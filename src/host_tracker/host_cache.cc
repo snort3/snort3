@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -23,11 +23,9 @@
 #endif
 
 #include "host_cache.h"
+#include "host_cache_segmented.h"
 
 using namespace snort;
 
-// Default host cache size in bytes.
-// Must agree with default memcap in host_cache_module.cc.
-#define LRU_CACHE_INITIAL_SIZE 16384 * 512
-
-HostCacheIp host_cache(LRU_CACHE_INITIAL_SIZE);
+HostCacheIp default_host_cache(LRU_CACHE_INITIAL_SIZE);
+HostCacheSegmentedIp host_cache;

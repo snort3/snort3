@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -44,6 +44,7 @@
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
+#include "memory/memory_cap.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/sfdaq_config.h"
 #include "packet_io/sfdaq_instance.h"
@@ -72,7 +73,7 @@ using namespace snort;
 static bool exit_requested = false;
 static int main_exit_code = 0;
 static bool paused = false;
-static bool all_pthreads_started = false;
+static bool pthreads_started = false;
 static std::queue<AnalyzerCommand*> orphan_commands;
 
 static std::mutex poke_mutex;
@@ -81,6 +82,17 @@ static Ring<unsigned>* pig_poke = nullptr;
 const struct timespec main_sleep = { 0, 1000000 }; // 0.001 sec
 
 static const char* prompt = "o\")~ ";
+
+static const std::map<std::string, clear_counter_type_t> counter_name_to_id =
+{
+	{"daq", clear_counter_type_t::TYPE_DAQ},
+	{"module", clear_counter_type_t::TYPE_MODULE},
+	{"appid", clear_counter_type_t::TYPE_APPID},
+	{"file_id", clear_counter_type_t::TYPE_FILE_ID},
+	{"snort", clear_counter_type_t::TYPE_SNORT},
+	{"ha", clear_counter_type_t::TYPE_HA},
+	{"all", clear_counter_type_t::TYPE_ALL}
+};
 
 const char* get_prompt()
 { return prompt; }
@@ -115,6 +127,7 @@ class Pig
 {
 public:
     Pig() = default;
+    ~Pig();
 
     void set_index(unsigned index) { idx = index; }
 
@@ -142,6 +155,13 @@ private:
     std::thread* athread = nullptr;
     unsigned idx = (unsigned)-1;
 };
+
+Pig::~Pig()
+{
+    delete analyzer;
+    delete swapper;
+    delete athread;
+}
 
 bool Pig::prep(const char* source)
 {
@@ -264,6 +284,7 @@ void Pig::reap_commands()
 static bool* pigs_started = nullptr;
 static Pig* pigs = nullptr;
 static unsigned max_pigs = 0;
+static unsigned pigs_failed = 0;
 
 static Pig* get_lazy_pig(unsigned max)
 {
@@ -336,12 +357,81 @@ int main_dump_stats(lua_State* L)
     return 0;
 }
 
+
+int main_dump_heap_stats(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    memory::MemoryCap::dump_mem_stats(ctrlcon);
+    return 0;
+}
+
+int convert_counter_type(const char* type)
+{
+	auto it = counter_name_to_id.find(type);
+	if ( it != counter_name_to_id.end() )
+		return it->second;
+	else
+		return clear_counter_type_t::TYPE_INVALID;
+}
+
 int main_reset_stats(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    int type = luaL_optint(L, 1, 0);
+    const char* command;
+    int type;
+    if ( lua_gettop(L) == 0 )
+    	command = "all";
+    else
+    	command = luaL_checkstring(L, 1);
     ctrlcon->respond("== clearing stats\n");
-    main_broadcast_command(new ACResetStats(static_cast<clear_counter_type_t>(type)), ctrlcon);
+    if ((type = convert_counter_type(command)) != clear_counter_type_t::TYPE_INVALID)
+    	main_broadcast_command(new ACResetStats(static_cast<clear_counter_type_t>(type)), ctrlcon);
+    else
+    	LogRespond(ctrlcon, "Available options to use: all, daq, module, appid, file_id, snort, ha\n");
+    return 0;
+}
+
+int main_set_watchdog_params(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    SnortConfig* sc = SnortConfig::get_main_conf();
+
+    if ( sc && L )
+    {
+        int seconds = luaL_optint(L, 1, -1);
+        int thread_count = luaL_optint(L, 2, -1);
+        // Timer and thread count are accessed only in main thread context
+        if ( seconds != -1 )
+            sc->set_watchdog(seconds);
+
+        if ( thread_count != -1 )
+            sc->set_watchdog_min_thread_count(thread_count);
+
+        std::ostringstream watchdog_timer_msg;
+        watchdog_timer_msg << "== setting watchdog timer to " << sc->watchdog_timer
+                           << ", min thread count to " << sc->watchdog_min_thread_count << "\n";
+        send_response(ctrlcon, watchdog_timer_msg.str().c_str());
+    }
+
+    return 0;
+}
+
+int main_log_command(lua_State* L)
+{
+    if (!L)
+        return 0;
+
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    if (lua_gettop(L) >= 2)
+    {
+        std::string command = luaL_optstring(L, 1, nullptr);
+        bool exclusion = luaL_opt(L,lua_toboolean, 2, true);
+        ctrlcon->log_command(command, exclusion);
+        LogRespond(ctrlcon, "Control: Logging %s for %s\n", exclusion ? "enabled" : "disabled" , command.c_str());
+    }
+    else
+        LogRespond(ctrlcon, "Usage: log_command(<command>,true|false)\n");
+
     return 0;
 }
 
@@ -350,6 +440,13 @@ int main_rotate_stats(lua_State* L)
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     send_response(ctrlcon, "== rotating stats\n");
     main_broadcast_command(new ACRotate(), ctrlcon);
+    return 0;
+}
+
+int main_show_config_generation(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    LogRespond(ctrlcon, "== configuration id: %u\n", SnortConfig::get_conf()->get_reload_id());
     return 0;
 }
 
@@ -671,6 +768,10 @@ int main_dump_plugins(lua_State*)
 int main_quit(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    SnortConfig* sc = SnortConfig::get_main_conf();
+    // Disable watchdog when process stops
+    if (sc)
+        sc->set_watchdog(0);
     send_response(ctrlcon, "== stopping\n");
     main_broadcast_command(new ACStop(), ctrlcon);
     exit_requested = true;
@@ -773,7 +874,7 @@ static void reap_commands()
 // FIXIT-L return true if something was done to avoid sleeping
 static bool house_keeping()
 {
-    if (all_pthreads_started)
+    if (pthreads_started)
         signal_check();
 
     reap_commands();
@@ -788,7 +889,7 @@ static bool house_keeping()
 static void service_check()
 {
 #ifdef SHELL
-    if (all_pthreads_started && ControlMgmt::service_users() )
+    if (pthreads_started && ControlMgmt::service_users())
         return;
 #endif
 
@@ -949,6 +1050,9 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
         }
         break;
 
+    case Analyzer::State::FAILED:
+        pigs_failed++;
+        // fallthrough
     case Analyzer::State::STOPPED:
         pig.stop();
         --swine;
@@ -961,7 +1065,7 @@ static void handle(Pig& pig, unsigned& swine, unsigned& pending_privileges)
 
 static void main_loop()
 {
-    unsigned swine = 0, pending_privileges = 0;
+    unsigned max_swine = 0, swine = 0, pending_privileges = 0;
 
     if (SnortConfig::get_conf()->change_privileges())
         pending_privileges = max_pigs;
@@ -971,9 +1075,11 @@ static void main_loop()
     {
         for (unsigned i = 0; i < max_pigs; i++)
         {
-            if (pigs[i].prep(SFDAQ::get_input_spec(SnortConfig::get_conf()->daq_config, i)))
-                swine++;
+            if (!pigs[i].prep(SFDAQ::get_input_spec(SnortConfig::get_conf()->daq_config, i)))
+                return;
         }
+
+        max_swine = swine += max_pigs;
     }
 
     // Iterate over the drove, spawn them as allowed, and handle their deaths.
@@ -994,6 +1100,9 @@ static void main_loop()
                 if (!pigs_started[idx] && pig.analyzer && (pig.analyzer->get_state() ==
                     Analyzer::State::STARTED))
                     pigs_started[idx] = true;
+                if (pigs_started[idx] && (!pig.analyzer || pig.analyzer->get_state() ==
+                    Analyzer::State::FAILED))
+                    pigs_started[idx] = false;
             }
             else if ( pending_privileges )
                 pending_privileges--;
@@ -1004,13 +1113,19 @@ static void main_loop()
             continue;
         }
 
-        if (!all_pthreads_started)
+        if (!pthreads_started)
         {
-            all_pthreads_started = true;
-            const unsigned num_threads = (!Trough::has_next()) ? swine : max_pigs;
+            const unsigned num_threads = (!Trough::has_next()) ? max_swine : max_pigs;
+            unsigned pigs_started_count = 0;
             for (unsigned i = 0; i < num_threads; i++)
-                all_pthreads_started &= pigs_started[i];
-            if (all_pthreads_started)
+            {
+                if (pigs_started[i])
+                    pigs_started_count++;
+            }
+
+            pthreads_started = pigs_started_count && num_threads <= pigs_started_count + pigs_failed;
+
+            if (pthreads_started)
             {
 #ifdef REG_TEST
                 LogMessage("All pthreads started\n");
@@ -1029,7 +1144,11 @@ static void main_loop()
         {
             Pig* pig = get_lazy_pig(max_pigs);
             if (pig->prep(src))
+            {
                 ++swine;
+                if (max_swine < swine)
+                    max_swine = swine;
+            }
             continue;
         }
         service_check();

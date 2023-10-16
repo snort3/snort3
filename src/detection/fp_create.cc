@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -74,12 +74,12 @@ static int fpGetFinalPattern(
     FastPatternConfig*, PatternMatchData*, const char*& ret_pattern, unsigned& ret_bytes);
 
 static void print_nfp_info(const char*, OptTreeNode*);
-static void print_fp_info(const char*, const OptTreeNode*, const PatternMatchData*);
+static void print_fp_info(const char*, const OptTreeNode*, const PatternMatchData*, int sect);
 
 static OptTreeNode* fixup_tree(
     detection_option_tree_node_t* dot, bool branched, unsigned contents)
 {
-    if ( dot->num_children == 0 )
+    if ( dot->num_children == 0 or dot->option_type == RULE_OPTION_TYPE_LEAF_NODE )
     {
         if ( !branched and contents )
             return (OptTreeNode*)dot->option_data;
@@ -121,10 +121,13 @@ static int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree
             free_detection_option_tree(node);
             root->children[i] = (detection_option_tree_node_t*)dup_node;
         }
-        fixup_tree(root->children[i], true, 0);
+        else
+        {
+            fixup_tree(root->children[i], true, 0);
+        }
 
         debug_logf(detection_trace, TRACE_OPTION_TREE, nullptr, "%3d %3d  %p %4s\n",
-            0, root->num_children, (void*)root, "root" );
+            0, root->num_children, (void*)root, "root");
 
         print_option_tree(root->children[i], 0);
     }
@@ -153,28 +156,28 @@ static bool new_sig(int num_children, detection_option_tree_node_t** nodes, OptT
 
 static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseType mpse_type)
 {
-    detection_option_tree_node_t* node = nullptr, * child;
-    bool need_leaf = false;
-
     if (!existing_tree)
         return -1;
 
     if (!*existing_tree)
         *existing_tree = new_root(otn);
 
-    detection_option_tree_root_t* root = (detection_option_tree_root_t*)*existing_tree;
+    detection_option_tree_root_t* const root = (detection_option_tree_root_t*)*existing_tree;
+    detection_option_tree_bud_t* bud = root;
+    bool need_leaf = false;
 
-    if (!root->children)
+    if (!bud->children)
     {
-        root->num_children++;
-        root->children = (detection_option_tree_node_t**)
-            snort_calloc(root->num_children, sizeof(detection_option_tree_node_t*));
+        bud->num_children++;
+        bud->children = (detection_option_tree_node_t**)
+            snort_calloc(bud->num_children, sizeof(detection_option_tree_node_t*));
         need_leaf = true;
     }
 
     int i = 0;
-    child = root->children[i];
+    detection_option_tree_node_t* child = bud->children[i];
     OptFpList* opt_fp = otn->opt_func;
+    std::list<OptFpList*> fbss;
 
     /* Build out sub-nodes for each option in the OTN fp list */
     while (opt_fp)
@@ -197,61 +200,41 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseTyp
             continue;
         }
 
+        // A flowbit setter will be evaluated last.
+        if ( is_flowbit_setter(opt_fp) )
+        {
+            fbss.push_back(opt_fp);
+            opt_fp = opt_fp->next;
+            continue;
+        }
+
         if (!child)
         {
             /* No children at this node */
             child = new_node(opt_fp->type, option_data);
             child->evaluate = opt_fp->OptTestFunc;
 
-            if (!node)
-                root->children[i] = child;
-            else
-                node->children[i] = child;
+            bud->children[i] = child;
 
             child->num_children++;
             child->children = (detection_option_tree_node_t**)
                 snort_calloc(child->num_children, sizeof(detection_option_tree_node_t*));
             child->is_relative = opt_fp->isRelative;
 
-            if (node && child->is_relative)
-                node->relative_children++;
+            if (child->is_relative)
+                bud->relative_children++;
 
             need_leaf = true;
         }
         else
         {
-            bool found_child_match = false;
+            bool found_child_match = child->option_data == option_data;
 
-            if (child->option_data != option_data)
+            for (i = 1; !found_child_match && i < bud->num_children; i++)
             {
-                if (!node)
-                {
-                    for (i=1; i<root->num_children; i++)
-                    {
-                        child = root->children[i];
-                        if (child->option_data == option_data)
-                        {
-                            found_child_match = true;
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    for (i=1; i<node->num_children; i++)
-                    {
-                        child = node->children[i];
-                        if (child->option_data == option_data)
-                        {
-                            found_child_match = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                found_child_match = true;
+                child = bud->children[i];
+                if (child->option_data == option_data)
+                    found_child_match = true;
             }
 
             if ( !found_child_match )
@@ -265,88 +248,82 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseTyp
                     snort_calloc(child->num_children, sizeof(child->children));
                 child->is_relative = opt_fp->isRelative;
 
-                if (!node)
-                {
-                    root->num_children++;
-                    tmp_children = (detection_option_tree_node_t**)
-                        snort_calloc(root->num_children, sizeof(tmp_children));
-                    memcpy(tmp_children, root->children,
-                        sizeof(detection_option_tree_node_t*) * (root->num_children-1));
+                bud->num_children++;
+                tmp_children = (detection_option_tree_node_t**)
+                    snort_calloc(bud->num_children, sizeof(detection_option_tree_node_t*));
+                memcpy(tmp_children, bud->children,
+                       sizeof(detection_option_tree_node_t*) * (bud->num_children-1));
 
-                    snort_free(root->children);
-                    root->children = tmp_children;
-                    root->children[root->num_children-1] = child;
-                }
-                else
-                {
-                    node->num_children++;
-                    tmp_children = (detection_option_tree_node_t**)
-                        snort_calloc(node->num_children, sizeof(detection_option_tree_node_t*));
-                    memcpy(tmp_children, node->children,
-                        sizeof(detection_option_tree_node_t*) * (node->num_children-1));
+                snort_free(bud->children);
+                bud->children = tmp_children;
+                bud->children[bud->num_children-1] = child;
 
-                    snort_free(node->children);
-                    node->children = tmp_children;
-                    node->children[node->num_children-1] = child;
-                    if (child->is_relative)
-                        node->relative_children++;
-                }
+                if (child->is_relative)
+                    bud->relative_children++;
+
                 need_leaf = true;
             }
         }
-        node = child;
+        bud = child;
         i=0;
-        child = node->children[i];
+        child = bud->children[i];
         opt_fp = opt_fp->next;
     }
 
     // don't add a new leaf node unless we branched higher in the tree or this
     // is a different sig ( eg alert ip ( sid:1; ) vs alert tcp ( sid:2; ) )
     // note: same sig different policy branches at rtn (this is for same policy)
-
-    if ( !need_leaf )
-    {
-        if ( node )
-            need_leaf = new_sig(node->num_children, node->children, otn);
-        else
-            need_leaf = new_sig(root->num_children, root->children, otn);
-    }
-
-    if ( !need_leaf )
+    if ( !need_leaf and !new_sig(bud->num_children, bud->children, otn) )
         return 0;
 
     /* Append a leaf node that has option data of the SigInfo/otn pointer */
     child = new_node(RULE_OPTION_TYPE_LEAF_NODE, otn);
 
-    if (!node)
+    if (bud->children[0])
     {
-        if (root->children[0])
-        {
-            detection_option_tree_node_t** tmp_children;
-            root->num_children++;
-            tmp_children = (detection_option_tree_node_t**)
-                snort_calloc(root->num_children, sizeof(detection_option_tree_node_t*));
-            memcpy(tmp_children, root->children,
-                sizeof(detection_option_tree_node_t*) * (root->num_children-1));
-            snort_free(root->children);
-            root->children = tmp_children;
-        }
-        root->children[root->num_children-1] = child;
+        detection_option_tree_node_t** tmp_children;
+        bud->num_children++;
+        tmp_children = (detection_option_tree_node_t**)
+            snort_calloc(bud->num_children, sizeof(detection_option_tree_node_t*));
+        memcpy(tmp_children, bud->children,
+               sizeof(detection_option_tree_node_t*) * (bud->num_children - 1));
+        snort_free(bud->children);
+        bud->children = tmp_children;
     }
-    else
+    bud->children[bud->num_children - 1] = child;
+
+    // Build after-leaf nodes with flowbit setters.
+    auto fbss_num = fbss.size();
+
+    if (!fbss_num)
+        return 0;
+
+    bud = child;
+    i = 0;
+
+    bud->num_children = fbss_num;
+    bud->children = (detection_option_tree_node_t**)
+        snort_calloc(bud->num_children, sizeof(detection_option_tree_node_t*));
+
+    for (auto fbs : fbss)
     {
-        if (node->children[0])
+        // Only flowbit setters should get here.
+        if (fbs->type == RULE_OPTION_TYPE_LEAF_NODE
+            or is_fast_pattern_only(otn, fbs, mpse_type)
+            or !is_flowbit_setter(fbs) )
         {
-            detection_option_tree_node_t** tmp_children;
-            node->num_children++;
-            tmp_children = (detection_option_tree_node_t**)
-                snort_calloc(node->num_children, sizeof(detection_option_tree_node_t*));
-            memcpy(tmp_children, node->children,
-                sizeof(detection_option_tree_node_t*) * (node->num_children-1));
-            snort_free(node->children);
-            node->children = tmp_children;
+            assert(false);
+            bud->num_children--;
+            continue;
         }
-        node->children[node->num_children-1] = child;
+
+        void* option_data = fbs->ips_opt;
+        child = new_node(fbs->type, option_data);
+        child->evaluate = fbs->OptTestFunc;
+        child->is_relative = fbs->isRelative;
+        bud->children[i++] = child;
+
+        assert(child->is_relative == false);
     }
 
     return 0;
@@ -454,17 +431,20 @@ static int fpFinishRuleGroup(SnortConfig* sc, RuleGroup* pg)
     assert(pg);
     bool has_rules = false;
 
-    for ( auto& it : pg->pm_list )
+    for ( int sect = PS_NONE; sect <= PS_MAX; sect++)
     {
-        if ( it->group.normal_mpse )
+        for ( auto& it : pg->pm_list[sect] )
         {
-            queue_mpse(it->group.normal_mpse);
-            has_rules = true;
-        }
-        if ( it->group.offload_mpse )
-        {
-            queue_mpse(it->group.offload_mpse);
-            has_rules = true;
+            if ( it->group.normal_mpse && !it->group.normal_is_dup)
+            {
+                queue_mpse(it->group.normal_mpse);
+                has_rules = true;
+            }
+            if ( it->group.offload_mpse && !it->group.offload_is_dup)
+            {
+                queue_mpse(it->group.offload_mpse);
+                has_rules = true;
+            }
         }
     }
 
@@ -493,8 +473,14 @@ static int fpFinishRuleGroup(SnortConfig* sc, RuleGroup* pg)
     return 0;
 }
 
+static bool srvc_supports_section(const char* srvc)
+{
+    return (srvc && ( !strcmp("http", srvc) || !strcmp("http2",srvc) || !strcmp("http3",srvc)));
+}
+
 static int fpAddRuleGroupRule(
-    SnortConfig* sc, RuleGroup* pg, OptTreeNode* otn, FastPatternConfig* fp, bool srvc)
+    SnortConfig* sc, RuleGroup* pg, OptTreeNode* otn, FastPatternConfig* fp, const char* srvc = nullptr,
+    bool to_server = false)
 {
     const MpseApi* search_api = nullptr;
     const MpseApi* offload_search_api = nullptr;
@@ -514,7 +500,7 @@ static int fpAddRuleGroupRule(
     IpsOption* opt = nullptr;
 
     bool only_literal = !MpseManager::is_regex_capable(search_api);
-    PatternMatchVector pmv = get_fp_content(otn, ofp, opt, srvc, only_literal, exclude);
+    PatternMatchVector pmv = get_fp_content(otn, ofp, opt, srvc != nullptr, only_literal, exclude);
 
     if ( !pmv.empty() )
     {
@@ -549,122 +535,171 @@ static int fpAddRuleGroupRule(
             PatternMatchData* main_pmd = pmv.back();
             pmv.pop_back();
 
-            static MpseAgent agent =
-            {
-                pmx_create_tree_normal, add_patrn_to_neg_list,
-                fpDeletePMX, free_detection_option_root, neg_list_free
-            };
-
-            const char* s = opt ? opt->get_name() : "pkt_data";
-            auto pmt = get_pm_type(s);
-            PatternMatcher* pm = pg->get_pattern_matcher(pmt, s);
-            MpseGroup* mpg = &pm->group;
-
-            if ( !mpg->normal_mpse )
-            {
-                if ( !mpg->create_normal_mpse(sc, &agent) )
-                {
-                    ParseError("Failed to create normal pattern matcher for %s", pm->name);
-                    return -1;
-                }
-
-                mpse_count++;
-            }
-
             if ( add_to_offload )
             {
                 ol_pmd = pmv_ol.back();
                 pmv_ol.pop_back();
+            }
 
-                static MpseAgent agent_offload =
-                {
-                    pmx_create_tree_offload, add_patrn_to_neg_list,
-                    fpDeletePMX, free_detection_option_root, neg_list_free
-                };
+            section_flags sects = section_to_flag(PS_NONE);
+            const bool supports_sect = srvc_supports_section(srvc);
+            if (supports_sect)
+                sects = to_server ? otn->sections[OptTreeNode::SECT_TO_SRV] :
+                    otn->sections[OptTreeNode::SECT_TO_CLIENT];
 
-                // Keep the created mpse alongside the same pm type as the main pmd
-                if ( !mpg->offload_mpse )
-                {
-                    if ( !mpg->create_offload_mpse(sc, &agent_offload) )
-                    {
-                        ParseError("Failed to create offload pattern matcher for %s", pm->name);
-                        return -1;
-                    }
-
-                    offload_mpse_count++;
-                }
+            // pkt_data can work on both PS_NONE and PS_BODY
+            const char* s = opt ? opt->get_name() : "pkt_data";
+            if (!strcmp("pkt_data", s))
+            {
+                if (!srvc)
+                    sects = section_to_flag(PS_NONE) | section_to_flag(PS_BODY);
+                else if (!supports_sect)
+                    sects = section_to_flag(PS_NONE);
+                else if (has_service_rule_opt(otn))
+                    sects = section_to_flag(PS_BODY);
+                else
+                    sects = section_to_flag(PS_NONE) | section_to_flag(PS_BODY);
             }
 
             bool add_rule = false;
             bool add_nfp_rule = false;
-
-            if ( mpg->normal_mpse )
+            bool is_first_sect = true;
+            const auto pmt = get_pm_type(s);
+            for (int sect = PS_NONE; sect <= PS_MAX; sect++)
             {
-                add_rule = true;
-                if ( main_pmd->is_negated() )
-                    add_nfp_rule = true;
-
-                // Now add patterns
-                if ( fpFinishRuleGroupRule(mpg->normal_mpse, otn, main_pmd, fp, true) == 0 )
+                if (sects & section_to_flag((PduSection)sect))
                 {
-                    if ( make_fast_pattern_only(ofp, main_pmd) )
+                    PatternMatcher* pm = pg->get_pattern_matcher(pmt, s, (PduSection)sect);
+                    MpseGroup* mpg = &pm->group;
+                    const bool update_mpse = srvc || is_first_sect;
+
+                    if ( !mpg->normal_mpse )
                     {
-                        otn->normal_fp_only = ofp;
-                        fp_only++;
+                        if (!update_mpse)
+                        {
+                            assert(!strcmp("pkt_data", s));
+                            PatternMatcher* pm_none = pg->get_pattern_matcher(pmt, s, (PduSection)PS_NONE);
+                            MpseGroup* mpg_none = &pm_none->group;
+                            mpg->normal_mpse = mpg_none->normal_mpse;
+                            mpg->normal_is_dup = true;
+                        }
+                        else
+                        {
+                            static MpseAgent agent =
+                            {
+                                pmx_create_tree_normal, add_patrn_to_neg_list,
+                                fpDeletePMX, free_detection_option_root, neg_list_free
+                            };
+
+                            if ( !mpg->create_normal_mpse(sc, &agent) )
+                            {
+                                ParseError("Failed to create normal pattern matcher for %s", pm->name);
+                                return -1;
+                            }
+
+                            mpse_count++;
+                        }
                     }
 
-                    if ( !pm->fp_opt )
-                        pm->fp_opt = opt;
-
-                    main_pmd->sticky_buf = pm->name;
-
-                    if ( fp->get_debug_print_fast_patterns() and !otn->soid )
-                        print_fp_info(s_group, otn, main_pmd);
-
-                    // Add Alternative patterns
-                    for ( auto alt_pmd : pmv )
+                    if ( add_to_offload && !mpg->offload_mpse )
                     {
-                        fpFinishRuleGroupRule(mpg->normal_mpse, otn, alt_pmd, fp, false);
-                        alt_pmd->sticky_buf = pm->name;
+                        // Keep the created mpse alongside the same pm type as the main pmd
+                        if (!update_mpse)
+                        {
+                            PatternMatcher* pm_none = pg->get_pattern_matcher(pmt, s, (PduSection)PS_NONE);
+                            MpseGroup* mpg_none = &pm_none->group;
+                            mpg->offload_mpse = mpg_none->offload_mpse;
+                            mpg->offload_is_dup = true;
+                        }
+                        else
+                        {
+                            static MpseAgent agent_offload =
+                            {
+                                pmx_create_tree_offload, add_patrn_to_neg_list,
+                                fpDeletePMX, free_detection_option_root, neg_list_free
+                            };
 
-                        if ( fp->get_debug_print_fast_patterns() and !otn->soid )
-                            print_fp_info(s_group, otn, alt_pmd);
-                    }
-                }
-            }
+                            if ( !mpg->create_offload_mpse(sc, &agent_offload) )
+                            {
+                                ParseError("Failed to create offload pattern matcher for %s",
+                                    pm->name);
+                                return -1;
+                            }
 
-            if ( ol_pmd and mpg->offload_mpse )
-            {
-                add_rule = true;
-                if ( ol_pmd->is_negated() )
-                    add_nfp_rule = true;
-
-                // Now add patterns
-                if ( fpFinishRuleGroupRule(mpg->offload_mpse, otn, ol_pmd, fp, true) == 0 )
-                {
-                    if ( make_fast_pattern_only(ofp_ol, ol_pmd) )
-                    {
-                        otn->offload_fp_only = ofp_ol;
-                        fp_only++;
+                            offload_mpse_count++;
+                        }
                     }
 
-                    if ( !pm->fp_opt )
-                        pm->fp_opt = opt_ol;
-
-                    main_pmd->sticky_buf = pm->name;
-
-                    if ( fp->get_debug_print_fast_patterns() and !otn->soid )
-                        print_fp_info(s_group, otn, main_pmd);
-
-                    // Add Alternative patterns
-                    for (auto alt_pmd : pmv_ol)
+                    if ( mpg->normal_mpse && update_mpse )
                     {
-                        fpFinishRuleGroupRule(mpg->offload_mpse, otn, alt_pmd, fp, false);
-                        alt_pmd->sticky_buf = pm->name;
+                        add_rule = true;
+                        if ( main_pmd->is_negated() )
+                            add_nfp_rule = true;
 
-                        if ( fp->get_debug_print_fast_patterns() and !otn->soid )
-                            print_fp_info(s_group, otn, alt_pmd);
+                        // Now add patterns
+                        if ( fpFinishRuleGroupRule(mpg->normal_mpse, otn, main_pmd, fp, true) == 0 )
+                        {
+                            if ( make_fast_pattern_only(ofp, main_pmd) )
+                            {
+                                otn->normal_fp_only = ofp;
+                                fp_only++;
+                            }
+
+                            if ( !pm->fp_opt )
+                                pm->fp_opt = opt;
+
+                            main_pmd->sticky_buf = pm->name;
+
+                            if ( fp->get_debug_print_fast_patterns() and !otn->soid )
+                                print_fp_info(s_group, otn, main_pmd, sect);
+
+                            // Add Alternative patterns
+                            for ( auto alt_pmd : pmv )
+                            {
+                                fpFinishRuleGroupRule(mpg->normal_mpse, otn, alt_pmd, fp, false);
+                                alt_pmd->sticky_buf = pm->name;
+
+                                if ( fp->get_debug_print_fast_patterns() and !otn->soid )
+                                    print_fp_info(s_group, otn, alt_pmd, sect);
+                            }
+                        }
                     }
+
+                    if ( ol_pmd and mpg->offload_mpse && update_mpse )
+                    {
+                        add_rule = true;
+                        if ( ol_pmd->is_negated() )
+                            add_nfp_rule = true;
+
+                        // Now add patterns
+                        if ( fpFinishRuleGroupRule(mpg->offload_mpse, otn, ol_pmd, fp, true) == 0 )
+                        {
+                            if ( make_fast_pattern_only(ofp_ol, ol_pmd) )
+                            {
+                                otn->offload_fp_only = ofp_ol;
+                                fp_only++;
+                            }
+
+                            if ( !pm->fp_opt )
+                                pm->fp_opt = opt_ol;
+
+                            main_pmd->sticky_buf = pm->name;
+
+                            if ( fp->get_debug_print_fast_patterns() and !otn->soid )
+                                print_fp_info(s_group, otn, main_pmd, sect);
+
+                            // Add Alternative patterns
+                            for (auto alt_pmd : pmv_ol)
+                            {
+                                fpFinishRuleGroupRule(mpg->offload_mpse, otn, alt_pmd, fp, false);
+                                alt_pmd->sticky_buf = pm->name;
+
+                                if ( fp->get_debug_print_fast_patterns() and !otn->soid )
+                                    print_fp_info(s_group, otn, alt_pmd, sect);
+                            }
+                        }
+                    }
+                    is_first_sect = false;
                 }
             }
 
@@ -932,16 +967,19 @@ static void fpRuleGroupPrintRuleCount(RuleGroup* pg, const char* what)
 {
     LogMessage("RuleGroup rule summary (%s):\n", what);
 
-    for ( auto& it : pg->pm_list )
+    for ( int sect = PS_NONE; sect <= PS_MAX; sect++)
     {
-        int count = it->group.normal_mpse ?  it->group.normal_mpse->get_pattern_count() : 0;
-        int count_ol = it->group.offload_mpse ?  it->group.offload_mpse->get_pattern_count() : 0;
+        for ( auto& it : pg->pm_list[sect] )
+        {
+            int count = it->group.normal_mpse ?  it->group.normal_mpse->get_pattern_count() : 0;
+            int count_ol = it->group.offload_mpse ?  it->group.offload_mpse->get_pattern_count() : 0;
 
-        if ( count )
-            LogMessage("\tNormal Pattern Matcher %s: %d\n", it->name, count);
+            if ( count )
+                LogMessage("\tNormal Pattern Matcher %s: %d\n", it->name, count);
 
-        if ( count_ol )
-            LogMessage("\tOffload Pattern Matcher %s: %d\n", it->name, count_ol);
+            if ( count_ol )
+                LogMessage("\tOffload Pattern Matcher %s: %d\n", it->name, count_ol);
+        }
     }
 
     if ( pg->nfp_rule_count )
@@ -963,7 +1001,7 @@ static void fpDeletePMX(void* pv)
  */
 static void fpCreatePortObject2RuleGroup(SnortConfig* sc, PortObject2* po, PortObject2* poaa)
 {
-    assert( po );
+    assert(po);
 
     po->group = nullptr;
     FastPatternConfig* fp = sc->fast_pattern_config;
@@ -1015,7 +1053,7 @@ static void fpCreatePortObject2RuleGroup(SnortConfig* sc, PortObject2* po, PortO
             assert(otn);
 
             if ( is_network_protocol(otn->snort_protocol_id) )
-                fpAddRuleGroupRule(sc, pg, otn, fp, false);
+                fpAddRuleGroupRule(sc, pg, otn, fp);
         }
 
         if (fp->get_debug_print_rule_group_build_details())
@@ -1190,7 +1228,7 @@ static int fpCreateRuleGroups(SnortConfig* sc, RulePortTables* p)
 * list- list of otns for this service
 */
 static void fpBuildServiceRuleGroupByServiceOtnList(
-    SnortConfig* sc, GHash* p, const char* srvc, SF_LIST* list, FastPatternConfig* fp)
+    SnortConfig* sc, GHash* p, const char* srvc, SF_LIST* list, FastPatternConfig* fp, bool to_server)
 {
     RuleGroup* pg = new RuleGroup;
     s_group = srvc;
@@ -1205,7 +1243,7 @@ static void fpBuildServiceRuleGroupByServiceOtnList(
          otn;
          otn = (OptTreeNode*)sflist_next(&cursor) )
     {
-        fpAddRuleGroupRule(sc, pg, otn, fp, true);
+        fpAddRuleGroupRule(sc, pg, otn, fp, srvc, to_server);
     }
 
     if (fpFinishRuleGroup(sc, pg) != 0)
@@ -1229,7 +1267,7 @@ static void fpBuildServiceRuleGroupByServiceOtnList(
  *
  */
 static void fpBuildServiceRuleGroups(
-    SnortConfig* sc, GHash* spg, RuleGroupVector& sopg, GHash* srm, FastPatternConfig* fp)
+    SnortConfig* sc, GHash* spg, RuleGroupVector& sopg, GHash* srm, FastPatternConfig* fp, bool to_server)
 {
     for (GHashNode* n = srm->find_first(); n; n = srm->find_next())
     {
@@ -1238,7 +1276,7 @@ static void fpBuildServiceRuleGroups(
 
         assert(list and srvc);
 
-        fpBuildServiceRuleGroupByServiceOtnList(sc, spg, srvc, list, fp);
+        fpBuildServiceRuleGroupByServiceOtnList(sc, spg, srvc, list, fp, to_server);
 
         /* Add this RuleGroup to the protocol-ordinal -> port_group table */
         RuleGroup* pg = (RuleGroup*)spg->find(srvc);
@@ -1266,10 +1304,10 @@ static void fpCreateServiceMapRuleGroups(SnortConfig* sc)
     sc->sopgTable = new sopg_table_t(sc->proto_ref->get_count());
 
     fpBuildServiceRuleGroups(sc, sc->spgmmTable->to_srv,
-        sc->sopgTable->to_srv, sc->srmmTable->to_srv, fp);
+        sc->sopgTable->to_srv, sc->srmmTable->to_srv, fp, true);
 
     fpBuildServiceRuleGroups(sc, sc->spgmmTable->to_cli,
-        sc->sopgTable->to_cli, sc->srmmTable->to_cli, fp);
+        sc->sopgTable->to_cli, sc->srmmTable->to_cli, fp, false);
 }
 
 /*
@@ -1362,10 +1400,13 @@ static void fp_sum_port_groups(RuleGroup* pg, unsigned& c)
     if ( !pg )
         return;
 
-    for ( const auto& it : pg->pm_list )
+    for ( int sect = PS_NONE; sect <= PS_MAX; sect++)
     {
-        if ( it->group.normal_mpse and it->group.normal_mpse->get_pattern_count() )
-            c++;
+        for ( const auto& it : pg->pm_list[sect] )
+        {
+            if ( it->group.normal_mpse and it->group.normal_mpse->get_pattern_count() )
+                c++;
+        }
     }
 }
 
@@ -1572,7 +1613,9 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
 
     if ( mpse_count )
     {
-        LogLabel("search engine");
+        auto method = fp->get_search_method();
+        string search_label = "search engine (" + string(method ? method : "unspecified") + ")";
+        LogLabel(search_label.c_str());
         MpseManager::print_mpse_summary(fp->get_search_api());
     }
 
@@ -1639,13 +1682,13 @@ void get_pattern_info(const PatternMatchData* pmd, string& hex, string& txt, str
     opts += " )";
 }
 
-static void print_fp_info(const char* group, const OptTreeNode* otn, const PatternMatchData* pmd)
+static void print_fp_info(const char* group, const OptTreeNode* otn, const PatternMatchData* pmd, int sect)
 {
     std::string hex, txt, opts;
 
     get_pattern_info(pmd, hex, txt, opts);
-    LogMessage("FP %s %u:%u:%u %s[%d] = '%s' |%s| %s\n",
+    LogMessage("FP %s %u:%u:%u %s[%d] = '%s' |%s| %s, section %s\n",
         group, otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev,
-        pmd->sticky_buf, pmd->pattern_size, txt.c_str(), hex.c_str(), opts.c_str());
+        pmd->sticky_buf, pmd->pattern_size, txt.c_str(), hex.c_str(), opts.c_str(), section_to_str[sect]);
 }
 

@@ -28,7 +28,6 @@ if (STATIC_INSPECTORS)
         $<TARGET_OBJECTS:cip>
         $<TARGET_OBJECTS:dce_rpc>
         $<TARGET_OBJECTS:dnp3>
-        $<TARGET_OBJECTS:dns>
         $<TARGET_OBJECTS:ftp_telnet>
         $<TARGET_OBJECTS:gtp_inspect>
         $<TARGET_OBJECTS:iec104>
@@ -50,6 +49,7 @@ set(STATIC_SERVICE_INSPECTOR_PLUGINS
     $<TARGET_OBJECTS:http2_inspect>
     $<TARGET_OBJECTS:sip>
     $<TARGET_OBJECTS:ssl>
+    $<TARGET_OBJECTS:dns>
     ${STATIC_INSPECTOR_OBJS}
     CACHE INTERNAL "STATIC_SERVICE_INSPECTOR_PLUGINS"
 )

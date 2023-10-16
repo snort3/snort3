@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -207,7 +207,7 @@ protected:
                     order.insert(std::pair<int, std::string>(dig, elem));
                 }
                 else
-                { 
+                {
                     table_api.add_comment("Unable to add " + elem +
                         ". Max precedence value is " + std::to_string(max));
                 }

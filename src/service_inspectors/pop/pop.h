@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -111,6 +111,11 @@ private:
     bool is_end_of_data(snort::Flow* ssn) override;
 };
 
+namespace snort
+{
+class PDFJSNorm;
+}
+
 struct POPData
 {
     int state;
@@ -118,6 +123,7 @@ struct POPData
     int state_flags;
     int session_flags;
     PopMime* mime_ssn;
+    snort::PDFJSNorm* jsn;
 };
 
 class PopFlowData : public snort::FlowData

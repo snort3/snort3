@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -155,8 +155,6 @@ struct ImapDetectorData
     ImapServiceData server;
     int need_continue;
 };
-
-static ImapClientDetector* imap_client_detector;
 
 static int isImapTagChar(uint8_t tag)
 {
@@ -427,7 +425,7 @@ static int imap_server_validate(ImapDetectorData* dd, const uint8_t* data, uint1
         if (id->flags & IMAP_FLAG_RESULT_OK)
         {
             // FIXIT-L - this may be called from server side
-            //add_app(asd, APP_ID_IMAPS, APP_ID_IMAPS, nullptr);
+            detector->add_app(asd, APP_ID_IMAPS, APP_ID_IMAPS, nullptr, change_bits);
             asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
         }
         else
@@ -493,7 +491,6 @@ static std::array<bool, num_imap_client_patterns> eoc =
 
 ImapClientDetector::ImapClientDetector(ClientDiscovery* cdm)
 {
-    imap_client_detector = this;
     handler = cdm;
     name = "IMAP";
     proto = IpProtocol::TCP;
@@ -860,6 +857,9 @@ ImapServiceDetector::ImapServiceDetector(ServiceDiscovery* sd)
 
 int ImapServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
+    if (!imap_client_detector)
+        return APPID_NOMATCH;
+
     ImapDetectorData* dd;
     ImapServiceData* id;
 

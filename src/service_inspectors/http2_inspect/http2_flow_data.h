@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -149,6 +149,7 @@ protected:
 
     // Used in eval()
     Http2ConnectionSettings connection_settings[2];
+    Http2ConnectionSettingsQueue settings_queue[2];
     Http2HpackDecoder hpack_decoder[2];
     std::list<Http2Stream> streams;
     uint32_t concurrent_files = 0;
@@ -213,6 +214,8 @@ public:
     void set_stream_flow_data(snort::Flow* flow, snort::FlowData* flow_data) override;
     void get_stream_id(const snort::Flow* flow, int64_t& stream_id) override;
     AppId get_appid_from_stream(const snort::Flow* flow) override;
+    void* get_hi_msg_section(const snort::Flow* flow) override;
+    void set_hi_msg_section(snort::Flow* flow, void* section) override;
 };
 
 #endif

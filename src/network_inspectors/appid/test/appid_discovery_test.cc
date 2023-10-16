@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -23,12 +23,13 @@
 
 #define APPID_MOCK_INSPECTOR_H // avoiding mocked inspector
 
+#include "framework/data_bus.h"
 #include "helpers/discovery_filter.h"
 #include "host_tracker/host_cache.h"
 #include "network_inspectors/appid/appid_discovery.cc"
 #include "network_inspectors/appid/appid_peg_counts.h"
 #include "network_inspectors/packet_tracer/packet_tracer.h"
-
+#include "pub_sub/appid_event_ids.h"
 #include "search_engines/search_tool.h"
 #include "utils/sflsq.cc"
 
@@ -53,6 +54,7 @@ const char* AppIdApi::get_application_name(AppId, OdpContext&) { return NULL; }
 THREAD_LOCAL PacketTracer* s_pkt_trace = nullptr;
 THREAD_LOCAL Stopwatch<SnortClock>* pt_timer = nullptr;
 void PacketTracer::daq_log(const char*, ...) { }
+void FatalError(const char* fmt, ...) { (void)fmt; exit(1); }
 
 // Stubs for packet
 Packet::Packet(bool) {}
@@ -102,12 +104,12 @@ time_t packet_time() { return std::time(nullptr); }
 // Stubs for search_tool
 SearchTool::SearchTool(bool) {}
 SearchTool::~SearchTool() = default;
-void SearchTool::add(const char*, unsigned, int, bool) {}
-void SearchTool::add(const char*, unsigned, void*, bool) {}
-void SearchTool::add(const uint8_t*, unsigned, int, bool) {}
-void SearchTool::add(const uint8_t*, unsigned, void*, bool) {}
+void SearchTool::add(const char*, unsigned, int, bool, bool) {}
+void SearchTool::add(const char*, unsigned, void*, bool, bool) {}
+void SearchTool::add(const uint8_t*, unsigned, int, bool, bool) {}
+void SearchTool::add(const uint8_t*, unsigned, void*, bool, bool) {}
 
-// Stubs for ip
+// Mocks for ip
 namespace ip
 {
 void IpApi::set(const SfIp& sip, const SfIp& dip)
@@ -121,13 +123,13 @@ void IpApi::set(const SfIp& sip, const SfIp& dip)
 
 AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
-void AppIdSessionApi::get_first_stream_app_ids(AppId&, AppId&,
-    AppId&, AppId&) const { }
-} // namespace snort
-void AppIdModule::reset_stats() {}
-DiscoveryFilter::~DiscoveryFilter() {}
-// Stubs for publish
-void DataBus::publish(const char*, DataEvent& event, Flow*)
+void AppIdSessionApi::get_first_stream_app_ids(AppId&, AppId&, AppId&, AppId&) const { }
+
+// Mocks for publish
+unsigned DataBus::get_id(const PubKey&)
+{ return 0; }
+
+void DataBus::publish(unsigned, unsigned, DataEvent& event, Flow*)
 {
     AppidEvent* appid_event = (AppidEvent*)&event;
     char* test_log = (char*)mock().getData("test_log").getObjectPointer();
@@ -135,6 +137,9 @@ void DataBus::publish(const char*, DataEvent& event, Flow*)
         appid_event->get_change_bitset().to_string().c_str());
     mock().actualCall("publish");
 }
+} // namespace snort
+void AppIdModule::reset_stats() {}
+DiscoveryFilter::~DiscoveryFilter() {}
 
 // Stubs for matchers
 static HttpPatternMatchers* http_matchers;
@@ -144,6 +149,7 @@ HttpPatternMatchers::~HttpPatternMatchers() = default;
 SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
 AlpnPatternMatchers::~AlpnPatternMatchers() = default;
+CipPatternMatchers::~CipPatternMatchers() = default;
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 void ApplicationDescriptor::set_id(AppId app_id){my_id = app_id;}
@@ -229,7 +235,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
 void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packet& p, bool, uint32_t)
 {
     AppidEvent app_event(change_bits, false, 0, this->get_api(), p);
-    DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, p.flow);
+    DataBus::publish(0, AppIdEventIds::ANY_CHANGE, app_event, p.flow);
 }
 
 void AppIdHttpSession::set_tun_dest(){}
@@ -256,7 +262,8 @@ static AppIdModule* s_app_module = nullptr;
 static AppIdInspector* s_ins = nullptr;
 static ServiceDiscovery* s_discovery_manager = nullptr;
 
-HostCacheIp host_cache(50);
+HostCacheIp default_host_cache(LRU_CACHE_INITIAL_SIZE);
+HostCacheSegmentedIp host_cache(1,50);
 AppId HostTracker::get_appid(Port, IpProtocol, bool, bool)
 {
     return APP_ID_NONE;
@@ -399,7 +406,7 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
 
     // Detect changes in service, client, payload, and misc appid
     mock().checkExpectations();
-    STRCMP_EQUAL("Published change_bits == 0000000000001111100", test_log);
+    STRCMP_EQUAL("Published change_bits == 00000000000001111100", test_log);
 
     delete &asd->get_api();
     delete asd;
@@ -433,7 +440,7 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
 
     // Detect changes in service, client, payload, and misc appid
     mock().checkExpectations();
-    STRCMP_EQUAL("Published change_bits == 0000000000001111100", test_log);
+    STRCMP_EQUAL("Published change_bits == 00000000000001111100", test_log);
     delete &asd->get_api();
     delete asd;
     delete flow;
@@ -531,14 +538,15 @@ TEST(appid_discovery_tests, change_bits_to_string)
     change_bits_to_string(change_bits, str);
     STRCMP_EQUAL(str.c_str(), "created, reset, service, client, payload, misc, referred, host,"
         " tls-host, url, user-agent, response, referrer, dns-host, service-info, client-info,"
-        " user-info, netbios-name, netbios-domain");
+        " user-info, netbios-name, netbios-domain, finished");
 
     // Failure of this test is a reminder that enum is changed, hence translator needs update
-    CHECK_EQUAL(APPID_MAX_BIT, 19);
+    CHECK_EQUAL(APPID_MAX_BIT, 20);
 }
 
 int main(int argc, char** argv)
 {
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
+    host_cache.term();
     return rc;
 }

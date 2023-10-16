@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -144,9 +144,6 @@ static const Parameter binder_use_params[] =
 
     { "file", Parameter::PT_STRING, nullptr, nullptr,
       "use configuration in given file" },
-
-    { "network_policy", Parameter::PT_STRING, nullptr, nullptr,
-      "use network policy from given file" },
 
     { "inspection_policy", Parameter::PT_STRING, nullptr, nullptr,
       "use inspection policy from given file" },

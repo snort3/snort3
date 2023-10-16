@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2022-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -20,6 +20,48 @@
 #ifndef REPUTATION_EVENTS_H
 #define REPUTATION_EVENTS_H
 
-#define REPUTATION_MATCHED_EVENT "rep.matched"
+#include "framework/data_bus.h"
+
+namespace snort
+{
+
+struct ReputationEventIds { enum : unsigned { REP_MATCHED, num_ids }; };
+
+const PubKey reputation_pub_key { "reputation", ReputationEventIds::num_ids };
+
+enum ReputationVerdict
+{
+    REP_VERDICT_BLOCKED,
+    REP_VERDICT_TRUSTED,
+    REP_VERDICT_MONITORED
+};
+
+class ReputationVerdictEvent : public DataEvent
+{
+public:
+    ReputationVerdictEvent(const Packet* packet, ReputationVerdict verdict, uint32_t list_id, bool source_matched)
+        : packet(packet), verdict(verdict), list_id(list_id), source_matched(source_matched)
+    { }
+
+    const Packet* get_packet() const override
+    { return packet; }
+
+    ReputationVerdict get_verdict() const
+    { return verdict; }
+
+    uint32_t get_list_id() const
+    { return list_id; }
+
+    bool get_source_matched() const
+    { return source_matched; }
+
+private:
+    const Packet* packet;
+    ReputationVerdict verdict;
+    uint32_t list_id;
+    bool source_matched;
+};
+
+}
 
 #endif

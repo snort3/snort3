@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -204,7 +204,9 @@ static inline bool process_command(SmtpPafData* pfdata,  uint8_t val)
     /*State unknown, start cmd search start from EOL, flush on EOL*/
     if (val == '\n')
     {
-        if (pfdata->cmd_info.cmd_state == SMTP_PAF_CMD_DATA_END_STATE)
+        if ((pfdata->cmd_info.cmd_state == SMTP_PAF_CMD_DATA_END_STATE) or
+            ((pfdata->cmd_info.cmd_state == SMTP_PAF_CMD_DATA_LENGTH_STATE) and
+            (pfdata->cmd_info.search_id == SMTP_PAF_DATA_CMD)))
         {
             pfdata->smtp_state = SMTP_PAF_DATA_STATE;
             reset_data_states(pfdata);
@@ -263,7 +265,7 @@ static inline bool flush_based_length(SmtpPafData* pfdata)
  *   * Process data boundary and flush each file based on boundary*/
 static inline bool process_data(SmtpPafData* pfdata,  uint8_t data)
 {
-    if (flush_based_length(pfdata)|| check_data_end(&(pfdata->data_end_state), data))
+    if (flush_based_length(pfdata) || check_data_end(&(pfdata->data_end_state), data))
     {
         /*Clean up states*/
         pfdata->smtp_state = SMTP_PAF_CMD_STATE;

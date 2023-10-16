@@ -16,10 +16,6 @@ if(DAQ_INCLUDE_DIR)
     set(DAQ_CPPFLAGS "-I${DAQ_INCLUDE_DIR}")
 endif()
 
-if(ENABLE_MEMORY_OVERLOADS)
-    set(MEMORY_OVERLOADS_CPPFLAGS "-DENABLE_MEMORY_OVERLOADS")
-endif()
-
 if(ENABLE_MEMORY_PROFILER)
     set(MEMORY_PROFILER_CPPFLAGS "-DENABLE_MEMORY_PROFILER")
 endif()
@@ -84,6 +80,9 @@ if(UUID_INCLUDE_DIR)
     set(UUID_CPPFLAGS "-I${UUID_INCLUDE_DIR}")
 endif()
 
+if(NUMA_INCLUDE_DIR)
+    set(NUMA_CPPFLAGS "-I${NUMA_INCLUDE_DIR}")
+endif()
 # create & install pkgconfig file
 
 configure_file(

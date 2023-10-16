@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 #include "flow.h"
 
 #include "detection/context_switcher.h"
+#include "detection/detection_continuation.h"
 #include "detection/detection_engine.h"
 #include "flow/flow_key.h"
 #include "flow/ha.h"
@@ -31,25 +32,47 @@
 #include "framework/data_bus.h"
 #include "helpers/bitop.h"
 #include "main/analyzer.h"
-#include "memory/memory_cap.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "sfip/sf_ip.h"
 #include "utils/stats.h"
 #include "utils/util.h"
 
 using namespace snort;
 
-Flow::Flow()
-{
-    constexpr size_t offset = offsetof(Flow, key);
-    // FIXIT-L need a struct to zero here to make future proof
-    memset((uint8_t*)this+offset, 0, sizeof(*this)-offset);
-}
-
 Flow::~Flow()
 {
-    term();
+    free_flow_data();
+    delete session;
+
+    if ( mpls_client.length )
+        delete[] mpls_client.start;
+    if ( mpls_server.length )
+        delete[] mpls_server.start;
+    delete bitop;
+
+    if ( ssn_client )
+        ssn_client->rem_ref();
+
+    if ( ssn_server )
+        ssn_server->rem_ref();
+
+    if ( clouseau )
+        clouseau->rem_ref();
+
+    if ( gadget )
+        gadget->rem_ref();
+
+    if (assistant_gadget)
+        assistant_gadget->rem_ref();
+
+    if ( data )
+        clear_data();
+
+    delete ha_state;
+    delete stash;
+    delete ips_cont;
 }
 
 void Flow::init(PktType type)
@@ -68,62 +91,6 @@ void Flow::init(PktType type)
     stash = new FlowStash;
 }
 
-void Flow::term()
-{
-    if ( !session )
-        return;
-
-    delete session;
-    session = nullptr;
-
-    if ( flow_data )
-        free_flow_data();
-
-    if ( mpls_client.length )
-        delete[] mpls_client.start;
-
-    if ( mpls_server.length )
-        delete[] mpls_server.start;
-
-    if ( bitop )
-        delete bitop;
-
-    if ( ssn_client )
-    {
-        ssn_client->rem_ref();
-        ssn_client = nullptr;
-    }
-
-    if ( ssn_server )
-    {
-        ssn_server->rem_ref();
-        ssn_server = nullptr;
-    }
-
-    if ( clouseau )
-        clouseau->rem_ref();
-
-    if ( gadget )
-        gadget->rem_ref();
-
-    if (assistant_gadget)
-        assistant_gadget->rem_ref();
-
-    if ( data )
-        clear_data();
-
-    if ( ha_state )
-        delete ha_state;
-
-    if (stash)
-    {
-        delete stash;
-        stash = nullptr;
-    }
-
-    service = nullptr;
-}
-
 inline void Flow::clean()
 {
     if ( mpls_client.length )
@@ -136,11 +103,8 @@ inline void Flow::clean()
         delete[] mpls_server.start;
         mpls_server.length = 0;
     }
-    if ( bitop )
-    {
-        delete bitop;
-        bitop = nullptr;
-    }
+    delete bitop;
+    bitop = nullptr;
     filtering_state.clear();
 }
 
@@ -187,41 +151,6 @@ void Flow::reset(bool do_cleanup)
             session->cleanup();
         }
     }
-
-    free_flow_data();
-    clean();
-
-    // FIXIT-M cleanup() winds up calling clear()
-    if ( ssn_client )
-    {
-        ssn_client->rem_ref();
-        ssn_client = nullptr;
-    }
-    if ( ssn_server )
-    {
-        ssn_server->rem_ref();
-        ssn_server = nullptr;
-    }
-    if ( clouseau )
-        clear_clouseau();
-
-    if ( gadget )
-        clear_gadget();
-
-    if ( data )
-        clear_data();
-
-    if ( ha_state )
-        ha_state->reset();
-
-    if ( stash )
-        stash->reset();
-
-    deferred_trust.clear();
-
-    constexpr size_t offset = offsetof(Flow, context_chain);
-    // FIXIT-L need a struct to zero here to make future proof
-    memset((uint8_t*)this+offset, 0, sizeof(Flow)-offset);
 }
 
 void Flow::restart(bool dump_flow_data)
@@ -401,6 +330,10 @@ void Flow::markup_packet_flags(Packet* p)
         {
             p->packet_flags |= PKT_STREAM_UNEST_UNI;
         }
+        if ( (ssn_state.session_flags & SSNFLAG_TCP_PSEUDO_EST) == SSNFLAG_TCP_PSEUDO_EST )
+        {
+            p->packet_flags |= PKT_TCP_PSEUDO_EST;
+        }
     }
     else
     {
@@ -485,7 +418,7 @@ void Flow::set_direction(Packet* p)
     }
 }
 
-void Flow::set_expire(const Packet* p, uint32_t timeout)
+void Flow::set_expire(const Packet* p, uint64_t timeout)
 {
     expire_time = (uint64_t)p->pkth->ts.tv_sec + timeout;
 }
@@ -592,7 +525,7 @@ bool Flow::is_direction_aborted(bool from_client) const
 void Flow::set_service(Packet* pkt, const char* new_service)
 {
     service = new_service;
-    DataBus::publish(FLOW_SERVICE_CHANGE_EVENT, pkt);
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_SERVICE_CHANGE, pkt);
 }
 
 void Flow::swap_roles()

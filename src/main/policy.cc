@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -29,12 +29,14 @@
 #include "detection/detection_engine.h"
 #include "framework/file_policy.h"
 #include "framework/policy_selector.h"
+#include "js_norm/js_config.h"
 #include "log/messages.h"
 #include "main/thread_config.h"
 #include "managers/inspector_manager.h"
 #include "parser/parse_conf.h"
 #include "parser/vars.h"
 #include "ports/port_var_table.h"
+#include "pub_sub/intrinsic_event_ids.h"
 
 #include "modules.h"
 #include "shell.h"
@@ -121,7 +123,13 @@ FilePolicy* NetworkPolicy::get_file_policy() const
 void NetworkPolicy::add_file_policy_rule(FileRule& file_rule)
 { file_policy->add_file_id(file_rule); }
 
-InspectionPolicy* NetworkPolicy::get_user_inspection_policy(unsigned user_id)
+void NetworkPolicy::setup_inspection_policies()
+{
+    std::for_each(inspection_policy.begin(), inspection_policy.end(),
+        [this](InspectionPolicy* ip){ set_user_inspection(ip); });
+}
+
+InspectionPolicy* NetworkPolicy::get_user_inspection_policy(uint64_t user_id) const
 {
     auto it = user_inspection.find(user_id);
     return it == user_inspection.end() ? nullptr : it->second;
@@ -168,11 +176,12 @@ void InspectionPolicy::init(InspectionPolicy* other_inspection_policy)
 InspectionPolicy::~InspectionPolicy()
 {
     InspectorManager::delete_policy(this, cloned);
+    delete jsn_config;
 }
 
 void InspectionPolicy::configure()
 {
-    dbus.subscribe(PACKET_EVENT, new AltPktHandler);
+    dbus.subscribe(intrinsic_pub_key, IntrinsicEventIds::ALT_PACKET, new AltPktHandler);
 }
 
 //-------------------------------------------------------------------------
@@ -182,7 +191,6 @@ void InspectionPolicy::configure()
 IpsPolicy::IpsPolicy(PolicyId id) : action(Actions::get_max_types(), nullptr)
 {
     policy_id = id;
-    user_policy_id = 0;
     policy_mode = POLICY_MODE__MAX;
 
     var_table = nullptr;
@@ -374,7 +382,7 @@ std::shared_ptr<PolicyTuple> PolicyMap::get_policies(Shell* sh)
     return pt == shell_map.end() ? nullptr : pt->second;
 }
 
-NetworkPolicy* PolicyMap::get_user_network(unsigned user_id)
+NetworkPolicy* PolicyMap::get_user_network(uint64_t user_id) const
 {
     auto it = user_network.find(user_id);
     NetworkPolicy* np = (it == user_network.end()) ? nullptr : it->second;
@@ -384,9 +392,10 @@ NetworkPolicy* PolicyMap::get_user_network(unsigned user_id)
 bool PolicyMap::set_user_network(NetworkPolicy* p)
 {
     NetworkPolicy* current_np = get_user_network(p->user_policy_id);
-    if (current_np && p != current_np)
-        return false;
+    if (current_np)
+        return p == current_np;
     user_network[p->user_policy_id] = p;
+    p->setup_inspection_policies();
     return true;
 }
 
@@ -426,7 +435,7 @@ void set_inspection_policy(InspectionPolicy* p)
 void set_ips_policy(IpsPolicy* p)
 { s_detection_policy = p; }
 
-InspectionPolicy* get_user_inspection_policy(unsigned policy_id)
+InspectionPolicy* get_user_inspection_policy(uint64_t policy_id)
 {
     NetworkPolicy* np = get_network_policy();
     assert(np);

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -21,10 +21,13 @@
 #include "config.h"
 #endif
 
-#include "hash/hash_key_operations.h"
 #include "http_buffer_info.h"
 
+#include "hash/hash_key_operations.h"
+#include "http_enum.h"
+
 using namespace snort;
+using namespace HttpEnums;
 
 uint32_t HttpBufferInfo::hash() const
 {
@@ -46,3 +49,7 @@ bool HttpBufferInfo::operator==(const HttpBufferInfo& rhs) const
          form == rhs.form);
 }
 
+bool HttpBufferInfo::is_request() const
+{
+    return ((form & FORM_REQUEST) != 0);
+}

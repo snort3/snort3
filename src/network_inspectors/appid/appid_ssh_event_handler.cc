@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -197,16 +197,29 @@ void SshEventHandler::handle(DataEvent& event, Flow* flow)
     if (fd->finished)
         return;
 
+    AppidChangeBits change_bits;
+
     switch(ssh_event.get_event_type())
     {
     case SSH_VERSION_STRING:
-        if (!handle_protocol(ssh_event, fd) and appidDebug->is_active())
+        if (handle_protocol(ssh_event, fd))
+        {
+            if (asd->get_session_flags(APPID_SESSION_EARLY_SSH_DETECTED))
+            {
+                if (appidDebug->is_active())
+                    LogMessage("AppIdDbg %s Early detection of SSH\n", appidDebug->get_debug_session());
+                handle_success(*data, ssh_event, *asd, change_bits);
+                asd->publish_appid_event(change_bits, *ssh_event.get_packet());
+                asd->clear_session_flags(APPID_SESSION_EARLY_SSH_DETECTED);
+            }
+        }
+        else if (appidDebug->is_active())
             LogMessage("AppIdDbg %s SSH event handler received unsupported protocol %s\n",
                 appidDebug->get_debug_session(), ssh_event.get_version_str().c_str());
+
         break;
 
     case SSH_VALIDATION:
-        AppidChangeBits change_bits;
         switch (ssh_event.get_validation_result())
         {
         case SSH_VALID_KEXINIT:

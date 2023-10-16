@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -94,7 +94,7 @@ DiscoveryFilter::DiscoveryFilter(const string& conf_path)
                     intf = 0;
                 else
                 {
-                    intf = strtol(config_intf.c_str(), nullptr, 0);
+                    intf = strtoll(config_intf.c_str(), nullptr, 0);
                     if ( intf < 1 or intf >= DF_ANY_INTF )
                     {
                         WarningMessage("Discovery Filter: Invalid interface at line %u from %s;"

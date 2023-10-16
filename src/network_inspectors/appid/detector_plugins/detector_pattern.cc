@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -145,7 +145,7 @@ struct PServiceMatch
     Pattern* data;
 };
 
-static PServiceMatch* free_servicematch_list;
+static THREAD_LOCAL PServiceMatch* free_servicematch_list;
 
 static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
@@ -263,6 +263,13 @@ static int csd_pattern_tree_search(const uint8_t* data, uint16_t size, SearchToo
         free_servicematch_list = sm;
     }
 
+    while (free_servicematch_list)
+    {
+        auto tmp = free_servicematch_list;
+        free_servicematch_list = free_servicematch_list->next;
+        snort_free(tmp);
+    }
+
     if (ps == nullptr)
         return 0;
 
@@ -328,6 +335,7 @@ void PatternServiceDetector::register_service_patterns()
             {
                 if (pattern->data && pattern->length)
                 {
+                    pattern_count++;
                     if (ps->proto == IpProtocol::TCP)
                     {
                         handler->register_tcp_pattern(this, pattern->data, pattern->length,
@@ -346,7 +354,10 @@ void PatternServiceDetector::register_service_patterns()
         else
         {
             for (Pattern* pattern = ps->pattern; pattern; pattern = pattern->next)
+            {
+                pattern_count++;
                 ps->count++;
+            }
         }
     }
 
@@ -426,6 +437,11 @@ void PatternServiceDetector::reload_service_port_patterns()
 
     if (udp_pattern_matcher)
         udp_pattern_matcher->reload();
+}
+
+unsigned PatternServiceDetector::get_pattern_count()
+{
+    return pattern_count;
 }
 
 PatternServiceDetector::PatternServiceDetector(ServiceDiscovery* sd)
@@ -612,6 +628,7 @@ void PatternClientDetector::register_client_patterns()
         {
             if (pattern->data && pattern->length)
             {
+                pattern_count++;
                 if (ps->proto == IpProtocol::TCP)
                 {
                     handler->register_tcp_pattern(this, pattern->data, pattern->length,
@@ -652,3 +669,7 @@ void PatternClientDetector::reload_client_port_patterns()
         udp_pattern_matcher->reload();
 }
 
+unsigned PatternClientDetector::get_pattern_count()
+{
+    return pattern_count;
+}

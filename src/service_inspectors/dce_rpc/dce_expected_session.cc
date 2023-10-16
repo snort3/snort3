@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -52,7 +52,7 @@ void DceExpSsnManager::create_expected_session(const SfIp* ept_ip,
 
     DceExpectedSessionEvent map_resp_event(pkt, src_ip, 0,
         ept_ip, ept_port, proto, protocol_id);
-    DataBus::publish(DCERPC_EXP_SESSION_EVENT_KEY, map_resp_event, pkt->flow);
+    DataBus::publish(Dce2Tcp::pub_id, DceTcpEventIds::EXP_SESSION, map_resp_event, pkt->flow);
 }
 
 DceTcpExpSsnManager::DceTcpExpSsnManager(const dce2TcpProtoConf& config) :

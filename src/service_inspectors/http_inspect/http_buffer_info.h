@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -20,6 +20,8 @@
 #ifndef HTTP_BUFFER_INFO_H
 #define HTTP_BUFFER_INFO_H
 
+#include "main/snort_types.h"
+
 class HttpBufferInfo
 {
 public:
@@ -29,6 +31,7 @@ public:
     uint32_t hash() const;
 
     bool operator==(const HttpBufferInfo& rhs) const;
+    bool is_request() const;
 
 public:
     const unsigned type;

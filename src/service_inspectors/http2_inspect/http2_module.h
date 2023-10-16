@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -36,13 +36,9 @@ struct Http2ParaList
 public:
     uint32_t concurrent_streams_limit;
 #ifdef REG_TEST
-    int64_t print_amount;
 
     bool test_input;
     bool test_output;
-    bool print_hex;
-    bool show_pegs;
-    bool show_scan;
 #endif
 };
 

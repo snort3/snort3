@@ -43,3 +43,5 @@ destroys the <protocol>HA class.  <protocol>HA is a subclass of ProtocolHA and i
 with the high level Stream HA functionality. <protocol>HA is instantiated in each packet
 processing thread.
 
+Note that the lifetime of any stream splitter instance should be less than the lifetime
+of the corresponding inspector instance.

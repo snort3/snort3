@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -41,12 +41,9 @@ HttpMsgSection* HttpContextData::get_snapshot(const Flow* flow, IpsContext* cont
 {
     assert(flow != nullptr);
 
-    if (Http2FlowData::inspector_id != 0)
+    if (flow->stream_intf)
     {
-        const Http2FlowData* const h2i_flow_data =
-            (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
-        if (h2i_flow_data != nullptr)
-            return h2i_flow_data->get_hi_msg_section();
+        return (HttpMsgSection*)flow->stream_intf->get_hi_msg_section(flow);
     }
 
     HttpContextData* hcd = (HttpContextData*)DetectionEngine::get_data(HttpContextData::ips_id,

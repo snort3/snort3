@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -130,10 +130,10 @@ static bool set_arg(
         if ( p->is_wild_card() )
             val = opt;
 
-        long n = (long)strtoll(val, &end, 0);
+        int64_t n = strtoll(val, &end, 0);
 
         if ( !*end )
-            v.set(n);
+            v.set((double)n);
         else
             ok = false;
     }

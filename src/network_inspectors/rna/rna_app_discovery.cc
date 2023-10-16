@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -357,7 +357,7 @@ void RnaAppDiscovery::discover_client(const Packet* p, DiscoveryFilter& filter, 
     rt->update_last_seen();
 
     const uint8_t* mac;
-    if ( layer::get_eth_layer(p) )
+    if ( !(p->packet_flags & PKT_REBUILT_STREAM ) && layer::get_eth_layer(p) )
     {
         if ( p->is_from_server() )
             mac = layer::get_eth_layer(p)->ether_dst;

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -41,7 +41,10 @@ static void dump_value(JsonStream& json, const char* node_name, const BaseConfig
             json.put_false(node_name);
         break;
     case Parameter::PT_INT:
-        json.put(node_name, value->get_int64());
+        if (Value::VT_UNUM == value->get_type())
+            json.uput(node_name, value->get_uint64());
+        else
+            json.put(node_name, value->get_int64());
         break;
     case Parameter::PT_REAL:
     {

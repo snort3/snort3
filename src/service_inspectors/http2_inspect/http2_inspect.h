@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -55,6 +55,7 @@ public:
     bool can_carve_files() const override
     { return true; }
 
+    const uint8_t* adjust_log_packet(snort::Packet* p, uint16_t& length) override;
 private:
     friend Http2Api;
 

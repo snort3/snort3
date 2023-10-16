@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -23,11 +23,15 @@
 
 //  Loads host cache configuration data.
 
+#include <string>
+
 #include "framework/module.h"
 #include "main/snort.h"
 #include "main/reload_tuner.h"
+#include "trace/trace_api.h"
 
 #include "host_cache.h"
+#include "host_cache_segmented.h"
 
 #define HOST_CACHE_NAME "host_cache"
 #define HOST_CACHE_HELP "global LRU cache of host_tracker data about hosts"
@@ -72,11 +76,17 @@ public:
 
     void log_host_cache(const char* file_name, bool verbose = false);
     std::string get_host_cache_stats();
+    std::string get_host_cache_segment_stats(int seg_idx);
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 
 private:
-    const char* dump_file = nullptr;
+    std::string dump_file;
     size_t memcap = 0;
+    uint8_t segments = 1;
 };
+extern THREAD_LOCAL const snort::Trace* host_cache_trace;
 
 #endif
 

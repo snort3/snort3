@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2022-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -23,10 +23,12 @@
 #include "framework/data_bus.h"
 #include "service_inspectors/netflow/netflow_record.h"
 
-#define NETFLOW_EVENT "service_inspector.netflow"
-
 namespace snort
 {
+
+struct NetFlowEventIds { enum : unsigned { DATA, num_ids }; };
+
+const PubKey netflow_pub_key { "netflow", NetFlowEventIds::num_ids };
 
 class NetFlowEvent : public DataEvent
 {

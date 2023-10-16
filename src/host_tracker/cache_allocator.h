@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -38,6 +38,8 @@ public:
 
     T* allocate(std::size_t n);
     void deallocate(T* p, std::size_t n) noexcept;
+    void set_lru(CacheInterface* c) { lru = c; }
+    CacheInterface* get_lru() const { return lru; }
 
 protected:
 
@@ -73,6 +75,7 @@ class HostCacheAllocIp : public CacheAlloc<T>
 {
 public:
 
+    using Base = CacheAlloc<T>;
     // This needs to be in every derived class:
     template <class U>
     struct rebind
@@ -81,6 +84,21 @@ public:
     };
 
     using CacheAlloc<T>::lru;
+
+    void set_cache(CacheInterface* hci) { Base::set_lru(hci); }
+    CacheInterface* get_cache_ptr() { return Base::get_lru(); }
+
+    template <class U>
+    HostCacheAllocIp(const HostCacheAllocIp<U>& other) 
+    {
+        this->lru = other.get_lru();
+    }
+
+    template <class U>
+    HostCacheAllocIp(HostCacheAllocIp<U>&& other)  noexcept 
+    {
+        this->lru = other.get_lru();
+    }
 
     HostCacheAllocIp();
 

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -23,6 +23,7 @@
 #endif
 
 #include "host_tracker/host_cache.h"
+#include "host_tracker/host_cache_segmented.h"
 #include "host_tracker/cache_allocator.cc"
 #include "network_inspectors/rna/rna_flow.h"
 
@@ -33,14 +34,19 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-HostCacheIp host_cache(100);
+HostCacheIp default_host_cache(LRU_CACHE_INITIAL_SIZE);
+HostCacheSegmentedIp host_cache(4,100);
 
 using namespace std;
 using namespace snort;
 
+namespace snort
+{
+void FatalError(const char* fmt, ...) { (void)fmt; exit(1); }
+}
 // Derive an allocator from CacheAlloc:
 template <class T>
-class Allocator : public CacheAlloc<T>
+class Alloc : public CacheAlloc<T>
 {
 public:
 
@@ -48,12 +54,12 @@ public:
     template <class U>
     struct rebind
     {
-        typedef Allocator<U> other;
+        typedef Alloc<U> other;
     };
 
     using CacheAlloc<T>::lru;
 
-    Allocator();
+    Alloc();
 };
 
 
@@ -62,7 +68,7 @@ class Item
 {
 public:
     typedef int ValueType;
-    vector<ValueType, Allocator<ValueType>> data;
+    vector<ValueType, Alloc<ValueType>> data;
 };
 
 // Instantiate a cache, as soon as we know the Item type:
@@ -72,7 +78,7 @@ CacheType cache(100);
 // Implement the allocator constructor AFTER we have a cache object
 // to point to and the implementation of our base CacheAlloc:
 template <class T>
-Allocator<T>::Allocator()
+Alloc<T>::Alloc()
 {
     lru = &cache;
 }
@@ -124,8 +130,8 @@ TEST(cache_allocator, allocate)
 
 int main(int argc, char** argv)
 {
-    // FIXIT-L There is currently no external way to fully release the memory from the global host
-    //   cache unordered_map in host_cache.cc
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-    return CommandLineTestRunner::RunAllTests(argc, argv);
+    int ret =  CommandLineTestRunner::RunAllTests(argc, argv);
+    host_cache.term();
+    return ret;
 }

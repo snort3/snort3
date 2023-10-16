@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -91,6 +91,8 @@ public:
         mix(a,b,c);
 
         a += (uint32_t)(uintptr_t)rtnk->policyId;
+        b += PortObjectHash(rtn->src_portobject, seed, scale, hardener);
+        c += PortObjectHash(rtn->dst_portobject, seed, scale, hardener);
 
         finalize(a,b,c);
 

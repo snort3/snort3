@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -79,8 +79,6 @@ public:
 
     virtual void init_new_tcp_session(TcpSegmentDescriptor&);
     virtual void update_timestamp_tracking(TcpSegmentDescriptor&) = 0;
-    virtual void update_session_on_syn_ack();
-    virtual void update_session_on_ack();
     virtual void update_session_on_server_packet(TcpSegmentDescriptor&);
     virtual void update_session_on_client_packet(TcpSegmentDescriptor&);
     virtual void update_session_on_rst(TcpSegmentDescriptor&, bool) = 0;
@@ -99,6 +97,11 @@ public:
     void set_pkt_action_flag(uint32_t flag)
     { pkt_action_mask |= flag; }
 
+    void set_established(const TcpSegmentDescriptor&);
+    void set_pseudo_established(snort::Packet*);
+    bool check_for_one_sided_session(snort::Packet*);
+    void check_for_pseudo_established(snort::Packet*);
+
     virtual void update_paws_timestamps(TcpSegmentDescriptor&) = 0;
     virtual void check_for_repeated_syn(TcpSegmentDescriptor&) = 0;
     virtual void check_for_session_hijack(TcpSegmentDescriptor&) = 0;
@@ -112,10 +115,10 @@ public:
     bool lws_init = false;
     bool tcp_init = false;
     uint32_t pkt_action_mask = ACTION_NOTHING;
-    uint8_t ecn = 0;
+    uint32_t initiator_watermark = 0;
     int32_t ingress_index = DAQ_PKTHDR_UNKNOWN;
-    int16_t ingress_group = DAQ_PKTHDR_UNKNOWN;
     int32_t egress_index = DAQ_PKTHDR_UNKNOWN;
+    int16_t ingress_group = DAQ_PKTHDR_UNKNOWN;
     int16_t egress_group = DAQ_PKTHDR_UNKNOWN;
     uint32_t daq_flags = 0;
     uint32_t address_space_id = 0;
@@ -124,6 +127,7 @@ public:
     TcpEventLogger tel;
     bool cleaning = false;
     uint8_t held_packet_dir = SSN_DIR_NONE;
+    uint8_t ecn = 0;
 
 private:
     bool no_ack = false;

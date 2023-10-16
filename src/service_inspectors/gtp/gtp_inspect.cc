@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -153,9 +153,9 @@ int GtpInspect::get_message_type(int version, const char* name)
     return -1;
 }
 
-int get_message_type(int version, const char* name)
+int get_message_type(int version, const char* name, snort::SnortConfig* sc)
 {
-    GtpInspect* ins = (GtpInspect*)InspectorManager::get_inspector(GTP_NAME);
+    GtpInspect* ins = (GtpInspect*)InspectorManager::get_inspector(GTP_NAME, false, sc);
 
     if ( !ins )
         return -1;
@@ -175,9 +175,9 @@ int GtpInspect::get_info_type(int version, const char* name)
     return -1;
 }
 
-int get_info_type(int version, const char* name)
+int get_info_type(int version, const char* name, SnortConfig* sc)
 {
-    GtpInspect* ins = (GtpInspect*)InspectorManager::get_inspector(GTP_NAME);
+    GtpInspect* ins = (GtpInspect*)InspectorManager::get_inspector(GTP_NAME, false, sc);
 
     if ( !ins )
         return -1;

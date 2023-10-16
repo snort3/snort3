@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -31,6 +31,7 @@ class DetectionModule : public Module
 public:
     DetectionModule();
 
+    bool begin(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
@@ -45,6 +46,12 @@ public:
 
     void set_trace(const Trace*) const override;
     const TraceOption* get_trace_options() const override;
+
+private:
+    bool add_service_extension(snort::SnortConfig*);
+
+    std::string service;
+    std::vector<std::string> extend_to;
 };
 }
 

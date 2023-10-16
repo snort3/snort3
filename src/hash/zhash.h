@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2003-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@
 class ZHash : public snort::XHash
 {
 public:
-    ZHash(int nrows, int keysize);
+    ZHash(int nrows, int keysize, bool recycle = true);
 
     ZHash(const ZHash&) = delete;
     ZHash& operator=(const ZHash&) = delete;

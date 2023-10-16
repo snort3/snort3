@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -27,7 +27,6 @@ namespace config
 extern const ConvertMap* addressspace_agnostic_map;
 extern const ConvertMap* alert_with_interface_name_map;
 extern const ConvertMap* alertfile_map;
-extern const ConvertMap* asn1_map;
 extern const ConvertMap* autogenerate_preprocessor_decoder_rules_map;
 extern const ConvertMap* binding_map;
 extern const ConvertMap* bpf_file_map;
@@ -147,7 +146,6 @@ const std::vector<const ConvertMap*> config_api =
     addressspace_agnostic_map,
     alert_with_interface_name_map,
     alertfile_map,
-    asn1_map,
     autogenerate_preprocessor_decoder_rules_map,
     binding_map,
     bpf_file_map,

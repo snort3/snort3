@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 // Copyright (C) 2003-2004 Daniel Roelker
 // Copyright (C) 2002-2004 Marc Norton
@@ -125,6 +125,7 @@
 
 #include <cassert>
 #include <list>
+#include <mutex>
 
 #include "log/messages.h"
 #include "utils/stats.h"
@@ -181,14 +182,22 @@ void acsm_init_summary()
 }
 
 static uint8_t xlatcase[256];
+static bool xlatinit = true;
 
 void acsmx2_init_xlatcase()
 {
+    static std::mutex _m;
+    std::lock_guard<std::mutex> lock(_m);
+    if ( !xlatinit )
+       return;
+
     int i;
     for (i = 0; i < 256; i++)
     {
         xlatcase[i] = (uint8_t)toupper(i);
     }
+
+    xlatinit = false;
 }
 
 static inline void ConvertCaseEx(uint8_t* d, const uint8_t* s, int m)

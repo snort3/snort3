@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -63,6 +63,15 @@ struct PacketCount
     PegCount pcre_match_limit;
     PegCount pcre_recursion_limit;
     PegCount pcre_error;
+    PegCount cont_creations;
+    PegCount cont_recalls;
+    PegCount cont_flows;
+    PegCount cont_evals;
+    PegCount cont_matches;
+    PegCount cont_mismatches;
+    PegCount cont_max_num;
+    PegCount cont_match_distance;
+    PegCount cont_mismatch_distance;
 };
 
 struct ProcessCount
@@ -100,7 +109,7 @@ SO_PUBLIC void LogStat(const char*, uint64_t n, uint64_t tot, FILE* = stdout);
 SO_PUBLIC void LogStat(const char*, double, FILE* = stdout);
 }
 
-void sum_stats(PegCount* sums, PegCount* counts, unsigned n);
+void sum_stats(PegCount* sums, PegCount* counts, unsigned n, bool dump_stats = false);
 void show_stats(PegCount*, const PegInfo*, const char* module_name = nullptr);
 void show_stats(PegCount*, const PegInfo*, unsigned n, const char* module_name = nullptr);
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char* module_name, FILE*);
@@ -114,5 +123,8 @@ void DropStats(ControlConn* ctrlcon = nullptr);
 void PrintStatistics();
 void TimeStart();
 void TimeStop();
+const struct timeval& get_time_curr();
+const struct timeval& get_time_start();
+const struct timeval& get_time_end();
 
 #endif

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -818,7 +818,6 @@ static void dce_co_process_ctx_result(DCE2_SsnData*, DCE2_CoTracker* cot,
     const Uuid* transport)
 {
     DCE2_CoCtxIdNode* ctx_node, * existing_ctx_node;
-    DCE2_Ret status;
 
     /* Dequeue context item in pending queue - this will get put in the permanent
      * context id list or freed */
@@ -898,8 +897,7 @@ static void dce_co_process_ctx_result(DCE2_SsnData*, DCE2_CoTracker* cot,
     }
     else
     {
-        status = DCE2_ListInsert(cot->ctx_ids, (void*)(uintptr_t)ctx_node->ctx_id,
-            (void*)ctx_node);
+        DCE2_Ret status = DCE2_ListInsert(cot->ctx_ids, (void*)(uintptr_t)ctx_node->ctx_id, (void*)ctx_node);
         if (status != DCE2_RET__SUCCESS)
         {
             snort_free((void*)ctx_node);
@@ -1420,7 +1418,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             if ( from_client )
                 dce_common_stats->co_cli_seg_reassembled++;
             else
-                dce_common_stats->co_cli_seg_reassembled++;
+                dce_common_stats->co_srv_seg_reassembled++;
         }
 
         *co_hdr = (const DceRpcCoHdr*)rpkt->data;
@@ -1468,7 +1466,6 @@ static DCE2_Ret dce_co_handle_frag(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 {
     uint32_t size = (frag_len < DCE2_CO__MIN_ALLOC_SIZE) ? DCE2_CO__MIN_ALLOC_SIZE : frag_len;
     DCE2_BufferMinAddFlag mflag = DCE2_BUFFER_MIN_ADD_FLAG__USE;
-    DCE2_Ret status;
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
     Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
@@ -1537,7 +1534,7 @@ static DCE2_Ret dce_co_handle_frag(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         if (DceRpcCoLastFrag(co_hdr) || (DCE2_BufferLength(frag_buf) == max_frag_data))
             mflag = DCE2_BUFFER_MIN_ADD_FLAG__IGNORE;
 
-        status = DCE2_BufferAddData(frag_buf, frag_ptr,
+        DCE2_Ret status = DCE2_BufferAddData(frag_buf, frag_ptr,
             frag_len, DCE2_BufferLength(frag_buf), mflag);
 
         if (status != DCE2_RET__SUCCESS)

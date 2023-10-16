@@ -1,3 +1,390 @@
+2023-09-25: 3.1.71.0
+
+* appid, http_inspect, http2_inspect: create appid session if not present in decrypt event handler, add message section as part of StreamFlowIntf for httpx
+* codecs: Add IPv6 Reserved Address to GID:116 Rules
+* detection: avoid multiple fixups of duplicated trees
+* detection: fix of default ips policy switching
+* flow: allow reinspection for blocked icmp flows after reload
+* flow: generate flow setup and established events for ha flows
+* host_cache: cppcheck fix
+* http2_inspect: fix http2 frame length for logging
+* main: fix signals handling after failed started instances
+* main: reset_stats argument type improvement
+* parser: add file_id rule syntax evaluation
+* smtp: add alert for mixed LF and CRLF
+* smtp: process DATA\n (no \r)
+* stream: extend list of arguments for extra data logging
+* stream_tcp: ensure all data segments after a zero window are blocked when NAP is inline
+* stream_tcp: examine whether a segment plugs a hole before blocking due to exceeding queue_limit
+
+2023-09-10: 3.1.70.0
+
+* appid: makes regex error more of a warning
+* detection: fix assert expression
+* helpers: improve hyperscan_search error message
+* host_cache: added segmented host cache
+* main: prevent reloading unprepared thread
+* search_engines: allow a snort config to be passed to find_all
+
+2023-08-27: 3.1.69.0
+
+* appid: mark ssl appid lookup successful if a service id is available
+* appid: prefer eve client over appid detected client after decryption and use appid detected client version if eve client equals appid client
+* dce_rpc: fix stats for client/server segments reassembled. Thanks to Bader-eddine Ouaich for addressing the issue.
+* dns: updates to allow DNS to be compiled dynamically.
+* framework: add virtual for inspectors that publish data when no ips policy is enabled.
+* http2_inspect: add frame when logging a packet
+* http2_inspect: handle empty header name
+* http2_inspect: update connection settings on ack
+* http2_inspect: update test tool configurations
+* http_inspect: adjust formatting
+* inspector: export get_service_inspector_by_service method
+* mime: fix boundary search
+* mime: postpone boundary-look-alike data till the next PDU arrives
+* mime: support transport padding in boundary strings
+
+2023-08-14: 3.1.68.0
+
+* appid, cip: parsing cip safety segments
+* dns: parse and publish dns response with ip, fqdn/ttl data
+* doc: udpate tutorial
+* http_inspect: disable rule evaluation caching for MIME attachments
+* managers: fix get_inspector to use the passed in snort config for context and inspection inspectors
+* sfip: Add < operator so SfIp can be used in std::map and std::set.
+* src: remove ips option asn1
+* stream: init meta ack packet action field
+* wizard: refactoring - split curses to multiple files by protocol
+
+2023-07-30: 3.1.67.0
+
+* appid: do not raise SMTP response overflow IPS alert on SSL traffic
+* appid: SSL regex pattern implementation
+* build: fix cstdint related clearlinux errors
+* build: fix issues with local build
+* build: fix type resolution for OSX build environment
+* control: fix descriptor polling implementation (POSIX)
+* control: follow code style and formatting
+* detection: service_extension config
+* flow: fix ha_test use of stack variable
+* flow: make sure cpputest mock objects are initialized
+* ips_options: remove FIXIT comment from sd_pattern
+* lua: change cip binder rule from 22222 to 2222 (thanks to animator-ra on GitHub for this fix).
+* main: increase the user policy id range to 0 - 2^64-1 
+* perf_mon: continue even when pegcounts can't be resolved
+* profiler: handle reload scenarios and tsan issues
+* profiler: remove interdependency with time and memory for accumulation
+* profiler: shell commands for time profiler
+* ssl: extract common name in the SSL certificate using openssl apis
+* ssl: parse and publish server common name from server certificate
+* ssl: remove wildcard character from common name string extracted from ssl certificate
+* style: fix whitespace
+
+2023-07-14: 3.1.66.0
+
+* appid: cache Complex HTTP Pattern glossary before detectors reload
+* appid: early detection of ssh and ignoring third-party detection
+* appid: fix for opportunistic tls detected as ssl
+* binder: in case of a service change, remove flags indicating an abort of the direction
+* flow: changes to support derived classes of parent class Flow
+* ftp: remove file_data dependency on file_id
+* helpers: added additional log in print_backtrace for debugging purpose
+* ips_options: add gadget check for vba_data
+* ips_options: add unit tests for vba_data
+* ips_options: update dev_notes about IPS options input values
+* perf_mon: fix dump_stats collision with perf mon
+* rna: add stats for rna graphs
+* stream_tcp: validate proper update of stream_tcp state when seglist head follows a hole
+
+2023-06-29: 3.1.65.0
+
+* analyzer: poison memory segment after msg->data
+* appid: add support for cip multiple service packet
+* appid: check size boundaries before header validation
+* appid: do not use global pointers to service and client detectors for packet processing during reload detectors
+* appid: fix FTP parsing
+* codecs: fix ipv6_mobility parsing
+* codecs: fix tcp options parsing
+* detection: update condition since the negated stuff can be matched in such cases
+* file_api: avoid file cache lookup after creating new file cache entry.
+* icmp6: allow rules to match packet data after header
+* ips_content: add flag for non-default value of depth
+* ips_content: clean-up of function
+* ips_content: make the negated content be opposite to normal content
+* ips_content: update condition checks
+* log: fix out-of-bounds read access
+* netflow: fix raw data conversion
+* parser: base service_only on services not cursor type
+* profiler: fix date related problems in rule_profiling json output
+* protocols: remove of unnecessary old_opt check
+* regex: clear flags reused by module to construct ips option
+* rna: fix icmpv6 decoding
+* thread_config: added thread level mempolicy
+* utils: fix out-of-bound access
+
+2023-06-15: 3.1.64.0
+
+* appid: always publish a change message after do not decrypt
+* detection: handle case when no rule tree node is found for a policy ID.
+* flow: introduced granular counters for idle_prunes
+* http_inspect: remove stream interface abstraction for http/1.1 flows
+* stream_ip: fix session counters in timeout and cleanup cases
+
+2023-06-01: 3.1.63.0
+
+* appid: changes logic in ssl pattern matching
+* http_inspect: rebuild start line
+* loggers: reuse sensor_id u2 event field for tenant_id value
+* main: add Pig destructor to free dynamic memory
+* main: allow network IDs to use up to 32 bits.
+* main: handling the return code in case of error in creation of daq instance
+* perf_monitor: fix data bus subscription
+* stream_tcp: account for data from zero window probes
+
+2023-05-21: 3.1.62.0
+
+* appid: added logic to check for encrypted appid before assigning SSL service based on port
+* decompress, detetion, file_api, framework: cppcheck fixes
+* flow: clean up flow termination
+* flow: do not recycle flow cache entries
+* http_inspect: add support for file transfer using Partial Content
+* main: disable watchdog when Snort 3 process exits gracefully
+* main, managers: set the network policy using the user id during inspector delete
+* memory: add extra jemalloc counts for tracking
+* memory: use jemalloc stats.mapped for process total
+* profiler: add json formatter
+* protocols: add check for missing Geneve layer in get_geneve_options.
+* protocols,codecs: decode Geneve variable length options.
+* sfip/test: fix a miscalculation of the number of codes entries.
+* snort2lua: remove 'reference' option during conversion
+
+2023-05-04: 3.1.61.0
+
+* appid: appIdPegCounters thread data handling refactored to prevent data races
+* appid: ensure that TP SSL detection is not overwrite SMTPS service and client in a starttls session
+* appid: validate data size of SSL certificate record before parsing
+* build: remove unused header. Thanks to Rui Chen for reporting the issue.
+* cmake: update sed call. Thanks to graysky for reporting the issue.
+* flow: defensive fix to prevent crash if flow->prev is nullptr.
+* flow, hash, stream: add a free list node count that is output as a peg count
+* managers: check main SnortConfig pointer in InspectorManager::get_inspector() to avoid memory bad access calls
+* memory: fix memory pruning race condition and bail on reap failure
+* memory: provide a default value for pointers if the module has not been initialized
+* profiler: add shell commands
+* profiler: move profiler module to separate files
+* snort: add show_config_generation() command
+* stream_tcp: populate TCP pseudopackets with VLAN ids in TCP reassembler to avoid issues with secondary flow creation / expected flow cache
+
+2023-04-20: 3.1.60.0
+
+* appid: fixed TSAN warnings
+* appid: log max rss difference and pattern count during appid initialization and reload detectors
+* appid: make ssl app group id lookup set payload and client
+* appid: making free_servicematch_list thread local
+* src: change a few operator bool functions to named functions
+* src: fix broken unit test/tweak define related to previous operator bool fixes
+
+2023-04-06: 3.1.59.0
+
+* file_api: handling file cache context
+* flow_cache: prune multiple flows
+* http2_inspect: clear flow stream_intf with flow_data
+* http2_inspect: make flow data reload safe
+* memory: subtract the allocated memory from the thread pruned before comparing to the target
+* stream: store thread local flow control pointer in global
+* thread_config: add preemptive watchdog kick for flow deletion
+* thread_config: remove message use in watchdog timer
+
+2023-03-22: 3.1.58.0
+
+* actions: restore rtn check in Actions::alert and add to Actions::log
+* appid: give precedence to eve detected client over appid when eve_http_client_mapping config is set
+* detection: fix queue_limit pegcounter evaluation
+* host cache: removed some log to prevent log flooding
+* js_norm: initialize normalization context only when script is detected
+* loggers: fix pcap flushing
+* memory: add shell command to dump heap stats
+
+2023-03-09: 3.1.57.0
+
+* ftp_telnet: updated flushing around subnegotiation parameters
+* search_engine: allocate a single shared scratch space
+* profiler: add rule time percentage table field
+
+2023-02-22: 3.1.56.0
+
+* appid: add validation for rpcbind universal address
+* appid: merge cname pattern matchers with ssl pattern matchers
+* configure: fix typo in jemalloc with tcmalloc error message
+* copyright: update for year 2023
+* doc: update sd_pattern docs after obfuscation changes
+* sd_pattern: keep obfuscation blocks per buffer
+
+2023-02-08: 3.1.55.0
+
+* appid: first packet detector creation support in appid detector builder script
+* appid: support for IPv4 and IPv6 subnets for First Packet API
+* appid: updating lua API to accomodate netbios domain extraction, substring search, and substring index.
+* appid: use packet thread's odp context instead of inspector's context for packet processing
+* build: fix configure_cmake.sh 'too many arguments' error
+* detection: add new pegcount
+* main: avoid race conditions when accessing id to tid map
+* ssl: refactor ssl client hello parser to be used by appid/ssl inspectors
+* stream_tcp: fix passive pickups with missing packets. Thanks to nagmtuc and hedayat for reporting and helping debug the issue.
+* wizard: ensure Wizard is refcounted by MagicSplitter to prevent snort crashes due to memory corruption
+
+2023-01-25: 3.1.53.0
+
+* appid: publish tls host set in eve process event handler only when appid discovery is complete
+* detection: show search algorithm configured
+* file_api: handling filedata in multithreading context
+* flow: add stream interface to get parent flow from child flow
+* memory: added memusage pegs
+* memory: fix unit test build w/o reg test
+
+2023-01-18: 3.1.52.0
+
+* dce_rpc: add errno resets during uuid parsing
+* dce_rpc: handling dcerpc over smbv2
+* flow: update flow creation to exclude non-syn packets with no payload
+* framework: change range check types to int64_t to fix ILP32 bit issues
+* main: Fix missing include file that caused build error on some platforms.
+* memory: add final epoch to capture stats
+* memory: add regression test hooks
+* memory: fix init sequence; thanks to amishmm and Xiche for reporting and debugging the problem
+* netflow: grab the proto off of the netflow record - not the wire packet
+* rna: reset host_tracker type when visibility changes
+* stream: fix iss and irs and mid-stream sent post processing
+* stream: refactor tcp state machine to handle mid-stream flow and more established cases
+
+2023-01-11: 3.1.51.0
+
+* appid: add support for cip service, client and payload detection
+* appid: do not create snmp future flow for udp reversed session
+* appid: use packet thread's odp context for future flow creation
+* build: error out if both jemalloc and tcmalloc are configured
+* build: exclude unused memory related sources
+* js_norm: add benchmark tests for PDF parser
+* js_norm: decode UTF-16BE to UTF-8 for JS in PDF
+* js_norm: delete unused method
+* js_norm: tune PDF parser performance
+* lua: add Adobe JavaScript related identifiers to snort_defaults
+* lua: fix typo in Sensitive Data classifications name
+* main: fix const issues causing compile warnings
+* memory: delete unnecessary includes
+* memory: incorporate overloads into profiler
+* memory: refactor jemalloc code and add relevant pegs
+* memory: rename manager to overloads to better indicate purpose
+* memory: update developer notes
+* memory: update stats regardless of state; add unit tests
+* memory: use the process total instead of per thread totals to enforce cap
+* watchdog: print thread id as well for better identification of unresponsive threads
+
+2022-12-19: 3.1.50.0
+
+* alert_fast: fix initialization of http_inspect cheat codes
+* config: ensure table state is reset when starting a new shell
+* config: fix talos tweaks for the daq module
+* data_bus: improve pub-sub performance
+* host_cache: fix initialization from Lua
+* pop, imap, smtp: gracefully decline buffer requests when flow data is not present
+
+2022-12-15: 3.1.49.0
+
+* appid: appid_detector_builder.sh addPortPatternService call fixed
+* appid: do not reset session data when built-in discovery is not done
+* appid: fixed assert condition for odp_ctxt and odp_thread_local_ctxt
+* doc: add decompression mention to js_norm reference
+* doc: update user/js_norm.txt for PDF in email protocols
+* geneve: if daq has the capability, do not bypass geneve tunnel
+* ips_options: fix offset related bug in byte_test eval()
+* js_norm: add PDF stream processing
+* js_norm: add support for email protocols
+* js_norm: fix pdf_tokenizer_test on FreeBSD platform
+* js_norm: update PDF tokenizer to use glue input streambuf
+* stream: ignore PAWS timestamp checks when in no_ack mode
+* wizard: remove client_first option
+
+2022-12-01: 3.1.48.0
+
+* appid: added config for logging alpn service mappings
+* appid: fixed addition of duplicate entries in app_info_table
+* appid: make appid availability independent from TP state
+* cmake: add FLEX build macro
+* doc: update sensitive data documentation
+* doc: update user/js_norm.txt for PDF
+* flow: add an event for retry packets
+* flow: added an event to allow post processing of new expected flows
+* flow: fix deferred trust clear when packet is dropped
+* flow, stream: added code to track and event for one-sided TCP sessions and generate an event for established or one-sided flows
+* http_inspect: add decompression failure check before normalization
+* http_inspect: remove port from xff header
+* ips_option: keep cursor intact for a negated content mismatched
+* ips_option: keep cursor intact for a negated hash mismatched
+* js_norm: implement Enhanced JS Normalization for PDF
+* js_norm: use FLEX macro to build parser
+* process: watchdog to abort snort when multiple packet thread becomes unresponsive
+* smb: handling smb duplicate sessions
+* stream: add logic to ensure metaACKs cause flushing
+
+2022-11-17: 3.1.47.0
+
+* appid: add a changed bit for discovery finished
+* appid: ntp detection improvements
+* appid: service, client and payload detection by lua detectors and third-party when first packet re-inspection is enabled
+* doc: add JavaScript Normalization section to user manual
+* doc: add js_norm alerts to builtin_stubs.txt
+* http_inspect: subdivide dev_notes into topics
+* http_inspect: move Enhanced JS Normalizer from NHI to a standalone component
+* js_norm: implement standalone Enhanced JavaScript Normalizer
+* main: dump packet trace after publishing finalize event since verdict could be modified.
+* main: update to improve performance by making packet tracer checks before calling function.
+* netflow: implement deferred trust, cleanup
+* packet_io: allow ACT_TRUST to be used as a delayed action.
+* packet_io: the most strict delayed action takes precedence.
+* smtp: do not accumulate cmds across policies and reloads. Avoids memory and performance problem.
+* stream: add info about the splitter lifetime to dev_notes
+* stream: ignore flushing from meta-ack if sent after FIN
+* stream: remove splitter from session before inspectors
+* stream: set splitter only on initialized tcp sessions or if midstream sessions are allowed
+* wizard: remove inspector's ref counter increments from MagicSplitter
+
+2022-11-04: 3.1.46.0
+
+* appid: check for empty patterns in lua detector api input
+* appid: publish client and payload ids set in eve process event handler and ssl lookup api only after appid discovery is complete
+* detection: add config option for SSE
+* detection: skip a rule variable copy for a single-branched node
+* doc: add information about handling multiple detection in SSE
+* doc: specified which packages are sent on rejection
+* helpers: fix duplicate scratch_handler
+* http_inspect: add override to destructor
+* http_inspect: move LiteralSearch::setup for http_param to its module
+* main: add variables to lua environment
+* netflow: if LAST_SWITCHED isn't provided, use packet time
+* parser: improve port_object hash function
+* ports: align fields of PortObject and PortObject2
+* ports: enable checks in debug build only
+
+2022-10-25: 3.1.45.0
+
+* detection: check Pig run number in node state conditions. Fixes crash introduced in 3.1.44.0.
+
+2022-10-20: 3.1.44.0
+
+* appid: return APP_ID_NONE only if hsession is not present for http3
+* detection: add stateful signature evaluation
+* flow, reputation, protocols: remove reputation information from packet and flow
+* http_inspect: inspect multiple MIME attachments per message section
+* http_inspect: maximum_pipelined_requests
+* http_inspect: MIME partial inspections
+* http_inspect: remove rule option timing features
+* lua: add sensitive data rules
+* reputation: added profiling to the event handlers
+* reputation: fix for array indexing error when searching for reputation file entries
+* reputation: refactor event generation for matches
+* s7commplus: adding wizard support for s7commplus
+* utils: add possibility to process keywords as identifiers
+
 2022-10-05: 3.1.43.0
 
 * actions: fix action logging for suppressed events

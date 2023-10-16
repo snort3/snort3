@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -93,6 +93,7 @@ static bool DCE2_ParseIface(char* token, Uuid* uuid)
             if (strlen(if_hex) != DCE2_IFACE__TIME_LOW_LEN)
                 return false;
 
+            errno = 0;
             time_low = strtoul(if_hex, &endptr, 16);
             if ((errno == ERANGE) || (*endptr != '\0'))
                 return false;
@@ -109,6 +110,7 @@ static bool DCE2_ParseIface(char* token, Uuid* uuid)
             if (strlen(if_hex) != DCE2_IFACE__TIME_MID_LEN)
                 return false;
 
+            errno = 0;
             time_mid = strtoul(if_hex, &endptr, 16);
             if ((errno == ERANGE) || (*endptr != '\0'))
                 return false;
@@ -126,6 +128,7 @@ static bool DCE2_ParseIface(char* token, Uuid* uuid)
             if (strlen(if_hex) != DCE2_IFACE__TIME_HIGH_LEN)
                 return false;
 
+            errno = 0;
             time_high = strtoul(if_hex, &endptr, 16);
             if ((errno == ERANGE) || (*endptr != '\0'))
                 return false;
@@ -144,6 +147,7 @@ static bool DCE2_ParseIface(char* token, Uuid* uuid)
                 return false;
 
             /* Work backwards */
+            errno = 0;
             clock_seq_low = strtoul(&if_hex[2], &endptr, 16);
             if ((errno == ERANGE) || (*endptr != '\0'))
                 return false;
@@ -153,6 +157,7 @@ static bool DCE2_ParseIface(char* token, Uuid* uuid)
             /* Set third byte to null so we can _dpd.SnortStrtoul the first part */
             if_hex[2] = '\x00';
 
+            errno = 0;
             clock_seq_and_reserved = strtoul(if_hex, &endptr, 16);
             if ((errno == ERANGE) || (*endptr != '\0'))
                 return false;
@@ -174,6 +179,7 @@ static bool DCE2_ParseIface(char* token, Uuid* uuid)
                 (i >= 0) && (j >= 0);
                 i -= 2, j--)
             {
+                errno = 0;
                 /* Only giving strtoul 1 byte */
                 uuid->node[j] = (uint8_t)strtoul(&if_hex[i], &endptr, 16);
                 if ((errno == ERANGE) || (*endptr != '\0'))

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -658,7 +658,7 @@ void DCE2_SmbRemoveRequestTracker(DCE2_SmbSsnData* ssd,
 }
 
 void DCE2_SmbRemoveFileTrackerFromRequestTrackers(DCE2_SmbSsnData* ssd,
-    DCE2_SmbFileTracker* ftracker)
+    const DCE2_SmbFileTracker* ftracker)
 {
     if (ftracker == nullptr)
         return;
@@ -1303,7 +1303,9 @@ static FileContext* DCE2_get_main_file_context()
 {
     FileFlows* file_flows = FileFlows::get_file_flows(DetectionEngine::get_current_packet()->flow);
     if (file_flows)
+    {
         return file_flows->get_current_file_context();
+    }
     else
         return nullptr;
 }
@@ -1420,6 +1422,10 @@ static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
         return;
 
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
+    if (!file_flows)
+    {
+        return;
+    }
     bool upload = (ftracker->ff_file_direction == DCE2_SMB_FILE_DIRECTION__UPLOAD);
 
     if (get_file_processed_size(p->flow) != 0)
@@ -1429,8 +1435,11 @@ static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
         if ((ftracker->ff_file_size == 0)
             && (ftracker->ff_bytes_processed != 0))
         {
-            if (file_flows->file_process(p, nullptr, 0, SNORT_FILE_END, upload,
-                ftracker->file_name_hash))
+            file_flows->file_flow_context_mutex.lock();
+            bool resault = file_flows->file_process(p, nullptr, 0, SNORT_FILE_END, upload,
+                ftracker->file_name_hash);
+            file_flows->file_flow_context_mutex.unlock();
+            if (resault)
             {
                 if (upload)
                 {
@@ -1502,6 +1511,7 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
     if (!file_flows)
         return DCE2_RET__ERROR;
 
+    std::lock_guard<std::mutex> guard(file_flows->file_flow_context_mutex);
     if (!file_flows->file_process(p, data_ptr, (int)data_len, position, upload,
         ftracker->file_name_hash))
     {

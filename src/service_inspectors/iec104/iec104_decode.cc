@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -52,7 +52,7 @@ static uint32_t getApciType(Packet* p)
     const Iec104GenericApci* apci = (const Iec104GenericApci*) p->data;
 
     // default apci type to a non-used value
-    // if this somehow makes it through it errors out in the apci type switch 
+    // if this somehow makes it through it errors out in the apci type switch
     uint32_t curApciType = IEC104_NO_APCI;
 
     // Check the APCI Major type flag
@@ -89,12 +89,12 @@ bool Iec104Decode(Packet* p, Iec104FlowData* iec104fd)
     // build the correct APCI based on the returned type
     uint32_t apciType = getApciType(p);
 
-    if (apciType > 2) 
+    if (apciType > 2)
     {
         // An APCI type cannot be determined. Message does not appear to be IEC104
         return false;
     }
-    else 
+    else
     {
         // apply the appropriate structure to the packet buffer based on the
         // earlier type determination

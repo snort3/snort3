@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -70,7 +70,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     if (!asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
         return;
 
-    if (asd->get_session_flags(APPID_SESSION_FIRST_PKT_CACHE_MATCHED) and !asd->get_odp_ctxt().need_reinspection) 
+    if (asd->get_session_flags(APPID_SESSION_FIRST_PKT_CACHE_MATCHED) and !asd->get_odp_ctxt().need_reinspection)
         return;
 
     const uint8_t* header_start;

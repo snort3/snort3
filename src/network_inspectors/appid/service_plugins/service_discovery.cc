@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -81,6 +81,7 @@
 using namespace snort;
 
 static ServiceDetector* ftp_service;
+static THREAD_LOCAL ServiceDetector* pkt_thread_ftp_service;
 
 void ServiceDiscovery::initialize(AppIdInspector& inspector)
 {
@@ -155,6 +156,20 @@ void ServiceDiscovery::reload_service_patterns()
 {
     tcp_patterns.reload();
     udp_patterns.reload();
+}
+
+unsigned ServiceDiscovery::get_pattern_count()
+{
+    return tcp_pattern_count + udp_pattern_count;
+}
+
+ServiceDetector* ServiceDiscovery::get_service_detector(const std::string& name) const
+{
+    auto det = tcp_detectors.find(name);
+    if (det != tcp_detectors.end())
+        return (ServiceDetector*) det->second;
+
+    return nullptr;
 }
 
 int ServiceDiscovery::add_service_port(AppIdDetector* detector, const ServiceDetectorPort& pp)
@@ -563,14 +578,24 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
 
 int ServiceDiscovery::add_ftp_service_state(AppIdSession& asd)
 {
-    if (!ftp_service)
+    if (!pkt_thread_ftp_service)
         return -1;
-    return asd.add_flow_data_id(21, ftp_service);
+    return asd.add_flow_data_id(21, pkt_thread_ftp_service);
 }
 
 void ServiceDiscovery::clear_ftp_service_state()
 {
     ftp_service = nullptr;
+}
+
+void ServiceDiscovery::set_thread_local_ftp_service()
+{
+    pkt_thread_ftp_service = ftp_service;
+}
+
+void ServiceDiscovery::reset_thread_local_ftp_service()
+{
+    pkt_thread_ftp_service = nullptr;
 }
 
 bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
@@ -610,6 +635,12 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         {
             asd.service_disco_state = APPID_DISCO_STATE_STATEFUL;
         }
+    }
+
+    if (asd.is_encrypted_oportunistic_tls_session() and asd.encrypted.service_id > 0)
+    {
+        asd.set_service_id(asd.encrypted.service_id, asd.get_odp_ctxt());
+        asd.stop_service_inspection(p, direction);
     }
 
     //stop inspection as soon as tp has classified a valid AppId later in the session
@@ -673,7 +704,8 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
                 asd.get_session_flags(APPID_SESSION_INITIATOR_MONITORED |
                 APPID_SESSION_RESPONDER_MONITORED) ) ) )
             {
-                asd.free_flow_data_by_mask(APPID_SESSION_DATA_SERVICE_MODSTATE_BIT);
+                if (asd.service_candidates.empty() and !asd.service_detector)
+                    asd.free_flow_data_by_mask(APPID_SESSION_DATA_SERVICE_MODSTATE_BIT);
                 asd.service_detector = entry->service_detector;
             }
             else if (prev_service_state == APPID_DISCO_STATE_NONE)
@@ -788,7 +820,7 @@ int ServiceDiscovery::fail_service(AppIdSession& asd, const Packet* pkt, AppidSe
 
     /* If we're still working on a port/pattern list of detectors, then ignore
      * individual fails until we're done looking at everything. */
-    if ( !asd.service_detector && !asd.service_candidates.empty() )
+    if ((asd.get_odp_ctxt().first_pkt_service_id > APP_ID_NONE) or (!asd.service_detector && !asd.service_candidates.empty()))
         return APPID_SUCCESS;
 
     asd.set_service_id(APP_ID_NONE, asd.get_odp_ctxt());

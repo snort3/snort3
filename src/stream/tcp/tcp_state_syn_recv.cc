@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -37,11 +37,10 @@ TcpStateSynRecv::TcpStateSynRecv(TcpStateMachine& tsm) :
 
 bool TcpStateSynRecv::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    Flow* flow = tsd.get_flow();
-
     trk.finish_server_init(tsd);
     trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
     trk.session->update_timestamp_tracking(tsd);
+    Flow* flow = tsd.get_flow();
     if ( tsd.get_tcph()->are_flags_set(TH_ECE) &&
         ( flow->get_session_flags() & SSNFLAG_ECN_CLIENT_QUERY ) )
         flow->set_session_flags(SSNFLAG_ECN_SERVER_REPLY);
@@ -65,11 +64,8 @@ bool TcpStateSynRecv::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateSynRecv::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    Flow* flow = tsd.get_flow();
-
     trk.finish_server_init(tsd);
     trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
-    flow->session_state |= STREAM_STATE_SYN_ACK;
 
     return true;
 }
@@ -78,13 +74,9 @@ bool TcpStateSynRecv::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 {
     if ( trk.is_ack_valid(tsd.get_ack()) )
     {
-        Flow* flow = tsd.get_flow();
-
+        trk.irs = tsd.get_seq();
         trk.update_tracker_ack_recv(tsd);
         trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
-        flow->set_session_flags(SSNFLAG_ESTABLISHED);
-        flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
-        trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
         trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
         if ( tsd.is_data_segment() )
             trk.session->handle_data_on_syn(tsd);
@@ -95,9 +87,16 @@ bool TcpStateSynRecv::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateSynRecv::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.session->tcp_config->midstream_allowed(tsd.get_pkt()) )
-        trk.session->update_session_on_ack();
-
+    if ( trk.session->tcp_config->midstream_allowed(tsd.get_pkt()) && trk.session->flow->two_way_traffic() )
+    {
+        TcpStreamTracker::TcpState listener_state = tsd.get_listener()->get_tcp_state();
+        // Does this ACK finish 4-way handshake
+        if ( TcpStreamTracker::TCP_ESTABLISHED == listener_state )
+        {
+            trk.session->set_established(tsd);
+            trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
+        }
+    }
     return true;
 }
 
@@ -105,43 +104,44 @@ bool TcpStateSynRecv::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( !tsd.is_meta_ack_packet() && trk.is_ack_valid(tsd.get_ack()) )
     {
-        Flow* flow = tsd.get_flow();
-
         trk.update_tracker_ack_recv(tsd);
         trk.session->set_pkt_action_flag(trk.normalizer.handle_paws(tsd));
         tsd.set_packet_flags(PKT_STREAM_TWH);
-        flow->set_session_flags(SSNFLAG_ESTABLISHED);
-        flow->session_state |= ( STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED );
-        trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
+        TcpStreamTracker::TcpState talker_state = tsd.get_talker()->get_tcp_state();
+        // Does this ACK finish the 3-way or 4-way handshake
+        if ( TcpStreamTracker::TCP_ESTABLISHED == talker_state || !trk.session->flow->two_way_traffic() )
+            trk.session->set_established(tsd);
         trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
         trk.session->check_for_window_slam(tsd);
     }
-
     return true;
 }
 
 bool TcpStateSynRecv::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_sent(tsd);
-    if ( trk.session->no_ack_mode_enabled() )
-        trk.update_tracker_no_ack_recv(tsd);
-
+    if ( trk.session->tcp_config->midstream_allowed(tsd.get_pkt()) )
+    {
+        trk.update_tracker_ack_sent(tsd);
+        if ( trk.session->no_ack_mode_enabled() )
+            trk.update_tracker_no_ack_recv(tsd);
+        if ( trk.session->flow->two_way_traffic() )
+        {
+            TcpStreamTracker::TcpState listener_state = tsd.get_listener()->get_tcp_state();
+            // Does this ACK finish 4-way handshake
+            if ( TcpStreamTracker::TCP_ESTABLISHED == listener_state )
+            {
+                trk.session->set_established(tsd);
+                trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
+            }
+        }
+    }
     return true;
 }
 
 bool TcpStateSynRecv::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.is_ack_valid(tsd.get_ack()) )
-    {
-        trk.update_tracker_ack_recv(tsd);
-        tsd.set_packet_flags(PKT_STREAM_TWH);
-        trk.session->set_pkt_action_flag(trk.normalizer.handle_paws(tsd));
-        trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
-        trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
-    }
-
+    ack_recv(tsd, trk);
     trk.session->handle_data_segment(tsd);
-
     return true;
 }
 
@@ -149,12 +149,16 @@ bool TcpStateSynRecv::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     if ( tsd.get_tcph()->is_ack() )
     {
-        Flow* flow = tsd.get_flow();
-
         trk.set_fin_seq_status_seen(tsd);
         trk.update_tracker_ack_recv(tsd);
         trk.session->set_pkt_action_flag(trk.normalizer.handle_paws(tsd));
-        flow->session_state |= STREAM_STATE_ACK;
+
+        TcpStreamTracker::TcpState talker_state = tsd.get_talker()->get_tcp_state();
+        // Does this ACK finish the 3-way
+        if ( TcpStreamTracker::TCP_ESTABLISHED == talker_state
+            || TcpStreamTracker::TCP_FIN_WAIT1 == talker_state )
+            trk.session->set_established(tsd);
+
         trk.perform_fin_recv_flush(tsd);
 
         if ( trk.update_on_fin_recv(tsd) )
@@ -174,6 +178,8 @@ bool TcpStateSynRecv::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     {
         Flow* flow = tsd.get_flow();
         flow->set_session_flags(SSNFLAG_RESET);
+        if ( !((SSNFLAG_TCP_PSEUDO_EST | SSNFLAG_ESTABLISHED) & flow->get_session_flags()) )
+            trk.session->set_pseudo_established(tsd.get_pkt());
     }
     else
     {

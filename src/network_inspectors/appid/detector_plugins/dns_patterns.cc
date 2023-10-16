@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -52,6 +52,7 @@ void DnsPatternMatchers::finalize_patterns()
     /* Add patterns from Lua API */
     for (element = dns_host_pattern_list; element; element = element->next)
     {
+        pattern_count++;
         dns_host_matcher.add((char*)element->dpattern->pattern,
             element->dpattern->pattern_size, element->dpattern, true);
     }
@@ -62,6 +63,11 @@ void DnsPatternMatchers::finalize_patterns()
 void DnsPatternMatchers::reload_patterns()
 {
     dns_host_matcher.reload();
+}
+
+unsigned DnsPatternMatchers::get_pattern_count()
+{
+    return pattern_count;
 }
 
 DnsPatternMatchers::~DnsPatternMatchers()

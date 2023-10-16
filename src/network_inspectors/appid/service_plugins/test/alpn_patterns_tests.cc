@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -22,6 +22,7 @@
 #include "config.h"
 #endif
 
+#include "appid_inspector.h"
 #include "service_plugins/alpn_patterns.cc"
 #include "service_alpn_patterns_mock.h"
 
@@ -34,13 +35,21 @@ AlpnPattern alpn_pattern(APPID_UT_ID, "h3");
 
 namespace snort
 {
-int SearchTool::find_all(const char* pattern, unsigned, MpseMatch, bool, void* data)
+int SearchTool::find_all(const char* pattern, unsigned, MpseMatch, bool, void* data, const SnortConfig*)
 {
     if (strcmp(pattern, "h3") == 0)
         alpn_pattern_match(&alpn_pattern, nullptr, 0, data, nullptr);
     return 0;
 }
 }
+
+Inspector* InspectorManager::get_inspector(char const*, bool, const snort::SnortConfig*)
+{
+    return nullptr;
+}
+
+AppIdContext* ctxt;
+AppIdContext& AppIdInspector::get_ctxt() const { return *ctxt; }
 
 TEST_GROUP(alpn_patterns_tests)
 {

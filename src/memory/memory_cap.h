@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -21,49 +21,75 @@
 #ifndef MEMORY_CAP_H
 #define MEMORY_CAP_H
 
+#include "memory/heap_interface.h"
+
 #include <cstddef>
 
 #include "framework/counts.h"
 #include "main/snort_types.h"
 
 struct MemoryConfig;
+class ControlConn;
 
 namespace memory
 {
 
 struct MemoryCounts
 {
-    PegCount allocations;
-    PegCount deallocations;
+    PegCount start_up_use;
+    PegCount cur_in_use;
+    PegCount max_in_use;
+    PegCount epochs;
     PegCount allocated;
     PegCount deallocated;
+    PegCount reap_cycles;
     PegCount reap_attempts;
     PegCount reap_failures;
-    PegCount max_in_use;
+    PegCount reap_aborts;
+    PegCount reap_decrease;
+    PegCount reap_increase;
+    // reporting only
+    PegCount app_all;
+    PegCount active;
+    PegCount resident;
+    PegCount retained;
 };
+
+typedef bool (*PruneHandler)();
 
 class SO_PUBLIC MemoryCap
 {
 public:
-    static void setup(const MemoryConfig&, unsigned);
-    static void cleanup();
+    // main thread
+    static void init(unsigned num_threads);
+    static void term();
 
+    // main thread - in configure
+    static void set_heap_interface(HeapInterface*);
+    static void set_pruner(PruneHandler);
+
+    // main thread - after configure
+    static void start(const MemoryConfig&, PruneHandler);
+    static void stop();
+    static void print(bool verbose, bool init = false);
+
+    // packet threads
+    static void thread_init();
+    static void thread_term();
     static void free_space();
 
-    // call from main thread
-    static void print(bool verbose, bool print_all = true);
-
+    // main and packet threads
     static MemoryCounts& get_mem_stats();
 
-#ifdef ENABLE_MEMORY_OVERLOADS
-    static void allocate(size_t);
-    static void deallocate(size_t);
-#endif
+    // main thread - shutdown
+    static void update_pegs(PegCount*);
 
-private:
-    static size_t limit;
+    static void dump_mem_stats(ControlConn*);
+#if defined(REG_TEST) || defined(UNIT_TEST)
+    static void test_main_check();
+#endif
 };
 
-} // namespace memory
+}
 
 #endif

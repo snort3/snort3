@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -25,6 +25,7 @@
 
 #include "distill_verdict_stubs.h"
 
+#include "framework/data_bus.h"
 #include "main/analyzer.h"
 #include "memory/memory_cap.h"
 #include "packet_io/sfdaq_instance.h"
@@ -49,6 +50,9 @@ void DeferredTrust::set_deferred_trust(unsigned, bool on)
 void Flow::trust() { }
 
 SFDAQInstance* SFDAQ::get_local_instance() { return nullptr; }
+
+unsigned DataBus::get_id(const PubKey&)
+{ return 0; }
 }
 
 using namespace snort;

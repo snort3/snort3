@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -41,7 +41,7 @@ private:
     bool check_http_state(Http2Stream* const stream);
     snort::StreamSplitter::Status skip_over_frame(Http2Stream* const stream, uint32_t length,
         uint32_t* flush_offset, uint32_t data_offset, uint8_t frame_flags);
-    
+
     Http2FlowData* const session_data;
     const HttpCommon::SourceId source_id;
 

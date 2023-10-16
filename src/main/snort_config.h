@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -222,7 +222,6 @@ public:
     int pcre_ovector_size = 0;
     bool pcre_override = true;
 
-    int asn1_mem = 0;
     uint32_t run_flags = 0;
 
     unsigned offload_limit = 99999;  // disabled
@@ -235,6 +234,13 @@ public:
     bool global_default_rule_state = true;
     bool allow_missing_so_rules = false;
     bool enable_strict_reduction = false;
+    uint16_t max_continuations = 1024;
+
+    std::unordered_map<std::string, std::vector<std::string>> service_extension =
+        {
+             { "http", {"http2", "http3"} },
+             { "netbios-ssn", {"dcerpc"} },
+        };
 
     //------------------------------------------------------
     // process stuff
@@ -244,6 +250,7 @@ public:
     int user_id = -1;
     int group_id = -1;
     uint16_t watchdog_timer = 0;
+    uint16_t watchdog_min_thread_count = 1;
     bool dirty_pig = false;
 
     std::string chroot_dir;        /* -t or config chroot */
@@ -461,6 +468,7 @@ public:
     void set_umask(uint32_t);
     void set_utc(bool);
     void set_watchdog(uint16_t);
+    void set_watchdog_min_thread_count(uint16_t);
     SO_PUBLIC bool set_latency_enable();
 
     //------------------------------------------------------
@@ -506,13 +514,16 @@ public:
     bool read_mode() const
     { return run_flags & RUN_FLAG__READ; }
 
-    bool inline_mode() const
+    bool ips_inline_mode() const
     { return get_ips_policy()->policy_mode == POLICY_MODE__INLINE; }
 
-    bool inline_test_mode() const
+    bool ips_inline_test_mode() const
     { return get_ips_policy()->policy_mode == POLICY_MODE__INLINE_TEST; }
 
-    bool passive_mode() const
+    bool nap_inline_mode() const
+    { return get_inspection_policy()->policy_mode == POLICY_MODE__INLINE; }
+
+    bool ips_passive_mode() const
     { return get_ips_policy()->policy_mode == POLICY_MODE__PASSIVE; }
 
     bool show_file_codes() const
@@ -654,6 +665,9 @@ public:
     void clear_reload_resource_tuner_list();
 
     void update_reload_id();
+
+    unsigned get_reload_id() const
+    { return reload_id; }
 
     bool get_default_rule_state() const;
 

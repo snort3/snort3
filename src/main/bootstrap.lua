@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------
--- Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+-- Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 --
 -- This program is free software; you can redistribute it and/or modify it
 -- under the terms of the GNU General Public License Version 2 as published
@@ -150,12 +150,14 @@ function create_sandbox_env()
         snort_whitelist_add_prefix = snort_whitelist_add_prefix,
         snort_whitelist_append = snort_whitelist_append,
         SNORT_VERSION = SNORT_VERSION,
+        SNORT_BUILD = SNORT_BUILD,
         SNORT_MAJOR_VERSION = SNORT_MAJOR_VERSION,
         SNORT_MINOR_VERSION = SNORT_MINOR_VERSION,
         SNORT_PATCH_VERSION = SNORT_PATCH_VERSION,
         SNORT_SUBLEVEL_VERSION = SNORT_SUBLEVEL_VERSION,
         get_module_version = get_module_version,
         tweaks = tweaks,
+        SNORT_DEP_VERSIONS = SNORT_DEP_VERSIONS
     }
 
     for k, v in pairs(export_to_sandbox) do

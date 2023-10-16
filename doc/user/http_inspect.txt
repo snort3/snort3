@@ -59,6 +59,12 @@ normalization. Both normalizers are independent and can be configured
 separately. The Legacy normalizer should be considered deprecated.
 The Enhanced Normalizer is encouraged to use for JavaScript normalization
 in the first place as we continue improving functionality and quality.
+The Enhanced JavaScript Normalizer has to be configured as a separate
+module:
+
+    js_norm = {}
+
+Refer to JavaScript Normalization section for Enhanced Normalizer specifics.
 
 ===== Legacy Normalizer
 
@@ -70,26 +76,6 @@ Legacy Normalizer, check the http_inspect.normalize_javascript option. Legacy
 Normalizer is deprecated preferably to use Enhanced Normalizer. After
 supporting backward compatibility in the Enhanced Normalizer, Legacy Normalizer
 will be removed.
-
-===== Enhanced Normalizer
-
-Having ips option 'js_data' in the rules automatically enables Enhanced
-Normalizer. The Enhanced Normalizer can normalize inline/external scripts.
-It supports scripts over multiple PDUs. It is a stateful JavaScript whitespace
-and identifiers normalizer. Normalizer concatenates string literals whenever 
-it's possible to do. This also works with any other normalizations that result
-in string literals. All JavaScript identifier names, except those from
-the ignore lists, will be substituted with unified names in the following
-format: var_0000 -> var_ffff. But the unescape-like function names will be removed
-from the normalized data. The Normalizer tries to expand an escaped text,
-so it will appear in a usual form in the output. Moreover, Normalizer validates
-the syntax concerning ECMA-262 Standard, including scope tracking and restrictions
-for script elements. For more information on how additionally configure
-Enhanced Normalizer check with the following configuration options:
-js_norm_bytes_depth, js_norm_identifier_depth, js_norm_max_tmpl_nest,
-js_norm_max_bracket_depth, js_norm_max_scope_depth, js_norm_ident_ignore,
-js_norm_prop_ignore.
-Eventually Enhanced Normalizer will completely replace Legacy Normalizer.
 
 ==== Configuration
 
@@ -209,6 +195,14 @@ locate the OLE (Object Linking and Embedding) file embedded with the files
 containing RLE compressed vba macro data. The decompressed vba macro data is
 then made available through the vba_data ips rule option.
 
+===== max_mime_attach
+
+HTTP request message bodies may be in MIME format. Each file attachment is
+separately incorporated in the file_data rule option. When a request contains
+many small file attachments these inspections may consume a lot of processing
+power. This parameter limits the number of files from one message that are
+inspected. The default value is 5.
+
 ===== normalize_javascript
 
 normalize_javascript = true will enable legacy normalizer of JavaScript within
@@ -220,120 +214,6 @@ the unescape, decodeURI, or decodeURIComponent are %XX, %uXXXX, XX and
 uXXXXi. http_inspect also replaces consecutive whitespaces with a single
 space and normalizes the plus by concatenating the strings. Such normalizations
 refer to basic JavaScript normalization.
-
-===== js_norm_bytes_depth
-
-js_norm_bytes_depth = N {-1 : max53} will set a number of input JavaScript
-bytes to normalize. When the depth is reached, normalization will be stopped.
-It's implemented per-script. By default js_norm_bytes_depth = -1, will set
-unlimited depth. The enhanced normalizer provides more precise whitespace
-normalization of JavaScript, that removes all redundant whitespaces and line
-terminators from the JavaScript syntax point of view (between identifier and
-punctuator, between identifier and operator, etc.) according to ECMAScript 5.1
-standard. Additionally, it performs normalization of JavaScript identifiers making
-a substitution of unique names with unified names representation: var_0000:var_ffff.
-The identifiers are variables and function names. The normalized data is available
-through the js_data rule option.
-
-===== js_norm_identifier_depth
-
-js_norm_identifier_depth = N {0 : 65536} will set a number of unique
-JavaScript identifiers to normalize. When the depth is reached, a built-in
-alert is generated. Every HTTP response has its own identifier substitution context,
-which means that identifier will retain same normal form in multiple scripts,
-if they are a part of the same HTTP response, and that this limit is set for a single
-HTTP response and not a single script. By default, the value is set to 65536, which
-is the max allowed number of unique identifiers. The generated names are in
-the range from var_0000 to var_ffff.
-
-===== js_norm_max_tmpl_nest
-
-js_norm_max_tmpl_nest = N {0 : 255} (default 32) is an option of the enhanced
-JavaScript normalizer that determines the deepest level of nested template literals
-to be processed. Introduced in ES6, template literals provide syntax to define
-a literal multiline string, which can have arbitrary JavaScript substitutions,
-that will be evaluated and inserted into the string. Such substitutions can be
-nested, and require keeping track of every layer for proper normalization. This option
-is present to limit the amount of memory dedicated to template nesting tracking.
-
-===== js_norm_max_bracket_depth
-
-js_norm_max_bracket_depth = N {1 : 65535} (default 256) is an option of the enhanced
-JavaScript normalizer that determines the maximum depth of nesting brackets, i.e. parentheses,
-braces and square brackets, nested within a matching pair, in any combination. This option
-is present to limit the amount of memory dedicated to bracket tracking.
-
-===== js_norm_max_scope_depth
-
-js_norm_max_scope_depth = N {1 : 65535} (default 256) is an option of the enhanced
-JavaScript normalizer that determines the deepest level of nested variable scope,
-i.e. functions, code blocks, etc. including the global scope.
-This option is present to limit the amount of memory dedicated to scope tracking.
-
-===== js_norm_ident_ignore
-
-js_norm_ident_ignore = {<list of ignored identifiers>} is an option of the enhanced
-JavaScript normalizer that defines a list of identifiers to keep intact.
-
-Identifiers in this list will not be put into normal form (var_0000). Subsequent accessors,
-after dot, in square brackets or after function call, will not be normalized as well.
-
-For example:
-
-    console.log("bar")
-    document.getElementById("id").text
-    eval("script")
-    console["log"]
-
-Every entry has to be a simple identifier, i.e. not include dots, brackets, etc.
-For example:
-
-    http_inspect.js_norm_ident_ignore = { 'console', 'document', 'eval', 'foo' }
-
-When a variable assignment that 'aliases' an identifier from the list is found,
-the assignment will be tracked, and subsequent occurrences of the variable will be
-replaced with the stored value. This substitution will follow JavaScript variable scope 
-limits.
-
-For example:
-
-    var a = console.log
-    a("hello") // will be substituted to 'console.log("hello")'
-
-For class names and constructors in the list, when the class is used with the
-keyword 'new', created object will be tracked, and its properties will be kept intact.
-Identifier of the object itself, however, will be brought to unified form.
-
-For example:
-
-    var o = new Array() // normalized to 'var var_0000=new Array()'
-    o.push(10) // normalized to 'var_0000.push(10)'
-
-The default list of ignore-identifiers is present in "snort_defaults.lua".
-
-Unescape function names should remain intact in the output. They ought to be
-included in the ignore list. If for some reason the user wants to disable unescape
-related features, then removing function's name from the ignore list does the trick.
-
-===== js_norm_prop_ignore
-
-js_norm_prop_ignore = {<list of ignored properties>} is an option of the enhanced
-JavaScript normalizer that defines a list of object properties and methods that
-will be kept intact during the identifiers normalization. This list should include
-methods and properties of objects that will not be tracked by assignment substitution
-functionality, for example, those that can be created implicitly.
-
-Subsequent accessors, after dot, in square brackets or after function call, will not be
-normalized as well.
-
-For example:
-
-    http_inspect.js_norm_prop_ignore = { 'split' }
-
-    in: "string".toUpperCase().split("").reverse().join("");
-    out: "string".var_0000().split("").reverse().join("");
-
-The default list of ignored properties is present in "snort_defaults.lua".
 
 ===== xff_headers
 
@@ -373,6 +253,16 @@ maximum_header_length = N {0 : 65535} (default 4096).
 
 http_inspect generates 119:20 when the number of headers exceeds
 maximum_headers = N {0 : 65535} (default 200).
+
+===== maximum_pipelined_requests
+
+http_inspect generates 119:34 when the number of pipelined requests exceeds
+maximum_pipelined_requests = N {0 : 99} (default 99). This number does
+not include the first request in a sequence of requests. Setting
+maximum_pipelined_requests = 0, will not trigger an alert in the case
+of an alternating sequence of requests and responses. It will trigger the
+alert once the client issue a request before getting the response to a
+previous request.
 
 ===== URI processing
 
@@ -487,43 +377,17 @@ server. Due to this potential evasion tactic, the HTTP inspector will not cut ov
 it sees any early client-to-server traffic, but will continue normal HTTP processing of the flow
 regardless of the eventual server response.
 
-==== Trace messages
-
-When a user needs help to sort out things going on inside HTTP inspector, Trace module becomes handy.
-
-    $ snort --help-module trace | grep http_inspect
-
-Messages for the enhanced JavaScript Normalizer follow
-(more verbosity available in debug build):
-
-===== trace.module.http_inspect.js_proc
-
-Messages from script processing flow and their verbosity levels:
-
-1. Script opening tag location.
-
-2. Attributes of the detected script.
-
-3. Return codes from Normalizer.
-
-===== trace.module.http_inspect.js_dump
-
-JavaScript data dump and verbosity levels:
-
-1. js_data buffer as it is passed to detection.
-
-2. (no messages available currently)
-
-3. Current script as it is passed to Normalizer.
-
 ==== Detection rules
 
 http_inspect parses HTTP messages into their components and makes them
 available to the detection engine through rule options. Let's start with an
 example:
 
-    alert tcp any any -> any any ( msg:"URI example"; flow:established,
-    to_server; http_uri; content:"chocolate"; sid:1; rev:1; )
+    alert tcp any any -> any any (
+        msg:"URI example";
+        flow:established, to_server;
+        http_uri; content:"chocolate";
+        sid:1; rev:1; )
 
 This rule looks for chocolate in the URI portion of the request message.
 Specifically, the http_uri rule option is the normalized URI with all the
@@ -537,15 +401,20 @@ and
 
 It is also possible to search the unnormalized URI
 
-    alert tcp any any -> any any ( msg:"Raw URI example"; flow:established,
-    to_server; http_raw_uri; content:"chocolate"; sid:2; rev:1; )
+    alert tcp any any -> any any (
+        msg:"Raw URI example";
+        flow:established, to_server;
+        http_raw_uri; content:"chocolate";
+        sid:2; rev:1; )
 
 will match the first message but not the second. If you want to detect
 someone who is trying to hide his request for chocolate then
 
-    alert tcp any any -> any any ( msg:"Raw URI example"; flow:established,
-    to_server; http_raw_uri; content:"%63%68$6F%63%6F%6C%61%74%65";
-    sid:3; rev:1; )
+    alert tcp any any -> any any (
+        msg:"Raw URI example";
+        flow:established, to_server;
+        http_raw_uri; content:"%63%68$6F%63%6F%6C%61%74%65";
+        sid:3; rev:1; )
 
 will do the trick.
 
@@ -553,9 +422,11 @@ Let's look at possible ways of writing a rule to match HTTP response
 messages with the Content-Language header set to "da" (Danish). You could
 write:
 
-    alert tcp any any -> any any ( msg:"whole header search";
-    flow:established, to_client; http_header; content:
-    "Content-Language: da", nocase; sid:4; rev:1; )
+    alert tcp any any -> any any (
+        msg:"whole header search";
+        flow:established, to_client;
+        http_header; content:"Content-Language: da", nocase;
+        sid:4; rev:1; )
 
 This rule leaves much to be desired. Modern headers are often thousands of
 bytes and seem to get longer every year. Searching all of the headers
@@ -572,9 +443,11 @@ the match.
 
 A better way to write this rule is:
 
-    alert tcp any any -> any any ( msg:"individual header search";
-    flow:established, to_client; http_header: field content-language;
-    content:"da", nocase; sid:4; rev:2; )
+    alert tcp any any -> any any (
+        msg:"individual header search";
+        flow:established, to_client;
+        http_header: field content-language; content:"da", nocase;
+        sid:4; rev:2; )
 
 The field option improves performance by narrowing the search to the
 Content-Language field of the header. Because it uses the header parsing
@@ -628,8 +501,11 @@ appeared in the message and the normalized form is determined by the URI
 normalization options you selected. In addition to searching the entire URI
 there are six components that can be searched individually:
 
-    alert tcp any any -> any any ( msg:"URI path"; flow:established,
-    to_server; http_uri: path; content:"chocolate"; sid:1; rev:2; )
+    alert tcp any any -> any any (
+        msg:"URI path";
+        flow:established, to_server;
+        http_uri: path; content:"chocolate";
+        sid:1; rev:2; )
 
 By specifying "path" the search is limited to the path portion of the URI.
 Informally this is the part consisting of the directory path and file name.
@@ -684,9 +560,11 @@ These cover all the header lines except the first one. You may specify an
 individual header by name using the field option as shown in this earlier
 example:
 
-    alert tcp any any -> any any ( msg:"individual header search";
-    flow:established, to_client; http_header: field content-language;
-    content:"da", nocase; sid:4; rev:2; )
+    alert tcp any any -> any any (
+        msg:"individual header search";
+        flow:established, to_client;
+        http_header: field content-language; content:"da", nocase;
+        sid:4; rev:2; )
 
 This rule searches the value of the Content-Language header. Header names
 are not case sensitive and may be written in the rule in any mixture of
@@ -785,8 +663,7 @@ normalize_javascript.
 
 The js_data contains normalized JavaScript text collected from the whole PDU
 (inline or external scripts). It requires the Enhanced Normalizer enabled:
-http_inspect = { js_norm_bytes_depth = N },
-js_norm_bytes_depth option is described above.
+js_norm = { },
 Despite what js_data has, file_data still contains the whole HTTP body
 with an original JavaScript in it.
 
@@ -853,41 +730,15 @@ the dividing lines between one message and the next, which request message
 triggered which response message, pipelines, and how many messages have
 been sent over the current connection.
 
-Some rules use a single rule option:
-
-    alert tcp any any -> any any ( msg:"URI example"; flow:established,
-    to_server; http_uri; content:"chocolate"; sid:1; rev:1; )
-
-Whenever a new URI is available this rule will be evaluated. Nothing
-complicated about that, but suppose we use more than one rule option:
-
-    alert tcp any any -> any any ( msg:"combined example"; flow:established,
-    to_server; http_uri: with_body; content:"chocolate"; file_data;
-    content:"sinister POST data"; sid:5; rev:1; )
-
-The with_body option to http_uri causes the URI to be made available with
-the message body. Use with_body for header-related rule options in rules
-that also examine the message body.
-
-The with_trailer option is analogous and causes an earlier message element
-to be made available at the end of the message when the trailers following
-a chunked body arrive.
-
-    alert tcp any any -> any any ( msg:"double content-language";
-    flow:established, to_client; http_header: with_trailer, field
-    content-language; content:"da", nocase; http_trailer: field
-    content-language; content:"en", nocase; sid:6; rev:1; )
-
-This rule will alert if the Content-Language changes from Danish in the
-headers to English in the trailers. The with_trailer option is essential to
-make this rule work.
-
-It is also possible to write rules that examine both the client request and
+It is possible to write rules that examine both the client request and
 the server response to it.
 
-    alert tcp any any -> any any ( msg:"request and response example";
-    flow:established, to_client; http_uri: with_body; content:"chocolate";
-    file_data; content:"white chocolate"; sid:7; rev:1; )
+    alert tcp any any -> any any (
+        msg:"request and response example";
+        flow:established, to_client;
+        http_uri; content:"chocolate";
+        file_data; content:"white chocolate";
+        sid:7; rev:1; )
 
 This rule looks for white chocolate in a response message body where the
 URI of the request contained chocolate. Note that this is a "to_client"
@@ -897,21 +748,23 @@ rule were rewritten "to_server" it would be nonsense and not work. Snort
 cannot block a client request based on what the server response will be
 because that has not happened yet.
 
-Another point is "with_body" for http_uri. This ensures the rule works on
-the entire response body. If we were looking for white chocolate in the
-response headers this would not be necessary.
-
 Response messages do not have a URI so there was only one thing http_uri
 could have meant in the previous rule. It had to be referring to the
 request message. Sometimes that is not so clear.
 
-    alert tcp any any -> any any ( msg:"header ambiguity example 1";
-    flow:established, to_client; http_header: with_body; content:
-    "chocolate"; file_data; content:"white chocolate"; sid:8; rev:1; )
+    alert tcp any any -> any any (
+        msg:"header ambiguity example 1";
+        flow:established, to_client;
+        http_header; content:"chocolate";
+        file_data; content:"white chocolate";
+        sid:8; rev:1; )
 
-    alert tcp any any -> any any ( msg:"header ambiguity example 2";
-    flow:established, to_client; http_header: with_body, request; content:
-    "chocolate"; file_data; content:"white chocolate"; sid:8; rev:2; )
+    alert tcp any any -> any any (
+        msg:"header ambiguity example 2";
+        flow:established, to_client;
+        http_header: request; content:"chocolate";
+        file_data; content:"white chocolate";
+        sid:8; rev:2; )
 
 Our search for chocolate has moved from the URI to the message headers.
 Both the request and response messages have headers--which one are we
@@ -923,32 +776,12 @@ the body.
 The second rule uses the "request" option to explicitly say that the
 http_header to be searched is the request header.
 
-Let's put all of this together. There are six opportunities to do
-detection:
-
-1. When the the request headers arrive. The request line and all of the
-headers go through detection at the same time.
-
-2. When sections of the request message body arrive. If you want to combine
-this with something from the request line or headers you must use the
-with_body option.
-
-3. When the request trailers arrive. If you want to combine this with
-something from the request line or headers you must use the with_trailer
-option.
-
-4. When the response headers arrive. The status line and all of the headers
-go through detection at the same time. These may be combined with elements
-from the request line, request headers, or request trailers. Where
-ambiguity arises use the request option.
-
-5. When sections of the response message body arrive. These may be combined
-with the status line, response headers, request line, request headers, or
-request trailers as described above.
-
-6. When the response trailers arrive. Again these may be combined as
-described above.
+Fast patterns are always searched in the current message. Rule options using
+"request" option can't be used as fast patterns.
 
 Message body sections can only go through detection at the time they are
 received. Headers may be combined with later items but the body cannot.
+
+The sub-options "with_header", "with_body" and "with_trailer" are deprecated,
+and no longer required when mixing the different sections.
 

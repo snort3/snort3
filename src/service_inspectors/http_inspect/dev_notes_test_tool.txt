@@ -1,0 +1,90 @@
+Test tool usage instructions:
+
+The HI test tool consists of two features. test_output provides extensive information about the
+inner workings of HI. It is strongly focused on showing work products (Fields) rather than being a
+tracing feature. Given a problematic pcap, the developer can see what the input is, how HI
+interprets it, and what the output to rule options will be. Several related configuration options
+(see help) allow the developer to customize the output.
+
+test_input is provided by the HttpTestInput class. It allows the developer to write tests that
+simulate HTTP messages split into TCP segments at specified points. The tests cover all of splitter
+and inspector and the impact on downstream customers such as detection and file processing. The
+test_input option activates a modified form of test_output. It is not necessary to also specify
+test_output.
+
+The test input comes from the file http_test_msgs.txt in the current directory. Enter HTTP test
+message text as you want it to be presented to the StreamSplitter.
+
+The easiest way to format is to put a blank line between message sections so that each message
+section is its own "paragraph". Within a paragraph the placement of single new lines does not have
+any effect. Format a paragraph any way you are comfortable. Extra blank lines between paragraphs
+also do not have any effect.
+
+Each paragraph represents a TCP segment. The splitter can be tested by putting multiple sections in
+the same paragraph (splitter must split) or continuing a section in the next paragraph (splitter
+must search and reassemble).
+
+Lines beginning with # are comments. Lines beginning with @ are commands. These do not apply to
+lines in the middle of a paragraph. Lines that begin with $ are insert commands - a special class
+of commands that may be used within a paragraph to insert data into the message buffer.
+
+Commands:
+  @break resets HTTP Inspect data structures and begins a new test. Use it liberally to prevent
+     unrelated tests from interfering with each other.
+  @tcpclose simulates a half-duplex TCP close.
+  @request and @response set the message direction. Applies to subsequent paragraphs until changed.
+     The initial direction is always request and the break command resets the direction to request.
+  @fileset <pathname> specifies a file from which the tool will read data into the message buffer.
+     This may be used to include a zipped or other binary file into a message body. Data is read
+     beginning at the start of the file. The file is closed automatically whenever a new file is
+     set or there is a break command.
+  @fileskip <decimal number> skips over the specified number of bytes in the included file. This
+     must be a positive number. To move backward do a new fileset and skip forward from the
+     beginning.
+  @<decimal number> sets the test number and hence the test output file name. Applies to subsequent
+     sections until changed. Don't reuse numbers.
+
+Insert commands:
+  $fill <decimal number> create a paragraph consisting of <number> octets of auto-fill data
+     ABCDEFGHIJABC ....
+  $fileread <decimal number> read the specified number of bytes from the included file into the
+     message buffer.
+  $h2preface creates the HTTP/2 connection preface "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n"
+  $h2frameheader <frame_type> <frame_length> <flags> <stream_id> generates an HTTP/2 frame header.
+    The frame type may be the frame type name in all lowercase or the numeric frame type code:
+      (data|headers|priority|rst_stream|settings|push_promise|ping|goaway|window_update|
+      continuation|\{0:9\})
+    The frame length is the length of the frame payload, may be in decimal or test tool hex value
+      (\xnn, see below under escape sequence for more details)
+    The frame flags are represented as a single test tool hex byte (\xnn)
+    The stream id is optional. If provided it must be a decimal number. If not included it defaults
+      to 0.
+
+Escape sequences begin with '\'. They may be used within a paragraph or to begin a paragraph.
+  \r - carriage return
+  \n - linefeed
+  \t - tab
+  \\ - backslash
+  \# - #
+  \@ - @
+  \$ - $
+  \xnn or \Xnn - where nn is a two-digit hexadecimal number. Insert an arbitrary 8-bit number as
+     the next character. a-f and A-F are both acceptable.
+
+Data are separated into segments for presentation to the splitter whenever a paragraph ends (blank
+line).
+
+When the inspector aborts the connection (scan() returns StreamSplitter::ABORT) it does not expect
+to receive any more input from stream on that connection in that direction. Accordingly the test
+tool should not send it any more input. A paragraph of test input expected to result in an abort
+should be the last paragraph. The developer should either start a new test (@break, etc.) or at
+least reverse the direction and not send any more data in the original direction. Sending more data
+after an abort is likely to lead to confusing output that has no bearing on the test.
+
+This test tool does not implement the feature of being hardened against bad input. If you write a
+badly formatted or improper test case the program may assert or crash. The responsibility is on the
+developer to get it right.
+
+The test tool is designed for single-threaded operation only.
+
+The test tool is only available when compiled with REG_TEST.

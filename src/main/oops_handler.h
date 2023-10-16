@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -22,6 +22,8 @@
 
 #include <daq_common.h>
 
+#include "packet_io/sfdaq_instance.h"
+
 class OopsHandler
 {
 public:
@@ -31,7 +33,7 @@ public:
     ~OopsHandler() = default;
 
     void tinit();
-    void set_current_message(DAQ_Msg_h cm) { msg = cm; }
+    void set_current_message(DAQ_Msg_h, snort::SFDAQInstance*);
     void tterm();
 
 private:
@@ -45,6 +47,8 @@ private:
     size_t header_len = 0;
     uint8_t data[UINT16_MAX] = { };
     uint32_t data_len = 0;
+    uint8_t priv_data[UINT16_MAX] = { };
+    uint16_t priv_data_len = 0;
 };
 
 #endif

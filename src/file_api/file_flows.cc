@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2012-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -43,6 +43,7 @@
 #include "file_module.h"
 #include "file_service.h"
 #include "file_stats.h"
+#include <thread>
 
 using namespace snort;
 
@@ -97,7 +98,8 @@ void FileFlows::handle_retransmit(Packet* p)
     if (file_policy == nullptr)
         return;
 
-    FileContext* file = get_file_context(pending_file_id, false);
+    bool is_new_context = false;
+    FileContext* file = get_file_context(pending_file_id, false, is_new_context);
     if ((file == nullptr) or (file->verdict != FILE_VERDICT_PENDING))
     {
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p,
@@ -112,7 +114,7 @@ void FileFlows::handle_retransmit(Packet* p)
     {
         if (file_cache)
             file_got = file_cache->get_file(flow, pending_file_id, false);
-        if (file_got and file_got->get_file_data())
+        if (file_got and file_got->get_file_data() and file_got->verdict == FILE_VERDICT_PENDING)
         {
             file_got->user_file_data_mutex.lock();
             file->set_file_data(file_got->get_file_data());
@@ -120,8 +122,10 @@ void FileFlows::handle_retransmit(Packet* p)
             file_got->user_file_data_mutex.unlock();
         }
     }
-
+    file->user_file_data_mutex.lock();
     FileVerdict verdict = file_policy->signature_lookup(p, file);
+    file->user_file_data_mutex.unlock();
+
     if (file_cache)
     {
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
@@ -173,8 +177,10 @@ void FileFlows::set_current_file_context(FileContext* ctx)
         FileContext* file_got = file_cache->get_file(flow, file_id, false);
         if (file_got and file_got->verdict == FILE_VERDICT_PENDING and current_context != file_got)
         {
+            file_got->user_file_data_mutex.lock();
             delete(file_got->get_file_data());
             file_got->set_file_data(nullptr);
+            file_got->user_file_data_mutex.unlock();
         }
     }
     current_context = ctx;
@@ -186,7 +192,8 @@ FileContext* FileFlows::get_current_file_context()
 {
     if (current_file_id)
     {
-        return get_file_context(current_file_id, false);
+        bool is_new_context = false;
+        return get_file_context(current_file_id, false, is_new_context);
     }
     return current_context;
 }
@@ -199,6 +206,7 @@ uint64_t FileFlows::get_new_file_instance()
 
 FileFlows::~FileFlows()
 {
+    std::lock_guard<std::mutex> guard(file_flow_context_mutex);
     FileCache* file_cache = FileService::get_file_cache();
     assert(file_cache);
     uint64_t file_id = 0;
@@ -267,8 +275,11 @@ FileContext* FileFlows::get_partially_processed_context(uint64_t file_id)
 }
 
 FileContext* FileFlows::get_file_context(
-    uint64_t file_id, bool to_create, uint64_t multi_file_processing_id)
+    uint64_t file_id, bool to_create, bool& is_new_context,
+    uint64_t multi_file_processing_id)
 {
+    is_new_context = false;
+
     // First check if this file is currently being processed
     if (!multi_file_processing_id)
         multi_file_processing_id = file_id;
@@ -300,6 +311,7 @@ FileContext* FileFlows::get_file_context(
         else
         {
             context = new FileContext;
+            is_new_context = true;
             partially_processed_contexts[multi_file_processing_id] = context;
             FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
                 "get_file_context:creating new context\n");
@@ -325,10 +337,12 @@ void FileFlows::remove_processed_file_context(uint64_t file_id)
 // Remove file context explicitly
 void FileFlows::remove_processed_file_context(uint64_t file_id, uint64_t multi_file_processing_id)
 {
+    bool is_new_context = false;
+
     if (!multi_file_processing_id)
         multi_file_processing_id = file_id;
 
-    FileContext* context = get_file_context(file_id, false, multi_file_processing_id);
+    FileContext* context = get_file_context(file_id, false, is_new_context, multi_file_processing_id);
     if (context)
     {
         set_current_file_context(context);
@@ -350,6 +364,7 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
     int64_t file_depth = FileService::get_max_file_depth();
     bool continue_processing;
     bool cacheable = file_id or offset;
+    bool is_new_context = false;
 
     if (!multi_file_processing_id)
         multi_file_processing_id = file_id;
@@ -361,7 +376,7 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
         return false;
     }
 
-    FileContext* context = get_file_context(file_id, true, multi_file_processing_id);
+    FileContext* context = get_file_context(file_id, true, is_new_context, multi_file_processing_id);
 
     if (!context)
     {
@@ -387,7 +402,7 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
         context->set_file_id(file_id);
     }
 
-    if ( context->is_cacheable())
+    if (context->is_cacheable() and not is_new_context)
     {
         FileVerdict verdict = FileService::get_file_cache()->cached_verdict_lookup(p, context,
             file_policy);
@@ -481,9 +496,10 @@ bool FileFlows::file_process(Packet* p, const uint8_t* file_data, int data_size,
 bool FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size, uint64_t file_id,
     uint64_t multi_file_processing_id, const uint8_t* url, uint32_t url_size)
 {
+    bool is_new_context = false;
     FileContext* context;
     if (file_id)
-        context = get_file_context(file_id, false, multi_file_processing_id);
+        context = get_file_context(file_id, false, is_new_context, multi_file_processing_id);
     else
         context = get_current_file_context();
     if ( !context )

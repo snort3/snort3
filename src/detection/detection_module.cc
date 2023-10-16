@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -49,17 +49,35 @@ static const TraceOption detection_trace_options[] =
     { "pkt_detect",    TRACE_PKT_DETECTION,     "enable packet detection trace logging" },
     { "opt_tree",      TRACE_OPTION_TREE,       "enable tree option trace logging" },
     { "tag",           TRACE_TAG,               "enable tag trace logging" },
+    { "cont",          TRACE_CONT,              "enable rule continuation trace logging" },
     { nullptr, 0, nullptr }
 };
 #endif
+
+
+static const Parameter extend_to_service[] =
+{
+    { "extend_to_service", Parameter::PT_STRING, nullptr, nullptr,
+      "service to extend to" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter service_extension[] =
+{
+    { "service", Parameter::PT_STRING, nullptr, nullptr,
+      "service to perform extension for" },
+
+    { "extend_to", Parameter::PT_LIST, extend_to_service, nullptr,
+      "comma separated list of services to extend to"},
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
 
 static const Parameter detection_params[] =
 {
     { "allow_missing_so_rules", Parameter::PT_BOOL, nullptr, "false",
       "warn (true) or error (false) when an SO rule stub refers to an SO rule that isn't loaded" },
-
-    { "asn1", Parameter::PT_INT, "0:65535", "0",
-      "maximum decode nodes" },
 
     { "global_default_rule_state", Parameter::PT_BOOL, nullptr, "true",
       "enable or disable rules by default (overridden by ips policy settings)" },
@@ -102,6 +120,13 @@ static const Parameter detection_params[] =
       "enable strict deduplication of rule headers by ports (saves memory, but "
       "loses some speed during config reading)" },
 
+    { "max_continuations_per_flow", Parameter::PT_INT, "0:65535", "1024",
+      "maximum number of continuations stored simultaneously on the flow" },
+
+    { "service_extension", Parameter::PT_LIST, service_extension, nullptr,
+      "List of maps outlining single service extension to multiple services "
+      "(defaults to http:http2,http3; netbios-ssn:dcerpc)" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 /* *INDENT-ON* */
@@ -126,8 +151,48 @@ const TraceOption* DetectionModule::get_trace_options() const
 #endif
 }
 
-bool DetectionModule::end(const char*, int, SnortConfig* sc)
+bool DetectionModule::begin(const char* fqn, int idx, SnortConfig* sc)
 {
+    if ( !strcmp(fqn, "detection.service_extension") and ( idx == 0 ) )
+        sc->service_extension.clear();
+
+    return true;
+}
+
+bool DetectionModule::add_service_extension(SnortConfig* sc)
+{
+     const bool ok = (sc->service_extension.insert({service, extend_to})).second;
+     if (!ok)
+         ParseWarning(WARN_CONF,"Duplicate service entry %s in service extension\n", service.c_str());
+     service.clear();
+     extend_to.clear();
+     return true;
+}
+
+bool DetectionModule::end(const char* fqn, int idx, SnortConfig* sc)
+{
+    if ( !strcmp(fqn, "detection.service_extension") )
+    {
+        if ( idx == 0 and service.empty() and extend_to.empty() )
+            return true;
+
+        if ( service.empty() )
+        {
+            ParseError("An entry in detection.service_extension missing a service name");
+            extend_to.clear();
+            return true;
+        }
+
+        if ( extend_to.empty() )
+        {
+            ParseError("Service %s in detection.service_extension missing extend_to", service.c_str());
+            service.clear();
+            return true;
+        }
+
+        return add_service_extension(sc);
+    }
+
     if ( sc->offload_threads and ThreadConfig::get_instance_max() != 1 )
         ParseError("You can not enable experimental offload with more than one packet thread.");
 
@@ -138,9 +203,6 @@ bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( v.is("allow_missing_so_rules") )
         sc->allow_missing_so_rules = v.get_bool();
-
-    else if ( v.is("asn1") )
-        sc->asn1_mem = v.get_uint16();
 
     else if ( v.is("global_default_rule_state") )
         sc->global_default_rule_state = v.get_bool();
@@ -212,6 +274,15 @@ bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("enable_strict_reduction") )
         sc->enable_strict_reduction = v.get_bool();
+
+    else if ( v.is("max_continuations_per_flow") )
+        sc->max_continuations = v.get_uint16();
+
+    else if ( v.is("service") )
+        service = v.get_string();
+
+    else if ( v.is("extend_to_service") )
+        extend_to.emplace_back(v.get_string());
 
     return true;
 }

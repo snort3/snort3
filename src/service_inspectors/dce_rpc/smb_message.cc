@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -30,7 +30,6 @@
 #include "dce_smb_transaction.h"
 #include "detection/detect.h"
 #include "file_api/file_service.h"
-#include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 #include "trace/trace_api.h"
@@ -1031,13 +1030,11 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
  ********************************************************************/
 static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr)
 {
-    int smb_com = SmbCom(smb_hdr);
-
-    if (smb_com < 0 or smb_com > 255) return nullptr;
+    uint8_t smb_com = SmbCom(smb_hdr);
 
     SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
         DetectionEngine::get_current_packet(),
-	"SMB command: %s (0x%02X)\n", get_smb_com_string(smb_com), smb_com);
+	"SMB command: %s (0x%02X)\n", get_smb_com_string(smb_com), (unsigned)smb_com);
 
     if (smb_com_funcs[smb_com] == nullptr)
     {

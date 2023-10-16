@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -49,6 +49,7 @@ public:
     int get_client_from_server(const char*, uint32_t, AppId&, char*&);
     void finalize_patterns(OdpContext&);
     void reload_patterns();
+    unsigned get_pattern_count();
 
 private:
     static const int PATTERN_PART_MAX = 10;
@@ -57,6 +58,7 @@ private:
     DetectorAppSipPattern* sip_ua_list = nullptr;
     tMlmpTree* sip_server_matcher = nullptr;
     DetectorAppSipPattern* sip_server_list = nullptr;
+    unsigned pattern_count = 0;
 };
 
 #endif

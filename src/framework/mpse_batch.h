@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -62,6 +62,8 @@ public:
 public:  // FIXIT-L privatize
     Mpse* normal_mpse;
     Mpse* offload_mpse;
+    bool normal_is_dup = false;
+    bool offload_is_dup = false;
 };
 
 template<typename BUF = const uint8_t*, typename LEN = unsigned>

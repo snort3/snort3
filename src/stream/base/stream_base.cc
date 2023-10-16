@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -21,6 +21,7 @@
 #endif
 
 #include <functional>
+#include <mutex>
 
 #include "detection/ips_context.h"
 #include "flow/expect_cache.h"
@@ -34,7 +35,9 @@
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
+#include "pub_sub/stream_event_ids.h"
 #include "stream/flush_bucket.h"
+#include "stream/stream.h"
 #include "stream/tcp/tcp_stream_tracker.h"
 
 #include "stream_ha.h"
@@ -49,18 +52,19 @@ using namespace snort;
 THREAD_LOCAL ProfileStats s5PerfStats;
 THREAD_LOCAL FlowControl* flow_con = nullptr;
 
-static BaseStats g_stats;
+std::vector<FlowControl *> crash_dump_flow_control;
+static std::mutex crash_dump_flow_control_mutex;
+
 THREAD_LOCAL BaseStats stream_base_stats;
-THREAD_LOCAL PegCount current_flows_prev;
-THREAD_LOCAL PegCount uni_flows_prev;
-THREAD_LOCAL PegCount uni_ip_flows_prev;
+
 
 // FIXIT-L dependency on stats define in another file
 const PegInfo base_pegs[] =
 {
     { CountType::SUM, "flows", "total sessions" },
     { CountType::SUM, "total_prunes", "total sessions pruned" },
-    { CountType::SUM, "idle_prunes", " sessions pruned due to timeout" },
+	{ CountType::SUM, "idle_prunes_max_flows", " sessions pruned due to pruning timeout since max flows is reached" },
+	{ CountType::SUM, "idle_prunes_proto_timeout", " sessions pruned due to protocol timeout" },
     { CountType::SUM, "excess_prunes", "sessions pruned due to excess" },
     { CountType::SUM, "uni_prunes", "uni sessions pruned" },
     { CountType::SUM, "memcap_prunes", "sessions pruned due to memcap" },
@@ -96,7 +100,8 @@ void base_prep()
 
     stream_base_stats.flows = flow_con->get_flows();
     stream_base_stats.prunes = flow_con->get_total_prunes();
-    stream_base_stats.timeout_prunes = flow_con->get_prunes(PruneReason::IDLE);
+    stream_base_stats.max_flow_prunes = flow_con->get_prunes(PruneReason::IDLE_MAX_FLOWS);
+    stream_base_stats.protocol_timeout_prunes = flow_con->get_prunes(PruneReason::IDLE_PROTOCOL_TIMEOUT);
     stream_base_stats.excess_prunes = flow_con->get_prunes(PruneReason::EXCESS);
     stream_base_stats.uni_prunes = flow_con->get_prunes(PruneReason::UNI);
     stream_base_stats.memcap_prunes = flow_con->get_prunes(PruneReason::MEMCAP);
@@ -122,29 +127,8 @@ void base_prep()
     }
 }
 
-void base_sum()
+void base_reset()
 {
-    sum_stats((PegCount*)&g_stats, (PegCount*)&stream_base_stats,
-        array_size(base_pegs) - 1 - NOW_PEGS_NUM);
-
-    g_stats.current_flows += (int64_t)stream_base_stats.current_flows - (int64_t)current_flows_prev;
-    g_stats.uni_flows += (int64_t)stream_base_stats.uni_flows - (int64_t)uni_flows_prev;
-    g_stats.uni_ip_flows += (int64_t)stream_base_stats.uni_ip_flows - (int64_t)uni_ip_flows_prev;
-
-    base_reset(false);
-}
-
-void base_stats()
-{
-    show_stats((PegCount*)&g_stats, base_pegs, array_size(base_pegs) - 1, MOD_NAME);
-}
-
-void base_reset(bool reset_all)
-{
-    current_flows_prev = stream_base_stats.current_flows;
-    uni_flows_prev = stream_base_stats.uni_flows;
-    uni_ip_flows_prev = stream_base_stats.uni_ip_flows;
-
     memset(&stream_base_stats, 0, sizeof(stream_base_stats));
 
     if ( flow_con )
@@ -154,9 +138,6 @@ void base_reset(bool reset_all)
         if ( exp_cache )
             exp_cache->reset_stats();
     }
-
-    if ( reset_all )
-        memset(&g_stats, 0, sizeof(g_stats));
 }
 
 //-------------------------------------------------------------------------
@@ -184,6 +165,7 @@ class StreamBase : public Inspector
 {
 public:
     StreamBase(const StreamModuleConfig*);
+    bool configure(SnortConfig*) override;
     void show(const SnortConfig*) const override;
 
     void tear_down(SnortConfig*) override;
@@ -200,6 +182,12 @@ public:
 StreamBase::StreamBase(const StreamModuleConfig* c)
 { config = *c; }
 
+bool StreamBase::configure(SnortConfig*)
+{
+    Stream::set_pub_id();
+    return true;
+}
+
 void StreamBase::tear_down(SnortConfig* sc)
 { sc->register_reload_handler(new StreamUnloadReloadResourceManager); }
 
@@ -209,6 +197,11 @@ void StreamBase::tinit()
 
     // this is temp added to suppress the compiler error only
     flow_con = new FlowControl(config.flow_cache_cfg);
+
+    std::unique_lock<std::mutex> flow_control_lock(crash_dump_flow_control_mutex);
+    crash_dump_flow_control.push_back(flow_con);
+    flow_control_lock.unlock();
+
     InspectSsnFunc f;
 
     StreamHAManager::tinit();
@@ -278,7 +271,7 @@ void StreamBase::eval(Packet* p)
             bool new_flow = false;
             flow_con->process(PktType::IP, p, &new_flow);
             if ( new_flow )
-                DataBus::publish(STREAM_IP_NEW_FLOW_EVENT, p);
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::IP_NEW_FLOW, p);
         }
         break;
 
@@ -296,7 +289,7 @@ void StreamBase::eval(Packet* p)
             bool new_flow = false;
             flow_con->process(PktType::UDP, p, &new_flow);
             if ( new_flow )
-                DataBus::publish(STREAM_UDP_NEW_FLOW_EVENT, p);
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::UDP_NEW_FLOW, p);
         }
         break;
 
@@ -307,7 +300,7 @@ void StreamBase::eval(Packet* p)
             if ( !flow_con->process(PktType::ICMP, p, &new_flow) )
                 flow_con->process(PktType::IP, p, &new_flow);
             if ( new_flow )
-                DataBus::publish(STREAM_ICMP_NEW_FLOW_EVENT, p);
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::ICMP_NEW_FLOW, p);
         }
         break;
 

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -27,12 +27,9 @@
 
 #include "framework/data_bus.h"
 
-#define CIP_EVENT_TYPE_CIP_DATA_KEY "cip_event_type_cip_data"
+struct CipEventIds { enum : unsigned { DATA, num_ids }; };
 
-enum CipEventType
-{
-    CIP_EVENT_TYPE_CIP_DATA
-};
+const snort::PubKey cip_pub_key { "cip", CipEventIds::num_ids };
 
 namespace snort
 {
@@ -50,9 +47,11 @@ public:
     const snort::Packet* get_packet() const override
     { return p; }
 
+    const CipEventData* get_event_data()
+    { return event_data; }
 private:
     const snort::Packet* p;
-    const CipEventData* EventData;
+    const CipEventData* event_data;
 };
 
 #endif

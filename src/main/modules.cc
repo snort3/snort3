@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -42,6 +42,7 @@
 #include "framework/module.h"
 #include "host_tracker/host_tracker_module.h"
 #include "host_tracker/host_cache_module.h"
+#include "js_norm/js_norm_module.h"
 #include "latency/latency_module.h"
 #include "log/messages.h"
 #include "managers/module_manager.h"
@@ -56,7 +57,7 @@
 #include "parser/parser.h"
 #include "parser/vars.h"
 #include "payload_injector/payload_injector_module.h"
-#include "profiler/profiler.h"
+#include "profiler/profiler_module.h"
 #include "search_engines/pat_stats.h"
 #include "side_channel/side_channel_module.h"
 #include "sfip/sf_ipvar.h"
@@ -316,164 +317,6 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
         fp->set_queue_limit(v.get_uint32());
 
     return true;
-}
-
-// -----------------------------------------------------------------------------
-// profiler module
-// -----------------------------------------------------------------------------
-
-static const Parameter profiler_time_params[] =
-{
-    { "show", Parameter::PT_BOOL, nullptr, "true",
-      "show module time profile stats" },
-
-    { "count", Parameter::PT_INT, "0:max32", "0",
-      "limit results to count items per level (0 = no limit)" },
-
-    { "sort", Parameter::PT_ENUM,
-      "none | checks | avg_check | total_time ",
-      "total_time", "sort by given field" },
-
-    { "max_depth", Parameter::PT_INT, "-1:255", "-1",
-      "limit depth to max_depth (-1 = no limit)" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-static const Parameter profiler_memory_params[] =
-{
-    { "show", Parameter::PT_BOOL, nullptr, "true",
-      "show module memory profile stats" },
-
-    { "count", Parameter::PT_INT, "0:max32", "0",
-      "limit results to count items per level (0 = no limit)" },
-
-    { "sort", Parameter::PT_ENUM,
-      "none | allocations | total_used | avg_allocation ",
-      "total_used", "sort by given field" },
-
-    { "max_depth", Parameter::PT_INT, "-1:255", "-1",
-      "limit depth to max_depth (-1 = no limit)" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-static const Parameter profiler_rule_params[] =
-{
-    { "show", Parameter::PT_BOOL, nullptr, "true",
-      "show rule time profile stats" },
-
-    { "count", Parameter::PT_INT, "0:max32", "0",
-      "print results to given level (0 = all)" },
-
-    { "sort", Parameter::PT_ENUM,
-      "none | checks | avg_check | total_time | matches | no_matches | "
-      "avg_match | avg_no_match",
-      "total_time", "sort by given field" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-static const Parameter profiler_params[] =
-{
-    { "modules", Parameter::PT_TABLE, profiler_time_params, nullptr,
-      "module time profiling" },
-
-    { "memory", Parameter::PT_TABLE, profiler_memory_params, nullptr,
-      "module memory profiling" },
-
-    { "rules", Parameter::PT_TABLE, profiler_rule_params, nullptr,
-      "rule time profiling" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-#define profiler_help \
-    "configure profiling of rules and/or modules"
-
-template<typename T>
-static bool s_profiler_module_set_max_depth(T& config, Value& v)
-{ config.max_depth = v.get_int16(); return true; }
-
-static bool s_profiler_module_set_max_depth(RuleProfilerConfig&, Value&)
-{ return false; }
-
-template<typename T>
-static bool s_profiler_module_set(T& config, Value& v)
-{
-    if ( v.is("count") )
-        config.count = v.get_uint32();
-
-    else if ( v.is("show") )
-        config.show = v.get_bool();
-
-    else if ( v.is("sort") )
-        config.sort = static_cast<typename T::Sort>(v.get_uint8());
-
-    else if ( v.is("max_depth") )
-        return s_profiler_module_set_max_depth(config, v);
-
-    else
-        return false;
-
-    return true;
-}
-
-class ProfilerModule : public Module
-{
-public:
-    ProfilerModule() : Module("profiler", profiler_help, profiler_params) { }
-
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
-
-    ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
-
-    Usage get_usage() const override
-    { return GLOBAL; }
-};
-
-bool ProfilerModule::set(const char* fqn, Value& v, SnortConfig* sc)
-{
-    const char* spt = "profiler.modules";
-    const char* spm = "profiler.memory";
-    const char* spr = "profiler.rules";
-
-    if ( !strncmp(fqn, spt, strlen(spt)) )
-        return s_profiler_module_set(sc->profiler->time, v);
-
-    else if ( !strncmp(fqn, spm, strlen(spm)) )
-        return s_profiler_module_set(sc->profiler->memory, v);
-
-    else if ( !strncmp(fqn, spr, strlen(spr)) )
-        return s_profiler_module_set(sc->profiler->rule, v);
-
-    return false;
-}
-
-bool ProfilerModule::end(const char*, int, SnortConfig* sc)
-{
-    TimeProfilerStats::set_enabled(sc->profiler->time.show);
-    RuleContext::set_enabled(sc->profiler->rule.show);
-    return true;
-}
-
-ProfileStats* ProfilerModule::get_profile(
-    unsigned index, const char*& name, const char*& parent) const
-{
-    switch ( index )
-    {
-    case 0:
-        name = "total";
-        parent = nullptr;
-        return &totalPerfStats;
-
-    case 1:
-        name = "other";
-        parent = nullptr;
-        return &otherPerfStats;
-    }
-    return nullptr;
 }
 
 //-------------------------------------------------------------------------
@@ -1002,7 +845,7 @@ bool AttributeTableModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter inspection_params[] =
 {
-    { "id", Parameter::PT_INT, "0:65535", "0",
+    { "id", Parameter::PT_INT, "0:max64", "0",
       "correlate policy and events with other items in configuration" },
 
 #ifdef HAVE_UUID
@@ -1028,7 +871,6 @@ class InspectionModule : public Module
 public:
     InspectionModule() : Module("inspection", inspection_help, inspection_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
 
     Usage get_usage() const override
     { return INSPECT; }
@@ -1039,7 +881,7 @@ bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
     InspectionPolicy* p = get_inspection_policy();
 
     if ( v.is("id") )
-        p->user_policy_id = v.get_uint16();
+        p->user_policy_id = v.get_uint64();
 
 #ifdef HAVE_UUID
     else if ( v.is("uuid") )
@@ -1070,15 +912,6 @@ bool InspectionModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("max_aux_ip") )
         sc->max_aux_ip = v.get_int16();
 
-    return true;
-}
-
-bool InspectionModule::end(const char*, int, SnortConfig*)
-{
-    InspectionPolicy* p = get_inspection_policy();
-    NetworkPolicy* np = get_network_parse_policy();
-    assert(np);
-    np->set_user_inspection(p);
     return true;
 }
 
@@ -1140,7 +973,7 @@ static const Parameter ips_params[] =
     { "enable_builtin_rules", Parameter::PT_BOOL, nullptr, "false",
       "enable events from builtin rules w/o stubs" },
 
-    { "id", Parameter::PT_INT, "0:65535", "0",
+    { "id", Parameter::PT_INT, "0:max64", "0",
       "correlate unified2 events with configuration" },
 
     { "include", Parameter::PT_STRING, nullptr, nullptr,
@@ -1206,7 +1039,7 @@ bool IpsModule::set(const char* fqn, Value& v, SnortConfig*)
         p->enable_builtin_rules = v.get_bool();
 
     else if ( v.is("id") )
-        p->user_policy_id = v.get_uint16();
+        p->user_policy_id = v.get_uint64();
 
     else if ( v.is("include") )
         p->include = v.get_string();
@@ -1328,6 +1161,9 @@ static const Parameter process_params[] =
     { "watchdog_timer", Parameter::PT_INT, "0:60", "0",
       "watchdog timer for packet threads (seconds, 0 to disable)" },
 
+    { "watchdog_min_thread_count", Parameter::PT_INT, "1:65535", "1",
+      "minimum unresponsive threads for watchdog to trigger" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1394,6 +1230,9 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("watchdog_timer") )
         sc->set_watchdog(v.get_uint16());
+
+    else if ( v.is("watchdog_min_thread_count") )
+        sc->set_watchdog_min_thread_count(v.get_uint16());
 
     return true;
 }
@@ -2117,6 +1956,7 @@ void module_init()
 
     // these modules should be in ips policy
     ModuleManager::add_module(new EventFilterModule);
+    ModuleManager::add_module(new JSNormModule);
     ModuleManager::add_module(new RateFilterModule);
     ModuleManager::add_module(new SuppressModule);
 

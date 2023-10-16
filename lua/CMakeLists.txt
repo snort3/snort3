@@ -5,6 +5,7 @@ set (LUA_SCRIPTS
     file_magic.rules
     inline.lua
     max_detect.lua
+    sensitive_data.rules
     security.lua
     snort.lua
     snort_defaults.lua

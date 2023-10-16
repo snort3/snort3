@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2004-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -75,7 +75,6 @@
 #include "log/messages.h"
 #include "main/analyzer.h"
 #include "main/snort_config.h"
-#include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq_config.h"
 #include "profiler/profiler_defs.h"

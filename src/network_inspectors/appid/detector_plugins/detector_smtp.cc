@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -126,8 +126,6 @@ static const uint8_t APP_SMTP_THUNDERBIRD[] =  "Thunderbird ";
 static const uint8_t APP_SMTP_MOZILLA[] = "Mozilla";
 static const uint8_t APP_SMTP_THUNDERBIRD_SHORT[] = "Thunderbird/";
 
-static SmtpClientDetector* smtp_client_detector;
-
 SmtpClientDetector::SmtpClientDetector(ClientDiscovery* cdm)
 {
     handler = cdm;
@@ -175,7 +173,6 @@ SmtpClientDetector::SmtpClientDetector(ClientDiscovery* cdm)
         { APP_ID_SMTPS, APPINFO_FLAG_CLIENT_ADDITIONAL }
     };
 
-    smtp_client_detector = this;
     handler->register_detector(name, this, proto);
 }
 
@@ -366,7 +363,10 @@ SMTPDetectorData* SmtpClientDetector::get_common_data(AppIdSession& asd)
         data_add(asd, dd, &smtp_free_state);
 
         if (asd.get_session_flags(APPID_SESSION_DECRYPTED))
+        {
             dd->server.state = SMTP_SERVICE_STATE_HELO;
+            dd->client.flags = CLIENT_FLAG_STARTTLS_SUCCESS;
+        }
         else
             dd->server.state = SMTP_SERVICE_STATE_CONNECTION;
 
@@ -605,6 +605,8 @@ done:
     else
         args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     args.asd.set_client_detected();
+    if (args.asd.get_client_id() == APP_ID_SSL_CLIENT)
+        args.asd.set_client_appid_data(APP_ID_SMTPS, args.change_bits);
     return APPID_SUCCESS;
 }
 
@@ -764,6 +766,9 @@ static inline int smtp_validate_reply(const uint8_t* data, uint16_t* offset, uin
 
 int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
+    if (!smtp_client_detector)
+        return APPID_NOMATCH;
+
     SMTPDetectorData* dd = smtp_client_detector->get_common_data(args.asd);
     if ( !dd )
         return APPID_ENOMEM;
@@ -792,6 +797,7 @@ int SmtpServiceDetector::validate(AppIdDiscoveryArgs& args)
         {
             if (!(dd->client.flags & CLIENT_FLAG_STARTTLS_SUCCESS))
                 goto fail;
+
             goto inprocess;
         }
         if (!fd->code)

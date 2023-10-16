@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -33,7 +33,11 @@
 #include "appid_http_session.h"
 #include "appid_inspector.h"
 #include "appid_session.h"
+#include "detector_plugins/detector_imap.h"
+#include "detector_plugins/detector_kerberos.h"
 #include "detector_plugins/detector_pattern.h"
+#include "detector_plugins/detector_pop3.h"
+#include "detector_plugins/detector_smtp.h"
 #include "host_port_app_cache.h"
 #include "main/snort_config.h"
 #include "log/messages.h"
@@ -63,6 +67,7 @@ static void map_app_names_to_snort_ids(SnortConfig* sc, AppIdConfig& config)
     config.snort_proto_ids[PROTO_INDEX_TFTP] = sc->proto_ref->add("tftp");
     config.snort_proto_ids[PROTO_INDEX_SIP] = sc->proto_ref->add("sip");
     config.snort_proto_ids[PROTO_INDEX_SSH] = sc->proto_ref->add("ssh");
+    config.snort_proto_ids[PROTO_INDEX_CIP] = sc->proto_ref->add("cip");
 }
 
 AppIdConfig::~AppIdConfig()
@@ -92,13 +97,17 @@ void AppIdConfig::show() const
 
 void AppIdContext::pterm()
 {
-    assert(odp_ctxt);
-    odp_ctxt->get_app_info_mgr().cleanup_appid_info_table();
-    delete odp_ctxt;
+    if (odp_ctxt)
+    {
+        odp_ctxt->get_app_info_mgr().cleanup_appid_info_table();
+        delete odp_ctxt;
+    }
 
-    assert(odp_thread_local_ctxt);
-    delete odp_thread_local_ctxt;
-    odp_thread_local_ctxt = nullptr;
+    if (odp_thread_local_ctxt)
+    {
+        delete odp_thread_local_ctxt;
+        odp_thread_local_ctxt = nullptr;
+    }
 }
 
 bool AppIdContext::init_appid(SnortConfig* sc, AppIdInspector& inspector)
@@ -115,6 +124,8 @@ bool AppIdContext::init_appid(SnortConfig* sc, AppIdInspector& inspector)
     {
         odp_ctxt->get_client_disco_mgr().initialize(inspector);
         odp_ctxt->get_service_disco_mgr().initialize(inspector);
+        odp_ctxt->set_client_and_service_detectors();
+
         odp_thread_local_ctxt->initialize(sc, *this, true);
         odp_ctxt->initialize(inspector);
 
@@ -150,6 +161,21 @@ void AppIdContext::create_tp_appid_ctxt()
 void AppIdContext::show() const
 {
     config.show();
+}
+
+unsigned OdpContext::get_pattern_count()
+{
+    return service_pattern_detector->get_pattern_count() +
+        client_pattern_detector->get_pattern_count() +
+        service_disco_mgr.get_pattern_count() +
+        client_disco_mgr.get_pattern_count() +
+        http_matchers.get_pattern_count() +
+        eve_ca_matchers.get_pattern_count() +
+        alpn_matchers.get_pattern_count() +
+        sip_matchers.get_pattern_count() +
+        ssl_matchers.get_pattern_count() +
+        ssh_matchers.get_pattern_count() +
+        dns_matchers.get_pattern_count();
 }
 
 OdpContext::OdpContext(const AppIdConfig& config, SnortConfig* sc)
@@ -190,6 +216,63 @@ void OdpContext::reload()
     ssl_matchers.reload_patterns();
     dns_matchers.reload_patterns();
     alpn_matchers.reload_patterns();
+}
+
+void OdpContext::set_client_and_service_detectors()
+{
+    Pop3ServiceDetector* s_pop = (Pop3ServiceDetector*) service_disco_mgr.get_service_detector("pop3");
+    Pop3ClientDetector* c_pop = (Pop3ClientDetector*) client_disco_mgr.get_client_detector("pop3");
+    if (!s_pop or !c_pop)
+    {
+        ErrorMessage("appid: failed to initialize pop3 detector\n");
+        return;
+    }
+    s_pop->set_client_detector(c_pop);
+    c_pop->set_service_detector(s_pop);
+
+    KerberosServiceDetector* s_krb = (KerberosServiceDetector*) service_disco_mgr.get_service_detector("kerberos");
+    KerberosClientDetector* c_krb = (KerberosClientDetector*) client_disco_mgr.get_client_detector("kerberos");
+    if (!s_krb or !c_krb)
+    {
+        ErrorMessage("appid: failed to initialize kerberos detector\n");
+        return;
+    }
+    s_krb->set_client_detector(c_krb);
+    c_krb->set_service_detector(s_krb);
+
+    SmtpServiceDetector* s_smtp = (SmtpServiceDetector*) service_disco_mgr.get_service_detector("smtp");
+    SmtpClientDetector* c_smtp = (SmtpClientDetector*) client_disco_mgr.get_client_detector("SMTP");
+    if (!s_smtp or !c_smtp)
+    {
+        ErrorMessage("appid: failed to initialize smtp detector\n");
+        return;
+    }
+    s_smtp->set_client_detector(c_smtp);
+
+    ImapServiceDetector* s_imap = (ImapServiceDetector*) service_disco_mgr.get_service_detector("IMAP");
+    ImapClientDetector* c_imap = (ImapClientDetector*) client_disco_mgr.get_client_detector("IMAP");
+    if (!s_imap or !c_imap)
+    {
+        ErrorMessage("appid: failed to initialize imap detector\n");
+        return;
+    }
+    s_imap->set_client_detector(c_imap);
+}
+
+SipServiceDetector* OdpContext::get_sip_service_detector()
+{
+    SipServiceDetector* s_sip = (SipServiceDetector*) service_disco_mgr.get_service_detector("sip");
+    if (!s_sip)
+        ErrorMessage("appid: failed to initialize sip service detector\n");
+    return s_sip;
+}
+
+SipUdpClientDetector* OdpContext::get_sip_client_detector()
+{
+    SipUdpClientDetector* c_sip = (SipUdpClientDetector*) client_disco_mgr.get_client_detector("SIP");
+    if (!c_sip)
+        ErrorMessage("appid: failed to initialize sip client detector\n");
+    return c_sip;
 }
 
 void OdpContext::add_port_service_id(IpProtocol proto, uint16_t port, AppId appid)

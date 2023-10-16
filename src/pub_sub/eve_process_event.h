@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -21,9 +21,7 @@
 #define EVE_PROCESS_EVENT_H
 
 #include <string>
-#include "framework/data_bus.h"
-
-#define EVE_PROCESS_EVENT "eve_process_event"
+#include "pub_sub/external_event_ids.h"
 
 class EveProcessEvent : public snort::DataEvent
 {
@@ -87,7 +85,7 @@ public:
     {
         return is_quic;
     }
-    
+
     bool is_client_process_mapping() const
     {
         return client_process_mapping;

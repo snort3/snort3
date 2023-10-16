@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -22,8 +22,6 @@
 
 #include "actions.h"
 
-#include <cassert>
-
 #include "detection/detect.h"
 #include "managers/action_manager.h"
 #include "parser/parser.h"
@@ -39,7 +37,9 @@ void Actions::pass()
 void Actions::log(Packet* p, const OptTreeNode* otn)
 {
     RuleTreeNode* rtn = getRtnFromOtn(otn);
-    assert(rtn);
+    if (!rtn)
+        return;
+
     CallLogFuncs(p, otn, rtn->listhead);
 }
 
@@ -49,7 +49,8 @@ void Actions::alert(Packet* p, const OptTreeNode* otn)
         return;
 
     RuleTreeNode* rtn = getRtnFromOtn(otn);
-    assert(rtn);
+    if (!rtn)
+        return;
 
     /* Call OptTreeNode specific output functions */
     if (otn->outputFuncs)

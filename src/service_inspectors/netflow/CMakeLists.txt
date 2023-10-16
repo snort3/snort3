@@ -4,6 +4,7 @@ set ( NETFLOW_INCLUDES
     netflow_headers.h
     netflow_module.h
     netflow_record.h
+    netflow.h
 )
 set ( FILE_LIST
     ${NETFLOW_INCLUDES}

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -23,10 +23,9 @@
 #include <memory>
 #include <string>
 
-#include "framework/data_bus.h"
+#include "pub_sub/intrinsic_event_ids.h"
 
 // An opportunistic SSL/TLS session will start from next packet
-#define OPPORTUNISTIC_TLS_EVENT "service_inspector.opportunistic.tls"
 
 namespace snort
 {

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -22,10 +22,8 @@
 
 #include <string>
 
-#include "framework/data_bus.h"
 #include "network_inspectors/appid/appid_debug.h"
-
-#define APPID_DEBUG_LOG_EVENT "appid_debug_log_event"
+#include "pub_sub/appid_event_ids.h"
 
 class AppIdDebugLogEvent : public snort::DataEvent
 {

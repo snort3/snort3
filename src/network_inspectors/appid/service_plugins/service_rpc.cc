@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -95,6 +95,8 @@ enum RPCReplyState
 
 #define PROGRAM_LENGTH 4
 #define VERSION_LENGTH 4
+
+#define RPCB_UNIVERSAL_ADDR_LENGTH 6
 
 #pragma pack(1)
 
@@ -322,6 +324,8 @@ static bool  validate_and_parse_universal_address(string& data, uint32_t &addres
     string tok;
     while (getline(tokenizer, tok, '.'))
     {
+        if (!all_of(tok.begin(), tok.end(), ::isdigit))
+            return false;
         int tmp = stoi(tok);
         if (tmp > 255)
             return false;
@@ -485,15 +489,16 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
                     uint16_t port = 0;
                     data += sizeof(UniversalAddress);
                     string uaddr(data, data + tmp);
-                    if (validate_and_parse_universal_address(uaddr, address, port))
+                    if ((count(uaddr.begin(), uaddr.end(), '.') == (RPCB_UNIVERSAL_ADDR_LENGTH - 1)) and
+                        validate_and_parse_universal_address(uaddr, address, port))
                     {
                         SfIp sip;
                         uint32_t addr = htonl(address);
                         sip.set(&addr, AF_INET);
                         const SfIp* dip = pkt->ptrs.ip_api.get_dst();
-                        AppIdSession* fsession = AppIdSession::create_future_session(
-                            pkt, dip, 0, &sip, port, rd->proto,
-                            asd.config.snort_proto_ids[PROTO_INDEX_SUNRPC], false, false, true);
+                        AppIdSession* fsession = AppIdSession::create_future_session(pkt, dip, 0, &sip,
+                            port, rd->proto, asd.config.snort_proto_ids[PROTO_INDEX_SUNRPC],
+                            asd.get_odp_ctxt(), false, false, true);
 
                         if (fsession)
                         {
@@ -518,9 +523,9 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
                         const SfIp* sip = pkt->ptrs.ip_api.get_src();
                         tmp = ntohl(pmr->port);
 
-                        AppIdSession* pf = AppIdSession::create_future_session(
-                            pkt, dip, 0, sip, (uint16_t)tmp, rd->proto,
-                            asd.config.snort_proto_ids[PROTO_INDEX_SUNRPC], false, false, true);
+                        AppIdSession* pf = AppIdSession::create_future_session(pkt, dip, 0, sip,
+                            (uint16_t)tmp, rd->proto, asd.config.snort_proto_ids[PROTO_INDEX_SUNRPC],
+                            asd.get_odp_ctxt(), false, false, true);
 
                         if (pf)
                         {
@@ -559,7 +564,6 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
 
 int RpcServiceDetector::rpc_udp_validate(AppIdDiscoveryArgs& args)
 {
-    static char subname[64];
     ServiceRPCData* rd;
     AppIdServiceSubtype sub;
     AppIdServiceSubtype* subtype;
@@ -606,6 +610,7 @@ done:
             }
             else if (program)
             {
+                char subname[64];
                 snprintf(subname, sizeof(subname), "(%u)", program);
                 sub.service = subname;
                 subtype = &sub;
@@ -650,7 +655,6 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
     const ServiceRPCCall* call;
     const ServiceRPCReply* reply;
 
-    static char subname[64];
     AppIdServiceSubtype sub;
     AppIdServiceSubtype* subtype;
     uint32_t program = 0;
@@ -953,7 +957,8 @@ inprocess:
             }
             else if (program)
             {
-                sprintf(subname, "(%u)", program);
+                char subname[64];
+                snprintf(subname, sizeof(subname), "(%u)", program);
                 sub.service = subname;
                 subtype = &sub;
             }

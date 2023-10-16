@@ -6,6 +6,12 @@ however, such as content, are still tightly coupled with the code and can
 only be built statically.  The code will hopefully evolve and eliminate
 these cases.
 
+IPS options are not guaranteed to get all they need for evaluation. For example,
+a packet may not have a flow assigned to it, or the flow may not have a gadget
+present. Not all options need specific inputs, so, if one does, that option should
+validate input values.
+Service-only options may not be guaranteed to get a gadget on the flow.
+
 Several options use RangeCheck to implement upper and/or lower bound
 semantics.  The Snort 2X options had various implementations of ranges so
 3X differs in some places.
@@ -31,3 +37,8 @@ for the "replace" content the rule will not match.
 - "replace" works for raw packets only. So, TCP data must either fit
 under the "pkt_data" buffer requirements or one should enable detection
 on TCP payload before reassembly: search_engine.detect_raw_tcp=true.
+
+"js_data" option is used by Enhanced JavaScript Normalizer to access normalized data.
+It's implemented as a generic IPS buffer and follows the JIT approach.
+"js_data" buffer must be specified in the list of buffers available for a particular
+inspector.

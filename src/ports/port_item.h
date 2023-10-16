@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -54,6 +54,7 @@ void PortObjectItemFree(PortObjectItem*);
 PortObjectItem* PortObjectItemDup(PortObjectItem*);
 int PortObjectItemsEqual(PortObjectItem* a, PortObjectItem* b);
 void PortObjectItemPrint(PortObjectItem*, char* dstbuf, int bufsize);
+unsigned PortObjectItemHash(PortObjectItem*, unsigned hash, unsigned scale);
 
 #endif
 

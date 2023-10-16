@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2017-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2017-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -24,8 +24,9 @@
 // by data bus subscribers
 
 #include <list>
+#include <vector>
 
-#include "framework/data_bus.h"
+#include "pub_sub/intrinsic_event_ids.h"
 
 #define EXPECT_EVENT_TYPE_EARLY_SESSION_CREATE_KEY "expect_event_type_early_session_create"
 
@@ -60,6 +61,26 @@ private:
     const snort::Packet* p;
     snort::ExpectFlow* expect_flow;
     const snort::FlowData* flow_data;
+};
+
+#define EXPECT_EVENT_TYPE_HANDLE_FLOWS "expect.handle_flows"
+
+class ExpectedFlowsEvent : public snort::DataEvent
+{
+public:
+    ExpectedFlowsEvent(std::vector<snort::ExpectFlow*>& expected_flows, const snort::Packet& p)
+        : expected_flows(expected_flows), pkt(p)
+    { }
+
+    std::vector<snort::ExpectFlow*>& get_expected_flows()
+    { return expected_flows; }
+
+    const snort::Packet* get_packet() const override
+    { return &pkt; }
+
+private:
+    std::vector<snort::ExpectFlow*>& expected_flows;
+    const snort::Packet& pkt;
 };
 
 #endif

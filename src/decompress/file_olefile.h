@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -180,21 +180,18 @@ public:
         return stream_size;
     }
 
-    FileProperty()
-    {
-        name = nullptr;
-    }
+    FileProperty() = default;
 
 private:
-    char* name;
-    object_type file_type;
-    color_flag color;
-    int32_t lef_sib_id;
-    int32_t rig_sib_id;
-    int32_t root_node_id;
-    char cls_id[16];
-    int32_t starting_sector;
-    int64_t stream_size;
+    char* name = nullptr;
+    object_type file_type = EMPTY;
+    color_flag color = RED;
+    int32_t lef_sib_id = 0;
+    int32_t rig_sib_id = 0;
+    int32_t root_node_id = 0;
+    char cls_id[16] = {};
+    int32_t starting_sector = 0;
+    int64_t stream_size = 0;
 };
 
 class DirectoryList

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -27,6 +27,7 @@
 
 #include "flow/flow_key.h"
 #include "managers/inspector_manager.h"
+#include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
 
 using namespace snort;
@@ -103,8 +104,9 @@ bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, ui
         if ( (flow = protocol_create_session(key)) == nullptr )
             return false;
 
+        flow->flags.ha_flow = true;
         BareDataEvent event;
-        DataBus::publish(STREAM_HA_NEW_FLOW_EVENT, event, flow);
+        DataBus::publish(Stream::get_pub_id(), StreamEventIds::HA_NEW_FLOW, event, flow);
 
         flow->ha_state->clear(FlowHAState::NEW);
         flow->ha_state->add(FlowHAState::STANDBY);
@@ -125,6 +127,7 @@ bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, ui
     }
 
     flow->ssn_state = hac->ssn_state;
+    flow->ssn_state.session_flags &= ~SSNFLAG_ESTABLISHED;  // clear flag for tcp established event to be generated
     flow->flow_state = hac->flow_state;
 
     if ( !flow->ha_state->check_any(FlowHAState::STANDBY) )
@@ -288,3 +291,4 @@ void StreamHAManager::tterm()
         ha_client = nullptr;
     }
 }
+

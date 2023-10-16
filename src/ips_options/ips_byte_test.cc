@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -198,6 +198,9 @@ public:
 
     EvalStatus eval(Cursor&, Packet*) override;
 
+    CursorActionType get_cursor_type() const override
+    { return CAT_READ; }
+
 private:
     ByteTestData config;
 };
@@ -292,12 +295,7 @@ IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
     else
         offset = btd->offset;
 
-    unsigned len = btd->relative_flag ? c.length() : c.size();
-    if (len > btd->bytes_to_extract)
-            len = btd->bytes_to_extract;
-
     ByteTestData extract_config = *btd;
-    extract_config.bytes_to_extract = len;
     extract_config.offset = offset;
 
     uint32_t value = 0;
@@ -383,7 +381,7 @@ static void parse_operator(const char* oper, ByteTestData& idx)
 static const Parameter s_params[] =
 {
     { "~count", Parameter::PT_INT, "1:10", nullptr,
-      "number of bytes to pick up from the buffer" },
+      "number of bytes to pick up from the buffer (string can pick less)" },
 
     { "~operator", Parameter::PT_STRING, nullptr, nullptr,
       "operation to perform to test the value" },
@@ -505,8 +503,8 @@ bool ByteTestModule::set(const char*, Value& v, SnortConfig*)
 
     else if (v.is("~compare"))
     {
-        long n;
-        if (v.strtol(n))
+        unsigned long n;
+        if (v.strtoul(n))
             data.cmp_value = n;
         else
             cmp_var = v.get_string();
@@ -903,8 +901,117 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
             ByteTestOption test_5(byte_test);
             REQUIRE((test_5.eval(current_cursor, &test_packet)) == MATCH);
         }
-    }
 
+        SECTION("bytes_to_extract bigger than amount of bytes left in the buffer")
+        {
+            byte_test.offset = 0;
+            byte_test.offset_var = -1;
+            byte_test.bytes_to_extract = 3;
+            byte_test.string_convert_flag = 0;
+            byte_test.relative_flag = 1;
+            uint8_t buff[] = "Hello world long input";
+            current_cursor.set("hello_world_long_name", buff, 22);
+            current_cursor.set_pos(20);
+            ByteTestOption test_6(byte_test);
+            REQUIRE((test_6.eval(current_cursor, &test_packet)) == NO_MATCH);
+        }
+
+        SECTION("String truncation")
+        {
+            byte_test.cmp_value = 123;
+            byte_test.cmp_value_var = -1;
+            byte_test.bytes_to_extract = 10;
+            byte_test.opcode = ByteTestOper(0);
+            byte_test.offset = 0;
+            byte_test.offset_var = -1;
+            byte_test.string_convert_flag = 1;
+            byte_test.relative_flag = 1;
+            byte_test.bitmask_val = 0;
+            byte_test.not_flag = 0;
+            byte_test.base = 10;
+            uint8_t buff[] = "Hello world long input 123";
+            current_cursor.set("hello_world_long_name", buff, 26);
+            current_cursor.set_pos(23);
+            ByteTestOption test_7(byte_test);
+            REQUIRE((test_7.eval(current_cursor, &test_packet)) == MATCH);
+        }
+
+        SECTION("Negative offset")
+        {
+            SECTION("Cursor on the last byte of buffer")
+            {
+                byte_test.cmp_value = 32;
+                byte_test.cmp_value_var = -1;
+                byte_test.bytes_to_extract = 1;
+                byte_test.opcode = ByteTestOper(0);
+                byte_test.offset = -6;
+                byte_test.offset_var = -1;
+                byte_test.string_convert_flag = 0;
+                byte_test.relative_flag = 1;
+                byte_test.bitmask_val = 0;
+                byte_test.not_flag = 0;
+                uint8_t buff[] = "Hello world long input";
+                current_cursor.set("hello_world_long_name", buff, 22);
+                current_cursor.set_pos(22);
+                ByteTestOption test_8(byte_test);
+                REQUIRE((test_8.eval(current_cursor, &test_packet)) == MATCH);
+            }
+
+            SECTION("Cursor on the last byte of buffer, bytes_to_extract is bigger than offset")
+            {
+                byte_test.bytes_to_extract = 4;
+                byte_test.offset = -3;
+                byte_test.offset_var = -1;
+                byte_test.relative_flag = 1;
+                byte_test.string_convert_flag = 0;
+                uint8_t buff[] = "Hello world long input";
+                current_cursor.set("hello_world_long_name", buff, 22);
+                current_cursor.set_pos(22);
+                ByteTestOption test_9(byte_test);
+                REQUIRE((test_9.eval(current_cursor, &test_packet)) == NO_MATCH);
+            }
+
+            SECTION("Cursor on the last byte of buffer with string flag")
+            {
+                byte_test.cmp_value = 123;
+                byte_test.cmp_value_var = -1;
+                byte_test.bytes_to_extract = 3;
+                byte_test.opcode = ByteTestOper(0);
+                byte_test.offset = -3;
+                byte_test.offset_var = -1;
+                byte_test.string_convert_flag = 1;
+                byte_test.relative_flag = 1;
+                byte_test.bitmask_val = 0;
+                byte_test.not_flag = 0;
+                byte_test.base = 10;
+                uint8_t buff[] = "Hello world long input 123";
+                current_cursor.set("hello_world_long_name", buff, 26);
+                current_cursor.set_pos(26);
+                ByteTestOption test_10(byte_test);
+                REQUIRE((test_10.eval(current_cursor, &test_packet)) == MATCH);
+            }
+
+            SECTION("String truncation")
+            {
+                byte_test.cmp_value = 123;
+                byte_test.cmp_value_var = -1;
+                byte_test.bytes_to_extract = 10;
+                byte_test.opcode = ByteTestOper(0);
+                byte_test.offset = -3;
+                byte_test.offset_var = -1;
+                byte_test.string_convert_flag = 1;
+                byte_test.relative_flag = 1;
+                byte_test.bitmask_val = 0;
+                byte_test.not_flag = 0;
+                byte_test.base = 10;
+                uint8_t buff[] = "Hello world long input 123";
+                current_cursor.set("hello_world_long_name", buff, 26);
+                current_cursor.set_pos(26);
+                ByteTestOption test_11(byte_test);
+                REQUIRE((test_11.eval(current_cursor, &test_packet)) == MATCH);
+            }
+        }
+    }
 }
 
 TEST_CASE("ByteTestModule test", "[ips_byte_test]")
@@ -984,6 +1091,16 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
                     nullptr, "default", "help");
                 value_tmp.set(&param);
                 REQUIRE(module_test.set(nullptr, value_tmp, nullptr) == true);
+            }
+
+            SECTION("Value isn't truncated")
+            {
+                Value value_tmp("4294967295");
+                Parameter param("~compare", snort::Parameter::Type::PT_BOOL,
+                    nullptr, "default", "help");
+                value_tmp.set(&param);
+                REQUIRE(module_test.set(nullptr, value_tmp, nullptr) == true);
+                REQUIRE(module_test.data.cmp_value == 4294967295UL);
             }
         }
 

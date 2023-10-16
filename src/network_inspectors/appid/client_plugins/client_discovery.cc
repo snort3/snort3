@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -90,6 +90,20 @@ void ClientDiscovery::reload_client_patterns()
 {
     tcp_patterns.reload();
     udp_patterns.reload();
+}
+
+unsigned ClientDiscovery::get_pattern_count()
+{
+    return tcp_pattern_count + udp_pattern_count;
+}
+
+ClientDetector* ClientDiscovery::get_client_detector(const std::string& name) const
+{
+    auto det = tcp_detectors.find(name);
+    if (det != tcp_detectors.end())
+        return (ClientDetector*) det->second;
+
+    return nullptr;
 }
 
 /*
@@ -317,6 +331,13 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
             is_discovery_done = true;
             asd.client_disco_state = APPID_DISCO_STATE_STATEFUL;
         }
+    }
+
+    if (asd.is_encrypted_oportunistic_tls_session() and asd.encrypted.client_id > 0)
+    {
+        asd.set_client_id(asd.encrypted.client_id);
+        asd.set_client_detected();
+        asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
     }
 
     if (asd.client_disco_state == APPID_DISCO_STATE_STATEFUL)

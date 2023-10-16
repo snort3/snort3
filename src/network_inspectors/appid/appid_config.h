@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@
 #include "app_info_table.h"
 #include "client_plugins/client_discovery.h"
 #include "client_plugins/eve_ca_patterns.h"
+#include "detector_plugins/cip_patterns.h"
 #include "detector_plugins/dns_patterns.h"
 #include "detector_plugins/http_url_patterns.h"
 #include "detector_plugins/sip_patterns.h"
@@ -63,6 +64,7 @@ enum SnortProtoIdIndex
     PROTO_INDEX_TFTP,
     PROTO_INDEX_SIP,
     PROTO_INDEX_SSH,
+    PROTO_INDEX_CIP,
 
     PROTO_INDEX_MAX
 };
@@ -70,6 +72,8 @@ enum SnortProtoIdIndex
 class AppIdInspector;
 class PatternClientDetector;
 class PatternServiceDetector;
+class SipUdpClientDetector;
+class SipServiceDetector;
 
 class AppIdConfig
 {
@@ -84,6 +88,8 @@ public:
     // after certificate-exchange). Such manual detection is disabled by default (0).
     uint32_t first_decrypted_packet_debug = 0;
     bool log_eve_process_client_mappings = false;
+    bool log_alpn_service_mappings = false;
+    bool log_memory_and_pattern_count = false;
 #endif
     bool log_stats = false;
     uint32_t app_stats_period = 300;
@@ -115,6 +121,9 @@ public:
     bool ftp_userid_disabled = false;
     bool chp_body_collection_disabled = false;
     bool need_reinspection = false;
+    AppId first_pkt_service_id = 0;
+    AppId first_pkt_payload_id = 0;
+    AppId first_pkt_client_id = 0;
     uint32_t chp_body_collection_max = 0;
     uint32_t rtmp_max_packets = 15;
     uint32_t max_tp_flow_depth = 5;
@@ -126,6 +135,8 @@ public:
     uint64_t max_bytes_before_service_fail = MIN_MAX_BYTES_BEFORE_SERVICE_FAIL;
     uint16_t max_packet_before_service_fail = MIN_MAX_PKTS_BEFORE_SERVICE_FAIL;
     uint16_t max_packet_service_fail_ignore_bytes = MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES;
+    FirstPktAppIdDiscovered first_pkt_appid_prefix = NO_APPID_FOUND;
+    bool eve_http_client = true;
 
     OdpContext(const AppIdConfig&, snort::SnortConfig*);
     void initialize(AppIdInspector& inspector);
@@ -162,10 +173,10 @@ public:
         return host_port_cache.add(sc, ip, port, proto, type, appid);
     }
 
-    bool host_first_pkt_add(const snort::SnortConfig* sc, const snort::SfIp* ip, uint16_t port,
+    bool host_first_pkt_add(const snort::SnortConfig* sc, const snort::SfIp* ip, uint32_t* netmask, uint16_t port,
         IpProtocol proto, AppId protocol_appid, AppId client_appid, AppId web_appid, unsigned reinspect)
     {
-        return first_pkt_cache.add_host(sc, ip, port, proto, protocol_appid, client_appid, web_appid, reinspect);
+        return first_pkt_cache.add_host(sc, ip, netmask, port, proto, protocol_appid, client_appid, web_appid, reinspect);
     }
 
     HostAppIdsVal* host_first_pkt_find(const snort::SfIp* ip, uint16_t port, IpProtocol proto)
@@ -181,6 +192,11 @@ public:
     bool length_cache_add(const LengthKey& key, AppId val)
     {
         return length_cache.add(key, val);
+    }
+
+    CipPatternMatchers& get_cip_matchers()
+    {
+        return cip_matchers;
     }
 
     DnsPatternMatchers& get_dns_matchers()
@@ -228,10 +244,14 @@ public:
         return alpn_matchers;
     }
 
+    unsigned get_pattern_count();
     void add_port_service_id(IpProtocol, uint16_t, AppId);
     void add_protocol_service_id(IpProtocol, AppId);
     AppId get_port_service_id(IpProtocol, uint16_t);
     AppId get_protocol_service_id(IpProtocol);
+    void set_client_and_service_detectors();
+    SipUdpClientDetector* get_sip_client_detector();
+    SipServiceDetector* get_sip_service_detector();
 
 private:
     AppInfoManager app_info_mgr;
@@ -239,6 +259,7 @@ private:
     HostPortCache host_port_cache;
     HostPortCache first_pkt_cache;
     LengthCache length_cache;
+    CipPatternMatchers cip_matchers;
     DnsPatternMatchers dns_matchers;
     HttpPatternMatchers http_matchers;
     EveCaPatternMatchers eve_ca_matchers;

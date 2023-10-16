@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 // Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 // Copyright (C) 2000,2001 Andrew R. Baker <andrewb@uab.edu>
@@ -19,24 +19,11 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-/* alert_fast
- *
- * Purpose:  output plugin for fast alerting
- *
- * Arguments:  alert file
- *
- * Effect:
- *
- * Alerts are written to a file in the snort fast alert format
- *
- * Comments:   Allows use of fast alerts with other output plugin types
- *
- */
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
+#include <mutex>
 #include <vector>
 
 #include "detection/detection_engine.h"
@@ -67,6 +54,7 @@ using namespace std;
 #define FAST_BUF (4*K_BYTES)
 
 static THREAD_LOCAL TextLog* fast_log = nullptr;
+static once_flag init_flag;
 
 #define S_NAME "alert_fast"
 #define F_NAME S_NAME ".txt"
@@ -133,6 +121,7 @@ bool FastModule::begin(const char*, int, SnortConfig*)
 
 //-------------------------------------------------------------------------
 // helper
+//-------------------------------------------------------------------------
 
 static void load_buf_ids(
     Inspector* ins, const std::vector<const char*>& keys, std::vector<unsigned>& ids)
@@ -144,6 +133,22 @@ static void load_buf_ids(
         ids.emplace_back(id);
     }
 }
+
+static void ObfuscateLogNetData(TextLog* log, const uint8_t* data, const int len,
+    Packet* p, const char* buf_name, const char* buf_key, const char* ins_name)
+{
+    // FIXIT-P avoid string copy
+    std::string buf((const char*)data, len);
+    auto obf = p->obfuscator;
+
+    if ( obf and obf->select_buffer(buf_key) )
+        for ( const auto& b : *obf )
+            buf.replace(b.offset, b.length, b.length, obf->get_mask_char());
+
+    LogNetData(log, (const uint8_t*)buf.c_str(), len, p, buf_name, ins_name);
+}
+
+using BufferIds = std::vector<unsigned>;
 
 //-------------------------------------------------------------------------
 // logger stuff
@@ -162,42 +167,55 @@ public:
 private:
     void log_data(Packet*, const Event&);
 
+    static void set_buffer_ids(Inspector*);
+    const BufferIds& get_buffer_ids(Inspector*, Packet*);
+
 private:
     string file;
     unsigned long limit;
     bool packet;
 
-    std::vector<unsigned> req_ids;
-    std::vector<unsigned> rsp_ids;
+    static std::vector<unsigned> req_ids;
+    static std::vector<unsigned> rsp_ids;
 };
+
+std::vector<unsigned> FastLogger::req_ids;
+std::vector<unsigned> FastLogger::rsp_ids;
 
 FastLogger::FastLogger(FastModule* m)
 {
     file = m->file ? F_NAME : "stdout";
     limit = m->limit;
     packet = m->packet;
+}
 
-    //-----------------------------------------------------------------
-    // FIXIT-L generalize buffer sets when other inspectors get smarter
-    // this is only applicable to http_inspect
-    // could be configurable; and should be should be shared with u2
-
-    Inspector* ins = InspectorManager::get_inspector("http_inspect");
-
-    if ( !ins )
-        return;
-
+//-----------------------------------------------------------------
+// FIXIT-L generalize buffer sets when other inspectors get smarter
+// this is only applicable to http_inspect
+// could be configurable; and should be should be shared with u2
+//-----------------------------------------------------------------
+void FastLogger::set_buffer_ids(Inspector* gadget)
+{
     std::vector<const char*> req
-    { "http_method", "http_version", "http_uri", "http_header", "http_cookie",
-      "http_client_body" };
+    { "http_method", "http_version", "http_uri", "http_header", "http_cookie", "http_client_body" };
 
     std::vector<const char*> rsp
-    { "http_version", "http_stat_code", "http_stat_msg", "http_uri", "http_header",
-      "http_cookie" };
-    //-----------------------------------------------------------------
+    { "http_version", "http_stat_code", "http_stat_msg", "http_uri", "http_header", "http_cookie" };
 
-    load_buf_ids(ins, req, req_ids);
-    load_buf_ids(ins, rsp, rsp_ids);
+    load_buf_ids(gadget, req, req_ids);
+    load_buf_ids(gadget, rsp, rsp_ids);
+}
+
+const BufferIds& FastLogger::get_buffer_ids(Inspector* gadget, Packet* p)
+{
+    // lazy init required because loggers don't have a configure (yet)
+    call_once(init_flag, set_buffer_ids, gadget);
+
+    InspectionBuffer buf;
+    const std::vector<unsigned>& idv =
+            gadget->get_buf(HttpEnums::HTTP_BUFFER_RAW_STATUS, p, buf) ? rsp_ids : req_ids;
+
+    return idv;
 }
 
 void FastLogger::open()
@@ -252,11 +270,12 @@ void FastLogger::alert(Packet* p, const char* msg, const Event& event)
 // available if a response was processed by http_inspect
 void FastLogger::log_data(Packet* p, const Event& event)
 {
-    bool log_pkt = true;
-
     TextLog_NewLine(fast_log);
+
+    bool log_pkt = true;
     const char* ins_name = "snort";
     Inspector* gadget = nullptr;
+
     if ( p->flow and p->flow->session )
     {
         snort::StreamSplitter* ss = p->flow->session->get_splitter(p->is_from_client());
@@ -267,22 +286,20 @@ void FastLogger::log_data(Packet* p, const Event& event)
                 ins_name = gadget->get_name();
         }
     }
-    const char** buffers = gadget ? gadget->get_api()->buffers : nullptr;
+    const char** buffers = (gadget and !strcmp(ins_name, "http_inspect")) ? gadget->get_api()->buffers : nullptr;
 
     if ( buffers )
     {
-        InspectionBuffer buf;
-        const std::vector<unsigned>& idv = gadget->get_buf(HttpEnums::HTTP_BUFFER_RAW_STATUS,
-            p, buf) ? rsp_ids : req_ids;
-        bool rsp = (idv == rsp_ids);
+        const BufferIds& idv = get_buffer_ids(gadget, p);
 
         for ( auto id : idv )
         {
+            InspectionBuffer buf;
 
             if ( gadget->get_buf(id, p, buf) )
-                LogNetData(fast_log, buf.data, buf.len, p, buffers[id-1], ins_name);
+                ObfuscateLogNetData(fast_log, buf.data, buf.len, p, buffers[id-1], buffers[id-1], ins_name);
 
-            log_pkt = rsp;
+            log_pkt = (idv == rsp_ids);
         }
     }
     else if ( gadget )
@@ -300,19 +317,8 @@ void FastLogger::log_data(Packet* p, const Event& event)
     }
     if (p->has_ip())
         LogIPPkt(fast_log, p);
-
-    else if ( log_pkt and p->obfuscator )
-    {
-        // FIXIT-P avoid string copy
-        std::string buf((const char*)p->data, p->dsize);
-
-        for ( const auto& b : *p->obfuscator )
-            buf.replace(b.offset, b.length, b.length, p->obfuscator->get_mask_char());
-
-        LogNetData(fast_log, (const uint8_t*)buf.c_str(), p->dsize, p, nullptr, ins_name);
-    }
     else if ( log_pkt )
-        LogNetData(fast_log, p->data, p->dsize, p, nullptr, ins_name);
+        ObfuscateLogNetData(fast_log, p->data, p->dsize, p, nullptr, "pkt_data", ins_name);
 
     DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
 

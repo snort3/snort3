@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -141,7 +141,7 @@ void DCE2_SmbCleanFileTracker(DCE2_SmbFileTracker*);
 void DCE2_SmbFileTrackerDataFree(void*);
 void DCE2_SmbCleanSessionFileTracker(DCE2_SmbSsnData*, DCE2_SmbFileTracker*);
 void DCE2_SmbRemoveFileTrackerFromRequestTrackers(DCE2_SmbSsnData*,
-    DCE2_SmbFileTracker*);
+    const DCE2_SmbFileTracker*);
 DCE2_SmbFileTracker* DCE2_SmbDequeueTmpFileTracker(DCE2_SmbSsnData*,
     DCE2_SmbRequestTracker*, const uint16_t);
 DCE2_SmbFileTracker* DCE2_SmbNewFileTracker(DCE2_SmbSsnData*,

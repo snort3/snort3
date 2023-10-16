@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -284,6 +284,7 @@ public:
 
     int finalize_patterns();
     void reload_patterns();
+    unsigned get_pattern_count();
     void insert_chp_pattern(CHPListElement*);
     void insert_http_pattern(enum httpPatternType, DetectorHTTPPattern&);
     void remove_http_patterns_for_id(AppId);
@@ -327,6 +328,7 @@ private:
     snort::SearchTool chp_matchers[NUM_HTTP_FIELDS];
     tMlmpTree* host_url_matcher = nullptr;
     tMlmpTree* rtmp_host_url_matcher = nullptr;
+    unsigned chp_pattern_count = 0;
 
     void free_chp_app_elements();
     int add_mlmp_pattern(tMlmpTree* matcher, DetectorHTTPPattern& pattern );

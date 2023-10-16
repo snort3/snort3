@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2007-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -25,7 +25,10 @@
 
 #include "ssl.h"
 
+#include <openssl/x509.h>
+
 #include "packet.h"
+#include "utils/util.h"
 
 #define THREE_BYTE_LEN(x) ((x)[2] | (x)[1] << 8 | (x)[0] << 16)
 
@@ -39,6 +42,36 @@
 #define SSL3_SECOND_BYTE 0x03
 #define SSL2_CHELLO_BYTE 0x01
 #define SSL2_SHELLO_BYTE 0x04
+
+SSLV3ClientHelloData::~SSLV3ClientHelloData()
+{
+    snort_free(host_name);
+}
+
+void SSLV3ClientHelloData::clear()
+{
+    snort_free(host_name);
+    host_name = nullptr;
+}
+
+SSLV3ServerCertData::~SSLV3ServerCertData()
+{
+    snort_free(certs_data);
+    snort_free(common_name);
+    snort_free(org_name);
+}
+
+void SSLV3ServerCertData::clear()
+{
+    snort_free(certs_data);
+    certs_data = nullptr;
+
+    snort_free(common_name);
+    common_name = nullptr;
+
+    snort_free(org_name);
+    org_name = nullptr;
+}
 
 static uint32_t SSL_decode_version_v3(uint8_t major, uint8_t minor)
 {
@@ -69,9 +102,11 @@ static uint32_t SSL_decode_version_v3(uint8_t major, uint8_t minor)
 }
 
 static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
-    uint32_t cur_flags, uint32_t pkt_flags)
+    uint32_t cur_flags, uint32_t pkt_flags, SSLV3ClientHelloData* client_hello_data,
+    SSLV3ServerCertData* server_cert_data)
 {
     const SSL_handshake_hello_t* hello;
+    const ServiceSSLV3CertsRecord* certs_rec;
     uint32_t retval = 0;
 
     while (size > 0)
@@ -113,6 +148,8 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
 
             hello = (const SSL_handshake_hello_t*)handshake;
             retval |= SSL_decode_version_v3(hello->major, hello->minor);
+
+            snort::parse_client_hello_data((const uint8_t*)handshake, size + SSL_HS_PAYLOAD_OFFSET, client_hello_data);
 
             break;
 
@@ -160,6 +197,16 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
             break;
 
         case SSL_HS_CERT:
+            if (server_cert_data != nullptr)
+            {
+                certs_rec = (const ServiceSSLV3CertsRecord*)handshake;
+                server_cert_data->certs_len = ntoh3(certs_rec->certs_len);
+                server_cert_data->certs_data = (uint8_t*)snort_alloc(server_cert_data->certs_len);
+                memcpy(server_cert_data->certs_data, pkt + sizeof(certs_rec->certs_len), server_cert_data->certs_len);
+
+                snort::parse_server_certificates(server_cert_data);
+            }
+
             retval |= SSL_CERTIFICATE_FLAG;
             break;
 
@@ -190,7 +237,8 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
 }
 
 static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
-    uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len, uint32_t* info_flags)
+    uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len, uint32_t* info_flags,
+    SSLV3ClientHelloData* client_hello_data, SSLV3ServerCertData* server_cert_data)
 {
     uint32_t retval = 0;
     uint16_t hblen;
@@ -284,7 +332,7 @@ static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
             if (!(retval & SSL_CHANGE_CIPHER_FLAG))
             {
                 int hsize = size < (int)reclen ? size : (int)reclen;
-                retval |= SSL_decode_handshake_v3(pkt, hsize, retval, pkt_flags);
+                retval |= SSL_decode_handshake_v3(pkt, hsize, retval, pkt_flags, client_hello_data, server_cert_data);
             }
             else if (ccs)
             {
@@ -427,7 +475,8 @@ namespace snort
 {
 uint32_t SSL_decode(
     const uint8_t* pkt, int size, uint32_t pkt_flags, uint32_t prev_flags,
-    uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len, uint32_t* info_flags)
+    uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len, uint32_t* info_flags,
+    SSLV3ClientHelloData* client_hello_data, SSLV3ServerCertData* server_cert_data)
 {
     if (!pkt || !size)
         return SSL_ARG_ERROR_FLAG;
@@ -448,7 +497,8 @@ uint32_t SSL_decode(
          * SSLv2 as TLS,the decoder will either catch a bad type, bad version, or
          * indicate that it is truncated. */
         if (size == 5)
-            return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len, info_flags);
+            return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len, info_flags,
+                client_hello_data, server_cert_data);
 
         /* At this point, 'size' has to be > 5 */
 
@@ -495,7 +545,8 @@ uint32_t SSL_decode(
         }
     }
 
-    return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len, info_flags);
+    return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len, info_flags,
+        client_hello_data, server_cert_data);
 }
 
 /* very simplistic - just enough to say this is binary data - the rules will make a final
@@ -546,7 +597,7 @@ bool IsTlsServerHello(const uint8_t* ptr, const uint8_t* end)
 
 bool IsSSL(const uint8_t* ptr, int len, int pkt_flags)
 {
-    uint32_t ssl_flags = SSL_decode(ptr, len, pkt_flags, 0, nullptr, nullptr, 0, nullptr);
+    uint32_t ssl_flags = SSL_decode(ptr, len, pkt_flags, 0, nullptr, nullptr, 0, nullptr, nullptr);
 
     if ((ssl_flags != SSL_ARG_ERROR_FLAG) &&
         !(ssl_flags & SSL_ERROR_FLAGS))
@@ -555,6 +606,169 @@ bool IsSSL(const uint8_t* ptr, int len, int pkt_flags)
     }
 
     return false;
+}
+
+void parse_client_hello_data(const uint8_t* pkt, uint16_t size, SSLV3ClientHelloData* client_hello_data)
+{
+    if (client_hello_data == nullptr)
+        return;
+
+    if (size < sizeof(ServiceSSLV3Record))
+        return;
+    const ServiceSSLV3Record* rec = (const ServiceSSLV3Record*)pkt;
+    uint16_t ver = ntohs(rec->version);
+    if (rec->type != SSLV3RecordType::CLIENT_HELLO || (ver != 0x0300 && ver != 0x0301 && ver != 0x0302 &&
+        ver != 0x0303) || rec->length_msb)
+    {
+        return;
+    }
+    unsigned length = ntohs(rec->length) + offsetof(ServiceSSLV3Record, version);
+    if (size < length)
+        return;
+    pkt += sizeof(ServiceSSLV3Record);
+    size -= sizeof(ServiceSSLV3Record);
+
+    /* Session ID (1-byte length). */
+    if (size < 1)
+        return;
+    length = *((const uint8_t*)pkt);
+    pkt += length + 1;
+    if (size < (length + 1))
+        return;
+    size -= length + 1;
+
+    /* Cipher Suites (2-byte length). */
+    if (size < 2)
+        return;
+    length = ntohs(*((const uint16_t*)pkt));
+    pkt += length + 2;
+    if (size < (length + 2))
+        return;
+    size -= length + 2;
+
+    /* Compression Methods (1-byte length). */
+    if (size < 1)
+        return;
+    length = *((const uint8_t*)pkt);
+    pkt += length + 1;
+    if (size < (length + 1))
+        return;
+    size -= length + 1;
+
+    /* Extensions (2-byte length) */
+    if (size < 2)
+        return;
+    length = ntohs(*((const uint16_t*)pkt));
+    pkt += 2;
+    size -= 2;
+    if (size < length)
+        return;
+
+    /* We need at least type (2 bytes) and length (2 bytes) in the extension. */
+    while (length >= 4)
+    {
+        const ServiceSSLV3ExtensionServerName* ext = (const ServiceSSLV3ExtensionServerName*)pkt;
+        if (ntohs(ext->type) == SSL_EXT_SERVER_NAME)
+        {
+            /* Found server host name. */
+            if (length < sizeof(ServiceSSLV3ExtensionServerName))
+                return;
+
+            unsigned len = ntohs(ext->string_length);
+            if ((length - sizeof(ServiceSSLV3ExtensionServerName)) < len)
+                return;
+
+            const uint8_t* str = pkt + offsetof(ServiceSSLV3ExtensionServerName, string_length) +
+                sizeof(ext->string_length);
+            client_hello_data->host_name = snort_strndup((const char*)str, len);
+            return;
+        }
+
+        unsigned len = ntohs(ext->length) + offsetof(ServiceSSLV3ExtensionServerName, list_length);
+        if (len > length)
+            return;
+
+        pkt += len;
+        length -= len;
+    }
+}
+
+bool parse_server_certificates(SSLV3ServerCertData* server_cert_data)
+{
+    if (!server_cert_data->certs_data or !server_cert_data->certs_len)
+        return false;
+
+    char* common_name = nullptr;
+    char* org_name = nullptr;
+    const uint8_t* data = server_cert_data->certs_data;
+    int len = server_cert_data->certs_len;
+    int common_name_len = 0;
+    int org_name_len  = 0;
+
+    while (len > 0 and !(common_name and org_name))
+    {
+        X509* cert = nullptr;
+        X509_NAME* cert_name = nullptr;
+
+        int cert_len = ntoh3(data);
+        data += 3;
+        len -= 3;
+        if (len < cert_len)
+            return false;
+
+        /* d2i_X509() increments the data ptr for us. */
+        cert = d2i_X509(nullptr, (const unsigned char**)&data, cert_len);
+        len -= cert_len;
+        if (!cert)
+            return false;
+
+        if (nullptr == (cert_name = X509_get_subject_name(cert)))
+        {
+            X509_free(cert);
+            continue;
+        }
+
+        if (!common_name)
+        {
+            int lastpos = -1;
+            lastpos = X509_NAME_get_index_by_NID(cert_name, NID_commonName, lastpos);
+            if (lastpos != -1)
+            {
+                X509_NAME_ENTRY* e = X509_NAME_get_entry(cert_name, lastpos);
+                const unsigned char* str_data = ASN1_STRING_get0_data(X509_NAME_ENTRY_get_data(e));
+                int length = strlen((const char*)str_data);
+
+                bool wildcard = false;
+                if ((wildcard = (length > 2 and *str_data == '*' and *(str_data + 1) == '.')))
+                    length -= 2; // remove leading *.
+
+                common_name_len = length;
+                common_name = snort_strndup((const char*)(str_data + (wildcard ? 2 : 0)), common_name_len);
+
+                org_name_len = length;
+                org_name = snort_strndup((const char*)(str_data + (wildcard ? 2 : 0)), org_name_len);
+            }
+        }
+
+        cert_name = nullptr;
+        X509_free(cert);
+    }
+
+    if (common_name)
+    {
+        server_cert_data->common_name = common_name;
+        server_cert_data->common_name_strlen = common_name_len;
+
+        server_cert_data->org_name = org_name;
+        server_cert_data->org_name_strlen = org_name_len;
+    }
+
+    /* No longer need entire certificates. We have what we came for. */
+    snort_free(server_cert_data->certs_data);
+    server_cert_data->certs_data = nullptr;
+    server_cert_data->certs_len = 0;
+
+    return true;
 }
 
 } // namespace snort

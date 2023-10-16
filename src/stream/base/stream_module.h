@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -56,7 +56,8 @@ struct BaseStats
 {
      PegCount flows;
      PegCount prunes;
-     PegCount timeout_prunes;
+     PegCount max_flow_prunes;
+     PegCount protocol_timeout_prunes;
      PegCount excess_prunes;
      PegCount uni_prunes;
      PegCount memcap_prunes;
@@ -159,9 +160,8 @@ public:
     unsigned get_gid() const override;
     const snort::RuleMap* get_rules() const override;
 
-    void prep_counts() override;
+    void prep_counts(bool dump_stats) override;
     void sum_stats(bool) override;
-    void show_stats() override;
     void reset_stats() override;
 
     bool counts_need_prep() const override
@@ -178,8 +178,6 @@ private:
 };
 
 extern void base_prep();
-extern void base_sum();
-extern void base_stats();
-extern void base_reset(bool reset_all=true);
+extern void base_reset();
 
 #endif

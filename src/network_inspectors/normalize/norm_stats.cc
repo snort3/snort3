@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2010-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -58,7 +58,7 @@ const PegInfo norm_names[] =
     { CountType::SUM, "tcp_ts_nop", "timestamp options cleared" },
     { CountType::SUM, "tcp_ips_data", "normalized segments" },
     { CountType::SUM, "tcp_block", "blocked segments" },
-    
+
     { CountType::END, nullptr, nullptr }
 };
 

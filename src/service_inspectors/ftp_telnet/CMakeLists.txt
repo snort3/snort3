@@ -17,8 +17,8 @@ set (FILE_LIST
     ftp_print.cc
     ftp_print.h
     ftp_server.h
-    ftp_splitter.h
-    ftp_splitter.cc
+    telnet_splitter.h
+    telnet_splitter.cc
     ftpdata_splitter.h
     ftpdata_splitter.cc
     ftpp_return_codes.h

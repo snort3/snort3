@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ typedef unsigned char uuid_t[16];
 #endif
 
 #include <algorithm>
+#include <climits>
 #include <map>
 #include <memory>
 #include <unordered_map>
@@ -51,11 +52,12 @@ struct SnortConfig;
 
 struct _daq_flow_stats;
 struct _daq_pkt_hdr;
+struct JSNormConfig;
 struct PortTable;
 struct vartable_t;
 struct sfip_var_t;
 
-#define UNDEFINED_USER_POLICY_ID 65536
+#define UNDEFINED_NETWORK_USER_POLICY_ID UINT64_MAX
 
 typedef unsigned int PolicyId;
 typedef snort::GHash PortVarTable;
@@ -93,7 +95,7 @@ SO_PUBLIC void set_ips_policy(IpsPolicy*);
 
 SO_PUBLIC NetworkPolicy* get_default_network_policy(const snort::SnortConfig*);
 // Based on currently set network policy
-SO_PUBLIC InspectionPolicy* get_user_inspection_policy(unsigned policy_id);
+SO_PUBLIC InspectionPolicy* get_user_inspection_policy(uint64_t policy_id);
 
 SO_PUBLIC IpsPolicy* get_ips_policy(const snort::SnortConfig*, unsigned i = 0);
 // Based on currently set network policy
@@ -149,12 +151,14 @@ public:
 public:
     PolicyId policy_id = 0;
     PolicyMode policy_mode = POLICY_MODE__MAX;
-    uint32_t user_policy_id = 0;
+    uint64_t user_policy_id = 0;
     uuid_t uuid{};
 
     struct FrameworkPolicy* framework_policy;
     snort::DataBus dbus;
     bool cloned;
+
+    JSNormConfig* jsn_config = nullptr;
 
 private:
     void init(InspectionPolicy* old_inspection_policy);
@@ -179,7 +183,8 @@ public:
     { return i < inspection_policy.size() ? inspection_policy[i] : nullptr; }
     unsigned inspection_policy_count()
     { return inspection_policy.size(); }
-    InspectionPolicy* get_user_inspection_policy(unsigned user_id);
+    void setup_inspection_policies();
+    InspectionPolicy* get_user_inspection_policy(uint64_t user_id) const;
     void set_user_inspection(InspectionPolicy* p)
     { user_inspection[p->user_policy_id] = p; }
 
@@ -213,10 +218,10 @@ public:
     snort::DataBus dbus;
 
     std::vector<InspectionPolicy*> inspection_policy;
-    std::unordered_map<unsigned, InspectionPolicy*> user_inspection;
+    std::unordered_map<uint64_t, InspectionPolicy*> user_inspection;
 
     PolicyId policy_id = 0;
-    uint32_t user_policy_id = 0;
+    uint64_t user_policy_id = 0;
     PolicyId default_ips_policy_id = 0;
 
     // minimum possible (allows all but errors to pass by default)
@@ -246,7 +251,7 @@ public:
 
 public:
     PolicyId policy_id;
-    uint32_t user_policy_id = 0;
+    uint64_t user_policy_id = 0;
     uuid_t uuid{};
 
     PolicyMode policy_mode = POLICY_MODE__MAX;
@@ -319,9 +324,9 @@ public:
     void set_user_ips(IpsPolicy* p)
     { user_ips[p->user_policy_id] = p; }
 
-    NetworkPolicy* get_user_network(unsigned user_id);
+    NetworkPolicy* get_user_network(uint64_t user_id) const;
 
-    IpsPolicy* get_user_ips(unsigned user_id)
+    IpsPolicy* get_user_ips(uint64_t user_id)
     {
         auto it = user_ips.find(user_id);
         return it == user_ips.end() ? nullptr : it->second;
@@ -384,8 +389,8 @@ private:
     IpsPolicy* empty_ips_policy;
 
     std::unordered_map<Shell*, std::shared_ptr<PolicyTuple>> shell_map;
-    std::unordered_map<unsigned, NetworkPolicy*> user_network;
-    std::unordered_map<unsigned, IpsPolicy*> user_ips;
+    std::unordered_map<uint64_t, NetworkPolicy*> user_network;
+    std::unordered_map<uint64_t, IpsPolicy*> user_ips;
 
     snort::PolicySelector* selector = nullptr;
     SingleInstanceInspectorPolicy* file_id;

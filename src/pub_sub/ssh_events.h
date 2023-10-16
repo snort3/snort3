@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -23,16 +23,21 @@
 // This event allows the SSH service inspector to publish extracted metadata
 // for use by data bus subscribers
 
+#include "framework/data_bus.h"
 #include "service_inspectors/ssh/ssh.h"
 
-#define SSH_EVENT "ssh_event"
+struct  SshEventIds { enum : unsigned { STATE_CHANGE, num_ids }; };
 
-enum SshEventType {
+const snort::PubKey ssh_pub_key { "ssh", SshEventIds::num_ids };
+
+enum SshEventType
+{
     SSH_VERSION_STRING,
     SSH_VALIDATION
 };
 
-enum SshValidationResult {
+enum SshValidationResult
+{
     SSH_NOT_FINISHED,
     SSH_VALID_KEXINIT,
     SSH_INVALID_VERSION,

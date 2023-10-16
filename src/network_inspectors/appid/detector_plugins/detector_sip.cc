@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -108,7 +108,6 @@ SipUdpClientDetector::SipUdpClientDetector(ClientDiscovery* cdm)
         { APP_ID_SIP, APPINFO_FLAG_CLIENT_ADDITIONAL | APPINFO_FLAG_CLIENT_USER },
     };
 
-    SipEventHandler::set_client(this);
     handler->register_detector(name, this, proto);
 }
 
@@ -179,15 +178,15 @@ struct ServiceSIPData
 void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, const SfIp* cliIp,
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol protocol)
 {
-    AppIdSession* fp = AppIdSession::create_future_session(
-        pkt, cliIp, cliPort, srvIp, srvPort, protocol,
-        asd.config.snort_proto_ids[PROTO_INDEX_SIP], false, true);
+    OdpContext& odp_ctxt = asd.get_odp_ctxt();
+    AppIdSession* fp = AppIdSession::create_future_session(pkt, cliIp, cliPort, srvIp, srvPort, protocol,
+        asd.config.snort_proto_ids[PROTO_INDEX_SIP], odp_ctxt, false, true);
 
     if ( fp )
     {
         fp->set_client_id(asd.get_client_id());
         fp->set_payload_id(asd.get_payload_id());
-        fp->set_service_id(APP_ID_RTP, asd.get_odp_ctxt());
+        fp->set_service_id(APP_ID_RTP, odp_ctxt);
 
         // FIXIT-M : snort 2.9.x updated the flag to APPID_SESSION_EXPECTED_EVALUATE.
         // Check if it is needed here as well.
@@ -198,15 +197,14 @@ void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, con
 
     // create an RTCP flow as well
 
-    AppIdSession* fp2 = AppIdSession::create_future_session(
-        pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, protocol,
-        asd.config.snort_proto_ids[PROTO_INDEX_SIP], false, true);
+    AppIdSession* fp2 = AppIdSession::create_future_session(pkt, cliIp, cliPort + 1, srvIp, srvPort + 1, protocol,
+        asd.config.snort_proto_ids[PROTO_INDEX_SIP], odp_ctxt, false, true);
 
     if ( fp2 )
     {
         fp2->set_client_id(asd.get_client_id());
         fp2->set_payload_id(asd.get_payload_id());
-        fp2->set_service_id(APP_ID_RTCP, asd.get_odp_ctxt());
+        fp2->set_service_id(APP_ID_RTCP, odp_ctxt);
 
         // FIXIT-M : same comment as above
         // asd.initialize_future_session(*fp2, APPID_SESSION_EXPECTED_EVALUATE);
@@ -274,7 +272,6 @@ SipServiceDetector::SipServiceDetector(ServiceDiscovery* sd)
         { SIP_PORT, IpProtocol::TCP, false }
     };
 
-    SipEventHandler::set_service(this);
     handler->register_detector(name, this, proto);
 }
 
@@ -306,9 +303,7 @@ int SipServiceDetector::validate(AppIdDiscoveryArgs& args)
     return APPID_INPROCESS;
 }
 
-SipUdpClientDetector* SipEventHandler::client = nullptr;
 #endif
-SipServiceDetector* SipEventHandler::service = nullptr;
 
 void SipEventHandler::handle(DataEvent& event, Flow* flow)
 {
@@ -346,6 +341,10 @@ void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession& asd,
 {
     AppId client_id = APP_ID_SIP;
     char* client_version = nullptr;
+
+    SipUdpClientDetector* client = pkt_thread_odp_ctxt->get_sip_client_detector();
+    if (!client)
+        return;
 
     ClientSIPData* fd = (ClientSIPData*)client->data_get(asd);
     if ( !fd )
@@ -404,6 +403,10 @@ success:
 void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession& asd,
     AppidChangeBits& change_bits)
 {
+    SipServiceDetector* service = pkt_thread_odp_ctxt->get_sip_service_detector();
+    if (!service)
+        return;
+
     ServiceSIPData* ss = (ServiceSIPData*)service->data_get(asd);
     if ( !ss )
     {

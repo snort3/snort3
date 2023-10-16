@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -27,8 +27,10 @@
 #include <algorithm>
 
 #include "log/messages.h"
+#include "managers/inspector_manager.h"
 #include "utils/util.h"
 #include "appid_debug.h"
+#include "appid_inspector.h"
 
 using namespace snort;
 using namespace std;
@@ -103,6 +105,9 @@ void AlpnPatternMatchers::finalize_patterns()
         alpn_pattern_matcher.add(p->pattern.data(), p->pattern.size(), p, true);
 
         #ifdef REG_TEST
+        AppIdInspector* inspector =
+            (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true);
+        if (inspector and inspector->get_ctxt().config.log_alpn_service_mappings)
             LogMessage("Adding ALPN service App pattern %d %s\n",
                 p->app_id, p->pattern.c_str());
         #endif
@@ -115,3 +120,7 @@ void AlpnPatternMatchers::reload_patterns()
     alpn_pattern_matcher.reload();
 }
 
+unsigned AlpnPatternMatchers::get_pattern_count()
+{
+    return alpn_load_list.size();
+}

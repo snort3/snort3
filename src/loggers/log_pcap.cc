@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 // Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 //
@@ -139,7 +139,7 @@ static void LogTcpdumpSingle(
 
     if (!p->context->conf->line_buffered_logging())  // FIXIT-L misnomer
     {
-        fflush( (FILE*)context.dumpd);
+        pcap_dump_flush(context.dumpd);
     }
 }
 

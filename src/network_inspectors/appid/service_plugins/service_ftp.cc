@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -353,7 +353,7 @@ static bool check_ret_digit_code(const uint8_t* code_raw, int start_digit_place,
                 ret = false;
             break;
         case 2:
-            if (ret and fd.rstate == FTP_REPLY_BEGIN and code_raw[index] >='0' 
+            if (ret and fd.rstate == FTP_REPLY_BEGIN and code_raw[index] >='0'
                 and code_raw[index] <= '5')
                 code += (code_raw[index] - '0') * 10;
             else if (ret and fd.rstate != FTP_REPLY_BEGIN and code_raw[index] >='1'
@@ -533,6 +533,7 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset, uint16_t si
                     return -1;
                 if (++offset >= size)
                 {
+                    offset = size;
                     fd.rstate = FTP_REPLY_BEGIN;
                     break;
                 }
@@ -890,21 +891,22 @@ void FtpServiceDetector::create_expected_session(AppIdSession& asd, const Packet
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol protocol, AppidSessionDirection dir)
 {
     bool swap_flow_app_direction = (dir == APP_ID_FROM_RESPONDER) ? true : false;
+    OdpContext& odp_ctxt = asd.get_odp_ctxt();
 
     AppIdSession* fp = AppIdSession::create_future_session(pkt, cliIp, cliPort, srvIp, srvPort,
-        protocol, asd.config.snort_proto_ids[PROTO_INDEX_FTP_DATA], swap_flow_app_direction);
+        protocol, asd.config.snort_proto_ids[PROTO_INDEX_FTP_DATA], odp_ctxt, swap_flow_app_direction);
 
     if (fp) // initialize data session
     {
         uint64_t encrypted_flags = asd.get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED);
         if (encrypted_flags == APPID_SESSION_ENCRYPTED)
         {
-            fp->set_service_id(APP_ID_FTPSDATA, asd.get_odp_ctxt());
+            fp->set_service_id(APP_ID_FTPSDATA, odp_ctxt);
         }
         else
         {
             encrypted_flags = 0; // reset (APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED) bits
-            fp->set_service_id(APP_ID_FTP_DATA, asd.get_odp_ctxt());
+            fp->set_service_id(APP_ID_FTP_DATA, odp_ctxt);
         }
 
         asd.initialize_future_session(*fp, APPID_SESSION_IGNORE_ID_FLAGS | encrypted_flags);

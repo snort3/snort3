@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -54,6 +54,8 @@ public:
         TCP_SYN_SENT,
         TCP_SYN_RECV,
         TCP_ESTABLISHED,
+        TCP_MID_STREAM_SENT,
+        TCP_MID_STREAM_RECV,
         TCP_FIN_WAIT1,
         TCP_FIN_WAIT2,
         TCP_CLOSE_WAIT,
@@ -276,8 +278,6 @@ public:
     virtual void init_on_syn_recv(TcpSegmentDescriptor&);
     virtual void init_on_synack_sent(TcpSegmentDescriptor&);
     virtual void init_on_synack_recv(TcpSegmentDescriptor&);
-    virtual void init_on_3whs_ack_sent(TcpSegmentDescriptor&);
-    virtual void init_on_3whs_ack_recv(TcpSegmentDescriptor&);
     virtual void init_on_data_seg_sent(TcpSegmentDescriptor&);
     virtual void init_on_data_seg_recv(TcpSegmentDescriptor&);
     virtual void finish_server_init(TcpSegmentDescriptor&);

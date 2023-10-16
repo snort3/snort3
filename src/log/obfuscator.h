@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -24,6 +24,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <set>
+#include <string>
+#include <unordered_map>
 
 #include "main/snort_types.h"
 
@@ -53,25 +55,53 @@ public:
     };
 
     using ObSet = std::set<ObfuscatorBlock, BlockCompare>;
+    using BufBlocks = std::unordered_map<std::string/*buf_name*/, ObSet>;
     using const_iterator = ObSet::const_iterator;
     using iterator = ObSet::iterator;
 
+    Obfuscator()
+    {
+        cur_buf = buffer_blocks.begin();
+    }
+
     void push(uint32_t offset, uint32_t length)
     {
-        const auto push_res = blocks.emplace(offset, length);
-        
+        if (cur_buf == buffer_blocks.end())
+            set_buffer("");
+        const auto push_res = cur_buf->second.emplace(offset, length);
+
         if (!push_res.second and length > push_res.first->length)
         {
-            blocks.erase(push_res.first);
-            blocks.emplace(offset, length);
+            cur_buf->second.erase(push_res.first);
+            cur_buf->second.emplace(offset, length);
         }
     }
 
+    bool select_buffer(const char* buf_key)
+    {
+        if (!buf_key)
+            return false;
+
+        auto buf = buffer_blocks.find(buf_key);
+        if (buf == buffer_blocks.end())
+            return false;
+        cur_buf = buf;
+        return true;
+    }
+
+    void set_buffer(const char* buf_key)
+    {
+        if (!buf_key)
+            return;
+
+        cur_buf = buffer_blocks.emplace(buf_key, ObSet()).first;
+    }
+
     const_iterator begin() const
-    { return blocks.cbegin(); }
+    { return cur_buf->second.cbegin(); }
 
     const_iterator end() const
-    { return blocks.cend(); }
+    { return cur_buf->second.cend(); }
 
     bool first(ObfuscatorBlock &b);
     bool next(ObfuscatorBlock &b);
@@ -80,9 +110,10 @@ public:
     { return mask_char; }
 
 private:
-    ObSet blocks;
+    BufBlocks buffer_blocks;
+    BufBlocks::iterator cur_buf;
     iterator it;
-    static const char mask_char = 'X';
+    static constexpr char mask_char = 'X';
 };
 }
 

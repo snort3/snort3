@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -47,7 +47,7 @@ struct SO_PUBLIC TimeProfilerStats
     hr_duration elapsed;
     uint64_t checks;
     mutable unsigned int ref_count;
-    static bool enabled;
+    static THREAD_LOCAL bool enabled;
 
     static void set_enabled(bool b)
     { enabled = b; }
@@ -61,8 +61,8 @@ struct SO_PUBLIC TimeProfilerStats
     void reset()
     { elapsed = 0_ticks; checks = 0; }
 
-    operator bool() const
-    { return ( elapsed > 0_ticks ) || checks; }
+    bool is_active() const
+    { return ( elapsed > CLOCK_ZERO ) || checks; }
 
     // reentrancy control
     bool enter() const { return ref_count++ == 0; }

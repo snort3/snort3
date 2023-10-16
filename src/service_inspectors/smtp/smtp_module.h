@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -46,6 +46,7 @@
 #define SMTP_AUTH_COMMAND_OVERFLOW  15
 #define SMTP_FILE_DECOMP_FAILED     16
 #define SMTP_STARTTLS_INJECTION_ATTEMPT 17
+#define SMTP_LF_CRLF_MIX            18
 
 #define SMTP_NAME "smtp"
 #define SMTP_HELP "smtp inspection"
@@ -96,6 +97,7 @@ public:
 
     SmtpProtoConf* get_data();
     const SmtpCmd* get_cmd(unsigned idx);
+    void clear_cmds();
 
     Usage get_usage() const override
     { return INSPECT; }

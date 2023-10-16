@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2007-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@
 
 #include "detection/signature.h"
 #include "detection/detection_util.h"
+#include "detection/detection_engine.h"
 #include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
@@ -244,8 +245,32 @@ static void alert_event(Packet* p, const char*, Unified2Config* config, const Ev
     Unified2Write(write_pkt_buffer, write_len, config);
 }
 
+static void apply_mask(Obfuscator* obf, uint8_t* buf, const char* buf_key)
+{
+    if ( obf->select_buffer(buf_key) )
+        for ( const auto& b : *obf )
+            memset(buf + b.offset, obf->get_mask_char(), b.length);
+}
+
+static void obfuscate(uint8_t* buf, Obfuscator* obf, uint32_t type)
+{
+    switch (type)
+    {
+    case EVENT_INFO_HTTP_URI:
+        apply_mask(obf, buf, "http_uri");
+        break;
+    case EVENT_INFO_JSNORM_DATA:
+        apply_mask(obf, buf, "file_data");
+        break;
+    default:
+        break;
+    }
+}
+
 static void _WriteExtraData(Unified2Config* config,
+    Obfuscator* obf,
     uint32_t event_id,
+    uint32_t tenant_id,
     uint32_t event_second,
     const uint8_t* buffer,
     uint32_t len,
@@ -259,7 +284,7 @@ static void _WriteExtraData(Unified2Config* config,
 
     uint32_t write_len = sizeof(hdr) + sizeof(alertHdr);
 
-    alertdata.sensor_id = 0;
+    alertdata.sensor_id = htonl(tenant_id);
     alertdata.event_id = htonl(event_id);
     alertdata.event_second = htonl(event_second);
     alertdata.data_type = htonl(EVENT_DATA_TYPE_BLOB);
@@ -297,22 +322,32 @@ static void _WriteExtraData(Unified2Config* config,
 
     memcpy_s(ptr + offset, sizeof(write_buffer) - offset, buffer, len);
 
+    if (obf)
+        obfuscate(ptr + offset, obf, type);
+
     Unified2Write(write_buffer, write_len, config);
 }
 
 static void AlertExtraData(
     Flow* flow, void* data,
     LogFunction* log_funcs, uint32_t max_count,
-    uint32_t xtradata_mask,
-    uint32_t event_id, uint32_t event_second)
+    uint32_t xtradata_mask, const AlertInfo& alert_info)
 {
     Unified2Config* config = (Unified2Config*)data;
     uint32_t xid;
 
-    if ((config == nullptr) || !xtradata_mask || !event_second)
+    if ((config == nullptr) || !xtradata_mask || !alert_info.event_second)
         return;
 
     xid = ffs(xtradata_mask);
+
+    const IpsContext* c = DetectionEngine::get_context();
+    Obfuscator* obf = (c and c->packet) ? c->packet->obfuscator : nullptr;
+    uint32_t tenant_id = 0;
+    if (flow)
+        tenant_id = flow->tenant;
+    else if (c and c->packet)
+        tenant_id = c->packet->pkth->tenant_id;
 
     while ( xid && (xid <= max_count) )
     {
@@ -323,7 +358,7 @@ static void AlertExtraData(
 
         if ( log_func(flow, &write_buffer, &len, &type) && (len > 0) )
         {
-            _WriteExtraData(config, event_id, event_second, write_buffer, len, type);
+            _WriteExtraData(config, obf, alert_info.event_id, tenant_id, alert_info.event_second, write_buffer, len, type);
         }
         xtradata_mask ^= BIT(xid);
         xid = ffs(xtradata_mask);
@@ -341,7 +376,7 @@ static void _Unified2LogPacketAlert(
     uint32_t write_len = sizeof(hdr) + sizeof(Serial_Unified2Packet) - 4;
     unsigned u2h_len = u2h ? u2h->get_size() : 0;
 
-    logheader.sensor_id = 0;
+    logheader.sensor_id = htonl(p->pkth->tenant_id);
     logheader.linktype = u2.base_proto;
 
     logheader.event_id = htonl(event->get_event_reference());
@@ -388,8 +423,9 @@ static void _Unified2LogPacketAlert(
             if ( p->is_data() )
                 off = 0;
 
-            for ( const auto& b : *p->obfuscator )
-                memset(&start[ off + b.offset ], p->obfuscator->get_mask_char(), b.length);
+            if ( p->obfuscator->select_buffer("pkt_data") )
+                for ( const auto& b : *p->obfuscator )
+                    memset(&start[ off + b.offset ], p->obfuscator->get_mask_char(), b.length);
         }
     }
 
@@ -612,6 +648,7 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, const E
     if (p)
     {
         alertdata.blocked = GetU2Flags(p, &alertdata.impact_flag);
+        alertdata.sensor_id = htonl(p->pkth->tenant_id);
 
         if (p->has_ip())
         {
@@ -697,6 +734,7 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, const E
 
     if (p)
     {
+        alertdata.sensor_id = htonl(p->pkth->tenant_id);
         alertdata.blocked = GetU2Flags(p, &alertdata.impact_flag);
 
         if(p->ptrs.ip_api.is_ip())
@@ -901,11 +939,12 @@ void U2Logger::alert_legacy(Packet* p, const char* msg, const Event& event)
 
         if (p->ptrs.ip_api.is_ip6())
         {
+            uint32_t tenant_id = p->pkth->tenant_id;
             const SfIp* ip = p->ptrs.ip_api.get_src();
-            _WriteExtraData(&config, event.get_event_id(), event.ref_time.tv_sec,
+            _WriteExtraData(&config, p->obfuscator, event.get_event_id(), tenant_id, event.ref_time.tv_sec,
                 (const uint8_t*) ip->get_ip6_ptr(), sizeof(struct in6_addr), EVENT_INFO_IPV6_SRC);
             ip = p->ptrs.ip_api.get_dst();
-            _WriteExtraData(&config, event.get_event_id(), event.ref_time.tv_sec,
+            _WriteExtraData(&config, p->obfuscator, event.get_event_id(), tenant_id, event.ref_time.tv_sec,
                 (const uint8_t*) ip->get_ip6_ptr(), sizeof(struct in6_addr), EVENT_INFO_IPV6_DST);
         }
     }
@@ -925,9 +964,8 @@ void U2Logger::alert_legacy(Packet* p, const char* msg, const Event& event)
         uint32_t max_count = Stream::get_xtra_data_map(log_funcs);
 
         if ( max_count > 0 )
-            AlertExtraData(
-                p->flow, &config, log_funcs, max_count, p->xtradata_mask,
-                event.get_event_id(), event.ref_time.tv_sec);
+            AlertExtraData(p->flow, &config, log_funcs, max_count, p->xtradata_mask,
+                { /* gid */ 0, /* sid */ 0, event.get_event_id(), event.ref_time.tv_sec });
     }
 }
 
@@ -951,9 +989,8 @@ void U2Logger::alert(Packet* p, const char* msg, const Event& event)
         uint32_t max_count = Stream::get_xtra_data_map(log_funcs);
 
         if ( max_count > 0 )
-            AlertExtraData(
-                p->flow, &config, log_funcs, max_count, p->xtradata_mask,
-                event.get_event_id(), event.ref_time.tv_sec);
+            AlertExtraData(p->flow, &config, log_funcs, max_count, p->xtradata_mask,
+                { /* gid */ 0, /* sid */ 0, event.get_event_id(), event.ref_time.tv_sec });
     }
 }
 

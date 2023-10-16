@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -32,6 +32,7 @@
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "log/unified2.h"
 #include "protocols/packet.h"
+#include "pub_sub/http_event_ids.h"
 #include "stream/stream.h"
 
 #include "http_common.h"
@@ -116,13 +117,12 @@ HttpInspect::HttpInspect(const HttpParaList* params_) :
     {
         HttpTestManager::activate_test_output(HttpTestManager::IN_HTTP);
     }
-    if ((params->test_input) || (params->test_output))
-    {
-        HttpTestManager::set_print_amount(params->print_amount);
-        HttpTestManager::set_print_hex(params->print_hex);
-        HttpTestManager::set_show_pegs(params->show_pegs);
-        HttpTestManager::set_show_scan(params->show_scan);
-    }
+
+    HttpTestManager::set_print_amount(params->print_amount);
+    HttpTestManager::set_print_hex(params->print_hex);
+    HttpTestManager::set_show_pegs(params->show_pegs);
+    HttpTestManager::set_show_scan(params->show_scan);
+
 #endif
 
     if (params->script_detection)
@@ -138,10 +138,11 @@ HttpInspect::~HttpInspect()
     delete script_finder;
 }
 
-bool HttpInspect::configure(SnortConfig* )
+bool HttpInspect::configure(SnortConfig*)
 {
-    params->js_norm_param.js_norm->configure();
+    params->js_norm_param.configure();
     params->mime_decode_conf->sync_all_depths();
+    pub_id = DataBus::get_id(http_pub_key);
 
     return true;
 }
@@ -154,14 +155,6 @@ void HttpInspect::show(const SnortConfig*) const
     auto bad_chars = GetBadChars(params->uri_param.bad_characters);
     auto xff_headers = GetXFFHeaders(params->xff_headers);
 
-    std::string js_norm_ident_ignore;
-    for (auto s : params->js_norm_param.ignored_ids)
-        js_norm_ident_ignore += s + " ";
-
-    std::string js_norm_prop_ignore;
-    for (auto s : params->js_norm_param.ignored_props)
-        js_norm_prop_ignore += s + " ";
-
     ConfigLogger::log_limit("request_depth", params->request_depth, -1);
     ConfigLogger::log_limit("response_depth", params->response_depth, -1);
     ConfigLogger::log_flag("unzip", params->unzip);
@@ -170,19 +163,11 @@ void HttpInspect::show(const SnortConfig*) const
     ConfigLogger::log_flag("decompress_swf", params->decompress_swf);
     ConfigLogger::log_flag("decompress_zip", params->decompress_zip);
     ConfigLogger::log_flag("decompress_vba", params->decompress_vba);
+    ConfigLogger::log_value("max_mime_attach", params->max_mime_attach);
     ConfigLogger::log_flag("script_detection", params->script_detection);
     ConfigLogger::log_flag("normalize_javascript", params->js_norm_param.normalize_javascript);
     ConfigLogger::log_value("max_javascript_whitespaces",
         params->js_norm_param.max_javascript_whitespaces);
-    ConfigLogger::log_value("js_norm_bytes_depth", params->js_norm_param.js_norm_bytes_depth);
-    ConfigLogger::log_value("js_norm_identifier_depth", params->js_norm_param.js_identifier_depth);
-    ConfigLogger::log_value("js_norm_max_tmpl_nest", params->js_norm_param.max_template_nesting);
-    ConfigLogger::log_value("js_norm_max_bracket_depth", params->js_norm_param.max_bracket_depth);
-    ConfigLogger::log_value("js_norm_max_scope_depth", params->js_norm_param.max_scope_depth);
-    if (!js_norm_ident_ignore.empty())
-        ConfigLogger::log_list("js_norm_ident_ignore", js_norm_ident_ignore.c_str());
-    if (!js_norm_prop_ignore.empty())
-        ConfigLogger::log_list("js_norm_prop_ignore", js_norm_prop_ignore.c_str());
     ConfigLogger::log_value("bad_characters", bad_chars.c_str());
     ConfigLogger::log_value("ignore_unreserved", unreserved_chars.c_str());
     ConfigLogger::log_flag("percent_u", params->uri_param.percent_u);
@@ -200,17 +185,17 @@ void HttpInspect::show(const SnortConfig*) const
     ConfigLogger::log_flag("request_body_app_detection", params->publish_request_body);
 }
 
-InspectSection HttpInspect::get_latest_is(const Packet* p)
+PduSection HttpInspect::get_latest_is(const Packet* p)
 {
     HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
 
     if (current_section == nullptr)
-        return IS_NONE;
+        return PS_NONE;
 
     // FIXIT-L revisit why we need this check. We should not be getting a current section back
     // for a raw packet but one of the test cases did exactly that.
     if (!(p->packet_flags & PKT_PSEUDO))
-        return IS_NONE;
+        return PS_NONE;
 
     return current_section->get_inspection_section();
 }
@@ -233,34 +218,13 @@ bool HttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffe
         return get_buf(HTTP_BUFFER_URI, p, b);
 
     case InspectionBuffer::IBT_HEADER:
-        if (get_latest_is(p) == IS_TRAILER)
+        if (get_latest_is(p) == PS_TRAILER)
             return get_buf(HTTP_BUFFER_TRAILER, p, b);
         else
             return get_buf(HTTP_BUFFER_HEADER, p , b);
 
     case InspectionBuffer::IBT_BODY:
         return get_buf(HTTP_BUFFER_CLIENT_BODY, p, b);
-
-    case InspectionBuffer::IBT_RAW_KEY:
-        return get_buf(HTTP_BUFFER_RAW_URI, p , b);
-
-    case InspectionBuffer::IBT_RAW_HEADER:
-        if (get_latest_is(p) == IS_TRAILER)
-            return get_buf(HTTP_BUFFER_RAW_TRAILER, p, b);
-        else
-            return get_buf(HTTP_BUFFER_RAW_HEADER, p , b);
-
-    case InspectionBuffer::IBT_METHOD:
-        return get_buf(HTTP_BUFFER_METHOD, p , b);
-
-    case InspectionBuffer::IBT_STAT_CODE:
-        return get_buf(HTTP_BUFFER_STAT_CODE, p , b);
-
-    case InspectionBuffer::IBT_STAT_MSG:
-        return get_buf(HTTP_BUFFER_STAT_MSG, p , b);
-
-    case InspectionBuffer::IBT_COOKIE:
-        return get_buf(HTTP_BUFFER_COOKIE, p , b);
 
     case InspectionBuffer::IBT_VBA:
         return get_buf(BUFFER_VBA_DATA, p, b);
@@ -269,6 +233,7 @@ bool HttpInspect::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffe
         return get_buf(BUFFER_JS_DATA, p, b);
 
     default:
+        assert(false);
         return false;
     }
 }
@@ -284,6 +249,8 @@ bool HttpInspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
 
     b.data = http_buffer.start();
     b.len = http_buffer.length();
+    b.is_accumulated = http_buffer.is_accumulated();
+
     return true;
 }
 
@@ -373,48 +340,11 @@ void HttpInspect::set_hx_body_state(snort::Flow* flow, HttpCommon::SourceId sour
 
 bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
 {
-    if (get_latest_is(p) == IS_NONE)
+    assert(ibt == InspectionBuffer::IBT_VBA or ibt == InspectionBuffer::IBT_JS_DATA);
+
+    if (get_latest_is(p) == PS_NONE)
         return false;
 
-    // Fast pattern buffers only supplied at specific times
-    switch (ibt)
-    {
-    case InspectionBuffer::IBT_KEY:
-    case InspectionBuffer::IBT_RAW_KEY:
-        // Many rules targeting POST feature http_uri fast pattern with http_client_body. We
-        // accept the performance hit of rerunning http_uri fast pattern with request body message
-        // sections
-        if (get_latest_src(p) != SRC_CLIENT)
-            return false;
-        break;
-    case InspectionBuffer::IBT_HEADER:
-    case InspectionBuffer::IBT_RAW_HEADER:
-        // http_header fast patterns for response bodies limited to first section
-        if ((get_latest_src(p) == SRC_SERVER) && (get_latest_is(p) == IS_BODY))
-            return false;
-        break;
-    case InspectionBuffer::IBT_BODY:
-    case InspectionBuffer::IBT_VBA:
-    case InspectionBuffer::IBT_JS_DATA:
-        if ((get_latest_is(p) != IS_FIRST_BODY) && (get_latest_is(p) != IS_BODY))
-            return false;
-        break;
-    case InspectionBuffer::IBT_METHOD:
-        if ((get_latest_src(p) != SRC_CLIENT) || (get_latest_is(p) == IS_BODY))
-            return false;
-        break;
-    case InspectionBuffer::IBT_STAT_CODE:
-    case InspectionBuffer::IBT_STAT_MSG:
-        if ((get_latest_src(p) != SRC_SERVER) || (get_latest_is(p) != IS_HEADER))
-            return false;
-        break;
-    case InspectionBuffer::IBT_COOKIE:
-        if (get_latest_is(p) != IS_HEADER)
-            return false;
-        break;
-    default:
-        break;
-    }
     return get_buf(ibt, p, b);
 }
 
@@ -522,12 +452,15 @@ HttpFlowData* HttpInspect::http_get_flow_data(const Flow* flow)
     if (flow->stream_intf)
         return (HttpFlowData*)flow->stream_intf->get_stream_flow_data(flow);
     else
-        return nullptr;
+        return (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
 }
 
 void HttpInspect::http_set_flow_data(Flow* flow, HttpFlowData* flow_data)
 {
-    flow->stream_intf->set_stream_flow_data(flow, flow_data);
+    if (flow->stream_intf)
+        flow->stream_intf->set_stream_flow_data(flow, flow_data);
+    else
+        flow->set_flow_data(flow_data);
 }
 
 void HttpInspect::eval(Packet* p)
@@ -680,7 +613,13 @@ void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
     }
 #endif
 
-    current_section->publish();
+    current_section->publish(pub_id);
+    if (p != nullptr)
+    {
+        const PduSection pdu_section = current_section->get_inspection_section();
+        p->set_pdu_section(pdu_section);
+    }
+
     if (current_section->run_detection(p))
     {
 #ifdef REG_TEST
@@ -706,18 +645,12 @@ void HttpInspect::clear(Packet* p)
         return;
     }
 
-    Http2FlowData* h2i_flow_data = nullptr;
-    if (Http2FlowData::inspector_id != 0)
-    {
-        h2i_flow_data = (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
-    }
-
     HttpMsgSection* current_section = nullptr;
-    if (h2i_flow_data != nullptr)
+    if(p->flow->stream_intf)
     {
-        current_section = h2i_flow_data->get_hi_msg_section();
+        current_section = (HttpMsgSection*)p->flow->stream_intf->get_hi_msg_section(p->flow);
         assert(current_section != nullptr);
-        h2i_flow_data->set_hi_msg_section(nullptr);
+        p->flow->stream_intf->set_hi_msg_section(p->flow, nullptr);
     }
     else
         current_section = HttpContextData::clear_snapshot(p->context);
@@ -742,3 +675,62 @@ void HttpInspect::clear(Packet* p)
     }
 }
 
+const uint8_t* HttpInspect::adjust_log_packet(Packet* p, uint16_t& length)
+{
+    HttpMsgSection*  current_section = HttpContextData::get_snapshot(p);
+    if (current_section == nullptr ||
+        current_section->get_inspection_section() != PS_HEADER)
+        return nullptr;
+
+    HttpMsgSection* other_section = nullptr;
+    unsigned id;
+    if ((HttpMsgHeader*)current_section == current_section->get_header(SRC_CLIENT))
+    {
+        other_section = current_section->get_request();
+        id = HTTP_BUFFER_RAW_REQUEST;
+    }
+    else if ((HttpMsgHeader*)current_section == current_section->get_header(SRC_SERVER))
+    {
+        other_section = current_section->get_status();
+        id = HTTP_BUFFER_RAW_STATUS;
+    }
+    else
+        return nullptr;
+
+    assert(other_section != nullptr);
+    if (other_section == nullptr)
+        return nullptr;
+
+    const Field& start_line = other_section->get_classic_buffer(id, 0, 0);
+    if (start_line.length() > 0)
+    {
+        static const uint8_t END_HEADERS[] = "\r\n\r\n";
+        static const size_t END_HEADERS_LEN = 4;
+        static const uint8_t* END_START_LINE = END_HEADERS;
+        static const size_t END_START_LINE_LEN = 2;
+
+        const struct { const uint8_t* data; const size_t len; } frags[] =
+        {
+            { start_line.start(), (size_t) start_line.length() },
+            { END_START_LINE, END_START_LINE_LEN },
+            { p->data, p->dsize },
+            { END_HEADERS, END_HEADERS_LEN }
+        };
+        const uint frags_cnt = sizeof(frags)/sizeof(frags[0]);
+
+        uint8_t* data = new uint8_t[start_line.length() + END_START_LINE_LEN +
+                                    p->dsize + END_HEADERS_LEN];
+
+        uint8_t* dst = data;
+        for (uint i = 0; i < frags_cnt; i++)
+        {
+            memcpy(dst, frags[i].data, frags[i].len);
+            dst += frags[i].len;
+        }
+
+        length = dst - data;
+        return data;
+    }
+
+    return nullptr;
+}

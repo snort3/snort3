@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -42,7 +42,7 @@ static const std::string removed_gids[] = { "146" , "147" };
 constexpr uint8_t MAX_GIDS = (sizeof(removed_gids) / sizeof(removed_gids[0]));
 
 // first -> gid, second -> error message
-static const std::unordered_map<std::string, std::string> rejected_gids = 
+static const std::unordered_map<std::string, std::string> rejected_gids =
 {
     {"138", "gid 138(sensitive data) rules should be written with Snort3 functionality in mind"}
 };

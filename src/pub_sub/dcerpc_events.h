@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //--------------------------------------------------------------------------
 
 #ifndef DCERPC_EVENTS_H
@@ -7,7 +7,9 @@
 
 #include "framework/data_bus.h"
 
-#define DCERPC_EXP_SESSION_EVENT_KEY "dcerpc_expected_session_event"
+struct DceTcpEventIds { enum : unsigned { EXP_SESSION, num_ids }; };
+
+const snort::PubKey dce_tcp_pub_key { "dce_tcp", DceTcpEventIds::num_ids };
 
 namespace snort
 {

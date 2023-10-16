@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2011-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 
 // SMTP helper functions
 
+#include "smtp.h"
 #include "smtp_config.h"
 
 namespace snort
@@ -31,7 +32,7 @@ namespace snort
 struct Packet;
 }
 
-void SMTP_GetEOL(const uint8_t*, const uint8_t*, const uint8_t**, const uint8_t**);
+SMTPEol SMTP_GetEOL(const uint8_t*, const uint8_t*, const uint8_t**, const uint8_t**);
 void SMTP_LogFuncs(SmtpProtoConf*, snort::Packet*, snort::MimeSession*);
 
 int SMTP_CopyToAltBuffer(snort::Packet*, const uint8_t*, int);

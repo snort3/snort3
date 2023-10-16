@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -194,6 +194,7 @@ static const PegInfo dce2_smb_pegs[] =
     { CountType::SUM, "total_smb2_sessions", "total smb2 sessions" },
     { CountType::SUM, "total_encrypted_sessions", "total encrypted sessions" },
     { CountType::SUM, "total_mc_sessions", "total multichannel sessions" },
+    { CountType::SUM, "ignore_dup_sessions", "total smb req/resp dropped because of dup msg id" },
     { CountType::END, nullptr, nullptr }
 };
 

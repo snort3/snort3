@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -53,7 +53,6 @@ THREAD_LOCAL bool Active::s_suspend = false;
 THREAD_LOCAL Active::ActiveSuspendReason Active::s_suspend_reason = Active::ASP_NONE;
 
 THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
-THREAD_LOCAL bool FlowCache::pruning_in_progress = false;
 
 void Active::drop_packet(snort::Packet const*, bool) { }
 PacketTracer::~PacketTracer() = default;
@@ -69,24 +68,26 @@ Packet::~Packet() = default;
 uint32_t Packet::get_flow_geneve_vni() const { return 0; }
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg) { }
 FlowCache::~FlowCache() = default;
-Flow::Flow() = default;
 Flow::~Flow() = default;
 DetectionEngine::DetectionEngine() = default;
 DetectionEngine::~DetectionEngine() = default;
 ExpectCache::~ExpectCache() = default;
 unsigned FlowCache::purge() { return 1; }
+unsigned FlowCache::get_flows_allocated() const { return 0; }
 Flow* FlowCache::find(const FlowKey*) { return nullptr; }
 Flow* FlowCache::allocate(const FlowKey*) { return nullptr; }
 void FlowCache::push(Flow*) { }
 bool FlowCache::prune_one(PruneReason, bool) { return true; }
+unsigned FlowCache::prune_multiple(PruneReason , bool) { return 0; }
 unsigned FlowCache::delete_flows(unsigned) { return 0; }
 unsigned FlowCache::timeout(unsigned, time_t) { return 1; }
 size_t FlowCache::uni_flows_size() const { return 0; }
 size_t FlowCache::uni_ip_flows_size() const { return 0; }
 size_t FlowCache::flows_size() const { return 0; }
 void Flow::init(PktType) { }
-void DataBus::publish(const char*, const uint8_t*, unsigned, Flow*) { }
-void DataBus::publish(const char*, Packet*, Flow*) { }
+void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }
+void DataBus::publish(unsigned, unsigned, const uint8_t*, unsigned, Flow*) { }
+void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
 const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 void FlowCache::unlink_uni(Flow*) { }
 void Flow::set_client_initiate(Packet*) { }

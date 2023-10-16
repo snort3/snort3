@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2022-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -21,10 +21,8 @@
 #define MMS_CURSE_H
 
 // MMS curse provides the ability to determine if the traffic being processed
-// conforms to the Manufacturing Message Specification (MMS) traffic defined 
+// conforms to the Manufacturing Message Specification (MMS) traffic defined
 // within the IEC-61850 family of protocols
-
-#include "curses.h"
 
 enum MMS_State
 {
@@ -40,6 +38,13 @@ enum MMS_State
     MMS_STATE__FOUND,
     MMS_STATE__SEARCH,
     MMS_STATE__NOT_FOUND,
+};
+
+class MmsTracker
+{
+public:  
+    MMS_State state = MMS_State::MMS_STATE__TPKT_VER;
+    MMS_State last_state = MMS_State::MMS_STATE__TPKT_VER;
 };
 
 #endif

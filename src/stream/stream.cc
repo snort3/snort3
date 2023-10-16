@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -32,11 +32,13 @@
 #include "flow/flow_key.h"
 #include "flow/ha.h"
 #include "flow/prune_stats.h"
+#include "framework/data_bus.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "network_inspectors/packet_tracer/packet_tracer.h"
 #include "packet_io/active.h"
 #include "protocols/vlan.h"
+#include "pub_sub/stream_event_ids.h"
 #include "stream/base/stream_module.h"
 #include "target_based/host_attributes.h"
 #include "target_based/snort_protocols.h"
@@ -60,7 +62,7 @@ public:
     uint32_t xtradata_func_count = 0;
     LogFunction xtradata_map[MAX_LOG_FN];
     LogExtraData extra_data_log = nullptr;
-    void* extra_data_config = nullptr;
+    void* extra_data_context = nullptr;
 };
 
 static StreamImpl stream;
@@ -211,12 +213,15 @@ void Stream::check_flow_closed(Packet* p)
         if ( flow->flags.use_direct_inject )
             p->packet_flags |= PKT_USE_DIRECT_INJECT;
 
+        p->flow = nullptr;
+
         // this will get called on each onload
         // eventually all onloads will occur and delete will be called
         if ( not flow->is_suspended() )
+        {
             flow_con->release_flow(flow, PruneReason::NONE);
-
-        p->flow = nullptr;
+            return;
+        }
     }
     else if (flow->session_state & STREAM_STATE_BLOCK_PENDING)
     {
@@ -386,7 +391,7 @@ bool Stream::prune_flows()
     if ( !flow_con )
         return false;
 
-    return flow_con->prune_one(PruneReason::MEMCAP, false);
+    return flow_con->prune_multiple(PruneReason::MEMCAP, false);
 }
 
 //-------------------------------------------------------------------------
@@ -508,13 +513,13 @@ StreamSplitter* Stream::get_splitter(Flow* flow, bool to_server)
 //-------------------------------------------------------------------------
 
 void Stream::log_extra_data(
-    Flow* flow, uint32_t mask, uint32_t id, uint32_t sec)
+    Flow* flow, uint32_t mask, const AlertInfo& alert_info)
 {
     if ( mask && stream.extra_data_log )
     {
         stream.extra_data_log(
-            flow, stream.extra_data_config, stream.xtradata_map,
-            stream.xtradata_func_count, mask, id, sec);
+            flow, stream.extra_data_context, stream.xtradata_map,
+            stream.xtradata_func_count, mask, alert_info);
     }
 }
 
@@ -545,7 +550,7 @@ void Stream::reg_xtra_data_log(LogExtraData f, void* config)
 {
     const std::lock_guard<std::mutex> xtra_lock(stream_xtra_mutex);
     stream.extra_data_log = f;
-    stream.extra_data_config = config;
+    stream.extra_data_context = config;
 }
 
 //-------------------------------------------------------------------------
@@ -868,7 +873,21 @@ bool Stream::get_held_pkt_seq(Flow* flow, uint32_t& seq)
     return false;
 }
 
+//-------------------------------------------------------------------------
+// pub sub foo
+//-------------------------------------------------------------------------
+
+static unsigned stream_pub_id = 0;
+
+void Stream::set_pub_id()
+{ stream_pub_id = DataBus::get_id(stream_pub_key); }
+
+unsigned Stream::get_pub_id()
+{ return stream_pub_id; }
+
+//-------------------------------------------------------------------------
 #ifdef UNIT_TEST
+//-------------------------------------------------------------------------
 
 #include "catch/snort_catch.h"
 #include "tcp/test/stream_tcp_test_utils.h"

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -27,12 +27,9 @@
 
 #include "framework/data_bus.h"
 
-#define SIP_EVENT_TYPE_SIP_DIALOG_KEY "sip_event_type_sip_dialog"
+struct SipEventIds { enum : unsigned { DIALOG, num_ids }; };
 
-enum SipEventType
-{
-    SIP_EVENT_TYPE_SIP_DIALOG
-};
+const snort::PubKey sip_pub_key { "sip", SipEventIds::num_ids };
 
 namespace snort
 {

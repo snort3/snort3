@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2004-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -44,6 +44,8 @@ using namespace snort;
 
 THREAD_LOCAL ProfileStats sshPerfStats;
 THREAD_LOCAL SshStats sshstats;
+
+static unsigned pub_id = 0;
 
 /*
  * Function prototype(s)
@@ -144,12 +146,12 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
             {
                 std::string proto_string((const char *)(p->data), p->dsize);
                 SshEvent event(SSH_VERSION_STRING, SSH_NOT_FINISHED, proto_string, pkt_direction, p);
-                DataBus::publish(SSH_EVENT, event, p->flow);
+                DataBus::publish(pub_id, SshEventIds::STATE_CHANGE, event, p->flow);
             }
             else
             {
                 SshEvent event(SSH_VALIDATION, SSH_INVALID_VERSION, "", pkt_direction, p);
-                DataBus::publish(SSH_EVENT, event, p->flow);
+                DataBus::publish(pub_id, SshEventIds::STATE_CHANGE, event, p->flow);
             }
         }
         else if (!(sessp->state_flags & search_dir_keyinit))
@@ -171,12 +173,12 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
             if (keyx_valid)
             {
                 SshEvent event(SSH_VALIDATION, SSH_VALID_KEXINIT, "", pkt_direction, p);
-                DataBus::publish(SSH_EVENT, event, p->flow);
+                DataBus::publish(pub_id, SshEventIds::STATE_CHANGE, event, p->flow);
             }
             else
             {
                 SshEvent event(SSH_VALIDATION, SSH_INVALID_KEXINIT, "", pkt_direction, p);
-                DataBus::publish(SSH_EVENT, event, p->flow);
+                DataBus::publish(pub_id, SshEventIds::STATE_CHANGE, event, p->flow);
                 sessp->state_flags |= SSH_FLG_SESS_ENCRYPTED;
             }
         }
@@ -244,14 +246,14 @@ static bool process_ssh_version_string(
     {
         DetectionEngine::queue_event(GID_SSH, SSH_EVENT_SECURECRT);
         // SSH_MAX_BANNER_LEN is 255, the maximum specified by the SSH protocol.
-        // MaxServerVersionLen defaults to 80, 
+        // MaxServerVersionLen defaults to 80,
         // but there may be valid version strings that are longer due to comments.
         if (p->dsize > SSH_MAX_BANNER_LEN)
         {
             return false;
         }
     }
-    if (p->dsize < SSH_MIN_BANNER_LEN 
+    if (p->dsize < SSH_MIN_BANNER_LEN
         or memcmp(p->data, SSH_BANNER, sizeof(SSH_BANNER)-1) != 0)
     {
         // according to the SSH specification,
@@ -267,7 +269,7 @@ static bool process_ssh_version_string(
         DetectionEngine::queue_event(GID_SSH, SSH_EVENT_VERSION);
         return false;
     }
-    
+
     if (proto_ver[0] == '2' and proto_ver[1] == '.')
     {
         sessionp->version = SSH_VERSION_2;
@@ -335,7 +337,7 @@ static bool process_ssh1_key_exchange(SSHData *sessionp, Packet *p, uint8_t dire
             sessionp->state_flags |= SSH_FLG_SERV_PKEY_SEEN;
         }
         else
-        { 
+        {
             DetectionEngine::queue_event(GID_SSH, SSH_EVENT_WRONGDIR);
             return false;
         }
@@ -429,7 +431,7 @@ static bool process_ssh2_key_exchange(SSHData *sessionp, Packet *p, uint8_t dire
     const SSH2Packet *ssh2p = (const SSH2Packet *)data;
     unsigned ssh_length = ntohl(ssh2p->packet_length) + sizeof(uint32_t);
 
-    if (ssh_length < sizeof(SSH2Packet) 
+    if (ssh_length < sizeof(SSH2Packet)
         or ssh_length != dsize
         or ssh_length > SSH_PACKET_MAX_SIZE)
     {
@@ -546,6 +548,7 @@ public:
     Ssh(SSH_PROTO_CONF*);
     ~Ssh() override;
 
+    bool configure(SnortConfig*) override;
     void show(const SnortConfig*) const override;
     void eval(Packet*) override;
     class StreamSplitter* get_splitter(bool to_server) override
@@ -564,6 +567,12 @@ Ssh::~Ssh()
 {
     if ( config )
         delete config;
+}
+
+bool Ssh::configure(SnortConfig*)
+{
+    pub_id = DataBus::get_id(ssh_pub_key);
+    return true;
 }
 
 void Ssh::show(const SnortConfig*) const

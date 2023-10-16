@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -44,8 +44,8 @@ public:
     };
 
     Op op = MAX;
-    long min = 0;
-    long max = 0;
+    int64_t min = 0;
+    int64_t max = 0;
 
     bool operator==(const RangeCheck&) const;
 
@@ -53,7 +53,7 @@ public:
     bool is_set() const;
     // FIXIT-L add ttl style syntax
     bool parse(const char* s);
-    bool eval(long) const;
+    bool eval(int64_t) const;
     bool validate(const char* s, const char* r);
     uint32_t hash() const;
 };

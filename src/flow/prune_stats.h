@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -28,12 +28,13 @@
 
 enum class PruneReason : uint8_t
 {
-    IDLE,
     EXCESS,
     UNI,
     MEMCAP,
     HA,
     STALE,
+	IDLE_MAX_FLOWS,
+	IDLE_PROTOCOL_TIMEOUT,
     NONE,
     MAX
 };

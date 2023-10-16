@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -102,7 +102,7 @@ StreamSplitter::Status SshSplitter::scan(
     {
         state = SSH_PAF_ENCRYPTED;
     }
-    else if (((flags & PKT_FROM_SERVER) 
+    else if (((flags & PKT_FROM_SERVER)
         and (sessp->state_flags & SSH_FLG_SERV_IDSTRING_SEEN))
         or ((flags & PKT_FROM_CLIENT)
         and (sessp->state_flags & SSH_FLG_CLIENT_IDSTRING_SEEN)))

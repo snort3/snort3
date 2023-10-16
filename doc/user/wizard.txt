@@ -55,15 +55,13 @@ contain following options:
 
   * 'service' - name of the service that would be assigned
   * 'proto' - protocol to scan
-  * 'client_first' - indicator of which end initiates data transfer (deprecated)
   * 'to_server' - list of text patterns to search in the data sent to the client
   * 'to_client' - list of text patterns to search in the data sent to the server
 
   Example of a spell definition in Lua:
     { 
       service = 'smtp', 
-      proto = 'tcp', 
-      client_first = true,
+      proto = 'tcp',
       to_server = { 'HELO', 'EHLO' },
       to_client = { '220*SMTP', '220*MAIL' } 
     }
@@ -86,7 +84,6 @@ Hexes are configured in the same way as spells and have an identical set of opti
     { 
       service = 'dnp3',
       proto = 'tcp',
-      client_first = true,
       to_server = { '|05 64|' },
       to_client = { '|05 64|' } 
     }

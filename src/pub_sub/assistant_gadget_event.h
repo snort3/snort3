@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -21,13 +21,12 @@
 #define ASSISTANT_GADGET_EVENTS_H
 
 #include "framework/data_bus.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
 
 // A flow is setting up assistant inspector.
 // For example used by HTTP2 to set NHI as assistant inspector.
-
-#define FLOW_ASSISTANT_GADGET_EVENT "flow.assistant_gadget"
 
 namespace snort
 {

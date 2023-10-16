@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -53,17 +53,16 @@ public:
 
 private:
     hs_scratch_t** get_addr(SnortConfig* sc, unsigned idx)
-    { return (hs_scratch_t**)&sc->state[idx][scratch_id]; }
+    { return (hs_scratch_t**)&sc->state[idx][id]; }
 
     hs_scratch_t* get(const SnortConfig* sc, unsigned idx)
-    { return (hs_scratch_t*)sc->state[idx][scratch_id]; }
+    { return (hs_scratch_t*)sc->state[idx][id]; }
 
     void set(SnortConfig* sc, unsigned idx, void* pv)
-    { sc->state[idx][scratch_id] = pv; }
+    { sc->state[idx][id] = pv; }
 
 private:
     hs_scratch_t* scratch = nullptr;
-    int scratch_id = -1;
 };
 
 }

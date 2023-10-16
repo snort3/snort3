@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -24,9 +24,10 @@
 #include "ip_session.h"
 
 #include "framework/data_bus.h"
-#include "memory/memory_cap.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
+#include "pub_sub/stream_event_ids.h"
+#include "stream/stream.h"
 
 #include "ip_defrag.h"
 #include "ip_ha.h"
@@ -78,7 +79,9 @@ static void IpSessionCleanup(Flow* lws, FragTracker* tracker)
         d->cleanup(tracker);
     }
 
-    ip_stats.released++;
+    if ( lws->ssn_state.session_flags & SSNFLAG_SEEN_SENDER )
+        ip_stats.released++;
+
     lws->restart();
 }
 
@@ -109,11 +112,11 @@ static inline void update_session(Packet* p, Flow* lws)
 
             if ( p->type() == PktType::ICMP and p->ptrs.icmph)
             {
-                DataBus::publish(STREAM_ICMP_BIDIRECTIONAL_EVENT, p);
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::ICMP_BIDIRECTIONAL, p);
             }
             else
             {
-                DataBus::publish(STREAM_IP_BIDIRECTIONAL_EVENT, p);
+                DataBus::publish(Stream::get_pub_id(), StreamEventIds::IP_BIDIRECTIONAL, p);
             }
         }
     }
@@ -177,6 +180,7 @@ int IpSession::process(Packet* p)
     {
         ip_stats.timeouts++;
         IpSessionCleanup(flow, &tracker);
+        ip_stats.created++;
 
 #ifdef ENABLE_EXPECTED_IP
         if ( Stream::expected_flow(flow, p) )
@@ -245,7 +249,6 @@ public:
     StreamIp(StreamIpConfig*);
     ~StreamIp() override;
 
-    bool configure(SnortConfig*) override;
     void show(const SnortConfig*) const override;
     NORETURN_ASSERT void eval(Packet*) override;
     StreamIpConfig* config;
@@ -277,6 +280,7 @@ TEST_CASE("IP Session", "[ip_session]")
 
         update_session(&p, &lws);
         CHECK(lws.expire_time == 360);
+        lws.ssn_server = nullptr;
     }
 }
 #endif

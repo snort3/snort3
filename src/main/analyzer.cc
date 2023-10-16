@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -26,6 +26,9 @@
 
 #include <daq.h>
 
+#if 0 // defined (__SANITIZE_ADDRESS__) && defined (REG_TEST)
+    #include <sanitizer/asan_interface.h>
+#endif
 #include <thread>
 
 #include "detection/context_switcher.h"
@@ -167,24 +170,24 @@ void Analyzer::set_main_hook(MainHook_f f)
 static void process_daq_sof_eof_msg(DAQ_Msg_h msg, DAQ_Verdict& verdict)
 {
     const DAQ_FlowStats_t *stats = (const DAQ_FlowStats_t*) daq_msg_get_hdr(msg);
-    const char* key;
+    unsigned key;
 
     select_default_policy(*stats, SnortConfig::get_conf());
     if (daq_msg_get_type(msg) == DAQ_MSG_TYPE_EOF)
     {
         packet_time_update(&stats->eof_timestamp);
         daq_stats.eof_messages++;
-        key = DAQ_EOF_MSG_EVENT;
+        key = IntrinsicEventIds::DAQ_EOF_MSG;
     }
     else
     {
         packet_time_update(&stats->sof_timestamp);
         daq_stats.sof_messages++;
-        key = DAQ_SOF_MSG_EVENT;
+        key = IntrinsicEventIds::DAQ_SOF_MSG;
     }
 
     DaqMessageEvent event(msg, verdict);
-    DataBus::publish(key, event);
+    DataBus::publish(intrinsic_pub_id, key, event);
 }
 
 static bool process_packet(Packet* p)
@@ -236,7 +239,7 @@ static DAQ_Verdict distill_verdict(Packet* p)
             daq_stats.internal_blacklist++;
             verdict = DAQ_VERDICT_BLOCK;
         }
-        else if ( p->context->conf->inline_mode() || act->packet_force_dropped() )
+        else if ( p->context->conf->ips_inline_mode() || act->packet_force_dropped() )
             verdict = DAQ_VERDICT_BLACKLIST;
         else
             verdict = DAQ_VERDICT_IGNORE;
@@ -298,9 +301,26 @@ static DAQ_Verdict distill_verdict(Packet* p)
     return verdict;
 }
 
-void Analyzer::add_to_retry_queue(DAQ_Msg_h daq_msg)
+static void packet_trace_dump(Packet* p, DAQ_Verdict verdict, bool msg_was_held)
+{
+    PacketTracer::log("Policies: Network %" PRIu64 ", Inspection %" PRIu64 ", Detection %" PRIu64 "\n",
+        get_network_policy()->user_policy_id, get_inspection_policy()->user_policy_id,
+        get_ips_policy()->user_policy_id);
+
+    if (p->active->packet_retry_requested())
+        PacketTracer::log("Verdict: Queuing for Retry\n");
+    else if (msg_was_held)
+        PacketTracer::log("Verdict: Holding for Detection\n");
+    else
+        PacketTracer::log("Verdict: %s\n", SFDAQ::verdict_to_string(verdict));
+    PacketTracer::dump(p);
+}
+
+void Analyzer::add_to_retry_queue(DAQ_Msg_h daq_msg, Flow* flow)
 {
     retry_queue->put(daq_msg);
+    if (flow)
+        flow->flags.retry_queued = true;
 }
 
 /*
@@ -316,7 +336,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
 
     if (p->active->packet_retry_requested())
     {
-        add_to_retry_queue(p->daq_msg);
+        add_to_retry_queue(p->daq_msg, p->flow);
         daq_stats.retries_queued++;
     }
     else
@@ -326,30 +346,12 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
         {
             if (p->flow->flags.trigger_detained_packet_event)
             {
-                DataBus::publish(DETAINED_PACKET_EVENT, p);
+                DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::DETAINED_PACKET, p);
             }
         }
         else
             verdict = distill_verdict(p);
     }
-
-    if (PacketTracer::is_active())
-    {
-        PacketTracer::log("Policies: Network %u, Inspection %u, Detection %u\n",
-            get_network_policy()->user_policy_id, get_inspection_policy()->user_policy_id,
-            get_ips_policy()->user_policy_id);
-
-        if (p->active->packet_retry_requested())
-            PacketTracer::log("Verdict: Queuing for Retry\n");
-        else if (msg_was_held)
-            PacketTracer::log("Verdict: Holding for Detection\n");
-        else
-            PacketTracer::log("Verdict: %s\n", SFDAQ::verdict_to_string(verdict));
-        PacketTracer::dump(p);
-    }
-
-    if (PacketTracer::is_daq_activated())
-        PacketTracer::daq_dump(p);
 
     HighAvailabilityManager::process_update(p->flow, p);
 
@@ -360,19 +362,33 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
         if (p->flow and p->flow->flags.trigger_finalize_event)
         {
             FinalizePacketEvent event(p, verdict);
-            DataBus::publish(FINALIZE_PACKET_EVENT, event);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FINALIZE_PACKET, event);
         }
+
+        if (PacketTracer::is_active())
+            packet_trace_dump(p, verdict, msg_was_held);
+
+        if (PacketTracer::is_daq_activated())
+            PacketTracer::daq_dump(p);
 
         if (verdict == DAQ_VERDICT_BLOCK or verdict == DAQ_VERDICT_BLACKLIST)
             p->active->send_reason_to_daq(*p);
 
-        oops_handler->set_current_message(nullptr);
+        oops_handler->set_current_message(nullptr, nullptr);
         p->pkth = nullptr;  // No longer avail after finalize_message.
 
         {
             Profile profile(daqPerfStats);
             p->daq_instance->finalize_message(p->daq_msg, verdict);
         }
+    }
+    else
+    {
+        if (PacketTracer::is_active())
+            packet_trace_dump(p, verdict, msg_was_held);
+
+        if (PacketTracer::is_daq_activated())
+            PacketTracer::daq_dump(p);
     }
 }
 
@@ -400,7 +416,18 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
     p->daq_msg = msg;
     p->daq_instance = daq_instance;
 
-    PacketManager::decode(p, pkthdr, daq_msg_get_data(msg), daq_msg_get_data_len(msg), false, retry);
+    const uint8_t* data = daq_msg_get_data(msg);
+    const uint32_t data_len = daq_msg_get_data_len(msg);
+
+#if 0 // defined (__SANITIZE_ADDRESS__) && defined (REG_TEST)
+    auto data_end = msg->data + msg->data_len;
+    unsigned long dist = static_cast<uint8_t*>(msg->hdr) - data_end;
+    auto size = std::min(16UL, dist);
+
+    ASAN_POISON_MEMORY_REGION(data_end, size);
+#endif
+
+    PacketManager::decode(p, pkthdr, data, data_len, false, retry);
 
     if (process_packet(p))
     {
@@ -408,6 +435,9 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
         switcher->stop();
     }
 
+#if 0 // defined (__SANITIZE_ADDRESS__) && defined (REG_TEST)
+    ASAN_UNPOISON_MEMORY_REGION(data_end, size);
+#endif
     // Beyond this point, we don't have an active context, but e.g. calls to
     // get_current_packet() or get_current_wire_packet() require a context.
     // We must ensure that a context is available when one is needed.
@@ -417,7 +447,7 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
 
 void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
 {
-    oops_handler->set_current_message(msg);
+    oops_handler->set_current_message(msg, daq_instance);
     memory::MemoryCap::free_space();
 
     DAQ_Verdict verdict = DAQ_VERDICT_PASS;
@@ -435,11 +465,11 @@ void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
             {
                 daq_stats.other_messages++;
                 DaqMessageEvent event(msg, verdict);
-                DataBus::publish(DAQ_OTHER_MSG_EVENT, event);
+                DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::DAQ_OTHER_MSG, event);
             }
             break;
     }
-    oops_handler->set_current_message(nullptr);
+    oops_handler->set_current_message(nullptr, nullptr);
     {
         Profile profile(daqPerfStats);
         daq_instance->finalize_message(msg, verdict);
@@ -531,6 +561,7 @@ const char* Analyzer::get_state_string()
         case State::RUNNING:     return "RUNNING";
         case State::PAUSED:      return "PAUSED";
         case State::STOPPED:     return "STOPPED";
+        case State::FAILED:      return "FAILED";
         default: assert(false);
     }
 
@@ -557,7 +588,7 @@ void Analyzer::idle()
     timeradd(&now, &increment, &now);
     packet_time_update(&now);
 
-    DataBus::publish(THREAD_IDLE_EVENT, nullptr);
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::THREAD_IDLE, nullptr);
 
     // Service the retry queue with the new packet time.
     process_retry_queue();
@@ -606,6 +637,7 @@ void Analyzer::init_unprivileged()
     InitTag();
     EventTrace_Init();
 
+    memory::MemoryCap::thread_init();
     EventManager::open_outputs();
     IpsManager::setup_options(sc);
     ActionManager::thread_init(sc);
@@ -615,6 +647,8 @@ void Analyzer::init_unprivileged()
     InspectorManager::thread_init(sc);
     PacketTracer::thread_init();
     HostAttributesManager::initialize();
+    RuleContext::set_enabled(sc->profiler->rule.show);
+    TimeProfilerStats::set_enabled(sc->profiler->time.show);
 
     // in case there are HA messages waiting, process them first
     HighAvailabilityManager::process_receive();
@@ -658,7 +692,8 @@ void Analyzer::term()
     DetectionEngine::idle();
     InspectorManager::thread_stop(sc);
     InspectorManager::thread_term();
-    ModuleManager::accumulate("memory");
+    memory::MemoryCap::thread_term();
+    ModuleManager::accumulate();
     ActionManager::thread_term();
 
     IpsManager::clear_options(sc);
@@ -667,7 +702,7 @@ void Analyzer::term()
     HighAvailabilityManager::thread_term();
     SideChannelManager::thread_term();
 
-    oops_handler->set_current_message(nullptr);
+    oops_handler->set_current_message(nullptr, nullptr);
 
     daq_instance->stop();
     SFDAQ::set_local_instance(nullptr);
@@ -691,8 +726,6 @@ void Analyzer::term()
     RateFilter_Cleanup();
 
     TraceApi::thread_term();
-
-    ModuleManager::accumulate_module("memory");
 }
 
 Analyzer::Analyzer(SFDAQInstance* instance, unsigned i, const char* s, uint64_t msg_cnt)
@@ -729,10 +762,10 @@ void Analyzer::operator()(Swapper* ps, uint16_t run_num)
 
     // init here to pin separately from packet threads
     DetectionEngine::thread_init();
-
+    SnortConfig::get_conf()->thread_config->set_instance_tid(id);
     // Perform all packet thread initialization actions that need to be taken with escalated
     // privileges prior to starting the DAQ module.
-    SnortConfig::get_conf()->thread_config->implement_thread_affinity(
+    SnortConfig::get_conf()->thread_config->apply_thread_policy(
         STHREAD_TYPE_PACKET, get_instance_id());
 
     SFDAQ::set_local_instance(daq_instance);
@@ -746,7 +779,8 @@ void Analyzer::operator()(Swapper* ps, uint16_t run_num)
     Profiler::stop(pc.analyzed_pkts);
     term();
 
-    set_state(State::STOPPED);
+    if (state != State::FAILED)
+        set_state(State::STOPPED);
 
     oops_handler->tterm();
 }
@@ -939,6 +973,8 @@ void Analyzer::start()
     {
         ErrorMessage("Analyzer: Failed to start DAQ instance\n");
         exit_requested = true;
+        set_state(State::FAILED);
+        return;
     }
     set_state(State::STARTED);
 }
@@ -990,6 +1026,6 @@ void Analyzer::reload_daq()
 
 void Analyzer::rotate()
 {
-    DataBus::publish(THREAD_ROTATE_EVENT, nullptr);
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::THREAD_ROTATE, nullptr);
 }
 

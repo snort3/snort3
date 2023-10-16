@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -65,7 +65,7 @@ void SearchTool::reload() { }
 static bool test_find_all_done = false;
 static bool test_find_all_enabled = false;
 static MatchedPatterns* mock_mp = nullptr;
-int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void* mp_arg)
+int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void* mp_arg, const SnortConfig*)
 {
     test_find_all_done = true;
     if (test_find_all_enabled)
@@ -88,6 +88,7 @@ EveCaPatternMatchers::~EveCaPatternMatchers() = default;
 SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
 AlpnPatternMatchers::~AlpnPatternMatchers() = default;
+CipPatternMatchers::~CipPatternMatchers() = default;
 void AppIdModule::reset_stats() {}
 bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
 

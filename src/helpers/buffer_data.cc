@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -27,36 +27,36 @@ namespace snort
 BufferData::BufferData(int32_t length, const uint8_t* data_, bool own_the_buffer_ = false) :
             len(length), data(data_), own_the_buffer(own_the_buffer_){}
 
-BufferData::~BufferData() 
-{ 
-    if (own_the_buffer) 
-        delete[] data; 
+BufferData::~BufferData()
+{
+    if (own_the_buffer)
+        delete[] data;
 }
 
 int32_t BufferData::length() const
-{ 
+{
     return len;
 }
 
 const uint8_t* BufferData::data_ptr() const
-{ 
-    return data; 
+{
+    return data;
 }
 
 void BufferData::set(int32_t length, const uint8_t* data_, bool own_the_buffer_)
 {
-    len = length; 
-    data = data_; 
-    own_the_buffer = own_the_buffer_; 
+    len = length;
+    data = data_;
+    own_the_buffer = own_the_buffer_;
 }
 
 void BufferData::reset()
-{ 
-    if (own_the_buffer) 
+{
+    if (own_the_buffer)
         delete[] data;
 
-    len = 0; 
-    data = nullptr; 
-    own_the_buffer = false; 
+    len = 0;
+    data = nullptr;
+    own_the_buffer = false;
 }
 }

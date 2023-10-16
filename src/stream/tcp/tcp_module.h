@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -113,6 +113,7 @@ struct TcpStats
     PegCount max_segs;
     PegCount max_bytes;
     PegCount zero_len_tcp_opt;
+    PegCount zero_win_probes;
 };
 
 extern THREAD_LOCAL struct TcpStats tcpStats;

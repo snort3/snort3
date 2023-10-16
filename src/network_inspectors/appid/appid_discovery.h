@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -60,17 +60,17 @@ struct Packet;
 #define SCAN_HTTP_URI_FLAG          (1<<9)
 #define SCAN_CERTVIZ_ENABLED_FLAG   (1<<10)
 #define SCAN_SPOOFED_SNI_FLAG       (1<<11)
-#define FIRST_PKT_CACHE_ONE_APPID_FOUND 1
-#define FIRST_PKT_CACHE_TWO_APPIDS_FOUND 2
-#define FIRST_PKT_CACHE_ALL_APPIDS_FOUND 3
 
 enum FirstPktAppIdDiscovered
 {
     NO_APPID_FOUND = 0,
-    CLIENT_APPID_FOUND,
-    SERVICE_APPID_FOUND,
-    PAYLOAD_APPID_FOUND,
-    CLIENT_PAYLOAD_APPID_FOUND
+    FIRST_CLIENT_APPID_FOUND,
+    FIRST_SERVICE_APPID_FOUND,
+    FIRST_PAYLOAD_APPID_FOUND,
+    FIRST_CLIENT_PAYLOAD_APPID_FOUND,
+    FIRST_SERVICE_PAYLOAD_APPID_FOUND,
+    FIRST_SERVICE_CLIENT_APPID_FOUND,
+    FIRST_ALL_APPID_FOUND
 };
 
 class AppIdPatternMatchNode

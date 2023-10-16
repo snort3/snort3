@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -35,6 +35,7 @@ extern const BaseApi* ips_file_data;
 extern const BaseApi* ips_file_meta;
 extern const BaseApi* ips_flow;
 extern const BaseApi* ips_flowbits;
+extern const BaseApi* ips_js_data;
 extern const BaseApi* ips_md5;
 extern const BaseApi* ips_metadata;
 extern const BaseApi* ips_pkt_data;
@@ -48,7 +49,6 @@ extern const BaseApi* ips_vba_data;
 
 #ifdef STATIC_IPS_OPTIONS
 extern const BaseApi* ips_ack[];
-extern const BaseApi* ips_asn1[];
 extern const BaseApi* ips_base64[];
 extern const BaseApi* ips_ber_data[];
 extern const BaseApi* ips_ber_skip[];
@@ -103,6 +103,7 @@ static const BaseApi* ips_options[] =
     ips_file_meta,
     ips_flow,
     ips_flowbits,
+    ips_js_data,
     ips_md5,
     ips_metadata,
     ips_pkt_data,
@@ -122,7 +123,6 @@ void load_ips_options()
 
 #ifdef STATIC_IPS_OPTIONS
     PluginManager::load_plugins(ips_ack);
-    PluginManager::load_plugins(ips_asn1);
     PluginManager::load_plugins(ips_base64);
     PluginManager::load_plugins(ips_ber_data);
     PluginManager::load_plugins(ips_ber_skip);

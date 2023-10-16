@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -48,6 +48,11 @@ uint32_t IpsOption::hash() const
 bool IpsOption::operator==(const IpsOption& ips) const
 {
     return !strcmp(get_name(), ips.get_name());
+}
+
+section_flags IpsOption::get_pdu_section(bool) const
+{
+    return section_to_flag(PS_NONE);
 }
 
 //-------------------------------------------------------------------------

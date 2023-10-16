@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -27,6 +27,7 @@
 #include "protocols/packet.h"
 
 #include "http_common.h"
+#include "http_context_data.h"
 #include "http_cutter.h"
 #include "http_enum.h"
 #include "http_inspect.h"
@@ -140,13 +141,11 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
     // This is the session state information we share with HttpInspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP
     // connection the new flow data object is created here.
-    HttpFlowData* session_data = nullptr;
-    if (flow->stream_intf)
-        session_data = (HttpFlowData*)flow->stream_intf->get_stream_flow_data(flow);
+    HttpFlowData* session_data = HttpInspect::http_get_flow_data(flow);
 
     if (session_data == nullptr)
     {
-        HttpInspect::http_set_flow_data(flow, session_data = new HttpFlowData(flow));
+        HttpInspect::http_set_flow_data(flow, session_data = new HttpFlowData(flow, my_inspector->params));
         HttpModule::increment_peg_counts(PEG_FLOW);
     }
 
@@ -240,6 +239,10 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
         prepare_flush(session_data, nullptr, SEC_HEADER, 0, 0, 0, false, 0, 0);
         my_inspector->process((const uint8_t*)"", 0, flow, SRC_SERVER, false, nullptr);
         session_data->transaction[SRC_SERVER]->clear_section();
+        HttpContextData* hcd = (HttpContextData*)DetectionEngine::get_data(HttpContextData::ips_id);
+        assert(hcd != nullptr);
+        if (hcd != nullptr)
+            hcd->clear();
     }
 
     HttpCutter*& cutter = session_data->cutter[source_id];

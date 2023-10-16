@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -35,9 +35,6 @@ HyperScratchAllocator::~HyperScratchAllocator()
 
 bool HyperScratchAllocator::allocate(hs_database_t* db)
 {
-    if ( scratch_id < 0 )
-        scratch_id = SnortConfig::request_scratch(this);
-
     return hs_alloc_scratch(db, &scratch) == HS_SUCCESS;
 }
 

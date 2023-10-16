@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -150,7 +150,7 @@ public:
     bool get_tls_handshake_done() const { return tls_handshake_done; }
 
     // Duplicate only if len > 0, otherwise simply set (i.e., own the argument)
-    void set_tls_host(const char* new_tls_host, uint32_t len, AppidChangeBits& change_bits)
+    void set_tls_host(const char* new_tls_host, uint32_t len, bool published=false)
     {
         if (tls_host)
             snort_free(tls_host);
@@ -160,7 +160,16 @@ public:
             return;
         }
         tls_host = len? snort::snort_strndup(new_tls_host,len) : const_cast<char*>(new_tls_host);
-        change_bits.set(APPID_TLSHOST_BIT);
+
+        if (!published)
+            tls_host_unpublished = true;
+    }
+
+    void set_tls_host(const char* new_tls_host, uint32_t len, AppidChangeBits& change_bits)
+    {
+        set_tls_host(new_tls_host, len, true);
+        if (new_tls_host and *new_tls_host != '\0')
+            change_bits.set(APPID_TLSHOST_BIT);
     }
 
     void set_tls_first_alt_name(const char* new_tls_first_alt_name, uint32_t len, AppidChangeBits& change_bits)
@@ -213,12 +222,17 @@ public:
         matched_tls_type = type;
     }
 
+    void set_tls_host_unpublished(bool val) { tls_host_unpublished = val; }
+
+    bool is_tls_host_unpublished() const { return tls_host_unpublished; }
+
 private:
     char* tls_host = nullptr;
     char* tls_first_alt_name = nullptr;
     char* tls_cname = nullptr;
     char* tls_org_unit = nullptr;
     bool tls_handshake_done = false;
+    bool tls_host_unpublished = false;
     MatchedTlsType matched_tls_type = MATCHED_TLS_NONE;
 };
 
@@ -232,8 +246,8 @@ public:
     static AppIdSession* allocate_session(const snort::Packet*, IpProtocol,
         AppidSessionDirection, AppIdInspector&, OdpContext&);
     static AppIdSession* create_future_session(const snort::Packet*, const snort::SfIp*, uint16_t,
-        const snort::SfIp*, uint16_t, IpProtocol, SnortProtocolId, bool swap_app_direction=false,
-        bool bidirectional=false, bool expect_persist=false);
+        const snort::SfIp*, uint16_t, IpProtocol, SnortProtocolId, OdpContext&,
+        bool swap_app_direction=false, bool bidirectional=false, bool expect_persist=false);
     void initialize_future_session(AppIdSession&, uint64_t);
 
     snort::Flow* flow = nullptr;
@@ -328,6 +342,7 @@ public:
     AppId pick_ss_misc_app_id() const;
     AppId pick_ss_client_app_id() const;
     AppId pick_ss_payload_app_id() const;
+    AppId check_first_pkt_tp_payload_app_id() const;
     AppId pick_ss_payload_app_id(AppId service_id) const;
     AppId pick_ss_referred_payload_app_id() const;
 
@@ -339,6 +354,7 @@ public:
 
     void examine_ssl_metadata(AppidChangeBits& change_bits);
     void set_client_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
+    void set_client_appid_data(AppId, char* version = nullptr, bool published=false);
     void set_service_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void set_payload_appid_data(AppId, char* version = nullptr);
     void check_app_detection_restart(AppidChangeBits& change_bits,
@@ -524,8 +540,17 @@ public:
 
     bool use_eve_client_app_id() const
     {
-        return (api.client.get_eve_client_app_id() > APP_ID_NONE and
-            (api.client.get_id() == APP_ID_SSL_CLIENT or api.client.get_id() <= APP_ID_NONE));
+        if (api.client.get_eve_client_app_id() <= APP_ID_NONE)
+            return false;
+
+        if (get_session_flags(APPID_SESSION_HTTP_SESSION))
+        {
+            if (odp_ctxt.eve_http_client)
+                api.client.reset_version();
+            return odp_ctxt.eve_http_client;
+        }
+        else
+            return (api.client.get_id() == APP_ID_SSL_CLIENT or api.client.get_id() <= APP_ID_NONE);
     }
 
     void set_alpn_service_app_id(AppId id)
@@ -577,6 +602,12 @@ public:
     void set_tls_host(const char* tls_host)
     {
         api.set_tls_host(tls_host);
+    }
+
+    void set_tls_host()
+    {
+        if (tsession and tsession->is_tls_host_unpublished())
+            api.set_tls_host(tsession->get_tls_host());
     }
 
     void set_netbios_name(AppidChangeBits& change_bits, const char *name)
@@ -662,6 +693,21 @@ public:
         no_service_inspector = true;
     }
 
+    void set_client_info_unpublished(bool val)
+    {
+        client_info_unpublished = val;
+    }
+
+    bool is_client_info_unpublished()
+    {
+        return client_info_unpublished;
+    }
+
+    inline bool is_encrypted_oportunistic_tls_session()
+    {
+        return get_session_flags(APPID_SESSION_OPPORTUNISTIC_TLS) and !flow->flags.data_decrypted;
+    }
+
 private:
     uint16_t prev_httpx_raw_packet = 0;
 
@@ -684,6 +730,7 @@ private:
     bool consumed_ha_data = false;
     bool no_service_candidate = false;
     bool no_service_inspector = false;
+    bool client_info_unpublished = false;
 };
 
 #endif

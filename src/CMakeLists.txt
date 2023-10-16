@@ -52,6 +52,11 @@ if ( HAVE_LZMA )
     LIST(APPEND EXTERNAL_LIBRARIES ${LIBLZMA_LIBRARIES})
 endif()
 
+if ( HAVE_NUMA )
+    LIST(APPEND EXTERNAL_INCLUDES ${NUMA_INCLUDE_DIRS})
+    LIST(APPEND EXTERNAL_LIBRARIES ${NUMA_LIBRARIES})
+endif()
+
 if ( HAVE_SAFEC )
     LIST(APPEND EXTERNAL_LIBRARIES ${SAFEC_LIBRARIES})
     LIST(APPEND EXTERNAL_INCLUDES ${SAFEC_INCLUDE_DIR})
@@ -94,6 +99,7 @@ add_subdirectory(filters)
 add_subdirectory(flow)
 add_subdirectory(framework)
 add_subdirectory(hash)
+add_subdirectory(js_norm)
 add_subdirectory(latency)
 add_subdirectory(log)
 add_subdirectory(main)
@@ -151,6 +157,7 @@ add_executable( snort
     $<TARGET_OBJECTS:host_tracker>
     $<TARGET_OBJECTS:ips_actions>
     $<TARGET_OBJECTS:ips_options>
+    $<TARGET_OBJECTS:js_norm>
     $<TARGET_OBJECTS:latency>
     $<TARGET_OBJECTS:log>
     $<TARGET_OBJECTS:loggers>

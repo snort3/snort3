@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -51,13 +51,15 @@ HttpMsgBody::HttpMsgBody(const uint8_t* buffer, const uint16_t buf_size,
     publish_length = buf_size;
 }
 void HttpMsgBody::analyze() {}
-void HttpMsgBody::publish() {}
+void HttpMsgBody::publish(unsigned) {}
 void HttpMsgBody::do_file_processing(const Field&) {}
 void HttpMsgBody::do_utf_decoding(const Field&, Field&) {}
 void HttpMsgBody::do_file_decompression(const Field&, Field&) {}
-void HttpMsgBody::do_enhanced_js_normalization(const Field&, Field&) {}
 void HttpMsgBody::clean_partial(uint32_t&, uint32_t&, uint8_t*&, uint32_t&) {}
 void HttpMsgBody::bookkeeping_regular_flush(uint32_t&, uint8_t*&, uint32_t&, int32_t) {}
+bool HttpMsgBody::run_detection(snort::Packet*) { return true; }
+void HttpMsgBody::clear() {}
+void HttpMsgSection::clear() {}
 #ifdef REG_TEST
 void HttpMsgBody::print_body_section(FILE*, const char*) {}
 #endif
@@ -78,6 +80,7 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     tcp_close(false)
 {}
 void HttpMsgSection::update_depth() const{}
+bool HttpMsgSection::run_detection(snort::Packet*) { return true; }
 
 HttpTransaction*HttpTransaction::attach_my_transaction(HttpFlowData*, HttpCommon::SourceId)
     { return nullptr; }

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -24,6 +24,7 @@
 
 #include <unordered_map>
 
+#include "flow/flow_data.h"
 #include "framework/module.h"
 #include "hash/lru_cache_local.h"
 #include "sfip/sf_cidr.h"
@@ -136,6 +137,8 @@ struct NetFlowStats : public LruCacheLocalStats
     PegCount v9_templates;
     PegCount version_5;
     PegCount version_9;
+    PegCount netflow_cache_bytes_in_use;
+    PegCount template_cache_bytes_in_use;
 };
 
 extern THREAD_LOCAL NetFlowStats netflow_stats;
@@ -166,6 +169,10 @@ public:
 
     bool is_bindable() const override
     { return true; }
+
+    static unsigned module_id;
+    static void init()
+    { module_id = snort::FlowData::create_flow_data_id(); }
 
 private:
     NetFlowConfig* conf = nullptr;

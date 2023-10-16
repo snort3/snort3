@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -40,6 +40,7 @@ struct PopStats
     PegCount ssl_search_abandoned;
     PegCount ssl_srch_abandoned_early;
     snort::MimeStats mime_stats;
+    PegCount js_pdf_scripts;
 };
 
 extern const PegInfo pop_peg_names[];

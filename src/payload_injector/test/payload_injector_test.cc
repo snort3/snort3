@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -54,12 +54,6 @@ uint32_t Active::send_data(snort::Packet*, EncodeFlags, unsigned char const*, un
 
 void Active::block_session(snort::Packet*, bool) { }
 void DetectionEngine::disable_all(snort::Packet*) { }
-Flow::Flow()
-{
-    gadget = nullptr;
-    flow_state = Flow::FlowState::SETUP;
-}
-
 Flow::~Flow() = default;
 IpsContext::IpsContext(unsigned int) { }
 IpsContext::~IpsContext() = default;

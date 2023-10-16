@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -51,6 +51,13 @@ public:
     SmtpServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
+    void set_client_detector(SmtpClientDetector* c)
+    {
+        smtp_client_detector = c;
+    }
+
+private:
+    SmtpClientDetector* smtp_client_detector = nullptr;
 };
 
 #endif

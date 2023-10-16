@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -27,8 +27,13 @@
 #include "flow/flow_control.h"
 
 #include "detection/detection_engine.h"
+#include "flow/expect_cache.h"
+#include "flow/flow_cache.h"
+#include "flow/ha.h"
+#include "flow/session.h"
 #include "main/policy.h"
 #include "main/snort_config.h"
+#include "main/thread_config.h"
 #include "managers/inspector_manager.h"
 #include "packet_io/active.h"
 #include "packet_tracer/packet_tracer.h"
@@ -39,10 +44,6 @@
 #include "protocols/vlan.h"
 #include "stream/stream.h"
 #include "utils/util.h"
-#include "flow/expect_cache.h"
-#include "flow/flow_cache.h"
-#include "flow/ha.h"
-#include "flow/session.h"
 #include "trace/trace_api.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -68,23 +69,17 @@ void Active::set_drop_reason(char const*) { }
 Packet::Packet(bool) { }
 Packet::~Packet() = default;
 uint32_t Packet::get_flow_geneve_vni() const { return 0; }
-Flow::Flow()
-{
-    constexpr size_t offset = offsetof(Flow, key);
-    // FIXIT-L need a struct to zero here to make future proof
-    memset((uint8_t*)this+offset, 0, sizeof(*this)-offset);
-}
 Flow::~Flow() = default;
 DetectionEngine::DetectionEngine() = default;
 ExpectCache::~ExpectCache() = default;
 DetectionEngine::~DetectionEngine() = default;
 void Flow::init(PktType) { }
-void Flow::term() { }
 void Flow::flush(bool) { }
 void Flow::reset(bool) { }
 void Flow::free_flow_data() { }
-void DataBus::publish(const char*, const uint8_t*, unsigned, Flow*) { }
-void DataBus::publish(const char*, Packet*, Flow*) { }
+void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }
+void DataBus::publish(unsigned, unsigned, const uint8_t*, unsigned, Flow*) { }
+void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
 const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
@@ -104,6 +99,7 @@ SfIpRet SfIp::set(void const*, int) { return SFIP_SUCCESS; }
 void snort::trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
 uint8_t snort::TraceApi::get_constraints_generation() { return 0; }
 void snort::TraceApi::filter(const Packet&) {}
+void ThreadConfig::preemptive_kick() {}
 
 namespace snort
 {

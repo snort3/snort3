@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -47,19 +47,17 @@ struct InspectionBuffer
 {
     enum Type
     {
-        // this is the only generic rule option
-        IBT_VBA,
+        // these are the only generic rule options
+        IBT_VBA, IBT_JS_DATA,
 
-        // FIXIT-M all of these should be eliminated after NHI is updated
+        // FIXIT-M all of these should be eliminated
         IBT_KEY, IBT_HEADER, IBT_BODY,
-        IBT_RAW_KEY, IBT_RAW_HEADER, IBT_METHOD,
-        IBT_STAT_CODE, IBT_STAT_MSG, IBT_COOKIE,
-        IBT_JS_DATA,
 
         IBT_MAX
     };
     const uint8_t* data;
     unsigned len;
+    bool is_accumulated = false;
 };
 
 struct InspectApi;
@@ -166,6 +164,18 @@ public:
     const char* get_alias_name() const
     { return alias_name; }
 
+    void set_network_policy_user_id(uint64_t user_id)
+    {
+        network_policy_user_id = user_id;
+        network_policy_user_id_set = true;
+    }
+
+    bool get_network_policy_user_id(uint64_t& user_id) const
+    {
+        user_id = network_policy_user_id;
+        return network_policy_user_id_set;
+    }
+
     virtual bool is_control_channel() const
     { return false; }
 
@@ -175,6 +185,9 @@ public:
     virtual bool can_start_tls() const
     { return false; }
 
+    virtual bool supports_no_ips() const
+    { return false; }
+
     void allocate_thread_storage();
     void set_thread_specific_data(void*);
     void* get_thread_specific_data() const;
@@ -182,6 +195,9 @@ public:
 
     virtual void install_reload_handler(SnortConfig*)
     { }
+
+    virtual const uint8_t* adjust_log_packet(Packet*, uint16_t&)
+    { return nullptr; }
 
 public:
     static THREAD_LOCAL unsigned slot;
@@ -197,6 +213,8 @@ private:
     SnortProtocolId snort_protocol_id = 0;
     // FIXIT-E Use std::string to avoid storing a pointer to external std::string buffers
     const char* alias_name = nullptr;
+    uint64_t network_policy_user_id = 0;
+    bool network_policy_user_id_set = false;
 };
 
 // at present there is no sequencing among like types except that appid

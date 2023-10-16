@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -118,19 +118,6 @@ static ConversionState* config_int_ctor(Converter& c)
     return new ConfigIntOption(c, snort_option, lua_table, lua_option, max_int_value);
 }
 } // namespace
-
-/*************************************************
- *********************  asn1  ********************
- *************************************************/
-
-static const std::string asn1 = "asn1";
-static const ConvertMap asn1_api =
-{
-    asn1,
-    config_int_ctor<& asn1, & detection>,
-};
-
-const ConvertMap* asn1_map = &asn1_api;
 
 /*************************************************
  *************  max_attribute_hosts  *************

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -24,6 +24,8 @@
 
 #include "dns_module.h"
 
+#include "dns_config.h"
+
 using namespace snort;
 using namespace std;
 
@@ -36,6 +38,8 @@ using namespace std;
 
 static const Parameter s_params[] =
 {
+    { "publish_response", Parameter::PT_BOOL, nullptr, "false", "parse and publish dns responses" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -55,6 +59,29 @@ static const RuleMap dns_rules[] =
 DnsModule::DnsModule() : Module(DNS_NAME, DNS_HELP, s_params)
 { }
 
+DnsModule::~DnsModule()
+{
+    delete config;
+}
+
+bool DnsModule::begin(const char*, int, SnortConfig*)
+{
+    if (!config)
+        config = new DnsConfig;
+
+    return true;
+}
+
+bool DnsModule::set(const char*, snort::Value& val, snort::SnortConfig*)
+{
+    if (val.is("publish_response"))
+    {
+        config->publish_response = val.get_bool();
+    }
+
+    return true;
+}
+
 const RuleMap* DnsModule::get_rules() const
 { return dns_rules; }
 
@@ -66,4 +93,11 @@ PegCount* DnsModule::get_counts() const
 
 ProfileStats* DnsModule::get_profile() const
 { return &dnsPerfStats; }
+
+const DnsConfig* DnsModule::get_config()
+{
+    DnsConfig* tmp = config;
+    config = nullptr;
+    return tmp;
+}
 

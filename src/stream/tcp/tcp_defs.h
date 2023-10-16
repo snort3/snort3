@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -60,6 +60,8 @@ struct Packet;
 #define STREAM_DEFAULT_CONSEC_SMALL_SEGS 0     /* disabled */
 
 #define SLAM_MAX 4
+
+#define ZERO_WIN_PROBE_LEN 1
 
 // target-based policy types - changes to this enum require changes to stream.h::TCP_POLICIES
 enum StreamPolicy : uint8_t

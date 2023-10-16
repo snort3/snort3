@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2022-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -73,7 +73,7 @@ private:
 };
 
 // Template class for range-based rule options module
-template<HttpEnums::HTTP_RULE_OPT OPT_IDX, HttpEnums::InspectSection SECTION>
+template<HttpEnums::HTTP_RULE_OPT OPT_IDX, snort::PduSection SECTION>
 class HttpNumRuleOptModule : public HttpRangeRuleOptModule
 {
 public:
@@ -83,11 +83,7 @@ public:
     bool begin(const char*, int, snort::SnortConfig*) override
     {
         HttpRangeRuleOptModule::begin(nullptr, 0, nullptr);
-        inspect_section = SECTION;
-        if (inspect_section == HttpEnums::IS_TRAILER)
-        {
-            is_trailer_opt = true;
-        }
+        pdu_section = SECTION;
         return true;
     }
 
@@ -95,7 +91,7 @@ private:
     static THREAD_LOCAL snort::ProfileStats ps;
 };
 
-template<HttpEnums::HTTP_RULE_OPT OPT_IDX, HttpEnums::InspectSection SECTION>
+template<HttpEnums::HTTP_RULE_OPT OPT_IDX, snort::PduSection SECTION>
 THREAD_LOCAL snort::ProfileStats HttpNumRuleOptModule<OPT_IDX, SECTION>::ps;
 
 // Template class for range-based rule options

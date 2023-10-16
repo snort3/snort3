@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -23,6 +23,7 @@
 #endif
 
 #include "host_tracker_module.h"
+#include "host_cache_segmented.h"
 
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -30,6 +31,8 @@
 #include "cache_allocator.cc"
 
 using namespace snort;
+
+static HostCacheIp initial_host_cache(LRU_CACHE_INITIAL_SIZE);
 
 const PegInfo host_tracker_pegs[] =
 {
@@ -63,13 +66,13 @@ bool HostTrackerModule::set(const char*, Value& v, SnortConfig*)
         v.get_addr(addr);
 
     else if ( v.is("port") )
-        host_cache[addr]->update_service_port(app, v.get_uint16());
+        app.port = v.get_uint16();
 
     else if ( v.is("proto") )
     {
         const IpProtocol mask[] =
         { IpProtocol::IP, IpProtocol::TCP, IpProtocol::UDP };
-        host_cache[addr]->update_service_proto(app, mask[v.get_uint8()]);
+        app.proto = mask[v.get_uint8()];
     }
 
     return true;
@@ -80,6 +83,7 @@ bool HostTrackerModule::begin(const char* fqn, int idx, SnortConfig*)
     if ( idx && !strcmp(fqn, "host_tracker") )
     {
         addr.clear();
+        apps.clear();
     }
     return true;
 }
@@ -87,21 +91,32 @@ bool HostTrackerModule::begin(const char* fqn, int idx, SnortConfig*)
 bool HostTrackerModule::end(const char* fqn, int idx, SnortConfig*)
 {
     if ( idx && !strcmp(fqn, "host_tracker.services") )
-    {
-        if ( addr.is_set() )
-            host_cache[addr]->add_service(app);
+        apps.emplace_back(app);
 
-        host_cache[addr]->clear_service(app);
-    }
     else if ( idx && !strcmp(fqn, "host_tracker") && addr.is_set() )
     {
-        host_cache[addr];
-        host_cache[addr]->clear_service(app);
+        initial_host_cache[addr];
+
+        for ( auto& a : apps )
+            initial_host_cache[addr]->add_service(a);
+
         addr.clear();
+        apps.clear();
     }
 
     return true;
 }
+
+void HostTrackerModule::init_data()
+{
+    auto host_data = initial_host_cache.get_all_data();
+    for ( auto& h : host_data )
+    {
+        host_cache.find_else_insert(h.first, h.second);
+        h.second->init_visibility(1);
+    }
+}
+
 
 const PegInfo* HostTrackerModule::get_pegs() const
 { return host_tracker_pegs; }

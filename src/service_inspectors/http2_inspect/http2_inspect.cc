@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -52,13 +52,6 @@ Http2Inspect::Http2Inspect(const Http2ParaList* params_) : params(params_)
     if (params->test_output)
     {
         HttpTestManager::activate_test_output(HttpTestManager::IN_HTTP2);
-    }
-    if ((params->test_input) || (params->test_output))
-    {
-        HttpTestManager::set_print_amount(params->print_amount);
-        HttpTestManager::set_print_hex(params->print_hex);
-        HttpTestManager::set_show_pegs(params->show_pegs);
-        HttpTestManager::set_show_scan(params->show_scan);
     }
 #endif
 }
@@ -221,3 +214,38 @@ static void print_flow_issues(FILE* output, Http2Infractions* const infractions,
         infractions->get_raw(0), events->get_raw(0));
 }
 #endif
+
+static const uint8_t* get_frame_pdu(Packet* p, uint16_t& length)
+{
+    auto* const session_data = (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+    if (!session_data)
+        return nullptr;
+
+    auto* stream = session_data->find_processing_stream();
+    if (!stream)
+        return nullptr;
+
+    auto* frame = stream->get_current_frame();
+    if (!frame)
+        return nullptr;
+
+    return frame->get_frame_pdu(length);
+}
+
+const uint8_t* Http2Inspect::adjust_log_packet(Packet* p, uint16_t& length)
+{
+    const uint8_t* pdu = get_frame_pdu(p, length);
+    if (pdu or !p->has_parent())
+        return pdu;
+
+    // for rebuilt packet w/o frame fall back to wire packet
+    Packet* wire_packet = DetectionEngine::get_current_wire_packet();
+    if (!wire_packet or !wire_packet->data or !wire_packet->dsize)
+        return nullptr;
+
+    uint8_t* wire_pdu = new uint8_t[wire_packet->dsize];
+    memcpy(wire_pdu, wire_packet->data, wire_packet->dsize);
+    length = wire_packet->dsize;
+
+    return wire_pdu;
+}

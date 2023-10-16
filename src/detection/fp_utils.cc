@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -36,6 +36,7 @@
 #include "framework/mpse.h"
 #include "framework/mpse_batch.h"
 #include "hash/ghash.h"
+#include "ips_options/ips_flowbits.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "parser/parse_conf.h"
@@ -56,6 +57,9 @@
 
 using namespace snort;
 
+// PduSection to string, used by debug traces
+const char* section_to_str[] = {"NONE", "HEADER", "HEADER_BODY", "BODY", "TRAILER"};
+
 //--------------------------------------------------------------------------
 // private utilities
 //--------------------------------------------------------------------------
@@ -66,6 +70,7 @@ static bool pmd_can_be_fp(
     switch ( cat )
     {
     case CAT_NONE:
+    case CAT_READ:
     case CAT_ADJUST:
     case CAT_SET_OTHER:
         return false;
@@ -135,23 +140,11 @@ void update_buffer_map(const char** bufs, const char* svc)
         return;
     }
 
-    // FIXIT-M update NHI and H2I api.buffers and remove the hard-coded foo below
     for ( int i = 0; bufs[i]; ++i )
-    {
         buffer_map[bufs[i]].push_back(svc);
-        if ( !strcmp(svc, "http") )
-        {
-            buffer_map[bufs[i]].push_back("http2");
-            buffer_map[bufs[i]].push_back("http3");
-        }
-    }
 
     if ( !strcmp(svc, "http") )
-    {
         buffer_map["file_data"].push_back("http");
-        buffer_map["file_data"].push_back("http2");
-        buffer_map["file_data"].push_back("http3");
-    }
 }
 
 void add_default_services(SnortConfig* sc, const std::string& buf, OptTreeNode* otn)
@@ -296,7 +289,7 @@ static bool fetch(const std::string& s, uint8_t*& data, size_t& len)
 }
 
 static std::string make_db_name(
-    const std::string& path, const char* proto, const char* dir, const char* buf, const std::string& id)
+    const std::string& path, const char* proto, const char* dir, const char* buf, const std::string& id, int sect)
 {
     std::stringstream ss;
 
@@ -304,7 +297,7 @@ static std::string make_db_name(
     ss << proto << "_";
     ss << dir << "_";
     ss << buf << "_";
-
+    ss << std::to_string(sect) << "_";
     ss << std::hex << std::setfill('0') << std::setw(2);
 
     for ( auto c : id )
@@ -317,26 +310,32 @@ static std::string make_db_name(
 
 static bool db_dump(const std::string& path, const char* proto, const char* dir, RuleGroup* g)
 {
-    for ( auto it : g->pm_list )
+    for ( int sect = PS_NONE; sect <= PS_MAX; sect++)
     {
-        std::string id;
-        it->group.normal_mpse->get_hash(id);
-
-        std::string file = make_db_name(path, proto, dir, it->name, id);
-
-        uint8_t* db = nullptr;
-        size_t len = 0;
-
-        if ( it->group.normal_mpse->serialize(db, len) and db and len > 0 )
+        for ( auto it : g->pm_list[sect] )
         {
-            store(file, db, len);
-            free(db);
-            ++mpse_dumped;
-        }
-        else
-        {
-            ParseWarning(WARN_RULES, "Failed to serialize %s", file.c_str());
-            return false;
+            if (it->group.normal_is_dup)
+                continue;
+
+            std::string id;
+            it->group.normal_mpse->get_hash(id);
+
+            std::string file = make_db_name(path, proto, dir, it->name, id, sect);
+
+            uint8_t* db = nullptr;
+            size_t len = 0;
+
+            if ( it->group.normal_mpse->serialize(db, len) and db and len > 0 )
+            {
+                store(file, db, len);
+                free(db);
+                ++mpse_dumped;
+            }
+            else
+            {
+                ParseWarning(WARN_RULES, "Failed to serialize %s", file.c_str());
+                return false;
+            }
         }
     }
     return true;
@@ -344,30 +343,36 @@ static bool db_dump(const std::string& path, const char* proto, const char* dir,
 
 static bool db_load(const std::string& path, const char* proto, const char* dir, RuleGroup* g)
 {
-    for ( auto it : g->pm_list )
+    for ( int sect = PS_NONE; sect <= PS_MAX; sect++)
     {
-        std::string id;
-        it->group.normal_mpse->get_hash(id);
-
-        std::string file = make_db_name(path, proto, dir, it->name, id);
-
-        uint8_t* db = nullptr;
-        size_t len = 0;
-
-        if ( !fetch(file, db, len) )
+        for ( auto it : g->pm_list[sect] )
         {
-            ParseWarning(WARN_RULES, "Failed to read %s", file.c_str());
+            if (it->group.normal_is_dup)
+                continue;
+
+            std::string id;
+            it->group.normal_mpse->get_hash(id);
+
+            std::string file = make_db_name(path, proto, dir, it->name, id, sect);
+
+            uint8_t* db = nullptr;
+            size_t len = 0;
+
+            if ( !fetch(file, db, len) )
+            {
+                ParseWarning(WARN_RULES, "Failed to read %s", file.c_str());
+                delete[] db;
+                return false;
+            }
+            else if ( !it->group.normal_mpse->deserialize(db, len) )
+            {
+                ParseWarning(WARN_RULES, "Failed to deserialize %s", file.c_str());
+                delete[] db;
+                return false;
+            }
             delete[] db;
-            return false;
+            ++mpse_loaded;
         }
-        else if ( !it->group.normal_mpse->deserialize(db, len) )
-        {
-            ParseWarning(WARN_RULES, "Failed to deserialize %s", file.c_str());
-            delete[] db;
-            return false;
-        }
-        delete[] db;
-        ++mpse_loaded;
     }
     return true;
 }
@@ -449,6 +454,30 @@ unsigned fp_deserialize(const SnortConfig* sc, const std::string& dir)
     return mpse_loaded;
 }
 
+bool has_service_rule_opt(OptTreeNode* otn)
+{
+    for (OptFpList* ofl = otn->opt_func; ofl; ofl = ofl->next)
+    {
+        if ( !ofl->ips_opt )
+            continue;
+
+        CursorActionType cat = ofl->ips_opt->get_cursor_type();
+        const char* s = ofl->ips_opt->get_name();
+
+        if ( cat <= CAT_ADJUST )
+        {
+            if (guess_service(s) != nullptr)
+                return true;
+
+            continue;
+        }
+
+        if (get_num_services(s) != 0)
+            return true;
+    }
+    return false;
+}
+
 void validate_services(SnortConfig* sc, OptTreeNode* otn)
 {
     std::string svc, multi_svc_buf;
@@ -460,36 +489,46 @@ void validate_services(SnortConfig* sc, OptTreeNode* otn)
             continue;
 
         CursorActionType cat = ofl->ips_opt->get_cursor_type();
-        const char* s = ofl->ips_opt->get_name();
+        const char* opt = ofl->ips_opt->get_name();
 
         if ( cat <= CAT_ADJUST )
         {
             if ( !guess )
-                guess = guess_service(s);
+                guess = guess_service(opt);
 
             continue;
         }
 
-        unsigned n = get_num_services(s);
+        unsigned n = get_num_services(opt);
 
         if ( !n )
             continue;
 
         if ( n > 1 )
         {
-            multi_svc_buf = s;
+            multi_svc_buf = opt;
             continue;
         }
 
-        s = get_service(s);
+        const char* opt_svc = get_service(opt);
+        const auto& search = sc->service_extension.find(opt_svc);
+        if (search != sc->service_extension.end())
+        {
+            multi_svc_buf = opt;
+            continue;
+        }
 
-        if ( !svc.empty() and svc != s )
+        if ( !svc.empty() and svc != opt_svc )
         {
             ParseWarning(WARN_RULES, "%u:%u:%u has mixed service buffers (%s and %s)",
-                otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, svc.c_str(), s);
+                otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, svc.c_str(), opt_svc);
         }
-        svc = s;
+        svc = opt_svc;
     }
+
+    if ( !svc.empty() or !multi_svc_buf.empty() or guess )
+        otn->set_service_only();
+
     if ( otn->sigInfo.services.size() == 1 and !svc.empty() and otn->sigInfo.services[0].service != svc )
     {
         ParseWarning(WARN_RULES, "%u:%u:%u has service:%s with %s buffer",
@@ -516,11 +555,6 @@ void validate_services(SnortConfig* sc, OptTreeNode* otn)
             otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, guess);
 
         add_service_to_otn(sc, otn, guess);
-
-        if ( !strcmp(guess, "netbios-ssn") )  // :(
-            add_service_to_otn(sc, otn, "dcerpc");
-
-        otn->set_service_only();
     }
 }
 
@@ -608,6 +642,12 @@ bool is_fast_pattern_only(const OptTreeNode* otn, const OptFpList* ofp, Mpse::Mp
         return true;
 
     return false;
+}
+
+bool is_flowbit_setter(const OptFpList* ofp)
+{
+    return ofp->type == RULE_OPTION_TYPE_FLOWBIT
+        and flowbits_setter(ofp->ips_opt);
 }
 
 //--------------------------------------------------------------------------

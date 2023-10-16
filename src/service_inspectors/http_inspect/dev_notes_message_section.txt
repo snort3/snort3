@@ -1,0 +1,33 @@
+Message section is a core concept of HI. A message section is a piece of an HTTP message that is
+processed together. There are eight types of message section:
+
+1. Request line (client-to-server start line)
+2. Status line (server-to-client start line)
+3. Headers (all headers after the start line as a group)
+4. Content-Length message body (a block of message data usually not much larger than 16K from a
+   body defined by the Content-Length header)
+5. Chunked message body (same but from a chunked body)
+6. Old message body (same but from a response body with no Content-Length header that runs to
+   connection close)
+7. HTTP/X message body (same but content taken from an HTTP/2 or HTTP/3 Data frame)
+8. Trailers (all header lines following a chunked or HTTP/X body as a group)
+
+Message sections are represented by message section objects that contain and process them. There
+are twelve message section classes that inherit as follows. An asterisk denotes a virtual class.
+
+1. HttpMsgSection* - top level with all common elements
+2. HttpMsgStart* : HttpMsgSection - common elements of request and status
+3. HttpMsgRequest : HttpMsgStart
+4. HttpMsgStatus : HttpMsgStart
+5. HttpMsgHeadShared* : HttpMsgSection - common elements of headers and trailers
+6. HttpMsgHeader : HttpMsgHeadShared
+7. HttpMsgTrailer : HttpMsgHeadShared
+8. HttpMsgBody* : HttpMsgSection - common elements of message body processing
+9. HttpMsgBodyCl : HttpMsgBody
+10. HttpMsgBodyChunk : HttpMsgBody
+11. HttpMsgBodyOld : HttpMsgBody
+12. HttpMsgBodyHX : HttpMsgBody
+
+Message sections implement the Just-In-Time (JIT) principle for work products. A minimum of
+essential processing is done under process(). Other work products are derived and stored the first
+time detection or some other customer asks for them.

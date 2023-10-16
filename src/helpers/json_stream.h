@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -41,12 +41,15 @@ public:
 
     void put(const char* key);    // null
     void put(const char* key, int64_t val);
+    void uput(const char* key, uint64_t val);
     void put(const char* key, const char* val);
     void put(const char* key, const std::string& val);
     void put(const char* key, double val, int precision);
 
     void put_true(const char* key);
     void put_false(const char* key);
+
+    void put_eol();
 
 private:
     void split();

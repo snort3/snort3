@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -61,7 +61,6 @@ namespace snort
 AppIdApi appid_api;
 AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) { }
-Flow::Flow() = default;
 Flow::~Flow() = default;
 AppIdSession* AppIdApi::get_appid_session(snort::Flow const&) { return nullptr; }
 
@@ -71,7 +70,7 @@ SearchTool::SearchTool(bool)
     mpsegrp = &mpse_group;
 }
 void SearchTool::reload() { }  // LCOV_EXCL_LINE
-int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void*)
+int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void*, const SnortConfig*)
 {
     // Seg-fault will be observed if this is called without initializing pattern matchers
     assert(mpsegrp);
@@ -109,6 +108,8 @@ void OdpContext::initialize(AppIdInspector&)
 {
     sip_matchers.finalize_patterns(*this);
 }
+
+SipUdpClientDetector* OdpContext::get_sip_client_detector() { return &cd; }
 
 void SipPatternMatchers::finalize_patterns(OdpContext&)
 {
@@ -157,6 +158,7 @@ EveCaPatternMatchers::~EveCaPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
 HttpPatternMatchers::~HttpPatternMatchers() = default;
 AlpnPatternMatchers::~AlpnPatternMatchers() = default;
+CipPatternMatchers::~CipPatternMatchers() = default;
 
 ClientDetector::ClientDetector() { }
 
@@ -177,7 +179,6 @@ bool SipEvent::is_invite() const { return false; }
 bool SipEvent::is_dialog_established() const { return false; }
 int SipPatternMatchers::get_client_from_ua(char const*, unsigned int, int&, char*&) { return 0; }  // LCOV_EXCL_LINE
 void SipEventHandler::service_handler(SipEvent&, AppIdSession&, AppidChangeBits&) { }
-SipUdpClientDetector* SipEventHandler::client = &cd;
 
 void* AppIdDetector::data_get(AppIdSession&)
 {
@@ -208,7 +209,7 @@ TEST(detector_sip_tests, sip_event_handler)
     odpctxt->initialize(appid_inspector);
     SipEvent event(&pkt, nullptr, nullptr);
     SipEventHandler event_handler(appid_inspector);
-    Flow* flow = new Flow();
+    Flow* flow = new Flow;
     event_handler.handle(event, flow);
     delete sip_data;
     delete session;

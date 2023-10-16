@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2004-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -48,6 +48,7 @@
 #include "framework/data_bus.h"
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "utils/util.h"
 
 #include "ftp_cmd_lookup.h"
@@ -175,13 +176,13 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
         return rval;
 
     //  Verify that FTP client and FTP data inspectors are initialized.
-    if(!InspectorManager::get_inspector(FTP_CLIENT_NAME, false))
+    if(!InspectorManager::get_inspector(FTP_CLIENT_NAME, false, sc))
     {
         ParseError("ftp_server requires that %s also be configured.", FTP_CLIENT_NAME);
         return -1;
     }
 
-    if(!InspectorManager::get_inspector(FTP_DATA_NAME, false))
+    if(!InspectorManager::get_inspector(FTP_DATA_NAME, false, sc))
     {
         ParseError("ftp_server requires that %s also be configured.", FTP_DATA_NAME);
         return -1;
@@ -192,7 +193,7 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
 
 void do_detection(Packet* p)
 {
-    DataBus::publish(PACKET_EVENT, p);
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::ALT_PACKET, p);
     DetectionEngine::disable_all(p);
 }
 

@@ -1,7 +1,7 @@
 Snort can take more active role in securing network by sending active
 responses to shutdown offending sessions. When active responses is
-enabled, snort will send TCP RST or ICMP unreachable when dropping a
-session.
+enabled, snort will send TCP RST and ICMP unreachable when
+dropping a TCP session and ICMP unreachable packets for UDP.
 
 ==== Changes from Snort 2.9
 
@@ -64,8 +64,8 @@ Example:
 ==== Reject
 
 IPS action reject perform active response to shutdown hostile network
-session by injecting TCP resets (TCP connections) or ICMP unreachable
-packets.
+session by injecting TCP resets and ICMP unreachable for TCP
+connections, and ICMP unreachable packets for UDP.
 
 Example:
 

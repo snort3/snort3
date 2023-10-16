@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -82,14 +82,14 @@ bool get_string(std::istringstream& data_stream,
  * characters which can get removed by c++ libraries
  *
  * NO SIDE EFFECTS
- * 
+ *
  * PARAMS:
  *          data_stream - the rule's data stream
  *          trim - specifies whether to trim the result string
  * RETURN:
- *          a string containing all the data left in the rule's 
+ *          a string containing all the data left in the rule's
  *          data stream
- * 
+ *
  */
 std::string get_remain_data(std::istringstream& data_stream, bool trim = true);
 

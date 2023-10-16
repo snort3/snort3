@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -54,18 +54,18 @@ SearchTool::~SearchTool()
     delete mpsegrp;
 }
 
-void SearchTool::add(const char* pat, unsigned len, int id, bool no_case)
-{ add((const uint8_t*)pat, len, id, no_case); }
+void SearchTool::add(const char* pat, unsigned len, int id, bool no_case, bool literal)
+{ add((const uint8_t*)pat, len, id, no_case, literal); }
 
-void SearchTool::add(const char* pat, unsigned len, void* id, bool no_case)
-{ add((const uint8_t*)pat, len, id, no_case); }
+void SearchTool::add(const char* pat, unsigned len, void* id, bool no_case, bool literal)
+{ add((const uint8_t*)pat, len, id, no_case, literal); }
 
-void SearchTool::add(const uint8_t* pat, unsigned len, int id, bool no_case)
-{ add(pat, len, (void*)(long)id, no_case); }
+void SearchTool::add(const uint8_t* pat, unsigned len, int id, bool no_case, bool literal)
+{ add(pat, len, (void*)(long)id, no_case, literal); }
 
-void SearchTool::add(const uint8_t* pat, unsigned len, void* id, bool no_case)
+void SearchTool::add(const uint8_t* pat, unsigned len, void* id, bool no_case, bool literal)
 {
-    Mpse::PatternDescriptor desc(no_case, false, true, multi_match);
+    Mpse::PatternDescriptor desc(no_case, false, literal, multi_match);
 
     if ( mpsegrp->normal_mpse )
         mpsegrp->normal_mpse->add_pattern(pat, len, desc, id);
@@ -134,10 +134,11 @@ int SearchTool::find(
 }
 
 int SearchTool::find_all(
-    const char* str, unsigned len, MpseMatch mf, bool confine, void* user_data)
+    const char* str, unsigned len, MpseMatch mf, bool confine, void* user_data, const SnortConfig* sc)
 {
     int num = 0;
-    const SnortConfig* sc = SnortConfig::get_conf();
+    if (!sc)
+        sc = SnortConfig::get_conf();
     const FastPatternConfig* fp = sc->fast_pattern_config;
 
     if ( confine && max_len > 0 )

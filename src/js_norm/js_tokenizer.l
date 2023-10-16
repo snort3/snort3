@@ -1,0 +1,3063 @@
+/*--------------------------------------------------------------------------
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License Version 2 as published
+// by the Free Software Foundation.  You may not use, modify or distribute
+// this program under any other version of the GNU General Public License.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License along
+// with this program; if not, write to the Free Software Foundation, Inc.,
+// 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//--------------------------------------------------------------------------
+// js_tokenizer.l author Oleksandr Serhiienko <oserhiie@cisco.com>
+*/
+
+%option c++
+%option yyclass="JSTokenizer"
+%option prefix="js"
+%option align full 8bit batch never-interactive
+%option noinput nounput noyywrap
+%option noyy_push_state noyy_pop_state noyy_top_state
+
+%{
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+
+#include <algorithm>
+#include <cassert>
+
+#include "js_norm/js_enum.h"
+#include "js_norm/js_identifier_ctx.h"
+#include "js_norm/js_tokenizer.h"
+#include "log/messages.h"
+#include "trace/trace_api.h"
+#include "utils/util_cstring.h"
+
+extern THREAD_LOCAL const snort::Trace* js_trace;
+
+using namespace jsn;
+
+#define YY_NO_UNPUT
+
+#define YY_FATAL_ERROR(msg) { snort::FatalError("%s", msg); }
+
+#define YY_USER_ACTION                                      \
+    {                                                       \
+        debug_logf(5, js_trace, TRACE_PROC, nullptr,        \
+            "pattern #%d, sc %d\n", yy_act, YY_START);      \
+                                                            \
+        debug_logf(5, js_trace, TRACE_DUMP, nullptr,        \
+            "text '%s'\n", YYText());                       \
+                                                            \
+        if (!states_process())                              \
+            break;                                          \
+    }
+
+#define RETURN(r)                               \
+     {                                          \
+         if ((r) == SCRIPT_CONTINUE)            \
+             states_over();                     \
+         else                                   \
+             states_reset();                    \
+         return (r);                            \
+     }
+
+#define EXEC(f)                                 \
+     {                                          \
+         auto r = (f);                          \
+         if (r)                                 \
+         {                                      \
+             BEGIN(regst);                      \
+             RETURN(r)                          \
+         }                                      \
+     }
+
+#define EEOF(f)                                 \
+     {                                          \
+         auto r = (f);                          \
+         if (r)                                 \
+         {                                      \
+             if (r != SCRIPT_CONTINUE)          \
+                 BEGIN(regst);                  \
+             RETURN(r)                          \
+         }                                      \
+     }
+
+constexpr bool JSTokenizer::insert_semicolon[ASI_GROUP_MAX][ASI_GROUP_MAX];
+
+// encoding flags
+
+enum EncodingType
+{
+    IS_BIN          = 1 << 0,   // bin code unit: 0bXXXX
+    IS_OCT          = 1 << 1,   // oct code unit: 0oXXXX
+    IS_DEC          = 1 << 2,   // dec code unit: XXXX
+    IS_HEX          = 1 << 3,   // hex code unit: 0xXXXX
+    IS_XBACKSLASH   = 1 << 4,   // \xXX
+    IS_UBACKSLASH_1 = 1 << 5,   // \uXX
+    IS_UBACKSLASH_2 = 1 << 6,   // \uXXXX
+    IS_UPERCENT     = 1 << 7,   // %uXXXX
+    IS_PERCENT      = 1 << 8,   // %XX
+    IS_UCODEPOINT   = 1 << 9    // \u{0xXXXX}
+};
+
+%}
+
+/* The following grammar was created based on ECMAScript specification */
+/* source https://ecma-international.org/ecma-262/5.1/ */
+
+/* Unicode letter ranges (categories Lu, Ll, Lt, Lm, Lo and Nl) */
+/* generated with unicode_range_generator.l */
+/* UTF-8 ranges generated with https://lists.gnu.org/archive/html/help-flex/2005-01/msg00043.html */
+/* the script above converts Unicode multi-byte ranges into UTF-8 encoding regex ranges since Flex doesn't support Unicode */
+/* for example, the Unicode range from 0x00D1 to 0x00D6 will look like this: \xC3[\x91-\x96] */
+/* just because each character in this range consists of two UTF-8 characters: \xC3 and the one of the range [\x91-\x96] */
+/* using this trick it's possible to handle unicode character ranges within the Flex regular expressions */
+/* i.e. the idea is to represent Unicode as a UTF-8 character sequence */
+LETTER_RNG_1      [A-Z]
+LETTER_RNG_2      [a-z]
+LETTER_RNG_3      \xC2\xAA
+LETTER_RNG_4      \xC2\xB5
+LETTER_RNG_5      \xC2\xBA
+LETTER_RNG_6      \xC3[\x80-\x96]
+LETTER_RNG_7      \xC3[\x98-\xB6]
+LETTER_RNG_8      \xC3[\xB8-\xBF]|\xCB[\x80-\x81]|[\xC4-\xCA][\x80-\xBF]
+LETTER_RNG_9      \xCB[\x86-\x91]
+LETTER_RNG_10     \xCB[\xA0-\xA4]
+LETTER_RNG_11     \xCB\xAC
+LETTER_RNG_12     \xCB\xAE
+LETTER_RNG_13     \xCD[\xB0-\xB4]
+LETTER_RNG_14     \xCD[\xB6-\xBD]
+LETTER_RNG_15     \xCD\xBF
+LETTER_RNG_16     \xCE\x86
+LETTER_RNG_17     \xCE[\x88-\xBF]|\xCF[\x80-\xB5]
+LETTER_RNG_18     \xCF[\xB7-\xBF]|\xD2[\x80-\x81]|[\xD0-\xD1][\x80-\xBF]
+LETTER_RNG_19     \xD2[\x8A-\xBF]|\xD5[\x80-\x99]|[\xD3-\xD4][\x80-\xBF]
+LETTER_RNG_20     \xD5[\xA0-\xBF]|\xD6[\x80-\x88]
+LETTER_RNG_21     \xD7[\x90-\xB2]
+LETTER_RNG_22     \xD8[\xA0-\xBF]|\xD9[\x80-\x8A]
+LETTER_RNG_23     \xD9[\xAE-\xAF]
+LETTER_RNG_24     \xD9[\xB1-\xBF]|\xDB[\x80-\x93]|\xDA[\x80-\xBF]
+LETTER_RNG_25     \xDB\x95
+LETTER_RNG_26     \xDB[\xA5-\xA6]
+LETTER_RNG_27     \xDB[\xAE-\xAF]
+LETTER_RNG_28     \xDB[\xBA-\xBC]
+LETTER_RNG_29     \xDB\xBF
+LETTER_RNG_30     \xDC\x90
+LETTER_RNG_31     \xDC[\x92-\xAF]
+LETTER_RNG_32     \xDD[\x8D-\xBF]|\xDE[\x80-\xA5]
+LETTER_RNG_33     \xDE\xB1
+LETTER_RNG_34     \xDF[\x8A-\xAA]
+LETTER_RNG_35     \xDF[\xB4-\xB5]
+LETTER_RNG_36     \xDF\xBA
+LETTER_RNG_37     \xE0\xA0[\x80-\x95]
+LETTER_RNG_38     \xE0\xA0\x9A
+LETTER_RNG_39     \xE0\xA0\xA4
+LETTER_RNG_40     \xE0\xA0\xA8
+LETTER_RNG_41     \xE0\xA1[\x80-\x98]
+LETTER_RNG_42     \xE0(\xA1[\xA0-\xBF]|\xA3[\x80-\x87]|\xA2[\x80-\xBF])
+LETTER_RNG_43     \xE0\xA4[\x84-\xB9]
+LETTER_RNG_44     \xE0\xA4\xBD
+LETTER_RNG_45     \xE0\xA5\x90
+LETTER_RNG_46     \xE0\xA5[\x98-\xA1]
+LETTER_RNG_47     \xE0(\xA5[\xB1-\xBF]|\xA6\x80)
+LETTER_RNG_48     \xE0\xA6[\x85-\xB9]
+LETTER_RNG_49     \xE0\xA6\xBD
+LETTER_RNG_50     \xE0\xA7\x8E
+LETTER_RNG_51     \xE0\xA7[\x9C-\xA1]
+LETTER_RNG_52     \xE0\xA7[\xB0-\xB1]
+LETTER_RNG_53     \xE0\xA7\xBC
+LETTER_RNG_54     \xE0\xA8[\x85-\xB9]
+LETTER_RNG_55     \xE0\xA9[\x99-\x9E]
+LETTER_RNG_56     \xE0\xA9[\xB2-\xB4]
+LETTER_RNG_57     \xE0\xAA[\x85-\xB9]
+LETTER_RNG_58     \xE0\xAA\xBD
+LETTER_RNG_59     \xE0\xAB[\x90-\xA1]
+LETTER_RNG_60     \xE0\xAB\xB9
+LETTER_RNG_61     \xE0\xAC[\x85-\xB9]
+LETTER_RNG_62     \xE0\xAC\xBD
+LETTER_RNG_63     \xE0\xAD[\x9C-\xA1]
+LETTER_RNG_64     \xE0\xAD\xB1
+LETTER_RNG_65     \xE0\xAE[\x83-\xB9]
+LETTER_RNG_66     \xE0\xAF\x90
+LETTER_RNG_67     \xE0\xB0[\x85-\xBD]
+LETTER_RNG_68     \xE0\xB1[\x98-\xA1]
+LETTER_RNG_69     \xE0\xB2\x80
+LETTER_RNG_70     \xE0\xB2[\x85-\xB9]
+LETTER_RNG_71     \xE0\xB2\xBD
+LETTER_RNG_72     \xE0\xB3[\x9E-\xA1]
+LETTER_RNG_73     \xE0\xB3[\xB1-\xB2]
+LETTER_RNG_74     \xE0\xB4[\x84-\xBA]
+LETTER_RNG_75     \xE0\xB4\xBD
+LETTER_RNG_76     \xE0\xB5\x8E
+LETTER_RNG_77     \xE0\xB5[\x94-\x96]
+LETTER_RNG_78     \xE0\xB5[\x9F-\xA1]
+LETTER_RNG_79     \xE0\xB5[\xBA-\xBF]
+LETTER_RNG_80     \xE0(\xB6[\x85-\xBF]|\xB7[\x80-\x86])
+LETTER_RNG_81     \xE0\xB8[\x81-\xB0]
+LETTER_RNG_82     \xE0\xB8[\xB2-\xB3]
+LETTER_RNG_83     \xE0\xB9[\x80-\x86]
+LETTER_RNG_84     \xE0\xBA[\x81-\xB0]
+LETTER_RNG_85     \xE0\xBA[\xB2-\xB3]
+LETTER_RNG_86     \xE0(\xBA[\xBD-\xBF]|\xBB[\x80-\x86])
+LETTER_RNG_87     \xE0(\xBB[\x9C-\xBF]|\xBC\x80)
+LETTER_RNG_88     \xE0\xBD[\x80-\xAC]
+LETTER_RNG_89     \xE0\xBE[\x88-\x8C]
+LETTER_RNG_90     \xE1\x80[\x80-\xAA]
+LETTER_RNG_91     \xE1\x80\xBF
+LETTER_RNG_92     \xE1\x81[\x90-\x95]
+LETTER_RNG_93     \xE1\x81[\x9A-\x9D]
+LETTER_RNG_94     \xE1\x81\xA1
+LETTER_RNG_95     \xE1\x81[\xA5-\xA6]
+LETTER_RNG_96     \xE1\x81[\xAE-\xB0]
+LETTER_RNG_97     \xE1(\x81[\xB5-\xBF]|\x82[\x80-\x81])
+LETTER_RNG_98     \xE1\x82\x8E
+LETTER_RNG_99     \xE1(\x82[\xA0-\xBF]|\x83[\x80-\xBA])
+LETTER_RNG_100    \xE1(\x83[\xBC-\xBF]|\x8D[\x80-\x9A]|[\x84-\x8C][\x80-\xBF])
+LETTER_RNG_101    \xE1\x8E[\x80-\x8F]
+LETTER_RNG_102    \xE1(\x8E[\xA0-\xBF]|\x8F[\x80-\xBD])
+LETTER_RNG_103    \xE1(\x90[\x81-\xBF]|\x99[\x80-\xAC]|[\x91-\x98][\x80-\xBF])
+LETTER_RNG_104    \xE1\x99[\xAF-\xBF]
+LETTER_RNG_105    \xE1\x9A[\x81-\x9A]
+LETTER_RNG_106    \xE1(\x9A[\xA0-\xBF]|\x9B[\x80-\xAA])
+LETTER_RNG_107    \xE1(\x9B[\xAE-\xBF]|\x9C[\x80-\x91])
+LETTER_RNG_108    \xE1\x9C[\xA0-\xB1]
+LETTER_RNG_109    \xE1\x9D[\x80-\x91]
+LETTER_RNG_110    \xE1\x9D[\xA0-\xB0]
+LETTER_RNG_111    \xE1\x9E[\x80-\xB3]
+LETTER_RNG_112    \xE1\x9F\x97
+LETTER_RNG_113    \xE1\x9F\x9C
+LETTER_RNG_114    \xE1(\xA0[\xA0-\xBF]|\xA2[\x80-\x84]|\xA1[\x80-\xBF])
+LETTER_RNG_115    \xE1\xA2[\x87-\xA8]
+LETTER_RNG_116    \xE1(\xA2[\xAA-\xBF]|\xA4[\x80-\x9E]|\xA3[\x80-\xBF])
+LETTER_RNG_117    \xE1(\xA5[\x90-\xBF]|\xA7[\x80-\x89]|\xA6[\x80-\xBF])
+LETTER_RNG_118    \xE1\xA8[\x80-\x96]
+LETTER_RNG_119    \xE1(\xA8[\xA0-\xBF]|\xA9[\x80-\x94])
+LETTER_RNG_120    \xE1\xAA\xA7
+LETTER_RNG_121    \xE1\xAC[\x85-\xB3]
+LETTER_RNG_122    \xE1\xAD[\x85-\x8B]
+LETTER_RNG_123    \xE1\xAE[\x83-\xA0]
+LETTER_RNG_124    \xE1\xAE[\xAE-\xAF]
+LETTER_RNG_125    \xE1(\xAE[\xBA-\xBF]|\xAF[\x80-\xA5])
+LETTER_RNG_126    \xE1\xB0[\x80-\xA3]
+LETTER_RNG_127    \xE1\xB1[\x8D-\x8F]
+LETTER_RNG_128    \xE1\xB1[\x9A-\xBD]
+LETTER_RNG_129    \xE1\xB2[\x80-\xBF]
+LETTER_RNG_130    \xE1\xB3[\xA9-\xAC]
+LETTER_RNG_131    \xE1\xB3[\xAE-\xB3]
+LETTER_RNG_132    \xE1\xB3[\xB5-\xB6]
+LETTER_RNG_133    \xE1(\xB3[\xBA-\xBF]|[\xB4-\xB6][\x80-\xBF])
+LETTER_RNG_134    \xE1(\xBE[\x80-\xBC]|[\xB8-\xBD][\x80-\xBF])
+LETTER_RNG_135    \xE1\xBE\xBE
+LETTER_RNG_136    \xE1\xBF[\x82-\x8C]
+LETTER_RNG_137    \xE1\xBF[\x90-\x9B]
+LETTER_RNG_138    \xE1\xBF[\xA0-\xAC]
+LETTER_RNG_139    \xE1\xBF[\xB2-\xBC]
+LETTER_RNG_140    \xE2\x81\xB1
+LETTER_RNG_141    \xE2\x81\xBF
+LETTER_RNG_142    \xE2\x82[\x90-\x9C]
+LETTER_RNG_143    \xE2\x84\x82
+LETTER_RNG_144    \xE2\x84\x87
+LETTER_RNG_145    \xE2\x84[\x8A-\x93]
+LETTER_RNG_146    \xE2\x84\x95
+LETTER_RNG_147    \xE2\x84[\x99-\x9D]
+LETTER_RNG_148    \xE2\x84\xA4
+LETTER_RNG_149    \xE2\x84\xA6
+LETTER_RNG_150    \xE2\x84\xA8
+LETTER_RNG_151    \xE2\x84[\xAA-\xAD]
+LETTER_RNG_152    \xE2\x84[\xAF-\xB9]
+LETTER_RNG_153    \xE2\x84[\xBC-\xBF]
+LETTER_RNG_154    \xE2\x85[\x85-\x89]
+LETTER_RNG_155    \xE2\x85\x8E
+LETTER_RNG_156    \xE2(\x85[\xA0-\xBF]|\x86[\x80-\x88])
+LETTER_RNG_157    \xE2(\xB3[\x80-\xA4]|[\xB0-\xB2][\x80-\xBF])
+LETTER_RNG_158    \xE2\xB3[\xAB-\xAE]
+LETTER_RNG_159    \xE2\xB3[\xB2-\xB3]
+LETTER_RNG_160    \xE2(\xB5[\x80-\xAF]|\xB4[\x80-\xBF])
+LETTER_RNG_161    \xE2(\xB7[\x80-\x9E]|\xB6[\x80-\xBF])
+LETTER_RNG_162    \xE2\xB8\xAF
+LETTER_RNG_163    \xE3\x80[\x85-\x87]
+LETTER_RNG_164    \xE3\x80[\xA1-\xA9]
+LETTER_RNG_165    \xE3\x80[\xB1-\xB5]
+LETTER_RNG_166    \xE3\x80[\xB8-\xBC]
+LETTER_RNG_167    \xE3(\x81[\x81-\xBF]|\x82[\x80-\x96])
+LETTER_RNG_168    \xE3\x82[\x9D-\x9F]
+LETTER_RNG_169    \xE3(\x82[\xA1-\xBF]|\x83[\x80-\xBA])
+LETTER_RNG_170    \xE3(\x83[\xBC-\xBF]|\x86[\x80-\x8E]|[\x84-\x85][\x80-\xBF])
+LETTER_RNG_171    \xE3\x86[\xA0-\xBF]
+LETTER_RNG_172    \xE3\x87[\xB0-\xBF]
+LETTER_RNG_173    (\xE3[\x90-\xBF]|\xE4[\x80-\xB6])[\x80-\xBF]
+LETTER_RNG_174    \xEA\x92[\x80-\x8C]|(\xE4[\xB8-\xBF]|\xEA[\x80-\x91]|[\xE5-\xE9][\x80-\xBF])[\x80-\xBF]
+LETTER_RNG_175    \xEA\x93[\x90-\xBD]
+LETTER_RNG_176    \xEA(\x98[\x80-\x8C]|[\x94-\x97][\x80-\xBF])
+LETTER_RNG_177    \xEA\x98[\x90-\x9F]
+LETTER_RNG_178    \xEA(\x98[\xAA-\xBF]|\x99[\x80-\xAE])
+LETTER_RNG_179    \xEA(\x99\xBF|\x9A[\x80-\x9D])
+LETTER_RNG_180    \xEA(\x9A[\xA0-\xBF]|\x9B[\x80-\xAF])
+LETTER_RNG_181    \xEA\x9C[\x97-\x9F]
+LETTER_RNG_182    \xEA(\x9C[\xA2-\xBF]|\x9E[\x80-\x88]|\x9D[\x80-\xBF])
+LETTER_RNG_183    \xEA(\x9E[\x8B-\xBF]|\xA0[\x80-\x81]|\x9F[\x80-\xBF])
+LETTER_RNG_184    \xEA\xA0[\x83-\x85]
+LETTER_RNG_185    \xEA\xA0[\x87-\x8A]
+LETTER_RNG_186    \xEA\xA0[\x8C-\xA2]
+LETTER_RNG_187    \xEA\xA1[\x80-\xB3]
+LETTER_RNG_188    \xEA\xA2[\x82-\xB3]
+LETTER_RNG_189    \xEA\xA3[\xB2-\xB7]
+LETTER_RNG_190    \xEA\xA3\xBB
+LETTER_RNG_191    \xEA\xA3[\xBD-\xBE]
+LETTER_RNG_192    \xEA\xA4[\x8A-\xA5]
+LETTER_RNG_193    \xEA(\xA4[\xB0-\xBF]|\xA5[\x80-\x86])
+LETTER_RNG_194    \xEA\xA5[\xA0-\xBC]
+LETTER_RNG_195    \xEA\xA6[\x84-\xB2]
+LETTER_RNG_196    \xEA\xA7\x8F
+LETTER_RNG_197    \xEA\xA7[\xA0-\xA4]
+LETTER_RNG_198    \xEA\xA7[\xA6-\xAF]
+LETTER_RNG_199    \xEA(\xA7[\xBA-\xBF]|\xA8[\x80-\xA8])
+LETTER_RNG_200    \xEA\xA9[\x80-\x82]
+LETTER_RNG_201    \xEA\xA9[\x84-\x8B]
+LETTER_RNG_202    \xEA\xA9[\xA0-\xB6]
+LETTER_RNG_203    \xEA\xA9\xBA
+LETTER_RNG_204    \xEA(\xA9[\xBE-\xBF]|\xAA[\x80-\xAF])
+LETTER_RNG_205    \xEA\xAA\xB1
+LETTER_RNG_206    \xEA\xAA[\xB5-\xB6]
+LETTER_RNG_207    \xEA\xAA[\xB9-\xBD]
+LETTER_RNG_208    \xEA\xAB\x80
+LETTER_RNG_209    \xEA\xAB[\x82-\x9D]
+LETTER_RNG_210    \xEA\xAB[\xA0-\xAA]
+LETTER_RNG_211    \xEA\xAB[\xB2-\xB4]
+LETTER_RNG_212    \xEA(\xAC[\x81-\xBF]|\xAD[\x80-\x9A])
+LETTER_RNG_213    \xEA\xAD[\x9C-\xA9]
+LETTER_RNG_214    \xEA(\xAD[\xB0-\xBF]|\xAF[\x80-\xA2]|\xAE[\x80-\xBF])
+LETTER_RNG_215    \xED\x9F[\x80-\xBB]|(\xEA[\xB0-\xBF]|\xED[\x80-\x9E]|[\xEB-\xEC][\x80-\xBF])[\x80-\xBF]
+LETTER_RNG_216    \xEF(\xAC[\x80-\x9D]|[\xA4-\xAB][\x80-\xBF])
+LETTER_RNG_217    \xEF\xAC[\x9F-\xA8]
+LETTER_RNG_218    \xEF(\xAC[\xAA-\xBF]|\xAE[\x80-\xB1]|\xAD[\x80-\xBF])
+LETTER_RNG_219    \xEF(\xAF[\x93-\xBF]|\xB4[\x80-\xBD]|[\xB0-\xB3][\x80-\xBF])
+LETTER_RNG_220    \xEF(\xB5[\x90-\xBF]|\xB7[\x80-\xBB]|\xB6[\x80-\xBF])
+LETTER_RNG_221    \xEF(\xB9[\xB0-\xBF]|\xBB[\x80-\xBC]|\xBA[\x80-\xBF])
+LETTER_RNG_222    \xEF\xBC[\xA1-\xBA]
+LETTER_RNG_223    \xEF\xBD[\x81-\x9A]
+LETTER_RNG_224    \xEF(\xBD[\xA6-\xBF]|\xBF[\x80-\x9C]|\xBE[\x80-\xBF])
+LETTER_RNG_225    \xF0\x90(\x83[\x80-\xBA]|[\x80-\x82][\x80-\xBF])
+LETTER_RNG_226    \xF0\x90\x85[\x80-\xB4]
+LETTER_RNG_227    \xF0\x90(\x8B[\x80-\x90]|\x8A[\x80-\xBF])
+LETTER_RNG_228    \xF0\x90\x8C[\x80-\x9F]
+LETTER_RNG_229    \xF0\x90(\x8C[\xAD-\xBF]|\x8D[\x80-\xB5])
+LETTER_RNG_230    \xF0\x90\x8E[\x80-\x9D]
+LETTER_RNG_231    \xF0\x90(\x8E[\xA0-\xBF]|\x8F[\x80-\x8F])
+LETTER_RNG_232    \xF0\x90(\x8F[\x91-\xBF]|\x92[\x80-\x9D]|[\x90-\x91][\x80-\xBF])
+LETTER_RNG_233    \xF0\x90(\x92[\xB0-\xBF]|\x95[\x80-\xA3]|[\x93-\x94][\x80-\xBF])
+LETTER_RNG_234    \xF0\x90(\xA1[\x80-\x95]|[\x98-\xA0][\x80-\xBF])
+LETTER_RNG_235    \xF0\x90\xA1[\xA0-\xB6]
+LETTER_RNG_236    \xF0\x90\xA2[\x80-\x9E]
+LETTER_RNG_237    \xF0\x90\xA3[\xA0-\xB5]
+LETTER_RNG_238    \xF0\x90\xA4[\x80-\x95]
+LETTER_RNG_239    \xF0\x90\xA4[\xA0-\xB9]
+LETTER_RNG_240    \xF0\x90\xA6[\x80-\xB7]
+LETTER_RNG_241    \xF0\x90\xA6[\xBE-\xBF]
+LETTER_RNG_242    \xF0\x90\xA8\x80
+LETTER_RNG_243    \xF0\x90\xA8[\x90-\xB5]
+LETTER_RNG_244    \xF0\x90\xA9[\xA0-\xBC]
+LETTER_RNG_245    \xF0\x90\xAA[\x80-\x9C]
+LETTER_RNG_246    \xF0\x90\xAB[\x80-\x87]
+LETTER_RNG_247    \xF0\x90\xAB[\x89-\xA4]
+LETTER_RNG_248    \xF0\x90\xAC[\x80-\xB5]
+LETTER_RNG_249    \xF0\x90\xAD[\x80-\x95]
+LETTER_RNG_250    \xF0\x90\xAD[\xA0-\xB2]
+LETTER_RNG_251    \xF0\x90\xAE[\x80-\x91]
+LETTER_RNG_252    \xF0\x90(\xB3[\x80-\xB2]|[\xB0-\xB2][\x80-\xBF])
+LETTER_RNG_253    \xF0\x90\xB4[\x80-\xA3]
+LETTER_RNG_254    \xF0\x90\xBA[\x80-\xA9]
+LETTER_RNG_255    \xF0\x90(\xBA[\xB0-\xBF]|\xBC[\x80-\x9C]|\xBB[\x80-\xBF])
+LETTER_RNG_256    \xF0\x90(\xBC[\xA7-\xBF]|\xBD[\x80-\x85])
+LETTER_RNG_257    \xF0\x90(\xBE[\xB0-\xBF]|\xBF[\x80-\x84])
+LETTER_RNG_258    \xF0\x90\xBF[\xA0-\xB6]
+LETTER_RNG_259    \xF0\x91\x80[\x83-\xB7]
+LETTER_RNG_260    \xF0\x91\x82[\x83-\xAF]
+LETTER_RNG_261    \xF0\x91\x83[\x90-\xA8]
+LETTER_RNG_262    \xF0\x91\x84[\x83-\xA6]
+LETTER_RNG_263    \xF0\x91\x85\x84
+LETTER_RNG_264    \xF0\x91\x85[\x87-\xB2]
+LETTER_RNG_265    \xF0\x91\x85\xB6
+LETTER_RNG_266    \xF0\x91\x86[\x83-\xB2]
+LETTER_RNG_267    \xF0\x91\x87[\x81-\x84]
+LETTER_RNG_268    \xF0\x91\x87\x9A
+LETTER_RNG_269    \xF0\x91\x87\x9C
+LETTER_RNG_270    \xF0\x91\x88[\x80-\xAB]
+LETTER_RNG_271    \xF0\x91\x8A[\x80-\xA8]
+LETTER_RNG_272    \xF0\x91(\x8A[\xB0-\xBF]|\x8B[\x80-\x9E])
+LETTER_RNG_273    \xF0\x91\x8C[\x85-\xB9]
+LETTER_RNG_274    \xF0\x91\x8C\xBD
+LETTER_RNG_275    \xF0\x91\x8D\x90
+LETTER_RNG_276    \xF0\x91\x8D[\x9D-\xA1]
+LETTER_RNG_277    \xF0\x91\x90[\x80-\xB4]
+LETTER_RNG_278    \xF0\x91\x91[\x87-\x8A]
+LETTER_RNG_279    \xF0\x91(\x91[\x9F-\xBF]|\x92[\x80-\xAF])
+LETTER_RNG_280    \xF0\x91\x93[\x84-\x85]
+LETTER_RNG_281    \xF0\x91\x93\x87
+LETTER_RNG_282    \xF0\x91\x96[\x80-\xAE]
+LETTER_RNG_283    \xF0\x91\x97[\x98-\x9B]
+LETTER_RNG_284    \xF0\x91\x98[\x80-\xAF]
+LETTER_RNG_285    \xF0\x91\x99\x84
+LETTER_RNG_286    \xF0\x91\x9A[\x80-\xAA]
+LETTER_RNG_287    \xF0\x91\x9A\xB8
+LETTER_RNG_288    \xF0\x91\x9C[\x80-\x9A]
+LETTER_RNG_289    \xF0\x91\xA0[\x80-\xAB]
+LETTER_RNG_290    \xF0\x91(\xA2[\xA0-\xBF]|\xA3[\x80-\x9F])
+LETTER_RNG_291    \xF0\x91(\xA3\xBF|\xA4[\x80-\xAF])
+LETTER_RNG_292    \xF0\x91\xA4\xBF
+LETTER_RNG_293    \xF0\x91\xA5\x81
+LETTER_RNG_294    \xF0\x91(\xA6[\xA0-\xBF]|\xA7[\x80-\x90])
+LETTER_RNG_295    \xF0\x91\xA7\xA1
+LETTER_RNG_296    \xF0\x91\xA7\xA3
+LETTER_RNG_297    \xF0\x91\xA8\x80
+LETTER_RNG_298    \xF0\x91\xA8[\x8B-\xB2]
+LETTER_RNG_299    \xF0\x91\xA8\xBA
+LETTER_RNG_300    \xF0\x91\xA9\x90
+LETTER_RNG_301    \xF0\x91(\xA9[\x9C-\xBF]|\xAA[\x80-\x89])
+LETTER_RNG_302    \xF0\x91\xAA\x9D
+LETTER_RNG_303    \xF0\x91(\xB0[\x80-\xAE]|[\xAB-\xAF][\x80-\xBF])
+LETTER_RNG_304    \xF0\x91\xB1\x80
+LETTER_RNG_305    \xF0\x91(\xB1[\xB2-\xBF]|\xB2[\x80-\x8F])
+LETTER_RNG_306    \xF0\x91\xB4[\x80-\xB0]
+LETTER_RNG_307    \xF0\x91\xB5\x86
+LETTER_RNG_308    \xF0\x91(\xB5[\xA0-\xBF]|\xB6[\x80-\x89])
+LETTER_RNG_309    \xF0\x91\xB6\x98
+LETTER_RNG_310    \xF0\x91\xBB[\xA0-\xB2]
+LETTER_RNG_311    \xF0\x91\xBE\xB0
+LETTER_RNG_312    \xF0\x92(\x91[\x80-\xAE]|[\x80-\x90][\x80-\xBF])
+LETTER_RNG_313    \xF0(\x93\x90[\x80-\xAE]|(\x92[\x92-\xBF]|\x93[\x80-\x8F])[\x80-\xBF])
+LETTER_RNG_314    \xF0(\x96\xA9[\x80-\x9E]|(\x94[\x90-\xBF]|\x96[\x80-\xA8]|\x95[\x80-\xBF])[\x80-\xBF])
+LETTER_RNG_315    \xF0\x96\xAB[\x90-\xAD]
+LETTER_RNG_316    \xF0\x96\xAC[\x80-\xAF]
+LETTER_RNG_317    \xF0\x96\xAD[\x80-\x83]
+LETTER_RNG_318    \xF0\x96(\xAD[\xA3-\xBF]|[\xAE-\xB9][\x80-\xBF])
+LETTER_RNG_319    \xF0\x96(\xBD[\x80-\x8A]|\xBC[\x80-\xBF])
+LETTER_RNG_320    \xF0\x96\xBD\x90
+LETTER_RNG_321    \xF0\x96(\xBE[\x93-\xBF]|\xBF[\x80-\xA1])
+LETTER_RNG_322    \xF0\x96\xBF\xA3
+LETTER_RNG_323    \xF0(\x9B\xB2[\x80-\x99]|(\x9B[\x80-\xB1]|[\x97-\x9A][\x80-\xBF])[\x80-\xBF])
+LETTER_RNG_324    \xF0\x9D(\x9B\x80|[\x90-\x9A][\x80-\xBF])
+LETTER_RNG_325    \xF0\x9D\x9B[\x82-\x9A]
+LETTER_RNG_326    \xF0\x9D\x9B[\x9C-\xBA]
+LETTER_RNG_327    \xF0\x9D(\x9B[\xBC-\xBF]|\x9C[\x80-\x94])
+LETTER_RNG_328    \xF0\x9D\x9C[\x96-\xB4]
+LETTER_RNG_329    \xF0\x9D(\x9C[\xB6-\xBF]|\x9D[\x80-\x8E])
+LETTER_RNG_330    \xF0\x9D\x9D[\x90-\xAE]
+LETTER_RNG_331    \xF0\x9D(\x9D[\xB0-\xBF]|\x9E[\x80-\x88])
+LETTER_RNG_332    \xF0\x9D\x9E[\x8A-\xA8]
+LETTER_RNG_333    \xF0\x9D(\x9E[\xAA-\xBF]|\x9F[\x80-\x82])
+LETTER_RNG_334    \xF0\x9D\x9F[\x84-\x8B]
+LETTER_RNG_335    \xF0\x9E\x84[\x80-\xAC]
+LETTER_RNG_336    \xF0\x9E\x84[\xB7-\xBD]
+LETTER_RNG_337    \xF0\x9E\x85\x8E
+LETTER_RNG_338    \xF0\x9E\x8B[\x80-\xAB]
+LETTER_RNG_339    \xF0\x9E(\xA3[\x80-\x84]|[\xA0-\xA2][\x80-\xBF])
+LETTER_RNG_340    \xF0\x9E(\xA5[\x80-\x83]|\xA4[\x80-\xBF])
+LETTER_RNG_341    \xF0\x9E\xA5\x8B
+LETTER_RNG_342    \xF0\x9E(\xBA[\x80-\xBB]|[\xB8-\xB9][\x80-\xBF])
+LETTER_RNG_343    \xF0(\xB1\x8D[\x80-\x8A]|(\xB1[\x80-\x8C]|[\xA0-\xB0][\x80-\xBF])[\x80-\xBF])
+
+LETTER_GROUP_1     {LETTER_RNG_1}|{LETTER_RNG_2}|{LETTER_RNG_3}|{LETTER_RNG_4}|{LETTER_RNG_5}|{LETTER_RNG_6}|{LETTER_RNG_7}|{LETTER_RNG_8}|{LETTER_RNG_9}|{LETTER_RNG_10}
+LETTER_GROUP_2     {LETTER_GROUP_1}|{LETTER_RNG_11}|{LETTER_RNG_12}|{LETTER_RNG_13}|{LETTER_RNG_14}|{LETTER_RNG_15}|{LETTER_RNG_16}|{LETTER_RNG_17}|{LETTER_RNG_18}|{LETTER_RNG_19}
+LETTER_GROUP_3     {LETTER_GROUP_2}|{LETTER_RNG_20}|{LETTER_RNG_21}|{LETTER_RNG_22}|{LETTER_RNG_23}|{LETTER_RNG_24}|{LETTER_RNG_25}|{LETTER_RNG_26}|{LETTER_RNG_27}|{LETTER_RNG_28}
+LETTER_GROUP_4     {LETTER_GROUP_3}|{LETTER_RNG_29}|{LETTER_RNG_30}|{LETTER_RNG_31}|{LETTER_RNG_32}|{LETTER_RNG_33}|{LETTER_RNG_34}|{LETTER_RNG_35}|{LETTER_RNG_36}|{LETTER_RNG_37}
+LETTER_GROUP_5     {LETTER_GROUP_4}|{LETTER_RNG_38}|{LETTER_RNG_39}|{LETTER_RNG_40}|{LETTER_RNG_41}|{LETTER_RNG_42}|{LETTER_RNG_43}|{LETTER_RNG_44}|{LETTER_RNG_45}|{LETTER_RNG_46}
+LETTER_GROUP_6     {LETTER_GROUP_5}|{LETTER_RNG_47}|{LETTER_RNG_48}|{LETTER_RNG_49}|{LETTER_RNG_50}|{LETTER_RNG_51}|{LETTER_RNG_52}|{LETTER_RNG_53}|{LETTER_RNG_54}|{LETTER_RNG_55}
+LETTER_GROUP_7     {LETTER_GROUP_6}|{LETTER_RNG_56}|{LETTER_RNG_57}|{LETTER_RNG_58}|{LETTER_RNG_59}|{LETTER_RNG_60}|{LETTER_RNG_61}|{LETTER_RNG_62}|{LETTER_RNG_63}|{LETTER_RNG_64}
+LETTER_GROUP_8     {LETTER_GROUP_7}|{LETTER_RNG_65}|{LETTER_RNG_66}|{LETTER_RNG_67}|{LETTER_RNG_68}|{LETTER_RNG_69}|{LETTER_RNG_70}|{LETTER_RNG_71}|{LETTER_RNG_72}|{LETTER_RNG_73}
+LETTER_GROUP_9     {LETTER_GROUP_8}|{LETTER_RNG_74}|{LETTER_RNG_75}|{LETTER_RNG_76}|{LETTER_RNG_77}|{LETTER_RNG_78}|{LETTER_RNG_79}|{LETTER_RNG_80}|{LETTER_RNG_81}|{LETTER_RNG_82}
+LETTER_GROUP_10    {LETTER_GROUP_9}|{LETTER_RNG_83}|{LETTER_RNG_84}|{LETTER_RNG_85}|{LETTER_RNG_86}|{LETTER_RNG_87}|{LETTER_RNG_88}|{LETTER_RNG_89}|{LETTER_RNG_90}|{LETTER_RNG_91}
+LETTER_GROUP_11    {LETTER_GROUP_10}|{LETTER_RNG_92}|{LETTER_RNG_93}|{LETTER_RNG_94}|{LETTER_RNG_95}|{LETTER_RNG_96}|{LETTER_RNG_97}|{LETTER_RNG_98}|{LETTER_RNG_99}|{LETTER_RNG_100}
+LETTER_GROUP_12    {LETTER_GROUP_11}|{LETTER_RNG_101}|{LETTER_RNG_102}|{LETTER_RNG_103}|{LETTER_RNG_104}|{LETTER_RNG_105}|{LETTER_RNG_106}|{LETTER_RNG_107}|{LETTER_RNG_108}|{LETTER_RNG_109}
+LETTER_GROUP_13    {LETTER_GROUP_12}|{LETTER_RNG_110}|{LETTER_RNG_111}|{LETTER_RNG_112}|{LETTER_RNG_113}|{LETTER_RNG_114}|{LETTER_RNG_115}|{LETTER_RNG_116}|{LETTER_RNG_117}|{LETTER_RNG_118}
+LETTER_GROUP_14    {LETTER_GROUP_13}|{LETTER_RNG_119}|{LETTER_RNG_120}|{LETTER_RNG_121}|{LETTER_RNG_122}|{LETTER_RNG_123}|{LETTER_RNG_124}|{LETTER_RNG_125}|{LETTER_RNG_126}|{LETTER_RNG_127}
+LETTER_GROUP_15    {LETTER_GROUP_14}|{LETTER_RNG_128}|{LETTER_RNG_129}|{LETTER_RNG_130}|{LETTER_RNG_131}|{LETTER_RNG_132}|{LETTER_RNG_133}|{LETTER_RNG_134}|{LETTER_RNG_135}|{LETTER_RNG_136}
+LETTER_GROUP_16    {LETTER_GROUP_15}|{LETTER_RNG_137}|{LETTER_RNG_138}|{LETTER_RNG_139}|{LETTER_RNG_140}|{LETTER_RNG_141}|{LETTER_RNG_142}|{LETTER_RNG_143}|{LETTER_RNG_144}|{LETTER_RNG_145}
+LETTER_GROUP_17    {LETTER_GROUP_15}|{LETTER_RNG_146}|{LETTER_RNG_147}|{LETTER_RNG_148}|{LETTER_RNG_149}|{LETTER_RNG_150}|{LETTER_RNG_151}|{LETTER_RNG_152}|{LETTER_RNG_153}|{LETTER_RNG_154}
+LETTER_GROUP_18    {LETTER_GROUP_17}|{LETTER_RNG_155}|{LETTER_RNG_156}|{LETTER_RNG_157}|{LETTER_RNG_158}|{LETTER_RNG_159}|{LETTER_RNG_160}|{LETTER_RNG_161}|{LETTER_RNG_162}|{LETTER_RNG_163}
+LETTER_GROUP_19    {LETTER_GROUP_18}|{LETTER_RNG_164}|{LETTER_RNG_165}|{LETTER_RNG_166}|{LETTER_RNG_167}|{LETTER_RNG_168}|{LETTER_RNG_169}|{LETTER_RNG_170}|{LETTER_RNG_171}|{LETTER_RNG_172}
+LETTER_GROUP_20    {LETTER_GROUP_19}|{LETTER_RNG_173}|{LETTER_RNG_174}|{LETTER_RNG_175}|{LETTER_RNG_176}|{LETTER_RNG_177}|{LETTER_RNG_178}|{LETTER_RNG_179}|{LETTER_RNG_180}|{LETTER_RNG_181}
+LETTER_GROUP_21    {LETTER_GROUP_20}|{LETTER_RNG_182}|{LETTER_RNG_183}|{LETTER_RNG_184}|{LETTER_RNG_185}|{LETTER_RNG_186}|{LETTER_RNG_187}|{LETTER_RNG_188}|{LETTER_RNG_189}|{LETTER_RNG_190}
+LETTER_GROUP_22    {LETTER_GROUP_21}|{LETTER_RNG_191}|{LETTER_RNG_192}|{LETTER_RNG_193}|{LETTER_RNG_194}|{LETTER_RNG_195}|{LETTER_RNG_196}|{LETTER_RNG_197}|{LETTER_RNG_198}|{LETTER_RNG_199}
+LETTER_GROUP_23    {LETTER_GROUP_22}|{LETTER_RNG_200}|{LETTER_RNG_201}|{LETTER_RNG_202}|{LETTER_RNG_203}|{LETTER_RNG_204}|{LETTER_RNG_205}|{LETTER_RNG_206}|{LETTER_RNG_207}|{LETTER_RNG_208}
+LETTER_GROUP_24    {LETTER_GROUP_23}|{LETTER_RNG_209}|{LETTER_RNG_210}|{LETTER_RNG_211}|{LETTER_RNG_212}|{LETTER_RNG_213}|{LETTER_RNG_214}|{LETTER_RNG_215}|{LETTER_RNG_216}|{LETTER_RNG_217}
+LETTER_GROUP_25    {LETTER_GROUP_24}|{LETTER_RNG_218}|{LETTER_RNG_219}|{LETTER_RNG_220}|{LETTER_RNG_221}|{LETTER_RNG_222}|{LETTER_RNG_223}|{LETTER_RNG_224}|{LETTER_RNG_225}|{LETTER_RNG_226}
+LETTER_GROUP_26    {LETTER_GROUP_25}|{LETTER_RNG_227}|{LETTER_RNG_228}|{LETTER_RNG_229}|{LETTER_RNG_230}|{LETTER_RNG_231}|{LETTER_RNG_232}|{LETTER_RNG_233}|{LETTER_RNG_234}|{LETTER_RNG_235}
+LETTER_GROUP_27    {LETTER_GROUP_26}|{LETTER_RNG_236}|{LETTER_RNG_237}|{LETTER_RNG_238}|{LETTER_RNG_239}|{LETTER_RNG_240}|{LETTER_RNG_241}|{LETTER_RNG_242}|{LETTER_RNG_243}|{LETTER_RNG_244}
+LETTER_GROUP_28    {LETTER_GROUP_27}|{LETTER_RNG_245}|{LETTER_RNG_246}|{LETTER_RNG_247}|{LETTER_RNG_248}|{LETTER_RNG_249}|{LETTER_RNG_250}|{LETTER_RNG_251}|{LETTER_RNG_252}|{LETTER_RNG_253}
+LETTER_GROUP_29    {LETTER_GROUP_28}|{LETTER_RNG_254}|{LETTER_RNG_255}|{LETTER_RNG_256}|{LETTER_RNG_257}|{LETTER_RNG_258}|{LETTER_RNG_259}|{LETTER_RNG_260}|{LETTER_RNG_261}|{LETTER_RNG_262}
+LETTER_GROUP_30    {LETTER_GROUP_29}|{LETTER_RNG_263}|{LETTER_RNG_264}|{LETTER_RNG_265}|{LETTER_RNG_266}|{LETTER_RNG_267}|{LETTER_RNG_268}|{LETTER_RNG_269}|{LETTER_RNG_270}|{LETTER_RNG_271}
+LETTER_GROUP_31    {LETTER_GROUP_30}|{LETTER_RNG_272}|{LETTER_RNG_273}|{LETTER_RNG_274}|{LETTER_RNG_275}|{LETTER_RNG_276}|{LETTER_RNG_277}|{LETTER_RNG_278}|{LETTER_RNG_279}|{LETTER_RNG_280}
+LETTER_GROUP_32    {LETTER_GROUP_31}|{LETTER_RNG_281}|{LETTER_RNG_282}|{LETTER_RNG_283}|{LETTER_RNG_284}|{LETTER_RNG_285}|{LETTER_RNG_286}|{LETTER_RNG_287}|{LETTER_RNG_288}|{LETTER_RNG_289}
+LETTER_GROUP_33    {LETTER_GROUP_32}|{LETTER_RNG_290}|{LETTER_RNG_291}|{LETTER_RNG_292}|{LETTER_RNG_293}|{LETTER_RNG_294}|{LETTER_RNG_295}|{LETTER_RNG_296}|{LETTER_RNG_297}|{LETTER_RNG_298}
+LETTER_GROUP_34    {LETTER_GROUP_33}|{LETTER_RNG_299}|{LETTER_RNG_300}|{LETTER_RNG_301}|{LETTER_RNG_302}|{LETTER_RNG_303}|{LETTER_RNG_304}|{LETTER_RNG_305}|{LETTER_RNG_306}|{LETTER_RNG_307}
+LETTER_GROUP_35    {LETTER_GROUP_34}|{LETTER_RNG_308}|{LETTER_RNG_309}|{LETTER_RNG_310}|{LETTER_RNG_311}|{LETTER_RNG_312}|{LETTER_RNG_313}|{LETTER_RNG_314}|{LETTER_RNG_315}|{LETTER_RNG_316}
+LETTER_GROUP_36    {LETTER_GROUP_35}|{LETTER_RNG_317}|{LETTER_RNG_318}|{LETTER_RNG_319}|{LETTER_RNG_320}|{LETTER_RNG_321}|{LETTER_RNG_322}|{LETTER_RNG_323}|{LETTER_RNG_324}|{LETTER_RNG_325}
+LETTER_GROUP_37    {LETTER_GROUP_36}|{LETTER_RNG_326}|{LETTER_RNG_327}|{LETTER_RNG_328}|{LETTER_RNG_329}|{LETTER_RNG_330}|{LETTER_RNG_331}|{LETTER_RNG_332}|{LETTER_RNG_333}|{LETTER_RNG_334}
+LETTER_GROUP_38    {LETTER_GROUP_37}|{LETTER_RNG_335}|{LETTER_RNG_336}|{LETTER_RNG_337}|{LETTER_RNG_338}|{LETTER_RNG_339}|{LETTER_RNG_340}|{LETTER_RNG_341}|{LETTER_RNG_342}|{LETTER_RNG_343}
+
+LETTER_G_GROUP_1    {LETTER_GROUP_1}|{LETTER_GROUP_2}|{LETTER_GROUP_3}|{LETTER_GROUP_4}|{LETTER_GROUP_5}|{LETTER_GROUP_6}|{LETTER_GROUP_7}|{LETTER_GROUP_8}|{LETTER_GROUP_9}|{LETTER_GROUP_10}
+LETTER_G_GROUP_2    {LETTER_G_GROUP_1}|{LETTER_GROUP_11}|{LETTER_GROUP_12}|{LETTER_GROUP_13}|{LETTER_GROUP_14}|{LETTER_GROUP_15}|{LETTER_GROUP_16}|{LETTER_GROUP_17}|{LETTER_GROUP_18}|{LETTER_GROUP_19}
+LETTER_G_GROUP_3    {LETTER_G_GROUP_2}|{LETTER_GROUP_20}|{LETTER_GROUP_21}|{LETTER_GROUP_22}|{LETTER_GROUP_23}|{LETTER_GROUP_24}|{LETTER_GROUP_25}|{LETTER_GROUP_26}|{LETTER_GROUP_27}|{LETTER_GROUP_28}
+LETTER_G_GROUP_4    {LETTER_G_GROUP_3}|{LETTER_GROUP_29}|{LETTER_GROUP_30}|{LETTER_GROUP_31}|{LETTER_GROUP_32}|{LETTER_GROUP_33}|{LETTER_GROUP_34}|{LETTER_GROUP_35}|{LETTER_GROUP_36}|{LETTER_GROUP_37}
+LETTER_G_GROUP_5    {LETTER_G_GROUP_4}|{LETTER_GROUP_38}
+
+UNICODE_LETTER    {LETTER_G_GROUP_1}|{LETTER_G_GROUP_2}|{LETTER_G_GROUP_3}|{LETTER_G_GROUP_4}|{LETTER_G_GROUP_5}
+
+/* Unicode digit ranges (category Nd) */
+/* generated with unicode_range_generator.l */
+/* UTF-8 ranges generated with https://lists.gnu.org/archive/html/help-flex/2005-01/msg00043.html */
+DIGIT_RNG_1     [0-9]
+DIGIT_RNG_2     \xD9[\xA0-\xA9]
+DIGIT_RNG_3     \xDB[\xB0-\xB9]
+DIGIT_RNG_4     \xDF[\x80-\x89]
+DIGIT_RNG_5     \xE0\xA5[\xA6-\xAF]
+DIGIT_RNG_6     \xE0\xA7[\xA6-\xAF]
+DIGIT_RNG_7     \xE0\xA9[\xA6-\xAF]
+DIGIT_RNG_8     \xE0\xAB[\xA6-\xAF]
+DIGIT_RNG_9     \xE0\xAD[\xA6-\xAF]
+DIGIT_RNG_10    \xE0\xAF[\xA6-\xAF]
+DIGIT_RNG_11    \xE0\xB1[\xA6-\xAF]
+DIGIT_RNG_12    \xE0\xB3[\xA6-\xAF]
+DIGIT_RNG_13    \xE0\xB5[\xA6-\xAF]
+DIGIT_RNG_14    \xE0\xB7[\xA6-\xAF]
+DIGIT_RNG_15    \xE0\xB9[\x90-\x99]
+DIGIT_RNG_16    \xE0\xBB[\x90-\x99]
+DIGIT_RNG_17    \xE0\xBC[\xA0-\xA9]
+DIGIT_RNG_18    \xE1\x81[\x80-\x89]
+DIGIT_RNG_19    \xE1\x82[\x90-\x99]
+DIGIT_RNG_20    \xE1\x9F[\xA0-\xA9]
+DIGIT_RNG_21    \xE1\xA0[\x90-\x99]
+DIGIT_RNG_22    \xE1\xA5[\x86-\x8F]
+DIGIT_RNG_23    \xE1\xA7[\x90-\x99]
+DIGIT_RNG_24    \xE1\xAA[\x80-\x99]
+DIGIT_RNG_25    \xE1\xAD[\x90-\x99]
+DIGIT_RNG_26    \xE1\xAE[\xB0-\xB9]
+DIGIT_RNG_27    \xE1\xB1[\x80-\x89]
+DIGIT_RNG_28    \xE1\xB1[\x90-\x99]
+DIGIT_RNG_29    \xEA\x98[\xA0-\xA9]
+DIGIT_RNG_30    \xEA\xA3[\x90-\x99]
+DIGIT_RNG_31    \xEA\xA4[\x80-\x89]
+DIGIT_RNG_32    \xEA\xA7[\x90-\x99]
+DIGIT_RNG_33    \xEA\xA7[\xB0-\xB9]
+DIGIT_RNG_34    \xEA\xA9[\x90-\x99]
+DIGIT_RNG_35    \xEA\xAF[\xB0-\xB9]
+DIGIT_RNG_36    \xEF\xBC[\x90-\x99]
+DIGIT_RNG_37    \xF0\x90\x92[\xA0-\xA9]
+DIGIT_RNG_38    \xF0\x90\xB4[\xB0-\xB9]
+DIGIT_RNG_39    \xF0\x91\x81[\xA6-\xAF]
+DIGIT_RNG_40    \xF0\x91\x83[\xB0-\xB9]
+DIGIT_RNG_41    \xF0\x91\x84[\xB6-\xBF]
+DIGIT_RNG_42    \xF0\x91\x87[\x90-\x99]
+DIGIT_RNG_43    \xF0\x91\x8B[\xB0-\xB9]
+DIGIT_RNG_44    \xF0\x91\x91[\x90-\x99]
+DIGIT_RNG_45    \xF0\x91\x93[\x90-\x99]
+DIGIT_RNG_46    \xF0\x91\x99[\x90-\x99]
+DIGIT_RNG_47    \xF0\x91\x9B[\x80-\x89]
+DIGIT_RNG_48    \xF0\x91\x9C[\xB0-\xB9]
+DIGIT_RNG_49    \xF0\x91\xA3[\xA0-\xA9]
+DIGIT_RNG_50    \xF0\x91\xA5[\x90-\x99]
+DIGIT_RNG_51    \xF0\x91\xB1[\x90-\x99]
+DIGIT_RNG_52    \xF0\x91\xB5[\x90-\x99]
+DIGIT_RNG_53    \xF0\x91\xB6[\xA0-\xA9]
+DIGIT_RNG_54    \xF0\x96\xA9[\xA0-\xA9]
+DIGIT_RNG_55    \xF0\x96\xAD[\x90-\x99]
+DIGIT_RNG_56    \xF0\x9D\x9F[\x8E-\xBF]
+DIGIT_RNG_57    \xF0\x9E\x85[\x80-\x89]
+DIGIT_RNG_58    \xF0\x9E\x8B[\xB0-\xB9]
+DIGIT_RNG_59    \xF0\x9E\xA5[\x90-\x99]
+DIGIT_RNG_60    \xF0\x9F\xAF[\xB0-\xB9]
+
+DIGIT_GROUP_1    {DIGIT_RNG_1}|{DIGIT_RNG_2}|{DIGIT_RNG_3}|{DIGIT_RNG_4}|{DIGIT_RNG_5}|{DIGIT_RNG_6}|{DIGIT_RNG_7}|{DIGIT_RNG_8}|{DIGIT_RNG_10}
+DIGIT_GROUP_2    {DIGIT_GROUP_1}|{DIGIT_RNG_11}|{DIGIT_RNG_12}|{DIGIT_RNG_13}|{DIGIT_RNG_14}|{DIGIT_RNG_15}|{DIGIT_RNG_16}|{DIGIT_RNG_17}|{DIGIT_RNG_18}
+DIGIT_GROUP_3    {DIGIT_GROUP_2}|{DIGIT_RNG_19}|{DIGIT_RNG_20}|{DIGIT_RNG_21}|{DIGIT_RNG_22}|{DIGIT_RNG_23}|{DIGIT_RNG_24}|{DIGIT_RNG_25}|{DIGIT_RNG_26}
+DIGIT_GROUP_4    {DIGIT_GROUP_3}|{DIGIT_RNG_27}|{DIGIT_RNG_28}|{DIGIT_RNG_29}|{DIGIT_RNG_30}|{DIGIT_RNG_31}|{DIGIT_RNG_32}|{DIGIT_RNG_33}|{DIGIT_RNG_34}
+DIGIT_GROUP_5    {DIGIT_GROUP_4}|{DIGIT_RNG_35}|{DIGIT_RNG_36}|{DIGIT_RNG_37}|{DIGIT_RNG_38}|{DIGIT_RNG_39}|{DIGIT_RNG_40}|{DIGIT_RNG_41}|{DIGIT_RNG_42}
+DIGIT_GROUP_6    {DIGIT_GROUP_5}|{DIGIT_RNG_43}|{DIGIT_RNG_44}|{DIGIT_RNG_45}|{DIGIT_RNG_46}|{DIGIT_RNG_47}|{DIGIT_RNG_48}|{DIGIT_RNG_49}|{DIGIT_RNG_50}
+DIGIT_GROUP_7    {DIGIT_GROUP_6}|{DIGIT_RNG_51}|{DIGIT_RNG_52}|{DIGIT_RNG_53}|{DIGIT_RNG_54}|{DIGIT_RNG_55}|{DIGIT_RNG_56}|{DIGIT_RNG_57}|{DIGIT_RNG_58}
+DIGIT_GROUP_8    {DIGIT_GROUP_7}|{DIGIT_RNG_59}|{DIGIT_RNG_60}
+
+UNICODE_DIGIT    {DIGIT_GROUP_1}|{DIGIT_GROUP_2}|{DIGIT_GROUP_3}|{DIGIT_GROUP_4}|{DIGIT_GROUP_5}|{DIGIT_GROUP_6}|{DIGIT_GROUP_7}|{DIGIT_GROUP_8}
+
+/* Unicode combining mark ranges (categories Mn and Mc) */
+/* generated with unicode_range_generator.l */
+/* UTF-8 ranges generated with https://lists.gnu.org/archive/html/help-flex/2005-01/msg00043.html */
+COMB_MARK_RNG_1      \xCD[\x80-\xAF]|\xCC[\x80-\xBF]
+COMB_MARK_RNG_2      \xD2[\x83-\x87]
+COMB_MARK_RNG_3      \xD6[\x91-\xBD]
+COMB_MARK_RNG_4      \xD6\xBF
+COMB_MARK_RNG_5      \xD7[\x81-\x82]
+COMB_MARK_RNG_6      \xD7[\x84-\x85]
+COMB_MARK_RNG_7      \xD7\x87
+COMB_MARK_RNG_8      \xD8[\x90-\x9A]
+COMB_MARK_RNG_9      \xD9[\x8B-\x9F]
+COMB_MARK_RNG_10     \xD9\xB0
+COMB_MARK_RNG_11     \xDB[\x96-\x9C]
+COMB_MARK_RNG_12     \xDB[\x9F-\xA4]
+COMB_MARK_RNG_13     \xDB[\xA7-\xA8]
+COMB_MARK_RNG_14     \xDB[\xAA-\xAD]
+COMB_MARK_RNG_15     \xDC\x91
+COMB_MARK_RNG_16     \xDC[\xB0-\xBF]|\xDD[\x80-\x8A]
+COMB_MARK_RNG_17     \xDE[\xA6-\xB0]
+COMB_MARK_RNG_18     \xDF[\xAB-\xB3]
+COMB_MARK_RNG_19     \xDF\xBD
+COMB_MARK_RNG_20     \xE0\xA0[\x96-\x99]
+COMB_MARK_RNG_21     \xE0\xA0[\x9B-\xA3]
+COMB_MARK_RNG_22     \xE0\xA0[\xA5-\xA7]
+COMB_MARK_RNG_23     \xE0\xA0[\xA9-\xAD]
+COMB_MARK_RNG_24     \xE0\xA1[\x99-\x9B]
+COMB_MARK_RNG_25     \xE0\xA3[\x93-\xA1]
+COMB_MARK_RNG_26     \xE0(\xA3[\xA3-\xBF]|\xA4[\x80-\x83])
+COMB_MARK_RNG_27     \xE0\xA4[\xBA-\xBC]
+COMB_MARK_RNG_28     \xE0(\xA4[\xBE-\xBF]|\xA5[\x80-\x8F])
+COMB_MARK_RNG_29     \xE0\xA5[\x91-\x97]
+COMB_MARK_RNG_30     \xE0\xA5[\xA2-\xA3]
+COMB_MARK_RNG_31     \xE0\xA6[\x81-\x83]
+COMB_MARK_RNG_32     \xE0\xA6\xBC
+COMB_MARK_RNG_33     \xE0(\xA6[\xBE-\xBF]|\xA7[\x80-\x8D])
+COMB_MARK_RNG_34     \xE0\xA7\x97
+COMB_MARK_RNG_35     \xE0\xA7[\xA2-\xA3]
+COMB_MARK_RNG_36     \xE0(\xA7[\xBE-\xBF]|\xA8[\x80-\x83])
+COMB_MARK_RNG_37     \xE0(\xA8[\xBC-\xBF]|\xA9[\x80-\x91])
+COMB_MARK_RNG_38     \xE0\xA9[\xB0-\xB1]
+COMB_MARK_RNG_39     \xE0\xA9\xB5
+COMB_MARK_RNG_40     \xE0\xAA[\x81-\x83]
+COMB_MARK_RNG_41     \xE0\xAA\xBC
+COMB_MARK_RNG_42     \xE0(\xAA[\xBE-\xBF]|\xAB[\x80-\x8D])
+COMB_MARK_RNG_43     \xE0\xAB[\xA2-\xA3]
+COMB_MARK_RNG_44     \xE0(\xAB[\xBA-\xBF]|\xAC[\x80-\x83])
+COMB_MARK_RNG_45     \xE0\xAC\xBC
+COMB_MARK_RNG_46     \xE0(\xAC[\xBE-\xBF]|\xAD[\x80-\x97])
+COMB_MARK_RNG_47     \xE0\xAD[\xA2-\xA3]
+COMB_MARK_RNG_48     \xE0\xAE\x82
+COMB_MARK_RNG_49     \xE0(\xAE[\xBE-\xBF]|\xAF[\x80-\x8D])
+COMB_MARK_RNG_50     \xE0\xAF\x97
+COMB_MARK_RNG_51     \xE0\xB0[\x80-\x84]
+COMB_MARK_RNG_52     \xE0(\xB0[\xBE-\xBF]|\xB1[\x80-\x96])
+COMB_MARK_RNG_53     \xE0\xB1[\xA2-\xA3]
+COMB_MARK_RNG_54     \xE0\xB2[\x81-\x83]
+COMB_MARK_RNG_55     \xE0\xB2\xBC
+COMB_MARK_RNG_56     \xE0(\xB2[\xBE-\xBF]|\xB3[\x80-\x96])
+COMB_MARK_RNG_57     \xE0\xB3[\xA2-\xA3]
+COMB_MARK_RNG_58     \xE0\xB4[\x80-\x83]
+COMB_MARK_RNG_59     \xE0\xB4[\xBB-\xBC]
+COMB_MARK_RNG_60     \xE0(\xB4[\xBE-\xBF]|\xB5[\x80-\x8D])
+COMB_MARK_RNG_61     \xE0\xB5\x97
+COMB_MARK_RNG_62     \xE0\xB5[\xA2-\xA3]
+COMB_MARK_RNG_63     \xE0\xB6[\x81-\x83]
+COMB_MARK_RNG_64     \xE0\xB7[\x8A-\x9F]
+COMB_MARK_RNG_65     \xE0\xB7[\xB2-\xB3]
+COMB_MARK_RNG_66     \xE0\xB8\xB1
+COMB_MARK_RNG_67     \xE0\xB8[\xB4-\xBA]
+COMB_MARK_RNG_68     \xE0\xB9[\x87-\x8E]
+COMB_MARK_RNG_69     \xE0\xBA\xB1
+COMB_MARK_RNG_70     \xE0\xBA[\xB4-\xBC]
+COMB_MARK_RNG_71     \xE0\xBB[\x88-\x8D]
+COMB_MARK_RNG_72     \xE0\xBC[\x98-\x99]
+COMB_MARK_RNG_73     \xE0\xBC\xB5
+COMB_MARK_RNG_74     \xE0\xBC\xB7
+COMB_MARK_RNG_75     \xE0\xBC\xB9
+COMB_MARK_RNG_76     \xE0\xBC[\xBE-\xBF]
+COMB_MARK_RNG_77     \xE0(\xBD[\xB1-\xBF]|\xBE[\x80-\x84])
+COMB_MARK_RNG_78     \xE0\xBE[\x86-\x87]
+COMB_MARK_RNG_79     \xE0\xBE[\x8D-\xBC]
+COMB_MARK_RNG_80     \xE0\xBF\x86
+COMB_MARK_RNG_81     \xE1\x80[\xAB-\xBE]
+COMB_MARK_RNG_82     \xE1\x81[\x96-\x99]
+COMB_MARK_RNG_83     \xE1\x81[\x9E-\xA0]
+COMB_MARK_RNG_84     \xE1\x81[\xA2-\xA4]
+COMB_MARK_RNG_85     \xE1\x81[\xA7-\xAD]
+COMB_MARK_RNG_86     \xE1\x81[\xB1-\xB4]
+COMB_MARK_RNG_87     \xE1\x82[\x82-\x8D]
+COMB_MARK_RNG_88     \xE1\x82\x8F
+COMB_MARK_RNG_89     \xE1\x82[\x9A-\x9D]
+COMB_MARK_RNG_90     \8xE1\x8D[\x9D-\x9F]
+COMB_MARK_RNG_91     \xE1\x9C[\x92-\x94]
+COMB_MARK_RNG_92     \xE1\x9C[\xB2-\xB4]
+COMB_MARK_RNG_93     \xE1\x9D[\x92-\x93]
+COMB_MARK_RNG_94     \xE1\x9D[\xB2-\xB3]
+COMB_MARK_RNG_95     \xE1(\x9E[\xB4-\xBF]|\x9F[\x80-\x93])
+COMB_MARK_RNG_96     \xE1\x9F\x9D
+COMB_MARK_RNG_97     \xE1\xA0[\x8B-\x8D]
+COMB_MARK_RNG_98     \xE1\xA2[\x85-\x86]
+COMB_MARK_RNG_99     \xE1\xA2\xA9
+COMB_MARK_RNG_100    \xE1\xA4[\xA0-\xBB]
+COMB_MARK_RNG_101    \xE1\xA8[\x97-\x9B]
+COMB_MARK_RNG_102    \xE1\xA9[\x95-\xBF]
+COMB_MARK_RNG_103    \xE1\xAA[\xB0-\xBD]
+COMB_MARK_RNG_104    \xE1(\xAA\xBF|\xAC[\x80-\x84]|\xAB[\x80-\xBF])
+COMB_MARK_RNG_105    \xE1(\xAC[\xB4-\xBF]|\xAD[\x80-\x84])
+COMB_MARK_RNG_106    \xE1\xAD[\xAB-\xB3]
+COMB_MARK_RNG_107    \xE1\xAE[\x80-\x82]
+COMB_MARK_RNG_108    \xE1\xAE[\xA1-\xAD]
+COMB_MARK_RNG_109    \xE1\xAF[\xA6-\xB3]
+COMB_MARK_RNG_110    \xE1\xB0[\xA4-\xB7]
+COMB_MARK_RNG_111    \xE1\xB3[\x90-\x92]
+COMB_MARK_RNG_112    \xE1\xB3[\x94-\xA8]
+COMB_MARK_RNG_113    \xE1\xB3\xAD
+COMB_MARK_RNG_114    \xE1\xB3\xB4
+COMB_MARK_RNG_115    \xE1\xB3[\xB7-\xB9]
+COMB_MARK_RNG_116    \xE1\xB7[\x80-\xBF]
+COMB_MARK_RNG_117    \xE2\x83[\x90-\x9C]
+COMB_MARK_RNG_118    \xE2\x83\xA1
+COMB_MARK_RNG_119    \xE2\x83[\xA5-\xB0]
+COMB_MARK_RNG_120    \xE2\xB3[\xAF-\xB1]
+COMB_MARK_RNG_121    \xE2\xB5\xBF
+COMB_MARK_RNG_122    \xE2\xB7[\xA0-\xBF]
+COMB_MARK_RNG_123    \xE3\x80[\xAA-\xAF]
+COMB_MARK_RNG_124    \xE3\x82[\x99-\x9A]
+COMB_MARK_RNG_125    \xEA\x99\xAF
+COMB_MARK_RNG_126    \xEA\x99[\xB4-\xBD]
+COMB_MARK_RNG_127    \xEA\x9A[\x9E-\x9F]
+COMB_MARK_RNG_128    \xEA\x9B[\xB0-\xB1]
+COMB_MARK_RNG_129    \xEA\xA0\x82
+COMB_MARK_RNG_130    \xEA\xA0\x86
+COMB_MARK_RNG_131    \xEA\xA0\x8B
+COMB_MARK_RNG_132    \xEA\xA0[\xA3-\xA7]
+COMB_MARK_RNG_133    \xEA\xA0\xAC
+COMB_MARK_RNG_134    \xEA\xA2[\x80-\x81]
+COMB_MARK_RNG_135    \xEA(\xA2[\xB4-\xBF]|\xA3[\x80-\x85])
+COMB_MARK_RNG_136    \xEA\xA3[\xA0-\xB1]
+COMB_MARK_RNG_137    \xEA\xA3\xBF
+COMB_MARK_RNG_138    \xEA\xA4[\xA6-\xAD]
+COMB_MARK_RNG_139    \xEA\xA5[\x87-\x93]
+COMB_MARK_RNG_140    \xEA\xA6[\x80-\x83]
+COMB_MARK_RNG_141    \xEA(\xA6[\xB3-\xBF]|\xA7\x80)
+COMB_MARK_RNG_142    \xEA\xA7\xA5
+COMB_MARK_RNG_143    \xEA\xA8[\xA9-\xB6]
+COMB_MARK_RNG_144    \xEA\xA9\x83
+COMB_MARK_RNG_145    \xEA\xA9[\x8C-\x8D]
+COMB_MARK_RNG_146    \xEA\xA9[\xBB-\xBD]
+COMB_MARK_RNG_147    \xEA\xAA\xB0
+COMB_MARK_RNG_148    \xEA\xAA[\xB2-\xB4]
+COMB_MARK_RNG_149    \xEA\xAA[\xB7-\xB8]
+COMB_MARK_RNG_150    \xEA\xAA[\xBE-\xBF]
+COMB_MARK_RNG_151    \xEA\xAB\x81
+COMB_MARK_RNG_152    \xEA\xAB[\xAB-\xAF]
+COMB_MARK_RNG_153    \xEA\xAB[\xB5-\xB6]
+COMB_MARK_RNG_154    \xEA\xAF[\xA3-\xAA]
+COMB_MARK_RNG_155    \xEA\xAF[\xAC-\xAD]
+COMB_MARK_RNG_156    \xEF\xAC\x9E
+COMB_MARK_RNG_157    \xEF\xB8[\x80-\x8F]
+COMB_MARK_RNG_158    \xEF\xB8[\xA0-\xAF]
+COMB_MARK_RNG_159    \xF0\x90\x87\xBD
+COMB_MARK_RNG_160    \xF0\x90\x8B\xA0
+COMB_MARK_RNG_161    \xF0\x90\x8D[\xB6-\xBA]
+COMB_MARK_RNG_162    \xF0\x90\xA8[\x81-\x8F]
+COMB_MARK_RNG_163    \xF0\x90\xA8[\xB8-\xBF]
+COMB_MARK_RNG_164    \xF0\x90\xAB[\xA5-\xA6]
+COMB_MARK_RNG_165    \xF0\x90\xB4[\xA4-\xA7]
+COMB_MARK_RNG_166    \xF0\x90\xBA[\xAB-\xAC]
+COMB_MARK_RNG_167    \xF0\x90\xBD[\x86-\x90]
+COMB_MARK_RNG_168    \xF0\x91\x80[\x80-\x82]
+COMB_MARK_RNG_169    \xF0\x91(\x80[\xB8-\xBF]|\x81[\x80-\x86])
+COMB_MARK_RNG_170    \xF0\x91(\x81\xBF|\x82[\x80-\x82])
+COMB_MARK_RNG_171    \xF0\x91\x82[\xB0-\xBA]
+COMB_MARK_RNG_172    \xF0\x91\x84[\x80-\x82]
+COMB_MARK_RNG_173    \xF0\x91\x84[\xA7-\xB4]
+COMB_MARK_RNG_174    \xF0\x91\x85[\x85-\x86]
+COMB_MARK_RNG_175    \xF0\x91\x85\xB3
+COMB_MARK_RNG_176    \xF0\x91\x86[\x80-\x82]
+COMB_MARK_RNG_177    \xF0\x91(\x86[\xB3-\xBF]|\x87\x80)
+COMB_MARK_RNG_178    \xF0\x91\x87[\x89-\x8C]
+COMB_MARK_RNG_179    \xF0\x91\x87[\x8E-\x8F]
+COMB_MARK_RNG_180    \xF0\x91\x88[\xAC-\xB7]
+COMB_MARK_RNG_181    \xF0\x91\x88\xBE
+COMB_MARK_RNG_182    \xF0\x91\x8B[\x9F-\xAA]
+COMB_MARK_RNG_183    \xF0\x91\x8C[\x80-\x83]
+COMB_MARK_RNG_184    \xF0\x91\x8C[\xBB-\xBC]
+COMB_MARK_RNG_185    \xF0\x91(\x8C[\xBE-\xBF]|\x8D[\x80-\x8D])
+COMB_MARK_RNG_186    \xF0\x91\x8D\x97
+COMB_MARK_RNG_187    \xF0\x91\x8D[\xA2-\xB4]
+COMB_MARK_RNG_188    \xF0\x91(\x90[\xB5-\xBF]|\x91[\x80-\x86])
+COMB_MARK_RNG_189    \xF0\x91\x91\x9E
+COMB_MARK_RNG_190    \xF0\x91(\x92[\xB0-\xBF]|\x93[\x80-\x83])
+COMB_MARK_RNG_191    \xF0\x91(\x96[\xAF-\xBF]|\x97\x80)
+COMB_MARK_RNG_192    \xF0\x91\x97[\x9C-\x9D]
+COMB_MARK_RNG_193    \xF0\x91(\x98[\xB0-\xBF]|\x99\x80)
+COMB_MARK_RNG_194    \xF0\x91\x9A[\xAB-\xB7]
+COMB_MARK_RNG_195    \xF0\x91\x9C[\x9D-\xAB]
+COMB_MARK_RNG_196    \xF0\x91\xA0[\xAC-\xBA]
+COMB_MARK_RNG_197    \xF0\x91\xA4[\xB0-\xBE]
+COMB_MARK_RNG_198    \xF0\x91\xA5\x80
+COMB_MARK_RNG_199    \xF0\x91\xA5[\x82-\x83]
+COMB_MARK_RNG_200    \xF0\x91\xA7[\x91-\xA0]
+COMB_MARK_RNG_201    \xF0\x91\xA7\xA4
+COMB_MARK_RNG_202    \xF0\x91\xA8[\x81-\x8A]
+COMB_MARK_RNG_203    \xF0\x91\xA8[\xB3-\xB9]
+COMB_MARK_RNG_204    \xF0\x91\xA8[\xBB-\xBE]
+COMB_MARK_RNG_205    \xF0\x91\xA9\x87
+COMB_MARK_RNG_206    \xF0\x91\xA9[\x91-\x9B]
+COMB_MARK_RNG_207    \xF0\x91\xAA[\x8A-\x99]
+COMB_MARK_RNG_208    \xF0\x91\xB0[\xAF-\xBF]
+COMB_MARK_RNG_209    \xF0\x91\xB2[\x92-\xB6]
+COMB_MARK_RNG_210    \xF0\x91(\xB4[\xB1-\xBF]|\xB5[\x80-\x85])
+COMB_MARK_RNG_211    \xF0\x91\xB5\x87
+COMB_MARK_RNG_212    \xF0\x91\xB6[\x8A-\x97]
+COMB_MARK_RNG_213    \xF0\x91\xBB[\xB3-\xB6]
+COMB_MARK_RNG_214    \xF0\x96\xAB[\xB0-\xB4]
+COMB_MARK_RNG_215    \xF0\x96\xAC[\xB0-\xB6]
+COMB_MARK_RNG_216    \xF0\x96\xBD\x8F
+COMB_MARK_RNG_217    \xF0\x96(\xBD[\x91-\xBF]|\xBE[\x80-\x92])
+COMB_MARK_RNG_218    \xF0\x96\xBF[\xA4-\xB1]
+COMB_MARK_RNG_219    \xF0\x9B\xB2[\x9D-\x9E]
+COMB_MARK_RNG_220    \xF0\x9D\x85[\xA5-\xA9]
+COMB_MARK_RNG_221    \xF0\x9D\x85[\xAD-\xB2]
+COMB_MARK_RNG_222    \xF0\x9D(\x85[\xBB-\xBF]|\x86[\x80-\x82])
+COMB_MARK_RNG_223    \xF0\x9D\x86[\x85-\x8B]
+COMB_MARK_RNG_224    \xF0\x9D\x86[\xAA-\xAD]
+COMB_MARK_RNG_225    \xF0\x9D\x89[\x82-\x84]
+COMB_MARK_RNG_226    \xF0\x9D\xA8[\x80-\xB6]
+COMB_MARK_RNG_227    \xF0\x9D(\xA8[\xBB-\xBF]|\xA9[\x80-\xAC])
+COMB_MARK_RNG_228    \xF0\x9D\xA9\xB5
+COMB_MARK_RNG_229    \xF0\x9D\xAA\x84
+COMB_MARK_RNG_230    \xF0(\x9D\xAA[\x9B-\xBF]|\x9E\x80[\x80-\xAA]|\x9D[\xAB-\xBF][\x80-\xBF])
+COMB_MARK_RNG_231    \xF0\x9E\x84[\xB0-\xB6]
+COMB_MARK_RNG_232    \xF0\x9E\x8B[\xAC-\xAF]
+COMB_MARK_RNG_233    \xF0\x9E\xA3[\x90-\x96]
+COMB_MARK_RNG_234    \xF0\x9E\xA5[\x84-\x8A]
+COMB_MARK_RNG_235    \xF3\xA0(\x87[\x80-\xAF]|[\x84-\x86][\x80-\xBF])
+
+COMB_MARK_GROUP_1     {COMB_MARK_RNG_1}|{COMB_MARK_RNG_2}|{COMB_MARK_RNG_3}|{COMB_MARK_RNG_4}|{COMB_MARK_RNG_5}|{COMB_MARK_RNG_6}|{COMB_MARK_RNG_7}|{COMB_MARK_RNG_8}|{COMB_MARK_RNG_9}|{COMB_MARK_RNG_10}
+COMB_MARK_GROUP_2     {COMB_MARK_GROUP_1}|{COMB_MARK_RNG_11}|{COMB_MARK_RNG_12}|{COMB_MARK_RNG_13}|{COMB_MARK_RNG_14}|{COMB_MARK_RNG_15}|{COMB_MARK_RNG_16}|{COMB_MARK_RNG_17}|{COMB_MARK_RNG_18}|{COMB_MARK_RNG_19}
+COMB_MARK_GROUP_3     {COMB_MARK_GROUP_2}|{COMB_MARK_RNG_20}|{COMB_MARK_RNG_21}|{COMB_MARK_RNG_22}|{COMB_MARK_RNG_23}|{COMB_MARK_RNG_24}|{COMB_MARK_RNG_25}|{COMB_MARK_RNG_26}|{COMB_MARK_RNG_27}|{COMB_MARK_RNG_28}
+COMB_MARK_GROUP_4     {COMB_MARK_GROUP_3}|{COMB_MARK_RNG_29}|{COMB_MARK_RNG_30}|{COMB_MARK_RNG_31}|{COMB_MARK_RNG_32}|{COMB_MARK_RNG_33}|{COMB_MARK_RNG_34}|{COMB_MARK_RNG_35}|{COMB_MARK_RNG_36}|{COMB_MARK_RNG_37}
+COMB_MARK_GROUP_5     {COMB_MARK_GROUP_4}|{COMB_MARK_RNG_38}|{COMB_MARK_RNG_39}|{COMB_MARK_RNG_40}|{COMB_MARK_RNG_41}|{COMB_MARK_RNG_42}|{COMB_MARK_RNG_43}|{COMB_MARK_RNG_44}|{COMB_MARK_RNG_45}|{COMB_MARK_RNG_46}
+COMB_MARK_GROUP_6     {COMB_MARK_GROUP_5}|{COMB_MARK_RNG_47}|{COMB_MARK_RNG_48}|{COMB_MARK_RNG_49}|{COMB_MARK_RNG_50}|{COMB_MARK_RNG_51}|{COMB_MARK_RNG_52}|{COMB_MARK_RNG_53}|{COMB_MARK_RNG_54}|{COMB_MARK_RNG_55}
+COMB_MARK_GROUP_7     {COMB_MARK_GROUP_6}|{COMB_MARK_RNG_56}|{COMB_MARK_RNG_57}|{COMB_MARK_RNG_58}|{COMB_MARK_RNG_59}|{COMB_MARK_RNG_60}|{COMB_MARK_RNG_61}|{COMB_MARK_RNG_62}|{COMB_MARK_RNG_63}|{COMB_MARK_RNG_64}
+COMB_MARK_GROUP_8     {COMB_MARK_GROUP_7}|{COMB_MARK_RNG_65}|{COMB_MARK_RNG_66}|{COMB_MARK_RNG_67}|{COMB_MARK_RNG_68}|{COMB_MARK_RNG_69}|{COMB_MARK_RNG_70}|{COMB_MARK_RNG_71}|{COMB_MARK_RNG_72}|{COMB_MARK_RNG_73}
+COMB_MARK_GROUP_9     {COMB_MARK_GROUP_8}|{COMB_MARK_RNG_74}|{COMB_MARK_RNG_75}|{COMB_MARK_RNG_76}|{COMB_MARK_RNG_77}|{COMB_MARK_RNG_78}|{COMB_MARK_RNG_79}|{COMB_MARK_RNG_80}|{COMB_MARK_RNG_81}|{COMB_MARK_RNG_82}
+COMB_MARK_GROUP_10    {COMB_MARK_GROUP_9}|{COMB_MARK_RNG_83}|{COMB_MARK_RNG_84}|{COMB_MARK_RNG_85}|{COMB_MARK_RNG_86}|{COMB_MARK_RNG_87}|{COMB_MARK_RNG_88}|{COMB_MARK_RNG_89}|{COMB_MARK_RNG_90}|{COMB_MARK_RNG_91}
+COMB_MARK_GROUP_11    {COMB_MARK_GROUP_10}|{COMB_MARK_RNG_92}|{COMB_MARK_RNG_93}|{COMB_MARK_RNG_94}|{COMB_MARK_RNG_95}|{COMB_MARK_RNG_96}|{COMB_MARK_RNG_97}|{COMB_MARK_RNG_98}|{COMB_MARK_RNG_99}|{COMB_MARK_RNG_100}
+COMB_MARK_GROUP_12    {COMB_MARK_GROUP_11}|{COMB_MARK_RNG_101}|{COMB_MARK_RNG_102}|{COMB_MARK_RNG_103}|{COMB_MARK_RNG_104}|{COMB_MARK_RNG_105}|{COMB_MARK_RNG_106}|{COMB_MARK_RNG_107}|{COMB_MARK_RNG_108}|{COMB_MARK_RNG_109}
+COMB_MARK_GROUP_13    {COMB_MARK_GROUP_12}|{COMB_MARK_RNG_110}|{COMB_MARK_RNG_111}|{COMB_MARK_RNG_112}|{COMB_MARK_RNG_113}|{COMB_MARK_RNG_114}|{COMB_MARK_RNG_115}|{COMB_MARK_RNG_116}|{COMB_MARK_RNG_117}|{COMB_MARK_RNG_118}
+COMB_MARK_GROUP_14    {COMB_MARK_GROUP_13}|{COMB_MARK_RNG_119}|{COMB_MARK_RNG_120}|{COMB_MARK_RNG_121}|{COMB_MARK_RNG_122}|{COMB_MARK_RNG_123}|{COMB_MARK_RNG_124}|{COMB_MARK_RNG_125}|{COMB_MARK_RNG_126}|{COMB_MARK_RNG_127}
+COMB_MARK_GROUP_15    {COMB_MARK_GROUP_14}|{COMB_MARK_RNG_128}|{COMB_MARK_RNG_129}|{COMB_MARK_RNG_130}|{COMB_MARK_RNG_131}|{COMB_MARK_RNG_132}|{COMB_MARK_RNG_133}|{COMB_MARK_RNG_134}|{COMB_MARK_RNG_135}|{COMB_MARK_RNG_136}
+COMB_MARK_GROUP_16    {COMB_MARK_GROUP_15}|{COMB_MARK_RNG_137}|{COMB_MARK_RNG_138}|{COMB_MARK_RNG_139}|{COMB_MARK_RNG_140}|{COMB_MARK_RNG_141}|{COMB_MARK_RNG_142}|{COMB_MARK_RNG_143}|{COMB_MARK_RNG_144}|{COMB_MARK_RNG_145}
+COMB_MARK_GROUP_17    {COMB_MARK_GROUP_16}|{COMB_MARK_RNG_146}|{COMB_MARK_RNG_147}|{COMB_MARK_RNG_148}|{COMB_MARK_RNG_149}|{COMB_MARK_RNG_150}|{COMB_MARK_RNG_151}|{COMB_MARK_RNG_152}|{COMB_MARK_RNG_153}|{COMB_MARK_RNG_154}
+COMB_MARK_GROUP_18    {COMB_MARK_GROUP_17}|{COMB_MARK_RNG_155}|{COMB_MARK_RNG_156}|{COMB_MARK_RNG_157}|{COMB_MARK_RNG_158}|{COMB_MARK_RNG_159}|{COMB_MARK_RNG_160}|{COMB_MARK_RNG_161}|{COMB_MARK_RNG_162}|{COMB_MARK_RNG_163}
+COMB_MARK_GROUP_19    {COMB_MARK_GROUP_18}|{COMB_MARK_RNG_164}|{COMB_MARK_RNG_165}|{COMB_MARK_RNG_166}|{COMB_MARK_RNG_167}|{COMB_MARK_RNG_168}|{COMB_MARK_RNG_169}|{COMB_MARK_RNG_170}|{COMB_MARK_RNG_171}|{COMB_MARK_RNG_172}
+COMB_MARK_GROUP_20    {COMB_MARK_GROUP_19}|{COMB_MARK_RNG_173}|{COMB_MARK_RNG_174}|{COMB_MARK_RNG_175}|{COMB_MARK_RNG_176}|{COMB_MARK_RNG_177}|{COMB_MARK_RNG_178}|{COMB_MARK_RNG_179}|{COMB_MARK_RNG_180}|{COMB_MARK_RNG_181}
+COMB_MARK_GROUP_21    {COMB_MARK_GROUP_20}|{COMB_MARK_RNG_182}|{COMB_MARK_RNG_183}|{COMB_MARK_RNG_184}|{COMB_MARK_RNG_185}|{COMB_MARK_RNG_186}|{COMB_MARK_RNG_187}|{COMB_MARK_RNG_188}|{COMB_MARK_RNG_189}|{COMB_MARK_RNG_190}
+COMB_MARK_GROUP_22    {COMB_MARK_GROUP_21}|{COMB_MARK_RNG_191}|{COMB_MARK_RNG_192}|{COMB_MARK_RNG_193}|{COMB_MARK_RNG_194}|{COMB_MARK_RNG_195}|{COMB_MARK_RNG_196}|{COMB_MARK_RNG_197}|{COMB_MARK_RNG_198}|{COMB_MARK_RNG_199}
+COMB_MARK_GROUP_23    {COMB_MARK_GROUP_22}|{COMB_MARK_RNG_200}|{COMB_MARK_RNG_201}|{COMB_MARK_RNG_202}|{COMB_MARK_RNG_203}|{COMB_MARK_RNG_204}|{COMB_MARK_RNG_205}|{COMB_MARK_RNG_206}|{COMB_MARK_RNG_207}|{COMB_MARK_RNG_208}
+COMB_MARK_GROUP_24    {COMB_MARK_GROUP_23}|{COMB_MARK_RNG_209}|{COMB_MARK_RNG_210}|{COMB_MARK_RNG_211}|{COMB_MARK_RNG_212}|{COMB_MARK_RNG_213}|{COMB_MARK_RNG_214}|{COMB_MARK_RNG_215}|{COMB_MARK_RNG_216}|{COMB_MARK_RNG_217}
+COMB_MARK_GROUP_25    {COMB_MARK_GROUP_24}|{COMB_MARK_RNG_218}|{COMB_MARK_RNG_219}|{COMB_MARK_RNG_220}|{COMB_MARK_RNG_221}|{COMB_MARK_RNG_222}|{COMB_MARK_RNG_223}|{COMB_MARK_RNG_224}|{COMB_MARK_RNG_225}|{COMB_MARK_RNG_226}
+COMB_MARK_GROUP_26    {COMB_MARK_GROUP_25}|{COMB_MARK_RNG_227}|{COMB_MARK_RNG_228}|{COMB_MARK_RNG_229}|{COMB_MARK_RNG_230}|{COMB_MARK_RNG_231}|{COMB_MARK_RNG_232}|{COMB_MARK_RNG_233}|{COMB_MARK_RNG_234}|{COMB_MARK_RNG_235}
+
+COMB_MARK_G_GROUP_1    {COMB_MARK_GROUP_1}|{COMB_MARK_GROUP_2}|{COMB_MARK_GROUP_3}|{COMB_MARK_GROUP_4}|{COMB_MARK_GROUP_5}|{COMB_MARK_GROUP_6}|{COMB_MARK_GROUP_7}|{COMB_MARK_GROUP_8}|{COMB_MARK_GROUP_9}|{COMB_MARK_GROUP_10}
+COMB_MARK_G_GROUP_2    {COMB_MARK_G_GROUP_1}|{COMB_MARK_GROUP_11}|{COMB_MARK_GROUP_12}|{COMB_MARK_GROUP_13}|{COMB_MARK_GROUP_14}|{COMB_MARK_GROUP_15}|{COMB_MARK_GROUP_16}|{COMB_MARK_GROUP_17}|{COMB_MARK_GROUP_18}|{COMB_MARK_GROUP_19}
+COMB_MARK_G_GROUP_3    {COMB_MARK_G_GROUP_2}|{COMB_MARK_GROUP_20}|{COMB_MARK_GROUP_21}|{COMB_MARK_GROUP_22}|{COMB_MARK_GROUP_23}|{COMB_MARK_GROUP_24}|{COMB_MARK_GROUP_25}|{COMB_MARK_GROUP_26}
+
+UNICODE_COMBINING_MARK    {COMB_MARK_G_GROUP_1}|{COMB_MARK_G_GROUP_2}|{COMB_MARK_G_GROUP_3}
+
+/* Unicode connector punctuation ranges (category Pc) */
+/* generated with unicode_range_generator.l */
+/* UTF-8 ranges generated with https://lists.gnu.org/archive/html/help-flex/2005-01/msg00043.html */
+CONNECTOR_PUNCT_RNG_1    _
+CONNECTOR_PUNCT_RNG_2    \xE2(\x80\xBF|\x81\x80)
+CONNECTOR_PUNCT_RNG_3    \xE2\x81\x94
+CONNECTOR_PUNCT_RNG_4    \xEF\xB8[\xB3-\xB4]
+CONNECTOR_PUNCT_RNG_5    \xEF\xB9[\x8D-\x8F]
+CONNECTOR_PUNCT_RNG_6    \xEF\xBC\xBF
+
+UNICODE_CONNECTOR_PUNCTUATION    {CONNECTOR_PUNCT_RNG_1}|{CONNECTOR_PUNCT_RNG_2}|{CONNECTOR_PUNCT_RNG_3}|{CONNECTOR_PUNCT_RNG_4}|{CONNECTOR_PUNCT_RNG_5}|{CONNECTOR_PUNCT_RNG_6}
+
+UNICODE_ZWNJ    \xE2\x80\x8C
+UNICODE_ZWJ     \xE2\x80\x8D
+
+/* according to https://262.ecma-international.org/12.0/#prod-UnicodeEscapeSequence */
+UNICODE_ESCAPE_SEQUENCE    \\u[0-9a-fA-F]{4}
+ESCAPED_CODE_POINT         \\u\{[0-9a-fA-F]+\}
+
+/* according to https://262.ecma-international.org/12.0/#prod-HexEscapeSequence */
+HEX_ESCAPE_SEQUENCE        \\x[0-9a-fA-F]{2}
+
+/* according to https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-unescape-string */
+BYTE_ESCAPE_SEQUENCE       \\u[0-9a-fA-F]{2}
+PERCENT_ESCAPE_SEQUENCE    %u[0-9a-fA-F]{4}
+
+/* according to https://datatracker.ietf.org/doc/html/rfc3986#section-2.1 */
+URL_ESCAPE_SEQUENCE        %[0-9a-fA-F]{2}
+
+/* whitespaces */
+/* according to https://ecma-international.org/ecma-262/5.1/#sec-7.2 */
+TAB            \x9
+VT             \xB
+FF             \xC
+SP             \x20
+NBSP           \xA0
+BOM            \xEF\xBB\xBF
+WHITESPACES    {TAB}|{VT}|{FF}|{SP}|{NBSP}|{BOM}
+
+/* single char escape sequences */
+/* according to https://ecma-international.org/ecma-262/5.1/#sec-7.8.4 */
+NUL                      \x0
+BS                       \x8
+HT                       \x9
+CHAR_ESCAPE_SEQUENCES    {NUL}|{BS}|{HT}
+
+/* line terminators */
+/* according to https://ecma-international.org/ecma-262/5.1/#sec-7.3 */
+LF                  \xA
+CR                  \xD
+LS                  \xE2\x80\xA8
+PS                  \xE2\x80\xA9
+LINE_TERMINATORS    {LF}|{CR}|{LS}|{PS}
+
+/* comments */
+/* according to https://ecma-international.org/ecma-262/5.1/#sec-7.4 */
+LINE_COMMENT_START   "//"
+LINE_COMMENT_END1    [^<\xA\xD]*\xA
+LINE_COMMENT_END2    [^<\xA\xD]*\xD
+LINE_COMMENT_END3    [^<\xA\xD]*"<"+(?i:script)
+LINE_COMMENT_END4    [^<\xA\xD]*"<"+(?i:\/script>)
+LINE_COMMENT_SKIP    [^<\xA\xD]*"<"?
+BLOCK_COMMENT_START  "/*"
+BLOCK_COMMENT_END1   [^<*\xA\xD]*"*"+"/"
+BLOCK_COMMENT_END2   [^<*\xA\xD]*"<"+(?i:script)
+BLOCK_COMMENT_END3   [^<*\xA\xD]*"<"+(?i:\/script>)
+BLOCK_COMMENT_LINE1  [^<*\xA\xD]*\xA
+BLOCK_COMMENT_LINE2  [^<*\xA\xD]*\xD
+BLOCK_COMMENT_SKIP   [^<*\xA\xD]*[<*]?
+
+/* directives */
+/* according to https://ecma-international.org/ecma-262/5.1/#sec-14.1 */
+USE_STRICT_DIRECTIVE    "\"use strict\""|"\'use strict\'"
+USE_STRICT_DIRECTIVE_SC "\"use strict\"";*|"\'use strict\'";*
+
+/* keywords */
+/* according to https://ecma-international.org/ecma-262/5.1/#sec-7.6.1.1 */
+/* keywords that can appear at the begining or the end of Statement*/
+KEYWORD_BA       break|continue|debugger|return
+/* keywords that can appear at the beginning of Statement*/
+KEYWORD_VAR_DECL    var|let|const
+KEYWORD_FUNCTION    function
+KEYWORD_IF          if
+KEYWORD_FOR         for
+KEYWORD_WHILE       while
+KEYWORD_DO          do
+KEYWORD_WITH        with
+KEYWORD_SWITCH      switch
+KEYWORD_TRY         try
+KEYWORD_B           delete|throw|typeof|void
+KEYWORD_NEW         new
+/* keywords that can not appear at the beginning or the end of Statement*/
+KEYWORD_ELSE        else
+KEYWORD_CATCH       catch
+KEYWORD_FINALLY     finally
+KEYWORD_CLASS       class
+KEYWORD_OTHER       case|default|enum|export|extends|implements|import|in|instanceof|interface|package|private|protected|public|static|super|yield
+
+/* punctuators */
+/* according to https://ecma-international.org/ecma-262/5.1/#sec-7.7 */
+OPEN_BRACE                     "{"
+CLOSE_BRACE                    "}"
+OPEN_PARENTHESIS               "("
+CLOSE_PARENTHESIS              ")"
+OPEN_BRACKET                   "["
+CLOSE_BRACKET                  "]"
+DOT_ACCESSOR                   "."
+PUNCTUATOR_PREFIX              "~"|"!"
+PUNCTUATOR_SEMICOLON           ";"
+PUNCTUATOR_COLON               ":"
+PUNCTUATOR_COMMA               ","
+OPERATOR_COMPARISON            ">="|"=="|"!="|"==="|"!=="|"<"|">"|"<="
+OPERATOR_COMPLEX_ASSIGNMENT    "+="|"-="|"*="|"%="|"<<="|">>="|">>>="|"&="|"|="|"^="
+OPERATOR_ASSIGNMENT            "="
+OPERATOR_LOGICAL               "?"|"&"|"|"|"^"|"&&"|"||"
+OPERATOR_SHIFT                 "<<"|">>"|">>>"
+OPERATOR_PREFIX                "+"|"-"
+OPERATOR_INCR_DECR             "--"|"++"
+OPERATOR                       "*"|"%"
+DIV_OPERATOR                   "/"
+DIV_ASSIGNMENT_OPERATOR        "/="
+PUNCTUATOR_ARROW               "=>"
+
+/* identifiers */
+/* according to https://ecma-international.org/ecma-262/5.1/#sec-7.6 */
+IDENTIFIER_START    [_$]|({UNICODE_LETTER})|{UNICODE_ESCAPE_SEQUENCE}|{ESCAPED_CODE_POINT}
+IDENTIFIER_PART     (({IDENTIFIER_START})|({UNICODE_COMBINING_MARK})|({UNICODE_DIGIT})|({UNICODE_CONNECTOR_PUNCTUATION})|{UNICODE_ZWNJ}|{UNICODE_ZWJ})*
+IDENTIFIER          ({IDENTIFIER_START}{IDENTIFIER_PART})*
+
+/* literals */
+/* according to https://ecma-international.org/ecma-262/5.1/#sec-7.8 */
+LITERAL_NULL                  null
+LITERAL_THIS                  this
+LITERAL_BOOLEAN               true|false
+LITERAL_BIN_INTEGER           0[bB][01](_?[01])*
+LITERAL_OCT_INTEGER           0[oO]?[0-7](_?[0-7])*
+LITERAL_DECIMAL               [.]?[0-9](_?[0-9])*[.]?(_?[0-9])*([eE](_?[0-9])+)?
+LITERAL_INTEGER               [0-9](_?[0-9])*
+LITERAL_HEX_INTEGER           0[xX][a-fA-F0-9](_?[a-fA-F0-9])*
+LITERAL_BIG_INTEGER           ({LITERAL_DECIMAL}|{LITERAL_BIN_INTEGER}|{LITERAL_OCT_INTEGER}|{LITERAL_HEX_INTEGER})n
+
+LITERAL_DQ_STRING_START       \"
+LITERAL_DQ_STRING_END         \"
+LITERAL_DQ_STRING_SKIP        \\\"|\\\\
+LITERAL_DQ_STRING_TEXT        [^\\%<\xA\xD\xE2"]{1,32}|.
+
+LITERAL_SQ_STRING_START       \'
+LITERAL_SQ_STRING_END         \'
+LITERAL_SQ_STRING_SKIP        \\\'|\\\\
+LITERAL_SQ_STRING_TEXT        [^\\%<\xA\xD\xE2']{1,32}|.
+
+LITERAL_TEMPLATE_START        \`
+LITERAL_TEMPLATE_END          \`
+LITERAL_TEMPLATE_SUBST_START  \$\{
+LITERAL_TEMPLATE_TEXT         [^\\%<$`]{1,32}|.
+
+LITERAL_REGEX_START           \/[^*\/]
+LITERAL_REGEX_END             \/[gimsuy]*
+LITERAL_REGEX_SKIP            \\\/|\\\\|\\\(|\\\)|\\\[|\\\]
+LITERAL_REGEX_TEXT            [^\\<\xA\xD\xE2/\(\)\[\]]{1,32}|.
+LITERAL_REGEX_G_OPEN          \(|\[
+LITERAL_REGEX_G_CLOSE         \)|\]
+/* extra literals */
+/* according to https://ecma-international.org/ecma-262/5.1/#sec-4.3 */
+LITERAL_UNDEFINED             undefined
+LITERAL_INFINITY              Infinity|\xE2\x88\x9E
+LITERAL_NAN                   NaN
+LITERAL                       {LITERAL_NULL}|{LITERAL_THIS}|{LITERAL_BOOLEAN}|{LITERAL_DECIMAL}|{LITERAL_BIN_INTEGER}|{LITERAL_OCT_INTEGER}|{LITERAL_HEX_INTEGER}|{LITERAL_BIG_INTEGER}|{LITERAL_UNDEFINED}|{LITERAL_INFINITY}|{LITERAL_NAN}
+
+HTML_COMMENT_OPEN         "<"+"!--"
+HTML_TAG_SCRIPT_OPEN      "<"+(?i:script)[\x9\xA\xC\x20\x2f\x3e]
+HTML_TAG_SCRIPT_CLOSE     "<"+(?i:\/script>)
+
+/* from 0x000 to 0x10FFFD to match undefined tokens */
+/* UTF-8 ranges generated with https://lists.gnu.org/archive/html/help-flex/2005-01/msg00043.html */
+ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x80-\xBF])[\x80-\xBF]|\xF4\x8F\xBF[\x80-\xBD]|(\xF4\x8F[\x80-\xBE]|(\xF0[\x90-\xBF]|\xF4[\x80-\x8E]|[\xF1-\xF3][\x80-\xBF])[\x80-\xBF])[\x80-\xBF]
+
+/* match regex literal only if the previous token was of type PUNCTUATOR_3 or KEYWORD */
+/* this resolves an ambiguity with a division operator: var x = 2/2/1; */
+%s regst
+
+/* do not match division operators as punctuators if the previous token was of type PUNCTUATOR */
+/* this resolves an ambiguity with regular expression in some cases such as (/=abc=/g) */
+%s divop
+
+/* in a single line comment */
+%x lcomm
+
+/* in a multi line comment */
+%x bcomm
+
+/* in a single-quoted string */
+%x sqstr
+
+/* in a double-quoted string */
+%x dqstr
+
+/* in a literal part of a template string */
+%x tmpll
+
+/* in a regular expression */
+%x regex
+
+/* in a single-quoted string within unescape function */
+%x unesc_sqstr
+
+/* in a double-quoted string within unescape function */
+%x unesc_dqstr
+
+/* in a template literal within unescape function */
+%x unesc_tmpll
+
+/* to process code units within char code unescape function */
+%x char_code
+%x char_code_lcomm
+%x char_code_bcomm
+
+%%
+
+<INITIAL,divop,regst,char_code>{WHITESPACES}           { /* skip */ }
+<INITIAL,divop,regst,char_code>{CHAR_ESCAPE_SEQUENCES} { /* skip */ }
+
+{LINE_TERMINATORS}                            { BEGIN(regst); newline_found = true; }
+<char_code>{LINE_TERMINATORS}                 { newline_found = true; }
+
+<INITIAL,regst,divop,char_code>{HTML_TAG_SCRIPT_OPEN} { explicit_otag(); }
+{HTML_TAG_SCRIPT_CLOSE}                       { EXEC(html_closing_script_tag()) }
+
+    {HTML_COMMENT_OPEN}                       { BEGIN(lcomm); }
+    {LINE_COMMENT_START}                      { BEGIN(lcomm); }
+<char_code>{HTML_COMMENT_OPEN}                { BEGIN(char_code_lcomm); }
+<char_code>{LINE_COMMENT_START}               { BEGIN(char_code_lcomm); }
+<lcomm>{LINE_COMMENT_END1}                    { BEGIN(regst); newline_found = true; }
+<lcomm>{LINE_COMMENT_END2}                    { BEGIN(regst); newline_found = true; }
+<lcomm>{LINE_COMMENT_END4}                    { if (!ext_script) { BEGIN(regst); EXEC(html_closing_script_tag()) } }
+<char_code_lcomm>{LINE_COMMENT_END1}          { BEGIN(char_code); newline_found = true; }
+<char_code_lcomm>{LINE_COMMENT_END2}          { BEGIN(char_code); newline_found = true; }
+<char_code_lcomm>{LINE_COMMENT_END4}          { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } }
+<lcomm,char_code_lcomm>{LINE_COMMENT_END3}    { if (!ext_script) { opening_tag_seen = true; } }
+<lcomm,char_code_lcomm>{LINE_COMMENT_SKIP}    { /* skip */ }
+<lcomm,char_code_lcomm><<EOF>>                { RETURN(SCRIPT_CONTINUE) }
+
+    {BLOCK_COMMENT_START}                     { BEGIN(bcomm); }
+<char_code>{BLOCK_COMMENT_START}              { BEGIN(char_code_bcomm); }
+<bcomm>{BLOCK_COMMENT_END1}                   { BEGIN(regst); }
+<char_code_bcomm>{BLOCK_COMMENT_END1}         { BEGIN(char_code); }
+<bcomm,char_code_bcomm>{BLOCK_COMMENT_END2}   { if (!ext_script) { opening_tag_seen = true; } }
+<bcomm,char_code_bcomm>{BLOCK_COMMENT_END3}   { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } }
+<bcomm,char_code_bcomm>{BLOCK_COMMENT_LINE1}  |
+<bcomm,char_code_bcomm>{BLOCK_COMMENT_LINE2}  { newline_found = true; }
+<bcomm,char_code_bcomm>{BLOCK_COMMENT_SKIP}   { /* skip */ }
+<bcomm,char_code_bcomm><<EOF>>                { RETURN(SCRIPT_CONTINUE) }
+
+    {LITERAL_DQ_STRING_START}                 { EXEC(literal_dq_string_start()) }
+<dqstr,unesc_dqstr>{LITERAL_DQ_STRING_END}    { dealias_append(); ECHO; BEGIN(divop); }
+<dqstr,unesc_dqstr>{HTML_TAG_SCRIPT_OPEN}     { ECHO; }
+<dqstr,unesc_dqstr>{HTML_TAG_SCRIPT_CLOSE}    { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } else { ECHO; } }
+<dqstr,unesc_dqstr>\\{CR}{LF}                 { /* skip */ }
+<dqstr,unesc_dqstr>\\{LF}                     { /* skip */ }
+<dqstr,unesc_dqstr>\\{CR}                     { /* skip */ }
+<dqstr,unesc_dqstr>{CR}                       { BEGIN(regst); RETURN(BAD_TOKEN) }
+<dqstr,unesc_dqstr>{LF}                       { BEGIN(regst); RETURN(BAD_TOKEN) }
+<dqstr,unesc_dqstr><<EOF>>                    { RETURN(SCRIPT_CONTINUE) }
+<dqstr>{UNICODE_ESCAPE_SEQUENCE}              |
+<dqstr>{HEX_ESCAPE_SEQUENCE}                  { escaped_unicode_utf_8(); }
+<dqstr>{ESCAPED_CODE_POINT}                   { escaped_code_point(); }
+<unesc_dqstr>{UNICODE_ESCAPE_SEQUENCE}        { set_encoding(IS_UBACKSLASH_2); escaped_unicode_utf_8(); }
+<unesc_dqstr>{HEX_ESCAPE_SEQUENCE}            { set_encoding(IS_XBACKSLASH); escaped_unicode_latin_1(); }
+<unesc_dqstr>{ESCAPED_CODE_POINT}             { set_encoding(IS_UCODEPOINT); escaped_code_point(); }
+<unesc_dqstr>{BYTE_ESCAPE_SEQUENCE}           { set_encoding(IS_UBACKSLASH_1); escaped_unicode_latin_1(); }
+<unesc_dqstr>{PERCENT_ESCAPE_SEQUENCE}        { set_encoding(IS_UPERCENT); escaped_unicode_utf_8(); }
+<unesc_dqstr>{URL_ESCAPE_SEQUENCE}            { set_encoding(IS_PERCENT); escaped_url_sequence_latin_1(); }
+<dqstr,unesc_dqstr>{LITERAL_DQ_STRING_SKIP}   { dealias_append(); ECHO; }
+<dqstr,unesc_dqstr>{LITERAL_DQ_STRING_TEXT}   { dealias_append(); ECHO; }
+
+    {LITERAL_SQ_STRING_START}                 { EXEC(literal_sq_string_start()) }
+<sqstr,unesc_sqstr>{LITERAL_SQ_STRING_END}    { dealias_append(); ECHO; BEGIN(divop); }
+<sqstr,unesc_sqstr>{HTML_TAG_SCRIPT_OPEN}     { ECHO; }
+<sqstr,unesc_sqstr>{HTML_TAG_SCRIPT_CLOSE}    { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } else { ECHO; } }
+<sqstr,unesc_sqstr>\\{CR}{LF}                 { /* skip */ }
+<sqstr,unesc_sqstr>\\{LF}                     { /* skip */ }
+<sqstr,unesc_sqstr>\\{CR}                     { /* skip */ }
+<sqstr,unesc_sqstr>{CR}                       { BEGIN(regst); RETURN(BAD_TOKEN) }
+<sqstr,unesc_sqstr>{LF}                       { BEGIN(regst); RETURN(BAD_TOKEN) }
+<sqstr,unesc_sqstr><<EOF>>                    { RETURN(SCRIPT_CONTINUE) }
+<sqstr>{UNICODE_ESCAPE_SEQUENCE}              |
+<sqstr>{HEX_ESCAPE_SEQUENCE}                  { escaped_unicode_utf_8(); }
+<sqstr>{ESCAPED_CODE_POINT}                   { escaped_code_point(); }
+<unesc_sqstr>{UNICODE_ESCAPE_SEQUENCE}        { set_encoding(IS_UBACKSLASH_2); escaped_unicode_utf_8(); }
+<unesc_sqstr>{HEX_ESCAPE_SEQUENCE}            { set_encoding(IS_XBACKSLASH); escaped_unicode_latin_1(); }
+<unesc_sqstr>{ESCAPED_CODE_POINT}             { set_encoding(IS_UCODEPOINT); escaped_code_point(); }
+<unesc_sqstr>{BYTE_ESCAPE_SEQUENCE}           { set_encoding(IS_UBACKSLASH_1); escaped_unicode_latin_1(); }
+<unesc_sqstr>{PERCENT_ESCAPE_SEQUENCE}        { set_encoding(IS_UPERCENT); escaped_unicode_utf_8(); }
+<unesc_sqstr>{URL_ESCAPE_SEQUENCE}            { set_encoding(IS_PERCENT); escaped_url_sequence_latin_1(); }
+<sqstr,unesc_sqstr>{LITERAL_SQ_STRING_SKIP}   { dealias_append(); ECHO; }
+<sqstr,unesc_sqstr>{LITERAL_SQ_STRING_TEXT}   { dealias_append(); ECHO; }
+
+    {LITERAL_TEMPLATE_START}                                 { EXEC(literal_template_start()) }
+<tmpll,unesc_tmpll>(\\\\)*{LITERAL_TEMPLATE_END}             { dealias_append(); ECHO; BEGIN(divop); }
+<tmpll,unesc_tmpll>(\\\\)*{LITERAL_TEMPLATE_SUBST_START}     { EXEC(process_subst_open()) dealias_reset(); }
+<tmpll,unesc_tmpll>{HTML_TAG_SCRIPT_OPEN}                    { if (!ext_script) { opening_tag_seen = true; } ECHO; }
+<tmpll,unesc_tmpll>{HTML_TAG_SCRIPT_CLOSE}                   { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } else { ECHO; } }
+<tmpll,unesc_tmpll><<EOF>>                                   { RETURN(SCRIPT_CONTINUE) }
+<tmpll>{UNICODE_ESCAPE_SEQUENCE}                             |
+<tmpll>{HEX_ESCAPE_SEQUENCE}                                 { escaped_unicode_utf_8(); }
+<tmpll>{ESCAPED_CODE_POINT}                                  { escaped_code_point(); }
+<unesc_tmpll>{UNICODE_ESCAPE_SEQUENCE}                       { set_encoding(IS_UBACKSLASH_2); escaped_unicode_utf_8(); }
+<unesc_tmpll>{HEX_ESCAPE_SEQUENCE}                           { set_encoding(IS_XBACKSLASH); escaped_unicode_latin_1(); }
+<unesc_tmpll>{ESCAPED_CODE_POINT}                            { set_encoding(IS_UCODEPOINT); escaped_code_point(); }
+<unesc_tmpll>{BYTE_ESCAPE_SEQUENCE}                          { set_encoding(IS_UBACKSLASH_1); escaped_unicode_latin_1(); }
+<unesc_tmpll>{PERCENT_ESCAPE_SEQUENCE}                       { set_encoding(IS_UPERCENT); escaped_unicode_utf_8(); }
+<unesc_tmpll>{URL_ESCAPE_SEQUENCE}                           { set_encoding(IS_PERCENT); escaped_url_sequence_latin_1(); }
+<tmpll,unesc_tmpll>(\\\\)*\\{LITERAL_TEMPLATE_SUBST_START}   | /* escaped template substitution */
+<tmpll,unesc_tmpll>(\\\\)*\\{LITERAL_TEMPLATE_END}           | /* escaped backtick */
+<tmpll,unesc_tmpll>{LITERAL_TEMPLATE_TEXT}                   { dealias_append(); ECHO; }
+
+<regst>{LITERAL_REGEX_START}        { EXEC(literal_regex_start()) }
+<regex>{LITERAL_REGEX_END}          { EXEC(literal_regex_end()) }
+<regex>{HTML_TAG_SCRIPT_OPEN}       { if (!ext_script) { opening_tag_seen = true; } ECHO; }
+<regex>{HTML_TAG_SCRIPT_CLOSE}      { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } else { ctag_in_regex(); } }
+<regex>\\{CR}                       { BEGIN(regst); RETURN(BAD_TOKEN) }
+<regex>\\{LF}                       { BEGIN(regst); RETURN(BAD_TOKEN) }
+<regex>{CR}                         { BEGIN(regst); RETURN(BAD_TOKEN) }
+<regex>{LF}                         { BEGIN(regst); RETURN(BAD_TOKEN) }
+<regex>{LITERAL_REGEX_G_OPEN}       { EXEC(literal_regex_g_open()) }
+<regex>{LITERAL_REGEX_G_CLOSE}      { EXEC(literal_regex_g_close()) }
+<regex>{UNICODE_ESCAPE_SEQUENCE}    |
+<regex>{HEX_ESCAPE_SEQUENCE}        { escaped_unicode_utf_8(); }
+<regex>{LITERAL_REGEX_SKIP}         { ECHO; }
+<regex>{LITERAL_REGEX_TEXT}         { ECHO; }
+<regex><<EOF>>                      { RETURN(SCRIPT_CONTINUE) }
+
+<divop>{DIV_OPERATOR}               |
+<divop>{DIV_ASSIGNMENT_OPERATOR}    { div_assignment_operator(); }
+
+{OPEN_BRACE}                                          { EXEC(open_brace()) }
+{CLOSE_BRACE}                                         { EXEC(close_brace()) }
+{OPEN_PARENTHESIS}                                    { EXEC(open_parenthesis()) }
+<INITIAL,divop,regst,char_code>{CLOSE_PARENTHESIS}    { EXEC(close_parenthesis()) }
+{OPEN_BRACKET}                                        { EXEC(open_bracket()) }
+{CLOSE_BRACKET}                                       { EXEC(close_bracket()) }
+
+{PUNCTUATOR_PREFIX}                 { EXEC(punctuator_prefix()) }
+{DOT_ACCESSOR}                      { dot_accessor(); }
+{PUNCTUATOR_ARROW}                  { EXEC(punctuator_arrow()) }
+{PUNCTUATOR_SEMICOLON}              { EXEC(punctuator_semicolon()) }
+{PUNCTUATOR_COLON}                  { punctuator_colon(); }
+{OPERATOR_COMPARISON}               { operator_comparison(); }
+{OPERATOR_COMPLEX_ASSIGNMENT}       { operator_complex_assignment(); }
+{OPERATOR_LOGICAL}                  { operator_logical(); }
+{OPERATOR_SHIFT}                    { operator_shift(); }
+
+{PUNCTUATOR_COMMA}                  { punctuator_comma(); }
+<char_code>{PUNCTUATOR_COMMA}       { /* skip */ }
+
+{USE_STRICT_DIRECTIVE}              { EXEC(use_strict_directive()) }
+{USE_STRICT_DIRECTIVE_SC}           { EXEC(use_strict_directive_sc()) }
+
+{KEYWORD_VAR_DECL}                  { EXEC(keyword_var_decl()) }
+{KEYWORD_FUNCTION}                  { EXEC(keyword_function()) }
+{KEYWORD_IF}                        |
+{KEYWORD_FOR}                       |
+{KEYWORD_WITH}                      |
+{KEYWORD_SWITCH}                    |
+{KEYWORD_CATCH}                     { EXEC(keyword_catch()) }
+{KEYWORD_WHILE}                     { EXEC(keyword_while()) }
+{KEYWORD_B}                         { EXEC(keyword_B()) }
+{KEYWORD_NEW}                       { EXEC(keyword_new())}
+{KEYWORD_BA}                        { EXEC(keyword_BA()) }
+{KEYWORD_TRY}                       |
+{KEYWORD_ELSE}                      |
+{KEYWORD_FINALLY}                   { EXEC(keyword_finally()) }
+{KEYWORD_DO}                        { EXEC(keyword_do()) }
+{KEYWORD_CLASS}                     { EXEC(keyword_class()) }
+{KEYWORD_OTHER}                     { EXEC(keyword_other()) }
+
+{OPERATOR_ASSIGNMENT}               { operator_assignment(); }
+{OPERATOR_PREFIX}                   { EXEC(operator_prefix()) }
+{OPERATOR_INCR_DECR}                { EXEC(operator_incr_decr()) }
+{OPERATOR}                          { EXEC(general_operator()) }
+{LITERAL}                           { EXEC(general_literal()) }
+{IDENTIFIER}                        { EXEC(general_identifier()) }
+
+<char_code>{LITERAL_BIN_INTEGER}   { set_encoding(IS_BIN); lit_int_code_point(2); }
+<char_code>{LITERAL_OCT_INTEGER}   { set_encoding(IS_OCT); lit_int_code_point(8); }
+<char_code>{LITERAL_INTEGER}       { set_encoding(IS_DEC); lit_int_code_point(10); }
+<char_code>{LITERAL_HEX_INTEGER}   { set_encoding(IS_HEX); lit_int_code_point(16); }
+
+.|{ALL_UNICODE}                     { general_unicode(); }
+
+<char_code>.|{ALL_UNICODE}                { char_code_no_match(); }
+<INITIAL,divop,regst,char_code><<EOF>>    { EEOF(eval_eof()) }
+
+%%
+
+// static helper functions
+
+static std::string unicode_to_utf8(const unsigned int code)
+{
+    std::string res;
+
+    if (code <= 0x7f)
+        res += (char)code;
+    else if (code <= 0x7ff)
+    {
+        res += 0xc0 | (code >> 6);
+        res += 0x80 | (code & 0x3f);
+    }
+    else if (code <= 0xffff)
+    {
+        res += 0xe0 | (code >> 12);
+        res += 0x80 | ((code >> 6) & 0x3f);
+        res += 0x80 | (code & 0x3f);
+    }
+    else if (code <= 0x1fffff)
+    {
+        res += 0xf0 | (code >> 18);
+        res += 0x80 | ((code >> 12) & 0x3f);
+        res += 0x80 | ((code >> 6) & 0x3f);
+        res += 0x80 | (code & 0x3f);
+    }
+    else
+        res += "\xf7\xbf\xbf\xbf";    // UTF-8 sequence for hex 0x1fffff
+
+    return res;
+}
+
+static std::string unescape_unicode(const char* lexeme)
+{
+    assert(lexeme);
+
+    std::string lex = lexeme;
+    std::string res;
+
+    bool is_unescape = false;
+    bool is_unicode = false;
+    bool is_code_point = false;
+    short digits_left = 4;
+    std::string unicode_str;
+
+    for (const auto& ch : lex)
+    {
+        if (ch == '\\')
+        {
+            is_unescape = true;
+            continue;
+        }
+
+        if (is_unescape)
+        {
+            if (ch == 'u')
+            {
+                is_unicode = true;
+                continue;
+            }
+            is_unescape = false;
+        }
+
+        if (is_unicode and ch == '{')
+        {
+            is_unicode = false;
+            is_code_point = true;
+            continue;
+        }
+
+        if (is_unicode)
+        {
+            unicode_str += ch;
+            if (!(--digits_left))
+            {
+                const unsigned int unicode = std::stoi(unicode_str, nullptr, 16);
+                res += unicode_to_utf8(unicode);
+
+                unicode_str = "";
+                digits_left = 4;
+                is_unicode = false;
+            }
+            continue;
+        }
+
+        if (is_code_point)
+        {
+            if (ch == '}')
+            {
+                const unsigned int code_point = std::stoi(unicode_str, nullptr, 16);
+                res += unicode_to_utf8(code_point);
+
+                unicode_str = "";
+                is_code_point = false;
+            }
+            else
+                unicode_str += ch;
+
+            continue;
+        }
+
+        res += ch;
+    }
+
+    return res;
+}
+
+// JSTokenizer members
+
+const char* JSTokenizer::p_scope_codes[] =
+{
+    "invalid",
+    "arrow function",
+    "function",
+    "block",
+    "object",
+    "unknown"
+};
+
+JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out,
+    JSIdentifier& mapper, uint8_t max_template_nesting,
+    uint32_t max_bracket_depth, char*& buf, size_t& buf_size, int cap_size)
+    : yyFlexLexer(in, out),
+      max_template_nesting(max_template_nesting),
+      ident_ctx(mapper),
+      bytes_read(0),
+      tokens_read(0),
+      tmp_buf(buf),
+      tmp_buf_size(buf_size),
+      tmp_cap_size(cap_size),
+      ignored_id_pos(-1),
+      max_bracket_depth(max_bracket_depth)
+{
+    scope_stack.emplace(GLOBAL);
+    BEGIN(regst);
+}
+
+JSTokenizer::~JSTokenizer()
+{
+    yy_delete_buffer((YY_BUFFER_STATE)tmp_buffer);
+    delete[] tmp_buf;
+    tmp_buf = nullptr;
+    tmp_buf_size = 0;
+}
+
+void JSTokenizer::switch_to_temporal(const std::string& data)
+{
+    tmp.str(data);
+    cur_buffer = YY_CURRENT_BUFFER;
+    tmp_buffer = yy_create_buffer(tmp, data.size());
+    yy_switch_to_buffer((YY_BUFFER_STATE)tmp_buffer);
+
+    tmp_bytes_read = bytes_read;
+    tmp_tokens_read = tokens_read;
+}
+
+void JSTokenizer::switch_to_initial()
+{
+    yy_switch_to_buffer((YY_BUFFER_STATE)cur_buffer);
+    yy_delete_buffer((YY_BUFFER_STATE)tmp_buffer);
+    tmp_buffer = nullptr;
+
+    bytes_read = tmp_bytes_read;
+    tmp_tokens_read = tokens_read - tmp_tokens_read;
+}
+
+// A return value of this method uses to terminate the scanner
+// true - terminate, false - continue scanning
+// Use this method only in <<EOF>> handler
+// The return value should be used to make a decision about yyterminate() call
+JSTokenizer::JSRet JSTokenizer::eval_eof()
+{
+    if (!tmp_buffer)
+        return SCRIPT_CONTINUE;
+
+    switch_to_initial();
+
+    if (tmp_tokens_read != 1 or token != IDENTIFIER)
+        return BAD_TOKEN;
+
+    // remove temporal buffer normalization state
+    memset((void*)(states + sp), 0, sizeof(states[0]));
+    --sp;
+    sp %= JSTOKENIZER_MAX_STATES;
+
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::do_spacing(JSToken cur_token)
+{
+    switch (token)
+    {
+    case PUNCTUATOR:
+    case COLON:
+    case OPERATOR_ASSIGNMENT:
+    case OPERATOR_COMPLEX_ASSIGNMENT:
+    case OPERATOR_COMPARISON:
+    case OPERATOR_LOGICAL:
+    case OPERATOR_SHIFT:
+    case OPERATOR:
+    case DIRECTIVE:
+    case DOT:
+    case CLOSING_BRACKET:
+    case UNDEFINED:
+        token = cur_token;
+        return EOS;
+
+    case IDENTIFIER:
+    case KEYWORD:
+    case KEYWORD_FUNCTION:
+    case KEYWORD_BLOCK:
+    case KEYWORD_CLASS:
+    case LITERAL:
+        yyout << ' ';
+        token = cur_token;
+        return EOS;
+
+    case KEYWORD_VAR_DECL:
+    {
+        if (cur_token == IDENTIFIER || cur_token == DOT)
+        {
+            yyout << ' ';
+            token = cur_token;
+            return EOS;
+        }
+        else
+            return BAD_TOKEN;
+    }
+    }
+
+    assert(false);
+
+    return BAD_TOKEN;
+}
+
+JSTokenizer::JSRet JSTokenizer::do_operator_spacing()
+{
+    switch (token)
+    {
+    case IDENTIFIER:
+    case KEYWORD:
+    case KEYWORD_FUNCTION:
+    case KEYWORD_BLOCK:
+    case KEYWORD_CLASS:
+    case PUNCTUATOR:
+    case COLON:
+    case OPERATOR_ASSIGNMENT:
+    case OPERATOR_COMPLEX_ASSIGNMENT:
+    case OPERATOR_COMPARISON:
+    case OPERATOR_LOGICAL:
+    case OPERATOR_SHIFT:
+    case LITERAL:
+    case DIRECTIVE:
+    case DOT:
+    case CLOSING_BRACKET:
+    case UNDEFINED:
+        token = OPERATOR;
+        return EOS;
+
+    case OPERATOR:
+        yyout << ' ';
+        token = OPERATOR;
+        return EOS;
+
+    case KEYWORD_VAR_DECL:
+        return BAD_TOKEN;
+    }
+
+    assert(false);
+
+    return BAD_TOKEN;
+}
+
+JSTokenizer::JSRet JSTokenizer::do_identifier_substitution(const char* lexeme, bool id_part)
+{
+    if (!ident_norm() && id_part)
+    {
+        yyout << lexeme;
+        return EOS;
+    }
+
+    set_ident_norm(true);
+
+    const char* name = ident_ctx.substitute(lexeme, id_part);
+
+    if (!name)
+    {
+        debug_logf(6, js_trace, TRACE_DUMP, nullptr,
+            "'%s' => IDENTIFIER_OVERFLOW\n", lexeme);
+        return IDENTIFIER_OVERFLOW;
+    }
+
+    if (ident_ctx.is_ignored(name))
+    {
+        if (!id_part)
+            ignored_id_pos = yyout.rdbuf()->pubseekoff(0, yyout.cur, std::ios_base::out);
+        set_ident_norm(false);
+        yyout << name;
+        return EOS;
+    }
+
+    const char* alias = id_part ? nullptr : ident_ctx.alias_lookup(lexeme);
+
+    if (alias)
+    {
+        set_ident_norm(false);
+        ignored_id_pos = yyout.rdbuf()->pubseekoff(0, yyout.cur, std::ios_base::out);
+        last_dealiased = std::string(YYText());
+        dealias_stored = true;
+        yyout << alias;
+
+        debug_logf(6, js_trace, TRACE_DUMP, nullptr,
+            "'%s' => '%s'\n", lexeme, alias);
+        return EOS;
+    }
+
+    ignored_id_pos = -1;
+    yyout << name;
+
+    debug_logf(6, js_trace, TRACE_DUMP, nullptr,
+        "'%s' => '%s'\n", lexeme, name);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::do_semicolon_insertion(ASIGroup current)
+{
+    assert(current >= 0 and current < ASI_GROUP_MAX);
+    if (newline_found)
+    {
+        newline_found = false;
+        if (insert_semicolon[previous_group][current])
+        {
+            dealias_clear_mutated(false);
+            dealias_finalize();
+            yyout << ';';
+
+            previous_group = current;
+            token = PUNCTUATOR;
+            JSRet ret = EOS;
+
+            if (meta_type() != ScopeMetaType::NOT_SET)
+            {
+                ret = p_scope_pop(meta_type());
+                set_meta_type(ScopeMetaType::NOT_SET);
+            }
+            return ret;
+        }
+    }
+    previous_group = current;
+    return EOS;
+}
+
+bool JSTokenizer::unescape(const char* lexeme)
+{
+    if (strstr(lexeme, "\\u"))
+    {
+        const std::string unescaped_lex = unescape_unicode(lexeme);
+        switch_to_temporal(unescaped_lex);
+        return false;
+    }
+    return true;
+}
+
+bool JSTokenizer::concatenate()
+{
+    std::streambuf* pbuf = yyout.rdbuf();
+    std::streamsize size = pbuf->pubseekoff(0, yyout.cur, yyout.out);
+
+    if (size >= 2)
+    {
+        char tail[2];
+        pbuf->pubseekoff(-2, yyout.cur, yyout.out);
+        pbuf->sgetn(tail, 2);
+
+        if (tail[1] == '+' and (tail[0] == '\'' or tail[0] == '"'))
+        {
+            pbuf->pubseekoff(-2, yyout.cur, yyout.out);
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void JSTokenizer::process_punctuator(JSToken tok)
+{
+    ECHO;
+    token = tok;
+    BEGIN(regst);
+}
+
+void JSTokenizer::skip_punctuator()
+{
+    token = PUNCTUATOR;
+    BEGIN(regst);
+}
+
+void JSTokenizer::process_closing_brace()
+{
+    if (!brace_depth.empty())
+    {
+        if (brace_depth.top())
+            brace_depth.top()--;
+        else
+        {
+            brace_depth.pop();
+            ECHO;
+            BEGIN(tmpll);
+            return;
+        }
+    }
+    process_punctuator();
+}
+
+JSTokenizer::JSRet JSTokenizer::process_subst_open()
+{
+    if (brace_depth.size() >= max_template_nesting)
+        return TEMPLATE_NESTING_OVERFLOW;
+    brace_depth.push(0);
+    token = PUNCTUATOR;
+    ECHO;
+    BEGIN(divop);
+    return scope_push(BRACES);
+}
+
+void JSTokenizer::states_reset()
+{
+    if (tmp_buffer)
+        switch_to_initial();
+
+    brace_depth = VStack<uint16_t>();
+    token = UNDEFINED;
+    previous_group = ASI_OTHER;
+
+    bytes_skip = 0;
+    memset(&states, 0, sizeof(states));
+
+    delete[] tmp_buf;
+    tmp_buf = nullptr;
+    tmp_buf_size = 0;
+
+    newline_found = false;
+
+    scope_stack = std::stack<Scope>();
+    scope_stack.emplace(GLOBAL);
+
+    BEGIN(regst);
+}
+
+void JSTokenizer::states_correct(int take_off)
+{
+    auto delta = yyleng - take_off;
+    auto& state = states[sp];
+
+    bytes_read -= delta;
+    state.orig_len -= delta;
+    state.correction = take_off;
+
+    yyless(take_off);
+}
+
+void JSTokenizer::states_over()
+{
+    int sp_idx = 0;
+    int tail_size = 0;
+
+    // Store the last state before EOF
+    eof_sp = sp;
+    eof_token = token;
+    eof_sc = yy_start;
+
+    // Evaluate a tail to renormalize and shift the current state
+    for (int i = JSTOKENIZER_MAX_STATES; i > 0 && tail_size < tmp_cap_size; --i)
+    {
+        auto idx = sp + i;
+        idx %= JSTOKENIZER_MAX_STATES;
+        auto& state = states[idx];
+
+        // Continue if NOT_SET
+        if (state.sc == 0)
+            continue;
+
+        token = state.token;
+        yy_start = state.sc;
+        sp_idx = idx;
+        tail_size += state.orig_len;
+        tail_size = tail_size < tmp_cap_size ? tail_size : tmp_cap_size;
+    }
+
+    // Number of already normalized bytes to be skipped
+    bytes_skip = tail_size;
+
+    // Set state pointer to the first state to be skipped
+    sp = sp_idx;
+
+    char* buf = new char[tail_size];
+
+    yyin.seekg(-tail_size, std::ios_base::end);
+    yyin.clear();
+    yyin.read(buf, tail_size);
+
+    delete[] tmp_buf;
+    tmp_buf = buf;
+    tmp_buf_size = tail_size;
+}
+
+bool JSTokenizer::states_process()
+{
+    bytes_read += yyleng;
+    ++tokens_read;
+
+    // Fulfillment goes after this check only in case of split over several input scripts.
+    // Otherwise, new state is pushed.
+    if (bytes_skip == 0)
+    {
+        sp++;
+        sp %= JSTOKENIZER_MAX_STATES;
+        auto& state = states[sp];
+
+        state.token = token;
+        state.orig_len = yyleng;
+        state.norm_len = yyout.rdbuf()->pubseekoff(0, std::ios_base::cur, std::ios_base::out);
+        state.sc = yy_start;
+        state.correction = 0;
+
+        return true;
+    }
+
+    bytes_skip = bytes_skip - yyleng;
+
+    // Continue normalization from the last state without any changes
+    if (bytes_skip == 0)
+    {
+        token = eof_token;
+        yy_start = eof_sc;
+    }
+    // Update parsing state every match
+    else if (bytes_skip > 0)
+    {
+        // if the state was corrected, reflect this during the parsing
+        if (auto correction = states[sp].correction)
+        {
+            auto delta = yyleng - correction;
+            bytes_skip += delta;
+            bytes_read -= delta;
+
+            yyless(correction);
+        }
+
+        do { ++sp; sp %= JSTOKENIZER_MAX_STATES; }
+        while (states[sp].sc == 0);
+
+        auto& state = states[sp];
+        token = state.token;
+        yy_start = state.sc;
+    }
+    // Ignore normalization till all the already normalized bytes are skipped or mismatch found.
+    // If mismatch found, adjust normalization state and renormalize from the mismatch point.
+    else
+    {
+        bytes_skip = 0;
+        states_adjust();
+
+        // Push new state
+        sp++;
+        sp %= JSTOKENIZER_MAX_STATES;
+        auto& state = states[sp];
+
+        state.token = token;
+        state.orig_len = yyleng;
+        state.norm_len = yyout.rdbuf()->pubseekoff(0, std::ios_base::cur, std::ios_base::out);
+        state.sc = yy_start;
+        state.correction = 0;
+
+        return true;
+    }
+
+    return false;
+}
+
+void JSTokenizer::states_adjust()
+{
+    adjusted_data = true;
+
+    int outbuf_pos = yyout.rdbuf()->pubseekoff(0, std::ios_base::cur, std::ios_base::out);
+    assert(outbuf_pos >= 0);
+
+    // Adjust output buffer if it was not cleaned up
+    if (outbuf_pos > 0)
+    {
+        // A valid state always here
+        auto& state = states[sp];
+        assert(state.sc != 0);
+
+        int ignore_norm_len = outbuf_pos - state.norm_len;
+        assert(ignore_norm_len >= 0);
+
+        yyout.seekp(-ignore_norm_len, std::ios_base::cur);
+    }
+
+    // Adjust normalization state based on specific tokens
+    switch (eof_token)
+    {
+    case KEYWORD_FUNCTION: set_meta_type(ScopeMetaType::NOT_SET); break;
+    case KEYWORD_BLOCK: p_scope_pop(meta_type()); set_meta_type(ScopeMetaType::NOT_SET); break;
+    case KEYWORD_CLASS: set_meta_type(ScopeMetaType::NOT_SET); break;
+    case OPERATOR_ASSIGNMENT: alias_state = ALIAS_NONE; break;
+    case IDENTIFIER:
+        if (alias_state == ALIAS_DEFINITION) alias_state = ALIAS_NONE;
+        break;
+    default: break;
+    }
+
+    assert((eof_sp >= 0 && eof_sp < JSTOKENIZER_MAX_STATES));
+
+    // Reset all the states after the current state till the state before EOF
+    if (sp <= eof_sp)
+        memset((void*)(states + sp), 0, sizeof(states[0]) * (eof_sp - sp + 1));
+    else
+    {
+        memset((void*)(states + sp), 0, sizeof(states[0]) * (JSTOKENIZER_MAX_STATES - sp));
+        memset(&states, 0, sizeof(states[0]) * (eof_sp + 1));
+    }
+    --sp;
+}
+
+JSTokenizer::JSRet JSTokenizer::scope_push(ScopeType t)
+{
+    if (scope_stack.size() >= max_bracket_depth)
+        return BRACKET_NESTING_OVERFLOW;
+
+    JSRet ret = EOS;
+    bool inside_object = false;
+
+    switch (meta_type())
+    {
+    case ScopeMetaType::FUNCTION:
+    {
+        if (t == PARENTHESES)
+            ret = p_scope_push(meta_type());
+
+        break;
+    }
+    case ScopeMetaType::OBJECT:
+    {
+        if (t == BRACES)
+            ret = p_scope_push(meta_type());
+
+        inside_object = true;
+        break;
+    }
+    case ScopeMetaType::ARROW_FUNCTION: break;
+    case ScopeMetaType::BLOCK: break;
+    case ScopeMetaType::NOT_SET: break;
+    default: assert(false); return BAD_TOKEN;
+    }
+
+    scope_stack.emplace(t);
+    set_in_object(inside_object);
+    return ret;
+}
+
+JSTokenizer::JSRet JSTokenizer::scope_pop(ScopeType t)
+{
+    if (t != scope_cur().type)
+        return WRONG_CLOSING_SYMBOL;
+
+    scope_stack.pop();
+
+    JSRet ret = EOS;
+
+    if (t == BRACES && meta_type() != ScopeMetaType::NOT_SET)
+    {
+        ret = p_scope_pop(meta_type());
+        set_meta_type(ScopeMetaType::NOT_SET);
+    }
+
+    return ret;
+}
+
+JSTokenizer::Scope& JSTokenizer::scope_cur()
+{
+    assert(!scope_stack.empty());
+    return scope_stack.top();
+}
+
+bool JSTokenizer::global_scope()
+{
+    return scope_cur().type == GLOBAL;
+}
+
+void JSTokenizer::set_meta_type(ScopeMetaType t)
+{
+    scope_cur().meta_type = t;
+}
+
+JSTokenizer::ScopeMetaType JSTokenizer::meta_type()
+{
+    return scope_cur().meta_type;
+}
+
+void JSTokenizer::set_ident_norm(bool f)
+{
+    scope_cur().ident_norm = f;
+}
+
+bool JSTokenizer::ident_norm()
+{
+    return scope_cur().ident_norm;
+}
+
+void JSTokenizer::set_func_call_type(JSTokenizer::FuncType f)
+{
+    scope_cur().func_call_type = f;
+}
+
+JSTokenizer::FuncType JSTokenizer::func_call_type()
+{
+    return scope_cur().func_call_type;
+}
+
+JSTokenizer::FuncType JSTokenizer::detect_func_type()
+{
+    switch(token)
+    {
+    case CLOSING_BRACKET:
+    case KEYWORD:
+        return FuncType::GENERAL;
+
+    case IDENTIFIER:
+        if (meta_type() == ScopeMetaType::FUNCTION or ignored_id_pos < 0)
+            return FuncType::GENERAL;
+
+        {
+            char tail[256];
+            std::streambuf* pbuf = yyout.rdbuf();
+            std::streamsize size = pbuf->pubseekoff(0, yyout.cur, yyout.out) - ignored_id_pos;
+
+            if (size <= 0)
+                return FuncType::GENERAL;
+
+            size = std::min((size_t)size, sizeof(tail));
+            pbuf->pubseekoff(-size, yyout.cur, yyout.out);
+            pbuf->sgetn(tail, size);
+
+            for (const auto& id : function_identifiers)
+            {
+                if ((unsigned)size == (unsigned)id.identifier.size() &&
+                    memcmp(tail, id.identifier.data(), size) == 0)
+                {
+                    pbuf->pubseekoff(-size, yyout.cur, yyout.out);
+                    return id.type;
+                }
+            }
+
+            return FuncType::GENERAL;
+        }
+
+    default:
+        return FuncType::NOT_FUNC;
+    }
+}
+
+void JSTokenizer::check_function_nesting(JSTokenizer::FuncType type)
+{
+    switch (type)
+    {
+    case (JSTokenizer::FuncType::UNESCAPE):
+        if (func_call_type() == JSTokenizer::FuncType::UNESCAPE)
+            unescape_nest_seen = true;
+        break;
+    default:
+        break;
+    }
+}
+
+void JSTokenizer::check_mixed_encoding(uint32_t flags)
+{
+    mixed_encoding_seen = (flags != (flags & -flags));
+}
+
+bool JSTokenizer::is_unescape_nesting_seen() const
+{
+    return unescape_nest_seen;
+}
+
+bool JSTokenizer::is_mixed_encoding_seen() const
+{
+    return mixed_encoding_seen;
+}
+
+bool JSTokenizer::is_opening_tag_seen() const
+{
+    return opening_tag_seen;
+}
+
+bool JSTokenizer::is_closing_tag_seen() const
+{
+    return closing_tag_seen;
+}
+
+bool JSTokenizer::is_buffer_adjusted() const
+{
+    return adjusted_data;
+}
+
+void JSTokenizer::set_block_param(bool f)
+{
+    scope_cur().block_param = f;
+}
+
+bool JSTokenizer::block_param()
+{
+    return scope_cur().block_param;
+}
+
+void JSTokenizer::set_do_loop(bool f)
+{
+    scope_cur().do_loop = f;
+}
+
+bool JSTokenizer::do_loop()
+{
+    return scope_cur().do_loop;
+}
+
+JSTokenizer::JSRet JSTokenizer::p_scope_push(ScopeMetaType t)
+{
+    if (!ident_ctx.scope_push(m2p(t)))
+        return SCOPE_NESTING_OVERFLOW;
+
+    debug_logf(5, js_trace, TRACE_PROC, nullptr, "scope pushed: '%s'\n", m2str(t));
+
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::p_scope_pop(ScopeMetaType t)
+{
+    if (!ident_ctx.scope_pop(m2p(t)))
+        return WRONG_CLOSING_SYMBOL;
+
+    debug_logf(5, js_trace, TRACE_PROC, nullptr, "scope popped: '%s'\n", m2str(t));
+
+    return EOS;
+}
+
+JSProgramScopeType JSTokenizer::m2p(ScopeMetaType mt)
+{
+    switch (mt)
+    {
+    case ScopeMetaType::ARROW_FUNCTION:
+    case ScopeMetaType::FUNCTION:
+        return JSProgramScopeType::FUNCTION;
+    case ScopeMetaType::BLOCK:
+    case ScopeMetaType::OBJECT:
+        return JSProgramScopeType::BLOCK;
+    case ScopeMetaType::NOT_SET:
+    default:
+        assert(false);
+        return JSProgramScopeType::PROG_SCOPE_TYPE_MAX;
+    }
+}
+
+const char* JSTokenizer::m2str(ScopeMetaType mt)
+{
+    mt = mt < ScopeMetaType::SCOPE_META_TYPE_MAX ? mt : ScopeMetaType::SCOPE_META_TYPE_MAX;
+    return p_scope_codes[mt];
+}
+
+bool JSTokenizer::is_operator(JSToken tok)
+{
+    switch (tok)
+    {
+    case OPERATOR:
+    case OPERATOR_ASSIGNMENT:
+    case OPERATOR_COMPLEX_ASSIGNMENT:
+    case OPERATOR_COMPARISON:
+    case OPERATOR_LOGICAL:
+    case OPERATOR_SHIFT:
+        return true;
+    default:
+        return false;
+    }
+}
+
+void JSTokenizer::dealias_clear_mutated(bool id_continue)
+{
+    if (!id_continue && prefix_increment && dealias_stored)
+    {
+        ident_ctx.add_alias(last_dealiased.c_str(),
+            std::string(ident_ctx.substitute(last_dealiased.c_str(), false)));
+    }
+    dealias_stored = false;
+    prefix_increment = false;
+}
+
+void JSTokenizer::dealias_increment()
+{
+    if (dealias_stored)
+    {
+        ident_ctx.add_alias(last_dealiased.c_str(),
+            std::string(ident_ctx.substitute(last_dealiased.c_str(), false)));
+    }
+    prefix_increment = token != IDENTIFIER && token != CLOSING_BRACKET;
+    dealias_stored = false;
+}
+
+void JSTokenizer::dealias_identifier(bool id_part, bool assignment_start)
+{
+    auto lexeme = YYText();
+
+    switch (alias_state)
+    {
+    case ALIAS_NONE:
+        if (assignment_start)
+        {
+            alias = std::string(YYText());
+            aliased.clear();
+            aliased.str("");
+            alias_state = ALIAS_DEFINITION;
+        }
+        break;
+    case ALIAS_PREFIX:
+    case ALIAS_DEFINITION:
+        dealias_reset();
+        break;
+    case ALIAS_EQUALS:
+        alias_state = ALIAS_VALUE;
+    // fallthrough
+    case ALIAS_VALUE:
+    {
+        auto dealias = ident_ctx.alias_lookup(lexeme);
+        if ((!ident_norm() && id_part) ||
+            (!id_part && ident_ctx.is_ignored(ident_ctx.substitute(lexeme, false))))
+            aliased << YYText();
+        else if (dealias)
+            aliased << dealias;
+        else
+            dealias_reset();
+        break;
+    }
+    case ALIAS_NEW:
+    {
+        if (ident_norm())
+            break;
+        ident_ctx.add_alias(alias.c_str(), std::string(ident_ctx.substitute(alias.c_str(), false)));
+        alias_state = ALIAS_NONE;
+    }
+    }
+}
+
+void JSTokenizer::dealias_equals(bool complex_assignment)
+{
+    if (alias_state == ALIAS_DEFINITION || alias_state == ALIAS_PREFIX)
+    {
+        if (complex_assignment)
+        {
+            if (ident_ctx.alias_lookup(alias.c_str()))
+            {
+                ident_ctx.add_alias(alias.c_str(),
+                    std::string(ident_ctx.substitute(alias.c_str(), false)));
+            }
+            alias_state = ALIAS_NONE;
+        }
+        else
+            alias_state = ALIAS_EQUALS;
+    }
+}
+
+void JSTokenizer::dealias_reset()
+{
+    if (alias_state != ALIAS_NONE)
+    {
+        if (alias_state == ALIAS_VALUE || alias_state == ALIAS_EQUALS)
+            if (ident_ctx.alias_lookup(alias.c_str()))
+            {
+                ident_ctx.add_alias(alias.c_str(),
+                    std::string(ident_ctx.substitute(alias.c_str(), false)));
+            }
+        alias_state = ALIAS_NONE;
+    }
+}
+
+void JSTokenizer::dealias_prefix_reset()
+{
+    if (alias_state == ALIAS_DEFINITION)
+        alias_state = ALIAS_PREFIX;
+    else
+        dealias_reset();
+}
+
+void JSTokenizer::dealias_append()
+{
+    if (alias_state == ALIAS_VALUE)
+        aliased << YYText();
+    else
+        dealias_reset();
+}
+
+void JSTokenizer::dealias_finalize()
+{
+    if (alias_state == ALIAS_VALUE)
+    {
+        ident_ctx.add_alias(alias.c_str(), aliased.str());
+        //FIXIT-E: add check for the 'sensitive' assignments here.
+        alias_state = ALIAS_NONE;
+    }
+    else
+        dealias_reset();
+}
+
+JSTokenizer::JSRet JSTokenizer::html_closing_script_tag()
+{
+    if (!ext_script)
+        return global_scope() ? SCRIPT_ENDED : ENDED_IN_INNER_SCOPE;
+    else
+    {
+        closing_tag_seen = true;
+        states_correct(1);
+        operator_comparison();
+        return EOS;
+    }
+}
+
+JSTokenizer::JSRet JSTokenizer::literal_dq_string_start()
+{
+    dealias_append();
+    EXEC(do_semicolon_insertion(ASI_GROUP_7))
+    EXEC(do_spacing(LITERAL))
+    if (!concatenate())
+        ECHO;
+    set_ident_norm(true);
+
+    switch (func_call_type())
+    {
+    case FuncType::UNESCAPE:
+        BEGIN(unesc_dqstr);
+        break;
+    case FuncType::NOT_FUNC:
+    case FuncType::GENERAL:
+    case FuncType::CHAR_CODE:
+        BEGIN(dqstr);
+        break;
+    default:
+        assert(false);
+        return BAD_TOKEN;
+    }
+
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::literal_sq_string_start()
+{
+    dealias_append();
+    EXEC(do_semicolon_insertion(ASI_GROUP_7))
+    EXEC(do_spacing(LITERAL))
+    if (!concatenate())
+        ECHO;
+    set_ident_norm(true);
+
+    switch (func_call_type())
+    {
+    case FuncType::UNESCAPE:
+        BEGIN(unesc_sqstr);
+        break;
+    case FuncType::NOT_FUNC:
+    case FuncType::GENERAL:
+    case FuncType::CHAR_CODE:
+        BEGIN(sqstr);
+        break;
+    default:
+        assert(false);
+        return BAD_TOKEN;
+    }
+
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::literal_template_start()
+{
+    dealias_append();
+    EXEC(do_semicolon_insertion(ASI_GROUP_7))
+    EXEC(do_spacing(LITERAL))
+    ECHO;
+    set_ident_norm(true);
+
+    switch (func_call_type())
+    {
+    case FuncType::UNESCAPE:
+        BEGIN(unesc_tmpll);
+        break;
+    case FuncType::NOT_FUNC:
+    case FuncType::GENERAL:
+    case FuncType::CHAR_CODE:
+        BEGIN(tmpll);
+        break;
+    default:
+        assert(false);
+        return BAD_TOKEN;
+    }
+
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::literal_regex_start()
+{
+    dealias_reset();
+    EXEC(do_semicolon_insertion(ASI_GROUP_7))
+    EXEC(do_spacing(LITERAL))
+    yyout << '/';
+    states_correct(1);
+    BEGIN(regex);
+    set_ident_norm(true);
+    regex_stack = VStack<char>();
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::literal_regex_end()
+{
+    if (regex_stack.empty())
+    {
+        ECHO;
+        BEGIN(divop);
+        return EOS;
+    }
+    else
+    {
+        ECHO;
+        return EOS;
+    }
+}
+
+JSTokenizer::JSRet JSTokenizer::literal_regex_g_open()
+{
+    if (regex_stack.size() >= max_template_nesting)
+        return TEMPLATE_NESTING_OVERFLOW;
+
+    // special meaning only outside of a character class
+    if (regex_stack.empty() or regex_stack.top() != '[')
+        regex_stack.push(yytext[0]);
+
+    ECHO;
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::literal_regex_g_close()
+{
+    switch (yytext[0])
+    {
+    case ')':
+        if (regex_stack.empty())
+        {
+            debug_logf(5, js_trace, TRACE_PROC, nullptr,
+                "no group to close, .. %c\n", yytext[0]);
+            return BAD_TOKEN;
+        }
+        else if (regex_stack.top() == '(')
+            regex_stack.pop();
+        else
+            assert(regex_stack.top() == '[');
+
+        break;
+
+    case ']':
+        if (regex_stack.empty())
+        {
+            // a raw bracket is allowed in regex w/o unicode flag,
+            // but the parser will accept a bracket in regex with unicode flag
+            ECHO;
+            return EOS;
+        }
+        else if (regex_stack.top() == '[')
+            regex_stack.pop();
+        else
+            assert(regex_stack.top() == '(');
+
+        break;
+
+    default:
+        assert(false);
+    }
+
+    ECHO;
+
+    return EOS;
+}
+
+void JSTokenizer::div_assignment_operator()
+{
+    dealias_equals(true);
+    previous_group = ASI_OTHER;
+    ECHO;
+    token = PUNCTUATOR;
+    BEGIN(INITIAL);
+    set_ident_norm(true);
+}
+
+JSTokenizer::JSRet JSTokenizer::open_brace()
+{
+    dealias_reset();
+    EXEC(do_semicolon_insertion(ASI_GROUP_1))
+    if (meta_type() == ScopeMetaType::NOT_SET)
+    {
+        if (is_operator(token) || token == COLON || func_call_type() != FuncType::NOT_FUNC)
+            set_meta_type(ScopeMetaType::OBJECT);
+        else
+        {
+            set_meta_type(ScopeMetaType::BLOCK);
+            EXEC(p_scope_push(meta_type()))
+        }
+    }
+    EXEC(scope_push(BRACES))
+    if (!brace_depth.empty())
+        brace_depth.top()++;
+    process_punctuator();
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::close_brace()
+{
+    dealias_clear_mutated(false);
+    EXEC(do_semicolon_insertion(ASI_GROUP_2))
+    if (meta_type() != ScopeMetaType::NOT_SET)
+        EXEC(p_scope_pop(meta_type()))
+    EXEC(scope_pop(BRACES))
+    process_closing_brace();
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::open_parenthesis()
+{
+    dealias_clear_mutated(true);
+    dealias_reset();
+    EXEC(do_semicolon_insertion(ASI_GROUP_3))
+    FuncType f_call = detect_func_type();
+    check_function_nesting(f_call);
+    EXEC(scope_push(PARENTHESES))
+    set_func_call_type(f_call);
+
+    switch (f_call)
+    {
+    case FuncType::CHAR_CODE:
+        token = LITERAL;
+        BEGIN(char_code);
+        set_char_code_str(true);
+        if (!concatenate())
+            yyout << '\'';
+        break;
+    case FuncType::UNESCAPE:
+        skip_punctuator();
+        break;
+    case FuncType::NOT_FUNC:
+    case FuncType::GENERAL:
+        process_punctuator();
+        break;
+    default:
+        assert(false);
+        return BAD_TOKEN;
+    }
+
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::close_parenthesis()
+{
+    dealias_clear_mutated(false);
+    dealias_reset();
+
+    FuncType f_call = func_call_type();
+    uint32_t flags = encoding();
+    bool ch_code_str = char_code_str();
+    bool id_norm = ident_norm();
+
+    if (meta_type() != ScopeMetaType::NOT_SET)
+        EXEC(p_scope_pop(meta_type()))
+    EXEC(scope_pop(PARENTHESES))
+
+    if (f_call == FuncType::NOT_FUNC)
+        set_ident_norm(id_norm);
+    if (block_param())
+    {
+        previous_group = ASI_OTHER;
+        set_block_param(false);
+    }
+    else
+    {
+        EXEC(do_semicolon_insertion(ASI_GROUP_5))
+    }
+
+    switch (f_call)
+    {
+    case FuncType::NOT_FUNC:
+    case FuncType::GENERAL:
+        ECHO;
+        break;
+    case FuncType::UNESCAPE:
+        check_mixed_encoding(flags);
+        break;
+    case FuncType::CHAR_CODE:
+        check_mixed_encoding(flags);
+        if (ch_code_str)
+            yyout << '\'';
+        break;
+    default:
+        assert(false);
+        return BAD_TOKEN;
+    }
+
+    token = PUNCTUATOR;
+    BEGIN(divop);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::open_bracket()
+{
+    dealias_clear_mutated(true);
+    dealias_append();
+    EXEC(do_semicolon_insertion(ASI_GROUP_3))
+    EXEC(do_semicolon_insertion(ASI_GROUP_4))
+    EXEC(scope_push(BRACKETS))
+    process_punctuator();
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::close_bracket()
+{
+    dealias_clear_mutated(false);
+    dealias_append();
+    EXEC(do_semicolon_insertion(ASI_GROUP_4))
+    EXEC(scope_pop(BRACKETS))
+    ECHO;
+    token = CLOSING_BRACKET;
+    BEGIN(divop);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::punctuator_prefix()
+{
+    process_punctuator();
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    set_ident_norm(true);
+    return EOS;
+}
+
+void JSTokenizer::dot_accessor()
+{
+    dealias_clear_mutated(true);
+    previous_group = ASI_OTHER;
+    dealias_append();
+    ECHO;
+    token = DOT;
+    BEGIN(regst);
+}
+
+JSTokenizer::JSRet JSTokenizer::punctuator_arrow()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_reset();
+    process_punctuator();
+    set_ident_norm(true);
+    if (meta_type() == ScopeMetaType::NOT_SET)
+    {
+        set_meta_type(ScopeMetaType::ARROW_FUNCTION);
+        EXEC(p_scope_push(meta_type()))
+    }
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::punctuator_semicolon()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_finalize();
+    process_punctuator();
+    set_ident_norm(true);
+    if (meta_type() != ScopeMetaType::NOT_SET)
+    {
+        EXEC(p_scope_pop(meta_type()))
+        set_meta_type(ScopeMetaType::NOT_SET);
+    }
+    return EOS;
+}
+
+void JSTokenizer::punctuator_colon()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_reset();
+    process_punctuator(COLON);
+    set_ident_norm(true);
+}
+
+void JSTokenizer::operator_comparison()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_prefix_reset();
+    process_punctuator(OPERATOR_COMPARISON);
+    set_ident_norm(true);
+}
+
+void JSTokenizer::operator_complex_assignment()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_equals(true);
+    process_punctuator(OPERATOR_COMPLEX_ASSIGNMENT);
+    set_ident_norm(true);
+}
+
+void JSTokenizer::operator_logical()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_prefix_reset();
+    process_punctuator(OPERATOR_LOGICAL);
+    set_ident_norm(true);
+}
+
+void JSTokenizer::operator_shift()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_prefix_reset();
+    process_punctuator(OPERATOR_SHIFT);
+    set_ident_norm(true);
+}
+
+void JSTokenizer::punctuator_comma()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_finalize();
+    process_punctuator();
+    set_ident_norm(true);
+}
+
+JSTokenizer::JSRet JSTokenizer::use_strict_directive()
+{
+    previous_group = ASI_OTHER;
+    EXEC(do_spacing(DIRECTIVE))
+    ECHO;
+    BEGIN(INITIAL);
+    yyout << ';';
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::use_strict_directive_sc()
+{
+    previous_group = ASI_OTHER;
+    EXEC(do_spacing(DIRECTIVE))
+    ECHO;
+    BEGIN(INITIAL);
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_var_decl()
+{
+    if (token == DOT or in_object())
+        return general_identifier();
+
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    set_ident_norm(true);
+    alias_state = ALIAS_NONE;
+    EXEC(do_spacing(KEYWORD_VAR_DECL))
+    ECHO;
+    BEGIN(regst);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_function()
+{
+    if (token == DOT)
+        return general_identifier();
+    
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD_FUNCTION))
+    ECHO;
+    BEGIN(regst);
+    if (meta_type() == ScopeMetaType::NOT_SET)
+        set_meta_type(ScopeMetaType::FUNCTION);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_catch()
+{
+    if (token == DOT or in_object())
+        return general_identifier();
+    
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD_BLOCK))
+    ECHO;
+    BEGIN(regst);
+    if (meta_type() == ScopeMetaType::NOT_SET)
+    {
+        set_meta_type(ScopeMetaType::BLOCK);
+        EXEC(p_scope_push(meta_type()))
+    }
+    set_block_param(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_while()
+{
+    if (token == DOT or in_object())
+        return general_identifier();
+    
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD_BLOCK))
+    ECHO;
+    BEGIN(regst);
+    if (meta_type() == ScopeMetaType::NOT_SET)
+    {
+        set_meta_type(ScopeMetaType::BLOCK);
+        EXEC(p_scope_push(meta_type()))
+    }
+    if (do_loop())
+        set_do_loop(false);
+    else
+        set_block_param(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_B()
+{
+    if (token == DOT or in_object())
+        return general_identifier();
+
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD))
+    ECHO;
+    BEGIN(regst);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_new()
+{
+    if (token == DOT or in_object())
+        return general_identifier();
+    
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD))
+    ECHO;
+    BEGIN(regst);
+
+    if (alias_state == ALIAS_EQUALS)
+        alias_state = ALIAS_NEW;
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_BA()
+{
+    if (token == DOT or in_object())
+        return general_identifier();
+
+    EXEC(do_semicolon_insertion(ASI_GROUP_9))
+    set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD))
+    ECHO;
+    BEGIN(regst);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_finally()
+{
+    if (token == DOT or in_object())
+        return general_identifier();
+
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD_BLOCK))
+    ECHO;
+    BEGIN(regst);
+    if (meta_type() == ScopeMetaType::NOT_SET)
+    {
+        set_meta_type(ScopeMetaType::BLOCK);
+        EXEC(p_scope_push(meta_type()))
+    }
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_do()
+{
+    if (token == DOT or in_object())
+        return general_identifier();
+    
+    EXEC(do_semicolon_insertion(ASI_GROUP_10))
+    set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD_BLOCK))
+    ECHO;
+    BEGIN(regst);
+    if (meta_type() == ScopeMetaType::NOT_SET)
+    {
+        set_meta_type(ScopeMetaType::BLOCK);
+        EXEC(p_scope_push(meta_type()))
+    }
+    set_do_loop(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_class()
+{ 
+    if (token == DOT or in_object())
+        return general_identifier();
+
+    previous_group = ASI_OTHER;
+    dealias_reset();
+    set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD_CLASS))
+    ECHO;
+    BEGIN(regst);
+    if (meta_type() == ScopeMetaType::NOT_SET)
+        set_meta_type(ScopeMetaType::OBJECT);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::keyword_other()
+{
+    if (token == DOT or in_object())
+        return general_identifier();
+
+    previous_group = ASI_OTHER;
+    dealias_reset();
+    set_ident_norm(true);
+    EXEC(do_spacing(KEYWORD))
+    ECHO;
+    BEGIN(regst);
+    return EOS;
+}
+
+void JSTokenizer::operator_assignment()
+{
+    previous_group = ASI_OTHER;
+    dealias_equals(false);
+    process_punctuator(OPERATOR_ASSIGNMENT);
+    set_ident_norm(true);
+}
+
+JSTokenizer::JSRet JSTokenizer::operator_prefix()
+{
+    dealias_prefix_reset();
+    EXEC(do_semicolon_insertion(ASI_GROUP_6))
+    EXEC(do_operator_spacing())
+    ECHO;
+    BEGIN(regst);
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::operator_incr_decr()
+{
+    dealias_increment();
+    dealias_reset();
+    EXEC(do_semicolon_insertion(ASI_GROUP_8))
+    EXEC(do_operator_spacing())
+    ECHO;
+    BEGIN(divop);
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::general_operator()
+{
+    dealias_clear_mutated(false);
+    previous_group = ASI_OTHER;
+    dealias_prefix_reset();
+    EXEC(do_operator_spacing())
+    ECHO;
+    BEGIN(regst);
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::general_literal()
+{
+    dealias_clear_mutated(false);
+    dealias_append();
+    EXEC(do_semicolon_insertion(ASI_GROUP_7))
+    EXEC(do_spacing(LITERAL))
+    ECHO;
+    BEGIN(divop);
+    set_ident_norm(true);
+    return EOS;
+}
+
+JSTokenizer::JSRet JSTokenizer::general_identifier()
+{
+    if (unescape(YYText()))
+    {
+        bool id_part = (token == DOT);
+        bool assignment_start = token == KEYWORD_VAR_DECL || token == PUNCTUATOR ||
+            token == UNDEFINED;
+        EXEC(do_semicolon_insertion(ASI_GROUP_7))
+        EXEC(do_spacing(IDENTIFIER))
+        EXEC(do_identifier_substitution(YYText(), id_part))
+        dealias_identifier(id_part, assignment_start);
+    }
+    else
+        EXEC(do_semicolon_insertion(ASI_GROUP_7))
+    BEGIN(divop);
+    return EOS;
+}
+
+void JSTokenizer::general_unicode()
+{
+    previous_group = ASI_OTHER;
+    ECHO;
+    token = UNDEFINED;
+    BEGIN(INITIAL);
+    set_ident_norm(true);
+}
+
+void JSTokenizer::escaped_unicode_latin_1()
+{
+    // truncate escape symbol, get hex number only
+    std::string code(YYText() + 2);
+    yyout << (char)std::stoi(code, nullptr, 16);
+}
+
+void JSTokenizer::escaped_unicode_utf_8()
+{
+    // truncate escape symbol, get hex number only
+    std::string code(YYText() + 2);
+    yyout << unicode_to_utf8(std::stoi(code, nullptr, 16));
+}
+
+void JSTokenizer::escaped_code_point()
+{
+    // truncate escape symbols, get hex number only
+    std::string code(YYText() + 3);
+    code.resize(code.size() - 1);
+    yyout << unicode_to_utf8(std::stoi(code, nullptr, 16));
+}
+
+void JSTokenizer::escaped_url_sequence_latin_1()
+{
+    // truncate escape symbol, get hex number only
+    std::string code(YYText() + 1);
+    yyout << (char)std::stoi(code, nullptr, 16);
+}
+
+void JSTokenizer::lit_int_code_point(int base)
+{
+    std::string code(base != 10 && !isdigit(YYText()[1]) ? YYText() + 2 : YYText());
+    code.erase(std::remove(code.begin(), code.end(), '_'), code.end());
+    yyout << unicode_to_utf8(std::stoi(code, nullptr, base));
+}
+
+void JSTokenizer::char_code_no_match()
+{
+    BEGIN(regst);
+    yyout << '\'';
+    set_char_code_str(false);
+    yyless(0);
+    memset((void*)(states + sp), 0, sizeof(states[0]));
+}
+
+void JSTokenizer::explicit_otag()
+{
+    if (!ext_script)
+        opening_tag_seen = true;
+
+    // discard match of the script tag and scan again without leading '<'
+    states_correct(1);
+
+    // process leading '<' as a comparison operator
+    operator_comparison();
+}
+
+void JSTokenizer::ctag_in_regex()
+{
+    // out of '</script>', consume only the leading '<' and renormalize the rest
+    states_correct(1);
+    ECHO;
+}
+
+JSTokenizer::JSRet JSTokenizer::process(size_t& bytes_in, bool external_script)
+{
+    yy_flush_buffer(YY_CURRENT_BUFFER);
+    unescape_nest_seen = false;
+    mixed_encoding_seen = false;
+    ext_script = external_script;
+    adjusted_data = false;
+
+    auto r = yylex();
+
+    yyin.clear();
+    yyout.clear();
+
+    bytes_in = std::max(bytes_read, bytes_in) - bytes_in;
+    bytes_read = 0;
+    tokens_read = 0;
+
+    return static_cast<JSTokenizer::JSRet>(r);
+}

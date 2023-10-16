@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -115,13 +115,21 @@ const arp::EtherARP* get_arp_layer(const Packet* const p)
             ProtocolId::ETHERTYPE_REVARP));
 }
 
-const geneve::GeneveHdr* get_geneve_layer(const Packet* const p)
+const geneve::GeneveLyr* get_geneve_layer(const Packet* const p, bool inner)
 {
     uint8_t num_layers = p->num_layers;
     const Layer* lyr = p->layers;
 
-    return reinterpret_cast<const geneve::GeneveHdr*>(
-        find_inner_layer(lyr, num_layers, ProtocolId::GENEVE));
+    if (inner)
+    {
+        return reinterpret_cast<const geneve::GeneveLyr*>(
+            find_inner_layer(lyr, num_layers, ProtocolId::GENEVE));
+    }
+    else
+    {
+        return reinterpret_cast<const geneve::GeneveLyr*>(
+            find_outer_layer(lyr, num_layers, ProtocolId::GENEVE));
+    }
 }
 
 const gre::GREHdr* get_gre_layer(const Packet* const p)

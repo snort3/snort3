@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -28,6 +28,8 @@
 #include "tcp_normalizers.h"
 #include "tcp_session.h"
 
+using namespace snort;
+
 TcpStateEstablished::TcpStateEstablished(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_ESTABLISHED, tsm)
 { }
@@ -54,7 +56,13 @@ bool TcpStateEstablished::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTrack
         // not be initialized... update_tracker_ack_sent may fix that but needs
         // more testing
         //trk.update_tracker_ack_sent( tsd );
-        trk.session->update_session_on_syn_ack();
+        Flow* flow = tsd.get_flow();
+        if ( !(flow->session_state & STREAM_STATE_ESTABLISHED) )
+        {
+            /* SYN-ACK from server */
+            if (flow->session_state != STREAM_STATE_NONE)
+                trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
+        }
     }
 
     if ( trk.is_server_tracker() )

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -45,6 +45,7 @@
 #include "main/snort_config.h"
 #include "main/swapper.h"
 #include "main/thread_config.h"
+#include "memory/memory_cap.h"
 #include "network_inspectors/packet_tracer/packet_tracer.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
@@ -63,14 +64,16 @@
 #include "utils/stats.h"
 
 THREAD_LOCAL DAQStats daq_stats;
+THREAD_LOCAL bool RuleContext::enabled = false;
 
 void Profiler::start() { }
 void Profiler::stop(uint64_t) { }
-void Profiler::consolidate_stats() { }
+void Profiler::consolidate_stats(snort::ProfilerType) { }
 void Swapper::apply(Analyzer&) { }
 Swapper::~Swapper() = default;
 void OopsHandler::tinit() { }
 void OopsHandler::tterm() { }
+void OopsHandler::set_current_message(DAQ_Msg_h, snort::SFDAQInstance*) { }
 uint16_t get_run_num() { return 0; }
 void set_run_num(uint16_t) { }
 void set_instance_id(unsigned) { }
@@ -125,7 +128,7 @@ namespace snort
 static struct timeval s_packet_time = { 0, 0 };
 THREAD_LOCAL PacketTracer* s_pkt_trace;
 THREAD_LOCAL TimeContext* ProfileContext::curr_time = nullptr;
-bool TimeProfilerStats::enabled = false;
+THREAD_LOCAL bool TimeProfilerStats::enabled = false;
 THREAD_LOCAL PacketCount pc;
 
 void packet_gettimeofday(struct timeval* tv) { *tv = s_packet_time; }
@@ -139,8 +142,8 @@ Packet::Packet(bool)
 }
 Packet::~Packet()  = default;
 IpsPolicy* get_ips_policy() { return nullptr; }
-void DataBus::publish(const char*, Packet*, Flow*) { }
-void DataBus::publish(const char*, DataEvent&, Flow*) { }
+void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
+void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }
 SFDAQInstance::SFDAQInstance(const char*, unsigned, const SFDAQConfig*) { }
 SFDAQInstance::~SFDAQInstance() = default;
 void SFDAQInstance::reload() { }
@@ -168,6 +171,7 @@ void DetectionEngine::idle() { }
 void DetectionEngine::reset() { }
 void DetectionEngine::wait_for_context() { }
 void DetectionEngine::set_file_data(const DataPointer&) { }
+void DetectionEngine::set_file_data(const DataPointer&, uint64_t, bool, bool) { }
 void DetectionEngine::clear_replacement() { }
 void DetectionEngine::disable_all(Packet*) { }
 unsigned get_instance_id() { return 0; }
@@ -219,12 +223,13 @@ void Stream::block_flow(const Packet*) { }
 IpsContext::IpsContext(unsigned) { }
 NetworkPolicy* get_network_policy() { return nullptr; }
 InspectionPolicy* get_inspection_policy() { return nullptr; }
-Flow::Flow() = default;
 Flow::~Flow() = default;
 void ThreadConfig::implement_thread_affinity(SThreadType, unsigned) { }
+void ThreadConfig::apply_thread_policy(SThreadType , unsigned ) { }
+void ThreadConfig::set_instance_tid(int) { }
 }
 
-namespace memory
-{
-void MemoryCap::free_space() { }
-}
+void memory::MemoryCap::thread_init() { }
+void memory::MemoryCap::thread_term() { }
+void memory::MemoryCap::free_space() { }
+

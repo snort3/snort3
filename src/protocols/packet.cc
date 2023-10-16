@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -88,12 +88,12 @@ void Packet::reset()
     release_helpers();
     ptrs.reset();
 
-    iplist_id = 0;
     user_inspection_policy_id = 0;
     user_ips_policy_id = 0;
     user_network_policy_id = 0;
     vlan_idx = 0;
     filtering_state.clear();
+    sect = PS_NONE;
 }
 
 void Packet::release_helpers()
@@ -271,9 +271,18 @@ uint32_t Packet::get_flow_geneve_vni() const
     uint32_t vni = 0;
 
     if (proto_bits & PROTO_BIT__GENEVE)
-        vni = layer::get_geneve_layer(this)->vni();
+        vni = layer::get_geneve_layer(this, true)->hdr.vni();
 
     return vni;
+}
+
+std::vector<snort::geneve::GeneveOptData> Packet::get_geneve_options(bool inner) const
+{
+    const snort::geneve::GeneveLyr* lyr = layer::get_geneve_layer(this, inner);
+    if (lyr)
+        return lyr->get_opt_data();
+    else
+        return {};
 }
 
 bool Packet::is_from_application_client() const

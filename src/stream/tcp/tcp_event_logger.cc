@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -90,7 +90,8 @@ void TcpEventLogger::log_tcp_events()
         {
             DetectionEngine::queue_event(GID_STREAM_TCP, tcp_event_sids[idx].sid);
             if ( PacketTracer::is_active() )
-                PacketTracer::log("Stream: TCP normalization error in %s\n",
+                PacketTracer::log("Stream: TCP raised %u:%u %s\n",
+                    GID_STREAM_TCP, tcp_event_sids[idx].sid,
                     tcp_event_sids[idx].event_description);
             tcp_events ^= tcp_event_sids[idx].event_id;
             tcpStats.events++;

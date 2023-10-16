@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2022-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2022-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -23,10 +23,12 @@
 #include "framework/data_bus.h"
 #include "service_inspectors/netflow/netflow_record.h"
 
-#define RNA_NEW_NETFLOW_CONN "network_inspector.rna.new_netflow_host"
-
 namespace snort
 {
+
+struct RnaEventIds { enum : unsigned { NEW_NETFLOW_CONN, num_ids }; };
+
+const PubKey rna_pub_key { "rna", RnaEventIds::num_ids };
 
 class RNAEvent : public DataEvent
 {

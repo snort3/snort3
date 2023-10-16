@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -97,6 +97,9 @@ public:
     uint32_t get_xtradata_mask() const
     { return trs.xtradata_mask; }
 
+    bool data_was_queued() const
+    { return trs.sos.total_bytes_queued > 0; }
+
     uint32_t get_seg_count() const
     { return trs.sos.seg_count; }
 
@@ -120,6 +123,9 @@ public:
 
     void set_norm_mode_test()
     { trs.sos.tcp_ips_data = NORM_MODE_TEST; }
+
+    bool segment_within_seglist_window(TcpSegmentDescriptor& tsd)
+    { return reassembler->segment_within_seglist_window(trs, tsd); }
 
     uint32_t perform_partial_flush(snort::Flow* flow, snort::Packet*& p)
     { return reassembler->perform_partial_flush(trs, flow, p); }

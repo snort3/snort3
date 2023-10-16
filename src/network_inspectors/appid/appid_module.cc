@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -27,9 +27,11 @@
 
 #include <climits>
 #include <lua.hpp>
+#include <sys/resource.h>
 
 #include "control/control.h"
 #include "host_tracker/host_cache.h"
+#include "host_tracker/host_cache_segmented.h"
 #include "log/messages.h"
 #include "main/analyzer.h"
 #include "main/analyzer_command.h"
@@ -71,6 +73,10 @@ static const Parameter s_params[] =
       "the first packet of an already decrypted SSL flow (debug single session only)" },
     { "log_eve_process_client_mappings", Parameter::PT_BOOL, nullptr, "false",
       "enable logging of encrypted visibility engine process to client mappings" },
+    { "log_alpn_service_mappings", Parameter::PT_BOOL, nullptr, "false",
+      "enable logging of alpn service mappings" },
+    { "log_memory_and_pattern_count", Parameter::PT_BOOL, nullptr, "false",
+      "enable logging of memory usage and pattern counts" },
 #endif
     { "memcap", Parameter::PT_INT, "1024:maxSZ", "1048576",
       "max size of the service cache before we start pruning the cache" },
@@ -249,8 +255,9 @@ bool ACOdpContextSwap::execute(Analyzer&, void**)
     AppIdPegCounts::cleanup_pegs();
     AppIdServiceState::initialize(ctxt.config.memcap);
     AppIdPegCounts::init_pegs();
-
+    ServiceDiscovery::set_thread_local_ftp_service();
     pkt_thread_odp_ctxt = &current_odp_ctxt;
+
     assert(odp_thread_local_ctxt);
     delete odp_thread_local_ctxt;
     odp_thread_local_ctxt = new OdpThreadContext;
@@ -263,6 +270,7 @@ ACOdpContextSwap::~ACOdpContextSwap()
     odp_ctxt.get_app_info_mgr().cleanup_appid_info_table();
     delete &odp_ctxt;
     AppIdContext& ctxt = inspector.get_ctxt();
+    LuaDetectorManager::cleanup_after_swap();
     if (ctxt.config.app_detector_dir)
     {
         std::string file_path = std::string(ctxt.config.app_detector_dir) + "/custom/userappid.conf";
@@ -306,7 +314,7 @@ static int enable_debug(lua_State* L)
     constraints.dport = dport;
 
     AppIdDebugLogEvent event(&constraints, "AppIdDbg");
-    DataBus::publish(APPID_DEBUG_LOG_EVENT, event);
+    DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::DEBUG_LOG, event);
 
     main_broadcast_command(new AcAppIdDebug(&constraints), ControlConn::query_from_lua(L));
 
@@ -316,7 +324,7 @@ static int enable_debug(lua_State* L)
 static int disable_debug(lua_State* L)
 {
     AppIdDebugLogEvent event(nullptr, "");
-    DataBus::publish(APPID_DEBUG_LOG_EVENT, event);
+    DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::DEBUG_LOG, event);
     main_broadcast_command(new AcAppIdDebug(nullptr), ControlConn::query_from_lua(L));
     return 0;
 }
@@ -379,6 +387,18 @@ static int reload_detectors(lua_State* L)
 
     ctrlcon->respond(".. reloading detectors\n");
 
+    struct rusage ru;
+    long prev_maxrss = -1;
+    #ifdef REG_TEST
+    if ( inspector->get_config().log_memory_and_pattern_count )
+    {
+    #endif
+        getrusage(RUSAGE_SELF, &ru);
+        prev_maxrss = ru.ru_maxrss;
+    #ifdef REG_TEST
+    }
+    #endif
+
     AppIdContext& ctxt = inspector->get_ctxt();
     OdpContext& old_odp_ctxt = ctxt.get_odp_ctxt();
     ServiceDiscovery::clear_ftp_service_state();
@@ -387,17 +407,32 @@ static int reload_detectors(lua_State* L)
     LuaDetectorManager::clear_lua_detector_mgrs();
     ctxt.create_odp_ctxt();
     assert(odp_thread_local_ctxt);
+    odp_thread_local_ctxt->get_lua_detector_mgr().set_ignore_chp_cleanup(true);
     delete odp_thread_local_ctxt;
     odp_thread_local_ctxt = new OdpThreadContext;
 
     OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
     odp_ctxt.get_client_disco_mgr().initialize(*inspector);
     odp_ctxt.get_service_disco_mgr().initialize(*inspector);
+    odp_ctxt.set_client_and_service_detectors();
+
     odp_thread_local_ctxt->initialize(SnortConfig::get_conf(), ctxt, true, true);
     odp_ctxt.initialize(*inspector);
 
     ctrlcon->respond("== swapping detectors configuration\n");
     ReloadTracker::update(ctrlcon, "swapping detectors configuration");
+
+    #ifdef REG_TEST
+    if ( inspector->get_config().log_memory_and_pattern_count )
+    {
+    #endif
+        getrusage(RUSAGE_SELF, &ru);
+        LogMessage("appid: MaxRss diff: %li\n", ru.ru_maxrss - prev_maxrss);
+        LogMessage("appid: patterns loaded: %u\n", odp_ctxt.get_pattern_count());
+    #ifdef REG_TEST
+    }
+    #endif
+
     main_broadcast_command(new ACOdpContextSwap(*inspector, old_odp_ctxt, ctrlcon), ctrlcon);
     return 0;
 }
@@ -481,6 +516,10 @@ bool AppIdModule::set(const char*, Value& v, SnortConfig*)
         config->first_decrypted_packet_debug = v.get_uint32();
     else if ( v.is("log_eve_process_client_mappings") )
         config->log_eve_process_client_mappings = v.get_bool();
+    else if (v.is("log_alpn_service_mappings") )
+        config->log_alpn_service_mappings = v.get_bool();
+    else if (v.is("log_memory_and_pattern_count") )
+        config->log_memory_and_pattern_count = v.get_bool();
     else
 #endif
     if ( v.is("memcap") )
@@ -552,10 +591,10 @@ PegCount* AppIdModule::get_counts() const
     return (PegCount*)&appid_stats;
 }
 
-void AppIdModule::sum_stats(bool accumulate_now_stats)
+void AppIdModule::sum_stats(bool dump_stats)
 {
     AppIdPegCounts::sum_stats();
-    Module::sum_stats(accumulate_now_stats);
+    Module::sum_stats(dump_stats);
 }
 
 void AppIdModule::show_dynamic_stats()

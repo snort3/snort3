@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2017-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2017-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -27,6 +27,7 @@
 #include <ctime>
 #include <queue>
 #include <string>
+#include <vector>
 
 #include "main/snort_types.h"
 
@@ -68,8 +69,11 @@ public:
     SO_PUBLIC bool respond(const char* format, ...) __attribute__((format (printf, 2, 3)));
     SO_PUBLIC static ControlConn* query_from_lua(const lua_State*);
 
+    static void log_command(const std::string& module, bool log);
+
 private:
     void touch();
+    bool loggable(const std::string& command);
 
 private:
     std::queue<std::string> pending_commands;
@@ -80,6 +84,8 @@ private:
     bool blocked = false;
     bool removed = false;
     time_t touched;
+
+    static std::vector<std::string> log_exclusion_list;
 };
 
 #define LogRespond(cn, ...)       do { if (cn) cn->respond(__VA_ARGS__); else LogMessage(__VA_ARGS__); } while(0)

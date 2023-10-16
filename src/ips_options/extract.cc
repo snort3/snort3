@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2003-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -307,8 +307,12 @@ int32_t data_extraction(const ByteData& settings, Packet* p,
     }
     else
     {
-        bytes_read = string_extract(settings.bytes_to_extract, settings.base,
-            ptr, start, end, &value);
+        unsigned len = end - ptr;
+
+        if (len > settings.bytes_to_extract)
+            len = settings.bytes_to_extract;
+
+        bytes_read = string_extract(len, settings.base, ptr, start, end, &value);
         if (bytes_read < 0)
             return IpsOption::NO_MATCH;
     }

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -33,6 +33,8 @@
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 #include "protocols/vlan.h"
+#include "pub_sub/intrinsic_event_ids.h"
+#include "pub_sub/packet_events.h"
 #include "stream/stream.h"
 #include "utils/util.h"
 
@@ -125,6 +127,9 @@ unsigned FlowControl::delete_flows(unsigned num_to_delete)
 bool FlowControl::prune_one(PruneReason reason, bool do_cleanup)
 { return cache->prune_one(reason, do_cleanup); }
 
+unsigned FlowControl::prune_multiple(PruneReason reason, bool do_cleanup)
+{ return cache->prune_multiple(reason, do_cleanup); }
+
 void FlowControl::timeout_flows(unsigned max, time_t cur_time)
 {
     cache->timeout(max, cur_time);
@@ -142,8 +147,8 @@ Flow* FlowControl::stale_flow_cleanup(FlowCache* cache, Flow* flow, Packet* p)
         {
             PacketTracerSuspend pt_susp;
 
-            cache->release(flow, PruneReason::STALE);
-            flow = nullptr;
+            if ( cache->release(flow, PruneReason::STALE) )
+                flow = nullptr;
         }
     }
 
@@ -360,13 +365,17 @@ static bool want_flow(PktType type, Packet* p)
         // guessing direction based on ports is misleading
         return false;
 
-    if ( !p->ptrs.tcph->is_syn_only() or p->context->conf->track_on_syn() )
+    if ( p->ptrs.tcph->is_syn_ack() or p->dsize )
         return true;
 
-    const unsigned DECODE_TCP_HS = DECODE_TCP_MSS | DECODE_TCP_TS | DECODE_TCP_WS;
-
-    if ( (p->ptrs.decode_flags & DECODE_TCP_HS) or p->dsize )
-        return true;
+    if ( p->ptrs.tcph->is_syn_only() )
+    {
+        if ( p->context->conf->track_on_syn() )
+            return true;
+        const unsigned DECODE_TCP_HS = DECODE_TCP_MSS | DECODE_TCP_TS | DECODE_TCP_WS;
+        if ( p->ptrs.decode_flags & DECODE_TCP_HS )
+            return true;
+    }
 
     p->packet_flags |= PKT_FROM_CLIENT;
     return false;
@@ -384,11 +393,14 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
     if (flow)
         flow = stale_flow_cleanup(cache, flow, p);
 
+    bool new_ha_flow = false;
     if ( !flow )
     {
         flow = HighAvailabilityManager::import(*p, key);
 
-        if ( !flow )
+        if ( flow )
+            new_ha_flow = true;
+        else
         {
             if ( !want_flow(type, p) )
                 return true;
@@ -409,7 +421,7 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
         flow->session = get_proto_session[to_utype(type)](flow);
     }
 
-    num_flows += process(flow, p);
+    num_flows += process(flow, p, new_ha_flow);
 
     // FIXIT-M refactor to unlink_uni immediately after session
     // is processed by inspector manager (all flows)
@@ -419,7 +431,15 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
     return true;
 }
 
-unsigned FlowControl::process(Flow* flow, Packet* p)
+static inline void restart_inspection(Flow* flow, Packet* p)
+{
+    p->disable_inspect = false;
+    flow->flags.disable_inspect = false;
+    flow->flow_state = Flow::FlowState::SETUP;
+    flow->last_verdict = MAX_DAQ_VERDICT;
+}
+
+unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
 {
     unsigned news = 0;
 
@@ -427,6 +447,10 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     p->flow = flow;
     p->disable_inspect = flow->is_inspection_disabled();
+
+    if ( p->disable_inspect and p->type() == PktType::ICMP
+         and flow->reload_id and SnortConfig::get_thread_reload_id() != flow->reload_id )
+        restart_inspection(flow, p);
 
     last_pkt_type = p->type();
 
@@ -443,8 +467,10 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
 
     if ( flow->flow_state != Flow::FlowState::SETUP )
     {
+        if ( new_ha_flow )
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_STATE_SETUP, p);
         unsigned reload_id = SnortConfig::get_thread_reload_id();
-        if (flow->reload_id != reload_id)
+        if ( flow->reload_id != reload_id )
             flow->network_policy_id = get_network_policy()->policy_id;
         else
         {
@@ -453,11 +479,24 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         }
         p->filtering_state = flow->filtering_state;
         update_stats(flow, p);
+        if ( p->is_retry() )
+        {
+            RetryPacketEvent retry_event(p);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::RETRY_PACKET, retry_event);
+            flow->flags.retry_queued = false;
+        }
+        else if ( flow->flags.retry_queued and ( !p->is_cooked() or p->is_defrag() ) )
+        {
+            RetryPacketEvent retry_event(p);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::RETRY_PACKET, retry_event);
+            if ( !retry_event.is_still_pending() )
+                flow->flags.retry_queued = false;
+        }
     }
     else
     {
         flow->network_policy_id = get_network_policy()->policy_id;
-        if (PacketTracer::is_active())
+        if ( PacketTracer::is_active() )
             PacketTracer::log("Session: new snort session\n");
 
         init_roles(p, flow);
@@ -468,7 +507,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p)
         update_stats(flow, p);
 
         flow->set_client_initiate(p);
-        DataBus::publish(FLOW_STATE_SETUP_EVENT, p);
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_STATE_SETUP, p);
 
         if ( flow->flow_state == Flow::FlowState::SETUP ||
             (flow->flow_state == Flow::FlowState::INSPECT &&

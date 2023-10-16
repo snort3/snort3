@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -20,10 +20,8 @@
 #ifndef AUXILIARY_IP_EVENT_H
 #define AUXILIARY_IP_EVENT_H
 
-#include "framework/data_bus.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "sfip/sf_ip.h"
-
-#define AUXILIARY_IP_EVENT "auxiliary_ip_event"
 
 class AuxiliaryIpEvent : public snort::DataEvent
 {

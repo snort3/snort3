@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -69,10 +69,11 @@
 #include "context_switcher.h"
 #include "detect.h"
 #include "detect_trace.h"
-#include "detection_util.h"
+#include "detection_continuation.h"
 #include "detection_engine.h"
 #include "detection_module.h"
 #include "detection_options.h"
+#include "detection_util.h"
 #include "fp_config.h"
 #include "fp_create.h"
 #include "fp_utils.h"
@@ -143,8 +144,8 @@ static inline void fpLogOther(
     if ( PacketTracer::is_daq_activated() )
     {
         std::string act = Actions::get_string(action);
-        tr_len += snprintf(tr_context+tr_len, sizeof(tr_context) - tr_len, 
-                      "gid:%u, sid:%u, rev:%u, action:%s, msg:%s\n", 
+        tr_len += snprintf(tr_context+tr_len, sizeof(tr_context) - tr_len,
+                      "gid:%u, sid:%u, rev:%u, action:%s, msg:%s\n",
                       otn->sigInfo.gid, otn->sigInfo.sid,
                       otn->sigInfo.rev, act.c_str(),
                       otn->sigInfo.message.c_str());
@@ -273,12 +274,15 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
 **    OptTreeNode        * - the otn to add.
 **
 **  FORMAL OUTPUTS
-**    int - 1 max_events variable hit, 0 successful.
+**    int - 1 max_events variable hit.
+**    int - 0 successful.
 **
 */
 int fpAddMatch(OtnxMatchData* omd, const OptTreeNode* otn)
 {
     RuleTreeNode* rtn = getRtnFromOtn(otn);
+    assert(rtn);
+
     unsigned evalIndex = rtn->listhead->ruleListNode->evalIndex;
 
     const SnortConfig* sc = SnortConfig::get_conf();
@@ -341,7 +345,7 @@ static void detection_option_tree_evaluate(detection_option_tree_root_t* root,
 {
     assert(root);
 
-    RuleLatency::Context rule_latency_ctx(root, eval_data.p);
+    RuleLatency::Context rule_latency_ctx(*root, eval_data.p);
 
     if ( RuleLatency::suspended() )
         return;
@@ -361,11 +365,9 @@ static void rule_tree_match(
     IpsContext* context, void* user, void* tree, int index, void* neg_list)
 {
     PMX* pmx = (PMX*)user;
+    Packet* pkt = context->packet;
 
-    detection_option_eval_data_t eval_data(context->packet);
-    eval_data.pmd = pmx->pmd;
-
-    print_pattern(pmx->pmd, eval_data.p);
+    print_pattern(pmx->pmd, pkt);
 
     {
         /* NOTE: The otn will be the first one in the match state. If there are
@@ -381,17 +383,18 @@ static void rule_tree_match(
             PmdLastCheck* last_check =
                 neg_pmx->pmd->last_check + get_instance_id();
 
-            last_check->ts.tv_sec = eval_data.p->pkth->ts.tv_sec;
-            last_check->ts.tv_usec = eval_data.p->pkth->ts.tv_usec;
+            last_check->ts.tv_sec = pkt->pkth->ts.tv_sec;
+            last_check->ts.tv_usec = pkt->pkth->ts.tv_usec;
             last_check->run_num = get_run_num();
             last_check->context_num = context->context_num;
-            last_check->rebuild_flag = (eval_data.p->packet_flags & PKT_REBUILT_STREAM);
+            last_check->rebuild_flag = (pkt->packet_flags & PKT_REBUILT_STREAM);
         }
 
         if ( !tree )
             return;
 
         detection_option_tree_root_t* root = (detection_option_tree_root_t*)tree;
+        detection_option_eval_data_t eval_data(pkt, root->otn, pmx->pmd);
 
         detection_option_tree_evaluate(root, eval_data);
 
@@ -399,47 +402,47 @@ static void rule_tree_match(
             pmqs.qualified_events++;
         else
             pmqs.non_qualified_events++;
-    }
 
-    if (eval_data.flowbit_failed)
-        return;
+        if (eval_data.flowbit_failed)
+            return;
+    }
 
     /* If this is for an IP rule set, evaluate the rules from
      * the inner IP offset as well */
-    if (eval_data.p->packet_flags & PKT_IP_RULE)
+    if (pkt->packet_flags & PKT_IP_RULE)
     {
-        ip::IpApi tmp_api = eval_data.p->ptrs.ip_api;
-        int8_t curr_layer = eval_data.p->num_layers - 1;
+        ip::IpApi tmp_api = pkt->ptrs.ip_api;
+        int8_t curr_layer = pkt->num_layers - 1;
 
-        if (layer::set_inner_ip_api(eval_data.p,
-            eval_data.p->ptrs.ip_api,
+        if (layer::set_inner_ip_api(pkt,
+            pkt->ptrs.ip_api,
             curr_layer) &&
-            (eval_data.p->ptrs.ip_api != tmp_api))
+            (pkt->ptrs.ip_api != tmp_api))
         {
-            const uint8_t* tmp_data = eval_data.p->data;
-            uint16_t tmp_dsize = eval_data.p->dsize;
+            const uint8_t* tmp_data = pkt->data;
+            uint16_t tmp_dsize = pkt->dsize;
 
             /* clear so we don't keep recursing */
-            eval_data.p->packet_flags &= ~PKT_IP_RULE;
-            eval_data.p->packet_flags |= PKT_IP_RULE_2ND;
+            pkt->packet_flags &= ~PKT_IP_RULE;
+            pkt->packet_flags |= PKT_IP_RULE_2ND;
 
             do
             {
-                eval_data.p->data = eval_data.p->ptrs.ip_api.ip_data();
-                eval_data.p->dsize = eval_data.p->ptrs.ip_api.pay_len();
+                pkt->data = pkt->ptrs.ip_api.ip_data();
+                pkt->dsize = pkt->ptrs.ip_api.pay_len();
 
                 /* Recurse, and evaluate with the inner IP */
                 rule_tree_match(context, user, tree, index, nullptr);
             }
-            while (layer::set_inner_ip_api(eval_data.p,
-                eval_data.p->ptrs.ip_api, curr_layer) && (eval_data.p->ptrs.ip_api != tmp_api));
+            while (layer::set_inner_ip_api(pkt,
+                pkt->ptrs.ip_api, curr_layer) && (pkt->ptrs.ip_api != tmp_api));
 
             /*  cleanup restore original data & dsize */
-            eval_data.p->packet_flags &= ~PKT_IP_RULE_2ND;
-            eval_data.p->packet_flags |= PKT_IP_RULE;
+            pkt->packet_flags &= ~PKT_IP_RULE_2ND;
+            pkt->packet_flags |= PKT_IP_RULE;
 
-            eval_data.p->data = tmp_data;
-            eval_data.p->dsize = tmp_dsize;
+            pkt->data = tmp_data;
+            pkt->dsize = tmp_dsize;
         }
     }
 }
@@ -616,6 +619,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
         return 0;
 
     unsigned tcnt = 0;
+    int res = 0;
     EventQueueConfig* eq = p->context->conf->event_queue_config;
     int (*compar)(const void *, const void *);
     compar = ( eq->order == SNORT_EVENTQ_PRIORITY )
@@ -646,10 +650,17 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
                 sizeof(void*), compar);
 
             /* Process each event in the action (alert,drop,log,...) groups */
-            for (unsigned j = 0; j < omd->matchInfo[i].iMatchCount; j++)
+            for ( unsigned j = 0; j < omd->matchInfo[i].iMatchCount; j++ )
             {
                 const OptTreeNode* otn = omd->matchInfo[i].MatchArray[j];
                 assert(otn);
+
+                if ( tcnt >= eq->max_events )
+                {
+                    pc.queue_limit += omd->matchInfo[i].iMatchCount - j;
+                    res = 1;
+                    break;
+                }
 
                 RuleTreeNode* rtn = getRtnFromOtn(otn);
 
@@ -693,12 +704,6 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
                         fpAddSessionAlert(p, otn);
                 }
 
-                if ( tcnt >= eq->max_events )
-                {
-                    pc.queue_limit++;
-                    return 1;
-                }
-
                 /* only log/count one pass */
                 if ( p->packet_flags & PKT_PASS_RULE )
                     return 1;
@@ -706,7 +711,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
         }
     }
 
-    return 0;
+    return res;
 }
 
 class MpseStash
@@ -880,9 +885,9 @@ static int fp_search(RuleGroup* port_group, Packet* p, bool srvc)
     p->packet_flags |= PKT_FAST_PAT_EVAL;
     Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
 
-    debug_log(detection_trace, TRACE_RULE_EVAL, p, "Fast pattern search\n");
-
-    for ( const auto it : port_group->pm_list )
+    debug_logf(detection_trace, TRACE_RULE_EVAL, p, "Fast pattern search, packet section %s\n",
+        section_to_str[p->sect]);
+    for ( const auto it : port_group->pm_list[p->sect] )
     {
         switch ( it->type )
         {
@@ -912,7 +917,6 @@ static int fp_search(RuleGroup* port_group, Packet* p, bool srvc)
                     {
                         debug_logf(detection_trace, TRACE_FP_SEARCH, p,
                             "%" PRIu64 " fp pkt_data[%u]\n", p->context->packet_number, length);
-
                         batch_search(&it->group, p, p->data, length, pc.pkt_searches);
                         p->is_cooked() ?  pc.cooked_searches++ : pc.raw_searches++;
                     }
@@ -1023,12 +1027,11 @@ static inline void eval_nfp(
             if ( fp->get_debug_print_nc_rules() )
                 LogMessage("NC-testing %u rules\n", port_group->nfp_rule_count);
 
-            detection_option_eval_data_t eval_data(p);
+            detection_option_tree_root_t* root = (detection_option_tree_root_t*)port_group->nfp_tree;
+            detection_option_eval_data_t eval_data(p, root->otn);
 
             debug_log(detection_trace, TRACE_RULE_EVAL, p,
                 "Testing non-content rules\n");
-
-            detection_option_tree_root_t* root = (detection_option_tree_root_t*)port_group->nfp_tree;
 
             detection_option_tree_evaluate(root, eval_data);
 
@@ -1301,6 +1304,18 @@ void fp_complete(Packet* p, bool search)
     }
     {
         Profile rule_profile(rulePerfStats);
+
+        if (p->flow && p->flow->ips_cont)
+        {
+            if (!p->flow->ips_cont->is_reloaded())
+                p->flow->ips_cont->eval(*p);
+            else
+            {
+                delete p->flow->ips_cont;
+                p->flow->ips_cont = nullptr;
+            }
+        }
+
         stash->process(c);
         print_pkt_info(p, "non-fast-patterns");
         fpEvalPacket(p, FPTask::NON_FP);
@@ -1382,7 +1397,7 @@ void fp_eval_service_group(Packet* p, SnortProtocolId snort_protocol_id)
     IpsContext::ActiveRules actv_rules = c->active_rules;
     c->active_rules = IpsContext::CONTENT;
     IpsPolicy* ips_policy = snort::get_ips_policy();
-    snort::set_ips_policy(get_default_ips_policy(SnortConfig::get_conf()));
+    snort::set_ips_policy(get_ips_policy(SnortConfig::get_conf()));
 
     print_pkt_info(p, "file_id fast-patterns"); //FIXIT
     fpEvalHeaderSW(svc, p, 0, FPTask::FP, true, true);

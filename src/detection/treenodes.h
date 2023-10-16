@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2008-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 #include "actions/actions.h"
 #include "detection/signature.h"
 #include "detection/rule_option_types.h"
+#include "framework/pdu_section.h"
 #include "main/policy.h"
 #include "main/snort_types.h"
 #include "ports/port_group.h"
@@ -72,8 +73,8 @@ struct OtnState
     uint64_t latency_timeouts = 0;
     uint64_t latency_suspends = 0;
 
-    operator bool() const
-    { return elapsed > 0_ticks || checks > 0; }
+    bool is_active() const
+    { return elapsed > CLOCK_ZERO || checks > 0; }
 };
 
 /* function pointer list for rule head nodes */
@@ -205,6 +206,10 @@ struct OptTreeNode
     IpsPolicy::Enable enable;
     Flag flags = 0;
 
+    enum SectionDir { SECT_TO_SRV = 0, SECT_TO_CLIENT, SECT_DIR__MAX };
+    snort::section_flags sections[SECT_DIR__MAX] = { section_to_flag(snort::PS_NONE),
+        section_to_flag(snort::PS_NONE) };
+
     void set_warned_fp()
     { flags |= WARNED_FP; }
 
@@ -263,6 +268,12 @@ struct OptTreeNode
     { return (flags & SVC_ONLY) != 0; }
 
     void update_fp(snort::IpsOption*);
+
+    bool to_client_err() const
+    { return sections[SECT_TO_CLIENT] == section_to_flag(snort::PS_ERROR); }
+
+    bool to_server_err() const
+    { return sections[SECT_TO_SRV] == section_to_flag(snort::PS_ERROR); }
 };
 
 typedef int (* RuleOptEvalFunc)(void*, Cursor&, snort::Packet*);

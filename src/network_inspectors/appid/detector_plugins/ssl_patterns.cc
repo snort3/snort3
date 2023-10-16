@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -28,7 +28,7 @@
 
 using namespace snort;
 
-static void create_matcher(SearchTool& matcher, SslPatternList* list)
+static void create_matcher(SearchTool& matcher, SslPatternList* list, CnameCache& set, unsigned& pattern_count)
 {
     size_t* pattern_index;
     size_t size = 0;
@@ -38,11 +38,14 @@ static void create_matcher(SearchTool& matcher, SslPatternList* list)
 
     for (element = list; element; element = element->next)
     {
+        if (!element->dpattern->is_cname and set.count(*(element->dpattern)))
+            continue;
+
         matcher.add(element->dpattern->pattern,
-            element->dpattern->pattern_size, element->dpattern, true);
+            element->dpattern->pattern_size, element->dpattern, true, element->dpattern->is_literal);
         (*pattern_index)++;
     }
-
+    pattern_count = size;
     matcher.prep();
 }
 
@@ -61,33 +64,82 @@ static int cert_pattern_match(void* id, void*, int match_end_pos, void* data, vo
     return 0;
 }
 
+static int cname_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
+{
+    MatchedSslPatterns* cm;
+    MatchedSslPatterns** matches = (MatchedSslPatterns**)data;
+    SslPattern* target = (SslPattern*)id;
+
+    /* Only collect the match if it is a cname pattern. */
+    if (target->is_cname)
+    {
+        cm = (MatchedSslPatterns*)snort_alloc(sizeof(MatchedSslPatterns));
+        cm->mpattern = target;
+        cm->match_start_pos = match_end_pos - target->pattern_size;
+        cm->next = *matches;
+        *matches = cm;
+    }
+    return 0;
+}
+/*  
+Only patterns that match end of the payload AND
+(match the start of the payload
+or match after '.'
+or patterns starting with '.')
+are considered a match. */
+inline static bool ssl_pattern_validate_match(const MatchedSslPatterns * const mp, const uint8_t* data, int data_size)
+{
+    return mp->match_start_pos + mp->mpattern->pattern_size == data_size and
+            (mp->match_start_pos == 0 or
+            data[mp->match_start_pos-1] == '.' or
+            *mp->mpattern->pattern == '.');
+}
+
+inline static bool is_perfect_literal_match(const MatchedSslPatterns * const mp, int data_size)
+{
+    return mp->mpattern->is_literal and
+            (mp->match_start_pos + mp->mpattern->pattern_size == data_size) and
+            mp->match_start_pos == 0;
+
+}
+
 static bool scan_patterns(SearchTool& matcher, const uint8_t* data, size_t size,
-    AppId& client_id, AppId& payload_id)
+    AppId& client_id, AppId& payload_id, bool is_cname_search)
 {
     MatchedSslPatterns* mp = nullptr;
-    SslPattern* best_match;
+    SslPattern* best_match = nullptr;
 
-    matcher.find_all((const char*)data, size, cert_pattern_match, false, &mp);
+    if (is_cname_search)
+        matcher.find_all((const char*)data, size, cname_pattern_match, false, &mp);
+    else
+        matcher.find_all((const char*)data, size, cert_pattern_match, false, &mp);
 
     if (!mp)
         return false;
+    
+    MatchedSslPatterns* tmp = mp;
 
-    best_match = nullptr;
-    while (mp)
+    while (tmp)
     {
-        /*  Only patterns that match start of payload,
-            or patterns starting with '.'
-            or patterns following '.' in payload are considered a match. */
-        if (mp->match_start_pos == 0 ||
-            *mp->mpattern->pattern == '.' ||
-            data[mp->match_start_pos-1] == '.')
+        if (!tmp->mpattern->is_literal or ssl_pattern_validate_match(tmp, data, (int)size))
         {
-            if (!best_match ||
-                mp->mpattern->pattern_size > best_match->pattern_size)
+            if(is_perfect_literal_match(tmp, (int)size))
             {
-                best_match = mp->mpattern;
+                best_match = tmp->mpattern;
+                break;
+            }
+
+            if (!best_match or
+                    tmp->mpattern->pattern_size > best_match->pattern_size)
+            {
+                best_match = tmp->mpattern;
             }
         }
+        tmp = tmp->next;
+    }
+
+    while (mp)
+    {
         MatchedSslPatterns* tmpMp = mp;
         mp = mp->next;
         snort_free(tmpMp);
@@ -132,7 +184,7 @@ static void free_patterns(SslPatternList*& list)
 }
 
 static void add_pattern(SslPatternList*& list, uint8_t* pattern_str, size_t
-    pattern_size, uint8_t type, AppId app_id)
+    pattern_size, uint8_t type, AppId app_id, bool is_cname, bool is_literal, CnameCache& set)
 {
     SslPatternList* new_ssl_pattern;
 
@@ -142,45 +194,48 @@ static void add_pattern(SslPatternList*& list, uint8_t* pattern_str, size_t
     new_ssl_pattern->dpattern->app_id = app_id;
     new_ssl_pattern->dpattern->pattern = pattern_str;
     new_ssl_pattern->dpattern->pattern_size = pattern_size;
+    new_ssl_pattern->dpattern->is_cname = is_cname;
+    new_ssl_pattern->dpattern->is_literal = is_literal;
 
     new_ssl_pattern->next = list;
     list = new_ssl_pattern;
+
+    if (is_cname)
+        set.emplace(*(new_ssl_pattern->dpattern));
 }
 
 SslPatternMatchers::~SslPatternMatchers()
 {
     free_patterns(cert_pattern_list);
-    free_patterns(cname_pattern_list);
 }
 
-void SslPatternMatchers::add_cert_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id)
+void SslPatternMatchers::add_cert_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id, bool is_cname, bool is_literal)
 {
-    add_pattern(cert_pattern_list, pattern_str, pattern_size, type, app_id);
-}
-
-void SslPatternMatchers::add_cname_pattern(uint8_t* pattern_str, size_t pattern_size, uint8_t type, AppId app_id)
-{
-    add_pattern(cname_pattern_list, pattern_str, pattern_size, type, app_id);
+    add_pattern(cert_pattern_list, pattern_str, pattern_size, type, app_id, is_cname, is_literal, cert_pattern_set);
 }
 
 void SslPatternMatchers::finalize_patterns()
 {
-    create_matcher(ssl_host_matcher, cert_pattern_list);
-    create_matcher(ssl_cname_matcher, cname_pattern_list);
+    create_matcher(ssl_host_matcher, cert_pattern_list, cert_pattern_set, pattern_count);
+    cert_pattern_set.clear();
 }
 
 void SslPatternMatchers::reload_patterns()
 {
     ssl_host_matcher.reload();
-    ssl_cname_matcher.reload();
+}
+
+unsigned SslPatternMatchers::get_pattern_count()
+{
+    return pattern_count;
 }
 
 bool SslPatternMatchers::scan_hostname(const uint8_t* hostname, size_t size, AppId& client_id, AppId& payload_id)
 {
-    return scan_patterns(ssl_host_matcher, hostname, size, client_id, payload_id);
+    return scan_patterns(ssl_host_matcher, hostname, size, client_id, payload_id, false);
 }
 
 bool SslPatternMatchers::scan_cname(const uint8_t* common_name, size_t size, AppId& client_id, AppId& payload_id)
 {
-    return scan_patterns(ssl_cname_matcher, common_name, size, client_id, payload_id);
+    return scan_patterns(ssl_host_matcher, common_name, size, client_id, payload_id, true);
 }

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -66,6 +66,8 @@
 #define SSNFLAG_PRUNED              0x00002000
 #define SSNFLAG_RESET               0x00004000
 
+#define SSNFLAG_TCP_PSEUDO_EST      0x00008000
+
 #define SSNFLAG_DROP_CLIENT         0x00010000
 #define SSNFLAG_DROP_SERVER         0x00020000
 
@@ -89,19 +91,17 @@
 #define SSNFLAG_BLOCK (SSNFLAG_DROP_CLIENT|SSNFLAG_DROP_SERVER)
 
 #define STREAM_STATE_NONE              0x0000
-#define STREAM_STATE_SYN               0x0001
-#define STREAM_STATE_SYN_ACK           0x0002
-#define STREAM_STATE_ACK               0x0004
-#define STREAM_STATE_ESTABLISHED       0x0008
-#define STREAM_STATE_DROP_CLIENT       0x0010
-#define STREAM_STATE_DROP_SERVER       0x0020
-#define STREAM_STATE_MIDSTREAM         0x0040
-#define STREAM_STATE_TIMEDOUT          0x0080
-#define STREAM_STATE_UNREACH           0x0100
-#define STREAM_STATE_CLOSED            0x0200
-#define STREAM_STATE_BLOCK_PENDING     0x0400
-#define STREAM_STATE_RELEASING         0x0800
+#define STREAM_STATE_ESTABLISHED       0x0001
+#define STREAM_STATE_DROP_CLIENT       0x0002
+#define STREAM_STATE_DROP_SERVER       0x0004
+#define STREAM_STATE_MIDSTREAM         0x0008
+#define STREAM_STATE_TIMEDOUT          0x0010
+#define STREAM_STATE_UNREACH           0x0020
+#define STREAM_STATE_CLOSED            0x0040
+#define STREAM_STATE_BLOCK_PENDING     0x0080
+#define STREAM_STATE_RELEASING         0x0100
 
+class Continuation;
 class BitOp;
 class Session;
 
@@ -164,7 +164,12 @@ public:
     virtual FlowData* get_stream_flow_data(const Flow* flow) = 0;
     virtual void set_stream_flow_data(Flow* flow, FlowData* flow_data) = 0;
     virtual void get_stream_id(const Flow* flow, int64_t& stream_id) = 0;
+    virtual void* get_hi_msg_section(const Flow* flow) = 0;
+    virtual void set_hi_msg_section(Flow* flow, void* section) = 0;
     virtual AppId get_appid_from_stream(const Flow*) { return APP_ID_NONE; }
+    // Stream based flows should override this interface to return parent flow
+    // when child flow is passed as input
+    virtual Flow* get_stream_parent_flow(Flow* cflow) { return cflow; }
 };
 
 // this struct is organized by member size for compactness
@@ -179,14 +184,13 @@ public:
         RESET,
         ALLOW
     };
-    Flow();
-    ~Flow();
+    Flow() = default;
+    virtual ~Flow();
 
     Flow(const Flow&) = delete;
     Flow& operator=(const Flow&) = delete;
 
     void init(PktType);
-    void term();
 
     void flush(bool do_cleanup = true);
     void reset(bool do_cleanup = true);
@@ -203,7 +207,7 @@ public:
     void markup_packet_flags(Packet*);
     void set_client_initiate(Packet*);
     void set_direction(Packet*);
-    void set_expire(const Packet*, uint32_t timeout);
+    void set_expire(const Packet*, uint64_t timeout);
     bool expired(const Packet*);
     void set_ttl(Packet*, bool client);
     void set_mpls_layer_per_dir(Packet*);
@@ -364,7 +368,7 @@ public:
         data = nullptr;
     }
 
-    void disable_inspection()
+    virtual void disable_inspection()
     { flags.disable_inspect = true; }
 
     bool is_inspection_disabled() const
@@ -409,77 +413,76 @@ public:
 
 public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
-    // void space and allow for memset of tail end of struct
+    // void space
 
     DeferredTrust deferred_trust;
 
-    // Anything before this comment is not zeroed during construction
-    const FlowKey* key;
-    BitOp* bitop;
-    FlowHAState* ha_state;
-    FlowStash* stash;
+    const FlowKey* key = nullptr;
+    BitOp* bitop = nullptr;
+    FlowHAState* ha_state = nullptr;
+    FlowStash* stash = nullptr;
 
-    uint8_t ip_proto;
-    PktType pkt_type; // ^^
+    uint8_t ip_proto = 0;
+    PktType pkt_type = PktType::NONE; // ^^
 
     // these fields are always set; not zeroed
-    Flow* prev, * next;
-    Session* session;
-    Inspector* ssn_client;
-    Inspector* ssn_server;
+    Flow* prev = nullptr;
+    Flow* next = nullptr;
+    Session* session = nullptr;
+    Inspector* ssn_client = nullptr;
+    Inspector* ssn_server = nullptr;
+    Continuation* ips_cont = nullptr;
 
-    long last_data_seen;
-    Layer mpls_client, mpls_server;
+    long last_data_seen = 0;
+    Layer mpls_client = {};
+    Layer mpls_server = {};
 
-    // everything from here down is zeroed
     IpsContextChain context_chain;
-    FlowData* flow_data;
-    FlowStats flowstats;
-    StreamFlowIntf* stream_intf;
+    FlowData* flow_data = nullptr;
+    FlowStats flowstats = {};
+    StreamFlowIntf* stream_intf = nullptr;
 
-    SfIp client_ip;
-    SfIp server_ip;
+    SfIp client_ip = {};
+    SfIp server_ip = {};
 
-    LwState ssn_state;
-    LwState previous_ssn_state;
+    LwState ssn_state = {};
+    LwState previous_ssn_state = {};
 
-    Inspector* clouseau;  // service identifier
-    Inspector* gadget;    // service handler
-    Inspector* assistant_gadget;
-    Inspector* data;
-    const char* service;
+    Inspector* clouseau = nullptr;  // service identifier
+    Inspector* gadget = nullptr;    // service handler
+    Inspector* assistant_gadget = nullptr;
+    Inspector* data = nullptr;
+    const char* service = nullptr;
 
-    uint64_t expire_time;
+    uint64_t expire_time = 0;
 
-    unsigned network_policy_id;
-    unsigned inspection_policy_id;
-    unsigned ips_policy_id;
-    unsigned reload_id;
+    unsigned network_policy_id = 0;
+    unsigned inspection_policy_id = 0;
+    unsigned ips_policy_id = 0;
+    unsigned reload_id = 0;
 
-    uint32_t iplist_monitor_id;
+    uint32_t tenant = 0;
 
-    uint32_t tenant;
+    uint32_t default_session_timeout = 0;
 
-    uint32_t default_session_timeout;
+    int32_t client_intf = 0;
+    int32_t server_intf = 0;
 
-    int32_t client_intf;
-    int32_t server_intf;
+    int16_t client_group = 0;
+    int16_t server_group = 0;
 
-    int16_t client_group;
-    int16_t server_group;
+    uint16_t client_port = 0;
+    uint16_t server_port = 0;
 
-    uint16_t client_port;
-    uint16_t server_port;
+    uint16_t ssn_policy = 0;
+    uint16_t session_state = 0;
 
-    uint16_t ssn_policy;
-    uint16_t session_state;
+    uint8_t inner_client_ttl = 0;
+    uint8_t inner_server_ttl = 0;
+    uint8_t outer_client_ttl = 0;
+    uint8_t outer_server_ttl = 0;
 
-    uint8_t inner_client_ttl;
-    uint8_t inner_server_ttl;
-    uint8_t outer_client_ttl;
-    uint8_t outer_server_ttl;
-
-    uint8_t response_count;
+    uint8_t response_count = 0;
 
     struct
     {
@@ -487,10 +490,6 @@ public:  // FIXIT-M privatize if possible
                                     // currently considered to be the client
         bool app_direction_swapped : 1; // Packet direction swapped from application perspective
         bool disable_inspect : 1;
-        bool reputation_src_dest : 1;
-        bool reputation_blocklist : 1;
-        bool reputation_monitor : 1;
-        bool reputation_allowlist : 1;
         bool trigger_detained_packet_event : 1;
         bool trigger_finalize_event : 1;
         bool use_direct_inject : 1;
@@ -498,9 +497,11 @@ public:  // FIXIT-M privatize if possible
         bool snort_proto_id_set_by_ha : 1;
         bool efd_flow : 1;  // Indicate that current flow is an elephant flow
         bool svc_event_generated : 1; // Set if FLOW_NO_SERVICE_EVENT was generated for this flow
-    } flags;
+        bool retry_queued : 1; // Set if a packet was queued for retry for this flow
+        bool ha_flow : 1; // Set if this flow was created by an HA message
+    } flags = {};
 
-    FlowState flow_state;
+    FlowState flow_state = FlowState::SETUP;
 
     FilteringState filtering_state;
 

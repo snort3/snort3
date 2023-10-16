@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -28,6 +28,8 @@
 #include "main/snort_types.h"
 #include "target_based/snort_protocols.h"
 
+#include "pdu_section.h"
+
 //-------------------------------------------------------------------------
 // api for class
 // eval and action are packet thread specific
@@ -49,6 +51,7 @@ class Module;
 enum CursorActionType
 {
     CAT_NONE,
+    CAT_READ,
     CAT_ADJUST,
     CAT_SET_OTHER,
     CAT_SET_RAW,
@@ -104,6 +107,8 @@ public:
 
     const char* get_buffer()
     { return buffer; }
+
+    virtual section_flags get_pdu_section(bool to_server) const;
 
 protected:
     IpsOption(const char* s, option_type_t t = RULE_OPTION_TYPE_OTHER);

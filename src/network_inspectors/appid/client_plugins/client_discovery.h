@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -47,8 +47,10 @@ public:
 
     void finalize_client_patterns();
     void reload_client_patterns();
+    unsigned get_pattern_count();
     bool do_client_discovery(AppIdSession&, snort::Packet*,
         AppidSessionDirection direction, AppidChangeBits& change_bits);
+    ClientDetector* get_client_detector(const std::string&) const;
 
 private:
     void exec_client_detectors(AppIdSession&, snort::Packet*,

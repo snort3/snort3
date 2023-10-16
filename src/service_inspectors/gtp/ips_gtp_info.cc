@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -151,7 +151,7 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
 
     bool set_types(long);
-    bool set_types(const char*);
+    bool set_types(const char*, SnortConfig*);
 
     ProfileStats* get_profile() const override
     { return &gtp_info_prof; }
@@ -174,13 +174,13 @@ bool GtpInfoModule::set_types(long t)
     return true;
 }
 
-bool GtpInfoModule::set_types(const char* name)
+bool GtpInfoModule::set_types(const char* name, SnortConfig* sc)
 {
     bool ok = false;
 
     for ( int v = 0; v <= MAX_GTP_VERSION_CODE; ++v )
     {
-        int t = get_info_type(v, name);
+        int t = get_info_type(v, name, sc);
 
         if ( t < 0 )
             continue;
@@ -191,7 +191,7 @@ bool GtpInfoModule::set_types(const char* name)
     return ok;
 }
 
-bool GtpInfoModule::set(const char*, Value& v, SnortConfig*)
+bool GtpInfoModule::set(const char*, Value& v, SnortConfig* sc)
 {
     assert(v.is("~"));
     long n;
@@ -199,7 +199,7 @@ bool GtpInfoModule::set(const char*, Value& v, SnortConfig*)
     if ( v.strtol(n) )
         return set_types(n);
 
-    return set_types(v.get_string());
+    return set_types(v.get_string(), sc);
 }
 
 //-------------------------------------------------------------------------

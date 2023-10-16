@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -403,7 +403,7 @@ static inline void process_ftp_control(AppIdSession& asd,
         asd.set_user_logged_in();
         asd.tpsession->set_attr(TP_ATTR_UNAME_KNOWN);
     }
-    // This is a safe bail out condition in case username is not known 
+    // This is a safe bail out condition in case username is not known
     if ((asd.init_tpPackets + asd.resp_tpPackets) >= asd.get_odp_ctxt().max_tp_flow_depth)
         asd.tpsession->set_attr(TP_ATTR_UNAME_KNOWN);
 }
@@ -522,7 +522,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
 {
     AppId tp_app_id = asd.get_tp_app_id();
 
-    if (tp_app_id == APP_ID_SSH && asd.get_payload_id() != APP_ID_SFTP &&
+    if ((tp_app_id == APP_ID_SSH or asd.get_service_id() == APP_ID_SSH) && asd.get_payload_id() != APP_ID_SFTP &&
         asd.session_packet_count >= MIN_SFTP_PACKET_COUNT &&
         asd.session_packet_count < MAX_SFTP_PACKET_COUNT)
     {
@@ -599,6 +599,15 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
     {
         hsession = asd.get_http_session();
         assert(hsession);
+    }
+
+    if (tp_app_id == APP_ID_SSH)
+    {
+        if (appidDebug->is_active())
+            LogMessage("AppIdDbg %s Setting the ignore and early detection flag\n",
+                    appidDebug->get_debug_session());
+         asd.get_odp_ctxt().get_app_info_mgr().set_app_info_flags(tp_app_id, APPINFO_FLAG_IGNORE);
+         asd.set_session_flags(APPID_SESSION_EARLY_SSH_DETECTED);
     }
 
     unsigned app_info_flags = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_flags(tp_app_id,
@@ -691,7 +700,14 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
             portAppId = getSslServiceAppId(serverPort);
             if (tp_app_id == APP_ID_SSL)
             {
-                tp_app_id = portAppId;
+                if (asd.encrypted.service_id > 0)
+                {
+                    tp_app_id = asd.encrypted.service_id;
+                }
+                else
+                {
+                    tp_app_id = portAppId;
+                }
                 //SSL policy determines IMAPS/POP3S etc before appId sees first server
                 // packet
                 asd.set_port_service_id(portAppId);

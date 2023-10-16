@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -28,6 +28,7 @@
 // one.
 
 #include <cassert>
+#include <vector>
 
 #include "framework/module.h"
 #include "host_tracker/cache_allocator.cc"
@@ -35,12 +36,13 @@
 
 #define host_tracker_help \
     "configure hosts"
+#define HOST_TRACKER_NAME "host_tracker"
 
 class HostTrackerModule : public snort::Module
 {
 public:
     HostTrackerModule() :
-        snort::Module("host_tracker", host_tracker_help, host_tracker_params, true) { }
+        snort::Module(HOST_TRACKER_NAME, host_tracker_help, host_tracker_params, true) { }
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
@@ -49,6 +51,8 @@ public:
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
 
+    void init_data();
+
     Usage get_usage() const override
     { return GLOBAL; }
 
@@ -56,6 +60,7 @@ private:
     static const snort::Parameter host_tracker_params[];
     static const snort::Parameter service_params[];
 
+    std::vector<snort::HostApplication> apps;
     snort::HostApplication app;
     snort::SfIp addr;
 };

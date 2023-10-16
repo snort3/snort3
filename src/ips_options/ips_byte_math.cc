@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -88,6 +88,9 @@ public:
     { return config.relative_flag; }
 
     EvalStatus eval(Cursor&, Packet*) override;
+
+    CursorActionType get_cursor_type() const override
+    { return CAT_READ; }
 
 private:
     const ByteMathData config;
@@ -261,7 +264,7 @@ int ByteMathOption::calc(uint32_t& value, const uint32_t rvalue)
 static void parse_base(uint8_t value, ByteMathData& idx)
 {
     assert(value <= 2);
-    int base[] = { 16, 10, 8 };
+    const int base[] = { 16, 10, 8 };
     idx.base = base[value];
 }
 
@@ -279,7 +282,7 @@ static void parse_endian(uint8_t value, ByteMathData& idx)
 static const Parameter s_params[] =
 {
     { "bytes", Parameter::PT_INT, "1:10", nullptr,
-      "number of bytes to pick up from the buffer" },
+      "number of bytes to pick up from the buffer (string can pick less)" },
 
     { "offset", Parameter::PT_STRING, nullptr, nullptr,
       "number of bytes into the buffer to start processing" },
@@ -351,8 +354,8 @@ bool ByteMathModule::set(const char*, Value& v, SnortConfig*)
 
     else if (v.is("rvalue"))
     {
-        long n;
-        if (v.strtol(n))
+        unsigned long n;
+        if (v.strtoul(n))
         {
             if (n == 0)
                 return false;
@@ -912,6 +915,86 @@ TEST_CASE("ByteMathOption::eval valid", "[ips_byte_math]")
         GetVarValueByIndex(&res, 1);
         CHECK(res == 222);
     }
+
+    SECTION("bytes_to_extract bigger than amount of bytes left in the buffer")
+    {
+        SetVarValueByIndex(1, 0);
+        c.set_pos(10);
+        ByteMathData data;
+        INITIALIZE(data, 2, 2, 0, 0, name, BM_MULTIPLY,
+            1, 0, 0, ENDIAN_BIG, 0, IPS_OPTIONS_NO_VAR, -1);
+        ByteMathOption opt(data);
+        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
+    }
+
+    SECTION("String truncation")
+    {
+        SetVarValueByIndex(1, 0);
+        c.set_pos(10);
+        ByteMathData data;
+        INITIALIZE(data, 2, 2, 0, 0, name, BM_MULTIPLY,
+            1, 1, 0, ENDIAN_BIG, 0, IPS_OPTIONS_NO_VAR, -1);
+        ByteMathOption opt(data);
+        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
+        uint32_t res = 0;
+        GetVarValueByIndex(&res, 0);
+        CHECK(res == 10);
+    }
+
+    SECTION("Negative offset")
+    {
+        SECTION("Cursor on the last byte of buffer")
+        {
+            SetVarValueByIndex(1, 0);
+            c.set_pos(11);
+            ByteMathData data;
+            INITIALIZE(data, 1, 2, -6, 0, name, BM_MULTIPLY,
+                1, 0, 0, ENDIAN_BIG, 0, IPS_OPTIONS_NO_VAR, -1);
+            ByteMathOption opt(data);
+            CHECK(opt.eval(c, &p) == IpsOption::MATCH);
+            uint32_t res = 0;
+            GetVarValueByIndex(&res, 0);
+            CHECK(res == 64);
+        }
+        SECTION("Cursor on the last byte of buffer, bytes_to_extract is bigger than offset")
+        {
+            SetVarValueByIndex(1, 0);
+            c.set_pos(11);
+            ByteMathData data;
+            INITIALIZE(data, 3, 2, -2, 0, name, BM_MULTIPLY,
+                1, 0, 0, ENDIAN_BIG, 0, IPS_OPTIONS_NO_VAR, -1);
+            ByteMathOption opt(data);
+            CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
+        }
+
+        SECTION("Cursor on the last byte of buffer with string flag")
+        {
+            SetVarValueByIndex(1, 0);
+            c.set_pos(11);
+            ByteMathData data;
+            INITIALIZE(data, 2, 2, -2, 0, name, BM_MULTIPLY,
+                1, 1, 0, ENDIAN_BIG, 0, IPS_OPTIONS_NO_VAR, -1);
+            ByteMathOption opt(data);
+            CHECK(opt.eval(c, &p) == IpsOption::MATCH);
+            uint32_t res = 0;
+            GetVarValueByIndex(&res, 0);
+            CHECK(res == 90);
+        }
+
+        SECTION("String truncation")
+        {
+            SetVarValueByIndex(1, 0);
+            c.set_pos(11);
+            ByteMathData data;
+            INITIALIZE(data, 2, 2, -1, 0, name, BM_MULTIPLY,
+                1, 1, 0, ENDIAN_BIG, 0, IPS_OPTIONS_NO_VAR, -1);
+            ByteMathOption opt(data);
+            CHECK(opt.eval(c, &p) == IpsOption::MATCH);
+            uint32_t res = 0;
+            GetVarValueByIndex(&res, 0);
+            CHECK(res == 10);
+        }
+    }
 }
 
 TEST_CASE("ByteMathOption::eval invalid", "[ips_byte_math]")
@@ -1018,7 +1101,7 @@ TEST_CASE("ByteMathModule::begin", "[ips_byte_math]")
     ByteMathModule obj;
     SECTION("test of \"begin\" method")
     {
-        CHECK(obj.begin(nullptr, 0, nullptr));
+        CHECK(true == obj.begin(nullptr, 0, nullptr));
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_PLUS, 0, 0, 0, 0, 0, 0, 0);
 
@@ -1044,10 +1127,11 @@ TEST_CASE("ByteMathModule::end", "[ips_byte_math]")
     v_bytes.set(&p_bytes);
     obj.set(nullptr, v_bytes, nullptr);
 
-    Value v_operation(0.0);
+    Value v_operation("+");
     Parameter p_operation{"oper", Parameter::PT_ENUM, "+|-|*|/|<<|>>",
         nullptr, "mathematical operation to perform"};
     v_operation.set(&p_operation);
+    CHECK(true == p_operation.validate(v_operation));
     obj.set(nullptr, v_operation, nullptr);
 
     char* name = new char[5];
@@ -1061,7 +1145,7 @@ TEST_CASE("ByteMathModule::end", "[ips_byte_math]")
         v_rvalue.set(&p_rvalue);
         obj.set(nullptr, v_rvalue, nullptr);
 
-        CHECK(obj.end(nullptr, 0, nullptr));
+        CHECK(true == obj.end(nullptr, 0, nullptr));
 
         ByteMathData expected;
         INITIALIZE(expected, 4, 7, 0, 0, name, BM_PLUS, 0, 0, 0, ENDIAN_BIG,
@@ -1081,7 +1165,7 @@ TEST_CASE("ByteMathModule::end", "[ips_byte_math]")
         v_rvalue.set(&p_rvalue);
         obj.set(nullptr, v_rvalue, nullptr);
 
-        CHECK(obj.end(nullptr, 0, nullptr));
+        CHECK(true == obj.end(nullptr, 0, nullptr));
 
         ByteMathData expected;
         INITIALIZE(expected, 4, 0, 0, 0, name, BM_PLUS, 0, 0, 0,
@@ -1100,7 +1184,7 @@ TEST_CASE("ByteMathModule::end", "[ips_byte_math]")
         v_offvalue.set(&p_offvalue);
         obj.set(nullptr, v_offvalue, nullptr);
 
-        CHECK(obj.end(nullptr, 0, nullptr));
+        CHECK(true == obj.end(nullptr, 0, nullptr));
 
         ByteMathData expected;
         INITIALIZE(expected, 4, 0, 0, 0, name, BM_PLUS, 0, 0,
@@ -1116,7 +1200,7 @@ TEST_CASE("ByteMathModule::end", "[ips_byte_math]")
         v_rvalue.set(&p_rvalue);
         obj.set(nullptr, v_rvalue, nullptr);
 
-        CHECK(!(obj.end(nullptr, 0, nullptr)));
+        CHECK(false == obj.end(nullptr, 0, nullptr));
     }
     SECTION("offset var doesn't exist")
     {
@@ -1127,7 +1211,7 @@ TEST_CASE("ByteMathModule::end", "[ips_byte_math]")
         v_offvalue.set(&p_offvalue);
         obj.set(nullptr, v_offvalue, nullptr);
 
-        CHECK(!(obj.end(nullptr, 0, nullptr)));
+        CHECK(false == obj.end(nullptr, 0, nullptr));
     }
 
     delete[] obj.data.result_name;
@@ -1156,7 +1240,7 @@ TEST_CASE("Test of byte_math_ctor", "[ips_byte_math]")
         else
         {
             IpsOption* res_null = byte_math_ctor(&obj, nullptr);
-            CHECK(res_null == nullptr);
+            CHECK(nullptr == res_null);
             delete[] obj.data.result_name;
         }
     }
@@ -1176,7 +1260,7 @@ TEST_CASE("ByteMathModule::set valid", "[ips_byte_math]")
         ByteMathData expected;
         INITIALIZE(expected, 4, 0, 0, 0, 0, BM_PLUS, 0, 0, 0, 0, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set offset")
@@ -1188,79 +1272,85 @@ TEST_CASE("ByteMathModule::set valid", "[ips_byte_math]")
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 3, 0, 0, BM_PLUS, 0, 0, 0, 0, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set option \"+\"")
     {
-        Value v(0.0);
+        Value v("+");
         Parameter p{"oper", Parameter::PT_ENUM, "+|-|*|/|<<|>>", nullptr,
             "mathematical operation to perform"};
         v.set(&p);
+        CHECK(true == p.validate(v));
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_PLUS, 0, 0, 0, 0, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set option \"-\"")
     {
-        Value v(1.0);
+        Value v("-");
         Parameter p{"oper", Parameter::PT_ENUM, "+|-|*|/|<<|>>", nullptr,
             "mathematical operation to perform"};
         v.set(&p);
+        CHECK(true == p.validate(v));
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_MINUS, 0, 0, 0, 0, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set option \"*\"")
     {
-        Value v(2.0);
+        Value v("*");
         Parameter p{"oper", Parameter::PT_ENUM, "+|-|*|/|<<|>>", nullptr,
             "mathematical operation to perform"};
         v.set(&p);
+        CHECK(true == p.validate(v));
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_MULTIPLY, 0, 0, 0, 0, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set option \"/\"")
     {
-        Value v(3.0);
+        Value v("/");
         Parameter p{"oper", Parameter::PT_ENUM, "+|-|*|/|<<|>>", nullptr,
             "mathematical operation to perform"};
         v.set(&p);
+        CHECK(true == p.validate(v));
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_DIVIDE, 0, 0, 0, 0, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set option \"<<\"")
     {
-        Value v(4.0);
+        Value v("<<");
         Parameter p{"oper", Parameter::PT_ENUM, "+|-|*|/|<<|>>", nullptr,
             "mathematical operation to perform"};
         v.set(&p);
+        CHECK(true == p.validate(v));
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_LEFT_SHIFT, 0, 0, 0, 0, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set option \">>\"")
     {
-        Value v(5.0);
+        Value v(">>");
         Parameter p{"oper", Parameter::PT_ENUM, "+|-|*|/|<<|>>", nullptr,
             "mathematical operation to perform"};
         v.set(&p);
+        CHECK(true == p.validate(v));
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_RIGHT_SHIFT, 0, 0, 0, 0, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set rvalue num")
@@ -1272,7 +1362,7 @@ TEST_CASE("ByteMathModule::set valid", "[ips_byte_math]")
         ByteMathData expected;
         INITIALIZE(expected, 0, 21, 0, 0, 0, BM_PLUS, 0, 0, 0, 0, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set result")
@@ -1282,7 +1372,7 @@ TEST_CASE("ByteMathModule::set valid", "[ips_byte_math]")
             "name of the variable to store the result"};
         v.set(&p);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data.result_name, Catch::Matchers::Equals("res_name"));
     }
     SECTION("set relative")
@@ -1295,32 +1385,34 @@ TEST_CASE("ByteMathModule::set valid", "[ips_byte_math]")
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_PLUS, 1, 0, 0, 0, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set endianness \"big\"")
     {
-        Value v(0.0);
+        Value v("big");
         Parameter p{"endian", Parameter::PT_ENUM, "big|little", nullptr,
             "specify big/little endian"};
         v.set(&p);
+        CHECK(true == p.validate(v));
         obj.set(nullptr, v, nullptr);
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_PLUS, 0, 0, 0, ENDIAN_BIG, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set endianness \"little\"")
     {
-        Value v(1.0);
+        Value v("little");
         Parameter p{"endian", Parameter::PT_ENUM, "big|little", nullptr,
             "specify big/little endian"};
         v.set(&p);
+        CHECK(true == p.validate(v));
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_PLUS, 0, 0, 0, ENDIAN_LITTLE, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set dce")
@@ -1332,43 +1424,46 @@ TEST_CASE("ByteMathModule::set valid", "[ips_byte_math]")
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_PLUS, 0, 0, 0, ENDIAN_FUNC, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set string, hex base")
     {
-        Value v(0.0);
+        Value v("hex");
         Parameter p{"string", Parameter::PT_ENUM, "hex|dec|oct", nullptr,
             "convert extracted string to dec/hex/oct"};
         v.set(&p);
+        CHECK(true == p.validate(v));
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_PLUS, 0, 1, 16, 0, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set string, dec base")
     {
-        Value v(1.0);
+        Value v("dec");
         Parameter p{"string", Parameter::PT_ENUM, "hex|dec|oct", nullptr,
             "convert extracted string to dec/hex/oct"};
         v.set(&p);
+        CHECK(true == p.validate(v));
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_PLUS, 0, 1, 10, 0, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set string, oct base")
     {
-        Value v(2.0);
+        Value v("oct");
         Parameter p{"string", Parameter::PT_ENUM, "hex|dec|oct", nullptr,
             "convert extracted string to dec/hex/oct"};
         v.set(&p);
+        CHECK(true == p.validate(v));
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_PLUS, 0, 1, 8, 0, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("set bitmask")
@@ -1380,7 +1475,7 @@ TEST_CASE("ByteMathModule::set valid", "[ips_byte_math]")
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 1023, 0, BM_PLUS, 0, 0, 0, 0, 0, 0, 0);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
     SECTION("rvalue as variable")
@@ -1390,8 +1485,8 @@ TEST_CASE("ByteMathModule::set valid", "[ips_byte_math]")
             "value to use mathematical operation against"};
         v.set(&p);
 
-        CHECK(obj.set(nullptr, v, nullptr));
-        CHECK(strcmp(obj.rvalue_var.c_str(), "r_test_var") == 0);
+        CHECK(true == obj.set(nullptr, v, nullptr));
+        CHECK(0 == strcmp(obj.rvalue_var.c_str(), "r_test_var"));
     }
     SECTION("offset as variable")
     {
@@ -1400,8 +1495,18 @@ TEST_CASE("ByteMathModule::set valid", "[ips_byte_math]")
             "number of bytes into the buffer to start processing"};
         v.set(&p);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK(strcmp(obj.off_var.c_str(), "off_test_var") == 0);
+    }
+    SECTION("rvalue isn't truncated")
+    {
+        Value v("4294967295");
+        Parameter p{"rvalue", Parameter::PT_STRING, nullptr, nullptr,
+            "value to use mathematical operation against"};
+        v.set(&p);
+
+        CHECK(true == obj.set(nullptr, v, nullptr));
+        CHECK(4294967295UL == obj.data.rvalue);
     }
 
     delete[] obj.data.result_name;
@@ -1421,7 +1526,7 @@ TEST_CASE("ByteMathModule::set invalid", "[ips_byte_math]")
         ByteMathData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, BM_PLUS, 0, 0, 0, 0, 0, 0, 0);
 
-        CHECK(!obj.set(nullptr, v, nullptr));
+        CHECK(false == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteMathDataEquals(expected));
     }
 }
@@ -1437,24 +1542,24 @@ TEST_CASE("ByteMathVerify valid", "[ips_byte_math]")
     SECTION("Minimum values, no string conversion")
     {
         INITIALIZE(obj, 1, 0, -65535, 0, name, BM_PLUS, 1, 0, 0, 0, 0, 0, 0);
-        CHECK(ByteMathVerify(&obj));
+        CHECK(true == ByteMathVerify(&obj));
     }
     SECTION("Maximum values, no string conversion")
     {
         INITIALIZE(obj, MAX_BYTES_TO_GRAB, 2147483647, 65535, 0xFFFFFFFF, name, BM_PLUS, 1, 0,
             0, ENDIAN_FUNC, NUM_IPS_OPTIONS_VARS, NUM_IPS_OPTIONS_VARS, NUM_IPS_OPTIONS_VARS);
-        CHECK(ByteMathVerify(&obj));
+        CHECK(true == ByteMathVerify(&obj));
     }
     SECTION("Minimum values, with string conversion")
     {
         INITIALIZE(obj, 1, 0, -65535, 0, name, BM_PLUS, 1, 1, 8, 0, 0, 0, 0);
-        CHECK(ByteMathVerify(&obj));
+        CHECK(true == ByteMathVerify(&obj));
     }
     SECTION("Maximum values, with string conversion")
     {
         INITIALIZE(obj, PARSELEN, 2147483647, 65535, 0xFFFFFFFF, name, BM_PLUS, 1, 1, 16,
             ENDIAN_FUNC, NUM_IPS_OPTIONS_VARS, NUM_IPS_OPTIONS_VARS, NUM_IPS_OPTIONS_VARS);
-        CHECK(ByteMathVerify(&obj));
+        CHECK(true == ByteMathVerify(&obj));
     }
 }
 
@@ -1469,7 +1574,7 @@ TEST_CASE("ByteMathVerify invalid", "[ips_byte_math]")
     {
         obj.result_name = nullptr;
 
-        CHECK((!ByteMathVerify(&obj)));
+        CHECK(false == ByteMathVerify(&obj));
     }
     SECTION("name not numeric check")
     {
@@ -1477,38 +1582,38 @@ TEST_CASE("ByteMathVerify invalid", "[ips_byte_math]")
         name = new char[5];
         strcpy(name, "6in4");
         obj.result_name = name;
-        CHECK((!ByteMathVerify(&obj)));
+        CHECK(false == ByteMathVerify(&obj));
     }
     SECTION("shift > 32 checks")
     {
         obj.rvalue = 33;
 
         obj.oper = BM_LEFT_SHIFT;
-        CHECK((!ByteMathVerify(&obj)));
+        CHECK(false == ByteMathVerify(&obj));
 
         obj.oper = BM_RIGHT_SHIFT;
-        CHECK((!ByteMathVerify(&obj)));
+        CHECK(false == ByteMathVerify(&obj));
     }
     SECTION("shift and bytes_to_extract > 4  checks")
     {
         obj.bytes_to_extract = MAX_BYTES_TO_GRAB + 1;
 
         obj.oper = BM_LEFT_SHIFT;
-        CHECK((!ByteMathVerify(&obj)));
+        CHECK(false == ByteMathVerify(&obj));
 
         obj.oper = BM_RIGHT_SHIFT;
-        CHECK((!ByteMathVerify(&obj)));
+        CHECK(false == ByteMathVerify(&obj));
     }
     SECTION("no string conversion and bytes_to_extract > 4  checks")
     {
         obj.bytes_to_extract = MAX_BYTES_TO_GRAB + 1;
-        CHECK((!ByteMathVerify(&obj)));
+        CHECK(false == ByteMathVerify(&obj));
     }
     SECTION("bitmask checks")
     {
         obj.bytes_to_extract = 2;
         obj.bitmask_val = 1048575;
-        CHECK((!ByteMathVerify(&obj)));
+        CHECK(false == ByteMathVerify(&obj));
     }
     delete[] name;
 }

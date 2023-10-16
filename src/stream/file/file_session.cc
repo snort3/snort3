@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -25,7 +25,6 @@
 
 #include "detection/detection_engine.h"
 #include "file_api/file_flows.h"
-#include "memory/memory_cap.h"
 #include "packet_io/sfdaq.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
@@ -86,7 +85,7 @@ int FileSession::process(Packet* p)
         if (file_name)
             file_flows->set_file_name((const uint8_t*)file_name, strlen(file_name));
     }
-    set_file_data(p->data, p->dsize);
+    set_file_data(p->data, p->dsize, c->upload);
 
     return 0;
 }

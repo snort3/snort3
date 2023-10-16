@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -18,6 +18,7 @@
 // stubs.h author Ron Dempster <rdempste@cisco.com>
 
 #include "detection/detection_engine.h"
+#include "flow/expect_cache.h"
 #include "main/policy.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -32,7 +33,6 @@
 THREAD_LOCAL const snort::Trace* snort_trace = nullptr;
 
 std::shared_ptr<PolicyTuple> PolicyMap::get_policies(Shell*) { return nullptr; }
-NetworkPolicy* PolicyMap::get_user_network(unsigned) { return nullptr; }
 void InspectionPolicy::configure() { }
 void BinderModule::add(const char*, const char*) { }
 void BinderModule::add(unsigned, const char*) { }
@@ -48,7 +48,10 @@ void LogMessage(const char*, ...) { }
 void LogLabel(const char*, FILE*) { }
 void ParseError(const char*, ...) { }
 void WarningMessage(const char*, ...) { }
-void DataBus::publish(const char*, Packet*, Flow*) { }
+DataBus::DataBus() { }
+DataBus::~DataBus() { }
+void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
+unsigned DataBus::get_id(const PubKey&) { return 0; }
 void DetectionEngine::disable_content(Packet*) { }
 unsigned SnortConfig::get_thread_reload_id() { return 1; }
 void SnortConfig::update_thread_reload_id() { }
@@ -74,9 +77,8 @@ void Module::sum_stats(bool) { }
 void Module::show_interval_stats(IndexVec&, FILE*) { }
 void Module::show_stats() { }
 void Module::reset_stats() { }
-DataBus::DataBus() { }
-DataBus::~DataBus() { }
 Module* ModuleManager::get_module(const char*) { return nullptr; }
+void ExpectFlow::handle_expected_flows(const Packet*) { }
 
 NetworkPolicy* get_default_network_policy(const SnortConfig*) { return nullptr; }
 void set_network_policy(NetworkPolicy*) { }

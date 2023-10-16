@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.43.0 2022-10-05 15:21:24 EDT TST
+Revision 3.1.71.0 2023-09-25 07:40:35 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -67,15 +67,16 @@ Table of Contents
     5.10. HTTP Inspector
     5.11. HTTP/2 Inspector
     5.12. IEC104 Inspector
-    5.13. MMS Inspector
-    5.14. Performance Monitor
-    5.15. POP and IMAP
-    5.16. Port Scan
-    5.17. Sensitive Data Filtering
-    5.18. SMTP
-    5.19. Telnet
-    5.20. Trace
-    5.21. Wizard
+    5.13. JavaScript Normalization
+    5.14. MMS Inspector
+    5.15. Performance Monitor
+    5.16. POP and IMAP
+    5.17. Port Scan
+    5.18. Sensitive Data Filtering
+    5.19. SMTP
+    5.20. Telnet
+    5.21. Trace
+    5.22. Wizard
 
 6. DAQ Configuration and Modules
 
@@ -369,6 +370,18 @@ with a lua config using -c option.
   * SNORT_PATCH_VERSION: Snort version’s patch number.
 
     SNORT_PATCH_VERSION = 2
+
+  * SNORT_DEP_VERSIONS: Snort dependencies version numbers table. If
+    snort wasn’t built with some dependency, its value will be nil.
+
+    SNORT_DEP_VERSIONS.DAQ = 3.0.7
+    SNORT_DEP_VERSIONS.LUAJIT = 2.1.0
+    SNORT_DEP_VERSIONS.OPENSSL = 3.0.5
+    SNORT_DEP_VERSIONS.LIBPCAP = 1.9.1
+    SNORT_DEP_VERSIONS.PCRE = 8.45
+    SNORT_DEP_VERSIONS.ZLIB = 1.2.11
+    SNORT_DEP_VERSIONS.HYPERSCAN = 5.4.8
+    SNORT_DEP_VERSIONS.LZMA = 5.0.5
 
 1.2.4. Whitelist
 
@@ -721,6 +734,8 @@ Parameter limits:
   * max32 = 4294967295
   * max53 = 9007199254740992
   * maxSZ = 9007199254740992
+  * max63 = 9223372036854775807
+  * max64 = 18446744073709551615
 
 
 2.4. Plugins
@@ -948,11 +963,11 @@ Fast patterns are content strings that have the fast_pattern option
 or which have been selected by Snort automatically to be used as a
 fast pattern. Snort will by default choose the longest pattern in the
 rule since that is likely to be most unique. That is not always the
-case so add fast_pattern to the appropriate content option for best
-performance. The ideal fast pattern is one which, if found, is very
-likely to result in a rule match. Fast patterns that match frequently
-for unrelated traffic will cause Snort to work hard with little to
-show for it.
+case so add fast_pattern to the appropriate content or regex option
+for best performance. The ideal fast pattern is one which, if found,
+is very likely to result in a rule match. Fast patterns that match
+frequently for unrelated traffic will cause Snort to work hard with
+little to show for it.
 
 Certain contents are not eligible to be used as fast patterns.
 Specifically, if a content is negated, then if it is also relative to
@@ -971,6 +986,28 @@ When rule evaluation takes place, the fast pattern match will
 automatically be skipped if possible. Note that this differs from
 Snort 2 which provided the fast_pattern:only option to designate such
 cases. This is one less thing for the rule writer to worry about.
+
+2.7.3.1. Stateful Evaluation
+
+When data forms a kind of stream, e.g. contiguous byte flow (like a
+file transferred over the network or byte sequence from TCP session
+packets), the point of interest may be in a signature which spans
+across packets (its parts lies in different data blocks). In this
+case, the stateful evaluation becomes handy.
+
+If rule evaluation starts in a packet and the cursor position is
+moved beyond the current packet boundary, then the evaluation gets
+paused and will resume later when more data become available to
+finish the process.
+
+Stateful evaluation is supported for the following buffers:
+
+ 1. pkt_data — as a sequence of TCP session bytes with respect to
+    their direction (client-to-server, server-to-client)
+ 2. js_data — normalized JavaScript text from the same data transfer
+    session
+ 3. file_data — the same file bytes, e.g. flows from different files
+    do not overlap
 
 
 ---------------------------------------------------------------------
@@ -1336,7 +1373,6 @@ a restart:
   * attribute_table.max_hosts
   * attribute_table.max_services_per_host
   * daq.snaplen
-  * detection.asn1
   * file_id.max_files_cached
   * process.chroot
   * process.daemon
@@ -1701,8 +1737,8 @@ This section explains how to use key features of Snort.
 
 Snort can take more active role in securing network by sending active
 responses to shutdown offending sessions. When active responses is
-enabled, snort will send TCP RST or ICMP unreachable when dropping a
-session.
+enabled, snort will send TCP RST and ICMP unreachable when dropping a
+TCP session and ICMP unreachable packets for UDP.
 
 5.1.1. Changes from Snort 2.9
 
@@ -1763,8 +1799,8 @@ active =
 5.1.3. Reject
 
 IPS action reject perform active response to shutdown hostile network
-session by injecting TCP resets (TCP connections) or ICMP unreachable
-packets.
+session by injecting TCP resets and ICMP unreachable for TCP
+connections, and ICMP unreachable packets for UDP.
 
 Example:
 
@@ -2532,6 +2568,11 @@ content:"|00 01 87 88|", offset 12, depth 4;
 content:"|00 00 00 01 00 00 00 01|", offset 20, depth 8;
 byte_test:4,>,200,36;
 
+In case of using any byte_* option with "string" parameter, the
+amount of bytes to be extracted from payload can be less than
+specified by user. This might happen when the buffer has fewer bytes
+(from the cursor position) than specified in the option.
+
 
 5.5. Consolidated Config
 
@@ -2577,7 +2618,7 @@ wizard =
 {
     spells =
     {
-        { service = 'http', proto = 'tcp', client_first = true, to_server = { 'GET' }, to_client = { 'HTTP/' } },
+        { service = 'http', proto = 'tcp', to_server = { 'GET' }, to_client = { 'HTTP/' } },
     }
 }
 
@@ -2627,13 +2668,11 @@ stream_tcp.track_only=false
 stream_tcp.show_rebuilt_packets=true
 consolidated config for http.lua
 wizard.spells[0].proto="tcp"
-wizard.spells[0].client_first=true
 wizard.spells[0].service="http"
 wizard.spells[0].to_client[0].spell="HTTP/"
 wizard.spells[0].to_server[0].spell="GET"
 consolidated config for sip.lua
 wizard.spells[0].proto="tcp"
-wizard.spells[0].client_first=true
 wizard.spells[0].service="sip"
 wizard.spells[0].to_server[0].spell="INVITE"
 
@@ -2724,7 +2763,6 @@ Example: snort -c snort.lua --dump-config=all | jq .
             "spells": [
             {
                 "proto": "tcp",
-                "client_first": true,
                 "service": "http",
                 "to_client": [
                 {
@@ -2748,7 +2786,6 @@ Example: snort -c snort.lua --dump-config=all | jq .
             "spells": [
             {
                 "proto": "tcp",
-                "client_first": true,
                 "service": "sip",
                 "to_server": [
                 {
@@ -3293,25 +3330,29 @@ There are 3 steps to enable file processing:
 5.7.3. Pre-packaged File Magic Rules
 
 A set of file magic rules is packaged with Snort. They can be located
-at "lua/file_magic.lua". To use this feature, it is recommended that
-these pre-packaged rules are used; doing so requires that you include
-the file in your Snort configuration as such (already in snort.lua):
+at "lua/file_magic.rules". To use this feature, it is recommended
+that these pre-packaged rules are used; doing so requires that you
+include the file in your Snort configuration as such (already in
+snort.lua):
 
-dofile('magic.lua')
+file_id = { rules_file = 'file_magic.rules' }
 
 Example:
 
-{ type = "GIF", id = 62, category = "Graphics", rev = 1,
-  magic = { { content = "| 47 49 46 38 37 61 |",offset = 0 } } },
+file_id (msg:"GIF"; file_meta:type GIF, id 62, category "Graphics";
+  file_data; content:"| 47 49 46 38 37 61 |", depth 6, offset 0; gid:4; sid:56; rev:1;)
 
-{ type = "GIF", id = 63, category = "Graphics", rev = 1,
-  magic = { { content = "| 47 49 46 38 39 61 |",offset = 0 } } },
+file_id (msg:"GIF"; file_meta:type GIF, id 63, category 'Graphics";
+  file_data; content:"| 47 49 46 38 39 61 |", depth 6, offset 0; gid:4; sid:57; rev:1;)
 
 The previous two rules define GIF format, because two file magics are
 different. File magics are specified by content and offset, which
 look at content at particular file offset to identify the file type.
 In this case, two magics look at the beginning of the file. You can
 use character if it is printable or hex value in between "|".
+
+Note that file_meta and a fast-pattern option (content, regex) are
+required for each file_id rule.
 
 5.7.4. File Policy
 
@@ -3869,7 +3910,13 @@ normalization. Both normalizers are independent and can be configured
 separately. The Legacy normalizer should be considered deprecated.
 The Enhanced Normalizer is encouraged to use for JavaScript
 normalization in the first place as we continue improving
-functionality and quality.
+functionality and quality. The Enhanced JavaScript Normalizer has to
+be configured as a separate module:
+
+js_norm = {}
+
+Refer to JavaScript Normalization section for Enhanced Normalizer
+specifics.
 
 5.10.2.1. Legacy Normalizer
 
@@ -3882,28 +3929,6 @@ Legacy Normalizer, check the http_inspect.normalize_javascript
 option. Legacy Normalizer is deprecated preferably to use Enhanced
 Normalizer. After supporting backward compatibility in the Enhanced
 Normalizer, Legacy Normalizer will be removed.
-
-5.10.2.2. Enhanced Normalizer
-
-Having ips option js_data in the rules automatically enables Enhanced
-Normalizer. The Enhanced Normalizer can normalize inline/external
-scripts. It supports scripts over multiple PDUs. It is a stateful
-JavaScript whitespace and identifiers normalizer. Normalizer
-concatenates string literals whenever it’s possible to do. This also
-works with any other normalizations that result in string literals.
-All JavaScript identifier names, except those from the ignore lists,
-will be substituted with unified names in the following format:
-var_0000 → var_ffff. But the unescape-like function names will be
-removed from the normalized data. The Normalizer tries to expand an
-escaped text, so it will appear in a usual form in the output.
-Moreover, Normalizer validates the syntax concerning ECMA-262
-Standard, including scope tracking and restrictions for script
-elements. For more information on how additionally configure Enhanced
-Normalizer check with the following configuration options:
-js_norm_bytes_depth, js_norm_identifier_depth, js_norm_max_tmpl_nest,
-js_norm_max_bracket_depth, js_norm_max_scope_depth,
-js_norm_ident_ignore, js_norm_prop_ignore. Eventually Enhanced
-Normalizer will completely replace Legacy Normalizer.
 
 5.10.3. Configuration
 
@@ -4029,7 +4054,16 @@ Linking and Embedding) file embedded with the files containing RLE
 compressed vba macro data. The decompressed vba macro data is then
 made available through the vba_data ips rule option.
 
-5.10.3.10. normalize_javascript
+5.10.3.10. max_mime_attach
+
+HTTP request message bodies may be in MIME format. Each file
+attachment is separately incorporated in the file_data rule option.
+When a request contains many small file attachments these inspections
+may consume a lot of processing power. This parameter limits the
+number of files from one message that are inspected. The default
+value is 5.
+
+5.10.3.11. normalize_javascript
 
 normalize_javascript = true will enable legacy normalizer of
 JavaScript within the HTTP response body. http_inspect looks for
@@ -4042,137 +4076,7 @@ http_inspect also replaces consecutive whitespaces with a single
 space and normalizes the plus by concatenating the strings. Such
 normalizations refer to basic JavaScript normalization.
 
-5.10.3.11. js_norm_bytes_depth
-
-js_norm_bytes_depth = N {-1 : max53} will set a number of input
-JavaScript bytes to normalize. When the depth is reached,
-normalization will be stopped. It’s implemented per-script. By
-default js_norm_bytes_depth = -1, will set unlimited depth. The
-enhanced normalizer provides more precise whitespace normalization of
-JavaScript, that removes all redundant whitespaces and line
-terminators from the JavaScript syntax point of view (between
-identifier and punctuator, between identifier and operator, etc.)
-according to ECMAScript 5.1 standard. Additionally, it performs
-normalization of JavaScript identifiers making a substitution of
-unique names with unified names representation: var_0000:var_ffff.
-The identifiers are variables and function names. The normalized data
-is available through the js_data rule option.
-
-5.10.3.12. js_norm_identifier_depth
-
-js_norm_identifier_depth = N {0 : 65536} will set a number of unique
-JavaScript identifiers to normalize. When the depth is reached, a
-built-in alert is generated. Every HTTP response has its own
-identifier substitution context, which means that identifier will
-retain same normal form in multiple scripts, if they are a part of
-the same HTTP response, and that this limit is set for a single HTTP
-response and not a single script. By default, the value is set to
-65536, which is the max allowed number of unique identifiers. The
-generated names are in the range from var_0000 to var_ffff.
-
-5.10.3.13. js_norm_max_tmpl_nest
-
-js_norm_max_tmpl_nest = N {0 : 255} (default 32) is an option of the
-enhanced JavaScript normalizer that determines the deepest level of
-nested template literals to be processed. Introduced in ES6, template
-literals provide syntax to define a literal multiline string, which
-can have arbitrary JavaScript substitutions, that will be evaluated
-and inserted into the string. Such substitutions can be nested, and
-require keeping track of every layer for proper normalization. This
-option is present to limit the amount of memory dedicated to template
-nesting tracking.
-
-5.10.3.14. js_norm_max_bracket_depth
-
-js_norm_max_bracket_depth = N {1 : 65535} (default 256) is an option
-of the enhanced JavaScript normalizer that determines the maximum
-depth of nesting brackets, i.e. parentheses, braces and square
-brackets, nested within a matching pair, in any combination. This
-option is present to limit the amount of memory dedicated to bracket
-tracking.
-
-5.10.3.15. js_norm_max_scope_depth
-
-js_norm_max_scope_depth = N {1 : 65535} (default 256) is an option of
-the enhanced JavaScript normalizer that determines the deepest level
-of nested variable scope, i.e. functions, code blocks, etc. including
-the global scope. This option is present to limit the amount of
-memory dedicated to scope tracking.
-
-5.10.3.16. js_norm_ident_ignore
-
-js_norm_ident_ignore = {<list of ignored identifiers>} is an option
-of the enhanced JavaScript normalizer that defines a list of
-identifiers to keep intact.
-
-Identifiers in this list will not be put into normal form (var_0000).
-Subsequent accessors, after dot, in square brackets or after function
-call, will not be normalized as well.
-
-For example:
-
-console.log("bar")
-document.getElementById("id").text
-eval("script")
-console["log"]
-
-Every entry has to be a simple identifier, i.e. not include dots,
-brackets, etc. For example:
-
-http_inspect.js_norm_ident_ignore = { 'console', 'document', 'eval', 'foo' }
-
-When a variable assignment that aliases an identifier from the list
-is found, the assignment will be tracked, and subsequent occurrences
-of the variable will be replaced with the stored value. This
-substitution will follow JavaScript variable scope limits.
-
-For example:
-
-var a = console.log
-a("hello") // will be substituted to 'console.log("hello")'
-
-For class names and constructors in the list, when the class is used
-with the keyword new, created object will be tracked, and its
-properties will be kept intact. Identifier of the object itself,
-however, will be brought to unified form.
-
-For example:
-
-var o = new Array() // normalized to 'var var_0000=new Array()'
-o.push(10) // normalized to 'var_0000.push(10)'
-
-The default list of ignore-identifiers is present in
-"snort_defaults.lua".
-
-Unescape function names should remain intact in the output. They
-ought to be included in the ignore list. If for some reason the user
-wants to disable unescape related features, then removing function’s
-name from the ignore list does the trick.
-
-5.10.3.17. js_norm_prop_ignore
-
-js_norm_prop_ignore = {<list of ignored properties>} is an option of
-the enhanced JavaScript normalizer that defines a list of object
-properties and methods that will be kept intact during the
-identifiers normalization. This list should include methods and
-properties of objects that will not be tracked by assignment
-substitution functionality, for example, those that can be created
-implicitly.
-
-Subsequent accessors, after dot, in square brackets or after function
-call, will not be normalized as well.
-
-For example:
-
-http_inspect.js_norm_prop_ignore = { 'split' }
-
-in: "string".toUpperCase().split("").reverse().join("");
-out: "string".var_0000().split("").reverse().join("");
-
-The default list of ignored properties is present in
-"snort_defaults.lua".
-
-5.10.3.18. xff_headers
+5.10.3.12. xff_headers
 
 This configuration supports defining custom x-forwarded-for type
 headers. In a multi-vendor world, it is quite possible that the
@@ -4187,7 +4091,7 @@ they are defined, e.g "x-forwarded-for" will be preferred than
 "true-client-ip" if both headers are present in the stream. The
 header names should be delimited by a space.
 
-5.10.3.19. maximum_host_length
+5.10.3.13. maximum_host_length
 
 Setting maximum_host_length causes http_inspect to generate 119:25 if
 the Host header value including optional white space exceeds the
@@ -4195,7 +4099,7 @@ specified length. In the abnormal case of multiple Host headers, the
 total length of the combined values is used. The default value is -1,
 meaning do not perform this check.
 
-5.10.3.20. maximum_chunk_length
+5.10.3.14. maximum_chunk_length
 
 http_inspect strictly limits individual chunks within a chunked
 message body to be less than four gigabytes.
@@ -4203,17 +4107,27 @@ message body to be less than four gigabytes.
 A lower limit may be configured by setting maximum_chunk_length. Any
 chunk longer than maximum chunk length will generate a 119:16 alert.
 
-5.10.3.21. maximum_header_length
+5.10.3.15. maximum_header_length
 
 http_inspect generates 119:19 when the length of a header exceeds
 maximum_header_length = N {0 : 65535} (default 4096).
 
-5.10.3.22. maximum_headers
+5.10.3.16. maximum_headers
 
 http_inspect generates 119:20 when the number of headers exceeds
 maximum_headers = N {0 : 65535} (default 200).
 
-5.10.3.23. URI processing
+5.10.3.17. maximum_pipelined_requests
+
+http_inspect generates 119:34 when the number of pipelined requests
+exceeds maximum_pipelined_requests = N {0 : 99} (default 99). This
+number does not include the first request in a sequence of requests.
+Setting maximum_pipelined_requests = 0, will not trigger an alert in
+the case of an alternating sequence of requests and responses. It
+will trigger the alert once the client issue a request before getting
+the response to a previous request.
+
+5.10.3.18. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -4340,40 +4254,17 @@ tactic, the HTTP inspector will not cut over to the wizard if it sees
 any early client-to-server traffic, but will continue normal HTTP
 processing of the flow regardless of the eventual server response.
 
-5.10.5. Trace messages
-
-When a user needs help to sort out things going on inside HTTP
-inspector, Trace module becomes handy.
-
-$ snort --help-module trace | grep http_inspect
-
-Messages for the enhanced JavaScript Normalizer follow (more
-verbosity available in debug build):
-
-5.10.5.1. trace.module.http_inspect.js_proc
-
-Messages from script processing flow and their verbosity levels:
-
- 1. Script opening tag location.
- 2. Attributes of the detected script.
- 3. Return codes from Normalizer.
-
-5.10.5.2. trace.module.http_inspect.js_dump
-
-JavaScript data dump and verbosity levels:
-
- 1. js_data buffer as it is passed to detection.
- 2. (no messages available currently)
- 3. Current script as it is passed to Normalizer.
-
-5.10.6. Detection rules
+5.10.5. Detection rules
 
 http_inspect parses HTTP messages into their components and makes
 them available to the detection engine through rule options. Let’s
 start with an example:
 
-alert tcp any any -> any any ( msg:"URI example"; flow:established,
-to_server; http_uri; content:"chocolate"; sid:1; rev:1; )
+alert tcp any any -> any any (
+    msg:"URI example";
+    flow:established, to_server;
+    http_uri; content:"chocolate";
+    sid:1; rev:1; )
 
 This rule looks for chocolate in the URI portion of the request
 message. Specifically, the http_uri rule option is the normalized URI
@@ -4388,15 +4279,20 @@ GET /%63%68$6F%63%6F%6C%61%74%65/%63%61%6B%65 HTTP/1.1
 
 It is also possible to search the unnormalized URI
 
-alert tcp any any -> any any ( msg:"Raw URI example"; flow:established,
-to_server; http_raw_uri; content:"chocolate"; sid:2; rev:1; )
+alert tcp any any -> any any (
+    msg:"Raw URI example";
+    flow:established, to_server;
+    http_raw_uri; content:"chocolate";
+    sid:2; rev:1; )
 
 will match the first message but not the second. If you want to
 detect someone who is trying to hide his request for chocolate then
 
-alert tcp any any -> any any ( msg:"Raw URI example"; flow:established,
-to_server; http_raw_uri; content:"%63%68$6F%63%6F%6C%61%74%65";
-sid:3; rev:1; )
+alert tcp any any -> any any (
+    msg:"Raw URI example";
+    flow:established, to_server;
+    http_raw_uri; content:"%63%68$6F%63%6F%6C%61%74%65";
+    sid:3; rev:1; )
 
 will do the trick.
 
@@ -4404,9 +4300,11 @@ Let’s look at possible ways of writing a rule to match HTTP response
 messages with the Content-Language header set to "da" (Danish). You
 could write:
 
-alert tcp any any -> any any ( msg:"whole header search";
-flow:established, to_client; http_header; content:
-"Content-Language: da", nocase; sid:4; rev:1; )
+alert tcp any any -> any any (
+    msg:"whole header search";
+    flow:established, to_client;
+    http_header; content:"Content-Language: da", nocase;
+    sid:4; rev:1; )
 
 This rule leaves much to be desired. Modern headers are often
 thousands of bytes and seem to get longer every year. Searching all
@@ -4424,9 +4322,11 @@ thwarted the match.
 
 A better way to write this rule is:
 
-alert tcp any any -> any any ( msg:"individual header search";
-flow:established, to_client; http_header: field content-language;
-content:"da", nocase; sid:4; rev:2; )
+alert tcp any any -> any any (
+    msg:"individual header search";
+    flow:established, to_client;
+    http_header: field content-language; content:"da", nocase;
+    sid:4; rev:2; )
 
 The field option improves performance by narrowing the search to the
 Content-Language field of the header. Because it uses the header
@@ -4476,7 +4376,7 @@ headers or more and 200 headers or less:
 alert tcp any any -> any any ( msg:"between [100,200] headers";
 http_num_headers: 100<=>200; sid:95; rev:1; )
 
-5.10.6.1. http_uri and http_raw_uri
+5.10.5.1. http_uri and http_raw_uri
 
 These provide the URI of the request message. The raw form is exactly
 as it appeared in the message and the normalized form is determined
@@ -4484,8 +4384,11 @@ by the URI normalization options you selected. In addition to
 searching the entire URI there are six components that can be
 searched individually:
 
-alert tcp any any -> any any ( msg:"URI path"; flow:established,
-to_server; http_uri: path; content:"chocolate"; sid:1; rev:2; )
+alert tcp any any -> any any (
+    msg:"URI path";
+    flow:established, to_server;
+    http_uri: path; content:"chocolate";
+    sid:1; rev:2; )
 
 By specifying "path" the search is limited to the path portion of the
 URI. Informally this is the part consisting of the directory path and
@@ -4536,15 +4439,17 @@ Note: this section uses informal language to explain some things.
 Nothing here is intended to conflict with the technical language of
 the HTTP RFCs and the implementation follows the RFCs.
 
-5.10.6.2. http_header and http_raw_header
+5.10.5.2. http_header and http_raw_header
 
 These cover all the header lines except the first one. You may
 specify an individual header by name using the field option as shown
 in this earlier example:
 
-alert tcp any any -> any any ( msg:"individual header search";
-flow:established, to_client; http_header: field content-language;
-content:"da", nocase; sid:4; rev:2; )
+alert tcp any any -> any any (
+    msg:"individual header search";
+    flow:established, to_client;
+    http_header: field content-language; content:"da", nocase;
+    sid:4; rev:2; )
 
 This rule searches the value of the Content-Language header. Header
 names are not case sensitive and may be written in the rule in any
@@ -4563,7 +4468,7 @@ In most cases specifying individual headers creates a more efficient
 and accurate rule. It is recommended that new rules be written using
 individual headers whenever possible.
 
-5.10.6.3. http_trailer and http_raw_trailer
+5.10.5.3. http_trailer and http_raw_trailer
 
 HTTP permits header lines to appear after a chunked body ends.
 Typically they contain information about the message content that was
@@ -4575,7 +4480,7 @@ counterparts except they apply to these end headers. If you want a
 rule to inspect both kinds of headers you need to write two rules,
 one using header and one using trailer.
 
-5.10.6.4. http_cookie and http_raw_cookie
+5.10.5.4. http_cookie and http_raw_cookie
 
 These provide the value of the Cookie header for a request message
 and the Set-Cookie for a response message. If multiple cookies are
@@ -4584,7 +4489,7 @@ present they will be concatenated into a comma-separated list.
 Normalization for http_cookie is the same URI-style normalization
 applied to http_header when no specific header is specified.
 
-5.10.6.5. http_true_ip
+5.10.5.5. http_true_ip
 
 This provides the original IP address of the client sending the
 request as it was stored by a proxy in the request message headers.
@@ -4593,42 +4498,42 @@ True-Client-IP or any other custom x-forwarded-for type header. If
 multiple headers are present the preference defined in xff_headers
 configuration is considered.
 
-5.10.6.6. http_client_body
+5.10.5.6. http_client_body
 
 This is the body of a request message such as POST or PUT.
 Normalization for http_client_body is the same URI-like normalization
 applied to http_header when no specific header is specified.
 
-5.10.6.7. http_raw_body
+5.10.5.7. http_raw_body
 
 This is the body of a request or response message. It will be
 dechunked and unzipped if applicable but will not be normalized in
 any other way.
 
-5.10.6.8. http_method
+5.10.5.8. http_method
 
 The method field of a request message. Common values are "GET",
 "POST", "OPTIONS", "HEAD", "DELETE", "PUT", "TRACE", and "CONNECT".
 
-5.10.6.9. http_stat_code
+5.10.5.9. http_stat_code
 
 The status code field of a response message. This is normally a
 3-digit number between 100 and 599. In this example it is 200.
 
 HTTP/1.1 200 OK
 
-5.10.6.10. http_stat_msg
+5.10.5.10. http_stat_msg
 
 The reason phrase field of a response message. This is the
 human-readable text following the status code. "OK" in the previous
 example.
 
-5.10.6.11. http_version
+5.10.5.11. http_version
 
 The protocol version information that appears on the first line of an
 HTTP message. This is usually "HTTP/1.0" or "HTTP/1.1".
 
-5.10.6.12. http_raw_request and http_raw_status
+5.10.5.12. http_raw_request and http_raw_status
 
 These are the unmodified first header line of the HTTP request and
 response messages respectively. These rule options are a safety valve
@@ -4638,38 +4543,37 @@ first header line. For a request message those are http_method,
 http_raw_uri, and http_version. For a response message those are
 http_version, http_stat_code, and http_stat_msg.
 
-5.10.6.13. file_data
+5.10.5.13. file_data
 
 The file_data contains the normalized message body. This is the
 normalization described above under gzip, normalize_utf,
 decompress_pdf, decompress_swf, and normalize_javascript.
 
-5.10.6.14. js_data
+5.10.5.14. js_data
 
 The js_data contains normalized JavaScript text collected from the
 whole PDU (inline or external scripts). It requires the Enhanced
-Normalizer enabled: http_inspect = { js_norm_bytes_depth = N },
-js_norm_bytes_depth option is described above. Despite what js_data
-has, file_data still contains the whole HTTP body with an original
+Normalizer enabled: js_norm = { }, Despite what js_data has,
+file_data still contains the whole HTTP body with an original
 JavaScript in it.
 
-5.10.6.15. vba_data
+5.10.5.15. vba_data
 
 The vba_data will contain the decompressed Visual Basic for
 Applications (vba) macro data embedded in MS office files. It
 requires decompress_zip and decompress_vba options enabled.
 
-5.10.6.16. http_num_headers and http_num_trailers
+5.10.5.16. http_num_headers and http_num_trailers
 
 These are range-based rule options used to check the number of
 headers and trailers, respectively.
 
-5.10.6.17. http_max_header_line and http_max_trailer_line
+5.10.5.17. http_max_header_line and http_max_trailer_line
 
 These are range-based rule options used to check the longest line in
 request and response headers and trailers, respectively.
 
-5.10.6.18. http_num_cookies
+5.10.5.18. http_num_cookies
 
 This is a range-based rule option that checks the number of cookies.
 In a request all the individual cookies found in Cookie header are
@@ -4687,7 +4591,7 @@ Content-Length: 5
 Set-Cookie: lang=en-US; Path=/; Domain=example.com
 Set-Cookie: id=a3fWa; Expires=Thu, 21 Oct 2021 07:28:00 GMT; Secure; HttpOnly
 
-5.10.6.19. http_version_match
+5.10.5.19. http_version_match
 
 Rule option that matches HTTP version to one of the listed version
 values. Possible match values: 1.0, 1.1, 2.0, 0.9, other, and
@@ -4703,7 +4607,7 @@ be HTTP/2.0 or HTTP/0.9 will match "other" as described above. The
 http_version rule option is available to examine the actual bytes in
 the version field.
 
-5.10.6.20. http_header_test and http_trailer_test
+5.10.5.20. http_header_test and http_trailer_test
 
 Rule options that perform various tests against a specific header and
 trailer field, respectively. It can perform a range test, check
@@ -4711,7 +4615,7 @@ whether the value is numeric or whether it is absent. Negative values
 are considered non-numeric. Values with more than 18 digits are
 considered non-numeric.
 
-5.10.7. Timing issues and combining rule options
+5.10.6. Timing issues and combining rule options
 
 HTTP inspector is stateful. That means it is aware of a bigger
 picture than the packet in front of it. It knows what all the pieces
@@ -4720,41 +4624,15 @@ next, which request message triggered which response message,
 pipelines, and how many messages have been sent over the current
 connection.
 
-Some rules use a single rule option:
+It is possible to write rules that examine both the client request
+and the server response to it.
 
-alert tcp any any -> any any ( msg:"URI example"; flow:established,
-to_server; http_uri; content:"chocolate"; sid:1; rev:1; )
-
-Whenever a new URI is available this rule will be evaluated. Nothing
-complicated about that, but suppose we use more than one rule option:
-
-alert tcp any any -> any any ( msg:"combined example"; flow:established,
-to_server; http_uri: with_body; content:"chocolate"; file_data;
-content:"sinister POST data"; sid:5; rev:1; )
-
-The with_body option to http_uri causes the URI to be made available
-with the message body. Use with_body for header-related rule options
-in rules that also examine the message body.
-
-The with_trailer option is analogous and causes an earlier message
-element to be made available at the end of the message when the
-trailers following a chunked body arrive.
-
-alert tcp any any -> any any ( msg:"double content-language";
-flow:established, to_client; http_header: with_trailer, field
-content-language; content:"da", nocase; http_trailer: field
-content-language; content:"en", nocase; sid:6; rev:1; )
-
-This rule will alert if the Content-Language changes from Danish in
-the headers to English in the trailers. The with_trailer option is
-essential to make this rule work.
-
-It is also possible to write rules that examine both the client
-request and the server response to it.
-
-alert tcp any any -> any any ( msg:"request and response example";
-flow:established, to_client; http_uri: with_body; content:"chocolate";
-file_data; content:"white chocolate"; sid:7; rev:1; )
+alert tcp any any -> any any (
+    msg:"request and response example";
+    flow:established, to_client;
+    http_uri; content:"chocolate";
+    file_data; content:"white chocolate";
+    sid:7; rev:1; )
 
 This rule looks for white chocolate in a response message body where
 the URI of the request contained chocolate. Note that this is a
@@ -4765,21 +4643,23 @@ be nonsense and not work. Snort cannot block a client request based
 on what the server response will be because that has not happened
 yet.
 
-Another point is "with_body" for http_uri. This ensures the rule
-works on the entire response body. If we were looking for white
-chocolate in the response headers this would not be necessary.
-
 Response messages do not have a URI so there was only one thing
 http_uri could have meant in the previous rule. It had to be
 referring to the request message. Sometimes that is not so clear.
 
-alert tcp any any -> any any ( msg:"header ambiguity example 1";
-flow:established, to_client; http_header: with_body; content:
-"chocolate"; file_data; content:"white chocolate"; sid:8; rev:1; )
+alert tcp any any -> any any (
+    msg:"header ambiguity example 1";
+    flow:established, to_client;
+    http_header; content:"chocolate";
+    file_data; content:"white chocolate";
+    sid:8; rev:1; )
 
-alert tcp any any -> any any ( msg:"header ambiguity example 2";
-flow:established, to_client; http_header: with_body, request; content:
-"chocolate"; file_data; content:"white chocolate"; sid:8; rev:2; )
+alert tcp any any -> any any (
+    msg:"header ambiguity example 2";
+    flow:established, to_client;
+    http_header: request; content:"chocolate";
+    file_data; content:"white chocolate";
+    sid:8; rev:2; )
 
 Our search for chocolate has moved from the URI to the message
 headers. Both the request and response messages have headers—which
@@ -4791,30 +4671,16 @@ and white chocolate in the body.
 The second rule uses the "request" option to explicitly say that the
 http_header to be searched is the request header.
 
-Let’s put all of this together. There are six opportunities to do
-detection:
-
- 1. When the the request headers arrive. The request line and all of
-    the headers go through detection at the same time.
- 2. When sections of the request message body arrive. If you want to
-    combine this with something from the request line or headers you
-    must use the with_body option.
- 3. When the request trailers arrive. If you want to combine this
-    with something from the request line or headers you must use the
-    with_trailer option.
- 4. When the response headers arrive. The status line and all of the
-    headers go through detection at the same time. These may be
-    combined with elements from the request line, request headers, or
-    request trailers. Where ambiguity arises use the request option.
- 5. When sections of the response message body arrive. These may be
-    combined with the status line, response headers, request line,
-    request headers, or request trailers as described above.
- 6. When the response trailers arrive. Again these may be combined as
-    described above.
+Fast patterns are always searched in the current message. Rule
+options using "request" option can’t be used as fast patterns.
 
 Message body sections can only go through detection at the time they
 are received. Headers may be combined with later items but the body
 cannot.
+
+The sub-options "with_header", "with_body" and "with_trailer" are
+deprecated, and no longer required when mixing the different
+sections.
 
 
 5.11. HTTP/2 Inspector
@@ -5017,14 +4883,252 @@ option can be specified in one of two ways: the uppercase function
 name, or the lowercase function name.
 
 
-5.13. MMS Inspector
+5.13. JavaScript Normalization
+
+--------------
+
+One of the improvements in Snort 3 is Enhanced JavaScript Normalizer
+which has its own module and can be used with any service inspectors
+where JavaScript code might occur. Currently it is supported for the
+following inspectors: HTTP, SMTP, IMAP, POP.
+
+5.13.1. Overview
+
+You can configure it by adding:
+
+js_norm = {}
+
+to your snort.lua configuration file. Or you can read about it in the
+source code under src/js_norm.
+
+Having js_norm module configured and ips option js_data in the rules
+automatically enables Enhanced Normalizer.
+
+The Enhanced Normalizer can normalize JavaScript embedded in HTML
+(inline scripts), in separate .js files (external scripts), and
+JavaScript embedded in PDF files sent over HTTP/1, HTTP/2, SMTP, IMAP
+and POP3 protocols. It supports scripts over multiple PDUs. It is a
+stateful JavaScript whitespace and identifiers normalizer. Normalizer
+concatenates string literals whenever it’s possible to do. This also
+works with any other normalizations that result in string literals.
+All JavaScript identifier names, except those from the ignore lists,
+will be substituted with unified names in the following format:
+var_0000 → var_ffff. The Normalizer tries to expand escaped text, so
+it will appear in a readable form in the output. When such text is a
+parameter of an unescape function, the entire function call will be
+replaced by the unescaped string. Moreover, Normalizer validates the
+syntax concerning ECMA-262 Standard, including scope tracking and
+restrictions for script elements. JavaScript, embedded in PDF files,
+has to be decompressed before normalization. For that, decompress_pdf
+= true option has to be set in configuration of appropriate service
+inspectors.
+
+Check with the following options for more configurations:
+bytes_depth, identifier_depth, max_tmpl_nest, max_bracket_depth,
+max_scope_depth, ident_ignore, prop_ignore.
+
+Enhanced normalizer is the preferred option for writing new
+JavaScript related rules, though legacy normalizer (part of
+http_inspect) is still available to support old rules.
+
+5.13.2. Configuration
+
+Configuration can be as simple as adding:
+
+js_norm = {}
+
+to your snort.lua file. The default configuration provides a thorough
+normalization and may be all that you need, but there are some
+options that provide extra features, tweak how things are done, or
+conserve resources by doing less.
+
+Also, there are default lists of ignored identifiers and object
+properties provided. To get a complete default configuration, use 
+default_js_norm from $SNORT_LUA_PATH/snort_defaults.lua by adding:
+
+js_norm = default_js_norm
+
+to your snort.lua file.
+
+Enhanced JavaScript Normalizer implements JIT approach. Actual
+normalization takes place only when js_data option is evaluated. This
+option is also used as a buffer selector for normalized JavaScript
+data.
+
+5.13.2.1. bytes_depth
+
+bytes_depth = N {-1 : max53} will set a number of input JavaScript
+bytes to normalize. When the depth is reached, normalization will be
+stopped. It’s implemented per-script. By default bytes_depth = -1,
+will set unlimited depth.
+
+5.13.2.2. identifier_depth
+
+identifier_depth = N {0 : 65536} will set a number of unique
+JavaScript identifiers to normalize. When the depth is reached, a
+built-in alert is generated. Every response has its own identifier
+substitution context, which means that identifier will retain same
+normal form in multiple scripts, if they are a part of the same
+response, and that this limit is set for a single response and not a
+single script. By default, the value is set to 65536, which is the
+max allowed number of unique identifiers. The generated names are in
+the range from var_0000 to var_ffff.
+
+5.13.2.3. max_tmpl_nest
+
+max_tmpl_nest = N {0 : 255} (default 32) is an option of the enhanced
+JavaScript normalizer that determines the deepest level of nested
+template literals to be processed. Introduced in ES6, template
+literals provide syntax to define a literal multiline string, which
+can have arbitrary JavaScript substitutions, that will be evaluated
+and inserted into the string. Such substitutions can be nested, and
+require keeping track of every layer for proper normalization. This
+option is present to limit the amount of memory dedicated to template
+nesting tracking.
+
+5.13.2.4. max_bracket_depth
+
+max_bracket_depth = N {1 : 65535} (default 256) is an option of the
+enhanced JavaScript normalizer that determines the maximum depth of
+nesting brackets, i.e. parentheses, braces and square brackets,
+nested within a matching pair, in any combination. This option is
+present to limit the amount of memory dedicated to bracket tracking.
+
+5.13.2.5. max_scope_depth
+
+max_scope_depth = N {1 : 65535} (default 256) is an option of the
+enhanced JavaScript normalizer that determines the deepest level of
+nested variable scope, i.e. functions, code blocks, etc. including
+the global scope. This option is present to limit the amount of
+memory dedicated to scope tracking.
+
+5.13.2.6. ident_ignore
+
+ident_ignore = {<list of ignored identifiers>} is an option of the
+enhanced JavaScript normalizer that defines a list of identifiers to
+keep intact.
+
+Identifiers in this list will not be put into normal form (var_0000).
+Subsequent accessors, after dot, in square brackets or after function
+call, will not be normalized as well.
+
+For example:
+
+console.log("bar")
+document.getElementById("id").text
+eval("script")
+console["log"]
+
+Every entry has to be a simple identifier, i.e. not include dots,
+brackets, etc. For example:
+
+js_norm.ident_ignore = { 'console', 'document', 'eval', 'foo' }
+
+When a variable assignment that aliases an identifier from the list
+is found, the assignment will be tracked, and subsequent occurrences
+of the variable will be replaced with the stored value. This
+substitution will follow JavaScript variable scope limits.
+
+For example:
+
+var a = console.log
+a("hello") // will be substituted to 'console.log("hello")'
+
+For class names and constructors in the list, when the class is used
+with the keyword new, created object will be tracked, and its
+properties will be kept intact. Identifier of the object itself,
+however, will be brought to unified form.
+
+For example:
+
+var o = new Array() // normalized to 'var var_0000=new Array()'
+o.push(10) // normalized to 'var_0000.push(10)'
+
+The default list of ignore-identifiers is present in
+"snort_defaults.lua".
+
+Unescape function names should remain intact in the output. They
+ought to be included in the ignore list. If for some reason the user
+wants to disable unescape related features, then removing function’s
+name from the ignore list does the trick.
+
+5.13.2.7. prop_ignore
+
+prop_ignore = {<list of ignored properties>} is an option of the
+enhanced JavaScript normalizer that defines a list of object
+properties and methods that will be kept intact during normalization
+of identifiers. This list should include methods and properties of
+objects that will not be tracked by assignment substitution
+functionality, for example, those that can be created implicitly.
+
+Subsequent accessors, after dot, in square brackets or after function
+call, will not be normalized as well.
+
+For example:
+
+js_norm.prop_ignore = { 'split' }
+
+in: "string".toUpperCase().split("").reverse().join("");
+out: "string".var_0000().split("").reverse().join("");
+
+The default list of ignored properties is present in
+"snort_defaults.lua".
+
+5.13.3. Detection rules
+
+Enhanced JavaScript Normalizer follows JIT approach, which requires
+rules with js_data IPS option to be executed. This can lead to missed
+data when js_data option is not evaluated for some packets, e.g. if
+there is a non-js_data fast pattern. In this case, when fast pattern
+doesn’t match, JavaScript normalization is skipped for the current
+PDU. If later js_data IPS rule matches again, a missed normalization
+context is detected and 154:8 built-in alert is raised. Further
+normalization is not possible for the script. For example:
+
+alert http (msg:"JS in HTTP"; js_data; content:"var var_0000"; sid:1;)
+alert smtp (msg:"JS in SMTP"; js_data; content:"var var_0000"; sid:2;)
+
+5.13.3.1. js_data
+
+The js_data IPS contains normalized JavaScript text collected from
+the whole PDU. It requires the Enhanced JavaScript Normalizer
+configured.
+
+5.13.4. Trace messages
+
+When a user needs help to sort out things going on inside Enhanced
+JavaScript Normalizer, Trace module becomes handy.
+
+$ snort --help-module trace | grep js_norm
+
+Messages for the enhanced JavaScript Normalizer follow (more
+verbosity available in debug build):
+
+5.13.4.1. trace.module.js_norm.proc
+
+Messages from script processing flow and their verbosity levels:
+
+ 1. Script opening tag location.
+ 2. Attributes of the detected script.
+ 3. Return codes from Normalizer.
+
+5.13.4.2. trace.module.js_norm.dump
+
+JavaScript data dump and verbosity levels:
+
+ 1. js_data buffer as it is passed to detection.
+ 2. (no messages available currently)
+ 3. Current script as it is passed to Normalizer.
+
+
+5.14. MMS Inspector
 
 --------------
 
 MMS inspector is a service inspector for the MMS protocol within the
 IEC 61850 specification.
 
-5.13.1. Overview
+5.14.1. Overview
 
 IEC 61850 is a family of protocols, including MMS, distributed by the
 International Electrotechnical Commission (IEC) that provide a
@@ -5041,7 +5145,7 @@ protocol and provides rule writers access to certain protocol fields
 and data content through rule options. This allows the user to write
 rules for MMS messages without decoding the protocol.
 
-5.13.2. Configuration
+5.14.2. Configuration
 
 MMS messages can be sent in a variety of ways including multiple PDUs
 within one TCP packet, one PDU split across multiple TCP packets, or
@@ -5051,7 +5155,7 @@ presented to the user. No manual configuration other than enabling
 the MMS service inspector is necessary to leverage this
 functionality.
 
-5.13.3. Quick Guide
+5.14.3. Quick Guide
 
 A typical MMS configuration looks like this:
 
@@ -5067,14 +5171,14 @@ binder =
 In this example, the mms inspector is defined based on patterns known
 to be consistent with MMS messages.
 
-5.13.4. Rule Options
+5.14.4. Rule Options
 
 New rule options are supported by enabling the MMS inspector:
 
   * mms_data
   * mms_func
 
-5.13.4.1. mms_data
+5.14.4.1. mms_data
 
 mms_data moves the cursor to the start of the MMS message, bypassing
 all of the OSI encapsulation layers and allowing subsequent rule
@@ -5095,7 +5199,7 @@ alert tcp ( \
   sid:1000000; \
 )
 
-5.13.4.2. mms_func
+5.14.4.2. mms_func
 
 mms_func takes the supplied function name or number and compares it
 with the Confirmed Service Request/Response in the message being
@@ -5130,7 +5234,7 @@ alert tcp ( \
 )
 
 
-5.14. Performance Monitor
+5.15. Performance Monitor
 
 --------------
 
@@ -5139,14 +5243,14 @@ down by too many flows? perf_monitor! Why are certain TCP segments
 being dropped without hitting a rule? perf_monitor! Why is a sensor
 leaking water? Not perf_monitor, check with stream…
 
-5.14.1. Overview
+5.15.1. Overview
 
 The Snort performance monitor is the built-in utility for monitoring
 system and traffic statistics. All statistics are separated by
 processing thread. perf_monitor supports several trackers for
 monitoring such data:
 
-5.14.2. Base Tracker
+5.15.2. Base Tracker
 
 The base tracker is used to gather running statistics about Snort and
 its running modules. All Snort modules gather, at the very least,
@@ -5203,7 +5307,7 @@ perf_monitor =
 Note: Event stats from prior Snorts are now located within base
 statistics.
 
-5.14.3. Flow Tracker
+5.15.3. Flow Tracker
 
 Flow tracks statistics regarding traffic and L3/L4 protocol
 distributions. This data can be used to build a profile of traffic
@@ -5213,7 +5317,7 @@ To enable:
 
 perf_monitor = { flow = true }
 
-5.14.4. FlowIP Tracker
+5.15.4. FlowIP Tracker
 
 FlowIP provides statistics for individual hosts within a network.
 This data can be used for identifying communication habits, such as
@@ -5225,7 +5329,7 @@ To enable:
 
 perf_monitor = { flow_ip = true }
 
-5.14.5. CPU Tracker
+5.15.5. CPU Tracker
 
 This tracker monitors the CPU and wall time spent by a given
 processing thread.
@@ -5234,21 +5338,21 @@ To enable:
 
 perf_monitor = { cpu = true }
 
-5.14.6. Formatters
+5.15.6. Formatters
 
 Performance monitor allows statistics to be output in a few formats.
 Along with human readable text (as seen at shutdown) and csv formats,
 a JSON format format is also available.
 
 
-5.15. POP and IMAP
+5.16. POP and IMAP
 
 --------------
 
 POP inspector is a service inspector for POP3 protocol and IMAP
 inspector is for IMAP4 protocol.
 
-5.15.1. Overview
+5.16.1. Overview
 
 POP and IMAP inspectors examine data traffic and find POP and IMAP
 commands and responses. The inspectors also identify the command,
@@ -5256,7 +5360,7 @@ header, body sections and extract the MIME attachments and decode it
 appropriately. The pop and imap also identify and whitelist the pop
 and imap traffic.
 
-5.15.2. Configuration
+5.16.2. Configuration
 
 POP inspector and IMAP inspector offer same set of configuration
 options for MIME decoding depth. These depths range from 0 to 65535
@@ -5267,27 +5371,27 @@ be decoded. If you do not specify the default value is -1
 
 The depth limits apply per attachment. They are:
 
-5.15.2.1. b64_decode_depth
+5.16.2.1. b64_decode_depth
 
 Set the base64 decoding depth used to decode the base64-encoded MIME
 attachments.
 
-5.15.2.2. qp_decode_depth
+5.16.2.2. qp_decode_depth
 
 Set the Quoted-Printable (QP) decoding depth used to decode
 QP-encoded MIME attachments.
 
-5.15.2.3. bitenc_decode_depth
+5.16.2.3. bitenc_decode_depth
 
 Set the non-encoded MIME extraction depth used for non-encoded MIME
 attachments.
 
-5.15.2.4. uu_decode_depth
+5.16.2.4. uu_decode_depth
 
 Set the Unix-to-Unix (UU) decoding depth used to decode UU-encoded
 attachments.
 
-5.15.2.5. Examples
+5.16.2.5. Examples
 
 stream = { }
 
@@ -5321,13 +5425,13 @@ pop =
 }
 
 
-5.16. Port Scan
+5.17. Port Scan
 
 --------------
 
 A module to detect port scanning
 
-5.16.1. Overview
+5.17.1. Overview
 
 This module is designed to detect the first phase in a network
 attack: Reconnaissance. In the Reconnaissance phase, an attacker
@@ -5427,7 +5531,7 @@ however, Portscan will only track open ports after the alert has been
 triggered. Open port events are not individual alerts, but tags based
 off the original scan alert.
 
-5.16.2. Scan levels
+5.17.2. Scan levels
 
 There are 3 default scan levels that can be set.
 
@@ -5481,7 +5585,7 @@ setting will catch some slow scans because of the continuous
 monitoring, but is very sensitive to active hosts. This most
 definitely will require the user to tune Portscan.
 
-5.16.3. Tuning Portscan
+5.17.3. Tuning Portscan
 
 The most important aspect in detecting portscans is tuning the
 detection engine for your network(s). Here are some tuning tips:
@@ -5558,7 +5662,7 @@ require the least tuning. The low sensitivity level does not catch
 filtered scans, since these are more prone to false positives.
 
 
-5.17. Sensitive Data Filtering
+5.18. Sensitive Data Filtering
 
 --------------
 
@@ -5568,21 +5672,21 @@ credit card numbers, U.S. Social Security numbers, phone numbers, and
 email addresses. A rich regular expression syntax is available for
 defining your own PII.
 
-5.17.1. Hyperscan
+5.18.1. Hyperscan
 
 The sd_pattern rule option is powered by the open source Hyperscan
 library from Intel. It provides a regex grammar which is mostly PCRE
 compatible. To learn more about Hyperscan see https://intel.github.io
 /hyperscan/dev-reference/
 
-5.17.2. Syntax
+5.18.2. Syntax
 
 Snort provides sd_pattern as IPS rule option with no additional
 inspector overhead. The Rule option takes the following syntax.
 
 sd_pattern: "<pattern>"[, threshold <count>];
 
-5.17.2.1. Pattern
+5.18.2.1. Pattern
 
 Pattern is the most important and is the only required parameter to
 sd_pattern. It supports 5 built-in patterns which are configured by
@@ -5632,7 +5736,7 @@ but would not match 1@ourdomain.com ab12@ourdomain.com or
 Note: This is just an example, this pattern is not suitable to detect
 many correctly formatted emails.
 
-5.17.2.2. Threshold
+5.18.2.2. Threshold
 
 Threshold is an optional parameter allowing you to change built-in
 default value (default value is 1). The following two instances are
@@ -5650,10 +5754,10 @@ This example requires 300 matches of the pattern "This is a string
 literal" to qualify as a positive match. That is, if the string only
 occurred 299 times in a packet, you will not see an event.
 
-5.17.2.3. Obfuscating built-in patterns
+5.18.2.3. Obfuscating built-in patterns
 
 Snort provides discreet logging for the built-in patterns
-"credit_card", "us_social", "us_social_nodashes", "us_phone" and
+"credit_card", "us_social", "us_social_nodashes", "us_phone", and
 "email". Enabling ips.obfuscate_pii makes Snort obfuscate the suspect
 packet payload which was matched by the patterns. This configuration
 is enabled by default.
@@ -5663,46 +5767,93 @@ ips =
     obfuscate_pii = true
 }
 
-5.17.3. Example
+5.18.3. Examples
 
-A complete Snort IPS rule
+Complete Snort IPS rules with built-in sensitive data patterns.
 
 alert tcp ( sid:1; msg:"Credit Card"; sd_pattern:"credit_card"; )
+alert tcp ( sid:2; msg:"US Social Number"; sd_pattern:"us_social"; )
+alert tcp ( sid:3; msg:"US Social Number No Dashes"; sd_pattern:"us_social_nodashes"; )
+alert tcp ( sid:4; msg:"US Phone Number"; sd_pattern:"us_phone"; )
+alert tcp ( sid:5; msg:"Email"; sd_pattern:"email"; )
 
-Logged output when running Snort in "cmg" alert format.
+Let’s try them on the next traffic.
 
-02/25-21:19:05.125553 [**] [1:1:0] "Credit Card" [**] [Priority: 0] {TCP} 10.1.2.3:48620 -> 10.9.8.7:8
-02:01:02:03:04:05 -> 02:09:08:07:06:05 type:0x800 len:0x46
-10.1.2.3:48620 -> 10.9.8.7:8 TCP TTL:64 TOS:0x0 ID:14 IpLen:20 DgmLen:56
-***A**** Seq: 0xB2  Ack: 0x2  Win: 0x2000  TcpLen: 20
-- - - raw[16] - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-58 58 58 58 58 58 58 58 58 58 58 58 39 32 39 34              XXXXXXXXXXXX9294
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+33 34 38 30 31 32 37 34 33 35  37 34 35 38 30 20 20 20 20 20  348012743574580
+34 30 34 2D 35 30 2D 32 31 38  33 20 20 20 20 20 20 20 20 20  404-50-2183
+34 30 34 35 30 32 31 38 33 20  20 20 20 20 20 20 20 20 20 20  404502183
+31 2D 39 31 39 2D 36 36 33 2D  32 35 32 34 20 20 20 20 20 20  1-919-663-2524
+74 75 72 2E 63 61 6C 6C 69 65  40 67 6D 61 69 6C 2E 63 6F 6D  tur.callie@gmail.com
 
-5.17.4. Caveats
+Printout of alert_cmg logger for this would be obfuscated.
 
- 1. Snort currently requires setting the fast pattern engine to use
-    "hyperscan" in order for sd_pattern ips option to function
-    correctly.
+snort.raw[100]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+58 58 58 58 58 58 58 58 58 58  58 34 35 38 30 20 20 20 20 20  XXXXXXXXXXX4580
+58 58 58 58 58 58 58 32 31 38  33 20 20 20 20 20 20 20 20 20  XXXXXXX2183
+58 58 58 58 58 32 31 38 33 20  20 20 20 20 20 20 20 20 20 20  XXXXX2183
+58 58 58 58 58 58 58 58 58 58  32 35 32 34 20 20 20 20 20 20  XXXXXXXXXX2524
+58 58 58 58 58 58 58 58 58 58  58 58 58 58 58 58 2E 63 6F 6D  XXXXXXXXXXXXXXXX.com
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
 
-    search_engine = { search_method = 'hyperscan' }
+But obfuscation doesn’t work for custom patterns.
 
- 2. Log obfuscation is only applicable to CMG and Unified2 logging
-    formats.
- 3. Log obfuscation doesn’t support user defined PII patterns. It is
+Example of a rule with a custom pattern.
+
+alert tcp (sid: 6; sd_pattern:"\b\w+@ourdomain\.com\b"; msg: "Custom email")
+
+Traffic.
+
+61 40 6F 75 72 64 6F 6D 61 69  6E 2E 63 6F 6D 20 20 20 20 20  a@ourdomain.com
+61 61 40 6F 75 72 64 6F 6D 61  69 6E 2E 63 6F 6D              aa@ourdomain.com
+
+Printout of alert_cmg logger for this would not be obfuscated.
+
+01/01-02:00:00.000004 [**] [1:6:0] "Custom email" [**] [Priority: 0] {TCP} 10.1.2.3:48620 -> 10.9.8.7:80
+02:01:02:03:04:05 -> 02:09:08:07:06:05 type:0x800 len:0x5A
+10.1.2.3:48620 -> 10.9.8.7:80 TCP TTL:64 TOS:0x0 ID:3 IpLen:20 DgmLen:76
+******** Seq: 0x2  Ack: 0x0  Win: 0x2000  TcpLen: 20
+
+snort.raw[36]:
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+61 40 6F 75 72 64 6F 6D 61 69  6E 2E 63 6F 6D 20 20 20 20 20  a@ourdomain.com
+61 61 40 6F 75 72 64 6F 6D 61  69 6E 2E 63 6F 6D              aa@ourdomain.com
+- - - - - - - - - - - - - - -  - - - - - - - - - - - - - - -  - - - - -  - - - - -
+
+Threshold values are applied per packet.
+
+So, traffic like this.
+
+Packet 1 payload:"a@ourdomain.com"
+Packet 2 payload:"aa@ourdomain.com"
+
+Doesn’t match a rule like this.
+
+alert tcp (sid: 7; sd_pattern:"\b\w+@ourdomain\.com\b", threshold 2; msg: "Custom email")
+
+5.18.4. Caveats
+
+ 1. sd_pattern implementation relies on Hyperscan, regardless of the
+    search engine specified in the config. So, Snort must be built
+    and run with Hyperscan to have sd_pattern IPS option available.
+ 2. Log obfuscation is only applicable to the buffer that the pattern
+    was found in.
+ 3. Log obfuscation is only applicable to CMG and Unified2 logging
+    formats. Unified2 logger only supports obfuscation of http extra
+    data.
+ 4. Log obfuscation doesn’t support user defined PII patterns. It is
     currently only supported for the built-in patterns for Credit
-    Cards and U.S. Social Security numbers.
- 4. Log obfuscation doesn’t work with stream rebuilt packet payloads.
-    (This is a known bug).
+    Cards and U.S. Social Security numbers, emails and U.S. phone
+    numbers.
 
 
-5.18. SMTP
+5.19. SMTP
 
 --------------
 
 SMTP inspector is a service inspector for SMTP protocol.
 
-5.18.1. Overview
+5.19.1. Overview
 
 The SMTP inspector examines SMTP connections looking for commands and
 responses. It also identifies the command, header and body sections,
@@ -5712,7 +5863,7 @@ identifies and whitelists the SMTP traffic.
 SMTP inspector logs the filename, email addresses, attachment names
 when configured.
 
-5.18.2. Configuration
+5.19.2. Configuration
 
 SMTP command lines can be normalized to remove extraneous spaces.
 TLS-encrypted traffic can be ignored, which improves performance. In
@@ -5721,7 +5872,7 @@ performance boost.
 
 The configuration options are described below:
 
-5.18.2.1. normalize and normalize_cmds
+5.19.2.1. normalize and normalize_cmds
 
 Normalization checks for more than one space character after a
 command. Space characters are defined as space (ASCII 0x20) or tab
@@ -5732,34 +5883,34 @@ example:
 
 smtp = { normalize = 'cmds', normalize_cmds = 'RCPT VRFY EXPN' }
 
-5.18.2.2. ignore_data
+5.19.2.2. ignore_data
 
 Set it to true to ignore data section of mail (except for mail
 headers) when processing rules.
 
-5.18.2.3. ignore_tls_data
+5.19.2.3. ignore_tls_data
 
 Set it to true to ignore TLS-encrypted data when processing rules.
 
-5.18.2.4. max_command_line_len
+5.19.2.4. max_command_line_len
 
 Alert if an SMTP command line is longer than this value. Absence of
 this option or a "0" means never alert on command line length. RFC
 2821 recommends 512 as a maximum command line length.
 
-5.18.2.5. max_header_line_len
+5.19.2.5. max_header_line_len
 
 Alert if an SMTP DATA header line is longer than this value. Absence
 of this option or a "0" means never alert on data header line length.
 RFC 2821 recommends 1024 as a maximum data header line length.
 
-5.18.2.6. max_response_line_len
+5.19.2.6. max_response_line_len
 
 Alert if an SMTP response line is longer than this value. Absence of
 this option or a "0" means never alert on response line length. RFC
 2821 recommends 512 as a maximum response line length.
 
-5.18.2.7. alt_max_command_line_len
+5.19.2.7. alt_max_command_line_len
 
 Overrides max_command_line_len for specific commands For example:
 
@@ -5775,11 +5926,11 @@ alt_max_command_line_len =
     },
 }
 
-5.18.2.8. invalid_cmds
+5.19.2.8. invalid_cmds
 
 Alert if this command is sent from client side.
 
-5.18.2.9. valid_cmds
+5.19.2.9. valid_cmds
 
 List of valid commands. We do not alert on commands in this list.
 
@@ -5789,36 +5940,36 @@ HELO HELP IDENT MAIL NOOP ONEX QUEU QUIT RCPT RSET SAML SEND SIZE
 STARTTLS SOML TICK TIME TURN TURNME VERB VRFY X-EXPS X-LINK2STATE
 XADR XAUTH XCIR XEXCH50 XGEN XLICENSE XQUE XSTA XTRN XUSR ]]
 
-5.18.2.10. data_cmds
+5.19.2.10. data_cmds
 
 List of commands that initiate sending of data with an end of data
 delimiter the same as that of the DATA command per RFC 5321 - "
 <CRLF>.<CRLF>".
 
-5.18.2.11. binary_data_cmds
+5.19.2.11. binary_data_cmds
 
 List of commands that initiate sending of data and use a length value
 after the command to indicate the amount of data to be sent, similar
 to that of the BDAT command per RFC 3030.
 
-5.18.2.12. auth_cmds
+5.19.2.12. auth_cmds
 
 List of commands that initiate an authentication exchange between
 client and server.
 
-5.18.2.13. xlink2state
+5.19.2.13. xlink2state
 
 Enable/disable xlink2state alert, options are {disable | alert |
 drop}. See CVE-2005-0560 for a description of the vulnerability.
 
-5.18.2.14. MIME processing depth parameters
+5.19.2.14. MIME processing depth parameters
 
 These four MIME processing depth parameters are identical to their
 POP and IMAP counterparts. See that section for further details.
 
 b64_decode_depth qp_decode_depth bitenc_decode_depth uu_decode_depth
 
-5.18.2.15. Log Options
+5.19.2.15. Log Options
 
 Following log options allow SMTP inspector to log email addresses and
 filenames. Please note, this is logged only with the unified2 output
@@ -5861,7 +6012,7 @@ This option specifies the depth for logging email headers. The
 allowed range for this option is 0 - 20480. A value of 0 will disable
 email headers logging. The default value for this option is 1464.
 
-5.18.3. Example
+5.19.3. Example
 
 smtp =
 {
@@ -5914,7 +6065,7 @@ smtp =
 }
 
 
-5.19. Telnet
+5.20. Telnet
 
 --------------
 
@@ -5924,7 +6075,7 @@ command sequences per RFC 854. It will also determine when a telnet
 connection is encrypted, per the use of the telnet encryption option
 per RFC 2946.
 
-5.19.1. Configuring the inspector to block exploits and attacks
+5.20.1. Configuring the inspector to block exploits and attacks
 
 ayt_attack_thresh number
 
@@ -5933,7 +6084,7 @@ the threshold number specified. This addresses a few specific
 vulnerabilities relating to bsd-based implementations of telnet.
 
 
-5.20. Trace
+5.21. Trace
 
 --------------
 
@@ -5946,7 +6097,7 @@ enable debug tracing, Snort must be configured at build time with
 wizard and snort.inspector_manager) are providing non-debug trace
 messages in normal production builds.
 
-5.20.1. Trace module
+5.21.1. Trace module
 
 The trace module is responsible for configuring traces and supports
 the following parameters:
@@ -5986,7 +6137,7 @@ The trace module supports config reloading. Also, it’s possible to
 set or clear modules traces and packet filter constraints via the
 control channel command.
 
-5.20.2. Trace module - configuring traces
+5.21.2. Trace module - configuring traces
 
 The trace module has the modules option - a table with trace
 configuration for specific modules. The following lines placed in
@@ -6068,7 +6219,7 @@ trace =
     }
 }
 
-5.20.3. Trace module - configuring packet filter constraints for
+5.21.3. Trace module - configuring packet filter constraints for
 packet related trace messages
 
 There is a capability to filter traces by the packet constraints. The
@@ -6123,7 +6274,7 @@ trace =
     }
 }
 
-5.20.4. Trace module - configuring trace output method
+5.21.4. Trace module - configuring trace output method
 
 There is a capability to configure the output method for trace
 messages. The trace module has the output option with two acceptable
@@ -6152,7 +6303,7 @@ trace =
 As a result, each trace message will be printed into syslog (the
 Snort run-mode will be ignored).
 
-5.20.5. Configuring traces via control channel command
+5.21.5. Configuring traces via control channel command
 
 There is a capability to configure module trace options and packet
 constraints via the control channel command by using a Snort shell.
@@ -6187,7 +6338,7 @@ trace.set({modules = {...}}) - set only module trace options keeping old filteri
 
 trace.set({}) - disable traces and constraints (set to empty)
 
-5.20.6. Trace messages format
+5.21.6. Trace messages format
 
 Each tracing message has a standard format:
 
@@ -6236,7 +6387,7 @@ m – minutes
 s – seconds
 S – milliseconds
 
-5.20.7. Example - Debugging rules using detection trace
+5.21.7. Example - Debugging rules using detection trace
 
 The detection engine is responsible for rule evaluation. Turning on
 the trace for it can help with debugging new rules.
@@ -6364,7 +6515,7 @@ detection:rule_eval:1: Matched rule gid:sid:rev 1:3:0
 detection:rule_vars:1: Rule options variables: var[0]=1 var[1]=10 var[2]=0
 04/22-20:21:40.905630, 1, TCP, raw, 56, C2S, 127.0.0.1:1234, 127.0.0.1:5678, 1:3:0, allow
 
-5.20.8. Example - Protocols decoding trace
+5.21.8. Example - Protocols decoding trace
 
 Turning on decode trace will print out information about the packets
 decoded protocols. Can be useful in case of tunneling.
@@ -6388,7 +6539,7 @@ decode:all:1: Codec ipv6 (protocol_id: 1) ip header starts at: 0x7f70800110f0, l
 decode:all:1: Codec icmp4 (protocol_id: 256) ip header starts at: 0x7f70800110f0, length is 8
 decode:all:1: Codec unknown (protocol_id: 256) ip header starts at: 0x7f70800110f0, length is 0
 
-5.20.9. Example - Track the time packet spends in each inspector
+5.21.9. Example - Track the time packet spends in each inspector
 
 There is a capability to track which inspectors evaluate a packet,
 and how much time the inspector consumes doing so. These trace
@@ -6429,7 +6580,7 @@ snort:inspector_manager:1: post detection inspection, raw, packet 1, context 1
 snort:inspector_manager:1: end inspection, raw, packet 1, context 1, total time: 0 usec
 snort:main:1: [0] Destroying completed command RUN
 
-5.20.10. Example - trace filtering by packet constraints:
+5.21.10. Example - trace filtering by packet constraints:
 
 In snort.lua, the following lines were added:
 
@@ -6491,7 +6642,7 @@ detection:rule_eval:1: packet 4 UNK 10.1.1.2:200 10.2.1.1:100 (non-fast-patterns
 The trace messages for two last packets (numbers 5 and 6) weren’t
 printed.
 
-5.20.11. Example - configuring traces via trace.set() command
+5.21.11. Example - configuring traces via trace.set() command
 
 In snort.lua, the following lines were added:
 
@@ -6574,7 +6725,7 @@ The new configuration was applied. decode:all:1 messages aren’t
 filtered because they don’t include a packet (a packet isn’t
 well-formed at the point when the message is printing).
 
-5.20.12. Other available traces
+5.21.12. Other available traces
 
 There are more trace options supported by detection:
 
@@ -6601,7 +6752,7 @@ developer. Some are for corner cases, others for complex data
 structures.
 
 
-5.21. Wizard
+5.22. Wizard
 
 --------------
 
@@ -6614,7 +6765,7 @@ the session can be handed off to the appropriate inspector. The
 wizard is still under development; if you find you need to tweak the
 defaults please let us know.
 
-5.21.1. Wizard patterns
+5.22.1. Wizard patterns
 
 Wizard supports 3 kinds of patterns:
 
@@ -6640,7 +6791,7 @@ looks at the first arriving packet from the meta-flow. If no pattern
 matches that packet or wizard’s max_search_depth is reached, the
 meta-flow is abandoned by wizard.
 
-5.21.2. Wizard patterns - Spells
+5.22.2. Wizard patterns - Spells
 
 Spell is a text based pattern. The best area of usage - text
 protocols: http, smtp, sip, etc. Spells are:
@@ -6663,8 +6814,6 @@ contain following options:
 
   * service - name of the service that would be assigned
   * proto - protocol to scan
-  * client_first - indicator of which end initiates data transfer
-    (deprecated)
   * to_server - list of text patterns to search in the data sent to
     the client
   * to_client - list of text patterns to search in the data sent to
@@ -6674,12 +6823,11 @@ contain following options:
       {
         service = 'smtp',
         proto = 'tcp',
-        client_first = true,
         to_server = { 'HELO', 'EHLO' },
         to_client = { '220*SMTP', '220*MAIL' }
       }
 
-5.21.3. Wizard patterns - Hexes
+5.22.3. Wizard patterns - Hexes
 
 Hexes can be used to match binary protocols: dnp3, http2, ssl, etc.
 Hexes use hexadecimal representation of the data for pattern
@@ -6699,12 +6847,11 @@ Example of a hex definition in Lua:
   {
     service = 'dnp3',
     proto = 'tcp',
-    client_first = true,
     to_server = { '|05 64|' },
     to_client = { '|05 64|' }
   }
 
-5.21.4. Wizard patterns - Curses
+5.22.4. Wizard patterns - Curses
 
 Curses are internal algorithms of service identification. They are
 implemented as state machines in C++ code and can have their own
@@ -6716,7 +6863,7 @@ A list of available services can be obtained using snort
 A configuration which enables some curses:
   curses = {'dce_udp', 'dce_tcp', 'dce_smb', 'sslv2'}
 
-5.21.5. Additional Details:
+5.22.5. Additional Details:
 
   * Note that usually more specific patterns have higher precedence.
 

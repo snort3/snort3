@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2011-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -45,7 +45,7 @@ using namespace snort;
 
 #define s_name "sip_method"
 #define s_help \
-    "detection option for sip stat code"
+    "detection option for sip method"
 
 typedef std::unordered_map<std::string, bool> MethodMap; //Method Name => Negated
 

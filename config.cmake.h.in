@@ -147,6 +147,8 @@
 /* tirpc should be used for RPC database lookups */
 #cmakedefine USE_TIRPC 1
 
+/* numa available */
+#cmakedefine HAVE_NUMA 1
 
 /*  Availability of specific library functions */
 

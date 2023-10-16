@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -609,6 +609,10 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
             {
                 set_app_info_flags(atoi(conf_val), APPINFO_FLAG_IGNORE);
             }
+            else if (!(strcasecmp(conf_key, "eve_http_client")))
+            {
+                odp_ctxt.eve_http_client = atoi(conf_val) ? true : false;
+            }
             else
                 ParseWarning(WARN_CONF, "appid: unsupported configuration: %s\n", conf_key);
         }
@@ -690,7 +694,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
                 snort_free(app_name);
                 continue;
             }
-            service_id = strtol(token, nullptr, 10);
+            service_id = strtoul(token, nullptr, 10);
 
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
             if (!token)
@@ -699,7 +703,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
                 snort_free(app_name);
                 continue;
             }
-            client_id = strtol(token, nullptr, 10);
+            client_id = strtoul(token, nullptr, 10);
 
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
             if (!token)
@@ -708,7 +712,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
                 snort_free(app_name);
                 continue;
             }
-            payload_id = strtol(token, nullptr, 10);
+            payload_id = strtoul(token, nullptr, 10);
 
             AppInfoTableEntry* entry = new AppInfoTableEntry(app_id, app_name, service_id,
                 client_id, payload_id);
@@ -720,21 +724,22 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
             if (token)
                 entry->snort_protocol_id = add_appid_protocol_reference(token, sc);
 
-            if ((app_id = get_static_app_info_entry(entry->appId)))
-            {
-                app_info_table[app_id] = entry;
-                AppIdPegCounts::add_app_peg_info(entry->app_name_key, app_id);
-            }
-
-            if ((app_id = get_static_app_info_entry(entry->serviceId)))
-                app_info_service_table[app_id] = entry;
-            if ((app_id = get_static_app_info_entry(entry->clientId)))
-                app_info_client_table[app_id] = entry;
-            if ((app_id = get_static_app_info_entry(entry->payloadId)))
-                app_info_payload_table[app_id] = entry;
-
             if (!add_entry_to_app_info_name_table(entry->app_name_key, entry))
                 delete entry;
+            else
+            {
+                if ((app_id = get_static_app_info_entry(entry->appId)))
+                {
+                    app_info_table[app_id] = entry;
+                    AppIdPegCounts::add_app_peg_info(entry->app_name_key, app_id);
+                }
+                if ((app_id = get_static_app_info_entry(entry->serviceId)))
+                    app_info_service_table[app_id] = entry;
+                if ((app_id = get_static_app_info_entry(entry->clientId)))
+                    app_info_client_table[app_id] = entry;
+                if ((app_id = get_static_app_info_entry(entry->payloadId)))
+                    app_info_payload_table[app_id] = entry;
+            }
         }
         fclose(tableFile);
 

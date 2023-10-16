@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -27,9 +27,9 @@
 #include "events/event_queue.h"
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
-#include "memory/memory_cap.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "pub_sub/sip_events.h"
 #include "stream/stream_splitter.h"
 
 #include "sip_module.h"
@@ -44,6 +44,7 @@ static void snort_sip(SIP_PROTO_CONF* GlobalConf, Packet* p);
 static void FreeSipData(void*);
 
 unsigned SipFlowData::inspector_id = 0;
+unsigned SIPData::pub_id = 0;
 
 SipFlowData::SipFlowData() : FlowData(inspector_id)
 {
@@ -185,6 +186,7 @@ public:
     Sip(SIP_PROTO_CONF*);
     ~Sip() override;
 
+    bool configure(SnortConfig*) override;
     void show(const SnortConfig*) const override;
     void eval(Packet*) override;
 
@@ -210,6 +212,12 @@ Sip::~Sip()
         SIP_DeleteMethods(config->methods);
         delete config;
     }
+}
+
+bool Sip::configure(SnortConfig*)
+{
+    SIPData::pub_id = DataBus::get_id(sip_pub_key);
+    return true;
 }
 
 void Sip::show(const SnortConfig*) const

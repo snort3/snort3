@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -171,7 +171,7 @@ static const RuleMap smtp_rules[] =
     { SMTP_AUTH_COMMAND_OVERFLOW, "attempted authentication command buffer overflow" },
     { SMTP_FILE_DECOMP_FAILED, "file decompression failed" },
     { SMTP_STARTTLS_INJECTION_ATTEMPT, "STARTTLS command injection attempt"},
-    
+    { SMTP_LF_CRLF_MIX, "mix of LF and CRLF as end of line" },
 
     { 0, nullptr }
 };
@@ -199,8 +199,7 @@ SmtpModule::~SmtpModule()
         delete config;
     }
 
-    for ( auto p : cmds )
-        delete p;
+    clear_cmds();
 }
 
 const RuleMap* SmtpModule::get_rules() const
@@ -231,6 +230,14 @@ const SmtpCmd* SmtpModule::get_cmd(unsigned idx)
         return cmds[idx];
     else
         return nullptr;
+}
+
+void SmtpModule::clear_cmds()
+{
+    for ( auto p : cmds )
+        delete p;
+
+    cmds.clear();
 }
 
 bool SmtpModule::set(const char*, Value& v, SnortConfig*)

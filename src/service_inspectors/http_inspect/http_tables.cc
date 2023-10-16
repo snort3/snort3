@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -168,6 +168,8 @@ const StrCode HttpMsgHeadShared::content_code_list[] =
 
 const StrCode HttpMsgHeadShared::content_type_list[] =
 {
+    { CT_APPLICATION_PDF,          "application/pdf" },
+    { CT_APPLICATION_OCTET_STREAM, "application/octet-stream" },
     { CT_APPLICATION_JAVASCRIPT,   "application/javascript" },
     { CT_APPLICATION_ECMASCRIPT,   "application/ecmascript" },
     { CT_APPLICATION_X_JAVASCRIPT, "application/x-javascript" },
@@ -250,8 +252,8 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_UNKNOWN_METHOD,             "HTTP request method is not known to Snort" },
     { EVENT_SIMPLE_REQUEST,             "HTTP request uses primitive HTTP format known as HTTP/0.9" },
     { EVENT_UNESCAPED_SPACE_URI,        "HTTP request URI has space character that is not percent-encoded" },
-    { EVENT_PIPELINE_MAX,               "HTTP connection has more than 100 simultaneous pipelined "
-                                        "requests that have not been answered" },
+    { EVENT_PIPELINE_MAX,               "HTTP connection has more than maximum_pipelined_requests simultaneous "
+                                        "pipelined requests that have not been answered" },
     { EVENT_INVALID_STATCODE,           "invalid status code in HTTP response" },
     { EVENT_UTF_NORM_FAIL,              "HTTP response has UTF character set that failed to normalize" },
     { EVENT_UTF7,                       "HTTP response has UTF-7 character set" },
@@ -328,16 +330,9 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_LONG_SCHEME,                "HTTP URI scheme longer than 10 characters" },
     { EVENT_HTTP2_UPGRADE_REQUEST,      "HTTP/1 client requested HTTP/2 upgrade" },
     { EVENT_HTTP2_UPGRADE_RESPONSE,     "HTTP/1 server granted HTTP/2 upgrade" },
-    { EVENT_JS_BAD_TOKEN,               "bad token in JavaScript" },
-    { EVENT_JS_OPENING_TAG,             "unexpected script opening tag in JavaScript" },
-    { EVENT_JS_CLOSING_TAG,             "unexpected script closing tag in JavaScript" },
     { EVENT_JS_CODE_IN_EXTERNAL,        "JavaScript code under the external script tags" },
     { EVENT_JS_SHORTENED_TAG,           "script opening tag in a short form" },
-    { EVENT_JS_IDENTIFIER_OVERFLOW,     "max number of unique JavaScript identifiers reached" },
-    { EVENT_JS_BRACKET_NEST_OVERFLOW,   "excessive JavaScript bracket nesting" },
     { EVENT_ACCEPT_ENCODING_CONSECUTIVE_COMMAS, "Consecutive commas in HTTP Accept-Encoding header" },
-    { EVENT_JS_DATA_LOST,               "data gaps during JavaScript normalization" },
-    { EVENT_JS_SCOPE_NEST_OVERFLOW,     "excessive JavaScript scope nesting" },
     { EVENT_INVALID_SUBVERSION,         "HTTP/1 version other than 1.0 or 1.1" },
     { EVENT_VERSION_0,                  "HTTP version in start line is 0" },
     { EVENT_VERSION_HIGHER_THAN_1,      "HTTP version in start line is higher than 1" },
@@ -390,9 +385,8 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "total_bytes", "total HTTP data bytes inspected" },
     { CountType::SUM, "js_inline_scripts", "total number of inline JavaScripts processed" },
     { CountType::SUM, "js_external_scripts", "total number of external JavaScripts processed" },
-    { CountType::SUM, "js_bytes", "total number of JavaScript bytes processed" },
-    { CountType::SUM, "js_identifiers", "total number of unique JavaScript identifiers processed" },
-    { CountType::SUM, "js_identifier_overflows", "total number of unique JavaScript identifier limit overflows" },
+    { CountType::SUM, "js_pdf_scripts", "total number of PDF files processed" },
+    { CountType::SUM, "skip_mime_attach", "total number of HTTP requests with too many MIME attachments to inspect" },
     { CountType::END, nullptr, nullptr }
 };
 

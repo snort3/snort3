@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -26,6 +26,7 @@
 
 #include "normalize/norm_stats.h"
 #include "stream/paf.h"
+#include "stream/stream.h"
 #include "tcp_segment_node.h"
 
 class TcpSession;
@@ -70,18 +71,13 @@ struct SegmentOverlapState
     void init_soe(TcpSegmentDescriptor& tsd, TcpSegmentNode* left, TcpSegmentNode* right);
 };
 
-struct StreamAlertInfo
+struct StreamAlertInfo : snort::AlertInfo
 {
-    StreamAlertInfo(uint32_t gid, uint32_t sid, uint32_t seq, uint32_t id, uint32_t sec)
-        : gid(gid), sid(sid), seq(seq), event_id(id), event_second(sec)
+    StreamAlertInfo(uint32_t gid_, uint32_t sid_, uint32_t seq_num_ = 0, uint32_t id_ = 0, uint32_t ts_ = 0)
+        : snort::AlertInfo(gid_, sid_, id_, ts_), seq(seq_num_)
     {}
 
-    uint32_t gid;
-    uint32_t sid;
     uint32_t seq;
-    // if we log extra data, event_* is used to correlate with alert
-    uint32_t event_id;
-    uint32_t event_second;
 };
 
 struct TcpReassemblerState
@@ -108,6 +104,7 @@ protected:
 
     virtual bool is_segment_retransmit(TcpReassemblerState&, bool*);
     virtual void drop_old_segment(TcpReassemblerState&);
+    virtual bool zwp_data_mismatch(TcpReassemblerState&, TcpSegmentDescriptor&, uint32_t);
 
     virtual void left_overlap_keep_first(TcpReassemblerState&);
     virtual void left_overlap_trim_first(TcpReassemblerState&);

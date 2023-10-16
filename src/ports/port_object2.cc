@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -37,6 +37,26 @@
 #include "port_utils.h"
 
 using namespace snort;
+
+#ifndef NDEBUG
+static void check_structures()
+{
+    using po1 = PortObject;
+    using po2 = PortObject2;
+
+    assert(sizeof(po1::name) == sizeof(po2::name));
+    assert(sizeof(po1::id) == sizeof(po2::id));
+    assert(sizeof(po1::hash) == sizeof(po2::hash));
+    assert(sizeof(po1::item_list) == sizeof(po2::item_list));
+
+    assert(offsetof(po1, name) == offsetof(po2, name));
+    assert(offsetof(po1, id) == offsetof(po2, id));
+    assert(offsetof(po1, hash) == offsetof(po2, hash));
+    assert(offsetof(po1, item_list) == offsetof(po2, item_list));
+}
+
+static int _check_structures __attribute__((unused)) = (static_cast<void>(check_structures()), 0);
+#endif
 
 #define PO_EXTRA_RULE_CNT 25
 

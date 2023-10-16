@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -51,11 +51,13 @@ public:
     void add_host_pattern(uint8_t*, size_t, uint8_t, AppId);
     void finalize_patterns();
     void reload_patterns();
+    unsigned get_pattern_count();
     int scan_hostname(const uint8_t*, size_t, AppId&, AppId&);
 
 private:
     DnsHostPatternList* dns_host_pattern_list = nullptr;
     snort::SearchTool dns_host_matcher = snort::SearchTool();
+    unsigned pattern_count = 0;
 };
 
 #endif

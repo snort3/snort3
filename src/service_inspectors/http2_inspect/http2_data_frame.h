@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -35,6 +35,7 @@ public:
 
     bool is_detection_required() const override { return false; }
     void update_stream_state() override;
+    virtual const uint8_t* get_frame_data(uint32_t& length) const override;
 
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const uint32_t, const uint8_t*,
         const uint32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);

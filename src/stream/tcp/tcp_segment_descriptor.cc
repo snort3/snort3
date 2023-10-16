@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -76,6 +76,19 @@ TcpSegmentDescriptor::TcpSegmentDescriptor
     ma_pseudo_tcph.th_urp = 0;
 
     // init meta-ack Packet fields stream cares about for TCP ack processing
+    pkt->pkth = p->pkth;
+    pkt->ptrs = p->ptrs;
+    pkt->ptrs.ip_api.set(*p->ptrs.ip_api.get_dst(), *p->ptrs.ip_api.get_src());
+    pkt->active = p->active_inst;
+    pkt->action = &p->action_inst;
+    if( p->is_from_client() )
+    {
+        pkt->packet_flags = PKT_FROM_SERVER;
+    }
+    else
+    {
+        pkt->packet_flags = PKT_FROM_CLIENT;
+    }
     pkt->flow = p->flow;
     pkt->context = p->context;
     pkt->dsize = 0;
@@ -94,7 +107,9 @@ TcpSegmentDescriptor::TcpSegmentDescriptor
 }
 
 void TcpSegmentDescriptor::setup()
-{ ma_pseudo_packet = new Packet(false); }
+{
+    ma_pseudo_packet = new Packet(false);
+}
 
 void TcpSegmentDescriptor::clear()
 {
@@ -171,4 +186,5 @@ void TcpSegmentDescriptor::set_retransmit_flag()
     if ( !pkt->is_retry() )
         pkt->packet_flags |= PKT_RETRANSMIT;
 }
+
 

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -140,6 +140,7 @@ enum CipSegmentType
     CipSegment_Type_LOGICAL_SERVICE_ID,
 
     CipSegment_Type_NETWORK,
+    CipSegment_Type_NETWORK_SAFETY,
 
     CipSegment_Type_SYMBOLIC,
 
@@ -367,7 +368,7 @@ struct CipRequest
 
     // True if this request was a Forward Open Request.
     bool is_forward_open_request;
-
+    bool is_cip_safety;
     // Class ID in the Forward Open Request Connection Path.
     // Used only when is_forward_open_request is true.
     uint32_t connection_path_class_id;

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -115,6 +115,7 @@ const PegInfo tcp_pegs[] =
     { CountType::MAX, "max_segs", "maximum number of segments queued in any flow" },
     { CountType::MAX, "max_bytes", "maximum number of bytes queued in any flow" },
     { CountType::SUM, "zero_len_tcp_opt", "number of zero length tcp options" },
+    { CountType::SUM, "zero_win_probes", "number of tcp zero window probes" },
     { CountType::END, nullptr, nullptr }
 };
 

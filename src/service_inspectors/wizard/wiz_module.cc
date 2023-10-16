@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -27,7 +27,7 @@
 #include "log/messages.h"
 #include "trace/trace.h"
 
-#include "curses.h"
+#include "curse_book.h"
 
 using namespace snort;
 using namespace std;
@@ -54,9 +54,6 @@ static const Parameter wizard_hexes_params[] =
     { "proto", Parameter::PT_SELECT, "tcp | udp | any", "any",
       "protocol to scan" },
 
-    { "client_first", Parameter::PT_BOOL, nullptr, "true",
-      "which end initiates data transfer (deprecated)" },
-
     { "to_server", Parameter::PT_LIST, wizard_hex_param, nullptr,
       "sequence of data with wild chars (?)" },
 
@@ -82,9 +79,6 @@ static const Parameter wizard_spells_params[] =
     { "proto", Parameter::PT_SELECT, "tcp | udp | any", "any",
       "protocol to scan" },
 
-    { "client_first", Parameter::PT_BOOL, nullptr, "true",
-      "which end initiates data transfer (deprecated)" },
-
     { "to_server", Parameter::PT_LIST, wizard_spell_param, nullptr,
       "list of initial tokens with wild cards (*)" },
 
@@ -102,7 +96,7 @@ static const Parameter s_params[] =
     { "spells", Parameter::PT_LIST, wizard_spells_params, nullptr,
       "criteria for text service identification" },
 
-    { "curses", Parameter::PT_MULTI, "dce_smb | dce_udp | dce_tcp | mms | sslv2", nullptr,
+    { "curses", Parameter::PT_MULTI, "dce_smb | dce_udp | dce_tcp | mms | s7commplus | sslv2", nullptr,
       "enable service identification based on internal algorithm" },
 
     { "max_search_depth", Parameter::PT_INT, "0:65535", "8192",
@@ -148,13 +142,9 @@ bool WizardModule::set(const char*, Value& v, SnortConfig*)
             proto = MagicBook::ArcaneType::TCP;
         else if ( !strcmp(v.get_string(), "udp") )
             proto = MagicBook::ArcaneType::UDP;
-        else 
+        else
             proto = MagicBook::ArcaneType::ANY;
     }
-
-    // FIXIT-H implement client_first
-    else if ( v.is("client_first") )
-        return true;
 
     else if ( v.is("hex") or v.is("spell") )
     {

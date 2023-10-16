@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2007-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -51,6 +51,12 @@
 #define SSL_VER_TLS10_FLAG      0x00020000
 #define SSL_VER_TLS11_FLAG      0x00040000
 #define SSL_VER_TLS12_FLAG      0x00080000
+
+/* Convert 3-byte lengths in TLS headers to integers. */
+#define ntoh3(msb_ptr) \
+    ((uint32_t)((uint32_t)(((const uint8_t*)(msb_ptr))[0] << 16) \
+    + (uint32_t)(((const uint8_t*)(msb_ptr))[1] << 8) \
+    + (uint32_t)(((const uint8_t*)(msb_ptr))[2])))
 
 #define SSL_VERFLAGS \
     (SSL_VER_SSLV2_FLAG | SSL_VER_SSLV3_FLAG | \
@@ -195,6 +201,78 @@ struct SSLv2_shello_t
     uint8_t minor;
 };
 
+struct SSLV3ClientHelloData
+{
+    ~SSLV3ClientHelloData();
+    void clear();
+    char* host_name = nullptr;
+};
+
+struct SSLV3ServerCertData
+{
+    ~SSLV3ServerCertData();
+    void clear();
+    /* While collecting certificates: */
+    unsigned certs_len;   // (Total) length of certificate(s).
+    uint8_t* certs_data = nullptr;  // Certificate(s) data (each proceeded by length (3 bytes)).
+    /* Data collected from certificates afterwards: */
+    char* common_name = nullptr;
+    int common_name_strlen;
+    char* org_name = nullptr;
+    int org_name_strlen;
+};
+
+enum class SSLV3RecordType : uint8_t
+{
+    CLIENT_HELLO = 1,
+    SERVER_HELLO = 2,
+    CERTIFICATE = 11,
+    SERVER_KEY_XCHG = 12,
+    SERVER_CERT_REQ = 13,
+    SERVER_HELLO_DONE = 14,
+    CERTIFICATE_STATUS = 22
+};
+
+/* Usually referred to as a Certificate Handshake. */
+struct ServiceSSLV3CertsRecord
+{
+    uint8_t type;
+    uint8_t length_msb;
+    uint16_t length;
+    uint8_t certs_len[3];  // 3-byte length, network byte order.
+    /* Certificate(s) follow.
+     * For each:
+     *  - Length: 3 bytes
+     *  - Data  : "Length" bytes */
+};
+
+/* Usually referred to as a TLS Handshake. */
+struct ServiceSSLV3Record
+{
+    SSLV3RecordType type;
+    uint8_t length_msb;
+    uint16_t length;
+    uint16_t version;
+    struct
+    {
+        uint32_t time;
+        uint8_t data[28];
+    } random;
+};
+
+struct ServiceSSLV3ExtensionServerName
+{
+    uint16_t type;
+    uint16_t length;
+    uint16_t list_length;
+    uint8_t string_length_msb;
+    uint16_t string_length;
+    /* String follows. */
+};
+
+/* Extension types. */
+#define SSL_EXT_SERVER_NAME 0
+
 #define SSL_V2_MIN_LEN 5
 
 #pragma pack()
@@ -229,7 +307,11 @@ namespace snort
 {
 uint32_t SSL_decode(
     const uint8_t* pkt, int size, uint32_t pktflags, uint32_t prevflags,
-    uint8_t* alert_flags, uint16_t* partial_rec_len, int hblen, uint32_t* info_flags = nullptr);
+    uint8_t* alert_flags, uint16_t* partial_rec_len, int hblen, uint32_t* info_flags = nullptr,
+    SSLV3ClientHelloData* data = nullptr, SSLV3ServerCertData* server_cert_data = nullptr);
+
+    void parse_client_hello_data(const uint8_t* pkt, uint16_t size, SSLV3ClientHelloData*);
+    bool parse_server_certificates(SSLV3ServerCertData* server_cert_data);
 
 SO_PUBLIC bool IsTlsClientHello(const uint8_t* ptr, const uint8_t* end);
 SO_PUBLIC bool IsTlsServerHello(const uint8_t* ptr, const uint8_t* end);

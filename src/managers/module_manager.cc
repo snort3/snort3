@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -995,7 +995,14 @@ static list<ModHook*> get_all_modhooks()
 }
 
 void ModuleManager::set_config(SnortConfig* sc)
-{ s_config = sc; }
+{
+    s_config = sc;
+    s_current.clear();
+    s_aliased_name.clear();
+    s_aliased_type.clear();
+    s_ips_includer.clear();
+    s_file_id_includer.clear();
+}
 
 void ModuleManager::reset_errors()
 { s_errors = 0; }
@@ -1418,6 +1425,17 @@ void ModuleManager::load_rules(SnortConfig* sc)
     }
 }
 
+PegCount* ModuleManager::get_stats(const char* name)
+{
+    PegCount* pc = nullptr;
+    ModHook* mh = get_hook(name);
+
+    if ( mh )
+        pc = &mh->mod->dump_stats_counts[0];
+
+    return pc;
+}
+
 void ModuleManager::dump_stats(const char* skip, bool dynamic)
 {
     auto mod_hooks = get_all_modhooks();
@@ -1446,7 +1464,7 @@ void ModuleManager::accumulate(const char* except)
             continue;
 
         lock_guard<mutex> lock(stats_mutex);
-        mh->mod->prep_counts();
+        mh->mod->prep_counts(true);
         mh->mod->sum_stats(true);
     }
 }
@@ -1457,7 +1475,7 @@ void ModuleManager::accumulate_module(const char* name)
     if ( mh )
     {
         lock_guard<mutex> lock(stats_mutex);
-        mh->mod->prep_counts();
+        mh->mod->prep_counts(true);
         mh->mod->sum_stats(true);
     }
 }
@@ -1486,7 +1504,7 @@ void ModuleManager::clear_global_active_counters()
 
 void ModuleManager::reset_stats(clear_counter_type_t type)
 {
-    if ( type != TYPE_MODULE and type != TYPE_UNKNOWN )
+    if ( type != TYPE_MODULE and type != TYPE_ALL )
     {
         ModHook* mh = get_hook(clear_counter_type_string_map[type]);
         if ( mh and mh->mod )
@@ -1513,14 +1531,14 @@ void ModuleManager::reset_stats(clear_counter_type_t type)
                 }
             }
 
-            if ( type == TYPE_UNKNOWN or !ignore )
+            if ( type == TYPE_ALL or !ignore )
             {
                 lock_guard<mutex> lock(stats_mutex);
                 mh->mod->reset_stats();
             }
         }
     }
-    if ( type == TYPE_DAQ or type == TYPE_UNKNOWN )
+    if ( type == TYPE_DAQ or type == TYPE_ALL )
     {
         lock_guard<mutex> lock(stats_mutex);
         PacketManager::reset_stats();
@@ -1698,20 +1716,30 @@ static void dump_param_range_json(JsonStream& json, const Parameter* p)
         {
             std::string tr = range;
             const char* d = strchr(range, ':');
+            bool is_signed = ('-' == *range) || (d && '-' == d[1]);
             if ( *range == 'm' )
             {
                 if ( d )
                 {
-                    tr = std::to_string(Parameter::get_int(range)) +
-                        tr.substr(tr.find(":"));
+                    if (is_signed)
+                        tr = std::to_string(Parameter::get_int(range)) + tr.substr(tr.find(":"));
+                    else
+                        tr = std::to_string(Parameter::get_uint(range)) + tr.substr(tr.find(":"));
                 }
                 else
-                    tr = std::to_string(Parameter::get_int(range));
+                {
+                    if (is_signed)
+                        tr = std::to_string(Parameter::get_int(range));
+                    else
+                        tr = std::to_string(Parameter::get_uint(range));
+                }
             }
             if ( d and *++d == 'm' )
             {
-                tr = tr.substr(0, tr.find(":") + 1) +
-                    std::to_string(Parameter::get_int(d));
+                if (is_signed)
+                    tr = tr.substr(0, tr.find(":") + 1) + std::to_string(Parameter::get_int(d));
+                else
+                    tr = tr.substr(0, tr.find(":") + 1) + std::to_string(Parameter::get_uint(d));
             }
             json.put("range", tr);
             break;

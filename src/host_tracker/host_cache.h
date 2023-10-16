@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -35,6 +35,9 @@
 
 #include "cache_allocator.h"
 #include "cache_interface.h"
+
+// Default host cache size in bytes.
+#define LRU_CACHE_INITIAL_SIZE 8388608 // 8 MB
 
 // Used to create hash of key for indexing into cache.
 //
@@ -276,6 +279,5 @@ public:
     }
 };
 
-extern SO_PUBLIC HostCacheIp host_cache;
 
 #endif

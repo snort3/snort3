@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -26,14 +26,19 @@
 #include "appid_inspector.h"
 
 #include <openssl/crypto.h>
+#include <sys/resource.h>
 
 #include "flow/flow.h"
+#include "log/messages.h"
 #include "main/analyzer_command.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler.h"
+#include "pub_sub/appid_event_ids.h"
+#include "pub_sub/intrinsic_event_ids.h"
 
+#include "appid_cip_event_handler.h"
 #include "appid_data_decrypt_event_handler.h"
 #include "appid_dcerpc_event_handler.h"
 #include "appid_debug.h"
@@ -61,6 +66,8 @@ using namespace snort;
 THREAD_LOCAL ThirdPartyAppIdContext* pkt_thread_tp_appid_ctxt = nullptr;
 THREAD_LOCAL OdpThreadContext* odp_thread_local_ctxt = nullptr;
 THREAD_LOCAL OdpContext* pkt_thread_odp_ctxt = nullptr;
+
+unsigned AppIdInspector::pub_id = 0;
 
 static THREAD_LOCAL PacketTracer::TracerMute appid_mute;
 
@@ -111,32 +118,58 @@ bool AppIdInspector::configure(SnortConfig* sc)
 {
     assert(!ctxt);
 
-    ctxt = new AppIdContext(const_cast<AppIdConfig&>(*config));
+    struct rusage ru;
+    long prev_maxrss = -1;
+    #ifdef REG_TEST
+    if ( config->log_memory_and_pattern_count )
+    {
+    #endif
+        if ( getrusage(RUSAGE_SELF, &ru) == 0 )
+            prev_maxrss = ru.ru_maxrss;
+    #ifdef REG_TEST
+    }
+    #endif
 
+    ctxt = new AppIdContext(const_cast<AppIdConfig&>(*config));
     ctxt->init_appid(sc, *this);
 
-    DataBus::subscribe_global(SIP_EVENT_TYPE_SIP_DIALOG_KEY, new SipEventHandler(*this), *sc);
+    #ifdef REG_TEST
+    if ( config->log_memory_and_pattern_count )
+    {
+    #endif
+        if ( prev_maxrss == -1 or getrusage(RUSAGE_SELF, &ru) == -1 )
+            ErrorMessage("appid: fetching memory usage failed\n");
+        else
+            LogMessage("appid: MaxRss diff: %li\n", ru.ru_maxrss - prev_maxrss);
 
-    DataBus::subscribe_global(HTTP_REQUEST_HEADER_EVENT_KEY, new HttpEventHandler(
-        HttpEventHandler::REQUEST_EVENT, *this), *sc);
+        LogMessage("appid: patterns loaded: %u\n", ctxt->get_odp_ctxt().get_pattern_count());
+    #ifdef REG_TEST
+    }
+    #endif
 
-    DataBus::subscribe_global(HTTP_RESPONSE_HEADER_EVENT_KEY, new HttpEventHandler(
-        HttpEventHandler::RESPONSE_EVENT, *this), *sc);
+    DataBus::subscribe_global(http_pub_key, HttpEventIds::REQUEST_HEADER,
+        new HttpEventHandler(HttpEventHandler::REQUEST_EVENT, *this), *sc);
 
-    DataBus::subscribe_global(HTTPX_REQUEST_BODY_EVENT_KEY, new AppIdHttpXReqBodyEventHandler(), *sc);
+    DataBus::subscribe_global(http_pub_key, HttpEventIds::RESPONSE_HEADER,
+        new HttpEventHandler(HttpEventHandler::RESPONSE_EVENT, *this), *sc);
 
-    DataBus::subscribe_global(DATA_DECRYPT_EVENT, new DataDecryptEventHandler(), *sc);
+    DataBus::subscribe_global(http_pub_key, HttpEventIds::REQUEST_BODY, new AppIdHttpXReqBodyEventHandler(), *sc);
+    DataBus::subscribe_global(sip_pub_key, SipEventIds::DIALOG, new SipEventHandler(*this), *sc);
+    DataBus::subscribe_global(dce_tcp_pub_key, DceTcpEventIds::EXP_SESSION, new DceExpSsnEventHandler(), *sc);
+    DataBus::subscribe_global(ssh_pub_key, SshEventIds::STATE_CHANGE, new SshEventHandler(), *sc);
+    DataBus::subscribe_global(cip_pub_key, CipEventIds::DATA, new CipEventHandler(*this), *sc);
+    DataBus::subscribe_global(external_pub_key, ExternalEventIds::DATA_DECRYPT, new DataDecryptEventHandler(*this), *sc);
 
-    DataBus::subscribe_global(DCERPC_EXP_SESSION_EVENT_KEY, new DceExpSsnEventHandler(), *sc);
+    DataBus::subscribe_global(external_pub_key, ExternalEventIds::EVE_PROCESS,
+        new AppIdEveProcessEventHandler(*this), *sc);
 
-    DataBus::subscribe_global(OPPORTUNISTIC_TLS_EVENT, new AppIdOpportunisticTlsEventHandler(), *sc);
+    DataBus::subscribe_global(intrinsic_pub_key, IntrinsicEventIds::OPPORTUNISTIC_TLS,
+        new AppIdOpportunisticTlsEventHandler(), *sc);
 
-    DataBus::subscribe_global(EVE_PROCESS_EVENT, new AppIdEveProcessEventHandler(*this), *sc);
+    DataBus::subscribe_global(intrinsic_pub_key, IntrinsicEventIds::FLOW_NO_SERVICE,
+         new AppIdServiceEventHandler(*this), *sc);
 
-    DataBus::subscribe_global(SSH_EVENT, new SshEventHandler(), *sc);
-
-    DataBus::subscribe_global(FLOW_NO_SERVICE_EVENT, new AppIdServiceEventHandler(*this), *sc);
-
+    pub_id = DataBus::get_id(appid_pub_key);
     return true;
 }
 
@@ -167,6 +200,7 @@ void AppIdInspector::tinit()
         appidDebug->set_enabled(true);
      if ( snort::HighAvailabilityManager::active() )
         AppIdHAManager::tinit();
+    ServiceDiscovery::set_thread_local_ftp_service();
 }
 
 void AppIdInspector::tterm()
@@ -180,6 +214,7 @@ void AppIdInspector::tterm()
         pkt_thread_tp_appid_ctxt->tfini();
     if ( snort::HighAvailabilityManager::active() )
         AppIdHAManager::tterm();
+    ServiceDiscovery::reset_thread_local_ftp_service();
 }
 
 void AppIdInspector::tear_down(SnortConfig*)

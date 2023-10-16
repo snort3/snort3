@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -68,6 +68,7 @@ public:
     void reload() override;
     void finalize_service_patterns();
     void reload_service_patterns();
+    unsigned get_pattern_count();
     int add_service_port(AppIdDetector*, const ServiceDetectorPort&) override;
 
     AppIdDetectorsIterator get_detector_iterator(IpProtocol);
@@ -81,6 +82,9 @@ public:
     int incompatible_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, ServiceDetector*);
     static int add_ftp_service_state(AppIdSession&);
     static void clear_ftp_service_state();
+    static void set_thread_local_ftp_service();
+    static void reset_thread_local_ftp_service();
+    ServiceDetector* get_service_detector(const std::string&) const;
 
 private:
     void get_next_service(const snort::Packet*, const AppidSessionDirection dir, AppIdSession&);

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -56,11 +56,12 @@ public:
 
     bool release(snort::Flow*, PruneReason = PruneReason::NONE, bool do_cleanup = true);
 
-    unsigned prune_stale(uint32_t thetime, const snort::Flow* save_me);
+    unsigned prune_idle(uint32_t thetime, const snort::Flow* save_me);
     unsigned prune_excess(const snort::Flow* save_me);
     bool prune_one(PruneReason, bool do_cleanup);
     unsigned timeout(unsigned num_flows, time_t cur_time);
     unsigned delete_flows(unsigned num_to_delete);
+    unsigned prune_multiple(PruneReason, bool do_cleanup);
 
     unsigned purge();
     unsigned get_count();
@@ -94,11 +95,7 @@ public:
     const FlowCacheConfig& get_flow_cache_config() const
     { return config; }
 
-    unsigned get_flows_allocated() const
-    { return flows_allocated; }
-
-    static bool is_pruning_in_progress()
-    { return pruning_in_progress; }
+    unsigned get_flows_allocated() const;
 
     size_t uni_flows_size() const;
     size_t uni_ip_flows_size() const;
@@ -115,13 +112,11 @@ private:
         (unsigned mode, unsigned num_to_delete, unsigned &deleted);
 
 private:
-    static THREAD_LOCAL bool pruning_in_progress;
     static const unsigned cleanup_flows = 1;
     FlowCacheConfig config;
     uint32_t flags;
 
     class ZHash* hash_table;
-    unsigned flows_allocated = 0;
     FlowUniList* uni_flows;
     FlowUniList* uni_ip_flows;
 

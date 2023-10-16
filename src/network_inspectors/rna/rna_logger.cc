@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2003-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -248,6 +248,7 @@ bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_
     }
 
     EventManager::call_loggers(nullptr, const_cast<Packet*>(p), "RNA", &rle);
+    ++rna_stats.total_events_in_interval;
 
 #ifdef DEBUG_MSGS
     rna_logger_message(rle, p);

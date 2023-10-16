@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2009-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -346,7 +346,7 @@ static int FuncCheck(int i)
 
     result = RunFunc(f->func, f->arg1, f->arg2);
 
-    code = (0 <= result && (size_t)result < sizeof(codes)/sizeof(code[0])) ?
+    code = (0 <= result && (size_t)result < sizeof(codes)/sizeof(codes[0])) ?
         codes[result] : "uh oh";
 
     if ( result != f->expected )

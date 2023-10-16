@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -25,6 +25,12 @@
 #include "time/stopwatch.h"
 
 struct dot_node_state_t;
+
+enum OutType
+{
+    OUTPUT_TABLE = 0,
+    OUTPUT_JSON
+};
 
 struct RuleProfilerConfig
 {
@@ -68,11 +74,35 @@ public:
     static void set_enabled(bool b)
     { enabled = b; }
 
+    static const struct timeval *get_start_time()
+    { return &start_time; }
+
+    static void set_start_time(const struct timeval &time);
+
+    static const struct timeval *get_end_time()
+    { return &end_time; }
+
+    static void set_end_time(const struct timeval &time);
+
+    static const struct timeval *get_total_time()
+    { return &total_time; }
+
+    static void count_total_time();
+    static bool is_enabled()
+    { return enabled; }
+
 private:
     dot_node_state_t& stats;
     Stopwatch<SnortClock> sw;
     bool finished = false;
-    static bool enabled;
+
+    static THREAD_LOCAL bool enabled;
+    static struct timeval start_time;
+    static struct timeval end_time;
+    static struct timeval total_time;
+
+    static void valid_start_time();
+    static void valid_end_time();
 };
 
 class RulePause

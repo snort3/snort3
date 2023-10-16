@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
+#include "pub_sub/appid_events.h"
 #include "stream/stream.h"
 #include "target_based/snort_protocols.h"
 #include "time/packet_time.h"
@@ -179,7 +180,7 @@ AppIdSession::~AppIdSession()
     // If api was not stored in the stash, delete it. An example would be when an appid future
     // session is created, but it doesn't get attached to a snort flow (because the packets for the
     // future session were never received by snort), api object is not stored in the stash.
-    if (!api.stored_in_stash)
+    if (!api.flags.stored_in_stash)
         delete &api;
     else
         api.asd = nullptr;
@@ -206,8 +207,8 @@ static inline PktType get_pkt_type_from_ip_proto(IpProtocol proto)
 
 AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const SfIp* cliIp,
     uint16_t cliPort, const SfIp* srvIp, uint16_t srvPort, IpProtocol proto,
-    SnortProtocolId snort_protocol_id, bool swap_app_direction, bool bidirectional,
-    bool expect_persist)
+    SnortProtocolId snort_protocol_id, OdpContext& odp_ctxt, bool swap_app_direction,
+    bool bidirectional, bool expect_persist)
 {
     enum PktType type = get_pkt_type_from_ip_proto(proto);
 
@@ -228,8 +229,8 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
 
     // FIXIT-RC - port parameter passed in as 0 since we may not know client port, verify
 
-    AppIdSession* asd = new AppIdSession(proto, cliIp, 0, *inspector,
-        inspector->get_ctxt().get_odp_ctxt(), ctrlPkt->pkth->address_space_id);
+    AppIdSession* asd = new AppIdSession(proto, cliIp, 0, *inspector, odp_ctxt,
+        ctrlPkt->pkth->address_space_id);
     is_session_monitored(asd->flags, ctrlPkt, *inspector);
 
     if (Stream::set_snort_protocol_id_expected(ctrlPkt, type, proto, cliIp,
@@ -615,7 +616,7 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
     }
 }
 
-void AppIdSession::set_client_appid_data(AppId id, AppidChangeBits& change_bits, char* version)
+void AppIdSession::set_client_appid_data(AppId id, char* version, bool published)
 {
     if (id <= APP_ID_NONE or id == APP_ID_HTTP)
         return;
@@ -632,7 +633,16 @@ void AppIdSession::set_client_appid_data(AppId id, AppidChangeBits& change_bits,
     if (!version)
         return;
     api.client.set_version(version);
-    change_bits.set(APPID_CLIENT_INFO_BIT);
+
+    if (!published)
+        client_info_unpublished = true;
+}
+
+void AppIdSession::set_client_appid_data(AppId id, AppidChangeBits& change_bits, char* version)
+{
+    set_client_appid_data(id, version, true);
+    if (version)
+        change_bits.set(APPID_CLIENT_INFO_BIT);
 }
 
 void AppIdSession::set_payload_appid_data(AppId id, char* version)
@@ -778,9 +788,13 @@ AppId AppIdSession::pick_service_app_id() const
         {
             if ((rval = api.service.get_id()) > APP_ID_NONE)
                 return rval;
+            else if (odp_ctxt.first_pkt_service_id > APP_ID_NONE)
+                return odp_ctxt.first_pkt_service_id;
             else
                 rval = APP_ID_UNKNOWN;
         }
+        else if (odp_ctxt.first_pkt_service_id > APP_ID_NONE)
+            return odp_ctxt.first_pkt_service_id;
     }
     else
     {
@@ -790,6 +804,9 @@ AppId AppIdSession::pick_service_app_id() const
 
             if (api.service.get_id() > APP_ID_NONE and !deferred)
                 return api.service.get_id();
+            if (odp_ctxt.first_pkt_service_id > APP_ID_NONE)
+                return odp_ctxt.first_pkt_service_id;
+
             if (is_tp_appid_available())
             {
                 if (tp_app_id > APP_ID_NONE)
@@ -804,6 +821,8 @@ AppId AppIdSession::pick_service_app_id() const
         }
         else if (tp_app_id > APP_ID_NONE)
             return tp_app_id;
+        else if (odp_ctxt.first_pkt_service_id > APP_ID_NONE)
+            return odp_ctxt.first_pkt_service_id;
     }
 
     if (client_inferred_service_id > APP_ID_NONE)
@@ -821,7 +840,8 @@ AppId AppIdSession::pick_service_app_id() const
 
 AppId AppIdSession::pick_ss_misc_app_id() const
 {
-    if (api.service.get_id() == APP_ID_HTTP2 or api.service.get_id() == APP_ID_HTTP3)
+    if (api.service.get_id() == APP_ID_HTTP2 or
+        (api.service.get_id() == APP_ID_HTTP3 and !api.hsessions.empty()))
         return APP_ID_NONE;
 
     if (misc_app_id > APP_ID_NONE)
@@ -838,8 +858,21 @@ AppId AppIdSession::pick_ss_misc_app_id() const
 
 AppId AppIdSession::pick_ss_client_app_id() const
 {
-    if (api.service.get_id() == APP_ID_HTTP2 or api.service.get_id() == APP_ID_HTTP3)
+    bool prefer_eve_client = use_eve_client_app_id();
+    if (api.service.get_id() == APP_ID_HTTP2 and !prefer_eve_client)
+    {
+        api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_APPID);
         return APP_ID_NONE;
+    }
+
+    if (api.service.get_id() == APP_ID_HTTP3 and !api.hsessions.empty())
+        return APP_ID_NONE;
+
+    if (prefer_eve_client)
+    {
+        api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_TLS_FP);
+        return api.client.get_eve_client_app_id();
+    }
 
     AppId tmp_id = APP_ID_NONE;
     if (!api.hsessions.empty())
@@ -850,25 +883,39 @@ AppId AppIdSession::pick_ss_client_app_id() const
         return tmp_id;
     }
 
-    if (use_eve_client_app_id())
-    {
-        api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_TLS_FP);
-        return api.client.get_eve_client_app_id();
-    }
-
     if (api.client.get_id() > APP_ID_NONE)
     {
         api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_APPID);
         return api.client.get_id();
     }
 
+    if (odp_ctxt.first_pkt_client_id > APP_ID_NONE)
+    {
+        api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_APPID);
+        return odp_ctxt.first_pkt_client_id;
+    }
+
     api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_APPID);
     return encrypted.client_id;
 }
 
+AppId AppIdSession::check_first_pkt_tp_payload_app_id() const
+{
+    if (get_session_flags(APPID_SESSION_FIRST_PKT_CACHE_MATCHED) and
+        (api.payload.get_id() <= APP_ID_NONE))
+    {
+        if ((odp_ctxt.first_pkt_payload_id > APP_ID_NONE) and (tp_payload_app_id > APP_ID_NONE))
+        {
+            return tp_payload_app_id;
+        }
+    }
+    return APP_ID_NONE;
+}
+
 AppId AppIdSession::pick_ss_payload_app_id(AppId service_id) const
 {
-    if (service_id == APP_ID_HTTP2 or service_id == APP_ID_HTTP3)
+    if (service_id == APP_ID_HTTP2 or
+        (service_id == APP_ID_HTTP3 and !api.hsessions.empty()))
         return APP_ID_NONE;
 
     if (tp_payload_app_id_deferred)
@@ -881,14 +928,23 @@ AppId AppIdSession::pick_ss_payload_app_id(AppId service_id) const
     {
         if (tmp_id == APP_ID_HTTP_TUNNEL)
         {
-            if (api.payload.get_id() > APP_ID_NONE)
+            AppId first_pkt_payload_appid = check_first_pkt_tp_payload_app_id();
+            if (first_pkt_payload_appid > APP_ID_NONE)
+                return first_pkt_payload_appid;
+            else if (api.payload.get_id() > APP_ID_NONE)
                 return api.payload.get_id();
             else if (tp_payload_app_id > APP_ID_NONE)
                 return tp_payload_app_id;
+            else if (odp_ctxt.first_pkt_payload_id > APP_ID_NONE)
+                return odp_ctxt.first_pkt_payload_id;
         }
         else
             return tmp_id;
     }
+
+    AppId first_pkt_payload_appid = check_first_pkt_tp_payload_app_id();
+    if (first_pkt_payload_appid > APP_ID_NONE)
+        return first_pkt_payload_appid;
 
     if (api.payload.get_id() > APP_ID_NONE)
         return api.payload.get_id();
@@ -898,6 +954,9 @@ AppId AppIdSession::pick_ss_payload_app_id(AppId service_id) const
 
     if (encrypted.payload_id > APP_ID_NONE)
         return encrypted.payload_id;
+
+    if (odp_ctxt.first_pkt_payload_id > APP_ID_NONE)
+        return odp_ctxt.first_pkt_payload_id;
 
     // APP_ID_UNKNOWN is valid only for HTTP type services
     if (tmp_id == APP_ID_UNKNOWN)
@@ -1118,17 +1177,17 @@ void AppIdSession::set_tp_payload_app_id(const Packet& p, AppidSessionDirection 
 void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packet& p,
     bool is_httpx, uint32_t httpx_stream_index)
 {
-    if (!api.stored_in_stash)
+    if (!api.flags.stored_in_stash)
     {
         assert(p.flow and p.flow->stash);
         p.flow->stash->store(STASH_APPID_DATA, &api, false);
-        api.stored_in_stash = true;
+        api.flags.stored_in_stash = true;
     }
 
-    if (!api.published)
+    if (!api.flags.published)
     {
         change_bits.set(APPID_CREATED_BIT);
-        api.published = true;
+        api.flags.published = true;
     }
 
     if (consumed_ha_data)
@@ -1148,11 +1207,20 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
         consumed_ha_data = false;
     }
 
-    if (change_bits.none())
+    if (!(api.flags.finished || api.is_appid_inspecting_session()))
+    {
+        change_bits.set(APPID_DISCOVERY_FINISHED_BIT);
+        api.flags.finished = true;
+    }
+
+    // Publish an event, if this is the first packet after appid processing
+    if (get_session_flags(APPID_SESSION_DO_NOT_DECRYPT))
+        clear_session_flags(APPID_SESSION_DO_NOT_DECRYPT);
+    else if (change_bits.none())
         return;
 
     AppidEvent app_event(change_bits, is_httpx, httpx_stream_index, api, p);
-    DataBus::publish(APPID_EVENT_ANY_CHANGE, app_event, p.flow);
+    DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::ANY_CHANGE, app_event, p.flow);
     if (appidDebug->is_active())
     {
         std::string str;

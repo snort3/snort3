@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -136,7 +136,7 @@ double CalcPct(uint64_t cnt, uint64_t total)
 
 //-------------------------------------------------------------------------
 
-static struct timeval starttime, endtime;
+static struct timeval starttime = {0, 0}, endtime = {0, 0}, currtime = {0, 0};
 
 void TimeStart()
 {
@@ -146,6 +146,22 @@ void TimeStart()
 void TimeStop()
 {
     gettimeofday(&endtime, nullptr);
+}
+
+const struct timeval& get_time_start()
+{
+    return starttime;
+}
+
+const struct timeval& get_time_end()
+{
+    return endtime;
+}
+
+const struct timeval& get_time_curr()
+{
+    gettimeofday(&currtime, nullptr);
+    return currtime;
 }
 
 static void timing_stats()
@@ -214,6 +230,15 @@ const PegInfo pc_names[] =
     { CountType::SUM, "pcre_match_limit", "total number of times pcre hit the match limit" },
     { CountType::SUM, "pcre_recursion_limit", "total number of times pcre hit the recursion limit" },
     { CountType::SUM, "pcre_error", "total number of times pcre returns error" },
+    { CountType::SUM, "cont_creations", "total number of continuations created" },
+    { CountType::SUM, "cont_recalls", "total number of continuations recalled" },
+    { CountType::SUM, "cont_flows", "total number of flows using continuation" },
+    { CountType::SUM, "cont_evals", "total number of condition-met continuations" },
+    { CountType::SUM, "cont_matches", "total number of continuations matched" },
+    { CountType::SUM, "cont_mismatches", "total number of continuations mismatched" },
+    { CountType::MAX, "cont_max_num", "peak number of simultaneous continuations per flow" },
+    { CountType::SUM, "cont_match_distance", "total number of bytes jumped over by matched continuations"},
+    { CountType::SUM, "cont_mismatch_distance", "total number of bytes jumped over by mismatched continuations"},
     { CountType::END, nullptr, nullptr }
 };
 
@@ -239,16 +264,18 @@ void DropStats(ControlConn* ctrlcon)
     s_ctrlcon = ctrlcon;
     LogLabel("Packet Statistics");
     ModuleManager::get_module("daq")->show_stats();
-
     PacketManager::dump_stats();
 
     LogLabel("Module Statistics");
-    const char* exclude = "daq snort";
+    const char* exclude = "daq snort memory";
     ModuleManager::dump_stats(exclude, false);
     ModuleManager::dump_stats(exclude, true);
 
     LogLabel("Summary Statistics");
     show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names)-1, "process");
+    ModuleManager::get_module("memory")->show_stats();
+    memory::MemoryCap::print(SnortConfig::log_verbose());
+
     s_ctrlcon = nullptr;
 }
 
@@ -256,8 +283,10 @@ void DropStats(ControlConn* ctrlcon)
 
 void PrintStatistics()
 {
+    if ( PegCount* pc = ModuleManager::get_stats("memory") )
+        memory::MemoryCap::update_pegs(pc);
+
     DropStats();
-    memory::MemoryCap::print(SnortConfig::log_verbose(), false);
     timing_stats();
 
     // FIXIT-L can do flag saving with RAII (much cleaner)
@@ -274,12 +303,13 @@ void PrintStatistics()
 //-------------------------------------------------------------------------
 
 void sum_stats(
-    PegCount* gpegs, PegCount* tpegs, unsigned n)
+    PegCount* gpegs, PegCount* tpegs, unsigned n, bool dump_stats)
 {
     for ( unsigned i = 0; i < n; ++i )
     {
         gpegs[i] += tpegs[i];
-        tpegs[i] = 0;
+        if(!dump_stats)
+            tpegs[i] = 0;
     }
 }
 

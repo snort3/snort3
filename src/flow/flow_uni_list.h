@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -54,7 +54,9 @@ public:
 
     bool unlink_uni(snort::Flow* flow)
     {
-        if ( !flow->next )
+        // FIXIT-H: Checking flow->prev is a defensive fix but doesn't resolve the
+        // root cause of how next and prev could be different.
+        if ( !flow->next or !flow->prev )
             return false;
 
         flow->next->prev = flow->prev;

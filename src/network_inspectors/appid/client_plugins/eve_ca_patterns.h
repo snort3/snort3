@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -48,6 +48,7 @@ public:
     void add_eve_ca_pattern(AppId, const std::string&, uint8_t, const std::string&);
     void finalize_patterns();
     void reload_patterns();
+    unsigned get_pattern_count();
 
     const EveCaPatternList& get_eve_ca_load_list() const { return eve_ca_load_list; }
 

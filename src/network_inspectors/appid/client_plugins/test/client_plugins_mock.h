@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -28,10 +28,10 @@ void WarningMessage(const char*,...) { }
 // Stubs for search_tool.cc
 SearchTool::SearchTool(bool) { }
 SearchTool::~SearchTool() = default;
-void SearchTool::add(const char*, unsigned, int, bool) { }
-void SearchTool::add(const char*, unsigned, void*, bool) { }
-void SearchTool::add(const uint8_t*, unsigned, int, bool) { }
-void SearchTool::add(const uint8_t*, unsigned, void*, bool) { }
+void SearchTool::add(const char*, unsigned, int, bool, bool) { }
+void SearchTool::add(const char*, unsigned, void*, bool, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, int, bool, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, void*, bool, bool) { }
 void SearchTool::prep() { }
 void SearchTool::reload() { }
 }

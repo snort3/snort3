@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -25,7 +25,9 @@
 
 #include "tcp_stream_session.h"
 
-#include "log/messages.h"
+#include "framework/data_bus.h"
+#include "pub_sub/stream_event_ids.h"
+#include "stream/stream.h"
 #include "stream/tcp/tcp_ha.h"
 
 using namespace snort;
@@ -54,55 +56,11 @@ void TcpStreamSession::init_new_tcp_session(TcpSegmentDescriptor& tsd)
     lws_init = true;
 }
 
-void TcpStreamSession::update_session_on_syn_ack()
-{
-    /* If session is already marked as established */
-    if ( !(flow->session_state & STREAM_STATE_ESTABLISHED) )
-    {
-        /* SYN-ACK from server */
-        if (flow->session_state != STREAM_STATE_NONE)
-        {
-            flow->session_state |= STREAM_STATE_SYN_ACK;
-            update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
-        }
-    }
-}
-
-void TcpStreamSession::update_session_on_ack()
-{
-    /* If session is already marked as established */
-    if ( !(flow->session_state & STREAM_STATE_ESTABLISHED) )
-    {
-        if ( flow->session_state & STREAM_STATE_SYN_ACK )
-        {
-            flow->session_state |= STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED;
-            update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
-        }
-    }
-}
-
 void TcpStreamSession::update_session_on_server_packet(TcpSegmentDescriptor& tsd)
 {
     flow->set_session_flags(SSNFLAG_SEEN_SERVER);
     tsd.set_talker(server);
     tsd.set_listener(client);
-
-    /* If we picked this guy up midstream, finish the initialization */
-    if ( !(flow->session_state & STREAM_STATE_ESTABLISHED)
-        && (flow->session_state & STREAM_STATE_MIDSTREAM) )
-    {
-        if ( tsd.get_tcph()->are_flags_set(TH_ECE)
-             && (flow->get_session_flags() & SSNFLAG_ECN_CLIENT_QUERY) )
-            flow->set_session_flags(SSNFLAG_ECN_SERVER_REPLY);
-
-        if ( flow->get_session_flags() & SSNFLAG_SEEN_CLIENT )
-        {
-            // should TCP state go to established too?
-            flow->session_state |= STREAM_STATE_ESTABLISHED;
-            flow->set_session_flags(SSNFLAG_ESTABLISHED);
-            update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
-        }
-    }
 
     if ( !flow->inner_server_ttl && !tsd.is_meta_ack_packet() )
         flow->set_ttl(tsd.get_pkt(), false);
@@ -114,17 +72,6 @@ void TcpStreamSession::update_session_on_client_packet(TcpSegmentDescriptor& tsd
     flow->set_session_flags(SSNFLAG_SEEN_CLIENT);
     tsd.set_talker(client);
     tsd.set_listener(server);
-
-    if ( !( flow->session_state & STREAM_STATE_ESTABLISHED )
-        && ( flow->session_state & STREAM_STATE_MIDSTREAM ) )
-    {
-        /* Midstream and seen server. */
-        if ( flow->get_session_flags() & SSNFLAG_SEEN_SERVER )
-        {
-            flow->session_state |= STREAM_STATE_ESTABLISHED;
-            flow->set_session_flags(SSNFLAG_ESTABLISHED);
-        }
-    }
 
     if ( !flow->inner_client_ttl && !tsd.is_meta_ack_packet() )
         flow->set_ttl(tsd.get_pkt(), true);
@@ -392,4 +339,71 @@ StreamSplitter* TcpStreamSession::get_splitter(bool to_server)
 
 void TcpStreamSession::start_proxy()
 { tcp_config->policy = StreamPolicy::OS_PROXY; }
+
+void TcpStreamSession::set_established(const TcpSegmentDescriptor& tsd)
+{
+    update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
+    flow->session_state |= STREAM_STATE_ESTABLISHED;
+    if (SSNFLAG_ESTABLISHED != (SSNFLAG_ESTABLISHED & flow->get_session_flags()))
+    {
+        flow->set_session_flags(SSNFLAG_ESTABLISHED);
+        // Only send 1 event
+        if (SSNFLAG_TCP_PSEUDO_EST != (SSNFLAG_TCP_PSEUDO_EST & flow->get_session_flags()))
+            DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_ESTABLISHED, tsd.get_pkt());
+    }
+}
+
+void TcpStreamSession::set_pseudo_established(Packet* p)
+{
+    p->flow->ssn_state.session_flags |= SSNFLAG_TCP_PSEUDO_EST;
+    DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_ESTABLISHED, p);
+}
+
+bool TcpStreamSession::check_for_one_sided_session(Packet* p)
+{
+    Flow& flow = *p->flow;
+    if ( 0 == ( (SSNFLAG_ESTABLISHED | SSNFLAG_TCP_PSEUDO_EST) & flow.ssn_state.session_flags )
+        && p->is_from_client_originally() )
+    {
+        uint64_t initiator_packets;
+        uint64_t responder_packets;
+        if (flow.flags.client_initiated)
+        {
+            initiator_packets = flow.flowstats.client_pkts;
+            responder_packets = flow.flowstats.server_pkts;
+        }
+        else
+        {
+            initiator_packets = flow.flowstats.server_pkts;
+            responder_packets = flow.flowstats.client_pkts;
+        }
+
+        if ( !responder_packets )
+        {
+            // handle case where traffic is only in one direction, but the sequence numbers
+            // are changing indicating an asynchronous session
+            uint32_t watermark = p->ptrs.tcph->seq() + p->ptrs.tcph->ack();
+            if ( 1 == initiator_packets )
+                initiator_watermark = watermark;
+            else if ( initiator_watermark != watermark )
+            {
+                set_pseudo_established(p);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void TcpStreamSession::check_for_pseudo_established(Packet* p)
+{
+    Flow& flow = *p->flow;
+    if ( 0 == ( (SSNFLAG_ESTABLISHED | SSNFLAG_TCP_PSEUDO_EST) & flow.ssn_state.session_flags ) )
+    {
+        if ( check_for_one_sided_session(p) )
+            return;
+        if ( 0 < flow.flowstats.client_pkts && 0 < flow.flowstats.server_pkts )
+            set_pseudo_established(p);
+    }
+}
 

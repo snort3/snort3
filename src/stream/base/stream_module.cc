@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -84,6 +84,9 @@ static const Parameter s_params[] =
 
     { "max_flows", Parameter::PT_INT, "2:max32", "476288",
       "maximum simultaneous flows tracked before pruning" },
+
+    { "prune_flows", Parameter::PT_INT, "1:max32", "10",
+      "maximum flows to prune at one time" },
 
     { "pruning_timeout", Parameter::PT_INT, "1:max32", "30",
       "minimum inactive time before being eligible for pruning" },
@@ -178,6 +181,11 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
         config.flow_cache_cfg.max_flows = v.get_uint32();
         return true;
     }
+    else if ( v.is("prune_flows") )
+    {
+        config.flow_cache_cfg.prune_flows = v.get_uint32();
+        return true;
+    }
     else if ( v.is("pruning_timeout") )
     {
         config.flow_cache_cfg.pruning_timeout = v.get_uint32();
@@ -225,17 +233,21 @@ bool StreamModule::end(const char* fqn, int, SnortConfig* sc)
     return true;
 }
 
-void StreamModule::prep_counts()
+void StreamModule::prep_counts(bool)
 { base_prep(); }
 
-void StreamModule::sum_stats(bool)
-{ base_sum(); }
-
-void StreamModule::show_stats()
-{ base_stats(); }
+void StreamModule::sum_stats(bool dump_stats)
+{
+    Module::sum_stats(dump_stats);
+    if(!dump_stats)
+        base_reset();
+}
 
 void StreamModule::reset_stats()
-{ base_reset(); }
+{
+    base_reset();
+    Module::reset_stats();
+}
 
 // Stream handler to adjust allocated resources as needed on a config reload
 bool StreamReloadResourceManager::initialize(const StreamModuleConfig& config_)
@@ -343,6 +355,7 @@ void StreamModuleConfig::show() const
     ConfigLogger::log_value("max_flows", flow_cache_cfg.max_flows);
     ConfigLogger::log_value("max_aux_ip", SnortConfig::get_conf()->max_aux_ip);
     ConfigLogger::log_value("pruning_timeout", flow_cache_cfg.pruning_timeout);
+    ConfigLogger::log_value("prune_flows", flow_cache_cfg.prune_flows);
 
     for (int i = to_utype(PktType::IP); i < to_utype(PktType::PDU); ++i)
     {

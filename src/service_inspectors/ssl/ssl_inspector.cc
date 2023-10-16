@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -37,12 +37,15 @@
 #include "protocols/ssl.h"
 #include "pub_sub/finalize_packet_event.h"
 #include "pub_sub/opportunistic_tls_event.h"
+#include "pub_sub/ssl_events.h"
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
 #include "trace/trace_api.h"
 
 #include "ssl_module.h"
 #include "ssl_splitter.h"
+
+#include "utils/util.h"
 
 using namespace snort;
 
@@ -55,6 +58,8 @@ using namespace snort;
 
 THREAD_LOCAL ProfileStats sslPerfStats;
 THREAD_LOCAL SslStats sslstats;
+
+static unsigned pub_id = 0;
 
 const PegInfo ssl_peg_names[] =
 {
@@ -303,8 +308,23 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
 
     uint8_t heartbleed_type = 0;
     uint32_t info_flags = 0;
+    SSLV3ClientHelloData client_hello_data;
+    SSLV3ServerCertData server_cert_data;
     uint32_t new_flags = SSL_decode(p->data, (int)p->dsize, p->packet_flags, sd->ssn_flags,
-        &heartbleed_type, &(sd->partial_rec_len[dir+index]), config->max_heartbeat_len, &info_flags);
+        &heartbleed_type, &(sd->partial_rec_len[dir+index]), config->max_heartbeat_len, &info_flags, &client_hello_data,
+        &server_cert_data);
+
+    if (client_hello_data.host_name != nullptr)
+    {
+        SslClientHelloEvent event(client_hello_data.host_name, p);
+        DataBus::publish(pub_id, SslEventIds::CHELLO_SERVER_NAME, event);
+    }
+
+    if (server_cert_data.common_name != nullptr)
+    {
+        SslServerCommonNameEvent event(server_cert_data.common_name, p);
+        DataBus::publish(pub_id, SslEventIds::SERVER_COMMON_NAME, event);
+    }
 
     if (heartbleed_type & SSL_HEARTBLEED_REQUEST)
     {
@@ -488,8 +508,10 @@ void Ssl::eval(Packet* p)
 
 bool Ssl::configure(SnortConfig*)
 {
-    DataBus::subscribe(FINALIZE_PACKET_EVENT, new SslFinalizePacketHandler());
-    DataBus::subscribe(OPPORTUNISTIC_TLS_EVENT, new SslStartTlsEventtHandler());
+    pub_id = DataBus::get_id(ssl_pub_key);
+
+    DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::FINALIZE_PACKET, new SslFinalizePacketHandler());
+    DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::OPPORTUNISTIC_TLS, new SslStartTlsEventtHandler());
     return true;
 }
 

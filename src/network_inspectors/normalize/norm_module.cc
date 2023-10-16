@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2010-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -375,7 +375,7 @@ const PegInfo* NormalizeModule::get_pegs() const
         p++;
     }
     test_pegs.emplace_back(*p);
-    
+
     return &test_pegs[0];
 }
 

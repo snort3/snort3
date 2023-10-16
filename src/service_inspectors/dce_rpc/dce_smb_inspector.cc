@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -67,6 +67,8 @@ void Dce2Smb::eval(Packet* p)
 
     assert(p->has_tcp_data() || p->has_udp_quic_data());
     assert(p->flow);
+
+    reset_using_rpkt();
 
     Dce2SmbFlowData* smb_flowdata =
         (Dce2SmbFlowData*)p->flow->get_flow_data(Dce2SmbFlowData::inspector_id);

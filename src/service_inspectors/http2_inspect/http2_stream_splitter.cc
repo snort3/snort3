@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -56,7 +56,7 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
     if (session_data == nullptr)
     {
         AssistantGadgetEvent event(pkt, "http");
-        DataBus::publish(FLOW_ASSISTANT_GADGET_EVENT, event, flow);
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_ASSISTANT_GADGET, event, flow);
         if (flow->assistant_gadget == nullptr)
         {
             // http_inspect is not configured

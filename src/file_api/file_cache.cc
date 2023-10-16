@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -122,6 +122,43 @@ void FileCache::set_max_files(int64_t max)
     fileHash->set_max_nodes(max_files);
 }
 
+FileContext* FileCache::find_add(const FileHashKey& hashKey, int64_t timeout)
+{
+
+    if ( !fileHash->get_num_nodes() )
+        return nullptr;
+
+    HashNode* hash_node = fileHash->find_node(&hashKey);
+    if ( !hash_node )
+        return nullptr;
+
+    FileNode* node = (FileNode*)hash_node->data;
+    if ( !node )
+    {
+        fileHash->release_node(hash_node);
+        return nullptr;
+    }
+
+    struct timeval now;
+    packet_gettimeofday(&now);
+
+    if ( timercmp(&node->cache_expire_time, &now, <) )
+    {
+        fileHash->release_node(hash_node);
+        return nullptr;
+    }
+
+    struct timeval next_expire_time;
+    struct timeval time_to_add = { static_cast<time_t>(timeout), 0 };
+    timeradd(&now, &time_to_add, &next_expire_time);
+
+    //  Refresh the timer on the cache.
+    if (timercmp(&node->cache_expire_time, &next_expire_time, <))
+        node->cache_expire_time = next_expire_time;
+
+    return node->file;
+}
+
 FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout)
 {
     FileNode new_node;
@@ -141,21 +178,32 @@ FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout)
 
     std::lock_guard<std::mutex> lock(cache_mutex);
 
-    if (fileHash->insert((void*)&hashKey, &new_node) != HASH_OK)
+    FileContext* file = find_add(hashKey, timeout);
+
+    if (!file) {
+        if (fileHash->insert((void*)&hashKey, &new_node) != HASH_OK)
+        {
+            /* Uh, shouldn't get here...
+             * There is already a node or couldn't alloc space
+             * for key.  This means bigger problems, but fail
+             * gracefully.
+             */
+            FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, GET_CURRENT_PACKET,
+                "add:Insert failed in file cache, returning\n");
+            file_counts.cache_add_fails++;
+            delete new_node.file;
+            return nullptr;
+        }
+        return new_node.file;
+    }
+    else
     {
-        /* Uh, shouldn't get here...
-         * There is already a node or couldn't alloc space
-         * for key.  This means bigger problems, but fail
-         * gracefully.
-         */
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, GET_CURRENT_PACKET,
-            "add:Insert failed in file cache, returning\n"); 
+            "add:file already found in file cache, returning\n");
         file_counts.cache_add_fails++;
         delete new_node.file;
-        return nullptr;
+        return file;
     }
-
-    return new_node.file;
 }
 
 FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout)
@@ -269,8 +317,10 @@ int FileCache::store_verdict(Flow* flow, FileInfo* file, int64_t timeout)
         {
             if (file->get_file_data() and !file_got->get_file_data())
             {
+                file_got->user_file_data_mutex.lock();
                 file_got->set_file_data(file->get_file_data());
                 file->set_file_data(nullptr);
+                file_got->user_file_data_mutex.unlock();
             }
         }
         else
@@ -385,7 +435,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
 
                     FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
                         "File signature lookup adding packet to retry queue"
-                        "Resume=%d, Waited %" PRIi64 "ms.\n", resume,	
+                        "Resume=%d, Waited %" PRIi64 "ms.\n", resume,
                         time_elapsed_ms(&now, &file_ctx->pending_expire_time, lookup_timeout));
                 }
             }
@@ -393,6 +443,11 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
             act->set_delayed_action(Active::ACT_RETRY, true);
             FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
                 "apply_verdict:FILE_VERDICT_PENDING with action retry\n");
+            FileFlows *files = FileFlows::get_file_flows(flow);
+            if (files)
+            {
+               files->add_pending_file(file_ctx->get_file_id());
+            }
 
             if (resume)
                 policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
@@ -402,15 +457,10 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
                     "apply_verdict:FILE_VERDICT_PENDING with action drop\n");
                 act->set_delayed_action(Active::ACT_DROP, true);
             }
-            else
+            else if (files)
             {
-                FileFlows* files = FileFlows::get_file_flows(flow);
-                if (files)
-                {
-                    files->add_pending_file(file_ctx->get_file_id());
-                    FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
-                        "apply_verdict:Adding file id to pending\n");
-                }
+                FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+                    "apply_verdict:Adding file id to pending\n");
             }
         }
         return true;

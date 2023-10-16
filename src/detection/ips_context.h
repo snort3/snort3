@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -156,6 +156,9 @@ public:
     SF_EVENTQ* equeue;
 
     DataPointer file_data = DataPointer(nullptr, 0);
+    uint64_t file_data_id = 0;
+    bool file_data_drop_sse = false;
+    bool file_data_no_sse = false;
     DataBuffer alt_data = {};
     unsigned file_pos = 0;
     bool file_type_process = false;

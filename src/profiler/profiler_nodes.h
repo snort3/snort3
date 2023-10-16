@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -47,7 +47,7 @@ public:
     { return bool(getter); }
 
     // thread local call
-    void accumulate();
+    void accumulate(snort::ProfilerType = snort::PROFILER_TYPE_BOTH);
 
     const snort::ProfileStats& get_stats() const
     { return stats; }
@@ -55,8 +55,7 @@ public:
     void set_stats(const snort::ProfileStats& ps)
     { stats = ps; }
 
-    void reset()
-    { stats.reset(); }
+    void reset(snort::ProfilerType = snort::PROFILER_TYPE_BOTH);
 
     void add_child(ProfilerNode* node)
     { children.emplace_back(node); }
@@ -91,9 +90,10 @@ public:
 
     void register_node(const std::string&, const char*, snort::Module*);
 
-    void accumulate_nodes();
+    void accumulate_nodes(snort::ProfilerType = snort::PROFILER_TYPE_BOTH);
     void accumulate_flex();
-    void reset_nodes();
+    void clear_flex();
+    void reset_nodes(snort::ProfilerType = snort::PROFILER_TYPE_BOTH);
 
     const ProfilerNode& get_root();
 

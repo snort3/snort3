@@ -1,0 +1,12 @@
+HI also supports defining custom "x-forwarded-for" type headers. In a multi-vendor world, it is
+quite possible that the header name carrying the original client IP could be vendor-specific. This
+is due to the absence of standardization which would otherwise standardize the header name. In such
+a scenario, it is important to provide a configuration with which such x-forwarded-for type headers
+can be introduced to HI. The headers can be introduced with the xff_headers configuration. The
+default value of this configuration is "x-forwarded-for true-client-ip". The default definition
+introduces the two commonly known "x-forwarded-for" type headers and is preferred in the same order
+by the inspector as they are defined, e.g "x-forwarded-for" will be preferred than "true-client-ip"
+if both headers are present in the stream. Every HTTP Header is mapped to an ID internally. The
+custom headers are mapped to a dynamically generated ID and the mapping is appended at the end
+of the mapping of the known HTTP headers. Every HI instance can have its own list of custom
+headers and thus an instance of HTTP header mapping list is also associated with an HI instance.

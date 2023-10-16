@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -101,20 +101,48 @@ static const Parameter s_pktnum[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const Parameter s_watchdog[] =
+{
+    { "timer", Parameter::PT_INT, "0:max32", nullptr,
+      "timer for watchdog" },
+    { "min_thread_count", Parameter::PT_INT, "0:max32", nullptr,
+      "min thread count for watchdog" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter main_log_command_param[] =
+{
+    { "command", Parameter::PT_STRING, nullptr, nullptr, "<command> to update logging" },
+    { "logging", Parameter::PT_BOOL, nullptr, nullptr, " true|false, enable or disable <command> logging" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter reset_stat_param[] =
+{
+	{ "type", Parameter::PT_STRING, nullptr, nullptr, "possible type can be: daq|module|appid|file_id|snort|ha|all." },
+	{ nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Command snort_cmds[] =
 {
+    { "set_watchdog_params", main_set_watchdog_params, s_watchdog, "set watchdog parameters" },
     { "show_plugins", main_dump_plugins, nullptr, "show available plugins" },
 
     { "delete_inspector", main_delete_inspector, s_delete,
       "delete an inspector from the default policy" },
 
     { "dump_stats", main_dump_stats, nullptr, "show summary statistics" },
-    { "reset_stats", main_reset_stats, nullptr, "clear summary statistics" },
+    { "dump_heap_stats", main_dump_heap_stats, nullptr, "show heap statistics" },
+    { "reset_stats", main_reset_stats, reset_stat_param, "clear summary statistics. "
+      "Type can be: daq|module|appid|file_id|snort|ha|all. reset_stats() without a parameter clears all statistics."},
     { "rotate_stats", main_rotate_stats, nullptr, "roll perfmonitor log files" },
     { "reload_config", main_reload_config, s_reload_w_path, "load new configuration" },
     { "reload_policy", main_reload_policy, s_reload, "reload part or all of the default policy" },
     { "reload_daq", main_reload_daq, nullptr, "reload daq module" },
     { "reload_hosts", main_reload_hosts, s_reload, "load a new hosts table" },
+    { "log_command", main_log_command,main_log_command_param, "enable or disable command logging"},
+    { "show_config_generation", main_show_config_generation, nullptr, "show loaded configuration ID"},
 
     // FIXIT-M rewrite trough to permit updates on the fly
     //{ "process", main_process, nullptr, "process given pcap" },

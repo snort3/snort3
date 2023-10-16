@@ -84,12 +84,14 @@ ftp_server = default_ftp_server
 ftp_client = { }
 ftp_data = { }
 
-http_inspect = default_http_inspect
+http_inspect = { }
 http2_inspect = { }
 
 -- see file_magic.rules for file id rules
 file_id = { rules_file = 'file_magic.rules' }
 file_policy = { }
+
+js_norm = default_js_norm
 
 -- the following require additional configuration to be fully effective:
 
@@ -121,12 +123,11 @@ binder =
     -- port bindings required for protocols without wizard support
     { when = { proto = 'udp', ports = '53', role='server' },  use = { type = 'dns' } },
     { when = { proto = 'tcp', ports = '53', role='server' },  use = { type = 'dns' } },
-    { when = { proto = 'tcp', ports = '102', role = 'server' }, use = { type = 's7commplus' } },
     { when = { proto = 'tcp', ports = '111', role='server' }, use = { type = 'rpc_decode' } },
     { when = { proto = 'tcp', ports = '502', role='server' }, use = { type = 'modbus' } },
     { when = { proto = 'tcp', ports = '2123 2152 3386', role='server' }, use = { type = 'gtp_inspect' } },
     { when = { proto = 'tcp', ports = '2404', role='server' }, use = { type = 'iec104' } },
-    { when = { proto = 'udp', ports = '22222', role = 'server' }, use = { type = 'cip' } },
+    { when = { proto = 'udp', ports = '2222', role = 'server' }, use = { type = 'cip' } },
     { when = { proto = 'tcp', ports = '44818', role = 'server' }, use = { type = 'cip' } },
 
     { when = { proto = 'tcp', service = 'dcerpc' },  use = { type = 'dce_tcp' } },

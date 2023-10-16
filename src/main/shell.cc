@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -27,7 +27,24 @@
 
 #include <cassert>
 #include <fstream>
+#include <openssl/crypto.h>
+#include <pcap.h>
+#include <pcre.h>
 #include <stdexcept>
+#include <vector>
+#include <zlib.h>
+
+#ifdef HAVE_HYPERSCAN
+#include <hs_compile.h>
+#endif
+
+#ifdef HAVE_LZMA
+#include <lzma.h>
+#endif
+
+extern "C" {
+#include <daq.h>
+}
 
 #include "dump_config/config_output.h"
 #include "log/messages.h"
@@ -50,6 +67,9 @@ using namespace std;
 //-------------------------------------------------------------------------
 
 static const char* versions[] = {
+#ifdef BUILD
+    "SNORT_BUILD",
+#endif
     "SNORT_VERSION",
     "SNORT_MAJOR_VERSION",
     "SNORT_MINOR_VERSION",
@@ -58,19 +78,43 @@ static const char* versions[] = {
     nullptr
 };
 
+static const char* dep_versions[] = {
+    "SNORT_DEP_VERSIONS",
+    "DAQ",
+    "LUAJIT",
+    "OPENSSL",
+    "LIBPCAP",
+    "PCRE",
+    "ZLIB",
+#ifdef HAVE_HYPERSCAN
+    "HYPERSCAN",
+#endif
+#ifdef HAVE_LZMA
+    "LZMA",
+#endif
+    nullptr
+};
+
 static void install_version_strings(lua_State* L)
 {
     assert(versions[0]);
 
+    const char** var_name = versions;
+
 #ifdef BUILD
-    lua_pushstring(L, VERSION "-" BUILD);
+    const char* build = BUILD;
+    lua_pushstring(L, build);
+    lua_setglobal(L, *var_name);
+    ++var_name;
+    lua_pushstring(L, (std::string(VERSION "-") + build).c_str());
 #else
     lua_pushstring(L, VERSION);
 #endif
-    lua_setglobal(L, versions[0]);
+    lua_setglobal(L, *var_name);
+    ++var_name;
 
     std::istringstream vs(VERSION);
-    for ( int i = 1 ; versions[i] ; i++ )
+    while (*var_name)
     {
         std::string tmp;
         int num = 0;
@@ -80,8 +124,49 @@ static void install_version_strings(lua_State* L)
             num = stoi(tmp);
 
         lua_pushinteger(L, num);
-        lua_setglobal(L, versions[i]);
+        lua_setglobal(L, *var_name);
+        ++var_name;
     }
+}
+
+static void install_dependencies_strings(Shell* sh, lua_State* L)
+{
+    assert(dep_versions[0]);
+
+    std::vector<const char*> vs;
+    const char* ljv = LUAJIT_VERSION;
+    const char* osv = OpenSSL_version(SSLEAY_VERSION);
+    const char* lpv = pcap_lib_version();
+
+    while (*ljv and !isdigit(*ljv))
+        ++ljv;
+    while (*osv and !isdigit(*osv))
+        ++osv;
+    while (*lpv and !isdigit(*lpv))
+        ++lpv;
+
+    vs.push_back(daq_version_string());
+    vs.push_back(ljv);
+    vs.push_back(osv);
+    vs.push_back(lpv);
+    vs.push_back(pcre_version());
+    vs.push_back(zlib_version);
+#ifdef HAVE_HYPERSCAN
+    vs.push_back(hs_version());
+#endif
+#ifdef HAVE_LZMA
+    vs.push_back(lzma_version_string());
+#endif
+
+    lua_createtable(L, 0, vs.size());
+    for (int i = 0; dep_versions[i + 1];)
+    {
+        lua_pushstring(L, vs[i]);
+        lua_setfield(L, -2, dep_versions[++i]);
+    }
+    lua_setglobal(L, dep_versions[0]);
+
+    sh->allowlist_append(dep_versions[0], false);
 }
 
 string Shell::fatal;
@@ -443,6 +528,7 @@ Shell::Shell(const char* s, bool load_defaults) :
     loaded = false;
     load_string(lua_bootstrap, false, "bootstrap");
     install_version_strings(lua);
+    install_dependencies_strings(this, lua);
     Shell** shell_ud = static_cast<Shell**>(lua_newuserdata(lua, sizeof(Shell*)));
     *(shell_ud) = this;
     lua_setglobal(lua, lua_shell_id);
@@ -568,7 +654,7 @@ void Shell::install(const char* name, const luaL_Reg* reg)
     luaL_register(lua, name, reg);
 }
 
-void Shell::set_network_policy_user_id(lua_State* L, uint32_t user_id)
+void Shell::set_network_policy_user_id(lua_State* L, uint64_t user_id)
 {
     lua_getglobal(L, lua_shell_id);
     Shell* shell = *static_cast<Shell**>(lua_touserdata(L, -1));
@@ -578,7 +664,7 @@ void Shell::set_network_policy_user_id(lua_State* L, uint32_t user_id)
 
 void Shell::set_user_network_policy()
 {
-    if (UNDEFINED_USER_POLICY_ID > network_user_policy_id)
+    if (UNDEFINED_NETWORK_USER_POLICY_ID > network_user_policy_id)
     {
         NetworkPolicy* np =
             SnortConfig::get_conf()->policy_map->get_user_network(network_user_policy_id);

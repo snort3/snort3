@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -34,8 +34,8 @@ public:
     HttpMsgTrailer(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
         HttpCommon::SourceId source_id_, bool buf_owner, snort::Flow* flow_,
         const HttpParaList* params_);
-    HttpEnums::InspectSection get_inspection_section() const override
-        { return HttpEnums::IS_TRAILER; }
+    snort::PduSection get_inspection_section() const override
+        { return snort::PS_TRAILER; }
     bool detection_required() const override { return (msg_text.length() > 0); }
     void gen_events() override;
     void update_flow() override;

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -170,8 +170,8 @@ LuaDetectorManager::~LuaDetectorManager()
 
     if (L)
     {
-        if (init(L))
-            free_chp_glossary();
+        if (init(L) and !ignore_chp_cleanup)
+            free_current_chp_glossary();
 
         for ( auto& lua_object : allocated_objects )
         {
@@ -240,6 +240,11 @@ void LuaDetectorManager::init_thread_manager(const SnortConfig* sc, const AppIdC
     lua_detector_mgr->activate_lua_detectors(sc);
     if (ctxt.config.list_odp_detectors)
         lua_detector_mgr->list_lua_detectors();
+}
+
+void LuaDetectorManager::cleanup_after_swap()
+{
+    free_old_chp_glossary();
 }
 
 void LuaDetectorManager::clear_lua_detector_mgrs()

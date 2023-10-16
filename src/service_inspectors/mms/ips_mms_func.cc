@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -148,7 +148,7 @@ static bool get_func(const char* s, long& n)
 
     for (size_t i = 0; i < max; ++i)
     {
-        // return true when the passed string matches a known function 
+        // return true when the passed string matches a known function
         if (strcmp(s, mms_func_map[i].name) == 0)
         {
             n = mms_func_map[i].func;

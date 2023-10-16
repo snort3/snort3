@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -23,6 +23,8 @@
 #include "config.h"
 #endif
 
+#include "netflow.h"
+
 #include <fstream>
 #include <mutex>
 #include <sys/stat.h>
@@ -32,10 +34,9 @@
 #include "log/messages.h"
 #include "managers/module_manager.h"
 #include "main/reload_tuner.h"
-#include "profiler/profiler.h"
-#include "protocols/packet.h"
 #include "pub_sub/netflow_event.h"
 #include "src/utils/endian.h"
+#include "time/packet_time.h"
 #include "utils/util.h"
 
 #include "netflow_cache.cc"
@@ -43,40 +44,7 @@
 
 using namespace snort;
 
-THREAD_LOCAL NetFlowStats netflow_stats;
-THREAD_LOCAL ProfileStats netflow_perf_stats;
-
-// Used to ensure we fully populate the record; can't rely on the actual values being zero
-struct RecordStatus
-{
-    bool src = false;
-    bool dst = false;
-    bool first = false;
-    bool last = false;
-    bool src_tos = false;
-    bool dst_tos = false;
-    bool bytes_sent = false;
-    bool packets_sent = false;
-};
-
-// -----------------------------------------------------------------------------
-// static variables
-// -----------------------------------------------------------------------------
-
-// temporary cache required to dump the output
-typedef std::pair<snort::SfIp, NetFlowSessionRecord> IpRecord;
-typedef std::vector<IpRecord> DumpCache;
-static DumpCache* dump_cache = nullptr;
-
-// compare struct to use with ip sort
-struct IpCompare
-{
-    bool operator()(const IpRecord& a, const IpRecord& b)
-    { return a.first.less_than(b.first); }
-};
-
-static std::unordered_map<int, int>* udp_srv_map = nullptr;
-static std::unordered_map<int, int>* tcp_srv_map = nullptr;
+static unsigned pub_id = 0;
 
 // -----------------------------------------------------------------------------
 // static functions
@@ -152,8 +120,17 @@ static void publish_netflow_event(const Packet* p, const NetFlowRule* match, Net
         }
     }
 
+
+    // Certain implementations of NetFlow don't use FIRST_PKT_SECOND and
+    // LAST_PKT_SECOND - if these aren't set, assume the current wire pkt time
+    if (!record.first_pkt_second or !record.last_pkt_second)
+    {
+        record.first_pkt_second = packet_time();
+        record.last_pkt_second = packet_time();
+    }
+
     NetFlowEvent event(p, &record, match->create_host, match->create_service, swapped, serviceID);
-    DataBus::publish(NETFLOW_EVENT, event);
+    DataBus::publish(pub_id, NetFlowEventIds::DATA, event);
 }
 
 static bool version_9_record_update(const unsigned char* data, uint32_t unix_secs,
@@ -259,10 +236,10 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_LAST_PKT:
 
-            if( field_length != sizeof(record.last_pkt_second) )
+            if (field_length != sizeof(uint32_t))
                 return false;
 
-            last_pkt_time = ntohl(*(const time_t*)data)/1000;
+            last_pkt_time = ntohl(*(const uint32_t*)data)/1000;
             // last_pkt_time (LAST_SWITCHED) is defined as the system uptime
             // at which the flow was seen. If this is >= to the current uptime
             // something has gone wrong - use the NetFlow header unix time instead.
@@ -280,10 +257,10 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 
         case NETFLOW_FIRST_PKT:
 
-            if( field_length != sizeof(record.first_pkt_second) )
+            if (field_length != sizeof(uint32_t))
                 return false;
 
-            first_pkt_time = ntohl(*(const time_t*)data)/1000;
+            first_pkt_time = ntohl(*(const uint32_t*)data)/1000;
             if (first_pkt_time >= sys_uptime)
                 record.first_pkt_second = unix_secs;
             else
@@ -413,6 +390,9 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
 static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
     const Packet* p, const NetFlowRules* p_rules)
 {
+    // Ensure this flow isn't implicitly trusted
+    p->flow->set_deferred_trust(NetFlowModule::module_id, true);
+
     NetFlow9Hdr header;
     const NetFlow9Hdr *pheader;
     const NetFlow9FlowSet *flowset;
@@ -633,6 +613,9 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
 static bool decode_netflow_v5(const unsigned char* data, uint16_t size,
     const Packet* p, const NetFlowRules* p_rules)
 {
+    // Ensure this flow isn't implicitly trusted
+    p->flow->set_deferred_trust(NetFlowModule::module_id, true);
+
     NetFlow5Hdr header;
     const NetFlow5Hdr *pheader;
     const NetFlow5RecordHdr *precord;
@@ -786,8 +769,15 @@ public:
     void tterm() override;
 
     void eval(snort::Packet*) override;
+    bool configure(SnortConfig*) override;
     void show(const snort::SnortConfig*) const override;
     void install_reload_handler(snort::SnortConfig*) override;
+
+    bool is_control_channel() const override
+    { return true; }
+
+    bool supports_no_ips() const override
+    { return true; }
 
 private:
     const NetFlowConfig *config;
@@ -850,6 +840,12 @@ static std::string to_string(const std::vector <int>& zones)
         }
     }
     return zs;
+}
+
+bool NetFlowInspector::configure(SnortConfig*)
+{
+    pub_id = DataBus::get_id(netflow_pub_key);
+    return true;
 }
 
 static void show_device(const NetFlowRule& d, bool is_exclude)
@@ -1050,6 +1046,8 @@ void NetFlowInspector::tterm()
     }
     delete netflow_cache;
     delete template_cache;
+    netflow_cache = nullptr;
+    template_cache = nullptr;
 }
 
 void NetFlowInspector::install_reload_handler(SnortConfig* sc)
@@ -1081,6 +1079,11 @@ static Inspector* netflow_ctor(Module* m)
 static void netflow_dtor(Inspector* p)
 { delete p; }
 
+static void netflow_inspector_pinit()
+{
+    NetFlowModule::init();
+}
+
 static const InspectApi netflow_api =
 {
     {
@@ -1099,7 +1102,7 @@ static const InspectApi netflow_api =
     PROTO_BIT__UDP,
     nullptr,    // buffers
     "netflow",  // service
-    nullptr,
+    netflow_inspector_pinit,
     nullptr,    //pterm
     nullptr,    // pre-config tinit
     nullptr,    // pre-config tterm

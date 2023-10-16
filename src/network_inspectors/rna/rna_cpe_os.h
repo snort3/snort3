@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -21,7 +21,7 @@
 #ifndef RNA_CPE_OS_H
 #define RNA_CPE_OS_H
 
-#define CPE_OS_INFO_EVENT "cpe_os_info_event"
+#include "pub_sub/external_event_ids.h"
 
 class SO_PUBLIC CpeOsInfoEvent : public snort::DataEvent
 {

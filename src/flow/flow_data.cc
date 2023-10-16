@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -28,7 +28,6 @@
 #include "framework/inspector.h"
 #include "main/snort_config.h"
 #include "managers/so_manager.h"
-#include "memory/memory_cap.h"
 
 using namespace snort;
 

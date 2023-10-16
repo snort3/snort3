@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -23,7 +23,9 @@
 
 #include "http2_flow_data.h"
 
+#include "main/snort_types.h"
 #include "service_inspectors/http_inspect/http_inspect.h"
+#include "service_inspectors/http_inspect/http_msg_section.h"
 #include "service_inspectors/http_inspect/http_test_manager.h"
 
 #include "http2_enum.h"
@@ -44,7 +46,7 @@ uint64_t Http2FlowData::instance_count = 0;
 #endif
 
 Http2FlowData::Http2FlowData(Flow* flow_) :
-    FlowData(inspector_id),
+    FlowData(inspector_id,(Inspector*)(flow_->assistant_gadget)),
     flow(flow_),
     hi((HttpInspect*)(flow->assistant_gadget)),
     hpack_decoder { Http2HpackDecoder(this, SRC_CLIENT, events[SRC_CLIENT],
@@ -97,6 +99,8 @@ Http2FlowData::~Http2FlowData()
         hi_ss[k]->go_away();
         delete[] frame_data[k];
     }
+
+    flow->stream_intf = nullptr;
 }
 
 HttpFlowData* Http2FlowData::get_hi_flow_data()
@@ -253,9 +257,7 @@ bool Http2FlowData::is_mid_frame() const
 
 FlowData* Http2FlowStreamIntf::get_stream_flow_data(const Flow* flow)
 {
-    Http2FlowData* h2i_flow_data = nullptr;
-
-    h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
     assert(h2i_flow_data);
 
     return h2i_flow_data->get_hi_flow_data();
@@ -263,27 +265,47 @@ FlowData* Http2FlowStreamIntf::get_stream_flow_data(const Flow* flow)
 
 void Http2FlowStreamIntf::set_stream_flow_data(Flow* flow, FlowData* flow_data)
 {
-    Http2FlowData* h2i_flow_data =
-        (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
     assert(h2i_flow_data);
+
     h2i_flow_data->set_hi_flow_data((HttpFlowData*)flow_data);
 }
 
 void Http2FlowStreamIntf::get_stream_id(const Flow* flow, int64_t& stream_id)
 {
-    Http2FlowData* h2i_flow_data = nullptr;
-
-    h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
     assert(h2i_flow_data);
+
     stream_id = h2i_flow_data->get_processing_stream_id();
 }
 
 AppId Http2FlowStreamIntf::get_appid_from_stream(const Flow* flow)
 {
-    Http2FlowData* h2i_flow_data = nullptr;
-
-    h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+#ifdef NDEBUG
+    UNUSED(flow);
+#else
+    Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
     assert(h2i_flow_data);
+#endif
 
     return APP_ID_HTTP2;
+}
+
+void* Http2FlowStreamIntf::get_hi_msg_section(const Flow* flow)
+{
+    const Http2FlowData* const h2i_flow_data =
+        (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    HttpMsgSection* current_section = nullptr;
+    if (h2i_flow_data)
+        current_section = h2i_flow_data->get_hi_msg_section();
+    return current_section;
+}
+
+void Http2FlowStreamIntf::set_hi_msg_section(Flow* flow, void* section)
+{
+    Http2FlowData* h2i_flow_data =
+        (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    if (h2i_flow_data)
+        h2i_flow_data->set_hi_msg_section((HttpMsgSection*)section);
+
 }

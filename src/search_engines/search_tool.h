@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -40,11 +40,11 @@ public:
     SearchTool(bool multi_match = true);
     ~SearchTool();
 
-    void add(const char* pattern, unsigned len, int s_id, bool no_case = true);
-    void add(const char* pattern, unsigned len, void* s_context, bool no_case = true);
+    void add(const char* pattern, unsigned len, int s_id, bool no_case = true, bool literal = true);
+    void add(const char* pattern, unsigned len, void* s_context, bool no_case = true, bool literal = true);
 
-    void add(const uint8_t* pattern, unsigned len, int s_id, bool no_case = true);
-    void add(const uint8_t* pattern, unsigned len, void* s_context, bool no_case = true);
+    void add(const uint8_t* pattern, unsigned len, int s_id, bool no_case = true, bool literal = true);
+    void add(const uint8_t* pattern, unsigned len, void* s_context, bool no_case = true, bool literal = true);
 
     void prep();
     void reload();
@@ -57,7 +57,7 @@ public:
         bool confine = false, void* user_data = nullptr);
 
     int find_all(const char* s, unsigned s_len, MpseMatch,
-        bool confine = false, void* user_data = nullptr);
+        bool confine = false, void* user_data = nullptr, const SnortConfig* = nullptr);
 
 private:
     class MpseGroup* mpsegrp;

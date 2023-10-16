@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -48,8 +48,13 @@ public:
     GTP_Roptions ropts;
 };
 
-int get_message_type(int version, const char* name);
-int get_info_type(int version, const char* name);
+namespace snort
+{
+struct SnortConfig;
+}
+
+int get_message_type(int version, const char* name, snort::SnortConfig*);
+int get_info_type(int version, const char* name, snort::SnortConfig*);
 
 struct GTP_IEData* get_infos();
 

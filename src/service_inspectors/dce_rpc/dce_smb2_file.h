@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -50,7 +50,7 @@ public:
         file_id(file_idv), file_size(0), file_name_hash(0), file_name(nullptr),
         direction(FILE_DOWNLOAD), parent_tree(p_tree), session_id(sid)
     {
-	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
             "file tracker %" PRIu64 " created\n", file_id);
     }
 
@@ -65,6 +65,7 @@ public:
         std::lock_guard<std::mutex> guard(flow_state_mutex);
         return (flow_state[current_flow_key].pdu_state == DCE2_SMB_PDU_STATE__RAW_DATA);
     }
+
     void stop_accepting_raw_data_from(uint32_t);
 
     void set_direction(FileDirection dir) { direction = dir; }
@@ -76,6 +77,16 @@ public:
     std::unordered_map<uint32_t, tcp_flow_state, std::hash<uint32_t> > get_flow_state_map()
     {
         return flow_state;
+    }
+
+    uint32_t get_flow_key()
+    {
+        return file_flow_key;
+    }
+
+    void set_flow_key(uint32_t key)
+    {
+        file_flow_key = key;
     }
 
 private:
@@ -99,7 +110,7 @@ private:
 
 using Dce2Smb2FileTrackerPtr = std::shared_ptr<Dce2Smb2FileTracker>;
 using Dce2Smb2FileTrackerMap =
-    std::unordered_map<uint64_t, Dce2Smb2FileTrackerPtr, std::hash<uint64_t> >;
+        std::unordered_map<uint64_t, Dce2Smb2FileTrackerPtr, std::hash<uint64_t> >;
 
 #endif
 

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -83,6 +83,7 @@ struct SO_PUBLIC ExpectFlow
     snort::FlowData* get_flow_data(unsigned);
     static std::vector<ExpectFlow*>* get_expect_flows();
     static void reset_expect_flows();
+    static void handle_expected_flows(const snort::Packet*);
 };
 }
 
@@ -108,7 +109,7 @@ public:
     unsigned long get_realized() { return realized; }
     unsigned long get_prunes() { return prunes; }
     unsigned long get_overflows() { return overflows; }
-    void reset_stats() 
+    void reset_stats()
     {
         expects = 0;
         realized = 0;

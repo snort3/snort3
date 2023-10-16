@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -53,10 +53,10 @@ class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
 // Stubs for search_tool.cc
 SearchTool::~SearchTool() = default;
 // LCOV_EXCL_START
-void SearchTool::add(const char*, unsigned, int, bool) { }
-void SearchTool::add(const char*, unsigned, void*, bool) { }
-void SearchTool::add(const uint8_t*, unsigned, int, bool) { }
-void SearchTool::add(const uint8_t*, unsigned, void*, bool) { }
+void SearchTool::add(const char*, unsigned, int, bool, bool) { }
+void SearchTool::add(const char*, unsigned, void*, bool, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, int, bool, bool) { }
+void SearchTool::add(const uint8_t*, unsigned, void*, bool, bool) { }
 // LCOV_EXCL_STOP
 void SearchTool::prep() { }
 

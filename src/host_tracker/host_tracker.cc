@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -30,6 +30,7 @@
 
 #include "cache_allocator.cc"
 #include "host_cache.h"
+#include "host_cache_segmented.h"
 #include "host_tracker.h"
 
 using namespace snort;
@@ -43,11 +44,12 @@ THREAD_LOCAL struct HostTrackerStats host_tracker_stats;
 const uint8_t snort::zero_mac[MAC_SIZE] = {0, 0, 0, 0, 0, 0};
 
 
+
 HostTracker::HostTracker() : hops(-1)
 {
     last_seen = nat_count_start = (uint32_t) packet_time();
     last_event = -1;
-    visibility = host_cache.get_valid_id();
+    visibility = host_cache.get_valid_id(0);
 }
 
 void HostTracker::update_last_seen()
@@ -816,10 +818,8 @@ bool HostTracker::add_cpe_os_hash(uint32_t hash)
 
 bool HostTracker::set_visibility(bool v)
 {
-    // get_valid_id may use its own lock, so get this outside our lock
-    size_t container_id = host_cache.get_valid_id();
-
     std::lock_guard<std::mutex> lck(host_tracker_lock);
+    size_t container_id = host_cache.get_valid_id(cache_idx);
     size_t old_visibility = visibility;
 
     visibility = v ? container_id : HostCacheIp::invalid_id;
@@ -860,6 +860,7 @@ bool HostTracker::set_visibility(bool v)
         smb_fpids.clear();
         netbios_name.clear();
         cpe_fpids.clear();
+        host_type = HostType::HOST_TYPE_HOST;
     }
 
     return old_visibility == visibility;
@@ -868,7 +869,7 @@ bool HostTracker::set_visibility(bool v)
 bool HostTracker::is_visible() const
 {
     std::lock_guard<std::mutex> lck(host_tracker_lock);
-    return visibility == host_cache.get_valid_id();
+    return visibility == host_cache.get_valid_id(cache_idx);
 }
 
 
@@ -1105,6 +1106,28 @@ void HostTracker::remove_flows()
         rna_flow->clear_ht(*this);
     }
     flows.clear();
+}
+
+void HostTracker::update_cache_interface(uint8_t idx)
+{
+
+    if (idx == cache_idx and cache_interface == host_cache.seg_list[idx])
+        return;
+
+    std::lock_guard<std::mutex> lock(host_tracker_lock);
+    cache_idx = idx;
+    cache_interface = host_cache.seg_list[idx];
+    
+    update_allocator(macs, cache_interface);
+    update_allocator(network_protos, cache_interface);
+    update_allocator(xport_protos, cache_interface);
+    update_allocator(services, cache_interface);
+    update_allocator(clients, cache_interface);
+    update_allocator(ua_fps, cache_interface);
+    update_set_allocator(tcp_fpids, cache_interface);
+    update_set_allocator(udp_fpids, cache_interface);
+    update_set_allocator(smb_fpids, cache_interface);
+    update_set_allocator(cpe_fpids, cache_interface);
 }
 
 HostApplicationInfo::HostApplicationInfo(const char *ver, const char *ven)

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -56,16 +56,16 @@ HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
     get_related_sections();
 }
 
-void HttpMsgHeader::publish()
+void HttpMsgHeader::publish(unsigned pub_id)
 {
     const int64_t stream_id = session_data->get_hx_stream_id();
 
     HttpEvent http_header_event(this, session_data->for_httpx, stream_id);
 
-    const char* key = (source_id == SRC_CLIENT) ?
-        HTTP_REQUEST_HEADER_EVENT_KEY : HTTP_RESPONSE_HEADER_EVENT_KEY;
+    unsigned evid = (source_id == SRC_CLIENT) ?
+        HttpEventIds::REQUEST_HEADER : HttpEventIds::RESPONSE_HEADER;
 
-    DataBus::publish(key, http_header_event, flow);
+    DataBus::publish(pub_id, evid, http_header_event, flow);
 }
 
 const Field& HttpMsgHeader::get_true_ip()
@@ -122,6 +122,12 @@ const Field& HttpMsgHeader::get_true_ip_addr()
     addr_str[true_ip.length()] = '\0';
 
     SfIp tmp_sfip;
+
+    /* remove port number from ip address */
+    char* colon_port = strrchr((char*)addr_str, ':');
+    if (colon_port && (strpbrk((char*)addr_str, "[.")))
+        *colon_port = '\0';
+
     const SfIpRet status = tmp_sfip.set((char*)addr_str);
     delete[] addr_str;
     if (status != SFIP_SUCCESS)
@@ -556,6 +562,9 @@ void HttpMsgHeader::setup_file_processing()
     if (session_data->mime_state[source_id])
         return;
 
+    // Generate the unique file id for multi file processing and set ID for file_data buffer
+    set_multi_file_processing_id(get_transaction_id(), session_data->get_hx_stream_id());
+
     session_data->file_octets[source_id] = 0;
     const int64_t max_file_depth = FileService::get_max_file_depth();
     if (max_file_depth <= 0)
@@ -563,9 +572,6 @@ void HttpMsgHeader::setup_file_processing()
         session_data->file_depth_remaining[source_id] = 0;
         return;
     }
-
-    // Generate the unique file id for multi file processing
-    set_multi_file_processing_id(get_transaction_id(), session_data->get_hx_stream_id());
 
     session_data->file_depth_remaining[source_id] = max_file_depth;
     FileFlows* file_flows = FileFlows::get_file_flows(flow);

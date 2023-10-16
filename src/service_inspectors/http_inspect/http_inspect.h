@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -25,6 +25,7 @@
 //-------------------------------------------------------------------------
 
 #include "framework/cursor.h"
+#include "framework/pdu_section.h"
 #include "helpers/literal_search.h"
 #include "log/messages.h"
 
@@ -38,6 +39,7 @@
 
 class HttpApi;
 class HttpParam;
+class HttpIpsOption;
 
 class HttpInspect : public HttpInspectBase
 {
@@ -77,7 +79,7 @@ public:
     bool can_start_tls() const override
     { return true; }
 
-    static HttpEnums::InspectSection get_latest_is(const snort::Packet* p);
+    static snort::PduSection get_latest_is(const snort::Packet* p);
     static HttpCommon::SourceId get_latest_src(const snort::Packet* p);
     void disable_detection(snort::Packet* p);
 
@@ -87,9 +89,15 @@ public:
     static int get_xtra_host(snort::Flow*, uint8_t** buf, uint32_t* len, uint32_t* type);
     static int get_xtra_jsnorm(snort::Flow*, uint8_t**, uint32_t*, uint32_t*);
 
+    unsigned get_pub_id()
+    { return pub_id; }
+
+    const uint8_t* adjust_log_packet(snort::Packet* p, uint16_t& length) override;
+
 private:
     friend HttpApi;
     friend HttpStreamSplitter;
+    friend HttpIpsOption;
 
     HttpStreamSplitter splitter[2] = { { true, this }, { false, this } };
 
@@ -107,6 +115,8 @@ private:
     const uint32_t xtra_uri_id;
     const uint32_t xtra_host_id;
     const uint32_t xtra_jsnorm_id;
+
+    unsigned pub_id; // for inspection events
 };
 
 #endif

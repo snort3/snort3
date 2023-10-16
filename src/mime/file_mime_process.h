@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -51,7 +51,7 @@ namespace snort
 enum FilenameState
 {
     CONT_DISP_FILENAME_PARAM_NAME,
-    CONT_DISP_FILENAME_PARAM_EQUALS, 
+    CONT_DISP_FILENAME_PARAM_EQUALS,
     CONT_DISP_FILENAME_PARAM_VALUE_QUOTE,
     CONT_DISP_FILENAME_PARAM_VALUE
 };
@@ -82,6 +82,15 @@ public:
 
     const BufferData& get_ole_buf();
     const BufferData& get_vba_inspect_buf();
+
+    struct AttachmentBuffer
+    {
+        const uint8_t* data = nullptr;
+        uint32_t length = 0;
+        bool finished = true;
+    };
+
+    const AttachmentBuffer get_attachment() { return attachment; }
 
 protected:
     MimeDecode* decode_state = nullptr;
@@ -124,13 +133,18 @@ private:
     const uint8_t* process_mime_header(Packet*, const uint8_t* ptr, const uint8_t* data_end_marker);
     bool process_header_line(const uint8_t*& ptr, const uint8_t* eol, const uint8_t* eolm, const
         uint8_t* start_hdr, Packet* p);
-    const uint8_t* process_mime_body(const uint8_t* ptr, const uint8_t* data_end,bool is_data_end);
+    const uint8_t* process_mime_body(const uint8_t* ptr, const uint8_t* data_end, FilePosition);
     const uint8_t* process_mime_data_paf(Packet*, const uint8_t* start, const uint8_t* end,
         bool upload, FilePosition);
     int extract_file_name(const char*& start, int length);
 
-    uint8_t* partial_header = nullptr;
+    uint8_t* partial_header = nullptr;      // single header line split into multiple sections
     uint32_t partial_header_len = 0;
+    uint8_t* partial_data = nullptr;        // attachment's trailing bytes (suspected boundary)
+    uint32_t partial_data_len = 0;
+    uint8_t* rebuilt_data = nullptr;        // prepended attachment data for detection module
+
+    AttachmentBuffer attachment;            // decoded and uncompressed file body
 };
 }
 #endif

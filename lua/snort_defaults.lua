@@ -358,64 +358,64 @@ default_wizard =
 {
     spells =
     {
-        { service = 'ftp', proto = 'tcp', client_first = false,
+        { service = 'ftp', proto = 'tcp',
           to_client = { '220*FTP', '220*FileZilla' } },
 
-        { service = 'http', proto = 'tcp', client_first = true,
+        { service = 'http', proto = 'tcp',
           to_server = http_methods, to_client = { 'HTTP/' } },
 
-        { service = 'imap', proto = 'tcp', client_first = false,
+        { service = 'imap', proto = 'tcp',
           to_client = { '** OK', '** BYE', '** PREAUTH' } },
 
-        { service = 'pop3', proto = 'tcp', client_first = false,
+        { service = 'pop3', proto = 'tcp',
           to_client = { '+OK', '-ERR' } },
 
-        { service = 'sip', client_first = true,
+        { service = 'sip',
           to_server = sip_requests, to_client = { 'SIP/' } },
 
-        { service = 'smtp', proto = 'tcp', client_first = true,
+        { service = 'smtp', proto = 'tcp',
           to_server = { 'HELO', 'EHLO' },
           to_client = { '220*SMTP', '220*MAIL' } },
 
-        { service = 'ssh', proto = 'tcp', client_first = true,
+        { service = 'ssh', proto = 'tcp',
           to_server = { 'SSH-' }, to_client = { 'SSH-' } },
 
-        { service = 'dce_http_server', proto = 'tcp', client_first = false,
+        { service = 'dce_http_server', proto = 'tcp',
           to_client = { 'ncacn_http' } },
 
-        { service = 'dce_http_proxy', proto = 'tcp', client_first = true,
+        { service = 'dce_http_proxy', proto = 'tcp',
           to_server = { 'RPC_CONNECT' } },
 
     },
     hexes =
     {
-        { service = 'dnp3', proto = 'tcp', client_first = true,
+        { service = 'dnp3', proto = 'tcp',
           to_server = { '|05 64|' }, to_client = { '|05 64|' } },
 
-        { service = 'netflow', proto = 'udp', client_first = true,
+        { service = 'netflow', proto = 'udp',
           to_server = netflow_versions },
 
-        { service = 'http2', proto = 'tcp', client_first = true,
+        { service = 'http2', proto = 'tcp',
           to_client = { '???|04 00 00 00 00 00|' },
           to_server = { '|50 52 49 20 2a 20 48 54 54 50 2f 32 2e 30 0d 0a 0d 0a 53 4d 0d 0a 0d 0a|' } },
 
 --[[
-        { service = 'modbus', proto = 'tcp', client_first = true,
+        { service = 'modbus', proto = 'tcp',
           to_server = { '??|0 0|' } },
 
-        { service = 'rpc', proto = 'tcp', client_first = true,
+        { service = 'rpc', proto = 'tcp',
           to_server = { '????|0 0 0 0 0 0 0 1|' },
           to_client = { '????|0 0 0 0 0 0 0 1|' } },
 --]]
 
-        { service = 'ssl', proto = 'tcp', client_first = true,
+        { service = 'ssl', proto = 'tcp',
           to_server = { '|16 03|' }, to_client = { '|16 03|' } },
 
-        { service = 'telnet', proto = 'tcp', client_first = true,
+        { service = 'telnet', proto = 'tcp',
           to_server = telnet_commands, to_client = telnet_commands },
     },
 
-    curses = {'dce_udp', 'dce_tcp', 'dce_smb', 'mms', 'sslv2'}
+    curses = {'dce_udp', 'dce_tcp', 'dce_smb', 'mms', 's7commplus', 'sslv2'}
 }
 
 ---------------------------------------------------------------------------
@@ -543,7 +543,7 @@ default_classifications =
       text = 'Attempt to login by a default username and password' },
 
     { name = 'sdf', priority = 2,
-      text = 'Senstive Data' },
+      text = 'Sensitive Data' },
 
     { name = 'file-format', priority = 1,
       text = 'Known malicious file or file based exploit' },
@@ -1176,7 +1176,7 @@ default_low_port_scan =
 }
 
 ---------------------------------------------------------------------------
--- default http configuration
+-- default js_norm configuration
 ---------------------------------------------------------------------------
 
 -- ECMAScript Standard Built-in Objects and Functions Names (Identifiers)
@@ -1281,12 +1281,19 @@ default_js_norm_ident_ignore =
     'IsConcatSpreadable', 'FlattenIntoArray', 'SortCompare', 'AddEntriesFromIterable',
     'CreateMapIterator', 'CreateSetIterator', 'EventSet', 'SharedDataBlockEventSet',
     'HostEventSet', 'ComposeWriteEventBytes', 'ValueOfReadEvent', 'escape', 'unescape',
-    'CreateHTML'
+    'CreateHTML',
+
+    -- Adobe Acrobat
+    'addAnnot', 'bookmarkRoot', 'calculateNow', 'closeDoc', 'createDataObject', 'docID',
+    'exportAsFDF', 'exportAsFDFStr', 'getAnnotRichMedia', 'getAnnots', 'getAnnotsRichMedia',
+    'getField', 'getLegalWarnings', 'getNthFieldName', 'getOCGs', 'openDataObject', 'removeField',
+    'removeLinks', 'modDate', 'scroll', 'setAction', 'setPageAction', 'submitForm', 'syncAnnotScan',
+    'Collab', 'Net', 'Rendition', 'XFA', 'XMLData', 'app', 'catalog', 'event', 'spell', 'util'
 }
 
 default_js_norm_prop_ignore =
 {
-    -- Object 
+    -- Object
     'constructor', 'prototype', '__proto__', '__defineGetter__', '__defineSetter__',
     '__lookupGetter__', '__lookupSetter__', '__count__', '__noSuchMethod__', '__parent__',
     'hasOwnProperty', 'isPrototypeOf', 'propertyIsEnumerable', 'toLocaleString', 'toString',
@@ -1313,7 +1320,7 @@ default_js_norm_prop_ignore =
 
     -- Array
     'copyWithin', 'entries', 'every', 'fill', 'filter', 'find', 'findIndex', 'flat', 'flatMap',
-    'forEach', 'groupBy', 'groupByToMap', 'join', 'keys', 'map', 'pop',  'push', 'reduce', 
+    'forEach', 'groupBy', 'groupByToMap', 'join', 'keys', 'map', 'pop',  'push', 'reduce',
     'reduceRight', 'reverse', 'shift', 'unshift', 'some', 'sort', 'splice',
 
     -- Generator
@@ -1337,19 +1344,36 @@ default_js_norm_prop_ignore =
     'setCapture', 'setHTML', 'setPointerCapture', 'toggleAttribute',
 
     -- HTMLElement
-    'contentEditable', 'contextMenu', 'dataset', 'dir', 'enterKeyHint', 'hidden', 'inert', 
+    'contentEditable', 'contextMenu', 'dataset', 'dir', 'enterKeyHint', 'hidden', 'inert',
     'innerText', 'lang', 'nonce', 'outerText', 'style', 'tabIndex', 'title',
     'attachInternals',
 
+    -- Promise
+    'catch', 'finally',
+
     -- Misc
-    'ExportStyle', 'callee'
+    'ExportStyle', 'callee',
+
+    -- Adobe Acrobat
+    'activated', 'addAnnot', 'addLink', 'annot', 'attachIcon', 'begin', 'bookmarkRoot',
+    'borderColor', 'borderStyle', 'buttonGetIcon', 'calculate', 'calculateNow', 'callAS',
+    'children', 'close', 'closeDoc', 'commitOnSelChange', 'createChild', 'createDataObject', 'data',
+    'dataObjects', 'destroy', 'doc', 'docID', 'end', 'execute', 'exportAsFDF', 'exportAsFDFStr',
+    'exportDataObject', 'exportValues', 'get', 'getAnnot', 'getAnnots', 'getAnnotsRichMedia',
+    'getField', 'getLegalWarnings', 'getNthFieldName', 'getOCGs', 'getPageBox', 'openDataObject',
+    'getProps', 'inReplyTo', 'layout', 'media', 'modDate', 'newPlayer', 'objectMetadata', 'page',
+    'point', 'points', 'popupOpen', 'popupRect', 'print', 'println', 'qSilence', 'query', 'rect',
+    'removeField', 'removeLinks', 'reset', 'resetForm', 'richText', 'rotate', 'saveAs', 'scroll',
+    'setAction', 'setFocus', 'setIntent', 'setItems', 'setPageAction', 'setPersistent', 'setProps',
+    'show', 'state', 'stateModel', 'streamFromString', 'stringFromStream', 'submitForm',
+    'syncAnnotScan', 'talk', 'text', 'toggleNoView', 'type', 'userName', 'value', 'width', 'xfa'
 }
 
-default_http_inspect =
+default_js_norm =
 {
     -- params not specified here get internal defaults
-    js_norm_ident_ignore = default_js_norm_ident_ignore,
-    js_norm_prop_ignore = default_js_norm_prop_ignore,
+    ident_ignore = default_js_norm_ident_ignore,
+    prop_ignore = default_js_norm_prop_ignore,
 }
 
 ---------------------------------------------------------------------------
@@ -1371,8 +1395,7 @@ default_whitelist =
     ip_hi_dist icmp_low_sweep icmp_med_sweep icmp_hi_sweep
     default_hi_port_scan default_med_port_scan default_low_port_scan
     default_variables netflow_versions default_js_norm_ident_ignore
-    default_js_norm_prop_ignore default_http_inspect
+    default_js_norm_prop_ignore default_js_norm
 ]]
 
 snort_whitelist_append(default_whitelist)
-

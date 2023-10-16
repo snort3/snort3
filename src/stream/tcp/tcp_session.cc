@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -51,9 +51,10 @@
 #include "detection/detection_engine.h"
 #include "detection/rules.h"
 #include "log/log.h"
-#include "memory/memory_cap.h"
 #include "profiler/profiler.h"
 #include "protocols/eth.h"
+#include "pub_sub/intrinsic_event_ids.h"
+#include "packet_tracer/packet_tracer.h"
 
 #include "stream_tcp.h"
 #include "tcp_ha.h"
@@ -102,6 +103,7 @@ bool TcpSession::setup(Packet*)
     cleaning = false;
     splitter_init = false;
 
+    initiator_watermark = 0;
     pkt_action_mask = ACTION_NOTHING;
     ecn = 0;
     ingress_index = egress_index = 0;
@@ -292,7 +294,7 @@ void TcpSession::update_perf_base_state(char newState)
     flow->update_session_flags(session_flags);
 
     if ( fire_event )
-        DataBus::publish(FLOW_STATE_EVENT, nullptr, flow);
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_STATE_CHANGE, nullptr, flow);
 }
 
 bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
@@ -325,7 +327,7 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
         if ( space_left < (int32_t)tsd.get_len() )
         {
             tcpStats.exceeded_max_bytes++;
-            bool inline_mode = tsd.is_policy_inline();
+            bool inline_mode = tsd.is_nap_policy_inline();
             bool ret_val = true;
 
             if ( space_left > 0 )
@@ -343,6 +345,17 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
                 else
                     (const_cast<tcp::TCPHdr*>(tsd.get_pkt()->ptrs.tcph))->set_seq(listener->max_queue_seq_nxt);
             }
+
+            if( listener->reassembler.segment_within_seglist_window(tsd) )
+                return false;
+
+            if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON)
+            {
+                tsd.get_pkt()->active->set_drop_reason("stream");
+                if (PacketTracer::is_active())
+                    PacketTracer::log("Stream: Flow exceeded the configured max byte threshold (%u)\n", tcp_config->max_queued_bytes);
+            }
+
             listener->normalizer.trim_win_payload(tsd, space_left, inline_mode);
             return ret_val;
         }
@@ -355,7 +368,7 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
         if ( listener->reassembler.get_seg_count() + 1 > tcp_config->max_queued_segs )
         {
             tcpStats.exceeded_max_segs++;
-            bool inline_mode = tsd.is_policy_inline();
+            bool inline_mode = tsd.is_nap_policy_inline();
 
             if ( inline_mode )
             {
@@ -367,6 +380,17 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
                 else
                     (const_cast<tcp::TCPHdr*>(tsd.get_pkt()->ptrs.tcph))->set_seq(listener->max_queue_seq_nxt);
             }
+
+            if( listener->reassembler.segment_within_seglist_window(tsd) )
+                return false;
+
+            if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON)
+            {
+                tsd.get_pkt()->active->set_drop_reason("stream");
+                if (PacketTracer::is_active())
+                    PacketTracer::log("Stream: Flow exceeded the configured max segment threshold (%u)\n", tcp_config->max_queued_segs);
+            }
+
             listener->normalizer.trim_win_payload(tsd, 0, inline_mode);
             return true;
         }
@@ -450,8 +474,17 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
         if ( tcp_config->policy != StreamPolicy::OS_PROXY
             and listener->normalizer.get_stream_window(tsd) == 0 )
         {
-            listener->normalizer.trim_win_payload(tsd);
-            return STREAM_UNALIGNED;
+            if (tsd.get_len() == ZERO_WIN_PROBE_LEN)
+            {
+                tcpStats.zero_win_probes++;
+                listener->normalizer.set_zwp_seq(seq);
+            }
+            else
+            {
+                bool force = (tsd.is_nap_policy_inline() && listener->get_iss());
+                listener->normalizer.trim_win_payload(tsd, 0, force);
+                return STREAM_UNALIGNED;
+            }
         }
 
         /* move the ack boundary up, this is the only way we'll accept data */
@@ -477,7 +510,11 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
         if ( tcp_config->policy != StreamPolicy::OS_PROXY
             and listener->normalizer.get_stream_window(tsd) == 0 )
         {
-            listener->normalizer.trim_win_payload(tsd);
+            if (tsd.get_len() == ZERO_WIN_PROBE_LEN)
+                tcpStats.zero_win_probes++;
+
+            bool force = (tsd.is_nap_policy_inline() && listener->get_iss());
+            listener->normalizer.trim_win_payload(tsd, 0, force);
             return STREAM_UNALIGNED;
         }
         if ( tsd.is_data_segment() )
@@ -607,7 +644,6 @@ bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
         else if ( tcph->is_syn_only() )
         {
             flow->ssn_state.direction = FROM_CLIENT;
-            flow->session_state = STREAM_STATE_SYN;
             flow->set_ttl(tsd.get_pkt(), true);
             init_session_on_syn(tsd);
             tcpStats.resyns++;
@@ -619,7 +655,6 @@ bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
             if ( tcp_config->midstream_allowed(tsd.get_pkt()) )
             {
                 flow->ssn_state.direction = FROM_SERVER;
-                flow->session_state = STREAM_STATE_SYN_ACK;
                 flow->set_ttl(tsd.get_pkt(), false);
                 init_session_on_synack(tsd);
                 tcpStats.resyns++;
@@ -695,7 +730,11 @@ void TcpSession::update_paws_timestamps(TcpSegmentDescriptor& tsd)
     TcpStreamTracker* listener = tsd.get_listener();
     TcpStreamTracker* talker = tsd.get_talker();
 
-    if ( listener->normalizer.handling_timestamps()
+    if ( no_ack_mode_enabled() )
+    {
+        talker->set_ts_last(0);
+    }
+    else if ( listener->normalizer.handling_timestamps()
         && SEQ_EQ(listener->r_win_base, tsd.get_seq()) )
     {
         if ( ((int32_t)(tsd.get_timestamp() - talker->get_ts_last()) >= 0  )
@@ -1041,7 +1080,8 @@ void TcpSession::precheck(Packet* p)
 
 void TcpSession::init_tcp_packet_analysis(TcpSegmentDescriptor& tsd)
 {
-    if ( !splitter_init and tsd.is_data_segment() )
+    if ( !splitter_init and tsd.is_data_segment() and
+        (tcp_init or is_midstream_allowed(tsd)) )
     {
         if ( !(tcp_config->flags & STREAM_CONFIG_NO_REASSEMBLY) )
         {
@@ -1088,7 +1128,7 @@ bool TcpSession::validate_packet_established_session(TcpSegmentDescriptor& tsd)
 {
     TcpStreamTracker* listener = tsd.get_listener();
 
-    if ( tsd.is_policy_inline() )
+    if ( tsd.is_nap_policy_inline() )
        if ( tsd.get_tcph()->is_ack() && !listener->is_ack_valid(tsd.get_ack()) )
        {
            listener->normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);

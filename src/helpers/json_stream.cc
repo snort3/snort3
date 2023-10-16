@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -98,6 +98,16 @@ void JsonStream::put(const char* key, int64_t val)
     out << val;
 }
 
+void JsonStream::uput(const char* key, uint64_t val)
+{
+    split();
+
+    if ( key )
+        out << std::quoted(key) << ": ";
+
+    out << val;
+}
+
 void JsonStream::put(const char* key, const char* val)
 {
     if (val and val[0] == '\0')
@@ -166,3 +176,7 @@ void JsonStream::split()
         sep = true;
 }
 
+void JsonStream::put_eol()
+{
+    out << std::endl;
+}

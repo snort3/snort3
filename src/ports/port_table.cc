@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -149,28 +149,8 @@ public:
 
     unsigned do_hash(const unsigned char* k, int) override
     {
-        unsigned hash = seed;
         const PortObject* po = *(PortObject* const*)k;
-        SF_LNODE* pos;
-
-        for (PortObjectItem* poi = (PortObjectItem*)sflist_first(po->item_list, &pos);
-             poi != nullptr;
-             poi = (PortObjectItem*)sflist_next(&pos) )
-        {
-            if ( poi->any() )
-                continue;
-
-            hash *= scale;
-            hash += poi->lport & 0xff;
-            hash *= scale;
-            hash += (poi->lport >> 8) & 0xff;
-
-            hash *= scale;
-            hash += poi->hport & 0xff;
-            hash *= scale;
-            hash += (poi->hport >> 8) & 0xff;
-        }
-        return hash ^ hardener;
+        return PortObjectHash(po, seed, scale, hardener);
     }
 
     bool key_compare(const void* k1, const void* k2, size_t) override
@@ -898,4 +878,3 @@ void PortTableSortUniqRules(PortTable* p)
         RuleListSortUniq(po->rule_list);
     }
 }
-

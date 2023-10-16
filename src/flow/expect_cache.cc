@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -84,6 +84,15 @@ void ExpectFlow::reset_expect_flows()
 {
     if(packet_expect_flows)
         packet_expect_flows->clear();
+}
+
+void ExpectFlow::handle_expected_flows(const Packet* p)
+{
+    if (p->flow && packet_expect_flows && !packet_expect_flows->empty())
+    {
+        ExpectedFlowsEvent event(*packet_expect_flows, *p);
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::EXPECT_HANDLE_FLOWS, event);
+    }
 }
 
 FlowData* ExpectFlow::get_flow_data(unsigned id)
@@ -439,7 +448,7 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
         packet_expect_flows->emplace_back(last);
 
         ExpectEvent event(ctrlPkt, last, fd);
-        DataBus::publish(EXPECT_EVENT_TYPE_EARLY_SESSION_CREATE_KEY, event, ctrlPkt->flow);
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::EXPECT_EARLY_SESSION, event, ctrlPkt->flow);
     }
     return 0;
 }

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -427,6 +427,7 @@ static int snort_pton(char const* src, SfCidr* dest)
     if ( *cidrbuf )
     {
         char* end;
+        errno = 0;
         int value = strtol(cidrbuf, &end, 10);
 
         if ( value > dest->get_bits() || value <= 0 || errno == ERANGE )

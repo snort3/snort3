@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -63,10 +63,7 @@ FileConnectorModule::FileConnectorModule() :
 
 FileConnectorConfig::FileConnectorConfigSet* FileConnectorModule::get_and_clear_config()
 {
-    FileConnectorConfig::FileConnectorConfigSet* config_set =
-        new FileConnectorConfig::FileConnectorConfigSet;
-
-    return config_set;
+    return new FileConnectorConfig::FileConnectorConfigSet;
 }
 
 FileConnectorModule::~FileConnectorModule() = default;

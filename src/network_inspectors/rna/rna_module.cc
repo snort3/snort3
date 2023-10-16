@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -33,6 +33,7 @@
 
 #include "control/control.h"
 #include "host_tracker/host_cache.h"
+#include "host_tracker/host_cache_segmented.h"
 #include "log/messages.h"
 #include "lua/lua.h"
 #include "main/snort_config.h"
@@ -388,6 +389,9 @@ static const PegInfo rna_pegs[] =
     { CountType::SUM, "dhcp_info", "count of new DHCP lease events received" },
     { CountType::SUM, "smb", "count of new SMB events received" },
     { CountType::SUM, "netflow_record", "count of netflow record events received" },
+    { CountType::SUM, "total_events_in_interval", "count of RNA events generated" },
+    { CountType::SUM, "total_packets_in_interval", "count of packets processed" },
+    { CountType::SUM, "total_bytes_in_interval", "count of bytes processed" },
     { CountType::END, nullptr, nullptr},
 };
 

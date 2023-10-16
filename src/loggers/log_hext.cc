@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -281,8 +281,9 @@ HextLogger::HextLogger(HextModule* m)
     limit = m->limit;
     width = m->width;
     raw = m->raw;
-    DataBus::subscribe(DAQ_SOF_MSG_EVENT, new DaqMessageEventHandler());
-    DataBus::subscribe(DAQ_EOF_MSG_EVENT, new DaqMessageEventHandler());
+
+    DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::DAQ_SOF_MSG, new DaqMessageEventHandler());
+    DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::DAQ_EOF_MSG, new DaqMessageEventHandler());
 }
 
 void HextLogger::open()

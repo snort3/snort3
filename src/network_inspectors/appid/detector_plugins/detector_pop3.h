@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 #include "service_plugins/service_detector.h"
 
 struct POP3DetectorData;
+class Pop3ServiceDetector;
 
 class Pop3ClientDetector : public ClientDetector
 {
@@ -37,10 +38,15 @@ public:
     void do_custom_reload() override;
     int validate(AppIdDiscoveryArgs&) override;
     POP3DetectorData* get_common_data(AppIdSession&);
+    void set_service_detector(Pop3ServiceDetector* s)
+    {
+        pop3_service_detector = s;
+    }
 
 private:
     snort::SearchTool* cmd_matcher = nullptr;
     unsigned longest_pattern = 0;
+    Pop3ServiceDetector* pop3_service_detector = nullptr;
 };
 
 class Pop3ServiceDetector : public ServiceDetector
@@ -49,6 +55,14 @@ public:
     Pop3ServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
+    void set_client_detector(Pop3ClientDetector* c)
+    {
+        pop3_client_detector = c;
+    }
+    int pop3_server_validate(POP3DetectorData*, const uint8_t*, uint16_t, AppIdSession&, int, AppidChangeBits&);
+
+private:
+    Pop3ClientDetector* pop3_client_detector = nullptr;
 };
 
 #endif

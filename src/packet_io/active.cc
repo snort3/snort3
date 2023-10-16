@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -521,7 +521,7 @@ void Active::cant_drop()
 
 void Active::update_status_actionable(const Packet* p)
 {
-    if ( p->context->conf->inline_mode() )
+    if ( p->context->conf->ips_inline_mode() )
     {
         if ( !SFDAQ::forwarding_packet(p->pkth) )
         {
@@ -534,12 +534,12 @@ void Active::update_status_actionable(const Packet* p)
             active_would_reason = WHD_INTERFACE_IDS;
         }
     }
-    else if ( p->context->conf->inline_test_mode() )
+    else if ( p->context->conf->ips_inline_test_mode() )
     {
         active_status = AST_WOULD;
         active_would_reason = WHD_IPS_INLINE_TEST;
     }
-    else if ( p->context->conf->passive_mode() )
+    else if ( p->context->conf->ips_passive_mode() )
     {
         active_status = AST_WOULD;
         active_would_reason = WHD_INTERFACE_IDS;
@@ -680,7 +680,7 @@ void Active::block_session(Packet* p, bool force)
     active_action = ACT_BLOCK;
     update_status(p, force);
 
-    if ( force or (p->context->conf->inline_mode() and SFDAQ::forwarding_packet(p->pkth)))
+    if ( force or (p->context->conf->ips_inline_mode() and SFDAQ::forwarding_packet(p->pkth)))
         Stream::block_flow(p);
 
     p->disable_inspect = true;
@@ -696,7 +696,7 @@ void Active::reset_session(Packet* p, ActiveAction* reject, bool force)
     active_action = ACT_RESET;
     update_status(p, force);
 
-    if ( force or (p->context->conf->inline_mode() and SFDAQ::forwarding_packet(p->pkth)) )
+    if ( force or (p->context->conf->ips_inline_mode() and SFDAQ::forwarding_packet(p->pkth)) )
         Stream::drop_flow(p);
 
     if (reject)
@@ -724,6 +724,11 @@ void Active::set_delayed_action(ActiveActionType action, bool force)
 
 void Active::set_delayed_action(ActiveActionType action, ActiveAction* act, bool force)
 {
+    // Don't update the delayed active action to a less strict one, with
+    // the exception of going from allow to trust.
+    if(delayed_active_action >= action and delayed_active_action > ACT_ALLOW)
+        return;
+
     delayed_active_action = action;
 
     if (delayed_reject == nullptr)
@@ -754,6 +759,9 @@ void Active::apply_delayed_action(Packet* p)
     case ACT_RETRY:
         if (!retry_packet(p))
             drop_packet(p, force);
+        break;
+    case ACT_TRUST:
+        trust_session(p, force);
         break;
     default:
         break;

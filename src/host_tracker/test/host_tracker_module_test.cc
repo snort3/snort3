@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -26,6 +26,7 @@
 #include <cstring>
 
 #include "host_tracker/host_cache.h"
+#include "host_tracker/host_cache_segmented.h"
 #include "host_tracker/host_tracker_module.h"
 #include "main/snort_config.h"
 #include "target_based/snort_protocols.h"
@@ -40,6 +41,7 @@ namespace snort
 char* snort_strdup(const char* s)
 { return strdup(s); }
 time_t packet_time() { return 0; }
+void FatalError(const char* fmt, ...) { (void)fmt; exit(1); }
 }
 
 //  Fake show_stats to avoid bringing in a ton of dependencies.
@@ -100,9 +102,10 @@ TEST(host_tracker_module, host_tracker_module_test_basic)
 
 int main(int argc, char** argv)
 {
-    // FIXIT-L There is currently no external way to fully release the memory from the global host
-    //   cache unordered_map in host_cache.cc
+    host_cache.init();
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
-    return CommandLineTestRunner::RunAllTests(argc, argv);
+    int ret = CommandLineTestRunner::RunAllTests(argc, argv);
+    host_cache.term();
+    return ret;
 }
 

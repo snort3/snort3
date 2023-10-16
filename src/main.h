@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -28,17 +28,22 @@ const char* get_prompt();
 // commands provided by the snort module
 int main_delete_inspector(lua_State* = nullptr);
 int main_dump_stats(lua_State* = nullptr);
+int main_log_command(lua_State* = nullptr);
+int main_dump_heap_stats(lua_State* = nullptr);
 int main_reset_stats(lua_State* = nullptr);
+int main_set_watchdog_params(lua_State* = nullptr);
 int main_rotate_stats(lua_State* = nullptr);
 int main_reload_config(lua_State* = nullptr);
 int main_reload_policy(lua_State* = nullptr);
 int main_reload_daq(lua_State* = nullptr);
 int main_reload_hosts(lua_State* = nullptr);
+int main_show_config_generation(lua_State* = nullptr);
 int main_process(lua_State* = nullptr);
 int main_pause(lua_State* = nullptr);
 int main_resume(lua_State* = nullptr);
 int main_quit(lua_State* = nullptr);
 int main_help(lua_State* = nullptr);
+int convert_counter_type(const char* type);
 
 #ifdef SHELL
 int main_dump_plugins(lua_State* = nullptr);

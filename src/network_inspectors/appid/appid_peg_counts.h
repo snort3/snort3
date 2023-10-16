@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2017-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2017-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -112,11 +112,10 @@ public:
     static void print();
 
 private:
-    static std::unordered_map<AppId, uint32_t> appid_detector_pegs_idx;
-    static std::vector<std::string> appid_detectors_info;
     static AppIdDynamicPeg appid_dynamic_sum[SF_APPID_MAX+1];
-    static THREAD_LOCAL std::vector<AppIdDynamicPeg>* appid_peg_counts;
-    static uint32_t get_stats_index(AppId id);
+    static THREAD_LOCAL AppIdDynamicPeg* unknown_appids_peg;
+    static THREAD_LOCAL std::unordered_map<AppId, AppIdPegCounts::AppIdDynamicPeg>* appid_peg_counts;
+    static std::unordered_map<AppId, std::pair<std::string, uint32_t>> appid_peg_ids;
     static AppIdDynamicPeg zeroed_peg;
     static PegCount all_zeroed_peg[DetectorPegs::NUM_APPID_DETECTOR_PEGS];
 };

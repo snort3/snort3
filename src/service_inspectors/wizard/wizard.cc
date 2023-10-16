@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -25,10 +25,11 @@
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "stream/stream_splitter.h"
 #include "trace/trace_api.h"
 
-#include "curses.h"
+#include "curse_book.h"
 #include "magic.h"
 #include "wiz_module.h"
 
@@ -169,6 +170,8 @@ MagicSplitter::MagicSplitter(bool c2s, class Wizard* w) :
     StreamSplitter(c2s), wizard_processed_bytes(0)
 {
     wizard = w;
+    // FIXIT-M: Handle inspector reference elsewhere such that all splitters
+    // are able to be deleted before their inspectors
     w->add_ref();
     // Used only in case of TCP traffic
     w->reset(wand, c2s, MagicBook::ArcaneType::TCP);
@@ -177,7 +180,6 @@ MagicSplitter::MagicSplitter(bool c2s, class Wizard* w) :
 MagicSplitter::~MagicSplitter()
 {
     wizard->rem_ref();
-
     // release trackers
     for ( unsigned i = 0; i < wand.curse_tracker.size(); i++ )
         delete wand.curse_tracker[i].tracker;
@@ -209,7 +211,7 @@ StreamSplitter::Status MagicSplitter::scan(
 
         if ( !pkt->flow->flags.svc_event_generated )
         {
-            DataBus::publish(FLOW_NO_SERVICE_EVENT, pkt);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_NO_SERVICE, pkt);
             pkt->flow->flags.svc_event_generated = true;
         }
 
@@ -225,7 +227,7 @@ StreamSplitter::Status MagicSplitter::scan(
     // enhanced to abort sooner if it can't detect service.
     if ( !pkt->flow->service and !pkt->flow->flags.svc_event_generated )
     {
-        DataBus::publish(FLOW_NO_SERVICE_EVENT, pkt);
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_NO_SERVICE, pkt);
         pkt->flow->flags.svc_event_generated = true;
     }
 

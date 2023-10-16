@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -92,6 +92,8 @@ namespace snort
 #define APPID_SESSION_HTTP_TUNNEL           (1ULL << 43)
 #define APPID_SESSION_OPPORTUNISTIC_TLS     (1ULL << 44)
 #define APPID_SESSION_FIRST_PKT_CACHE_MATCHED    (1ULL << 45)
+#define APPID_SESSION_DO_NOT_DECRYPT        (1ULL << 46)
+#define APPID_SESSION_EARLY_SSH_DETECTED        (1ULL << 47)
 #define APPID_SESSION_IGNORE_ID_FLAGS \
     (APPID_SESSION_FUTURE_FLOW | \
     APPID_SESSION_NOT_A_SERVICE | \
@@ -150,9 +152,9 @@ public:
         return session_id;
     }
 
-    void set_user_logged_in() { user_logged_in = true; }
+    void set_user_logged_in() { flags.user_logged_in = true; }
 
-    void clear_user_logged_in() { user_logged_in = false; }
+    void clear_user_logged_in() { flags.user_logged_in = false; }
 
 protected:
     AppIdSessionApi(const AppIdSession* asd, const SfIp& ip);
@@ -161,8 +163,13 @@ private:
     const AppIdSession* asd = nullptr;
     AppId application_ids[APP_PROTOID_MAX] =
         { APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE };
-    bool published = false;
-    bool stored_in_stash = false;
+    struct
+    {
+        bool published : 1;
+        bool stored_in_stash : 1;
+        bool finished : 1;
+        bool user_logged_in : 1;
+    } flags = {};
     std::vector<AppIdHttpSession*> hsessions;
     AppIdDnsSession* dsession = nullptr;
     snort::SfIp initiator_ip;
@@ -171,7 +178,6 @@ private:
     char* netbios_name = nullptr;
     char* netbios_domain = nullptr;
     std::string session_id;
-    bool user_logged_in = false;
 
     // Following two fields are used only for non-http sessions. For HTTP traffic,
     // these fields are maintained inside AppIdHttpSession.
@@ -188,6 +194,7 @@ private:
     void set_application_ids_service(AppId service_id, AppidChangeBits& change_bits, Flow& flow);
     void set_netbios_name(AppidChangeBits& change_bits, const char* name);
     void set_netbios_domain(AppidChangeBits& change_bits, const char* domain);
+    bool prefer_eve_client_over_appid_http_client() const;
 
     AppIdHttpSession* get_hsession(uint32_t stream_index = 0) const;
 

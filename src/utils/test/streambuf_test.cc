@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -1564,7 +1564,7 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
 
         int off_c = b.pubseekoff(-exp_len, ios_base::cur, ios_base::out);
         CHECK(off_c == 0);
-        
+
         char* act_seq = new char[exp_len];
         CHECK(b.sgetn(act_seq, exp_len) == exp_len);
         CHECK(!memcmp(exp, act_seq, exp_len));
@@ -1581,7 +1581,7 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         char* buf = new char[exp_len];
         memcpy(buf, exp, exp_len);
         b.pubsetbuf(buf, exp_len);
-        
+
         int data_off = b.pubseekoff(exp_len, ios_base::beg, ios_base::out);
         CHECK(data_off == exp_len);
 
@@ -1594,7 +1594,7 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         int new_off = b.pubseekoff(0, ios_base::cur, ios_base::out);
         CHECK(new_off == exp_len);
     }
-    
+
     SECTION("get char sequence more than available")
     {
         ostreambuf_infl b;
@@ -1602,7 +1602,7 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         char* buf = new char[exp_len];
         memcpy(buf, exp, exp_len);
         b.pubsetbuf(buf, exp_len);
-        
+
         char* act_seq = new char[exp_len + 1];
         CHECK(b.sgetn(act_seq, exp_len + 1) == exp_len);
         CHECK(!memcmp(exp, act_seq, exp_len));

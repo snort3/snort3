@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 1998-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -82,6 +82,9 @@ public:
 
     bool is_relative() override
     { return (config.flags & ISDATAAT_RELATIVE_FLAG) != 0; }
+
+    CursorActionType get_cursor_type() const override
+    { return CAT_READ; }
 
 private:
     IsDataAtData config;
@@ -185,7 +188,7 @@ static void isdataat_parse(const char* data, IsDataAtData* idx)
         char* endp;
 
         idx->offset_var = IPS_OPTIONS_NO_VAR;
-        idx->offset = strtol(offset, &endp, 10);
+        idx->offset = strtoul(offset, &endp, 10);
 
         if (offset == endp)
         {

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -37,11 +37,11 @@ public:
     Usage get_usage() const override
     { return GLOBAL; }
 
-    static bool is_active();
-
-private:
-    static bool configured;
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
 };
+
+extern THREAD_LOCAL const snort::Trace* memory_trace;
 
 #endif
 

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -33,7 +33,6 @@ FlowData::~FlowData() = default;
 FlowData* mock_flow_data = nullptr;
 
 typedef int32_t AppId;
-Flow::Flow() = default;
 Flow::~Flow() = default;
 
 class FakeFlow : public Flow

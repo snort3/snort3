@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -26,7 +26,6 @@
 
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
-#include "memory/memory_cap.h"
 
 #include "dce_smb1.h"
 #include "dce_smb2.h"
@@ -161,12 +160,23 @@ DCE2_SsnData* get_dce2_session_data(snort::Flow* flow)
 inline FileContext* get_smb_file_context(const Packet* p)
 {
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
-    return file_flows ? file_flows->get_current_file_context() : nullptr;
+    if (file_flows)
+    {
+        std::lock_guard<std::mutex> guard(file_flows->file_flow_context_mutex);
+        return file_flows->get_current_file_context();
+    }
+    else
+        return nullptr;
 }
 
 FileContext* get_smb_file_context(Flow* flow, uint64_t file_id,
     uint64_t multi_file_processing_id, bool to_create)
 {
+    if (!flow)
+    {
+        dce2_smb_stats.v2_inv_file_ctx_err++;
+        return nullptr;
+    }
     FileFlows* file_flows = FileFlows::get_file_flows(flow);
 
     if ( !file_flows )
@@ -175,7 +185,9 @@ FileContext* get_smb_file_context(Flow* flow, uint64_t file_id,
         return nullptr;
     }
 
-    return file_flows->get_file_context(file_id, to_create, multi_file_processing_id);
+    bool is_new_context = false;
+    std::lock_guard<std::mutex> guard(file_flows->file_flow_context_mutex);
+    return file_flows->get_file_context(file_id, to_create, is_new_context, multi_file_processing_id);
 }
 
 char* get_smb_file_name(const uint8_t* data, uint32_t data_len, bool unicode,

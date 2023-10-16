@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2003-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -74,6 +74,9 @@ public:
     unsigned get_num_nodes()
     { return num_nodes; }
 
+    unsigned get_num_free_nodes()
+    { return num_free_nodes; }
+
     void set_memcap(unsigned long memcap)
     { mem_allocator->set_mem_capacity(memcap); }
 
@@ -113,6 +116,7 @@ protected:
     unsigned nrows = 0;
     unsigned keysize = 0;
     unsigned num_nodes = 0;
+    unsigned num_free_nodes = 0;
     bool recycle_nodes = true;
     bool anr_enabled = true;
 

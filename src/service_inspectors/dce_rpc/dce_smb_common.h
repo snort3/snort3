@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -205,6 +205,7 @@ struct dce2SmbStats
     PegCount total_smb2_sessions;
     PegCount total_encrypted_sessions;
     PegCount total_mc_sessions;
+    PegCount ignore_dup_sessions;
 };
 
 enum DCE2_SmbVersion
@@ -292,7 +293,7 @@ public:
 
     Dce2SmbSessionData* upgrade(const snort::Packet*);
     void update_smb_session_data(Dce2SmbSessionData* ssd_v)
-    { 
+    {
         if (ssd) delete ssd;
         ssd = ssd_v;
     }

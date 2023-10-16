@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 // Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 //
@@ -37,6 +37,7 @@ struct PatternMatchData* get_pmd(OptFpList*, SnortProtocolId, snort::RuleDirecti
 
 bool make_fast_pattern_only(const OptFpList*, const PatternMatchData*);
 bool is_fast_pattern_only(const OptTreeNode*, const OptFpList*, snort::Mpse::MpseType);
+bool is_flowbit_setter(const OptFpList*);
 
 PatternMatcher::Type get_pm_type(const std::string& buf);
 
@@ -48,6 +49,7 @@ std::vector <PatternMatchData*> get_fp_content(
 void queue_mpse(snort::Mpse*);
 unsigned compile_mpses(struct snort::SnortConfig*, bool parallel = false);
 
+bool has_service_rule_opt(OptTreeNode*);
 void validate_services(struct snort::SnortConfig*, OptTreeNode*);
 
 unsigned fp_serialize(const struct snort::SnortConfig*, const std::string& dir);
@@ -56,5 +58,6 @@ unsigned fp_deserialize(const struct snort::SnortConfig*, const std::string& dir
 void update_buffer_map(const char** bufs, const char* svc);
 void add_default_services(struct snort::SnortConfig*, const std::string&, OptTreeNode*);
 
-#endif
+extern const char* section_to_str[];
 
+#endif

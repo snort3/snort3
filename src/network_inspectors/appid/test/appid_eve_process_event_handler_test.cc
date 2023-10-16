@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -82,7 +82,7 @@ void AppIdSession::set_ss_application_ids_payload(AppId, AppidChangeBits&)
     return;
 }
 
-void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*)
+void AppIdSession::set_client_appid_data(AppId, char*, bool)
 {
     set_client_id(APPID_UT_ID);
     return;
@@ -97,10 +97,6 @@ void AppIdSession::update_encrypted_app_id(AppId) {}
 void HttpPatternMatchers::identify_user_agent(const char*, int, AppId&, AppId& client, char**)
 {
     client = APPID_UT_ID;
-}
-
-void AppIdSession::set_service_appid_data(AppId, AppidChangeBits&, char*)
-{
 }
 
 AppId AlpnPatternMatchers::match_alpn_pattern(const string& str)
@@ -141,7 +137,7 @@ TEST(appid_eve_process_event_handler_tests, eve_process_event_handler)
     EveProcessEvent event(p, "firefox", 90);
     event.set_client_process_mapping(true);
     AppIdEveProcessEventHandler event_handler(dummy_appid_inspector);
-    Flow* flow = new Flow();
+    Flow* flow = new Flow;
     event_handler.handle(event, flow);
     CHECK(session->get_eve_client_app_id() == APPID_UT_ID);
     delete flow;
@@ -153,7 +149,7 @@ TEST(appid_eve_process_event_handler_tests, eve_user_agent_event_handler)
     EveProcessEvent event(p, "firefox", 90);
     event.set_user_agent("chrome");
     AppIdEveProcessEventHandler event_handler(dummy_appid_inspector);
-    Flow* flow = new Flow();
+    Flow* flow = new Flow;
     event_handler.handle(event, flow);
     CHECK(session->get_client_id() == APPID_UT_ID);
     delete flow;
@@ -165,7 +161,7 @@ TEST(appid_eve_process_event_handler_tests, eve_server_name_event_handler)
     EveProcessEvent event(p, "firefox", 90);
     event.set_server_name("www.google.com");
     AppIdEveProcessEventHandler event_handler(dummy_appid_inspector);
-    Flow* flow = new Flow();
+    Flow* flow = new Flow;
     event_handler.handle(event, flow);
     CHECK(session->get_payload_id() == APPID_UT_ID + 1);
     delete flow;
@@ -179,7 +175,7 @@ TEST(appid_eve_process_event_handler_tests, eve_alpn_event_handler)
     event.set_alpn(alpn);
     event.set_quic(true);
     AppIdEveProcessEventHandler event_handler(dummy_appid_inspector);
-    Flow* flow = new Flow();
+    Flow* flow = new Flow;
     event_handler.handle(event, flow);
     CHECK(session->get_alpn_service_app_id() == APPID_UT_ID + 2);
     delete flow;
@@ -193,7 +189,7 @@ TEST(appid_eve_process_event_handler_tests, eve_unknown_alpn_event_handler)
     event.set_alpn(alpn);
     event.set_quic(true);
     AppIdEveProcessEventHandler event_handler(dummy_appid_inspector);
-    Flow* flow = new Flow();
+    Flow* flow = new Flow;
     event_handler.handle(event, flow);
     CHECK(session->get_alpn_service_app_id() == APP_ID_NONE);
     delete flow;

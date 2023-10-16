@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -64,9 +64,9 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_INVALID_WINDOW_UPDATE_FRAME, "invalid HTTP/2 window update frame" },
     { EVENT_WINDOW_UPDATE_FRAME_ZERO_INCREMENT, "HTTP/2 window update frame with zero increment" },
     { EVENT_REQUEST_WITHOUT_METHOD, "HTTP/2 request without a method" },
-    { EVENT_TABLE_SIZE_UPDATE_NOT_AT_HEADER_START, 
+    { EVENT_TABLE_SIZE_UPDATE_NOT_AT_HEADER_START,
         "HTTP/2 HPACK table size update not at the start of a header block" },
-    { EVENT_MORE_THAN_2_TABLE_SIZE_UPDATES, 
+    { EVENT_MORE_THAN_2_TABLE_SIZE_UPDATES,
         "More than two HTTP/2 HPACK table size updates in a single header block" },
     { EVENT_HPACK_TABLE_SIZE_UPDATE_EXCEEDS_MAX,
         "HTTP/2 HPACK table size update exceeds max value set by decoder in SETTINGS frame" },
@@ -75,6 +75,8 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_LOSS_OF_SYNC,  "not HTTP/2 traffic or unrecoverable HTTP/2 protocol error" },
     { EVENT_INVALID_PRIORITY_FRAME, "invalid HTTP/2 PRIORITY frame" },
     { EVENT_INVALID_GOAWAY_FRAME, "invalid HTTP/2 GOAWAY frame" },
+    { EVENT_SETTINGS_QUEUE_OVERFLOW, "too many unacknowledged settings" },
+    { EVENT_SETTINGS_QUEUE_UNDERFLOW, "setting acknowledgment without actual settings" },
     { 0, nullptr }
 };
 

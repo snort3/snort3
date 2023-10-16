@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -52,6 +52,7 @@ public:
     virtual int update_alert(TcpReassemblerState&, uint32_t gid, uint32_t sid,
         uint32_t event_id, uint32_t event_second);
     virtual void purge_alerts(TcpReassemblerState&);
+    virtual bool segment_within_seglist_window(TcpReassemblerState&, TcpSegmentDescriptor&);
 
     uint32_t perform_partial_flush(TcpReassemblerState&, snort::Flow*, snort::Packet*&);
 
@@ -99,6 +100,7 @@ protected:
     bool fin_acked_no_gap(const TcpSegmentNode&, const TcpReassemblerState&);
     void update_next(TcpReassemblerState&, const TcpSegmentNode&);
     void update_skipped_bytes(uint32_t, TcpReassemblerState&);
+    void check_first_segment_hole(TcpReassemblerState&);
     bool has_seglist_hole(TcpReassemblerState&, TcpSegmentNode&, PAF_State&, uint32_t& total,
         uint32_t& flags);
     void skip_seglist_hole(TcpReassemblerState&, snort::Packet*, uint32_t flags,

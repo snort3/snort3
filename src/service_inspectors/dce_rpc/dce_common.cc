@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -141,9 +141,14 @@ bool dce2_paf_abort(DCE2_SsnData* sd)
     return false;
 }
 
+void reset_using_rpkt()
+{
+    using_rpkt = false;
+}
+
 void DCE2_Detect(DCE2_SsnData* sd)
 {
-    if (!sd) return ;
+    if (!sd) return;
     DceContextData::set_current_ropts(sd);
     if ( using_rpkt )
     {

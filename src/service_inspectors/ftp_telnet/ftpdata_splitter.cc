@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2017-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2017-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -93,7 +93,7 @@ StreamSplitter::Status FtpDataSplitter::scan(Packet* pkt, const uint8_t*, uint32
         *fp = len;
         // avoid unnecessary signature calc by clearing the flag set by detained packet
         if (fdfd->session.packet_flags & FTPDATA_FLG_FLUSH)
-            fdfd->session.packet_flags &= ~FTPDATA_FLG_FLUSH; 
+            fdfd->session.packet_flags &= ~FTPDATA_FLG_FLUSH;
         return FLUSH;
     }
 

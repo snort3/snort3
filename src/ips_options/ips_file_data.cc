@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 1998-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -43,6 +43,9 @@ public:
     { return CAT_SET_FAST_PATTERN; }
 
     EvalStatus eval(Cursor&, Packet*) override;
+
+    section_flags get_pdu_section(bool) const override
+    { return section_to_flag(PS_BODY); }
 };
 
 //-------------------------------------------------------------------------
@@ -53,12 +56,17 @@ IpsOption::EvalStatus FileDataOption::eval(Cursor& c, Packet* p)
 {
     RuleProfile profile(fileDataPerfStats);
 
-    DataPointer dp = DetectionEngine::get_file_data(p->context);
+    uint64_t sid;
+    bool drop_sse;
+    bool no_sse;
+    DataPointer dp = DetectionEngine::get_file_data(p->context, sid, drop_sse, no_sse);
 
     if ( !dp.data || !dp.len )
         return NO_MATCH;
-    c.set(s_name, dp.data, dp.len);
+
+    c.set(s_name, sid, dp.data, dp.len, !no_sse);
     c.set_pos_file(p->context->file_pos);
+    c.set_accumulation(drop_sse);
 
     return MATCH;
 }

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 // Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 //
@@ -52,7 +52,7 @@ static void replace_parse(const char* args, string& s)
 
 static bool replace_ok(const SnortConfig* sc)
 {
-    if ( sc->inline_mode() and SFDAQ::can_replace() )
+    if ( sc->ips_inline_mode() and SFDAQ::can_replace() )
         return true;
 
     static THREAD_LOCAL bool warned = false;
@@ -85,6 +85,9 @@ public:
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
+
+    CursorActionType get_cursor_type() const override
+    { return CAT_READ; }
 
     bool is_agent() override
     { return true; }

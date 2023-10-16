@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -103,3 +103,9 @@ void Http2DataFrame::print_frame(FILE* output)
     Http2Frame::print_frame(output);
 }
 #endif
+
+const uint8_t* Http2DataFrame::get_frame_data(uint32_t& length) const
+{
+    length = data_length;
+    return data_buffer;
+}

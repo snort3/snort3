@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -45,6 +45,7 @@
 #include "framework/policy_selector.h"
 #include "hash/xhash.h"
 #include "helpers/process.h"
+#include "host_tracker/host_cache_segmented.h"
 #include "latency/latency_config.h"
 #include "log/messages.h"
 #include "managers/action_manager.h"
@@ -269,6 +270,7 @@ SnortConfig::~SnortConfig()
     delete fast_pattern_config;
 
     delete policy_map;
+    policy_map = nullptr;
     InspectorManager::delete_config(this);
     ActionManager::delete_config(this);
 
@@ -489,9 +491,6 @@ bool SnortConfig::verify() const
     if (!policy_map->setup_network_policies())
         ReloadError("Network policy user ids must be unique\n");
 
-    if ( sc->asn1_mem != asn1_mem )
-        ReloadError("Changing detection.asn1_mem requires a restart.\n");
-
     else if ( sc->bpf_filter != bpf_filter )
         ReloadError("Changing packets.bfp_filter requires a restart.\n");
 
@@ -643,6 +642,11 @@ void SnortConfig::set_log_dir(const char* directory)
 void SnortConfig::set_watchdog(uint16_t n)
 {
     watchdog_timer = n;
+}
+
+void SnortConfig::set_watchdog_min_thread_count(uint16_t n)
+{
+    watchdog_min_thread_count = n;
 }
 
 void SnortConfig::set_dirty_pig(bool enabled)
@@ -1058,6 +1062,7 @@ void SnortConfig::cleanup_fatal_error()
         EventManager::release_plugins();
         IpsManager::release_plugins();
         InspectorManager::release_plugins();
+        host_cache.term();
     }
 #endif
 }

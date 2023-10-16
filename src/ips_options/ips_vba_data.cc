@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2021-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -39,8 +39,11 @@ IpsOption::EvalStatus VbaDataOption::eval(Cursor& c, Packet* p)
 {
     RuleProfile profile(vbaDataPerfStats);
 
+    if (!p->flow or !p->flow->gadget)
+        return NO_MATCH;
+
     InspectionBuffer buf;
-    if (!p->flow->gadget->get_fp_buf(buf.IBT_VBA, p, buf)) 
+    if (!p->flow->gadget->get_fp_buf(buf.IBT_VBA, p, buf))
         return NO_MATCH;
 
     c.set(s_name, buf.data, buf.len);
@@ -51,7 +54,7 @@ bool VbaDataModule::end(const char*, int, SnortConfig*)
 {
     if (!search_handle)
         search_handle = LiteralSearch::setup();
-    
+
     if (!searcher)
         searcher = snort::LiteralSearch::instantiate(search_handle,
             (const uint8_t*)"ATTRIBUT", 8, true);
@@ -147,3 +150,37 @@ const BaseApi* ips_vba_data[] =
     nullptr
 };
 
+//-------------------------------------------------------------------------
+// UNIT TESTS
+//-------------------------------------------------------------------------
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+TEST_CASE("vba_data test", "[ips_vba_data]")
+{
+    VbaDataOption vba_data_opt;
+    Packet p;
+    p.data = (const uint8_t*) "foo";
+    p.dsize = strlen((const char*) p.data);
+
+    SECTION("null flow")
+    {
+        p.flow = nullptr;
+
+        Cursor c(&p);
+        REQUIRE(vba_data_opt.eval(c, &p) == IpsOption::NO_MATCH);
+    }
+
+    SECTION("null gadget")
+    {
+        Flow f;
+        p.flow = &f;
+        p.flow->gadget = nullptr;
+
+        Cursor c(&p);
+        REQUIRE(vba_data_opt.eval(c, &p) == IpsOption::NO_MATCH);
+    }
+}
+
+#endif

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -285,7 +285,7 @@ bool RpcModule::set(const Value& v, uint32_t& field, int flag)
 
     errno = 0;
     char* end = nullptr;
-    int64_t num = (int64_t)strtol(v.get_string(), &end, 0);
+    int64_t num = strtoll(v.get_string(), &end, 0);
 
     if ( *end or errno or num < 0 or num > 0xFFFFFFFF )
         return false;

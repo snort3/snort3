@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -55,8 +55,10 @@ void LogMessage(const char*,...) { }
 void LogText(const char*, FILE*) {}
 
 void ParseWarning(WarningGroup, const char*, ...) { }
-
 void LogLabel(const char*, FILE*) {}
+
+unsigned DataBus::get_id(const PubKey&) { return 0; }
+
 SearchTool::SearchTool(bool) { }
 SearchTool::~SearchTool() = default;
 }
@@ -85,6 +87,7 @@ HttpPatternMatchers::~HttpPatternMatchers() = default;
 SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
 AlpnPatternMatchers::~AlpnPatternMatchers() = default;
+CipPatternMatchers::~CipPatternMatchers() = default;
 
 void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
 {

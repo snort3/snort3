@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -24,6 +24,7 @@
 
 #include "flow/flow.h"
 #include "framework/counts.h"
+#include "framework/data_bus.h"
 #include "main/thread.h"
 #include "protocols/packet.h"
 
@@ -43,7 +44,8 @@ enum CipDataType
     CIP_DATA_TYPE_IMPLICIT,
     CIP_DATA_TYPE_OTHER,
     CIP_DATA_TYPE_ENIP_COMMAND,
-    CIP_DATA_TYPE_MALFORMED
+    CIP_DATA_TYPE_MALFORMED,
+    CIP_DATA_TYPE_CONNECTION_SAFETY
 };
 
 struct CipEventData
@@ -79,6 +81,8 @@ struct CipEventData
 
     // Pointer to snort::Packet
     const snort::Packet* snort_packet;
+
+    static unsigned pub_id;
 };
 
 class CipFlowData : public snort::FlowData

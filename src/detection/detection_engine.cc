@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -98,13 +98,16 @@ void DetectionEngine::thread_init()
 }
 
 void DetectionEngine::thread_term()
-{ delete offloader; }
+{
+    delete offloader;
+}
 
 DetectionEngine::DetectionEngine()
 {
     context = Analyzer::get_switcher()->interrupt();
 
     context->file_data = DataPointer(nullptr, 0);
+    context->file_data_id = 0;
 
     reset();
 }
@@ -299,10 +302,33 @@ DataBuffer& DetectionEngine::get_alt_buffer(Packet* p)
 }
 
 void DetectionEngine::set_file_data(const DataPointer& dp)
-{ Analyzer::get_switcher()->get_context()->file_data = dp; }
+{
+    auto c = Analyzer::get_switcher()->get_context();
+    c->file_data = dp;
+    c->file_data_id = 0;
+    c->file_data_drop_sse = false;
+    c->file_data_no_sse = false;
+}
 
-DataPointer& DetectionEngine::get_file_data(IpsContext* c)
+void DetectionEngine::set_file_data(const DataPointer& dp, uint64_t id, bool is_accum, bool no_flow)
+{
+    auto c = Analyzer::get_switcher()->get_context();
+    c->file_data = dp;
+    c->file_data_id = id;
+    c->file_data_drop_sse = is_accum;
+    c->file_data_no_sse = no_flow;
+}
+
+const DataPointer& DetectionEngine::get_file_data(const IpsContext* c)
 { return c->file_data; }
+
+const DataPointer& DetectionEngine::get_file_data(const IpsContext* c, uint64_t& id, bool& drop_sse, bool& no_sse)
+{
+    id = c->file_data_id;
+    drop_sse = c->file_data_drop_sse;
+    no_sse = c->file_data_no_sse;
+    return c->file_data;
+}
 
 void DetectionEngine::set_data(unsigned id, IpsContextData* p)
 { Analyzer::get_switcher()->get_context()->set_context_data(id, p); }
@@ -604,7 +630,7 @@ bool DetectionEngine::inspect(Packet* p)
 
         if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
         {
-            if ( p->context->conf->inline_mode() and
+            if ( p->context->conf->ips_inline_mode() and
                 snort::get_network_policy()->checksum_drops(p->ptrs.decode_flags &
                     DECODE_ERR_CKSUM_ALL) )
             {

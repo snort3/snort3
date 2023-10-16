@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2002-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@
 #include "main/thread.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "pub_sub/intrinsic_event_ids.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -60,8 +61,8 @@ static THREAD_LOCAL PerfConstraints* t_constraints;
 class PerfIdleHandler : public DataHandler
 {
 public:
-    PerfIdleHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_network(THREAD_IDLE_EVENT, this); }
+    PerfIdleHandler(PerfMonitor& p, SnortConfig& sc) : DataHandler(PERF_NAME), perf_monitor(p)
+    { DataBus::subscribe_global(intrinsic_pub_key, IntrinsicEventIds::THREAD_IDLE, this, sc); }
 
     void handle(DataEvent&, Flow*) override
     { perf_monitor.eval(nullptr); }
@@ -73,8 +74,8 @@ private:
 class PerfRotateHandler : public DataHandler
 {
 public:
-    PerfRotateHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_network(THREAD_ROTATE_EVENT, this); }
+    PerfRotateHandler(PerfMonitor& p, SnortConfig& sc) : DataHandler(PERF_NAME), perf_monitor(p)
+    { DataBus::subscribe_global(intrinsic_pub_key, IntrinsicEventIds::THREAD_ROTATE, this, sc); }
 
     void handle(DataEvent&, Flow*) override
     { perf_monitor.rotate(); }
@@ -86,8 +87,8 @@ private:
 class FlowIPDataHandler : public DataHandler
 {
 public:
-    FlowIPDataHandler(PerfMonitor& p) : DataHandler(PERF_NAME), perf_monitor(p)
-    { DataBus::subscribe_network(FLOW_STATE_EVENT, this); }
+    FlowIPDataHandler(PerfMonitor& p, SnortConfig& sc) : DataHandler(PERF_NAME), perf_monitor(p)
+    { DataBus::subscribe_global(intrinsic_pub_key, IntrinsicEventIds::FLOW_STATE_CHANGE, this, sc); }
 
     void handle(DataEvent&, Flow* flow) override
     {
@@ -190,11 +191,11 @@ void PerfMonitor::disable_tracker(size_t i)
 // type and version fields immediately after timestamp like seconds, usec,
 // type, version#, data1, data2, ...
 
-bool PerfMonitor::configure(SnortConfig*)
+bool PerfMonitor::configure(SnortConfig* sc)
 {
-    new PerfIdleHandler(*this);
-    new PerfRotateHandler(*this);
-    new FlowIPDataHandler(*this);
+    new PerfIdleHandler(*this, *sc);
+    new PerfRotateHandler(*this, *sc);
+    new FlowIPDataHandler(*this, *sc);
 
     return config->resolve();
 }

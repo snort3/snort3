@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 1998-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -88,6 +88,7 @@ struct SO_PUBLIC SfIp
     bool fast_eq6(const SfIp& ip2) const;
     bool fast_equals_raw(const SfIp& ip2) const;
     bool operator==(const SfIp& ip2) const;
+    bool operator < (const SfIp& rhs) const;
 
     /*
      * Miscellaneous
@@ -454,6 +455,11 @@ inline bool SfIp::fast_equals_raw(const SfIp& ip2) const
 inline bool SfIp::operator==(const SfIp& ip2) const
 {
     return fast_equals_raw(ip2);
+}
+
+inline bool SfIp::operator < (const SfIp& rhs) const
+{
+    return less_than(rhs);
 }
 
 /* End of member function definitions */

@@ -19,6 +19,7 @@ set (FRAMEWORK_INCLUDES
     mpse_batch.h
     packet_constraints.h
     parameter.h
+    pdu_section.h
     policy_selector.h
     range.h
     so_rule.h

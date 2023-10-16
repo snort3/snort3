@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -43,6 +43,8 @@ void ErrorMessage(const char*,...) {}
 void LogLabel(const char*, FILE*) {}
 void LogText(const char* s, FILE*) { LogMessage("%s\n", s); }
 
+unsigned DataBus::get_id(const PubKey&)
+{ return 0; }
 
 // Stubs for utils
 char* snort_strdup(const char* str)
@@ -126,6 +128,7 @@ HttpPatternMatchers::~HttpPatternMatchers() = default;
 SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
 AlpnPatternMatchers::~AlpnPatternMatchers() = default;
+CipPatternMatchers::~CipPatternMatchers() = default;
 snort::SearchTool::SearchTool(bool) { }
 snort::SearchTool::~SearchTool() = default;
 

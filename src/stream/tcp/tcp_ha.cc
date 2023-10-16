@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -53,8 +53,7 @@ void TcpHA::deactivate_session(Flow* flow)
         ((TcpSession*)(flow->session))->clear_session(true, false, false);
     }
 
-    flow->clear_session_state(STREAM_STATE_SYN | STREAM_STATE_SYN_ACK |
-        STREAM_STATE_ACK | STREAM_STATE_ESTABLISHED);
+    flow->clear_session_state(STREAM_STATE_ESTABLISHED);
 
     assert( flow->ha_state );
     flow->clear_session_flags( SSNFLAG_SEEN_CLIENT | SSNFLAG_SEEN_SERVER );

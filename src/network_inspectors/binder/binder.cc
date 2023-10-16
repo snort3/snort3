@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -29,6 +29,8 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "pub_sub/assistant_gadget_event.h"
+#include "pub_sub/intrinsic_event_ids.h"
+#include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
 #include "target_based/host_attributes.h"
@@ -441,14 +443,16 @@ void Stuff::apply_service(Flow& flow)
             if (flow.ssn_state.snort_protocol_id == UNKNOWN_PROTOCOL_ID)
                 flow.ssn_state.snort_protocol_id = gadget->get_service();
 
-            DataBus::publish(SERVICE_INSPECTOR_CHANGE_EVENT, DetectionEngine::get_current_packet());
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::SERVICE_INSPECTOR_CHANGE,
+                DetectionEngine::get_current_packet());
         }
     }
     else if (wizard)
         flow.set_clouseau(wizard);
+
     else if (!flow.flags.svc_event_generated)
     {
-        DataBus::publish(FLOW_NO_SERVICE_EVENT, DetectionEngine::get_current_packet());
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_NO_SERVICE, DetectionEngine::get_current_packet());
         flow.flags.svc_event_generated = true;
     }
 }
@@ -523,7 +527,7 @@ public:
     void handle(DataEvent&, Flow* flow) override
     {
         Binder* binder = InspectorManager::get_binder();
-        if (binder && flow)
+        if (binder && flow && !flow->flags.ha_flow)
             binder->handle_flow_setup(*flow);
     }
 };
@@ -625,15 +629,16 @@ bool Binder::configure(SnortConfig* sc)
             default:            name = nullptr; break;
         }
         if (name)
-            default_ssn_inspectors[proto] = InspectorManager::get_inspector(name);
+            default_ssn_inspectors[proto] = InspectorManager::get_inspector(name, false, sc);
     }
 
-    DataBus::subscribe(PKT_WITHOUT_FLOW_EVENT, new NonFlowPacketHandler());
-    DataBus::subscribe(FLOW_STATE_SETUP_EVENT, new FlowStateSetupHandler());
-    DataBus::subscribe(FLOW_SERVICE_CHANGE_EVENT, new FlowServiceChangeHandler());
-    DataBus::subscribe(STREAM_HA_NEW_FLOW_EVENT, new StreamHANewFlowHandler());
-    DataBus::subscribe(FLOW_ASSISTANT_GADGET_EVENT, new AssistantGadgetHandler());
-    DataBus::subscribe(FLOW_STATE_RELOADED_EVENT, new RebindFlow());
+    DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::PKT_WITHOUT_FLOW, new NonFlowPacketHandler());
+    DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::FLOW_STATE_SETUP, new FlowStateSetupHandler());
+    DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::FLOW_SERVICE_CHANGE, new FlowServiceChangeHandler());
+    DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::FLOW_ASSISTANT_GADGET, new AssistantGadgetHandler());
+    DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::FLOW_STATE_RELOADED, new RebindFlow());
+
+    DataBus::subscribe(stream_pub_key, StreamEventIds::HA_NEW_FLOW, new StreamHANewFlowHandler());
 
     return true;
 }
@@ -775,6 +780,7 @@ void Binder::handle_flow_service_change(Flow& flow)
             {
                 flow.set_gadget(ins);
                 flow.ssn_state.snort_protocol_id = ins->get_service();
+                flow.clear_session_flags(SSNFLAG_ABORT_CLIENT | SSNFLAG_ABORT_SERVER);
                 if (data and data != flow.data)
                 {
                     if (flow.data)
@@ -782,7 +788,8 @@ void Binder::handle_flow_service_change(Flow& flow)
 
                     flow.set_data(data);
                 }
-                DataBus::publish(SERVICE_INSPECTOR_CHANGE_EVENT, DetectionEngine::get_current_packet());
+                DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::SERVICE_INSPECTOR_CHANGE,
+                    DetectionEngine::get_current_packet());
             }
             else
                 flow.ssn_state.snort_protocol_id = UNKNOWN_PROTOCOL_ID;

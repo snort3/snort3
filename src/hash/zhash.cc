@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2003-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -41,11 +41,12 @@ using namespace snort;
 //-------------------------------------------------------------------------
 
 
-ZHash::ZHash(int rows, int key_len)
+ZHash::ZHash(int rows, int key_len, bool recycle)
     : XHash(rows, key_len)
 {
     initialize(new FlowHashKeyOps(nrows));
     anr_enabled = false;
+    recycle_nodes = recycle;
 }
 
 void* ZHash::get(const void* key)

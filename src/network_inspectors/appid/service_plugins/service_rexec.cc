@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -164,7 +164,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
             sip = args.pkt->ptrs.ip_api.get_src();
             AppIdSession* pf = AppIdSession::create_future_session(args.pkt,
                 dip, 0, sip,(uint16_t)port, IpProtocol::TCP,
-                args.asd.config.snort_proto_ids[PROTO_INDEX_REXEC]);
+                args.asd.config.snort_proto_ids[PROTO_INDEX_REXEC], args.asd.get_odp_ctxt());
 
             if (pf)
             {

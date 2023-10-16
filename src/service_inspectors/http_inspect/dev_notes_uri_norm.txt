@@ -1,0 +1,60 @@
+HttpUri is the class that represents a URI. HttpMsgRequest objects have an HttpUri that is created
+during analyze().
+
+URI normalization is performed during HttpUri construction in four steps.
+
+Step 1: Identify the type of URI.
+
+HI recognizes four types of URI:
+
+1. Asterisk: a lone ‘*’ character signifying that the request does not refer to any resource in
+particular. Often used with the OPTIONS method. This is not normalized.
+
+2. Authority: any URI used with the CONNECT method. The entire URI is treated as an authority.
+
+3. Origin: a URI that begins with a slash. Consists of only an absolute path with no scheme or
+authority present.
+
+4. Absolute: a URI which includes a scheme and a host as well as an absolute path. E.g.
+http://example.com/path/to/resource.
+
+In addition there are malformed URIs that don't meet any of the four types. These are protocol
+errors and will trigger an alert. Because their format is unrecognized they are not normalized.
+
+Step 2: Decompose the URI into its up to six constituent pieces: scheme, host, port, path, query,
+and fragment.
+
+Based on the URI type the overall URI is divided into scheme, authority, and absolute path. The
+authority is subdivided into host and port. The absolute path is subdivided into path, query, and
+fragment.
+
+The raw URI pieces can be accessed via rules. For example: http_raw_uri: query; content: “foo”
+will only match the query portion of the URI.
+
+Step 3: Normalize the individual pieces.
+
+The port is not normalized. The scheme is normalized to lower case. The other four pieces are
+normalized in a fashion similar to 2.X with an important exception. Path-related normalizations
+such as eliminating directory traversals and squeezing out extra slashes are only done for the
+path.
+
+The normalized URI pieces can be accessed via rules. For example: http_uri: path; content:
+“foo/bar”.
+
+Step 4: Stitch the normalized pieces back together into a complete normalized URI.
+
+This allows rules to be written against a normalized whole URI as is done in 2.X.
+
+The procedures for normalizing the individual pieces are mostly identical to 2.X. Some points
+warrant mention:
+
+1. HI considers it to be normal for reserved characters to be percent encoded and does not
+generate an alert. The 119/1 alert is used only for unreserved characters that are found to be
+percent encoded. The ignore_unreserved configuration option allows the user to specify a list of
+unreserved characters that are exempt from this alert.
+
+2. Plus to space substitution is a configuration option. It is not currently limited to the query
+but that would not be a difficult feature to add.
+
+3. The 2.X multi_slash and directory options are combined into a single option called
+simplify_path.

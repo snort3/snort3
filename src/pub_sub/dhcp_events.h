@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2020-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -21,10 +21,8 @@
 #define DHCP_EVENTS_H
 
 #include <cstring>
-#include "framework/data_bus.h"
+#include "pub_sub/appid_event_ids.h"
 
-#define DHCP_DATA_EVENT "dhcp_data_event"
-#define DHCP_INFO_EVENT "dhcp_info_event"
 #define DHCP_OP55_MAX_SIZE  64
 #define DHCP_OP60_MAX_SIZE  64
 

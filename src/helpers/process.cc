@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -228,8 +228,10 @@ static void print_backtrace(SigSafePrinter& ssp)
 
         char sym[256];
         unw_word_t offset;
-        if (unw_get_proc_name(&cursor, sym, sizeof(sym), &offset) == 0)
+        if ((ret = unw_get_proc_name(&cursor, sym, sizeof(sym), &offset)) == 0)
             ssp.printf(" in %s+0x%x", sym, offset);
+        else
+        	ssp.printf(" unw_get_proc_name failed: %s (%d)", unw_strerror(ret), ret);
 
         Dl_info dlinfo;
         if (dladdr((void *)(uintptr_t)(pip.start_ip + offset), &dlinfo)

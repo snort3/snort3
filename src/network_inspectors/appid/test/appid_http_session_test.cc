@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -27,7 +27,6 @@
 #include <string>
 
 #include "framework/data_bus.h"
-#include "memory/memory_cap.h"
 #include "protocols/protocol_ids.h"
 #include "service_inspectors/http_inspect/http_msg_header.h"
 #include "tp_appid_module_api.h"
@@ -145,6 +144,10 @@ bool AppIdSession::is_tp_appid_available() const
     return true;
 }
 
+void AppIdSession::update_encrypted_app_id(AppId)
+{
+}
+
 void AppIdModule::reset_stats() {}
 
 // AppIdDebug mock functions
@@ -161,8 +164,8 @@ void AppIdDebug::set_constraints(const char*, const AppIdDebugSessionConstraints
 // Profiler mock functions
 void Profiler::register_module(Module*) { }
 void Profiler::register_module(const char*, const char*, Module*) { }
-void Profiler::consolidate_stats() { }
-void Profiler::reset_stats() { }
+void Profiler::consolidate_stats(snort::ProfilerType) { }
+void Profiler::reset_stats(snort::ProfilerType) { }
 void Profiler::show_stats() { }
 
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -37,11 +37,11 @@ using namespace snort;
 
 TEST_GROUP(deferred_trust_test)
 {
-    DeferredTrust deferred_trust;
 };
 
 TEST(deferred_trust_test, set_deferred_trust)
 {
+    DeferredTrust deferred_trust;
     // Disable non-existent module_id
     deferred_trust.set_deferred_trust(1, false);
     CHECK_TEXT(!deferred_trust.is_active(), "Deferred trust should not be active");
@@ -89,6 +89,7 @@ TEST(deferred_trust_test, set_deferred_trust)
 
 TEST(deferred_trust_test, finalize)
 {
+    DeferredTrust deferred_trust;
     Active active{};
     active.block_again();
 
@@ -150,6 +151,35 @@ TEST(deferred_trust_test, finalize)
     CHECK_TEXT(active.session_was_allowed(), "Session was not allowed while deferring trust");
 }
 
+/* Stub implementation for the test below to avoid linking */
+void Active::drop_packet(const Packet*, bool)
+{
+    active_action = ACT_DROP;
+}
+
+TEST(deferred_trust_test, finalize_clear)
+{
+    DeferredTrust deferred_trust;
+    Active active{};
+
+    deferred_trust.clear();
+    // Enable
+    deferred_trust.set_deferred_trust(1, true);
+    CHECK_TEXT(deferred_trust.is_active(), "Deferred trust should be active");
+    active.block_again();
+    // finalize should clear deferred_trust
+    deferred_trust.finalize(active);
+    CHECK_TEXT(!deferred_trust.is_active(), "Deferred trust should not be active");
+
+    deferred_trust.clear();
+    // Enable
+    deferred_trust.set_deferred_trust(1, true);
+    CHECK_TEXT(deferred_trust.is_active(), "Deferred trust should be active");
+    active.drop_packet(nullptr, true);
+    // finalize should NOT clear deferred_trust
+    deferred_trust.finalize(active);
+    CHECK_TEXT(deferred_trust.is_active(), "Deferred trust should still be active");
+}
 
 int main(int argc, char** argv)
 {

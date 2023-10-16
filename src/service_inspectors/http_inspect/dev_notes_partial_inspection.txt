@@ -1,0 +1,49 @@
+When the end of a script is found and the normal flush point has not been found, the current TCP
+segment and all previous segments for the current message section are flushed using a special
+procedure known as partial inspection. From the perspective of Stream (or H2I) a partial inspection
+is a regular flush in every respect.
+
+scan() calls prep_partial_flush() to prepare for the partial inspection. Then it returns a normal
+flush point to Stream at the end of the current TCP segment. Partial inspections perform all of the
+functions of a regular inspection including forwarding data to file processing and detection.
+
+The difference between a partial inspection and a regular inspection is reassemble() saves the
+input data for future reuse. Eventually there will be a regular full inspection of the entire
+message section. reassemble() will accomplish this by combining the input data for the partial
+inspection with later data that complete the message section.
+
+Correct and efficient execution of a full inspection following a partial inspection requires
+special handling of certain functions. Unzipping is only done once in reassemble(). The stored
+input in reassemble() has already been through dechunking and unzipping. Data is forwarded to file
+processing during the partial inspection and duplicate data will not be forwarded again. Some
+of the message body normalization steps are done once during partial inspection with work
+products saved for reuse.
+
+It is possible to do more than one partial inspection of a single message section. Each partial
+inspection is cumulative, covering the new data and all previous data.
+
+Compared to just doing a full inspection, a partial inspection followed by a full inspection
+will not miss anything. The benefits of partial inspection are in addition to the benefits of a
+full inspection.
+
+The http_inspect partial inspection mechanism is also used by http2_inspect to manage frame
+boundaries. When inspecting HTTP/2, a partial inspection by http_inspect may occur because script
+detection triggered it, because H2I wanted it, or both. 
+
+Some applications may be affected by blocks too late scenarios related to seeing part of the
+zero-length chunk. For example a TCP packet that ends with:
+
+    8<CR><LF>abcdefgh<CR><LF>0
+
+might be sufficient to forward the available data ("abcdefgh") to the application even though the
+final <CR><LF> has not been received.
+
+Note that the actual next bytes are uncertain here. The next packet might begin with <CR><LF>, but
+
+    100000<CR><LF>ijklmnopq ...
+
+is another perfectly legal possibility. There is no rule against starting a nonzero chunk length
+with a zero character and some applications reputedly do this.
+
+As a precaution partial inspection is performed when 1) a TCP segment ends inside a possible
+zero-length chunk or 2) chunk processing fails (broken chunk).

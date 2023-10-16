@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2018-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2018-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -72,12 +72,14 @@ MpseGroup::~MpseGroup()
 {
     if (normal_mpse)
     {
-        MpseManager::delete_search_engine(normal_mpse);
+        if (!normal_is_dup)
+            MpseManager::delete_search_engine(normal_mpse);
         normal_mpse = nullptr;
     }
     if (offload_mpse)
     {
-        MpseManager::delete_search_engine(offload_mpse);
+        if (!offload_is_dup)
+            MpseManager::delete_search_engine(offload_mpse);
         offload_mpse = nullptr;
     }
 }

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -198,7 +198,7 @@ bool HttpStreamSplitter::finish(Flow* flow)
         {
             HttpRequestBodyEvent http_request_body_event(nullptr,
                 session_data->publish_octets[source_id], true, session_data);
-            DataBus::publish(HTTPX_REQUEST_BODY_EVENT_KEY, http_request_body_event, flow);
+            DataBus::publish(my_inspector->get_pub_id(), HttpEventIds::REQUEST_BODY, http_request_body_event, flow);
 #ifdef REG_TEST
             if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
             {

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -87,3 +87,23 @@ void PortObjectItemPrint(PortObjectItem* poi, char* dstbuf, int bufsize)
         SnortSnprintfAppend(dstbuf, bufsize, "%hu:%hu",poi->lport,poi->hport);
 }
 
+/*
+   Calculate the hash value of the port item.
+*/
+unsigned PortObjectItemHash(PortObjectItem* poi, unsigned hash, unsigned scale)
+{
+    if ( poi->any() )
+        return 0;
+
+    hash *= scale;
+    hash += poi->lport & 0xff;
+    hash *= scale;
+    hash += (poi->lport >> 8) & 0xff;
+
+    hash *= scale;
+    hash += poi->hport & 0xff;
+    hash *= scale;
+    hash += (poi->hport >> 8) & 0xff;
+
+    return hash;
+}

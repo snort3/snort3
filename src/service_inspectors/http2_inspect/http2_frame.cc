@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2019-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2019-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -154,3 +154,37 @@ void Http2Frame::print_frame(FILE* output)
     data.print(output, "Frame Data");
 }
 #endif
+
+const uint8_t* Http2Frame::get_frame_pdu(uint16_t& length) const
+{
+    int32_t hlen = header.length();
+    if (hlen != FRAME_HEADER_LENGTH)
+        return nullptr;
+
+    uint32_t dlen;
+    const uint8_t* data = get_frame_data(dlen);
+    if (!data or (hlen + dlen > UINT16_MAX))
+        return nullptr;
+
+    length = (uint16_t)(hlen + dlen);
+    uint8_t* pdu = new uint8_t[length];
+    memcpy(pdu, header.start(), hlen);
+    if (dlen)
+        memcpy(&pdu[hlen], data, dlen);
+
+    pdu[0] = (dlen >> 16) & 0xff;
+    pdu[1] = (dlen >> 8) & 0xff;
+    pdu[2] = dlen & 0xff;
+
+    return pdu;
+}
+
+const uint8_t* Http2Frame::get_frame_data(uint32_t& length) const
+{
+    int32_t dlen = data.length();
+    if (dlen < 0)
+        return nullptr;
+
+    length = (uint32_t)dlen;
+    return data.start();
+}

@@ -41,6 +41,8 @@ add_library (protocols OBJECT
     packet_manager.cc
 )
 
+add_subdirectory(test)
+
 install (FILES ${PROTOCOL_HEADERS}
     DESTINATION "${INCLUDE_INSTALL_PATH}/protocols"
 )

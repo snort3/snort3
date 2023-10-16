@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -46,6 +46,9 @@ public:
     bool operator==(const IpsOption& ips) const override;
 
     EvalStatus eval(Cursor&, Packet*) override;
+
+    section_flags get_pdu_section(bool) const override
+    { return section_to_flag(PS_BODY); }
 
     FileTypeBitSet types;
 };

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -66,7 +66,14 @@ bool MobilityCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
+    if ( raw.len < ip::MIN_EXT_LEN )
+    {
+        codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);
+        return false;
+    }
+
     codec.lyr_len = ip::MIN_EXT_LEN + (mip6->header_len << 3);
+
     if (codec.lyr_len > raw.len)
     {
         codec_event(codec, DECODE_IPV6_TRUNCATED_EXT);

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -43,6 +43,7 @@ struct TcpNormalizerState
 
     int32_t paws_ts_fudge = 0;
     int tcp_ts_flags = 0;
+    uint32_t zwp_seq = 0;
 
     int8_t trim_syn = 0;
     int8_t trim_rst = 0;
@@ -64,6 +65,7 @@ public:
     virtual ~TcpNormalizer() = default;
 
     virtual void init(State&) { }
+    virtual void session_blocker(State&, TcpSegmentDescriptor&);
     virtual bool packet_dropper(State&, TcpSegmentDescriptor&, NormFlags);
     virtual bool trim_syn_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
     virtual void trim_rst_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
@@ -72,12 +74,14 @@ public:
     virtual void trim_mss_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
     virtual void ecn_tracker(State&, const snort::tcp::TCPHdr*, bool req3way);
     virtual void ecn_stripper(State&, TcpSegmentDescriptor&);
+    virtual uint32_t get_zwp_seq(State&);
     virtual uint32_t get_stream_window(State&, TcpSegmentDescriptor&);
     virtual uint32_t get_tcp_timestamp(State&, TcpSegmentDescriptor&, bool strip);
     virtual int handle_paws(State&, TcpSegmentDescriptor&);
     virtual bool validate_rst(State&, TcpSegmentDescriptor&);
     virtual int handle_repeated_syn(State&, TcpSegmentDescriptor&) = 0;
     virtual uint16_t set_urg_offset(State&, const snort::tcp::TCPHdr* tcph, uint16_t dsize);
+    virtual void set_zwp_seq(State&, uint32_t seq);
 
     static void reset_stats();
 

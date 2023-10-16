@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2011-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -124,7 +124,8 @@ IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
     AppId service_id = session->get_api().get_service_app_id();
     OdpContext& odp_ctxt = session->get_odp_ctxt();
 
-    if (service_id != APP_ID_HTTP2 and service_id != APP_ID_HTTP3)
+    if ((service_id != APP_ID_HTTP2 and service_id != APP_ID_HTTP3) or
+        (service_id == APP_ID_HTTP3 and session->get_api().get_hsessions_size() == 0))
     {
         AppId app_ids[APP_PROTOID_MAX];
 

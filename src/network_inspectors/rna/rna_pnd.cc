@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2003-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -210,7 +210,7 @@ void RnaPnd::analyze_netflow_host(NetFlowEvent* nfe)
     {
         uint32_t service = nfe->get_service_id();
         RNAEvent new_flow_event(p, nfe->get_record(), service);
-        DataBus::publish(RNA_NEW_NETFLOW_CONN, new_flow_event);
+        DataBus::publish(RnaConfig::pub_id, NetFlowEventIds::DATA, new_flow_event);
         return;
     }
 
@@ -229,6 +229,7 @@ void RnaPnd::analyze_netflow_host(NetFlowEvent* nfe)
             return;
     }
 
+    // Note: this is the ethertype for the wire packet itself, not the NetFlow flows
     uint16_t ptype = rna_get_eth(p);
     if ( ptype > to_utype(ProtocolId::ETHERTYPE_MINIMUM) )
     {
@@ -237,7 +238,8 @@ void RnaPnd::analyze_netflow_host(NetFlowEvent* nfe)
                 packet_time());
     }
 
-    ptype = to_utype(p->get_ip_proto_next());
+    // Remaining fields (port, proto, etc.) are parsed from the NetFlow record
+    ptype = nfe->get_record()->proto;
     if ( ht->add_xport_proto(ptype) )
         logger.log(RNA_EVENT_NEW, NEW_XPORT_PROTOCOL, p, &ht, ptype, src_mac, src_ip_ptr,
             packet_time());
@@ -278,7 +280,7 @@ void RnaPnd::analyze_netflow_service(NetFlowEvent* nfe)
         if ( proto == IpProtocol::TCP )
             logger.log(RNA_EVENT_NEW, NEW_TCP_SERVICE, p, &ht,
                 (const struct in6_addr*) src_ip.get_ip6_ptr(), mac_addr, &ha);
-        else
+        else if ( proto == IpProtocol::UDP )
             logger.log(RNA_EVENT_NEW, NEW_UDP_SERVICE, p, &ht,
                 (const struct in6_addr*) src_ip.get_ip6_ptr(), mac_addr, &ha);
 
@@ -1040,7 +1042,7 @@ int RnaPnd::discover_host_types_icmpv6_ndp(RnaTracker& ht, const Packet* p, uint
         return 1;
 
     const uint8_t* data = (const uint8_t*)p->ptrs.icmph;
-    int32_t data_len = p->ptrs.ip_api.pay_len();
+    int32_t data_len = std::min((int)p->ptrs.ip_api.pay_len(), (int)(p->pkt + p->pktlen - data));
 
     switch ( ((const icmp::Icmp6Hdr*)p->ptrs.icmph)->type )
     {

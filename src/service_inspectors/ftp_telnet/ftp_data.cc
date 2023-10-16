@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2004-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -62,7 +62,7 @@ static void FTPDataProcess(
 {
     int status;
 
-    set_file_data(p->data, p->dsize);
+    set_file_data(p->data, p->dsize, data_ssn->path_hash);
 
     if (data_ssn->packet_flags & FTPDATA_FLG_REST)
     {
@@ -235,10 +235,10 @@ void FtpDataFlowData::handle_expected(Packet* p)
         if (fd and fd->in_tls)
         {
             OpportunisticTlsEvent evt(p, fd_svc_name);
-            DataBus::publish(OPPORTUNISTIC_TLS_EVENT, evt, p->flow);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::OPPORTUNISTIC_TLS, evt, p->flow);
         }
         else
-            DataBus::publish(SSL_SEARCH_ABANDONED, p);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::SSL_SEARCH_ABANDONED, p);
     }
 }
 
@@ -310,9 +310,6 @@ void FtpData::eval(Packet* p)
 
     // precondition - what we registered for
     assert(p->has_tcp_data());
-
-    if (FileService::get_max_file_depth() < 0)
-        return;
 
     SnortFTPData(p);
     ++fdstats.total_packets;

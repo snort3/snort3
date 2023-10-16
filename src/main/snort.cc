@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -40,6 +40,8 @@
 #include "framework/mpse.h"
 #include "helpers/process.h"
 #include "host_tracker/host_cache.h"
+#include "host_tracker/host_cache_segmented.h"
+#include "host_tracker/host_tracker_module.h"
 #include "ips_options/ips_options.h"
 #include "log/log.h"
 #include "log/messages.h"
@@ -68,6 +70,7 @@
 #include "service_inspectors/service_inspectors.h"
 #include "side_channel/side_channel.h"
 #include "stream/stream_inspectors.h"
+#include "stream/stream.h"
 #include "target_based/host_attributes.h"
 #include "time/periodic.h"
 #include "trace/trace_api.h"
@@ -105,6 +108,7 @@ void Snort::init(int argc, char** argv)
 #endif
 
     InitProtoNames();
+    DataBus::init();
 
     load_actions();
     load_codecs();
@@ -166,6 +170,7 @@ void Snort::init(int argc, char** argv)
         EventManager::instantiate(sc->output.c_str(), sc);
 
     HighAvailabilityManager::configure(sc->ha_config);
+    memory::MemoryCap::init(sc->thread_config->get_instance_max());
 
     ModuleManager::reset_stats(sc);
 
@@ -336,24 +341,27 @@ void Snort::term()
     // since the "TraceApi::thread_term()" uses SnortConfig
     TraceApi::thread_term();
 
+    SnortConfig::set_conf(nullptr);
+
     /* free allocated memory */
     if (sc != snort_cmd_line_conf)
         delete sc;
 
     delete snort_cmd_line_conf;
     snort_cmd_line_conf = nullptr;
-    SnortConfig::set_conf(nullptr);
 
     CleanupProtoNames();
     HighAvailabilityManager::term();
     SideChannelManager::term();
     ModuleManager::term();
+    host_cache.term();
     PluginManager::release_plugins();
     ScriptManager::release_scripts();
-    memory::MemoryCap::cleanup();
+    memory::MemoryCap::term();
     detection_filter_term();
 
     term_signals();
+    
 }
 
 void Snort::clean_exit(int)
@@ -397,9 +405,11 @@ void Snort::setup(int argc, char* argv[])
 
     set_quick_exit(false);
 
-    memory::MemoryCap::setup(*sc->memory, sc->thread_config->get_instance_max());
-    memory::MemoryCap::print(SnortConfig::log_verbose());
+    memory::MemoryCap::start(*sc->memory, Stream::prune_flows);
+    memory::MemoryCap::print(SnortConfig::log_verbose(), true);
 
+    host_cache.init();
+    ((HostTrackerModule*)ModuleManager::get_module(HOST_TRACKER_NAME))->init_data();
     host_cache.print_config();
 
     TimeStart();
@@ -411,6 +421,7 @@ void Snort::cleanup()
 
     SFDAQ::term();
     FileService::close();
+    memory::MemoryCap::stop();
 
     if ( !SnortConfig::get_conf()->test_mode() )  // FIXIT-M ideally the check is in one place
         PrintStatistics();

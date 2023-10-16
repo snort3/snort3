@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2010-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -245,7 +245,7 @@ static bool ByteExtractVerify(ByteExtractData* data)
 static const Parameter s_params[] =
 {
     { "~count", Parameter::PT_INT, "1:10", nullptr,
-      "number of bytes to pick up from the buffer" },
+      "number of bytes to pick up from the buffer (string can pick less)" },
 
     { "~offset", Parameter::PT_INT, "-65535:65535", nullptr,
       "number of bytes into the buffer to start processing" },
@@ -704,6 +704,70 @@ TEST_CASE("ByteExtractOption::eval valid", "[ips_byte_extract]")
         CHECK(res == 508);
         CHECK(c.get_pos() == 4);
     }
+    SECTION("bytes_to_extract bigger than amount of bytes left in the buffer")
+    {
+        ByteExtractData data;
+        c.set_pos(9);
+        INITIALIZE(data, 3, 0, 1, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, name);
+        ByteExtractOption opt(data);
+        CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
+    }
+    SECTION("String truncation")
+    {
+        ByteExtractData data;
+        c.set_pos(10);
+        INITIALIZE(data, 2, 0, 1, 1, 0, ENDIAN_BIG, 10, 1, 0, 0, name);
+        ByteExtractOption opt(data);
+        CHECK(opt.eval(c, &p) == IpsOption::MATCH);
+        uint32_t res = 0;
+        GetVarValueByIndex(&res, 0);
+        CHECK(res == 5);
+    }
+
+    SECTION("Negative offset")
+    {
+        SECTION("Cursor on last byte of buffers")
+        {
+            ByteExtractData data;
+            c.set_pos(11);
+            INITIALIZE(data, 1, -6, 1, 0, 0, ENDIAN_BIG, 10, 1, 0, 0, name);
+            ByteExtractOption opt(data);
+            CHECK(opt.eval(c, &p) == IpsOption::MATCH);
+            uint32_t res = 0;
+            GetVarValueByIndex(&res, 0);
+            CHECK(res == 32);
+        }
+        SECTION("Cursor on last byte of buffers, bytes_to_extract is bigger than offset")
+        {
+            ByteExtractData data;
+            c.set_pos(11);
+            INITIALIZE(data, 4, -3, 1, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, name);
+            ByteExtractOption opt(data);
+            CHECK(opt.eval(c, &p) == IpsOption::NO_MATCH);
+        }
+        SECTION("Cursor on the last byte of buffer with string flag")
+        {
+            ByteExtractData data;
+            c.set_pos(11);
+            INITIALIZE(data, 1, -2, 1, 1, 0, ENDIAN_BIG, 10, 1, 0, 0, name);
+            ByteExtractOption opt(data);
+            CHECK(opt.eval(c, &p) == IpsOption::MATCH);
+            uint32_t res = 0;
+            GetVarValueByIndex(&res, 0);
+            CHECK(res == 4);
+        }
+        SECTION("String truncation")
+        {
+            ByteExtractData data;
+            c.set_pos(11);
+            INITIALIZE(data, 3, -2, 1, 1, 0, ENDIAN_BIG, 10, 1, 0, 0, name);
+            ByteExtractOption opt(data);
+            CHECK(opt.eval(c, &p) == IpsOption::MATCH);
+            uint32_t res = 0;
+            GetVarValueByIndex(&res, 0);
+            CHECK(res == 45);
+        }
+    }
 }
 
 TEST_CASE("ByteExtractOption::eval invalid", "[ips_byte_extract]")
@@ -760,7 +824,7 @@ TEST_CASE("ExtractModule lifecycle", "[ips_byte_extract]")
     }
     SECTION("test of \"begin\" method")
     {
-        CHECK(obj.begin(nullptr, 0, nullptr));
+        CHECK(true == obj.begin(nullptr, 0, nullptr));
         ByteExtractData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, nullptr);
 
@@ -784,7 +848,7 @@ TEST_CASE("ExtractModule lifecycle", "[ips_byte_extract]")
         v_bytes.set(&p_bytes);
         obj.set(nullptr, v_bytes, nullptr);
 
-        CHECK(obj.end(nullptr, 0, nullptr));
+        CHECK(true == obj.end(nullptr, 0, nullptr));
 
         char* name = new char[5];
         strcpy(name, "test");
@@ -822,7 +886,7 @@ TEST_CASE("Test of byte_extract_ctor", "[ips_byte_extract]")
         else
         {
             IpsOption* res_null = byte_extract_ctor(&obj, nullptr);
-            CHECK(res_null == nullptr);
+            CHECK(nullptr == res_null);
             delete[] obj.data.name;
         }
     }
@@ -843,7 +907,7 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
         ByteExtractData expected;
         INITIALIZE(expected, 4, 0, 0, 0, 0, 0, 0, 1, 0, 0, nullptr);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteExtractDataEquals(expected));
     }
     SECTION("set offset")
@@ -856,7 +920,7 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
         ByteExtractData expected;
         INITIALIZE(expected, 0, 7, 0, 0, 0, 0, 0, 1, 0, 0, nullptr);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteExtractDataEquals(expected));
     }
     SECTION("set name")
@@ -867,7 +931,7 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
             "name of the variable that will be used in other rule options"};
         v.set(&p);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data.name, Catch::Matchers::Equals("test_name"));
     }
     SECTION("set relative")
@@ -881,7 +945,7 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
         ByteExtractData expected;
         INITIALIZE(expected, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, nullptr);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteExtractDataEquals(expected));
     }
     SECTION("set multiplier")
@@ -894,7 +958,7 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
         ByteExtractData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, nullptr);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteExtractDataEquals(expected));
     }
     SECTION("set align")
@@ -908,7 +972,7 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
         ByteExtractData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, nullptr);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteExtractDataEquals(expected));
     }
     SECTION("set endianness")
@@ -920,7 +984,7 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
         ByteExtractData expected_big;
         INITIALIZE(expected_big, 0, 0, 0, 0, 0, ENDIAN_BIG, 0, 1, 0, 0, nullptr);
 
-        CHECK(obj.set(nullptr, v_big, nullptr));
+        CHECK(true == obj.set(nullptr, v_big, nullptr));
         CHECK_THAT(obj.data, ByteExtractDataEquals(expected_big));
 
         Value v_lit((double)ENDIAN_LITTLE);
@@ -929,7 +993,7 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
         ByteExtractData expected_lit;
         INITIALIZE(expected_lit, 0, 0, 0, 0, 0, ENDIAN_LITTLE, 0, 1, 0, 0, nullptr);
 
-        CHECK(obj.set(nullptr, v_lit, nullptr));
+        CHECK(true == obj.set(nullptr, v_lit, nullptr));
         CHECK_THAT(obj.data, ByteExtractDataEquals(expected_lit));
 
         Value v_dce((double)ENDIAN_FUNC);
@@ -939,7 +1003,7 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
         ByteExtractData expected_dce;
         INITIALIZE(expected_dce, 0, 0, 0, 0, 0, ENDIAN_FUNC, 0, 1, 0, 0, nullptr);
 
-        CHECK(obj.set(nullptr, v_dce, nullptr));
+        CHECK(true == obj.set(nullptr, v_dce, nullptr));
         CHECK_THAT(obj.data, ByteExtractDataEquals(expected_dce));
     }
     SECTION("set string")
@@ -952,7 +1016,7 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
         ByteExtractData expected;
         INITIALIZE(expected, 0, 0, 0, 1, 0, 0, 10, 1, 0, 0, nullptr);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteExtractDataEquals(expected));
     }
     SECTION("set hex")
@@ -965,7 +1029,7 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
         ByteExtractData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, 0, 16, 1, 0, 0, nullptr);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteExtractDataEquals(expected));
     }
     SECTION("set oct")
@@ -978,7 +1042,7 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
         ByteExtractData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, 0, 8, 1, 0, 0, nullptr);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteExtractDataEquals(expected));
     }
     SECTION("set dec")
@@ -991,7 +1055,7 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
         ByteExtractData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, 0, 10, 1, 0, 0, nullptr);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteExtractDataEquals(expected));
     }
     SECTION("set bitmask")
@@ -1005,7 +1069,7 @@ TEST_CASE("ExtractModule::set", "[ips_byte_extract]")
         ByteExtractData expected;
         INITIALIZE(expected, 0, 0, 0, 0, 0, 0, 0, 1, 1023, 0, nullptr);
 
-        CHECK(obj.set(nullptr, v, nullptr));
+        CHECK(true == obj.set(nullptr, v, nullptr));
         CHECK_THAT(obj.data, ByteExtractDataEquals(expected));
     }
     delete[] obj.data.name;
@@ -1023,23 +1087,23 @@ TEST_CASE("ByteExtractVerify_valid", "[ips_byte_extract]")
     SECTION("Minimum values, no string conversion")
     {
         INITIALIZE(obj, 1, -65535, 1, 0, 0, ENDIAN_FUNC, 0, 1, 0x1, 0, name);
-        CHECK(ByteExtractVerify(&obj));
+        CHECK(true == ByteExtractVerify(&obj));
     }
     SECTION("Maximum values, no string conversion")
     {
         INITIALIZE(obj, MAX_BYTES_TO_GRAB, 65535, 1, 0, 4, ENDIAN_FUNC,
             0, 65535, 0xFFFFFFFF, 0, name);
-        CHECK(ByteExtractVerify(&obj));
+        CHECK(true == ByteExtractVerify(&obj));
     }
     SECTION("Minimum values, with string conversion")
     {
         INITIALIZE(obj, 1, -65535, 1, 1, 0, ENDIAN_FUNC, 8, 1, 0x1, 0, name);
-        CHECK(ByteExtractVerify(&obj));
+        CHECK(true == ByteExtractVerify(&obj));
     }
     SECTION("Maximum values, with string conversion")
     {
         INITIALIZE(obj, PARSELEN, 65535, 1, 1, 4, ENDIAN_FUNC, 16, 65535, 0xFFFFFFFF, 0, name);
-        CHECK(ByteExtractVerify(&obj));
+        CHECK(true == ByteExtractVerify(&obj));
     }
 }
 
@@ -1053,46 +1117,46 @@ TEST_CASE("ByteExtractVerify_invalid", "[ips_byte_extract]")
     SECTION("bytes_to_extract checks")
     {
         obj.bytes_to_extract = MAX_BYTES_TO_GRAB + 1;
-        CHECK((!ByteExtractVerify(&obj)));
+        CHECK(false == ByteExtractVerify(&obj));
 
         obj.string_convert_flag = true;
         obj.bytes_to_extract = PARSELEN + 1;
-        CHECK((!ByteExtractVerify(&obj)));
+        CHECK(false == ByteExtractVerify(&obj));
     }
     SECTION("align checks")
     {
         obj.align = 1;
-        CHECK((!ByteExtractVerify(&obj)));
+        CHECK(false == ByteExtractVerify(&obj));
 
         obj.align = 6;
-        CHECK((!ByteExtractVerify(&obj)));
+        CHECK(false == ByteExtractVerify(&obj));
     }
     SECTION("offset checks")
     {
         obj.offset = -5;
-        CHECK((!ByteExtractVerify(&obj)));
+        CHECK(false == ByteExtractVerify(&obj));
     }
     SECTION("name checks")
     {
         delete[] name;
         obj.name = nullptr;
-        CHECK((!ByteExtractVerify(&obj)));
+        CHECK(false == ByteExtractVerify(&obj));
 
         name = new char[6];
         strcpy(name, "64bit");
         obj.name = name;
-        CHECK((!ByteExtractVerify(&obj)));
+        CHECK(false == ByteExtractVerify(&obj));
     }
     SECTION("base checks")
     {
         obj.base = 16;
-        CHECK((!ByteExtractVerify(&obj)));
+        CHECK(false == ByteExtractVerify(&obj));
     }
     SECTION("bitmask checks")
     {
         obj.bytes_to_extract = 2;
         obj.bitmask_val = 1048575;
-        CHECK((!ByteExtractVerify(&obj)));
+        CHECK(false == ByteExtractVerify(&obj));
     }
     delete[] name;
 }

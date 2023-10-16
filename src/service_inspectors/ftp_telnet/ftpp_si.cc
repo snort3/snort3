@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2004-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -357,7 +357,7 @@ bool FTPDataDirection(Packet* p, FTP_DATA_SESSION* ftpdata)
            return true;
 
       // upload
-      if (p->is_from_application_client() && !p->is_from_client()) 
+      if (p->is_from_application_client() && !p->is_from_client())
           return true;
     }
     else
@@ -367,7 +367,7 @@ bool FTPDataDirection(Packet* p, FTP_DATA_SESSION* ftpdata)
            return true;
 
       // upload
-      if (p->is_from_client() && p->is_from_application_client()) 
+      if (p->is_from_client() && p->is_from_application_client())
           return true;
     }
 

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2005-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -74,17 +74,12 @@ public:
         DataHandler(MOD_NAME), inspector(inspector)
     { }
 
-    static void set_client(SipUdpClientDetector* cd) { SipEventHandler::client = cd; }
-    static void set_service(SipServiceDetector* sd) { SipEventHandler::service = sd; }
-
     void handle(snort::DataEvent&, snort::Flow*) override;
 
 private:
     void client_handler(SipEvent&, AppIdSession&, AppidChangeBits&);
     void service_handler(SipEvent&, AppIdSession&, AppidChangeBits&);
 
-    static SipUdpClientDetector* client;
-    static SipServiceDetector* service;
     AppIdInspector& inspector;
 };
 #endif

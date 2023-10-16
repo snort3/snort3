@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2013-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -32,10 +32,10 @@ extern const BaseApi* sin_http[];
 extern const BaseApi* sin_http2[];
 extern const BaseApi* sin_sip[];
 extern const BaseApi* sin_ssl[];
+extern const BaseApi* sin_dns[];
 
 #ifdef STATIC_INSPECTORS
 extern const BaseApi* sin_bo;
-extern const BaseApi* sin_dns;
 extern const BaseApi* sin_ftp_client;
 extern const BaseApi* sin_ftp_server;
 extern const BaseApi* sin_ftp_data;
@@ -63,7 +63,6 @@ const BaseApi* service_inspectors[] =
 {
 #ifdef STATIC_INSPECTORS
     sin_bo,
-    sin_dns,
     sin_ftp_client,
     sin_ftp_server,
     sin_ftp_data,
@@ -83,6 +82,7 @@ void load_service_inspectors()
 {
     PluginManager::load_plugins(service_inspectors);
 
+    PluginManager::load_plugins(sin_dns);
     PluginManager::load_plugins(sin_file);
     PluginManager::load_plugins(sin_http);
     PluginManager::load_plugins(sin_http2);

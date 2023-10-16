@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -48,6 +48,8 @@ THREAD_LOCAL ProfileStats otherPerfStats;
 
 THREAD_LOCAL TimeContext* ProfileContext::curr_time = nullptr;
 THREAD_LOCAL Stopwatch<SnortClock>* run_timer = nullptr;
+THREAD_LOCAL uint64_t first_pkt_num = 0;
+THREAD_LOCAL bool consolidated_once = false;
 
 static ProfilerNodeMap s_profiler_nodes;
 
@@ -74,39 +76,71 @@ void Profiler::register_module(const char* n, const char* pn, Module* m)
 
 void Profiler::start()
 {
+    first_pkt_num = (uint64_t)get_packet_number();
     run_timer = new Stopwatch<SnortClock>;
     run_timer->start();
+    consolidated_once = false;
 }
 
 void Profiler::stop(uint64_t checks)
 {
-    run_timer->stop();
-    totalPerfStats.time.elapsed = run_timer->get();
-    totalPerfStats.time.checks = checks;
+    if ( run_timer )
+    {
+        run_timer->stop();
+        totalPerfStats.time.elapsed = run_timer->get();
+        totalPerfStats.time.checks = checks - first_pkt_num;
 
-    delete run_timer;
-    run_timer = nullptr;
+        delete run_timer;
+        run_timer = nullptr;
+    }
 }
 
-void Profiler::consolidate_stats()
+void Profiler::consolidate_stats(snort::ProfilerType type)
 {
-    s_profiler_nodes.accumulate_nodes();
-    MemoryProfiler::consolidate_fallthrough_stats();
+    if ( !consolidated_once and type == snort::PROFILER_TYPE_TIME )
+    {
+        s_profiler_nodes.accumulate_nodes(snort::PROFILER_TYPE_TIME);
+        consolidated_once = true;
+    }
+    else if ( !consolidated_once and type == snort::PROFILER_TYPE_BOTH )
+    {
+        s_profiler_nodes.accumulate_nodes();
+    }
+
+    if ( consolidated_once and type == snort::PROFILER_TYPE_BOTH )
+    {
+#ifdef ENABLE_MEMORY_PROFILER
+        s_profiler_nodes.accumulate_nodes(PROFILER_TYPE_MEMORY);
+        MemoryProfiler::consolidate_fallthrough_stats();
+#endif
+    }
 }
 
-void Profiler::reset_stats()
+void Profiler::reset_stats(snort::ProfilerType type)
 {
-    s_profiler_nodes.reset_nodes();
-    reset_rule_profiler_stats();
+    if ( type == snort::PROFILER_TYPE_TIME )
+    {
+        totalPerfStats.reset_time();
+        otherPerfStats.reset_time();
+    }
+    else
+    {
+        totalPerfStats.reset();
+        otherPerfStats.reset();
+    }
+
+    s_profiler_nodes.reset_nodes(type);
 }
 
-void Profiler::show_stats()
+void Profiler::prepare_stats()
 {
     const ProfilerNode& root = s_profiler_nodes.get_root();
     auto children = root.get_children();
 
     hr_duration runtime = root.get_stats().time.elapsed;
     hr_duration sum = 0_ticks;
+
+    s_profiler_nodes.clear_flex();
 
     for ( auto pn : children )
         sum += pn->get_stats().time.elapsed;
@@ -115,7 +149,16 @@ void Profiler::show_stats()
     otherPerfStats.time.elapsed = (runtime > sum) ?  (runtime - sum) : 0_ticks;
 
     s_profiler_nodes.accumulate_flex();
+}
 
+ProfilerNodeMap& Profiler::get_profiler_nodes()
+{
+    return s_profiler_nodes;
+}
+
+void Profiler::show_stats()
+{
+    prepare_stats();
     const auto* config = SnortConfig::get_conf()->get_profiler();
     assert(config);
 
@@ -136,7 +179,7 @@ TEST_CASE( "profile stats", "[profiler]" )
         {
             ProfileStats stats;
 
-            CHECK( !stats.time );
+            CHECK( false == stats.time.is_active() );
             CHECK( !stats.memory.stats );
         }
 
@@ -170,7 +213,7 @@ TEST_CASE( "profile stats", "[profiler]" )
         {
             stats.reset();
 
-            CHECK( !stats.time );
+            CHECK( false == stats.time.is_active() );
             CHECK( !stats.memory.stats );
         }
 

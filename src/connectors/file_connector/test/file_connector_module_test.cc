@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2015-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -80,15 +80,15 @@ TEST(file_connector_module, test)
 
     FileConnectorConfig::FileConnectorConfigSet* config_set = module.get_and_clear_config();
 
-    CHECK(config_set != nullptr);
+    CHECK(nullptr != config_set);
 
-    CHECK(config_set->size() == 1);
+    CHECK(1 == config_set->size());
 
     FileConnectorConfig config = *(config_set->front());
-    CHECK(config.name == "rx");
-    CHECK(config.connector_name == "rx");
-    CHECK(config.direction == Connector::CONN_RECEIVE);
-    CHECK(config.text_format == false);
+    CHECK("rx" == config.name);
+    CHECK("rx" == config.connector_name);
+    CHECK(Connector::CONN_RECEIVE == config.direction);
+    CHECK(false == config.text_format);
 
     for ( auto conf : *config_set )
         delete conf;

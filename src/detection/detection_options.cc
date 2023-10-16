@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2007-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -54,6 +54,7 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+#include "detection_continuation.h"
 #include "detection_engine.h"
 #include "detection_module.h"
 #include "detection_util.h"
@@ -348,26 +349,17 @@ void* add_detection_option_tree(SnortConfig* sc, detection_option_tree_node_t* o
 }
 
 int detection_option_node_evaluate(
-    detection_option_tree_node_t* node, detection_option_eval_data_t& eval_data,
+    const detection_option_tree_node_t* node, detection_option_eval_data_t& eval_data,
     const Cursor& orig_cursor)
 {
     assert(node and eval_data.p);
 
+    node_eval_trace(node, orig_cursor, eval_data.p);
+
     auto& state = node->state[get_instance_id()];
     RuleContext profile(state);
 
-    int result = 0;
-    int rval;
-    char tmp_noalert_flag = 0;
-    Cursor cursor = orig_cursor;
-    bool continue_loop = true;
-    bool flowbits_setoperation = false;
-    int loop_count = 0;
-    uint32_t tmp_byte_extract_vars[NUM_IPS_OPTIONS_VARS];
     uint64_t cur_eval_context_num = eval_data.p->context->context_num;
-
-    node_eval_trace(node, cursor, eval_data.p);
-
     auto p = eval_data.p;
 
     // see if evaluated it before ...
@@ -409,6 +401,16 @@ int detection_option_node_evaluate(
         if ( pmd and pmd->is_literal() and pmd->last_check )
             content_last = pmd->last_check + get_instance_id();
     }
+
+    bool continue_loop = true;
+    int loop_count = 0;
+
+    char tmp_noalert_flag = 0;
+    int result = 0;
+    uint32_t tmp_byte_extract_vars[NUM_IPS_OPTIONS_VARS];
+    IpsOption* buf_selector = eval_data.buf_selector;
+    Cursor cursor = orig_cursor;
+    int rval;
 
     // No, haven't evaluated this one before... Check it.
     do
@@ -511,20 +513,20 @@ int detection_option_node_evaluate(
         case RULE_OPTION_TYPE_FLOWBIT:
             if ( node->evaluate )
             {
-                flowbits_setoperation = flowbits_setter(node->option_data);
-
-                if ( flowbits_setoperation )
-                    // set to match so we don't bail early
-                    rval = (int)IpsOption::MATCH;
-
-                else
-                    rval = node->evaluate(node->option_data, cursor, eval_data.p);
+                rval = node->evaluate(node->option_data, cursor, eval_data.p);
+                assert((flowbits_setter(node->option_data) and rval == (int)IpsOption::MATCH)
+                    or !flowbits_setter(node->option_data) or !eval_data.p->flow);
             }
             break;
 
         default:
             if ( node->evaluate )
+            {
+                IpsOption* opt = (IpsOption*)node->option_data;
+                if ( opt->is_buffer_setter() )
+                    buf_selector = opt;
                 rval = node->evaluate(node->option_data, cursor, p);
+            }
             break;
         }
 
@@ -532,6 +534,11 @@ int detection_option_node_evaluate(
         {
             debug_log(detection_trace, TRACE_RULE_EVAL, p, "no match\n");
             state.last_check.result = result;
+            // See if the option has failed due to incomplete input or its failed evaluation
+            if (orig_cursor.awaiting_data())
+                Continuation::postpone<false>(orig_cursor, *node, eval_data);
+            else
+                Continuation::postpone<true>(cursor, *node, eval_data);
             return result;
         }
         else if ( rval == (int)IpsOption::FAILED_BIT )
@@ -552,20 +559,17 @@ int detection_option_node_evaluate(
             debug_log(detection_trace, TRACE_RULE_EVAL, p, "flowbit no alert\n");
         }
 
-        // Back up byte_extract vars so they don't get overwritten between rules
-        for ( unsigned i = 0; i < NUM_IPS_OPTIONS_VARS; ++i )
-        {
-            GetVarValueByIndex(&(tmp_byte_extract_vars[i]), (int8_t)i);
-        }
 #ifdef DEBUG_MSGS
         if ( trace_enabled(detection_trace, TRACE_RULE_VARS) )
         {
             char var_buf[100];
             std::string rule_vars;
             rule_vars.reserve(sizeof(var_buf));
+            uint32_t dbg_extract_vars[]{0,0};
             for ( unsigned i = 0; i < NUM_IPS_OPTIONS_VARS; ++i )
             {
-                safe_snprintf(var_buf, sizeof(var_buf), "var[%u]=0x%X ", i, tmp_byte_extract_vars[i]);
+                GetVarValueByIndex(&(dbg_extract_vars[i]), (int8_t)i);
+                safe_snprintf(var_buf, sizeof(var_buf), "var[%u]=0x%X ", i, dbg_extract_vars[i]);
                 rule_vars.append(var_buf);
             }
             debug_logf(detection_trace, TRACE_RULE_VARS, p, "Rule options variables: %s\n",
@@ -584,12 +588,17 @@ int detection_option_node_evaluate(
             // Passed, check the children.
             if ( node->num_children )
             {
+                // Back up byte_extract vars so they don't get overwritten between rules
+                // If node has only 1 child - no need to back up on current step
+                for ( unsigned i = 0; node->num_children > 1 && i < NUM_IPS_OPTIONS_VARS; ++i )
+                    GetVarValueByIndex(&(tmp_byte_extract_vars[i]), (int8_t)i);
+
                 for ( int i = 0; i < node->num_children; ++i )
                 {
                     detection_option_tree_node_t* child_node = node->children[i];
                     dot_node_state_t* child_state = child_node->state + get_instance_id();
 
-                    for ( unsigned j = 0; j < NUM_IPS_OPTIONS_VARS; ++j )
+                    for ( unsigned j = 0; node->num_children > 1 && j < NUM_IPS_OPTIONS_VARS; ++j )
                         SetVarValueByIndex(tmp_byte_extract_vars[j], (int8_t)j);
 
                     if ( loop_count > 0 )
@@ -620,7 +629,7 @@ int detection_option_node_evaluate(
                                         opt = (IpsOption*)child_node->option_data;
                                         PatternMatchData* pmd = opt->get_pattern(0, RULE_WO_DIR);
 
-                                        if ( pmd and pmd->is_literal() and pmd->is_unbounded() )
+                                        if ( pmd and pmd->is_literal() and pmd->is_unbounded() and !pmd->is_negated() )
                                         {
                                             // Only increment result once. Should hit this
                                             // condition on first loop iteration
@@ -644,6 +653,7 @@ int detection_option_node_evaluate(
                             continue;
                     }
 
+                    eval_data.buf_selector = buf_selector;
                     child_state->result = detection_option_node_evaluate(
                         node->children[i], eval_data, cursor);
 
@@ -668,10 +678,14 @@ int detection_option_node_evaluate(
                 // the children so don't need to reeval this content/pcre rule
                 // option at a new offset.
                 // Else, reset the DOE ptr to last eval for offset/depth,
-                // distance/within adjustments for this same content/pcre
-                // rule option
+                // distance/within adjustments for this same content/pcre rule option.
+                // If the node and its sub-tree propagate MATCH back,
+                // then all its continuations are recalled.
                 if ( result == node->num_children )
+                {
                     continue_loop = false;
+                    Continuation::recall(state, p);
+                }
 
                 // Don't need to reset since it's only checked after we've gone
                 // through the loop at least once and the result will have
@@ -706,15 +720,6 @@ int detection_option_node_evaluate(
     }
     while ( continue_loop );
 
-    if ( flowbits_setoperation && result == (int)IpsOption::MATCH )
-    {
-        // Do any setting/clearing/resetting/toggling of flowbits here
-        // given that other rule options matched
-        rval = node->evaluate(node->option_data, cursor, p);
-        if ( rval != (int)IpsOption::MATCH )
-            result = rval;
-    }
-
     if ( eval_data.flowbit_failed )
     {
         // something deeper in the tree failed a flowbit test, we may need to
@@ -728,109 +733,102 @@ int detection_option_node_evaluate(
     return result;
 }
 
-struct node_profile_stats
-{
-    // FIXIT-L duplicated from dot_node_state_t and OtnState
-    hr_duration elapsed;
-    hr_duration elapsed_match;
-    hr_duration elapsed_no_match;
-
-    uint64_t checks;
-    uint64_t latency_timeouts;
-    uint64_t latency_suspends;
-};
-
 static void detection_option_node_update_otn_stats(detection_option_tree_node_t* node,
-    node_profile_stats* stats, uint64_t checks, uint64_t timeouts, uint64_t suspends)
+    const dot_node_state_t* stats, unsigned thread_id, std::unordered_map<SigInfo*, OtnState>& entries)
 {
-    node_profile_stats local_stats; /* cumulative stats for this node */
-    node_profile_stats node_stats;  /* sum of all instances */
+    dot_node_state_t local_stats(node->state[thread_id]); /* cumulative stats for this node */
 
-    memset(&node_stats, 0, sizeof(node_stats));
-
-    for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
+    if (stats)
     {
-        node_stats.elapsed += node->state[i].elapsed;
-        node_stats.elapsed_match += node->state[i].elapsed_match;
-        node_stats.elapsed_no_match += node->state[i].elapsed_no_match;
-        node_stats.checks += node->state[i].checks;
-    }
+        local_stats.elapsed += stats->elapsed;
+        local_stats.elapsed_match += stats->elapsed_match;
+        local_stats.elapsed_no_match += stats->elapsed_no_match;
 
-    if ( stats )
-    {
-        local_stats.elapsed = stats->elapsed + node_stats.elapsed;
-        local_stats.elapsed_match = stats->elapsed_match + node_stats.elapsed_match;
-        local_stats.elapsed_no_match = stats->elapsed_no_match + node_stats.elapsed_no_match;
-
-        if (node_stats.checks > stats->checks)
-            local_stats.checks = node_stats.checks;
-        else
+        if (stats->checks > local_stats.checks)
             local_stats.checks = stats->checks;
 
-        local_stats.latency_timeouts = timeouts;
-        local_stats.latency_suspends = suspends;
-    }
-    else
-    {
-        local_stats.elapsed = node_stats.elapsed;
-        local_stats.elapsed_match = node_stats.elapsed_match;
-        local_stats.elapsed_no_match = node_stats.elapsed_no_match;
-        local_stats.checks = node_stats.checks;
-        local_stats.latency_timeouts = timeouts;
-        local_stats.latency_suspends = suspends;
+        local_stats.latency_suspends += stats->latency_suspends;
+        local_stats.latency_timeouts += stats->latency_timeouts;
     }
 
     if ( node->option_type == RULE_OPTION_TYPE_LEAF_NODE )
     {
         // Update stats for this otn
-        // FIXIT-L call from packet threads at exit or total *all* states by main thread
-        // Right now, it looks like we're missing out on some stats although it's possible
-        // that this is "corrected" in the profiler code
         auto* otn = (OptTreeNode*)node->option_data;
-        auto& state = otn->state[get_instance_id()];
+        auto& state = otn->state[thread_id];
 
-        state.elapsed += local_stats.elapsed;
-        state.elapsed_match += local_stats.elapsed_match;
-        state.elapsed_no_match += local_stats.elapsed_no_match;
+        state.elapsed = local_stats.elapsed;
+        state.elapsed_match = local_stats.elapsed_match;
+        state.elapsed_no_match = local_stats.elapsed_no_match;
 
         if (local_stats.checks > state.checks)
             state.checks = local_stats.checks;
 
-        state.latency_timeouts += local_stats.latency_timeouts;
-        state.latency_suspends += local_stats.latency_suspends;
+        state.latency_timeouts = local_stats.latency_timeouts;
+        state.latency_suspends = local_stats.latency_suspends;
+
+        static std::mutex rule_prof_stats_mutex;
+        std::lock_guard<std::mutex> lock(rule_prof_stats_mutex);
+
+        // All threads totals
+        OtnState& totals = entries[&otn->sigInfo];
+
+        totals.elapsed += state.elapsed;
+        totals.elapsed_match += state.elapsed_match;
+        totals.elapsed_no_match += state.elapsed_no_match;
+        totals.checks += state.checks;
+        totals.latency_timeouts += state.latency_timeouts;
+        totals.latency_suspends += state.latency_suspends;
+        totals.matches += state.matches;
+        totals.alerts += state.alerts;
     }
 
     if ( node->num_children )
     {
         for ( int i = 0; i < node->num_children; ++i )
-            detection_option_node_update_otn_stats(node->children[i], &local_stats, checks,
-                timeouts, suspends);
+            detection_option_node_update_otn_stats(node->children[i], &local_stats, thread_id, entries);
     }
 }
 
-void detection_option_tree_update_otn_stats(XHash* doth)
+static void detection_option_node_reset_otn_stats(detection_option_tree_node_t* node,
+    unsigned thread_id)
 {
-    if ( !doth )
-        return;
+    node->state[thread_id].reset_profiling();
 
-    for ( auto hnode = doth->find_first_node(); hnode; hnode = doth->find_next_node() )
+    if ( node->option_type == RULE_OPTION_TYPE_LEAF_NODE )
+    {
+        auto& state = ((OptTreeNode*)node->option_data)->state[thread_id];
+        state = OtnState();
+    }
+
+    if ( node->num_children )
+    {
+        for ( int i = 0; i < node->num_children; ++i )
+            detection_option_node_reset_otn_stats(node->children[i], thread_id);
+    }
+}
+
+void detection_option_tree_update_otn_stats(std::vector<HashNode*>& nodes, std::unordered_map<SigInfo*, OtnState>& stats, unsigned thread_id)
+{
+    for ( auto hnode : nodes )
     {
         auto* node = (detection_option_tree_node_t*)hnode->data;
         assert(node);
 
-        uint64_t checks = 0;
-        uint64_t timeouts = 0;
-        uint64_t suspends = 0;
+        if ( node->state[thread_id].checks )
+            detection_option_node_update_otn_stats(node, nullptr, thread_id, stats);
+    }
+}
 
-        for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
-        {
-            checks += node->state[i].checks;
-            timeouts += node->state[i].latency_timeouts;
-            suspends += node->state[i].latency_suspends;
-        }
+void detection_option_tree_reset_otn_stats(std::vector<HashNode*>& nodes, unsigned thread_id)
+{
+    for ( auto hnode : nodes )
+    {
+        auto* node = (detection_option_tree_node_t*)hnode->data;
+        assert(node);
 
-        if ( checks )
-            detection_option_node_update_otn_stats(node, nullptr, checks, timeouts, suspends);
+        if ( node->state[thread_id].checks )
+            detection_option_node_reset_otn_stats(node, thread_id);
     }
 }
 

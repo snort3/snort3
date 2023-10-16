@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2017-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2017-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -77,6 +77,11 @@ public:
     {
         if ( version )
             my_version = version;
+    }
+
+    void reset_version()
+    {
+        my_version.clear();
     }
 
 private:

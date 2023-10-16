@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2016-2022 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -53,17 +53,16 @@ void DecodeConfig::set_decompress_pdf(bool) {}
 void DecodeConfig::set_decompress_swf(bool) {}
 void DecodeConfig::set_decompress_zip(bool) {}
 void DecodeConfig::set_decompress_vba(bool) {}
+SearchTool::~SearchTool() {}
 }
+
+snort::SearchTool* js_create_mpse_open_tag() { return nullptr; }
+snort::SearchTool* js_create_mpse_tag_type() { return nullptr; }
+snort::SearchTool* js_create_mpse_tag_attr() { return nullptr; }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
 
-HttpJsNorm::HttpJsNorm(const HttpParaList::UriParam& uri_param_,
-    const HttpParaList::JsNormParam& js_norm_param_) :
-    uri_param(uri_param_), js_norm_param(js_norm_param_), mpse_otag(nullptr), mpse_attr(nullptr),
-    mpse_type(nullptr) {}
-HttpJsNorm::~HttpJsNorm() = default;
-void HttpJsNorm::configure() {}
 int64_t Parameter::get_int(char const*) { return 0; }
 
 TEST_GROUP(http_inspect_uri_norm)
