@@ -52,9 +52,9 @@ static const StatsTable::Field fields[] =
     { "#", 5, ' ', 0, std::ios_base::left },
     { "module", 24, ' ', 0, std::ios_base::fmtflags() },
     { "layer", 6, ' ', 0, std::ios_base::fmtflags() },
-    { "checks", 10, ' ', 0, std::ios_base::fmtflags() },
-    { "time(us)", 11, ' ', 0, std::ios_base::fmtflags() },
-    { "avg/check", 11, ' ', 1, std::ios_base::fmtflags() },
+    { "checks", 21, ' ', 0, std::ios_base::fmtflags() },
+    { "time(us)", 21, ' ', 0, std::ios_base::fmtflags() },
+    { "avg/check", 21, ' ', 1, std::ios_base::fmtflags() },
     { "%/caller", 10, ' ', 2, std::ios_base::fmtflags() },
     { "%/total", 9, ' ', 2, std::ios_base::fmtflags() },
     { nullptr, 0, '\0', 0, std::ios_base::fmtflags() }
