@@ -942,7 +942,10 @@ int32_t TcpReassembler::scan_data_pre_ack(TcpReassemblerState& trs, uint32_t* fl
     }
 
     trs.sos.seglist.cur_sseg = tsn;
-    update_rcv_nxt(trs, *tsn);
+
+    if (tsn)
+        update_rcv_nxt(trs, *tsn);
+    
     return ret_val;
 }
 

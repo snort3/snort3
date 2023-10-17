@@ -476,14 +476,14 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
     {
         /* check if we're in the window */
         if ( tcp_config->policy != StreamPolicy::OS_PROXY
-            and listener->normalizer.get_stream_window(tsd) == 0 )
+            and !Stream::is_midstream(flow) and listener->normalizer.get_stream_window(tsd) == 0 )
         {
-            if ( !listener->normalizer.data_inside_window(tsd) or !listener->get_iss() )
+            if ( !listener->normalizer.data_inside_window(tsd) )
             {
-                listener->normalizer.trim_win_payload(tsd);
+                listener->normalizer.trim_win_payload(tsd, 0, tsd.is_nap_policy_inline());
                 return STREAM_UNALIGNED;
             }
-            else
+            if( listener->get_iss() )
             {
                 tcpStats.zero_win_probes++;
                 listener->normalizer.set_zwp_seq(seq);
@@ -512,7 +512,7 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
 
         /* check if we're in the window */
         if ( tcp_config->policy != StreamPolicy::OS_PROXY
-            and listener->normalizer.get_stream_window(tsd) == 0 )
+            and !Stream::is_midstream(flow) and listener->normalizer.get_stream_window(tsd) == 0 )
         {
             if ( SEQ_EQ(seq, listener->normalizer.get_zwp_seq()) )
             {
@@ -521,7 +521,7 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
                 return STREAM_UNALIGNED;
             }
 
-            listener->normalizer.trim_win_payload(tsd);
+            listener->normalizer.trim_win_payload(tsd, 0, tsd.is_nap_policy_inline());
             return STREAM_UNALIGNED;
         }
         if ( tsd.is_data_segment() )
@@ -853,18 +853,18 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
         // FIXIT-M move this to normalizer base class, handle OS_PROXY in derived class
         if ( tcp_config->policy != StreamPolicy::OS_PROXY )
         {
-            // drop packet if sequence num is invalid
-            if ( !listener->is_segment_seq_valid(tsd) )
-            {
-                tcpStats.invalid_seq_num++;
-                listener->normalizer.trim_win_payload(tsd);
-                return;
-            }
-
             // these normalizations can't be done if we missed setup. and
             // window is zero in one direction until we've seen both sides.
-            if ( !(flow->get_session_flags() & SSNFLAG_MIDSTREAM) && flow->two_way_traffic() )
+            if ( !(Stream::is_midstream(flow)) && flow->two_way_traffic() )
             {
+                // drop packet if sequence num is invalid
+                if ( !listener->is_segment_seq_valid(tsd) )
+                {
+                    tcpStats.invalid_seq_num++;
+                    listener->normalizer.trim_win_payload(tsd);
+                    return;
+                }
+
                 // trim to fit in listener's window and mss
                 listener->normalizer.trim_win_payload
                     (tsd, (listener->r_win_base + listener->get_snd_wnd() - listener->rcv_nxt));
