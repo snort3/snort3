@@ -577,8 +577,8 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
             TP_SESSION_FLAG_TUNNELING | TP_SESSION_FLAG_FUTUREFLOW);
     }
 
-    const char *app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
-    appid_log(p, TRACE_DEBUG_LEVEL, "3rd party returned %s (%d)\n", app_name ? app_name : "unknown", tp_app_id);
+    const char *tp_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
+    appid_log(p, TRACE_DEBUG_LEVEL, "3rd party returned %s (%d)\n", tp_app_name ? tp_app_name : "unknown", tp_app_id);
 
     process_third_party_results(*p, asd, tp_confidence, tp_proto_list, tp_attribute_data, change_bits);
 
