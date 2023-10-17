@@ -65,11 +65,13 @@ public:
 
 protected:
     enum ValidationResult { V_GOOD, V_BAD, V_TBD };
+    bool validated = false;
+
+    bool find_eol(uint8_t octet, uint32_t ind, HttpInfractions* infractions, HttpEventGen* events);
 
 private:
     static const int MAX_LEADING_WHITESPACE = 20;
     virtual ValidationResult validate(uint8_t octet, HttpInfractions*, HttpEventGen*) = 0;
-    bool validated = false;
 };
 
 class HttpRequestCutter : public HttpStartCutter
@@ -82,6 +84,19 @@ private:
 
 class HttpStatusCutter : public HttpStartCutter
 {
+private:
+    uint32_t octets_checked = 0;
+    ValidationResult validate(uint8_t octet, HttpInfractions*, HttpEventGen*) override;
+};
+
+class HttpZeroNineCutter : public HttpStartCutter
+{
+public:
+    HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
+        HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, HttpCommon::HXBodyState) override;
+    static const int match_size = 5;
+    static uint8_t match[match_size];
+
 private:
     uint32_t octets_checked = 0;
     ValidationResult validate(uint8_t octet, HttpInfractions*, HttpEventGen*) override;

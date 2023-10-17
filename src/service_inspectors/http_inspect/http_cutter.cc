@@ -31,6 +31,36 @@
 using namespace HttpEnums;
 using namespace HttpCommon;
 
+bool HttpStartCutter::find_eol(uint8_t octet, uint32_t idx, HttpInfractions* infractions, HttpEventGen* events)
+{
+    if (octet == '\n')
+    {
+        num_crlf++;
+        if (num_crlf == 1)
+        {
+            // There was no CR before this
+            *infractions += INF_LF_WITHOUT_CR;
+            events->create_event(EVENT_LF_WITHOUT_CR);
+        }
+        num_flush = idx + 1;
+        return true;
+    }
+    if (num_crlf == 1)
+    {
+        // CR not followed by LF
+        *infractions += INF_CR_WITHOUT_LF;
+        events->create_event(EVENT_CR_WITHOUT_LF);
+        num_flush = idx;   // current octet not flushed
+        return true;
+    }
+    if (octet == '\r')
+    {
+        num_crlf = 1;
+    }
+
+    return false;
+}
+
 ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
     HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, HXBodyState)
 {
@@ -87,29 +117,9 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
                 break;
             }
         }
-        if (buffer[k] == '\n')
-        {
-            num_crlf++;
-            if (num_crlf == 1)
-            {
-                // There was no CR before this
-                *infractions += INF_LF_WITHOUT_CR;
-                events->create_event(EVENT_LF_WITHOUT_CR);
-            }
-            num_flush = k+1;
+
+        if (find_eol(buffer[k], k, infractions, events))
             return SCAN_FOUND;
-        }
-        if (num_crlf == 1)
-        {   // CR not followed by LF
-            *infractions += INF_CR_WITHOUT_LF;
-            events->create_event(EVENT_CR_WITHOUT_LF);
-            num_flush = k;                      // current octet not flushed
-            return SCAN_FOUND;
-        }
-        if (buffer[k] == '\r')
-        {
-            num_crlf = 1;
-        }
     }
     octets_seen += length;
     return SCAN_NOT_FOUND;
@@ -936,3 +946,46 @@ bool HttpBodyCutter::dangerous(const uint8_t* data, uint32_t length)
     return false;
 }
 
+uint8_t HttpZeroNineCutter::match[] = { 'H', 'T', 'T', 'P', '/' };
+
+HttpStartCutter::ValidationResult HttpZeroNineCutter::validate(uint8_t octet, HttpInfractions*, HttpEventGen*)
+{
+    if (octet != match[octets_checked])
+        return V_BAD;
+
+    if (++octets_checked >= match_size)
+        return V_GOOD;
+
+    return V_TBD;
+}
+
+// Lightweight version of the start cutter. Checking whether it is 0.9 response or more advanced
+// version's status line.
+ScanResult HttpZeroNineCutter::cut(const uint8_t* buffer, uint32_t length,
+    HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, HXBodyState)
+{
+    for (uint32_t k = 0; k < length; k++)
+    {
+        if (!validated)
+        {
+            // The purpose of validate() is to quickly and efficiently dispose of obviously wrong
+            // bindings. Passing is no guarantee that the connection is really HTTP, but failing
+            // makes it clear that it isn't.
+            switch (validate(buffer[k], infractions, events))
+            {
+            case V_GOOD:
+                validated = true;
+                break;
+            case V_BAD:
+                return SCAN_ABORT;
+            case V_TBD:
+                break;
+            }
+        }
+
+        if (find_eol(buffer[k], k, infractions, events))
+            return SCAN_FOUND;
+    }
+    octets_seen += length;
+    return SCAN_NOT_FOUND;
+}
