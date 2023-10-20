@@ -33,6 +33,7 @@ static const uint32_t HTTP_GID = 119;
 static const int GZIP_WINDOW_BITS = 31;
 static const uint8_t GZIP_HEADER_FLAG_OFFSET = 3;
 static const uint8_t GZIP_FLAG_FEXTRA = 0x4;
+static const uint8_t GZIP_RESERVED_FLAGS = 0xE0; // bits 5-7
 static const int DEFLATE_WINDOW_BITS = 15;
 static const int MAX_FIELD_NAME_LENGTH = 100;
 // Plan to support max 8 xff headers
@@ -287,6 +288,7 @@ enum Infraction
     INF_METHOD_NOT_ON_ALLOWED_LIST = 136,
     INF_METHOD_ON_DISALLOWED_LIST = 137,
     INF_PIPELINE_MAX = 138,
+    INF_GZIP_RESERVED_FLAGS = 139,
     INF__MAX_VALUE
 };
 
@@ -434,6 +436,7 @@ enum EventSid
     EVENT_REQ_TOO_LONG = 285,
     EVENT_UNEXPECTED_H2_PREFACE = 286,
     EVENT_DISALLOWED_METHOD = 287,
+    EVENT_GZIP_RESERVED_FLAGS = 288,
     EVENT__MAX_VALUE
 };
 

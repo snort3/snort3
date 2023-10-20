@@ -347,6 +347,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_UNEXPECTED_H2_PREFACE,      "HTTP/2 preface received instead of an HTTP/1 method" },
     { EVENT_DISALLOWED_METHOD,          "HTTP request method is not on allowed methods list or is on "
                                         "disallowed methods list" },
+    { EVENT_GZIP_RESERVED_FLAGS,        "HTTP gzip body with reserved flag set" },
     { 0, nullptr }
 };
 
