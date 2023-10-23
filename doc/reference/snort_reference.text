@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.72.0 2023-10-10 22:54:49 EDT TST
+Revision 3.1.73.0 2023-10-23 08:37:59 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -450,6 +450,8 @@ Configuration:
     host table from
   * int attribute_table.max_hosts = 1024: maximum number of hosts in
     attribute table { 32:max53 }
+  * int attribute_table.segments = 4: number of segments of hosts
+    attribute table. It must be power of 2. { 1:32 }
   * int attribute_table.max_services_per_host = 8: maximum number of
     services per host entry in attribute table { 1:65535 }
   * int attribute_table.max_metadata_services = 9: maximum number of
@@ -1800,6 +1802,7 @@ Usage: global
 Configuration:
 
   * int trace.modules.all: enable trace for all modules { 0:255 }
+  * int trace.modules.appid.all: enable all trace options { 0:255 }
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
   * int trace.modules.file_id.all: enable all trace options { 0:255 }
@@ -4097,6 +4100,7 @@ Rules:
     /1 method
   * 119:287 (http_inspect) HTTP request method is not on allowed
     methods list or is on disallowed methods list
+  * 119:288 (http_inspect) HTTP gzip body with reserved flag set
 
 Peg counts:
 
@@ -9085,6 +9089,8 @@ libraries see the Getting Started section of the manual.
     services in rule { 1:255 }
   * int attribute_table.max_services_per_host = 8: maximum number of
     services per host entry in attribute table { 1:65535 }
+  * int attribute_table.segments = 4: number of segments of hosts
+    attribute table. It must be power of 2. { 1:32 }
   * int base64_decode.bytes: number of base64 encoded bytes to decode
     { 1:max32 }
   * int base64_decode.offset = 0: bytes past start of buffer to start
@@ -10977,6 +10983,7 @@ libraries see the Getting Started section of the manual.
   * string trace.constraints.src_ip: source IP address filter
   * int trace.constraints.src_port: source port filter { 0:65535 }
   * int trace.modules.all: enable trace for all modules { 0:255 }
+  * int trace.modules.appid.all: enable all trace options { 0:255 }
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
   * int trace.modules.file_id.all: enable all trace options { 0:255 }
@@ -13807,6 +13814,10 @@ list or is on disallowed methods list
 
 HTTP request method is not on allowed methods list or is on
 disallowed methods list.
+
+119:288 (http_inspect) HTTP gzip body with reserved flag set
+
+HTTP reserved GZIP flags are set
 
 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
 

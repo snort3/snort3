@@ -1,3 +1,16 @@
+2023-10-23: 3.1.73.0
+
+* appid: added support for appid trace logs with multiple logging levels
+* appid: fixing cppcheck issue
+* control: code refactor to support all unix flavors
+* detection: fix cleaning of rule profiling stats when profiling starts
+* host_cache: added segmented cache
+* http_inspect: handle reserved gzip flags
+* http_inspect: response to 0.9 isn't necessarily 0.9
+* profiler: extend field length to support uint64
+* stream: skip duplicated alerts in TcpReassemblerState's list. Thanks wenhao-in-chengdu for reporting the issue and suggesting a fix.
+* stream_tcp: ignore normalization checks when in midstream state
+
 2023-10-10: 3.1.72.0
 
 * active: added API for printing delayed action string
