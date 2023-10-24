@@ -292,14 +292,6 @@ const DAQ_Stats_t* SFDAQInstance::get_stats()
         int rval = daq_instance_get_stats(instance, &daq_instance_stats);
         if (rval != DAQ_SUCCESS)
             LogMessage("Couldn't query DAQ stats: %s (%d)\n", daq_instance_get_error(instance), rval);
-
-        // Some DAQ modules don't provide hardware numbers, so we default HW RX to the SW equivalent
-        // (this means outstanding packets = 0)
-        if (daq_instance_stats.hw_packets_received == 0)
-        {
-            daq_instance_stats.hw_packets_received = daq_instance_stats.packets_received +
-                daq_instance_stats.packets_filtered;
-        }
     }
 
     return &daq_instance_stats;

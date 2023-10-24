@@ -250,22 +250,32 @@ void SFDAQModule::prep_counts(bool dump_stats)
     DAQ_Stats_t daq_stats_delta = new_daq_stats - prev_daq_stats;
 
     daq_stats.pcaps = Trough::get_file_count();
-    daq_stats.received = daq_stats_delta.hw_packets_received;
     daq_stats.analyzed = daq_stats_delta.packets_received;
-    daq_stats.dropped = daq_stats_delta.hw_packets_dropped;
     daq_stats.filtered = daq_stats_delta.packets_filtered;
-    daq_stats.injected =  daq_stats_delta.packets_injected;
+    daq_stats.injected = daq_stats_delta.packets_injected;
+
+    // Data plane stats is reset
+    if ( new_daq_stats.hw_packets_dropped < prev_daq_stats.hw_packets_dropped ||
+            new_daq_stats.hw_packets_received < prev_daq_stats.hw_packets_received )
+    {
+        daq_stats.dropped = new_daq_stats.hw_packets_dropped;
+        daq_stats.received = new_daq_stats.hw_packets_received;
+    }
+    else
+    {
+        daq_stats.dropped = daq_stats_delta.hw_packets_dropped;
+        daq_stats.received = daq_stats_delta.hw_packets_received;
+    }
 
     for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
         daq_stats.verdicts[i] = daq_stats_delta.verdicts[i];
 
     daq_stats.outstanding = new_daq_stats.hw_packets_received -
         new_daq_stats.packets_filtered - new_daq_stats.packets_received;
-
     if ( daq_stats.outstanding > daq_stats.outstanding_max )
         daq_stats.outstanding_max = daq_stats.outstanding;
 
-    if(!dump_stats)
+    if ( !dump_stats )
         prev_daq_stats = new_daq_stats;
 }
 
