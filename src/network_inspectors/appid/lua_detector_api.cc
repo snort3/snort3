@@ -348,6 +348,45 @@ static int detector_log_message(lua_State* L)
     return 0;
 }
 
+static int detector_log_snort_message(lua_State* L)
+{
+    const auto& name = (*UserData<LuaObject>::check(L, DETECTOR, 1))->get_detector()->get_name();
+
+    unsigned int level = lua_tonumber(L, 2);
+    const char* message = lua_tostring(L, 3);
+
+    switch (level)
+    {
+    case LUA_LOG_CRITICAL:
+        appid_log(nullptr, TRACE_CRITICAL_LEVEL, "%s:%s\n", name.c_str(), message);
+        break;
+
+    case LUA_LOG_ERR:
+        appid_log(nullptr, TRACE_ERROR_LEVEL, "%s:%s\n", name.c_str(), message);
+        break;
+
+    case LUA_LOG_WARN:
+        appid_log(nullptr, TRACE_WARNING_LEVEL, "%s:%s\n", name.c_str(), message);
+        break;
+
+    case LUA_LOG_NOTICE:
+    case LUA_LOG_INFO:
+        if ( !appidDebug or !appidDebug->is_enabled() )
+            return 0;
+        appid_log(nullptr, TRACE_INFO_LEVEL, "AppIdDbg %s:%s\n", name.c_str(), message);
+        break;
+
+    case LUA_LOG_TRACE:
+        appid_log(init(L) ? nullptr : CURRENT_PACKET, TRACE_DEBUG_LEVEL, "%s:%s\n", name.c_str(), message);
+        break;
+
+    default:
+        break;
+    }
+
+    return 0;
+}
+
 /** Add a netbios domain
  *  lua params:
  *    1 - the netbios domain
@@ -3158,6 +3197,7 @@ static const luaL_Reg detector_methods[] =
     { "htons",                    detector_htons },
     { "htonl",                    detector_htonl },
     { "log",                      detector_log_message },
+    { "cLog",                     detector_log_snort_message},
     { "addHttpPattern",           detector_add_http_pattern },
     { "addAppUrl",                detector_add_url_application },
     { "addRTMPUrl",               detector_add_rtmp_url },

@@ -97,16 +97,16 @@ void AppIdConfig::show() const
 
 void AppIdContext::pterm()
 {
-    if (odp_ctxt)
-    {
-        odp_ctxt->get_app_info_mgr().cleanup_appid_info_table();
-        delete odp_ctxt;
-    }
-
     if (odp_thread_local_ctxt)
     {
         delete odp_thread_local_ctxt;
         odp_thread_local_ctxt = nullptr;
+    }
+
+    if (odp_ctxt)
+    {
+        odp_ctxt->get_app_info_mgr().cleanup_appid_info_table();
+        delete odp_ctxt;
     }
 }
 
@@ -125,6 +125,12 @@ bool AppIdContext::init_appid(SnortConfig* sc, AppIdInspector& inspector)
         odp_ctxt->get_client_disco_mgr().initialize(inspector);
         odp_ctxt->get_service_disco_mgr().initialize(inspector);
         odp_ctxt->set_client_and_service_detectors();
+
+        if (!appidDebug)
+        {
+            appidDebug = new AppIdDebug();
+            appidDebug->set_enabled(config.log_all_sessions);
+        }
 
         odp_thread_local_ctxt->initialize(sc, *this, true);
         odp_ctxt->initialize(inspector);

@@ -269,7 +269,8 @@ static void appid_inspector_pterm()
 static void appid_inspector_tinit()
 {
     AppIdPegCounts::init_pegs();
-    appidDebug = new AppIdDebug();
+    if (!appidDebug)
+        appidDebug = new AppIdDebug();
 }
 
 static void appid_inspector_tterm()
@@ -279,6 +280,7 @@ static void appid_inspector_tterm()
     AppIdPegCounts::cleanup_pegs();
     AppIdServiceState::clean();
     delete appidDebug;
+    appidDebug = nullptr;
 }
 
 static Inspector* appid_inspector_ctor(Module* m)
