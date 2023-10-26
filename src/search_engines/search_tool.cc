@@ -139,7 +139,7 @@ int SearchTool::find_all(
     int num = 0;
     if (!sc)
         sc = SnortConfig::get_conf();
-    const FastPatternConfig* fp = sc->fast_pattern_config;
+    const FastPatternConfig* fp = sc ? sc->fast_pattern_config : nullptr;
 
     if ( confine && max_len > 0 )
     {
