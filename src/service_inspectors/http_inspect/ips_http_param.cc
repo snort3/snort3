@@ -80,7 +80,11 @@ uint32_t HttpParamIpsOption::hash() const
 bool HttpParamRuleOptModule::end(const char*, int, SnortConfig*)
 {
     if (param.length() == 0)
+    {
         ParseError("Specify parameter name");
+        return false;
+    }
+
     return true;
 }
 
