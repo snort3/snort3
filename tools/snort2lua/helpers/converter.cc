@@ -235,7 +235,8 @@ int Converter::parse_file(
         std::size_t first_non_white_char = tmp.find_first_not_of(" \f\n\r\t\v");
         std::size_t last_non_space = tmp.find_last_not_of(' ');
 
-        bool comment = (tmp[first_non_white_char] == '#') or (tmp[first_non_white_char] == ';');
+        bool comment = (first_non_white_char != std::string::npos) and ((tmp[first_non_white_char] == '#') or
+            (tmp[first_non_white_char] == ';'));
         bool commented_rule = tmp.substr(0, 7) == "# alert";
 
         if ( !commented_rule && ((first_non_white_char == std::string::npos) || comment) )

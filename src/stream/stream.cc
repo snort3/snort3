@@ -232,7 +232,8 @@ void Stream::check_flow_closed(Packet* p)
         if ( !(p->packet_flags & PKT_STATELESS) )
         {
             drop_traffic(p, SSN_DIR_BOTH);
-            p->active->set_drop_reason("stream");
+            if (p->active)
+                p->active->set_drop_reason("stream");
             if (PacketTracer::is_active())
                 PacketTracer::log("Stream: pending block, drop\n");
         }

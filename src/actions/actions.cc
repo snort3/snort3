@@ -55,7 +55,7 @@ void Actions::alert(Packet* p, const OptTreeNode* otn)
     /* Call OptTreeNode specific output functions */
     if (otn->outputFuncs)
     {
-        ListHead lh;  // FIXIT-L use of ListHead for CallLogFuncs() is a little unwieldy here
+        ListHead lh = {};  // FIXIT-L use of ListHead for CallLogFuncs() is a little unwieldy here
         lh.LogList = otn->outputFuncs;
         CallLogFuncs(p, otn, &lh);
     }

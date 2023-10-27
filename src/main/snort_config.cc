@@ -852,7 +852,8 @@ void SnortConfig::set_tunnel_verdicts(const char* args)
 
         else
         {
-            ParseError("unknown tunnel bypass protocol");
+            ParseError("unknown tunnel bypass protocol %s", tok);
+            snort_free(tmp);
             return;
         }
 

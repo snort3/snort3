@@ -245,7 +245,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseTyp
                 child->evaluate = opt_fp->OptTestFunc;
                 child->num_children++;
                 child->children = (detection_option_tree_node_t**)
-                    snort_calloc(child->num_children, sizeof(child->children));
+                    snort_calloc(child->num_children, sizeof(detection_option_tree_node_t*));
                 child->is_relative = opt_fp->isRelative;
 
                 bud->num_children++;

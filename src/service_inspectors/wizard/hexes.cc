@@ -132,8 +132,7 @@ bool HexBook::add_spell(const char* key, const char*& val, ArcaneType proto)
 
         if ( c == WILD and p->any )
             p = p->any;
-
-        else if ( p->next[c] )
+        else if ( c != WILD and p->next[c] )
             p = p->next[c];
 
         else
