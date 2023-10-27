@@ -79,7 +79,7 @@ static const PegInfo dce2_tcp_pegs[] =
     { CountType::SUM, "bind_acks", "total connection-oriented binds acks" },
     { CountType::SUM, "alter_contexts", "total connection-oriented alter contexts" },
     { CountType::SUM, "alter_context_responses",
-        "total connection-oriented alter context responses" },
+      "total connection-oriented alter context responses" },
     { CountType::SUM, "bind_naks", "total connection-oriented bind naks" },
     { CountType::SUM, "requests", "total connection-oriented requests" },
     { CountType::SUM, "responses", "total connection-oriented responses" },
@@ -90,27 +90,27 @@ static const PegInfo dce2_tcp_pegs[] =
     { CountType::SUM, "shutdowns", "total connection-oriented shutdowns" },
     { CountType::SUM, "rejects", "total connection-oriented rejects" },
     { CountType::SUM, "ms_rpc_http_pdus",
-        "total connection-oriented MS requests to send RPC over HTTP" },
+      "total connection-oriented MS requests to send RPC over HTTP" },
     { CountType::SUM, "other_requests", "total connection-oriented other requests" },
     { CountType::SUM, "other_responses", "total connection-oriented other responses" },
     { CountType::SUM, "request_fragments", "total connection-oriented request fragments" },
     { CountType::SUM, "response_fragments", "total connection-oriented response fragments" },
     { CountType::SUM, "client_max_fragment_size",
-        "connection-oriented client maximum fragment size" },
+      "connection-oriented client maximum fragment size" },
     { CountType::SUM, "client_min_fragment_size",
-        "connection-oriented client minimum fragment size" },
+      "connection-oriented client minimum fragment size" },
     { CountType::SUM, "client_segs_reassembled",
-        "total connection-oriented client segments reassembled" },
+      "total connection-oriented client segments reassembled" },
     { CountType::SUM, "client_frags_reassembled",
-        "total connection-oriented client fragments reassembled" },
+      "total connection-oriented client fragments reassembled" },
     { CountType::SUM, "server_max_fragment_size",
-        "connection-oriented server maximum fragment size" },
+      "connection-oriented server maximum fragment size" },
     { CountType::SUM, "server_min_fragment_size",
-        "connection-oriented server minimum fragment size" },
+      "connection-oriented server minimum fragment size" },
     { CountType::SUM, "server_segs_reassembled",
-        "total connection-oriented server segments reassembled" },
+      "total connection-oriented server segments reassembled" },
     { CountType::SUM, "server_frags_reassembled",
-        "total connection-oriented server fragments reassembled" },
+      "total connection-oriented server fragments reassembled" },
     { CountType::SUM, "tcp_sessions", "total tcp sessions" },
     { CountType::SUM, "tcp_expected_sessions", "total tcp dynamic endpoint expected sessions" },
     { CountType::SUM, "tcp_expected_realized", "total tcp dynamic endpoint expected realized sessions" },
@@ -120,7 +120,7 @@ static const PegInfo dce2_tcp_pegs[] =
     { CountType::END, nullptr, nullptr }
 };
 
-Dce2TcpModule::Dce2TcpModule() : Module(DCE2_TCP_NAME, DCE2_TCP_HELP, s_params)
+Dce2TcpModule::Dce2TcpModule() :   Module(DCE2_TCP_NAME, DCE2_TCP_HELP, s_params)
 {
 }
 

@@ -32,8 +32,6 @@
 #include "dce_context_data.h"
 #include "dce_http_proxy_module.h"
 #include "dce_http_server_module.h"
-#include "dce_smb1.h"
-#include "dce_smb_common.h"
 #include "dce_smb_utils.h"
 #include "dce_tcp.h"
 #include "dce_udp.h"

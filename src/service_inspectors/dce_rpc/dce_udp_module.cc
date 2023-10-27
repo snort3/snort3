@@ -85,7 +85,7 @@ static const PegInfo dce2_udp_pegs[] =
     { CountType::END, nullptr, nullptr }
 };
 
-Dce2UdpModule::Dce2UdpModule() : Module(DCE2_UDP_NAME, DCE2_UDP_HELP, s_params)
+Dce2UdpModule::Dce2UdpModule() :   Module(DCE2_UDP_NAME, DCE2_UDP_HELP, s_params), config {}
 { }
 
 void Dce2UdpModule::set_trace(const Trace* trace) const

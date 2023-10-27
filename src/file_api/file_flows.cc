@@ -206,7 +206,6 @@ uint64_t FileFlows::get_new_file_instance()
 
 FileFlows::~FileFlows()
 {
-    std::lock_guard<std::mutex> guard(file_flow_context_mutex);
     FileCache* file_cache = FileService::get_file_cache();
     assert(file_cache);
     uint64_t file_id = 0;
@@ -496,10 +495,11 @@ bool FileFlows::file_process(Packet* p, const uint8_t* file_data, int data_size,
 bool FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size, uint64_t file_id,
     uint64_t multi_file_processing_id, const uint8_t* url, uint32_t url_size)
 {
-    bool is_new_context = false;
     FileContext* context;
-    if (file_id)
+    if (file_id) {
+        bool is_new_context = false;
         context = get_file_context(file_id, false, is_new_context, multi_file_processing_id);
+    }
     else
         context = get_current_file_context();
     if ( !context )

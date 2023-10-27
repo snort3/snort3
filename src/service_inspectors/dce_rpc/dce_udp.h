@@ -196,7 +196,7 @@ public:
     { inspector_id = snort::FlowData::create_flow_data_id(); }
 
     static unsigned inspector_id;
-    DCE2_UdpSsnData dce2_udp_session;
+    DCE2_UdpSsnData dce2_udp_session = {};
 };
 
 DCE2_UdpSsnData* get_dce2_udp_session_data(snort::Flow*);

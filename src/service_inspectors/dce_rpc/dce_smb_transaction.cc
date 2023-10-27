@@ -290,7 +290,7 @@ static DCE2_Ret DCE2_SmbNtTransactCreateReq(DCE2_SmbSsnData* ssd,
     dce2_move(param_ptr, param_len, pad);
 
     ssd->cur_rtracker->file_name =
-      get_smb_file_name(param_ptr, file_name_length, unicode, &ssd->cur_rtracker->file_name_size);
+        DCE2_SmbGetFileName(param_ptr, file_name_length, unicode, &ssd->cur_rtracker->file_name_size);
 
     return DCE2_RET__SUCCESS;
 }
@@ -528,8 +528,7 @@ static DCE2_Ret DCE2_SmbUpdateTransRequest(DCE2_SmbSsnData* ssd,
             if (DCE2_SsnIsWindowsPolicy(&ssd->sd)
                 && ssd->cur_rtracker->ftracker->fp_byte_mode)
             {
-                SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
-                    DetectionEngine::get_current_packet(),
+                debug_log(dce_smb_trace, DetectionEngine::get_current_packet(),
                     "Pipe is in byte mode - TRANS_TRANSACT_NMPIPE won't work\n");
                 return DCE2_RET__ERROR;
             }
@@ -554,14 +553,14 @@ static DCE2_Ret DCE2_SmbUpdateTransRequest(DCE2_SmbSsnData* ssd,
         // Not implemented according to MS-CIFS
         case TRANS_RAW_READ_NMPIPE:
 
-        // Can only write 2 null bytes and subsequent writes return pipe disconnected
+        // Can only write 2 NULL bytes and subsequent writes return pipe disconnected
         case TRANS_RAW_WRITE_NMPIPE:
 
         // Can at most do a DCE/RPC bind
         case TRANS_CALL_NMPIPE:
             dce_alert(GID_DCE2, DCE2_SMB_DEPR_COMMAND_USED, (dce2CommonStats*)&dce2_smb_stats,
                 ssd->sd);
-            // fallthrough
+        // fallthrough
 
         // Aren't looking at these or the three above
         case TRANS_QUERY_NMPIPE_STATE:
@@ -588,10 +587,9 @@ static DCE2_Ret DCE2_SmbUpdateTransRequest(DCE2_SmbSsnData* ssd,
         // And Samba uses the ByteCount to validate
         if (DCE2_SsnIsSambaPolicy(&ssd->sd)
             && (DCE2_SmbTransactionGetName(nb_ptr, nb_len,
-            byte_count, SmbUnicode(smb_hdr)) != DCE2_RET__SUCCESS))
+                byte_count, SmbUnicode(smb_hdr)) != DCE2_RET__SUCCESS))
         {
-            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
-                DetectionEngine::get_current_packet(),
+            debug_log(dce_smb_trace, DetectionEngine::get_current_packet(),
                 "Failed to validate pipe name for Samba.\n");
             return DCE2_RET__ERROR;
         }
@@ -720,7 +718,7 @@ static DCE2_Ret DCE2_SmbUpdateTransRequest(DCE2_SmbSsnData* ssd,
         // If all of the data and parameters weren't sent, buffer what was sent
         if (((dcnt != tdcnt) || (pcnt != tpcnt)) && (dcnt != 0)
             && (DCE2_SmbBufferTransactionData(ttracker,
-            nb_ptr, dcnt, 0) != DCE2_RET__SUCCESS))
+                nb_ptr, dcnt, 0) != DCE2_RET__SUCCESS))
         {
             return DCE2_RET__ERROR;
         }
@@ -737,7 +735,7 @@ static DCE2_Ret DCE2_SmbUpdateTransRequest(DCE2_SmbSsnData* ssd,
         // If all of the data and parameters weren't sent, buffer what was sent
         if (((pcnt != tpcnt) || (dcnt != tdcnt)) && (pcnt != 0)
             && (DCE2_SmbBufferTransactionParameters(ttracker,
-            nb_ptr, pcnt, 0) != DCE2_RET__SUCCESS))
+                nb_ptr, pcnt, 0) != DCE2_RET__SUCCESS))
         {
             return DCE2_RET__ERROR;
         }
@@ -960,7 +958,7 @@ static DCE2_Ret DCE2_SmbTrans2Open2Req(DCE2_SmbSsnData* ssd,
     dce2_move(param_ptr, param_len, sizeof(SmbTrans2Open2ReqParams));
 
     ssd->cur_rtracker->file_name =
-      get_smb_file_name(param_ptr, param_len, unicode, &ssd->cur_rtracker->file_name_size);
+        DCE2_SmbGetFileName(param_ptr, param_len, unicode, &ssd->cur_rtracker->file_name_size);
 
     return DCE2_RET__SUCCESS;
 }
@@ -1075,8 +1073,8 @@ DCE2_Ret DCE2_SmbTransaction(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     if (DCE2_ComInfoIsRequest(com_info)
         && !DCE2_SmbIsTransactionComplete(ttracker))
     {
-        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
-            DetectionEngine::get_current_packet(), "Got new transaction request "
+        debug_log(dce_smb_trace, DetectionEngine::get_current_packet(),
+            "Got new transaction request "
             "that matches an in progress transaction - not inspecting.\n");
         return DCE2_RET__ERROR;
     }
@@ -1085,8 +1083,7 @@ DCE2_Ret DCE2_SmbTransaction(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     if (DCE2_ComInfoIsRequest(com_info)
         && (DCE2_ComInfoWordCount(com_info) != 16))
     {
-        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
-            DetectionEngine::get_current_packet(),
+        debug_log(dce_smb_trace, DetectionEngine::get_current_packet(),
             "\\PIPE\\LANMAN request - not inspecting\n");
         return DCE2_RET__IGNORE;
     }
@@ -1199,9 +1196,9 @@ DCE2_Ret DCE2_SmbTransaction2(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     if (DCE2_ComInfoIsRequest(com_info)
         && !DCE2_SmbIsTransactionComplete(ttracker))
     {
-        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
-             DetectionEngine::get_current_packet(), "Got new transaction request "
-             "that matches an in progress transaction - not inspecting.\n");
+        debug_log(dce_smb_trace, DetectionEngine::get_current_packet(),
+            "Got new transaction request "
+            "that matches an in progress transaction - not inspecting.\n");
         return DCE2_RET__ERROR;
     }
 
@@ -1294,9 +1291,9 @@ DCE2_Ret DCE2_SmbTransaction2(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
             if (!DCE2_SmbIsTidIPC(ssd, ssd->cur_rtracker->tid)
                 && (SmbFileAttrsDirectory(SmbTrans2Open2RespFileAttrs(
-                (const SmbTrans2Open2RespParams*)ptr))
+                    (const SmbTrans2Open2RespParams*)ptr))
                 || !SmbResourceTypeDisk(SmbTrans2Open2RespResourceType(
-                (const SmbTrans2Open2RespParams*)ptr))))
+                    (const SmbTrans2Open2RespParams*)ptr))))
             {
                 return DCE2_RET__SUCCESS;
             }
@@ -1458,8 +1455,8 @@ DCE2_Ret DCE2_SmbNtTransact(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
     if (DCE2_ComInfoIsRequest(com_info)
         && !DCE2_SmbIsTransactionComplete(ttracker))
     {
-        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
-            DetectionEngine::get_current_packet(), "Got new transaction request "
+        debug_log(dce_smb_trace, DetectionEngine::get_current_packet(),
+            "Got new transaction request "
             "that matches an in progress transaction - not inspecting.\n");
         return DCE2_RET__ERROR;
     }

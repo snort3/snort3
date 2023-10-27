@@ -31,7 +31,7 @@ static const PegInfo dce_http_server_pegs[] =
     { CountType::END, nullptr, nullptr }
 };
 
-DceHttpServerModule::DceHttpServerModule() : Module(DCE_HTTP_SERVER_NAME, DCE_HTTP_SERVER_HELP)
+DceHttpServerModule::DceHttpServerModule() :   Module(DCE_HTTP_SERVER_NAME, DCE_HTTP_SERVER_HELP)
 {
 }
 
@@ -44,3 +44,4 @@ PegCount* DceHttpServerModule::get_counts() const
 {
     return (PegCount*)&dce_http_server_stats;
 }
+

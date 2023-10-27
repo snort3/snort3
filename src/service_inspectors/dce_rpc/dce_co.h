@@ -265,7 +265,8 @@ enum DCE2_CoCtxTransport
     DCE2_CO_CTX_TRANS_SYNTAX_NDR64
 };
 
-enum DCE2_CoEpmOpnum {
+enum DCE2_CoEpmOpnum
+{
     DCE2_CO_EPT_NONE = -1,
     DCE2_CO_EPT_INSERT = 0,
     DCE2_CO_EPT_DELETE,

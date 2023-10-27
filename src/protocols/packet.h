@@ -229,7 +229,7 @@ struct SO_PUBLIC Packet
     { return (proto_bits & PROTO_BIT__UDP) and data and dsize; }
 
     bool has_udp_quic_data() const
-    { return (pseudo_type == PSEUDO_PKT_UDP_QUIC) and data and dsize; }
+    { return (is_cooked() and pseudo_type == PSEUDO_PKT_UDP_QUIC) and data and dsize; }
 
     /* Get general, non-boolean information */
     PktType type() const

@@ -44,7 +44,7 @@ extern THREAD_LOCAL const snort::Trace* dce_udp_trace;
 
 struct dce2UdpProtoConf
 {
-    dce2CommonProtoConf common;
+    dce2CommonProtoConf common = {};
 };
 
 class Dce2UdpModule : public snort::Module

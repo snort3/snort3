@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2008-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -538,10 +537,10 @@ static int DCE2_ClFragCompare(const void* a, const void* b)
 static void DCE2_ClFragReassemble(
     DCE2_SsnData* sd, DCE2_ClActTracker* at, const DceRpcClHdr* cl_hdr)
 {
-    uint8_t dce2_cl_rbuf[IP_MAXPACKET];
+    auto dce2_cl_rbuf = std::make_unique<uint8_t[]>(IP_MAXPACKET);
     DCE2_ClFragTracker* ft = &at->frag_tracker;
-    const uint8_t* rdata = dce2_cl_rbuf;
-    uint16_t rlen = sizeof(dce2_cl_rbuf);
+    const uint8_t* rdata = dce2_cl_rbuf.get();
+    uint16_t rlen = IP_MAXPACKET;
     DCE2_ClFragNode* fnode;
     uint32_t stub_len = 0;
 
@@ -558,7 +557,7 @@ static void DCE2_ClFragReassemble(
     }
 
     Packet* rpkt = DCE2_GetRpkt(DetectionEngine::get_current_packet(),
-        DCE2_RPKT_TYPE__UDP_CL_FRAG, dce2_cl_rbuf, stub_len);
+        DCE2_RPKT_TYPE__UDP_CL_FRAG, dce2_cl_rbuf.get(), stub_len);
 
     if ( !rpkt )
         return;

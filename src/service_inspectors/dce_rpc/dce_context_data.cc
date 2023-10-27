@@ -41,35 +41,35 @@ void DceContextData::init(DCE2_TransType trans)
 
 unsigned DceContextData::get_ips_id(DCE2_TransType trans)
 {
-    switch(trans)
+    switch (trans)
     {
-        case DCE2_TRANS_TYPE__SMB:
-            return DceContextData::smb_ips_id;
-        case DCE2_TRANS_TYPE__TCP:
-            return DceContextData::tcp_ips_id;
-        case DCE2_TRANS_TYPE__UDP:
-            return DceContextData::udp_ips_id;
-        default:
-            break;
+    case DCE2_TRANS_TYPE__SMB:
+        return DceContextData::smb_ips_id;
+    case DCE2_TRANS_TYPE__TCP:
+        return DceContextData::tcp_ips_id;
+    case DCE2_TRANS_TYPE__UDP:
+        return DceContextData::udp_ips_id;
+    default:
+        break;
     }
     return 0;
 }
 
 void DceContextData::set_ips_id(DCE2_TransType trans, unsigned id)
 {
-    switch(trans)
+    switch (trans)
     {
-        case DCE2_TRANS_TYPE__SMB:
-            DceContextData::smb_ips_id = id;
-            break;
-        case DCE2_TRANS_TYPE__TCP:
-            DceContextData::tcp_ips_id = id;
-            break;
-        case DCE2_TRANS_TYPE__UDP:
-            DceContextData::udp_ips_id = id;
-            break;
-        default:
-            break;
+    case DCE2_TRANS_TYPE__SMB:
+        DceContextData::smb_ips_id = id;
+        break;
+    case DCE2_TRANS_TYPE__TCP:
+        DceContextData::tcp_ips_id = id;
+        break;
+    case DCE2_TRANS_TYPE__UDP:
+        DceContextData::udp_ips_id = id;
+        break;
+    default:
+        break;
     }
     return;
 }
@@ -145,9 +145,8 @@ void DceContextData::clear_current_ropts(IpsContext* context, DCE2_TransType tra
     {
         dcd->clear();
     }
-
-    return;
 }
+
 void DceContextData::clear_current_ropts(const Packet* p, DCE2_TransType trans)
 {
     IpsContext* context = p ? p->context : nullptr;

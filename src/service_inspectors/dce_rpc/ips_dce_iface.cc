@@ -231,8 +231,8 @@ public:
 
 private:
     const RangeCheck version;
-    const bool any_frag;
-    const Uuid uuid;
+    const bool any_frag = false;
+    const Uuid uuid = {};
     PatternMatchData pmd;
     PatternMatchData alt_pmd;
 };
@@ -249,7 +249,7 @@ Dce2IfaceOption::~Dce2IfaceOption()
     }
 }
 
-static char* make_pattern_buffer( const Uuid &uuid, DceRpcBoFlag type )
+static char* make_pattern_buffer(const Uuid& uuid, DceRpcBoFlag type)
 {
     int index = 0;
     char* pattern_buf = (char*)snort_alloc(sizeof(Uuid));
@@ -314,9 +314,9 @@ PatternMatchData* Dce2IfaceOption::get_pattern(SnortProtocolId snort_protocol_id
     }
     else if (snort_protocol_id == SNORT_PROTO_UDP)
     {
-        pmd.pattern_buf = make_pattern_buffer( uuid, DCERPC_BO_FLAG__LITTLE_ENDIAN );
+        pmd.pattern_buf = make_pattern_buffer(uuid, DCERPC_BO_FLAG__LITTLE_ENDIAN);
         pmd.pattern_size = sizeof(Uuid);
-        alt_pmd.pattern_buf = make_pattern_buffer( uuid, DCERPC_BO_FLAG__BIG_ENDIAN );
+        alt_pmd.pattern_buf = make_pattern_buffer(uuid, DCERPC_BO_FLAG__BIG_ENDIAN);
         alt_pmd.pattern_size = sizeof(Uuid);
 
         return &pmd;
@@ -454,7 +454,7 @@ static const Parameter s_params[] =
 class Dce2IfaceModule : public Module
 {
 public:
-    Dce2IfaceModule() : Module(s_name, s_help, s_params) { }
+    Dce2IfaceModule() :   Module(s_name, s_help, s_params) { }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;

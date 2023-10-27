@@ -1,6 +1,5 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2016-2023 Cisco and/or its affiliates. All rights reserved.
-//
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
 // by the Free Software Foundation.  You may not use, modify or distribute
@@ -567,7 +566,7 @@ DCE2_Ret DCE2_SmbOpen(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         dce2_move(nb_ptr, nb_len, 1);
 
         ssd->cur_rtracker->file_name =
-            get_smb_file_name(nb_ptr, nb_len, SmbUnicode(smb_hdr),
+            DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),
             &ssd->cur_rtracker->file_name_size);
     }
 
@@ -625,7 +624,7 @@ DCE2_Ret DCE2_SmbCreate(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         dce2_move(nb_ptr, nb_len, 1);
 
         ssd->cur_rtracker->file_name =
-            get_smb_file_name(nb_ptr, nb_len, SmbUnicode(smb_hdr),
+            DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),
             &ssd->cur_rtracker->file_name_size);
     }
 
@@ -856,7 +855,7 @@ DCE2_Ret DCE2_SmbCreateNew(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         dce2_move(nb_ptr, nb_len, 1);
 
         ssd->cur_rtracker->file_name =
-            get_smb_file_name(nb_ptr, nb_len, SmbUnicode(smb_hdr),
+            DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),
             &ssd->cur_rtracker->file_name_size);
     }
 
@@ -1069,7 +1068,7 @@ DCE2_Ret DCE2_SmbOpenAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (ssd->cur_rtracker->file_name == nullptr)
         {
             ssd->cur_rtracker->file_name =
-                get_smb_file_name(nb_ptr, nb_len, unicode, &ssd->cur_rtracker->file_name_size);
+                DCE2_SmbGetFileName(nb_ptr, nb_len, unicode, &ssd->cur_rtracker->file_name_size);
         }
     }
 
@@ -1491,13 +1490,13 @@ DCE2_Ret DCE2_SmbSessionSetupAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
                 uint8_t r2 = 0;  // Release version second digit
 
                 // Get Major version
-                for (i = 0; (i < nb_len) && (*nb_ptr != '\0'); i += increment)
+                for (i = 0; (i < nb_len); i += increment)
                 {
                     if (isdigit((int)nb_ptr[i]))
                         break;
                 }
 
-                if ((i == nb_len) || (*nb_ptr == '\0'))
+                if (i == nb_len)
                 {
                     return DCE2_RET__SUCCESS;
                 }
@@ -1930,7 +1929,7 @@ DCE2_Ret DCE2_SmbNtCreateAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         if (ssd->cur_rtracker->file_name == nullptr)
         {
             ssd->cur_rtracker->file_name =
-                get_smb_file_name(nb_ptr, file_name_length, unicode,
+                DCE2_SmbGetFileName(nb_ptr, file_name_length, unicode,
                 &ssd->cur_rtracker->file_name_size);
         }
 
@@ -2167,3 +2166,4 @@ DCE2_Ret DCE2_SmbWriteAndClose(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
     return DCE2_RET__SUCCESS;
 }
+

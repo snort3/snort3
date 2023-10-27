@@ -31,7 +31,7 @@ static const PegInfo dce_http_proxy_pegs[] =
     { CountType::END, nullptr, nullptr }
 };
 
-DceHttpProxyModule::DceHttpProxyModule() : Module(DCE_HTTP_PROXY_NAME, DCE_HTTP_PROXY_HELP)
+DceHttpProxyModule::DceHttpProxyModule() :   Module(DCE_HTTP_PROXY_NAME, DCE_HTTP_PROXY_HELP)
 {
 }
 
@@ -44,3 +44,4 @@ PegCount* DceHttpProxyModule::get_counts() const
 {
     return (PegCount*)&dce_http_proxy_stats;
 }
+

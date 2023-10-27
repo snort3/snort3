@@ -56,7 +56,7 @@ void DceExpSsnManager::create_expected_session(const SfIp* ept_ip,
 }
 
 DceTcpExpSsnManager::DceTcpExpSsnManager(const dce2TcpProtoConf& config) :
-    DceExpSsnManager(IpProtocol::TCP, PktType::TCP), pc(config) {}
+    DceExpSsnManager(IpProtocol::TCP, PktType::TCP), pc(config) { }
 
 int DceTcpExpSsnManager::create_expected_session_impl(Packet* pkt,
     const snort::SfIp* src_ip, uint16_t src_port,
@@ -84,3 +84,4 @@ int DceTcpExpSsnManager::create_expected_session_impl(Packet* pkt,
 
     return 0;
 }
+

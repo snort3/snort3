@@ -63,6 +63,7 @@ private:
     snort::FileContext* context = nullptr;
 
     void add(const uint8_t* file_data, int64_t data_size, uint64_t offset);
+    void insert_segment(const uint8_t* file_data, int64_t data_size, uint64_t offset, bool find_left,  FileSegment** left);
     FilePosition get_file_position(uint64_t data_size, uint64_t file_size);
     int process_one(snort::Packet*, const uint8_t* file_data, int data_size, snort::FilePolicyBase*,
         FilePosition position=SNORT_FILE_POSITION_UNKNOWN);

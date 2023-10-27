@@ -6,6 +6,7 @@ set( FILE_LIST
     dce_common.h
     dce_context_data.cc
     dce_context_data.h
+    dce_db.h
     dce_expected_session.cc
     dce_expected_session.h
     dce_http_proxy.cc
@@ -18,25 +19,18 @@ set( FILE_LIST
     dce_http_server_module.h
     dce_http_server_splitter.cc
     dce_http_server_splitter.h
-    dce_list.cc
     dce_list.h
-    dce_smb1.cc
-    dce_smb1.h
+    dce_list.cc
+    dce_smb.cc
+    dce_smb.h
     dce_smb2.cc
     dce_smb2.h
-    dce_smb2_file.cc
-    dce_smb2_file.h
-    dce_smb2_request.h
-    dce_smb2_session.cc
-    dce_smb2_session.h
-    dce_smb2_tree.cc
-    dce_smb2_tree.h
+    dce_smb2_commands.cc
+    dce_smb2_commands.h
+    dce_smb2_utils.cc
+    dce_smb2_utils.h
     dce_smb_commands.cc
     dce_smb_commands.h
-    dce_smb_common.cc
-    dce_smb_common.h
-    dce_smb_inspector.cc
-    dce_smb_inspector.h
     dce_smb_module.cc
     dce_smb_module.h
     dce_smb_paf.cc

@@ -23,9 +23,11 @@
 #include "config.h"
 #endif
 
+#include "dce_smb_module.h"
 #include "dce_smb_paf.h"
-
-#include "dce_smb_common.h"
+#include "dce_smb.h"
+#include "trace/trace_api.h"
+#include "utils/util.h"
 
 namespace
 {
@@ -45,8 +47,8 @@ using namespace snort;
  *          junk states, header type must be Session Message.
  *
  *********************************************************************/
-static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk,
-    const SmbNtHdr* nt_hdr, uint32_t* nb_len)
+static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, const SmbNtHdr* nt_hdr,
+    uint32_t* nb_len)
 {
     uint8_t type = (uint8_t)(nb_hdr >> 24);
     uint8_t bit = (uint8_t)((nb_hdr & 0x00ff0000) >> 16);
@@ -106,8 +108,8 @@ static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk,
  *          state 7 until this is the case.
  *
  *********************************************************************/
-static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow,
-    const uint8_t* data, uint32_t len, uint32_t, uint32_t* fp)
+static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, const uint8_t* data,
+    uint32_t len, uint32_t, uint32_t* fp)
 {
     uint32_t n = 0;
     StreamSplitter::Status ps = StreamSplitter::SEARCH;
@@ -179,7 +181,7 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow,
     return ps;
 }
 
-Dce2SmbSplitter::Dce2SmbSplitter(bool c2s) : StreamSplitter(c2s)
+Dce2SmbSplitter::Dce2SmbSplitter(bool c2s) :   StreamSplitter(c2s)
 {
     state.paf_state = DCE2_PAF_SMB_STATES__0;
     state.nb_hdr = 0;
@@ -190,9 +192,9 @@ StreamSplitter::Status Dce2SmbSplitter::scan(
     uint32_t flags, uint32_t* fp)
 {
     DCE2_PafSmbData* pfdata = &state;
-    StreamSplitter::Status ps =  dce2_smb_paf(pfdata, pkt->flow, data, len, flags, fp);
+    StreamSplitter::Status ps = dce2_smb_paf(pfdata, pkt->flow, data, len, flags, fp);
     SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, pkt,
-        "Dce2SmbSplitter scan with length %u and status %d\n", len, ps);
+        "Dce2SmbSplitter scan with length %u, status %d and fp %u\n", len, ps, *fp);
     return ps;
 }
 

@@ -50,10 +50,10 @@ static void DCE2_ClCleanTracker(DCE2_ClTracker* clt)
 //-------------------------------------------------------------------------
 // class stuff
 //-------------------------------------------------------------------------
-Dce2UdpFlowData::Dce2UdpFlowData() : FlowData(inspector_id)
+Dce2UdpFlowData::Dce2UdpFlowData() :   FlowData(inspector_id)
 {
     dce2_udp_stats.concurrent_sessions++;
-    if(dce2_udp_stats.max_concurrent_sessions < dce2_udp_stats.concurrent_sessions)
+    if (dce2_udp_stats.max_concurrent_sessions < dce2_udp_stats.concurrent_sessions)
         dce2_udp_stats.max_concurrent_sessions = dce2_udp_stats.concurrent_sessions;
 }
 
@@ -108,7 +108,7 @@ static DCE2_UdpSsnData* dce2_handle_udp_session(Packet* p, dce2UdpProtoConf* con
 class Dce2Udp : public Inspector
 {
 public:
-    Dce2Udp(const dce2UdpProtoConf&);
+    explicit Dce2Udp(const dce2UdpProtoConf&);
     void show(const SnortConfig*) const override;
     void eval(Packet*) override;
     void clear(Packet*) override;
@@ -117,9 +117,8 @@ private:
     dce2UdpProtoConf config;
 };
 
-Dce2Udp::Dce2Udp(const dce2UdpProtoConf& pc)
+Dce2Udp::Dce2Udp(const dce2UdpProtoConf& pc) : config(pc)
 {
-    config = pc;
 }
 
 void Dce2Udp::show(const SnortConfig*) const
@@ -163,7 +162,6 @@ void Dce2Udp::clear(Packet* p)
     {
         DCE2_ResetRopts(&dce2_udp_sess->sd, p);
     }
-
 }
 
 //-------------------------------------------------------------------------

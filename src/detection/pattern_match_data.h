@@ -69,7 +69,7 @@ struct PatternMatchData
         NO_FP    = 0x20,
     };
 
-    uint16_t flags;          // from above enum
+    uint16_t flags = 0;          // from above enum
     uint16_t mpse_flags;     // passed through to mpse
 
     uint16_t fp_offset;

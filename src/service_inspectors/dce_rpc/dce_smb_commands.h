@@ -24,6 +24,8 @@
 
 #include "dce_smb_utils.h"
 
+#define SMB2_GLOBAL_CAP_MULTI_CHANNEL 0x08
+
 DCE2_Ret DCE2_SmbOpen(DCE2_SmbSsnData*, const SmbNtHdr*,
     const DCE2_SmbComInfo*, const uint8_t*, uint32_t);
 DCE2_Ret DCE2_SmbCreate(DCE2_SmbSsnData*, const SmbNtHdr*,

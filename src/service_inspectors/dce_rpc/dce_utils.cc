@@ -182,7 +182,6 @@ const char* DCE2_UuidToStr(
     return uuid_buf;
 }
 
-
 DCE2_Buffer* DCE2_BufferNew(uint32_t initial_size, uint32_t min_add_size)
 {
     DCE2_Buffer* buf = (DCE2_Buffer*)snort_calloc(sizeof(DCE2_Buffer));

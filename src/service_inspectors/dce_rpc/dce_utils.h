@@ -1,6 +1,5 @@
-//--------------------------------------------------------------------------
+//-------------------------------------------------------------------------/
 // Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2008-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -136,11 +135,10 @@ void DCE2_BufferDestroy(DCE2_Buffer* buf);
 
 #define DCE2_UUID_BUF_SIZE 50
 const char* DCE2_UuidToStr(
-    const Uuid*, DceRpcBoFlag, char (&buf)[DCE2_UUID_BUF_SIZE]);
+    const Uuid*, DceRpcBoFlag, char (& buf)[DCE2_UUID_BUF_SIZE]);
 
 // Determines if the character passed in is a character that
 // the inspector considers a to be a space character.
-
 inline bool DCE2_IsSpaceChar(const char c)
 {
     if (isspace((int)c))
@@ -151,7 +149,6 @@ inline bool DCE2_IsSpaceChar(const char c)
 // Determines if the character passed in is a character that
 // the inspector considers a to be an end of configuration
 // character.
-
 inline bool DCE2_IsConfigEndChar(const char c)
 {
     if (c == DCE2_CFG_TOK__END)
@@ -161,7 +158,6 @@ inline bool DCE2_IsConfigEndChar(const char c)
 
 // Prunes whitespace surrounding string.
 // String must be 0 terminated.
-
 inline char* DCE2_PruneWhiteSpace(char* str)
 {
     char* end;
@@ -186,7 +182,6 @@ inline char* DCE2_PruneWhiteSpace(char* str)
 
 // Checks if string is null, empty or just spaces.
 // String must be 0 terminated.
-
 inline bool DCE2_IsEmptyStr(char* str)
 {
     char* end;
@@ -386,3 +381,4 @@ inline void dce2_move(const uint8_t*& data_ptr, int64_t& data_len, int amount)
 }
 
 #endif
+

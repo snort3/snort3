@@ -22,7 +22,7 @@
 #ifndef DCE_SMB_TRANSACTION_UTILS_H
 #define DCE_SMB_TRANSACTION_UTILS_H
 
-#include "dce_smb1.h"
+#include "dce_smb.h"
 
 DCE2_Ret DCE2_SmbTransactionGetName(const uint8_t* nb_ptr,
     uint32_t nb_len, uint16_t bcc, bool unicode);

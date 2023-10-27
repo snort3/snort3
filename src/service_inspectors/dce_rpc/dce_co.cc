@@ -28,8 +28,7 @@
 #include "utils/util.h"
 
 #include "dce_expected_session.h"
-#include "dce_smb1.h"
-#include "dce_smb_common.h"
+#include "dce_smb.h"
 #include "dce_smb_module.h"
 #include "dce_smb_utils.h"
 #include "dce_tcp.h"
@@ -40,11 +39,13 @@ static THREAD_LOCAL int co_reassembled = 0;
 
 /* [MS-RPCE] 2.2.5 - 64-Bit Network Data Representation */
 static const Uuid uuid_ndr64 = { 0x71710533, 0xbeba, 0x4937, 0x83, 0x19,
-    { 0xb5, 0xdb, 0xef, 0x9c, 0xcc, 0x36 } };
+                                 { 0xb5, 0xdb, 0xef, 0x9c, 0xcc, 0x36 }
+};
 
 /* Endpoint mapper UUID */
 static const Uuid uuid_epm = { 0xe1af8308, 0x5d1f, 0x11c9, 0x91, 0xa4,
-    { 0x08, 0x00, 0x2b, 0x14, 0xa0, 0xfa } };
+                               { 0x08, 0x00, 0x2b, 0x14, 0xa0, 0xfa }
+};
 
 static inline dce2CommonStats* dce_get_proto_stats_ptr(const DCE2_SsnData* sd)
 {
@@ -54,7 +55,9 @@ static inline dce2CommonStats* dce_get_proto_stats_ptr(const DCE2_SsnData* sd)
     }
     else
     {
-        return((dce2CommonStats*)&dce2_smb_stats);
+        /* Since dce2_smb_stats derives from LruCacheLocalStats,
+        force return the pointer to first peg of the derived class */
+        return((dce2CommonStats*)&(dce2_smb_stats.events));
     }
     // FIXIT-M add HTTP, UDP cases when these are ported
 }
@@ -387,6 +390,7 @@ static inline DCE2_CoSeg* DCE2_CoGetSegPtr(DCE2_CoTracker* cot)
     Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return nullptr;
+
     if ( p->is_from_server() )
         return &cot->srv_seg;
 
@@ -818,7 +822,6 @@ static void dce_co_process_ctx_result(DCE2_SsnData*, DCE2_CoTracker* cot,
     const Uuid* transport)
 {
     DCE2_CoCtxIdNode* ctx_node, * existing_ctx_node;
-
     /* Dequeue context item in pending queue - this will get put in the permanent
      * context id list or freed */
     ctx_node = (DCE2_CoCtxIdNode*)DCE2_QueueDequeue(cot->pending_ctx_ids);
@@ -1361,6 +1364,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return nullptr;
+
     bool from_client = p->is_from_client();
 
     int co_hdr_len = from_client ? DCE2_MOCK_HDR_LEN__CO_CLI : DCE2_MOCK_HDR_LEN__CO_SRV;
@@ -1378,7 +1382,8 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     {
     case DCE2_RPKT_TYPE__SMB_CO_FRAG:
     case DCE2_RPKT_TYPE__SMB_CO_SEG:
-        set_smb_reassembled_data(wrdata, (uint16_t)(rpkt->dsize - smb_hdr_len));
+        set_smb_reassembled_data(wrdata,
+            (uint16_t)(rpkt->dsize - smb_hdr_len));
 
         if (rpkt_type == DCE2_RPKT_TYPE__SMB_CO_FRAG)
         {
@@ -1418,7 +1423,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             if ( from_client )
                 dce_common_stats->co_cli_seg_reassembled++;
             else
-                dce_common_stats->co_srv_seg_reassembled++;
+                dce_common_stats->co_srv_frag_reassembled++;
         }
 
         *co_hdr = (const DceRpcCoHdr*)rpkt->data;
@@ -2163,7 +2168,6 @@ static void DCE2_CoEarlyReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot)
 {
     DCE2_Buffer* frag_buf = DCE2_CoGetFragBuf(&cot->frag_tracker);
     Packet* p = DetectionEngine::get_current_packet();
-
     if ( (p == nullptr) || p->is_from_server() )
         return;
 
@@ -2234,16 +2238,16 @@ static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
     Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return nullptr;
+
     Packet* rpkt = nullptr;
-    int smb_hdr_len = p->is_from_client() ? DCE2_MOCK_HDR_LEN__SMB_CLI :
-        DCE2_MOCK_HDR_LEN__SMB_SRV;
+    int smb_hdr_len = p->is_from_client() ? DCE2_MOCK_HDR_LEN__SMB_CLI : DCE2_MOCK_HDR_LEN__SMB_SRV;
 
     switch (sd->trans)
     {
     case DCE2_TRANS_TYPE__SMB:
         rpkt = DCE2_GetRpkt(p, DCE2_RPKT_TYPE__SMB_CO_SEG, data_ptr, data_len);
 
-        if ( !rpkt  || !rpkt->data )
+        if ( !rpkt || !rpkt->data )
             return nullptr;
 
         set_smb_reassembled_data(const_cast<uint8_t*>(rpkt->data),
@@ -2292,7 +2296,6 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
         smb_hdr_len = DCE2_MOCK_HDR_LEN__SMB_SRV;
         dce_common_stats->co_srv_seg_reassembled++;
     }
-
 
     Packet* rpkt = DCE2_CoGetSegRpkt(sd, DCE2_BufferData(seg->buf), DCE2_BufferLength(seg->buf));
 

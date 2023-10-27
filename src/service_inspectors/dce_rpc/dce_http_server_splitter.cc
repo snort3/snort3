@@ -55,17 +55,17 @@ StreamSplitter::Status DceHttpServerSplitter::match(const uint8_t* data, uint32_
     len = (len > strlen(HTTP_SERVER_MARKER)) ? strlen(HTTP_SERVER_MARKER) : len;
 
     if ( ((len+match_index) > strlen(HTTP_SERVER_MARKER)) ||
-        memcmp( (const void*)data, (const void*)(&HTTP_SERVER_MARKER[match_index]), len ) != 0 )
+        memcmp( (const void*)data, (const void*)(&HTTP_SERVER_MARKER[match_index]), len) != 0 )
         return StreamSplitter::ABORT;
     else
     {
         match_index += len;
         return match_index == (unsigned int)strlen(HTTP_SERVER_MARKER) ?
-            StreamSplitter::FLUSH : StreamSplitter::SEARCH;
+               StreamSplitter::FLUSH : StreamSplitter::SEARCH;
     }
 }
 
-DceHttpServerSplitter::DceHttpServerSplitter(bool c2s) : StreamSplitter(c2s)
+DceHttpServerSplitter::DceHttpServerSplitter(bool c2s) :   StreamSplitter(c2s)
 {
     match_index = 0;
     cutover = false;
@@ -180,3 +180,4 @@ TEST_CASE("DceHttpServerSplitter-scan - extra_server", "[http_server_splitter]")
 }
 
 #endif
+

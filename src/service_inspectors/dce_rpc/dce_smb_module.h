@@ -21,9 +21,8 @@
 #ifndef DCE_SMB_MODULE_H
 #define DCE_SMB_MODULE_H
 
-#include "framework/module.h"
-
 #include "dce_common.h"
+#include "framework/module.h"
 #include "dce_list.h"
 
 namespace snort
@@ -36,59 +35,6 @@ extern THREAD_LOCAL const snort::Trace* dce_smb_trace;
 
 #define DCE2_VALID_SMB_VERSION_FLAG_V1 1
 #define DCE2_VALID_SMB_VERSION_FLAG_V2 2
-
-#define DCE2_SMB_BAD_NBSS_TYPE_STR "SMB - bad NetBIOS session service session type"
-#define DCE2_SMB_BAD_TYPE_STR  "SMB - bad SMB message type"
-#define DCE2_SMB_BAD_ID_STR "SMB - bad SMB Id (not \\xffSMB for SMB1 or not \\xfeSMB for SMB2)"
-#define DCE2_SMB_BAD_WCT_STR "SMB - bad word count or structure size"
-#define DCE2_SMB_BAD_BCC_STR  "SMB - bad byte count"
-#define DCE2_SMB_BAD_FORM_STR  "SMB - bad format type"
-#define DCE2_SMB_BAD_OFF_STR  "SMB - bad offset"
-#define DCE2_SMB_TDCNT_ZE_STR  "SMB - zero total data count"
-#define DCE2_SMB_NB_LT_SMBHDR_STR "SMB - NetBIOS data length less than SMB header length"
-#define DCE2_SMB_NB_LT_COM_STR   "SMB - remaining NetBIOS data length less than command length"
-#define DCE2_SMB_NB_LT_BCC_STR  "SMB - remaining NetBIOS data length less than command byte count"
-#define DCE2_SMB_NB_LT_DSIZE_STR \
-    "SMB - remaining NetBIOS data length less than command data size"
-#define DCE2_SMB_TDCNT_LT_DSIZE_STR \
-    "SMB - remaining total data count less than this command data size"
-#define DCE2_SMB_DSENT_GT_TDCNT_STR \
-    "SMB - total data sent (STDu64) greater than command total data expected"
-#define DCE2_SMB_BCC_LT_DSIZE_STR   "SMB - byte count less than command data size (STDu64)"
-#define DCE2_SMB_INVALID_DSIZE_STR  "SMB - invalid command data size for byte count"
-#define DCE2_SMB_EXCESSIVE_TREE_CONNECTS_STR \
-    "SMB - excessive tree connect requests with pending tree connect responses"
-#define DCE2_SMB_EXCESSIVE_READS_STR  "SMB - excessive read requests with pending read responses"
-#define DCE2_SMB_EXCESSIVE_CHAINING_STR  "SMB - excessive command chaining"
-#define DCE2_SMB_MULT_CHAIN_SS_STR   "SMB - Multiple chained login requests"
-#define DCE2_SMB_MULT_CHAIN_TC_STR   "SMB - Multiple chained tree connect requests"
-#define DCE2_SMB_CHAIN_SS_LOGOFF_STR   "SMB - chained/compounded login followed by logoff"
-#define DCE2_SMB_CHAIN_TC_TDIS_STR \
-    "SMB - chained/compounded tree connect followed by tree disconnect"
-#define DCE2_SMB_CHAIN_OPEN_CLOSE_STR \
-    "SMB - chained/compounded open pipe followed by close pipe"
-#define DCE2_SMB_INVALID_SHARE_STR   "SMB - invalid share access"
-
-#define DCE2_SMB_V1_STR  "SMB - invalid SMB version 1 seen"
-#define DCE2_SMB_V2_STR  "SMB - invalid SMB version 2 seen"
-#define DCE2_SMB_INVALID_BINDING_STR "SMB - invalid user, tree connect, file binding"
-#define DCE2_SMB2_EXCESSIVE_COMPOUNDING_STR  "SMB - excessive command compounding"
-#define DCE2_SMB_DCNT_ZERO_STR   "SMB - zero data count"
-#define DCE2_SMB_DCNT_MISMATCH_STR "SMB - data count mismatch in command and format"
-#define DCE2_SMB_MAX_REQS_EXCEEDED_STR  "SMB - maximum number of outstanding requests exceeded"
-#define DCE2_SMB_REQS_SAME_MID_STR "SMB - outstanding requests with same MID"
-#define DCE2_SMB_DEPR_DIALECT_NEGOTIATED_STR  "SMB - deprecated dialect negotiated"
-#define DCE2_SMB_DEPR_COMMAND_USED_STR   "SMB - deprecated command used"
-#define DCE2_SMB_UNUSUAL_COMMAND_USED_STR "SMB - unusual command used"
-#define DCE2_SMB_INVALID_SETUP_COUNT_STR  "SMB - invalid setup count for command"
-#define DCE2_SMB_MULTIPLE_NEGOTIATIONS_STR \
-    "SMB - client attempted multiple dialect negotiations on session"
-#define DCE2_SMB_EVASIVE_FILE_ATTRS_STR \
-    "SMB - client attempted to create or set a file's attributes to readonly/hidden/system"
-#define DCE2_SMB_INVALID_FILE_OFFSET_STR \
-    "SMB - file offset provided is greater than file size specified"
-#define DCE2_SMB_BAD_NEXT_COMMAND_OFFSET_STR \
-    "SMB - next command specified in SMB2 header is beyond payload boundary"
 
 enum dce2SmbFingerprintPolicy
 {

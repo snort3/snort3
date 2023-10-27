@@ -94,6 +94,47 @@ bool DCE2_SmbIsTidIPC(DCE2_SmbSsnData* ssd, const uint16_t tid)
     return false;
 }
 
+// Extract file name from data. Supports ASCII and UTF-16LE.
+// Returns byte stream (ASCII or UTF-16LE with BOM)
+char* DCE2_SmbGetFileName(const uint8_t* data, uint32_t data_len, bool unicode,
+    uint16_t* file_name_len)
+{
+    const uint8_t inc = unicode ? 2 : 1;
+    if (data_len < inc)
+        return nullptr;
+
+    const uint32_t max_len =  unicode ? data_len - 1 : data_len;
+    // Move forward.  Don't know if the end of data is actually
+    // the end of the string.
+    uint32_t i;
+    for (i = 0; i < max_len; i += inc)
+    {
+        uint16_t uchar = unicode ? extract_16bits(data + i) : data[i];
+        if (uchar == 0)
+            break;
+    }
+
+    char* fname = nullptr;
+    const uint32_t real_len = i;
+
+    if (unicode)
+    {
+        fname = (char*)snort_calloc(real_len + UTF_16_LE_BOM_LEN + 2);
+        memcpy(fname, UTF_16_LE_BOM, UTF_16_LE_BOM_LEN);//Prepend with BOM
+        memcpy(fname + UTF_16_LE_BOM_LEN, data, real_len);
+        *file_name_len = real_len + UTF_16_LE_BOM_LEN;
+    }
+    else
+    {
+        fname = (char*)snort_alloc(real_len + 1);
+        memcpy(fname, data, real_len);
+        fname[real_len] = 0;
+        *file_name_len = real_len;
+    }
+
+    return fname;
+}
+
 int DCE2_SmbUidTidFidCompare(const void* a, const void* b)
 {
     int x = (int)(uintptr_t)a;
@@ -137,7 +178,7 @@ void DCE2_SmbInsertUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
             }
         }
 
-        DCE2_ListInsert(ssd->uids, (void*)(uintptr_t)uid, (void*)(uintptr_t)uid);
+        (void)DCE2_ListInsert(ssd->uids, (void*)(uintptr_t)uid, (void*)(uintptr_t)uid);
     }
 }
 
@@ -439,7 +480,7 @@ DCE2_SmbFileTracker* DCE2_SmbFindFileTracker(DCE2_SmbSsnData* ssd,
 
             break;
         }
-        // fallthrough
+    // fallthrough
 
     case DCE2_POLICY__WIN2003:
     case DCE2_POLICY__WINXP:
@@ -663,7 +704,7 @@ void DCE2_SmbRemoveFileTrackerFromRequestTrackers(DCE2_SmbSsnData* ssd,
     if (ftracker == nullptr)
         return;
 
-    // null out file trackers of any outstanding requests
+    // NULL out file trackers of any outstanding requests
     // that reference this file tracker
     if (ssd->rtracker.ftracker == ftracker)
         ssd->rtracker.ftracker = nullptr;
@@ -794,8 +835,8 @@ void DCE2_SmbInsertTid(DCE2_SmbSsnData* ssd,
     if ( !is_ipc and
         ssd->max_file_depth == -1 and DCE2_ScSmbFileDepth((dce2SmbProtoConf*)ssd->sd.config) == -1 )
     {
-	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
-	        DetectionEngine::get_current_packet(), "Not inserting TID (%hu) "
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+            DetectionEngine::get_current_packet(), "Not inserting TID (%hu) "
             "because it's not IPC and not inspecting normal file data.\n", tid);
         return;
     }
@@ -822,7 +863,7 @@ void DCE2_SmbInsertTid(DCE2_SmbSsnData* ssd,
             }
         }
 
-        DCE2_ListInsert(ssd->tids, (void*)(uintptr_t)tid, (void*)(uintptr_t)insert_tid);
+        (void)DCE2_ListInsert(ssd->tids, (void*)(uintptr_t)tid, (void*)(uintptr_t)insert_tid);
     }
 }
 
@@ -951,8 +992,7 @@ DCE2_Ret DCE2_SmbProcessRequestData(DCE2_SmbSsnData* ssd,
         if (data_len > UINT16_MAX)
             data_len = UINT16_MAX;
 
-        if (ftracker->fp_co_tracker)
-            DCE2_CoProcess(&ssd->sd, ftracker->fp_co_tracker, data_ptr, (uint16_t)data_len);
+        DCE2_CoProcess(&ssd->sd, ftracker->fp_co_tracker, data_ptr, (uint16_t)data_len);
 
         if (!ftracker->fp_used)
             ftracker->fp_used = true;
@@ -1303,9 +1343,7 @@ static FileContext* DCE2_get_main_file_context()
 {
     FileFlows* file_flows = FileFlows::get_file_flows(DetectionEngine::get_current_packet()->flow);
     if (file_flows)
-    {
         return file_flows->get_current_file_context();
-    }
     else
         return nullptr;
 }
@@ -1423,9 +1461,7 @@ static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
 
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
     if (!file_flows)
-    {
         return;
-    }
     bool upload = (ftracker->ff_file_direction == DCE2_SMB_FILE_DIRECTION__UPLOAD);
 
     if (get_file_processed_size(p->flow) != 0)
@@ -1435,11 +1471,8 @@ static void DCE2_SmbFinishFileAPI(DCE2_SmbSsnData* ssd)
         if ((ftracker->ff_file_size == 0)
             && (ftracker->ff_bytes_processed != 0))
         {
-            file_flows->file_flow_context_mutex.lock();
-            bool resault = file_flows->file_process(p, nullptr, 0, SNORT_FILE_END, upload,
-                ftracker->file_name_hash);
-            file_flows->file_flow_context_mutex.unlock();
-            if (resault)
+            if (file_flows->file_process(p, nullptr, 0, SNORT_FILE_END, upload,
+                ftracker->file_name_hash))
             {
                 if (upload)
                 {
@@ -1511,13 +1544,12 @@ static DCE2_Ret DCE2_SmbFileAPIProcess(DCE2_SmbSsnData* ssd,
     if (!file_flows)
         return DCE2_RET__ERROR;
 
-    std::lock_guard<std::mutex> guard(file_flows->file_flow_context_mutex);
     if (!file_flows->file_process(p, data_ptr, (int)data_len, position, upload,
         ftracker->file_name_hash))
     {
-	    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
-	        p, "File API returned FAILURE for (0x%02X) %s\n",
-	        ftracker->fid_v1, upload ? "UPLOAD" : "DOWNLOAD");
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+            p, "File API returned FAILURE for (0x%02X) %s\n",
+            ftracker->fid_v1, upload ? "UPLOAD" : "DOWNLOAD");
 
         // Failure.  Abort tracking this file under file API
         return DCE2_RET__ERROR;
@@ -1657,7 +1689,7 @@ static DCE2_Ret DCE2_SmbHandleOutOfOrderFileData(DCE2_SmbSsnData* ssd,
 
         DCE2_Ret ret;
         if ((ret = DCE2_ListInsert(ftracker->ff_file_chunks,
-                (void*)file_chunk, (void*)file_chunk)) != DCE2_RET__SUCCESS)
+            (void*)file_chunk, (void*)file_chunk)) != DCE2_RET__SUCCESS)
         {
             snort_free((void*)file_chunk->data);
             snort_free((void*)file_chunk);
@@ -1769,10 +1801,10 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
             }
             else if (ftracker->ff_file_offset < ftracker->ff_bytes_processed)
             {
-		        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
-	                DetectionEngine::get_current_packet(), "File offset %" PRIu64 " is less than bytes processed %"
-		            PRIu64 " - aborting.\n", ftracker->ff_file_offset,
-		            ftracker->ff_bytes_processed);
+                SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+                    DetectionEngine::get_current_packet(), "File offset %" PRIu64 " is less than bytes processed %"
+                    PRIu64 " - aborting.\n", ftracker->ff_file_offset,
+                    ftracker->ff_bytes_processed);
 
                 DCE2_SmbAbortFileAPI(ssd);
                 DCE2_SmbSetNewFileAPIFileTracker(ssd);

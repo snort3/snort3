@@ -2,7 +2,7 @@ This directory contains all the files related to DCE-RPC protocol
 processing.
 
 DCE is supported over TCP/IP, UDP, SMB and HTTP v1 Proxy and Server.
-The DCE-RPC preprocessor is split into four inspectors - one for each
+The DCE-RPC inspector is split into four inspectors - one for each
 transport. This includes the configuration as well as the inspector
 modules.
 
@@ -25,15 +25,10 @@ inspectors.  These inspectors only serve to locate the 'tunnel' setup
 content.  If/when the setup content is located, the session is transferred
 to the DCE TCP inspector.
 
-The SMB inspector supports version 1 and version 2 of the protocol. 
-It processes relevant messages and inspects file transferred over this transport. 
+The SMB inspector supports version 1 and version 2 of the protocol.
+It processes relevant messages and inspects file transferred over this transport.
 For SMBv2, it supports TCP as transport and it also supports multiple File transfer
-on single SMB2 connection.
-The SMB inspector implements base class for smb flow data,
-which all versions now inherits and implements. SMBv1 and SMBv2 code is completely
-segregated, maintaining common code in separate file to reduce redundancy.
-The common functionality used by both versions are in dce_smb_common files.
-SMBv2 specific trackers are in there own file now.
+on single SMB2 connection or multiple SMB2 connection from the same source IP.
 
 The inspector eval function checks for the presence of SMB flow data in the flow,
 if not present, it creates an SMB flow data according to detected version, otherwise

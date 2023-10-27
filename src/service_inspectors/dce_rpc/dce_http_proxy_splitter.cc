@@ -54,9 +54,9 @@ StreamSplitter::Status DceHttpProxySplitter::scan(
     StreamSplitter::Status status;
 
     if ( (flags & PKT_FROM_CLIENT) != 0 )
-        status =  match_request_head( data, len );
+        status =  match_request_head(data, len);
     else if ( (flags & PKT_FROM_SERVER) != 0 )
-        status = match_response( data, len );
+        status = match_response(data, len);
     else
         return StreamSplitter::ABORT;
 
@@ -68,8 +68,7 @@ StreamSplitter::Status DceHttpProxySplitter::scan(
 }
 
 /* match_request_head() is only used by the c2s splitter instance. */
-StreamSplitter::Status
-    DceHttpProxySplitter::match_request_head(const uint8_t* data, uint32_t& len)
+StreamSplitter::Status DceHttpProxySplitter::match_request_head(const uint8_t* data, uint32_t& len)
 {
     if ( match_index == (unsigned int)strlen(HTTP_PROXY_REQUEST) )
     {
@@ -80,7 +79,7 @@ StreamSplitter::Status
     len = (len > strlen(HTTP_PROXY_REQUEST)) ? strlen(HTTP_PROXY_REQUEST) : len;
 
     if ( ((len+match_index) > strlen(HTTP_PROXY_REQUEST)) ||
-        memcmp( (const void*)data, (const void*)(&HTTP_PROXY_REQUEST[match_index]), len ) != 0 )
+        memcmp( (const void*)data, (const void*)(&HTTP_PROXY_REQUEST[match_index]), len) != 0 )
         return StreamSplitter::ABORT;
     else
     {
@@ -101,19 +100,18 @@ StreamSplitter::Status DceHttpProxySplitter::match_response_head(const uint8_t* 
 
     len = (len > strlen(HTTP_PROXY_RESPONSE)) ? strlen(HTTP_PROXY_RESPONSE) : len;
 
-    if ( memcmp( (const void*)data, (const void*)(&HTTP_PROXY_RESPONSE[match_index]), len ) != 0 )
+    if ( memcmp( (const void*)data, (const void*)(&HTTP_PROXY_RESPONSE[match_index]), len) != 0 )
         return StreamSplitter::ABORT;
     else
     {
         match_index += len;
         return match_index == (unsigned int)strlen(HTTP_PROXY_RESPONSE) ?
-            StreamSplitter::FLUSH : StreamSplitter::SEARCH;
+               StreamSplitter::FLUSH : StreamSplitter::SEARCH;
     }
 }
 
 /* match_request() is only used by the s2c splitter instance. */
-StreamSplitter::Status
-    DceHttpProxySplitter::match_response(const uint8_t* data, const uint32_t& len)
+StreamSplitter::Status DceHttpProxySplitter::match_response(const uint8_t* data, const uint32_t& len)
 {
     uint32_t starting_index = 0;
 
@@ -148,7 +146,7 @@ StreamSplitter::Status
     return StreamSplitter::SEARCH;
 }
 
-DceHttpProxySplitter::DceHttpProxySplitter(bool c2s) : StreamSplitter(c2s)
+DceHttpProxySplitter::DceHttpProxySplitter(bool c2s) :   StreamSplitter(c2s)
 {
     cutover = false;
     match_index = 0;
@@ -358,3 +356,4 @@ TEST_CASE("DceHttpProxySplitter-scan - bad_3_proxy_response", "[http_proxy_split
 }
 
 #endif
+

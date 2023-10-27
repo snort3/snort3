@@ -402,3 +402,4 @@ DCE2_Ret DCE2_SmbBufferTransactionParameters(DCE2_SmbTransactionTracker* ttracke
 
     return DCE2_RET__SUCCESS;
 }
+

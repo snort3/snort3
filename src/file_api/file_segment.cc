@@ -110,6 +110,7 @@ void FileSegments::add(const uint8_t* file_data, int64_t data_size, uint64_t off
             data_size = end -offset;
             file_data = file_data + offset - start;
         }
+        insert_segment(file_data, data_size, offset, find_left, &left);
     }
     // New segment should be at the start of link list
     else if (!left)
@@ -119,29 +120,41 @@ void FileSegments::add(const uint8_t* file_data, int64_t data_size, uint64_t off
             /* Overlap, trim off extra data from end */
             data_size = head->offset - offset;
         }
+        insert_segment(file_data, data_size, offset, find_left, &left);
     }
     else
     {
         //Left Overlap
-        if ( (left->offset + left->data->size() > start)  )
+        while(left and (left->offset + left->data->size() <= end))
         {
-            offset = left->offset + left->data->size();
-            data_size = end - offset;
-            file_data = file_data + offset - start;
-        }
-        //Right Overlap
-        if ( (left->next->offset < end) )
-        {
-            data_size = left->next->offset - offset;
-        }
 
+            const uint8_t *cur_file_data = file_data;
+            if ( (left->offset + left->data->size() > start)  )
+            {
+                offset = left->offset + left->data->size();
+                data_size = end - offset;
+                cur_file_data = cur_file_data + offset - start;
+            }
+            //Right Overlap
+            if ( left->next and (left->next->offset < end) )
+            {
+                data_size = left->next->offset - offset;
+            }
+
+            insert_segment(cur_file_data, data_size, offset, find_left, &left);
+            left = left->next;
+        }
     }
+}
 
+void FileSegments::insert_segment(const uint8_t* file_data, int64_t data_size, uint64_t offset, bool find_left,  FileSegment** left)
+{
     // ignore overlap case
     if (data_size <= 0)
     {
         FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
-            GET_CURRENT_PACKET, "Complete overlap while adding segments\n");
+            GET_CURRENT_PACKET, "Complete overlap while adding segments  offset : %lu data_size : %lu\n",
+            offset, data_size);
         return;
     }
 
@@ -150,22 +163,22 @@ void FileSegments::add(const uint8_t* file_data, int64_t data_size, uint64_t off
     new_segment->data = new std::string((const char*)file_data, data_size);
 
     FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
-        GET_CURRENT_PACKET, "Adding offset : %u data_size : %lu\n", new_segment->offset,
+        GET_CURRENT_PACKET, "Adding offset : %lu data_size : %lu\n", offset,
         data_size);
-    if (!find_left)
-    {
-        previous->next = new_segment;
-
-    }
-    else if (!left)
+    if (!*left)
     {
         new_segment->next = head;
         head = new_segment;
     }
+    else if (!find_left)
+    {
+        (*left)->next = new_segment;
+    }
     else
     {
-        new_segment->next = left->next;
-        left->next = new_segment;
+        new_segment->next = (*left)->next;
+        (*left)->next = new_segment;
+        *left = (*left)->next;
     }
 }
 
@@ -179,7 +192,7 @@ FilePosition FileSegments::get_file_position(uint64_t data_size, uint64_t file_s
             return SNORT_FILE_START;
     }
 
-    if (file_size <= data_size + current_offset)
+    if (file_size and (file_size <= data_size + current_offset))
         return SNORT_FILE_END;
 
     return SNORT_FILE_MIDDLE;

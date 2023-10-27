@@ -13,6 +13,7 @@ set (DETECTION_INCLUDES
     rules.h
     signature.h
     treenodes.h
+    pattern_match_data.h
 )
 
 add_library (detection OBJECT
@@ -38,7 +39,6 @@ add_library (detection OBJECT
     ips_context.cc
     ips_context_chain.cc
     ips_context_data.cc
-    pattern_match_data.h
     pcrm.cc
     pcrm.h
     regex_offload.cc

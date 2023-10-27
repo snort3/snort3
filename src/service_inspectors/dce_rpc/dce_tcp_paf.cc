@@ -30,7 +30,7 @@
 
 using namespace snort;
 
-Dce2TcpSplitter::Dce2TcpSplitter(bool c2s) : StreamSplitter(c2s)
+Dce2TcpSplitter::Dce2TcpSplitter(bool c2s) :   StreamSplitter(c2s)
 {
     state.paf_state = DCE2_PAF_TCP_STATES__0;
     state.byte_order = DCERPC_BO_FLAG__NONE;
@@ -53,12 +53,12 @@ StreamSplitter::Status Dce2TcpSplitter::scan(
 {
     DCE2_TcpSsnData* sd = get_dce2_tcp_session_data(pkt->flow);
 
-    if (dce2_paf_abort((DCE2_SsnData*) sd))
+    if (dce2_paf_abort((DCE2_SsnData*)sd))
         return StreamSplitter::ABORT;
 
     uint32_t n = 0;
     uint32_t new_fp = 0;
-    int start_state = (uint8_t) state.paf_state;
+    int start_state = (uint8_t)state.paf_state;
     int num_requests = 0;
 
     while (n < len)
@@ -108,7 +108,8 @@ StreamSplitter::Status Dce2TcpSplitter::scan(
             if (state.frag_len < sizeof(DceRpcCoHdr))
             {
                 if (sd)
-                    dce_alert(GID_DCE2, DCE2_CO_FRAG_LEN_LT_HDR, (dce2CommonStats*)&dce2_tcp_stats, *(DCE2_SsnData*)sd);
+                    dce_alert(GID_DCE2, DCE2_CO_FRAG_LEN_LT_HDR, (dce2CommonStats*)&dce2_tcp_stats,
+                        *(DCE2_SsnData*)sd);
                 return StreamSplitter::ABORT;
             }
 
@@ -117,7 +118,7 @@ StreamSplitter::Status Dce2TcpSplitter::scan(
                 state.autodetected = true;
 
             /* Increment n here so we can continue */
-            n += state.frag_len - (uint8_t) state.paf_state;
+            n += state.frag_len - (uint8_t)state.paf_state;
             num_requests++;
             /* Might have multiple PDUs in one segment.  If the last PDU is partial,
              * flush just before it */
@@ -142,3 +143,4 @@ StreamSplitter::Status Dce2TcpSplitter::scan(
 
     return StreamSplitter::SEARCH;
 }
+

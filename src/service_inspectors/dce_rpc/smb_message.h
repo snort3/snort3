@@ -152,7 +152,7 @@ inline uint16_t SmbCloseReqFid(const SmbCloseReq* req)
  ********************************************************************/
 struct SmbDeleteReq  /* smb_wct = 1 */
 {
-    uint8_t  smb_wct;
+    uint8_t smb_wct;
     uint16_t smb_search_attrs;
     uint16_t smb_bcc;
 };
@@ -489,7 +489,7 @@ inline uint64_t SmbReadAndXReqOffset(const SmbReadAndXExtReq* req)
         return (uint64_t)snort::alignedNtohl(&req->smb_offset);
 
     return (uint64_t)snort::alignedNtohl(&req->smb_off_high) << 32
-                    | (uint64_t)snort::alignedNtohl(&req->smb_offset);
+           | (uint64_t)snort::alignedNtohl(&req->smb_offset);
 }
 
 inline uint16_t SmbReadAndXRespDataOff(const SmbReadAndXResp* req)
@@ -500,7 +500,7 @@ inline uint16_t SmbReadAndXRespDataOff(const SmbReadAndXResp* req)
 inline uint32_t SmbReadAndXRespDataCnt(const SmbReadAndXResp* resp)
 {
     return (uint32_t)snort::alignedNtohs(&resp->smb_dsize_high) << 16
-                    | (uint32_t)snort::alignedNtohs(&resp->smb_dsize);
+           | (uint32_t)snort::alignedNtohs(&resp->smb_dsize);
 }
 
 /********************************************************************
@@ -583,13 +583,13 @@ inline uint64_t SmbWriteAndXReqOffset(const SmbWriteAndXExtReq* req)
         return (uint64_t)snort::alignedNtohl(&req->smb_offset);
 
     return (uint64_t)snort::alignedNtohl(&req->smb_off_high) << 32
-                    | (uint64_t)snort::alignedNtohl(&req->smb_offset);
+           | (uint64_t)snort::alignedNtohl(&req->smb_offset);
 }
 
 inline uint32_t SmbWriteAndXReqDataCnt(const SmbWriteAndXReq* req)
 {
     return (uint32_t)snort::alignedNtohs(&req->smb_dsize_high) << 16
-                    | (uint32_t)snort::alignedNtohs(&req->smb_dsize);
+           | (uint32_t)snort::alignedNtohs(&req->smb_dsize);
 }
 
 inline uint16_t SmbWriteAndXReqWriteMode(const SmbWriteAndXReq* req)
@@ -2033,7 +2033,7 @@ inline uint64_t SmbReadRawReqOffset(const SmbReadRawExtReq* req)
         return (uint64_t)snort::alignedNtohl(&req->smb_offset);
 
     return (uint64_t)snort::alignedNtohl(&req->smb_off_high) << 32
-                    | (uint64_t)snort::alignedNtohl(&req->smb_offset);
+           | (uint64_t)snort::alignedNtohl(&req->smb_offset);
 }
 
 /********************************************************************
@@ -2112,7 +2112,7 @@ inline uint64_t SmbWriteRawReqOffset(const SmbWriteRawExtReq* req)
         return (uint64_t)snort::alignedNtohl(&req->smb_offset);
 
     return (uint64_t)snort::alignedNtohl(&req->smb_off_high) << 32 |
-                    (uint64_t)snort::alignedNtohl(&req->smb_offset);
+           (uint64_t)snort::alignedNtohl(&req->smb_offset);
 }
 
 inline uint16_t SmbWriteRawInterimRespRemaining(const SmbWriteRawInterimResp* resp)
@@ -2190,8 +2190,12 @@ inline uint16_t SmbWriteAndCloseRespCount(const SmbWriteAndCloseResp* resp)
 
 #pragma pack()
 
+void DCE2_SmbInitGlobals();
 void DCE2_Smb1Process(struct DCE2_SmbSsnData*);
+struct DCE2_SmbSsnData* dce2_create_new_smb_session(snort::Packet*, struct dce2SmbProtoConf*);
+struct DCE2_Smb2SsnData* dce2_create_new_smb2_session(snort::Packet*, struct dce2SmbProtoConf*);
 void DCE2_SmbDataFree(DCE2_SmbSsnData*);
+void set_smb_reassembled_data(uint8_t* nb_ptr, uint16_t co_len);
 
 #endif
 

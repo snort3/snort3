@@ -342,8 +342,8 @@ static DCE2_Ret DCE2_OpnumParse(char* args, DCE2_Opnum* opnum)
 class Dce2OpnumOption : public IpsOption
 {
 public:
-    Dce2OpnumOption(const DCE2_Opnum& src_opnum) : IpsOption(s_name)
-    { opnum = src_opnum; }
+    explicit Dce2OpnumOption(const DCE2_Opnum& src_opnum) :   IpsOption(s_name), opnum(src_opnum)
+    { }
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
     EvalStatus eval(Cursor&, Packet*) override;
@@ -462,7 +462,7 @@ static const Parameter s_params[] =
 class Dce2OpnumModule : public Module
 {
 public:
-    Dce2OpnumModule() : Module(s_name, s_help, s_params)
+    Dce2OpnumModule() :   Module(s_name, s_help, s_params)
     { memset(&opnum, 0, sizeof(opnum)); }
 
     bool begin(const char*, int, SnortConfig*) override;
@@ -489,7 +489,8 @@ bool Dce2OpnumModule::begin(const char*, int, SnortConfig*)
 
 bool Dce2OpnumModule::set(const char*, Value& v, SnortConfig*)
 {
-    assert(v.is("~"));
+    if ( !v.is("~") )
+        return false;
     std::string tok = v.get_unquoted_string();
     char* s = snort_strdup(tok.c_str());
     DCE2_Ret status = DCE2_OpnumParse(s, &opnum);

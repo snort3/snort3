@@ -1,3 +1,6 @@
+set(IPS_INCLUDES
+    extract.h
+)
 
 SET( PLUGIN_LIST
     ips_ack.cc
@@ -45,8 +48,8 @@ SET( PLUGIN_LIST
 
 
 set (IPS_SOURCES
+    ${IPS_INCLUDES}
     extract.cc
-    extract.h
     ips_classtype.cc
     ips_content.cc
     ips_detection_filter.cc
@@ -141,3 +144,7 @@ endif ( HAVE_HYPERSCAN )
 endif (STATIC_IPS_OPTIONS)
 
 add_subdirectory(test)
+
+install(FILES ${IPS_INCLUDES}
+    DESTINATION "${INCLUDE_INSTALL_PATH}/ips_options/"
+)

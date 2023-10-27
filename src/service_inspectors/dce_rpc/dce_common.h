@@ -186,7 +186,7 @@ struct DCE2_Roptions
     int opnum;    /* Set to sentinel if not applicable */
 
     /* dce_stub_data */
-    const uint8_t* stub_data;  /* Set to null if not applicable */
+    const uint8_t* stub_data;  /* Set to null  if not applicable */
 };
 
 enum DCE2_SsnFlag

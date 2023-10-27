@@ -53,11 +53,11 @@ static void DCE2_ListInsertBefore(DCE2_List*, DCE2_ListNode*, DCE2_ListNode*);
  *      for inserting, finding, etc.
  *  DCE2_ListDataFree
  *      An optional function to call to free data in the list.
- *      If null is passed in, the user will have to manually free
+ *      If null  is passed in, the user will have to manually free
  *      the data.
  *  DCE2_ListKeyFree
  *      An optional function to call to free keys used in the list.
- *      If null is passed in, the user will have to manually free
+ *      If null  is passed in, the user will have to manually free
  *      the keys.
  *  int
  *      Flags that affect processing of the list.
@@ -66,7 +66,7 @@ static void DCE2_ListInsertBefore(DCE2_List*, DCE2_ListNode*, DCE2_ListNode*);
  * Returns:
  *  DCE2_List *
  *      Pointer to a valid list object.
- *      Null if an error occurs.
+ *      null  if an error occurs.
  *
  ********************************************************************/
 DCE2_List* DCE2_ListNew(DCE2_ListType type, DCE2_ListKeyCompare kc,
@@ -108,7 +108,6 @@ static void DCE2_ListInsertTail(DCE2_List* list, DCE2_ListNode* n)
 {
     if ((list == nullptr) || (n == nullptr))
         return;
-
 
     if (list->tail == nullptr)
     {
@@ -221,7 +220,7 @@ static void DCE2_ListInsertBefore(DCE2_List* list, DCE2_ListNode* insert, DCE2_L
  *          in the list and no duplicates are allowed.
  *      DCE2_RET__SUCCESS if a new node with key and data is
  *          successfully inserted into the list.
- *      DCE2_RET__ERROR if a null list object was passed in.
+ *      DCE2_RET__ERROR if a null  list object was passed in.
  *
  ********************************************************************/
 DCE2_Ret DCE2_ListInsert(DCE2_List* list, void* key, void* data)
@@ -309,7 +308,7 @@ DCE2_Ret DCE2_ListInsert(DCE2_List* list, void* key, void* data)
  * Returns:
  *  void *
  *      The data in the first node in the list.
- *      Null if the list object passed in is null, or there are
+ *      null  if the list object passed in is NULL, or there are
  *          no items in the list.
  *
  ********************************************************************/
@@ -342,7 +341,7 @@ void* DCE2_ListFirst(DCE2_List* list)
  * Returns:
  *  void *
  *      The data in the next node in the list.
- *      Null if the list object passed in is null, or we are at
+ *      null  if the list object passed in is NULL, or we are at
  *          the end of the list and there are no next nodes.
  *
  ********************************************************************/
@@ -372,7 +371,7 @@ void* DCE2_ListNext(DCE2_List* list)
  *
  * Removes all of the nodes in a list.  Does not delete the list
  * object itself.  Calls data free and key free functions for
- * data and key if they are not null.
+ * data and key if they are not NULL.
  *
  * Arguments:
  *  DCE2_List *
@@ -446,7 +445,7 @@ void DCE2_ListDestroy(DCE2_List* list)
  *  void *
  *      If the key is found, the data associated with the node
  *          is returned.
- *      Null is returned if the item cannot be found given the key.
+ *      null  is returned if the item cannot be found given the key.
  *
  ********************************************************************/
 void* DCE2_ListFind(DCE2_List* list, void* key)
@@ -579,7 +578,7 @@ DCE2_Ret DCE2_ListFindKey(DCE2_List* list, void* key)
  * Returns:
  *  DCE2_Ret
  *      DCE2_RET__ERROR if a node in the list with the specified
- *          key cannot be found or the list object passed in is null.
+ *          key cannot be found or the list object passed in is NULL.
  *      DCE2_RET__SUCCESS if the node is successfully removed from
  *          the list.
  *
@@ -688,7 +687,7 @@ void DCE2_ListRemoveCurrent(DCE2_List* list)
  * Arguments:
  *  DCE2_QueueDataFree
  *      An optional free function for the data inserted into
- *      the queue.  If null is passed in, the user will be
+ *      the queue.  If null  is passed in, the user will be
  *      responsible for freeing data left in the queue.
  *
  * Returns:
@@ -719,7 +718,7 @@ DCE2_Queue* DCE2_QueueNew(DCE2_QueueDataFree df)
  *
  * Returns:
  *  DCE2_Ret
- *      DCE2_RET__ERROR if the queue object passed in is null.
+ *      DCE2_RET__ERROR if the queue object passed in is NULL.
  *      DCE2_RET__SUCCESS if the data is successfully added to
  *          the queue.
  *
@@ -766,8 +765,8 @@ DCE2_Ret DCE2_QueueEnqueue(DCE2_Queue* queue, void* data)
  * Returns:
  *  void *
  *      The data in the first node in the queue.
- *      Null if there are no items in the queue or the queue object
- *          passed in is null.
+ *      null  if there are no items in the queue or the queue object
+ *          passed in is NULL.
  *
  ********************************************************************/
 void* DCE2_QueueDequeue(DCE2_Queue* queue)
@@ -808,7 +807,7 @@ void* DCE2_QueueDequeue(DCE2_Queue* queue)
  *
  * Removes all of the nodes in a queue.  Does not delete the queue
  * object itself.  Calls data free function for data if it is
- * not null.
+ * not NULL.
  *
  * Arguments:
  *  DCE2_Queue *
@@ -876,7 +875,7 @@ void DCE2_QueueDestroy(DCE2_Queue* queue)
  * Returns:
  *  void *
  *      The data in the first node in the queue.
- *      Null if the queue object passed in is null, or there are
+ *      null  if the queue object passed in is NULL, or there are
  *          no items in the queue.
  *
  ********************************************************************/
@@ -909,7 +908,7 @@ void* DCE2_QueueFirst(DCE2_Queue* queue)
  * Returns:
  *  void *
  *      The data in the next node in the queue.
- *      Null if the queue object passed in is null, or we are at
+ *      null  if the queue object passed in is NULL, or we are at
  *          the end of the queue and there are no next nodes.
  *
  ********************************************************************/
@@ -994,7 +993,7 @@ void DCE2_QueueRemoveCurrent(DCE2_Queue* queue)
  * Returns:
  *  void *
  *      The data in the last node in the queue.
- *      Null if the queue object passed in is null, or there are
+ *      null  if the queue object passed in is NULL, or there are
  *          no items in the queue.
  *
  ********************************************************************/

@@ -24,22 +24,13 @@
 #endif
 
 #include "dce_smb2.h"
-
+#include "dce_smb2_commands.h"
 #include "detection/detection_util.h"
-#include "flow/flow_key.h"
 #include "stream/stream.h"
-
-#include "dce_smb2_file.h"
-#include "dce_smb2_session.h"
-#include "dce_smb2_session_cache.h"
-#include "dce_smb2_tree.h"
 
 using namespace snort;
 
-Dce2Smb2SessionCache smb2_session_cache(SMB_DEFAULT_MEMCAP);
-
-const char* smb2_command_string[SMB2_COM_MAX] =
-{
+const char* smb2_command_string[SMB2_COM_MAX] = {
     "SMB2_COM_NEGOTIATE",
     "SMB2_COM_SESSION_SETUP",
     "SMB2_COM_LOGOFF",
@@ -58,612 +49,181 @@ const char* smb2_command_string[SMB2_COM_MAX] =
     "SMB2_COM_CHANGE_NOTIFY",
     "SMB2_COM_QUERY_INFO",
     "SMB2_COM_SET_INFO",
-    "SMB2_COM_OPLOCK_BREAK"
-};
+    "SMB2_COM_OPLOCK_BREAK" };
 
-static inline uint64_t Smb2Sid(const Smb2Hdr* hdr)
+DCE2_Smb2RequestTracker::DCE2_Smb2RequestTracker(uint64_t file_id_v,
+    uint64_t offset_v) :   file_id(file_id_v), offset(offset_v)
 {
-    return alignedNtohq(&(hdr->session_id));
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+        GET_CURRENT_PACKET, "Request tracker created with file_id = 0x%" PRIx64 " offset = %" PRIu64 "\n", file_id,
+        offset);
 }
 
-static inline bool Smb2Error(const Smb2Hdr* hdr)
+DCE2_Smb2RequestTracker::DCE2_Smb2RequestTracker(char* fname_v,
+    uint16_t fname_len_v) :   fname(fname_v), fname_len(fname_len_v)
 {
-    return (SMB_NT_STATUS_SEVERITY__ERROR == (uint8_t)(hdr->status >> 30));
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+        GET_CURRENT_PACKET, "Request tracker created\n");
 }
 
-uint32_t get_smb2_flow_key(const FlowKey* flow_key)
+DCE2_Smb2RequestTracker::~DCE2_Smb2RequestTracker()
 {
-    Smb2FlowKey key;
-
-    key.ip_l[0] = flow_key->ip_l[0];
-    key.ip_l[1] = flow_key->ip_l[1];
-    key.ip_l[2] = flow_key->ip_l[2];
-    key.ip_l[3] = flow_key->ip_l[3];
-    key.ip_h[0] = flow_key->ip_h[0];
-    key.ip_h[1] = flow_key->ip_h[1];
-    key.ip_h[2] = flow_key->ip_h[2];
-    key.ip_h[3] = flow_key->ip_h[3];
-    key.mplsLabel = flow_key->mplsLabel;
-    key.port_l = flow_key->port_l;
-    key.port_h = flow_key->port_h;
-    key.group_l = flow_key->group_l;
-    key.group_h = flow_key->group_h;
-    key.vlan_tag = flow_key->vlan_tag;
-    key.addressSpaceId = flow_key->addressSpaceId;
-    key.ip_protocol = flow_key->ip_protocol;
-    key.pkt_type = (uint8_t)flow_key->pkt_type;
-    key.version = flow_key->version;
-    key.padding = key.padding16 = 0;
-
-    Smb2KeyHash hasher;
-    return hasher(key);
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+        nullptr, "Request tracker terminating\n");
+    if (fname)
+        snort_free(fname);
 }
 
-//Dce2Smb2SessionData member functions
-
-Dce2Smb2SessionData::Dce2Smb2SessionData(const Packet* p,
-    const dce2SmbProtoConf* proto) : Dce2SmbSessionData(p, proto)
+DCE2_Smb2FileTracker::DCE2_Smb2FileTracker(uint64_t file_id_v, DCE2_Smb2TreeTracker* ttr_v,
+    DCE2_Smb2SessionTracker* str_v, Flow* flow_v) :   file_id(file_id_v), ttr(ttr_v),
+    str(str_v), parent_flow(flow_v), ignore(false), upload(false), multi_channel_file(false)
 {
-    tcp_file_tracker = nullptr;
-    flow_key = get_smb2_flow_key(tcp_flow->key);
-    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
-        "smb2 session created\n");
-    dce2_smb_stats.total_smb2_sessions++;
-    vlan_id = p->get_flow_vlan_id();
+    dce2_smb_stats.v2_total_file_trackers++;
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+        GET_CURRENT_PACKET, "File tracker 0x%" PRIx64 " created\n", file_id);
+    str->update_cache_size(sizeof(DCE2_Smb2FileTracker));
 }
 
-Dce2Smb2SessionData::~Dce2Smb2SessionData(void)
+DCE2_Smb2FileTracker::~DCE2_Smb2FileTracker(void)
 {
-    for (auto it_session : connected_sessions)
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+        nullptr, "File tracker with file id: 0x%" PRIx64 " tracker terminating\n", file_id);
+    auto all_conn_trackers = str->conn_trackers.get_all_entry();
+    for ( auto& h : all_conn_trackers )
     {
-        it_session.second->detach_flow(flow_key);
-        it_session.second->set_file_context_cleaned(true);
-    }
-
-    if (get_tcp_file_tracker() && !(get_tcp_file_tracker()->get_flow_state_map().empty()))
-    {
-        get_tcp_file_tracker()->get_flow_state_map().erase(flow_key);
-    }
-    if (tcp_file_tracker and tcp_file_tracker->get_flow_key() == flow_key )
-        tcp_file_tracker->set_flow_key(0);
-    tcp_file_tracker = nullptr;
-}
-
-void Dce2Smb2SessionData::reset_matching_tcp_file_tracker(
-    Dce2Smb2FileTrackerPtr file_tracker)
-{
-    std::lock_guard<std::mutex> guard(tcp_file_tracker_mutex);
-    if (tcp_file_tracker == file_tracker)
-    {
-        if (get_tcp_file_tracker() && !(get_tcp_file_tracker()->get_flow_state_map().empty()))
+        if (h.second->ftracker_tcp)
         {
-            get_tcp_file_tracker()->get_flow_state_map().erase(flow_key);
-            tcp_file_tracker = nullptr;
-        }
-        else
-            return;
-    }
-}
-
-Smb2SessionKey Dce2Smb2SessionData::get_session_key(uint64_t session_id)
-{
-    Smb2SessionKey key;
-    Flow* flow = DetectionEngine::get_current_packet()->flow;
-    memcpy(key.cip, flow->client_ip.get_ip6_ptr(), 4*sizeof(uint32_t));
-    memcpy(key.sip, flow->server_ip.get_ip6_ptr(), 4*sizeof(uint32_t));
-    key.sid = session_id;
-    key.cgroup = flow->client_group;
-    key.sgroup = flow->server_group;
-    key.asid = flow->key->addressSpaceId;
-    return key;
-}
-
-Dce2Smb2SessionTrackerPtr Dce2Smb2SessionData::find_session(uint64_t session_id)
-{
-    std::lock_guard<std::recursive_mutex> guard(session_data_mutex);
-    auto it_session = connected_sessions.find(session_id);
-
-    if (it_session != connected_sessions.end())
-    {
-        Dce2Smb2SessionTrackerPtr session = it_session->second;
-        //we already have the session, but call find to update the LRU
-        smb2_session_cache.find_session(session->get_key());
-        if (session->vlan_id != 0 and session->vlan_id !=
-            (DetectionEngine::get_current_packet()->get_flow_vlan_id()))
-            return nullptr;
-        return session;
-    }
-    else
-    {
-        Dce2Smb2SessionTrackerPtr session = smb2_session_cache.find_session(
-            get_session_key(session_id));
-        if (session and session->vlan_id != 0 and
-            session->vlan_id != (DetectionEngine::get_current_packet()->get_flow_vlan_id()))
-        {
-            connected_sessions.insert(std::make_pair(session_id,session));
-            return session;
-        }
-        else
-            return nullptr;
-    }
-}
-
-// Caller must ensure that the session is not already present in flow
-Dce2Smb2SessionTrackerPtr Dce2Smb2SessionData::create_session(uint64_t session_id)
-{
-    Smb2SessionKey session_key = get_session_key(session_id);
-    Dce2Smb2SessionTrackerPtr session = smb2_session_cache.find_else_create_session(session_key,
-        this);
-    if (session)
-    {
-        connected_sessions.insert(std::make_pair(session_id, session));
-        session->vlan_id =  DetectionEngine::get_current_packet()->get_flow_vlan_id();
-    }
-    return session;
-}
-
-void Dce2Smb2SessionData::remove_session(uint64_t session_id)
-{
-    session_data_mutex.lock();
-    connected_sessions.erase(session_id);
-    session_data_mutex.unlock();
-}
-
-void Dce2Smb2SessionData::process_command(const Smb2Hdr* smb_hdr,
-    const uint8_t* end)
-{
-    const uint8_t* smb_data = (const uint8_t*)smb_hdr + SMB2_HEADER_LENGTH;
-    uint16_t structure_size = alignedNtohs((const uint16_t*)smb_data);
-    uint16_t command = alignedNtohs(&(smb_hdr->command));
-    uint64_t session_id = Smb2Sid(smb_hdr);
-    Dce2Smb2SessionTrackerPtr session;
-
-// Macro and shorthand to save some repetitive code
-// Should only be used in this function
-#define SMB2_COMMAND_TYPE(cmd, type) \
-    (structure_size == SMB2_ ## cmd ## _ ## type ## _STRUC_SIZE)
-
-#define SMB2_GET_COMMAND_TYPE(cmd) \
-    (SMB2_COMMAND_TYPE(ERROR,RESPONSE) and Smb2Error(smb_hdr)) ? \
-    SMB2_CMD_TYPE_ERROR_RESPONSE : (SMB2_COMMAND_TYPE(cmd, REQUEST) ? \
-    SMB2_CMD_TYPE_REQUEST : (SMB2_COMMAND_TYPE(cmd, RESPONSE) ? \
-    SMB2_CMD_TYPE_RESPONSE : SMB2_CMD_TYPE_INVALID))
-
-#define SMB2_HANDLE_HEADER_ERROR(cmd, type, counter) \
-    { \
-        if (smb_data + SMB2_ ## cmd ## _ ## type ## _STRUC_SIZE - 1 > end) \
-        { \
-            dce2_smb_stats.v2_ ## counter ## _hdr_err++; \
-            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, \
-                GET_CURRENT_PACKET, \
-                "%s : smb data beyond end detected\n", \
-                smb2_command_string[command]); \
-            if (session) \
-            { \
-                session->set_do_not_delete(false); \
-                session->set_prev_comand(SMB2_COM_MAX); \
-            } \
-            return; \
-        } \
-    }
-
-#define SMB2_HANDLE_ERROR_RESPONSE(counter) \
-    { \
-        if (SMB2_COMMAND_TYPE(ERROR, RESPONSE) and Smb2Error(smb_hdr)) \
-        { \
-            dce2_smb_stats.v2_ ## counter ## _err_resp++; \
-            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, GET_CURRENT_PACKET, \
-                "%s_RESP: error\n", \
-                smb2_command_string[command]); \
-            if (session) \
-            { \
-                session->set_do_not_delete(false); \
-                session->set_prev_comand(SMB2_COM_MAX); \
-            } \
-            return; \
-        } \
-    }
-
-#define SMB2_HANDLE_INVALID_STRUC_SIZE(counter) \
-    { \
-        dce2_smb_stats.v2_ ## counter ## _inv_str_sz++; \
-        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL \
-            , GET_CURRENT_PACKET, "%s: invalid struct size\n", \
-            smb2_command_string[command]); \
-        if (session) \
-        { \
-            session->set_do_not_delete(false); \
-            session->set_prev_comand(SMB2_COM_MAX); \
-        } \
-        return; \
-    }
-
-    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, GET_CURRENT_PACKET,
-        "%s : flow %" PRIu32 " mid %" PRIu64 " sid %" PRIu64 " tid %" PRIu32 "\n",
-        (command < SMB2_COM_MAX ? smb2_command_string[command] : "unknown"),
-        flow_key, Smb2Mid(smb_hdr), session_id, Smb2Tid(smb_hdr));
-
-    // Handling case of two threads trying to do close same session at a time
-    session = smb2_session_cache.find(get_session_key(session_id));
-    if (session and connected_sessions.size() < 9)
-        connected_sessions.insert(std::make_pair(session_id, session));
-    if ((command == SMB2_COM_CLOSE or command ==
-        SMB2_COM_TREE_DISCONNECT)and (session and session->get_prev_command() !=  SMB2_COM_MAX))
-    {
-        return;
-    }
-
-    if (session)
-    {
-        session->set_do_not_delete(true);
-        session->set_prev_comand(command);
-    }
-
-    // Try to find the session.
-    // The case when session is not available will be handled per command.
-    switch (command)
-    {
-    //commands processed by flow
-    case SMB2_COM_NEGOTIATE:
-        if (SMB2_COMMAND_TYPE(NEGOTIATE, RESPONSE))
-        {
-            const Smb2NegotiateResponseHdr* neg_resp_hdr = (const
-                Smb2NegotiateResponseHdr*)smb_data;
-            if (neg_resp_hdr->capabilities & SMB2_GLOBAL_CAP_MULTI_CHANNEL)
+            if (h.second->ftracker_tcp == this)
             {
-                //total multichannel sessions
-                dce2_smb_stats.total_mc_sessions++;
-                Packet* p = DetectionEngine::get_current_packet();
-                Dce2SmbFlowData* fd = create_expected_smb_flow_data(p);
-                if (fd)
-                {
-                    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
-                        GET_CURRENT_PACKET,
-                        "Requesting for expected smb flow\n");
-                    int result = Stream::set_snort_protocol_id_expected(p, PktType::TCP,
-                        IpProtocol::TCP, p->ptrs.ip_api.get_dst(), 0,p->ptrs.ip_api.get_src(),
-                        p->flow->server_port, snort_protocol_id_smb, fd, false, true);
+                h.second->ftracker_tcp = nullptr;
+                h.second->ftracker_local = nullptr;
+            }
+        }
+    }
+    if (multi_channel_file)
+        dce2_smb_stats.v2_mc_file_transfers++;
+    if (co_tracker != nullptr)
+    {
+        DCE2_CoCleanTracker(co_tracker);
+        snort_free((void*)co_tracker);
+    }
+    str->update_cache_size(-(int)sizeof(DCE2_Smb2FileTracker));
+}
 
-                    if (result < 0)
-                    {
-                        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
-                            GET_CURRENT_PACKET,
-                            "Failed to create expected smb flow\n");
-                        delete fd;
-                    }
-                }
-                else
+DCE2_Smb2TreeTracker::DCE2_Smb2TreeTracker (uint32_t tid_v, uint8_t share_type_v) :
+    share_type(share_type_v), tid(tid_v)
+{
+    dce2_smb_stats.v2_total_tree_trackers++;
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+        GET_CURRENT_PACKET, "Tree tracker %" PRIu32 " created\n", tid);
+}
+
+DCE2_Smb2TreeTracker::~DCE2_Smb2TreeTracker(void)
+{
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+        nullptr, "Tree tracker %" PRIu32 " terminating\n", tid);
+}
+
+DCE2_Smb2SessionTracker::DCE2_Smb2SessionTracker(uint64_t sid) :   conn_trackers(false), session_id(sid),
+    encryption_flag(0)
+{
+    update_cache_size((int)sizeof(DCE2_Smb2SessionTracker));
+    dce2_smb_stats.v2_total_session_trackers++;
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+        GET_CURRENT_PACKET, "Session tracker 0x%" PRIx64 " created\n", session_id);
+}
+
+DCE2_Smb2SessionTracker::~DCE2_Smb2SessionTracker(void)
+{
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
+        nullptr, "Session tracker 0x%" PRIx64 " terminating\n", session_id);
+    removeSessionFromAllConnection();
+    auto all_tree_trackers = tree_trackers.get_all_entry();
+    for ( auto& h : all_tree_trackers )
+    {
+        removeTtracker(h.first);
+    }
+    update_cache_size(-(int)sizeof(DCE2_Smb2SessionTracker));
+}
+
+void DCE2_Smb2SessionTracker::removeSessionFromAllConnection()
+{
+    auto all_conn_trackers = conn_trackers.get_all_entry();
+    auto all_tree_trackers = tree_trackers.get_all_entry();
+    for ( auto& h : all_conn_trackers )
+    {
+        if (h.second->ftracker_tcp)
+        {
+            for (auto& t : all_tree_trackers)
+            {
+                DCE2_Smb2FileTracker* ftr = t.second->findFtracker(
+                    h.second->ftracker_tcp->file_id);
+                if (ftr and ftr == h.second->ftracker_tcp)
                 {
-                    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
-                        GET_CURRENT_PACKET,
-                        "fd is null in negotiate , failed to create pinhole\n");
+                    h.second->ftracker_tcp = nullptr;
+                    h.second->ftracker_local = nullptr;
+                    break;
                 }
             }
         }
-        break;
-    case SMB2_COM_SESSION_SETUP:
-        dce2_smb_stats.v2_setup++;
-        SMB2_HANDLE_ERROR_RESPONSE(setup)
-        if (SMB2_COMMAND_TYPE(SETUP, RESPONSE))
-        {
-            SMB2_HANDLE_HEADER_ERROR(SETUP, RESPONSE, setup_resp)
-            if (!session)
-                create_session(session_id);
-        }
-        else if (!SMB2_COMMAND_TYPE(SETUP, REQUEST))
-            SMB2_HANDLE_INVALID_STRUC_SIZE(setup)
-            break;
-
-    case SMB2_COM_LOGOFF:
-        dce2_smb_stats.v2_logoff++;
-        if (SMB2_COMMAND_TYPE(LOGOFF, REQUEST))
-            smb2_session_cache.remove(get_session_key(session_id));
-        else
-            SMB2_HANDLE_INVALID_STRUC_SIZE(logoff)
-            break;
-    //commands processed by session
-    case SMB2_COM_TREE_CONNECT:
-        dce2_smb_stats.v2_tree_cnct++;
-        SMB2_HANDLE_ERROR_RESPONSE(tree_cnct)
-        if (SMB2_COMMAND_TYPE(TREE_CONNECT, RESPONSE))
-        {
-            SMB2_HANDLE_HEADER_ERROR(TREE_CONNECT, RESPONSE, tree_cnct_resp)
-            if (!session)
-                session = create_session(session_id);
-            if (!session)
-                return;
-            session->process(command, SMB2_CMD_TYPE_RESPONSE, smb_hdr, end, flow_key);
-        }
-        else if (!SMB2_COMMAND_TYPE(TREE_CONNECT,REQUEST))
-            SMB2_HANDLE_INVALID_STRUC_SIZE(tree_cnct)
-            break;
-
-    case SMB2_COM_TREE_DISCONNECT:
-        dce2_smb_stats.v2_tree_discn++;
-
-        if (session)
-        {
-            if (SMB2_COMMAND_TYPE(TREE_DISCONNECT, REQUEST))
-            {
-                SMB2_HANDLE_HEADER_ERROR(TREE_DISCONNECT, REQUEST, tree_discn_req)
-                session->process(command, SMB2_CMD_TYPE_REQUEST, smb_hdr, end, flow_key);
-            }
-            else
-            {
-                SMB2_HANDLE_INVALID_STRUC_SIZE(tree_discn)
-            }
-        }
-        else
-            dce2_smb_stats.v2_session_ignored++;
-        break;
-    //commands processed by tree
-    case SMB2_COM_CREATE:
-    {
-        dce2_smb_stats.v2_crt++;
-        uint8_t command_type = SMB2_GET_COMMAND_TYPE(CREATE);
-        if (SMB2_CMD_TYPE_INVALID == command_type)
-            SMB2_HANDLE_INVALID_STRUC_SIZE(crt)
-            else if (SMB2_COMMAND_TYPE(CREATE, REQUEST))
-                SMB2_HANDLE_HEADER_ERROR(CREATE, REQUEST, crt_req)
-                else if (SMB2_COMMAND_TYPE(CREATE, RESPONSE))
-                    SMB2_HANDLE_HEADER_ERROR(CREATE, RESPONSE, crt_resp)
-
-                    if (!session)
-                        session = create_session(session_id);
-        if (!session)
-            return;
-        session->process(command, command_type, smb_hdr, end, flow_key);
-    }
-    break;
-
-    case SMB2_COM_CLOSE:
-        dce2_smb_stats.v2_cls++;
-        SMB2_HANDLE_ERROR_RESPONSE(cls)
-        if (session)
-        {
-            if (SMB2_COMMAND_TYPE(CLOSE, REQUEST))
-            {
-                SMB2_HANDLE_HEADER_ERROR(CLOSE, REQUEST, cls_req)
-                session->process(command, SMB2_CMD_TYPE_REQUEST, smb_hdr, end, flow_key);
-            }
-            else if (!SMB2_COMMAND_TYPE(CLOSE, RESPONSE))
-            {
-                SMB2_HANDLE_INVALID_STRUC_SIZE(cls)
-            }
-        }
-        else
-            dce2_smb_stats.v2_session_ignored++;
-        break;
-
-    case SMB2_COM_SET_INFO:
-        dce2_smb_stats.v2_setinfo++;
-        SMB2_HANDLE_ERROR_RESPONSE(stinf)
-        if (session)
-        {
-            if (SMB2_COMMAND_TYPE(SET_INFO, REQUEST))
-            {
-                SMB2_HANDLE_HEADER_ERROR(SET_INFO, REQUEST, stinf_req)
-                session->process(command, SMB2_CMD_TYPE_REQUEST, smb_hdr, end, flow_key);
-            }
-            else if (!SMB2_COMMAND_TYPE(SET_INFO, RESPONSE))
-            {
-                SMB2_HANDLE_INVALID_STRUC_SIZE(stinf)
-            }
-        }
-        else
-            dce2_smb_stats.v2_session_ignored++;
-        break;
-
-    case SMB2_COM_READ:
-        dce2_smb_stats.v2_read++;
-        if (session)
-        {
-            uint8_t command_type;
-            if (SMB2_COMMAND_TYPE(ERROR, RESPONSE) and Smb2Error(smb_hdr))
-                command_type = SMB2_CMD_TYPE_ERROR_RESPONSE;
-            else if (SMB2_COMMAND_TYPE(READ, REQUEST))
-            {
-                SMB2_HANDLE_HEADER_ERROR(READ, REQUEST, read_req)
-                command_type = SMB2_CMD_TYPE_REQUEST;
-            }
-            else if (SMB2_COMMAND_TYPE(READ, RESPONSE))
-            {
-                SMB2_HANDLE_HEADER_ERROR(READ, RESPONSE, read_resp)
-                command_type = SMB2_CMD_TYPE_RESPONSE;
-            }
-            else
-                SMB2_HANDLE_INVALID_STRUC_SIZE(read)
-                session->process(command, command_type, smb_hdr, end, flow_key);
-        }
-        else
-            dce2_smb_stats.v2_session_ignored++;
-        break;
-
-    case SMB2_COM_WRITE:
-        dce2_smb_stats.v2_wrt++;
-        if (session)
-        {
-            uint8_t command_type;
-            if (SMB2_COMMAND_TYPE(ERROR, RESPONSE) and Smb2Error(smb_hdr))
-                command_type = SMB2_CMD_TYPE_ERROR_RESPONSE;
-            else if (SMB2_COMMAND_TYPE(WRITE, REQUEST))
-            {
-                SMB2_HANDLE_HEADER_ERROR(WRITE, REQUEST, wrt_req)
-                command_type = SMB2_CMD_TYPE_REQUEST;
-            }
-            else if (SMB2_COMMAND_TYPE(WRITE, RESPONSE))
-            {
-                SMB2_HANDLE_HEADER_ERROR(WRITE, RESPONSE, wrt_resp)
-                command_type = SMB2_CMD_TYPE_RESPONSE;
-            }
-            else
-                SMB2_HANDLE_INVALID_STRUC_SIZE(wrt)
-                session->process(command, command_type, smb_hdr, end, flow_key);
-        }
-        else
-            dce2_smb_stats.v2_session_ignored++;
-        break;
-    case SMB2_COM_IOCTL:
-        if (session)
-        {
-            if (SMB2_COMMAND_TYPE(IOCTL, REQUEST))
-            {
-                SMB2_HANDLE_HEADER_ERROR(IOCTL, REQUEST, ioctl_req)
-                session->process(command, SMB2_CMD_TYPE_REQUEST, smb_hdr, end, flow_key);
-            }
-            else if ( SMB2_COMMAND_TYPE(IOCTL, RESPONSE))
-            {
-                SMB2_HANDLE_HEADER_ERROR(IOCTL, RESPONSE, ioctl_resp)
-                session->process(command, SMB2_CMD_TYPE_RESPONSE, smb_hdr, end, flow_key);
-            }
-            else
-            {
-                SMB2_HANDLE_INVALID_STRUC_SIZE(ioctl)
-            }
-        }
-        break;
-    default:
-        dce2_smb_stats.v2_msgs_uninspected++;
-        break;
-    }
-    if (session)
-    {
-        session->set_prev_comand(SMB2_COM_MAX);
-        session->set_do_not_delete(false);
+        DCE2_Smb2RemoveSidInSsd(h.second, session_id);
     }
 }
 
-// This is the main entry point for SMB2 processing.
-void Dce2Smb2SessionData::process()
+void DCE2_Smb2SessionTracker::update_cache_size(int size)
+{
+    DCE2_SmbSessionCacheUpdateSize(size);
+}
+
+DCE2_Smb2SsnData::DCE2_Smb2SsnData()
 {
     Packet* p = DetectionEngine::get_current_packet();
-    const uint8_t* data_ptr = p->data;
-    uint16_t data_len = p->dsize;
-    Dce2Smb2SessionTrackerPtr session = nullptr;
-
-    // Process the header
-    if (p->is_pdu_start())
-    {
-        // Check header length
-        if (data_len < sizeof(NbssHdr) + SMB2_HEADER_LENGTH)
-        {
-            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
-                p, "Header error with data length %d\n",data_len);
-            dce2_smb_stats.v2_hdr_err++;
-            return;
-        }
-        const Smb2Hdr* smb_hdr = (const Smb2Hdr*)(data_ptr + sizeof(NbssHdr));
-        const Smb2TransformHdr* smb_trans_hdr = (const Smb2TransformHdr*)(data_ptr +
-            sizeof(NbssHdr));
-        uint32_t smb_proto_id = SmbTransformId(smb_trans_hdr);
-        uint64_t sid = smb_trans_hdr->session_id;
-        if (smb_proto_id == DCE2_SMB2_TRANS_ID)
-        {
-            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
-                p, "Encrypted header is received \n");
-            session = find_session(sid);
-            if (session)
-            {
-                bool flag = session->get_encryption_flag();
-                if (!flag)
-                    session->set_encryption_flag(true);
-            }
-        }
-        uint32_t next_command_offset;
-        uint8_t compound_request_index = 0;
-        // SMB protocol allows multiple smb commands to be grouped in a single packet.
-        // So loop through to parse all the smb commands.
-        // Reference: https://msdn.microsoft.com/en-us/library/cc246614.aspx
-        // "A nonzero value for the NextCommand field in the SMB2 header indicates a compound
-        // request. NextCommand in the SMB2 header of a request specifies an offset, in bytes,
-        // from the beginning of the SMB2 header under consideration to the start of the 8-byte
-        // aligned SMB2 header of the subsequent request. Such compounding can be used to append
-        // multiple requests up to the maximum size<88> that is supported by the transport."
-        do
-        {
-            process_command(smb_hdr, data_ptr +  data_len);
-            // In case of message compounding, find the offset of the next smb command
-            next_command_offset = alignedNtohl(&(smb_hdr->next_command));
-            if (next_command_offset + (const uint8_t*)smb_hdr > (data_ptr + data_len))
-            {
-                dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
-                    (dce2CommonStats*)&dce2_smb_stats, sd);
-                SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID,
-                    TRACE_ERROR_LEVEL, p, "bad next command offset\n");
-                dce2_smb_stats.v2_bad_next_cmd_offset++;
-                if (session)
-                    session->set_do_not_delete(false);
-                return;
-            }
-            if (next_command_offset)
-            {
-                smb_hdr = (const Smb2Hdr*)((const uint8_t*)smb_hdr + next_command_offset);
-                compound_request_index++;
-            }
-
-            if (compound_request_index > get_smb_max_compound())
-            {
-                dce2_smb_stats.v2_cmpnd_req_lt_crossed++;
-                SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID,
-                    TRACE_INFO_LEVEL, p, "compound request limit"
-                    " reached %" PRIu8 "\n",compound_request_index);
-                if (session)
-                    session->set_do_not_delete(false);
-                return;
-            }
-        }
-        while (next_command_offset and smb_hdr);
-    }
-    else
-    {
-        if ( tcp_file_tracker )
-        {
-            session = smb2_session_cache.find(get_session_key(tcp_file_tracker->get_session_id()));
-            if (session)
-                session->set_do_not_delete(true);
-            else
-                return;
-        }
-        else
-            return;
-        tcp_file_tracker_mutex.lock();
-        if ( tcp_file_tracker and tcp_file_tracker.use_count() >
-            1 and tcp_file_tracker->accepting_raw_data_from(flow_key))
-        {
-            SMB_DEBUG(dce_smb_trace,DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
-                "processing raw data for file id %" PRIu64 "\n",
-                tcp_file_tracker->get_file_id());
-            tcp_file_tracker->process_data(flow_key, data_ptr, data_len, session);
-            tcp_file_tracker->stop_accepting_raw_data_from(flow_key);
-        }
-        else if (tcp_file_tracker and tcp_file_tracker.use_count() == 1)
-        {
-            if (get_tcp_file_tracker() && !(get_tcp_file_tracker()->get_flow_state_map().empty()))
-            {
-                get_tcp_file_tracker()->get_flow_state_map().erase(flow_key);
-                tcp_file_tracker = nullptr;
-            }
-        }
-        else
-        {
-            SMB_DEBUG(dce_smb_trace,DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
-                "not processing raw data\n");
-        }
-        tcp_file_tracker_mutex.unlock();
-    }
-    if (session)
-        session->set_do_not_delete(false);
+    memset(&sd, 0, sizeof(DCE2_SsnData));
+    memset(&policy, 0, sizeof(DCE2_Policy));
+    dialect_index = 0;
+    ssn_state_flags = 0;
+    ftracker_tcp = nullptr;
+    smb_id = 0;
+    max_file_depth = FileService::get_max_file_depth();
+    max_outstanding_requests = 10;  // Until Negotiate
+    flow = p->flow;
+    SmbKeyHash hasher;
+    flow_key = hasher(*flow->key);
 }
 
-void Dce2Smb2SessionData::set_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
+DCE2_Smb2SsnData::~DCE2_Smb2SsnData()
+{
+    for (auto it = session_trackers.cbegin(), next_it = it; it != session_trackers.cend(); it = next_it)
+    {
+        ++next_it;
+        auto sptr = it->second.lock();
+        if (sptr)
+        {
+            if (flow_key)
+                sptr->removeConnectionTracker(flow_key); // remove tcp connection from session
+                                                         // tracker
+            auto ttrs = sptr->tree_trackers.get_all_entry();
+            for (const auto& titer: ttrs)
+            {
+                DCE2_Smb2TreeTracker* ttr = titer.second;
+                auto ftrs = ttr->file_trackers.get_all_entry();
+                for (const auto& fiter: ftrs)
+                {
+                    DCE2_Smb2FileTracker* ftr = fiter.second;
+                    if (flow == ftr->parent_flow)
+                        ftr->parent_flow = nullptr;
+                }
+            }
+        }
+    }
+}
+
+void DCE2_Smb2SsnData::set_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
 {
     NbssHdr* nb_hdr = (NbssHdr*)nb_ptr;
     SmbNtHdr* smb_hdr = (SmbNtHdr*)((uint8_t*)nb_hdr + sizeof(NbssHdr));
 
-    tcp_file_tracker_mutex.lock();
-    uint32_t tid = (tcp_file_tracker) ? tcp_file_tracker->get_parent()->get_tree_id() : 0;
-    tcp_file_tracker_mutex.unlock();
-
+    uint32_t tid = (ftracker_tcp) ? ftracker_tcp->ttr->get_tid() : 0;
     smb_hdr->smb_tid = alignedNtohl((const uint32_t*)&tid);
 
     if (DetectionEngine::get_current_packet()->is_from_client())
@@ -675,18 +235,14 @@ void Dce2Smb2SessionData::set_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
             nb_len = UINT16_MAX;
         write->structure_size = SMB2_WRITE_REQUEST_STRUC_SIZE;
         nb_hdr->length = htons((uint16_t)nb_len);
-
-        tcp_file_tracker_mutex.lock();
-        if (tcp_file_tracker)
+        if (ftracker_tcp)
         {
-            uint64_t fid = tcp_file_tracker->get_file_id();
+            uint64_t fid = ftracker_tcp->file_id;
             write->fileId_persistent = alignedNtohq(&fid);
             write->fileId_volatile = alignedNtohq(&fid);
         }
         else
             write->fileId_persistent = write->fileId_volatile = 0;
-        tcp_file_tracker_mutex.unlock();
-
         write->length = alignedNtohs(&co_len);
     }
     else
@@ -701,5 +257,307 @@ void Dce2Smb2SessionData::set_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
         read->structure_size = SMB2_READ_RESPONSE_STRUC_SIZE;
         read->length = alignedNtohs(&co_len);
     }
+}
+
+static inline bool DCE2_Smb2FindSidTid(DCE2_Smb2SsnData* ssd, const uint64_t sid,
+    const uint32_t tid, const uint32_t mid, DCE2_Smb2SessionTracker** str, DCE2_Smb2TreeTracker** ttr, bool
+    lookup_cache = false)
+{
+    *str = DCE2_Smb2FindSidInSsd(ssd, sid).get();
+    if (!*str)
+    {
+        if (lookup_cache)
+            *str = DCE2_Smb2FindElseCreateSid(ssd, sid, false);
+    }
+    if (!*str)
+        return false;
+
+    if (!tid)
+        *ttr = ssd->GetTreeTrackerFromMessage(mid);
+    else
+        *ttr = (*str)->findTtracker(tid);
+
+    if (!*ttr)
+        return false;
+
+    return true;
+}
+
+// FIXIT-L port fileCache related code along with
+// DCE2_Smb2Init, DCE2_Smb2Close and DCE2_Smb2UpdateStats
+
+static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
+    const uint8_t* end)
+{
+    const uint8_t* smb_data = (const uint8_t*)smb_hdr + SMB2_HEADER_LENGTH;
+    uint16_t command = alignedNtohs(&(smb_hdr->command));
+    int16_t structure_size = alignedNtohs((const uint16_t*)smb_data);
+    DCE2_Smb2SessionTracker* str = nullptr;
+    DCE2_Smb2TreeTracker* ttr = nullptr;
+    uint32_t tid = 0;
+
+    uint64_t mid = Smb2Mid(smb_hdr);
+    uint64_t sid = Smb2Sid(smb_hdr);
+    /* Still process async commands*/
+    if (!(alignedNtohl(&(smb_hdr->flags)) & SMB2_FLAGS_ASYNC_COMMAND))
+        tid = Smb2Tid(smb_hdr);
+
+    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+        DetectionEngine::get_current_packet(),
+        "%s : mid %" PRIu64 " sid 0x%" PRIx64 " tid %" PRIu32 "\n",
+        (command <= SMB2_COM_OPLOCK_BREAK ? smb2_command_string[command] : "unknown"),
+        mid, sid, tid);
+    switch (command)
+    {
+    case SMB2_COM_NEGOTIATE:
+        if (structure_size == SMB2_NEGOTIATE_RESPONSE_STRUC_SIZE)
+        {
+            const Smb2NegotiateResponseHdr* neg_resp_hdr = (const
+                Smb2NegotiateResponseHdr*)smb_data;
+            if (neg_resp_hdr->capabilities & SMB2_GLOBAL_CAP_MULTI_CHANNEL)
+            {
+                //total multichannel sessions
+                dce2_smb_stats.total_mc_sessions++;
+            }
+        }
+        break;
+    case SMB2_COM_CREATE:
+        if (!tid)
+        {
+            //Check request tracker for tid in Async case.
+            auto rtracker = ssd->findRtracker(mid);
+            if (rtracker)
+                tid = rtracker->get_tree_id();
+        }
+        dce2_smb_stats.v2_crt++;
+        DCE2_Smb2Create(ssd, smb_hdr, smb_data, end, mid, sid, tid);
+        break;
+    case SMB2_COM_READ:
+        if (!tid)
+        {
+            //Check request tracker for tid in Async case.
+            auto rtracker = ssd->findRtracker(mid);
+            if (rtracker)
+                tid = rtracker->get_tree_id();
+        }
+        dce2_smb_stats.v2_read++;
+        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr, true))
+        {
+            dce2_smb_stats.v2_read_ignored++;
+            return;
+        }
+
+        DCE2_Smb2Read(ssd, smb_hdr, smb_data, end, str, ttr, mid);
+        break;
+    case SMB2_COM_WRITE:
+        if (!tid)
+        {
+            //Check request tracker for tid in Async case.
+            auto rtracker = ssd->findRtracker(mid);
+            if (rtracker)
+                tid = rtracker->get_tree_id();
+        }
+        dce2_smb_stats.v2_wrt++;
+        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr, true))
+        {
+            dce2_smb_stats.v2_wrt_ignored++;
+            return;
+        }
+
+        DCE2_Smb2Write(ssd, smb_hdr, smb_data, end, str, ttr, mid);
+        break;
+    case SMB2_COM_SET_INFO:
+        if (!tid)
+        {
+            //Check request tracker for tid in Async case.
+            auto rtracker = ssd->findRtracker(mid);
+            if (rtracker)
+                tid = rtracker->get_tree_id();
+        }
+        dce2_smb_stats.v2_setinfo++;
+        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr))
+        {
+            dce2_smb_stats.v2_stinf_ignored++;
+            return;
+        }
+
+        DCE2_Smb2SetInfo(ssd, smb_hdr, smb_data, end, ttr);
+        break;
+    case SMB2_COM_CLOSE:
+        if (!tid)
+        {
+            //Check request tracker for tid in Async case.
+            auto rtracker = ssd->findRtracker(mid);
+            if (rtracker)
+                tid = rtracker->get_tree_id();
+        }
+        dce2_smb_stats.v2_cls++;
+        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr))
+        {
+            dce2_smb_stats.v2_cls_ignored++;
+            return;
+        }
+
+        DCE2_Smb2CloseCmd(ssd, smb_hdr, smb_data, end, ttr, str, mid);
+        break;
+    case SMB2_COM_TREE_CONNECT:
+        dce2_smb_stats.v2_tree_cnct++;
+        // This will always return session tracker
+        str = DCE2_Smb2FindElseCreateSid(ssd, sid);
+        if (str)
+        {
+            DCE2_Smb2TreeConnect(ssd, smb_hdr, smb_data, end, str, tid);
+        }
+        break;
+    case SMB2_COM_TREE_DISCONNECT:
+        dce2_smb_stats.v2_tree_discn++;
+        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr))
+        {
+            dce2_smb_stats.v2_tree_discn_ignored++;
+            return;
+        }
+        DCE2_Smb2TreeDisconnect(ssd, smb_data, end);
+        break;
+    case SMB2_COM_SESSION_SETUP:
+        dce2_smb_stats.v2_setup++;
+        DCE2_Smb2Setup(ssd, smb_hdr, sid, smb_data, end);
+        break;
+    case SMB2_COM_LOGOFF:
+        dce2_smb_stats.v2_logoff++;
+        DCE2_Smb2Logoff(ssd, smb_data, sid);
+        break;
+    case SMB2_COM_IOCTL:
+        if (!tid)
+        {
+            //Check request tracker for tid in Async case.
+            auto rtracker = ssd->findRtracker(mid);
+            if (rtracker)
+                tid = rtracker->get_tree_id();
+        }
+        if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr))
+        {
+            dce2_smb_stats.v2_ioctl_ignored++;
+            return;
+        }
+        else if (SMB2_SHARE_TYPE_DISK != ttr->get_share_type())
+        {
+            dce2_smb_stats.v2_ioctl++;
+            DCE2_Smb2IoctlCommand(ssd, smb_hdr, smb_data, end, str, ttr, mid);
+        }
+        else
+        {
+            dce2_smb_stats.v2_ioctl_ignored++;
+            return;
+        }
+        break;
+    default:
+        dce2_smb_stats.v2_msgs_uninspected++;
+        break;
+    }
+}
+
+// This is the main entry point for SMB2 processing.
+void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
+{
+    Packet* p = DetectionEngine::get_current_packet();
+    const uint8_t* data_ptr = p->data;
+    uint16_t data_len = p->dsize;
+    // Process the header
+    if (p->is_pdu_start())
+    {
+        // Check header length
+        if (data_len < sizeof(NbssHdr) + SMB2_HEADER_LENGTH)
+        {
+            dce2_smb_stats.v2_hdr_err++;
+            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p,
+                "Header error with data length %d\n",data_len);
+            return;
+        }
+        const Smb2Hdr* smb_hdr = (const Smb2Hdr*)(data_ptr + sizeof(NbssHdr));
+        const Smb2TransformHdr* smb_trans_hdr = (const Smb2TransformHdr*)(data_ptr +
+            sizeof(NbssHdr));
+        uint32_t smb_proto_id = SmbTransformId(smb_trans_hdr);
+        uint64_t sid = smb_trans_hdr->session_id;
+        if (smb_proto_id == DCE2_SMB2_TRANS_ID)
+        {
+            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+                p, "Encrypted header is received \n");
+            DCE2_Smb2SessionTracker* session = DCE2_Smb2FindElseCreateSid(ssd, sid);
+            if (session)
+            {
+                session->set_encryption_flag(true);
+            }
+        }
+        uint32_t next_command_offset;
+        uint8_t compound_request_index = 0;
+        // SMB protocol allows multiple smb commands to be grouped in a single packet.
+        // So loop through to parse all the smb commands.
+        // Reference: https://msdn.microsoft.com/en-us/library/cc246614.aspx
+        // "A nonzero value for the NextCommand field in the SMB2 header indicates a compound
+        // request. NextCommand in the SMB2 header of a request specifies an offset, in bytes,
+        // from the beginning of the SMB2 header under consideration to the start of the 8-byte
+        // aligned SMB2 header of the subsequent request. Such compounding can be used to append
+        // multiple requests up to the maximum size<88> that is supported by the transport."
+        do
+        {
+            DCE2_Smb2Inspect(ssd, smb_hdr, data_ptr +  data_len);
+            // In case of message compounding, find the offset of the next smb command
+            next_command_offset = alignedNtohl(&(smb_hdr->next_command));
+            if (next_command_offset + (const uint8_t*)smb_hdr > (data_ptr + data_len))
+            {
+                dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
+                    (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+                SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+                    p, "bad next command offset\n");
+                dce2_smb_stats.v2_bad_next_cmd_offset++;
+                return;
+            }
+            if (next_command_offset)
+            {
+                smb_hdr = (const Smb2Hdr*)((const uint8_t*)smb_hdr + next_command_offset);
+                compound_request_index++;
+            }
+
+            if (compound_request_index > DCE2_ScSmbMaxCompound((dce2SmbProtoConf*)ssd->sd.config))
+            {
+                dce2_smb_stats.v2_cmpnd_req_lt_crossed++;
+                SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+                    p, "compound req limit reached %" PRIu8 "\n",
+                    compound_request_index);
+                return;
+            }
+        }
+        while (next_command_offset and smb_hdr);
+    }
+    else if ( ssd->ftracker_tcp and ssd->ftracker_local and (ssd->ftracker_local->smb2_pdu_state ==
+        DCE2_SMB_PDU_STATE__RAW_DATA))
+    {
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+            p, "raw data file_name_hash %" PRIu64 " fid 0x%" PRIx64 " dir %s\n",
+            ssd->ftracker_tcp->file_name_hash, ssd->ftracker_tcp->file_id,
+            ssd->ftracker_tcp->upload ? "upload" : "download");
+
+        if (!DCE2_Smb2ProcessFileData(ssd, data_ptr, data_len))
+            return;
+    }
+}
+
+// Check whether the packet is smb2
+DCE2_SmbVersion DCE2_Smb2Version(const Packet* p)
+{
+    // Only check reassembled SMB2 packet
+    if ( p->has_paf_payload() and
+        (p->dsize > sizeof(NbssHdr) + DCE2_SMB_ID_SIZE) )     // DCE2_SMB_ID is u32
+    {
+        const Smb2Hdr* smb_hdr = (const Smb2Hdr*)(p->data + sizeof(NbssHdr));
+        uint32_t smb_version_id = SmbId((const SmbNtHdr*)smb_hdr);
+
+        if (smb_version_id == DCE2_SMB_ID)
+            return DCE2_SMB_VERSION_1;
+        else if (smb_version_id == DCE2_SMB2_ID)
+            return DCE2_SMB_VERSION_2;
+    }
+
+    return DCE2_SMB_VERSION_NULL;
 }
 
