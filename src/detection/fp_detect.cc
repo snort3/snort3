@@ -819,7 +819,7 @@ void MpseStash::process(IpsContext* context, MatchStore& store)
     unsigned i = 0;
 #endif
 
-    for ( auto it : store )
+    for ( const auto & it : store )
     {
         debug_logf(detection_trace, TRACE_RULE_EVAL,
             static_cast<snort::IpsContext*>(context)->packet, "Processing pattern match #%d\n", ++i);

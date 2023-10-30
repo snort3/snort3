@@ -464,9 +464,9 @@ public:
     { return DETECT; }
 
 public:
-    RangeCheck version;
-    bool any_frag;
-    Uuid uuid;
+    RangeCheck version = {};
+    bool any_frag = false;
+    Uuid uuid = {};
 };
 
 bool Dce2IfaceModule::begin(const char*, int, SnortConfig*)

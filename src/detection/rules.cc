@@ -60,7 +60,7 @@ bool operator< (const RuleKey& lhs, const RuleKey& rhs)
 
 void RuleStateMap::apply(SnortConfig* sc)
 {
-    for ( auto it : map )
+    for ( const auto & it : map )
     {
         const RuleKey& k = it.first;
         OptTreeNode* otn = OtnLookup(sc->otn_map, k.gid, k.sid);

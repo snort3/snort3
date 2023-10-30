@@ -233,10 +233,10 @@ SnortConfig::~SnortConfig()
         return;
     }
 
-    for ( auto ct : classifications )
+    for ( const auto & ct : classifications )
         delete ct.second;
 
-    for ( auto rs : references )
+    for ( const auto & rs : references )
         delete rs.second;
 
     for ( auto* s : scratchers )
