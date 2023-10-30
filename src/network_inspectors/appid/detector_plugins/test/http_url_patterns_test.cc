@@ -60,7 +60,7 @@ namespace snort
 {
 AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
-SearchTool::SearchTool(bool) { }
+SearchTool::SearchTool(bool, const char*) { }
 void SearchTool::reload() { }
 static bool test_find_all_done = false;
 static bool test_find_all_enabled = false;

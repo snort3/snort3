@@ -37,8 +37,10 @@ namespace snort
 class SO_PUBLIC SearchTool
 {
 public:
-    SearchTool(bool multi_match = true);
+    SearchTool(bool multi_match = true, const char* = nullptr);
     ~SearchTool();
+
+    const char* get_method() const;
 
     void add(const char* pattern, unsigned len, int s_id, bool no_case = true, bool literal = true);
     void add(const char* pattern, unsigned len, void* s_context, bool no_case = true, bool literal = true);

@@ -62,7 +62,7 @@ static std::string s_data, s_prep_data;
 
 namespace snort
 {
-    SearchTool::SearchTool(bool)
+    SearchTool::SearchTool(bool multi, const char*) : mpsegrp(nullptr), max_len(0), multi_match(multi)
     { s_prep_count = s_count = 0; }
 
     SearchTool::~SearchTool()

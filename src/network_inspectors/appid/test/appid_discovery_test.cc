@@ -99,7 +99,7 @@ char* snort_strndup(const char* src, size_t)
 time_t packet_time() { return std::time(nullptr); }
 
 // Stubs for search_tool
-SearchTool::SearchTool(bool) {}
+SearchTool::SearchTool(bool, const char*) {}
 SearchTool::~SearchTool() = default;
 void SearchTool::add(const char*, unsigned, int, bool, bool) {}
 void SearchTool::add(const char*, unsigned, void*, bool, bool) {}

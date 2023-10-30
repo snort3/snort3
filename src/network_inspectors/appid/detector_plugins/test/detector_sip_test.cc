@@ -65,7 +65,7 @@ Flow::~Flow() = default;
 AppIdSession* AppIdApi::get_appid_session(snort::Flow const&) { return nullptr; }
 
 MpseGroup::~MpseGroup() = default;
-SearchTool::SearchTool(bool)
+SearchTool::SearchTool(bool, const char*)
 {
     mpsegrp = &mpse_group;
 }

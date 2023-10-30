@@ -22,7 +22,8 @@
 namespace snort
 {
 // Stubs for search_tool.cc
-SearchTool::SearchTool(bool) { }
+SearchTool::SearchTool(bool multi, const char*) : mpsegrp(nullptr), max_len(0), multi_match(multi)
+{ }
 SearchTool::~SearchTool() = default;
 void SearchTool::add(const char*, unsigned, int, bool, bool) { }
 void SearchTool::add(const char*, unsigned, void*, bool, bool) { }

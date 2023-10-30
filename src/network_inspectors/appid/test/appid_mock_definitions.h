@@ -59,7 +59,8 @@ void LogLabel(const char*, FILE*) {}
 
 unsigned DataBus::get_id(const PubKey&) { return 0; }
 
-SearchTool::SearchTool(bool) { }
+SearchTool::SearchTool(bool multi, const char*) : mpsegrp(nullptr), max_len(0), multi_match(multi)
+{ }
 SearchTool::~SearchTool() = default;
 }
 DiscoveryFilter::~DiscoveryFilter(){}

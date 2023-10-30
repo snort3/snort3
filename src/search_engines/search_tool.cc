@@ -32,11 +32,12 @@
 
 namespace snort
 {
-SearchTool::SearchTool(bool multi)
+SearchTool::SearchTool(bool multi, const char* override_method)
 {
     const SnortConfig* sc = SnortConfig::get_conf();
     assert(sc and sc->fast_pattern_config);
-    const char* method = sc->fast_pattern_config->get_search_method();
+    assert(!override_method || strcmp(override_method, "hyperscan"));
+    const char* method = override_method ? override_method : sc->fast_pattern_config->get_search_method();
 
     if ( strcmp(method, "hyperscan") )
         method = "ac_full";
@@ -53,6 +54,9 @@ SearchTool::~SearchTool()
 {
     delete mpsegrp;
 }
+
+const char* SearchTool::get_method() const
+{ return mpsegrp->get_normal_mpse()->get_method(); }
 
 void SearchTool::add(const char* pat, unsigned len, int id, bool no_case, bool literal)
 { add((const uint8_t*)pat, len, id, no_case, literal); }
