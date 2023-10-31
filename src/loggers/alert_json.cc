@@ -804,13 +804,8 @@ public:
     string sep;
 };
 
-JsonLogger::JsonLogger(JsonModule* m)
-{
-    file = m->file ? F_NAME : "stdout";
-    limit = m->limit;
-    sep = m->sep;
-    fields = std::move(m->fields);
-}
+JsonLogger::JsonLogger(JsonModule* m) : file(m->file ? F_NAME : "stdout"), limit(m->limit), fields(std::move(m->fields)), sep(m->sep)
+{ }
 
 void JsonLogger::open()
 {

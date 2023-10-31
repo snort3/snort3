@@ -74,8 +74,8 @@ void UserSegment::term(UserSegment* us)
 
 unsigned UserSegment::avail()
 {
-    unsigned size = offset + len;
-    return (BUCKET > size) ? BUCKET - size : 0;
+    unsigned tmp_size = offset + len;
+    return (BUCKET > tmp_size) ? BUCKET - tmp_size : 0;
 }
 
 void UserSegment::copy(const uint8_t* p, unsigned n)
@@ -468,7 +468,7 @@ StreamSplitter* UserSession::get_splitter(bool c2s)
 
 int UserSession::process(Packet* p)
 {
-    Profile profile(user_perf_stats);
+    Profile profile(user_perf_stats);   // cppcheck-suppress unreadVariable
 
     if ( Stream::expired_flow(flow, p) )
     {
@@ -515,7 +515,4 @@ int UserSession::update_alert(
     Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
     uint32_t /*event_id*/, uint32_t /*event_second*/)
 { return 0; }
-
-uint8_t UserSession::get_reassembly_direction()
-{ return SSN_DIR_NONE; }
 

@@ -137,10 +137,10 @@ FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME)
 
 FlowIPTracker::~FlowIPTracker()
 {
-    const XHashStats& stats = ip_map->get_stats();
-    pmstats.flow_tracker_creates = stats.nodes_created;
-    pmstats.flow_tracker_total_deletes = stats.memcap_deletes;
-    pmstats.flow_tracker_prunes = stats.memcap_prunes;
+    const XHashStats& tmp_stats = ip_map->get_stats();
+    pmstats.flow_tracker_creates = tmp_stats.nodes_created;
+    pmstats.flow_tracker_total_deletes = tmp_stats.memcap_deletes;
+    pmstats.flow_tracker_prunes = tmp_stats.memcap_prunes;
 
     delete ip_map;
 }
@@ -168,17 +168,17 @@ void FlowIPTracker::update(Packet* p)
         if ( !value )
             return;
 
-        TrafficStats* stats = &value->traffic_stats[type];
+        TrafficStats* tmp_stats = &value->traffic_stats[type];
 
         if ( !swapped )
         {
-            stats->packets_a_to_b++;
-            stats->bytes_a_to_b += len;
+            tmp_stats->packets_a_to_b++;
+            tmp_stats->bytes_a_to_b += len;
         }
         else
         {
-            stats->packets_b_to_a++;
-            stats->bytes_b_to_a += len;
+            tmp_stats->packets_b_to_a++;
+            tmp_stats->bytes_b_to_a += len;
         }
         value->total_packets++;
         value->total_bytes += len;

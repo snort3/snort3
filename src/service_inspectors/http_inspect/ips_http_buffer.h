@@ -57,12 +57,12 @@ private:
 
     // URI related params. These affect the sub_id while parsed.
     // These values are saved to alert on conflicts, only used by ::end
-    bool scheme;
-    bool host;
-    bool port;
-    bool path;
-    bool query;
-    bool fragment;
+    bool scheme = false;
+    bool host = false;
+    bool port = false;
+    bool path = false;
+    bool query = false;
+    bool fragment = false;
 };
 
 class HttpBufferIpsOption : public HttpIpsOption

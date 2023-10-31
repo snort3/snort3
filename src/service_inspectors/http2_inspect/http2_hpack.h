@@ -86,8 +86,8 @@ public:
     void cleanup();
 
 private:
-    Http2StartLine* start_line;
-    bool pseudo_headers_allowed;
+    Http2StartLine* start_line = nullptr;
+    bool pseudo_headers_allowed = false;
     uint8_t* decoded_headers = nullptr; // working buffer to store decoded headers
     Http2FlowData* session_data;
     Http2EventGen* const events;

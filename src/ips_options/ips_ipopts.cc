@@ -44,9 +44,8 @@ struct IpOptionData
 class IpOptOption : public IpsOption
 {
 public:
-    IpOptOption(const IpOptionData& c) :
-        IpsOption(s_name)
-    { config = c; }
+    IpOptOption(const IpOptionData& c) : IpsOption(s_name), config(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -96,6 +95,7 @@ bool IpOptOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IpOptOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(ipOptionPerfStats);
 
     if ( !p->is_ip4() )
@@ -107,9 +107,7 @@ IpsOption::EvalStatus IpOptOption::eval(Cursor&, Packet* p)
     const uint8_t option_len = ip4h->get_opt_len();
 
     if ((config.any_flag == 1) && (option_len > 0))
-    {
         return MATCH;
-    }
 
     ip::IpOptionIterator iter(ip4h, p);
 
@@ -117,7 +115,6 @@ IpsOption::EvalStatus IpOptOption::eval(Cursor&, Packet* p)
     {
         if (config.ip_option == opt.code)
             return MATCH;
-
     }
 
     return NO_MATCH;

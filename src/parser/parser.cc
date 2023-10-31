@@ -129,10 +129,10 @@ public:
 
 struct PolicyRuleStats
 {
-    const char* file;
-    int loaded;
-    int shared;
-    int enabled;
+    const char* file = nullptr;
+    int loaded = 0;
+    int shared = 0;
+    int enabled = 0;
 };
 
 //-------------------------------------------------------------------------

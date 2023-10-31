@@ -64,12 +64,9 @@ TreeConfigNode::TreeConfigNode(BaseConfigNode* parent_node,
 
 BaseConfigNode* TreeConfigNode::get_node(const std::string& name)
 {
-    for ( auto node : children )
-    {
-        if ( node->get_name() == name )
-            return node;
-    }
-    return nullptr;
+    auto it = std::find_if(children.cbegin(), children.cend(),
+        [name](BaseConfigNode* node){ return node->get_name() == name; });
+    return it != children.cend() ? *it : nullptr;
 }
 
 ValueConfigNode::ValueConfigNode(BaseConfigNode* parent_node, const Value& val,
@@ -311,7 +308,7 @@ TEST_CASE("value_config_node", "[ValueConfigNode]")
     SECTION("get_value")
     {
         CHECK(value_node_str->get_value()->get_origin_string() == "test_str");
-        CHECK(value_node_bool->get_value()->get_bool() == true);
+        CHECK(true == value_node_bool->get_value()->get_bool());
         CHECK(value_node_multi->get_value()->get_origin_string() == "test2 test3");
         CHECK(value_node_custom_name->get_value()->get_origin_string() == "test_str_custom");
     }
@@ -337,7 +334,7 @@ TEST_CASE("value_config_node", "[ValueConfigNode]")
     SECTION("get_value_after_update")
     {
         CHECK(value_node_str->get_value()->get_origin_string() == "new_value");
-        CHECK(value_node_bool->get_value()->get_bool() == false);
+        CHECK(false == value_node_bool->get_value()->get_bool());
         CHECK(value_node_multi->get_value()->get_origin_string() == "test1 test2 test3");
         CHECK(value_node_custom_name->get_value()->get_origin_string() == "new_custom_value");
     }

@@ -42,7 +42,8 @@ bool HttpTestManager::print_hex {};
 TEST_GROUP(get_next_code)
 {
     enum Color { COLOR_OTHER=1, COLOR_GREEN, COLOR_BLUE, COLOR_RED, COLOR_YELLOW, COLOR_PURPLE };
-    int32_t offset = 0;
+    int32_t offset = 0; // cppcheck-suppress unreadVariable
+    // cppcheck-suppress unreadVariable
     const StrCode color_table[6] =
     {
         { COLOR_GREEN,  "green" },

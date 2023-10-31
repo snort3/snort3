@@ -291,7 +291,7 @@ TEST_CASE( "memory metadata", "[memory]" )
         auto meta = memory::Metadata::create<AllocatorSpy>(n);
 
         CHECK( (void*)meta == (void*)pool );
-        CHECK( meta->valid() );
+        CHECK( true == meta->valid() );
         CHECK( meta->payload_size == n );
     }
 

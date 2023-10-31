@@ -53,11 +53,9 @@ const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
 SnortConfig::SnortConfig(const SnortConfig* const, const char*)
-{
-    state = &s_state;
-    num_slots = 1;
-    fast_pattern_config = new FastPatternConfig();
-}
+    : daq_config(nullptr), fast_pattern_config(new FastPatternConfig()), state(&s_state), num_slots(1),
+    thread_config(nullptr)
+{ }
 
 SnortConfig::~SnortConfig() = default;
 
@@ -104,7 +102,7 @@ void md5(const unsigned char*, size_t, unsigned char*) { }
 FastPatternConfig::FastPatternConfig()
 { search_api = get_test_api(); }
 
-const char* FastPatternConfig::get_search_method()
+const char* FastPatternConfig::get_search_method() const
 { return search_api ? search_api->base.name : nullptr; }
 
 using namespace snort;

@@ -58,7 +58,7 @@ public:
     void get_data(dnp3ProtoConf&);
 
 private:
-    dnp3ProtoConf config;
+    dnp3ProtoConf config = {};
 };
 
 #endif

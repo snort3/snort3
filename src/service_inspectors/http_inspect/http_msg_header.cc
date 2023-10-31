@@ -109,8 +109,8 @@ const Field& HttpMsgHeader::get_true_ip_addr()
     if (true_ip_addr.length() != STAT_NOT_COMPUTE)
         return true_ip_addr;
 
-    const Field& true_ip = get_true_ip();
-    if (true_ip.length() <= 0)
+    const Field& tmp_true_ip = get_true_ip();
+    if (tmp_true_ip.length() <= 0)
     {
         true_ip_addr.set(STAT_NOT_PRESENT);
         return true_ip_addr;

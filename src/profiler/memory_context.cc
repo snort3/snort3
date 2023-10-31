@@ -112,7 +112,7 @@ TEST_CASE( "active context", "[profiler][active_context]" )
 
     active.get_fallback() = fallback;
 
-    CHECK( !active.is_set() );
+    CHECK( false == active.is_set() );
     CHECK( active.get() == nullptr );
     CHECK( active.get_default() == fallback );
 
@@ -121,12 +121,12 @@ TEST_CASE( "active context", "[profiler][active_context]" )
     CHECK( active.get_default() == fallback );
 
     CHECK( active.set(&a) == nullptr );
-    CHECK( active.is_set() );
+    CHECK( true == active.is_set() );
     CHECK( active.get() == &a );
     CHECK( active.get_default() == a );
 
     CHECK( active.set(&b) == &a );
-    CHECK( active.is_set() );
+    CHECK( true == active.is_set() );
     CHECK( active.get() == &b );
     CHECK( active.get_default() == b );
 }

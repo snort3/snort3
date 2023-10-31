@@ -117,7 +117,7 @@ static void read_patterns(PortPatternNode* portPatternList, PatternService** ser
         pattern->next = ps->pattern;
         ps->pattern = pattern;
 
-        AppIdContext& ctxt = inspector.get_ctxt();
+        const AppIdContext& ctxt = inspector.get_ctxt();
 
         ctxt.get_odp_ctxt().get_app_info_mgr().set_app_info_active(ps->id);
     }

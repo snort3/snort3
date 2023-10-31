@@ -592,10 +592,8 @@ public:
 };
 
 Binder::Binder(std::vector<Binding>& bv, std::vector<Binding>& pbv)
-{
-    bindings = std::move(bv);
-    policy_bindings = std::move(pbv);
-}
+    : bindings(std::move(bv)),  policy_bindings(std::move(pbv))
+{ }
 
 Binder::~Binder()
 {
@@ -696,6 +694,7 @@ void Binder::remove_inspector_binding(SnortConfig*, const char* name)
 
 void Binder::handle_packet(const Packet* pkt)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(bindPerfStats);
 
     Stuff stuff;
@@ -798,14 +797,10 @@ void Binder::handle_flow_service_change(Flow& flow)
     else
     {
         // reset to wizard when service is not specified
-        for (const Binding& b : bindings)
-        {
-            if (b.use.what == BindUse::BW_WIZARD)
-            {
-                ins = b.use.inspector;
-                break;
-            }
-        }
+        auto it = std::find_if(bindings.cbegin(), bindings.cend(),
+            [](const Binding& b){ return b.use.what == BindUse::BW_WIZARD; });
+        if (it != bindings.cend())
+            ins = (*it).use.inspector;
 
         if (flow.gadget)
             flow.clear_gadget();
@@ -838,6 +833,7 @@ void Binder::handle_flow_service_change(Flow& flow)
 
 void Binder::handle_assistant_gadget(const char* service, Flow& flow)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(bindPerfStats);
 
     Stuff stuff;

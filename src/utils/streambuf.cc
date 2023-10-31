@@ -260,27 +260,27 @@ void ostreambuf_infl::reserve(streamsize n)
 
 const char* ostreambuf_infl::take_data()
 {
-    auto data = pbase();
+    auto d = pbase();
 
     setp(nullptr, nullptr);
 
     gen.s = states[0].s;
     gen.n = states[0].n;
 
-    return data;
+    return d;
 }
 
 const char* ostreambuf_infl::take_data(streamsize& n)
 {
-    auto data = pbase();
+    auto d = pbase();
 
-    n = pptr() - data;
+    n = pptr() - d;
     setp(nullptr, nullptr);
 
     gen.s = states[0].s;
     gen.n = states[0].n;
 
-    return data;
+    return d;
 }
 
 streambuf* ostreambuf_infl::setbuf(char* s, streamsize n)
@@ -369,7 +369,6 @@ streamsize ostreambuf_infl::xsputn(const char* s, streamsize n)
     return n;
 }
 
-// cppcheck-suppress unusedFunction
 streamsize ostreambuf_infl::xsgetn(char* s, streamsize n)
 {
     assert(n >= 0);

@@ -68,8 +68,5 @@ bool cip_request_remove(CipUnconnectedMessageList* unconnected_list,
     const EnipSessionData* enip_data,
     CipRequestType* request_type);
 
-// Set timeout (milliseconds) to use for unconnected messages that don't have a built-in timeout.
-void set_unconnected_timeout(uint32_t unconnected_timeout);
-
 #endif  // CIP_SESSION_H
 

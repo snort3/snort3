@@ -153,10 +153,10 @@ void ThreadConfig::term()
 
 ThreadConfig::~ThreadConfig()
 {
-    for (auto& iter : thread_affinity)
+    for (const auto& iter : thread_affinity)
         delete iter.second;
 
-    for (auto& iter : named_thread_affinity)
+    for (const auto& iter : named_thread_affinity)
         delete iter.second;
 }
 
@@ -624,11 +624,11 @@ TEST_CASE("set node for thread", "[ThreadConfig]")
     tc.set_thread_affinity(STHREAD_TYPE_PACKET, 0, cpuset2);
     tc.set_thread_affinity(STHREAD_TYPE_PACKET, 1, cpuset);
 
-    CHECK(tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
+    CHECK(true == tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
 
     hwloc_mock->node.os_index = 1;
     numa_mock->pref = 1;
-    CHECK(tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 1));
+    CHECK(true == tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 1));
 }
 
 TEST_CASE("numa_available negative test", "[ThreadConfig]")
@@ -643,7 +643,7 @@ TEST_CASE("numa_available negative test", "[ThreadConfig]")
     numa_mock->numa_avail = -1;
     numa = numa_mock;
     hwloc = hwloc_mock;
-    CHECK(!tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
+    CHECK(false == tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
 }
 
 TEST_CASE("set node failure negative test", "[ThreadConfig]")
@@ -658,7 +658,7 @@ TEST_CASE("set node failure negative test", "[ThreadConfig]")
     numa_mock->pref = -1;
     numa = numa_mock;
     hwloc = hwloc_mock;
-    CHECK(!tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
+    CHECK(false == tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
 }
 
 TEST_CASE("depth unknown negative test", "[ThreadConfig]")
@@ -674,7 +674,7 @@ TEST_CASE("depth unknown negative test", "[ThreadConfig]")
     hwloc_mock->type_depth = HWLOC_TYPE_DEPTH_UNKNOWN;
     hwloc = hwloc_mock;
     numa = numa_mock;
-    CHECK(!tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
+    CHECK(false == tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
 }
 
 TEST_CASE("set memory policy failure negative test", "[ThreadConfig]")
@@ -690,7 +690,7 @@ TEST_CASE("set memory policy failure negative test", "[ThreadConfig]")
     numa_mock->mem_policy = -1;
     numa = numa_mock;
     hwloc = hwloc_mock;
-    CHECK(!tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
+    CHECK(false == tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
 }
 
 TEST_CASE("get_nbobjs_by_depth failure negative test", "[ThreadConfig]")
@@ -705,7 +705,7 @@ TEST_CASE("get_nbobjs_by_depth failure negative test", "[ThreadConfig]")
     hwloc_mock->nbobjs_by_depth = 0;
     hwloc = hwloc_mock;
     numa = numa_mock;
-    CHECK(!tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
+    CHECK(false == tc.implement_thread_mempolicy(STHREAD_TYPE_PACKET, 0));
 }
 
 #endif

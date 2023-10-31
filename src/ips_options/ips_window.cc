@@ -38,9 +38,8 @@ static THREAD_LOCAL ProfileStats tcpWinPerfStats;
 class TcpWinOption : public IpsOption
 {
 public:
-    TcpWinOption(const RangeCheck& c) :
-        IpsOption(s_name)
-    { config = c; }
+    TcpWinOption(const RangeCheck& c) : IpsOption(s_name), config(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -77,6 +76,7 @@ bool TcpWinOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus TcpWinOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(tcpWinPerfStats);
 
     if (!p->ptrs.tcph)

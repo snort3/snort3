@@ -108,7 +108,7 @@ public:
 
 public:
     static unsigned inspector_id;
-    SSHData session;
+    SSHData session = {};
 };
 
 #define SSH_BANNER "SSH-"

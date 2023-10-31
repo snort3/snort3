@@ -317,12 +317,6 @@ static void PrecalcPrefix()
  */
 static int BoGetDirection(Packet* p, const char* pkt_data)
 {
-    uint32_t len = 0;
-    uint32_t id = 0;
-    uint32_t l, i;
-    char type;
-    char plaintext;
-
     /* Check for the default port on either side */
     if ( p->ptrs.dp == BO_DEFAULT_PORT )
     {
@@ -335,23 +329,19 @@ static int BoGetDirection(Packet* p, const char* pkt_data)
 
     /* Didn't find default port, so look for ping packet */
 
+    uint32_t len = 0;
+
     /* Get length from BO header - 32 bit int */
-    for ( i = 0; i < 4; i++ )
+    for ( uint32_t i = 0; i < 4; i++ )
     {
-        plaintext = (char)(*pkt_data ^ BoRand());
-        l = (uint32_t)plaintext;
+        char plaintext = (char)(*pkt_data ^ BoRand());
+        uint32_t l = (uint32_t)plaintext;
         len += l << (8*i);
         pkt_data++;
     }
 
     /* Get ID from BO header - 32 bit int */
-    for ( i = 0; i < 4; i++ )
-    {
-        plaintext = (char)(*pkt_data ^ BoRand() );
-        l = ((uint32_t)plaintext) & 0x000000FF;
-        id += l << (8*i);
-        pkt_data++;
-    }
+    pkt_data += 4;
 
     /* Do more len checking */
 
@@ -378,7 +368,7 @@ static int BoGetDirection(Packet* p, const char* pkt_data)
     }
 
     /* Continue parsing BO header */
-    type = (char)(*pkt_data ^ BoRand());
+    char type = (char)(*pkt_data ^ BoRand());
     pkt_data++;
 
     /* check to make sure we don't run off end of packet */
@@ -400,7 +390,7 @@ static int BoGetDirection(Packet* p, const char* pkt_data)
         }
         char buf1[BO_BUF_SIZE];
 
-        for (i=0; i<len; i++ ) /* start at 0 to advance the BoRand() function properly */
+        for (uint32_t i=0; i<len; i++ ) /* start at 0 to advance the BoRand() function properly */
         {
             buf1[i] = (char)(pkt_data[i] ^ BoRand());
 
@@ -438,6 +428,7 @@ public:
 
 void BackOrifice::eval(Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(boPerfStats);
 
     const char* const magic_cookie = "*!*QWTY?";

@@ -23,6 +23,8 @@
 
 #include "http_msg_trailer.h"
 
+#include <array>
+
 #include "http_api.h"
 #include "http_common.h"
 #include "http_enum.h"
@@ -43,7 +45,7 @@ HttpMsgTrailer::HttpMsgTrailer(const uint8_t* buffer, const uint16_t buf_size,
 void HttpMsgTrailer::gen_events()
 {
     // Trailers not allowed by RFC 7230
-    static const HeaderId bad_trailer[] =
+    static const std::array<HeaderId, 27> bad_trailer =
     {
         HEAD_AGE,
         HEAD_AUTHORIZATION,
@@ -74,14 +76,11 @@ void HttpMsgTrailer::gen_events()
         HEAD_WWW_AUTHENTICATE
     };
 
-    for (HeaderId id: bad_trailer)
+    if (std::any_of(bad_trailer.cbegin(), bad_trailer.cend(),
+        [this](HeaderId id){ return get_header_count(id) > 0; }))
     {
-        if (get_header_count(id) > 0)
-        {
-            add_infraction(INF_ILLEGAL_TRAILER);
-            create_event(EVENT_ILLEGAL_TRAILER);
-            break;
-        }
+        add_infraction(INF_ILLEGAL_TRAILER);
+        create_event(EVENT_ILLEGAL_TRAILER);
     }
 }
 

@@ -114,7 +114,7 @@ TABLE_PTR RtTable::sfrt_dir_flat_new(uint32_t mem_cap, int count,...)
     va_list ap;
     int index;
     TABLE_PTR table_ptr;
-    dir_table_flat_t* table;
+    dir_table_flat_t* tmp_table;
     uint8_t* base;
 
     table_ptr = segment_snort_alloc(sizeof(dir_table_flat_t));
@@ -125,35 +125,35 @@ TABLE_PTR RtTable::sfrt_dir_flat_new(uint32_t mem_cap, int count,...)
     }
 
     base = (uint8_t*)segment_basePtr();
-    table = (dir_table_flat_t*)(&base[table_ptr]);
+    tmp_table = (dir_table_flat_t*)(&base[table_ptr]);
 
-    table->allocated = 0;
+    tmp_table->allocated = 0;
 
-    table->dim_size = count;
+    tmp_table->dim_size = count;
 
     va_start(ap, count);
 
     for (index=0; index < count; index++)
     {
         uint32_t val = va_arg(ap, int);
-        table->dimensions[index] = val;
+        tmp_table->dimensions[index] = val;
     }
 
     va_end(ap);
 
-    table->mem_cap = mem_cap;
+    tmp_table->mem_cap = mem_cap;
 
-    table->cur_num = 0;
+    tmp_table->cur_num = 0;
 
-    table->sub_table = _sub_table_flat_new(table, 0, 0, 0);
+    tmp_table->sub_table = _sub_table_flat_new(tmp_table, 0, 0, 0);
 
-    if (!table->sub_table)
+    if (!tmp_table->sub_table)
     {
         segment_free(table_ptr);
         return 0;
     }
 
-    table->allocated += sizeof(dir_table_flat_t) + sizeof(int)*count;
+    tmp_table->allocated += sizeof(dir_table_flat_t) + sizeof(int)*count;
 
     return table_ptr;
 }
@@ -472,25 +472,25 @@ return_codes RtTable::sfrt_dir_flat_insert(const uint32_t* addr, int /* numAddrD
     {
         h_addr[1] = ntohl(addr[1]);
         h_addr[2] = ntohl(addr[2]);
-        h_addr[3] = ntohl(addr[3]);
+        h_addr[3] = ntohl(addr[3]); // cppcheck-suppress unreadVariable
     }
     else if (len > 64)
     {
         h_addr[1] = ntohl(addr[1]);
         h_addr[2] = ntohl(addr[2]);
-        h_addr[3] = 0;
+        h_addr[3] = 0;  // cppcheck-suppress unreadVariable
     }
     else if (len > 32)
     {
         h_addr[1] = ntohl(addr[1]);
         h_addr[2] = 0;
-        h_addr[3] = 0;
+        h_addr[3] = 0;  // cppcheck-suppress unreadVariable
     }
     else
     {
         h_addr[1] = 0;
         h_addr[2] = 0;
-        h_addr[3] = 0;
+        h_addr[3] = 0;  // cppcheck-suppress unreadVariable
     }
 
     /* Find the sub table in which to insert */
@@ -505,7 +505,7 @@ tuple_flat_t RtTable::_dir_sub_flat_lookup(IPLOOKUP* ip, TABLE_PTR table_ptr)
     word index;
     uint8_t* base = (uint8_t*)segment_basePtr();
     DIR_Entry* entry;
-    dir_sub_table_flat_t* table = (dir_sub_table_flat_t*)(&base[table_ptr]);
+    dir_sub_table_flat_t* tmp_table = (dir_sub_table_flat_t*)(&base[table_ptr]);
 
     {
         uint32_t local_index, i;
@@ -527,9 +527,9 @@ tuple_flat_t RtTable::_dir_sub_flat_lookup(IPLOOKUP* ip, TABLE_PTR table_ptr)
             i=3;
         }
         local_index = ip->addr[i] << (ip->bits %32);
-        index = local_index >> (ARCH_WIDTH - table->width);
+        index = local_index >> (ARCH_WIDTH - tmp_table->width);
     }
-    entry = (DIR_Entry*)(&base[table->entries]);
+    entry = (DIR_Entry*)(&base[tmp_table->entries]);
 
     if ( !entry[index].value || entry[index].length )
     {
@@ -539,7 +539,7 @@ tuple_flat_t RtTable::_dir_sub_flat_lookup(IPLOOKUP* ip, TABLE_PTR table_ptr)
         return ret;
     }
 
-    ip->bits += table->width;
+    ip->bits += tmp_table->width;
     return _dir_sub_flat_lookup(ip, entry[index].value);
 }
 
@@ -578,14 +578,14 @@ tuple_flat_t RtTable::sfrt_dir_flat_lookup(const uint32_t* addr, int numAddrDwor
 
 uint32_t RtTable::sfrt_dir_flat_usage(TABLE_PTR table_ptr) const
 {
-    dir_table_flat_t* table;
+    dir_table_flat_t* tmp_table;
     uint8_t* base;
     if (!table_ptr)
     {
         return 0;
     }
     base = (uint8_t*)segment_basePtr();
-    table = (dir_table_flat_t*)(&base[table_ptr]);
-    return ((dir_table_flat_t*)(table))->allocated;
+    tmp_table = (dir_table_flat_t*)(&base[table_ptr]);
+    return ((dir_table_flat_t*)(tmp_table))->allocated;
 }
 

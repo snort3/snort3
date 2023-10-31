@@ -332,7 +332,7 @@ static void free_app_url_patterns(std::vector<DetectorAppUrlPattern*>& url_patte
 
 static void free_http_patterns(DetectorHTTPPatterns& patterns)
 {
-    for (auto& pat: patterns)
+    for (const auto& pat: patterns)
         if (pat.pattern)
             snort_free(const_cast<uint8_t*>(pat.pattern));
 }
@@ -363,7 +363,7 @@ HttpPatternMatchers::~HttpPatternMatchers()
     free_http_patterns(content_type_patterns);
     free_chp_app_elements();
 
-    for (auto* pattern : host_url_patterns)
+    for (const auto* pattern : host_url_patterns)
         delete pattern;
     host_url_patterns.clear();
     if ( host_url_matcher )
@@ -546,13 +546,13 @@ int HttpPatternMatchers::process_mlmp_patterns()
         if ( add_mlmp_pattern(host_url_matcher, pattern) < 0 )
             return -1;
 
-    for (auto* pattern: rtmp_url_patterns)
-        if ( add_mlmp_pattern(rtmp_host_url_matcher, *pattern) < 0 )
-            return -1;
+    if (std::any_of(rtmp_url_patterns.begin(), rtmp_url_patterns.end(),
+        [this](DetectorAppUrlPattern* pattern){ return add_mlmp_pattern(rtmp_host_url_matcher, *pattern) < 0; }))
+        return -1;
 
-    for (auto* pattern: app_url_patterns)
-        if ( add_mlmp_pattern(host_url_matcher, *pattern) < 0 )
-            return -1;
+    if (std::any_of(app_url_patterns.begin(), app_url_patterns.end(),
+        [this](DetectorAppUrlPattern* pattern){ return add_mlmp_pattern(host_url_matcher, *pattern) < 0; }))
+        return -1;
 
     return 0;
 }
@@ -582,12 +582,13 @@ static int chp_pattern_match(void* id, void*, int match_end_pos, void* data, voi
 
 static inline void chp_add_candidate_to_tally(CHPMatchTally& match_tally, CHPApp* chpapp)
 {
-    for (auto& item: match_tally)
-        if (chpapp == item.chpapp)
-        {
-            item.key_pattern_countdown--;
-            return;
-        }
+    auto it = std::find_if(match_tally.begin(), match_tally.end(),
+        [&chpapp](const CHPMatchCandidate& item){ return chpapp == item.chpapp; });
+    if (it != match_tally.end())
+    {
+        (*it).key_pattern_countdown--;
+        return;
+    }
 
     match_tally.emplace_back( CHPMatchCandidate{ chpapp, chpapp->key_pattern_length_sum,
         chpapp->key_pattern_count - 1 } );

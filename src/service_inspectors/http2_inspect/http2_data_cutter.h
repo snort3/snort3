@@ -46,13 +46,13 @@ private:
     const HttpCommon::SourceId source_id;
 
     // total per frame - scan
-    uint32_t data_len;
+    uint32_t data_len = 0;
     // accumulating - scan
     uint32_t frame_bytes_seen = 0;
     uint32_t bytes_sent_http = 0;
-    uint32_t data_bytes_read;
+    uint32_t data_bytes_read = 0;
     // total per frame - reassemble
-    uint32_t reassemble_data_len;
+    uint32_t reassemble_data_len = 0;
     // accumulating - reassemble
     uint32_t reassemble_bytes_sent = 0;
     uint32_t reassemble_hdr_bytes_read = 0;

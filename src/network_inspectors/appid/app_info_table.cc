@@ -192,11 +192,11 @@ AppInfoTableEntry* AppInfoManager::add_dynamic_app_entry(const char* app_name)
 
 void AppInfoManager::cleanup_appid_info_table()
 {
-    for (auto& kv: app_info_table)
+    for (const auto& kv: app_info_table)
         delete(kv.second);
     app_info_table.erase(app_info_table.begin(), app_info_table.end());
 
-    for (auto& kv: custom_app_info_table)
+    for (const auto& kv: custom_app_info_table)
         delete(kv.second);
 
     custom_app_info_table.erase(custom_app_info_table.begin(), custom_app_info_table.end());

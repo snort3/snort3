@@ -76,7 +76,7 @@ private:
     std::string service;
     std::vector<std::string> c2s_patterns;
     std::vector<std::string> s2c_patterns;
-    bool c2s;
+    bool c2s = false;
 
     MagicBook* c2s_hexes = nullptr;
     MagicBook* s2c_hexes = nullptr;
@@ -87,7 +87,7 @@ private:
     CurseBook* curses = nullptr;
     uint16_t max_search_depth = 0;
 
-    MagicBook::ArcaneType proto;
+    MagicBook::ArcaneType proto = MagicBook::ArcaneType::MAX;
 };
 
 #endif

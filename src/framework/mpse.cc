@@ -43,12 +43,8 @@ namespace snort
 // base stuff
 //-------------------------------------------------------------------------
 
-Mpse::Mpse(const char* m)
-{
-    method = m;
-    verbose = 0;
-    api = nullptr;
-}
+Mpse::Mpse(const char* m) : method(m)
+{ }
 
 int Mpse::search(
     const unsigned char* T, int n, MpseMatch match,

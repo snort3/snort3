@@ -162,15 +162,15 @@ const uint8_t* Http2Frame::get_frame_pdu(uint16_t& length) const
         return nullptr;
 
     uint32_t dlen;
-    const uint8_t* data = get_frame_data(dlen);
-    if (!data or (hlen + dlen > UINT16_MAX))
+    const uint8_t* frame_data = get_frame_data(dlen);
+    if (!frame_data or (hlen + dlen > UINT16_MAX))
         return nullptr;
 
     length = (uint16_t)(hlen + dlen);
     uint8_t* pdu = new uint8_t[length];
     memcpy(pdu, header.start(), hlen);
     if (dlen)
-        memcpy(&pdu[hlen], data, dlen);
+        memcpy(&pdu[hlen], frame_data, dlen);
 
     pdu[0] = (dlen >> 16) & 0xff;
     pdu[1] = (dlen >> 8) & 0xff;

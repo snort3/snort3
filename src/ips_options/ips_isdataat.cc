@@ -68,9 +68,8 @@ typedef struct _IsDataAtData
 class IsDataAtOption : public IpsOption
 {
 public:
-    IsDataAtOption(const IsDataAtData& c) :
-        IpsOption(s_name)
-    { config = c; }
+    IsDataAtOption(const IsDataAtData& c) : IpsOption(s_name), config(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -128,6 +127,7 @@ bool IsDataAtOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IsDataAtOption::eval(Cursor& c, Packet*)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(isDataAtPerfStats);
 
     int offset;

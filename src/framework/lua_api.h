@@ -39,11 +39,8 @@ public:
     std::string chunk;
 
 protected:
-    LuaApi(const std::string& s, const std::string& c)
-    {
-        name = s;
-        chunk = c;
-    }
+    LuaApi(const std::string& s, const std::string& c) : name(s), chunk(c)
+    { }
 };
 
 #endif

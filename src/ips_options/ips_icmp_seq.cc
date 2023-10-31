@@ -61,9 +61,8 @@ static THREAD_LOCAL ProfileStats icmpSeqPerfStats;
 class IcmpSeqOption : public IpsOption
 {
 public:
-    IcmpSeqOption(const RangeCheck& c) :
-        IpsOption(s_name)
-    { config = c; }
+    IcmpSeqOption(const RangeCheck& c) : IpsOption(s_name), config(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -100,6 +99,7 @@ bool IcmpSeqOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IcmpSeqOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(icmpSeqPerfStats);
 
     if (!p->ptrs.icmph)

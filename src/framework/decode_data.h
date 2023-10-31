@@ -118,25 +118,30 @@ struct DecodeData
      * these three pointers are each referenced literally
      * dozens if not hundreds of times.  NOTHING else should be added!!
      */
-    const snort::tcp::TCPHdr* tcph;
-    const snort::udp::UDPHdr* udph;
-    const snort::icmp::ICMPHdr* icmph;
+    const snort::tcp::TCPHdr* tcph = nullptr;
+    const snort::udp::UDPHdr* udph = nullptr;
+    const snort::icmp::ICMPHdr* icmph = nullptr;
 
-    uint16_t sp;            /* source port (TCP/UDP) */
-    uint16_t dp;            /* dest port (TCP/UDP) */
+    uint16_t sp = 0;    /* source port (TCP/UDP) */
+    uint16_t dp = 0;    /* dest port (TCP/UDP) */
 
-    uint16_t decode_flags;
-    PktType type;
+    uint16_t decode_flags = 0;
+    PktType type = PktType::NONE;
 
     snort::ip::IpApi ip_api;
-    snort::mpls::MplsHdr mplsHdr;  // FIXIT-L need to zero this?
+    snort::mpls::MplsHdr mplsHdr = {};
 
     inline void reset()
     {
-        memset(this, 0, offsetof(DecodeData, ip_api));
-        ip_api.reset();
+        tcph = nullptr;
+        udph = nullptr;
+        icmph = nullptr;
         sp = 0;
         dp = 0;
+        decode_flags = 0;
+        type = PktType::NONE;
+        ip_api.reset();
+        mplsHdr = {};
     }
 
     inline void set_pkt_type(PktType pkt_type)

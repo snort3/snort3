@@ -1160,7 +1160,7 @@ int TcpSession::process_tcp_packet(TcpSegmentDescriptor& tsd, const Packet* p)
 
 int TcpSession::process(Packet* p)
 {
-    Profile profile(s5TcpPerfStats);
+    Profile profile(s5TcpPerfStats);    // cppcheck-suppress unreadVariable
     assert(flow->ssn_server && flow->pkt_type == PktType::TCP);
 
     if ( ignore_this_packet(p) )

@@ -183,7 +183,7 @@ static THREAD_LOCAL TagSessionCache* ssn_tag_cache = nullptr;
  *
  * @returns number of bytes needed
  */
-static inline unsigned int memory_per_node(XHash* hash)
+static inline unsigned int memory_per_node(const XHash* hash)
 {
     if ( hash == ssn_tag_cache )
         return sizeof(tTagFlowKey) + sizeof(HashNode) + sizeof(TagNode);

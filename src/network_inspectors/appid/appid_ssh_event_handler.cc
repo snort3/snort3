@@ -82,7 +82,7 @@ static void handle_failure(AppIdSession& asd, SshEventFlowData& data)
 
 static void client_success(const SshAppIdInfo& fd, AppIdSession& asd, AppidChangeBits& change_bits)
 {
-    SshPatternMatchers& table = asd.get_odp_ctxt().get_ssh_matchers();
+    const SshPatternMatchers& table = asd.get_odp_ctxt().get_ssh_matchers();
     AppId client_id;
 
     if (table.has_pattern(fd.vendor))

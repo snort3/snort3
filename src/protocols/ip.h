@@ -70,10 +70,6 @@ public:
     uint16_t pay_len() const;
     // return the ip_len field in host byte order
     uint16_t actual_ip_len() const;
-    // true if the current source address ia the loopback address
-    bool is_src_loopback() const;
-    // true if the current source address ia the loopback address
-    bool is_dst_loopback() const;
 
     // overloaded == operators.
     friend bool operator==(const IpApi& lhs, const IpApi& rhs);
@@ -126,10 +122,10 @@ public:
     uint8_t ver() const;
 
 private:
-    SfIp src;
-    SfIp dst;
-    const void* iph;
-    Type type;
+    SfIp src = {};
+    SfIp dst = {};
+    const void* iph = nullptr;
+    Type type = IAT_NONE;
 };
 
 } // namespace ip

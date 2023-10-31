@@ -97,18 +97,18 @@ TEST_CASE("IpsOption test", "[ips_option]")
 
     SECTION("hash test")
     {
-        StubIpsOption main_ips("ips_test",
+        StubIpsOption other_main_ips("ips_test",
             option_type_t::RULE_OPTION_TYPE_OTHER);
 
         SECTION("hash test with short string")
         {
             StubIpsOption main_ips_short("ips_test",
                 option_type_t::RULE_OPTION_TYPE_OTHER);
-            REQUIRE((main_ips.hash() == main_ips_short.hash()) == true);
+            REQUIRE((other_main_ips.hash() == main_ips_short.hash()) == true);
 
             StubIpsOption main_ips_short_diff("not_ips_test",
                 option_type_t::RULE_OPTION_TYPE_OTHER);
-            REQUIRE((main_ips.hash() == main_ips_short_diff.hash()) == false);
+            REQUIRE((other_main_ips.hash() == main_ips_short_diff.hash()) == false);
         }
 
         SECTION("hash test with long string")
@@ -134,7 +134,7 @@ TEST_CASE("IpsOption test", "[ips_option]")
                 option_type_t::RULE_OPTION_TYPE_OTHER);
             REQUIRE(main_ips_long_first.hash() == main_ips_long_second.hash());
 
-            REQUIRE(main_ips_long_first.hash() != main_ips.hash());
+            REQUIRE(main_ips_long_first.hash() != other_main_ips.hash());
         }
     }
 }

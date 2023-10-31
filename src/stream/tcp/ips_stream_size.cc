@@ -44,9 +44,8 @@ static THREAD_LOCAL ProfileStats streamSizePerfStats;
 class SizeOption : public IpsOption
 {
 public:
-    SizeOption(const RangeCheck& c, int dir) :
-        IpsOption(s_name)
-    { ssod = c; direction = dir; }
+    SizeOption(const RangeCheck& c, int dir) : IpsOption(s_name), ssod(c), direction(dir)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -183,7 +182,7 @@ public:
 
 public:
     RangeCheck ssod;
-    int direction;
+    int direction = 0;
 };
 
 bool SizeModule::begin(const char*, int, SnortConfig*)

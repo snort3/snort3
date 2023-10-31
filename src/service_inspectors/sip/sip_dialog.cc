@@ -39,16 +39,13 @@
 
 using namespace snort;
 
-static void SIP_updateMedias(SIP_MediaSession*, SIP_MediaList*);
+static void SIP_updateMedias(SIP_MediaSession*, SIP_MediaList&);
 static int SIP_compareMedias(const SIP_MediaDataList, const SIP_MediaDataList);
-static bool SIP_checkMediaChange(const SIPMsg*, const SIP_DialogData*);
-static int SIP_processRequest(SIPMsg*, SIP_DialogData*, SIP_DialogList*, Packet*, SIP_PROTO_CONF*);
-static int SIP_processInvite(SIPMsg*, SIP_DialogData*, SIP_DialogList*);
-static int SIP_processACK(SIPMsg*, SIP_DialogData*, SIP_DialogList*, Packet*, SIP_PROTO_CONF*);
-static int SIP_processResponse(SIPMsg*, SIP_DialogData*, SIP_DialogList*, Packet*,
-    SIP_PROTO_CONF*);
-static int SIP_ignoreChannels(SIP_DialogData*, Packet* p, SIP_PROTO_CONF*);
-static SIP_DialogData* SIP_addDialog(SIPMsg*, SIP_DialogData*, SIP_DialogList*);
+static bool SIP_checkMediaChange(const SIPMsg&, const SIP_DialogData*);
+static int SIP_processInvite(const SIPMsg&, SIP_DialogData*, SIP_DialogList*);
+static int SIP_processACK(SIPMsg&, SIP_DialogData*, SIP_DialogList*, Packet*, SIP_PROTO_CONF*);
+static int SIP_ignoreChannels(const SIP_DialogData&, Packet* p, SIP_PROTO_CONF*);
+static SIP_DialogData* SIP_addDialog(const SIPMsg&, SIP_DialogData*, SIP_DialogList*);
 static int SIP_deleteDialog(SIP_DialogData*, SIP_DialogList*);
 
 /********************************************************************
@@ -57,7 +54,7 @@ static int SIP_deleteDialog(SIP_DialogData*, SIP_DialogList*);
  *  Based on the new received sip request message, update the dialog information.
  *  Note: dialog is created through dialog
  * Arguments:
- *  SIPMsg *        - sip request message
+ *  SIPMsg &        - sip request message
  *  SIP_DialogData* - dialog to be updated,
  *  Packet*  - the packet
  *
@@ -65,23 +62,21 @@ static int SIP_deleteDialog(SIP_DialogData*, SIP_DialogList*);
  *  true: request message has been processed correctly
  *  false: request message has not been processed correctly
  ********************************************************************/
-static int SIP_processRequest(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogList* dList,
+static int SIP_processRequest(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_DialogList* dList,
     Packet* p, SIP_PROTO_CONF* config)
 {
     SIPMethodsFlag methodFlag;
     int ret = true;
 
-    assert (nullptr != sipMsg);
-
     /*If dialog not exist, create one */
-    if ((nullptr == dialog)&&(SIP_METHOD_CANCEL != sipMsg->methodFlag))
+    if ((nullptr == dialog) && (SIP_METHOD_CANCEL != sipMsg.methodFlag))
     {
         // Clang analyzer is false positive, dlist->head is updated after free
         // (Use of memory after it is freed)
         dialog = SIP_addDialog(sipMsg, dList->head, dList); // ... FIXIT-W
     }
 
-    methodFlag = sipMsg->methodFlag;
+    methodFlag = sipMsg.methodFlag;
 
     sip_stats.requests[TOTAL_REQUESTS]++;
     if (methodFlag > 0 && methodFlag < NUM_OF_REQUEST_TYPES)
@@ -131,14 +126,14 @@ static int SIP_processRequest(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialog
  *  Based on the new received sip invite request message, update the dialog information.
  *  Note: dialog is created through dialog
  * Arguments:
- *  SIPMsg *        - sip request message
+ *  SIPMsg &        - sip request message
  *  SIP_DialogData* - dialog to be updated,
  *   SIP_DialogList*- dialog list
  * Returns:
  *  true:
  *  false:
  ********************************************************************/
-static int SIP_processInvite(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogList* dList)
+static int SIP_processInvite(const SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_DialogList* dList)
 {
     bool ret = true;
 
@@ -147,7 +142,7 @@ static int SIP_processInvite(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogL
 
     /*Check for the invite replay attack: authenticated invite without challenge*/
     // check whether this invite has authorization information
-    if ((SIP_DLG_AUTHENCATING != dialog->state) && (nullptr != sipMsg->authorization))
+    if ((SIP_DLG_AUTHENCATING != dialog->state) && (nullptr != sipMsg.authorization))
     {
         DetectionEngine::queue_event(GID_SIP, SIP_EVENT_AUTH_INVITE_REPLAY_ATTACK);
         return false;
@@ -167,11 +162,11 @@ static int SIP_processInvite(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogL
         ret = SIP_checkMediaChange(sipMsg, dialog);
         if (false == ret)
             DetectionEngine::queue_event(GID_SIP, SIP_EVENT_AUTH_INVITE_DIFF_SESSION);
-        SIP_updateMedias(sipMsg->mediaSession, &dialog->mediaSessions);
+        SIP_updateMedias(sipMsg.mediaSession, dialog->mediaSessions);
     }
     else if (SIP_DLG_TERMINATED == dialog->state)
     {
-        SIP_updateMedias(sipMsg->mediaSession, &dialog->mediaSessions);
+        SIP_updateMedias(sipMsg.mediaSession, dialog->mediaSessions);
     }
     dialog->state = SIP_DLG_INVITING;
     return ret;
@@ -182,16 +177,8 @@ static int SIP_processInvite(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogL
  *
  *  Based on the new received sip ACK request message, update the dialog information.
  *  Note: dialog is created through dialog
- * Arguments:
- *  SIPMsg *        - sip request message
- *  SIP_DialogData* - dialog to be updated,
- *  SIP_DialogList* - dialog list
- *  Packet*  - the packet
- * Returns:
- *  true:
- *  false:
  ********************************************************************/
-static int SIP_processACK(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogList*, Packet* p,
+static int SIP_processACK(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_DialogList*, Packet* p,
     SIP_PROTO_CONF* config)
 {
     if (nullptr == dialog)
@@ -199,12 +186,11 @@ static int SIP_processACK(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogList
 
     if (SIP_DLG_ESTABLISHED == dialog->state)
     {
-        if ((SIP_METHOD_INVITE == dialog->creator)&&(SIP_checkMediaChange(sipMsg, dialog) ==
-            false))
+        if ((SIP_METHOD_INVITE == dialog->creator) && !SIP_checkMediaChange(sipMsg, dialog))
         {
-            SIP_updateMedias(sipMsg->mediaSession, &dialog->mediaSessions);
-            SIP_ignoreChannels(dialog, p, config);
-            sipMsg->mediaUpdated = true;
+            SIP_updateMedias(sipMsg.mediaSession, dialog->mediaSessions);
+            SIP_ignoreChannels(*dialog, p, config);
+            sipMsg.mediaUpdated = true;
         }
     }
     return true;
@@ -216,7 +202,7 @@ static int SIP_processACK(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogList
  *  Based on the new received sip response message, update the dialog information.
  *
  * Arguments:
- *  SIPMsg *        - sip response message
+ *  SIPMsg &        - sip response message
  *  SIP_DialogData* - dialog to be updated,
  *  Packet*  - the packet
  *
@@ -224,15 +210,13 @@ static int SIP_processACK(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogList
  *  true:
  *  false:
  ********************************************************************/
-static int SIP_processResponse(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_DialogList* dList,
+static int SIP_processResponse(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_DialogList* dList,
     Packet* p, SIP_PROTO_CONF* config)
 {
     int statusType;
     SIP_DialogData* currDialog = dialog;
 
-    assert (nullptr != sipMsg);
-
-    statusType = sipMsg->status_code / 100;
+    statusType = sipMsg.status_code / 100;
     sip_stats.responses[TOTAL_RESPONSES]++;
     if (statusType < NUM_OF_RESPONSE_TYPES)
         sip_stats.responses[statusType]++;
@@ -240,8 +224,8 @@ static int SIP_processResponse(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialo
     if (nullptr == dialog)
         return false;
 
-    if (sipMsg->status_code > 0)
-        dialog->status_code = sipMsg->status_code;
+    if (sipMsg.status_code > 0)
+        dialog->status_code = sipMsg.status_code;
 
     switch (statusType)
     {
@@ -256,9 +240,9 @@ static int SIP_processResponse(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialo
         // media session
         if ( !SIP_checkMediaChange(sipMsg, dialog) )
         {
-            SIP_updateMedias(sipMsg->mediaSession, &dialog->mediaSessions);
-            SIP_ignoreChannels(currDialog, p,config);
-            sipMsg->mediaUpdated = true;
+            SIP_updateMedias(sipMsg.mediaSession, dialog->mediaSessions);
+            SIP_ignoreChannels(*currDialog, p,config);
+            sipMsg.mediaUpdated = true;
         }
         break;
     case RESPONSE2XX:
@@ -268,9 +252,9 @@ static int SIP_processResponse(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialo
             SIP_deleteDialog(currDialog->nextD, dList);
             if (SIP_checkMediaChange(sipMsg, dialog) == false)
             {
-                SIP_updateMedias(sipMsg->mediaSession, &dialog->mediaSessions);
-                SIP_ignoreChannels(currDialog, p, config);
-                sipMsg->mediaUpdated = true;
+                SIP_updateMedias(sipMsg.mediaSession, dialog->mediaSessions);
+                SIP_ignoreChannels(*currDialog, p, config);
+                sipMsg.mediaUpdated = true;
             }
             currDialog->state = SIP_DLG_ESTABLISHED;
         }
@@ -284,9 +268,9 @@ static int SIP_processResponse(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialo
             if ((SIP_METHOD_INVITE == currDialog->creator)&&
                 (SIP_checkMediaChange(sipMsg, dialog) == false))
             {
-                SIP_updateMedias(sipMsg->mediaSession, &dialog->mediaSessions);
-                SIP_ignoreChannels(currDialog, p, config);
-                sipMsg->mediaUpdated = true;
+                SIP_updateMedias(sipMsg.mediaSession, dialog->mediaSessions);
+                SIP_ignoreChannels(*currDialog, p, config);
+                sipMsg.mediaUpdated = true;
             }
             currDialog->state = SIP_DLG_ESTABLISHED;
         }
@@ -297,7 +281,7 @@ static int SIP_processResponse(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialo
     case RESPONSE6XX:
 
         // If authentication is required
-        if ((401 == sipMsg->status_code) || (407 == sipMsg->status_code))
+        if ((401 == sipMsg.status_code) || (407 == sipMsg.status_code))
         {
             currDialog->state = SIP_DLG_AUTHENCATING;
         }
@@ -324,25 +308,25 @@ static int SIP_processResponse(SIPMsg* sipMsg, SIP_DialogData* dialog, SIP_Dialo
  *  Based on the new received sip invite request message, check whether SDP has been changed
  *
  * Arguments:
- *  SIPMsg *        - sip request message
+ *  SIPMsg &        - sip request message
  *  SIP_DialogData* - dialog to be updated,
  *
  * Returns:
  *  true: media not changed
  *  false: media changed
  ********************************************************************/
-static bool SIP_checkMediaChange(const SIPMsg* sipMsg, const SIP_DialogData* dialog)
+static bool SIP_checkMediaChange(const SIPMsg& sipMsg, const SIP_DialogData* dialog)
 {
     const SIP_MediaSession* medias;
 
     // Compare the medias (SDP part)
-    if (nullptr == sipMsg->mediaSession)
+    if (nullptr == sipMsg.mediaSession)
         return true;
 
     medias = dialog->mediaSessions;
     while (nullptr != medias)
     {
-        if (sipMsg->mediaSession->sessionID == medias->sessionID)
+        if (sipMsg.mediaSession->sessionID == medias->sessionID)
             break;
         medias = medias->nextS;
     }
@@ -353,7 +337,7 @@ static bool SIP_checkMediaChange(const SIPMsg* sipMsg, const SIP_DialogData* dia
         return false;
     }
     // The media content has been changed
-    if (0 != SIP_compareMedias(medias->medias, sipMsg->mediaSession->medias))
+    if (0 != SIP_compareMedias(medias->medias, sipMsg.mediaSession->medias))
         return false;
 
     return true;
@@ -366,7 +350,7 @@ static bool SIP_checkMediaChange(const SIPMsg* sipMsg, const SIP_DialogData* dia
  * sessions, one from each side of conversation
  *
  * Arguments:
- *  SIP_DialogData * - the current dialog
+ *  SIP_DialogData & - the current dialog
  *
  *
  * Returns:
@@ -374,23 +358,21 @@ static bool SIP_checkMediaChange(const SIPMsg* sipMsg, const SIP_DialogData* dia
  *   false: the channel has not been ignored
  *
  ********************************************************************/
-static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF* config)
+static int SIP_ignoreChannels(const SIP_DialogData& dialog, Packet* p, SIP_PROTO_CONF* config)
 {
-    SIP_MediaData* mdataA,* mdataB;
-
     if (0 == config->ignoreChannel)
         return false;
 
     // check the first media session
-    if (nullptr == dialog->mediaSessions)
+    if (nullptr == dialog.mediaSessions)
         return false;
 
     // check the second media session
-    if (nullptr == dialog->mediaSessions->nextS)
+    if (nullptr == dialog.mediaSessions->nextS)
         return false;
 
-    mdataA = dialog->mediaSessions->medias;
-    mdataB = dialog->mediaSessions->nextS->medias;
+    SIP_MediaData* mdataA = dialog.mediaSessions->medias;
+    SIP_MediaData* mdataB = dialog.mediaSessions->nextS->medias;
     sip_stats.ignoreSessions++;
     while ((nullptr != mdataA)&&(nullptr != mdataB))
     {
@@ -424,7 +406,7 @@ static int SIP_ignoreChannels(SIP_DialogData* dialog, Packet* p, SIP_PROTO_CONF*
  * Compare two media list
  *
  * Arguments:
- *  SIPMsg * - the message used to create a dialog
+ *  SIPMsg & - the message used to create a dialog
  *  SIP_DialogData * - the current dialog location
  *  SIP_DialogList * - the dialogs to be added.
  *
@@ -462,21 +444,20 @@ static int SIP_compareMedias(const SIP_MediaDataList mlistA, const SIP_MediaData
  *
  * Arguments:
  *  SIP_MediaSession*  - media session
- *  SIP_MediaList*     - media session list to be updated,
+ *  SIP_MediaList&     - media session list to be updated,
  *
  * Returns:
  *
  ********************************************************************/
-static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList* dList)
+static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList& dList)
 {
-    SIP_MediaSession* currSession, * preSession = nullptr;
-
     if (nullptr == mSession)
         return;
 
     mSession->savedFlag = SIP_SESSION_SAVED;
     // Find out the media session based on session id
-    currSession = *dList;
+    SIP_MediaSession* currSession = dList;
+    SIP_MediaSession* preSession = nullptr;
     while (nullptr != currSession)
     {
         if (currSession->sessionID == mSession->sessionID)
@@ -488,8 +469,8 @@ static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList* dList)
     // if this is a new session data, add to the list head
     if (nullptr == currSession)
     {
-        mSession->nextS = *dList;
-        *dList = mSession;
+        mSession->nextS = dList;
+        dList = mSession;
     }
     else
     {
@@ -497,7 +478,7 @@ static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList* dList)
         mSession->nextS = currSession->nextS;
         // if this is the header, update the new header
         if (nullptr == preSession)
-            *dList = mSession;
+            dList = mSession;
         else
             preSession->nextS = mSession;
 
@@ -513,7 +494,7 @@ static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList* dList)
  * Add a sip dialog before the current dialog
  *
  * Arguments:
- *  SIPMsg * - the message used to create a dialog
+ *  SIPMsg & - the message used to create a dialog
  *  SIP_DialogData * - the current dialog location
  *  SIP_DialogList * - the dialogs to be added.
  *
@@ -521,13 +502,11 @@ static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList* dList)
  * Returns: None
  *
  ********************************************************************/
-static SIP_DialogData* SIP_addDialog(SIPMsg* sipMsg, SIP_DialogData* currDialog,
+static SIP_DialogData* SIP_addDialog(const SIPMsg& sipMsg, SIP_DialogData* currDialog,
     SIP_DialogList* dList)
 {
-    SIP_DialogData* dialog;
-
     sip_stats.dialogs++;
-    dialog = (SIP_DialogData*)snort_calloc(sizeof(SIP_DialogData));
+    SIP_DialogData* dialog = (SIP_DialogData*)snort_calloc(sizeof(SIP_DialogData));
 
     // Add to the head
     dialog->nextD = currDialog;
@@ -546,11 +525,11 @@ static SIP_DialogData* SIP_addDialog(SIPMsg* sipMsg, SIP_DialogData* currDialog,
         dialog->prevD = nullptr;
         dList->head = dialog;
     }
-    dialog->dlgID = sipMsg->dlgID;
-    dialog->creator = sipMsg->methodFlag;
+    dialog->dlgID = sipMsg.dlgID;
+    dialog->creator = sipMsg.methodFlag;
     dialog->state = SIP_DLG_CREATE;
 
-    SIP_updateMedias(sipMsg->mediaSession, &dialog->mediaSessions);
+    SIP_updateMedias(sipMsg.mediaSession, dialog->mediaSessions);
     dList->num_dialogs++;
     return dialog;
 }
@@ -573,7 +552,7 @@ static int SIP_deleteDialog(SIP_DialogData* currDialog, SIP_DialogList* dList)
         return false;
 
     // If this is the header
-    if (nullptr ==  currDialog->prevD)
+    if (nullptr == currDialog->prevD)
     {
         if (nullptr != currDialog->nextD)
             currDialog->nextD->prevD = nullptr;
@@ -595,7 +574,7 @@ static int SIP_deleteDialog(SIP_DialogData* currDialog, SIP_DialogList* dList)
 }
 
 static void sip_publish_data_bus(
-    const Packet* p, const SIPMsg* sip_msg, const SIP_DialogData* dialog)
+    const Packet* p, const SIPMsg& sip_msg, const SIP_DialogData* dialog)
 {
     SipEvent event(p, sip_msg, dialog);
     DataBus::publish(SIPData::pub_id, SipEventIds::DIALOG, event, p->flow);
@@ -608,29 +587,28 @@ static void sip_publish_data_bus(
  *  If not in the current list, created one and add it to the head.
  *
  * Arguments:
- *  SIPMsg *        - sip message
+ *  SIPMsg &        - sip message
  *  SIP_DialogList* - dialog list to be updated,
  *
  * Returns:
  *  true: dialog has been updated
  *  false: dialog has not been updated
  ********************************************************************/
-int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO_CONF* config)
+int SIP_updateDialog(SIPMsg& sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO_CONF* config)
 {
-    SIP_DialogData* dialog;
     SIP_DialogData* oldDialog = nullptr;
     int ret;
 
-    if ((nullptr == sipMsg)||(0 == sipMsg->dlgID.callIdHash))
+    if (0 == sipMsg.dlgID.callIdHash)
         return false;
 
-    dialog = dList->head;
+    SIP_DialogData* dialog = dList->head;
 
     /*Find out the dialog in the dialog list*/
 
     while (nullptr != dialog)
     {
-        if (sipMsg->dlgID.callIdHash == dialog->dlgID.callIdHash)
+        if (sipMsg.dlgID.callIdHash == dialog->dlgID.callIdHash)
             break;
 
         oldDialog = dialog;
@@ -646,16 +624,14 @@ int SIP_updateDialog(SIPMsg* sipMsg, SIP_DialogList* dList, Packet* p, SIP_PROTO
 
     /*Update the  dialog information*/
 
-    if (sipMsg->status_code == 0)
+    if (sipMsg.status_code == 0)
         ret = SIP_processRequest(sipMsg, dialog, dList, p, config);
-    else if (sipMsg->status_code > 0)
-        ret = SIP_processResponse(sipMsg, dialog, dList, p, config);
     else
-        ret = false;
+        ret = SIP_processResponse(sipMsg, dialog, dList, p, config);
 
     for (dialog = dList->head; dialog; dialog = dialog->nextD)
     {
-        if (sipMsg->dlgID.callIdHash == dialog->dlgID.callIdHash)
+        if (sipMsg.dlgID.callIdHash == dialog->dlgID.callIdHash)
             break;
     }
     sip_publish_data_bus(p, sipMsg, dialog);

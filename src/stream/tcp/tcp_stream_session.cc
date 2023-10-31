@@ -109,7 +109,7 @@ void TcpStreamSession::disable_reassembly(Flow* f)
     server.finalize_held_packet(f);
 }
 
-uint8_t TcpStreamSession::get_reassembly_direction()
+uint8_t TcpStreamSession::get_reassembly_direction() const
 {
     uint8_t dir = SSN_DIR_NONE;
 
@@ -122,7 +122,7 @@ uint8_t TcpStreamSession::get_reassembly_direction()
     return dir;
 }
 
-bool TcpStreamSession::is_sequenced(uint8_t dir)
+bool TcpStreamSession::is_sequenced(uint8_t dir) const
 {
     if ( dir & SSN_DIR_FROM_CLIENT )
     {
@@ -141,7 +141,7 @@ bool TcpStreamSession::is_sequenced(uint8_t dir)
 
 /* This will falsely return SSN_MISSING_BEFORE on the first reassembled
  * packet if reassembly for this direction was set mid-session */
-uint8_t TcpStreamSession::missing_in_reassembled(uint8_t dir)
+uint8_t TcpStreamSession::missing_in_reassembled(uint8_t dir) const
 {
     if ( dir & SSN_DIR_FROM_CLIENT )
     {
@@ -167,7 +167,7 @@ uint8_t TcpStreamSession::missing_in_reassembled(uint8_t dir)
     return SSN_MISSING_NONE;
 }
 
-bool TcpStreamSession::are_packets_missing(uint8_t dir)
+bool TcpStreamSession::are_packets_missing(uint8_t dir) const
 {
     if ( dir & SSN_DIR_FROM_CLIENT )
     {
@@ -184,7 +184,7 @@ bool TcpStreamSession::are_packets_missing(uint8_t dir)
     return false;
 }
 
-bool TcpStreamSession::are_client_segments_queued()
+bool TcpStreamSession::are_client_segments_queued() const
 {
     return client.reassembler.is_segment_pending_flush();
 }

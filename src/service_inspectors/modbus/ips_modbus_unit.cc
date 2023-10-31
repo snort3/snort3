@@ -77,7 +77,7 @@ bool ModbusUnitOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ModbusUnitOption::eval(Cursor&, Packet* p)
 {
-    RuleProfile profile(modbus_unit_prof);
+    RuleProfile profile(modbus_unit_prof);  // cppcheck-suppress unreadVariable
 
     if ( !p->flow )
         return NO_MATCH;
@@ -123,7 +123,7 @@ public:
     { return DETECT; }
 
 public:
-    uint8_t unit;
+    uint8_t unit = 0;
 };
 
 bool ModbusUnitModule::set(const char*, Value& v, SnortConfig*)

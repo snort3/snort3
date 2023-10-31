@@ -46,13 +46,13 @@ static const PegInfo host_attribute_pegs[] =
 };
 
 template<typename Key, typename Value, typename Hash>
-class HostLruSegmentedCache : public SegmentedLruCache<Key, Value, Hash> 
+class HostLruSegmentedCache : public SegmentedLruCache<Key, Value, Hash>
 {
 public:
 
     HostLruSegmentedCache(const size_t initial_size, std::size_t seg_count = DEFAULT_SEGMENT_COUNT)
         : SegmentedLruCache<Key, Value, Hash>(initial_size, seg_count)
-      { } 
+      { }
 };
 
 typedef HostLruSegmentedCache<snort::SfIp, HostAttributesDescriptor, HostAttributesCacheKey> HostAttributesSegmentedCache;
@@ -87,18 +87,18 @@ bool HostAttributesDescriptor::update_service
 {
     std::lock_guard<std::mutex> lck(host_attributes_lock);
 
-    for ( auto& s : services)
+    auto it = std::find_if(services.begin(), services.end(),
+        [port, protocol](const HostServiceDescriptor& s){ return s.ipproto == protocol && s.port == port; });
+    if (it != services.cend())
     {
-        if ( s.ipproto == protocol && (uint16_t)s.port == port )
+        HostServiceDescriptor& s = *it;
+        if ( s.snort_protocol_id != snort_protocol_id )
         {
-            if ( s.snort_protocol_id != snort_protocol_id )
-            {
-                s.snort_protocol_id = snort_protocol_id;
-                s.appid_service = is_appid_service;
-            }
-            updated = true;
-            return true;
+            s.snort_protocol_id = snort_protocol_id;
+            s.appid_service = is_appid_service;
         }
+        updated = true;
+        return true;
     }
 
     // service not found, add it
@@ -130,14 +130,10 @@ void HostAttributesDescriptor::get_host_attributes(uint16_t port,HostAttriInfo* 
     host_info->frag_policy = policies.fragPolicy;
     host_info->stream_policy = policies.streamPolicy;
     host_info->snort_protocol_id = UNKNOWN_PROTOCOL_ID;
-    for ( auto& s : services )
-    {
-        if ( s.port == port )
-        {
-            host_info->snort_protocol_id = s.snort_protocol_id;
-            return;
-        }
-    }
+    auto it = std::find_if(services.cbegin(), services.cend(),
+        [port](const HostServiceDescriptor &s){ return s.port == port; });
+    if (it != services.cend())
+        host_info->snort_protocol_id = (*it).snort_protocol_id;
 }
 bool HostAttributesManager::load_hosts_file(snort::SnortConfig* sc, const char* fname)
 {
@@ -262,7 +258,7 @@ PegCount* HostAttributesManager::get_peg_counts()
 {
     if ( active_cache )
     {
-        LruCacheSharedStats* cache_stats = (LruCacheSharedStats*) active_cache->get_counts();
+        const LruCacheSharedStats* cache_stats = (const LruCacheSharedStats*) active_cache->get_counts();
         host_attribute_stats.hosts_pruned = cache_stats->alloc_prunes;
         host_attribute_stats.total_hosts = active_cache->size();
     }

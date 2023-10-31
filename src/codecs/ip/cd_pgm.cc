@@ -66,18 +66,27 @@ struct PGM_NAK_OPT
 {
     uint8_t type;     /* 02 = vuln */
     uint8_t len;
+    // cppcheck-suppress unusedStructMember
     uint8_t res[2];
+    // cppcheck-suppress unusedStructMember
     uint32_t seq[1];    /* could be many many more, but 1 is sufficient */
 };
 
 struct PGM_NAK
 {
+    // cppcheck-suppress unusedStructMember
     uint32_t seqnum;
+    // cppcheck-suppress unusedStructMember
     uint16_t afil1;
+    // cppcheck-suppress unusedStructMember
     uint16_t res1;
+    // cppcheck-suppress unusedStructMember
     uint32_t src;
+    // cppcheck-suppress unusedStructMember
     uint16_t afi2;
+    // cppcheck-suppress unusedStructMember
     uint16_t res2;
+    // cppcheck-suppress unusedStructMember
     uint32_t multi;
     PGM_NAK_OPT opt;
 };

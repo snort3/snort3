@@ -41,8 +41,8 @@ struct ObfuscatorBlock
     // Used for iterations
     ObfuscatorBlock() = default;
 
-    uint32_t offset;
-    size_t length;
+    uint32_t offset = 0;
+    size_t length = 0;
 };
 
 class SO_PUBLIC Obfuscator

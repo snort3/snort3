@@ -287,21 +287,12 @@ IpsOption::EvalStatus FlowBitsOption::eval(Cursor&, Packet* p)
 
 bool FlowBitsOption::is_set(BitOp* bitop)
 {
-    if ( !config->or_bits )
-    {
-        for ( auto id : config->ids )
-        {
-            if ( !bitop->is_set(id) )
-                return false;
-        }
-        return true;
-    }
-    for ( auto id : config->ids )
-    {
-        if ( bitop->is_set(id) )
-            return true;
-    }
-    return false;
+    return config->or_bits ?
+        std::any_of(config->ids.cbegin(), config->ids.cend(),
+            [&bitop](uint16_t id){ return !bitop->is_set(id); })
+        :
+        std::none_of(config->ids.cbegin(), config->ids.cend(),
+            [&bitop](uint16_t id){ return !bitop->is_set(id); });
 }
 
 void FlowBitsOption::get_dependencies(bool& set, std::vector<std::string>& bits)

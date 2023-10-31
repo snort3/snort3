@@ -252,7 +252,6 @@ bool MimeSession::process_header_line(const uint8_t*& ptr, const uint8_t* eol, c
     const uint8_t* header_value_ptr = nullptr;
     int max_header_name_len = 0;
 
-    int header_found;
     /* got a line with only end of line marker should signify end of header */
     if (eolm == ptr)
     {
@@ -315,7 +314,7 @@ bool MimeSession::process_header_line(const uint8_t*& ptr, const uint8_t* eol, c
         if (tolower((int)*ptr) == 'c')
         {
             mime_current_search = &mime_hdr_search[0];
-            header_found = mime_hdr_search_mpse->find(
+            int header_found = mime_hdr_search_mpse->find(
                 (const char*)ptr, eolm - ptr, search_str_found, true);
 
             /* Headers must start at beginning of line */

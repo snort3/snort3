@@ -52,10 +52,7 @@ Packet::Packet(bool packet_data)
         pkt = new uint8_t[Codec::PKT_MAX];
     }
 
-    obfuscator = nullptr;
-    endianness = nullptr;
     active_inst = new Active();
-    action_inst = nullptr;
     reset();
 }
 

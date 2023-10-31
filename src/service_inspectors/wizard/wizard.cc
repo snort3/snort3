@@ -189,7 +189,7 @@ StreamSplitter::Status MagicSplitter::scan(
     Packet* pkt, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t*)
 {
-    Profile profile(wizPerfStats);
+    Profile profile(wizPerfStats);  // cppcheck-suppress unreadVariable
     count_scan(pkt->flow);
 
     bytes_scanned += len;
@@ -293,7 +293,7 @@ void Wizard::reset(Wand& w, bool c2s, MagicBook::ArcaneType proto)
 
 void Wizard::eval(Packet* p)
 {
-    Profile profile(wizPerfStats);
+    Profile profile(wizPerfStats);  // cppcheck-suppress unreadVariable
 
     if ( !p->is_udp() )
         return;

@@ -51,7 +51,7 @@ struct DetectorPackageInfo
     std::string validateFunctionName;
     int minimum_matches = 0;
     std::string name = "NoName";
-    IpProtocol proto;
+    IpProtocol proto = IpProtocol::PROTO_NOT_SET;
 };
 
 struct LuaDetectorParameters
@@ -69,7 +69,7 @@ struct LuaDetectorParameters
     const uint8_t* data = nullptr;
     uint16_t size = 0;
     AppidSessionDirection dir = APP_ID_FROM_INITIATOR;
-    AppIdSession* asd;
+    AppIdSession* asd = nullptr;
     AppidChangeBits* change_bits = nullptr;
     const snort::Packet* pkt = nullptr;
 };

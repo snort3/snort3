@@ -39,19 +39,6 @@
 
 using namespace snort;
 
-UtfDecodeSession::UtfDecodeSession()
-{
-    init_decode_utf_state();
-}
-
-/* init a new decode_utf_state_t */
-void UtfDecodeSession::init_decode_utf_state()
-{
-    dstate.state = DSTATE_FIRST;
-    dstate.charset = CHARSET_DEFAULT;
-    dstate.charset_src = CHARSET_SET_BY_GUESS;
-}
-
 /* setters & getters */
 void UtfDecodeSession::set_decode_utf_state_charset(CharsetCode charset, CharsetSrc src)
 {

@@ -50,7 +50,7 @@ ContextSwitcher::~ContextSwitcher()
 {
     abort();
 
-    for ( auto* p : contexts )
+    for ( const auto* p : contexts )
         delete p;
 }
 

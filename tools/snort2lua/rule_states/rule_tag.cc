@@ -40,7 +40,6 @@ bool Tag::convert(std::istringstream& data_stream)
 {
     std::string args;
     std::string value;
-    std::string type;
 
     args = util::get_rule_option_args(data_stream);
     std::istringstream arg_stream(args);
@@ -112,6 +111,7 @@ bool Tag::convert(std::istringstream& data_stream)
             cnt = !cnt;
         }
 
+        std::string type;
         if (is_host)
         {
             if (value == "src")

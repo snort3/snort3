@@ -49,7 +49,6 @@ void Resp::add_diff_comment(const std::string& old_v, const std::string& new_v)
 bool Resp::convert(std::istringstream& data_stream)
 {
     std::string args;
-    std::string tmp;
     std::streamoff pos = data_stream.tellg();
 
     args = util::get_rule_option_args(data_stream);
@@ -68,6 +67,7 @@ bool Resp::convert(std::istringstream& data_stream)
         {
             // since we still can't be sure if we passed the resp buffer,
             // check the next option and ensure it matches
+            std::string tmp;
             std::istringstream arg_stream(args);
             if (util::get_string(arg_stream, tmp, ",") &&
                 (tmp == "reset_dest" ||

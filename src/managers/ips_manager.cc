@@ -66,7 +66,7 @@ void IpsManager::add_plugin(const IpsApi* api)
 
 void IpsManager::release_plugins()
 {
-    for ( auto& p : s_options )
+    for ( const auto& p : s_options )
         delete p.second;
 
     s_options.clear();
@@ -337,7 +337,7 @@ void IpsManager::global_init(const SnortConfig*)
 
 void IpsManager::global_term(const SnortConfig* sc)
 {
-    for ( auto& p : s_options )
+    for ( const auto& p : s_options )
         if ( p.second->init && p.second->api->pterm )
         {
             p.second->api->pterm(sc);
@@ -347,27 +347,27 @@ void IpsManager::global_term(const SnortConfig* sc)
 
 void IpsManager::reset_options()
 {
-    for ( auto& p : s_options )
+    for ( const auto& p : s_options )
         p.second->count = 0;
 }
 
 void IpsManager::setup_options(const SnortConfig* sc)
 {
-    for ( auto& p : s_options )
+    for ( const auto& p : s_options )
         if ( p.second->init && p.second->api->tinit )
             p.second->api->tinit(sc);
 }
 
 void IpsManager::clear_options(const SnortConfig* sc)
 {
-    for ( auto& p : s_options )
+    for ( const auto& p : s_options )
         if ( p.second->init && p.second->api->tterm )
             p.second->api->tterm(sc);
 }
 
 bool IpsManager::verify(SnortConfig* sc)
 {
-    for ( auto& p : s_options )
+    for ( const auto& p : s_options )
         if ( p.second->init && p.second->api->verify )
             p.second->api->verify(sc);
 

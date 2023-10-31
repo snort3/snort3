@@ -58,12 +58,8 @@ Inspector::Inspector()
 
 Inspector::~Inspector()
 {
-    unsigned total = 0;
-
     for (unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
-        total += ref_count[i];
-
-    assert(!total);
+        assert(0 == ref_count[i]);
 
     delete[] ref_count;
 }

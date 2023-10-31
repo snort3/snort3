@@ -81,10 +81,10 @@ static const ReferenceSystem* reference_system_lookup(SnortConfig* sc, const std
 void add_reference(
     SnortConfig* sc, OptTreeNode* otn, const std::string& system, const std::string& id)
 {
+    assert(sc and otn and !system.empty() and !id.empty());
+
     if ( !sc->alert_refs() )
         return;
-
-    assert(sc and otn and !system.empty() and !id.empty());
 
     const ReferenceSystem* sys = reference_system_lookup(sc, system);
 
@@ -331,7 +331,7 @@ static void dump_services(JsonStream& json, const SigInfo& si)
     json.close_array();
 }
 
-static void dump_bits(JsonStream& json, const char* key, std::vector<std::string>& bits)
+static void dump_bits(JsonStream& json, const char* key, const std::vector<std::string>& bits)
 {
     if ( bits.empty() )
         return;

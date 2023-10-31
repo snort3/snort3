@@ -210,7 +210,7 @@ public:
     uint32_t get_data();
 
 private:
-    uint32_t flags;
+    uint32_t flags = 0;
 };
 
 bool RejectModule::begin(const char*, int, SnortConfig*)

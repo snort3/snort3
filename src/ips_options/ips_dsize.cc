@@ -37,9 +37,8 @@ static THREAD_LOCAL ProfileStats dsizePerfStats;
 class DsizeOption : public IpsOption
 {
 public:
-    DsizeOption(const RangeCheck& c) :
-        IpsOption(s_name)
-    { config = c; }
+    DsizeOption(const RangeCheck& c) : IpsOption(s_name), config(c)
+    { }
 
 
     uint32_t hash() const override;
@@ -78,6 +77,7 @@ bool DsizeOption::operator==(const IpsOption& ips) const
 // Test the packet's payload size against the rule payload size value
 IpsOption::EvalStatus DsizeOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(dsizePerfStats);
 
     /* fake packet dsizes are always wrong

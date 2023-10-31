@@ -198,7 +198,7 @@ class DirectoryList
 {
 public:
     std::unordered_map<char*, FileProperty*> oleentry;
-    snort::UtfDecodeSession* utf_state;
+    snort::UtfDecodeSession* utf_state = nullptr;
 
     bool is_file_exists(char* name);
     FileProperty* get_file_node(char* name);
@@ -214,16 +214,12 @@ public:
         return mini_stream_sector;
     }
 
-    DirectoryList()
-    {
-        utf_state = nullptr;
-        mini_stream_sector = -1;
-    }
+    DirectoryList() = default;
 
     ~DirectoryList();
 
 private:
-    int32_t mini_stream_sector;
+    int32_t mini_stream_sector = -1;
 };
 
 class OleFile

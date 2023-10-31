@@ -85,9 +85,9 @@ protected:
     // non-static variable
     FILE* log_fh = stdout;
     std::vector<bool> mutes;
-    char buffer[max_buff_size];
+    char buffer[max_buff_size] = {0};
     unsigned buff_len = 0;
-    char daq_buffer[max_buff_size];
+    char daq_buffer[max_buff_size] = {0};
     unsigned daq_buff_len = 0;
 
     unsigned pause_count = 0;
@@ -96,7 +96,7 @@ protected:
     bool shell_enabled = false;
     bool active = false;
 
-    char debug_session[PT_DEBUG_SESSION_ID_SIZE];
+    char debug_session[PT_DEBUG_SESSION_ID_SIZE] = {0};
     PacketConstraints constraints;
 
     // static functions

@@ -51,9 +51,9 @@ enum CharsetSrc
 // state between subsequent calls.
 struct decode_utf_state_t
 {
-    int state;
-    CharsetCode charset;
-    CharsetSrc charset_src;
+    int state = 0;
+    CharsetCode charset = CHARSET_DEFAULT;
+    CharsetSrc charset_src = CHARSET_SET_BY_GUESS;
 };
 
 namespace snort
@@ -61,9 +61,8 @@ namespace snort
 class SO_PUBLIC UtfDecodeSession
 {
 public:
-    UtfDecodeSession();
+    UtfDecodeSession() = default;
     virtual ~UtfDecodeSession() = default;
-    void init_decode_utf_state();
     void set_decode_utf_state_charset(CharsetCode charset, CharsetSrc src = CHARSET_SET_BY_APP);
     CharsetCode get_decode_utf_state_charset();
     CharsetSrc get_decode_utf_charset_src();

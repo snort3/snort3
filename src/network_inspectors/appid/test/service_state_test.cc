@@ -30,7 +30,12 @@
 
 namespace snort
 {
-Packet::Packet(bool) { }
+Packet::Packet(bool)
+{
+    memset((char*) this , 0, sizeof(*this));
+    ip_proto_next = IpProtocol::PROTO_NOT_SET;
+    packet_flags = PKT_FROM_CLIENT;
+}
 Packet::~Packet() = default;
 Packet* DetectionEngine::get_current_packet() { return nullptr; }
 
@@ -78,7 +83,8 @@ AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId)
 
 // Stubs for appid classes
 class AppIdInspector{};
-FlowData::FlowData(unsigned, Inspector*) {}
+FlowData::FlowData(unsigned, Inspector*) : next(nullptr), prev(nullptr), handler(nullptr), id(0)
+{ }
 FlowData::~FlowData() = default;
 
 // Stubs for AppIdDebug

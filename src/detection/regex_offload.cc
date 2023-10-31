@@ -90,7 +90,7 @@ RegexOffload::~RegexOffload()
 {
     assert(busy.empty());
 
-    for ( auto* req : idle )
+    for ( const auto* req : idle )
         delete req;
 }
 
@@ -99,14 +99,9 @@ void RegexOffload::stop()
     assert(busy.empty());
 }
 
-bool RegexOffload::on_hold(Flow* f) const
+bool RegexOffload::on_hold(const Flow* f) const
 {
-    for ( auto* req : busy )
-    {
-        if ( req->packet->flow == f )
-            return true;
-    }
-    return false;
+    return std::any_of(busy.cbegin(), busy.cend(), [f](const RegexRequest* req){ return req->packet->flow == f; });
 }
 
 //--------------------------------------------------------------------------
@@ -117,6 +112,7 @@ MpseRegexOffload::MpseRegexOffload(unsigned max) : RegexOffload(max) { }
 
 void MpseRegexOffload::put(Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(mpsePerfStats);
 
     assert(p);
@@ -137,6 +133,7 @@ void MpseRegexOffload::put(Packet* p)
 
 bool MpseRegexOffload::get(Packet*& p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(mpsePerfStats);
     assert(!busy.empty());
 
@@ -211,6 +208,7 @@ void ThreadRegexOffload::stop()
 
 void ThreadRegexOffload::put(Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(mpsePerfStats);
 
     assert(p);

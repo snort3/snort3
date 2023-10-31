@@ -179,8 +179,8 @@ public:
     StreamModuleConfig config;
 };
 
-StreamBase::StreamBase(const StreamModuleConfig* c)
-{ config = *c; }
+StreamBase::StreamBase(const StreamModuleConfig* c) : config(*c)
+{ }
 
 bool StreamBase::configure(SnortConfig*)
 {

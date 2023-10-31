@@ -145,8 +145,8 @@ static bool new_sig(int num_children, detection_option_tree_node_t** nodes, OptT
             continue;
 
         OptTreeNode* cotn = (OptTreeNode*)child->option_data;
-        SigInfo& csi = cotn->sigInfo;
-        SigInfo& osi = otn->sigInfo;
+        const SigInfo& csi = cotn->sigInfo;
+        const SigInfo& osi = otn->sigInfo;
 
         if ( csi.gid == osi.gid and csi.sid == osi.sid and csi.rev == osi.rev )
             return false;
@@ -1360,9 +1360,9 @@ static void fpPrintServiceRuleMaps(SnortConfig* sc)
     fpPrintServiceRuleMapTable(sc->srmmTable->to_cli, "to client");
 }
 
-static void fp_print_service_rules(SnortConfig* sc, GHash* cli, GHash* srv)
+static void fp_print_service_rules(SnortConfig* sc, GHash* to_srv, GHash* to_cli)
 {
-    if ( !cli->get_count() and !srv->get_count() )
+    if ( !to_srv->get_count() and !to_cli->get_count() )
         return;
 
     LogLabel("service rule counts          to-srv  to-cli");
@@ -1372,8 +1372,8 @@ static void fp_print_service_rules(SnortConfig* sc, GHash* cli, GHash* srv)
 
     while ( const char* svc = sc->proto_ref->get_name_sorted(idx++) )
     {
-        SF_LIST* clist = (SF_LIST*)cli->find(svc);
-        SF_LIST* slist = (SF_LIST*)srv->find(svc);
+        SF_LIST* clist = (SF_LIST*)to_srv->find(svc);
+        SF_LIST* slist = (SF_LIST*)to_cli->find(svc);
 
         if ( !clist and !slist )
             continue;

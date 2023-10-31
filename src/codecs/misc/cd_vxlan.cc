@@ -46,8 +46,10 @@ public:
 struct VXLANHdr
 {
     uint8_t flags;
+    // cppcheck-suppress unusedStructMember
     uint8_t reserved_1[3];
     uint8_t vni[3]; //VXLAN network id
+    // cppcheck-suppress unusedStructMember
     uint8_t reserved_2;
 };
 constexpr uint16_t VXLAN_MIN_HDR_LEN = 8;

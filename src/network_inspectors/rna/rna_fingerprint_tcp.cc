@@ -182,7 +182,7 @@ static inline bool is_ws_good(const FpTcpKey& key, const vector<FpElement>& tfp_
 }
 
 static inline bool is_option_good(const int& optpos, const int& fp_optpos,
-    uint8_t* optorder, uint8_t* fp_optorder)
+    const uint8_t* optorder, const uint8_t* fp_optorder)
 {
     if (optpos != fp_optpos)
         return false;
@@ -196,7 +196,7 @@ static inline bool is_option_good(const int& optpos, const int& fp_optpos,
 }
 
 static inline bool is_ts_good(const FpTcpKey& key, const vector<FpElement>& topts,
-    const int& optpos, uint8_t* optorder, uint8_t* fp_optorder)
+    const int& optpos, const uint8_t* optorder, uint8_t* fp_optorder)
 {
     if (key.syn_timestamp)
         return false;
@@ -354,7 +354,7 @@ const TcpFingerprint* TcpFpProcessor::get_tcp_fp(const FpTcpKey& key, uint8_t tt
 static int get_tcp_option(const Packet* p, tcp::TcpOptCode opt_code, int& pos)
 {
     int maxops = (int) p->ptrs.tcph->options_len();
-    if (maxops < 0 || TCP_OPTLENMAX < maxops)
+    if (TCP_OPTLENMAX < maxops)
     {
         pos = -1;
         return -1;
@@ -636,11 +636,11 @@ TEST_CASE("get_tcp_fp", "[rna_fingerprint_tcp]")
     rawfp.fpid = 1234;
     rawfp.fp_type = 1;
     rawfp.tcp_window = "SYN";
-    CHECK( processor->push(rawfp) == true );
+    CHECK( true == processor->push(rawfp) );
 
     // Testing the insertion failure for duplicate fpid
     rawfp.fp_type = 2;
-    CHECK( processor->push(rawfp) == false );
+    CHECK( false == processor->push(rawfp) );
 
     processor->make_tcp_fp_tables(TcpFpProcessor::TCP_FP_MODE::SERVER);
     processor->make_tcp_fp_tables(TcpFpProcessor::TCP_FP_MODE::CLIENT);
@@ -836,7 +836,7 @@ TEST_CASE("get_tcp_option", "[rna_fingerprint_tcp]")
     int pos;
 
     // Check the default case when the desired option does not match
-    CHECK( get_tcp_option(&p, tcp::TcpOptCode::EOL, pos) == -1 );
+    CHECK( -1 == get_tcp_option(&p, tcp::TcpOptCode::EOL, pos) );
 
     // Check the case when NOP option is matched
     cooked_pkt[54] = 1; // 34 + TCP_MIN_HEADER_LEN = 54

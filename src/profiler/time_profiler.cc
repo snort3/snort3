@@ -495,7 +495,7 @@ TEST_CASE( "time profiler time context disabled", "[profiler][time_profiler]" )
     {
         {
             TimeContext ctx(stats);
-            CHECK( ctx.active() );
+            CHECK( true == ctx.active() );
             CHECK( stats.ref_count == 0 );
         }
 
@@ -506,10 +506,10 @@ TEST_CASE( "time profiler time context disabled", "[profiler][time_profiler]" )
     {
         {
             TimeContext ctx(stats);
-            CHECK( ctx.active() );
+            CHECK( true == ctx.active() );
             CHECK( stats.ref_count == 0 );
             ctx.stop();
-            CHECK( ctx.active() );
+            CHECK( true == ctx.active() );
             CHECK( stats.ref_count == 0 );
         }
 
@@ -556,7 +556,7 @@ TEST_CASE( "time profiler time context", "[profiler][time_profiler]" )
     {
         {
             TimeContext ctx(stats);
-            CHECK( ctx.active() );
+            CHECK( true == ctx.active() );
             CHECK( stats.ref_count == 1 );
         }
 
@@ -567,10 +567,10 @@ TEST_CASE( "time profiler time context", "[profiler][time_profiler]" )
     {
         {
             TimeContext ctx(stats);
-            CHECK( ctx.active() );
+            CHECK( true == ctx.active() );
             CHECK( stats.ref_count == 1 );
             ctx.stop();
-            CHECK_FALSE( ctx.active() );
+            CHECK( false == ctx.active() );
             CHECK( stats.ref_count == 0 );
         }
 

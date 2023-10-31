@@ -53,9 +53,8 @@ struct StreamReassembleRuleOptionData
 class ReassembleOption : public IpsOption
 {
 public:
-    ReassembleOption(const StreamReassembleRuleOptionData& c) :
-        IpsOption(s_name)
-    { srod = c; }
+    ReassembleOption(const StreamReassembleRuleOptionData& c) : IpsOption(s_name), srod(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -104,7 +103,7 @@ bool ReassembleOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ReassembleOption::eval(Cursor&, Packet* pkt)
 {
-    RuleProfile profile(streamReassembleRuleOptionPerfStats);
+    RuleProfile profile(streamReassembleRuleOptionPerfStats);   // cppcheck-suppress unreadVariable
 
     if (!pkt->flow || !pkt->ptrs.tcph)
         return NO_MATCH;
@@ -196,7 +195,7 @@ public:
     { return DETECT; }
 
 public:
-    StreamReassembleRuleOptionData srod;
+    StreamReassembleRuleOptionData srod = {};
 };
 
 bool ReassembleModule::begin(const char*, int, SnortConfig*)
@@ -287,7 +286,7 @@ const BaseApi* ips_stream_reassemble = &reassemble_api.base;
 TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
 {
     // initialization code here
-    REQUIRE( ( ips_stream_reassemble->api_version == ((BASE_API_VERSION << 16) | 0) ) );
+    REQUIRE( ( ips_stream_reassemble->api_version == (BASE_API_VERSION << 16) ) );
     REQUIRE( ( strcmp(ips_stream_reassemble->name, s_name) == 0 ) );
     ReassembleModule* reassembler = ( ReassembleModule* )ips_stream_reassemble->mod_ctor();
     REQUIRE( reassembler != nullptr );

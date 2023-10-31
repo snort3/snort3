@@ -125,7 +125,7 @@ public:
     { return rule_db_dir; }
 
     bool set_search_method(const char*);
-    const char* get_search_method();
+    const char* get_search_method() const;
 
     bool set_offload_search_method(const char*);
     void set_max_pattern_len(unsigned);

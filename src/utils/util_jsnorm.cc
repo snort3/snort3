@@ -171,7 +171,7 @@ static const int valid_chars[256] =
 
 struct JSNorm
 {
-    uint8_t state;
+    uint8_t state;  // cppcheck-suppress unusedStructMember
     uint8_t event;
     uint8_t match;
     uint8_t other;
@@ -968,7 +968,7 @@ static int Unescape_exec(UnescapeState* s, ActionUnsc a, int c, JSState* js)
             if (s->unicode_map && (s->iNorm <= 0xffff))
             {
                 s->iNorm = s->unicode_map[s->iNorm];
-                if (s->iNorm == -1)
+                if (s->iNorm == -1) // cppcheck-suppress knownConditionTrueFalse
                     s->iNorm = NON_ASCII_CHAR;
             }
             else
@@ -994,7 +994,7 @@ static int Unescape_exec(UnescapeState* s, ActionUnsc a, int c, JSState* js)
             if (s->unicode_map && (s->iNorm <= 0xffff))
             {
                 s->iNorm = s->unicode_map[s->iNorm];
-                if (s->iNorm == -1)
+                if (s->iNorm == -1) // cppcheck-suppress knownConditionTrueFalse
                     s->iNorm = NON_ASCII_CHAR;
             }
             else

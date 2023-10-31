@@ -231,14 +231,12 @@ static void load_list(
     SoHandlePtr so_file;
     if ( handle and sc )
     {   // for reload, if the so lib file was previously opened, reuse the shared_ptr
-        for( auto const& i : s_plugins.plug_map )
-        {
-            if ( i.second.api == (*api) and i.second.handle.get()->handle == handle )
-            {
-                so_file = i.second.handle;
-                break;
-            }
-        }
+        auto it = std::find_if(s_plugins.plug_map.cbegin(), s_plugins.plug_map.cend(),
+            [api, handle](const std::pair<const std::string, Plugin>& i)
+            { return i.second.api == *api and i.second.handle.get()->handle == handle; });
+
+        if (it != s_plugins.plug_map.cend())
+            so_file = (*it).second.handle;
     }
     if ( !so_file.get() )
         so_file = std::make_shared<SoHandle>(handle);
@@ -448,7 +446,7 @@ void PluginManager::list_plugins()
 {
     for ( auto it = s_plugins.plug_map.begin(); it != s_plugins.plug_map.end(); ++it )
     {
-        Plugin& p = it->second;
+        const Plugin& p = it->second;
         cout << Markup::item();
         cout << p.key;
         cout << " v" << p.api->version;
@@ -461,7 +459,7 @@ void PluginManager::show_plugins()
 {
     for ( auto it = s_plugins.plug_map.begin(); it != s_plugins.plug_map.end(); ++it )
     {
-        Plugin& p = it->second;
+        const Plugin& p = it->second;
 
         cout << Markup::item();
         cout << Markup::emphasis(p.key);

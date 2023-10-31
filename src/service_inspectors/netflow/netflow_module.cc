@@ -226,12 +226,12 @@ bool NetFlowModule::set(const char*, Value& v, SnortConfig*)
 
 void NetFlowModule::parse_service_id_file(const std::string& serv_id_file_path)
 {
-    std::string serv_line;
     std::ifstream serv_id_file;
     serv_id_file.open(serv_id_file_path);
 
     if ( serv_id_file.is_open() )
     {
+        std::string serv_line;
         while ( std::getline(serv_id_file, serv_line) )
         {
             std::stringstream ss(serv_line);

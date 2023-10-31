@@ -50,8 +50,8 @@ struct RpcCheckData
 class RpcOption : public IpsOption
 {
 public:
-    RpcOption(const RpcCheckData& c) : IpsOption(s_name)
-    { config = c; }
+    RpcOption(const RpcCheckData& c) : IpsOption(s_name), config(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -116,6 +116,7 @@ bool RpcOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus RpcOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(rpcCheckPerfStats);
 
     if ( !is_valid(p) )

@@ -118,7 +118,7 @@ bool S7commplusFuncOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus S7commplusFuncOption::eval(Cursor&, Packet* p)
 {
-    RuleProfile profile(s7commplus_func_prof);
+    RuleProfile profile(s7commplus_func_prof);  // cppcheck-suppress unreadVariable
 
     if ( !p->flow )
         return NO_MATCH;
@@ -165,7 +165,7 @@ public:
 
 public:
     //uint8_t func;
-    uint16_t func;
+    uint16_t func = 0;
 };
 
 bool S7commplusFuncModule::set(const char*, Value& v, SnortConfig*)

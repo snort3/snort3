@@ -375,6 +375,7 @@ static int SFRF_TestObject(
     switch (op)
     {
     case SFRF_COUNT_INCREMENT:
+        // cppcheck-suppress knownConditionTrueFalse
         if ( (dynNode->count+1) != 0 )
         {
             dynNode->count++;

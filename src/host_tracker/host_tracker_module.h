@@ -62,7 +62,7 @@ private:
 
     std::vector<snort::HostApplication> apps;
     snort::HostApplication app;
-    snort::SfIp addr;
+    snort::SfIp addr = {};
 };
 
 #endif

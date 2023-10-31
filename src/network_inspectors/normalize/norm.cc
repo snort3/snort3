@@ -296,7 +296,7 @@ static int Norm_ICMP6(
 
 struct ExtOpt
 {
-    uint8_t next;
+    uint8_t next;   // cppcheck-suppress unusedStructMember
     uint8_t xlen;
     uint8_t type;
     uint8_t olen;

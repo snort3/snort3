@@ -163,9 +163,9 @@ bool FlowStash::store(const SfIp& ip, const SnortConfig* sc)
 
     if ( sc->max_aux_ip > 0 )
     {
-        for ( const auto& aip : aux_ip_fifo )
-            if ( aip == ip )
-                return false;
+        if ( std::any_of(aux_ip_fifo.cbegin(), aux_ip_fifo.cend(),
+            [ip](const snort::SfIp& aip){ return aip == ip; }) )
+            return false;
 
         if ( aux_ip_fifo.size() == (unsigned)sc->max_aux_ip )
             aux_ip_fifo.pop_back();

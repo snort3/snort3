@@ -55,12 +55,12 @@ TEST_CASE( "bitop", "[bitop]" )
         const size_t bit = 7;
 
         bitop.set(bit);
-        CHECK(bitop.is_set(bit));
+        CHECK(true == bitop.is_set(bit));
 
         CHECK(num_set(bitop, max) == 1);
 
         bitop.clear(bit);
-        CHECK(!bitop.is_set(bit));
+        CHECK(false == bitop.is_set(bit));
 
         CHECK( (is_clear(bitop, max) == true) );
     }
@@ -71,23 +71,23 @@ TEST_CASE( "bitop", "[bitop]" )
         const size_t k = max + 2;
 
         bitop.set(j);
-        CHECK(bitop.is_set(j));
+        CHECK(true == bitop.is_set(j));
 
-        CHECK(!bitop.is_set(k));
+        CHECK(false == bitop.is_set(k));
 
         bitop.set(k);
-        CHECK(bitop.is_set(k));
+        CHECK(true == bitop.is_set(k));
 
         CHECK(num_set(bitop, k + 2) == 2);
-        CHECK(bitop.is_set(j));
+        CHECK(true == bitop.is_set(j));
 
         bitop.clear(k);
-        CHECK(!bitop.is_set(k));
+        CHECK(false == bitop.is_set(k));
 
-        CHECK(bitop.is_set(j));
+        CHECK(true == bitop.is_set(j));
         bitop.clear(j);
 
-        CHECK( (is_clear(bitop, k + 2) == true) );
+        CHECK(true == is_clear(bitop, k + 2));
     }
 }
 

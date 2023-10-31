@@ -265,57 +265,6 @@ uint16_t IpApi::pay_len() const
     return 0;
 }
 
-static inline bool is_loopback(uint32_t addr)
-{ return (addr >> 24) == 0x7F; }
-
-static bool is_loopback(const snort_in6_addr* const ip)
-{
-    const uint32_t* p = ip->u6_addr32;
-
-    /* Check the first 64 bits in an IPv6 address, and
-       verify they're zero.  If not, it's not a loopback */
-    if (p[0] || p[1])
-        return false;
-
-    /* Check if the 3rd 32-bit int is zero */
-    if ( p[2] == 0 )
-    {
-        /* ::7F00:0/104 is ipv4 compatible ipv6 */
-        /* ::1 is the IPv6 loopback */
-        return ( (ip->u6_addr8[12] == 0x7F) || (ntohl(p[3]) == 0x1) );
-    }
-
-    /* Check the 3rd 32-bit int for a mapped IPv4 address */
-    if ( ntohl(p[2]) == 0xffff )
-    {
-        /* ::ffff:127.0.0.0/104 is IPv4 loopback mapped over IPv6 */
-        return ( ip->u6_addr8[12] == 0x7F );
-    }
-    return false;
-}
-
-bool IpApi::is_src_loopback() const
-{
-    switch ( type )
-    {
-    case IAT_4: return is_loopback(ntohl(((const IP4Hdr*)iph)->get_src()));
-    case IAT_6: return is_loopback(((const IP6Hdr*)iph)->get_src());
-    default: break;
-    }
-    return false;
-}
-
-// true if the current source address ia the loopback address
-bool IpApi::is_dst_loopback() const
-{
-    switch ( type )
-    {
-    case IAT_4: return ((ntohl(((const IP4Hdr*)iph)->get_dst())) >> 24) == 0x7F;
-    case IAT_6: return is_loopback(((const IP6Hdr*)iph)->get_dst());
-    default: break;
-    }
-    return false;
-}
 } // namespace ip
 } // namespace snort
 

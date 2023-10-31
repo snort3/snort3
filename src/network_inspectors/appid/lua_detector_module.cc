@@ -163,7 +163,6 @@ LuaDetectorManager::LuaDetectorManager(AppIdContext& ctxt, bool is_control) :
 
 LuaDetectorManager::~LuaDetectorManager()
 {
-    auto L = this->L;
     if (lua_gettop(L))
         appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before detector unload\n",
             lua_gettop(L));

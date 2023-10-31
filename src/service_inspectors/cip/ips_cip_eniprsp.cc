@@ -73,6 +73,7 @@ bool CipEnipRspOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus CipEnipRspOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(cip_eniprsp_perf_stats);
 
     if ( !p->flow || !p->is_full_pdu() )

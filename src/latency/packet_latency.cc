@@ -344,16 +344,16 @@ TEST_CASE ( "packet latency impl", "[latency]" )
         {
             MockClock::inc(config.config.max_time + 1_ticks);
 
-            CHECK( impl.fastpath() );
-            CHECK( impl.pop(nullptr) );
+            CHECK( true == impl.fastpath() );
+            CHECK( true == impl.pop(nullptr) );
 
             CHECK( event_handler.count == 1 );
         }
 
         SECTION( "no timeout" )
         {
-            CHECK_FALSE( impl.fastpath() );
-            CHECK_FALSE( impl.pop(nullptr) );
+            CHECK( false == impl.fastpath() );
+            CHECK( false == impl.pop(nullptr) );
 
             CHECK( event_handler.count == 0 );
         }
@@ -370,16 +370,16 @@ TEST_CASE ( "packet latency impl", "[latency]" )
         {
             MockClock::inc(config.config.max_time + 1_ticks);
 
-            CHECK_FALSE( impl.fastpath() );
-            CHECK( impl.pop(nullptr) );
+            CHECK( false == impl.fastpath() );
+            CHECK( true == impl.pop(nullptr) );
 
             CHECK( event_handler.count == 1 );
         }
 
         SECTION( "no timeout" )
         {
-            CHECK_FALSE( impl.fastpath() );
-            CHECK_FALSE( impl.pop(nullptr) );
+            CHECK( false == impl.fastpath() );
+            CHECK( false == impl.pop(nullptr) );
 
             CHECK( event_handler.count == 0 );
         }

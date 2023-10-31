@@ -78,6 +78,7 @@ bool GtpVersionOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus GtpVersionOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(gtp_ver_prof);
 
     if ( !p->flow )
@@ -120,7 +121,7 @@ public:
     { return DETECT; }
 
 public:
-    uint8_t version;
+    uint8_t version = 0;
 };
 
 bool GtpVersionModule::set(const char*, Value& v, SnortConfig*)

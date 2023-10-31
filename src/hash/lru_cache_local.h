@@ -129,7 +129,7 @@ void LruCacheLocal<Key, Value, Hash>::add_entry(const Key& key, const Value& val
 template<typename Key, typename Value, typename Hash>
 Value& LruCacheLocal<Key, Value, Hash>::find_else_create(const Key& key, bool* is_new)
 {
-    LruMapIter it = map.find(key);
+    auto it = map.find(key);
     if (it == map.end())
     {
         stats.cache_misses++;
@@ -147,7 +147,7 @@ Value& LruCacheLocal<Key, Value, Hash>::find_else_create(const Key& key, bool* i
 template<typename Key, typename Value, typename Hash>
 bool LruCacheLocal<Key, Value, Hash>::add(const Key& key, const Value& value, bool replace)
 {
-    LruMapIter it = map.find(key);
+    auto it = map.find(key);
     if (it == map.end())
     {
         stats.cache_misses++;
@@ -168,7 +168,7 @@ bool LruCacheLocal<Key, Value, Hash>::add(const Key& key, const Value& value, bo
 template<typename Key, typename Value, typename Hash>
 bool LruCacheLocal<Key, Value, Hash>::remove(const Key& key)
 {
-    LruMapIter it = map.find(key);
+    auto it = map.find(key);
     if (it == map.end())
     {
         return false;

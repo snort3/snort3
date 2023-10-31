@@ -111,6 +111,7 @@ bool SoOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SoOption::eval(Cursor& c, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(soPerfStats);
     return func(data, c, p);
 }

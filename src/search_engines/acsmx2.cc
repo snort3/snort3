@@ -970,10 +970,6 @@ int acsmCompile2(SnortConfig* sc, ACSM_STRUCT2* acsm)
     return 0;
 }
 
-void acsmx2_print_qinfo()
-{
-}
-
 /*
 *   Full format DFA search
 *   Do not change anything here without testing, caching and prefetching

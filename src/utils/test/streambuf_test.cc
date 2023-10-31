@@ -156,11 +156,11 @@ TEST_CASE("input buffer - basic one source", "[Stream buffers]")
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
         CHECK(c == EOF);
-        CHECK(avail_1 == -1);
-        CHECK(avail_2 == -1);
-        CHECK(off_b == -1);
-        CHECK(off_c == -1);
-        CHECK(off_e == -1);
+        CHECK((avail_1 == -1));
+        CHECK((avail_2 == -1));
+        CHECK((off_b == -1));
+        CHECK((off_c == -1));
+        CHECK((off_e == -1));
     }
 
     SECTION("get char")
@@ -176,12 +176,12 @@ TEST_CASE("input buffer - basic one source", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(c == 'E');
-        CHECK(avail_1 == len);
-        CHECK(avail_2 == len);
+        CHECK((c == 'E'));
+        CHECK((avail_1 == len));
+        CHECK((avail_2 == len));
         CHECK(off_b == 0);
         CHECK(off_c == 0);
-        CHECK(off_e == len);
+        CHECK((off_e == len));
     }
 
     SECTION("get char and bump")
@@ -197,12 +197,12 @@ TEST_CASE("input buffer - basic one source", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(c == 'E');
-        CHECK(avail_1 == len);
-        CHECK(avail_2 == len - 1);
+        CHECK((c == 'E'));
+        CHECK((avail_1 == len));
+        CHECK((avail_2 == (len - 1)));
         CHECK(off_b == 0);
         CHECK(off_c == 1);
-        CHECK(off_e == len);
+        CHECK((off_e == len));
     }
 
     SECTION("advance and get char")
@@ -218,12 +218,12 @@ TEST_CASE("input buffer - basic one source", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(c == 'a');
-        CHECK(avail_1 == len);
-        CHECK(avail_2 == len - 1);
+        CHECK((c == 'a'));
+        CHECK((avail_1 == len));
+        CHECK((avail_2 == (len - 1)));
         CHECK(off_b == 0);
         CHECK(off_c == 1);
-        CHECK(off_e == len);
+        CHECK((off_e == len));
     }
 
     SECTION("get chars")
@@ -242,14 +242,14 @@ TEST_CASE("input buffer - basic one source", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(nread_1 == 10);
-        CHECK(nread_2 == 10);
-        CHECK(avail_1 == len);
-        CHECK(avail_2 == len - 10);
-        CHECK(avail_3 == len - 20);
+        CHECK((nread_1 == 10));
+        CHECK((nread_2 == 10));
+        CHECK((avail_1 == len));
+        CHECK((avail_2 == (len - 10)));
+        CHECK((avail_3 == (len - 20)));
         CHECK(off_b == 0);
-        CHECK(off_c == 20);
-        CHECK(off_e == len);
+        CHECK((off_c == 20));
+        CHECK((off_e == len));
         CHECK(!memcmp(exp, act, 20));
     }
 
@@ -271,16 +271,16 @@ TEST_CASE("input buffer - basic one source", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(nread_1 == 10);
-        CHECK(nread_2 == 10);
-        CHECK(nread_3 == 3);
-        CHECK(avail_1 == len);
-        CHECK(avail_2 == len - 10);
-        CHECK(avail_3 == len - 20);
+        CHECK((nread_1 == 10));
+        CHECK((nread_2 == 10));
+        CHECK((nread_3 == 3));
+        CHECK((avail_1 == len));
+        CHECK((avail_2 == (len - 10)));
+        CHECK((avail_3 == (len - 20)));
         CHECK(avail_4 == 0);
         CHECK(off_b == 0);
-        CHECK(off_c == 23);
-        CHECK(off_e == len);
+        CHECK((off_c == 23));
+        CHECK((off_e == len));
         CHECK(!memcmp(exp, act, len));
     }
 
@@ -298,13 +298,13 @@ TEST_CASE("input buffer - basic one source", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(c == 'y');
-        CHECK(avail_1 == len - 5);
-        CHECK(avail_2 == len - 4);
-        CHECK(off_o == 5);
+        CHECK((c == 'y'));
+        CHECK((avail_1 == (len - 5)));
+        CHECK((avail_2 == (len - 4)));
+        CHECK((off_o == 5));
         CHECK(off_b == 0);
-        CHECK(off_c == 4);
-        CHECK(off_e == len);
+        CHECK((off_c == 4));
+        CHECK((off_e == len));
     }
 
     SECTION("put another char back")
@@ -322,14 +322,14 @@ TEST_CASE("input buffer - basic one source", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(c1 == -1);
-        CHECK(c2 == 'y');
-        CHECK(avail_1 == len - 5);
-        CHECK(avail_2 == len - 4);
-        CHECK(off_o == 5);
+        CHECK((c1 == -1));
+        CHECK((c2 == 'y'));
+        CHECK((avail_1 == (len - 5)));
+        CHECK((avail_2 == (len - 4)));
+        CHECK((off_o == 5));
         CHECK(off_b == 0);
-        CHECK(off_c == 4);
-        CHECK(off_e == len);
+        CHECK((off_c == 4));
+        CHECK((off_e == len));
     }
 }
 
@@ -355,12 +355,12 @@ TEST_CASE("input buffer - basic two sources", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(c == 'E');
+        CHECK((c == 'E'));
         CHECK(avail_1 == dat1_len);
         CHECK(avail_2 == dat1_len);
         CHECK(off_b == 0);
         CHECK(off_c == 0);
-        CHECK(off_e == len);
+        CHECK((off_e == len));
     }
 
     SECTION("get char and bump")
@@ -376,12 +376,12 @@ TEST_CASE("input buffer - basic two sources", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(c == 'E');
+        CHECK((c == 'E'));
         CHECK(avail_1 == dat1_len);
         CHECK(avail_2 == dat1_len - 1);
         CHECK(off_b == 0);
         CHECK(off_c == 1);
-        CHECK(off_e == len);
+        CHECK((off_e == len));
     }
 
     SECTION("advance and get char")
@@ -397,12 +397,12 @@ TEST_CASE("input buffer - basic two sources", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(c == 'a');
+        CHECK((c == 'a'));
         CHECK(avail_1 == dat1_len);
         CHECK(avail_2 == dat1_len - 1);
         CHECK(off_b == 0);
         CHECK(off_c == 1);
-        CHECK(off_e == len);
+        CHECK((off_e == len));
     }
 
     SECTION("get chars")
@@ -421,14 +421,14 @@ TEST_CASE("input buffer - basic two sources", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(nread_1 == 10);
-        CHECK(nread_2 == 10);
+        CHECK((nread_1 == 10));
+        CHECK((nread_2 == 10));
         CHECK(avail_1 == dat1_len);
-        CHECK(avail_2 == len - 10);
-        CHECK(avail_3 == len - 20);
+        CHECK((avail_2 == (len - 10)));
+        CHECK((avail_3 == (len - 20)));
         CHECK(off_b == 0);
-        CHECK(off_c == 20);
-        CHECK(off_e == len);
+        CHECK((off_c == 20));
+        CHECK((off_e == len));
         CHECK(!memcmp(exp, act, 20));
     }
 
@@ -450,16 +450,16 @@ TEST_CASE("input buffer - basic two sources", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(nread_1 == 10);
-        CHECK(nread_2 == 10);
-        CHECK(nread_3 == 3);
+        CHECK((nread_1 == 10));
+        CHECK((nread_2 == 10));
+        CHECK((nread_3 == 3));
         CHECK(avail_1 == dat1_len);
-        CHECK(avail_2 == len - 10);
-        CHECK(avail_3 == len - 20);
+        CHECK((avail_2 == (len - 10)));
+        CHECK((avail_3 == (len - 20)));
         CHECK(avail_4 == 0);
         CHECK(off_b == 0);
-        CHECK(off_c == 23);
-        CHECK(off_e == len);
+        CHECK((off_c == 23));
+        CHECK((off_e == len));
         CHECK(!memcmp(exp, act, len));
     }
 
@@ -477,13 +477,13 @@ TEST_CASE("input buffer - basic two sources", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(c == 'y');
+        CHECK((c == 'y'));
         CHECK(avail_1 == dat1_len - 5);
         CHECK(avail_2 == dat1_len - 4);
-        CHECK(off_o == 5);
+        CHECK((off_o == 5));
         CHECK(off_b == 0);
-        CHECK(off_c == 4);
-        CHECK(off_e == len);
+        CHECK((off_c == 4));
+        CHECK((off_e == len));
     }
 
     SECTION("put another char back")
@@ -501,14 +501,14 @@ TEST_CASE("input buffer - basic two sources", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(c1 == -1);
-        CHECK(c2 == 'y');
+        CHECK((c1 == -1));
+        CHECK((c2 == 'y'));
         CHECK(avail_1 == dat1_len - 5);
         CHECK(avail_2 == dat1_len - 4);
-        CHECK(off_o == 5);
+        CHECK((off_o == 5));
         CHECK(off_b == 0);
-        CHECK(off_c == 4);
-        CHECK(off_e == len);
+        CHECK((off_c == 4));
+        CHECK((off_e == len));
     }
 }
 
@@ -516,7 +516,7 @@ TEST_CASE("input buffer - buffer management", "[Stream buffers]")
 {
     const char* exp = "Early bird gets a corn.";
     const int len = strlen(exp);
-    char dat[] = "Early bird gets a corn.";
+    char dat[] = "Early bird gets a corn."; // cppcheck-suppress variableScope
     char dat1[] = "Early ";
     char dat2[] = "bird ";
     char dat3[] = "gets ";
@@ -536,8 +536,8 @@ TEST_CASE("input buffer - buffer management", "[Stream buffers]")
         int r1 = b1.pubsync();
         int r2 = b2.pubsync();
 
-        CHECK(r1 == -1);
-        CHECK(r2 == -1);
+        CHECK((r1 == -1));
+        CHECK((r2 == -1));
     }
 
     SECTION("chain of buffers")
@@ -582,9 +582,9 @@ TEST_CASE("input buffer - offset one source", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::in);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
 
-        CHECK(off_b == -1);
-        CHECK(off_c == -1);
-        CHECK(off_e == -1);
+        CHECK((off_b == -1));
+        CHECK((off_c == -1));
+        CHECK((off_e == -1));
     }
 
     SECTION("wrong argument")
@@ -598,10 +598,10 @@ TEST_CASE("input buffer - offset one source", "[Stream buffers]")
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::out);
         int off_a = b.pubseekoff(0, static_cast<std::ios_base::seekdir>(0x5a5a), ios_base::in);
 
-        CHECK(off_b == -1);
-        CHECK(off_c == -1);
-        CHECK(off_e == -1);
-        CHECK(off_a == -1);
+        CHECK((off_b == -1));
+        CHECK((off_c == -1));
+        CHECK((off_e == -1));
+        CHECK((off_a == -1));
     }
 
     SECTION("begin")
@@ -616,7 +616,7 @@ TEST_CASE("input buffer - offset one source", "[Stream buffers]")
         EXP_AVAIL1(b, exp, len, off);
 
         off = b.pubseekoff(0 + len + len, ios_base::beg, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL1(b, exp, len, off);
 
         off = b.pubseekoff(0, ios_base::beg, ios_base::in);
@@ -632,19 +632,19 @@ TEST_CASE("input buffer - offset one source", "[Stream buffers]")
         EXP_AVAIL1(b, exp, len, off);
 
         off = b.pubseekoff(0 + len1d3, ios_base::beg, ios_base::in);
-        CHECK(off == len1d3);
+        CHECK((off == len1d3));
         EXP_AVAIL1(b, exp, len, off);
 
         off = b.pubseekoff(0 + len2d3, ios_base::beg, ios_base::in);
-        CHECK(off == len2d3);
+        CHECK((off == len2d3));
         EXP_AVAIL1(b, exp, len, off);
 
         off = b.pubseekoff(0 + len - 1, ios_base::beg, ios_base::in);
-        CHECK(off == len - 1);
+        CHECK((off == (len - 1)));
         EXP_AVAIL1(b, exp, len, off);
 
         off = b.pubseekoff(0 + len, ios_base::beg, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL1(b, exp, len, off);
     }
 
@@ -660,27 +660,27 @@ TEST_CASE("input buffer - offset one source", "[Stream buffers]")
         EXP_AVAIL1(b, exp, len, off);
 
         off = b.pubseekoff(0 + len + len, ios_base::end, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL1(b, exp, len, off);
 
         off = b.pubseekoff(0, ios_base::end, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL1(b, exp, len, off);
 
         off = b.pubseekoff(0 - 1, ios_base::end, ios_base::in);
-        CHECK(off == len - 1);
+        CHECK((off == (len - 1)));
         EXP_AVAIL1(b, exp, len, off);
 
         off = b.pubseekoff(0 + 1, ios_base::end, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL1(b, exp, len, off);
 
         off = b.pubseekoff(0 - len1d3, ios_base::end, ios_base::in);
-        CHECK(off == len2d3);
+        CHECK((off == len2d3));
         EXP_AVAIL1(b, exp, len, off);
 
         off = b.pubseekoff(0 - len2d3, ios_base::end, ios_base::in);
-        CHECK(off == len1d3);
+        CHECK((off == len1d3));
         EXP_AVAIL1(b, exp, len, off);
 
         off = b.pubseekoff(0 - len + 1, ios_base::end, ios_base::in);
@@ -706,37 +706,37 @@ TEST_CASE("input buffer - offset one source", "[Stream buffers]")
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len + len, ios_base::cur, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL1(b, exp, len, off);
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0, ios_base::cur, ios_base::in);
-        CHECK(off == len1d3);
+        CHECK((off == len1d3));
         EXP_AVAIL1(b, exp, len, off);
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 - 1, ios_base::cur, ios_base::in);
-        CHECK(off == len1d3 - 1);
+        CHECK((off == (len1d3 - 1)));
         EXP_AVAIL1(b, exp, len, off);
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + 1, ios_base::cur, ios_base::in);
-        CHECK(off == len1d3 + 1);
+        CHECK((off == (len1d3 + 1)));
         EXP_AVAIL1(b, exp, len, off);
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len1d3, ios_base::cur, ios_base::in);
-        CHECK(off == len1d3 + len1d3);
+        CHECK((off == (len1d3 + len1d3)));
         EXP_AVAIL1(b, exp, len, off);
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len2d3, ios_base::cur, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL1(b, exp, len, off);
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len, ios_base::cur, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL1(b, exp, len, off);
     }
 
@@ -754,37 +754,37 @@ TEST_CASE("input buffer - offset one source", "[Stream buffers]")
 
         b.pubseekoff(len2d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len + len, ios_base::cur, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL1(b, exp, len, off);
 
         b.pubseekoff(len2d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0, ios_base::cur, ios_base::in);
-        CHECK(off == len2d3);
+        CHECK((off == len2d3));
         EXP_AVAIL1(b, exp, len, off);
 
         b.pubseekoff(len2d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 - 1, ios_base::cur, ios_base::in);
-        CHECK(off == len2d3 - 1);
+        CHECK((off == (len2d3 - 1)));
         EXP_AVAIL1(b, exp, len, off);
 
         b.pubseekoff(len2d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + 1, ios_base::cur, ios_base::in);
-        CHECK(off == len2d3 + 1);
+        CHECK((off == (len2d3 + 1)));
         EXP_AVAIL1(b, exp, len, off);
 
         b.pubseekoff(len2d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len1d3, ios_base::cur, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL1(b, exp, len, off);
 
         b.pubseekoff(len2d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len2d3, ios_base::cur, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL1(b, exp, len, off);
 
         b.pubseekoff(len2d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len, ios_base::cur, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL1(b, exp, len, off);
     }
 }
@@ -810,9 +810,9 @@ TEST_CASE("input buffer - offset two sources", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::out);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::out);
 
-        CHECK(off_b == -1);
-        CHECK(off_c == -1);
-        CHECK(off_e == -1);
+        CHECK((off_b == -1));
+        CHECK((off_c == -1));
+        CHECK((off_e == -1));
     }
 
     SECTION("begin")
@@ -827,7 +827,7 @@ TEST_CASE("input buffer - offset two sources", "[Stream buffers]")
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         off = b.pubseekoff(0 + len + len, ios_base::beg, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         off = b.pubseekoff(0, ios_base::beg, ios_base::in);
@@ -843,19 +843,19 @@ TEST_CASE("input buffer - offset two sources", "[Stream buffers]")
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         off = b.pubseekoff(0 + len1d3, ios_base::beg, ios_base::in);
-        CHECK(off == len1d3);
+        CHECK((off == len1d3));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         off = b.pubseekoff(0 + len2d3, ios_base::beg, ios_base::in);
-        CHECK(off == len2d3);
+        CHECK((off == len2d3));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         off = b.pubseekoff(0 + len - 1, ios_base::beg, ios_base::in);
-        CHECK(off == len - 1);
+        CHECK((off == (len - 1)));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         off = b.pubseekoff(0 + len, ios_base::beg, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
     }
 
@@ -871,27 +871,27 @@ TEST_CASE("input buffer - offset two sources", "[Stream buffers]")
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         off = b.pubseekoff(0 + len + len, ios_base::end, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         off = b.pubseekoff(0, ios_base::end, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         off = b.pubseekoff(0 - 1, ios_base::end, ios_base::in);
-        CHECK(off == len - 1);
+        CHECK((off == (len - 1)));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         off = b.pubseekoff(0 + 1, ios_base::end, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         off = b.pubseekoff(0 - len1d3, ios_base::end, ios_base::in);
-        CHECK(off == len2d3);
+        CHECK((off == len2d3));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         off = b.pubseekoff(0 - len2d3, ios_base::end, ios_base::in);
-        CHECK(off == len1d3);
+        CHECK((off == len1d3));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         off = b.pubseekoff(0 - len + 1, ios_base::end, ios_base::in);
@@ -917,37 +917,37 @@ TEST_CASE("input buffer - offset two sources", "[Stream buffers]")
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len + len, ios_base::cur, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0, ios_base::cur, ios_base::in);
-        CHECK(off == len1d3);
+        CHECK((off == len1d3));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 - 1, ios_base::cur, ios_base::in);
-        CHECK(off == len1d3 - 1);
+        CHECK((off == (len1d3 - 1)));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + 1, ios_base::cur, ios_base::in);
-        CHECK(off == len1d3 + 1);
+        CHECK((off == (len1d3 + 1)));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len1d3, ios_base::cur, ios_base::in);
-        CHECK(off == len1d3 + len1d3);
+        CHECK((off == (len1d3 + len1d3)));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len2d3, ios_base::cur, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len, ios_base::cur, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
     }
 
@@ -965,37 +965,37 @@ TEST_CASE("input buffer - offset two sources", "[Stream buffers]")
 
         b.pubseekoff(len2d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len + len, ios_base::cur, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         b.pubseekoff(len2d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0, ios_base::cur, ios_base::in);
-        CHECK(off == len2d3);
+        CHECK((off == len2d3));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         b.pubseekoff(len2d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 - 1, ios_base::cur, ios_base::in);
-        CHECK(off == len2d3 - 1);
+        CHECK((off == (len2d3 - 1)));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         b.pubseekoff(len2d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + 1, ios_base::cur, ios_base::in);
-        CHECK(off == len2d3 + 1);
+        CHECK((off == (len2d3 + 1)));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         b.pubseekoff(len2d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len1d3, ios_base::cur, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         b.pubseekoff(len2d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len2d3, ios_base::cur, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
 
         b.pubseekoff(len2d3, ios_base::beg, ios_base::in);
         off = b.pubseekoff(0 + len, ios_base::cur, ios_base::in);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_AVAIL2(b, exp, len, off, dat1_len);
     }
 }
@@ -1016,9 +1016,9 @@ TEST_CASE("input buffer - positioning one source", "[Stream buffers]")
         int pos_b = b.pubseekpos(0,       ios_base::in);
         int pos_e = b.pubseekpos(len,     ios_base::in);
 
-        CHECK(pos_b == -1);
-        CHECK(pos_c == -1);
-        CHECK(pos_e == -1);
+        CHECK((pos_b == -1));
+        CHECK((pos_c == -1));
+        CHECK((pos_e == -1));
     }
 
     SECTION("wrong buffer")
@@ -1031,9 +1031,9 @@ TEST_CASE("input buffer - positioning one source", "[Stream buffers]")
         int pos_b = b.pubseekpos(0,       ios_base::out);
         int pos_e = b.pubseekpos(len,     ios_base::out);
 
-        CHECK(pos_b == -1);
-        CHECK(pos_c == -1);
-        CHECK(pos_e == -1);
+        CHECK((pos_b == -1));
+        CHECK((pos_c == -1));
+        CHECK((pos_e == -1));
     }
 
     SECTION("out of range")
@@ -1048,7 +1048,7 @@ TEST_CASE("input buffer - positioning one source", "[Stream buffers]")
         EXP_AVAIL1(b, exp, len, pos);
 
         pos = b.pubseekpos(len + len, ios_base::in);
-        CHECK(pos == len);
+        CHECK((pos == len));
         EXP_AVAIL1(b, exp, len, pos);
     }
 
@@ -1072,15 +1072,15 @@ TEST_CASE("input buffer - positioning one source", "[Stream buffers]")
         EXP_AVAIL1(b, exp, len, pos);
 
         pos = b.pubseekpos(len, ios_base::in);
-        CHECK(pos == len);
+        CHECK((pos == len));
         EXP_AVAIL1(b, exp, len, pos);
 
         pos = b.pubseekpos(len - 1, ios_base::in);
-        CHECK(pos == len - 1);
+        CHECK((pos == (len - 1)));
         EXP_AVAIL1(b, exp, len, pos);
 
         pos = b.pubseekpos(len + 1, ios_base::in);
-        CHECK(pos == len);
+        CHECK((pos == len));
         EXP_AVAIL1(b, exp, len, pos);
     }
 
@@ -1092,11 +1092,11 @@ TEST_CASE("input buffer - positioning one source", "[Stream buffers]")
         b.pubsetbuf(dat, len);
 
         pos = b.pubseekpos(len1d3, ios_base::in);
-        CHECK(pos == len1d3);
+        CHECK((pos == len1d3));
         EXP_AVAIL1(b, exp, len, pos);
 
         pos = b.pubseekpos(len2d3, ios_base::in);
-        CHECK(pos == len2d3);
+        CHECK((pos == len2d3));
         EXP_AVAIL1(b, exp, len, pos);
     }
 }
@@ -1122,9 +1122,9 @@ TEST_CASE("input buffer - positioning two sources", "[Stream buffers]")
         int pos_b = b.pubseekpos(0,       ios_base::out);
         int pos_e = b.pubseekpos(len,     ios_base::out);
 
-        CHECK(pos_b == -1);
-        CHECK(pos_c == -1);
-        CHECK(pos_e == -1);
+        CHECK((pos_b == -1));
+        CHECK((pos_c == -1));
+        CHECK((pos_e == -1));
     }
 
     SECTION("out of range")
@@ -1139,7 +1139,7 @@ TEST_CASE("input buffer - positioning two sources", "[Stream buffers]")
         EXP_AVAIL2(b, exp, len, pos, dat1_len);
 
         pos = b.pubseekpos(len + len, ios_base::in);
-        CHECK(pos == len);
+        CHECK((pos == len));
         EXP_AVAIL2(b, exp, len, pos, dat1_len);
     }
 
@@ -1163,15 +1163,15 @@ TEST_CASE("input buffer - positioning two sources", "[Stream buffers]")
         EXP_AVAIL2(b, exp, len, pos, dat1_len);
 
         pos = b.pubseekpos(len, ios_base::in);
-        CHECK(pos == len);
+        CHECK((pos == len));
         EXP_AVAIL2(b, exp, len, pos, dat1_len);
 
         pos = b.pubseekpos(len - 1, ios_base::in);
-        CHECK(pos == len - 1);
+        CHECK((pos == (len - 1)));
         EXP_AVAIL2(b, exp, len, pos, dat1_len);
 
         pos = b.pubseekpos(len + 1, ios_base::in);
-        CHECK(pos == len);
+        CHECK((pos == len));
         EXP_AVAIL2(b, exp, len, pos, dat1_len);
     }
 
@@ -1183,11 +1183,11 @@ TEST_CASE("input buffer - positioning two sources", "[Stream buffers]")
         b.pubsetbuf(dat1, dat1_len)->pubsetbuf(dat2, dat2_len);
 
         pos = b.pubseekpos(len1d3, ios_base::in);
-        CHECK(pos == len1d3);
+        CHECK((pos == len1d3));
         EXP_AVAIL2(b, exp, len, pos, dat1_len);
 
         pos = b.pubseekpos(len2d3, ios_base::in);
-        CHECK(pos == len2d3);
+        CHECK((pos == len2d3));
         EXP_AVAIL2(b, exp, len, pos, dat1_len);
 
         pos = b.pubseekpos(dat1_len, ios_base::in);
@@ -1468,10 +1468,10 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::out);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::out);
 
-        CHECK(c == 'A');
+        CHECK((c == 'A'));
         CHECK(off_b == 0);
         CHECK(off_c == 1);
-        CHECK(off_e == 2048);
+        CHECK((off_e == 2048));
 
         EXP_RES(b, exp, 1, 2048);
     }
@@ -1487,12 +1487,12 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::out);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::out);
 
-        CHECK(c1 == 'A');
-        CHECK(c2 == 'B');
+        CHECK((c1 == 'A'));
+        CHECK((c2 == 'B'));
         CHECK(off_b == 0);
         CHECK(off_1 == 1);
-        CHECK(off_2 == 2);
-        CHECK(off_e == 2048);
+        CHECK((off_2 == 2));
+        CHECK((off_e == 2048));
 
         EXP_RES(b, exp, 2, 2048);
     }
@@ -1509,13 +1509,13 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         int off_2 = b.pubseekoff(0, ios_base::cur, ios_base::out);
         int off_z = b.pubseekoff(0, ios_base::end, ios_base::out);
 
-        CHECK(c1 == 'A');
-        CHECK(c2 == 'Z');
+        CHECK((c1 == 'A'));
+        CHECK((c2 == 'Z'));
         CHECK(off_b == 0);
         CHECK(off_1 == 1);
-        CHECK(off_2 == 2049);
-        CHECK(off_e == 2048);
-        CHECK(off_z == 6144);
+        CHECK((off_2 == 2049));
+        CHECK((off_e == 2048));
+        CHECK((off_z == 6144));
     }
 
     SECTION("put sequence of chars")
@@ -1528,10 +1528,10 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::out);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::out);
 
-        CHECK(n == len);
+        CHECK((n == len));
         CHECK(off_b == 0);
-        CHECK(off_c == len);
-        CHECK(off_e == 4096);
+        CHECK((off_c == len));
+        CHECK((off_e == 4096));
 
         EXP_RES(b, exp, len, 4096);
     }
@@ -1548,12 +1548,12 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         int off_b = b.pubseekoff(0, ios_base::beg, ios_base::out);
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::out);
 
-        CHECK(n == len);
-        CHECK(c1 == 'A');
-        CHECK(c2 == 'Z');
+        CHECK((n == len));
+        CHECK((c1 == 'A'));
+        CHECK((c2 == 'Z'));
         CHECK(off_b == 0);
-        CHECK(off_c == len + 2);
-        CHECK(off_e == 4096 + 2048);
+        CHECK((off_c == (len + 2)));
+        CHECK((off_e == (4096 + 2048)));
     }
 
     SECTION("get char sequence")
@@ -1571,7 +1571,7 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         delete[] act_seq;
 
         int new_off = b.pubseekoff(0, ios_base::cur, ios_base::out);
-        CHECK(new_off == exp_len);
+        CHECK((new_off == exp_len));
     }
 
     SECTION("get char sequence from the end")
@@ -1583,7 +1583,7 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         b.pubsetbuf(buf, exp_len);
 
         int data_off = b.pubseekoff(exp_len, ios_base::beg, ios_base::out);
-        CHECK(data_off == exp_len);
+        CHECK((data_off == exp_len));
 
         char* act_seq = new char[exp_len];
         memset(act_seq, '\0', exp_len);
@@ -1592,7 +1592,7 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         delete[] act_seq;
 
         int new_off = b.pubseekoff(0, ios_base::cur, ios_base::out);
-        CHECK(new_off == exp_len);
+        CHECK((new_off == exp_len));
     }
 
     SECTION("get char sequence more than available")
@@ -1609,7 +1609,7 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
         delete[] act_seq;
 
         int new_off = b.pubseekoff(0, ios_base::cur, ios_base::out);
-        CHECK(new_off == exp_len);
+        CHECK((new_off == exp_len));
     }
 }
 
@@ -1633,7 +1633,7 @@ TEST_CASE("output buffer - buffer management", "[Stream buffers]")
         b.pubsetbuf(buf, dat1_len);
 
         int r = b.pubsync();
-        CHECK(r == -1);
+        CHECK((r == -1));
     }
 
     SECTION("changing buffer")
@@ -1692,9 +1692,9 @@ TEST_CASE("output buffer - positioning", "[Stream buffers]")
         int pos_b = b.pubseekpos(0,       ios_base::in);
         int pos_e = b.pubseekpos(len,     ios_base::in);
 
-        CHECK(pos_b == -1);
-        CHECK(pos_c == -1);
-        CHECK(pos_e == -1);
+        CHECK((pos_b == -1));
+        CHECK((pos_c == -1));
+        CHECK((pos_e == -1));
     }
 
     SECTION("out of range")
@@ -1713,7 +1713,7 @@ TEST_CASE("output buffer - positioning", "[Stream buffers]")
         b.sputn(exp, len);
 
         pos = b.pubseekpos(len + len, ios_base::out);
-        CHECK(pos == len);
+        CHECK((pos == len));
         EXP_RES(b, exp, len, len);
     }
 
@@ -1730,11 +1730,11 @@ TEST_CASE("output buffer - positioning", "[Stream buffers]")
         pos = b.pubseekpos(0 + 1, ios_base::out);
         CHECK(pos == 1);
         pos = b.pubseekpos(len, ios_base::out);
-        CHECK(pos == len);
+        CHECK((pos == len));
         pos = b.pubseekpos(len - 1, ios_base::out);
-        CHECK(pos == len - 1);
+        CHECK((pos == (len - 1)));
         pos = b.pubseekpos(len + 1, ios_base::out);
-        CHECK(pos == len);
+        CHECK((pos == len));
 
         pos = b.pubseekpos(0, ios_base::out);
         CHECK(pos == 0);
@@ -1750,9 +1750,9 @@ TEST_CASE("output buffer - positioning", "[Stream buffers]")
         b.sputn(exp, len);
 
         pos = b.pubseekpos(len1d3, ios_base::out);
-        CHECK(pos == len1d3);
+        CHECK((pos == len1d3));
         pos = b.pubseekpos(len2d3, ios_base::out);
-        CHECK(pos == len2d3);
+        CHECK((pos == len2d3));
     }
 }
 
@@ -1787,10 +1787,10 @@ TEST_CASE("output buffer - offset", "[Stream buffers]")
         int off_e = b.pubseekoff(0, ios_base::end, ios_base::in);
         int off_a = b.pubseekoff(0, static_cast<std::ios_base::seekdir>(0x5a5a), ios_base::out);
 
-        CHECK(off_b == -1);
-        CHECK(off_c == -1);
-        CHECK(off_e == -1);
-        CHECK(off_a == -1);
+        CHECK((off_b == -1));
+        CHECK((off_c == -1));
+        CHECK((off_e == -1));
+        CHECK((off_a == -1));
     }
 
     SECTION("begin")
@@ -1805,7 +1805,7 @@ TEST_CASE("output buffer - offset", "[Stream buffers]")
         CHECK(off == 0);
 
         off = b.pubseekoff(0 + len + len, ios_base::beg, ios_base::out);
-        CHECK(off == len);
+        CHECK((off == len));
 
         off = b.pubseekoff(0 - 1, ios_base::beg, ios_base::out);
         CHECK(off == 0);
@@ -1814,16 +1814,16 @@ TEST_CASE("output buffer - offset", "[Stream buffers]")
         CHECK(off == 1);
 
         off = b.pubseekoff(0 + len1d3, ios_base::beg, ios_base::out);
-        CHECK(off == len1d3);
+        CHECK((off == len1d3));
 
         off = b.pubseekoff(0 + len2d3, ios_base::beg, ios_base::out);
-        CHECK(off == len2d3);
+        CHECK((off == len2d3));
 
         off = b.pubseekoff(0 + len - 1, ios_base::beg, ios_base::out);
-        CHECK(off == len - 1);
+        CHECK((off == (len - 1)));
 
         off = b.pubseekoff(0 + len, ios_base::beg, ios_base::out);
-        CHECK(off == len);
+        CHECK((off == len));
 
         off = b.pubseekoff(0, ios_base::beg, ios_base::out);
         CHECK(off == 0);
@@ -1846,22 +1846,22 @@ TEST_CASE("output buffer - offset", "[Stream buffers]")
         CHECK(off == 0);
 
         off = b.pubseekoff(0 + len + len, ios_base::end, ios_base::out);
-        CHECK(off == len);
+        CHECK((off == len));
 
         off = b.pubseekoff(0, ios_base::end, ios_base::out);
-        CHECK(off == len);
+        CHECK((off == len));
 
         off = b.pubseekoff(0 - 1, ios_base::end, ios_base::out);
-        CHECK(off == len - 1);
+        CHECK((off == (len - 1)));
 
         off = b.pubseekoff(0 + 1, ios_base::end, ios_base::out);
-        CHECK(off == len);
+        CHECK((off == len));
 
         off = b.pubseekoff(0 - len1d3, ios_base::end, ios_base::out);
-        CHECK(off == len2d3);
+        CHECK((off == len2d3));
 
         off = b.pubseekoff(0 - len2d3, ios_base::end, ios_base::out);
-        CHECK(off == len1d3);
+        CHECK((off == len1d3));
 
         off = b.pubseekoff(0 - len + 1, ios_base::end, ios_base::out);
         CHECK(off == 1);
@@ -1872,10 +1872,10 @@ TEST_CASE("output buffer - offset", "[Stream buffers]")
         b.pubsetbuf(new char[len], len);
         b.sputn(exp, len);
         off = b.pubseekoff(- 1, ios_base::end, ios_base::out);
-        CHECK(off == len - 1);
+        CHECK((off == (len - 1)));
         b.sputn("!", 1);
         off = b.pubseekoff(0, ios_base::end, ios_base::out);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_RES(b, exp_alt, len, len);
     }
 
@@ -1897,31 +1897,31 @@ TEST_CASE("output buffer - offset", "[Stream buffers]")
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::out);
         off = b.pubseekoff(0 + len + len, ios_base::cur, ios_base::out);
-        CHECK(off == len);
+        CHECK((off == len));
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::out);
         off = b.pubseekoff(0, ios_base::cur, ios_base::out);
-        CHECK(off == len1d3);
+        CHECK((off == len1d3));
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::out);
         off = b.pubseekoff(0 - 1, ios_base::cur, ios_base::out);
-        CHECK(off == len1d3 - 1);
+        CHECK((off == (len1d3 - 1)));
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::out);
         off = b.pubseekoff(0 + 1, ios_base::cur, ios_base::out);
-        CHECK(off == len1d3 + 1);
+        CHECK((off == (len1d3 + 1)));
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::out);
         off = b.pubseekoff(0 + len1d3, ios_base::cur, ios_base::out);
-        CHECK(off == len1d3 + len1d3);
+        CHECK((off == (len1d3 + len1d3)));
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::out);
         off = b.pubseekoff(0 + len2d3, ios_base::cur, ios_base::out);
-        CHECK(off == len);
+        CHECK((off == len));
 
         b.pubseekoff(len1d3, ios_base::beg, ios_base::out);
         off = b.pubseekoff(0 + len, ios_base::cur, ios_base::out);
-        CHECK(off == len);
+        CHECK((off == len));
 
         b.pubsetbuf(new char[len], len);
         b.sputn(exp, len);
@@ -1930,7 +1930,7 @@ TEST_CASE("output buffer - offset", "[Stream buffers]")
         CHECK(off == len - off_alt);
         b.sputn(ovr_alt, off_alt);
         off = b.pubseekoff(0, ios_base::end, ios_base::out);
-        CHECK(off == len);
+        CHECK((off == len));
         EXP_RES(b, exp_alt, len, len);
     }
 }

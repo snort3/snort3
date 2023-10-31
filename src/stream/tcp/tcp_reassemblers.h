@@ -76,7 +76,7 @@ public:
     void flush_queued_segments(snort::Flow* flow, bool clear, const snort::Packet* p = nullptr)
     { reassembler->flush_queued_segments(trs, flow, clear, p); }
 
-    bool is_segment_pending_flush()
+    bool is_segment_pending_flush() const
     { return reassembler->is_segment_pending_flush(trs); }
 
     int flush_on_data_policy(snort::Packet* p)
@@ -147,7 +147,7 @@ public:
 
 private:
     TcpReassembler* reassembler = nullptr;
-    TcpReassemblerState trs;
+    TcpReassemblerState trs = {};
     friend inline void TraceSegments(const TcpReassemblerPolicy&, const snort::Packet* p);
 };
 #endif

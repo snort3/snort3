@@ -191,7 +191,7 @@ TEST(lru_cache_shared, stats_test)
     lru_cache.remove(7);    // Removes - hit
     lru_cache.remove(10);   // Removes - miss
 
-    PegCount* stats = lru_cache.get_counts();
+    const PegCount* stats = lru_cache.get_counts();
 
     CHECK(stats[0] == 10);  //  adds
     CHECK(stats[1] == 7);   //  alloc prunes

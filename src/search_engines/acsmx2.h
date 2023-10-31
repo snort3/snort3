@@ -140,7 +140,6 @@ void acsmPrintInfo2(ACSM_STRUCT2* p);
 
 int acsmPrintDetailInfo2(ACSM_STRUCT2*);
 int acsmPrintSummaryInfo2();
-void acsmx2_print_qinfo();
 void acsm_init_summary();
 
 #endif

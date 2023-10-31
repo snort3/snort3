@@ -77,9 +77,8 @@ protected:
 };
 
 TenantSelector::TenantSelector(const PolicySelectorApi* api_in, std::vector<TenantSelection>& psv)
-    : PolicySelector(api_in)
+    : PolicySelector(api_in), policy_selections(std::move(psv))
 {
-    policy_selections = std::move(psv);
     for (auto i = policy_selections.rbegin(); i != policy_selections.rend(); ++i)
     {
         std::sort((*i).tenants.begin(), (*i).tenants.end());
@@ -117,6 +116,7 @@ void TenantSelector::show() const
 
 bool TenantSelector::select_default_policies(uint32_t key, const SnortConfig* sc)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(tenant_select_perf_stats);
 
     tenant_select_stats.packets++;

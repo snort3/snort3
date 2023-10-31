@@ -78,7 +78,7 @@ bool SpellBook::translate(const char* in, HexVector& out)
 }
 
 void SpellBook::add_spell(
-    const char* key, const char* val, HexVector& hv, unsigned i, MagicPage* p)
+    const char* key, const char* val, const HexVector& hv, unsigned i, MagicPage* p)
 {
     while ( i < hv.size() )
     {

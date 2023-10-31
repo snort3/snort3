@@ -141,6 +141,7 @@ bool ByteExtractOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ByteExtractOption::eval(Cursor& c, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(byteExtractPerfStats);
 
     uint32_t value = 0;
@@ -626,6 +627,7 @@ TEST_CASE("ByteExtractOption::operator== invalid", "[ips_byte_extract]")
         ByteExtractOption rhs(data_rhs);
         CHECK(lhs != rhs);
     }
+    // cppcheck-suppress memleak
 }
 
 TEST_CASE("ByteExtractOption::hash", "[ips_byte_extract]")

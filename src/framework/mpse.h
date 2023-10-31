@@ -120,8 +120,8 @@ protected:
 
 private:
     std::string method;
-    int verbose;
-    const MpseApi* api;
+    int verbose = 0;
+    const MpseApi* api = nullptr;
 };
 
 typedef void (* MpseOptFunc)(SnortConfig*);

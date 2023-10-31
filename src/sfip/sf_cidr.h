@@ -67,7 +67,7 @@ struct SO_PUBLIC SfCidr
 
 private:
     SfIp addr;
-    uint16_t bits;
+    uint16_t bits = 0;
 } __attribute__((__packed__));
 
 

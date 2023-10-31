@@ -70,7 +70,7 @@ public:
         return alpn;
     }
 
-    void set_alpn(std::vector<std::string>& alpn_vec)
+    void set_alpn(const std::vector<std::string>& alpn_vec)
     {
         if(alpn_vec.size())
             alpn = alpn_vec;

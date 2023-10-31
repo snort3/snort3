@@ -609,13 +609,12 @@ public:
     string sep;
 };
 
-CsvLogger::CsvLogger(CsvModule* m)
-{
-    file = m->file ? F_NAME : "stdout";
-    limit = m->limit;
-    sep = m->sep;
-    fields = std::move(m->fields);
-}
+CsvLogger::CsvLogger(CsvModule* m) :
+    file(m->file ? F_NAME : "stdout"),
+    limit(m->limit),
+    fields(std::move(m->fields)),
+    sep(m->sep)
+{ }
 
 void CsvLogger::open()
 {

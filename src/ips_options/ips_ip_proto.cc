@@ -51,9 +51,8 @@ struct IpProtoData
 class IpProtoOption : public IpsOption
 {
 public:
-    IpProtoOption(const IpProtoData& c) :
-        IpsOption(s_name)
-    { config = c; }
+    IpProtoOption(const IpProtoData& c) : IpsOption(s_name), config(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;

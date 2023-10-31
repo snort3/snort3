@@ -121,10 +121,10 @@ TEST_CASE("JSIdentifierCtx::is_ignored()", "[JSIdentifierCtx]")
         auto v3 = ident_ctx.substitute("w", false);
         auto v4 = ident_ctx.substitute("w", true);
 
-        CHECK(ident_ctx.is_ignored(v1) == true);
-        CHECK(ident_ctx.is_ignored(v2) == false);
-        CHECK(ident_ctx.is_ignored(v3) == false);
-        CHECK(ident_ctx.is_ignored(v4) == true);
+        CHECK(true == ident_ctx.is_ignored(v1));
+        CHECK(false == ident_ctx.is_ignored(v2));
+        CHECK(false == ident_ctx.is_ignored(v3));
+        CHECK(true == ident_ctx.is_ignored(v4));
     }
     SECTION("multiple chars identifier")
     {
@@ -135,10 +135,10 @@ TEST_CASE("JSIdentifierCtx::is_ignored()", "[JSIdentifierCtx]")
         auto v3 = ident_ctx.substitute("watch", false);
         auto v4 = ident_ctx.substitute("watch", true);
 
-        CHECK(ident_ctx.is_ignored(v1) == true);
-        CHECK(ident_ctx.is_ignored(v2) == false);
-        CHECK(ident_ctx.is_ignored(v3) == false);
-        CHECK(ident_ctx.is_ignored(v4) == true);
+        CHECK(true == ident_ctx.is_ignored(v1));
+        CHECK(false == ident_ctx.is_ignored(v2));
+        CHECK(false == ident_ctx.is_ignored(v3));
+        CHECK(true == ident_ctx.is_ignored(v4));
     }
 }
 
@@ -148,18 +148,18 @@ TEST_CASE("JSIdentifierCtx::scopes", "[JSIdentifierCtx]")
 
     SECTION("scope stack")
     {
-        CHECK(ident_ctx.scope_check({GLOBAL}));
+        CHECK(true == ident_ctx.scope_check({GLOBAL}));
 
         ident_ctx.scope_push(JSProgramScopeType::FUNCTION);
         ident_ctx.scope_push(JSProgramScopeType::BLOCK);
         ident_ctx.scope_push(JSProgramScopeType::BLOCK);
-        CHECK(ident_ctx.scope_check({GLOBAL, FUNCTION, BLOCK, BLOCK}));
+        CHECK(true == ident_ctx.scope_check({GLOBAL, FUNCTION, BLOCK, BLOCK}));
 
-        CHECK(ident_ctx.scope_pop(JSProgramScopeType::BLOCK));
-        CHECK(ident_ctx.scope_check({GLOBAL, FUNCTION, BLOCK}));
+        CHECK(true == ident_ctx.scope_pop(JSProgramScopeType::BLOCK));
+        CHECK(true == ident_ctx.scope_check({GLOBAL, FUNCTION, BLOCK}));
 
         ident_ctx.reset();
-        CHECK(ident_ctx.scope_check({GLOBAL}));
+        CHECK(true == ident_ctx.scope_check({GLOBAL}));
     }
     SECTION("aliases")
     {
@@ -168,18 +168,18 @@ TEST_CASE("JSIdentifierCtx::scopes", "[JSIdentifierCtx]")
         CHECK(!strcmp(ident_ctx.alias_lookup("a"), "console.log"));
         CHECK(!strcmp(ident_ctx.alias_lookup("b"), "document"));
 
-        REQUIRE(ident_ctx.scope_push(JSProgramScopeType::FUNCTION));
+        REQUIRE(true == ident_ctx.scope_push(JSProgramScopeType::FUNCTION));
         ident_ctx.add_alias("a", "document");
         CHECK(!strcmp(ident_ctx.alias_lookup("a"), "document"));
         CHECK(!strcmp(ident_ctx.alias_lookup("b"), "document"));
 
-        REQUIRE(ident_ctx.scope_push(JSProgramScopeType::BLOCK));
+        REQUIRE(true == ident_ctx.scope_push(JSProgramScopeType::BLOCK));
         ident_ctx.add_alias("b", "console.log");
         CHECK(!strcmp(ident_ctx.alias_lookup("b"), "console.log"));
         CHECK(!strcmp(ident_ctx.alias_lookup("a"), "document"));
 
-        REQUIRE(ident_ctx.scope_pop(JSProgramScopeType::BLOCK));
-        REQUIRE(ident_ctx.scope_pop(JSProgramScopeType::FUNCTION));
+        REQUIRE(true == ident_ctx.scope_pop(JSProgramScopeType::BLOCK));
+        REQUIRE(true == ident_ctx.scope_pop(JSProgramScopeType::FUNCTION));
         ident_ctx.add_alias("a", "eval");
         CHECK(!strcmp(ident_ctx.alias_lookup("a"), "eval"));
         CHECK(!strcmp(ident_ctx.alias_lookup("b"), "document"));
@@ -188,30 +188,30 @@ TEST_CASE("JSIdentifierCtx::scopes", "[JSIdentifierCtx]")
     }
     SECTION("scope mismatch")
     {
-        CHECK(!ident_ctx.scope_pop(JSProgramScopeType::FUNCTION));
-        CHECK(ident_ctx.scope_check({GLOBAL}));
-        CHECK(!ident_ctx.scope_check({FUNCTION}));
+        CHECK(false == ident_ctx.scope_pop(JSProgramScopeType::FUNCTION));
+        CHECK(true == ident_ctx.scope_check({GLOBAL}));
+        CHECK(false == ident_ctx.scope_check({FUNCTION}));
 
-        CHECK(ident_ctx.scope_push(JSProgramScopeType::FUNCTION));
-        CHECK(ident_ctx.scope_check({GLOBAL, FUNCTION}));
-        CHECK(!ident_ctx.scope_pop(JSProgramScopeType::BLOCK));
-        CHECK(ident_ctx.scope_check({GLOBAL, FUNCTION}));
-        CHECK(!ident_ctx.scope_check({GLOBAL}));
+        CHECK(true == ident_ctx.scope_push(JSProgramScopeType::FUNCTION));
+        CHECK(true == ident_ctx.scope_check({GLOBAL, FUNCTION}));
+        CHECK(false == ident_ctx.scope_pop(JSProgramScopeType::BLOCK));
+        CHECK(true == ident_ctx.scope_check({GLOBAL, FUNCTION}));
+        CHECK(false == ident_ctx.scope_check({GLOBAL}));
     }
     SECTION("scope max nesting")
     {
         JSIdentifierCtx ident_ctx_limited(DEPTH, 2, s_ignored_ids, s_ignored_props);
 
-        CHECK(ident_ctx_limited.scope_push(JSProgramScopeType::FUNCTION));
-        CHECK(ident_ctx_limited.scope_check({GLOBAL, FUNCTION}));
+        CHECK(true == ident_ctx_limited.scope_push(JSProgramScopeType::FUNCTION));
+        CHECK(true == ident_ctx_limited.scope_check({GLOBAL, FUNCTION}));
 
-        CHECK(!ident_ctx_limited.scope_push(JSProgramScopeType::FUNCTION));
-        CHECK(ident_ctx_limited.scope_check({GLOBAL, FUNCTION}));
-        CHECK(!ident_ctx_limited.scope_push(JSProgramScopeType::FUNCTION));
-        CHECK(ident_ctx_limited.scope_check({GLOBAL, FUNCTION}));
+        CHECK(false == ident_ctx_limited.scope_push(JSProgramScopeType::FUNCTION));
+        CHECK(true == ident_ctx_limited.scope_check({GLOBAL, FUNCTION}));
+        CHECK(false == ident_ctx_limited.scope_push(JSProgramScopeType::FUNCTION));
+        CHECK(true == ident_ctx_limited.scope_check({GLOBAL, FUNCTION}));
 
-        CHECK(ident_ctx_limited.scope_pop(JSProgramScopeType::FUNCTION));
-        CHECK(ident_ctx_limited.scope_push(JSProgramScopeType::FUNCTION));
-        CHECK(ident_ctx_limited.scope_check({GLOBAL, FUNCTION}));
+        CHECK(true == ident_ctx_limited.scope_pop(JSProgramScopeType::FUNCTION));
+        CHECK(true == ident_ctx_limited.scope_push(JSProgramScopeType::FUNCTION));
+        CHECK(true == ident_ctx_limited.scope_check({GLOBAL, FUNCTION}));
     }
 }

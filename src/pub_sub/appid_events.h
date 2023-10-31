@@ -69,7 +69,7 @@ enum AppidChangeBit
 
 typedef std::bitset<APPID_MAX_BIT> AppidChangeBits;
 
-inline void change_bits_to_string(AppidChangeBits& change_bits, std::string& str)
+inline void change_bits_to_string(const AppidChangeBits& change_bits, std::string& str)
 {
     size_t n = change_bits.count();
 

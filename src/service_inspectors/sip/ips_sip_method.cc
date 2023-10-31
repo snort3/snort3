@@ -100,7 +100,7 @@ bool SipMethodOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SipMethodOption::eval(Cursor&, Packet* p)
 {
-    RuleProfile profile(sipMethodRuleOptionPerfStats);
+    RuleProfile profile(sipMethodRuleOptionPerfStats);  // cppcheck-suppress unreadVariable
 
     if ( !p->flow )
         return NO_MATCH;
@@ -162,7 +162,7 @@ public:
     MethodMap methods;
 
 private:
-    bool negated;
+    bool negated = false;
 };
 
 bool SipMethodModule::begin(const char*, int, SnortConfig*)

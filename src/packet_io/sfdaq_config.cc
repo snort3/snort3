@@ -24,6 +24,8 @@
 
 #include "sfdaq_config.h"
 
+#include <algorithm>
+
 using namespace std;
 
 static pair<string, string> parse_variable(const char* varkvp)
@@ -46,11 +48,8 @@ static pair<string, string> parse_variable(const char* varkvp)
  */
 
 SFDAQModuleConfig::SFDAQModuleConfig(const SFDAQModuleConfig& other)
-{
-    name = other.name;
-    mode = other.mode;
-    variables = other.variables;
-}
+    : name(other.name), mode(other.mode), variables(other.variables)
+{ }
 
 void SFDAQModuleConfig::set_variable(const char* varkvp)
 {
@@ -116,8 +115,9 @@ void SFDAQConfig::overlay(const SFDAQConfig* other)
         for (SFDAQModuleConfig *dmc : module_configs)
             delete dmc;
         module_configs.clear();
-        for (SFDAQModuleConfig *dmc : other->module_configs)
-            module_configs.emplace_back(new SFDAQModuleConfig(*dmc));
+        module_configs.reserve(other->module_configs.size());
+        transform(other->module_configs.cbegin(), other->module_configs.cend(), back_inserter(module_configs),
+            [](const SFDAQModuleConfig* dmc){ return new SFDAQModuleConfig(*dmc); });
     }
 
     if (!other->inputs.empty())

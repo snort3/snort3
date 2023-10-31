@@ -40,7 +40,6 @@ public:
 bool FileData::convert(std::istringstream& data_stream)
 {
     std::string args;
-    std::string tmp;
     std::streamoff pos = data_stream.tellg();
 
     rule_api.add_option("file_data");
@@ -62,6 +61,7 @@ bool FileData::convert(std::istringstream& data_stream)
         {
             // since we still can't be sure if we passed the file_data buffer,
             // check the next option and ensure it matches 'mime'
+            std::string tmp;
             std::istringstream(args) >> tmp;
 
             if (tmp == "mime")

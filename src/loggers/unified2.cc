@@ -330,8 +330,8 @@ static void _WriteExtraData(Unified2Config* config,
 
 static void AlertExtraData(
     Flow* flow, void* data,
-    LogFunction* log_funcs, uint32_t max_count,
-    uint32_t xtradata_mask, const AlertInfo& alert_info)
+    LogFunction* log_funcs, //cppcheck-suppress constParameter
+    uint32_t max_count, uint32_t xtradata_mask, const AlertInfo& alert_info)
 {
     Unified2Config* config = (Unified2Config*)data;
     uint32_t xid;

@@ -145,7 +145,7 @@ enum dnp3_reassembly_state_t
 
 struct dnp3_reassembly_data_t
 {
-    uint8_t buffer[DNP3_BUFFER_SIZE];
+    uint8_t buffer[DNP3_BUFFER_SIZE] = {0};
     uint16_t buflen = 0;
     dnp3_reassembly_state_t state = DNP3_REASSEMBLY_STATE__IDLE;
     uint8_t last_seq = 0;

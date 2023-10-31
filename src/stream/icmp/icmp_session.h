@@ -33,8 +33,8 @@ public:
     void clear() override;
 
 public:
-    uint32_t echo_count;
-    struct timeval ssn_time;
+    uint32_t echo_count = 0;
+    struct timeval ssn_time = {};
 };
 
 void icmp_stats();

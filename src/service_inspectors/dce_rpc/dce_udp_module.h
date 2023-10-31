@@ -73,7 +73,7 @@ public:
     const snort::TraceOption* get_trace_options() const override;
 
 private:
-    dce2UdpProtoConf config;
+    dce2UdpProtoConf config = {};
 };
 
 void print_dce2_udp_conf(const dce2UdpProtoConf&);

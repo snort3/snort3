@@ -53,7 +53,7 @@ public:
     { return true; }
 
 public:
-    bool upload;
+    bool upload = false;
 };
 
 #endif

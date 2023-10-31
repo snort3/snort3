@@ -94,7 +94,7 @@ inline void snort_free(void* p)
 inline pid_t gettid()
 {
 #if defined(__linux__) && defined(SYS_gettid)
-    return syscall(SYS_gettid);
+    return syscall(SYS_gettid); // cppcheck-suppress ConfigurationNotChecked
 #else
     return getpid();
 #endif
@@ -108,7 +108,6 @@ SO_PUBLIC extern char** protocol_names;
 SO_PUBLIC const char* get_error(int errnum);
 SO_PUBLIC char* snort_strdup(const char*);
 SO_PUBLIC char* snort_strndup(const char*, size_t);
-SO_PUBLIC const uint8_t* snort_memrchr(const uint8_t*, char, size_t);
 SO_PUBLIC void ts_print(const struct timeval*, char*, bool yyyymmdd = false);
 void uint8_to_printable_str(const uint8_t* buff, unsigned len, std::string& print_str);
 }

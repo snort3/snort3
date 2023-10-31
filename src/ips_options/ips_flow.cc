@@ -56,8 +56,8 @@ struct FlowCheckData
 class FlowCheckOption : public IpsOption
 {
 public:
-    FlowCheckOption(const FlowCheckData& c) : IpsOption(s_name)
-    { config = c; }
+    FlowCheckOption(const FlowCheckData& c) : IpsOption(s_name), config(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -114,6 +114,7 @@ bool FlowCheckOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus FlowCheckOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(flowCheckPerfStats);
 
     FlowCheckData* fcd = &config;

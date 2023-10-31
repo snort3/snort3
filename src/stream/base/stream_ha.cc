@@ -255,19 +255,13 @@ ProtocolHA::~ProtocolHA()
 {
     assert( proto_map );
 
-    for( auto map : *proto_map )
-    {
-        if ( map.second == this )
-        {
-            proto_map->erase(map.first);
-            break;
-        }
-    }
+    auto it = std::find_if(proto_map->cbegin(), proto_map->cend(),
+        [this](const std::pair<const int, ProtocolHA*>& map){ return map.second == this; });
+    if ( it != proto_map->cend() )
+        proto_map->erase((*it).first);
 
     if ( proto_map->empty() )
-    {
         delete proto_map;
-    }
 }
 
 void ProtocolHA::process_deletion(Flow& flow)

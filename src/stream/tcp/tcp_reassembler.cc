@@ -63,21 +63,20 @@ static void purge_alerts_callback_ips(IpsContext* c)
         session->client.reassembler.purge_alerts();
 }
 
-bool TcpReassembler::is_segment_pending_flush(TcpReassemblerState& trs)
+bool TcpReassembler::is_segment_pending_flush(const TcpReassemblerState& trs) const
 {
     return ( get_pending_segment_count(trs, 1) > 0 );
 }
 
-uint32_t TcpReassembler::get_pending_segment_count(TcpReassemblerState& trs, unsigned max)
+uint32_t TcpReassembler::get_pending_segment_count(const TcpReassemblerState& trs, unsigned max) const
 {
     uint32_t n = trs.sos.seg_count - trs.flush_count;
-    TcpSegmentNode* tsn;
 
     if ( !n || max == 1 )
         return n;
 
     n = 0;
-    tsn = trs.sos.seglist.head;
+    const TcpSegmentNode* tsn = trs.sos.seglist.head;
     while ( tsn )
     {
         if ( tsn->c_len && SEQ_LT(tsn->c_seq, trs.tracker->r_win_base) )
@@ -276,11 +275,8 @@ bool TcpReassembler::add_alert(TcpReassemblerState& trs, uint32_t gid, uint32_t 
 
 bool TcpReassembler::check_alerted(TcpReassemblerState& trs, uint32_t gid, uint32_t sid)
 {
-    for ( auto& alert : trs.alerts )
-       if (alert.gid == gid && alert.sid == sid)
-            return true;
-
-    return false;
+    return std::any_of(trs.alerts.cbegin(), trs.alerts.cend(),
+        [gid, sid](const StreamAlertInfo& alert){ return alert.gid == gid && alert.sid == sid; });
 }
 
 int TcpReassembler::update_alert(TcpReassemblerState& trs, uint32_t gid, uint32_t sid,
@@ -289,13 +285,15 @@ int TcpReassembler::update_alert(TcpReassemblerState& trs, uint32_t gid, uint32_
     // FIXIT-M comparison of seq_num is wrong, compare value is always 0, should be seq_num of wire packet
     uint32_t seq_num = 0;
 
-    for ( auto& alert : trs.alerts )
-       if (alert.gid == gid && alert.sid == sid && SEQ_EQ(alert.seq, seq_num))
-       {
-           alert.event_id = event_id;
-           alert.event_second = event_second;
-           return 0;
-       }
+    auto it = std::find_if(trs.alerts.begin(), trs.alerts.end(),
+        [gid, sid, seq_num](const StreamAlertInfo& alert)
+        { return alert.gid == gid && alert.sid == sid && SEQ_EQ(alert.seq, seq_num); });
+    if (it != trs.alerts.end())
+    {
+        (*it).event_id = event_id;
+        (*it).event_second = event_second;
+        return 0;
+    }
 
     return -1;
 }
@@ -957,7 +955,7 @@ static inline void fallback(TcpStreamTracker& trk, bool server_side, uint16_t ma
 
     // FIXIT-L: consolidate these 3
     bool to_server = splitter->to_server();
-    assert(splitter && server_side == to_server && server_side == !trk.client_tracker);
+    assert(server_side == to_server && server_side == !trk.client_tracker);
 #endif
 
     trk.set_splitter(new AtomSplitter(server_side, max));

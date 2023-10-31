@@ -322,10 +322,10 @@ static bool uniSearchReal(ContentData* cd, Cursor& c)
     else
     {
         // retry - adjust from start of last match
-        pos = c.get_pos() - cd->pmd.pattern_size + cd->match_delta;
+        pos = (int64_t)c.get_pos() - cd->pmd.pattern_size + cd->match_delta;
 
         if ( cd->depth_configured )
-            depth -= c.get_delta();
+            depth -= (int64_t)c.get_delta();
 
         if ( pos < 0 )
             return false;
@@ -361,6 +361,7 @@ static bool uniSearchReal(ContentData* cd, Cursor& c)
 
 static IpsOption::EvalStatus CheckANDPatternMatch(ContentData* idx, Cursor& c)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(contentPerfStats);
 
     bool found = uniSearchReal(idx, c);

@@ -504,7 +504,7 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
             return true;
         else if (v.is("substring"))
         {
-            const auto& ua_part = v.get_string();
+            const char* ua_part = v.get_string();
             if ( !ua_part )
                 return false;
             fingerprint.user_agent.emplace_back(ua_part);
@@ -628,7 +628,6 @@ bool RnaModule::log_mac_cache(const char* outfile)
         snort::LogMessage("Error opening %s for dumping MAC cache", outfile);
     }
 
-    string str;
     HostCacheMac* host_cache_mac = get_host_cache_mac();
     assert(host_cache_mac);
     const auto&& lru_data = host_cache_mac->get_all_data();
@@ -636,7 +635,7 @@ bool RnaModule::log_mac_cache(const char* outfile)
         << lru_data.size() << " trackers" << endl << endl;
     for ( const auto& elem : lru_data )
     {
-        str = "MAC: ";
+        string str = "MAC: ";
         str += format_dump_mac(elem.first.mac_addr);
         str += "\n Key: " + to_string(hash_mac(elem.first.mac_addr));
         elem.second->stringify(str);
@@ -664,14 +663,14 @@ TEST_CASE("RNA module", "[rna_module]")
         RnaModule mod;
         SnortConfig sc;
 
-        CHECK_FALSE(mod.begin("dummy", 0, nullptr));
-        CHECK(mod.end("rna", 0, nullptr) == false);
-        CHECK(mod.begin("rna", 0, nullptr) == true);
+        CHECK(false == mod.begin("dummy", 0, nullptr));
+        CHECK(false == mod.end("rna", 0, nullptr));
+        CHECK(true == mod.begin("rna", 0, nullptr));
 
         Value v1("rna.conf");
         v1.set(Parameter::find(rna_params, "rna_conf_path"));
-        CHECK(mod.set(nullptr, v1, nullptr) == true);
-        CHECK(mod.end("rna", 0, &sc) == true);
+        CHECK(true == mod.set(nullptr, v1, nullptr));
+        CHECK(true == mod.end("rna", 0, &sc));
 
         RnaModuleConfig* rc = mod.get_config();
         CHECK(rc != nullptr);
@@ -686,11 +685,11 @@ TEST_CASE("RNA module", "[rna_module]")
         SnortConfig sc;
 
         sc.set_run_flags(RUN_FLAG__IP_FRAGS_ONLY);
-        CHECK(sc.ip_frags_only() == true);
+        CHECK(true == sc.ip_frags_only());
 
-        CHECK(mod.begin(RNA_NAME, 0, nullptr) == true);
-        CHECK(mod.end(RNA_NAME, 0, &sc) == true);
-        CHECK(sc.ip_frags_only() == false);
+        CHECK(true == mod.begin(RNA_NAME, 0, nullptr));
+        CHECK(true == mod.end(RNA_NAME, 0, &sc));
+        CHECK(false == sc.ip_frags_only());
 
         delete mod.get_config();
     }
@@ -701,11 +700,11 @@ TEST_CASE("RNA module", "[rna_module]")
         SnortConfig sc;
 
         sc.clear_run_flags(RUN_FLAG__TRACK_ON_SYN);
-        CHECK(sc.track_on_syn() == false);
+        CHECK(false == sc.track_on_syn());
 
-        CHECK(mod.begin(RNA_NAME, 0, nullptr) == true);
-        CHECK(mod.end(RNA_NAME, 0, &sc) == true);
-        CHECK(sc.track_on_syn() == true);
+        CHECK(true == mod.begin(RNA_NAME, 0, nullptr));
+        CHECK(true == mod.end(RNA_NAME, 0, &sc));
+        CHECK(true == sc.track_on_syn());
 
         delete mod.get_config();
     }

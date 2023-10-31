@@ -701,7 +701,7 @@ public:
 private:
     inline bool is(const Value& v, const char* opt);
 
-    SFDAQModuleConfig* module_config;
+    SFDAQModuleConfig* module_config = nullptr;
     bool no_warn_flowbits = false;
     bool no_warn_rules = false;
     std::string stub_opts;

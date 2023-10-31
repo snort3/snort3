@@ -25,6 +25,7 @@
 #include "profiler.h"
 
 #include <cassert>
+#include <numeric>
 
 #include "framework/module.h"
 #include "main/snort_config.h"
@@ -138,12 +139,11 @@ void Profiler::prepare_stats()
     auto children = root.get_children();
 
     hr_duration runtime = root.get_stats().time.elapsed;
-    hr_duration sum = 0_ticks;
 
     s_profiler_nodes.clear_flex();
 
-    for ( auto pn : children )
-        sum += pn->get_stats().time.elapsed;
+    hr_duration sum = std::accumulate(children.cbegin(), children.cend(), 0_ticks,
+        [](const hr_duration& s, const ProfilerNode* pn){ return s + pn->get_stats().time.elapsed; });
 
     otherPerfStats.time.checks = root.get_stats().time.checks;
     otherPerfStats.time.elapsed = (runtime > sum) ?  (runtime - sum) : 0_ticks;

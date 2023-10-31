@@ -58,7 +58,7 @@ typedef std::function<void(SCMessage*)> SCProcessMsgFunc;
 class SideChannel
 {
 public:
-    SideChannel();
+    SideChannel() = default;
 
     void register_receive_handler(const SCProcessMsgFunc& handler);
     void unregister_receive_handler();
@@ -71,12 +71,12 @@ public:
     void set_default_port(SCPort port);
     snort::Connector::Direction get_direction();
 
-    snort::Connector* connector_receive;
-    snort::Connector* connector_transmit;
+    snort::Connector* connector_receive = nullptr;
+    snort::Connector* connector_transmit = nullptr;
 
 private:
-    SCSequence sequence;
-    SCPort default_port;
+    SCSequence sequence = 0;
+    SCPort default_port = 0;
     SCProcessMsgFunc receive_handler = nullptr;
 };
 

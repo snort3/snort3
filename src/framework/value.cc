@@ -265,8 +265,8 @@ std::string Value::get_origin_string() const
     std::string value;
     std::string token;
 
-    stringstream s(origin_str);
-    while ( s >> token )
+    stringstream str_s(origin_str);
+    while ( str_s >> token )
     {
         value += token;
         value += " ";
@@ -333,17 +333,39 @@ void Value::update_mask(uint64_t& mask, uint64_t flag, bool invert)
 
 TEST_CASE("set double test", "[Value]")
 {
+    Value test_val((double)12345.689);
+    CHECK(true == test_val.get_bool());
+    CHECK(12345 == test_val.get_size());
+    CHECK(12345 == test_val.get_int16());
+    CHECK(12345 == test_val.get_uint16());
+    CHECK(12345 == test_val.get_int32());
+    CHECK(12345 == test_val.get_uint32());
+    CHECK(12345 == test_val.get_int64());
+    CHECK(12345 == test_val.get_uint64());
+    CHECK(12345.689 == test_val.get_real());
+    CHECK(12345 == test_val.get_ip4());
+}
+
+TEST_CASE("set double test 2", "[Value]")
+{
     Value test_val((double)123456.89);
     CHECK(true == test_val.get_bool());
     CHECK(123456 == test_val.get_size());
-    CHECK(-7616 == test_val.get_int16());
-    CHECK(0xe240 == test_val.get_uint16());
-    CHECK(0x1e240 == test_val.get_int32());
-    CHECK(0x1e240 == test_val.get_uint32());
-    CHECK(0x1e240 == test_val.get_int64());
-    CHECK(0x1e240 == test_val.get_uint64());
+    CHECK(123456 == test_val.get_int32());
+    CHECK(123456 == test_val.get_uint32());
+    CHECK(123456 == test_val.get_int64());
+    CHECK(123456 == test_val.get_uint64());
     CHECK(123456.89 == test_val.get_real());
-    CHECK(0x1e240 == test_val.get_ip4());
+    CHECK(123456 == test_val.get_ip4());
+}
+
+TEST_CASE("set double test 3", "[Value]")
+{
+    Value test_val((double)-123456.89);
+    CHECK(true == test_val.get_bool());
+    CHECK(-123456 == test_val.get_int32());
+    CHECK(-123456 == test_val.get_int64());
+    CHECK(-123456.89 == test_val.get_real());
 }
 
 TEST_CASE("mac addr negative test", "[Value]")
@@ -462,7 +484,7 @@ TEST_CASE("token test", "[Value]")
     CHECK(true == test_val.get_next_csv_token(test_str));
     str_val = (const char *)test_str.c_str();
     REQUIRE(nullptr != str_val);
-    CHECK((strcmp(str_val,"123456")==0));
+    CHECK(0 == strcmp(str_val,"123456"));
 }
 
 TEST_CASE("get as string", "[Value]")

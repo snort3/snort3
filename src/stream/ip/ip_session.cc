@@ -174,7 +174,7 @@ bool IpSession::setup(Packet* p)
 
 int IpSession::process(Packet* p)
 {
-    Profile profile(ip_perf_stats);
+    Profile profile(ip_perf_stats); // cppcheck-suppress unreadVariable
 
     if ( Stream::expired_flow(flow, p) )
     {

@@ -127,7 +127,7 @@ static CipPacketDirection get_packet_direction(Packet* p)
 
 static void publish_data_to_appId(Packet* packet, CipCurrentData& current_data)
 {
-    CipEventData cip_event_data;
+    CipEventData cip_event_data = {};
     CipEvent cip_event(packet, &cip_event_data);
 
     bool publish_appid = true;
@@ -224,6 +224,7 @@ static void cip_current_data_process(CipSessionData* css, CipCurrentData& curren
 
 static void snort_cip(CipProtoConf* config, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(cip_perf_stats);
 
     if (p->has_tcp_data() && !p->is_full_pdu())

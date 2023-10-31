@@ -70,7 +70,7 @@ protected:
     Logger() = default;
 
 private:
-    const LogApi* api;
+    const LogApi* api = nullptr;
 };
 
 typedef Logger* (* LogNewFunc)(class Module*);

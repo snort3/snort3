@@ -231,10 +231,8 @@ bool JSIdentifierCtx::scope_check(const std::list<JSProgramScopeType>& compare) 
 const std::list<JSProgramScopeType> JSIdentifierCtx::get_types() const
 {
     std::list<JSProgramScopeType> return_list;
-    for (const auto& scope : scopes)
-    {
-        return_list.push_back(scope.type());
-    }
+    std::transform(scopes.cbegin(), scopes.cend(), std::back_inserter(return_list),
+        [](const ProgramScope& scope){ return scope.type(); });
     return return_list;
 }
 

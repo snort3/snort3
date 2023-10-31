@@ -28,7 +28,9 @@ THREAD_LOCAL ProfileStats rna_perf_stats;
 
 namespace snort
 {
-Module::Module(const char*, const char*, const Parameter*, bool) {}
+Module::Module(const char* s, const char*, const Parameter*, bool)
+    : name(s), help(nullptr), params(nullptr), list(false)
+{ }
 bool TcpFingerprint::operator==(const TcpFingerprint&) const { return true; }
 
 // inspector
@@ -65,7 +67,8 @@ private:
 } // end of namespace snort
 
 static ControlConn s_ctrlcon(1, true);
-ControlConn::ControlConn(int, bool) {}
+ControlConn::ControlConn(int, bool) : shell(nullptr), fd(-1), touched(0)
+{}
 ControlConn::~ControlConn() {}
 
 #endif

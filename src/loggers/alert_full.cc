@@ -129,11 +129,8 @@ private:
     unsigned long limit;
 };
 
-FullLogger::FullLogger(FullModule* m)
-{
-    file = m->file ? F_NAME : "stdout";
-    limit = m->limit;
-}
+FullLogger::FullLogger(FullModule* m) : file(m->file ? F_NAME : "stdout"), limit(m->limit)
+{ }
 
 void FullLogger::open()
 {

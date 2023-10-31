@@ -89,6 +89,7 @@ static void prune_cip_unconnected_list(CipUnconnectedMessageList* unconnected_li
     {
         if (unconnected_list->list[i].slot_active)
         {
+            // cppcheck-suppress unreadVariable
             TIMERSUB(timestamp, &unconnected_list->list[i].timestamp, &timestamp_diff);
 
             // Round up to the nearest whole second.
@@ -139,7 +140,9 @@ static void prune_cip_connection_list(CipConnectionList* connection_list,
     {
         if (connection_list->list[i].slot_active)
         {
+            // cppcheck-suppress unreadVariable
             TIMERSUB(timestamp, &connection_list->list[i].ot_timestamp, &ot_timestamp_diff);
+            // cppcheck-suppress unreadVariable
             TIMERSUB(timestamp, &connection_list->list[i].to_timestamp, &to_timestamp_diff);
 
             // If either OT or TO connection timeouts have been exceeded, remove the connection
@@ -517,10 +520,5 @@ bool cip_request_remove(CipUnconnectedMessageList* unconnected_list,
     }
 
     return valid;
-}
-
-void set_unconnected_timeout(uint32_t unconnected_timeout)
-{
-    f_unconnected_timeout_ms = unconnected_timeout;
 }
 

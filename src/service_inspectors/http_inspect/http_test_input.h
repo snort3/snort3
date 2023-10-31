@@ -43,7 +43,7 @@ public:
 private:
     FILE* test_data_file;
     // FIXIT-E Figure out how big this buf needs to be and revise value
-    uint8_t msg_buf[2][2 * HttpEnums::MAX_OCTETS];
+    uint8_t msg_buf[2][2 * HttpEnums::MAX_OCTETS] = {{0}, {0}};
     std::queue<uint32_t> segments[2];
     FILE* include_file[2] = { nullptr, nullptr };
 

@@ -76,8 +76,8 @@ public:
     { return INSPECT; }
 
 private:
-    ArpSpoofConfig* config;
-    IPMacEntry host;
+    ArpSpoofConfig* config = nullptr;
+    IPMacEntry host = {};
 };
 
 #endif

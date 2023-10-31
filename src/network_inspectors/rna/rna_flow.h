@@ -61,8 +61,8 @@ public:
     RnaTracker get_client(const snort::SfIp&);
     RnaTracker get_tracker(const snort::Packet*, DiscoveryFilter&);
 
-    void set_server(RnaTracker& ht);
-    void set_client(RnaTracker& ht);
+    void set_server(const RnaTracker& ht);
+    void set_client(const RnaTracker& ht);
 
 };
 

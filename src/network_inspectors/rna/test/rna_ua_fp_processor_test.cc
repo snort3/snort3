@@ -91,13 +91,7 @@ namespace snort
 
 TEST_GROUP(rna_ua_fp_processor_test)
 {
-    UaFpProcessor* ua_proc;
-
-    void setup() override
-    { ua_proc = new UaFpProcessor; }
-
-    void teardown() override
-    { delete ua_proc; }
+    UaFpProcessor ua_proc;
 };
 
 TEST(rna_ua_fp_processor_test, sequential_setup)
@@ -105,14 +99,14 @@ TEST(rna_ua_fp_processor_test, sequential_setup)
     UaFingerprint fp;
 
     fp.user_agent = "Pink ";
-    ua_proc->push_agent(fp);
-    ua_proc->make_mpse();
+    ua_proc.push_agent(fp);
+    ua_proc.make_mpse();
 
     CHECK(s_prep_count == 1);
 
     fp.user_agent = "Floyd";
-    ua_proc->push_agent(fp);
-    ua_proc->make_mpse(true);
+    ua_proc.push_agent(fp);
+    ua_proc.make_mpse(true);
 
     CHECK(s_prep_count == 2);
     CHECK(s_prep_data == "Pink Floyd");
@@ -123,18 +117,18 @@ TEST(rna_ua_fp_processor_test, interleaved_setup)
     UaFingerprint fp;
 
     fp.user_agent = "Pink ";
-    ua_proc->push_agent(fp);
+    ua_proc.push_agent(fp);
 
     CHECK(s_prep_count == 0);
 
     fp.user_agent = "Floyd";
-    ua_proc->push_agent(fp);
-    ua_proc->make_mpse(true);
+    ua_proc.push_agent(fp);
+    ua_proc.make_mpse(true);
 
     CHECK(s_prep_count == 2);
     CHECK(s_prep_data == "Pink Floyd");
 
-    ua_proc->make_mpse();
+    ua_proc.make_mpse();
 
     CHECK(s_prep_count == 2);
     CHECK(s_prep_data == "Pink Floyd");

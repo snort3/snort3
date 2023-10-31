@@ -20,8 +20,7 @@ using namespace snort;
 
 void ApplicationDescriptor::set_id(AppId app_id)
 {
-    if ( my_id != app_id )
-        my_id = app_id;
+    my_id = app_id;
 }
 
 void ApplicationDescriptor::set_id(const Packet& p, AppIdSession& asd,

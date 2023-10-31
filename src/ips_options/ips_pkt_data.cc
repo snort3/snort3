@@ -49,6 +49,7 @@ public:
 
 IpsOption::EvalStatus PktDataOption::eval(Cursor& c, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(pktDataPerfStats);
 
     c.reset(p);

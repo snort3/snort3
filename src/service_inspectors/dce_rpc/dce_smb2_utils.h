@@ -95,7 +95,7 @@ inline std::shared_ptr<DCE2_Smb2SessionTracker> DCE2_SmbSessionCacheFindElseCrea
     return session_ptr;
 }
 
-inline bool DCE2_SmbSessionCacheRemove(Smb2SidHashKey& key)
+inline bool DCE2_SmbSessionCacheRemove(const Smb2SidHashKey& key)
 {
     return smb2_session_cache->remove(key);
 }

@@ -50,7 +50,7 @@ bool ReloadTracker::start(ControlConn* ctrlcon)
     return true;
 }
 
-void ReloadTracker::end(ControlConn* ctrlcon, bool prompt)
+void ReloadTracker::end(const ControlConn* ctrlcon, bool prompt)
 {
 #ifdef NDEBUG
     UNUSED(ctrlcon);
@@ -65,7 +65,7 @@ void ReloadTracker::end(ControlConn* ctrlcon, bool prompt)
     reload_in_progress = false;
 }
 
-void ReloadTracker::failed(ControlConn* ctrlcon, const char* reason)
+void ReloadTracker::failed(const ControlConn* ctrlcon, const char* reason)
 {
 #ifdef NDEBUG
     UNUSED(ctrlcon);
@@ -78,7 +78,7 @@ void ReloadTracker::failed(ControlConn* ctrlcon, const char* reason)
     reload_in_progress = false;
 }
 
-void ReloadTracker::update(ControlConn* ctrlcon, const char* status)
+void ReloadTracker::update(const ControlConn* ctrlcon, const char* status)
 {
 #ifdef NDEBUG
     UNUSED(ctrlcon);

@@ -405,14 +405,13 @@ bool ModuleConfig::resolve()
             }
         }
 
-        for ( auto &i : peg_names )
-        {
-            if ( !i.second )
+        std::for_each(peg_names.cbegin(), peg_names.cend(),
+            [this](const std::pair<const std::string, bool>& i)
             {
-                ParseWarning(WARN_CONF, "Perf monitor is unable to find %s.%s count\n",
-                    name.c_str(), i.first.c_str());
-            }
-        }
+                if (!i.second)
+                    ParseWarning(WARN_CONF, "Perf monitor is unable to find %s.%s count\n",
+                        name.c_str(), i.first.c_str());
+            });
     }
     name.clear();
     peg_names.clear();

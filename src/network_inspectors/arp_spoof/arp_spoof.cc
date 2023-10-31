@@ -98,12 +98,9 @@ THREAD_LOCAL ProfileStats arpPerfStats;
 
 static const IPMacEntry* LookupIPMacEntryByIP(const IPMacEntryList& ipmel, uint32_t ipv4_addr)
 {
-    for ( auto& p : ipmel )
-    {
-        if (p.ipv4_addr == ipv4_addr)
-            return &p;
-    }
-    return nullptr;
+    auto it = std::find_if(ipmel.cbegin(), ipmel.cend(),
+        [ipv4_addr](const IPMacEntry& p){ return p.ipv4_addr == ipv4_addr; });
+    return (it != ipmel.cend()) ? &(*it) : nullptr;
 }
 
 static std::string to_hex_string(const uint8_t* data, size_t len)

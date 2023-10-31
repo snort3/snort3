@@ -109,10 +109,10 @@ private:
     void add_commands(snort::Value&, uint32_t flags);
 
 private:
-    SmtpProtoConf* config;
+    SmtpProtoConf* config = nullptr;
     std::vector<SmtpCmd*> cmds;
     std::string names;
-    int number;
+    int number = 0;
 };
 
 #endif

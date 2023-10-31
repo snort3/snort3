@@ -391,6 +391,7 @@ TEST_CASE("sigsafe printer", "[SigsafePrinter]")
     SECTION("null string")
     {
         const char* nullstr = nullptr;
+        // cppcheck-suppress nullPointer
         snprintf(expected, sizeof(expected), "%s", nullstr);
         SigSafePrinter(actual, sizeof(actual)).printf("%s", nullstr);
         CHECK_THAT(expected, Equals(actual));

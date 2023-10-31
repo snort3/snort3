@@ -36,7 +36,7 @@ void RuleGroup::add_rule()
 RuleGroup::~RuleGroup()
 {
     for ( int sect = snort::PS_NONE; sect <= snort::PS_MAX; sect++)
-        for ( auto* it : pm_list[sect] )
+        for ( const auto* it : pm_list[sect] )
             delete it;
 
     delete_nfp_rules();

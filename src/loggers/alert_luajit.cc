@@ -147,12 +147,8 @@ private:
 };
 
 LuaJitLogger::LuaJitLogger(const char* name, std::string& chunk, LuaLogModule* mod)
+    : config("args = { " + mod->args + "}")
 {
-    // create an args table with any rule options
-    config = "args = { ";
-    config += mod->args;
-    config += "}";
-
     unsigned max = ThreadConfig::get_instance_max();
 
     // FIXIT-L might make more sense to have one instance with one lua state in
@@ -168,6 +164,7 @@ LuaJitLogger::LuaJitLogger(const char* name, std::string& chunk, LuaLogModule* m
 
 void LuaJitLogger::alert(Packet* p, const char*, const Event& e)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(luaLogPerfStats);
 
     packet = p;

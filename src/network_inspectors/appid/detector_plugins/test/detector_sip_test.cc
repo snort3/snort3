@@ -32,6 +32,7 @@
 #include "framework/mpse_batch.h"
 #include "network_inspectors/appid/appid_utils/sf_mlmp.cc"
 #include "protocols/protocol_ids.h"
+#include "service_inspectors/sip/sip_parser.h"
 #include "utils/util_cstring.cc"
 
 #include "appid_inspector.h"
@@ -173,7 +174,8 @@ void AppIdDetector::add_app(snort::Packet const&, AppIdSession&, AppidSessionDir
     int, char const*, AppidChangeBits&) { }
 // LCOV_EXCL_STOP
 
-SipEvent::SipEvent(snort::Packet const* p, SIPMsg const*, SIP_DialogData const*) { this->p = p; }
+SipEvent::SipEvent(const snort::Packet* p, const SIPMsg& msg, const SIP_DialogData*) : p(p), msg(msg)
+{ }
 SipEvent::~SipEvent() = default;
 bool SipEvent::is_invite() const { return false; }
 bool SipEvent::is_dialog_established() const { return false; }
@@ -189,8 +191,11 @@ void* AppIdDetector::data_get(AppIdSession&)
 
 TEST_GROUP(detector_sip_tests)
 {
+    SIPMsg sip_msg;
+
     void setup() override
     {
+        sip_msg = {};
         appid_inspector.configure(nullptr);
     }
     void teardown() override
@@ -207,7 +212,7 @@ TEST(detector_sip_tests, sip_event_handler)
     OdpContext* odpctxt = pkt_thread_odp_ctxt = &context.get_odp_ctxt();
 
     odpctxt->initialize(appid_inspector);
-    SipEvent event(&pkt, nullptr, nullptr);
+    SipEvent event(&pkt, sip_msg, nullptr);
     SipEventHandler event_handler(appid_inspector);
     Flow* flow = new Flow;
     event_handler.handle(event, flow);

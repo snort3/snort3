@@ -77,7 +77,7 @@ private:
 class SipEvent : public snort::DataEvent
 {
 public:
-    SipEvent(const snort::Packet*, const SIPMsg*, const SIP_DialogData*);
+    SipEvent(const snort::Packet*, const SIPMsg&, const SIP_DialogData*);
     ~SipEvent() override;
 
     const snort::Packet* get_packet() const override
@@ -118,7 +118,7 @@ public:
 private:
     const snort::Packet* p;
 
-    const SIPMsg* msg;
+    const SIPMsg& msg;
     const SIP_DialogData* dialog;
 
     const char* from = nullptr;

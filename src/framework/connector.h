@@ -74,7 +74,7 @@ public:
     virtual Direction get_connector_direction() = 0;
 
     const std::string connector_name;
-    const ConnectorConfig* config;
+    const ConnectorConfig* config = nullptr;
 
 protected:
     Connector() = default;

@@ -82,7 +82,7 @@ public:
 
 void Modbus::eval(Packet* p)
 {
-    Profile profile(modbus_prof);
+    Profile profile(modbus_prof);   // cppcheck-suppress unreadVariable
 
     // preconditions - what we registered for
     assert(p->has_tcp_data());

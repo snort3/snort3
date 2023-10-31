@@ -40,7 +40,6 @@ public:
 bool React::convert(std::istringstream& data_stream)
 {
     std::string args;
-    std::string tmp;
     std::istringstream::off_type pos = data_stream.tellg();
 
     args = util::get_rule_option_args(data_stream);
@@ -60,6 +59,7 @@ bool React::convert(std::istringstream& data_stream)
         {
             // since we still can't be sure if we passed the resp buffer,
             // check the next option and ensure it matches
+            std::string tmp;
             std::istringstream arg_stream(args);
             if (util::get_string(arg_stream, tmp, ",") &&
                 (tmp == "msg" ||

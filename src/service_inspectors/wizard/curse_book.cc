@@ -22,12 +22,14 @@
 #include "config.h"
 #endif
 
+#include <algorithm>
+
 #include "curse_book.h"
 
 using namespace std;
 
 // map between service and curse details
-vector<CurseDetails> CurseBook::curse_map = 
+vector<CurseDetails> CurseBook::curse_map =
 {
     // name         service        alg                          is_tcp
     { "dce_udp"   , "dcerpc"     , CurseBook::dce_udp_curse   , false },
@@ -40,20 +42,20 @@ vector<CurseDetails> CurseBook::curse_map =
 
 bool CurseBook::add_curse(const char* key)
 {
-    for ( const CurseDetails& curse : curse_map )
-    {
-        if ( curse.name == key )
+    return std::cend(curse_map) != std::find_if(std::cbegin(curse_map), std::cend(curse_map),
+        [this, key](const CurseDetails& curse)
         {
-            if ( curse.is_tcp )
-                tcp_curses.emplace_back(&curse);
-            else
-                non_tcp_curses.emplace_back(&curse);
+            if ( curse.name == key )
+            {
+                if ( curse.is_tcp )
+                    tcp_curses.emplace_back(&curse);
+                else
+                    non_tcp_curses.emplace_back(&curse);
 
-            return true;
-        }
-    }
-
-    return false;
+                return true;
+            }
+            return false;
+        });
 }
 
 const vector<const CurseDetails*>& CurseBook::get_curses(bool tcp) const

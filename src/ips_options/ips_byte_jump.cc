@@ -192,6 +192,7 @@ bool ByteJumpOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ByteJumpOption::eval(Cursor& c, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(byteJumpPerfStats);
 
     ByteJumpData* bjd = (ByteJumpData*)&config;
@@ -631,19 +632,19 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
         SECTION("Testing hash with maximum values")
         {
             SetByteJumpMaxValue(byte_jump);
-            ByteJumpOption hash_test_max(byte_jump);
+            ByteJumpOption hash_test_max_opt(byte_jump);
             ByteJumpOption hash_test_equal_max(byte_jump);
 
             SECTION("Hash has same source")
             {
-                CHECK(hash_test_max.hash() == hash_test_equal_max.hash());
+                CHECK(hash_test_max_opt.hash() == hash_test_equal_max.hash());
             }
 
             SECTION("Compare hash from different source")
             {
                 SetByteJumpMaxValue(byte_jump);
-                ByteJumpOption hash_test_max(byte_jump);
-                CHECK(hash_test.hash() != hash_test_max.hash());
+                ByteJumpOption tmp_hash_test_max_opt(byte_jump);
+                CHECK(hash_test.hash() != tmp_hash_test_max_opt.hash());
             }
         }
     }
@@ -870,8 +871,8 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
                 byte_jump.align_flag = 0;
                 byte_jump.bitmask_val = 0;
                 ByteJumpOption test_8(byte_jump);
-                REQUIRE((test_8.eval(current_cursor, &test_packet)) == NO_MATCH);
-                REQUIRE(current_cursor.awaiting_data());
+                REQUIRE(NO_MATCH == test_8.eval(current_cursor, &test_packet));
+                REQUIRE(true == current_cursor.awaiting_data());
             }
 
             SECTION("Cursor on the last byte of buffer, bytes_to_extract is bigger than offset")
@@ -953,7 +954,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             module_jump.var = buff;
             byte_jump.offset_var = -1;
             module_jump.data = byte_jump;
-            REQUIRE(module_jump.end("tmp", 0, nullptr) == false);
+            REQUIRE(false == module_jump.end("tmp", 0, nullptr));
         }
 
         SECTION("Undefined rule option for offset_var")
@@ -962,14 +963,14 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             module_jump.post_var = buff;
             byte_jump.post_offset_var = -1;
             module_jump.data = byte_jump;
-            REQUIRE(module_jump.end("tmp", 0, nullptr) == false);
+            REQUIRE(false == module_jump.end("tmp", 0, nullptr));
         }
 
         SECTION("From_beginning and from_end options together")
         {
             byte_jump.endianness = 0;
             module_jump.data = byte_jump;
-            REQUIRE(module_jump.end("tmp", 0, nullptr) == false);
+            REQUIRE(false == module_jump.end("tmp", 0, nullptr));
         }
 
         SECTION("Number of bytes in \"bitmask\" value is greater than bytes to extract")
@@ -977,7 +978,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             byte_jump.from_beginning_flag = 0;
             byte_jump.bytes_to_extract = 0;
             module_jump.data = byte_jump;
-            REQUIRE(module_jump.end("tmp", 0, nullptr) == false);
+            REQUIRE(false == module_jump.end("tmp", 0, nullptr));
         }
 
         SECTION("byte_jump rule option cannot extract more \
@@ -987,14 +988,14 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             byte_jump.bytes_to_extract = 5;
             byte_jump.string_convert_flag = 0;
             module_jump.data = byte_jump;
-            REQUIRE(module_jump.end("tmp", 0, nullptr) == false);
+            REQUIRE(false == module_jump.end("tmp", 0, nullptr));
         }
 
         SECTION("Case with returned value true")
         {
             byte_jump.from_beginning_flag = 0;
             module_jump.data = byte_jump;
-            REQUIRE(module_jump.end("tmp", 0, nullptr) == true);
+            REQUIRE(true == module_jump.end("tmp", 0, nullptr));
         }
     }
 
@@ -1007,7 +1008,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             Parameter param("~count", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_jump.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"~offset\"")
@@ -1017,7 +1018,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
                 Parameter param("~offset", snort::Parameter::Type::PT_BOOL,
                     nullptr, "default", "help");
                 value.set(&param);
-                REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+                REQUIRE(true == module_jump.set(nullptr, value, nullptr));
             }
 
             SECTION("When value has a str")
@@ -1026,7 +1027,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
                 Parameter param("~offset", snort::Parameter::Type::PT_BOOL,
                     nullptr, "default", "help");
                 value_tmp.set(&param);
-                REQUIRE(module_jump.set(nullptr, value_tmp, nullptr) == true);
+                REQUIRE(true == module_jump.set(nullptr, value_tmp, nullptr));
             }
         }
 
@@ -1035,7 +1036,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             Parameter param("relative", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_jump.set(nullptr, value, nullptr));
         }
 
         SECTION("Param \"from_beginning\" correct")
@@ -1043,7 +1044,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             Parameter param("from_beginning", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_jump.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"from_end\"")
@@ -1051,7 +1052,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             Parameter param("from_end", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_jump.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"align\"")
@@ -1059,7 +1060,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             Parameter param("align", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_jump.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"multiplier\"")
@@ -1067,7 +1068,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             Parameter param("multiplier", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_jump.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"post_offset\"")
@@ -1077,7 +1078,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
                 Parameter param("post_offset", snort::Parameter::Type::PT_BOOL,
                     nullptr, "default", "help");
                 value.set(&param);
-                REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+                REQUIRE(true == module_jump.set(nullptr, value, nullptr));
             }
 
             SECTION("When value has a str")
@@ -1086,7 +1087,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
                 Parameter param("post_offset", snort::Parameter::Type::PT_BOOL,
                     nullptr, "default", "help");
                 value_tmp.set(&param);
-                REQUIRE(module_jump.set(nullptr, value_tmp, nullptr) == true);
+                REQUIRE(true == module_jump.set(nullptr, value_tmp, nullptr));
             }
         }
 
@@ -1095,7 +1096,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             Parameter param("big", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_jump.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"little\"")
@@ -1103,7 +1104,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             Parameter param("little", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_jump.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"dce\"")
@@ -1111,7 +1112,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             Parameter param("dce", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_jump.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"string\"")
@@ -1119,7 +1120,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             Parameter param("string", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_jump.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"dec\"")
@@ -1127,7 +1128,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             Parameter param("dec", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_jump.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"hex\"")
@@ -1135,7 +1136,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             Parameter param("hex", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_jump.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"oct\"")
@@ -1143,7 +1144,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             Parameter param("oct", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_jump.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"bitmask\"")
@@ -1151,7 +1152,7 @@ TEST_CASE("ByteJumpModule test", "[ips_byte_jump]")
             Parameter param("bitmask", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_jump.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_jump.set(nullptr, value, nullptr));
         }
     }
 }

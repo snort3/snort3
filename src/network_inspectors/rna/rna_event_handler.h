@@ -32,7 +32,7 @@ inline static void update_rna_pkt_stats(const snort::Packet* p)
     rna_stats.total_bytes_in_interval += p->pktlen;
 }
 
-inline static void update_rna_pkt_stats(snort::DataEvent& event)
+inline static void update_rna_pkt_stats(const snort::DataEvent& event)
 {
     update_rna_pkt_stats(event.get_packet());
 }

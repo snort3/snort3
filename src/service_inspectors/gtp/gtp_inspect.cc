@@ -98,7 +98,7 @@ GTP_IEData* get_infos()
 class GtpInspect : public Inspector
 {
 public:
-    GtpInspect(std::vector<GtpStuff>&);
+    GtpInspect(const std::vector<GtpStuff>&);
 
     void eval(Packet*) override;
 
@@ -109,11 +109,11 @@ private:
     GTPConfig config;
 };
 
-GtpInspect::GtpInspect(std::vector<GtpStuff>& v)
+GtpInspect::GtpInspect(const std::vector<GtpStuff>& v)
 {
     for ( unsigned i = 0; i < v.size(); ++i )
     {
-        GtpStuff& gs = v[i];
+        const GtpStuff& gs = v[i];
 
         if ( gs.length < 0 )
         {
@@ -129,6 +129,7 @@ GtpInspect::GtpInspect(std::vector<GtpStuff>& v)
 
 void GtpInspect::eval(Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(gtp_inspect_prof);
 
     // preconditions - what we registered for

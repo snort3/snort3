@@ -50,7 +50,8 @@ static HostCacheModule module;
 static char logged_message[LOG_MAX+1];
 
 static ControlConn ctrlcon(1, true);
-ControlConn::ControlConn(int, bool) {}
+ControlConn::ControlConn(int, bool) : shell(nullptr), fd(-1), touched(0)
+{ }
 ControlConn::~ControlConn() {}
 void ControlConn::log_command(const std::string& , bool ) { }
 ControlConn* ControlConn::query_from_lua(const lua_State*) { return &ctrlcon; }

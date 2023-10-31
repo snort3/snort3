@@ -218,6 +218,7 @@ void Dnp3::show(const SnortConfig*) const
 
 void Dnp3::eval(Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(dnp3_perf_stats);
 
     assert (p->has_tcp_data() || p->has_udp_data());

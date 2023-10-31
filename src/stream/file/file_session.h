@@ -32,15 +32,6 @@ public:
     void clear() override;
     int process(snort::Packet*) override;
 
-    bool is_sequenced(uint8_t /*dir*/) override
-    { return true; }
-
-    bool are_packets_missing(uint8_t /*dir*/) override
-    { return false; }
-
-    uint8_t missing_in_reassembled(uint8_t /*dir*/) override
-    { return SSN_MISSING_NONE; }
-
 private:
     void start(snort::Packet*, snort::Flow*);
     void update(snort::Packet*, snort::Flow*);

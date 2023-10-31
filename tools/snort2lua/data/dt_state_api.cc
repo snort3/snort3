@@ -68,7 +68,7 @@ void StateApi::print_states(std::ostream& out) const
 
     out << "local_states =\n[[\n";
 
-    for (const auto r : states)
+    for (const auto* r : states)
         out << (*r) << "\n";
 
     out << "]]\n\n";

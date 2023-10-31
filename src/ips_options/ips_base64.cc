@@ -59,8 +59,8 @@ struct Base64DecodeData
 class Base64DecodeOption : public IpsOption
 {
 public:
-    Base64DecodeOption(const Base64DecodeData& c) : IpsOption(s_name)
-    { config = c; }
+    Base64DecodeOption(const Base64DecodeData& c) : IpsOption(s_name), config(c)
+    { }
 
 
     uint32_t hash() const override;
@@ -115,6 +115,7 @@ bool Base64DecodeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus Base64DecodeOption::eval(Cursor& c, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(base64PerfStats);
     DataBuffer& base64_decode_buffer = DetectionEngine::get_alt_buffer(p);
     base64_decode_buffer.len = 0;
@@ -284,6 +285,7 @@ public:
 
 IpsOption::EvalStatus Base64DataOption::eval(Cursor& c, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(base64PerfStats);
     const DataBuffer& base64_decode_buffer = DetectionEngine::get_alt_buffer(p);
 

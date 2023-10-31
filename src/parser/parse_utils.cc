@@ -170,7 +170,7 @@ TEST_CASE("parse_int", "[ParseUtils]")
     {
         int res = parse_int("10  ", "test");
 
-        CHECK(res == 10);
+        CHECK((res == 10));
     }
 
     SECTION("not a number")
@@ -188,7 +188,7 @@ TEST_CASE("parse_int", "[ParseUtils]")
 
         int res = parse_int(data, "test");
 
-        CHECK(res == 65535);
+        CHECK((res == 65535));
         CHECK(errno == ERANGE);
     }
 
@@ -198,7 +198,7 @@ TEST_CASE("parse_int", "[ParseUtils]")
 
         int res = parse_int(data, "test");
 
-        CHECK(res == -65535);
+        CHECK((res == -65535));
         CHECK(errno == ERANGE);
     }
 
@@ -206,14 +206,14 @@ TEST_CASE("parse_int", "[ParseUtils]")
     {
         int res = parse_int("1", "test", 2, 3);
 
-        CHECK(res == 2);
+        CHECK((res == 2));
     }
 
     SECTION("above the limit")
     {
         int res = parse_int("4", "test", 2, 3);
 
-        CHECK(res == 3);
+        CHECK((res == 3));
     }
 }
 

@@ -70,7 +70,7 @@ unsigned AppIdInspector::pub_id = 0;
 
 static THREAD_LOCAL PacketTracer::TracerMute appid_mute;
 
-static void add_appid_to_packet_trace(Flow& flow, const OdpContext& odp_context)
+static void add_appid_to_packet_trace(const Flow& flow, const OdpContext& odp_context)
 {
     AppIdSession* session = appid_api.get_appid_session(flow);
     // Skip sessions using old odp context after odp reload
@@ -222,6 +222,7 @@ void AppIdInspector::tear_down(SnortConfig*)
 
 void AppIdInspector::eval(Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(appid_perf_stats);
     appid_stats.packets++;
 

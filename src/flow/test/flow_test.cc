@@ -40,10 +40,9 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-using namespace snort;
+#include "flow_stubs.h"
 
-Packet::Packet(bool) { }
-Packet::~Packet()  = default;
+using namespace snort;
 
 void Inspector::rem_ref() {}
 
@@ -61,28 +60,13 @@ void FlowStash::reset() {}
 
 void DetectionEngine::onload(Flow*) {}
 
-void set_network_policy(unsigned) { }
-void set_inspection_policy(unsigned) { }
-void set_ips_policy(const snort::SnortConfig*, unsigned) { }
-void select_default_policy(const _daq_pkt_hdr&, const SnortConfig*) { }
-namespace snort
-{
-NetworkPolicy* get_network_policy() { return nullptr; }
-InspectionPolicy* get_inspection_policy() { return nullptr; }
-IpsPolicy* get_ips_policy() { return nullptr; }
-void set_network_policy(NetworkPolicy*) { }
-void set_inspection_policy(InspectionPolicy*) { }
-void set_ips_policy(IpsPolicy*) { }
-unsigned SnortConfig::get_thread_reload_id() { return 0; }
-}
-
 Packet* DetectionEngine::set_next_packet(const Packet*, Flow*) { return nullptr; }
 
 ContextSwitcher* Analyzer::get_switcher() { return nullptr; }
 snort::IpsContext* ContextSwitcher::get_context() const { return nullptr; }
 IpsContext* DetectionEngine::get_context() { return nullptr; }
 
-DetectionEngine::DetectionEngine() = default;
+DetectionEngine::DetectionEngine() { context = nullptr; }
 
 DetectionEngine::~DetectionEngine() = default;
 
@@ -93,19 +77,10 @@ uint8_t ip::IpApi::ttl() const { return 0; }
 
 const Layer* layer::get_mpls_layer(const Packet* const) { return nullptr; }
 
-void DataBus::publish(unsigned, unsigned, Packet*, Flow*) {}
-
 const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 
 TEST_GROUP(nondefault_timeout)
 {
-    void setup() override
-    {
-    }
-
-    void teardown() override
-    {
-    }
 };
 
 TEST(nondefault_timeout, hard_expiration)

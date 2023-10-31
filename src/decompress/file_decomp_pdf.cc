@@ -396,7 +396,7 @@ static inline fd_status_t Handle_State_DICT_OBJECT(fd_session_t* SessionPtr, uin
            and handles other diversion such as nested Dict objects.
            If the /Filter token doesn't exist then we don't fill the
            Filter_Spec_Buf[].  If in skip mode, no need to look for token. */
-        char Filter_Tok[] = TOK_DICT_FILT;
+        static const char Filter_Tok[] = TOK_DICT_FILT;
 
         if ( (p->Sub_State == P_DICT_ACTIVE) && c == Filter_Tok[p->Elem_Index++] )
         {

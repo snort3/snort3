@@ -57,13 +57,6 @@ void reset_telnet_buffer(Packet* p)
     DetectionEngine::get_alt_buffer(p).len = 0;
 }
 
-const uint8_t* get_telnet_buffer(Packet* p, unsigned& len)
-{
-    const DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
-    len = buf.len;
-    return len ? buf.data : nullptr;
-}
-
 int normalize_telnet(
     TELNET_SESSION* tnssn, Packet* p, DataBuffer& buf,
     int iMode, char ignoreEraseCmds, bool on_ftp_channel)

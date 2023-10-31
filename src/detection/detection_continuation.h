@@ -245,16 +245,16 @@ bool Continuation::State::eval(snort::Packet& p)
     for (uint8_t i = 0; i < NUM_IPS_OPTIONS_VARS; ++i)
         snort::SetVarValueByIndex(byte_extract_vars[i], i);
 
-    const detection_option_tree_node_t* node = root.children[0];
+    const detection_option_tree_node_t* root_node = root.children[0];
 
     if (opt_parent)
     {
-        for (int i = 0; i < node->num_children; ++i)
-            result += detection_option_node_evaluate(node->children[i], data, cursor);
+        for (int i = 0; i < root_node->num_children; ++i)
+            result += detection_option_node_evaluate(root_node->children[i], data, cursor);
     }
     else
     {
-        result = detection_option_node_evaluate(node, data, cursor);
+        result = detection_option_node_evaluate(root_node, data, cursor);
     }
 
     clear_trace_cursor_info();

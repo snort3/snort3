@@ -105,6 +105,7 @@ bool Http2Inspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionB
 
 void Http2Inspect::eval(Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(Http2Module::get_profile_stats());
 
     const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;

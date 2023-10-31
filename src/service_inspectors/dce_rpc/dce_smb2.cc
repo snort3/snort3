@@ -89,7 +89,7 @@ DCE2_Smb2FileTracker::~DCE2_Smb2FileTracker(void)
     SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
         nullptr, "File tracker with file id: 0x%" PRIx64 " tracker terminating\n", file_id);
     auto all_conn_trackers = str->conn_trackers.get_all_entry();
-    for ( auto& h : all_conn_trackers )
+    for ( const auto& h : all_conn_trackers )
     {
         if (h.second->ftracker_tcp)
         {
@@ -139,7 +139,7 @@ DCE2_Smb2SessionTracker::~DCE2_Smb2SessionTracker(void)
         nullptr, "Session tracker 0x%" PRIx64 " terminating\n", session_id);
     removeSessionFromAllConnection();
     auto all_tree_trackers = tree_trackers.get_all_entry();
-    for ( auto& h : all_tree_trackers )
+    for ( const auto& h : all_tree_trackers )
     {
         removeTtracker(h.first);
     }

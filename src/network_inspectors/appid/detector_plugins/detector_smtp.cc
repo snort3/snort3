@@ -526,7 +526,7 @@ int SmtpClientDetector::validate(AppIdDiscoveryArgs& args)
             if (*args.data == '.')
             {
                 if (len == 0 ||
-                    (len >= 1 && args.data[1] == '\n') ||
+                    args.data[1] == '\n' ||
                     (len >= 2 && args.data[1] == '\r' && args.data[2] == '\n'))
                 {
                     add_app(args.asd, APP_ID_SMTP, APP_ID_SMTP, nullptr, args.change_bits);

@@ -33,10 +33,10 @@ public:
     Option(const std::string& name, std::string val, int depth);
     virtual ~Option() = default;
 
-    inline const std::string& get_name()
+    inline const std::string& get_name() const
     { return name; }
 
-    inline const std::string& get_value()
+    inline const std::string& get_value() const
     { return value; }
 
     void set_print_whitespace(bool w)

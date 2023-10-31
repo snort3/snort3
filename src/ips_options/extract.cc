@@ -434,8 +434,8 @@ TEST_CASE("set_cursor_bounds", "[byte_extraction_tests]")
     p.data = (const uint8_t*)"Lorem 010 12345 0x75";
     p.dsize = 21;
     Cursor c(&p);
-    const uint8_t* start = nullptr;
-    const uint8_t* ptr = nullptr;
+    const uint8_t* start;
+    const uint8_t* ptr;
     const uint8_t* end = nullptr;
 
     SECTION("4 bytes read, no offset")
@@ -445,7 +445,6 @@ TEST_CASE("set_cursor_bounds", "[byte_extraction_tests]")
         set_cursor_bounds(settings, c, start, ptr, end);
         CHECK(start == p.data);
         CHECK(ptr == p.data);
-        CHECK(end == p.data + 21);
     }
     SECTION("4 byte read, offset = 4")
     {
@@ -454,7 +453,6 @@ TEST_CASE("set_cursor_bounds", "[byte_extraction_tests]")
         set_cursor_bounds(settings, c, start, ptr, end);
         CHECK(start == p.data);
         CHECK(ptr == p.data + 4);
-        CHECK(end == p.data + 21);
     }
     SECTION("4 bytes read, cursor move without relative flag")
     {
@@ -464,7 +462,6 @@ TEST_CASE("set_cursor_bounds", "[byte_extraction_tests]")
         set_cursor_bounds(settings, c, start, ptr, end);
         CHECK(start == p.data);
         CHECK(ptr == p.data);
-        CHECK(end == p.data + 21);
     }
     SECTION("4 bytes read, cursor move with relative flag")
     {
@@ -474,8 +471,9 @@ TEST_CASE("set_cursor_bounds", "[byte_extraction_tests]")
         set_cursor_bounds(settings, c, start, ptr, end);
         CHECK(start == p.data);
         CHECK(ptr == p.data + 3);
-        CHECK(end == p.data + 21);
     }
+
+    CHECK(end == p.data + 21);
 }
 
 TEST_CASE("extract_data valid", "[byte_extraction_tests]")

@@ -55,8 +55,8 @@ struct Location
     std::string file;
     unsigned line;
 
-    Location(const char* c, const char* p, const char* f, unsigned u)
-    { code = c; path = p; file = f; line = u; }
+    Location(const char* c, const char* p, const char* f, unsigned u) : code(c), path(p), file(f), line(u)
+    { }
 };
 
 static std::stack<Location> files;
@@ -254,9 +254,9 @@ static void add_service_to_otn_helper(SnortConfig* sc, OptTreeNode* otn, const c
 {
     SnortProtocolId svc_id = sc->proto_ref->add(svc_name);
 
-    for ( const auto& si : otn->sigInfo.services )
-        if ( si.snort_protocol_id == svc_id )
-            return;  // already added
+    if (std::any_of(otn->sigInfo.services.cbegin(), otn->sigInfo.services.cend(),
+        [svc_id](const SignatureServiceInfo& si){ return si.snort_protocol_id == svc_id; }))
+        return;  // already added
 
     SignatureServiceInfo si(svc_name, svc_id);
     otn->sigInfo.services.emplace_back(si);

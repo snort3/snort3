@@ -293,7 +293,7 @@ static void AlertSyslog(
     }
     else if (msg != nullptr)
     {
-        syslog(priority, "%s", msg == nullptr ? "ALERT" : msg);
+        syslog(priority, "%s", msg);
     }
 }
 

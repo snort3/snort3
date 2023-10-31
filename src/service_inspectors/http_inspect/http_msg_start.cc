@@ -75,7 +75,7 @@ void HttpMsgStart::derive_version_id()
         add_infraction(INF_BAD_VERSION);
         create_event(EVENT_BAD_VERS);
     }
-    else if ((version.start()[5] > '1') && (version.start()[5] <= '9'))
+    else if ((version.start()[5] > '1'))
     {
         version_id = VERS__OTHER;
         add_infraction(INF_VERSION_HIGHER_THAN_1);

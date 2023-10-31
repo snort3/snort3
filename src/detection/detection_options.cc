@@ -405,7 +405,6 @@ int detection_option_node_evaluate(
     bool continue_loop = true;
     int loop_count = 0;
 
-    char tmp_noalert_flag = 0;
     int result = 0;
     uint32_t tmp_byte_extract_vars[NUM_IPS_OPTIONS_VARS];
     IpsOption* buf_selector = eval_data.buf_selector;
@@ -425,14 +424,10 @@ int detection_option_node_evaluate(
             {
                 const auto& sig_info = node->otn->sigInfo;
 
-                for ( const auto& svc : sig_info.services )
-                {
-                    if ( snort_protocol_id == svc.snort_protocol_id )
-                    {
-                        check_ports = 0;
-                        break;  // out of for
-                    }
-                }
+                if ( std::any_of(sig_info.services.cbegin(), sig_info.services.cend(),
+                    [snort_protocol_id] (const SignatureServiceInfo& svc)
+                    { return snort_protocol_id == svc.snort_protocol_id; }) )
+                    check_ports = 0;
 
                 if ( !sig_info.services.empty() and check_ports )
                 {
@@ -541,7 +536,7 @@ int detection_option_node_evaluate(
                 Continuation::postpone<true>(cursor, *node, eval_data);
             return result;
         }
-        else if ( rval == (int)IpsOption::FAILED_BIT )
+        if ( rval == (int)IpsOption::FAILED_BIT )
         {
             debug_log(detection_trace, TRACE_RULE_EVAL, p, "failed bit\n");
             eval_data.flowbit_failed = 1;
@@ -550,11 +545,12 @@ int detection_option_node_evaluate(
             state.last_check.result = result;
             return 0;
         }
-        else if ( rval == (int)IpsOption::NO_ALERT )
+
+        // Cache the current flowbit_noalert flag, and set it
+        // so nodes below this don't alert.
+        char tmp_noalert_flag = eval_data.flowbit_noalert;
+        if ( rval == (int)IpsOption::NO_ALERT )
         {
-            // Cache the current flowbit_noalert flag, and set it
-            // so nodes below this don't alert.
-            tmp_noalert_flag = eval_data.flowbit_noalert;
             eval_data.flowbit_noalert = 1;
             debug_log(detection_trace, TRACE_RULE_EVAL, p, "flowbit no alert\n");
         }
@@ -579,6 +575,8 @@ int detection_option_node_evaluate(
 
         if ( PacketLatency::fastpath() )
         {
+            // Reset the flowbit_noalert flag in eval data
+            eval_data.flowbit_noalert = tmp_noalert_flag;
             profile.stop(result != (int)IpsOption::NO_MATCH);
             state.last_check.result = result;
             return result;
@@ -695,11 +693,8 @@ int detection_option_node_evaluate(
             }
         }
 
-        if ( rval == (int)IpsOption::NO_ALERT )
-        {
-            // Reset the flowbit_noalert flag in eval data
-            eval_data.flowbit_noalert = tmp_noalert_flag;
-        }
+        // Reset the flowbit_noalert flag in eval data
+        eval_data.flowbit_noalert = tmp_noalert_flag;
 
         if ( continue_loop && rval == (int)IpsOption::MATCH && node->relative_children )
         {

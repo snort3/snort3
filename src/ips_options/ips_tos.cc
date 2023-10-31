@@ -37,9 +37,8 @@ static THREAD_LOCAL ProfileStats ipTosPerfStats;
 class IpTosOption : public IpsOption
 {
 public:
-    IpTosOption(const RangeCheck& c) :
-        IpsOption(s_name)
-    { config = c; }
+    IpTosOption(const RangeCheck& c) : IpsOption(s_name), config(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -80,6 +79,7 @@ bool IpTosOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IpTosOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(ipTosPerfStats);
 
     if(!p->ptrs.ip_api.is_ip())

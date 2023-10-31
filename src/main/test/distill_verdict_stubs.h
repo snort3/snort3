@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// stubs.h author Ron Dempster <rdempste@cisco.com>
+// distill_verdict_stubs.h author Ron Dempster <rdempste@cisco.com>
 
 #include "detection/context_switcher.h"
 #include "detection/detection_engine.h"
@@ -162,7 +162,7 @@ bool SFDAQ::can_inject() { return false; }
 bool SFDAQ::can_inject_raw() { return false; }
 bool SFDAQ::can_replace() { return false; }
 int SFDAQInstance::set_packet_verdict_reason(DAQ_Msg_h, uint8_t) { return 0; }
-DetectionEngine::DetectionEngine() = default;
+DetectionEngine::DetectionEngine() { context = nullptr; }
 DetectionEngine::~DetectionEngine() = default;
 void DetectionEngine::onload() { }
 void DetectionEngine::thread_init() { }

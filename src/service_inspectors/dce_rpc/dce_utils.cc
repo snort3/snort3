@@ -166,22 +166,6 @@ DCE2_Ret DCE2_GetValue(const char* start, char* end, void* int_value, int negate
     return DCE2_RET__SUCCESS;
 }
 
-const char* DCE2_UuidToStr(
-    const Uuid* uuid, DceRpcBoFlag byte_order, char (& uuid_buf)[50])
-{
-    snprintf(uuid_buf, DCE2_UUID_BUF_SIZE,
-        "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
-        DceRpcHtonl(&uuid->time_low, byte_order),
-        DceRpcHtons(&uuid->time_mid, byte_order),
-        DceRpcHtons(&uuid->time_high_and_version, byte_order),
-        uuid->clock_seq_and_reserved, uuid->clock_seq_low,
-        uuid->node[0], uuid->node[1], uuid->node[2],
-        uuid->node[3], uuid->node[4], uuid->node[5]);
-
-    uuid_buf[DCE2_UUID_BUF_SIZE - 1] = '\0';
-    return uuid_buf;
-}
-
 DCE2_Buffer* DCE2_BufferNew(uint32_t initial_size, uint32_t min_add_size)
 {
     DCE2_Buffer* buf = (DCE2_Buffer*)snort_calloc(sizeof(DCE2_Buffer));

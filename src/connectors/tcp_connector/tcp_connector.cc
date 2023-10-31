@@ -69,11 +69,11 @@ TcpConnectorCommon::~TcpConnectorCommon()
 
 enum ReadDataOutcome { SUCCESS = 0, TRUNCATED, ERROR, CLOSED, PARTIAL, AGAIN };
 
-static ReadDataOutcome read_data(int sockfd, uint8_t *data, uint16_t length, ssize_t *read_offset)
+static ReadDataOutcome read_data(int sockfd, uint8_t *data, uint16_t length, ssize_t& read_offset)
 {
     ssize_t bytes_read, offset;
 
-    offset = *read_offset;
+    offset = read_offset;
     bytes_read = recv(sockfd, data + offset, length - offset, 0);
     if (bytes_read == 0)
     {
@@ -91,7 +91,7 @@ static ReadDataOutcome read_data(int sockfd, uint8_t *data, uint16_t length, ssi
         }
         return ERROR;
     }
-    *read_offset = offset + bytes_read;
+    read_offset = offset + bytes_read;
     if ((offset + bytes_read) < length)
         return PARTIAL;
 
@@ -103,10 +103,10 @@ static ReadDataOutcome read_message_data(int sockfd, uint16_t length, uint8_t *d
     if ( length > 0 )
     {
         ReadDataOutcome rval;
-        ssize_t offset = 0;
         do
         {
-            rval = read_data(sockfd, data, length, &offset);
+            ssize_t offset = 0;
+            rval = read_data(sockfd, data, length, offset);
         } while (rval == PARTIAL || rval == AGAIN);
 
         if (rval != SUCCESS)

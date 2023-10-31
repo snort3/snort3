@@ -287,7 +287,7 @@ std::ostream& operator<<(std::ostream& out, const RuleApi& data)
     }
 
     out << "local_rules =\n[[\n";
-    for (Rule* r : data.rules)
+    for (const Rule* r : data.rules)
         out << (*r) << "\n\n";
 
     out << "]]\n\n\n";
@@ -303,7 +303,7 @@ void RuleApi::print_rules(std::ostream& out, bool in_rule_file)
     if (!in_rule_file)
         out << "local_rules =\n[[\n";
 
-    for (Rule* r : rules)
+    for (const Rule* r : rules)
         out << (*r) << "\n";
 
     if (!in_rule_file)

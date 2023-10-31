@@ -423,7 +423,7 @@ void Flow::set_expire(const Packet* p, uint64_t timeout)
     expire_time = (uint64_t)p->pkth->ts.tv_sec + timeout;
 }
 
-bool Flow::expired(const Packet* p)
+bool Flow::expired(const Packet* p) const
 {
     if ( !expire_time )
         return false;
@@ -505,7 +505,7 @@ Layer Flow::get_mpls_layer_per_dir(bool client)
         return mpls_server;
 }
 
-bool Flow::is_pdu_inorder(uint8_t dir)
+bool Flow::is_pdu_inorder(uint8_t dir) const
 {
     return ( (session != nullptr) && session->is_sequenced(dir)
             && (session->missing_in_reassembled(dir) == SSN_MISSING_NONE)

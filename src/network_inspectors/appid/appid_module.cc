@@ -109,7 +109,7 @@ static const Parameter s_params[] =
 class AcAppIdDebug : public AnalyzerCommand
 {
 public:
-    AcAppIdDebug(AppIdDebugSessionConstraints* cs);
+    AcAppIdDebug(const AppIdDebugSessionConstraints* cs);
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "APPID_DEBUG"; }
 
@@ -118,7 +118,7 @@ private:
     bool enable = false;
 };
 
-AcAppIdDebug::AcAppIdDebug(AppIdDebugSessionConstraints* cs)
+AcAppIdDebug::AcAppIdDebug(const AppIdDebugSessionConstraints* cs)
 {
     if (cs)
     {

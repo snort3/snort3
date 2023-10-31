@@ -101,7 +101,7 @@ class ReactData
 {
 public:
 
-    ReactData(const std::string& page)
+    explicit ReactData(const std::string& page)
     {
         if ( page.empty())
         {
@@ -136,7 +136,7 @@ private:
 class ReactActiveAction : public ActiveAction
 {
 public:
-    ReactActiveAction(ReactData* c)
+    explicit ReactActiveAction(ReactData* c)
         : ActiveAction( ActionPriority::AP_PROXY ), config(c)
     { }
 
@@ -149,6 +149,7 @@ private:
 
 void ReactActiveAction::delayed_exec(Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(reactPerfStats);
 
     if ( p->active->is_reset_candidate(p) )

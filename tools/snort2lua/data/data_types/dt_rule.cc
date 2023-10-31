@@ -22,6 +22,8 @@
 #include "helpers/s2l_util.h"
 #include "data/data_types/dt_rule_option.h"
 
+#include <algorithm>
+
 Rule::Rule() :  num_hdr_data(0),
     is_bad_rule(false),
     is_comment(false), old_http_rule(false)
@@ -88,24 +90,17 @@ void Rule::add_option(const std::string& keyword, const std::string& data)
 
 std::string Rule::get_option(const std::string& keyword)
 {
-    for (auto option : options)
-    {
-        if (option->get_name() == keyword)
-            return option->get_value();
-    }
-    return std::string();
+    auto it = std::find_if(options.cbegin(), options.cend(),
+        [&keyword](const RuleOption* option){ return option->get_name() == keyword; });
+    return (it != options.cend()) ? (*it)->get_value() : std::string();
 }
 
 void Rule::update_option(const std::string& keyword, const std::string& val)
 {
-    for (auto option : options)
-    {
-        if (option->get_name() == keyword)
-        {
-            option->update_value(val);
-            break;
-        }
-    }
+    auto it = std::find_if(options.begin(), options.end(),
+        [&keyword](const RuleOption* option){ return option->get_name() == keyword; });
+    if (it != options.end())
+        (*it)->update_value(val);
 }
 
 void Rule::add_suboption(const std::string& keyword)
@@ -167,7 +162,7 @@ std::ostream& operator<<(std::ostream& out, const Rule& rule)
         out << " (";
         first_line = true;
 
-        for (auto* r : rule.options)
+        for (const auto* r : rule.options)
         {
             if (first_line)
                 first_line = false;

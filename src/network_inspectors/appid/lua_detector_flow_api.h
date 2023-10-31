@@ -48,7 +48,7 @@ struct DetectorFlow
 
     lua_State* myLuaState;
     AppIdSession* asd;
-    int userDataRef;
+    int userDataRef = 0;
 };
 
 int register_detector_flow_api(lua_State*);

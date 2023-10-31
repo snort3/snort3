@@ -91,11 +91,11 @@ TEST_GROUP(http_double_decode_test)
 
     void setup() override
     {
-        uri_param.percent_u = true;
-        uri_param.iis_unicode = true;
-        uri_param.utf8_bare_byte = true;
-        uri_param.iis_double_decode = true;
-        uri_param.backslash_to_slash = true;
+        uri_param.percent_u = true; // cppcheck-suppress unreadVariable
+        uri_param.iis_unicode = true;   // cppcheck-suppress unreadVariable
+        uri_param.utf8_bare_byte = true;    // cppcheck-suppress unreadVariable
+        uri_param.iis_double_decode = true; // cppcheck-suppress unreadVariable
+        uri_param.backslash_to_slash = true;    // cppcheck-suppress unreadVariable
     }
 };
 

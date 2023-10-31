@@ -119,13 +119,9 @@ void Http2FlowData::set_hi_flow_data(HttpFlowData* flow)
 
 Http2Stream* Http2FlowData::find_stream(const uint32_t key)
 {
-    for (Http2Stream& stream : streams)
-    {
-        if (stream.get_stream_id() == key)
-            return &stream;
-    }
-
-    return nullptr;
+    auto it = std::find_if(streams.begin(), streams.end(),
+        [key](const Http2Stream &stream){ return stream.get_stream_id() == key; });
+    return (it != streams.end()) ? &(*it) : nullptr;
 }
 
 Http2Stream* Http2FlowData::get_processing_stream(const SourceId source_id, uint32_t concurrent_streams_limit)

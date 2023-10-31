@@ -77,8 +77,13 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     source_id(source_id_),
     version_id(VERS__NOT_PRESENT),
     method_id(METH__NOT_PRESENT),
-    tcp_close(false)
-{}
+    tcp_close(false),
+    request(nullptr),
+    status(nullptr)
+{
+    memset(header, 0, sizeof(header));
+    memset(trailer, 0, sizeof(trailer));
+}
 void HttpMsgSection::update_depth() const{}
 bool HttpMsgSection::run_detection(snort::Packet*) { return true; }
 

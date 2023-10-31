@@ -43,9 +43,7 @@ static const Parameter s_params[] =
 
 StreamIcmpModule::StreamIcmpModule() :
     Module(MOD_NAME, MOD_HELP, s_params)
-{
-    config = nullptr;
-}
+{ }
 
 ProfileStats* StreamIcmpModule::get_profile() const
 {

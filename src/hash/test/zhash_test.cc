@@ -67,7 +67,7 @@ DataBus::DataBus() = default;
 DataBus::~DataBus() = default;
 
 // run_flags is used indirectly from HashFnc class by calling SnortConfig::static_hash()
-SnortConfig::SnortConfig(const SnortConfig* const, const char*)
+SnortConfig::SnortConfig(const SnortConfig* const, const char*) : daq_config(nullptr), thread_config(nullptr)
 { snort_conf->run_flags = 0;}
 
 SnortConfig::~SnortConfig() = default;

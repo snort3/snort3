@@ -57,10 +57,8 @@ public:
 // class methods
 //-------------------------------------------------------------------------
 
-FileTypeOption::FileTypeOption(const FileTypeBitSet& t) : IpsOption(s_name)
-{
-    types = t;
-}
+FileTypeOption::FileTypeOption(const FileTypeBitSet& t) : IpsOption(s_name), types(t)
+{ }
 
 uint32_t FileTypeOption::hash() const
 {
@@ -80,6 +78,7 @@ bool FileTypeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus FileTypeOption::eval(Cursor&, Packet* pkt)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(fileTypePerfStats);
 
     if (!pkt->flow)

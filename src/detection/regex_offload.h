@@ -57,7 +57,7 @@ public:
     unsigned count() const
     { return busy.size(); }
 
-    bool on_hold(snort::Flow*) const;
+    bool on_hold(const snort::Flow*) const;
 
 protected:
     RegexOffload(unsigned max);

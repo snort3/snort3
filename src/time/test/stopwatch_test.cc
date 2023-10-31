@@ -56,7 +56,7 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
     Stopwatch<Clock> sw;
     Clock::reset();
 
-    REQUIRE_FALSE( sw.active() );
+    REQUIRE( false == sw.active() );
     REQUIRE( (sw.get() == 0_ticks) );
 
     SECTION( "start" )
@@ -65,7 +65,7 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
 
         SECTION( "sets clock to active" )
         {
-            CHECK( sw.active() );
+            CHECK( true == sw.active() );
         }
 
         SECTION( "running elapsed time should be non-zero" )
@@ -77,7 +77,7 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
         SECTION( "start on running clock has no effect" )
         {
             sw.start();
-            CHECK( sw.active() );
+            CHECK( true == sw.active() );
         }
     }
 
@@ -88,7 +88,7 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
 
         SECTION( "sets clock to be dead" )
         {
-            CHECK_FALSE( sw.active() );
+            CHECK( false == sw.active() );
         }
 
         SECTION( "ticks should not increase after death" )
@@ -103,7 +103,7 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
             auto val = sw.get();
             sw.stop();
             Clock::inc();
-            CHECK_FALSE( sw.active() );
+            CHECK( false == sw.active() );
             CHECK( val == sw.get() );
         }
     }
@@ -115,7 +115,7 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
         SECTION( "reset on running clock" )
         {
             sw.reset();
-            CHECK_FALSE( sw.active() );
+            CHECK( false == sw.active() );
             CHECK( (sw.get() == 0_ticks) );
         }
 
@@ -123,7 +123,7 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
         {
             sw.stop();
             sw.reset();
-            CHECK_FALSE( sw.active() );
+            CHECK( false == sw.active() );
             CHECK( (sw.get() == 0_ticks) );
         }
     }
@@ -134,7 +134,7 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
         SECTION( "cancel on running clock that has no lap time" )
         {
             sw.cancel();
-            CHECK_FALSE( sw.active() );
+            CHECK( false == sw.active() );
             CHECK( (sw.get() == 0_ticks) );
         }
 
@@ -144,7 +144,7 @@ TEST_CASE( "stopwatch", "[time][stopwatch]" )
             auto val = sw.get();
             sw.cancel();
 
-            CHECK_FALSE( sw.active() );
+            CHECK( false == sw.active() );
             CHECK( val == sw.get() );
         }
     }

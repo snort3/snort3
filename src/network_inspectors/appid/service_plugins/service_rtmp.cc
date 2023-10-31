@@ -585,9 +585,7 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 else
                 {
                     /* We've gotten all of the bytes that we wanted. */
-                    ss->server_state = RTMP_STATE_SENT_HANDSHAKE2;
                     args.data += ss->server_bytes_left;
-                    args.size -= ss->server_bytes_left;
                 }
             /* fall through */
 

@@ -66,9 +66,13 @@ struct AuthHdr
 {
     IpProtocol next;
     uint8_t len;
+    // cppcheck-suppress unusedStructMember
     uint16_t rsv;   /* reserved */
+    // cppcheck-suppress unusedStructMember
     uint32_t spi;   /* Security Parameters Index */
+    // cppcheck-suppress unusedStructMember
     uint32_t seq;   /* Sequence Number */
+    // cppcheck-suppress unusedStructMember
     uint32_t icv[1]; /* VARIABLE LENGTH!! -- specified by len field*/
 };
 

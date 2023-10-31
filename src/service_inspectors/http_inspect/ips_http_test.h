@@ -55,8 +55,8 @@ private:
     static THREAD_LOCAL std::array<snort::ProfileStats, TEST_PSI_MAX> http_test_ps;
     const TestPsIdx idx;
     snort::RangeCheck check;
-    enum NumericValue numeric;
-    bool absent;
+    enum NumericValue numeric = NV_UNDEFINED;
+    bool absent = false;
 };
 
 class HttpTestIpsOption : public HttpIpsOption

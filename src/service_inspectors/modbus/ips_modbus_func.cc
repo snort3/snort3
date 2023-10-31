@@ -125,7 +125,7 @@ bool ModbusFuncOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ModbusFuncOption::eval(Cursor&, Packet* p)
 {
-    RuleProfile profile(modbus_func_prof);
+    RuleProfile profile(modbus_func_prof);  // cppcheck-suppress unreadVariable
 
     if ( !p->flow )
         return NO_MATCH;
@@ -171,7 +171,7 @@ public:
     { return DETECT; }
 
 public:
-    uint8_t func;
+    uint8_t func = 0;
 };
 
 bool ModbusFuncModule::set(const char*, Value& v, SnortConfig*)

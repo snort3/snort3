@@ -203,9 +203,6 @@ void Binder::set_use_file(const std::string& file_name, IncludeType type)
     use_file_type = type;
 }
 
-void Binder::set_use_service(const std::string& service_name)
-{ use_service = service_name; }
-
 void Binder::set_use_action(const std::string& action)
 { use_action = action; }
 

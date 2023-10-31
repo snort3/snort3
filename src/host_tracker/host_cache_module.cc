@@ -365,7 +365,7 @@ static const Parameter host_cache_params[] =
 
     { "memcap", Parameter::PT_INT, "512:maxSZ", "8388608",
       "maximum host cache size in bytes" },
-    
+
     { "segments", Parameter::PT_INT, "1:32", "4",
       "number of host cache segments. It must be power of 2."},
 
@@ -385,7 +385,7 @@ bool HostCacheModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("segments"))
     {
         segments = v.get_uint8();
-        
+
         if(segments > 32)
             segments = 32;
 
@@ -408,7 +408,7 @@ bool HostCacheModule::end(const char* fqn, int, SnortConfig* sc)
         if ( Snort::is_reloading() )
             sc->register_reload_handler(new HostCacheReloadTuner(memcap));
         else
-        {   
+        {
             host_cache.setup(segments, memcap);
             ControlConn::log_command("host_cache.delete_host",false);
         }
@@ -485,7 +485,7 @@ string HostCacheModule::get_host_cache_segment_stats(int seg_idx)
 
     if(seg_idx >= host_cache.get_segments())
         return "Invalid segment index\nTry host_cache.get_segment_stats() to get all stats\n";
-    
+
     string str;
     const PegInfo* pegs = host_cache.get_pegs();
 
@@ -503,7 +503,7 @@ string HostCacheModule::get_host_cache_segment_stats(int seg_idx)
             cache->stats.items_in_use = cache->list.size();
             cache->unlock();
         }
-        
+
         PegCount* counts = (PegCount*) host_cache.get_counts();
         for ( int i = 0; pegs[i].type != CountType::END; i++ )
         {
@@ -536,7 +536,7 @@ string HostCacheModule::get_host_cache_segment_stats(int seg_idx)
         cache->stats.items_in_use = cache->list.size();
         cache->unlock();
 
-        PegCount* count = (PegCount*) cache->get_counts();
+        const PegCount* count = cache->get_counts();
         for ( int i = 0; pegs[i].type != CountType::END; i++ )
         {
             if ( count[i] )
@@ -566,7 +566,7 @@ string HostCacheModule::get_host_cache_stats()
         cache->stats.items_in_use = cache->list.size();
         cache->unlock();
     }
-    
+
     PegCount* counts = (PegCount*) host_cache.get_counts();
     const PegInfo* pegs = host_cache.get_pegs();
 

@@ -98,7 +98,7 @@ public:
 
 private:
     bool translate(const char*, HexVector&);
-    void add_spell(const char*, const char*, HexVector&, unsigned, MagicPage*);
+    void add_spell(const char*, const char*, const HexVector&, unsigned, MagicPage*);
     const MagicPage* find_spell(const uint8_t*, unsigned, const MagicPage*, unsigned,
         const MagicPage*&) const override;
 };
@@ -117,7 +117,7 @@ public:
 
 private:
     bool translate(const char*, HexVector&);
-    void add_spell(const char*, const char*, HexVector&, unsigned, MagicPage*);
+    void add_spell(const char*, const char*, const HexVector&, unsigned, MagicPage*);
     const MagicPage* find_spell(const uint8_t*, unsigned, const MagicPage*, unsigned,
         const MagicPage*&) const override;
 };

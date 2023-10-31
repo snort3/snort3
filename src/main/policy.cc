@@ -282,12 +282,8 @@ PolicyMap::~PolicyMap()
 
 bool PolicyMap::setup_network_policies()
 {
-    for (auto* np : network_policy)
-    {
-        if (!set_user_network(np))
-            return false;
-    }
-    return true;
+    return std::none_of(network_policy.begin(), network_policy.end(),
+        [this](NetworkPolicy* np){ return !set_user_network(np); });
 }
 
 void PolicyMap::clone(PolicyMap *other_map, const char* exclude_name)

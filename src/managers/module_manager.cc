@@ -674,14 +674,12 @@ static bool interested(Module* m)
 // ffi methods - only called from Lua so cppcheck suppressions required
 //-------------------------------------------------------------------------
 
-// cppcheck-suppress unusedFunction
 SO_PUBLIC void clear_alias()
 {
     s_aliased_name.clear();
     s_aliased_type.clear();
 }
 
-// cppcheck-suppress unusedFunction
 SO_PUBLIC bool set_alias(const char* from, const char* to)
 {
     if ( !from or !to )
@@ -692,7 +690,7 @@ SO_PUBLIC bool set_alias(const char* from, const char* to)
     if ( !m or !m->is_bindable() )
         return false;
 
-    if ( (m->get_usage() == Module::GLOBAL) and from )
+    if ( m->get_usage() == Module::GLOBAL )
     {
         ParseError("global module type '%s' can't be aliased", to);
         return false;
@@ -710,19 +708,16 @@ SO_PUBLIC bool set_alias(const char* from, const char* to)
     return true;
 }
 
-// cppcheck-suppress unusedFunction
 SO_PUBLIC void snort_whitelist_append(const char* s)
 {
     Shell::allowlist_append(s, false);
 }
 
-// cppcheck-suppress unusedFunction
 SO_PUBLIC void snort_whitelist_add_prefix(const char* s)
 {
     Shell::allowlist_append(s, true);
 }
 
-// cppcheck-suppress unusedFunction
 SO_PUBLIC const char* push_include_path(const char* file)
 {
     static std::string path;
@@ -732,13 +727,11 @@ SO_PUBLIC const char* push_include_path(const char* file)
     return path.c_str();
 }
 
-// cppcheck-suppress unusedFunction
 SO_PUBLIC void pop_include_path()
 {
     pop_parse_location();
 }
 
-// cppcheck-suppress unusedFunction
 SO_PUBLIC bool set_includer(const char* fqn, const char* s)
 {
     if ( !strcmp(fqn, "ips.includer") )
@@ -751,7 +744,6 @@ SO_PUBLIC bool set_includer(const char* fqn, const char* s)
     return true;
 }
 
-// cppcheck-suppress unusedFunction
 SO_PUBLIC int get_module_version(const char* name, const char* type)
 {
     // not all modules are plugins
@@ -941,7 +933,7 @@ void ModuleManager::init()
 
 void ModuleManager::term()
 {
-    for ( auto& mh : s_modules )
+    for ( const auto& mh : s_modules )
         delete mh.second;
 
     s_modules.clear();
@@ -986,8 +978,8 @@ list<Module*> ModuleManager::get_all_modules()
 {
     list<Module*> ret;
 
-    for ( auto& mh : s_modules )
-       ret.emplace_back(mh.second->mod);
+    std::transform(s_modules.cbegin(), s_modules.cend(), std::back_inserter(ret),
+        [](const std::pair<const std::string, ModHook*>& mh){ return mh.second->mod; });
 
     return ret;
 }
@@ -996,8 +988,8 @@ static list<ModHook*> get_all_modhooks()
 {
     list<ModHook*> ret;
 
-    for ( auto& mh : s_modules )
-       ret.emplace_back(mh.second);
+    std::transform(s_modules.cbegin(), s_modules.cend(), std::back_inserter(ret),
+        [](const std::pair<const std::string, ModHook*>& mh){ return mh.second; });
 
     return ret;
 }
@@ -1724,30 +1716,21 @@ static void dump_param_range_json(JsonStream& json, const Parameter* p)
         {
             std::string tr = range;
             const char* d = strchr(range, ':');
-            bool is_signed = ('-' == *range) || (d && '-' == d[1]);
             if ( *range == 'm' )
             {
                 if ( d )
-                {
-                    if (is_signed)
-                        tr = std::to_string(Parameter::get_int(range)) + tr.substr(tr.find(":"));
-                    else
-                        tr = std::to_string(Parameter::get_uint(range)) + tr.substr(tr.find(":"));
-                }
+                    tr = std::to_string(Parameter::get_uint(range)) + tr.substr(tr.find(":"));
                 else
-                {
-                    if (is_signed)
-                        tr = std::to_string(Parameter::get_int(range));
-                    else
-                        tr = std::to_string(Parameter::get_uint(range));
-                }
+                    tr = std::to_string(Parameter::get_uint(range));
             }
             if ( d and *++d == 'm' )
             {
-                if (is_signed)
-                    tr = tr.substr(0, tr.find(":") + 1) + std::to_string(Parameter::get_int(d));
+                bool is_signed = ('-' == *range);
+                tr.resize(tr.find(":") + 1);
+                if ( is_signed )
+                    tr += std::to_string(Parameter::get_int(d));
                 else
-                    tr = tr.substr(0, tr.find(":") + 1) + std::to_string(Parameter::get_uint(d));
+                    tr += std::to_string(Parameter::get_uint(d));
             }
             json.put("range", tr);
             break;
@@ -2054,6 +2037,24 @@ TEST_CASE("param range JSON dumper", "[ModuleManager]")
         const Parameter p_min_max("int_min_max", Parameter::PT_INT, "max31:max32", nullptr, "help");
         dump_param_range_json(json, &p_min_max);
         x = R"-(, "range": "2147483647:4294967295")-";
+        CHECK(ss.str() == x);
+        ss.str("");
+
+        const Parameter p_s_int_max("s_int_max", Parameter::PT_INT, "-2:max63", nullptr, "help");
+        dump_param_range_json(json, &p_s_int_max);
+        x = R"-(, "range": "-2:9223372036854775807")-";
+        CHECK(ss.str() == x);
+        ss.str("");
+
+        const Parameter p_s_uint_max("s_uint_max", Parameter::PT_INT, "-5:max64", nullptr, "help");
+        dump_param_range_json(json, &p_s_uint_max);
+        x = R"-(, "range": "-5:-1")-";
+        CHECK(ss.str() == x);
+        ss.str("");
+
+        const Parameter p_max("uint_max", Parameter::PT_INT, ":max64", nullptr, "help");
+        dump_param_range_json(json, &p_max);
+        x = R"-(, "range": ":18446744073709551615")-";
         CHECK(ss.str() == x);
     }
 }

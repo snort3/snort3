@@ -69,7 +69,7 @@ TEST_CASE("parse sfdaq config", "[SFDAQModule]")
     {
         // Empty module table entry should fail
         CHECK(true == sfdm.begin("daq.modules", 1, &sc));
-        CHECK_FALSE(sfdm.end("daq.modules", 1, &sc));
+        CHECK(false == sfdm.end("daq.modules", 1, &sc));
     }
 
     CHECK(true == sfdm.begin("daq.modules", 2, &sc));

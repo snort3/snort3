@@ -214,19 +214,19 @@ TEST_CASE("sslv2 detect", "[SslV2Curse]")
                 if ( (i + incr_by - 1) < max_detect )
                 {
                     CHECK(tracker.ssl.state == static_cast<SSL_State>(i));
-                    CHECK_FALSE(CurseBook::ssl_v2_curse(&ch[i],sizeof(uint8_t) * incr_by,&tracker));
+                    CHECK(false == CurseBook::ssl_v2_curse(&ch[i],sizeof(uint8_t) * incr_by,&tracker));
                 }
                 else
                 {
-                    CHECK(CurseBook::ssl_v2_curse(&ch[i],sizeof(uint8_t) * incr_by,&tracker));
-                    CHECK(tracker.ssl.state == SSL_STATE__SSL_FOUND);
+                    CHECK(true == CurseBook::ssl_v2_curse(&ch[i],sizeof(uint8_t) * incr_by,&tracker));
+                    CHECK(SSL_STATE__SSL_FOUND == tracker.ssl.state);
                 }
 
                 i += incr_by;
             }
             // subsequent checks must return found
-            CHECK(CurseBook::ssl_v2_curse(&ch[max_detect + 1],sizeof(uint8_t),&tracker));
-            CHECK(tracker.ssl.state == SSL_STATE__SSL_FOUND);
+            CHECK(true == CurseBook::ssl_v2_curse(&ch[max_detect + 1],sizeof(uint8_t),&tracker));
+            CHECK(SSL_STATE__SSL_FOUND == tracker.ssl.state);
         };
 
     // sslv2 with ssl version 2
@@ -273,17 +273,17 @@ TEST_CASE("sslv2 not found", "[SslV2Curse]")
                 if ( i < fail_at_byte )
                 {
                     CHECK(tracker.ssl.state == static_cast<SSL_State>(i));
-                    CHECK_FALSE(CurseBook::ssl_v2_curse(&ch_data[i],sizeof(uint8_t),&tracker));
+                    CHECK(false == CurseBook::ssl_v2_curse(&ch_data[i],sizeof(uint8_t),&tracker));
                 }
                 else
                 {
-                    CHECK_FALSE(CurseBook::ssl_v2_curse(&ch_data[i],sizeof(uint8_t),&tracker));
-                    CHECK(tracker.ssl.state == SSL_STATE__SSL_NOT_FOUND);
+                    CHECK(false == CurseBook::ssl_v2_curse(&ch_data[i],sizeof(uint8_t),&tracker));
+                    CHECK(SSL_STATE__SSL_NOT_FOUND == tracker.ssl.state);
                 }
             }
             // subsequent checks must return ssl not found
-            CHECK_FALSE(CurseBook::ssl_v2_curse(&ch_data[max_detect + 1],sizeof(uint8_t),&tracker));
-            CHECK(tracker.ssl.state == SSL_STATE__SSL_NOT_FOUND);
+            CHECK(false == CurseBook::ssl_v2_curse(&ch_data[max_detect + 1],sizeof(uint8_t),&tracker));
+            CHECK(SSL_STATE__SSL_NOT_FOUND == tracker.ssl.state);
         };
 
     SECTION("byte 0"){ test(0);}

@@ -113,7 +113,7 @@ static int* RuleHashToSortedArray(GHash* rh)
          node != nullptr && k < (int)rh->get_count();
          node = rh->find_next() )
     {
-        if ( int* prid = (int*)node->data )
+        if ( const int* prid = (int*)node->data )
             ra[k++] = *prid;
     }
 

@@ -121,13 +121,13 @@ bool RuleType::convert(std::istringstream& stream)
                 if (map)
                 {
                     // using smart pointer to guarantee new Map is deleted
-                    const std::vector<std::unique_ptr<const ConvertMap> >& ruletype_map =
+                    const std::vector<std::unique_ptr<const ConvertMap> >& tmp_ruletype_map =
                         ruletype_api;
                     std::unique_ptr<ConvertMap> new_map(new ConvertMap());
                     new_map->keyword = name;
                     new_map->ctor = map->ctor;
                     const_cast<std::vector<std::unique_ptr<const ConvertMap> >&>(
-                        ruletype_map).push_back(std::move(new_map));
+                        tmp_ruletype_map).push_back(std::move(new_map));
                     return true;
                 }
                 else

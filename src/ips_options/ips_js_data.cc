@@ -60,6 +60,7 @@ public:
 
     EvalStatus eval(Cursor& c, Packet* p) override
     {
+        // cppcheck-suppress unreadVariable
         RuleProfile profile(js_data_profile_stats);
         InspectionBuffer buf;
 

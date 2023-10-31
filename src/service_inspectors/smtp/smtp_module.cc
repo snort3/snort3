@@ -32,20 +32,11 @@
 using namespace snort;
 using namespace std;
 
-SmtpCmd::SmtpCmd(const std::string& key, uint32_t flg, int num)
+SmtpCmd::SmtpCmd(const std::string& key, uint32_t flg, int num) : name(key), flags(flg), number(num)
+{ }
+
+SmtpCmd::SmtpCmd(const std::string& key, int num) : name(key), flags(PCMD_ALT), number(0)
 {
-    name = key;
-    flags = flg;
-    number = num;
-}
-
-SmtpCmd::SmtpCmd(const std::string& key, int num)
-{
-    name = key;
-
-    flags = PCMD_ALT;
-    number = 0;
-
     if ( num >= 0 )
     {
         number = num;
@@ -181,9 +172,7 @@ static const RuleMap smtp_rules[] =
 //-------------------------------------------------------------------------
 
 SmtpModule::SmtpModule() : Module(SMTP_NAME, SMTP_HELP, s_params)
-{
-    config = nullptr;
-}
+{ }
 
 SmtpModule::~SmtpModule()
 {

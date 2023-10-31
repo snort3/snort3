@@ -113,8 +113,8 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
 
     if (!server_name.empty())
     {
-        AppId client_id = APP_ID_NONE;
-        AppId payload_id = APP_ID_NONE;
+        AppId tmp_client_id = APP_ID_NONE;
+        AppId tmp_payload_id = APP_ID_NONE;
 
         if (!asd->tsession)
             asd->tsession = new TlsSession();
@@ -123,8 +123,8 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
         asd->set_tls_host();
 
         odp_ctxt.get_ssl_matchers().scan_hostname(reinterpret_cast<const uint8_t*>(server_name.c_str()),
-            server_name.length(), client_id, payload_id);
-        asd->set_payload_id(payload_id);
+            server_name.length(), tmp_client_id, tmp_payload_id);
+        asd->set_payload_id(tmp_payload_id);
     }
 
     std::string debug_str;

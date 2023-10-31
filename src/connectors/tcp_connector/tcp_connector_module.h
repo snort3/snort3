@@ -50,7 +50,7 @@ public:
 
 private:
     TcpConnectorConfig::TcpConnectorConfigSet* config_set;
-    TcpConnectorConfig* config;
+    TcpConnectorConfig* config = nullptr;
 };
 
 #endif

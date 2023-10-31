@@ -49,8 +49,8 @@ static THREAD_LOCAL ProfileStats cip_service_perf_stats;
 class CipServiceOption : public IpsOption
 {
 public:
-    CipServiceOption(const RangeCheck& v) : IpsOption(s_name)
-    { cip_serv = v; }
+    CipServiceOption(const RangeCheck& v) : IpsOption(s_name), cip_serv(v)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -82,6 +82,7 @@ bool CipServiceOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus CipServiceOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(cip_service_perf_stats);
 
     if ( !p->flow || !p->is_full_pdu() )

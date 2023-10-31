@@ -62,7 +62,7 @@ bool FastPatternConfig::set_search_method(const char* method)
     return true;
 }
 
-const char* FastPatternConfig::get_search_method()
+const char* FastPatternConfig::get_search_method() const
 {
     if ( !search_api )
         return nullptr;

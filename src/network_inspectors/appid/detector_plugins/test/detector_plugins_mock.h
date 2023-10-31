@@ -32,7 +32,8 @@ void ParseWarning(WarningGroup, const char*, ...) { }
 // LCOV_EXCL_STOP
 
 // Stubs for appid sessions
-FlowData::FlowData(unsigned, Inspector*) { }
+FlowData::FlowData(unsigned, Inspector*) : next(nullptr), prev(nullptr), handler(nullptr), id(0)
+{ }
 FlowData::~FlowData() = default;
 
 // Stubs for packet

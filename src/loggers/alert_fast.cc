@@ -182,12 +182,8 @@ private:
 std::vector<unsigned> FastLogger::req_ids;
 std::vector<unsigned> FastLogger::rsp_ids;
 
-FastLogger::FastLogger(FastModule* m)
-{
-    file = m->file ? F_NAME : "stdout";
-    limit = m->limit;
-    packet = m->packet;
-}
+FastLogger::FastLogger(FastModule* m) : file(m->file ? F_NAME : "stdout"), limit(m->limit), packet(m->packet)
+{ }
 
 //-----------------------------------------------------------------
 // FIXIT-L generalize buffer sets when other inspectors get smarter

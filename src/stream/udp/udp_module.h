@@ -24,6 +24,8 @@
 #include "flow/session.h"
 #include "framework/module.h"
 
+#include "stream_udp.h"
+
 namespace snort
 {
 struct SnortConfig;
@@ -47,12 +49,12 @@ extern THREAD_LOCAL snort::ProfileStats udp_perf_stats;
 #define MOD_NAME "stream_udp"
 #define MOD_HELP "stream inspector for UDP flow tracking"
 
-struct StreamUdpConfig;
-
 class StreamUdpModule : public snort::Module
 {
 public:
     StreamUdpModule();
+    ~StreamUdpModule() override
+    { delete config; }
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
@@ -69,7 +71,7 @@ public:
     { return true; }
 
 private:
-    StreamUdpConfig* config;
+    StreamUdpConfig* config = nullptr;
 };
 
 #endif

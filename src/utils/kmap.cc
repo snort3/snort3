@@ -137,7 +137,7 @@ int KMapAdd(KMAP* km, void* key, int n, void* userdata)
 
     int type = 0;
     const unsigned char* P = (unsigned char*)key;
-    std::string xkey;
+    std::string xkey; // cppcheck-suppress variableScope
 
     if ( km->nocase )
     {
@@ -264,7 +264,7 @@ void* KMapFind(KMAP* ks, void* key, int n)
 {
     assert(n > 0);
 
-    std::string xkey;
+    std::string xkey; // cppcheck-suppress variableScope
     const unsigned char* T = (unsigned char*)key;
 
     if ( ks->nocase )
@@ -276,6 +276,7 @@ void* KMapFind(KMAP* ks, void* key, int n)
 
         T = (const unsigned char*)xkey.c_str();
     }
+
     //printf("finding key='%.*s'\n",n,T);
 
     /* Check if any keywords start with this character */

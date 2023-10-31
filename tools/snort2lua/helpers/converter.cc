@@ -378,7 +378,7 @@ Binder& Converter::make_binder()
 void Converter::add_bindings()
 {
     std::unordered_map<int, std::shared_ptr<Binder>> policy_map;
-    for ( auto& b : binders )
+    for ( const auto& b : binders )
     {
         if ( b->has_ips_policy_id() && b->get_use_file().second == Binder::IT_FILE )
             policy_map[b->get_when_ips_policy_id()] = b;

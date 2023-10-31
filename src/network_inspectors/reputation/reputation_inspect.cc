@@ -474,6 +474,7 @@ private:
 
 void IpRepHandler::handle(DataEvent& event, Flow*)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(reputation_perf_stats);
     Packet* p = const_cast<Packet*>(event.get_packet());
     assert(p);
@@ -503,6 +504,7 @@ private:
 
 void AuxiliaryIpRepHandler::handle(DataEvent& event, Flow*)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(reputation_perf_stats);
     ReputationData* data = static_cast<ReputationData*>(inspector.get_thread_specific_data());
     assert(data);

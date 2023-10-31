@@ -64,10 +64,10 @@ void TcpSession::flush_listener(Packet*){ }
 void TcpSession::set_splitter(bool, StreamSplitter*){ }
 StreamSplitter* TcpSession::get_splitter(bool){ return nullptr; }
 void TcpSession::set_extra_data(Packet*, unsigned int){ }
-bool TcpSession::is_sequenced(unsigned char){ return true; }
-bool TcpSession::are_packets_missing(unsigned char){ return false; }
-uint8_t TcpSession::get_reassembly_direction(){ return 0; }
-uint8_t  TcpSession::missing_in_reassembled(unsigned char){ return 0; }
+bool TcpSession::is_sequenced(unsigned char) const { return true; }
+bool TcpSession::are_packets_missing(unsigned char) const { return false; }
+uint8_t TcpSession::get_reassembly_direction() const { return 0; }
+uint8_t  TcpSession::missing_in_reassembled(unsigned char) const { return 0; }
 
 class TcpSessionMock : public TcpSession
 {

@@ -53,16 +53,16 @@ public:
     { return DETECT; }
 
 protected:
-    snort::PduSection pdu_section;
+    snort::PduSection pdu_section = snort::PduSection::PS_NONE;
     const HttpEnums::HTTP_RULE_OPT rule_opt_index;
     const char* const key;
-    uint64_t sub_id;
+    uint64_t sub_id = 0;
 
 private:
     friend class HttpIpsOption;
 
     const snort::CursorActionType cat;
-    uint64_t form;
+    uint64_t form = 0;
 };
 
 class HttpIpsOption : public snort::IpsOption

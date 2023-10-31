@@ -44,7 +44,7 @@ public:
     virtual ~CursorData() = default;
     virtual CursorData* clone() = 0;
 
-    unsigned get_id()
+    unsigned get_id() const
     { return id; }
 
     static unsigned create_cursor_data_id()

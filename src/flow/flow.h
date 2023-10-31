@@ -208,14 +208,14 @@ public:
     void set_client_initiate(Packet*);
     void set_direction(Packet*);
     void set_expire(const Packet*, uint64_t timeout);
-    bool expired(const Packet*);
+    bool expired(const Packet*) const;
     void set_ttl(Packet*, bool client);
     void set_mpls_layer_per_dir(Packet*);
     Layer get_mpls_layer_per_dir(bool);
     void swap_roles();
     void set_service(Packet*, const char* new_service);
-    bool get_attr(const std::string& key, int32_t& val);
-    bool get_attr(const std::string& key, std::string& val);
+    bool get_attr(const std::string& key, int32_t& val) const;
+    bool get_attr(const std::string& key, std::string& val) const;
     void set_attr(const std::string& key, const int32_t& val);
     void set_attr(const std::string& key, const std::string& val);
     // Use this API when the publisher of the attribute allocated memory for it and can give up its
@@ -227,7 +227,7 @@ public:
     }
 
     template<typename T>
-    bool get_attr(const std::string& key, T& val)
+    bool get_attr(const std::string& key, T& val) const
     {
         assert(stash);
         return stash->get(key, val);
@@ -258,7 +258,7 @@ public:
     void set_to_client_detection(bool enable);
     void set_to_server_detection(bool enable);
 
-    int get_ignore_direction()
+    int get_ignore_direction() const
     { return ssn_state.ignore_direction; }
 
     int set_ignore_direction(char ignore_direction)
@@ -267,20 +267,20 @@ public:
         return ssn_state.ignore_direction;
     }
 
-    bool two_way_traffic()
+    bool two_way_traffic() const
     { return (ssn_state.session_flags & SSNFLAG_SEEN_BOTH) == SSNFLAG_SEEN_BOTH; }
 
-    bool is_pdu_inorder(uint8_t dir);
+    bool is_pdu_inorder(uint8_t dir) const;
 
     bool is_direction_aborted(bool from_client) const;
 
     void set_proxied()
     { ssn_state.session_flags |= SSNFLAG_PROXIED; }
 
-    bool is_proxied()
+    bool is_proxied() const
     { return (ssn_state.session_flags & SSNFLAG_PROXIED) != 0; }
 
-    bool is_stream()
+    bool is_stream() const
     { return pkt_type == PktType::TCP or pkt_type == PktType::USER; }
 
     void block()
@@ -386,13 +386,13 @@ public:
     void set_hard_expiration()
     { ssn_state.session_flags |= SSNFLAG_HARD_EXPIRATION; }
 
-    bool is_hard_expiration()
+    bool is_hard_expiration() const
     { return (ssn_state.session_flags & SSNFLAG_HARD_EXPIRATION) != 0; }
 
     void set_deferred_trust(unsigned module_id, bool on)
     { deferred_trust.set_deferred_trust(module_id, on); }
 
-    bool cannot_trust()
+    bool cannot_trust() const
     { return deferred_trust.is_active(); }
 
     bool try_trust()
@@ -408,7 +408,7 @@ public:
 
     void trust();
 
-    bool trust_is_deferred()
+    bool trust_is_deferred() const
     { return deferred_trust.is_deferred(); }
  
     void set_idle_timeout(unsigned timeout)

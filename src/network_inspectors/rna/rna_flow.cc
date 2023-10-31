@@ -103,14 +103,14 @@ RnaTracker RNAFlow::get_tracker(const Packet* p, DiscoveryFilter& filter)
     return rt;
 }
 
-void RNAFlow::set_server(RnaTracker& ht)
+void RNAFlow::set_server(const RnaTracker& ht)
 {
     rna_mutex.lock();
     serverht = ht;
     rna_mutex.unlock();
 }
 
-void RNAFlow::set_client(RnaTracker& ht)
+void RNAFlow::set_client(const RnaTracker& ht)
 {
     rna_mutex.lock();
     clientht = ht;

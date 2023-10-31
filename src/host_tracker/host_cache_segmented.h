@@ -26,6 +26,7 @@
 
 #include <atomic>
 #include <cassert>
+#include <numeric>
 
 #include "host_cache.h"
 #include "log/messages.h"
@@ -38,8 +39,8 @@ template<typename Key, typename Value>
 class HostCacheSegmented
 {
 public:
-    HostCacheSegmented() : 
-        segment_count(DEFAULT_HOST_CACHE_SEGMENTS), 
+    HostCacheSegmented() :
+        segment_count(DEFAULT_HOST_CACHE_SEGMENTS),
         memcap_per_segment(LRU_CACHE_INITIAL_SIZE) { }
     HostCacheSegmented(uint8_t segment_count, size_t memcap_per_segment);
 
@@ -93,7 +94,7 @@ HostCacheSegmented<Key, Value>::HostCacheSegmented(uint8_t segment_count, size_t
     memcap_per_segment(memcap_per_segment)
 {
     assert(segment_count > 0);
-    
+
     for (size_t i = 0; i < this->segment_count; ++i)
     {
         auto cache = new HostCacheIp(this->memcap_per_segment);
@@ -109,7 +110,7 @@ void HostCacheSegmented<Key, Value>::init()
         return;
 
     assert(segment_count > 0);
-    
+
     for (size_t i = 0; i < segment_count; ++i)
     {
         auto cache = new HostCacheIp(memcap_per_segment.load());
@@ -139,16 +140,16 @@ void HostCacheSegmented<Key, Value>::setup(uint8_t segs, size_t memcap )
 }
 
 template<typename Key, typename Value>
-size_t HostCacheSegmented<Key, Value>::get_valid_id(uint8_t idx) 
-{ 
+size_t HostCacheSegmented<Key, Value>::get_valid_id(uint8_t idx)
+{
     if(idx < seg_list.size())
         return seg_list[idx]->get_valid_id();
     return 0;
 }
 
 template<typename Key, typename Value>
-void HostCacheSegmented<Key, Value>::print_config() 
-{ 
+void HostCacheSegmented<Key, Value>::print_config()
+{
     if ( snort::SnortConfig::log_verbose() )
     {
         snort::LogLabel("host_cache");
@@ -180,7 +181,7 @@ bool HostCacheSegmented<Key, Value>::set_max_size(size_t max_size)
 }
 
 /**
- * Resize the cache based on the provided memory capacity, distributing the 
+ * Resize the cache based on the provided memory capacity, distributing the
  * memory equally among all the segments. If any segment fails to resize,
  * the operation is considered unsuccessful.
  */
@@ -199,11 +200,11 @@ bool HostCacheSegmented<Key, Value>::reload_resize(size_t memcap)
 
 // Computes the index of the segment where a given key-value pair belongs.
 template<typename Key, typename Value>
-uint8_t HostCacheSegmented<Key, Value>::get_segment_idx(Key val) 
+uint8_t HostCacheSegmented<Key, Value>::get_segment_idx(Key val)
 {
     const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&val);
     uint8_t result = 0;
-    for (size_t i = 0; i < sizeof(Key); ++i) 
+    for (size_t i = 0; i < sizeof(Key); ++i)
         result ^= bytes[i];
     //Assumes segment_count is a power of 2 always
     //This is a fast way to do a modulo operation
@@ -232,7 +233,7 @@ std::shared_ptr<Value> HostCacheSegmented<Key, Value>::find(const Key& key)
 }
 
 /**
- * Updates the internal counts of the host cache. This method aggregates the 
+ * Updates the internal counts of the host cache. This method aggregates the
  * counts from all segments and updates the overall counts for the cache.
  */
 template<typename Key, typename Value>
@@ -245,9 +246,7 @@ void HostCacheSegmented<Key, Value>::update_counts()
     {
         PegCount c = 0;
         for(auto cache : seg_list)
-        {
             c += cache->get_counts()[i];
-        }
         pcs[i] = c;
     }
 }
@@ -258,7 +257,7 @@ std::shared_ptr<Value> HostCacheSegmented<Key, Value>:: find_else_create(const K
     // Determine the segment index where the key-value pair resides or should reside
     uint8_t idx = get_segment_idx(key);
     bool new_data_local = false;
-    
+
     // Retrieve or create the entry for the key in the determined segment
     auto ht = seg_list[idx]->find_else_create(key, &new_data_local);
     if(new_data_local)
@@ -326,9 +325,7 @@ size_t HostCacheSegmented<Key, Value>::get_max_size()
 {
     size_t max_size = 0;
     for (auto cache : seg_list)
-    {
         max_size += cache->get_max_size();
-    }
     return max_size;
 }
 
@@ -340,7 +337,7 @@ size_t HostCacheSegmented<Key, Value>::get_mem_chunk()
 }
 
 template<typename Key, typename Value>
-bool HostCacheSegmented<Key, Value>::remove(const Key& key) 
+bool HostCacheSegmented<Key, Value>::remove(const Key& key)
 {
     uint8_t idx = get_segment_idx(key);
     return seg_list[idx]->remove(key);
@@ -358,19 +355,19 @@ Warning!!!: update_allocator and update_set_allocator don't copy data to old con
 but erase it for speed. Use with care!!!
 */
 template <template <typename, typename...> class Container, typename T, typename Alloc>
-void update_allocator(Container<T, Alloc>& cont, CacheInterface* new_lru) 
+void update_allocator(Container<T, Alloc>& cont, CacheInterface* new_lru)
 {
     Alloc new_allocator;
     new_allocator.set_cache(new_lru);
     cont = std::move(Container<T, Alloc>(new_allocator));
-} 
+}
 
 template <template <typename, typename, typename...> class Container, typename T, typename Comp, typename Alloc>
-void update_set_allocator(Container<T, Comp, Alloc>& cont, CacheInterface* new_lru) 
+void update_set_allocator(Container<T, Comp, Alloc>& cont, CacheInterface* new_lru)
 {
     Alloc new_allocator;
     new_allocator.set_cache(new_lru);
-    cont = std::move(Container<T, Comp, Alloc> (new_allocator)); 
+    cont = std::move(Container<T, Comp, Alloc> (new_allocator));
 }
 
 

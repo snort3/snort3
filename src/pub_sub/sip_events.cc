@@ -28,21 +28,19 @@
 using namespace snort;
 using namespace std;
 
-SipEvent::SipEvent(const Packet* p, const SIPMsg* msg, const SIP_DialogData* dialog)
-{
-    this->p = p;
-    this->msg = msg;
-    this->dialog = dialog;
-
-    from_len = msg->fromLen;
-    from = msg->from;
-    user_name_len = msg->userNameLen;
-    user_name = msg->userName;
-    user_agent_len = msg->userAgentLen;
-    user_agent = msg->userAgent;
-    server_len = msg->serverLen;
-    server = msg->server;
-}
+SipEvent::SipEvent(const Packet* p, const SIPMsg& msg, const SIP_DialogData* dialog) :
+    p(p),
+    msg(msg),
+    dialog(dialog),
+    from(msg.from),
+    from_len(msg.fromLen),
+    user_name(msg.userName),
+    user_name_len(msg.userNameLen),
+    user_agent(msg.userAgent),
+    user_agent_len(msg.userAgentLen),
+    server(msg.server),
+    server_len(msg.serverLen)
+{ }
 
 SipEvent::~SipEvent()
 {
@@ -51,10 +49,10 @@ SipEvent::~SipEvent()
 }
 
 bool SipEvent::is_invite() const
-{ return msg->methodFlag == SIP_METHOD_INVITE; }
+{ return msg.methodFlag == SIP_METHOD_INVITE; }
 
 bool SipEvent::is_media_updated() const
-{ return msg->mediaUpdated; }
+{ return msg.mediaUpdated; }
 
 bool SipEvent::has_dialog() const
 { return dialog; }

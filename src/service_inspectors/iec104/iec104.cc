@@ -87,6 +87,7 @@ public:
 
 void Iec104::eval(Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(iec104_prof);
 
     // preconditions - what we registered for

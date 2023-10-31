@@ -80,6 +80,7 @@ public:
     static ContextSwitcher* get_switcher();
     static void set_main_hook(MainHook_f);
 
+    Analyzer() = delete;
     Analyzer(snort::SFDAQInstance*, unsigned id, const char* source, uint64_t msg_cnt = 0);
     ~Analyzer();
 
@@ -149,8 +150,8 @@ private:
     uint64_t skip_cnt = 0;
     std::string source;
     snort::SFDAQInstance* daq_instance;
-    RetryQueue* retry_queue = nullptr;
-    OopsHandler* oops_handler = nullptr;
+    RetryQueue* retry_queue;
+    OopsHandler* oops_handler;
     ContextSwitcher* switcher = nullptr;
     std::mutex pending_work_queue_mutex;
     std::list<UncompletedAnalyzerCommand*> uncompleted_work_queue;

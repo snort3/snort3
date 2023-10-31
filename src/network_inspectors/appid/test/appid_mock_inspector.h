@@ -27,7 +27,7 @@ class Value;
 
 namespace snort
 {
-Inspector::Inspector()
+Inspector::Inspector() : ref_count(nullptr)
 {
     set_api(nullptr);
 }

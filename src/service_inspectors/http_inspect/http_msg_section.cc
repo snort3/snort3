@@ -371,8 +371,8 @@ const Field& HttpMsgSection::get_param_buffer(Cursor& c, const HttpParam& param)
     {
         KeyValue* fields = query_kv[query_index];
 
-        Field& key = fields->key;
-        Field& value = fields->value;
+        const Field& key = fields->key;
+        const Field& value = fields->value;
 
         ++query_index;
 
@@ -387,8 +387,8 @@ const Field& HttpMsgSection::get_param_buffer(Cursor& c, const HttpParam& param)
     {
         KeyValue* fields = body_kv[body_index];
 
-        Field& key = fields->key;
-        Field& value = fields->value;
+        const Field& key = fields->key;
+        const Field& value = fields->value;
 
         ++body_index;
 

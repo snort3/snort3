@@ -133,6 +133,8 @@ void FileInfo::copy(const FileInfo& other)
     pending_expire_time = other.pending_expire_time;
     // only one copy of file capture
     file_capture = nullptr;
+    policy_id = 0;
+    user_file_data = nullptr;
 }
 
 FileInfo::FileInfo(const FileInfo& other)
@@ -461,6 +463,7 @@ void FileContext::check_policy(Flow* flow, FileDirection dir, FilePolicyBase* po
 bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
     FilePosition position, FilePolicyBase* policy)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(file_perf_stats);
     Flow* flow = p->flow;
 
@@ -624,12 +627,10 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
  * 3) file magics are exhausted in depth
  *
  */
-void FileContext::find_file_type_from_ips(Packet* pkt, const uint8_t* file_data, int
-    data_size,
+void FileContext::find_file_type_from_ips(Packet* pkt, const uint8_t* file_data, int data_size,
     FilePosition position)
 {
     bool depth_exhausted = false;
-    bool set_file_context = false;
 
     if ((int64_t)processed_bytes + data_size >= config->file_type_depth)
     {
@@ -649,17 +650,20 @@ void FileContext::find_file_type_from_ips(Packet* pkt, const uint8_t* file_data,
     p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
     p->proto_bits |= PROTO_BIT__PDU;
 
+    bool set_file_context = false;
     FileFlows* files = FileFlows::get_file_flows(p->flow, false);
-    if (files and (!files->get_current_file_context() or files->get_current_file_context() != this))
+    if (files)
     {
-        files->set_current_file_context(this);
-        set_file_context =true;
+        FileContext* context = files->get_current_file_context();
+        if (!context or context != this)
+        {
+            files->set_current_file_context(this);
+            set_file_context = true;
+        }
     }
     fp_eval_service_group(p, conf->snort_protocol_id);
     if (set_file_context)
-    {
         files->set_current_file_context(nullptr);
-    }
     /* Check whether file transfer is done or type depth is reached */
     if ((position == SNORT_FILE_END) || (position == SNORT_FILE_FULL) || depth_exhausted)
         finalize_file_type();

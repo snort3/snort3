@@ -358,7 +358,7 @@ public:
 private:
     string name;
     string text;
-    unsigned priority;
+    unsigned priority = 0;
 };
 
 bool ClassificationsModule::begin(const char*, int, SnortConfig*)
@@ -1202,8 +1202,8 @@ public:
     { return GLOBAL; }
 
 private:
-    int thread;
-    CpuSet* cpuset;
+    int thread = 0;
+    CpuSet* cpuset = nullptr;
     string type;
     string name;
 };
@@ -1369,7 +1369,7 @@ public:
     { return CONTEXT; }
 
 private:
-    THDX_STRUCT thdx;
+    THDX_STRUCT thdx = {};
 };
 
 bool SuppressModule::set(const char*, Value& v, SnortConfig*)
@@ -1488,7 +1488,7 @@ public:
     { return CONTEXT; }
 
 private:
-    THDX_STRUCT thdx;
+    THDX_STRUCT thdx = {};
 };
 
 bool EventFilterModule::set(const char*, Value& v, SnortConfig*)
@@ -1707,7 +1707,7 @@ class HostsModule : public Module
 {
 public:
     HostsModule() : Module("hosts", hosts_help, hosts_params, true)
-    { host = nullptr; }
+    { }
 
     ~HostsModule() override
     { assert(!host); }
@@ -1727,7 +1727,7 @@ public:
 
 private:
     HostServiceDescriptor service;
-    HostAttributesEntry host;
+    HostAttributesEntry host = nullptr;
 };
 
 bool HostsModule::set(const char*, Value& v, SnortConfig* sc)

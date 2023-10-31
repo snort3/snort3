@@ -69,7 +69,7 @@ TEST_GROUP(appid_session_api)
     {
         AppidChangeBits change_bits;
 
-        SfIp ip;
+        SfIp ip{};
         mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
         mock_session->flow = &flow;
         pkt_thread_odp_ctxt = &mock_session->get_odp_ctxt();
@@ -112,7 +112,7 @@ TEST(appid_session_api, get_client_app_id)
 
 TEST(appid_session_api, get_client_app_id_with_eve_for_http2)
 {
-    SfIp ip;
+    SfIp ip{};
     AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
     asd.flow = &flow;
     AppidChangeBits change_bits;
@@ -162,7 +162,7 @@ TEST(appid_session_api, get_referred_app_id)
 
 TEST(appid_session_api, get_app_id)
 {
-    SfIp ip;
+    SfIp ip{};
     AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
     asd.flow = &flow;
     AppidChangeBits change_bits;
@@ -191,7 +191,7 @@ TEST(appid_session_api, get_app_id)
 
 TEST(appid_session_api, get_app_id_with_eve_for_http2)
 {
-    SfIp ip;
+    SfIp ip{};
     AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
     asd.flow = &flow;
     AppidChangeBits change_bits;
@@ -284,7 +284,7 @@ TEST(appid_session_api, get_app_id_with_eve_for_http2)
 
 TEST(appid_session_api, get_first_stream_appids_for_http2)
 {
-    SfIp ip;
+    SfIp ip{};
     AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
     asd.flow = &flow;
     AppidChangeBits change_bits;
@@ -432,7 +432,7 @@ TEST(appid_session_api, get_client_info)
 
 TEST(appid_session_api, get_client_info_http2)
 {
-    SfIp ip;
+    SfIp ip{};
     AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
     asd.flow = &flow;
     AppidChangeBits change_bits;

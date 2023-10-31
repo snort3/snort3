@@ -144,12 +144,12 @@ inline bool PatternMatchData::can_be_fp() const
 
 inline bool PatternMatchData::has_alpha() const
 {
-    unsigned offset = fp_offset ? fp_offset : 0;
-    unsigned length = fp_length ? fp_length : pattern_size;
+    unsigned tmp_offset = static_cast<unsigned>(fp_offset);
+    unsigned tmp_length = fp_length ? fp_length : pattern_size;
 
-    for ( unsigned idx = 0; idx < length; ++idx )
+    for ( unsigned idx = 0; idx < tmp_length; ++idx )
     {
-        if ( isalpha(pattern_buf[offset + idx]) )
+        if ( isalpha(pattern_buf[tmp_offset + idx]) )
             return true;
     }
     return false;

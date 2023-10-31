@@ -37,7 +37,8 @@
 class __attribute__((__packed__)) TcpConnectorMsgHdr
 {
 public:
-    TcpConnectorMsgHdr() = default;
+    TcpConnectorMsgHdr() : version(0), connector_msg_length(0)
+    { }
     TcpConnectorMsgHdr(uint32_t length)
     { version = TCP_FORMAT_VERSION; connector_msg_length = length; }
 

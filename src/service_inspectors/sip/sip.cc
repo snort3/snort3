@@ -132,7 +132,7 @@ static inline int SIP_Process(Packet* p, SIPData* sessp, SIP_PROTO_CONF* config)
     if (true == status)
     {
         /*Update the dialog state*/
-        SIP_updateDialog(&sipMsg, &(sessp->dialogs), p, config);
+        SIP_updateDialog(sipMsg, &(sessp->dialogs), p, config);
     }
     /*Update the session data*/
     pRopts = &(sessp->ropts);
@@ -152,7 +152,7 @@ static inline int SIP_Process(Packet* p, SIPData* sessp, SIP_PROTO_CONF* config)
 
 static void snort_sip(SIP_PROTO_CONF* config, Packet* p)
 {
-    Profile profile(sipPerfStats);
+    Profile profile(sipPerfStats);  // cppcheck-suppress unreadVariable
 
     /* Attempt to get a previously allocated SIP block. */
     SIPData* sessp = get_sip_session_data(p->flow);

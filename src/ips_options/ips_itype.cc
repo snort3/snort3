@@ -38,9 +38,8 @@ static THREAD_LOCAL ProfileStats icmpTypePerfStats;
 class IcmpTypeOption : public IpsOption
 {
 public:
-    IcmpTypeOption(const RangeCheck& c) :
-        IpsOption(s_name)
-    { config = c; }
+    IcmpTypeOption(const RangeCheck& c) : IpsOption(s_name), config(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -77,6 +76,7 @@ bool IcmpTypeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IcmpTypeOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(icmpTypePerfStats);
 
     // return 0 if we don't have an icmp header

@@ -58,11 +58,9 @@ static std::vector<const NetFlowRule*> filter_record(const NetFlowRules* rules, 
 
     for( auto const & address : addr )
     {
-        for( auto const& rule : rules->exclude )
-        {
-            if ( rule.filter_match(address, zone) )
-                return match_vec;
-        }
+        if (std::any_of(rules->exclude.cbegin(), rules->exclude.cend(),
+            [address, zone](const NetFlowRule& rule){ return rule.filter_match(address, zone); }))
+            return match_vec;
     }
 
     for( auto const & address : addr )
@@ -890,14 +888,13 @@ void NetFlowInspector::stringify(std::ofstream& file_stream)
 {
     std::sort(dump_cache->begin(), dump_cache->end(), IpCompare());
 
-    std::string str;
     SfIpString ip_str;
     uint32_t i = 0;
 
     for (auto& elem : *dump_cache)
     {
         NetFlowSessionRecord& record = elem.second;
-        str = "NetFlow Record #";
+        std::string str = "NetFlow Record #";
         str += std::to_string(++i);
         str += "\n";
 

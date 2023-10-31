@@ -271,8 +271,9 @@ HttpInfractions* HttpFlowData::get_infractions(SourceId source_id)
     if (infractions[source_id] != nullptr)
         return infractions[source_id];
     assert(transaction[source_id] != nullptr);
-    assert(transaction[source_id]->get_infractions(source_id) != nullptr);
-    return transaction[source_id]->get_infractions(source_id);
+    HttpInfractions* tmp_infractions = transaction[source_id]->get_infractions(source_id);
+    assert(nullptr != tmp_infractions);
+    return tmp_infractions;
 }
 
 void HttpFlowData::finish_hx_body(HttpCommon::SourceId source_id, HttpCommon::HXBodyState state,

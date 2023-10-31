@@ -361,7 +361,7 @@ void Snort::term()
     detection_filter_term();
 
     term_signals();
-    
+
 }
 
 void Snort::clean_exit(int)

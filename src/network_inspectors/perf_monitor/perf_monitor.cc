@@ -334,6 +334,7 @@ void PerfMonitor::disable_profiling(PerfConstraints* constraints)
 
 void PerfMonitor::eval(Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(perfmonStats);
 
     if (p)

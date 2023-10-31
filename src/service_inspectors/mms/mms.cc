@@ -88,6 +88,7 @@ public:
 
 void Mms::eval(Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(mms_prof);
 
     // preconditions - what we registered for

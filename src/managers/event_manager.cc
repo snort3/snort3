@@ -76,7 +76,7 @@ void EventManager::release_plugins()
 {
     s_loggers.outputs.clear();
 
-    for ( auto* p : s_outputs )
+    for ( const auto* p : s_outputs )
         delete p;
 
     s_outputs.clear();

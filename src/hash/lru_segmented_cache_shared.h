@@ -20,7 +20,9 @@
 #ifndef LRU_SEGMENTED_CACHE_SHARED_H
 #define LRU_SEGMENTED_CACHE_SHARED_H
 
+#include <algorithm>
 #include <cassert>
+#include <numeric>
 #include <vector>
 
 #include "lru_cache_shared.h"
@@ -28,7 +30,7 @@
 #define DEFAULT_SEGMENT_COUNT 4
 
 template<typename Key, typename Value, typename Hash = std::hash<Key>, typename Eq = std::equal_to<Key>>
-class SegmentedLruCache 
+class SegmentedLruCache
 {
 public:
 
@@ -66,10 +68,10 @@ public:
         std::size_t segment_idx = get_segment_idx(key);
         return segments[segment_idx]->remove(key);
     }
-    
+
     bool remove(const Key& key, Data& data)
     {
-        std::size_t idx = get_segment_idx(key); 
+        std::size_t idx = get_segment_idx(key);
         return segments[idx]->remove(key, data);
     }
 
@@ -90,7 +92,7 @@ public:
         std::size_t segment_idx = get_segment_idx(key);
         return segments[segment_idx]->find_else_insert(key, data, status, replace);
     }
-    
+
     bool set_max_size(size_t max_size)
     {
         bool success = true;
@@ -115,22 +117,20 @@ public:
         return all_data;
     }
 
-    size_t mem_size()
+    size_t mem_size() const
     {
         size_t mem_size = 0;
         for ( const auto& cache : segments )
-        {
             mem_size += cache->mem_size();
-        }
         return mem_size;
     }
 
-    const PegInfo* get_pegs() 
-    { 
-        return lru_cache_shared_peg_names; 
+    const PegInfo* get_pegs()
+    {
+        return lru_cache_shared_peg_names;
     }
 
-    PegCount* get_counts() 
+    const PegCount* get_counts()
     {
         PegCount* pcs = (PegCount*)&counts;
         const PegInfo* pegs = get_pegs();
@@ -144,26 +144,22 @@ public:
             }
             pcs[i] = c;
         }
-        return (PegCount*)&counts;
+        return (const PegCount*)&counts;
     }
 
-    size_t size() 
+    size_t size() const
     {
         size_t total_size = 0;
-        for ( const auto& cache : segments ) 
-        {
+        for ( const auto& cache : segments )
             total_size += cache->size();
-        }
         return total_size;
     }
 
-    size_t get_max_size()
+    size_t get_max_size() const
     {
         size_t max_size = 0;
         for ( const auto& cache : segments )
-        {
             max_size += cache->get_max_size();
-        }
         return max_size;
     }
 

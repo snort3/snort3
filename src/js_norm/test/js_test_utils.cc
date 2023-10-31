@@ -74,16 +74,16 @@ void JSTokenizerTester::run_checks(const JSTestConfig& checks)
         CHECK(last_return == checks.return_code);
 
     if (checks.check_open_tag.is_set())
-        CHECK(normalizer.is_opening_tag_seen() == checks.check_open_tag);
+        CHECK((normalizer.is_opening_tag_seen() == checks.check_open_tag));
 
     if (checks.check_closing_tag.is_set())
-        CHECK(normalizer.is_closing_tag_seen() == checks.check_closing_tag);
+        CHECK((normalizer.is_closing_tag_seen() == checks.check_closing_tag));
 
     if (checks.check_mixed_encoding.is_set())
-        CHECK(normalizer.is_mixed_encoding_seen() == checks.check_mixed_encoding);
+        CHECK((normalizer.is_mixed_encoding_seen() == checks.check_mixed_encoding));
 
     if (checks.check_unescape_nesting.is_set())
-        CHECK(normalizer.is_unescape_nesting_seen() == checks.check_unescape_nesting);
+        CHECK((normalizer.is_unescape_nesting_seen() == checks.check_unescape_nesting));
 
     if (checks.expected_cursor_pos.is_set())
         CHECK((normalizer.get_src_next() - last_source.c_str()) == checks.expected_cursor_pos);

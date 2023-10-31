@@ -179,7 +179,7 @@ TEST(segmented_lru_cache, stats_test)
     lru_cache.remove(8);
     lru_cache.remove(11); // not in cache
 
-    PegCount* stats = lru_cache.get_counts();
+    const PegCount* stats = lru_cache.get_counts();
 
     CHECK(stats[0] == 10);  // adds
     CHECK(stats[1] == 2);   // alloc_prunes
@@ -199,10 +199,10 @@ TEST(segmented_lru_cache, find_else_insert_replace)
     SegmentedLruCache<int, std::string> lru_cache(8);
     std::shared_ptr<std::string> data(new std::string("hello"));
     LcsInsertStatus status;
-    
+
     lru_cache.find_else_insert(1, data, &status, false);  // initial insert
     CHECK(status == LcsInsertStatus::LCS_ITEM_INSERTED);  // Check status for initial insert
-    
+
     std::shared_ptr<std::string> newData(new std::string("world"));
     std::shared_ptr<std::string> returnedData = lru_cache.find_else_insert(1, newData, &status, true);  // replace existing item
     CHECK(returnedData != nullptr);

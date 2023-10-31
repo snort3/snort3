@@ -34,7 +34,7 @@
 
 using namespace snort;
 
-Dce2TcpFlowData::Dce2TcpFlowData() :   FlowData(inspector_id)
+Dce2TcpFlowData::Dce2TcpFlowData() : FlowData(inspector_id)
 {
     dce2_tcp_stats.concurrent_sessions++;
     if (dce2_tcp_stats.max_concurrent_sessions < dce2_tcp_stats.concurrent_sessions)
@@ -130,6 +130,7 @@ void Dce2Tcp::show(const SnortConfig*) const
 void Dce2Tcp::eval(Packet* p)
 {
     DCE2_TcpSsnData* dce2_tcp_sess;
+    // cppcheck-suppress unreadVariable
     Profile profile(dce2_tcp_pstat_main);
 
     assert(p->has_tcp_data());

@@ -62,9 +62,8 @@ struct TcpFlagCheckData
 class TcpFlagOption : public IpsOption
 {
 public:
-    TcpFlagOption(const TcpFlagCheckData& c) :
-        IpsOption(s_name)
-    { config = c; }
+    TcpFlagOption(const TcpFlagCheckData& c) : IpsOption(s_name), config(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;

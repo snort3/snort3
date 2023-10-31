@@ -47,7 +47,6 @@ LiteralSearch* LiteralSearch::instantiate(LiteralSearch::Handle*, const uint8_t*
 void UtfDecodeSession::set_decode_utf_state_charset(CharsetCode, CharsetSrc) { }
 bool UtfDecodeSession::decode_utf(unsigned char const*, unsigned int, unsigned char*, unsigned int,
     int*) { return true; }
-UtfDecodeSession::UtfDecodeSession() { }
 Packet* DetectionEngine::get_current_packet() { return nullptr; }
 void trace_vprintf(char const*, unsigned char, char const*, snort::Packet const*, char const*, va_list) { }
 uint8_t TraceApi::get_constraints_generation() { return 0; }

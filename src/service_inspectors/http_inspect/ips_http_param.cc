@@ -108,6 +108,7 @@ bool HttpParamIpsOption::retry(Cursor& current_cursor, const Cursor&)
 
 IpsOption::EvalStatus HttpParamIpsOption::eval(Cursor& c, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(HttpParamRuleOptModule::http_param_ps);
 
     const HttpInspect* const hi = eval_helper(p);

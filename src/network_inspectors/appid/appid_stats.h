@@ -60,6 +60,7 @@ struct StatsBucket
 class AppIdStatistics
 {
 public:
+    AppIdStatistics() = delete;
     ~AppIdStatistics();
 
     static AppIdStatistics* initialize_manager(const AppIdConfig&);
@@ -88,7 +89,6 @@ private:
     void open_stats_log_file();
     void dump_statistics();
 
-    bool enabled = false;
     SF_LIST* curr_buckets = nullptr;
     SF_LIST* log_buckets = nullptr;
     struct TextLog* log = nullptr;

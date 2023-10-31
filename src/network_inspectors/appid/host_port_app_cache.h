@@ -66,8 +66,6 @@ struct FirstPktkey
     {
         max_network_range.clear();
         network_address.clear();
-        port = 0;
-        proto = IpProtocol::PROTO_NOT_SET;
     }
 
     bool operator<(const FirstPktkey& right) const
@@ -81,12 +79,12 @@ struct FirstPktkey
             return false;
     }
 
-    uint32_t netmask[4];
+    uint32_t netmask[4] = {};
     snort::SfIp max_network_range;
     snort::SfIp network_address;
-    uint16_t port;
-    IpProtocol proto;
-    char padding;
+    uint16_t port = 0;
+    IpProtocol proto = IpProtocol::PROTO_NOT_SET;
+    char padding = 0;
 };
 PADDING_GUARD_END
 

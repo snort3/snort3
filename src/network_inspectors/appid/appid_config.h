@@ -104,7 +104,7 @@ public:
     bool log_all_sessions = false;
     bool enable_rna_filter = false;
     std::string rna_conf_path = "";
-    SnortProtocolId snort_proto_ids[PROTO_INDEX_MAX];
+    SnortProtocolId snort_proto_ids[PROTO_INDEX_MAX] = {};
     void show() const;
 };
 

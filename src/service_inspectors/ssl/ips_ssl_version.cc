@@ -51,9 +51,8 @@ struct SslVersionRuleOptionData
 class SslVersionOption : public IpsOption
 {
 public:
-    SslVersionOption(const SslVersionRuleOptionData& c) :
-        IpsOption(s_name)
-    { svod = c; }
+    SslVersionOption(const SslVersionRuleOptionData& c) : IpsOption(s_name), svod(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -61,7 +60,7 @@ public:
     EvalStatus eval(Cursor&, Packet*) override;
 
 private:
-    SslVersionRuleOptionData svod = {};
+    SslVersionRuleOptionData svod;
 };
 
 //-------------------------------------------------------------------------
@@ -94,7 +93,7 @@ bool SslVersionOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SslVersionOption::eval(Cursor&, Packet* pkt)
 {
-    RuleProfile profile(sslVersionRuleOptionPerfStats);
+    RuleProfile profile(sslVersionRuleOptionPerfStats); // cppcheck-suppress unreadVariable
 
     if ( !(pkt->packet_flags & PKT_REBUILT_STREAM) && !pkt->is_full_pdu() )
         return NO_MATCH;

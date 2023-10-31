@@ -133,10 +133,6 @@ DCE2_Ret DCE2_BufferAddData(DCE2_Buffer*, const uint8_t*,
     uint32_t, uint32_t, DCE2_BufferMinAddFlag);
 void DCE2_BufferDestroy(DCE2_Buffer* buf);
 
-#define DCE2_UUID_BUF_SIZE 50
-const char* DCE2_UuidToStr(
-    const Uuid*, DceRpcBoFlag, char (& buf)[DCE2_UUID_BUF_SIZE]);
-
 // Determines if the character passed in is a character that
 // the inspector considers a to be a space character.
 inline bool DCE2_IsSpaceChar(const char c)

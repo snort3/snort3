@@ -87,6 +87,7 @@ bool HttpRangeIpsOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus HttpRangeIpsOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(ps);
 
     const HttpInspect* const hi = eval_helper(p);

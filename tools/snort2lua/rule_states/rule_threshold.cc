@@ -97,7 +97,7 @@ bool Threshold::convert(std::istringstream& data_stream)
             std::streamoff off = 1 + (std::streamoff)(tmp_pos) +
                 (std::streamoff)(semi_colon_pos);
             data_stream.seekg(off);
-            rule_keyword = rule_keyword.substr(0, semi_colon_pos);
+            rule_keyword.resize(semi_colon_pos);
         }
 
         // now, lets get the next option.

@@ -165,13 +165,3 @@ bool MpseManager::parallel_compiles(const MpseApi* api)
     return (api->flags & MPSE_MTBLD) != 0;
 }
 
-// was called during drop stats but actually commented out
-// FIXIT-M this one has to accumulate across threads
-#if 0
-void MpseManager::print_qinfo()
-{
-    sfksearch_print_qinfo();
-    acsmx2_print_qinfo();
-}
-#endif
-

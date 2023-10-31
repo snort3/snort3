@@ -197,7 +197,7 @@ void TraceParser::init_configured_trace_options()
 
 enum { OPT_1, OPT_2 };
 
-static const TraceOption trace_options[] =
+static const TraceOption s_trace_options[] =
 {
     { "option1", OPT_1, "test option 1" },
     { "option2", OPT_2, "test option 2" },
@@ -211,7 +211,7 @@ class Module1 : public Module
 public:
     Module1() : Module("mod_1", "testing trace parser module 1") { }
     void set_trace(const Trace* t) const override { m1_trace = t; }
-    const TraceOption* get_trace_options() const override { return trace_options; }
+    const TraceOption* get_trace_options() const override { return s_trace_options; }
 
 };
 
@@ -220,7 +220,7 @@ class Module2 : public Module
 public:
     Module2() : Module("mod_2", "testing trace parser module 2") { }
     void set_trace(const Trace* t) const override { m2_trace = t; }
-    const TraceOption* get_trace_options() const override { return trace_options; }
+    const TraceOption* get_trace_options() const override { return s_trace_options; }
 
 };
 
@@ -241,13 +241,13 @@ TEST_CASE("modules traces", "[TraceParser]")
     SECTION("invalid module")
     {
         MODULE_OPTION(all, 10);
-        CHECK(!tp.set_traces("invalid_module", all));
+        CHECK(false == tp.set_traces("invalid_module", all));
     }
 
     SECTION("invalid option")
     {
         MODULE_OPTION(invalid_option, 10);
-        CHECK(!tp.set_traces("mod_1", invalid_option));
+        CHECK(false == tp.set_traces("mod_1", invalid_option));
     }
 
     SECTION("unset")
@@ -255,66 +255,66 @@ TEST_CASE("modules traces", "[TraceParser]")
         REQUIRE(m1_trace != nullptr);
         REQUIRE(m2_trace != nullptr);
 
-        CHECK(!m1_trace->enabled(OPT_1));
-        CHECK(!m1_trace->enabled(OPT_2));
-        CHECK(!m2_trace->enabled(OPT_1));
-        CHECK(!m2_trace->enabled(OPT_2));
+        CHECK(false == m1_trace->enabled(OPT_1));
+        CHECK(false == m1_trace->enabled(OPT_2));
+        CHECK(false == m2_trace->enabled(OPT_1));
+        CHECK(false == m2_trace->enabled(OPT_2));
     }
 
     SECTION("all modules")
     {
         MODULE_OPTION(all, 3);
-        CHECK(tp.set_traces("all", all));
+        CHECK(true == tp.set_traces("all", all));
 
         REQUIRE(m1_trace != nullptr);
         REQUIRE(m2_trace != nullptr);
 
-        CHECK(m1_trace->enabled(OPT_1, 3));
-        CHECK(m1_trace->enabled(OPT_2, 3));
-        CHECK(m2_trace->enabled(OPT_1, 3));
-        CHECK(m2_trace->enabled(OPT_2, 3));
+        CHECK(true == m1_trace->enabled(OPT_1, 3));
+        CHECK(true == m1_trace->enabled(OPT_2, 3));
+        CHECK(true == m2_trace->enabled(OPT_1, 3));
+        CHECK(true == m2_trace->enabled(OPT_2, 3));
 
-        CHECK(!m1_trace->enabled(OPT_1, 4));
-        CHECK(!m1_trace->enabled(OPT_2, 4));
-        CHECK(!m2_trace->enabled(OPT_1, 4));
-        CHECK(!m2_trace->enabled(OPT_2, 4));
+        CHECK(false == m1_trace->enabled(OPT_1, 4));
+        CHECK(false == m1_trace->enabled(OPT_2, 4));
+        CHECK(false == m2_trace->enabled(OPT_1, 4));
+        CHECK(false == m2_trace->enabled(OPT_2, 4));
     }
 
     SECTION("module all")
     {
         MODULE_OPTION(all, 3);
-        CHECK(tp.set_traces("mod_1", all));
+        CHECK(true == tp.set_traces("mod_1", all));
 
         REQUIRE(m1_trace != nullptr);
         REQUIRE(m2_trace != nullptr);
 
-        CHECK(m1_trace->enabled(OPT_1, 3));
-        CHECK(m1_trace->enabled(OPT_2, 3));
-        CHECK(!m2_trace->enabled(OPT_1, 3));
-        CHECK(!m2_trace->enabled(OPT_2, 3));
+        CHECK(true == m1_trace->enabled(OPT_1, 3));
+        CHECK(true == m1_trace->enabled(OPT_2, 3));
+        CHECK(false == m2_trace->enabled(OPT_1, 3));
+        CHECK(false == m2_trace->enabled(OPT_2, 3));
     }
 
     SECTION("options")
     {
         MODULE_OPTION(option1, 1);
         MODULE_OPTION(option2, 5);
-        CHECK(tp.set_traces("mod_1", option1));
-        CHECK(tp.set_traces("mod_1", option2));
-        CHECK(tp.set_traces("mod_2", option1));
-        CHECK(tp.set_traces("mod_2", option2));
+        CHECK(true == tp.set_traces("mod_1", option1));
+        CHECK(true == tp.set_traces("mod_1", option2));
+        CHECK(true == tp.set_traces("mod_2", option1));
+        CHECK(true == tp.set_traces("mod_2", option2));
 
         REQUIRE(m1_trace != nullptr);
         REQUIRE(m2_trace != nullptr);
 
-        CHECK(m1_trace->enabled(OPT_1, 1));
-        CHECK(m1_trace->enabled(OPT_2, 1));
-        CHECK(m2_trace->enabled(OPT_1, 1));
-        CHECK(m2_trace->enabled(OPT_2, 1));
+        CHECK(true == m1_trace->enabled(OPT_1, 1));
+        CHECK(true == m1_trace->enabled(OPT_2, 1));
+        CHECK(true == m2_trace->enabled(OPT_1, 1));
+        CHECK(true == m2_trace->enabled(OPT_2, 1));
 
-        CHECK(!m1_trace->enabled(OPT_1, 5));
-        CHECK(m1_trace->enabled(OPT_2, 5));
-        CHECK(!m2_trace->enabled(OPT_1, 5));
-        CHECK(m2_trace->enabled(OPT_2, 5));
+        CHECK(false == m1_trace->enabled(OPT_1, 5));
+        CHECK(true == m1_trace->enabled(OPT_2, 5));
+        CHECK(false == m2_trace->enabled(OPT_1, 5));
+        CHECK(true == m2_trace->enabled(OPT_2, 5));
     }
 
     SECTION("override all modules")
@@ -322,27 +322,27 @@ TEST_CASE("modules traces", "[TraceParser]")
         MODULE_OPTION(option1, 1);
         MODULE_OPTION(option2, 2);
         MODULE_OPTION(all, 3);
-        CHECK(tp.set_traces("mod_1", option1));
-        CHECK(tp.set_traces("mod_2", option2));
-        CHECK(tp.set_traces("all", all));
+        CHECK(true == tp.set_traces("mod_1", option1));
+        CHECK(true == tp.set_traces("mod_2", option2));
+        CHECK(true == tp.set_traces("all", all));
 
         REQUIRE(m1_trace != nullptr);
         REQUIRE(m2_trace != nullptr);
 
-        CHECK(m1_trace->enabled(OPT_1, 1));
-        CHECK(m1_trace->enabled(OPT_2, 1));
-        CHECK(m2_trace->enabled(OPT_1, 1));
-        CHECK(m2_trace->enabled(OPT_2, 1));
+        CHECK(true == m1_trace->enabled(OPT_1, 1));
+        CHECK(true == m1_trace->enabled(OPT_2, 1));
+        CHECK(true == m2_trace->enabled(OPT_1, 1));
+        CHECK(true == m2_trace->enabled(OPT_2, 1));
 
-        CHECK(!m1_trace->enabled(OPT_1, 2));
-        CHECK(m1_trace->enabled(OPT_2, 2));
-        CHECK(m2_trace->enabled(OPT_1, 2));
-        CHECK(m2_trace->enabled(OPT_2, 2));
+        CHECK(false == m1_trace->enabled(OPT_1, 2));
+        CHECK(true == m1_trace->enabled(OPT_2, 2));
+        CHECK(true == m2_trace->enabled(OPT_1, 2));
+        CHECK(true == m2_trace->enabled(OPT_2, 2));
 
-        CHECK(!m1_trace->enabled(OPT_1, 3));
-        CHECK(m1_trace->enabled(OPT_2, 3));
-        CHECK(m2_trace->enabled(OPT_1, 3));
-        CHECK(!m2_trace->enabled(OPT_2, 3));
+        CHECK(false == m1_trace->enabled(OPT_1, 3));
+        CHECK(true == m1_trace->enabled(OPT_2, 3));
+        CHECK(true == m2_trace->enabled(OPT_1, 3));
+        CHECK(false == m2_trace->enabled(OPT_2, 3));
     }
 
     auto sc = SnortConfig::get_conf();
@@ -361,7 +361,7 @@ TEST_CASE("packet constraints", "[TraceParser]")
         const PacketConstraints exp = { IpProtocol::TCP, 0, 0,
             SfIp(), SfIp(), PacketConstraints::IP_PROTO };
 
-        CHECK(tp.set_constraints(ip_proto));
+        CHECK(true == tp.set_constraints(ip_proto));
         tp.finalize_constraints();
 
         REQUIRE(tc.constraints != nullptr);
@@ -377,7 +377,7 @@ TEST_CASE("packet constraints", "[TraceParser]")
         const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 0, 0,
             SfIp(&exp_ip, AF_INET), SfIp(), PacketConstraints::SRC_IP };
 
-        CHECK(tp.set_constraints(src_ip));
+        CHECK(true == tp.set_constraints(src_ip));
         tp.finalize_constraints();
 
         REQUIRE(tc.constraints != nullptr);
@@ -389,7 +389,7 @@ TEST_CASE("packet constraints", "[TraceParser]")
     SECTION("invalid src_ip")
     {
         ADDR_OPTION(src_ip, "10.1.2.300");
-        CHECK(!tp.set_constraints(src_ip));
+        CHECK(false == tp.set_constraints(src_ip));
     }
 
     SECTION("src_port")
@@ -398,7 +398,7 @@ TEST_CASE("packet constraints", "[TraceParser]")
             SfIp(), SfIp(), PacketConstraints::SRC_PORT };
         PORT_OPTION(src_port, 100);
 
-        CHECK(tp.set_constraints(src_port));
+        CHECK(true == tp.set_constraints(src_port));
         tp.finalize_constraints();
 
         REQUIRE(tc.constraints != nullptr);
@@ -414,7 +414,7 @@ TEST_CASE("packet constraints", "[TraceParser]")
         const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 0, 0,
             SfIp(), SfIp(&exp_ip, AF_INET), PacketConstraints::DST_IP };
 
-        CHECK(tp.set_constraints(dst_ip));
+        CHECK(true == tp.set_constraints(dst_ip));
         tp.finalize_constraints();
 
         REQUIRE(tc.constraints != nullptr);
@@ -426,7 +426,7 @@ TEST_CASE("packet constraints", "[TraceParser]")
     SECTION("invalid dst_ip")
     {
         ADDR_OPTION(dst_ip, "10.300.2.1");
-        CHECK(!tp.set_constraints(dst_ip));
+        CHECK(false == tp.set_constraints(dst_ip));
     }
 
     SECTION("dst_port")
@@ -435,7 +435,7 @@ TEST_CASE("packet constraints", "[TraceParser]")
         const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 0, 200,
             SfIp(), SfIp(), PacketConstraints::DST_PORT };
 
-        CHECK(tp.set_constraints(dst_port));
+        CHECK(true == tp.set_constraints(dst_port));
         tp.finalize_constraints();
 
         REQUIRE(tc.constraints != nullptr);
@@ -447,7 +447,7 @@ TEST_CASE("packet constraints", "[TraceParser]")
     SECTION("invalid option")
     {
         CONFIG_OPTION(invalid_option, (uint64_t)5, Parameter::PT_INT, "0:8");
-        CHECK(!tp.set_constraints(invalid_option));
+        CHECK(false == tp.set_constraints(invalid_option));
     }
 }
 

@@ -37,7 +37,7 @@ public:
     const Field& get_norm(HttpInfractions* infractions, HttpEventGen* events,
         const HttpEnums::HeaderId header_name_id[], const Field header_value[],
         const int32_t num_headers);
-    const Field& get_comma_separated_raw(HttpMsgHeadShared& msg_head, HttpInfractions* infractions,
+    const Field& get_comma_separated_raw(const HttpMsgHeadShared& msg_head, HttpInfractions* infractions,
 	HttpEventGen* events, const HttpEnums::HeaderId header_name_id[], const Field header_value[],
         const int32_t num_headers);
 

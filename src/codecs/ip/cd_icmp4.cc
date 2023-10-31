@@ -565,9 +565,12 @@ namespace
 {
 struct IcmpHdr
 {
+    // cppcheck-suppress unusedStructMember
     uint8_t type;
+    // cppcheck-suppress unusedStructMember
     uint8_t code;
     uint16_t cksum;
+    // cppcheck-suppress unusedStructMember
     uint32_t unused;
 };
 } // namespace

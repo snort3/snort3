@@ -167,7 +167,7 @@ void Http2SettingsFrame::print_frame(FILE* output)
     if (bad_frame)
         fprintf(output, " Error in settings frame.");
     else if (FLAG_ACK & get_flags())
-        fprintf(output, " ACK, Header Table Size: %d.",
+        fprintf(output, " ACK, Header Table Size: %u.",
                 session_data->connection_settings[1 - source_id].get_param(SFID_HEADER_TABLE_SIZE));
     else
         fprintf(output, " Parameters in current frame - %d.", (data.length()/6)) ;

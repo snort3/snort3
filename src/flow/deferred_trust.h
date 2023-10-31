@@ -63,7 +63,7 @@ public:
     DeferredTrust() = default;
     ~DeferredTrust() = default;
     SO_PUBLIC void set_deferred_trust(unsigned module_id, bool on);
-    bool is_active()
+    bool is_active() const
     { return TRUST_DEFER_ON == deferred_trust || TRUST_DEFER_DEFERRING == deferred_trust; }
     bool try_trust()
     {
@@ -71,7 +71,7 @@ public:
             deferred_trust = TRUST_DEFER_DEFERRING;
         return TRUST_DEFER_DEFERRING != deferred_trust;
     }
-    bool is_deferred()
+    bool is_deferred() const
     { return TRUST_DEFER_DEFERRING == deferred_trust; }
     void clear()
     {

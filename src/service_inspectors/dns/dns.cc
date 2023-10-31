@@ -562,7 +562,6 @@ static uint16_t ParseDNSAnswer(
             if ( !--bytes_unused )
                 return 0;
         }
-        dnsSessionData->curr_rec_state = DNS_RESP_STATE_RR_RDLENGTH;
         // Fall through
 
     case DNS_RESP_STATE_RR_RDLENGTH:
@@ -1101,6 +1100,7 @@ StreamSplitter* Dns::get_splitter(bool c2s)
 
 static void snort_dns(Packet* p, const DnsConfig* dns_config)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(dnsPerfStats);
 
     // For TCP, do a few extra checks...

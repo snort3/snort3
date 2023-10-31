@@ -97,10 +97,10 @@ TEST_CASE("DceHttpServerSplitter-scan - first_server", "[http_server_splitter]")
     DceHttpServerSplitter* splitter = new DceHttpServerSplitter(false);
     uint32_t fp;
 
-    REQUIRE(splitter->cutover_inspector() == false);
+    REQUIRE(false == splitter->cutover_inspector());
     REQUIRE(splitter->scan(nullptr, (const uint8_t*)"n", 1, PKT_FROM_SERVER, &fp) ==
         StreamSplitter::SEARCH);
-    REQUIRE(splitter->cutover_inspector() == false);
+    REQUIRE(false == splitter->cutover_inspector());
     delete splitter;
 }
 
@@ -109,10 +109,10 @@ TEST_CASE("DceHttpServerSplitter-scan - first_server_wrong_direction", "[http_se
     DceHttpServerSplitter* splitter = new DceHttpServerSplitter(false);
     uint32_t fp;
 
-    REQUIRE(splitter->cutover_inspector() == false);
+    REQUIRE(false == splitter->cutover_inspector());
     REQUIRE(splitter->scan(nullptr, (const uint8_t*)"n", 1, PKT_FROM_CLIENT, &fp) ==
         StreamSplitter::ABORT);
-    REQUIRE(splitter->cutover_inspector() == false);
+    REQUIRE(false == splitter->cutover_inspector());
     delete splitter;
 }
 
@@ -123,7 +123,7 @@ TEST_CASE("DceHttpServerSplitter-scan - bad_first_server", "[http_server_splitte
 
     REQUIRE(splitter->scan(nullptr, (const uint8_t*)"x", 1, PKT_FROM_SERVER, &fp) ==
         StreamSplitter::ABORT);
-    REQUIRE(splitter->cutover_inspector() == false);
+    REQUIRE(false == splitter->cutover_inspector());
     delete splitter;
 }
 
@@ -134,10 +134,10 @@ TEST_CASE("DceHttpServerSplitter-scan - first_bad_second_server", "[http_server_
 
     REQUIRE(splitter->scan(nullptr, (const uint8_t*)"n", 1, PKT_FROM_SERVER, &fp) ==
         StreamSplitter::SEARCH);
-    REQUIRE(splitter->cutover_inspector() == false);
+    REQUIRE(false == splitter->cutover_inspector());
     REQUIRE(splitter->scan(nullptr, (const uint8_t*)"n", 1, PKT_FROM_SERVER, &fp) ==
         StreamSplitter::ABORT);
-    REQUIRE(splitter->cutover_inspector() == false);
+    REQUIRE(false == splitter->cutover_inspector());
     delete splitter;
 }
 
@@ -150,7 +150,7 @@ TEST_CASE("DceHttpServerSplitter-scan - first_good_second_server", "[http_server
         StreamSplitter::SEARCH);
     REQUIRE(splitter->scan(nullptr, (const uint8_t*)"c", 1, PKT_FROM_SERVER, &fp) ==
         StreamSplitter::SEARCH);
-    REQUIRE(splitter->cutover_inspector() == false);
+    REQUIRE(false == splitter->cutover_inspector());
     delete splitter;
 }
 
@@ -162,7 +162,7 @@ TEST_CASE("DceHttpServerSplitter-scan - full_server", "[http_server_splitter]")
     REQUIRE(splitter->scan(nullptr, (const uint8_t*)HTTP_SERVER_MARKER,
         strlen(HTTP_SERVER_MARKER), PKT_FROM_SERVER, &fp) == StreamSplitter::FLUSH);
     REQUIRE(fp == strlen(HTTP_SERVER_MARKER));
-    REQUIRE(splitter->cutover_inspector() == true);
+    REQUIRE(true == splitter->cutover_inspector());
     delete splitter;
 }
 
@@ -175,7 +175,7 @@ TEST_CASE("DceHttpServerSplitter-scan - extra_server", "[http_server_splitter]")
     REQUIRE(splitter->scan(nullptr, (const uint8_t*)string,
         strlen(string), PKT_FROM_SERVER, &fp) == StreamSplitter::FLUSH);
     REQUIRE(fp == strlen(HTTP_SERVER_MARKER));
-    REQUIRE(splitter->cutover_inspector() == true);
+    REQUIRE(true == splitter->cutover_inspector());
     delete splitter;
 }
 

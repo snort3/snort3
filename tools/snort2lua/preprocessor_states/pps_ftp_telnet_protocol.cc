@@ -299,8 +299,8 @@ std::set<std::string> ftp_format_commands =
 
 struct FtpDefaultCmd
 {
-    std::string default_name;
-    std::set<std::string> cmd_set;
+    std::string default_name;   // cppcheck-suppress unusedStructMember
+    std::set<std::string> cmd_set;  // cppcheck-suppress unusedStructMember
 };
 
 // Use these defaults for the entries that the original config didn't provide.

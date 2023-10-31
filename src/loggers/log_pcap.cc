@@ -50,7 +50,6 @@ using namespace std;
 
 struct LtdConfig
 {
-    string file;
     size_t limit;
 };
 

@@ -67,7 +67,7 @@ std::ostream& operator<<(std::ostream& out, const RuleOption& opt)
         out << ':' << opt.value;
     }
 
-    for (RuleSubOption* rso : opt.sub_options)
+    for (const RuleSubOption* rso : opt.sub_options)
     {
         if (first_print)
             first_print = false;

@@ -72,7 +72,7 @@ void ConnectorManager::dump_plugins()
 {
     Dumper d("Connectors");
 
-    for ( auto& sc : s_connector_commons )
+    for ( const auto& sc : s_connector_commons )
         d.dump(sc.api->base.name, sc.api->base.version);
 }
 
@@ -83,7 +83,7 @@ void ConnectorManager::release_plugins()
         if ( sc.api->dtor )
             sc.api->dtor(sc.connector_common);
 
-        for ( auto& conn : sc.connectors )
+        for ( const auto& conn : sc.connectors )
             delete conn.second;
 
         sc.connectors.clear();

@@ -257,7 +257,7 @@ static inline bool frag_timed_out(
     const timeval* current_time, const timeval* start_time, FragEngine* engine)
 {
     struct timeval tv_diff;
-    TIMERSUB(current_time, start_time, &tv_diff);
+    TIMERSUB(current_time, start_time, &tv_diff);   // cppcheck-suppress unreadVariable
 
     if (tv_diff.tv_sec >= (int)engine->frag_timeout)
         return true;
@@ -1409,25 +1409,22 @@ left_overlap_last:
         trunc = 0;
         overlap = frag_end - right->offset;
 
-        if (overlap)
+        if (frag_end < ft->calculated_size ||
+            ((ft->frag_flags & FRAG_GOT_LAST) &&
+            frag_end != ft->calculated_size))
         {
-            if (frag_end < ft->calculated_size ||
-                ((ft->frag_flags & FRAG_GOT_LAST) &&
-                frag_end != ft->calculated_size))
+            if (!(p->ptrs.decode_flags & DECODE_MF))
             {
-                if (!(p->ptrs.decode_flags & DECODE_MF))
-                {
-                    /*
-                     * teardrop attack...
-                     */
-                    debug_log(stream_ip_trace, p, "[..] Teardrop attack!\n");
+                /*
+                    * teardrop attack...
+                    */
+                debug_log(stream_ip_trace, p, "[..] Teardrop attack!\n");
 
-                    EventAttackTeardrop(fe);
+                EventAttackTeardrop(fe);
 
-                    ft->frag_flags |= FRAG_BAD;
+                ft->frag_flags |= FRAG_BAD;
 
-                    return FRAG_INSERT_ATTACK;
-                }
+                return FRAG_INSERT_ATTACK;
             }
         }
 

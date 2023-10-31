@@ -284,7 +284,7 @@ static inline void SSLPP_process_other(SSL_PROTO_CONF* config, SSLData* sd, uint
 
 static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
 {
-    Profile profile(sslPerfStats);
+    Profile profile(sslPerfStats);  // cppcheck-suppress unreadVariable
 
     /* Attempt to get a previously allocated SSL block. */
     SSLData* sd = SslBaseFlowData::get_ssl_session_data(p->flow);

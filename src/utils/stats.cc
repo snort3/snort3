@@ -353,7 +353,7 @@ void show_stats(
 {
     bool head = false;
 
-    for ( auto& i : peg_idxs)
+    for ( const auto& i : peg_idxs)
         head = show_stat(head, pegs[i], info[i].name, module_name, fh);
 }
 

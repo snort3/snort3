@@ -130,13 +130,8 @@ private:
 
 LuaJitOption::LuaJitOption(
     const char* name, std::string& chunk, LuaJitModule* mod)
-    : IpsOption((my_name = snort_strdup(name)))
+    : IpsOption((my_name = snort_strdup(name))), config("args = { " + mod->args + "}")
 {
-    // create an args table with any rule options
-    config = "args = { ";
-    config += mod->args;
-    config += "}";
-
     unsigned max = ThreadConfig::get_instance_max();
     states.reserve(max);
 
@@ -175,6 +170,7 @@ bool LuaJitOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus LuaJitOption::eval(Cursor& c, Packet*)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(luaIpsPerfStats);
 
     cursor = &c;

@@ -162,16 +162,6 @@ uint32_t TcpSegmentDescriptor::init_wscale(uint16_t* value)
     return TF_NONE;
 }
 
-bool TcpSegmentDescriptor::has_wscale()
-{
-    uint16_t wscale;
-
-    if ( !(pkt->ptrs.decode_flags & DECODE_TCP_WS) )
-        return false;
-
-    return ( init_wscale(&wscale) & TF_WSCALE ) != TF_NONE;
-}
-
 void TcpSegmentDescriptor::set_retransmit_flag()
 {
     if ( PacketTracer::is_active() )

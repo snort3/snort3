@@ -113,11 +113,13 @@ struct HostApplication
         visibility = ha.visibility;
         banner_updated = ha.banner_updated;
         num_visible_payloads = ha.num_visible_payloads;
+        memcpy(user, ha.user, sizeof(user));
+        user_login = ha.user_login;
         return *this;
     }
 
     Port port = 0;
-    IpProtocol proto;
+    IpProtocol proto = IpProtocol::PROTO_NOT_SET;
     AppId appid = APP_ID_NONE;
     bool inferred_appid = false;
     uint32_t hits = 0;
@@ -144,9 +146,9 @@ struct HostClient
 {
     HostClient() = default;
     HostClient(AppId clientid, const char *ver, AppId ser);
-    AppId id;
+    AppId id = APP_ID_NONE;
     char version[INFO_SIZE] = { '\0' };
-    AppId service;
+    AppId service = APP_ID_NONE;
     PayloadVector payloads;
     size_t num_visible_payloads = 0;
 
@@ -444,9 +446,9 @@ private:
 
     mutable std::mutex host_tracker_lock; // ensure that updates to a shared object are safe
     mutable std::mutex flows_lock;        // protect the flows set separately
-    uint8_t hops;                 // hops from the snort inspector, e.g., zero for ARP
+    uint8_t hops = ~0;                 // hops from the snort inspector, e.g., zero for ARP
     uint32_t last_seen;           // the last time this host was seen
-    uint32_t last_event;          // the last time an event was generated
+    uint32_t last_event = ~0;          // the last time an event was generated
 
     // list guarantees iterator validity on insertion
     std::list<HostMac_t, HostCacheAllocIp<HostMac_t>> macs;
@@ -465,7 +467,7 @@ private:
     std::unordered_set<RNAFlow*> flows;
 
     bool vlan_tag_present = false;
-    vlan::VlanTagHdr vlan_tag;
+    vlan::VlanTagHdr vlan_tag = {};
     HostType host_type = HOST_TYPE_HOST;
     uint8_t ip_ttl = 0;
     uint32_t nat_count = 0;

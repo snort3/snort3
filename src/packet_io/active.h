@@ -35,6 +35,8 @@ class ActiveAction;
 class SO_PUBLIC Active
 {
 public:
+    Active() = default;
+    ~Active() = default;
 
     struct Counts
     {
@@ -233,17 +235,17 @@ private:
     static THREAD_LOCAL bool s_suspend;
     static THREAD_LOCAL ActiveSuspendReason s_suspend_reason;
 
-    int active_tunnel_bypass;
-    const char* drop_reason;
+    int active_tunnel_bypass = 0;
+    const char* drop_reason = nullptr;
 
     // these can't be pkt flags because we do the handling
     // of these flags following all processing and the drop
     // or response may have been produced by a pseudopacket.
-    ActiveStatus active_status;
-    ActiveWouldReason active_would_reason;
-    ActiveActionType active_action;
-    ActiveActionType delayed_active_action;
-    ActiveAction* delayed_reject;    // set with set_delayed_action()
+    ActiveStatus active_status = AST_MAX;
+    ActiveWouldReason active_would_reason = WHD_EXIT;
+    ActiveActionType active_action = ACT_MAX;
+    ActiveActionType delayed_active_action = ACT_MAX;
+    ActiveAction* delayed_reject = nullptr; // set with set_delayed_action()
 };
 
 struct SO_PUBLIC ActiveSuspendContext

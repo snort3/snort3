@@ -264,12 +264,12 @@ TEST_CASE("RNA logger", "[rna_logger]")
         RnaTracker ht;
         uint8_t mac[6] = {0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6};
         RnaLogger logger1(false);
-        CHECK(logger1.log(0, 0, nullptr, mac, &ht, nullptr, 0, 0,
-            nullptr, nullptr, nullptr, nullptr, nullptr) == false);
+        CHECK(false == logger1.log(0, 0, nullptr, mac, &ht, nullptr, 0, 0,
+            nullptr, nullptr, nullptr, nullptr, nullptr));
 
         RnaLogger logger2(true);
-        CHECK(logger2.log(0, 0, nullptr, mac, &ht, nullptr, 0, 0,
-            nullptr, nullptr, nullptr, nullptr, nullptr) == true);
+        CHECK(true == logger2.log(0, 0, nullptr, mac, &ht, nullptr, 0, 0,
+            nullptr, nullptr, nullptr, nullptr, nullptr));
     }
 }
 #endif

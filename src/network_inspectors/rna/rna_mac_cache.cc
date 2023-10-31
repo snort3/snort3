@@ -34,9 +34,9 @@ bool HostTrackerMac::add_network_proto(const uint16_t type)
 {
     lock_guard<mutex> lck(host_tracker_mac_lock);
 
-    for ( const auto& proto : network_protos )
-        if ( proto == type )
-            return false;
+    if (std::any_of(network_protos.cbegin(), network_protos.cend(),
+        [type](uint16_t proto){ return proto == type; }))
+        return false;
 
     network_protos.emplace_back(type);
     return true;
@@ -163,7 +163,7 @@ TEST_CASE("RNA Mac Cache", "[rna_mac_cache]")
 
         a_ptr->get_vlan_details(cfi, priority, vid);
 
-        CHECK(a_ptr->has_vlan());
+        CHECK(true == a_ptr->has_vlan());
         CHECK(cfi == (ntohs(vth_pri_cfi_vlan) & 0x1000) >> 12);
         CHECK(priority == (ntohs(vth_pri_cfi_vlan)) >> 13);
         CHECK(vid == (ntohs(vth_pri_cfi_vlan) & 0x0FFF));

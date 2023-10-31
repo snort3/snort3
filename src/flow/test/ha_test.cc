@@ -31,6 +31,8 @@
 
 using namespace snort;
 
+#include "flow_stubs.h"
+
 #define MSG_SIZE 100
 #define TEST_KEY 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47
 
@@ -180,9 +182,6 @@ Flow* Stream::get_flow(const FlowKey* flowkey)
     return (Flow*)mock().getData("flow").getObjectPointer();
 }
 
-Packet::Packet(bool) { }
-Packet::~Packet() = default;
-
 void Stream::delete_flow(const FlowKey* flowkey)
 {
     mock().actualCall("delete_flow");
@@ -193,8 +192,9 @@ void Stream::delete_flow(const FlowKey* flowkey)
 
 namespace snort
 {
-void ErrorMessage(const char*,...) { }
-void LogMessage(const char*,...) { }
+Flow::~Flow() = default;
+void Flow::set_client_initiate(Packet*) { }
+void Flow::set_direction(Packet*) { }
 
 void packet_gettimeofday(struct timeval* tv)
 {
@@ -206,19 +206,12 @@ bool FlowKey::is_equal(const void*, const void*, size_t) { return false; }
 
 int SFDAQInstance::ioctl(DAQ_IoctlCmd, void*, size_t) { return DAQ_SUCCESS; }
 
-Flow::~Flow() { }
-
 FlowStash::~FlowStash() = default;
-
-void Flow::set_client_initiate(Packet*) { }
-void Flow::set_direction(Packet*) { }
 
 SideChannel* SideChannelManager::get_side_channel(SCPort)
 {
     return (SideChannel*)mock().getData("s_side_channel").getObjectPointer();
 }
-
-SideChannel::SideChannel() = default;
 
 Connector::Direction SideChannel::get_direction()
 { return Connector::CONN_DUPLEX; }
@@ -395,8 +388,8 @@ TEST_GROUP(high_availability_test)
 {
     Flow s_flow;
     Active active;
-    StreamHAClient* s_ha_client; // cppcheck-suppress variableScope
-    FlowHAClient* s_other_ha_client; // cppcheck-suppress variableScope
+    StreamHAClient* s_ha_client;
+    FlowHAClient* s_other_ha_client;
     uint8_t s_message[MSG_SIZE];
     SCMessage s_sc_message;
     Packet s_pkt;
@@ -427,7 +420,7 @@ TEST_GROUP(high_availability_test)
         s_sc_message = {};
         s_sc_message.content = s_message;
         mock().setDataObject("message_content", "SCMessage", &s_sc_message);
-        s_pkt.active = &active; // cppcheck-suppress unreadVariable
+        s_pkt.active = &active;
 
         memset(&ha_stats, 0, sizeof(ha_stats));
 
@@ -440,8 +433,8 @@ TEST_GROUP(high_availability_test)
 
         HighAvailabilityManager::configure(&hac);
         HighAvailabilityManager::thread_init();
-        s_ha_client = new StreamHAClient; // cppcheck-suppress unreadVariable
-        s_other_ha_client = new OtherHAClient; // cppcheck-suppress unreadVariable
+        s_ha_client = new StreamHAClient;
+        s_other_ha_client = new OtherHAClient;
     }
 
     void teardown() override

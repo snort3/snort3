@@ -189,6 +189,7 @@ bool Iec104AsduFuncOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus Iec104AsduFuncOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(iec104_asdu_func_prof);
 
     if (!p->flow)

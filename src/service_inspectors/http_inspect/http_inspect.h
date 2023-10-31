@@ -116,7 +116,7 @@ private:
     const uint32_t xtra_host_id;
     const uint32_t xtra_jsnorm_id;
 
-    unsigned pub_id; // for inspection events
+    unsigned pub_id = 0; // for inspection events
 };
 
 #endif

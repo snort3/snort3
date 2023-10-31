@@ -98,10 +98,10 @@ TEST(host_tracker, add_rediscover_service_payload_test)
     auto services = ht.get_services();
 
     // Verify we added the services, payload visibility == true
-    for (auto& srv : services)
+    for (const auto& srv : services)
     {
         CHECK(true == srv.visibility);
-        for (auto& pld : srv.payloads)
+        for (const auto& pld : srv.payloads)
             CHECK(true == pld.second);
     }
 
@@ -113,11 +113,9 @@ TEST(host_tracker, add_rediscover_service_payload_test)
     for (const auto& srv : services)
     {
         if (srv.port == 80)
-        {
             CHECK(false == srv.visibility);
-            for (const auto& pld : srv.payloads)
-                CHECK(false == pld.second);
-        }
+        for ( const auto& pld : srv.payloads )
+            CHECK(false == pld.second);
     }
 
     // Test rediscovery
@@ -131,11 +129,9 @@ TEST(host_tracker, add_rediscover_service_payload_test)
     for (const auto& srv : services)
     {
         if (srv.port == 80)
-        {
             CHECK(true == srv.visibility);
-            for (const  auto& pld : srv.payloads)
-                CHECK(true == pld.second);
-        }
+        for ( const auto& pld : srv.payloads )
+            CHECK(true == pld.second);
     }
 
     CHECK(2 == services.front().payloads.size());
@@ -162,7 +158,7 @@ TEST(host_tracker, max_payloads_test)
     // Verify we added the services, payload visibility == true
     CHECK(5 == services.front().payloads.size());
 
-    for (auto& pld : services.front().payloads)
+    for (const auto& pld : services.front().payloads)
         CHECK(true == pld.second);
 
     // Delete the service
@@ -278,7 +274,7 @@ TEST(host_tracker, client_payload_max_payloads_test)
     ht.add_client_payload(hc, 666, 5);
     ht.add_client_payload(hc, 777, 5);
     clients = ht.get_clients();
-    for (auto& pld : clients.front().payloads)
+    for (const auto& pld : clients.front().payloads)
     {
         if (pld.first == 666 or pld.first == 777)
         {

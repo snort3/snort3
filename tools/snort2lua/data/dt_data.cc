@@ -371,10 +371,10 @@ void DataApi::print_errors(std::ostream& out) const
 
 void DataApi::print_data(std::ostream& out) const
 {
-    for (Variable* v : vars)
+    for (const Variable* v : vars)
         out << (*v) << "\n\n";
 
-    for (Include* i : includes)
+    for (const Include* i : includes)
         out << (*i) << "\n\n";
 }
 

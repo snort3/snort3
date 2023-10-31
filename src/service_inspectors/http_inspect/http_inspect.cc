@@ -472,6 +472,7 @@ void HttpInspect::eval(Packet* p)
 
 void HttpInspect::eval(Packet* p, SourceId source_id, const uint8_t* data, uint16_t dsize)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(HttpModule::get_profile_stats());
 
     HttpFlowData* session_data = http_get_flow_data(p->flow);
@@ -635,6 +636,7 @@ void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
 
 void HttpInspect::clear(Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(HttpModule::get_profile_stats());
 
     HttpFlowData* const session_data = http_get_flow_data(p->flow);

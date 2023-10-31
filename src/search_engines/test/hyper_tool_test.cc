@@ -57,12 +57,12 @@ const MpseApi* get_test_api()
 TEST_GROUP(search_tool_full)
 {
     Module* mod = nullptr;
-    SearchTool* stool;
+    SearchTool* stool;  // cppcheck-suppress variableScope
     const MpseApi* mpse_api = (const MpseApi*)se_hyperscan;
 
     void setup() override
     {
-        mod = mpse_api->base.mod_ctor();
+        mod = mpse_api->base.mod_ctor();    // cppcheck-suppress unreadVariable
         stool = new SearchTool;
         CHECK(stool->mpsegrp->normal_mpse);
 

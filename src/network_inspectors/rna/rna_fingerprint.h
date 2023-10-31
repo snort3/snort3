@@ -148,9 +148,9 @@ public:
     std::string dhcp55;
     std::string dhcp60;
 
-    uint16_t smb_major;
-    uint16_t smb_minor;
-    uint32_t smb_flags;
+    uint16_t smb_major = 0;
+    uint16_t smb_minor = 0;
+    uint32_t smb_flags = 0;
 
     void clear()
     {

@@ -55,7 +55,7 @@ unsigned DataBus::get_id(const PubKey&) { return 0; }
 void DetectionEngine::disable_content(Packet*) { }
 unsigned SnortConfig::get_thread_reload_id() { return 1; }
 void SnortConfig::update_thread_reload_id() { }
-Inspector::Inspector() { }
+Inspector::Inspector() { ref_count = nullptr; }
 Inspector::~Inspector() { }
 bool Inspector::likes(Packet*) { return false; }
 bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return false; }

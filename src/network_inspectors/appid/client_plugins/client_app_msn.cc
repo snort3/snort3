@@ -97,6 +97,7 @@ int MsnClientDetector::validate(AppIdDiscoveryArgs& args)
         }
 
         /* Get the product */
+        // cppcheck-suppress knownConditionTrueFalse
         if ( end - args.data >= (int)sizeof(MSNMSGR) && memcmp(args.data, MSNMSGR, sizeof(MSNMSGR)-
             1) == 0 )
         {
@@ -105,6 +106,7 @@ int MsnClientDetector::validate(AppIdDiscoveryArgs& args)
 
             args.data++; /* skip the space */
         }
+        // cppcheck-suppress knownConditionTrueFalse
         else if ( end - args.data >= (int)sizeof(MACMSGS) &&
             memcmp(args.data, MACMSGS, sizeof(MACMSGS)-1) == 0 )
         {

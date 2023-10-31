@@ -206,7 +206,7 @@ bool AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd, HttpPatternMat
     }
 
     int longest = 0;
-    for (auto& item: cmd.match_tally)
+    for (const auto& item: cmd.match_tally)
     {
         // Only those items with key_pattern_countdown field reduced to zero are a full match
         if (item.key_pattern_countdown)
@@ -691,7 +691,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
 
             if (asd.get_service_id() <= APP_ID_NONE)
             {
-                if (service_id > APP_ID_NONE and service_id != APP_ID_HTTP and asd.get_service_id() != service_id)
+                if (service_id > APP_ID_NONE and service_id != APP_ID_HTTP)
                 {
                     const char* app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(service_id);
                     appid_log(p, TRACE_DEBUG_LEVEL, "URL is service %s (%d)\n",

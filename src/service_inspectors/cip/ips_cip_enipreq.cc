@@ -73,6 +73,7 @@ bool CipEnipreqOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus CipEnipreqOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(cip_enipreq_perf_stats);
 
     if ( !p->flow || !p->is_full_pdu() )

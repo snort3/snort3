@@ -40,8 +40,8 @@ static THREAD_LOCAL ProfileStats lenCheckPerfStats;
 class LenOption : public IpsOption
 {
 public:
-    LenOption(const RangeCheck& c, bool r) : IpsOption(s_name)
-    { config = c; relative = r; }
+    LenOption(const RangeCheck& c, bool r) : IpsOption(s_name), config(c), relative(r)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -85,6 +85,7 @@ bool LenOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus LenOption::eval(Cursor& c, Packet*)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(lenCheckPerfStats);
     unsigned n = relative ? c.length() : c.size();
 

@@ -72,7 +72,7 @@ public:
 
 private:
     const JSTestConfig& config;
-    JSTokenizer::JSRet last_return;
+    JSTokenizer::JSRet last_return = JSTokenizer::EOS;
     std::string last_source;
 };
 

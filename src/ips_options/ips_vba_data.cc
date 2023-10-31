@@ -37,6 +37,7 @@ CursorActionType VbaDataOption::get_cursor_type() const
 
 IpsOption::EvalStatus VbaDataOption::eval(Cursor& c, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(vbaDataPerfStats);
 
     if (!p->flow or !p->flow->gadget)

@@ -74,11 +74,12 @@ public:
     { return true; }
 
 private:
-    FTP_CLIENT_PROTO_CONF* conf;
+    FTP_CLIENT_PROTO_CONF* conf = nullptr;
     std::vector<BounceTo*> bounce_to;
 
     std::string address;
-    Port port, last_port;
+    Port port = 0;
+    Port last_port = 0;
 };
 
 //-------------------------------------------------------------------------
@@ -140,11 +141,11 @@ private:
     void add_commands(snort::Value&, uint32_t flags, int num = 0);
 
 private:
-    FTP_SERVER_PROTO_CONF* conf;
+    FTP_SERVER_PROTO_CONF* conf = nullptr;
     std::vector<FtpCmd*> cmds;
     std::string names;
     std::string format;
-    int number;
+    int number = 0;
 };
 
 #endif

@@ -34,7 +34,7 @@ void CSVFormatter::finalize_fields()
     {
         std::string section = section_names[i];
 
-        for( auto& field : field_names[i] )
+        for( const auto& field : field_names[i] )
         {
             header += ",";
             header += section;

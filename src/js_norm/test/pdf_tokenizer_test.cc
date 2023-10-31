@@ -54,7 +54,7 @@ static void test_pdf_proc(const vector<Chunk>& chunks)
     ostringstream out;
     PDFTokenizer extractor(in, out);
 
-    for (auto& chunk : chunks)
+    for (const auto& chunk : chunks)
     {
         auto src = chunk.first;
         auto exp = chunk.second;

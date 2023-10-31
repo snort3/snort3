@@ -46,8 +46,11 @@ struct MobileIPV6Header  // RFC 6275
 {
     IpProtocol payload_proto;
     uint8_t header_len;
+    // cppcheck-suppress unusedStructMember
     uint8_t mh_type;
+    // cppcheck-suppress unusedStructMember
     uint8_t reserved;
+    // cppcheck-suppress unusedStructMember
     uint16_t checksum;
 };
 } // namespace

@@ -99,13 +99,13 @@ static char get_xlink_keyword(const uint8_t* ptr, const uint8_t* end)
 
     len = end - ptr;
 
-    if (len > 5 && strncasecmp((const char*)ptr, "FIRST", 5) == 0)
+    // cppcheck-suppress knownConditionTrueFalse
+    if (len > 5)
     {
-        return XLINK_FIRST;
-    }
-    else if (len > 5 && strncasecmp((const char*)ptr, "CHUNK", 5) == 0)
-    {
-        return XLINK_CHUNK;
+        if (strncasecmp((const char*)ptr, "FIRST", 5) == 0)
+            return XLINK_FIRST;
+        if (strncasecmp((const char*)ptr, "CHUNK", 5) == 0)
+            return XLINK_CHUNK;
     }
 
     return XLINK_OTHER;

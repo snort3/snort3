@@ -77,7 +77,7 @@ class Http2ConnectionSettingsQueue
 {
 public:
     ~Http2ConnectionSettingsQueue() { delete queue; }
-    auto size() { return queue ? queue->size() : 0; }
+    auto size() const { return queue ? queue->size() : 0; }
     bool extend(Http2ConnectionSettings& item) { return size() ? extend() : init(item); }
     void pop();
     auto& front() { assert(size()); return queue->front(); }

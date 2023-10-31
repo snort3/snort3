@@ -132,7 +132,7 @@ struct FpFingerprintState
     int initial_mss = -1;
     int timestamp = -1;
     int numopts = -1;
-    uint8_t tcpopts[4];
+    uint8_t tcpopts[4] = {};
     time_t timeout = -1;
 
     bool set(const snort::Packet*);

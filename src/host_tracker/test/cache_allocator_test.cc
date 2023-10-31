@@ -73,14 +73,14 @@ public:
 
 // Instantiate a cache, as soon as we know the Item type:
 typedef LruCacheSharedMemcap<string, Item, hash<string>> CacheType;
-CacheType cache(100);
+CacheType lru_cache(100);
 
 // Implement the allocator constructor AFTER we have a cache object
 // to point to and the implementation of our base CacheAlloc:
 template <class T>
 Alloc<T>::Alloc()
 {
-    lru = &cache;
+    lru = &lru_cache;
 }
 
 namespace snort
@@ -102,19 +102,19 @@ TEST(cache_allocator, allocate)
     // room for n items in the cache and m data in the Item.
     const size_t max_size = n * item_sz + m * item_data_sz;
 
-    cache.set_max_size(max_size);
+    lru_cache.set_max_size(max_size);
 
     // insert n empty host trackers:
     for (size_t i=0; i<n; i++)
     {
         string key = to_string(i);
-        auto item_ptr = cache[key];
+        auto item_ptr = lru_cache[key];
         CHECK( item_ptr != nullptr );
     }
 
     // grow the oldest item in the cache enough to trigger pruning:
     string key = to_string(0);
-    auto item_ptr = cache[key];
+    auto item_ptr = lru_cache[key];
     CHECK( item_ptr != nullptr );
 
     for (size_t i = 0; i<m; i++)
@@ -122,10 +122,10 @@ TEST(cache_allocator, allocate)
 
     // the oldest (0) is no longer the oldest after the look-up above,
     // so it should still be in the cache:
-    CHECK( cache.find(key) != nullptr );
+    CHECK( lru_cache.find(key) != nullptr );
 
     // however, the second oldest should have become oldest and be pruned:
-    CHECK( cache.find(to_string(1)) == nullptr );
+    CHECK( lru_cache.find(to_string(1)) == nullptr );
 }
 
 int main(int argc, char** argv)

@@ -76,13 +76,10 @@ bool ServiceModule::set(const char*, Value& v, SnortConfig*)
     assert(v.is("*"));
     std::string svc = v.get_string();
 
-    for ( const auto& p : services )
+    if (std::any_of(services.cbegin(), services.cend(), [&svc](const std::string&p){ return p == svc; }))
     {
-        if ( p == svc )
-        {
-            ParseWarning(WARN_RULES, "repeated service '%s'", svc.c_str());
-            return true;
-        }
+        ParseWarning(WARN_RULES, "repeated service '%s'", svc.c_str());
+        return true;
     }
     services.emplace_back(svc);
     return true;

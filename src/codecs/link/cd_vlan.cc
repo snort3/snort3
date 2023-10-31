@@ -83,8 +83,8 @@ bool VlanModule::set(const char*, Value& v, SnortConfig*)
 class VlanCodec : public Codec
 {
 public:
-    VlanCodec(const char* s) : Codec(CD_VLAN_NAME)
-    { tpids = s; }
+    VlanCodec(const char* s) : Codec(CD_VLAN_NAME), tpids(s)
+    { }
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;

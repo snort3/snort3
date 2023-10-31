@@ -81,7 +81,7 @@ public:
 
 void S7commplus::eval(Packet* p)
 {
-    Profile profile(s7commplus_prof);
+    Profile profile(s7commplus_prof);   // cppcheck-suppress unreadVariable
 
     // preconditions - what we registered for
     assert(p->has_tcp_data());

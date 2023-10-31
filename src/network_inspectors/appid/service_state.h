@@ -193,7 +193,7 @@ public:
 
     ~MapList()
     {
-        for ( auto& kv : m )
+        for ( const auto& kv : m )
             delete kv.second;
     }
 

@@ -637,19 +637,19 @@ TEST_CASE("enable", "[PacketTracer]")
 {
     TestPacketTracer::thread_init();
     // packet tracer is disabled by default
-    CHECK(!TestPacketTracer::is_active());
+    CHECK(false == TestPacketTracer::is_active());
     // enabled from user
     TestPacketTracer::set_user_enable(true);
-    CHECK(TestPacketTracer::is_user_enabled());
-    CHECK(!TestPacketTracer::is_daq_enabled());
+    CHECK(true == TestPacketTracer::is_user_enabled());
+    CHECK(false == TestPacketTracer::is_daq_enabled());
     // enabled from DAQ
     TestPacketTracer::set_daq_enable(true);
-    CHECK(TestPacketTracer::is_daq_enabled());
+    CHECK(true == TestPacketTracer::is_daq_enabled());
     // disable DAQ enable
     TestPacketTracer::set_daq_enable(false);
-    CHECK(!TestPacketTracer::is_daq_enabled());
+    CHECK(false == TestPacketTracer::is_daq_enabled());
     // user configuration remain enabled
-    CHECK(TestPacketTracer::is_user_enabled());
+    CHECK(true == TestPacketTracer::is_user_enabled());
 
     TestPacketTracer::thread_term();
 }

@@ -129,7 +129,7 @@ void ProfilerNode::accumulate(snort::ProfilerType type)
 }
 
 void ProfilerNode::reset(ProfilerType type)
-{ 
+{
     if ( is_set() )
     {
         auto* local_stats = (*getter)();
@@ -200,8 +200,10 @@ ProfilerNode& ProfilerNodeMap::get_node(const std::string& key)
 static ProfilerNode find_node(const ProfilerNodeMap& tree, const std::string& name)
 {
     for ( const auto& it : tree )
+    {
         if ( it.first == name )
             return it.second;
+    }
 
     return ProfilerNode("");
 }
@@ -217,7 +219,6 @@ public:
 
     ProfileStats* get_stats() { return stats; }
     void set_stats(ProfileStats* ps) { stats = ps; }
-    bool get_multi() { return multi; }
     void set_multi(bool b) { multi = b; }
 
     ProfileStats* get_profile() const override

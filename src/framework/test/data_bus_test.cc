@@ -35,7 +35,7 @@ using namespace snort;
 //--------------------------------------------------------------------------
 // mocks
 //--------------------------------------------------------------------------
-InspectionPolicy::InspectionPolicy(unsigned int) {}
+InspectionPolicy::InspectionPolicy(unsigned int) : framework_policy(nullptr), cloned(false) {}
 InspectionPolicy::~InspectionPolicy() = default;
 NetworkPolicy::NetworkPolicy(unsigned int, unsigned int) {}
 NetworkPolicy::~NetworkPolicy() = default;

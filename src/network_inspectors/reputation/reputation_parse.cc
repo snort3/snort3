@@ -718,6 +718,7 @@ static int load_file(int total_lines, const char* path)
         return 0;
     }
 
+    // cppcheck-suppress invalidTestForOverflow
     if (total_lines + num_lines < total_lines)
     {
         ErrorMessage("Too many entries in one file.\n");

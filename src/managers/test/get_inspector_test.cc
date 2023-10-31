@@ -58,6 +58,8 @@ NetworkPolicy::~NetworkPolicy()
 }
 PolicyMap::PolicyMap(PolicyMap*, const char*)
 {
+    empty_ips_policy = nullptr;
+    inspector_tinit_complete = nullptr;
     file_id = InspectorManager::create_single_instance_inspector_policy();
     flow_tracking = InspectorManager::create_single_instance_inspector_policy();
     global_inspector_policy = InspectorManager::create_global_inspector_policy();
@@ -87,7 +89,7 @@ SnortConfig::~SnortConfig()
 const SnortConfig* SnortConfig::get_conf()
 { return (const SnortConfig*)mock().getData("snort_config").getObjectPointer(); }
 
-Module::Module(const char* name, const char*) : name(name)
+Module::Module(const char* name, const char*) : name(name), help(nullptr), params(nullptr), list(false)
 { }
 
 class TestInspector : public Inspector

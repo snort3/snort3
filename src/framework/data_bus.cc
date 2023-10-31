@@ -78,7 +78,7 @@ DataBus::DataBus() = default;
 
 DataBus::~DataBus()
 {
-    for ( auto& p : pub_sub )
+    for ( const auto& p : pub_sub )
     {
         for ( auto* h : p )
         {

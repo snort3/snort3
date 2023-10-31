@@ -79,22 +79,23 @@ public:
     using KeyType = Key;
 
     // Return data entry associated with key. If doesn't exist, return nullptr.
-    Data find(const Key& key);
+    Data find(const Key&);
 
     // Return data entry associated with key. If doesn't exist, create a new entry.
-    Data operator[](const Key& key);
+    Data operator[](const Key&);
 
     // Same as operator[]; additionally, sets the boolean if a new entry is created.
-    Data find_else_create(const Key& key, bool* new_data);
+    Data find_else_create(const Key&, bool* new_data);
 
     // Returns true if found or replaced, takes a ref to a user managed entry
-    bool find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace = false);
+    bool find_else_insert(const Key&, Data&, bool replace = false);
 
     // Returns the found or inserted data, takes a ref to user managed entry.
-    Data find_else_insert(const Key&, Data&, LcsInsertStatus*, bool = false);
+    Data find_else_insert(const Key&, Data&, LcsInsertStatus*,
+        bool replace = false);
 
     // Return all data from the LruCache in order (most recently used to least)
-    std::vector<std::pair<Key, Data> > get_all_data();
+    std::vector<std::pair<Key, Data>> get_all_data();
 
     //  Get current number of elements in the LruCache.
     size_t size()
@@ -109,7 +110,7 @@ public:
         return list.size() * mem_chunk;
     }
 
-    size_t get_max_size()
+    size_t get_max_size() const
     {
         return max_size;
     }
@@ -120,18 +121,18 @@ public:
 
     //  Remove entry associated with Key.
     //  Returns true if entry existed, false otherwise.
-    virtual bool remove(const Key& key);
+    virtual bool remove(const Key&);
 
     //  Remove entry associated with key and return removed data.
     //  Returns true and copy of data if entry existed.  Returns false if
     //  entry did not exist.
-    virtual bool remove(const Key& key, Data& data);
+    virtual bool remove(const Key&, Data&);
 
     const PegInfo* get_pegs() const
     { return lru_cache_shared_peg_names; }
 
-    PegCount* get_counts()
-    { return (PegCount*)&stats; }
+    const PegCount* get_counts() const
+    { return (const PegCount*)&stats; }
 
     void lock()
     { cache_mutex.lock(); }
@@ -218,10 +219,9 @@ bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::set_max_size(size_t newsiz
 template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
 std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq, Purgatory>::find(const Key& key)
 {
-    LruMapIter map_iter;
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
-    map_iter = map.find(key);
+    auto map_iter = map.find(key);
     if (map_iter == map.end())
     {
         stats.find_misses++;
@@ -241,11 +241,9 @@ std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq, Purgatory>::operator
 }
 
 template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
-std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq, Purgatory>::
-find_else_create(const Key& key, bool* new_data)
+std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq, Purgatory>::find_else_create(const Key& key,
+    bool* new_data)
 {
-    LruMapIter map_iter;
-
     // As with remove and operator[], we need a temporary list of references
     // to delay the destruction of the items being removed by prune().
     // This is one instance where we cannot get by with directly locking and
@@ -256,7 +254,7 @@ find_else_create(const Key& key, bool* new_data)
 
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
-    map_iter = map.find(key);
+    auto map_iter = map.find(key);
     if (map_iter != map.end())
     {
         stats.find_hits++;
@@ -283,15 +281,14 @@ find_else_create(const Key& key, bool* new_data)
 }
 
 template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
-bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::
-find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace)
+bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::find_else_insert(const Key& key, Data& data,
+    bool replace)
 {
-    LruMapIter map_iter;
-
     Purgatory tmp_data;
+
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
-    map_iter = map.find(key);
+    auto map_iter = map.find(key);
     if (map_iter != map.end())
     {
         stats.find_hits++;
@@ -324,15 +321,14 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data, bool replace)
 }
 
 template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
-std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq, Purgatory>::
-find_else_insert(const Key& key, std::shared_ptr<Value>& data, LcsInsertStatus* status, bool replace)
+std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq, Purgatory>::find_else_insert(const Key& key, Data& data,
+    LcsInsertStatus* status, bool replace)
 {
-    LruMapIter map_iter;
-
     Purgatory tmp_data;
+
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
-    map_iter = map.find(key);
+    auto map_iter = map.find(key);
     if (map_iter != map.end())
     {
         stats.find_hits++;
@@ -368,25 +364,19 @@ find_else_insert(const Key& key, std::shared_ptr<Value>& data, LcsInsertStatus* 
 }
 
 template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
-std::vector< std::pair<Key, std::shared_ptr<Value>> >
-LruCacheShared<Key, Value, Hash, Eq, Purgatory>::get_all_data()
+std::vector<std::pair<Key, std::shared_ptr<Value>>> LruCacheShared<Key, Value, Hash, Eq, Purgatory>::get_all_data()
 {
     std::vector<std::pair<Key, Data> > vec;
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
-    for (auto& entry : list )
-    {
-        vec.emplace_back(entry);
-    }
-
+    vec.reserve(list.size());
+    std::copy(list.cbegin(), list.cend(), std::back_inserter(vec));
     return vec;
 }
 
 template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
 bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::remove(const Key& key)
 {
-    LruMapIter map_iter;
-
     // There is a potential race condition here, when the destructor of
     // the object being removed needs to call back into the cache and lock
     // the cache (e.g. via an allocator) to update the size of the cache.
@@ -402,11 +392,9 @@ bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::remove(const Key& key)
 
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
-    map_iter = map.find(key);
+    auto map_iter = map.find(key);
     if (map_iter == map.end())
-    {
         return false;   //  Key is not in LruCache.
-    }
 
     data = map_iter->second->second;
 
@@ -424,18 +412,13 @@ bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::remove(const Key& key)
 }
 
 template<typename Key, typename Value, typename Hash, typename Eq, typename Purgatory>
-bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::remove(const Key& key,
-    std::shared_ptr<Value>& data)
+bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::remove(const Key& key, Data& data)
 {
-    LruMapIter map_iter;
-
     std::lock_guard<std::mutex> cache_lock(cache_mutex);
 
-    map_iter = map.find(key);
+    auto map_iter = map.find(key);
     if (map_iter == map.end())
-    {
         return false;   //  Key is not in LruCache.
-    }
 
     data = map_iter->second->second;
 

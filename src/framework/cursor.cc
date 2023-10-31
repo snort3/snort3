@@ -53,6 +53,7 @@ Cursor::Cursor(const Cursor& rhs)
     if (rhs.data)
     {
         data = new CursorDataVec;
+        data->reserve(rhs.data->size());
 
         for (CursorData*& cd : *rhs.data)
             data->push_back(cd->clone());
@@ -79,10 +80,10 @@ void Cursor::set_data(CursorData* cd)
 
     if (data)
     {
-        unsigned id = cd->get_id();
+        unsigned i = cd->get_id();
         for (CursorData*& old : *data)
         {
-            if (old->get_id() == id)
+            if (old->get_id() == i)
             {
                 delete old;
                 old = cd;
@@ -102,11 +103,11 @@ void Cursor::reset(Packet* p)
 {
     if (p->flow and p->flow->gadget)
     {
-        const DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+        const DataBuffer& alt_buf = DetectionEngine::get_alt_buffer(p);
 
-        if (buf.len)
+        if (alt_buf.len)
         {
-            set("alt_data", buf.data, buf.len);
+            set("alt_data", alt_buf.data, alt_buf.len);
             return;
         }
     }

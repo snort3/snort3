@@ -132,6 +132,7 @@ void RnaInspector::install_reload_handler(SnortConfig* sc)
 
 void RnaInspector::eval(Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.other_packets;
     update_rna_pkt_stats(p);

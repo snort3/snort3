@@ -23,13 +23,12 @@
 #include "data/data_types/dt_var.h"
 #include "data/data_types/dt_comment.h"
 
+#include <algorithm>
+
 static inline Table* find_table(std::vector<Table*> vec, const std::string& name)
 {
-    for ( auto* t : vec)
-        if (name == t->get_name())
-            return t;
-
-    return nullptr;
+    auto it = std::find_if(vec.begin(), vec.end(), [&name](const Table* t){ return name == t->get_name(); });
+    return (it != vec.end()) ? *it : nullptr;
 }
 
 Table::Table(int d)
@@ -74,16 +73,12 @@ Table::~Table()
     delete comments;
 }
 
-bool Table::has_differences()
+bool Table::has_differences() const
 {
     if (!comments->empty())
         return true;
 
-    for (Table* t : tables)
-        if (t->has_differences())
-            return true;
-
-    return false;
+    return std::any_of(tables.cbegin(), tables.cend(), [](const Table* t){ return t->has_differences(); });
 }
 
 Table* Table::open_table()
@@ -171,9 +166,10 @@ void Table::append_option(const std::string& opt_name, const std::string& value)
 
 bool Table::add_list(const std::string& list_name, const std::string& next_elem)
 {
-    for (auto l : lists)
-        if (l->get_name() == list_name)
-            return l->add_value(next_elem);
+    auto it = std::find_if(lists.begin(), lists.end(),
+        [&list_name](const Variable* l){ return l->get_name() == list_name; });
+    if (it != lists.end())
+        return (*it)->add_value(next_elem);
 
     Variable* var = new Variable(list_name, depth + 1);
     lists.push_back(var);
@@ -182,47 +178,43 @@ bool Table::add_list(const std::string& list_name, const std::string& next_elem)
 
 bool Table::has_option(const std::string& opt_name)
 {
-    for (Option* o : options)
-        if (opt_name == o->get_name())
-            return true;
+    if (std::any_of(options.cbegin(), options.cend(),
+        [&opt_name](const Option* o){ return opt_name == o->get_name(); }))
+        return true;
 
-    for (Option* a : append_options)
-        if (opt_name == a->get_name())
-            return true;
-
-    return false;
+    return std::any_of(append_options.cbegin(), append_options.cend(),
+        [&opt_name](const Option* a){ return opt_name == a->get_name(); });
 }
 
 bool Table::get_option(const std::string& opt_name, std::string& value)
 {
-    for (Option* o : options)
-        if (opt_name == o->get_name())
-        {
-            value = o->get_value();
-            return true;
-        }
+    auto it = std::find_if(options.cbegin(), options.cend(),
+        [&opt_name](const Option* o){ return opt_name == o->get_name(); });
+    if (it != options.cend())
+    {
+        value = (*it)->get_value();
+        return true;
+    }
 
-    for (Option* a : append_options)
-        if (opt_name == a->get_name())
-        {
-            value = a->get_value();
-            return true;
-        }
+    auto a_it = std::find_if(append_options.cbegin(), append_options.cend(),
+        [&opt_name](const Option* a){ return opt_name == a->get_name(); });
+    if (a_it != append_options.cend())
+    {
+        value = (*it)->get_value();
+        return true;
+    }
 
     return false;
 }
 
 bool Table::has_option(const Option& opt)
 {
-    for (Option* o : options)
-        if ( (*o) == opt)
-            return true;
+    if (std::any_of(options.cbegin(), options.cend(),
+        [&opt](const Option* o){ return opt == *o; }))
+        return true;
 
-    for (Option* a : append_options)
-        if ( (*a) == opt)
-            return true;
-
-    return false;
+    return std::any_of(append_options.cbegin(), append_options.cend(),
+        [&opt](const Option* a){ return opt == *a; });
 }
 
 bool Table::has_option(const std::string& opt_name, int val)

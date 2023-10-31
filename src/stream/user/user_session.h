@@ -25,6 +25,7 @@
 #include "flow/session.h"
 #include "stream/paf.h"
 
+// cppcheck-suppress noConstructor
 struct UserSegment
 {
     static UserSegment* init(const uint8_t*, unsigned);
@@ -97,8 +98,6 @@ private:
 
     int update_alert(
         snort::Packet*, uint32_t gid, uint32_t sid, uint32_t event_id, uint32_t event_second) override;
-
-    uint8_t get_reassembly_direction() override;
 
 public:
     UserTracker client;

@@ -44,7 +44,7 @@ using namespace snort;
 
 struct FileMetaData
 {
-    uint32_t file_id;
+    uint32_t file_id = 0;
     std::string file_type;
     std::string category;
     std::string version;

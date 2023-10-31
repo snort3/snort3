@@ -75,6 +75,7 @@ bool Dce2StubDataOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus Dce2StubDataOption::eval(Cursor& c, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(dce2_stub_data_perf_stats);
 
     if (p->dsize == 0)

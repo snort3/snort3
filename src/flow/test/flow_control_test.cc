@@ -47,29 +47,19 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+#include "flow_stubs.h"
+
 using namespace snort;
 
 THREAD_LOCAL bool Active::s_suspend = false;
 THREAD_LOCAL Active::ActiveSuspendReason Active::s_suspend_reason = Active::ASP_NONE;
 
-THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
-
 void Active::drop_packet(snort::Packet const*, bool) { }
-PacketTracer::~PacketTracer() = default;
-void PacketTracer::log(const char*, ...) { }
-void PacketTracer::open_file() { }
-void PacketTracer::dump_to_daq(Packet*) { }
-void PacketTracer::reset(bool) { }
-void PacketTracer::pause() { }
-void PacketTracer::unpause() { }
 void Active::set_drop_reason(char const*) { }
-Packet::Packet(bool) { }
-Packet::~Packet() = default;
-uint32_t Packet::get_flow_geneve_vni() const { return 0; }
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg) { }
 FlowCache::~FlowCache() = default;
 Flow::~Flow() = default;
-DetectionEngine::DetectionEngine() = default;
+DetectionEngine::DetectionEngine() { context = nullptr; }
 DetectionEngine::~DetectionEngine() = default;
 ExpectCache::~ExpectCache() = default;
 unsigned FlowCache::purge() { return 1; }
@@ -85,37 +75,16 @@ size_t FlowCache::uni_flows_size() const { return 0; }
 size_t FlowCache::uni_ip_flows_size() const { return 0; }
 size_t FlowCache::flows_size() const { return 0; }
 void Flow::init(PktType) { }
-void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }
-void DataBus::publish(unsigned, unsigned, const uint8_t*, unsigned, Flow*) { }
-void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
 const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 void FlowCache::unlink_uni(Flow*) { }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
-void set_network_policy(unsigned) { }
-void set_inspection_policy(unsigned) { }
-void set_ips_policy(const snort::SnortConfig*, unsigned) { }
 void Flow::set_mpls_layer_per_dir(Packet*) { }
 void DetectionEngine::disable_all(Packet*) { }
-void Stream::drop_traffic(const Packet*, char) { }
-bool Stream::blocked_flow(Packet*) { return true; }
 ExpectCache::ExpectCache(uint32_t) { }
 bool ExpectCache::check(Packet*, Flow*) { return true; }
 bool ExpectCache::is_expected(Packet*) { return true; }
 Flow* HighAvailabilityManager::import(Packet&, FlowKey&) { return nullptr; }
-
-namespace snort
-{
-NetworkPolicy* get_network_policy() { return nullptr; }
-InspectionPolicy* get_inspection_policy() { return nullptr; }
-IpsPolicy* get_ips_policy() { return nullptr; }
-unsigned SnortConfig::get_thread_reload_id() { return 0; }
-
-namespace layer
-{
-const vlan::VlanTagHdr* get_vlan_layer(const Packet* const) { return nullptr; }
-}
-}
 
 namespace snort
 {
@@ -166,8 +135,6 @@ bool FlowKey::init(
 {
     return true;
 }
-
-void Stream::stop_inspection(Flow*, Packet*, char, int32_t, int) { }
 
 int ExpectCache::add_flow(const Packet*,
     PktType, IpProtocol,

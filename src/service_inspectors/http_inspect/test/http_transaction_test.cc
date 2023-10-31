@@ -42,7 +42,8 @@ namespace snort
 {
 // Stubs whose sole purpose is to make the test code link
 unsigned FlowData::flow_data_id = 0;
-FlowData::FlowData(unsigned, Inspector*) {}
+FlowData::FlowData(unsigned, Inspector*) : next(nullptr), prev(nullptr), handler(nullptr), id(0)
+{}
 FlowData::~FlowData() = default;
 int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
 fd_status_t File_Decomp_StopFree(fd_session_t*) { return File_Decomp_OK; }

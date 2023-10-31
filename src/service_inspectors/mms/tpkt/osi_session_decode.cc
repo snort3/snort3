@@ -80,7 +80,7 @@ static TpktAppliSearchStateType resolve_spdu_parameter(Cursor* tpkt_cur, const O
         struct OsiSessionSpduSessionRequirement
         {
             OsiSessionSpduParameterHdr param_hdr;
-            uint16_t flags;
+            uint16_t flags; // cppcheck-suppress unusedStructMember
         };
 
         // overlay the appropriate struct
@@ -114,7 +114,7 @@ static TpktAppliSearchStateType resolve_spdu_parameter(Cursor* tpkt_cur, const O
         struct OsiSessionSpduCallingSessionSelector
         {
             OsiSessionSpduParameterHdr param_hdr;
-            uint16_t calling_session_selector;
+            uint16_t calling_session_selector;  // cppcheck-suppress unusedStructMember
         };
 
         // overlay the appropriate struct
@@ -143,7 +143,7 @@ static TpktAppliSearchStateType resolve_spdu_parameter(Cursor* tpkt_cur, const O
         struct OsiSessionSpduCalledSessionSelector
         {
             OsiSessionSpduParameterHdr param_hdr;
-            uint16_t called_session_selector;
+            uint16_t called_session_selector;   // cppcheck-suppress unusedStructMember
         };
 
         // overlay the appropriate struct

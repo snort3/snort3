@@ -279,7 +279,7 @@ SnortConfig::~SnortConfig()
     delete trace_config;
     delete overlay_trace_config;
     delete ha_config;
-        delete global_dbus;
+    delete global_dbus;
 
     delete profiler;
     delete latency;
@@ -336,11 +336,8 @@ void SnortConfig::post_setup()
     for ( unsigned i = 0; i < num_slots; ++i )
         state[i].resize(handler_count);
 
-    for ( auto* s : scratch_handlers )
-    {
-        if ( s and s->setup(this) )
-            scratchers.push_back(s);
-    }
+    std::copy_if(scratch_handlers.begin(), scratch_handlers.end(), std::back_inserter(scratchers),
+        [this](ScratchAllocator* s){ return s and s->setup(this); });
 }
 
 void SnortConfig::update_scratch(ControlConn* ctrlcon)
@@ -385,14 +382,13 @@ void SnortConfig::merge(const SnortConfig* cmd_line_conf)
     daq_config->overlay(cmd_line_conf->daq_config);
 
     // -k (only configures eval, not drop)
-    int cl_chk = cmd_line_conf->policy_map->get_network_policy()->checksum_eval;
+    uint32_t cl_chk = cmd_line_conf->policy_map->get_network_policy()->checksum_eval;
     if (!(cl_chk & CHECKSUM_FLAG__DEF))
     {
         for (unsigned idx = 0; idx < policy_map->network_policy_count(); ++idx)
         {
             NetworkPolicy* nw_policy = policy_map->get_network_policy(idx);
-            if (!(cl_chk & CHECKSUM_FLAG__DEF))
-                nw_policy->checksum_eval = cl_chk;
+            nw_policy->checksum_eval = cl_chk;
         }
     }
 
@@ -964,24 +960,24 @@ bool SnortConfig::get_default_rule_state() const
 
 ConfigOutput* SnortConfig::create_config_output() const
 {
-    ConfigOutput* output = nullptr;
+    ConfigOutput* output_cfg = nullptr;
 
     switch (dump_config_type)
     {
     case DUMP_CONFIG_JSON_ALL:
-        output = new JsonAllConfigOutput();
+        output_cfg = new JsonAllConfigOutput();
         break;
     case DUMP_CONFIG_JSON_TOP:
-        output = new JsonTopConfigOutput();
+        output_cfg = new JsonTopConfigOutput();
         break;
     case DUMP_CONFIG_TEXT:
-        output = new TextConfigOutput();
+        output_cfg = new TextConfigOutput();
         break;
     default:
         break;
     }
 
-    return output;
+    return output_cfg;
 }
 
 bool SnortConfig::tunnel_bypass_enabled(uint16_t proto) const

@@ -778,7 +778,7 @@ RpcDecode::RpcDecode(RpcDecodeModule*)
  */
 void RpcDecode::eval(Packet* p)
 {
-    Profile profile(rpcdecodePerfStats);
+    Profile profile(rpcdecodePerfStats);    // cppcheck-suppress unreadVariable
 
     // preconditions - what we registered for
     assert(p->has_tcp_data());

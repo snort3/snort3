@@ -378,6 +378,7 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
         p->pkth = nullptr;  // No longer avail after finalize_message.
 
         {
+            // cppcheck-suppress unreadVariable
             Profile profile(daqPerfStats);
             p->daq_instance->finalize_message(p->daq_msg, verdict);
         }
@@ -471,6 +472,7 @@ void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
     }
     oops_handler->set_current_message(nullptr, nullptr);
     {
+        // cppcheck-suppress unreadVariable
         Profile profile(daqPerfStats);
         daq_instance->finalize_message(msg, verdict);
     }
@@ -521,6 +523,7 @@ void Analyzer::post_process_packet(Packet* p)
 
 void Analyzer::finalize_daq_message(DAQ_Msg_h msg, DAQ_Verdict verdict)
 {
+    // cppcheck-suppress unreadVariable
     Profile profile(daqPerfStats);
     daq_instance->finalize_message(msg, verdict);
 }
@@ -685,6 +688,7 @@ void Analyzer::term()
     while ((msg = retry_queue->get()) != nullptr)
     {
         daq_stats.retries_discarded++;
+        // cppcheck-suppress unreadVariable
         Profile profile(daqPerfStats);
         daq_instance->finalize_message(msg, DAQ_VERDICT_BLOCK);
     }
@@ -728,14 +732,14 @@ void Analyzer::term()
     TraceApi::thread_term();
 }
 
-Analyzer::Analyzer(SFDAQInstance* instance, unsigned i, const char* s, uint64_t msg_cnt)
+Analyzer::Analyzer(SFDAQInstance* instance, unsigned i, const char* s, uint64_t msg_cnt) :
+    id(i),
+    exit_after_cnt(msg_cnt),
+    source(s ? s : ""),
+    daq_instance(instance),
+    retry_queue(new RetryQueue(200)),
+    oops_handler(new OopsHandler())
 {
-    id = i;
-    exit_after_cnt = msg_cnt;
-    source = s ? s : "";
-    daq_instance = instance;
-    oops_handler = new OopsHandler();
-    retry_queue = new RetryQueue(200);
     set_state(State::NEW);
 }
 
@@ -876,6 +880,7 @@ DAQ_RecvStatus Analyzer::process_messages()
 
     DAQ_RecvStatus rstat;
     {
+        // cppcheck-suppress unreadVariable
         Profile profile(daqPerfStats);
         rstat = daq_instance->receive_messages(max_recv);
     }

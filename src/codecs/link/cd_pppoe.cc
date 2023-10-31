@@ -38,8 +38,11 @@ enum class PppoepktType
 /* PPPoEHdr Header; eth::EtherHdr plus the PPPoE Header */
 struct PPPoEHdr
 {
+    // cppcheck-suppress unusedStructMember
     uint8_t ver_type;     /* pppoe version/type */
+    // cppcheck-suppress unusedStructMember
     uint8_t code;         /* pppoe code CODE_* */
+    // cppcheck-suppress unusedStructMember
     uint16_t session;     /* session id */
     uint16_t length;      /* payload length */
     /* payload follows */

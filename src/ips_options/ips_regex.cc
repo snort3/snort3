@@ -98,11 +98,8 @@ private:
     RegexConfig config;
 };
 
-RegexOption::RegexOption(const RegexConfig& c) :
-    IpsOption(s_name, RULE_OPTION_TYPE_CONTENT)
+RegexOption::RegexOption(const RegexConfig& c) : IpsOption(s_name, RULE_OPTION_TYPE_CONTENT), config(c)
 {
-    config = c;
-
     if ( !scratcher->allocate(config.db) )
         ParseError("can't allocate scratch for regex '%s'", config.re.c_str());
 
@@ -166,6 +163,7 @@ static int hs_match(
 
 IpsOption::EvalStatus RegexOption::eval(Cursor& c, Packet*)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(regex_perf_stats);
 
     unsigned pos = c.get_delta();
@@ -321,7 +319,7 @@ bool RegexModule::convert_pcre_to_regex_form()
     }
 
     // finally, process the modifiers
-    for ( char& c : modifiers )
+    for ( const char& c : modifiers )
     {
         switch ( c )
         {

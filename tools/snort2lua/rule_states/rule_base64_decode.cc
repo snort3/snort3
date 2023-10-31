@@ -39,7 +39,6 @@ public:
 bool Base64Decode::convert(std::istringstream& data_stream)
 {
     std::string args;
-    std::string tmp;
     std::streamoff pos = data_stream.tellg();
 
     args = util::get_rule_option_args(data_stream);
@@ -60,6 +59,7 @@ bool Base64Decode::convert(std::istringstream& data_stream)
         {
             // since we still can't be sure if we passed the base64_decode buffer,
             // check the next option and ensure it matches
+            std::string tmp;
             std::istringstream arg_stream(args);
             if (util::get_string(arg_stream, tmp, ", ") &&
                 (tmp == "bytes" ||

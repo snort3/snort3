@@ -464,7 +464,7 @@ const std::string ExpandVars(const std::string& input_str)
                     var_modifier = var_name[p+1];
                     var_aux = var_name.substr(p+2);
                 }
-                var_name = var_name.substr(0, p);
+                var_name.resize(p);
             }
 
             std::string var_contents = VarSearch(var_name);
@@ -473,7 +473,7 @@ const std::string ExpandVars(const std::string& input_str)
             {
             case '-':
                 if (var_contents.empty())
-                    var_contents = var_aux.c_str();
+                    var_contents = var_aux;
                 break;
 
             case '?':

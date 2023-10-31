@@ -171,7 +171,7 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.src_ip = sip;
         cs.dst_ip = dip;
 
-        CHECK( match_constraints(cs, sip, dip, sport, dport) );
+        CHECK( true == match_constraints(cs, sip, dip, sport, dport) );
     }
 
     SECTION("backwards")
@@ -188,7 +188,7 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.src_ip = sip;
         cs.dst_ip = dip;
 
-        CHECK( !match_constraints(cs, dip, sip, dport, sport) );
+        CHECK( false == match_constraints(cs, dip, sip, dport, sport) );
     }
 
     SECTION("any ip")
@@ -201,7 +201,7 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.src_port = sport;
         cs.dst_port = dport;
 
-        CHECK( match_constraints(cs, sip, dip, sport, dport) );
+        CHECK( true == match_constraints(cs, sip, dip, sport, dport) );
     }
 
     SECTION("any port")
@@ -214,7 +214,7 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.src_ip = sip;
         cs.dst_ip = dip;
 
-        CHECK( match_constraints(cs, sip, dip, sport, dport) );
+        CHECK( true == match_constraints(cs, sip, dip, sport, dport) );
     }
 
     SECTION("any src")
@@ -227,7 +227,7 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.dst_port = dport;
         cs.dst_ip = dip;
 
-        CHECK( match_constraints(cs, sip, dip, sport, dport) );
+        CHECK( true == match_constraints(cs, sip, dip, sport, dport) );
     }
 }
 

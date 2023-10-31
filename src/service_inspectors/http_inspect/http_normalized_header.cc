@@ -254,6 +254,7 @@ void NormalizedHeader::HeaderNormalizer::normalize(const HeaderId head_id, const
 
     uint8_t* const norm_value = new uint8_t[buffer_length];
     uint8_t* const temp_space = new uint8_t[buffer_length];
+    // cppcheck-suppress uninitdata
     uint8_t* const norm_start = (num_normalizers%2 == 0) ? norm_value : temp_space;
     uint8_t* working = norm_start;
     int32_t data_length = 0;
@@ -349,7 +350,7 @@ const Field& NormalizedHeader::get_norm(HttpInfractions* infractions, HttpEventG
     return norm;
 }
 
-const Field& NormalizedHeader::get_comma_separated_raw(HttpMsgHeadShared& msg_head,
+const Field& NormalizedHeader::get_comma_separated_raw(const HttpMsgHeadShared& msg_head,
     HttpInfractions* infractions, HttpEventGen* events, const HttpEnums::HeaderId header_name_id[],
     const Field header_value[], const int32_t num_headers)
 {

@@ -50,10 +50,7 @@ typedef AppIdHttpSession::pair_t pair_t;
 
 static inline bool contains(const vector<AppId>& vec, const AppId val)
 {
-    for (const auto& elem : vec)
-        if (elem == val)
-            return true;
-    return false;
+    return std::any_of(vec.cbegin(), vec.cend(), [val](AppId elem){ return elem == val; });
 }
 
 static inline bool check_reinspect(const Packet* p, const AppIdSession& asd)
@@ -577,8 +574,8 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
             TP_SESSION_FLAG_TUNNELING | TP_SESSION_FLAG_FUTUREFLOW);
     }
 
-    const char *tp_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
-    appid_log(p, TRACE_DEBUG_LEVEL, "3rd party returned %s (%d)\n", tp_app_name ? tp_app_name : "unknown", tp_app_id);
+    const char *app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
+    appid_log(p, TRACE_DEBUG_LEVEL, "3rd party returned %s (%d)\n", app_name ? app_name : "unknown", tp_app_id);
 
     process_third_party_results(*p, asd, tp_confidence, tp_proto_list, tp_attribute_data, change_bits);
 
@@ -706,8 +703,8 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                 if (!(asd.scan_flags & SCAN_SPOOFED_SNI_FLAG))
                     asd.set_tp_payload_app_id(*p, direction, tp_app_id, change_bits);
                 tp_app_id = portAppId;
-                const char *app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
-                appid_log(p, TRACE_DEBUG_LEVEL, "SSL is %s (%d)\n", app_name ? app_name : "unknown", tp_app_id);
+                const char *tp_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
+                appid_log(p, TRACE_DEBUG_LEVEL, "SSL is %s (%d)\n", tp_app_name ? tp_app_name : "unknown", tp_app_id);
             }
             snort_app_id = APP_ID_SSL;
         }

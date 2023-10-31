@@ -86,7 +86,7 @@ public:
     bool check_alerted(snort::Packet*, uint32_t gid, uint32_t sid) override;
 
 public:
-    FragTracker tracker;
+    FragTracker tracker = {};
 };
 
 extern THREAD_LOCAL IpStats ip_stats;

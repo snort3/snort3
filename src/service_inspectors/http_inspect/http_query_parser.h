@@ -94,7 +94,7 @@ private:
     const uint8_t* norm_buffer;
     unsigned norm_buffer_len;
 
-    unsigned index;
+    unsigned index = 0;
 
     static const unsigned MAX_REPEAT_PARAMS = 100;
 

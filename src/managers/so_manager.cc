@@ -353,8 +353,7 @@ public:
     void eval(Packet*) override { }
     bool configure(SnortConfig* sc) override
     {
-        for( auto i : sc->so_rules->handles )
-            handles.emplace_back(i);
+        copy(sc->so_rules->handles.begin(), sc->so_rules->handles.end(), back_inserter(handles));
         sc->so_rules->proxy = this;
         return true;
     }

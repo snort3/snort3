@@ -496,7 +496,8 @@ bool FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size, uint64_t
     uint64_t multi_file_processing_id, const uint8_t* url, uint32_t url_size)
 {
     FileContext* context;
-    if (file_id) {
+    if (file_id)
+    {
         bool is_new_context = false;
         context = get_file_context(file_id, false, is_new_context, multi_file_processing_id);
     }

@@ -43,13 +43,13 @@ public:
     void set_splitter(bool, snort::StreamSplitter*) override;
     snort::StreamSplitter* get_splitter(bool) override;
 
-    bool is_sequenced(uint8_t dir) override;
-    bool are_packets_missing(uint8_t dir) override;
+    bool is_sequenced(uint8_t dir) const override;
+    bool are_packets_missing(uint8_t dir) const override;
 
     void disable_reassembly(snort::Flow*) override;
-    uint8_t get_reassembly_direction() override;
-    uint8_t missing_in_reassembled(uint8_t dir) override;
-    bool are_client_segments_queued() override;
+    uint8_t get_reassembly_direction() const override;
+    uint8_t missing_in_reassembled(uint8_t dir) const override;
+    bool are_client_segments_queued() const override;
 
     bool add_alert(snort::Packet*, uint32_t gid, uint32_t sid) override;
     bool check_alerted(snort::Packet*, uint32_t gid, uint32_t sid) override;
@@ -74,7 +74,7 @@ public:
         bool free_flow_data, bool flush_segments, bool restart, snort::Packet* p = nullptr) = 0;
     virtual TcpStreamTracker::TcpState get_talker_state(TcpSegmentDescriptor&) = 0;
     virtual TcpStreamTracker::TcpState get_listener_state(TcpSegmentDescriptor&) = 0;
-    TcpStreamTracker::TcpState get_peer_state(TcpStreamTracker* me)
+    TcpStreamTracker::TcpState get_peer_state(const TcpStreamTracker* me)
     { return me == &client ? server.get_tcp_state() : client.get_tcp_state(); }
 
     virtual void init_new_tcp_session(TcpSegmentDescriptor&);

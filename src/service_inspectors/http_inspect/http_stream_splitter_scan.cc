@@ -277,7 +277,7 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
 StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data, uint32_t length,
     uint32_t* flush_offset)
 {
-    Profile profile(HttpModule::get_profile_stats());
+    Profile profile(HttpModule::get_profile_stats()); // cppcheck-suppress unreadVariable
 
     // This is the session state information we share with HttpInspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP

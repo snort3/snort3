@@ -955,12 +955,14 @@ static const uint8_t* SMTP_HandleCommand(SmtpProtoConf* config, Packet* p, SMTPD
                     while ((last < eolm) && isspace((int)*last))
                         last++;
 
+                    // cppcheck-suppress knownConditionTrueFalse
                     if (((eolm - last) >= 4)
                         && (strncasecmp("LAST", (const char*)last, 4) == 0))
                     {
                         bdat_last = true;
                     }
 
+                    // cppcheck-suppress knownConditionTrueFalse
                     if (bdat_last || (dat_chunk == 0))
                         smtp_ssn->state_flags &= ~(SMTP_FLAG_BDAT);
                     else
@@ -1565,7 +1567,7 @@ void Smtp::show(const SnortConfig*) const
 
 void Smtp::eval(Packet* p)
 {
-    Profile profile(smtpPerfStats);
+    Profile profile(smtpPerfStats); // cppcheck-suppress unreadVariable
 
     // precondition - what we registered for
     assert(p->has_tcp_data());

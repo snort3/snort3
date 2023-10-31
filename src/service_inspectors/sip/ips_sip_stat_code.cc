@@ -50,9 +50,8 @@ static THREAD_LOCAL ProfileStats sipStatCodeRuleOptionPerfStats;
 class SipStatCodeOption : public IpsOption
 {
 public:
-    SipStatCodeOption(const SipStatCodeRuleOptData& c) :
-        IpsOption(s_name)
-    { ssod = c; }
+    SipStatCodeOption(const SipStatCodeRuleOptData& c) : IpsOption(s_name), ssod(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -90,7 +89,7 @@ bool SipStatCodeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus SipStatCodeOption::eval(Cursor&, Packet* p)
 {
-    RuleProfile profile(sipStatCodeRuleOptionPerfStats);
+    RuleProfile profile(sipStatCodeRuleOptionPerfStats);    // cppcheck-suppress unreadVariable
 
     if ((!p->has_tcp_data() && !p->is_udp()) || !p->flow || !p->dsize)
         return NO_MATCH;
@@ -151,7 +150,7 @@ public:
     SipStatCodeRuleOptData ssod;
 
 private:
-    int num_tokens;
+    int num_tokens = 0;
 };
 
 bool SipStatCodeModule::begin(const char*, int, SnortConfig*)

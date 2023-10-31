@@ -336,36 +336,32 @@ static int RunFunc(const char* func, const char* arg1, const char* arg2)
 
 //---------------------------------------------------------------
 
+static void print_func(int i, const char* status, const char* code, const FuncTest* f)
+{
+    if ( f->arg2 )
+        printf("[%d] %s: %s(%s, %s) = %s\n",
+            i, status, f->func, f->arg1, f->arg2, code);
+    else
+        printf("[%d] %s: %s(%s) = %s\n",
+            i, status, f->func, f->arg1, code);
+}
+
 static int FuncCheck(int i)
 {
-    FuncTest* f = ftests + i;
-    int result;
+    const FuncTest* f = ftests + i;
 
-    const char* status = "Passed";
-    const char* code;
+    int result = RunFunc(f->func, f->arg1, f->arg2);
 
-    result = RunFunc(f->func, f->arg1, f->arg2);
-
-    code = (0 <= result && (size_t)result < sizeof(codes)/sizeof(codes[0])) ?
+    const char* code = (0 <= result && (size_t)result < sizeof(codes)/sizeof(codes[0])) ?
         codes[result] : "uh oh";
 
     if ( result != f->expected )
-    {
-        status = "Failed";
-    }
-#ifndef SFIP_TEST_DEBUG
-    if ( result != f->expected )
-    {
+        print_func(i, "Failed", code, f);
+#ifdef SFIP_TEST_DEBUG
+    else
+        print_func(i, "Passed", code, f);
 #endif
-        if ( f->arg2 )
-            printf("[%d] %s: %s(%s, %s) = %s\n",
-                i, status, f->func, f->arg1, f->arg2, code);
-        else
-            printf("[%d] %s: %s(%s) = %s\n",
-                i, status, f->func, f->arg1, code);
-#ifndef SFIP_TEST_DEBUG
-    }
-#endif
+
     return result == f->expected;
 }
 

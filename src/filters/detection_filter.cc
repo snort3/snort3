@@ -57,6 +57,7 @@ void DetectionFilterConfigFree(DetectionFilterConfig* config)
 
 int detection_filter_test(void* pv, const SfIp* sip, const SfIp* dip, long curtime)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(detectionFilterPerfStats);
 
     if (pv == nullptr)

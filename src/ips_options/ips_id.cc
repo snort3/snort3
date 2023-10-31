@@ -37,9 +37,8 @@ static THREAD_LOCAL ProfileStats ipIdPerfStats;
 class IpIdOption : public IpsOption
 {
 public:
-    IpIdOption(const RangeCheck& c) :
-        IpsOption(s_name)
-    { config = c; }
+    IpIdOption(const RangeCheck& c) : IpsOption(s_name), config(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -76,6 +75,7 @@ bool IpIdOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus IpIdOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(ipIdPerfStats);
 
     if (!p->has_ip())

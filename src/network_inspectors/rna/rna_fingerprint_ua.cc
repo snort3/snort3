@@ -152,12 +152,10 @@ static int match_ua_part(void* id, void*, int, void* data, void*)
     auto cur_fp = (UaFingerprint*) id;
     auto matched_parts = (vector<UaFingerprint*>*)data;
 
-    for (const auto& fp : *matched_parts)
-        if ( *fp == *cur_fp )
-            return 0; // ignore already recorded matching part
-
-    matched_parts->emplace_back(cur_fp);
-    return 0; // search continues for the next match
+    if (std::none_of(matched_parts->cbegin(), matched_parts->cend(),
+        [cur_fp](const UaFingerprint* fp){ return *fp == *cur_fp; }))
+        matched_parts->emplace_back(cur_fp);
+    return 0;
 }
 
 struct CompareParts

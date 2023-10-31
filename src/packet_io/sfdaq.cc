@@ -286,14 +286,12 @@ bool SFDAQ::init(const SFDAQConfig* cfg, unsigned total_instances)
         }
     }
 
-    for (SFDAQModuleConfig* dmc : cfg->module_configs)
+    if (std::any_of(cfg->module_configs.cbegin(), cfg->module_configs.cend(),
+        [](const SFDAQModuleConfig* dmc){ return !AddDaqModuleConfig(dmc); }))
     {
-        if (!AddDaqModuleConfig(dmc))
-        {
-            daq_config_destroy(daqcfg);
-            daqcfg = nullptr;
-            return false;
-        }
+        daq_config_destroy(daqcfg);
+        daqcfg = nullptr;
+        return false;
     }
 
 /*

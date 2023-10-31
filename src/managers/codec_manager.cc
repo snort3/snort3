@@ -78,11 +78,10 @@ uint8_t CodecManager::get_codec(const char* const keyword)
 
 CodecManager::CodecApiWrapper& CodecManager::get_api_wrapper(const CodecApi* cd_api)
 {
-    for (CodecApiWrapper& caw : s_codecs)
-    {
-        if (caw.api == cd_api)
-            return caw;
-    }
+    auto it = std::find_if(s_codecs.begin(), s_codecs.end(),
+        [cd_api](const CodecApiWrapper& caw){ return caw.api == cd_api; });
+    if (it != s_codecs.end())
+        return *it;
 
     ParseAbort("Attempting to instantiate Codec '%s', "
         "but codec has not been added", cd_api->base.name);
@@ -243,7 +242,7 @@ void CodecManager::dump_plugins()
 {
     Dumper d("Codecs");
 
-    for ( CodecApiWrapper& wrap : s_codecs )
+    for ( const CodecApiWrapper& wrap : s_codecs )
         d.dump(wrap.api->base.name, wrap.api->base.version);
 }
 

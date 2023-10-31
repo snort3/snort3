@@ -172,17 +172,17 @@ TEST_CASE("non-blocking events", "[JSNorm]")
 
     SECTION("EVENT_CLOSING_TAG")
     {
-        JSNorm jsn(&config, true);
+        JSNorm tmp_jsn(&config, true);
 
-        std::string src = "'</script>' ;";
-        std::string exp = "'</script>';";
+        std::string tmp_src = "'</script>' ;";
+        std::string tmp_exp = "'</script>';";
 
-        jsn.normalize(src.c_str(), src.size(), dst, dst_len);
+        tmp_jsn.normalize(tmp_src.c_str(), tmp_src.size(), dst, dst_len);
 
         REQUIRE(dst != nullptr);
         REQUIRE(dst_len != 0);
 
-        CHECK(std::string((const char*)dst, dst_len) == exp);
+        CHECK(std::string((const char*)dst, dst_len) == tmp_exp);
     }
 
     jsn.normalize(src.c_str(), src.size(), dst, dst_len);
@@ -222,51 +222,51 @@ TEST_CASE("blocking events", "[JSNorm]")
     {
         config.identifier_depth = 0;
 
-        JSNorm jsn(&config, false);
+        JSNorm tmp_jsn(&config, false);
 
-        std::string src = "; a";
-        std::string exp = ";";
+        std::string tmp_src = "; a";
+        std::string tmp_exp = ";";
 
-        jsn.normalize(src.c_str(), src.size(), dst, dst_len);
+        tmp_jsn.normalize(tmp_src.c_str(), tmp_src.size(), dst, dst_len);
 
         REQUIRE(dst != nullptr);
         REQUIRE(dst_len != 0);
 
-        CHECK(std::string((const char*)dst, dst_len) == exp);
+        CHECK(std::string((const char*)dst, dst_len) == tmp_exp);
     }
 
     SECTION("EVENT_BRACKET_NEST_OVERFLOW")
     {
         config.max_bracket_depth = 0;
 
-        JSNorm jsn(&config, false);
+        JSNorm tmp_jsn(&config, false);
 
-        std::string src = "; {";
-        std::string exp = ";";
+        std::string tmp_src = "; {";
+        std::string tmp_exp = ";";
 
-        jsn.normalize(src.c_str(), src.size(), dst, dst_len);
+        tmp_jsn.normalize(tmp_src.c_str(), tmp_src.size(), dst, dst_len);
 
         REQUIRE(dst != nullptr);
         REQUIRE(dst_len != 0);
 
-        CHECK(std::string((const char*)dst, dst_len) == exp);
+        CHECK(std::string((const char*)dst, dst_len) == tmp_exp);
     }
 
     SECTION("EVENT_SCOPE_NEST_OVERFLOW")
     {
         config.max_scope_depth = 0;
 
-        JSNorm jsn(&config, false);
+        JSNorm tmp_jsn(&config, false);
 
-        std::string src = "; function f () {";
-        std::string exp = ";function var_0000";
+        std::string tmp_src = "; function f () {";
+        std::string tmp_exp = ";function var_0000";
 
-        jsn.normalize(src.c_str(), src.size(), dst, dst_len);
+        tmp_jsn.normalize(tmp_src.c_str(), tmp_src.size(), dst, dst_len);
 
         REQUIRE(dst != nullptr);
         REQUIRE(dst_len != 0);
 
-        CHECK(std::string((const char*)dst, dst_len) == exp);
+        CHECK(std::string((const char*)dst, dst_len) == tmp_exp);
     }
 
     jsn.normalize(src.c_str(), src.size(), dst, dst_len);

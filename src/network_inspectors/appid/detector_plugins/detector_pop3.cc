@@ -40,7 +40,6 @@ enum POP3ClientState
 
 struct ClientPOP3Data
 {
-    int auth;
     char* username;
     POP3ClientState state;
     int detected;
@@ -221,7 +220,7 @@ void Pop3ClientDetector::do_custom_init()
     {
         unsigned index = 0;
 
-        for (auto& pat : tcp_patterns)
+        for (const auto& pat : tcp_patterns)
         {
             cmd_matcher->add(pat.pattern, pat.length, index++);
             if (pat.length > longest_pattern)

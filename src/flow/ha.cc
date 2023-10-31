@@ -121,10 +121,6 @@ static inline bool is_ip6_key(const FlowKey* key)
 
 FlowHAState::FlowHAState()
 {
-    state = INITIAL_STATE;
-    state |= (NEW | NEW_SESSION);
-    pending = NONE_PENDING;
-
     // Set the initial update time to now+min_session_lifetime
     packet_gettimeofday(&next_update);
     timeradd(&next_update, &min_session_lifetime, &next_update);
@@ -200,12 +196,10 @@ void FlowHAState::reset()
     init_next_update();
 }
 
-FlowHAClient::FlowHAClient(uint8_t length, bool session_client)
+FlowHAClient::FlowHAClient(uint8_t length, bool session_client) : max_length(length)
 {
     if (!ha)
         return;
-
-    max_length = length;
 
     if (session_client)
     {

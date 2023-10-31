@@ -98,8 +98,8 @@ public:
 private:
     bool enabled = false;
     bool active = false;
-    AppIdDebugSessionConstraints info = { };
-    char debug_session[APPID_DEBUG_SESSION_ID_SIZE];
+    AppIdDebugSessionConstraints info = {};
+    char debug_session[APPID_DEBUG_SESSION_ID_SIZE] = {};
 };
 
 extern THREAD_LOCAL AppIdDebug* appidDebug;

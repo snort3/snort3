@@ -1200,16 +1200,6 @@ bnfa_struct_t* bnfaNew(const MpseAgent* agent)
     return p;
 }
 
-void bnfaSetCase(bnfa_struct_t* p, int flag)
-{
-    if ( flag == BNFA_PER_PAT_CASE )
-        p->bnfaCaseMode = flag;
-    if ( flag == BNFA_CASE    )
-        p->bnfaCaseMode = flag;
-    if ( flag == BNFA_NOCASE  )
-        p->bnfaCaseMode = flag;
-}
-
 /*
 *   Fee all memory
 */

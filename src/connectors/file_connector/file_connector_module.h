@@ -50,7 +50,7 @@ public:
 
 private:
     FileConnectorConfig::FileConnectorConfigSet* config_set;
-    FileConnectorConfig* config;
+    FileConnectorConfig* config = nullptr;
 };
 
 #endif

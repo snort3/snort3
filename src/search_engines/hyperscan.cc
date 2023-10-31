@@ -328,7 +328,7 @@ void HyperscanMpse::get_hash(std::string& hash)
 
     std::stringstream ss;
 
-    for ( auto& p : pvector )
+    for ( const auto& p : pvector )
         ss << p.pat << p.flags;
 
     std::string str = ss.str();

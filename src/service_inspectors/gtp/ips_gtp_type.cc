@@ -46,7 +46,7 @@ static THREAD_LOCAL ProfileStats gtp_type_prof;
 class GtpTypeOption : public IpsOption
 {
 public:
-    GtpTypeOption(ByteBitSet*);
+    GtpTypeOption(const ByteBitSet*);
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -59,7 +59,7 @@ public:
     ByteBitSet types[MAX_GTP_VERSION_CODE + 1];
 };
 
-GtpTypeOption::GtpTypeOption(ByteBitSet* t) : IpsOption(s_name)
+GtpTypeOption::GtpTypeOption(const ByteBitSet* t) : IpsOption(s_name)
 {
     for ( int v = 0; v <= MAX_GTP_VERSION_CODE; ++v )
         types[v] = t[v];
@@ -96,6 +96,7 @@ bool GtpTypeOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus GtpTypeOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(gtp_type_prof);
 
     if ( !p or !p->flow )

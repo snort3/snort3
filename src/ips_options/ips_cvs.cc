@@ -94,9 +94,8 @@ static void CvsGetEOL(const uint8_t*, const uint8_t*,
 class CvsOption : public IpsOption
 {
 public:
-    CvsOption(const CvsRuleOption& c) :
-        IpsOption(s_name)
-    { config = c; }
+    CvsOption(const CvsRuleOption& c) : IpsOption(s_name), config(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;

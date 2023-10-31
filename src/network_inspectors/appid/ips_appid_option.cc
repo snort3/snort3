@@ -109,6 +109,7 @@ bool AppIdIpsOption::match_id_against_rule(OdpContext& odp_ctxt, int32_t id)
 // first match wins...
 IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(ips_appid_perf_stats);
 
     if ( !p->flow )

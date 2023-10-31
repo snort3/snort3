@@ -48,7 +48,7 @@ struct RnaLoggerEvent : public Event
     uint32_t event_time = 0;
     uint16_t type;
     uint16_t subtype;
-    const struct in6_addr* ip;
+    const struct in6_addr* ip = nullptr;
     const uint8_t* mac;
     const RnaTracker* ht;
     const snort::HostMac* hm;

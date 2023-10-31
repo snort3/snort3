@@ -160,6 +160,7 @@ bool ByteMathOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ByteMathOption::eval(Cursor& c, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(byteMathPerfStats);
 
     /* Get values from ips options variables, if present. */
@@ -264,14 +265,14 @@ int ByteMathOption::calc(uint32_t& value, const uint32_t rvalue)
 static void parse_base(uint8_t value, ByteMathData& idx)
 {
     assert(value <= 2);
-    const int base[] = { 16, 10, 8 };
+    static const uint32_t base[] = { 16, 10, 8 };
     idx.base = base[value];
 }
 
 static void parse_endian(uint8_t value, ByteMathData& idx)
 {
     assert(value <= 1);
-    int endian[] = { ENDIAN_BIG, ENDIAN_LITTLE };
+    static const uint8_t endian[] = { ENDIAN_BIG, ENDIAN_LITTLE };
     set_byte_order(idx.endianness, endian[value], "byte_math");
 }
 
@@ -772,6 +773,7 @@ TEST_CASE("ByteMathOption::operator== invalid", "[ips_byte_math]")
         ByteMathOption rhs(data_rhs);
         CHECK(lhs != rhs);
     }
+    // cppcheck-suppress memleak
 }
 
 TEST_CASE("ByteMathOption::hash", "[ips_byte_math]")

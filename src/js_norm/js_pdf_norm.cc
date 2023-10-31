@@ -64,12 +64,15 @@ bool PDFJSNorm::pre_proc()
     }
 
     src_ptr = (const uint8_t*)buf_pdf_out.data();
-    src_end = src_ptr + buf_pdf_out.data_len();
 
     // script object not found
     if (!src_ptr)
+    {
+        src_end = nullptr;
         return false;
+    }
 
+    src_end = src_ptr + buf_pdf_out.data_len();
     return true;
 }
 

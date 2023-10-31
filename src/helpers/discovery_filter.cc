@@ -179,7 +179,7 @@ DiscoveryFilter::DiscoveryFilter(const string& conf_path)
         auto any_list = get_list((FilterType)type, DF_ANY_INTF);
         if (!any_list)
             continue;
-        for (auto& intf_entry : intf_ip_list[type])
+        for (const auto& intf_entry : intf_ip_list[type])
         {
             if (intf_entry.second != any_list and
                 sfvar_add(intf_entry.second, any_list) != SFIP_SUCCESS)
@@ -412,27 +412,27 @@ TEST_CASE("Discovery Filter", "[is_monitored]")
     DiscoveryFilter df(conf);
 
     // Without flag
-    CHECK(df.is_app_monitored(&p, nullptr) == true);   // any interface rule for app is added to interface 0
-    CHECK(df.is_host_monitored(&p, nullptr) == false); // no rule for host
-    CHECK(df.is_user_monitored(&p, nullptr) == false); // no any interface rule for user
+    CHECK(true == df.is_app_monitored(&p, nullptr));   // any interface rule for app is added to interface 0
+    CHECK(false == df.is_host_monitored(&p, nullptr)); // no rule for host
+    CHECK(false == df.is_user_monitored(&p, nullptr)); // no any interface rule for user
 
     // With flag
     uint8_t flag = 0;
     CHECK((flag & DF_APP_CHECKED) != DF_APP_CHECKED);
     CHECK((flag & DF_APP_MONITORED) != DF_APP_MONITORED);
-    CHECK(df.is_app_monitored(&p, &flag) == true); // first attempt
+    CHECK(true == df.is_app_monitored(&p, &flag)); // first attempt
     CHECK((flag & DF_APP_CHECKED) == DF_APP_CHECKED);
     CHECK((flag & DF_APP_MONITORED) == DF_APP_MONITORED);
-    CHECK(df.is_app_monitored(&p, &flag) == true); // second attempt
+    CHECK(true == df.is_app_monitored(&p, &flag)); // second attempt
     CHECK((flag & DF_APP_CHECKED) == DF_APP_CHECKED);
     CHECK((flag & DF_APP_MONITORED) == DF_APP_MONITORED);
 
     CHECK((flag & DF_USER_CHECKED) != DF_USER_CHECKED);
     CHECK((flag & DF_USER_MONITORED) != DF_USER_MONITORED);
-    CHECK(df.is_user_monitored(&p, &flag) == false); // first attempt
+    CHECK(false == df.is_user_monitored(&p, &flag)); // first attempt
     CHECK((flag & DF_USER_CHECKED) == DF_USER_CHECKED);
     CHECK((flag & DF_USER_MONITORED) != DF_USER_MONITORED);
-    CHECK(df.is_user_monitored(&p, &flag) == false); // second attempt
+    CHECK(false == df.is_user_monitored(&p, &flag)); // second attempt
     CHECK((flag & DF_USER_CHECKED) == DF_USER_CHECKED);
     CHECK((flag & DF_USER_MONITORED) != DF_USER_MONITORED);
 
@@ -453,9 +453,9 @@ TEST_CASE("Discovery Filter Empty Configuration", "[is_monitored_config]")
     p.ptrs.ip_api.set(ip, ip);
     DiscoveryFilter df(conf);
 
-    CHECK(df.is_app_monitored(&p, nullptr) == false);
-    CHECK(df.is_host_monitored(&p, nullptr) == false);
-    CHECK(df.is_user_monitored(&p, nullptr) == false);
+    CHECK(false == df.is_app_monitored(&p, nullptr));
+    CHECK(false == df.is_host_monitored(&p, nullptr));
+    CHECK(false == df.is_user_monitored(&p, nullptr));
 
     remove("test_empty_analyze.txt");
 }
@@ -490,33 +490,33 @@ TEST_CASE("Discovery Filter Intf", "[is_monitored_intf_vs_ip]")
 
     p.ptrs.ip_api.set(ip1, ip7);  // ip from undefined interface matches interface any list
     p.pkth = &z_undefined;
-    CHECK(df.is_app_monitored(&p, nullptr) == true); // analyze host enables application discovery
-    CHECK(df.is_host_monitored(&p, nullptr) == true);
-    CHECK(df.is_user_monitored(&p, nullptr) == false);
+    CHECK(true == df.is_app_monitored(&p, nullptr)); // analyze host enables application discovery
+    CHECK(true == df.is_host_monitored(&p, nullptr));
+    CHECK(false == df.is_user_monitored(&p, nullptr));
 
     p.pkth = &z2; // the ip is not in interface 2 list, but it is in interface any list
-    CHECK(df.is_host_monitored(&p, nullptr) == true);
+    CHECK(true == df.is_host_monitored(&p, nullptr));
 
     p.ptrs.ip_api.set(ip3, ip7); // the ip matches interface 2 list
-    CHECK(df.is_host_monitored(&p, nullptr) == true);
+    CHECK(true == df.is_host_monitored(&p, nullptr));
 
     p.pkth = &z1; // no interface 1 list and the ip is not in interface any list
-    CHECK(df.is_host_monitored(&p, nullptr) == false);
+    CHECK(false == df.is_host_monitored(&p, nullptr));
 
     p.ptrs.ip_api.set(ip1, ip7); // no interface 1 list, but the ip is in interface any list
-    CHECK(df.is_host_monitored(&p, nullptr) == true);
+    CHECK(true == df.is_host_monitored(&p, nullptr));
 
     p.pkth = saved_hdr;
     p.ptrs.ip_api.set(ip2, ip7);  // the ip matches interface 0 list
-    CHECK(df.is_host_monitored(&p, nullptr) == true);
+    CHECK(true == df.is_host_monitored(&p, nullptr));
 
     // no match since the configuration for these ip addresses were invalid
     p.ptrs.ip_api.set(ip4, ip7);
-    CHECK(df.is_host_monitored(&p, nullptr) == false);
+    CHECK(false == df.is_host_monitored(&p, nullptr));
     p.ptrs.ip_api.set(ip5, ip7);
-    CHECK(df.is_host_monitored(&p, nullptr) == false);
+    CHECK(false == df.is_host_monitored(&p, nullptr));
     p.ptrs.ip_api.set(ip6, ip7);
-    CHECK(df.is_host_monitored(&p, nullptr) == false);
+    CHECK(false == df.is_host_monitored(&p, nullptr));
 
     remove("test_intf_ip.txt");
 }
@@ -572,7 +572,7 @@ TEST_CASE("Discovery Filter Port Exclusion", "[portexclusion]")
     p.ptrs.dp = b_port;
     p.packet_flags = 0x0;
     p.packet_flags |= PKT_FROM_CLIENT;
-    CHECK(is_port_excluded_test(df, &p) == true);
+    CHECK(true == is_port_excluded_test(df, &p));
 
     // A:any <- B:b_port
     p.ptrs.ip_api.set(&ba_hdr);
@@ -580,7 +580,7 @@ TEST_CASE("Discovery Filter Port Exclusion", "[portexclusion]")
     p.ptrs.dp = a_port;
     p.packet_flags = 0x0;
     p.packet_flags |= PKT_FROM_SERVER;
-    CHECK(is_port_excluded_test(df, &p) == true);
+    CHECK(true == is_port_excluded_test(df, &p));
 
 
     // Negative test: B = initiator (client), A = responder (server)
@@ -592,7 +592,7 @@ TEST_CASE("Discovery Filter Port Exclusion", "[portexclusion]")
     p.ptrs.dp = a_port;
     p.packet_flags = 0x0;
     p.packet_flags |= PKT_FROM_CLIENT;
-    CHECK(is_port_excluded_test(df, &p) == false);
+    CHECK(false == is_port_excluded_test(df, &p));
 
     // A -> B:b_port
     p.ptrs.ip_api.set(&ab_hdr);
@@ -600,7 +600,7 @@ TEST_CASE("Discovery Filter Port Exclusion", "[portexclusion]")
     p.ptrs.dp = b_port;
     p.packet_flags = 0x0;
     p.packet_flags |= PKT_FROM_SERVER;
-    CHECK(is_port_excluded_test(df, &p) == false);
+    CHECK(false == is_port_excluded_test(df, &p));
 
     remove(conf.c_str());
 }

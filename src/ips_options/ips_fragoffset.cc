@@ -37,9 +37,8 @@ static THREAD_LOCAL ProfileStats fragOffsetPerfStats;
 class FragOffsetOption : public IpsOption
 {
 public:
-    FragOffsetOption(const RangeCheck& c) :
-        IpsOption(s_name)
-    { config = c; }
+    FragOffsetOption(const RangeCheck& c) : IpsOption(s_name), config(c)
+    { }
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -76,6 +75,7 @@ bool FragOffsetOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus FragOffsetOption::eval(Cursor&, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(fragOffsetPerfStats);
 
     if (!p->has_ip())

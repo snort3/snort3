@@ -73,7 +73,7 @@ const std::unique_ptr<const ConvertMap>& find_map(
     const std::string& keyword,
     bool strict_case)
 {
-    for (auto& p : map)
+    for (const auto& p : map)
     {
         if (strict_case)
         {
@@ -96,11 +96,8 @@ Table* find_table(const std::vector<Table*>& vec, const std::string& name)
     if (name.empty())
         return nullptr;
 
-    for ( auto* t : vec)
-        if (name == t->get_name())
-            return t;
-
-    return nullptr;
+    auto it = std::find_if(vec.begin(), vec.end(), [&name](const Table* t){ return name == t->get_name(); });
+    return (it != vec.end()) ? (*it) : nullptr;
 }
 
 std::string& ltrim(std::string& s)

@@ -646,10 +646,10 @@ TEST_CASE( "rule pause", "[profiler][rule_profiler]" )
 
     {
         RulePause pause(ctx);
-        CHECK_FALSE( ctx.active() );
+        CHECK( false == ctx.active() );
     }
 
-    CHECK( ctx.active() );
+    CHECK( true == ctx.active() );
     RuleContext::set_enabled(false);
 }
 

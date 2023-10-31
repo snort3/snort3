@@ -354,10 +354,11 @@ void Dce2SmbInspector::show(const SnortConfig*) const
 
 void Dce2SmbInspector::eval(Packet* p)
 {
+    Profile profile(dce2_smb_pstat_main); // cppcheck-suppress unreadVariable
+
     DCE2_SmbSsnData* dce2_smb_sess = nullptr;
     DCE2_Smb2SsnData* dce2_smb2_sess = nullptr;
     DCE2_SmbVersion smb_version = DCE2_SMB_VERSION_NULL;
-    Profile profile(dce2_smb_pstat_main);
 
     if (p == nullptr)
         return;

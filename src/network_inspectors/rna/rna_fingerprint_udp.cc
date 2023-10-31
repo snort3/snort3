@@ -24,6 +24,7 @@
 
 #include "rna_fingerprint_udp.h"
 
+#include <algorithm>
 #include <sstream>
 
 #ifdef UNIT_TEST
@@ -95,7 +96,7 @@ const DHCPFingerprint* UdpFpProcessor::match_dhcp_fingerprint(const FpDHCPKey& k
     uint32_t fptype = FpFingerprint::FpType::FP_TYPE_DHCP;
     for (const auto& fp: dhcp_fps)
     {
-        if (fptype == fp.fp_type && fp.dhcp55.size() == key.dhcp55_len and
+        if (fptype == fp.fp_type and fp.dhcp55.size() == key.dhcp55_len and
             match_dhcp_options(fp.dhcp55, key.dhcp55))
         {
             if (key.dhcp60 and !fp.dhcp60.empty())

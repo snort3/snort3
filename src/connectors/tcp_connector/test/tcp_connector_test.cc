@@ -170,7 +170,7 @@ static void set_normal_status()
 
 TcpConnectorModule::TcpConnectorModule() :
     Module("TCPC", "TCPC Help", nullptr)
-{ }
+{ config_set = nullptr; }
 
 TcpConnectorConfig::TcpConnectorConfigSet* TcpConnectorModule::get_and_clear_config()
 {

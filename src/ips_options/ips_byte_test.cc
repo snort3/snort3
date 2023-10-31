@@ -269,6 +269,7 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
 
 IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
 {
+    // cppcheck-suppress unreadVariable
     RuleProfile profile(byteTestPerfStats);
 
     ByteTestData* btd = (ByteTestData*)&config;
@@ -664,54 +665,54 @@ TEST_CASE("byte_test_check test", "[ips_byte_test]")
 {
     SECTION("Incorrect ByteTestOper, other data correct")
     {
-        REQUIRE(byte_test_check(ByteTestOper(7), 1, 1, 0) == false);
+        REQUIRE(false == byte_test_check(ByteTestOper(7), 1, 1, 0));
     }
 
     SECTION("Incorrect ByteTestOper, true not_flag")
     {
-        REQUIRE(byte_test_check(ByteTestOper(7), 1, 1, 1) == true);
+        REQUIRE(true == byte_test_check(ByteTestOper(7), 1, 1, 1));
     }
 
     SECTION("CHECK_EQ both true && false situation")
     {
-        REQUIRE(byte_test_check(ByteTestOper(0), 1, 1, 0) == true);
-        REQUIRE(byte_test_check(ByteTestOper(0), 1, 2, 0) == false);
+        REQUIRE(true == byte_test_check(ByteTestOper(0), 1, 1, 0));
+        REQUIRE(false == byte_test_check(ByteTestOper(0), 1, 2, 0));
     }
 
     SECTION("CHECK_LT both true && false situation")
     {
-        REQUIRE(byte_test_check(ByteTestOper(1), 1, 2, 0) == true);
-        REQUIRE(byte_test_check(ByteTestOper(1), 4, 1, 0) == false);
+        REQUIRE(true == byte_test_check(ByteTestOper(1), 1, 2, 0));
+        REQUIRE(false == byte_test_check(ByteTestOper(1), 4, 1, 0));
     }
 
     SECTION("CHECK_GT both true && false situation")
     {
-        REQUIRE(byte_test_check(ByteTestOper(2), 2, 1, 0) == true);
-        REQUIRE(byte_test_check(ByteTestOper(2), 1, 4, 0) == false);
+        REQUIRE(true == byte_test_check(ByteTestOper(2), 2, 1, 0));
+        REQUIRE(false == byte_test_check(ByteTestOper(2), 1, 4, 0));
     }
 
     SECTION("CHECK_LTE both true && false situation")
     {
-        REQUIRE(byte_test_check(ByteTestOper(3), 0, 1, 0) == true);
-        REQUIRE(byte_test_check(ByteTestOper(3), 4, 1, 0) == false);
+        REQUIRE(true == byte_test_check(ByteTestOper(3), 0, 1, 0));
+        REQUIRE(false == byte_test_check(ByteTestOper(3), 4, 1, 0));
     }
 
     SECTION("CHECK_GTE both true && false situation")
     {
-        REQUIRE(byte_test_check(ByteTestOper(4), 1, 0, 0) == true);
-        REQUIRE(byte_test_check(ByteTestOper(4), 0, 4, 0) == false);
+        REQUIRE(true == byte_test_check(ByteTestOper(4), 1, 0, 0));
+        REQUIRE(false == byte_test_check(ByteTestOper(4), 0, 4, 0));
     }
 
     SECTION("CHECK_AND for bites both true && false situation")
     {
-        REQUIRE(byte_test_check(ByteTestOper(5), 1, 1, 0) == true);
-        REQUIRE(byte_test_check(ByteTestOper(5), 1, 0, 0) == false);
+        REQUIRE(true == byte_test_check(ByteTestOper(5), 1, 1, 0));
+        REQUIRE(false == byte_test_check(ByteTestOper(5), 1, 0, 0));
     }
 
     SECTION("CHECK_XOR for bites both true && false situation")
     {
-        REQUIRE(byte_test_check(ByteTestOper(6), 1, 0, 0) == true);
-        REQUIRE(byte_test_check(ByteTestOper(6), 1, 1, 0) == false);
+        REQUIRE(true == byte_test_check(ByteTestOper(6), 1, 0, 0));
+        REQUIRE(false == byte_test_check(ByteTestOper(6), 1, 1, 0));
     }
 }
 
@@ -754,8 +755,8 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
             SECTION("Testing hash with maximum values from different source")
             {
                 SetByteTestDataMax(byte_test);
-                ByteTestOption hash_test_max(byte_test);
-                CHECK(hash_test.hash() != hash_test_max.hash());
+                ByteTestOption tmp_hash_test_max(byte_test);
+                CHECK(hash_test.hash() != tmp_hash_test_max.hash());
             }
         }
     }
@@ -1028,7 +1029,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
         {
             module_test.cmp_var = buff;
             module_test.data = byte_test;
-            REQUIRE(module_test.end("tmp", 0, nullptr) == false);
+            REQUIRE(false == module_test.end("tmp", 0, nullptr));
         }
 
         SECTION("Undefined rule option for offset_var")
@@ -1036,7 +1037,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
             module_test.cmp_var.clear();
             module_test.off_var = buff;
             module_test.data = byte_test;
-            REQUIRE(module_test.end("tmp", 0, nullptr) == false);
+            REQUIRE(false == module_test.end("tmp", 0, nullptr));
         }
 
         SECTION("Number of bytes in \"bitmask\" value is greater than bytes to extract")
@@ -1044,13 +1045,13 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
             byte_test.endianness = 0;
             byte_test.bytes_to_extract = 0;
             module_test.data = byte_test;
-            REQUIRE(module_test.end("tmp", 0, nullptr) == false);
+            REQUIRE(false == module_test.end("tmp", 0, nullptr));
         }
 
         SECTION("Case with returned value true")
         {
             module_test.data = byte_test;
-            REQUIRE(module_test.end("tmp", 0, nullptr) == true);
+            REQUIRE(true == module_test.end("tmp", 0, nullptr));
         }
     }
 
@@ -1063,7 +1064,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
             Parameter param("~count", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_test.set(nullptr, value, nullptr));
         }
 
         SECTION("Param \"~operator\" correct")
@@ -1071,7 +1072,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
             Parameter param("~operator", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_test.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"~compare\"")
@@ -1081,7 +1082,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
                 Parameter param("~compare", snort::Parameter::Type::PT_BOOL,
                     nullptr, "default", "help");
                 value.set(&param);
-                REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+                REQUIRE(true == module_test.set(nullptr, value, nullptr));
             }
 
             SECTION("When value has a str")
@@ -1090,7 +1091,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
                 Parameter param("~compare", snort::Parameter::Type::PT_BOOL,
                     nullptr, "default", "help");
                 value_tmp.set(&param);
-                REQUIRE(module_test.set(nullptr, value_tmp, nullptr) == true);
+                REQUIRE(true == module_test.set(nullptr, value_tmp, nullptr));
             }
 
             SECTION("Value isn't truncated")
@@ -1099,7 +1100,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
                 Parameter param("~compare", snort::Parameter::Type::PT_BOOL,
                     nullptr, "default", "help");
                 value_tmp.set(&param);
-                REQUIRE(module_test.set(nullptr, value_tmp, nullptr) == true);
+                REQUIRE(true == module_test.set(nullptr, value_tmp, nullptr));
                 REQUIRE(module_test.data.cmp_value == 4294967295UL);
             }
         }
@@ -1111,7 +1112,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
                 Parameter param("~offset", snort::Parameter::Type::PT_BOOL,
                     nullptr, "default", "help");
                 value.set(&param);
-                REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+                REQUIRE(true == module_test.set(nullptr, value, nullptr));
             }
 
             SECTION("When value has a str")
@@ -1120,7 +1121,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
                 Parameter param("~offset", snort::Parameter::Type::PT_BOOL,
                     nullptr, "default", "help");
                 value_tmp.set(&param);
-                REQUIRE(module_test.set(nullptr, value_tmp, nullptr) == true);
+                REQUIRE(true == module_test.set(nullptr, value_tmp, nullptr));
             }
         }
 
@@ -1129,7 +1130,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
             Parameter param("relative", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_test.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"big\"")
@@ -1137,7 +1138,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
             Parameter param("big", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_test.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"little\"")
@@ -1145,7 +1146,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
             Parameter param("little", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_test.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"dce\"")
@@ -1153,7 +1154,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
             Parameter param("dce", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_test.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"string\"")
@@ -1161,7 +1162,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
             Parameter param("string", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_test.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"dec\"")
@@ -1169,7 +1170,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
             Parameter param("dec", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_test.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"hex\"")
@@ -1177,7 +1178,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
             Parameter param("hex", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_test.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"oct\"")
@@ -1185,7 +1186,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
             Parameter param("oct", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_test.set(nullptr, value, nullptr));
         }
 
         SECTION("Case param \"bitmask\"")
@@ -1193,7 +1194,7 @@ TEST_CASE("ByteTestModule test", "[ips_byte_test]")
             Parameter param("bitmask", snort::Parameter::Type::PT_BOOL,
                 nullptr, "default", "help");
             value.set(&param);
-            REQUIRE(module_test.set(nullptr, value, nullptr) == true);
+            REQUIRE(true == module_test.set(nullptr, value, nullptr));
         }
     }
 }

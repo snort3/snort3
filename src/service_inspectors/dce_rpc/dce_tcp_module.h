@@ -57,7 +57,7 @@ public:
     { return true; }
 
 private:
-    dce2TcpProtoConf config;
+    dce2TcpProtoConf config = {};
 };
 
 void print_dce2_tcp_conf(const dce2TcpProtoConf& config);

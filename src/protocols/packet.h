@@ -120,8 +120,8 @@ struct SO_PUBLIC Packet
     Packet& operator=(const Packet&) = delete;
 
     Flow* flow;   /* for session tracking */
-    Endianness* endianness;
-    Obfuscator* obfuscator;
+    Endianness* endianness = nullptr;
+    Obfuscator* obfuscator = nullptr;
 
     uint32_t packet_flags;      /* special flags for the packet */
     uint32_t xtradata_mask;
@@ -137,28 +137,28 @@ struct SO_PUBLIC Packet
     PduSection sect;
 
     // nothing after this point is zeroed by reset() ...
-    IpsContext* context;
-    Active* active;
+    IpsContext* context = nullptr;
+    Active* active = nullptr;
     Active* active_inst;
-    ActiveAction** action;
-    ActiveAction* action_inst;
+    ActiveAction** action = nullptr;
+    ActiveAction* action_inst = nullptr;
 
     DAQ_Msg_h daq_msg;              // DAQ message this packet came from
-    SFDAQInstance* daq_instance;    // DAQ instance the message came from
+    SFDAQInstance* daq_instance = nullptr;  // DAQ instance the message came from
 
     // Everything beyond this point is set by PacketManager::decode()
     const DAQ_PktHdr_t* pkth;   // packet meta data
     const uint8_t* pkt;         // raw packet data
-    uint32_t pktlen;            // raw packet data length
+    uint32_t pktlen = 0;        // raw packet data length
 
     // These are both set before PacketManager::decode() returns
-    const uint8_t* data;        /* packet payload pointer */
-    uint16_t dsize;             /* packet payload size */
+    const uint8_t* data = nullptr;  /* packet payload pointer */
+    uint16_t dsize = 0;             /* packet payload size */
 
     DecodeData ptrs; // convenience pointers used throughout Snort++
     Layer* layers;    /* decoded encapsulations */
 
-    PseudoPacketType pseudo_type;    // valid only when PKT_PSEUDO is set
+    PseudoPacketType pseudo_type = PSEUDO_PKT_MAX;  // valid only when PKT_PSEUDO is set
 
     uint64_t user_inspection_policy_id;
     uint64_t user_ips_policy_id;

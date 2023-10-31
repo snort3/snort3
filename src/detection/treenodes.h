@@ -203,7 +203,7 @@ struct OptTreeNode
     SnortProtocolId snort_protocol_id = 0;    // Added for integrity checks during rule parsing.
     unsigned short proto_node_num = 0;
     uint16_t longestPatternLen = 0;
-    IpsPolicy::Enable enable;
+    IpsPolicy::Enable enable = IpsPolicy::Enable::DISABLED;
     Flag flags = 0;
 
     enum SectionDir { SECT_TO_SRV = 0, SECT_TO_CLIENT, SECT_DIR__MAX };

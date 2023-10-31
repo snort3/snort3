@@ -2761,6 +2761,7 @@ static int add_port_pattern_client(lua_State* L)
     }
 
     PortPatternNode* pPattern  = (decltype(pPattern))snort_calloc(sizeof(PortPatternNode));
+    // cppcheck-suppress internalAstError
     pPattern->pattern  = (decltype(pPattern->pattern))snort_calloc(pattern_size);
     pPattern->appId = appid;
     pPattern->protocol = protocol;

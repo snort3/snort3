@@ -343,7 +343,7 @@ void InspectorList::populate_all_removed(SnortConfig* sc, InspectorList* def_il,
 
 void InspectorList::clear_removed()
 {
-    for ( auto& ri : removed_ilist )
+    for ( const auto& ri : removed_ilist )
         ri.instance->handler->rem_global_ref();
     removed_ilist.clear();
 }
@@ -354,18 +354,15 @@ void InspectorList::reconcile_inspectors(SnortConfig* sc, InspectorList* old_lis
     {
         for (auto* p : ilist)
         {
-            for (auto* old_p : old_list->ilist)
+            auto it = std::find_if(old_list->ilist.cbegin(), old_list->ilist.cend(),
+                [&p](const PHInstance* old_p){ return old_p->name == p->name; });
+            if (it != old_list->ilist.cend())
             {
-                if (old_p->name == p->name)
+                ReloadType reload_type = p->get_reload_type();
+                if (!cloned || RELOAD_TYPE_NEW == reload_type || RELOAD_TYPE_REENABLED == reload_type)
                 {
-                    ReloadType reload_type = p->get_reload_type();
-                    if (!cloned || RELOAD_TYPE_NEW == reload_type
-                        || RELOAD_TYPE_REENABLED == reload_type)
-                    {
-                        p->handler->copy_thread_storage(old_p->handler);
-                        p->handler->install_reload_handler(sc);
-                    }
-                    break;
+                    p->handler->copy_thread_storage((*it)->handler);
+                    p->handler->install_reload_handler(sc);
                 }
             }
         }
@@ -416,7 +413,7 @@ TrafficPolicy::~TrafficPolicy()
         --ts_handlers->ref_count;
         if (!ts_handlers->ref_count)
         {
-            for (auto* h : ts_handlers->olists)
+            for (const auto* h : ts_handlers->olists)
                 delete h;
             delete ts_handlers;
         }
@@ -853,9 +850,10 @@ PHInstance* FrameworkPolicy::get_instance_by_type(const char* key, InspectorType
 std::vector<const InspectApi*> InspectorManager::get_apis()
 {
     std::vector<const InspectApi*> v;
+    v.reserve(s_handlers.size());
 
-    for ( const auto* p : s_handlers )
-        v.emplace_back(&p->api);
+    std::transform(s_handlers.cbegin(), s_handlers.cend(), std::back_inserter(v),
+        [](const PHObject* p){ return &p->api; });
 
     return v;
 }
@@ -878,7 +876,7 @@ void InspectorManager::add_plugin(const InspectApi* api)
 
 static const InspectApi* get_plugin(const char* keyword)
 {
-    for ( auto* p : s_handlers )
+    for ( const auto* p : s_handlers )
         if ( !strcmp(p->api.base.name, keyword) )
             return &p->api;
 
@@ -1415,11 +1413,11 @@ void InspectorManager::free_inspector(Inspector* p)
 
 InspectSsnFunc InspectorManager::get_session(uint16_t proto)
 {
-    for ( auto* p : s_handlers )
-    {
-        if ( p->api.type == IT_STREAM && p->api.proto_bits == proto && p->initialized )
-            return p->api.ssn;
-    }
+    auto it = std::find_if(s_handlers.cbegin(), s_handlers.cend(),
+        [proto](const PHObject* p)
+        { return p->api.type == IT_STREAM && p->api.proto_bits == proto && p->initialized; });
+    if (it != s_handlers.cend())
+        return (*it)->api.ssn;
     return nullptr;
 }
 
@@ -1437,7 +1435,7 @@ void InspectorManager::delete_config(SnortConfig* sc)
     if ( !sc->framework_config )
         return;
 
-    for ( auto* p : sc->framework_config->clist )
+    for ( const auto* p : sc->framework_config->clist )
         delete p;
 
     delete sc->framework_config;
@@ -1446,11 +1444,13 @@ void InspectorManager::delete_config(SnortConfig* sc)
 
 static PHClass* get_class(const char* keyword, FrameworkConfig* fc)
 {
+    // cppcheck-suppress constVariable
     for ( auto* p : fc->clist )
         if ( !strcmp(p->api.base.name, keyword) )
             return p;
 
     for ( auto* p : s_handlers )
+    {
         if ( !strcmp(p->api.base.name, keyword) )
         {
             if ( !p->initialized )
@@ -1463,6 +1463,7 @@ static PHClass* get_class(const char* keyword, FrameworkConfig* fc)
             fc->clist.emplace_back(ppc);
             return ppc;
         }
+    }
     return nullptr;
 }
 
@@ -1470,11 +1471,10 @@ static PHObject& get_thread_local_plugin(const InspectApi& api, PHObjectList* ha
 {
     assert(handlers);
 
-    for ( PHObject& phg : *handlers )
-    {
-        if ( &phg.api == &api )
-            return phg;
-    }
+    auto it = std::find_if(handlers->begin(), handlers->end(),
+        [&api](const PHObject& phg){ return &phg.api == &api; });
+    if (it != handlers->end())
+        return (*it);
     handlers->emplace_back(api);
     return handlers->back();
 }
@@ -1908,6 +1908,7 @@ void InspectorManager::prepare_controls(SnortConfig* sc)
             g_disabled.emplace_back(gp->control.vec[i]);
     }
     gp->control.num = g_c;
+    // cppcheck-suppress constVariable
     for (auto* ph : g_disabled)
         gp->control.vec[g_c++] = ph;
     for ( unsigned idx = 0; idx < sc->policy_map->network_policy_count(); ++idx )
@@ -1923,6 +1924,7 @@ void InspectorManager::prepare_controls(SnortConfig* sc)
                 disabled.emplace_back(tp->control.vec[i]);
         }
         tp->control.num = c;
+        // cppcheck-suppress constVariable
         for (auto* ph : disabled)
             tp->control.vec[c++] = ph;
     }

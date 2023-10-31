@@ -23,6 +23,8 @@
 
 #include "script_manager.h"
 
+#include <algorithm>
+
 #include <sys/stat.h>
 
 #include "framework/ips_option.h"
@@ -72,10 +74,9 @@ public:
 
 const char* IpsLuaApi::type = "ips_option";
 
-IpsLuaApi::IpsLuaApi(string& s, string& c, unsigned v) : LuaApi(s, c)
+extern const IpsApi* ips_luajit;
+IpsLuaApi::IpsLuaApi(string& s, string& c, unsigned v) : LuaApi(s, c), api(*ips_luajit)
 {
-    extern const IpsApi* ips_luajit;
-    api = *ips_luajit;
     api.base.name = name.c_str();
     api.base.version = v;
 }
@@ -99,10 +100,9 @@ public:
 
 const char* LogLuaApi::type = "logger";
 
-LogLuaApi::LogLuaApi(string& s, string& c, unsigned v) : LuaApi(s, c)
+extern const LogApi* log_luajit;
+LogLuaApi::LogLuaApi(string& s, string& c, unsigned v) : LuaApi(s, c), api(*log_luajit)
 {
-    extern const LogApi* log_luajit;
-    api = *log_luajit;
     api.base.name = name.c_str();
     api.base.version = v;
 }
@@ -275,9 +275,10 @@ void ScriptManager::load_scripts(const std::vector<std::string>& paths)
 const BaseApi** ScriptManager::get_plugins()
 {
     base_api.clear();
+    base_api.reserve(lua_api.size() + 1);
 
-    for ( auto p : lua_api )
-        base_api.emplace_back(p->get_base());
+    transform(lua_api.cbegin(), lua_api.cend(), back_inserter(base_api),
+        [](const LuaApi* p){ return p->get_base(); });
 
     base_api.emplace_back(nullptr);
 
@@ -296,9 +297,9 @@ void ScriptManager::release_scripts()
 
 string* ScriptManager::get_chunk(const char* key)
 {
-    for ( auto p : lua_api )
-        if ( p->name == key )
-            return &p->chunk;
+    auto it = find_if(lua_api.cbegin(), lua_api.cend(), [key](const LuaApi* p){ return p->name == key; });
+    if (it != lua_api.cend())
+        return &(*it)->chunk;
 
     return nullptr;
 }

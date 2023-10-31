@@ -47,11 +47,11 @@ const StreamBuffer StreamSplitter::reassemble(
     if (n == 0)
         return { nullptr, 0 };
 
-    unsigned max;
-    uint8_t* pdu_buf = DetectionEngine::get_next_buffer(max);
-    max = max > Packet::max_dsize ? Packet::max_dsize : max;
+    unsigned tmp_max;
+    uint8_t* pdu_buf = DetectionEngine::get_next_buffer(tmp_max);
+    tmp_max = tmp_max > Packet::max_dsize ? Packet::max_dsize : tmp_max;
 
-    n = std::min(n, max - offset);
+    n = std::min(n, tmp_max - offset);
     /*
     FIXIT:
         - Extra bytes will be lost and will pass without inspection

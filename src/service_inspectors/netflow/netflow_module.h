@@ -77,30 +77,14 @@ struct NetFlowRule
 
     bool filter_match(const snort::SfIp* ip, const int zone) const
     {
-        bool zone_match = false;
-        if ( zones.empty() )
-            zone_match = true;
-        else
-        {
-            for( int z : zones)
-            {
-                if ( z == NETFLOW_ANY_ZONE or z == zone )
-                {
-                    zone_match = true;
-                    break;
-                }
-            }
-        }
-        if ( !zone_match )
+        if ( !zones.empty()
+            and std::none_of(zones.cbegin(), zones.cend(),
+                [zone](int z){ return z == NETFLOW_ANY_ZONE or z == zone; }))
             return false;
 
-        if ( networks.empty() )
-            return true;
-        for( auto const &net : networks )
-            if ( net.contains(ip) == SFIP_CONTAINS )
-                return true;
-
-        return false;
+        return networks.empty()
+            or std::any_of(networks.cbegin(), networks.cend(),
+                [ip](const snort::SfCidr& net){ return SFIP_CONTAINS == net.contains(ip);});
     }
 
     std::vector <snort::SfCidr> networks;

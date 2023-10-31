@@ -59,12 +59,10 @@ const char* get_instance_file(std::string& file, const char* name)
 
 FileConnectorModule::FileConnectorModule() :
     Module("FC", "FC Help", nullptr)
-{ }
+{ config_set = nullptr; }
 
 FileConnectorConfig::FileConnectorConfigSet* FileConnectorModule::get_and_clear_config()
-{
-    return new FileConnectorConfig::FileConnectorConfigSet;
-}
+{ return new FileConnectorConfig::FileConnectorConfigSet; }
 
 FileConnectorModule::~FileConnectorModule() = default;
 
