@@ -289,7 +289,7 @@ bool FlowBitsOption::is_set(BitOp* bitop)
 {
     return config->or_bits ?
         std::any_of(config->ids.cbegin(), config->ids.cend(),
-            [&bitop](uint16_t id){ return !bitop->is_set(id); })
+            [&bitop](uint16_t id){ return bitop->is_set(id); })
         :
         std::none_of(config->ids.cbegin(), config->ids.cend(),
             [&bitop](uint16_t id){ return !bitop->is_set(id); });
