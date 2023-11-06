@@ -25,7 +25,8 @@
 
 #include "lua_detector_api.h"
 #include <lua.hpp>
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 #include <unordered_map>
 
 #include "detection/fp_config.h"
@@ -712,7 +713,7 @@ static int detector_get_packet_direction(lua_State* L)
     return 1;
 }
 
-/**Perform a pcre match with grouping. A simple regular expression match with no grouping
+/**Perform a pcre2 match with grouping. A simple regular expression match with no grouping
  * can also be performed.
  *
  * @param Lua_State* - Lua state variable.
@@ -721,41 +722,50 @@ static int detector_get_packet_direction(lua_State* L)
  * @return matchedStrings/stack - matched strings are pushed on stack starting with group 0.
  *     There may be 0 or more strings.
  */
-static int detector_get_pcre_groups(lua_State* L)
+static int detector_get_pcre2_groups(lua_State* L)
 {
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
     // Verify detector user data and that we are in packet context
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    int ovector[OVECCOUNT];
-    const char* error;
-    int erroffset;
+    PCRE2_SIZE* ovector;
+    pcre2_match_data* match_data;
+    PCRE2_UCHAR error[128];
+    PCRE2_SIZE erroffset;
+    int errorcode;
 
     const char* pattern = lua_tostring(L, 2);
     unsigned int offset = lua_tonumber(L, 3);     /*offset can be zero, no check necessary. */
 
     /*compile the regular expression pattern, and handle errors */
-    pcre* re = pcre_compile(pattern,  // the pattern
-        PCRE_DOTALL,                  // default options - dot matches all inc \n
-        &error,                       // for error message
-        &erroffset,                   // for error offset
-        nullptr);                     // use default character tables
+    pcre2_code* re = pcre2_compile((PCRE2_SPTR)pattern,  // the pattern
+        PCRE2_ZERO_TERMINATED,         // assume zero terminated strings
+        PCRE2_DOTALL,                  // default options - dot matches all inc \n
+        &errorcode,                    // for error message
+        &erroffset,                    // for error offset
+        nullptr);                      // use default character tables
 
     if (re == nullptr)
     {
-        appid_log(lsd->ldp.pkt, TRACE_ERROR_LEVEL, "PCRE compilation failed at offset %d: %s\n", erroffset, error);
+        pcre2_get_error_message(errorcode, error, 128);
+        appid_log(lsd->ldp.pkt, TRACE_ERROR_LEVEL, "PCRE2 compilation failed at offset %d: %s\n", erroffset, error);
+        return 0;
+    }
+
+    match_data = pcre2_match_data_create(OVECCOUNT, NULL);
+    if (match_data == nullptr) {
+        appid_log(lsd->ldp.pkt, TRACE_ERROR_LEVEL, "PCRE2 failed to allocate mem for match_data\n");
         return 0;
     }
 
     /*pattern match against the subject string. */
-    int rc = pcre_exec(re,            // compiled pattern
-        nullptr,                      // no extra data
-        (const char*)lsd->ldp.data,   // subject string
-        lsd->ldp.size,                // length of the subject
-        offset,                       // offset 0
-        0,                            // default options
-        ovector,                      // output vector for substring information
-        OVECCOUNT);                   // number of elements in the output vector
+    int rc = pcre2_match(re,         // compiled pattern
+        (PCRE2_SPTR)lsd->ldp.data,   // subject string
+        (PCRE2_SIZE)lsd->ldp.size,   // length of the subject
+        (PCRE2_SIZE)offset,          // offset 0
+        0,                           // default options
+        match_data,                  // match data for match results
+        NULL);                       // no match context
 
     if (rc >= 0)
     {
@@ -769,10 +779,11 @@ static int detector_get_pcre_groups(lua_State* L)
         if (!lua_checkstack(L, rc))
         {
             appid_log(lsd->ldp.pkt, TRACE_WARNING_LEVEL, "Cannot grow Lua stack by %d slots to hold "
-                "PCRE matches\n", rc);
+                "PCRE2 matches\n", rc);
             return 0;
         }
 
+        ovector = pcre2_get_ovector_pointer(match_data);
         for (int i = 0; i < rc; i++)
         {
             lua_pushlstring(L, (const char*)lsd->ldp.data + ovector[2*i], ovector[2*i+1] -
@@ -782,12 +793,13 @@ static int detector_get_pcre_groups(lua_State* L)
     else
     {
         // log errors except no matches
-        if (rc != PCRE_ERROR_NOMATCH)
-            appid_log(lsd->ldp.pkt, TRACE_WARNING_LEVEL, "PCRE regular expression group match failed. rc: %d\n", rc);
+        if (rc != PCRE2_ERROR_NOMATCH)
+            appid_log(lsd->ldp.pkt, TRACE_WARNING_LEVEL, "PCRE2 regular expression group match failed. rc: %d\n", rc);
         rc = 0;
     }
 
-    pcre_free(re);
+    pcre2_match_data_free(match_data);
+    pcre2_code_free(re);
     return rc;
 }
 
@@ -3328,7 +3340,7 @@ static const luaL_Reg detector_methods[] =
     { "getPacketSize",            detector_get_packet_size },
     { "getPacketDir",             detector_get_packet_direction },
     { "matchSimplePattern",       detector_memcmp },
-    { "getPcreGroups",            detector_get_pcre_groups },
+    { "getPcreGroups",            detector_get_pcre2_groups },
     { "getL4Protocol",            detector_get_protocol_type },
     { "getPktSrcAddr",            detector_get_packet_src_addr },
     { "getPktDstAddr",            detector_get_packet_dst_addr },

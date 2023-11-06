@@ -217,30 +217,30 @@ static const ConvertMap new_ttl_api =
 const ConvertMap* new_ttl_map = &new_ttl_api;
 
 /*************************************************
- **************  pcre_match_limit   **************
+ **************  pcre2_match_limit   **************
  *************************************************/
 
-static const std::string pcre_match_limit = "pcre_match_limit";
-static const ConvertMap pcre_match_limit_api =
+static const std::string pcre2_match_limit = "pcre2_match_limit";
+static const ConvertMap pcre2_match_limit_api =
 {
-    pcre_match_limit,
-    config_int_ctor<& pcre_match_limit, & detection>,
+    pcre2_match_limit,
+    config_int_ctor<& pcre2_match_limit, & detection>,
 };
 
-const ConvertMap* pcre_match_limit_map = &pcre_match_limit_api;
+const ConvertMap* pcre2_match_limit_map = &pcre2_match_limit_api;
 
 /**************************************************
- **********  pcre_match_limit_recursion  **********
+ **********  pcre2_match_limit_recursion  **********
  **************************************************/
 
-static const std::string pcre_match_limit_recursion = "pcre_match_limit_recursion";
-static const ConvertMap pcre_match_limit_recursion_api =
+static const std::string pcre2_match_limit_recursion = "pcre_match_limit_recursion";
+static const ConvertMap pcre2_match_limit_recursion_api =
 {
-    pcre_match_limit_recursion,
-    config_int_ctor<& pcre_match_limit_recursion, & detection>,
+    pcre2_match_limit_recursion,
+    config_int_ctor<& pcre2_match_limit_recursion, & detection>,
 };
 
-const ConvertMap* pcre_match_limit_recursion_map = &pcre_match_limit_recursion_api;
+const ConvertMap* pcre2_match_limit_recursion_map = &pcre2_match_limit_recursion_api;
 
 /*************************************************
  ******************  pkt_count   *****************

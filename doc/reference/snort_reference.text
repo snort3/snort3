@@ -257,7 +257,7 @@ Table of Contents
     7.92. modbus_unit
     7.93. msg
     7.94. mss
-    7.95. pcre
+    7.95. pcre2
     7.96. pkt_data
     7.97. pkt_num
     7.98. priority
@@ -600,15 +600,15 @@ Configuration:
     offload fast pattern search (defaults to disabled) { 0:max32 }
   * int detection.offload_threads = 0: maximum number of simultaneous
     offloads (defaults to disabled) { 0:max32 }
-  * bool detection.pcre_enable = true: enable pcre pattern matching
-  * int detection.pcre_match_limit = 1500: limit pcre backtracking, 0
+  * bool detection.pcre2_enable = true: enable pcre2 pattern matching
+  * int detection.pcre2_match_limit = 1500: limit pcre2 backtracking, 0
     = off { 0:max32 }
-  * int detection.pcre_match_limit_recursion = 1500: limit pcre stack
+  * int detection.pcre2_match_limit_recursion = 1500: limit pcre2 stack
     consumption, 0 = off { 0:max32 }
-  * bool detection.pcre_override = true: enable pcre match limit
+  * bool detection.pcre2_override = true: enable pcre2 match limit
     overrides when pattern matching (ie ignore /O)
-  * bool detection.pcre_to_regex = false: enable the use of regex
-    instead of pcre for compatible expressions
+  * bool detection.pcre2_to_regex = false: enable the use of regex
+    instead of pcre2 for compatible expressions
   * bool detection.enable_address_anomaly_checks = false: enable
     check and alerting of address anomalies
   * bool detection.enable_strict_reduction = false: enable strict
@@ -8206,11 +8206,11 @@ Configuration:
     }
 
 
-7.95. pcre
+7.95. pcre2
 
 --------------
 
-Help: rule option for matching payload data with pcre
+Help: rule option for matching payload data with pcre2
 
 Type: ips_option
 
@@ -8218,15 +8218,15 @@ Usage: detect
 
 Configuration:
 
-  * string pcre.~re: Snort regular expression
+  * string pcre2.~re: Snort regular expression
 
 Peg counts:
 
-  * pcre.pcre_match_limit: total number of times pcre hit the match
+  * pcre2.pcre2_match_limit: total number of times pcre2 hit the match
     limit (sum)
-  * pcre.pcre_recursion_limit: total number of times pcre hit the
+  * pcre2.pcre2_recursion_limit: total number of times pcre2 hit the
     recursion limit (sum)
-  * pcre.pcre_error: total number of times pcre returns error (sum)
+  * pcre2.pcre2_error: total number of times pcre2 returns error (sum)
 
 
 7.96. pkt_data
@@ -8304,7 +8304,7 @@ Configuration:
 --------------
 
 Help: rule option for matching payload data with hyperscan regex;
-uses pcre syntax
+uses pcre2 syntax
 
 Type: ips_option
 
@@ -9155,7 +9155,7 @@ locations, you can use these options:
   * --with-pkg-libraries: specify the directory containing the
     package libraries.
 
-These can be used for pcap, luajit, pcre, dnet, daq, lzma, openssl,
+These can be used for pcap, luajit, pcre2, dnet, daq, lzma, openssl,
 iconv, and hyperscan packages. For more information on these
 libraries see the Getting Started section of the manual.
 
@@ -9762,15 +9762,15 @@ libraries see the Getting Started section of the manual.
     offload fast pattern search (defaults to disabled) { 0:max32 }
   * int detection.offload_threads = 0: maximum number of simultaneous
     offloads (defaults to disabled) { 0:max32 }
-  * bool detection.pcre_enable = true: enable pcre pattern matching
-  * int detection.pcre_match_limit = 1500: limit pcre backtracking, 0
+  * bool detection.pcre2_enable = true: enable pcre2 pattern matching
+  * int detection.pcre2_match_limit = 1500: limit pcre2 backtracking, 0
     = off { 0:max32 }
-  * int detection.pcre_match_limit_recursion = 1500: limit pcre stack
+  * int detection.pcre2_match_limit_recursion = 1500: limit pcre2 stack
     consumption, 0 = off { 0:max32 }
-  * bool detection.pcre_override = true: enable pcre match limit
+  * bool detection.pcre2_override = true: enable pcre2 match limit
     overrides when pattern matching (ie ignore /O)
-  * bool detection.pcre_to_regex = false: enable the use of regex
-    instead of pcre for compatible expressions
+  * bool detection.pcre2_to_regex = false: enable the use of regex
+    instead of pcre2 for compatible expressions
   * string detection.service_extension[].extend_to
     [].extend_to_service: service to extend to
   * string detection.service_extension[].service: service to perform
@@ -10529,7 +10529,7 @@ libraries see the Getting Started section of the manual.
     that determined packet verdict
   * enum packet_tracer.output = console: select where to send packet
     trace { console | file }
-  * string pcre.~re: Snort regular expression
+  * string pcre2.~re: Snort regular expression
   * bool perf_monitor.base = true: enable base statistics
   * bool perf_monitor.cpu = false: enable cpu statistics
   * bool perf_monitor.flow = false: enable traffic statistics
@@ -12357,10 +12357,10 @@ libraries see the Getting Started section of the manual.
     translation errors (sum)
   * payload_injector.http_injects: total number of http injections
     (sum)
-  * pcre.pcre_error: total number of times pcre returns error (sum)
-  * pcre.pcre_match_limit: total number of times pcre hit the match
+  * pcre2.pcre2_error: total number of times pcre2 returns error (sum)
+  * pcre2.pcre2_match_limit: total number of times pcre2 hit the match
     limit (sum)
-  * pcre.pcre_recursion_limit: total number of times pcre hit the
+  * pcre2.pcre2_recursion_limit: total number of times pcre2 hit the
     recursion limit (sum)
   * perf_monitor.flow_tracker_creates: total number of flow trackers
     created (sum)
@@ -16571,8 +16571,8 @@ and are not applicable elsewhere.
   * pass (ips_action): manage the counters for the pass action
   * payload_injector (basic): payload injection utility
   * pbb (codec): support for 802.1ah protocol
-  * pcre (ips_option): rule option for matching payload data with
-    pcre
+  * pcre2 (ips_option): rule option for matching payload data with
+    pcre2
   * perf_monitor (inspector): performance monitoring and flow
     statistics collection
   * pgm (codec): support for pragmatic general multicast
@@ -16596,7 +16596,7 @@ and are not applicable elsewhere.
     identification system
   * references (basic): define reference systems used in rules
   * regex (ips_option): rule option for matching payload data with
-    hyperscan regex; uses pcre syntax
+    hyperscan regex; uses pcre2 syntax
   * reject (ips_action): manage the data and the counters for the
     reject action
   * rem (ips_option): rule option to convey an arbitrary comment in
@@ -16995,7 +16995,7 @@ and are not applicable elsewhere.
   * ips_option::msg: rule option summarizing rule purpose output with
     events
   * ips_option::mss: detection for TCP maximum segment size
-  * ips_option::pcre: rule option for matching payload data with pcre
+  * ips_option::pcre2: rule option for matching payload data with pcre2
   * ips_option::pkt_data: rule option to set the detection cursor to
     the normalized packet data
   * ips_option::pkt_num: alert on raw packet number
@@ -17005,7 +17005,7 @@ and are not applicable elsewhere.
   * ips_option::reference: rule option to indicate relevant attack
     identification system
   * ips_option::regex: rule option for matching payload data with
-    hyperscan regex; uses pcre syntax
+    hyperscan regex; uses pcre2 syntax
   * ips_option::rem: rule option to convey an arbitrary comment in
     the rule body
   * ips_option::replace: rule option to overwrite payload data; use

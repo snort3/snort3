@@ -29,7 +29,8 @@
 #include <fstream>
 #include <openssl/crypto.h>
 #include <pcap.h>
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 #include <stdexcept>
 #include <vector>
 #include <zlib.h>
@@ -138,12 +139,16 @@ static void install_version_strings(lua_State* L)
 
 static void install_dependencies_strings(Shell* sh, lua_State* L)
 {
+
     assert(dep_versions[0]);
 
+    const char pcre2_version[32] = { 0 };
     std::vector<const char*> vs;
     const char* ljv = LUAJIT_VERSION;
     const char* osv = OpenSSL_version(SSLEAY_VERSION);
     const char* lpv = pcap_lib_version();
+
+    pcre2_config(PCRE2_CONFIG_VERSION, (PCRE2_UCHAR8 *)pcre2_version);
 
     while (*ljv and !isdigit(*ljv))
         ++ljv;
@@ -156,7 +161,7 @@ static void install_dependencies_strings(Shell* sh, lua_State* L)
     vs.push_back(ljv);
     vs.push_back(osv);
     vs.push_back(lpv);
-    vs.push_back(pcre_version());
+    vs.push_back(pcre2_version);
     vs.push_back(zlib_version);
 #ifdef HAVE_HYPERSCAN
     vs.push_back(hs_version());

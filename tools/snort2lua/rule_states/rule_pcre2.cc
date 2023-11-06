@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// rule_pcre.cc author Josh Rosenbaum <jrosenba@cisco.com>
+// rule_pcre2.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
 #include <sstream>
 #include <vector>
@@ -29,49 +29,49 @@ namespace rules
 {
 namespace
 {
-class Pcre : public ConversionState
+class Pcre2 : public ConversionState
 {
 public:
-    Pcre(Converter& c) : ConversionState(c) { }
+    Pcre2(Converter& c) : ConversionState(c) { }
     bool convert(std::istringstream& data) override;
 };
 } // namespace
 
-bool Pcre::convert(std::istringstream& data_stream)
+bool Pcre2::convert(std::istringstream& data_stream)
 {
     bool sticky_buffer_set = false;
     std::string buffer = "pkt_data";
 
     char delim = '/';
-    std::string pcre_str = util::get_rule_option_args(data_stream);
+    std::string pcre2_str = util::get_rule_option_args(data_stream);
     std::string pattern;
     std::string new_opts;
     std::string options;
 
-    if (pcre_str.front() == '!')
+    if (pcre2_str.front() == '!')
     {
         pattern += "!";
-        pcre_str.erase(pcre_str.begin());
+        pcre2_str.erase(pcre2_str.begin());
     }
 
-    if (pcre_str.front() != '"' || pcre_str.back() != '"')
+    if (pcre2_str.front() != '"' || pcre2_str.back() != '"')
     {
         rule_api.bad_rule(data_stream, "pattern must be enclosed in \"");
         return set_next_rule_state(data_stream);
     }
 
-    pcre_str.erase(pcre_str.begin());
+    pcre2_str.erase(pcre2_str.begin());
     pattern += '"';
 
-    if (pcre_str.front() == 'm')
+    if (pcre2_str.front() == 'm')
     {
-        pcre_str.erase(pcre_str.begin());
+        pcre2_str.erase(pcre2_str.begin());
         pattern += 'm';
-        delim = pcre_str.front();
+        delim = pcre2_str.front();
     }
 
-    const std::size_t pattern_end = pcre_str.rfind(delim);
-    if ((pcre_str.front() != delim) || (pattern_end == 0))
+    const std::size_t pattern_end = pcre2_str.rfind(delim);
+    if ((pcre2_str.front() != delim) || (pattern_end == 0))
     {
         std::string tmp = "Regex must be enclosed in delim '";
         tmp.append(delim, 1);
@@ -79,8 +79,8 @@ bool Pcre::convert(std::istringstream& data_stream)
         return set_next_rule_state(data_stream);
     }
 
-    pattern += pcre_str.substr(0, pattern_end + 1);
-    options = pcre_str.substr(pattern_end + 1, std::string::npos);
+    pattern += pcre2_str.substr(0, pattern_end + 1);
+    options = pcre2_str.substr(pattern_end + 1, std::string::npos);
     new_opts = "";
 
     for (char c : options )
@@ -146,14 +146,14 @@ bool Pcre::convert(std::istringstream& data_stream)
  **************************/
 
 static ConversionState* ctor(Converter& c)
-{ return new Pcre(c); }
+{ return new Pcre2(c); }
 
-static const ConvertMap pcre_api =
+static const ConvertMap pcre2_api =
 {
-    "pcre",
+    "pcre2",
     ctor,
 };
 
-const ConvertMap* pcre_map = &pcre_api;
+const ConvertMap* pcre2_map = &pcre2_api;
 } // namespace rules
 

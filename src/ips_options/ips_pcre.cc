@@ -23,7 +23,8 @@
 #include "config.h"
 #endif
 
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 
 #include <cassert>
 
@@ -46,35 +47,33 @@
 
 using namespace snort;
 
-#ifndef PCRE_STUDY_JIT_COMPILE
-#define PCRE_STUDY_JIT_COMPILE 0
+#ifndef PCRE2_STUDY_JIT_COMPILE
+#define PCRE2_STUDY_JIT_COMPILE 0
 #endif
 
 //#define NO_JIT // uncomment to disable JIT for Xcode
 
 #ifdef NO_JIT
-#define PCRE_STUDY_FLAGS 0
-#define pcre_release(x) pcre_free(x)
+#define PCRE2_JIT 0
 #else
-#define PCRE_STUDY_FLAGS PCRE_STUDY_JIT_COMPILE
-#define pcre_release(x) pcre_free_study(x)
+#define PCRE2_JIT PCRE2_STUDY_JIT_COMPILE
 #endif
+#define pcre2_release(x) pcre2_code_free(x)
 
 #define SNORT_PCRE_RELATIVE         0x00010 // relative to the end of the last match
 #define SNORT_PCRE_INVERT           0x00020 // invert detect
 #define SNORT_PCRE_ANCHORED         0x00040
 #define SNORT_OVERRIDE_MATCH_LIMIT  0x00080 // Override default limits on match & match recursion
 
-#define s_name "pcre"
+#define s_name "pcre2"
 #define mod_regex_name "regex"
 
 void show_pcre_counts();
 
-struct PcreData
+struct Pcre2Data
 {
-    pcre* re;           /* compiled regex */
-    pcre_extra* pe;     /* studied regex foo */
-    bool free_pe;
+    pcre2_code* re;     /* compiled regex */
+    pcre2_match_context* match_context; /* match_context for limits */
     int options;        /* sp_pcre specific options (relative & inverse) */
     char* expression;
 };
@@ -88,82 +87,78 @@ struct PcreData
 // by verify; search uses the value in snort conf
 static int s_ovector_max = -1;
 
-static unsigned scratch_index;
-static ScratchAllocator* scratcher = nullptr;
+static THREAD_LOCAL ProfileStats pcre2PerfStats;
 
-static THREAD_LOCAL ProfileStats pcrePerfStats;
-
-struct PcreCounts
+struct Pcre2Counts
 {
-    unsigned pcre_rules;
+    unsigned pcre2_rules;
 #ifdef HAVE_HYPERSCAN
-    unsigned pcre_to_hyper;
+    unsigned pcre2_to_hyper;
 #endif
-    unsigned pcre_native;
+    unsigned pcre2_native;
 };
 
-PcreCounts pcre_counts;
+Pcre2Counts pcre2_counts;
 
 void show_pcre_counts()
 {
-    if (pcre_counts.pcre_rules == 0)
+    if (pcre2_counts.pcre2_rules == 0)
         return;
 
-    LogLabel("pcre counts");
-    LogCount("pcre_rules", pcre_counts.pcre_rules);
+    LogLabel("pcre2 counts");
+    LogCount("pcre2_rules", pcre2_counts.pcre2_rules);
 #ifdef HAVE_HYPERSCAN
-    LogCount("pcre_to_hyper", pcre_counts.pcre_to_hyper);
+    LogCount("pcre2_to_hyper", pcre2_counts.pcre2_to_hyper);
 #endif
-    LogCount("pcre_native", pcre_counts.pcre_native);
+    LogCount("pcre2_native", pcre2_counts.pcre2_native);
 }
 
 //-------------------------------------------------------------------------
 // stats foo
 //-------------------------------------------------------------------------
 
-struct PcreStats
+struct Pcre2Stats
 {
-    PegCount pcre_match_limit;
-    PegCount pcre_recursion_limit;
-    PegCount pcre_error;
+    PegCount pcre2_match_limit;
+    PegCount pcre2_recursion_limit;
+    PegCount pcre2_error;
 };
 
-const PegInfo pcre_pegs[] =
+const PegInfo pcre2_pegs[] =
 {
-    { CountType::SUM, "pcre_match_limit", "total number of times pcre hit the match limit" },
-    { CountType::SUM, "pcre_recursion_limit", "total number of times pcre hit the recursion limit" },
-    { CountType::SUM, "pcre_error", "total number of times pcre returns error" },
+    { CountType::SUM, "pcre2_match_limit", "total number of times pcre2 hit the match limit" },
+    { CountType::SUM, "pcre2_recursion_limit", "total number of times pcre2 hit the recursion limit" },
+    { CountType::SUM, "pcre2_error", "total number of times pcre2 returns error" },
 
     { CountType::END, nullptr, nullptr }
 };
 
-THREAD_LOCAL PcreStats pcre_stats;
+THREAD_LOCAL Pcre2Stats pcre2_stats;
 
 //-------------------------------------------------------------------------
 // implementation foo
 //-------------------------------------------------------------------------
 
-static void pcre_capture(
-    const void* code, const void* extra)
+static void pcre2_capture(const void* code)
 {
     int tmp_ovector_size = 0;
 
-    pcre_fullinfo((const pcre*)code, (const pcre_extra*)extra,
-        PCRE_INFO_CAPTURECOUNT, &tmp_ovector_size);
+    pcre2_pattern_info((const pcre2_code *)code,
+        PCRE2_INFO_CAPTURECOUNT, &tmp_ovector_size);
 
     if (tmp_ovector_size > s_ovector_max)
         s_ovector_max = tmp_ovector_size;
 }
 
-static void pcre_check_anchored(PcreData* pcre_data)
+static void pcre2_check_anchored(Pcre2Data* pcre2_data)
 {
     int rc;
     unsigned long int options = 0;
 
-    if ((pcre_data == nullptr) || (pcre_data->re == nullptr) || (pcre_data->pe == nullptr))
+    if ((pcre2_data == nullptr) || (pcre2_data->re == nullptr))
         return;
 
-    rc = pcre_fullinfo(pcre_data->re, pcre_data->pe, PCRE_INFO_OPTIONS, (void*)&options);
+    rc = pcre2_pattern_info(pcre2_data->re, PCRE2_INFO_ARGOPTIONS, (void*)&options);
     switch (rc)
     {
     /* pcre_fullinfo fails for the following:
@@ -178,40 +173,41 @@ static void pcre_check_anchored(PcreData* pcre_data)
         /* This is the success code */
         break;
 
-    case PCRE_ERROR_NULL:
-        ParseError("pcre_fullinfo: code and/or where were null.");
+    case PCRE2_ERROR_NULL:
+        ParseError("pcre2_fullinfo: code and/or where were null.");
         return;
 
-    case PCRE_ERROR_BADMAGIC:
-        ParseError("pcre_fullinfo: compiled code didn't have correct magic.");
+    case PCRE2_ERROR_BADMAGIC:
+        ParseError("pcre2_fullinfo: compiled code didn't have correct magic.");
         return;
 
-    case PCRE_ERROR_BADOPTION:
-        ParseError("pcre_fullinfo: option type is invalid.");
+    case PCRE2_ERROR_BADOPTION:
+        ParseError("pcre2_fullinfo: option type is invalid.");
         return;
 
     default:
-        ParseError("pcre_fullinfo: Unknown error code.");
+        ParseError("pcre2_fullinfo: Unknown error code.");
         return;
     }
 
-    if ((options & PCRE_ANCHORED) && !(options & PCRE_MULTILINE))
+    if ((options & PCRE2_ANCHORED) && !(options & PCRE2_MULTILINE))
     {
         /* This means that this pcre rule option shouldn't be EvalStatus
          * even if any of it's relative children should fail to match.
          * It is anchored to the cursor set by the previous cursor setting
          * rule option */
-        pcre_data->options |= SNORT_PCRE_ANCHORED;
+        pcre2_data->options |= SNORT_PCRE_ANCHORED;
     }
 }
 
-static void pcre_parse(const SnortConfig* sc, const char* data, PcreData* pcre_data)
+static void pcre2_parse(const SnortConfig* sc, const char* data, Pcre2Data* pcre2_data)
 {
-    const char* error;
+    PCRE2_UCHAR error[128];
     char* re, * free_me;
     char* opts;
     char delimit = '/';
-    int erroffset;
+    int errorcode;
+    PCRE2_SIZE erroffset;
     int compile_flags = 0;
 
     if (data == nullptr)
@@ -231,7 +227,7 @@ static void pcre_parse(const SnortConfig* sc, const char* data, PcreData* pcre_d
 
     if (*re == '!')
     {
-        pcre_data->options |= SNORT_PCRE_INVERT;
+        pcre2_data->options |= SNORT_PCRE_INVERT;
         re++;
         while (isspace((int)*re))
             re++;
@@ -263,7 +259,7 @@ static void pcre_parse(const SnortConfig* sc, const char* data, PcreData* pcre_d
     else if (*re != delimit)
         goto syntax;
 
-    pcre_data->expression = snort_strdup(re);
+    pcre2_data->expression = snort_strdup(re);
 
     /* find ending delimiter, trim delimit chars */
     opts = strrchr(re, delimit);
@@ -281,25 +277,25 @@ static void pcre_parse(const SnortConfig* sc, const char* data, PcreData* pcre_d
     {
         switch (*opts)
         {
-        case 'i':  compile_flags |= PCRE_CASELESS;            break;
-        case 's':  compile_flags |= PCRE_DOTALL;              break;
-        case 'm':  compile_flags |= PCRE_MULTILINE;           break;
-        case 'x':  compile_flags |= PCRE_EXTENDED;            break;
+        case 'i':  compile_flags |= PCRE2_CASELESS;            break;
+        case 's':  compile_flags |= PCRE2_DOTALL;              break;
+        case 'm':  compile_flags |= PCRE2_MULTILINE;           break;
+        case 'x':  compile_flags |= PCRE2_EXTENDED;            break;
 
         /*
          * these are pcre specific... don't work with perl
          */
-        case 'A':  compile_flags |= PCRE_ANCHORED;            break;
-        case 'E':  compile_flags |= PCRE_DOLLAR_ENDONLY;      break;
-        case 'G':  compile_flags |= PCRE_UNGREEDY;            break;
+        case 'A':  compile_flags |= PCRE2_ANCHORED;            break;
+        case 'E':  compile_flags |= PCRE2_DOLLAR_ENDONLY;      break;
+        case 'G':  compile_flags |= PCRE2_UNGREEDY;            break;
 
         /*
-         * these are snort specific don't work with pcre or perl
+         * these are snort specific don't work with pcre2 or perl
          */
-        case 'R':  pcre_data->options |= SNORT_PCRE_RELATIVE; break;
+        case 'R':  pcre2_data->options |= SNORT_PCRE_RELATIVE; break;
         case 'O':
-            if ( sc->pcre_override )
-                pcre_data->options |= SNORT_OVERRIDE_MATCH_LIMIT;
+            if ( sc->pcre2_override )
+                pcre2_data->options |= SNORT_OVERRIDE_MATCH_LIMIT;
             break;
 
         default:
@@ -310,71 +306,68 @@ static void pcre_parse(const SnortConfig* sc, const char* data, PcreData* pcre_d
     }
 
     /* now compile the re */
-    pcre_data->re = pcre_compile(re, compile_flags, &error, &erroffset, nullptr);
+    pcre2_data->re = pcre2_compile((PCRE2_SPTR)re, PCRE2_ZERO_TERMINATED, compile_flags, &errorcode, &erroffset, nullptr);
 
-    if (pcre_data->re == nullptr)
+    if (pcre2_data->re == nullptr)
     {
-        ParseError(": pcre compile of '%s' failed at offset "
-            "%d : %s", re, erroffset, error);
+        pcre2_get_error_message(errorcode, error, 128);
+        ParseError(": pcre2 compile of '%s' failed at offset "
+            "%zu : %s", re, erroffset, error);
+        return;
+    }
+
+    /* now create match context */
+    pcre2_data->match_context = pcre2_match_context_create(NULL);
+    if(pcre2_data->match_context == NULL)
+    {
+        ParseError(": failed to allocate memory for match context");
         return;
     }
 
     /* now study it... */
-    pcre_data->pe = pcre_study(pcre_data->re, PCRE_STUDY_FLAGS, &error);
+    if (PCRE2_JIT)
+        errorcode = pcre2_jit_compile(pcre2_data->re, PCRE2_JIT_COMPLETE);
 
-    if (pcre_data->pe)
+    if (PCRE2_JIT || errorcode)
     {
-        if ((sc->get_pcre_match_limit() != 0) &&
-            !(pcre_data->options & SNORT_OVERRIDE_MATCH_LIMIT))
+        if ((sc->get_pcre2_match_limit() != 0) &&
+            !(pcre2_data->options & SNORT_OVERRIDE_MATCH_LIMIT))
         {
-            if ( !(pcre_data->pe->flags & PCRE_EXTRA_MATCH_LIMIT) )
-                pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT;
-
-            pcre_data->pe->match_limit = sc->get_pcre_match_limit();
+            pcre2_set_match_limit(pcre2_data->match_context, sc->get_pcre2_match_limit());
         }
 
-        if ((sc->get_pcre_match_limit_recursion() != 0) &&
-            !(pcre_data->options & SNORT_OVERRIDE_MATCH_LIMIT))
+        if ((sc->get_pcre2_match_limit_recursion() != 0) &&
+            !(pcre2_data->options & SNORT_OVERRIDE_MATCH_LIMIT))
         {
-            if ( !(pcre_data->pe->flags & PCRE_EXTRA_MATCH_LIMIT_RECURSION) )
-                pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT_RECURSION;
-
-            pcre_data->pe->match_limit_recursion =
-                sc->get_pcre_match_limit_recursion();
+            pcre2_set_match_limit(pcre2_data->match_context, sc->get_pcre2_match_limit_recursion());
         }
     }
     else
     {
-        if (!(pcre_data->options & SNORT_OVERRIDE_MATCH_LIMIT) &&
-            ((sc->get_pcre_match_limit() != 0) ||
-             (sc->get_pcre_match_limit_recursion() != 0)))
+        if (!(pcre2_data->options & SNORT_OVERRIDE_MATCH_LIMIT) &&
+            ((sc->get_pcre2_match_limit() != 0) ||
+             (sc->get_pcre2_match_limit_recursion() != 0)))
         {
-            pcre_data->pe = (pcre_extra*)snort_calloc(sizeof(pcre_extra));
-            pcre_data->free_pe = true;
-
-            if (sc->get_pcre_match_limit() != 0)
+            if (sc->get_pcre2_match_limit() != 0)
             {
-                pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT;
-                pcre_data->pe->match_limit = sc->get_pcre_match_limit();
+                pcre2_set_match_limit(pcre2_data->match_context, sc->get_pcre2_match_limit());
             }
 
-            if (sc->get_pcre_match_limit_recursion() != 0)
+            if (sc->get_pcre2_match_limit_recursion() != 0)
             {
-                pcre_data->pe->flags |= PCRE_EXTRA_MATCH_LIMIT_RECURSION;
-                pcre_data->pe->match_limit_recursion =
-                    sc->get_pcre_match_limit_recursion();
+                pcre2_set_match_limit(pcre2_data->match_context, sc->get_pcre2_match_limit_recursion());
             }
         }
     }
 
-    if (error != nullptr)
+    if (PCRE2_JIT && errorcode)
     {
-        ParseError("pcre study failed : %s", error);
+        ParseError("pcre2 JIT failed : %s", error);
         return;
     }
 
-    pcre_capture(pcre_data->re, pcre_data->pe);
-    pcre_check_anchored(pcre_data);
+    pcre2_capture(pcre2_data->re);
+    pcre2_check_anchored(pcre2_data);
 
     snort_free(free_me);
     return;
@@ -383,40 +376,44 @@ syntax:
     snort_free(free_me);
 
     // ensure integrity from parse error to fatal error
-    if ( !pcre_data->expression )
-        pcre_data->expression = snort_strdup("");
+    if ( !pcre2_data->expression )
+        pcre2_data->expression = snort_strdup("");
 
-    ParseError("unable to parse pcre %s", data);
+    ParseError("unable to parse pcre2 %s", data);
 }
 
 /*
- * Perform a search of the PCRE data.
+ * Perform a search of the PCRE2 data.
  * found_offset will be set to -1 when the find is unsuccessful OR the routine is inverted
  */
-static bool pcre_search(
+static bool pcre2_search(
     Packet* p,
-    const PcreData* pcre_data,
+    const Pcre2Data* pcre2_data,
     const uint8_t* buf,
     unsigned len,
     unsigned start_offset,
     int& found_offset)
 {
+    pcre2_match_data *match_data;
+    PCRE2_SIZE *ovector;
     bool matched;
 
     found_offset = -1;
 
-    std::vector<void *> ss = p->context->conf->state[get_instance_id()];
-    assert(ss[scratch_index]);
+    match_data = pcre2_match_data_create(p->context->conf->pcre2_ovector_size, NULL);
+    if (match_data == nullptr) {
+        pcre2_stats.pcre2_error++;
+        return false;
+    }
 
-    int result = pcre_exec(
-        pcre_data->re,  /* result of pcre_compile() */
-        pcre_data->pe,  /* result of pcre_study()   */
-        (const char*)buf, /* the subject string */
-        len,            /* the length of the subject string */
-        start_offset,   /* start at offset 0 in the subject */
-        0,              /* options(handled at compile time */
-        (int*)ss[scratch_index], /* vector for substring information */
-        p->context->conf->pcre_ovector_size); /* number of elements in the vector */
+    int result = pcre2_match(
+        pcre2_data->re,  /* result of pcre_compile() */
+        (PCRE2_SPTR)buf, /* the subject string */
+        (PCRE2_SIZE)len, /* the length of the subject string */
+        (PCRE2_SIZE)start_offset, /* start at offset 0 in the subject */
+        0,               /* options(handled at compile time */
+        match_data,      /* match data to store the match results */
+        pcre2_data->match_context); /* match context for limits */
 
     if (result >= 0)
     {
@@ -441,33 +438,36 @@ static bool pcre_search(
          * and a single int for scratch space.
          */
 
-        found_offset = ((int*)ss[scratch_index])[1];
+        ovector = pcre2_get_ovector_pointer(match_data);
+        found_offset = ovector[1];
     }
-    else if (result == PCRE_ERROR_NOMATCH)
+    else if (result == PCRE2_ERROR_NOMATCH)
     {
         matched = false;
     }
-    else if (result == PCRE_ERROR_MATCHLIMIT)
+    else if (result == PCRE2_ERROR_MATCHLIMIT)
     {
-        pcre_stats.pcre_match_limit++;
+        pcre2_stats.pcre2_match_limit++;
         matched = false;
     }
-    else if (result == PCRE_ERROR_RECURSIONLIMIT)
+    else if (result == PCRE2_ERROR_RECURSIONLIMIT)
     {
-        pcre_stats.pcre_recursion_limit++;
+        pcre2_stats.pcre2_recursion_limit++;
         matched = false;
     }
     else
     {
-        pcre_stats.pcre_error++;
+        pcre2_stats.pcre2_error++;
         return false;
     }
 
     /* invert sense of match */
-    if (pcre_data->options & SNORT_PCRE_INVERT)
+    if (pcre2_data->options & SNORT_PCRE_INVERT)
     {
         matched = !matched;
     }
+
+    pcre2_match_data_free(match_data);
 
     return matched;
 }
@@ -476,14 +476,14 @@ static bool pcre_search(
 // class methods
 //-------------------------------------------------------------------------
 
-class PcreOption : public IpsOption
+class Pcre2Option : public IpsOption
 {
 public:
-    PcreOption(PcreData* c) :
+    Pcre2Option(Pcre2Data* c) :
         IpsOption(s_name, RULE_OPTION_TYPE_CONTENT)
     { config = c; }
 
-    ~PcreOption() override;
+    ~Pcre2Option() override;
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -497,17 +497,17 @@ public:
     EvalStatus eval(Cursor&, Packet*) override;
     bool retry(Cursor&) override;
 
-    PcreData* get_data()
+    Pcre2Data* get_data()
     { return config; }
 
-    void set_data(PcreData* pcre)
+    void set_data(Pcre2Data* pcre)
     { config = pcre; }
 
 private:
-    PcreData* config;
+    Pcre2Data* config;
 };
 
-PcreOption::~PcreOption()
+Pcre2Option::~Pcre2Option()
 {
     if ( !config )
         return;
@@ -515,21 +515,16 @@ PcreOption::~PcreOption()
     if ( config->expression )
         snort_free(config->expression);
 
-    if ( config->pe )
-    {
-        if ( config->free_pe )
-            snort_free(config->pe);
-        else
-            pcre_release(config->pe);
-    }
+    if ( config->match_context )
+        pcre2_match_context_free(config->match_context);
 
     if ( config->re )
-        free(config->re);  // external allocation
+        pcre2_code_free(config->re);  // external allocation
 
     snort_free(config);
 }
 
-uint32_t PcreOption::hash() const
+uint32_t Pcre2Option::hash() const
 {
     uint32_t a = 0, b = 0, c = 0;
     int expression_len = strlen(config->expression);
@@ -583,14 +578,14 @@ uint32_t PcreOption::hash() const
     return c;
 }
 
-bool PcreOption::operator==(const IpsOption& ips) const
+bool Pcre2Option::operator==(const IpsOption& ips) const
 {
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const PcreOption& rhs = (const PcreOption&)ips;
-    PcreData* left = config;
-    PcreData* right = rhs.config;
+    const Pcre2Option& rhs = (const Pcre2Option&)ips;
+    Pcre2Data* left = config;
+    Pcre2Data* right = rhs.config;
 
     if (( strcmp(left->expression, right->expression) == 0) &&
         ( left->options == right->options))
@@ -601,13 +596,13 @@ bool PcreOption::operator==(const IpsOption& ips) const
     return false;
 }
 
-IpsOption::EvalStatus PcreOption::eval(Cursor& c, Packet* p)
+IpsOption::EvalStatus Pcre2Option::eval(Cursor& c, Packet* p)
 {
     // cppcheck-suppress unreadVariable
-    RuleProfile profile(pcrePerfStats);
+    RuleProfile profile(pcre2PerfStats);
 
-    // short circuit this for testing pcre performance impact
-    if ( p->context->conf->no_pcre() )
+    // short circuit this for testing pcre2 performance impact
+    if ( p->context->conf->no_pcre2() )
         return NO_MATCH;
 
     unsigned pos = c.get_delta();
@@ -621,7 +616,7 @@ IpsOption::EvalStatus PcreOption::eval(Cursor& c, Packet* p)
 
     int found_offset = -1; // where is the ending location of the pattern
 
-    if ( pcre_search(p, config, c.buffer()+adj, c.size()-adj, pos, found_offset) )
+    if ( pcre2_search(p, config, c.buffer()+adj, c.size()-adj, pos, found_offset) )
     {
         if ( found_offset > 0 )
         {
@@ -636,17 +631,17 @@ IpsOption::EvalStatus PcreOption::eval(Cursor& c, Packet* p)
 }
 
 // we always advance by found_offset so no adjustments to cursor are done
-// here; note also that this means relative pcre matches on overlapping
+// here; note also that this means relative pcre2 matches on overlapping
 // patterns won't work.  given the test pattern "ABABACD":
 //
 // ( sid:1; content:"ABA"; content:"C"; within:1; )
-// ( sid:2; pcre:"/ABA/"; content:"C"; within:1; )
+// ( sid:2; pcre2:"/ABA/"; content:"C"; within:1; )
 //
 // sid 1 will fire but sid 2 will NOT.  this example is easily fixed by
-// using content, but more advanced pcre won't work for the relative /
+// using content, but more advanced pcre2 won't work for the relative /
 // overlap case.
 
-bool PcreOption::retry(Cursor&)
+bool Pcre2Option::retry(Cursor&)
 {
     if ((config->options & (SNORT_PCRE_INVERT | SNORT_PCRE_ANCHORED)))
     {
@@ -668,22 +663,19 @@ static const Parameter s_params[] =
 };
 
 #define s_help \
-    "rule option for matching payload data with pcre"
+    "rule option for matching payload data with pcre2"
 
-class PcreModule : public Module
+class Pcre2Module : public Module
 {
 public:
-    PcreModule() : Module(s_name, s_help, s_params)
+    Pcre2Module() : Module(s_name, s_help, s_params)
     {
         data = nullptr;
-        scratcher = new SimpleScratchAllocator(scratch_setup, scratch_cleanup);
-        scratch_index = scratcher->get_id();
     }
 
-    ~PcreModule() override
+    ~Pcre2Module() override
     {
         delete data;
-        delete scratcher;
     }
 
 #ifdef HAVE_HYPERSCAN
@@ -693,12 +685,12 @@ public:
     bool end(const char*, int, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
-    { return &pcrePerfStats; }
+    { return &pcre2PerfStats; }
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
 
-    PcreData* get_data();
+    Pcre2Data* get_data();
 
     Usage get_usage() const override
     { return DETECT; }
@@ -707,31 +699,28 @@ public:
     { return mod_regex; }
 
 private:
-    PcreData* data;
+    Pcre2Data* data;
     Module* mod_regex = nullptr;
     std::string re;
-
-    static bool scratch_setup(SnortConfig*);
-    static void scratch_cleanup(SnortConfig*);
 };
 
-PcreData* PcreModule::get_data()
+Pcre2Data* Pcre2Module::get_data()
 {
-    PcreData* tmp = data;
+    Pcre2Data* tmp = data;
     data = nullptr;
     return tmp;
 }
 
-const PegInfo* PcreModule::get_pegs() const
-{ return pcre_pegs; }
+const PegInfo* Pcre2Module::get_pegs() const
+{ return pcre2_pegs; }
 
-PegCount* PcreModule::get_counts() const
-{ return (PegCount*)&pcre_stats; }
+PegCount* Pcre2Module::get_counts() const
+{ return (PegCount*)&pcre2_stats; }
 
 #ifdef HAVE_HYPERSCAN
-bool PcreModule::begin(const char* name, int v, SnortConfig* sc)
+bool Pcre2Module::begin(const char* name, int v, SnortConfig* sc)
 {
-    if ( sc->pcre_to_regex )
+    if ( sc->pcre2_to_regex )
     {
         if ( !mod_regex )
             mod_regex = ModuleManager::get_module(mod_regex_name);
@@ -743,7 +732,7 @@ bool PcreModule::begin(const char* name, int v, SnortConfig* sc)
 }
 #endif
 
-bool PcreModule::set(const char* name, Value& v, SnortConfig* sc)
+bool Pcre2Module::set(const char* name, Value& v, SnortConfig* sc)
 {
     assert(v.is("~re"));
     re = v.get_string();
@@ -754,50 +743,28 @@ bool PcreModule::set(const char* name, Value& v, SnortConfig* sc)
     return true;
 }
 
-bool PcreModule::end(const char* name, int v, SnortConfig* sc)
+bool Pcre2Module::end(const char* name, int v, SnortConfig* sc)
 {
     if( mod_regex )
         mod_regex = mod_regex->end(name, v, sc) ? mod_regex : nullptr;
 
     if ( !mod_regex )
     {
-        data = (PcreData*)snort_calloc(sizeof(*data));
-        pcre_parse(sc, re.c_str(), data);
+        data = (Pcre2Data*)snort_calloc(sizeof(*data));
+        pcre2_parse(sc, re.c_str(), data);
     }
-
-    return true;
-}
-
-bool PcreModule::scratch_setup(SnortConfig* sc)
-{
-    if ( s_ovector_max < 0 )
-        return false;
 
     // The pcre_fullinfo() function can be used to find out how many
     // capturing subpatterns there are in a compiled pattern. The
     // smallest size for ovector that will allow for n captured
     // substrings, in addition to the offsets of the substring matched
     // by the whole pattern is 3(n+1).
-
-    sc->pcre_ovector_size = 3 * (s_ovector_max + 1);
-    s_ovector_max = -1;
-
-    for ( unsigned i = 0; i < sc->num_slots; ++i )
-    {
-        std::vector<void *>& ss = sc->state[i];
-        ss[scratch_index] = snort_calloc(sc->pcre_ovector_size, sizeof(int));
+    if ( s_ovector_max >= 0 ) {
+        sc->pcre2_ovector_size = 3 * (s_ovector_max + 1);
+        s_ovector_max = -1;
     }
+
     return true;
-}
-
-void PcreModule::scratch_cleanup(SnortConfig* sc)
-{
-    for ( unsigned i = 0; i < sc->num_slots; ++i )
-    {
-        std::vector<void *>& ss = sc->state[i];
-        snort_free(ss[scratch_index]);
-        ss[scratch_index] = nullptr;
-    }
 }
 
 //-------------------------------------------------------------------------
@@ -805,21 +772,21 @@ void PcreModule::scratch_cleanup(SnortConfig* sc)
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{ return new PcreModule; }
+{ return new Pcre2Module; }
 
 static void mod_dtor(Module* m)
 { delete m; }
 
-static IpsOption* pcre_ctor(Module* p, IpsInfo& info)
+static IpsOption* pcre2_ctor(Module* p, IpsInfo& info)
 {
-    pcre_counts.pcre_rules++;
-    PcreModule* m = (PcreModule*)p;
+    pcre2_counts.pcre2_rules++;
+    Pcre2Module* m = (Pcre2Module*)p;
 
 #ifdef HAVE_HYPERSCAN
     Module* mod_regex = m->get_mod_regex();
     if ( mod_regex )
     {
-        pcre_counts.pcre_to_hyper++;
+        pcre2_counts.pcre2_to_hyper++;
         const IpsApi* opt_api = IpsManager::get_option_api(mod_regex_name);
         return opt_api->ctor(mod_regex, info);
     }
@@ -828,16 +795,16 @@ static IpsOption* pcre_ctor(Module* p, IpsInfo& info)
     UNUSED(info);
 #endif
     {
-        pcre_counts.pcre_native++;
-        PcreData* d = m->get_data();
-        return new PcreOption(d);
+        pcre2_counts.pcre2_native++;
+        Pcre2Data* d = m->get_data();
+        return new Pcre2Option(d);
     }
 }
 
-static void pcre_dtor(IpsOption* p)
+static void pcre2_dtor(IpsOption* p)
 { delete p; }
 
-static const IpsApi pcre_api =
+static const IpsApi pcre2_api =
 {
     {
         PT_IPS_OPTION,
@@ -857,17 +824,17 @@ static const IpsApi pcre_api =
     nullptr,
     nullptr,
     nullptr,
-    pcre_ctor,
-    pcre_dtor,
+    pcre2_ctor,
+    pcre2_dtor,
     nullptr
 };
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
-const BaseApi* ips_pcre[] =
+const BaseApi* ips_pcre2[] =
 #endif
 {
-    &pcre_api.base,
+    &pcre2_api.base,
     nullptr
 };

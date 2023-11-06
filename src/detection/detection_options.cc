@@ -594,7 +594,7 @@ int detection_option_node_evaluate(
                             {
                                 if ( !child_node->is_relative )
                                 {
-                                    // If it's a non-relative content or pcre, no reason
+                                    // If it's a non-relative content or pcre2, no reason
                                     // to check again.  Only increment result once.
                                     // Should hit this condition on first loop iteration.
                                     if ( loop_count == 1 )
@@ -660,10 +660,10 @@ int detection_option_node_evaluate(
                 }
 
                 // If all children branches matched, we don't need to reeval any of
-                // the children so don't need to reeval this content/pcre rule
+                // the children so don't need to reeval this content/pcre2 rule
                 // option at a new offset.
                 // Else, reset the DOE ptr to last eval for offset/depth,
-                // distance/within adjustments for this same content/pcre rule option.
+                // distance/within adjustments for this same content/pcre2 rule option.
                 // If the node and its sub-tree propagate MATCH back,
                 // then all its continuations are recalled.
                 if ( result == node->num_children )

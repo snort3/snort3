@@ -91,10 +91,10 @@ Optional Packages:
                             luajit include directory
     --with-luajit-libraries=DIR
                             luajit library directory
-    --with-pcre-includes=DIR
-                            libpcre include directory
-    --with-pcre-libraries=DIR
-                            libpcre library directory
+    --with-pcre2-includes=DIR
+                            libpcre2 include directory
+    --with-pcre2-libraries=DIR
+                            libpcre2 library directory
     --with-dnet-includes=DIR
                             libdnet include directory
     --with-dnet-libraries=DIR
@@ -421,11 +421,11 @@ while [ $# -ne 0 ]; do
         --with-luajit-libraries=*)
             append_cache_entry LUAJIT_LIBRARIES_DIR_HINT PATH $optarg
             ;;
-        --with-pcre-includes=*)
-            append_cache_entry PCRE_INCLUDE_DIR_HINT PATH $optarg
+        --with-pcre2-includes=*)
+            append_cache_entry PCRE2_INCLUDE_DIR_HINT PATH $optarg
             ;;
-        --with-pcre-libraries=*)
-            append_cache_entry PCRE_LIBRARIES_DIR_HINT PATH $optarg
+        --with-pcre2-libraries=*)
+            append_cache_entry PCRE2_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         --with-dnet-includes=*)
             append_cache_entry DNET_INCLUDE_DIR_HINT PATH $optarg
