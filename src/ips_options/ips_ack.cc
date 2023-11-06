@@ -82,10 +82,12 @@ IpsOption::EvalStatus TcpAckOption::eval(Cursor&, Packet* p)
     // cppcheck-suppress unreadVariable
     RuleProfile profile(tcpAckPerfStats);
 
-    if ( p->ptrs.tcph && config.eval(p->ptrs.tcph->th_ack) )
-        return MATCH;
+    if ( !p->ptrs.tcph )
+        return NO_MATCH;
 
-    return NO_MATCH;
+    auto ack = p->ptrs.tcph->ack();
+
+    return config.eval(ack) ? MATCH : NO_MATCH;
 }
 
 //-------------------------------------------------------------------------
