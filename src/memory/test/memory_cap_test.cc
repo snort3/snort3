@@ -235,7 +235,7 @@ TEST(memory, prune1)
     const uint64_t start = 50;
     heap->total = start;
 
-    MemoryConfig config { cap, 100, 0, 2, true };
+    MemoryConfig config { (size_t)cap, 100, 0, 2, true };
     MemoryCap::start(config, pruner);
     MemoryCap::thread_init();
 
@@ -336,7 +336,7 @@ TEST(memory, prune1)
 TEST(memory, prune3)
 {
     uint64_t cap = 100;
-    MemoryConfig config { cap, 100, 0, 1, true };
+    MemoryConfig config { (size_t)cap, 100, 0, 1, true };
     MemoryCap::start(config, pruner);
     MemoryCap::thread_init();
 
@@ -378,7 +378,7 @@ TEST(memory, prune3)
 TEST(memory, two_cycles)
 {
     uint64_t cap = 100;
-    MemoryConfig config { cap, 100, 0, 1, true };
+    MemoryConfig config { (size_t)cap, 100, 0, 1, true };
     MemoryCap::start(config, pruner);
     MemoryCap::thread_init();
 
@@ -423,7 +423,7 @@ TEST(memory, reap_failure)
     const uint64_t start = 50;
     heap->total = start;
 
-    MemoryConfig config { cap, 100, 0, 2, true };
+    MemoryConfig config { (size_t)cap, 100, 0, 2, true };
     MemoryCap::start(config, pruner);
     MemoryCap::thread_init();
 
@@ -481,7 +481,7 @@ TEST(memory, reap_freed_outside_of_pruning)
     const uint64_t start = 50;
     heap->total = start;
 
-    MemoryConfig config { cap, 100, 0, 2, true };
+    MemoryConfig config { (size_t)cap, 100, 0, 2, true };
     MemoryCap::start(config, pruner);
     MemoryCap::thread_init();
 

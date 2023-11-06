@@ -102,8 +102,7 @@ AppIdInspector::AppIdInspector(AppIdModule& mod)
 
 AppIdInspector::~AppIdInspector()
 {
-    if (ctxt)
-        delete ctxt;
+    delete ctxt;
     delete config;
 }
 

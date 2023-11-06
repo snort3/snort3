@@ -54,23 +54,18 @@ THREAD_LOCAL Active::ActiveSuspendReason Active::s_suspend_reason = Active::ASP_
 THREAD_LOCAL const Trace* stream_trace = nullptr;
 
 void Active::drop_packet(snort::Packet const*, bool) { }
-Analyzer* Analyzer::get_local_analyzer() { return nullptr; }
-void Analyzer::resume(unsigned long) { }
 void Active::set_drop_reason(char const*) { }
-DetectionEngine::DetectionEngine() { context = nullptr; }
-ExpectCache::~ExpectCache() = default;
-DetectionEngine::~DetectionEngine() = default;
-const SnortConfig* SnortConfig::get_conf() { return nullptr; }
-void DetectionEngine::disable_all(Packet*) { }
 ExpectCache::ExpectCache(uint32_t) { }
+ExpectCache::~ExpectCache() = default;
 bool ExpectCache::check(Packet*, Flow*) { return true; }
 bool ExpectCache::is_expected(Packet*) { return true; }
+void DetectionEngine::disable_all(Packet*) { }
 Flow* HighAvailabilityManager::import(Packet&, FlowKey&) { return nullptr; }
 bool HighAvailabilityManager::in_standby(Flow*) { return false; }
 SfIpRet SfIp::set(void const*, int) { return SFIP_SUCCESS; }
-void snort::trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
-uint8_t snort::TraceApi::get_constraints_generation() { return 0; }
-void snort::TraceApi::filter(const Packet&) {}
+const SnortConfig* SnortConfig::get_conf() { return nullptr; }
+uint8_t TraceApi::get_constraints_generation() { return 0; }
+void TraceApi::filter(const Packet&) {}
 void ThreadConfig::preemptive_kick() {}
 
 namespace snort
@@ -85,7 +80,8 @@ void Flow::set_direction(Packet*) { }
 void Flow::set_mpls_layer_per_dir(Packet*) { }
 
 time_t packet_time() { return 0; }
-void packet_gettimeofday(struct timeval* tv) { *tv = {}; }
+
+void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
 
 namespace ip
 {
@@ -239,10 +235,10 @@ TEST(flow_prune, prune_proto)
     FlowCacheConfig fcg;
     fcg.max_flows = 5;
     fcg.prune_flows = 3;
-    
+
     for(uint8_t i = to_utype(PktType::NONE); i <= to_utype(PktType::MAX); i++)
         fcg.proto[i].nominal_timeout = 5;
-    
+
     FlowCache *cache = new FlowCache(fcg);
     int port = 1;
 
@@ -263,7 +259,7 @@ TEST(flow_prune, prune_proto)
             continue;
         CHECK(cache->prune_one(PruneReason::NONE, true, i) == false);
     }
-    
+
     //pruning should happen for UDP
     CHECK(cache->prune_one(PruneReason::NONE, true, to_utype(PktType::UDP)) == true);
 

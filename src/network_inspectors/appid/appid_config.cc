@@ -95,6 +95,8 @@ void AppIdConfig::show() const
     ConfigLogger::log_value("memcap", memcap);
 }
 
+static bool once = false;
+
 void AppIdContext::pterm()
 {
     if (odp_thread_local_ctxt)
@@ -107,7 +109,16 @@ void AppIdContext::pterm()
     {
         odp_ctxt->get_app_info_mgr().cleanup_appid_info_table();
         delete odp_ctxt;
+        odp_ctxt = nullptr;
     }
+
+    if (appidDebug)
+    {
+        delete appidDebug;
+        appidDebug = nullptr;
+    }
+
+    once = false;
 }
 
 bool AppIdContext::init_appid(SnortConfig* sc, AppIdInspector& inspector)
@@ -119,7 +130,6 @@ bool AppIdContext::init_appid(SnortConfig* sc, AppIdInspector& inspector)
     if (!odp_thread_local_ctxt)
         odp_thread_local_ctxt = new OdpThreadContext;
 
-    static bool once = false;
     if (!once)
     {
         odp_ctxt->get_client_disco_mgr().initialize(inspector);
