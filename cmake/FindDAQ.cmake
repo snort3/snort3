@@ -16,7 +16,7 @@ This module defines:
 #]=======================================================================]
 
 find_package(PkgConfig)
-pkg_check_modules(PC_DAQ libdaq>=3.0.12)
+pkg_check_modules(PC_DAQ libdaq>=3.0.13)
 
 # Use DAQ_INCLUDE_DIR_HINT and DAQ_LIBRARIES_DIR_HINT from configure_cmake.sh as primary hints
 # and then package config information after that.

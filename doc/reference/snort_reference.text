@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.73.0 2023-10-23 08:37:59 EDT TST
+Revision 3.1.74.0 2023-11-07 16:08:18 EST TST
 
 ---------------------------------------------------------------------
 
@@ -2915,8 +2915,8 @@ Configuration:
   * bool dce_smb.smb_legacy_mode = false: inspect only SMBv1
   * int dce_smb.smb_max_credit = 8192: Maximum number of outstanding
     request { 1:65535 }
-  * int dce_smb.memcap = 8388608: Memory utilization limit on smb {
-    512:maxSZ }
+  * int dce_smb.memcap = 8388608: Memory utilization limit on SMBv2
+    cache { 512:maxSZ }
 
 Rules:
 
@@ -2949,8 +2949,8 @@ Rules:
   * 133:19 (dce_smb) SMB - excessive read requests with pending read
     responses
   * 133:20 (dce_smb) SMB - excessive command chaining
-  * 133:21 (dce_smb) SMB - Multiple chained login requests
-  * 133:22 (dce_smb) SMB - Multiple chained tree connect requests
+  * 133:21 (dce_smb) SMB - multiple chained tree connect requests
+  * 133:22 (dce_smb) SMB - multiple chained tree connect requests
   * 133:23 (dce_smb) SMB - chained/compounded login followed by
     logoff
   * 133:24 (dce_smb) SMB - chained/compounded tree connect followed
@@ -2981,6 +2981,15 @@ Rules:
 
 Peg counts:
 
+  * dce_smb.cache_adds: smbv2 cache added new entry (sum)
+  * dce_smb.cache_hits: smbv2 cache found existing entry (sum)
+  * dce_smb.cache_misses: smbv2 cache did not find entry (sum)
+  * dce_smb.cache_replaces: smbv2 cache found entry and replaced its
+    value (sum)
+  * dce_smb.cache_max: smbv2 cache’s maximum byte usage (sum)
+  * dce_smb.cache_prunes: smbv2 cache pruned entry to make space for
+    new entry (sum)
+  * dce_smb.cache_removes: smbv2 cache removed existing entry (sum)
   * dce_smb.events: total events (sum)
   * dce_smb.pdus: total connection-oriented PDUs (sum)
   * dce_smb.binds: total connection-oriented binds (sum)
@@ -3072,15 +3081,17 @@ Peg counts:
   * dce_smb.v2_wrt: total number of SMBv2 write packets seen (sum)
   * dce_smb.v2_wrt_err_resp: total number of SMBv2 write error
     response packets seen (sum)
+  * dce_smb.v2_wrt_ignored: total number of SMBv2 write packets
+    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_wrt_inv_str_sz: total number of SMBv2 write packets
     seen with invalid structure size (sum)
   * dce_smb.v2_wrt_req_hdr_err: total number of SMBv2 write request
     packets ignored due to corrupted header (sum)
-  * dce_smb.v2_wrt_resp_hdr_err: total number of SMBv2 write response
-    packets ignored due to corrupted header (sum)
   * dce_smb.v2_read: total number of SMBv2 read packets seen (sum)
   * dce_smb.v2_read_err_resp: total number of SMBv2 read error
     response packets seen (sum)
+  * dce_smb.v2_read_ignored: total number of SMBv2 write packets
+    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_read_inv_str_sz: total number of SMBv2 read packets
     seen with invalid structure size (sum)
   * dce_smb.v2_read_rtrkr_misng: total number of SMBv2 read response
@@ -3093,6 +3104,8 @@ Peg counts:
     (sum)
   * dce_smb.v2_stinf_err_resp: total number of SMBv2 set info error
     response packets seen (sum)
+  * dce_smb.v2_stinf_ignored: total number of SMBv2 set info packets
+    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_stinf_inv_str_sz: total number of SMBv2 set info
     packets seen with invalid structure size (sum)
   * dce_smb.v2_stinf_req_ftrkr_misng: total number of SMBv2 set info
@@ -3102,6 +3115,8 @@ Peg counts:
   * dce_smb.v2_cls: total number of SMBv2 close packets seen (sum)
   * dce_smb.v2_cls_err_resp: total number of SMBv2 close error
     response packets seen (sum)
+  * dce_smb.v2_cls_ignored: total number of SMBv2 close packets
+    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_cls_inv_str_sz: total number of SMBv2 close packets
     seen with invalid structure size (sum)
   * dce_smb.v2_cls_req_ftrkr_misng: total number of SMBv2 close
@@ -3124,6 +3139,8 @@ Peg counts:
     corrupted hdr (sum)
   * dce_smb.v2_bad_next_cmd_offset: total number of SMBv2 packets
     seen with invalid next command offset (sum)
+  * dce_smb.v2_extra_file_data_err: total number of SMBv2 packets
+    seen with where file data beyond file size is observed (sum)
   * dce_smb.v2_inv_file_ctx_err: total number of times null file
     context are seen resulting in not being able to set file size
     (sum)
@@ -3132,19 +3149,6 @@ Peg counts:
   * dce_smb.v2_cmpnd_req_lt_crossed: total number of SMBv2 packets
     seen where compound requests exceed the smb_max_compound limit
     (sum)
-  * dce_smb.v2_tree_ignored: total number of packets ignored due to
-    missing tree tracker (sum)
-  * dce_smb.v2_session_ignored: total number of packets ignored due
-    to missing session tracker (sum)
-  * dce_smb.v2_ioctl: total number of ioctl calls (sum)
-  * dce_smb.v2_ioctl_err_resp: total number of ioctl errors responses
-    (sum)
-  * dce_smb.v2_ioctl_inv_str_sz: total number of ioctl invalid
-    structure size (sum)
-  * dce_smb.v2_ioctl_req_hdr_err: total number of ioctl request
-    header errors (sum)
-  * dce_smb.v2_ioctl_resp_hdr_err: total number of ioctl response
-    header errors (sum)
   * dce_smb.concurrent_sessions: total concurrent sessions (now)
   * dce_smb.max_concurrent_sessions: maximum concurrent sessions
     (max)
@@ -3152,8 +3156,26 @@ Peg counts:
   * dce_smb.total_smb2_sessions: total smb2 sessions (sum)
   * dce_smb.total_encrypted_sessions: total encrypted sessions (sum)
   * dce_smb.total_mc_sessions: total multichannel sessions (sum)
-  * dce_smb.ignore_dup_sessions: total smb req/resp dropped because
-    of dup msg id (sum)
+  * dce_smb.v2_total_session_trackers: total number of session
+    trackers (sum)
+  * dce_smb.v2_total_tree_trackers: total number of tree trackers
+    (sum)
+  * dce_smb.v2_total_file_trackers: total number of file trackers
+    (sum)
+  * dce_smb.v2_updated_file_flows: total number of updated file flows
+    due to parent flow cleanup (sum)
+  * dce_smb.v2_ignored_file_processing: total number of file
+    processing ignored (sum)
+  * dce_smb.v2_mc_file_transfers: total multichannel files
+    transferred (sum)
+  * dce_smb.v2_ioctl: total number of ioctl calls (sum)
+  * dce_smb.v2_ioctl_err_resp: total number of ioctl errors responses
+    (sum)
+  * dce_smb.v2_ioctl_inv_str_sz: total number of ioctl invalid
+    structure size (sum)
+  * dce_smb.v2_ioctl_ignored: total number of SMBv2 IOCTL packets
+    ignored due to missing trackers or invalid share type (sum)
+  * dce_smb.total_sessions: total smb sessions (sum)
 
 
 5.12. dce_tcp
@@ -4475,6 +4497,7 @@ Peg counts:
   * netflow.cache_max: netflow cache’s maximum byte usage (sum)
   * netflow.cache_prunes: netflow cache pruned entry to make space
     for new entry (sum)
+  * netflow.cache_removes: netflow cache removed existing entry (sum)
   * netflow.invalid_netflow_record: count of invalid netflow records
     (sum)
   * netflow.packets: total packets processed (sum)
@@ -9289,8 +9312,8 @@ libraries see the Getting Started section of the manual.
     per signature per flow
   * int dce_smb.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
-  * int dce_smb.memcap = 8388608: Memory utilization limit on smb {
-    512:maxSZ }
+  * int dce_smb.memcap = 8388608: Memory utilization limit on SMBv2
+    cache { 512:maxSZ }
   * enum dce_smb.policy = WinXP: target based policy to use { Win2000
     | WinXP | WinVista | Win2003 | Win2008 | Win7 | Samba | 
     Samba-3.0.37 | Samba-3.0.22 | Samba-3.0.20 }
@@ -11164,6 +11187,15 @@ libraries see the Getting Started section of the manual.
   * dce_smb.bind_acks: total connection-oriented binds acks (sum)
   * dce_smb.bind_naks: total connection-oriented bind naks (sum)
   * dce_smb.binds: total connection-oriented binds (sum)
+  * dce_smb.cache_adds: smbv2 cache added new entry (sum)
+  * dce_smb.cache_hits: smbv2 cache found existing entry (sum)
+  * dce_smb.cache_max: smbv2 cache’s maximum byte usage (sum)
+  * dce_smb.cache_misses: smbv2 cache did not find entry (sum)
+  * dce_smb.cache_prunes: smbv2 cache pruned entry to make space for
+    new entry (sum)
+  * dce_smb.cache_removes: smbv2 cache removed existing entry (sum)
+  * dce_smb.cache_replaces: smbv2 cache found entry and replaced its
+    value (sum)
   * dce_smb.cancels: total connection-oriented cancels (sum)
   * dce_smb.client_frags_reassembled: total connection-oriented
     client fragments reassembled (sum)
@@ -11178,8 +11210,6 @@ libraries see the Getting Started section of the manual.
   * dce_smb.faults: total connection-oriented faults (sum)
   * dce_smb.files_processed: total smb files processed (sum)
   * dce_smb.ignored_bytes: total ignored bytes (sum)
-  * dce_smb.ignore_dup_sessions: total smb req/resp dropped because
-    of dup msg id (sum)
   * dce_smb.max_concurrent_sessions: maximum concurrent sessions
     (max)
   * dce_smb.max_outstanding_requests: maximum outstanding requests
@@ -11216,12 +11246,15 @@ libraries see the Getting Started section of the manual.
     reassembled (sum)
   * dce_smb.total_encrypted_sessions: total encrypted sessions (sum)
   * dce_smb.total_mc_sessions: total multichannel sessions (sum)
+  * dce_smb.total_sessions: total smb sessions (sum)
   * dce_smb.total_smb1_sessions: total smb1 sessions (sum)
   * dce_smb.total_smb2_sessions: total smb2 sessions (sum)
   * dce_smb.v2_bad_next_cmd_offset: total number of SMBv2 packets
     seen with invalid next command offset (sum)
   * dce_smb.v2_cls_err_resp: total number of SMBv2 close error
     response packets seen (sum)
+  * dce_smb.v2_cls_ignored: total number of SMBv2 close packets
+    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_cls_inv_str_sz: total number of SMBv2 close packets
     seen with invalid structure size (sum)
   * dce_smb.v2_cls_req_ftrkr_misng: total number of SMBv2 close
@@ -11249,27 +11282,33 @@ libraries see the Getting Started section of the manual.
   * dce_smb.v2_crt: total number of SMBv2 create packets seen (sum)
   * dce_smb.v2_crt_tree_trkr_misng: total number of SMBv2 create
     response packets ignored due to missing tree tracker (sum)
+  * dce_smb.v2_extra_file_data_err: total number of SMBv2 packets
+    seen with where file data beyond file size is observed (sum)
   * dce_smb.v2_hdr_err: total number of SMBv2 packets seen with
     corrupted hdr (sum)
+  * dce_smb.v2_ignored_file_processing: total number of file
+    processing ignored (sum)
   * dce_smb.v2_inv_file_ctx_err: total number of times null file
     context are seen resulting in not being able to set file size
     (sum)
   * dce_smb.v2_ioctl_err_resp: total number of ioctl errors responses
     (sum)
+  * dce_smb.v2_ioctl_ignored: total number of SMBv2 IOCTL packets
+    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_ioctl_inv_str_sz: total number of ioctl invalid
     structure size (sum)
-  * dce_smb.v2_ioctl_req_hdr_err: total number of ioctl request
-    header errors (sum)
-  * dce_smb.v2_ioctl_resp_hdr_err: total number of ioctl response
-    header errors (sum)
   * dce_smb.v2_ioctl: total number of ioctl calls (sum)
   * dce_smb.v2_logoff_inv_str_sz: total number of SMBv2 logoff
     packets seen with invalid structure size (sum)
   * dce_smb.v2_logoff: total number of SMBv2 logoff (sum)
+  * dce_smb.v2_mc_file_transfers: total multichannel files
+    transferred (sum)
   * dce_smb.v2_msgs_uninspected: total number of SMBv2 packets seen
     where command is not being inspected (sum)
   * dce_smb.v2_read_err_resp: total number of SMBv2 read error
     response packets seen (sum)
+  * dce_smb.v2_read_ignored: total number of SMBv2 write packets
+    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_read_inv_str_sz: total number of SMBv2 read packets
     seen with invalid structure size (sum)
   * dce_smb.v2_read_req_hdr_err: total number of SMBv2 read request
@@ -11279,8 +11318,6 @@ libraries see the Getting Started section of the manual.
   * dce_smb.v2_read_rtrkr_misng: total number of SMBv2 read response
     packets ignored due to missing read request tracker (sum)
   * dce_smb.v2_read: total number of SMBv2 read packets seen (sum)
-  * dce_smb.v2_session_ignored: total number of packets ignored due
-    to missing session tracker (sum)
   * dce_smb.v2_setinfo: total number of SMBv2 set info packets seen
     (sum)
   * dce_smb.v2_setup_err_resp: total number of SMBv2 setup error
@@ -11292,12 +11329,20 @@ libraries see the Getting Started section of the manual.
   * dce_smb.v2_setup: total number of SMBv2 setup packets seen (sum)
   * dce_smb.v2_stinf_err_resp: total number of SMBv2 set info error
     response packets seen (sum)
+  * dce_smb.v2_stinf_ignored: total number of SMBv2 set info packets
+    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_stinf_inv_str_sz: total number of SMBv2 set info
     packets seen with invalid structure size (sum)
   * dce_smb.v2_stinf_req_ftrkr_misng: total number of SMBv2 set info
     request packets ignored due to missing file tracker (sum)
   * dce_smb.v2_stinf_req_hdr_err: total number of SMBv2 set info
     request packets ignored due to corrupted header (sum)
+  * dce_smb.v2_total_file_trackers: total number of file trackers
+    (sum)
+  * dce_smb.v2_total_session_trackers: total number of session
+    trackers (sum)
+  * dce_smb.v2_total_tree_trackers: total number of tree trackers
+    (sum)
   * dce_smb.v2_tree_cnct_err_resp: total number of SMBv2 tree connect
     error response packets seen (sum)
   * dce_smb.v2_tree_cnct_ignored: total number of SMBv2 setup
@@ -11318,15 +11363,15 @@ libraries see the Getting Started section of the manual.
     disconnect request packets ignored due to corrupted header (sum)
   * dce_smb.v2_tree_discn: total number of SMBv2 tree disconnect
     packets seen (sum)
-  * dce_smb.v2_tree_ignored: total number of packets ignored due to
-    missing tree tracker (sum)
+  * dce_smb.v2_updated_file_flows: total number of updated file flows
+    due to parent flow cleanup (sum)
   * dce_smb.v2_wrt_err_resp: total number of SMBv2 write error
     response packets seen (sum)
+  * dce_smb.v2_wrt_ignored: total number of SMBv2 write packets
+    ignored due to missing trackers or invalid share type (sum)
   * dce_smb.v2_wrt_inv_str_sz: total number of SMBv2 write packets
     seen with invalid structure size (sum)
   * dce_smb.v2_wrt_req_hdr_err: total number of SMBv2 write request
-    packets ignored due to corrupted header (sum)
-  * dce_smb.v2_wrt_resp_hdr_err: total number of SMBv2 write response
     packets ignored due to corrupted header (sum)
   * dce_smb.v2_wrt: total number of SMBv2 write packets seen (sum)
   * dce_tcp.alter_context_responses: total connection-oriented alter
@@ -11729,6 +11774,7 @@ libraries see the Getting Started section of the manual.
   * netflow.cache_misses: netflow cache did not find entry (sum)
   * netflow.cache_prunes: netflow cache pruned entry to make space
     for new entry (sum)
+  * netflow.cache_removes: netflow cache removed existing entry (sum)
   * netflow.cache_replaces: netflow cache found entry and replaced
     its value (sum)
   * netflow.invalid_netflow_record: count of invalid netflow records
@@ -14605,14 +14651,14 @@ requests
 Excessive command chaining. Number of SMB chained commands in a
 single request is greater than or equal to the configured value.
 
-133:21 (dce_smb) SMB - Multiple chained login requests
+133:21 (dce_smb) SMB - multiple chained tree connect requests
 
 It is possible to chain multiple Session Setup AndX commands within
 the same request. There is, however, only one place in the SMB header
 to return a login handle (or Uid). Windows does not allow this
 behavior, however Samba does. This is an anomalous behavior.
 
-133:22 (dce_smb) SMB - Multiple chained tree connect requests
+133:22 (dce_smb) SMB - multiple chained tree connect requests
 
 It is possible to chain multiple Tree Connect AndX commands within
 the same request. There is, however, only one place in the SMB header

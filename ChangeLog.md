@@ -1,3 +1,21 @@
+2023-11-07: 3.1.74.0
+
+* actions, detection, file_api, flow, stream: coverity fixes
+* appid: clean up main thread appid debug and make appid on, off, on work
+* appid: lua log function with appiddebug check
+* build: address miscellaneous cppcheck warnings
+* build: fix up 32-bit compilation
+* build: fix coverity and cppcheck issues
+* build: remove unused functions reported by cppcheck
+* codecs: fix bad checksum when auth(51) protocol header is present between IP and TCP layer.
+* dce_rpc: added SMB Redesigned Multichannel enabled code
+* http_inspect: add correct handling of configuration error
+* ips_options: fix ack option
+* ips_options: fix flow bits
+* packet_io: fix incorrect counters caused by data plane counters reset
+* search_tool: allow an override of the search method
+* search_tool: fall back to normal mpse if no snort config
+
 2023-10-23: 3.1.73.0
 
 * appid: added support for appid trace logs with multiple logging levels
