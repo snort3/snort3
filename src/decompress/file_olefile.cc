@@ -26,11 +26,11 @@
 
 DirectoryList :: ~DirectoryList()
 {
-    std::unordered_map<char*, FileProperty*>::iterator it = oleentry.begin();
+    auto it = oleentry.begin();
 
     while (it != oleentry.end())
     {
-        FileProperty* node =  it->second;
+        FileProperty* node = *it;
         delete[] node->get_name();
         delete node;
         it = oleentry.erase(it);
@@ -119,6 +119,7 @@ void OleFile :: walk_directory_list()
 
             if (strcmp(file_name, ROOT_ENTRY) == 0)
                 dir_list->set_mini_stream_sector(node->get_starting_sector());
+
             object_type type = node->get_file_type();
             // check for all the empty/non valid entries in the directory list.
             if (!(type == ROOT_STORAGE or type == STORAGE or type == STREAM))
@@ -127,7 +128,7 @@ void OleFile :: walk_directory_list()
                 delete[] name_buf;
             }
             else
-                dir_list->oleentry.insert({ file_name, node });
+                dir_list->oleentry.emplace_back(node);
             count++;
         }
         // Reading the next sector of current_sector by referring the FAT list array.
@@ -145,13 +146,16 @@ void OleFile :: walk_directory_list()
 
 FileProperty* DirectoryList :: get_file_node(char* name)
 {
-    std::unordered_map<char*, FileProperty*>::iterator it;
+    auto it = std::find_if(oleentry.begin(), oleentry.end(),
+        [name](const auto& curr)
+        {
+            return !strcmp(curr->get_name(), name);
+        });
 
-    it = oleentry.find(name);
+    if (it == oleentry.end())
+        return nullptr;
 
-    if (it != oleentry.end())
-        return(it->second);
-    return nullptr;
+    return *it;
 }
 
 // Every index of fat_list array is the fat sector ID and the value present
@@ -271,9 +275,8 @@ uint32_t OleFile :: find_bytes_to_copy(uint32_t byte_offset, uint32_t data_len,
     return bytes_to_copy;
 }
 
-void OleFile :: get_file_data(char* file, uint8_t*& file_data, uint32_t& data_len)
+void OleFile :: get_file_data(FileProperty* node, uint8_t*& file_data, uint32_t& data_len)
 {
-    FileProperty* node = dir_list->get_file_node(file);
     data_len = 0;
 
     if (node)
@@ -661,19 +664,19 @@ void OleFile :: decompression(const uint8_t* data, uint32_t& data_len, uint8_t*&
 // Function to extract the VBA data and send it for RLE decompression.
 void OleFile :: find_and_extract_vba(uint8_t*& vba_buf, uint32_t& vba_buf_len)
 {
-    std::unordered_map<char*, FileProperty*>::iterator it = dir_list->oleentry.begin();
+    auto it = dir_list->oleentry.begin();
     uint32_t vba_buffer_offset = 0;
     vba_buf = new uint8_t[MAX_VBA_BUFFER_LEN + 1]();
 
     while (it != dir_list->oleentry.end())
     {
-        FileProperty* node = it->second;
+        FileProperty* node = *it;
         ++it;
         if (node->get_file_type() == STREAM)
         {
             uint8_t* data = nullptr;
             uint32_t data_len;
-            get_file_data(node->get_name(), data, data_len);
+            get_file_data(node, data, data_len);
             uint8_t* data1 = data;
             int32_t offset = get_file_offset(data, data_len);
             if (offset <= 0)
