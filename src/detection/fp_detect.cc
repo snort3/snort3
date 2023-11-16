@@ -224,6 +224,11 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         */
         IpsAction * act = get_ips_policy()->action[action];
         act->exec(p);
+        if ( p->active && p->flow &&
+            (p->active->get_action() >= Active::ACT_DROP) )
+        {
+            p->flow->flags.ips_event_suppressed = true;
+        }
         fpLogOther(p, rtn, otn, action);
         pc.event_limit++;
         return 1;
