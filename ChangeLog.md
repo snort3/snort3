@@ -1,3 +1,9 @@
+2023-11-19: 3.1.75.0
+
+* appid: add appId for DNS over QUIC and DNS over HTTP/3 to application_ids.h
+* decompress: use list for OLE file entries to guarantee their order in file_data
+* detection: setting flag for flows with affected logging due to event filter
+
 2023-11-07: 3.1.74.0
 
 * actions, detection, file_api, flow, stream: coverity fixes
