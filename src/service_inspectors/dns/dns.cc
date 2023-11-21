@@ -348,6 +348,9 @@ static uint16_t ParseDNSName(
                 {
                     /* If this one is a relative offset, read that extra byte */
                     dnsSessionData->curr_txt.offset |= *data;
+                    if (dnsSessionData->length > 0)
+                        dnsSessionData->curr_txt.offset += 2; // first two bytes are length in TCP
+
                     if (parse_dns_name)
                     {
                         // parse recursively relative name
@@ -951,7 +954,7 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData, bool& ne
             dnsSessionData->curr_rec = 0;
         /* Fall through */
         case DNS_RESP_STATE_ADD_RR: /* ADDITIONALS section */
-            for (i=dnsSessionData->curr_rec; i<dnsSessionData->hdr.authorities; i++)
+            for (i=dnsSessionData->curr_rec; i<dnsSessionData->hdr.additionals; i++)
             {
                 bytes_unused = ParseDNSAnswer(data, bytes_unused, dnsSessionData);
 
