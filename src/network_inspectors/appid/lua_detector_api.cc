@@ -377,10 +377,8 @@ static int detector_log_snort_message(lua_State* L)
         break;
 
     case LUA_LOG_TRACE:
-        appid_log(init(L) ? nullptr : CURRENT_PACKET, TRACE_DEBUG_LEVEL, "%s:%s\n", name.c_str(), message);
-        break;
-
-    default:
+        auto curr_packet = (Analyzer::get_local_analyzer() and snort::DetectionEngine::get_context()) ? snort::DetectionEngine::get_current_packet() : nullptr;
+        appid_log(curr_packet, TRACE_DEBUG_LEVEL, curr_packet ? "%s:%s\n" : "AppIdDbg %s:%s\n", name.c_str(), message);
         break;
     }
 
