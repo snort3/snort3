@@ -67,6 +67,9 @@ PegCount FlowControl::get_total_prunes() const
 PegCount FlowControl::get_prunes(PruneReason reason) const
 { return cache->get_prunes(reason); }
 
+PegCount FlowControl::get_proto_prune_count(PruneReason reason, PktType type) const
+{ return cache->get_proto_prune_count(reason,type); }
+
 PegCount FlowControl::get_total_deletes() const
 { return cache->get_total_deletes(); }
 

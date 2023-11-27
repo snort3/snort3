@@ -82,6 +82,20 @@ const PegInfo base_pegs[] =
     { CountType::SUM, "reload_allowed_deletes", "number of allowed flows deleted by config reloads" },
     { CountType::SUM, "reload_blocked_deletes", "number of blocked flows deleted by config reloads" },
     { CountType::SUM, "reload_offloaded_deletes", "number of offloaded flows deleted by config reloads" },
+    { CountType::SUM, "ip_timeout_prunes", "number of IP flows pruned due to timeout" },
+    { CountType::SUM, "tcp_timeout_prunes", "number of TCP flows pruned due to timeout" },
+    { CountType::SUM, "udp_timeout_prunes", "number of UDP flows pruned due to timeout" },
+    { CountType::SUM, "icmp_timeout_prunes", "number of ICMP flows pruned due to timeout" },
+    { CountType::SUM, "user_timeout_prunes", "number of USER flows pruned due to timeout" },
+    { CountType::SUM, "file_timeout_prunes", "number of FILE flows pruned due to timeout" },
+    { CountType::SUM, "pdu_timeout_prunes", "number of PDU flows pruned due to timeout" },
+    { CountType::SUM, "ip_memcap_prunes", "number of IP flows pruned due to memcap" },
+    { CountType::SUM, "tcp_memcap_prunes", "number of TCP flows pruned due to memcap" },
+    { CountType::SUM, "udp_memcap_prunes", "number of UDP flows pruned due to memcap" },
+    { CountType::SUM, "icmp_memcap_prunes", "number of ICMP flows pruned due to memcap" },
+    { CountType::SUM, "user_memcap_prunes", "number of USER flows pruned due to memcap" },
+    { CountType::SUM, "file_memcap_prunes", "number of FILE flows pruned due to memcap" },
+    { CountType::SUM, "pdu_memcap_prunes", "number of PDU flows pruned due to memcap" },
 
     // Keep the NOW stats at the bottom as it requires special sum_stats logic
     { CountType::NOW, "current_flows", "current number of flows in cache" },
@@ -111,6 +125,20 @@ void base_prep()
     stream_base_stats.reload_allowed_flow_deletes = flow_con->get_deletes(FlowDeleteState::ALLOWED);
     stream_base_stats.reload_offloaded_flow_deletes= flow_con->get_deletes(FlowDeleteState::OFFLOADED);
     stream_base_stats.reload_blocked_flow_deletes= flow_con->get_deletes(FlowDeleteState::BLOCKED);
+    stream_base_stats.ip_timeout_prunes = flow_con->get_proto_prune_count(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::IP);
+    stream_base_stats.tcp_timeout_prunes = flow_con->get_proto_prune_count(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::TCP);
+    stream_base_stats.udp_timeout_prunes = flow_con->get_proto_prune_count(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::UDP);
+    stream_base_stats.icmp_timeout_prunes = flow_con->get_proto_prune_count(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::ICMP);
+    stream_base_stats.user_timeout_prunes = flow_con->get_proto_prune_count(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::USER);
+    stream_base_stats.file_timeout_prunes = flow_con->get_proto_prune_count(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::FILE);
+    stream_base_stats.pdu_timeout_prunes = flow_con->get_proto_prune_count(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::PDU);
+    stream_base_stats.ip_memcap_prunes = flow_con->get_proto_prune_count(PruneReason::MEMCAP, PktType::IP);
+    stream_base_stats.tcp_memcap_prunes = flow_con->get_proto_prune_count(PruneReason::MEMCAP, PktType::TCP);
+    stream_base_stats.udp_memcap_prunes = flow_con->get_proto_prune_count(PruneReason::MEMCAP, PktType::UDP);
+    stream_base_stats.icmp_memcap_prunes = flow_con->get_proto_prune_count(PruneReason::MEMCAP, PktType::ICMP);
+    stream_base_stats.user_memcap_prunes = flow_con->get_proto_prune_count(PruneReason::MEMCAP, PktType::USER);
+    stream_base_stats.file_memcap_prunes = flow_con->get_proto_prune_count(PruneReason::MEMCAP, PktType::FILE);
+    stream_base_stats.pdu_memcap_prunes = flow_con->get_proto_prune_count(PruneReason::MEMCAP, PktType::PDU);
 
     stream_base_stats.current_flows = flow_con->get_num_flows();
     stream_base_stats.uni_flows = flow_con->get_uni_flows();

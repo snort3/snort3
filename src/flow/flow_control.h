@@ -91,6 +91,7 @@ public:
 
     PegCount get_total_prunes() const;
     PegCount get_prunes(PruneReason) const;
+    PegCount get_proto_prune_count(PruneReason, PktType) const;
     PegCount get_total_deletes() const;
     PegCount get_deletes(FlowDeleteState state) const;
     void clear_counts();

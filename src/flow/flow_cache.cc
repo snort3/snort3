@@ -51,7 +51,8 @@ static const unsigned OFFLOADED_FLOWS_TOO = 2;
 static const unsigned ALL_FLOWS = 3;
 static const unsigned WDT_MASK = 7; // kick watchdog once for every 8 flows deleted
 
-const uint8_t MAX_PROTOCOLS = (uint8_t)to_utype(PktType::MAX) - 1; //removing PktType::NONE from count
+constexpr uint8_t MAX_PROTOCOLS = (uint8_t)to_utype(PktType::MAX) - 1; //removing PktType::NONE from count
+constexpr uint64_t max_skip_protos = (1ULL << MAX_PROTOCOLS) - 1;
 
 //-------------------------------------------------------------------------
 // FlowCache stuff
@@ -204,7 +205,7 @@ bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
     }
 
     flow->reset(do_cleanup);
-    prune_stats.update(reason);
+    prune_stats.update(reason, flow->key->pkt_type);
     remove(flow);
     return true;
 }
@@ -212,7 +213,7 @@ bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
 void FlowCache::retire(Flow* flow)
 {
     flow->reset(true);
-    prune_stats.update(PruneReason::NONE);
+    prune_stats.update(PruneReason::NONE, flow->key->pkt_type);
     remove(flow);
 }
 
@@ -225,8 +226,6 @@ unsigned FlowCache::prune_idle(uint32_t thetime, const Flow* save_me)
 
     assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
 
-    const uint64_t max_skip_protos = (1ULL << MAX_PROTOCOLS) - 1;
-
     {
         PacketTracerSuspend pt_susp;
         while ( pruned <= cleanup_flows and 
@@ -238,13 +237,15 @@ unsigned FlowCache::prune_idle(uint32_t thetime, const Flow* save_me)
                 if( pruned > cleanup_flows )
                     break;
 
-                if ( skip_protos & (1ULL << proto_idx) )
+                const uint64_t proto_mask = 1ULL << proto_idx;
+
+                if ( skip_protos & proto_mask )
                     continue;
 
                 auto flow = static_cast<Flow*>(hash_table->lru_first(proto_idx));
                 if ( !flow )
                 {
-                    skip_protos |= (1ULL << proto_idx);
+                    skip_protos |= proto_mask;
                     continue;
                 }
                 
@@ -252,7 +253,7 @@ unsigned FlowCache::prune_idle(uint32_t thetime, const Flow* save_me)
                     or flow->is_suspended()
                     or flow->last_data_seen + config.pruning_timeout >= thetime )
                 {
-                    skip_protos |= (1ULL << proto_idx);
+                    skip_protos |= proto_mask;
                     continue;
                 }
 
@@ -323,7 +324,6 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
 
     assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
 
-    const uint64_t max_skip_protos = (1ULL << MAX_PROTOCOLS) - 1;
 
     {
         PacketTracerSuspend pt_susp;
@@ -341,14 +341,16 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
                 num_nodes = hash_table->get_num_nodes();
                 if ( num_nodes <= max_cap or num_nodes <= blocks )
                     break;
-                
-                if ( skip_protos & (1ULL << proto_idx) ) 
+
+                const uint64_t proto_mask = 1ULL << proto_idx;
+
+                if ( skip_protos & proto_mask ) 
                     continue;
 
                 auto flow = static_cast<Flow*>(hash_table->lru_first(proto_idx));
                 if ( !flow )
                 {
-                    skip_protos |= (1ULL << proto_idx);
+                    skip_protos |= proto_mask;
                     continue;
                 }
 
@@ -415,14 +417,14 @@ unsigned FlowCache::prune_multiple(PruneReason reason, bool do_cleanup)
 
     assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
 
-    const uint64_t max_skip_protos = (1ULL << MAX_PROTOCOLS) - 1;
-
+    
     while ( pruned < config.prune_flows )
     {
-        if ( (skip_protos & (1ULL << proto)) or !prune_one(reason, do_cleanup, proto) )
+        const uint64_t proto_mask = 1ULL << proto;
+        if ( (skip_protos & proto_mask) or !prune_one(reason, do_cleanup, proto) )
         {
 
-            skip_protos |= (1ULL << proto);
+            skip_protos |= proto_mask;
             if ( skip_protos == max_skip_protos )
                 break;
         }
@@ -448,7 +450,6 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 
     assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
 
-    const uint64_t max_skip_protos = (1ULL << MAX_PROTOCOLS) - 1;
     {
         PacketTracerSuspend pt_susp;
 
@@ -458,8 +459,10 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
             {
                 if( retired >= num_flows )
                     break;
+                
+                const uint64_t proto_mask = 1ULL << proto_idx;
 
-                if ( skip_protos & (1ULL << proto_idx) ) 
+                if ( skip_protos & proto_mask ) 
                     continue;
 
                 auto flow = static_cast<Flow*>(hash_table->lru_current(proto_idx));
@@ -467,7 +470,7 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
                     flow = static_cast<Flow*>(hash_table->lru_first(proto_idx));
                 if ( !flow )
                 {
-                    skip_protos |= (1ULL << proto_idx);
+                    skip_protos |= proto_mask;
                     continue;
                 }
 
@@ -475,13 +478,13 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
                 {
                     if ( flow->expire_time > static_cast<uint64_t>(thetime) )
                     {
-                        skip_protos |= (1ULL << proto_idx);
+                        skip_protos |= proto_mask;
                         continue;
                     }
                 }
                 else if ( flow->last_data_seen + flow->idle_timeout > thetime )
                 {
-                    skip_protos |= (1ULL << proto_idx);
+                    skip_protos |= proto_mask;
                     continue;
                 }
 
@@ -508,7 +511,6 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
 
     assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
 
-    const uint64_t max_skip_protos = (1ULL << MAX_PROTOCOLS) - 1;
 
     while ( num_to_delete and skip_protos != max_skip_protos and
             undeletable < hash_table->get_num_nodes() )
@@ -518,13 +520,15 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
             if( num_to_delete == 0)
                 break;
             
-            if ( skip_protos & (1ULL << proto_idx) )
+            const uint64_t proto_mask = 1ULL << proto_idx;
+
+            if ( skip_protos & proto_mask )
                 continue;
             
             auto flow = static_cast<Flow*>(hash_table->lru_first(proto_idx));
             if ( !flow )
             {
-                skip_protos |= (1ULL << proto_idx);
+                skip_protos |= proto_mask;
                 continue;
             }
 

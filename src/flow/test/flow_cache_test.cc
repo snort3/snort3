@@ -304,6 +304,50 @@ TEST(flow_prune, prune_proto)
     delete cache;
 }
 
+TEST(flow_prune, prune_counts)
+{
+    PruneStats stats;
+
+    // Simulate a few prunes for different reasons and protocol types
+    stats.update(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::IP);
+    stats.update(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::TCP);
+    stats.update(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::UDP);
+    stats.update(PruneReason::MEMCAP, PktType::ICMP);
+    stats.update(PruneReason::MEMCAP, PktType::USER);
+
+    // Check the total prunes
+    CHECK_EQUAL(5, stats.get_total());
+
+    // Check individual protocol prunes
+    CHECK_EQUAL(1, stats.get_proto_prune_count(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::IP));
+    CHECK_EQUAL(1, stats.get_proto_prune_count(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::TCP));
+    CHECK_EQUAL(1, stats.get_proto_prune_count(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::UDP));
+    CHECK_EQUAL(1, stats.get_proto_prune_count(PruneReason::MEMCAP, PktType::ICMP));
+    CHECK_EQUAL(1, stats.get_proto_prune_count(PruneReason::MEMCAP, PktType::USER));
+
+    // Check prunes for a specific protocol across all reasons
+    CHECK_EQUAL(1, stats.get_proto_prune_count(PktType::IP));
+    CHECK_EQUAL(1, stats.get_proto_prune_count(PktType::TCP));
+    CHECK_EQUAL(1, stats.get_proto_prune_count(PktType::UDP));
+    CHECK_EQUAL(1, stats.get_proto_prune_count(PktType::ICMP));
+    CHECK_EQUAL(1, stats.get_proto_prune_count(PktType::USER));
+
+    // Reset the counts
+    stats = PruneStats();
+
+    // Ensure that the counts have been reset
+    CHECK_EQUAL(0, stats.get_total());
+    CHECK_EQUAL(0, stats.get_proto_prune_count(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::IP));
+    CHECK_EQUAL(0, stats.get_proto_prune_count(PruneReason::MEMCAP, PktType::TCP));
+
+     // Update the same protocol and reason multiple times
+    stats.update(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::IP);
+    stats.update(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::IP);
+    stats.update(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::IP);
+
+    CHECK_EQUAL(3, stats.get_proto_prune_count(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::IP));
+}
+
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);

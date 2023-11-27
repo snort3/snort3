@@ -75,6 +75,9 @@ public:
     PegCount get_prunes(PruneReason reason) const
     { return prune_stats.get(reason); }
 
+    PegCount get_proto_prune_count(PruneReason reason, PktType type) const
+    { return prune_stats.get_proto_prune_count(reason,type); }
+
     PegCount get_total_deletes() const
     { return delete_stats.get_total(); }
 

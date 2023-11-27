@@ -75,6 +75,20 @@ struct BaseStats
      PegCount reload_allowed_flow_deletes;
      PegCount reload_blocked_flow_deletes;
      PegCount reload_offloaded_flow_deletes;
+     PegCount ip_timeout_prunes;
+     PegCount tcp_timeout_prunes;
+     PegCount udp_timeout_prunes;
+     PegCount icmp_timeout_prunes;
+     PegCount user_timeout_prunes;
+     PegCount file_timeout_prunes;
+     PegCount pdu_timeout_prunes;  
+     PegCount ip_memcap_prunes;
+     PegCount tcp_memcap_prunes;
+     PegCount udp_memcap_prunes;
+     PegCount icmp_memcap_prunes;
+     PegCount user_memcap_prunes;
+     PegCount file_memcap_prunes;
+     PegCount pdu_memcap_prunes;
 
      // Keep the NOW stats at the bottom as it requires special sum_stats logic
      PegCount current_flows;
