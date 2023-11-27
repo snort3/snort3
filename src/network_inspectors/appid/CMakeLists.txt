@@ -204,6 +204,9 @@ set ( APPID_SOURCES
     tp_lib_handler.cc
     tp_lib_handler.h
     tp_appid_types.h
+    tp_appid_session_api.h
+    tp_appid_module_api.h
+    tp_appid_module_api.cc
 )
 
 #if (STATIC_INSPECTORS)

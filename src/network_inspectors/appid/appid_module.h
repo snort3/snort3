@@ -40,6 +40,7 @@ class Trace;
 }
 
 extern THREAD_LOCAL snort::ProfileStats appid_perf_stats;
+extern THREAD_LOCAL snort::ProfileStats tp_appid_perf_stats;
 extern THREAD_LOCAL const snort::Trace* appid_trace;
 
 #define MOD_NAME "appid"
@@ -85,7 +86,8 @@ public:
     const snort::Command* get_commands() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    snort::ProfileStats* get_profile() const override;
+    snort::ProfileStats* get_profile(
+        unsigned i, const char*& name, const char*& parent) const override;
 
     const AppIdConfig* get_data();
 

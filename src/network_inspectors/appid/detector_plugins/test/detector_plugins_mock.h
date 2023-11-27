@@ -140,7 +140,8 @@ PegCount* AppIdModule::get_counts() const
     return nullptr;
 }
 
-snort::ProfileStats* AppIdModule::get_profile() const
+snort::ProfileStats* AppIdModule::get_profile(
+        unsigned, const char*&, const char*&) const
 {
     return nullptr;
 }

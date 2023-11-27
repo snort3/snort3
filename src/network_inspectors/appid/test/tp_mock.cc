@@ -48,19 +48,24 @@ public:
         : ThirdPartyAppIdContext(ver, mname, config)
     {
         cerr << WhereMacro << endl;
+        // For tp_appid profiler coverage
+        data = (int*)cfg.tp_appid_profiler_functions.appid_malloc(sizeof(int));
     }
 
     ~ThirdPartyAppIdContextImpl() override
     {
         cerr << WhereMacro << endl;
+        // For tp_appid profiler coverage
+        cfg.tp_appid_profiler_functions.appid_free(data);
     }
 
-    int tinit() override { return 0; }
-    bool tfini(bool) override { return false; }
+    int tinit() override {return 0;}
+    bool tfini(bool) override {return false;}
     const string& get_user_config() const override { return user_config; }
 
 private:
     const string user_config = "";
+    int* data;
 };
 
 class ThirdPartyAppIdSessionImpl : public ThirdPartyAppIdSession

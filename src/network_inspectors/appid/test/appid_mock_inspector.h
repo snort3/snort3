@@ -56,7 +56,8 @@ bool AppIdModule::set(char const*, snort::Value&, snort::SnortConfig*) { return 
 const snort::Command* AppIdModule::get_commands() const { return nullptr; }
 const PegInfo* AppIdModule::get_pegs() const { return nullptr; }
 PegCount* AppIdModule::get_counts() const { return nullptr; }
-snort::ProfileStats* AppIdModule::get_profile() const { return nullptr; }
+snort::ProfileStats* AppIdModule::get_profile(
+        unsigned, const char*&, const char*& ) const { return nullptr; }
 void AppIdModule::set_trace(const Trace*) const { }
 const TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
 

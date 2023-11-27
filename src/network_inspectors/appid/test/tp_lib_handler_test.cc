@@ -35,6 +35,7 @@
 #include <CppUTest/TestHarness.h>
 
 using namespace std;
+using namespace snort;
 
 static TPLibHandler* tph = nullptr;
 static AppIdConfig config;
@@ -70,6 +71,14 @@ void ServiceDiscovery::reload() { }
 int ServiceDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&)
 { return 0; }
 void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
+
+
+THREAD_LOCAL ProfileStats tp_appid_perf_stats;
+THREAD_LOCAL bool TimeProfilerStats::enabled = false;
+MemoryContext::MemoryContext(MemoryTracker&) { }
+MemoryContext::~MemoryContext() = default;
+THREAD_LOCAL TimeContext* ProfileContext::curr_time = nullptr;
+
 
 TEST_GROUP(tp_lib_handler)
 {

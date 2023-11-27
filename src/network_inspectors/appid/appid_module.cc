@@ -61,6 +61,7 @@ THREAD_LOCAL const Trace* appid_trace = nullptr;
 //-------------------------------------------------------------------------
 
 THREAD_LOCAL ProfileStats appid_perf_stats;
+THREAD_LOCAL ProfileStats tp_appid_perf_stats;
 THREAD_LOCAL AppIdStats appid_stats;
 THREAD_LOCAL bool ThirdPartyAppIdContext::tp_reload_in_progress = false;
 
@@ -491,9 +492,25 @@ const TraceOption* AppIdModule::get_trace_options() const
     return &appid_trace_options;
 }
 
-ProfileStats* AppIdModule::get_profile() const
+
+
+snort::ProfileStats* AppIdModule::get_profile(
+        unsigned i, const char*& name, const char*& parent) const
 {
-    return &appid_perf_stats;
+    switch (i) 
+    {
+    
+        case 0:
+            name = get_name();
+            parent = nullptr;
+            return &appid_perf_stats;
+
+        case 1:
+            name = "tp_appid";
+            parent = get_name();
+            return &tp_appid_perf_stats;
+    }
+    return nullptr;
 }
 
 const AppIdConfig* AppIdModule::get_data()

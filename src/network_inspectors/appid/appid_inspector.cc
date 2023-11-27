@@ -115,7 +115,8 @@ AppIdContext& AppIdInspector::get_ctxt() const
 bool AppIdInspector::configure(SnortConfig* sc)
 {
     assert(!ctxt);
-
+    // cppcheck-suppress unreadVariable
+    Profile profile(appid_perf_stats);
     struct rusage ru;
     long prev_maxrss = -1;
     #ifdef REG_TEST

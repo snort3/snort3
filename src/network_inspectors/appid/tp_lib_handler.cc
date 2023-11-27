@@ -103,6 +103,7 @@ ThirdPartyAppIdContext* TPLibHandler::create_tp_appid_ctxt(const AppIdConfig& co
     tp_config.chp_body_collection_disabled =
         odp_ctxt.chp_body_collection_disabled;
     tp_config.tp_allow_probes = odp_ctxt.tp_allow_probes;
+    tp_config.tp_appid_profiler_functions = get_tp_appid_profiler_functions();
 
     ThirdPartyAppIdContext* tp_appid_ctxt = self->tp_appid_create_ctxt(tp_config);
     if (tp_appid_ctxt == nullptr)

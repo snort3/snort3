@@ -115,6 +115,7 @@ int MsnClientDetector::validate(AppIdDiscoveryArgs& args)
 
             args.data++; /* skip the space */
         }
+        // cppcheck-suppress knownConditionTrueFalse
         else if ( end - args.data >= (int)sizeof(MSMSGS) &&
             memcmp(args.data, MSMSGS, sizeof(MSMSGS)-1) == 0 )
         {

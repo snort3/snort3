@@ -50,6 +50,7 @@ add_cpputest( tp_lib_handler_test
         tp_lib_handler_test.cc
         ../../../network_inspectors/rna/test/rna_flow_stubs.cc
         ../tp_lib_handler.cc
+        ../tp_appid_module_api.cc
     LIBS
         dl
 )
