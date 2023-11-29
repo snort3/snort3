@@ -71,17 +71,17 @@ class MockModule : public Module
 public:
     MockModule() : Module("mockery", "mockery")
     {
-        counts = (PegCount*)snort_alloc(5 * sizeof(PegCount));
+        mock_counts = (PegCount*)snort_alloc(5 * sizeof(PegCount));
 
         for( unsigned i = 0; i < 5; i++ )
-            counts[i] = i;
+            mock_counts[i] = i;
     }
 
-    ~MockModule() override { snort_free(counts); }
+    ~MockModule() override { snort_free(mock_counts); }
 
     const PegInfo* get_pegs() const override { return pegs; }
 
-    PegCount* get_counts() const override { return counts; }
+    PegCount* get_counts() const override { return mock_counts; }
 
     void sum_stats(bool) override {}
 
@@ -91,7 +91,7 @@ public:
     { return INSPECT; }
 
 private:
-    PegCount* counts;
+    PegCount* mock_counts;
 
     PegInfo pegs[6] =
     {
