@@ -106,7 +106,7 @@ void AppIdStatistics::dump_statistics()
     {
         if ( bucket->app_record_cnt )
         {
-            for (auto it : bucket->apps_tree)
+            for (auto& it : bucket->apps_tree)
             {
                 struct AppIdStatRecord& record = it.second;
 
@@ -266,4 +266,3 @@ void AppIdStatistics::flush()
         start_stats_period(now);
     }
 }
-

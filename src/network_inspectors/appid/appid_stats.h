@@ -47,7 +47,7 @@ struct AppIdStatRecord
 
 struct StatsBucket
 {
-    uint32_t start_time = 0;
+    time_t start_time = 0;
     std::map<AppId, AppIdStatRecord> apps_tree;
     struct
     {

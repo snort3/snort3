@@ -224,9 +224,11 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
             }
             break;
         case TNS_STATE_MESSAGE_CONNECT:
+            if (fd->pos >= (CONNECT_VERSION_OFFSET + 2))
+                break;
             fd->l.raw_len[fd->pos - CONNECT_VERSION_OFFSET] = args.data[offset];
             fd->pos++;
-            if (fd->pos >= (CONNECT_VERSION_OFFSET + 2))
+            if (fd->pos == (CONNECT_VERSION_OFFSET + 2))
             {
                 {
                     switch (ntohs(fd->l.len))
@@ -344,4 +346,3 @@ done:
     }
     return APPID_SUCCESS;
 }
-

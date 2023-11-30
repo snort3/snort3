@@ -65,18 +65,18 @@ void ClientDiscovery::initialize(AppIdInspector& inspector)
     new TnsClientDetector(this);
     new VncClientDetector(this);
 
-    for ( auto kv : tcp_detectors )
+    for ( auto& kv : tcp_detectors )
         kv.second->initialize(inspector);
 
-    for ( auto kv : udp_detectors )
+    for ( auto& kv : udp_detectors )
         kv.second->initialize(inspector);
 }
 
 void ClientDiscovery::reload()
 {
-    for ( auto kv : tcp_detectors )
+    for ( auto& kv : tcp_detectors )
         kv.second->reload();
-    for ( auto kv : udp_detectors )
+    for ( auto& kv : udp_detectors )
         kv.second->reload();
 }
 

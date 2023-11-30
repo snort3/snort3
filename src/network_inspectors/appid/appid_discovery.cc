@@ -80,10 +80,10 @@ AppIdDiscovery::~AppIdDiscovery()
 
     pattern_data.clear();
 
-    for (auto kv : tcp_detectors)
+    for (const auto& kv : tcp_detectors)
         delete kv.second;
 
-    for (auto kv : udp_detectors)
+    for (const auto& kv : udp_detectors)
         delete kv.second;
 }
 

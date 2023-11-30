@@ -124,9 +124,12 @@ int BitClientDetector::validate(AppIdDiscoveryArgs& args)
             fd->pos++;
             break;
         case BIT_STATE_MESSAGE_LEN:
+            if (fd->pos >= offsetof(ClientBITMsg, code))
+                break;
+
             fd->l.raw_len[fd->pos] = args.data[offset];
             fd->pos++;
-            if (fd->pos >= offsetof(ClientBITMsg, code))
+            if (fd->pos == offsetof(ClientBITMsg, code))
             {
                 fd->stringlen = ntohl(fd->l.len);
                 fd->state = BIT_STATE_MESSAGE_DATA;
@@ -157,4 +160,3 @@ done:
     add_app(args.asd, APP_ID_BITTORRENT, APP_ID_BITTORRENT, nullptr, args.change_bits);
     return APPID_SUCCESS;
 }
-
