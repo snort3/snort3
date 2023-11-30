@@ -428,8 +428,6 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
                     }
                     break;
                 case SSLV3RecordType::SERVER_HELLO_DONE:
-                    if (size < offsetof(ServiceSSLV3Record, version))
-                        goto success;
                     if (rec->length)
                         goto fail;
                     if (ss->tot_length != offsetof(ServiceSSLV3Record, version))

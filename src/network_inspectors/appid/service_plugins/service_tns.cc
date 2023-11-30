@@ -228,9 +228,11 @@ int TnsServiceDetector::validate(AppIdDiscoveryArgs& args)
             break;
 
         case TNS_STATE_MESSAGE_ACCEPT:
+            if (ss->pos >= (ACCEPT_VERSION_OFFSET + 2))
+                break;
             ss->l.raw_len[ss->pos - ACCEPT_VERSION_OFFSET] = data[offset];
             ss->pos++;
-            if (ss->pos >= (ACCEPT_VERSION_OFFSET + 2))
+            if (ss->pos == (ACCEPT_VERSION_OFFSET + 2))
             {
                 switch (ntohs(ss->l.len))
                 {

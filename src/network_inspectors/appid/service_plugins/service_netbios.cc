@@ -618,7 +618,7 @@ not_mailslot:
         data += sizeof(NBDgmError);
         if (end != data)
             goto fail;
-        if (err->code < NBDGM_ERROR_CODE_MIN and
+        if (err->code < NBDGM_ERROR_CODE_MIN or
             err->code > NBDGM_ERROR_CODE_MAX)
         {
             goto fail;

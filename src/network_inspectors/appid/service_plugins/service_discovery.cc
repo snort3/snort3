@@ -126,12 +126,12 @@ void ServiceDiscovery::initialize(AppIdInspector& inspector)
     new RegTestServiceDetector2(this);
 #endif
 
-    for ( auto kv : tcp_detectors )
+    for ( auto& kv : tcp_detectors )
     {
         kv.second->initialize(inspector);
         service_detector_list.emplace_back(kv.second);
     }
-    for ( auto kv : udp_detectors )
+    for ( auto& kv : udp_detectors )
     {
         kv.second->initialize(inspector);
         service_detector_list.emplace_back(kv.second);
@@ -140,9 +140,9 @@ void ServiceDiscovery::initialize(AppIdInspector& inspector)
 
 void ServiceDiscovery::reload()
 {
-    for ( auto kv : tcp_detectors )
+    for ( auto& kv : tcp_detectors )
         kv.second->reload();
-    for ( auto kv : udp_detectors )
+    for ( auto& kv : udp_detectors )
         kv.second->reload();
 }
 

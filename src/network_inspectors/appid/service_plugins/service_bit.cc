@@ -138,6 +138,8 @@ int BitServiceDetector::validate(AppIdDiscoveryArgs& args)
             ss->pos++;
             break;
         case BIT_STATE_MESSAGE_LEN:
+            if (ss->pos >= 4)
+                break;
             ss->l.raw_len[ss->pos] = data[offset];
             ss->pos++;
             if (ss->pos >= offsetof(ServiceBITMsg, code))

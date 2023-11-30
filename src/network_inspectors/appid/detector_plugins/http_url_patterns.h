@@ -123,13 +123,13 @@ struct DetectorHTTPPattern
         return true;
     }
 
-    DHPSequence sequence;
-    AppId service_id;
-    AppId client_id;
-    AppId payload_id;
-    AppId app_id;
-    unsigned pattern_size;
-    const uint8_t* pattern;
+    DHPSequence sequence = SINGLE;
+    AppId service_id = 0;
+    AppId client_id = 0;
+    AppId payload_id = 0;
+    AppId app_id = 0;
+    unsigned pattern_size = 0;
+    const uint8_t* pattern = nullptr;
 };
 typedef std::vector<DetectorHTTPPattern> DetectorHTTPPatterns;
 
