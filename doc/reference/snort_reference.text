@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.75.0 2023-11-19 20:04:04 EST TST
+Revision 3.1.76.0 2023-12-03 22:56:58 EST TST
 
 ---------------------------------------------------------------------
 
@@ -5660,6 +5660,34 @@ Peg counts:
     config reloads (sum)
   * stream.reload_offloaded_deletes: number of offloaded flows
     deleted by config reloads (sum)
+  * stream.ip_timeout_prunes: number of IP flows pruned due to
+    timeout (sum)
+  * stream.tcp_timeout_prunes: number of TCP flows pruned due to
+    timeout (sum)
+  * stream.udp_timeout_prunes: number of UDP flows pruned due to
+    timeout (sum)
+  * stream.icmp_timeout_prunes: number of ICMP flows pruned due to
+    timeout (sum)
+  * stream.user_timeout_prunes: number of USER flows pruned due to
+    timeout (sum)
+  * stream.file_timeout_prunes: number of FILE flows pruned due to
+    timeout (sum)
+  * stream.pdu_timeout_prunes: number of PDU flows pruned due to
+    timeout (sum)
+  * stream.ip_memcap_prunes: number of IP flows pruned due to memcap
+    (sum)
+  * stream.tcp_memcap_prunes: number of TCP flows pruned due to
+    memcap (sum)
+  * stream.udp_memcap_prunes: number of UDP flows pruned due to
+    memcap (sum)
+  * stream.icmp_memcap_prunes: number of ICMP flows pruned due to
+    memcap (sum)
+  * stream.user_memcap_prunes: number of USER flows pruned due to
+    memcap (sum)
+  * stream.file_memcap_prunes: number of FILE flows pruned due to
+    memcap (sum)
+  * stream.pdu_memcap_prunes: number of PDU flows pruned due to
+    memcap (sum)
   * stream.current_flows: current number of flows in cache (now)
   * stream.uni_flows: number of uni flows in cache (now)
   * stream.uni_ip_flows: number of uni ip flows in cache (now)
@@ -12099,13 +12127,21 @@ libraries see the Getting Started section of the manual.
     (sum)
   * stream.expected_pruned: number of expected flows pruned (sum)
   * stream.expected_realized: number of expected flows realized (sum)
+  * stream.file_memcap_prunes: number of FILE flows pruned due to
+    memcap (sum)
+  * stream.file_timeout_prunes: number of FILE flows pruned due to
+    timeout (sum)
   * stream.flows: total sessions (sum)
   * stream.ha_prunes: sessions pruned by high availability sync (sum)
   * stream_icmp.created: icmp session trackers created (sum)
   * stream_icmp.max: max icmp sessions (max)
+  * stream.icmp_memcap_prunes: number of ICMP flows pruned due to
+    memcap (sum)
   * stream_icmp.prunes: icmp session prunes (sum)
   * stream_icmp.released: icmp session trackers released (sum)
   * stream_icmp.sessions: total icmp sessions (sum)
+  * stream.icmp_timeout_prunes: number of ICMP flows pruned due to
+    timeout (sum)
   * stream_icmp.timeouts: icmp session timeouts (sum)
   * stream.idle_prunes_max_flows: sessions pruned due to pruning
     timeout since max flows is reached (sum)
@@ -12121,6 +12157,8 @@ libraries see the Getting Started section of the manual.
   * stream_ip.frag_timeouts: datagrams abandoned (sum)
   * stream_ip.max_frags: max fragments (sum)
   * stream_ip.max: max ip sessions (max)
+  * stream.ip_memcap_prunes: number of IP flows pruned due to memcap
+    (sum)
   * stream_ip.nodes_deleted: fragments deleted from tracker (sum)
   * stream_ip.nodes_inserted: fragments added to tracker (sum)
   * stream_ip.overlaps: overlapping fragments (sum)
@@ -12129,6 +12167,8 @@ libraries see the Getting Started section of the manual.
   * stream_ip.reassembled: reassembled datagrams (sum)
   * stream_ip.released: ip session trackers released (sum)
   * stream_ip.sessions: total ip sessions (sum)
+  * stream.ip_timeout_prunes: number of IP flows pruned due to
+    timeout (sum)
   * stream_ip.timeouts: ip session timeouts (sum)
   * stream_ip.total_bytes: total number of bytes processed (sum)
   * stream_ip.total_frags: total fragments (sum)
@@ -12137,6 +12177,10 @@ libraries see the Getting Started section of the manual.
   * stream_ip.trackers_completed: datagram trackers completed (sum)
   * stream_ip.trackers_freed: datagram trackers released (sum)
   * stream.memcap_prunes: sessions pruned due to memcap (sum)
+  * stream.pdu_memcap_prunes: number of PDU flows pruned due to
+    memcap (sum)
+  * stream.pdu_timeout_prunes: number of PDU flows pruned due to
+    timeout (sum)
   * stream.reload_allowed_deletes: number of allowed flows deleted by
     config reloads (sum)
   * stream.reload_blocked_deletes: number of blocked flows deleted by
@@ -12205,6 +12249,8 @@ libraries see the Getting Started section of the manual.
     simultaneously (max)
   * stream_tcp.max_segs: maximum number of segments queued in any
     flow (max)
+  * stream.tcp_memcap_prunes: number of TCP flows pruned due to
+    memcap (sum)
   * stream_tcp.memory: current memory in use (now)
   * stream_tcp.meta_acks: number of meta acks processed (sum)
   * stream_tcp.no_flags_set: tcp packets received with no TCP flags
@@ -12244,6 +12290,8 @@ libraries see the Getting Started section of the manual.
     (sum)
   * stream_tcp.three_way_trackers: tcp session tracking started on
     ack (sum)
+  * stream.tcp_timeout_prunes: number of TCP flows pruned due to
+    timeout (sum)
   * stream_tcp.timeouts: tcp session timeouts (sum)
   * stream_tcp.untracked: tcp packets not tracked (sum)
   * stream_tcp.zero_len_tcp_opt: number of zero length tcp options
@@ -12254,14 +12302,22 @@ libraries see the Getting Started section of the manual.
   * stream_udp.created: udp session trackers created (sum)
   * stream_udp.ignored: udp packets ignored (sum)
   * stream_udp.max: max udp sessions (max)
+  * stream.udp_memcap_prunes: number of UDP flows pruned due to
+    memcap (sum)
   * stream_udp.prunes: udp session prunes (sum)
   * stream_udp.released: udp session trackers released (sum)
   * stream_udp.sessions: total udp sessions (sum)
+  * stream.udp_timeout_prunes: number of UDP flows pruned due to
+    timeout (sum)
   * stream_udp.timeouts: udp session timeouts (sum)
   * stream_udp.total_bytes: total number of bytes processed (sum)
   * stream.uni_flows: number of uni flows in cache (now)
   * stream.uni_ip_flows: number of uni ip flows in cache (now)
   * stream.uni_prunes: uni sessions pruned (sum)
+  * stream.user_memcap_prunes: number of USER flows pruned due to
+    memcap (sum)
+  * stream.user_timeout_prunes: number of USER flows pruned due to
+    timeout (sum)
   * tcp.bad_tcp4_checksum: nonzero tcp over ip checksums (sum)
   * tcp.bad_tcp6_checksum: nonzero tcp over ipv6 checksums (sum)
   * tcp.checksum_bypassed: checksum calculations bypassed (sum)

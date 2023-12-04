@@ -1,3 +1,14 @@
+2023-12-03: 3.1.76.0
+
+* appid: added missed cppcheck warning
+* appid: adding support for memory profiling of third party lib
+* appid: additional check for lua logging
+* appid: fixing coverity issues
+* dns: fix parsing 'additionals' section in dns response
+* flow_cache: added new protocol base counters
+* pegs: make add_peg_count and set_peg_count protected to be available for the derived class
+* perf_mon: fix variable name issue reported by cppcheck
+
 2023-11-19: 3.1.75.0
 
 * appid: add appId for DNS over QUIC and DNS over HTTP/3 to application_ids.h
