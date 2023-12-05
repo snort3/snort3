@@ -33,7 +33,7 @@
 #define GID_DEFAULT          1
 #define GID_SESSION        135
 
-#define GID_BUILTIN_MIN    100
+#define GID_BUILTIN_MIN     40
 #define GID_BUILTIN_MAX    999
 
 #define SESSION_EVENT_SYN_RX 1
