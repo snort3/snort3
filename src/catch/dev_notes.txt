@@ -10,3 +10,6 @@ optimizations.
 
 catch.hpp is from https://github.com/philsquared/Catch.
 
+The relevant licensing information for catch.hpp, as required
+by the Boost Software License, is provided in this directory,
+in the file LICENSE_1_0.txt
