@@ -242,12 +242,16 @@ void HostCacheSegmented<Key, Value>::update_counts()
     PegCount* pcs = (PegCount*)&counts;
     const PegInfo* pegs = get_pegs();
 
-    for ( int i = 0; pegs[i].type != CountType::END; i++ )
+    for (int i = 0; pegs[i].type != CountType::END; i++)
+        pcs[i] = 0;
+
+    for (auto cache : seg_list) 
     {
-        PegCount c = 0;
-        for(auto cache : seg_list)
-            c += cache->get_counts()[i];
-        pcs[i] = c;
+        const PegCount* cache_counts = cache->get_counts();
+        cache->lock();
+        for (int i = 0; pegs[i].type != CountType::END; i++) 
+            pcs[i] += cache_counts[i];
+        cache->unlock();
     }
 }
 
