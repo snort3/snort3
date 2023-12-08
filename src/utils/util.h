@@ -55,6 +55,7 @@ void InitGroups(int, int);
 bool EnterChroot(std::string& root_dir, std::string& log_dir);
 void InitProtoNames();
 unsigned int get_random_seed();
+bool get_file_size(const std::string&, size_t&);
 
 #if defined(NOCOREFILE)
 void SetNoCores();

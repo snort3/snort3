@@ -58,6 +58,7 @@ void HttpMsgBody::do_file_decompression(const Field&, Field&) {}
 void HttpMsgBody::clean_partial(uint32_t&, uint32_t&, uint8_t*&, uint32_t&) {}
 void HttpMsgBody::bookkeeping_regular_flush(uint32_t&, uint8_t*&, uint32_t&, int32_t) {}
 bool HttpMsgBody::run_detection(snort::Packet*) { return true; }
+const Field& HttpMsgBody::get_classic_client_body() { return classic_client_body; }
 void HttpMsgBody::clear() {}
 void HttpMsgSection::clear() {}
 #ifdef REG_TEST

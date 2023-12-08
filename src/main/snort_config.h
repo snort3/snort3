@@ -417,6 +417,7 @@ public:
     DumpConfigType dump_config_type = DUMP_CONFIG_NONE;
 private:
     std::list<ReloadResourceTuner*> reload_tuners;
+    static std::mutex reload_id_mutex;
     unsigned reload_id = 0;
     static std::mutex static_names_mutex;
     static std::unordered_map<std::string, std::string> static_names;

@@ -21,12 +21,10 @@
 #define HTTP_REQUEST_BODY_EVENT_H
 
 #include "framework/data_bus.h"
-#include "service_inspectors/http_inspect/http_enum.h"
-#include "service_inspectors/http_inspect/http_field.h"
-#include "service_inspectors/http_inspect/http_msg_body.h"
 
 #include "http_event_ids.h"
 
+class HttpMsgBody;
 class HttpFlowData;
 
 namespace snort
@@ -41,11 +39,13 @@ public:
         { }
 
     const uint8_t* get_request_body_data(int32_t& length, int32_t& offset);
+    const uint8_t* get_client_body(int32_t& length);
     bool is_last_request_body_piece();
+    bool is_mime() const;
     int64_t get_httpx_stream_id() const;
 
 private:
-    const HttpMsgBody* const http_msg_body;
+    HttpMsgBody* const http_msg_body;
     const int32_t msg_offset;
     const bool last_piece;
     HttpFlowData* const http_flow_data;

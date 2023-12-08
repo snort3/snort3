@@ -1009,8 +1009,13 @@ const SnortConfig* SnortConfig::get_conf()
 unsigned SnortConfig::get_thread_reload_id()
 { return thread_snort_config.reload_id; }
 
+std::mutex SnortConfig::reload_id_mutex;
+
 void SnortConfig::update_thread_reload_id()
-{ thread_snort_config.reload_id = thread_snort_config.snort_conf->reload_id; }
+{
+    std::lock_guard<std::mutex> reload_id_lock(reload_id_mutex);
+    thread_snort_config.reload_id = thread_snort_config.snort_conf->reload_id;
+}
 
 void SnortConfig::set_conf(const SnortConfig* sc)
 {
@@ -1041,6 +1046,7 @@ void SnortConfig::clear_reload_resource_tuner_list()
 
 void SnortConfig::update_reload_id()
 {
+    std::lock_guard<std::mutex> reload_id_lock(reload_id_mutex);
     static unsigned reload_id_tracker = 0;
     reload_id = ++reload_id_tracker;
 }

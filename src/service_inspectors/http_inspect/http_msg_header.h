@@ -48,6 +48,9 @@ public:
     const Field& get_true_ip_addr();
     int32_t get_num_cookies();
 
+    bool has_mime_boundary() const
+    { return mime_boundary_found; }
+
     // The multi_file_processing_id is unique for each file transferred within a single connection
     // and is used by file processing to store partially processed file contexts in the flow data.
     void set_multi_file_processing_id(const uint64_t transaction_id, const uint32_t stream_id);
@@ -63,6 +66,8 @@ private:
 
     // Dummy configurations to support MIME processing
     snort::MailLogConfig mime_conf;
+
+    bool mime_boundary_found = false;
 
     Field true_ip;
     Field true_ip_addr;

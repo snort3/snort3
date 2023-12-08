@@ -98,6 +98,11 @@ const uint8_t* HttpEvent::get_uri_host(int32_t &length)
     }
 }
 
+const uint8_t* HttpEvent::get_uri_query(int32_t& length)
+{
+    return get_header(HttpEnums::HTTP_BUFFER_URI, HttpEnums::UC_QUERY, length);
+}
+
 const uint8_t* HttpEvent::get_location(int32_t& length)
 {
     return get_header(HttpEnums::HTTP_BUFFER_HEADER, HttpEnums::HEAD_LOCATION,

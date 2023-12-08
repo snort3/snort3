@@ -64,6 +64,18 @@ extern "C" {
 #include "catch/snort_catch.h"
 #endif
 
+#ifdef _WIN32
+#define STAT _stat
+#else
+#define STAT stat
+#endif
+
+#ifdef _WIN32
+#define ISREG(m) (((m) & _S_IFMT) == _S_IFREG)
+#else
+#define ISREG(m) S_ISREG(m)
+#endif
+
 using namespace snort;
 
 /****************************************************************************
@@ -476,6 +488,23 @@ unsigned int get_random_seed()
     }
 
     return seed;
+}
+
+bool get_file_size(const std::string& path, size_t& size)
+{
+    struct STAT sb;
+
+    if (STAT(path.c_str(), &sb))
+        return false;
+
+    if (!ISREG(sb.st_mode))
+        return false;
+
+    if (sb.st_size < 0)
+        return false;
+
+    size = static_cast<size_t>(sb.st_size);
+    return true;
 }
 
 #if defined(NOCOREFILE)

@@ -160,6 +160,12 @@ static bool relative_to_include_dir(const char* file, std::string& path)
     return valid_file(file, path);
 }
 
+static bool relative_to_working_dir(const char* file, std::string& path)
+{
+    path = ".";
+    return valid_file(file, path);
+}
+
 const char* get_config_file(const char* arg, std::string& file)
 {
     assert(arg);
@@ -183,6 +189,9 @@ const char* get_config_file(const char* arg, std::string& file)
 
     if ( relative_to_config_dir(arg, file) )
         return "C";
+
+    if ( relative_to_working_dir(arg, file) )
+        return "W";
 
     return nullptr;
 }

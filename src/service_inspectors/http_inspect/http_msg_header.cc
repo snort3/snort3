@@ -491,7 +491,7 @@ void HttpMsgHeader::prepare_body()
         // body
         session_data->detect_depth_remaining[source_id] = INT64_MAX;
     }
-    if ((source_id == SRC_CLIENT) and params->publish_request_body and session_data->for_httpx)
+    if ((source_id == SRC_CLIENT) and params->publish_request_body)
     {
         session_data->publish_octets[source_id] = 0;
         session_data->publish_depth_remaining[source_id] = REQUEST_PUBLISH_DEPTH;
@@ -528,6 +528,8 @@ void HttpMsgHeader::setup_mime()
         {
             if (boundary_present(content_type))
             {
+                mime_boundary_found = true;
+
                 // Generate the unique file id for multi file processing
                 set_multi_file_processing_id(get_transaction_id(), session_data->get_hx_stream_id());
 

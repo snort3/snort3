@@ -323,6 +323,7 @@ various parameters. Snort will find relative includes in the following order:
 1.  If you specify --include-path, this directory will be tried first.
 2.  Snort will try the directory containing the including file.
 3.  Snort will try the directory containing the -c configuration file.
+4.  Snort will try the current working directory.
 
 Some things to keep in mind:
 
