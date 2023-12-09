@@ -613,6 +613,7 @@ bool is_service_over_ssl(AppId appId)
     case APP_ID_SF_APPLIANCE_MGMT:
     case APP_ID_SSL:
     case APP_ID_QUIC:
+    case APP_ID_HTTP3:
         return true;
     }
 
