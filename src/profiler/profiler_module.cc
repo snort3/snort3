@@ -536,6 +536,9 @@ bool ProfilerModule::end(const char* fqn, int, SnortConfig* sc)
     TimeProfilerStats::set_enabled(sc->profiler->time.show);
     RuleContext::set_enabled(sc->profiler->rule.show);
 
+    if ( sc->profiler->rule.show )
+        RuleContext::set_start_time(get_time_curr());
+
     if ( Snort::is_reloading() && strcmp(fqn, "profiler") == 0 )
         sc->register_reload_handler(new ProfilerReloadTuner(sc->profiler->rule.show,
             sc->profiler->time.show));

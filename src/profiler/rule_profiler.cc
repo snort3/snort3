@@ -164,6 +164,7 @@ void show_rule_profiler_stats(const RuleProfilerConfig& config)
     for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
         prepare_rule_profiler_stats(nodes, stats, i);
 
+    RuleContext::set_end_time(get_time_curr());
     print_rule_profiler_stats(config, stats, nullptr);
 }
 
