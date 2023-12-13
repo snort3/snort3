@@ -152,6 +152,9 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
         switch (fd->state)
         {
         case TNS_STATE_MESSAGE_LEN:
+            if (fd->pos >= 2)
+                    break;
+
             fd->l.raw_len[fd->pos++] = args.data[offset];
             if (fd->pos >= offsetof(ClientTNSMsg, checksum))
             {
@@ -262,9 +265,11 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
                 fd->state = TNS_STATE_MESSAGE_CONNECT_OFFSET;
             break;
         case TNS_STATE_MESSAGE_CONNECT_OFFSET:
+            if (fd->pos >= CONNECT_DATA_OFFSET + 2)
+                break; 
             fd->l.raw_len[fd->pos - CONNECT_DATA_OFFSET] = args.data[offset];
             fd->pos++;
-            if (fd->pos >= (CONNECT_DATA_OFFSET + 2))
+            if (fd->pos == (CONNECT_DATA_OFFSET + 2))
             {
                 fd->offsetlen = ntohs(fd->l.len);
                 if (fd->offsetlen > args.size)
