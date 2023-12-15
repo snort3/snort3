@@ -460,6 +460,9 @@ while [ $# -ne 0 ]; do
         --with-uuid-libraries=*)
             append_cache_entry UUID_LIBRARIES_DIR_HINT PATH $optarg
             ;;
+        --with-toolchain=*)
+            append_cache_entry CMAKE_TOOLCHAIN_FILE PATH $optarg
+            ;;
         SIGNAL_SNORT_RELOAD=*)
             append_cache_entry SIGNAL_SNORT_RELOAD STRING $optarg
             ;;
