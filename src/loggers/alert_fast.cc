@@ -71,6 +71,12 @@ static const Parameter s_params[] =
     { "packet", Parameter::PT_BOOL, nullptr, "false",
       "output packet dump with alert" },
 
+    { "buffers", Parameter::PT_BOOL, nullptr, "false",
+      "output IPS buffer dump" },
+
+    { "buffers_depth", Parameter::PT_INT, "0:maxSZ", "0",
+      "number of IPS buffer bytes to dump per buffer (0 is unlimited)" },
+
     { "limit", Parameter::PT_INT, "0:maxSZ", "0",
       "set maximum size in MB before rollover (0 is unlimited)" },
 
@@ -93,8 +99,10 @@ public:
 
 public:
     size_t limit = 0;
+    size_t buffers_depth = 0;
     bool file = false;
     bool packet = false;
+    bool buffers = false;
 };
 
 bool FastModule::set(const char*, Value& v, SnortConfig*)
@@ -105,8 +113,14 @@ bool FastModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("packet") )
         packet = v.get_bool();
 
+    else if ( v.is("buffers") )
+        buffers = v.get_bool();
+
     else if ( v.is("limit") )
         limit = v.get_size() * 1024 * 1024;
+
+    else if ( v.is("buffers_depth") )
+        buffers_depth = v.get_size();
 
     return true;
 }
@@ -116,6 +130,8 @@ bool FastModule::begin(const char*, int, SnortConfig*)
     file = false;
     limit = 0;
     packet = false;
+    buffers = false;
+    buffers_depth = 0;
     return true;
 }
 
@@ -148,6 +164,55 @@ static void ObfuscateLogNetData(TextLog* log, const uint8_t* data, const int len
     LogNetData(log, (const uint8_t*)buf.c_str(), len, p, buf_name, ins_name);
 }
 
+static bool should_dump_buffer(const char* buf_name, const char** buffs_to_dump)
+{
+    if ( !buf_name )
+        return false;
+
+    size_t cmp_idx = 0;
+
+    while ( buffs_to_dump[cmp_idx] )
+        if ( !strcmp(buf_name, buffs_to_dump[cmp_idx++]) )
+            return true;
+
+    return false;
+}
+
+static void log_ips_buffers(Packet* p, const char** buffs_to_dump, unsigned long depth)
+{
+    if ( !buffs_to_dump or !buffs_to_dump[0] )
+        return;
+
+    auto& all_buffs = p->context->matched_buffers;
+    std::vector<MatchedBuffer*> to_dump;
+
+    for ( auto& b : all_buffs )
+        if ( should_dump_buffer(b.name, buffs_to_dump) and to_dump.cend() ==
+            find_if(to_dump.begin(), to_dump.end(), [b](MatchedBuffer*& cmp_b)
+            {
+                bool same_buffers = cmp_b->name == b.name and cmp_b->data == b.data;
+                if ( same_buffers and cmp_b->size < b.size )
+                {
+                    cmp_b->size = b.size;
+                    return true;
+                }
+
+                return same_buffers;
+            }) )
+            to_dump.push_back(&b);
+
+    for ( auto b : to_dump )
+    {
+        const char* buf_name = b->name;
+
+        if ( !buf_name )
+            continue;
+
+        int log_depth = depth && depth < b->size ? depth : b->size;
+        ObfuscateLogNetData(fast_log, b->data, log_depth, p, buf_name, buf_name, "detection");
+    }
+}
+
 using BufferIds = std::vector<unsigned>;
 
 //-------------------------------------------------------------------------
@@ -173,7 +238,9 @@ private:
 private:
     string file;
     unsigned long limit;
+    unsigned long buffers_depth;
     bool packet;
+    bool log_buffers;
 
     static std::vector<unsigned> req_ids;
     static std::vector<unsigned> rsp_ids;
@@ -182,7 +249,8 @@ private:
 std::vector<unsigned> FastLogger::req_ids;
 std::vector<unsigned> FastLogger::rsp_ids;
 
-FastLogger::FastLogger(FastModule* m) : file(m->file ? F_NAME : "stdout"), limit(m->limit), packet(m->packet)
+FastLogger::FastLogger(FastModule* m) : file(m->file ? F_NAME : "stdout"), limit(m->limit),
+    buffers_depth(m->buffers_depth), packet(m->packet), log_buffers(m->buffers)
 { }
 
 //-----------------------------------------------------------------
@@ -320,6 +388,9 @@ void FastLogger::log_data(Packet* p, const Event& event)
 
     if ( buf.len and event.sig_info->gid != 116 )
         LogNetData(fast_log, buf.data, buf.len, p, "alt");
+
+    if ( log_buffers )
+        log_ips_buffers(p, event.buffs_to_dump, buffers_depth);
 }
 
 //-------------------------------------------------------------------------

@@ -685,6 +685,16 @@ int detection_option_node_evaluate(
                     Continuation::recall(state, p);
                 }
 
+                if ( eval_data.leaf_reached and !eval_data.otn->sigInfo.file_id and
+                    node->option_type != RULE_OPTION_TYPE_LEAF_NODE and
+                    ((IpsOption*)node->option_data)->is_buffer_setter() )
+                {
+                    debug_logf(detection_trace, TRACE_BUFFER, p, "Collecting \"%s\" buffer of size %u\n",
+                        cursor.get_name(), cursor.size());
+                    p->context->matched_buffers.emplace_back(cursor.get_name(), cursor.buffer(), cursor.size());
+                    pc.buf_dumps++;
+                }
+
                 // Don't need to reset since it's only checked after we've gone
                 // through the loop at least once and the result will have
                 // been set again already

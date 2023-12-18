@@ -40,6 +40,7 @@ struct Event
     struct sf_timeval32 ref_time = { 0, 0 };   /* reference time for the event reference */
     const char* alt_msg = nullptr;
     std::string action_string;
+    const char** buffs_to_dump = nullptr;
 
     Event() = default;
     Event(SigInfo& si)

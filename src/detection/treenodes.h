@@ -186,6 +186,7 @@ struct OptTreeNode
     OptFpList* opt_func = nullptr;
     OutputSet* outputFuncs = nullptr; /* per sid enabled output functions */
     snort::IpsOption* agent = nullptr;
+    const char** buffer_setters = nullptr;
 
     OptFpList* normal_fp_only = nullptr;
     OptFpList* offload_fp_only = nullptr;

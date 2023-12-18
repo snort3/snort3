@@ -121,6 +121,7 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     Event event;
 
     event.sig_info = const_cast<SigInfo*>(&otn->sigInfo);
+    event.buffs_to_dump = otn->buffer_setters;
     event.ref_time.tv_sec = p->pkth->ts.tv_sec;
     event.ref_time.tv_usec = p->pkth->ts.tv_usec;
     event.update_event_id_and_ref(p->context->conf->get_event_log_id());

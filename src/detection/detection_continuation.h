@@ -37,6 +37,7 @@
 #include "detect_trace.h"
 #include "ips_context.h"
 #include "rule_option_types.h"
+#include "treenodes.h"
 
 class Continuation
 {
@@ -255,6 +256,14 @@ bool Continuation::State::eval(snort::Packet& p)
     else
     {
         result = detection_option_node_evaluate(root_node, data, cursor);
+    }
+
+    if (data.leaf_reached and !data.otn->sigInfo.file_id)
+    {
+        data.p->context->matched_buffers.emplace_back(cursor.get_name(), cursor.buffer(), cursor.size());
+        debug_logf(detection_trace, TRACE_BUFFER, data.p, "Collecting \"%s\" buffer of size %u on continuation root\n",
+            cursor.get_name(), cursor.size());
+        snort::pc.buf_dumps++;
     }
 
     clear_trace_cursor_info();

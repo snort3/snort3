@@ -269,3 +269,17 @@ But just-created continuations are not evaluated immediately on the same packet,
 the next PDU. Additionally, if an inspector calls for detection on a single data block (like, a full
 attachment in HTTP), continuations can be disabled by providing 'no_flow' flag to file_data buffer or
 any other buffer to indicate that the block is complete and no continuations needed.
+
+
+*Matched Buffers Dumps*
+
+Buffers that have been matched during detection are collected and stored on IPS context
+until logging takes place.
+Amount of collected buffers is represented with "detection.buf_dumps" peg count;
+
+Caveats:
+
+1. Only buffers included in the rules explicitly will be collected.
+
+2. For multiple detection cases, all found instances of a matched buffer will be logged,
+   even ones that may not be related to the rule.

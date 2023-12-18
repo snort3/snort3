@@ -93,6 +93,8 @@ static bool buf_is_set = false;
 static std::string s_type;
 static std::string s_body;
 
+static std::list<const char*> buffer_setters;
+
 static bool action_file_id = false;
 static bool fp_file_id = false;
 static bool only_file_data = true;
@@ -1028,6 +1030,11 @@ void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
             fp_file_id = true;
     }
 
+    // only add unique buffer setters
+    if ( !action_file_id and ips and ips->is_buffer_setter() and
+        std::find(buffer_setters.cbegin(), buffer_setters.cend(), ips->get_name()) == buffer_setters.cend() )
+        buffer_setters.emplace_back(ips->get_name());
+
     if ( type != OPT_TYPE_META )
         otn->num_detection_opts++;
 
@@ -1069,6 +1076,8 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
     s_capture = sc->dump_rule_meta();
     s_body = "(";
     buf_is_set = false;
+
+    buffer_setters.clear();
 
     return otn;
 }
@@ -1248,6 +1257,18 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
 
     if ( otn->sigInfo.message.empty() )
         otn->sigInfo.message = "\"no msg in rule\"";
+
+    if ( !otn->sigInfo.file_id and buffer_setters.size() )
+    {
+        otn->buffer_setters = new const char*[buffer_setters.size() + 1];
+
+        size_t idx = 0;
+        for (auto& setter : buffer_setters)
+        {
+            otn->buffer_setters[idx++] = setter;
+        }
+        otn->buffer_setters[idx] = nullptr;
+    }
 
     OptFpList* fpl = AddOptFuncToList(nullptr, otn);
     fpl->type = RULE_OPTION_TYPE_LEAF_NODE;

@@ -165,6 +165,7 @@ OptTreeNode::~OptTreeNode()
         snort_free(detection_filter);
 
     delete sigInfo.body;
+    delete[] buffer_setters;
     delete[] state;
 }
 

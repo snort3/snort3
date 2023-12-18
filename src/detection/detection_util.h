@@ -43,6 +43,18 @@ struct DataBuffer
     unsigned len;
 };
 
+struct MatchedBuffer
+{
+    MatchedBuffer(const char* const n, const uint8_t* const d, unsigned s) :
+        name(n), data(d), size(s)
+    {}
+    MatchedBuffer() = delete;
+
+    const char* const name = nullptr;
+    const uint8_t* const data = nullptr;
+    unsigned size = 0;
+};
+
 // FIXIT-RC event trace should be placed in its own files
 void EventTrace_Init();
 void EventTrace_Term();

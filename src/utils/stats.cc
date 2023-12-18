@@ -239,6 +239,7 @@ const PegInfo pc_names[] =
     { CountType::MAX, "cont_max_num", "peak number of simultaneous continuations per flow" },
     { CountType::SUM, "cont_match_distance", "total number of bytes jumped over by matched continuations"},
     { CountType::SUM, "cont_mismatch_distance", "total number of bytes jumped over by mismatched continuations"},
+    { CountType::SUM, "buf_dumps", "total number of IPS buffers collected from matched rules" },
     { CountType::END, nullptr, nullptr }
 };
 

@@ -176,6 +176,8 @@ public:
     // Only 5 inspectors currently use the ips context data.
     static constexpr unsigned max_ips_id = 8;
 
+    std::vector<MatchedBuffer> matched_buffers;
+
 private:
     FlowSnapshot flow = {};
     std::vector<IpsContextData*> data;
