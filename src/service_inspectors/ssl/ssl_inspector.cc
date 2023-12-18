@@ -149,7 +149,7 @@ static inline bool SSLPP_is_encrypted(SSL_PROTO_CONF* config, uint32_t ssl_flags
 {
     if (config->trustservers)
     {
-        if (ssl_flags & SSL_SAPP_FLAG)
+        if ((ssl_flags & SSL_CAPP_FLAG) || (ssl_flags & SSL_SAPP_FLAG))
             return true;
     }
 
