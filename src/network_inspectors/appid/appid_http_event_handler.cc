@@ -93,7 +93,8 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     {
         if (direction == APP_ID_FROM_INITIATOR)
         {
-            if (asd->get_prev_httpx_raw_packet() != asd->session_packet_count)
+            AppId http_app_id = flow->stream_intf->get_appid_from_stream(flow);
+            if (http_app_id != APP_ID_HTTP3 and asd->get_prev_httpx_raw_packet() != asd->session_packet_count)
             {
                 asd->delete_all_http_sessions();
                 asd->set_prev_httpx_raw_packet(asd->session_packet_count);
