@@ -49,7 +49,6 @@ public:
     bool key_compare(const void* k1, const void* k2, size_t) override;
 };
 
-
 PADDING_GUARD_BEGIN
 struct SO_PUBLIC FlowKey
 {
@@ -57,6 +56,7 @@ struct SO_PUBLIC FlowKey
     uint32_t   ip_h[4]; /* High IP */
     uint32_t   mplsLabel;
     uint32_t   addressSpaceId;
+    uint32_t   tenant_id;
     uint16_t   port_l;  /* Low Port - 0 if ICMP */
     uint16_t   port_h;  /* High Port - 0 if ICMP */
     int16_t    group_l;
@@ -80,14 +80,14 @@ struct SO_PUBLIC FlowKey
         const SnortConfig*, PktType, IpProtocol,
         const snort::SfIp *srcIP, uint16_t srcPort,
         const snort::SfIp *dstIP, uint16_t dstPort,
-        uint16_t vlanId, uint32_t mplsId, uint32_t addrSpaceId,
+        uint16_t vlanId, uint32_t mplsId, uint32_t addrSpaceId, uint32_t tid,
         int16_t group_h = DAQ_PKTHDR_UNKNOWN, int16_t group_l = DAQ_PKTHDR_UNKNOWN);
 
     bool init(
         const SnortConfig*, PktType, IpProtocol,
         const snort::SfIp *srcIP, const snort::SfIp *dstIP,
         uint32_t id, uint16_t vlanId,
-        uint32_t mplsId, uint32_t addrSpaceId,
+        uint32_t mplsId, uint32_t addrSpaceId, uint32_t tid,
         int16_t group_h = DAQ_PKTHDR_UNKNOWN, int16_t group_l = DAQ_PKTHDR_UNKNOWN);
 
     bool init(
@@ -106,8 +106,11 @@ struct SO_PUBLIC FlowKey
     void init_address_space(const SnortConfig*, uint32_t);
     void init_groups(int16_t, int16_t, bool);
 
-    // If this data structure changes size, compare must be updated!
-    static bool is_equal(const void* k1, const void* k2, size_t);
+    static bool is_equal(const FlowKey* k1, const FlowKey* k2)
+    {
+        return 0 == memcmp(k1, k2, sizeof(FlowKey));
+    }
+
 
 private:
     bool init4(IpProtocol, const snort::SfIp *srcIP, uint16_t srcPort,

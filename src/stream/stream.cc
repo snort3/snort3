@@ -95,13 +95,14 @@ Flow* Stream::get_flow(
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
     uint16_t vlan, uint32_t mplsId, uint32_t addressSpaceId,
+    uint32_t tenant_id,
     int16_t ingress_group, int16_t egress_group)
 {
     FlowKey key;
     const SnortConfig* sc = SnortConfig::get_conf();
 
     key.init(sc, type, proto, srcIP, srcPort, dstIP, dstPort, vlan, mplsId,
-        addressSpaceId, ingress_group, egress_group);
+        addressSpaceId, tenant_id, ingress_group, egress_group);
     return get_flow(&key);
 }
 
@@ -109,7 +110,8 @@ Flow* Stream::get_flow(
     PktType type, IpProtocol proto,
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
-    uint16_t vlan, uint32_t mplsId, const DAQ_PktHdr_t& pkth)
+    uint16_t vlan, uint32_t mplsId,
+    const DAQ_PktHdr_t& pkth)
 {
     FlowKey key;
     const SnortConfig* sc = SnortConfig::get_conf();
@@ -135,13 +137,6 @@ void Stream::populate_flow_key(const Packet* p, FlowKey* key)
         *p->pkth);
 }
 
-FlowKey* Stream::get_flow_key(Packet* p)
-{
-    FlowKey* key = (FlowKey*)snort_calloc(sizeof(*key));
-    populate_flow_key(p, key);
-    return key;
-}
-
 //-------------------------------------------------------------------------
 // app data foo
 //-------------------------------------------------------------------------
@@ -160,30 +155,13 @@ FlowData* Stream::get_flow_data(
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
     uint16_t vlan, uint32_t mplsId,
-    uint32_t addressSpaceID, unsigned flowdata_id,
+    uint32_t addressSpaceID, unsigned flowdata_id, uint32_t tenant_id,
     int16_t ingress_group, int16_t egress_group)
 {
     Flow* flow = get_flow(
         type, proto, srcIP, srcPort, dstIP, dstPort,
-        vlan, mplsId, addressSpaceID, ingress_group,
+        vlan, mplsId, addressSpaceID, tenant_id, ingress_group,
         egress_group);
-
-    if (!flow)
-        return nullptr;
-
-    return flow->get_flow_data(flowdata_id);
-}
-
-FlowData* Stream::get_flow_data(
-    PktType type, IpProtocol proto,
-    const SfIp* srcIP, uint16_t srcPort,
-    const SfIp* dstIP, uint16_t dstPort,
-    uint16_t vlan, uint32_t mplsId,
-    unsigned flowdata_id, const DAQ_PktHdr_t& pkth)
-{
-    Flow* flow = get_flow(
-        type, proto, srcIP, srcPort, dstIP, dstPort,
-        vlan, mplsId, pkth);
 
     if (!flow)
         return nullptr;

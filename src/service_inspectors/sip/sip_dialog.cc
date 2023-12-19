@@ -390,8 +390,11 @@ static int SIP_ignoreChannels(const SIP_DialogData& dialog, Packet* p, SIP_PROTO
         }
         else
         {
-            Stream::ignore_flow(p, p->flow->pkt_type, p->get_ip_proto_next(), &mdataA->maddress,
-                mdataA->mport, &mdataB->maddress, mdataB->mport, SSN_DIR_BOTH, (new SipFlowData));
+            SipFlowData* fd = new SipFlowData;
+            int ret = Stream::ignore_flow(p, p->flow->pkt_type, p->get_ip_proto_next(), &mdataA->maddress,
+                mdataA->mport, &mdataB->maddress, mdataB->mport, SSN_DIR_BOTH, fd);
+            if (ret)
+                delete fd;
         }
         sip_stats.ignoreChannels++;
         mdataA = mdataA->nextM;

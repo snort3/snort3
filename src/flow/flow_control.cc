@@ -628,8 +628,3 @@ int FlowControl::add_expected( const Packet* ctrlPkt, PktType type, IpProtocol i
         SSN_DIR_BOTH, fd, snort_protocol_id, swap_app_direction, expect_multi, bidirectional, expect_persist);
 }
 
-bool FlowControl::is_expected(Packet* p)
-{
-    return exp_cache->is_expected(p);
-}
-

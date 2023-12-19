@@ -39,10 +39,6 @@ namespace snort
     struct Packet;
 }
 
-// %s %u -> %s %u %u AS=%u ID=%u [GR=%hd-%hd]
-// IPv6 Port -> IPv6 Port Proto AS=ASNum ID=InstanceNum [GR=SrcGroupNum-DstGroupNum]
-#define APPID_DEBUG_SESSION_ID_SIZE ((39+1+5+1+2+1+39+1+5+1+3+1+2+1+10+1+2+1+10+32)+1)
-
 #define CURRENT_PACKET snort::DetectionEngine::get_current_packet()
 
 void appid_log(const snort::Packet*, const uint8_t log_level, const char*, ...);
@@ -79,7 +75,7 @@ public:
 
     void activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t port1, uint16_t port2,
         IpProtocol protocol, const int version, uint32_t address_space_id,
-        const AppIdSession* session, bool log_all_sessions, int16_t group1 = DAQ_PKTHDR_UNKNOWN,
+        const AppIdSession* session, bool log_all_sessions, uint32_t tenant_id, int16_t group1 = DAQ_PKTHDR_UNKNOWN,
         int16_t group2 = DAQ_PKTHDR_UNKNOWN, bool inter_group_flow = false);
     void activate(const snort::Flow *flow, const AppIdSession* session, bool log_all_sessions);
     void set_constraints(const char *desc, const AppIdDebugSessionConstraints* constraints);
@@ -90,16 +86,16 @@ public:
     bool is_active() { return active; }
     void deactivate() { active = false; }
 
-    const char* get_debug_session()
+    const char* get_debug_session() const
     {
-        return debug_session;
+        return debugstr.c_str();
     }
 
 private:
     bool enabled = false;
     bool active = false;
     AppIdDebugSessionConstraints info = {};
-    char debug_session[APPID_DEBUG_SESSION_ID_SIZE] = {};
+    std::string debugstr;
 };
 
 extern THREAD_LOCAL AppIdDebug* appidDebug;

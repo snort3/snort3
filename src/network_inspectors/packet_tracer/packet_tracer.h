@@ -35,10 +35,6 @@
 #include "time/clock_defs.h"
 #include "time/stopwatch.h"
 
-// %s %u -> %s %u %u AS=%u ID=%u GR=%hd-%hd
-// IPv6 Port -> IPv6 Port Proto AS=ASNum ID=InstanceNum GR=SrcGroupNum-DstGroupNum
-#define PT_DEBUG_SESSION_ID_SIZE ((39+1+5+1+2+1+39+1+5+1+3+1+2+1+10+1+2+1+10+32)+1)
-
 namespace snort
 {
 struct Packet;
@@ -96,7 +92,7 @@ protected:
     bool shell_enabled = false;
     bool active = false;
 
-    char debug_session[PT_DEBUG_SESSION_ID_SIZE] = {0};
+    std::string debugstr;
     PacketConstraints constraints;
 
     // static functions
@@ -109,7 +105,7 @@ protected:
     void add_eth_header_info(const snort::Packet&);
     void add_packet_type_info(const snort::Packet&);
     void update_constraints(const PacketConstraints* constraints);
-    const char *get_debug_session() { return debug_session; }
+    const char *get_debug_session() { return debugstr.c_str(); }
 
     virtual void open_file();
     virtual void dump_to_daq(Packet*);

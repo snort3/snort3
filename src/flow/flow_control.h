@@ -69,7 +69,6 @@ public:
     snort::Flow* stale_flow_cleanup(FlowCache*, snort::Flow*, snort::Packet*);
     void timeout_flows(unsigned int, time_t cur_time);
     void check_expected_flow(snort::Flow*, snort::Packet*);
-    bool is_expected(snort::Packet*);
     unsigned prune_multiple(PruneReason, bool do_cleanup);
 
     int add_expected_ignore(

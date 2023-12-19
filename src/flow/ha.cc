@@ -89,7 +89,7 @@ private:
     bool use_daq_channel;
 };
 
-static constexpr uint8_t HA_MESSAGE_VERSION = 3;
+static constexpr uint8_t HA_MESSAGE_VERSION = 4;
 
 // define message size and content constants.
 static constexpr uint8_t KEY_SIZE_IP6 = sizeof(FlowKey);
@@ -492,7 +492,7 @@ static Flow* consume_ha_message(HAMessage& msg,
     if (read_flow_key(msg, hdr, key) == 0)
         return nullptr;
 
-    if (packet_key and !FlowKey::is_equal(packet_key, &key, 0))
+    if (packet_key and !FlowKey::is_equal(packet_key, &key))
     {
         ha_stats.key_mismatch++;
         return nullptr;

@@ -170,7 +170,7 @@ const Command* AppIdModule::get_commands() const { return nullptr; }
 const PegInfo* AppIdModule::get_pegs() const { return nullptr; }
 PegCount* AppIdModule::get_counts() const { return nullptr; }
 ProfileStats* AppIdModule::get_profile(
-        unsigned i, const char*& name, const char*& parent) const { return nullptr; }
+        unsigned, const char*&, const char*&) const { return nullptr; }
 void AppIdModule::set_trace(const Trace*) const { }
 const TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
 THREAD_LOCAL bool ThirdPartyAppIdContext::tp_reload_in_progress = false;
@@ -393,7 +393,7 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     p.ptrs.ip_api.set(ip, ip);
     AppIdModule app_module;
     AppIdInspector ins(app_module);
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt());
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0, 0);
     asd->flags |= APPID_SESSION_SPECIAL_MONITORED | APPID_SESSION_DISCOVER_USER |
         APPID_SESSION_DISCOVER_APP;
     Flow* flow = new Flow;
@@ -428,7 +428,7 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
     p.ptrs.tcph = nullptr;
     AppIdModule app_module;
     AppIdInspector ins(app_module);
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt());
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0, 0);
     asd->flags |= APPID_SESSION_SPECIAL_MONITORED | APPID_SESSION_DISCOVER_USER |
         APPID_SESSION_DISCOVER_APP;
     Flow* flow = new Flow;
@@ -453,7 +453,7 @@ TEST(appid_discovery_tests, change_bits_for_client_version)
     AppIdModule app_module;
     AppIdInspector ins(app_module);
     SfIp ip;
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt());
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0, 0);
     const char* version = "3.0";
     asd->set_client_version(version, change_bits);
 
@@ -488,7 +488,7 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     p.ptrs.ip_api.set(ip, ip);
     AppIdModule app_module;
     AppIdInspector ins(app_module);
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt());
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0, 0);
     asd->flags |= APPID_SESSION_SPECIAL_MONITORED | APPID_SESSION_DISCOVER_USER |
         APPID_SESSION_DISCOVER_APP;
     Flow* flow = new Flow;

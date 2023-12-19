@@ -1132,11 +1132,14 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                             {
                                 /* Call into Streams to mark data channel as something
                                  * to ignore. */
-                                Stream::ignore_flow(
+                                FtpDataFlowData* fd = new FtpDataFlowData(p);
+                                int ret = Stream::ignore_flow(
                                     p, PktType::TCP, IpProtocol::TCP,
                                     &session->clientIP, session->clientPort,
                                     &session->serverIP, session->serverPort,
-                                    SSN_DIR_BOTH, (new FtpDataFlowData(p)));
+                                    SSN_DIR_BOTH, fd);
+                                if (ret)
+                                    delete fd;
                             }
                         }
                     }

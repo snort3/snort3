@@ -102,7 +102,6 @@ public:
         bool swap_app_direction = false, bool expect_multi = false, bool bidirectional = false,
         bool expect_persist = false);
 
-    bool is_expected(snort::Packet*);
     bool check(snort::Packet*, snort::Flow*);
 
     unsigned long get_expects() { return expects; }

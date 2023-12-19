@@ -44,6 +44,7 @@ static const FlowKey s_test_key =
     /* .ip_h = */ { 5, 6, 7, 8 },
     /* .mplsLabel = */ 9,
     /* .addressSpaceId = */ 0,
+    /* .tenant_id = */ 0,
     /* .port_l = */ 10,
     /* .port_h = */ 11,
     /* .group_l = */ 0,
@@ -65,7 +66,7 @@ static struct __attribute__((__packed__)) TestDeleteMessage {
     {
         HA_DELETE_EVENT,
         HA_MESSAGE_VERSION,
-        61,
+        65,
         KEY_TYPE_IP6
     },
     s_test_key
@@ -81,7 +82,7 @@ static struct __attribute__((__packed__)) TestUpdateMessage {
     {
         HA_UPDATE_EVENT,
         HA_MESSAGE_VERSION,
-        73,
+        77,
         KEY_TYPE_IP6
     },
     s_test_key,
@@ -201,8 +202,6 @@ void packet_gettimeofday(struct timeval* tv)
     *tv = *(struct timeval*)mock().getData("packet_tv").getObjectPointer();
 }
 }
-
-bool FlowKey::is_equal(const void*, const void*, size_t) { return false; }
 
 int SFDAQInstance::ioctl(DAQ_IoctlCmd, void*, size_t) { return DAQ_SUCCESS; }
 

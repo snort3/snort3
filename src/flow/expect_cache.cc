@@ -339,7 +339,7 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
     // when groups are significant
     bool reversed_key = (ctrlPkt->pkth->flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS)
         ? key.init(ctrlPkt->context->conf, type, ip_proto, cliIP, cliPort,
-            srvIP, srvPort, vlanId, mplsId, ctrlPkt->pkth->address_space_id, ctrlPkt->pkth->egress_group,
+            srvIP, srvPort, vlanId, mplsId, ctrlPkt->pkth->address_space_id, ctrlPkt->pkth->tenant_id, ctrlPkt->pkth->egress_group,
             ctrlPkt->pkth->ingress_group)
         : key.init(ctrlPkt->context->conf, type, ip_proto, cliIP, cliPort,
             srvIP, srvPort, vlanId, mplsId, *ctrlPkt->pkth);
@@ -457,12 +457,6 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
         DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::EXPECT_EARLY_SESSION, event, ctrlPkt->flow);
     }
     return 0;
-}
-
-bool ExpectCache::is_expected(Packet* p)
-{
-    FlowKey key;
-    return (find_node_by_packet(p, key) != nullptr);
 }
 
 bool ExpectCache::check(Packet* p, Flow* lws)

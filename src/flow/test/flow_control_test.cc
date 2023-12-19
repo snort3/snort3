@@ -83,7 +83,6 @@ void Flow::set_mpls_layer_per_dir(Packet*) { }
 void DetectionEngine::disable_all(Packet*) { }
 ExpectCache::ExpectCache(uint32_t) { }
 bool ExpectCache::check(Packet*, Flow*) { return true; }
-bool ExpectCache::is_expected(Packet*) { return true; }
 Flow* HighAvailabilityManager::import(Packet&, FlowKey&) { return nullptr; }
 
 namespace snort
@@ -100,7 +99,7 @@ bool FlowKey::init(
     const SfIp*, uint16_t,
     const SfIp*, uint16_t,
     uint16_t, uint32_t,
-    uint32_t, int16_t, int16_t)
+    uint32_t, uint32_t, int16_t, int16_t)
 {
    return true;
 }
@@ -120,7 +119,7 @@ bool FlowKey::init(
     PktType, IpProtocol,
     const SfIp*, const SfIp*,
     uint32_t, uint16_t,
-    uint32_t, uint32_t, int16_t,
+    uint32_t, uint32_t, uint32_t, int16_t,
     int16_t)
 {
     return true;

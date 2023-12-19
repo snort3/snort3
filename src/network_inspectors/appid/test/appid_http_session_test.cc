@@ -115,7 +115,7 @@ static Flow flow;
 
 // AppIdSession mock functions
 AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector,
-    OdpContext&, uint32_t) : FlowData(inspector_id, &inspector), config(stub_config),
+    OdpContext&, uint32_t, uint32_t) : FlowData(inspector_id, &inspector), config(stub_config),
         api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt)
 {}
 
@@ -158,7 +158,7 @@ void AppIdModule::reset_stats() {}
 // AppIdDebug mock functions
 void AppIdDebug::activate(const uint32_t*, const uint32_t*, uint16_t,
     uint16_t, IpProtocol, const int, uint32_t, const AppIdSession*, bool,
-    int16_t, int16_t, bool)
+    uint32_t, int16_t, int16_t, bool)
 {
 }
 
@@ -188,7 +188,7 @@ TEST_GROUP(appid_http_session)
     void setup() override
     {
         SfIp sfip;
-        session = new AppIdSession(IpProtocol::IP, &sfip, 0, dummy_appid_inspector, stub_odp_ctxt);
+        session = new AppIdSession(IpProtocol::IP, &sfip, 0, dummy_appid_inspector, stub_odp_ctxt, 0, 0);
         session->flow = &flow;
         mock_hsession = new AppIdHttpSession(*session, 0);
         appidDebug = new AppIdDebug();

@@ -237,6 +237,8 @@ struct Smb2SidHashKey
     uint16_t vlan_tag = 0;
     uint16_t padding = 0;
     uint64_t sid = 0;
+    uint32_t tenant_id = 0;
+    uint32_t padding2 = 0;  // NOTE: If this changes, change do_hash too
 
     bool operator==(const Smb2SidHashKey& other) const
     {
@@ -253,7 +255,8 @@ struct Smb2SidHashKey
                sgroup == other.sgroup and
                addressSpaceId == other.addressSpaceId and
                vlan_tag == other.vlan_tag and
-               sid == other.sid);
+               sid == other.sid and
+               tenant_id == other.tenant_id );
     }
 };
 PADDING_GUARD_END
@@ -278,11 +281,34 @@ private:
     {
         uint32_t a, b, c;
         a = b = c = SMB_KEY_HASH_HARDENER;
-        a += d[0]; b += d[1];  c += d[2];  mix(a, b, c);
-        a += d[3]; b += d[4];  c += d[5];  mix(a, b, c);
-        a += d[6]; b += d[7];  c += d[8];  mix(a, b, c);
-        a += d[9]; b += d[10]; c += d[11]; mix(a, b, c);
-        a += d[12]; b += d[13]; finalize(a, b, c);
+
+        a += d[0];  // IPv6 cip[0]
+        b += d[1];  // IPv6 cip[1]
+        c += d[2];  // IPv6 cip[2]
+        mix(a, b, c);
+
+        a += d[3];  // IPv6 cip[3]
+        b += d[4];  // IPv6 sip[0]
+        c += d[5];  // IPv6 sip[1]
+        mix(a, b, c);
+
+        a += d[6];  // IPv6 sip[2]
+        b += d[7];  // IPv6 sip[3]
+        c += d[8];  // mpls label
+        mix(a, b, c);
+
+        a += d[9];  // cgroup and sgroup
+        b += d[10]; // addressSpaceId
+        c += d[11]; // vlan_tag, padding
+        mix(a, b, c);
+
+        a += d[12]; // sid[0]
+        b += d[13]; // sid[1]
+        c += d[14]; // tenant_id
+
+        // padding2 is ignored.
+        finalize(a, b, c);
+
         return c;
     }
 

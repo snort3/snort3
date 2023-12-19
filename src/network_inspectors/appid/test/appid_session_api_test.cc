@@ -70,7 +70,7 @@ TEST_GROUP(appid_session_api)
         AppidChangeBits change_bits;
 
         SfIp ip{};
-        mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
+        mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt, 0, 0);
         mock_session->flow = &flow;
         pkt_thread_odp_ctxt = &mock_session->get_odp_ctxt();
         mock_session->set_ss_application_ids(APPID_UT_ID, APPID_UT_ID, APPID_UT_ID,
@@ -113,7 +113,7 @@ TEST(appid_session_api, get_client_app_id)
 TEST(appid_session_api, get_client_app_id_with_eve_for_http2)
 {
     SfIp ip{};
-    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
+    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt, 0, 0);
     asd.flow = &flow;
     AppidChangeBits change_bits;
     asd.set_ss_application_ids(APP_ID_HTTP2, APPID_UT_ID, APPID_UT_ID, APPID_UT_ID, APPID_UT_ID, change_bits);
@@ -163,7 +163,7 @@ TEST(appid_session_api, get_referred_app_id)
 TEST(appid_session_api, get_app_id)
 {
     SfIp ip{};
-    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
+    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt, 0, 0);
     asd.flow = &flow;
     AppidChangeBits change_bits;
     asd.set_application_ids_service(APP_ID_HTTP2, change_bits);
@@ -192,7 +192,7 @@ TEST(appid_session_api, get_app_id)
 TEST(appid_session_api, get_app_id_with_eve_for_http2)
 {
     SfIp ip{};
-    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
+    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt, 0, 0);
     asd.flow = &flow;
     AppidChangeBits change_bits;
     asd.set_application_ids_service(APP_ID_HTTP2, change_bits);
@@ -285,7 +285,7 @@ TEST(appid_session_api, get_app_id_with_eve_for_http2)
 TEST(appid_session_api, get_first_stream_appids_for_http2)
 {
     SfIp ip{};
-    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
+    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt, 0, 0);
     asd.flow = &flow;
     AppidChangeBits change_bits;
     asd.set_application_ids_service(APP_ID_HTTP2, change_bits);
@@ -433,7 +433,7 @@ TEST(appid_session_api, get_client_info)
 TEST(appid_session_api, get_client_info_http2)
 {
     SfIp ip{};
-    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt);
+    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt, 0, 0);
     asd.flow = &flow;
     AppidChangeBits change_bits;
     asd.set_ss_application_ids(APP_ID_HTTP2, APPID_UT_ID + 1, APPID_UT_ID, APPID_UT_ID, APPID_UT_ID, change_bits);

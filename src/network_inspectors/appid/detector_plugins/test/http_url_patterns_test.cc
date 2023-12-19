@@ -42,7 +42,7 @@ static Packet pkt;
 static SfIp sfip;
 static AppIdModule appid_mod;
 static AppIdInspector appid_inspector(appid_mod);
-static AppIdSession session(IpProtocol::IP, &sfip, 0, appid_inspector, odpctxt);
+static AppIdSession session(IpProtocol::IP, &sfip, 0, appid_inspector, odpctxt, 0, 0);
 static AppIdHttpSession mock_hsession(session, 0);
 static ChpMatchDescriptor cmd_test;
 static MatchedCHPAction mchp;

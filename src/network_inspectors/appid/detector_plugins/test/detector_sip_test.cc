@@ -127,7 +127,7 @@ void SipPatternMatchers::finalize_patterns(OdpContext&)
 AppIdSession* AppIdSession::allocate_session(snort::Packet const*, IpProtocol,
     AppidSessionDirection, AppIdInspector&, OdpContext& odp_ctxt)
 {
-    session = new AppIdSession(IpProtocol::IP, &sfip, 0, appid_inspector, odp_ctxt);
+    session = new AppIdSession(IpProtocol::IP, &sfip, 0, appid_inspector, odp_ctxt, 0, 0);
     return session;
 }
 

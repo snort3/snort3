@@ -49,7 +49,7 @@ static AppIdSession* create_appid_session(Flow& flow, const FlowKey* key,
     AppIdSession* asd = new AppIdSession(static_cast<IpProtocol>(key->ip_protocol),
         flow.flags.client_initiated ? &flow.client_ip : &flow.server_ip,
         flow.flags.client_initiated ? flow.client_port : flow.server_port, inspector,
-        *pkt_thread_odp_ctxt, key->addressSpaceId);
+        *pkt_thread_odp_ctxt, key->addressSpaceId, key->tenant_id);
         appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - New AppId session created in consume\n");
 
     flow.set_flow_data(asd);

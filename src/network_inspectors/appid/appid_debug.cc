@@ -25,6 +25,8 @@
 
 #include "appid_debug.h"
 
+#include <sstream>
+
 #include "flow/flow_key.h"
 #include "log/messages.h"
 #include "trace/trace_api.h"
@@ -96,8 +98,8 @@ void appid_log(const Packet* p, const uint8_t log_level, const char* format, ...
 
 void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t port1,
     uint16_t port2, IpProtocol protocol, const int version, uint32_t address_space_id,
-    const AppIdSession* session, bool log_all_sessions, int16_t group1, int16_t group2,
-    bool inter_group_flow)
+    const AppIdSession* session, bool log_all_sessions, uint32_t tenant_id,
+    int16_t group1, int16_t group2, bool inter_group_flow)
 {
     if (!( log_all_sessions or
            ( info.proto_match(protocol) and
@@ -170,14 +172,20 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
     snort_inet_ntop(af, &sip->u6_addr32[(af == AF_INET)? 3 : 0], sipstr, sizeof(sipstr));
     snort_inet_ntop(af, &dip->u6_addr32[(af == AF_INET)? 3 : 0], dipstr, sizeof(dipstr));
 
-    char gr_buf[32] = { '\0' };
-    if (inter_group_flow)
-        snprintf(gr_buf, sizeof(gr_buf), " GR=%hd-%hd", sgroup, dgroup);
+    std::ostringstream oss;
+    oss << sipstr << " " << sport << " -> "
+        << dipstr << " " << dport << " "
+        << std::to_string(to_utype(protocol))
+        << " AS=" << address_space_id
+        << " ID=" << get_instance_id();
 
-    snprintf(debug_session, sizeof(debug_session),
-        "%s %hu -> %s %hu %hhu AS=%u ID=%u%s",
-        sipstr, sport, dipstr, dport, static_cast<uint8_t>(protocol),
-        address_space_id, get_instance_id(), gr_buf);
+    if (inter_group_flow)
+        oss << " GR=" << sgroup << "-" << dgroup;
+
+    if (tenant_id)
+        oss << " TN=" << tenant_id;
+
+    debugstr = oss.str();
 }
 
 void AppIdDebug::activate(const Flow *flow, const AppIdSession* session, bool log_all_sessions)
@@ -194,7 +202,7 @@ void AppIdDebug::activate(const Flow *flow, const AppIdSession* session, bool lo
     // two key->version here to create the proper debug_session string.
     activate(key->ip_l, key->ip_h, key->port_l, key->port_h, (IpProtocol)(key->ip_protocol),
         key->version, key->addressSpaceId, session, log_all_sessions,
-        key->group_l, key->group_h, key->flags.group_used);
+        key->tenant_id, key->group_l, key->group_h, key->flags.group_used);
 }
 
 void AppIdDebug::set_constraints(const char *desc,

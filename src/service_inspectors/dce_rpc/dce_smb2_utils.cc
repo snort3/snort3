@@ -42,13 +42,13 @@ Smb2SidHashKey get_key(uint64_t sid)
     {
         memcpy(key.cip, flow->client_ip.get_ip6_ptr(), 4 * sizeof(uint32_t));
         memcpy(key.sip, flow->server_ip.get_ip6_ptr(), 4 * sizeof(uint32_t));
-        key.sid = sid;
+        key.mplsLabel = flow->key->mplsLabel;
         key.cgroup = flow->client_group;
         key.sgroup = flow->server_group;
-        key.vlan_tag = flow->key->vlan_tag;
-        key.mplsLabel = flow->key->mplsLabel;
         key.addressSpaceId = flow->key->addressSpaceId;
-        key.padding = 0;
+        key.vlan_tag = flow->key->vlan_tag;
+        key.sid = sid;
+        key.tenant_id = flow->key->tenant_id;
     }
     return key;
 }

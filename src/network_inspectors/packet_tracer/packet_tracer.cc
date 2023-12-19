@@ -27,6 +27,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <unordered_map>
+#include <sstream>
 
 #include "detection/ips_context.h"
 #include "log/log.h"
@@ -311,6 +312,7 @@ void PacketTracer::add_ip_header_info(const Packet& p)
 {
     SfIpString sipstr;
     SfIpString dipstr;
+    std::ostringstream oss;
 
     uint16_t sport = p.ptrs.sp;
     uint16_t dport = p.ptrs.dp;
@@ -323,24 +325,53 @@ void PacketTracer::add_ip_header_info(const Packet& p)
     actual_sip->ntop(sipstr, sizeof(sipstr));
     actual_dip->ntop(dipstr, sizeof(dipstr));
 
-    char gr_buf[32] = { '\0' };
-    if (p.is_inter_group_flow())
-        snprintf(gr_buf, sizeof(gr_buf), " GR=%hd-%hd", p.pkth->ingress_group,
-            p.pkth->egress_group);
-
     if (shell_enabled)
     {
         PacketTracer::log("\n");
-        snprintf(debug_session, sizeof(debug_session), "%s %hu -> %s %hu %hhu AS=%u ID=%u%s ",
-            sipstr, sport, dipstr, dport, static_cast<uint8_t>(proto),
-            p.pkth->address_space_id, get_instance_id(), gr_buf);
+
+        oss << sipstr << " " << sport << " -> "
+            << dipstr << " " << dport << " "
+            << std::to_string(to_utype(proto))
+            << " AS=" << p.pkth->address_space_id
+            << " ID=" << get_instance_id();
+
+            if (p.is_inter_group_flow())
+            {
+                oss << " GR="
+                    << p.pkth->ingress_group
+                    << "-"
+                    << p.pkth->egress_group;
+            }
+
+            if (p.pkth->tenant_id)
+                oss << " TN=" << p.pkth->tenant_id;
+
+        oss << " ";
+        debugstr = oss.str();
     }
     else
     {
         add_eth_header_info(p);
-        PacketTracer::log("%s:%hu -> %s:%hu proto %u AS=%u ID=%u%s\n",
-            sipstr, sport, dipstr, dport, static_cast<uint8_t>(proto),
-            p.pkth->address_space_id, get_instance_id(), gr_buf);
+
+        oss << sipstr << ":" << sport << " -> "
+            << dipstr << ":" << dport << " "
+            << "proto " << std::to_string(to_utype(proto))
+            << " AS=" << p.pkth->address_space_id
+            << " ID=" << get_instance_id();
+
+            if (p.is_inter_group_flow())
+            {
+                oss << " GR="
+                    << p.pkth->ingress_group
+                    << "-"
+                    << p.pkth->egress_group;
+            }
+
+            if (p.pkth->tenant_id)
+                oss << " TN=" << p.pkth->tenant_id;
+
+        oss << "\n";
+        PacketTracer::log("%s", oss.str().c_str());
     }
     add_packet_type_info(p);
 }
@@ -396,31 +427,30 @@ void PacketTracer::add_eth_header_info(const Packet& p)
         if (shell_enabled)
         {
             PacketTracer::log("\n");
-            char gr_buf[32] = { '\0' };
-            if (p.is_inter_group_flow())
-                snprintf(gr_buf, sizeof(gr_buf), " GR=%hd-%hd", p.pkth->ingress_group,
-                    p.pkth->egress_group);
+            std::ostringstream oss;
+            oss << eh->to_string()
+                << " AS=" << p.pkth->address_space_id
+                << " ID=" << get_instance_id();
 
-            snprintf(debug_session, sizeof(debug_session),
-                "%02X:%02X:%02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X:%02X:%02X %04X"
-                " AS=%u ID=%u%s ",
-                eh->ether_src[0], eh->ether_src[1], eh->ether_src[2],
-                eh->ether_src[3], eh->ether_src[4], eh->ether_src[5],
-                eh->ether_dst[0], eh->ether_dst[1], eh->ether_dst[2],
-                eh->ether_dst[3], eh->ether_dst[4], eh->ether_dst[5],
-                (uint16_t)eh->ethertype(), p.pkth->address_space_id, get_instance_id(),
-                gr_buf);
+            if (p.is_inter_group_flow())
+            {
+                oss << " GR="
+                    << p.pkth->ingress_group
+                    << "-"
+                    << p.pkth->egress_group;
+            }
+
+            if (p.pkth->tenant_id)
+                oss << " TN=" << p.pkth->tenant_id;
+
+            oss << " ";  // Include a space before the remaining data.
+            debugstr = oss.str();
             s_pkt_trace->active = true;
         }
         else
         {
             // MAC layer
-            PacketTracer::log("%02X:%02X:%02X:%02X:%02X:%02X -> %02X:%02X:%02X:%02X:%02X:%02X %04X\n",
-                eh->ether_src[0], eh->ether_src[1], eh->ether_src[2],
-                eh->ether_src[3], eh->ether_src[4], eh->ether_src[5],
-                eh->ether_dst[0], eh->ether_dst[1], eh->ether_dst[2],
-                eh->ether_dst[3], eh->ether_dst[4], eh->ether_dst[5],
-                (uint16_t)eh->ethertype());
+            PacketTracer::log("%s\n", eh->to_string().c_str());
         }
     }
 }

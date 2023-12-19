@@ -58,7 +58,6 @@ void Active::set_drop_reason(char const*) { }
 ExpectCache::ExpectCache(uint32_t) { }
 ExpectCache::~ExpectCache() = default;
 bool ExpectCache::check(Packet*, Flow*) { return true; }
-bool ExpectCache::is_expected(Packet*) { return true; }
 void DetectionEngine::disable_all(Packet*) { }
 Flow* HighAvailabilityManager::import(Packet&, FlowKey&) { return nullptr; }
 bool HighAvailabilityManager::in_standby(Flow*) { return false; }
