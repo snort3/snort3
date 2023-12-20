@@ -48,6 +48,7 @@ public:
 
     static bool has_dropped_privileges();
     SO_PUBLIC static bool is_reloading();
+    inline SO_PUBLIC static bool is_exiting() { return already_exiting; }
 
 private:
     static void init(int, char**);
@@ -59,6 +60,7 @@ private:
     static bool initializing;
     static bool reloading;
     static bool privileges_dropped;
+    static bool already_exiting;
 };
 
 // RAII-style mechanism for removal and reinstallation of Snort's crash handler

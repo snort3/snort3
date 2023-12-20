@@ -91,62 +91,9 @@ inline MemoryStats& MemoryStats::operator+=(const MemoryStats& rhs)
     return *this;
 }
 
-struct CombinedMemoryStats
-{
-    MemoryStats startup;
-    MemoryStats runtime;
-
-    void update_allocs(size_t);
-    void update_deallocs(size_t);
-
-    void reset();
-
-    operator bool() const
-    { return startup || runtime; }
-
-    bool operator==(const CombinedMemoryStats&) const;
-    bool operator!=(const CombinedMemoryStats& rhs) const
-    { return !(*this == rhs); }
-
-    CombinedMemoryStats& operator+=(const CombinedMemoryStats&);
-};
-
-inline void CombinedMemoryStats::update_allocs(size_t n)
-{
-    if ( snort::is_packet_thread() )
-        runtime.update_allocs(n);
-    else
-        startup.update_allocs(n);
-}
-
-inline void CombinedMemoryStats::update_deallocs(size_t n)
-{
-    if ( snort::is_packet_thread() )
-        runtime.update_deallocs(n);
-    else
-        startup.update_deallocs(n);
-}
-
-inline void CombinedMemoryStats::reset()
-{
-    startup.reset();
-    runtime.reset();
-}
-
-inline bool CombinedMemoryStats::operator==(const CombinedMemoryStats& rhs) const
-{ return startup == rhs.startup && runtime == rhs.runtime; }
-
-inline CombinedMemoryStats& CombinedMemoryStats::operator+=(const CombinedMemoryStats& rhs)
-{
-    startup += rhs.startup;
-    runtime += rhs.runtime;
-
-    return *this;
-}
-
 struct MemoryTracker
 {
-    CombinedMemoryStats stats;
+    MemoryStats stats;
 
     void reset()
     { stats.reset(); }
@@ -158,7 +105,7 @@ struct MemoryTracker
     { stats.update_deallocs(n); }
 
     constexpr MemoryTracker() = default;
-    constexpr MemoryTracker(const CombinedMemoryStats &stats) : stats(stats) { }
+    constexpr MemoryTracker(const MemoryStats &stats) : stats(stats) { }
 };
 
 #endif

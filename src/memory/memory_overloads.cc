@@ -18,13 +18,15 @@
 
 // memory_overloads.cc author Joel Cornett <jocornet@cisco.com>
 
+#include "memory_overloads.h"
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <cassert>
-#include <new>
 
+#include "main/snort.h"
 #include "main/thread.h"
 #include "profiler/memory_profiler_active_context.h"
 
@@ -33,6 +35,8 @@
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
 #endif
+
+extern THREAD_LOCAL unsigned instance_id;
 
 namespace memory
 {
@@ -52,6 +56,9 @@ struct alignas(max_align_t) Metadata
 
     // number of requested bytes
     size_t payload_size;
+    uint32_t thread_id;
+    // stat used to keep track of allocation/deallocation
+    MemoryTracker* mp_inspector_stats = nullptr;
 
     // total number of bytes allocated, including Metadata header
     size_t total_size() const;
@@ -82,7 +89,8 @@ inline Metadata::Metadata(size_t n) :
 #if defined(REG_TEST) || defined(UNIT_TEST)
     sanity(SANITY_CHECK_VALUE),
 #endif
-    payload_size(n)
+    payload_size(n), thread_id(instance_id),
+    mp_inspector_stats(&mp_active_context.get_default())
 { }
 
 inline size_t Metadata::calculate_total_size(size_t n)
@@ -109,8 +117,6 @@ Metadata* Metadata::create(size_t n)
 
 Metadata* Metadata::extract(void* p)
 {
-    assert(p);
-
     auto meta = static_cast<Metadata*>(p) - 1;
 
 #if defined(REG_TEST) || defined(UNIT_TEST)
@@ -124,6 +130,7 @@ Metadata* Metadata::extract(void* p)
 // the meat
 // -----------------------------------------------------------------------------
 
+#ifdef REG_TEST
 class ReentryContext
 {
 public:
@@ -141,6 +148,7 @@ private:
     const bool already_entered;
     bool& flag;
 };
+#endif
 
 template<typename Allocator = MemoryAllocator>
 struct Interface
@@ -154,10 +162,11 @@ struct Interface
 template<typename Allocator>
 void* Interface<Allocator>::allocate(size_t n)
 {
+#ifdef REG_TEST
     // prevent allocation reentry
     ReentryContext reentry_context(in_allocation_call);
     assert(!reentry_context.is_reentry());
-
+#endif
     auto meta = Metadata::create<Allocator>(n);
 
     if ( !meta )
@@ -180,7 +189,13 @@ void Interface<Allocator>::deallocate(void* p)
     assert(meta);
 
 #ifdef ENABLE_MEMORY_PROFILER
-    mp_active_context.update_deallocs(meta->total_size());
+    if (!snort::Snort::is_exiting())
+    {
+        if (meta->mp_inspector_stats and meta->thread_id == instance_id) 
+            meta->mp_inspector_stats->update_deallocs(meta->total_size());
+        else
+            mp_active_context.update_deallocs(meta->total_size());
+    }
 #endif
 
     Allocator::deallocate(meta);
@@ -233,6 +248,13 @@ void operator delete(void* p, size_t) noexcept
 
 void operator delete[](void* p, size_t) noexcept
 { ::operator delete[](p); }
+
+void operator delete[](void* p, size_t, const std::nothrow_t&) noexcept
+{ ::operator delete[](p); }
+
+void operator delete(void* p, size_t, const std::nothrow_t&) noexcept
+{ ::operator delete(p); }
+
 #endif
 
 // -----------------------------------------------------------------------------

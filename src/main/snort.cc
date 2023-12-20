@@ -306,7 +306,6 @@ void Snort::term()
      * double-freeing any memory.  Not guaranteed to be
      * thread-safe, but it will prevent the simple cases.
      */
-    static bool already_exiting = false;
     if ( already_exiting )
         return;
     already_exiting = true;
@@ -376,6 +375,7 @@ void Snort::clean_exit(int)
 
 bool Snort::reloading = false;
 bool Snort::privileges_dropped = false;
+bool Snort::already_exiting = false;
 
 bool Snort::is_reloading()
 { return reloading; }

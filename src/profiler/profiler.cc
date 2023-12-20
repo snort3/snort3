@@ -169,6 +169,11 @@ void Profiler::show_stats()
     show_rule_profiler_stats(config->rule);
 }
 
+void Profiler::show_runtime_memory_stats()
+{
+    s_profiler_nodes.print_runtime_memory_stats();
+}
+
 #ifdef UNIT_TEST
 
 TEST_CASE( "profile stats", "[profiler]" )
@@ -186,11 +191,7 @@ TEST_CASE( "profile stats", "[profiler]" )
         SECTION( "il" )
         {
             TimeProfilerStats time_stats = { 12_ticks, 2 };
-            MemoryTracker memory_stats =
-            {{
-                { 1, 2, 3, 4 },
-                { 5, 6, 7, 8 }
-            }};
+            MemoryTracker memory_stats = {{ 1, 2, 3, 4 }};
 
             ProfileStats stats(time_stats, memory_stats);
 
@@ -203,10 +204,7 @@ TEST_CASE( "profile stats", "[profiler]" )
     {
         ProfileStats stats {
             { 1_ticks, 2 },
-            {{
-                { 1, 2, 3, 4 },
-                { 5, 6, 7, 8 },
-            }}
+            {{ 1, 2, 3, 4 }}
         };
 
         SECTION( "reset" )
@@ -219,10 +217,7 @@ TEST_CASE( "profile stats", "[profiler]" )
 
         ProfileStats other_stats {
             { 12_ticks, 12 },
-            {{
-                { 5, 6, 7, 8 },
-                { 9, 10, 11, 12 }
-            }}
+            {{ 5, 6, 7, 8 }}
         };
 
         SECTION( "==/!=" )
@@ -236,10 +231,7 @@ TEST_CASE( "profile stats", "[profiler]" )
         {
             stats += other_stats;
             CHECK( stats.time == TimeProfilerStats(13_ticks, 14) );
-            CombinedMemoryStats memory_result = {
-                { 6, 8, 10, 12 },
-                { 14, 16, 18, 20 }
-            };
+            MemoryStats memory_result = { 6, 8, 10, 12 };
 
             CHECK( stats.memory.stats == memory_result );
         }

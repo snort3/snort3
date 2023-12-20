@@ -38,7 +38,7 @@ using namespace snort;
 // -----------------------------------------------------------------------------
 
 THREAD_LOCAL MemoryActiveContext mp_active_context;
-static CombinedMemoryStats s_fallthrough_stats;
+static MemoryStats s_fallthrough_stats;
 
 
 // -----------------------------------------------------------------------------
@@ -46,7 +46,7 @@ static CombinedMemoryStats s_fallthrough_stats;
 // -----------------------------------------------------------------------------
 
 // get thread local default stats
-const CombinedMemoryStats& MemoryProfiler::get_fallthrough_stats()
+const MemoryStats& MemoryProfiler::get_fallthrough_stats()
 { return s_fallthrough_stats; }
 
 // thread local call

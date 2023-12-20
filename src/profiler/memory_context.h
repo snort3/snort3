@@ -21,13 +21,13 @@
 #ifndef MEMORY_CONTEXT_H
 #define MEMORY_CONTEXT_H
 
-struct CombinedMemoryStats;
+struct MemoryStats;
 
 class MemoryProfiler
 {
 public:
     // global accumulated stats
-    static const CombinedMemoryStats& get_fallthrough_stats();
+    static const MemoryStats& get_fallthrough_stats();
 
     // thread local call
     static void consolidate_fallthrough_stats();

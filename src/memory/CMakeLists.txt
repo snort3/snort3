@@ -11,10 +11,10 @@ set ( MEMORY_SOURCES
     memory_module.cc
     memory_module.h
     memory_overloads.cc
+    memory_overloads.h
 )
 
 set ( ALLOC_SOURCES
-    memory_allocator.cc
     memory_allocator.h
 )
 

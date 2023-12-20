@@ -65,6 +65,8 @@ public:
 
     const std::string name;
 
+    void get_local_memory_stats(FILE*);
+
 private:
     std::vector<ProfilerNode*> children;
     std::shared_ptr<GetProfileFunctor> getter;
@@ -94,6 +96,14 @@ public:
     void accumulate_flex();
     void clear_flex();
     void reset_nodes(snort::ProfilerType = snort::PROFILER_TYPE_BOTH);
+
+    void print_runtime_memory_stats();
+
+    inline void create_new_file(std::string&, uint64_t);
+    void auto_rotate(std::string&, uint64_t);
+    bool rotate(std::string&, uint64_t);
+    bool open(std::string&, uint64_t, bool);
+    void write_header();
 
     const ProfilerNode& get_root();
 

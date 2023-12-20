@@ -38,6 +38,7 @@ struct MemoryProfilerConfig
     bool show = false;
     unsigned count = 0;
     int max_depth = -1;
+    uint64_t dump_file_size = 0;
 };
 
 namespace snort

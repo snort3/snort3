@@ -32,6 +32,12 @@ struct MemoryAllocator
     static void deallocate(void*);
 };
 
+inline void* MemoryAllocator::allocate(size_t n)
+{ return malloc(n); }
+
+inline void MemoryAllocator::deallocate(void* p)
+{ free(p); }
+
 } // namespace memory
 
 #endif

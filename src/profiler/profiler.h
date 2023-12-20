@@ -45,6 +45,7 @@ public:
     static void prepare_stats();
     static void show_stats();
     static ProfilerNodeMap& get_profiler_nodes();
+    SO_PUBLIC static void show_runtime_memory_stats();
 };
 
 extern THREAD_LOCAL snort::ProfileStats totalPerfStats;

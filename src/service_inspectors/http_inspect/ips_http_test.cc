@@ -115,6 +115,12 @@ bool HttpTestIpsOption::operator==(const IpsOption& ips) const
 
 static int64_t get_decimal_num(enum NumericValue& is_numeric, const uint8_t* start, int32_t length)
 {
+    if (!length)
+    {
+        is_numeric = NV_FALSE;
+        return -1;
+    }
+
     int64_t total = 0;
     int32_t k = 0;
     do

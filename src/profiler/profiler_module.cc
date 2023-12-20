@@ -417,6 +417,9 @@ static const Parameter profiler_memory_params[] =
     { "max_depth", Parameter::PT_INT, "-1:255", "-1",
       "limit depth to max_depth (-1 = no limit)" },
 
+    { "dump_file_size", Parameter::PT_INT, "4096:max53", "1073741824",
+      "files will be rolled over if they exceed this size" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -490,6 +493,14 @@ static bool s_profiler_module_set_max_depth(RuleProfilerConfig&, Value&)
 { return false; }
 
 template<typename T>
+static bool s_profiler_module_set_dump_file_size(T&, Value&)
+{ return false; }
+
+// cppcheck-suppress constParameter
+static bool s_profiler_module_set_dump_file_size(MemoryProfilerConfig& config, Value& v)
+{ config.dump_file_size = v.get_int64(); return true; }
+
+template<typename T>
 static bool s_profiler_module_set(T& config, Value& v)
 {
     if ( v.is("count") )
@@ -503,6 +514,9 @@ static bool s_profiler_module_set(T& config, Value& v)
 
     else if ( v.is("max_depth") )
         return s_profiler_module_set_max_depth(config, v);
+
+    else if ( v.is("dump_file_size") )
+        return s_profiler_module_set_dump_file_size(config, v);
 
     else
         return false;

@@ -350,6 +350,9 @@ void PerfMonitor::eval(Packet* p)
     {
         if (ready_to_process(p))
         {
+#ifdef ENABLE_MEMORY_PROFILER
+            Profiler::show_runtime_memory_stats();
+#endif
             for (unsigned i = 0; i < trackers->size(); i++)
             {
                 (*trackers)[i]->process(false);
