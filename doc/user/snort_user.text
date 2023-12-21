@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.76.0 2023-12-03 22:57:21 EST TST
+Revision 3.1.77.0 2023-12-21 17:02:23 EST TST
 
 ---------------------------------------------------------------------
 
@@ -433,6 +433,7 @@ the following order:
  2. Snort will try the directory containing the including file.
  3. Snort will try the directory containing the -c configuration
     file.
+ 4. Snort will try the current working directory.
 
 Some things to keep in mind:
 

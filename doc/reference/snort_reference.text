@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.76.0 2023-12-03 22:56:58 EST TST
+Revision 3.1.77.0 2023-12-21 17:02:00 EST TST
 
 ---------------------------------------------------------------------
 
@@ -670,6 +670,8 @@ Peg counts:
     by matched continuations (sum)
   * detection.cont_mismatch_distance: total number of bytes jumped
     over by mismatched continuations (sum)
+  * detection.buf_dumps: total number of IPS buffers collected from
+    matched rules (sum)
 
 
 2.8. event_filter
@@ -1328,6 +1330,8 @@ Configuration:
     none | allocations | total_used | avg_allocation }
   * int profiler.memory.max_depth = -1: limit depth to max_depth (-1
     = no limit) { -1:255 }
+  * int profiler.memory.dump_file_size = 1073741824: files will be
+    rolled over if they exceed this size { 4096:max53 }
   * bool profiler.rules.show = true: show rule time profile stats
   * int profiler.rules.count = 0: print results to given level (0 =
     all) { 0:max32 }
@@ -3929,9 +3933,9 @@ Configuration:
   * string http_inspect.xff_headers = x-forwarded-for true-client-ip:
     specifies the xff type headers to parse and consider in the same
     order of preference as defined
-  * bool http_inspect.request_body_app_detection = true: make HTTP/2
+  * bool http_inspect.request_body_app_detection = true: make HTTP
     request message bodies available for application detection
-    (detection requires AppId)
+    (AppId) and other inspectors
   * string http_inspect.allowed_methods: list of allowed methods
   * string http_inspect.disallowed_methods: list of disallowed
     methods
@@ -8581,6 +8585,9 @@ Configuration:
   * bool alert_fast.file = false: output to alert_fast.txt instead of
     stdout
   * bool alert_fast.packet = false: output packet dump with alert
+  * bool alert_fast.buffers = false: output IPS buffer dump
+  * int alert_fast.buffers_depth = 0: number of IPS buffer bytes to
+    dump per buffer (0 is unlimited) { 0:maxSZ }
   * int alert_fast.limit = 0: set maximum size in MB before rollover
     (0 is unlimited) { 0:maxSZ }
 
@@ -9053,6 +9060,9 @@ libraries see the Getting Started section of the manual.
     character sequence
   * bool alert_ex.upper = false: true/false → convert to upper/lower
     case
+  * int alert_fast.buffers_depth = 0: number of IPS buffer bytes to
+    dump per buffer (0 is unlimited) { 0:maxSZ }
+  * bool alert_fast.buffers = false: output IPS buffer dump
   * bool alert_fast.file = false: output to alert_fast.txt instead of
     stdout
   * int alert_fast.limit = 0: set maximum size in MB before rollover
@@ -9725,9 +9735,9 @@ libraries see the Getting Started section of the manual.
     encodings
   * bool http_inspect.plus_to_space = true: replace + with <sp> when
     normalizing URIs
-  * bool http_inspect.request_body_app_detection = true: make HTTP/2
+  * bool http_inspect.request_body_app_detection = true: make HTTP
     request message bodies available for application detection
-    (detection requires AppId)
+    (AppId) and other inspectors
   * int http_inspect.request_depth = -1: maximum request message body
     bytes to examine (-1 no limit) { -1:max53 }
   * int http_inspect.response_depth = -1: maximum response message
@@ -10337,6 +10347,8 @@ libraries see the Getting Started section of the manual.
     (seconds, 0 to disable) { 0:60 }
   * int profiler.memory.count = 0: limit results to count items per
     level (0 = no limit) { 0:max32 }
+  * int profiler.memory.dump_file_size = 1073741824: files will be
+    rolled over if they exceed this size { 4096:max53 }
   * int profiler.memory.max_depth = -1: limit depth to max_depth (-1
     = no limit) { -1:255 }
   * bool profiler.memory.show = true: show module memory profile
@@ -11488,6 +11500,8 @@ libraries see the Getting Started section of the manual.
   * detection.alt_searches: alt fast pattern searches in packet data
     (sum)
   * detection.analyzed: total packets processed (now)
+  * detection.buf_dumps: total number of IPS buffers collected from
+    matched rules (sum)
   * detection.cont_creations: total number of continuations created
     (sum)
   * detection.cont_evals: total number of condition-met continuations

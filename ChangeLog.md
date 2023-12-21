@@ -1,3 +1,24 @@
+2023-12-20: 3.1.77.0
+
+* appid: add http3 to the list of ssl protocols as http3 will always be inside quic and encrypted
+* appid: do not delete hsession for http3
+* appid: fix coverity issues
+* appid: lua logging doc update
+* build: arm compilation support
+* catch: add boost software license for catch.hpp
+* detection: adjust built-in GID range to 40-999
+* detection: collect matched buffers on IpsContext
+* flow: add tenant ID to FlowKey
+* host_cache: fix race condition on peg counts
+* http_inspect: publish HTTP/1 request bodies, track MIME boundary
+* main: fix reload_id data race
+* parser: add CWD to conf search order
+* profiler: change time tracking for "rule_time (%)" field in rule_profiler output
+* profiler: dump memory profiler stats at frequent interval
+* pub_sub: add get_client_body and is_mime methods
+* ssl: stopping inspection once client or server app packet is found
+* utils: add get_file_size
+
 2023-12-03: 3.1.76.0
 
 * appid: added missed cppcheck warning
