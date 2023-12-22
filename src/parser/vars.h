@@ -48,7 +48,7 @@ struct VarEntry
 };
 
 void ParsePathVar(const char* name, const char* value);
-void ParsePortVar(const char* name, const char* value);
+bool ParsePortVar(const char* name, const char* value);
 
 VarEntry* VarAlloc();
 void DeleteVars(VarEntry* var_table);

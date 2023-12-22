@@ -22,6 +22,8 @@ add_library (parser OBJECT
     cmd_line.h
     config_file.cc
     config_file.h
+    var_dependency.cc
+    var_dependency.h
     vars.cc
     vars.h
 )

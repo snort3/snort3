@@ -55,6 +55,7 @@
 #include "parser/parse_conf.h"
 #include "parser/parse_ip.h"
 #include "parser/parser.h"
+#include "parser/var_dependency.h"
 #include "parser/vars.h"
 #include "payload_injector/payload_injector_module.h"
 #include "profiler/profiler_module.h"
@@ -1128,6 +1129,11 @@ bool IpsModule::end(const char* fqn, int idx, SnortConfig* sc)
         p->includer = ModuleManager::get_includer("ips");
         sc->policy_map->set_user_ips(p);
     }
+    else if (!idx and !strcmp(fqn, "ips.variables.nets"))
+        resolve_nets();
+    else if (!idx and !strcmp(fqn, "ips.variables.ports"))
+        resolve_ports();
+
     return true;
 }
 

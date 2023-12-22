@@ -44,6 +44,7 @@
 #include "config_file.h"
 #include "parser.h"
 #include "parse_stream.h"
+#include "var_dependency.h"
 #include "vars.h"
 
 using namespace snort;
@@ -223,7 +224,7 @@ void parse_include(SnortConfig* sc, const char* arg)
     pop_parse_location();
 }
 
-void ParseIpVar(const char* var, const char* value)
+bool ParseIpVar(const char* var, const char* value)
 {
     int ret;
     IpsPolicy* p = get_ips_policy();
@@ -236,7 +237,7 @@ void ParseIpVar(const char* var, const char* value)
         {
         case SFIP_ARG_ERR:
             ParseError("the following is not allowed: %s.", value);
-            return;
+            return false;
 
         case SFIP_DUPLICATE:
             ParseWarning(WARN_VARS, "Var '%s' redefined.", var);
@@ -246,17 +247,26 @@ void ParseIpVar(const char* var, const char* value)
             ParseError("negated IP ranges that are more general than "
                 "non-negated ranges are not allowed. Consider "
                 "inverting the logic in %s.", var);
-            return;
+            return false;
 
         case SFIP_NOT_ANY:
             ParseError("!any is not allowed in %s.", var);
-            return;
+            return false;
+
+        case SFIP_LOOKUP_FAILURE:
+            if (is_resolving_nets())
+                ParseError("failed to parse the IP address: %s.", value);
+            else
+                push_to_weak_nets(var, value);
+            return false;
 
         default:
             ParseError("failed to parse the IP address: %s.", value);
-            return;
+            return false;
         }
     }
+
+    return true;
 }
 
 static void add_service_to_otn_helper(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
