@@ -229,7 +229,7 @@ static PortObject* _POParseVar(POParser* pop)
         return nullptr;
     }
 
-    PortObject* pox = PortVarTableFind(pop->pvTable, name);
+    PortObject* pox = PortVarTableFind(pop->pvTable, name, true);
     snort_free(name);
 
     if (!pox)
