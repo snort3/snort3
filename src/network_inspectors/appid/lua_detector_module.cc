@@ -29,6 +29,7 @@
 #include <libgen.h>
 
 #include <cassert>
+#include <cstring>
 #include <fstream>
 
 #include "appid_config.h"
@@ -37,6 +38,7 @@
 #include "lua_detector_util.h"
 #include "lua_detector_api.h"
 #include "lua_detector_flow_api.h"
+#include "main/snort_config.h"
 #include "utils/util.h"
 #include "utils/sflsq.h"
 
@@ -49,6 +51,8 @@ using namespace std;
 #define MAX_DEFAULT_NUM_LUA_TRACKERS  10000
 #define AVG_LUA_TRACKER_SIZE_IN_BYTES 740
 #define MAX_MEMORY_FOR_LUA_DETECTORS (512 * 1024 * 1024)
+#define OPEN_DETECTOR_PACKAGE_VERSION_FILE "version.conf"
+#define OPEN_DETECTOR_PACKAGE_VERSION "VERSION="
 
 static vector<LuaDetectorManager*> lua_detector_mgr_list;
 static unordered_set<string> lua_detectors_w_validate;
@@ -151,6 +155,30 @@ static lua_State* create_lua_state(const AppIdConfig& config, bool is_control)
     return L;
 }
 
+static void scan_and_print_odp_version(const char* app_detector_dir)
+{
+    char odp_version_path[PATH_MAX];
+    snprintf(odp_version_path, sizeof(odp_version_path) - 1, "%s/odp/%s",
+            app_detector_dir, OPEN_DETECTOR_PACKAGE_VERSION_FILE);
+
+    std::ifstream version_file(odp_version_path);
+    if (!version_file.is_open())
+        return;
+    std::string line;
+    while (std::getline(version_file, line))
+    {
+        if (line.size() <= strlen(OPEN_DETECTOR_PACKAGE_VERSION))
+            continue;
+        if (line.find(OPEN_DETECTOR_PACKAGE_VERSION) == 0)
+        {
+            line = line.substr(strlen(OPEN_DETECTOR_PACKAGE_VERSION));
+            appid_log(nullptr, TRACE_INFO_LEVEL, "AppId Open Detector Package(ODP) Version: %s\n", line.c_str());
+            break;
+        }
+    }
+    version_file.close();
+}
+
 LuaDetectorManager::LuaDetectorManager(AppIdContext& ctxt, bool is_control) :
     ctxt(ctxt)
 {
@@ -228,7 +256,11 @@ void LuaDetectorManager::initialize(const SnortConfig* sc, AppIdContext& ctxt, b
     lua_detector_mgr->initialize_lua_detectors(is_control, reload);
     lua_detector_mgr->activate_lua_detectors(sc);
 
-    if (ctxt.config.list_odp_detectors)
+    if (SnortConfig::log_verbose())
+        scan_and_print_odp_version(ctxt.config.app_detector_dir);
+
+
+    if (ctxt.config.list_odp_detectors or SnortConfig::log_verbose())
         lua_detector_mgr->list_lua_detectors();
 }
 
@@ -646,8 +678,16 @@ void LuaDetectorManager::activate_lua_detectors(const SnortConfig* sc)
 
 void LuaDetectorManager::list_lua_detectors()
 {
+
+    #ifdef REG_TEST
+    // Lua memory usage is inconsistent, for ease of testing lets print 0 instead.
+    int memory_used_by_lua = 0;
+    #else
+    int memory_used_by_lua = lua_gc(L, LUA_GCCOUNT, 0);
+    #endif
+
     appid_log(nullptr, TRACE_INFO_LEVEL, "AppId Lua-Detector Stats: instance %u, odp detectors %zu, custom detectors %zu,"
         " total memory %d kb\n", get_instance_id(), num_odp_detectors,
-        (allocated_objects.size() - num_odp_detectors), lua_gc(L, LUA_GCCOUNT, 0));
+        (allocated_objects.size() - num_odp_detectors), memory_used_by_lua);
 }
 
