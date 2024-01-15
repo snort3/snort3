@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 SNORT_BINARY="$1"
-PLUGIN_PATH="$2"
-INPUT_FILE="$3"
-OUTPUT_FILE="$4"
+INPUT_FILE="$2"
+OUTPUT_FILE="$3"
+PLUGIN_PATH="$4"
 
 PLUGIN_ARGS=
 

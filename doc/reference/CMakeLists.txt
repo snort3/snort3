@@ -86,7 +86,7 @@ list ( APPEND BUILT_SOURCES version.txt )
 
 add_custom_command (
     OUTPUT builtin.txt
-    COMMAND ${CMAKE_CURRENT_LIST_DIR}/scripts/generate_builtin.sh $<TARGET_FILE:snort> $ENV{SNORT_PLUGIN_PATH} ${CMAKE_CURRENT_LIST_DIR}/builtin_stubs.txt builtin.txt
+    COMMAND ${CMAKE_CURRENT_LIST_DIR}/scripts/generate_builtin.sh $<TARGET_FILE:snort> ${CMAKE_CURRENT_LIST_DIR}/builtin_stubs.txt builtin.txt $ENV{SNORT_PLUGIN_PATH} 
     DEPENDS snort
     COMMENT "Documents: building builtin.txt"
 )
