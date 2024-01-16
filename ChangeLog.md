@@ -1,3 +1,11 @@
+2024-01-16: 3.1.78.0
+
+* appid: print odp version and odp detector count on startup
+* copyright: update year to 2024
+* doc: update arg list for "generate_builtin.sh". Add parity to "generate_" scripts arg list, thanks to @puck(https://github.com/puck)
+* main: fix inconsistent lua variables assignment
+* parser: fix --dump-rule-meta for negated ports
+
 2023-12-20: 3.1.77.0
 
 * appid: add http3 to the list of ssl protocols as http3 will always be inside quic and encrypted
