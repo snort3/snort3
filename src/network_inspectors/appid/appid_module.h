@@ -77,7 +77,7 @@ class AppIdModule : public snort::Module
 {
 public:
     AppIdModule();
-    ~AppIdModule() override;
+    ~AppIdModule() override = default;
 
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;

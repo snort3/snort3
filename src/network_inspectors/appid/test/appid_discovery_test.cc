@@ -55,6 +55,7 @@ THREAD_LOCAL PacketTracer* s_pkt_trace = nullptr;
 THREAD_LOCAL Stopwatch<SnortClock>* pt_timer = nullptr;
 void PacketTracer::daq_log(const char*, ...) { }
 void FatalError(const char* fmt, ...) { (void)fmt; exit(1); }
+void WarningMessage(const char*,...) { }
 
 // Stubs for packet
 Packet::Packet(bool) {}
@@ -160,7 +161,6 @@ void ClientAppDescriptor::update_user(AppId, const char*, AppidChangeBits&){}
 
 // Stubs for AppIdModule
 AppIdModule::AppIdModule(): Module("appid_mock", "appid_mock_help") {}
-AppIdModule::~AppIdModule() = default;
 void AppIdModule::sum_stats(bool) {}
 void AppIdModule::show_dynamic_stats() {}
 bool AppIdModule::begin(char const*, int, SnortConfig*) { return true; }
@@ -169,8 +169,7 @@ bool AppIdModule::set(char const*, Value&, SnortConfig*) { return true; }
 const Command* AppIdModule::get_commands() const { return nullptr; }
 const PegInfo* AppIdModule::get_pegs() const { return nullptr; }
 PegCount* AppIdModule::get_counts() const { return nullptr; }
-ProfileStats* AppIdModule::get_profile(
-        unsigned, const char*&, const char*&) const { return nullptr; }
+ProfileStats* AppIdModule::get_profile(unsigned, const char*&, const char*&) const { return nullptr; }
 void AppIdModule::set_trace(const Trace*) const { }
 const TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
 THREAD_LOCAL bool ThirdPartyAppIdContext::tp_reload_in_progress = false;

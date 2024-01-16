@@ -30,10 +30,12 @@
 #include <string>
 #include <unistd.h>
 
+#include "log/messages.h"
 #include "log/unified2.h"
 #include "main/snort_config.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util_cstring.h"
+
 #include "appid_api.h"
 #include "appid_config.h"
 #include "appid_debug.h"

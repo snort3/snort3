@@ -52,6 +52,8 @@ void LogMessage(const char* format,...)
     LogMessage(format, args);
     va_end(args);
 }
+void WarningMessage(const char*,...)
+{ }
 
 void LogLabel(const char*, FILE*) {}
 void LogText(const char* s, FILE*) { LogMessage("%s\n", s); }

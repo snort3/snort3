@@ -259,12 +259,14 @@ static void appid_inspector_pinit()
 {
     AppIdSession::init();
     TPLibHandler::get();
+    AppIdPegCounts::init_peg_info();
 }
 
 static void appid_inspector_pterm()
 {
     AppIdContext::pterm();
     TPLibHandler::pfini();
+    AppIdPegCounts::cleanup_peg_info();
 }
 
 static void appid_inspector_tinit()

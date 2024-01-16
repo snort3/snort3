@@ -21,11 +21,13 @@
 #ifndef APPID_MOCK_DEFINITIONS_H
 #define APPID_MOCK_DEFINITIONS_H
 
+#include "log/messages.h"
+#include "utils/stats.h"
+
 #include "appid_detector.h"
 #include "appid_module.h"
 #include "appid_peg_counts.h"
 #include "service_inspectors/http_inspect/http_msg_header.h"
-#include "utils/stats.h"
 
 class ThirdPartyAppIdContext;
 

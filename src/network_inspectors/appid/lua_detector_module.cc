@@ -32,15 +32,14 @@
 #include <cstring>
 #include <fstream>
 
+#include "log/messages.h"
+
 #include "appid_config.h"
 #include "appid_debug.h"
 #include "appid_inspector.h"
 #include "lua_detector_util.h"
 #include "lua_detector_api.h"
 #include "lua_detector_flow_api.h"
-#include "main/snort_config.h"
-#include "utils/util.h"
-#include "utils/sflsq.h"
 
 using namespace snort;
 using namespace std;
