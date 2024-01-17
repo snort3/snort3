@@ -1593,6 +1593,7 @@ class RateFilterModule : public Module
 public:
     RateFilterModule() : Module("rate_filter", rate_filter_help, rate_filter_params, true)
     { thdx.applyTo = nullptr; }
+
     ~RateFilterModule() override;
     bool set(const char*, Value&, SnortConfig*) override;
     bool begin(const char*, int, SnortConfig*) override;
@@ -1617,6 +1618,7 @@ private:
 
 RateFilterModule::~RateFilterModule()
 {
+    RateFilter_Cleanup();
     if ( thdx.applyTo )
         sfvar_free(thdx.applyTo);
 }
@@ -1656,8 +1658,9 @@ bool RateFilterModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-bool RateFilterModule::begin(const char*, int, SnortConfig*)
+bool RateFilterModule::begin(const char*, int, SnortConfig* sc)
 {
+    SFRF_Alloc(sc->rate_filter_config->memcap);
     memset(&thdx, 0, sizeof(thdx));
     return true;
 }

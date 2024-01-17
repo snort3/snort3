@@ -22,13 +22,14 @@
 #ifndef SFRF_H
 #define SFRF_H
 
-// Implements rate_filter feature for snort
-
 #include <ctime>
+#include <mutex>
 
 #include "actions/actions.h"
 #include "framework/counts.h"
 #include "main/policy.h"
+#include "sfip/sf_ip.h"
+#include "sfip/sf_ipvar.h"
 
 namespace snort
 {
@@ -37,13 +38,8 @@ struct SfIp;
 struct SnortConfig;
 }
 
-// define to use over rate threshold
-#define SFRF_OVER_RATE
-
-// used for the dimensions of the gid lookup array.
 #define SFRF_MAX_GENID 8129
 
-// rate_filter tracking by src, by dst, or by rule
 typedef enum
 {
     SFRF_TRACK_BY_SRC = 1,
@@ -52,8 +48,7 @@ typedef enum
     SFRF_TRACK_BY_MAX
 } SFRF_TRACK;
 
-/* Type of operation for threshold tracking nodes.
- */
+
 typedef enum
 {
     SFRF_COUNT_NOP,
@@ -68,72 +63,34 @@ typedef enum
     FS_NEW = 0, FS_OFF, FS_ON, FS_MAX
 } FilterState;
 
-/* A threshold configuration object, created for each configured rate_filter.
- * These are created at initialization, and remain static.
- */
 struct tSFRFConfigNode
 {
-    // Internally generated unique threshold identity
     int tid;
-
-    // Generator id from configured threshold
     unsigned gid;
-
-    // Signature id from configured threshold
     unsigned sid;
-
-    // Signature id from configured threshold
     PolicyId policyId;
-
-    // Threshold tracking by src, dst or rule
     SFRF_TRACK tracking;
-
-    // Number of rule matching before rate limit is reached.
     unsigned count;
-
-    // Duration in seconds for determining rate of rule matching
     unsigned seconds;
-
-    // Action that replaces original rule action on reaching threshold
     Actions::Type newAction;
-
-    // Threshold action duration in seconds before reverting to original rule action
     unsigned timeout;
-
-    // ip set to restrict rate_filter
     sfip_var_t* applyTo;
 };
 
-/* tSFRFSidNode acts as a container of gid+sid based threshold objects,
- * this allows multiple threshold objects to be applied to a single
- * gid+sid pair. This is static data elements, built at initialization.
- */
 struct tSFRFSidNode
 {
-    // List of threshold configuration nodes of type tSFRFConfigNode
     PolicyId policyId;
-
-    // Generator id from configured threshold
     unsigned gid;
-
-    // Signature id from configured threshold
     unsigned sid;
-
-    // List of threshold configuration nodes of type tSFRFConfigNode
     struct sf_list* configNodeList;
 };
 
 struct tSFRFGenHashKey
 {
-    ///policy identifier
     PolicyId policyId;
-
-    // Signature id from configured threshold
     unsigned sid;
 };
 
-/* Single global context containing rate_filter configuration nodes.
- */
 struct RateFilterConfig
 {
     /* Array of hash, indexed by gid. Each array element is a hash, which
@@ -152,24 +109,17 @@ struct RateFilterStats
     PegCount xhash_nomem_peg = 0;
 };
 
-/*
- * Prototypes
- */
 void SFRF_Delete();
 void SFRF_Flush();
 int SFRF_ConfigAdd(snort::SnortConfig*, RateFilterConfig*, tSFRFConfigNode*);
 
-int SFRF_TestThreshold(
-    RateFilterConfig *config,
-    unsigned gid,
-    unsigned sid,
-    PolicyId policyid,
-    const snort::SfIp *sip,
-    const snort::SfIp *dip,
-    time_t curTime,
-    SFRF_COUNT_OPERATION);
+int SFRF_TestThreshold(RateFilterConfig *config, unsigned gid, unsigned sid,
+    PolicyId policyid, const snort::SfIp *sip, const snort::SfIp *dip,
+    time_t curTime, SFRF_COUNT_OPERATION);
 
 void SFRF_ShowObjects(RateFilterConfig*);
+
+int SFRF_Alloc(unsigned int memcap);
 
 inline void enable_internal_event(RateFilterConfig* config, uint32_t sid)
 {
@@ -187,6 +137,6 @@ inline bool is_internal_event_enabled(RateFilterConfig* config, uint32_t sid)
     return (config->internal_event_mask & (1 << sid));
 }
 
-int SFRF_Alloc(unsigned int memcap);
+static std::mutex sfrf_hash_mutex;
 
 #endif
