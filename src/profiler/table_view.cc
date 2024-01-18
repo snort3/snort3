@@ -102,7 +102,8 @@ void print_entries(ControlConn* ctrlcon, std::vector<rule_stats::View>& entries,
     RuleContext::count_total_time();
 
     double total_time_usec =
-        RuleContext::get_total_time()->tv_sec * 1000000.0 + RuleContext::get_total_time()->tv_usec;
+        ( RuleContext::get_total_time()->tv_sec * 1000000.0 + RuleContext::get_total_time()->tv_usec )
+        * ThreadConfig::get_instance_max();
 
     StatsTable table(fields, ss);
 
