@@ -26,6 +26,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <vector>
 
 #include "main/thread.h"
 
@@ -1151,49 +1152,48 @@ static int JSNorm_exec(JSNormState* s, ActionJSNorm a, int c, const char* src, u
     char* cur_ptr;
     int iRet = RET_OK;
     uint16_t bcopied = 0;
-    // FIXIT-M this is large for stack. Move elsewhere.
-    char decoded_out[65535];
-    char* dest = decoded_out;
+    std::vector<char> decoded_out_vec(65535);
+    char* dest = decoded_out_vec.data();
 
-    cur_ptr = s->dest.data+ s->dest.len;
+    cur_ptr = s->dest.data + s->dest.len;
     switch (a)
     {
-    case ACT_NOP:
-        WriteJSNormChar(s, c, js);
-        break;
-    case ACT_SAVE:
-        s->overwrite = cur_ptr;
-        WriteJSNormChar(s, c, js);
-        break;
-    case ACT_SPACE:
-        if ( s->prev_event != ' ')
-        {
+        case ACT_NOP:
             WriteJSNormChar(s, c, js);
-        }
-        s->num_spaces++;
-        break;
-    case ACT_UNESCAPE:
-        if (s->overwrite && (s->overwrite < cur_ptr))
-        {
-            s->dest.len = s->overwrite - s->dest.data;
-        }
-        UnescapeDecode(src, srclen, ptr, &dest, sizeof(decoded_out), &bcopied, js, s->unicode_map);
-        WriteJSNorm(s, dest, bcopied, js);
-        break;
-    case ACT_SFCC:
-        if ( s->overwrite && (s->overwrite < cur_ptr))
-        {
-            s->dest.len = s->overwrite - s->dest.data;
-        }
-        StringFromCharCodeDecode(src, srclen, ptr, &dest, sizeof(decoded_out), &bcopied, js, s->unicode_map);
-        WriteJSNorm(s, dest, bcopied, js);
-        break;
-    case ACT_QUIT:
-        iRet = RET_QUIT;
-        WriteJSNormChar(s, c, js);
-        break;
-    default:
-        break;
+            break;
+        case ACT_SAVE:
+            s->overwrite = cur_ptr;
+            WriteJSNormChar(s, c, js);
+            break;
+        case ACT_SPACE:
+            if ( s->prev_event != ' ' )
+            {
+                WriteJSNormChar(s, c, js);
+            }
+            s->num_spaces++;
+            break;
+        case ACT_UNESCAPE:
+            if ( s->overwrite && (s->overwrite < cur_ptr) )
+            {
+                s->dest.len = s->overwrite - s->dest.data;
+            }
+            UnescapeDecode(src, srclen, ptr, &dest, decoded_out_vec.size(), &bcopied, js, s->unicode_map);
+            WriteJSNorm(s, dest, bcopied, js);
+            break;
+        case ACT_SFCC:
+            if ( s->overwrite && (s->overwrite < cur_ptr) )
+            {
+                s->dest.len = s->overwrite - s->dest.data;
+            }
+            StringFromCharCodeDecode(src, srclen, ptr, &dest, decoded_out_vec.size(), &bcopied, js, s->unicode_map);
+            WriteJSNorm(s, dest, bcopied, js);
+            break;
+        case ACT_QUIT:
+            iRet = RET_QUIT;
+            WriteJSNormChar(s, c, js);
+            break;
+        default:
+            break;
     }
 
     s->prev_event = c;

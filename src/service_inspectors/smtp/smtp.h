@@ -148,7 +148,7 @@ class SmtpMime : public snort::MimeSession
 {
 public:
     using snort::MimeSession::MimeSession;
-    SmtpProtoConf* config;
+    SmtpProtoConf* config = nullptr;
 #ifndef UNIT_TEST
 private:
 #endif

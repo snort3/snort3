@@ -69,7 +69,7 @@ struct UserTracker
 
     std::list<UserSegment*> seg_list;
     snort::StreamSplitter* splitter;
-    PAF_State paf_state;
+    PAF_State paf_state = {};
     unsigned total;
 };
 

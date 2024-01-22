@@ -37,7 +37,7 @@ public:
     void clear() override;
 
 public:
-    struct timeval ssn_time;
+    struct timeval ssn_time = {};
 };
 
 void udp_stats();

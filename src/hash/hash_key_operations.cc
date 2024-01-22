@@ -24,6 +24,8 @@
 #include "hash_key_operations.h"
 
 #include <cassert>
+#include <climits>
+#include <random>
 
 #include "main/snort_config.h"
 #include "utils/util.h"
@@ -34,25 +36,27 @@ using namespace snort;
 
 HashKeyOperations::HashKeyOperations(int rows)
 {
-    static bool one = true;
+    static std::mt19937 generator(static_cast<unsigned int>(std::random_device{}()));
 
-    if ( one ) /* one time init */
-    {
-        srand( (unsigned)time(nullptr) );
-        one = false;
-    }
-
-    if ( SnortConfig::static_hash() )
+    if (SnortConfig::static_hash()) 
     {
         seed = 3193;
         scale = 719;
         hardener = 133824503;
-    }
-    else
+    } 
+    else 
     {
-        seed = nearest_prime( (rand() % rows) + 3191);
-        scale = nearest_prime( (rand() % rows) + 709);
-        hardener = ((unsigned) rand() * rand()) + 133824503;
+        if ( rows <= 0 )
+            rows = 1;
+
+        std::uniform_int_distribution<> distr(1, rows);
+
+        seed = nearest_prime(distr(generator) + 3191);
+        scale = nearest_prime(distr(generator) + 709);
+
+        // For hardener, use a larger range distribution
+        std::uniform_int_distribution<unsigned long long> large_distr(0, ULLONG_MAX);
+        hardener = static_cast<unsigned long long>(large_distr(generator)) * large_distr(generator) + 133824503;
     }
 }
 

@@ -123,8 +123,8 @@ static void publish_netflow_event(const Packet* p, const NetFlowRule* match, Net
     // LAST_PKT_SECOND - if these aren't set, assume the current wire pkt time
     if (!record.first_pkt_second or !record.last_pkt_second)
     {
-        record.first_pkt_second = packet_time();
-        record.last_pkt_second = packet_time();
+        record.first_pkt_second = static_cast<uint32_t>(packet_time());
+        record.last_pkt_second = static_cast<uint32_t>(packet_time());
     }
 
     NetFlowEvent event(p, &record, match->create_host, match->create_service, swapped, serviceID);

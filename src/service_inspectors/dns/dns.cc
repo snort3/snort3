@@ -1004,7 +1004,7 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData, bool& ne
 
 SfIp DnsResponseIp::get_ip()
 {
-    SfIp ip;
+    SfIp ip = {};
     int family = 0;
     switch (type)
     {

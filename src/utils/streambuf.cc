@@ -99,7 +99,7 @@ streampos istreambuf_glue::seekoff(streamoff off, ios_base::seekdir way, ios_bas
     pos = min(pos, size);
 
     size_t i = 0;
-    for (auto chunk : chunks)
+    for (auto &chunk : chunks)
     {
         auto ptr = get<0>(chunk);
         auto len = get<1>(chunk);
@@ -133,7 +133,7 @@ streampos istreambuf_glue::seekpos(streampos pos, ios_base::openmode which)
     pos = min(pos, size);
 
     int i = 0;
-    for (auto chunk : chunks)
+    for (auto &chunk : chunks)
     {
         auto ptr = get<0>(chunk);
         auto len = get<1>(chunk);

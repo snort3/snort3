@@ -120,7 +120,7 @@ void SIP_ParseMethods(const char* cur_tokenp, uint32_t* methodsConfig, SIPMethod
     // Check whether this is a standard method
 
     i_method = SIP_findMethod(cur_tokenp, StandardMethods);
-    if (METHOD_NOT_FOUND != i_method )
+    if (METHOD_NOT_FOUND != i_method and StandardMethods[i_method].methodFlag > 0)
     {
         *methodsConfig |= 1 << (StandardMethods[i_method].methodFlag - 1);
         SIP_AddMethodToList(cur_tokenp, StandardMethods[i_method].methodFlag, pmethods);
@@ -198,9 +198,9 @@ SIPMethodNode* SIP_AddUserDefinedMethod(
         }
         i++;
     }
-    if (currentUseDefineMethod > SIP_METHOD_USER_DEFINE_MAX)
+    if (currentUseDefineMethod > SIP_METHOD_USER_DEFINE_MAX or currentUseDefineMethod <= SIP_METHOD_NULL)
     {
-        ParseError("Exceeded max number of user defined methods \n");
+        ParseError("Invalid user defined methods \n");
         return nullptr;
     }
     *methodsConfig |= 1 << (currentUseDefineMethod - 1);

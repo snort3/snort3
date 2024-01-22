@@ -224,12 +224,14 @@ std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq, Purgatory>::find(con
     auto map_iter = map.find(key);
     if (map_iter == map.end())
     {
+        // coverity[missing_lock]
         stats.find_misses++;
         return nullptr;
     }
 
     //  Move entry to front of LruList
     list.splice(list.begin(), list, map_iter->second);
+    // coverity[missing_lock]
     stats.find_hits++;
     return map_iter->second->second;
 }
@@ -257,12 +259,15 @@ std::shared_ptr<Value> LruCacheShared<Key, Value, Hash, Eq, Purgatory>::find_els
     auto map_iter = map.find(key);
     if (map_iter != map.end())
     {
+        // coverity[missing_lock]
         stats.find_hits++;
         list.splice(list.begin(), list, map_iter->second); // update LRU
         return map_iter->second->second;
     }
 
+    // coverity[missing_lock]
     stats.find_misses++;
+    // coverity[missing_lock]
     stats.adds++;
     if ( new_data )
         *new_data = true;
@@ -291,6 +296,7 @@ bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::find_else_insert(const Key
     auto map_iter = map.find(key);
     if (map_iter != map.end())
     {
+        // coverity[missing_lock]
         stats.find_hits++;
         if (replace)
         {
@@ -299,13 +305,15 @@ bool LruCacheShared<Key, Value, Hash, Eq, Purgatory>::find_else_insert(const Key
             map_iter->second->second.reset();
             map_iter->second->second = data;
             increase_size(map_iter->second->second.get());
+            // coverity[missing_lock]
             stats.replaced++;
         }
         list.splice(list.begin(), list, map_iter->second); // update LRU
         return true;
     }
-
+    // coverity[missing_lock]
     stats.find_misses++;
+    // coverity[missing_lock]
     stats.adds++;
 
     //  Add key/data pair to front of list.

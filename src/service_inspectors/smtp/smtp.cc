@@ -541,11 +541,14 @@ void SmtpProtoConf::show() const
 static void SMTP_ResetState(Flow* ssn)
 {
     SMTPData* smtp_ssn = get_session_data(ssn);
-    smtp_ssn->state = STATE_COMMAND;
-    smtp_ssn->state_flags = (smtp_ssn->state_flags & SMTP_FLAG_ABANDON_EVT) ? SMTP_FLAG_ABANDON_EVT : 0;
+    if( smtp_ssn )
+    {
+        smtp_ssn->state = STATE_COMMAND;
+        smtp_ssn->state_flags = (smtp_ssn->state_flags & SMTP_FLAG_ABANDON_EVT) ? SMTP_FLAG_ABANDON_EVT : 0;
 
-    delete smtp_ssn->jsn;
-    smtp_ssn->jsn = nullptr;
+        delete smtp_ssn->jsn;
+        smtp_ssn->jsn = nullptr;
+    }
 }
 
 static inline int InspectPacket(Packet* p)
@@ -1068,7 +1071,7 @@ static void SMTP_ProcessClientPacket(SmtpProtoConf* config, Packet* p, SMTPData*
             break;
         case STATE_XEXCH50:
             if (smtp_normalizing)
-                SMTP_CopyToAltBuffer(p, ptr, end - ptr);
+                (void)SMTP_CopyToAltBuffer(p, ptr, end - ptr);
             if (smtp_is_data_end (p->flow))
                 smtp_ssn->state = STATE_COMMAND;
             return;

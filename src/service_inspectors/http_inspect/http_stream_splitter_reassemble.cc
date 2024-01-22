@@ -252,11 +252,13 @@ void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, cons
             inflateReset(compress_stream);
             compress_stream->next_in = const_cast<Bytef*>(zlib_header);
             compress_stream->avail_in = sizeof(zlib_header);
-            inflate(compress_stream, Z_SYNC_FLUSH);
-
-            // Start over at the beginning
-            decompress_copy(buffer, offset, data, length, compression, compress_stream, false,
-                infractions, events, session_data);
+            int ret = inflate(compress_stream, Z_SYNC_FLUSH);
+            if ( ret == Z_OK or ret == Z_STREAM_END)
+            { 
+                // Start over at the beginning
+                decompress_copy(buffer, offset, data, length, compression, compress_stream, false,
+                    infractions, events, session_data);
+            }
             return;
         }
         else

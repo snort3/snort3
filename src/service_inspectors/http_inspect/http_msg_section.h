@@ -120,10 +120,10 @@ protected:
     bool cleared = false;
 
     // Pointers to related message sections in the same transaction
-    HttpMsgRequest* request;
-    HttpMsgStatus* status;
-    HttpMsgHeader* header[2];
-    HttpMsgTrailer* trailer[2];
+    HttpMsgRequest* request = nullptr;
+    HttpMsgStatus* status = nullptr;
+    HttpMsgHeader* header[2] = {nullptr, nullptr};
+    HttpMsgTrailer* trailer[2] = {nullptr, nullptr};
 
 
     // Convenience methods shared by multiple subclasses

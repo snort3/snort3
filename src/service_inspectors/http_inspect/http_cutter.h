@@ -133,9 +133,9 @@ private:
 
     const bool accelerated_blocking;
     uint8_t partial_match = 0;
-    HttpEnums::CompressId compression;
+    HttpEnums::CompressId compression = HttpEnums::CompressId::CMP_NONE;
     bool decompress_failed = false;
-    uint8_t string_length;
+    uint8_t string_length = 0;
     z_stream* compress_stream = nullptr;
     ScriptFinder* const finder;
     const uint8_t* match_string;

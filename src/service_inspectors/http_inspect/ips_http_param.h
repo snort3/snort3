@@ -53,7 +53,7 @@ private:
     static THREAD_LOCAL snort::ProfileStats http_param_ps;
 
     std::string param;       // provide buffer containing specific parameter
-    bool nocase;             // case insensitive match
+    bool nocase = false;             // case insensitive match
     snort::LiteralSearch::Handle* search_handle;
 };
 
