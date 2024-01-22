@@ -501,6 +501,7 @@ public:  // FIXIT-M privatize if possible
         bool retry_queued : 1; // Set if a packet was queued for retry for this flow
         bool ha_flow : 1; // Set if this flow was created by an HA message
         bool ips_event_suppressed : 1; // Set if event filters have suppressed ips event
+        bool disable_reassembly_by_ips : 1; // Set if IPS has disabled reassembly for this flow
     } flags = {};
 
     FlowState flow_state = FlowState::SETUP;

@@ -107,6 +107,7 @@ void IpsContext::clear()
     if ( remove_gadget and packet->flow and !packet->is_rebuilt() )
     {
        Stream::disable_reassembly(packet->flow);
+       packet->flow->flags.disable_reassembly_by_ips = true;
 
        if ( packet->flow->gadget )
            packet->flow->clear_gadget();

@@ -1090,7 +1090,8 @@ void TcpSession::init_tcp_packet_analysis(TcpSegmentDescriptor& tsd)
     if ( !splitter_init and tsd.is_data_segment() and
         (tcp_init or is_midstream_allowed(tsd)) )
     {
-        if ( !(tcp_config->flags & STREAM_CONFIG_NO_REASSEMBLY) )
+        if ( !(tcp_config->flags & STREAM_CONFIG_NO_REASSEMBLY) and
+                !(tsd.get_flow()->flags.disable_reassembly_by_ips) )
         {
             client.set_splitter(tsd.get_flow());
             server.set_splitter(tsd.get_flow());
