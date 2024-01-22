@@ -106,7 +106,7 @@ bool TcpStateListen::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         flow->session_state |= STREAM_STATE_MIDSTREAM;
         trk.init_on_data_seg_recv(tsd);
         trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
-        trk.session->handle_data_segment(tsd);
+        trk.session->handle_data_segment(tsd, !trk.normalizer.is_tcp_ips_enabled());
     }
     else if ( trk.session->tcp_config->require_3whs() )
     {

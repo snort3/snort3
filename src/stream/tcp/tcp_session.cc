@@ -146,6 +146,12 @@ void TcpSession::restart(Packet* p)
         listener = &server;
     }
 
+    if ( talker->midstream_initial_ack_flush )
+    {
+        talker->midstream_initial_ack_flush = false;
+        talker->reassembler.flush_on_data_policy(p);
+    }
+
     if (p->dsize > 0)
         listener->reassembler.flush_on_data_policy(p);
 
@@ -452,7 +458,6 @@ void TcpSession::update_stream_order(const TcpSegmentDescriptor& tsd, bool align
     default:
         if ( aligned )
             tsd.set_packet_flags(PKT_STREAM_ORDER_OK);
-
         else
         {
             if ( !(flow->get_session_flags() & SSNFLAG_STREAM_ORDER_BAD) )
@@ -830,17 +835,10 @@ void TcpSession::mark_packet_for_drop(TcpSegmentDescriptor& tsd)
     set_pkt_action_flag(ACTION_BAD_PKT);
 }
 
-void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
+void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd, bool flush)
 {
     TcpStreamTracker* listener = tsd.get_listener();
     TcpStreamTracker* talker = tsd.get_talker();
-
-    // if this session started midstream we may need to init the listener's base seq #
-    if ( listener->reinit_seg_base )
-    {
-        listener->reassembler.set_seglist_base_seq(tsd.get_seq());
-        listener->reinit_seg_base = false;
-    }
 
     if ( TcpStreamTracker::TCP_CLOSED != talker->get_tcp_state() )
     {
@@ -879,7 +877,10 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd)
         process_tcp_data(tsd);
     }
 
-    listener->reassembler.flush_on_data_policy(tsd.get_pkt());
+    if ( flush )
+        listener->reassembler.flush_on_data_policy(tsd.get_pkt());
+    else
+        listener->reassembler.initialize_paf();
 }
 
 TcpStreamTracker::TcpState TcpSession::get_talker_state(TcpSegmentDescriptor& tsd)

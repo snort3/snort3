@@ -332,6 +332,7 @@ public:
     bool require_3whs = false;
     bool rst_pkt_sent = false;
     bool ooo_packet_seen = false;
+    bool midstream_initial_ack_flush = false;
 
 // FIXIT-L make these non-public
 public:
@@ -345,7 +346,6 @@ public:
     uint8_t max_queue_exceeded = MQ_NONE;
     uint8_t order = 0;
     FinSeqNumStatus fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
-    bool reinit_seg_base = false;
 
 protected:
     static const std::list<HeldPacket>::iterator null_iterator;

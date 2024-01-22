@@ -60,7 +60,7 @@ bool TcpStateNone::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
         trk.init_on_synack_recv(tsd);
         trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
         if ( tsd.is_data_segment() )
-            trk.session->handle_data_segment(tsd);
+            trk.session->handle_data_segment(tsd, !trk.normalizer.is_tcp_ips_enabled());
     }
     else if ( trk.session->tcp_config->require_3whs() )
     {
@@ -111,7 +111,7 @@ bool TcpStateNone::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
         flow->session_state |= STREAM_STATE_MIDSTREAM;
         trk.init_on_data_seg_recv(tsd);
         trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
-        trk.session->handle_data_segment(tsd);
+        trk.session->handle_data_segment(tsd, !trk.normalizer.is_tcp_ips_enabled());
     }
     else if ( trk.session->tcp_config->require_3whs() )
     {

@@ -79,6 +79,12 @@ public:
     bool is_segment_pending_flush() const
     { return reassembler->is_segment_pending_flush(trs); }
 
+    void skip_midstream_pickup_seglist_hole(TcpSegmentDescriptor& tsd)
+    { reassembler->skip_midstream_pickup_seglist_hole(trs, tsd); }
+
+    void initialize_paf()
+    { reassembler->initialize_paf(trs); }
+
     int flush_on_data_policy(snort::Packet* p)
     { return reassembler->flush_on_data_policy(trs, p); }
 

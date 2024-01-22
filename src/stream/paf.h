@@ -65,6 +65,13 @@ SO_PUBLIC inline uint32_t paf_initialized (PAF_State* ps)
     return ( ps->paf != snort::StreamSplitter::START );
 }
 
+SO_PUBLIC inline void paf_initialize(PAF_State* ps, uint32_t seq)
+{
+    ps->seq = ps->pos = seq;
+    ps->fpt = ps->tot = 0;
+    ps->paf = snort::StreamSplitter::SEARCH;
+}
+
 inline uint32_t paf_active (PAF_State* ps)
 {
     return ( ps->paf != snort::StreamSplitter::ABORT );

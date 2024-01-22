@@ -107,7 +107,6 @@ public:
     virtual void check_for_session_hijack(TcpSegmentDescriptor&) = 0;
     virtual bool check_for_window_slam(TcpSegmentDescriptor&) = 0;
     virtual void mark_packet_for_drop(TcpSegmentDescriptor&) = 0;
-    virtual void handle_data_segment(TcpSegmentDescriptor&) = 0;
     virtual bool validate_packet_established_session(TcpSegmentDescriptor&) = 0;
 
     TcpStreamTracker client;

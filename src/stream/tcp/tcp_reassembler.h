@@ -53,6 +53,12 @@ public:
         uint32_t event_id, uint32_t event_second);
     virtual void purge_alerts(TcpReassemblerState&);
     virtual bool segment_within_seglist_window(TcpReassemblerState&, TcpSegmentDescriptor&);
+    void skip_midstream_pickup_seglist_hole(TcpReassemblerState&, TcpSegmentDescriptor&);
+    void initialize_paf(TcpReassemblerState& trs)
+    {
+        if ( !paf_initialized(&trs.paf_state) or SEQ_GT(trs.paf_state.seq, trs.sos.seglist.head->i_seq) )
+            paf_initialize(&trs.paf_state, trs.sos.seglist.head->i_seq);
+    }
 
     uint32_t perform_partial_flush(TcpReassemblerState&, snort::Flow*, snort::Packet*&);
 
@@ -92,6 +98,7 @@ protected:
     void fallback(TcpStreamTracker&, bool server_side);
     int32_t scan_data_post_ack(TcpReassemblerState&, uint32_t* flags, snort::Packet*);
     void purge_to_seq(TcpReassemblerState&, uint32_t flush_seq);
+    void purge_segments_left_of_hole(TcpReassemblerState&, const TcpSegmentNode*);
 
     bool next_no_gap(const TcpSegmentNode&);
     bool next_no_gap_c(const TcpSegmentNode&);
@@ -106,6 +113,7 @@ protected:
         uint32_t& flags);
     void skip_seglist_hole(TcpReassemblerState&, snort::Packet*, uint32_t flags,
         int32_t flush_amt);
+
     uint32_t perform_partial_flush(TcpReassemblerState&, snort::Packet*, uint32_t flushed = 0);
 };
 

@@ -67,7 +67,7 @@ public:
     void check_for_session_hijack(TcpSegmentDescriptor&) override;
     bool check_for_window_slam(TcpSegmentDescriptor& tsd) override;
     void mark_packet_for_drop(TcpSegmentDescriptor&) override;
-    void handle_data_segment(TcpSegmentDescriptor&) override;
+    void handle_data_segment(TcpSegmentDescriptor&, bool flush = true);
     bool validate_packet_established_session(TcpSegmentDescriptor&) override;
 
     bool is_midstream_allowed(const TcpSegmentDescriptor& tsd)

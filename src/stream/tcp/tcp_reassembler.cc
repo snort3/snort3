@@ -31,6 +31,7 @@
 #include "log/log.h"
 #include "main/analyzer.h"
 #include "packet_io/active.h"
+#include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "protocols/packet_manager.h"
 #include "time/packet_time.h"
@@ -38,6 +39,7 @@
 #include "tcp_module.h"
 #include "tcp_normalizers.h"
 #include "tcp_session.h"
+#include "tcp_stream_tracker.h"
 
 using namespace snort;
 
@@ -732,7 +734,8 @@ int TcpReassembler::flush_stream(
     if ( !trs.tracker->is_reassembly_enabled() )
         return 0;
 
-    if ( trs.sos.session->flow->two_way_traffic() )
+    if ( trs.sos.session->flow->two_way_traffic()
+            or (trs.tracker->get_tcp_state() == TcpStreamTracker::TCP_MID_STREAM_RECV) )
     {
         uint32_t bytes = 0;
 
@@ -822,14 +825,13 @@ void TcpReassembler::flush_queued_segments(
 {
     if ( p )
     {
-        finish_and_final_flush(trs, flow, clear, const_cast<Packet*>(p));
+       finish_and_final_flush(trs, flow, clear, const_cast<Packet*>(p));
     }
     else
     {
         Packet* pdu = get_packet(flow, trs.packet_dir, trs.server_side);
 
         bool pending = clear and paf_initialized(&trs.paf_state);
-
         if ( pending )
         {
             DetectionEngine de;
@@ -839,38 +841,6 @@ void TcpReassembler::flush_queued_segments(
         if ( pending and !(flow->ssn_state.ignore_direction & trs.ignore_dir) )
             final_flush(trs, pdu, trs.packet_dir);
     }
-}
-
-// this is for post-ack flushing
-uint32_t TcpReassembler::get_reverse_packet_dir(TcpReassemblerState&, const Packet* p)
-{
-    /* Remember, one side's packets are stored in the
-     * other side's queue.  So when talker ACKs data,
-     * we need to check if we're ready to flush.
-     *
-     * If we do decide to flush, the flush IP & port info
-     * is the opposite of the packet -- again because this
-     * is the ACK from the talker and we're flushing packets
-     * that actually came from the listener.
-     */
-    if ( p->is_from_server() )
-        return PKT_FROM_CLIENT;
-
-    if ( p->is_from_client() )
-        return PKT_FROM_SERVER;
-
-    return 0;
-}
-
-uint32_t TcpReassembler::get_forward_packet_dir(TcpReassemblerState&, const Packet* p)
-{
-    if ( p->is_from_server() )
-        return PKT_FROM_SERVER;
-
-    if ( p->is_from_client() )
-        return PKT_FROM_CLIENT;
-
-    return 0;
 }
 
 // see scan_data_post_ack() for details
@@ -940,8 +910,7 @@ int32_t TcpReassembler::scan_data_pre_ack(TcpReassemblerState& trs, uint32_t* fl
     }
 
     trs.sos.seglist.cur_sseg = tsn;
-
-    if (tsn)
+    if ( tsn )
         update_rcv_nxt(trs, *tsn);
     
     return ret_val;
@@ -1018,7 +987,8 @@ void TcpReassembler::update_rcv_nxt(TcpReassemblerState& trs, TcpSegmentNode& ts
     if (!trs.tracker->ooo_packet_seen and SEQ_LT(trs.tracker->rcv_nxt, temp))
         trs.tracker->ooo_packet_seen = true;
 
-    trs.tracker->rcv_nxt = temp;
+    if ( SEQ_GT(temp, trs.tracker->rcv_nxt) )
+        trs.tracker->rcv_nxt = temp;
 }
 
 bool TcpReassembler::has_seglist_hole(TcpReassemblerState& trs, TcpSegmentNode& tsn, PAF_State& ps,
@@ -1040,6 +1010,62 @@ bool TcpReassembler::has_seglist_hole(TcpReassemblerState& trs, TcpSegmentNode& 
 
     ps.paf = StreamSplitter::SKIP;
     return true;
+}
+
+void TcpReassembler::purge_segments_left_of_hole(TcpReassemblerState& trs, const TcpSegmentNode* end_tsn)
+{
+    uint32_t packets_skipped = 0;
+
+    TcpSegmentNode* cur_tsn = trs.sos.seglist.head;
+    do
+    {
+        TcpSegmentNode* drop_tsn = cur_tsn;
+        cur_tsn = cur_tsn->next;
+        delete_reassembly_segment(trs, drop_tsn);
+        ++packets_skipped;
+    } while( cur_tsn and cur_tsn != end_tsn );
+
+    if (PacketTracer::is_active())
+        PacketTracer::log("Stream: Skipped %u packets before seglist hole)\n", packets_skipped);
+}
+
+void TcpReassembler::skip_midstream_pickup_seglist_hole(TcpReassemblerState& trs, TcpSegmentDescriptor& tsd)
+{
+    uint32_t ack = tsd.get_ack();
+
+    TcpSegmentNode* tsn = trs.sos.seglist.head;
+    while ( tsn )
+    {
+        if ( SEQ_GEQ( tsn->i_seq + tsn->i_len, ack) )
+            break;
+
+        if ( tsn->next and SEQ_GT(tsn->next->i_seq, tsn->i_seq + tsn->i_len) )
+        {
+            tsn = tsn->next;
+            purge_segments_left_of_hole(trs, tsn);
+            trs.sos.seglist_base_seq = trs.sos.seglist.head->i_seq;
+        }
+        else if ( !tsn->next and SEQ_LT(tsn->i_seq + tsn->i_len, ack) )
+        {
+            tsn = tsn->next;
+            purge_segments_left_of_hole(trs, tsn);
+            trs.sos.seglist_base_seq = ack;
+        }
+        else
+            tsn = tsn->next;
+    }
+
+    tsn = trs.sos.seglist.head;
+    if ( tsn )
+    {
+        paf_initialize(&trs.paf_state, tsn->i_seq);
+
+        while ( next_no_gap(*tsn) )
+            tsn = tsn->next;
+        trs.tracker->rcv_nxt = tsn->i_seq + tsn->i_len;
+    }
+    else
+        trs.tracker->rcv_nxt = ack;
 }
 
 // iterate over trs.sos.seglist and scan all new acked bytes
@@ -1155,7 +1181,7 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
             int32_t flush_amt;
             do
             {
-                flags = get_forward_packet_dir(trs, p);
+                flags = trs.packet_dir;
                 flush_amt = scan_data_pre_ack(trs, &flags, p);
                 if ( flush_amt <= 0 )
                     break;
@@ -1251,7 +1277,7 @@ int TcpReassembler::flush_on_ack_policy(TcpReassemblerState& trs, Packet* p)
 
         do
         {
-            flags = get_reverse_packet_dir(trs, p);
+            flags = trs.packet_dir;
             flush_amt = scan_data_post_ack(trs, &flags, p);
             if ( flush_amt <= 0 or trs.paf_state.paf == StreamSplitter::SKIP )
                 break;
