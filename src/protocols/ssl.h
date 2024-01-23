@@ -218,8 +218,8 @@ struct SSLV3ServerCertData
     /* Data collected from certificates afterwards: */
     char* common_name = nullptr;
     int common_name_strlen;
-    char* org_name = nullptr;
-    int org_name_strlen;
+    char* org_unit = nullptr;
+    int org_unit_strlen;
 };
 
 enum class SSLV3RecordType : uint8_t

@@ -496,12 +496,23 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits)
 {
     AppId client_id = 0;
     AppId payload_id = 0;
-    const char* tls_str = tsession->get_tls_host();
+    const char* tls_str = tsession->get_tls_org_unit();
 
     if (scan_flags & SCAN_CERTVIZ_ENABLED_FLAG)
         return;
 
-    if ((scan_flags & SCAN_SSL_HOST_FLAG) and tls_str)
+    if (tls_str)
+    {
+        size_t size = strlen(tls_str);
+        if (odp_ctxt.get_ssl_matchers().scan_cname((const uint8_t*)tls_str, size,
+            client_id, payload_id))
+        {
+            set_client_appid_data(client_id, change_bits);
+            set_payload_appid_data(payload_id);
+        }
+        tsession->set_tls_org_unit(nullptr, 0);
+    }
+    if ((scan_flags & SCAN_SSL_HOST_FLAG) and (tls_str = tsession->get_tls_host()))
     {
         size_t size = strlen(tls_str);
         if (odp_ctxt.get_ssl_matchers().scan_hostname((const uint8_t*)tls_str, size,
@@ -524,17 +535,6 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits)
             set_payload_appid_data(payload_id);
         }
         scan_flags &= ~SCAN_SSL_CERTIFICATE_FLAG;
-    }
-    if ((tls_str = tsession->get_tls_org_unit()))
-    {
-        size_t size = strlen(tls_str);
-        if (odp_ctxt.get_ssl_matchers().scan_cname((const uint8_t*)tls_str, size,
-            client_id, payload_id))
-        {
-            set_client_appid_data(client_id, change_bits);
-            set_payload_appid_data(payload_id);
-        }
-        tsession->set_tls_org_unit(nullptr, 0);
     }
     if (tsession->get_tls_handshake_done() and
         api.payload.get_id() == APP_ID_NONE)

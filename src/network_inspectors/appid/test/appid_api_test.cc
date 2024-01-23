@@ -310,7 +310,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     string host = "";
     change_bits.reset();
     mock_session->tsession->set_tls_host("", 0, change_bits);
-    val = appid_api.ssl_app_group_id_lookup(flow, (const char*)(host.c_str()), nullptr,
+    val = appid_api.ssl_app_group_id_lookup(flow, nullptr, nullptr,
         nullptr, (const char*)APPID_UT_ORG_UNIT, false, service, client, payload);
     CHECK_TRUE(val);
     CHECK_EQUAL(client, APPID_UT_ID + 3);

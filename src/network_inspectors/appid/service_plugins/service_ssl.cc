@@ -514,7 +514,7 @@ success:
     }
 
     args.asd.set_session_flags(APPID_SESSION_SSL_SESSION);
-    if (ss->client_hello.host_name || ss->server_cert.common_name || ss->server_cert.org_name)
+    if (ss->client_hello.host_name || ss->server_cert.common_name || ss->server_cert.org_unit)
     {
         if (!args.asd.tsession)
             args.asd.tsession = new TlsSession();
@@ -540,10 +540,10 @@ success:
             args.asd.scan_flags |= SCAN_SSL_CERTIFICATE_FLAG;
         }
         /* TLS Org Unit */
-        if (ss->server_cert.org_name)
-            args.asd.tsession->set_tls_org_unit(ss->server_cert.org_name, 0);
+        if (ss->server_cert.org_unit)
+            args.asd.tsession->set_tls_org_unit(ss->server_cert.org_unit, 0);
 
-        ss->client_hello.host_name = ss->server_cert.common_name = ss->server_cert.org_name = nullptr;
+        ss->client_hello.host_name = ss->server_cert.common_name = ss->server_cert.org_unit = nullptr;
         args.asd.tsession->set_tls_handshake_done();
     }
     return add_service(args.change_bits, args.asd, args.pkt, args.dir,

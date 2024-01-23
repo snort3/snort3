@@ -146,6 +146,18 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
         if (sni_mismatch)
             asd->scan_flags |= SCAN_SPOOFED_SNI_FLAG;
 
+        if (org_unit)
+        {
+            asd->tsession->set_tls_org_unit(org_unit, strlen(org_unit));
+            if (client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
+            {
+                ssl_matchers.scan_cname((const uint8_t*)org_unit, strlen(org_unit),
+                    client_id, payload_id);
+                if (client_id != APP_ID_NONE or payload_id != APP_ID_NONE)
+                    asd->tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_ORG_UNIT);
+            }
+        }
+
         if (server_name and !sni_mismatch)
         {
             asd->tsession->set_tls_host(server_name, strlen(server_name), change_bits);
@@ -176,18 +188,6 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
                     client_id, payload_id);
                 if (client_id != APP_ID_NONE or payload_id != APP_ID_NONE)
                     asd->tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_CNAME);
-            }
-        }
-
-        if (org_unit)
-        {
-            asd->tsession->set_tls_org_unit(org_unit, strlen(org_unit));
-            if (client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
-            {
-                ssl_matchers.scan_cname((const uint8_t*)org_unit, strlen(org_unit),
-                    client_id, payload_id);
-                if (client_id != APP_ID_NONE or payload_id != APP_ID_NONE)
-                    asd->tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_ORG_UNIT);
             }
         }
 
