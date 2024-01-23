@@ -178,9 +178,6 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
     tcp_init = false;
     tcpStats.released++;
 
-    client.ooo_packet_seen = false;
-    server.ooo_packet_seen = false;
-
     if ( flush_segments )
     {
         client.reassembler.flush_queued_segments(flow, true, p);
@@ -437,33 +434,50 @@ void TcpSession::process_tcp_stream(TcpSegmentDescriptor& tsd)
 void TcpSession::update_stream_order(const TcpSegmentDescriptor& tsd, bool aligned)
 {
     TcpStreamTracker* listener = tsd.get_listener();
+    uint32_t seq = tsd.get_seq();
 
     switch ( listener->order )
     {
-    case 0:
-        if ( aligned )
-            tsd.set_packet_flags(PKT_STREAM_ORDER_OK);
-        else
-            listener->order = 1;
-        break;
+        case TcpStreamTracker::IN_SEQUENCE:
+            if ( aligned )
+                tsd.set_packet_flags(PKT_STREAM_ORDER_OK);
+            else if ( SEQ_GT(seq, listener->rcv_nxt) )
+            {
+                listener->order = TcpStreamTracker::NONE;
+			    listener->hole_left_edge = listener->rcv_nxt;
+			    listener->hole_right_edge = seq - 1;
+            }
+            break;
 
-    case 1:
-        if ( aligned )
-        {
-            tsd.set_packet_flags(PKT_STREAM_ORDER_OK);
-            listener->order = 2;
-        }
-        break;
+        case TcpStreamTracker::NONE:
+            if ( aligned )
+            {
+                tsd.set_packet_flags(PKT_STREAM_ORDER_OK);
+                if ( SEQ_GT(tsd.get_end_seq(), listener->hole_right_edge) )
+			        listener->order = TcpStreamTracker::OUT_OF_SEQUENCE;
+			    else
+			        listener->hole_left_edge = tsd.get_end_seq();
+            }
+            else
+            {
+                if ( SEQ_LEQ(seq, listener->hole_right_edge) )
+			    {
+			    	if ( SEQ_GT(seq, listener->hole_left_edge) )
+			       	    listener->hole_right_edge = seq - 1;
+                    else if ( SEQ_GT(tsd.get_end_seq(), listener->hole_left_edge) )
+                    {
+                        listener->hole_left_edge = tsd.get_end_seq();
+                        tsd.set_packet_flags(PKT_STREAM_ORDER_OK);
+                    }
+			    }
+                // accounting for overlaps when not aligned
+                if ( SEQ_GT(listener->hole_left_edge, listener->hole_right_edge) )
+                    listener->order = TcpStreamTracker::OUT_OF_SEQUENCE;
+            }
+            break;
 
-    default:
-        if ( aligned )
-            tsd.set_packet_flags(PKT_STREAM_ORDER_OK);
-        else
-        {
-            if ( !(flow->get_session_flags() & SSNFLAG_STREAM_ORDER_BAD) )
-                flow->set_session_flags(SSNFLAG_STREAM_ORDER_BAD);
+        case TcpStreamTracker::OUT_OF_SEQUENCE:
             tsd.set_packet_flags(PKT_STREAM_ORDER_BAD);
-        }
     }
 }
 
@@ -502,7 +516,7 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
 
         if ( tsd.is_data_segment() )
         {
-            update_stream_order(tsd, !listener->ooo_packet_seen);
+            update_stream_order(tsd, true);
             process_tcp_stream(tsd);
             return STREAM_ALIGNED;
         }

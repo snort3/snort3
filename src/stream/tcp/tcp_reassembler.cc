@@ -910,6 +910,7 @@ int32_t TcpReassembler::scan_data_pre_ack(TcpReassemblerState& trs, uint32_t* fl
     }
 
     trs.sos.seglist.cur_sseg = tsn;
+
     if ( tsn )
         update_rcv_nxt(trs, *tsn);
     
@@ -983,9 +984,6 @@ void TcpReassembler::check_first_segment_hole(TcpReassemblerState& trs)
 void TcpReassembler::update_rcv_nxt(TcpReassemblerState& trs, TcpSegmentNode& tsn)
 {
     uint32_t temp = (tsn.i_seq + tsn.i_len);
-
-    if (!trs.tracker->ooo_packet_seen and SEQ_LT(trs.tracker->rcv_nxt, temp))
-        trs.tracker->ooo_packet_seen = true;
 
     if ( SEQ_GT(temp, trs.tracker->rcv_nxt) )
         trs.tracker->rcv_nxt = temp;

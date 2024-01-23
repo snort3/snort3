@@ -242,7 +242,7 @@ void TcpStreamTracker::init_tcp_state()
     fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
     fin_seq_set = false;
     rst_pkt_sent = false;
-    order = 0;
+    order = TcpStreamTracker::IN_SEQUENCE;
     held_packet = null_iterator;
     flush_policy = STREAM_FLPOLICY_IGNORE;
     reassembler.reset();

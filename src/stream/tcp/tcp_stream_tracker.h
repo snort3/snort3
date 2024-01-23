@@ -85,6 +85,8 @@ public:
         TCP_MAX_EVENTS
     };
 
+    enum PacketOrder : uint8_t { OUT_OF_SEQUENCE, IN_SEQUENCE, NONE };
+
     enum FinSeqNumStatus : uint8_t { FIN_NOT_SEEN, FIN_WITH_SEQ_SEEN, FIN_WITH_SEQ_ACKED };
 
     TcpStreamTracker(bool client);
@@ -325,13 +327,15 @@ public:
     uint16_t rcv_up = 0;  // RCV.UP  - receive urgent pointer
 
     uint32_t held_pkt_seq = 0;
+    uint32_t hole_left_edge = 0;   // First left hole
+    uint32_t hole_right_edge = 0;
+
     TcpState tcp_state;
     TcpEvent tcp_event = TCP_MAX_EVENTS;
 
     bool client_tracker;
     bool require_3whs = false;
     bool rst_pkt_sent = false;
-    bool ooo_packet_seen = false;
     bool midstream_initial_ack_flush = false;
 
 // FIXIT-L make these non-public
@@ -344,7 +348,7 @@ public:
     uint32_t small_seg_count = 0;
     uint32_t max_queue_seq_nxt = 0; // next expected sequence once queue limit is exceeded
     uint8_t max_queue_exceeded = MQ_NONE;
-    uint8_t order = 0;
+    uint8_t order = IN_SEQUENCE;
     FinSeqNumStatus fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
 
 protected:
