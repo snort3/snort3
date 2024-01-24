@@ -464,9 +464,23 @@ void PacketTracer::update_constraints(const PacketConstraints* cs)
     constraints = *cs;
     constraints.src_ip.ntop(sipstr, sizeof(sipstr));
     constraints.dst_ip.ntop(dipstr, sizeof(dipstr));
-    LogMessage("Debugging packet tracer with %s-%hu and %s-%hu %hhu\n",
+
+    std::string tenants = "none";
+    if (constraints.tenants.size())
+    {
+        std::ostringstream oss;
+        for (size_t i = 0; i < constraints.tenants.size(); ++i)
+        {
+            oss << constraints.tenants[i];
+            if (i < constraints.tenants.size() - 1)
+                oss << ",";
+        }
+        tenants = oss.str();
+    }
+
+    LogMessage("Debugging packet tracer with %s-%hu and %s-%hu %hhu and tenants:%s\n",
         sipstr, constraints.src_port, dipstr, constraints.dst_port,
-        static_cast<uint8_t>(constraints.ip_proto));
+        static_cast<uint8_t>(constraints.ip_proto), tenants.c_str());
 
     shell_enabled = true;
 

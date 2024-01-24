@@ -358,8 +358,8 @@ TEST_CASE("packet constraints", "[TraceParser]")
     SECTION("ip_proto")
     {
         PROTO_OPTION(ip_proto, 6);
-        const PacketConstraints exp = { IpProtocol::TCP, 0, 0,
-            SfIp(), SfIp(), PacketConstraints::IP_PROTO };
+        const PacketConstraints exp = PacketConstraints(IpProtocol::TCP, 0, 0,
+            SfIp(), SfIp(), PacketConstraints::IP_PROTO, true);
 
         CHECK(true == tp.set_constraints(ip_proto));
         tp.finalize_constraints();
@@ -374,8 +374,8 @@ TEST_CASE("packet constraints", "[TraceParser]")
     {
         ADDR_OPTION(src_ip, "10.1.2.3");
         const uint32_t exp_ip = 0x0302010a;
-        const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 0, 0,
-            SfIp(&exp_ip, AF_INET), SfIp(), PacketConstraints::SRC_IP };
+        const PacketConstraints exp = PacketConstraints(IpProtocol::PROTO_NOT_SET, 0, 0,
+            SfIp(&exp_ip, AF_INET), SfIp(), PacketConstraints::SRC_IP, true);
 
         CHECK(true == tp.set_constraints(src_ip));
         tp.finalize_constraints();
@@ -394,8 +394,8 @@ TEST_CASE("packet constraints", "[TraceParser]")
 
     SECTION("src_port")
     {
-        const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 100, 0,
-            SfIp(), SfIp(), PacketConstraints::SRC_PORT };
+        const PacketConstraints exp = PacketConstraints(IpProtocol::PROTO_NOT_SET, 100, 0,
+            SfIp(), SfIp(), PacketConstraints::SRC_PORT, true);
         PORT_OPTION(src_port, 100);
 
         CHECK(true == tp.set_constraints(src_port));
@@ -411,8 +411,8 @@ TEST_CASE("packet constraints", "[TraceParser]")
     {
         ADDR_OPTION(dst_ip, "10.3.2.1");
         const uint32_t exp_ip = 0x0102030a;
-        const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 0, 0,
-            SfIp(), SfIp(&exp_ip, AF_INET), PacketConstraints::DST_IP };
+        const PacketConstraints exp = PacketConstraints(IpProtocol::PROTO_NOT_SET, 0, 0,
+            SfIp(), SfIp(&exp_ip, AF_INET), PacketConstraints::DST_IP, true);
 
         CHECK(true == tp.set_constraints(dst_ip));
         tp.finalize_constraints();
@@ -432,8 +432,8 @@ TEST_CASE("packet constraints", "[TraceParser]")
     SECTION("dst_port")
     {
         PORT_OPTION(dst_port, 200);
-        const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 0, 200,
-            SfIp(), SfIp(), PacketConstraints::DST_PORT };
+        const PacketConstraints exp = PacketConstraints(IpProtocol::PROTO_NOT_SET, 0, 200,
+            SfIp(), SfIp(), PacketConstraints::DST_PORT, true);
 
         CHECK(true == tp.set_constraints(dst_port));
         tp.finalize_constraints();

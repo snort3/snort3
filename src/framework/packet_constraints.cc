@@ -31,19 +31,53 @@ namespace {
 
 inline bool match_constraints(const snort::PacketConstraints& cs,
     const snort::SfIp& sip, const snort::SfIp& dip, uint16_t sport,
-    uint16_t dport)
+    uint16_t dport, uint32_t tenant_id)
 {
     using SetBits = snort::PacketConstraints::SetBits;
 
-    return (!(cs.set_bits & SetBits::SRC_PORT) or (sport == cs.src_port)) and
+    bool res = (!(cs.set_bits & SetBits::SRC_PORT) or (sport == cs.src_port)) and
         (!(cs.set_bits & SetBits::DST_PORT) or (dport == cs.dst_port)) and
         (!(cs.set_bits & SetBits::SRC_IP) or (sip == cs.src_ip)) and
         (!(cs.set_bits & SetBits::DST_IP) or (dip == cs.dst_ip));
+
+    if (res && tenant_id && !cs.tenants.empty())
+    {
+        auto it = std::find_if(cs.tenants.cbegin(), cs.tenants.cend(),
+            [tenant_id](uint32_t t){ return t == tenant_id; });
+
+        if (it == cs.tenants.cend())
+            return false;
+    }
+
+    return res;
 }
 
 } // namespace
 
 using namespace snort;
+
+PacketConstraints::PacketConstraints(const PacketConstraints& other) :
+    ip_proto(other.ip_proto), src_port(other.src_port), dst_port(other.dst_port),
+    src_ip(other.src_ip), dst_ip(other.dst_ip), set_bits(other.set_bits),
+    match(other.match), tenants(other.tenants)
+{}
+
+PacketConstraints& PacketConstraints::operator=(const PacketConstraints& other)
+{
+    if (this == &other)
+        return *this;
+
+    ip_proto = other.ip_proto;
+    src_port = other.src_port;
+    dst_port = other.dst_port;
+    src_ip = other.src_ip;
+    dst_ip = other.dst_ip;
+    set_bits = other.set_bits;
+    match = other.match;
+    tenants = other.tenants;
+
+    return *this;
+}
 
 bool PacketConstraints::operator==(const PacketConstraints& other) const
 {
@@ -52,7 +86,8 @@ bool PacketConstraints::operator==(const PacketConstraints& other) const
         and ( !(set_bits & SRC_PORT) or src_port == other.src_port )
         and ( !(set_bits & DST_PORT) or dst_port == other.dst_port )
         and ( !(set_bits & SRC_IP) or src_ip == other.src_ip )
-        and ( !(set_bits & DST_IP) or dst_ip == other.dst_ip );
+        and ( !(set_bits & DST_IP) or dst_ip == other.dst_ip )
+        and ( tenants == other.tenants );
 }
 
 bool PacketConstraints::packet_match(const Packet& p) const
@@ -76,8 +111,8 @@ bool PacketConstraints::packet_match(const Packet& p) const
     const auto sp = p.ptrs.sp;
     const auto dp = p.ptrs.dp;
 
-    return match_constraints(*this, sip, dip, sp, dp) or
-        match_constraints(*this, dip, sip, dp, sp);
+    return match_constraints(*this, sip, dip, sp, dp, p.pkth->tenant_id) or
+        match_constraints(*this, dip, sip, dp, sp, p.pkth->tenant_id);
 }
 
 bool PacketConstraints::flow_match(const Flow& f) const
@@ -90,7 +125,7 @@ bool PacketConstraints::flow_match(const Flow& f) const
         return false;
 
     return match_constraints(*this, f.client_ip, f.server_ip, f.client_port,
-        f.server_port);
+        f.server_port, f.tenant);
 }
 
 #ifdef UNIT_TEST
@@ -101,10 +136,10 @@ TEST_CASE("Packet constraints comparison", "[framework]")
 {
     SECTION("all unset")
     {
-        const PacketConstraints exp = { IpProtocol::TCP, 10, 20,
-            SfIp(), SfIp(), 0 };
-        const PacketConstraints act = { IpProtocol::UDP, 30, 40,
-            SfIp(), SfIp(), 0 };
+        const PacketConstraints exp = PacketConstraints(IpProtocol::TCP, 10, 20,
+            SfIp(), SfIp(), 0, true);
+        const PacketConstraints act = PacketConstraints(IpProtocol::UDP, 30, 40,
+            SfIp(), SfIp(), 0, true);
         CHECK( exp == act );
     }
 
@@ -112,12 +147,12 @@ TEST_CASE("Packet constraints comparison", "[framework]")
     {
         const uint32_t ip1 = 0x01010101;
         const uint32_t ip2 = 0x02020202;
-        const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 10, 20,
+        const PacketConstraints exp = PacketConstraints(IpProtocol::PROTO_NOT_SET, 10, 20,
             SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET),
-            (uint8_t)~PacketConstraints::SetBits::DST_IP };
-        const PacketConstraints act = { IpProtocol::PROTO_NOT_SET, 10, 20,
+            (uint8_t)~PacketConstraints::SetBits::DST_IP, true);
+        const PacketConstraints act = PacketConstraints(IpProtocol::PROTO_NOT_SET, 10, 20,
             SfIp(&ip1, AF_INET), SfIp(),
-            (uint8_t)~PacketConstraints::SetBits::DST_IP };
+            (uint8_t)~PacketConstraints::SetBits::DST_IP, true);
         CHECK( exp == act );
     }
 
@@ -126,21 +161,31 @@ TEST_CASE("Packet constraints comparison", "[framework]")
         const uint32_t ip1 = 0x01010101;
         const uint32_t ip2 = 0x02020202;
         const uint32_t ip3 = 0x03030303;
-        const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 0, 0,
-            SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1 };
-        const PacketConstraints act = { IpProtocol::PROTO_NOT_SET, 0, 0,
-            SfIp(&ip3, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1};
+        const PacketConstraints exp = PacketConstraints(IpProtocol::PROTO_NOT_SET, 0, 0,
+            SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1, true);
+        const PacketConstraints act = PacketConstraints(IpProtocol::PROTO_NOT_SET, 0, 0,
+            SfIp(&ip3, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1, true);
         CHECK( !(exp == act) );
     }
 
     SECTION("equal")
     {
+        std::vector<uint32_t> tenants1;
+        tenants1.push_back(100);
+        tenants1.push_back(200);
+
+        std::vector<uint32_t> tenants2;
+        tenants2.push_back(100);
+        tenants2.push_back(200);
+
         const uint32_t ip1 = 0x01010101;
         const uint32_t ip2 = 0x02020202;
-        const PacketConstraints exp = { IpProtocol::PROTO_NOT_SET, 0, 0,
-            SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1 };
-        const PacketConstraints act = { IpProtocol::PROTO_NOT_SET, 0, 0,
-            SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1 };
+        PacketConstraints exp = PacketConstraints(IpProtocol::PROTO_NOT_SET, 0, 0,
+            SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1, true);
+        exp.tenants = tenants1;
+        PacketConstraints act = PacketConstraints(IpProtocol::PROTO_NOT_SET, 0, 0,
+            SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1, true);
+        act.tenants = tenants2;
         CHECK( exp == act );
     }
 }
@@ -171,7 +216,12 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.src_ip = sip;
         cs.dst_ip = dip;
 
-        CHECK( true == match_constraints(cs, sip, dip, sport, dport) );
+        std::vector<uint32_t> tenants;
+        tenants.push_back(100);
+        tenants.push_back(200);
+        cs.tenants = tenants;
+
+        CHECK( true == match_constraints(cs, sip, dip, sport, dport, 100) );
     }
 
     SECTION("backwards")
@@ -188,7 +238,7 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.src_ip = sip;
         cs.dst_ip = dip;
 
-        CHECK( false == match_constraints(cs, dip, sip, dport, sport) );
+        CHECK( false == match_constraints(cs, dip, sip, dport, sport, 0) );
     }
 
     SECTION("any ip")
@@ -201,7 +251,7 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.src_port = sport;
         cs.dst_port = dport;
 
-        CHECK( true == match_constraints(cs, sip, dip, sport, dport) );
+        CHECK( true == match_constraints(cs, sip, dip, sport, dport, 0) );
     }
 
     SECTION("any port")
@@ -214,7 +264,7 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.src_ip = sip;
         cs.dst_ip = dip;
 
-        CHECK( true == match_constraints(cs, sip, dip, sport, dport) );
+        CHECK( true == match_constraints(cs, sip, dip, sport, dport, 0) );
     }
 
     SECTION("any src")
@@ -227,7 +277,7 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.dst_port = dport;
         cs.dst_ip = dip;
 
-        CHECK( true == match_constraints(cs, sip, dip, sport, dport) );
+        CHECK( true == match_constraints(cs, sip, dip, sport, dport, 0) );
     }
 }
 

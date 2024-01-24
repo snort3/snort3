@@ -20,6 +20,8 @@
 #ifndef PACKET_CONSTRAINTS_H
 #define PACKET_CONSTRAINTS_H
 
+#include <vector>
+
 #include "protocols/protocol_ids.h"
 #include "sfip/sf_ip.h"
 
@@ -39,6 +41,15 @@ struct PacketConstraints
         DST_PORT = 1 << 4,
     };
 
+    PacketConstraints() = default;
+    PacketConstraints(IpProtocol ip_proto, uint16_t src_port, uint16_t dst_port,
+        const snort::SfIp& src_ip, const snort::SfIp& dst_ip, uint8_t set_bits, bool match) :
+        ip_proto(ip_proto), src_port(src_port), dst_port(dst_port),
+        src_ip(src_ip), dst_ip(dst_ip), set_bits(set_bits), match(match)
+    {}
+    PacketConstraints(const PacketConstraints&);
+    PacketConstraints& operator=(const PacketConstraints& other);
+
     bool operator==(const PacketConstraints& other) const;
 
     bool packet_match(const Packet& p) const;
@@ -53,6 +64,8 @@ struct PacketConstraints
     uint8_t set_bits = 0;
 
     bool match = true;
+
+    std::vector<uint32_t> tenants;
 };
 
 } // namespace snort
