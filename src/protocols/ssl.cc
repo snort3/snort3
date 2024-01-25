@@ -238,7 +238,7 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
 
 static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
     uint8_t* alert_flags, uint16_t* partial_rec_len, int max_hb_len, uint32_t* info_flags,
-    SSLV3ClientHelloData* client_hello_data, SSLV3ServerCertData* server_cert_data)
+    SSLV3ClientHelloData* client_hello_data, SSLV3ServerCertData* server_cert_data, uint32_t prev_flags)
 {
     uint32_t retval = 0;
     uint16_t hblen;
@@ -329,7 +329,7 @@ static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
         case SSL_HANDSHAKE_REC:
             /* If the CHANGE_CIPHER_FLAG is set, the following handshake
              * record should be encrypted */
-            if (!(retval & SSL_CHANGE_CIPHER_FLAG))
+            if (!(retval & SSL_CHANGE_CIPHER_FLAG) && !(prev_flags & SSL_CHANGE_CIPHER_FLAG))
             {
                 int hsize = size < (int)reclen ? size : (int)reclen;
                 retval |= SSL_decode_handshake_v3(pkt, hsize, retval, pkt_flags, client_hello_data, server_cert_data);
@@ -498,7 +498,7 @@ uint32_t SSL_decode(
          * indicate that it is truncated. */
         if (size == 5)
             return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len, info_flags,
-                client_hello_data, server_cert_data);
+                client_hello_data, server_cert_data, prev_flags);
 
         /* At this point, 'size' has to be > 5 */
 
@@ -546,7 +546,7 @@ uint32_t SSL_decode(
     }
 
     return SSL_decode_v3(pkt, size, pkt_flags, alert_flags, partial_rec_len, max_hb_len, info_flags,
-        client_hello_data, server_cert_data);
+        client_hello_data, server_cert_data, prev_flags);
 }
 
 /* very simplistic - just enough to say this is binary data - the rules will make a final

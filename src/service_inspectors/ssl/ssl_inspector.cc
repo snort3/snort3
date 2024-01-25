@@ -404,6 +404,14 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
     {
         sd->ssn_flags = SSLPP_process_app(config, sd->ssn_flags, new_flags, p);
     }
+    else if (SSL_IS_CHANGE_CIPHER(new_flags))
+    {
+        /* If the 'change cipher spec' and 'encrypted handshake message' flags come in separate subsequent packets,
+         * the encrypted handshake message is inspected, and attempts to process some random type and it fails.
+         * To avoid this situation, update the 'change cipher spec' flag in the session to skip processing
+         * the encrypted handshake message.*/
+        sd->ssn_flags |= SSL_CHANGE_CIPHER_FLAG;
+    }
     else
     {
         /* Different record type that we don't care about.
