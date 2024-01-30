@@ -34,6 +34,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <vector>
 
 #include "main/snort_types.h"
 
@@ -56,6 +57,8 @@ bool EnterChroot(std::string& root_dir, std::string& log_dir);
 void InitProtoNames();
 unsigned int get_random_seed();
 bool get_file_size(const std::string&, size_t&);
+void StrToIntVector(const std::string& s, char delim, std::vector<uint32_t>& elems);
+std::string IntVectorToStr(const std::vector<uint32_t>& elems, char delim = ',');
 
 #if defined(NOCOREFILE)
 void SetNoCores();

@@ -507,6 +507,36 @@ bool get_file_size(const std::string& path, size_t& size)
     return true;
 }
 
+void StrToIntVector(const std::string& s, char delim, std::vector<uint32_t>& elems)
+{
+    std::istringstream ss(s);
+    std::string item;
+    while (std::getline(ss, item, delim))
+    {
+        size_t pos;
+        uint32_t i = std::stoul(item, &pos);
+        elems.push_back(i);
+    }
+}
+
+std::string IntVectorToStr(const std::vector<uint32_t>& elems, char delim)
+{
+    std::string str = "none";
+    if (elems.size())
+    {
+        std::ostringstream oss;
+        for (size_t i = 0; i < elems.size(); ++i)
+        {
+            oss << elems[i];
+            if (i < elems.size() - 1)
+                oss << delim;
+        }
+        str = oss.str();
+    }
+
+    return str;
+}
+
 #if defined(NOCOREFILE)
 void SetNoCores()
 {

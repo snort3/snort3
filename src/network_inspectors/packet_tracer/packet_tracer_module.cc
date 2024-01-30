@@ -32,24 +32,11 @@
 #include "main/snort_config.h"
 #include "profiler/profiler.h"
 #include "sfip/sf_ip.h"
+#include "utils/util.h"
 
 #include "packet_tracer.h"
 
 using namespace snort;
-
-static void StrToVector(const std::string& s,
-    char delim,
-    std::vector<uint32_t>& elems)
-{
-    std::istringstream ss(s);
-    std::string item;
-    while (std::getline(ss, item, delim))
-    {
-        size_t pos;
-        uint32_t i = std::stoul(item, &pos);
-        elems.push_back(i);
-    }
-}
 
 static int enable(lua_State*);
 static int disable(lua_State*);
@@ -143,7 +130,7 @@ static int enable(lua_State* L)
     PacketConstraints constraints = {};
 
     if (tenantsstr)
-        StrToVector(tenantsstr, ',', constraints.tenants);
+        StrToIntVector(tenantsstr, ',', constraints.tenants);
 
     if (proto and (IpProtocol)proto < IpProtocol::PROTO_NOT_SET)
     {

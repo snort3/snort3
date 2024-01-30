@@ -289,6 +289,7 @@ static int enable_debug(lua_State* L)
     int sport = luaL_optint(L, 3, 0);
     const char* dipstr = luaL_optstring(L, 4, nullptr);
     int dport = luaL_optint(L, 5, 0);
+    const char *tenantsstr = luaL_optstring(L, 6, nullptr);
 
     AppIdDebugSessionConstraints constraints = { };
     if (sipstr)
@@ -312,6 +313,9 @@ static int enable_debug(lua_State* L)
 
     constraints.sport = sport;
     constraints.dport = dport;
+
+    if (tenantsstr)
+        StrToIntVector(tenantsstr, ',', constraints.tenants);
 
     AppIdDebugLogEvent event(&constraints, "AppIdDbg");
     DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::DEBUG_LOG, event);
@@ -445,6 +449,7 @@ static const Parameter enable_debug_params[] =
     { "src_port", Parameter::PT_INT, nullptr, nullptr, "source port filter" },
     { "dst_ip", Parameter::PT_STRING, nullptr, nullptr, "destination IP address filter" },
     { "dst_port", Parameter::PT_INT, nullptr, nullptr, "destination port filter" },
+    { "tenants", Parameter::PT_STRING, nullptr, nullptr, "tenants filter" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };

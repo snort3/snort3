@@ -52,6 +52,7 @@ struct AppIdDebugSessionConstraints
     uint16_t sport;
     uint16_t dport;
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
+    std::vector<uint32_t> tenants;
     bool proto_match(IpProtocol proto) const
     {
         return (protocol == IpProtocol::PROTO_NOT_SET or protocol == proto);
@@ -65,6 +66,18 @@ struct AppIdDebugSessionConstraints
         return
             ((!sip_flag or !memcmp(sip.get_ip6_ptr(), ip1, sizeof(snort::ip::snort_in6_addr))) and
              (!dip_flag or !memcmp(dip.get_ip6_ptr(), ip2, sizeof(snort::ip::snort_in6_addr))));
+    }
+    bool tenant_match(uint32_t tenant_id) const
+    {
+        if (tenant_id && !tenants.empty())
+        {
+            auto it = std::find_if(tenants.cbegin(), tenants.cend(),
+                [tenant_id](uint32_t t){ return t == tenant_id; });
+
+            if (it == tenants.cend())
+                return false;
+        }
+        return true;
     }
 };
 

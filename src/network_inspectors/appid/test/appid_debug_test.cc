@@ -56,6 +56,8 @@ void trace_vprintf(const char*, unsigned char, const char*, const Packet*, const
 uint8_t TraceApi::get_constraints_generation() { return 0; }
 }
 
+std::string IntVectorToStr(const std::vector<uint32_t>& elems, char delim) { return ""; }
+
 THREAD_LOCAL const snort::Trace* appid_trace;
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
