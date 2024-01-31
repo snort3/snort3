@@ -45,6 +45,10 @@
 #include <lzma.h>
 #endif
 
+#ifdef HAVE_LIBML
+#include <libml.h>
+#endif
+
 extern "C" {
 #include <daq.h>
 }
@@ -128,6 +132,9 @@ int DisplayBanner()
 #endif
 #ifdef HAVE_LZMA
     LogMessage("           Using LZMA version %s\n", lzma_version_string());
+#endif
+#ifdef HAVE_LIBML
+    LogMessage("           Using LibML version %s\n", libml_version());
 #endif
     LogMessage("\n");
 

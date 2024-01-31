@@ -42,6 +42,10 @@
 #include <lzma.h>
 #endif
 
+#ifdef HAVE_LIBML
+#include <libml.h>
+#endif
+
 extern "C" {
 #include <daq.h>
 }
@@ -91,6 +95,9 @@ static const char* dep_versions[] = {
 #endif
 #ifdef HAVE_LZMA
     "LZMA",
+#endif
+#ifdef HAVE_LIBML
+    "LIBML",
 #endif
     nullptr
 };
@@ -156,6 +163,9 @@ static void install_dependencies_strings(Shell* sh, lua_State* L)
 #endif
 #ifdef HAVE_LZMA
     vs.push_back(lzma_version_string());
+#endif
+#ifdef HAVE_LIBML
+    vs.push_back(libml_version());
 #endif
 
     lua_createtable(L, 0, vs.size());

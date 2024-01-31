@@ -120,6 +120,10 @@ Optional Packages:
                             libuuid include directory
     --with-uuid-libraries=DIR
                             libuuid library directory
+    --with-libml-includes=DIR
+                            libml include directory
+    --with-libml-libraries=DIR
+                            libml library directory
 
 Some influential variable definitions:
     SIGNAL_SNORT_RELOAD=<int>
@@ -462,6 +466,12 @@ while [ $# -ne 0 ]; do
             ;;
         --with-toolchain=*)
             append_cache_entry CMAKE_TOOLCHAIN_FILE PATH $optarg
+            ;;
+        --with-libml-includes=*)
+            append_cache_entry ML_INCLUDE_DIR_HINT PATH $optarg
+            ;;
+        --with-libml-libraries=*)
+            append_cache_entry ML_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         SIGNAL_SNORT_RELOAD=*)
             append_cache_entry SIGNAL_SNORT_RELOAD STRING $optarg

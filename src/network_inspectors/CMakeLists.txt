@@ -2,6 +2,7 @@
 add_subdirectory(appid)
 add_subdirectory(arp_spoof)
 add_subdirectory(binder)
+add_subdirectory(kaizen)
 add_subdirectory(normalize)
 add_subdirectory(packet_capture)
 add_subdirectory(packet_tracer)
@@ -21,6 +22,7 @@ endif()
 set(STATIC_NETWORK_INSPECTOR_PLUGINS
     $<TARGET_OBJECTS:appid>
     $<TARGET_OBJECTS:binder>
+    $<TARGET_OBJECTS:kaizen>
     $<TARGET_OBJECTS:normalize>
     $<TARGET_OBJECTS:packet_tracer>
     $<TARGET_OBJECTS:port_scan>

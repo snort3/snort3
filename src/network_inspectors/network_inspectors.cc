@@ -31,6 +31,8 @@ extern const BaseApi* nin_normalize;
 extern const BaseApi* nin_reputation;
 
 extern const BaseApi* nin_appid[];
+extern const BaseApi* nin_kaizen_engine[];
+extern const BaseApi* nin_kaizen[];
 extern const BaseApi* nin_port_scan[];
 extern const BaseApi* nin_rna[];
 
@@ -52,6 +54,8 @@ void load_network_inspectors()
 {
     PluginManager::load_plugins(network_inspectors);
     PluginManager::load_plugins(nin_appid);
+    PluginManager::load_plugins(nin_kaizen_engine);
+    PluginManager::load_plugins(nin_kaizen);
     PluginManager::load_plugins(nin_port_scan);
     PluginManager::load_plugins(nin_rna);
 

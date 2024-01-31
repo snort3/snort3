@@ -204,4 +204,12 @@ else ()
     NUMA:           OFF")
 endif ()
 
+if (HAVE_LIBML)
+    message("\
+    LibML:          ON")
+else ()
+    message("\
+    LibML:          OFF")
+endif ()
+
 message("-------------------------------------------------------\n")

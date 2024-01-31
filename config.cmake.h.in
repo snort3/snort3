@@ -150,6 +150,9 @@
 /* numa available */
 #cmakedefine HAVE_NUMA 1
 
+/* libml available */
+#cmakedefine HAVE_LIBML 1
+
 /*  Availability of specific library functions */
 
 /* Define to 1 if you have the `malloc_trim' function. */
