@@ -239,6 +239,10 @@ bool AppIdSessionApi::is_appid_inspecting_session() const
             return false;
     }
 
+    if ( (get_service_app_id() == APP_ID_QUIC or  get_service_app_id() == APP_ID_HTTP3) and
+         !asd->get_session_flags(APPID_SESSION_DECRYPTED) )
+        return false;
+
     if ( asd->service_disco_state != APPID_DISCO_STATE_FINISHED or
         !asd->is_tp_appid_done() or
         asd->get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE) or
