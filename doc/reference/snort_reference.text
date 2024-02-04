@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.78.0 2024-01-16 01:22:50 EST TST
+Revision 3.1.79.0 2024-02-01 19:30:03 UTC TST
 
 ---------------------------------------------------------------------
 
@@ -16,7 +16,6 @@ Table of Contents
 
 1. Help
 2. Basic Modules
-
     2.1. active
     2.2. alerts
     2.3. attribute_table
@@ -50,9 +49,7 @@ Table of Contents
     2.31. snort
     2.32. suppress
     2.33. trace
-
 3. Codec Modules
-
     3.1. arp
     3.2. auth
     3.3. ciscometadata
@@ -80,14 +77,10 @@ Table of Contents
     3.25. udp
     3.26. vlan
     3.27. wlan
-
 4. Connector Modules
-
     4.1. file_connector
     4.2. tcp_connector
-
 5. Inspector Modules
-
     5.1. appid
     5.2. appid_listener
     5.3. arp_spoof
@@ -143,14 +136,10 @@ Table of Contents
     5.53. stream_user
     5.54. telnet
     5.55. wizard
-
 6. IPS Action Modules
-
     6.1. react
     6.2. reject
-
 7. IPS Option Modules
-
     7.1. ack
     7.2. appids
     7.3. base64_decode
@@ -281,11 +270,9 @@ Table of Contents
     7.128. vba_data
     7.129. window
     7.130. wscale
-
 8. Search Engine Modules
 9. SO Rule Modules
 10. Logger Modules
-
     10.1. alert_csv
     10.2. alert_ex
     10.3. alert_fast
@@ -298,9 +285,7 @@ Table of Contents
     10.10. log_hext
     10.11. log_pcap
     10.12. unified2
-
 11. Appendix
-
     11.1. Build Options
     11.2. Environment Variables
     11.3. Command Line Options
@@ -1216,8 +1201,8 @@ Configuration:
 
 Commands:
 
-  * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port):
-    enable packet tracer debugging
+  * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port,
+    tenants): enable packet tracer debugging
   * packet_tracer.disable(): disable packet tracer
 
 
@@ -2593,8 +2578,8 @@ Configuration:
 
 Commands:
 
-  * appid.enable_debug(proto, src_ip, src_port, dst_ip, dst_port):
-    enable appid debugging
+  * appid.enable_debug(proto, src_ip, src_port, dst_ip, dst_port,
+    tenants): enable appid debugging
   * appid.disable_debug(): disable appid debugging
   * appid.reload_third_party(): reload appid third-party module
   * appid.reload_detectors(): reload appid detectors
@@ -13007,12 +12992,12 @@ session.
 The TCP packet is invalid because it doesn’t have a SYN, ACK, or RST
 flag set.
 
-116:424 (pbb) truncated ethernet header
+116:424 (eth) truncated ethernet header
 
 The packet length is less than the minimum ethernet header size (14
 bytes)
 
-116:424 (pbb) truncated ethernet header
+116:424 (eth) truncated ethernet header
 
 A truncated ethernet header was detected.
 
@@ -15707,8 +15692,8 @@ alert is raised by the enhanced JavaScript normalizer.
 
 --------------
 
-  * appid.enable_debug(proto, src_ip, src_port, dst_ip, dst_port):
-    enable appid debugging
+  * appid.enable_debug(proto, src_ip, src_port, dst_ip, dst_port,
+    tenants): enable appid debugging
   * appid.disable_debug(): disable appid debugging
   * appid.reload_third_party(): reload appid third-party module
   * appid.reload_detectors(): reload appid detectors
@@ -15729,8 +15714,8 @@ alert is raised by the enhanced JavaScript normalizer.
     the user policy id
   * packet_capture.enable(filter, group): dump raw packets
   * packet_capture.disable(): stop packet dump
-  * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port):
-    enable packet tracer debugging
+  * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port,
+    tenants): enable packet tracer debugging
   * packet_tracer.disable(): disable packet tracer
   * perf_monitor.enable_flow_ip_profiling(seconds, packets): enable
     statistics on host pairs
