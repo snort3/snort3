@@ -1,26 +1,26 @@
 2024-02-01: 3.1.79.0
 
-appid: add tenants filter for appid debug
-appid: process organization unit instead of organization name
-appid: return false in is_appid_inspecting_session for quic if not decrypting
-appid: update peg counts to be thread safe
-coverity: fix for stream and hash
-filters: make rate_filter multithreaded + some cleanup
-kaizen: add dev_notes.txt
-kaizen: change default value of uri_depth to -1
-kaizen: change kaizen gid to 411
-kaizen: extend mock object with simple matching mechanism
-kaizen: make kaizen configurable per policy
-kaizen: register module only when LibML present or REG_TEST defined
-kaizen: update copyright
-mercury: updating alpn info without sni in 7.6
-network_inspectors: add kaizen ML based exploit detector
-packet_tracer: add tenants to filters
-profiler: improve multithread rule percentage calculation
-ssl: heap overflow issue when processing handshake records
-stream_tcp: correct labeling of in-sequence and out-of-sequence packets
-stream_tcp: persist disable_reassembly in Flow
-stream_tcp: set packet direction flag based on direction saved in reassembly state
+* appid: add tenants filter for appid debug
+* appid: process organization unit instead of organization name
+* appid: return false in is_appid_inspecting_session for quic if not decrypting
+* appid: update peg counts to be thread safe
+* coverity: fix for stream and hash
+* filters: make rate_filter multithreaded + some cleanup
+* kaizen: add dev_notes.txt
+* kaizen: change default value of uri_depth to -1
+* kaizen: change kaizen gid to 411
+* kaizen: extend mock object with simple matching mechanism
+* kaizen: make kaizen configurable per policy
+* kaizen: register module only when LibML present or REG_TEST defined
+* kaizen: update copyright
+* mercury: updating alpn info without sni in 7.6
+* network_inspectors: add kaizen ML based exploit detector
+* packet_tracer: add tenants to filters
+* profiler: improve multithread rule percentage calculation
+* ssl: heap overflow issue when processing handshake records
+* stream_tcp: correct labeling of in-sequence and out-of-sequence packets
+* stream_tcp: persist disable_reassembly in Flow
+* stream_tcp: set packet direction flag based on direction saved in reassembly state
 
 2024-01-16: 3.1.78.0
 
