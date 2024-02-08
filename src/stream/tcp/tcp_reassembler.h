@@ -56,6 +56,10 @@ public:
     void skip_midstream_pickup_seglist_hole(TcpReassemblerState&, TcpSegmentDescriptor&);
     void initialize_paf(TcpReassemblerState& trs)
     {
+        // only initialize if we have a data segment queued
+        if ( !trs.sos.seglist.head )
+            return;
+
         if ( !paf_initialized(&trs.paf_state) or SEQ_GT(trs.paf_state.seq, trs.sos.seglist.head->i_seq) )
             paf_initialize(&trs.paf_state, trs.sos.seglist.head->i_seq);
     }
