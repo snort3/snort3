@@ -38,6 +38,24 @@
 
 #include "main/snort_types.h"
 
+// Note: thread names > 15 chars aren't supported on most systems
+#if defined(__linux__)
+    #include <pthread.h>
+    #define SET_THREAD_NAME(thread, name) \
+    pthread_setname_np(thread, name)
+
+#elif defined(__OpenBSD__) || defined(__FreeBSD__)
+    #include <pthread_np.h>
+    #define SET_THREAD_NAME(thread, name) \
+    pthread_set_name_np(thread, name)
+
+#else
+    #define SET_THREAD_NAME(thread, name) \
+    UNUSED(thread);\
+    UNUSED(name);
+
+#endif
+
 #define TIMEBUF_SIZE 27
 
 #define SECONDS_PER_DAY  86400  /* number of seconds in a day  */

@@ -301,6 +301,9 @@ void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
     hwloc_cpuset_t current_cpuset, desired_cpuset;
     char* s;
 
+    std::string thread_name_suffix;
+    std::string thread_name;
+
     auto iter = thread_affinity.find(key);
     if (iter != thread_affinity.end())
         desired_cpuset = iter->second->cpuset;
@@ -314,7 +317,32 @@ void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
     current_cpuset = hwloc_bitmap_alloc();
     hwloc_get_cpubind(topology, current_cpuset, HWLOC_CPUBIND_THREAD);
     if (!hwloc_bitmap_isequal(current_cpuset, desired_cpuset))
+    {
         LogMessage("Binding %s to CPU %s.\n", stringify_thread(type, id).c_str(), s);
+        thread_name_suffix = ".core-";
+        thread_name_suffix.append(s);
+    }
+    else
+    {
+        thread_name_suffix = ".ins-";
+        thread_name_suffix.append(std::to_string(id));
+    }
+
+    // Thread name is snort.ins-X for unpinned threads, and snort.core-X
+    // for threads pinned to CPU x
+    if (type == STHREAD_TYPE_MAIN)
+    {
+        thread_name = "snort3";
+        thread_name_suffix = "";
+    }
+    else
+    {
+        thread_name = "snort";
+    }
+
+    thread_name.append(thread_name_suffix);
+    SET_THREAD_NAME(pthread_self(), thread_name.c_str());
+
     hwloc_bitmap_free(current_cpuset);
 
     if (hwloc_set_cpubind(topology, desired_cpuset, HWLOC_CPUBIND_THREAD))

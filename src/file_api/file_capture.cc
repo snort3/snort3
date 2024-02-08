@@ -65,6 +65,8 @@ FileCaptureState FileCapture::error_capture(FileCaptureState state)
 // Only one writer thread supported
 void FileCapture::writer_thread()
 {
+    SET_THREAD_NAME(pthread_self(), "snort.filecap");
+
     while (true)
     {
         // Wait until there are files
