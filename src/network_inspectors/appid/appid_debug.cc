@@ -102,11 +102,13 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
     const AppIdSession* session, bool log_all_sessions, uint32_t tenant_id,
     int16_t group1, int16_t group2, bool inter_group_flow)
 {
-    if (!( log_all_sessions or
-           ( info.proto_match(protocol) and
+    bool match = info.proto_match(protocol) and
              ( (info.port_match(port1, port2) and info.ip_match(ip1, ip2)) or
-               (info.port_match(port2, port1) and info.ip_match(ip2, ip1)) ) and
-               info.tenant_match(tenant_id) ) ))
+               (info.port_match(port2, port1) and info.ip_match(ip2, ip1)) );
+    if (match)
+        match = info.tenant_match(tenant_id);
+
+    if (!(log_all_sessions or match))
     {
         active = false;
         return;
