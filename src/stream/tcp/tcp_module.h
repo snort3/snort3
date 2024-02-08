@@ -47,6 +47,8 @@
 #define STREAM_TCP_DATA_AFTER_RST_RCVD            18
 #define STREAM_TCP_WINDOW_SLAM                    19
 #define STREAM_TCP_NO_3WHS                        20
+#define STREAM_TCP_MAX_QUEUED_BYTES_EXCEEDED      21
+#define STREAM_TCP_MAX_QUEUED_SEGS_EXCEEDED       22
 #define STREAM_TCP_MAX_EVENTS                     32
 
 extern const PegInfo tcp_pegs[];

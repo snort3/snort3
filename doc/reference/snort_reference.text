@@ -5880,6 +5880,8 @@ Rules:
   * 129:18 (stream_tcp) data sent on stream after TCP reset received
   * 129:19 (stream_tcp) TCP window closed before receiving data
   * 129:20 (stream_tcp) TCP session without 3-way handshake
+  * 129:21 (stream_tcp) TCP max queued reassembly bytes exceeded threshold
+  * 129:22 (stream_tcp) TCP max queued reassembly segments exceeded threshold
 
 Peg counts:
 
@@ -14585,6 +14587,16 @@ TCP window was closed before receiving data.
 129:20 (stream_tcp) TCP session without 3-way handshake
 
 The TCP 3-way handshake was not seen for this TCP session.
+
+129:21 (stream_tcp) TCP maximum bytes queued limit exceeded
+
+The maximum bytes allowed to be queued for reassembly for an
+endpoint has been exceeded.
+
+129:22 (stream_tcp) TCP maximum segments queued limit exceeded
+
+The maximum number of segments allowed to be queued for reassembly
+for an endpoint has been exceeded.
 
 131:1 (dns) obsolete DNS RR types
 

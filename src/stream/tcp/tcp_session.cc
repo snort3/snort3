@@ -359,6 +359,7 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
             if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON)
             {
                 tsd.get_pkt()->active->set_drop_reason("stream");
+                tel.set_tcp_event(EVENT_MAX_QUEUED_BYTES_EXCEEDED);
                 if (PacketTracer::is_active())
                     PacketTracer::log("Stream: Flow exceeded the configured max byte threshold (%u)\n", tcp_config->max_queued_bytes);
             }
@@ -394,6 +395,7 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
             if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON)
             {
                 tsd.get_pkt()->active->set_drop_reason("stream");
+                tel.set_tcp_event(EVENT_MAX_QUEUED_SEGS_EXCEEDED);
                 if (PacketTracer::is_active())
                     PacketTracer::log("Stream: Flow exceeded the configured max segment threshold (%u)\n", tcp_config->max_queued_segs);
             }
@@ -502,6 +504,7 @@ int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
                 listener->normalizer.trim_win_payload(tsd, 0, tsd.is_nap_policy_inline());
                 return STREAM_UNALIGNED;
             }
+
             if( listener->get_iss() )
             {
                 tcpStats.zero_win_probes++;

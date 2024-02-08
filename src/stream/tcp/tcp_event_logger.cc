@@ -67,8 +67,8 @@ struct tcp_event_sid tcp_event_sids[] =
     { EVENT_BAD_SEGMENT, STREAM_TCP_BAD_SEGMENT, "BAD_SEGMENT" },
     { EVENT_EXCESSIVE_OVERLAP, STREAM_TCP_EXCESSIVE_TCP_OVERLAPS, "EXCESSIVE_OVERLAP" },
     { EVENT_MAX_SMALL_SEGS_EXCEEDED, STREAM_TCP_SMALL_SEGMENT, "MAX_SMALL_SEGS_EXCEEDED" },
-    { 0, 0, nullptr }, { 0, 0, nullptr }, { 0, 0, nullptr }, { 0, 0, nullptr },
-    { 0, 0, nullptr }, { 0, 0, nullptr }, { 0, 0, nullptr }, { 0, 0, nullptr },
+    { EVENT_MAX_QUEUED_BYTES_EXCEEDED, STREAM_TCP_MAX_QUEUED_BYTES_EXCEEDED, "MAX_QUEUED_BYTES_EXCEEDED" },
+    { EVENT_MAX_QUEUED_SEGS_EXCEEDED, STREAM_TCP_MAX_QUEUED_SEGS_EXCEEDED, "MAX_QUEUED_SEGS_EXCEEDED" },
     { 0, 0, nullptr }, { 0, 0, nullptr }, { 0, 0, nullptr }, { 0, 0, nullptr }
 };
 

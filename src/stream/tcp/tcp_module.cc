@@ -161,6 +161,10 @@ THREAD_LOCAL TcpStats tcpStats;
     "TCP window closed before receiving data"
 #define STREAM_TCP_NO_3WHS_STR \
     "TCP session without 3-way handshake"
+#define STREAM_TCP_MAX_QUEUED_BYTES_STR \
+    "TCP max queued reassembly bytes exceeded threshold"
+#define STREAM_TCP_MAX_QUEUED_SEGS_STR \
+    "TCP max queued reassembly segments exceeded threshold"
 
 static const Parameter stream_tcp_small_params[] =
 {
@@ -256,6 +260,8 @@ static const RuleMap stream_tcp_rules[] =
     { STREAM_TCP_DATA_AFTER_RST_RCVD, STREAM_TCP_DATA_AFTER_RST_RCVD_STR },
     { STREAM_TCP_WINDOW_SLAM, STREAM_TCP_WINDOW_SLAM_STR },
     { STREAM_TCP_NO_3WHS, STREAM_TCP_NO_3WHS_STR },
+    { STREAM_TCP_MAX_QUEUED_BYTES_EXCEEDED, STREAM_TCP_MAX_QUEUED_BYTES_STR },
+    { STREAM_TCP_MAX_QUEUED_SEGS_EXCEEDED, STREAM_TCP_MAX_QUEUED_SEGS_STR },
 
     { 0, nullptr }
 };
