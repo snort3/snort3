@@ -123,9 +123,15 @@ RuleTreeNode* RuleStateMap::dup_rtn(RuleTreeNode* rtn, IpsPolicy* policy)
     ret->sip = sip
         ? sfvar_create_alias(sip, sip->name)
         : sfvar_deep_copy(rtn->sip);
+    if (!sip and rtn->sip->name)
+        ret->sip->name = snort_strdup(rtn->sip->name);
+
     ret->dip = dip
         ? sfvar_create_alias(dip, dip->name)
         : sfvar_deep_copy(rtn->dip);
+    if (!dip and rtn->dip->name)
+        ret->dip->name = snort_strdup(rtn->dip->name);
+
     ret->src_portobject = spo ? spo : ret->src_portobject;
     ret->dst_portobject = dpo ? dpo : ret->dst_portobject;
     ret->otnRefCount = 0;
