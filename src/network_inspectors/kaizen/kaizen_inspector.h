@@ -30,7 +30,7 @@
 class Kaizen : public snort::Inspector
 {
 public:
-    Kaizen(const KaizenConfig& c) : config(c) { };
+    Kaizen(const KaizenConfig& c) : config(c) { }
 
     void show(const snort::SnortConfig*) const override;
     void eval(snort::Packet*) override {}

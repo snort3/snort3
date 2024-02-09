@@ -93,7 +93,7 @@ void HttpBodyHandler::handle(DataEvent& de, Flow*)
     kaizen_stats.client_body_bytes += body_len;
 
     debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "input (body): %.*s\n", body_len, body);
-    debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "output: %f\n", output);
+    debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "output: %f\n", static_cast<double>(output));
 
     if ((double)output > config.http_param_threshold)
     {
@@ -148,7 +148,7 @@ void HttpUriHandler::handle(DataEvent& de, Flow*)
     kaizen_stats.uri_bytes += query_len;
 
     debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "input (query): %.*s\n", query_len, query);
-    debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "output: %f\n", output);
+    debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "output: %f\n", static_cast<double>(output));
 
     if ((double)output > config.http_param_threshold)
     {
