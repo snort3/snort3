@@ -89,12 +89,14 @@ StatsBucket* AppIdStatistics::get_stats_bucket(time_t start_time)
 
 void AppIdStatistics::open_stats_log_file()
 {
-    log = TextLog_Init(appid_stats_filename, 4096, roll_size);
+    log = TextLog_Init(appid_stats_filename, 4096, roll_size, false);
+    if (!log)
+        log_err = true;
 }
 
 void AppIdStatistics::dump_statistics()
 {
-    if ( !log_buckets )
+    if ( !log_buckets or log_err )
         return;
 
     if ( !log )
@@ -104,6 +106,11 @@ void AppIdStatistics::dump_statistics()
 
     while ((bucket = (struct StatsBucket*)sflist_remove_head(log_buckets)) != nullptr)
     {
+        if (log_err)
+        {
+            delete bucket;
+            continue;
+        }
         if ( bucket->app_record_cnt )
         {
             for (auto& it : bucket->apps_tree)

@@ -96,6 +96,7 @@ private:
     time_t bucket_interval = 0;
     time_t bucket_end = 0;
     size_t roll_size = 0;
+    bool log_err = false;
 };
 
 #endif

@@ -68,7 +68,7 @@ void CreateTCPFlagString(const tcp::TCPHdr* const tcph, char* flagBuffer)
  * Returns: file handle
  *
  ***************************************************************************/
-FILE* OpenAlertFile(const char* filearg)
+FILE* OpenAlertFile(const char* filearg, bool is_critical)
 {
     FILE* file;
 
@@ -80,8 +80,10 @@ FILE* OpenAlertFile(const char* filearg)
 
     if ((file = fopen(filename, "a")) == nullptr)
     {
-        FatalError("OpenAlertFile() => fopen() alert file %s: %s\n",
-            filename, get_error(errno));
+        if (is_critical)
+            FatalError("OpenAlertFile() => fopen() alert file %s: %s\n", filename, get_error(errno));
+        else
+            ErrorMessage("OpenAlertFile() => fopen() alert file %s: %s\n", filename, get_error(errno));
     }
     else
         setvbuf(file, (char*)nullptr, _IOLBF, (size_t)0);

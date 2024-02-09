@@ -33,7 +33,7 @@ struct Packet;
 SO_PUBLIC void CreateTCPFlagString(const tcp::TCPHdr* const, char*);
 }
 
-FILE* OpenAlertFile(const char*);
+FILE* OpenAlertFile(const char*, bool is_critical=true);
 int RollAlertFile(const char*);
 
 void OpenLogger();

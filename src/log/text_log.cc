@@ -67,7 +67,7 @@ struct TextLog
  * TextLog_Open/Close: open/close associated log file
  *-------------------------------------------------------------------
  */
-static FILE* TextLog_Open(const char* name)
+static FILE* TextLog_Open(const char* name, bool is_critical=true)
 {
     if ( name && !strcasecmp(name, "stdout") )
     {
@@ -79,7 +79,7 @@ static FILE* TextLog_Open(const char* name)
 #endif
     }
 
-    return OpenAlertFile(name);
+    return OpenAlertFile(name, is_critical);
 }
 
 static void TextLog_Close(FILE* file)
@@ -116,7 +116,7 @@ void TextLog_Reset(TextLog* const txt)
  *-------------------------------------------------------------------
  */
 TextLog* TextLog_Init(
-    const char* name, unsigned int maxBuf, size_t maxFile)
+    const char* name, unsigned int maxBuf, size_t maxFile, bool is_critical)
 {
     TextLog* txt;
 
@@ -126,7 +126,14 @@ TextLog* TextLog_Init(
     txt = (TextLog*)snort_alloc(sizeof(TextLog)+maxBuf);
 
     txt->name = name ? snort_strdup(name) : nullptr;
-    txt->file = TextLog_Open(txt->name);
+    txt->file = TextLog_Open(txt->name, is_critical);
+    if (!txt->file)
+    {
+        if ( txt->name )
+            snort_free(txt->name);
+        snort_free(txt);
+        return nullptr;
+    }
     txt->size = TextLog_Size(txt->file);
     txt->last = time(nullptr);
     txt->maxFile = maxFile;
