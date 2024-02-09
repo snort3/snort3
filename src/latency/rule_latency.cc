@@ -590,19 +590,14 @@ TEST_CASE ( "default latency rule interface", "[latency]" )
     if ( !instances )
         instances = 1;
 
-    std::unique_ptr<RuleLatencyState[]> latency_state(new RuleLatencyState[instances]());
-
     std::unique_ptr<detection_option_tree_node_t*[]> children(
         new detection_option_tree_node_t*[1]());
 
-    detection_option_tree_node_t child;
+    detection_option_tree_node_t child(RULE_OPTION_TYPE_LEAF_NODE, nullptr);
     children[0] = &child;
 
-    std::unique_ptr<dot_node_state_t[]> child_state(new dot_node_state_t[instances]());
-    child.state = child_state.get();
-
     detection_option_tree_root_t root;
-    root.latency_state = latency_state.get();
+    root.latency_state = new RuleLatencyState[instances]();
     root.num_children = 1;
     root.children = children.get();
 
@@ -644,23 +639,23 @@ TEST_CASE ( "default latency rule interface", "[latency]" )
             SECTION( "timeouts under threshold" )
             {
                 CHECK( false == RuleInterface::timeout_and_suspend(root, 2, hr_time(0_ticks), true) );
-                CHECK( child_state[0].latency_timeouts == 1 );
-                CHECK( child_state[0].latency_suspends == 0 );
+                CHECK( child.state[0].latency_timeouts == 1 );
+                CHECK( child.state[0].latency_suspends == 0 );
             }
 
             SECTION( "timeouts exceed threshold" )
             {
                 CHECK( true == RuleInterface::timeout_and_suspend(root, 1, hr_time(0_ticks), true) );
-                CHECK( child_state[0].latency_timeouts == 1 );
-                CHECK( child_state[0].latency_suspends == 1 );
+                CHECK( child.state[0].latency_timeouts == 1 );
+                CHECK( child.state[0].latency_suspends == 1 );
             }
         }
 
         SECTION( "suspend disabled" )
         {
             CHECK( false == RuleInterface::timeout_and_suspend(root, 0, hr_time(0_ticks), false) );
-            CHECK( child_state[0].latency_timeouts == 1 );
-            CHECK( child_state[0].latency_suspends == 0 );
+            CHECK( child.state[0].latency_timeouts == 1 );
+            CHECK( child.state[0].latency_suspends == 0 );
         }
     }
 }

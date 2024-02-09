@@ -34,8 +34,11 @@
 #include <sys/time.h>
 
 #include "detection/rule_option_types.h"
+#include "latency/rule_latency_state.h"
+#include "main/thread_config.h"
 #include "time/clock_defs.h"
 #include "trace/trace_api.h"
+#include "utils/util.h"
 
 namespace snort
 {
@@ -78,6 +81,15 @@ struct dot_node_state_t
     unsigned latency_timeouts;
     unsigned latency_suspends;
 
+    dot_node_state_t()
+    {
+        result = 0;
+        conts = nullptr;
+        memset(&last_check, 0, sizeof(last_check));
+        context_num = run_num = 0;
+        reset_profiling();
+    }
+
     // FIXIT-L perf profiler stuff should be factored of the node state struct
     void update(hr_duration delta, bool match)
     {
@@ -111,8 +123,11 @@ struct detection_option_tree_bud_t
     detection_option_tree_bud_t()
         : relative_children(0), num_children(0), children(nullptr), otn(nullptr) {}
 
-    detection_option_tree_bud_t(int num, detection_option_tree_node_t** d_otn, const OptTreeNode* r_otn)
-        : relative_children(0), num_children(num), children(d_otn), otn(r_otn) {}
+    detection_option_tree_bud_t(int num, const OptTreeNode* _otn)
+        : relative_children(0), num_children(num), children(nullptr), otn(_otn) {}
+
+protected:
+    ~detection_option_tree_bud_t() {}
 };
 
 struct detection_option_tree_node_t : public detection_option_tree_bud_t
@@ -122,18 +137,45 @@ struct detection_option_tree_node_t : public detection_option_tree_bud_t
     dot_node_state_t* state;
     int is_relative;
     option_type_t option_type;
+    
+    detection_option_tree_node_t(option_type_t type, void* data) :
+        evaluate(nullptr), option_data(data), is_relative(0), option_type(type)
+    {
+        state = new dot_node_state_t[snort::ThreadConfig::get_instance_max()];
+    }
+
+    ~detection_option_tree_node_t()
+    {
+        for (int i = 0; i < num_children; i++)
+            delete children[i];
+
+        snort_free(children);
+        delete[] state;
+    }
 };
 
 struct detection_option_tree_root_t : public detection_option_tree_bud_t
 {
     RuleLatencyState* latency_state;
 
-    detection_option_tree_root_t()
-        : detection_option_tree_bud_t(), latency_state(nullptr) {}
+    detection_option_tree_root_t() : latency_state(nullptr) {}
 
-    detection_option_tree_root_t(int num, detection_option_tree_node_t** d_otn, const OptTreeNode* r_otn,
-        RuleLatencyState* lat)
-        : detection_option_tree_bud_t(num, d_otn, r_otn), latency_state(lat) {}
+    detection_option_tree_root_t(OptTreeNode* _otn)
+        : detection_option_tree_bud_t(0, _otn)
+    {
+        latency_state = new RuleLatencyState[snort::ThreadConfig::get_instance_max()]();
+    }
+
+    detection_option_tree_root_t(int num, const OptTreeNode* _otn)
+        : detection_option_tree_bud_t(num, _otn)
+    {
+        latency_state = new RuleLatencyState[snort::ThreadConfig::get_instance_max()]();
+    }
+
+    ~detection_option_tree_root_t()
+    {
+        delete[] latency_state;
+    }
 };
 
 struct detection_option_eval_data_t
@@ -171,11 +213,7 @@ void detection_option_tree_update_otn_stats(std::vector<snort::HashNode*>&,
     std::unordered_map<SigInfo*, OtnState>&, unsigned);
 void detection_option_tree_reset_otn_stats(std::vector<snort::HashNode*>&, unsigned);
 
-detection_option_tree_root_t* new_root(OptTreeNode*);
 void free_detection_option_root(void** existing_tree);
-
-detection_option_tree_node_t* new_node(option_type_t, void*);
-void free_detection_option_tree(detection_option_tree_node_t*);
 
 #endif
 

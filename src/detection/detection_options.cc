@@ -46,12 +46,10 @@
 #include "latency/rule_latency_state.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "main/thread_config.h"
 #include "managers/ips_manager.h"
 #include "parser/parser.h"
 #include "profiler/rule_profiler_defs.h"
 #include "protocols/packet_manager.h"
-#include "utils/util.h"
 #include "utils/util_cstring.h"
 
 #include "detection_continuation.h"
@@ -210,16 +208,6 @@ static bool detection_option_tree_compare(
     return true;
 }
 
-void free_detection_option_tree(detection_option_tree_node_t* node)
-{
-    for (int i = 0; i < node->num_children; i++)
-        free_detection_option_tree(node->children[i]);
-
-    snort_free(node->children);
-    snort_free(node->state);
-    snort_free(node);
-}
-
 class DetectionOptionTreeHashKeyOps : public HashKeyOperations
 {
 public:
@@ -269,7 +257,7 @@ public:
 
     void free_user_data(HashNode* hnode) override
     {
-        free_detection_option_tree((detection_option_tree_node_t*)hnode->data);
+        delete (detection_option_tree_node_t*)hnode->data;
     }
 
 };
@@ -836,17 +824,6 @@ void detection_option_tree_reset_otn_stats(std::vector<HashNode*>& nodes, unsign
     }
 }
 
-detection_option_tree_root_t* new_root(OptTreeNode* otn)
-{
-    detection_option_tree_root_t* p = (detection_option_tree_root_t*)
-        snort_calloc(sizeof(detection_option_tree_root_t));
-
-    p->latency_state = new RuleLatencyState[ThreadConfig::get_instance_max()]();
-    p->otn = otn;
-
-    return p;
-}
-
 void free_detection_option_root(void** existing_tree)
 {
     detection_option_tree_root_t* root;
@@ -857,21 +834,7 @@ void free_detection_option_root(void** existing_tree)
     root = (detection_option_tree_root_t*)*existing_tree;
     snort_free(root->children);
 
-    delete[] root->latency_state;
-    snort_free(root);
+    delete root;
     *existing_tree = nullptr;
 }
 
-detection_option_tree_node_t* new_node(option_type_t type, void* data)
-{
-    detection_option_tree_node_t* p =
-        (detection_option_tree_node_t*)snort_calloc(sizeof(*p));
-
-    p->option_type = type;
-    p->option_data = data;
-
-    p->state = (dot_node_state_t*)
-        snort_calloc(ThreadConfig::get_instance_max(), sizeof(*p->state));
-
-    return p;
-}

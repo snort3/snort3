@@ -72,7 +72,7 @@ private:
 
         State(const detection_option_tree_node_t& n, const detection_option_eval_data_t& d,
             snort::IpsOption* s, unsigned wp, uint64_t id, bool p) : data(d),
-            root(1, nullptr, d.otn, new RuleLatencyState[snort::ThreadConfig::get_instance_max()]()),
+            root(1, d.otn),
             selector(s), node(const_cast<detection_option_tree_node_t*>(&n)), waypoint(wp),
             original_waypoint(wp), sid(id), packet_number(d.p->context->packet_number),
             opt_parent(p)
@@ -82,9 +82,6 @@ private:
 
             root.children = &node;
         }
-
-        ~State()
-        { delete[] root.latency_state; }
 
         inline bool eval(snort::Packet&);
 

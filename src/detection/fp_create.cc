@@ -118,7 +118,7 @@ static int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree
         if ( void* dup_node = add_detection_option_tree(sc, node) )
         {
             // FIXIT-L delete dup_node and keep original?
-            free_detection_option_tree(node);
+            delete node;
             root->children[i] = (detection_option_tree_node_t*)dup_node;
         }
         else
@@ -160,7 +160,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseTyp
         return -1;
 
     if (!*existing_tree)
-        *existing_tree = new_root(otn);
+        *existing_tree = new detection_option_tree_root_t(otn);
 
     detection_option_tree_root_t* const root = (detection_option_tree_root_t*)*existing_tree;
     detection_option_tree_bud_t* bud = root;
@@ -211,7 +211,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseTyp
         if (!child)
         {
             /* No children at this node */
-            child = new_node(opt_fp->type, option_data);
+            child = new detection_option_tree_node_t(opt_fp->type, option_data);
             child->evaluate = opt_fp->OptTestFunc;
 
             bud->children[i] = child;
@@ -241,7 +241,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseTyp
             {
                 /* No matching child node, create a new and add to array */
                 detection_option_tree_node_t** tmp_children;
-                child = new_node(opt_fp->type, option_data);
+                child = new detection_option_tree_node_t(opt_fp->type, option_data);
                 child->evaluate = opt_fp->OptTestFunc;
                 child->num_children++;
                 child->children = (detection_option_tree_node_t**)
@@ -277,7 +277,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseTyp
         return 0;
 
     /* Append a leaf node that has option data of the SigInfo/otn pointer */
-    child = new_node(RULE_OPTION_TYPE_LEAF_NODE, otn);
+    child = new detection_option_tree_node_t(RULE_OPTION_TYPE_LEAF_NODE, otn);
 
     if (bud->children[0])
     {
@@ -318,7 +318,7 @@ static int otn_create_tree(OptTreeNode* otn, void** existing_tree, Mpse::MpseTyp
         }
 
         void* option_data = fbs->ips_opt;
-        child = new_node(fbs->type, option_data);
+        child = new detection_option_tree_node_t(fbs->type, option_data);
         child->evaluate = fbs->OptTestFunc;
         child->is_relative = fbs->isRelative;
         bud->children[i++] = child;
@@ -379,7 +379,7 @@ static int pmx_create_tree(SnortConfig* sc, void* id, void** existing_tree, Mpse
     OptTreeNode* otn = (OptTreeNode*)pmx->rule_node.rnRuleData;
 
     if (!*existing_tree)
-        *existing_tree = new_root(otn);
+        *existing_tree = new detection_option_tree_root_t(otn);
 
     return otn_create_tree(otn, existing_tree, mpse_type);
 }
