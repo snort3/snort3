@@ -224,10 +224,16 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         */
         IpsAction * act = get_ips_policy()->action[action];
         act->exec(p);
+
         if ( p->active && p->flow &&
             (p->active->get_action() >= Active::ACT_DROP) )
         {
-            p->flow->flags.ips_event_suppressed = true;
+            if ( p->active->can_partial_block_session() )
+                p->flow->flags.ips_pblock_event_suppressed = true;
+            else if (p->active->packet_would_be_dropped())
+                p->flow->flags.ips_wblock_event_suppressed = true;
+            else
+                p->flow->flags.ips_block_event_suppressed = true;
         }
         fpLogOther(p, rtn, otn, action);
         pc.event_limit++;

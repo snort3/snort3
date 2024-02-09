@@ -500,8 +500,10 @@ public:  // FIXIT-M privatize if possible
         bool svc_event_generated : 1; // Set if FLOW_NO_SERVICE_EVENT was generated for this flow
         bool retry_queued : 1; // Set if a packet was queued for retry for this flow
         bool ha_flow : 1; // Set if this flow was created by an HA message
-        bool ips_event_suppressed : 1; // Set if event filters have suppressed ips event
         bool disable_reassembly_by_ips : 1; // Set if IPS has disabled reassembly for this flow
+        bool ips_block_event_suppressed : 1; // Set if event filters have suppressed a block ips event
+        bool ips_wblock_event_suppressed : 1; // set if event filters have suppressed a would block/drop ips event
+        bool ips_pblock_event_suppressed : 1; // set if event filters have suppressed a partial block ips event
     } flags = {};
 
     FlowState flow_state = FlowState::SETUP;
