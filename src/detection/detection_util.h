@@ -24,6 +24,8 @@
 // this is a legacy junk-drawer file that needs to be refactored
 // it provides file and alt data and event trace foo.
 
+#include <cassert>
+
 #include "actions/actions.h"
 #include "main/snort_config.h"
 
@@ -39,8 +41,22 @@ struct DataPointer
 
 struct DataBuffer
 {
-    uint8_t data[DECODE_BLEN];
-    unsigned len;
+    static constexpr unsigned decode_blen = DECODE_BLEN;
+
+    DataBuffer() = default;
+    DataBuffer(const DataBuffer&) = delete;
+    DataBuffer& operator=(const DataBuffer&) = delete;
+    ~DataBuffer()
+    { delete [] data; }
+
+    void allocate_data()
+    {
+        assert(nullptr == data);
+        const_cast<uint8_t*&>(data) = new uint8_t[DECODE_BLEN];
+    }
+
+    uint8_t* const data = nullptr;
+    unsigned len = 0;
 };
 
 struct MatchedBuffer

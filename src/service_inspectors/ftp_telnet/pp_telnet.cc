@@ -54,7 +54,7 @@ using namespace snort;
 
 void reset_telnet_buffer(Packet* p)
 {
-    DetectionEngine::get_alt_buffer(p).len = 0;
+    DetectionEngine::reset_alt_buffer(p);
 }
 
 int normalize_telnet(
@@ -160,7 +160,7 @@ int normalize_telnet(
 
     /* walk thru the remainder of the packet */
     while ((read_ptr < end) &&
-        (write_ptr < ((unsigned char*)buf.data) + sizeof(buf.data)))
+        (write_ptr < ((unsigned char*)buf.data) + buf.decode_blen))
     {
         /* if the following byte isn't a subnegotiation initialization */
         if (((read_ptr + 1) < end) &&

@@ -41,7 +41,7 @@ THREAD_LOCAL ProfileStats psPerfStats;
 
 static void make_port_scan_info(Packet* p, PS_PROTO* proto)
 {
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
 
     SfIp* ip1 = &proto->low_ip;
     SfIp* ip2 = &proto->high_ip;
@@ -59,7 +59,7 @@ static void make_port_scan_info(Packet* p, PS_PROTO* proto)
     else
         type = 'r';
 
-    buf.len = safe_snprintf((char*)buf.data, sizeof(buf.data),
+    buf.len = safe_snprintf((char*)buf.data, buf.decode_blen,
         "Priority Count: %d\n"
         "Connection Count: %d\n"
         "IP Count: %d\n"
@@ -76,13 +76,13 @@ static void make_port_scan_info(Packet* p, PS_PROTO* proto)
 
 static void make_open_port_info(Packet* p, PS_PROTO* proto)
 {
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
 
     SfIp* ip1 = &proto->low_ip;
     char a1[INET6_ADDRSTRLEN];
     ip1->ntop(a1, sizeof(a1));
 
-    buf.len += safe_snprintf((char*)buf.data+buf.len, sizeof(buf.data)-buf.len,
+    buf.len += safe_snprintf((char*)buf.data + buf.len, buf.decode_blen - buf.len,
         "Scanned IP: %s\n"
         "Port Count: %d\n"
         "Open Ports:",
@@ -92,20 +92,20 @@ static void make_open_port_info(Packet* p, PS_PROTO* proto)
     for ( int i = 0; i < proto->open_ports_cnt; i++ )
     {
         buf.len += safe_snprintf(
-            (char*)buf.data + buf.len, sizeof(buf.data) - buf.len, " %hu", proto->open_ports[i]);
+            (char*)buf.data + buf.len, buf.decode_blen - buf.len, " %hu", proto->open_ports[i]);
     }
-    buf.len += safe_snprintf((char*)buf.data + buf.len, sizeof(buf.data) - buf.len, "\n");
+    buf.len += safe_snprintf((char*)buf.data + buf.len, buf.decode_blen - buf.len, "\n");
 }
 
 #if 0
 // FIXIT-L add open port for port sweeps
 static void make_open_port_info(Packet* p, uint16_t port)
 {
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
 
     SfIpString ip_str;
 
-    buf.len = safe_snprintf((char*)buf.data, sizeof(buf.data),
+    buf.len = safe_snprintf((char*)buf.data, buf.decode_blen,
         "Scanned IP: %s\n"
         "Open Port: %hu\n",
         p->ptrs.ip_api.get_src()->ntop(ip_str), port);

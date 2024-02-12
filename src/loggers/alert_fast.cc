@@ -384,7 +384,7 @@ void FastLogger::log_data(Packet* p, const Event& event)
     else if ( log_pkt )
         ObfuscateLogNetData(fast_log, p->data, p->dsize, p, nullptr, "pkt_data", ins_name);
 
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    const DataPointer& buf = DetectionEngine::get_alt_buffer(p);
 
     if ( buf.len and event.sig_info->gid != 116 )
         LogNetData(fast_log, buf.data, buf.len, p, "alt");

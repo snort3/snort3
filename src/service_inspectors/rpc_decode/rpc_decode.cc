@@ -331,12 +331,12 @@ static RpcStatus RpcStatefulInspection(RpcSsnData* rsdata, Packet* p)
 
 static RpcStatus RpcPrepRaw(const uint8_t* data, uint32_t fraglen, Packet* p)
 {
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
 
-    if (RPC_FRAG_HDR_SIZE + fraglen > sizeof(buf.data))
+    if (RPC_FRAG_HDR_SIZE + fraglen > buf.decode_blen)
         return RPC_STATUS__ERROR;
 
-    memcpy_s(buf.data, sizeof(buf.data), data, RPC_FRAG_HDR_SIZE + fraglen);
+    memcpy_s(buf.data, buf.decode_blen, data, RPC_FRAG_HDR_SIZE + fraglen);
     buf.len = (RPC_FRAG_HDR_SIZE + fraglen);
 
     return RPC_STATUS__SUCCESS;
@@ -344,7 +344,7 @@ static RpcStatus RpcPrepRaw(const uint8_t* data, uint32_t fraglen, Packet* p)
 
 static RpcStatus RpcPrepFrag(RpcSsnData* rsdata, Packet* p)
 {
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
     uint32_t fraghdr = htonl(RpcBufLen(&rsdata->frag));
 
     buf.data[0] = *((uint8_t*)&fraghdr);
@@ -354,13 +354,13 @@ static RpcStatus RpcPrepFrag(RpcSsnData* rsdata, Packet* p)
 
     buf.data[0] |= 0x80;
 
-    if (RpcBufLen(&rsdata->frag) > sizeof(buf.data) - 4)
+    if (RpcBufLen(&rsdata->frag) > buf.decode_blen - 4)
     {
         RpcBufClean(&rsdata->frag);
         return RPC_STATUS__ERROR;
     }
 
-    memcpy_s(buf.data + 4, sizeof(buf.data) - 4,
+    memcpy_s(buf.data + 4, buf.decode_blen - 4,
         RpcBufData(&rsdata->frag), RpcBufLen(&rsdata->frag));
 
     if (RpcBufLen(&rsdata->frag) > RPC_MAX_BUF_SIZE)
@@ -373,14 +373,14 @@ static RpcStatus RpcPrepFrag(RpcSsnData* rsdata, Packet* p)
 
 static RpcStatus RpcPrepSeg(RpcSsnData* rsdata, Packet* p)
 {
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
 
-    if (RpcBufLen(&rsdata->seg) > sizeof(buf.data))
+    if (RpcBufLen(&rsdata->seg) > buf.decode_blen)
     {
         RpcBufClean(&rsdata->seg);
         return RPC_STATUS__ERROR;
     }
-    memcpy_s(buf.data, sizeof(buf.data),
+    memcpy_s(buf.data, buf.decode_blen,
         RpcBufData(&rsdata->seg), RpcBufLen(&rsdata->seg));
 
     if (RpcBufLen(&rsdata->seg) > RPC_MAX_BUF_SIZE)
@@ -603,8 +603,8 @@ static int ConvertRPC(RpcSsnData* rsdata, Packet* p)
     uint32_t fraghdr;   /* Used to store the RPC fragment header data */
     int fragcount = 0;   /* How many fragment counters have we seen? */
 
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
-    size_t decode_buf_rem = sizeof(buf.data);
+    DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
+    size_t decode_buf_rem = buf.decode_blen;
 
     if (psize < MIN_CALL_BODY_SZ)
     {
@@ -824,8 +824,7 @@ void RpcDecode::eval(Packet* p)
 
 void RpcDecode::clear(Packet* p)
 {
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
-    buf.len = 0;
+    DetectionEngine::reset_alt_buffer(p);
 }
 
 //-------------------------------------------------------------------------

@@ -930,7 +930,7 @@ int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode)
             (iMode == FTPP_SI_SERVER_MODE && session->server_conf->ignore_telnet_erase_cmds))
             ignoreTelnetErase = FTPP_IGNORE_TNC_ERASE_CMDS;
 
-        DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+        DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
 
         iRet = normalize_telnet(nullptr, p, buf, iMode, ignoreTelnetErase, true);
 
@@ -1361,7 +1361,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
 
     const unsigned char* end = p->data + p->dsize;
 
-    const DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    const DataPointer& buf = DetectionEngine::get_alt_buffer(p);
     if ( buf.len )
         end = buf.data + buf.len;
 

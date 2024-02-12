@@ -297,12 +297,6 @@ uint8_t* DetectionEngine::get_next_buffer(unsigned& max)
     return Analyzer::get_switcher()->get_next()->buf;
 }
 
-DataBuffer& DetectionEngine::get_alt_buffer(Packet* p)
-{
-    assert(p);
-    return p->context->alt_data;
-}
-
 void DetectionEngine::set_file_data(const DataPointer& dp)
 {
     auto c = Analyzer::get_switcher()->get_context();

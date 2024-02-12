@@ -914,7 +914,7 @@ static int fp_search(RuleGroup* port_group, Packet* p, bool srvc)
                 {
                     // need to add a norm_data keyword or telnet, rpc_decode, smtp keywords
                     // until then we must use the standard packet mpse
-                    const DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+                    const DataPointer& buf = DetectionEngine::get_alt_buffer(p);
 
                     if ( buf.len )
                     {

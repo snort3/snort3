@@ -117,7 +117,7 @@ IpsOption::EvalStatus Base64DecodeOption::eval(Cursor& c, Packet* p)
 {
     // cppcheck-suppress unreadVariable
     RuleProfile profile(base64PerfStats);
-    DataBuffer& base64_decode_buffer = DetectionEngine::get_alt_buffer(p);
+    DataBuffer& base64_decode_buffer = DetectionEngine::acquire_alt_buffer(p);
     base64_decode_buffer.len = 0;
 
     Base64DecodeData* idx = (Base64DecodeData*)&config;
@@ -153,7 +153,7 @@ IpsOption::EvalStatus Base64DecodeOption::eval(Cursor& c, Packet* p)
     }
 
     if (sf_base64decode(base64_buf, base64_size, base64_decode_buffer.data,
-        sizeof(base64_decode_buffer.data), &base64_decode_buffer.len) != 0)
+        base64_decode_buffer.decode_blen, &base64_decode_buffer.len) != 0)
         return NO_MATCH;
 
     return MATCH;
@@ -287,7 +287,7 @@ IpsOption::EvalStatus Base64DataOption::eval(Cursor& c, Packet* p)
 {
     // cppcheck-suppress unreadVariable
     RuleProfile profile(base64PerfStats);
-    const DataBuffer& base64_decode_buffer = DetectionEngine::get_alt_buffer(p);
+    const DataPointer& base64_decode_buffer = DetectionEngine::get_alt_buffer(p);
 
     if ( !base64_decode_buffer.len )
         return NO_MATCH;

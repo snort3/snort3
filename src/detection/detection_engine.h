@@ -74,7 +74,9 @@ public:
     static const DataPointer& get_file_data(const IpsContext*, uint64_t& id, bool& drop_sse, bool& no_sse);
 
     static uint8_t* get_buffer(unsigned& max);
-    static struct DataBuffer& get_alt_buffer(Packet*);
+    static inline DataPointer get_alt_buffer(const Packet*);
+    static inline DataBuffer& acquire_alt_buffer(const Packet*);
+    static inline void reset_alt_buffer(Packet*);
 
     static void set_data(unsigned id, IpsContextData*);
     static IpsContextData* get_data(unsigned id);
@@ -122,6 +124,29 @@ private:
 private:
     IpsContext* context;
 };
+
+DataPointer DetectionEngine::get_alt_buffer(const Packet* p)
+{
+    assert(p);
+    auto& alt_buf = p->context->alt_data;
+
+    return { alt_buf.data, alt_buf.len };
+}
+
+DataBuffer& DetectionEngine::acquire_alt_buffer(const Packet* p)
+{
+    assert(p);
+
+    auto& alt_buf = p->context->alt_data;
+
+    if (!alt_buf.data)
+        alt_buf.allocate_data();
+
+    return alt_buf;
+}
+
+void snort::DetectionEngine::reset_alt_buffer(Packet *p)
+{ p->context->alt_data.len = 0; }
 
 static inline void set_file_data(const uint8_t* p, unsigned n)
 {

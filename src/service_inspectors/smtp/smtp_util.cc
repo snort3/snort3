@@ -75,13 +75,12 @@ SMTPEol SMTP_GetEOL(const uint8_t* ptr, const uint8_t* end,
 
 void SMTP_ResetAltBuffer(Packet* p)
 {
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
-    buf.len = 0;
+    DetectionEngine::reset_alt_buffer(p);
 }
 
 const uint8_t* SMTP_GetAltBuffer(Packet* p, unsigned& len)
 {
-    const DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+    const DataPointer& buf = DetectionEngine::get_alt_buffer(p);
     len = buf.len;
     return len ? buf.data : nullptr;
 }
@@ -96,8 +95,8 @@ int SMTP_CopyToAltBuffer(Packet* p, const uint8_t* start, int length)
     if (length == 0)
         return 0;
 
-    DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
-    unsigned alt_size = sizeof(buf.data);
+    DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
+    unsigned alt_size = buf.decode_blen;
 
     if ((unsigned long)length > alt_size - buf.len)
     {

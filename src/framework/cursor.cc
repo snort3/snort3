@@ -103,8 +103,7 @@ void Cursor::reset(Packet* p)
 {
     if (p->flow and p->flow->gadget)
     {
-        const DataBuffer& alt_buf = DetectionEngine::get_alt_buffer(p);
-
+        const DataPointer& alt_buf = DetectionEngine::get_alt_buffer(p);
         if (alt_buf.len)
         {
             set("alt_data", alt_buf.data, alt_buf.len);

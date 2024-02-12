@@ -82,7 +82,7 @@ static int SnortTelnet(TELNET_PROTO_CONF* telnet_config, TELNET_SESSION* Telnets
 
     if ( telnet_config->normalize )
     {
-        DataBuffer& buf = DetectionEngine::get_alt_buffer(p);
+        DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
         int ret = normalize_telnet(Telnetsession, p, buf, iInspectMode,
             FTPP_APPLY_TNC_ERASE_CMDS, false);
 
