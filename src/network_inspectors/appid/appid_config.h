@@ -48,9 +48,14 @@
 
 #define APP_ID_PORT_ARRAY_SIZE  65536
 
-#define MIN_MAX_BYTES_BEFORE_SERVICE_FAIL 4096
-#define MIN_MAX_PKTS_BEFORE_SERVICE_FAIL 5
-#define MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES 15
+#define MIN_MAX_BYTES_BEFORE_SERVICE_FAIL 1024
+#define MIN_MAX_PKTS_BEFORE_SERVICE_FAIL 2
+#define MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES 2
+
+#define DEFAULT_MAX_BYTES_BEFORE_SERVICE_FAIL 4096
+#define DEFAULT_MAX_PKTS_BEFORE_SERVICE_FAIL  5
+#define DEFAULT_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES 10
+
 
 enum SnortProtoIdIndex
 {
@@ -132,9 +137,9 @@ public:
     uint32_t host_port_app_cache_lookup_range = 100000;
     bool allow_port_wildcard_host_cache = false;
     bool recheck_for_portservice_appid = false;
-    uint64_t max_bytes_before_service_fail = MIN_MAX_BYTES_BEFORE_SERVICE_FAIL;
-    uint16_t max_packet_before_service_fail = MIN_MAX_PKTS_BEFORE_SERVICE_FAIL;
-    uint16_t max_packet_service_fail_ignore_bytes = MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES;
+    uint64_t max_bytes_before_service_fail = DEFAULT_MAX_BYTES_BEFORE_SERVICE_FAIL;
+    uint16_t max_packet_before_service_fail = DEFAULT_MAX_PKTS_BEFORE_SERVICE_FAIL;
+    uint16_t max_packet_service_fail_ignore_bytes = DEFAULT_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES;
     FirstPktAppIdDiscovered first_pkt_appid_prefix = NO_APPID_FOUND;
     bool eve_http_client = true;
 

@@ -513,7 +513,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 uint64_t max_bytes_before_service_fail = atoi(conf_val);
                 if (max_bytes_before_service_fail < MIN_MAX_BYTES_BEFORE_SERVICE_FAIL)
                 {
-                    ParseWarning(WARN_CONF, "appid: invalid max_bytes_before_service_fail "
+                    appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: invalid max_bytes_before_service_fail "
                         "%" PRIu64 " must be greater than %u.\n", max_bytes_before_service_fail,
                         MIN_MAX_BYTES_BEFORE_SERVICE_FAIL);
                 }
@@ -527,7 +527,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 uint16_t max_packet_before_service_fail = atoi(conf_val);
                 if (max_packet_before_service_fail < MIN_MAX_PKTS_BEFORE_SERVICE_FAIL)
                 {
-                    ParseWarning(WARN_CONF, "appid: invalid max_packet_before_service_fail "
+                    appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: invalid max_packet_before_service_fail "
                         "%" PRIu16 ", must be greater than %u.\n", max_packet_before_service_fail,
                         MIN_MAX_PKTS_BEFORE_SERVICE_FAIL);
                 }
@@ -542,7 +542,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 if (max_packet_service_fail_ignore_bytes <
                     MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES)
                 {
-                    ParseWarning(WARN_CONF, "appid: invalid max_packet_service_fail_ignore_bytes"
+                    appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: invalid max_packet_service_fail_ignore_bytes"
                         "%" PRIu16 ", must be greater than %u.\n",
                         max_packet_service_fail_ignore_bytes,
                         MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES);
