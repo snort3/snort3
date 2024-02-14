@@ -46,7 +46,7 @@ static const Parameter kaizen_params[] =
 
 static const RuleMap kaizen_rules[] =
 {
-    { KZ_SID, "exploit payload detected" },
+    { KZ_SID, "potential threat found in http parameters via Neural Network Based Exploit Detection" },
     { 0, nullptr }
 };
 
@@ -63,7 +63,7 @@ static const PegInfo peg_names[] =
 #ifdef DEBUG_MSGS
 static const TraceOption kaizen_trace_options[] =
 {
-    { "classifier", TRACE_CLASSIFIER, "enable Kaizen classifier trace logging" },
+    { "classifier", TRACE_CLASSIFIER, "enable Kaizen ML classifier trace logging" },
     { nullptr, 0, nullptr }
 };
 #endif
@@ -103,7 +103,7 @@ bool KaizenModule::end(const char*, int, snort::SnortConfig*)
 {
     if (!conf.uri_depth && !conf.client_body_depth)
         ParseWarning(WARN_CONF,
-            "Neither of Kaizen source depth is set, Kaizen won't process traffic.");
+            "If neither of Kaizen ML source depth is set, it won't process traffic.");
 
     return true;
 }
