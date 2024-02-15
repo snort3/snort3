@@ -496,14 +496,6 @@ string HostCacheModule::get_host_cache_segment_stats(int seg_idx)
             + to_string(lru_data.size()) + " trackers, memcap: " + to_string(host_cache.get_max_size())
             + " bytes\n";
 
-        for(auto cache : host_cache.seg_list)
-        {
-            cache->lock();
-            cache->stats.bytes_in_use = cache->current_size;
-            cache->stats.items_in_use = cache->list.size();
-            cache->unlock();
-        }
-
         PegCount* counts = (PegCount*) host_cache.get_counts();
         for ( int i = 0; pegs[i].type != CountType::END; i++ )
         {
@@ -559,14 +551,6 @@ string HostCacheModule::get_host_cache_stats()
         + to_string(lru_data.size()) + " trackers, memcap: " + to_string(host_cache.get_max_size())
         + " bytes\n";
 
-    for(auto cache : host_cache.seg_list)
-    {
-        cache->lock();
-        cache->stats.bytes_in_use = cache->current_size;
-        cache->stats.items_in_use = cache->list.size();
-        cache->unlock();
-    }
-
     PegCount* counts = (PegCount*) host_cache.get_counts();
     const PegInfo* pegs = host_cache.get_pegs();
 
@@ -590,19 +574,19 @@ const PegInfo* HostCacheModule::get_pegs() const
 PegCount* HostCacheModule::get_counts() const
 { return (PegCount*)host_cache.get_counts(); }
 
+void HostCacheModule::prep_counts(bool)
+{ host_cache.update_counts(); }
+
 void HostCacheModule::sum_stats(bool dump_stats)
 {
-    // These could be set in prep_counts but we set them here
-    // to save an extra cache lock.
-    for(auto cache : host_cache.seg_list)
-    {
-        cache->lock();
-        cache->stats.bytes_in_use = cache->current_size;
-        cache->stats.items_in_use = cache->list.size();
-        cache->unlock();
-    }
-
     Module::sum_stats(dump_stats);
+    host_cache.sum_stats(dump_stats);
+}
+
+void HostCacheModule::reset_stats()
+{
+    host_cache.reset_counts();
+    Module::reset_stats();
 }
 
 void HostCacheModule::set_trace(const Trace* trace) const

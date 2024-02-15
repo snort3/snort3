@@ -34,6 +34,7 @@
 #define DEFAULT_HOST_CACHE_SEGMENTS 4
 
 extern SO_PUBLIC HostCacheIp default_host_cache;
+extern THREAD_LOCAL struct LruCacheSharedStats host_cache_counts;
 
 template<typename Key, typename Value>
 class HostCacheSegmented
@@ -62,6 +63,9 @@ public:
     bool reload_resize(size_t memcap_per_segment);
     bool reload_prune(size_t new_size, unsigned max_prune);
     void invalidate();
+    void update_counts();
+    void reset_counts();
+    void sum_stats(bool dump_stats);
 
     std::shared_ptr<Value> operator[](const Key& key);
 
@@ -79,12 +83,11 @@ public:
     HostCacheIp* default_cache = &default_host_cache; // Default cache used for host tracker
 
 private:
-    void update_counts();
-
     uint8_t segment_count;
     std::atomic<size_t> memcap_per_segment;
     struct LruCacheSharedStats counts;
     bool init_done = false;
+    std::mutex stats_lock;
 };
 
 
@@ -239,6 +242,7 @@ std::shared_ptr<Value> HostCacheSegmented<Key, Value>::find(const Key& key)
 template<typename Key, typename Value>
 void HostCacheSegmented<Key, Value>::update_counts()
 {
+    std::lock_guard<std::mutex> guard(stats_lock);
     PegCount* pcs = (PegCount*)&counts;
     const PegInfo* pegs = get_pegs();
 
@@ -249,9 +253,50 @@ void HostCacheSegmented<Key, Value>::update_counts()
     {
         const PegCount* cache_counts = cache->get_counts();
         cache->lock();
-        for (int i = 0; pegs[i].type != CountType::END; i++) 
+        cache->stats.bytes_in_use = cache->current_size;
+        cache->stats.items_in_use = cache->list.size();
+        for (int i = 0; pegs[i].type != CountType::END; i++)
             pcs[i] += cache_counts[i];
         cache->unlock();
+    }
+    host_cache_counts = counts;
+}
+
+template<typename Key, typename Value>
+void HostCacheSegmented<Key, Value>::reset_counts()
+{
+    std::lock_guard<std::mutex> guard(stats_lock);
+    const PegInfo* pegs = get_pegs();
+
+    for (auto cache : seg_list)
+    {
+        PegCount* cache_counts = reinterpret_cast<PegCount*> (&cache->stats);
+        cache->lock();
+        for (int i = 0; pegs[i].type != CountType::END; i++)
+            cache_counts[i] = 0;
+        cache->unlock();
+    }
+}
+
+template<typename Key, typename Value>
+void HostCacheSegmented<Key, Value>::sum_stats(bool dump_stats)
+{
+    std::lock_guard<std::mutex> guard(stats_lock);
+    if ( !dump_stats )
+    {
+        const PegInfo* pegs = get_pegs();
+
+        for (auto cache : seg_list)
+        {
+            PegCount* cache_counts = reinterpret_cast<PegCount*> (&cache->stats);
+            cache->lock();
+            for (int i = 0; pegs[i].type != CountType::END; i++)
+            {
+                if ( pegs[i].type == CountType::SUM )
+                    cache_counts[i] = 0;
+            }
+            cache->unlock();
+        }
     }
 }
 
@@ -285,9 +330,10 @@ bool HostCacheSegmented<Key, Value>::find_else_insert(const Key& key, std::share
 template<typename Key, typename Value>
 PegCount* HostCacheSegmented<Key, Value>::get_counts()
 {
-    if(init_done)
+    if( init_done )
         update_counts();
-    return (PegCount*)&counts;
+
+    return (PegCount*)&host_cache_counts;
 }
 
 template<typename Key, typename Value>

@@ -65,7 +65,9 @@ public:
     const snort::Command* get_commands() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
+    void prep_counts(bool) override;
     void sum_stats(bool) override;
+    void reset_stats() override;
 
     // in sum_stats, just populate the counts vector with whatever we have now
     bool global_stats() const override

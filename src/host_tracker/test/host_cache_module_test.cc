@@ -42,6 +42,7 @@ using namespace snort;
 
 HostCacheIp default_host_cache(LRU_CACHE_INITIAL_SIZE);
 HostCacheSegmentedIp host_cache(4,LRU_CACHE_INITIAL_SIZE);
+THREAD_LOCAL struct LruCacheSharedStats host_cache_counts;
 
 // All tests here use the same module since host_cache is global. Creating a local module for each
 // test will cause host_cache PegCount testing to be dependent on the order of running these tests.

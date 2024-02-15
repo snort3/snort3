@@ -27,5 +27,6 @@
 
 using namespace snort;
 
+THREAD_LOCAL struct LruCacheSharedStats host_cache_counts;
 HostCacheIp default_host_cache(LRU_CACHE_INITIAL_SIZE);
 HostCacheSegmentedIp host_cache;
