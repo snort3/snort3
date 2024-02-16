@@ -67,9 +67,6 @@ ControlConn::~ControlConn()
 
 void ControlConn::shutdown()
 {
-    if (blocked)
-        blocked = false;
-
     if (is_closed())
         return;
     if (!local)
@@ -189,7 +186,7 @@ int ControlConn::execute_commands()
 
 void ControlConn::block()
 {
-    blocked = true;
+    blocked++;
 }
 
 void ControlConn::remove()
@@ -211,7 +208,7 @@ void ControlConn::unblock()
 {
     if (blocked)
     {
-        blocked = false;
+        blocked--;
         execute_commands();
         if (!blocked && !show_prompt())
             shutdown();

@@ -81,8 +81,8 @@ private:
     std::string next_command;
     class Shell *shell;
     int fd;
+    int blocked = 0; // a number of commands blocking the channel
     bool local = false;
-    bool blocked = false; //block any new commands from executing before current command in control connection is complete
     bool removed = false;
     time_t touched;
 

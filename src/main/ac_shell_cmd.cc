@@ -49,9 +49,8 @@ ACShellCmd::~ACShellCmd()
 
     if (ctrlcon)
     {
-        if (ctrlcon->is_removed())
+        ctrlcon->unblock();
+        if (ctrlcon->is_removed() and !ctrlcon->is_blocked())
             delete ctrlcon;
-        else
-            ctrlcon->unblock();
     }
 }

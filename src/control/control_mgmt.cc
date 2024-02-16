@@ -543,3 +543,76 @@ bool ControlMgmt::service_users()
     return (serviced > 0);
 }
 
+
+// -----------------------------------------------------------------------------
+// unit tests
+// -----------------------------------------------------------------------------
+
+
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#include "main/ac_shell_cmd.h"
+
+class ACExample : public AnalyzerCommand
+{
+    bool execute(Analyzer &, void **) override { return true; }
+    const char * stringify() override { return "ACExample"; }
+    ~ACExample() override {}
+};
+
+TEST_CASE("Do not delete ctrlcon if its in use by another ACShellCmd")
+{
+    int pipefd[2];
+    pipe(pipefd);
+
+    ControlConn* ctrlcon = new ControlConn(pipefd[1], false);
+
+    auto iter = controls.insert({pipefd[1], ctrlcon});
+
+    ACShellCmd* acshell1 = new ACShellCmd(ctrlcon, new ACExample());
+    ACShellCmd* acshell2 = new ACShellCmd(ctrlcon, new ACExample());
+
+    delete_control(iter.first);
+
+    delete acshell1;
+
+    CHECK((ctrlcon->is_blocked() == true));
+    CHECK((ctrlcon->is_closed() == false));
+
+    delete acshell2;
+
+    close(pipefd[0]);
+    close(pipefd[1]);
+
+};
+
+TEST_CASE("Do not unblock ctrlcon if its in use by another ACShellCmd")
+{
+    int pipefd[2];
+    pipe(pipefd);
+
+    ControlConn* ctrlcon = new ControlConn(pipefd[1], false);
+
+    auto iter = controls.insert({pipefd[1], ctrlcon});
+
+    ACShellCmd* acshell1 = new ACShellCmd(ctrlcon, new ACExample());
+    ACShellCmd* acshell2 = new ACShellCmd(ctrlcon, new ACExample());
+
+    CHECK((ctrlcon->is_blocked() == true));
+
+    delete acshell1;
+
+    CHECK((ctrlcon->is_blocked() == true));
+
+    delete acshell2;
+
+    CHECK((ctrlcon->is_blocked() == false));
+
+    delete_control(iter.first);
+
+    close(pipefd[0]);
+    close(pipefd[1]);
+
+};
+
+#endif
