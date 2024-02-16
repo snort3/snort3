@@ -130,13 +130,18 @@ static POPData* get_session_data(Flow* flow)
 
 static inline PDFJSNorm* acquire_js_ctx(POPData& pop_ssn, const void* data, size_t len)
 {
-    if (pop_ssn.jsn)
+    auto reload_id = SnortConfig::get_conf()->get_reload_id();
+
+    if (pop_ssn.jsn and pop_ssn.jsn->get_generation_id() == reload_id)
         return pop_ssn.jsn;
+
+    delete pop_ssn.jsn;
+    pop_ssn.jsn = nullptr;
 
     JSNormConfig* cfg = get_inspection_policy()->jsn_config;
     if (cfg and PDFJSNorm::is_pdf(data, len))
     {
-        pop_ssn.jsn = new PDFJSNorm(cfg);
+        pop_ssn.jsn = new PDFJSNorm(cfg, reload_id);
         ++popstats.js_pdf_scripts;
     }
 

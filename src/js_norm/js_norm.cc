@@ -61,9 +61,9 @@ const char* jsn::ret2str(int r)
     return jsret_codes[ret];
 }
 
-JSNorm::JSNorm(JSNormConfig* jsn_config, bool ext_script_type) :
-    alive(true), pdu_cnt(0), src_ptr(nullptr), src_end(nullptr),
-    idn_ctx(nullptr), jsn_ctx(nullptr), ext_script_type(ext_script_type)
+JSNorm::JSNorm(JSNormConfig* jsn_config, bool ext_script_type, uint32_t generation_id) :
+    alive(true), pdu_cnt(0), src_ptr(nullptr), src_end(nullptr), idn_ctx(nullptr),
+    jsn_ctx(nullptr), ext_script_type(ext_script_type), generation_id(generation_id)
 {
     config = jsn_config;
     alive = (bool)config;

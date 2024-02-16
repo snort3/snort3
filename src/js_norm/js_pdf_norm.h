@@ -40,8 +40,9 @@ public:
         return magic_len < len and !strncmp((const char*)data, magic, magic_len);
     }
 
-    PDFJSNorm(JSNormConfig* cfg) :
-        JSNorm(cfg), pdf_in(&buf_pdf_in), pdf_out(&buf_pdf_out), extractor(pdf_in, pdf_out)
+    PDFJSNorm(JSNormConfig* cfg, uint32_t gen_id) :
+        JSNorm(cfg, false, gen_id),
+        pdf_in(&buf_pdf_in), pdf_out(&buf_pdf_out), extractor(pdf_in, pdf_out)
     { }
 
 protected:

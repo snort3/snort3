@@ -229,13 +229,18 @@ static SMTPData* get_session_data(Flow* flow)
 
 static inline PDFJSNorm* acquire_js_ctx(SMTPData& smtp_ssn, const void* data, size_t len)
 {
-    if (smtp_ssn.jsn)
+    auto reload_id = SnortConfig::get_conf()->get_reload_id();
+
+    if (smtp_ssn.jsn and smtp_ssn.jsn->get_generation_id() == reload_id)
         return smtp_ssn.jsn;
+
+    delete smtp_ssn.jsn;
+    smtp_ssn.jsn = nullptr;
 
     JSNormConfig* cfg = get_inspection_policy()->jsn_config;
     if (cfg and PDFJSNorm::is_pdf(data, len))
     {
-        smtp_ssn.jsn = new PDFJSNorm(cfg);
+        smtp_ssn.jsn = new PDFJSNorm(cfg, reload_id);
         ++smtpstats.js_pdf_scripts;
     }
 

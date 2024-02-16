@@ -63,8 +63,9 @@ class HttpInlineJSNorm : public snort::JSNorm, public HttpJSNorm
 {
 public:
     HttpInlineJSNorm(JSNormConfig* jsn_config, uint64_t tid, snort::SearchTool* mpse_open_tag,
-        snort::SearchTool* mpse_tag_attr) :
-        JSNorm(jsn_config), mpse_otag(mpse_open_tag), mpse_attr(mpse_tag_attr), output_size(0), ext_ref_type(false)
+        snort::SearchTool* mpse_tag_attr, uint32_t gen_id) :
+        JSNorm(jsn_config, false, gen_id), mpse_otag(mpse_open_tag),
+        mpse_attr(mpse_tag_attr), output_size(0), ext_ref_type(false)
     { trans_num = tid; }
 
     snort::JSNorm& ctx() override
@@ -84,7 +85,8 @@ private:
 class HttpExternalJSNorm : public snort::JSNorm, public HttpJSNorm
 {
 public:
-    HttpExternalJSNorm(JSNormConfig* jsn_config, uint64_t tid) : JSNorm(jsn_config)
+    HttpExternalJSNorm(JSNormConfig* jsn_config, uint64_t tid, uint32_t gen_id) :
+        JSNorm(jsn_config, false, gen_id)
     { trans_num = tid; }
 
     snort::JSNorm& ctx() override
@@ -98,8 +100,8 @@ protected:
 class HttpPDFJSNorm : public snort::PDFJSNorm, public HttpJSNorm
 {
 public:
-    HttpPDFJSNorm(JSNormConfig* jsn_config, uint64_t tid) :
-        PDFJSNorm(jsn_config)
+    HttpPDFJSNorm(JSNormConfig* jsn_config, uint64_t tid, uint32_t gen_id) :
+        PDFJSNorm(jsn_config, gen_id)
     { trans_num = tid; }
 
     snort::JSNorm& ctx() override

@@ -39,7 +39,7 @@ namespace snort
 class SO_PUBLIC JSNorm
 {
 public:
-    JSNorm(JSNormConfig*, bool ext_script_type = false);
+    JSNorm(JSNormConfig*, bool ext_script_type = false, uint32_t generation_id = 0);
     JSNorm(const JSNorm&) = delete;
     virtual ~JSNorm();
 
@@ -50,6 +50,9 @@ public:
     void get_data(const void*&, size_t&);
     void flush_data(const void*&, size_t&);
     void flush_data();
+
+    uint32_t get_generation_id() const
+    { return generation_id; }
 
 protected:
     virtual bool pre_proc();
@@ -67,6 +70,7 @@ protected:
 
     JSEvents events;
     JSNormConfig* config;
+    uint32_t generation_id;
 };
 
 }

@@ -473,7 +473,8 @@ HttpJSNorm* HttpMsgBody::acquire_js_ctx()
 
     if (js_ctx)
     {
-        if (js_ctx->get_trans_num() == trans_num)
+        if (js_ctx->get_trans_num() == trans_num and
+            js_ctx->ctx().get_generation_id() == SnortConfig::get_conf()->get_reload_id())
             return js_ctx;
 
         delete js_ctx;
@@ -506,22 +507,24 @@ HttpJSNorm* HttpMsgBody::acquire_js_ctx()
     case CT_TEXT_JSCRIPT:
     case CT_TEXT_LIVESCRIPT:
         // an external script should be processed from the beginning
-        js_ctx = first_body ? new HttpExternalJSNorm(jsn_config, trans_num) : nullptr;
+        js_ctx = first_body ? new HttpExternalJSNorm(jsn_config, trans_num,
+            SnortConfig::get_conf()->get_reload_id()) : nullptr;
         break;
 
     case CT_APPLICATION_XHTML_XML:
     case CT_TEXT_HTML:
         js_ctx = new HttpInlineJSNorm(jsn_config, trans_num, params->js_norm_param.mpse_otag,
-            params->js_norm_param.mpse_attr);
+            params->js_norm_param.mpse_attr, SnortConfig::get_conf()->get_reload_id());
         break;
 
     case CT_APPLICATION_PDF:
-        js_ctx = new HttpPDFJSNorm(jsn_config, trans_num);
+        js_ctx = new HttpPDFJSNorm(jsn_config, trans_num, SnortConfig::get_conf()->get_reload_id());
         break;
 
     case CT_APPLICATION_OCTET_STREAM:
-        js_ctx = first_body and HttpPDFJSNorm::is_pdf(decompressed_file_body.start(), decompressed_file_body.length()) ?
-            new HttpPDFJSNorm(jsn_config, trans_num) : nullptr;
+        js_ctx = first_body and
+            HttpPDFJSNorm::is_pdf(decompressed_file_body.start(), decompressed_file_body.length()) ?
+            new HttpPDFJSNorm(jsn_config, trans_num, SnortConfig::get_conf()->get_reload_id()) : nullptr;
         break;
     }
 
@@ -535,7 +538,8 @@ HttpJSNorm* HttpMsgBody::acquire_js_ctx_mime()
 
     if (js_ctx)
     {
-        if (js_ctx->get_trans_num() == trans_num)
+        if (js_ctx->get_trans_num() == trans_num and
+            js_ctx->ctx().get_generation_id() == SnortConfig::get_conf()->get_reload_id())
             return js_ctx;
 
         delete js_ctx;
@@ -544,7 +548,7 @@ HttpJSNorm* HttpMsgBody::acquire_js_ctx_mime()
 
     JSNormConfig* jsn_config = get_inspection_policy()->jsn_config;
     js_ctx = HttpPDFJSNorm::is_pdf(decompressed_file_body.start(), decompressed_file_body.length()) ?
-        new HttpPDFJSNorm(jsn_config, trans_num) : nullptr;
+        new HttpPDFJSNorm(jsn_config, trans_num, SnortConfig::get_conf()->get_reload_id()) : nullptr;
 
     session_data->js_ctx_mime[source_id] = js_ctx;
     return js_ctx;
