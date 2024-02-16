@@ -321,7 +321,7 @@ default_smtp =
 
 http_methods =
 {
-    'GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'TRACE', 'CONNECT',
+    'GET', 'HEAD', 'POST', 'DELETE', 'TRACE', 'CONNECT',
     'VERSION_CONTROL', 'REPORT', 'CHECKOUT', 'CHECKIN', 'UNCHECKOUT',
     'MKWORKSPACE', 'LABEL', 'MERGE', 'BASELINE_CONTROL',
     'MKACTIVITY', 'ORDERPATCH', 'ACL', 'PATCH', 'BIND', 'LINK',
@@ -330,7 +330,7 @@ http_methods =
     'MOVE', 'LOCK', 'UNLOCK', 'SEARCH', 'BCOPY', 'BDELETE', 'BMOVE',
     'BPROPFIND', 'BPROPPATCH', 'POLL', 'UNSUBSCRIBE', 'X_MS_ENUMATTS',
     'NOTIFY * HTTP/', 'OPTIONS * HTTP/', 'SUBSCRIBE * HTTP/', 'UPDATE * HTTP/',
-    '* * HTTP/'
+    'PUT * HTTP/', '* * HTTP/'
 }
 
 sip_requests =
