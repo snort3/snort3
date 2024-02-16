@@ -1491,6 +1491,16 @@ void ModuleManager::reset_stats(SnortConfig*)
     }
 }
 
+void ModuleManager::reset_module_stats(const char* name)
+{
+    ModHook* mh = get_hook(name);
+    if ( mh )
+    {
+        lock_guard<mutex> lock(stats_mutex);
+        mh->mod->reset_stats();
+    }
+}
+
 void ModuleManager::clear_global_active_counters()
 {
     auto mod_hooks = get_all_modhooks();

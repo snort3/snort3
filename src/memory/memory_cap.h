@@ -82,7 +82,7 @@ public:
     static MemoryCounts& get_mem_stats();
 
     // main thread - shutdown
-    static void update_pegs(PegCount*);
+    static void update_pegs();
 
     static void dump_mem_stats(ControlConn*);
 #if defined(REG_TEST) || defined(UNIT_TEST)
