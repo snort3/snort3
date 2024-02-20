@@ -605,4 +605,24 @@ TEST_CASE("Discovery Filter Port Exclusion", "[portexclusion]")
     remove(conf.c_str());
 }
 
+TEST_CASE("Discovery Filter with Problem Config", "[df_problem_config]")
+{
+    // Checks a set of configs that previously caused
+    // a heap-use-after-free when initializing nodes
+
+    string conf("test_intf_ip.txt");
+    ofstream out_stream(conf.c_str());
+    out_stream << "config AnalyzeHost 10.0.0.0/24 -1\n";  // interface any
+    out_stream << "config AnalyzeHost 10.0.0.0/21 4\n";   // interface 4
+    out_stream << "config AnalyzeHost 192.8.8.0/24 -1\n"; // interface any
+    out_stream.close();
+
+
+    // Verifies the config loads with no issues - otherwise, ASAN
+    // will report leaks when constructing df below
+    DiscoveryFilter df(conf);
+
+    remove("test_intf_ip.txt");
+}
+
 #endif

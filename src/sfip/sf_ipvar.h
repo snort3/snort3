@@ -43,34 +43,22 @@ struct SfIp;
 struct SfCidr;
 }
 
-/* Selects which mode a given variable is using to
- * store and lookup IP addresses */
-typedef enum _modes
-{
-    SFIP_LIST,
-    SFIP_TABLE
-} MODES;
-
-/* Used by the "list" mode.  A doubly linked list of SfIp objects. */
+/* A doubly linked list of SfIp objects. */
 typedef struct _ip_node
 {
-    snort::SfCidr* ip;
-#define ip_addr ip;   /* To ease porting Snort */
-    struct _ip_node* next;
-    int flags;
-    int addr_flags; /* Flags used exclusively by Snort */
+    snort::SfCidr* ip = nullptr;
+    struct _ip_node* next = nullptr;
+    int flags = 0;
+    int addr_flags = 0;
+                    /* Flags used exclusively by Snort */
                     /* Keeping these variables separate keeps
                      * this from stepping on Snort's toes. */
                     /* Should merge them later */
 } sfip_node_t;
 
-/* An IP variable onkect */
+/* An IP variable object */
 struct sfip_var_t
 {
-    /* Selects whether or not to use the list, the table,
-     * or any other method added later */
-    MODES mode;
-
     /* Linked lists.  Switch to something faster later */
     sfip_node_t* head;
     sfip_node_t* neg_head;

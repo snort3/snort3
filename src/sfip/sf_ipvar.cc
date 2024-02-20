@@ -19,7 +19,7 @@
 
 /*
  * Adam Keeton
- * sf_ipvar.c
+ * sf_ipvar.cc
  * 11/17/06
  *
  * Library for IP variables.
@@ -49,7 +49,7 @@ using namespace snort;
 
 static SfIpRet sfvar_list_compare(sfip_node_t*, sfip_node_t*);
 static inline void sfip_node_free(sfip_node_t*&);
-static inline void sfip_node_freelist(sfip_node_t*);
+static inline void sfip_node_freelist(sfip_node_t*&);
 
 static inline sfip_var_t* _alloc_var()
 {
@@ -67,15 +67,8 @@ void sfvar_free(sfip_var_t* var)
     if (var->value)
         snort_free(var->value);
 
-    if (var->mode == SFIP_LIST)
-    {
-        sfip_node_freelist(var->head);
-        sfip_node_freelist(var->neg_head);
-    }
-    else if (var->mode == SFIP_TABLE)
-    {
-        // FIXIT-L SFIP_TABLE free unimplemented
-    }
+    sfip_node_freelist(var->head);
+    sfip_node_freelist(var->neg_head);
 
     snort_free(var);
 }
@@ -116,7 +109,7 @@ static sfip_node_t* sfipnode_alloc(const char* str, SfIpRet* status)
         {
             if (status)
                 *status = SFIP_ARG_ERR;
-            snort_free(ret);
+            sfip_node_free(ret);
             return nullptr;
         }
 
@@ -164,13 +157,15 @@ static inline void sfip_node_free(sfip_node_t*& node)
         return;
 
     if ( node->ip )
+    {
         delete node->ip;
+    }
 
     snort_free(node);
     node = nullptr;
 }
 
-static inline void sfip_node_freelist(sfip_node_t* root)
+static inline void sfip_node_freelist(sfip_node_t*& root)
 {
     sfip_node_t* node;
 
@@ -261,8 +256,10 @@ static inline bool list_contains_node(sfip_node_t*& head, sfip_node_t*& tail, ui
         {
             head = tail = node;
             sfip_node_free(cur);
+            head->next = nullptr;
             return true;
         }
+
         sfip_node_free(cur); // overlaps removed so that caller can insert the node
         --count;
     }
@@ -279,7 +276,6 @@ sfip_var_t* sfvar_deep_copy(const sfip_var_t* var)
 
     ret = (sfip_var_t*)snort_calloc(sizeof(*ret));
 
-    ret->mode = var->mode;
     ret->head = _sfvar_deep_copy_list(var->head);
     ret->neg_head = _sfvar_deep_copy_list(var->neg_head);
     ret->head_count = var->head_count;
@@ -436,26 +432,25 @@ SfIpRet sfvar_add(sfip_var_t* dst, sfip_var_t* src)
     dst->neg_head = merge_lists(dst->neg_head, copiedvar->neg_head, dst->neg_head_count,
         copiedvar->neg_head_count, dst->neg_head_count);
 
+    // This needs to be snort_free rather than sfipvar_free since
+    // we don't want to free the nodes
     snort_free(copiedvar);
 
     return SFIP_SUCCESS;
 }
 
 // Adds the nodes in 'src' to the variable 'dst'
-// The mismatch of types is for ease-of-supporting Snort4 and
-// Snort6 simultaneously
+// The mismatch of types is for ease-of-supporting IPv4 and
+// IPv6 simultaneously
 static SfIpRet sfvar_add_node(sfip_var_t* var, sfip_node_t* node, int negated)
 {
-    sfip_node_t* p;
-    sfip_node_t* swp;
-    sfip_node_t** head;
+    sfip_node_t* p = nullptr;
+    sfip_node_t* swp = nullptr;
+    sfip_node_t** head = nullptr;
     uint32_t* count;
 
     if (!var || !node)
         return SFIP_ARG_ERR;
-
-    // As of this writing, 11/20/06, nodes are always added to
-    // the list, regardless of the mode (list or table).
 
     if (negated)
     {
