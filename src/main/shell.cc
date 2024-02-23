@@ -659,9 +659,13 @@ bool Shell::configure(SnortConfig* sc, bool is_root)
 void Shell::install(const char* name, const luaL_Reg* reg)
 {
     if ( !strcmp(name, "snort") )
+    {
         luaL_register(lua, "_G", reg);
+        lua_pop(lua, 1);
+    }
 
     luaL_register(lua, name, reg);
+    lua_pop(lua, 1);
 }
 
 void Shell::set_network_policy_user_id(lua_State* L, uint64_t user_id)
@@ -767,3 +771,29 @@ void Shell::allowlist_update(const char* s, bool is_prefix)
         wlist->emplace(s);
 }
 
+// -----------------------------------------------------------------------------
+// unit tests
+// -----------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+
+static int test_closure(lua_State*)
+{ return 0; }
+
+TEST_CASE("lua stack size on commands install", "[Shell]")
+{
+    Shell sh;
+    int init_stack_size = lua_gettop(sh.get_lua());
+    luaL_Reg reg[2];
+    reg[0].name = "test_closure";
+    reg[0].func = test_closure;
+    reg[1].name = nullptr;
+    reg[1].func = nullptr;
+
+    sh.install("test_module", reg);
+    int stack_size = lua_gettop(sh.get_lua());
+    CHECK(stack_size == init_stack_size);
+}
+
+#endif
