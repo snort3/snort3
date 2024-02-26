@@ -139,8 +139,14 @@ ACResetStats::ACResetStats(clear_counter_type_t requested_type_l) : requested_ty
 
 ACResetStats::~ACResetStats()
 {
+    // Destructor is called only from main thread,
+    // main-thread stats are reset here.
+
     if (requested_type == TYPE_MODULE or requested_type == TYPE_ALL)
         ModuleManager::reset_module_stats("memory");
+
+    if (requested_type == TYPE_SNORT or requested_type == TYPE_ALL)
+        ModuleManager::reset_module_stats("snort");
 }
 
 bool ACSwap::execute(Analyzer& analyzer, void** ac_state)

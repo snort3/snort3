@@ -690,6 +690,12 @@ public:
     void sum_stats(bool) override
     { }  // accumulate externally
 
+    void reset_stats() override
+    {
+        if (snort::in_main_thread())
+            Module::reset_stats();
+    }
+
     ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
 
     Usage get_usage() const override
