@@ -44,6 +44,8 @@ Inspector* InspectorManager::get_inspector(char const*, bool, const snort::Snort
     return nullptr;
 }
 
+void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
+
 namespace snort
 {
     unsigned get_instance_id()

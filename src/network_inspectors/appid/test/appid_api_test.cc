@@ -70,6 +70,8 @@ AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
     StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
 }
 
+void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
+
 void AppIdModule::reset_stats() {}
 
 class DummyInspector : public snort::Inspector

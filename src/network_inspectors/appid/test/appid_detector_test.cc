@@ -49,6 +49,8 @@ void AppIdHttpSession::set_http_change_bits(AppidChangeBits&, HttpFieldIds) {}
 
 void AppIdModule::reset_stats() {}
 
+void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
+
 class TestDetector : public AppIdDetector
 {
 public:

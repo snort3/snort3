@@ -36,9 +36,11 @@
 
 #include "log/messages.h"
 #include "main/thread.h"
+#include "trace/trace.h"
 #include "utils/stats.h"
 
 #include "app_info_table.h"
+#include "appid_debug.h"
 
 using namespace snort;
 
@@ -90,7 +92,7 @@ public:
     {
         if (!peg_ids)
         {
-            WarningMessage("AppId peg counts thread created with no ids\n");
+            appid_log(nullptr, TRACE_WARNING_LEVEL, "AppId peg counts thread created with no ids\n");
             peg_ids = std::make_shared<AppIdPegCountIdInfo>();
         }
     }
