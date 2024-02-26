@@ -280,7 +280,6 @@ There are several scenarios for this event.
 2) The C flag is set but critical options are absent.
 3) If the critical header present bit is set the option's length cannot be 0.
 
-
 116:184
 
 The options length field extends past the end of the GENEVE header.
@@ -1894,6 +1893,16 @@ TCP window was closed before receiving data.
 129:20
 
 The TCP 3-way handshake was not seen for this TCP session.
+
+129:21
+
+The maximum bytes allowed to be queued for reassembly for an
+endpoint has been exceeded.
+
+129:22
+
+The maximum number of segments allowed to be queued for reassembly
+for an endpoint has been exceeded.
 
 131:1
 
