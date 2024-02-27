@@ -418,6 +418,8 @@ public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
     // void space
 
+    std::unordered_map<uint32_t, std::unique_ptr<FlowData>> flow_data;
+
     DeferredTrust deferred_trust;
 
     const FlowKey* key = nullptr;
@@ -441,7 +443,7 @@ public:  // FIXIT-M privatize if possible
     Layer mpls_server = {};
 
     IpsContextChain context_chain;
-    FlowData* flow_data = nullptr;
+    FlowData* current_flow_data = nullptr;
     FlowStats flowstats = {};
     StreamFlowIntf* stream_intf = nullptr;
 

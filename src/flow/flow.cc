@@ -201,68 +201,40 @@ void Flow::trust()
 
 int Flow::set_flow_data(FlowData* fd)
 {
-    FlowData* old = get_flow_data(fd->get_id());
-    assert(old != fd);
+    if ( !fd ) return -1;
 
-    if (old)
-        free_flow_data(old);
-
-    fd->prev = nullptr;
-    fd->next = flow_data;
-
-    if ( flow_data )
-        flow_data->prev = fd;
-
-    flow_data = fd;
+    current_flow_data = fd;
+    uint32_t id = fd->get_id();
+    // operator[] will create a new entry if it does not exist
+    // or replace the existing one if it does
+    // when replacing, the old entry is deleted
+    flow_data[id] = std::unique_ptr<FlowData>(fd);
     return 0;
 }
 
+
 FlowData* Flow::get_flow_data(unsigned id) const
 {
-    FlowData* fd = flow_data;
-
-    while (fd)
-    {
-        if (fd->get_id() == id)
-            return fd;
-
-        fd = fd->next;
-    }
+    auto it = flow_data.find(id);
+    if ( it != flow_data.end() )
+        return it->second.get();
     return nullptr;
 }
 
-// FIXIT-L: implement doubly linked list with STL to cut down on code we maintain
 void Flow::free_flow_data(FlowData* fd)
 {
-    if ( fd == flow_data )
-    {
-        flow_data = fd->next;
-        if ( flow_data )
-            flow_data->prev = nullptr;
-    }
-    else if ( !fd->next )
-    {
-        fd->prev->next = nullptr;
-    }
-    else
-    {
-        fd->prev->next = fd->next;
-        fd->next->prev = fd->prev;
-    }
-    delete fd;
+    if ( !fd ) return;
+    flow_data.erase(fd->get_id());
 }
 
 void Flow::free_flow_data(uint32_t proto)
 {
-    FlowData* fd = get_flow_data(proto);
-
-    if ( fd )
-        free_flow_data(fd);
+    flow_data.erase(proto);
 }
 
 void Flow::free_flow_data()
 {
-    if (!flow_data)
+    if ( flow_data.empty() )
         return;
     const SnortConfig* sc = SnortConfig::get_conf();
     PolicySelector* ps = sc->policy_map->get_policy_selector();
@@ -291,12 +263,7 @@ void Flow::free_flow_data()
         }
     }
 
-    while (flow_data)
-    {
-        FlowData* tmp = flow_data;
-        flow_data = flow_data->next;
-        delete tmp;
-    }
+    flow_data.clear();
 
     if (ps)
     {
@@ -308,16 +275,13 @@ void Flow::free_flow_data()
 
 void Flow::call_handlers(Packet* p, bool eof)
 {
-    FlowData* fd = flow_data;
-
-    while (fd)
+    for (auto& fd_pair : flow_data)
     {
+        FlowData* fd = fd_pair.second.get(); 
         if ( eof )
             fd->handle_eof(p);
         else
             fd->handle_retransmit(p);
-
-        fd = fd->next;
     }
 }
 

@@ -222,7 +222,7 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     char src_ip[INET6_ADDRSTRLEN];
     char dst_ip[INET6_ADDRSTRLEN];
 
-    AppIdInspector* inspector = (AppIdInspector*)ctrlPkt->flow->flow_data->get_handler();
+    AppIdInspector* inspector = (AppIdInspector*)ctrlPkt->flow->current_flow_data->get_handler();
     if ((inspector == nullptr) or strcmp(inspector->get_name(), MOD_NAME))
         inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true);
 
