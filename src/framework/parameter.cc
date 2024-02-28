@@ -27,6 +27,7 @@
 
 #include <iomanip>
 #include <sstream>
+#include <type_traits>
 #include <vector>
 
 #include "utils/dnet_header.h"
@@ -86,62 +87,80 @@ static size_t split(const string& s, vector<string>& strs)
     return strs.size();
 }
 
+template <bool RV, typename T>
+static bool str2num(const char* r, T& t)
+{
+    const int n = 5;
+
+    if ( *r != 'm' )
+        return false;
+
+    if ( !strncmp(r, "maxSZ", n) )
+        r = (sizeof(size_t) == 4) ? "max32" : "max53";
+
+    bool res = true;
+
+    if ( !strncmp(r, "max31", n) )
+        t = 2147483647;
+
+    else if ( !strncmp(r, "max32", n) )
+        t = 4294967295;
+
+    // Lua represents numbers in a 64-bit double. The max representable value is 9007199254740992
+    // and the min is -9007199254740992
+    else if ( !strncmp(r, "max53", n) )
+        t = 9007199254740992;
+
+    else if ( !strncmp(r, "max63", n) )
+        t = 9223372036854775807;
+
+    else if ( !strncmp(r, "max64", n) )
+        t = std::is_same_v<T, int64_t> ? -1 : 18446744073709551615ULL;
+
+    else
+        res = false;
+
+    return res and (r[n] == '\0' or (RV and r[n] == ':'));
+}
+
 int64_t Parameter::get_int(const char* r)
 {
-    if ( *r == 'm' )
-    {
-        if ( !strncmp(r, "maxSZ", 5) )
-            r = (sizeof(size_t) == 4) ? "max32" : "max53";
-
-        if ( !strncmp(r, "max31", 5) )
-            return 2147483647;
-
-        if ( !strncmp(r, "max32", 5) )
-            return 4294967295;
-
-        // Lua represents numbers in a 64-bit double. The max representable value is 9007199254740992
-        // and the min is -9007199254740992
-        if ( !strncmp(r, "max53", 5) )
-            return 9007199254740992;
-
-        if ( !strncmp(r, "max63", 5) )
-            return 9223372036854775807;
-
-        if ( !strncmp(r, "max64", 5) )
-            return -1;
-    }
     char* end = nullptr;
     int64_t i = (int64_t)strtoll(r, &end, 0);
-    assert(!*end or *end == ':');
+
+    if (!str2num<true>(r, i))
+        assert(!*end or *end == ':');
 
     return i;
 }
 
 uint64_t Parameter::get_uint(const char* r)
 {
-    if ( *r == 'm' )
-    {
-        if ( !strncmp(r, "maxSZ", 5) )
-            r = (sizeof(size_t) == 4) ? "max32" : "max53";
-
-        if ( !strncmp(r, "max31", 5) )
-            return 2147483647;
-
-        if ( !strncmp(r, "max32", 5) )
-            return 4294967295;
-
-        if ( !strncmp(r, "max53", 5) )
-            return 9007199254740992;
-
-        if ( !strncmp(r, "max63", 5) )
-            return 9223372036854775807;
-
-        if ( !strncmp(r, "max64", 5) )
-            return 18446744073709551615ULL;
-    }
     char* end = nullptr;
     uint64_t i = (uint64_t)strtoull(r, &end, 0);
-    assert(!*end or *end == ':');
+
+    if (!str2num<true>(r, i))
+        assert(!*end or *end == ':');
+
+    return i;
+}
+
+int64_t Parameter::get_int(const char* r, bool& is_correct)
+{
+    char* end = nullptr;
+    int64_t i = (int64_t)strtoll(r, &end, 0);
+
+    is_correct = str2num<false>(r, i) or !*end;
+
+    return i;
+}
+
+uint64_t Parameter::get_uint(const char* r, bool& is_correct)
+{
+    char* end = nullptr;
+    uint64_t i = (uint64_t)strtoull(r, &end, 0);
+
+    is_correct = str2num<false>(r, i) or !*end;
 
     return i;
 }
@@ -159,43 +178,43 @@ static bool valid_bool(const Value& v, const char*)
 static bool valid_int(Value& v, const char* r)
 {
     bool signed_values;
+    bool is_correct = true;
+    uint64_t num;
+
     switch (v.get_type())
     {
-        case Value::VT_STR:
-            {
-                const char* str = v.get_string();
-                if (!str[0])
-                    return false;
-                signed_values = ('-' == str[0]);
-                if (!r || !r[0])
-                {
-                    if (signed_values)
-                        v.set((int64_t)strtoll(str, nullptr, 0));
-                    else
-                        v.set((uint64_t)strtoull(str, nullptr, 0));
-                    return true;
-                }
-            }
-            break;
+    case Value::VT_STR:
+    {
+        const char* str = v.get_string();
+        const char f = str[0];
 
-        case Value::VT_REAL:
-            {
-                double d = v.get_real();
-                signed_values = (0.0 > d);
-                if (!r || !r[0])
-                {
-                    if (signed_values)
-                        v.set((int64_t)d);
-                    else
-                        v.set((uint64_t)d);
-                    return true;
-                }
-            }
-            break;
-
-        default:
+        if (f == '\0' or isspace(f))
             return false;
+
+        signed_values = ('-' == f);
+        num = signed_values ? Parameter::get_int(str, is_correct) : Parameter::get_uint(str, is_correct);
+        break;
     }
+
+    case Value::VT_REAL:
+    {
+        double d = v.get_real();
+        signed_values = (0.0 > d);
+        num = (uint64_t)d;
+        break;
+    }
+
+    default:
+        return false;
+    }
+
+    if (is_correct)
+        signed_values ? v.set((int64_t)num) : v.set((uint64_t)num);
+    else
+        return false;
+
+    if (!r || !r[0])
+        return true;
 
     // require no leading or trailing whitespace
     // and either # | #: | :# | #:#
@@ -212,12 +231,8 @@ static bool valid_int(Value& v, const char* r)
 
     if (signed_values)
     {
-        int64_t d;
-        if (Value::VT_STR == v.get_type())
-            d = (int64_t)Parameter::get_int(v.get_string());
-        else
-            d = (int64_t)v.get_real();
-        v.set(d);
+        int64_t d = (int64_t)num;
+
         if (':' != *r)
         {
             int64_t low = Parameter::get_int(r);
@@ -235,12 +250,8 @@ static bool valid_int(Value& v, const char* r)
     }
     else
     {
-        uint64_t d;
-        if (Value::VT_STR == v.get_type())
-            d = Parameter::get_uint(v.get_string());
-        else
-            d = (uint64_t)v.get_real();
-        v.set(d);
+        uint64_t d = (uint64_t)num;
+
         if (':' != *r)
         {
             uint64_t low = Parameter::get_uint(r);
@@ -256,6 +267,7 @@ static bool valid_int(Value& v, const char* r)
                 return false;
         }
     }
+
     return true;
 }
 
@@ -702,6 +714,8 @@ num_tests[] =
     { false, valid_int, 1, "0" },
     { true, valid_int, 1, "0:" },
     { false, valid_int, 1, ":0" },
+    { true, valid_int, -1, "-1" },
+    { false, valid_int, 2, "-1" },
 
     { false, valid_int, 1.5, ":0" },
 
@@ -787,6 +801,44 @@ str_num_tests[] =
     { true, valid_int, "-9223372036854775808", ":-53" },
     { false, valid_int, "-52", ":-53" },
     { false, valid_int, "2", ":-53" },
+
+    { false, valid_int, "", "" },
+    { false, valid_int, "foo", "" },
+    { false, valid_int, "1a", "" },
+    { false, valid_int, "a1", "" },
+    { false, valid_int, " 1", "" },
+    { false, valid_int, "1 ", "" },
+    { false, valid_int, "\t\t2", "" },
+    { false, valid_int, "2\t\t", "" },
+    { false, valid_int, " -3", "" },
+    { false, valid_int, "-3 ", "" },
+    { false, valid_int, "4 5", "" },
+    { true, valid_int, "+10", "" },
+    { false, valid_int, "", "0:1" },
+    { false, valid_int, "foo", "0:1" },
+    { false, valid_int, "1a", "0:1" },
+    { false, valid_int, "a1", "0:1" },
+    { false, valid_int, " 1", "0:1" },
+    { false, valid_int, "1 ", "0:1" },
+    { false, valid_int, "\t\t2", "2:3" },
+    { false, valid_int, "2\t\t", "2:3" },
+    { false, valid_int, " -3", "-5:5" },
+    { false, valid_int, "-3 ", "-5:5" },
+    { false, valid_int, "4 5", "-5:5" },
+    { true, valid_int, "+10", "0:20" },
+
+    { true, valid_int, "max31", "" },
+    { true, valid_int, "max32", "" },
+    { true, valid_int, "max53", "" },
+    { true, valid_int, "max63", "" },
+    { true, valid_int, "max64", "" },
+    { true, valid_int, "max31", "max31" },
+    { false, valid_int, "max32", "max31" },
+
+    { false, valid_int, " max32", "" },
+    { false, valid_int, "max32 ", "" },
+    { false, valid_int, "maxN", "" },
+    { false, valid_int, "max31:max32", "" },
 
     { true, valid_real, "0.0", "0.0" },
     { true, valid_real, "0.0", ":0" },

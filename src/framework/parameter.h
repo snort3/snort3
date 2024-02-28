@@ -100,8 +100,11 @@ struct SO_PUBLIC Parameter
 
     // convert string to long long (including 'maxN' literals)
     static int64_t get_int(const char*);
+    static int64_t get_int(const char*, bool&);
+
     // convert string to unsigned long long (including 'maxN' literals)
     static uint64_t get_uint(const char*);
+    static uint64_t get_uint(const char*, bool&);
 };
 }
 #endif
