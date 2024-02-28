@@ -35,10 +35,12 @@ using namespace snort;
 using namespace std;
 
 void EveCaPatternMatchers::add_eve_ca_pattern(AppId app_id, const string& pattern_str,
-    uint8_t confidence, const string& detector)
+    uint8_t confidence, const string& detector, bool literal)
 {
     auto match = find_if(eve_ca_load_list.begin(), eve_ca_load_list.end(),
-        [pattern_str] (EveCaPattern* eve_ca) { return eve_ca->pattern == pattern_str; });
+        [pattern_str, literal] (EveCaPattern* eve_ca)
+        { return (eve_ca->pattern == pattern_str) and (eve_ca->literal == literal); });
+
     if (match != eve_ca_load_list.end())
     {
         if ((*match)->app_id != app_id)
@@ -48,7 +50,7 @@ void EveCaPatternMatchers::add_eve_ca_pattern(AppId app_id, const string& patter
     }
     else
     {
-        EveCaPattern* new_eve_ca_pattern = new EveCaPattern(app_id, pattern_str, confidence);
+        EveCaPattern* new_eve_ca_pattern = new EveCaPattern(app_id, pattern_str, confidence, literal);
         eve_ca_load_list.push_back(new_eve_ca_pattern);
     }
 }
@@ -71,19 +73,22 @@ AppId EveCaPatternMatchers::match_eve_ca_pattern(const string& pattern,
 
     for (auto &mp : *eve_ca_match_list)
     {
-        if (mp->pattern.size() == pattern.size())
-        {
-            if (reported_confidence >= mp->confidence)
-                best_match = mp;
-            else if (best_match)
-                best_match = nullptr;
-            break;
-        }
-        else if ((reported_confidence >= mp->confidence) and
-            (!best_match or (mp->pattern.size() > best_match->pattern.size())))
-        {
-            best_match = mp;
+        const bool confident = (reported_confidence >= mp->confidence);
+        const bool same_size = (mp->pattern.size() == pattern.size());
+
+        if (not confident)
             continue;
+
+        if (mp->literal)
+        {
+            if (same_size)
+                best_match = mp;
+        }
+       
+        if (not mp->literal)
+        {
+            if (!best_match or (mp->pattern.size() > best_match->pattern.size()))
+                best_match = mp;
         }
     }
     AppId ret_app_id = APP_ID_NONE;
@@ -106,7 +111,7 @@ void EveCaPatternMatchers::finalize_patterns()
 {
     for (auto& p : eve_ca_load_list)
     {
-        eve_ca_pattern_matcher.add(p->pattern.data(), p->pattern.size(), p, true);
+        eve_ca_pattern_matcher.add(p->pattern.data(), p->pattern.size(), p, true, p->literal);
 
         #ifdef REG_TEST
         AppIdInspector* inspector =

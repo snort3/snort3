@@ -1187,7 +1187,51 @@ static int add_process_to_client_mapping(lua_State* L)
     const std::string detector_name = ud->get_detector()->get_name();
 
     ud->get_odp_ctxt().get_eve_ca_matchers().add_eve_ca_pattern(appid, process_name,
-        process_score, detector_name);
+        process_score, detector_name, true);
+
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appid);
+
+    return 0;
+}
+
+/** Add a fp process name regex to client app mapping.
+ *  @param Lua_State* - Lua state variable.
+ *  @param appid/stack - the AppId to map the fp data to
+ *  @param process_name/stack - encrypted fingerprint process name regex
+ *  @param process_score - encrypted fingerprint process_score
+ */
+static int add_process_to_client_mapping_regex(lua_State* L)
+{
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    // Verify detector user data and that we are NOT in packet context
+    ud->validate_lua_state(false);
+    if (!init(L))
+        return 0;
+
+    const FastPatternConfig* const fp = SnortConfig::get_conf()->fast_pattern_config;
+    if (!MpseManager::is_regex_capable(fp->get_search_api())){
+        appid_log(nullptr, TRACE_WARNING_LEVEL, "WARNING: appid: Regex patterns require usage of "
+            "regex capable search engine like hyperscan in %s\n", ud->get_detector()->get_name().c_str());
+            return 0;
+    }
+
+    int index = 1;
+    uint32_t appid = lua_tointeger(L, ++index);
+
+    // Verify that process_name is a valid string
+    size_t pattern_size = 0;
+    const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
+    if (!tmp_string or !pattern_size)
+    {
+        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid eve process_name regex string: appid %u.\n", appid);
+        return 0;
+    }
+    const std::string process_name(tmp_string);
+    uint8_t process_score = lua_tointeger(L, ++index);
+    const std::string detector_name = ud->get_detector()->get_name();
+
+    ud->get_odp_ctxt().get_eve_ca_matchers().add_eve_ca_pattern(appid, process_name,
+        process_score, detector_name, false);
 
     ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appid);
 
@@ -3259,6 +3303,7 @@ static const luaL_Reg detector_methods[] =
     /* add client mapping for process name derived by fingerprinting */
     { "addProcessToClientMapping", add_process_to_client_mapping },
     { "addAlpnToServiceMapping",  add_alpn_to_service_mapping },
+    { "addProcessToClientMappingRegex", add_process_to_client_mapping_regex },
 
     //HTTP Multi Pattern engine
     { "CHPCreateApp",             detector_chp_create_application },
