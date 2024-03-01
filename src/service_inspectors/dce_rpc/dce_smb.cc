@@ -38,6 +38,7 @@
 
 using namespace snort;
 
+static size_t smb_memcap;
 THREAD_LOCAL dce2SmbStats dce2_smb_stats;
 THREAD_LOCAL ProfileStats dce2_smb_pstat_main;
 
@@ -318,9 +319,6 @@ public:
     explicit Dce2SmbInspector(const dce2SmbProtoConf&);
     ~Dce2SmbInspector() override;
 
-    void tinit() override;
-    void tterm() override;
-
     void show(const SnortConfig*) const override;
     void eval(Packet*) override;
     void clear(Packet*) override;
@@ -437,19 +435,6 @@ void Dce2SmbInspector::clear(Packet* p)
         DCE2_ResetRopts(sd, p);
 }
 
-void Dce2SmbInspector::tinit()
-{
-    delete smb2_session_cache;
-    size_t smb_memcap = DCE2_ScSmbMemcap(&config);
-    DCE2_SmbSessionCacheInit(smb_memcap);
-}
-
-void Dce2SmbInspector::tterm()
-{
-    delete smb2_session_cache;
-    smb2_session_cache = nullptr;
-}
-
 //-------------------------------------------------------------------------
 // api stuff
 //-------------------------------------------------------------------------
@@ -472,11 +457,24 @@ static void dce2_smb_init()
     DceContextData::init(DCE2_TRANS_TYPE__SMB);
 }
 
+static void dce2_smb_tinit()
+{
+    delete smb2_session_cache;
+    DCE2_SmbSessionCacheInit(smb_memcap);
+}
+
+static void dce2_smb_tterm()
+{
+    delete smb2_session_cache;
+    smb2_session_cache = nullptr;
+}
+
 static Inspector* dce2_smb_ctor(Module* m)
 {
     Dce2SmbModule* mod = (Dce2SmbModule*)m;
     dce2SmbProtoConf config;
     mod->get_data(config);
+    smb_memcap = DCE2_ScSmbMemcap(&config);
     return new Dce2SmbInspector(config);
 }
 
@@ -513,8 +511,8 @@ const InspectApi dce2_smb_api =
     "netbios-ssn",
     dce2_smb_init,
     nullptr, // pterm
-    nullptr, // tinit
-    nullptr, // tterm
+    dce2_smb_tinit, // tinit
+    dce2_smb_tterm, // tterm
     dce2_smb_ctor,
     dce2_smb_dtor,
     nullptr, // ssn
