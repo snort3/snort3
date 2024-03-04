@@ -1,21 +1,21 @@
-Kaizen ML is a neural network-based exploit detector for the Snort intrusion
+Snort ML is a neural network-based exploit detector for the Snort intrusion
 prevention system. It is designed to not only learn to detect known attacks
 from training data, but also learn to detect attacks it has never seen before.
 
-Kaizen uses TensorFlow, included as LibML library.
+Snort ML uses TensorFlow, included as LibML library.
 
 Global configuration sets the trained network model to use. For example:
 
-    kaizen_ml_engine.http_param_model = { 'model.file' }
+    snort_ml_engine.http_param_model = { 'model.file' }
 
 While per policy configuration sets data source and inspection depth in
 the selected Inspection policy. The following example enables two sources,
 HTTP URI and HTTP body:
 
-    kaizen_ml.uri_depth = -1
-    kaizen_ml.client_body_depth = 100
+    snort_ml.uri_depth = -1
+    snort_ml.client_body_depth = 100
 
 Trace messages are available:
 
-* trace.modules.kaizen_ml.classifier turns on messages from Kaizen
+* trace.modules.snort_ml.classifier turns on messages from Snort ML
 

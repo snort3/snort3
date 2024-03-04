@@ -124,7 +124,7 @@ Optional Packages:
                             libml include directory
     --with-libml-libraries=DIR
                             libml library directory
-    --without-libml         build Kaizen ML with mock of LibML
+    --without-libml         build Snort ML with mock of LibML
 
 Some influential variable definitions:
     SIGNAL_SNORT_RELOAD=<int>

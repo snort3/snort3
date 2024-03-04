@@ -24,7 +24,7 @@
 #include "framework/inspector.h"
 
 
-#define KZ_ENGINE_NAME "kaizen_ml_engine"
+#define KZ_ENGINE_NAME "snort_ml_engine"
 #define KZ_ENGINE_HELP "configure machine learning engine settings"
 
 class BinaryClassifier;

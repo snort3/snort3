@@ -123,7 +123,7 @@ string KaizenEngine::read_model()
 
     if (!get_config_file(hint, path) || !get_file_size(path, size))
     {
-        ParseError("kaizen_ml_engine: could not read model file: %s", hint);
+        ParseError("snort_ml_engine: could not read model file: %s", hint);
         return {};
     }
 
@@ -131,13 +131,13 @@ string KaizenEngine::read_model()
 
     if (!file.is_open())
     {
-        ParseError("kaizen_ml_engine: could not read model file: %s", hint);
+        ParseError("snort_ml_engine: could not read model file: %s", hint);
         return {};
     }
 
     if (size == 0)
     {
-        ParseError("kaizen_ml_engine: empty model file: %s", hint);
+        ParseError("snort_ml_engine: empty model file: %s", hint);
         return {};
     }
 

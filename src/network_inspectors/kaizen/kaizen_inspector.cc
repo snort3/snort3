@@ -179,7 +179,7 @@ bool Kaizen::configure(SnortConfig* sc)
 
     if(!InspectorManager::get_inspector(KZ_ENGINE_NAME, true, sc))
     {
-        ParseError("kaizen_ml requires %s to be configured in the global policy.", KZ_ENGINE_NAME);
+        ParseError("snort_ml requires %s to be configured in the global policy.", KZ_ENGINE_NAME);
         return false;
     }
 

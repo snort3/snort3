@@ -28,7 +28,7 @@
 #define KZ_GID 411
 #define KZ_SID 1
 
-#define KZ_NAME "kaizen_ml"
+#define KZ_NAME "snort_ml"
 #define KZ_HELP "machine learning based exploit detector"
 
 enum { TRACE_CLASSIFIER };
