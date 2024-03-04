@@ -74,6 +74,8 @@ uint8_t TraceApi::get_constraints_generation() { return 0; }
 void TraceApi::filter(const Packet&) { }
 PegCount Module::get_global_count(const char*) const { return 0; }
 void Module::sum_stats(bool) { }
+void Module::init_stats(bool) { }
+void Module::main_accumulate_stats() { }
 void Module::show_interval_stats(IndexVec&, FILE*) { }
 void Module::show_stats() { }
 void Module::reset_stats() { }

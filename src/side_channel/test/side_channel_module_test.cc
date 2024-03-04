@@ -27,6 +27,7 @@
 #include "side_channel/side_channel_module.h"
 
 #include "log/messages.h"
+#include "main/thread_config.h"
 #include "profiler/profiler.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -64,6 +65,9 @@ void ParseWarning(WarningGroup, const char*, ...) { }
 
 char* snort_strdup(const char* s)
 { return strdup(s); }
+unsigned get_instance_id()
+{ return 0; }
+unsigned ThreadConfig::get_instance_max() { return 1; }
 }
 
 TEST_GROUP(side_channel_module)

@@ -24,12 +24,14 @@
 #endif
 
 #include "connectors/file_connector/file_connector_module.h"
+#include "main/thread_config.h"
 #include "profiler/profiler.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
 using namespace snort;
+
 
 THREAD_LOCAL SimpleStats file_connector_stats;
 THREAD_LOCAL ProfileStats file_connector_perfstats;
@@ -41,6 +43,9 @@ namespace snort
 {
 char* snort_strdup(const char* s)
 { return strdup(s); }
+unsigned get_instance_id()
+{ return 0; }
+unsigned ThreadConfig::get_instance_max() { return 1; }
 }
 
 TEST_GROUP(file_connector_module)

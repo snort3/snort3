@@ -263,6 +263,7 @@ const PegInfo proc_names[] =
 void DropStats(ControlConn* ctrlcon)
 {
     s_ctrlcon = ctrlcon;
+    ModuleManager::accumulate_dump_stats();
     LogLabel("Packet Statistics");
     ModuleManager::get_module("daq")->show_stats();
     PacketManager::dump_stats();

@@ -30,6 +30,7 @@
 #include "framework/mpse.h"
 #include "framework/mpse_batch.h"
 #include "main/snort_config.h"
+#include "main/thread_config.h"
 
 #include "mpse_test_stubs.h"
 
@@ -38,6 +39,12 @@
 #include <CppUTest/TestHarness.h>
 
 using namespace snort;
+
+namespace snort
+{
+    unsigned get_instance_id() { return 0; }
+    unsigned ThreadConfig::get_instance_max() { return 1; }
+}
 
 //-------------------------------------------------------------------------
 // stubs, spies, etc.

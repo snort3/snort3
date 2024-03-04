@@ -29,6 +29,7 @@
 #include "host_tracker/host_cache_segmented.h"
 #include "host_tracker/host_tracker_module.h"
 #include "main/snort_config.h"
+#include "main/thread_config.h"
 #include "target_based/snort_protocols.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -42,6 +43,9 @@ char* snort_strdup(const char* s)
 { return strdup(s); }
 time_t packet_time() { return 0; }
 void FatalError(const char* fmt, ...) { (void)fmt; exit(1); }
+unsigned get_instance_id()
+{ return 0; }
+unsigned ThreadConfig::get_instance_max() { return 1; }
 }
 
 //  Fake show_stats to avoid bringing in a ton of dependencies.

@@ -77,7 +77,9 @@ Module::Module(char const*, char const*) {}
 void Module::sum_stats(bool) {}
 void Module::show_interval_stats(std::vector<unsigned>&, FILE*) {}
 void Module::show_stats() {}
+void Module::init_stats(bool) {}
 void Module::reset_stats() {}
+void Module::main_accumulate_stats() {}
 PegCount Module::get_global_count(char const*) const { return 0; }
 
 // Stubs for logs

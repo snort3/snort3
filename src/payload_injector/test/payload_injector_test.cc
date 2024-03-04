@@ -28,6 +28,7 @@
 
 #include "detection/detection_engine.h"
 #include "flow/flow.h"
+#include "main/thread_config.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
@@ -61,6 +62,9 @@ DataBus::DataBus() = default;
 DataBus::~DataBus() = default;
 SnortConfig::SnortConfig(snort::SnortConfig const*, const char*) { }
 SnortConfig::~SnortConfig() = default;
+unsigned get_instance_id()
+{ return 0; }
+unsigned ThreadConfig::get_instance_max() { return 1; }
 
 IpsContext ips_context;
 SnortConfig conf;

@@ -182,7 +182,11 @@ ThreadRegexOffload::ThreadRegexOffload(unsigned max) : RegexOffload(max)
     const SnortConfig* sc = SnortConfig::get_conf();
 
     for ( auto* req : idle )
+    {
+        ModuleManager::add_thread_stats_entry("search_engine");
+        ModuleManager::add_thread_stats_entry("detection");
         req->thread = new std::thread(worker, req, sc, i++);
+    }
 }
 
 ThreadRegexOffload::~ThreadRegexOffload()

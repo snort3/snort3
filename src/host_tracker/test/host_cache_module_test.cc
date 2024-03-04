@@ -31,6 +31,7 @@
 #include "host_tracker/host_cache.h"
 #include "host_tracker/host_cache_segmented.h"
 #include "main/snort_config.h"
+#include "main/thread_config.h"
 #include "managers/module_manager.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -85,6 +86,9 @@ time_t packet_time() { return 0; }
 bool Snort::is_reloading() { return false; }
 void SnortConfig::register_reload_handler(ReloadResourceTuner* rrt) { delete rrt; }
 void FatalError(const char* fmt, ...) { (void)fmt; exit(1); }
+unsigned get_instance_id()
+{ return 0; }
+unsigned ThreadConfig::get_instance_max() { return 1; }
 } // end of namespace snort
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }

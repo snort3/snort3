@@ -26,6 +26,7 @@
 #include "helpers/literal_search.h"
 #include "log/messages.h"
 
+#include "main/thread_config.h"
 #include "service_inspectors/http_inspect/http_js_norm.h"
 #include "service_inspectors/http_inspect/http_module.h"
 #include "service_inspectors/http_inspect/http_str_to_code.h"
@@ -60,6 +61,9 @@ void DecodeConfig::set_decompress_zip(bool) {}
 void DecodeConfig::set_decompress_vba(bool) {}
 
 SearchTool::~SearchTool() {}
+unsigned get_instance_id()
+{ return 0; }
+unsigned ThreadConfig::get_instance_max() { return 1; }
 }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }

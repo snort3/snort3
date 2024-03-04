@@ -31,6 +31,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include "main/thread_config.h"
+
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
@@ -72,6 +74,7 @@ namespace snort
 {
 unsigned get_instance_id()
 { return s_instance; }
+unsigned ThreadConfig::get_instance_max() { return 1; }
 
 void ErrorMessage(const char*, ...) { }
 void LogMessage(const char*, ...) { }

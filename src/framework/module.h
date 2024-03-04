@@ -175,6 +175,8 @@ public:
     virtual void show_interval_stats(IndexVec&, FILE*);
     virtual void show_stats();
     virtual void reset_stats();
+    virtual void init_stats(bool new_thread=false);
+    virtual void main_accumulate_stats();
     virtual void show_dynamic_stats() {}
     void clear_global_active_counters();
 
@@ -203,34 +205,49 @@ protected:
 
     void set_params(const Parameter* p)
     { params = p; }
-
-    bool dump_stats_initialized = false;
-
-    std::vector<PegCount> counts;
-    std::vector<PegCount> dump_stats_counts;
+    std::vector<unsigned> dump_stats_initialized;
+    std::vector<std::vector<PegCount>> counts;
+    std::vector<std::vector<PegCount>> dump_stats_counts;
+    std::vector<PegCount> dump_stats_results;
     int num_counts = -1;
 
-    void set_peg_count(int index, PegCount value, bool dump_stats = false)
+    void set_peg_count(int index, PegCount value, bool dump_stats)
     {
         assert(index < num_counts);
-        if(dump_stats)
-            dump_stats_counts[index] = value;
+        if (dump_stats)
+            dump_stats_counts[get_instance_id()][index] = value;
         else
-            counts[index] = value;
+            counts[get_instance_id()][index] = value;
     }
 
-    void add_peg_count(int index, PegCount value, bool dump_stats = false)
+    void set_max_peg_count(int index, PegCount value, bool dump_stats)
     {
         assert(index < num_counts);
-        if(dump_stats)
-            dump_stats_counts[index] += value;
+        if (dump_stats)
+        {
+            if(value > dump_stats_counts[get_instance_id()][index])
+                dump_stats_counts[get_instance_id()][index] = value;
+        }
         else
-            counts[index] += value;
+        {
+            if(value > counts[get_instance_id()][index])
+                counts[get_instance_id()][index] = value;
+        }
+    }
+
+    void add_peg_count(int index, PegCount value, bool dump_stats)
+    {
+        assert(index < num_counts);
+        if (dump_stats)
+            dump_stats_counts[get_instance_id()][index] += value;
+        else
+            counts[get_instance_id()][index] += value;
     }
 
 private:
     friend ModuleManager;
     void init(const char*, const char* = nullptr);
+
 
     const char* name;
     const char* help;
@@ -239,20 +256,6 @@ private:
     bool list;
     int table_level = 0;
 
-    void set_max_peg_count(int index, PegCount value, bool dump_stats = false)
-    {
-        assert(index < num_counts);
-        if(dump_stats)
-        {
-            if(value > dump_stats_counts[index])
-                dump_stats_counts[index] = value;
-        }
-        else
-        {
-            if(value > counts[index])
-                counts[index] = value;
-        }
-    }
 };
 }
 #endif

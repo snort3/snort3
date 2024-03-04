@@ -30,6 +30,7 @@
 #include "framework/data_bus.h"
 #include "framework/module.cc"
 #include "framework/mpse_batch.h"
+#include "main/thread_config.h"
 #include "network_inspectors/appid/appid_utils/sf_mlmp.cc"
 #include "protocols/protocol_ids.h"
 #include "service_inspectors/sip/sip_parser.h"
@@ -77,6 +78,9 @@ int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void*, const Sn
     assert(mpsegrp);
     return 0;
 }
+unsigned get_instance_id()
+{ return 0; }
+unsigned ThreadConfig::get_instance_max() { return 1; }
 }
 
 AppIdInspector::AppIdInspector(AppIdModule&) { }

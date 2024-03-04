@@ -73,6 +73,7 @@ static std::unordered_map<std::string, ModHook*> s_modules;
 static std::unordered_map<std::string, const Parameter*> s_pmap;
 
 static unsigned s_errors = 0;
+const char* ModuleManager::dynamic_stats_modules = "file_id appid";
 
 set<uint32_t> ModuleManager::gids;
 mutex ModuleManager::stats_mutex;
@@ -1431,9 +1432,34 @@ PegCount* ModuleManager::get_stats(const char* name)
     ModHook* mh = get_hook(name);
 
     if ( mh )
-        pc = &mh->mod->dump_stats_counts[0];
+        pc = &mh->mod->dump_stats_counts[0][0];
 
     return pc;
+}
+
+void ModuleManager::accumulate_dump_stats()
+{
+    auto mod_hooks = get_all_modhooks();
+    for ( auto* mh : mod_hooks )
+    {
+        mh->mod->main_accumulate_stats();
+    }
+}
+
+void ModuleManager::init_stats()
+{
+    auto mod_hooks = get_all_modhooks();
+    for ( auto* mh : mod_hooks )
+    {
+        mh->mod->init_stats();
+    }
+}
+
+void ModuleManager::add_thread_stats_entry(const char* name)
+{
+    ModHook* mh = get_hook(name);
+    if ( mh )
+        mh->mod->init_stats(true);
 }
 
 void ModuleManager::dump_stats(const char* skip, bool dynamic)
@@ -1445,11 +1471,21 @@ void ModuleManager::dump_stats(const char* skip, bool dynamic)
     {
         if ( !skip || !strstr(skip, mh->mod->get_name()) )
         {
-            lock_guard<mutex> lock(stats_mutex);
-            if ( dynamic )
-                mh->mod->show_dynamic_stats();
+            if (strstr(dynamic_stats_modules, mh->mod->get_name()) || mh->mod->global_stats())
+            {
+                lock_guard<mutex> lock(stats_mutex);
+                if ( dynamic )
+                    mh->mod->show_dynamic_stats();
+                else
+                    mh->mod->show_stats();
+            }
             else
-                mh->mod->show_stats();
+            {
+                if ( dynamic )
+                    mh->mod->show_dynamic_stats();
+                else
+                    mh->mod->show_stats();
+            }
         }
     }
 }
@@ -1463,9 +1499,17 @@ void ModuleManager::accumulate(const char* except)
         if ( except and !strcmp(mh->mod->name, except) )
             continue;
 
-        lock_guard<mutex> lock(stats_mutex);
-        mh->mod->prep_counts(true);
-        mh->mod->sum_stats(true);
+        if (strstr(dynamic_stats_modules, mh->mod->get_name()) || mh->mod->global_stats())
+        {
+            lock_guard<mutex> lock(stats_mutex);
+            mh->mod->prep_counts(true);
+            mh->mod->sum_stats(true);
+        }
+        else
+        {
+            mh->mod->prep_counts(true);
+            mh->mod->sum_stats(true);
+        }
     }
 }
 
@@ -1474,9 +1518,17 @@ void ModuleManager::accumulate_module(const char* name)
     ModHook* mh = get_hook(name);
     if ( mh )
     {
-        lock_guard<mutex> lock(stats_mutex);
-        mh->mod->prep_counts(true);
-        mh->mod->sum_stats(true);
+        if (strstr(dynamic_stats_modules, mh->mod->get_name()) || mh->mod->global_stats())
+        {
+            lock_guard<mutex> lock(stats_mutex);
+            mh->mod->prep_counts(true);
+            mh->mod->sum_stats(true);
+        }
+        else
+        {
+            mh->mod->prep_counts(true);
+            mh->mod->sum_stats(true);
+        }
     }
 }
 
@@ -1486,8 +1538,15 @@ void ModuleManager::reset_stats(SnortConfig*)
 
     for ( auto* mh : mod_hooks )
     {
-        lock_guard<mutex> lock(stats_mutex);
-        mh->mod->reset_stats();
+        if (strstr(dynamic_stats_modules, mh->mod->get_name()) || mh->mod->global_stats())
+        {
+            lock_guard<mutex> lock(stats_mutex);
+            mh->mod->reset_stats();
+        }
+        else
+        {
+            mh->mod->reset_stats();
+        }
     }
 }
 
@@ -1507,8 +1566,15 @@ void ModuleManager::clear_global_active_counters()
 
     for ( auto* mh : mod_hooks )
     {
-        lock_guard<mutex> lock(stats_mutex);
-        mh->mod->clear_global_active_counters();
+        if (strstr(dynamic_stats_modules, mh->mod->get_name()) || mh->mod->global_stats())
+        {
+            lock_guard<mutex> lock(stats_mutex);
+            mh->mod->clear_global_active_counters();
+        }
+        else
+        {
+            mh->mod->clear_global_active_counters();
+        }
     }
 }
 
@@ -1519,8 +1585,15 @@ void ModuleManager::reset_stats(clear_counter_type_t type)
         ModHook* mh = get_hook(clear_counter_type_string_map[type]);
         if ( mh and mh->mod )
         {
-            lock_guard<mutex> lock(stats_mutex);
-            mh->mod->reset_stats();
+            if (strstr(dynamic_stats_modules, mh->mod->get_name()) || mh->mod->global_stats())
+            {
+                lock_guard<mutex> lock(stats_mutex);
+                mh->mod->reset_stats();
+            }
+            else
+            {
+                mh->mod->reset_stats();
+            }
         }
     }
     else
@@ -1543,8 +1616,15 @@ void ModuleManager::reset_stats(clear_counter_type_t type)
 
             if ( type == TYPE_ALL or !ignore )
             {
-                lock_guard<mutex> lock(stats_mutex);
-                mh->mod->reset_stats();
+                if (strstr(dynamic_stats_modules, mh->mod->get_name()) || mh->mod->global_stats())
+                {
+                    lock_guard<mutex> lock(stats_mutex);
+                    mh->mod->reset_stats();
+                }
+                else
+                {
+                    mh->mod->reset_stats();
+                }
             }
         }
     }

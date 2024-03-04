@@ -65,7 +65,6 @@ public:
     void invalidate();
     void update_counts();
     void reset_counts();
-    void sum_stats(bool dump_stats);
 
     std::shared_ptr<Value> operator[](const Key& key);
 
@@ -278,27 +277,6 @@ void HostCacheSegmented<Key, Value>::reset_counts()
     }
 }
 
-template<typename Key, typename Value>
-void HostCacheSegmented<Key, Value>::sum_stats(bool dump_stats)
-{
-    std::lock_guard<std::mutex> guard(stats_lock);
-    if ( !dump_stats )
-    {
-        const PegInfo* pegs = get_pegs();
-
-        for (auto cache : seg_list)
-        {
-            PegCount* cache_counts = reinterpret_cast<PegCount*> (&cache->stats);
-            cache->lock();
-            for (int i = 0; pegs[i].type != CountType::END; i++)
-            {
-                if ( pegs[i].type == CountType::SUM )
-                    cache_counts[i] = 0;
-            }
-            cache->unlock();
-        }
-    }
-}
 
 template<typename Key, typename Value>
 std::shared_ptr<Value> HostCacheSegmented<Key, Value>:: find_else_create(const Key& key, bool* new_data)

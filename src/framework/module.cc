@@ -22,6 +22,7 @@
 #endif
 
 #include "module.h"
+#include "main/thread_config.h"
 
 #include "trace/trace.h"
 
@@ -77,18 +78,55 @@ void Module::clear_global_active_counters()
     const PegInfo* q = get_pegs();
 
     assert(q);
-
-    for ( int i = 0; i < num_counts; i++ )
+    for ( unsigned thread_index = 0; thread_index < dump_stats_counts.size(); thread_index++)
     {
-        if ( q[i].type == CountType::NOW )
-            counts[i] = 0;
+        for ( int i = 0; i < num_counts; i++ )
+        {
+            if ( q[i].type == CountType::NOW )
+            {
+                dump_stats_counts[thread_index][i] = 0;
+                counts[thread_index][i] = 0;
+                dump_stats_results[i] = 0;
+            }
+        }
     }
 }
+
+void Module::main_accumulate_stats()
+{
+    const PegInfo* q = get_pegs();
+
+    if ( !q )
+        return;
+
+    if (!global_stats())
+    {
+        for ( int i = 0; i < num_counts; i++ )
+        {
+            for ( unsigned thread_index = 0; thread_index < dump_stats_counts.size(); thread_index++)
+            {
+                if ( q[i].type == CountType::SUM || q[i].type == CountType::NOW)
+                {
+                    dump_stats_results[i] += dump_stats_counts[thread_index][i];
+                }
+                else if ( q[i].type == CountType::MAX)
+                {
+                    if (dump_stats_counts[thread_index][i] > dump_stats_results[i])
+                        dump_stats_results[i] = dump_stats_counts[thread_index][i];
+                }    
+            }
+        }
+    }
+}
+
 
 void Module::sum_stats(bool dump_stats)
 {
     if ( num_counts < 0 )
+    {
+        init_stats();
         reset_stats();
+    }
 
     PegCount* p = get_counts();
     const PegInfo* q = get_pegs();
@@ -97,17 +135,25 @@ void Module::sum_stats(bool dump_stats)
         return;
 
     assert(q);
-    if(dump_stats && !dump_stats_initialized)
+
+    unsigned instance_id = get_instance_id();
+    if (dump_stats and !dump_stats_initialized[instance_id])
     {
-        for (unsigned long i=0; i<counts.size(); i++)
-            dump_stats_counts[i] = counts[i];
-        dump_stats_initialized = true;
+        dump_stats_counts[instance_id] = counts[instance_id];
+        dump_stats_initialized[instance_id] = 1;
     }
 
     if ( global_stats() )
     {
         for ( int i = 0; i < num_counts; i++ )
-            set_peg_count(i, p[i], dump_stats);
+        {
+            // we need each thread to update the same variable since it is global stats.
+            // we need the latest info updated by the last thread
+            if (dump_stats)
+                dump_stats_results[i] = p[i];
+            else
+                counts[0][i] = p[i];
+        }
     }
     else
     {
@@ -120,12 +166,12 @@ void Module::sum_stats(bool dump_stats)
 
             case CountType::SUM:
                 add_peg_count(i, p[i], dump_stats);
-                if(!dump_stats)
+                if (!dump_stats)
                     p[i] = 0;
                 break;
 
             case CountType::NOW:
-                if ( dump_stats )
+                if (dump_stats)
                     add_peg_count(i, p[i], dump_stats);
                 break;
 
@@ -147,10 +193,40 @@ void Module::show_stats()
 {
     if ( num_counts > 0 )
     {
-        ::show_stats(&dump_stats_counts[0], get_pegs(), num_counts, get_name());
-        dump_stats_initialized = false;
+        ::show_stats(&dump_stats_results[0], get_pegs(), num_counts, get_name());
+        dump_stats_initialized.assign(dump_stats_initialized.size(), 0);
+        std::fill(dump_stats_results.begin(), dump_stats_results.end(), 0);
     }
 }
+
+void Module::init_stats(bool new_thread)
+{
+    const PegInfo* pegs = get_pegs();
+
+    if ( !pegs )
+        return;
+
+    if ( num_counts <= 0 )
+    {
+        num_counts = 0;
+
+        while ( pegs[num_counts].name )
+            ++num_counts;
+    }
+
+    unsigned number_of_threads = new_thread ? 1 : ThreadConfig::get_instance_max();
+
+    for ( unsigned thread_index = 0; thread_index < number_of_threads; thread_index++)
+    {
+        std::vector<PegCount> stats(num_counts);
+        std::vector<PegCount> dump_stats(num_counts);
+        counts.push_back(stats);
+        dump_stats_counts.push_back(dump_stats);
+        dump_stats_initialized.push_back(0);
+    }
+    dump_stats_results.resize(num_counts);
+}
+
 
 void Module::reset_stats()
 {
@@ -164,21 +240,11 @@ void Module::reset_stats()
     if ( !pegs )
         return;
 
-    if ( num_counts <= 0 )
-    {
-        num_counts = 0;
-
-        while ( pegs[num_counts].name )
-            ++num_counts;
-
-        counts.resize(num_counts);
-        dump_stats_counts.resize(num_counts);
-    }
 
     for ( int i = 0; i < num_counts; i++ )
     {
-        counts[i] = 0;
-        dump_stats_counts[i] = 0;
+        counts[get_instance_id()][i] = 0;
+        dump_stats_counts[get_instance_id()][i] = 0;
 
         if ( pegs[i].type != CountType::NOW )
             p[i] = 0;
@@ -193,7 +259,7 @@ PegCount Module::get_global_count(const char* name) const
     for ( unsigned i = 0; infos[i].name; i++ )
     {
         if ( strcmp(name, infos[i].name) == 0 )
-            return counts[i];
+            return dump_stats_results[i];
     }
     assert(false); // wrong name = programmer error
     return 0;

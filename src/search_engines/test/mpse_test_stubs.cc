@@ -76,9 +76,6 @@ void SnortConfig::release_scratch(int)
 DataBus::DataBus() = default;
 DataBus::~DataBus() = default;
 
-unsigned get_instance_id()
-{ return 0; }
-
 THREAD_LOCAL PatMatQStat pmqs;
 
 unsigned parse_errors = 0;

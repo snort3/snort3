@@ -25,11 +25,13 @@
 
 #include "connectors/file_connector/file_connector.h"
 #include "connectors/file_connector/file_connector_module.h"
+#include "main/thread_config.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
 using namespace snort;
+
 
 extern const BaseApi* file_connector;
 const ConnectorApi* fc_api = nullptr;
@@ -55,6 +57,9 @@ namespace snort
 {
 const char* get_instance_file(std::string& file, const char* name)
 { file += name; return nullptr; }
+unsigned get_instance_id()
+{ return 0; }
+unsigned ThreadConfig::get_instance_max() { return 1; }
 }
 
 FileConnectorModule::FileConnectorModule() :

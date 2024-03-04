@@ -30,6 +30,7 @@
 #include "framework/module.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "main/thread_config.h"
 #include "ports/port_group.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
@@ -96,6 +97,7 @@ void ParseWarning(WarningGroup, const char*, ...) { }
 
 unsigned get_instance_id()
 { return 0; }
+unsigned ThreadConfig::get_instance_max() { return 1; }
 
 char* snort_strdup(const char* s)
 { return strdup(s); }

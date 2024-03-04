@@ -24,12 +24,14 @@
 #endif
 
 #include "connectors/tcp_connector/tcp_connector_module.h"
+#include "main/thread_config.h"
 #include "profiler/profiler.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
 using namespace snort;
+
 
 THREAD_LOCAL SimpleStats tcp_connector_stats;
 THREAD_LOCAL ProfileStats tcp_connector_perfstats;
@@ -41,6 +43,10 @@ namespace snort
 {
 char* snort_strdup(const char* s)
 { return strdup(s); }
+
+unsigned get_instance_id()
+{ return 0; }
+unsigned ThreadConfig::get_instance_max() { return 1; }
 }
 
 TEST_GROUP(tcp_connector_module)

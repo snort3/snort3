@@ -58,8 +58,15 @@ void BaseTracker::process(bool summary)
     {
         for ( const ModuleConfig& mod : modules )
         {
-            lock_guard<mutex> lock(ModuleManager::stats_mutex);
-            mod.ptr->sum_stats(false);
+            if (strstr(ModuleManager::dynamic_stats_modules, mod.ptr->get_name()) || mod.ptr->global_stats())
+            {
+                lock_guard<mutex> lock(ModuleManager::stats_mutex);
+                mod.ptr->sum_stats(false);
+            }
+            else
+            {
+                mod.ptr->sum_stats(false);
+            }
         }
     }
 }
@@ -84,6 +91,8 @@ public:
     PegCount* get_counts() const override { return mock_counts; }
 
     void sum_stats(bool) override {}
+
+    void init_stats(bool) override {Module::init_stats();}
 
     void real_sum_stats() { Module::sum_stats(false); }
 
@@ -124,6 +133,7 @@ TEST_CASE("module stats", "[BaseTracker]")
     config.format = PerfFormat::MOCK;
 
     MockModule mod;
+    mod.init_stats(false);
     ModuleConfig mod_cfg;
     mod_cfg.ptr = &mod;
     mod_cfg.pegs = {0, 2, 4};

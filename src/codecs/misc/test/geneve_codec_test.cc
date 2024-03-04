@@ -20,6 +20,7 @@
 #include "../cd_geneve.cc"
 
 #include "utils/endian.h"
+#include "main/thread_config.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -33,6 +34,9 @@ namespace snort
     bool TextLog_Print(TextLog* const, const char*, ...) { return false; }
     void Codec::codec_event(const CodecData&, CodecSid) { }
     bool SnortConfig::tunnel_bypass_enabled(unsigned short) const { return false; }
+    unsigned get_instance_id()
+    { return 0; }
+    unsigned ThreadConfig::get_instance_max() { return 1; }
 }
 
 // Geneve data with 2 variable options.

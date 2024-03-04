@@ -30,7 +30,9 @@ char* snort_strdup(const char* s)
 { return strdup(s); }
 
 void Module::sum_stats(bool) {}
+void Module::main_accumulate_stats() {}
 void Module::show_stats() {}
+void Module::init_stats(bool) {}
 void Module::reset_stats() {}
 PegCount Module::get_global_count(char const*) const
 { return 0; }

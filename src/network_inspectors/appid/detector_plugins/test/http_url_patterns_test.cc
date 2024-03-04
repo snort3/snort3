@@ -23,6 +23,7 @@
 
 #include "network_inspectors/appid/detector_plugins/http_url_patterns.cc"
 
+#include "main/thread_config.h"
 #include "protocols/protocol_ids.h"
 #include "framework/module.cc"
 #include "network_inspectors/appid/appid_utils/sf_mlmp.cc"
@@ -72,6 +73,9 @@ int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void* mp_arg, c
         memcpy(mp_arg, &mock_mp, sizeof(MatchedPatterns*));
     return 0;
 }
+unsigned get_instance_id()
+{ return 0; }
+unsigned ThreadConfig::get_instance_max() { return 1; }
 }
 
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }

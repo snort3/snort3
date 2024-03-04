@@ -32,6 +32,7 @@
 #include "flow/ha.h"
 #include "flow/session.h"
 #include "main/analyzer.h"
+#include "main/thread_config.h"
 #include "managers/inspector_manager.h"
 #include "packet_io/active.h"
 #include "protocols/icmp4.h"

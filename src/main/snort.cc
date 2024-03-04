@@ -172,6 +172,7 @@ void Snort::init(int argc, char** argv)
     HighAvailabilityManager::configure(sc->ha_config);
     memory::MemoryCap::init(sc->thread_config->get_instance_max());
 
+    ModuleManager::init_stats();
     ModuleManager::reset_stats(sc);
 
     if (sc->alert_before_pass())

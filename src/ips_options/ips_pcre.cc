@@ -672,6 +672,9 @@ public:
 
     PcreData* get_data();
 
+    bool global_stats() const override
+    { return true; }
+
     Usage get_usage() const override
     { return DETECT; }
 

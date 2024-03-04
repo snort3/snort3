@@ -76,7 +76,8 @@ Module::Module(const char*, const char*, const Parameter*, bool)
 PegCount Module::get_global_count(char const*) const { return 0; }
 void Module::show_interval_stats(std::vector<unsigned int, std::allocator<unsigned int> >&, FILE*) {}
 void Module::show_stats(){}
-void Module::sum_stats(bool ){}
+void Module::sum_stats(bool){}
+void Module::main_accumulate_stats(){}
 void Module::reset_stats() {}
 
 AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :

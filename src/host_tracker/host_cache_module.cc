@@ -580,7 +580,6 @@ void HostCacheModule::prep_counts(bool)
 void HostCacheModule::sum_stats(bool dump_stats)
 {
     Module::sum_stats(dump_stats);
-    host_cache.sum_stats(dump_stats);
 }
 
 void HostCacheModule::reset_stats()
