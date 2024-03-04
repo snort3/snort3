@@ -30,6 +30,7 @@
 
 #include "actions/actions.h"
 #include "framework/decode_data.h"
+#include "filters/sfthd.h"
 #include "hash/hash_defs.h"
 #include "hash/ghash.h"
 #include "helpers/json_stream.h"
@@ -162,7 +163,7 @@ OptTreeNode::~OptTreeNode()
         snort_free(proto_nodes);
 
     if (detection_filter)
-        snort_free(detection_filter);
+        sfthd_node_free(detection_filter);
 
     delete sigInfo.body;
     delete[] buffer_setters;

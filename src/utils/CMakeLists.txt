@@ -24,8 +24,6 @@ add_library ( utils OBJECT
     ${SNPRINTF_SOURCES}
     boyer_moore.cc
     dnet_header.h
-    dyn_array.cc
-    dyn_array.h
     kmap.cc
     sflsq.cc
     snort_bounds.h

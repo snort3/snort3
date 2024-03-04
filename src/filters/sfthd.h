@@ -29,6 +29,7 @@
 #include "utils/cpp_macros.h"
 
 #include <mutex>
+#include <vector>
 
 namespace snort
 {
@@ -129,15 +130,15 @@ PADDING_GUARD_END
 */
 struct THD_NODE
 {
-    int thd_id;        /* Id of this node */
-    unsigned gen_id;   /* Keep these around if needed */
-    unsigned sig_id;
-    int tracking;      /* by_src, by_dst */
-    int type;
-    int priority;
-    int count;
-    unsigned seconds;
-    sfip_var_t* ip_address;
+    int thd_id = 0;        /* Id of this node */
+    unsigned gen_id = 0;   /* Keep these around if needed */
+    unsigned sig_id = 0;
+    int tracking = 0;      /* by_src, by_dst */
+    int type = 0;
+    int priority = 0;
+    int count = 0;
+    unsigned seconds = 0;
+    sfip_var_t* ip_address = nullptr;
 };
 
 /*!
@@ -198,19 +199,19 @@ struct THD_STRUCT
 
 struct ThresholdObjects
 {
-    int count;  /* Total number of thresholding/suppression objects */
-    snort::GHash* sfthd_array[THD_MAX_GENID];    /* Local Hash of THD_ITEM nodes,  lookup by key=sig_id
-                                              */
+    int count = 0;  /* Total number of thresholding/suppression objects */
+    std::vector<snort::GHash*> sfthd_vector;    /* Local Hash of THD_ITEM nodes,  lookup by key=sig_id */
+    /*
+    * Vector of unordered maps, each map indexed by generator ID (genId) and containing 
+    * unique pointers to THD_NODE structures. The outer vector is indexed by policyId 
+    * and can dynamically vary in size. Each map represents THD_NODE structures for a specific 
+    * policyId, with the key being the genId. This allows direct access to THD_NODE structures 
+    * by their generator ID within a given policy context, optimizing lookup and management 
+    * of thresholding nodes.
+    */
+    std::vector<std::unordered_map<uint32_t, std::unique_ptr<THD_NODE>>> sfthd_gvector;
 
-    /* Double array of THD_NODE pointers. First index is policyId and therefore variable length.
-     * Second index is genId and of fixed length, A simpler definition could be
-     * THD_NODE * sfthd_garray[0][THD_MAX_GENID] and we could intentionally overflow first index,
-     * but we may have to deal with compiler warnings if the array is indexed by value known at
-     * compile time.
-     */
-    //THD_NODE * (*sfthd_garray)[THD_MAX_GENID];
-    THD_NODE*** sfthd_garray;
-    PolicyId numPoliciesAllocated;
+    PolicyId numPoliciesAllocated = 0;
 };
 
 struct EventFilterStats
@@ -245,7 +246,7 @@ void sfthd_node_free(THD_NODE*);
 
 int sfthd_create_threshold(snort::SnortConfig*, ThresholdObjects*, unsigned gen_id,
     unsigned sig_id, int tracking, int type, int priority, int count,
-    int seconds, sfip_var_t* ip_address, PolicyId policy_id);
+    unsigned seconds, sfip_var_t* ip_address, PolicyId policy_id);
 
 //  1: don't log due to event_filter
 //  0: log
