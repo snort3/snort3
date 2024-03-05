@@ -133,6 +133,9 @@ void TraceModule::generate_params()
 
         { "match", Parameter::PT_BOOL, nullptr, "true",
           "use constraints to filter traces" },
+        
+        { "tenants", Parameter::PT_STRING, nullptr, nullptr,
+          "tenants filter" },
 
         { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
     };

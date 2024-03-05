@@ -25,6 +25,7 @@
 
 #include "framework/module.h"
 #include "managers/module_manager.h"
+#include "utils/util.h"
 
 #include "trace_config.h"
 
@@ -36,7 +37,7 @@ TraceParser::TraceParser(TraceConfig& tc)
     : trace_config(tc)
 {
     // Will be initialized only once when first TraceParser instance created
-    if ( s_configured_trace_options.empty() )
+    if (s_configured_trace_options.empty())
         init_configured_trace_options();
     else
         reset_configured_trace_options();
@@ -44,20 +45,20 @@ TraceParser::TraceParser(TraceConfig& tc)
 
 bool TraceParser::set_traces(const std::string& module_name, const Value& val)
 {
-    if ( !s_configured_trace_options.count(module_name)
-        and module_name != DEFAULT_TRACE_OPTION_NAME )
+    if (!s_configured_trace_options.count(module_name) 
+        and module_name != DEFAULT_TRACE_OPTION_NAME)
         return false;
 
-    if ( module_name == DEFAULT_TRACE_OPTION_NAME )
+    if (module_name == DEFAULT_TRACE_OPTION_NAME)
     {
-        for ( const auto& trace_options : s_configured_trace_options )
+        for (const auto& trace_options : s_configured_trace_options)
         {
-            if ( trace_options.second.at(DEFAULT_TRACE_OPTION_NAME) )
+            if (trace_options.second.at(DEFAULT_TRACE_OPTION_NAME))
                 continue;
 
-            for ( const auto& trace_option : trace_options.second )
+            for (const auto& trace_option : trace_options.second)
             {
-                if ( !trace_option.second )
+                if (!trace_option.second)
                     trace_config.set_trace(trace_options.first, trace_option.first,
                         val.get_uint8());
             }
@@ -65,12 +66,12 @@ bool TraceParser::set_traces(const std::string& module_name, const Value& val)
 
         return true;
     }
-    else if ( val.is(DEFAULT_TRACE_OPTION_NAME) )
+    else if (val.is(DEFAULT_TRACE_OPTION_NAME))
     {
         auto& trace_options = s_configured_trace_options[module_name];
-        for ( const auto& trace_option : trace_options )
+        for (const auto& trace_option : trace_options)
         {
-            if ( !trace_option.second )
+            if (!trace_option.second)
                 trace_config.set_trace(module_name, trace_option.first, val.get_uint8());
         }
         trace_options[DEFAULT_TRACE_OPTION_NAME] = true;
@@ -87,39 +88,48 @@ bool TraceParser::set_traces(const std::string& module_name, const Value& val)
 
 bool TraceParser::set_constraints(const Value& val)
 {
-    if ( val.is("ip_proto") )
+    if (val.is("ip_proto"))
     {
         parsed_constraints.ip_proto = static_cast<IpProtocol>(val.get_uint8());
         parsed_constraints.set_bits |= PacketConstraints::SetBits::IP_PROTO;
     }
-    else if ( val.is("src_port") )
+    else if (val.is("src_port"))
     {
         parsed_constraints.src_port = val.get_uint16();
         parsed_constraints.set_bits |= PacketConstraints::SetBits::SRC_PORT;
     }
-    else if ( val.is("dst_port") )
+    else if (val.is("dst_port"))
     {
         parsed_constraints.dst_port = val.get_uint16();
         parsed_constraints.set_bits |= PacketConstraints::SetBits::DST_PORT;
     }
-    else if ( val.is("src_ip") )
+    else if (val.is("src_ip"))
     {
         const char* str = val.get_string();
-        if ( parsed_constraints.src_ip.set(str) != SFIP_SUCCESS )
+        if (parsed_constraints.src_ip.set(str) != SFIP_SUCCESS)
             return false;
 
         parsed_constraints.set_bits |= PacketConstraints::SetBits::SRC_IP;
     }
-    else if ( val.is("dst_ip") )
+    else if (val.is("dst_ip"))
     {
         const char* str = val.get_string();
-        if ( parsed_constraints.dst_ip.set(str) != SFIP_SUCCESS )
+        if (parsed_constraints.dst_ip.set(str) != SFIP_SUCCESS)
             return false;
 
         parsed_constraints.set_bits |= PacketConstraints::SetBits::DST_IP;
     }
-    else if ( val.is("match") )
+    else if (val.is("match"))
         parsed_constraints.match = val.get_bool();
+    else if (val.is("tenants"))
+    {
+        const char* tenants_str = val.get_string();
+        if (!tenants_str)
+            return false;
+
+        StrToIntVector(tenants_str, ',', parsed_constraints.tenants);
+        parsed_constraints.set_bits |= PacketConstraints::SetBits::TENANT;
+    }
     else
         return false;
 
@@ -128,7 +138,7 @@ bool TraceParser::set_constraints(const Value& val)
 
 void TraceParser::finalize_constraints()
 {
-    if ( !parsed_constraints.match or parsed_constraints.set_bits )
+    if (!parsed_constraints.match or parsed_constraints.set_bits)
         trace_config.constraints = new PacketConstraints(parsed_constraints);
 }
 
@@ -143,9 +153,9 @@ void TraceParser::clear_constraints()
 
 void TraceParser::reset_configured_trace_options()
 {
-    for ( auto& module_trace_options : s_configured_trace_options )
+    for (auto& module_trace_options : s_configured_trace_options)
     {
-        for ( auto& trace_options : module_trace_options.second )
+        for (auto& trace_options : module_trace_options.second)
             trace_options.second = false;
     }
 }
@@ -153,16 +163,16 @@ void TraceParser::reset_configured_trace_options()
 void TraceParser::init_configured_trace_options()
 {
     auto trace_modules = ModuleManager::get_all_modules();
-    for ( const auto* module : trace_modules )
+    for (const auto* module : trace_modules)
     {
         const TraceOption* trace_options = module->get_trace_options();
-        if ( !trace_options )
+        if (!trace_options)
             continue;
 
         auto& module_trace_options = s_configured_trace_options[module->get_name()];
 
         module_trace_options[DEFAULT_TRACE_OPTION_NAME] = false;
-        while ( trace_options->name )
+        while (trace_options->name)
         {
             module_trace_options[trace_options->name] = false;
             ++trace_options;
@@ -194,6 +204,9 @@ void TraceParser::init_configured_trace_options()
 
 #define PORT_OPTION(name, value) \
     CONFIG_OPTION(name, (uint64_t)value, Parameter::PT_INT, "0:65535")
+
+#define TENANT_OPTION(name, value) \
+    CONFIG_OPTION(name, value, Parameter::PT_STRING, nullptr)
 
 enum { OPT_1, OPT_2 };
 
@@ -448,6 +461,21 @@ TEST_CASE("packet constraints", "[TraceParser]")
     {
         CONFIG_OPTION(invalid_option, (uint64_t)5, Parameter::PT_INT, "0:8");
         CHECK(false == tp.set_constraints(invalid_option));
+    }
+
+    SECTION("tenants")
+    {
+        TENANT_OPTION(tenants, "11,12");
+        const auto expected_tenants = std::vector<uint32_t>{ 11, 12 };
+        
+        const PacketConstraints expected_constraints = PacketConstraints(IpProtocol::PROTO_NOT_SET, 0, 0,
+            SfIp(), SfIp(), PacketConstraints::TENANT, true, expected_tenants);
+
+        CHECK(true == tp.set_constraints(tenants));
+        tp.finalize_constraints();
+
+        REQUIRE(tc.constraints != nullptr);
+        CHECK(*tc.constraints == expected_constraints);
     }
 }
 

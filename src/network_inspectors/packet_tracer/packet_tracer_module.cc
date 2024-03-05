@@ -130,7 +130,10 @@ static int enable(lua_State* L)
     PacketConstraints constraints = {};
 
     if (tenantsstr)
+    {
         StrToIntVector(tenantsstr, ',', constraints.tenants);
+        constraints.set_bits |= PacketConstraints::SetBits::TENANT;
+    }
 
     if (proto and (IpProtocol)proto < IpProtocol::PROTO_NOT_SET)
     {

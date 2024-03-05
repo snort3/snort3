@@ -40,7 +40,7 @@ inline bool match_constraints(const snort::PacketConstraints& cs,
         (!(cs.set_bits & SetBits::SRC_IP) or (sip == cs.src_ip)) and
         (!(cs.set_bits & SetBits::DST_IP) or (dip == cs.dst_ip));
 
-    if (res && tenant_id && !cs.tenants.empty())
+    if (res and (cs.set_bits & SetBits::TENANT) and tenant_id and !cs.tenants.empty())
     {
         auto it = std::find_if(cs.tenants.cbegin(), cs.tenants.cend(),
             [tenant_id](uint32_t t){ return t == tenant_id; });
@@ -87,7 +87,7 @@ bool PacketConstraints::operator==(const PacketConstraints& other) const
         and ( !(set_bits & DST_PORT) or dst_port == other.dst_port )
         and ( !(set_bits & SRC_IP) or src_ip == other.src_ip )
         and ( !(set_bits & DST_IP) or dst_ip == other.dst_ip )
-        and ( tenants == other.tenants );
+        and ( !(set_bits & TENANT) or tenants == other.tenants );
 }
 
 bool PacketConstraints::packet_match(const Packet& p) const
@@ -110,9 +110,10 @@ bool PacketConstraints::packet_match(const Packet& p) const
     const auto& dip = *p.ptrs.ip_api.get_dst();
     const auto sp = p.ptrs.sp;
     const auto dp = p.ptrs.dp;
+    const auto tenant = p.pkth->tenant_id;
 
-    return match_constraints(*this, sip, dip, sp, dp, p.pkth->tenant_id) or
-        match_constraints(*this, dip, sip, dp, sp, p.pkth->tenant_id);
+    return match_constraints(*this, sip, dip, sp, dp, tenant) or
+        match_constraints(*this, dip, sip, dp, sp, tenant);
 }
 
 bool PacketConstraints::flow_match(const Flow& f) const
@@ -181,11 +182,9 @@ TEST_CASE("Packet constraints comparison", "[framework]")
         const uint32_t ip1 = 0x01010101;
         const uint32_t ip2 = 0x02020202;
         PacketConstraints exp = PacketConstraints(IpProtocol::PROTO_NOT_SET, 0, 0,
-            SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1, true);
-        exp.tenants = tenants1;
+            SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1, true, tenants1);
         PacketConstraints act = PacketConstraints(IpProtocol::PROTO_NOT_SET, 0, 0,
-            SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1, true);
-        act.tenants = tenants2;
+            SfIp(&ip1, AF_INET), SfIp(&ip2, AF_INET), (uint8_t)-1, true, tenants2);
         CHECK( exp == act );
     }
 }
@@ -209,6 +208,7 @@ TEST_CASE("Packet constraints matching", "[framework]")
         cs.set_bits |= PacketConstraints::SetBits::DST_PORT;
         cs.set_bits |= PacketConstraints::SetBits::SRC_IP;
         cs.set_bits |= PacketConstraints::SetBits::DST_IP;
+        cs.set_bits |= PacketConstraints::SetBits::TENANT;
 
         cs.ip_proto = proto;
         cs.src_port = sport;

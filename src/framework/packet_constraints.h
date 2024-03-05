@@ -39,13 +39,15 @@ struct PacketConstraints
         DST_IP   = 1 << 2,
         SRC_PORT = 1 << 3,
         DST_PORT = 1 << 4,
+        TENANT   = 1 << 5,
     };
 
     PacketConstraints() = default;
     PacketConstraints(IpProtocol ip_proto, uint16_t src_port, uint16_t dst_port,
-        const snort::SfIp& src_ip, const snort::SfIp& dst_ip, uint8_t set_bits, bool match) :
+        const snort::SfIp& src_ip, const snort::SfIp& dst_ip, uint8_t set_bits, bool match,
+        const std::vector<uint32_t>& tenants = std::vector<uint32_t>()) :
         ip_proto(ip_proto), src_port(src_port), dst_port(dst_port),
-        src_ip(src_ip), dst_ip(dst_ip), set_bits(set_bits), match(match)
+        src_ip(src_ip), dst_ip(dst_ip), set_bits(set_bits), match(match), tenants(tenants)
     {}
     PacketConstraints(const PacketConstraints&);
     PacketConstraints& operator=(const PacketConstraints& other);

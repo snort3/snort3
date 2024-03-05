@@ -10,6 +10,6 @@ attached to configuration with one element per packet thread, however those
 cases are rare and should only be needed by the framework code, not the
 plugins.
 
-PacketConstraints allow you to match packets and flows against a 5-tuple.
-( ip_proto; src_ip; dst_ip; src_port; dst_port)
+PacketConstraints allow you to match packets and flows against a 6-tuple.
+( ip_proto; src_ip; dst_ip; src_port; dst_port; tenant)
 
