@@ -342,7 +342,7 @@ void SnortConfig::post_setup()
 
 void SnortConfig::update_scratch(ControlConn* ctrlcon)
 {
-    main_broadcast_command(new ACScratchUpdate(this, scratch_handlers, ctrlcon));
+    main_broadcast_command(new ACScratchUpdate(this, scratch_handlers, ctrlcon), ctrlcon);
 }
 
 void SnortConfig::clone(const SnortConfig* const conf)

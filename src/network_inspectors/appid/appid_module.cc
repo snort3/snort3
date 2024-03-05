@@ -225,7 +225,7 @@ ACThirdPartyAppIdContextUnload::~ACThirdPartyAppIdContextUnload()
     delete tp_ctxt;
     AppIdContext& ctxt = inspector.get_ctxt();
     ctxt.create_tp_appid_ctxt();
-    main_broadcast_command(new ACThirdPartyAppIdContextSwap(inspector, ctrlcon));
+    main_broadcast_command(new ACThirdPartyAppIdContextSwap(inspector, ctrlcon), ctrlcon);
     log_message("== unload old third-party complete\n");
     ReloadTracker::update(ctrlcon, "unload old third-party complete, start swapping to new configuration.");
 }
