@@ -26,6 +26,7 @@
 #include "tcp_stream_session.h"
 
 #include "framework/data_bus.h"
+#include "packet_tracer/packet_tracer.h"
 #include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
 #include "stream/tcp/tcp_ha.h"
@@ -338,7 +339,15 @@ StreamSplitter* TcpStreamSession::get_splitter(bool to_server)
 }
 
 void TcpStreamSession::start_proxy()
-{ tcp_config->policy = StreamPolicy::OS_PROXY; }
+{
+    if ( PacketTracer::is_active() )
+        PacketTracer::log("Stream TCP normalization policy set to Proxy mode.  Normalizations will be skipped\n");
+
+    tcp_config->policy = StreamPolicy::OS_PROXY;
+    client.normalizer.init(tcp_config->policy, this, &client, &server);
+    server.normalizer.init(tcp_config->policy, this, &server, &client);
+    ++tcpStats.proxy_mode_flows;
+}
 
 void TcpStreamSession::set_established(const TcpSegmentDescriptor& tsd)
 {

@@ -233,6 +233,14 @@ int Stream::ignore_flow(
         ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort, direction, fd);
 }
 
+void Stream::start_proxy(Flow* flow)
+{
+    assert(flow and flow->session and flow->pkt_type == PktType::TCP);
+
+    TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+    tcp_session->start_proxy();
+}
+
 void Stream::stop_inspection(
     Flow* flow, Packet* p, char dir,
     int32_t /*bytes*/, int /*response*/)

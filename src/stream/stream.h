@@ -114,6 +114,10 @@ public:
     // packet_flags field of the Packet struct to indicate the direction determined.
     static uint32_t get_packet_direction(Packet*);
 
+    // Set the stream normalization mode to PROXY.  In this mode wire packets go thru a proxy before snort
+    // sees them.  All stream normalizations are turned off in this mode.
+    static void start_proxy(Flow*);
+
     // Stop inspection on a flow for up to count bytes (-1 to ignore for life or until resume).
     // If response flag is set, automatically resume inspection up to count bytes when a data
     // packet in the other direction is seen.  Also marks the packet to be ignored

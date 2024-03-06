@@ -50,6 +50,9 @@ public:
     void reset()
     { init(StreamPolicy::OS_DEFAULT, nullptr, nullptr, nullptr); }
 
+    TcpNormalizer::NormStatus apply_normalizations(TcpSegmentDescriptor& tsd, uint32_t seq, bool stream_is_inorder)
+    { return norm->apply_normalizations(tns, tsd, seq, stream_is_inorder); }
+
     void session_blocker(TcpSegmentDescriptor& tsd)
     { norm->session_blocker(tns, tsd); }
 

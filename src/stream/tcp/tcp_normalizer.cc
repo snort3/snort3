@@ -25,12 +25,77 @@
 
 #include "tcp_normalizer.h"
 
+#include "stream/stream.h"
+
 #include "tcp_module.h"
 #include "tcp_stream_session.h"
 #include "tcp_stream_tracker.h"
 #include "packet_tracer/packet_tracer.h"
 
 using namespace snort;
+
+TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
+    TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, uint32_t seq, bool stream_is_inorder)
+{
+    // if this is a midstream pickup then skip normalizations
+    if ( Stream::is_midstream(tsd.get_flow()) )
+        return NORM_OK;
+
+    // these normalizations can't be done if we missed setup. and
+    // window is zero in one direction until we've seen both sides.
+    if ( tsd.get_flow()->two_way_traffic() )
+    {
+        // drop packet if sequence num is invalid
+        if ( !tns.tracker->is_segment_seq_valid(tsd) )
+        {
+            tcpStats.invalid_seq_num++;
+            trim_win_payload(tns, tsd);
+            return NORM_BAD_SEQ;
+        }
+
+        // trim to fit in listener's window and mss
+        trim_win_payload(tns, tsd,
+            (tns.tracker->r_win_base + tns.tracker->get_snd_wnd() - tns.tracker->rcv_nxt));
+
+        if ( tns.tracker->get_mss() )
+            trim_mss_payload(tns, tsd, tns.tracker->get_mss());
+
+        ecn_stripper(tns, tsd);
+    }
+
+    if ( stream_is_inorder )
+    {
+        if ( get_stream_window(tns, tsd) == 0 )
+        {
+            if ( !data_inside_window(tns, tsd) )
+            {
+                trim_win_payload(tns, tsd, 0, tsd.is_nap_policy_inline());
+                return NORM_TRIMMED;
+            }
+
+            if ( tns.tracker->get_iss() )
+            {
+                tcpStats.zero_win_probes++;
+                set_zwp_seq(tns, seq);
+                trim_win_payload(tns, tsd, MAX_ZERO_WIN_PROBE_LEN, tsd.is_nap_policy_inline());
+            }
+        }
+    }
+    else if ( get_stream_window(tns, tsd) == 0 )
+    {
+        if ( SEQ_EQ(seq, get_zwp_seq(tns)) )
+        {
+            tcpStats.zero_win_probes++;
+            trim_win_payload(tns, tsd, MAX_ZERO_WIN_PROBE_LEN, tsd.is_nap_policy_inline());
+            return NORM_TRIMMED;
+        }
+
+        trim_win_payload(tns, tsd, 0, tsd.is_nap_policy_inline());
+        return NORM_TRIMMED;
+    }
+
+    return NORM_OK;
+}
 
 bool TcpNormalizer::trim_payload(TcpNormalizerState&, TcpSegmentDescriptor& tsd, uint32_t max,
     NormMode mode, PegCounts peg, bool force)

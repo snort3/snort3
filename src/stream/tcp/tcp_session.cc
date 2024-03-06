@@ -410,29 +410,6 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
     return false;
 }
 
-void TcpSession::process_tcp_stream(TcpSegmentDescriptor& tsd)
-{
-    if ( tsd.are_packet_flags_set(PKT_IGNORE) )
-        return;
-
-    set_packet_header_foo(tsd);
-
-    if ( flow_exceeds_config_thresholds(tsd) )
-        return;
-
-    TcpStreamTracker* listener = tsd.get_listener();
-
-    listener->reassembler.queue_packet_for_reassembly(tsd);
-
-    // Alert if overlap limit exceeded
-    if ( (tcp_config->overlap_limit)
-        && (listener->reassembler.get_overlap_count() > tcp_config->overlap_limit) )
-    {
-        tel.set_tcp_event(EVENT_EXCESSIVE_OVERLAP);
-        listener->reassembler.set_overlap_count(0);
-    }
-}
-
 void TcpSession::update_stream_order(const TcpSegmentDescriptor& tsd, bool aligned)
 {
     TcpStreamTracker* listener = tsd.get_listener();
@@ -481,79 +458,6 @@ void TcpSession::update_stream_order(const TcpSegmentDescriptor& tsd, bool align
         case TcpStreamTracker::OUT_OF_SEQUENCE:
             tsd.set_packet_flags(PKT_STREAM_ORDER_BAD);
     }
-}
-
-int TcpSession::process_tcp_data(TcpSegmentDescriptor& tsd)
-{
-    TcpStreamTracker* listener = tsd.get_listener();
-    const tcp::TCPHdr* tcph = tsd.get_tcph();
-    uint32_t seq = tsd.get_seq();
-
-    if ( tcph->is_syn() )
-        seq++;
-
-    /* we're aligned, so that's nice anyway */
-    if (seq == listener->rcv_nxt)
-    {
-        /* check if we're in the window */
-        if ( tcp_config->policy != StreamPolicy::OS_PROXY
-            and !Stream::is_midstream(flow) and listener->normalizer.get_stream_window(tsd) == 0 )
-        {
-            if ( !listener->normalizer.data_inside_window(tsd) )
-            {
-                listener->normalizer.trim_win_payload(tsd, 0, tsd.is_nap_policy_inline());
-                return STREAM_UNALIGNED;
-            }
-
-            if( listener->get_iss() )
-            {
-                tcpStats.zero_win_probes++;
-                listener->normalizer.set_zwp_seq(seq);
-                listener->normalizer.trim_win_payload(tsd, MAX_ZERO_WIN_PROBE_LEN, tsd.is_nap_policy_inline());
-            }
-        }
-
-        /* move the ack boundary up, this is the only way we'll accept data */
-        // FIXIT-L for ips, must move all the way to first hole or right end
-        listener->rcv_nxt = tsd.get_end_seq();
-
-        if ( tsd.is_data_segment() )
-        {
-            update_stream_order(tsd, true);
-            process_tcp_stream(tsd);
-            return STREAM_ALIGNED;
-        }
-    }
-    else
-    {
-        // pkt is out of order, do some target-based shizzle here...
-        // NO, we don't want to simply bail.  Some platforms favor unack'd dup data over the
-        // original data.  Let the reassembly policy decide how to handle the overlapping data.
-        // See HP, Solaris, et al. for those that favor duplicate data over the original in
-        // some cases.
-
-        /* check if we're in the window */
-        if ( tcp_config->policy != StreamPolicy::OS_PROXY
-            and !Stream::is_midstream(flow) and listener->normalizer.get_stream_window(tsd) == 0 )
-        {
-            if ( SEQ_EQ(seq, listener->normalizer.get_zwp_seq()) )
-            {
-                tcpStats.zero_win_probes++;
-                listener->normalizer.trim_win_payload(tsd, MAX_ZERO_WIN_PROBE_LEN, tsd.is_nap_policy_inline());
-                return STREAM_UNALIGNED;
-            }
-
-            listener->normalizer.trim_win_payload(tsd, 0, tsd.is_nap_policy_inline());
-            return STREAM_UNALIGNED;
-        }
-        if ( tsd.is_data_segment() )
-        {
-            update_stream_order(tsd, false);
-            process_tcp_stream(tsd);
-        }
-    }
-
-    return STREAM_UNALIGNED;
 }
 
 void TcpSession::set_os_policy()
@@ -865,33 +769,45 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd, bool flush)
         else
             server.set_tcp_options_len(tcp_options_len);
 
-        // FIXIT-M move this to normalizer base class, handle OS_PROXY in derived class
-        if ( tcp_config->policy != StreamPolicy::OS_PROXY )
+        uint32_t seq = tsd.get_tcph()->is_syn() ? tsd.get_seq() + 1 : tsd.get_seq();
+        bool stream_is_inorder = ( seq == listener->rcv_nxt );
+
+        int rc =  listener->normalizer.apply_normalizations(tsd, seq, stream_is_inorder);
+        switch ( rc )
         {
-            // these normalizations can't be done if we missed setup. and
-            // window is zero in one direction until we've seen both sides.
-            if ( !(Stream::is_midstream(flow)) && flow->two_way_traffic() )
+        case TcpNormalizer::NORM_OK:
+            if ( stream_is_inorder )
+                listener->rcv_nxt = tsd.get_end_seq();
+
+            update_stream_order(tsd, stream_is_inorder);
+
+            // don't queue data if we are ignoring or queue thresholds are exceeded
+            if ( !tsd.are_packet_flags_set(PKT_IGNORE) and !flow_exceeds_config_thresholds(tsd) )
             {
-                // drop packet if sequence num is invalid
-                if ( !listener->is_segment_seq_valid(tsd) )
+                set_packet_header_foo(tsd);
+                listener->reassembler.queue_packet_for_reassembly(tsd);
+
+                // Alert if overlap limit exceeded
+                if ( (tcp_config->overlap_limit)
+                    && (listener->reassembler.get_overlap_count() > tcp_config->overlap_limit) )
                 {
-                    tcpStats.invalid_seq_num++;
-                    listener->normalizer.trim_win_payload(tsd);
-                    return;
+                    tel.set_tcp_event(EVENT_EXCESSIVE_OVERLAP);
+                    listener->reassembler.set_overlap_count(0);
                 }
-
-                // trim to fit in listener's window and mss
-                listener->normalizer.trim_win_payload
-                    (tsd, (listener->r_win_base + listener->get_snd_wnd() - listener->rcv_nxt));
-
-                if ( listener->get_mss() )
-                    listener->normalizer.trim_mss_payload(tsd, listener->get_mss());
-
-                listener->normalizer.ecn_stripper(tsd);
             }
-        }
+            break;
 
-        process_tcp_data(tsd);
+        case TcpNormalizer::NORM_TRIMMED:
+            break;
+
+        case TcpNormalizer::NORM_BAD_SEQ:
+            return;
+
+        default:
+            assert(false);
+            break;
+
+        }
     }
 
     if ( flush )

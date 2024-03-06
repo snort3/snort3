@@ -35,7 +35,9 @@ using namespace snort;
 class TcpNormalizerFirst : public TcpNormalizer
 {
 public:
-    TcpNormalizerFirst() = default;
+    TcpNormalizerFirst()
+    { my_name = "OS_First"; }
+
 
     int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
 };
@@ -43,7 +45,9 @@ public:
 class TcpNormalizerLast : public TcpNormalizer
 {
 public:
-    TcpNormalizerLast() = default;
+    TcpNormalizerLast()
+    { my_name = "OS_Last"; }
+
 
     int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
 };
@@ -51,7 +55,9 @@ public:
 class TcpNormalizerLinux : public TcpNormalizer
 {
 public:
-    TcpNormalizerLinux() = default;
+    TcpNormalizerLinux()
+    { my_name = "OS_Linux"; }
+
 
     void init(TcpNormalizerState& tns) override
     {
@@ -67,7 +73,9 @@ public:
 class TcpNormalizerOldLinux : public TcpNormalizer
 {
 public:
-    TcpNormalizerOldLinux() = default;
+    TcpNormalizerOldLinux()
+    { my_name = "OS_OldLinux"; }
+
 
     void init(TcpNormalizerState& tns) override
     { tns.paws_drop_zero_ts = false; }
@@ -80,7 +88,9 @@ public:
 class TcpNormalizerBSD : public TcpNormalizer
 {
 public:
-    TcpNormalizerBSD() = default;
+    TcpNormalizerBSD()
+    { my_name = "OS_BSD"; }
+
 
     bool validate_rst(TcpNormalizerState&, TcpSegmentDescriptor&) override;
     int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
@@ -89,7 +99,9 @@ public:
 class TcpNormalizerMacOS : public TcpNormalizer
 {
 public:
-    TcpNormalizerMacOS() = default;
+    TcpNormalizerMacOS()
+    { my_name = "OS_MacOS"; }
+
 
     int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
 };
@@ -97,7 +109,9 @@ public:
 class TcpNormalizerSolaris : public TcpNormalizer
 {
 public:
-    TcpNormalizerSolaris() = default;
+    TcpNormalizerSolaris()
+    { my_name = "OS_Solaris"; }
+
 
     void init(TcpNormalizerState& tns) override
     { tns.paws_drop_zero_ts = false; }
@@ -109,7 +123,9 @@ public:
 class TcpNormalizerIrix : public TcpNormalizer
 {
 public:
-    TcpNormalizerIrix() = default;
+    TcpNormalizerIrix()
+    { my_name = "OS_Irix"; }
+
 
     int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
 };
@@ -117,7 +133,9 @@ public:
 class TcpNormalizerHpux11 : public TcpNormalizer
 {
 public:
-    TcpNormalizerHpux11() = default;
+    TcpNormalizerHpux11()
+    { my_name = "OS_Hpux11"; }
+
 
     bool validate_rst(TcpNormalizerState&, TcpSegmentDescriptor&) override;
     bool is_paws_ts_checked_required(TcpNormalizerState&, TcpSegmentDescriptor&) override;
@@ -127,7 +145,9 @@ public:
 class TcpNormalizerHpux10 : public TcpNormalizer
 {
 public:
-    TcpNormalizerHpux10() = default;
+    TcpNormalizerHpux10()
+    { my_name = "OS_Hpux10"; }
+
 
     int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
 };
@@ -135,7 +155,9 @@ public:
 class TcpNormalizerWindows : public TcpNormalizer
 {
 public:
-    TcpNormalizerWindows() = default;
+    TcpNormalizerWindows()
+    { my_name = "OS_Windows"; }
+
 
     void init(TcpNormalizerState& tns) override
     { tns.paws_drop_zero_ts = false; }
@@ -147,7 +169,9 @@ public:
 class TcpNormalizerWindows2K3 : public TcpNormalizer
 {
 public:
-    TcpNormalizerWindows2K3() = default;
+    TcpNormalizerWindows2K3()
+    { my_name = "OS_Windows2K3"; }
+
 
     void init(TcpNormalizerState& tns) override
     { tns.paws_drop_zero_ts = false; }
@@ -159,7 +183,9 @@ public:
 class TcpNormalizerVista : public TcpNormalizer
 {
 public:
-    TcpNormalizerVista() = default;
+    TcpNormalizerVista()
+    { my_name = "OS_Vista"; }
+
 
     void init(TcpNormalizerState& tns) override
     { tns.paws_drop_zero_ts = false; }
@@ -171,8 +197,11 @@ public:
 class TcpNormalizerProxy : public TcpNormalizer
 {
 public:
-    TcpNormalizerProxy() = default;
+    TcpNormalizerProxy()
+    { my_name = "OS_Proxy"; }
 
+    TcpNormalizer::NormStatus apply_normalizations(
+        TcpNormalizerState&, TcpSegmentDescriptor&, uint32_t seq, bool stream_is_inorder) override;
     bool validate_rst(TcpNormalizerState&, TcpSegmentDescriptor&) override;
     int handle_paws(TcpNormalizerState&, TcpSegmentDescriptor&) override;
     int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
@@ -362,8 +391,8 @@ bool TcpNormalizerHpux11::is_paws_ts_checked_required(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
     /* HPUX 11 ignores timestamps for out of order segments */
-    if ( (tns.tracker->get_tf_flags() & TF_MISSING_PKT) || !SEQ_EQ(tns.tracker->rcv_nxt,
-        tsd.get_seq()) )
+    if ( (tns.tracker->get_tf_flags() & TF_MISSING_PKT)
+        || !SEQ_EQ(tns.tracker->rcv_nxt, tsd.get_seq()) )
         return false;
     else
         return true;
@@ -417,11 +446,17 @@ int TcpNormalizerVista::handle_repeated_syn(
     return handle_repeated_syn_mswin(tns.peer_tracker, tns.tracker, tsd, tns.session);
 }
 
+TcpNormalizer::NormStatus TcpNormalizerProxy::apply_normalizations(
+    TcpNormalizerState&, TcpSegmentDescriptor&, uint32_t, bool)
+{
+    // when Proxy policy is active packet normalizations are skipped
+    return NORM_OK;
+}
+
 bool TcpNormalizerProxy::validate_rst(
     TcpNormalizerState&, TcpSegmentDescriptor&)
-
 {
-    return false;
+    return true;
 }
 
 int TcpNormalizerProxy::handle_paws(
