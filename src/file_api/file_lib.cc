@@ -109,8 +109,11 @@ FileInfo::~FileInfo ()
         delete[] sha256;
 }
 
-void FileInfo::copy(const FileInfo& other)
+void FileInfo::copy(const FileInfo& other, bool clear_data)
 {
+    if (&other == this)
+        return;
+
     if (other.sha256)
     {
         sha256 = new uint8_t[SHA256_HASH_SIZE];
@@ -131,10 +134,13 @@ void FileInfo::copy(const FileInfo& other)
     file_capture_enabled = other.file_capture_enabled;
     file_state = other.file_state;
     pending_expire_time = other.pending_expire_time;
-    // only one copy of file capture
-    file_capture = nullptr;
-    policy_id = 0;
-    user_file_data = nullptr;
+    if (clear_data)
+    {
+        // only one copy of file capture
+        file_capture = nullptr;
+        policy_id = 0;
+        user_file_data = nullptr;
+    }
 }
 
 FileInfo::FileInfo(const FileInfo& other)
@@ -311,7 +317,7 @@ void FileInfo::set_file_data(UserFileDataBase* fd)
     user_file_data = fd;
 }
 
-UserFileDataBase* FileInfo::get_file_data()
+UserFileDataBase* FileInfo::get_file_data() const
 {
     return user_file_data;
 }

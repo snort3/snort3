@@ -284,7 +284,7 @@ FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
         verdict = FILE_VERDICT_UNKNOWN;
     }
 
-    if ( file->get_file_sig_sha256() and verdict == FILE_VERDICT_UNKNOWN )
+    if ( file->get_file_sig_sha256() and verdict <= FILE_VERDICT_LOG )
     {
         file->user_file_data_mutex.lock();
         verdict = policy->signature_lookup(p, file);
@@ -510,7 +510,7 @@ FileVerdict FileCache::cached_verdict_lookup(Packet* p, FileInfo* file,
             "cached_verdict_lookup:Verdict received from cached_verdict_lookup %d\n", verdict);
         apply_verdict(p, file_found, verdict, true, policy);
         // Update the current file context from cached context
-        *file = *(FileInfo*)file_found;
+        file->copy(*(FileInfo*)file_found, false);
     }
 
     return verdict;

@@ -82,7 +82,8 @@ public:
     void set_policy_id(uint32_t id);
     uint32_t get_policy_id();
     void set_file_data(UserFileDataBase* fd);
-    UserFileDataBase* get_file_data();
+    UserFileDataBase* get_file_data() const;
+    void copy(const FileInfo& other, bool clear_data = true);
     // Preserve the file in memory until it is released
     // The file reserved will be returned and it will be detached from file context/session
     FileCaptureState reserve_file(FileCapture*& dest);
@@ -112,9 +113,6 @@ protected:
     FileState file_state = { FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING };
     uint32_t policy_id = 0;
     UserFileDataBase* user_file_data = nullptr;
-
-private:
-    void copy(const FileInfo& other);
 };
 
 class SO_PUBLIC FileContext : public FileInfo
