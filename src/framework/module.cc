@@ -101,6 +101,8 @@ void Module::main_accumulate_stats()
 
     if (!global_stats())
     {
+        //reset the results
+        std::fill(dump_stats_results.begin(), dump_stats_results.end(), 0);
         for ( int i = 0; i < num_counts; i++ )
         {
             for ( unsigned thread_index = 0; thread_index < dump_stats_counts.size(); thread_index++)
@@ -195,7 +197,6 @@ void Module::show_stats()
     {
         ::show_stats(&dump_stats_results[0], get_pegs(), num_counts, get_name());
         dump_stats_initialized.assign(dump_stats_initialized.size(), 0);
-        std::fill(dump_stats_results.begin(), dump_stats_results.end(), 0);
     }
 }
 
