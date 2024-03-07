@@ -358,10 +358,11 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
 
             if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON)
             {
-                tsd.get_pkt()->active->set_drop_reason("stream");
                 tel.set_tcp_event(EVENT_MAX_QUEUED_BYTES_EXCEEDED);
-                if (PacketTracer::is_active())
-                    PacketTracer::log("Stream: Flow exceeded the configured max byte threshold (%u)\n", tcp_config->max_queued_bytes);
+                listener->normalizer.log_drop_reason(tsd, inline_mode, "stream", 
+                "Stream: Flow exceeded the configured max byte threshold (" + std::to_string(tcp_config->max_queued_bytes) +
+                "). You may want to adjust the 'max_bytes' parameter in the NAP policy" 
+                " to a higher value, or '0' for unlimited.\n");
             }
 
             listener->normalizer.trim_win_payload(tsd, space_left, inline_mode);
@@ -394,10 +395,11 @@ bool TcpSession::flow_exceeds_config_thresholds(TcpSegmentDescriptor& tsd)
 
             if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON)
             {
-                tsd.get_pkt()->active->set_drop_reason("stream");
                 tel.set_tcp_event(EVENT_MAX_QUEUED_SEGS_EXCEEDED);
-                if (PacketTracer::is_active())
-                    PacketTracer::log("Stream: Flow exceeded the configured max segment threshold (%u)\n", tcp_config->max_queued_segs);
+                listener->normalizer.log_drop_reason(tsd, inline_mode, "stream",
+                "Stream: Flow exceeded the configured max segment threshold (" + std::to_string(tcp_config->max_queued_segs) + 
+                "). You may want to adjust the 'max_segments' parameter in the NAP policy" 
+                " to a higher value, or '0' for unlimited.\n");
             }
 
             listener->normalizer.trim_win_payload(tsd, 0, inline_mode);
@@ -751,7 +753,6 @@ bool TcpSession::check_for_window_slam(TcpSegmentDescriptor& tsd)
 
 void TcpSession::mark_packet_for_drop(TcpSegmentDescriptor& tsd)
 {
-
     tsd.get_listener()->normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
     set_pkt_action_flag(ACTION_BAD_PKT);
 }

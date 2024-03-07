@@ -101,6 +101,9 @@ public:
     void set_zwp_seq(uint32_t seq)
     { return norm->set_zwp_seq(tns, seq); }
 
+    void log_drop_reason(const TcpSegmentDescriptor& tsd, bool inline_mode, const char *issuer, const std::string& log)
+    { return norm->log_drop_reason(tns, tsd , inline_mode, issuer, log); }
+
     uint16_t set_urg_offset(const snort::tcp::TCPHdr* tcph, uint16_t dsize)
     { return norm->set_urg_offset(tns, tcph, dsize); }
 

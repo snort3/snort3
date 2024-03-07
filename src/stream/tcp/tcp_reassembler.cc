@@ -952,6 +952,9 @@ void TcpReassembler::fallback(TcpStreamTracker& tracker, bool server_side)
 
 bool TcpReassembler::segment_within_seglist_window(TcpReassemblerState& trs, TcpSegmentDescriptor& tsd)
 {
+    if ( !trs.sos.seglist.head )
+        return true;
+    
     uint32_t start, end = (trs.sos.seglist.tail->i_seq + trs.sos.seglist.tail->i_len);
 
     if ( SEQ_LT(trs.sos.seglist_base_seq, trs.sos.seglist.head->i_seq) )
