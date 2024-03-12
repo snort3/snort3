@@ -29,6 +29,7 @@
 #include "control/control.h"
 #include "main/analyzer_command.h"
 #include "profiler/profiler.h"
+#include "utils/util.h"
 
 #include "packet_capture.h"
 
@@ -41,13 +42,16 @@ static int disable(lua_State*);
 static const Parameter s_capture[] =
 {
     { "enable", Parameter::PT_BOOL, nullptr, "false",
-      "initially enable packet dumping" },
+      "state of packet capturing" },
 
     { "filter", Parameter::PT_STRING, nullptr, nullptr,
-      "bpf filter to use for packet dump" },
+      "bpf filter to use for packet capturing" },
 
     { "group", Parameter::PT_INT, "-1:32767", "-1",
-      "group filter to use for the packet dump" },
+      "group filter to use for packet capturing" },
+
+    { "tenants", Parameter::PT_STRING, nullptr, nullptr,
+      "comma-separated tenants filter to use for packet capturing" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -55,25 +59,28 @@ static const Parameter s_capture[] =
 static const Parameter capture_params[] =
 {
     { "filter", Parameter::PT_STRING, nullptr, nullptr,
-      "bpf filter to use for packet dump" },
+      "bpf filter to use for packet capturing" },
 
     { "group", Parameter::PT_INT, "-1:32767", "-1",
-      "group filter to use for the packet dump" },
+      "group filter to use for packet capturing" },
+
+    { "tenants", Parameter::PT_STRING, nullptr, nullptr,
+      "comma-separated tenants filter to use for packet capturing" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 static const Command cap_cmds[] =
 {
-    { "enable", enable, capture_params, "dump raw packets"},
-    { "disable", disable, nullptr, "stop packet dump"},
+    { "enable", enable, capture_params, "capture raw packets"},
+    { "disable", disable, nullptr, "stop packet capturing"},
     { nullptr, nullptr, nullptr, nullptr }
 };
 
 static const PegInfo cap_names[] =
 {
     { CountType::SUM, "processed", "packets processed against filter" },
-    { CountType::SUM, "captured", "packets matching dumped after matching filter" },
+    { CountType::SUM, "captured", "packets captured after matching filter" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -86,13 +93,14 @@ THREAD_LOCAL ProfileStats cap_prof_stats;
 class PacketCaptureDebug : public AnalyzerCommand
 {
 public:
-    PacketCaptureDebug(const char* f, const int16_t g);
+    PacketCaptureDebug(const char* f, const int16_t g, const char* t);
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "PACKET_CAPTURE_DEBUG"; }
 private:
     bool enable = false;
     std::string filter;
     int16_t group = -1;
+    std::string tenants;
 };
 
 // -----------------------------------------------------------------------------
@@ -100,14 +108,14 @@ private:
 // -----------------------------------------------------------------------------
 static int enable(lua_State* L)
 {
-    main_broadcast_command(new PacketCaptureDebug(lua_tostring(L, 1),
-        luaL_optint(L, 2, 0)), ControlConn::query_from_lua(L));
+    main_broadcast_command(new PacketCaptureDebug(luaL_optstring(L, 1, ""),
+        luaL_optint(L, 2, 0), luaL_optstring(L, 3, "")), ControlConn::query_from_lua(L));
     return 0;
 }
 
 static int disable(lua_State* L)
 {
-    main_broadcast_command(new PacketCaptureDebug(nullptr, -1), ControlConn::query_from_lua(L));
+    main_broadcast_command(new PacketCaptureDebug(nullptr, -1, nullptr), ControlConn::query_from_lua(L));
     return 0;
 }
 
@@ -115,20 +123,21 @@ static int disable(lua_State* L)
 // non-static functions
 // -----------------------------------------------------------------------------
 
-PacketCaptureDebug::PacketCaptureDebug(const char* f, const int16_t g)
+PacketCaptureDebug::PacketCaptureDebug(const char* f, const int16_t g, const char* t)
 {
     if (f)
     {
         filter = f;
         group = g;
         enable = true;
+        tenants = t == nullptr ? "" : t;
     }
 }
 
 bool PacketCaptureDebug::execute(Analyzer&, void**)
 {
     if (enable)
-        packet_capture_enable(filter, group);
+        packet_capture_enable(filter, group, tenants);
     else
         packet_capture_disable();
 
@@ -140,6 +149,7 @@ CaptureModule::CaptureModule() :
 {
     config.enabled = false;
     config.group = -1;
+    config.tenants.clear();
 }
 
 bool CaptureModule::set(const char*, Value& v, SnortConfig*)
@@ -152,6 +162,9 @@ bool CaptureModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("group") )
         config.group = v.get_int16();
+
+    else if ( v.is("tenants") )
+        str_to_int_vector(v.get_string(), ',', config.tenants);
 
     return true;
 }

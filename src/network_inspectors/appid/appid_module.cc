@@ -315,7 +315,7 @@ static int enable_debug(lua_State* L)
     constraints.dport = dport;
 
     if (tenantsstr)
-        StrToIntVector(tenantsstr, ',', constraints.tenants);
+        str_to_int_vector(tenantsstr, ',', constraints.tenants);
 
     AppIdDebugLogEvent event(&constraints, "AppIdDbg");
     DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::DEBUG_LOG, event);

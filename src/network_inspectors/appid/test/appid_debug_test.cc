@@ -54,9 +54,9 @@ void LogMessage(const char*, va_list&) { }
 void TraceApi::filter(snort::Packet const&) { }
 void trace_vprintf(const char*, unsigned char, const char*, const Packet*, const char*, va_list) { }
 uint8_t TraceApi::get_constraints_generation() { return 0; }
+std::string int_vector_to_str(const std::vector<uint32_t>&, char) { return ""; }
 }
 
-std::string IntVectorToStr(const std::vector<uint32_t>& elems, char delim) { return ""; }
 
 THREAD_LOCAL const snort::Trace* appid_trace;
 

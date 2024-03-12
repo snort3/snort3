@@ -75,8 +75,6 @@ bool EnterChroot(std::string& root_dir, std::string& log_dir);
 void InitProtoNames();
 unsigned int get_random_seed();
 bool get_file_size(const std::string&, size_t&);
-void StrToIntVector(const std::string& s, char delim, std::vector<uint32_t>& elems);
-std::string IntVectorToStr(const std::vector<uint32_t>& elems, char delim = ',');
 
 #if defined(NOCOREFILE)
 void SetNoCores();
@@ -132,6 +130,8 @@ SO_PUBLIC char* snort_strdup(const char*);
 SO_PUBLIC char* snort_strndup(const char*, size_t);
 SO_PUBLIC void ts_print(const struct timeval*, char*, bool yyyymmdd = false);
 void uint8_to_printable_str(const uint8_t* buff, unsigned len, std::string& print_str);
+SO_PUBLIC void str_to_int_vector(const std::string& s, char delim, std::vector<uint32_t>& elems);
+SO_PUBLIC std::string int_vector_to_str(const std::vector<uint32_t>& elems, char delim = ',');
 }
 
 #endif

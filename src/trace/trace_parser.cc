@@ -127,7 +127,7 @@ bool TraceParser::set_constraints(const Value& val)
         if (!tenants_str)
             return false;
 
-        StrToIntVector(tenants_str, ',', parsed_constraints.tenants);
+        str_to_int_vector(tenants_str, ',', parsed_constraints.tenants);
         parsed_constraints.set_bits |= PacketConstraints::SetBits::TENANT;
     }
     else

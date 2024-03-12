@@ -467,7 +467,7 @@ void PacketTracer::update_constraints(const PacketConstraints* cs)
 
     LogMessage("Debugging packet tracer with %s-%hu and %s-%hu %hhu and tenants:%s\n",
         sipstr, constraints.src_port, dipstr, constraints.dst_port,
-        static_cast<uint8_t>(constraints.ip_proto), IntVectorToStr(constraints.tenants).c_str());
+        static_cast<uint8_t>(constraints.ip_proto), int_vector_to_str(constraints.tenants).c_str());
 
     shell_enabled = true;
 

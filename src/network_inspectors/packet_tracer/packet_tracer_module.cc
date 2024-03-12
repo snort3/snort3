@@ -131,7 +131,7 @@ static int enable(lua_State* L)
 
     if (tenantsstr)
     {
-        StrToIntVector(tenantsstr, ',', constraints.tenants);
+        str_to_int_vector(tenantsstr, ',', constraints.tenants);
         constraints.set_bits |= PacketConstraints::SetBits::TENANT;
     }
 

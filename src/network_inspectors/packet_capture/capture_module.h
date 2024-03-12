@@ -31,6 +31,7 @@ struct CaptureConfig
     bool enabled;
     int16_t group;
     std::string filter;
+    std::vector<uint32_t> tenants;
 };
 
 struct CaptureStats

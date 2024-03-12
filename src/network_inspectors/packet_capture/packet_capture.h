@@ -22,7 +22,7 @@
 
 #include <string>
 
-void packet_capture_enable(const std::string&, const int16_t g = -1);
+void packet_capture_enable(const std::string&, const int16_t g = -1, const std::string& t = "");
 void packet_capture_disable();
 
 #endif

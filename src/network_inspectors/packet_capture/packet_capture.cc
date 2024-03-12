@@ -29,6 +29,7 @@
 #include "framework/inspector.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
+#include "utils/util.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -108,13 +109,14 @@ static bool open_pcap_dumper()
 }
 
 // for unit test
-static void _packet_capture_enable(const string& f, const int16_t g = -1)
+static void _packet_capture_enable(const string& f, const int16_t g = -1, const string& t = "")
 {
     if ( !config.enabled )
     {
         config.filter = f;
         config.enabled = true;
         config.group = g;
+        str_to_int_vector(t, ',', config.tenants);
     }
 }
 
@@ -123,6 +125,7 @@ static void _packet_capture_disable()
 {
     config.enabled = false;
     config.group = -1;
+    config.tenants.clear();
     LogMessage("Packet capture disabled\n");
 }
 
@@ -130,10 +133,10 @@ static void _packet_capture_disable()
 // non-static functions
 // -----------------------------------------------------------------------------
 
-void packet_capture_enable(const string& f, const int16_t g)
+void packet_capture_enable(const string& f, const int16_t g, const string& t)
 {
 
-    _packet_capture_enable(f, g);
+    _packet_capture_enable(f, g, t);
 
     if ( !capture_initialized() )
     {
@@ -202,8 +205,11 @@ bool PacketCapture::capture_init()
 void PacketCapture::show(const SnortConfig*) const
 {
     ConfigLogger::log_flag("enable", config.enabled);
-    if ( config.enabled )
+    if (config.enabled) 
+    {
         ConfigLogger::log_value("filter", config.filter.c_str());
+        ConfigLogger::log_value("tenants", int_vector_to_str(config.tenants).c_str());
+    }
 }
 
 void PacketCapture::eval(Packet* p)
@@ -222,6 +228,17 @@ void PacketCapture::eval(Packet* p)
 
         if ( p->is_cooked() )
             return;
+
+        if (!config.tenants.empty())
+        {
+            if (!std::any_of(config.tenants.begin(), config.tenants.end(),[&p](uint32_t tenant_id){
+            return p->pkth->tenant_id == tenant_id;
+            }))
+            {
+                cap_count_stats.checked++;
+                return;
+            }
+        }
 
         if ( !bpf.bf_insns || bpf_filter(bpf.bf_insns, p->pkt,
                 p->pktlen, p->pkth->pktlen) )
@@ -318,6 +335,21 @@ static Packet* init_null_packet()
     return &p;
 }
 
+static Packet* init_packet_with_tenant(uint32_t tenant_id)
+{
+    static Packet p(false);
+    static DAQ_PktHdr_t h;
+
+    h.tenant_id = tenant_id;
+
+    p.pkth = &h;
+    p.pkt = nullptr;
+    p.pktlen = 0;
+    h.pktlen = 0;
+
+    return &p;
+}
+
 class MockPacketCapture : public PacketCapture
 {
 public:
@@ -402,6 +434,38 @@ TEST_CASE("lazy init", "[PacketCapture]")
     cap.eval(null_packet);
     CHECK ( (capture_initialized() == false) );
 
+    mod_dtor(mod);
+}
+
+TEST_CASE("filter tenants", "[PacketCapture]")
+{
+    auto mod = (CaptureModule*)mod_ctor();
+    auto real_cap = (PacketCapture*)pc_ctor(mod);
+
+    CHECK ( (capture_initialized() == false) );
+
+    pc_dtor(real_cap);
+    MockPacketCapture cap(mod);
+
+    _packet_capture_enable("",-1,"11,13");
+    CHECK ( (capture_initialized() == false) );
+
+    auto packet_tenants_11 = init_packet_with_tenant(11);
+    cap.write_packet_called = false;
+    cap.eval(packet_tenants_11);
+    CHECK ( cap.write_packet_called );
+
+    auto packet_tenants_13 = init_packet_with_tenant(13);
+    cap.write_packet_called = false;
+    cap.eval(packet_tenants_13);
+    CHECK ( cap.write_packet_called );
+
+    auto packet_tenants_22 = init_packet_with_tenant(22);
+    cap.write_packet_called = false;
+    cap.eval(packet_tenants_22);
+    CHECK ( !cap.write_packet_called );
+
+    _packet_capture_disable();
     mod_dtor(mod);
 }
 

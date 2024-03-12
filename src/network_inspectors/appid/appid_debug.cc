@@ -223,7 +223,7 @@ void AppIdDebug::set_constraints(const char *desc,
 
         appid_log(nullptr, TRACE_INFO_LEVEL, "Debugging %s with %s-%hu and %s-%hu %hhu and tenants:%s\n", desc,
             sipstr, info.sport, dipstr, info.dport, static_cast<uint8_t>(info.protocol),
-            IntVectorToStr(info.tenants).c_str());
+            int_vector_to_str(info.tenants).c_str());
 
         enabled = true;
     }
