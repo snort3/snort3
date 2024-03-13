@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.81.0 2024-02-16 22:51:25 UTC TST
+Revision 3.1.82.0 2024-03-12 12:50:44 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -16,6 +16,7 @@ Table of Contents
 
 1. Help
 2. Basic Modules
+
     2.1. active
     2.2. alerts
     2.3. attribute_table
@@ -49,7 +50,9 @@ Table of Contents
     2.31. snort
     2.32. suppress
     2.33. trace
+
 3. Codec Modules
+
     3.1. arp
     3.2. auth
     3.3. ciscometadata
@@ -77,10 +80,14 @@ Table of Contents
     3.25. udp
     3.26. vlan
     3.27. wlan
+
 4. Connector Modules
+
     4.1. file_connector
     4.2. tcp_connector
+
 5. Inspector Modules
+
     5.1. appid
     5.2. appid_listener
     5.3. arp_spoof
@@ -136,10 +143,14 @@ Table of Contents
     5.53. stream_user
     5.54. telnet
     5.55. wizard
+
 6. IPS Action Modules
+
     6.1. react
     6.2. reject
+
 7. IPS Option Modules
+
     7.1. ack
     7.2. appids
     7.3. base64_decode
@@ -270,9 +281,11 @@ Table of Contents
     7.128. vba_data
     7.129. window
     7.130. wscale
+
 8. Search Engine Modules
 9. SO Rule Modules
 10. Logger Modules
+
     10.1. alert_csv
     10.2. alert_ex
     10.3. alert_fast
@@ -285,7 +298,9 @@ Table of Contents
     10.10. log_hext
     10.11. log_pcap
     10.12. unified2
+
 11. Appendix
+
     11.1. Build Options
     11.2. Environment Variables
     11.3. Command Line Options
@@ -1815,6 +1830,7 @@ Configuration:
     }
   * bool trace.constraints.match = true: use constraints to filter
     traces
+  * string trace.constraints.tenants: tenants filter
   * enum trace.output: output method for trace log messages { stdout
     | syslog }
   * bool trace.ntuple = false: print packet n-tuple info with trace
@@ -4670,22 +4686,25 @@ Instance Type: global
 
 Configuration:
 
-  * bool packet_capture.enable = false: initially enable packet
-    dumping
-  * string packet_capture.filter: bpf filter to use for packet dump
-  * int packet_capture.group = -1: group filter to use for the packet
-    dump { -1:32767 }
+  * bool packet_capture.enable = false: state of packet capturing
+  * string packet_capture.filter: bpf filter to use for packet
+    capturing
+  * int packet_capture.group = -1: group filter to use for packet
+    capturing { -1:32767 }
+  * string packet_capture.tenants: comma-separated tenants filter to
+    use for packet capturing
 
 Commands:
 
-  * packet_capture.enable(filter, group): dump raw packets
-  * packet_capture.disable(): stop packet dump
+  * packet_capture.enable(filter, group, tenants): capture raw
+    packets
+  * packet_capture.disable(): stop packet capturing
 
 Peg counts:
 
   * packet_capture.processed: packets processed against filter (sum)
-  * packet_capture.captured: packets matching dumped after matching
-    filter (sum)
+  * packet_capture.captured: packets captured after matching filter
+    (sum)
 
 
 5.35. perf_monitor
@@ -5982,6 +6001,8 @@ Peg counts:
     (sum)
   * stream_tcp.zero_win_probes: number of tcp zero window probes
     (sum)
+  * stream_tcp.proxy_mode_flows: number of flows set to proxy
+    normalization policy (sum)
 
 
 5.52. stream_udp
@@ -10134,11 +10155,13 @@ libraries see the Getting Started section of the manual.
   * bool output.verbose = false: be verbose (same as -v)
   * bool output.wide_hex_dump = false: output 20 bytes per lines
     instead of 16 when dumping buffers
-  * bool packet_capture.enable = false: initially enable packet
-    dumping
-  * string packet_capture.filter: bpf filter to use for packet dump
-  * int packet_capture.group = -1: group filter to use for the packet
-    dump { -1:32767 }
+  * bool packet_capture.enable = false: state of packet capturing
+  * string packet_capture.filter: bpf filter to use for packet
+    capturing
+  * int packet_capture.group = -1: group filter to use for packet
+    capturing { -1:32767 }
+  * string packet_capture.tenants: comma-separated tenants filter to
+    use for packet capturing
   * bool packets.address_space_agnostic = false: determines whether
     DAQ address space info is used to track fragments and connections
   * string packets.bpf_file: file with BPF to select traffic for
@@ -11034,6 +11057,7 @@ libraries see the Getting Started section of the manual.
     traces
   * string trace.constraints.src_ip: source IP address filter
   * int trace.constraints.src_port: source port filter { 0:65535 }
+  * string trace.constraints.tenants: tenants filter
   * int trace.modules.all: enable trace for all modules { 0:255 }
   * int trace.modules.appid.all: enable all trace options { 0:255 }
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
@@ -11904,8 +11928,8 @@ libraries see the Getting Started section of the manual.
   * normalizer.test_tcp_ts_nop: test timestamp options cleared (sum)
   * normalizer.test_tcp_urgent_ptr: test packets without data with
     urgent pointer cleared (sum)
-  * packet_capture.captured: packets matching dumped after matching
-    filter (sum)
+  * packet_capture.captured: packets captured after matching filter
+    (sum)
   * packet_capture.processed: packets processed against filter (sum)
   * payload_injector.http2_injects: total number of http2 injections
     (sum)
@@ -12267,6 +12291,8 @@ libraries see the Getting Started section of the manual.
     (sum)
   * stream_tcp.payload_fully_trimmed: segments with no data after
     trimming (sum)
+  * stream_tcp.proxy_mode_flows: number of flows set to proxy
+    normalization policy (sum)
   * stream_tcp.prunes: tcp session prunes (sum)
   * stream_tcp.rebuilt_buffers: rebuilt PDU sections (sum)
   * stream_tcp.rebuilt_bytes: total rebuilt bytes (sum)
@@ -14590,6 +14616,18 @@ TCP window was closed before receiving data.
 
 The TCP 3-way handshake was not seen for this TCP session.
 
+129:21 (stream_tcp) TCP max queued reassembly bytes exceeded
+threshold
+
+The maximum bytes allowed to be queued for reassembly for an endpoint
+has been exceeded.
+
+129:22 (stream_tcp) TCP max queued reassembly segments exceeded
+threshold
+
+The maximum number of segments allowed to be queued for reassembly
+for an endpoint has been exceeded.
+
 131:1 (dns) obsolete DNS RR types
 
 DNS Response Resource Record Type is Obsolete.
@@ -15716,8 +15754,9 @@ alert is raised by the enhanced JavaScript normalizer.
     cache segment(s)
   * network.set_policy(id): set the network policy for commands given
     the user policy id
-  * packet_capture.enable(filter, group): dump raw packets
-  * packet_capture.disable(): stop packet dump
+  * packet_capture.enable(filter, group, tenants): capture raw
+    packets
+  * packet_capture.disable(): stop packet capturing
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port,
     tenants): enable packet tracer debugging
   * packet_tracer.disable(): disable packet tracer

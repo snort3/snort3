@@ -1,3 +1,29 @@
+2024-03-12: 3.1.82.0
+
+* appid: broadcast commands with ctrlcon
+* appid: change eve pattern matching logic
+* appid: replaced warning log with logging api for CBD
+* file_api: do not clear the file capture and user file data pointers when updating the verdict from the cache
+* filters: updated dyn array with vector
+* flow: updated flow_data linklist with STL container
+* framework: validate parameter of number type in a string form
+* kaizen: rename to Snort ML
+* main: clear lua stack when registering commands in a shell
+* main: reset main-thread stats from the main thread
+* main: update limits help
+* packet_capture: add packet capturing per tenant
+* sfip: remove references to unused mode feature
+* sfip: zero out var/node pointers after operations to remedy heap-use-after-free on reload
+* smb: fix for improper session cache destruction in tterm during config reload
+* snort2lua: change deprecated use of ptr_fn to lambda
+* stats: fix timing stats
+* stats: perf improvement changes
+* stream: remove splitter from session before inspectors
+* stream_tcp: add reasons for drops due to trims
+* stream_tcp: implement support for proxy mode normalization behavior
+* stream_tcp: update documentation for stream TCP alerts to include the new 129:21 and 129:22 alerts
+* trace: add tenants logging
+
 2024-02-20: 3.1.81.0
 
 * appid: check tenant_match() if required
