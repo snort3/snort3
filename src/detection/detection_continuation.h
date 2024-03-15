@@ -224,13 +224,13 @@ bool Continuation::State::eval(snort::Packet& p)
     if (cursor.awaiting_data(true) or cursor.size() == 0)
     {
         waypoint = cursor.get_next_pos();
-        debug_logf(detection_trace, TRACE_CONT, data.p,
+        debug_logf(detection_trace, TRACE_CONT, &p,
             "Continuation postponed, %u bytes to go\n", waypoint);
         return false;
     }
 
     assert(cursor.get_name());
-    debug_logf(detection_trace, TRACE_CONT, data.p,
+    debug_logf(detection_trace, TRACE_CONT, &p,
         "Cursor reached the position, evaluating sub-tree with "
         "current buffer '%s'\n", cursor.get_name());
 
