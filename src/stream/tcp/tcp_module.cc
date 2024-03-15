@@ -117,6 +117,7 @@ const PegInfo tcp_pegs[] =
     { CountType::SUM, "zero_len_tcp_opt", "number of zero length tcp options" },
     { CountType::SUM, "zero_win_probes", "number of tcp zero window probes" },
     { CountType::SUM, "proxy_mode_flows", "number of flows set to proxy normalization policy" },
+    { CountType::SUM, "full_retransmits", "number of fully retransmitted segments" },
     { CountType::END, nullptr, nullptr }
 };
 

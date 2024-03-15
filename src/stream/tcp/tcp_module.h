@@ -117,6 +117,7 @@ struct TcpStats
     PegCount zero_len_tcp_opt;
     PegCount zero_win_probes;
     PegCount proxy_mode_flows;
+    PegCount full_retransmits;
 };
 
 extern THREAD_LOCAL struct TcpStats tcpStats;

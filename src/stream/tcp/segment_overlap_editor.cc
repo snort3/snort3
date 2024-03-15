@@ -154,6 +154,8 @@ void SegmentOverlapEditor::eval_right(TcpReassemblerState& trs)
                 trs.sos.tsd->set_retransmit_flag();
                 snort::DetectionEngine::disable_content(trs.sos.tsd->get_pkt());
                 trs.sos.keep_segment = false;
+                tcpStats.full_retransmits++;
+
             }
             else
             {
@@ -173,7 +175,11 @@ void SegmentOverlapEditor::eval_right(TcpReassemblerState& trs)
             if ( is_segment_retransmit(trs, &full_retransmit) )
             {
                 if ( full_retransmit )
+                {
+                    tcpStats.full_retransmits++;
                     break;
+                }
+
                 continue;
             }
 
