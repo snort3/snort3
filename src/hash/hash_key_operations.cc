@@ -36,8 +36,6 @@ using namespace snort;
 
 HashKeyOperations::HashKeyOperations(int rows)
 {
-    static std::mt19937 generator(static_cast<unsigned int>(std::random_device{}()));
-
     if (SnortConfig::static_hash()) 
     {
         seed = 3193;
@@ -50,6 +48,8 @@ HashKeyOperations::HashKeyOperations(int rows)
             rows = 1;
 
         std::uniform_int_distribution<> distr(1, rows);
+        static auto gen_seed = get_random_seed();
+        static thread_local std::mt19937 generator(gen_seed + get_instance_id());
 
         seed = nearest_prime(distr(generator) + 3191);
         scale = nearest_prime(distr(generator) + 709);

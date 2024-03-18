@@ -97,6 +97,8 @@ time_t packet_time() { return 0; }
 
 void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
 
+unsigned get_instance_id() { return 0; }
+
 namespace ip
 {
 uint32_t IpApi::id() const { return 0; }
@@ -108,6 +110,8 @@ int ExpectCache::add_flow(const Packet*, PktType, IpProtocol, const SfIp*, uint1
 {
     return 1;
 }
+unsigned int get_random_seed()
+{ return 3193; }
 
 TEST_GROUP(flow_prune) { };
 

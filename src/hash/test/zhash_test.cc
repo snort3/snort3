@@ -57,6 +57,8 @@ bool FlowHashKeyOps::key_compare(const void* k1, const void* k2, size_t len)
     else
         return false;
 }
+
+unsigned get_instance_id() { return 0; }
 }
 
 // Stubs whose sole purpose is to make the test code link
@@ -74,6 +76,9 @@ SnortConfig::~SnortConfig() = default;
 
 const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
+
+unsigned int get_random_seed()
+{ return 3193; }
 
 const unsigned ZHASH_ROWS = 50;
 const unsigned ZHASH_KEY_SIZE = 100;

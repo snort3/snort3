@@ -38,6 +38,8 @@ using namespace snort;
 static SnortConfig my_config;
 THREAD_LOCAL SnortConfig* snort_conf = &my_config;
 
+unsigned snort::get_instance_id() { return 0; }
+
 DataBus::DataBus() = default;
 DataBus::~DataBus() = default;
 
@@ -49,6 +51,9 @@ SnortConfig::~SnortConfig() = default;
 
 const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
+
+unsigned int get_random_seed()
+{ return 3193; }
 
 // user free function
 static void myfree(void* p)
