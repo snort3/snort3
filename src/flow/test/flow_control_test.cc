@@ -77,6 +77,7 @@ size_t FlowCache::flows_size() const { return 0; }
 void Flow::init(PktType) { }
 const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 void FlowCache::unlink_uni(Flow*) { }
+bool FlowCache::dump_flows(std::fstream&, unsigned, const FilterFlowCriteria&, bool, uint8_t) const { return false; }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
 void Flow::set_mpls_layer_per_dir(Packet*) { }

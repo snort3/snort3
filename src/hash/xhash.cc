@@ -511,6 +511,18 @@ void* XHash::get_lru_user_data(uint8_t type)
     return lru_caches[type]->get_lru_user_data();
 }
 
+void* XHash::get_walk_user_data(uint8_t type)
+{
+    HashNode* walk_node = lru_caches[type]->get_walk_node();
+    return walk_node ? walk_node->data : nullptr;
+}
+
+void* XHash::get_next_walk_user_data(uint8_t type)
+{
+    HashNode* walk_node = lru_caches[type]->get_next_walk_node();
+    return walk_node ? walk_node->data : nullptr;
+}
+
 HashNode* XHash::release_lru_node(uint8_t type)
 {
     assert(type < num_lru_caches);

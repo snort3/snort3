@@ -24,14 +24,20 @@
 
 #include "stream_module.h"
 
+#include "control/control.h"
 #include "detection/rules.h"
+#include "flow/flow_cache.h"
 #include "log/messages.h"
+#include "lua/lua.h"
+#include "main/analyzer_command.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
+#include "managers/inspector_manager.h"
 #include "stream/flush_bucket.h"
 #include "stream/tcp/tcp_stream_tracker.h"
 #include "time/packet_time.h"
 #include "trace/trace.h"
+#include "flow/filter_flow_critera.h"
 
 using namespace snort;
 using namespace std;
@@ -131,6 +137,128 @@ const TraceOption* StreamModule::get_trace_options() const
     return stream_trace_options;
 #endif
 }
+
+static int dump_flows(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    PktType proto_type = PktType::NONE;
+    Inspector* inspector = InspectorManager::get_inspector("stream", Module::GLOBAL, IT_STREAM);
+    if (!inspector)
+    {
+        LogRespond(ctrlcon, "Dump flows requires stream to be configured\n");
+        return -1;
+    }
+    const char* file_name = luaL_optstring(L, 1, nullptr);
+    if (!file_name)
+    {
+        LogRespond(ctrlcon, "Dump flows requires a file name\n");
+        return -1;
+    }
+    int count = luaL_optint(L, 2, 4);
+    if (0 >= count || 100 < count)
+    {
+        LogRespond(ctrlcon, "Dump flows requires a count value of 1-100\n");
+        return -1;
+    }
+    const char* protocol = luaL_optstring(L, 3, nullptr);
+    if (!protocol)
+    {
+        LogRespond(ctrlcon, "protocol must be a string or convertible to a string\n");
+        return -1;
+    }
+    
+    if (protocol[0] != '\0')
+    {
+        auto proto_it = protocol_to_type.find(protocol);
+        if (proto_it == protocol_to_type.end())
+        {
+            LogRespond(ctrlcon, "valid protocols are IP/TCP/UDP/ICMP\n");
+            return -1;
+        }
+        else
+            proto_type = proto_it->second;
+    }
+
+    std::string source_ip = luaL_optstring(L, 4, nullptr);
+    if (!source_ip.c_str())
+    {
+        LogRespond(ctrlcon, "source_ip must be a string or convertible to a string\n");
+        return -1;
+    }
+    std::string destination_ip= luaL_optstring(L, 5, nullptr);
+    if (!destination_ip.c_str())
+    {
+        LogRespond(ctrlcon, "destination_ip must be a string or convertible to a string\n");
+        return -1;
+    }
+    int source_port = luaL_optint(L, 6, -1);
+    if ( source_port<0 || source_port>65535 )
+    {
+        LogRespond(ctrlcon, "source_port must be between 0-65535\n");
+        return -1;
+    }
+    int destination_port = luaL_optint(L, 7, -1);
+    if ( destination_port<0 || destination_port>65535)
+    {
+        LogRespond(ctrlcon, "destination_port must be between 0-65535\n");
+        return -1;
+    }
+
+/*resume count is used to complete the command execution from
+uncompleted queue*/
+#ifdef REG_TEST
+    int resume = luaL_optint(L, 8, -1);
+#endif
+    DumpFlows* df = new DumpFlows(count, ctrlcon
+#ifdef REG_TEST
+        , resume
+#endif
+    );
+    SfIp src_ip,src_subnet;
+    if (!df->set_ip(source_ip, src_ip, src_subnet))
+    {
+        LogRespond(ctrlcon, "Invalid source ip\n");
+        delete df;
+        return -1;
+    }
+    SfIp dst_ip,dst_subnet;
+    if (!df->set_ip(destination_ip, dst_ip, dst_subnet))
+    {
+        LogRespond(ctrlcon, "Invalid destination ip\n");
+        delete df;
+        return -1;
+    }
+
+    FilterFlowCriteria ffc;
+    ffc.pkt_type = proto_type;
+    ffc.source_port = static_cast<uint16_t>(source_port);
+    ffc.destination_port = static_cast<uint16_t>(destination_port);
+    ffc.source_sfip=src_ip;
+    ffc.destination_sfip=dst_ip;
+    ffc.source_subnet_sfip=src_subnet;
+    ffc.destination_subnet_sfip=dst_subnet;
+    df->set_filter_criteria(ffc);
+
+    if (!df->open_files(file_name))
+    {
+        delete df;
+        return -1;
+    }
+
+    LogRespond(ctrlcon, "== dumping connections\n");
+    main_broadcast_command(df, ctrlcon);
+    return 0;
+}
+
+static const Command stream_cmds[] =
+{
+    { "dump_flows", dump_flows, nullptr, "dump the flow table" },
+
+    { nullptr, nullptr, nullptr, nullptr }
+};
+
+const snort::Command* StreamModule::get_commands() const
+{ return stream_cmds; }
 
 const PegInfo* StreamModule::get_pegs() const
 { return base_pegs; }

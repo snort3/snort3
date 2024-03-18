@@ -26,12 +26,14 @@
 // processed.  flows are pruned as needed to process new flows.
 
 #include <cstdint>
+#include <fstream>
 #include <vector>
 
 #include "flow/flow_config.h"
 #include "framework/counts.h"
 #include "framework/decode_data.h"
 #include "framework/inspector.h"
+#include "flow/flow_cache.h"
 
 namespace snort
 {
@@ -71,6 +73,8 @@ public:
     void check_expected_flow(snort::Flow*, snort::Packet*);
     unsigned prune_multiple(PruneReason, bool do_cleanup);
 
+    bool dump_flows(std::fstream&, unsigned count, const FilterFlowCriteria& ffc, bool first, uint8_t code) const;
+
     int add_expected_ignore(
         const snort::Packet* ctrlPkt, PktType, IpProtocol,
         const snort::SfIp *srcIP, uint16_t srcPort,
@@ -100,7 +104,7 @@ public:
     PegCount get_num_flows() const;
 
 private:
-    void set_key(snort::FlowKey*, snort::Packet*);
+    bool set_key(snort::FlowKey*, snort::Packet*);
     unsigned process(snort::Flow*, snort::Packet*, bool new_ha_flow);
     void update_stats(snort::Flow*, snort::Packet*);
 

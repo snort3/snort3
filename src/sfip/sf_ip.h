@@ -70,6 +70,7 @@ struct SO_PUBLIC SfIp
     uint32_t get_ip4_value() const;
     const uint32_t* get_ip4_ptr() const;
     const uint32_t* get_ip6_ptr() const;
+    const uint64_t* get_ip64_ptr() const;
     const uint32_t* get_ptr() const;
     bool is_set() const;
     bool is_ip6() const;
@@ -121,6 +122,7 @@ private:
         uint8_t ip8[16];
         uint16_t ip16[8];
         uint32_t ip32[4];
+        uint64_t ip64[2];
     };
     int16_t family;
 } __attribute__((__packed__));
@@ -157,6 +159,11 @@ inline const uint32_t* SfIp::get_ip4_ptr() const
 inline const uint32_t* SfIp::get_ip6_ptr() const
 {
     return ip32;
+}
+
+inline const uint64_t* SfIp::get_ip64_ptr() const
+{
+    return ip64;
 }
 
 inline const uint32_t* SfIp::get_ptr() const
@@ -416,13 +423,9 @@ inline bool SfIp::fast_gt6(const SfIp& ip2) const
 
 inline bool SfIp::fast_eq6(const SfIp& ip2) const
 {
-    if (ip32[0] != ip2.ip32[0])
+    if (ip64[0] != ip2.ip64[0])
         return false;
-    if (ip32[1] != ip2.ip32[1])
-        return false;
-    if (ip32[2] != ip2.ip32[2])
-        return false;
-    if (ip32[3] != ip2.ip32[3])
+    if (ip64[1] != ip2.ip64[1])
         return false;
 
     return true;

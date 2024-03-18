@@ -30,6 +30,7 @@ add_library (flow OBJECT
     ha_module.h
     prune_stats.h
     stash_item.h
+    filter_flow_critera.h
 )
 
 install(FILES ${FLOW_INCLUDES}

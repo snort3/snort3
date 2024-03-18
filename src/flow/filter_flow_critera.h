@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2024 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2024 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,30 +16,21 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_trace.h author Oleksii Khomiakovskyi <okhomiak@cisco.com>
+#ifndef FILTER_FLOW_CRITERIA_H
+#define FILTER_FLOW_CRITERIA_H
 
-#ifndef TCP_TRACE_H
-#define TCP_TRACE_H
+#include <string>
+#include "sfip/sf_ip.h"
+#include <framework/decode_data.h>
 
-#include "main/thread.h"
-
-namespace snort
+struct FilterFlowCriteria
 {
-struct Packet;
-}
-
-class TcpSegmentDescriptor;
-class TcpStreamTracker;
-
-enum
-{
-    TRACE_SEGMENTS = 0,
-    TRACE_STATE,
+	PktType pkt_type;
+    snort::SfIp source_sfip;
+    snort::SfIp destination_sfip;
+	uint16_t source_port = 0;
+	uint16_t destination_port = 0;
+    snort::SfIp source_subnet_sfip;
+    snort::SfIp destination_subnet_sfip;
 };
-
-void S5TraceTCP(const TcpSegmentDescriptor&, const snort::Packet*);
-
-const char* stream_tcp_state_to_str(const TcpStreamTracker&);
-
 #endif
-

@@ -21,8 +21,11 @@
 #ifndef STREAM_MODULE_H
 #define STREAM_MODULE_H
 
+#include <map>
+
 #include "flow/flow_config.h"
 #include "flow/flow_control.h"
+#include "framework/decode_data.h"
 #include "framework/module.h"
 #include "main/analyzer.h"
 #include "main/reload_tuner.h"
@@ -36,6 +39,15 @@ struct SnortConfig;
 extern THREAD_LOCAL snort::ProfileStats s5PerfStats;
 extern THREAD_LOCAL class FlowControl* flow_con;
 extern THREAD_LOCAL const snort::Trace* stream_trace;
+
+static const std::map<std::string, PktType> protocol_to_type =
+{
+    {"TCP", PktType::TCP},
+    {"UDP", PktType::UDP},
+    {"IP", PktType::IP},
+    {"ICMP", PktType::ICMP},
+};
+
 
 #ifdef DEBUG_MSGS
 enum
@@ -166,6 +178,7 @@ public:
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
 
+    const snort::Command* get_commands() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     snort::ProfileStats* get_profile() const override;

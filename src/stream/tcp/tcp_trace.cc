@@ -32,17 +32,22 @@
 #include "tcp_session.h"
 #include "tcp_stream_tracker.h"
 
-#ifndef DEBUG_MSGS
-void S5TraceTCP(const TcpSegmentDescriptor&, const snort::Packet*) { }
-#else
-#define LCL(p, x) ((p).x() - (p).get_iss())
-#define RMT(p, x, q) ((p).x - (q).get_iss())
-
 static const char* const statext[] =
 {
     "LST", "SYS", "SYR", "EST", "MDS", "MDR", "FW1", "FW2", "CLW",
     "CLG", "LAK", "TWT", "CLD", "NON"
 };
+
+const char* stream_tcp_state_to_str(const TcpStreamTracker& t)
+{
+    return statext[t.get_tcp_state()];
+}
+
+#ifndef DEBUG_MSGS
+void S5TraceTCP(const TcpSegmentDescriptor&, const snort::Packet*) { }
+#else
+#define LCL(p, x) ((p).x() - (p).get_iss())
+#define RMT(p, x, q) ((p).x - (q).get_iss())
 
 static const char* const flushxt[] = { "IGN", "FPR", "PRE", "PRO", "PAF" };
 
@@ -133,7 +138,7 @@ inline void TraceState(const TcpStreamTracker& a, const TcpStreamTracker& b, con
 
     debug_logf(stream_tcp_trace, TRACE_STATE, p,
         "      %s ST=%s      UA=%-4u NS=%-4u LW=%-5u RN=%-4u RW=%-4u ISS=%-4u IRS=%-4u\n",
-        s, statext[a.get_tcp_state()], ua, ns, a.get_snd_wnd( ),
+        s, stream_tcp_state_to_str(a), ua, ns, a.get_snd_wnd( ),
         RMT(a, rcv_nxt, b), RMT(a, r_win_base, b), a.get_iss(), a.get_irs());
 
     unsigned paf = a.is_splitter_paf() ? 2 : 0;

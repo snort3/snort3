@@ -63,10 +63,27 @@ public:
         return hnode;
     }
 
+    snort::HashNode* get_walk_node()
+    {
+        if ( tail )
+            walk_cursor = tail->gprev;
+        return tail;
+    }
+
+    snort::HashNode* get_next_walk_node()
+    {
+        snort::HashNode* rnode = walk_cursor;
+        if ( walk_cursor )
+            walk_cursor = walk_cursor->gprev;
+        return rnode;
+    }
+
 private:
     snort::HashNode* head = nullptr;
     snort::HashNode* tail = nullptr;
     snort::HashNode* cursor = nullptr;
+    //walk_cursor is used to traverse from tail to head while dumping the flows.
+    snort::HashNode* walk_cursor = nullptr;
 };
 
 #endif

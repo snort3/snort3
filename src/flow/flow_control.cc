@@ -133,6 +133,9 @@ bool FlowControl::prune_one(PruneReason reason, bool do_cleanup)
 unsigned FlowControl::prune_multiple(PruneReason reason, bool do_cleanup)
 { return cache->prune_multiple(reason, do_cleanup); }
 
+bool FlowControl::dump_flows(std::fstream& stream, unsigned count, const FilterFlowCriteria& ffc, bool first, uint8_t code) const
+{ return cache->dump_flows(stream, count, ffc, first, code); }
+
 void FlowControl::timeout_flows(unsigned max, time_t cur_time)
 {
     cache->timeout(max, cur_time);
@@ -162,13 +165,14 @@ Flow* FlowControl::stale_flow_cleanup(FlowCache* cache, Flow* flow, Packet* p)
 // packet foo
 //-------------------------------------------------------------------------
 
-void FlowControl::set_key(FlowKey* key, Packet* p)
+bool FlowControl::set_key(FlowKey* key, Packet* p)
 {
     const ip::IpApi& ip_api = p->ptrs.ip_api;
     uint32_t mplsId;
     uint16_t vlanId;
     PktType type = p->type();
     IpProtocol ip_proto = p->get_ip_proto_next();
+    bool reversed;
 
     if ( p->proto_bits & PROTO_BIT__VLAN )
         vlanId = layer::get_vlan_layer(p)->vid();
@@ -182,19 +186,20 @@ void FlowControl::set_key(FlowKey* key, Packet* p)
 
     if ( (p->ptrs.decode_flags & DECODE_FRAG) )
     {
-        key->init(p->context->conf, type, ip_proto, ip_api.get_src(),
+        reversed = key->init(p->context->conf, type, ip_proto, ip_api.get_src(),
             ip_api.get_dst(), ip_api.id(), vlanId, mplsId, *p->pkth);
     }
     else if ( type == PktType::ICMP )
     {
-        key->init(p->context->conf, type, ip_proto, ip_api.get_src(), p->ptrs.icmph->type,
+        reversed = key->init(p->context->conf, type, ip_proto, ip_api.get_src(), p->ptrs.icmph->type,
             ip_api.get_dst(), 0, vlanId, mplsId, *p->pkth);
     }
     else
     {
-        key->init(p->context->conf, type, ip_proto, ip_api.get_src(), p->ptrs.sp,
+        reversed = key->init(p->context->conf, type, ip_proto, ip_api.get_src(), p->ptrs.sp,
             ip_api.get_dst(), p->ptrs.dp, vlanId, mplsId, *p->pkth);
     }
+    return reversed;
 }
 
 static bool is_bidirectional(const Flow* flow)
@@ -390,7 +395,7 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
         return false;
 
     FlowKey key;
-    set_key(&key, p);
+    bool reversed = set_key(&key, p);
     Flow* flow = cache->find(&key);
 
     if (flow)
@@ -412,6 +417,11 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
 
             if ( !flow )
                 return true;
+
+            if ( p->is_tcp() and p->ptrs.tcph->is_syn_ack() )
+                flow->flags.key_is_reversed = !reversed;
+            else
+                flow->flags.key_is_reversed = reversed;
 
             if ( new_flow )
                 *new_flow = true;

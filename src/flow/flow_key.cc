@@ -355,7 +355,7 @@ bool FlowKey::init(
     flags.group_used = (ingress_group != DAQ_PKTHDR_UNKNOWN and egress_group != DAQ_PKTHDR_UNKNOWN);
     init_groups(ingress_group, egress_group, reversed);
 
-    return false;
+    return reversed;
 }
 
 bool FlowKey::init(
@@ -397,7 +397,7 @@ bool FlowKey::init(
     flags.group_used = ((pkt_hdr.flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS) != 0);
     init_groups(pkt_hdr.ingress_group, pkt_hdr.egress_group, reversed);
 
-    return false;
+    return reversed;
 }
 
 //-------------------------------------------------------------------------

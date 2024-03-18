@@ -79,11 +79,14 @@ Flow* Stream::new_flow(const FlowKey* key)
 { return flow_con->new_flow(key); }
 
 void Stream::delete_flow(const FlowKey* key)
-{ flow_con->release_flow(key); }
+{
+    flow_con->release_flow(key);
+}
 
 void Stream::delete_flow(Flow* flow)
 {
-    flow_con->release_flow(flow, PruneReason::NONE);
+    if (flow_con)
+        flow_con->release_flow(flow, PruneReason::NONE);
 }
 
 //-------------------------------------------------------------------------

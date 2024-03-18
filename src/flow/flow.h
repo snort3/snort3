@@ -486,11 +486,13 @@ public:  // FIXIT-M privatize if possible
     uint8_t outer_server_ttl = 0;
 
     uint8_t response_count = 0;
+    uint8_t dump_code = 0;
 
     struct
     {
         bool client_initiated : 1;  // Set if the first packet on the flow was from the side that is
                                     // currently considered to be the client
+        bool key_is_reversed : 1; // The _l members are the destinations
         bool app_direction_swapped : 1; // Packet direction swapped from application perspective
         bool disable_inspect : 1;
         bool trigger_detained_packet_event : 1;

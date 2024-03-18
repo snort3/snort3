@@ -60,10 +60,12 @@ public:
     void* get_user_data();
     void* get_user_data(const void* key, uint8_t type = 0);
     void release(uint8_t type = 0);
-    int release_node(const void* key, uint8_t type = 0);
+    int release_node(const void* key, u_int8_t type = 0);
     int release_node(HashNode* node, uint8_t type = 0);
     void* get_mru_user_data(uint8_t type = 0);
     void* get_lru_user_data(uint8_t type = 0);
+    void* get_walk_user_data(uint8_t type = 0);
+    void* get_next_walk_user_data(uint8_t type = 0);
     bool delete_lru_node(uint8_t type = 0);
     void clear_hash();
     bool full() const { return !fhead; }

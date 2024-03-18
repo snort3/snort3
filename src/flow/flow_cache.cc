@@ -24,14 +24,23 @@
 
 #include "flow/flow_cache.h"
 
+#include <sstream>
+
+#include "control/control.h"
 #include "detection/detection_engine.h"
 #include "hash/hash_defs.h"
 #include "hash/zhash.h"
 #include "helpers/flag_context.h"
+#include "log/messages.h"
+#ifdef REG_TEST
+#include "main/analyzer.h"
+#endif
 #include "main/thread_config.h"
 #include "packet_io/active.h"
 #include "packet_tracer/packet_tracer.h"
 #include "stream/base/stream_module.h"
+#include "stream/tcp/tcp_stream_session.h"
+#include "stream/tcp/tcp_trace.h"
 #include "time/packet_time.h"
 #include "trace/trace_api.h"
 #include "utils/stats.h"
@@ -54,11 +63,141 @@ static const unsigned WDT_MASK = 7; // kick watchdog once for every 8 flows dele
 constexpr uint8_t MAX_PROTOCOLS = (uint8_t)to_utype(PktType::MAX) - 1; //removing PktType::NONE from count
 constexpr uint64_t max_skip_protos = (1ULL << MAX_PROTOCOLS) - 1;
 
+uint8_t DumpFlows::dump_code = 0;
+
+#ifndef REG_TEST
+DumpFlows::DumpFlows(unsigned count,  ControlConn* conn)
+#else
+DumpFlows::DumpFlows(unsigned count, ControlConn* conn, int resume)
+#endif
+    : snort::AnalyzerCommand(conn), dump_count(count)
+#ifdef REG_TEST
+    , resume(resume)
+#endif
+{
+    next.resize(ThreadConfig::get_instance_max());
+    ++dump_code;
+}
+
+bool DumpFlows::open_files(const std::string& base_name)
+{
+    dump_stream.resize(ThreadConfig::get_instance_max());
+    for (unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i)
+    {
+        std::string file_name = base_name + std::to_string(i + 1);
+        dump_stream[i].open(file_name, std::fstream::out | std::fstream::trunc);
+        if (0 != (dump_stream[i].rdstate() & std::fstream::failbit))
+        {
+            LogRespond(ctrlcon, "Dump flows failed to open %s\n", file_name.c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
+void DumpFlows::cidr2mask(const uint32_t cidr, uint32_t* mask) const
+{
+    size_t i;
+
+    for (i = cidr; i > 0;)
+    {
+        --i;
+        mask[i / 32] |= 0x00000001 << (i % 32);
+    }
+}
+
+bool DumpFlows::set_ip(std::string filter_ip, snort::SfIp& ip, snort::SfIp& subnet) const
+{
+    size_t slash_pos = filter_ip.find('/');
+    if (slash_pos != std::string::npos)
+    {
+        std::string ip_part = filter_ip.substr(0, slash_pos);
+        std::string subnet_part = filter_ip.substr(slash_pos+1);
+
+        if (ip_part.find(':') != std::string::npos)
+        {
+            //filter is IPV6
+            if (ip.pton(AF_INET6, ip_part.c_str()) != SFIP_SUCCESS)
+                return false;
+
+            if (subnet_part.find(':') == std::string::npos)
+            {
+                //IPV6 cidr
+                uint32_t cidr = std::stoi(subnet_part);
+                if (cidr > 128)
+                    return false;
+                uint32_t mask_v6[4]={0};
+                cidr2mask(std::stoi(subnet_part), mask_v6);
+                if (subnet.set(&mask_v6, AF_INET6) != SFIP_SUCCESS)
+                    return false;
+            }
+            else if (subnet_part.empty() || (subnet.pton(AF_INET6, subnet_part.c_str()) != SFIP_SUCCESS))
+                return false;
+            return true;
+        }
+        else if (ip_part.find('.') != std::string::npos)
+        {
+            //filter is  IPV4
+            if (ip.pton(AF_INET, ip_part.c_str()) != SFIP_SUCCESS)
+                return false;
+
+            if (subnet_part.find('.') == std::string::npos)
+            {
+                //IPV4 cidr
+                uint32_t cidr = std::stoi(subnet_part);
+                if (cidr > 32)
+                    return false;
+                uint32_t mask_v4[1]={0};
+                cidr2mask(std::stoi(subnet_part), mask_v4);
+                if (subnet.set(&mask_v4, AF_INET) != SFIP_SUCCESS)
+                    return false;
+            }
+            else if (subnet_part.empty())
+                return false;
+            else
+            {
+                //IPV4 netmask
+                if (subnet.pton(AF_INET, subnet_part.c_str()) != SFIP_SUCCESS)
+                    return false;
+            }
+            return true;
+        }
+        return false;
+    }
+    else
+    {
+        //No mask
+        if (filter_ip.find(':') != std::string::npos)
+        {
+            return ip.pton(AF_INET6, filter_ip.c_str()) == SFIP_SUCCESS;
+        }
+        else if (filter_ip.find('.') != std::string::npos)
+        {
+            return ip.pton(AF_INET, filter_ip.c_str()) == SFIP_SUCCESS;
+        }
+        else if (filter_ip.empty())
+            return true;
+    }
+    return false;
+}
+
+bool DumpFlows::execute(Analyzer&, void**)
+{
+    if (!flow_con)
+        return true;
+    unsigned id = get_instance_id();
+#ifdef REG_TEST
+    if (!next[id] && -1 != resume)
+        Analyzer::get_local_analyzer()->resume(resume);
+#endif
+    bool first = !next[id];
+    next[id] = 1;
+    return flow_con->dump_flows(dump_stream[id], dump_count, ffc, first, dump_code);
+}
+
 //-------------------------------------------------------------------------
 // FlowCache stuff
 //-------------------------------------------------------------------------
-
-extern THREAD_LOCAL const snort::Trace* stream_trace;
 
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg)
 {
@@ -602,6 +741,189 @@ unsigned FlowCache::purge()
     // Remove these here so alloc/dealloc counts are right when Memory::get_pegs is called
     delete_uni();
     return retired;
+}
+
+std::string FlowCache::timeout_to_str(time_t t)
+{
+    std::stringstream out;
+    time_t hours = t / (60 * 60);
+    if (hours)
+    {
+        out << hours << "h";
+        t -= hours * (60 * 60);
+    }
+    time_t minutes = t / 60;
+    if (minutes || hours)
+    {
+        out << minutes << "m";
+        t -= minutes * 60;
+    }
+    if (t || !hours)
+        out << t << "s";
+    return out.str();
+}
+
+
+bool FlowCache::is_ip_match(const SfIp& flow_sfip, const SfIp& filter_sfip, const SfIp& filter_subnet_sfip) const
+{
+    //if address is empty
+    if (!filter_sfip.is_set())
+        return true;
+
+    //if no subnet mask
+    if (!filter_subnet_sfip.is_set())
+    {
+        return filter_sfip.fast_equals_raw(flow_sfip);
+    }
+    else
+    {
+        if (filter_sfip.get_family() != flow_sfip.get_family())
+            return false;
+        const uint64_t* filter_ptr = filter_sfip.get_ip64_ptr();
+        const uint64_t* flow_ptr = flow_sfip.get_ip64_ptr();
+        const uint64_t* subnet_sfip = filter_subnet_sfip.get_ip64_ptr();
+        return (filter_ptr[0] & subnet_sfip[0]) == (flow_ptr[0] & subnet_sfip[0]) && (filter_ptr[1] & subnet_sfip[1]) == (flow_ptr[1] & subnet_sfip[1]);
+    }
+}
+
+bool FlowCache::filter_flows(const Flow& flow, const FilterFlowCriteria& ffc) const
+{
+    const SfIp& flow_srcip = flow.flags.client_initiated ? flow.client_ip : flow.server_ip;
+    const SfIp& flow_dstip = flow.flags.client_initiated ? flow.server_ip : flow.client_ip;
+
+    return ((ffc.pkt_type == PktType::NONE || flow.pkt_type == ffc.pkt_type)
+            && is_ip_match(flow_srcip, ffc.source_sfip, ffc.source_subnet_sfip)
+            && is_ip_match(flow_dstip, ffc.destination_sfip, ffc.destination_subnet_sfip)
+            && (!ffc.source_port || ffc.source_port == (flow.flags.key_is_reversed ? flow.key->port_h : flow.key->port_l))
+            && (!ffc.destination_port || ffc.destination_port == (flow.flags.key_is_reversed ? flow.key->port_l : flow.key->port_h)));
+
+}
+
+void FlowCache::output_flow(std::fstream& stream, const Flow& flow, const struct timeval& now) const
+{
+    char src_ip[INET6_ADDRSTRLEN];
+    src_ip[0] = 0;
+    char dst_ip[INET6_ADDRSTRLEN];
+    dst_ip[0] = 0;
+    uint16_t src_port;
+    uint16_t dst_port;
+    if (flow.flags.key_is_reversed)
+    {
+        SfIp ip;
+        ip.set(flow.key->ip_h);
+        ip.ntop(src_ip, sizeof(src_ip));
+        ip.set(flow.key->ip_l);
+        ip.ntop(dst_ip, sizeof(dst_ip));
+        src_port = flow.key->port_h;
+        dst_port = flow.key->port_l;
+    }
+    else
+    {
+        SfIp ip;
+        ip.set(flow.key->ip_l);
+        ip.ntop(src_ip, sizeof(src_ip));
+        ip.set(flow.key->ip_h);
+        ip.ntop(dst_ip, sizeof(dst_ip));
+        src_port = flow.key->port_l;
+        dst_port = flow.key->port_h;
+    }
+    std::stringstream out;
+    std::stringstream proto;
+    switch ( flow.pkt_type )
+    {
+        case PktType::IP:
+            out << "IP " << flow.key->addressSpaceId << ": " << src_ip << " " << dst_ip;
+            break;
+
+        case PktType::ICMP:
+            out << "ICMP " << flow.key->addressSpaceId << ": " << src_ip << " type " << src_port << " "
+                << dst_ip;
+            break;
+
+        case PktType::TCP:
+            out << "TCP " << flow.key->addressSpaceId << ": " << src_ip << "/" << src_port << " "
+                << dst_ip << "/" << dst_port;
+            if (flow.session)
+            {
+                TcpStreamSession* tcp_session = static_cast<TcpStreamSession*>(flow.session);
+                proto << " state client " << stream_tcp_state_to_str(tcp_session->client)
+                    << " server " << stream_tcp_state_to_str(tcp_session->server);
+            }
+            break;
+
+        case PktType::UDP:
+            out << "UDP " << flow.key->addressSpaceId << ": "<< src_ip << "/" << src_port << " "
+                << dst_ip << "/" << dst_port;
+            break;
+
+        default:
+            assert(false);
+    }
+    out << " pkts/bytes client " << flow.flowstats.client_pkts << "/" << flow.flowstats.client_bytes
+        << " server " << flow.flowstats.server_pkts << "/" << flow.flowstats.server_bytes
+        << " idle " << (now.tv_sec - flow.last_data_seen) << "s, uptime "
+        << (now.tv_sec - flow.flowstats.start_time.tv_sec) << "s, timeout ";
+    std::string t = flow.is_hard_expiration() ?
+        timeout_to_str(flow.expire_time - now.tv_sec) :
+        timeout_to_str((flow.last_data_seen + config.proto[to_utype(flow.key->pkt_type)].nominal_timeout) - now.tv_sec);
+    out << t;
+    stream << out.str() << proto.str() << std::endl;
+}
+
+bool FlowCache::dump_flows(std::fstream& stream, unsigned count, const FilterFlowCriteria& ffc, bool first, uint8_t code) const
+{
+    struct timeval now;
+    packet_gettimeofday(&now);
+    unsigned i;
+
+    for(uint8_t proto_id = to_utype(PktType::NONE)+1; proto_id <= to_utype(PktType::ICMP); proto_id++)
+    {
+        if (first)
+        {
+            Flow* walk_flow = static_cast<Flow*>(hash_table->get_walk_user_data(proto_id));
+            if (!walk_flow)
+            {
+                //Return only if all the protocol caches are processed.
+                if (proto_id < to_utype(PktType::ICMP))
+                    continue;
+
+                return true;
+            }
+            walk_flow->dump_code = code;
+            bool matched_filter = filter_flows(*walk_flow, ffc);
+            if (matched_filter)
+                output_flow(stream, *walk_flow, now);
+            i = 1;
+
+        }
+        else
+            i = 0;
+        while (i < count)
+        {
+            Flow* walk_flow = static_cast<Flow*>(hash_table->get_next_walk_user_data(proto_id));
+
+            if (!walk_flow )
+            {
+                //Return only if all the protocol caches are processed.
+                if (proto_id < to_utype(PktType::ICMP))
+                    break;
+                return true;
+            }
+            if (walk_flow->dump_code != code)
+            {
+                walk_flow->dump_code = code;
+                bool matched_filter = filter_flows(*walk_flow, ffc);
+                if (matched_filter)
+                    output_flow(stream, *walk_flow, now);
+                ++i;
+            }
+#ifdef REG_TEST
+            else
+                LogMessage("dump_flows skipping already dumped flow\n");
+#endif
+        }
+    }
+    return false;
 }
 
 size_t FlowCache::uni_flows_size() const
