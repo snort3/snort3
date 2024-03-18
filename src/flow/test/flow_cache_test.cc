@@ -75,7 +75,6 @@ SfIpRet SfIp::set(void const*) { return SFIP_SUCCESS; }
 SfIpRet SfIp::pton(const int, const char* ) { return SFIP_SUCCESS; }
 const char* SfIp::ntop(char* buf, int) const
 { buf[0] = 0; return buf; }
-unsigned snort::get_instance_id() { return 0; }
 unsigned ThreadConfig::get_instance_max() { return 0; }
 bool ControlConn::respond(const char*, ...) { return true; }
 class TcpStreamTracker;
@@ -91,7 +90,7 @@ void Flow::free_flow_data() { }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
 void Flow::set_mpls_layer_per_dir(Packet*) { }
-void packet_gettimeofday(struct timeval* tv) { tv = {}; }
+void packet_gettimeofday(struct timeval* ) { }
 
 time_t packet_time() { return 0; }
 
