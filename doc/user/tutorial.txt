@@ -52,6 +52,9 @@ Optional:
 * iconv from https://ftp.gnu.org/pub/gnu/libiconv/ for converting
   UTF16-LE filenames to UTF8 (usually included in glibc)
 
+* libml from https://github.com/snort3/libml to enable Snort ML, Neural
+  Network-based Exploit Detector
+
 * libunwind from https://www.nongnu.org/libunwind/ to attempt to dump a
   somewhat readable backtrace when a fatal signal is received
 
