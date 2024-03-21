@@ -57,15 +57,14 @@ static std::string get_ntuple(bool ntuple, const Packet* p)
     }
 
     ss << src_addr << " " << src_port << " -> " << dst_addr << " " << dst_port << " ";
-    ss << unsigned(p->get_ip_proto_next()) << " ";
-    ss << "AS=" << p->pkth->address_space_id << ":";
+    ss << unsigned(p->get_ip_proto_next());
+    ss << " AS=" << p->pkth->address_space_id;
 
     if (p->pkth->tenant_id)
-        ss << "TN=" << p->pkth->tenant_id<< ":";
+        ss << " TN=" << p->pkth->tenant_id;
 
-    const auto vni = p->get_flow_geneve_vni();
-    if (vni)
-        ss << "VNI=" << vni<< ":";
+    // Delimits the header part and the trace message
+    ss << " ";
 
     return ss.str();
 }
