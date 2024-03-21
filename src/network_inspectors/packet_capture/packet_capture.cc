@@ -28,6 +28,8 @@
 
 #include "framework/inspector.h"
 #include "log/messages.h"
+#include "packet_io/sfdaq.h"
+#include "packet_io/sfdaq_instance.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
 
@@ -75,11 +77,18 @@ static void _capture_term()
     pcap_freecode(&bpf);
 }
 
+static int get_dlt()
+{
+    int dlt = SFDAQ::get_base_protocol();
+    if (dlt == DLT_USER1)
+        return DLT_EN10MB;
+    return dlt;
+}
+
 static bool bpf_compile_and_validate()
 {
     // FIXIT-M This BPF compilation is not thread-safe and should be handled by the main thread
-    // and this call should use DLT from DAQ rather then hard coding DLT_EN10MB
-    if ( pcap_compile_nopcap(SNAP_LEN, DLT_EN10MB, &bpf,
+    if ( pcap_compile_nopcap(SNAP_LEN, get_dlt(), &bpf,
         config.filter.c_str(), 1, 0) >= 0 )
     {
         if (bpf_validate(bpf.bf_insns, bpf.bf_len))
@@ -97,7 +106,7 @@ static bool open_pcap_dumper()
     string fname;
     get_instance_file(fname, FILE_NAME);
 
-    pcap = pcap_open_dead(DLT_EN10MB, SNAP_LEN);
+    pcap = pcap_open_dead(get_dlt(), SNAP_LEN);
     dumper = pcap ? pcap_dump_open(pcap, fname.c_str()) : nullptr;
 
     if (dumper)
@@ -322,6 +331,22 @@ const BaseApi* nin_packet_capture[] =
 // --------------------------------------------------------------------------
 
 #ifdef UNIT_TEST
+
+static bool bpf_compile_and_validate_test()
+{
+    if (pcap_compile_nopcap(SNAP_LEN, DLT_EN10MB, &bpf,
+        config.filter.c_str(), 1, 0) >= 0)
+    {
+        if (bpf_validate(bpf.bf_insns, bpf.bf_len))
+            return true;
+        else
+            WarningMessage("Unable to validate BPF filter\n");
+    }
+    else
+        WarningMessage("Unable to compile BPF filter\n");
+    return false;
+}
+
 static Packet* init_null_packet()
 {
     static Packet p(false);
@@ -367,7 +392,7 @@ protected:
 
     bool capture_init() override
     {
-        if (bpf_compile_and_validate())
+        if (bpf_compile_and_validate_test())
         {
             dumper = (pcap_dumper_t*)1;
             return true;
