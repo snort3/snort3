@@ -21,6 +21,7 @@
 #define PACKET_CAPTURE_H
 
 #include <string>
+#include <cstdint>
 
 void packet_capture_enable(const std::string&, const int16_t g = -1, const std::string& t = "");
 void packet_capture_disable();
