@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.82.0 2024-03-12 12:50:44 EDT TST
+Revision 3.1.83.0 2024-03-24 21:36:04 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -5626,6 +5626,10 @@ Configuration:
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
 
+Commands:
+
+  * stream.dump_flows(): dump the flow table
+
 Rules:
 
   * 135:1 (stream) TCP SYN received
@@ -6003,6 +6007,8 @@ Peg counts:
     (sum)
   * stream_tcp.proxy_mode_flows: number of flows set to proxy
     normalization policy (sum)
+  * stream_tcp.full_retransmits: number of fully retransmitted
+    segments (sum)
 
 
 5.52. stream_udp
@@ -12245,6 +12251,8 @@ libraries see the Getting Started section of the manual.
   * stream_tcp.exceeded_max_segs: number of times the maximum queued
     segment limit was reached (sum)
   * stream_tcp.fins: number of fin packets (sum)
+  * stream_tcp.full_retransmits: number of fully retransmitted
+    segments (sum)
   * stream_tcp.gaps: missing data between PDUs (sum)
   * stream_tcp.held_packet_purges: number of held packets that were
     purged without flushing (sum)
@@ -15806,6 +15814,7 @@ alert is raised by the enhanced JavaScript normalizer.
   * snort.detach(): detach from control shell (without shutting down)
   * snort.quit(): shutdown and dump-stats
   * snort.help(): this output
+  * stream.dump_flows(): dump the flow table
   * trace.set(modules, constraints, ntuple, timestamp): set modules
     traces, constraints, ntuple and timestamp options
   * trace.clear(): clear modules traces and constraints

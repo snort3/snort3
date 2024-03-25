@@ -1,3 +1,14 @@
+2024-03-24: 3.1.83.0
+
+* detection: use correct packet in trace logs
+* doc: add libml to optional dependencies
+* flow: add filter to dump flows
+* flow: fix UT
+* hash: exception handling for random device
+* packet_capture: fixed wrong dlt in pcap header when nfq is used
+* stream: count retransmits when we disable content rules
+* trace: replace colon delimiter for tenant with whitespace in the trace_logger output
+
 2024-03-12: 3.1.82.0
 
 * appid: broadcast commands with ctrlcon

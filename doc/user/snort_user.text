@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.82.0 2024-03-12 12:51:07 EDT TST
+Revision 3.1.83.0 2024-03-24 21:36:21 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1061,6 +1061,8 @@ Optional:
     their instructions for building it as a shared library.
   * iconv from https://ftp.gnu.org/pub/gnu/libiconv/ for converting
     UTF16-LE filenames to UTF8 (usually included in glibc)
+  * libml from https://github.com/snort3/libml to enable Snort ML,
+    Neural Network-based Exploit Detector
   * libunwind from https://www.nongnu.org/libunwind/ to attempt to
     dump a somewhat readable backtrace when a fatal signal is
     received
