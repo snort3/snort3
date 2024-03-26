@@ -108,12 +108,10 @@ static AppIdDynamicPeg appid_dynamic_sum[SF_APPID_MAX + 1];
 static AppIdDynamicPeg zeroed_peg;
 
 static std::mutex dynamic_stats_mutex;
-static std::shared_mutex appid_peg_ids_mutex;
 
 void AppIdPegCounts::init_pegs()
 {
     assert(!appid_thread_pegs);
-    const std::shared_lock<std::shared_mutex> _lock(appid_peg_ids_mutex);
     appid_thread_pegs = new AppIdThreadPegs(appid_peg_ids);
 
     for (auto& appid : *appid_thread_pegs->peg_ids)
@@ -122,20 +120,17 @@ void AppIdPegCounts::init_pegs()
 
 void AppIdPegCounts::cleanup_pegs()
 {
-    const std::shared_lock<std::shared_mutex> _lock(appid_peg_ids_mutex);
     delete appid_thread_pegs;
     appid_thread_pegs = nullptr;
 }
 
 void AppIdPegCounts::init_peg_info()
 {
-    const std::unique_lock<std::shared_mutex> _lock(appid_peg_ids_mutex);
     appid_peg_ids = std::make_shared<AppIdPegCountIdInfo>();
 }
 
 void AppIdPegCounts::cleanup_peg_info()
 {
-    const std::unique_lock<std::shared_mutex> _lock(appid_peg_ids_mutex);
     appid_peg_ids.reset();
 }
 
@@ -162,7 +157,6 @@ void AppIdPegCounts::add_app_peg_info(std::string app_name, AppId app_id)
     std::replace(app_name.begin(), app_name.end(), ' ', '_');
 
     assert(appid_peg_ids);
-    const std::unique_lock<std::shared_mutex> _lock(appid_peg_ids_mutex);
     appid_peg_ids->emplace(app_id, std::make_pair(app_name, appid_peg_ids->size()));
 }
 
@@ -171,7 +165,6 @@ void AppIdPegCounts::sum_stats()
     if (!appid_thread_pegs)
         return;
 
-    const std::shared_lock<std::shared_mutex> _ids_lock(appid_peg_ids_mutex);
     const std::lock_guard<std::mutex> _lock(dynamic_stats_mutex);
 
     for (auto& peg : appid_thread_pegs->peg_counts)
