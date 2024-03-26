@@ -66,7 +66,8 @@ THREAD_LOCAL ThirdPartyAppIdContext* pkt_thread_tp_appid_ctxt = nullptr;
 THREAD_LOCAL OdpThreadContext* odp_thread_local_ctxt = nullptr;
 THREAD_LOCAL OdpContext* pkt_thread_odp_ctxt = nullptr;
 
-unsigned AppIdInspector::pub_id = 0;
+unsigned AppIdInspector::cached_global_pub_id = 0;
+static THREAD_LOCAL unsigned appid_pub_id = 0;
 
 static THREAD_LOCAL PacketTracer::TracerMute appid_mute;
 
@@ -110,6 +111,10 @@ AppIdContext& AppIdInspector::get_ctxt() const
 {
     assert(ctxt);
     return *ctxt;
+}
+unsigned AppIdInspector::get_pub_id() 
+{
+    return appid_pub_id;
 }
 
 bool AppIdInspector::configure(SnortConfig* sc)
@@ -167,7 +172,8 @@ bool AppIdInspector::configure(SnortConfig* sc)
     DataBus::subscribe_global(intrinsic_pub_key, IntrinsicEventIds::FLOW_NO_SERVICE,
          new AppIdServiceEventHandler(*this), *sc);
 
-    pub_id = DataBus::get_id(appid_pub_key);
+    cached_global_pub_id = DataBus::get_id(appid_pub_key);
+    appid_pub_id = cached_global_pub_id;
     return true;
 }
 
@@ -178,6 +184,7 @@ void AppIdInspector::show(const SnortConfig*) const
 
 void AppIdInspector::tinit()
 {
+    appid_pub_id = cached_global_pub_id;
     appid_mute = PacketTracer::get_mute();
 
     AppIdStatistics::initialize_manager(*config);
