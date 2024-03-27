@@ -263,7 +263,15 @@ static inline bool DCE2_Smb2FindSidTid(DCE2_Smb2SsnData* ssd, const uint64_t sid
     const uint32_t tid, const uint32_t mid, DCE2_Smb2SessionTracker** str, DCE2_Smb2TreeTracker** ttr, bool
     lookup_cache = false)
 {
-    *str = DCE2_Smb2FindSidInSsd(ssd, sid).get();
+    if(lookup_cache)
+    {
+        auto key = get_key(sid);
+        *str = smb2_session_cache->find(key).get();
+    }
+    else
+    {
+        *str = DCE2_Smb2FindSidInSsd(ssd, sid).get();
+    }
     if (!*str)
     {
         if (lookup_cache)
@@ -403,7 +411,7 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     case SMB2_COM_TREE_CONNECT:
         dce2_smb_stats.v2_tree_cnct++;
         // This will always return session tracker
-        str = DCE2_Smb2FindElseCreateSid(ssd, sid);
+        str = DCE2_Smb2FindElseCreateSid(ssd, sid, true);
         if (str)
         {
             DCE2_Smb2TreeConnect(ssd, smb_hdr, smb_data, end, str, tid);
