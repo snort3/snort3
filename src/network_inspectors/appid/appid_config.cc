@@ -196,6 +196,31 @@ unsigned OdpContext::get_pattern_count()
         dns_matchers.get_pattern_count();
 }
 
+void OdpContext::dump_appid_config()
+{
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: dns_host_reporting                   %s\n", (dns_host_reporting ? "True" : "False"));
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: referred_appId_disabled              %s\n", (referred_appId_disabled ? "True" : "False"));
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: mdns_user_reporting                  %s\n", (mdns_user_reporting ? "True" : "False"));
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: chp_userid_disabled                  %s\n", (chp_userid_disabled ? "True" : "False"));
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: is_host_port_app_cache_runtime       %s\n", (is_host_port_app_cache_runtime ? "True" : "False"));
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: check_host_port_app_cache            %s\n", (check_host_port_app_cache ? "True" : "False"));
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: check_host_cache_unknown_ssl         %s\n", (check_host_cache_unknown_ssl ? "True" : "False"));
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: ftp_userid_disabled                  %s\n", (ftp_userid_disabled ? "True" : "False"));
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: chp_body_collection_disabled         %s\n", (chp_body_collection_disabled ? "True" : "False"));
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: chp_body_collection_max              %d\n", chp_body_collection_max);
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: rtmp_max_packets                     %d\n", rtmp_max_packets);
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_tp_flow_depth                    %d\n", max_tp_flow_depth);
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: tp_allow_probes                      %s\n", (tp_allow_probes ? "True" : "False"));
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: host_port_app_cache_lookup_interval  %d\n", host_port_app_cache_lookup_interval);
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: host_port_app_cache_lookup_range     %d\n", host_port_app_cache_lookup_range);
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: allow_port_wildcard_host_cache       %s\n", (allow_port_wildcard_host_cache ? "True" : "False"));
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: recheck_for_portservice_appid        %s\n", (recheck_for_portservice_appid ? "True" : "False"));
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_bytes_before_service_fail        %" PRIu64" \n", max_bytes_before_service_fail);
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_packet_before_service_fail       %" PRIu16" \n", max_packet_before_service_fail);
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_packet_service_fail_ignore_bytes %" PRIu16" \n", max_packet_service_fail_ignore_bytes);
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: eve_http_client                      %s\n", (eve_http_client ? "True" : "False"));
+}
+
 OdpContext::OdpContext(const AppIdConfig& config, SnortConfig* sc)
 {
     app_info_mgr.init_appid_info_table(config, sc, *this);

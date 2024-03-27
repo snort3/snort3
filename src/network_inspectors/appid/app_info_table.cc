@@ -45,7 +45,6 @@
 using namespace snort;
 
 #define MAX_TABLE_LINE_LEN      1024
-static const char* CONF_SEPARATORS = "\t\n\r";
 static const int MIN_MAX_TP_FLOW_DEPTH = 1;
 static const int MAX_MAX_TP_FLOW_DEPTH = 1000000;
 static const int MIN_HOST_PORT_APP_CACHE_LOOKUP_INTERVAL = 1;
@@ -270,6 +269,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
 {
     char buf[MAX_TABLE_LINE_LEN];
     unsigned line = 0;
+    const char* CONF_SEPARATORS = "\t\n\r ";
 
     FILE* config_file = fopen(path, "r");
     if (config_file == nullptr)
@@ -666,7 +666,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
     else
     {
         char buf[MAX_TABLE_LINE_LEN];
-
+        const char* CONF_SEPARATORS = "\t\n\r";
         while (fgets(buf, sizeof(buf), tableFile))
         {
             AppId app_id;

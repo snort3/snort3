@@ -364,6 +364,22 @@ static int reload_third_party(lua_State* L)
     return 0;
 }
 
+static int print_appid_config(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
+    if (!inspector)
+    {
+        ctrlcon->respond("== printing appid config failed - appid not enabled\n");
+        return 0;
+    }
+    ctrlcon->respond("== printing appid configs\n");
+    const AppIdContext& ctxt = inspector->get_ctxt();
+    OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
+    odp_ctxt.dump_appid_config();
+    return 0;
+}
+
 static void clear_dynamic_host_cache_services()
 {
     auto hosts = host_cache.get_all_data();
@@ -460,6 +476,7 @@ static const Command appid_cmds[] =
     { "disable_debug", disable_debug, nullptr, "disable appid debugging"},
     { "reload_third_party", reload_third_party, nullptr, "reload appid third-party module" },
     { "reload_detectors", reload_detectors, nullptr, "reload appid detectors" },
+    { "print_appid_config", print_appid_config, nullptr, "print appid configs" },
     { nullptr, nullptr, nullptr, nullptr }
 };
 

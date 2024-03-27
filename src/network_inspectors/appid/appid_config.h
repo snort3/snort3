@@ -146,6 +146,7 @@ public:
     OdpContext(const AppIdConfig&, snort::SnortConfig*);
     void initialize(AppIdInspector& inspector);
     void reload();
+    void dump_appid_config();
 
     uint32_t get_version() const
     {
