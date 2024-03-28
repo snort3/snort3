@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include "protocols/eth.h"
+#include "protocols/ipv6.h"
 #include "detection/ips_context.h"
 #include "detection/signature.h"
 #include "events/event.h"
@@ -81,6 +83,42 @@ SO_PUBLIC const SnortPacket* get_packet()
     lua_packet.num = packet->context->packet_number;
     lua_packet.sp = packet->ptrs.sp;
     lua_packet.dp = packet->ptrs.dp;
+    lua_packet.dst_addr = "";
+
+    if ( !(packet->proto_bits & PROTO_BIT__ETH) ) {
+        lua_packet.ether_dst = lua_packet.ether_src = "";
+        return &lua_packet;
+    }
+
+    static THREAD_LOCAL char eth_src[eth::ETH_ADDR_STR_LEN], eth_dst[eth::ETH_ADDR_STR_LEN];
+
+    const eth::EtherHdr* eh = layer::get_eth_layer( packet );
+
+    if(eh && eh->ether_src) {
+        snprintf(eth_src, eth::ETH_ADDR_STR_LEN, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_src[0],
+            eh->ether_src[1], eh->ether_src[2], eh->ether_src[3],
+            eh->ether_src[4], eh->ether_src[5]);
+
+        lua_packet.ether_src = (const char*)eth_src;
+    } else {
+        lua_packet.ether_src = "";
+    }
+
+    if(eh && eh->ether_dst) {
+        snprintf(eth_dst, eth::ETH_ADDR_STR_LEN, "%02X:%02X:%02X:%02X:%02X:%02X", eh->ether_dst[0],
+            eh->ether_dst[1], eh->ether_dst[2], eh->ether_dst[3],
+            eh->ether_dst[4], eh->ether_dst[5]);
+
+        lua_packet.ether_dst = (const char*)eth_dst;
+    } else {
+        lua_packet.ether_dst = "";
+    }
+
+    if ( packet->has_ip() or packet->is_data() ) {
+        static THREAD_LOCAL char ip[ip::IP6_MAX_STR_LEN];
+        packet->ptrs.ip_api.get_dst()->ntop(ip, ip::IP6_MAX_STR_LEN);
+        lua_packet.dst_addr = ip;
+    }
 
     return &lua_packet;
 }
