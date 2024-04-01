@@ -49,6 +49,7 @@ void HttpApi::http_init()
 
 const char* HttpApi::classic_buffer_names[] =
 {
+    "file_data",
     "http_client_body",
     "http_cookie",
     "http_header",

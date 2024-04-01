@@ -46,7 +46,9 @@ static const uint64_t FORM_REQUEST = 0x1;
 // HTTP rule options.
 // Lower numbered portion is message buffers available to clients.
 // That part must remain synchronized with HttpApi::classic_buffer_names[]
-enum HTTP_RULE_OPT { HTTP_BUFFER_CLIENT_BODY = 1, HTTP_BUFFER_COOKIE, HTTP_BUFFER_HEADER,
+// Enum value 1 is kept for file_data, which is provided by http_inspect but
+// is not obtained through its facilities
+enum HTTP_RULE_OPT { HTTP_BUFFER_CLIENT_BODY = 2, HTTP_BUFFER_COOKIE, HTTP_BUFFER_HEADER,
     HTTP_BUFFER_METHOD, HTTP_BUFFER_PARAM, HTTP_BUFFER_RAW_BODY, HTTP_BUFFER_RAW_COOKIE,
     HTTP_BUFFER_RAW_HEADER, HTTP_BUFFER_RAW_REQUEST, HTTP_BUFFER_RAW_STATUS,
     HTTP_BUFFER_RAW_TRAILER, HTTP_BUFFER_RAW_URI, HTTP_BUFFER_STAT_CODE, HTTP_BUFFER_STAT_MSG,

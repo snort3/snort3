@@ -142,9 +142,6 @@ void update_buffer_map(const char** bufs, const char* svc)
 
     for ( int i = 0; bufs[i]; ++i )
         buffer_map[bufs[i]].push_back(svc);
-
-    if ( !strcmp(svc, "http") )
-        buffer_map["file_data"].push_back("http");
 }
 
 void add_default_services(SnortConfig* sc, const std::string& buf, OptTreeNode* otn)
