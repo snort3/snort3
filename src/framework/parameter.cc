@@ -200,7 +200,7 @@ static bool valid_int(Value& v, const char* r)
     {
         double d = v.get_real();
         signed_values = (0.0 > d);
-        num = (uint64_t)d;
+        num = (uint64_t)(int64_t)d;
         break;
     }
 
