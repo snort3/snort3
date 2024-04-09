@@ -1,3 +1,15 @@
+2024-04-08: 3.1.84.0
+
+* appid: enhanced appid config parsing
+* appid: remove locks from peg counts
+* appid: separate main thread and packet thread appid_pub_id
+* dce_smb: fixing an ASAN memory corruption issue
+* detection: handle policy changes in continuation
+* framework: add correct cast from double to unsigned
+* http_inspect: add file_data to buffer list
+* packet_capture: include cstdint in a header file. Thanks to Plup <plup@plup.io> and Hauke Mehrtens <hauke@hauke-m.de> for reporting this!
+* xhash: fixed typo
+
 2024-03-24: 3.1.83.0
 
 * detection: use correct packet in trace logs

@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.83.0 2024-03-24 21:36:04 EDT TST
+Revision 3.1.84.0 2024-04-08 22:48:07 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -2599,6 +2599,7 @@ Commands:
   * appid.disable_debug(): disable appid debugging
   * appid.reload_third_party(): reload appid third-party module
   * appid.reload_detectors(): reload appid detectors
+  * appid.print_appid_config(): print appid configs
 
 Peg counts:
 
@@ -15747,6 +15748,7 @@ alert is raised by the enhanced JavaScript normalizer.
   * appid.disable_debug(): disable appid debugging
   * appid.reload_third_party(): reload appid third-party module
   * appid.reload_detectors(): reload appid detectors
+  * appid.print_appid_config(): print appid configs
   * host_cache.dump(file_name): dump host cache
   * host_cache.delete_host(host_ip): delete host from host cache
   * host_cache.delete_network_proto(host_ip, proto): delete network
