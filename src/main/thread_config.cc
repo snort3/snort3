@@ -235,7 +235,7 @@ void ThreadConfig::apply_thread_policy(SThreadType type, unsigned id)
 
 int ThreadConfig::get_numa_node(hwloc_topology_t topology, hwloc_cpuset_t cpuset)
 {
-    int depth = hwloc->get_type_depth(topology, HWLOC_OBJ_NODE);
+    int depth = hwloc->get_type_depth(topology, HWLOC_OBJ_NUMANODE);
     if (depth == HWLOC_TYPE_DEPTH_UNKNOWN)
         return -1;
 
