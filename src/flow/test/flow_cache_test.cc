@@ -58,7 +58,7 @@ THREAD_LOCAL FlowControl* flow_con = nullptr;
 
 void Active::drop_packet(snort::Packet const*, bool) { }
 Analyzer* Analyzer::get_local_analyzer() { return nullptr; }
-void Analyzer::resume(unsigned long) { }
+void Analyzer::resume(uint64_t) { }
 void Active::set_drop_reason(char const*) { }
 ExpectCache::ExpectCache(uint32_t) { }
 ExpectCache::~ExpectCache() = default;
