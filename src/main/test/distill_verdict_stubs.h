@@ -144,6 +144,7 @@ Packet::~Packet()  = default;
 IpsPolicy* get_ips_policy() { return nullptr; }
 void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
 void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }
+void DataBus::publish_to_all_network_policies(unsigned int, unsigned int) { }
 SFDAQInstance::SFDAQInstance(const char*, unsigned, const SFDAQConfig*) { }
 SFDAQInstance::~SFDAQInstance() = default;
 void SFDAQInstance::reload() { }

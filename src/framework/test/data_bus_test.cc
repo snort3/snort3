@@ -68,6 +68,10 @@ InspectionPolicy* get_inspection_policy()
         (InspectionPolicy*)mock().getData("my_inspection_policy").getObjectPointer();
     return my_inspection_policy;
 }
+void set_network_policy(NetworkPolicy*)
+{ }
+void set_inspection_policy(InspectionPolicy*)
+{ }
 
 THREAD_LOCAL PacketCount pc;
 }

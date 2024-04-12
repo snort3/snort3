@@ -186,6 +186,31 @@ void DataBus::publish(unsigned pid, unsigned eid, Packet* p, Flow* f)
     publish(pid, eid, e, f);
 }
 
+void DataBus::publish_to_all_network_policies(unsigned pub_id, unsigned evt_id)
+{
+    BareDataEvent e;
+
+    const SnortConfig* sc = SnortConfig::get_conf();
+    sc->global_dbus->_publish(pub_id, evt_id, e, nullptr);
+
+    NetworkPolicy* current_np = get_network_policy();
+    InspectionPolicy* current_ip = get_inspection_policy();
+
+    for ( unsigned nidx = 0; nidx < sc->policy_map->network_policy_count(); ++nidx )
+    {
+        NetworkPolicy* np = sc->policy_map->get_network_policy(nidx);
+        assert(np);
+        set_network_policy(np);
+        InspectionPolicy* ip = np->get_inspection_policy(0);
+        assert(ip);
+        set_inspection_policy(ip);
+        np->dbus._publish(pub_id, evt_id, e, nullptr);
+        ip->dbus._publish(pub_id, evt_id, e, nullptr);
+    }
+    set_inspection_policy(current_ip);
+    set_network_policy(current_np);
+}
+
 //--------------------------------------------------------------------------
 // private methods
 //--------------------------------------------------------------------------

@@ -118,12 +118,11 @@ void RnaUdpNewFlowEventHandler::handle(DataEvent& event, Flow*)
     pnd.analyze_flow_udp(event.get_packet());
 }
 
-void RnaIdleEventHandler::handle(DataEvent& event, Flow*)
+void RnaIdleEventHandler::handle(DataEvent&, Flow*)
 {
     // cppcheck-suppress unreadVariable
     Profile profile(rna_perf_stats);
     ++rna_stats.change_host_update;
-    update_rna_pkt_stats(event);
     pnd.generate_change_host_update();
 }
 

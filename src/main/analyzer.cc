@@ -591,7 +591,7 @@ void Analyzer::idle()
     timeradd(&now, &increment, &now);
     packet_time_update(&now);
 
-    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::THREAD_IDLE, nullptr);
+    DataBus::publish_to_all_network_policies(intrinsic_pub_id, IntrinsicEventIds::THREAD_IDLE);
 
     // Service the retry queue with the new packet time.
     process_retry_queue();
