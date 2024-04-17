@@ -308,9 +308,6 @@ void TcpReassemblerFactory::term()
 
 TcpReassembler* TcpReassemblerFactory::get_instance(StreamPolicy os_policy)
 {
-    NormMode tcp_ips_data = Normalize_GetMode(NORM_TCP_IPS);
-    StreamPolicy sp = (tcp_ips_data == NORM_MODE_ON) ? StreamPolicy::OS_FIRST : os_policy;
-
-    assert( sp <= StreamPolicy::OS_PROXY );
-    return reassemblers[sp];
+    assert( os_policy <= StreamPolicy::OS_PROXY );
+    return reassemblers[os_policy];
 }

@@ -233,6 +233,7 @@ void TcpReassembler::add_reassembly_segment(
     TcpSegmentNode* const tsn = TcpSegmentNode::init(tsd);
 
     tsn->offset = slide;
+    tsn->o_offset = slide;
     tsn->c_len = (uint16_t)new_size;
     tsn->i_len = (uint16_t)new_size;
     tsn->i_seq = tsn->c_seq = seq;
@@ -1336,15 +1337,9 @@ void TcpReassembler::purge_segment_list(TcpReassemblerState& trs)
 void TcpReassembler::insert_segment_in_empty_seglist(
     TcpReassemblerState& trs, TcpSegmentDescriptor& tsd)
 {
-    const tcp::TCPHdr* tcph = tsd.get_tcph();
-
     uint32_t overlap = 0;
-    uint32_t seq = tsd.get_seq();
 
-    if ( tcph->is_syn() )
-        seq++;
-
-    if ( SEQ_GT(trs.sos.seglist_base_seq, seq) )
+    if ( SEQ_GT(trs.sos.seglist_base_seq, tsd.get_seq()) )
     {
         overlap = trs.sos.seglist_base_seq - tsd.get_seq();
         if ( overlap >= tsd.get_len() )
@@ -1352,7 +1347,7 @@ void TcpReassembler::insert_segment_in_empty_seglist(
     }
 
     add_reassembly_segment(
-        trs, tsd, tsd.get_len(), overlap, 0, seq + overlap, nullptr);
+        trs, tsd, tsd.get_len(), overlap, 0, tsd.get_seq() + overlap, nullptr);
 }
 
 void TcpReassembler::init_overlap_editor(
@@ -1379,7 +1374,6 @@ void TcpReassembler::init_overlap_editor(
         for ( tsn = trs.sos.seglist.head; tsn; tsn = tsn->next )
         {
             right = tsn;
-
             if ( SEQ_GEQ(right->i_seq, tsd.get_seq() ) )
                 break;
 
@@ -1394,7 +1388,6 @@ void TcpReassembler::init_overlap_editor(
         for ( tsn = trs.sos.seglist.tail; tsn; tsn = tsn->prev )
         {
             left = tsn;
-
             if ( SEQ_LT(left->i_seq, tsd.get_seq() ) )
                 break;
 
@@ -1432,11 +1425,12 @@ void TcpReassembler::insert_segment_in_seglist(
             return;
         }
 
-        /* Adjust slide so that is correct relative to orig seq */
-        trs.sos.slide = trs.sos.seq - tsd.get_seq();
-        // FIXIT-L for some reason length - slide - trunc_len is sometimes negative
-        if (trs.sos.len - trs.sos.slide - trs.sos.trunc_len < 0)
-            return;
+        // slide is current seq number - initial seq number unless all data
+        // truncated from right, then slide is 0
+        if ( trs.sos.len - trs.sos.trunc_len > 0 )
+            trs.sos.slide = trs.sos.seq - tsd.get_seq();
+        else
+            trs.sos.slide = 0;
 
         add_reassembly_segment(
             trs, tsd, trs.sos.len, trs.sos.slide, trs.sos.trunc_len, trs.sos.seq, trs.sos.left);

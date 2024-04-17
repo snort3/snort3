@@ -78,7 +78,8 @@ public:
     uint32_t c_seq;             // current seq # of data for reassembly
     uint16_t i_len;             // initial length of the data segment
     uint16_t c_len;             // length of data remaining for reassembly
-    uint16_t offset;
+    uint16_t offset;            // current offset into the data buffer for reassembly
+    uint16_t o_offset;          // offset into the data buffer due to overlaps
     uint16_t size;              // actual allocated size (overlaps cause i_len to differ)
     uint8_t data[1];
 };

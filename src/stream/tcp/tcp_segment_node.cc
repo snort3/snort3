@@ -93,7 +93,7 @@ TcpSegmentNode* TcpSegmentNode::create(
 
     tsn->prev = tsn->next = nullptr;
     tsn->i_seq = tsn->c_seq = 0;
-    tsn->offset = 0;
+    tsn->offset = tsn->o_offset = 0;
     tsn->ts = 0;
 
     return tsn;

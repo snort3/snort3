@@ -473,6 +473,12 @@ void TcpSession::set_os_policy()
     client.normalizer.init(client_os_policy, this, &client, &server);
     server.normalizer.init(server_os_policy, this, &server, &client);
 
+    if (Normalize_GetMode(NORM_TCP_IPS) == NORM_MODE_ON)
+    {
+        client_os_policy = StreamPolicy::OS_FIRST;
+        server_os_policy = StreamPolicy::OS_FIRST;
+    }
+
     client.reassembler.init(this, &client, client_os_policy, false);
     server.reassembler.init(this, &server, server_os_policy, true);
 }
@@ -640,6 +646,8 @@ void TcpSession::handle_data_on_syn(TcpSegmentDescriptor& tsd)
 
     if ( !listener->normalizer.trim_syn_payload(tsd) )
     {
+        // skip the byte in sequence space for SYN...data starts at the next byte
+        tsd.update_seq(1);
         handle_data_segment(tsd);
         tel.set_tcp_event(EVENT_DATA_ON_SYN);
     }
@@ -770,10 +778,9 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd, bool flush)
         else
             server.set_tcp_options_len(tcp_options_len);
 
-        uint32_t seq = tsd.get_tcph()->is_syn() ? tsd.get_seq() + 1 : tsd.get_seq();
-        bool stream_is_inorder = ( seq == listener->rcv_nxt );
+        bool stream_is_inorder = ( tsd.get_seq() == listener->rcv_nxt );
 
-        int rc =  listener->normalizer.apply_normalizations(tsd, seq, stream_is_inorder);
+        int rc =  listener->normalizer.apply_normalizations(tsd, tsd.get_seq(), stream_is_inorder);
         switch ( rc )
         {
         case TcpNormalizer::NORM_OK:
