@@ -333,23 +333,6 @@ void FileFlows::remove_processed_file_context(uint64_t file_id)
         current_context_delete_pending = true;
 }
 
-// Remove file context explicitly
-void FileFlows::remove_processed_file_context(uint64_t file_id, uint64_t multi_file_processing_id)
-{
-    bool is_new_context = false;
-
-    if (!multi_file_processing_id)
-        multi_file_processing_id = file_id;
-
-    FileContext* context = get_file_context(file_id, false, is_new_context, multi_file_processing_id);
-    if (context)
-    {
-        set_current_file_context(context);
-        context->processing_complete = true;
-        remove_processed_file_context(multi_file_processing_id);
-    }
-}
-
 /* This function is used to process file that is sent in pieces
  *
  * Return:
@@ -390,7 +373,10 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
     if (!cacheable)
         context->set_not_cacheable();
 
-    set_current_file_context(context);
+    if(!context->processing_complete)
+        set_current_file_context(context);
+    else
+        current_file_id = file_id;
 
     // Only increase file count when there are no queued segments
     // This will ensure we only count a file once in case it has

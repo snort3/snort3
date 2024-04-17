@@ -641,7 +641,8 @@ void FileContext::find_file_type_from_ips(Packet* pkt, const uint8_t* file_data,
     if ((int64_t)processed_bytes + data_size >= config->file_type_depth)
     {
         data_size = config->file_type_depth - processed_bytes;
-        assert(data_size > 0);
+        if (data_size < 0)
+	        return;
         depth_exhausted = true;
     }
     const FileConfig* const conf = get_file_config();
@@ -679,7 +680,8 @@ void FileContext::process_file_type(Packet* pkt,const uint8_t* file_data, int da
     FilePosition position)
 {
     /* file type already found and no magics to continue */
-    find_file_type_from_ips(pkt, file_data, data_size, position);
+    if (SNORT_FILE_TYPE_CONTINUE == file_type_id)
+        find_file_type_from_ips(pkt, file_data, data_size, position);
 }
 
 void FileContext::process_file_signature_sha256(const uint8_t* file_data, int data_size,
