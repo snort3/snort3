@@ -1427,7 +1427,7 @@ void TcpReassembler::insert_segment_in_seglist(
     if ( trs.sos.keep_segment )
     {
         if ( !trs.sos.left and trs.sos.right and
-            paf_initialized(&trs.paf_state) and trs.paf_state.pos > tsd.get_seq() )
+            paf_initialized(&trs.paf_state) and SEQ_GT(trs.paf_state.pos, tsd.get_seq()) )
         {
             return;
         }

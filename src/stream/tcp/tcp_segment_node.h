@@ -56,9 +56,9 @@ public:
     bool is_packet_missing(uint32_t to_seq)
     {
         if ( next )
-            return (i_seq + i_len) != next->i_seq;
+            return !(SEQ_EQ((i_seq + i_len), next->i_seq));
         else
-            return (c_seq + c_len) < to_seq;
+            return SEQ_LT((c_seq + c_len), to_seq);
     }
 
     void update_ressembly_lengths(uint16_t bytes)

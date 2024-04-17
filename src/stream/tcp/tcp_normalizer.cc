@@ -48,9 +48,10 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
         // drop packet if sequence num is invalid
         if ( !tns.tracker->is_segment_seq_valid(tsd) )
         {
+            bool inline_mode = tsd.is_nap_policy_inline();
             tcpStats.invalid_seq_num++;
-            log_drop_reason(tns, tsd, false, "normalizer", "Normalizer: Sequence number is invalid\n");
-            trim_win_payload(tns, tsd);
+            log_drop_reason(tns, tsd, inline_mode, "normalizer", "Normalizer: Sequence number is invalid\n");
+            trim_win_payload(tns, tsd, 0, inline_mode);
             return NORM_BAD_SEQ;
         }
 
