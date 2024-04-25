@@ -252,6 +252,9 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
 
     p->context->post_detection();
 
+    if ( inspected and !p->context->next() )
+        InspectorManager::clear(p);
+
     // clear closed sessions here after inspection since non-stream
     // inspectors may depend on flow information
     // this also handles block pending state
@@ -259,9 +262,6 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
     // while processing a PDU
     if ( !p->has_parent() )
         Stream::check_flow_closed(p);
-
-    if ( inspected and !p->context->next() )
-        InspectorManager::clear(p);
 
     clear_events(p);
 }
