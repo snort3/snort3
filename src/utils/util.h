@@ -27,6 +27,7 @@
 #if defined(__linux__)
 #include <sys/syscall.h>
 #endif
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <unistd.h>
 
@@ -132,6 +133,9 @@ SO_PUBLIC void ts_print(const struct timeval*, char*, bool yyyymmdd = false);
 void uint8_to_printable_str(const uint8_t* buff, unsigned len, std::string& print_str);
 SO_PUBLIC void str_to_int_vector(const std::string& s, char delim, std::vector<uint32_t>& elems);
 SO_PUBLIC std::string int_vector_to_str(const std::vector<uint32_t>& elems, char delim = ',');
+SO_PUBLIC bool rotate_file_for_max_size(const char* file_owner, const char* old_file,
+    FILE* old_fh, uint32_t max_file_size);
+SO_PUBLIC bool check_file_size(FILE* fh, uint64_t max_file_size);
 }
 
 #endif

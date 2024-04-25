@@ -486,24 +486,6 @@ bool ProfilerNodeMap::rotate(std::string& fname, uint64_t max_file_size)
     return false;
 }
 
-static inline bool check_file_size(FILE* fh, uint64_t max_file_size)
-{
-    int fd;
-    struct stat fstats;
-
-    if (!fh)
-        return false;
-
-    fd = fileno(fh);
-    if ((fstat(fd, &fstats) == 0)
-        and ((uint64_t)fstats.st_size >= max_file_size))
-    {
-        return true;
-    }
-
-    return false;
-}
-
 inline void ProfilerNodeMap::create_new_file(std::string& fname, uint64_t max_file_size)
 {
     open(fname, max_file_size, true);
