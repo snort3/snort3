@@ -76,6 +76,7 @@ struct DetectorAppUrlPattern
     } patterns;
 
     UrlUserData userData;
+    bool is_literal;
 };
 
 // These values are used in Lua code as raw numbers. Do NOT reassign new values.
@@ -309,7 +310,7 @@ public:
     void get_server_vendor_version(const char*, int, char**, char**, AppIdServiceSubtype**);
     void identify_user_agent(const char*, int, AppId&, AppId&, char**);
     uint32_t parse_multiple_http_patterns(const char* pattern, tMlmpPattern*,
-        uint32_t numPartLimit, int level);
+        uint32_t numPartLimit, int level, bool is_literal);
 
 private:
     DetectorHTTPPatterns client_agent_patterns;

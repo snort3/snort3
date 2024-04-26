@@ -41,6 +41,7 @@ struct tMlmpPattern
 
     /**level of pattern. It should start from 0.*/
     uint32_t level;
+    bool is_literal;
 };
 
 struct tMlmpTree;

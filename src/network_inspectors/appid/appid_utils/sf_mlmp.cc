@@ -76,7 +76,7 @@ struct tMatchedPatternList
 };
 
 static int compareMlmpPatterns(const void* p1, const void* p2);
-static int createTreesRecusively(tMlmpTree* root);
+static int createTreesRecursively(tMlmpTree* root);
 static void destroyTreesRecursively(tMlmpTree* root);
 static int addPatternRecursively(tMlmpTree* root, const tMlmpPattern* inputPatternList,
     void* metaData, uint32_t level);
@@ -108,7 +108,7 @@ int mlmpProcessPatterns(tMlmpTree* root)
 {
     int rvalue;
 
-    rvalue = createTreesRecusively(root);
+    rvalue = createTreesRecursively(root);
     if (rvalue)
         destroyTreesRecursively(root);
     return rvalue;
@@ -204,7 +204,7 @@ static int compareMlmpPatterns(const void* p1, const void* p2)
 
 /*pattern trees are not freed on error because in case of error, caller should call
    detroyTreesRecursively. */
-static int createTreesRecusively(tMlmpTree* rootNode)
+static int createTreesRecursively(tMlmpTree* rootNode)
 {
     SearchTool* patternMatcher;
     tPatternPrimaryNode* primaryPatternNode;
@@ -220,7 +220,7 @@ static int createTreesRecusively(tMlmpTree* rootNode)
         /*recursion into next lower level */
         if (primaryPatternNode->nextLevelMatcher)
         {
-            if (createTreesRecusively(primaryPatternNode->nextLevelMatcher))
+            if (createTreesRecursively(primaryPatternNode->nextLevelMatcher))
                 return -1;
         }
 
@@ -229,7 +229,7 @@ static int createTreesRecusively(tMlmpTree* rootNode)
             ddPatternNode = ddPatternNode->nextPattern)
         {
             patternMatcher->add(ddPatternNode->pattern.pattern,
-                ddPatternNode->pattern.patternSize, ddPatternNode, true);
+                ddPatternNode->pattern.patternSize, ddPatternNode, true, ddPatternNode->pattern.is_literal);
         }
     }
 
@@ -295,32 +295,33 @@ static tPatternNode* patternSelector(const tMatchedPatternList* patternMatchList
         tmpList;
         tmpList = tmpList->next)
     {
-        if (tmpList->patternNode->patternId != patternId)
+        const tPatternNode& node = *tmpList->patternNode;
+        if (node.patternId != patternId)
         {
             /*first pattern */
 
             /*skip incomplete pattern */
-            if (tmpList->patternNode->partNum != 1)
+            if (node.partNum != 1)
                 continue;
 
             /*new pattern started */
-            patternId = tmpList->patternNode->patternId;
+            patternId = node.patternId;
             currentPrimaryNode = tmpList->patternNode;
             partNum = 0;
             patternSize = 0;
         }
 
-        if (tmpList->patternNode->partNum == (partNum+1))
+        if (node.partNum == (partNum+1))
         {
             partNum++;
-            patternSize += tmpList->patternNode->pattern.patternSize;
+            patternSize += node.pattern.patternSize;
         }
 
-        if (tmpList->patternNode->partTotal != partNum)
+        if (node.partTotal != partNum)
             continue;
 
         /*backward compatibility */
-        if ((tmpList->patternNode->partTotal == 1)
+        if (node.pattern.is_literal && (node.partTotal == 1)
             && domain && !match_is_domain_pattern(tmpList, payload))
             continue;
 
@@ -485,6 +486,7 @@ static int addPatternRecursively(tMlmpTree* rootNode, const tMlmpPattern* inputP
         tmpPrimaryNode->patternNode.pattern.pattern = patterns->pattern;
         tmpPrimaryNode->patternNode.pattern.patternSize = patterns->patternSize;
         tmpPrimaryNode->patternNode.pattern.level = patterns->level;
+        tmpPrimaryNode->patternNode.pattern.is_literal = patterns->is_literal;
         tmpPrimaryNode->patternNode.partNum = 1;
         tmpPrimaryNode->patternNode.partTotal = partTotal;
         tmpPrimaryNode->patternNode.patternId = patternId;
@@ -512,6 +514,7 @@ static int addPatternRecursively(tMlmpTree* rootNode, const tMlmpPattern* inputP
             newNode->pattern.pattern = patterns->pattern;
             newNode->pattern.patternSize = patterns->patternSize;
             newNode->pattern.level = patterns->level;
+            newNode->pattern.is_literal = patterns->is_literal;
             newNode->partNum = partNum;
             newNode->partTotal = partTotal;
             newNode->patternId = patternId;

@@ -53,7 +53,7 @@ public:
 
 private:
     static const int PATTERN_PART_MAX = 10;
-    tMlmpPattern patterns[PATTERN_PART_MAX] = { { nullptr, 0, 0 } };
+    tMlmpPattern patterns[PATTERN_PART_MAX] = { { nullptr, 0, 0, true } };
     tMlmpTree* sip_ua_matcher = nullptr;
     DetectorAppSipPattern* sip_ua_list = nullptr;
     tMlmpTree* sip_server_matcher = nullptr;
