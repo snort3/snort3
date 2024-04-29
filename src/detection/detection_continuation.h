@@ -179,9 +179,10 @@ void Continuation::eval(snort::Packet& p)
     while (i != &states)
     {
         auto st = i;
-        i = i->get_next();
+        bool r = (**st).eval(p);
+        i = st->get_next();
 
-        if ((**st).eval(p))
+        if (r)
         {
             assert(0 < states_cnt);
             assert(st != &states);
