@@ -138,7 +138,7 @@ void TcpReassembler::update_skipped_bytes(uint32_t remaining_bytes, TcpReassembl
         auto bytes_skipped = ( tsn->c_len <= remaining_bytes ) ? tsn->c_len : remaining_bytes;
 
         remaining_bytes -= bytes_skipped;
-        tsn->update_ressembly_lengths(bytes_skipped);
+        tsn->update_reassembly_cursor(bytes_skipped);
 
         if ( !tsn->c_len )
         {
@@ -452,7 +452,7 @@ int TcpReassembler::flush_data_segments(TcpReassemblerState& trs, uint32_t flush
         }
 
         total_flushed += bytes_copied;
-        tsn->update_ressembly_lengths(bytes_copied);
+        tsn->update_reassembly_cursor(bytes_copied);
         flags = 0;
 
         if ( !tsn->c_len )
@@ -955,19 +955,19 @@ bool TcpReassembler::segment_within_seglist_window(TcpReassemblerState& trs, Tcp
 {
     if ( !trs.sos.seglist.head )
         return true;
-    
-    uint32_t start, end = (trs.sos.seglist.tail->i_seq + trs.sos.seglist.tail->i_len);
 
+    // Left side
+    uint32_t start;
     if ( SEQ_LT(trs.sos.seglist_base_seq, trs.sos.seglist.head->i_seq) )
         start = trs.sos.seglist_base_seq;
     else
         start = trs.sos.seglist.head->i_seq;
 
-    // Left side
     if ( SEQ_LEQ(tsd.get_end_seq(), start) )
         return false;
 
     // Right side
+    uint32_t end = (trs.sos.seglist.tail->i_seq + trs.sos.seglist.tail->i_len);
     if ( SEQ_GEQ(tsd.get_seq(), end) )
         return false;
 
@@ -1031,6 +1031,35 @@ void TcpReassembler::purge_segments_left_of_hole(TcpReassemblerState& trs, const
         PacketTracer::log("Stream: Skipped %u packets before seglist hole)\n", packets_skipped);
 }
 
+void TcpReassembler::reset_asymmetric_flow_reassembly(TcpReassemblerState& trs)
+{
+    TcpSegmentNode* tsn = trs.sos.seglist.head;
+    // if there is a hole at the beginning, skip it...
+    if ( SEQ_GT(tsn->i_seq, trs.sos.seglist_base_seq) )
+    {
+        trs.sos.seglist_base_seq = tsn->i_seq;
+        if (PacketTracer::is_active())
+            PacketTracer::log("Stream: Skipped hole at beginning of the seglist\n");
+    }
+
+    while ( tsn )
+    {
+        if ( tsn->next and SEQ_GT(tsn->next->i_seq, tsn->i_seq + tsn->i_len) )
+        {
+            tsn = tsn->next;
+            purge_segments_left_of_hole(trs, tsn);
+            trs.sos.seglist_base_seq = trs.sos.seglist.head->i_seq;
+        }
+       else
+            tsn = tsn->next;
+    }
+
+    if ( trs.tracker->is_splitter_paf() )
+        fallback(*trs.tracker, trs.server_side);
+    else
+        paf_reset(&trs.paf_state);
+}
+
 void TcpReassembler::skip_midstream_pickup_seglist_hole(TcpReassemblerState& trs, TcpSegmentDescriptor& tsd)
 {
     uint32_t ack = tsd.get_ack();
@@ -1068,6 +1097,19 @@ void TcpReassembler::skip_midstream_pickup_seglist_hole(TcpReassemblerState& trs
     }
     else
         trs.tracker->rcv_nxt = ack;
+}
+
+bool  TcpReassembler::flush_on_asymmetric_flow(const TcpReassemblerState &trs, uint32_t flushed, snort::Packet *p)
+{
+    bool asymmetric = flushed && trs.sos.seg_count && !p->flow->two_way_traffic() && !p->ptrs.tcph->is_syn();
+    if ( asymmetric )
+    {
+        TcpStreamTracker::TcpState peer = trs.tracker->session->get_peer_state(trs.tracker);
+        asymmetric = ( peer == TcpStreamTracker::TCP_SYN_SENT || peer == TcpStreamTracker::TCP_SYN_RECV
+            || peer == TcpStreamTracker::TCP_MID_STREAM_SENT );
+    }
+
+    return asymmetric;
 }
 
 // iterate over trs.sos.seglist and scan all new acked bytes
@@ -1163,6 +1205,17 @@ int32_t TcpReassembler::scan_data_post_ack(TcpReassemblerState& trs, uint32_t* f
     return ret_val;
 }
 
+// we are on a FIN, the data has been scanned, it has no gaps,
+// but somehow we are waiting for more data - do final flush here
+// FIXIT-M this convoluted expression needs some refactoring to simplify
+bool TcpReassembler::final_flush_on_fin(const TcpReassemblerState &trs, int32_t flush_amt, Packet *p)
+{
+    return trs.tracker->fin_seq_status >= TcpStreamTracker::FIN_WITH_SEQ_SEEN
+        && -1 <= flush_amt && flush_amt <= 0
+        && trs.paf_state.paf == StreamSplitter::SEARCH
+        && !p->flow->searching_for_service();
+}
+
 int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
 {
     uint32_t flushed = 0;
@@ -1189,23 +1242,15 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
                     break;
 
                 flushed += flush_to_seq(trs, flush_amt, p, flags);
-            }
-            while ( trs.sos.seglist.head and !p->flow->is_inspection_disabled() );
+            }  while ( trs.sos.seglist.head and !p->flow->is_inspection_disabled() );
 
             if ( (trs.paf_state.paf == StreamSplitter::ABORT) && trs.tracker->is_splitter_paf() )
             {
                 fallback(*trs.tracker, trs.server_side);
                 return flush_on_data_policy(trs, p);
             }
-            else if ( trs.tracker->fin_seq_status >= TcpStreamTracker::FIN_WITH_SEQ_SEEN and
-                -1 <= flush_amt and flush_amt <= 0 and
-                trs.paf_state.paf == StreamSplitter::SEARCH and
-                !p->flow->searching_for_service() )
-            {
-                // we are on a FIN, the data has been scanned, it has no gaps,
-                // but somehow we are waiting for more data - do final flush here
+            else if ( final_flush_on_fin(trs, flush_amt, p) )
                 finish_and_final_flush(trs, p->flow, true, p);
-            }
         }
         break;
     }
@@ -1216,20 +1261,13 @@ int TcpReassembler::flush_on_data_policy(TcpReassemblerState& trs, Packet* p)
     if ( trs.tracker->is_retransmit_of_held_packet(p) )
         flushed = perform_partial_flush(trs, p, flushed);
 
-    // FIXIT-M a drop rule will yoink the seglist out from under us
-    // because apply_delayed_action is only deferred to end of context
-    // this is causing stability issues
-    if ( flushed and trs.sos.seg_count and
-        !trs.sos.session->flow->two_way_traffic() and !p->ptrs.tcph->is_syn() )
+    if ( flush_on_asymmetric_flow(trs, flushed, p) )
     {
-        TcpStreamTracker::TcpState peer = trs.tracker->session->get_peer_state(trs.tracker);
-
-        if ( peer == TcpStreamTracker::TCP_SYN_SENT || peer == TcpStreamTracker::TCP_SYN_RECV )
-        {
             purge_to_seq(trs, trs.sos.seglist.head->i_seq + flushed);
             trs.tracker->r_win_base = trs.sos.seglist_base_seq;
-        }
+            tcpStats.flush_on_asymmetric_flow++;
     }
+
     return flushed;
 }
 

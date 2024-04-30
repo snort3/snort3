@@ -82,6 +82,9 @@ public:
     void skip_midstream_pickup_seglist_hole(TcpSegmentDescriptor& tsd)
     { reassembler->skip_midstream_pickup_seglist_hole(trs, tsd); }
 
+    void reset_asymmetric_flow_reassembly()
+    { reassembler->reset_asymmetric_flow_reassembly(trs); }
+
     void initialize_paf()
     { reassembler->initialize_paf(trs); }
 

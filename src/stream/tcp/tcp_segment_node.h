@@ -61,7 +61,7 @@ public:
             return SEQ_LT((c_seq + c_len), to_seq);
     }
 
-    void update_ressembly_lengths(uint16_t bytes)
+    void update_reassembly_cursor(uint16_t bytes)
     {
         c_seq += bytes;
         c_len -= bytes;

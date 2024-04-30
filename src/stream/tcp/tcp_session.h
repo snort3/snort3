@@ -76,7 +76,6 @@ public:
 private:
     int process_tcp_packet(TcpSegmentDescriptor&, const snort::Packet*);
     void set_os_policy() override;
-    bool flow_exceeds_config_thresholds(TcpSegmentDescriptor&);
     void update_stream_order(const TcpSegmentDescriptor&, bool aligned);
     void swap_trackers();
     void init_session_on_syn(TcpSegmentDescriptor&);
@@ -87,6 +86,10 @@ private:
     void init_tcp_packet_analysis(TcpSegmentDescriptor&);
     void check_events_and_actions(const TcpSegmentDescriptor& tsd);
     void flush_tracker(TcpStreamTracker&, snort::Packet*, uint32_t dir, bool final_flush);
+    bool check_reassembly_queue_thresholds(TcpSegmentDescriptor&, TcpStreamTracker*);
+    bool filter_packet_for_reassembly(TcpSegmentDescriptor&, TcpStreamTracker*);
+    void check_small_segment_threshold(const TcpSegmentDescriptor&, TcpStreamTracker*);
+    int32_t kickstart_asymmetric_flow(const TcpSegmentDescriptor&, TcpStreamTracker*);
 
 private:
     TcpStateMachine* tsm;

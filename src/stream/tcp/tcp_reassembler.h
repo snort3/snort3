@@ -23,7 +23,8 @@
 #define TCP_REASSEMBLER_H
 
 #include "stream/stream.h"
-#include "stream/tcp/segment_overlap_editor.h"
+
+#include "segment_overlap_editor.h"
 
 class TcpReassembler : public SegmentOverlapEditor
 {
@@ -53,6 +54,7 @@ public:
         uint32_t event_id, uint32_t event_second);
     virtual void purge_alerts(TcpReassemblerState&);
     virtual bool segment_within_seglist_window(TcpReassemblerState&, TcpSegmentDescriptor&);
+    void reset_asymmetric_flow_reassembly(TcpReassemblerState&);
     void skip_midstream_pickup_seglist_hole(TcpReassemblerState&, TcpSegmentDescriptor&);
     void initialize_paf(TcpReassemblerState& trs)
     {
@@ -119,6 +121,10 @@ protected:
         int32_t flush_amt);
 
     uint32_t perform_partial_flush(TcpReassemblerState&, snort::Packet*, uint32_t flushed = 0);
+
+private:
+    bool final_flush_on_fin(const TcpReassemblerState&, int32_t flush_amt, snort::Packet*);
+    bool flush_on_asymmetric_flow(const TcpReassemblerState &trs, uint32_t flushed, snort::Packet *p);
 };
 
 #endif
