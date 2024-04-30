@@ -119,6 +119,7 @@ const PegInfo tcp_pegs[] =
     { CountType::SUM, "proxy_mode_flows", "number of flows set to proxy normalization policy" },
     { CountType::SUM, "full_retransmits", "number of fully retransmitted segments" },
     { CountType::SUM, "flush_on_asymmetric_flow", "number of flushes on asymmetric flows" },
+    { CountType::SUM, "asymmetric_flows", "number of completed flows having one-way traffic only" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -363,10 +364,12 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
         else
             config->flags |= STREAM_CONFIG_NO_ASYNC_REASSEMBLY;
     }
+
     else if ( v.is("require_3whs") )
     {
         config->hs_timeout = v.get_int32();
     }
+
     else if ( v.is("show_rebuilt_packets") )
     {
         if ( v.get_bool() )
@@ -374,6 +377,7 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
         else
             config->flags &= ~STREAM_CONFIG_SHOW_PACKETS;
     }
+
     else if ( v.is("track_only") )
     {
         if ( v.get_bool() )

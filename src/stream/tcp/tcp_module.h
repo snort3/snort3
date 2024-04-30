@@ -119,6 +119,7 @@ struct TcpStats
     PegCount proxy_mode_flows;
     PegCount full_retransmits;
     PegCount flush_on_asymmetric_flow;
+    PegCount asymmetric_flows;
 };
 
 extern THREAD_LOCAL struct TcpStats tcpStats;

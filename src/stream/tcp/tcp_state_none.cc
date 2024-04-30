@@ -25,6 +25,7 @@
 
 #include "tcp_state_none.h"
 
+#include "packet_tracer/packet_tracer.h"
 #include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
 
@@ -86,9 +87,20 @@ bool TcpStateNone::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
     {
         Flow* flow = tsd.get_flow();
         flow->session_state |= STREAM_STATE_MIDSTREAM;
+
         if ( !Stream::is_midstream(flow) )
         {
+            TcpStreamTracker* listener = tsd.get_listener();
+            TcpStreamTracker* talker = tsd.get_talker();
+
+            trk.normalizer.init(StreamPolicy::MISSED_3WHS, trk.session, listener, talker);
+            trk.normalizer.init(StreamPolicy::MISSED_3WHS, trk.session, talker, listener);
             flow->set_session_flags(SSNFLAG_MIDSTREAM);
+
+            if ( PacketTracer::is_active() )
+                PacketTracer::log("Stream TCP did not see the complete 3-Way Handshake. "
+                "Not all normalizations will be in effect\n");
+
             DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_MIDSTREAM, tsd.get_pkt());
         }
 

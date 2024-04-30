@@ -37,34 +37,25 @@ using namespace snort;
 TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, uint32_t seq, bool stream_is_inorder)
 {
-    // if this is a midstream pickup then skip normalizations
-    if ( Stream::is_midstream(tsd.get_flow()) )
-        return NORM_OK;
-
-    // these normalizations can't be done if we missed setup. and
-    // window is zero in one direction until we've seen both sides.
-    if ( tsd.get_flow()->two_way_traffic() )
+    // drop packet if sequence num is invalid
+    if ( !tns.tracker->is_segment_seq_valid(tsd) )
     {
-        // drop packet if sequence num is invalid
-        if ( !tns.tracker->is_segment_seq_valid(tsd) )
-        {
-            bool inline_mode = tsd.is_nap_policy_inline();
-            tcpStats.invalid_seq_num++;
-            log_drop_reason(tns, tsd, inline_mode, "normalizer", "Normalizer: Sequence number is invalid\n");
-            trim_win_payload(tns, tsd, 0, inline_mode);
-            return NORM_BAD_SEQ;
-        }
-
-        // trim to fit in listener's window and mss
-        log_drop_reason(tns, tsd, false, "normalizer", "Normalizer: Trimming payload to fit window size\n");
-        trim_win_payload(tns, tsd,
-            (tns.tracker->r_win_base + tns.tracker->get_snd_wnd() - tns.tracker->rcv_nxt));
-
-        if ( tns.tracker->get_mss() )
-            trim_mss_payload(tns, tsd, tns.tracker->get_mss());
-
-        ecn_stripper(tns, tsd);
+        bool inline_mode = tsd.is_nap_policy_inline();
+        tcpStats.invalid_seq_num++;
+        log_drop_reason(tns, tsd, inline_mode, "normalizer", "Normalizer: Sequence number is invalid\n");
+        trim_win_payload(tns, tsd, 0, inline_mode);
+        return NORM_BAD_SEQ;
     }
+
+    // trim to fit in listener's window and mss
+    log_drop_reason(tns, tsd, false, "normalizer", "Normalizer: Trimming payload to fit window size\n");
+    trim_win_payload(tns, tsd,
+        (tns.tracker->r_win_base + tns.tracker->get_snd_wnd() - tns.tracker->rcv_nxt));
+
+    if ( tns.tracker->get_mss() )
+        trim_mss_payload(tns, tsd, tns.tracker->get_mss());
+
+    ecn_stripper(tns, tsd);
 
     if ( stream_is_inorder )
     {

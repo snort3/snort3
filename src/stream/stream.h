@@ -60,7 +60,7 @@ class StreamSplitter;
 // sequence must match enum StreamPolicy defines in tcp_defs.h
 #define TCP_POLICIES \
     "first | last | linux | old_linux | bsd | macos | solaris | irix | " \
-    "hpux11 | hpux10 | windows | win_2003 | vista | proxy"
+    "hpux11 | hpux10 | windows | win_2003 | vista | proxy | asymmetric"
 
 struct AlertInfo
 {

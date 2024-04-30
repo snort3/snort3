@@ -90,6 +90,7 @@ private:
     bool filter_packet_for_reassembly(TcpSegmentDescriptor&, TcpStreamTracker*);
     void check_small_segment_threshold(const TcpSegmentDescriptor&, TcpStreamTracker*);
     int32_t kickstart_asymmetric_flow(const TcpSegmentDescriptor&, TcpStreamTracker*);
+    void check_flow_missed_3whs();
 
 private:
     TcpStateMachine* tsm;

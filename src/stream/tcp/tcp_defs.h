@@ -76,6 +76,7 @@ enum StreamPolicy : uint8_t
     OS_WINDOWS2K3,
     OS_VISTA,
     OS_PROXY,
+    MISSED_3WHS,
     OS_END_OF_LIST,
     OS_DEFAULT = OS_BSD
 };

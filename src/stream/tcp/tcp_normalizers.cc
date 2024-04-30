@@ -207,6 +207,22 @@ public:
     int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
 };
 
+// Normalizations applied or excluded for midstream and one-way asymmetric flows are common
+class TcpNormalizerMissed3whs : public TcpNormalizer
+{
+public:
+    TcpNormalizerMissed3whs()
+    { my_name = "Missed3whs"; }
+
+    void init(TcpNormalizer* prev) override
+    { prev_norm = prev; }
+
+    TcpNormalizer::NormStatus apply_normalizations(
+        TcpNormalizerState&, TcpSegmentDescriptor&, uint32_t seq, bool stream_is_inorder) override;
+    bool validate_rst(TcpNormalizerState&, TcpSegmentDescriptor&) override;
+    int handle_paws(TcpNormalizerState&, TcpSegmentDescriptor&) override;
+    int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
+};
 
 static inline int handle_repeated_syn_mswin(
     TcpStreamTracker* talker, TcpStreamTracker* listener,
@@ -471,8 +487,43 @@ int TcpNormalizerProxy::handle_repeated_syn(
     return ACTION_NOTHING;
 }
 
+TcpNormalizer::NormStatus TcpNormalizerMissed3whs::apply_normalizations(
+    TcpNormalizerState&, TcpSegmentDescriptor&, uint32_t, bool)
+{
+    // when a flow is Midstream/Asymmetric, not all packet normalizations are possible
+    return NORM_OK;
+}
+
+bool TcpNormalizerMissed3whs::validate_rst(
+    TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
+{
+    if ( tns.session->flow->two_way_traffic() )
+        return prev_norm->validate_rst(tns, tsd);
+
+    if ( !prev_norm->get_name().compare("OS_Hpux11") )
+        return validate_rst_seq_geq(tns, tsd);
+
+    return true;
+}
+
+int TcpNormalizerMissed3whs::handle_paws(
+    TcpNormalizerState& tns, TcpSegmentDescriptor& tsd) 
+{
+    return ACTION_NOTHING;
+}
+
+int TcpNormalizerMissed3whs::handle_repeated_syn(
+    TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
+{
+    return prev_norm->handle_repeated_syn(tns, tsd);
+}
+
 void TcpNormalizerPolicy::init(StreamPolicy os, TcpStreamSession* ssn, TcpStreamTracker* trk, TcpStreamTracker* peer)
 {
+    TcpNormalizer* prev_norm = nullptr;
+    if ( os == StreamPolicy::MISSED_3WHS and os != tns.os_policy )
+        prev_norm = TcpNormalizerFactory::get_instance(tns.os_policy);
+
     tns.os_policy = os;
     tns.session = ssn;
     tns.tracker = trk;
@@ -492,7 +543,11 @@ void TcpNormalizerPolicy::init(StreamPolicy os, TcpStreamSession* ssn, TcpStream
     tns.opt_block = Normalize_GetMode(NORM_TCP_OPT);
 
     norm = TcpNormalizerFactory::get_instance(os);
-    norm->init(tns);
+
+    if ( prev_norm )
+        norm->init(prev_norm);
+    else
+        norm->init(tns);
 }
 
 TcpNormalizer* TcpNormalizerFactory::normalizers[StreamPolicy::OS_END_OF_LIST];
@@ -513,17 +568,18 @@ void TcpNormalizerFactory::initialize()
     normalizers[StreamPolicy::OS_WINDOWS2K3] = new TcpNormalizerWindows2K3;
     normalizers[StreamPolicy::OS_VISTA] = new TcpNormalizerVista;
     normalizers[StreamPolicy::OS_PROXY] = new TcpNormalizerProxy;
+    normalizers[StreamPolicy::MISSED_3WHS] = new TcpNormalizerMissed3whs;
 }
 
 void TcpNormalizerFactory::term()
 {
-    for ( auto sp = StreamPolicy::OS_FIRST; sp <= StreamPolicy::OS_PROXY; sp++ )
+    for ( auto sp = StreamPolicy::OS_FIRST; sp < StreamPolicy::OS_END_OF_LIST; sp++ )
         delete normalizers[sp];
 }
 
 TcpNormalizer* TcpNormalizerFactory::get_instance(StreamPolicy sp)
 {
-    assert( sp <= StreamPolicy::OS_PROXY );
+    assert( sp < StreamPolicy::OS_END_OF_LIST );
     return normalizers[sp];
 }
 

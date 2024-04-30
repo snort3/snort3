@@ -178,6 +178,9 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
     tcp_init = false;
     tcpStats.released++;
 
+    if ( !flow->two_way_traffic() and free_flow_data )
+        tcpStats.asymmetric_flows++;
+
     if ( flush_segments )
     {
         client.reassembler.flush_queued_segments(flow, true, p);
@@ -302,6 +305,19 @@ void TcpSession::update_perf_base_state(char newState)
 
     if ( fire_event )
         DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_STATE_CHANGE, nullptr, flow);
+}
+
+void TcpSession::check_flow_missed_3whs()
+{
+    if ( flow->two_way_traffic() )
+        return;
+
+    if ( PacketTracer::is_active() )
+        PacketTracer::log("Stream TCP did not see the complete 3-Way Handshake. "
+        "Not all normalizations will be in effect\n");
+
+    client.normalizer.init(StreamPolicy::MISSED_3WHS, this, &client, &server);
+    server.normalizer.init(StreamPolicy::MISSED_3WHS, this, &server, &client);
 }
 
 void TcpSession::update_stream_order(const TcpSegmentDescriptor& tsd, bool aligned)
@@ -626,6 +642,9 @@ void TcpSession::check_for_session_hijack(TcpSegmentDescriptor& tsd)
 
 bool TcpSession::check_for_window_slam(TcpSegmentDescriptor& tsd)
 {
+    if (Stream::is_midstream(tsd.get_flow()) or !flow->two_way_traffic())
+        return false;
+
     TcpStreamTracker* listener = tsd.get_listener();
 
     if ( tcp_config->max_window && (tsd.get_wnd() > tcp_config->max_window) )
@@ -638,8 +657,7 @@ bool TcpSession::check_for_window_slam(TcpSegmentDescriptor& tsd)
     }
     else if ( tsd.is_packet_from_client() && (tsd.get_wnd() <= SLAM_MAX)
         && (tsd.get_ack() == listener->get_iss() + 1)
-        && !(tsd.get_tcph()->is_fin() || tsd.get_tcph()->is_rst())
-        && !(flow->get_session_flags() & SSNFLAG_MIDSTREAM))
+        && !(tsd.get_tcph()->is_fin() || tsd.get_tcph()->is_rst()))
     {
         /* got a window slam alert! */
         tel.set_tcp_event(EVENT_WINDOW_SLAM);
@@ -1060,6 +1078,13 @@ void TcpSession::init_tcp_packet_analysis(TcpSegmentDescriptor& tsd)
 
             client.init_flush_policy();
             server.init_flush_policy();
+
+            if ( tsd.is_packet_from_client() ) // Important if the 3-way handshake's ACK contains data
+                flow->set_session_flags(SSNFLAG_SEEN_CLIENT);
+            else
+                flow->set_session_flags(SSNFLAG_SEEN_SERVER);
+
+            check_flow_missed_3whs();
 
             set_no_ack(tcp_config->no_ack);
         }
