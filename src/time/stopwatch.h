@@ -65,6 +65,9 @@ public:
     void cancel()
     { running = false; }
 
+    time_point get_start_time() const
+    { return start_time; }
+
 private:
     duration get_delta() const
     { return Clock::now() - start_time; }

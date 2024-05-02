@@ -41,6 +41,7 @@
 #include "main/snort_module.h"
 #include "main/thread_config.h"
 #include "protocols/packet.h"
+#include "profiler/profiler_defs.h"
 #include "pub_sub/intrinsic_event_ids.h"
 #include "search_engines/search_tool.h"
 #include "target_based/snort_protocols.h"
@@ -2239,10 +2240,15 @@ inline void InspectorManager::internal_execute(Packet* p)
 // new it_xxx) is run just once per flow (and all non-flow packets).
 void InspectorManager::execute(Packet* p)
 {
+    p->inspection_started_timestamp = TO_USECS_FROM_EPOCH(SnortClock::now());
+
     if ( trace_enabled(snort_trace, TRACE_INSPECTOR_MANAGER, DEFAULT_TRACE_LOG_LEVEL, p) )
         internal_execute<true>(p);
     else
         internal_execute<false>(p);
+
+    if ( p->flow )
+        p->flow->add_inspection_duration(TO_USECS_FROM_EPOCH(SnortClock::now()) - p->inspection_started_timestamp);
 
     if ( p->flow && ( !p->is_cooked() or p->is_defrag() ) )
         ExpectFlow::handle_expected_flows(p);

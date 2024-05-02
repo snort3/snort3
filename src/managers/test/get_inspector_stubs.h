@@ -26,11 +26,14 @@
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
 #include "network_inspectors/binder/bind_module.h"
+#include "profiler/rule_profiler_defs.h"
+#include "profiler/time_profiler_defs.h"
 #include "search_engines/search_tool.h"
 #include "trace/trace.h"
 #include "trace/trace_api.h"
 
 THREAD_LOCAL const snort::Trace* snort_trace = nullptr;
+THREAD_LOCAL bool RuleContext::enabled = false;
 
 std::shared_ptr<PolicyTuple> PolicyMap::get_policies(Shell*) { return nullptr; }
 void InspectionPolicy::configure() { }
@@ -88,4 +91,6 @@ void set_inspection_policy(InspectionPolicy*) { }
 void set_ips_policy(IpsPolicy*) { }
 unsigned get_instance_id() { return 0; }
 void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) { }
+
+THREAD_LOCAL bool TimeProfilerStats::enabled = false;
 }

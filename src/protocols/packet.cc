@@ -91,6 +91,7 @@ void Packet::reset()
     vlan_idx = 0;
     filtering_state.clear();
     sect = PS_NONE;
+    inspection_started_timestamp = 0;
 }
 
 void Packet::release_helpers()

@@ -164,6 +164,8 @@ struct SO_PUBLIC Packet
     uint64_t user_ips_policy_id;
     uint64_t user_network_policy_id;
 
+    uint64_t inspection_started_timestamp;
+
     uint8_t vlan_idx;
     uint8_t ts_packet_flags; // FIXIT-M packet flags should always be thread safe
 

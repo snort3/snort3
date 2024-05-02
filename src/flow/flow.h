@@ -43,6 +43,7 @@
 #include "protocols/layer.h"
 #include "sfip/sf_ip.h"
 #include "target_based/snort_protocols.h"
+#include "time/clock_defs.h"
 
 #define SSNFLAG_SEEN_CLIENT         0x00000001
 #define SSNFLAG_SEEN_SENDER         0x00000001
@@ -293,7 +294,13 @@ public:
     { return (flow_state <= FlowState::INSPECT) and !is_inspection_disabled(); }
 
     void set_state(FlowState fs)
-    { flow_state = fs; }
+    { 
+        flow_state = fs;
+        if (fs > FlowState::INSPECT)
+        {
+            inspected_packet_count = flowstats.client_pkts + flowstats.server_pkts;
+        }
+    }
 
     void set_client(Inspector* ins)
     {
@@ -410,9 +417,31 @@ public:
 
     bool trust_is_deferred() const
     { return deferred_trust.is_deferred(); }
- 
+
     void set_idle_timeout(unsigned timeout)
-    { idle_timeout = timeout; }  
+    { idle_timeout = timeout; }
+
+    uint16_t get_inspected_packet_count() const
+    { return inspected_packet_count ? inspected_packet_count : (flowstats.client_pkts + flowstats.server_pkts); }
+
+    void add_inspection_duration(const uint64_t& duration)
+    {
+        if (inspected_packet_count != 0)
+            return;
+
+        inspection_duration += duration;
+    }
+
+    uint64_t get_inspection_duration() const
+    {
+#ifdef USE_TSC_CLOCK
+        return clock_usecs(inspection_duration.load());
+#else
+        return inspection_duration.load();
+#endif
+    }
+
+    uint64_t fetch_add_inspection_duration();
 
 public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
@@ -518,6 +547,8 @@ public:  // FIXIT-M privatize if possible
 
 private:
     void clean();
+    std::atomic_ullong inspection_duration{0};
+    uint16_t inspected_packet_count{0};
 };
 
 inline void Flow::set_to_client_detection(bool enable)

@@ -36,6 +36,7 @@
 #include "protocols/tcp.h"
 #include "pub_sub/intrinsic_event_ids.h"
 #include "sfip/sf_ip.h"
+#include "time/clock_defs.h"
 #include "utils/stats.h"
 #include "utils/util.h"
 
@@ -106,6 +107,9 @@ inline void Flow::clean()
     delete bitop;
     bitop = nullptr;
     filtering_state.clear();
+
+    inspected_packet_count = 0;
+    inspection_duration = 0;
 }
 
 void Flow::flush(bool do_cleanup)
@@ -197,6 +201,25 @@ void Flow::trust()
     set_ignore_direction(SSN_DIR_BOTH);
     set_state(Flow::FlowState::ALLOW);
     disable_inspection();
+}
+
+uint64_t Flow::fetch_add_inspection_duration()
+{
+    if (inspected_packet_count != 0)
+        return get_inspection_duration();
+
+    auto c = DetectionEngine::get_context();
+
+    if (c and c->packet and c->packet->inspection_started_timestamp)
+    {
+        auto packet = c->packet;
+        const auto timestamp = TO_USECS_FROM_EPOCH(SnortClock::now());
+
+        add_inspection_duration(timestamp - packet->inspection_started_timestamp);
+        packet->inspection_started_timestamp = timestamp;
+    }
+
+    return get_inspection_duration();
 }
 
 int Flow::set_flow_data(FlowData* fd)

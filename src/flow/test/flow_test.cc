@@ -36,6 +36,7 @@
 #include "protocols/ip.h"
 #include "protocols/layer.h"
 #include "protocols/packet.h"
+#include "time/clock_defs.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -70,6 +71,9 @@ DetectionEngine::DetectionEngine() { context = nullptr; }
 
 DetectionEngine::~DetectionEngine() = default;
 
+Packet test_packet;
+Packet* DetectionEngine::get_current_packet() { return &test_packet; }
+
 bool layer::set_outer_ip_api(const Packet* const, ip::IpApi&, int8_t&)
 { return false; }
 
@@ -99,6 +103,36 @@ TEST(nondefault_timeout, hard_expiration)
 
     CHECK( flow->is_hard_expiration() == true);
     CHECK( flow->expire_time == validate );
+
+    delete flow;
+}
+
+TEST_GROUP(inspection_time_presence)
+{
+};
+
+TEST(inspection_time_presence, inspection_time_addition)
+{
+    Flow *flow = new Flow;
+
+    flow->flowstats.client_pkts = 3;
+    flow->flowstats.server_pkts = 3;
+
+    flow->add_inspection_duration(2);
+    flow->add_inspection_duration(3);
+
+    CHECK(flow->get_inspection_duration() == 5);
+    CHECK(flow->get_inspected_packet_count() == 6);
+
+    flow->set_state(Flow::FlowState::ALLOW);
+
+    flow->add_inspection_duration(2);
+
+    flow->flowstats.client_pkts = 5;
+    flow->flowstats.server_pkts = 5;
+
+    CHECK(flow->get_inspection_duration() == 5);
+    CHECK(flow->get_inspected_packet_count() == 6);
 
     delete flow;
 }

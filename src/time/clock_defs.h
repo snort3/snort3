@@ -27,6 +27,7 @@ using SnortClock = TscClock;
 #define DURA_ZERO 0
 #define TO_TICKS(t) (t)
 #define TO_USECS(t) (t)
+#define TO_USECS_FROM_EPOCH(t) (t)
 #define TO_NSECS(t) (t)
 #define TO_DURATION(v, t) (t)
 
@@ -39,6 +40,7 @@ inline long clock_scale() { return 1; }
 #define DURA_ZERO Clock::duration::zero()
 #define TO_TICKS(t) (t.count())
 #define TO_USECS(t) (std::chrono::duration_cast<std::chrono::microseconds>(t).count())
+#define TO_USECS_FROM_EPOCH(t) (TO_USECS(t.time_since_epoch()))
 #define TO_NSECS(t) (std::chrono::duration_cast<std::chrono::nanoseconds>(t).count())
 #define TO_DURATION(v, t) (std::chrono::duration_cast<decltype(v)>(std::chrono::microseconds(t)))
 #endif
