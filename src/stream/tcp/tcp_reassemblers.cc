@@ -252,6 +252,22 @@ private:
     { full_right_overlap_os5(trs); }
 };
 
+class TcpReassemblerMissed3whs : public TcpReassemblerFirst
+{
+public:
+    TcpReassemblerMissed3whs() = default;
+
+private:
+    void insert_left_overlap(TcpReassemblerState& trs) override
+    { left_overlap_keep_first(trs); }
+
+    void insert_right_overlap(TcpReassemblerState& trs) override
+    { right_overlap_truncate_new(trs); }
+
+    void insert_full_overlap(TcpReassemblerState& trs) override
+    { full_right_overlap_os5(trs); }
+};
+
 void TcpReassemblerPolicy::init(TcpSession* ssn, TcpStreamTracker* trk, StreamPolicy pol, bool server)
 {
     trs.sos.init_sos(ssn, pol);
@@ -298,16 +314,17 @@ void TcpReassemblerFactory::initialize()
     reassemblers[StreamPolicy::OS_WINDOWS2K3] = new TcpReassemblerWindows2K3;
     reassemblers[StreamPolicy::OS_VISTA] = new TcpReassemblerVista;
     reassemblers[StreamPolicy::OS_PROXY] = new TcpReassemblerProxy;
+    reassemblers[StreamPolicy::MISSED_3WHS] = new TcpReassemblerMissed3whs;
 }
 
 void TcpReassemblerFactory::term()
 {
-    for ( auto sp = StreamPolicy::OS_FIRST; sp <= StreamPolicy::OS_PROXY; sp++ )
+    for ( auto sp = StreamPolicy::OS_FIRST; sp < StreamPolicy::OS_END_OF_LIST; sp++ )
         delete reassemblers[sp];
 }
 
 TcpReassembler* TcpReassemblerFactory::get_instance(StreamPolicy os_policy)
 {
-    assert( os_policy <= StreamPolicy::OS_PROXY );
+    assert( os_policy < StreamPolicy::OS_END_OF_LIST );
     return reassemblers[os_policy];
 }
