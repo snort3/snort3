@@ -34,6 +34,7 @@
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
+THREAD_LOCAL bool TimeProfilerStats::enabled = false;
 
 // Mocks
 
@@ -69,6 +70,7 @@ public:
 
 AppIdConfig::~AppIdConfig() = default;
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
+AppidCPUProfilingManager::AppidCPUProfilingManager() {}
 
 AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);

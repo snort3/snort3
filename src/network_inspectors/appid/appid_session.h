@@ -299,7 +299,11 @@ public:
         uint32_t last_packet_second;
         uint64_t initiator_bytes;
         uint64_t responder_bytes;
-    } stats = { 0, 0, 0, 0 };
+        uint32_t cpu_profiler_pkt_count;
+        uint32_t prev_payload_processing_packets;
+        uint64_t processing_time;
+        uint64_t prev_payload_processing_time;
+    } stats = { 0, 0, 0, 0, 0, 0, 0, 0};
 
     //appIds picked from encrypted session.
     struct

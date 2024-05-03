@@ -65,6 +65,7 @@ SslPatternMatchers::~SslPatternMatchers() = default;
 AlpnPatternMatchers::~AlpnPatternMatchers() = default;
 CipPatternMatchers::~CipPatternMatchers() = default;
 AppIdConfig::~AppIdConfig() = default;
+AppidCPUProfilingManager::AppidCPUProfilingManager() = default;
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 void ServiceDiscovery::initialize(AppIdInspector&) { }
 void ServiceDiscovery::reload() { }

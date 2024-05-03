@@ -49,6 +49,7 @@
 #include "service_plugins/service_ssl.h"
 #include "tp_appid_utils.h"
 #include "tp_lib_handler.h"
+#include "profiler/profiler_defs.h"
 
 using namespace snort;
 
@@ -110,6 +111,10 @@ void AppIdContext::pterm()
     if (odp_ctxt)
     {
         odp_ctxt->get_app_info_mgr().cleanup_appid_info_table();
+        if (odp_ctxt->is_appid_cpu_profiler_running())
+            odp_ctxt->get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table();
+
+        odp_ctxt->get_appid_cpu_profiler_mgr().cleanup_appid_cpu_profiler_table();
         delete odp_ctxt;
         odp_ctxt = nullptr;
     }
@@ -219,7 +224,18 @@ void OdpContext::dump_appid_config()
     appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_packet_before_service_fail       %" PRIu16" \n", max_packet_before_service_fail);
     appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_packet_service_fail_ignore_bytes %" PRIu16" \n", max_packet_service_fail_ignore_bytes);
     appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: eve_http_client                      %s\n", (eve_http_client ? "True" : "False"));
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: appid_cpu_profiler                  %s\n", (appid_cpu_profiler ? "True" : "False"));
 }
+
+bool OdpContext::is_appid_cpu_profiler_running()
+{
+    return (TimeProfilerStats::is_enabled() and appid_cpu_profiler);
+}   
+
+bool OdpContext::is_appid_cpu_profiler_enabled()
+{
+    return appid_cpu_profiler;
+}  
 
 OdpContext::OdpContext(const AppIdConfig& config, SnortConfig* sc)
 {

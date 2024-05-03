@@ -491,6 +491,16 @@ static void set_tp_reinspect(AppIdSession& asd, const Packet* p, AppidSessionDir
         asd.tp_reinspect_by_initiator = true;
         asd.set_session_flags(APPID_SESSION_APP_REINSPECT);
         appid_log(p, TRACE_DEBUG_LEVEL, "3rd party allow reinspect http\n");
+        
+        // If on reinspection, payload is found, a new record would be inserted for that
+        //  payload, only for the time and packets processed from this point onwards
+        if (asd.get_odp_ctxt().is_appid_cpu_profiler_running() and asd.get_payload_id() > APP_ID_NONE)
+        { 
+                asd.stats.prev_payload_processing_time = asd.stats.processing_time;
+                asd.stats.prev_payload_processing_packets = asd.stats.cpu_profiler_pkt_count;
+                asd.get_odp_ctxt().get_appid_cpu_profiler_mgr().check_appid_cpu_profiler_table_entry(&asd, asd.get_payload_id());    
+        }
+
         asd.init_tpPackets = 0;
         asd.resp_tpPackets = 0;
         asd.clear_http_data();

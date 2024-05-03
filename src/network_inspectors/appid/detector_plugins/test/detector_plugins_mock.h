@@ -212,6 +212,9 @@ AppInfoTableEntry* AppInfoManager::get_app_info_entry(AppId, const AppInfoTable&
     return nullptr;
 }
 
+
+AppidCPUProfilingManager::AppidCPUProfilingManager() { }
+
 bool AppIdReloadTuner::tinit() { return false; }
 
 bool AppIdReloadTuner::tune_resources(unsigned int)

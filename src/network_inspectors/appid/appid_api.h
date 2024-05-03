@@ -53,6 +53,7 @@ public:
     const AppIdSessionApi* get_appid_session_api(const Flow& flow) const;
     bool is_inspection_needed(const Inspector& g) const;
     const char* get_appid_detector_directory() const;
+    void reset_appid_cpu_profiler_stats();
 
     bool is_service_http_type(AppId service_id) const
     {

@@ -34,6 +34,7 @@
 #include "appid_http_session.h"
 #include "tp_appid_module_api.h"
 #include "tp_appid_session_api.h"
+#include "app_cpu_profile_table.h"
 
 #include "appid_mock_definitions.h"
 #include "appid_mock_http_session.h"
@@ -50,6 +51,7 @@ using namespace snort;
 
 static SnortProtocolId dummy_http2_protocol_id = 1;
 char const* APPID_UT_ORG_UNIT = "Google";
+THREAD_LOCAL bool TimeProfilerStats::enabled = false;
 
 namespace snort
 {
@@ -201,6 +203,10 @@ void AppIdSession::set_ss_application_ids(AppId client_id, AppId payload_id,
         change_bits.set(APPID_PAYLOAD_BIT);
     }
 }
+
+bool OdpContext::is_appid_cpu_profiler_enabled() { return false; }
+
+void AppidCPUProfilingManager::cleanup_appid_cpu_profiler_table() {}
 
 AppIdHttpSession* AppIdSession::get_http_session(uint32_t) const { return nullptr; }
 

@@ -31,6 +31,7 @@
 
 #include "detection/detection_engine.h"
 #include "app_info_table.h"
+#include "app_cpu_profile_table.h"
 #include "appid_debug.h"
 #include "appid_discovery.h"
 #include "appid_http_session.h"
@@ -75,6 +76,12 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     int32_t header_length;
     HttpEvent* http_event = (HttpEvent*)&event;
     AppidChangeBits change_bits;
+
+    bool is_appid_cpu_profiling_running = (asd->get_odp_ctxt().is_appid_cpu_profiler_running());
+    Stopwatch<SnortClock> per_appid_event_cpu_timer;
+
+    if (is_appid_cpu_profiling_running)
+        per_appid_event_cpu_timer.start();
 
     if ((asd->get_tp_appid_ctxt() or ThirdPartyAppIdContext::get_tp_reload_in_progress()) and
         !http_event->get_is_httpx())
@@ -199,5 +206,10 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 
     asd->publish_appid_event(change_bits, *p, http_event->get_is_httpx(),
         asd->get_api().get_hsessions_size() - 1);
-}
 
+    if (is_appid_cpu_profiling_running)
+    {
+        per_appid_event_cpu_timer.stop();
+        asd->stats.processing_time += TO_USECS(per_appid_event_cpu_timer.get());
+    }
+}

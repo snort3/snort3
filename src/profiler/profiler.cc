@@ -37,6 +37,7 @@
 #include "profiler_nodes.h"
 #include "rule_profiler.h"
 #include "time_profiler.h"
+#include <network_inspectors/appid/appid_api.h>
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -131,6 +132,7 @@ void Profiler::reset_stats(snort::ProfilerType type)
     }
 
     s_profiler_nodes.reset_nodes(type);
+    appid_api.reset_appid_cpu_profiler_stats();
 }
 
 void Profiler::prepare_stats()

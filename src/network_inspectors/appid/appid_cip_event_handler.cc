@@ -68,6 +68,12 @@ void CipEventHandler::handle(DataEvent& event, Flow* flow)
 
     if (!asd)
         return;
+    
+    bool is_appid_cpu_profiling_running = (asd->get_odp_ctxt().is_appid_cpu_profiler_running());
+    Stopwatch<SnortClock> per_appid_event_cpu_timer;
+
+    if (is_appid_cpu_profiling_running)
+        per_appid_event_cpu_timer.start();
 
     if (!pkt_thread_odp_ctxt or (asd->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version()))
         return;
@@ -103,4 +109,10 @@ void CipEventHandler::handle(DataEvent& event, Flow* flow)
     }
 
     asd->publish_appid_event(change_bits, *p);
+
+    if (is_appid_cpu_profiling_running)
+    {
+        per_appid_event_cpu_timer.stop();
+        asd->stats.processing_time += TO_USECS(per_appid_event_cpu_timer.get());
+    }
 }

@@ -45,6 +45,8 @@
 #include "detector_plugins/ssh_patterns.h"
 #include "tp_appid_module_api.h"
 #include "utils/sflsq.h"
+#include "app_cpu_profile_table.h"
+#include "profiler/profiler_defs.h"
 
 #define APP_ID_PORT_ARRAY_SIZE  65536
 
@@ -142,11 +144,14 @@ public:
     uint16_t max_packet_service_fail_ignore_bytes = DEFAULT_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES;
     FirstPktAppIdDiscovered first_pkt_appid_prefix = NO_APPID_FOUND;
     bool eve_http_client = true;
+    bool appid_cpu_profiler= true;
 
     OdpContext(const AppIdConfig&, snort::SnortConfig*);
     void initialize(AppIdInspector& inspector);
     void reload();
     void dump_appid_config();
+    bool is_appid_cpu_profiler_enabled();  
+    bool is_appid_cpu_profiler_running();    
 
     uint32_t get_version() const
     {
@@ -250,6 +255,11 @@ public:
         return alpn_matchers;
     }
 
+    AppidCPUProfilingManager& get_appid_cpu_profiler_mgr()
+    {
+        return app_cpu_profiler_mgr;
+    }
+    
     unsigned get_pattern_count();
     void add_port_service_id(IpProtocol, uint16_t, AppId);
     void add_protocol_service_id(IpProtocol, AppId);
@@ -261,6 +271,7 @@ public:
 
 private:
     AppInfoManager app_info_mgr;
+    AppidCPUProfilingManager app_cpu_profiler_mgr;
     ClientDiscovery client_disco_mgr;
     HostPortCache host_port_cache;
     HostPortCache first_pkt_cache;

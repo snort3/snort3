@@ -43,6 +43,7 @@
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
 THREAD_LOCAL bool ThirdPartyAppIdContext::tp_reload_in_progress = false;
+THREAD_LOCAL bool TimeProfilerStats::enabled = false;
 bool DiscoveryFilter::is_app_monitored(const snort::Packet*, uint8_t*){return true;}
 void AppIdDebug::activate(const Flow*, const AppIdSession*, bool) { active = true; }
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
@@ -83,6 +84,9 @@ class FakeHttpMsgHeader
 {
 };
 FakeHttpMsgHeader* fake_msg_header = nullptr;
+
+bool OdpContext::is_appid_cpu_profiler_enabled() { return false; }
+bool OdpContext::is_appid_cpu_profiler_running() { return false; }
 
 AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol, AppidSessionDirection,
     AppIdInspector&, OdpContext&)

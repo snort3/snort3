@@ -268,6 +268,8 @@ bool ACOdpContextSwap::execute(Analyzer&, void**)
 ACOdpContextSwap::~ACOdpContextSwap()
 {
     odp_ctxt.get_app_info_mgr().cleanup_appid_info_table();
+    odp_ctxt.get_appid_cpu_profiler_mgr().cleanup_appid_cpu_profiler_table();
+    
     delete &odp_ctxt;
     AppIdContext& ctxt = inspector.get_ctxt();
     LuaDetectorManager::cleanup_after_swap();
@@ -389,6 +391,49 @@ static void clear_dynamic_host_cache_services()
     }
 }
 
+
+static int show_cpu_profiler_stats(lua_State* L)
+{
+    int appid = luaL_optint(L, 1, 0);
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
+    if (!inspector)
+    {
+        ctrlcon->respond("== displaying appid cpu profiler failed - appid not enabled\n");
+        return 0;
+    }
+    const AppIdContext& ctxt = inspector->get_ctxt();
+    OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
+    if (odp_ctxt.is_appid_cpu_profiler_enabled())
+    {
+        ctrlcon->respond("== showing appid cpu profiler table\n");
+        if (!appid)
+            odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table();
+        else
+            odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(appid);
+    }
+    else
+        ctrlcon->respond("appid cpu profiler is disabled\n");
+        
+    return 0;
+}
+
+static int show_cpu_profiler_status(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
+    if (!inspector)
+    {
+        ctrlcon->respond("== appid cpu profiler status check failed- appid not enabled\n");
+        return 0;
+    }
+    const AppIdContext& ctxt = inspector->get_ctxt();
+    OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
+    ctrlcon->respond("appid cpu profiler enabled: %s , running: %s \n",
+            odp_ctxt.is_appid_cpu_profiler_enabled() ? "yes" : "no", odp_ctxt.is_appid_cpu_profiler_running() ? "yes" : "no");
+    return 0;
+}
+
 static int reload_detectors(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -470,6 +515,13 @@ static const Parameter enable_debug_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const Parameter appid_cpu_params[] =
+{
+    { "appid", Parameter::PT_INT, nullptr, nullptr, "show appid cpu profiling stats" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Command appid_cmds[] =
 {
     { "enable_debug", enable_debug, enable_debug_params, "enable appid debugging"},
@@ -477,6 +529,9 @@ static const Command appid_cmds[] =
     { "reload_third_party", reload_third_party, nullptr, "reload appid third-party module" },
     { "reload_detectors", reload_detectors, nullptr, "reload appid detectors" },
     { "print_appid_config", print_appid_config, nullptr, "print appid configs" },
+    { "show_cpu_profiler_stats", show_cpu_profiler_stats, appid_cpu_params, "show appid cpu profiling stats" },
+    { "show_cpu_profiler_status", show_cpu_profiler_status, nullptr, "show appid cpu profiling status" },
+
     { nullptr, nullptr, nullptr, nullptr }
 };
 

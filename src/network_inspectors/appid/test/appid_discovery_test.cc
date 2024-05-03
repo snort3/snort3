@@ -43,6 +43,7 @@
 #include <CppUTestExt/MockSupport.h>
 
 uint32_t ThirdPartyAppIdContext::next_version = 0;
+THREAD_LOCAL bool TimeProfilerStats::enabled = false;
 
 namespace snort
 {
@@ -183,6 +184,9 @@ AppId OdpContext::get_port_service_id(IpProtocol, uint16_t)
 {
     return APP_ID_NONE;
 }
+
+bool OdpContext::is_appid_cpu_profiler_enabled() { return false; }
+bool OdpContext::is_appid_cpu_profiler_running() { return false; }
 
 AppId OdpContext::get_protocol_service_id(IpProtocol)
 {

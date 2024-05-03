@@ -210,5 +210,6 @@ bool AppIdSession::is_tp_appid_available() const
     return true;
 }
 
-#endif
+AppidCPUProfilingManager::AppidCPUProfilingManager() { }
 
+#endif

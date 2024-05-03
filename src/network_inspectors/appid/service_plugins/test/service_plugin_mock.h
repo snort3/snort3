@@ -203,6 +203,8 @@ ServiceDiscoveryState* AppIdServiceState::add(SfIp const*, IpProtocol,
 {
   return nullptr;
 }
+AppidCPUProfilingManager::AppidCPUProfilingManager() { }
+
 void ServiceDiscoveryState::set_service_id_valid(ServiceDetector*) { }
 
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*)

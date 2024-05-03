@@ -28,6 +28,8 @@
 
 #include <vector>
 
+THREAD_LOCAL bool TimeProfilerStats::enabled = false;
+
 namespace snort
 {
 Packet::Packet(bool)
@@ -102,6 +104,7 @@ void ServiceAppDescriptor::set_port_service_id(AppId){}
 void ClientAppDescriptor::update_user(AppId, const char*, AppidChangeBits&){}
 AppIdConfig::~AppIdConfig() = default;
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
+AppidCPUProfilingManager::AppidCPUProfilingManager() {}
 AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
 OdpContext stub_odp_ctxt(stub_config, nullptr);

@@ -616,6 +616,13 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
             {
                 odp_ctxt.eve_http_client = atoi(conf_val) ? true : false;
             }
+            else if (!(strcasecmp(conf_key, "appid_cpu_profiling")))
+            {
+                if (!(strcasecmp(conf_val, "disabled")))
+                {
+                    odp_ctxt.appid_cpu_profiler = false;
+                }
+            }
             else
                 ParseWarning(WARN_CONF, "appid: unsupported configuration: %s\n", conf_key);
         }
@@ -757,4 +764,4 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
         load_odp_config(odp_ctxt, filepath);
     }
 }
-
+ 

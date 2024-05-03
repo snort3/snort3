@@ -138,6 +138,12 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
 
 AppIdSession::~AppIdSession()
 {
+     // Skip sessions using old odp context after reload detectors for appid cpu profiling
+    if ((pkt_thread_odp_ctxt->get_version() == api.asd->get_odp_ctxt_version()) and api.asd->get_odp_ctxt().is_appid_cpu_profiler_running())
+    {
+        api.asd->get_odp_ctxt().get_appid_cpu_profiler_mgr().check_appid_cpu_profiler_table_entry(api.asd, api.service.get_id(), api.client.get_id(), api.payload.get_id(), api.get_misc_app_id());
+    }
+
     if (!in_expected_cache)
     {
         if (config.log_stats)
@@ -384,6 +390,13 @@ void AppIdSession::check_ssl_detection_restart(AppidChangeBits& change_bits,
         encrypted.misc_id = pick_ss_misc_app_id();
         encrypted.referred_id = pick_ss_referred_payload_app_id();
 
+        if (odp_ctxt.is_appid_cpu_profiler_running())
+        {
+            odp_ctxt.get_appid_cpu_profiler_mgr().check_appid_cpu_profiler_table_entry(api.asd, encrypted.service_id, encrypted.client_id, encrypted.payload_id, encrypted.misc_id);
+            this->stats.processing_time = 0;
+            this->stats.cpu_profiler_pkt_count = 0;
+        }
+
         reinit_session_data(change_bits, curr_tp_appid_ctxt);
         appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "SSL decryption is available, restarting app detection\n");
 
@@ -406,6 +419,13 @@ void AppIdSession::check_tunnel_detection_restart()
         return;
 
     appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Found HTTP Tunnel, restarting app Detection\n");
+
+    if (odp_ctxt.is_appid_cpu_profiler_running())
+    {
+        odp_ctxt.get_appid_cpu_profiler_mgr().check_appid_cpu_profiler_table_entry(api.asd, api.service.get_id(), api.client.get_id(), api.payload.get_id(), api.get_misc_app_id());
+        this->stats.processing_time = 0;
+        this->stats.cpu_profiler_pkt_count = 0;
+    }
 
     // service
     if (api.service.get_id() == api.service.get_port_service_id())
@@ -1215,4 +1235,3 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
     else
         appid_log(&p, TRACE_DEBUG_LEVEL, "Published event for changes: %s\n",  str.c_str());
 }
-
