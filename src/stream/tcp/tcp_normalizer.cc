@@ -42,13 +42,13 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
     {
         bool inline_mode = tsd.is_nap_policy_inline();
         tcpStats.invalid_seq_num++;
-        log_drop_reason(tns, tsd, inline_mode, "normalizer", "Normalizer: Sequence number is invalid\n");
+        log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Sequence number is invalid\n");
         trim_win_payload(tns, tsd, 0, inline_mode);
         return NORM_BAD_SEQ;
     }
 
     // trim to fit in listener's window and mss
-    log_drop_reason(tns, tsd, false, "normalizer", "Normalizer: Trimming payload to fit window size\n");
+    log_drop_reason(tns, tsd, false, "stream", "Normalizer: Trimming payload to fit window size\n");
     trim_win_payload(tns, tsd,
         (tns.tracker->r_win_base + tns.tracker->get_snd_wnd() - tns.tracker->rcv_nxt));
 
@@ -65,7 +65,7 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
         {
             if ( !data_inside_window(tns, tsd) )
             {
-                log_drop_reason(tns, tsd, inline_mode, "normalizer", "Normalizer: Data is outside the TCP Window\n");
+                log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Data is outside the TCP Window\n");
                 trim_win_payload(tns, tsd, 0, inline_mode);
                 return NORM_TRIMMED;
             }
@@ -74,7 +74,7 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
             {
                 tcpStats.zero_win_probes++;
                 set_zwp_seq(tns, seq);
-                log_drop_reason(tns, tsd, inline_mode, "normalizer", 
+                log_drop_reason(tns, tsd, inline_mode, "stream", 
                 "Normalizer: Maximum Zero Window Probe length supported at a time is 1 byte\n");
                 trim_win_payload(tns, tsd, MAX_ZERO_WIN_PROBE_LEN, inline_mode);
             }
@@ -88,11 +88,11 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
         {
             tcpStats.zero_win_probes++;
             trim_win_payload(tns, tsd, MAX_ZERO_WIN_PROBE_LEN, inline_mode);
-            log_drop_reason(tns, tsd, inline_mode, "normalizer", "Normalizer: Maximum Zero Window Probe length supported at a time is 1 byte\n");
+            log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Maximum Zero Window Probe length supported at a time is 1 byte\n");
             return NORM_TRIMMED;
         }
 
-        log_drop_reason(tns, tsd, inline_mode, "normalizer", "Normalizer: Received data during a Zero Window that is not a Zero Window Probe\n");
+        log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Received data during a Zero Window that is not a Zero Window Probe\n");
         trim_win_payload(tns, tsd, 0, inline_mode);
         return NORM_TRIMMED;
     }
@@ -141,7 +141,7 @@ void TcpNormalizer::session_blocker(
     Packet *p = tsd.get_pkt();
     DetectionEngine::disable_all(p);
     p->active->block_session(p, true);
-    p->active->set_drop_reason("normalizer");
+    p->active->set_drop_reason("stream");
     if (PacketTracer::is_active())
         {
             PacketTracer::log("Normalizer: TCP Zero Window Probe byte data mismatch\n");
