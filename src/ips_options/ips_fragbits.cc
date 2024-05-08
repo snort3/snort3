@@ -400,7 +400,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* fragbits_ctor(Module* p, OptTreeNode*)
+static IpsOption* fragbits_ctor(Module* p, IpsInfo&)
 {
     FragBitsModule* fragBitsModule = (FragBitsModule*)p;
     return new FragBitsOption( fragBitsModule->get_fragBits_data() );

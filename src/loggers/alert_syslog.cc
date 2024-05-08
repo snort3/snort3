@@ -25,10 +25,10 @@
 #include <syslog.h>
 
 #include "detection/ips_context.h"
-#include "detection/signature.h"
 #include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
+#include "framework/pig_pen.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "packet_io/sfdaq.h"
@@ -203,24 +203,25 @@ static void AlertSyslog(
 
     if ((p != nullptr) && p->ptrs.ip_api.is_valid())
     {
-        SnortSnprintfAppend(event_string, sizeof(event_string),
-            "[%u:%u:%u] ", event.sig_info->gid, event.sig_info->sid, event.sig_info->rev);
+        uint32_t gid, sid, rev;
+        event.get_sig_ids(gid, sid, rev);
+        SnortSnprintfAppend(event_string, sizeof(event_string), "[%u:%u:%u] ", gid, sid, rev);
 
         if (msg != nullptr)
             SnortSnprintfAppend(event_string, sizeof(event_string), "%s ", msg);
         else
             SnortSnprintfAppend(event_string, sizeof(event_string), "ALERT ");
 
-        if ( event.sig_info->class_type and !event.sig_info->class_type->text.empty() )
+        if ( auto cls = event.get_class_type() )
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                "[Classification: %s] ", event.sig_info->class_type->text.c_str());
+                "[Classification: %s] ", cls);
         }
 
-        if (event.sig_info->priority != 0)
+        if (event.get_priority() != 0)
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
-                "[Priority: %u] ", event.sig_info->priority);
+                "[Priority: %u] ", event.get_priority());
         }
 
         if (p->context->conf->alert_interface())
@@ -229,17 +230,10 @@ static void AlertSyslog(
                 "<%s> ", SFDAQ::get_input_spec());
         }
 
-	IpProtocol ip_proto = p->get_ip_proto_next();
-        if (protocol_names[to_utype(ip_proto)] != nullptr)
-        {
-            SnortSnprintfAppend(event_string, sizeof(event_string),
-                "{%s} ", protocol_names[to_utype(ip_proto)]);
-        }
-        else
-        {
-            SnortSnprintfAppend(event_string, sizeof(event_string),
-                "{%d} ", static_cast<uint8_t>(ip_proto));
-        }
+	    IpProtocol ip_proto = p->get_ip_proto_next();
+
+        const char* proto = PigPen::get_protocol_name(to_utype(ip_proto));
+        SnortSnprintfAppend(event_string, sizeof(event_string), "{%s} ", proto);
 
         if ((p->ptrs.decode_flags & DECODE_FRAG)
             || ((ip_proto != IpProtocol::TCP)

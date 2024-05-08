@@ -8,23 +8,19 @@ set (CPP_INCLUDES
     ${CMAKE_CURRENT_BINARY_DIR}/lua_coreinit.h
 )
 
-set( MANAGERS_INCLUDES
-    codec_manager.h
-    event_manager.h
-    inspector_manager.h
-)
-
 add_subdirectory(test)
 
 add_library( managers OBJECT
     ${LUA_INCLUDES}
-    ${MANAGERS_INCLUDES}
     ${CPP_INCLUDES}
     action_manager.h
     action_manager.cc
     codec_manager.cc
+    codec_manager.h
     event_manager.cc
+    event_manager.h
     inspector_manager.cc
+    inspector_manager.h
     ips_manager.cc
     ips_manager.h
     lua_plugin_defs.h
@@ -57,10 +53,6 @@ add_custom_command (
 )
 
 include_directories (${CMAKE_CURRENT_BINARY_DIR})
-
-install (FILES ${MANAGERS_INCLUDES}
-    DESTINATION "${INCLUDE_INSTALL_PATH}/managers"
-)
 
 install (FILES ${LUA_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/lua"

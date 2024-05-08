@@ -25,18 +25,25 @@
 // These can be used to execute external controls like updating an external
 // firewall.
 
+// the ACTAPI_VERSION will change if anything in this file changes.
+// see also framework/base_api.h.
+
+#include <cstdint>
+#include <string>
+
 #include "framework/base_api.h"
 #include "main/snort_types.h"
 #include "packet_io/active_action.h"
 
 // this is the current version of the api
-#define ACTAPI_VERSION ((BASE_API_VERSION << 16) | 1)
+#define ACTAPI_VERSION ((BASE_API_VERSION << 16) | 2)
 
 //-------------------------------------------------------------------------
 // api for class
 //-------------------------------------------------------------------------
 
-struct OptTreeNode;
+class ActInfo;
+
 namespace snort
 {
 struct Packet;
@@ -44,6 +51,8 @@ struct Packet;
 class SO_PUBLIC IpsAction
 {
 public:
+    using Type = uint8_t;
+
     enum IpsActionPriority : uint16_t
     {
         IAP_OTHER = 1,
@@ -62,8 +71,21 @@ public:
     const char* get_name() const { return name; }
     ActiveAction* get_active_action() const { return active_action; }
 
-    virtual void exec(Packet*, const OptTreeNode* otn = nullptr) = 0;
+    virtual void exec(Packet*, const ActInfo&) = 0;
     virtual bool drops_traffic() { return false; }
+
+    static std::string get_string(Type);
+    static Type get_type(const char*);
+    static Type get_max_types();
+    static bool is_valid_action(Type);
+    static std::string get_default_priorities(bool alert_before_pass = false);
+
+    bool log_it(const ActInfo&) const;
+    uint64_t get_file_id(const ActInfo&) const;
+
+    void pass();
+    void log(snort::Packet*, const ActInfo&);
+    void alert(snort::Packet*, const ActInfo&);
 
 protected:
     IpsAction(const char* s, ActiveAction* a)

@@ -22,6 +22,7 @@
 #endif
 
 #include "messages.h"
+#include "log_errors.h"
 
 #include <syslog.h>
 
@@ -29,6 +30,7 @@
 #include <cstring>
 
 #include "main/snort_config.h"
+#include "main/thread.h"
 #include "parser/parser.h"
 #include "time/packet_time.h"
 #include "utils/util_cstring.h"

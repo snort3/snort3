@@ -28,9 +28,7 @@
 #include <memory>
 #include <string>
 
-#include "detection/detect.h"
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -576,8 +574,6 @@ const InspectApi ssl_api =
     nullptr, // ssn
     nullptr  // reset
 };
-
-#undef BUILDING_SO  // FIXIT-L can't be linked dynamically yet
 
 extern const BaseApi* ips_ssl_state;
 extern const BaseApi* ips_ssl_version;

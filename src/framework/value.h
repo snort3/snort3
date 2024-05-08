@@ -26,9 +26,9 @@
 #include <cstring>
 #include <sstream>
 
-#include "framework/bits.h"
 #include "framework/parameter.h"
 #include "main/snort_types.h"
+#include "utils/bits.h"
 
 namespace snort
 {

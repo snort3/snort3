@@ -259,7 +259,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* ip_proto_ctor(Module* p, OptTreeNode*)
+static IpsOption* ip_proto_ctor(Module* p, IpsInfo&)
 {
     IpProtoModule* m = (IpProtoModule*)p;
     return new IpProtoOption(m->data);

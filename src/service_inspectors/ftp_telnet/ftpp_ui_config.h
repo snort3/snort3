@@ -39,7 +39,8 @@
 #define FTPP_UI_CONFIG_H
 
 #include "sfip/sf_ip.h"
-#include "utils/kmap.h"
+
+#include "kmap.h"
 
 /*
  * Defines

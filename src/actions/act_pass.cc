@@ -21,12 +21,13 @@
 #include "config.h"
 #endif
 
-#include "actions/actions_module.h"
+#include <cassert>
+
 #include "framework/ips_action.h"
 #include "framework/module.h"
 #include "protocols/packet.h"
 
-#include "actions.h"
+#include "actions_module.h"
 
 using namespace snort;
 
@@ -55,14 +56,14 @@ class PassAction : public IpsAction
 public:
     PassAction() : IpsAction(action_name, nullptr) { }
 
-    void exec(Packet*, const OptTreeNode*) override;
+    void exec(Packet*, const ActInfo&) override;
 };
 
-void PassAction::exec(Packet* p, const OptTreeNode* otn)
+void PassAction::exec(Packet* p, const ActInfo& ai)
 {
-    if ( otn )
+    if ( log_it(ai) )
     {
-        Actions::pass();
+        pass();
         p->packet_flags |= PKT_PASS_RULE;
         ++pass_stats.pass;
     }
@@ -125,7 +126,11 @@ static ActionApi pass_api
     pass_dtor
 };
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
 const BaseApi* act_pass[] =
+#endif
 {
     &pass_api.base,
     nullptr

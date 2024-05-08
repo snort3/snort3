@@ -25,9 +25,8 @@
 #include "mms_splitter.h"
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
+#include "helpers/ber.h"
 #include "profiler/profiler.h"
-#include "utils/util_ber.h"
 
 #include "mms.h"
 #include "mms_decode.h"

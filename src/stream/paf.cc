@@ -24,9 +24,11 @@
 #endif
 
 #include "paf.h"
+#include "paf_stats.h"
 
 #include "detection/detection_engine.h"
 #include "protocols/packet.h"
+#include "protocols/tcp.h"
 
 using namespace snort;
 

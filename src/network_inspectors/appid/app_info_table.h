@@ -29,7 +29,6 @@
 
 #include "flow/flow.h"
 #include "framework/counts.h"
-#include "main/thread.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
 

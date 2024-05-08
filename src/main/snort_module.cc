@@ -42,6 +42,7 @@
 #include "parser/vars.h"
 #include "trace/trace_api.h"
 #include "trace/trace_config.h"
+#include "utils/stats.h"
 
 #if defined(UNIT_TEST) || defined(BENCHMARK_TEST)
 #include "catch/unit_test.h"

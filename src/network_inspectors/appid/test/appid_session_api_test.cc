@@ -24,6 +24,8 @@
 
 #include "network_inspectors/appid/appid_session_api.cc"
 
+#include "managers/inspector_manager.h"
+
 #include "appid_mock_definitions.h"
 #include "appid_mock_session.h"
 

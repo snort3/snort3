@@ -29,8 +29,8 @@
 #include <FlexLexer.h>
 
 #include "catch/catch.hpp"
+#include "helpers/streambuf.h"
 #include "js_norm/pdf_tokenizer.h"
-#include "utils/streambuf.h"
 
 using namespace jsn;
 using namespace snort;

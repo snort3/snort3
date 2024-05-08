@@ -22,6 +22,7 @@
 #ifndef APPID_DEBUG_H
 #define APPID_DEBUG_H
 
+#include <algorithm>
 #include <cstring>
 
 #include <daq_common.h>
@@ -29,7 +30,6 @@
 #include "detection/detection_engine.h"
 #include "protocols/ipv6.h"
 #include "protocols/protocol_ids.h"
-#include "main/thread.h"
 #include "sfip/sf_ip.h"
 
 class AppIdSession;

@@ -41,11 +41,13 @@
 
 #include <vector>
 
-#include "actions/actions.h"
 #include "events/event.h"
+#include "events/event_queue.h"
 #include "filters/rate_filter.h"
 #include "filters/sfthreshold.h"
+#include "framework/act_info.h"
 #include "framework/cursor.h"
+#include "framework/ips_action.h"
 #include "framework/mpse.h"
 #include "latency/packet_latency.h"
 #include "latency/rule_latency.h"
@@ -54,7 +56,7 @@
 #include "main/snort_config.h"
 #include "managers/action_manager.h"
 #include "packet_io/active.h"
-#include "packet_tracer/packet_tracer.h"
+#include "packet_io/packet_tracer.h"
 #include "parser/parser.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/icmp4.h"
@@ -67,13 +69,13 @@
 #include "utils/util.h"
 
 #include "context_switcher.h"
-#include "detect.h"
 #include "detect_trace.h"
+#include "detection_buf.h"
 #include "detection_continuation.h"
 #include "detection_engine.h"
 #include "detection_module.h"
 #include "detection_options.h"
-#include "detection_util.h"
+#include "event_trace.h"
 #include "fp_config.h"
 #include "fp_create.h"
 #include "fp_utils.h"
@@ -108,9 +110,7 @@ void populate_trace_data()
     if ( tr_len > 0 )
     {
         tr_context[tr_len-1] = ' ';
-        PacketTracer::daq_log("IPS+%" PRId64"++%s$",
-            TO_NSECS(pt_timer->get()),
-            tr_context);
+        PacketTracer::daq_log("IPS+%" PRId64"++%s$", PacketTracer::get_time(), tr_context);
 
         tr_len = 0;
         tr_context[0] = '\0';
@@ -128,14 +128,14 @@ static inline void init_match_info(const IpsContext* c)
 // called by fpLogEvent(), which does the filtering etc.
 // this handles the non-rule-actions (responses).
 static inline void fpLogOther(
-    Packet* p, const RuleTreeNode* rtn, const OptTreeNode* otn, Actions::Type action)
+    Packet* p, const RuleTreeNode* rtn, const OptTreeNode* otn, IpsAction::Type action)
 {
     if ( EventTrace_IsEnabled(p->context->conf) )
         EventTrace_Log(p, otn, action);
 
     if ( PacketTracer::is_active() )
     {
-        std::string act = Actions::get_string(action);
+        std::string act = IpsAction::get_string(action);
         PacketTracer::log("Event: %u:%u:%u, Action %s\n",
             otn->sigInfo.gid, otn->sigInfo.sid,
             otn->sigInfo.rev, act.c_str());
@@ -143,7 +143,7 @@ static inline void fpLogOther(
 
     if ( PacketTracer::is_daq_activated() )
     {
-        std::string act = Actions::get_string(action);
+        std::string act = IpsAction::get_string(action);
         tr_len += snprintf(tr_context+tr_len, sizeof(tr_context) - tr_len,
                       "gid:%u, sid:%u, rev:%u, action:%s, msg:%s\n",
                       otn->sigInfo.gid, otn->sigInfo.sid,
@@ -186,9 +186,9 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
 
     // perform rate filtering tests - impacts action taken
     rateAction = RateFilter_Test(otn, p);
-    override = ( rateAction >= Actions::get_max_types() );
+    override = ( rateAction >= IpsAction::get_max_types() );
     if ( override )
-        rateAction -= Actions::get_max_types();
+        rateAction -= IpsAction::get_max_types();
 
     // internal events are no-ops
     if ( (rateAction < 0) && EventIsInternal(otn->sigInfo.gid) )
@@ -223,10 +223,10 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         **  that are drop rules.  We just don't want to see the alert.
         */
         IpsAction * act = get_ips_policy()->action[action];
-        act->exec(p);
+        ActInfo ai(otn, false);
+        act->exec(p, ai);
 
-        if ( p->active && p->flow &&
-            (p->active->get_action() >= Active::ACT_DROP) )
+        if ( p->active && p->flow && (p->active->get_action() >= Active::ACT_DROP) )
         {
             if ( p->active->can_partial_block_session() )
                 p->flow->flags.ips_pblock_event_suppressed = true;
@@ -247,20 +247,19 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     const SnortConfig* sc = p->context->conf;
 
     if ( (p->packet_flags & PKT_PASS_RULE) &&
-        (sc->get_eval_index(rtn->action) > sc->get_eval_index(Actions::get_type("pass"))) )
+        (sc->get_eval_index(rtn->action) > sc->get_eval_index(IpsAction::get_type("pass"))) )
     {
         fpLogOther(p, rtn, otn, rtn->action);
         return 1;
     }
 
     otn->state[get_instance_id()].alerts++;
+    uint16_t eseq = Event::get_next_seq_num();
+    IpsAction* act = get_ips_policy()->action[action];
+    ActInfo ai(otn);
 
-    incr_event_id();
-
-    IpsAction * act = get_ips_policy()->action[action];
-    act->exec(p, otn);
-    SetTags(p, otn, get_event_id());
-
+    act->exec(p, ai);
+    SetTags(p, otn, eseq);
     fpLogOther(p, rtn, otn, action);
 
     return 0;
@@ -642,7 +641,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
     {
         /* bail if were not dumping events in all the action groups,
          * and we've already got some events */
-        if (!p->context->conf->process_all_events() && (tcnt > 0))
+        if (!p->context->conf->event_queue_config->process_all_events && (tcnt > 0))
             return 1;
 
         if ( omd->matchInfo[i].iMatchCount )
@@ -1398,7 +1397,8 @@ static inline int fp_do_actions(OtnxMatchData* omd, Packet* p)
             const OptTreeNode* otn = omd->matchInfo[i].MatchArray[0];
             RuleTreeNode* rtn = getRtnFromOtn(otn);
             IpsAction* act = get_ips_policy()->action[rtn->action];
-            act->exec(p, otn);
+            ActInfo ai(otn);
+            act->exec(p, ai);
         }
     }
 

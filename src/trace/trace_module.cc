@@ -25,9 +25,9 @@
 
 #include <syslog.h>
 
-#include "framework/packet_constraints.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
+#include "packet_io/packet_constraints.h"
 
 #include "trace_config.h"
 #include "trace_loggers.h"

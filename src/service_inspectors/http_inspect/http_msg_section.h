@@ -20,7 +20,6 @@
 #ifndef HTTP_MSG_SECTION_H
 #define HTTP_MSG_SECTION_H
 
-#include "detection/detection_util.h"
 #include "framework/cursor.h"
 #include "framework/pdu_section.h"
 #include "protocols/packet.h"

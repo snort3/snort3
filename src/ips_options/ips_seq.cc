@@ -149,7 +149,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* seq_ctor(Module* p, OptTreeNode*)
+static IpsOption* seq_ctor(Module* p, IpsInfo&)
 {
     SeqModule* m = (SeqModule*)p;
     return new TcpSeqOption(m->data);

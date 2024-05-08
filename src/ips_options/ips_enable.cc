@@ -21,8 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/treenodes.h"
-#include "detection/rules.h"
 #include "framework/decode_data.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -58,22 +56,19 @@ public:
     { return DETECT; }
 
 public:
-    IpsPolicy::Enable enable = IpsPolicy::Enable::ENABLED;
+    IpsOption::Enable enable = IpsOption::NO;
 };
 
-bool EnableModule::begin(const char*, int, SnortConfig* sc)
+bool EnableModule::begin(const char*, int, SnortConfig*)
 {
-    if ( !sc->rule_states )
-        sc->rule_states = new RuleStateMap;
-
-    enable = IpsPolicy::Enable::ENABLED;
+    enable = IpsOption::YES;
     return true;
 }
 
 bool EnableModule::set(const char*, Value& v, SnortConfig*)
 {
     assert(v.is("~enable"));
-    enable = IpsPolicy::Enable(v.get_uint8());
+    enable = IpsOption::Enable(v.get_uint8());
     return true;
 }
 
@@ -91,10 +86,10 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* enable_ctor(Module* p, OptTreeNode* otn)
+static IpsOption* enable_ctor(Module* p, IpsInfo& info)
 {
     EnableModule* m = (EnableModule*)p;
-    otn->set_enabled(m->enable);
+    IpsOption::set_enabled(info, m->enable);
     return nullptr;
 }
 

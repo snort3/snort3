@@ -30,16 +30,17 @@
 #include <sstream>
 
 #include "detection/ips_context.h"
-#include "log/log.h"
 #include "log/messages.h"
-#include "packet_io/active.h"
-#include "packet_io/sfdaq_instance.h"
+#include "main/thread.h"
 #include "protocols/eth.h"
 #include "protocols/icmp4.h"
 #include "protocols/ip.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "utils/util.h"
+
+#include "active.h"
+#include "sfdaq_instance.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -52,9 +53,14 @@ using namespace snort;
 // -----------------------------------------------------------------------------
 
 // FIXIT-M refactor the way this is used so all methods are members called against this pointer
-THREAD_LOCAL PacketTracer* snort::s_pkt_trace = nullptr;
-
-THREAD_LOCAL Stopwatch<SnortClock>* snort::pt_timer = nullptr;
+#ifdef _WIN64
+static THREAD_LOCAL PacketTracer* s_pkt_trace = nullptr;
+#else
+namespace snort
+{
+THREAD_LOCAL PacketTracer* PacketTracer::s_pkt_trace = nullptr;
+};
+#endif
 
 // so modules can register regardless of when packet trace is activated
 static THREAD_LOCAL struct{ unsigned val = 0; } global_mutes;
@@ -62,9 +68,22 @@ static THREAD_LOCAL struct{ unsigned val = 0; } global_mutes;
 static std::string log_file = "-";
 static bool config_status = false;
 
+// %s %u -> %s %u %u AS=%u ID=%u GR=%hd-%hd
+// IPv6 Port -> IPv6 Port Proto AS=ASNum ID=InstanceNum GR=SrcGroupNum-DstGroupNum
+#define PT_DEBUG_SESSION_ID_SIZE ((39+1+5+1+2+1+39+1+5+1+3+1+2+1+10+1+2+1+10+32)+1)
+static constexpr int max_buff_size = 2048;
+
 // -----------------------------------------------------------------------------
 // static functions
 // -----------------------------------------------------------------------------
+
+#ifdef _WIN64
+bool PacketTracer::is_active()
+{ return s_pkt_trace ? s_pkt_trace->active : false; }
+
+bool PacketTracer::is_daq_activated()
+{ return s_pkt_trace ? s_pkt_trace->daq_activated : false; }
+#endif
 
 void PacketTracer::set_log_file(const std::string& file)
 { log_file = file; }
@@ -72,34 +91,17 @@ void PacketTracer::set_log_file(const std::string& file)
 // template needed for unit tests
 template<typename T> void PacketTracer::_thread_init()
 {
-    if ( s_pkt_trace == nullptr )
-        s_pkt_trace = new T();
-
-    if ( pt_timer == nullptr )
-        pt_timer = new Stopwatch<SnortClock>;
-
-    s_pkt_trace->mutes.resize(global_mutes.val, false);
-    s_pkt_trace->open_file();
-    s_pkt_trace->user_enabled = config_status;
+    assert(!s_pkt_trace);
+    s_pkt_trace = new T();
 }
-template void PacketTracer::_thread_init<PacketTracer>();
 
 void PacketTracer::thread_init()
-{ _thread_init(); }
+{ _thread_init<PacketTracer>(); }
 
 void PacketTracer::thread_term()
 {
-    if ( s_pkt_trace )
-    {
-        delete s_pkt_trace;
-        s_pkt_trace = nullptr;
-    }
-
-    if (pt_timer)
-    {
-        delete pt_timer;
-        pt_timer = nullptr;
-    }
+    delete s_pkt_trace;
+    s_pkt_trace = nullptr;
 }
 
 void PacketTracer::dump(char* output_buff, unsigned int len)
@@ -269,17 +271,37 @@ void PacketTracer::activate(const Packet& p)
         s_pkt_trace->active = false;
 }
 
-void PacketTracer::pt_timer_start()
+uint64_t PacketTracer::get_time()
+{ return TO_NSECS(s_pkt_trace->pt_timer->get()); }
+
+void PacketTracer::start_timer()
+{ s_pkt_trace->pt_timer->start(); }
+
+void PacketTracer::reset_timer()
+{ s_pkt_trace->pt_timer->reset(); }
+
+void PacketTracer::restart_timer()
 {
-    pt_timer->reset();
-    pt_timer->start();
+    s_pkt_trace->pt_timer->reset();
+    s_pkt_trace->pt_timer->start();
 }
 
 // -----------------------------------------------------------------------------
 // non-static functions
 // -----------------------------------------------------------------------------
 
-// destructor
+PacketTracer::PacketTracer()
+{
+    pt_timer = new Stopwatch<SnortClock>;
+    buffer = new char[max_buff_size] { };
+    daq_buffer = new char[max_buff_size] { };
+    debug_session = new char[PT_DEBUG_SESSION_ID_SIZE];
+
+    mutes.resize(global_mutes.val, false);
+    open_file();
+    user_enabled = config_status;
+}
+
 PacketTracer::~PacketTracer()
 {
     if ( log_fh && log_fh != stdout )
@@ -287,6 +309,10 @@ PacketTracer::~PacketTracer()
         fclose(log_fh);
         log_fh = nullptr;
     }
+    delete[] debug_session;
+    delete[] daq_buffer;
+    delete[] buffer;
+    delete pt_timer;
 }
 
 void PacketTracer::populate_buf(const char* format, va_list ap, char* buffer, uint32_t& buff_len)
@@ -398,7 +424,7 @@ void PacketTracer::add_packet_type_info(const Packet& p)
         case PktType::TCP:
         {
             char tcpFlags[10];
-            CreateTCPFlagString(p.ptrs.tcph, tcpFlags);
+            p.ptrs.tcph->stringify_flags(tcpFlags);
 
             if (p.ptrs.tcph->th_flags & TH_ACK)
                 PacketTracer::log("Packet %" PRIu64 ": TCP %s, %s, seq %u, ack %u, dsize %u%s\n",
@@ -643,32 +669,32 @@ TEST_CASE("corner cases", "[PacketTracer]")
         TestPacketTracer::daq_log("%s", test_str);
     }
     // when buffer limit is  reached, buffer length will stopped at max_buff_size-1
-    CHECK((TestPacketTracer::get_buff_len() == (TestPacketTracer::max_buff_size-1)));
-    CHECK((TestPacketTracer::get_daq_buff_len() == (TestPacketTracer::max_buff_size-1)));
+    CHECK((TestPacketTracer::get_buff_len() == (max_buff_size-1)));
+    CHECK((TestPacketTracer::get_daq_buff_len() == (max_buff_size-1)));
 
     // continue logging will not change anything
     TestPacketTracer::log("%s", test_str);
-    CHECK((TestPacketTracer::get_buff_len() == (TestPacketTracer::max_buff_size-1)));
+    CHECK((TestPacketTracer::get_buff_len() == (max_buff_size-1)));
     TestPacketTracer::daq_log("%s", test_str);
-    CHECK((TestPacketTracer::get_daq_buff_len() == (TestPacketTracer::max_buff_size-1)));
+    CHECK((TestPacketTracer::get_daq_buff_len() == (max_buff_size-1)));
 
     TestPacketTracer::thread_term();
 }
 
 TEST_CASE("dump", "[PacketTracer]")
 {
-    char test_string[TestPacketTracer::max_buff_size];
+    char test_string[max_buff_size];
     char test_str[] = "ABCD", results[] = "ABCD3=400";
 
     TestPacketTracer::thread_init();
     TestPacketTracer::set_user_enable(true);
     TestPacketTracer::log("%s%d=%d", test_str, 3, 400);
-    TestPacketTracer::dump(test_string, TestPacketTracer::max_buff_size);
+    TestPacketTracer::dump(test_string, max_buff_size);
     CHECK(!strcmp(test_string, results));
     CHECK((TestPacketTracer::get_buff_len() == 0));
 
     // dump again
-    TestPacketTracer::dump(test_string, TestPacketTracer::max_buff_size);
+    TestPacketTracer::dump(test_string, max_buff_size);
     CHECK(!strcmp(test_string, ""));
     CHECK((TestPacketTracer::get_buff_len() == 0));
 

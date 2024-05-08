@@ -30,7 +30,7 @@
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
 #include "packet_io/active.h"
-#include "packet_tracer/packet_tracer.h"
+#include "packet_io/packet_tracer.h"
 #include "parser/parse_rule.h"
 #include "profiler/profiler.h"
 #include "protocols/tcp.h"

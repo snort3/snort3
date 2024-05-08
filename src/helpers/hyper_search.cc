@@ -32,7 +32,6 @@
 
 #include "log/messages.h"
 #include "main/snort_config.h"
-#include "main/thread.h"
 #include "utils/util.h"
 
 #include "hyper_scratch_allocator.h"
@@ -104,11 +103,14 @@ HyperSearch::~HyperSearch()
 
 }
 
+namespace
+{
 struct ScanContext
 {
     unsigned index;
     bool found = false;
 };
+}
 
 static int hs_match(unsigned int, unsigned long long, unsigned long long to, unsigned int, void* context)
 {

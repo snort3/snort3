@@ -28,6 +28,7 @@
 #include <random>
 
 #include "main/snort_config.h"
+#include "main/thread.h"
 #include "utils/util.h"
 
 #include "primetable.h"

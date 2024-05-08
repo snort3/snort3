@@ -25,7 +25,6 @@
 #include "detect_trace.h"
 
 #include "log/log.h"
-#include "main/thread.h"
 #include "protocols/packet.h"
 #include "utils/stats.h"
 #include "utils/util.h"

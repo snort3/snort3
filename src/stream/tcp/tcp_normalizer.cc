@@ -26,11 +26,11 @@
 #include "tcp_normalizer.h"
 
 #include "stream/stream.h"
+#include "packet_io/packet_tracer.h"
 
 #include "tcp_module.h"
 #include "tcp_stream_session.h"
 #include "tcp_stream_tracker.h"
-#include "packet_tracer/packet_tracer.h"
 
 using namespace snort;
 

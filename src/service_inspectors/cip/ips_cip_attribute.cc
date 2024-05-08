@@ -171,7 +171,7 @@ static void cip_attribute_mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* cip_attribute_ctor(Module* p, OptTreeNode*)
+static IpsOption* cip_attribute_ctor(Module* p, IpsInfo&)
 {
     CipAttributeModule* m = static_cast<CipAttributeModule*>(p);
     return new CipAttributeOption(m->cip_attr);

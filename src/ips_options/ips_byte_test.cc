@@ -93,6 +93,7 @@
 #include "config.h"
 #endif
 
+#include "detection/extract.h"
 #include "framework/cursor.h"
 #include "framework/endianness.h"
 #include "framework/ips_option.h"
@@ -107,8 +108,6 @@
 #include <climits>
 #include "catch/snort_catch.h"
 #endif
-
-#include "extract.h"
 
 using namespace snort;
 using namespace std;
@@ -564,7 +563,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* byte_test_ctor(Module* p, OptTreeNode*)
+static IpsOption* byte_test_ctor(Module* p, IpsInfo&)
 {
     ByteTestModule* m = (ByteTestModule*)p;
     return new ByteTestOption(m->data);

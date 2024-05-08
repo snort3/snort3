@@ -23,6 +23,9 @@
 // Policy selectors provide a method to select the network policy and default inspection
 // and IPS policies for a given packet
 
+// the POLICY_SELECTOR_API_VERSION will change if anything in this file changes.
+// see also framework/base_api.h.
+
 #include <string>
 
 #include "framework/base_api.h"
@@ -34,7 +37,7 @@ struct _daq_pkt_hdr;
 
 namespace snort
 {
-#define POLICY_SELECTOR_API_VERSION ((BASE_API_VERSION << 16) | 0)
+#define POLICY_SELECTOR_API_VERSION ((BASE_API_VERSION << 16) | 1)
 
 struct Packet;
 class PolicySelector;

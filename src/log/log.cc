@@ -24,10 +24,11 @@
 
 #include "log.h"
 
+#include <netdb.h>
 #include <mutex>
 
+#include "main/thread.h"
 #include "protocols/packet.h"
-#include "protocols/tcp.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
@@ -37,25 +38,6 @@
 using namespace snort;
 
 #define DEFAULT_DAEMON_ALERT_FILE  "alert"
-
-namespace snort
-{
-// Input is packet and an nine-byte (including null) character array.  Results
-// are put into the character array.
-void CreateTCPFlagString(const tcp::TCPHdr* const tcph, char* flagBuffer)
-{
-    /* parse TCP flags */
-    *flagBuffer++ = (char)((tcph->th_flags & TH_RES1) ? '1' : '*');
-    *flagBuffer++ = (char)((tcph->th_flags & TH_RES2) ? '2' : '*');
-    *flagBuffer++ = (char)((tcph->th_flags & TH_URG)  ? 'U' : '*');
-    *flagBuffer++ = (char)((tcph->th_flags & TH_ACK)  ? 'A' : '*');
-    *flagBuffer++ = (char)((tcph->th_flags & TH_PUSH) ? 'P' : '*');
-    *flagBuffer++ = (char)((tcph->th_flags & TH_RST)  ? 'R' : '*');
-    *flagBuffer++ = (char)((tcph->th_flags & TH_SYN)  ? 'S' : '*');
-    *flagBuffer++ = (char)((tcph->th_flags & TH_FIN)  ? 'F' : '*');
-    *flagBuffer = '\0';
-}
-}
 
 /****************************************************************************
  *
@@ -170,5 +152,59 @@ void LogNetData(const uint8_t* data, const int len, Packet* p)
     LogNetData(text_log, data, len, p);
     TextLog_Flush(text_log);
     log_mutex.unlock();
+}
+
+//--------------------------------------------------------------------
+// protocol translation
+//--------------------------------------------------------------------
+
+static char** protocol_names = nullptr;
+
+const char* get_protocol_name(uint8_t ip_proto)
+{
+    assert(protocol_names and protocol_names[ip_proto]);
+    return protocol_names[ip_proto];
+}
+
+void InitProtoNames()
+{
+    if ( !protocol_names )
+        protocol_names = (char**)snort_calloc(NUM_IP_PROTOS, sizeof(char*));
+
+    for ( int i = 0; i < NUM_IP_PROTOS; i++ )
+    {
+        struct protoent* pt = getprotobynumber(i);  // main thread only
+
+        if (pt != nullptr)
+        {
+            protocol_names[i] = snort_strdup(pt->p_name);
+
+            for ( size_t j = 0; j < strlen(protocol_names[i]); j++ )
+                protocol_names[i][j] = toupper(protocol_names[i][j]);
+        }
+        else
+        {
+            char protoname[10];
+            SnortSnprintf(protoname, sizeof(protoname), "PROTO:%03d", i);
+            protocol_names[i] = snort_strdup(protoname);
+        }
+    }
+}
+
+void CleanupProtoNames()
+{
+    if (protocol_names != nullptr)
+    {
+        int i;
+
+        for (i = 0; i < NUM_IP_PROTOS; i++)
+        {
+            if (protocol_names[i] != nullptr)
+                snort_free(protocol_names[i]);
+        }
+
+        snort_free(protocol_names);
+        protocol_names = nullptr;
+    }
 }
 

@@ -1,7 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2024 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2002-2013 Sourcefire, Inc.
-// Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
+// Copyright (C) 2024-2023 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -18,16 +16,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-#ifndef DETECTION_UTIL_H
-#define DETECTION_UTIL_H
+#ifndef DETECTION_BUF_H
+#define DETECTION_BUF_H
 
-// this is a legacy junk-drawer file that needs to be refactored
-// it provides file and alt data and event trace foo.
+// buffers used by DetectionEngine and IpsContext
 
 #include <cassert>
-
-#include "actions/actions.h"
-#include "main/snort_config.h"
+#include <cstdint>
 
 #define DECODE_BLEN 65535
 
@@ -70,17 +65,6 @@ struct MatchedBuffer
     const uint8_t* const data = nullptr;
     unsigned size = 0;
 };
-
-// FIXIT-RC event trace should be placed in its own files
-void EventTrace_Init();
-void EventTrace_Term();
-
-void EventTrace_Log(const snort::Packet*, const OptTreeNode*, Actions::Type action);
-
-inline int EventTrace_IsEnabled(const snort::SnortConfig* sc)
-{
-    return ( sc->event_trace_max > 0 );
-}
 
 #endif
 

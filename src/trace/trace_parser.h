@@ -23,7 +23,7 @@
 #include <map>
 #include <string>
 
-#include "framework/packet_constraints.h"
+#include "packet_io/packet_constraints.h"
 
 namespace snort
 {

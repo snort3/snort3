@@ -149,7 +149,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* window_ctor(Module* p, OptTreeNode*)
+static IpsOption* window_ctor(Module* p, IpsInfo&)
 {
     WindowModule* m = (WindowModule*)p;
     return new TcpWinOption(m->data);

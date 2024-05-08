@@ -39,7 +39,7 @@ SearchTool::SearchTool(bool multi, const char* override_method)
     assert(!override_method || strcmp(override_method, "hyperscan"));
     const char* method = override_method ? override_method : sc->fast_pattern_config->get_search_method();
 
-    if ( strcmp(method, "hyperscan") )
+    if ( !method or strcmp(method, "hyperscan") )
         method = "ac_full";
 
     mpsegrp = new MpseGroup;

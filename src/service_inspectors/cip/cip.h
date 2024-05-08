@@ -25,7 +25,6 @@
 #include "flow/flow.h"
 #include "framework/counts.h"
 #include "framework/data_bus.h"
-#include "main/thread.h"
 #include "protocols/packet.h"
 
 #include "cip_definitions.h"

@@ -150,7 +150,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* icode_ctor(Module* p, OptTreeNode*)
+static IpsOption* icode_ctor(Module* p, IpsInfo&)
 {
     IcodeModule* m = (IcodeModule*)p;
     return new IcodeOption(m->data);

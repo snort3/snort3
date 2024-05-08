@@ -14,7 +14,7 @@ perf_monitor supports several trackers for monitoring such data:
 The base tracker is used to gather running statistics about Snort and its
 running modules. All Snort modules gather, at the very least, counters for the
 number of packets reaching it. Most supplement these counts with those for
-domain specific functions, such as http_inspect’s number of GET requests seen.
+domain specific functions, such as the number of GET requests seen by http_inspect.
 
 Statistics are gathered live and can be reported at regular intervals. The stats
 reported correspond only to the interval in question and are reset at the

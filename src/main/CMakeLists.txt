@@ -1,14 +1,11 @@
 
 set (INCLUDES
-    analyzer.h
     analyzer_command.h
     policy.h
     reload_tracker.h
     reload_tuner.h
-    snort.h
     snort_config.h
     snort_types.h
-    swapper.h
     thread.h
     thread_config.h
 )
@@ -26,6 +23,7 @@ add_subdirectory(test)
 
 add_library (main OBJECT
     analyzer.cc
+    analyzer.h
     analyzer_command.cc
     help.cc
     help.h
@@ -33,9 +31,12 @@ add_library (main OBJECT
     modules.h
     network_module.cc
     network_module.h
+    numa.h
     oops_handler.cc
     oops_handler.h
     policy.cc
+    process.cc
+    process.h
     reload_tracker.cc
     shell.h
     shell.cc
@@ -45,6 +46,7 @@ add_library (main OBJECT
     snort_module.h
     snort_module.cc
     swapper.cc
+    swapper.h
     thread.cc
     thread_config.h
     thread_config.cc

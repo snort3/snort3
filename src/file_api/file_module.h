@@ -27,14 +27,14 @@
 #include "framework/module.h"
 
 #include "file_config.h"
+#include "file_flows.h"
 #include "file_identifier.h"
 #include "trace/trace_api.h"
 #include "utils/util.h"
+
 //-------------------------------------------------------------------------
 // file_id module
 //-------------------------------------------------------------------------
-
-static const uint32_t FILE_ID_GID = 150;
 
 #define FILE_DEBUG(module_name, module_id, log_level, p, ...) \
     trace_logf(log_level, module_name , module_id, p, __VA_ARGS__)
@@ -78,13 +78,6 @@ private:
     FileMeta rule;
     FileConfig *fc = nullptr;
     std::string magic_file;
-};
-
-enum FileSid
-{
-    EVENT__NONE = -1,
-    EVENT_FILE_DROPPED_OVER_LIMIT = 1,
-    EVENT__MAX_VALUE
 };
 
 #endif

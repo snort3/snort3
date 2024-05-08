@@ -24,37 +24,36 @@
 // This provides a wrapper to manage several file contexts
 
 #include "flow/flow.h"
+#include "helpers/event_gen.h"
 #include "main/snort_types.h"
-#include "utils/event_gen.h"
 
 #include "file_api.h"
-#include "file_module.h"
 
 #include <map>
 
+static const uint32_t FILE_ID_GID = 150;
+
+enum FileSid
+{
+    EVENT__NONE = -1,
+    EVENT_FILE_DROPPED_OVER_LIMIT = 1,
+    EVENT__MAX_VALUE
+};
+
 using FileEventGen = EventGen<EVENT__MAX_VALUE, EVENT__NONE, FILE_ID_GID>;
+
+class FileInspect;
 
 namespace snort
 {
 class FileContext;
 class Flow;
 
-class FileInspect : public Inspector
-{
-public:
-    FileInspect(FileIdModule*);
-    ~FileInspect() override;
-    void eval(Packet*) override { }
-    bool configure(SnortConfig*) override;
-    void show(const SnortConfig*) const override;
-    FileConfig* config;
-};
-
 class SO_PUBLIC FileFlows : public FlowData
 {
 public:
 
-    FileFlows(Flow* f, FileInspect* inspect) : FlowData(file_flow_data_id, inspect), flow(f) { }
+    FileFlows(Flow* f, FileInspect* fi) : FlowData(file_flow_data_id, (Inspector*)fi), flow(f) { }
     ~FileFlows() override;
     std::mutex file_flow_context_mutex;
     static void init()

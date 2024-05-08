@@ -65,12 +65,12 @@ public:
     CacheInterface* get_cache_ptr() { return Base::get_lru(); }
 
     template <class U>
-    Allocator(const Allocator<U>& other) 
+    Allocator(const Allocator<U>& other)
     {
         lru = other.lru;
     }
     template <class U>
-    Allocator(const Allocator<U>&& other) 
+    Allocator(const Allocator<U>&& other)
     {
         lru = other.lru;
     }
@@ -102,7 +102,7 @@ TEST_GROUP(host_cache_allocator_ht)
 };
 
 TEST(host_cache_allocator_ht, allocate_update)
-{   
+{
     //declare a list with allocator cache
     std::list<string, Allocator<string>> test_list;
     CHECK(test_list.get_allocator().get_lru() == &cache1);

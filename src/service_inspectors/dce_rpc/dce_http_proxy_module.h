@@ -24,7 +24,6 @@
 #include "dce_common.h"
 #include "framework/counts.h"
 #include "framework/module.h"
-#include "main/thread.h"
 
 class DceHttpProxyModule : public snort::Module
 {

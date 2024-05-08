@@ -161,6 +161,8 @@ enum class ProtocolId : std::uint16_t
     ETHERTYPE_CISCO_META = 0x8909,
 };
 
+constexpr auto num_protocol_idx = UINT8_MAX;
+
 static const auto num_protocol_ids =
     std::numeric_limits<std::underlying_type<ProtocolId>::type>::max() + 1;
 

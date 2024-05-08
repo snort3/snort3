@@ -28,10 +28,10 @@
 
 #include "hash/lru_cache_shared.h"
 #include "host_tracker.h"
+#include "log/log_stats.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "sfip/sf_ip.h"
-#include "utils/stats.h"
 
 #include "cache_allocator.h"
 #include "cache_interface.h"

@@ -26,7 +26,6 @@
 
 #include <unordered_map>
 
-#include "detection/treenodes.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/hash_defs.h"
@@ -35,8 +34,6 @@
 #include "log/messages.h"
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
-#include "utils/sflsq.h"
-#include "utils/util.h"
 
 using namespace snort;
 
@@ -509,14 +506,14 @@ static void mod_dtor(Module* m)
     delete fb;
 }
 
-static IpsOption* flowbits_ctor(Module* p, OptTreeNode* otn)
+static IpsOption* flowbits_ctor(Module* p, IpsInfo& info)
 {
     FlowbitsModule* m = (FlowbitsModule*)p;
     FlowBitCheck* fbc = m->get_data();
     FlowBitsOption* opt = new FlowBitsOption(fbc);
 
     if ( opt->is_checker() )
-        otn->set_flowbits_check();
+        IpsOption::set_flowbits_check(info);
 
     return opt;
 }
@@ -551,5 +548,9 @@ static const IpsApi flowbits_api =
     nullptr
 };
 
-const BaseApi* ips_flowbits = &flowbits_api.base;
+const BaseApi* ips_flowbits[] =
+{
+    &flowbits_api.base,
+    nullptr
+};
 

@@ -24,11 +24,11 @@
 
 #include <sys/un.h>
 
-#include "detection/signature.h"
 #include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "log/messages.h"
+#include "main/thread.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
@@ -41,7 +41,8 @@ using namespace snort;
  */
 struct pcap_pkthdr32
 {
-    struct sf_timeval32 ts;   /* packet timestamp */
+    uint32_t ts_sec;          /* packet timestamp */
+    uint32_t ts_usec;
     uint32_t caplen;          /* packet capture length */
     uint32_t len;             /* packet "real" length */
 };
@@ -73,7 +74,9 @@ struct Alertpkt
 
     uint32_t event_id;
     uint32_t event_ref;
-    struct sf_timeval32 ref_time;
+
+    uint32_t ts_sec;
+    uint32_t ts_usec;
 };
 
 struct UnixSock
@@ -121,21 +124,20 @@ static void get_alert_pkt(
     // FIXIT-L minimize or eliminate memset
     memset((char*)&us.alert,0,sizeof(us.alert));
 
-    us.alert.gid = event.sig_info->gid;
-    us.alert.sid = event.sig_info->sid;
-    us.alert.rev = event.sig_info->rev;
+    event.get_sig_ids(us.alert.gid, us.alert.sid, us.alert.rev);
 
-    us.alert.class_id = event.sig_info->class_id;
-    us.alert.priority = event.sig_info->priority;
+    us.alert.class_id = event.get_class_id();
+    us.alert.priority = event.get_priority();
 
     us.alert.event_id = event.get_event_id();
     us.alert.event_ref = event.get_event_reference();
-    us.alert.ref_time = event.ref_time;
+
+    event.get_timestamp(us.alert.ts_sec, us.alert.ts_usec);
 
     if (p && p->pkt)
     {
-        us.alert.pkth.ts.tv_sec = (uint32_t)p->pkth->ts.tv_sec;
-        us.alert.pkth.ts.tv_usec = (uint32_t)p->pkth->ts.tv_usec;
+        us.alert.pkth.ts_sec = (uint32_t)p->pkth->ts.tv_sec;
+        us.alert.pkth.ts_usec = (uint32_t)p->pkth->ts.tv_usec;
         us.alert.pkth.caplen = p->pktlen;
         us.alert.pkth.len = p->pkth->pktlen;
         memmove(us.alert.pkt, (const void*)p->pkt, us.alert.pkth.caplen);

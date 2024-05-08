@@ -150,7 +150,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* itype_ctor(Module* p, OptTreeNode*)
+static IpsOption* itype_ctor(Module* p, IpsInfo&)
 {
     ItypeModule* m = (ItypeModule*)p;
     return new IcmpTypeOption(m->data);

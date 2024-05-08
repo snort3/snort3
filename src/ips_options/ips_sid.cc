@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/treenodes.h"
 #include "framework/decode_data.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -79,10 +78,10 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* sid_ctor(Module* p, OptTreeNode* otn)
+static IpsOption* sid_ctor(Module* p, IpsInfo& info)
 {
     SidModule* m = (SidModule*)p;
-    otn->sigInfo.sid = m->sid;
+    IpsOption::set_sid(info, m->sid);
     return nullptr;
 }
 

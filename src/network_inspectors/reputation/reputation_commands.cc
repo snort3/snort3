@@ -24,9 +24,10 @@
 #include "reputation_commands.h"
 
 #include "control/control.h"
+#include "framework/pig_pen.h"
 #include "log/messages.h"
 #include "main/analyzer_command.h"
-#include "managers/inspector_manager.h"
+#include "main/snort_config.h"
 
 #include "reputation_common.h"
 #include "reputation_inspect.h"
@@ -75,7 +76,8 @@ bool ReputationReload::execute(Analyzer&, void**)
 static int reload(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    Reputation* ins = static_cast<Reputation*>(InspectorManager::get_inspector(REPUTATION_NAME));
+    Reputation* ins = static_cast<Reputation*>(PigPen::get_inspector(REPUTATION_NAME));
+
     if (ins)
         main_broadcast_command(new ReputationReload(ctrlcon, *ins), ctrlcon);
     else

@@ -23,7 +23,6 @@
 #endif
 
 #include "detection/detection_engine.h"
-#include "detection/treenodes.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -240,7 +239,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* replace_ctor(Module* p, OptTreeNode*)
+static IpsOption* replace_ctor(Module* p, IpsInfo&)
 {
     ReplModule* m = (ReplModule*)p;
     return new ReplaceOption(m->data);

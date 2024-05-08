@@ -21,15 +21,16 @@
 #ifndef DETECT_H
 #define DETECT_H
 
-#include "detection/rules.h"
 #include "main/snort_types.h"
-#include "main/thread.h"
 
 namespace snort
 {
 struct Packet;
 struct ProfileStats;
 }
+
+struct ListHead;
+struct OptTreeNode;
 
 extern THREAD_LOCAL snort::ProfileStats eventqPerfStats;
 
@@ -38,7 +39,7 @@ bool snort_ignore(snort::Packet*);
 bool snort_log(snort::Packet*);
 
 // alerts
-void CallLogFuncs(snort::Packet*, ListHead*, struct Event*, const char*);
+void CallLogFuncs(snort::Packet*, ListHead*, class Event*, const char*);
 void CallLogFuncs(snort::Packet*, const OptTreeNode*, ListHead*);
 void CallAlertFuncs(snort::Packet*, const OptTreeNode*, ListHead*);
 

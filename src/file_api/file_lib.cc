@@ -34,27 +34,28 @@
 #include <iostream>
 #include <iomanip>
 
-#include "hash/hashes.h"
+#include "detection/fp_detect.h"
 #include "framework/data_bus.h"
-#include "main/snort_config.h"
 #include "managers/inspector_manager.h"
-#include "packet_tracer/packet_tracer.h"
+#include "hash/hashes.h"
+#include "helpers/utf.h"
+#include "main/snort_config.h"
+#include "packet_io/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "pub_sub/intrinsic_event_ids.h"
 #include "utils/util.h"
-#include "utils/util_utf.h"
 
 #include "file_api.h"
+#include "file_cache.h"
 #include "file_capture.h"
 #include "file_config.h"
-#include "file_cache.h"
 #include "file_flows.h"
-#include "file_service.h"
-#include "file_segment.h"
-#include "file_stats.h"
+#include "file_inspect.h"
 #include "file_module.h"
-#include "detection/fp_detect.h"
+#include "file_segment.h"
+#include "file_service.h"
+#include "file_stats.h"
 
 using namespace snort;
 
@@ -336,10 +337,11 @@ FileContext::~FileContext ()
 {
     if (file_signature_context)
         snort_free(file_signature_context);
+
     if (file_capture)
         stop_file_capture();
-    if (file_segments)
-        delete file_segments;
+
+    delete file_segments;
     InspectorManager::release(inspector);
 }
 

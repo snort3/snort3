@@ -42,7 +42,7 @@
 #include <vector>
 
 #include "detection/ips_context_chain.h"
-#include "utils/primed_allocator.h"
+#include "helpers/primed_allocator.h"
 
 namespace snort
 {

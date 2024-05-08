@@ -25,7 +25,6 @@
 
 #include "codecs/codec_module.h"
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"

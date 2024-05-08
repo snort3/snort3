@@ -28,9 +28,9 @@
 #include "flow/flow.h"
 #include "framework/counts.h"
 #include "framework/cursor.h"
+#include "helpers/ber.h"
 #include "protocols/packet.h"
 #include "service_inspectors/mms/mms.h"
-#include "utils/util_ber.h"
 
 namespace snort
 {
@@ -159,11 +159,6 @@ public:
     void reset_packet_data(TpktPacketDataDirectionType direction)
     {
         ssn_data.packet_data_reset(direction);
-    }
-
-    size_t size_of() override
-    {
-        return sizeof(*this);
     }
 
 public:

@@ -26,6 +26,7 @@
 
 #include "detection/detection_engine.h"
 #include "flow/session.h"
+#include "main/snort_config.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"

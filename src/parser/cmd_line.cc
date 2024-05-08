@@ -24,6 +24,7 @@
 #include "cmd_line.h"
 
 #include "framework/module.h"
+#include "log/log_errors.h"
 #include "log/messages.h"
 #include "main/help.h"
 #include "main/snort_config.h"

@@ -147,7 +147,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* opt_ctor(Module* m, OptTreeNode*)
+static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
     ModbusUnitModule* mod = (ModbusUnitModule*)m;
     return new ModbusUnitOption(mod->unit);

@@ -21,8 +21,8 @@
 
 #include <functional>
 
-#include "framework/bits.h"
 #include "framework/connector.h"
+#include "utils/bits.h"
 
 #define MAXIMUM_SC_MESSAGE_CONTENT 1024
 #define DISPATCH_ALL_RECEIVE 0

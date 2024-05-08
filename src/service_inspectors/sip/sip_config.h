@@ -25,7 +25,6 @@
 // Configuration for SIP service inspector
 
 #include "framework/counts.h"
-#include "main/thread.h"
 #include "sip_common.h"
 
 #define SIP_METHOD_DEFAULT     0x003f

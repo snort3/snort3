@@ -21,8 +21,8 @@
 #include "config.h"
 #endif
 
+#include "framework/pig_pen.h"
 #include "main/snort_config.h"
-#include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
@@ -196,7 +196,6 @@ public:
     { delete ftp_client; }
 
     void show(const SnortConfig*) const override;
-    void eval(Packet*) override { }
 
     FTP_CLIENT_PROTO_CONF* ftp_client;
 };
@@ -272,7 +271,7 @@ FTP_CLIENT_PROTO_CONF* get_ftp_client(Packet* p)
     FtpClient* client = (FtpClient*)p->flow->data;
     if ( !client )
     {
-        client = (FtpClient*)InspectorManager::get_inspector(FTP_CLIENT_NAME);
+        client = (FtpClient*)PigPen::get_inspector(FTP_CLIENT_NAME);
         assert(client);
         p->flow->set_data(client);
     }

@@ -42,7 +42,7 @@ enum DCE_State
 
 class DceTracker
 {
-public:  
+public:
     DCE_State state = DCE_State::DCE_STATE__0;
     uint32_t helper;
 };

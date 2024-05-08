@@ -186,8 +186,6 @@ private:
     ClientAppDescriptor client;
     PayloadAppDescriptor payload;
 
-    static THREAD_LOCAL uint32_t appid_flow_data_id;
-
     void set_ss_application_ids(AppId service, AppId client, AppId payload, AppId misc,
         AppId referred, AppidChangeBits& change_bits, Flow& flow);
     void set_ss_application_ids(AppId client, AppId payload, AppidChangeBits& change_bits, Flow& flow);

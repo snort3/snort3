@@ -26,7 +26,6 @@
 #include "appid_session_api.h"
 
 #include "flow/ha.h"
-#include "managers/inspector_manager.h"
 #include "appid_inspector.h"
 #include "appid_peg_counts.h"
 #include "appid_session.h"
@@ -38,13 +37,12 @@
 
 using namespace snort;
 
-THREAD_LOCAL uint32_t AppIdSessionApi::appid_flow_data_id = 0;
+static THREAD_LOCAL uint32_t appid_flow_data_id = 0;
 
 AppIdSessionApi::AppIdSessionApi(const AppIdSession* asd, const SfIp& ip) :
-    StashGenericObject(STASH_GENERIC_OBJECT_APPID), asd(asd), initiator_ip(ip)
-{
-    session_id = std::to_string(get_instance_id()) + "." + std::to_string(++appid_flow_data_id);
-}
+    StashGenericObject(STASH_GENERIC_OBJECT_APPID), asd(asd), initiator_ip(ip),
+    session_id(std::to_string(get_instance_id()) + "." + std::to_string(++appid_flow_data_id))
+{ }
 
 AppId AppIdSessionApi::get_service_app_id() const
 {

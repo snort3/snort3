@@ -86,7 +86,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* raw_data_ctor(Module*, OptTreeNode*)
+static IpsOption* raw_data_ctor(Module*, IpsInfo&)
 {
     return new RawDataOption;
 }

@@ -22,12 +22,12 @@
 #ifndef DCE_SMB2_COMMANDS_H
 #define DCE_SMB2_COMMANDS_H
 
+#include "file_api/file_flows.h"
+#include "file_api/file_service.h"
+
 #include "dce_smb_module.h"
 #include "dce_smb_utils.h"
 #include "dce_smb2_utils.h"
-#include "detection/detection_util.h"
-#include "file_api/file_flows.h"
-#include "file_api/file_service.h"
 
 void DCE2_Smb2Setup(DCE2_Smb2SsnData*, const Smb2Hdr*,
     const uint64_t sid, const uint8_t* smb_data, const uint8_t* end);

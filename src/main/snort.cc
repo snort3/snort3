@@ -38,15 +38,15 @@
 #include "filters/sfthreshold.h"
 #include "flow/ha.h"
 #include "framework/mpse.h"
-#include "helpers/process.h"
 #include "host_tracker/host_cache.h"
 #include "host_tracker/host_cache_segmented.h"
 #include "host_tracker/host_tracker_module.h"
 #include "ips_options/ips_options.h"
 #include "log/log.h"
-#include "log/messages.h"
+#include "log/log_errors.h"
 #include "loggers/loggers.h"
 #include "main.h"
+#include "main/process.h"
 #include "main/shell.h"
 #include "managers/codec_manager.h"
 #include "managers/inspector_manager.h"
@@ -76,6 +76,7 @@
 #include "trace/trace_api.h"
 #include "trace/trace_config.h"
 #include "trace/trace_logger.h"
+#include "utils/stats.h"
 #include "utils/util.h"
 
 #ifdef SHELL
@@ -176,7 +177,7 @@ void Snort::init(int argc, char** argv)
     ModuleManager::reset_stats(sc);
 
     if (sc->alert_before_pass())
-        sc->rule_order = Actions::get_default_priorities(true);
+        sc->rule_order = IpsAction::get_default_priorities(true);
 
     sc->setup();
 
@@ -210,6 +211,7 @@ void Snort::init(int argc, char** argv)
 
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::global_init(sc);
+    PacketManager::global_init(sc->num_layers);
 
     sc->post_setup();
     sc->update_reload_id();
@@ -219,9 +221,10 @@ void Snort::init(int argc, char** argv)
     const MpseApi* search_api = sc->fast_pattern_config->get_search_api();
     const MpseApi* offload_search_api = sc->fast_pattern_config->get_offload_search_api();
 
-    MpseManager::activate_search_engine(search_api, sc);
+    if ( search_api )
+        MpseManager::activate_search_engine(search_api, sc);
 
-    if ((offload_search_api != nullptr) and (offload_search_api != search_api))
+    if ( offload_search_api and offload_search_api != search_api )
         MpseManager::activate_search_engine(offload_search_api, sc);
 
     /* Finish up the pcap list and put in the queues */
@@ -361,7 +364,6 @@ void Snort::term()
     detection_filter_term();
 
     term_signals();
-
 }
 
 void Snort::clean_exit(int)
@@ -604,12 +606,3 @@ SnortConfig* Snort::get_updated_policy(
     return sc;
 }
 
-OopsHandlerSuspend::OopsHandlerSuspend()
-{
-    remove_oops_handler();
-}
-
-OopsHandlerSuspend::~OopsHandlerSuspend()
-{
-    install_oops_handler();
-}

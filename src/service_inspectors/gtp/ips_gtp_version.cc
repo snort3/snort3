@@ -145,7 +145,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* opt_ctor(Module* m, OptTreeNode*)
+static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
     GtpVersionModule* mod = (GtpVersionModule*)m;
     return new GtpVersionOption(mod->version);

@@ -27,7 +27,7 @@
 
 #include "detection/detection_engine.h"
 #include "helpers/literal_search.h"
-#include "utils/util_utf.h"
+#include "helpers/utf.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>

@@ -29,9 +29,8 @@
 #include "detection/detection_engine.h"
 #include "main/policy.h"
 #include "main/snort_config.h"
-#include "managers/inspector_manager.h"
 #include "packet_io/active.h"
-#include "packet_tracer/packet_tracer.h"
+#include "packet_io/packet_tracer.h"
 #include "protocols/icmp4.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
@@ -51,17 +50,15 @@
 
 using namespace snort;
 
-THREAD_LOCAL bool Active::s_suspend = false;
-THREAD_LOCAL Active::ActiveSuspendReason Active::s_suspend_reason = Active::ASP_NONE;
-
 void Active::drop_packet(snort::Packet const*, bool) { }
+void Active::suspend(ActiveSuspendReason) { }
+void Active::resume() { }
 void Active::set_drop_reason(char const*) { }
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg) { }
 FlowCache::~FlowCache() = default;
 Flow::~Flow() = default;
 DetectionEngine::DetectionEngine() { context = nullptr; }
 DetectionEngine::~DetectionEngine() = default;
-ExpectCache::~ExpectCache() = default;
 unsigned FlowCache::purge() { return 1; }
 unsigned FlowCache::get_flows_allocated() const { return 0; }
 Flow* FlowCache::find(const FlowKey*) { return nullptr; }
@@ -83,6 +80,7 @@ void Flow::set_direction(Packet*) { }
 void Flow::set_mpls_layer_per_dir(Packet*) { }
 void DetectionEngine::disable_all(Packet*) { }
 ExpectCache::ExpectCache(uint32_t) { }
+ExpectCache::~ExpectCache() = default;
 bool ExpectCache::check(Packet*, Flow*) { return true; }
 Flow* HighAvailabilityManager::import(Packet&, FlowKey&) { return nullptr; }
 

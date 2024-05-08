@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#include "flow/expect_cache.h"
+#include "flow/expect_flow.h"
 #include "framework/api_options.h"
 #include "protocols/packet.h"
 #include "protocols/packet_manager.h"
@@ -37,8 +37,8 @@ const char* PacketManager::get_proto_name(ProtocolId) { return nullptr; }
 const vlan::VlanTagHdr* layer::get_vlan_layer(const Packet*) { return nullptr; }
 const geneve::GeneveLyr* layer::get_geneve_layer(const Packet*, bool) { return nullptr; }
 void ip::IpApi::reset() {}
-THREAD_LOCAL uint8_t CodecManager::max_layers = 0;
 
+uint8_t PacketManager::max_layers = DEFAULT_LAYERMAX;
 
 TEST_GROUP(get_geneve_opt_tests)
 {

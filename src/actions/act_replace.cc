@@ -28,8 +28,6 @@
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 
-#include "actions.h"
-
 using namespace snort;
 
 #define action_name "rewrite"
@@ -113,17 +111,17 @@ class ReplaceAction : public IpsAction
 public:
     ReplaceAction() : IpsAction(action_name, &rep_act_action) { }
 
-    void exec(Packet*, const OptTreeNode* otn) override;
+    void exec(Packet*, const ActInfo&) override;
 
 private:
     ReplaceActiveAction rep_act_action;
 };
 
-void ReplaceAction::exec(Packet* p, const OptTreeNode* otn)
+void ReplaceAction::exec(Packet* p, const ActInfo& ai)
 {
     p->active->rewrite_packet(p);
 
-    Actions::alert(p, otn);
+    alert(p, ai);
     ++replace_stats.replace;
 }
 
@@ -184,7 +182,11 @@ static ActionApi rep_api
     rep_dtor
 };
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
 const BaseApi* act_replace[] =
+#endif
 {
     &rep_api.base,
     nullptr

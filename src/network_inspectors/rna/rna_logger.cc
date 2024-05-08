@@ -32,6 +32,7 @@
 
 #include "rna_fingerprint.h"
 #include "rna_logger_common.h"
+#include "rna_logger_event.h"
 #include "rna_module.h"
 
 #ifdef UNIT_TEST

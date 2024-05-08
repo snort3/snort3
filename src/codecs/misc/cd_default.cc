@@ -75,9 +75,5 @@ static const CodecApi default_api =
     dtor, // dtor
 };
 
-const CodecApi* default_codec[] =
-{
-    &default_api,
-    nullptr
-};
+const CodecApi* default_codec = &default_api;
 

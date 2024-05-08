@@ -23,6 +23,7 @@
 #include <array>
 #include <cassert>
 
+#include "detection/extract.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -31,8 +32,6 @@
 #include "log/messages.h"
 #include "parser/parse_utils.h"
 #include "profiler/profiler.h"
-
-#include "extract.h"
 
 using namespace snort;
 
@@ -366,7 +365,7 @@ static Module* md5_mod_ctor()
     return new HashModule(IPS_OPT, HPI_MD5);
 }
 
-static IpsOption* md5_opt_ctor(Module* p, OptTreeNode*)
+static IpsOption* md5_opt_ctor(Module* p, IpsInfo&)
 {
     HashModule* m = (HashModule*)p;
     HashMatchData* hmd = m->get_data();
@@ -410,7 +409,7 @@ static Module* sha256_mod_ctor()
     return new HashModule(IPS_OPT, HPI_SHA256);
 }
 
-static IpsOption* sha256_opt_ctor(Module* p, OptTreeNode*)
+static IpsOption* sha256_opt_ctor(Module* p, IpsInfo&)
 {
     HashModule* m = (HashModule*)p;
     HashMatchData* hmd = m->get_data();
@@ -454,7 +453,7 @@ static Module* sha512_mod_ctor()
     return new HashModule(IPS_OPT, HPI_SHA512);
 }
 
-static IpsOption* sha512_opt_ctor(Module* p, OptTreeNode*)
+static IpsOption* sha512_opt_ctor(Module* p, IpsInfo&)
 {
     HashModule* m = (HashModule*)p;
     HashMatchData* hmd = m->get_data();
@@ -490,20 +489,17 @@ static const IpsApi sha512_api =
 // plugins
 //-------------------------------------------------------------------------
 
-// can't be linked dynamically yet
-//#ifdef BUILDING_SO
-//SO_PUBLIC const BaseApi* snort_plugins[] =
-//{
-//    &md5_api.base,
-//    &sha256_api.base,
-//    &sha512_api.base,
-//    nullptr
-//};
-//#else
-const BaseApi* ips_md5 = &md5_api.base;
-const BaseApi* ips_sha256 = &sha256_api.base;
-const BaseApi* ips_sha512 = &sha512_api.base;
-//#endif
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_hash[] =
+#endif
+{
+    &md5_api.base,
+    &sha256_api.base,
+    &sha512_api.base,
+    nullptr
+};
 
 //-------------------------------------------------------------------------
 // UNIT TESTS

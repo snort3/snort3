@@ -21,12 +21,13 @@
 #include "config.h"
 #endif
 
-#include "actions/actions_module.h"
+#include <cassert>
+
 #include "framework/ips_action.h"
 #include "framework/module.h"
 #include "protocols/packet.h"
 
-#include "actions.h"
+#include "actions_module.h"
 
 using namespace snort;
 
@@ -55,14 +56,14 @@ class LogAction : public IpsAction
 public:
     LogAction() : IpsAction(action_name, nullptr) { }
 
-    void exec(Packet*, const OptTreeNode* otn) override;
+    void exec(Packet*, const ActInfo&) override;
 };
 
-void LogAction::exec(Packet* p, const OptTreeNode* otn)
+void LogAction::exec(Packet* p, const ActInfo& ai)
 {
-    if ( otn )
+    if ( log_it(ai) )
     {
-        Actions::log(p, otn);
+        log(p, ai);
         ++log_stats.log;
     }
 }
@@ -124,7 +125,11 @@ static ActionApi log_api
     log_dtor
 };
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
 const BaseApi* act_log[] =
+#endif
 {
     &log_api.base,
     nullptr

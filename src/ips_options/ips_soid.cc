@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/treenodes.h"
 #include "framework/decode_data.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -80,10 +79,10 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* soid_ctor(Module* p, OptTreeNode* otn)
+static IpsOption* soid_ctor(Module* p, IpsInfo& info)
 {
     SoidModule* m = (SoidModule*)p;
-    otn->soid = snort_strdup(m->soid.c_str());
+    IpsOption::set_soid(info, m->soid.c_str());
     return nullptr;
 }
 

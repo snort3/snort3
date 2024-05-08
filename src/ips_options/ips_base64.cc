@@ -24,7 +24,6 @@
 #endif
 
 #include "detection/detection_engine.h"
-#include "detection/treenodes.h"
 #include "hash/hash_key_operations.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
@@ -229,7 +228,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* base64_decode_ctor(Module* p, OptTreeNode*)
+static IpsOption* base64_decode_ctor(Module* p, IpsInfo&)
 {
     B64DecodeModule* m = (B64DecodeModule*)p;
     return new Base64DecodeOption(m->data);
@@ -302,9 +301,9 @@ IpsOption::EvalStatus Base64DataOption::eval(Cursor& c, Packet* p)
 //-------------------------------------------------------------------------
 
 static class IpsOption* base64_data_ctor(
-    Module*, OptTreeNode* otn)
+    Module*, IpsInfo& info)
 {
-    if ( !otn_has_plugin(otn, "base64_decode") )
+    if ( !IpsOption::has_plugin(info, "base64_decode") )
     {
         ParseError("base64_decode needs to be specified before base64_data in a rule");
         return nullptr;

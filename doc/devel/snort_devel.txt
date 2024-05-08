@@ -10,6 +10,10 @@ include::version.txt[]
 
 toc::[]
 
+== Versions
+
+include::versions.txt[]
+
 == Extending Snort
 
 include::extending.txt[]

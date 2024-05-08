@@ -22,8 +22,8 @@
 #include "config.h"
 #endif
 
+#include "detection/extract.h"
 #include "detection/pattern_match_data.h"
-#include "detection/treenodes.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -34,9 +34,6 @@
 #include "parser/parse_utils.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
-#include "utils/stats.h"
-
-#include "extract.h"
 
 using namespace snort;
 
@@ -147,7 +144,7 @@ public:
     bool is_relative() override
     { return config->pmd.is_relative(); }
 
-    bool retry(Cursor&, const Cursor&) override;
+    bool retry(Cursor&) override;
 
     ContentData* get_data()
     { return config; }
@@ -180,7 +177,7 @@ static inline bool retry(const PatternMatchData& pmd, const Cursor& c)
     return c.get_delta() + pmd.pattern_size <= pmd.depth;
 }
 
-bool ContentOption::retry(Cursor& c, const Cursor&)
+bool ContentOption::retry(Cursor& c)
 {
     return ::retry(config->pmd, c);
 }
@@ -794,7 +791,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* content_ctor(Module* p, OptTreeNode*)
+static IpsOption* content_ctor(Module* p, IpsInfo&)
 {
     ContentModule* m = (ContentModule*)p;
     ContentData* cd = m->get_data();
@@ -831,15 +828,13 @@ static const IpsApi content_api =
     nullptr
 };
 
-// FIXIT-L need boyer_moore.cc funcs but they
-// aren't otherwise called
-//#ifdef BUILDING_SO
-//SO_PUBLIC const BaseApi* snort_plugins[] =
-//{
-//    &content_api.base,
-//    nullptr
-//};
-//#else
-const BaseApi* ips_content = &content_api.base;
-//#endif
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_content[] =
+#endif
+{
+    &content_api.base,
+    nullptr
+};
 

@@ -26,7 +26,7 @@
 #include "tcp_segment_descriptor.h"
 
 #include "detection/rules.h"
-#include "packet_tracer/packet_tracer.h"
+#include "packet_io/packet_tracer.h"
 #include "protocols/tcp_options.h"
 #include "stream/tcp/tcp_defs.h"
 #include "stream/tcp/tcp_stream_tracker.h"

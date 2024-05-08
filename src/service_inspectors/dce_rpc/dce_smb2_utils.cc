@@ -23,11 +23,11 @@
 #include "config.h"
 #endif
 
+#include "flow/flow_key.h"
+
 #include "dce_smb_module.h"
 #include "dce_smb_utils.h"
 #include "dce_smb2_utils.h"
-#include "detection/detection_util.h"
-#include "flow/flow_key.h"
 
 using namespace snort;
 

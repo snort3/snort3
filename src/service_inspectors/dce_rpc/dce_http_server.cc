@@ -25,7 +25,6 @@
 
 #include "dce_http_server_module.h"
 
-#include "managers/inspector_manager.h"
 #include "stream/tcp/tcp_stream_session.h"
 
 #include "dce_http_server_splitter.h"

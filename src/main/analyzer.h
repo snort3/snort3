@@ -76,7 +76,7 @@ public:
         NUM_STATES
     };
 
-    SO_PUBLIC static Analyzer* get_local_analyzer();
+    static Analyzer* get_local_analyzer();
     static ContextSwitcher* get_switcher();
     static void set_main_hook(MainHook_f);
 
@@ -97,7 +97,6 @@ public:
 
     void post_process_packet(snort::Packet*);
     bool process_rebuilt_packet(snort::Packet*, const DAQ_PktHdr_t*, const uint8_t* pkt, uint32_t pktlen);
-    SO_PUBLIC bool inspect_rebuilt(snort::Packet*);
     void finalize_daq_message(DAQ_Msg_h, DAQ_Verdict);
     void add_to_retry_queue(DAQ_Msg_h, snort::Flow*);
 

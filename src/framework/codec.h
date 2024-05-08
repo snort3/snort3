@@ -23,6 +23,9 @@
 // Codec is a type of plugin that provides protocol-specific encoding and
 // decoding.
 
+// the CDAPI_VERSION will change if anything in this file changes.
+// see also framework/base_api.h.
+
 #include <cstdint>
 #include <vector>
 
@@ -38,22 +41,10 @@ namespace snort
 {
 enum CodecSid : uint32_t;
 
-namespace ip
-{
-class IpApi;
-}
-namespace tcp
-{
-struct TCPHdr;
-}
-namespace udp
-{
-struct UDPHdr;
-}
-namespace icmp
-{
-struct ICMPHdr;
-}
+namespace ip { class IpApi; }
+namespace tcp { struct TCPHdr; }
+namespace udp { struct UDPHdr; }
+namespace icmp { struct ICMPHdr; }
 
 class Flow;
 
@@ -384,7 +375,7 @@ private:
 //-------------------------------------------------------------------------
 
 // this is the current version of the api
-#define CDAPI_VERSION ((BASE_API_VERSION << 16) | 1)
+#define CDAPI_VERSION ((BASE_API_VERSION << 16) | 2)
 
 typedef Codec* (* CdNewFunc)(Module*);
 typedef void (* CdDelFunc)(Codec*);
@@ -406,5 +397,5 @@ struct CodecApi
     CdDelFunc dtor;   // clean up instance data
 };
 }
-#endif /* FRAMEWORK_CODEC_H */
+#endif
 

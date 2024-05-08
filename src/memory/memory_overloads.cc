@@ -26,8 +26,6 @@
 
 #include <cassert>
 
-#include "main/snort.h"
-#include "main/thread.h"
 #include "profiler/memory_profiler_active_context.h"
 
 #include "memory_allocator.h"

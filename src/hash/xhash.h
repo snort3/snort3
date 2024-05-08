@@ -27,8 +27,8 @@
 #include <vector>
 
 #include "framework/counts.h"
+#include "helpers/memcap_allocator.h"
 #include "main/snort_types.h"
-#include "utils/memcap_allocator.h"
 
 class HashLruCache;
 

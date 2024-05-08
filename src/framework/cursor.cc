@@ -25,8 +25,8 @@
 
 #include "cursor.h"
 
+#include "detection/detection_buf.h"
 #include "detection/detection_engine.h"
-#include "detection/detection_util.h"
 #include "protocols/packet.h"
 #include "detection/ips_context.h"
 

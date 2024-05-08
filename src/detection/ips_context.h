@@ -27,7 +27,7 @@
 
 #include <list>
 
-#include "detection/detection_util.h"
+#include "detection/detection_buf.h"
 #include "framework/codec.h"
 #include "framework/mpse.h"
 #include "framework/mpse_batch.h"

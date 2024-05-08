@@ -26,7 +26,7 @@
 #include "tcp_stream_session.h"
 
 #include "framework/data_bus.h"
-#include "packet_tracer/packet_tracer.h"
+#include "packet_io/packet_tracer.h"
 #include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
 #include "stream/tcp/tcp_ha.h"

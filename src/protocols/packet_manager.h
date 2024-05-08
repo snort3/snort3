@@ -27,8 +27,8 @@
 #include "framework/codec.h"
 #include "framework/counts.h"
 #include "main/snort_types.h"
-#include "managers/codec_manager.h"
 #include "protocols/packet.h"
+#include "protocols/protocol_ids.h"
 
 struct TextLog;
 
@@ -57,6 +57,8 @@ enum class UnreachResponse
 class SO_PUBLIC PacketManager
 {
 public:
+    static void global_init(uint8_t max_layers);
+
     static void thread_init();
     static void thread_term();
 
@@ -122,16 +124,20 @@ public:
      *
      * The equivalent of Snort's PROTO_ID */
     static constexpr std::size_t max_protocols() // compile time constant
-    { return CodecManager::s_protocols.size(); }
+    { return num_protocol_idx; }
 
     /* If a proto was registered in a Codec's get_protocol_ids() function,
      * this function will return the 'ProtocolIndex' of the Codec to which the proto belongs.
      * If none of the loaded Codecs registered that proto, this function will
      * return zero. */
-    static ProtocolIndex proto_idx(ProtocolId prot_id)
-    { return CodecManager::s_proto_map[to_utype(prot_id)]; }
+    static ProtocolIndex proto_idx(ProtocolId);
 
     static void accumulate();
+
+    static uint8_t get_max_layers()
+    { return max_layers; }
+
+    static constexpr uint8_t stat_offset = 4;
 
 private:
     static bool push_layer(Packet*, CodecData&, ProtocolId, const uint8_t* hdr_start, uint32_t len);
@@ -144,20 +150,12 @@ private:
 
     // constant offsets into the s_stats array.  Notice the stat_offset
     // constant which is used when adding a protocol specific codec
-    static const uint8_t total_processed = 0;
-    static const uint8_t other_codecs = 1;
-    static const uint8_t discards = 2;
-    static const uint8_t depth_exceeded = 3;
-    static const uint8_t stat_offset = 4;
+    static constexpr uint8_t total_processed = 0;
+    static constexpr uint8_t other_codecs = 1;
+    static constexpr uint8_t discards = 2;
+    static constexpr uint8_t depth_exceeded = 3;
 
-    // declared in header so it can access s_protocols
-    static THREAD_LOCAL std::array<PegCount, stat_offset +
-    CodecManager::s_protocols.size()> s_stats;
-    // FIXIT-L gcc apparently does not consider thread_local variables to be valid in
-    // constexpr expressions. As long as __thread is used instead of thread_local in gcc,
-    // this is not a problem. However, if we use thread_local and gcc, the declaration
-    // below will not compile.
-    static std::array<PegCount, s_stats.size()> g_stats;
+    static uint8_t max_layers;
     static const std::array<const char*, stat_offset> stat_names;
 };
 }

@@ -34,7 +34,9 @@
 
 #include <cassert>
 
+#include "log/log_stats.h"
 #include "log/messages.h"
+#include "main/thread.h"
 #include "utils/stats.h"
 #include "utils/util.h"
 

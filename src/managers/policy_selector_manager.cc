@@ -29,6 +29,7 @@
 #include "framework/policy_selector.h"
 #include "framework/module.h"
 #include "main/snort_config.h"
+#include "log/log_stats.h"
 #include "log/messages.h"
 #include "utils/util.h"
 

@@ -27,7 +27,6 @@
 #include "s7comm_paf.h"
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 
 #include "s7comm.h"
 #include "s7comm_decode.h"

@@ -27,9 +27,10 @@
 #include <lua.hpp>
 
 #include "control/control.h"
+#include "framework/pig_pen.h"
 #include "log/messages.h"
 #include "main/analyzer_command.h"
-#include "main/snort.h"
+#include "main/snort_config.h"
 #include "managers/module_manager.h"
 
 #include "perf_monitor.h"
@@ -138,7 +139,7 @@ bool PerfMonFlowIPDebug::execute(Analyzer&, void**)
 static int enable_flow_ip_profiling(lua_State* L)
 {
     PerfMonitor* perf_monitor =
-        (PerfMonitor*)InspectorManager::get_inspector(PERF_NAME, true);
+        (PerfMonitor*)PigPen::get_inspector(PERF_NAME, true);
 
     if (!perf_monitor)
     {
@@ -162,7 +163,7 @@ static int enable_flow_ip_profiling(lua_State* L)
 static int disable_flow_ip_profiling(lua_State* L)
 {
     PerfMonitor* perf_monitor =
-        (PerfMonitor*)InspectorManager::get_inspector(PERF_NAME, true);
+        (PerfMonitor*)PigPen::get_inspector(PERF_NAME, true);
 
     if (!perf_monitor)
     {
@@ -193,7 +194,7 @@ static int show_flow_ip_profiling(lua_State* L)
     bool status = false;
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
 
-    PerfMonitor* perf_monitor = (PerfMonitor*)InspectorManager::get_inspector(PERF_NAME, true);
+    PerfMonitor* perf_monitor = (PerfMonitor*)PigPen::get_inspector(PERF_NAME, true);
 
     if (perf_monitor)
         status = perf_monitor->is_flow_ip_enabled();
@@ -324,7 +325,7 @@ bool PerfMonModule::begin(const char* fqn, int idx, SnortConfig*)
 bool PerfMonModule::end(const char* fqn, int idx, SnortConfig* sc)
 {
 
-    if ( Snort::is_reloading() && strcmp(fqn, "perf_monitor") == 0 )
+    if ( PigPen::snort_is_reloading() && strcmp(fqn, "perf_monitor") == 0 )
         sc->register_reload_handler(new PerfMonReloadTuner(config->flowip_memcap));
 
     if ( idx != 0 && strcmp(fqn, "perf_monitor.modules") == 0 )

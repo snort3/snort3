@@ -26,7 +26,7 @@
 #include <array>
 #include <vector>
 
-#include "main/thread.h"
+#include "main/snort_types.h"
 #include "protocols/protocol_ids.h"
 
 namespace snort
@@ -36,7 +36,6 @@ struct CodecApi;
 class Module;
 class PacketManager;
 struct ProfileStats;
-struct SnortConfig;
 }
 
 //-------------------------------------------------------------------------
@@ -54,31 +53,27 @@ public:
     // global plugin initializer
     static void add_plugin(const struct snort::CodecApi*);
     // instantiate a specific codec with a codec specific Module
-    static void instantiate(const snort::CodecApi*, snort::Module*, snort::SnortConfig*);
+    static void instantiate(const snort::CodecApi*, snort::Module*);
     // instantiate any codec for which a module has not been provided.
     static void instantiate();
     // destroy all global codec related information
     static void release_plugins();
     // initialize the current threads DLT and Packet struct
-    static void thread_init(const snort::SnortConfig*);
+    static void thread_init();
     // destroy thread_local data
     static void thread_term();
     // print all of the codec plugins
     static void dump_plugins();
-
-    static uint8_t get_max_layers()
-    { return max_layers; }
 
 private:
     struct CodecApiWrapper;
 
     static std::vector<CodecApiWrapper> s_codecs;
     static std::array<ProtocolIndex, num_protocol_ids> s_proto_map;
-    static std::array<snort::Codec*, UINT8_MAX> s_protocols;
+    static std::array<snort::Codec*, num_protocol_idx> s_protocols;
 
     static THREAD_LOCAL ProtocolId grinder_id;
     static THREAD_LOCAL ProtocolIndex grinder;
-    static THREAD_LOCAL uint8_t max_layers;
 
     /*
      * Private helper functions.  These are all declared here
@@ -86,7 +81,7 @@ private:
      */
 
     // Private struct defined in an anonymous namespace.
-    static void instantiate(CodecApiWrapper&, snort::Module*, snort::SnortConfig*);
+    static void instantiate(CodecApiWrapper&, snort::Module*);
     static CodecApiWrapper& get_api_wrapper(const snort::CodecApi* cd_api);
     static uint8_t get_codec(const char* const keyword);
 };

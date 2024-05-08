@@ -25,69 +25,134 @@
 
 #include "detection/signature.h"
 #include "main/snort_config.h"
+#include "main/thread.h"
 
 using namespace snort;
 
 static THREAD_LOCAL uint16_t g_event_id;
+static SigInfo s_dummy;
 
-uint16_t get_event_id()
-{
-    return g_event_id;
-}
-
-void incr_event_id()
-{
-    g_event_id++;
-}
-
-static uint32_t calc_event_id(uint16_t id, uint16_t log_id)
+static uint32_t calc_event_id(uint16_t id)
 {
     // Use instance ID to make log_id unique per packet thread. Even if
     // it overflows, value will still be unique if there are less than
     // 65k threads.
+    uint16_t log_id = SnortConfig::get_conf()->get_event_log_id();
     log_id += snort::get_instance_id();
     return (id | (log_id << 16));
 }
 
-void Event::update_event_id(uint16_t log_id)
+uint16_t Event::get_curr_seq_num()
+{ return g_event_id; }
+
+uint16_t Event::get_next_seq_num()
+{ return ++g_event_id; }
+
+uint32_t Event::get_next_event_id()
 {
-    event_id = calc_event_id(g_event_id, log_id);
+    uint16_t eseq = get_next_seq_num();
+    return calc_event_id(eseq);
 }
 
-void Event::update_event_id_and_ref(uint16_t log_id)
+Event::Event() : sig_info(s_dummy) { }
+
+Event::Event(uint32_t sec, uint32_t usec, const SigInfo& si, const char** bufs, const char* act) :
+    sig_info(si)
 {
-    event_id = calc_event_id(g_event_id, log_id);
+    ts_sec = sec;
+    ts_usec = usec;
+
+    buffs_to_dump = bufs;
+    action = act;
+
+    event_id = calc_event_id(g_event_id);
     event_reference = event_id;
 }
 
-uint32_t Event::update_and_get_event_id(void)
+Event::Event(uint32_t sec, uint32_t usec, const SigInfo& si, const char** bufs, const char* act, uint32_t ref) :
+    sig_info(si)
 {
-    /* return event id based on g_event_id. */
-    incr_event_id();
+    ts_sec = sec;
+    ts_usec = usec;
 
-    return calc_event_id(g_event_id,
-        SnortConfig::get_conf()->get_event_log_id());
+    buffs_to_dump = bufs;
+    action = act;
+
+    event_id = get_next_event_id();
+    event_reference = calc_event_id(ref);
 }
 
-void Event::set_event(uint32_t gid, uint32_t sid, uint32_t rev,
-    uint32_t classification, uint32_t priority, uint16_t event_ref,
-    uint16_t log_id, const struct timeval& tv, const std::string& act)
+uint32_t Event::get_seconds() const
+{ return ts_sec; }
+
+void Event::get_timestamp(uint32_t& sec, uint32_t& usec) const
+{ sec = ts_sec; usec = ts_usec; }
+
+uint32_t Event::get_event_id() const
+{ return event_id; }
+
+uint32_t Event::get_event_reference() const
+{ return event_reference; }
+
+uint32_t Event::get_gid() const
+{ return sig_info.gid; }
+
+uint32_t Event::get_sid() const
+{ return sig_info.sid; }
+
+uint32_t Event::get_rev() const
+{ return sig_info.rev; }
+
+void Event::get_sig_ids(uint32_t& gid, uint32_t& sid, uint32_t& rev) const
 {
-    sig_info->gid = gid;
-    sig_info->sid = sid;
-    sig_info->rev = rev;
-    sig_info->class_id = classification;
-    sig_info->priority = priority;
-
-    event_id = update_and_get_event_id();
-
-    if (event_ref)
-        event_reference = calc_event_id(event_ref, log_id);
-    else
-        event_reference = event_id;
-
-    ref_time.tv_sec = tv.tv_sec;
-    ref_time.tv_usec = tv.tv_usec;
-    action_string = act;
+    gid = sig_info.gid;
+    sid = sig_info.sid;
+    rev = sig_info.rev;
 }
+
+const char* Event::get_msg() const
+{
+    if ( sig_info.message.empty() )
+        return nullptr;
+
+    return sig_info.message.c_str();
+}
+
+const char* Event::get_class_type() const
+{
+    if ( !sig_info.class_type or sig_info.class_type->text.empty() )
+        return nullptr;
+
+    return sig_info.class_type->text.c_str();
+}
+
+const char** Event::get_buffers() const
+{ return buffs_to_dump; }
+
+const char* Event::get_action() const
+{ return action; }
+
+uint32_t Event::get_class_id() const
+{ return sig_info.class_id; }
+
+uint32_t Event::get_priority() const
+{ return sig_info.priority; }
+
+bool Event::get_target(bool& src) const
+{
+    if ( sig_info.target == TARGET_SRC )
+    {
+        src = true;
+        return true;
+    }
+    else if ( sig_info.target == TARGET_DST )
+    {
+        src = false;
+        return true;
+    }
+    return false;
+}
+
+const SigInfo& Event::get_sig_info() const
+{ return sig_info; }
 

@@ -20,7 +20,7 @@
 #ifndef JS_ENUM_H
 #define JS_ENUM_H
 
-#include "utils/event_gen.h"
+#include "helpers/event_gen.h"
 
 namespace jsn
 {

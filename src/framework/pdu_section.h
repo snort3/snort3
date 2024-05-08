@@ -36,8 +36,7 @@ namespace snort
 // PS_ERROR is used for invalid combination of sections:
 // trailer and body sections can be combined only if it's a request trailer in a to_client direction
 // When updating this enum, also update section_to_str
-enum PduSection { PS_NONE = 0, PS_HEADER, PS_HEADER_BODY, PS_BODY, PS_TRAILER, PS_MAX = PS_TRAILER,
-    PS_ERROR };
+enum PduSection { PS_NONE = 0, PS_HEADER, PS_HEADER_BODY, PS_BODY, PS_TRAILER, PS_MAX = PS_TRAILER, PS_ERROR };
 
 // Bitmask with all of supported sections
 using section_flags = uint16_t;

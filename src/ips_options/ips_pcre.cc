@@ -32,6 +32,7 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
+#include "framework/pig_pen.h"
 #include "hash/hash_key_operations.h"
 #include "helpers/scratch_allocator.h"
 #include "log/messages.h"
@@ -39,6 +40,7 @@
 #include "managers/ips_manager.h"
 #include "managers/module_manager.h"
 #include "profiler/profiler.h"
+#include "utils/stats.h"
 #include "utils/util.h"
 
 using namespace snort;
@@ -87,6 +89,40 @@ static unsigned scratch_index;
 static ScratchAllocator* scratcher = nullptr;
 
 static THREAD_LOCAL ProfileStats pcrePerfStats;
+
+//-------------------------------------------------------------------------
+// stats foo
+//-------------------------------------------------------------------------
+
+struct PcreStats
+{
+    PegCount pcre_rules;
+#ifdef HAVE_HYPERSCAN
+    PegCount pcre_to_hyper;
+#endif
+    PegCount pcre_native;
+    PegCount pcre_negated;
+    PegCount pcre_match_limit;
+    PegCount pcre_recursion_limit;
+    PegCount pcre_error;
+};
+
+const PegInfo pcre_pegs[] =
+{
+    { CountType::SUM, "pcre_rules", "total rules processed with pcre option" },
+#ifdef HAVE_HYPERSCAN
+    { CountType::SUM, "pcre_to_hyper", "total pcre rules by hyperscan engine" },
+#endif
+    { CountType::SUM, "pcre_native", "total pcre rules compiled by pcre engine" },
+    { CountType::SUM, "pcre_negated", "total pcre rules using negation syntax" },
+    { CountType::SUM, "pcre_match_limit", "total number of times pcre hit the match limit" },
+    { CountType::SUM, "pcre_recursion_limit", "total number of times pcre hit the recursion limit" },
+    { CountType::SUM, "pcre_error", "total number of times pcre returns error" },
+
+    { CountType::END, nullptr, nullptr }
+};
+
+PcreStats pcre_stats;
 
 //-------------------------------------------------------------------------
 // implementation foo
@@ -398,17 +434,17 @@ static bool pcre_search(
     }
     else if (result == PCRE_ERROR_MATCHLIMIT)
     {
-        pc.pcre_match_limit++;
+        pcre_stats.pcre_match_limit++;
         matched = false;
     }
     else if (result == PCRE_ERROR_RECURSIONLIMIT)
     {
-        pc.pcre_recursion_limit++;
+        pcre_stats.pcre_recursion_limit++;
         matched = false;
     }
     else
     {
-        pc.pcre_error++;
+        pcre_stats.pcre_error++;
         return false;
     }
 
@@ -444,7 +480,7 @@ public:
     { return (config->options & SNORT_PCRE_RELATIVE) != 0; }
 
     EvalStatus eval(Cursor&, Packet*) override;
-    bool retry(Cursor&, const Cursor&) override;
+    bool retry(Cursor&) override;
 
     PcreData* get_data()
     { return config; }
@@ -595,7 +631,7 @@ IpsOption::EvalStatus PcreOption::eval(Cursor& c, Packet* p)
 // using content, but more advanced pcre won't work for the relative /
 // overlap case.
 
-bool PcreOption::retry(Cursor&, const Cursor&)
+bool PcreOption::retry(Cursor&)
 {
     if ((config->options & (SNORT_PCRE_INVERT | SNORT_PCRE_ANCHORED)))
     {
@@ -615,29 +651,6 @@ static const Parameter s_params[] =
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
-
-struct PcreStats
-{
-    PegCount pcre_rules;
-#ifdef HAVE_HYPERSCAN
-    PegCount pcre_to_hyper;
-#endif
-    PegCount pcre_native;
-    PegCount pcre_negated;
-};
-
-const PegInfo pcre_pegs[] =
-{
-    { CountType::SUM, "pcre_rules", "total rules processed with pcre option" },
-#ifdef HAVE_HYPERSCAN
-    { CountType::SUM, "pcre_to_hyper", "total pcre rules by hyperscan engine" },
-#endif
-    { CountType::SUM, "pcre_native", "total pcre rules compiled by pcre engine" },
-    { CountType::SUM, "pcre_negated", "total pcre rules using negation syntax" },
-    { CountType::END, nullptr, nullptr }
-};
-
-PcreStats pcre_stats;
 
 #define s_help \
     "rule option for matching payload data with pcre"
@@ -785,7 +798,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static IpsOption* pcre_ctor(Module* p, OptTreeNode* otn)
+static IpsOption* pcre_ctor(Module* p, IpsInfo& info)
 {
     pcre_stats.pcre_rules++;
     PcreModule* m = (PcreModule*)p;
@@ -796,11 +809,11 @@ static IpsOption* pcre_ctor(Module* p, OptTreeNode* otn)
     {
         pcre_stats.pcre_to_hyper++;
         const IpsApi* opt_api = IpsManager::get_option_api(mod_regex_name);
-        return opt_api->ctor(mod_regex, otn);
+        return opt_api->ctor(mod_regex, info);
     }
     else
 #else
-    UNUSED(otn);
+    UNUSED(info);
 #endif
     {
         pcre_stats.pcre_native++;

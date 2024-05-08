@@ -26,12 +26,12 @@
 #include "dce_smb_utils.h"
 
 #include "detection/detection_engine.h"
-#include "detection/detection_util.h"
 #include "file_api/file_api.h"
+#include "file_api/file_lib.h"
 #include "hash/hash_key_operations.h"
 #include "main/snort.h"
-#include "network_inspectors/packet_tracer/packet_tracer.h"
 #include "packet_io/active.h"
+#include "packet_io/packet_tracer.h"
 #include "trace/trace_api.h"
 #include "utils/util.h"
 

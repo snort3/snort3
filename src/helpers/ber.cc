@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#include "util_ber.h"
+#include "ber.h"
 
 namespace snort
 {

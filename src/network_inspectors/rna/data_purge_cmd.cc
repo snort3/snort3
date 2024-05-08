@@ -24,8 +24,6 @@
 
 #include "data_purge_cmd.h"
 
-#include "managers/inspector_manager.h"
-
 #include "rna_inspector.h"
 #include "rna_name.h"
 #include "rna_pnd.h"

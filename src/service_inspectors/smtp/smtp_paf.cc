@@ -23,7 +23,6 @@
 #include "smtp_paf.h"
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
 

@@ -152,7 +152,7 @@ static void mod_dtor(Module* m)
 // api methods
 //-------------------------------------------------------------------------
 
-static IpsOption* id_ctor(Module* p, OptTreeNode*)
+static IpsOption* id_ctor(Module* p, IpsInfo&)
 {
     IpIdModule* m = (IpIdModule*)p;
     return new IpIdOption(m->data);

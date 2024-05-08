@@ -25,15 +25,12 @@
 
 #include "reputation_inspect.h"
 
-#include "detection/detect.h"
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 #include "log/messages.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
-#include "managers/inspector_manager.h"
-#include "network_inspectors/packet_tracer/packet_tracer.h"
 #include "packet_io/active.h"
+#include "packet_io/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "pub_sub/auxiliary_ip_event.h"
@@ -348,7 +345,7 @@ static void populate_trace_data(IPdecision& decision, Packet* p, uint32_t iplist
     sfip_ntop(ip, addr, sizeof(addr));
 
     PacketTracer::daq_log("SI-IP+%" PRId64"+%s list id %u+Matched ip %s, action %s$",
-        TO_NSECS(pt_timer->get()),
+        PacketTracer::get_time(),
         (TRUSTED_SRC == decision or TRUSTED_DST == decision)?"Do_not_block":"Block",
         iplist_id, addr, to_string(decision));
 }
@@ -482,7 +479,7 @@ void IpRepHandler::handle(DataEvent& event, Flow*)
         return;
 
     if (PacketTracer::is_daq_activated())
-        PacketTracer::pt_timer_start();
+        PacketTracer::restart_timer();
 
     ReputationData* data = static_cast<ReputationData*>(inspector.get_thread_specific_data());
     assert(data);

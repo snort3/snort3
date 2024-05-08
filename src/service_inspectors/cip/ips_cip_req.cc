@@ -128,7 +128,7 @@ static void cip_req_mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* cip_req_ctor(Module*, OptTreeNode*)
+static IpsOption* cip_req_ctor(Module*, IpsInfo&)
 {
     return new CipReqOption;
 }

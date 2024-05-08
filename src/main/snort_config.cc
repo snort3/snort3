@@ -36,6 +36,7 @@
 #include "detection/fp_create.h"
 #include "dump_config/json_config_output.h"
 #include "dump_config/text_config_output.h"
+#include "events/event_queue.h"
 #include "file_api/file_service.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
@@ -44,10 +45,11 @@
 #include "flow/ha_module.h"
 #include "framework/policy_selector.h"
 #include "hash/xhash.h"
-#include "helpers/process.h"
 #include "host_tracker/host_cache_segmented.h"
 #include "latency/latency_config.h"
 #include "log/messages.h"
+#include "main/policy.h"
+#include "main/process.h"
 #include "managers/action_manager.h"
 #include "managers/event_manager.h"
 #include "managers/inspector_manager.h"
@@ -265,7 +267,8 @@ SnortConfig::~SnortConfig()
         (fast_pattern_config->get_search_api() !=
         get_conf()->fast_pattern_config->get_search_api())) )
     {
-        MpseManager::stop_search_engine(fast_pattern_config->get_search_api());
+        if ( fast_pattern_config->get_search_api() )
+            MpseManager::stop_search_engine(fast_pattern_config->get_search_api());
     }
     delete fast_pattern_config;
 
@@ -308,7 +311,7 @@ void SnortConfig::setup()
     ParseRules(this);
 
     // Allocate evalOrder before calling the OrderRuleLists
-    evalOrder = new int[Actions::get_max_types()]();
+    evalOrder = new int[IpsAction::get_max_types()]();
 
     OrderRuleLists(this);
 
@@ -1082,3 +1085,15 @@ const char* SnortConfig::get_static_name(const char* name)
     static_names.emplace(name, name);
     return static_names[name].c_str();
 }
+
+int SnortConfig::get_classification_id(const char* name)
+{
+    auto& cls = get_conf()->classifications;
+    auto itr = cls.find(name);
+
+    if (itr != cls.end())
+        return itr->second->id;
+
+    return 0;
+}
+

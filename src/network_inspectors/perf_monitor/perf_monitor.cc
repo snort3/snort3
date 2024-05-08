@@ -31,11 +31,11 @@
 #include "perf_monitor.h"
 
 #include "framework/data_bus.h"
+#include "framework/pig_pen.h"
 #include "hash/hash_defs.h"
 #include "hash/xhash.h"
 #include "log/messages.h"
 #include "main/analyzer_command.h"
-#include "main/thread.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "pub_sub/intrinsic_event_ids.h"
@@ -231,7 +231,7 @@ void PerfMonitor::tinit()
 
 bool PerfMonReloadTuner::tinit()
 {
-    PerfMonitor* pm = (PerfMonitor*)InspectorManager::get_inspector(PERF_NAME, true);
+    PerfMonitor* pm = (PerfMonitor*)PigPen::get_inspector(PERF_NAME, true);
     auto* new_constraints = pm->get_constraints();
 
     if (new_constraints->flow_ip_enabled)
@@ -351,7 +351,7 @@ void PerfMonitor::eval(Packet* p)
         if (ready_to_process(p))
         {
 #ifdef ENABLE_MEMORY_PROFILER
-            Profiler::show_runtime_memory_stats();
+            PigPen::show_runtime_memory_stats();
 #endif
             for (unsigned i = 0; i < trackers->size(); i++)
             {

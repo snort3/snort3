@@ -81,10 +81,8 @@ bool DataPurgeAC::execute(Analyzer&, void**) { return true;}
 
 void set_host_cache_mac(HostCacheMac*) { }
 
-Inspector* InspectorManager::get_inspector(const char*, bool, const SnortConfig*)
-{
-    return nullptr;
-}
+Inspector* PigPen::get_inspector(const char*, bool, const SnortConfig*)
+{ return nullptr; }
 
 void HostTracker::remove_flows() { }
 

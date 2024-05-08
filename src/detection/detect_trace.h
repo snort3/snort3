@@ -25,7 +25,6 @@
 
 #include "framework/cursor.h"
 #include "main/snort_types.h"
-#include "main/thread.h"
 
 namespace snort
 {

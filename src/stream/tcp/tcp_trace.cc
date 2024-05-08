@@ -26,7 +26,6 @@
 #include "tcp_trace.h"
 
 #include "trace/trace_api.h"
-#include "utils/stats.h"
 
 #include "tcp_module.h"
 #include "tcp_session.h"

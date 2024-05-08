@@ -193,7 +193,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* sip_stat_code_ctor(Module* p, OptTreeNode*)
+static IpsOption* sip_stat_code_ctor(Module* p, IpsInfo&)
 {
     SipStatCodeModule* m = (SipStatCodeModule*)p;
     return new SipStatCodeOption(m->ssod);

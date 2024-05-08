@@ -28,10 +28,10 @@
 
 #include "detection/detection_engine.h"
 #include "helpers/literal_search.h"
+#include "helpers/utf.h"
 #include "ips_options/ips_vba_data.h"
 #include "trace/trace_api.h"
 #include "utils/util.h"
-#include "utils/util_utf.h"
 
 #define OLE_MAX_FILENAME_LEN_UTF16  64
 #define OLE_MAX_FILENAME_ASCII      32

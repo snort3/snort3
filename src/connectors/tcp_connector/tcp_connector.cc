@@ -30,7 +30,6 @@
 #include <unistd.h>
 
 #include "log/messages.h"
-#include "main/thread.h"
 #include "profiler/profiler_defs.h"
 
 #include "tcp_connector_module.h"

@@ -235,7 +235,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* ssl_state_ctor(Module* p, OptTreeNode*)
+static IpsOption* ssl_state_ctor(Module* p, IpsInfo&)
 {
     SslStateModule* m = (SslStateModule*)p;
     return new SslStateOption(m->ssod);

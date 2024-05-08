@@ -25,7 +25,7 @@
 
 #include "tcp_state_listen.h"
 
-#include "packet_tracer/packet_tracer.h"
+#include "packet_io/packet_tracer.h"
 #include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
 

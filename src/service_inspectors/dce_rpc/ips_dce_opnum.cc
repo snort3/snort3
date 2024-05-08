@@ -524,7 +524,7 @@ static void dce2_opnum_mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* dce2_opnum_ctor(Module* p, OptTreeNode*)
+static IpsOption* dce2_opnum_ctor(Module* p, IpsInfo&)
 {
     Dce2OpnumModule* m = (Dce2OpnumModule*)p;
     DCE2_Opnum opnum = m->opnum;

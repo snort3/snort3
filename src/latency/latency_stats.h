@@ -21,7 +21,6 @@
 #ifndef LATENCY_STATS_H
 #define LATENCY_STATS_H
 
-#include "main/thread.h"
 #include "framework/counts.h"
 
 struct LatencyStats

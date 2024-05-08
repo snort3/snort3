@@ -1,14 +1,14 @@
 set (RNA_INCLUDES
+    rna_cpe_os.h
     rna_fingerprint.h
     rna_fingerprint_smb.h
     rna_fingerprint_tcp.h
     rna_fingerprint_ua.h
     rna_fingerprint_udp.h
-    rna_flow.h
     rna_inspector.h
-    rna_logger.h
+    rna_logger_event.h
     rna_name.h
-    rna_cpe_os.h
+    rna_tracker.h
 )
 
 set ( RNA_SOURCES
@@ -26,7 +26,9 @@ set ( RNA_SOURCES
     rna_fingerprint_udp.cc
     rna_inspector.cc
     rna_flow.cc
+    rna_flow.h
     rna_logger.cc
+    rna_logger.h
     rna_logger_common.h
     rna_mac_cache.cc
     rna_mac_cache.h

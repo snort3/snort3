@@ -148,7 +148,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* ack_ctor(Module* p, OptTreeNode*)
+static IpsOption* ack_ctor(Module* p, IpsInfo&)
 {
     AckModule* m = (AckModule*)p;
     return new TcpAckOption(m->data);

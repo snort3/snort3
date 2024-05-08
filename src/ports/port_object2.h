@@ -22,7 +22,7 @@
 #ifndef PORT_OBJECT2_H
 #define PORT_OBJECT2_H
 
-#include "framework/bits.h"
+#include "utils/bits.h"
 #include "utils/sflsq.h"
 
 //-------------------------------------------------------------------------

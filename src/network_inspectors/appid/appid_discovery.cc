@@ -27,7 +27,8 @@
 #include "host_tracker/host_cache.h"
 #include "host_tracker/host_cache_segmented.h"
 
-#include "packet_tracer/packet_tracer.h"
+#include "log/messages.h"
+#include "packet_io/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
@@ -67,7 +68,7 @@ static void populate_trace_data(AppIdSession& session)
 
     PacketTracer::daq_log("AppID+%" PRId64"++service: %s(%d), "
         "client: %s(%d), payload: %s(%d), misc: %s(%d)$",
-        TO_NSECS(pt_timer->get()),
+        PacketTracer::get_time(),
         (service_app_name ? service_app_name : ""), service_id,
         (client_app_name ? client_app_name : ""), client_id,
         (payload_app_name ? payload_app_name : ""), payload_id,

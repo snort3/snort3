@@ -26,6 +26,8 @@
 #endif
 
 #include "dce_smb2_commands.h"
+
+#include "file_api/file_lib.h"
 #include "hash/hash_key_operations.h"
 #include "log/messages.h"
 #include "packet_io/active.h"

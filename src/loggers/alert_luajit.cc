@@ -22,11 +22,9 @@
 #endif
 
 #include "detection/ips_context.h"
-#include "detection/signature.h"
 #include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
-#include "helpers/chunk.h"
 #include "log/messages.h"
 #include "lua/lua.h"
 #include "main/thread_config.h"
@@ -35,6 +33,7 @@
 #include "managers/script_manager.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
+#include "utils/chunk.h"
 
 using namespace snort;
 
@@ -49,18 +48,13 @@ static THREAD_LOCAL SnortPacket lua_packet;
 SO_PUBLIC const SnortEvent* get_event()
 {
     assert(event);
-
-    lua_event.gid = event->sig_info->gid;
-    lua_event.sid = event->sig_info->sid;
-    lua_event.rev = event->sig_info->rev;
+    event->get_sig_ids(lua_event.gid, lua_event.sid, lua_event.rev);
 
     lua_event.event_id = event->get_event_id();
     lua_event.event_ref = event->get_event_reference();
 
-    if ( !event->sig_info->message.empty() )
-        lua_event.msg = event->sig_info->message.c_str();
-    else
-        lua_event.msg = "";
+    lua_event.msg = event->get_msg();
+    if ( !lua_event.msg ) lua_event.msg = "";
 
     return &lua_event;
 }

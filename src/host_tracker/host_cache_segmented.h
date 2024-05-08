@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2024 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2023-2024 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -20,15 +20,12 @@
 #ifndef HOST_CACHE_SEGMENTED_H
 #define HOST_CACHE_SEGMENTED_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <atomic>
 #include <cassert>
 #include <numeric>
 
 #include "host_cache.h"
+#include "log/log_stats.h"
 #include "log/messages.h"
 
 #define DEFAULT_HOST_CACHE_SEGMENTS 4

@@ -22,8 +22,8 @@
 #ifndef PORT_UTILS_H
 #define PORT_UTILS_H
 
-#include "framework/bits.h"
 #include "protocols/packet.h"
+#include "utils/bits.h"
 #include "utils/sflsq.h"
 
 struct PortObject;

@@ -21,7 +21,7 @@
 #include "config.h"
 #endif
 
-#include "framework/range.h"
+#include "range.h"
 
 #include <cerrno>
 #include <cstdlib>

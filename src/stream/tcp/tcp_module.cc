@@ -28,6 +28,7 @@
 #include "main/snort_config.h"
 #include "profiler/profiler_defs.h"
 #include "stream/paf.h"
+#include "stream/paf_stats.h"
 #include "trace/trace.h"
 
 #include "tcp_trace.h"
@@ -133,8 +134,6 @@ THREAD_LOCAL TcpStats tcpStats;
     "data sent on stream not accepting data"
 #define STREAM_TCP_BAD_TIMESTAMP_STR \
     "TCP timestamp is outside of PAWS window"
-#define STREAM_TCP_BAD_SEGMENT_STR \
-    "bad segment, adjusted size <= 0 (deprecated)"
 #define STREAM_TCP_WINDOW_TOO_LARGE_STR \
     "window size (after scaling) larger than policy allows"
 #define STREAM_TCP_EXCESSIVE_TCP_OVERLAPS_STR \
@@ -248,7 +247,6 @@ static const RuleMap stream_tcp_rules[] =
     { STREAM_TCP_DATA_ON_SYN, STREAM_TCP_DATA_ON_SYN_STR },
     { STREAM_TCP_DATA_ON_CLOSED, STREAM_TCP_DATA_ON_CLOSED_STR },
     { STREAM_TCP_BAD_TIMESTAMP, STREAM_TCP_BAD_TIMESTAMP_STR },
-    { STREAM_TCP_BAD_SEGMENT, STREAM_TCP_BAD_SEGMENT_STR },
     { STREAM_TCP_WINDOW_TOO_LARGE, STREAM_TCP_WINDOW_TOO_LARGE_STR },
     { STREAM_TCP_EXCESSIVE_TCP_OVERLAPS, STREAM_TCP_EXCESSIVE_TCP_OVERLAPS_STR },
     { STREAM_TCP_DATA_AFTER_RESET, STREAM_TCP_DATA_AFTER_RESET_STR },

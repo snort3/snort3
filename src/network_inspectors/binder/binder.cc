@@ -23,7 +23,9 @@
 
 #include "detection/detection_engine.h"
 #include "flow/flow.h"
+#include "framework/pig_pen.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "packet_io/active.h"
 #include "profiler/profiler.h"
@@ -31,6 +33,7 @@
 #include "pub_sub/assistant_gadget_event.h"
 #include "pub_sub/intrinsic_event_ids.h"
 #include "pub_sub/stream_event_ids.h"
+#include "sfip/sf_cidr.h"
 #include "stream/stream.h"
 #include "stream/stream_splitter.h"
 #include "target_based/host_attributes.h"
@@ -51,7 +54,7 @@ static Inspector* get_gadget(const SnortProtocolId protocol_id)
     if (protocol_id == UNKNOWN_PROTOCOL_ID)
         return nullptr;
 
-    return InspectorManager::get_service_inspector_by_id(protocol_id);
+    return InspectorManager::get_service_inspector(protocol_id);
 }
 
 static std::string to_string(const sfip_var_t* list)
@@ -460,7 +463,7 @@ void Stuff::apply_service(Flow& flow)
 void Stuff::apply_assistant(Flow& flow, const char* service)
 {
     if (!gadget)
-        gadget = InspectorManager::get_service_inspector_by_service(service);
+        gadget = InspectorManager::get_service_inspector(service);
 
     if (gadget)
         flow.set_assistant_gadget(gadget);
@@ -480,8 +483,6 @@ public:
 
     bool configure(SnortConfig*) override;
     void show(const SnortConfig*) const override;
-
-    void eval(Packet*) override { }
 
     void handle_packet(const Packet*);
     void handle_flow_setup(Flow&, bool standby = false);
@@ -512,7 +513,7 @@ public:
 
     void handle(DataEvent& e, Flow*) override
     {
-        Binder* binder = InspectorManager::get_binder();
+        Binder* binder = (Binder*)InspectorManager::get_binder();
         if (binder)
             binder->handle_packet(e.get_packet());
     }
@@ -526,7 +527,7 @@ public:
 
     void handle(DataEvent&, Flow* flow) override
     {
-        Binder* binder = InspectorManager::get_binder();
+        Binder* binder = (Binder*)InspectorManager::get_binder();
         if (binder && flow && !flow->flags.ha_flow)
             binder->handle_flow_setup(*flow);
     }
@@ -540,7 +541,7 @@ public:
 
     void handle(DataEvent&, Flow* flow) override
     {
-        Binder* binder = InspectorManager::get_binder();
+        Binder* binder = (Binder*)InspectorManager::get_binder();
         if (binder && flow)
             binder->handle_flow_service_change(*flow);
     }
@@ -554,7 +555,7 @@ public:
 
     void handle(DataEvent&, Flow* flow) override
     {
-        Binder* binder = InspectorManager::get_binder();
+        Binder* binder = (Binder*)InspectorManager::get_binder();
         if (binder && flow)
             binder->handle_flow_setup(*flow, true);
     }
@@ -567,7 +568,7 @@ public:
 
     void handle(DataEvent& event, Flow* flow) override
     {
-        Binder* binder = InspectorManager::get_binder();
+        Binder* binder = (Binder*)InspectorManager::get_binder();
         AssistantGadgetEvent* assistant_event = (AssistantGadgetEvent*)&event;
 
         if (binder && flow)
@@ -584,7 +585,7 @@ public:
     {
         if (flow && Flow::FlowState::INSPECT == flow->flow_state)
         {
-            Binder* binder = InspectorManager::get_binder();
+            Binder* binder = (Binder*)InspectorManager::get_binder();
             if (binder)
                 binder->handle_flow_after_reload(*flow);
         }
@@ -939,7 +940,7 @@ void Binder::get_bindings(Flow& flow, Stuff& stuff, const char* service)
     get_policy_bindings(flow, service);
 
     // If policy selection produced a new binder to use, use that instead.
-    Binder* sub = InspectorManager::get_binder();
+    Binder* sub = (Binder*)InspectorManager::get_binder();
     if (sub && sub != this)
     {
         sub->get_bindings(flow, stuff, service);
@@ -970,7 +971,7 @@ void Binder::get_bindings(Packet* p, Stuff& stuff)
     get_policy_bindings(p);
 
     // If policy selection produced a new binder to use, use that instead.
-    Binder* sub = InspectorManager::get_binder();
+    Binder* sub = (Binder*)InspectorManager::get_binder();
     if (sub && sub != this)
     {
         sub->get_bindings(p, stuff);

@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/treenodes.h"
 #include "framework/decode_data.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -79,10 +78,10 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* rev_ctor(Module* p, OptTreeNode* otn)
+static IpsOption* rev_ctor(Module* p, IpsInfo& info)
 {
     RevModule* m = (RevModule*)p;
-    otn->sigInfo.rev = m->rev;
+    IpsOption::set_rev(info, m->rev);
     return nullptr;
 }
 

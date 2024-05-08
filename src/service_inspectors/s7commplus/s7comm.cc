@@ -25,7 +25,6 @@
 
 #include "s7comm.h"
 
-#include "events/event_queue.h"
 #include "detection/detection_engine.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"

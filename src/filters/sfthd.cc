@@ -36,7 +36,6 @@
 #include "hash/ghash.h"
 #include "hash/hash_defs.h"
 #include "hash/xhash.h"
-#include "main/thread.h"
 #include "sfip/sf_ipvar.h"
 #include "utils/sflsq.h"
 #include "utils/util.h"
@@ -360,7 +359,6 @@ static int sfthd_create_threshold_global(
 
     return 0;
 }
-
 
 /*!
 Add a permanent threshold object to the threshold table. Multiple

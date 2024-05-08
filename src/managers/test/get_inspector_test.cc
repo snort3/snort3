@@ -31,8 +31,6 @@
 
 using namespace snort;
 
-bool Inspector::is_inactive() { return true; }
-
 NetworkPolicy* snort::get_network_policy()
 { return (NetworkPolicy*)mock().getData("network_policy").getObjectPointer(); }
 NetworkPolicy* PolicyMap::get_user_network(uint64_t) const
@@ -97,7 +95,6 @@ class TestInspector : public Inspector
 public:
     TestInspector() = default;
     ~TestInspector() override = default;
-    void eval(Packet*) override { }
 };
 
 class TestModule : public Module

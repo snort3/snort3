@@ -26,6 +26,7 @@
 #include "dce_tcp.h"
 
 #include "detection/detection_engine.h"
+#include "main/snort_config.h"
 #include "pub_sub/dcerpc_events.h"
 #include "utils/util.h"
 

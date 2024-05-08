@@ -31,13 +31,11 @@
 #endif
 
 #include "detection/detection_engine.h"
-#include "detection/signature.h"
 #include "events/event.h"
 #include "flow/flow_key.h"
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "helpers/base64_encoder.h"
-#include "log/log.h"
 #include "log/log_text.h"
 #include "log/text_log.h"
 #include "packet_io/active.h"
@@ -48,7 +46,6 @@
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 #include "protocols/vlan.h"
-#include "utils/stats.h"
 
 using namespace snort;
 using namespace std;
@@ -64,6 +61,8 @@ static THREAD_LOCAL TextLog* json_log;
 // field formatting functions
 //-------------------------------------------------------------------------
 
+namespace
+{
 struct Args
 {
     Packet* pkt;
@@ -71,6 +70,7 @@ struct Args
     const Event& event;
     bool comma;
 };
+}
 
 static void print_label(const Args& a, const char* label)
 {
@@ -89,10 +89,8 @@ static bool ff_action(const Args& a)
 
 static bool ff_class(const Args& a)
 {
-    const char* cls = "none";
-
-    if ( a.event.sig_info->class_type and !a.event.sig_info->class_type->text.empty() )
-        cls = a.event.sig_info->class_type->text.c_str();
+    const char* cls = a.event.get_class_type();
+    if ( !cls ) cls = "none";
 
     print_label(a, "class");
     TextLog_Quote(json_log, cls);
@@ -281,7 +279,7 @@ static bool ff_geneve_vni(const Args& a)
 static bool ff_gid(const Args& a)
 {
     print_label(a, "gid");
-    TextLog_Print(json_log, "%u",  a.event.sig_info->gid);
+    TextLog_Print(json_log, "%u",  a.event.get_gid());
     return true;
 }
 
@@ -412,7 +410,7 @@ static bool ff_pkt_num(const Args& a)
 static bool ff_priority(const Args& a)
 {
     print_label(a, "priority");
-    TextLog_Print(json_log, "%u", a.event.sig_info->priority);
+    TextLog_Print(json_log, "%u", a.event.get_priority());
     return true;
 }
 
@@ -426,7 +424,7 @@ static bool ff_proto(const Args& a)
 static bool ff_rev(const Args& a)
 {
     print_label(a, "rev");
-    TextLog_Print(json_log, "%u",  a.event.sig_info->rev);
+    TextLog_Print(json_log, "%u",  a.event.get_rev());
     return true;
 }
 
@@ -434,9 +432,10 @@ static bool ff_rule(const Args& a)
 {
     print_label(a, "rule");
 
-    TextLog_Print(json_log, "\"%u:%u:%u\"",
-        a.event.sig_info->gid, a.event.sig_info->sid, a.event.sig_info->rev);
+    uint32_t gid, sid, rev;
+    a.event.get_sig_ids(gid, sid, rev);
 
+    TextLog_Print(json_log, "\"%u:%u:%u\"", gid, sid, rev);
     return true;
 }
 
@@ -496,7 +495,7 @@ static bool ff_sgt(const Args& a)
 static bool ff_sid(const Args& a)
 {
     print_label(a, "sid");
-    TextLog_Print(json_log, "%u",  a.event.sig_info->sid);
+    TextLog_Print(json_log, "%u",  a.event.get_sid());
     return true;
 }
 
@@ -542,15 +541,16 @@ static bool ff_src_port(const Args& a)
 static bool ff_target(const Args& a)
 {
     SfIpString addr = "";
+    bool src;
 
-    if ( a.event.sig_info->target == TARGET_SRC )
+    if ( !a.event.get_target(src) )
+        return false;
+
+    if ( src )
         a.pkt->ptrs.ip_api.get_src()->ntop(addr);
 
-    else if ( a.event.sig_info->target == TARGET_DST )
-        a.pkt->ptrs.ip_api.get_dst()->ntop(addr);
-
     else
-        return false;
+        a.pkt->ptrs.ip_api.get_dst()->ntop(addr);
 
     print_label(a, "target");
     TextLog_Quote(json_log, addr);
@@ -573,7 +573,7 @@ static bool ff_tcp_flags(const Args& a)
     if (a.pkt->ptrs.tcph )
     {
         char tcpFlags[9];
-        CreateTCPFlagString(a.pkt->ptrs.tcph, tcpFlags);
+        a.pkt->ptrs.tcph->stringify_flags(tcpFlags);
 
         print_label(a, "tcp_flags");
         TextLog_Quote(json_log, tcpFlags);

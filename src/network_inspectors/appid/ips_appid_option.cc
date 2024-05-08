@@ -237,7 +237,7 @@ static void appid_option_mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* appid_option_ips_ctor(Module* p, OptTreeNode*)
+static IpsOption* appid_option_ips_ctor(Module* p, IpsInfo&)
 {
     AppIdOptionModule* m = (AppIdOptionModule*)p;
     return new AppIdIpsOption(m->appid_table);

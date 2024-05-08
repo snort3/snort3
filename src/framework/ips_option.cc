@@ -25,10 +25,22 @@
 
 #include <cstring>
 
+#include "detection/rules.h"
+#include "detection/signature.h"
+#include "detection/treenodes.h"
+#include "filters/detection_filter.h"
+#include "filters/sfthd.h"
+#include "framework/ips_info.h"
 #include "hash/hash_key_operations.h"
+#include "main/snort_config.h"
+#include "managers/so_manager.h"
+#include "parser/parse_conf.h"
+#include "utils/util.h"
 
 using namespace snort;
 
+namespace snort
+{
 //-------------------------------------------------------------------------
 
 IpsOption::IpsOption(const char* s, option_type_t t)
@@ -56,6 +68,120 @@ section_flags IpsOption::get_pdu_section(bool) const
 }
 
 //-------------------------------------------------------------------------
+// static / instantiator methods
+//-------------------------------------------------------------------------
+
+bool IpsOption::has_plugin(IpsInfo& info, const char* name)
+{ return otn_has_plugin(info.otn, name); }
+
+void IpsOption::set_priority(const IpsInfo& info, uint32_t pri)
+{ info.otn->sigInfo.priority = pri; }
+
+void IpsOption::set_classtype(IpsInfo& info, const char* type)
+{
+    const ClassType* ct = get_classification(info.sc, type);
+
+    if ( !ct and info.sc->dump_rule_info() )
+    {
+        add_classification(info.sc, type, type, 1);
+        ct = get_classification(info.sc, type);
+    }
+
+    info.otn->sigInfo.class_type = ct;
+
+    if ( ct )
+    {
+        info.otn->sigInfo.class_id = ct->id;
+        info.otn->sigInfo.priority = ct->priority;
+    }
+}
+
+void IpsOption::set_detection_filter(IpsInfo& info, bool track_src, uint32_t count, uint32_t seconds)
+{
+    THDX_STRUCT thdx = { };
+    thdx.type = THD_TYPE_DETECT;
+    thdx.tracking = (track_src ? THD_TRK_SRC : THD_TRK_DST);
+    thdx.count = count;
+    thdx.seconds = seconds;
+    info.otn->detection_filter = detection_filter_create(info.sc->detection_filter_config, &thdx);
+}
+
+void IpsOption::set_enabled(IpsInfo& info, Enable ie)
+{
+    if ( !info.sc->rule_states )
+        info.sc->rule_states = new RuleStateMap;
+
+    IpsPolicy::Enable e;
+
+    switch (ie)
+    {
+        case IpsOption::NO: e = IpsPolicy::DISABLED; break;
+        case IpsOption::INHERIT: e = IpsPolicy::INHERIT_ENABLE; break;
+        default: e = IpsPolicy::ENABLED; break;
+    }
+    info.otn->set_enabled(e);
+}
+
+void IpsOption::set_file_id(const IpsInfo& info, uint64_t fid)
+{ info.otn->sigInfo.file_id = fid; }
+
+void IpsOption::set_flowbits_check(IpsInfo& info)
+{ info.otn->set_flowbits_check(); }
+
+void IpsOption::set_stateless(IpsInfo& info)
+{ info.otn->set_stateless(); }
+
+void IpsOption::set_to_client(IpsInfo& info)
+{ info.otn->set_to_client(); }
+
+void IpsOption::set_to_server(IpsInfo& info)
+{ info.otn->set_to_server(); }
+
+void IpsOption::set_gid(const IpsInfo& info, uint32_t gid)
+{ info.otn->sigInfo.gid = gid; }
+
+void IpsOption::set_sid(const IpsInfo& info, uint32_t sid)
+{ info.otn->sigInfo.sid = sid; }
+
+void IpsOption::set_rev(const IpsInfo& info, uint32_t rev)
+{ info.otn->sigInfo.rev = rev; }
+
+void IpsOption::set_message(const IpsInfo& info, const char* msg)
+{ info.otn->sigInfo.message = msg; }
+
+void IpsOption::set_metadata_match(IpsInfo& info)
+{ info.otn->set_metadata_match(); }
+
+void IpsOption::set_tag(IpsInfo& info, TagData* td)
+{ info.otn->tag = td; }
+
+void IpsOption::set_target(const IpsInfo& info, bool src_ip)
+{ info.otn->sigInfo.target = (src_ip ? TARGET_SRC : TARGET_DST); }
+
+void IpsOption::add_reference(IpsInfo& info, const char* scheme, const char* id)
+{ ::add_reference(info.sc, info.otn, scheme, id); }
+
+void IpsOption::add_service(IpsInfo& info, const char* svc)
+{ add_service_to_otn(info.sc, info.otn, svc); }
+
+void IpsOption::set_soid(IpsInfo& info, const char* s)
+{ info.otn->soid = snort_strdup(s); }
+
+const char* IpsOption::get_soid(const IpsInfo& info)
+{ return info.otn->soid; }
+
+IpsOption::SoEvalFunc IpsOption::get_so_eval(IpsInfo& info, const char* name, void*& data)
+{ return SoManager::get_so_eval(info.otn->soid, name, &data, info.sc); }
+
+SnortProtocolId IpsOption::get_protocol_id(const IpsInfo& info)
+{ return info.otn->snort_protocol_id; }
+
+SoRules* IpsOption::get_so_rules(const IpsInfo& info)
+{ return info.sc->so_rules; }
+
+} // snort
+
+//-------------------------------------------------------------------------
 // UNIT TESTS
 //-------------------------------------------------------------------------
 #ifdef UNIT_TEST
@@ -73,11 +199,6 @@ TEST_CASE("IpsOption test", "[ips_option]")
 {
     StubIpsOption main_ips("ips_test",
         option_type_t::RULE_OPTION_TYPE_OTHER);
-
-    SECTION("buffer test")
-    {
-        REQUIRE(main_ips.get_buffer());  // only until api is updated
-    }
 
     SECTION("IpsOperator == test")
     {

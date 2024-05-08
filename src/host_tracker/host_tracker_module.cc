@@ -23,6 +23,7 @@
 #endif
 
 #include "host_tracker_module.h"
+#include "host_tracker_stats.h"
 #include "host_cache_segmented.h"
 
 #include "log/messages.h"

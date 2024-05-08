@@ -27,7 +27,7 @@
 
 #include "framework/module.h"
 #include "helpers/markup.h"
-#include "helpers/process.h"
+#include "main/process.h"
 #include "managers/event_manager.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"

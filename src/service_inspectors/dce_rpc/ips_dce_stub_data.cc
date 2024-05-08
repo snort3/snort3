@@ -136,7 +136,7 @@ static void dce2_stub_data_mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* dce2_stub_data_ctor(Module*, OptTreeNode*)
+static IpsOption* dce2_stub_data_ctor(Module*, IpsInfo&)
 {
     return new Dce2StubDataOption;
 }

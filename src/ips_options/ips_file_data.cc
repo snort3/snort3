@@ -105,7 +105,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* file_data_ctor(Module*, OptTreeNode*)
+static IpsOption* file_data_ctor(Module*, IpsInfo&)
 {
     return new FileDataOption;
 }

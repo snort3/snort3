@@ -31,7 +31,6 @@
 
 #include "log/messages.h"
 #include "main/snort.h"
-#include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 #include "pub_sub/appid_event_ids.h"
 #include "pub_sub/dhcp_events.h"

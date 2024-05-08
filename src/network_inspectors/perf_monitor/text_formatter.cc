@@ -26,7 +26,7 @@
 
 #include <sstream>
 
-#include "utils/stats.h"
+#include "log/log_stats.h"
 
 #ifdef UNIT_TEST
 #include <cstdio>

@@ -1,6 +1,6 @@
 
 set (LOG_INCLUDES
-    log.h
+    log_stats.h
     log_text.h
     messages.h
     obfuscator.h
@@ -12,6 +12,9 @@ set (LOG_INCLUDES
 add_library ( log OBJECT
     ${LOG_INCLUDES}
     log.cc
+    log.h
+    log_errors.h
+    log_stats.cc
     log_text.cc
     messages.cc
     obfuscator.cc

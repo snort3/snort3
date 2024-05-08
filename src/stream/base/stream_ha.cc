@@ -23,10 +23,10 @@
 
 #include "stream_ha.h"
 
+#include <algorithm>
 #include <unordered_map>
 
 #include "flow/flow_key.h"
-#include "managers/inspector_manager.h"
 #include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
 

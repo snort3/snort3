@@ -27,7 +27,6 @@
 #include <sstream>
 #include <string>
 
-#include "detection/detect.h"
 #include "detection/detection_engine.h"
 #include "log/messages.h"
 #include "main/analyzer.h"

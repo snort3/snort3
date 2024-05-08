@@ -39,6 +39,7 @@
 #include "hash/ghash.h"
 #include "hash/hash_defs.h"
 #include "hash/xhash.h"
+#include "log/log_stats.h"
 #include "log/messages.h"
 #include "main/snort.h"
 #include "main/snort_config.h"

@@ -31,7 +31,6 @@
 #include "catch/snort_catch.h"
 #endif
 
-#include "main/thread.h"
 #include "pub_sub/dhcp_events.h"
 
 using namespace snort;

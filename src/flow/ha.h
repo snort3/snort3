@@ -24,8 +24,8 @@
 
 #include <cassert>
 
-#include "framework/bits.h"
-#include "main/thread.h"
+#include "main/snort_types.h"
+#include "utils/bits.h"
 
 //-------------------------------------------------------------------------
 

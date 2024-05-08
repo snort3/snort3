@@ -31,12 +31,12 @@
 #include "time/periodic.h"
 #include "utils/util.h"
 
-#ifdef HAVE_NUMA
-#include "utils/util_numa.h"
-#endif
-
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
+#endif
+
+#ifdef HAVE_NUMA
+#include "numa.h"
 #endif
 
 using namespace snort;

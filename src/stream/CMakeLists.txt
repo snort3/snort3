@@ -25,6 +25,7 @@ add_library( stream_paf OBJECT
     flush_bucket.cc
     flush_bucket.h
     paf.cc
+    paf_stats.h
 )
 
 install (FILES ${STREAM_INCLUDES}

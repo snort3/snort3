@@ -23,6 +23,8 @@
 #include "config.h"
 #endif
 
+#include <cassert>
+
 #include "sf_mlmp.h"
 
 #include "search_engines/search_tool.h"

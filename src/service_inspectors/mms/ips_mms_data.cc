@@ -123,7 +123,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* opt_ctor(Module*, OptTreeNode*)
+static IpsOption* opt_ctor(Module*, IpsInfo&)
 {
     return new MmsDataOption;
 }

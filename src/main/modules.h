@@ -25,8 +25,6 @@
 // ideally, modules.cc would be refactored into several files.
 
 #include "framework/counts.h"
-#include "main/thread.h"
-
 
 void module_init();
 const char* get_lua_defaults();

@@ -28,6 +28,7 @@
 #include "detection/ips_context.h"
 #include "framework/policy_selector.h"
 #include "log/messages.h"
+#include "main/policy.h"
 #include "policy_selectors/int_set_to_string.h"
 #include "profiler/profiler.h"
 

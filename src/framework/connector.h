@@ -23,6 +23,9 @@
 // Connector provides out-of-band communications among packet processing
 // threads, high-availability partners, and other threads.
 
+// the CONNECTOR_API_VERSION will change if anything in this file changes.
+// see also framework/base_api.h.
+
 #include <string>
 #include <vector>
 
@@ -32,7 +35,7 @@
 namespace snort
 {
 // this is the current version of the api
-#define CONNECTOR_API_VERSION ((BASE_API_VERSION << 16) | 0)
+#define CONNECTOR_API_VERSION ((BASE_API_VERSION << 16) | 1)
 
 //-------------------------------------------------------------------------
 // api for class
@@ -40,7 +43,6 @@ namespace snort
 // other methods are packet thread specific
 //-------------------------------------------------------------------------
 
-struct ConnectorApi;
 class ConnectorConfig;
 
 struct ConnectorMsg

@@ -44,12 +44,6 @@
 
 using namespace snort;
 
-namespace snort
-{
-    unsigned get_instance_id() { return 0; }
-    unsigned ThreadConfig::get_instance_max() { return 1; }
-}
-
 //-------------------------------------------------------------------------
 // stubs, spies, etc.
 //-------------------------------------------------------------------------

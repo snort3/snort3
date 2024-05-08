@@ -29,9 +29,8 @@
 
 #include "detection/detection_engine.h"
 #include "log/log.h"
-#include "main/analyzer.h"
 #include "packet_io/active.h"
-#include "packet_tracer/packet_tracer.h"
+#include "packet_io/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "protocols/packet_manager.h"
 #include "time/packet_time.h"
@@ -597,7 +596,9 @@ int TcpReassembler::flush_to_seq(
         tcpStats.rebuilt_packets++;
         tcpStats.rebuilt_bytes += flushed_bytes;
 
-        if ( !Analyzer::get_local_analyzer()->inspect_rebuilt(pdu) )
+        DetectionEngine de;
+
+        if ( !de.inspect(pdu) )
             last_pdu = pdu;
         else
             last_pdu = nullptr;
@@ -641,7 +642,9 @@ int TcpReassembler::do_zero_byte_flush(TcpReassemblerState& trs, Packet* p, uint
 
         trs.flush_count++;
         show_rebuilt_packet(trs, pdu);
-        Analyzer::get_local_analyzer()->inspect_rebuilt(pdu);
+
+        DetectionEngine de;
+        de.inspect(pdu);
      }
 
      return bytes_copied;

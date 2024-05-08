@@ -26,9 +26,8 @@
 
 #include "detection/detection_engine.h"
 #include "main/snort_config.h"
-#include "managers/inspector_manager.h"
 #include "packet_io/active.h"
-#include "packet_tracer/packet_tracer.h"
+#include "packet_io/packet_tracer.h"
 #include "protocols/icmp4.h"
 #include "protocols/tcp.h"
 #include "protocols/udp.h"

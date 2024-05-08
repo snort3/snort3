@@ -65,7 +65,7 @@ snort::SearchTool* js_create_mpse_tag_type() { return nullptr; }
 snort::SearchTool* js_create_mpse_tag_attr() { return nullptr; }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
+void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 
 int64_t Parameter::get_int(char const*) { return 0; }
 

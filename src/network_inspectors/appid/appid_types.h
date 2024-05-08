@@ -17,7 +17,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// appid_session.h author Sourcefire Inc.
+// appid_types.h author Sourcefire Inc.
 
 #ifndef APPID_TYPES_H
 #define APPID_TYPES_H

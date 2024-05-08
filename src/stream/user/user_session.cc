@@ -25,7 +25,7 @@
 
 #include "detection/detection_engine.h"
 #include "detection/rules.h"
-#include "main/analyzer.h"
+#include "framework/pig_pen.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
 #include "trace/trace_api.h"
@@ -165,7 +165,7 @@ void UserTracker::detect(
     up->packet_flags |= (p->packet_flags & (PKT_STREAM_EST|PKT_STREAM_UNEST_UNI));
 
     debug_logf(stream_user_trace, up, "detect[%d]\n", up->dsize);
-    Analyzer::get_local_analyzer()->inspect_rebuilt(up);
+    PigPen::inspect_rebuilt(up);
 }
 
 int UserTracker::scan(Packet* p, uint32_t& flags)

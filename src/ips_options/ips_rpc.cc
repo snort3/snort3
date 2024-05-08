@@ -310,7 +310,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* rpc_ctor(Module* p, OptTreeNode*)
+static IpsOption* rpc_ctor(Module* p, IpsInfo&)
 {
     RpcModule* m = (RpcModule*)p;
     return new RpcOption(m->data);

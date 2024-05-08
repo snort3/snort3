@@ -23,7 +23,6 @@
 #include "framework/cursor.h"
 #include "framework/endianness.h"
 #include "main/snort_types.h"
-#include "main/thread.h"
 #include "protocols/packet.h"
 
 #define ENDIAN_BIG    0x1
@@ -59,14 +58,14 @@ SO_PUBLIC int byte_extract(
     int endianness, int bytes_to_grab, const uint8_t* ptr,
     const uint8_t* start, const uint8_t* end, uint32_t* value);
 
-void set_cursor_bounds(const ByteData& settings, const Cursor& c,
+SO_PUBLIC void set_cursor_bounds(const ByteData& settings, const Cursor& c,
     const uint8_t*& start, const uint8_t*& ptr, const uint8_t*& end);
 
-int32_t data_extraction(const ByteData& settings, Packet* p,
+SO_PUBLIC int32_t data_extraction(const ByteData& settings, Packet* p,
     uint32_t& result_var, const uint8_t* start,
     const uint8_t* ptr, const uint8_t* end);
 
-int32_t extract_data(const ByteData& settings, const Cursor& c, Packet* p,
+SO_PUBLIC int32_t extract_data(const ByteData& settings, const Cursor& c, Packet* p,
     uint32_t& result_var);
 
 SO_PUBLIC void set_byte_order(uint8_t& order, uint8_t flag, const char* opt);

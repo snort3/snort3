@@ -27,14 +27,18 @@
 
 #include <cstdint>
 
-// this is the current version of the base api
-// must be prefixed to subtype version
-#define BASE_API_VERSION 19
-
 // set options to API_OPTIONS to ensure compatibility
 #ifndef API_OPTIONS
 #include "framework/api_options.h"
 #endif
+
+// the current version of the Snort API
+// must be prefixed to subtype version
+
+// depends on includes installed in framework/snort_api.h
+// see framework/plugins.h
+
+#define BASE_API_VERSION 20
 
 // set the reserved field to this to be future proof
 #define API_RESERVED 0
@@ -64,14 +68,14 @@ typedef void (* ModDelFunc)(Module*);
 struct BaseApi
 {
     PlugType type;
-    uint32_t size;
-    uint32_t api_version;
-    uint32_t version;
-    uint64_t reserved;
-    const char* options;
-    const char* name;
-    const char* help;
-    snort::ModNewFunc mod_ctor;
+    uint32_t size;          // sizeof(plugin-api)
+    uint32_t api_version;   // (BASE_API_VERSION << 16) | plugin-api-version)
+    uint32_t version;       // version of plugin
+    uint64_t reserved;      // zero
+    const char* options;    // API_OPTIONS
+    const char* name;       // plugin name
+    const char* help;       // short help text
+    ModNewFunc mod_ctor;
     ModDelFunc mod_dtor;
 };
 }

@@ -25,7 +25,6 @@
 
 #include "hash/xhash.h"
 #include "log/messages.h"
-#include "main/thread.h"
 #include "utils/util.h"
 
 #include "sfthd.h"

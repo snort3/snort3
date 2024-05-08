@@ -29,6 +29,8 @@ namespace snort
 struct SnortConfig;
 }
 
+struct OptTreeNode;
+
 void parser_init();
 void parser_term(snort::SnortConfig*);
 
@@ -60,15 +62,15 @@ const char* parser_get_special_includer();
 
 int ParseBool(const char* arg);
 
-int addRtnToOtn(snort::SnortConfig*, struct OptTreeNode*, RuleTreeNode*);
-int addRtnToOtn(snort::SnortConfig*, struct OptTreeNode*, RuleTreeNode*, PolicyId);
+int addRtnToOtn(snort::SnortConfig*, OptTreeNode*, RuleTreeNode*);
+int addRtnToOtn(snort::SnortConfig*, OptTreeNode*, RuleTreeNode*, PolicyId);
 
 void set_strict_rtn_reduction(bool);
 bool same_headers(RuleTreeNode*, RuleTreeNode*);
 RuleTreeNode* deleteRtnFromOtn(OptTreeNode*, snort::SnortConfig* sc = nullptr);
-RuleTreeNode* deleteRtnFromOtn(struct OptTreeNode*, PolicyId, snort::SnortConfig* sc = nullptr, bool remove = true);
+RuleTreeNode* deleteRtnFromOtn(OptTreeNode*, PolicyId, snort::SnortConfig* sc = nullptr, bool remove = true);
 
-inline RuleTreeNode* getRtnFromOtn(const struct OptTreeNode* otn, PolicyId policyId)
+inline RuleTreeNode* getRtnFromOtn(const OptTreeNode* otn, PolicyId policyId)
 {
     if (otn && otn->proto_nodes && (otn->proto_node_num > (unsigned)policyId))
     {
@@ -77,12 +79,12 @@ inline RuleTreeNode* getRtnFromOtn(const struct OptTreeNode* otn, PolicyId polic
     return nullptr;
 }
 
-inline RuleTreeNode* getRtnFromOtn(const struct OptTreeNode* otn)
+inline RuleTreeNode* getRtnFromOtn(const OptTreeNode* otn)
 {
     return getRtnFromOtn(otn, snort::get_ips_policy()->policy_id);
 }
 
-RuleListNode* CreateRuleType(snort::SnortConfig* sc, const char* name, Actions::Type action_type);
+RuleListNode* CreateRuleType(snort::SnortConfig* sc, const char* name, snort::IpsAction::Type action_type);
 
 void FreeRuleTreeNode(RuleTreeNode*);
 void DestroyRuleTreeNode(RuleTreeNode*);

@@ -31,7 +31,7 @@ struct SnortConfig;
 
 class Analyzer;
 
-class SO_PUBLIC Swapper
+class Swapper
 {
 public:
     Swapper(snort::SnortConfig*);

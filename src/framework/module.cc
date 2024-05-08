@@ -25,6 +25,7 @@
 #include "main/thread_config.h"
 
 #include "trace/trace.h"
+#include "utils/stats.h"
 
 using namespace snort;
 
@@ -185,7 +186,7 @@ void Module::sum_stats(bool dump_stats)
     }
 }
 
-void Module::show_interval_stats(IndexVec& peg_idxs, FILE* fh)
+void Module::show_interval_stats(std::vector<unsigned>& peg_idxs, FILE* fh)
 {
     if ( num_counts > 0 )
         ::show_stats(get_counts(), get_pegs(), peg_idxs, get_name(), fh);

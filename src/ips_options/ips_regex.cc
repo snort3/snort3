@@ -29,7 +29,6 @@
 #include <cassert>
 
 #include "detection/pattern_match_data.h"
-#include "detection/treenodes.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -87,7 +86,7 @@ public:
     bool is_relative() override
     { return config.pmd.is_relative(); }
 
-    bool retry(Cursor&, const Cursor&) override;
+    bool retry(Cursor&) override;
 
     PatternMatchData* get_pattern(SnortProtocolId, RuleDirection) override
     { return &config.pmd; }
@@ -145,11 +144,14 @@ bool RegexOption::operator==(const IpsOption& ips) const
     return false;
 }
 
+namespace
+{
 struct ScanContext
 {
     unsigned index;
     bool found = false;
 };
+}
 
 static int hs_match(
     unsigned int /*id*/, unsigned long long /*from*/, unsigned long long to,
@@ -190,7 +192,7 @@ IpsOption::EvalStatus RegexOption::eval(Cursor& c, Packet*)
     return NO_MATCH;
 }
 
-bool RegexOption::retry(Cursor&, const Cursor&)
+bool RegexOption::retry(Cursor&)
 { return !is_relative(); }
 
 //-------------------------------------------------------------------------
@@ -405,7 +407,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* p)
 { delete p; }
 
-static IpsOption* regex_ctor(Module* m, OptTreeNode*)
+static IpsOption* regex_ctor(Module* m, IpsInfo&)
 {
     RegexModule* mod = (RegexModule*)m;
     RegexConfig c;

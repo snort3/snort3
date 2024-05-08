@@ -39,6 +39,7 @@
 #include "ips_options/ips_flowbits.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "main/thread.h"
 #include "parser/parse_conf.h"
 #include "pattern_match_data.h"
 #include "ports/port_group.h"

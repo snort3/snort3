@@ -28,12 +28,12 @@
 #include <vector>
 
 #include "binder/bind_module.h"
-#include "detection/detect.h"
 #include "detection/detection_engine.h"
 #include "detection/fp_utils.h"
-#include "flow/expect_cache.h"
+#include "flow/expect_flow.h"
 #include "flow/flow.h"
 #include "flow/session.h"
+#include "log/log_stats.h"
 #include "log/messages.h"
 #include "main/shell.h"
 #include "main/snort.h"
@@ -293,7 +293,7 @@ void InspectorList::tterm(PHObjectList* handlers)
 void InspectorList::tterm_removed()
 {
     for ( auto& ri : removed_ilist )
-        ri.instance->tterm(ri.handlers[Inspector::slot]);
+        ri.instance->tterm(ri.handlers[Inspector::get_slot()]);
 }
 
 static PHInstance* get_instance(InspectorList* il, const char* keyword);
@@ -459,12 +459,13 @@ void TrafficPolicy::vectorize(SnortConfig*)
 
 PHObjectList* TrafficPolicy::get_specific_handlers()
 {
+    unsigned slot = Inspector::get_slot();
     assert(ts_handlers);
-    PHObjectList* handlers = ts_handlers->olists[Inspector::slot];
+    PHObjectList* handlers = ts_handlers->olists[slot];
     if (!handlers)
     {
         handlers = new PHObjectList;
-        ts_handlers->olists[Inspector::slot] = handlers;
+        ts_handlers->olists[slot] = handlers;
     }
     return handlers;
 }
@@ -606,7 +607,7 @@ void SingleInstanceInspectorPolicy::tterm(PHObjectList* handlers)
 void SingleInstanceInspectorPolicy::tterm_removed()
 {
     if (removed_instance)
-        removed_instance->tterm(s_tl_handlers[Inspector::slot]);
+        removed_instance->tterm(s_tl_handlers[Inspector::get_slot()]);
 }
 
 void SingleInstanceInspectorPolicy::print_config(SnortConfig* sc, const char* title)
@@ -1120,17 +1121,6 @@ void InspectorManager::update_policy(SnortConfig* sc)
     }
 }
 
-Binder* InspectorManager::get_binder()
-{
-    InspectionPolicy* pi = get_inspection_policy();
-
-    if ( !pi )
-        return nullptr;
-
-    assert(pi->framework_policy);
-    return (Binder*)pi->framework_policy->binder;
-}
-
 void InspectorManager::clear_removed_inspectors(SnortConfig* sc)
 {
     SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
@@ -1210,158 +1200,7 @@ void InspectorManager::reconcile_inspectors(const SnortConfig* old, SnortConfig*
     }
 }
 
-Inspector* InspectorManager::get_file_inspector(const SnortConfig* sc)
-{
-    if ( !sc )
-        sc = SnortConfig::get_conf();
-    SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
-    return fid->instance ? fid->instance->handler : nullptr;
-}
-
-// FIXIT-P cache get_inspector() returns or provide indexed lookup
-Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, const SnortConfig* snort_config)
-{
-    InspectionPolicy* pi;
-    NetworkPolicy* ni;
-
-    const SnortConfig* sc = snort_config;
-    if ( !sc )
-        sc = SnortConfig::get_conf();
-    assert(sc);
-    if ( dflt_only )
-    {
-        ni = get_default_network_policy(sc);
-        pi = ni->get_inspection_policy(0);
-    }
-    else
-    {
-        pi = get_inspection_policy();
-        // During reload, get_network_policy will return the network policy from the new snort config
-        // for a given tenant
-        ni = get_network_policy();
-        if (!snort_config)
-        {
-            // If no snort config is passed in, it means that this is either a normally running system with
-            // the correct network policy set or that get_inspector is being called from Inspector::configure
-            // and it is expecting the inspector from the running configuration and not the new snort config
-            if (ni)
-            {
-                PolicyMap* pm = sc->policy_map;
-                NetworkPolicy* np = pm->get_user_network(ni->user_policy_id);
-                if (np)
-                {
-                    // If network policy is correct, then no need to change the inspection policy
-                    if (np != ni && pi)
-                        pi = np->get_user_inspection_policy(pi->user_policy_id);
-                    ni = np;
-                }
-                else
-                    pi = nullptr;
-            }
-            else
-                pi = nullptr;
-        }
-    }
-
-    if ( pi )
-    {
-        PHInstance* p = get_instance(pi->framework_policy, key);
-        if ( p )
-            return p->handler;
-    }
-
-    if ( ni && ni->traffic_policy )
-    {
-        PHInstance* p = get_instance(ni->traffic_policy, key);
-        if ( p )
-            return p->handler;
-    }
-
-    GlobalInspectorPolicy* pp = sc->policy_map->get_global_inspector_policy();
-    PHInstance* p = get_instance(pp, key);
-    if ( p )
-        return p->handler;
-
-    SingleInstanceInspectorPolicy* ft = sc->policy_map->get_flow_tracking();
-    if ( ft->instance && ft->instance->name == key )
-        return ft->instance->handler;
-
-    SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
-    if ( fid->instance && fid->instance->name == key )
-        return fid->instance->handler;
-
-    return nullptr;
-}
-
-Inspector* InspectorManager::get_inspector(const char* key, Module::Usage usage, InspectorType type)
-{
-    const SnortConfig* sc = SnortConfig::get_conf();
-    if (!sc)
-        return nullptr;
-
-    if (Module::GLOBAL == usage && IT_FILE == type)
-    {
-        SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
-        assert(fid);
-        return (fid->instance && fid->instance->name == key) ? fid->instance->handler : nullptr;
-    }
-    else if (Module::GLOBAL == usage && IT_STREAM == type)
-    {
-        SingleInstanceInspectorPolicy* ft = sc->policy_map->get_flow_tracking();
-        assert(ft);
-        return (ft->instance && ft->instance->name == key) ? ft->instance->handler : nullptr;
-    }
-    else
-    {
-        if (Module::GLOBAL == usage && IT_SERVICE != type)
-        {
-            GlobalInspectorPolicy* il = sc->policy_map->get_global_inspector_policy();
-            assert(il);
-            PHInstance* p = il->get_instance_by_type(key, type);
-            return p ? p->handler : nullptr;
-        }
-        else if (Module::CONTEXT == usage)
-        {
-            NetworkPolicy* np = get_network_policy();
-            if (!np)
-                return nullptr;
-            PolicyMap* pm = sc->policy_map;
-            np = pm->get_user_network(np->user_policy_id);
-            if (!np)
-                return nullptr;
-            TrafficPolicy* il = np->traffic_policy;
-            assert(il);
-            PHInstance* p = il->get_instance_by_type(key, type);
-            return p ? p->handler : nullptr;
-        }
-        else
-        {
-            NetworkPolicy* orig_np = get_network_policy();
-            if (!orig_np)
-                return nullptr;
-            PolicyMap* pm = sc->policy_map;
-            NetworkPolicy* np = pm->get_user_network(orig_np->user_policy_id);
-            if (!np)
-                return nullptr;
-            InspectionPolicy* ip = get_inspection_policy();
-            if (!ip)
-                return nullptr;
-            // If network policy is correct, then no need to change the inspection policy
-            if (np != orig_np)
-            {
-                ip = np->get_user_inspection_policy(ip->user_policy_id);
-                if (!ip)
-                    return nullptr;
-            }
-            FrameworkPolicy* il = ip->framework_policy;
-            assert(il);
-            PHInstance* p = il->get_instance_by_type(key, type);
-            return p ? p->handler : nullptr;
-        }
-    }
-}
-
-Inspector* InspectorManager::get_service_inspector_by_service(const char* key)
+Inspector* InspectorManager::get_service_inspector(const char* key)
 {
     InspectionPolicy* pi = get_inspection_policy();
 
@@ -1373,7 +1212,7 @@ Inspector* InspectorManager::get_service_inspector_by_service(const char* key)
     return (g != pi->framework_policy->inspector_cache_by_service.end()) ? g->second : nullptr;
 }
 
-Inspector* InspectorManager::get_service_inspector_by_id(const SnortProtocolId protocol_id)
+Inspector* InspectorManager::get_service_inspector(const SnortProtocolId protocol_id)
 {
     InspectionPolicy* pi = get_inspection_policy();
 
@@ -1504,11 +1343,13 @@ void PHInstance::tterm(PHObjectList* handlers)
 void InspectorManager::thread_init(const SnortConfig* sc)
 {
     SnortConfig::update_thread_reload_id();
+#ifndef _WIN64
     Inspector::slot = get_instance_id();
+#endif
 
     // Initial build out of this thread's configured plugin registry
     PHObjectList* g_handlers = new PHObjectList;
-    s_tl_handlers[Inspector::slot] = g_handlers;
+    s_tl_handlers[Inspector::get_slot()] = g_handlers;
     for ( auto* p : sc->framework_config->clist )
     {
         PHObject& phg = get_thread_local_plugin(p->api, g_handlers);
@@ -1551,7 +1392,7 @@ void InspectorManager::thread_reinit(const SnortConfig* sc)
         sc->policy_map->set_inspector_tinit_complete(instance_id, true);
 
         // Update this thread's configured plugin registry with any newly configured inspectors
-        PHObjectList* g_handlers = s_tl_handlers[Inspector::slot];
+        PHObjectList* g_handlers = s_tl_handlers[Inspector::get_slot()];
         for ( auto* p : sc->framework_config->clist )
         {
             PHObject& phg = get_thread_local_plugin(p->api, g_handlers);
@@ -1621,7 +1462,7 @@ void InspectorManager::thread_stop_removed(const SnortConfig* sc)
 void InspectorManager::thread_stop(const SnortConfig* sc)
 {
     // If thread_init() was never called, we have nothing to do.
-    PHObjectList* g_handlers = s_tl_handlers[Inspector::slot];
+    PHObjectList* g_handlers = s_tl_handlers[Inspector::get_slot()];
     if ( !g_handlers )
         return;
 
@@ -1653,7 +1494,7 @@ void InspectorManager::thread_stop(const SnortConfig* sc)
 void InspectorManager::thread_term()
 {
     // If thread_init() was never called, we have nothing to do.
-    PHObjectList* handlers = s_tl_handlers[Inspector::slot];
+    PHObjectList* handlers = s_tl_handlers[Inspector::get_slot()];
     if ( !handlers )
         return;
 
@@ -1664,7 +1505,7 @@ void InspectorManager::thread_term()
             phg.api.tterm();
     }
     delete handlers;
-    s_tl_handlers[Inspector::slot] = nullptr;
+    s_tl_handlers[Inspector::get_slot()] = nullptr;
 }
 
 //-------------------------------------------------------------------------
@@ -1804,24 +1645,6 @@ static bool configure(SnortConfig* sc, InspectorList* il, bool cloned, bool& new
     il->vectorize(sc);
 
     return ok;
-}
-
-Inspector* InspectorManager::acquire_file_inspector()
-{
-    Inspector* pi = get_file_inspector();
-
-    if ( !pi )
-        FatalError("unconfigured file inspector\n");
-    else
-        pi->add_global_ref();
-
-    return pi;
-}
-
-void InspectorManager::release(Inspector* pi)
-{
-    assert(pi);
-    pi->rem_global_ref();
 }
 
 bool InspectorManager::configure(SnortConfig* sc, bool cloned)
@@ -2288,5 +2111,185 @@ void InspectorManager::clear(Packet* p)
         p->flow->gadget->clear(p);
 
     p->context->clear_inspectors = false;
+}
+
+Inspector* InspectorManager::get_binder()
+{
+    InspectionPolicy* pi = get_inspection_policy();
+
+    if ( !pi )
+        return nullptr;
+
+    assert(pi->framework_policy);
+    return pi->framework_policy->binder;
+}
+
+Inspector* InspectorManager::get_file_inspector(const SnortConfig* sc)
+{
+    if ( !sc )
+        sc = SnortConfig::get_conf();
+    SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
+    return fid->instance ? fid->instance->handler : nullptr;
+}
+
+Inspector* InspectorManager::acquire_file_inspector()
+{
+    Inspector* pi = get_file_inspector();
+
+    if ( !pi )
+        FatalError("unconfigured file inspector\n");
+    else
+        pi->add_global_ref();
+
+    return pi;
+}
+
+// FIXIT-P cache get_inspector() returns or provide indexed lookup
+Inspector* InspectorManager::get_inspector(const char* key, bool dflt_only, const SnortConfig* snort_config)
+{
+    InspectionPolicy* pi;
+    NetworkPolicy* ni;
+
+    const SnortConfig* sc = snort_config;
+    if ( !sc )
+        sc = SnortConfig::get_conf();
+    assert(sc);
+    if ( dflt_only )
+    {
+        ni = get_default_network_policy(sc);
+        pi = ni->get_inspection_policy(0);
+    }
+    else
+    {
+        pi = get_inspection_policy();
+        // During reload, get_network_policy will return the network policy from the new snort config
+        // for a given tenant
+        ni = get_network_policy();
+        if (!snort_config)
+        {
+            // If no snort config is passed in, it means that this is either a normally running system with
+            // the correct network policy set or that get_inspector is being called from Inspector::configure
+            // and it is expecting the inspector from the running configuration and not the new snort config
+            if (ni)
+            {
+                PolicyMap* pm = sc->policy_map;
+                NetworkPolicy* np = pm->get_user_network(ni->user_policy_id);
+                if (np)
+                {
+                    // If network policy is correct, then no need to change the inspection policy
+                    if (np != ni && pi)
+                        pi = np->get_user_inspection_policy(pi->user_policy_id);
+                    ni = np;
+                }
+                else
+                    pi = nullptr;
+            }
+            else
+                pi = nullptr;
+        }
+    }
+
+    if ( pi )
+    {
+        PHInstance* p = get_instance(pi->framework_policy, key);
+        if ( p )
+            return p->handler;
+    }
+
+    if ( ni && ni->traffic_policy )
+    {
+        PHInstance* p = get_instance(ni->traffic_policy, key);
+        if ( p )
+            return p->handler;
+    }
+
+    GlobalInspectorPolicy* pp = sc->policy_map->get_global_inspector_policy();
+    PHInstance* p = get_instance(pp, key);
+    if ( p )
+        return p->handler;
+
+    SingleInstanceInspectorPolicy* ft = sc->policy_map->get_flow_tracking();
+    if ( ft->instance && ft->instance->name == key )
+        return ft->instance->handler;
+
+    SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
+    if ( fid->instance && fid->instance->name == key )
+        return fid->instance->handler;
+
+    return nullptr;
+}
+
+Inspector* InspectorManager::get_inspector(const char* key, Module::Usage usage, InspectorType type)
+{
+    const SnortConfig* sc = SnortConfig::get_conf();
+    if (!sc)
+        return nullptr;
+
+    if (Module::GLOBAL == usage && IT_FILE == type)
+    {
+        SingleInstanceInspectorPolicy* fid = sc->policy_map->get_file_id();
+        assert(fid);
+        return (fid->instance && fid->instance->name == key) ? fid->instance->handler : nullptr;
+    }
+    else if (Module::GLOBAL == usage && IT_STREAM == type)
+    {
+        SingleInstanceInspectorPolicy* ft = sc->policy_map->get_flow_tracking();
+        assert(ft);
+        return (ft->instance && ft->instance->name == key) ? ft->instance->handler : nullptr;
+    }
+    else
+    {
+        if (Module::GLOBAL == usage && IT_SERVICE != type)
+        {
+            GlobalInspectorPolicy* il = sc->policy_map->get_global_inspector_policy();
+            assert(il);
+            PHInstance* p = il->get_instance_by_type(key, type);
+            return p ? p->handler : nullptr;
+        }
+        else if (Module::CONTEXT == usage)
+        {
+            NetworkPolicy* np = get_network_policy();
+            if (!np)
+                return nullptr;
+            PolicyMap* pm = sc->policy_map;
+            np = pm->get_user_network(np->user_policy_id);
+            if (!np)
+                return nullptr;
+            TrafficPolicy* il = np->traffic_policy;
+            assert(il);
+            PHInstance* p = il->get_instance_by_type(key, type);
+            return p ? p->handler : nullptr;
+        }
+        else
+        {
+            NetworkPolicy* orig_np = get_network_policy();
+            if (!orig_np)
+                return nullptr;
+            PolicyMap* pm = sc->policy_map;
+            NetworkPolicy* np = pm->get_user_network(orig_np->user_policy_id);
+            if (!np)
+                return nullptr;
+            InspectionPolicy* ip = get_inspection_policy();
+            if (!ip)
+                return nullptr;
+            // If network policy is correct, then no need to change the inspection policy
+            if (np != orig_np)
+            {
+                ip = np->get_user_inspection_policy(ip->user_policy_id);
+                if (!ip)
+                    return nullptr;
+            }
+            FrameworkPolicy* il = ip->framework_policy;
+            assert(il);
+            PHInstance* p = il->get_instance_by_type(key, type);
+            return p ? p->handler : nullptr;
+        }
+    }
+}
+
+void InspectorManager::release(Inspector* pi)
+{
+    assert(pi);
+    pi->rem_global_ref();
 }
 

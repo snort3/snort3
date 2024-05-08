@@ -37,7 +37,7 @@
 #endif
 #include "main/thread_config.h"
 #include "packet_io/active.h"
-#include "packet_tracer/packet_tracer.h"
+#include "packet_io/packet_tracer.h"
 #include "stream/base/stream_module.h"
 #include "stream/tcp/tcp_stream_session.h"
 #include "stream/tcp/tcp_trace.h"

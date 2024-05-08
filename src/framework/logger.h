@@ -20,20 +20,24 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-// Logger is used to log packets and events.  Events are thresholded before
+// Logger is used to log packets and IPS events.  Events are thresholded before
 // they reach the Logger.  Packets may be logged along with events or as a
 // result of tagging.
+
+// the LOGAPI_VERSION will change if anything in this file changes.
+// see also framework/base_api.h.
 
 #include "framework/base_api.h"
 #include "main/snort_types.h"
 
-struct Event;
+class Event;
+
 namespace snort
 {
 struct Packet;
 
 // this is the current version of the api
-#define LOGAPI_VERSION ((BASE_API_VERSION << 16) | 0)
+#define LOGAPI_VERSION ((BASE_API_VERSION << 16) | 1)
 
 #define OUTPUT_TYPE_FLAG__NONE  0x0
 #define OUTPUT_TYPE_FLAG__ALERT 0x1
@@ -79,7 +83,7 @@ typedef void (* LogDelFunc)(Logger*);
 struct LogApi
 {
     BaseApi base;
-    unsigned flags;
+    unsigned flags;  // bitmask of OUTPUT_TYPE_FLAG__*
     LogNewFunc ctor;
     LogDelFunc dtor;
 };

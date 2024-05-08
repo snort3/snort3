@@ -24,7 +24,8 @@
 
 #include "tcp_defs.h"
 
-#include "main/thread.h"
+#include <string>
+
 #include "normalize/normalize.h"
 #include "normalize/norm_stats.h"
 #include "protocols/tcp_options.h"

@@ -96,7 +96,7 @@ bool HttpParamIpsOption::operator==(const IpsOption& ips) const
            http_param == hio.http_param;
 }
 
-bool HttpParamIpsOption::retry(Cursor& current_cursor, const Cursor&)
+bool HttpParamIpsOption::retry(Cursor& current_cursor)
 {
     HttpCursorData* cd = (HttpCursorData*)current_cursor.get_data(HttpCursorData::id);
 

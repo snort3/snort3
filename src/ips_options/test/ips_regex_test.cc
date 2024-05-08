@@ -26,11 +26,13 @@
 #include "framework/base_api.h"
 #include "framework/counts.h"
 #include "framework/cursor.h"
+#include "framework/ips_info.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
+#include "managers/so_manager.h"
 #include "ports/port_group.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
@@ -104,8 +106,6 @@ char* snort_strdup(const char* s)
 
 MemoryContext::MemoryContext(MemoryTracker&) { }
 MemoryContext::~MemoryContext() = default;
-
-THREAD_LOCAL bool TimeProfilerStats::enabled = false;
 }
 
 extern const BaseApi* ips_regex;
@@ -114,9 +114,33 @@ Cursor::Cursor(Packet* p)
 { set("pkt_data", p->data, p->dsize); }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
+void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 
 OptTreeNode::~OptTreeNode() = default;
+
+SO_PUBLIC bool snort::otn_has_plugin(OptTreeNode*, const char*)
+{ return false; }
+
+const ClassType* get_classification(snort::SnortConfig*, const char*)
+{ return nullptr; }
+
+void add_classification(snort::SnortConfig*, const char*, const char*, unsigned)
+{ }
+
+struct THD_NODE* detection_filter_create(DetectionFilterConfig*, struct THDX_STRUCT*)
+{ return nullptr; }
+
+void add_reference(snort::SnortConfig*, OptTreeNode*, const std::string&, const std::string&)
+{ }
+
+void add_reference(IpsInfo&, const char*, const char*)
+{ }
+
+void add_service_to_otn(snort::SnortConfig*, OptTreeNode*, const char*)
+{ }
+
+SoEvalFunc SoManager::get_so_eval(const char*, const char*, void**, snort::SnortConfig*)
+{ return nullptr; }
 
 //-------------------------------------------------------------------------
 // helpers
@@ -145,10 +169,10 @@ static IpsOption* get_option(Module* mod, const char* pat)
     mod->set(ips_regex->name, vs, nullptr);
     mod->end(ips_regex->name, 0, nullptr);
 
-    OptTreeNode otn;
+    IpsInfo info(nullptr, nullptr);
 
     const IpsApi* api = (const IpsApi*) ips_regex;
-    IpsOption* opt = api->ctor(mod, &otn);
+    IpsOption* opt = api->ctor(mod, info);
 
     return opt;
 }
@@ -308,7 +332,7 @@ TEST(ips_regex_option, match_absolute)
     Cursor c(&pkt);
     CHECK(opt->eval(c, &pkt) == IpsOption::MATCH);
     CHECK(!strcmp((const char*) c.start(), " stew *"));
-    CHECK(opt->retry(c,c));
+    CHECK(opt->retry(c));
 }
 
 TEST(ips_regex_option, no_match_delta)
@@ -363,7 +387,7 @@ TEST(ips_regex_option_relative, no_match)
 
     CHECK(opt->is_relative());
     CHECK(opt->eval(c, &pkt) == IpsOption::NO_MATCH);
-    CHECK(!opt->retry(c,c));
+    CHECK(!opt->retry(c));
 }
 
 //-------------------------------------------------------------------------

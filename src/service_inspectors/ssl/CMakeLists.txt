@@ -16,14 +16,13 @@ set( FILE_LIST
     ${SSL_INCLUDES}
 )
 
-# can't be be linked dynamically yet
-#if (STATIC_INSPECTORS)
+if (STATIC_INSPECTORS)
     add_library( ssl OBJECT ${FILE_LIST})
 
-#else (STATIC_INSPECTORS)
-    #add_dynamic_module(ssl inspectors ${FILE_LIST})
+else (STATIC_INSPECTORS)
+    add_dynamic_module(ssl inspectors ${FILE_LIST})
 
-#endif (STATIC_INSPECTORS)
+endif (STATIC_INSPECTORS)
 
 install(FILES ${SSL_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/service_inspectors/ssl/"

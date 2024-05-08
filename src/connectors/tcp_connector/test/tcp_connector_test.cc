@@ -68,7 +68,7 @@ ConnectorCommon* connector_common;
 Connector* connector;
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
+void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 
 namespace snort
 {

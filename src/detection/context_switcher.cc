@@ -74,7 +74,7 @@ void ContextSwitcher::start()
 
     debug_logf(detection_trace, TRACE_DETECTION_ENGINE, nullptr,
         "(wire) %" PRIu64 " cs::start %" PRIu64 " (i=%zu, b=%zu)\n",
-        get_packet_number(), c->context_num, idle.size(), busy.size());
+        pc.analyzed_pkts, c->context_num, idle.size(), busy.size());
 
     idle.pop_back();
 
@@ -98,7 +98,7 @@ void ContextSwitcher::stop()
 
     debug_logf(detection_trace, TRACE_DETECTION_ENGINE, nullptr,
         "(wire) %" PRIu64 " cs::stop %" PRIu64 " (i=%zu, b=%zu)\n",
-        get_packet_number(), c->context_num, idle.size(), busy.size());
+        pc.analyzed_pkts, c->context_num, idle.size(), busy.size());
 
     c->clear();
 
@@ -114,7 +114,7 @@ void ContextSwitcher::abort()
 {
     debug_logf(detection_trace, TRACE_DETECTION_ENGINE, nullptr,
         "(wire) %" PRIu64 " cs::abort (i=%zu, b=%zu)\n",
-        get_packet_number(), idle.size(), busy.size());
+        pc.analyzed_pkts, idle.size(), busy.size());
 
     busy.clear();
 
@@ -157,7 +157,7 @@ IpsContext* ContextSwitcher::interrupt()
     c->context_num = ++global_context_num;
     debug_logf(detection_trace, TRACE_DETECTION_ENGINE, nullptr,
         "%" PRIu64 " cs::interrupt %" PRIu64 " (i=%zu, b=%zu)\n",
-        busy.empty() ? get_packet_number() : busy.back()->packet_number,
+        busy.empty() ? pc.analyzed_pkts : busy.back()->packet_number,
         busy.empty() ? 0 : busy.back()->context_num, idle.size(), busy.size());
 
     idle.pop_back();

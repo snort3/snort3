@@ -26,7 +26,7 @@
 
 #include "detection/detection_engine.h"
 #include "detection/ips_context_data.h"
-#include "managers/inspector_manager.h"
+#include "framework/pig_pen.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
@@ -156,7 +156,7 @@ int GtpInspect::get_message_type(int version, const char* name)
 
 int get_message_type(int version, const char* name, snort::SnortConfig* sc)
 {
-    GtpInspect* ins = (GtpInspect*)InspectorManager::get_inspector(GTP_NAME, false, sc);
+    GtpInspect* ins = (GtpInspect*)PigPen::get_inspector(GTP_NAME, false, sc);
 
     if ( !ins )
         return -1;
@@ -178,7 +178,7 @@ int GtpInspect::get_info_type(int version, const char* name)
 
 int get_info_type(int version, const char* name, SnortConfig* sc)
 {
-    GtpInspect* ins = (GtpInspect*)InspectorManager::get_inspector(GTP_NAME, false, sc);
+    GtpInspect* ins = (GtpInspect*)PigPen::get_inspector(GTP_NAME, false, sc);
 
     if ( !ins )
         return -1;

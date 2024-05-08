@@ -30,13 +30,11 @@
 
 #include "detection/detection_engine.h"
 #include "detection/ips_context.h"
-#include "detection/signature.h"
 #include "events/event.h"
 #include "flow/flow_key.h"
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "helpers/base64_encoder.h"
-#include "log/log.h"
 #include "log/log_text.h"
 #include "log/text_log.h"
 #include "packet_io/active.h"
@@ -48,7 +46,6 @@
 #include "protocols/udp.h"
 #include "protocols/vlan.h"
 #include "protocols/geneve.h"
-#include "utils/stats.h"
 
 using namespace snort;
 using namespace std;
@@ -64,12 +61,15 @@ static THREAD_LOCAL TextLog* csv_log;
 // field formatting functions
 //-------------------------------------------------------------------------
 
+namespace
+{
 struct Args
 {
     Packet* pkt;
     const char* msg;
     const Event& event;
 };
+}
 
 static void ff_action(const Args& a)
 {
@@ -78,9 +78,8 @@ static void ff_action(const Args& a)
 
 static void ff_class(const Args& a)
 {
-    const char* cls = "none";
-    if ( a.event.sig_info->class_type and !a.event.sig_info->class_type->text.empty() )
-        cls = a.event.sig_info->class_type->text.c_str();
+    const char* cls = a.event.get_class_type();
+    if ( !cls ) cls = "none";
     TextLog_Puts(csv_log, cls);
 }
 
@@ -219,7 +218,7 @@ static void ff_geneve_vni(const Args& a)
 
 static void ff_gid(const Args& a)
 {
-    TextLog_Print(csv_log, "%u",  a.event.sig_info->gid);
+    TextLog_Print(csv_log, "%u",  a.event.get_gid());
 }
 
 static void ff_icmp_code(const Args& a)
@@ -304,7 +303,7 @@ static void ff_pkt_num(const Args& a)
 
 static void ff_priority(const Args& a)
 {
-    TextLog_Print(csv_log, "%u", a.event.sig_info->priority);
+    TextLog_Print(csv_log, "%u", a.event.get_priority());
 }
 
 static void ff_proto(const Args& a)
@@ -314,13 +313,14 @@ static void ff_proto(const Args& a)
 
 static void ff_rev(const Args& a)
 {
-    TextLog_Print(csv_log, "%u",  a.event.sig_info->rev);
+    TextLog_Print(csv_log, "%u",  a.event.get_rev());
 }
 
 static void ff_rule(const Args& a)
 {
-    TextLog_Print(csv_log, "%u:%u:%u",
-        a.event.sig_info->gid, a.event.sig_info->sid, a.event.sig_info->rev);
+    uint32_t gid, sid, rev;
+    a.event.get_sig_ids(gid, sid, rev);
+    TextLog_Print(csv_log, "%u:%u:%u", gid, sid, rev);
 }
 
 static void ff_seconds(const Args& a)
@@ -359,7 +359,7 @@ static void ff_sgt(const Args& a)
 
 static void ff_sid(const Args& a)
 {
-    TextLog_Print(csv_log, "%u",  a.event.sig_info->sid);
+    TextLog_Print(csv_log, "%u",  a.event.get_sid());
 }
 
 static void ff_src_addr(const Args& a)
@@ -394,15 +394,15 @@ static void ff_src_port(const Args& a)
 static void ff_target(const Args& a)
 {
     SfIpString addr = "";
+    bool src;
 
-    if ( a.event.sig_info->target == TARGET_SRC )
-        a.pkt->ptrs.ip_api.get_src()->ntop(addr);
-
-    else if ( a.event.sig_info->target == TARGET_DST )
-        a.pkt->ptrs.ip_api.get_dst()->ntop(addr);
-
-    else
+    if ( !a.event.get_target(src) )
         return;
+
+    if ( src )
+        a.pkt->ptrs.ip_api.get_src()->ntop(addr);
+    else
+        a.pkt->ptrs.ip_api.get_dst()->ntop(addr);
 
     TextLog_Print(csv_log, "%s", addr);
 }
@@ -418,7 +418,7 @@ static void ff_tcp_flags(const Args& a)
     if (a.pkt->ptrs.tcph )
     {
         char tcpFlags[9];
-        CreateTCPFlagString(a.pkt->ptrs.tcph, tcpFlags);
+        a.pkt->ptrs.tcph->stringify_flags(tcpFlags);
         TextLog_Print(csv_log, "%s", tcpFlags);
     }
 }

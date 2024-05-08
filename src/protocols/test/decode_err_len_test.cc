@@ -24,11 +24,12 @@
 #include "detection/detection_engine.h"
 #include "detection/ips_context.h"
 #include "flow/expect_cache.h"
+#include "flow/expect_flow.h"
 #include "log/text_log.h"
 #include "main/snort_config.h"
 #include "managers/codec_manager.h"
+#include "packet_io/packet_tracer.h"
 #include "packet_io/sfdaq.h"
-#include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler_defs.h"
 #include "stream/stream.h"
 #include "trace/trace_api.h"
@@ -109,7 +110,6 @@ public:
 
 MockCodec mock_cd;
 std::array<Codec*, UINT8_MAX> CodecManager::s_protocols { { &mock_cd } };
-THREAD_LOCAL uint8_t CodecManager::max_layers = 1;
 
 //-----------------------------
 // Test

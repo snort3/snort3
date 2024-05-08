@@ -27,7 +27,6 @@
 #include <string>
 
 #include "framework/counts.h"
-#include "main/thread.h"
 
 namespace snort
 {

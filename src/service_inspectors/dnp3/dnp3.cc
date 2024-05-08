@@ -26,7 +26,6 @@
 #include "dnp3.h"
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
 

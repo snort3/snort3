@@ -24,7 +24,7 @@
 // the snort module is for handling command line args,
 // shell commands, and basic application stats
 
-#include "main/thread.h"
+#include "main/snort_types.h"
 
 namespace snort
 {

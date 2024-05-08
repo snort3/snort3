@@ -20,9 +20,9 @@
 #ifndef HTTP2_PUSH_PROMISE_FRAME_H
 #define HTTP2_PUSH_PROMISE_FRAME_H
 
+#include "helpers/event_gen.h"
+#include "helpers/infractions.h"
 #include "service_inspectors/http_inspect/http_common.h"
-#include "utils/event_gen.h"
-#include "utils/infractions.h"
 
 #include "http2_enum.h"
 #include "http2_frame.h"

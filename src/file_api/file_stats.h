@@ -23,7 +23,6 @@
 #define FILE_STATS_H
 
 #include "framework/counts.h"
-#include "main/thread.h"
 
 #include "file_api.h"
 #include "file_config.h"

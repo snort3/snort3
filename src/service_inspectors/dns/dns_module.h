@@ -22,9 +22,8 @@
 #define DNS_MODULE_H
 //Interface to the DNS service inspector
 
-#include "framework/bits.h"
 #include "framework/module.h"
-#include "main/thread.h"
+#include "utils/bits.h"
 
 namespace snort
 {

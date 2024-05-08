@@ -27,6 +27,7 @@
 #include <string>
 
 #include "framework/data_bus.h"
+#include "managers/inspector_manager.h"
 #include "protocols/protocol_ids.h"
 #include "pub_sub/appid_event_ids.h"
 #include "service_inspectors/http_inspect/http_msg_header.h"

@@ -30,7 +30,6 @@
 #include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
-#include "main/thread.h"
 
 using namespace snort;
 

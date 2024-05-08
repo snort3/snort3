@@ -21,6 +21,8 @@
 #ifndef SFDAQ_MODULE_H
 #define SFDAQ_MODULE_H
 
+#include <daq_common.h>
+
 #include "framework/module.h"
 
 namespace snort

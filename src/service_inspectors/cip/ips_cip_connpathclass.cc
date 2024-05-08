@@ -171,7 +171,7 @@ static void cip_connpathclass_mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* cip_connpathclass_ctor(Module* p, OptTreeNode*)
+static IpsOption* cip_connpathclass_ctor(Module* p, IpsInfo&)
 {
     CipConnpathclassModule* m = static_cast<CipConnpathclassModule*>(p);
     return new CipConnpathclassOption(m->cip_cpc);

@@ -21,7 +21,8 @@
 #include "config.h"
 #endif
 
-#include "detection/treenodes.h"
+#include <string>
+
 #include "framework/decode_data.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -56,21 +57,14 @@ public:
     { return DETECT; }
 
 public:
-    const ClassType* type = nullptr;
+    std::string classtype;
 };
 
-bool ClassTypeModule::set(const char*, Value& v, SnortConfig* sc)
+bool ClassTypeModule::set(const char*, Value& v, SnortConfig*)
 {
     assert(v.is("~"));
-    type = get_classification(sc, v.get_string());
-
-    if ( !type and sc->dump_rule_info() )
-    {
-        const char* s = v.get_string();
-        add_classification(sc, s, s, 1);
-        type = get_classification(sc, s);
-    }
-    return type != nullptr;
+    classtype = v.get_string();
+    return true;
 }
 
 //-------------------------------------------------------------------------
@@ -87,16 +81,10 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* classtype_ctor(Module* p, OptTreeNode* otn)
+static IpsOption* classtype_ctor(Module* p, IpsInfo& info)
 {
     ClassTypeModule* m = (ClassTypeModule*)p;
-    otn->sigInfo.class_type = m->type;
-
-    if ( m->type )
-    {
-        otn->sigInfo.class_id = m->type->id;
-        otn->sigInfo.priority = m->type->priority;
-    }
+    IpsOption::set_classtype(info, m->classtype.c_str());
     return nullptr;
 }
 
@@ -125,5 +113,13 @@ static const IpsApi classtype_api =
     nullptr
 };
 
-const BaseApi* ips_classtype = &classtype_api.base;
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_classtype[] =
+#endif
+{
+    &classtype_api.base,
+    nullptr
+};
 

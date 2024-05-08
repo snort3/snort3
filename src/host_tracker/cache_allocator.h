@@ -89,13 +89,13 @@ public:
     CacheInterface* get_cache_ptr() { return Base::get_lru(); }
 
     template <class U>
-    HostCacheAllocIp(const HostCacheAllocIp<U>& other) 
+    HostCacheAllocIp(const HostCacheAllocIp<U>& other)
     {
         this->lru = other.get_lru();
     }
 
     template <class U>
-    HostCacheAllocIp(HostCacheAllocIp<U>&& other)  noexcept 
+    HostCacheAllocIp(HostCacheAllocIp<U>&& other) noexcept
     {
         this->lru = other.get_lru();
     }

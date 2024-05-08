@@ -23,7 +23,6 @@
 #include <sys/time.h>
 
 #include "flow/session.h"
-#include "main/snort_types.h"
 
 class SO_PUBLIC UdpSession : public Session
 {
@@ -39,9 +38,6 @@ public:
 public:
     struct timeval ssn_time = {};
 };
-
-void udp_stats();
-void udp_reset();
 
 #endif
 

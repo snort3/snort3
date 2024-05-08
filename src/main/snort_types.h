@@ -65,6 +65,14 @@ typedef uint16_t Port;
 #endif
 #endif
 
+// `__thread` is a gnu extension that at present is slightly faster than
+// `thread_local` (possibly due to the lack of dynamic initialization)
+#ifdef USE_THREAD_LOCAL
+#    define THREAD_LOCAL thread_local
+#else
+#    define THREAD_LOCAL __thread
+#endif
+
 #if !defined(__GNUC__) || __GNUC__ < 2 || \
     (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
 #define __attribute__(x)    /* delete __attribute__ if non-gcc or gcc1 */

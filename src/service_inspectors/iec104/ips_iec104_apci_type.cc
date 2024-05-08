@@ -212,7 +212,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* opt_ctor(Module* m, OptTreeNode*)
+static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
     Iec104ApciTypeModule* mod = (Iec104ApciTypeModule*) m;
     return new Iec104ApciTypeOption(mod->apci_type);

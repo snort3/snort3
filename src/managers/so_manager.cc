@@ -350,7 +350,6 @@ static const char* sp_help = "a proxy inspector to track flow data from SO rules
 class SoProxy : public Inspector
 {
 public:
-    void eval(Packet*) override { }
     bool configure(SnortConfig* sc) override
     {
         copy(sc->so_rules->handles.begin(), sc->so_rules->handles.end(), back_inserter(handles));

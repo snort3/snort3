@@ -33,6 +33,7 @@
 #include <fstream>
 
 #include "log/messages.h"
+#include "main/snort_config.h"
 
 #include "appid_config.h"
 #include "appid_debug.h"

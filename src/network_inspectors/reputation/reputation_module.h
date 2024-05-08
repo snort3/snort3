@@ -29,6 +29,16 @@
 #include "reputation_config.h"
 #include "reputation_common.h"
 
+#define REPUTATION_NAME "reputation"
+#define REPUTATION_HELP "reputation inspection"
+
+#define REPUTATION_EVENT_BLOCKLIST_SRC   1
+#define REPUTATION_EVENT_ALLOWLIST_SRC   2
+#define REPUTATION_EVENT_MONITOR_SRC     3
+#define REPUTATION_EVENT_BLOCKLIST_DST   4
+#define REPUTATION_EVENT_ALLOWLIST_DST   5
+#define REPUTATION_EVENT_MONITOR_DST     6
+
 namespace snort
 {
 struct SnortConfig;

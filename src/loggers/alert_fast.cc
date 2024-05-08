@@ -27,7 +27,6 @@
 #include <vector>
 
 #include "detection/detection_engine.h"
-#include "detection/signature.h"
 #include "events/event.h"
 #include "flow/flow.h"
 #include "flow/session.h"
@@ -303,8 +302,9 @@ void FastLogger::alert(Packet* p, const char* msg, const Event& event)
 
     TextLog_Puts(fast_log, " [**] ");
 
-    TextLog_Print(fast_log, "[%u:%u:%u] ",
-        event.sig_info->gid, event.sig_info->sid, event.sig_info->rev);
+    uint32_t gid, sid, rev;
+    event.get_sig_ids(gid, sid, rev);
+    TextLog_Print(fast_log, "[%u:%u:%u] ", gid, sid, rev);
 
     if (p->context->conf->alert_interface())
         TextLog_Print(fast_log, " <%s> ", SFDAQ::get_input_spec());
@@ -386,11 +386,11 @@ void FastLogger::log_data(Packet* p, const Event& event)
 
     const DataPointer& buf = DetectionEngine::get_alt_buffer(p);
 
-    if ( buf.len and event.sig_info->gid != 116 )
+    if ( buf.len and event.get_gid() != 116 )
         LogNetData(fast_log, buf.data, buf.len, p, "alt");
 
     if ( log_buffers )
-        log_ips_buffers(p, event.buffs_to_dump, buffers_depth);
+        log_ips_buffers(p, event.get_buffers(), buffers_depth);
 }
 
 //-------------------------------------------------------------------------

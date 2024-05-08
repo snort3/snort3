@@ -60,8 +60,8 @@ objectives, including:
 * IpsOption - for detection in Snort rules
 * IpsAction - for custom actions
 * Logger - for handling events
-* Mpse - for fast pattern matching
-* So - for dynamic rules
+* MPSE - for fast pattern matching
+* SO - for dynamic rules
 
 The power of plugins is that they have a very focused purpose and can be
 created with relative ease.  For example, you can extend the rule language

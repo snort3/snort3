@@ -23,13 +23,11 @@
 // Provides facilities for displaying Snort exit stats
 
 #include <daq_common.h>
+#include <cstdio>
 #include <vector>
 
 #include "framework/counts.h"
 #include "main/snort_types.h"
-#include "main/thread.h"
-
-using IndexVec = std::vector<unsigned>;
 
 class ControlConn;
 
@@ -60,9 +58,6 @@ struct PacketCount
     PegCount offload_fallback;
     PegCount offload_failures;
     PegCount offload_suspends;
-    PegCount pcre_match_limit;
-    PegCount pcre_recursion_limit;
-    PegCount pcre_error;
     PegCount cont_creations;
     PegCount cont_recalls;
     PegCount cont_flows;
@@ -97,29 +92,18 @@ extern const PegInfo proc_names[];
 
 namespace snort
 {
-extern SO_PUBLIC THREAD_LOCAL PacketCount pc;
-
-SO_PUBLIC inline PegCount get_packet_number() { return pc.analyzed_pkts; }
-
-SO_PUBLIC void LogLabel(const char*, FILE* = stdout);
-SO_PUBLIC void LogText(const char*, FILE* = stdout);
-SO_PUBLIC void LogValue(const char*, const char*, FILE* = stdout);
-SO_PUBLIC void LogCount(const char*, uint64_t, FILE* = stdout);
-
-SO_PUBLIC void LogStat(const char*, uint64_t n, uint64_t tot, FILE* = stdout);
-SO_PUBLIC void LogStat(const char*, double, FILE* = stdout);
+extern THREAD_LOCAL PacketCount pc;
 }
 
 void sum_stats(PegCount* sums, PegCount* counts, unsigned n, bool dump_stats = false);
 void show_stats(PegCount*, const PegInfo*, const char* module_name = nullptr);
 void show_stats(PegCount*, const PegInfo*, unsigned n, const char* module_name = nullptr);
-void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char* module_name, FILE*);
+void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char* module_name, FILE*);
 void show_percent_stats(PegCount*, const char*[], unsigned n, const char* module_name = nullptr);
 
 void sum_stats(SimpleStats* sums, SimpleStats* counts);
 void show_stats(SimpleStats*, const char* module_name);
 
-double CalcPct(uint64_t, uint64_t);
 void DropStats(ControlConn* ctrlcon = nullptr);
 void PrintStatistics();
 void TimeStart();

@@ -4,6 +4,7 @@ set (
     snort_devel.txt
     extending.txt
     style.txt
+    versions.txt
 )
 
 foreach ( file_name ${UNBUILT_SOURCES} )

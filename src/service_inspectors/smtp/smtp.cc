@@ -25,7 +25,6 @@
 #include <string>
 
 #include "detection/detection_engine.h"
-#include "detection/detection_util.h"
 #include "js_norm/js_pdf_norm.h"
 #include "log/messages.h"
 #include "log/unified2.h"

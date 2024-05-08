@@ -67,7 +67,7 @@ private:
     static bool s7commplus_curse(const uint8_t* data, unsigned len, CurseTracker*);
 #ifdef CATCH_TEST_BUILD
 public:
-#endif  
+#endif
     static bool ssl_v2_curse(const uint8_t* data, unsigned len, CurseTracker*);
 };
 

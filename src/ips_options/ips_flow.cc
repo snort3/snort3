@@ -22,7 +22,6 @@
 #include "config.h"
 #endif
 
-#include "detection/treenodes.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/hash_key_operations.h"
@@ -376,20 +375,20 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* flow_ctor(Module* p, OptTreeNode* otn)
+static IpsOption* flow_ctor(Module* p, IpsInfo& info)
 {
     FlowModule* m = (FlowModule*)p;
 
     if ( m->data.stateless )
-        otn->set_stateless();
+        IpsOption::set_stateless(info);
 
     if ( m->data.from_server )
-        otn->set_to_client();
+        IpsOption::set_to_client(info);
 
     else if ( m->data.from_client )
-        otn->set_to_server();
+        IpsOption::set_to_server(info);
 
-    if (otn->snort_protocol_id == SNORT_PROTO_ICMP)
+    if (IpsOption::get_protocol_id(info) == SNORT_PROTO_ICMP)
     {
         if ( (m->data.only_reassembled != ONLY_FRAG) &&
             (m->data.ignore_reassembled != IGNORE_FRAG) )
@@ -431,5 +430,13 @@ static const IpsApi flow_api =
     nullptr
 };
 
-const BaseApi* ips_flow = &flow_api.base;
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_flow[] =
+#endif
+{
+    &flow_api.base,
+    nullptr
+};
 

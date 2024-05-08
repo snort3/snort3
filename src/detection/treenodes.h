@@ -24,9 +24,9 @@
 
 #include <string>
 
-#include "actions/actions.h"
 #include "detection/signature.h"
 #include "detection/rule_option_types.h"
+#include "framework/ips_action.h"
 #include "framework/pdu_section.h"
 #include "main/policy.h"
 #include "main/snort_types.h"
@@ -136,7 +136,7 @@ struct RuleTreeNode
     // Multiple OTNs can reference this RTN with the same policy.
     unsigned int otnRefCount = 0; // FIXIT-L shared_ptr?
 
-    Actions::Type action = 0;
+    snort::IpsAction::Type action = 0;
 
     uint8_t flags = 0;
 

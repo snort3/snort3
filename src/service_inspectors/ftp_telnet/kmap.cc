@@ -29,7 +29,7 @@
 #include <cassert>
 #include <string>
 
-#include "util.h"
+#include "utils/util.h"
 
 namespace snort
 {

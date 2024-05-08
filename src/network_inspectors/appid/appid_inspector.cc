@@ -30,9 +30,9 @@
 
 #include "flow/flow.h"
 #include "main/analyzer_command.h"
-#include "managers/inspector_manager.h"
+#include "main/snort_config.h"
 #include "managers/module_manager.h"
-#include "packet_tracer/packet_tracer.h"
+#include "packet_io/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "pub_sub/appid_event_ids.h"
 #include "pub_sub/intrinsic_event_ids.h"
@@ -237,7 +237,7 @@ void AppIdInspector::eval(Packet* p)
     if (p->flow)
     {
         if (PacketTracer::is_daq_activated())
-            PacketTracer::pt_timer_start();
+            PacketTracer::restart_timer();
 
         AppIdDiscovery::do_application_discovery(p, *this, *pkt_thread_odp_ctxt, pkt_thread_tp_appid_ctxt);
         // FIXIT-L tag verdict reason as appid for daq

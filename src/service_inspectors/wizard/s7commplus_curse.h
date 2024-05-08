@@ -50,7 +50,7 @@ enum S7commplus_State
 
 class S7commplusTracker
 {
-public:  
+public:
     S7commplus_State state = S7commplus_State::S7COMMPLUS_STATE__TPKT_VER;
     S7commplus_State last_state = S7commplus_State::S7COMMPLUS_STATE__TPKT_VER;
     uint16_t func = 0;

@@ -201,14 +201,14 @@ struct SSLv2_shello_t
     uint8_t minor;
 };
 
-struct SSLV3ClientHelloData
+struct SO_PUBLIC SSLV3ClientHelloData
 {
     ~SSLV3ClientHelloData();
     void clear();
     char* host_name = nullptr;
 };
 
-struct SSLV3ServerCertData
+struct SO_PUBLIC SSLV3ServerCertData
 {
     ~SSLV3ServerCertData();
     void clear();
@@ -306,7 +306,7 @@ struct ServiceSSLV3ExtensionServerName
 
 namespace snort
 {
-uint32_t SSL_decode(
+SO_PUBLIC uint32_t SSL_decode(
     const uint8_t* pkt, int size, uint32_t pktflags, uint32_t prevflags,
     uint8_t* alert_flags, uint16_t* partial_rec_len, int hblen, uint32_t* info_flags = nullptr,
     SSLV3ClientHelloData* data = nullptr, SSLV3ServerCertData* server_cert_data = nullptr);

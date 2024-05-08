@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2024 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2024-2024 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,38 +15,33 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// ips_info.h author Russ Combs <rucombs@cisco.com>
 
-#ifndef ACTIONS_H
-#define ACTIONS_H
+#ifndef IPS_INFO_H
+#define IPS_INFO_H
 
-// Define action types and provide hooks to apply a given action to a packet
-
-#include <cstdint>
-#include <string>
-
-#include "main/snort_types.h"
-
-struct OptTreeNode;
+// enables keeping OTN private
 
 namespace snort
 {
-struct Packet;
-}
+    struct SnortConfig;
+    class IpsOption;
+};
 
-class SO_PUBLIC Actions
+struct OptTreeNode;
+
+struct IpsInfo
 {
 public:
-    using Type = uint8_t;
-public:
-    static std::string get_string(Type);
-    static Type get_type(const char*);
-    static Type get_max_types();
-    static bool is_valid_action(Type);
-    static std::string get_default_priorities(bool alert_before_pass = false);
+    IpsInfo(OptTreeNode* o, snort::SnortConfig* s)
+    { otn = o; sc = s; }
 
-    static void pass();
-    static void log(snort::Packet*, const OptTreeNode*);
-    static void alert(snort::Packet*, const OptTreeNode*);
+private:
+    friend class snort::IpsOption;
+
+    OptTreeNode* otn;
+    snort::SnortConfig* sc;
 };
+
 #endif
 

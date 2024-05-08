@@ -23,8 +23,10 @@
 #include "config.h"
 #endif
 
+#include "detection/extract.h"
 #include "framework/cursor.h"
 #include "framework/endianness.h"
+#include "framework/ips_info.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/hash_key_operations.h"
@@ -32,8 +34,6 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
-
-#include "extract.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -492,7 +492,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* byte_math_ctor(Module* p, OptTreeNode*)
+static IpsOption* byte_math_ctor(Module* p, IpsInfo&)
 {
     ByteMathModule* m = (ByteMathModule*)p;
     ByteMathData& data = m->data;
@@ -1233,16 +1233,19 @@ TEST_CASE("Test of byte_math_ctor", "[ips_byte_math]")
         Parameter p{"result", Parameter::PT_STRING, nullptr, nullptr,
             "name of the variable to store the result"};
         v.set(&p);
+
         obj.set(nullptr, v, nullptr);
+        IpsInfo info(nullptr, nullptr);
+
         if (i < NUM_IPS_OPTIONS_VARS)
         {
-            IpsOption* res = byte_math_ctor(&obj, nullptr);
+            IpsOption* res = byte_math_ctor(&obj, info);
             delete res;
         }
         else
         {
-            IpsOption* res_null = byte_math_ctor(&obj, nullptr);
-            CHECK(nullptr == res_null);
+            IpsOption* res_null = byte_math_ctor(&obj, info);
+            CHECK(res_null == nullptr);
             delete[] obj.data.result_name;
         }
     }

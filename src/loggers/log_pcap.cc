@@ -29,6 +29,7 @@
 #include "framework/module.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "main/thread.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/sfdaq_config.h"
 #include "protocols/packet.h"

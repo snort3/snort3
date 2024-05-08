@@ -21,14 +21,13 @@
 #include "config.h"
 #endif
 
-#include "actions.h"
-#include "actions/actions_module.h"
-#include "detection/detect.h"
 #include "file_api/file_flows.h"
-#include "file_api/file_identifier.h"
+#include "file_api/file_lib.h"
+#include "framework/ips_action.h"
 #include "managers/action_manager.h"
 #include "parser/parser.h"
-#include "utils/stats.h"
+
+#include "actions_module.h"
 
 using namespace snort;
 
@@ -59,21 +58,25 @@ class File_IdAction : public IpsAction
 {
 public:
     File_IdAction() : IpsAction(action_name, nullptr) { }
-    void exec(Packet*, const OptTreeNode* otn) override;
+    void exec(Packet*, const ActInfo&) override;
 };
 
-void File_IdAction::exec(Packet* p, const OptTreeNode* otn)
+void File_IdAction::exec(Packet* p, const ActInfo& ai)
 {
     if (!p->flow)
       return;
+
     FileFlows* files = FileFlows::get_file_flows(p->flow, false);
+
     if (!files)
         return;
+
     FileContext* file = files->get_current_file_context();
+
     if (!file)
         return;
-    file->set_file_type(otn->sigInfo.file_id);
 
+    file->set_file_type(get_file_id(ai));
     ++file_id_stats.file_id;
 }
 
@@ -134,7 +137,11 @@ static ActionApi file_id_api
     file_id_dtor
 };
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
 const BaseApi* act_file_id[] =
+#endif
 {
     &file_id_api.base,
     nullptr

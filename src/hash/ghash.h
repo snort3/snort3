@@ -40,7 +40,7 @@ struct GHashNode
 
 typedef void (* gHashFree)(void*);
 
-class SO_PUBLIC GHash
+class GHash
 {
 public:
     GHash(int nrows, unsigned keysize, bool userkey, gHashFree);

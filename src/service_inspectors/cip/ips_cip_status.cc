@@ -170,7 +170,7 @@ static void cip_status_mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* cip_status_ctor(Module* p, OptTreeNode*)
+static IpsOption* cip_status_ctor(Module* p, IpsInfo&)
 {
     CipStatusModule* m = static_cast<CipStatusModule*>(p);
     return new CipStatusOption(m->cip_status);

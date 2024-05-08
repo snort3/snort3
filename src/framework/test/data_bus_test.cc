@@ -23,7 +23,6 @@
 
 #include "framework/data_bus.h"
 #include "main/snort_config.h"
-#include "main/thread.h"
 #include "utils/stats.h"
 
 #include <CppUTest/CommandLineTestRunner.h>

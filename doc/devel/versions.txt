@@ -1,0 +1,67 @@
+
+=== Versions
+
+Snort 3 does not follow semantic versioning (major.minor.patch) because
+<non-technical reasons>.
+
+The Snort 3 version is of the form 3.A.R.B where:
+
+* 3 is fixed for now.
+
+* A is bumped when the API changes as defined in framework/snort_api.h.
+
+* R is bumped for each regular release (nominally every 2 weeks).
+
+* B is the build number supplied at the time of build and is always zero
+  for github releases.
+
+Some background on plugin versions is required to fully explain the
+significance of A.
+
+There are several Snort 3 plugin types defined in these headers:
+
+* framework/codec.h
+* framework/connector.h
+* framework/inspector.h
+* framework/ips_action.h
+* framework/ips_option.h
+* framework/logger.h
+* framework/mpse.h
+* framework/policy_selector.h
+* framework/so_rule.h
+
+Each of the above has its own version number that pertains specifically to the file
+in which it is defined. In addition, these plugins have a common part defined in:
+
+* framework/base_api.h.
+
+The above file specifies a version number for the common part shared by all plugins
+which includes all the other files found in framework/snort_api.h.
+
+These API version numbers are not included in the Snort 3 version but, if any
+of them changes, indicating a change to the plugin API, then A is bumped to
+indicate that a new version of the API exists. So A will be bumped for any of
+the following:
+
+* base API version change
+* plugin API version change
+* DAQ version change
+
+There are many other exported features apart from those included directly in
+framework/snort_api.h and if you use them, you must rebuild your plugins with
+each new release. If you just use the snort_api.h includes, you will only need
+to rebuild your plugins if A changes.
+
+For the best security efficacy and stability, there is no requirement to
+maintain backward compatibility, so you may need to tweak code when you
+rebuild your plugin.  Developers will not change the APIs without good reason,
+but existing code will be changed as needed and these changes may break your
+plugin.
+
+That said, if you want to reduce the number of times you release plugins, you
+can study the change set to see if it affects you. Due to the complexity of
+Snort and the API, this is possible but cannot be recommended.
+
+As of this writing the version is 3.1.85 and this will be merged with the 3.2.0
+release. The significance of the A component prior to 3.2.0 is not well defined.
+

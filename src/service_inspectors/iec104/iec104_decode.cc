@@ -27,7 +27,6 @@
 #include "iec104_decode.h"
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
 #include "trace/trace_api.h"

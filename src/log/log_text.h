@@ -26,7 +26,7 @@
 
 #include "log/text_log.h"
 
-struct Event;
+class Event;
 
 namespace snort
 {

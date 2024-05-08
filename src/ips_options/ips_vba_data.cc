@@ -106,7 +106,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* vba_data_ctor(Module*, OptTreeNode*)
+static IpsOption* vba_data_ctor(Module*, IpsInfo&)
 {
     return new VbaDataOption;
 }
@@ -141,11 +141,7 @@ static const IpsApi vba_data_api =
     nullptr
 };
 
-#ifdef BUILDING_SO
-SO_PUBLIC const BaseApi* snort_plugins[] =
-#else
 const BaseApi* ips_vba_data[] =
-#endif
 {
     &vba_data_api.base,
     nullptr

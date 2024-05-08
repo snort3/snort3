@@ -26,9 +26,8 @@
 #include <cstring>
 #include <vector>
 
-#include "framework/packet_constraints.h"
 #include "main/snort_types.h"
-#include "main/thread.h"
+#include "packet_io/packet_constraints.h"
 #include "protocols/ipv6.h"
 #include "protocols/protocol_ids.h"
 #include "sfip/sf_ip.h"
@@ -42,11 +41,10 @@ struct Packet;
 class PacketTracer
 {
 public:
-    PacketTracer() = default;
+    PacketTracer();
     virtual ~PacketTracer();
 
     typedef uint8_t TracerMute;
-    static const int max_buff_size = 2048;
 
     // static functions
     static void set_log_file(const std::string&);
@@ -64,8 +62,17 @@ public:
     static SO_PUBLIC void pause();
     static SO_PUBLIC void unpause();
     static SO_PUBLIC bool is_paused();
+
+#ifdef _WIN64
     static SO_PUBLIC bool is_active();
     static SO_PUBLIC bool is_daq_activated();
+#else
+    static bool is_active()
+    { return s_pkt_trace ? s_pkt_trace->active : false; }
+
+    static bool is_daq_activated()
+    { return s_pkt_trace ? s_pkt_trace->daq_activated : false; }
+#endif
 
     static SO_PUBLIC TracerMute get_mute();
 
@@ -74,20 +81,32 @@ public:
     static SO_PUBLIC void log_msg_only(const char* format, ...) __attribute__((format (printf, 1, 2)));
 
     static SO_PUBLIC void daq_log(const char* format, ...) __attribute__((format (printf, 1, 2)));
-    static SO_PUBLIC void pt_timer_start();
+
+    static SO_PUBLIC void start_timer();
+    static SO_PUBLIC void restart_timer();
+    static SO_PUBLIC void reset_timer();
+
+    static SO_PUBLIC uint64_t get_time();
 
 protected:
-
+#ifndef _WIN64
+    static SO_PUBLIC THREAD_LOCAL PacketTracer* s_pkt_trace;
+#endif
 
     // non-static variable
+    Stopwatch<SnortClock>* pt_timer = nullptr;
     FILE* log_fh = stdout;
-    std::vector<bool> mutes;
-    char buffer[max_buff_size] = {0};
-    unsigned buff_len = 0;
-    char daq_buffer[max_buff_size] = {0};
-    unsigned daq_buff_len = 0;
 
+    char* buffer;
+    char* daq_buffer;
+    char* debug_session;
+
+    std::vector<bool> mutes;
+
+    unsigned buff_len = 0;
+    unsigned daq_buff_len = 0;
     unsigned pause_count = 0;
+
     bool user_enabled = false;
     bool daq_activated = false;
     bool shell_enabled = false;
@@ -108,21 +127,12 @@ protected:
     void update_constraints(const PacketConstraints* constraints);
     const char *get_debug_session() { return debugstr.c_str(); }
 
-    virtual void open_file();
+    void open_file();
     virtual void dump_to_daq(Packet*);
-    virtual void reset(bool);
+    void reset(bool);
 };
 
-SO_PUBLIC extern THREAD_LOCAL PacketTracer* s_pkt_trace;
-SO_PUBLIC extern THREAD_LOCAL Stopwatch<SnortClock>* pt_timer;
-
-inline bool PacketTracer::is_active()
-{ return s_pkt_trace ? s_pkt_trace->active : false; }
-
-inline bool PacketTracer::is_daq_activated()
-{ return s_pkt_trace ? s_pkt_trace->daq_activated : false; }
-
-struct SO_PUBLIC PacketTracerSuspend
+struct PacketTracerSuspend
 {
     PacketTracerSuspend()
     { PacketTracer::pause(); }

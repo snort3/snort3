@@ -25,8 +25,8 @@
 #include <ctime>
 #include <mutex>
 
-#include "actions/actions.h"
 #include "framework/counts.h"
+#include "framework/ips_action.h"
 #include "main/policy.h"
 #include "sfip/sf_ip.h"
 #include "sfip/sf_ipvar.h"
@@ -72,7 +72,11 @@ struct tSFRFConfigNode
     SFRF_TRACK tracking;
     unsigned count;
     unsigned seconds;
-    Actions::Type newAction;
+
+    // Action that replaces original rule action on reaching threshold
+    snort::IpsAction::Type newAction;
+
+    // Threshold action duration in seconds before reverting to original rule action
     unsigned timeout;
     sfip_var_t* applyTo;
 };

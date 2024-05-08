@@ -189,9 +189,6 @@ public:
     static void init()
     { inspector_id = snort::FlowData::create_flow_data_id(); }
 
-    size_t size_of() override
-    { return sizeof(*this); }
-
 public:
     static unsigned inspector_id;
     FTP_SESSION session;
@@ -230,8 +227,6 @@ public:
 
     void handle_expected(snort::Packet*) override;
     void handle_eof(snort::Packet*) override;
-    size_t size_of() override
-    { return sizeof(*this); }
 
 public:
     static unsigned inspector_id;

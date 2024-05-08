@@ -27,9 +27,7 @@
 #include "cip.h"
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 #include "log/messages.h"
-#include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "pub_sub/cip_events.h"

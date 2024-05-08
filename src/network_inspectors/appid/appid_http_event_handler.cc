@@ -30,6 +30,8 @@
 #include <cassert>
 
 #include "detection/detection_engine.h"
+#include "flow/stream_flow.h"
+
 #include "app_info_table.h"
 #include "app_cpu_profile_table.h"
 #include "appid_debug.h"

@@ -24,14 +24,12 @@
 
 #include "util_jsnorm.h"
 
+#include <ctype.h>
+
 #include <cstdlib>
 #include <cstring>
 #include <vector>
 
-#include "main/thread.h"
-
-namespace snort
-{
 #define INVALID_HEX_VAL (-1)
 #define MAX_BUF 8
 #define NON_ASCII_CHAR 0xff
@@ -51,6 +49,8 @@ namespace snort
 
 #define ANY '\0'
 
+namespace
+{
 enum ActionPNorm
 {
     PNORM_ACT_DQUOTES,
@@ -101,6 +101,70 @@ enum ActionJSNorm
     ACT_SPACE,
     ACT_UNESCAPE
 };
+
+struct JSNorm
+{
+    uint8_t state;  // cppcheck-suppress unusedStructMember
+    uint8_t event;
+    uint8_t match;
+    uint8_t other;
+    uint8_t action;
+};
+
+struct Dbuf
+{
+    char* data;
+    uint16_t size;
+    uint16_t len;
+};
+
+struct PNormState
+{
+    uint8_t fsm;
+    uint8_t fsm_other;
+    uint8_t prev_event;
+    uint8_t d_quotes;
+    uint8_t s_quotes;
+    uint16_t num_spaces;
+    char* overwrite;
+    Dbuf output;
+};
+
+struct SFCCState
+{
+    uint8_t fsm;
+    uint8_t buf[MAX_BUF];
+    uint8_t buflen;
+    uint16_t cur_flags;
+    uint16_t alert_flags;
+    Dbuf output;
+};
+
+struct JSNormState
+{
+    uint8_t fsm;
+    uint8_t prev_event;
+    uint16_t num_spaces;
+    uint8_t* unicode_map;
+    char* overwrite;
+    Dbuf dest;
+};
+
+struct UnescapeState
+{
+    uint8_t fsm;
+    uint8_t multiple_levels;
+    uint8_t prev_event;
+    uint16_t alert_flags;
+    uint16_t num_spaces;
+    int iNorm;
+    int paren_count;
+    uint8_t* unicode_map;
+    char* overwrite;
+    ActionUnsc prev_action;
+    Dbuf output;
+};
+}  // anonymous
 
 static const int hex_lookup[256] =
 {
@@ -168,69 +232,6 @@ static const int valid_chars[256] =
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-};
-
-struct JSNorm
-{
-    uint8_t state;  // cppcheck-suppress unusedStructMember
-    uint8_t event;
-    uint8_t match;
-    uint8_t other;
-    uint8_t action;
-};
-
-struct Dbuf
-{
-    char* data;
-    uint16_t size;
-    uint16_t len;
-};
-
-struct PNormState
-{
-    uint8_t fsm;
-    uint8_t fsm_other;
-    uint8_t prev_event;
-    uint8_t d_quotes;
-    uint8_t s_quotes;
-    uint16_t num_spaces;
-    char* overwrite;
-    Dbuf output;
-};
-
-struct SFCCState
-{
-    uint8_t fsm;
-    uint8_t buf[MAX_BUF];
-    uint8_t buflen;
-    uint16_t cur_flags;
-    uint16_t alert_flags;
-    Dbuf output;
-};
-
-struct JSNormState
-{
-    uint8_t fsm;
-    uint8_t prev_event;
-    uint16_t num_spaces;
-    uint8_t* unicode_map;
-    char* overwrite;
-    Dbuf dest;
-};
-
-struct UnescapeState
-{
-    uint8_t fsm;
-    uint8_t multiple_levels;
-    uint8_t prev_event;
-    uint16_t alert_flags;
-    uint16_t num_spaces;
-    int iNorm;
-    int paren_count;
-    uint8_t* unicode_map;
-    char* overwrite;
-    ActionUnsc prev_action;
-    Dbuf output;
 };
 
 // STATES for SFCC
@@ -440,6 +441,8 @@ static const JSNorm javascript_norm[] =
 
     { Z6+ 0, ANY, Z0+ 0, Z0+ 0, ACT_NOP }
 };
+
+using snort::JSState;
 
 static void UnescapeDecode(const char* src, uint16_t srclen, const char** ptr, char** dst, size_t dst_len,
     uint16_t* bytes_copied, JSState* js, uint8_t* iis_unicode_map);
@@ -1228,6 +1231,8 @@ static int JSNorm_scan_fsm(JSNormState* s, int c, const char* src, uint16_t srcl
     return(JSNorm_exec(s, (ActionJSNorm)m->action, c, src, srclen, ptr, js));
 }
 
+namespace snort
+{
 int JSNormalizeDecode(const char* src, uint16_t srclen, char* dst, uint16_t destlen, const char** ptr,
     int* bytes_copied, JSState* js, uint8_t* iis_unicode_map)
 {
@@ -1272,5 +1277,4 @@ int JSNormalizeDecode(const char* src, uint16_t srclen, char* dst, uint16_t dest
     return RET_OK;
 }
 }
-
 

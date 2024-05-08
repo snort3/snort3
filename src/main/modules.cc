@@ -32,6 +32,8 @@
 #include "detection/fp_config.h"
 #include "detection/rules.h"
 #include "detection/tag.h"
+#include "events/event_queue.h"
+#include "file_api/file_policy.h"
 #include "file_api/file_service.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
@@ -39,7 +41,6 @@
 #include "filters/sfthd.h"
 #include "filters/sfthreshold.h"
 #include "flow/ha_module.h"
-#include "framework/file_policy.h"
 #include "framework/module.h"
 #include "host_tracker/host_tracker_module.h"
 #include "host_tracker/host_cache_module.h"
@@ -50,8 +51,9 @@
 #include "managers/plugin_manager.h"
 #include "memory/memory_module.h"
 #include "packet_io/active.h"
+#include "packet_io/active_counts.h"
+#include "packet_io/packet_tracer_module.h"
 #include "packet_io/sfdaq_module.h"
-#include "packet_tracer/packet_tracer_module.h"
 #include "parser/config_file.h"
 #include "parser/parse_conf.h"
 #include "parser/parse_ip.h"
@@ -225,7 +227,6 @@ const PegInfo mpse_pegs[] =
     { CountType::SUM, "total_unique", "total unique fast pattern hits" },
     { CountType::SUM, "non_qualified_events", "total non-qualified events" },
     { CountType::SUM, "qualified_events", "total qualified events" },
-    { CountType::SUM, "searched_bytes", "total bytes searched" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -699,7 +700,7 @@ public:
     { return active_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*) &active_counts; }
+    { return (PegCount*) get_active_counts(); }
 
     Usage get_usage() const override
     { return GLOBAL; }
@@ -1649,9 +1650,9 @@ bool RateFilterModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("new_action") )
     {
-        thdx.newAction = Actions::get_type(v.get_string());
+        thdx.newAction = IpsAction::get_type(v.get_string());
 
-        if ( !Actions::is_valid_action(thdx.newAction) )
+        if ( !IpsAction::is_valid_action(thdx.newAction) )
             ParseError("unknown new_action type rate_filter configuration %s",
                     v.get_string());
     }

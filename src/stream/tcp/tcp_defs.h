@@ -22,7 +22,7 @@
 #ifndef TCP_DEFS_H
 #define TCP_DEFS_H
 
-#include "main/thread.h"
+#include <cstdint>
 
 namespace snort
 {

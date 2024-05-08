@@ -26,7 +26,6 @@
 
 #include "sfrf.h"
 
-#include "main/thread.h"
 #include "detection/rules.h"
 #include "framework/ips_action.h"
 #include "hash/ghash.h"
@@ -317,7 +316,7 @@ static int SFRF_TestObject(tSFRFConfigNode* cfgNode, const SfIp* ip, time_t curT
     // if the count were not incremented in such cases, the
     // threshold would never be exceeded.
     if ( !cfgNode->seconds && (dynNode->count > cfgNode->count)
-      && Actions::is_valid_action(cfgNode->newAction) )
+      && IpsAction::is_valid_action(cfgNode->newAction) )
     {
         IpsAction* act = get_ips_policy()->action[cfgNode->newAction];
         if ( act->drops_traffic() )
@@ -561,7 +560,7 @@ static int checkThreshold(tSFRFConfigNode* cfgNode, tSFRFTrackingNode* dynNode, 
     dynNode->filterState = FS_ON;
     dynNode->overRate = 1;
 
-    return Actions::get_max_types() + cfgNode->newAction;
+    return IpsAction::get_max_types() + cfgNode->newAction;
 }
 
 static void updateDependentThresholds(RateFilterConfig* config, unsigned gid,

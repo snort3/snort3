@@ -37,6 +37,8 @@ static const char BIT_BANNER[] = "\023BitTorrent protocol";
 #define MAX_VER_LEN 4
 #define LAST_BANNER_OFFSET  (BIT_BANNER_LEN+RES_LEN+SHA_LEN+PEER_ID_LEN - 1)
 
+namespace
+{
 enum BITState
 {
     BIT_STATE_BANNER = 0,
@@ -64,6 +66,7 @@ struct ClientBITMsg
     uint8_t code;
 };
 #pragma pack()
+} // anonymous
 
 BitClientDetector::BitClientDetector(ClientDiscovery* cdm)
 {

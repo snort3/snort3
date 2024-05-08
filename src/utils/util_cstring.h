@@ -22,6 +22,7 @@
 #define UTIL_CSTRING_H
 
 // Utility functions and macros for interacting with and parsing C strings
+// these functions are deprecated; use C++ strings instead
 
 #include <cctype>
 #include <cerrno>
@@ -42,7 +43,6 @@ namespace snort
 
 SO_PUBLIC int safe_snprintf(char*, size_t, const char*, ... )
     __attribute__((format (printf, 3, 4)));
-// these functions are deprecated; use C++ strings instead
 SO_PUBLIC int SnortSnprintf(char*, size_t, const char*, ...)
     __attribute__((format (printf, 3, 4)));
 SO_PUBLIC int SnortSnprintfAppend(char*, size_t, const char*, ...)

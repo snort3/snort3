@@ -24,6 +24,7 @@
 #include "stream/stream_splitter.h"
 
 #include "detection/detection_engine.h"
+#include "main/snort_config.h"
 #include "stream/flush_bucket.h"
 #include "stream/stream.h"
 

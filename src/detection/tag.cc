@@ -98,7 +98,7 @@ struct TagNode
     uint16_t event_id;
     struct timeval event_time;
 
-    void* log_list;  // retain custom logging if any from triggering alert
+    struct ListHead* log_list;  // retain custom logging if any from triggering alert
 };
 
 /*  G L O B A L S  **************************************************/
@@ -114,16 +114,9 @@ static THREAD_LOCAL unsigned s_sessions = 0;
 // (consecutive) sessions to be captured.
 static const unsigned s_max_sessions = 1;
 
-
 /*  P R O T O T Y P E S  ********************************************/
-static TagNode* TagAlloc(XHash*);
 static void TagFree(XHash*, TagNode*);
 static int PruneTagCache(uint32_t, int);
-static int PruneTime(XHash* tree, uint32_t thetime);
-static void TagSession(const Packet*, TagData*, uint32_t, uint16_t, void*);
-static void TagHost(const Packet*, TagData*, uint32_t, uint16_t, void*);
-static void AddTagNode(const Packet*, TagData*, int, uint32_t, uint16_t, void*);
-static inline void SwapTag(TagNode*);
 
 class TagSessionCache : public XHash
 {
@@ -241,16 +234,7 @@ static TagNode* TagAlloc(
     return tag_node;
 }
 
-/**Frees allocated TagNode.
- *
- * @param hash - pointer to XHash that should point to either ssn_tag_cache_ptr
- * or host_tag_cache_ptr.
- * @param node - pointer to node to be freed
- */
-static void TagFree(
-    XHash* hash,
-    TagNode* node
-    )
+static void TagFree(XHash* hash, TagNode* node)
 {
     if (node == nullptr)
         return;
@@ -262,11 +246,6 @@ static void TagFree(
     tag_memory_usage -= memory_per_node(hash);
 }
 
-/**
- * swap the sips and dips, dp's and sp's
- *
- * @param np TagNode ptr
- */
 static inline void SwapTag(TagNode* np)
 {
     SfIp tip;
@@ -295,33 +274,8 @@ void CleanupTag()
     delete host_tag_cache;
 }
 
-static void TagSession(const Packet* p, TagData* tag, uint32_t time, uint16_t event_id, void* log_list)
-{
-    AddTagNode(p, tag, TAG_SESSION, time, event_id, log_list);
-}
-
-static void TagHost(const Packet* p, TagData* tag, uint32_t time, uint16_t event_id, void* log_list)
-{
-    int mode;
-
-    switch (tag->tag_direction)
-    {
-    case TAG_HOST_DST:
-        mode = TAG_HOST_DST;
-        break;
-    case TAG_HOST_SRC:
-        mode = TAG_HOST_SRC;
-        break;
-    default:
-        mode = TAG_HOST_SRC;
-        break;
-    }
-
-    AddTagNode(p, tag, mode, time, event_id, log_list);
-}
-
 static void AddTagNode(const Packet* p, TagData* tag, int mode, uint32_t now,
-    uint16_t event_id, void* log_list)
+    uint16_t event_id, ListHead* log_list)
 {
     TagNode* idx;  /* index pointer */
     TagNode* returned;
@@ -427,7 +381,33 @@ static void AddTagNode(const Packet* p, TagData* tag, int mode, uint32_t now,
     }
 }
 
-int CheckTagList(Packet* p, Event& event, void** log_list)
+static void TagSession(const Packet* p, TagData* tag, uint32_t time, uint16_t event_id, ListHead* log_list)
+{
+    AddTagNode(p, tag, TAG_SESSION, time, event_id, log_list);
+}
+
+static void TagHost(const Packet* p, TagData* tag, uint32_t time, uint16_t event_id, ListHead* log_list)
+{
+    int mode;
+
+    switch (tag->tag_direction)
+    {
+    case TAG_HOST_DST:
+        mode = TAG_HOST_DST;
+        break;
+    case TAG_HOST_SRC:
+        mode = TAG_HOST_SRC;
+        break;
+    default:
+        mode = TAG_HOST_SRC;
+        break;
+    }
+
+    AddTagNode(p, tag, mode, time, event_id, log_list);
+}
+
+int CheckTagList(
+    Packet* p, SigInfo& info, ListHead*& ret_list, struct timeval& ret_time, uint32_t& ret_id, const char*& ret_act)
 {
     TagNode idx;
     TagNode* returned = nullptr;
@@ -540,10 +520,16 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
 
         if ( create_event )
         {
-            event.set_event(GID_TAG, TAG_LOG_PKT, 1, 1, 1, returned->event_id,
-                p->context->conf->get_event_log_id(), returned->event_time);
+            info.gid = GID_TAG;
+            info.sid = TAG_LOG_PKT;
+            info.rev = 1;
+            info.class_id = 1;
+            info.priority = 1;
 
-            *log_list = returned->log_list;
+            ret_time = returned->event_time;
+            ret_id = returned->event_id;
+            ret_list = returned->log_list;
+            ret_act = (ret_list and ret_list->ruleListNode) ? ret_list->ruleListNode->name : "";
         }
 
         if ( !returned->metric )
@@ -565,6 +551,30 @@ int CheckTagList(Packet* p, Event& event, void** log_list)
         return 1;
 
     return 0;
+}
+
+static int PruneTime(XHash* tree, uint32_t thetime)
+{
+    int pruned = 0;
+    TagNode* lru_node = nullptr;
+
+    while ((lru_node = (TagNode*)tree->get_lru_user_data()) != nullptr)
+    {
+        if ((lru_node->last_access + TAG_PRUNE_QUANTUM) < thetime)
+        {
+            if (tree->release_node(&lru_node->key) != HASH_OK)
+            {
+                LogMessage("WARNING: failed to remove tagNode from hash.\n");
+            }
+            pruned++;
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return pruned;
 }
 
 static int PruneTagCache(uint32_t thetime, int mustdie)
@@ -599,30 +609,6 @@ static int PruneTagCache(uint32_t thetime, int mustdie)
     return pruned;
 }
 
-static int PruneTime(XHash* tree, uint32_t thetime)
-{
-    int pruned = 0;
-    TagNode* lru_node = nullptr;
-
-    while ((lru_node = (TagNode*)tree->get_lru_user_data()) != nullptr)
-    {
-        if ((lru_node->last_access + TAG_PRUNE_QUANTUM) < thetime)
-        {
-            if (tree->release_node(&lru_node->key) != HASH_OK)
-            {
-                LogMessage("WARNING: failed to remove tagNode from hash.\n");
-            }
-            pruned++;
-        }
-        else
-        {
-            break;
-        }
-    }
-
-    return pruned;
-}
-
 void SetTags(const Packet* p, const OptTreeNode* otn, uint16_t event_id)
 {
     if (otn != nullptr && otn->tag != nullptr)
@@ -630,7 +616,7 @@ void SetTags(const Packet* p, const OptTreeNode* otn, uint16_t event_id)
         if (otn->tag->tag_type != 0)
         {
             RuleTreeNode* rtn = getRtnFromOtn(otn);
-            void* log_list = rtn ? rtn->listhead : nullptr;
+            ListHead* log_list = rtn ? rtn->listhead : nullptr;
 
             switch (otn->tag->tag_type)
             {

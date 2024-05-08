@@ -62,8 +62,6 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
-#include "actions.h"
-
 using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
@@ -214,7 +212,7 @@ public:
     ~ReactAction() override
     { delete config; }
 
-    void exec(Packet*, const OptTreeNode* otn) override;
+    void exec(Packet*, const ActInfo&) override;
     bool drops_traffic() override { return true; }
 
 private:
@@ -222,12 +220,12 @@ private:
     ReactActiveAction react_act_action;
 };
 
-void ReactAction::exec(Packet* p, const OptTreeNode* otn)
+void ReactAction::exec(Packet* p, const ActInfo& ai)
 {
     p->active->drop_packet(p);
     p->active->set_drop_reason("ips");
 
-    Actions::alert(p, otn);
+    alert(p, ai);
     ++react_stats.react;
 }
 

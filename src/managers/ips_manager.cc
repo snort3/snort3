@@ -28,6 +28,7 @@
 
 #include "detection/fp_detect.h"
 #include "detection/treenodes.h"
+#include "framework/ips_info.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 
@@ -300,7 +301,8 @@ IpsOption* IpsManager::option_end(
         return nullptr;
     }
 
-    IpsOption* ips = opt->api->ctor(mod, otn);
+    IpsInfo info(otn, sc);
+    IpsOption* ips = opt->api->ctor(mod, info);
     type = opt->api->type;
     current_keyword.clear();
 

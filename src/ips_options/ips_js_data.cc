@@ -87,7 +87,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
-static IpsOption* js_data_ctor(Module*, OptTreeNode*)
+static IpsOption* js_data_ctor(Module*, IpsInfo&)
 { return new JSDataOption; }
 
 static void js_data_dtor(IpsOption* opt)

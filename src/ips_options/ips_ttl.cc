@@ -149,7 +149,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* ttl_ctor(Module* p, OptTreeNode*)
+static IpsOption* ttl_ctor(Module* p, IpsInfo&)
 {
     TtlModule* m = (TtlModule*)p;
     return new TtlOption(m->data);

@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/treenodes.h"
 #include "framework/decode_data.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -59,14 +58,12 @@ public:
 public:
     std::string scheme;
     std::string id;
-    SnortConfig* snort_config = nullptr;
 };
 
-bool ReferenceModule::begin(const char*, int, SnortConfig* sc)
+bool ReferenceModule::begin(const char*, int, SnortConfig*)
 {
     scheme.clear();
     id.clear();
-    snort_config = sc;
     return true;
 }
 
@@ -100,10 +97,10 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* reference_ctor(Module* p, OptTreeNode* otn)
+static IpsOption* reference_ctor(Module* p, IpsInfo& info)
 {
     ReferenceModule* m = (ReferenceModule*)p;
-    add_reference(m->snort_config, otn, m->scheme, m->id);
+    IpsOption::add_reference(info, m->scheme.c_str(), m->id.c_str());
     return nullptr;
 }
 
@@ -132,5 +129,13 @@ static const IpsApi reference_api =
     nullptr
 };
 
-const BaseApi* ips_reference = &reference_api.base;
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_reference[] =
+#endif
+{
+    &reference_api.base,
+    nullptr
+};
 

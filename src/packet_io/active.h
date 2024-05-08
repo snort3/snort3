@@ -69,33 +69,11 @@ public:
     static bool thread_init(const SnortConfig*);
     static void thread_term();
 
-    static void suspend(ActiveSuspendReason suspend_reason)
-    {
-        s_suspend = true;
-        s_suspend_reason = suspend_reason;
-    }
+    static void suspend(ActiveSuspendReason);
+    static bool is_suspended();
+    static void resume();
 
-    static bool is_suspended()
-    { return s_suspend; }
-
-    static void resume()
-    {
-        s_suspend = false;
-        s_suspend_reason = ASP_NONE;
-    }
-
-    static ActiveWouldReason get_whd_reason_from_suspend_reason()
-    {
-        switch ( s_suspend_reason )
-        {
-        case ASP_NONE: return WHD_NONE;
-        case ASP_PRUNE: return WHD_PRUNE;
-        case ASP_TIMEOUT: return WHD_TIMEOUT;
-        case ASP_RELOAD: return WHD_RELOAD;
-        case ASP_EXIT: return WHD_EXIT;
-        }
-        return WHD_NONE;
-    }
+    static ActiveWouldReason get_whd_reason_from_suspend_reason();
 
     void send_reset(Packet*, EncodeFlags);
     void send_unreach(Packet*, snort::UnreachResponse);
@@ -161,14 +139,9 @@ public:
     ActiveWouldReason get_would_be_dropped_reason() const
     { return active_would_reason; }
 
-    bool can_partial_block_session() const
-    { return active_status == AST_CANT and s_suspend_reason > ASP_NONE and s_suspend_reason != ASP_TIMEOUT; }
-
-    bool keep_pruned_flow() const
-    { return ( s_suspend_reason == ASP_PRUNE ) or ( s_suspend_reason == ASP_RELOAD ); }
-
-    bool keep_timedout_flow() const
-    { return ( s_suspend_reason == ASP_TIMEOUT ); }
+    bool can_partial_block_session() const;
+    bool keep_pruned_flow() const;
+    bool keep_timedout_flow() const;
 
     bool packet_retry_requested() const
     { return active_action == ACT_RETRY; }
@@ -231,9 +204,6 @@ private:
 
 private:
     static const char* act_str[ACT_MAX][AST_MAX];
-    static THREAD_LOCAL uint8_t s_attempts;
-    static THREAD_LOCAL bool s_suspend;
-    static THREAD_LOCAL ActiveSuspendReason s_suspend_reason;
 
     int active_tunnel_bypass = 0;
     const char* drop_reason = nullptr;
@@ -248,7 +218,7 @@ private:
     ActiveAction* delayed_reject = nullptr; // set with set_delayed_action()
 };
 
-struct SO_PUBLIC ActiveSuspendContext
+struct ActiveSuspendContext
 {
     ActiveSuspendContext(Active::ActiveSuspendReason suspend_reason)
     { Active::suspend(suspend_reason); }
@@ -257,7 +227,6 @@ struct SO_PUBLIC ActiveSuspendContext
     { Active::resume(); }
 };
 
-extern THREAD_LOCAL Active::Counts active_counts;
 }
 #endif
 

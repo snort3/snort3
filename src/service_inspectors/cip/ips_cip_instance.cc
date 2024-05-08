@@ -171,7 +171,7 @@ static void cip_instance_mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* cip_instance_ctor(Module* p, OptTreeNode*)
+static IpsOption* cip_instance_ctor(Module* p, IpsInfo&)
 {
     CipInstanceModule* m = static_cast<CipInstanceModule*>(p);
     return new CipInstanceOption(m->cip_inst);

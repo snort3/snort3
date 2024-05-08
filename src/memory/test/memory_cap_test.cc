@@ -64,10 +64,6 @@ unsigned get_instance_id()
 
 THREAD_LOCAL const Trace* memory_trace = nullptr;
 
-void Periodic::register_handler(PeriodicHook, void*, uint16_t, uint32_t) { }
-
-void Profiler::register_module(const char*, const char*, snort::Module*) { }
-
 void ModuleManager::accumulate_module(const char*) { }
 
 //--------------------------------------------------------------------------

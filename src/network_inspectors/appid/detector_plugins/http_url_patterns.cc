@@ -144,6 +144,8 @@ static const char GOOGLE_TB_PATTERN[] = "toolbarqueries.google.com";
 
 #define COMPATIBLE_BROWSER_STRING " (Compat)"
 
+namespace
+{
 struct MatchedPatterns
 {
     DetectorHTTPPattern* mpattern;
@@ -152,6 +154,7 @@ struct MatchedPatterns
                           // matching character.
     MatchedPatterns* next;
 };
+}
 
 static DetectorHTTPPatterns static_content_type_patterns =
 {

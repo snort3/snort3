@@ -81,7 +81,7 @@ static int cname_pattern_match(void* id, void*, int match_end_pos, void* data, v
     }
     return 0;
 }
-/*  
+/*
 Only patterns that match end of the payload AND
 (match the start of the payload
 or match after '.'
@@ -116,7 +116,7 @@ static bool scan_patterns(SearchTool& matcher, const uint8_t* data, size_t size,
 
     if (!mp)
         return false;
-    
+
     MatchedSslPatterns* tmp = mp;
 
     while (tmp)

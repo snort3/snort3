@@ -36,6 +36,7 @@
 #include "utils/dnet_header.h"
 
 #include "active_action.h"
+#include "active_counts.h"
 #include "sfdaq.h"
 #include "sfdaq_instance.h"
 #include "sfdaq_module.h"
@@ -67,10 +68,11 @@ const char* Active::act_str[Active::ACT_MAX][Active::AST_MAX] =
     { "reset", "cant_reset", "would_reset", "force_reset" },
 };
 
-THREAD_LOCAL uint8_t Active::s_attempts = 0;
-THREAD_LOCAL bool Active::s_suspend = false;
-THREAD_LOCAL Active::ActiveSuspendReason Active::s_suspend_reason = Active::ASP_NONE;
-THREAD_LOCAL Active::Counts snort::active_counts;
+static THREAD_LOCAL uint8_t s_attempts = 0;
+static THREAD_LOCAL bool s_suspend = false;
+static THREAD_LOCAL Active::ActiveSuspendReason s_suspend_reason = Active::ASP_NONE;
+
+static THREAD_LOCAL Active::Counts active_counts;
 
 typedef int (* send_t) (
     DAQ_Msg_h msg, int rev, const uint8_t* buf, uint32_t len);
@@ -83,6 +85,9 @@ static ResetAction default_reset;
 static int default_drop_reason_id = -1;
 
 static std::unordered_map<std::string, uint8_t> drop_reason_id_map;
+
+PegCount* get_active_counts()
+{ return (PegCount*)&active_counts; }
 
 //--------------------------------------------------------------------
 // helpers
@@ -544,6 +549,43 @@ void Active::update_status_actionable(const Packet* p)
         active_status = AST_WOULD;
         active_would_reason = WHD_INTERFACE_IDS;
     }
+}
+
+void Active::suspend(ActiveSuspendReason suspend_reason)
+{
+    s_suspend = true;
+    s_suspend_reason = suspend_reason;
+}
+
+bool Active::is_suspended()
+{ return s_suspend; }
+
+void Active::resume()
+{
+    s_suspend = false;
+    s_suspend_reason = ASP_NONE;
+}
+
+bool Active::can_partial_block_session() const
+{ return active_status == AST_CANT and s_suspend_reason > ASP_NONE and s_suspend_reason != ASP_TIMEOUT; }
+
+bool Active::keep_pruned_flow() const
+{ return ( s_suspend_reason == ASP_PRUNE ) or ( s_suspend_reason == ASP_RELOAD ); }
+
+bool Active::keep_timedout_flow() const
+{ return ( s_suspend_reason == ASP_TIMEOUT ); }
+
+Active::ActiveWouldReason Active::get_whd_reason_from_suspend_reason()
+{
+    switch ( s_suspend_reason )
+    {
+    case ASP_NONE: return WHD_NONE;
+    case ASP_PRUNE: return WHD_PRUNE;
+    case ASP_TIMEOUT: return WHD_TIMEOUT;
+    case ASP_RELOAD: return WHD_RELOAD;
+    case ASP_EXIT: return WHD_EXIT;
+    }
+    return WHD_NONE;
 }
 
 void Active::update_status(const Packet* p, bool force)

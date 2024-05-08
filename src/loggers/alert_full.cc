@@ -38,7 +38,6 @@
 #endif
 
 #include "detection/ips_context.h"
-#include "detection/signature.h"
 #include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
@@ -147,8 +146,9 @@ void FullLogger::alert(Packet* p, const char* msg, const Event& event)
 {
     TextLog_Puts(full_log, "[**] ");
 
-    TextLog_Print(full_log, "[%u:%u:%u] ",
-        event.sig_info->gid, event.sig_info->sid, event.sig_info->rev);
+    uint32_t gid, sid, rev;
+    event.get_sig_ids(gid, sid, rev);
+    TextLog_Print(full_log, "[%u:%u:%u] ", gid, sid, rev);
 
     if (p->context->conf->alert_interface())
     {

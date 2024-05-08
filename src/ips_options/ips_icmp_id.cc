@@ -178,7 +178,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* icmp_id_ctor(Module* p, OptTreeNode*)
+static IpsOption* icmp_id_ctor(Module* p, IpsInfo&)
 {
     IcmpIdModule* m = (IcmpIdModule*)p;
     return new IcmpIdOption(m->data);

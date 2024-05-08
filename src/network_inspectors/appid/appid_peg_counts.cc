@@ -34,10 +34,11 @@
 #include <unordered_map>
 #include <vector>
 
+#include "framework/inspector.h"
+#include "log/log_stats.h"
 #include "log/messages.h"
-#include "main/thread.h"
+#include "main/thread_config.h"
 #include "trace/trace.h"
-#include "utils/stats.h"
 
 #include "app_info_table.h"
 #include "appid_debug.h"

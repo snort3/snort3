@@ -23,14 +23,15 @@
 
 #include "parse_rule.h"
 
-#include "actions/actions.h"
-#include "detection/detect.h"
+#include "detection/extract.h"
 #include "detection/fp_config.h"
 #include "detection/fp_utils.h"
 #include "detection/rtn_checks.h"
 #include "detection/treenodes.h"
 #include "framework/decode_data.h"
+#include "framework/ips_action.h"
 #include "hash/xhash.h"
+#include "log/log_stats.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
@@ -42,7 +43,6 @@
 #include "sfip/sf_vartable.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
-#include "ips_options/extract.h"
 
 #include "parser.h"
 #include "parse_conf.h"
@@ -788,15 +788,15 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 
     assert(s);
 
-    rtn.action = Actions::get_type(s);
+    rtn.action = IpsAction::get_type(s);
 
-    if ( !Actions::is_valid_action(rtn.action) )
+    if ( !IpsAction::is_valid_action(rtn.action) )
     {
         s_ignore = true;
         ParseError("unknown rule action '%s'", s);
         return;
     }
-    if (!strcmp(s,"file_id"))
+    if (!strcmp(s, "file_id"))
         action_file_id = true;
     else
         action_file_id = false;

@@ -26,8 +26,10 @@
 #include <map>
 
 #include "host_port_app_cache.h"
-#include "main/thread.h"
+
+#include "log/messages.h"
 #include "managers/inspector_manager.h"
+
 #include "appid_config.h"
 #include "appid_debug.h"
 #include "appid_inspector.h"
@@ -125,9 +127,9 @@ bool HostPortCache::add(const SnortConfig* sc, const SfIp* ip, uint16_t port, Ip
     HostPortVal hv;
 
     hk.ip = *ip;
-    AppIdInspector* inspector =
-        (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, false, sc);
+    AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true, sc);
     assert(inspector);
+
     const AppIdContext& ctxt = inspector->get_ctxt();
     hk.port = (ctxt.get_odp_ctxt().allow_port_wildcard_host_cache)? 0 : port;
     hk.proto = proto;
@@ -180,9 +182,9 @@ bool HostPortCache::add_host(const SnortConfig* sc, const SfIp* ip, uint32_t* ne
         HostAppIdsVal hv;
 
         hk.ip = *ip;
-        AppIdInspector* inspector =
-            (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, false, sc);
+        AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true, sc);
         assert(inspector);
+
         const AppIdContext& ctxt = inspector->get_ctxt();
         hk.port = (ctxt.get_odp_ctxt().allow_port_wildcard_host_cache)? 0 : port;
         hk.proto = proto;
@@ -206,9 +208,9 @@ bool HostPortCache::add_host(const SnortConfig* sc, const SfIp* ip, uint32_t* ne
 
         memcpy(&hk.netmask[0], netmask, 16);
 
-        AppIdInspector* inspector =
-            (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, false, sc);
+        AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true, sc);
         assert(inspector);
+
         const AppIdContext& ctxt = inspector->get_ctxt();
         hk.port = (ctxt.get_odp_ctxt().allow_port_wildcard_host_cache)? 0 : port;
         hk.proto = proto;

@@ -36,6 +36,8 @@
 #include "catch/snort_catch.h"
 #endif
 
+#include "main/thread.h"
+
 #define TRACKER_NAME PERF_NAME "_cpu"
 
 using namespace snort;

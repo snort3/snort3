@@ -25,7 +25,6 @@
 #include "framework/decode_data.h"
 #include "framework/module.h"
 #include "hash/hash_key_operations.h"
-#include "helpers/chunk.h"
 #include "lua/lua.h"
 #include "log/messages.h"
 #include "main/thread_config.h"
@@ -34,6 +33,7 @@
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
 #include "profiler/profiler.h"
+#include "utils/chunk.h"
 #include "utils/util.h"
 
 using namespace snort;
@@ -211,7 +211,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* opt_ctor(Module* m, struct OptTreeNode*)
+static IpsOption* opt_ctor(Module* m, struct IpsInfo&)
 {
     const char* key = IpsManager::get_option_keyword();
     std::string* chunk = ScriptManager::get_chunk(key);

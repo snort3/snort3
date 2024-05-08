@@ -25,9 +25,9 @@
 
 #include "daq_common.h"
 
-#include "actions/actions.h"
 #include "detection/detection_engine.h"
-#include "framework/file_policy.h"
+#include "file_api/file_policy.h"
+#include "framework/ips_action.h"
 #include "framework/policy_selector.h"
 #include "js_norm/js_config.h"
 #include "log/messages.h"
@@ -188,7 +188,7 @@ void InspectionPolicy::configure()
 // detection policy
 //-------------------------------------------------------------------------
 
-IpsPolicy::IpsPolicy(PolicyId id) : action(Actions::get_max_types(), nullptr)
+IpsPolicy::IpsPolicy(PolicyId id) : action(IpsAction::get_max_types(), nullptr)
 {
     policy_id = id;
     policy_mode = POLICY_MODE__MAX;

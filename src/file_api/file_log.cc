@@ -206,7 +206,6 @@ public:
     { }
 
     void show(const SnortConfig*) const override;
-    void eval(Packet*) override { }
 
     bool configure(SnortConfig*) override
     {

@@ -29,26 +29,18 @@
 #include <mutex>
 #include <list>
 #include <set>
+#include <string>
 #include <unordered_set>
 #include <vector>
 
 #include "framework/counts.h"
 #include "main/snort_types.h"
-#include "main/thread.h"
 #include "network_inspectors/appid/application_ids.h"
 #include "protocols/protocol_ids.h"
 #include "protocols/vlan.h"
 #include "time/packet_time.h"
 
 #include "cache_allocator.h"
-
-struct HostTrackerStats
-{
-    PegCount service_adds;
-    PegCount service_finds;
-};
-
-extern THREAD_LOCAL struct HostTrackerStats host_tracker_stats;
 
 class RNAFlow;
 
@@ -387,13 +379,13 @@ public:
         return ++nat_count;
     }
 
-    void set_cache_idx(uint8_t idx) 
-    { 
+    void set_cache_idx(uint8_t idx)
+    {
         std::lock_guard<std::mutex> lck(host_tracker_lock);
-        cache_idx = idx; 
+        cache_idx = idx;
     }
 
-    void init_visibility(size_t v) 
+    void init_visibility(size_t v)
     {
         std::lock_guard<std::mutex> lck(host_tracker_lock);
         visibility = v;
@@ -474,12 +466,12 @@ private:
     uint32_t nat_count_start;     // the time nat counting starts for this host
 
     size_t visibility;
-    uint8_t cache_idx = 0; 
+    uint8_t cache_idx = 0;
 
     uint32_t num_visible_services = 0;
     uint32_t num_visible_clients = 0;
     uint32_t num_visible_macs = 0;
-    
+
     CacheInterface * cache_interface = nullptr;
 
     // These three do not lock independently; they are used by payload discovery and called

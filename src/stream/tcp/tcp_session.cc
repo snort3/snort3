@@ -51,10 +51,10 @@
 #include "detection/detection_engine.h"
 #include "detection/rules.h"
 #include "log/log.h"
+#include "packet_io/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "protocols/eth.h"
 #include "pub_sub/intrinsic_event_ids.h"
-#include "packet_tracer/packet_tracer.h"
 
 #include "stream_tcp.h"
 #include "tcp_ha.h"

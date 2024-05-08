@@ -21,7 +21,6 @@
 #ifndef TCP_TRACE_H
 #define TCP_TRACE_H
 
-#include "main/thread.h"
 
 namespace snort
 {

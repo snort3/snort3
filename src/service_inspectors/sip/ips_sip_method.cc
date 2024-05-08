@@ -210,7 +210,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* sip_method_ctor(Module* p, OptTreeNode*)
+static IpsOption* sip_method_ctor(Module* p, IpsInfo&)
 {
     SipMethodModule* m = (SipMethodModule*)p;
     return new SipMethodOption(m->methods);

@@ -21,12 +21,13 @@
 #ifndef FLOW_STASH_H
 #define FLOW_STASH_H
 
+// a generic store for shared flow data
+
 #include <list>
 #include <map>
 #include <string>
 #include <unordered_map>
 
-#include "main/snort_config.h"
 #include "main/snort_types.h"
 #include "sfip/sf_ip.h"
 
@@ -52,7 +53,7 @@ public:
     void store(const std::string& key, std::string* val, unsigned pubid = 0, unsigned evid = 0);
     void store(const std::string& key, StashGenericObject* val, unsigned pubid = 0, unsigned evid = 0);
 
-    bool store(const snort::SfIp&, const SnortConfig* sc = nullptr);
+    bool store(const snort::SfIp&, const struct SnortConfig* = nullptr);
 
     std::list<snort::SfIp>& get_aux_ip_list()
     { return aux_ip_fifo; }

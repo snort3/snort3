@@ -25,7 +25,7 @@
 #include "main/policy.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
-#include "packet_tracer/packet_tracer.h"
+#include "packet_io/packet_tracer.h"
 #include "protocols/layer.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
@@ -48,7 +48,7 @@ Packet::Packet(bool)
 Packet::~Packet()  = default;
 uint32_t Packet::get_flow_geneve_vni() const { return 0; }
 
-THREAD_LOCAL PacketTracer* s_pkt_trace = nullptr;
+THREAD_LOCAL PacketTracer* PacketTracer::s_pkt_trace = nullptr;
 
 PacketTracer::~PacketTracer() = default;
 void PacketTracer::log(const char*, ...) { }

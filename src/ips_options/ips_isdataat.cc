@@ -39,6 +39,7 @@
 
 #include <cstdlib>
 
+#include "detection/extract.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -46,8 +47,6 @@
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "utils/snort_bounds.h"
-
-#include "extract.h"
 
 using namespace snort;
 
@@ -280,7 +279,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* isdataat_ctor(Module* p, OptTreeNode*)
+static IpsOption* isdataat_ctor(Module* p, IpsInfo&)
 {
     IsDataAtModule* m = (IsDataAtModule*)p;
     return new IsDataAtOption(m->data);

@@ -22,6 +22,9 @@
 #include "config.h"
 #endif
 
+#include "host_tracker.h"
+#include "host_tracker_stats.h"
+
 #include <algorithm>
 
 #include "flow/flow.h"
@@ -31,7 +34,6 @@
 #include "cache_allocator.cc"
 #include "host_cache.h"
 #include "host_cache_segmented.h"
-#include "host_tracker.h"
 
 using namespace snort;
 using namespace std;

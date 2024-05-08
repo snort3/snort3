@@ -285,7 +285,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* opt_ctor(Module* m, OptTreeNode*)
+static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
     Iec104AsduFuncModule* mod = (Iec104AsduFuncModule*) m;
     return new Iec104AsduFuncOption(mod->func);

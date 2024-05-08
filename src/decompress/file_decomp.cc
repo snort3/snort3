@@ -26,7 +26,6 @@
 
 #include <cassert>
 
-#include "detection/detection_util.h"
 #include "utils/util.h"
 
 #include "file_decomp_pdf.h"

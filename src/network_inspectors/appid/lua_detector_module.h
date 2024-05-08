@@ -30,7 +30,6 @@
 #include <lua.hpp>
 #include <lua/lua.h>
 
-#include "main/thread.h"
 #include "main/thread_config.h"
 #include "protocols/protocol_ids.h"
 

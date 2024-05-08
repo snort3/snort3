@@ -238,7 +238,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* reassemble_ctor(Module* p, OptTreeNode*)
+static IpsOption* reassemble_ctor(Module* p, IpsInfo&)
 {
     ReassembleModule* m = (ReassembleModule*)p;
     return new ReassembleOption(m->srod);
@@ -286,7 +286,6 @@ const BaseApi* ips_stream_reassemble = &reassemble_api.base;
 TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
 {
     // initialization code here
-    REQUIRE( ( ips_stream_reassemble->api_version == (BASE_API_VERSION << 16) ) );
     REQUIRE( ( strcmp(ips_stream_reassemble->name, s_name) == 0 ) );
     ReassembleModule* reassembler = ( ReassembleModule* )ips_stream_reassemble->mod_ctor();
     REQUIRE( reassembler != nullptr );

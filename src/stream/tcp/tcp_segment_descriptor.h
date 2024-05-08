@@ -28,6 +28,7 @@
 
 #include "flow/flow.h"
 #include "detection/ips_context.h"
+#include "main/snort_config.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"

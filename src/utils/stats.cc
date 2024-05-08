@@ -26,113 +26,35 @@
 #include <cassert>
 #include <cmath>
 
-#include "control/control.h"
 #include "detection/detection_engine.h"
 #include "file_api/file_stats.h"
 #include "filters/sfthreshold.h"
 #include "framework/module.h"
-#include "helpers/process.h"
+#include "log/log_stats.h"
 #include "log/messages.h"
+#include "main/process.h"
 #include "main/snort_config.h"
 #include "memory/memory_cap.h"
 #include "managers/module_manager.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/trough.h"
-#include "profiler/profiler.h"
+#include "profiler/profiler_impl.h"
 #include "protocols/packet_manager.h"
 #include "time/timersub.h"
 
 #include "util.h"
 
-#define STATS_SEPARATOR \
-    "--------------------------------------------------"
 #define USECS_PER_SEC 1000000.0
 
 ProcessCount proc_stats;
 
 namespace snort
 {
-
 THREAD_LOCAL PacketCount pc;
-static THREAD_LOCAL ControlConn* s_ctrlcon = nullptr;
-
-//-------------------------------------------------------------------------
-
-static inline void LogSeparator(FILE* fh = stdout)
-{
-    LogfRespond(s_ctrlcon, fh, "%s\n", STATS_SEPARATOR);
-}
-
-void LogText(const char* s, FILE* fh)
-{
-    LogfRespond(s_ctrlcon, fh, "%s\n", s);
-}
-
-void LogLabel(const char* s, FILE* fh)
-{
-    if ( *s == ' ' )
-    {
-        LogfRespond(s_ctrlcon, fh, "%s\n", s);
-    }
-    else
-    {
-        LogSeparator(fh);
-        LogfRespond(s_ctrlcon, fh, "%s\n", s);
-    }
-}
-
-void LogValue(const char* s, const char* v, FILE* fh)
-{
-    LogfRespond(s_ctrlcon, fh, "%25.25s: %s\n", s, v);
-}
-
-void LogCount(const char* s, uint64_t c, FILE* fh)
-{
-    if ( c )
-    {
-        LogfRespond(s_ctrlcon, fh, "%25.25s: " STDu64 "\n", s, c);
-    }
-}
-
-void LogStat(const char* s, uint64_t n, uint64_t tot, FILE* fh)
-{
-    if ( n )
-    {
-        LogfRespond(s_ctrlcon, fh, "%25.25s: " FMTu64("-12") "\t(%7.3f%%)\n", s, n, CalcPct(n, tot));
-    }
-}
-
-void LogStat(const char* s, double d, FILE* fh)
-{
-    if ( d )
-    {
-        LogfRespond(s_ctrlcon, fh, "%25.25s: %g\n", s, d);
-    }
-}
 }
 
 using namespace snort;
-
-//-------------------------------------------------------------------------
-
-double CalcPct(uint64_t cnt, uint64_t total)
-{
-    double pct = 0.0;
-
-    if (total == 0.0)
-    {
-        pct = (double)cnt;
-    }
-    else
-    {
-        pct = (double)cnt / (double)total;
-    }
-
-    pct *= 100.0;
-
-    return pct;
-}
 
 //-------------------------------------------------------------------------
 
@@ -195,7 +117,7 @@ static void timing_stats()
     if ( uint64_t pps = (uint64_t)llround(num_pkts / total_secs) )
         LogMessage("%25.25s: " STDu64 "\n", "pkts/sec", pps);
 
-    if ( uint64_t mbps = (uint64_t)llround(8 * num_byts / total_secs / 1024 / 1024) )
+    if ( uint64_t mbps = (uint64_t)llround(8 * num_byts / total_secs / 1e6) )
         LogMessage("%25.25s: " STDu64 "\n", "Mbits/sec", mbps);
 }
 
@@ -227,9 +149,6 @@ const PegInfo pc_names[] =
     { CountType::SUM, "offload_fallback", "fast pattern offload search fallback attempts" },
     { CountType::SUM, "offload_failures", "fast pattern offload search failures" },
     { CountType::SUM, "offload_suspends", "fast pattern search suspends due to offload context chains" },
-    { CountType::SUM, "pcre_match_limit", "total number of times pcre hit the match limit" },
-    { CountType::SUM, "pcre_recursion_limit", "total number of times pcre hit the recursion limit" },
-    { CountType::SUM, "pcre_error", "total number of times pcre returns error" },
     { CountType::SUM, "cont_creations", "total number of continuations created" },
     { CountType::SUM, "cont_recalls", "total number of continuations recalled" },
     { CountType::SUM, "cont_flows", "total number of flows using continuation" },
@@ -262,7 +181,8 @@ const PegInfo proc_names[] =
 
 void DropStats(ControlConn* ctrlcon)
 {
-    s_ctrlcon = ctrlcon;
+    set_log_conn(ctrlcon);
+
     ModuleManager::accumulate_dump_stats();
     LogLabel("Packet Statistics");
     ModuleManager::get_module("daq")->show_stats();
@@ -278,7 +198,7 @@ void DropStats(ControlConn* ctrlcon)
     ModuleManager::get_module("memory")->show_stats();
     memory::MemoryCap::print(SnortConfig::log_verbose());
 
-    s_ctrlcon = nullptr;
+    set_log_conn(nullptr);
 }
 
 //-------------------------------------------------------------------------
@@ -351,7 +271,7 @@ void show_stats(
 
 void show_stats(
     PegCount* pegs, const PegInfo* info,
-    const IndexVec& peg_idxs, const char* module_name, FILE* fh)
+    const std::vector<unsigned>& peg_idxs, const char* module_name, FILE* fh)
 {
     bool head = false;
 

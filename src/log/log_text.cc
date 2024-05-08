@@ -31,6 +31,7 @@
 #include "detection/detection_engine.h"
 #include "detection/signature.h"
 #include "events/event.h"
+#include "framework/pig_pen.h"
 #include "main/snort_config.h"
 #include "network_inspectors/appid/appid_api.h"
 #include "packet_io/sfdaq.h"
@@ -45,7 +46,6 @@
 #include "utils/util.h"
 #include "utils/util_net.h"
 
-#include "log.h"
 #include "messages.h"
 #include "obfuscator.h"
 
@@ -72,10 +72,12 @@ void LogTimeStamp(TextLog* log, Packet* p)
  */
 void LogPriorityData(TextLog* log, const Event& e)
 {
-    if ( e.sig_info->class_type and !e.sig_info->class_type->text.empty() )
-        TextLog_Print(log, "[Classification: %s] ", e.sig_info->class_type->text.c_str());
+    const char* ct = e.get_class_type();
 
-    TextLog_Print(log, "[Priority: %d] ", e.sig_info->priority);
+    if ( ct )
+        TextLog_Print(log, "[Classification: %s] ", ct);
+
+    TextLog_Print(log, "[Priority: %d] ", e.get_priority());
 }
 
 /*--------------------------------------------------------------------
@@ -343,13 +345,10 @@ void LogIPHeader(TextLog* log, Packet* p)
     {
         const ip::IP6Hdr* const ip6h = p->ptrs.ip_api.get_ip6h(); // nullptr if ipv4
         const ip::IP6Frag* const ip6_frag = layer::get_inner_ip6_frag();
+        const char* proto = PigPen::get_protocol_name(to_utype(p->get_ip_proto_next()));
 
         TextLog_Print(log, "%s TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
-            protocol_names[to_utype(p->get_ip_proto_next())],
-            ip6h->hop_lim(),
-            ip6h->tos(),
-            (ip6_frag ? ip6_frag->id() : 0),
-            ip::IP6_HEADER_LEN,
+            proto, ip6h->hop_lim(), ip6h->tos(), (ip6_frag ? ip6_frag->id() : 0), ip::IP6_HEADER_LEN,
             (ip6h->len() + ip::IP6_HEADER_LEN));
 
         if (!ip6_frag)
@@ -369,13 +368,10 @@ void LogIPHeader(TextLog* log, Packet* p)
     }
     else
     {
+        const char* proto = PigPen::get_protocol_name(to_utype(ip4h->proto()));
+
         TextLog_Print(log, "%s TTL:%u TOS:0x%X ID:%u IpLen:%u DgmLen:%u",
-            protocol_names[to_utype(ip4h->proto())],
-            ip4h->ttl(),
-            ip4h->tos(),
-            ip4h->id(),
-            ip4h->hlen(),
-            ip4h->len());
+            proto, ip4h->ttl(), ip4h->tos(), ip4h->id(), ip4h->hlen(), ip4h->len());
 
         if (ip4h->rb())
             TextLog_Puts(log, " RB");
@@ -582,8 +578,8 @@ void LogTCPHeader(TextLog* log, Packet* p)
         return;
     }
     /* print TCP flags */
-    CreateTCPFlagString(tcph, tcpFlags);
-    TextLog_Puts(log, tcpFlags); /* We don't care about the null */
+    tcph->stringify_flags(tcpFlags);
+    TextLog_Puts(log, tcpFlags);
 
     /* print other TCP info */
     TextLog_Print(log, " Seq: 0x%lX  Ack: 0x%lX  Win: 0x%X  TcpLen: %d",
@@ -1024,7 +1020,9 @@ void LogICMPHeader(TextLog* log, Packet* p)
 
 void LogXrefs(TextLog* log, const Event& e)
 {
-    for ( const auto ref : e.sig_info->refs )
+    const SigInfo& sig_info = e.get_sig_info();
+
+    for ( const auto ref : sig_info.refs )
     {
         if ( !ref->system )
             TextLog_Print(log, "[Xref => %s]", ref->id.c_str());

@@ -40,7 +40,6 @@
 #include "hash/hash_defs.h"
 #include "hash/hash_key_operations.h"
 #include "hash/xhash.h"
-#include "ips_options/extract.h"
 #include "ips_options/ips_flowbits.h"
 #include "latency/packet_latency.h"
 #include "latency/rule_latency_state.h"
@@ -55,8 +54,8 @@
 #include "detection_continuation.h"
 #include "detection_engine.h"
 #include "detection_module.h"
-#include "detection_util.h"
 #include "detect_trace.h"
+#include "extract.h"
 #include "fp_create.h"
 #include "fp_detect.h"
 #include "ips_context.h"
@@ -697,7 +696,7 @@ int detection_option_node_evaluate(
         if ( continue_loop && rval == (int)IpsOption::MATCH && node->relative_children )
         {
             IpsOption* opt = (IpsOption*)node->option_data;
-            continue_loop = opt->retry(cursor, orig_cursor);
+            continue_loop = opt->retry(cursor);
         }
         else
             continue_loop = false;

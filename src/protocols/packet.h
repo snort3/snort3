@@ -20,6 +20,10 @@
 #ifndef PROTOCOLS_PACKET_H
 #define PROTOCOLS_PACKET_H
 
+// Packet is an abstraction describing a unit of work.  it may define a
+// wire packet or it may define a cooked packet.  the latter contains
+// payload data only, no headers.
+
 #include <daq_common.h>
 
 #include "flow/flow.h"
@@ -42,7 +46,7 @@ class SFDAQInstance;
 #define PKT_REBUILT_FRAG          0x00000001  // is a rebuilt fragment
 #define PKT_REBUILT_STREAM        0x00000002  // is a rebuilt stream
 #define PKT_STREAM_UNEST_UNI      0x00000004  // is from an unestablished stream and
-                                         // we've only seen traffic in one direction
+                                              // we've only seen traffic in one direction
 #define PKT_STREAM_EST            0x00000008  // is from an established stream
 
 #define PKT_STREAM_INSERT         0x00000010  // this packet has been queued for stream reassembly
@@ -108,9 +112,6 @@ constexpr uint16_t NUM_IP_PROTOS = 256;
 constexpr uint8_t TCP_OPTLENMAX = 40; /* (((2^4) - 1) * 4  - TCP_HEADER_LEN) */
 constexpr uint8_t DEFAULT_LAYERMAX = 40;
 
-// Packet is an abstraction describing a unit of work.  it may define a
-// wire packet or it may define a cooked packet.  the latter contains
-// payload data only, no headers.
 struct SO_PUBLIC Packet
 {
     Packet(bool packet_data = true);
@@ -375,13 +376,6 @@ struct SO_PUBLIC Packet
 private:
     bool allocated;
 };
-
-/* Macros to deal with sequence numbers - p810 TCP Illustrated vol 2 */
-#define SEQ_LT(a,b)  ((int)((a) - (b)) <  0)
-#define SEQ_LEQ(a,b) ((int)((a) - (b)) <= 0)
-#define SEQ_GT(a,b)  ((int)((a) - (b)) >  0)
-#define SEQ_GEQ(a,b) ((int)((a) - (b)) >= 0)
-#define SEQ_EQ(a,b)  ((int)((a) - (b)) == 0)
 
 #define BIT(i) (0x1 << ((i)-1))
 

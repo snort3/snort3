@@ -20,6 +20,7 @@
 #ifndef MPSE_BATCH_H
 #define MPSE_BATCH_H
 
+#include <cassert>
 #include <unordered_map>
 #include <vector>
 

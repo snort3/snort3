@@ -193,15 +193,6 @@ public:
         bool swap_app_direction = false, bool expect_multi = false, bool bidirectional = false,
         bool expect_persist = false);
 
-    // Get pointer to application data for a flow based on the lookup tuples for cases where
-    // Snort does not have an active packet that is relevant.
-    static FlowData* get_flow_data(
-        PktType type, IpProtocol proto,
-        const snort::SfIp* a1, uint16_t p1, const snort::SfIp* a2, uint16_t p2,
-        uint16_t vlanId, uint32_t mplsId, uint32_t addrSpaceId, unsigned flowdata_id,
-        uint32_t tenant_id, int16_t ingress_group = DAQ_PKTHDR_UNKNOWN,
-        int16_t egress_group = DAQ_PKTHDR_UNKNOWN);
-
     // Get pointer to application data for a flow using the FlowKey as the lookup criteria
     static FlowData* get_flow_data(const FlowKey*, unsigned flowdata_id);
 
@@ -223,7 +214,6 @@ public:
     // Handle session block pending state
     static void check_flow_closed(Packet*);
 
-    //  Populate a flow key from the Packet
     static void populate_flow_key(const Packet*, FlowKey*);
 
     static void set_snort_protocol_id_from_ha(Flow*, const SnortProtocolId);

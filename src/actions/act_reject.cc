@@ -55,8 +55,6 @@
 #include "packet_io/active.h"
 #include "profiler/profiler.h"
 
-#include "actions.h"
-
 using namespace snort;
 
 #define action_name "reject"
@@ -170,7 +168,7 @@ class RejectAction : public IpsAction
 public:
     RejectAction(uint32_t f = REJ_RST_BOTH);
 
-    void exec(Packet*, const OptTreeNode* otn) override;
+    void exec(Packet*, const ActInfo&) override;
 
 private:
     RejectActiveAction rej_act_action;
@@ -183,14 +181,14 @@ private:
 RejectAction::RejectAction(uint32_t f) : IpsAction(action_name, &rej_act_action) , rej_act_action(f)
 { }
 
-void RejectAction::exec(Packet* p, const OptTreeNode* otn)
+void RejectAction::exec(Packet* p, const ActInfo& ai)
 {
     p->active->set_delayed_action(Active::ACT_RESET, get_active_action());
     p->active->set_drop_reason("ips");
     p->active->reset_again();
     p->active->update_status(p);
 
-    Actions::alert(p, otn);
+    alert(p, ai);
     ++reject_stats.reject;
 }
 
@@ -341,7 +339,11 @@ static const ActionApi rej_api =
     rej_dtor
 };
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
 const BaseApi* act_reject[] =
+#endif
 {
     &rej_api.base,
     nullptr

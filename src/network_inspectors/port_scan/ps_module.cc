@@ -23,8 +23,9 @@
 #endif
 
 #include "ps_module.h"
+
+#include "framework/pig_pen.h"
 #include "log/messages.h"
-#include "main/snort.h"
 #include "main/snort_config.h"
 
 #include <cassert>
@@ -329,7 +330,7 @@ bool PortScanModule::set(const char* fqn, Value& v, SnortConfig*)
 
 bool PortScanModule::end(const char* fqn, int, SnortConfig* sc)
 {
-    if ( Snort::is_reloading() && strcmp(fqn, "port_scan") == 0 )
+    if ( PigPen::snort_is_reloading() && strcmp(fqn, "port_scan") == 0 )
         sc->register_reload_handler(new PortScanReloadTuner(config->memcap));
     return true;
 }

@@ -21,13 +21,12 @@
 #include "config.h"
 #endif
 
-#include "actions/actions_module.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 
-#include "actions.h"
+#include "actions_module.h"
 
 using namespace snort;
 
@@ -56,16 +55,16 @@ class DropAction : public IpsAction
 public:
     DropAction() : IpsAction(action_name, nullptr) { }
 
-    void exec(Packet*, const OptTreeNode* otn) override;
+    void exec(Packet*, const ActInfo&) override;
     bool drops_traffic() override { return true; }
 };
 
-void DropAction::exec(Packet* p, const OptTreeNode* otn)
+void DropAction::exec(Packet* p, const ActInfo& ai)
 {
     p->active->drop_packet(p);
     p->active->set_drop_reason("ips");
 
-    Actions::alert(p, otn);
+    alert(p, ai);
     ++drop_stats.drop;
 }
 
@@ -126,7 +125,11 @@ static ActionApi drop_api
     drop_dtor
 };
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
 const BaseApi* act_drop[] =
+#endif
 {
     &drop_api.base,
     nullptr

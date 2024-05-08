@@ -23,6 +23,8 @@
 
 #include "dns_events.h"
 
+#include <algorithm>
+
 #include "service_inspectors/dns/dns.h"
 
 using namespace snort;
@@ -43,7 +45,7 @@ void IPFqdnCacheItem::add_fqdn(const FqdnTtl& fqdn_ttl)
             return;
 
     fqdns.emplace_back(fqdn_ttl);
-} 
+}
 
 void DnsResponseDataEvents::add_ip(const DnsResponseIp& ip)
 {

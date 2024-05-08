@@ -22,8 +22,10 @@
 
 #include <string>
 
-bool parse_byte_code(const char*, bool& negate, std::string&);
-int parse_int(const char*, const char* tag, int low = -65535, int high = 65535);
+#include "main/snort_types.h"
+
+SO_PUBLIC bool parse_byte_code(const char*, bool& negate, std::string&);
+SO_PUBLIC int parse_int(const char*, const char* tag, int low = -65535, int high = 65535);
 
 #endif
 

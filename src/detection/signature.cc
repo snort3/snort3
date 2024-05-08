@@ -28,9 +28,9 @@
 
 #include "signature.h"
 
-#include "actions/actions.h"
 #include "framework/decode_data.h"
 #include "filters/sfthd.h"
+#include "framework/ips_action.h"
 #include "hash/hash_defs.h"
 #include "hash/ghash.h"
 #include "helpers/json_stream.h"
@@ -462,7 +462,7 @@ void dump_rule_state(const SnortConfig* sc)
             auto pid = snort::get_ips_policy(sc, i)->user_policy_id;
             json.put("policy", pid);
 
-            std::string action = Actions::get_string(rtn->action);
+            std::string action = IpsAction::get_string(rtn->action);
             json.put("action", action.c_str());
 
             const char* s = rtn->enabled() ? "yes" : "no";

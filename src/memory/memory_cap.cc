@@ -30,6 +30,7 @@
 #include <cassert>
 #include <vector>
 
+#include "log/log_stats.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/snort_types.h"

@@ -29,7 +29,6 @@
 #include <arpa/inet.h>
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 #include "log/messages.h"
 #include "trace/trace_api.h"
 #include "utils/util_cstring.h"

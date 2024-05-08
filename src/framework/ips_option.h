@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// ips_manager.h author Russ Combs <rucombs@cisco.com>
+// ips_option.h author Russ Combs <rucombs@cisco.com>
 
 #ifndef IPS_OPTION_H
 #define IPS_OPTION_H
@@ -23,12 +23,17 @@
 // All IPS rule keywords are realized as IpsOptions instantiated when rules
 // are parsed.
 
+// the IPSAPI_VERSION will change if anything in this file changes.
+// see also framework/base_api.h.
+
+#include <cinttypes>
+
 #include "detection/rule_option_types.h"
 #include "framework/base_api.h"
+#include "framework/cursor.h"
+#include "framework/pdu_section.h"
 #include "main/snort_types.h"
 #include "target_based/snort_protocols.h"
-
-#include "pdu_section.h"
 
 //-------------------------------------------------------------------------
 // api for class
@@ -36,8 +41,10 @@
 //-------------------------------------------------------------------------
 
 class Cursor;
-struct OptTreeNode;
+struct IpsInfo;
 struct PatternMatchData;
+struct TagData;
+struct SoRules;
 
 namespace snort
 {
@@ -46,7 +53,7 @@ struct SnortConfig;
 class Module;
 
 // this is the current version of the api
-#define IPSAPI_VERSION ((BASE_API_VERSION << 16) | 0)
+#define IPSAPI_VERSION ((BASE_API_VERSION << 16) | 1)
 
 enum CursorActionType
 {
@@ -82,8 +89,7 @@ public:
     // packet threads
     virtual bool is_relative() { return false; }
 
-    // 2nd cursor is deprecated, do not use
-    virtual bool retry(Cursor&, const Cursor&) { return false; }
+    virtual bool retry(Cursor&) { return false; }
     virtual void action(Packet*) { }
 
     enum EvalStatus { NO_MATCH, MATCH, NO_ALERT, FAILED_BIT };
@@ -105,17 +111,54 @@ public:
     bool is_buffer_setter() const
     { return get_cursor_type() > CAT_ADJUST; }
 
-    const char* get_buffer()
-    { return buffer; }
-
     virtual section_flags get_pdu_section(bool to_server) const;
+
+    // these methods are only available to the instantiator method (IpsNewFunc)
+    static bool has_plugin(IpsInfo&, const char* name);
+
+    static void set_priority(const IpsInfo&, uint32_t);
+    static void set_classtype(IpsInfo&, const char*);
+    static void set_reference(IpsInfo&, const char* scheme, const char* id);
+
+    enum Enable { NO, YES, INHERIT };
+    static void set_enabled(IpsInfo&, Enable);
+
+    static void set_flowbits_check(IpsInfo&);
+    static void set_detection_filter(IpsInfo&, bool track_src, uint32_t count, uint32_t seconds); // don't install header
+
+    static void set_stateless(IpsInfo&);
+    static void set_to_client(IpsInfo&);
+    static void set_to_server(IpsInfo&);
+
+    static void set_gid(const IpsInfo&, uint32_t);
+    static void set_sid(const IpsInfo&, uint32_t);
+    static void set_rev(const IpsInfo&, uint32_t);
+
+    static void set_message(const IpsInfo&, const char*);
+    static void set_metadata_match(IpsInfo&);
+
+    static void set_tag(IpsInfo&, TagData*);
+    static void set_target(const IpsInfo&, bool src_ip);
+
+    static void set_file_id(const IpsInfo&, uint64_t);
+    static void add_reference(IpsInfo&, const char*, const char*);
+    static void add_service(IpsInfo&, const char*);
+
+    static void set_soid(IpsInfo&, const char*);
+    static const char* get_soid(const IpsInfo&);
+
+    typedef snort::IpsOption::EvalStatus (* SoEvalFunc)(void*, class Cursor&, snort::Packet*);
+    static SoEvalFunc get_so_eval(IpsInfo&, const char* name, void*& data);
+
+    static SnortProtocolId get_protocol_id(const IpsInfo&);
+
+    static SoRules* get_so_rules(const IpsInfo&);
 
 protected:
     IpsOption(const char* s, option_type_t t = RULE_OPTION_TYPE_OTHER);
 
 private:
     const char* name;
-    const char* buffer = "error"; // FIXIT-API to be deleted; here to avoid an api update
     option_type_t type;
 };
 
@@ -129,7 +172,7 @@ enum RuleOptType
 
 typedef void (* IpsOptFunc)(const SnortConfig*);
 
-typedef IpsOption* (* IpsNewFunc)(Module*, OptTreeNode*);
+typedef IpsOption* (* IpsNewFunc)(Module*, IpsInfo&);
 typedef void (* IpsDelFunc)(IpsOption*);
 
 struct IpsApi
@@ -137,8 +180,8 @@ struct IpsApi
     BaseApi base;
     RuleOptType type;
 
-    unsigned max_per_rule;
-    unsigned protos;
+    unsigned max_per_rule;  // max instances of this keyword per IPS rule
+    unsigned protos;        // bitmask of PROTO_BIT_* from decode_data.h
 
     IpsOptFunc pinit;
     IpsOptFunc pterm;

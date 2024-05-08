@@ -34,6 +34,7 @@
 #include "log/messages.h"
 #include "managers/module_manager.h"
 #include "main/reload_tuner.h"
+#include "main/snort_config.h"
 #include "pub_sub/netflow_event.h"
 #include "src/utils/endian.h"
 #include "time/packet_time.h"

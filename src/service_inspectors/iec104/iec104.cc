@@ -27,7 +27,6 @@
 #include "iec104.h"
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 

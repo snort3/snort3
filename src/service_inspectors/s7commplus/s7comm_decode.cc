@@ -30,7 +30,6 @@
 #include "s7comm_decode.h"
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 #include "protocols/packet.h"
 
 #include "s7comm.h"

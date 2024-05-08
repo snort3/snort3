@@ -149,7 +149,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* fragoffset_ctor(Module* p, OptTreeNode*)
+static IpsOption* fragoffset_ctor(Module* p, IpsInfo&)
 {
     FragOffsetModule* m = (FragOffsetModule*)p;
     return new FragOffsetOption(m->data);

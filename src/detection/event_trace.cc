@@ -22,10 +22,10 @@
 #include "config.h"
 #endif
 
-#include "detection_util.h"
+#include "event_trace.h"
 
-#include "actions/actions.h"
 #include "events/event.h"
+#include "framework/ips_action.h"
 #include "log/text_log.h"
 #include "protocols/packet.h"
 #include "utils/stats.h"
@@ -75,16 +75,16 @@ static void LogBuffer(const char* s, const uint8_t* p, unsigned n)
     }
 }
 
-void EventTrace_Log(const Packet* p, const OptTreeNode* otn, Actions::Type action)
+void EventTrace_Log(const Packet* p, const OptTreeNode* otn, IpsAction::Type action)
 {
-    std::string acts = Actions::get_string(action);
+    std::string acts = IpsAction::get_string(action);
 
     if ( !tlog )
         return;
 
     TextLog_Print(tlog,
         "\nEvt=%u, Gid=%u, Sid=%u, Rev=%u, Act=%s\n",
-        get_event_id(), otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, acts.c_str());
+        Event::get_curr_seq_num(), otn->sigInfo.gid, otn->sigInfo.sid, otn->sigInfo.rev, acts.c_str());
 
     TextLog_Print(tlog,
         "Pkt=" STDu64 ", Sec=%lu.%6lu, Len=%u, Cap=%u\n",

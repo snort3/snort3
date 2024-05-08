@@ -1,7 +1,5 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2024 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2002-2013 Sourcefire, Inc.
-// Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -21,54 +19,59 @@
 #ifndef EVENT_H
 #define EVENT_H
 
-#include "main/thread.h"
+#include "main/snort_types.h"
 
 struct SigInfo;
 
-/* we must use fixed size of 32 bits, because on-disk
- * format of savefiles uses 32-bit tv_sec (and tv_usec)
- */
-struct sf_timeval32
+class SO_PUBLIC Event
 {
-    uint32_t tv_sec;      /* seconds */
-    uint32_t tv_usec;     /* microseconds */
-};
+public:
+    Event();
+    Event(uint32_t sec, uint32_t usec, const SigInfo&, const char** buffers, const char* action);
+    Event(uint32_t sec, uint32_t usec, const SigInfo&, const char** buffers, const char* action, uint32_t ref);
 
-struct Event
-{
-    SigInfo* sig_info = nullptr;
-    struct sf_timeval32 ref_time = { 0, 0 };   /* reference time for the event reference */
-    const char* alt_msg = nullptr;
-    std::string action_string;
-    const char** buffs_to_dump = nullptr;
+    static uint16_t get_curr_seq_num();
+    static uint16_t get_next_seq_num();
+    static uint32_t get_next_event_id();
 
-    Event() = default;
-    Event(SigInfo& si)
-    { sig_info = &si; }
+    const SigInfo& get_sig_info() const;
 
-    uint32_t get_event_id() const { return event_id; }
-    void set_event_id(uint32_t id) { event_id = id; }
+    uint32_t get_seconds() const;
+    void get_timestamp(uint32_t& sec, uint32_t& usec) const;
 
-    uint32_t get_event_reference() const { return event_reference; }
-    void set_event_reference(uint32_t ref) { event_reference = ref; }
+    uint32_t get_event_id() const;
+    uint32_t get_event_reference() const;
 
-    void update_event_id(uint16_t log_id);
-    void update_event_id_and_ref(uint16_t log_id);
-    SO_PUBLIC static uint32_t update_and_get_event_id();
+    const char** get_buffers() const;
+    const char* get_action() const;
 
-    void set_event(uint32_t gid, uint32_t sid, uint32_t rev,
-        uint32_t classification, uint32_t priority, uint16_t event_ref,
-        uint16_t log_id, const struct timeval& tv, const std::string& act = "");
+    uint32_t get_gid() const;
+    uint32_t get_sid() const;
+    uint32_t get_rev() const;
 
+    void get_sig_ids(uint32_t& gid, uint32_t& sid, uint32_t& rev) const;
+
+    const char* get_msg() const;
+    const char* get_class_type() const;
+
+    uint32_t get_class_id() const;
+    uint32_t get_priority() const;
+
+    // returns false if not specified; otherwise src indicates target is source or dest
+    bool get_target(bool& src) const;
 
 private:
+    const SigInfo& sig_info;
+    const char* action = nullptr;
+    const char** buffs_to_dump = nullptr;
+
+    uint32_t ts_sec = 0;
+    uint32_t ts_usec = 0;
+
     uint32_t event_id = 0;
     uint32_t event_reference = 0; // reference to other events that have gone off,
                                   // such as in the case of tagged packets...
 };
-
-uint16_t get_event_id();
-void incr_event_id();
 
 #endif
 

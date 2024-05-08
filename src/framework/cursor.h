@@ -22,8 +22,8 @@
 #ifndef CURSOR_H
 #define CURSOR_H
 
-// Cursor provides a formal way of using buffers when doing detection with
-// IpsOptions.
+// Cursor provides access to the current buffer pointer used by IpsOptions
+// during signature evaluation.
 
 #include <assert.h>
 #include <cstdint>

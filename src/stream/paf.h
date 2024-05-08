@@ -26,8 +26,6 @@
 #define PAF_H
 
 #include "main/snort_types.h"
-#include "main/thread.h"
-#include "profiler/profiler_defs.h"
 #include "stream/stream_splitter.h"
 
 namespace snort
@@ -35,12 +33,10 @@ namespace snort
 struct Packet;
 }
 
-extern THREAD_LOCAL snort::ProfileStats pafPerfStats;
-
 void* paf_new(unsigned max);     // create new paf config (per policy)
 void paf_delete(void*);  // free config
 
-struct SO_PUBLIC PAF_State     // per session direction
+struct PAF_State     // per session direction
 {
     uint32_t seq;    // stream cursor
     uint32_t pos;    // last flush position
@@ -60,7 +56,7 @@ inline uint32_t paf_position (PAF_State* ps)
     return ps->seq;
 }
 
-SO_PUBLIC inline uint32_t paf_initialized (PAF_State* ps)
+inline uint32_t paf_initialized (PAF_State* ps)
 {
     return ( ps->paf != snort::StreamSplitter::START );
 }

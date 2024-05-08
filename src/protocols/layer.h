@@ -20,6 +20,8 @@
 #ifndef PROTOCOLS_LAYER_H
 #define PROTOCOLS_LAYER_H
 
+// Packet contains a Layer for each decoded encapsulation.
+
 #include "main/snort_types.h"
 #include "protocols/protocol_ids.h"
 

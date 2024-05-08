@@ -90,7 +90,10 @@ private:
     static unsigned pending_cmds_count; //counter to serialize commands across control connections
 };
 
-#define LogRespond(cn, ...)       do { if (cn) cn->respond(__VA_ARGS__); else LogMessage(__VA_ARGS__); } while(0)
-#define LogfRespond(cn, fh, ...)  do { if (cn) cn->respond(__VA_ARGS__); else LogMessage(fh, __VA_ARGS__); } while(0)
+#define LogRespond(cn, ...) \
+    do { if (cn) cn->respond(__VA_ARGS__); else snort::LogMessage(__VA_ARGS__); } while(0)
+
+#define LogfRespond(cn, fh, ...) \
+    do { if (cn) cn->respond(__VA_ARGS__); else snort::LogMessage(fh, __VA_ARGS__); } while(0)
 
 #endif

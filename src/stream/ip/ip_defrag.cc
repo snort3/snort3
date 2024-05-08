@@ -70,7 +70,6 @@
 
 #include "ip_defrag.h"
 
-#include "detection/detect.h"
 #include "detection/detection_engine.h"
 #include "log/messages.h"
 #include "main/analyzer.h"
@@ -82,7 +81,6 @@
 #include "time/timersub.h"
 #include "trace/trace_api.h"
 #include "utils/safec.h"
-#include "utils/stats.h"
 #include "utils/util.h"
 
 #include "ip_session.h"

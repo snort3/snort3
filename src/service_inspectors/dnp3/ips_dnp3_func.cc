@@ -176,7 +176,7 @@ static void dnp3_func_mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* dnp3_func_ctor(Module* p, OptTreeNode*)
+static IpsOption* dnp3_func_ctor(Module* p, IpsInfo&)
 {
     Dnp3FuncModule* m = (Dnp3FuncModule*)p;
     return new Dnp3FuncOption(m->func);

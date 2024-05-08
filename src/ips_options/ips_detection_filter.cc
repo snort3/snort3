@@ -1,7 +1,5 @@
 //--------------------------------------------------------------------------
 // Copyright (C) 2014-2024 Cisco and/or its affiliates. All rights reserved.
-// Copyright (C) 2002-2013 Sourcefire, Inc.
-// Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -24,7 +22,6 @@
 #include "config.h"
 #endif
 
-#include "detection/treenodes.h"
 #include "filters/detection_filter.h"
 #include "filters/sfthd.h"
 #include "framework/decode_data.h"
@@ -62,7 +59,6 @@ class DetectionFilterModule : public Module
 public:
     DetectionFilterModule() : Module(s_name, s_help, s_params) { }
     bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
     { return &detectionFilterPerfStats; }
@@ -71,28 +67,20 @@ public:
     { return DETECT; }
 
 public:
-    THDX_STRUCT thdx = {};
-    DetectionFilterConfig* dfc = nullptr;
+    bool trk_src = false;
+    uint32_t count = 0, seconds = 0;
 };
-
-bool DetectionFilterModule::begin(const char*, int, SnortConfig* sc)
-{
-    memset(&thdx, 0, sizeof(thdx));
-    thdx.type = THD_TYPE_DETECT;
-    dfc = sc->detection_filter_config;
-    return true;
-}
 
 bool DetectionFilterModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("track") )
-        thdx.tracking = v.get_uint8() ? THD_TRK_DST : THD_TRK_SRC;
+        trk_src = v.get_uint8() == 0;
 
     else if ( v.is("count") )
-        thdx.count = v.get_uint32();
+        count = v.get_uint32();
 
     else if ( v.is("seconds") )
-        thdx.seconds = v.get_uint32();
+        seconds = v.get_uint32();
 
     return true;
 }
@@ -111,10 +99,10 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* detection_filter_ctor(Module* p, OptTreeNode* otn)
+static IpsOption* detection_filter_ctor(Module* p, IpsInfo& info)
 {
     DetectionFilterModule* m = (DetectionFilterModule*)p;
-    otn->detection_filter = detection_filter_create(m->dfc, &m->thdx);
+    IpsOption::set_detection_filter(info, m->trk_src, m->count, m->seconds);
     return nullptr;
 }
 
@@ -143,5 +131,9 @@ static const IpsApi detection_filter_api =
     nullptr
 };
 
-const BaseApi* ips_detection_filter = &detection_filter_api.base;
+const BaseApi* ips_detection_filter[] =
+{
+    &detection_filter_api.base,
+    nullptr
+};
 

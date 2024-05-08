@@ -22,7 +22,7 @@
 #include "config.h"
 #endif
 
-#include "framework/file_policy.h"
+#include "file_policy.h"
 
 #include "file_api/file_capture.h"
 #include "file_api/file_lib.h"

@@ -21,10 +21,10 @@
 #define TRACE_H
 
 #include <cassert>
+#include <cstdint>
 #include <map>
+#include <string>
 #include <vector>
-
-#include "main/thread.h"
 
 #define DEFAULT_TRACE_LOG_LEVEL 1
 #define TRACE_CRITICAL_LEVEL 2

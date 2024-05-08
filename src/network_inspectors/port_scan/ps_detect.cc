@@ -42,7 +42,6 @@
 #include "stream/stream.h"
 #include "time/packet_time.h"
 #include "utils/cpp_macros.h"
-#include "utils/stats.h"
 
 #include "ps_inspect.h"
 #include "ps_pegs.h"

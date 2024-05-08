@@ -92,7 +92,7 @@ unsigned ThreadConfig::get_instance_max() { return 1; }
 } // end of namespace snort
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
+void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 
 template <class T>
 HostCacheAllocIp<T>::HostCacheAllocIp()
@@ -177,12 +177,12 @@ TEST(host_cache_module, misc)
     // cache, because sum_stats resets the pegs.
     module.sum_stats(true);
 
-    // add 3 entries to segment 3 
+    // add 3 entries to segment 3
     SfIp ip1, ip2, ip3;
     ip1.set("1.1.1.1");
     ip2.set("2.2.2.2");
     ip3.set("3.3.3.3");
-    
+
     host_cache.find_else_create(ip1, nullptr);
     host_cache.find_else_create(ip2, nullptr);
     host_cache.find_else_create(ip3, nullptr);
@@ -206,7 +206,7 @@ TEST(host_cache_module, misc)
     // pruning in thread is not done when reload_mutex is already locked
     for(auto cache : host_cache.seg_list)
         cache->reload_mutex.lock();
-        
+
     std::thread test_negative(try_reload_prune, false);
     test_negative.join();
 
@@ -268,8 +268,6 @@ TEST(host_cache_module, get_segment_stats)
     str = module.get_host_cache_segment_stats(-1);
     contain = str.find("total cache segments: 4") != std::string::npos;
     CHECK_TRUE(contain);
-    
-
 }
 
 TEST(host_cache_module, log_host_cache_messages)

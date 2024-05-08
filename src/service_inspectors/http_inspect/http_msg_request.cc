@@ -23,6 +23,7 @@
 
 #include "http_msg_request.h"
 
+#include "main/snort_config.h"
 #include "pub_sub/intrinsic_event_ids.h"
 
 #include "http_api.h"

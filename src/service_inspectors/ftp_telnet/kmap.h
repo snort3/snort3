@@ -74,14 +74,14 @@ typedef struct _kmap
 
 namespace snort
 {
-SO_PUBLIC KMAP* KMapNew(KMapUserFreeFunc, bool nocase);
-SO_PUBLIC void KMapDelete(KMAP*);
+KMAP* KMapNew(KMapUserFreeFunc, bool nocase);
+void KMapDelete(KMAP*);
 
-SO_PUBLIC int KMapAdd(KMAP*, void* key, int ksize, void* userdata);
+int KMapAdd(KMAP*, void* key, int ksize, void* userdata);
 
-SO_PUBLIC void* KMapFind(KMAP*, void* key, int ksize);
-SO_PUBLIC void* KMapFindFirst(KMAP*);
-SO_PUBLIC void* KMapFindNext(KMAP*);
+void* KMapFind(KMAP*, void* key, int ksize);
+void* KMapFindFirst(KMAP*);
+void* KMapFindNext(KMAP*);
 }
 #endif
 

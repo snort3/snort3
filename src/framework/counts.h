@@ -32,9 +32,9 @@ typedef uint64_t PegCount;
 enum CountType
 {
     END,   // sentinel value
-    SUM,   // tracks cumulative total number of items seen (eg #events)
-    NOW,   // gives snapshot of current number of items (eg current #sessions)
-    MAX,   // tracks maximum value seen (eg max #sessions)
+    SUM,   // running total: tracks cumulative total number of items seen (eg #events)
+    NOW,   // current level: gives snapshot of current number of items (eg current #sessions)
+    MAX,   // maximum level: tracks maximum value seen (eg max #sessions)
 };
 
 struct SimpleStats

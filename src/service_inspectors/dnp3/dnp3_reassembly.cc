@@ -27,7 +27,6 @@
 #include "dnp3_reassembly.h"
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 #include "protocols/packet.h"
 
 #include "dnp3_map.h"

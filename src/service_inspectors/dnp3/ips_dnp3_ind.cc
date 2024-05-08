@@ -185,7 +185,7 @@ static void dnp3_ind_mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* dnp3_ind_ctor(Module* p, OptTreeNode*)
+static IpsOption* dnp3_ind_ctor(Module* p, IpsInfo&)
 {
     Dnp3IndModule* m = (Dnp3IndModule*)p;
     return new Dnp3IndOption(m->flags);

@@ -27,7 +27,7 @@
 #include <cstring>
 #include <vector>
 
-#include "utils/grouped_list.h"
+#include "helpers/grouped_list.h"
 
 using namespace snort;
 using namespace std;

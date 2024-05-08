@@ -34,7 +34,6 @@
 #include "latency/packet_latency.h"
 #include "main/snort_config.h"
 #include "managers/event_manager.h"
-#include "managers/inspector_manager.h"
 #include "packet_io/active.h"
 #include "ports/port_object.h"
 #include "profiler/profiler_defs.h"
@@ -65,9 +64,7 @@ bool snort_log(Packet* p)
 
 void CallLogFuncs(Packet* p, ListHead* head, Event* event, const char* msg)
 {
-    event->update_event_id(p->context->conf->get_event_log_id());
-
-    DetectionEngine::set_check_tags(false);
+    DetectionEngine::set_check_tags(p, false);
     pc.log_pkts++;
 
     OutputSet* idx = head ? head->LogList : nullptr;
@@ -76,17 +73,10 @@ void CallLogFuncs(Packet* p, ListHead* head, Event* event, const char* msg)
 
 void CallLogFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 {
-    Event event;
+    const char* act = (head and head->ruleListNode) ? head->ruleListNode->name : "";
+    Event event(p->pkth->ts.tv_sec, p->pkth->ts.tv_usec, otn->sigInfo, otn->buffer_setters, act);
 
-    // FIXIT-L this and the same below should be refactored to not need const_cast
-    event.sig_info = const_cast<SigInfo*>(&otn->sigInfo);
-    event.ref_time.tv_sec = p->pkth->ts.tv_sec;
-    event.ref_time.tv_usec = p->pkth->ts.tv_usec;
-    event.update_event_id_and_ref(p->context->conf->get_event_log_id());
-    if (head and head->ruleListNode)
-        event.action_string = head->ruleListNode->name;
-
-    DetectionEngine::set_check_tags(false);
+    DetectionEngine::set_check_tags(p, false);
     pc.log_pkts++;
 
     const uint8_t* data = nullptr;
@@ -118,15 +108,8 @@ void CallLogFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 
 void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 {
-    Event event;
-
-    event.sig_info = const_cast<SigInfo*>(&otn->sigInfo);
-    event.buffs_to_dump = otn->buffer_setters;
-    event.ref_time.tv_sec = p->pkth->ts.tv_sec;
-    event.ref_time.tv_usec = p->pkth->ts.tv_usec;
-    event.update_event_id_and_ref(p->context->conf->get_event_log_id());
-    if (head and head->ruleListNode)
-        event.action_string = head->ruleListNode->name;
+    const char* act = (head and head->ruleListNode) ? head->ruleListNode->name : "";
+    Event event(p->pkth->ts.tv_sec, p->pkth->ts.tv_usec, otn->sigInfo, otn->buffer_setters, act);
 
     pc.total_alert_pkts++;
 
@@ -151,19 +134,18 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
 */
 void check_tags(Packet* p)
 {
-    SigInfo info;
-    Event event(info);
-
-    if ( DetectionEngine::get_check_tags() and !(p->packet_flags & PKT_REBUILT_STREAM) )
+    if ( DetectionEngine::get_check_tags(p) and !(p->packet_flags & PKT_REBUILT_STREAM) )
     {
-        void* listhead = nullptr;
+        SigInfo info;
+        ListHead* listhead = nullptr;
+        struct timeval tv;
+        uint32_t id;
+        const char* act;
 
-        if (CheckTagList(p, event, &listhead))
+        if (CheckTagList(p, info, listhead, tv, id, act))
         {
-            /* if we find a match, we want to send the packet to the
-             * logging mechanism
-             */
-            CallLogFuncs(p, (ListHead*)listhead, &event, "Tagged Packet");
+            Event event(tv.tv_sec, tv.tv_usec, info, nullptr, act, id);
+            CallLogFuncs(p, listhead, &event, "Tagged Packet");
         }
     }
 }

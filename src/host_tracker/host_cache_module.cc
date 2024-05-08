@@ -563,8 +563,6 @@ string HostCacheModule::get_host_cache_stats()
         }
 
     }
-
-
     return str;
 }
 

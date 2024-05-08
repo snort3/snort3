@@ -25,7 +25,6 @@
 // Detection trace utility
 
 #include "main/snort_types.h"
-#include "main/thread.h"
 
 namespace snort
 {

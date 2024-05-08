@@ -26,7 +26,6 @@
 #include "sip_dialog.h"
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 #include "framework/data_bus.h"
 #include "protocols/packet.h"
 #include "protocols/vlan.h"

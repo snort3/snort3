@@ -30,6 +30,7 @@
 
 #include "file_stats.h"
 
+#include "log/log_stats.h"
 #include "log/messages.h"
 #include "utils/stats.h"
 #include "utils/util.h"

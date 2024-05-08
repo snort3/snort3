@@ -151,7 +151,7 @@ static Module* header_mod_ctor()
     return new SipCursorModule(IPS_OPT, header_help, SIP_HEADER);
 }
 
-static IpsOption* header_opt_ctor(Module*, OptTreeNode*)
+static IpsOption* header_opt_ctor(Module*, IpsInfo&)
 {
     return new SipIpsOption(IPS_OPT, SIP_HEADER, CAT_SET_FAST_PATTERN);
 }
@@ -196,7 +196,7 @@ static Module* body_mod_ctor()
     return new SipCursorModule(IPS_OPT, cb_help, SIP_BODY);
 }
 
-static IpsOption* body_opt_ctor(Module*, OptTreeNode*)
+static IpsOption* body_opt_ctor(Module*, IpsInfo&)
 {
     return new SipIpsOption(IPS_OPT, SIP_BODY, CAT_SET_FAST_PATTERN);
 }

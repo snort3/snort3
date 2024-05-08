@@ -35,6 +35,7 @@
 #include "managers/module_manager.h"
 #include "utils/stats.h"
 
+#include "profiler_impl.h"
 #include "rule_profiler.h"
 #include "rule_profiler_defs.h"
 #include "time_profiler.h"
@@ -269,7 +270,7 @@ static void time_profiling_start_cmd()
 static void time_profiling_stop_cmd()
 {
     TimeProfilerStats::set_enabled(false);
-    Profiler::stop((uint64_t)get_packet_number());
+    Profiler::stop(pc.analyzed_pkts);
     Profiler::consolidate_stats(snort::PROFILER_TYPE_TIME);
 }
 
@@ -456,7 +457,7 @@ static const Parameter profiler_params[] =
 class ProfilerReloadTuner : public snort::ReloadResourceTuner
 {
 public:
-    explicit ProfilerReloadTuner(bool enable_rule, bool enable_time) 
+    explicit ProfilerReloadTuner(bool enable_rule, bool enable_time)
         : enable_rule(enable_rule), enable_time(enable_time)
     {}
     ~ProfilerReloadTuner() override = default;
@@ -568,12 +569,12 @@ ProfileStats* ProfilerModule::get_profile(
     case 0:
         name = "total";
         parent = nullptr;
-        return &totalPerfStats;
+        return Profiler::get_total_perf_stats();
 
     case 1:
         name = "other";
         parent = nullptr;
-        return &otherPerfStats;
+        return Profiler::get_other_perf_stats();
     }
     return nullptr;
 }

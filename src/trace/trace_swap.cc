@@ -27,10 +27,10 @@
 
 #include "control/control.h"
 #include "framework/module.h"
-#include "framework/packet_constraints.h"
 #include "log/messages.h"
 #include "main/analyzer_command.h"
 #include "main/snort_config.h"
+#include "packet_io/packet_constraints.h"
 
 #include "trace_api.h"
 #include "trace_config.h"

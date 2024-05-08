@@ -21,6 +21,8 @@
 #ifndef STASH_ITEM_H
 #define STASH_ITEM_H
 
+// stored in the FlowStash
+
 #include <cstdint>
 #include <string>
 

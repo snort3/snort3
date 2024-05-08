@@ -24,19 +24,19 @@
 
 #include "smb_message.h"
 
-#include "dce_smb.h"
-#include "dce_smb_commands.h"
-#include "dce_smb_module.h"
-#include "dce_smb_paf.h"
-#include "dce_smb_transaction.h"
-#include "dce_smb2_utils.h"
-#include "detection/detect.h"
 #include "file_api/file_service.h"
 #include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 #include "trace/trace_api.h"
 #include "utils/util.h"
+
+#include "dce_smb.h"
+#include "dce_smb2.h"
+#include "dce_smb_commands.h"
+#include "dce_smb_module.h"
+#include "dce_smb_paf.h"
+#include "dce_smb_transaction.h"
 
 using namespace snort;
 

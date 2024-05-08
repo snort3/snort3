@@ -30,13 +30,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include "actions/actions.h"
-#include "events/event_queue.h"
-#include "framework/bits.h"
+#include "framework/inspector.h"
+#include "framework/ips_action.h"
 #include "helpers/scratch_allocator.h"
 #include "main/policy.h"
-#include "main/thread.h"
 #include "sfip/sf_cidr.h"
+#include "utils/bits.h"
 
 #define DEFAULT_LOG_DIR "."
 
@@ -544,10 +543,7 @@ public:
     uint16_t get_event_log_id() const
     { return event_log_id; }
 
-    bool process_all_events() const
-    { return event_queue_config->process_all_events; }
-
-    int get_eval_index(Actions::Type type) const
+    int get_eval_index(IpsAction::Type type) const
     { return evalOrder[type]; }
 
     // output stuff
@@ -739,6 +735,7 @@ public:
     { return logging_flags & LOGGING_FLAG__SHOW_PLUGINS; }
 
     SO_PUBLIC static const char* get_static_name(const char* name);
+    SO_PUBLIC static int get_classification_id(const char* name);
 };
 }
 

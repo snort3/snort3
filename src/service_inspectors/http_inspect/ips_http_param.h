@@ -67,11 +67,11 @@ public:
     uint32_t hash() const override;
     bool operator==(const snort::IpsOption& ips) const override;
 
-    static IpsOption* opt_ctor(snort::Module* m, OptTreeNode*)
+    static IpsOption* opt_ctor(snort::Module* m, IpsInfo&)
     { return new HttpParamIpsOption((HttpParamRuleOptModule*)m); }
 
     static void opt_dtor(snort::IpsOption* p) { delete p; }
-    bool retry(Cursor& , const Cursor&) override;
+    bool retry(Cursor&) override;
 
     snort::section_flags get_pdu_section(bool) const override;
 

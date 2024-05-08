@@ -17,6 +17,8 @@ set (FILE_LIST
     ftp_print.cc
     ftp_print.h
     ftp_server.h
+    kmap.cc
+    kmap.h
     telnet_splitter.h
     telnet_splitter.cc
     ftpdata_splitter.h

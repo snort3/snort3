@@ -217,7 +217,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* opt_ctor(Module* m, OptTreeNode*)
+static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
     GtpInfoModule* mod = (GtpInfoModule*)m;
     return new GtpInfoOption(mod->types);

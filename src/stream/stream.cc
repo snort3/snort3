@@ -35,8 +35,8 @@
 #include "framework/data_bus.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
-#include "network_inspectors/packet_tracer/packet_tracer.h"
 #include "packet_io/active.h"
+#include "packet_io/packet_tracer.h"
 #include "protocols/vlan.h"
 #include "pub_sub/stream_event_ids.h"
 #include "stream/base/stream_module.h"
@@ -79,15 +79,10 @@ Flow* Stream::new_flow(const FlowKey* key)
 { return flow_con->new_flow(key); }
 
 void Stream::delete_flow(const FlowKey* key)
-{
-    flow_con->release_flow(key);
-}
+{ flow_con->release_flow(key); }
 
 void Stream::delete_flow(Flow* flow)
-{
-    if (flow_con)
-        flow_con->release_flow(flow, PruneReason::NONE);
-}
+{ flow_con->release_flow(flow, PruneReason::NONE); }
 
 //-------------------------------------------------------------------------
 // key foo
@@ -153,26 +148,6 @@ FlowData* Stream::get_flow_data(
     return flow->get_flow_data(flowdata_id);
 }
 
-FlowData* Stream::get_flow_data(
-    PktType type, IpProtocol proto,
-    const SfIp* srcIP, uint16_t srcPort,
-    const SfIp* dstIP, uint16_t dstPort,
-    uint16_t vlan, uint32_t mplsId,
-    uint32_t addressSpaceID, unsigned flowdata_id, uint32_t tenant_id,
-    int16_t ingress_group, int16_t egress_group)
-{
-    Flow* flow = get_flow(
-        type, proto, srcIP, srcPort, dstIP, dstPort,
-        vlan, mplsId, addressSpaceID, tenant_id, ingress_group,
-        egress_group);
-
-    if (!flow)
-        return nullptr;
-
-    return flow->get_flow_data(flowdata_id);
-}
-
-//-------------------------------------------------------------------------
 //-------------------------------------------------------------------------
 // session status
 //-------------------------------------------------------------------------

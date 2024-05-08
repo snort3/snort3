@@ -20,8 +20,8 @@
 #ifndef HTTP_EVENT_H
 #define HTTP_EVENT_H
 
-#include "utils/event_gen.h"
-#include "utils/infractions.h"
+#include "helpers/event_gen.h"
+#include "helpers/infractions.h"
 #include "utils/util_cstring.h"
 
 #include "http_enum.h"

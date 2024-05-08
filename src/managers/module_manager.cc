@@ -45,7 +45,7 @@
 #include "managers/inspector_manager.h"
 #include "parser/parse_conf.h"
 #include "parser/parser.h"
-#include "profiler/profiler.h"
+#include "profiler/profiler_impl.h"
 #include "protocols/packet_manager.h"
 #include "utils/util.h"
 

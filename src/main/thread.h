@@ -26,17 +26,6 @@
 
 #include "main/snort_types.h"
 
-#define THREAD_LOCAL_TBD
-//#define THREAD_LOCAL // for single-threaded debugging
-
-// `__thread` is a gnu extension that at present is slightly faster than
-// `thread_local` (possibly due to the lack of dynamic initialization)
-#ifdef USE_THREAD_LOCAL
-#    define THREAD_LOCAL thread_local
-#else
-#    define THREAD_LOCAL __thread
-#endif
-
 enum SThreadType
 {
     STHREAD_TYPE_OTHER,

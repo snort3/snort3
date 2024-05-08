@@ -236,7 +236,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* ssl_version_ctor(Module* p, OptTreeNode*)
+static IpsOption* ssl_version_ctor(Module* p, IpsInfo&)
 {
     SslVersionModule* m = (SslVersionModule*)p;
     return new SslVersionOption(m->svod);

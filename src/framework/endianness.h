@@ -25,7 +25,7 @@
 
 namespace snort
 {
-class SO_PUBLIC Endianness
+class Endianness
 {
 public:
     Endianness() = default;

@@ -26,7 +26,6 @@
 
 #include <cassert>
 
-#include "main/thread.h"
 #include "utils/util.h"
 
 #ifdef UNIT_TEST

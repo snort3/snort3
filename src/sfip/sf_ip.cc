@@ -29,7 +29,6 @@
 
 #include <cmath> // For ceil
 
-#include "main/thread.h"
 #include "utils/util.h"
 #include "utils/util_net.h"
 

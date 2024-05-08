@@ -21,12 +21,11 @@
 #include "config.h"
 #endif
 
-#include "actions/actions_module.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
 #include "protocols/packet.h"
 
-#include "actions.h"
+#include "actions_module.h"
 
 using namespace snort;
 
@@ -55,12 +54,12 @@ class AlertAction : public IpsAction
 public:
     AlertAction() : IpsAction(action_name, nullptr) { }
 
-    void exec(Packet*, const OptTreeNode* otn) override;
+    void exec(Packet*, const ActInfo&) override;
 };
 
-void AlertAction::exec(Packet* p, const OptTreeNode* otn)
+void AlertAction::exec(Packet* p, const ActInfo& ai)
 {
-    Actions::alert(p, otn);
+    alert(p, ai);
     ++alert_stats.alert;
 }
 
@@ -120,7 +119,11 @@ static ActionApi alert_api
     alert_dtor
 };
 
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
 const BaseApi* act_alert[] =
+#endif
 {
     &alert_api.base,
     nullptr

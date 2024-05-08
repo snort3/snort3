@@ -25,8 +25,8 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/hash_key_operations.h"
+#include "helpers/ber.h"
 #include "profiler/profiler.h"
-#include "utils/util_ber.h"
 
 using namespace snort;
 
@@ -165,7 +165,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* ber_data_ctor(Module* p, OptTreeNode*)
+static IpsOption* ber_data_ctor(Module* p, IpsInfo&)
 {
     BerDataModule* m = (BerDataModule*)p;
     return new BerDataOption(m->type);

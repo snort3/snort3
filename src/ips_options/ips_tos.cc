@@ -152,7 +152,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* tos_ctor(Module* p, OptTreeNode*)
+static IpsOption* tos_ctor(Module* p, IpsInfo&)
 {
     TosModule* m = (TosModule*)p;
     return new IpTosOption(m->data);

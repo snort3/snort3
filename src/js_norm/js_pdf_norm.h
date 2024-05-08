@@ -23,9 +23,9 @@
 #include <FlexLexer.h>
 #include <cstring>
 
+#include "helpers/streambuf.h"
 #include "js_norm/js_norm.h"
 #include "js_norm/pdf_tokenizer.h"
-#include "utils/streambuf.h"
 
 namespace snort
 {

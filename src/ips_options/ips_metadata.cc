@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/treenodes.h"
 #include "framework/decode_data.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -91,11 +90,13 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* metadata_ctor(Module* p, OptTreeNode* otn)
+static IpsOption* metadata_ctor(Module* p, IpsInfo& info)
 {
     MetadataModule* m = (MetadataModule*)p;
+
     if ( m->match )
-        otn->set_metadata_match();
+        IpsOption::set_metadata_match(info);
+
     return nullptr;
 }
 
@@ -124,5 +125,13 @@ static const IpsApi metadata_api =
     nullptr
 };
 
-const BaseApi* ips_metadata = &metadata_api.base;
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_metadata[] =
+#endif
+{
+    &metadata_api.base,
+    nullptr
+};
 

@@ -27,7 +27,6 @@
 #include <cmath>
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 #include "protocols/packet.h"
 
 #include "iec104.h"

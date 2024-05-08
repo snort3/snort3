@@ -27,12 +27,11 @@
 #include "mms_decode.h"
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
+#include "helpers/ber.h"
 #include "log/messages.h"
 #include "managers/plugin_manager.h"
 #include "protocols/packet.h"
 #include "trace/trace_api.h"
-#include "utils/util_ber.h"
 
 #include "mms.h"
 #include "mms_module.h"

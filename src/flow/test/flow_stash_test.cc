@@ -25,6 +25,7 @@
 #include <string>
 
 #include "flow/flow_stash.h"
+#include "main/snort_config.h"
 #include "pub_sub/stash_events.h"
 #include "utils/util.h"
 

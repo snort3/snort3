@@ -24,8 +24,8 @@
 #include <vector>
 #include <string>
 
-#include "main/thread.h"
-#include "profiler/profiler_defs.h"
+#include "main/snort_types.h"
+
 #include "tp_appid_types.h"
 
 #define THIRD_PARTY_APPID_API_VERSION 6

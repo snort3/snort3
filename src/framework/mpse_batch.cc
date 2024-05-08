@@ -24,7 +24,6 @@
 #include "mpse_batch.h"
 
 #include "profiler/profiler_defs.h"
-#include "search_engines/pat_stats.h"
 #include "managers/mpse_manager.h"
 #include "managers/module_manager.h"
 #include "main/snort_config.h"

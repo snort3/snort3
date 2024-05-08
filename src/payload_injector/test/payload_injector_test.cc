@@ -28,6 +28,7 @@
 
 #include "detection/detection_engine.h"
 #include "flow/flow.h"
+#include "main/snort_config.h"
 #include "main/thread_config.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
@@ -99,7 +100,7 @@ class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
 }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
+void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 
 // MockInspector class
 

@@ -22,9 +22,9 @@
 
 #include <string>
 
-#include "framework/bits.h"
 #include "main/policy.h"
 #include "sfip/sf_ipvar.h"
+#include "utils/bits.h"
 
 namespace snort
 {

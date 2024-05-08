@@ -387,7 +387,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* flags_ctor(Module* p, OptTreeNode*)
+static IpsOption* flags_ctor(Module* p, IpsInfo&)
 {
     FlagsModule* m = (FlagsModule*)p;
     return new TcpFlagOption(m->data);

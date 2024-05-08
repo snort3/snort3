@@ -213,7 +213,7 @@ static Module* size_mod_ctor()
 static void mod_dtor(Module* m)
 {  delete m; }
 
-static IpsOption* size_ctor(Module* p, OptTreeNode*)
+static IpsOption* size_ctor(Module* p, IpsInfo&)
 {
     SizeModule* m = (SizeModule*)p;
     return new SizeOption(m->ssod, m->direction);

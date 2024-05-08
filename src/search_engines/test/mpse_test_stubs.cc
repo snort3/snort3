@@ -32,9 +32,9 @@
 #include "framework/mpse_batch.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "main/thread_config.h"
 #include "managers/mpse_manager.h"
-#include "search_engines/pat_stats.h"
-#include "utils/stats.h"
+#include "profiler/time_profiler_defs.h"
 
 //-------------------------------------------------------------------------
 // base stuff
@@ -76,7 +76,10 @@ void SnortConfig::release_scratch(int)
 DataBus::DataBus() = default;
 DataBus::~DataBus() = default;
 
-THREAD_LOCAL PatMatQStat pmqs;
+THREAD_LOCAL bool snort::TimeProfilerStats::enabled;
+
+unsigned get_instance_id() { return 0; }
+unsigned ThreadConfig::get_instance_max() { return 1; }
 
 unsigned parse_errors = 0;
 void ParseError(const char*, ...)
@@ -105,7 +108,7 @@ const char* FastPatternConfig::get_search_method() const
 using namespace snort;
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
+void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 
 Mpse* mpse = nullptr;
 

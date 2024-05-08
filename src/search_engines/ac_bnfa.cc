@@ -30,14 +30,61 @@
 #include "config.h"
 #endif
 
+#include "framework/module.h"
 #include "framework/mpse.h"
+#include "main/snort_types.h"
+#include "profiler/profiler.h"
 
 #include "bnfa_search.h"
 
 using namespace snort;
 
+#define MOD_NAME "ac_bnfa"
+#define MOD_HELP "Aho-Corasick Binary NFA (low memory, low performance) MPSE"
+
+struct BnfaCounts
+{
+    PegCount searches;
+    PegCount matches;
+    PegCount bytes;
+};
+
+static THREAD_LOCAL BnfaCounts bnfa_counts;
+static THREAD_LOCAL ProfileStats bnfa_stats;
+
+const PegInfo bnfa_pegs[] =
+{
+    { CountType::SUM, "searches", "number of search attempts" },
+    { CountType::SUM, "matches", "number of times a match was found" },
+    { CountType::SUM, "bytes", "total bytes searched" },
+
+    { CountType::END, nullptr, nullptr }
+};
+
 //-------------------------------------------------------------------------
-// "ac_bnfa"
+// module
+//-------------------------------------------------------------------------
+
+class AcBnfaModule : public Module
+{
+public:
+    AcBnfaModule() : Module(MOD_NAME, MOD_HELP) { }
+
+    ProfileStats* get_profile() const override
+    { return &bnfa_stats; }
+
+    const PegInfo* get_pegs() const override
+    { return bnfa_pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*)&bnfa_counts; }
+
+    Usage get_usage() const override
+    { return GLOBAL; }
+};
+
+//-------------------------------------------------------------------------
+// mpse
 //-------------------------------------------------------------------------
 
 class AcBnfaMpse : public Mpse
@@ -58,27 +105,14 @@ public:
             bnfaFree(obj);
     }
 
-    int add_pattern(
-        const uint8_t* P, unsigned m, const PatternDescriptor& desc, void* user) override
-    {
-        return bnfaAddPattern(obj, P, m, desc.no_case, desc.negated, user);
-    }
+    int add_pattern(const uint8_t* P, unsigned m, const PatternDescriptor& desc, void* user) override
+    { return bnfaAddPattern(obj, P, m, desc.no_case, desc.negated, user); }
 
     int prep_patterns(SnortConfig* sc) override
-    {
-        return bnfaCompile(sc, obj);
-    }
+    { return bnfaCompile(sc, obj); }
 
-    int _search(
-        const uint8_t* T, int n, MpseMatch match,
-        void* context, int* current_state) override
-    {
-        /* return is actually the state */
-        return _bnfa_search_csparse_nfa(
-            obj, T, n, match, context, 0 /* start-state */, current_state);
-    }
-
-    //  FIXIT-L Implement search_all method for AC_BNFA.
+    int get_pattern_count() const override
+    { return bnfaPatternCount(obj); }
 
     int print_info() override
     {
@@ -86,15 +120,37 @@ public:
         return 0;
     }
 
-    int get_pattern_count() const override
-    {
-        return bnfaPatternCount(obj);
-    }
+    int search(const uint8_t*, int, MpseMatch, void*, int*) override;
+    //  FIXIT-L Implement search_all method for AC_BNFA.
 };
+
+int AcBnfaMpse::search( const uint8_t* T, int n, MpseMatch match, void* context, int* current_state)
+{
+    Profile profile(bnfa_stats);  // cppcheck-suppress unreadVariable
+
+    bnfa_counts.searches++;
+    bnfa_counts.bytes += n;
+
+    int found = _bnfa_search_csparse_nfa(
+        obj, T, n, match, context, 0 /* start-state */, current_state);
+
+    bnfa_counts.matches += found;
+    return found;
+}
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{
+    return new AcBnfaModule;
+}
+
+static void mod_dtor(Module* p)
+{
+    delete p;
+}
 
 static Mpse* bnfa_ctor(
     const SnortConfig*, class Module*, const MpseAgent* agent)
@@ -127,10 +183,10 @@ static const MpseApi bnfa_api =
         0,
         API_RESERVED,
         API_OPTIONS,
-        "ac_bnfa",
-        "Aho-Corasick Binary NFA (low memory, high performance) MPSE",
-        nullptr,
-        nullptr
+        MOD_NAME,
+        MOD_HELP,
+        mod_ctor,
+        mod_dtor
     },
     MPSE_BASE,
     nullptr,

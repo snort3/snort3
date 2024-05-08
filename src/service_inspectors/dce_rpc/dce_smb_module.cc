@@ -231,9 +231,6 @@ static const Parameter s_params[] =
     { "valid_smb_versions", Parameter::PT_MULTI, "v1 | v2 | all", "all",
       "valid SMB versions" },
 
-    { "smb_file_inspection", Parameter::PT_ENUM, "off | on | only", nullptr,
-      "deprecated (not used): file inspection controlled by smb_file_depth" },
-
     { "smb_file_depth", Parameter::PT_INT, "-1:32767", "16384",
       "SMB file depth for file data (-1 = disabled, 0 = unlimited)" },
 
@@ -509,9 +506,6 @@ bool Dce2SmbModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("valid_smb_versions") )
         set_smb_versions_mask(config,v.get_string());
-
-    else if ( v.is("smb_file_inspection") )
-        ParseWarning(WARN_CONF, "smb_file_inspection is deprecated (not used): use smb_file_depth");
 
     else if ( v.is("smb_file_depth") )
         config.smb_file_depth = v.get_int16();

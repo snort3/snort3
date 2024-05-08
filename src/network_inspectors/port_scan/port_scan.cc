@@ -26,7 +26,6 @@
 
 #include "detection/detection_engine.h"
 #include "log/messages.h"
-#include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"

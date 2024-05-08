@@ -28,6 +28,7 @@
 #include "detection/detection_options.h"
 #include "detection/treenodes.h"
 #include "main/snort_config.h"
+#include "main/thread.h"
 #include "log/messages.h"
 #include "protocols/packet.h"
 #include "utils/stats.h"

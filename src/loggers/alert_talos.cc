@@ -28,7 +28,6 @@
 #include <map>
 #include <sstream>
 
-#include "detection/signature.h"
 #include "events/event.h"
 #include "framework/logger.h"
 #include "framework/module.h"
@@ -162,11 +161,9 @@ void TalosLogger::alert(Packet*, const char* msg, const Event& event)
     stringstream key;
     string message;
 
-    key << "["
-        << event.sig_info->gid << ":"
-        << event.sig_info->sid << ":"
-        << event.sig_info->rev
-        << "]";
+    uint32_t gid, sid, rev;
+    event.get_sig_ids(gid, sid, rev);
+    key << "[" << gid << ":" << sid << ":" << rev << "]";
 
     auto rule_iter = alerts.find(key.str());
 
@@ -189,9 +186,9 @@ void TalosLogger::alert(Packet*, const char* msg, const Event& event)
 
     rule.key = key.str();
     rule.msg = message;
-    rule.gid = event.sig_info->gid;
-    rule.sid = event.sig_info->sid;
-    rule.rev = event.sig_info->rev;
+    rule.gid = gid;
+    rule.sid = sid;
+    rule.rev = rev;
     rule.count = 1;
 
     // rule not in map, add it

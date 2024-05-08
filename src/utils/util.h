@@ -63,23 +63,8 @@
 #define SECONDS_PER_HOUR  3600  /* number of seconds in a hour */
 #define SECONDS_PER_MIN     60     /* number of seconds in a minute */
 
-void StoreSnortInfoStrings();
-int DisplayBanner();
-int gmt2local(time_t);
-std::string read_infile(const char* key, const char* fname);
-void CleanupProtoNames();
-void CreatePidFile(pid_t);
-void ClosePidFile();
-bool SetUidGid(int, int);
-void InitGroups(int, int);
-bool EnterChroot(std::string& root_dir, std::string& log_dir);
-void InitProtoNames();
 unsigned int get_random_seed();
 bool get_file_size(const std::string&, size_t&);
-
-#if defined(NOCOREFILE)
-void SetNoCores();
-#endif
 
 namespace
 {
@@ -123,9 +108,6 @@ inline pid_t gettid()
 
 namespace snort
 {
-// FIXIT-M provide getter function to for standardized access into the protocol_names array
-SO_PUBLIC extern char** protocol_names;
-
 SO_PUBLIC const char* get_error(int errnum);
 SO_PUBLIC char* snort_strdup(const char*);
 SO_PUBLIC char* snort_strndup(const char*, size_t);

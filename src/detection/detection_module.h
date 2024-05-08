@@ -23,6 +23,7 @@
 #define DETECTION_MODULE_H
 
 #include "framework/module.h"
+#include "utils/stats.h"
 
 namespace snort
 {
@@ -55,4 +56,5 @@ private:
 };
 }
 
-#endif // DETECTION_MODULE_H
+#endif
+

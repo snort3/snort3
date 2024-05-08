@@ -26,8 +26,8 @@
 #include <cstring>
 
 #include "framework/module.h"
-#include "framework/packet_constraints.h"
 #include "managers/module_manager.h"
+#include "packet_io/packet_constraints.h"
 
 #include "trace_logger.h"
 

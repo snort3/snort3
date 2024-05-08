@@ -42,7 +42,7 @@ enum MMS_State
 
 class MmsTracker
 {
-public:  
+public:
     MMS_State state = MMS_State::MMS_STATE__TPKT_VER;
     MMS_State last_state = MMS_State::MMS_STATE__TPKT_VER;
 };

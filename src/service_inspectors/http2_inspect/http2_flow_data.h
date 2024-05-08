@@ -23,10 +23,11 @@
 #include <queue>
 #include <vector>
 
-#include "main/snort_types.h"
-#include "utils/event_gen.h"
-#include "utils/infractions.h"
 #include "flow/flow.h"
+#include "flow/stream_flow.h"
+#include "helpers/event_gen.h"
+#include "helpers/infractions.h"
+#include "main/snort_types.h"
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_field.h"
 #include "stream/stream_splitter.h"

@@ -85,7 +85,7 @@ char* snort_strdup(const char* str)
 // LCOV_EXCL_START
 DiscoveryFilter::~DiscoveryFilter(){}
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
+void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 // LCOV_EXCL_STOP
 
 #ifndef SIP_UNIT_TEST
@@ -95,12 +95,6 @@ public:
     AppIdInspector(AppIdModule&) { }
     ~AppIdInspector() override = default;
     bool configure(snort::SnortConfig*) override;
-// LCOV_EXCL_START
-    void eval(Packet*) override { }
-    void show(const SnortConfig*) const override { }
-    void tinit() override { }
-    void tterm() override { }
-// LCOV_EXCL_STOP
 private:
     AppIdContext* ctxt = nullptr;
 };

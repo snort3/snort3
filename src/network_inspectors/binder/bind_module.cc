@@ -124,16 +124,6 @@ static const Parameter binder_when_params[] =
     { "service", Parameter::PT_STRING, nullptr, nullptr,
       "override default configuration" },
 
-    // FIXIT-D deprecated zone parameters to be removed
-    { "zones", Parameter::PT_STRING, nullptr, nullptr,
-      "deprecated alias for groups" },
-
-    { "src_zone", Parameter::PT_STRING, nullptr, nullptr,
-      "deprecated alias for src_groups" },
-
-    { "dst_zone", Parameter::PT_STRING, nullptr, nullptr,
-      "deprecated alias for dst_groups" },
-
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -325,19 +315,19 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
             return false;
         binding.when.add_criteria(BindWhen::Criteria::BWC_SPLIT_INTFS);
     }
-    else if ( v.is("groups") || v.is("zones") )
+    else if ( v.is("groups") )
     {
         if (!parse_int_set<int16_t>(v, binding.when.src_groups))
             return false;
         binding.when.add_criteria(BindWhen::Criteria::BWC_GROUPS);
     }
-    else if ( v.is("src_groups") || v.is("src_zone") )
+    else if ( v.is("src_groups") )
     {
         if (!parse_int_set<int16_t>(v, binding.when.src_groups))
             return false;
         binding.when.add_criteria(BindWhen::Criteria::BWC_SPLIT_GROUPS);
     }
-    else if ( v.is("dst_groups") || v.is("dst_zone") )
+    else if ( v.is("dst_groups") )
     {
         if (!parse_int_set<int16_t>(v, binding.when.dst_groups))
             return false;

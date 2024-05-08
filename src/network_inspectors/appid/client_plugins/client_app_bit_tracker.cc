@@ -42,6 +42,8 @@ static const char UDP_BIT_COMMON_END[] = "1:y1:";
 #define UDP_BIT_COMMON_END_LEN (sizeof(UDP_BIT_COMMON_END)-1)
 #define UDP_BIT_END_LEN (UDP_BIT_COMMON_END_LEN+2)
 
+namespace
+{
 enum  BITState
 {
     BIT_STATE_BANNER = 0,
@@ -65,6 +67,7 @@ struct ClientBITData
     BITType type;
     unsigned pos;
 };
+} // anonymous
 
 BitTrackerClientDetector::BitTrackerClientDetector(ClientDiscovery* cdm)
 {

@@ -511,7 +511,7 @@ static void dce2_iface_mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* dce2_iface_ctor(Module* p, OptTreeNode*)
+static IpsOption* dce2_iface_ctor(Module* p, IpsInfo&)
 {
     Dce2IfaceModule* m = (Dce2IfaceModule*)p;
     return new Dce2IfaceOption(m->version, m->any_frag, m->uuid);

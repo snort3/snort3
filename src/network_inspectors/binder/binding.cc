@@ -107,6 +107,7 @@ void Binding::configure(const SnortConfig* sc)
     {
         const char* name = use.name.c_str();
         Inspector* ins = InspectorManager::get_inspector(name, use.global_type, sc);
+
         if (ins)
         {
             switch (ins->get_api()->type)

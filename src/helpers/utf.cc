@@ -23,7 +23,7 @@
 #include "config.h"
 #endif
 
-#include "util_utf.h"
+#include "utf.h"
 
 #include <cassert>
 #include <cstring>

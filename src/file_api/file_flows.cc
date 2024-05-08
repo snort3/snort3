@@ -32,8 +32,9 @@
 #include "detection/detection_engine.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
+#include "main/thread.h"
 #include "managers/inspector_manager.h"
-#include "packet_tracer/packet_tracer.h"
+#include "packet_io/packet_tracer.h"
 #include "protocols/packet.h"
 #include "trace/trace_api.h"
 
@@ -78,7 +79,7 @@ static void populate_trace_data(FileContext* context)
 
     PacketTracer::daq_log("file+%" PRId64"+Matched policy id %u, identification %s, signature %s, capture %s+"
                 "File with ID %lu, name %s, type %s, size %lu, SHA %s detected. Verdict %s.$",
-                TO_NSECS(pt_timer->get()),
+                PacketTracer::get_time(),
                 context->get_policy_id(),
                 ((context->is_file_type_enabled() || context->get_file_type() || context->get_file_sig_sha256()) ? "<on>" : "<off>"),
                 ((context->is_file_signature_enabled() || context->get_file_sig_sha256()) ? "<on>" : "<off>"),
@@ -368,7 +369,7 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
     }
 
     if (PacketTracer::is_daq_activated())
-        PacketTracer::pt_timer_start();
+        PacketTracer::restart_timer();
 
     if (!cacheable)
         context->set_not_cacheable();
@@ -460,7 +461,7 @@ bool FileFlows::file_process(Packet* p, const uint8_t* file_data, int data_size,
     }
 
     if (PacketTracer::is_daq_activated())
-        PacketTracer::pt_timer_start();
+        PacketTracer::restart_timer();
 
     context = find_main_file_context(position, direction, file_index);
 
@@ -518,120 +519,3 @@ void FileFlows::add_pending_file(uint64_t file_id)
     current_file_id = pending_file_id = file_id;
 }
 
-FileInspect::FileInspect(FileIdModule* fm)
-{
-    fm->load_config(config);
-}
-
-FileInspect:: ~FileInspect()
-{
-    if (config)
-        delete config;
-}
-
-bool FileInspect::configure(SnortConfig*)
-{
-    if (!config)
-        return true;
-
-    FileCache* file_cache = FileService::get_file_cache();
-    if (file_cache)
-    {
-        file_cache->set_block_timeout(config->file_block_timeout);
-        file_cache->set_lookup_timeout(config->file_lookup_timeout);
-        file_cache->set_max_files(config->max_files_cached);
-    }
-
-    return true;
-}
-
-static void file_config_show(const FileConfig* fc)
-{
-    if ( ConfigLogger::log_flag("enable_type", FileService::is_file_type_id_enabled()) )
-        ConfigLogger::log_value("type_depth", fc->file_type_depth);
-
-    if ( ConfigLogger::log_flag("enable_signature", FileService::is_file_signature_enabled()) )
-        ConfigLogger::log_value("signature_depth", fc->file_signature_depth);
-
-    if ( ConfigLogger::log_flag("block_timeout_lookup", fc->block_timeout_lookup) )
-        ConfigLogger::log_value("block_timeout", fc->file_block_timeout);
-
-    if ( ConfigLogger::log_flag("enable_capture", FileService::is_file_capture_enabled()) )
-    {
-        ConfigLogger::log_value("capture_memcap", fc->capture_memcap);
-        ConfigLogger::log_value("capture_max_size", fc->capture_max_size);
-        ConfigLogger::log_value("capture_min_size", fc->capture_min_size);
-        ConfigLogger::log_value("capture_block_size", fc->capture_block_size);
-    }
-
-    ConfigLogger::log_value("lookup_timeout", fc->file_lookup_timeout);
-    ConfigLogger::log_value("max_files_cached", fc->max_files_cached);
-    ConfigLogger::log_value("max_files_per_flow", fc->max_files_per_flow);
-    ConfigLogger::log_value("show_data_depth", fc->show_data_depth);
-
-    ConfigLogger::log_flag("trace_type", fc->trace_type);
-    ConfigLogger::log_flag("trace_signature", fc->trace_signature);
-    ConfigLogger::log_flag("trace_stream", fc->trace_stream);
-}
-
-void FileInspect::show(const SnortConfig*) const
-{
-    if ( config )
-        file_config_show(config);
-}
-
-static Module* mod_ctor()
-{ return new FileIdModule; }
-
-static void mod_dtor(Module* m)
-{ delete m; }
-
-static void file_init()
-{
-    FileFlows::init();
-}
-
-static void file_term()
-{
-}
-
-static Inspector* file_ctor(Module* m)
-{
-    FileIdModule* mod = (FileIdModule*)m;
-    return new FileInspect(mod);
-}
-
-static void file_dtor(Inspector* p)
-{
-    delete p;
-}
-
-static const InspectApi file_inspect_api =
-{
-    {
-        PT_INSPECTOR,
-        sizeof(InspectApi),
-        INSAPI_VERSION,
-        0,
-        API_RESERVED,
-        API_OPTIONS,
-        FILE_ID_NAME,
-        FILE_ID_HELP,
-        mod_ctor,
-        mod_dtor
-    },
-    IT_FILE,
-    PROTO_BIT__NONE,
-    nullptr,
-    "file",
-    file_init,
-    file_term,
-    nullptr, // tinit
-    nullptr, // tterm
-    file_ctor,
-    file_dtor,
-    nullptr, // ssn
-    nullptr  // reset
-};
-
-const BaseApi* sin_file_flow = &file_inspect_api.base;

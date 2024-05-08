@@ -127,7 +127,7 @@ static void cip_enipreq_mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* cip_enipreq_ctor(Module*, OptTreeNode*)
+static IpsOption* cip_enipreq_ctor(Module*, IpsInfo&)
 {
     return new CipEnipreqOption;
 }

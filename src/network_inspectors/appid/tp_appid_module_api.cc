@@ -24,7 +24,10 @@
 #endif
 
 #include "tp_appid_module_api.h"
+
 #include "managers/module_manager.h"
+#include "profiler/profiler.h"
+
 #include "appid_module.h"
 #include "tp_lib_handler.h"
 

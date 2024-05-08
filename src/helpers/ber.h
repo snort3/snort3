@@ -15,10 +15,10 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// util_ber.h author Brandon Stultz <brastult@cisco.com>
+// ber.h author Brandon Stultz <brastult@cisco.com>
 
-#ifndef UTIL_BER_H
-#define UTIL_BER_H
+#ifndef BER_H
+#define BER_H
 
 #include "main/snort_types.h"
 #include "framework/cursor.h"

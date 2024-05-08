@@ -21,34 +21,6 @@
 #ifndef PROFILER_H
 #define PROFILER_H
 
-#include "main/thread.h"
 #include "profiler_defs.h"
-
-namespace snort
-{
-class Module;
-}
-class ControlConn;
-class ProfilerNodeMap;
-class Profiler
-{
-public:
-    static void register_module(snort::Module*);
-    static void register_module(const char*, const char*, snort::Module*);
-
-    static void start();
-    static void stop(uint64_t);
-
-    static void consolidate_stats(snort::ProfilerType = snort::PROFILER_TYPE_BOTH);
-
-    static void reset_stats(snort::ProfilerType = snort::PROFILER_TYPE_BOTH);
-    static void prepare_stats();
-    static void show_stats();
-    static ProfilerNodeMap& get_profiler_nodes();
-    SO_PUBLIC static void show_runtime_memory_stats();
-};
-
-extern THREAD_LOCAL snort::ProfileStats totalPerfStats;
-extern THREAD_LOCAL snort::ProfileStats otherPerfStats;
 
 #endif

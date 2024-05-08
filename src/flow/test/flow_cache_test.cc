@@ -35,7 +35,11 @@
 #include "main/analyzer.h"
 #include "main/thread_config.h"
 #include "managers/inspector_manager.h"
+#include "main/policy.h"
+#include "main/snort_config.h"
+#include "main/thread_config.h"
 #include "packet_io/active.h"
+#include "packet_io/packet_tracer.h"
 #include "protocols/icmp4.h"
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
@@ -50,36 +54,46 @@
 
 using namespace snort;
 
-THREAD_LOCAL bool Active::s_suspend = false;
-THREAD_LOCAL Active::ActiveSuspendReason Active::s_suspend_reason = Active::ASP_NONE;
-
 THREAD_LOCAL const Trace* stream_trace = nullptr;
 THREAD_LOCAL FlowControl* flow_con = nullptr;
 
-void Active::drop_packet(snort::Packet const*, bool) { }
 Analyzer* Analyzer::get_local_analyzer() { return nullptr; }
 void Analyzer::resume(uint64_t) { }
+
+void Active::drop_packet(snort::Packet const*, bool) { }
+void Active::suspend(ActiveSuspendReason) { }
+void Active::resume() { }
 void Active::set_drop_reason(char const*) { }
-ExpectCache::ExpectCache(uint32_t) { }
-ExpectCache::~ExpectCache() = default;
-bool ExpectCache::check(Packet*, Flow*) { return true; }
+
+DetectionEngine::DetectionEngine() = default;
+DetectionEngine::~DetectionEngine() = default;
 void DetectionEngine::disable_all(Packet*) { }
+
+const SnortConfig* SnortConfig::get_conf() { return nullptr; }
+
 Flow* HighAvailabilityManager::import(Packet&, FlowKey&) { return nullptr; }
 bool HighAvailabilityManager::in_standby(Flow*) { return false; }
-SfIpRet SfIp::set(void const*, int) { return SFIP_SUCCESS; }
-const SnortConfig* SnortConfig::get_conf() { return nullptr; }
+
 uint8_t TraceApi::get_constraints_generation() { return 0; }
 void TraceApi::filter(const Packet&) {}
+
 void ThreadConfig::preemptive_kick() {}
+unsigned ThreadConfig::get_instance_max() { return 0; }
+
+SfIpRet SfIp::set(void const*, int) { return SFIP_SUCCESS; }
 SfIpRet SfIp::set(void const*) { return SFIP_SUCCESS; }
 SfIpRet SfIp::pton(const int, const char* ) { return SFIP_SUCCESS; }
+
 const char* SfIp::ntop(char* buf, int) const
 { buf[0] = 0; return buf; }
-unsigned ThreadConfig::get_instance_max() { return 0; }
+
 bool ControlConn::respond(const char*, ...) { return true; }
+
 class TcpStreamTracker;
 const char* stream_tcp_state_to_str(const TcpStreamTracker&) { return "error"; }
+
 void LogMessage(const char*, ...) { }
+
 namespace snort
 {
 Flow::~Flow() = default;
@@ -103,6 +117,11 @@ namespace ip
 uint32_t IpApi::id() const { return 0; }
 }
 }
+
+ExpectCache::ExpectCache(uint32_t) { }
+ExpectCache::~ExpectCache() = default;
+
+bool ExpectCache::check(Packet*, Flow*) { return true; }
 
 int ExpectCache::add_flow(const Packet*, PktType, IpProtocol, const SfIp*, uint16_t,
     const SfIp*, uint16_t, char, FlowData*, SnortProtocolId, bool, bool, bool, bool)

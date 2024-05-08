@@ -237,7 +237,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* file_type_ctor(Module* m, OptTreeNode*)
+static IpsOption* file_type_ctor(Module* m, IpsInfo&)
 {
     FileTypeModule* mod = (FileTypeModule*)m;
     return new FileTypeOption(mod->types);

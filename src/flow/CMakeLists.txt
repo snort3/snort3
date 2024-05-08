@@ -1,6 +1,6 @@
 set (FLOW_INCLUDES
     deferred_trust.h
-    expect_cache.h
+    expect_flow.h
     flow.h
     flow_data.h
     flow_key.h
@@ -8,6 +8,7 @@ set (FLOW_INCLUDES
     ha.h
     session.h
     stash_item.h
+    stream_flow.h
 )
 
 add_library (flow OBJECT
@@ -16,6 +17,7 @@ add_library (flow OBJECT
     expect_cache.cc
     flow.cc
     flow_cache.cc
+    expect_cache.h
     flow_cache.h
     flow_config.h
     flow_control.cc

@@ -344,7 +344,8 @@ static int reload_third_party(lua_State* L)
         return 0;
     }
 
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
+    AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true);
+
     if (!inspector)
     {
         ReloadTracker::failed(ctrlcon, "appid not enabled");
@@ -442,7 +443,8 @@ static int reload_detectors(lua_State* L)
         ctrlcon->respond("== reload pending; retry\n");
         return 0;
     }
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
+    AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true);
+
     if (!inspector)
     {
         ctrlcon->respond("== reload detectors failed - appid not enabled\n");

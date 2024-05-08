@@ -33,6 +33,7 @@
 #include "trace/trace.h"
 
 #include "detect_trace.h"
+#include "detection_engine.h"
 
 using namespace snort;
 
@@ -195,6 +196,9 @@ bool DetectionModule::end(const char* fqn, int idx, SnortConfig* sc)
 
     if ( sc->offload_threads and ThreadConfig::get_instance_max() != 1 )
         ParseError("You can not enable experimental offload with more than one packet thread.");
+
+    if ( sc->offload_limit < 99999 )
+        DetectionEngine::enable_offload();
 
     return true;
 }

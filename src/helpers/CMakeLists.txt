@@ -13,39 +13,47 @@ endif ()
 set (HELPERS_INCLUDES
     ${HYPER_HEADERS}
     base64_encoder.h
+    ber.h
     bitop.h
+    boyer_moore.h
     boyer_moore_search.h
     buffer_data.h
+    event_gen.h
+    infractions.h
     json_stream.h
     literal_search.h
-    process.h
+    memcap_allocator.h
     scratch_allocator.h
     sigsafe.h
+    utf.h
 )
 
 add_library (helpers OBJECT
     ${HELPERS_INCLUDES}
     ${HYPER_SOURCES}
     base64_encoder.cc
+    ber.cc
+    boyer_moore.cc
     boyer_moore_search.cc
     buffer_data.cc
-    chunk.cc
-    chunk.h
     directory.cc
     directory.h
     discovery_filter.cc
     discovery_filter.h
     flag_context.h
+    grouped_list.h
     json_stream.cc
-    json_stream.h
     literal_search.cc
     markup.cc
     markup.h
-    process.cc
+    primed_allocator.h
     ring.h
     ring_logic.h
     sigsafe.cc
     scratch_allocator.cc
+    streambuf.cc
+    streambuf.h
+    utf.cc
 )
 
 install (FILES ${HELPERS_INCLUDES}

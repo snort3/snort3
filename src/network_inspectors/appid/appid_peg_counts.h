@@ -36,6 +36,8 @@
 
 #include "application_ids.h"
 #include "framework/counts.h"
+#include "log/messages.h"
+#include "utils/util.h"
 
 struct AppIdStats
 {

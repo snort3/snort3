@@ -31,19 +31,14 @@ namespace snort
 {
 struct Packet;
 
-// FIXIT-L can I assume api is always valid?
-// i.e. if not ip4, then ipv6?
-// or if not ip4, also make sure its not ip6
-
 namespace ip
 {
-// keeping this as a class to avoid confusion.
 class SO_PUBLIC IpApi
 {
 public:
     enum Type { IAT_NONE, IAT_4, IAT_6, IAT_DATA };
 
-    // constructor and destructor MUST remain a trivial. Adding
+    // constructor and destructor MUST remain trivial. Adding
     // any non-trivial code will cause a compilation failure.
     IpApi() = default;
 

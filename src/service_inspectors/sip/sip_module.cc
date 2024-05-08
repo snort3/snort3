@@ -81,9 +81,6 @@ static const Parameter s_params[] =
     { "max_request_name_len", Parameter::PT_INT, "0:65535", "20",
       "maximum request name field size" },
 
-    { "max_requestName_len", Parameter::PT_INT, "0:65535", "20",
-      "deprecated - use max_request_name_len instead" },
-
     { "max_to_len", Parameter::PT_INT, "0:65535", "256",
       "maximum to field size" },
 
@@ -218,8 +215,7 @@ bool SipModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("max_from_len") )
         conf->maxFromLen = v.get_uint16();
 
-    // FIXIT-L max_requestName_len is deprecated - delete
-    else if ( v.is("max_request_name_len") or v.is("max_requestName_len") )
+    else if ( v.is("max_request_name_len") )
         conf->maxRequestNameLen = v.get_uint16();
 
     else if ( v.is("max_to_len") )

@@ -25,10 +25,9 @@
 
 #include <cstring>
 
-#include "framework/packet_constraints.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
-#include "main/thread.h"
+#include "packet_io/packet_constraints.h"
 #include "protocols/packet.h"
 #include "utils/safec.h"
 

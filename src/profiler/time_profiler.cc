@@ -42,7 +42,17 @@ using namespace snort;
 // enabled is not in SnortConfig to avoid that ugly dependency
 // enabled is not in TimeContext because declaring it SO_PUBLIC made TimeContext visible
 // putting enabled in TimeProfilerStats seems to be the best solution
+#ifndef _WIN64
 THREAD_LOCAL bool TimeProfilerStats::enabled = false;
+#else
+static THREAD_LOCAL bool enabled;
+
+void TimeProfilerStats::set_enabled(bool b)
+{ enabled = b; }
+
+bool TimeProfilerStats::is_enabled()
+{ return enabled; }
+#endif
 
 namespace time_stats
 {

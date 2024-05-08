@@ -162,7 +162,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* len_ctor(Module* p, OptTreeNode*)
+static IpsOption* len_ctor(Module* p, IpsInfo&)
 {
     LenModule* m = (LenModule*)p;
     return new LenOption(m->data, m->relative);

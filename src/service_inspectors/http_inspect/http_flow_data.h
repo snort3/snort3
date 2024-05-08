@@ -26,7 +26,7 @@
 #include <list>
 
 #include "flow/flow.h"
-#include "utils/util_utf.h"
+#include "helpers/utf.h"
 #include "decompress/file_decomp.h"
 
 #include "http_common.h"

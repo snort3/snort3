@@ -29,7 +29,6 @@
 // rule groups are selected based on traffic and any fast pattern
 // matches trigger rule tree evaluation.
 
-#include "main/thread.h"
 #include "profiler/profiler_defs.h"
 #include "target_based/snort_protocols.h"
 

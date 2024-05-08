@@ -26,7 +26,6 @@
 
 #include "codecs/codec_module.h"
 #include "framework/codec.h"
-#include "log/log.h"
 #include "log/log_text.h"
 #include "main/snort_config.h"
 #include "parser/parse_ip.h"
@@ -573,7 +572,7 @@ void TcpCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
     const tcp::TCPHdr* const tcph = reinterpret_cast<const tcp::TCPHdr*>(raw_pkt);
 
     /* print TCP flags */
-    CreateTCPFlagString(tcph, tcpFlags);
+    tcph->stringify_flags(tcpFlags);
     TextLog_Puts(text_log, tcpFlags); /* We don't care about the null */
 
     /* print other TCP info */

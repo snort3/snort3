@@ -25,7 +25,7 @@
 #include "dce_common.h"
 
 #include "detection/detection_engine.h"
-#include "ips_options/extract.h"
+#include "detection/extract.h"
 #include "log/messages.h"
 #include "utils/safec.h"
 

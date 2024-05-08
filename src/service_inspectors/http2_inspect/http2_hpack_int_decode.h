@@ -23,9 +23,9 @@
 #include "http2_enum.h"
 #include "http2_varlen_int_decode.h"
 
+#include "helpers/event_gen.h"
+#include "helpers/infractions.h"
 #include "main/snort_types.h"
-#include "utils/event_gen.h"
-#include "utils/infractions.h"
 
 using Http2Infractions = Infractions<Http2Enums::INF__MAX_VALUE, Http2Enums::INF__NONE>;
 

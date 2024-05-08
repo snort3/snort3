@@ -89,7 +89,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* pkt_data_ctor(Module*, OptTreeNode*)
+static IpsOption* pkt_data_ctor(Module*, IpsInfo&)
 {
     return new PktDataOption;
 }
@@ -124,5 +124,13 @@ static const IpsApi pkt_data_api =
     nullptr
 };
 
-const BaseApi* ips_pkt_data = &pkt_data_api.base;
+#ifdef BUILDING_SO
+SO_PUBLIC const BaseApi* snort_plugins[] =
+#else
+const BaseApi* ips_pkt_data[] =
+#endif
+{
+    &pkt_data_api.base,
+    nullptr
+};
 

@@ -21,7 +21,6 @@
 #define REPUTATION_CONFIG_H
 
 #include "framework/counts.h"
-#include "main/thread.h"
 #include "sfrt/sfrt.h"
 
 #include <vector>

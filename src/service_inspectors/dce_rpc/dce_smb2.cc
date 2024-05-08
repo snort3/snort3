@@ -24,9 +24,11 @@
 #endif
 
 #include "dce_smb2.h"
-#include "dce_smb2_commands.h"
-#include "detection/detection_util.h"
+
+#include "flow/flow_key.h"
 #include "stream/stream.h"
+
+#include "dce_smb2_commands.h"
 
 using namespace snort;
 

@@ -26,6 +26,7 @@
 
 #include <cassert>
 
+#include "main/snort_config.h"
 #include "pub_sub/auxiliary_ip_event.h"
 #include "pub_sub/stash_events.h"
 

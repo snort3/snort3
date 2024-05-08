@@ -28,7 +28,6 @@
 #include <sstream>
 
 #include "detection/detection_engine.h"
-#include "detection/detection_util.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "log/unified2.h"
 #include "protocols/packet.h"

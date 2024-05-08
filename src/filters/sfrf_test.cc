@@ -558,7 +558,7 @@ static void Init(const SnortConfig* sc, unsigned cap)
         cfg.tracking = p->track;
         cfg.count = p->count;
         cfg.seconds = p->seconds;
-        cfg.newAction = (Actions::Type)RULE_NEW;
+        cfg.newAction = (IpsAction::Type)RULE_NEW;
         cfg.timeout = p->timeout;
         cfg.applyTo = p->ip ? sfip_var_from_string(p->ip, "sfrf_test") : nullptr;
 
@@ -599,8 +599,8 @@ static int EventTest(EventData* p)
     status = SFRF_TestThreshold(rfc, p->gid, p->sid, get_network_policy()->policy_id,
         &sip, &dip, curtime, op);
 
-    if ( status >= Actions::get_max_types() )
-        status -= Actions::get_max_types();
+    if ( status >= IpsAction::get_max_types() )
+        status -= IpsAction::get_max_types();
 
     return status;
 }

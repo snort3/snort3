@@ -33,7 +33,6 @@
 
 #include "control/control.h"
 #include "log/messages.h"
-#include "main/thread.h"
 
 namespace memory
 {

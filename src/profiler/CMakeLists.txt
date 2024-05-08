@@ -1,6 +1,5 @@
 set ( PROFILER_INCLUDES
     memory_defs.h
-    memory_context.h
     memory_profiler_defs.h
     profiler.h
     profiler_defs.h
@@ -13,9 +12,11 @@ set ( PROFILER_SOURCES
     json_view.cc
     json_view.h
     memory_context.cc
+    memory_context.h
     memory_profiler.cc
     memory_profiler.h
     profiler.cc
+    profiler_impl.h
     profiler_module.cc
     profiler_module.h
     profiler_nodes.cc

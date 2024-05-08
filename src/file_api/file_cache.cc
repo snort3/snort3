@@ -30,10 +30,11 @@
 #include "main/snort_config.h"
 #include "main/thread_config.h"
 #include "packet_io/active.h"
-#include "packet_tracer/packet_tracer.h"
+#include "packet_io/packet_tracer.h"
 #include "time/packet_time.h"
 
 #include "file_flows.h"
+#include "file_module.h"
 #include "file_service.h"
 #include "file_stats.h"
 

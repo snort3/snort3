@@ -29,6 +29,7 @@
 #include "sfip/sf_ip.h"
 
 #include "rna_fingerprint_tcp.h"
+#include "rna_tracker.h"
 
 namespace snort
 {
@@ -36,8 +37,6 @@ struct Packet;
 }
 
 class DiscoveryFilter;
-
-using RnaTracker = std::shared_ptr<snort::HostTracker>;
 
 class RNAFlow : public snort::FlowData
 {

@@ -22,7 +22,6 @@
 #define NORM_STATS_H
 
 #include "framework/counts.h"
-#include "main/thread.h"
 
 #include "normalize.h"
 

@@ -24,7 +24,7 @@
 
 #include "dce_expected_session.h"
 
-#include "managers/inspector_manager.h"
+#include "framework/pig_pen.h"
 #include "pub_sub/dcerpc_events.h"
 #include "stream/stream.h"
 
@@ -36,7 +36,7 @@ void DceExpSsnManager::create_expected_session(const SfIp* ept_ip,
     uint16_t ept_port, const char* mod_name)
 {
     Packet* pkt = DetectionEngine::get_current_packet();
-    Dce2Tcp* inspector = (Dce2Tcp*)InspectorManager::get_inspector(mod_name, true);
+    Dce2Tcp* inspector = (Dce2Tcp*)PigPen::get_inspector(mod_name, true);
     DceExpSsnManager& esm = inspector->get_esm();
 
     const SfIp* src_ip = pkt->ptrs.ip_api.get_dst();

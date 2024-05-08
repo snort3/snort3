@@ -27,7 +27,6 @@
 #include <algorithm>
 #include <cstring>
 
-#include "main/thread.h"
 
 using namespace snort;
 using namespace std;

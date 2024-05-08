@@ -37,7 +37,7 @@ struct LogApi;
 struct Packet;
 struct SnortConfig;
 }
-struct Event;
+class Event;
 struct OutputSet;
 
 //-------------------------------------------------------------------------

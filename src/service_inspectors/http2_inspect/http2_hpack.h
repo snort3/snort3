@@ -20,9 +20,9 @@
 #ifndef HTTP2_HPACK_H
 #define HTTP2_HPACK_H
 
+#include "helpers/event_gen.h"
+#include "helpers/infractions.h"
 #include "service_inspectors/http_inspect/http_common.h"
-#include "utils/event_gen.h"
-#include "utils/infractions.h"
 
 #include "http2_hpack_int_decode.h"
 #include "http2_hpack_string_decode.h"

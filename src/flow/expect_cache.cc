@@ -22,11 +22,12 @@
 #endif
 
 #include "expect_cache.h"
+#include "expect_flow.h"
 
 #include "detection/ips_context.h"
 #include "hash/zhash.h"
+#include "packet_io/packet_tracer.h"
 #include "packet_io/sfdaq_instance.h"
-#include "packet_tracer/packet_tracer.h"
 #include "protocols/packet.h"
 #include "protocols/vlan.h"
 #include "pub_sub/expect_events.h"

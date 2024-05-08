@@ -24,6 +24,7 @@
 
 #include "framework/module.h"
 #include "framework/policy_selector.h"
+
 #include "address_space_selection.h"
 
 #define ADDRESS_SPACE_SELECT_NAME "address_space_selector"

@@ -35,6 +35,7 @@
 #include "detection/detect.h"
 #include "detection/detection_engine.h"
 #include "detection/ips_context.h"
+#include "detection/event_trace.h"
 #include "detection/tag.h"
 #include "file_api/file_service.h"
 #include "filters/detection_filter.h"
@@ -50,18 +51,19 @@
 #include "main/swapper.h"
 #include "main.h"
 #include "managers/action_manager.h"
+#include "managers/codec_manager.h"
 #include "managers/inspector_manager.h"
 #include "managers/ips_manager.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"
 #include "memory/memory_cap.h"
 #include "packet_io/active.h"
+#include "packet_io/packet_tracer.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/sfdaq_config.h"
 #include "packet_io/sfdaq_instance.h"
 #include "packet_io/sfdaq_module.h"
-#include "packet_tracer/packet_tracer.h"
-#include "profiler/profiler.h"
+#include "profiler/profiler_impl.h"
 #include "pub_sub/daq_message_event.h"
 #include "pub_sub/finalize_packet_event.h"
 #include "side_channel/side_channel.h"
@@ -407,7 +409,7 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
 
     Packet* p = switcher->get_context()->packet;
     p->context->wire_packet = p;
-    p->context->packet_number = get_packet_number();
+    p->context->packet_number = pc.analyzed_pkts;
     select_default_policy(*pkthdr, p->context->conf);
 
     DetectionEngine::reset();
@@ -497,12 +499,6 @@ void Analyzer::process_retry_queue()
 /*
  * Public packet processing methods
  */
-bool Analyzer::inspect_rebuilt(Packet* p)
-{
-    DetectionEngine de;
-    return main_hook(p);
-}
-
 bool Analyzer::process_rebuilt_packet(Packet* p, const DAQ_PktHdr_t* pkthdr, const uint8_t* pkt,
     uint32_t pktlen)
 {
@@ -631,7 +627,7 @@ void Analyzer::init_unprivileged()
     // to handle all trace log messages
     TraceApi::thread_init(sc->trace_config);
 
-    CodecManager::thread_init(sc);
+    CodecManager::thread_init();
 
     // this depends on instantiated daq capabilities
     // so it is done here instead of init()

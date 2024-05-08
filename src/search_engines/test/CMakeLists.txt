@@ -6,6 +6,7 @@ add_cpputest( ac_bnfa_test
         ../ac_bnfa.cc
         ../bnfa_search.cc
         ../search_tool.cc
+        ../../framework/module.cc
         ../../framework/mpse.cc
 )
 
@@ -16,6 +17,7 @@ add_cpputest( search_tool_test
         ../ac_full.cc
         ../acsmx2.cc
         ../search_tool.cc
+        ../../framework/module.cc
         ../../framework/mpse.cc
 )
 

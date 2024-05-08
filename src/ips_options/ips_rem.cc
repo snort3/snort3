@@ -67,7 +67,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* rem_ctor(Module*, OptTreeNode*)
+static IpsOption* rem_ctor(Module*, IpsInfo&)
 {
     return nullptr;
 }

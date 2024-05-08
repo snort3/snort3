@@ -67,7 +67,7 @@ unsigned ThreadConfig::get_instance_max() { return 1; }
 }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
+void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 
 int32_t str_to_code(const char*, const StrCode []) { return 0; }
 int32_t str_to_code(const uint8_t*, const int32_t, const StrCode []) { return 0; }

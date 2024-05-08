@@ -21,7 +21,6 @@
 #ifndef PERF_MONITOR_H
 #define PERF_MONITOR_H
 
-#include "managers/inspector_manager.h"
 #include "protocols/packet.h"
 
 #include "base_tracker.h"

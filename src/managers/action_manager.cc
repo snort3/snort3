@@ -59,13 +59,13 @@ struct IpsActionsConfig
 };
 
 using ACList = vector<ActionClass>;
-using ACTypeList = unordered_map<string, Actions::Type>;
+using ACTypeList = unordered_map<string, IpsAction::Type>;
 using ACPriorityList = map<IpsAction::IpsActionPriority, string, std::greater<int>>;
 
 static ACList s_actors;
 static ACTypeList s_act_types;
 static ACPriorityList s_act_priorities;
-static Actions::Type s_act_index = 0;
+static IpsAction::Type s_act_index = 0;
 
 static THREAD_LOCAL ACList* s_tl_actors = nullptr;
 
@@ -81,12 +81,12 @@ void ActionManager::add_plugin(const ActionApi* api)
     s_act_priorities.emplace(api->priority, api->base.name);
 }
 
-std::string ActionManager::get_action_string(Actions::Type action)
+std::string ActionManager::get_action_string(IpsAction::Type action)
 {
     if ( action < s_act_index )
     {
         auto it = std::find_if(s_act_types.cbegin(), s_act_types.cend(),
-            [action](const std::pair<const std::string, Actions::Type>& type){ return type.second == action; });
+            [action](const std::pair<const std::string, IpsAction::Type>& type){ return type.second == action; });
         if ( it != s_act_types.cend())
             return (*it).first;
     }
@@ -94,7 +94,7 @@ std::string ActionManager::get_action_string(Actions::Type action)
     return "ERROR";
 }
 
-Actions::Type ActionManager::get_action_type(const char* s)
+IpsAction::Type ActionManager::get_action_type(const char* s)
 {
     auto type = s_act_types.find(s);
 
@@ -104,7 +104,7 @@ Actions::Type ActionManager::get_action_type(const char* s)
     return get_max_action_types();
 }
 
-Actions::Type ActionManager::get_max_action_types()
+IpsAction::Type ActionManager::get_max_action_types()
 {
     return s_act_index;
 }
@@ -218,7 +218,7 @@ void ActionManager::instantiate(const ActionApi* api, Module* mod, SnortConfig* 
         if ( !ips )
             ips = get_ips_policy();
 
-        Actions::Type idx = rln->mode;
+        IpsAction::Type idx = rln->mode;
         if (ips->action[idx] == nullptr)
         {
             ips->action[idx] = act;

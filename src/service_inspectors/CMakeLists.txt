@@ -40,6 +40,7 @@ if (STATIC_INSPECTORS)
         $<TARGET_OBJECTS:s7commplus>
         $<TARGET_OBJECTS:smtp>
         $<TARGET_OBJECTS:ssh>
+        $<TARGET_OBJECTS:ssl>
         $<TARGET_OBJECTS:wizard>
     )
 endif()
@@ -48,7 +49,6 @@ set(STATIC_SERVICE_INSPECTOR_PLUGINS
     $<TARGET_OBJECTS:http_inspect>
     $<TARGET_OBJECTS:http2_inspect>
     $<TARGET_OBJECTS:sip>
-    $<TARGET_OBJECTS:ssl>
     $<TARGET_OBJECTS:dns>
     ${STATIC_INSPECTOR_OBJS}
     CACHE INTERNAL "STATIC_SERVICE_INSPECTOR_PLUGINS"

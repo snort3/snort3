@@ -22,7 +22,6 @@
 #include "appid_detector.h"
 #include "appid_module.h"
 #include "appid_peg_counts.h"
-#include "utils/stats.h"
 
 #define APPID_UT_ID 1492
 
@@ -65,11 +64,6 @@ char* snort_strdup(const char* str)
     memcpy(p, str, n);
     return p;
 }
-class InspectorManager
-{
-public:
-SO_PUBLIC static Inspector* get_inspector(const char*, bool, SnortConfig*) {return nullptr;}
-};
 Module::Module(const char*, const char*) {}
 Module::Module(const char*, const char*, const Parameter*, bool)
 {}
@@ -118,13 +112,12 @@ int AppIdSession::add_flow_data(void*, unsigned, AppIdFreeFCN) { return 0; }
 int dcerpc_validate(const uint8_t*, int){return 0; }
 AppIdDiscovery::~AppIdDiscovery() { }
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
-void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
+void show_stats(PegCount*, const PegInfo*, const vector<unsigned>&, const char*, FILE*) { }
 AppIdConfig config;
 AppIdContext ctxt(config);
 class AppIdInspector : public snort::Inspector
 {
 public:
-    void eval(Packet*) override { }
     bool configure(snort::SnortConfig*) override { return true; }
 };
 

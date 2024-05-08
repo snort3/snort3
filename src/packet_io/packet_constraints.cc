@@ -23,9 +23,10 @@
 
 #include "packet_constraints.h"
 
-#include "protocols/packet.h"
-
+#include <algorithm>
 #include <cstring>
+
+#include "protocols/packet.h"
 
 namespace {
 

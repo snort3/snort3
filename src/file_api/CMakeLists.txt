@@ -2,12 +2,8 @@
 set( FILE_API_INCLUDES
     file_api.h
     file_capture.h
-    file_config.h
     file_flows.h
-    file_identifier.h
     file_lib.h
-    file_module.h
-    file_segment.h
     file_service.h
 )
 
@@ -20,14 +16,22 @@ add_library ( file_api OBJECT
     file_cache.cc
     file_cache.h
     file_config.cc
+    file_config.h
     file_flows.cc
     file_identifier.cc
+    file_identifier.h
+    file_inspect.cc
+    file_inspect.h
     file_lib.cc
     file_log.cc
     file_mempool.cc
     file_mempool.h
     file_module.cc
+    file_module.h
+    file_policy.cc
+    file_policy.h
     file_segment.cc
+    file_segment.h
     file_service.cc
     file_stats.cc
     file_stats.h

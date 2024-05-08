@@ -61,7 +61,7 @@ struct ModuleConfig
     // state optimized for run time using indices
     // can't be determined until all modules have loaded (PerfMonitor::configure)
     snort::Module* ptr;
-    IndexVec pegs;
+    std::vector<unsigned> pegs;
 
     void set_name(const std::string& name);
     void set_peg_names(snort::Value& peg_names);

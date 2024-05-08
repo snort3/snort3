@@ -29,11 +29,12 @@
 
 #include "file_config.h"
 
-#include "main/snort_config.h"
 #include "managers/inspector_manager.h"
+#include "main/snort_config.h"
 #include "parser/parse_utils.h"
 
 #include "file_flows.h"
+#include "file_inspect.h"
 
 using namespace snort;
 

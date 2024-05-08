@@ -33,7 +33,7 @@ struct MplsHdr
     uint8_t bos;
     uint8_t ttl;
 };
-} // namespace mpls
+}
 }
 #endif
 

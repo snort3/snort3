@@ -26,7 +26,7 @@
 #include <iostream>
 #include <vector>
 
-#include "utils/streambuf.h"
+#include "helpers/streambuf.h"
 
 using namespace snort;
 using namespace std;

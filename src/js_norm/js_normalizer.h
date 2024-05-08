@@ -24,9 +24,8 @@
 
 #include <FlexLexer.h>
 
+#include "helpers/streambuf.h"
 #include "js_tokenizer.h"
-
-#include "utils/streambuf.h"
 
 namespace jsn
 {

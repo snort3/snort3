@@ -152,7 +152,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* dsize_ctor(Module* p, OptTreeNode*)
+static IpsOption* dsize_ctor(Module* p, IpsInfo&)
 {
     DsizeModule* m = (DsizeModule*)p;
     return new DsizeOption(m->data);

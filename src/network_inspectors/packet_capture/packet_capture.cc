@@ -29,7 +29,6 @@
 #include "framework/inspector.h"
 #include "log/messages.h"
 #include "packet_io/sfdaq.h"
-#include "packet_io/sfdaq_instance.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
 

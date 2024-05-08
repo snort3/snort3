@@ -38,12 +38,12 @@ const std::string VerdictName[] =
 {"Unknown", "Log", "Stop", "Block", "Reset", "Pending", "Stop Capture", "INVALID"};
 
 class FileConfig;
+class FileInspect;
 class FileSegments;
 
 namespace snort
 {
 class FileCapture;
-class FileInspect;
 class Flow;
 
 class SO_PUBLIC FileInfo

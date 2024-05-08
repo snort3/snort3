@@ -164,7 +164,7 @@ static void cip_enipcommand_mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* cip_enipcommand_ctor(Module* p, OptTreeNode*)
+static IpsOption* cip_enipcommand_ctor(Module* p, IpsInfo&)
 {
     CipEnipCommandModule* m = static_cast<CipEnipCommandModule*>(p);
     return new CipEnipCommandOption(m->cip_enip_cmd);

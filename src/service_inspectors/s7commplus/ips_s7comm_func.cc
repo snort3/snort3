@@ -196,7 +196,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* opt_ctor(Module* m, OptTreeNode*)
+static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
     S7commplusFuncModule* mod = (S7commplusFuncModule*)m;
     return new S7commplusFuncOption(mod->func);

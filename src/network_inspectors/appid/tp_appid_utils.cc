@@ -26,6 +26,7 @@
 #include <iostream>
 #include <dlfcn.h>
 
+#include "main/snort_config.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"

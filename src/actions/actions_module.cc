@@ -22,11 +22,11 @@
 #include "config.h"
 #endif
 
+#include "actions_module.h"
+
 #include <algorithm>
 #include <vector>
 
-#include "actions_module.h"
-#include "actions/actions.h"
 #include "log/messages.h"
 #include "managers/action_manager.h"
 #include "managers/module_manager.h"

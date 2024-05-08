@@ -24,14 +24,12 @@
 // which is just a single response deferred until end of current packet
 // processing.
 
-#include "actions/actions.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
 
 namespace snort
 {
 struct ActionApi;
-class IpsAction;
 struct SnortConfig;
 struct Packet;
 }
@@ -54,9 +52,9 @@ public:
             snort::SnortConfig*, IpsPolicy* ips = nullptr );
     static void initialize_policies(snort::SnortConfig*);
 
-    static std::string get_action_string(Actions::Type);
-    static Actions::Type get_action_type(const char*);
-    static Actions::Type get_max_action_types();
+    static std::string get_action_string(snort::IpsAction::Type);
+    static snort::IpsAction::Type get_action_type(const char*);
+    static snort::IpsAction::Type get_max_action_types();
     static std::string get_action_priorities(bool);
 
     static void thread_init(const snort::SnortConfig*);

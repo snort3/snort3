@@ -27,9 +27,9 @@
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "hash/hash_key_operations.h"
+#include "helpers/ber.h"
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
-#include "utils/util_ber.h"
 
 #include "mms.h"
 
@@ -393,7 +393,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* opt_ctor(Module* m, OptTreeNode*)
+static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
     MmsFuncModule* mod = (MmsFuncModule*)m;
 

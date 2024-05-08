@@ -38,7 +38,6 @@
 #include "latency/packet_latency.h"
 #include "latency/rule_latency.h"
 #include "main/snort_config.h"
-#include "main/thread.h"
 #include "main/thread_config.h"
 #include "managers/module_manager.h"
 #include "utils/stats.h"

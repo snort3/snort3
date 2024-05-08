@@ -29,7 +29,6 @@
 #include "iec104_paf.h"
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 #include "profiler/profiler.h"
 
 #include "iec104.h"

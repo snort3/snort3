@@ -75,7 +75,6 @@
 #include <sstream>
 
 #include "detection/detection_engine.h"
-#include "events/event_queue.h"
 #include "log/messages.h"
 #include "profiler/profiler.h"
 #include "protocols/arp.h"

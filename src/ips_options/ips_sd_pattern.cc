@@ -29,7 +29,6 @@
 #include <hs_runtime.h>
 
 #include "detection/pattern_match_data.h"
-#include "detection/treenodes.h"
 #include "framework/cursor.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -488,7 +487,7 @@ static void mod_dtor(Module* p)
     delete p;
 }
 
-static IpsOption* sd_pattern_ctor(Module* m, OptTreeNode*)
+static IpsOption* sd_pattern_ctor(Module* m, IpsInfo&)
 {
     SdPatternModule* mod = (SdPatternModule*)m;
     SdPatternConfig c;

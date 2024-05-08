@@ -15,12 +15,10 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// util_numa.h author Raza Shafiq <rshafiq@cisco.com>
+// numa.h author Raza Shafiq <rshafiq@cisco.com>
 
-#ifndef NUMA_UTILS_H
-#define NUMA_UTILS_H
-
-#ifdef HAVE_NUMA
+#ifndef NUMA_H
+#define NUMA_H
 
 #include <numa.h>
 #include <numaif.h>
@@ -49,6 +47,7 @@ public:
         return set_mempolicy(mode, nodemask, maxnode);
     }
 };
+
 class HwlocWrapper
 {
 public:
@@ -70,5 +69,5 @@ public:
         return hwloc_bitmap_intersects(set1, set2);
     }
 };
-#endif // HAVE_NUMA
-#endif // NUMA_UTILS_H
+#endif
+

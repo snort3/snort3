@@ -33,10 +33,8 @@
 #include <memory>
 
 #include "framework/counts.h"
-#include "main/analyzer_command.h"
-#include "main/thread.h"
-
 #include "flow_config.h"
+#include "main/analyzer_command.h"
 #include "prune_stats.h"
 #include "filter_flow_critera.h"
 

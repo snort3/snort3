@@ -20,7 +20,7 @@
 #ifndef JS_NORM_H
 #define JS_NORM_H
 
-#include "utils/event_gen.h"
+#include "helpers/event_gen.h"
 
 #include "js_config.h"
 #include "js_enum.h"

@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "detection/treenodes.h"
 #include "framework/decode_data.h"
 #include "framework/ips_option.h"
 #include "framework/module.h"
@@ -55,14 +54,13 @@ public:
     { return DETECT; }
 
 public:
-    Target target = Target::TARGET_NONE;
+    bool target = false;
 };
 
 bool TargetModule::set(const char*, Value& v, SnortConfig*)
 {
     assert(v.is("~"));
-    assert(v.get_uint8() <= TARGET_MAX);
-    target = static_cast<Target>(v.get_uint8() + 1);
+    target = v.get_uint8() ? false : true;
     return true;
 }
 
@@ -80,10 +78,10 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* target_ctor(Module* p, OptTreeNode* otn)
+static IpsOption* target_ctor(Module* p, IpsInfo& info)
 {
     TargetModule* m = (TargetModule*)p;
-    otn->sigInfo.target = m->target;
+    IpsOption::set_target(info, m->target);
     return nullptr;
 }
 

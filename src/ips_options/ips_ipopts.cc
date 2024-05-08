@@ -236,7 +236,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* ipopts_ctor(Module* p, OptTreeNode*)
+static IpsOption* ipopts_ctor(Module* p, IpsInfo&)
 {
     IpOptModule* m = (IpOptModule*)p;
     return new IpOptOption(m->data);

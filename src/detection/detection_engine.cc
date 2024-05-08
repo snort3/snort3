@@ -24,18 +24,19 @@
 
 #include "detection_engine.h"
 
+#include "events/event_queue.h"
 #include "events/sfeventq.h"
 #include "filters/sfthreshold.h"
 #include "framework/endianness.h"
+#include "framework/ips_action.h"
 #include "helpers/ring.h"
 #include "latency/packet_latency.h"
 #include "main/analyzer.h"
 #include "main/snort_config.h"
-#include "main/thread.h"
 #include "managers/inspector_manager.h"
 #include "managers/mpse_manager.h"
 #include "packet_io/active.h"
-#include "packet_tracer/packet_tracer.h"
+#include "packet_io/packet_tracer.h"
 #include "parser/parser.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
@@ -45,8 +46,8 @@
 #include "utils/stats.h"
 
 #include "context_switcher.h"
+#include "detection_buf.h"
 #include "detection_module.h"
-#include "detection_util.h"
 #include "detect.h"
 #include "detect_trace.h"
 #include "fp_config.h"
@@ -55,9 +56,10 @@
 #include "ips_context_data.h"
 #include "regex_offload.h"
 
-static THREAD_LOCAL RegexOffload* offloader = nullptr;
-
 using namespace snort;
+
+static THREAD_LOCAL RegexOffload* offloader = nullptr;
+bool DetectionEngine::offload_enabled = false;
 
 //--------------------------------------------------------------------------
 // basic de
@@ -124,6 +126,9 @@ DetectionEngine::~DetectionEngine()
     }
 }
 
+void DetectionEngine::enable_offload()
+{ offload_enabled = true; }
+
 void DetectionEngine::reset()
 {
     IpsContext* c = Analyzer::get_switcher()->get_context();
@@ -180,7 +185,7 @@ Packet* DetectionEngine::set_next_packet(const Packet* parent, Flow* flow)
     {
         if ( flow )
             p->context->snapshot_flow(flow);
-        c->packet_number = get_packet_number();
+        c->packet_number = pc.analyzed_pkts;
         c->wire_packet = nullptr;
     }
 
@@ -221,7 +226,7 @@ Packet* DetectionEngine::set_next_packet(const Packet* parent, Flow* flow)
 
 void DetectionEngine::finish_inspect_with_latency(Packet* p)
 {
-    DetectionEngine::set_check_tags();
+    DetectionEngine::set_check_tags(p);
 
     // By checking tagging here, we make sure that we log the
     // tagged packet whether it generates an alert or not.
@@ -283,12 +288,6 @@ void DetectionEngine::finish_packet(Packet* p, bool flow_deletion)
 
     if ( flow_deletion or p->is_rebuilt() )
         sw->complete();
-}
-
-uint8_t* DetectionEngine::get_buffer(unsigned& max)
-{
-    max = IpsContext::buf_size;
-    return Analyzer::get_switcher()->get_context()->buf;
 }
 
 uint8_t* DetectionEngine::get_next_buffer(unsigned& max)
@@ -404,11 +403,11 @@ IpsContext::ActiveRules DetectionEngine::get_detects(Packet* p)
 void DetectionEngine::set_detects(Packet* p, IpsContext::ActiveRules ar)
 { p->context->active_rules = ar; }
 
-void DetectionEngine::set_check_tags(bool enable)
-{ Analyzer::get_switcher()->get_context()->check_tags = enable; }
+void DetectionEngine::set_check_tags(Packet* p, bool enable)
+{ p->context->check_tags = enable; }
 
-bool DetectionEngine::get_check_tags()
-{ return Analyzer::get_switcher()->get_context()->check_tags; }
+bool DetectionEngine::get_check_tags(Packet* p)
+{ return p->context->check_tags; }
 
 //--------------------------------------------------------------------------
 // offload / onload
@@ -475,12 +474,12 @@ void DetectionEngine::idle()
         while ( offloader->count() )
         {
             debug_logf(detection_trace, TRACE_DETECTION_ENGINE, nullptr,
-                "(wire) %" PRIu64 " de::sleep\n", get_packet_number());
+                "(wire) %" PRIu64 " de::sleep\n", pc.analyzed_pkts);
 
             onload();
         }
         debug_logf(detection_trace, TRACE_DETECTION_ENGINE, nullptr,
-            "(wire) %" PRIu64 " de::idle (r=%d)\n", get_packet_number(),
+            "(wire) %" PRIu64 " de::idle (r=%d)\n", pc.analyzed_pkts,
             offloader->count());
 
         offloader->stop();
@@ -495,7 +494,7 @@ void DetectionEngine::onload(Flow* flow)
     while ( flow->is_suspended() )
     {
         debug_logf(detection_trace, TRACE_DETECTION_ENGINE, nullptr,
-            "(wire) %" PRIu64 " de::sleep\n", get_packet_number());
+            "(wire) %" PRIu64 " de::sleep\n", pc.analyzed_pkts);
 
         resume_ready_suspends(flow->context_chain); // FIXIT-M makes onload reentrant-safe
         onload();
@@ -647,9 +646,9 @@ bool DetectionEngine::inspect(Packet* p)
             if ( !all_disabled(p) )
             {
                 if ( PacketTracer::is_daq_activated() )
-                    PacketTracer::pt_timer_start();
+                    PacketTracer::restart_timer();
 
-                if ( detect(p, true) )
+                if ( detect(p, offload_enabled) )
                     return false; // don't finish out offloaded packets
             }
         }

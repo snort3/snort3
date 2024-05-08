@@ -31,8 +31,6 @@
 #include "hash/hash_key_operations.h"
 #include "utils/cpp_macros.h"
 
-class HashKeyOperations;
-
 namespace snort
 {
 struct SfIp;
