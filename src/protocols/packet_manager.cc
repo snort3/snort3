@@ -33,6 +33,7 @@
 #include "main/snort_config.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
+#include "packet_tracer/packet_tracer.h"
 #include "profiler/profiler_defs.h"
 #include "stream/stream.h"
 #include "trace/trace_api.h"
@@ -171,6 +172,7 @@ void PacketManager::handle_decode_failure(Packet* p, RawData& raw, const CodecDa
     // if the codec exists, it failed
     if (CodecManager::s_proto_map[to_utype(prev_prot_id)])
     {
+        PacketTracer::log_msg_only("Packet %" PRIu64": decoding error\n", p->context->packet_number);
         s_stats[discards]++;
     }
     else
@@ -345,7 +347,13 @@ void PacketManager::decode(
 
         // Shrink the buffer of undecoded data
         const uint16_t curr_lyr_len = codec_data.lyr_len + codec_data.invalid_bytes;
-        assert(curr_lyr_len <= raw.len);
+        if (curr_lyr_len > raw.len)
+        {
+            p->ptrs.decode_flags |= DECODE_ERR_LEN;
+            PacketTracer::log("Packet %" PRIu64": current layer len %d > raw length %d\n", p->context->packet_number,
+                curr_lyr_len, raw.len);
+            return;
+        }
         raw.len -= curr_lyr_len;
         raw.data += curr_lyr_len;
 

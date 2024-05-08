@@ -71,6 +71,7 @@ public:
 
     static SO_PUBLIC void log(const char* format, ...) __attribute__((format (printf, 1, 2)));
     static SO_PUBLIC void log(TracerMute, const char* format, ...) __attribute__((format (printf, 2, 3)));
+    static SO_PUBLIC void log_msg_only(const char* format, ...) __attribute__((format (printf, 1, 2)));
 
     static SO_PUBLIC void daq_log(const char* format, ...) __attribute__((format (printf, 1, 2)));
     static SO_PUBLIC void pt_timer_start();
@@ -99,7 +100,7 @@ protected:
     template<typename T = PacketTracer> static void _thread_init();
 
     // non-static functions
-    void log_va(const char*, va_list, bool);
+    void log_va(const char*, va_list, bool, bool msg_only = false);
     void populate_buf(const char*, va_list, char*, uint32_t&);
     void add_ip_header_info(const snort::Packet&);
     void add_eth_header_info(const snort::Packet&);

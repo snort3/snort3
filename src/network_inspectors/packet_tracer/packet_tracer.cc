@@ -164,6 +164,17 @@ void PacketTracer::log(const char* format, ...)
     va_end(ap);
 }
 
+void PacketTracer::log_msg_only(const char* format, ...)
+{
+    if (is_paused())
+        return;
+
+    va_list ap;
+    va_start(ap, format);
+    s_pkt_trace->log_va(format, ap, false, true);
+    va_end(ap);
+}
+
 void PacketTracer::log(TracerMute mute, const char* format, ...)
 {
     if ( s_pkt_trace->mutes[mute] )
@@ -289,14 +300,14 @@ void PacketTracer::populate_buf(const char* format, va_list ap, char* buffer, ui
         buff_len = max_buff_size - 1;
 }
 
-void PacketTracer::log_va(const char* format, va_list ap, bool daq_log)
+void PacketTracer::log_va(const char* format, va_list ap, bool daq_log, bool msg_only)
 {
     // FIXIT-L Need to find way to add 'PktTracerDbg' string as part of format string.
     std::string dbg_str;
     if (shell_enabled and !daq_log) // only add debug string during shell execution
     {
         dbg_str = "PktTracerDbg ";
-        if (strcmp(format, "\n") != 0)
+        if (!msg_only && (strcmp(format, "\n") != 0))
             dbg_str += get_debug_session();
         dbg_str += format;
         format = dbg_str.c_str();
