@@ -77,16 +77,16 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     HttpEvent* http_event = (HttpEvent*)&event;
     AppidChangeBits change_bits;
 
+    if ((asd->get_tp_appid_ctxt() or ThirdPartyAppIdContext::get_tp_reload_in_progress()) and
+        !http_event->get_is_httpx())
+        return;
+
     bool is_appid_cpu_profiling_running = (asd->get_odp_ctxt().is_appid_cpu_profiler_running());
     Stopwatch<SnortClock> per_appid_event_cpu_timer;
 
     if (is_appid_cpu_profiling_running)
         per_appid_event_cpu_timer.start();
-
-    if ((asd->get_tp_appid_ctxt() or ThirdPartyAppIdContext::get_tp_reload_in_progress()) and
-        !http_event->get_is_httpx())
-        return;
-
+    
     if (appidDebug->is_enabled() and !is_debug_active)
         appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
 

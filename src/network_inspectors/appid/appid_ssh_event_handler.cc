@@ -158,17 +158,17 @@ void SshEventHandler::handle(DataEvent& event, Flow* flow)
     if (!asd)
         return;
 
-    bool is_appid_cpu_profiling_running = (asd->get_odp_ctxt().is_appid_cpu_profiler_running());
-    Stopwatch<SnortClock> per_appid_event_cpu_timer;
-
-    if (is_appid_cpu_profiling_running)
-        per_appid_event_cpu_timer.start();
-
     if (asd->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version())
         return; // Skip detection for sessions using old odp context after odp reload
     if (!asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
         return;
 
+    bool is_appid_cpu_profiling_running = (asd->get_odp_ctxt().is_appid_cpu_profiler_running());
+    Stopwatch<SnortClock> per_appid_event_cpu_timer;
+
+    if (is_appid_cpu_profiling_running)
+        per_appid_event_cpu_timer.start();
+    
     SshEventFlowData* data = (SshEventFlowData* )asd->get_flow_data(id);
     Packet* p = DetectionEngine::get_current_packet();
 
