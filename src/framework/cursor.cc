@@ -49,6 +49,10 @@ Cursor::Cursor(const Cursor& rhs)
     extensible = rhs.extensible;
     buf_id = rhs.buf_id;
     is_accumulated = rhs.is_accumulated;
+    re_eval = rhs.re_eval;
+
+    if (re_eval)
+        delta = rhs.delta;
 
     if (rhs.data)
     {
@@ -233,6 +237,79 @@ TEST_CASE("Boundaries", "[cursor]")
 
         CHECK(r1);
         CHECK(!r2);
+    }
+
+    SECTION("Delta")
+    {
+        SECTION("Set delta in bounds")
+        {
+            bool r1 = false;
+            unsigned d1 = sizeof(buf_1) - 1;
+
+            cursor.set("1", buf_1, sizeof(buf_1), true);
+            r1 = cursor.set_delta(d1);
+
+            CHECK(r1);
+            CHECK(cursor.get_delta() == d1);
+        }
+        SECTION("Set delta as buffer size")
+        {
+            bool r1 = false;
+            unsigned d1 = sizeof(buf_1);
+
+            cursor.set("1", buf_1, sizeof(buf_1), true);
+            r1 = cursor.set_delta(d1);
+
+            CHECK(r1);
+            CHECK(cursor.get_delta() == d1);
+        }
+        SECTION("Set delta bigger than buffer size")
+        {
+            bool r1 = false;
+            unsigned d1 = sizeof(buf_1) + 1;
+
+            cursor.set("1", buf_1, sizeof(buf_1), true);
+            r1 = cursor.set_delta(d1);
+
+            CHECK(!r1);
+            CHECK(cursor.get_delta() == d1);
+        }
+        SECTION("Set delta as negative")
+        {
+            bool r1 = false;
+            unsigned d1 = -1;
+
+            cursor.set("1", buf_1, sizeof(buf_1), true);
+            r1 = cursor.set_delta(d1);
+
+            CHECK(!r1);
+            CHECK(cursor.get_delta() == d1);
+        }
+        SECTION("Copy constructor")
+        {
+            SECTION("re_eval false")
+            {
+                cursor.set("1", buf_1, sizeof(buf_1), true);
+                cursor.set_delta(sizeof(buf_1) - 1);
+                cursor.set_re_eval(false);
+                unsigned r = Cursor(cursor).get_delta();
+                CHECK(r != cursor.get_delta());
+                CHECK(r == 0);
+            }
+            SECTION("re_eval true")
+            {
+                cursor.set("1", buf_1, sizeof(buf_1), true);
+                unsigned d1 = sizeof(buf_1) - 1;
+                cursor.set_delta(d1);
+                cursor.set_re_eval(true);
+
+                Cursor c = Cursor(cursor);
+                CHECK(c.get_delta() == cursor.get_delta());
+                CHECK(c.get_delta() == d1);
+                bool r1 = c.is_re_eval();
+                CHECK(r1);
+            }
+        }
     }
 }
 

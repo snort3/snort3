@@ -165,15 +165,24 @@ protected:
     ContentData* config;
 };
 
-bool ContentOption::retry(Cursor& c, const Cursor&)
+static inline bool retry(const PatternMatchData& pmd, const Cursor& c)
 {
-    if ( config->pmd.is_negated() )
+    if ( pmd.is_negated() )
         return false;
 
-    if ( !config->pmd.depth )
+    // since we're already out-of-bound, no reason to retry
+    if ( c.get_pos() >= c.size() )
+        return false;
+
+    if ( !pmd.depth )
         return true;
 
-    return c.get_delta() + config->pmd.pattern_size <= config->pmd.depth;
+    return c.get_delta() + pmd.pattern_size <= pmd.depth;
+}
+
+bool ContentOption::retry(Cursor& c, const Cursor&)
+{
+    return ::retry(config->pmd, c);
 }
 
 uint32_t ContentOption::hash() const
@@ -275,7 +284,7 @@ static bool uniSearchReal(ContentData* cd, Cursor& c)
 {
     // byte_extract variables are strictly unsigned, used for sizes and forward offsets
     // converting from uint32_t to int64_t ensures all extracted values remain positive
-    int64_t offset, depth;
+    int64_t offset, depth, orig_depth;
 
     if (cd->offset_var >= 0 && cd->offset_var < NUM_IPS_OPTIONS_VARS)
     {
@@ -290,10 +299,10 @@ static bool uniSearchReal(ContentData* cd, Cursor& c)
     {
         uint32_t extract;
         GetVarValueByIndex(&extract, cd->depth_var);
-        depth = extract;
+        orig_depth = depth = extract;
     }
     else
-        depth = cd->pmd.depth;
+        orig_depth = depth = cd->pmd.depth;
 
     uint32_t file_pos = c.get_file_pos();
 
@@ -306,7 +315,7 @@ static bool uniSearchReal(ContentData* cd, Cursor& c)
 
     int64_t pos = 0;
 
-    if ( !c.get_delta() )
+    if ( !c.get_delta() and !c.is_re_eval() )
     {
         // first - adjust from cursor or buffer start
         pos = (cd->pmd.is_relative() ? c.get_pos() : 0) + offset;
@@ -331,8 +340,48 @@ static bool uniSearchReal(ContentData* cd, Cursor& c)
             return false;
     }
 
-    if ( ( cd->depth_configured and depth <= 0 ) or pos + cd->pmd.pattern_size > c.size() )
+    if ( (cd->depth_configured and depth <= 0) or !c.size() )
         return false;
+
+    unsigned last_position = c.size() - 1;
+
+    if ( last_position < pos )
+    {
+        if ( !cd->pmd.is_negated() )
+        {
+            unsigned next_pkt_pos = pos - last_position + c.size();
+
+            c.set_pos(next_pkt_pos);
+            c.set_re_eval(true);
+        }
+
+        return false;
+    }
+
+    unsigned min_bytes_to_match = pos + cd->pmd.pattern_size;
+
+    if ( min_bytes_to_match > c.size() )
+    {
+        constexpr unsigned current_byte_evaluated = 1;
+        unsigned depth_skipped = last_position - pos + current_byte_evaluated;
+
+        if ( !cd->pmd.is_negated() && depth >= depth_skipped + cd->pmd.pattern_size )
+        {
+            assert(cd->pmd.pattern_size >= depth_skipped);
+
+            // IPS content takes into account repeated parts of
+            // the pattern during retries. But in next PDU, such influence
+            // is harmful, so some extra bytes are needed
+            unsigned extra_offset = cd->pmd.pattern_size - cd->match_delta;
+            unsigned next_pkt_pos = extra_offset + c.size();
+
+            c.set_pos(next_pkt_pos);
+            c.set_re_eval(true);
+            c.set_delta(depth_skipped);
+        }
+
+        return false;
+    }
 
     int64_t bytes_left = c.size() - pos;
 
@@ -354,6 +403,24 @@ static bool uniSearchReal(ContentData* cd, Cursor& c)
         }
 
         return true;
+    }
+    else if ( cd->depth_configured )
+    {
+        unsigned used_depth = depth + c.get_delta();
+
+        if ( orig_depth <= used_depth + cd->pmd.pattern_size )
+            return false;
+
+        // Continuation should be created only on the last evaluation of current node,
+        // where node means current ips option during detection process
+        if ( c.get_delta() == 0 and !c.is_re_eval() and !retry(cd->pmd, c) )
+            return false;
+
+        unsigned next_pkt_pos = c.size() + 0;
+
+        c.set_pos(next_pkt_pos);
+        c.set_re_eval(true);
+        c.set_delta(used_depth);
     }
 
     return false;

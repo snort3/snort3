@@ -148,6 +148,7 @@ public:
     bool set_pos(unsigned n)
     {
         current_pos = n;
+        re_eval = false;
         return !(current_pos > buf_size);
     }
 
@@ -175,10 +176,8 @@ public:
 
     bool set_delta(unsigned n)
     {
-        if (n > buf_size)
-            return false;
         delta = n;
-        return true;
+        return n <= buf_size;
     }
 
     void set_data(CursorData* cd);
@@ -195,6 +194,12 @@ public:
         return current_pos - buf_size;
     }
 
+    bool is_re_eval() const
+    { return re_eval; }
+
+    void set_re_eval(bool val)
+    { re_eval = val; }
+
     typedef std::vector<CursorData*> CursorDataVec;
 
 private:
@@ -208,6 +213,7 @@ private:
     bool extensible = false;       // if the buffer could have more data in a continuation
     uint64_t buf_id = 0;           // source buffer ID
     bool is_accumulated = false;
+    bool re_eval = false;
 };
 
 #endif
