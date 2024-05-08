@@ -1,3 +1,23 @@
+2024-05-06: 3.1.85.0
+
+* anaylzer, framework: add a data bus method to publish to all network policies and use it for idle
+* appid: add http url regex patterns
+* appid: appid CPU Profiler Table and CLI
+* appid: disable appid cpu profiler
+* detection: clear inspector data before flow_data
+* detection: fix postponed rule evaluation with recall presence
+* file_api: fix incorrect data size being passed to IPS engine for file type detection
+* flow: connection profiling feature
+* flow: fix unit test for debian
+* main: update usage of a deprecated hwloc macro. Thanks to teicors for reporting the issue!
+* stream_tcp: add reassembler class for missed_3whs
+* stream_tcp: change drop reason issuer to stream
+* stream_tcp: drop packet with invalid sequence number if inspection policy is inline and fix sequence number comparisons
+* stream_tcp: implement an asymmetric flow (one-way traffic) mode for reassembly that purges flushed segments immediately (no waiting for ack that will never come)
+* stream_tcp: support for asymmetric normalization
+* stream_tcp: track offset into data buffer due to overlaps with state variable on the TCP segment node
+* utils: move file specific functions from perfmonitor to utils
+
 2024-04-08: 3.1.84.0
 
 * appid: enhanced appid config parsing

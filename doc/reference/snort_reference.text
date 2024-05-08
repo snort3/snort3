@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.84.0 2024-04-08 22:48:07 EDT TST
+Revision 3.1.85.0 2024-05-06 22:48:20 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -901,7 +901,7 @@ Configuration:
     | bsd | bsd_right | last | windows | solaris }
   * enum hosts[].tcp_policy: TCP reassembly policy { first | last | 
     linux | old_linux | bsd | macos | solaris | irix | hpux11 | 
-    hpux10 | windows | win_2003 | vista | proxy }
+    hpux10 | windows | win_2003 | vista | proxy | asymmetric }
   * string hosts[].services[].name: service identifier
   * enum hosts[].services[].proto = tcp: IP protocol { tcp | udp }
   * port hosts[].services[].port: port number
@@ -2600,6 +2600,9 @@ Commands:
   * appid.reload_third_party(): reload appid third-party module
   * appid.reload_detectors(): reload appid detectors
   * appid.print_appid_config(): print appid configs
+  * appid.show_cpu_profiler_stats(appid): show appid cpu profiling
+    stats
+  * appid.show_cpu_profiler_status(): show appid cpu profiling status
 
 Peg counts:
 
@@ -5851,7 +5854,7 @@ Configuration:
   * enum stream_tcp.policy = bsd: determines operating system
     characteristics like reassembly { first | last | linux | 
     old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | 
-    windows | win_2003 | vista | proxy }
+    windows | win_2003 | vista | proxy | asymmetric }
   * bool stream_tcp.reassemble_async = true: queue data for
     reassembly before traffic is seen in both directions
   * int stream_tcp.require_3whs = -1: don’t track midstream sessions
@@ -6010,6 +6013,10 @@ Peg counts:
     normalization policy (sum)
   * stream_tcp.full_retransmits: number of fully retransmitted
     segments (sum)
+  * stream_tcp.flush_on_asymmetric_flow: number of flushes on
+    asymmetric flows (sum)
+  * stream_tcp.asymmetric_flows: number of completed flows having
+    one-way traffic only (sum)
 
 
 5.52. stream_udp
@@ -9659,7 +9666,7 @@ libraries see the Getting Started section of the manual.
   * enum hosts[].services[].proto = tcp: IP protocol { tcp | udp }
   * enum hosts[].tcp_policy: TCP reassembly policy { first | last | 
     linux | old_linux | bsd | macos | solaris | irix | hpux11 | 
-    hpux10 | windows | win_2003 | vista | proxy }
+    hpux10 | windows | win_2003 | vista | proxy | asymmetric }
   * addr host_tracker[].ip: hosts address / cidr
   * port host_tracker[].services[].port: port number
   * enum host_tracker[].services[].proto: IP protocol { ip | tcp | 
@@ -11000,7 +11007,7 @@ libraries see the Getting Started section of the manual.
   * enum stream_tcp.policy = bsd: determines operating system
     characteristics like reassembly { first | last | linux | 
     old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | 
-    windows | win_2003 | vista | proxy }
+    windows | win_2003 | vista | proxy | asymmetric }
   * int stream_tcp.queue_limit.max_bytes = 4194304: don’t queue more
     than given bytes per session and direction, 0 = unlimited {
     0:max32 }
@@ -12233,6 +12240,8 @@ libraries see the Getting Started section of the manual.
     tuner called while processing packets (sum)
   * stream.stale_prunes: sessions pruned due to stale connection
     (sum)
+  * stream_tcp.asymmetric_flows: number of completed flows having
+    one-way traffic only (sum)
   * stream_tcp.client_cleanups: number of times data from server was
     flushed when session released (sum)
   * stream_tcp.closing: number of sessions currently closing (now)
@@ -12252,6 +12261,8 @@ libraries see the Getting Started section of the manual.
   * stream_tcp.exceeded_max_segs: number of times the maximum queued
     segment limit was reached (sum)
   * stream_tcp.fins: number of fin packets (sum)
+  * stream_tcp.flush_on_asymmetric_flow: number of flushes on
+    asymmetric flows (sum)
   * stream_tcp.full_retransmits: number of fully retransmitted
     segments (sum)
   * stream_tcp.gaps: missing data between PDUs (sum)
@@ -15749,6 +15760,9 @@ alert is raised by the enhanced JavaScript normalizer.
   * appid.reload_third_party(): reload appid third-party module
   * appid.reload_detectors(): reload appid detectors
   * appid.print_appid_config(): print appid configs
+  * appid.show_cpu_profiler_stats(appid): show appid cpu profiling
+    stats
+  * appid.show_cpu_profiler_status(): show appid cpu profiling status
   * host_cache.dump(file_name): dump host cache
   * host_cache.delete_host(host_ip): delete host from host cache
   * host_cache.delete_network_proto(host_ip, proto): delete network
