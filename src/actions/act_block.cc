@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include "actions/actions_module.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
 #include "packet_io/active.h"
@@ -30,16 +31,30 @@
 
 using namespace snort;
 
-#define s_name "block"
-
-#define s_help \
+#define action_name "block"
+#define action_help \
     "block current packet and all the subsequent packets in this flow"
+
+#define module_name "block"
+#define module_help \
+    "manage the counters for the block action"
+
+static THREAD_LOCAL struct BlockStats
+{
+    PegCount block;
+} block_stats;
+
+const PegInfo block_pegs[] =
+{
+    { CountType::SUM, "block", "number of packets that matched an IPS block rule" },
+    { CountType::END, nullptr, nullptr }
+};
 
 //-------------------------------------------------------------------------
 class BlockAction : public IpsAction
 {
 public:
-    BlockAction() : IpsAction(s_name, nullptr) { }
+    BlockAction() : IpsAction(action_name, nullptr) { }
 
     void exec(Packet*, const OptTreeNode* otn) override;
     bool drops_traffic() override { return true; }
@@ -51,9 +66,35 @@ void BlockAction::exec(Packet* p, const OptTreeNode* otn)
     p->active->set_drop_reason("ips");
 
     Actions::alert(p, otn);
+    ++block_stats.block;
 }
 
 //-------------------------------------------------------------------------
+class BlockActionModule : public Module
+{
+public:
+    BlockActionModule() : Module(module_name, module_help)
+    { ActionsModule::add_action(module_name, block_pegs); }
+
+    bool stats_are_aggregated() const override
+    { return true; }
+
+    void show_stats() override
+    { /* These stats are shown by ActionsModule. */ }
+
+    const PegInfo* get_pegs() const override
+    { return block_pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*)&block_stats; }
+};
+
+//-------------------------------------------------------------------------
+static Module* mod_ctor()
+{ return new BlockActionModule; }
+
+static void mod_dtor(Module* m)
+{ delete m; }
 
 static IpsAction* block_ctor(Module*)
 { return new BlockAction; }
@@ -70,10 +111,10 @@ static ActionApi block_api
         0,
         API_RESERVED,
         API_OPTIONS,
-        s_name,
-        s_help,
-        nullptr,  // mod_ctor
-        nullptr,  // mod_dtor
+        action_name,
+        action_help,
+        mod_ctor,
+        mod_dtor,
     },
     IpsAction::IAP_BLOCK,
     nullptr,

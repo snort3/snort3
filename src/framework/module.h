@@ -171,6 +171,16 @@ public:
     virtual bool global_stats() const
     { return false; }
 
+    // Return true only if all of the module's stats are aggregated into
+    // another module.
+    virtual bool stats_are_aggregated() const
+    { return false; }
+
+    // Return true only if all of the module's stats are aggregated from
+    // other modules.
+    virtual bool is_aggregator() const
+    { return false; }
+
     virtual void sum_stats(bool dump_stats);
     virtual void show_interval_stats(IndexVec&, FILE*);
     virtual void show_stats();

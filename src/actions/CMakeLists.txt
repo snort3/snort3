@@ -5,6 +5,8 @@ set ( ACTIONS_INCLUDES
 
 set (IPS_ACTION_SOURCES
     actions.cc
+    actions_module.cc
+    actions_module.h
     ips_actions.cc
     ips_actions.h
     act_alert.cc
@@ -33,7 +35,7 @@ else (STATIC_IPS_ACTIONS)
         ${IPS_ACTION_SOURCES}
     )
 
-    add_dynamic_module(act_react ips_actions act_react.cc)
+    add_dynamic_module(act_react ips_actions act_react.cc actions_module.cc)
 
 endif (STATIC_IPS_ACTIONS)
 

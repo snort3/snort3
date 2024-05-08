@@ -48,6 +48,7 @@
 #include "config.h"
 #endif
 
+#include "actions/actions_module.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
 #include "main/snort_config.h"
@@ -58,10 +59,13 @@
 
 using namespace snort;
 
-#define s_name "reject"
-
-#define s_help \
+#define action_name "reject"
+#define action_help \
     "terminate session with TCP reset or ICMP unreachable"
+
+#define module_name "reject"
+#define module_help \
+    "manage the data and the counters for the reject action"
 
 enum
 {
@@ -77,6 +81,17 @@ enum
 };
 
 THREAD_LOCAL ProfileStats rejPerfStats;
+
+static THREAD_LOCAL struct RejectStats
+{
+    PegCount reject;
+} reject_stats;
+
+const PegInfo reject_pegs[] =
+{
+    { CountType::SUM, "reject", "number of packets that matched an IPS reject rule" },
+    { CountType::END, nullptr, nullptr }
+};
 
 //-------------------------------------------------------------------------
 // active action
@@ -165,7 +180,7 @@ private:
 // class methods
 //-------------------------------------------------------------------------
 
-RejectAction::RejectAction(uint32_t f) : IpsAction(s_name, &rej_act_action) , rej_act_action(f)
+RejectAction::RejectAction(uint32_t f) : IpsAction(action_name, &rej_act_action) , rej_act_action(f)
 { }
 
 void RejectAction::exec(Packet* p, const OptTreeNode* otn)
@@ -176,13 +191,14 @@ void RejectAction::exec(Packet* p, const OptTreeNode* otn)
     p->active->update_status(p);
 
     Actions::alert(p, otn);
+    ++reject_stats.reject;
 }
 
 //-------------------------------------------------------------------------
 // module
 //-------------------------------------------------------------------------
 
-static const Parameter s_params[] =
+static const Parameter module_params[] =
 {
     { "reset", Parameter::PT_ENUM, "none|source|dest|both", "both",
       "send TCP reset to one or both ends" },
@@ -196,7 +212,8 @@ static const Parameter s_params[] =
 class RejectModule : public Module
 {
 public:
-    RejectModule() : Module(s_name, s_help, s_params) { }
+    RejectModule() : Module(module_name, module_help, module_params) 
+    { ActionsModule::add_action(module_name, reject_pegs); }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
@@ -208,6 +225,18 @@ public:
     { return DETECT; }
 
     uint32_t get_data();
+
+    bool stats_are_aggregated() const override
+    { return true; }
+
+    void show_stats() override
+    { /* These stats are shown by ActionsModule. */ }
+
+    const PegInfo* get_pegs() const override
+    { return reject_pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*)&reject_stats; }
 
 private:
     uint32_t flags = 0;
@@ -298,8 +327,8 @@ static const ActionApi rej_api =
         0,
         API_RESERVED,
         API_OPTIONS,
-        s_name,
-        s_help,
+        action_name,
+        action_help,
         mod_ctor,
         mod_dtor
     },

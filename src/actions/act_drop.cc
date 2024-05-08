@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include "actions/actions_module.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
 #include "packet_io/active.h"
@@ -30,16 +31,30 @@
 
 using namespace snort;
 
-#define s_name "drop"
-
-#define s_help \
+#define action_name "drop"
+#define action_help \
     "drop the current packet"
+
+#define module_name "drop"
+#define module_help \
+    "manage the counters for the drop action"
+
+static THREAD_LOCAL struct DropStats
+{
+    PegCount drop;
+} drop_stats;
+
+const PegInfo drop_pegs[] =
+{
+    { CountType::SUM, "drop", "number of packets that matched an IPS drop rule" },
+    { CountType::END, nullptr, nullptr }
+};
 
 //-------------------------------------------------------------------------
 class DropAction : public IpsAction
 {
 public:
-    DropAction() : IpsAction(s_name, nullptr) { }
+    DropAction() : IpsAction(action_name, nullptr) { }
 
     void exec(Packet*, const OptTreeNode* otn) override;
     bool drops_traffic() override { return true; }
@@ -51,9 +66,36 @@ void DropAction::exec(Packet* p, const OptTreeNode* otn)
     p->active->set_drop_reason("ips");
 
     Actions::alert(p, otn);
+    ++drop_stats.drop;
 }
 
 //-------------------------------------------------------------------------
+class DropActionModule : public Module
+{
+public:
+    DropActionModule() : Module(module_name, module_help)
+    { ActionsModule::add_action(module_name, drop_pegs); }
+
+    bool stats_are_aggregated() const override
+    { return true; }
+
+    void show_stats() override
+    { /* These stats are shown by ActionsModule. */ }
+
+    const PegInfo* get_pegs() const override
+    { return drop_pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*)&drop_stats; }
+};
+
+//-------------------------------------------------------------------------
+
+static Module* mod_ctor()
+{ return new DropActionModule; }
+
+static void mod_dtor(Module* m)
+{ delete m; }
 
 static IpsAction* drop_ctor(Module*)
 { return new DropAction; }
@@ -70,10 +112,10 @@ static ActionApi drop_api
         0,
         API_RESERVED,
         API_OPTIONS,
-        s_name,
-        s_help,
-        nullptr,  // mod_ctor
-        nullptr,  // mod_dtor
+        action_name,
+        action_help,
+        mod_ctor,
+        mod_dtor,
     },
     IpsAction::IAP_DROP,
     nullptr,

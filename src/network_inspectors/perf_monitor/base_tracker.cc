@@ -39,6 +39,9 @@ BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf, PERF_NAME "_base"
 {
     for ( ModuleConfig& mod : modules )
     {
+        if (mod.ptr->stats_are_aggregated())
+            continue;
+
         formatter->register_section(mod.ptr->get_name());
 
         for ( auto const& idx : mod.pegs )
@@ -58,6 +61,9 @@ void BaseTracker::process(bool summary)
     {
         for ( const ModuleConfig& mod : modules )
         {
+            if (mod.ptr->is_aggregator())
+                continue;
+
             if (strstr(ModuleManager::dynamic_stats_modules, mod.ptr->get_name()) || mod.ptr->global_stats())
             {
                 lock_guard<mutex> lock(ModuleManager::stats_mutex);

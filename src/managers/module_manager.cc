@@ -1332,7 +1332,7 @@ void ModuleManager::show_pegs(const char* pfx, bool exact)
         const Module* m = mh->mod;
         assert(m);
 
-        if ( !selected(m, pfx, exact) )
+        if ( !selected(m, pfx, exact) || m->stats_are_aggregated())
             continue;
 
         const PegInfo* pegs = m->get_pegs();

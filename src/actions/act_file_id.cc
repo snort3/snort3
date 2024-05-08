@@ -22,6 +22,7 @@
 #endif
 
 #include "actions.h"
+#include "actions/actions_module.h"
 #include "detection/detect.h"
 #include "file_api/file_flows.h"
 #include "file_api/file_identifier.h"
@@ -31,10 +32,24 @@
 
 using namespace snort;
 
-#define s_name "file_id"
-
-#define s_help \
+#define action_name "file_id"
+#define action_help \
     "file_id file type id"
+
+#define module_name "file_id_action"
+#define module_help \
+    "manage the counters for the file_id action"
+
+static THREAD_LOCAL struct File_IdStats
+{
+    PegCount file_id;
+} file_id_stats;
+
+const PegInfo file_id_pegs[] =
+{
+    { CountType::SUM, "file_id", "number of packets that matched an IPS file_id rule" },
+    { CountType::END, nullptr, nullptr }
+};
 
 //-------------------------------------------------------------------------
 // ips action
@@ -43,7 +58,7 @@ using namespace snort;
 class File_IdAction : public IpsAction
 {
 public:
-    File_IdAction() : IpsAction(s_name, nullptr) { }
+    File_IdAction() : IpsAction(action_name, nullptr) { }
     void exec(Packet*, const OptTreeNode* otn) override;
 };
 
@@ -58,9 +73,37 @@ void File_IdAction::exec(Packet* p, const OptTreeNode* otn)
     if (!file)
         return;
     file->set_file_type(otn->sigInfo.file_id);
+
+    ++file_id_stats.file_id;
 }
 
 //-------------------------------------------------------------------------
+
+class File_IdActionModule : public Module
+{
+public:
+    File_IdActionModule() : Module(module_name, module_help)
+    { ActionsModule::add_action(module_name, file_id_pegs); }
+
+    bool stats_are_aggregated() const override
+    { return true; }
+
+    void show_stats() override
+    { /* These stats are shown by ActionsModule. */ }
+
+    const PegInfo* get_pegs() const override
+    { return file_id_pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*)&file_id_stats; }
+};
+
+//-------------------------------------------------------------------------
+static Module* mod_ctor()
+{ return new File_IdActionModule; }
+
+static void mod_dtor(Module* m)
+{ delete m; }
 
 static IpsAction* file_id_ctor(Module*)
 { return new File_IdAction; }
@@ -77,10 +120,10 @@ static ActionApi file_id_api
         0,
         API_RESERVED,
         API_OPTIONS,
-        s_name,
-        s_help,
-        nullptr,  // mod_ctor
-        nullptr,  // mod_dtor
+        action_name,
+        action_help,
+        mod_ctor,
+        mod_dtor,
     },
     IpsAction::IAP_OTHER,
     nullptr,

@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include "actions/actions_module.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
 #include "protocols/packet.h"
@@ -29,16 +30,30 @@
 
 using namespace snort;
 
-#define s_name "pass"
-
-#define s_help \
+#define action_name "pass"
+#define action_help \
     "mark the current packet as passed"
+
+#define module_name "pass"
+#define module_help \
+    "manage the counters for the pass action"
+
+static THREAD_LOCAL struct PassStats
+{
+    PegCount pass;
+} pass_stats;
+
+const PegInfo pass_pegs[] =
+{
+    { CountType::SUM, "pass", "number of packets that matched an IPS pass rule" },
+    { CountType::END, nullptr, nullptr }
+};
 
 //-------------------------------------------------------------------------
 class PassAction : public IpsAction
 {
 public:
-    PassAction() : IpsAction(s_name, nullptr) { }
+    PassAction() : IpsAction(action_name, nullptr) { }
 
     void exec(Packet*, const OptTreeNode*) override;
 };
@@ -49,10 +64,37 @@ void PassAction::exec(Packet* p, const OptTreeNode* otn)
     {
         Actions::pass();
         p->packet_flags |= PKT_PASS_RULE;
+        ++pass_stats.pass;
     }
 }
 
 //-------------------------------------------------------------------------
+
+class PassActionModule : public Module
+{
+public:
+    PassActionModule() : Module(module_name, module_help)
+    { ActionsModule::add_action(module_name, pass_pegs); }
+
+    bool stats_are_aggregated() const override
+    { return true; }
+
+    void show_stats() override
+    { /* These stats are shown by ActionsModule. */ }
+
+    const PegInfo* get_pegs() const override
+    { return pass_pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*)&pass_stats; }
+};
+
+//-------------------------------------------------------------------------
+static Module* mod_ctor()
+{ return new PassActionModule; }
+
+static void mod_dtor(Module* m)
+{ delete m; }
 
 static IpsAction* pass_ctor(Module*)
 { return new PassAction; }
@@ -69,10 +111,10 @@ static ActionApi pass_api
         0,
         API_RESERVED,
         API_OPTIONS,
-        s_name,
-        s_help,
-        nullptr,  // mod_ctor
-        nullptr,  // mod_dtor
+        action_name,
+        action_help,
+        mod_ctor,
+        mod_dtor,
     },
     IpsAction::IAP_PASS,
     nullptr,

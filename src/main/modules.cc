@@ -26,6 +26,7 @@
 
 #include <sys/resource.h>
 
+#include "actions/actions_module.h"
 #include "codecs/codec_module.h"
 #include "detection/detection_module.h"
 #include "detection/fp_config.h"
@@ -1968,6 +1969,7 @@ void module_init()
     ModuleManager::add_module(new SearchEngineModule);
     ModuleManager::add_module(new SFDAQModule);
     ModuleManager::add_module(new PayloadInjectorModule);
+    ModuleManager::add_module(new ActionsModule);
 
     // these could but probably shouldn't be policy specific
     // or should be broken into policy and non-policy parts

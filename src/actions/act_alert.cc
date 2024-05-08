@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include "actions/actions_module.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
 #include "protocols/packet.h"
@@ -29,16 +30,30 @@
 
 using namespace snort;
 
-#define s_name "alert"
-
-#define s_help \
+#define action_name "alert"
+#define action_help \
     "generate alert on the current packet"
+
+#define module_name "alert"
+#define module_help \
+    "manage the counters for the alert action"
+
+static THREAD_LOCAL struct AlertStats
+{
+    PegCount alert;
+} alert_stats;
+
+const PegInfo alert_pegs[] =
+{
+    { CountType::SUM, "alert", "number of packets that matched an IPS alert rule" },
+    { CountType::END, nullptr, nullptr }
+};
 
 //-------------------------------------------------------------------------
 class AlertAction : public IpsAction
 {
 public:
-    AlertAction() : IpsAction(s_name, nullptr) { }
+    AlertAction() : IpsAction(action_name, nullptr) { }
 
     void exec(Packet*, const OptTreeNode* otn) override;
 };
@@ -46,9 +61,35 @@ public:
 void AlertAction::exec(Packet* p, const OptTreeNode* otn)
 {
     Actions::alert(p, otn);
+    ++alert_stats.alert;
 }
 
 //-------------------------------------------------------------------------
+class AlertActionModule : public Module
+{
+public:
+    AlertActionModule() : Module(module_name, module_help)
+    { ActionsModule::add_action(module_name, alert_pegs); }
+
+    bool stats_are_aggregated() const override
+    { return true; }
+
+    void show_stats() override
+    { /* These stats are shown by ActionsModule. */ }
+
+    const PegInfo* get_pegs() const override
+    { return alert_pegs; }
+
+    PegCount* get_counts() const override
+    { return (PegCount*)&alert_stats; }
+};
+
+//-------------------------------------------------------------------------
+static Module* mod_ctor()
+{ return new AlertActionModule; }
+
+static void mod_dtor(Module* m)
+{ delete m; }
 
 static IpsAction* alert_ctor(Module*)
 { return new AlertAction; }
@@ -65,10 +106,10 @@ static ActionApi alert_api
         0,
         API_RESERVED,
         API_OPTIONS,
-        s_name,
-        s_help,
-        nullptr,  // mod_ctor
-        nullptr,  // mod_dtor
+        action_name,
+        action_help,
+        mod_ctor,
+        mod_dtor,
     },
     IpsAction::IAP_ALERT,
     nullptr,
