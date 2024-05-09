@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.1.85.0 2024-05-06 22:48:20 EDT TST
+Revision 3.2.0.0 2024-05-08 20:53:04 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -33,23 +33,24 @@ Table of Contents
     2.14. hosts
     2.15. inspection
     2.16. ips
-    2.17. js_norm
-    2.18. latency
-    2.19. memory
-    2.20. network
-    2.21. output
-    2.22. packet_tracer
-    2.23. packets
-    2.24. payload_injector
-    2.25. process
-    2.26. profiler
-    2.27. rate_filter
-    2.28. references
-    2.29. search_engine
-    2.30. side_channel
-    2.31. snort
-    2.32. suppress
-    2.33. trace
+    2.17. ips_actions
+    2.18. js_norm
+    2.19. latency
+    2.20. memory
+    2.21. network
+    2.22. output
+    2.23. packet_tracer
+    2.24. packets
+    2.25. payload_injector
+    2.26. process
+    2.27. profiler
+    2.28. rate_filter
+    2.29. references
+    2.30. search_engine
+    2.31. side_channel
+    2.32. snort
+    2.33. suppress
+    2.34. trace
 
 3. Codec Modules
 
@@ -146,8 +147,15 @@ Table of Contents
 
 6. IPS Action Modules
 
-    6.1. react
-    6.2. reject
+    6.1. alert
+    6.2. block
+    6.3. drop
+    6.4. file_id_action
+    6.5. log
+    6.6. pass
+    6.7. react
+    6.8. reject
+    6.9. rewrite
 
 7. IPS Option Modules
 
@@ -646,12 +654,6 @@ Peg counts:
     (sum)
   * detection.offload_suspends: fast pattern search suspends due to
     offload context chains (sum)
-  * detection.pcre_match_limit: total number of times pcre hit the
-    match limit (sum)
-  * detection.pcre_recursion_limit: total number of times pcre hit
-    the recursion limit (sum)
-  * detection.pcre_error: total number of times pcre returns error
-    (sum)
   * detection.cont_creations: total number of continuations created
     (sum)
   * detection.cont_recalls: total number of continuations recalled
@@ -981,7 +983,39 @@ Configuration:
   * string ips.variables.ports.$var: IPS policy variable
 
 
-2.17. js_norm
+2.17. ips_actions
+
+--------------
+
+Help: aggregate action counters
+
+Type: basic
+
+Usage: global
+
+Peg counts:
+
+  * ips_actions.alert: number of packets that matched an IPS alert
+    rule (sum)
+  * ips_actions.block: number of packets that matched an IPS block
+    rule (sum)
+  * ips_actions.drop: number of packets that matched an IPS drop rule
+    (sum)
+  * ips_actions.file_id: number of packets that matched an IPS
+    file_id rule (sum)
+  * ips_actions.log: number of packets that matched an IPS log rule
+    (sum)
+  * ips_actions.pass: number of packets that matched an IPS pass rule
+    (sum)
+  * ips_actions.react: number of packets that matched an IPS react
+    rule (sum)
+  * ips_actions.reject: number of packets that matched an IPS reject
+    rule (sum)
+  * ips_actions.rewrite: number of packets that matched an IPS
+    rewrite rule (sum)
+
+
+2.18. js_norm
 
 --------------
 
@@ -1031,7 +1065,7 @@ Peg counts:
     limit overflows (sum)
 
 
-2.18. latency
+2.19. latency
 
 --------------
 
@@ -1074,7 +1108,7 @@ Peg counts:
   * latency.rule_tree_enables: rule tree re-enables (sum)
 
 
-2.19. memory
+2.20. memory
 
 --------------
 
@@ -1121,7 +1155,7 @@ Peg counts:
   * memory.retained: total bytes not returned to OS (now)
 
 
-2.20. network
+2.21. network
 
 --------------
 
@@ -1159,7 +1193,7 @@ Commands:
     the user policy id
 
 
-2.21. output
+2.22. output
 
 --------------
 
@@ -1197,7 +1231,7 @@ Rules:
   * 2:1 (output) tagged packet
 
 
-2.22. packet_tracer
+2.23. packet_tracer
 
 --------------
 
@@ -1221,7 +1255,7 @@ Commands:
   * packet_tracer.disable(): disable packet tracer
 
 
-2.23. packets
+2.24. packets
 
 --------------
 
@@ -1247,7 +1281,7 @@ Configuration:
     are used to track fragments and connections
 
 
-2.24. payload_injector
+2.25. payload_injector
 
 --------------
 
@@ -1269,7 +1303,7 @@ Peg counts:
     inject mid-frame (sum)
 
 
-2.25. process
+2.26. process
 
 --------------
 
@@ -1303,7 +1337,7 @@ Configuration:
     threads for watchdog to trigger { 1:65535 }
 
 
-2.26. profiler
+2.27. profiler
 
 --------------
 
@@ -1352,7 +1386,7 @@ Commands:
   * profiler.module_status(): show module time profiler status
 
 
-2.27. rate_filter
+2.28. rate_filter
 
 --------------
 
@@ -1384,7 +1418,7 @@ Peg counts:
     memory (sum)
 
 
-2.28. references
+2.29. references
 
 --------------
 
@@ -1400,7 +1434,7 @@ Configuration:
   * string references[].url: where this reference is defined
 
 
-2.29. search_engine
+2.30. search_engine
 
 --------------
 
@@ -1461,10 +1495,9 @@ Peg counts:
   * search_engine.non_qualified_events: total non-qualified events
     (sum)
   * search_engine.qualified_events: total qualified events (sum)
-  * search_engine.searched_bytes: total bytes searched (sum)
 
 
-2.30. side_channel
+2.31. side_channel
 
 --------------
 
@@ -1486,7 +1519,7 @@ Peg counts:
   * side_channel.packets: total packets (sum)
 
 
-2.31. snort
+2.32. snort
 
 --------------
 
@@ -1773,7 +1806,7 @@ Peg counts:
     failed due to attribute table full (sum)
 
 
-2.32. suppress
+2.33. suppress
 
 --------------
 
@@ -1793,7 +1826,7 @@ Configuration:
     according to track
 
 
-2.33. trace
+2.34. trace
 
 --------------
 
@@ -2737,9 +2770,6 @@ Configuration:
   * enum binder[].when.role = any: use the given configuration on one
     or any end of a session { client | server | any }
   * string binder[].when.service: override default configuration
-  * string binder[].when.zones: deprecated alias for groups
-  * string binder[].when.src_zone: deprecated alias for src_groups
-  * string binder[].when.dst_zone: deprecated alias for dst_groups
   * enum binder[].use.action = inspect: what to do with matching
     traffic { reset | block | allow | inspect }
   * string binder[].use.file: use configuration in given file
@@ -2916,8 +2946,6 @@ Configuration:
   * int dce_smb.smb_max_compound = 3: SMB max compound size { 0:255 }
   * multi dce_smb.valid_smb_versions = all: valid SMB versions { v1 |
     v2 | all }
-  * enum dce_smb.smb_file_inspection: deprecated (not used): file
-    inspection controlled by smb_file_depth { off | on | only }
   * int dce_smb.smb_file_depth = 16384: SMB file depth for file data
     (-1 = disabled, 0 = unlimited) { -1:32767 }
   * string dce_smb.smb_invalid_shares: SMB shares to alert on
@@ -5299,8 +5327,6 @@ Configuration:
   * int sip.max_from_len = 256: maximum from field size { 0:65535 }
   * int sip.max_request_name_len = 20: maximum request name field
     size { 0:65535 }
-  * int sip.max_requestName_len = 20: deprecated - use
-    max_request_name_len instead { 0:65535 }
   * int sip.max_to_len = 256: maximum to field size { 0:65535 }
   * int sip.max_uri_len = 256: maximum request uri field size {
     0:65535 }
@@ -5886,7 +5912,6 @@ Rules:
   * 129:2 (stream_tcp) data on SYN packet
   * 129:3 (stream_tcp) data sent on stream not accepting data
   * 129:4 (stream_tcp) TCP timestamp is outside of PAWS window
-  * 129:5 (stream_tcp) bad segment, adjusted size ⇐ 0 (deprecated)
   * 129:6 (stream_tcp) window size (after scaling) larger than policy
     allows
   * 129:7 (stream_tcp) limit on number of overlapping TCP packets
@@ -6165,11 +6190,101 @@ the parser. For the reject rule, you can set reject = { } to get the
 rule to parse.
 
 
-6.1. react
+6.1. alert
 
 --------------
 
-Help: send response to client and terminate session
+Help: manage the counters for the alert action
+
+Type: ips_action
+
+Usage: context
+
+Peg counts:
+
+no match
+
+
+6.2. block
+
+--------------
+
+Help: manage the counters for the block action
+
+Type: ips_action
+
+Usage: context
+
+Peg counts:
+
+no match
+
+
+6.3. drop
+
+--------------
+
+Help: manage the counters for the drop action
+
+Type: ips_action
+
+Usage: context
+
+Peg counts:
+
+no match
+
+
+6.4. file_id_action
+
+--------------
+
+Help: manage the counters for the file_id action
+
+Type: ips_action
+
+Usage: context
+
+Peg counts:
+
+no match
+
+
+6.5. log
+
+--------------
+
+Help: manage the counters for the log action
+
+Type: ips_action
+
+Usage: context
+
+Peg counts:
+
+no match
+
+
+6.6. pass
+
+--------------
+
+Help: manage the counters for the pass action
+
+Type: ips_action
+
+Usage: context
+
+Peg counts:
+
+no match
+
+
+6.7. react
+
+--------------
+
+Help: manage the data and the counters for the react action
 
 Type: ips_action
 
@@ -6179,12 +6294,16 @@ Configuration:
 
   * string react.page: file containing HTTP response body
 
+Peg counts:
 
-6.2. reject
+no match
+
+
+6.8. reject
 
 --------------
 
-Help: terminate session with TCP reset or ICMP unreachable
+Help: manage the data and the counters for the reject action
 
 Type: ips_action
 
@@ -6196,6 +6315,25 @@ Configuration:
     none|source|dest|both }
   * enum reject.control = none: send ICMP unreachable(s) { none|
     network|host|port|forward|all }
+
+Peg counts:
+
+no match
+
+
+6.9. rewrite
+
+--------------
+
+Help: manage the counters for the rewrite action
+
+Type: ips_action
+
+Usage: context
+
+Peg counts:
+
+no match
 
 
 ---------------------------------------------------------------------
@@ -7898,6 +8036,11 @@ Peg counts:
   * pcre.pcre_to_hyper: total pcre rules by hyperscan engine (sum)
   * pcre.pcre_native: total pcre rules compiled by pcre engine (sum)
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
+  * pcre.pcre_match_limit: total number of times pcre hit the match
+    limit (sum)
+  * pcre.pcre_recursion_limit: total number of times pcre hit the
+    recursion limit (sum)
+  * pcre.pcre_error: total number of times pcre returns error (sum)
 
 
 7.94. pkt_data
@@ -9203,7 +9346,6 @@ libraries see the Getting Started section of the manual.
   * addr_list binder[].when.dst_nets: list of destination networks
   * bit_list binder[].when.dst_ports: list of destination ports {
     65535 }
-  * string binder[].when.dst_zone: deprecated alias for dst_groups
   * string binder[].when.groups: list of interface group IDs
   * string binder[].when.intfs: list of interface IDs
   * int binder[].when.ips_policy_id: unique ID for selection of this
@@ -9220,10 +9362,8 @@ libraries see the Getting Started section of the manual.
   * string binder[].when.src_intfs: list of source interface IDs
   * addr_list binder[].when.src_nets: list of source networks
   * bit_list binder[].when.src_ports: list of source ports { 65535 }
-  * string binder[].when.src_zone: deprecated alias for src_groups
   * string binder[].when.tenants: list of tenants
   * bit_list binder[].when.vlans: list of VLAN IDs { 4095 }
-  * string binder[].when.zones: deprecated alias for groups
   * interval bufferlen.~range: check that total length of current
     buffer is in given range { 0:65535 }
   * implied bufferlen.relative: use remaining length (from current
@@ -9383,8 +9523,6 @@ libraries see the Getting Started section of the manual.
     before performing reassembly { 0:65535 }
   * int dce_smb.smb_file_depth = 16384: SMB file depth for file data
     (-1 = disabled, 0 = unlimited) { -1:32767 }
-  * enum dce_smb.smb_file_inspection: deprecated (not used): file
-    inspection controlled by smb_file_depth { off | on | only }
   * enum dce_smb.smb_fingerprint_policy = none: target based SMB
     policy to use { none | client | server | both }
   * string dce_smb.smb_invalid_shares: SMB shares to alert on
@@ -10610,8 +10748,6 @@ libraries see the Getting Started section of the manual.
   * int sip.max_dialogs = 4: maximum number of dialogs within one
     stream session { 1:max32 }
   * int sip.max_from_len = 256: maximum from field size { 0:65535 }
-  * int sip.max_requestName_len = 20: deprecated - use
-    max_request_name_len instead { 0:65535 }
   * int sip.max_request_name_len = 20: maximum request name field
     size { 0:65535 }
   * int sip.max_to_len = 256: maximum to field size { 0:65535 }
@@ -11140,6 +11276,12 @@ libraries see the Getting Started section of the manual.
 
 --------------
 
+  * ac_bnfa.bytes: total bytes searched (sum)
+  * ac_bnfa.matches: number of times a match was found (sum)
+  * ac_bnfa.searches: number of search attempts (sum)
+  * ac_full.bytes: total bytes searched (sum)
+  * ac_full.matches: number of times a match was found (sum)
+  * ac_full.searches: number of search attempts (sum)
   * active.direct_injects: total crafted packets directly injected
     (sum)
   * active.failed_direct_injects: total crafted packet direct injects
@@ -11570,12 +11712,6 @@ libraries see the Getting Started section of the manual.
   * detection.onload_waits: times processing waited for onload to
     complete (sum)
   * detection.passed: passed packets (sum)
-  * detection.pcre_error: total number of times pcre returns error
-    (sum)
-  * detection.pcre_match_limit: total number of times pcre hit the
-    match limit (sum)
-  * detection.pcre_recursion_limit: total number of times pcre hit
-    the recursion limit (sum)
   * detection.pdu_searches: fast pattern searches in service buffers
     (sum)
   * detection.pkt_searches: fast pattern searches in packet data
@@ -11759,6 +11895,9 @@ libraries see the Getting Started section of the manual.
   * http_inspect.uri_normalizations: URIs needing to be normalization
     (sum)
   * http_inspect.uri_path: URIs with path problems (sum)
+  * hyperscan.bytes: total bytes searched (sum)
+  * hyperscan.matches: number of times a match was found (sum)
+  * hyperscan.searches: number of search attempts (sum)
   * icmp4.bad_checksum: non-zero icmp checksums (sum)
   * icmp4.checksum_bypassed: checksum calculations bypassed (sum)
   * icmp6.bad_icmp6_checksum: nonzero icmp6 checksums (sum)
@@ -11789,6 +11928,24 @@ libraries see the Getting Started section of the manual.
   * imap.start_tls: total STARTTLS events generated (sum)
   * imap.uu_attachments: total uu attachments decoded (sum)
   * imap.uu_decoded_bytes: total uu decoded bytes (sum)
+  * ips_actions.alert: number of packets that matched an IPS alert
+    rule (sum)
+  * ips_actions.block: number of packets that matched an IPS block
+    rule (sum)
+  * ips_actions.drop: number of packets that matched an IPS drop rule
+    (sum)
+  * ips_actions.file_id: number of packets that matched an IPS
+    file_id rule (sum)
+  * ips_actions.log: number of packets that matched an IPS log rule
+    (sum)
+  * ips_actions.pass: number of packets that matched an IPS pass rule
+    (sum)
+  * ips_actions.react: number of packets that matched an IPS react
+    rule (sum)
+  * ips_actions.reject: number of packets that matched an IPS reject
+    rule (sum)
+  * ips_actions.rewrite: number of packets that matched an IPS
+    rewrite rule (sum)
   * ipv4.bad_checksum: nonzero ip checksums (sum)
   * ipv4.checksum_bypassed: checksum calculations bypassed (sum)
   * js_norm.bytes: total number of bytes processed (sum)
@@ -11803,6 +11960,9 @@ libraries see the Getting Started section of the manual.
   * latency.total_packets: total packets monitored (sum)
   * latency.total_rule_evals: total rule evals monitored (sum)
   * latency.total_usecs: total usecs elapsed (sum)
+  * lowmem.bytes: total bytes searched (sum)
+  * lowmem.matches: number of times a match was found (sum)
+  * lowmem.searches: number of search attempts (sum)
   * memory.active: total bytes allocated in active pages (now)
   * memory.allocated: total amount of memory allocated by packet
     threads (now)
@@ -11953,8 +12113,13 @@ libraries see the Getting Started section of the manual.
     translation errors (sum)
   * payload_injector.http_injects: total number of http injections
     (sum)
+  * pcre.pcre_error: total number of times pcre returns error (sum)
+  * pcre.pcre_match_limit: total number of times pcre hit the match
+    limit (sum)
   * pcre.pcre_native: total pcre rules compiled by pcre engine (sum)
   * pcre.pcre_negated: total pcre rules using negation syntax (sum)
+  * pcre.pcre_recursion_limit: total number of times pcre hit the
+    recursion limit (sum)
   * pcre.pcre_rules: total rules processed with pcre option (sum)
   * pcre.pcre_to_hyper: total pcre rules by hyperscan engine (sum)
   * perf_monitor.flow_tracker_creates: total number of flow trackers
@@ -12054,7 +12219,6 @@ libraries see the Getting Started section of the manual.
   * search_engine.non_qualified_events: total non-qualified events
     (sum)
   * search_engine.qualified_events: total qualified events (sum)
-  * search_engine.searched_bytes: total bytes searched (sum)
   * search_engine.total_flushed: total fast pattern matches processed
     (sum)
   * search_engine.total_inserts: total fast pattern hits (sum)
@@ -14550,7 +14714,7 @@ TIME-WAIT, FIN-WAIT, CLOSED, or CLOSE-WAIT state.
 The TCP timestamp is outside of PAWS (protection against wrapped
 sequences) window.
 
-129:5 (stream_tcp) bad segment, adjusted size ⇐ 0 (deprecated)
+129:5
 
 Bad segment, adjusted size ⇐ 0 (deprecated)
 
@@ -15858,10 +16022,15 @@ and are not applicable elsewhere.
 
 --------------
 
+  * ac_bnfa (search_engine): Aho-Corasick Binary NFA (low memory, low
+    performance) MPSE
+  * ac_full (search_engine): Aho-Corasick Full (high memory, best
+    performance), implements search_all()
   * ack (ips_option): rule option to match on TCP ack numbers
   * active (basic): configure responses
   * address_space_selector (policy_selector): configure traffic
     processing based on address space
+  * alert (ips_action): manage the counters for the alert action
   * alert_csv (logger): output event in csv format
   * alert_ex (logger): output gid:sid:rev for alerts
   * alert_fast (logger): output event with brief text format
@@ -15887,6 +16056,7 @@ and are not applicable elsewhere.
   * ber_skip (ips_option): rule option to skip BER element
   * binder (inspector): configure processing based on CIDRs, ports,
     services, etc.
+  * block (ips_action): manage the counters for the block action
   * bufferlen (ips_option): rule option to check length of current
     buffer
   * byte_extract (ips_option): rule option to convert data to an
@@ -15948,6 +16118,7 @@ and are not applicable elsewhere.
   * dns (inspector): dns inspection
   * domain_filter (inspector): alert on configured HTTP domains
   * dpx (inspector): dynamic inspector example
+  * drop (ips_action): manage the counters for the drop action
   * dsize (ips_option): rule option to test payload size
   * eapol (codec): support for extensible authentication protocol
     over LAN
@@ -15970,6 +16141,8 @@ and are not applicable elsewhere.
   * file_data (ips_option): rule option to set detection cursor to
     file data
   * file_id (inspector): configure file identification
+  * file_id_action (ips_action): manage the counters for the file_id
+    action
   * file_log (inspector): log file event to file.log
   * file_meta (ips_option): rule option to set file metadata (file
     type and id)
@@ -16059,7 +16232,7 @@ and are not applicable elsewhere.
     cursor to the version buffer
   * http_version_match (ips_option): rule option to match version to
     listed values
-  * hyperscan (search_engine): intel hyperscan-based mpse with regex
+  * hyperscan (search_engine): intel hyperscan-based MPSE with regex
     support
   * icmp4 (codec): support for Internet control message protocol v4
   * icmp6 (codec): support for Internet control message protocol v6
@@ -16079,6 +16252,7 @@ and are not applicable elsewhere.
     number
   * ipopts (ips_option): rule option to check for IP options
   * ips (basic): configure IPS rule processing
+  * ips_actions (basic): aggregate action counters
   * ipv4 (codec): support for Internet protocol v4 (DLT 228)
   * ipv6 (codec): support for Internet protocol v6 (DLT 229)
   * isdataat (ips_option): rule option to check for the presence of
@@ -16089,9 +16263,12 @@ and are not applicable elsewhere.
   * js_norm (basic): JavaScript normalizer
   * latency (basic): packet and rule latency monitoring and control
   * llc (codec): support for logical link control
+  * log (ips_action): manage the counters for the log action
   * log_codecs (logger): log protocols in packet by layer
   * log_hext (logger): output payload suitable for daq hext
   * log_pcap (logger): log packet in pcap format
+  * lowmem (search_engine): Keyword Trie (low memory, low
+    performance) MPSE
   * md5 (ips_option): payload rule option for hash matching
   * mem_test (inspector): for testing memory management
   * memory (basic): memory management configuration
@@ -16118,6 +16295,7 @@ and are not applicable elsewhere.
   * packet_capture (inspector): raw packet dumping facility
   * packet_tracer (basic): generate debug trace messages for packets
   * packets (basic): configure basic packet handling
+  * pass (ips_action): manage the counters for the pass action
   * payload_injector (basic): payload injection utility
   * pbb (codec): support for 802.1ah protocol
   * pcre (ips_option): rule option for matching payload data with
@@ -16139,14 +16317,15 @@ and are not applicable elsewhere.
     actions)
   * raw_data (ips_option): rule option to set the detection cursor to
     the raw packet data
-  * react (ips_action): send response to client and terminate session
+  * react (ips_action): manage the data and the counters for the
+    react action
   * reference (ips_option): rule option to indicate relevant attack
     identification system
   * references (basic): define reference systems used in rules
   * regex (ips_option): rule option for matching payload data with
     hyperscan regex; uses pcre syntax
-  * reject (ips_action): terminate session with TCP reset or ICMP
-    unreachable
+  * reject (ips_action): manage the data and the counters for the
+    reject action
   * rem (ips_option): rule option to convey an arbitrary comment in
     the rule body
   * replace (ips_option): rule option to overwrite payload data; use
@@ -16154,6 +16333,7 @@ and are not applicable elsewhere.
   * reputation (inspector): reputation inspection
   * rev (ips_option): rule option to indicate current revision of
     signature
+  * rewrite (ips_action): manage the counters for the rewrite action
   * rna (inspector): Real-time network awareness and OS
     fingerprinting (experimental)
   * rpc (ips_option): rule option to check SUNRPC CALL parameters
@@ -16598,13 +16778,13 @@ and are not applicable elsewhere.
     processing based on address space
   * policy_selector::tenant_selector: configure traffic processing
     based on tenants
-  * search_engine::ac_bnfa: Aho-Corasick Binary NFA (low memory, high
+  * search_engine::ac_bnfa: Aho-Corasick Binary NFA (low memory, low
     performance) MPSE
   * search_engine::ac_full: Aho-Corasick Full (high memory, best
     performance), implements search_all()
-  * search_engine::hyperscan: intel hyperscan-based mpse with regex
+  * search_engine::hyperscan: intel hyperscan-based MPSE with regex
     support
-  * search_engine::lowmem: Keyword Trie (low memory, moderate
-    performance) MPSE
+  * search_engine::lowmem: Keyword Trie (low memory, low performance)
+    MPSE
   * so_rule::3|18758: SO rule example
 

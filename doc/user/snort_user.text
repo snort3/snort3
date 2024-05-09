@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.1.85.0 2024-05-06 22:48:43 EDT TST
+Revision 3.2.0.0 2024-05-08 20:53:28 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -751,8 +751,8 @@ objectives, including:
   * IpsOption - for detection in Snort rules
   * IpsAction - for custom actions
   * Logger - for handling events
-  * Mpse - for fast pattern matching
-  * So - for dynamic rules
+  * MPSE - for fast pattern matching
+  * SO - for dynamic rules
 
 The power of plugins is that they have a very focused purpose and can
 be created with relative ease. For example, you can extend the rule
@@ -5258,8 +5258,8 @@ monitoring such data:
 The base tracker is used to gather running statistics about Snort and
 its running modules. All Snort modules gather, at the very least,
 counters for the number of packets reaching it. Most supplement these
-counts with those for domain specific functions, such as
-http_inspect’s number of GET requests seen.
+counts with those for domain specific functions, such as the number
+of GET requests seen by http_inspect.
 
 Statistics are gathered live and can be reported at regular
 intervals. The stats reported correspond only to the interval in
