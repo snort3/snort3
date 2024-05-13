@@ -774,7 +774,7 @@ static DCE2_CoCtxIdNode* dce_co_process_ctx_id(DCE2_SsnData* sd,DCE2_CoTracker* 
  * Context ids and associated uuids are stored in a queue and
  * dequeued upon server response.  Server response doesn't
  * indicate by context id which bindings were accepted or
- * rejected, but the index or order they were in in the client
+ * rejected, but the index or order they were in the client
  * bind or alter context, hence the queue.
  *
  ********************************************************************/

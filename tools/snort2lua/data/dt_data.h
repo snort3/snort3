@@ -37,7 +37,7 @@
 // data (variables, includes, etcs), one api for creating tables. Hoever,
 // the reason they are together is because this class is not static, and I
 // did not want to be pass three pointers to the three API's when creating
-// new conversion states.  There are comments in in all caps which show the
+// new conversion states.  There are comments in all caps which show the
 // separate the sections.
 
 // The first section of this file is really DataApi creation and
