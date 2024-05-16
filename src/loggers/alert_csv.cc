@@ -28,6 +28,8 @@
 #include "config.h"
 #endif
 
+#include <sys/types.h>
+
 #include "detection/detection_engine.h"
 #include "detection/ips_context.h"
 #include "events/event.h"

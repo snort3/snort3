@@ -20,7 +20,10 @@
 #define PROCESS_H
 
 #include <sys/time.h>
+#include <sys/types.h>
+
 #include <string>
+
 #include "main/snort_types.h"
 
 
