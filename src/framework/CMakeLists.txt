@@ -60,11 +60,22 @@ add_custom_command(
 
 add_custom_target(api_options ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/api_options.h)
 
+list(APPEND inc_local ".")
+list(APPEND inc_local "${CMAKE_CURRENT_BINARY_DIR}/..")
+list(TRANSFORM inc_local PREPEND "-I")
+
+list(APPEND inc_external ${EXTERNAL_INCLUDES})
+list(TRANSFORM inc_external PREPEND "-idirafter")
+
+list(APPEND inc_dirs ${inc_local})
+list(APPEND inc_dirs ${inc_external})
+list(JOIN inc_dirs " " INC_DIRS)
+
 add_custom_command(
     OUTPUT
         ${CMAKE_CURRENT_BINARY_DIR}/snort_api.h
     COMMAND
-        ${CMAKE_CURRENT_SOURCE_DIR}/plug_gen.sh ${CMAKE_CXX_COMPILER} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} > ${CMAKE_CURRENT_BINARY_DIR}/snort_api.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/plug_gen.sh ${CMAKE_CXX_COMPILER} ${CMAKE_CURRENT_SOURCE_DIR} ${INC_DIRS} > ${CMAKE_CURRENT_BINARY_DIR}/snort_api.h
     DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/plug_gen.sh
         ${CMAKE_CURRENT_SOURCE_DIR}/plugins.h
