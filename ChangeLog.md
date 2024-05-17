@@ -1,3 +1,9 @@
+2024-05-16: 3.2.1.0
+
+* framework: supply directories to system headers to plug_gen.sh
+* main: updates for types used by Alpine.
+* memory: fix unit test
+
 2024-05-08: 3.2.0.0
 
 * actions: add action counters and aggregate them under ips_actions
