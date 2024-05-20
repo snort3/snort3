@@ -79,6 +79,9 @@ bool Http2Inspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
     if (session_data->stream_in_hi == Http2Enums::NO_STREAM_ID)
         return false;
 
+    if  (id >= HTTP2_BUFFER__MAX)
+        return session_data->hi->get_buf(id - HTTP2_BUFFER__MAX + 1, p, b);
+
     Http2Stream* const stream = session_data->find_processing_stream();
     assert(stream != nullptr);
     const Field& buffer = stream->get_buf(id);

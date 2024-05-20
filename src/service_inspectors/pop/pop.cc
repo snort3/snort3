@@ -40,6 +40,13 @@
 
 using namespace snort;
 
+// Indices in the buffer array exposed by InspectApi
+// Must remain synchronized with pop_bufs
+enum PopBufId
+{
+    POP_FILE_DATA_ID = 1, POP_VBA_DATA_ID, POP_JS_DATA_ID
+};
+
 THREAD_LOCAL ProfileStats popPerfStats;
 THREAD_LOCAL PopStats popstats;
 
@@ -699,8 +706,7 @@ public:
     { return true; }
 
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
-    bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
-        snort::InspectionBuffer& b) override;
+    bool get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b) override;
 
 private:
     POP_PROTO_CONF* config;
@@ -791,9 +797,19 @@ bool Pop::get_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
     return dst && dst_len;
 }
 
-bool Pop::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b)
+bool Pop::get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b)
 {
-    return get_buf(ibt, p, b);
+    switch (id)
+    {
+    case POP_FILE_DATA_ID:
+        return false;
+    case POP_VBA_DATA_ID:
+        return get_buf(InspectionBuffer::IBT_VBA, p, b);
+    case POP_JS_DATA_ID:
+        return get_buf(InspectionBuffer::IBT_JS_DATA, p, b);
+    default:
+        return false;
+    }
 }
 
 //-------------------------------------------------------------------------

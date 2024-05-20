@@ -184,5 +184,7 @@ public:
 extern THREAD_LOCAL Dnp3Stats dnp3_stats;
 extern THREAD_LOCAL snort::ProfileStats dnp3_perf_stats;
 
+bool get_buf_dnp3_data(snort::Packet* p, snort::InspectionBuffer& b);
+
 #endif
 

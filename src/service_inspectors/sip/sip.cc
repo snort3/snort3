@@ -44,6 +44,33 @@ static void FreeSipData(void*);
 unsigned SipFlowData::inspector_id = 0;
 unsigned SIPData::pub_id = 0;
 
+bool get_buf_sip(unsigned id, snort::Packet* p, snort::InspectionBuffer& b)
+{
+    if (id != SIP_HEADER_ID and id != SIP_BODY_ID)
+        return false;
+
+    if ((!p->has_tcp_data() and !p->is_udp()) or !p->flow or !p->dsize)
+        return false;
+
+    if (p->has_tcp_data() and !p->is_full_pdu())
+        return false;
+
+    SIPData* sd = get_sip_session_data(p->flow);
+    if (!sd)
+        return false;
+
+    const SIP_Roptions& ropts = sd->ropts;
+    const uint8_t* data = (id == SIP_HEADER_ID) ? ropts.header_data : ropts.body_data;
+    unsigned len = (id == SIP_HEADER_ID) ? ropts.header_len : ropts.body_len;
+    if (!data or !len)
+        return false;
+
+    b.data = data;
+    b.len = len;
+    b.is_accumulated = false;
+    return true;
+}
+
 SipFlowData::SipFlowData() : FlowData(inspector_id)
 {
     memset(&session, 0, sizeof(session));
@@ -115,7 +142,7 @@ static inline int SIP_Process(Packet* p, SIPData* sessp, SIP_PROTO_CONF* config)
     bool status;
     const char* sip_buff = (const char*)p->data;
     const char* end;
-    SIP_Roptions* pRopts;
+    SIP_Roptions* pRopts = &(sessp->ropts);
     SIPMsg sipMsg;
 
     memset(&sipMsg, 0, SIPMSG_ZERO_LEN);
@@ -127,13 +154,13 @@ static inline int SIP_Process(Packet* p, SIPData* sessp, SIP_PROTO_CONF* config)
 
     status = sip_parse(&sipMsg, sip_buff, end, config);
 
+    memset(pRopts, 0, sizeof(*pRopts));
     if (true == status)
     {
         /*Update the dialog state*/
         SIP_updateDialog(sipMsg, &(sessp->dialogs), p, config);
     }
     /*Update the session data*/
-    pRopts = &(sessp->ropts);
     pRopts->method_data = sipMsg.method;
     pRopts->method_len = sipMsg.methodLen;
     pRopts->header_data = sipMsg.header;
@@ -193,6 +220,9 @@ public:
 
     bool is_control_channel() const override
     { return true; }
+
+    bool get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b) override
+    { return get_buf_sip(id, p, b); }
 
 private:
     SIP_PROTO_CONF* config;

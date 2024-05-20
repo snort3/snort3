@@ -91,6 +91,7 @@ public:
     EvalStatus eval(Cursor&, Packet*) override;
 
 private:
+    unsigned get_bufid() const { return (idx == SIP_HEADER) ? SIP_HEADER_ID : SIP_BODY_ID; }
     const char* key;
     CursorActionType cat;
     SipIdx idx;
@@ -98,42 +99,14 @@ private:
 
 IpsOption::EvalStatus SipIpsOption::eval(Cursor& c, Packet* p)
 {
-    RuleProfile profile(sip_ps[idx]);
+    RuleProfile profile(sip_ps[idx]);  // cppcheck-suppress unreadVariable
 
-    if ((!p->has_tcp_data() && !p->is_udp()) || !p->flow || !p->dsize)
-        return NO_MATCH;
+    InspectionBuffer b;
+    if (!get_buf_sip(get_bufid(), p, b))
+         return NO_MATCH;
 
-    // FIXIT-P cache id at parse time for runtime use
-    SIPData* sd = get_sip_session_data(p->flow);
-
-    if (!sd)
-        return NO_MATCH;
-
-    SIP_Roptions* ropts = &sd->ropts;
-    const uint8_t* data = nullptr;
-    unsigned len = 0;
-
-    switch (idx)
-    {
-    case SIP_HEADER:
-        data = ropts->header_data;
-        len = ropts->header_len;
-        break;
-    case SIP_BODY:
-        data = ropts->body_data;
-        len = ropts->body_len;
-        break;
-    default:
-        break;
-    }
-
-    if (data != nullptr)
-    {
-        c.set(key, data, len);
-        return MATCH;
-    }
-
-    return NO_MATCH;
+    c.set(key, b.data, b.len);
+    return MATCH;
 }
 
 //-------------------------------------------------------------------------

@@ -35,7 +35,20 @@
 
 using namespace snort;
 
+#define S7COMMPLUS_CONTENT_BUFID 1
+
 THREAD_LOCAL S7commplusStats s7commplus_stats;
+
+bool get_buf_s7commplus_content(Packet* p, InspectionBuffer& b)
+{
+    if ( !p->is_full_pdu() or p->dsize < S7COMMPLUS_MIN_HDR_LEN )
+        return false;
+
+    b.data = p->data + S7COMMPLUS_MIN_HDR_LEN;
+    b.len = p->dsize - S7COMMPLUS_MIN_HDR_LEN;
+    b.is_accumulated = false;
+    return true;
+}
 
 //-------------------------------------------------------------------------
 // flow stuff
@@ -76,6 +89,9 @@ public:
 
     StreamSplitter* get_splitter(bool c2s) override
     { return new S7commplusSplitter(c2s); }
+
+    bool get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b) override
+    { return ( id == S7COMMPLUS_CONTENT_BUFID ) ? get_buf_s7commplus_content(p, b) : false; }
 };
 
 void S7commplus::eval(Packet* p)
@@ -113,7 +129,7 @@ void S7commplus::eval(Packet* p)
     // evaluating on the first PDU. Setting this flag stops the caching.
     p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
 
-    if ( !S7commplusDecode(p, mfd))
+    if ( !S7commplusDecode(p, mfd) )
         mfd->reset();
 }
 

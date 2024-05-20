@@ -57,4 +57,13 @@ public:
 SIPData* get_sip_session_data(const snort::Flow*);
 SIPMethodNode* add_sip_method(const char*);
 
+// Indices in the buffer array exposed by InspectApi
+// Must remain synchronized with sip_bufs
+enum SipBufId
+{
+    SIP_HEADER_ID = 1, SIP_BODY_ID
+};
+
+bool get_buf_sip(unsigned id, snort::Packet* p, snort::InspectionBuffer& b);
+
 #endif

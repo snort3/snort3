@@ -40,6 +40,13 @@
 
 using namespace snort;
 
+// Indices in the buffer array exposed by InspectApi
+// Must remain synchronized with imap_bufs
+enum ImapBufId
+{
+    IMAP_FILE_DATA_ID = 1, IMAP_VBA_DATA_ID, IMAP_JS_DATA_ID
+};
+
 THREAD_LOCAL ProfileStats imapPerfStats;
 THREAD_LOCAL ImapStats imapstats;
 
@@ -763,6 +770,7 @@ public:
     bool get_buf(InspectionBuffer::Type, Packet*, InspectionBuffer&) override;
     bool get_fp_buf(snort::InspectionBuffer::Type ibt, snort::Packet* p,
         snort::InspectionBuffer& b) override;
+    bool get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b) override;
 
 private:
     IMAP_PROTO_CONF* config;
@@ -858,6 +866,21 @@ bool Imap::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBuffer& b
 {
     // Fast pattern buffers only supplied at specific times
     return get_buf(ibt, p, b);
+}
+
+bool Imap::get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b)
+{
+    switch (id)
+    {
+    case IMAP_FILE_DATA_ID:
+        return false;
+    case IMAP_VBA_DATA_ID:
+        return get_buf(InspectionBuffer::IBT_VBA, p, b);
+    case IMAP_JS_DATA_ID:
+        return get_buf(InspectionBuffer::IBT_JS_DATA, p, b);
+    default:
+        return false;
+    }
 }
 
 //-------------------------------------------------------------------------

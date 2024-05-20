@@ -49,27 +49,7 @@ void HttpApi::http_init()
 
 const char* HttpApi::classic_buffer_names[] =
 {
-    "file_data",
-    "http_client_body",
-    "http_cookie",
-    "http_header",
-    "http_method",
-    "http_param",
-    "http_raw_body",
-    "http_raw_cookie",
-    "http_raw_header",
-    "http_raw_request",
-    "http_raw_status",
-    "http_raw_trailer",
-    "http_raw_uri",
-    "http_stat_code",
-    "http_stat_msg",
-    "http_trailer",
-    "http_true_ip",
-    "http_uri",
-    "http_version",
-    "js_data",
-    "vba_data",
+    HTTP_CLASSIC_BUFFER_NAMES,
     nullptr
 };
 

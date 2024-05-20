@@ -30,6 +30,7 @@
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 
+#include "modbus.h"
 #include "modbus_decode.h"
 
 using namespace snort;
@@ -75,16 +76,11 @@ IpsOption::EvalStatus ModbusDataOption::eval(Cursor& c, Packet* p)
 {
     RuleProfile profile(modbus_data_prof);  // cppcheck-suppress unreadVariable
 
-    if ( !p->flow )
+    InspectionBuffer b;
+    if (!get_buf_modbus_data(p, b))
         return NO_MATCH;
 
-    if ( !p->is_full_pdu() )
-        return NO_MATCH;
-
-    if ( p->dsize < MODBUS_MIN_LEN )
-        return NO_MATCH;
-
-    c.set(s_name, p->data + MODBUS_MIN_LEN, p->dsize - MODBUS_MIN_LEN);
+    c.set(s_name, b.data, b.len);
 
     return MATCH;
 }

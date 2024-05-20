@@ -59,6 +59,24 @@ static once_flag init_flag;
 #define F_NAME S_NAME ".txt"
 
 //-------------------------------------------------------------------------
+// translation stuff
+//-------------------------------------------------------------------------
+
+enum BuffersToOutput
+{
+    BUFFERS_NONE = 0,
+    BUFFERS_RULE,
+    BUFFERS_INSPECTOR,
+    BUFFERS_BOTH,
+};
+
+static void param_to_buffers(unsigned param, bool& buffers_rule, bool& buffers_inspector)
+{
+    buffers_rule = param == BUFFERS_RULE or param == BUFFERS_BOTH;
+    buffers_inspector = param == BUFFERS_INSPECTOR or param == BUFFERS_BOTH;
+}
+
+//-------------------------------------------------------------------------
 // module stuff
 //-------------------------------------------------------------------------
 
@@ -70,8 +88,8 @@ static const Parameter s_params[] =
     { "packet", Parameter::PT_BOOL, nullptr, "false",
       "output packet dump with alert" },
 
-    { "buffers", Parameter::PT_BOOL, nullptr, "false",
-      "output IPS buffer dump" },
+    { "buffers", Parameter::PT_ENUM, "none | rule | inspector | both", "none",
+      "output IPS buffer dump (evaluated by IPS rule or an inspector)" },
 
     { "buffers_depth", Parameter::PT_INT, "0:maxSZ", "0",
       "number of IPS buffer bytes to dump per buffer (0 is unlimited)" },
@@ -101,7 +119,8 @@ public:
     size_t buffers_depth = 0;
     bool file = false;
     bool packet = false;
-    bool buffers = false;
+    bool buffers_rule = false;
+    bool buffers_inspector = false;
 };
 
 bool FastModule::set(const char*, Value& v, SnortConfig*)
@@ -113,7 +132,7 @@ bool FastModule::set(const char*, Value& v, SnortConfig*)
         packet = v.get_bool();
 
     else if ( v.is("buffers") )
-        buffers = v.get_bool();
+        param_to_buffers(v.get_uint8(), buffers_rule, buffers_inspector);
 
     else if ( v.is("limit") )
         limit = v.get_size() * 1024 * 1024;
@@ -129,7 +148,8 @@ bool FastModule::begin(const char*, int, SnortConfig*)
     file = false;
     limit = 0;
     packet = false;
-    buffers = false;
+    buffers_rule = false;
+    buffers_inspector = false;
     buffers_depth = 0;
     return true;
 }
@@ -212,6 +232,31 @@ static void log_ips_buffers(Packet* p, const char** buffs_to_dump, unsigned long
     }
 }
 
+static void log_inspector_buffers(Packet* p, unsigned long depth)
+{
+    if ( !p->flow or !p->flow->gadget )
+        return;
+
+    Inspector* gadget = p->flow->gadget;
+    const char* gadget_name = gadget->get_name();
+    const char** buffers = gadget->get_api()->buffers;
+
+    if ( !buffers )
+        return;
+
+    for ( ; *buffers; buffers++ )
+    {
+        InspectionBuffer buf;
+
+        // FIXIT-E avoid forcing evaluation of JIT buffers
+        if ( gadget->get_buf(*buffers, p, buf) )
+        {
+            int log_depth = depth && depth < buf.len ? depth : buf.len;
+            ObfuscateLogNetData(fast_log, buf.data, log_depth, p, *buffers, *buffers, gadget_name);
+        }
+    }
+}
+
 using BufferIds = std::vector<unsigned>;
 
 //-------------------------------------------------------------------------
@@ -239,7 +284,8 @@ private:
     unsigned long limit;
     unsigned long buffers_depth;
     bool packet;
-    bool log_buffers;
+    bool buffers_rule;
+    bool buffers_inspector;
 
     static std::vector<unsigned> req_ids;
     static std::vector<unsigned> rsp_ids;
@@ -249,7 +295,8 @@ std::vector<unsigned> FastLogger::req_ids;
 std::vector<unsigned> FastLogger::rsp_ids;
 
 FastLogger::FastLogger(FastModule* m) : file(m->file ? F_NAME : "stdout"), limit(m->limit),
-    buffers_depth(m->buffers_depth), packet(m->packet), log_buffers(m->buffers)
+    buffers_depth(m->buffers_depth), packet(m->packet), buffers_rule(m->buffers_rule),
+    buffers_inspector(m->buffers_inspector)
 { }
 
 //-----------------------------------------------------------------
@@ -326,6 +373,9 @@ void FastLogger::alert(Packet* p, const char* msg, const Event& event)
     }
     TextLog_NewLine(fast_log);
     TextLog_Flush(fast_log);
+
+    if ( buffers_inspector )
+        log_inspector_buffers(p, buffers_depth);
 }
 
 // log packet (p) if this is not an http request with one or more buffers
@@ -389,7 +439,7 @@ void FastLogger::log_data(Packet* p, const Event& event)
     if ( buf.len and event.get_gid() != 116 )
         LogNetData(fast_log, buf.data, buf.len, p, "alt");
 
-    if ( log_buffers )
+    if ( buffers_rule )
         log_ips_buffers(p, event.get_buffers(), buffers_depth);
 }
 

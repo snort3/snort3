@@ -58,34 +58,11 @@ IpsOption::EvalStatus MmsDataOption::eval(Cursor& c, Packet* p)
     // cppcheck-suppress unreadVariable
     RuleProfile profile(mms_data_prof);
 
-    if (!p->flow)
-    {
+    InspectionBuffer b;
+    if (!get_buf_mms_data(p, b))
         return NO_MATCH;
-    }
 
-    // not including any checks for a full PDU as we're not guaranteed to
-    // have one with the available pipelining options to get to MMS
-
-    MmsFlowData* mmsfd = (MmsFlowData*)p->flow->get_flow_data(MmsFlowData::inspector_id);
-
-    if (!mmsfd)
-    {
-        return NO_MATCH;
-    }
-
-    if (!mmsfd->is_mms_found())
-    {
-        return NO_MATCH;
-    }
-
-    if (mmsfd->get_mms_offset() >= p->dsize)
-    {
-        return NO_MATCH;
-    }
-
-    // setting the cursor to the offset previously determined by util_tpkt
-    // to be the start of the MMS message
-    c.set(s_name, p->data + mmsfd->get_mms_offset(), p->dsize - mmsfd->get_mms_offset());
+    c.set(s_name, b.data, b.len);
 
     return MATCH;
 }

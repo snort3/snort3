@@ -73,6 +73,7 @@ int get_message_type(int version, const char* name);
 int get_info_type(int version, const char* name);
 
 extern THREAD_LOCAL S7commplusStats s7commplus_stats;
+bool get_buf_s7commplus_content(snort::Packet* p, snort::InspectionBuffer& b);
 
 #endif
 

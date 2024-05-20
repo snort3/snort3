@@ -108,6 +108,7 @@ enum MmsMsgType
 };
 
 extern THREAD_LOCAL MmsStats mms_stats;
+bool get_buf_mms_data(snort::Packet* p, snort::InspectionBuffer& b);
 
 #endif
 

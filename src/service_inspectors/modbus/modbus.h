@@ -63,6 +63,7 @@ int get_message_type(int version, const char* name);
 int get_info_type(int version, const char* name);
 
 extern THREAD_LOCAL ModbusStats modbus_stats;
+bool get_buf_modbus_data(snort::Packet* p, snort::InspectionBuffer& b);
 
 #endif
 

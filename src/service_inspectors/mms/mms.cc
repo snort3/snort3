@@ -37,7 +37,33 @@
 
 using namespace snort;
 
+// Indices in the buffer array exposed by InspectApi
+// Must remain synchronized with mms_bufs
+enum MmsBufId
+{
+    MMS_DATA_BUFID = 1
+};
+
 THREAD_LOCAL MmsStats mms_stats;
+
+bool get_buf_mms_data(snort::Packet* p, snort::InspectionBuffer& b)
+{
+    if (!p->flow)
+        return false;
+
+    // not including any checks for a full PDU as we're not guaranteed to
+    // have one with the available pipelining options to get to MMS
+    MmsFlowData* mmsfd = (MmsFlowData*)p->flow->get_flow_data(MmsFlowData::inspector_id);
+    if (!mmsfd or !mmsfd->is_mms_found() or mmsfd->get_mms_offset() >= p->dsize)
+        return false;
+
+    // setting the cursor to the offset previously determined by util_tpkt
+    // to be the start of the MMS message
+    b.data = p->data + mmsfd->get_mms_offset();
+    b.len = p->dsize - mmsfd->get_mms_offset();
+    b.is_accumulated = false;
+    return true;
+}
 
 //-------------------------------------------------------------------------
 // flow stuff
@@ -82,6 +108,11 @@ public:
     StreamSplitter* get_splitter(bool c2s) override
     {
         return new MmsSplitter(c2s);
+    }
+
+    bool get_buf(unsigned id, snort::Packet* p, snort::InspectionBuffer& b) override
+    {
+        return (id == MMS_DATA_BUFID) ? get_buf_mms_data(p, b) : false;
     }
 };
 

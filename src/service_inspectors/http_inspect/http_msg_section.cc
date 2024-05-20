@@ -283,7 +283,7 @@ const Field& HttpMsgSection::get_classic_buffer(const HttpBufferInfo& buf)
             return Field::FIELD_NULL;
     }
     default:
-        assert(false);
+        assert(buf.type <= HTTP__BUFFER_MAX);
         return Field::FIELD_NULL;
     }
 }

@@ -102,7 +102,7 @@ IpsOption::EvalStatus SipMethodOption::eval(Cursor&, Packet* p)
 {
     RuleProfile profile(sipMethodRuleOptionPerfStats);  // cppcheck-suppress unreadVariable
 
-    if ( !p->flow )
+    if ((!p->has_tcp_data() && !p->is_udp()) || !p->flow || !p->dsize)
         return NO_MATCH;
 
     SIPData* sd = get_sip_session_data(p->flow);

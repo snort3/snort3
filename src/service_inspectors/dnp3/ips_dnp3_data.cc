@@ -78,27 +78,11 @@ IpsOption::EvalStatus Dnp3DataOption::eval(Cursor& c, Packet* p)
     // cppcheck-suppress unreadVariable
     RuleProfile profile(dnp3_data_perf_stats);
 
-    if ((p->has_tcp_data() && !p->is_full_pdu()) || !p->flow || !p->dsize)
+    InspectionBuffer b;
+    if (!get_buf_dnp3_data(p, b))
         return NO_MATCH;
 
-    Dnp3FlowData* fd = (Dnp3FlowData*)p->flow->get_flow_data(Dnp3FlowData::inspector_id);
-
-    if (!fd)
-        return NO_MATCH;
-
-    dnp3_session_data_t* dnp3_session = &fd->dnp3_session;
-    dnp3_reassembly_data_t* rdata;
-
-    if (dnp3_session->direction == DNP3_CLIENT)
-        rdata = &(dnp3_session->client_rdata);
-    else
-        rdata = &(dnp3_session->server_rdata);
-
-    /* Only evaluate rules against complete Application-layer fragments */
-    if (rdata->state != DNP3_REASSEMBLY_STATE__DONE)
-        return NO_MATCH;
-
-    c.set(s_name,(uint8_t*)rdata->buffer, rdata->buflen);
+    c.set(s_name, b.data, b.len);
 
     return MATCH;
 }
