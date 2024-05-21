@@ -438,6 +438,7 @@ static Flow* consume_ha_update_message(HAMessage& msg, const FlowKey& key, Packe
 
     if( p && no_flow_found && flow && flow->session )
     {
+        p->flow = flow;
         flow->session->setup(p);
         flow->set_direction(p);
         flow->set_client_initiate(p);

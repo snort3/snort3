@@ -94,7 +94,7 @@ public:
     {
         FlowIPTracker* tracker = perf_monitor.get_flow_ip();
 
-        if (!tracker)
+        if (!tracker or !flow)
             return;
 
         FlowState state = SFS_STATE_MAX;
