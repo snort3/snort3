@@ -40,6 +40,9 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
     // drop packet if sequence num is invalid
     if ( !tns.tracker->is_segment_seq_valid(tsd) )
     {
+        if ( is_keep_alive_probe(tns, tsd) )
+            return NORM_BAD_SEQ;
+
         bool inline_mode = tsd.is_nap_policy_inline();
         tcpStats.invalid_seq_num++;
         log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Sequence number is invalid\n");
@@ -515,6 +518,19 @@ void TcpNormalizer::log_drop_reason(TcpNormalizerState& tns, const TcpSegmentDes
         if (PacketTracer::is_active())
             PacketTracer::log("%s", log.c_str());
     }
+}
+
+bool TcpNormalizer::is_keep_alive_probe(TcpNormalizerState& tns, const TcpSegmentDescriptor& tsd)
+{
+    if ( (tns.tracker->r_win_base - tsd.get_seq()) == MAX_KEEP_ALIVE_PROBE_LEN
+        and tsd.get_len() <= MAX_KEEP_ALIVE_PROBE_LEN and 
+        !(tsd.get_tcph()->th_flags & (TH_SYN|TH_FIN|TH_RST)) )
+    {
+        tcpStats.keep_alive_probes++;
+        return true;
+    }
+
+    return false;
 }
 
 uint16_t TcpNormalizer::set_urg_offset(

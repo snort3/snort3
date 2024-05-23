@@ -90,6 +90,7 @@ public:
     virtual uint16_t set_urg_offset(State&, const snort::tcp::TCPHdr* tcph, uint16_t dsize);
     virtual void set_zwp_seq(State&, uint32_t seq);
     virtual void log_drop_reason(State&, const TcpSegmentDescriptor&, bool inline_mode, const char *issuer, const std::string& log);
+    virtual bool is_keep_alive_probe(State&, const TcpSegmentDescriptor&);
 
     static void reset_stats();
 

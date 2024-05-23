@@ -117,6 +117,7 @@ const PegInfo tcp_pegs[] =
     { CountType::MAX, "max_bytes", "maximum number of bytes queued in any flow" },
     { CountType::SUM, "zero_len_tcp_opt", "number of zero length tcp options" },
     { CountType::SUM, "zero_win_probes", "number of tcp zero window probes" },
+    { CountType::SUM, "keep_alive_probes", "number of tcp keep-alive probes" },
     { CountType::SUM, "proxy_mode_flows", "number of flows set to proxy normalization policy" },
     { CountType::SUM, "full_retransmits", "number of fully retransmitted segments" },
     { CountType::SUM, "flush_on_asymmetric_flow", "number of flushes on asymmetric flows" },

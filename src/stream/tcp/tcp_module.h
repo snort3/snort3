@@ -116,6 +116,7 @@ struct TcpStats
     PegCount max_bytes;
     PegCount zero_len_tcp_opt;
     PegCount zero_win_probes;
+    PegCount keep_alive_probes;
     PegCount proxy_mode_flows;
     PegCount full_retransmits;
     PegCount flush_on_asymmetric_flow;
