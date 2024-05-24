@@ -279,6 +279,15 @@ TEST_CASE("basic", "[PDFTokenizer]")
             "",  PDFTokenizer::PDFRet::INCOMPLETE_ARRAY_IN_DICTIONARY
         );
     }
+    SECTION("token too long")
+    {
+        test_pdf_proc(
+            "1"s + std::string(16 * 1024,' ') + " 0 obj"
+            "<< >>"
+            "endobj"s,
+            "",  PDFTokenizer::PDFRet::TOKEN_TOO_LONG
+        );
+    }
 }
 
 TEST_CASE("JS location", "[PDFTokenizer]")

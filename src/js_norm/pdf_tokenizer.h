@@ -41,6 +41,7 @@ public:
         INCOMPLETE_ARRAY_IN_DICTIONARY,
         STREAM_NO_LENGTH,
         UNEXPECTED_SYMBOL,
+        TOKEN_TOO_LONG,
         MAX
     };
 

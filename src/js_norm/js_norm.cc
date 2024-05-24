@@ -130,7 +130,7 @@ void JSNorm::normalize(const void* in_data, size_t in_len, const void*& data, si
         JSNormModule::increment_peg_counts(PEG_BYTES, next - src_ptr);
         src_ptr = next;
 
-        alive = post_proc(ret);
+        alive = alive and post_proc(ret);
     }
 
     if (jsn_ctx != nullptr)

@@ -60,7 +60,7 @@ bool PDFJSNorm::pre_proc()
     {
         trace_logf(2, js_trace, TRACE_PROC, DetectionEngine::get_current_packet(),
             "pdf processing failed: %d\n", (int)r);
-        return false;
+        alive = false;
     }
 
     src_ptr = (const uint8_t*)buf_pdf_out.data();

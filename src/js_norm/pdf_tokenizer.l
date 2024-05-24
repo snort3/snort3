@@ -79,7 +79,9 @@ GRP_DELIMITER      [\(\)\<\>\[\]\{\}\/\%]
 GRP_REGULAR        [^\x00\x09\x0a\x0c\x0d\x20\(\)\<\>\[\]\{\}\/\%]
 
 /* 7.2.3 Comments */
-COMMENT            %{GRP_NOT_NEWLINE}*{EOL_MARKER}
+COMMENT_START      %
+COMMENT_CONTENT    {GRP_NOT_NEWLINE}{1,16}
+COMMENT_END        {EOL_MARKER}
 
 /* 7.3.2 Boolean Objects */
 OBJ_BOOLEAN        true|false
@@ -145,17 +147,20 @@ OBJ_REFERENCE        {OBJ_INT_NUM}{GRP_WHITESPACE}+{OBJ_INT_NUM}{GRP_WHITESPACE}
 SKIP              [^[:digit:]%]{1,16}|.
 WHITESPACE        {GRP_WHITESPACE}{1,16}
 
-/* Start conditions: INITIAL or inside dictionary, literal string, hexadecimal string, stream */
+/* Start conditions: structures: comment, indirect object, dictionary or array */
+%x comment
 %x indobj
-%x stream
 %x dictnr
+
+/* Start conditions: literals: regular, hexadecimal, stream */
 %x litstr
 %x hexstr
+%x stream
 %x jslstr
 %x jshstr
 %x jsstream
 
-/* Start conditions: UTF-16BE BOM, UTF-16BE literal string, UTF-16BE hexadecimal string, UTF-16BE stream */
+/* Start conditions: UTF-16BE: BOM, hex BOM, regular, hexadecimal, stream */
 %x u16
 %x u16hex
 %x jsstru16
@@ -164,11 +169,12 @@ WHITESPACE        {GRP_WHITESPACE}{1,16}
 
 %%
 
-{SKIP}                                            { }
-{COMMENT}                                         { }
+
+<INITIAL,indobj,dictnr>{COMMENT_START}            { PUSH(comment); }
+<comment>{COMMENT_CONTENT}                        { }
+<comment>{COMMENT_END}                            { POP(); }
 
 <INITIAL>{INDIRECT_OBJ_OPEN}                      { PUSH(indobj); h_ind_obj_open(); }
-<indobj>{COMMENT}                                 { }
 <indobj>{WHITESPACE}                              { }
 <indobj>{INDIRECT_OBJ_CLOSE}                      { POP(); h_ind_obj_close(); }
 
@@ -183,7 +189,6 @@ WHITESPACE        {GRP_WHITESPACE}{1,16}
 <dictnr>{OBJ_DICT_OPEN}                           { PUSH(dictnr); EXEC(h_dict_open()) }
 <indobj>{OBJ_DICT_OPEN}                           { PUSH(dictnr); EXEC(h_dict_open()) }
 <dictnr>{OBJ_DICT_CLOSE}                          { POP(); EXEC(h_dict_close()) }
-<dictnr>{COMMENT}                                 { }
 <dictnr>{WHITESPACE}                              { }
 <dictnr>{OBJ_REFERENCE}                           { EXEC(h_dict_other()) h_ref(); }
 <dictnr>{OBJ_BOOLEAN}                             { EXEC(h_dict_other()) }
@@ -238,6 +243,7 @@ WHITESPACE        {GRP_WHITESPACE}{1,16}
 
 <*><<EOF>>                                        { return PDFRet::EOS; }
 
+{SKIP}                                            { }
 <*>.|\n                                           { return PDFRet::UNEXPECTED_SYMBOL; }
 
 %%
@@ -619,6 +625,16 @@ PDFTokenizer::~PDFTokenizer()
 
 PDFTokenizer::PDFRet PDFTokenizer::process()
 {
-    auto r = yylex();
-    return static_cast<PDFTokenizer::PDFRet>(r);
+    auto r = static_cast<PDFTokenizer::PDFRet>(yylex());
+
+    if (!yy_buffer_stack or !YY_CURRENT_BUFFER_LVALUE)
+        return r;
+
+    if (YY_CURRENT_BUFFER_LVALUE->yy_buf_size > YY_BUF_SIZE)
+        r = PDFTokenizer::TOKEN_TOO_LONG;
+
+    if (r != PDFTokenizer::EOS)
+        yy_flush_buffer(YY_CURRENT_BUFFER);
+
+    return r;
 }
