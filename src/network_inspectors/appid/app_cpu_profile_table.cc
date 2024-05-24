@@ -33,11 +33,11 @@
 
 using namespace snort;
 
-const char* table_header = "AppId Performance Statistics (all)\n========================================================================================================================\n";
-const char* columns = " AppId   App Name                             Microsecs        Packets        Avg/Packet       Sessions     Avg/Session \n";
-const char* partition = "------------------------------------------------------------------------------------------------------------------------\n";
+static const char* table_header = "AppId Performance Statistics (all)\n========================================================================================================================\n";
+static const char* columns = " AppId   App Name                             Microsecs        Packets        Avg/Packet       Sessions     Avg/Session \n";
+static const char* partition = "------------------------------------------------------------------------------------------------------------------------\n";
 
-std::string FormatWithCommas(uint64_t value) 
+static std::string FormatWithCommas(uint64_t value)
 {
     std::string numStr = std::to_string(value);
     int insertPosition = numStr.length() - 3;
@@ -52,20 +52,20 @@ std::string FormatWithCommas(uint64_t value)
 // Comparator for priority queue based on avg_processing_time/session
 struct CompareByAvgProcessingTime {
     bool operator()(const std::pair<AppId, AppidCPUProfilerStats>& a, const std::pair<AppId, AppidCPUProfilerStats>& b) const {
-        if (a.second.processed_packets == 0 or b.second.processed_packets == 0) {
+        if (a.second.per_appid_sessions == 0 or b.second.per_appid_sessions == 0)
             return false;
-        }
-        return a.second.processing_time/a.second.per_appid_sessions < b.second.processing_time/b.second.per_appid_sessions ; 
+
+        return a.second.processing_time/a.second.per_appid_sessions < b.second.processing_time/b.second.per_appid_sessions;
     }
 };
 
-void AppidCPUProfilingManager::display_appid_cpu_profiler_table(AppId appid)
+AppidCpuTableDisplayStatus AppidCPUProfilingManager::display_appid_cpu_profiler_table(AppId appid, OdpContext& odp_ctxt)
 {
-    if (appid_cpu_profiling_table.empty())
-    {
-        appid_log(nullptr, TRACE_INFO_LEVEL,"Appid CPU Profiler Table is empty\n", appid);
-        return;
-    }
+    if (odp_ctxt.is_appid_cpu_profiler_running())
+        return DISPLAY_ERROR_APPID_PROFILER_RUNNING;
+    else if (appid_cpu_profiling_table.empty())
+        return DISPLAY_ERROR_TABLE_EMPTY;
+
     auto bucket = appid_cpu_profiling_table.find(appid);
 
     if (bucket != appid_cpu_profiling_table.end())
@@ -82,22 +82,20 @@ void AppidCPUProfilingManager::display_appid_cpu_profiler_table(AppId appid)
     {
         appid_log(nullptr, TRACE_INFO_LEVEL,"Appid %d not found in the table\n", appid);
     }
+    return DISPLAY_SUCCESS;
 }
 
-void AppidCPUProfilingManager::display_appid_cpu_profiler_table()
+AppidCpuTableDisplayStatus AppidCPUProfilingManager::display_appid_cpu_profiler_table(OdpContext& odp_ctxt, bool override_running_flag)
 {
-    if (appid_cpu_profiling_table.empty())
-    {
-        appid_log(nullptr, TRACE_INFO_LEVEL,"Appid CPU Profiler Table is empty\n");
-        return;
-    }
+    if (odp_ctxt.is_appid_cpu_profiler_running() and !override_running_flag)
+        return DISPLAY_ERROR_APPID_PROFILER_RUNNING;
+    else if (appid_cpu_profiling_table.empty())
+        return DISPLAY_ERROR_TABLE_EMPTY;
 
     std::priority_queue<std::pair<AppId, AppidCPUProfilerStats>, std::vector<std::pair<AppId, AppidCPUProfilerStats>>, CompareByAvgProcessingTime> sorted_appid_cpu_profiler_table;
 
     for (const auto& entry : appid_cpu_profiling_table) 
-    {
-        sorted_appid_cpu_profiler_table.push(entry); // Push the pair (AppId, AppidCPUProfilerStats)
-    }
+        sorted_appid_cpu_profiler_table.push(entry);
 
     appid_log(nullptr, TRACE_INFO_LEVEL, table_header);
     appid_log(nullptr, TRACE_INFO_LEVEL, columns);
@@ -107,27 +105,26 @@ void AppidCPUProfilingManager::display_appid_cpu_profiler_table()
     {
         auto entry = sorted_appid_cpu_profiler_table.top();
         sorted_appid_cpu_profiler_table.pop();
-        if (!entry.second.processed_packets) 
+        if (!entry.second.processed_packets or !entry.second.per_appid_sessions)
             continue;
             
         appid_log(nullptr, TRACE_INFO_LEVEL, " %5d   %-25.25s   %18s   %12s   %15s   %12s    %12s\n",
                     entry.first, entry.second.app_name.c_str(), FormatWithCommas(entry.second.processing_time).c_str(), FormatWithCommas(entry.second.processed_packets).c_str(), FormatWithCommas(entry.second.processing_time/entry.second.processed_packets).c_str(),
                                                                                FormatWithCommas(entry.second.per_appid_sessions).c_str(), FormatWithCommas(entry.second.processing_time/entry.second.per_appid_sessions).c_str());
     } 
-}
-
-AppidCPUProfilingManager::AppidCPUProfilingManager()
-{
-    appid_cpu_profiling_table.clear();
+    return DISPLAY_SUCCESS;
 }
 
 void AppidCPUProfilingManager::cleanup_appid_cpu_profiler_table()
 { 
+    std::lock_guard<std::mutex> lock(appid_cpu_profiler_mutex);
     appid_cpu_profiling_table.clear();
 }
 
 void AppidCPUProfilingManager::insert_appid_cpu_profiler_record(AppId appId, const AppidCPUProfilerStats& stats)
 {
+    std::lock_guard<std::mutex> lock(appid_cpu_profiler_mutex);
+
     auto it = appid_cpu_profiling_table.find(appId);
     if (it == appid_cpu_profiling_table.end()) 
     {

@@ -622,10 +622,6 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 {
                     odp_ctxt.appid_cpu_profiler = false;
                 }
-                else if (!(strcasecmp(conf_val, "enabled")))
-                {
-                    odp_ctxt.appid_cpu_profiler = true;
-                }
             }
             else
                 ParseWarning(WARN_CONF, "appid: unsupported configuration: %s\n", conf_key);

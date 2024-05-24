@@ -70,7 +70,6 @@ public:
 
 AppIdConfig::~AppIdConfig() = default;
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
-AppidCPUProfilingManager::AppidCPUProfilingManager() {}
 
 AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);

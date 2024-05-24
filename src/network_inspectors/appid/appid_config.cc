@@ -111,8 +111,8 @@ void AppIdContext::pterm()
     if (odp_ctxt)
     {
         odp_ctxt->get_app_info_mgr().cleanup_appid_info_table();
-        if (odp_ctxt->is_appid_cpu_profiler_running())
-            odp_ctxt->get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table();
+        if (odp_ctxt->is_appid_cpu_profiler_enabled())
+            odp_ctxt->get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(*odp_ctxt, true);
 
         odp_ctxt->get_appid_cpu_profiler_mgr().cleanup_appid_cpu_profiler_table();
         delete odp_ctxt;

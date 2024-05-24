@@ -23,6 +23,7 @@
 
 #include <unordered_map>
 #include <vector>
+#include <mutex>
 
 #include "main/thread.h"
 #include "utils/util.h"
@@ -32,6 +33,12 @@
 
 class AppIdSession;
 class OdpContext;
+
+enum AppidCpuTableDisplayStatus {
+    DISPLAY_SUCCESS = 0,
+    DISPLAY_ERROR_TABLE_EMPTY,
+    DISPLAY_ERROR_APPID_PROFILER_RUNNING
+};
 
 struct AppidCPUProfilerStats {
     std::string app_name;
@@ -46,19 +53,20 @@ struct AppidCPUProfilerStats {
 
 class AppidCPUProfilingManager {
 private:
-    typedef std::unordered_map<AppId, AppidCPUProfilerStats> AppidCPUProfilingTable;
+    using AppidCPUProfilingTable = std::unordered_map<AppId, AppidCPUProfilerStats>;
     AppidCPUProfilingTable appid_cpu_profiling_table;
+    std::mutex appid_cpu_profiler_mutex;
         
 public:
-    AppidCPUProfilingManager();
+    AppidCPUProfilingManager() = default;
     
     void stats_bucket_insert(AppId appid, const char* app_name, uint64_t processing_time, uint64_t processed_packets);
     void insert_appid_cpu_profiler_record(AppId appId, const AppidCPUProfilerStats& stats);
     void check_appid_cpu_profiler_table_entry(const AppIdSession* asd, AppId service_id, AppId client_id, AppId payload_id, AppId misc_id);
     void check_appid_cpu_profiler_table_entry(const AppIdSession* asd, AppId payload_id);
 
-    void display_appid_cpu_profiler_table();
-    void display_appid_cpu_profiler_table(AppId appid);
+    AppidCpuTableDisplayStatus display_appid_cpu_profiler_table(OdpContext&, bool override_running_flag = false);
+    AppidCpuTableDisplayStatus display_appid_cpu_profiler_table(AppId, OdpContext&);
     
     void cleanup_appid_cpu_profiler_table();
 };

@@ -176,7 +176,6 @@ void Profiler::reset_stats(snort::ProfilerType) { }
 void Profiler::show_stats() { }
 
 OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
-AppidCPUProfilingManager::AppidCPUProfilingManager() { }
 
 AppIdConfig::~AppIdConfig() = default;
 

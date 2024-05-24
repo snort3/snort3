@@ -50,6 +50,7 @@
 #include "appid_inspector.h"
 #include "appid_peg_counts.h"
 #include "service_state.h"
+#include "app_cpu_profile_table.h"
 
 using namespace snort;
 using namespace std;
@@ -392,7 +393,6 @@ static void clear_dynamic_host_cache_services()
     }
 }
 
-
 static int show_cpu_profiler_stats(lua_State* L)
 {
     int appid = luaL_optint(L, 1, 0);
@@ -404,14 +404,27 @@ static int show_cpu_profiler_stats(lua_State* L)
         return 0;
     }
     const AppIdContext& ctxt = inspector->get_ctxt();
-    OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
+    OdpContext& odp_ctxt = ctxt.get_odp_ctxt(); 
+
     if (odp_ctxt.is_appid_cpu_profiler_enabled())
     {
+        AppidCpuTableDisplayStatus displayed = DISPLAY_SUCCESS;
         ctrlcon->respond("== showing appid cpu profiler table\n");
         if (!appid)
-            odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table();
+            displayed = odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(odp_ctxt);
         else
-            odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(appid);
+            displayed = odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(appid, odp_ctxt);
+
+        switch (displayed){
+            case DISPLAY_ERROR_TABLE_EMPTY:
+                ctrlcon->respond("== appid cpu profiler table is empty\n");
+                break;
+            case DISPLAY_ERROR_APPID_PROFILER_RUNNING:
+                ctrlcon->respond("== appid cpu profiler is still running\n");
+                break;
+            case DISPLAY_SUCCESS:
+                break;
+        }
     }
     else
         ctrlcon->respond("appid cpu profiler is disabled\n");
