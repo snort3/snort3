@@ -102,6 +102,10 @@ struct SIP_PROTO_CONF
     uint16_t maxViaLen;      // Maximum Via field size
     uint16_t maxContactLen;  // Maximum Contact field size
     uint16_t maxContentLen;  // Maximum Content length
+    uint64_t sip_timeout;
+    uint64_t sip_media_timeout;
+    uint64_t sip_invite_timeout;
+    uint64_t sip_disconnect_timeout;
     bool ignoreChannel;   // Whether to ignore media channels found by SIP PP
 };
 

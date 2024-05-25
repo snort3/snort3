@@ -266,6 +266,10 @@ void Sip::show(const SnortConfig*) const
     ConfigLogger::log_value("max_uri_len", config->maxUriLen);
     ConfigLogger::log_value("max_via_len", config->maxViaLen);
     ConfigLogger::log_list("methods", methods.c_str());
+    ConfigLogger::log_value("sip_timeout", config->sip_timeout);
+    ConfigLogger::log_value("sip_media_timeout", config->sip_media_timeout);
+    ConfigLogger::log_value("sip_invite_timeout", config->sip_invite_timeout);
+    ConfigLogger::log_value("sip_disconnect_timeout", config->sip_disconnect_timeout);
 }
 
 void Sip::eval(Packet* p)

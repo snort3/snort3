@@ -22,6 +22,7 @@
 #include "config.h"
 #endif
 
+#include "log/messages.h"
 #include "sip_module.h"
 
 #include <cassert>
@@ -92,6 +93,18 @@ static const Parameter s_params[] =
 
     { "methods", Parameter::PT_STRING, nullptr, default_methods,
       "list of methods to check in SIP messages" },
+
+    { "sip_timeout", Parameter::PT_INT, "0:", "0",
+      "SIP Timeout value in milliseconds" },
+
+    { "sip_media_timeout", Parameter::PT_INT, "0:", "0",
+      "SIP Media timeout milliseconds" },
+
+    { "sip_invite_timeout", Parameter::PT_INT, "0:", "0",
+      "SIP Invite timeout milliseconds" },
+
+    { "sip_disconnect_timeout", Parameter::PT_INT, "0:", "0",
+      "SIP Disconnect timeout milliseconds" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -229,6 +242,18 @@ bool SipModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("methods") )
         sip_methods = v.get_string();
+
+    else if ( v.is("sip_timeout") )
+        conf->sip_timeout = v.get_uint64()/1000;
+
+    else if ( v.is("sip_invite_timeout") )
+        conf->sip_invite_timeout = v.get_uint64()/1000;
+
+    else if ( v.is("sip_media_timeout") )
+        conf->sip_media_timeout = v.get_uint64()/1000;
+
+    else if ( v.is("sip_disconnect_timeout") )
+        conf->sip_disconnect_timeout = v.get_uint64()/1000;
 
     return true;
 }

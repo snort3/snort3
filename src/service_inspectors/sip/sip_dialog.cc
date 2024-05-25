@@ -84,33 +84,46 @@ static int SIP_processRequest(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_Dialog
     switch (methodFlag)
     {
     case SIP_METHOD_INVITE:
-
+    {
         ret = SIP_processInvite(sipMsg, dialog, dList);
 
+        if (ret and (config->sip_invite_timeout))
+        {
+            p->flow->set_idle_timeout(config->sip_invite_timeout);
+        }
         break;
-
+    }
     case SIP_METHOD_CANCEL:
-
+    {
         if (nullptr == dialog)
             return false;
         /*dialog can be deleted in the early state*/
         if ((SIP_DLG_EARLY == dialog->state)||(SIP_DLG_INVITING == dialog->state)
             || (SIP_DLG_CREATE == dialog->state))
             SIP_deleteDialog(dialog, dList);
-
+        if (config->sip_disconnect_timeout)
+            p->flow->set_idle_timeout(config->sip_disconnect_timeout);
         break;
+    }
 
     case SIP_METHOD_ACK:
-
+    {
         SIP_processACK(sipMsg, dialog, dList, p, config);
 
+        if (config->sip_timeout)
+            p->flow->set_idle_timeout(config->sip_timeout);
         break;
+    }
 
     case SIP_METHOD_BYE:
-
+    {
         if (SIP_DLG_ESTABLISHED == dialog->state)
             dialog->state = SIP_DLG_TERMINATING;
+
+        if (config->sip_disconnect_timeout)
+            p->flow->session_state |= STREAM_STATE_CLOSED;
         break;
+    }
 
     default:
 
@@ -239,6 +252,8 @@ static int SIP_processResponse(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_Dialo
         // media session
         if ( !SIP_checkMediaChange(sipMsg, dialog) )
         {
+            if (config->sip_media_timeout)
+                p->flow->set_idle_timeout(config->sip_media_timeout);
             SIP_updateMedias(sipMsg.mediaSession, dialog->mediaSessions);
             SIP_ignoreChannels(*currDialog, p,config);
             sipMsg.mediaUpdated = true;
