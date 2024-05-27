@@ -265,15 +265,7 @@ static inline bool DCE2_Smb2FindSidTid(DCE2_Smb2SsnData* ssd, const uint64_t sid
     const uint32_t tid, const uint32_t mid, DCE2_Smb2SessionTracker** str, DCE2_Smb2TreeTracker** ttr, bool
     lookup_cache = false)
 {
-    if(lookup_cache)
-    {
-        auto key = get_key(sid);
-        *str = smb2_session_cache->find(key).get();
-    }
-    else
-    {
-        *str = DCE2_Smb2FindSidInSsd(ssd, sid).get();
-    }
+    *str = DCE2_Smb2FindSidInSsd(ssd, sid).get();
     if (!*str)
     {
         if (lookup_cache)

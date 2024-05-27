@@ -49,9 +49,6 @@ public:
         current_size += size;
         if ( size > 0)
         {
-            // Checking 1+ size prevents crash if max_size is too low to hold even a single entry
-            if ( current_size > max_size and list.size() > 1 )
-                LruLocal::prune();
             if ( stats.cache_max < current_size )
                 stats.cache_max = current_size;
         }

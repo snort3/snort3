@@ -43,6 +43,7 @@ Smb2SidHashKey get_key(uint64_t sid)
         memcpy(key.cip, flow->client_ip.get_ip6_ptr(), 4 * sizeof(uint32_t));
         memcpy(key.sip, flow->server_ip.get_ip6_ptr(), 4 * sizeof(uint32_t));
         key.mplsLabel = flow->key->mplsLabel;
+        key.dport = flow->server_port;
         key.cgroup = flow->client_group;
         key.sgroup = flow->server_group;
         key.addressSpaceId = flow->key->addressSpaceId;

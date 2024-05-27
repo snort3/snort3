@@ -235,7 +235,7 @@ struct Smb2SidHashKey
     int16_t sgroup = 0;
     uint32_t addressSpaceId = 0;
     uint16_t vlan_tag = 0;
-    uint16_t padding = 0;
+    uint16_t dport = 0;
     uint64_t sid = 0;
     uint32_t tenant_id = 0;
     uint32_t padding2 = 0;  // NOTE: If this changes, change do_hash too
@@ -256,6 +256,7 @@ struct Smb2SidHashKey
                addressSpaceId == other.addressSpaceId and
                vlan_tag == other.vlan_tag and
                sid == other.sid and
+               dport == other.dport and
                tenant_id == other.tenant_id );
     }
 };
@@ -341,7 +342,7 @@ private:
 
         mix(a, b, c);
 
-        a += d[12];  // vlan & pad
+        a += d[12];  // vlan & dport
         b += d[13];  // ip_proto, pkt_type, version, flags
 
         finalize(a, b, c);
