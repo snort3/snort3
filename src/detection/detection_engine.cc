@@ -627,6 +627,7 @@ bool DetectionEngine::inspect(Packet* p)
     {
         PacketLatency::Context pkt_latency_ctx { p };
 
+        InspectorManager::probe_first(p);
         if ( p->ptrs.decode_flags & DECODE_ERR_FLAGS )
         {
             if ( p->context->conf->ips_inline_mode() and

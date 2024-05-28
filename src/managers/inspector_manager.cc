@@ -631,6 +631,7 @@ struct GlobalInspectorPolicy : public InspectorList
 {
     PHVector passive;
     PHVector probe;
+    PHVector probe_first;
     PHVector control;
 
     void vectorize(SnortConfig*) override;
@@ -641,6 +642,7 @@ void GlobalInspectorPolicy::vectorize(SnortConfig*)
 {
     passive.alloc(ilist.size());
     probe.alloc(ilist.size());
+    probe_first.alloc(ilist.size());
     control.alloc(ilist.size());
     for ( auto* p : ilist )
     {
@@ -652,6 +654,10 @@ void GlobalInspectorPolicy::vectorize(SnortConfig*)
 
         case IT_PROBE:
             probe.add(p);
+            break;
+
+        case IT_PROBE_FIRST:
+            probe_first.add(p);
             break;
 
         case IT_CONTROL:
@@ -676,6 +682,9 @@ PHInstance* GlobalInspectorPolicy::get_instance_by_type(const char* key, Inspect
 
     case IT_PROBE:
         return get_instance_from_vector(key, probe.vec, probe.total_num);
+
+    case IT_PROBE_FIRST:
+        return get_instance_from_vector(key, probe_first.vec, probe_first.total_num);
 
     case IT_CONTROL:
         return get_instance_from_vector(key, control.vec, control.total_num);
@@ -2100,6 +2109,16 @@ void InspectorManager::probe(Packet* p)
             "end inspection, %s, packet %" PRId64", context %" PRId64", total time: %" PRId64" usec\n",
             packet_type, p->context->packet_number, p->context->context_num, TO_USECS(timer.get()));
     }
+}
+
+void InspectorManager::probe_first(Packet* p)
+{
+    GlobalInspectorPolicy* pp = p->context->conf->policy_map->get_global_inspector_policy();
+    assert(pp);
+    if ( !trace_enabled(snort_trace, TRACE_INSPECTOR_MANAGER, DEFAULT_TRACE_LOG_LEVEL, p) )
+        ::execute<false>(p, pp->probe_first.vec, pp->probe_first.num, true);
+    else
+        ::execute<true>(p, pp->probe_first.vec, pp->probe_first.num, true);
 }
 
 void InspectorManager::clear(Packet* p)

@@ -93,6 +93,7 @@ public:
 
     static void execute(Packet*);
     static void probe(Packet*);
+    static void probe_first(Packet*);
 
     static void clear(Packet*);
     static void empty_trash();

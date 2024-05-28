@@ -244,6 +244,7 @@ enum InspectorType
     IT_CONTROL,  // process all packets before detection (eg appid)
     IT_PROBE,    // process all packets after detection (eg perf_monitor, port_scan)
     IT_FILE,     // file identification inspector
+    IT_PROBE_FIRST, // process all packets before detection (eg packet_capture)
     IT_MAX
 };
 

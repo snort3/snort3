@@ -84,10 +84,25 @@ static int get_dlt()
     return dlt;
 }
 
+static int _pcap_compile_nopcap(int snaplen_arg, int linktype_arg,
+		    struct bpf_program *program,
+		    const char *buf, int optimize, bpf_u_int32 mask)
+{
+	pcap_t *p;
+	int ret;
+
+	p = pcap_open_dead(linktype_arg, snaplen_arg);
+	if (p == NULL)
+		return (PCAP_ERROR);
+	ret = pcap_compile(p, program, buf, optimize, mask);
+	pcap_close(p);
+	return (ret);
+}
+
 static bool bpf_compile_and_validate()
 {
     // FIXIT-M This BPF compilation is not thread-safe and should be handled by the main thread
-    if ( pcap_compile_nopcap(SNAP_LEN, get_dlt(), &bpf,
+    if ( _pcap_compile_nopcap(SNAP_LEN, get_dlt(), &bpf,
         config.filter.c_str(), 1, 0) >= 0 )
     {
         if (bpf_validate(bpf.bf_insns, bpf.bf_len))
@@ -301,7 +316,7 @@ static const InspectApi pc_api =
         mod_ctor,
         mod_dtor
     },
-    IT_PROBE,
+    IT_PROBE_FIRST,
     PROTO_BIT__ANY_IP | PROTO_BIT__ETH,
     nullptr, // buffers
     nullptr, // service
@@ -333,7 +348,7 @@ const BaseApi* nin_packet_capture[] =
 
 static bool bpf_compile_and_validate_test()
 {
-    if (pcap_compile_nopcap(SNAP_LEN, DLT_EN10MB, &bpf,
+    if (_pcap_compile_nopcap(SNAP_LEN, DLT_EN10MB, &bpf,
         config.filter.c_str(), 1, 0) >= 0)
     {
         if (bpf_validate(bpf.bf_insns, bpf.bf_len))
