@@ -34,7 +34,7 @@ Packet::Packet(bool)
     : flow(nullptr), packet_flags(0), xtradata_mask(0), proto_bits(0), alt_dsize(0), num_layers(0),
     disable_inspect(true), sect(PS_NONE), active_inst(nullptr), pkth(nullptr), pkt(nullptr), layers(nullptr),
     user_inspection_policy_id(0), user_ips_policy_id(0), user_network_policy_id(0), inspection_started_timestamp(0), vlan_idx(0),
-    ts_packet_flags(0), allocated(false)
+    ts_packet_flags(0), allocated(false), daq_msg(nullptr)
 { }
 Packet::~Packet() = default;
 

@@ -24,6 +24,7 @@
 
 #include "util.h"
 
+#include <sys/resource.h>
 #include <sys/stat.h>
 
 #include <chrono>

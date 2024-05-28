@@ -144,7 +144,7 @@ struct SO_PUBLIC Packet
     ActiveAction** action = nullptr;
     ActiveAction* action_inst = nullptr;
 
-    DAQ_Msg_h daq_msg;              // DAQ message this packet came from
+    DAQ_Msg_h daq_msg = nullptr;            // DAQ message this packet came from
     SFDAQInstance* daq_instance = nullptr;  // DAQ instance the message came from
 
     // Everything beyond this point is set by PacketManager::decode()

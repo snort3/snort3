@@ -298,7 +298,7 @@ int32_t paf_check (
     // occurs at the paf_max byte. So, we manually set the data's length and
     // total queued bytes (px.len) to guarantee that at most paf_max bytes will
     // be analyzed and flushed since the last flush point.  It should also be
-    // noted that we perform the check here rather in in paf_flush() to
+    // noted that we perform the check here rather in paf_flush() to
     // avoid scanning the same data twice. The first scan would analyze the
     // entire segment and the second scan would analyze this segments
     // unflushed data.
