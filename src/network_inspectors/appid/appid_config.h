@@ -45,7 +45,7 @@
 #include "detector_plugins/ssh_patterns.h"
 #include "tp_appid_module_api.h"
 #include "utils/sflsq.h"
-#include "app_cpu_profile_table.h"
+#include "appid_cpu_profile_table.h"
 #include "profiler/profiler_defs.h"
 
 #define APP_ID_PORT_ARRAY_SIZE  65536

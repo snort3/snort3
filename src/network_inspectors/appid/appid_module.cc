@@ -50,7 +50,7 @@
 #include "appid_inspector.h"
 #include "appid_peg_counts.h"
 #include "service_state.h"
-#include "app_cpu_profile_table.h"
+#include "appid_cpu_profile_table.h"
 
 using namespace snort;
 using namespace std;

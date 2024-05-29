@@ -35,7 +35,7 @@
 #include "appid_http_session.h"
 #include "tp_appid_module_api.h"
 #include "tp_appid_session_api.h"
-#include "app_cpu_profile_table.h"
+#include "appid_cpu_profile_table.h"
 
 #include "appid_mock_definitions.h"
 #include "appid_mock_http_session.h"

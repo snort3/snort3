@@ -29,13 +29,13 @@
 #include <queue>
 
 #include "appid_session.h"
-#include "app_cpu_profile_table.h"
+#include "appid_cpu_profile_table.h"
 
 using namespace snort;
 
-static const char* table_header = "AppId Performance Statistics (all)\n========================================================================================================================\n";
-static const char* columns = " AppId   App Name                             Microsecs        Packets        Avg/Packet       Sessions     Avg/Session \n";
-static const char* partition = "------------------------------------------------------------------------------------------------------------------------\n";
+static const char* table_header = "AppId Performance Statistics (all)\n===========================================================================================================================================================\n";
+static const char* columns = " AppId   App Name                             Usecs        Pkts        AvgUsecs/Pkt       Sessions     AvgUsecs/Sess       MaxPkts/Sess       MaxUsecs/Sess\n";
+static const char* partition = "-----------------------------------------------------------------------------------------------------------------------------------------------------------\n";
 
 static std::string FormatWithCommas(uint64_t value)
 {
@@ -74,9 +74,11 @@ AppidCpuTableDisplayStatus AppidCPUProfilingManager::display_appid_cpu_profiler_
         appid_log(nullptr, TRACE_INFO_LEVEL, columns);
         appid_log(nullptr, TRACE_INFO_LEVEL, partition);
 
-        appid_log(nullptr, TRACE_INFO_LEVEL, " %5d   %-25.25s   %18s   %12s   %15s   %12s    %12s\n",
-                        appid, bucket->second.app_name.c_str(), FormatWithCommas(bucket->second.processing_time).c_str(), FormatWithCommas(bucket->second.processed_packets).c_str(), FormatWithCommas(bucket->second.processing_time/bucket->second.processed_packets).c_str(),
-                                                                                            FormatWithCommas(bucket->second.per_appid_sessions).c_str(), FormatWithCommas(bucket->second.processing_time/bucket->second.per_appid_sessions).c_str());
+        appid_log(nullptr, TRACE_INFO_LEVEL, " %5d   %-25.25s   %14.14s   %9.9s   %17.17s   %12.12s    %14.14s    %15.14s   %17.16s\n",
+                appid, bucket->second.app_name.c_str(), FormatWithCommas(bucket->second.processing_time).c_str(), FormatWithCommas(bucket->second.processed_packets).c_str(), 
+                FormatWithCommas(bucket->second.processing_time/bucket->second.processed_packets).c_str(), FormatWithCommas(bucket->second.per_appid_sessions).c_str(), 
+                FormatWithCommas(bucket->second.processing_time/bucket->second.per_appid_sessions).c_str(), FormatWithCommas(bucket->second.max_processed_pkts_per_session).c_str(), 
+                FormatWithCommas(bucket->second.max_processing_time_per_session).c_str());
     }
     else
     {
@@ -108,9 +110,11 @@ AppidCpuTableDisplayStatus AppidCPUProfilingManager::display_appid_cpu_profiler_
         if (!entry.second.processed_packets or !entry.second.per_appid_sessions)
             continue;
             
-        appid_log(nullptr, TRACE_INFO_LEVEL, " %5d   %-25.25s   %18s   %12s   %15s   %12s    %12s\n",
-                    entry.first, entry.second.app_name.c_str(), FormatWithCommas(entry.second.processing_time).c_str(), FormatWithCommas(entry.second.processed_packets).c_str(), FormatWithCommas(entry.second.processing_time/entry.second.processed_packets).c_str(),
-                                                                               FormatWithCommas(entry.second.per_appid_sessions).c_str(), FormatWithCommas(entry.second.processing_time/entry.second.per_appid_sessions).c_str());
+        appid_log(nullptr, TRACE_INFO_LEVEL, " %5d   %-25.25s   %14.14s   %9.9s   %17.17s   %12.12s    %14.14s    %15.14s   %17.16s\n",
+                entry.first, entry.second.app_name.c_str(), FormatWithCommas(entry.second.processing_time).c_str(), FormatWithCommas(entry.second.processed_packets).c_str(), 
+                FormatWithCommas(entry.second.processing_time/entry.second.processed_packets).c_str(), FormatWithCommas(entry.second.per_appid_sessions).c_str(), 
+                FormatWithCommas(entry.second.processing_time/entry.second.per_appid_sessions).c_str(), FormatWithCommas(entry.second.max_processed_pkts_per_session).c_str(), 
+                FormatWithCommas(entry.second.max_processing_time_per_session).c_str());
     } 
     return DISPLAY_SUCCESS;
 }
@@ -135,6 +139,11 @@ void AppidCPUProfilingManager::insert_appid_cpu_profiler_record(AppId appId, con
         it->second.processing_time += stats.processing_time;
         it->second.processed_packets += stats.processed_packets;
         it->second.per_appid_sessions += 1;
+        if (stats.processed_packets > it->second.max_processed_pkts_per_session)
+            it->second.max_processed_pkts_per_session = stats.processed_packets;
+
+        if (stats.processing_time > it->second.max_processing_time_per_session)
+            it->second.max_processing_time_per_session = stats.processing_time;
     }
 }
 

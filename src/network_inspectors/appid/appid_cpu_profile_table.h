@@ -45,9 +45,12 @@ struct AppidCPUProfilerStats {
     uint64_t processing_time    = 0;
     uint64_t processed_packets  = 0;
     uint32_t per_appid_sessions = 0;
-
+    uint64_t max_processing_time_per_session = 0;
+    uint64_t max_processed_pkts_per_session = 0;
+    
     AppidCPUProfilerStats(const char* app_name, uint64_t processing_time, uint64_t processed_packets, uint32_t per_appid_sessions) :
-        app_name(app_name), processing_time(processing_time), processed_packets(processed_packets), per_appid_sessions (per_appid_sessions)
+        app_name(app_name), processing_time(processing_time), processed_packets(processed_packets), per_appid_sessions(per_appid_sessions),
+        max_processing_time_per_session(processing_time), max_processed_pkts_per_session(processed_packets)
     { }
 };
 

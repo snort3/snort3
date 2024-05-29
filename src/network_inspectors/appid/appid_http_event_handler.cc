@@ -33,7 +33,7 @@
 #include "flow/stream_flow.h"
 
 #include "app_info_table.h"
-#include "app_cpu_profile_table.h"
+#include "appid_cpu_profile_table.h"
 #include "appid_debug.h"
 #include "appid_discovery.h"
 #include "appid_http_session.h"

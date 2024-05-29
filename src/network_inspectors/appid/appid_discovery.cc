@@ -40,7 +40,7 @@
 #include "appid_http_session.h"
 #include "appid_inspector.h"
 #include "appid_session.h"
-#include "app_cpu_profile_table.h"
+#include "appid_cpu_profile_table.h"
 #include "appid_utils/ip_funcs.h"
 #include "client_plugins/client_discovery.h"
 #include "detector_plugins/detector_dns.h"

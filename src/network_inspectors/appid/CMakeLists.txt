@@ -207,8 +207,8 @@ set ( APPID_SOURCES
     tp_appid_session_api.h
     tp_appid_module_api.h
     tp_appid_module_api.cc
-    app_cpu_profile_table.cc 
-    app_cpu_profile_table.h
+    appid_cpu_profile_table.cc 
+    appid_cpu_profile_table.h
 )
 
 #if (STATIC_INSPECTORS)
