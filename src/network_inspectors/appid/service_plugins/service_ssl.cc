@@ -525,19 +525,13 @@ success:
             args.asd.tsession->set_tls_host(ss->client_hello.host_name, 0, args.change_bits);
             args.asd.scan_flags |= SCAN_SSL_HOST_FLAG;
         }
-        else if (ss->server_cert.common_name)
-        {
-            /* Use common name (from server) if we didn't get host name (from client). */
-            args.asd.tsession->set_tls_host(ss->server_cert.common_name, ss->server_cert.common_name_strlen,
-                args.change_bits);
-            args.asd.scan_flags |= SCAN_SSL_HOST_FLAG;
-        }
 
         /* TLS Common Name */
         if (ss->server_cert.common_name)
         {
             args.asd.tsession->set_tls_cname(ss->server_cert.common_name, 0, args.change_bits);
             args.asd.scan_flags |= SCAN_SSL_CERTIFICATE_FLAG;
+            args.asd.scan_flags |= SCAN_SSL_HOST_FLAG;
         }
         /* TLS Org Unit */
         if (ss->server_cert.org_unit)

@@ -257,7 +257,7 @@ TEST(appid_api, get_application_id)
 
 TEST(appid_api, ssl_app_group_id_lookup)
 {
-    mock().expectNCalls(6, "publish");
+    mock().expectNCalls(7, "publish");
     AppId service, client, payload = APP_ID_NONE;
     bool val = false;
 
@@ -284,6 +284,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_first_alt_name(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
+    STRCMP_EQUAL(mock_session->tsession->get_tls_sni(),  APPID_UT_TLS_HOST);
     STRCMP_EQUAL("Published change_bits == 00000000000100011000", test_log);
 
     // Common name based detection
@@ -345,6 +346,18 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_first_alt_name(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL("Published change_bits == 00000000000100011000", test_log);
+
+    //check for sni mismatch being stored in sni field
+    change_bits.reset();
+    mock_session->tsession->set_tls_host("mismatchedsni.com", 17, change_bits);
+    service = APP_ID_NONE;
+    client = APP_ID_NONE;
+    payload = APP_ID_NONE;
+    val = appid_api.ssl_app_group_id_lookup(flow, (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST,
+        nullptr, nullptr, true, service, client, payload);
+    CHECK_TRUE(val);
+    STRCMP_EQUAL(APPID_UT_TLS_HOST, mock_session->tsession->get_tls_host());
+    STRCMP_EQUAL("mismatchedsni.com", mock_session->tsession->get_tls_sni());
 
     mock().checkExpectations();
 

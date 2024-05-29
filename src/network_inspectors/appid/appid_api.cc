@@ -141,7 +141,10 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
         if (!asd->tsession)
             asd->tsession = new TlsSession();
         else if (sni_mismatch)
-            asd->tsession->set_tls_host(nullptr, 0, change_bits);
+        {
+            asd->tsession->process_sni_mismatch();
+        }
+            
 
         if (sni_mismatch)
             asd->scan_flags |= SCAN_SPOOFED_SNI_FLAG;

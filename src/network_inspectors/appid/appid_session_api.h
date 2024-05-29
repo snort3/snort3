@@ -157,6 +157,8 @@ public:
 
     void clear_user_logged_in() { flags.user_logged_in = false; }
 
+    const char* get_tls_sni() const { return tls_sni; }
+
 protected:
     AppIdSessionApi(const AppIdSession* asd, const SfIp& ip);
 
@@ -176,6 +178,7 @@ private:
     snort::SfIp initiator_ip;
     ServiceAppDescriptor service;
     char* tls_host = nullptr;
+    char* tls_sni = nullptr;
     char* netbios_name = nullptr;
     char* netbios_domain = nullptr;
     std::string session_id;
@@ -203,6 +206,7 @@ private:
         snort_free(tls_host);
         snort_free(netbios_name);
         snort_free(netbios_domain);
+        snort_free(tls_sni);
         delete dsession;
     }
 
@@ -220,6 +224,16 @@ private:
             if (tls_host)
                 snort_free(tls_host);
             tls_host = snort_strdup(host);
+        }
+    }
+
+    void set_tls_sni(const char* sni)
+    {
+        if (sni and sni != tls_sni)
+        {
+            if (tls_sni)
+                snort_free(tls_sni);
+            tls_sni = snort_strdup(sni);
         }
     }
 

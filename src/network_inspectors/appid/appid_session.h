@@ -118,6 +118,8 @@ public:
             snort_free(tls_cname);
         if (tls_org_unit)
             snort_free(tls_org_unit);
+        if (tls_host_mismatch)
+            snort_free(tls_host_mismatch);
     }
 
     const char* get_tls_host() const
@@ -139,6 +141,22 @@ public:
                     return tls_cname;
         }
         return nullptr;
+    }
+
+    const char* get_tls_sni() const
+    {
+        return tls_host_mismatch ? tls_host_mismatch : tls_host;
+    }
+
+    void process_sni_mismatch()
+    {
+        if(tls_host)
+        {
+            if(tls_host_mismatch)
+                snort_free(tls_host_mismatch);
+            tls_host_mismatch = tls_host;
+            tls_host = nullptr;
+        }
     }
 
     const char* get_tls_first_alt_name() const { return tls_first_alt_name; }
@@ -228,6 +246,7 @@ public:
 
 private:
     char* tls_host = nullptr;
+    char* tls_host_mismatch = nullptr;
     char* tls_first_alt_name = nullptr;
     char* tls_cname = nullptr;
     char* tls_org_unit = nullptr;
@@ -601,7 +620,10 @@ public:
     void set_tls_host(const AppidChangeBits& change_bits)
     {
         if (tsession and change_bits[APPID_TLSHOST_BIT])
+        {
             api.set_tls_host(tsession->get_tls_host());
+            api.set_tls_sni(tsession->get_tls_sni());
+        }
     }
 
     void set_tls_host(const char* tls_host)
@@ -612,7 +634,10 @@ public:
     void set_tls_host()
     {
         if (tsession and tsession->is_tls_host_unpublished())
+        {
             api.set_tls_host(tsession->get_tls_host());
+            api.set_tls_sni(tsession->get_tls_sni());
+        }
     }
 
     void set_netbios_name(AppidChangeBits& change_bits, const char *name)
