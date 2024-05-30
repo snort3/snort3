@@ -979,10 +979,9 @@ bool TcpReassembler::segment_within_seglist_window(TcpReassemblerState& trs, Tcp
 
 void TcpReassembler::check_first_segment_hole(TcpReassemblerState& trs)
 {
-    if ( SEQ_LT(trs.sos.seglist_base_seq, trs.sos.seglist.head->c_seq)
-        and SEQ_EQ(trs.sos.seglist_base_seq, trs.tracker->rcv_nxt) )
+    if ( SEQ_LT(trs.sos.seglist_base_seq, trs.sos.seglist.head->i_seq) )
         {
-            trs.sos.seglist_base_seq = trs.sos.seglist.head->c_seq;
+            trs.sos.seglist_base_seq = trs.sos.seglist.head->i_seq;
             trs.tracker->rcv_nxt = trs.tracker->r_win_base;
             trs.paf_state.paf = StreamSplitter::START;
         }
@@ -1013,7 +1012,6 @@ bool TcpReassembler::has_seglist_hole(TcpReassemblerState& trs, TcpSegmentNode& 
     if ( !ps.tot )
         flags |= PKT_PDU_HEAD;
 
-    ps.paf = StreamSplitter::SKIP;
     return true;
 }
 
@@ -1176,7 +1174,14 @@ int32_t TcpReassembler::scan_data_post_ack(TcpReassemblerState& trs, uint32_t* f
             *flags &= ~PKT_MORE_TO_FLUSH;
 
         if ( has_seglist_hole(trs, *tsn, trs.paf_state, total, *flags) )
-            flush_pt = total;
+        {
+            if (!paf_initialized(&trs.paf_state))
+                flush_pt = flush_len;
+            else
+                flush_pt = total;
+            
+            trs.paf_state.paf = StreamSplitter::SKIP;
+        } 
         else
         {
             total += flush_len;
