@@ -1,29 +1,29 @@
 This directory contains classes related to Snort configuration dump.
 
-Snort supports dumping config into a file for JSON and text formats.
+Snort can dump configuration (it read from all config sources) in JSON or text formats.
 
-* ConfigData
+==== ConfigData
 
-    The ConfigData structure represents the internal config data of a particular Lua file.
-    A unique shell is associated with every base and targeted policy file.
-    Every module in a Lua file is represented by the General Tree.
-    The Tree node can be one of the following types: TreeConfigNode, ValueConfigNode.
-    The TreeConfigNode represents a table or list.
-    The ValueConfigNode represents a config value itself.
+ConfigData structure represents the internal config data of a particular Lua file.
+An unique shell is associated with every base and targeted policy files.
+Every module in a Lua file is represented by the General Tree.
+Tree node can be one of the following types: TreeConfigNode, ValueConfigNode.
+TreeConfigNode represents a table or a list.
+ValueConfigNode represents a configured value itself.
 
-* ConfigOutput
+==== ConfigOutput
 
-    The ConfigOutput class is a base class that encapsulates dumping config into a file.
-    Pure virtual function dump() should be overridden by derived classes for particular
-    output format.
+ConfigOutput class is a base class that encapsulates dumping config into a file.
+Pure virtual function dump() should be overridden by derived classes for particular
+output format.
 
-* JsonAllConfigOutput
+==== JsonAllConfigOutput
 
-    The JsonAllConfigOutput class inherits from ConfigOutput and dumps base and targeted
-    policy file in JSON format.
+The JsonAllConfigOutput class inherits from ConfigOutput and dumps base and targeted
+policy file in JSON format.
 
-* TextConfigOutput
+==== TextConfigOutput
 
-    The TextConfigOutput class inherits from ConfigOutput and dumps base and targeted
-    policy file in text format.
+The TextConfigOutput class inherits from ConfigOutput and dumps base and targeted
+policy file in text format.
 

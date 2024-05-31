@@ -1,4 +1,4 @@
-The wizard uses hexes, spells and curses to determine the most likely service 
+The wizard uses hexes, spells and curses to determine the most likely service
 on a flow.  It does not determine the service with certainty; that is the job of
 the service inspector or appId.  The goal is to get the most likely service
 inspector engaged as quickly as possible.
@@ -8,29 +8,30 @@ that there is no possible match.
 
 Hexes and spells differ in the following aspects:
 
-    * spells allow wildcards matching any number of consecutive characters
-      whereas hexes allow a single wild char.
-    * spells are case insensitive whereas hexes are case sensitive.
-    * spells automatically skip leading whitespace (at very start of flow).
+* spells allow wildcards matching any number of consecutive characters
+  whereas hexes allow a single wild char.
+* spells are case insensitive whereas hexes are case sensitive.
+* spells automatically skip leading whitespace (at very start of flow).
 
 To match "`*`" symbol in traffic, put "`**`" in a spell.
+For example:
 
-    For example: traffic "* OK" will match the pattern "** OK".
+    traffic "* OK" will match the pattern "** OK".
 
 A series of asterisks is matched from left to right. '***' is seen as "*<glob>".
 
 ==== Concepts
 
-    * `MagicPage` - leaf of a trie. Represents a symbol of a pattern.
-    * `MagicBook` - trie itself. Represents a set of patterns for the wizard instance.
-       ** `SpellBook` - `MagicBook` implementation for spells.
-       ** `HexBook` - `MagicBook` implementation for hexes.
-    * `MagicSplitter` - object related to a stream. Applies wizard logic to a stream.
-    * `Wand` - contains state of wizard patterns for a stream.
-    * `CurseDetails` - settings of a curse. Contains identifiers and algorithm.
-    * `CurseTracker` - state of a curse.
-    * `CurseBook` - contains all configured curses.
-    * `CurseServiceTracker` - instance of a curse. Contains settings and state.
+* `MagicPage` - leaf of a trie. Represents a symbol of a pattern.
+* `MagicBook` - trie itself. Represents a set of patterns for the wizard instance.
+   ** `SpellBook` - `MagicBook` implementation for spells.
+   ** `HexBook` - `MagicBook` implementation for hexes.
+* `MagicSplitter` - object related to a stream. Applies wizard logic to a stream.
+* `Wand` - contains state of wizard patterns for a stream.
+* `CurseDetails` - settings of a curse. Contains identifiers and algorithm.
+* `CurseTracker` - state of a curse.
+* `CurseBook` - contains all configured curses.
+* `CurseServiceTracker` - instance of a curse. Contains settings and state.
 
 ==== MagicSplitter
 
@@ -43,38 +44,39 @@ rewound to the start.
 Each flow contains two `MagicSplitter` objects: client-to-server and server-to-client.
 Each `MagicSplitter` contains `Wand` that stores pointers unique for the flow:
 
-    1. MagicPage of Hex
-    2. MagicPage of Spell
-    3. Vector of all curses
+1. MagicPage of Hex
+2. MagicPage of Spell
+3. Vector of all curses
 
 Where 1 and 2 - point to the current page in pattern.
 
 ==== Spell matching algorithm
-    
-The spell matching algorithm is defined in `SpellBook::find_spell()` method. 
+
+The spell matching algorithm is defined in `SpellBook::find_spell()` method.
 In general, `MagicPage::next` array is an alphabet (ASCII table),
 each element of which can exist or be absent. Thus, if an element exists
 in the position of a certain symbol, it means that there is a pattern with
-such a sequence of symbols. 
+such a sequence of symbols.
 
-    Example: 
-        User configured only one pattern: "ABC"
-        MagicPage(root)::next - all elements beside (int)A is nullptr.
-        MagicPage(A)::next - all elements beside (int)B is nullptr.
-        MagicPage(B)::next - all elements beside (int)C is nullptr.
+Example:
 
-Wizard iterates over the data from begin to end, checking at each iteration 
-if there is a transition from the current character of the pattern to the 
+    User configured only one pattern: "ABC"
+    MagicPage(root)::next - all elements beside (int)A is nullptr.
+    MagicPage(A)::next - all elements beside (int)B is nullptr.
+    MagicPage(B)::next - all elements beside (int)C is nullptr.
+
+Wizard iterates over the data from begin to end, checking at each iteration
+if there is a transition from the current character of the pattern to the
 next character of the data.
 
 `MagicPage::any` reflects a glob (wildcard). If wizard transitioned to a glob of the pattern,
 a loop is started, in which wizard is trying to match the pattern from the current symbol of the
-data. If it failed to match the pattern from the current symbol of the data, it moves 
-to the next symbol and tries again, and so either until it matches the pattern or the 
+data. If it failed to match the pattern from the current symbol of the data, it moves
+to the next symbol and tries again, and so either until it matches the pattern or the
 data runs out.
 
-`MagicPage::value` is not empty only in those positions that are the ends of some pattern. 
-Thus, if, after a complete pass through the data, the wizard have reached a position in which this 
+`MagicPage::value` is not empty only in those positions that are the ends of some pattern.
+Thus, if, after a complete pass through the data, the wizard have reached a position in which this
 field is not empty, means that it has matched the pattern.
 
 It should be mentioned that the matching of spells is case-independent, this is
@@ -86,29 +88,29 @@ which is then saved to the `MagicSplitter::bookmark` local for the flow.
 
 ==== Hex matching algorithm
 
-The algorithm for matching hexes is defined in `HexBook::find_spell()` and 
+The algorithm for matching hexes is defined in `HexBook::find_spell()` and
 identical to the algorithm for spells, but lacks:
 
-    1) converting to an uppercase, since hexes work with raw data;
-    2) loops for working with the glob, since glob in hexes replaces exactly one symbol;
-    3) saving the position of the glob between packets.
+* converting to an uppercase, since hexes work with raw data;
+* loops for working with the glob, since glob in hexes replaces exactly one symbol;
+* saving the position of the glob between packets.
 
 ==== TCP traffic processing
 
-Execution starts from the `MagicSplitter::scan()`. 
+Execution starts from the `MagicSplitter::scan()`.
 
 Since we want to be able to match patterns between packets in a stream, wizard need to
-save the state of the pattern at the end of the processing of a particular packet. 
+save the state of the pattern at the end of the processing of a particular packet.
 The state of the pattern is saved in the `MagicSplitter::wand`. However, for spells,
 it needs to keep the presence of a glob between packages. This is implemented with
 `MagicSplitter::bookmark`.
 
-Spells, hexes and curses are called inside the `Wizard::cast_spell()`. 
+Spells, hexes and curses are called inside the `Wizard::cast_spell()`.
 There wizard determines the search depth and sequentially calls the processing methods.
 
 If wizard matched the pattern in the `Wizard::cast_spell()`, it increments `tcp_hits`.
 If it didn't, then it checks whether it reached the limit of `max_search_depth`.
-If wizard has reached the limit of `max_search_depth` and has't matched a pattern, 
+If wizard has reached the limit of `max_search_depth` and has't matched a pattern,
 then it nullifies `Wand::spell` and `Wand::hex`, thus further in `Wizard::finished()` it'll
 know that this flow can be abandoned and raise `tcp_misses` by 1.
 
@@ -116,28 +118,29 @@ know that this flow can be abandoned and raise `tcp_misses` by 1.
 
 Way of processing UDP is similar to TCP but has some differences:
 
-    1. Instead `MagicSplitter::scan()`, processing starts from `Wizard::eval()`;
-    2. Wizard processes only the first packet of UDP "meta-flow", so for 
-       every packet amount of previously processed bytes sets at 0;
-    3. There isn't any bookmark - UDP doesn't support wildcard over several packets.
-    4. The wizard don't need to check `Wizard::finished()`, because it processes only the 
-       first packet of UDP "meta-flow". So, if it hasn't matched anything in 
-       `Wizard::cast_spell()`, it increments `udp_misses` and unbinds itself from the flow.
+1. Instead `MagicSplitter::scan()`, processing starts from `Wizard::eval()`;
+2. Wizard processes only the first packet of UDP "meta-flow", so for
+   every packet amount of previously processed bytes sets at 0;
+3. There isn't any bookmark - UDP doesn't support wildcard over several packets.
+4. The wizard don't need to check `Wizard::finished()`, because it processes only the
+   first packet of UDP "meta-flow". So, if it hasn't matched anything in
+   `Wizard::cast_spell()`, it increments `udp_misses` and unbinds itself from the flow.
 
 ==== Additional info
 
 Every flow gets a context (in `MagicSplitter`), where wizard stores flow's processing state.
 Each flow is processed independently from others.
 
-Currently wizard cannot roll back on the pattern, so if it reaches a certain symbol 
-of the pattern, it cannot go back. In some cases this will lead to the fact that 
+Currently wizard cannot roll back on the pattern, so if it reaches a certain symbol
+of the pattern, it cannot go back. In some cases this will lead to the fact that
 the pattern that could be matched will not be matched.
 
-    For example:
-        Patterns: "foobar", "foo*"
-        Content: "foobaz"
+For example:
+
+    Patterns: "foobar", "foo*"
+    Content: "foobaz"
     Unfortunately, none of the available patterns will match in such case.
-    This is due to the fact that the symbols have a higher priority than 
+    This is due to the fact that the symbols have a higher priority than
     the glob. So from the MagicPage(O) wizard will transit to the MagicPage(B)
     of the "foobar" pattern and will not process glob. Further, in MagicPage(А)::next[]
     it will not find MagicPage by the symbol "z" and will consider the pattern unmatched.

@@ -1,116 +1,117 @@
 This directory contains the trace logger framework.
 
-* TraceLogger
+==== TraceLogger
 
-    The TraceLogger encapsulates the logging method for traces. A particular thread-local logger
-    is created per each packet thread and one for the main thread. The logging configuration
-    happens in the module. The logger factory is used to init/cleanup loggers.
+The TraceLogger encapsulates the logging method for traces. A particular thread-local logger
+is created per each packet thread and one for the main thread. The logging configuration
+happens in the module. The logger factory is used to init/cleanup loggers.
 
-    Include "trace_logger.h" to get TraceLogger base class.
-    Built-in loggers are defined in "trace_loggers.h/trace_loggers.cc".
+Include "trace_logger.h" to get TraceLogger base class.
+Built-in loggers are defined in "trace_loggers.h"/"trace_loggers.cc".
 
-* TraceLoggerFactory
+==== TraceLoggerFactory
 
-    The base TraceLoggerFactory is used to create a particular TraceLogger instance per each
-    thread. One factory instance exists which used to init/cleanup loggers and placed
-    into TraceConfig. The factory object instantiates in the module due to configuration.
+The base TraceLoggerFactory is used to create a particular TraceLogger instance per each
+thread. One factory instance exists which used to init/cleanup loggers and placed
+into TraceConfig. The factory object instantiates in the module due to configuration.
 
-    Include "trace_logger.h" to get TraceLoggerFactory base class and template function
-    to create particular objects. Built-in factories are defined in "trace_loggers.h/trace_loggers.cc".
+Include "trace_logger.h" to get TraceLoggerFactory base class and template function
+to create particular objects. Built-in factories are defined in "trace_loggers.h/trace_loggers.cc".
 
-* TraceConfig
+==== TraceConfig
 
-    This is a class that contains pointer on TraceLoggerFactory object and Trace list.
-    By default all Traces are off. TraceModule fills Traces from configuration.
+This is a class that contains pointer on TraceLoggerFactory object and Trace list.
+By default all Traces are off. TraceModule fills Traces from configuration.
 
-    TraceConfig placed into "trace_config.h".
+TraceConfig placed into "trace_config.h".
 
-* TraceModule
+==== TraceModule
 
-    This module provides configuration for trace logs:
-        output - create a concrete logger factory based on the output value (stdout/syslog).
-        constraints - set packet constraints to use for trace filtering.
-        modules - set modules trace level verbosity.
-        ntuple - on/off packet n-tuple info logging.
-        timestamp - on/off message time stamps.
+This module provides configuration for trace logs:
 
-    This is a built-in module (from coreinit.lua)
+* `output` - create a concrete logger factory based on the output value (stdout/syslog).
+* `constraints` - set packet constraints to use for trace filtering.
+* `modules` - set modules trace level verbosity.
+* `ntuple` - on/off packet n-tuple info logging.
+* `timestamp` - on/off message time stamps.
 
-    The module placed into "trace_module.h/trace_module.cc".
+This is a built-in module (from coreinit.lua)
+The module placed into "trace_module.h"/"trace_module.cc".
 
-    TraceModule ctor should be called after all existed modules due to TraceModule
-        dynamic params restriction.
+TraceModule ctor should be called after all existed modules due to TraceModule
+dynamic params restriction.
 
-* TraceSwap
+==== TraceSwap
 
-    This class extends snort::AnalyzerCommand and represents control channel CLI commands
-    for setting/clearing trace configuration from the shell. Commands parameters are encapsulated in
-    the TraceSwapParams class.
-    Available commands:
-        1) trace.set({ modules = {}, constraints = {}, ntuple = true/false, timestamp = true/false })
-           -- set new modules traces, constraints, ntuple and timestamp options;
-        2) trace.clear() -- clear modules traces and constraints.
+This class extends snort::AnalyzerCommand and represents control channel CLI commands
+for setting/clearing trace configuration from the shell. Commands parameters are encapsulated in
+the TraceSwapParams class.
+Available commands:
 
-* TraceSwapParams
+* `trace.set({ modules = {}, constraints = {}, ntuple = true/false, timestamp = true/false })`
+   -- set new modules traces, constraints, ntuple and timestamp options;
+* `trace.clear()` -- clear modules traces and constraints.
 
-    This is a helper class for TraceSwap which encapsulates dynamic initialization and storing of
-    snort::Parameter and snort::Command lists based on TraceModule's parameters.
+==== TraceSwapParams
 
-* TraceParser
+This is a helper class for TraceSwap which encapsulates dynamic initialization and storing of
+snort::Parameter and snort::Command lists based on TraceModule's parameters.
 
-    This class encapsulates module trace options and packet constraints parsing and setting logic.
+==== TraceParser
 
-* TraceApi
+This class encapsulates module trace options and packet constraints parsing and setting logic.
 
-    TraceApi is a facade API class used to init/reinit/term thread-local trace logger and module's
-    trace pointers and to match packets and flows against trace filtering constraints.
+==== TraceApi
 
-    TraceApi placed into "trace_api.h/trace_api.cc"
+TraceApi is a facade API class used to init/reinit/term thread-local trace logger and module's
+trace pointers and to match packets and flows against trace filtering constraints.
 
-* TraceOption
+TraceApi placed into "trace_api.h"/"trace_api.cc"
 
-    Represents a targeted module's trace option.
-    The targeted module provides a list of its trace options,
-    which control the verbosity level of the module's trace messages.
-    Since the messages can be present in release-build and/or debug-build,
-    one should pay attention which option should be in the options list.
-    TraceOptionID indexes (for the module's trace options) must start from zero.
+==== TraceOption
 
-* Trace
+Represents a targeted module's trace option.
+The targeted module provides a list of its trace options,
+which control the verbosity level of the module's trace messages.
+Since the messages can be present in release-build and/or debug-build,
+one should pay attention which option should be in the options list.
+TraceOptionID indexes (for the module's trace options) must start from zero.
 
-    This class encapsulates trace verbosity functionality.
+==== Trace
 
-* Configuration override
+This class encapsulates trace verbosity functionality.
 
-    By default, the factory will be initialized based on Snort run mode (stdout or syslog).
-    But this can be explicitly overwritten in TraceModule's configuration to specify
-    which kind of logger to use.
+==== Configuration override
 
-    Changes will be applied in case of reloading too.
+By default, the factory will be initialized based on Snort run mode (stdout or syslog).
+But this can be explicitly overwritten in TraceModule's configuration to specify
+which kind of logger to use.
 
-* External dependencies
+Changes will be applied in case of reloading too.
 
-    Include TraceApi header somewhere in the code where it needs to make trace logs.
-    Make sure that TraceApi::thread_init()/thread_term() are provided for thread where
-    TraceApi::log() is going used.
+==== External dependencies
 
-    TraceConfig should be configured in SnortConfig before TraceApi init.
+Include TraceApi header somewhere in the code where it needs to make trace logs.
+Make sure that TraceApi::thread_init()/thread_term() are provided for thread where
+TraceApi::log() is going used.
 
-    To create specific TraceLogger/TraceLoggerFactory pair just inherit base classes placed
-    into "trace_logger.h" and init TraceConfig with a new factory during configuration.
+TraceConfig should be configured in SnortConfig before TraceApi init.
 
-* Extending the trace logger framework with TraceLogger plugins
+To create specific TraceLogger/TraceLoggerFactory pair just inherit base classes placed
+into "trace_logger.h" and init TraceConfig with a new factory during configuration.
 
-    It's possible to create a trace logger as an inspector plugin to handle a custom logic of trace
-    messages printing. The workflow here is to implement the custom logger and logger factory by
-    inheriting from the Snort TraceLogger and TraceLoggerFactory classes, put them into a separate
-    plugin, and call TraceApi::override_logger_factory() during the plugin configuration to
-    initialize the framework with the custom logger factory.
+==== Extending the trace logger framework with TraceLogger plugins
 
-* Disabling packet constraints matching
+It's possible to create a trace logger as an inspector plugin to handle a custom logic of trace
+messages printing. The workflow here is to implement the custom logger and logger factory by
+inheriting from the Snort TraceLogger and TraceLoggerFactory classes, put them into a separate
+plugin, and call TraceApi::override_logger_factory() during the plugin configuration to
+initialize the framework with the custom logger factory.
 
-    Constraints matching can be disabled by setting "trace.constraints.match = false" during
-    configuration. This is effectively saying all packets don't pass the trace filter. It may be
-    useful in case of using external packet filtering, such as filtering by the DAQ, or to block
-    printing for all trace messages in the context of a packet.
+==== Disabling packet constraints matching
+
+Constraints matching can be disabled by setting "trace.constraints.match = false" during
+configuration. This is effectively saying all packets don't pass the trace filter. It may be
+useful in case of using external packet filtering, such as filtering by the DAQ, or to block
+printing for all trace messages in the context of a packet.
 

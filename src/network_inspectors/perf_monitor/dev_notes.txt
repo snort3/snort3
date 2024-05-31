@@ -39,7 +39,7 @@ Currently output formats are:
 
 3. JSON
 
-===== File Layout
+==== File Layout
 
 [options="header"]
 |============================================================================
@@ -48,7 +48,7 @@ Currently output formats are:
 |Records     |This is a stream of records. There may be an unlimited number.
 |============================================================================
 
-===== File Header
+==== File Header
 
 [options="header"]
 |==========================================================================
@@ -58,7 +58,7 @@ Currently output formats are:
 |Schema      |(schema size) bytes |Schema for parsing records in this file.
 |==========================================================================
 
-===== Record
+==== Record
 
 [options="header"]
 |===========================================================================

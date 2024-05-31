@@ -40,38 +40,38 @@ a consistent experience to detection by making flow depth independent of factors
 could easily manipulate, such as header length, chunking, compression, and encodings. The maximum
 depth is computed against normalized message body data.
 
-===== Partial inspection
+==== Partial inspection
 
 include::dev_notes_partial_inspection.txt[]
 
-===== Message section
+==== Message section
 
 include::dev_notes_message_section.txt[]
 
-===== Field class
+==== Field class
 
 include::dev_notes_field_class.txt[]
 
-===== Support for custom xff type headers
+==== Support for custom xff type headers
 
 include::dev_notes_hff_headers.txt[]
 
-===== URI normalization
+==== URI normalization
 
 include::dev_notes_uri_norm.txt[]
 
-===== JS normalization
+==== JS normalization
 
 include::dev_notes_js_norm.txt[]
 
-===== Reassembling chunked message
+==== Reassembling chunked message
 
 include::dev_notes_chunked_processing.txt[]
 
-===== MIME inspection
+==== MIME inspection
 
 include::dev_notes_mime_inspection.txt[]
 
-===== HI test tool usage
+==== HI test tool usage
 
 include::dev_notes_test_tool.txt[]
