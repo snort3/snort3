@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.2.1.0 2024-05-16 22:50:33 EDT TST
+Revision 3.2.2.0 2024-06-03 00:01:20 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -4710,7 +4710,7 @@ Instance Type: global
 
 Help: raw packet dumping facility
 
-Type: inspector (probe)
+Type: inspector (probe_first)
 
 Usage: global
 
@@ -5333,6 +5333,13 @@ Configuration:
   * int sip.max_via_len = 1024: maximum via field size { 0:65535 }
   * string sip.methods = invite cancel ack bye register options: list
     of methods to check in SIP messages
+  * int sip.sip_timeout = 0: SIP Timeout value in milliseconds { 0: }
+  * int sip.sip_media_timeout = 0: SIP Media timeout milliseconds {
+    0: }
+  * int sip.sip_invite_timeout = 0: SIP Invite timeout milliseconds {
+    0: }
+  * int sip.sip_disconnect_timeout = 0: SIP Disconnect timeout
+    milliseconds { 0: }
 
 Rules:
 
@@ -6033,6 +6040,8 @@ Peg counts:
   * stream_tcp.zero_len_tcp_opt: number of zero length tcp options
     (sum)
   * stream_tcp.zero_win_probes: number of tcp zero window probes
+    (sum)
+  * stream_tcp.keep_alive_probes: number of tcp keep-alive probes
     (sum)
   * stream_tcp.proxy_mode_flows: number of flows set to proxy
     normalization policy (sum)
@@ -8752,7 +8761,8 @@ Configuration:
   * bool alert_fast.file = false: output to alert_fast.txt instead of
     stdout
   * bool alert_fast.packet = false: output packet dump with alert
-  * bool alert_fast.buffers = false: output IPS buffer dump
+  * enum alert_fast.buffers = none: output IPS buffer dump (evaluated
+    by IPS rule or an inspector) { none | rule | inspector | both }
   * int alert_fast.buffers_depth = 0: number of IPS buffer bytes to
     dump per buffer (0 is unlimited) { 0:maxSZ }
   * int alert_fast.limit = 0: set maximum size in MB before rollover
@@ -9229,7 +9239,8 @@ libraries see the Getting Started section of the manual.
     case
   * int alert_fast.buffers_depth = 0: number of IPS buffer bytes to
     dump per buffer (0 is unlimited) { 0:maxSZ }
-  * bool alert_fast.buffers = false: output IPS buffer dump
+  * enum alert_fast.buffers = none: output IPS buffer dump (evaluated
+    by IPS rule or an inspector) { none | rule | inspector | both }
   * bool alert_fast.file = false: output to alert_fast.txt instead of
     stdout
   * int alert_fast.limit = 0: set maximum size in MB before rollover
@@ -10757,6 +10768,13 @@ libraries see the Getting Started section of the manual.
   * string sip_method.*method: sip method
   * string sip.methods = invite cancel ack bye register options: list
     of methods to check in SIP messages
+  * int sip.sip_disconnect_timeout = 0: SIP Disconnect timeout
+    milliseconds { 0: }
+  * int sip.sip_invite_timeout = 0: SIP Invite timeout milliseconds {
+    0: }
+  * int sip.sip_media_timeout = 0: SIP Media timeout milliseconds {
+    0: }
+  * int sip.sip_timeout = 0: SIP Timeout value in milliseconds { 0: }
   * int sip_stat_code.*code: status code { 1:999 }
   * string smtp.alt_max_command_line_len[].command: command string
   * int smtp.alt_max_command_line_len[].length = 0: specify
@@ -12453,6 +12471,8 @@ libraries see the Getting Started section of the manual.
     number (sum)
   * stream_tcp.invalid_seq_num: tcp packets received with an invalid
     sequence number (sum)
+  * stream_tcp.keep_alive_probes: number of tcp keep-alive probes
+    (sum)
   * stream_tcp.max_bytes: maximum number of bytes queued in any flow
     (max)
   * stream_tcp.max: max tcp sessions (max)

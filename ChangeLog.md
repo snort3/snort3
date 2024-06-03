@@ -1,3 +1,23 @@
+2024-06-02: 3.2.2.0
+
+* appid: appid cpu profiler max columns
+* appid: re-enabling appid cpu profiler making it thread safe
+* appid: store and retrieve only SNI in AppIdSession
+* appid: updating file_magic.rules with some new file types added to the VDB.
+* dce_smb: do not prune from LRU cache during file tracker update
+* doc: fix formatting in dev_notes.txt
+* flow: add the newly-created flow to p->flow to avoid segv
+* js_norm: stop PDF processing on syntax error
+* main: apply loaded configuration only once
+* packet_capture: make sure packet_capture executed before detection
+* service_inspectors: fix get_buf handling
+* sip: flow clean-up based on lina configured timeout
+* src: remove repetitive words. Thanks @gopherorg for finding those typos
+* src: udpate to resolve new issues
+* stream_tcp: don't attempt to verify or process keep-alive probes with data
+* stream_tcp: fix infinite recursion cases. Thanks to scloder-ut-iso for helping with debug information that uncovered a case of infinite recursion
+* utils: add explicit include
+
 2024-05-16: 3.2.1.0
 
 * framework: supply directories to system headers to plug_gen.sh
