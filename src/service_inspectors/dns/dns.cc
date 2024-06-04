@@ -1083,7 +1083,7 @@ void Dns::show(const SnortConfig*) const
 void Dns::eval(Packet* p)
 {
     // precondition - what we registered for
-    assert((p->is_udp() and p->dsize and p->data) or p->has_tcp_data());
+    assert((p->is_udp() and p->dsize and p->data) or p->has_tcp_data() or p->has_udp_quic_data());
     assert(p->flow);
 
     ++dnsstats.packets;
@@ -1148,6 +1148,9 @@ static void snort_dns(Packet* p, const DnsConfig* dns_config)
 
         if (!needNextPacket and dnsSessionData->has_events())
             DataBus::publish(Dns::get_pub_id(), DnsEventIds::DNS_RESPONSE_DATA, dnsSessionData->dns_events);
+
+        if (p->type() == PktType::UDP)
+            p->flow->session_state |= STREAM_STATE_CLOSED;
     }
     else
     {
