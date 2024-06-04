@@ -20,8 +20,11 @@
 #ifndef ANALYZER_COMMANDS_H
 #define ANALYZER_COMMANDS_H
 
+#include <daq_common.h>
+
 #include <cstdarg>
 #include <vector>
+#include <mutex>
 
 #include "main/snort_types.h"
 
@@ -202,6 +205,24 @@ public:
 private:
     snort::SnortConfig* sc;
     std::vector<snort::ScratchAllocator*>& handlers;
+};
+
+class ACShowSnortCPU : public snort::AnalyzerCommand
+{
+public:
+    explicit ACShowSnortCPU(ControlConn* conn) : AnalyzerCommand(conn)
+    { }
+    bool execute(Analyzer&, void**) override;
+    const char* stringify() override { return "SHOW_SNORT_CPU"; }
+    ~ACShowSnortCPU() override;
+
+private:
+    int status = DAQ_SUCCESS;
+    float cpu_usage_30s = 0.0;
+    float cpu_usage_120s = 0.0;
+    float cpu_usage_300s = 0.0;
+    int instance_num = 0;
+    std::mutex cpu_usage_mutex;
 };
 
 namespace snort

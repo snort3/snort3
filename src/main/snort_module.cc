@@ -144,6 +144,7 @@ static const Command snort_cmds[] =
     { "reload_hosts", main_reload_hosts, s_reload, "load a new hosts table" },
     { "log_command", main_log_command,main_log_command_param, "enable or disable command logging"},
     { "show_config_generation", main_show_config_generation, nullptr, "show loaded configuration ID"},
+    { "show_snort_cpu", show_snort_cpu, nullptr, "show snort cpu usage"},
 
     // FIXIT-M rewrite trough to permit updates on the fly
     //{ "process", main_process, nullptr, "process given pcap" },

@@ -32,12 +32,14 @@
 #include "protocols/packet_manager.h"
 #include "target_based/host_attributes.h"
 #include "utils/stats.h"
+#include "packet_io/sfdaq_instance.h"
 
 #include "analyzer.h"
 #include "reload_tracker.h"
 #include "reload_tuner.h"
 #include "snort.h"
 #include "snort_config.h"
+#include "thread_config.h"
 #include "swapper.h"
 
 using namespace snort;
@@ -268,4 +270,58 @@ ACScratchUpdate::~ACScratchUpdate()
 SFDAQInstance* AnalyzerCommand::get_daq_instance(Analyzer& analyzer)
 {
     return analyzer.get_daq_instance();
+}
+
+ACShowSnortCPU::~ACShowSnortCPU()
+{
+    if (DAQ_SUCCESS == status)
+    {
+        LogRespond(ctrlcon, "\nSummary \t%.1f%% \t%.1f%% \t%.1f%%\n",
+                   cpu_usage_30s/instance_num,
+                   cpu_usage_120s/instance_num,
+                   cpu_usage_300s/instance_num);
+    }
+}
+
+bool ACShowSnortCPU::execute(Analyzer& analyzer, void**)
+{
+    DIOCTL_GetCpuProfileData get_data = {};
+    do
+    {
+        std::lock_guard<std::mutex> lock(cpu_usage_mutex);
+        if (DAQ_SUCCESS != status)
+            break;
+
+        SFDAQInstance* instance = get_daq_instance(analyzer);
+        ThreadConfig *thread_config = SnortConfig::get_conf()->thread_config;
+        int tid = thread_config->get_instance_tid(get_instance_id());
+
+        status = instance->ioctl(
+                     (DAQ_IoctlCmd)DIOCTL_GET_CPU_PROFILE_DATA,
+                     (void *)(&get_data),
+                     sizeof(DIOCTL_GetCpuProfileData));
+
+        if (DAQ_SUCCESS != status)
+        {
+            LogRespond(ctrlcon, "Fetching profile data failed from DAQ instance\n");
+            break;
+        }
+
+        // Print CPU usage
+        LogRespond(ctrlcon, "%-3d \t%-6d \t%.1f%% \t%.1f%% \t%.1f%%\n",
+                   instance_num,
+                   tid,
+                   get_data.cpu_usage_percent_30s,
+                   get_data.cpu_usage_percent_120s,
+                   get_data.cpu_usage_percent_300s);
+
+        // Add CPU usage data
+        cpu_usage_30s += get_data.cpu_usage_percent_30s;
+        cpu_usage_120s += get_data.cpu_usage_percent_120s;
+        cpu_usage_300s += get_data.cpu_usage_percent_300s;
+        instance_num++;
+
+    } while (0);
+
+    return true;
 }

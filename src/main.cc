@@ -810,6 +810,14 @@ int main_help(lua_State* L)
     return 0;
 }
 
+int show_snort_cpu(lua_State* L)
+{
+    ControlConn* ctrlconn = ControlConn::query_from_lua(L);
+    send_response(ctrlconn, "Id \tPid \t30sec \t2min \t5min\n\n");
+    main_broadcast_command(new ACShowSnortCPU(ctrlconn), ctrlconn);
+    return 0;
+}
+
 //-------------------------------------------------------------------------
 // housekeeping foo
 //-------------------------------------------------------------------------
