@@ -917,11 +917,11 @@ int32_t TcpReassembler::scan_data_pre_ack(TcpReassemblerState& trs, uint32_t* fl
 
     if ( tsn )
         update_rcv_nxt(trs, *tsn);
-    
+
     return ret_val;
 }
 
-static inline void fallback(TcpStreamTracker& trk, bool server_side, uint16_t max)
+static inline void fallback(TcpStreamTracker& trk, bool server_side)
 {
 #ifndef NDEBUG
     StreamSplitter* splitter = trk.get_splitter();
@@ -932,14 +932,13 @@ static inline void fallback(TcpStreamTracker& trk, bool server_side, uint16_t ma
     assert(server_side == to_server && server_side == !trk.client_tracker);
 #endif
 
-    trk.set_splitter(new AtomSplitter(server_side, max));
+    trk.set_splitter(new AtomSplitter(server_side));
     tcpStats.partial_fallbacks++;
 }
 
 void TcpReassembler::fallback(TcpStreamTracker& tracker, bool server_side)
 {
-    uint16_t max = tracker.session->tcp_config->paf_max;
-    ::fallback(tracker, server_side, max);
+    ::fallback(tracker, server_side);
 
     Flow* flow = tracker.session->flow;
     if ( server_side )
@@ -950,6 +949,10 @@ void TcpReassembler::fallback(TcpStreamTracker& tracker, bool server_side)
     if ( flow->gadget and both_splitters_aborted(flow) )
     {
         flow->clear_gadget();
+
+        if (flow->clouseau)
+            flow->clear_clouseau();
+
         tcpStats.inspector_fallbacks++;
     }
 }
