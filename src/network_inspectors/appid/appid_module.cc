@@ -396,6 +396,8 @@ static void clear_dynamic_host_cache_services()
 static int show_cpu_profiler_stats(lua_State* L)
 {
     int appid = luaL_optint(L, 1, 0);
+    int display_rows_limit = luaL_optint(L, 2, APPID_CPU_PROFILER_DEFAULT_DISPLAY_ROWS);
+
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
     if (!inspector)
@@ -411,7 +413,12 @@ static int show_cpu_profiler_stats(lua_State* L)
         AppidCpuTableDisplayStatus displayed = DISPLAY_SUCCESS;
         ctrlcon->respond("== showing appid cpu profiler table\n");
         if (!appid)
-            displayed = odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(odp_ctxt);
+        {
+            if (display_rows_limit > APPID_CPU_PROFILER_MAX_DISPLAY_ROWS)
+                ctrlcon->respond("given number of rows exceeds maximum limit of %d, limiting to %d\n",
+                                                   APPID_CPU_PROFILER_MAX_DISPLAY_ROWS, APPID_CPU_PROFILER_MAX_DISPLAY_ROWS);
+            displayed = odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(odp_ctxt, display_rows_limit);
+        }
         else
             displayed = odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(appid, odp_ctxt);
 
@@ -532,7 +539,8 @@ static const Parameter enable_debug_params[] =
 
 static const Parameter appid_cpu_params[] =
 {
-    { "appid", Parameter::PT_INT, nullptr, nullptr, "show appid cpu profiling stats" },
+    { "appid", Parameter::PT_INT, nullptr, "0", "show appid cpu profiling stats" },
+    { "display_rows_limit", Parameter::PT_INT, "1:2000", "100", "num of rows to be displayed" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
