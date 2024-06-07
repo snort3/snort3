@@ -141,7 +141,7 @@ AppIdSession::~AppIdSession()
      // Skip sessions using old odp context after reload detectors for appid cpu profiling
     if ((pkt_thread_odp_ctxt->get_version() == api.asd->get_odp_ctxt_version()) and api.asd->get_odp_ctxt().is_appid_cpu_profiler_running())
     {
-        api.asd->get_odp_ctxt().get_appid_cpu_profiler_mgr().check_appid_cpu_profiler_table_entry(api.asd, api.service.get_id(), api.client.get_id(), api.payload.get_id(), api.get_misc_app_id());
+        api.asd->get_odp_ctxt().get_appid_cpu_profiler_mgr().check_appid_cpu_profiler_table_entry(api.asd, api.get_service_app_id(), api.get_client_app_id(), api.get_payload_app_id(), api.get_misc_app_id());
     }
 
     if (!in_expected_cache)
@@ -422,7 +422,7 @@ void AppIdSession::check_tunnel_detection_restart()
 
     if (odp_ctxt.is_appid_cpu_profiler_running())
     {
-        odp_ctxt.get_appid_cpu_profiler_mgr().check_appid_cpu_profiler_table_entry(api.asd, api.service.get_id(), api.client.get_id(), api.payload.get_id(), api.get_misc_app_id());
+        odp_ctxt.get_appid_cpu_profiler_mgr().check_appid_cpu_profiler_table_entry(api.asd, api.get_service_app_id(), api.get_client_app_id(), api.get_payload_app_id(), api.get_misc_app_id());
         this->stats.processing_time = 0;
         this->stats.cpu_profiler_pkt_count = 0;
     }
