@@ -84,14 +84,7 @@ bool get_file_size(const std::string& path, size_t& size)
 }
 
 #if defined(NOCOREFILE)
-void SetNoCores()
-{
-    struct rlimit rlim;
-
-    getrlimit(RLIMIT_CORE, &rlim);
-    rlim.rlim_max = 0;
-    setrlimit(RLIMIT_CORE, &rlim);
-}
+void SetNoCores();
 #endif
 
 namespace snort

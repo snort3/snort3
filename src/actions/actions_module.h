@@ -25,6 +25,9 @@
 
 #include <map>
 #include <vector>
+#if defined(__FreeBSD__) || defined(__DragonFly__)
+#include <array>
+#endif
 
 #include "framework/module.h"
 
