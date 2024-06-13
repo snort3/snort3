@@ -21,6 +21,8 @@
 #define HTTP_ENUM_H
 
 #include <cstdint>
+#include <map>
+#include <string>
 
 namespace HttpEnums
 {
@@ -77,6 +79,7 @@ enum ChunkState { CHUNK_NEWLINES, CHUNK_ZEROS, CHUNK_LEADING_WS, CHUNK_NUMBER, C
     CHUNK_OPTIONS, CHUNK_HCRLF, CHUNK_DATA, CHUNK_DCRLF1, CHUNK_DCRLF2, CHUNK_BAD };
 
 // List of possible HTTP versions.
+// When making changes to this enum, also update VersionStrToEnum and VersionEnumToStr 
 enum VersionId { VERS__PROBLEMATIC=-12, VERS__NOT_PRESENT=-11, VERS__OTHER=1,
     VERS_1_0, VERS_1_1, VERS_2_0, VERS_3_0, VERS_0_9, VERS__MIN = VERS__PROBLEMATIC,
     VERS__MAX = VERS_0_9};
@@ -453,6 +456,8 @@ extern const bool is_sp_tab_cr_lf_vt_ff[256];
 extern const bool is_sp_tab_quote_dquote[256];
 extern const bool is_print_char[256]; // printable includes SP, tab, CR, LF
 extern const bool is_sp_comma[256];
+extern const std::map <std::string, VersionId> VersionStrToEnum;
+extern const std::map <HttpEnums::VersionId, const char*> VersionEnumToStr;
 
 } // end namespace HttpEnums
 

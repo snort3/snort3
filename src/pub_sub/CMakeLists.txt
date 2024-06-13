@@ -15,6 +15,7 @@ set (PUB_SUB_INCLUDES
     http_event_ids.h
     http_events.h
     http_request_body_event.h
+    http_transaction_end_event.h
     intrinsic_event_ids.h
     netflow_event.h
     opportunistic_tls_event.h
@@ -35,6 +36,7 @@ add_library( pub_sub OBJECT
     http_events.cc
     dns_events.cc
     http_request_body_event.cc
+    http_transaction_end_event.cc
     sip_events.cc
 )
 

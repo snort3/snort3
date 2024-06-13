@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2022-2024 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2024-2024 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,33 +15,38 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// extractor_event_handlers.h author Maya Dagon <mdagon@cisco.com>
 
-// http_event_ids.h author Russ Combs <rucombs@cisco.com>
-
-// Inspection events published by the Http Inspector. Modules can subscribe
-// to receive the events.
-
-#ifndef HTTP_EVENT_IDS_H
-#define HTTP_EVENT_IDS_H
+#ifndef EXTRACTOR_EVENT_HANDLERS_H
+#define EXTRACTOR_EVENT_HANDLERS_H
 
 #include "framework/data_bus.h"
 
+#include "extractor.h"
+#include "extractor_logger.h"
+
 namespace snort
 {
-// These are common values between the HTTP inspector and the subscribers.
-struct HttpEventIds
-{ enum : unsigned {
 
-    REQUEST_HEADER,
-    RESPONSE_HEADER,
-    REQUEST_BODY,
-    END_OF_TRANSACTION,  
+class ExtractorEvent
+{
+protected:
+    ExtractorEvent(uint32_t tid, const std::vector<std::string>& flds, ExtractorLogger& l)
+        : tenant_id(tid), fields(flds), logger(l) {}
 
-    num_ids
-}; };
+    uint32_t tenant_id;
+    const std::vector<std::string> fields;
+    ExtractorLogger& logger;
+};
 
-const PubKey http_pub_key { "http_inspect", HttpEventIds::num_ids };
+class HttpExtractorEventHandler : public DataHandler, public ExtractorEvent
+{
+public:
+    HttpExtractorEventHandler(uint32_t tenant, const std::vector<std::string>& flds,
+        ExtractorLogger& l) : DataHandler(S_NAME), ExtractorEvent(tenant, flds, l) {}
+
+    void handle(DataEvent&, Flow*) override;
+};
 
 }
 #endif
-

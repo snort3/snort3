@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2022-2024 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2024-2024 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,33 +15,17 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// extractor_writer.cc author Anna Norokh <anorokh@cisco.com>
 
-// http_event_ids.h author Russ Combs <rucombs@cisco.com>
+#include "extractor_writer.h"
 
-// Inspection events published by the Http Inspector. Modules can subscribe
-// to receive the events.
-
-#ifndef HTTP_EVENT_IDS_H
-#define HTTP_EVENT_IDS_H
-
-#include "framework/data_bus.h"
-
-namespace snort
+ExtractorWriter* ExtractorWriter::make_writer(OutputType o_type)
 {
-// These are common values between the HTTP inspector and the subscribers.
-struct HttpEventIds
-{ enum : unsigned {
+    switch (o_type)
+    {
+    case OutputType::STD:
+        return new StdExtractorWriter();
+    }
 
-    REQUEST_HEADER,
-    RESPONSE_HEADER,
-    REQUEST_BODY,
-    END_OF_TRANSACTION,  
-
-    num_ids
-}; };
-
-const PubKey http_pub_key { "http_inspect", HttpEventIds::num_ids };
-
+    return nullptr;
 }
-#endif
-

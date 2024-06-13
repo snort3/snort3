@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2022-2024 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2024-2024 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,33 +15,31 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// csv_logger.h author Anna Norokh <anorokh@cisco.com>
 
-// http_event_ids.h author Russ Combs <rucombs@cisco.com>
+#ifndef CSV_LOGGER_H
+#define CSV_LOGGER_H
 
-// Inspection events published by the Http Inspector. Modules can subscribe
-// to receive the events.
+#include "framework/value.h"
 
-#ifndef HTTP_EVENT_IDS_H
-#define HTTP_EVENT_IDS_H
+#include "extractor_logger.h"
+#include "extractor_writer.h"
 
-#include "framework/data_bus.h"
-
-namespace snort
+class CsvExtractorLogger : public ExtractorLogger
 {
-// These are common values between the HTTP inspector and the subscribers.
-struct HttpEventIds
-{ enum : unsigned {
+public:
+    CsvExtractorLogger(OutputType o_type, const std::vector<std::string>& fields)
+        : ExtractorLogger(fields), writer(ExtractorWriter::make_writer(o_type))
+    { CsvExtractorLogger::add_header(); }
+    ~CsvExtractorLogger() override;
 
-    REQUEST_HEADER,
-    RESPONSE_HEADER,
-    REQUEST_BODY,
-    END_OF_TRANSACTION,  
+    void add_header() override;
+    void add_field(const snort::Value&) override;
+    void open_record() override;
+    void close_record() override;
 
-    num_ids
-}; };
+private:
+    ExtractorWriter* const writer;
+};
 
-const PubKey http_pub_key { "http_inspect", HttpEventIds::num_ids };
-
-}
 #endif
-

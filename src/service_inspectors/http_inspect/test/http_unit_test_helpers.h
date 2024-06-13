@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2022-2024 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2024-2024 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,33 +15,22 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// http_unit_test_helpers.h author Maya Dagon <mdagon@cisco.com>
+// Code moved from http_transaction_test.cc, author Tom Peters <thopeter@cisco.com>
 
-// http_event_ids.h author Russ Combs <rucombs@cisco.com>
+#ifndef HTTP_UNIT_TEST_HELPERS_H
+#define HTTP_UNIT_TEST_HELPERS_H
 
-// Inspection events published by the Http Inspector. Modules can subscribe
-// to receive the events.
+#include "service_inspectors/http_inspect/http_common.h"
+#include "service_inspectors/http_inspect/http_flow_data.h"
 
-#ifndef HTTP_EVENT_IDS_H
-#define HTTP_EVENT_IDS_H
-
-#include "framework/data_bus.h"
-
-namespace snort
+class HttpUnitTestSetup
 {
-// These are common values between the HTTP inspector and the subscribers.
-struct HttpEventIds
-{ enum : unsigned {
+public:
+    static HttpCommon::SectionType* get_section_type(HttpFlowData* flow_data)
+        { assert(flow_data!=nullptr); return flow_data->section_type; }
+    static HttpCommon::SectionType* get_type_expected(HttpFlowData* flow_data)
+        { assert(flow_data!=nullptr); return flow_data->type_expected; }
+};
 
-    REQUEST_HEADER,
-    RESPONSE_HEADER,
-    REQUEST_BODY,
-    END_OF_TRANSACTION,  
-
-    num_ids
-}; };
-
-const PubKey http_pub_key { "http_inspect", HttpEventIds::num_ids };
-
-}
 #endif
-

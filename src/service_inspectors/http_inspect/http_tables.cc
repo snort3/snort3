@@ -689,3 +689,22 @@ const bool HttpEnums::is_print_char[256] =
     false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
 };
 
+const std::map <std::string, VersionId> HttpEnums::VersionStrToEnum =
+{
+    { "malformed", VERS__PROBLEMATIC },
+    { "other", VERS__OTHER },
+    { "1.0", VERS_1_0 },
+    { "1.1", VERS_1_1 },
+    { "2.0", VERS_2_0 },
+    { "3.0", VERS_3_0 },
+    { "0.9", VERS_0_9 }
+};
+
+const std::map <VersionId, const char*> HttpEnums::VersionEnumToStr =
+{
+    { VERS_1_0, "1.0" },
+    { VERS_1_1, "1.1" },
+    { VERS_2_0, "2.0" },
+    { VERS_3_0, "3.0" },
+    { VERS_0_9, "0.9" }
+};
