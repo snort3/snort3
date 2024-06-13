@@ -732,6 +732,10 @@ The IPv6 packet has a reserved source address.
 
 The IPv6 packet has a reserved destination address.
 
+116:478
+
+ICMPv6 option length field is set to 0.
+
 119:1
 
 URI has percent encoding of an unreserved character. The ignore_unreserved option designates

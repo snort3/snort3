@@ -78,6 +78,7 @@ static const RuleMap icmp6_rules[] =
     { DECODE_ICMPV6_NODE_INFO_BAD_CODE,
       "ICMPv6 node info query/response packet with a code greater than 2" },
     { DECODE_ICMP6_NOT_IP6, "ICMPv6 not encapsulated in IPv6" },
+    { DECODE_ICMP6_OPT_ZERO_LENGTH, "ICMPv6 option length field is set to 0" },
     { 0, nullptr }
 };
 
@@ -110,6 +111,9 @@ public:
 
 private:
     bool valid_checksum_from_daq(const RawData&);
+    template<typename OptionType>
+    inline void validate_ndp_option(CodecData &codec, const OptionType* const icmp_pkt,
+        const uint16_t min_len, const uint16_t dsize);
 };
 } // anonymous namespace
 
@@ -131,6 +135,46 @@ inline bool Icmp6Codec::valid_checksum_from_daq(const RawData& raw)
     }
     stats.cksum_bypassed++;
     return true;
+}
+
+template <typename NDPType>
+void Icmp6Codec::validate_ndp_option(CodecData &codec, const NDPType* const icmp_pkt,
+    const uint16_t min_len, const uint16_t dsize)
+{
+    const uint16_t real_size = dsize + icmp::ICMP6_HEADER_MIN_LEN;
+    bool option_field_not_exists = real_size == min_len;
+    if (option_field_not_exists)
+        return;
+
+    assert(real_size > min_len - icmp::ICMP6_HEADER_MIN_LEN);
+    // Based on RFC2461, for types 133-137, "option" field depends on version
+    // of implementation, so there's no unified format for all types.
+    assert(icmp_pkt->type >= 133 && icmp_pkt->type <= 137);
+
+    const uint8_t* const icmp_pkt_ptr = (const uint8_t* const)icmp_pkt;
+    const uint8_t* curr_option_ptr = (const uint8_t* const)&icmp_pkt->options_start;
+
+    while (real_size > curr_option_ptr - icmp_pkt_ptr )
+    {
+        assert(curr_option_ptr > icmp_pkt_ptr);
+        bool field_incomplete = real_size == curr_option_ptr - icmp_pkt_ptr + 1;
+        if (field_incomplete)
+            return;     // FIXIT-L good candidate for new builtin rule
+
+        const icmp::NDPOptionFormatBasic* curr_option = (const icmp::NDPOptionFormatBasic*)curr_option_ptr;
+
+        // Right now, only option types explicitly specified in RFC4861 are supported
+        if (curr_option->type == 0 || curr_option->type > 5)
+            return;     // FIXIT-L good candidate for non-supported option field
+
+        if (curr_option->length == 0)
+        {
+            codec_event(codec, DECODE_ICMP6_OPT_ZERO_LENGTH);
+            return;
+        }
+
+        curr_option_ptr += curr_option->length * 8;
+    }
 }
 
 bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
@@ -231,16 +275,18 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         }
         break;
 
-    case icmp::Icmp6Types::ROUTER_ADVERTISEMENT:
-        if (dsize >= (sizeof(icmp::ICMP6RouterAdvertisement) - icmp::ICMP6_HEADER_MIN_LEN))
+    case icmp::Icmp6Types::ROUTER_SOLICITATION:
+        if (dsize >= (ICMPv6_RS_MIN_LEN - icmp::ICMP6_HEADER_MIN_LEN))
         {
-            const icmp::ICMP6RouterAdvertisement* ra = (const icmp::ICMP6RouterAdvertisement*)raw.data;
+            const icmp::ICMP6RouterSolicitation* rs = (const icmp::ICMP6RouterSolicitation*)raw.data;
 
-            if (icmp6h->code != icmp::Icmp6Code::ADVERTISEMENT)
-                codec_event(codec, DECODE_ICMPV6_ADVERT_BAD_CODE);
+            if (rs->code != 0)
+                codec_event(codec, DECODE_ICMPV6_SOLICITATION_BAD_CODE);
 
-            if (ntohl(ra->reachable_time) > 3600000)
-                codec_event(codec, DECODE_ICMPV6_ADVERT_BAD_REACHABLE);
+            if (ntohl(rs->reserved) != 0)
+                codec_event(codec, DECODE_ICMPV6_SOLICITATION_BAD_RESERVED);
+
+            validate_ndp_option(codec, rs, ICMPv6_RS_MIN_LEN, dsize);
         }
         else
         {
@@ -249,15 +295,60 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         }
         break;
 
-    case icmp::Icmp6Types::ROUTER_SOLICITATION:
-        if (dsize >= (sizeof(icmp::ICMP6RouterSolicitation) - icmp::ICMP6_HEADER_MIN_LEN))
+    case icmp::Icmp6Types::ROUTER_ADVERTISEMENT:
+        if (dsize >= (ICMPv6_RA_MIN_LEN - icmp::ICMP6_HEADER_MIN_LEN))
         {
-            const icmp::ICMP6RouterSolicitation* rs = (const icmp::ICMP6RouterSolicitation*)raw.data;
-            if (rs->code != 0)
-                codec_event(codec, DECODE_ICMPV6_SOLICITATION_BAD_CODE);
+            const icmp::ICMP6RouterAdvertisement* ra = (const icmp::ICMP6RouterAdvertisement*)raw.data;
 
-            if (ntohl(rs->reserved) != 0)
-                codec_event(codec, DECODE_ICMPV6_SOLICITATION_BAD_RESERVED);
+            if (icmp6h->code != icmp::Icmp6Code::ADVERTISEMENT)
+                codec_event(codec, DECODE_ICMPV6_ADVERT_BAD_CODE);
+
+            if (ntohl(ra->reachable_time) > 3600000)
+                codec_event(codec, DECODE_ICMPV6_ADVERT_BAD_REACHABLE);
+
+            validate_ndp_option(codec, ra, ICMPv6_RA_MIN_LEN, dsize);
+        }
+        else
+        {
+            codec_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
+            return false;
+        }
+        break;
+
+    case icmp::Icmp6Types::NEIGHBOR_SOLICITATION:
+        if (dsize >= (ICMPv6_NS_MIN_LEN - icmp::ICMP6_HEADER_MIN_LEN))
+        {
+            const icmp::ICMP6NeighborSolicitation* ns = (const icmp::ICMP6NeighborSolicitation*)raw.data;
+
+            validate_ndp_option(codec, ns, ICMPv6_NS_MIN_LEN, dsize);
+        }
+        else
+        {
+            codec_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
+            return false;
+        }
+        break;
+
+    case icmp::Icmp6Types::NEIGHBOR_ADVERTISEMENT:
+        if (dsize >= (ICMPv6_NA_MIN_LEN - icmp::ICMP6_HEADER_MIN_LEN))
+        {
+            const icmp::ICMP6NeighborAdvertisement* na = (const icmp::ICMP6NeighborAdvertisement*)raw.data;
+
+            validate_ndp_option(codec, na, ICMPv6_NA_MIN_LEN, dsize);
+        }
+        else
+        {
+            codec_event(codec, DECODE_ICMP_DGRAM_LT_ICMPHDR);
+            return false;
+        }
+        break;
+
+    case icmp::Icmp6Types::REDIRECT6:
+        if (dsize >= (ICMPv6_RD_MIN_LEN - icmp::ICMP6_HEADER_MIN_LEN))
+        {
+            const icmp::ICMP6Redirect* rd = (const icmp::ICMP6Redirect*)raw.data;
+
+            validate_ndp_option(codec, rd, ICMPv6_RD_MIN_LEN, dsize);
         }
         else
         {
@@ -287,9 +378,6 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     case icmp::Icmp6Types::MULTICAST_LISTENER_QUERY:
     case icmp::Icmp6Types::MULTICAST_LISTENER_REPORT:
     case icmp::Icmp6Types::MULTICAST_LISTENER_DONE:
-    case icmp::Icmp6Types::NEIGHBOR_SOLICITATION:
-    case icmp::Icmp6Types::NEIGHBOR_ADVERTISEMENT:
-    case icmp::Icmp6Types::REDIRECT6:
     case icmp::Icmp6Types::INVERSE_NEIGHBOR_DISCOVERY_SOLICITATION:
     case icmp::Icmp6Types::INVERSE_NEIGHBOR_DISCOVERY_ADVERTISEMENT:
     case icmp::Icmp6Types::VERSION_2_MULTICAST_LISTENER_REPORT:
