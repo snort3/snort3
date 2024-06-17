@@ -22,6 +22,9 @@
 
 #include "main/snort_types.h"
 
+// This follows the prefix from js_tokenizer.l
+#undef yyFlexLexer
+#define yyFlexLexer jsFlexLexer
 #include <FlexLexer.h>
 
 #include "helpers/streambuf.h"
