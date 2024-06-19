@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.2.2.0 2024-06-03 00:01:20 EDT TST
+Revision 3.3.0.0 2024-06-19 09:50:09 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -106,44 +106,45 @@ Table of Contents
     5.15. dns
     5.16. domain_filter
     5.17. dpx
-    5.18. file_id
-    5.19. file_log
-    5.20. ftp_client
-    5.21. ftp_data
-    5.22. ftp_server
-    5.23. gtp_inspect
-    5.24. http2_inspect
-    5.25. http_inspect
-    5.26. iec104
-    5.27. imap
-    5.28. mem_test
-    5.29. mms
-    5.30. modbus
-    5.31. netflow
-    5.32. normalizer
-    5.33. null_trace_logger
-    5.34. packet_capture
-    5.35. perf_monitor
-    5.36. pop
-    5.37. port_scan
-    5.38. reputation
-    5.39. rna
-    5.40. rpc_decode
-    5.41. s7commplus
-    5.42. sip
-    5.43. smtp
-    5.44. so_proxy
-    5.45. ssh
-    5.46. ssl
-    5.47. stream
-    5.48. stream_file
-    5.49. stream_icmp
-    5.50. stream_ip
-    5.51. stream_tcp
-    5.52. stream_udp
-    5.53. stream_user
-    5.54. telnet
-    5.55. wizard
+    5.18. extractor
+    5.19. file_id
+    5.20. file_log
+    5.21. ftp_client
+    5.22. ftp_data
+    5.23. ftp_server
+    5.24. gtp_inspect
+    5.25. http2_inspect
+    5.26. http_inspect
+    5.27. iec104
+    5.28. imap
+    5.29. mem_test
+    5.30. mms
+    5.31. modbus
+    5.32. netflow
+    5.33. normalizer
+    5.34. null_trace_logger
+    5.35. packet_capture
+    5.36. perf_monitor
+    5.37. pop
+    5.38. port_scan
+    5.39. reputation
+    5.40. rna
+    5.41. rpc_decode
+    5.42. s7commplus
+    5.43. sip
+    5.44. smtp
+    5.45. so_proxy
+    5.46. ssh
+    5.47. ssl
+    5.48. stream
+    5.49. stream_file
+    5.50. stream_icmp
+    5.51. stream_ip
+    5.52. stream_tcp
+    5.53. stream_udp
+    5.54. stream_user
+    5.55. telnet
+    5.56. wizard
 
 6. IPS Action Modules
 
@@ -1778,6 +1779,7 @@ Commands:
   * snort.log_command(command, logging): enable or disable command
     logging
   * snort.show_config_generation(): show loaded configuration ID
+  * snort.show_snort_cpu(): show snort cpu usage
   * snort.pause(): suspend packet processing
   * snort.resume(pkt_num): continue packet processing. If number of
     packets is specified, will resume for n packets and pause
@@ -2188,6 +2190,7 @@ Rules:
   * 116:460 (icmp6) ICMPv6 node info query/response packet with a
     code greater than 2
   * 116:474 (icmp6) ICMPv6 not encapsulated in IPv6
+  * 116:478 (icmp6) ICMPv6 option length field is set to 0
 
 Peg counts:
 
@@ -2633,8 +2636,8 @@ Commands:
   * appid.reload_third_party(): reload appid third-party module
   * appid.reload_detectors(): reload appid detectors
   * appid.print_appid_config(): print appid configs
-  * appid.show_cpu_profiler_stats(appid): show appid cpu profiling
-    stats
+  * appid.show_cpu_profiler_stats(appid, display_rows_limit): show
+    appid cpu profiling stats
   * appid.show_cpu_profiler_status(): show appid cpu profiling status
 
 Peg counts:
@@ -3520,7 +3523,37 @@ Peg counts:
   * dpx.packets: total packets (sum)
 
 
-5.18. file_id
+5.18. extractor
+
+--------------
+
+Help: extracts protocol specific data
+
+Type: inspector (passive)
+
+Usage: global
+
+Instance Type: global
+
+Configuration:
+
+  * enum extractor.formatting = csv: output format for extractor { 
+    csv }
+  * enum extractor.output = stdout: output destination for extractor
+    { stdout }
+  * enum extractor.protocols[].service: service to extract from { 
+    http }
+  * int extractor.protocols[].tenant_id = 0: tenant_id of target
+    tenant { 0:max32 }
+  * string extractor.protocols[].on_events: specify events to log
+  * string extractor.protocols[].fields: specify fields to log
+
+Peg counts:
+
+  * extractor.total_events: total extractor events (sum)
+
+
+5.19. file_id
 
 --------------
 
@@ -3584,7 +3617,7 @@ Peg counts:
     concurrently on a flow (max)
 
 
-5.19. file_log
+5.20. file_log
 
 --------------
 
@@ -3608,7 +3641,7 @@ Peg counts:
   * file_log.total_events: total file events (sum)
 
 
-5.20. ftp_client
+5.21. ftp_client
 
 --------------
 
@@ -3636,7 +3669,7 @@ Configuration:
     sequences on FTP control channel
 
 
-5.21. ftp_data
+5.22. ftp_data
 
 --------------
 
@@ -3653,7 +3686,7 @@ Peg counts:
   * ftp_data.packets: total packets (sum)
 
 
-5.22. ftp_server
+5.23. ftp_server
 
 --------------
 
@@ -3739,7 +3772,7 @@ Peg counts:
     sessions with segment size change (sum)
 
 
-5.23. gtp_inspect
+5.24. gtp_inspect
 
 --------------
 
@@ -3782,7 +3815,7 @@ Peg counts:
   * gtp_inspect.unknown_infos: unknown information elements (sum)
 
 
-5.24. http2_inspect
+5.25. http2_inspect
 
 --------------
 
@@ -3884,7 +3917,7 @@ Peg counts:
     concurrent streams (sum)
 
 
-5.25. http_inspect
+5.26. http_inspect
 
 --------------
 
@@ -4219,7 +4252,7 @@ Peg counts:
     too many MIME attachments to inspect (sum)
 
 
-5.26. iec104
+5.27. iec104
 
 --------------
 
@@ -4351,7 +4384,7 @@ Peg counts:
     sessions (max)
 
 
-5.27. imap
+5.28. imap
 
 --------------
 
@@ -4415,7 +4448,7 @@ Peg counts:
   * imap.js_pdf_scripts: total number of PDF files processed (sum)
 
 
-5.28. mem_test
+5.29. mem_test
 
 --------------
 
@@ -4432,7 +4465,7 @@ Peg counts:
   * mem_test.packets: total packets (sum)
 
 
-5.29. mms
+5.30. mms
 
 --------------
 
@@ -4457,7 +4490,7 @@ Peg counts:
     (max)
 
 
-5.30. modbus
+5.31. modbus
 
 --------------
 
@@ -4486,7 +4519,7 @@ Peg counts:
     sessions (max)
 
 
-5.31. netflow
+5.32. netflow
 
 --------------
 
@@ -4555,7 +4588,7 @@ Peg counts:
     template cache (now)
 
 
-5.32. normalizer
+5.33. normalizer
 
 --------------
 
@@ -4691,7 +4724,7 @@ Peg counts:
   * normalizer.tcp_block: blocked segments (sum)
 
 
-5.33. null_trace_logger
+5.34. null_trace_logger
 
 --------------
 
@@ -4704,7 +4737,7 @@ Usage: global
 Instance Type: global
 
 
-5.34. packet_capture
+5.35. packet_capture
 
 --------------
 
@@ -4739,7 +4772,7 @@ Peg counts:
     (sum)
 
 
-5.35. perf_monitor
+5.36. perf_monitor
 
 --------------
 
@@ -4799,7 +4832,7 @@ Peg counts:
     by new flows (sum)
 
 
-5.36. pop
+5.37. pop
 
 --------------
 
@@ -4864,7 +4897,7 @@ Peg counts:
   * pop.js_pdf_scripts: total number of PDF files processed (sum)
 
 
-5.37. port_scan
+5.38. port_scan
 
 --------------
 
@@ -5038,7 +5071,7 @@ Peg counts:
     portscan (now)
 
 
-5.38. reputation
+5.39. reputation
 
 --------------
 
@@ -5095,7 +5128,7 @@ Peg counts:
     monitored (sum)
 
 
-5.39. rna
+5.40. rna
 
 --------------
 
@@ -5242,7 +5275,7 @@ Peg counts:
   * rna.total_bytes_in_interval: count of bytes processed (sum)
 
 
-5.40. rpc_decode
+5.41. rpc_decode
 
 --------------
 
@@ -5271,7 +5304,7 @@ Peg counts:
     sessions (max)
 
 
-5.41. s7commplus
+5.42. s7commplus
 
 --------------
 
@@ -5300,7 +5333,7 @@ Peg counts:
     sessions (max)
 
 
-5.42. sip
+5.43. sip
 
 --------------
 
@@ -5408,7 +5441,7 @@ Peg counts:
   * sip.code_9xx: 9xx (sum)
 
 
-5.43. smtp
+5.44. smtp
 
 --------------
 
@@ -5522,7 +5555,7 @@ Peg counts:
   * smtp.js_pdf_scripts: total number of PDF files processed (sum)
 
 
-5.44. so_proxy
+5.45. so_proxy
 
 --------------
 
@@ -5536,7 +5569,7 @@ Usage: global
 Instance Type: global
 
 
-5.45. ssh
+5.46. ssh
 
 --------------
 
@@ -5576,7 +5609,7 @@ Peg counts:
     (max)
 
 
-5.46. ssl
+5.47. ssl
 
 --------------
 
@@ -5627,7 +5660,7 @@ Peg counts:
     (max)
 
 
-5.47. stream
+5.48. stream
 
 --------------
 
@@ -5742,7 +5775,7 @@ Peg counts:
   * stream.uni_ip_flows: number of uni ip flows in cache (now)
 
 
-5.48. stream_file
+5.49. stream_file
 
 --------------
 
@@ -5759,7 +5792,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-5.49. stream_icmp
+5.50. stream_icmp
 
 --------------
 
@@ -5786,7 +5819,7 @@ Peg counts:
   * stream_icmp.prunes: icmp session prunes (sum)
 
 
-5.50. stream_ip
+5.51. stream_ip
 
 --------------
 
@@ -5858,7 +5891,7 @@ Peg counts:
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-5.51. stream_tcp
+5.52. stream_tcp
 
 --------------
 
@@ -6053,7 +6086,7 @@ Peg counts:
     one-way traffic only (sum)
 
 
-5.52. stream_udp
+5.53. stream_udp
 
 --------------
 
@@ -6082,7 +6115,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-5.53. stream_user
+5.54. stream_user
 
 --------------
 
@@ -6100,7 +6133,7 @@ Configuration:
     1:max31 }
 
 
-5.54. telnet
+5.55. telnet
 
 --------------
 
@@ -6136,7 +6169,7 @@ Peg counts:
     sessions (max)
 
 
-5.55. wizard
+5.56. wizard
 
 --------------
 
@@ -9642,6 +9675,16 @@ libraries see the Getting Started section of the manual.
     ordering incoming events { priority|content_length }
   * bool event_queue.process_all_events = false: process just first
     action group or all action groups
+  * enum extractor.formatting = csv: output format for extractor { 
+    csv }
+  * enum extractor.output = stdout: output destination for extractor
+    { stdout }
+  * string extractor.protocols[].fields: specify fields to log
+  * string extractor.protocols[].on_events: specify events to log
+  * enum extractor.protocols[].service: service to extract from { 
+    http }
+  * int extractor.protocols[].tenant_id = 0: tenant_id of target
+    tenant { 0:max32 }
   * string file_connector[].connector: connector name
   * enum file_connector[].direction: usage { receive | transmit | 
     duplex }
@@ -11759,6 +11802,7 @@ libraries see the Getting Started section of the manual.
     out of global memory (sum)
   * event_filter.no_memory_local: number of times event filter ran
     out of local memory (sum)
+  * extractor.total_events: total extractor events (sum)
   * file_connector.messages: total messages (sum)
   * file_id.cache_failures: number of file cache add failures (sum)
   * file_id.files_not_processed: number of files not processed due to
@@ -13469,6 +13513,10 @@ The IPv6 packet has a reserved source address.
 116:477 (ipv6) IPv6 packet to reserved dest address
 
 The IPv6 packet has a reserved destination address.
+
+116:478 (icmp6) ICMPv6 option length field is set to 0
+
+ICMPv6 option length field is set to 0.
 
 119:1 (http_inspect) URI has percent-encoding of an unreserved
 character
@@ -15944,8 +15992,8 @@ alert is raised by the enhanced JavaScript normalizer.
   * appid.reload_third_party(): reload appid third-party module
   * appid.reload_detectors(): reload appid detectors
   * appid.print_appid_config(): print appid configs
-  * appid.show_cpu_profiler_stats(appid): show appid cpu profiling
-    stats
+  * appid.show_cpu_profiler_stats(appid, display_rows_limit): show
+    appid cpu profiling stats
   * appid.show_cpu_profiler_status(): show appid cpu profiling status
   * host_cache.dump(file_name): dump host cache
   * host_cache.delete_host(host_ip): delete host from host cache
@@ -16008,6 +16056,7 @@ alert is raised by the enhanced JavaScript normalizer.
   * snort.log_command(command, logging): enable or disable command
     logging
   * snort.show_config_generation(): show loaded configuration ID
+  * snort.show_snort_cpu(): show snort cpu usage
   * snort.pause(): suspend packet processing
   * snort.resume(pkt_num): continue packet processing. If number of
     packets is specified, will resume for n packets and pause
@@ -16156,6 +16205,7 @@ and are not applicable elsewhere.
   * eth (codec): support for ethernet protocol (DLT 1) (DLT 51)
   * event_filter (basic): configure thresholding of events
   * event_queue (basic): configure event queue parameters
+  * extractor (inspector): extracts protocol specific data
   * fabricpath (codec): support for fabricpath
   * file_connector (connector): implement the file based connector
   * file_data (ips_option): rule option to set detection cursor to
@@ -16515,6 +16565,7 @@ and are not applicable elsewhere.
   * inspector::dns: dns inspection
   * inspector::domain_filter: alert on configured HTTP domains
   * inspector::dpx: dynamic inspector example
+  * inspector::extractor: extracts protocol specific data
   * inspector::file_id: configure file identification
   * inspector::file_log: log file event to file.log
   * inspector::ftp_client: FTP inspector client module

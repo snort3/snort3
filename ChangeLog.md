@@ -1,3 +1,18 @@
+2024-06-18: 3.3.0.0
+
+* appid: display rows limit of table and totals
+* appid: using different api for picking appids for appid cpu profiler
+* build: bump version to 3.2.0
+* codecs: add handling of NDP types
+* dns: set Flow timeout after getting DNS response
+* extractor: add protocol logging for HTTP
+* framework: add new Cursor Action Type
+* http_inspect: set CAT_SET_SUB_SECTION for buffer with a sub-selector configured
+* js_norm: fix prerequisites for FlexLexer includes
+* main: add CLI command to show snort cpu percentage
+* stream_tcp: use default size atomsplitter on fallback
+* utils: remove duplication of definition. Thanks to xxxx81 for reporting the issue.
+
 2024-06-02: 3.2.2.0
 
 * appid: appid cpu profiler max columns
