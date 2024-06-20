@@ -244,6 +244,8 @@ inline bool Impl<Clock, RuleTree>::pop()
 {
     assert(!timers.empty());
     const auto& timer = timers.back();
+    if ( timer.packet->flow )
+        timer.packet->flow->flowstats.total_rule_latency += clock_usecs(TO_USECS(timer.elapsed()));
 
     bool timed_out = false;
 
@@ -338,7 +340,7 @@ static inline Impl<>& get_impl()
 
 void RuleLatency::push(const detection_option_tree_root_t& root, Packet* p)
 {
-    if ( rule_latency::config->enabled() )
+    if ( rule_latency::config->force_enabled() )
     {
         if ( rule_latency::get_impl().push(root, p) )
             ++latency_stats.rule_tree_enables;
@@ -349,7 +351,7 @@ void RuleLatency::push(const detection_option_tree_root_t& root, Packet* p)
 
 void RuleLatency::pop()
 {
-    if ( rule_latency::config->enabled() )
+    if ( rule_latency::config->force_enabled() )
     {
         if ( rule_latency::get_impl().pop() )
             ++latency_stats.rule_eval_timeouts;

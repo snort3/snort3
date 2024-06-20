@@ -799,13 +799,37 @@ void SnortConfig::set_overlay_trace_config(TraceConfig* tc)
     overlay_trace_config = tc;
 }
 
-bool SnortConfig::set_latency_enable()
+bool SnortConfig::set_packet_latency(bool is_enabled) const
 {
-    if (latency)
+    if ( latency )
     {
-        latency->packet_latency.force_enable = true;
-        return true;
+        latency->packet_latency.force_enable = is_enabled;
+        return is_enabled;
     }
+    return false;
+}
+
+bool SnortConfig::get_packet_latency() const
+{
+    if ( latency->packet_latency.force_enabled() )
+        return true;
+    return false;
+}
+
+bool SnortConfig::set_rule_latency(bool is_enabled) const
+{
+    if ( latency )
+    {
+        latency->rule_latency.force_enable = is_enabled;
+        return is_enabled;
+    }
+    return false;
+}
+
+bool SnortConfig::get_rule_latency() const
+{
+    if ( latency->rule_latency.force_enabled() )
+        return true;
     return false;
 }
 
