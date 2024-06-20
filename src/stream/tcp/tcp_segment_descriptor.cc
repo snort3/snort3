@@ -92,6 +92,7 @@ TcpSegmentDescriptor::TcpSegmentDescriptor
     pkt->flow = p->flow;
     pkt->context = p->context;
     pkt->dsize = 0;
+    pkt->daq_msg = p->daq_msg;
 
     seq = tcph->seq();
     ack = tcph->ack();

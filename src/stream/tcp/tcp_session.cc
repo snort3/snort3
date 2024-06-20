@@ -1165,6 +1165,8 @@ int TcpSession::process(Packet* p)
     if ( tcp_mack )
     {
         TcpSegmentDescriptor ma_tsd(flow, p, tcp_mack->tcp_ack_seq_num, tcp_mack->tcp_window_size);
+        assert( ma_tsd.get_pkt()->daq_msg && ma_tsd.get_pkt()->daq_msg == p->daq_msg );
+
         init_tcp_packet_analysis(ma_tsd);
         process_tcp_packet(ma_tsd, p);
         tcpStats.meta_acks++;
