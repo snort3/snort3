@@ -27,7 +27,7 @@
 
 #include "stream/stream.h"
 #include "packet_io/packet_tracer.h"
-
+#include "trace/trace_api.h"
 #include "tcp_module.h"
 #include "tcp_stream_session.h"
 #include "tcp_stream_tracker.h"
@@ -517,6 +517,8 @@ void TcpNormalizer::log_drop_reason(TcpNormalizerState& tns, const TcpSegmentDes
         tsd.get_pkt()->active->set_drop_reason(issuer);
         if (PacketTracer::is_active())
             PacketTracer::log("%s", log.c_str());
+        if (stream_tcp_trace_enabled)
+            trace_logf(TRACE_WARNING_LEVEL, stream_tcp_trace, DEFAULT_TRACE_OPTION_ID, tsd.get_pkt(), "%s", log.c_str());
     }
 }
 

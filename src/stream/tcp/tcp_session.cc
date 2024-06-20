@@ -64,6 +64,7 @@
 #include "tcp_segment_node.h"
 #include "tcp_state_machine.h"
 #include "tcp_trace.h"
+#include "trace/trace_api.h"
 
 using namespace snort;
 
@@ -1141,7 +1142,8 @@ int TcpSession::process_tcp_packet(TcpSegmentDescriptor& tsd, const Packet* p)
     tsm->eval(tsd);
     check_events_and_actions(tsd);
 
-    S5TraceTCP(tsd, p);
+    if ( stream_tcp_trace_enabled )
+        S5TraceTCP(tsd, p);
 
     return ACTION_NOTHING;
 }
