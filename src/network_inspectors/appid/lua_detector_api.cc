@@ -77,27 +77,25 @@ static CHPGlossary* old_CHP_glossary = nullptr;
 
 void init_chp_glossary()
 {
-    if(CHP_glossary)
-        old_CHP_glossary = CHP_glossary;
+    assert(!old_CHP_glossary);
+    old_CHP_glossary = CHP_glossary;
     CHP_glossary = new CHPGlossary;
 }
 
 static void free_chp_glossary(CHPGlossary*& glossary)
 {
 
-    if (!glossary)
-        return;
-
-    for (auto& entry : *glossary)
+    if (glossary)
     {
-        if (entry.second)
-            snort_free(entry.second);
+        for (auto& entry : *glossary)
+            delete entry.second;
+        delete glossary;
+        glossary = nullptr;
     }
-    delete glossary;
-    glossary = nullptr;
 }
 
-void free_current_chp_glossary(){
+void free_current_chp_glossary()
+{
     free_chp_glossary(CHP_glossary);
 }
 
@@ -1254,11 +1252,11 @@ static int detector_get_flow(lua_State* L)
     // Verify detector user data and that we are in packet context
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
-    auto df = odp_thread_local_ctxt->get_lua_detector_mgr().get_detector_flow();
+    auto df = odp_thread_local_ctxt->get_detector_flow();
     if (!df)
     {
         df = new DetectorFlow(L, lsd->ldp.asd);
-        odp_thread_local_ctxt->get_lua_detector_mgr().set_detector_flow(df);
+        odp_thread_local_ctxt->set_detector_flow(df);
     }
     UserData<DetectorFlow>::push(L, DETECTORFLOW, df);
     lua_pushvalue(L, -1);
@@ -1769,7 +1767,7 @@ static int register_callback(lua_State* L, LuaObject& ud, AppInfoFlags flag)
         // Note that Lua detector objects are thread local
         ud.set_cb_fn_name(callback);
 
-        if (!odp_thread_local_ctxt->get_lua_detector_mgr().insert_cb_detector(app_id, &ud))
+        if (!odp_thread_local_ctxt->insert_cb_detector(app_id, &ud))
         {
             appid_log(nullptr, TRACE_ERROR_LEVEL, "AppId: detector callback already registered for app %d\n", app_id);
             return 1;
@@ -1803,8 +1801,7 @@ static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDir
         return -10;
     }
 
-    LuaDetectorManager& lua_detector_mgr = odp_thread_local_ctxt->get_lua_detector_mgr();
-    auto my_lua_state = lua_detector_mgr.L;
+    auto my_lua_state = odp_thread_local_ctxt->get_lua_state();
     // when an ODP detector triggers the detector callback to be called, there are some elements
     // in the stack. Checking here to make sure the number of elements is not too many
     if (lua_gettop(my_lua_state) > 20)
@@ -1834,8 +1831,7 @@ static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDir
     }
 
     // detector flows must be destroyed after each packet is processed
-    if (lua_detector_mgr.get_detector_flow())
-        lua_detector_mgr.free_detector_flow();
+    odp_thread_local_ctxt->free_detector_flow();
 
     // retrieve result
     if (!lua_isnumber(my_lua_state, -1))
@@ -1865,7 +1861,7 @@ void check_detector_callback(const Packet& p, AppIdSession& asd, AppidSessionDir
     if (entry->flags & APPINFO_FLAG_CLIENT_DETECTOR_CALLBACK or
         entry->flags & APPINFO_FLAG_SERVICE_DETECTOR_CALLBACK)
     {
-        LuaObject* ud = odp_thread_local_ctxt->get_lua_detector_mgr().get_cb_detector(app_id);
+        LuaObject* ud = odp_thread_local_ctxt->get_cb_detector(app_id);
         assert(ud);
 
         if (ud->is_running())
@@ -1882,7 +1878,7 @@ void check_detector_callback(const Packet& p, AppIdSession& asd, AppidSessionDir
 
 static int create_chp_application(AppId appIdInstance, unsigned app_type_flags, int num_matches)
 {
-    CHPApp* new_app = (CHPApp*)snort_calloc(sizeof(CHPApp));
+    CHPApp* new_app = new CHPApp();
     new_app->appIdInstance = appIdInstance;
     new_app->app_type_flags = app_type_flags;
     new_app->num_matches = num_matches;
@@ -1891,7 +1887,7 @@ static int create_chp_application(AppId appIdInstance, unsigned app_type_flags, 
     {
         appid_log(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Failed to add CHP for appId %d, instance %d",
             CHP_APPIDINSTANCE_TO_ID(appIdInstance), CHP_APPIDINSTANCE_TO_INSTANCE(appIdInstance));
-        snort_free(new_app);
+        delete new_app;
         return -1;
     }
     return 0;
@@ -3514,8 +3510,7 @@ int register_detector(lua_State* L)
 
 int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
 {
-    LuaDetectorManager& lua_detector_mgr = odp_thread_local_ctxt->get_lua_detector_mgr();
-    auto my_lua_state = lua_detector_mgr.L;
+    auto my_lua_state = odp_thread_local_ctxt->get_lua_state();
     if (!my_lua_state)
     {
         appid_log(args.pkt, TRACE_ERROR_LEVEL, "lua detector %s: no LUA state\n", package_info.name.c_str());
@@ -3550,14 +3545,13 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
         appid_log(args.pkt, TRACE_ERROR_LEVEL, "lua detector %s: error validating %s\n",
             package_info.name.c_str(), lua_tostring(my_lua_state, -1));
         ldp.pkt = nullptr;
-        lua_detector_mgr.free_detector_flow();
+        odp_thread_local_ctxt->free_detector_flow();
         lua_settop(my_lua_state, 0);
         return APPID_ENULL;
     }
 
     /**detectorFlows must be destroyed after each packet is processed.*/
-    if (lua_detector_mgr.get_detector_flow())
-        lua_detector_mgr.free_detector_flow();
+    odp_thread_local_ctxt->free_detector_flow();
 
     /* retrieve result */
     if (!lua_isnumber(my_lua_state, -1))
@@ -3654,7 +3648,7 @@ LuaServiceObject::LuaServiceObject(AppIdDiscovery* sdm, const std::string& detec
 
 int LuaServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    auto my_lua_state = odp_thread_local_ctxt->get_lua_detector_mgr().L;
+    auto my_lua_state = odp_thread_local_ctxt->get_lua_state();
     if (lua_gettop(my_lua_state))
     appid_log(args.pkt, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before service validate\n",
         lua_gettop(my_lua_state));
@@ -3730,7 +3724,7 @@ LuaStateDescriptor* LuaObject::validate_lua_state(bool packet_context)
 
 int LuaClientDetector::validate(AppIdDiscoveryArgs& args)
 {
-    auto my_lua_state = odp_thread_local_ctxt->get_lua_detector_mgr().L;
+    auto my_lua_state = odp_thread_local_ctxt->get_lua_state();
     if (lua_gettop(my_lua_state))
         appid_log(args.pkt, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before client validate\n",
             lua_gettop(my_lua_state));

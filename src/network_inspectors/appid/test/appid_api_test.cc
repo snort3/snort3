@@ -425,11 +425,6 @@ TEST(appid_api, is_service_http_type)
     CHECK_FALSE(appid_api.is_service_http_type(APP_ID_SMTP));
 }
 
-TEST(appid_api, get_appid_detector_directory)
-{
-    STRCMP_EQUAL(appid_api.get_appid_detector_directory(), "/path/to/appid/detectors/");
-}
-
 int main(int argc, char** argv)
 {
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);

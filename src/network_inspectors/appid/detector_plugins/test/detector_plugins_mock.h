@@ -104,6 +104,7 @@ private:
 AppIdConfig::~AppIdConfig() = default;
 AppIdModule::AppIdModule()
     : Module("a", "b") { }
+AppIdModule::~AppIdModule() = default;
 
 // LCOV_EXCL_START
 bool AppIdModule::begin(const char*, int, snort::SnortConfig*)

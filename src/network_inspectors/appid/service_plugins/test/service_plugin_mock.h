@@ -90,9 +90,8 @@ void ClientDiscovery::reload() {}
 FpSMBData* smb_data = nullptr;
 
 int AppIdDetector::initialize(AppIdInspector&){return 0;}
-void AppIdDetector::reload() { }
 int AppIdDetector::data_add(AppIdSession&, void*, AppIdFreeFCN){return 0;}
-void* AppIdDetector::data_get(AppIdSession&) {return nullptr;}
+void* AppIdDetector::data_get(const AppIdSession&) {return nullptr;}
 void AppIdDetector::add_user(AppIdSession&, const char*, AppId, bool, AppidChangeBits&){}
 void AppIdDetector::add_payload(AppIdSession&, AppId){}
 void AppIdDetector::add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId, const char*, AppidChangeBits&){}

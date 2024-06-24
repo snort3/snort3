@@ -48,8 +48,6 @@ Inspector* InspectorManager::get_inspector(char const*, bool, const snort::Snort
     return nullptr;
 }
 
-AppIdContext* ctxt;
-AppIdContext& AppIdInspector::get_ctxt() const { return *ctxt; }
 void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
 
 TEST_GROUP(alpn_patterns_tests)

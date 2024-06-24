@@ -77,7 +77,6 @@ OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 void FlowHAState::add(uint8_t) { }
 
 static AppIdConfig stub_config;
-static AppIdContext stub_ctxt(stub_config);
 static OdpContext stub_odp_ctxt(stub_config, nullptr);
 OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInspector& inspector,

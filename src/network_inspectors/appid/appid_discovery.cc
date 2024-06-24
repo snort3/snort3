@@ -242,9 +242,9 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
         return false;
     }
 
+    const AppIdConfig& config = inspector.get_config();
     if (appidDebug->is_enabled())
-        appidDebug->activate(p->flow, asd,
-            inspector.get_ctxt().config.log_all_sessions);
+        appidDebug->activate(p->flow, asd, config.log_all_sessions);
 
     if (is_packet_ignored(p))
         return false;
@@ -386,7 +386,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
     // FIXIT-L: DECRYPT_DEBUG - Move set_proxied and first_decrypted_packet_debug to ssl-module
     // after ssl-module's decryption capability is implemented
 #ifdef REG_TEST
-    uint32_t fdpd = inspector.get_ctxt().config.first_decrypted_packet_debug;
+    uint32_t fdpd = config.first_decrypted_packet_debug;
     if (fdpd and (fdpd == asd->session_packet_count))
     {
         p->flow->set_proxied();

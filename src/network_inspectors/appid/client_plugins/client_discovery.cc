@@ -75,9 +75,9 @@ void ClientDiscovery::initialize(AppIdInspector& inspector)
 void ClientDiscovery::reload()
 {
     for ( auto& kv : tcp_detectors )
-        kv.second->reload();
+        kv.second->do_custom_reload();
     for ( auto& kv : udp_detectors )
-        kv.second->reload();
+        kv.second->do_custom_reload();
 }
 
 void ClientDiscovery::finalize_client_patterns()
