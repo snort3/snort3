@@ -33,6 +33,13 @@
 
 class AppIdSession;
 class OdpContext;
+class ControlConn;
+
+enum AppidCPUProfilerOutputType
+{
+    OUPUT_LOGFILE = 0,
+    OUTPUT_CONSOLE
+};
 
 #define APPID_CPU_PROFILER_DEFAULT_DISPLAY_ROWS 100
 #define APPID_CPU_PROFILER_MAX_DISPLAY_ROWS 2000
@@ -77,8 +84,9 @@ public:
     void check_appid_cpu_profiler_table_entry(const AppIdSession* asd, AppId payload_id);
     void update_totals(const AppidCPUProfilerStats& stats);
 
-    AppidCpuTableDisplayStatus display_appid_cpu_profiler_table(OdpContext&, uint32_t display_rows_limit = APPID_CPU_PROFILER_DEFAULT_DISPLAY_ROWS, bool override_running_flag = false);
-    AppidCpuTableDisplayStatus display_appid_cpu_profiler_table(AppId, OdpContext&);
+    AppidCpuTableDisplayStatus display_appid_cpu_profiler_table(OdpContext&, uint32_t display_rows_limit = APPID_CPU_PROFILER_DEFAULT_DISPLAY_ROWS,
+                                                                bool override_running_flag = false, ControlConn* control_conn = nullptr);
+    AppidCpuTableDisplayStatus display_appid_cpu_profiler_table(AppId, OdpContext&, ControlConn* control_conn = nullptr);
     
     void cleanup_appid_cpu_profiler_table();
 };

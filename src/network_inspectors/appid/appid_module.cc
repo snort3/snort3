@@ -417,10 +417,10 @@ static int show_cpu_profiler_stats(lua_State* L)
             if (display_rows_limit > APPID_CPU_PROFILER_MAX_DISPLAY_ROWS)
                 ctrlcon->respond("given number of rows exceeds maximum limit of %d, limiting to %d\n",
                                                    APPID_CPU_PROFILER_MAX_DISPLAY_ROWS, APPID_CPU_PROFILER_MAX_DISPLAY_ROWS);
-            displayed = odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(odp_ctxt, display_rows_limit);
+            displayed = odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(odp_ctxt, display_rows_limit, false, ctrlcon);
         }
         else
-            displayed = odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(appid, odp_ctxt);
+            displayed = odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(appid, odp_ctxt, ctrlcon);
 
         switch (displayed){
             case DISPLAY_ERROR_TABLE_EMPTY:
