@@ -214,9 +214,6 @@ public:
     TcpNormalizerMissed3whs()
     { my_name = "Missed3whs"; }
 
-    void init(TcpNormalizer* prev) override
-    { prev_norm = prev; }
-
     TcpNormalizer::NormStatus apply_normalizations(
         TcpNormalizerState&, TcpSegmentDescriptor&, uint32_t seq, bool stream_is_inorder) override;
     bool validate_rst(TcpNormalizerState&, TcpSegmentDescriptor&) override;
@@ -498,9 +495,9 @@ bool TcpNormalizerMissed3whs::validate_rst(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
     if ( tns.session->flow->two_way_traffic() )
-        return prev_norm->validate_rst(tns, tsd);
+        return tns.prev_norm->validate_rst(tns, tsd);
 
-    if ( !prev_norm->get_name().compare("OS_Hpux11") )
+    if ( !tns.prev_norm->get_name().compare("OS_Hpux11") )
         return validate_rst_seq_geq(tns, tsd);
 
     return true;
@@ -515,14 +512,15 @@ int TcpNormalizerMissed3whs::handle_paws(
 int TcpNormalizerMissed3whs::handle_repeated_syn(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
-    return prev_norm->handle_repeated_syn(tns, tsd);
+    return tns.prev_norm->handle_repeated_syn(tns, tsd);
 }
 
 void TcpNormalizerPolicy::init(StreamPolicy os, TcpStreamSession* ssn, TcpStreamTracker* trk, TcpStreamTracker* peer)
 {
-    TcpNormalizer* prev_norm = nullptr;
-    if ( os == StreamPolicy::MISSED_3WHS and os != tns.os_policy )
-        prev_norm = TcpNormalizerFactory::get_instance(tns.os_policy);
+    if ( os == StreamPolicy::MISSED_3WHS and os == tns.os_policy)
+        tns.prev_norm = TcpNormalizerFactory::get_instance(StreamPolicy::OS_DEFAULT);
+    else
+        tns.prev_norm = TcpNormalizerFactory::get_instance(tns.os_policy);
 
     tns.os_policy = os;
     tns.session = ssn;
@@ -543,11 +541,7 @@ void TcpNormalizerPolicy::init(StreamPolicy os, TcpStreamSession* ssn, TcpStream
     tns.opt_block = Normalize_GetMode(NORM_TCP_OPT);
 
     norm = TcpNormalizerFactory::get_instance(os);
-
-    if ( prev_norm )
-        norm->init(prev_norm);
-    else
-        norm->init(tns);
+    norm->init(tns);
 }
 
 TcpNormalizer* TcpNormalizerFactory::normalizers[StreamPolicy::OS_END_OF_LIST];

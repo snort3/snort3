@@ -33,12 +33,14 @@
 class TcpStreamSession;
 class TcpStreamTracker;
 class TcpSegmentDescriptor;
+class TcpNormalizer;
 
 struct TcpNormalizerState
 {
     TcpStreamSession* session = nullptr;
     TcpStreamTracker* tracker = nullptr;
     TcpStreamTracker* peer_tracker = nullptr;
+    TcpNormalizer* prev_norm = nullptr;
 
     StreamPolicy os_policy = StreamPolicy::OS_DEFAULT;
 
@@ -67,7 +69,6 @@ public:
     virtual ~TcpNormalizer() = default;
 
     virtual void init(State&) { }
-    virtual void init(TcpNormalizer*) { }
 
     virtual NormStatus apply_normalizations(
         State&, TcpSegmentDescriptor&, uint32_t seq, bool stream_is_inorder);
@@ -114,7 +115,6 @@ protected:
     virtual int handle_paws_no_timestamps(State&, TcpSegmentDescriptor&);
 
     std::string my_name;
-    TcpNormalizer* prev_norm = nullptr;
 };
 
 #endif
