@@ -246,8 +246,8 @@ FlowData* Flow::get_flow_data(unsigned id) const
 
 void Flow::free_flow_data(FlowData* fd)
 {
-    if ( !fd ) return;
-    flow_data.erase(fd->get_id());
+    if ( fd )
+        flow_data.erase(fd->get_id());
 }
 
 void Flow::free_flow_data(uint32_t proto)
@@ -258,7 +258,11 @@ void Flow::free_flow_data(uint32_t proto)
 void Flow::free_flow_data()
 {
     if ( flow_data.empty() )
+    {
+        if (stash)
+            stash->reset();
         return;
+    }
     const SnortConfig* sc = SnortConfig::get_conf();
     PolicySelector* ps = sc->policy_map->get_policy_selector();
     NetworkPolicy* np = nullptr;
@@ -287,6 +291,8 @@ void Flow::free_flow_data()
     }
 
     flow_data.clear();
+    if (stash)
+        stash->reset();
 
     if (ps)
     {
@@ -300,7 +306,7 @@ void Flow::call_handlers(Packet* p, bool eof)
 {
     for (auto& fd_pair : flow_data)
     {
-        FlowData* fd = fd_pair.second.get(); 
+        FlowData* fd = fd_pair.second.get();
         if ( eof )
             fd->handle_eof(p);
         else

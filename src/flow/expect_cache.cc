@@ -338,13 +338,10 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
 
     // This code assumes that the expected session is in the opposite direction of the control session
     // when groups are significant
-    bool reversed_key = (ctrlPkt->pkth->flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS)
-        ? key.init(ctrlPkt->context->conf, type, ip_proto, cliIP, cliPort,
-            srvIP, srvPort, vlanId, mplsId, ctrlPkt->pkth->address_space_id, ctrlPkt->pkth->tenant_id, ctrlPkt->pkth->egress_group,
-            ctrlPkt->pkth->ingress_group)
-        : key.init(ctrlPkt->context->conf, type, ip_proto, cliIP, cliPort,
-            srvIP, srvPort, vlanId, mplsId, *ctrlPkt->pkth);
-
+    bool reversed_key = key.init(ctrlPkt->context->conf, type, ip_proto, cliIP, cliPort,
+        srvIP, srvPort, vlanId, mplsId, ctrlPkt->pkth->address_space_id, ctrlPkt->pkth->tenant_id,
+        0 != (ctrlPkt->pkth->flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS),
+        ctrlPkt->pkth->egress_group, ctrlPkt->pkth->ingress_group);
     bool new_node = false;
     ExpectNode* node = static_cast<ExpectNode*> ( hash_table->get_user_data(&key) );
     if ( !node )

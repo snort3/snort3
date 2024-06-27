@@ -70,22 +70,15 @@ struct SO_PUBLIC FlowKey
         uint8_t padding_bits : 7;
     } flags;
 
-    /* The init() functions return true if the key IP/port fields were actively
-        normalized, reversing the source and destination addresses internally.
-        The IP-only init() will always return false as we will not reorder its
-        addresses at this time. */
+    // The init() functions return true if the key IP/port fields were actively
+    // normalized, reversing the source and destination addresses internally.
+    // The IP-only init() will always return false as we will not reorder its
+    // addresses at this time.
     bool init(
         const SnortConfig*, PktType, IpProtocol,
         const snort::SfIp *srcIP, uint16_t srcPort,
         const snort::SfIp *dstIP, uint16_t dstPort,
-        uint16_t vlanId, uint32_t mplsId, uint32_t addrSpaceId, uint32_t tid,
-        int16_t group_h = DAQ_PKTHDR_UNKNOWN, int16_t group_l = DAQ_PKTHDR_UNKNOWN);
-
-    bool init(
-        const SnortConfig*, PktType, IpProtocol,
-        const snort::SfIp *srcIP, const snort::SfIp *dstIP,
-        uint32_t id, uint16_t vlanId,
-        uint32_t mplsId, uint32_t addrSpaceId, uint32_t tid,
+        uint16_t vlanId, uint32_t mplsId, uint32_t addrSpaceId, uint32_t tid, bool significant_groups,
         int16_t group_h = DAQ_PKTHDR_UNKNOWN, int16_t group_l = DAQ_PKTHDR_UNKNOWN);
 
     bool init(
@@ -94,6 +87,7 @@ struct SO_PUBLIC FlowKey
         const snort::SfIp *dstIP, uint16_t dstPort,
         uint16_t vlanId, uint32_t mplsId, const DAQ_PktHdr_t&);
 
+    // IP fragment key
     bool init(
         const SnortConfig*, PktType, IpProtocol,
         const snort::SfIp *srcIP, const snort::SfIp *dstIP,
