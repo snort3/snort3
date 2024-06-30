@@ -27,11 +27,12 @@
 
 using namespace snort;
 
-extern const BaseApi* sin_dns[];
 extern const BaseApi* sin_file[];
 extern const BaseApi* sin_http[];
 extern const BaseApi* sin_http2[];
 extern const BaseApi* sin_sip[];
+extern const BaseApi* sin_ssl[];
+extern const BaseApi* sin_dns[];
 
 #ifdef STATIC_INSPECTORS
 extern const BaseApi* sin_bo;
@@ -55,8 +56,8 @@ extern const BaseApi* sin_iec104[];
 extern const BaseApi* sin_mms[];
 extern const BaseApi* sin_modbus[];
 extern const BaseApi* sin_netflow[];
+extern const BaseApi* sin_s7comm[];
 extern const BaseApi* sin_s7commplus[];
-extern const BaseApi* sin_ssl[];
 #endif
 
 const BaseApi* service_inspectors[] =
@@ -87,6 +88,7 @@ void load_service_inspectors()
     PluginManager::load_plugins(sin_http);
     PluginManager::load_plugins(sin_http2);
     PluginManager::load_plugins(sin_sip);
+    PluginManager::load_plugins(sin_ssl);
 
 #ifdef STATIC_INSPECTORS
     PluginManager::load_plugins(sin_cip);
@@ -97,8 +99,8 @@ void load_service_inspectors()
     PluginManager::load_plugins(sin_mms);
     PluginManager::load_plugins(sin_modbus);
     PluginManager::load_plugins(sin_netflow);
+    PluginManager::load_plugins(sin_s7comm);
     PluginManager::load_plugins(sin_s7commplus);
-    PluginManager::load_plugins(sin_ssl);
 #endif
 }
 

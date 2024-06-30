@@ -35,6 +35,7 @@ vector<CurseDetails> CurseBook::curse_map =
     { "dce_udp"   , "dcerpc"     , CurseBook::dce_udp_curse   , false },
     { "dce_tcp"   , "dcerpc"     , CurseBook::dce_tcp_curse   , true  },
     { "mms"       , "mms"        , CurseBook::mms_curse       , true  },
+    { "s7comm"    , "s7comm"     , CurseBook::s7comm_curse    , true  },
     { "s7commplus", "s7commplus" , CurseBook::s7commplus_curse, true  },
     { "dce_smb"   , "netbios-ssn", CurseBook::dce_smb_curse   , true  },
     { "sslv2"     , "ssl"        , CurseBook::ssl_v2_curse    , true  }
