@@ -42,9 +42,12 @@ Value* get_method(DataEvent*, Packet*, Flow*);
 Value* get_host(DataEvent*, Packet*, Flow*);
 Value* get_user_agent(DataEvent*, Packet*, Flow*);
 Value* get_uri(DataEvent*, Packet*, Flow*);
+Value* get_referrer(DataEvent*, Packet*, Flow*);
+Value* get_origin(DataEvent*, Packet*, Flow*);
 Value* get_version(DataEvent*, Packet*, Flow*);
 Value* get_stat_code(DataEvent*, Packet*, Flow*);
 Value* get_stat_msg(DataEvent*, Packet*, Flow*);
+Value* get_trans_depth(DataEvent*, Packet*, Flow*);
 
 // Common
 Value* get_timestamp(DataEvent*, Packet*, Flow*);
@@ -92,6 +95,22 @@ Value* get_uri(DataEvent* event, Packet*, Flow*)
     return new Value(str.c_str());
 }
 
+Value* get_referrer(DataEvent* event, Packet*, Flow*)
+{
+    const Field& field = ((HttpTransactionEndEvent*)event)->get_referer_hdr();
+    std::string str;
+    field_to_string(field, str);
+    return new Value(str.c_str());
+}
+
+Value* get_origin(DataEvent* event, Packet*, Flow*)
+{
+    const Field& field = ((HttpTransactionEndEvent*)event)->get_origin_hdr();
+    std::string str;
+    field_to_string(field, str);
+    return new Value(str.c_str());
+}
+
 Value* get_version(DataEvent* event, Packet*, Flow*)
 {
     HttpEnums::VersionId version = ((HttpTransactionEndEvent*)event)->get_version();
@@ -117,6 +136,12 @@ Value* get_stat_msg(DataEvent* event, Packet*, Flow*)
     std::string str;
     field_to_string(field, str);
     return new Value(str.c_str());
+}
+
+Value* get_trans_depth(DataEvent* event, Packet*, Flow*)
+{
+    const uint64_t trans_depth = ((HttpTransactionEndEvent*)event)->get_trans_depth();
+    return new Value(trans_depth);
 }
 
 Value* get_timestamp(DataEvent*, Packet* p, Flow*)
@@ -173,9 +198,12 @@ static std::map<std::string, GetFunc> event_getters =
     {"host", get_host},
     {"uri", get_uri},
     {"user_agent", get_user_agent},
+    {"referrer", get_referrer},
+    {"origin", get_origin},
     {"version", get_version},
     {"status_code", get_stat_code},
     {"status_msg", get_stat_msg},
+    {"trans_depth", get_trans_depth}
 };
 
 void HttpExtractorEventHandler::handle(DataEvent& event, Flow* flow)

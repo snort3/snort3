@@ -142,6 +142,7 @@ const StrCode HttpMsgHeadShared::header_list[] =
     { HEAD_HTTP2_SETTINGS,             "http2-settings" },
     { HEAD_RESTRICT_ACCESS_TO_TENANTS, "restrict-access-to-tenants" },
     { HEAD_RESTRICT_ACCESS_CONTEXT,    "restrict-access-context" },
+    { HEAD_ORIGIN,                     "origin" },
     { 0,                               nullptr }
 };
 

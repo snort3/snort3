@@ -53,7 +53,8 @@ static void delete_section_list(HttpMsgSection* section_list)
     }
 }
 
-HttpTransaction::HttpTransaction(HttpFlowData* session_data_, snort::Flow* const f): session_data(session_data_), flow(f)
+HttpTransaction::HttpTransaction(HttpFlowData* session_data_, snort::Flow* const f)
+    : session_data(session_data_), flow(f)
 {
     infractions[0] = nullptr;
     infractions[1] = nullptr;

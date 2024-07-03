@@ -150,9 +150,12 @@ ServiceBlueprint HttpExtractorService::blueprint =
       "host",
       "uri",
       "user_agent",
+      "referrer",
+      "origin",
       "version",
       "status_code",
       "status_msg",
+      "trans_depth"
     },
 };
 

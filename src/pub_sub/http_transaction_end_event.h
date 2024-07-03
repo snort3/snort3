@@ -45,9 +45,14 @@ public:
     const Field& get_stat_code() const;
     const Field& get_stat_msg() const;
     const Field& get_user_agent() const;
+    const Field& get_referer_hdr() const;
+    const Field& get_origin_hdr() const;
     HttpEnums::VersionId get_version() const;
+    uint64_t get_trans_depth() const;
 
 private:
+    const Field& get_client_header(uint64_t sub_id) const;
+
     const HttpTransaction* const transaction;
 };
 }
