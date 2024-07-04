@@ -39,9 +39,9 @@ using namespace snort;
 
 THREAD_LOCAL const Trace* detection_trace = nullptr;
 
-#ifdef DEBUG_MSGS
 static const TraceOption detection_trace_options[] =
 {
+#ifdef DEBUG_MSGS
     { "detect_engine", TRACE_DETECTION_ENGINE,  "enable detection engine trace logging" },
     { "rule_eval",     TRACE_RULE_EVAL,         "enable rule evaluation trace logging" },
     { "buffer",        TRACE_BUFFER,            "enable buffer trace logging" },
@@ -51,9 +51,10 @@ static const TraceOption detection_trace_options[] =
     { "opt_tree",      TRACE_OPTION_TREE,       "enable tree option trace logging" },
     { "tag",           TRACE_TAG,               "enable tag trace logging" },
     { "cont",          TRACE_CONT,              "enable rule continuation trace logging" },
+#endif
+    { "fp_info",       TRACE_FP_INFO,           "enable fast pattern info logging" },
     { nullptr, 0, nullptr }
 };
-#endif
 
 
 static const Parameter extend_to_service[] =
@@ -145,11 +146,7 @@ void DetectionModule::set_trace(const Trace* trace) const
 
 const TraceOption* DetectionModule::get_trace_options() const
 {
-#ifndef DEBUG_MSGS
-    return nullptr;
-#else
     return detection_trace_options;
-#endif
 }
 
 bool DetectionModule::begin(const char* fqn, int idx, SnortConfig* sc)

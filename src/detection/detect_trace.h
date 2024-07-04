@@ -48,6 +48,7 @@ enum
     TRACE_OPTION_TREE,
     TRACE_TAG,
     TRACE_CONT,
+    TRACE_FP_INFO,
 };
 
 void clear_trace_cursor_info();

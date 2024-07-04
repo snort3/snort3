@@ -198,9 +198,6 @@ static const Parameter search_engine_params[] =
     { "rule_db_dir", Parameter::PT_STRING, nullptr, nullptr,
       "deserialize rule databases from given directory" },
 
-    { "show_fast_patterns", Parameter::PT_BOOL, nullptr, "false",
-      "print fast pattern info for each rule" },
-
     { "split_any_any", Parameter::PT_BOOL, nullptr, "true",
       "evaluate any-any rules separately to save memory" },
 
@@ -310,8 +307,6 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
         if ( !fp->set_offload_search_method(v.get_string()) )
             return false;
     }
-    else if ( v.is("show_fast_patterns") )
-        fp->set_debug_print_fast_patterns(v.get_bool());
 
     else if ( v.is("split_any_any") )
         fp->set_split_any_any(v.get_bool());

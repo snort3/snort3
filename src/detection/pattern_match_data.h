@@ -73,8 +73,8 @@ struct PatternMatchData
     uint16_t flags = 0;          // from above enum
     uint16_t mpse_flags;     // passed through to mpse
 
-    uint16_t fp_offset;
-    uint16_t fp_length;
+    uint16_t fp_offset = 0;
+    uint16_t fp_length = 0;
 
     bool is_unbounded() const
     { return !depth; }
