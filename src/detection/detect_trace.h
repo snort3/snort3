@@ -39,16 +39,16 @@ struct PatternMatchData;
 
 enum
 {
-    TRACE_DETECTION_ENGINE = 0,
+    TRACE_OPTION_TREE = 0,
+    TRACE_FP_INFO,
+    TRACE_DETECTION_ENGINE,
     TRACE_RULE_EVAL,
     TRACE_BUFFER,
     TRACE_RULE_VARS,
     TRACE_FP_SEARCH,
     TRACE_PKT_DETECTION,
-    TRACE_OPTION_TREE,
     TRACE_TAG,
     TRACE_CONT,
-    TRACE_FP_INFO,
 };
 
 void clear_trace_cursor_info();

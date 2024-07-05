@@ -41,6 +41,8 @@ THREAD_LOCAL const Trace* detection_trace = nullptr;
 
 static const TraceOption detection_trace_options[] =
 {
+    { "opt_tree",      TRACE_OPTION_TREE,       "enable tree option trace logging" },
+    { "fp_info",       TRACE_FP_INFO,           "enable fast pattern info logging" },
 #ifdef DEBUG_MSGS
     { "detect_engine", TRACE_DETECTION_ENGINE,  "enable detection engine trace logging" },
     { "rule_eval",     TRACE_RULE_EVAL,         "enable rule evaluation trace logging" },
@@ -48,11 +50,9 @@ static const TraceOption detection_trace_options[] =
     { "rule_vars",     TRACE_RULE_VARS,         "enable rule variables trace logging" },
     { "fp_search",     TRACE_FP_SEARCH,         "enable fast pattern search trace logging" },
     { "pkt_detect",    TRACE_PKT_DETECTION,     "enable packet detection trace logging" },
-    { "opt_tree",      TRACE_OPTION_TREE,       "enable tree option trace logging" },
     { "tag",           TRACE_TAG,               "enable tag trace logging" },
     { "cont",          TRACE_CONT,              "enable rule continuation trace logging" },
 #endif
-    { "fp_info",       TRACE_FP_INFO,           "enable fast pattern info logging" },
     { nullptr, 0, nullptr }
 };
 
