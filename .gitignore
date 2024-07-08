@@ -10,6 +10,7 @@
 ._Xcode*
 .vscode/
 Cbuild/
+build/
 Xcode*/
 doc/basic.txt
 doc/builtin.txt

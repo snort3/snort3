@@ -272,7 +272,7 @@ SFDAQInstance* AnalyzerCommand::get_daq_instance(Analyzer& analyzer)
     return analyzer.get_daq_instance();
 }
 
-ACShowSnortCPU::~ACShowSnortCPU()
+/*ACShowSnortCPU::~ACShowSnortCPU()
 {
     if (DAQ_SUCCESS == status)
     {
@@ -281,9 +281,9 @@ ACShowSnortCPU::~ACShowSnortCPU()
                    cpu_usage_120s/instance_num,
                    cpu_usage_300s/instance_num);
     }
-}
+}*/
 
-bool ACShowSnortCPU::execute(Analyzer& analyzer, void**)
+/*bool ACShowSnortCPU::execute(Analyzer& analyzer, void**)
 {
     DIOCTL_GetCpuProfileData get_data = {};
     do
@@ -324,4 +324,4 @@ bool ACShowSnortCPU::execute(Analyzer& analyzer, void**)
     } while (0);
 
     return true;
-}
+}*/

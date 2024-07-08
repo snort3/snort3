@@ -177,7 +177,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* opt_ctor(Module* m, OptTreeNode*)
+static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
     S7commParameterLengthModule* mod = (S7commParameterLengthModule*)m;
     return new S7commParameterLengthOption(mod->parameter_length);

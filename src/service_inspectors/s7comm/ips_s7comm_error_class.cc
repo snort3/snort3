@@ -214,7 +214,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* opt_ctor(Module* m, OptTreeNode*)
+static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
     S7commErrorClassModule* mod = (S7commErrorClassModule*)m;
     return new S7commErrorClassOption(mod->error_class);

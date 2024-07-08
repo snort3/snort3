@@ -180,7 +180,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static IpsOption* opt_ctor(Module* m, OptTreeNode*)
+static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
     S7commPduRefModule* mod = (S7commPduRefModule*)m;
     return new S7commPduRefOption(mod->pdu_ref);
