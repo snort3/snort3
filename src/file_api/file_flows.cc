@@ -114,7 +114,7 @@ void FileFlows::handle_retransmit(Packet* p)
     if (!file->get_file_data())
     {
         if (file_cache)
-            file_got = file_cache->get_file(flow, pending_file_id, false);
+            file_got = file_cache->get_file(flow, pending_file_id, false, false);
         if (file_got and file_got->get_file_data() and file_got->verdict == FILE_VERDICT_PENDING)
         {
             file_got->user_file_data_mutex.lock();
@@ -175,7 +175,7 @@ void FileFlows::set_current_file_context(FileContext* ctx)
         current_context_delete_pending = false;
         FileCache* file_cache = FileService::get_file_cache();
         assert(file_cache);
-        FileContext* file_got = file_cache->get_file(flow, file_id, false);
+        FileContext* file_got = file_cache->get_file(flow, file_id, false, false);
         if (file_got and file_got->verdict == FILE_VERDICT_PENDING and current_context != file_got)
         {
             file_got->user_file_data_mutex.lock();
@@ -209,21 +209,6 @@ FileFlows::~FileFlows()
 {
     FileCache* file_cache = FileService::get_file_cache();
     assert(file_cache);
-    uint64_t file_id = 0;
-    if (current_context)
-        file_id = current_context->get_file_id();
-    else if (main_context)
-        file_id = main_context->get_file_id();
-
-    FileContext* file_got = file_cache->get_file(flow, file_id, false);
-
-    if (file_got and (file_got->verdict == FILE_VERDICT_PENDING))
-    {
-        file_got->user_file_data_mutex.lock();
-        delete (file_got->get_file_data());
-        file_got->set_file_data(nullptr);
-        file_got->user_file_data_mutex.unlock();
-    }
 
     delete(main_context);
     if (current_context_delete_pending)
@@ -291,7 +276,7 @@ FileContext* FileFlows::get_file_context(
     {
         FileCache* file_cache = FileService::get_file_cache();
         assert(file_cache);
-        context = file_cache->get_file(flow, file_id, false);
+        context = file_cache->get_file(flow, file_id, false, true);
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
             "get_file_context:trying to get context from cache\n");
     }

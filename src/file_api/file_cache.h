@@ -60,7 +60,7 @@ PADDING_GUARD_END
     void set_lookup_timeout(int64_t);
     void set_max_files(int64_t);
 
-    snort::FileContext* get_file(snort::Flow*, uint64_t file_id, bool to_create);
+    snort::FileContext* get_file(snort::Flow*, uint64_t file_id, bool to_create, bool using_cache_entry);
     FileVerdict cached_verdict_lookup(snort::Packet*, snort::FileInfo*,
         snort::FilePolicyBase*);
     bool apply_verdict(snort::Packet*, snort::FileContext*, FileVerdict, bool resume,
@@ -71,7 +71,7 @@ private:
     snort::FileContext* find(const FileHashKey&, int64_t);
     snort::FileContext* find_add(const FileHashKey&, int64_t);
     snort::FileContext* get_file(snort::Flow*, uint64_t file_id, bool to_create,
-        int64_t timeout);
+        int64_t timeout, bool using_cache_entry);
     FileVerdict check_verdict(snort::Packet*, snort::FileInfo*, snort::FilePolicyBase*);
     int store_verdict(snort::Flow*, snort::FileInfo*, int64_t timeout);
 
