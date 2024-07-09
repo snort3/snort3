@@ -36,6 +36,10 @@
 #include "s7comm.h"
 #include "s7comm_module.h"
 
+#include <iostream> // For debug output
+#include <iomanip> // For std::setw and std::setfill
+#include <cmath>
+
 #pragma pack(1)
 /* TPKT header */
 struct TpktHeader
@@ -79,11 +83,6 @@ static bool DecodeJobReadVar(S7commSessionData* session, const uint8_t* data, in
 
     return true;
 }
-
-#include <iostream> // For debug output
-
-#include <iostream> // For debug output
-#include <iomanip> // For std::setw and std::setfill
 
 static bool DecodeJobWriteVar(S7commSessionData* session, const uint8_t* data, int& offset)
 {
@@ -131,6 +130,9 @@ static bool DecodeJobWriteVar(S7commSessionData* session, const uint8_t* data, i
             std::cout << std::dec << std::endl; // Switch back to decimal output
 
             offset += data_item.length; // Move to the next data item
+
+            // Print the length of data_items vector
+            std::cout << "Current length of data_items vector: " << session->data_items.size() << std::endl;
         }
 
         // Handle padding if length is odd and there's more data
@@ -145,25 +147,60 @@ static bool DecodeJobWriteVar(S7commSessionData* session, const uint8_t* data, i
 
 
 
+// Custom function to calculate length from two bytes
+uint16_t calculate_custom_length(uint8_t byte1, uint8_t byte2) {
+    uint8_t result= pow((byte1 & 0x0F) * 2, 3) 
+    + pow(((byte1 & 0xF0) >> 4) * 2, 4) 
+    + pow(((byte2 & 0xF0) >> 4) * 2, 1);
+    uint8_t first_byte_num= (byte2 & 0x0F) ? 1: 0;
+    return result+ first_byte_num;
+}
+
 static bool DecodeAckDataReadVar(S7commSessionData* session, const uint8_t* data, int& offset)
 {
     session->s7comm_item_count = *(data + offset + 1);
     offset += 2;
 
     for (int i = 0; i < session->s7comm_item_count; ++i) {
+        std::cout << "Processing data item " << i << std::endl;
+
         S7commSessionData::DataItem data_item;
         data_item.error_code = *(data + offset);
         data_item.variable_type = *(data + offset + 1);
-        data_item.length = ntohs(*(uint16_t*)(data + offset + 2));
+        
+        // Custom length calculation
+        uint8_t byte1 = *(data + offset + 2);
+        uint8_t byte2 = *(data + offset + 3);
+        data_item.length = calculate_custom_length(byte1, byte2);
+
+        std::cout << "Raw length bytes: " << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte1) << " " << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte2) << std::dec << std::endl;
+        std::cout << "Interpreted length: " << data_item.length << std::endl;
+
         offset += 4; // Move to data
 
-        data_item.data.assign(data + offset, data + offset + data_item.length);
-        session->data_items.push_back(data_item);
-        offset += data_item.length; // Move to the next data item
+        std::cout << "Data item " << i << " with length: " << data_item.length << std::endl;
+
+        if (data_item.length > 0) {
+            data_item.data.assign(data + offset, data + offset + data_item.length);
+            session->data_items.push_back(data_item);
+
+            std::cout << "Data item " << i << " added with error code: " << static_cast<int>(data_item.error_code) << std::endl;
+            std::cout << "Data item " << i << " values: ";
+            for (const auto& byte : data_item.data) {
+                std::cout << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte) << " ";
+            }
+            std::cout << std::dec << std::endl; // Switch back to decimal output
+
+            offset += data_item.length; // Move to the next data item
+
+            // Print the length of data_items vector
+            std::cout << "Current length of data_items vector: " << session->data_items.size() << std::endl;
+        }
 
         // Handle padding if length is odd and there's more data
         if (data_item.length % 2 != 0 && i < session->s7comm_item_count - 1) {
             offset += 1;
+            std::cout << "Padding byte skipped" << std::endl;
         }
     }
 

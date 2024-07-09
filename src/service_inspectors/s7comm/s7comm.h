@@ -49,16 +49,21 @@ struct S7commSessionData
     bool is_read_write_var = false; // the message is read var or write var
 
     // New fields for DB-type addressing mode (Request Items)
-    struct RequestItem {
-        uint8_t var_type;
-        uint8_t var_length;
-        uint8_t syntax_id;
-        uint8_t transport_size;
-        uint16_t length;
-        uint16_t db_number;
-        uint8_t area;
-        uint32_t address; // 3 bytes, but stored in a 4-byte field
-    };
+        struct RequestItem {
+            uint8_t var_type;
+            uint8_t var_length;
+            uint8_t syntax_id;
+            uint8_t transport_size;
+            uint16_t length;
+            uint16_t db_number;
+            uint8_t area;
+            uint32_t address; // 3 bytes, but stored in a 4-byte field
+
+        // Default constructor
+        RequestItem()
+            : var_type(0), var_length(0), syntax_id(0), transport_size(0),
+            length(0), db_number(0), area(0), address(0) {}
+        };
 
     // New fields for DB-type addressing mode (Data Items)
     struct DataItem {
@@ -66,6 +71,10 @@ struct S7commSessionData
         uint8_t variable_type;
         uint16_t length;
         std::vector<uint8_t> data;
+        
+        // Default constructor
+        DataItem()
+            : error_code(0), variable_type(0), length(0), data() {}
     };
 
     std::vector<RequestItem> request_items;
