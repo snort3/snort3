@@ -35,6 +35,7 @@ struct S7commStats
 
 struct S7commSessionData
 {
+    // Existing fields
     uint8_t s7comm_proto_id = 0;
     uint8_t s7comm_message_type = 0;
     uint16_t s7comm_reserved = 0;
@@ -45,21 +46,45 @@ struct S7commSessionData
     uint8_t s7comm_error_code = 0;
     uint8_t s7comm_function_code = 0;
     uint8_t s7comm_item_count = -1;
-    bool is_read_write_var; //the message is read var or write var
+    bool is_read_write_var = false; // the message is read var or write var
 
+    // New fields for DB-type addressing mode (Request Items)
+    struct RequestItem {
+        uint8_t var_type;
+        uint8_t var_length;
+        uint8_t syntax_id;
+        uint8_t transport_size;
+        uint16_t length;
+        uint16_t db_number;
+        uint8_t area;
+        uint32_t address; // 3 bytes, but stored in a 4-byte field
+    };
+
+    // New fields for DB-type addressing mode (Data Items)
+    struct DataItem {
+        uint8_t error_code;
+        uint8_t variable_type;
+        uint16_t length;
+        std::vector<uint8_t> data;
+    };
+
+    std::vector<RequestItem> request_items;
+    std::vector<DataItem> data_items;
 
     void session_data_reset()
     {
-        //resetting 1 byte fields 
+        // Reset existing fields
         s7comm_proto_id = s7comm_message_type = s7comm_error_class = s7comm_error_code = 0;
         s7comm_function_code = s7comm_item_count = 0;
-
-        //resetting 2 byte fields
         s7comm_reserved = s7comm_pdu_reference = s7comm_parameter_length = s7comm_data_length = 0;
+        is_read_write_var = false;
 
-        is_read_write_var=false;
+        // Reset new fields
+        request_items.clear();
+        data_items.clear();
     }
 };
+
 
 class S7commFlowData : public snort::FlowData
 {

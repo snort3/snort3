@@ -58,6 +58,133 @@ struct CotpHeader
 
 using namespace snort;
 
+static bool DecodeJobReadVar(S7commSessionData* session, const uint8_t* data, int& offset)
+{
+    session->s7comm_item_count = *(data + offset + 1);
+    offset += 2;
+
+    for (int i = 0; i < session->s7comm_item_count; ++i) {
+        S7commSessionData::RequestItem request_item;
+        request_item.var_type = *(data + offset);
+        request_item.var_length = *(data + offset + 1);
+        request_item.syntax_id = *(data + offset + 2);
+        request_item.transport_size = *(data + offset + 3);
+        request_item.length = ntohs(*(uint16_t*)(data + offset + 4));
+        request_item.db_number = ntohs(*(uint16_t*)(data + offset + 6));
+        request_item.area = *(data + offset + 8);
+        request_item.address = ntohl(*(uint32_t*)(data + offset + 9)) >> 8; // 3-byte address, adjusted for 4-byte field
+        session->request_items.push_back(request_item);
+        offset += 12; // Move to the next request item
+    }
+
+    return true;
+}
+
+#include <iostream> // For debug output
+
+#include <iostream> // For debug output
+#include <iomanip> // For std::setw and std::setfill
+
+static bool DecodeJobWriteVar(S7commSessionData* session, const uint8_t* data, int& offset)
+{
+    session->s7comm_item_count = *(data + offset + 1);
+    offset += 2;
+
+    std::cout << "Item count: " << static_cast<int>(session->s7comm_item_count) << std::endl;
+
+    for (int i = 0; i < session->s7comm_item_count; ++i) {
+        S7commSessionData::RequestItem request_item;
+        request_item.var_type = *(data + offset);
+        request_item.var_length = *(data + offset + 1);
+        request_item.syntax_id = *(data + offset + 2);
+        request_item.transport_size = *(data + offset + 3);
+        request_item.length = ntohs(*(uint16_t*)(data + offset + 4));
+        request_item.db_number = ntohs(*(uint16_t*)(data + offset + 6));
+        request_item.area = *(data + offset + 8);
+        request_item.address = ntohl(*(uint32_t*)(data + offset + 9)) >> 8; // 3-byte address, adjusted for 4-byte field
+        session->request_items.push_back(request_item);
+        offset += 12; // Move to the next request item
+
+        std::cout << "Request item " << i << " added with DB number: " << request_item.db_number << std::endl;
+    }
+
+    for (int i = 0; i < session->s7comm_item_count; ++i) {
+        std::cout << "Processing data item " << i << std::endl;
+
+        S7commSessionData::DataItem data_item;
+        data_item.error_code = *(data + offset);
+        data_item.variable_type = *(data + offset + 1);
+        data_item.length = ntohs(*(uint16_t*)(data + offset + 2));
+        offset += 4; // Move to data
+
+        std::cout << "Data item " << i << " with length: " << data_item.length << std::endl;
+
+        if (data_item.length > 0) {
+            data_item.data.assign(data + offset, data + offset + data_item.length);
+            session->data_items.push_back(data_item);
+
+            std::cout << "Data item " << i << " added with error code: " << static_cast<int>(data_item.error_code) << std::endl;
+            std::cout << "Data item " << i << " values: ";
+            for (const auto& byte : data_item.data) {
+                std::cout << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte) << " ";
+            }
+            std::cout << std::dec << std::endl; // Switch back to decimal output
+
+            offset += data_item.length; // Move to the next data item
+        }
+
+        // Handle padding if length is odd and there's more data
+        if (data_item.length % 2 != 0 && i < session->s7comm_item_count - 1) {
+            offset += 1;
+            std::cout << "Padding byte skipped" << std::endl;
+        }
+    }
+
+    return true;
+}
+
+
+
+static bool DecodeAckDataReadVar(S7commSessionData* session, const uint8_t* data, int& offset)
+{
+    session->s7comm_item_count = *(data + offset + 1);
+    offset += 2;
+
+    for (int i = 0; i < session->s7comm_item_count; ++i) {
+        S7commSessionData::DataItem data_item;
+        data_item.error_code = *(data + offset);
+        data_item.variable_type = *(data + offset + 1);
+        data_item.length = ntohs(*(uint16_t*)(data + offset + 2));
+        offset += 4; // Move to data
+
+        data_item.data.assign(data + offset, data + offset + data_item.length);
+        session->data_items.push_back(data_item);
+        offset += data_item.length; // Move to the next data item
+
+        // Handle padding if length is odd and there's more data
+        if (data_item.length % 2 != 0 && i < session->s7comm_item_count - 1) {
+            offset += 1;
+        }
+    }
+
+    return true;
+}
+
+static bool DecodeAckDataWriteVar(S7commSessionData* session, const uint8_t* data, int& offset)
+{
+    session->s7comm_item_count = *(data + offset + 1);
+    offset += 2;
+
+    for (int i = 0; i < session->s7comm_item_count; ++i) {
+        S7commSessionData::DataItem data_item;
+        data_item.error_code = *(data + offset);
+        session->data_items.push_back(data_item);
+        offset += 1; // Move to the next data item
+    }
+
+    return true;
+}
+
 static bool S7commProtocolDecode(S7commSessionData* session, Packet* p)
 {
     const S7commHeader* s7comm_header;
@@ -69,7 +196,6 @@ static bool S7commProtocolDecode(S7commSessionData* session, Packet* p)
     offset = sizeof(TpktHeader) + sizeof(CotpHeader);
 
     s7comm_header = (const S7commHeader*)(p->data + offset);
-    /* Set the session data. Swap byte order for 16-bit fields. */
     session->s7comm_proto_id = s7comm_header->proto_id;
     session->s7comm_message_type = s7comm_header->message_type;
     session->s7comm_reserved = ntohs(s7comm_header->reserved);
@@ -79,29 +205,43 @@ static bool S7commProtocolDecode(S7commSessionData* session, Packet* p)
 
     offset += sizeof(S7commHeader) - 2; // -2 for optional fields
 
-
-    //In case the its a ack_Data message
     if (s7comm_header->message_type == ACK_DATA && p->dsize >= (offset + 2)) {
-        /* Set the session data. */
         session->s7comm_error_class = s7comm_header->error_class;
         session->s7comm_error_code = s7comm_header->error_code;
-        offset +=2;
+        offset += 2;
     }
 
 
-    if ((s7comm_header->message_type == ACK_DATA || s7comm_header->message_type == JOB_REQUEST) && p->dsize >= (offset + 2)) {
-        const S7commParameterHeader* s7comm_param_header;
-        s7comm_param_header=(const S7commParameterHeader*)(p->data + offset);
-        session->s7comm_function_code = s7comm_param_header->function_code;
-        if (session->s7comm_function_code == 0x04 or session->s7comm_function_code == 0x05){ // the message has either read var or write var function
-            session->is_read_write_var= true;
-        }
-        session->s7comm_item_count = s7comm_param_header->item_count;
-        offset +=2;
+    const S7commParameterHeader* s7comm_param_header;
+    s7comm_param_header = (const S7commParameterHeader*)(p->data + offset);
+    session->s7comm_function_code = s7comm_param_header->function_code;
+
+    //reset previous request and data items
+    session->request_items.clear();
+    session->data_items.clear();
+
+    switch (s7comm_header->message_type) {
+        case JOB_REQUEST:
+            if (session->s7comm_function_code == 0x04) {
+                return DecodeJobReadVar(session, p->data, offset);
+            } else if (session->s7comm_function_code == 0x05) {
+                return DecodeJobWriteVar(session, p->data, offset);
+            }
+            break;
+        case ACK_DATA:
+            if (session->s7comm_function_code == 0x04) {
+                return DecodeAckDataReadVar(session, p->data, offset);
+            } else if (session->s7comm_function_code == 0x05) {
+                return DecodeAckDataWriteVar(session, p->data, offset);
+            }
+            break;
+        default:
+            return false;
     }
 
-    return true;
+    return false;
 }
+
 
 bool S7commDecode(Packet* p, S7commFlowData* mfd)
 {
