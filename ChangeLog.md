@@ -1,3 +1,22 @@
+2024-07-15: 3.3.1.0
+
+* appid: restructure the appid code to make it easier to follow and maintain
+* appid: updating appid cpu profiler cli
+* dce_rpc: correct the session counters post the upgrade to smb v2 from v1
+* detection: include OPT_TREE traces in release build
+* detection: make print of fast pattern as a trace module
+* extractor: support trans_depth, origin and referrer fields
+* file: fixing file context reuse
+* flow: clear flow stash when freeing the flow data
+* flow: handle significant groups with unknown group value as non-group flow keys
+* http_inspect: add origin header
+* parser: do not skip symbols while expanding variables
+* perf_monitor: introducing new parameters for ip flow profiling
+* stream_tcp: move prev_norm object from TcpNormalizer to TcpNormalizerState
+* stream_tcp: set daq_msg field in meta-ack pseudo-packet header to the value from the wire packet.
+* stream_tcp: support tracing without compilation flags
+* wizard: expand MMS curse
+
 2024-06-18: 3.3.0.0
 
 * appid: display rows limit of table and totals

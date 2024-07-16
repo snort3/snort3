@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.3.0.0 2024-06-19 09:50:09 EDT TST
+Revision 3.3.1.0 2024-07-15 14:03:05 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -133,18 +133,20 @@ Table of Contents
     5.42. s7commplus
     5.43. sip
     5.44. smtp
-    5.45. so_proxy
-    5.46. ssh
-    5.47. ssl
-    5.48. stream
-    5.49. stream_file
-    5.50. stream_icmp
-    5.51. stream_ip
-    5.52. stream_tcp
-    5.53. stream_udp
-    5.54. stream_user
-    5.55. telnet
-    5.56. wizard
+    5.45. snort_ml
+    5.46. snort_ml_engine
+    5.47. so_proxy
+    5.48. ssh
+    5.49. ssl
+    5.50. stream
+    5.51. stream_file
+    5.52. stream_icmp
+    5.53. stream_ip
+    5.54. stream_tcp
+    5.55. stream_udp
+    5.56. stream_user
+    5.57. telnet
+    5.58. wizard
 
 6. IPS Action Modules
 
@@ -1476,8 +1478,6 @@ Configuration:
     ac_full | hyperscan | lowmem }
   * string search_engine.rule_db_dir: deserialize rule databases from
     given directory
-  * bool search_engine.show_fast_patterns = false: print fast pattern
-    info for each rule
   * bool search_engine.split_any_any = true: evaluate any-any rules
     separately to save memory
   * int search_engine.queue_limit = 0: maximum number of fast pattern
@@ -1843,6 +1843,12 @@ Configuration:
   * int trace.modules.all: enable trace for all modules { 0:255 }
   * int trace.modules.appid.all: enable all trace options { 0:255 }
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
+  * int trace.modules.detection.all: enable all trace options { 0:255
+    }
+  * int trace.modules.detection.opt_tree: enable tree option trace
+    logging { 0:255 }
+  * int trace.modules.detection.fp_info: enable fast pattern info
+    logging { 0:255 }
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
   * int trace.modules.file_id.all: enable all trace options { 0:255 }
   * int trace.modules.js_norm.all: enable all trace options { 0:255 }
@@ -1853,6 +1859,12 @@ Configuration:
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
+  * int trace.modules.stream_tcp.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_tcp.segments: enable stream TCP segments
+    trace logging { 0:255 }
+  * int trace.modules.stream_tcp.state: enable stream TCP state trace
+    logging { 0:255 }
   * int trace.modules.vba_data.all: enable all trace options { 0:255
     }
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
@@ -4791,6 +4803,8 @@ Configuration:
   * bool perf_monitor.flow = false: enable traffic statistics
   * bool perf_monitor.flow_ip = false: enable statistics on host
     pairs
+  * bool perf_monitor.flow_ip_all = false: enable every stat of
+    flow_ip profiling on host pairs
   * int perf_monitor.packets = 10000: minimum packets to report {
     0:max32 }
   * int perf_monitor.seconds = 60: report interval { 0:max32 }
@@ -4811,8 +4825,8 @@ Configuration:
 
 Commands:
 
-  * perf_monitor.enable_flow_ip_profiling(seconds, packets): enable
-    statistics on host pairs
+  * perf_monitor.enable_flow_ip_profiling(seconds, packets,
+    flow_ip_all): enable all statistics on host pairs
   * perf_monitor.disable_flow_ip_profiling(): disable statistics on
     host pairs
   * perf_monitor.show_flow_ip_profiling(): show status of statistics
@@ -5555,7 +5569,63 @@ Peg counts:
   * smtp.js_pdf_scripts: total number of PDF files processed (sum)
 
 
-5.45. so_proxy
+5.45. snort_ml
+
+--------------
+
+Help: machine learning based exploit detector
+
+Type: inspector (passive)
+
+Usage: inspect
+
+Instance Type: singleton
+
+Configuration:
+
+  * int snort_ml.uri_depth = -1: number of input HTTP URI bytes to
+    scan (-1 unlimited) { -1:max31 }
+  * int snort_ml.client_body_depth = 0: number of input HTTP client
+    body bytes to scan (-1 unlimited) { -1:max31 }
+  * real snort_ml.http_param_threshold = 0.95: alert threshold for
+    http_param_model { 0:1 }
+
+Rules:
+
+  * 411:1 (snort_ml) potential threat found in HTTP parameters via
+    Neural Network Based Exploit Detection
+
+Peg counts:
+
+  * snort_ml.uri_alerts: total number of alerts triggered on HTTP URI
+    (sum)
+  * snort_ml.client_body_alerts: total number of alerts triggered on
+    HTTP client body (sum)
+  * snort_ml.uri_bytes: total number of HTTP URI bytes processed
+    (sum)
+  * snort_ml.client_body_bytes: total number of HTTP client body
+    bytes processed (sum)
+  * snort_ml.libml_calls: total libml calls (sum)
+
+
+5.46. snort_ml_engine
+
+--------------
+
+Help: configure machine learning engine settings
+
+Type: inspector (passive)
+
+Usage: global
+
+Instance Type: global
+
+Configuration:
+
+  * string snort_ml_engine.http_param_model: path to the model file
+
+
+5.47. so_proxy
 
 --------------
 
@@ -5569,7 +5639,7 @@ Usage: global
 Instance Type: global
 
 
-5.46. ssh
+5.48. ssh
 
 --------------
 
@@ -5609,7 +5679,7 @@ Peg counts:
     (max)
 
 
-5.47. ssl
+5.49. ssl
 
 --------------
 
@@ -5660,7 +5730,7 @@ Peg counts:
     (max)
 
 
-5.48. stream
+5.50. stream
 
 --------------
 
@@ -5775,7 +5845,7 @@ Peg counts:
   * stream.uni_ip_flows: number of uni ip flows in cache (now)
 
 
-5.49. stream_file
+5.51. stream_file
 
 --------------
 
@@ -5792,7 +5862,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-5.50. stream_icmp
+5.52. stream_icmp
 
 --------------
 
@@ -5819,7 +5889,7 @@ Peg counts:
   * stream_icmp.prunes: icmp session prunes (sum)
 
 
-5.51. stream_ip
+5.53. stream_ip
 
 --------------
 
@@ -5891,7 +5961,7 @@ Peg counts:
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-5.52. stream_tcp
+5.54. stream_tcp
 
 --------------
 
@@ -6086,7 +6156,7 @@ Peg counts:
     one-way traffic only (sum)
 
 
-5.53. stream_udp
+5.55. stream_udp
 
 --------------
 
@@ -6115,7 +6185,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-5.54. stream_user
+5.56. stream_user
 
 --------------
 
@@ -6133,7 +6203,7 @@ Configuration:
     1:max31 }
 
 
-5.55. telnet
+5.57. telnet
 
 --------------
 
@@ -6169,7 +6239,7 @@ Peg counts:
     sessions (max)
 
 
-5.56. wizard
+5.58. wizard
 
 --------------
 
@@ -10388,6 +10458,8 @@ libraries see the Getting Started section of the manual.
   * bool perf_monitor.base = true: enable base statistics
   * bool perf_monitor.cpu = false: enable cpu statistics
   * bool perf_monitor.flow = false: enable traffic statistics
+  * bool perf_monitor.flow_ip_all = false: enable every stat of
+    flow_ip profiling on host pairs
   * bool perf_monitor.flow_ip = false: enable statistics on host
     pairs
   * int perf_monitor.flow_ip_memcap = 52428800: maximum memory in
@@ -10767,8 +10839,6 @@ libraries see the Getting Started section of the manual.
   * dynamic search_engine.search_method = ac_bnfa: set fast pattern
     algorithm - choose available search engine { ac_bnfa | ac_full |
     hyperscan | lowmem }
-  * bool search_engine.show_fast_patterns = false: print fast pattern
-    info for each rule
   * bool search_engine.split_any_any = true: evaluate any-any rules
     separately to save memory
   * interval seq.~range: check if TCP sequence number is in given
@@ -10993,7 +11063,14 @@ libraries see the Getting Started section of the manual.
     engines
   * string snort.--metadata-filter: <filter> load only rules
     containing filter string in metadata if set
+  * int snort_ml.client_body_depth = 0: number of input HTTP client
+    body bytes to scan (-1 unlimited) { -1:max31 }
+  * string snort_ml_engine.http_param_model: path to the model file
+  * real snort_ml.http_param_threshold = 0.95: alert threshold for
+    http_param_model { 0:1 }
   * implied snort.-M: log messages to syslog (not alerts)
+  * int snort_ml.uri_depth = -1: number of input HTTP URI bytes to
+    scan (-1 unlimited) { -1:max31 }
   * int snort.-m: <umask> set the process file mode creation mask {
     0x000:0x1FF }
   * int snort.-n: <count> stop after count packets { 0:max53 }
@@ -11272,6 +11349,12 @@ libraries see the Getting Started section of the manual.
   * int trace.modules.all: enable trace for all modules { 0:255 }
   * int trace.modules.appid.all: enable all trace options { 0:255 }
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
+  * int trace.modules.detection.all: enable all trace options { 0:255
+    }
+  * int trace.modules.detection.fp_info: enable fast pattern info
+    logging { 0:255 }
+  * int trace.modules.detection.opt_tree: enable tree option trace
+    logging { 0:255 }
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
   * int trace.modules.file_id.all: enable all trace options { 0:255 }
   * int trace.modules.js_norm.all: enable all trace options { 0:255 }
@@ -11282,6 +11365,12 @@ libraries see the Getting Started section of the manual.
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
+  * int trace.modules.stream_tcp.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_tcp.segments: enable stream TCP segments
+    trace logging { 0:255 }
+  * int trace.modules.stream_tcp.state: enable stream TCP state trace
+    logging { 0:255 }
   * int trace.modules.vba_data.all: enable all trace options { 0:255
     }
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
@@ -12356,6 +12445,15 @@ libraries see the Getting Started section of the manual.
   * snort.inspector_deletions: number of times inspectors were
     deleted (sum)
   * snort.local_commands: total local commands processed (sum)
+  * snort_ml.client_body_alerts: total number of alerts triggered on
+    HTTP client body (sum)
+  * snort_ml.client_body_bytes: total number of HTTP client body
+    bytes processed (sum)
+  * snort_ml.libml_calls: total libml calls (sum)
+  * snort_ml.uri_alerts: total number of alerts triggered on HTTP URI
+    (sum)
+  * snort_ml.uri_bytes: total number of HTTP URI bytes processed
+    (sum)
   * snort.policy_reloads: number of times policies were reloaded
     (sum)
   * snort.remote_commands: total remote commands processed (sum)
@@ -12690,6 +12788,7 @@ libraries see the Getting Started section of the manual.
   * 154: js_norm
   * 175: domain_filter
   * 256: dpx
+  * 411: snort_ml
 
 
 11.7. Builtin Rules
@@ -16016,8 +16115,8 @@ alert is raised by the enhanced JavaScript normalizer.
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port,
     tenants): enable packet tracer debugging
   * packet_tracer.disable(): disable packet tracer
-  * perf_monitor.enable_flow_ip_profiling(seconds, packets): enable
-    statistics on host pairs
+  * perf_monitor.enable_flow_ip_profiling(seconds, packets,
+    flow_ip_all): enable all statistics on host pairs
   * perf_monitor.disable_flow_ip_profiling(): disable statistics on
     host pairs
   * perf_monitor.show_flow_ip_profiling(): show status of statistics
@@ -16434,6 +16533,9 @@ and are not applicable elsewhere.
   * sip_stat_code (ips_option): detection option for sip stat code
   * smtp (inspector): smtp inspection
   * snort (basic): command line configuration and shell commands
+  * snort_ml (inspector): machine learning based exploit detector
+  * snort_ml_engine (inspector): configure machine learning engine
+    settings
   * so (ips_option): rule option to call custom eval function
   * so_proxy (inspector): a proxy inspector to track flow data from
     SO rules (internal use only)
@@ -16595,6 +16697,9 @@ and are not applicable elsewhere.
   * inspector::s7commplus: s7commplus inspection
   * inspector::sip: sip inspection
   * inspector::smtp: smtp inspection
+  * inspector::snort_ml: machine learning based exploit detector
+  * inspector::snort_ml_engine: configure machine learning engine
+    settings
   * inspector::so_proxy: a proxy inspector to track flow data from SO
     rules (internal use only)
   * inspector::ssh: ssh inspection
