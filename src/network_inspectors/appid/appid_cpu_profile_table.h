@@ -57,7 +57,7 @@ struct AppidCPUProfilerStats {
     uint32_t per_appid_sessions = 0;
     uint64_t max_processing_time_per_session = 0;
     uint64_t max_processed_pkts_per_session = 0;
-    
+
     AppidCPUProfilerStats(const char* app_name, uint64_t processing_time, uint64_t processed_packets, uint32_t per_appid_sessions) :
         app_name(app_name), processing_time(processing_time), processed_packets(processed_packets), per_appid_sessions(per_appid_sessions),
         max_processing_time_per_session(processing_time), max_processed_pkts_per_session(processed_packets)
@@ -74,10 +74,10 @@ private:
     uint32_t total_per_appid_sessions = 0;
     uint64_t max_processing_time_per_session = 0;
     uint64_t max_processed_pkts_per_session = 0;
-        
+
 public:
     AppidCPUProfilingManager() = default;
-    
+
     void stats_bucket_insert(AppId appid, const char* app_name, uint64_t processing_time, uint64_t processed_packets);
     void insert_appid_cpu_profiler_record(AppId appId, const AppidCPUProfilerStats& stats);
     void check_appid_cpu_profiler_table_entry(const AppIdSession* asd, AppId service_id, AppId client_id, AppId payload_id, AppId misc_id);
@@ -87,7 +87,7 @@ public:
     AppidCpuTableDisplayStatus display_appid_cpu_profiler_table(OdpContext&, uint32_t display_rows_limit = APPID_CPU_PROFILER_DEFAULT_DISPLAY_ROWS,
                                                                 bool override_running_flag = false, ControlConn* control_conn = nullptr);
     AppidCpuTableDisplayStatus display_appid_cpu_profiler_table(AppId, OdpContext&, ControlConn* control_conn = nullptr);
-    
+
     void cleanup_appid_cpu_profiler_table();
 };
 #endif

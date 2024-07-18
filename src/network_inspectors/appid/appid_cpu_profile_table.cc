@@ -45,7 +45,7 @@ static std::string FormatWithCommas(uint64_t value)
 {
     std::string numStr = std::to_string(value);
     int insertPosition = numStr.length() - 3;
-    while (insertPosition > 0) 
+    while (insertPosition > 0)
     {
         numStr.insert(insertPosition, ",");
         insertPosition -= 3;
@@ -111,10 +111,10 @@ AppidCpuTableDisplayStatus AppidCPUProfilingManager::display_appid_cpu_profiler_
         print_log(ctrlcon, output_type, TRACE_INFO_LEVEL, partition);
 
         print_log(ctrlcon, output_type, TRACE_INFO_LEVEL, " %5d   %-15.15s   %14.14s %10.10s  %15.14s  %11.11s  %16.14s  %15.14s   %15.14s  %10.2f\n",
-                appid, bucket->second.app_name.c_str(), FormatWithCommas(bucket->second.processing_time).c_str(), FormatWithCommas(bucket->second.processed_packets).c_str(), 
-                FormatWithCommas(bucket->second.processing_time/bucket->second.processed_packets).c_str(), FormatWithCommas(bucket->second.per_appid_sessions).c_str(), 
-                FormatWithCommas(bucket->second.processing_time/bucket->second.per_appid_sessions).c_str(), FormatWithCommas(bucket->second.max_processed_pkts_per_session).c_str(), 
-                FormatWithCommas(bucket->second.max_processing_time_per_session).c_str(), static_cast<float>(bucket->second.processing_time)/static_cast<float>(total_processing_time)*100);
+                appid, bucket->second.app_name.c_str(), FormatWithCommas(bucket->second.processing_time).c_str(), FormatWithCommas(bucket->second.processed_packets).c_str(),
+                FormatWithCommas(bucket->second.processing_time/bucket->second.processed_packets).c_str(), FormatWithCommas(bucket->second.per_appid_sessions).c_str(),
+                FormatWithCommas(bucket->second.processing_time/bucket->second.per_appid_sessions).c_str(), FormatWithCommas(bucket->second.max_processed_pkts_per_session).c_str(),
+                FormatWithCommas(bucket->second.max_processing_time_per_session).c_str(), static_cast<double>(bucket->second.processing_time) / total_processing_time * 100.0);
     }
     else
     {
@@ -134,7 +134,7 @@ AppidCpuTableDisplayStatus AppidCPUProfilingManager::display_appid_cpu_profiler_
 
     std::priority_queue<std::pair<AppId, AppidCPUProfilerStats>, std::vector<std::pair<AppId, AppidCPUProfilerStats>>, CompareByAvgProcessingTime> sorted_appid_cpu_profiler_table;
 
-    for (const auto& entry : appid_cpu_profiling_table) 
+    for (const auto& entry : appid_cpu_profiling_table)
         sorted_appid_cpu_profiler_table.push(entry);
 
     if (ctrlcon)
@@ -144,7 +144,7 @@ AppidCpuTableDisplayStatus AppidCPUProfilingManager::display_appid_cpu_profiler_
     print_log(ctrlcon, output_type, TRACE_INFO_LEVEL, TABLE_HEADER(display_rows_limit));
     print_log(ctrlcon, output_type, TRACE_INFO_LEVEL, columns);
     print_log(ctrlcon, output_type, TRACE_INFO_LEVEL, partition);
-    
+
     uint32_t rows_displayed = 0;
 
     while (!sorted_appid_cpu_profiler_table.empty() and rows_displayed < display_rows_limit)
@@ -153,15 +153,15 @@ AppidCpuTableDisplayStatus AppidCPUProfilingManager::display_appid_cpu_profiler_
         sorted_appid_cpu_profiler_table.pop();
         if (!entry.second.processed_packets or !entry.second.per_appid_sessions)
             continue;
-            
+
         print_log(ctrlcon, output_type, TRACE_INFO_LEVEL, " %5d   %-15.15s   %14.14s %10.10s  %15.14s  %11.11s  %16.14s  %15.14s   %15.14s  %10.2f\n",
-                entry.first, entry.second.app_name.c_str(), FormatWithCommas(entry.second.processing_time).c_str(), FormatWithCommas(entry.second.processed_packets).c_str(), 
-                FormatWithCommas(entry.second.processing_time/entry.second.processed_packets).c_str(), FormatWithCommas(entry.second.per_appid_sessions).c_str(), 
+                entry.first, entry.second.app_name.c_str(), FormatWithCommas(entry.second.processing_time).c_str(), FormatWithCommas(entry.second.processed_packets).c_str(),
+                FormatWithCommas(entry.second.processing_time/entry.second.processed_packets).c_str(), FormatWithCommas(entry.second.per_appid_sessions).c_str(),
                 FormatWithCommas(entry.second.processing_time/entry.second.per_appid_sessions).c_str(), FormatWithCommas(entry.second.max_processed_pkts_per_session).c_str(),
-                FormatWithCommas(entry.second.max_processing_time_per_session).c_str(), static_cast<float>(entry.second.processing_time)/static_cast<float>(total_processing_time)*100);
+                FormatWithCommas(entry.second.max_processing_time_per_session).c_str(), static_cast<double>(entry.second.processing_time) / total_processing_time * 100.0);
 
         rows_displayed += 1;
-    } 
+    }
 
     print_log(ctrlcon, output_type, TRACE_INFO_LEVEL, partition);
 
@@ -174,7 +174,7 @@ AppidCpuTableDisplayStatus AppidCPUProfilingManager::display_appid_cpu_profiler_
 }
 
 void AppidCPUProfilingManager::cleanup_appid_cpu_profiler_table()
-{ 
+{
     std::lock_guard<std::mutex> lock(appid_cpu_profiler_mutex);
     appid_cpu_profiling_table.clear();
     total_processing_time = 0;
@@ -200,11 +200,11 @@ void AppidCPUProfilingManager::insert_appid_cpu_profiler_record(AppId appId, con
     std::lock_guard<std::mutex> lock(appid_cpu_profiler_mutex);
 
     auto it = appid_cpu_profiling_table.find(appId);
-    if (it == appid_cpu_profiling_table.end()) 
+    if (it == appid_cpu_profiling_table.end())
     {
         appid_cpu_profiling_table.emplace(appId, stats);
     }
-    else 
+    else
     {
         it->second.processing_time += stats.processing_time;
         it->second.processed_packets += stats.processed_packets;
@@ -223,7 +223,7 @@ void AppidCPUProfilingManager::check_appid_cpu_profiler_table_entry(const AppIdS
     if (payload_id > APP_ID_NONE)
     {
         const char* app_name = asd->get_odp_ctxt().get_app_info_mgr().get_app_name(payload_id);
-        if (app_name == nullptr) 
+        if (app_name == nullptr)
             app_name = "unknown";
 
         stats_bucket_insert(payload_id, app_name, asd->stats.prev_payload_processing_time, asd->stats.prev_payload_processing_packets);
@@ -237,7 +237,7 @@ void AppidCPUProfilingManager::stats_bucket_insert(AppId appid, const char* app_
         appid_log(nullptr, TRACE_INFO_LEVEL, "appid: processed packets/time are NULL for appid : %d , app_name : %s , processing time :%lu \n", appid, app_name, processing_time);
         return;
     }
-        
+
     AppidCPUProfilerStats stats(app_name, processing_time, processed_packets, 1);
     insert_appid_cpu_profiler_record(appid, stats);
 }
@@ -270,7 +270,7 @@ void AppidCPUProfilingManager::check_appid_cpu_profiler_table_entry(const AppIdS
 
         stats_bucket_insert(payload_id, app_name, asd->stats.processing_time - asd->stats.prev_payload_processing_time, asd->stats.cpu_profiler_pkt_count - asd->stats.prev_payload_processing_packets);
     }
-    if (misc_id > APP_ID_NONE and misc_id != service_id and misc_id != client_id and misc_id != payload_id) 
+    if (misc_id > APP_ID_NONE and misc_id != service_id and misc_id != client_id and misc_id != payload_id)
     {
         const char* app_name = asd->get_odp_ctxt().get_app_info_mgr().get_app_name(misc_id);
         if (app_name == nullptr)

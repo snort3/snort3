@@ -450,7 +450,7 @@ static int show_cpu_profiler_status(lua_State* L)
     }
     const AppIdContext& ctxt = inspector->get_ctxt();
     OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
-    ctrlcon->respond("appid cpu profiler enabled: %s , running: %s \n",
+    ctrlcon->respond("appid cpu profiler enabled: %s, running: %s \n",
             odp_ctxt.is_appid_cpu_profiler_enabled() ? "yes" : "no", odp_ctxt.is_appid_cpu_profiler_running() ? "yes" : "no");
     return 0;
 }
