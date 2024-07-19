@@ -202,7 +202,10 @@ public:
         PktType type, IpProtocol proto,
         const snort::SfIp* a1, uint16_t p1, const snort::SfIp* a2, uint16_t p2,
         uint16_t vlanId, uint32_t mplsId, uint32_t addrSpaceId,
-        uint32_t tenant_id, bool significant_groups, int16_t ingress_group = DAQ_PKTHDR_UNKNOWN,
+#ifndef DISABLE_TENANT_ID
+        uint32_t tenant_id,
+#endif
+        bool significant_groups, int16_t ingress_group = DAQ_PKTHDR_UNKNOWN,
         int16_t egress_group = DAQ_PKTHDR_UNKNOWN);
 
     static Flow* get_flow(

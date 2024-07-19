@@ -24,6 +24,7 @@
 #include "extractor_event_handlers.h"
 
 #include "detection/detection_engine.h"
+#include "flow/flow_key.h"
 #include "framework/value.h"
 #include "profiler/profiler.h"
 #include "pub_sub/http_transaction_end_event.h"
@@ -210,8 +211,15 @@ void HttpExtractorEventHandler::handle(DataEvent& event, Flow* flow)
 {
     // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
+    uint32_t tid;
 
-    if (tenant_id != flow->tenant)
+#ifndef DISABLE_TENANT_ID
+    tid = flow->key->tenant_id;
+#else
+    tid = 0;
+#endif
+
+    if (tenant_id != tid)
         return;
 
     Packet* p = DetectionEngine::get_current_packet();

@@ -76,6 +76,9 @@
 /* enable memory profiler */
 #cmakedefine ENABLE_MEMORY_PROFILER 1
 
+/* disable tenant_id */
+#cmakedefine DISABLE_TENANT_ID 1
+
 /* enable rule profiler */
 #cmakedefine ENABLE_RULE_PROFILER 1
 

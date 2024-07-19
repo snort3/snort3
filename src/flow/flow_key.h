@@ -54,7 +54,9 @@ struct SO_PUBLIC FlowKey
     uint32_t   ip_h[4]; /* High IP */
     uint32_t   mplsLabel;
     uint32_t   addressSpaceId;
-    uint32_t   tenant_id;
+#ifndef DISABLE_TENANT_ID
+    uint32_t   tenant_id; // included by default
+#endif
     uint16_t   port_l;  /* Low Port - 0 if ICMP */
     uint16_t   port_h;  /* High Port - 0 if ICMP */
     int16_t    group_l;
@@ -78,7 +80,11 @@ struct SO_PUBLIC FlowKey
         const SnortConfig*, PktType, IpProtocol,
         const snort::SfIp *srcIP, uint16_t srcPort,
         const snort::SfIp *dstIP, uint16_t dstPort,
-        uint16_t vlanId, uint32_t mplsId, uint32_t addrSpaceId, uint32_t tid, bool significant_groups,
+        uint16_t vlanId, uint32_t mplsId, uint32_t addrSpaceId, 
+#ifndef DISABLE_TENANT_ID
+        uint32_t tid, 
+#endif
+        bool significant_groups,
         int16_t group_h = DAQ_PKTHDR_UNKNOWN, int16_t group_l = DAQ_PKTHDR_UNKNOWN);
 
     bool init(

@@ -506,6 +506,8 @@ bool TcpNormalizerMissed3whs::validate_rst(
 int TcpNormalizerMissed3whs::handle_paws(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd) 
 {
+    UNUSED(tsd); 
+    UNUSED(tns);
     return ACTION_NOTHING;
 }
 

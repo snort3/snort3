@@ -233,8 +233,11 @@ bool FlowKey::init(
     PktType type, IpProtocol ip_proto,
     const SfIp *srcIP, uint16_t srcPort,
     const SfIp *dstIP, uint16_t dstPort,
-    uint16_t vlanId, uint32_t mplsId,
-    uint32_t addrSpaceId, uint32_t tid, bool significant_groups,
+    uint16_t vlanId, uint32_t mplsId, uint32_t addrSpaceId,
+#ifndef DISABLE_TENANT_ID
+    uint32_t tid, 
+#endif
+    bool significant_groups,
     int16_t ingress_group, int16_t egress_group)
 {
     bool reversed;
@@ -258,7 +261,9 @@ bool FlowKey::init(
 
     pkt_type = type;
     ip_protocol = (uint8_t)ip_proto;
+#ifndef DISABLE_TENANT_ID
     tenant_id = tid;
+#endif
 
     init_vlan(sc, vlanId);
     init_address_space(sc, addrSpaceId);
@@ -301,7 +306,9 @@ bool FlowKey::init(
 
     pkt_type = type;
     ip_protocol = (uint8_t)ip_proto;
+#ifndef DISABLE_TENANT_ID
     tenant_id = pkt_hdr.tenant_id;
+#endif
 
     init_vlan(sc, vlanId);
     init_address_space(sc, pkt_hdr.address_space_id);
@@ -342,7 +349,9 @@ bool FlowKey::init(
     }
 
     pkt_type = type;
+#ifndef DISABLE_TENANT_ID
     tenant_id = pkt_hdr.tenant_id;
+#endif
 
     init_vlan(sc, vlanId);
     init_address_space(sc, pkt_hdr.address_space_id);
@@ -387,6 +396,8 @@ unsigned FlowHashKeyOps::do_hash(const unsigned char* k, int)
     mix(a, b, c);
 
     a += d[9];   // addressSpaceId
+
+#ifndef DISABLE_TENANT_ID
     b += d[10];  // tenant_id
     c += d[11];  // port lo & port hi
 
@@ -395,6 +406,15 @@ unsigned FlowHashKeyOps::do_hash(const unsigned char* k, int)
     a += d[12];  // group lo & group hi
     b += d[13];  // vlan & padding
     c += d[14];  // ip_protocol & pkt_type, version, flags
+#else
+    b += d[10];  // port lo & port hi
+    c += d[11];  // group lo & group hi
+
+    mix(a, b, c);
+
+    b += d[12];  // vlan & padding
+    c += d[13];  // ip_protocol & pkt_type, version, flags
+#endif
 
     finalize(a, b, c);
 

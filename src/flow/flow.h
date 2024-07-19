@@ -479,7 +479,6 @@ public:  // FIXIT-M privatize if possible
     unsigned inspection_policy_id = 0;
     unsigned ips_policy_id = 0;
     unsigned reload_id = 0;
-    uint32_t tenant = 0;
     uint32_t default_session_timeout = 0;
     uint32_t idle_timeout = 0;
     int32_t client_intf = 0;

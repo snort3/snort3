@@ -75,7 +75,11 @@ AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
 OdpContext stub_odp_ctxt(stub_config, nullptr);
 AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector&,
-    OdpContext&, uint32_t, uint32_t) : FlowData(0), config(stub_config),
+    OdpContext&, uint32_t
+#ifndef DISABLE_TENANT_ID
+    ,uint32_t
+#endif
+    ) : FlowData(0), config(stub_config),
     api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt) { }
 AppIdSession::~AppIdSession() = default;
 
@@ -131,7 +135,11 @@ TEST(appid_debug, basic_test)
     sip.set("10.1.2.3");
     SfIp dip;
     AppIdInspector inspector;
-    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0, 0);
+    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
     // This packet...
     dip.set("10.9.8.7");
     uint16_t sport = 48620;
@@ -165,7 +173,11 @@ TEST(appid_debug, reverse_direction_activate_test)
     SfIp dip;
     dip.set("10.1.2.3");
     AppIdInspector inspector;
-    AppIdSession session(IpProtocol::PROTO_NOT_SET, &dip, 0, inspector, stub_odp_ctxt, 0, 0);
+    AppIdSession session(IpProtocol::PROTO_NOT_SET, &dip, 0, inspector, stub_odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
     // This packet...
     sip.set("10.9.8.7");    // this would be a reply back
     uint16_t sport = 80;
@@ -201,7 +213,11 @@ TEST(appid_debug, ipv6_test)
     sip.set("2001:db8:85a3::8a2e:370:7334");    // IPv6
     SfIp dip;
     AppIdInspector inspector;
-    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0, 0);
+    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
     // This packet...
     dip.set("2001:db8:85a3::8a2e:370:7335");
     uint16_t sport = 1234;
@@ -237,7 +253,11 @@ TEST(appid_debug, no_initiator_port_test)
     sip.set("10.1.2.3");
     SfIp dip;
     AppIdInspector inspector;
-    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0, 0);
+    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
     // This packet...
     dip.set("10.9.8.7");
     uint16_t sport = 48620;
@@ -271,7 +291,11 @@ TEST(appid_debug, no_initiator_port_reversed_test)
     SfIp dip;
     dip.set("10.1.2.3");
     AppIdInspector inspector;
-    AppIdSession session(IpProtocol::PROTO_NOT_SET, &dip, 0, inspector, stub_odp_ctxt, 0, 0);
+    AppIdSession session(IpProtocol::PROTO_NOT_SET, &dip, 0, inspector, stub_odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
     // This packet...
     sip.set("10.9.8.7");
     uint16_t sport = 80;
@@ -340,7 +364,11 @@ TEST(appid_debug, no_match_test)
     sip.set("10.1.2.3");
     SfIp dip;
     AppIdInspector inspector;
-    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0, 0);
+    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
     // This packet...
     dip.set("10.9.8.7");
     uint16_t sport = 48620;
@@ -370,7 +398,11 @@ TEST(appid_debug, all_constraints_test)
     sip.set("10.1.2.3");
     SfIp dip;
     AppIdInspector inspector;
-    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0, 0);
+    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
     // This packet...
     dip.set("10.9.8.7");
     uint16_t sport = 48620;
@@ -404,7 +436,11 @@ TEST(appid_debug, just_proto_test)
     sip.set("10.1.2.3");
     SfIp dip;
     AppIdInspector inspector;
-    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0, 0);
+    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
     // This packet...
     dip.set("10.9.8.7");
     uint16_t sport = 48620;
@@ -438,7 +474,11 @@ TEST(appid_debug, just_ip_test)
     sip.set("10.1.2.3");
     SfIp dip;
     AppIdInspector inspector;
-    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0, 0);
+    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
     // This packet...
     dip.set("10.9.8.7");
     uint16_t sport = 48620;
@@ -472,7 +512,11 @@ TEST(appid_debug, just_port_test)
     sip.set("10.1.2.3");
     SfIp dip;
     AppIdInspector inspector;
-    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0, 0);
+    AppIdSession session(IpProtocol::PROTO_NOT_SET, &sip, 0, inspector, stub_odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
     // This packet...
     dip.set("10.9.8.7");
     uint16_t sport = 48620;

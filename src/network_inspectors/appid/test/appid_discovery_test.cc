@@ -396,7 +396,11 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     AppIdModule app_module;
     AppIdInspector ins(app_module);
     AppIdContext& app_ctxt = ins.get_ctxt();
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0, 0);
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
     asd->flags |= APPID_SESSION_SPECIAL_MONITORED | APPID_SESSION_DISCOVER_USER |
         APPID_SESSION_DISCOVER_APP;
     Flow* flow = new Flow;
@@ -432,7 +436,11 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
     AppIdModule app_module;
     AppIdInspector ins(app_module);
     AppIdContext& app_ctxt = ins.get_ctxt();
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0, 0);
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
     asd->flags |= APPID_SESSION_SPECIAL_MONITORED | APPID_SESSION_DISCOVER_USER |
         APPID_SESSION_DISCOVER_APP;
     Flow* flow = new Flow;
@@ -458,7 +466,11 @@ TEST(appid_discovery_tests, change_bits_for_client_version)
     AppIdInspector ins(app_module);
     SfIp ip;
     AppIdContext app_ctxt(app_config);
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0, 0);
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
     const char* version = "3.0";
     asd->set_client_version(version, change_bits);
 
@@ -494,7 +506,11 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     AppIdModule app_module;
     AppIdInspector ins(app_module);
     AppIdContext& app_ctxt = ins.get_ctxt();
-    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0, 0);
+    AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
     asd->flags |= APPID_SESSION_SPECIAL_MONITORED | APPID_SESSION_DISCOVER_USER |
         APPID_SESSION_DISCOVER_APP;
     Flow* flow = new Flow;

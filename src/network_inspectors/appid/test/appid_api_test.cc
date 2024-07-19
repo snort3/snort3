@@ -222,7 +222,11 @@ TEST_GROUP(appid_api)
         mock_init_appid_pegs();
         SfIp ip;
         mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector,
-            dummy_appid_inspector.get_ctxt().get_odp_ctxt(), 0, 0);
+            dummy_appid_inspector.get_ctxt().get_odp_ctxt(), 0
+#ifndef DISABLE_TENANT_ID
+            ,0
+#endif
+            );
         pkt_thread_odp_ctxt = &mock_session->get_odp_ctxt();
         flow = new Flow;
         flow->set_flow_data(mock_session);

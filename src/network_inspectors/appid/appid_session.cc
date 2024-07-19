@@ -116,7 +116,11 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
         port = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
 
     AppIdSession* asd = new AppIdSession(proto, ip, port, inspector, odp_context,
-        p->pkth->address_space_id, p->pkth->tenant_id);
+        p->pkth->address_space_id
+#ifndef DISABLE_TENANT_ID
+        ,p->pkth->tenant_id
+#endif
+        );
     is_session_monitored(asd->flags, p, inspector);
     asd->flow = p->flow;
     asd->stats.first_packet_second = p->pkth->ts.tv_sec;
@@ -126,9 +130,17 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
 }
 
 AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
-    AppIdInspector& inspector, OdpContext& odp_ctxt, uint32_t asid, uint32_t tenant_id)
+    AppIdInspector& inspector, OdpContext& odp_ctxt, uint32_t asid
+#ifndef DISABLE_TENANT_ID
+    ,uint32_t tenant_id
+#endif
+    )
     : FlowData(inspector_id, &inspector), config(inspector.get_ctxt().config),
-        initiator_port(port), tenant_id(tenant_id), asid(asid), protocol(proto),
+        initiator_port(port),
+#ifndef DISABLE_TENANT_ID
+        tenant_id(tenant_id),
+#endif
+        asid(asid), protocol(proto),
         api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(odp_ctxt),
         odp_ctxt_version(odp_ctxt.get_version()),
         tp_appid_ctxt(pkt_thread_tp_appid_ctxt)
@@ -235,7 +247,11 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     // FIXIT-RC - port parameter passed in as 0 since we may not know client port, verify
 
     AppIdSession* asd = new AppIdSession(proto, cliIp, 0, *inspector, odp_ctxt,
-        ctrlPkt->pkth->address_space_id, ctrlPkt->pkth->tenant_id);
+        ctrlPkt->pkth->address_space_id
+#ifndef DISABLE_TENANT_ID
+        ,ctrlPkt->pkth->tenant_id
+#endif
+        );
     is_session_monitored(asd->flags, ctrlPkt, *inspector);
 
     if (Stream::set_snort_protocol_id_expected(ctrlPkt, type, proto, cliIp,

@@ -49,7 +49,9 @@ Smb2SidHashKey get_key(uint64_t sid)
         key.addressSpaceId = flow->key->addressSpaceId;
         key.vlan_tag = flow->key->vlan_tag;
         key.sid = sid;
+#ifndef DISABLE_TENANT_ID
         key.tenant_id = flow->key->tenant_id;
+#endif
     }
     return key;
 }

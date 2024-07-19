@@ -206,7 +206,12 @@ void AppIdDebug::activate(const Flow *flow, const AppIdSession* session, bool lo
     // two key->version here to create the proper debug_session string.
     activate(key->ip_l, key->ip_h, key->port_l, key->port_h, (IpProtocol)(key->ip_protocol),
         key->version, key->addressSpaceId, session, log_all_sessions,
-        key->tenant_id, key->group_l, key->group_h, key->flags.group_used);
+#ifndef DISABLE_TENANT_ID
+        key->tenant_id,
+#else
+        0,
+#endif
+        key->group_l, key->group_h, key->flags.group_used);
 }
 
 void AppIdDebug::set_constraints(const char *desc,

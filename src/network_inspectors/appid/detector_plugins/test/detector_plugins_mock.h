@@ -20,6 +20,10 @@
 #ifndef DETECTOR_PLUGINS_MOCK_H
 #define DETECTOR_PLUGINS_MOCK_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "log/messages.h"
 #include "utils/stats.h"
 
@@ -153,7 +157,11 @@ AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
 OdpContext stub_odp_ctxt(stub_config, nullptr);
 AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector,
-    OdpContext& odpctxt, uint32_t, uint32_t) : snort::FlowData(inspector_id, (snort::Inspector*)&inspector),
+    OdpContext& odpctxt, uint32_t
+#ifndef DISABLE_TENANT_ID
+    ,uint32_t
+#endif
+    ) : snort::FlowData(inspector_id, (snort::Inspector*)&inspector),
         config(stub_config), api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(odpctxt)
 {
     this->set_session_flags(APPID_SESSION_DISCOVER_APP);

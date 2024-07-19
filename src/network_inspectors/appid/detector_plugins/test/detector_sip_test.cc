@@ -130,7 +130,11 @@ void SipPatternMatchers::finalize_patterns(OdpContext&)
 AppIdSession* AppIdSession::allocate_session(snort::Packet const*, IpProtocol,
     AppidSessionDirection, AppIdInspector&, OdpContext& odp_ctxt)
 {
-    session = new AppIdSession(IpProtocol::IP, &sfip, 0, appid_inspector, odp_ctxt, 0, 0);
+    session = new AppIdSession(IpProtocol::IP, &sfip, 0, appid_inspector, odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+            ,0 // tenant_id
+#endif
+    );
     return session;
 }
 

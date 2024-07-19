@@ -564,7 +564,11 @@ inline bool Binding::check_tenant(const Flow& flow) const
     if (!when.has_criteria(BindWhen::Criteria::BWC_TENANTS))
         return true;
 
-    return when.tenants.count(flow.tenant) != 0;
+#ifndef DISABLE_TENANT_ID
+    return when.tenants.count(flow.key->tenant_id) != 0;
+#else
+    return when.tenants.count(0) != 0;
+#endif
 }
 
 inline bool Binding::check_tenant(const Packet* p) const

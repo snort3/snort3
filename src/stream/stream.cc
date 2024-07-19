@@ -93,14 +93,20 @@ Flow* Stream::get_flow(
     const SfIp* srcIP, uint16_t srcPort,
     const SfIp* dstIP, uint16_t dstPort,
     uint16_t vlan, uint32_t mplsId, uint32_t addressSpaceId,
-    uint32_t tenant_id, bool significant_groups,
+#ifndef DISABLE_TENANT_ID
+    uint32_t tenant_id,
+#endif
+    bool significant_groups,
     int16_t ingress_group, int16_t egress_group)
 {
     FlowKey key;
     const SnortConfig* sc = SnortConfig::get_conf();
 
-    key.init(sc, type, proto, srcIP, srcPort, dstIP, dstPort, vlan, mplsId,
-        addressSpaceId, tenant_id, significant_groups, ingress_group, egress_group);
+    key.init(sc, type, proto, srcIP, srcPort, dstIP, dstPort, vlan, mplsId, addressSpaceId, 
+#ifndef DISABLE_TENANT_ID
+        tenant_id, 
+#endif
+        significant_groups, ingress_group, egress_group);
     return get_flow(&key);
 }
 

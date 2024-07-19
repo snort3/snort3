@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cstring>
 
+#include "flow/flow_key.h"
 #include "protocols/packet.h"
 
 namespace {
@@ -127,7 +128,12 @@ bool PacketConstraints::flow_match(const Flow& f) const
         return false;
 
     return match_constraints(*this, f.client_ip, f.server_ip, f.client_port,
-        f.server_port, f.tenant);
+        f.server_port,
+#ifndef DISABLE_TENANT_ID
+        f.key->tenant_id);
+#else
+        0);
+#endif
 }
 
 #ifdef UNIT_TEST

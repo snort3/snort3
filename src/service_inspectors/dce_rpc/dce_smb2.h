@@ -22,6 +22,10 @@
 #ifndef DCE_SMB2_H
 #define DCE_SMB2_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dce_db.h"
 #include "dce_smb.h"
 #include "hash/lru_cache_shared.h"
@@ -237,8 +241,10 @@ struct Smb2SidHashKey
     uint16_t vlan_tag = 0;
     uint16_t dport = 0;
     uint64_t sid = 0;
+#ifndef DISABLE_TENANT_ID
     uint32_t tenant_id = 0;
     uint32_t padding2 = 0;  // NOTE: If this changes, change do_hash too
+#endif
 
     bool operator==(const Smb2SidHashKey& other) const
     {
@@ -256,8 +262,11 @@ struct Smb2SidHashKey
                addressSpaceId == other.addressSpaceId and
                vlan_tag == other.vlan_tag and
                sid == other.sid and
-               dport == other.dport and
-               tenant_id == other.tenant_id );
+               dport == other.dport 
+#ifndef DISABLE_TENANT_ID
+               and tenant_id == other.tenant_id 
+#endif
+               );
     }
 };
 PADDING_GUARD_END
@@ -305,8 +314,9 @@ private:
 
         a += d[12]; // sid[0]
         b += d[13]; // sid[1]
+#ifndef DISABLE_TENANT_ID
         c += d[14]; // tenant_id
-
+#endif
         // padding2 is ignored.
         finalize(a, b, c);
 
