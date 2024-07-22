@@ -101,7 +101,7 @@ TEST_CASE("basic", "[PDFTokenizer]")
             ""
         );
     }
-    SECTION("indirect object")
+    SECTION("indirect dictionary")
     {
         test_pdf_proc(
             "19 0 obj"
@@ -112,6 +112,83 @@ TEST_CASE("basic", "[PDFTokenizer]")
             ""
         );
     }
+
+    SECTION("indirect array")
+    {
+        test_pdf_proc(
+            "1 0 obj"
+            "["
+            "null 1 2 3.14 (string) << /SubDict [/Sub /Array] >> true 2 0 R"
+            "]"
+            "endobj",
+            ""
+        );
+    }
+
+    SECTION("indirect imbalanced array")
+    {
+        test_pdf_proc(
+            "1 0 obj"
+            "["
+            "1 2 3\n"
+            "endobj",
+            "", PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+        );
+    }
+
+    SECTION("indirect number")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "1\n"
+            "endobj\n"
+            "2 0 obj\n"
+            "3.14\n"
+            "endobj",
+            ""
+        );
+    }
+
+    SECTION("indirect ref")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "2 0 R\n"
+            "endobj",
+            ""
+        );
+    }
+
+    SECTION("indirect bool")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "false\n"
+            "endobj\n",
+            ""
+        );
+    }
+
+    SECTION("indirect name")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "/name\n"
+            "endobj",
+            ""
+        );
+    }
+
+     SECTION("indirect null")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "null\n"
+            "endobj\n",
+            ""
+        );
+    }
+
     SECTION("records")
     {
         test_pdf_proc(
@@ -268,17 +345,6 @@ TEST_CASE("basic", "[PDFTokenizer]")
             "",  PDFTokenizer::PDFRet::NOT_NAME_IN_DICTIONARY_KEY
         );
     }
-    SECTION("incomplete array")
-    {
-        test_pdf_proc(
-            "1 0 obj"
-            "<<"
-            "/K1 [ /V1 /V2 /V3 "
-            ">>"
-            "endobj",
-            "",  PDFTokenizer::PDFRet::INCOMPLETE_ARRAY_IN_DICTIONARY
-        );
-    }
     SECTION("token too long")
     {
         test_pdf_proc(
@@ -287,6 +353,260 @@ TEST_CASE("basic", "[PDFTokenizer]")
             "endobj"s,
             "",  PDFTokenizer::PDFRet::TOKEN_TOO_LONG
         );
+    }
+}
+
+TEST_CASE("brackets balancing", "[PDFTokenizer]")
+{
+    SECTION("imbalanced array")
+    {
+        SECTION("missing end")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "[ 0 "
+                "endobj",
+                "", PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+            );
+        }
+        SECTION("redundant end")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "[ 0 ]]"
+                "endobj",
+                "", PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+            );
+        }
+    }
+    SECTION("imbalanced dictionary")
+    {
+        SECTION("missing end")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "<< /dict "
+                "endobj",
+                "", PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+            );
+        }
+        SECTION("redundant end")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "<< /dict >> >>"
+                "endobj",
+                "", PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+            );
+        }
+    }
+    SECTION("balanced array in array")
+    {
+        test_pdf_proc(
+            "1 0 obj"
+            "["
+            "[ /nested /array ]"
+            "]"
+            "endobj",
+            ""
+        );
+    }
+    SECTION("imbalanced array in array")
+    {
+        SECTION("missing end")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "["
+                "[ /nested /array "
+                "]"
+                "endobj",
+                "", PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+            );
+        }
+        SECTION("redundant end")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "["
+                "[ /nested /array ] ]"
+                "]"
+                "endobj",
+                "", PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+            );
+        }
+    }
+    SECTION("balanced dictionary in array")
+    {
+        test_pdf_proc(
+            "1 0 obj"
+            "["
+            "<< /nested /dict >>"
+            "]"
+            "endobj",
+            ""
+        );
+    }
+    SECTION("imbalanced dictionary in array")
+    {
+        SECTION("missing end")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "["
+                "<< /nested /dict "
+                "]"
+                "endobj",
+                "", PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+            );
+        }
+        SECTION("redundant end")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "["
+                "<< /nested /dict >> >>"
+                "]"
+                "endobj",
+                "", PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+            );
+        }
+    }
+    SECTION("balanced array in dictionary")
+    {
+        test_pdf_proc(
+                "1 0 obj"
+                "<< /array [] >>"
+                "endobj",
+                ""
+            );
+    }
+    SECTION("imbalanced array in dictionary")
+    {
+        SECTION("missing end")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "<<"
+                "/K1 [ /V1 /V2 /V3 "
+                ">>"
+                "endobj",
+                "", PDFTokenizer::PDFRet::INCOMPLETE_ARRAY_IN_DICTIONARY
+            );
+        }
+        SECTION("redundant end")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "<<"
+                "/K1 [ /V1 /V2 /V3 ]]"
+                ">>"
+                "endobj",
+                "", PDFTokenizer::PDFRet::INCOMPLETE_ARRAY_IN_DICTIONARY
+            );
+        }
+    }
+    SECTION("balanced strings")
+    {
+        test_pdf_proc(
+            "1 0 obj"
+            "( a string with ( parentheses ) in it )"
+            "endobj",
+            ""
+        );
+    }
+    SECTION("imbalanced strings")
+    {
+        SECTION("missing end")
+        {
+            // NOTE: such syntax doesn't generate an error, because it's possible
+            // to have a string continuation in next PDUs. Same holds true for
+            // hex strings too
+            test_pdf_proc(
+                "1 0 obj"
+                "( a string with ( parentheses  in it )"
+                "endobj",
+                ""
+            );
+        }
+        SECTION("redundant end")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "( a string with ( parentheses  in it )))"
+                "endobj",
+                "", PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+            );
+        }
+    }
+    SECTION("balanced hex strings")
+    {
+        test_pdf_proc(
+            "1 0 obj"
+            "<FE FF 00 66 006F 00 6F>"
+            "endobj",
+            ""
+        );
+    }
+    SECTION("imbalanced hex strings")
+    {
+        SECTION("missing end")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "<FE FF 00 66 006F 00 6F "
+                "endobj",
+                ""
+            );
+        }
+        SECTION("redundant end")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "<FE FF 00 66 006F 00 6F>>"
+                "endobj",
+                "", PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+            );
+        }
+    }
+    SECTION("multiple tokens inter-nesting")
+    {
+        SECTION("array-array-array")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "[ [ [ null ] ] ]"
+                "endobj",
+                ""
+            );
+        }
+        SECTION("array-array-dict")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "[ [ << /key /value >> ] ]"
+                "endobj",
+                ""
+            );
+        }
+        SECTION("dict-dict-array")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "<< /key1 << /key2 [ null ] >> >>"
+                "endobj",
+                ""
+            );
+        }
+        SECTION("dict-dict-dict")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "<< /key1 << /key2 << /key3 /val3 >> >> >>"
+                "endobj",
+                ""
+            );
+        }
     }
 }
 
@@ -483,6 +803,26 @@ TEST_CASE("stream object", "[PDFTokenizer]")
             "endstream\n"
             "endobj\n",
             "bar\n"
+        );
+    }
+    SECTION("reference as length")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<</S /JavaScript /JS 2 0 R>>\n"
+            "endobj\n"
+            "2 0 obj\n"
+            "<<"
+            "/Length 3 0 R"
+            ">>\n"
+            "stream\n"
+            "foo\n"
+            "endstream\n"
+            "endobj\n"
+            "3 0 obj\n"
+            "3\n"
+            "endobj\n",
+            "foo\n", PDFTokenizer::PDFRet::EOS
         );
     }
     SECTION("special symbols in a stream")
