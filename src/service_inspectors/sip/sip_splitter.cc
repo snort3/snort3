@@ -27,6 +27,10 @@
 #include <cctype>
 #include <cstring>
 
+#include "protocols/packet.h"
+
+#include "sip.h"
+
 using namespace snort;
 
 const char SipSplitter::content_len_key[] = "Content-Length";
@@ -167,9 +171,18 @@ void SipSplitter::process_command(const uint8_t ch)
 }
 
 StreamSplitter::Status SipSplitter::scan(
-    Packet*, const uint8_t* data, uint32_t len,
+    Packet* pkt, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t* fp)
 {
+    SIPData* sip_sess;
+    Flow* flow = pkt->flow;
+
+    sip_sess = get_sip_session_data(flow);
+    if (sip_sess && sip_sess->sip_aborted) {
+        sip_stats.aborted_sessions++;
+        return StreamSplitter::ABORT;
+    }
+
     for (uint32_t i = 0; i < len; i++)
     {
         uint8_t ch = data[i];

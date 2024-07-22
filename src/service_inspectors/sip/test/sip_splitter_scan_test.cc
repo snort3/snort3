@@ -24,6 +24,7 @@
 #include "sip_splitter_test.h"
 
 #include "log/messages.h"
+#include "protocols/packet.h"
 #include "service_inspectors/sip/sip_splitter.h"
 #include "stream/stream_splitter.h"
 
@@ -32,6 +33,13 @@
 #include <CppUTestExt/MockSupport.h>
 
 using namespace snort;
+
+Packet::Packet(bool)
+{
+      memset((char*) this , 0, sizeof(*this));
+}
+
+Packet::~Packet()  = default;
 
 TEST_GROUP(sip_splitter_scan_test)
 {
@@ -46,7 +54,9 @@ TEST_GROUP(sip_splitter_scan_test)
 TEST(sip_splitter_scan_test, scan_start_content_len_test)
 {
     uint32_t fp = 0;
-    StreamSplitter::Status ret = ssut.splitter_scan(nullptr,
+    Packet p(true);
+
+    StreamSplitter::Status ret = ssut.splitter_scan(&p,
                                         (const uint8_t *)"0xBEEF0xBEEF\n", 13, 0, &fp);
     CHECK_EQUAL(ret, StreamSplitter::SEARCH);
     CHECK_EQUAL(ssut.splitter_get_paf_state(), SIP_PAF_CONTENT_LEN_CMD);
@@ -56,7 +66,9 @@ TEST(sip_splitter_scan_test, scan_start_content_len_test)
 TEST(sip_splitter_scan_test, scan_start_content_len_negative_test)
 {
     uint32_t fp = 0;
-    StreamSplitter::Status ret = ssut.splitter_scan(nullptr,
+    Packet p(true);
+
+    StreamSplitter::Status ret = ssut.splitter_scan(&p,
                                         (const uint8_t *)"0xBEEF0xBEEF", 12, 0, &fp);
     CHECK_EQUAL(ret, StreamSplitter::SEARCH);
     CHECK_EQUAL(ssut.splitter_get_paf_state(), SIP_PAF_START_STATE);
@@ -66,8 +78,10 @@ TEST(sip_splitter_scan_test, scan_start_content_len_negative_test)
 TEST(sip_splitter_scan_test, scan_process_cmd_test)
 {
     uint32_t fp = 0;
+    Packet p(true);
+
     ssut.splitter_set_paf_state(SIP_PAF_CONTENT_LEN_CMD);
-    StreamSplitter::Status ret = ssut.splitter_scan(nullptr,
+    StreamSplitter::Status ret = ssut.splitter_scan(&p,
                                         (const uint8_t *)"C", 1, 0, &fp);
     CHECK_EQUAL(ret, StreamSplitter::SEARCH);
     CHECK_EQUAL(ssut.splitter_get_paf_state(), SIP_PAF_CONTENT_LEN_CMD);
@@ -78,8 +92,10 @@ TEST(sip_splitter_scan_test, scan_process_cmd_test)
 TEST(sip_splitter_scan_test, scan_content_len_convert_body_search_test)
 {
     uint32_t fp = 0;
+    Packet p(true);
+
     ssut.splitter_set_paf_state(SIP_PAF_CONTENT_LEN_CONVERT);
-    StreamSplitter::Status ret = ssut.splitter_scan(nullptr,
+    StreamSplitter::Status ret = ssut.splitter_scan(&p,
                                         (const uint8_t *)"144 ", 4, 0, &fp);
     CHECK_EQUAL(ret, StreamSplitter::SEARCH);
     CHECK_EQUAL(ssut.splitter_get_paf_state(), SIP_PAF_BODY_SEARCH);
@@ -90,8 +106,10 @@ TEST(sip_splitter_scan_test, scan_content_len_convert_body_search_test)
 TEST(sip_splitter_scan_test, scan_content_len_invalid_test)
 {
     uint32_t fp = 0;
+    Packet p(true);
+
     ssut.splitter_set_paf_state(SIP_PAF_CONTENT_LEN_CONVERT);
-    StreamSplitter::Status ret = ssut.splitter_scan(nullptr,
+    StreamSplitter::Status ret = ssut.splitter_scan(&p,
                                         (const uint8_t *)"144i", 4, 0, &fp);
     CHECK_EQUAL(ret, StreamSplitter::SEARCH);
     CHECK_TRUE(ssut.is_init());
@@ -101,8 +119,10 @@ TEST(sip_splitter_scan_test, scan_content_len_invalid_test)
 TEST(sip_splitter_scan_test, scan_search_body_test)
 {
     uint32_t fp = 0;
+    Packet p(true);
+
     ssut.splitter_set_paf_state(SIP_PAF_BODY_SEARCH);
-    StreamSplitter::Status ret = ssut.splitter_scan(nullptr,
+    StreamSplitter::Status ret = ssut.splitter_scan(&p,
                                         (const uint8_t *)"\r\n\r\n", 4, 0, &fp);
     CHECK_EQUAL(ret, StreamSplitter::SEARCH);
     CHECK_EQUAL(ssut.splitter_get_paf_state(), SIP_PAF_FLUSH_STATE);
@@ -111,7 +131,7 @@ TEST(sip_splitter_scan_test, scan_search_body_test)
     ssut.splitter_reset_states();
 
     ssut.splitter_set_paf_state(SIP_PAF_BODY_SEARCH);
-    ret = ssut.splitter_scan(nullptr, (const uint8_t *)"\n\n", 2, 0, &fp);
+    ret = ssut.splitter_scan(&p, (const uint8_t *)"\n\n", 2, 0, &fp);
     CHECK_EQUAL(ret, StreamSplitter::SEARCH);
     CHECK_EQUAL(ssut.splitter_get_paf_state(), SIP_PAF_FLUSH_STATE);
     CHECK_EQUAL(fp, 0);
@@ -120,11 +140,13 @@ TEST(sip_splitter_scan_test, scan_search_body_test)
 TEST(sip_splitter_scan_test, scan_flush_test)
 {
     uint32_t fp = 0;
+    Packet p(true);
+
     ssut.splitter_set_paf_state(SIP_PAF_FLUSH_STATE);
     ssut.splitter_set_content_length(6);
 
     // Sip splitter starts searching body from one character behind the actual body.
-    StreamSplitter::Status ret = ssut.splitter_scan(nullptr,
+    StreamSplitter::Status ret = ssut.splitter_scan(&p,
                                         (const uint8_t *)"\nfoobar", 7, 0, &fp);
     CHECK_EQUAL(ret, StreamSplitter::FLUSH);
     CHECK_TRUE(ssut.is_init());
@@ -136,14 +158,14 @@ TEST(sip_splitter_scan_test, scan_flush_test)
     ssut.splitter_set_paf_state(SIP_PAF_FLUSH_STATE);
     ssut.splitter_set_content_length(12);
 
-    ret = ssut.splitter_scan(nullptr, (const uint8_t *)"\nfoobar", 7, 0, &fp);
+    ret = ssut.splitter_scan(&p, (const uint8_t *)"\nfoobar", 7, 0, &fp);
     CHECK_EQUAL(ret, StreamSplitter::SEARCH);
     CHECK_EQUAL(ssut.splitter_get_paf_state(), SIP_PAF_FLUSH_STATE);
     CHECK_EQUAL(ssut.splitter_get_content_length(), 5);
     CHECK_EQUAL(fp, 0);
 
     //Continue scanning the remaining buffer
-    ret = ssut.splitter_scan(nullptr, (const uint8_t *)"foobar", 6, 0, &fp);
+    ret = ssut.splitter_scan(&p, (const uint8_t *)"foobar", 6, 0, &fp);
     CHECK_EQUAL(ret, StreamSplitter::FLUSH);
     CHECK_TRUE(ssut.is_init());
     CHECK_EQUAL(fp, 6);
