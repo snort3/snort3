@@ -286,15 +286,15 @@ The options length field extends past the end of the GENEVE header.
 
 116:250
 
-The ICMP error message's original IP header is truncated.
+The ICMP or IP in ICMP error message's original IP header is truncated.
 
 116:251
 
-The ICMP error message's original IP packet's version and original IP header versions differ.
+The ICMP or IP in ICMP error message's original IP packet's version and original IP header versions differ.
 
 116:252
 
-The ICMP error message's original datagram's length is less than the original IP's header length.
+The ICMP or IP in ICMP error message's original datagram's length is less than the original IP's header length.
 
 116:253
 
@@ -670,7 +670,7 @@ An IPv6 packet was received with a routing type 0 extension header.
 
 116:462
 
-The ERSpan2 version is not equal to 1 (the value of 1 signals that it's ERSpan2).
+Incorrect ERSpan version. ERSpan2 should have version 1, ERSpan3 should have version 2.
 
 116:463
 
