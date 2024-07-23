@@ -231,6 +231,7 @@ static DAQ_Stats_t operator-(const DAQ_Stats_t& left, const DAQ_Stats_t& right)
     ret.packets_received = left.packets_received - right.packets_received;
     ret.packets_filtered = left.packets_filtered - right.packets_filtered;
     ret.packets_injected = left.packets_injected - right.packets_injected;
+    ret.packets_outstanding = left.packets_outstanding - right.packets_outstanding;
 
     for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
         ret.verdicts[i] = left.verdicts[i] - right.verdicts[i];
