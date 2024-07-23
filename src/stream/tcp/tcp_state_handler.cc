@@ -29,10 +29,6 @@
 
 #include "tcp_state_machine.h"
 
-#ifdef UNIT_TEST
-#include "catch/snort_catch.h"
-#endif
-
 using namespace std;
 
 TcpStateHandler::TcpStateHandler(TcpStreamTracker::TcpState state, TcpStateMachine& tsm)

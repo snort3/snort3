@@ -87,10 +87,10 @@ inline void TraceSession(const snort::Flow* flow, const snort::Packet* p)
         flow->ssn_state.session_flags, flow->client_port, flow->server_port);
 }
 
-inline void TraceSegments(const TcpReassemblerPolicy& trp, const snort::Packet* p)
+inline void TraceSegments(const TcpReassemblySegments& seglist, const snort::Packet* p)
 {
-    const TcpSegmentNode* tsn = trp.trs.sos.seglist.head;
-    uint32_t sx = trp.trs.tracker->r_win_base;
+    const TcpSegmentNode* tsn = seglist.head;
+    uint32_t sx = seglist.tracker->r_win_base;
     unsigned segs = 0;
     unsigned bytes = 0;
     std::stringstream ss;
@@ -100,30 +100,29 @@ inline void TraceSegments(const TcpReassemblerPolicy& trp, const snort::Packet* 
 
     while ( tsn )
     {
-        if ( SEQ_LT(sx, tsn->i_seq) )
-            ss << " +" << tsn->i_seq - sx;
-        else if ( SEQ_GT(sx, tsn->i_seq) )
-            ss << " -" << sx - tsn->i_seq;
+        uint32_t seq = tsn->start_seq();
 
-        ss << " " << tsn->i_len;
+        if ( SEQ_LT(sx, seq) )
+            ss << " +" << seq - sx;
 
-        if ( tsn->c_len and tsn->c_len != tsn->i_len )
-        {
-            ss << "(" << tsn->offset << "|" << tsn->c_len;
-            ss << "|" << tsn->i_len-tsn->offset-tsn->c_len << ")";
-        }
+        else if ( SEQ_GT(sx, seq) )
+            ss << " -" << sx - seq;
 
+        ss << " " << tsn->length;
+
+        if ( tsn->cursor and tsn->unscanned() > 0 )
+            ss << "(" << tsn->cursor << "|" << tsn->unscanned() << ")";
         segs++;
-        bytes += tsn->i_len;
-        sx = tsn->i_seq + tsn->i_len;
+        bytes += tsn->length;
+        sx = seq + tsn->length;
         tsn = tsn->next;
     }
 
     if ( !ss.str().empty() )
         trace_logf(DEFAULT_TRACE_LOG_LEVEL, stream_tcp_trace, TRACE_SEGMENTS, p, "       %s\n", ss.str().c_str());
 
-    assert(trp.trs.sos.seg_count == segs);
-    assert(trp.trs.sos.seg_bytes_logical == bytes);
+    assert(seglist.seg_count == segs);
+    assert(seglist.seg_bytes_logical == bytes);
 }
 
 inline void TraceState(const TcpStreamTracker& a, const TcpStreamTracker& b, const char* s,
@@ -137,17 +136,17 @@ inline void TraceState(const TcpStreamTracker& a, const TcpStreamTracker& b, con
         s, stream_tcp_state_to_str(a), ua, ns, a.get_snd_wnd( ),
         RMT(a, rcv_nxt, b), RMT(a, r_win_base, b), a.get_iss(), a.get_irs());
 
-    unsigned paf = a.is_splitter_paf() ? 2 : 0;
+    unsigned paf = a.reassembler->is_splitter_paf() ? 2 : 0;
     unsigned fpt = a.get_flush_policy() ? 192 : 0;
 
     trace_logf(DEFAULT_TRACE_LOG_LEVEL, stream_tcp_trace, TRACE_STATE, p,
         "           FP=%s:%-4u SC=%-4u FL=%-4u SL=%-5u BS=%-4u\n",
         flushxt[a.get_flush_policy() + paf], fpt,
-        a.reassembler.get_seg_count(), a.reassembler.get_flush_count(),
-        a.reassembler.get_seg_bytes_logical(),
-        a.reassembler.get_seglist_base_seq() - b.get_iss());
+        a.seglist.get_seg_count(), a.seglist.get_flush_count(),
+        a.seglist.get_seg_bytes_logical(),
+        a.seglist.get_seglist_base_seq() - b.get_iss());
 
-    TraceSegments(a.reassembler, p);
+    TraceSegments(a.seglist, p);
 }
 
 void S5TraceTCP(const TcpSegmentDescriptor& tsd, const snort::Packet* p)
@@ -179,7 +178,7 @@ void S5TraceTCP(const TcpSegmentDescriptor& tsd, const snort::Packet* p)
 
     TraceEvent(tsd, txd, rxd, p);
 
-    if ( ssn->lws_init )
+    if ( ssn->tcp_init )
         TraceSession(tsd.get_flow(), p);
 
     TraceState(cli, srv, cdir, p);

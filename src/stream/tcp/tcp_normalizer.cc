@@ -25,11 +25,13 @@
 
 #include "tcp_normalizer.h"
 
-#include "stream/stream.h"
+#include "detection/detection_engine.h"
 #include "packet_io/packet_tracer.h"
+#include "stream/stream.h"
+#include "trace/trace.h"
 #include "trace/trace_api.h"
-#include "tcp_module.h"
-#include "tcp_stream_session.h"
+
+#include "tcp_session.h"
 #include "tcp_stream_tracker.h"
 
 using namespace snort;
@@ -78,7 +80,7 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
                 tcpStats.zero_win_probes++;
                 set_zwp_seq(tns, seq);
                 log_drop_reason(tns, tsd, inline_mode, "stream", 
-                "Normalizer: Maximum Zero Window Probe length supported at a time is 1 byte\n");
+                    "Normalizer: Maximum Zero Window Probe length supported at a time is 1 byte\n");
                 trim_win_payload(tns, tsd, MAX_ZERO_WIN_PROBE_LEN, inline_mode);
             }
         }

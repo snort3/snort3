@@ -28,8 +28,10 @@
 #include "detection/rules.h"
 #include "packet_io/packet_tracer.h"
 #include "protocols/tcp_options.h"
-#include "stream/tcp/tcp_defs.h"
-#include "stream/tcp/tcp_stream_tracker.h"
+
+#include "tcp_defs.h"
+#include "tcp_event_logger.h"
+#include "tcp_stream_tracker.h"
 
 using namespace snort;
 

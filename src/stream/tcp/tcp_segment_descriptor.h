@@ -24,16 +24,14 @@
 
 #include <cassert>
 
-#include <daq_common.h>
-
 #include "flow/flow.h"
 #include "detection/ips_context.h"
 #include "main/snort_config.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
-#include "stream/tcp/tcp_event_logger.h"
 
+class TcpEventLogger;
 class TcpStreamTracker;
 
 class TcpSegmentDescriptor
@@ -172,6 +170,16 @@ public:
     void set_talker(TcpStreamTracker& tracker)
     { talker = &tracker; }
 
+    bool is_packet_inorder() const
+    {
+        return packet_inorder;
+    }
+
+    void set_packet_inorder(bool inorder)
+    {
+        packet_inorder = inorder;
+    }
+
 private:
     snort::Flow* const flow;
     snort::Packet* const pkt;
@@ -189,6 +197,7 @@ private:
     uint16_t dst_port;
     uint32_t packet_timestamp;
     bool packet_from_client;
+    bool packet_inorder = false;
     bool meta_ack_packet = false;
 };
 

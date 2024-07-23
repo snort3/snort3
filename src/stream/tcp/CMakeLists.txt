@@ -7,10 +7,10 @@ add_library( stream_tcp OBJECT
     held_packet_queue.h
     ips_stream_reassemble.cc
     ips_stream_size.cc
-    segment_overlap_editor.cc
-    segment_overlap_editor.h
     stream_tcp.cc
     stream_tcp.h
+    tcp_alerts.cc
+    tcp_alerts.h
     tcp_defs.h
     tcp_event_logger.cc
     tcp_event_logger.h
@@ -22,10 +22,16 @@ add_library( stream_tcp OBJECT
     tcp_normalizer.h
     tcp_normalizers.cc
     tcp_normalizers.h
+    tcp_overlap_resolver.cc
+    tcp_overlap_resolver.h
+    tcp_reassembler_ids.cc
+    tcp_reassembler_ids.h
+    tcp_reassembler_ips.cc
+    tcp_reassembler_ips.h
     tcp_reassembler.cc
     tcp_reassembler.h
-    tcp_reassemblers.cc
-    tcp_reassemblers.h
+    tcp_reassembly_segments.cc
+    tcp_reassembly_segments.h
     tcp_segment_descriptor.cc
     tcp_segment_descriptor.h
     tcp_segment_node.cc
@@ -66,8 +72,6 @@ add_library( stream_tcp OBJECT
     tcp_state_time_wait.h
     tcp_stream_config.cc
     tcp_stream_config.h
-    tcp_stream_session.cc
-    tcp_stream_session.h
     tcp_stream_tracker.cc
     tcp_stream_tracker.h
     tcp_trace.cc

@@ -613,7 +613,7 @@ void FlowControl::check_expected_flow(Flow* flow, Packet* p)
 
     if ( ignore )
     {
-        flow->ssn_state.ignore_direction = ignore;
+        flow->ssn_state.ignore_direction = SSN_DIR_BOTH;
         DetectionEngine::disable_all(p);
     }
 }

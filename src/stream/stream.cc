@@ -46,7 +46,6 @@
 #include "utils/util.h"
 
 #include "tcp/tcp_session.h"
-#include "tcp/tcp_stream_session.h"
 #include "tcp/tcp_stream_tracker.h"
 
 using namespace snort;
@@ -221,7 +220,7 @@ void Stream::start_proxy(Flow* flow)
 {
     assert(flow and flow->session and flow->pkt_type == PktType::TCP);
 
-    TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+    TcpSession* tcp_session = (TcpSession*)flow->session;
     tcp_session->start_proxy();
 }
 
@@ -742,12 +741,6 @@ void Stream::disable_reassembly(Flow* flow)
     return flow->session->disable_reassembly(flow);
 }
 
-char Stream::get_reassembly_direction(Flow* flow)
-{
-    assert(flow && flow->session);
-    return flow->session->get_reassembly_direction();
-}
-
 bool Stream::is_stream_sequenced(Flow* flow, uint8_t dir)
 {
     assert(flow && flow->session);
@@ -770,7 +763,7 @@ uint16_t Stream::get_mss(Flow* flow, bool to_server)
 {
     assert(flow and flow->session and flow->pkt_type == PktType::TCP);
 
-    TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+    TcpSession* tcp_session = (TcpSession*)flow->session;
     return tcp_session->get_mss(to_server);
 }
 
@@ -778,7 +771,7 @@ uint8_t Stream::get_tcp_options_len(Flow* flow, bool to_server)
 {
     assert(flow and flow->session and flow->pkt_type == PktType::TCP);
 
-    TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+    TcpSession* tcp_session = (TcpSession*)flow->session;
     return tcp_session->get_tcp_options_len(to_server);
 }
 
@@ -794,7 +787,7 @@ bool Stream::can_set_no_ack_mode(Flow* flow)
 {
     assert(flow and flow->session and flow->pkt_type == PktType::TCP);
 
-    TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+    TcpSession* tcp_session = (TcpSession*)flow->session;
     return tcp_session->can_set_no_ack();
 }
 
@@ -802,7 +795,7 @@ bool Stream::set_no_ack_mode(Flow* flow, bool on_off)
 {
     assert(flow and flow->session and flow->pkt_type == PktType::TCP);
 
-    TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+    TcpSession* tcp_session = (TcpSession*)flow->session;
     return tcp_session->set_no_ack(on_off);
 }
 
@@ -811,9 +804,9 @@ void Stream::partial_flush(Flow* flow, bool to_server)
     if ( flow->pkt_type == PktType::TCP )
     {
         if ( to_server )
-            ((TcpStreamSession*)flow->session)->server.perform_partial_flush();
+            ((TcpSession*)flow->session)->server.perform_partial_flush();
         else
-            ((TcpStreamSession*)flow->session)->client.perform_partial_flush();
+            ((TcpSession*)flow->session)->client.perform_partial_flush();
     }
 }
 
@@ -822,7 +815,7 @@ bool Stream::get_held_pkt_seq(Flow* flow, uint32_t& seq)
     if (!flow or !flow->session or !(flow->pkt_type == PktType::TCP))
         return false;
 
-    TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+    TcpSession* tcp_session = (TcpSession*)flow->session;
 
     if (tcp_session->held_packet_dir == SSN_DIR_NONE)
         return false;
@@ -866,6 +859,7 @@ unsigned Stream::get_pub_id()
 TEST_CASE("Stream API", "[stream_api][stream]")
 {
     // initialization code here
+    TcpNormalizerFactory::initialize();
     Flow* flow = new Flow;
 
     SECTION("set/get ignore direction")
@@ -976,6 +970,7 @@ TEST_CASE("Stream API", "[stream_api][stream]")
     }
 
     delete flow;
+    TcpNormalizerFactory::term();
 }
 
 #endif

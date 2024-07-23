@@ -83,7 +83,7 @@ bool TcpStateMidStreamSent::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTr
 bool TcpStateMidStreamSent::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_recv(tsd);
-    trk.reassembler.set_seglist_base_seq(tsd.get_seq());
+    trk.seglist.set_seglist_base_seq(tsd.get_seq());
     trk.session->handle_data_segment(tsd);
     trk.session->set_established(tsd);
     trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);

@@ -39,7 +39,7 @@
 #include "packet_io/active.h"
 #include "packet_io/packet_tracer.h"
 #include "stream/base/stream_module.h"
-#include "stream/tcp/tcp_stream_session.h"
+#include "stream/tcp/tcp_session.h"
 #include "stream/tcp/tcp_trace.h"
 #include "time/packet_time.h"
 #include "trace/trace_api.h"
@@ -845,7 +845,7 @@ void FlowCache::output_flow(std::fstream& stream, const Flow& flow, const struct
                 << dst_ip << "/" << dst_port;
             if (flow.session)
             {
-                TcpStreamSession* tcp_session = static_cast<TcpStreamSession*>(flow.session);
+                TcpSession* tcp_session = static_cast<TcpSession*>(flow.session);
                 proto << " state client " << stream_tcp_state_to_str(tcp_session->client)
                     << " server " << stream_tcp_state_to_str(tcp_session->server);
             }

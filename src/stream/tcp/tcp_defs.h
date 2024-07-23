@@ -49,9 +49,6 @@ struct Packet;
 #define PAWS_WINDOW         60
 #define PAWS_24DAYS         2073600         /* 24 days in seconds */
 
-#define STREAM_UNALIGNED       0
-#define STREAM_ALIGNED         1
-
 #define STREAM_DEFAULT_MAX_SMALL_SEG_SIZE 0    /* disabled */
 #define STREAM_DEFAULT_CONSEC_SMALL_SEGS 0     /* disabled */
 

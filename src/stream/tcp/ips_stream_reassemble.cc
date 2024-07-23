@@ -108,49 +108,34 @@ IpsOption::EvalStatus ReassembleOption::eval(Cursor&, Packet* pkt)
     if (!pkt->flow || !pkt->ptrs.tcph)
         return NO_MATCH;
 
+    Flow* flow = (Flow*)pkt->flow;
+
+    if ( !srod.enable ) /* Turn it off */
     {
-        Flow* lwssn = (Flow*)pkt->flow;
-        TcpSession* tcpssn = (TcpSession*)lwssn->session;
+        if ( srod.direction & SSN_DIR_FROM_SERVER )
+            Stream::set_splitter(flow, true);
 
-        if ( !srod.enable ) /* Turn it off */
-        {
-            if ( srod.direction & SSN_DIR_FROM_SERVER )
-            {
-                tcpssn->server.set_flush_policy(STREAM_FLPOLICY_IGNORE);
-                Stream::set_splitter(lwssn, true);
-            }
+        if ( srod.direction & SSN_DIR_FROM_CLIENT )
+            Stream::set_splitter(flow, false);
+    }
+    else
+    {
+        // FIXIT-M PAF need to instantiate service splitter?
+        // FIXIT-M PAF need to check for ips / on-data
+        if ( srod.direction & SSN_DIR_FROM_SERVER )
+            Stream::set_splitter(flow, true, new AtomSplitter(true));
 
-            if ( srod.direction & SSN_DIR_FROM_CLIENT )
-            {
-                tcpssn->client.set_flush_policy(STREAM_FLPOLICY_IGNORE);
-                Stream::set_splitter(lwssn, false);
-            }
-        }
-        else
-        {
-            // FIXIT-M PAF need to instantiate service splitter?
-            // FIXIT-M PAF need to check for ips / on-data
-            if ( srod.direction & SSN_DIR_FROM_SERVER )
-            {
-                tcpssn->server.set_flush_policy(STREAM_FLPOLICY_ON_ACK);
-                Stream::set_splitter(lwssn, true, new AtomSplitter(true));
-            }
+        if ( srod.direction & SSN_DIR_FROM_CLIENT )
+            Stream::set_splitter(flow, false, new AtomSplitter(false));
+    }
 
-            if ( srod.direction & SSN_DIR_FROM_CLIENT )
-            {
-                tcpssn->client.set_flush_policy(STREAM_FLPOLICY_ON_ACK);
-                Stream::set_splitter(lwssn, false, new AtomSplitter(false));
-            }
-        }
+    if (srod.fastpath)
+    {
+        /* Turn off inspection */
+        flow->ssn_state.ignore_direction |= srod.direction;
+        DetectionEngine::disable_all(pkt);
 
-        if (srod.fastpath)
-        {
-            /* Turn off inspection */
-            lwssn->ssn_state.ignore_direction |= srod.direction;
-            DetectionEngine::disable_all(pkt);
-
-            /* TBD: Set TF_FORCE_FLUSH ? */
-        }
+        /* TBD: Set TF_FORCE_FLUSH ? */
     }
 
     if (srod.alert)
@@ -290,6 +275,8 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
     ReassembleModule* reassembler = ( ReassembleModule* )ips_stream_reassemble->mod_ctor();
     REQUIRE( reassembler != nullptr );
 
+    TcpNormalizerFactory::initialize();
+
     Flow* flow = new Flow;
     Packet* pkt = get_syn_packet(flow);
     Cursor cursor(pkt);
@@ -319,6 +306,7 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
     }
 #endif
     release_packet(pkt);
+    TcpNormalizerFactory::term();
     delete flow;
     ips_stream_reassemble->mod_dtor(reassembler);
 }
