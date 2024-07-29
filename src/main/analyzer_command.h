@@ -218,9 +218,9 @@ public:
 
 private:
     int status = DAQ_SUCCESS;
-    float cpu_usage_30s = 0.0;
-    float cpu_usage_120s = 0.0;
-    float cpu_usage_300s = 0.0;
+    double cpu_usage_30s = 0.0;
+    double cpu_usage_120s = 0.0;
+    double cpu_usage_300s = 0.0;
     int instance_num = 0;
     std::mutex cpu_usage_mutex;
 };

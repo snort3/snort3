@@ -277,20 +277,18 @@ ACShowSnortCPU::~ACShowSnortCPU()
     if (DAQ_SUCCESS == status)
     {
         LogRespond(ctrlcon, "\nSummary \t%.1f%% \t%.1f%% \t%.1f%%\n",
-                   cpu_usage_30s/instance_num,
-                   cpu_usage_120s/instance_num,
-                   cpu_usage_300s/instance_num);
+            cpu_usage_30s/instance_num, cpu_usage_120s/instance_num,
+            cpu_usage_300s/instance_num);
     }
 }
 
 bool ACShowSnortCPU::execute(Analyzer& analyzer, void**)
 {
     DIOCTL_GetCpuProfileData get_data = {};
-    do
+
     {
         std::lock_guard<std::mutex> lock(cpu_usage_mutex);
-        if (DAQ_SUCCESS != status)
-            break;
+        assert(DAQ_SUCCESS == status);
 
         SFDAQInstance* instance = get_daq_instance(analyzer);
         ThreadConfig *thread_config = SnortConfig::get_conf()->thread_config;
@@ -304,24 +302,24 @@ bool ACShowSnortCPU::execute(Analyzer& analyzer, void**)
         if (DAQ_SUCCESS != status)
         {
             LogRespond(ctrlcon, "Fetching profile data failed from DAQ instance\n");
-            break;
+            return true; 
         }
+
+        double cpu_30s = static_cast<double> (get_data.cpu_usage_percent_30s);
+        double cpu_120s = static_cast<double> (get_data.cpu_usage_percent_120s);
+        double cpu_300s = static_cast<double> (get_data.cpu_usage_percent_300s);
 
         // Print CPU usage
         LogRespond(ctrlcon, "%-3d \t%-6d \t%.1f%% \t%.1f%% \t%.1f%%\n",
-                   instance_num,
-                   tid,
-                   get_data.cpu_usage_percent_30s,
-                   get_data.cpu_usage_percent_120s,
-                   get_data.cpu_usage_percent_300s);
+            instance_num, tid, cpu_30s, cpu_120s, cpu_300s);
 
         // Add CPU usage data
-        cpu_usage_30s += get_data.cpu_usage_percent_30s;
-        cpu_usage_120s += get_data.cpu_usage_percent_120s;
-        cpu_usage_300s += get_data.cpu_usage_percent_300s;
+        cpu_usage_30s += cpu_30s;
+        cpu_usage_120s += cpu_120s;
+        cpu_usage_300s += cpu_300s;
         instance_num++;
 
-    } while (0);
+    }
 
     return true;
 }
