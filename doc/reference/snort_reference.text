@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.3.1.0 2024-07-15 14:03:05 EDT TST
+Revision 3.3.2.0 2024-07-29 22:04:21 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -5424,6 +5424,7 @@ Peg counts:
   * sip.concurrent_sessions: total concurrent SIP sessions (now)
   * sip.max_concurrent_sessions: maximum concurrent SIP sessions
     (max)
+  * sip.aborted_sessions: total session aborted (sum)
   * sip.events: events generated (sum)
   * sip.dialogs: total dialogs (sum)
   * sip.ignored_channels: total channels ignored (sum)
@@ -12377,6 +12378,7 @@ libraries see the Getting Started section of the manual.
     to overflow (sum)
   * search_engine.total_unique: total unique fast pattern hits (sum)
   * side_channel.packets: total packets (sum)
+  * sip.aborted_sessions: total session aborted (sum)
   * sip.ack: ack (sum)
   * sip.bye: bye (sum)
   * sip.cancel: cancel (sum)
@@ -13105,18 +13107,19 @@ The options length field extends past the end of the GENEVE header.
 
 116:250 (icmp4) ICMP original IP header truncated
 
-The ICMP error message’s original IP header is truncated.
+The ICMP or IP in ICMP error message’s original IP header is
+truncated.
 
 116:251 (icmp4) ICMP version and original IP header versions differ
 
-The ICMP error message’s original IP packet’s version and original IP
-header versions differ.
+The ICMP or IP in ICMP error message’s original IP packet’s version
+and original IP header versions differ.
 
 116:252 (icmp4) ICMP original datagram length < original IP header
 length
 
-The ICMP error message’s original datagram’s length is less than the
-original IP’s header length.
+The ICMP or IP in ICMP error message’s original datagram’s length is
+less than the original IP’s header length.
 
 116:253 (icmp4) ICMP original IP payload < 64 bits
 
@@ -13542,8 +13545,8 @@ An IPv6 packet was received with a routing type 0 extension header.
 
 116:462 (erspan2) ERSpan header version mismatch
 
-The ERSpan2 version is not equal to 1 (the value of 1 signals that
-it’s ERSpan2).
+Incorrect ERSpan version. ERSpan2 should have version 1, ERSpan3
+should have version 2.
 
 116:463 (erspan2) captured length < ERSpan type2 header length
 

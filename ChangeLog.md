@@ -1,3 +1,25 @@
+2024-07-29: 3.3.2.0
+
+* appid: fixing cpp warnings and cosmetic changes for appid cpu profiler
+* appid: removing trailing whitespaces
+* daq: added outstanding packets counter
+* doc: builtin rule documentation updates
+* flow: added compile-time option to disable tenant_id
+* flow: clear deferred trust after the flow is trusted to stop repeated trusting
+* js_norm: address pdf tokenizer issues
+* kaizen: fix verbose mode output for unlimited options
+* main: fix coverage
+* sip: fallback functionality for sip inspector
+* stream: refactor paf logic into a c++ class
+* stream_tcp: delete lws_init, it was redundant with tcp_init; delete FIXITs that are no longer relevant
+* stream_tcp: improve variable and function names for overlap processing
+* stream_tcp: integrate and streamline setting of flush policy and splitter
+* stream_tcp: merge TcpStreamSession into TcpSession
+* stream_tcp: refactor segment nodes to implement reassembly cursor and eliminate tracking variables
+* stream_tcp: refactor TcpReassembler into a virtual base class and subclasses for each mode: ignore, IPS and IDS
+* stream_tcp: refactor to move alert functions to their own class
+* stream_tcp: refactor to move tcp overlap processing out of reassembly class
+
 2024-07-15: 3.3.1.0
 
 * appid: restructure the appid code to make it easier to follow and maintain
