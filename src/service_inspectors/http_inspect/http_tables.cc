@@ -389,6 +389,9 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "js_external_scripts", "total number of external JavaScripts processed" },
     { CountType::SUM, "js_pdf_scripts", "total number of PDF files processed" },
     { CountType::SUM, "skip_mime_attach", "total number of HTTP requests with too many MIME attachments to inspect" },
+    { CountType::SUM, "compressed_gzip", "total number of HTTP bodies compressed with GZIP" },
+    { CountType::SUM, "compressed_not_supported", "total number of HTTP bodies compressed with known but not supported methods" },
+    { CountType::SUM, "compressed_unknown", "total number of HTTP bodies compressed with unknown methods" },
     { CountType::END, nullptr, nullptr }
 };
 

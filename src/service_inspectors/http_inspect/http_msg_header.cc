@@ -609,6 +609,7 @@ void HttpMsgHeader::setup_encoding_decompression()
         {
         case CONTENTCODE_GZIP:
         case CONTENTCODE_X_GZIP:
+            HttpModule::increment_peg_counts(PEG_COMPRESSED_GZIP);
             compression = CMP_GZIP;
             break;
         case CONTENTCODE_DEFLATE:
@@ -622,11 +623,13 @@ void HttpMsgHeader::setup_encoding_decompression()
             break;
         case CONTENTCODE__OTHER:
             // The ones we never heard of
+            HttpModule::increment_peg_counts(PEG_COMPRESSED_UNKNOWN);
             add_infraction(INF_UNKNOWN_ENCODING);
             create_event(EVENT_UNKNOWN_ENCODING);
             break;
         default:
             // The ones we know by name but don't support
+            HttpModule::increment_peg_counts(PEG_COMPRESSED_NOT_SUPPORTED);
             add_infraction(INF_UNSUPPORTED_ENCODING);
             create_event(EVENT_UNSUPPORTED_ENCODING);
             break;
