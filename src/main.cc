@@ -72,7 +72,7 @@
 
 using namespace snort;
 
-static bool exit_requested = false;
+bool exit_requested = false;
 static int main_exit_code = 0;
 static bool paused = false;
 static bool pthreads_started = false;

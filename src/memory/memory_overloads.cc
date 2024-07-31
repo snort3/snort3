@@ -27,7 +27,7 @@
 #include <cassert>
 
 #include "profiler/memory_profiler_active_context.h"
-
+#include "main.h"
 #include "memory_allocator.h"
 
 #ifdef UNIT_TEST
@@ -54,7 +54,7 @@ struct alignas(max_align_t) Metadata
 
     // number of requested bytes
     size_t payload_size;
-    uint32_t thread_id;
+    bool is_packet_thread;
     // stat used to keep track of allocation/deallocation
     MemoryTracker* mp_inspector_stats = nullptr;
 
@@ -87,7 +87,7 @@ inline Metadata::Metadata(size_t n) :
 #if defined(REG_TEST) || defined(UNIT_TEST)
     sanity(SANITY_CHECK_VALUE),
 #endif
-    payload_size(n), thread_id(instance_id),
+    payload_size(n), is_packet_thread(snort::is_packet_thread()),
     mp_inspector_stats(&mp_active_context.get_default())
 { }
 
@@ -187,12 +187,12 @@ void Interface<Allocator>::deallocate(void* p)
     assert(meta);
 
 #ifdef ENABLE_MEMORY_PROFILER
-    if (!snort::Snort::is_exiting())
+    if ( !snort::Snort::is_exiting() and !exit_requested )
     {
-        if (meta->mp_inspector_stats and meta->thread_id == instance_id) 
+        if ( meta->mp_inspector_stats and  meta->is_packet_thread == true )
             meta->mp_inspector_stats->update_deallocs(meta->total_size());
         else
-            mp_active_context.update_deallocs(meta->total_size());
+            mp_active_context.get_fallback().update_deallocs(meta->total_size());
     }
 #endif
 
