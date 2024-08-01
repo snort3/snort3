@@ -154,6 +154,7 @@ private:
     void output_flow(std::fstream&, const snort::Flow&, const struct timeval&) const;
 
 private:
+    uint8_t timeout_idx;
     static const unsigned cleanup_flows = 1;
     FlowCacheConfig config;
     uint32_t flags;
@@ -164,6 +165,7 @@ private:
 
     PruneStats prune_stats;
     FlowDeleteStats delete_stats;
+    uint64_t empty_proto;
 };
 #endif
 

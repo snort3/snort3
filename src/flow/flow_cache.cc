@@ -62,6 +62,7 @@ static const unsigned WDT_MASK = 7; // kick watchdog once for every 8 flows dele
 
 constexpr uint8_t MAX_PROTOCOLS = (uint8_t)to_utype(PktType::MAX) - 1; //removing PktType::NONE from count
 constexpr uint64_t max_skip_protos = (1ULL << MAX_PROTOCOLS) - 1;
+constexpr uint8_t first_proto = to_utype(PktType::NONE) + 1;
 
 uint8_t DumpFlows::dump_code = 0;
 
@@ -205,6 +206,8 @@ FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg)
     uni_flows = new FlowUniList;
     uni_ip_flows = new FlowUniList;
     flags = 0x0;
+    empty_proto = ( 1 << MAX_PROTOCOLS ) - 1;
+    timeout_idx = first_proto;
 
     assert(prune_stats.get_total() == 0);
 }
@@ -318,6 +321,7 @@ Flow* FlowCache::allocate(const FlowKey* key)
     link_uni(flow);
     flow->last_data_seen = timestamp;
     flow->set_idle_timeout(config.proto[to_utype(flow->key->pkt_type)].nominal_timeout);
+    empty_proto &= ~(1ULL << to_utype(key->pkt_type)); // clear the bit for this protocol
 
     return flow;
 }
@@ -361,7 +365,7 @@ unsigned FlowCache::prune_idle(uint32_t thetime, const Flow* save_me)
     ActiveSuspendContext act_susp(Active::ASP_PRUNE);
 
     unsigned pruned = 0;
-    uint64_t skip_protos = 0;
+    uint64_t skip_protos = empty_proto;
 
     assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
 
@@ -371,7 +375,7 @@ unsigned FlowCache::prune_idle(uint32_t thetime, const Flow* save_me)
                 skip_protos != max_skip_protos )
         {
             // Round-robin through the proto types
-            for( uint8_t proto_idx = 0; proto_idx < MAX_PROTOCOLS; ++proto_idx ) 
+            for( uint8_t proto_idx = first_proto; proto_idx < MAX_PROTOCOLS; ++proto_idx ) 
             {
                 if( pruned > cleanup_flows )
                     break;
@@ -385,6 +389,7 @@ unsigned FlowCache::prune_idle(uint32_t thetime, const Flow* save_me)
                 if ( !flow )
                 {
                     skip_protos |= proto_mask;
+                    empty_proto |= proto_mask;
                     continue;
                 }
                 
@@ -463,7 +468,6 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
 
     assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
 
-
     {
         PacketTracerSuspend pt_susp;
         unsigned blocks = 0;
@@ -475,7 +479,7 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
                     ignore_offloads == 0 or skip_protos == max_skip_protos )
                     break;
             
-            for( uint8_t proto_idx = 0; proto_idx < MAX_PROTOCOLS; ++proto_idx )  
+            for( uint8_t proto_idx = first_proto; proto_idx < MAX_PROTOCOLS; ++proto_idx )  
             {
                 num_nodes = hash_table->get_num_nodes();
                 if ( num_nodes <= max_cap or num_nodes <= blocks )
@@ -585,7 +589,7 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
     ActiveSuspendContext act_susp(Active::ASP_TIMEOUT);
 
     unsigned retired = 0;
-    uint64_t skip_protos = 0;
+    uint64_t skip_protos = empty_proto;
 
     assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
 
@@ -594,23 +598,24 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 
         while ( retired < num_flows and skip_protos != max_skip_protos )
         {
-            for( uint8_t proto_idx = 0; proto_idx < MAX_PROTOCOLS; ++proto_idx ) 
+            for( ; timeout_idx < MAX_PROTOCOLS; ++timeout_idx ) 
             {
-                if( retired >= num_flows )
-                    break;
-                
-                const uint64_t proto_mask = 1ULL << proto_idx;
+
+                const uint64_t proto_mask = 1ULL << timeout_idx;
 
                 if ( skip_protos & proto_mask ) 
                     continue;
 
-                auto flow = static_cast<Flow*>(hash_table->lru_current(proto_idx));
-                if ( !flow )
-                    flow = static_cast<Flow*>(hash_table->lru_first(proto_idx));
+                auto flow = static_cast<Flow*>(hash_table->lru_current(timeout_idx));
                 if ( !flow )
                 {
-                    skip_protos |= proto_mask;
-                    continue;
+                    flow = static_cast<Flow*>(hash_table->lru_first(timeout_idx));
+                    if ( !flow )
+                    {
+                        skip_protos |= proto_mask;
+                        empty_proto |= proto_mask;
+                        continue;
+                    }
                 }
 
                 if ( flow->is_hard_expiration() )
@@ -632,8 +637,13 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 
                 flow->ssn_state.session_flags |= SSNFLAG_TIMEDOUT;
                 if ( release(flow, PruneReason::IDLE_PROTOCOL_TIMEOUT) )
-                    ++retired;
+                {
+                    if( ++retired >= num_flows )
+                        break;
+                }
             }
+
+            timeout_idx = first_proto;
         }
     }
 
@@ -645,7 +655,7 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 
 unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, unsigned &deleted)
 {
-    uint64_t skip_protos = 0;
+    uint64_t skip_protos = empty_proto;
     uint64_t undeletable = 0;
 
     assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
@@ -654,7 +664,7 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
     while ( num_to_delete and skip_protos != max_skip_protos and
             undeletable < hash_table->get_num_nodes() )
     {
-        for( uint8_t proto_idx = 0; proto_idx < MAX_PROTOCOLS; ++proto_idx ) 
+        for( uint8_t proto_idx = first_proto; proto_idx < MAX_PROTOCOLS; ++proto_idx ) 
         {
             if( num_to_delete == 0)
                 break;
@@ -668,6 +678,7 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
             if ( !flow )
             {
                 skip_protos |= proto_mask;
+                empty_proto |= proto_mask;
                 continue;
             }
 
@@ -730,7 +741,7 @@ unsigned FlowCache::purge()
 
     unsigned retired = 0;
 
-    for( uint8_t proto_idx = 0; proto_idx < MAX_PROTOCOLS; ++proto_idx ) 
+    for( uint8_t proto_idx = first_proto; proto_idx < MAX_PROTOCOLS; ++proto_idx ) 
     {
         while ( auto flow = static_cast<Flow*>(hash_table->lru_first(proto_idx)) )
         {
