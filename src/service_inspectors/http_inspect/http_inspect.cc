@@ -137,10 +137,10 @@ HttpInspect::~HttpInspect()
     delete script_finder;
 }
 
-bool HttpInspect::configure(SnortConfig*)
+bool HttpInspect::configure(SnortConfig* sc)
 {
     params->js_norm_param.configure();
-    params->mime_decode_conf->sync_all_depths();
+    params->mime_decode_conf->sync_all_depths(sc);
     pub_id = DataBus::get_id(http_pub_key);
 
     return true;

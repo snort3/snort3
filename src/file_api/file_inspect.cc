@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2014-2023 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2014-2024 Cisco and/or its affiliates. All rights reserved.
 // Copyright (C) 2012-2013 Sourcefire, Inc.
 //
 // This program is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ FileInspect:: ~FileInspect()
         delete config;
 }
 
-bool FileInspect::configure(SnortConfig*)
+bool FileInspect::configure(SnortConfig* sc)
 {
     if (!config)
         return true;
@@ -62,6 +62,8 @@ bool FileInspect::configure(SnortConfig*)
         file_cache->set_lookup_timeout(config->file_lookup_timeout);
         file_cache->set_max_files(config->max_files_cached);
     }
+
+    FileService::set_max_file_depth(sc);
 
     return true;
 }
