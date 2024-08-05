@@ -35,6 +35,7 @@
 #include "framework/pig_pen.h"
 #include "hash/hash_key_operations.h"
 #include "helpers/scratch_allocator.h"
+#include "log/log_stats.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/ips_manager.h"
@@ -67,6 +68,8 @@ using namespace snort;
 #define s_name "pcre"
 #define mod_regex_name "regex"
 
+void show_pcre_counts();
+
 struct PcreData
 {
     pcre* re;           /* compiled regex */
@@ -90,18 +93,36 @@ static ScratchAllocator* scratcher = nullptr;
 
 static THREAD_LOCAL ProfileStats pcrePerfStats;
 
+struct PcreCounts
+{
+    unsigned pcre_rules;
+#ifdef HAVE_HYPERSCAN
+    unsigned pcre_to_hyper;
+#endif
+    unsigned pcre_native;
+};
+
+PcreCounts pcre_counts;
+
+void show_pcre_counts()
+{
+    if (pcre_counts.pcre_rules == 0)
+        return;
+
+    LogLabel("pcre counts");
+    LogCount("pcre_rules", pcre_counts.pcre_rules);
+#ifdef HAVE_HYPERSCAN
+    LogCount("pcre_to_hyper", pcre_counts.pcre_to_hyper);
+#endif
+    LogCount("pcre_native", pcre_counts.pcre_native);
+}
+
 //-------------------------------------------------------------------------
 // stats foo
 //-------------------------------------------------------------------------
 
 struct PcreStats
 {
-    PegCount pcre_rules;
-#ifdef HAVE_HYPERSCAN
-    PegCount pcre_to_hyper;
-#endif
-    PegCount pcre_native;
-    PegCount pcre_negated;
     PegCount pcre_match_limit;
     PegCount pcre_recursion_limit;
     PegCount pcre_error;
@@ -109,12 +130,6 @@ struct PcreStats
 
 const PegInfo pcre_pegs[] =
 {
-    { CountType::SUM, "pcre_rules", "total rules processed with pcre option" },
-#ifdef HAVE_HYPERSCAN
-    { CountType::SUM, "pcre_to_hyper", "total pcre rules by hyperscan engine" },
-#endif
-    { CountType::SUM, "pcre_native", "total pcre rules compiled by pcre engine" },
-    { CountType::SUM, "pcre_negated", "total pcre rules using negation syntax" },
     { CountType::SUM, "pcre_match_limit", "total number of times pcre hit the match limit" },
     { CountType::SUM, "pcre_recursion_limit", "total number of times pcre hit the recursion limit" },
     { CountType::SUM, "pcre_error", "total number of times pcre returns error" },
@@ -122,7 +137,7 @@ const PegInfo pcre_pegs[] =
     { CountType::END, nullptr, nullptr }
 };
 
-PcreStats pcre_stats;
+THREAD_LOCAL PcreStats pcre_stats;
 
 //-------------------------------------------------------------------------
 // implementation foo
@@ -685,9 +700,6 @@ public:
 
     PcreData* get_data();
 
-    bool global_stats() const override
-    { return true; }
-
     Usage get_usage() const override
     { return DETECT; }
 
@@ -800,14 +812,14 @@ static void mod_dtor(Module* m)
 
 static IpsOption* pcre_ctor(Module* p, IpsInfo& info)
 {
-    pcre_stats.pcre_rules++;
+    pcre_counts.pcre_rules++;
     PcreModule* m = (PcreModule*)p;
 
 #ifdef HAVE_HYPERSCAN
     Module* mod_regex = m->get_mod_regex();
     if ( mod_regex )
     {
-        pcre_stats.pcre_to_hyper++;
+        pcre_counts.pcre_to_hyper++;
         const IpsApi* opt_api = IpsManager::get_option_api(mod_regex_name);
         return opt_api->ctor(mod_regex, info);
     }
@@ -816,7 +828,7 @@ static IpsOption* pcre_ctor(Module* p, IpsInfo& info)
     UNUSED(info);
 #endif
     {
-        pcre_stats.pcre_native++;
+        pcre_counts.pcre_native++;
         PcreData* d = m->get_data();
         return new PcreOption(d);
     }

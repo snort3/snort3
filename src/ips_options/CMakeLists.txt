@@ -34,7 +34,6 @@ SET( PLUGIN_LIST
     ips_js_data.cc
     ips_metadata.cc
     ips_msg.cc
-    ips_pcre.cc
     ips_pkt_data.cc
     ips_priority.cc
     ips_raw_data.cc
@@ -60,6 +59,7 @@ set (IPS_SOURCES
     ips_luajit.cc
     ips_options.cc
     ips_options.h
+    ips_pcre.cc
     ips_replace.cc
     ips_so.cc
     ips_vba_data.cc
@@ -121,7 +121,6 @@ else (STATIC_IPS_OPTIONS)
     add_dynamic_module(ips_js_data ips_options ips_js_data.cc)
     add_dynamic_module(ips_metadata ips_options ips_metadata.cc)
     add_dynamic_module(ips_msg ips_options ips_msg.cc)
-    add_dynamic_module(ips_pcre ips_options ips_pcre.cc)
     add_dynamic_module(ips_pkt_data ips_options ips_pkt_data.cc)
     add_dynamic_module(ips_priority ips_options ips_priority.cc)
     add_dynamic_module(ips_raw_data ips_options ips_raw_data.cc)
