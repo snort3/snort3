@@ -1142,10 +1142,11 @@ static void main_loop()
 
             pthreads_started = pigs_started_count && num_threads <= pigs_started_count + pigs_failed;
             
-#ifdef REG_TEST
             if (pthreads_started)
             {
+#ifdef REG_TEST
                 LogMessage("All pthreads started\n");
+#endif
 
 #ifdef SHELL
                 if (use_shell(SnortConfig::get_conf()))
@@ -1155,11 +1156,9 @@ static void main_loop()
                 }
 #endif
             }
-#endif
         }
 
-#ifdef SHELL
-        if(!pthreads_running)
+        if (!pthreads_running)
         {
             const unsigned num_threads = (!Trough::has_next()) ? max_swine : max_pigs;
             unsigned pigs_running_count = 0;
@@ -1172,7 +1171,6 @@ static void main_loop()
 
             pthreads_running = pigs_running_count && num_threads <= pigs_running_count + pigs_failed;
         }
-#endif
 
         if ( !exit_requested and (swine < max_pigs) and (src = Trough::get_next()) )
         {
