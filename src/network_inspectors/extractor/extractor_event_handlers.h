@@ -20,6 +20,7 @@
 #ifndef EXTRACTOR_EVENT_HANDLERS_H
 #define EXTRACTOR_EVENT_HANDLERS_H
 
+#include "flow/flow_key.h"
 #include "framework/data_bus.h"
 
 #include "extractor.h"
@@ -30,6 +31,13 @@ namespace snort
 
 class ExtractorEvent
 {
+public:
+    static FlowHashKeyOps& get_hash()
+    {
+        static thread_local FlowHashKeyOps flow_key_ops(0);
+        return flow_key_ops;
+    }
+
 protected:
     ExtractorEvent(uint32_t tid, const std::vector<std::string>& flds, ExtractorLogger& l)
         : tenant_id(tid), fields(flds), logger(l) {}

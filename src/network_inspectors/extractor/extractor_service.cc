@@ -40,6 +40,7 @@ using namespace snort;
 std::vector<std::string> ExtractorService::common_fields =
 {
     "ts",
+    "uid",
     "id.orig_h",
     "id.orig_p",
     "id.resp_h",
@@ -54,7 +55,6 @@ ExtractorService::ExtractorService(uint32_t tenant, const std::vector<std::strin
 {
     add_fields(srv_fields);
     add_events(srv_events);
-
     logger = ExtractorLogger::make_logger(f_type, o_type, get_fields());
 }
 
@@ -65,7 +65,7 @@ void ExtractorService::add_events(const std::vector<std::string>& vals)
         if (find_event(val))
             events.push_back(val);
         else
-            ParseError("Invalid protocols.on_events value %s", val.c_str());
+            ParseWarning(WARN_CONF_STRICT, "unsupported '%s' event in protocols.on_events", val.c_str());
     }
 }
 
@@ -76,28 +76,32 @@ void ExtractorService::add_fields(const std::vector<std::string>& vals)
         if (find_field(val))
             fields.push_back(val);
         else
-            ParseError("Invalid protocols.fields value %s", val.c_str());
+            ParseWarning(WARN_CONF_STRICT, "unsupported '%s' field in protocols.fields", val.c_str());
     }
 }
 
 ExtractorService* ExtractorService::make_service(const ServiceConfig& cfg, FormatType f_type, OutputType o_type)
 {
     if (cfg.on_events.empty())
+    {
         ParseError("%s service misses on_events field", cfg.service.c_str());
+        return nullptr;
+    }
+
+    ExtractorService* srv = nullptr;
 
     switch (cfg.service)
     {
-        case ServiceType::HTTP:
-            return new HttpExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, f_type, o_type);
+    case ServiceType::HTTP:
+        srv = new HttpExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, f_type, o_type);
+        break;
 
-        case ServiceType::UNDEFINED:
-            ParseError("%s service is not supported", cfg.service.c_str());
-            break;
-
-        default:
-            return nullptr;
+    case ServiceType::UNDEFINED: // fallthrough
+    default:
+        ParseError("'%s' service is not supported", cfg.service.c_str());
     }
-    return nullptr;
+
+    return srv;
 }
 
 bool ExtractorService::find_event(const std::string& event) const
@@ -163,6 +167,9 @@ HttpExtractorService::HttpExtractorService(uint32_t tenant, const std::vector<st
     const std::vector<std::string>& srv_events, ServiceType s_type, FormatType f_type, OutputType o_type)
     : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, f_type, o_type)
 {
+    if (!logger)
+        return;
+
     for (const auto& event : get_events())
     {
         if (!strcmp("eot", event.c_str()))
@@ -172,4 +179,3 @@ HttpExtractorService::HttpExtractorService(uint32_t tenant, const std::vector<st
         }
     }
 }
-

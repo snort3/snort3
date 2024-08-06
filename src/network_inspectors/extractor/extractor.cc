@@ -92,10 +92,7 @@ void ExtractorModule::commit_config()
     for (const auto& p : extractor_config.protocols)
     {
         if (p.tenant_id == service_config.tenant_id and p.service == service_config.service)
-        {
-            ParseError("%s service got multiple configurations", service_config.service.c_str());
-            break;
-        }
+            ParseWarning(WARN_CONF_STRICT, "%s service got multiple configurations", service_config.service.c_str());
     }
 
     extractor_config.protocols.push_back(service_config);
@@ -156,15 +153,16 @@ bool ExtractorModule::set(const char*, Value& v, SnortConfig*)
 
 bool ExtractorModule::end(const char* fqn, int idx, SnortConfig*)
 {
-    if (idx > 0 && !strcmp(fqn, "extractor.protocols"))
+    if (!idx or strcmp(fqn, "extractor.protocols"))
+        return true;
+
+    if (service_config.fields.empty())
     {
-        if (service_config.fields.empty())
-        {
-            ParseError("Can't initialize extractor without protocols.fields");
-            return false;
-        }
-        commit_config();
+        ParseError("can't initialize extractor without protocols.fields");
+        return false;
     }
+
+    commit_config();
 
     return true;
 }

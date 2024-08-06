@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // extractor_writer.cc author Anna Norokh <anorokh@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "extractor_writer.h"
 
 ExtractorWriter* ExtractorWriter::make_writer(OutputType o_type)
@@ -25,7 +29,8 @@ ExtractorWriter* ExtractorWriter::make_writer(OutputType o_type)
     {
     case OutputType::STD:
         return new StdExtractorWriter();
+    case OutputType::MAX: // fallthrough
+    default:
+        return nullptr;
     }
-
-    return nullptr;
 }

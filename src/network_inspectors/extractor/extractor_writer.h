@@ -28,7 +28,8 @@ class OutputType
 public:
     enum Value : uint8_t
     {
-        STD
+        STD,
+        MAX
     };
 
     OutputType() = default;
@@ -44,6 +45,7 @@ public:
         {
         case STD:
             return "stdout";
+        case MAX: // fallthrough
         default:
             return "(not set)";
         }

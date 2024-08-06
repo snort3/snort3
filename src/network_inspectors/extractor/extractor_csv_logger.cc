@@ -17,6 +17,10 @@
 //--------------------------------------------------------------------------
 // csv_logger.cc author Anna Norokh <anorokh@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "extractor_csv_logger.h"
 
 #include <algorithm>

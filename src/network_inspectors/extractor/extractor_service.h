@@ -34,7 +34,8 @@ public:
     enum Value : uint8_t
     {
         HTTP,
-        UNDEFINED
+        UNDEFINED,
+        MAX
     };
 
     ServiceType() = default;
@@ -48,10 +49,10 @@ public:
     {
         switch (v)
         {
-        case UNDEFINED:
-            return "(not set)";
         case HTTP:
             return "http";
+        case UNDEFINED: // fallthrough
+        case MAX:       // fallthrough
         default:
             return "(not set)";
         }
@@ -98,9 +99,10 @@ protected:
     const uint32_t tenant_id;
     std::vector<std::string> fields;
     std::vector<std::string> events;
-    ExtractorLogger* logger;
-    const ServiceBlueprint& sbp;
 
+    ExtractorLogger* logger = nullptr;
+
+    const ServiceBlueprint& sbp;
     const ServiceType type;
 };
 

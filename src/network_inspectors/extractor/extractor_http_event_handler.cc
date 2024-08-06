@@ -57,6 +57,7 @@ Value* get_ip_dst(DataEvent*, Packet*, Flow*);
 Value* get_ip_src_port(DataEvent*, Packet*, Flow*);
 Value* get_ip_dst_port(DataEvent*, Packet*, Flow*);
 Value* get_pkt_num(DataEvent*, Packet*, Flow*);
+Value* get_uid(DataEvent*, Packet*, Flow*);
 
 static void field_to_string(const Field& field, std::string& value)
 {
@@ -187,9 +188,17 @@ Value* get_pkt_num(DataEvent*, Packet* p, Flow*)
     return new Value(p->context->packet_number);
 }
 
+Value* get_uid(DataEvent*, Packet*, Flow* f)
+{
+    unsigned key = ExtractorEvent::get_hash().do_hash((const unsigned char*)f->key, 0);
+
+    return new Value((uint64_t)key);
+}
+
 static std::map<std::string, GetFunc> event_getters =
 {
     {"ts", get_timestamp},
+    {"uid", get_uid},
     {"id.orig_h", get_ip_src},
     {"id.resp_h", get_ip_dst},
     {"id.orig_p", get_ip_src_port},

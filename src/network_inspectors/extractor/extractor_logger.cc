@@ -17,18 +17,32 @@
 //--------------------------------------------------------------------------
 // extractor_logger.cc author Anna Norokh <anorokh@cisco.com>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "extractor_logger.h"
+
+#include <cassert>
 
 #include "extractor_csv_logger.h"
 
 ExtractorLogger* ExtractorLogger::make_logger(FormatType f_type, OutputType o_type,
     const std::vector<std::string>& fields)
 {
+    if (fields.empty())
+        return nullptr;
+
+    ExtractorLogger* logger = nullptr;
+
     switch (f_type)
     {
     case FormatType::CSV:
-        return new CsvExtractorLogger(o_type, fields);
+        logger = new CsvExtractorLogger(o_type, fields);
+        break;
     }
 
-    return nullptr;
+    assert(logger);
+
+    return logger;
 }

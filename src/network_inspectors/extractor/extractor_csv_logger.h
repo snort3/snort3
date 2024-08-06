@@ -30,7 +30,11 @@ class CsvExtractorLogger : public ExtractorLogger
 public:
     CsvExtractorLogger(OutputType o_type, const std::vector<std::string>& fields)
         : ExtractorLogger(fields), writer(ExtractorWriter::make_writer(o_type))
-    { CsvExtractorLogger::add_header(); }
+    {
+        if (writer)
+            CsvExtractorLogger::add_header();
+    }
+
     ~CsvExtractorLogger() override;
 
     void add_header() override;
