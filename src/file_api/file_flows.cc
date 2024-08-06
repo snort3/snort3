@@ -207,9 +207,6 @@ uint64_t FileFlows::get_new_file_instance()
 
 FileFlows::~FileFlows()
 {
-    FileCache* file_cache = FileService::get_file_cache();
-    assert(file_cache);
-
     delete(main_context);
     if (current_context_delete_pending)
         delete(current_context);
