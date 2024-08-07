@@ -33,7 +33,7 @@
 
 using namespace snort;
 
-static const char* s_name = "s7comm_variable_type";
+static const char* s_name = "s7comm_di_variable_type";
 
 //-------------------------------------------------------------------------
 // variable_type option
@@ -178,4 +178,4 @@ static const IpsApi ips_api =
     nullptr
 };
 
-const BaseApi* ips_s7comm_variable_type = &ips_api.base;
+const BaseApi* ips_s7comm_di_variable_type = &ips_api.base;

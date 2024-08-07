@@ -30,7 +30,7 @@
 #include "hash/hash_key_operations.h"
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
-
+#include "framework/range.h"
 #include "s7comm.h"
 
 using namespace snort;
@@ -65,8 +65,10 @@ static THREAD_LOCAL ProfileStats s7comm_parameter_length_prof;
 class S7commParameterLengthOption : public IpsOption
 {
 public:
-    S7commParameterLengthOption(uint16_t pl) : IpsOption(s_name)
-    { parameter_length = pl; }
+    S7commParameterLengthOption(const RangeCheck& c)
+     : IpsOption(s_name), config(c)
+    {}
+
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -74,12 +76,12 @@ public:
     EvalStatus eval(Cursor&, Packet*) override;
 
 public:
-    uint16_t parameter_length;
+    RangeCheck config;
 };
 
 uint32_t S7commParameterLengthOption::hash() const
 {
-    uint32_t a = parameter_length, b = IpsOption::hash(), c = 0;
+    uint32_t a = config.hash(), b = IpsOption::hash(), c = 0;
 
     mix(a, b, c);
     finalize(a, b, c);
@@ -93,7 +95,7 @@ bool S7commParameterLengthOption::operator==(const IpsOption& ips) const
         return false;
 
     const S7commParameterLengthOption& rhs = (const S7commParameterLengthOption&)ips;
-    return (parameter_length == rhs.parameter_length);
+    return (config == rhs.config);
 }
 
 IpsOption::EvalStatus S7commParameterLengthOption::eval(Cursor&, Packet* p)
@@ -108,7 +110,7 @@ IpsOption::EvalStatus S7commParameterLengthOption::eval(Cursor&, Packet* p)
 
     S7commFlowData* mfd = (S7commFlowData*)p->flow->get_flow_data(S7commFlowData::inspector_id);
 
-        if (mfd && mfd->ssn_data.s7comm_parameter_length <= parameter_length)
+        if (mfd && config.eval(mfd->ssn_data.s7comm_parameter_length))
             return MATCH;
 
     return NO_MATCH;
@@ -118,9 +120,12 @@ IpsOption::EvalStatus S7commParameterLengthOption::eval(Cursor&, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
+		
+#define RANGE "0:65535"
+
 static const Parameter s_params[] =
 {
-    { "~", Parameter::PT_STRING, nullptr, nullptr, "parameter length to match for ack_data messages" },
+    { "~range", Parameter::PT_INTERVAL, RANGE, nullptr, "parameter_length field to match for s7comm packets" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -132,7 +137,7 @@ class S7commParameterLengthModule : public Module
 {
 public:
     S7commParameterLengthModule() : Module(s_name, s_help, s_params) {}
-
+    bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
@@ -146,20 +151,20 @@ public:
     }
 
 public:
-    uint16_t parameter_length = 0;
+    RangeCheck parameter_length;
 };
+
+bool S7commParameterLengthModule::begin(const char*, int, SnortConfig*)
+{
+    parameter_length.init();
+    return true;
+}
 
 bool S7commParameterLengthModule::set(const char* name, Value& v, SnortConfig*)
 {
-    assert(v.is("~"));
-    long n;
+    if ( v.is("~range") )
+        return parameter_length.validate(v.get_string(), RANGE);
 
-    if ( v.strtol(n) )
-        {
-            parameter_length = static_cast<uint16_t>(n);
-            return true;
-        }
-    else
         return false; // Invalid parameter length
 }
 

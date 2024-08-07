@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// ips_s7comm_area.cc author Pradeep Damodharan <prdamodh@cisco.com>
+// ips_s7comm_db_number.cc author Pradeep Damodharan <prdamodh@cisco.com>
 // based on work by Jeffrey Gu <jgu@cisco.com>
 
 #ifdef HAVE_CONFIG_H
@@ -33,47 +33,47 @@
 
 using namespace snort;
 
-static const char* s_name = "s7comm_area";
+static const char* s_name = "s7comm_pi_db_number";
 
 //-------------------------------------------------------------------------
-// area option
+// db_number option
 //-------------------------------------------------------------------------
 
-static THREAD_LOCAL ProfileStats s7comm_area_prof;
+static THREAD_LOCAL ProfileStats s7comm_db_number_prof;
 
-class S7commAreaOption : public IpsOption
+class S7commDbNumberOption : public IpsOption
 {
 public:
-    S7commAreaOption(uint8_t v) : IpsOption(s_name), area(v) {}
+    S7commDbNumberOption(uint16_t v) : IpsOption(s_name), db_number(v) {}
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
     EvalStatus eval(Cursor&, Packet*) override;
 
 private:
-    uint8_t area;
+    uint16_t db_number;
 };
 
-uint32_t S7commAreaOption::hash() const
+uint32_t S7commDbNumberOption::hash() const
 {
-    uint32_t a = area, b = IpsOption::hash(), c = 0;
+    uint32_t a = db_number, b = IpsOption::hash(), c = 0;
     mix(a, b, c);
     finalize(a, b, c);
     return c;
 }
 
-bool S7commAreaOption::operator==(const IpsOption& ips) const
+bool S7commDbNumberOption::operator==(const IpsOption& ips) const
 {
     if (!IpsOption::operator==(ips))
         return false;
 
-    const S7commAreaOption& rhs = (const S7commAreaOption&)ips;
-    return (area == rhs.area);
+    const S7commDbNumberOption& rhs = (const S7commDbNumberOption&)ips;
+    return (db_number == rhs.db_number);
 }
 
-IpsOption::EvalStatus S7commAreaOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus S7commDbNumberOption::eval(Cursor&, Packet* p)
 {
-    RuleProfile profile(s7comm_area_prof);
+    RuleProfile profile(s7comm_db_number_prof);
 
     if (!p->flow)
         return NO_MATCH;
@@ -88,7 +88,7 @@ IpsOption::EvalStatus S7commAreaOption::eval(Cursor&, Packet* p)
 
     for (const auto& requestItem : mfd->ssn_data.request_items)
     {        
-        if (requestItem.area == area)
+        if (requestItem.db_number == db_number)
             return MATCH;
     }
 
@@ -101,40 +101,40 @@ IpsOption::EvalStatus S7commAreaOption::eval(Cursor&, Packet* p)
 
 static const Parameter s_params[] =
 {
-    { "~", Parameter::PT_STRING, nullptr, nullptr, "area to match" },
+    { "~", Parameter::PT_STRING, nullptr, nullptr, "db_number to match" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 #define s_help \
-    "rule option to check s7comm area"
+    "rule option to check s7comm db_number"
 
-class S7commAreaModule : public Module
+class S7commDbNumberModule : public Module
 {
 public:
-    S7commAreaModule() : Module(s_name, s_help, s_params) {}
+    S7commDbNumberModule() : Module(s_name, s_help, s_params) {}
 
     bool set(const char*, Value&, SnortConfig*) override;
-    ProfileStats* get_profile() const override { return &s7comm_area_prof; }
+    ProfileStats* get_profile() const override { return &s7comm_db_number_prof; }
     Usage get_usage() const override { return DETECT; }
 
 public:
-    uint8_t area = 0;
+    uint16_t db_number = 0;
 };
 
-bool S7commAreaModule::set(const char*, Value& v, SnortConfig*)
+bool S7commDbNumberModule::set(const char*, Value& v, SnortConfig*)
 {
     assert(v.is("~"));
     long n;
 
     if (v.strtol(n))
-        area = static_cast<uint8_t>(n);
+        db_number = static_cast<uint16_t>(n);
 
     return true;
 }
 
 static Module* mod_ctor()
 {
-    return new S7commAreaModule;
+    return new S7commDbNumberModule;
 }
 
 static void mod_dtor(Module* m)
@@ -144,8 +144,8 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    S7commAreaModule* mod = (S7commAreaModule*)m;
-    return new S7commAreaOption(mod->area);
+    S7commDbNumberModule* mod = (S7commDbNumberModule*)m;
+    return new S7commDbNumberOption(mod->db_number);
 }
 
 static void opt_dtor(IpsOption* p)
@@ -178,4 +178,4 @@ static const IpsApi ips_api =
     nullptr
 };
 
-const BaseApi* ips_s7comm_area = &ips_api.base;
+const BaseApi* ips_s7comm_pi_db_number = &ips_api.base;

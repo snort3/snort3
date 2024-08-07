@@ -191,7 +191,7 @@ ips =
     -- note that rules files can include other rules files
     -- (see also related path vars at the top of snort_defaults.lua)
     rules = [[
-        include /home/snorty/snort_sc7omm_helper_folders/rules/s7comm_dev_tests.rules
+        include /home/snorty/rules/s7comm_dev_tests.rules
     ]],
     variables = default_variables
 }

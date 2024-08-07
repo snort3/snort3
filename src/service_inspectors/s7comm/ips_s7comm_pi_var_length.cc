@@ -1,3 +1,5 @@
+// ips_s7comm_var_length.cc
+
 //--------------------------------------------------------------------------
 // Copyright (C) 2018-2024 Cisco and/or its affiliates. All rights reserved.
 //
@@ -16,64 +18,70 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// ips_s7comm_syntax_id.cc author Pradeep Damodharan <prdamodh@cisco.com>
+// ips_s7comm_var_length.cc author <Your Name> <Your Email>
 // based on work by Jeffrey Gu <jgu@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <iostream> // For debug output
+
 #include "framework/ips_option.h"
 #include "framework/module.h"
+#include "framework/range.h"
 #include "hash/hash_key_operations.h"
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
-
+#include <iostream> // For debug output
 #include "s7comm.h"
 
 using namespace snort;
 
-static const char* s_name = "s7comm_syntax_id";
+static const char* s_name = "s7comm_pi_var_length";
 
 //-------------------------------------------------------------------------
-// syntax_id option
+// var_length option
 //-------------------------------------------------------------------------
 
-static THREAD_LOCAL ProfileStats s7comm_syntax_id_prof;
+static THREAD_LOCAL ProfileStats s7comm_var_length_prof;
 
-class S7commSyntaxIdOption : public IpsOption
+class S7commVarLengthOption : public IpsOption
 {
 public:
-    S7commSyntaxIdOption(uint8_t v) : IpsOption(s_name), syntax_id(v) {}
+    S7commVarLengthOption(const RangeCheck& c)
+     : IpsOption(s_name), config(c)
+    {}
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
+
     EvalStatus eval(Cursor&, Packet*) override;
 
-private:
-    uint8_t syntax_id;
+public:
+    RangeCheck config;
 };
 
-uint32_t S7commSyntaxIdOption::hash() const
+uint32_t S7commVarLengthOption::hash() const
 {
-    uint32_t a = syntax_id, b = IpsOption::hash(), c = 0;
+    uint32_t a = config.hash(), b = IpsOption::hash(), c = 0;
+
     mix(a, b, c);
     finalize(a, b, c);
+
     return c;
 }
 
-bool S7commSyntaxIdOption::operator==(const IpsOption& ips) const
+bool S7commVarLengthOption::operator==(const IpsOption& ips) const
 {
     if (!IpsOption::operator==(ips))
         return false;
 
-    const S7commSyntaxIdOption& rhs = (const S7commSyntaxIdOption&)ips;
-    return (syntax_id == rhs.syntax_id);
+    const S7commVarLengthOption& rhs = (const S7commVarLengthOption&)ips;
+    return (config == rhs.config);
 }
 
-IpsOption::EvalStatus S7commSyntaxIdOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus S7commVarLengthOption::eval(Cursor&, Packet* p)
 {
-    RuleProfile profile(s7comm_syntax_id_prof);
+    RuleProfile profile(s7comm_var_length_prof);  // cppcheck-suppress unreadVariable
 
     if (!p->flow)
         return NO_MATCH;
@@ -83,13 +91,13 @@ IpsOption::EvalStatus S7commSyntaxIdOption::eval(Cursor&, Packet* p)
 
     S7commFlowData* mfd = (S7commFlowData*)p->flow->get_flow_data(S7commFlowData::inspector_id);
 
-    if (!mfd)
-        return NO_MATCH;
-
-    for (const auto& requestItem : mfd->ssn_data.request_items)
-    {        
-        if (requestItem.syntax_id == syntax_id)
-            return MATCH;
+    if (mfd)
+    {
+        for (const auto& requestItem : mfd->ssn_data.request_items)
+        {
+            if (config.eval(requestItem.var_length))
+                return MATCH;
+        }
     }
 
     return NO_MATCH;
@@ -99,42 +107,61 @@ IpsOption::EvalStatus S7commSyntaxIdOption::eval(Cursor&, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
+#define RANGE "0:255"
+
 static const Parameter s_params[] =
 {
-    { "~", Parameter::PT_STRING, nullptr, nullptr, "syntax_id to match" },
+    { "~range", Parameter::PT_INTERVAL, RANGE, nullptr, "var_length to match" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 #define s_help \
-    "rule option to check s7comm syntax_id"
+    "rule option to check s7comm var_length"
 
-class S7commSyntaxIdModule : public Module
+class S7commVarLengthModule : public Module
 {
 public:
-    S7commSyntaxIdModule() : Module(s_name, s_help, s_params) {}
+    S7commVarLengthModule() : Module(s_name, s_help, s_params) {}
 
+    bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
-    ProfileStats* get_profile() const override { return &s7comm_syntax_id_prof; }
-    Usage get_usage() const override { return DETECT; }
+
+    ProfileStats* get_profile() const override
+    {
+        return &s7comm_var_length_prof;
+    }
+
+    Usage get_usage() const override
+    {
+        return DETECT;
+    }
 
 public:
-    uint8_t syntax_id = 0;
+    RangeCheck var_length;
 };
 
-bool S7commSyntaxIdModule::set(const char*, Value& v, SnortConfig*)
+bool S7commVarLengthModule::begin(const char*, int, SnortConfig*)
 {
-    assert(v.is("~"));
-    long n;
-
-    if (v.strtol(n))
-        syntax_id = static_cast<uint8_t>(n);
-
+    var_length.init();
     return true;
 }
 
+bool S7commVarLengthModule::set(const char* name, Value& v, SnortConfig*)
+{
+    if ( v.is("~range") )
+        return var_length.validate(v.get_string(), RANGE);
+
+    return false; // Invalid var_length
+}
+
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
+
 static Module* mod_ctor()
 {
-    return new S7commSyntaxIdModule;
+    return new S7commVarLengthModule;
 }
 
 static void mod_dtor(Module* m)
@@ -144,8 +171,8 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    S7commSyntaxIdModule* mod = (S7commSyntaxIdModule*)m;
-    return new S7commSyntaxIdOption(mod->syntax_id);
+    S7commVarLengthModule* mod = (S7commVarLengthModule*)m;
+    return new S7commVarLengthOption(mod->var_length);
 }
 
 static void opt_dtor(IpsOption* p)
@@ -178,4 +205,4 @@ static const IpsApi ips_api =
     nullptr
 };
 
-const BaseApi* ips_s7comm_syntax_id = &ips_api.base;
+const BaseApi* ips_s7comm_pi_var_length = &ips_api.base;

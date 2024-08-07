@@ -179,16 +179,28 @@ static const InspectApi s7comm_api =
     nullptr  // reset
 };
 
-extern const BaseApi* ips_s7comm_func;
 extern const BaseApi* ips_s7comm_content;
-extern const BaseApi* ips_s7comm_error_code;
-extern const BaseApi* ips_s7comm_error_class;
+extern const BaseApi* ips_s7comm_func;
 extern const BaseApi* ips_s7comm_pdu_ref;
 extern const BaseApi* ips_s7comm_parameter_length;
 extern const BaseApi* ips_s7comm_data_length;
+extern const BaseApi* ips_s7comm_error_code;
+extern const BaseApi* ips_s7comm_error_class;
 extern const BaseApi* ips_s7comm_function_code;
 extern const BaseApi* ips_s7comm_item_count;
-extern const BaseApi* ips_s7comm_var_type;
+extern const BaseApi* ips_s7comm_di_error_code;
+extern const BaseApi* ips_s7comm_di_variable_type;
+extern const BaseApi* ips_s7comm_di_data_length;
+extern const BaseApi* ips_s7comm_di_data;
+extern const BaseApi* ips_s7comm_pi_var_type;
+extern const BaseApi* ips_s7comm_pi_var_length;
+extern const BaseApi* ips_s7comm_pi_syntax_id;
+extern const BaseApi* ips_s7comm_pi_transport_size;
+extern const BaseApi* ips_s7comm_pi_length;
+extern const BaseApi* ips_s7comm_pi_db_number;
+extern const BaseApi* ips_s7comm_pi_area;
+extern const BaseApi* ips_s7comm_pi_address;
+
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
@@ -197,15 +209,26 @@ const BaseApi* sin_s7comm[] =
 #endif
 {
     &s7comm_api.base,
-    ips_s7comm_func,
     ips_s7comm_content,
-    ips_s7comm_error_code,
-    ips_s7comm_error_class,
+    ips_s7comm_func,
     ips_s7comm_pdu_ref,
     ips_s7comm_parameter_length,
     ips_s7comm_data_length,
+    ips_s7comm_error_code,
+    ips_s7comm_error_class,
     ips_s7comm_function_code,
     ips_s7comm_item_count,
-    ips_s7comm_var_type,
+    ips_s7comm_di_error_code,
+    ips_s7comm_di_variable_type,
+    ips_s7comm_di_data_length,
+    ips_s7comm_di_data,
+    ips_s7comm_pi_var_type,
+    ips_s7comm_pi_var_length,
+    ips_s7comm_pi_syntax_id,
+    ips_s7comm_pi_transport_size,
+    ips_s7comm_pi_length,
+    ips_s7comm_pi_db_number,
+    ips_s7comm_pi_area,
+    ips_s7comm_pi_address,
     nullptr
 };

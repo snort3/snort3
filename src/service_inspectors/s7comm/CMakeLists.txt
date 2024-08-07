@@ -16,7 +16,18 @@ set( FILE_LIST
     ips_s7comm_data_length.cc
     ips_s7comm_function_code.cc
     ips_s7comm_item_count.cc
-    ips_s7comm_var_type.cc
+    ips_s7comm_di_data_length.cc
+    ips_s7comm_di_data.cc
+    ips_s7comm_di_error_code.cc
+    ips_s7comm_di_variable_type.cc
+    ips_s7comm_pi_address.cc
+    ips_s7comm_pi_area.cc
+    ips_s7comm_pi_db_number.cc
+    ips_s7comm_pi_length.cc
+    ips_s7comm_pi_syntax_id.cc
+    ips_s7comm_pi_transport_size.cc
+    ips_s7comm_pi_var_length.cc
+    ips_s7comm_pi_var_type.cc
 )
 
 if (STATIC_INSPECTORS)

@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// ips_s7comm_var_type.cc author Pradeep Damodharan <prdamodh@cisco.com>
+// ips_s7comm_area.cc author Pradeep Damodharan <prdamodh@cisco.com>
 // based on work by Jeffrey Gu <jgu@cisco.com>
 
 #ifdef HAVE_CONFIG_H
@@ -33,46 +33,48 @@
 
 using namespace snort;
 
-static const char* s_name = "s7comm_var_type";
+static const char* s_name = "s7comm_pi_area";
 
 //-------------------------------------------------------------------------
-// var_type option
+// area option
 //-------------------------------------------------------------------------
 
-static THREAD_LOCAL ProfileStats s7comm_var_type_prof;
+static THREAD_LOCAL ProfileStats s7comm_area_prof;
 
-class S7commVarTypeOption : public IpsOption
+class S7commAreaOption : public IpsOption
 {
 public:
-    S7commVarTypeOption(uint8_t v) : IpsOption(s_name), var_type(v) {}
+    S7commAreaOption(uint8_t v) : IpsOption(s_name), area(v) {}
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
     EvalStatus eval(Cursor&, Packet*) override;
 
 private:
-    uint8_t var_type;
+    uint8_t area;
 };
 
-uint32_t S7commVarTypeOption::hash() const
+uint32_t S7commAreaOption::hash() const
 {
-    uint32_t a = var_type, b = IpsOption::hash(), c = 0;
+    uint32_t a = area, b = IpsOption::hash(), c = 0;
     mix(a, b, c);
     finalize(a, b, c);
     return c;
 }
 
-bool S7commVarTypeOption::operator==(const IpsOption& ips) const
+bool S7commAreaOption::operator==(const IpsOption& ips) const
 {
     if (!IpsOption::operator==(ips))
         return false;
 
-    const S7commVarTypeOption& rhs = (const S7commVarTypeOption&)ips;
-    return (var_type == rhs.var_type);
+    const S7commAreaOption& rhs = (const S7commAreaOption&)ips;
+    return (area == rhs.area);
 }
 
-IpsOption::EvalStatus S7commVarTypeOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus S7commAreaOption::eval(Cursor&, Packet* p)
 {
+    RuleProfile profile(s7comm_area_prof);
+
     if (!p->flow)
         return NO_MATCH;
 
@@ -86,8 +88,7 @@ IpsOption::EvalStatus S7commVarTypeOption::eval(Cursor&, Packet* p)
 
     for (const auto& requestItem : mfd->ssn_data.request_items)
     {        
-        if (requestItem.var_type == var_type)
-
+        if (requestItem.area == area)
             return MATCH;
     }
 
@@ -100,40 +101,40 @@ IpsOption::EvalStatus S7commVarTypeOption::eval(Cursor&, Packet* p)
 
 static const Parameter s_params[] =
 {
-    { "~", Parameter::PT_STRING, nullptr, nullptr, "var_type to match" },
+    { "~", Parameter::PT_STRING, nullptr, nullptr, "area to match" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 #define s_help \
-    "rule option to check s7comm var_type"
+    "rule option to check s7comm area"
 
-class S7commVarTypeModule : public Module
+class S7commAreaModule : public Module
 {
 public:
-    S7commVarTypeModule() : Module(s_name, s_help, s_params) {}
+    S7commAreaModule() : Module(s_name, s_help, s_params) {}
 
     bool set(const char*, Value&, SnortConfig*) override;
-    ProfileStats* get_profile() const override { return &s7comm_var_type_prof; }
+    ProfileStats* get_profile() const override { return &s7comm_area_prof; }
     Usage get_usage() const override { return DETECT; }
 
 public:
-    uint8_t var_type = 0;
+    uint8_t area = 0;
 };
 
-bool S7commVarTypeModule::set(const char*, Value& v, SnortConfig*)
+bool S7commAreaModule::set(const char*, Value& v, SnortConfig*)
 {
     assert(v.is("~"));
     long n;
 
     if (v.strtol(n))
-        var_type = static_cast<uint8_t>(n);
+        area = static_cast<uint8_t>(n);
 
     return true;
 }
 
 static Module* mod_ctor()
 {
-    return new S7commVarTypeModule;
+    return new S7commAreaModule;
 }
 
 static void mod_dtor(Module* m)
@@ -143,15 +144,14 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    S7commVarTypeModule* mod = (S7commVarTypeModule*)m;
-    return new S7commVarTypeOption(mod->var_type);
+    S7commAreaModule* mod = (S7commAreaModule*)m;
+    return new S7commAreaOption(mod->area);
 }
 
 static void opt_dtor(IpsOption* p)
 {
     delete p;
 }
-
 
 static const IpsApi ips_api =
 {
@@ -178,4 +178,4 @@ static const IpsApi ips_api =
     nullptr
 };
 
-const BaseApi* ips_s7comm_var_type = &ips_api.base;
+const BaseApi* ips_s7comm_pi_area = &ips_api.base;

@@ -108,11 +108,8 @@ IpsOption::EvalStatus S7commPduRefOption::eval(Cursor&, Packet* p)
 
     S7commFlowData* mfd = (S7commFlowData*)p->flow->get_flow_data(S7commFlowData::inspector_id);
 
-    if (mfd && mfd->ssn_data.s7comm_message_type == s7comm_func_map[2].func) // Check for ack_data message type
-    {
-        if (mfd->ssn_data.s7comm_pdu_reference == pdu_ref)
+    if (mfd && mfd->ssn_data.s7comm_pdu_reference == pdu_ref)
             return MATCH;
-    }
 
     return NO_MATCH;
 }

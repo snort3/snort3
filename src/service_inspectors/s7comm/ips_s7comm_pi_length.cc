@@ -1,3 +1,5 @@
+// ips_s7comm_length.cc
+
 //--------------------------------------------------------------------------
 // Copyright (C) 2018-2024 Cisco and/or its affiliates. All rights reserved.
 //
@@ -16,64 +18,70 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// ips_s7comm_transport_size.cc author Pradeep Damodharan <prdamodh@cisco.com>
+// ips_s7comm_length.cc author <Your Name> <Your Email>
 // based on work by Jeffrey Gu <jgu@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include <iostream> // For debug output
+
 #include "framework/ips_option.h"
 #include "framework/module.h"
+#include "framework/range.h"
 #include "hash/hash_key_operations.h"
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
-
+#include <iostream> // For debug output
 #include "s7comm.h"
 
 using namespace snort;
 
-static const char* s_name = "s7comm_transport_size";
+static const char* s_name = "s7comm_pi_length";
 
 //-------------------------------------------------------------------------
-// transport_size option
+// length option
 //-------------------------------------------------------------------------
 
-static THREAD_LOCAL ProfileStats s7comm_transport_size_prof;
+static THREAD_LOCAL ProfileStats s7comm_length_prof;
 
-class S7commTransportSizeOption : public IpsOption
+class S7commLengthOption : public IpsOption
 {
 public:
-    S7commTransportSizeOption(uint8_t v) : IpsOption(s_name), transport_size(v) {}
+    S7commLengthOption(const RangeCheck& c)
+     : IpsOption(s_name), config(c)
+    {}
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
+
     EvalStatus eval(Cursor&, Packet*) override;
 
-private:
-    uint8_t transport_size;
+public:
+    RangeCheck config;
 };
 
-uint32_t S7commTransportSizeOption::hash() const
+uint32_t S7commLengthOption::hash() const
 {
-    uint32_t a = transport_size, b = IpsOption::hash(), c = 0;
+    uint32_t a = config.hash(), b = IpsOption::hash(), c = 0;
+
     mix(a, b, c);
     finalize(a, b, c);
+
     return c;
 }
 
-bool S7commTransportSizeOption::operator==(const IpsOption& ips) const
+bool S7commLengthOption::operator==(const IpsOption& ips) const
 {
     if (!IpsOption::operator==(ips))
         return false;
 
-    const S7commTransportSizeOption& rhs = (const S7commTransportSizeOption&)ips;
-    return (transport_size == rhs.transport_size);
+    const S7commLengthOption& rhs = (const S7commLengthOption&)ips;
+    return (config == rhs.config);
 }
 
-IpsOption::EvalStatus S7commTransportSizeOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus S7commLengthOption::eval(Cursor&, Packet* p)
 {
-    RuleProfile profile(s7comm_transport_size_prof);
+    RuleProfile profile(s7comm_length_prof);  // cppcheck-suppress unreadVariable
 
     if (!p->flow)
         return NO_MATCH;
@@ -83,13 +91,13 @@ IpsOption::EvalStatus S7commTransportSizeOption::eval(Cursor&, Packet* p)
 
     S7commFlowData* mfd = (S7commFlowData*)p->flow->get_flow_data(S7commFlowData::inspector_id);
 
-    if (!mfd)
-        return NO_MATCH;
-
-    for (const auto& requestItem : mfd->ssn_data.request_items)
-    {        
-        if (requestItem.transport_size == transport_size)
-            return MATCH;
+    if (mfd)
+    {
+        for (const auto& requestItem : mfd->ssn_data.request_items)
+        {
+            if (config.eval(requestItem.length))
+                return MATCH;
+        }
     }
 
     return NO_MATCH;
@@ -99,42 +107,61 @@ IpsOption::EvalStatus S7commTransportSizeOption::eval(Cursor&, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
+#define RANGE "0:65535"
+
 static const Parameter s_params[] =
 {
-    { "~", Parameter::PT_STRING, nullptr, nullptr, "transport_size to match" },
+    { "~range", Parameter::PT_INTERVAL, RANGE, nullptr, "length to match" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 #define s_help \
-    "rule option to check s7comm transport_size"
+    "rule option to check s7comm length"
 
-class S7commTransportSizeModule : public Module
+class S7commLengthModule : public Module
 {
 public:
-    S7commTransportSizeModule() : Module(s_name, s_help, s_params) {}
+    S7commLengthModule() : Module(s_name, s_help, s_params) {}
 
+    bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
-    ProfileStats* get_profile() const override { return &s7comm_transport_size_prof; }
-    Usage get_usage() const override { return DETECT; }
+
+    ProfileStats* get_profile() const override
+    {
+        return &s7comm_length_prof;
+    }
+
+    Usage get_usage() const override
+    {
+        return DETECT;
+    }
 
 public:
-    uint8_t transport_size = 0;
+    RangeCheck length;
 };
 
-bool S7commTransportSizeModule::set(const char*, Value& v, SnortConfig*)
+bool S7commLengthModule::begin(const char*, int, SnortConfig*)
 {
-    assert(v.is("~"));
-    long n;
-
-    if (v.strtol(n))
-        transport_size = static_cast<uint8_t>(n);
-
+    length.init();
     return true;
 }
 
+bool S7commLengthModule::set(const char* name, Value& v, SnortConfig*)
+{
+    if ( v.is("~range") )
+        return length.validate(v.get_string(), RANGE);
+
+    return false; // Invalid length
+}
+
+//-------------------------------------------------------------------------
+// api
+//-------------------------------------------------------------------------
+
 static Module* mod_ctor()
 {
-    return new S7commTransportSizeModule;
+    return new S7commLengthModule;
 }
 
 static void mod_dtor(Module* m)
@@ -144,8 +171,8 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    S7commTransportSizeModule* mod = (S7commTransportSizeModule*)m;
-    return new S7commTransportSizeOption(mod->transport_size);
+    S7commLengthModule* mod = (S7commLengthModule*)m;
+    return new S7commLengthOption(mod->length);
 }
 
 static void opt_dtor(IpsOption* p)
@@ -178,4 +205,4 @@ static const IpsApi ips_api =
     nullptr
 };
 
-const BaseApi* ips_s7comm_transport_size = &ips_api.base;
+const BaseApi* ips_s7comm_pi_length = &ips_api.base;

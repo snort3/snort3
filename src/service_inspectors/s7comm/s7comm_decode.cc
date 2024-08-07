@@ -62,6 +62,16 @@ struct CotpHeader
 
 using namespace snort;
 
+uint16_t readBigEndianField(const uint8_t* buffer) {
+    // Combine bytes into a 16-bit integer (Big-Endian)
+    uint16_t net_short = (buffer[0] << 8) | buffer[1];
+
+    // Convert from network byte order to host byte order
+    return ntohs(net_short);
+}
+
+
+
 static bool DecodeJobReadVar(S7commSessionData* session, const uint8_t* data, int& offset)
 {
     session->s7comm_item_count = *(data + offset + 1);
@@ -186,9 +196,9 @@ static bool DecodeAckDataReadVar(S7commSessionData* session, const uint8_t* data
 
             //std::cout << "Data item " << i << " added with error code: " << static_cast<int>(data_item.error_code) << std::endl;
             //std::cout << "Data item " << i << " values: ";
-            for (const auto& byte : data_item.data) {
+            //for (const auto& byte : data_item.data) {
                 //std::cout << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte) << " ";
-            }
+            //}
             //std::cout << std::dec << std::endl; // Switch back to decimal output
 
             offset += data_item.length; // Move to the next data item
@@ -238,6 +248,16 @@ static bool S7commProtocolDecode(S7commSessionData* session, Packet* p)
     session->s7comm_reserved = ntohs(s7comm_header->reserved);
     session->s7comm_pdu_reference = ntohs(s7comm_header->pdu_reference);
     session->s7comm_parameter_length = ntohs(s7comm_header->parameter_length);
+   /* // Example: bytes read from a packet (Big-Endian order)
+    uint8_t packet[] = { 0x00, 0xF6 };  // Example bytes
+
+    // Read and convert the 2-byte field
+    uint16_t value = readBigEndianField(packet);
+
+    // Output the results
+    std::cout << "Read value (decimal): " << value << std::endl;
+    std::cout << "Read value (hex): 0x" << std::hex << value << std::endl;*/
+
     session->s7comm_data_length = ntohs(s7comm_header->data_length);
 
     offset += sizeof(S7commHeader) - 2; // -2 for optional fields

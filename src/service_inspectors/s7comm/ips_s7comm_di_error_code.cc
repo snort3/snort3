@@ -33,18 +33,18 @@
 
 using namespace snort;
 
-static const char* s_name = "s7comm_error_code";
+static const char* s_name = "s7comm_di_error_code";
 
 //-------------------------------------------------------------------------
 // error_code option
 //-------------------------------------------------------------------------
 
-static THREAD_LOCAL ProfileStats s7comm_error_code_prof;
+static THREAD_LOCAL ProfileStats s7comm_di_error_code_prof;
 
-class S7commErrorCodeOption : public IpsOption
+class S7commDIErrorCodeOption : public IpsOption
 {
 public:
-    S7commErrorCodeOption(uint8_t v) : IpsOption(s_name), error_code(v) {}
+    S7commDIErrorCodeOption(uint8_t v) : IpsOption(s_name), error_code(v) {}
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -54,7 +54,7 @@ private:
     uint8_t error_code;
 };
 
-uint32_t S7commErrorCodeOption::hash() const
+uint32_t S7commDIErrorCodeOption::hash() const
 {
     uint32_t a = error_code, b = IpsOption::hash(), c = 0;
     mix(a, b, c);
@@ -62,18 +62,18 @@ uint32_t S7commErrorCodeOption::hash() const
     return c;
 }
 
-bool S7commErrorCodeOption::operator==(const IpsOption& ips) const
+bool S7commDIErrorCodeOption::operator==(const IpsOption& ips) const
 {
     if (!IpsOption::operator==(ips))
         return false;
 
-    const S7commErrorCodeOption& rhs = (const S7commErrorCodeOption&)ips;
+    const S7commDIErrorCodeOption& rhs = (const S7commDIErrorCodeOption&)ips;
     return (error_code == rhs.error_code);
 }
 
-IpsOption::EvalStatus S7commErrorCodeOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus S7commDIErrorCodeOption::eval(Cursor&, Packet* p)
 {
-    RuleProfile profile(s7comm_error_code_prof);
+    RuleProfile profile(s7comm_di_error_code_prof);
 
     if (!p->flow)
         return NO_MATCH;
@@ -108,20 +108,20 @@ static const Parameter s_params[] =
 #define s_help \
     "rule option to check s7comm error_code"
 
-class S7commErrorCodeModule : public Module
+class S7commDIErrorCodeModule : public Module
 {
 public:
-    S7commErrorCodeModule() : Module(s_name, s_help, s_params) {}
+    S7commDIErrorCodeModule() : Module(s_name, s_help, s_params) {}
 
     bool set(const char*, Value&, SnortConfig*) override;
-    ProfileStats* get_profile() const override { return &s7comm_error_code_prof; }
+    ProfileStats* get_profile() const override { return &s7comm_di_error_code_prof; }
     Usage get_usage() const override { return DETECT; }
 
 public:
     uint8_t error_code = 0;
 };
 
-bool S7commErrorCodeModule::set(const char*, Value& v, SnortConfig*)
+bool S7commDIErrorCodeModule::set(const char*, Value& v, SnortConfig*)
 {
     assert(v.is("~"));
     long n;
@@ -134,7 +134,7 @@ bool S7commErrorCodeModule::set(const char*, Value& v, SnortConfig*)
 
 static Module* mod_ctor()
 {
-    return new S7commErrorCodeModule;
+    return new S7commDIErrorCodeModule;
 }
 
 static void mod_dtor(Module* m)
@@ -144,8 +144,8 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    S7commErrorCodeModule* mod = (S7commErrorCodeModule*)m;
-    return new S7commErrorCodeOption(mod->error_code);
+    S7commDIErrorCodeModule* mod = (S7commDIErrorCodeModule*)m;
+    return new S7commDIErrorCodeOption(mod->error_code);
 }
 
 static void opt_dtor(IpsOption* p)
@@ -178,4 +178,4 @@ static const IpsApi ips_api =
     nullptr
 };
 
-const BaseApi* ips_s7comm_error_code = &ips_api.base;
+const BaseApi* ips_s7comm_di_error_code = &ips_api.base;

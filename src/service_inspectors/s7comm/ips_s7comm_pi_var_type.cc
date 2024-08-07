@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// ips_s7comm_db_number.cc author Pradeep Damodharan <prdamodh@cisco.com>
+// ips_s7comm_var_type.cc author Pradeep Damodharan <prdamodh@cisco.com>
 // based on work by Jeffrey Gu <jgu@cisco.com>
 
 #ifdef HAVE_CONFIG_H
@@ -33,48 +33,46 @@
 
 using namespace snort;
 
-static const char* s_name = "s7comm_db_number";
+static const char* s_name = "s7comm_pi_var_type";
 
 //-------------------------------------------------------------------------
-// db_number option
+// var_type option
 //-------------------------------------------------------------------------
 
-static THREAD_LOCAL ProfileStats s7comm_db_number_prof;
+static THREAD_LOCAL ProfileStats s7comm_var_type_prof;
 
-class S7commDbNumberOption : public IpsOption
+class S7commVarTypeOption : public IpsOption
 {
 public:
-    S7commDbNumberOption(uint16_t v) : IpsOption(s_name), db_number(v) {}
+    S7commVarTypeOption(uint8_t v) : IpsOption(s_name), var_type(v) {}
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
     EvalStatus eval(Cursor&, Packet*) override;
 
 private:
-    uint16_t db_number;
+    uint8_t var_type;
 };
 
-uint32_t S7commDbNumberOption::hash() const
+uint32_t S7commVarTypeOption::hash() const
 {
-    uint32_t a = db_number, b = IpsOption::hash(), c = 0;
+    uint32_t a = var_type, b = IpsOption::hash(), c = 0;
     mix(a, b, c);
     finalize(a, b, c);
     return c;
 }
 
-bool S7commDbNumberOption::operator==(const IpsOption& ips) const
+bool S7commVarTypeOption::operator==(const IpsOption& ips) const
 {
     if (!IpsOption::operator==(ips))
         return false;
 
-    const S7commDbNumberOption& rhs = (const S7commDbNumberOption&)ips;
-    return (db_number == rhs.db_number);
+    const S7commVarTypeOption& rhs = (const S7commVarTypeOption&)ips;
+    return (var_type == rhs.var_type);
 }
 
-IpsOption::EvalStatus S7commDbNumberOption::eval(Cursor&, Packet* p)
+IpsOption::EvalStatus S7commVarTypeOption::eval(Cursor&, Packet* p)
 {
-    RuleProfile profile(s7comm_db_number_prof);
-
     if (!p->flow)
         return NO_MATCH;
 
@@ -88,7 +86,8 @@ IpsOption::EvalStatus S7commDbNumberOption::eval(Cursor&, Packet* p)
 
     for (const auto& requestItem : mfd->ssn_data.request_items)
     {        
-        if (requestItem.db_number == db_number)
+        if (requestItem.var_type == var_type)
+
             return MATCH;
     }
 
@@ -101,24 +100,82 @@ IpsOption::EvalStatus S7commDbNumberOption::eval(Cursor&, Packet* p)
 
 static const Parameter s_params[] =
 {
-    { "~", Parameter::PT_STRING, nullptr, nullptr, "db_number to match" },
+    { "~", Parameter::PT_STRING, nullptr, nullptr, "var_type to match" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 #define s_help \
-    "rule option to check s7comm db_number"
+    "rule option to check s7comm var_type"
 
-class S7commDbNumberModule : public Module
+class S7commVarTypeModule : public Module
 {
 public:
-    S7commDbNumberModule() : Module(s_name, s_help, s_params) {}
+    S7commVarTypeModule() : Module(s_name, s_help, s_params) {}
 
     bool set(const char*, Value&, SnortConfig*) override;
-    ProfileStats* get_profile() const override { return &s7comm_db_number_prof; }
+    ProfileStats* get_profile() const override { return &s7comm_var_type_prof; }
     Usage get_usage() const override { return DETECT; }
 
 public:
-    uint16_t db_number = 0;
+    uint8_t var_type = 0;
 };
 
-bool S7commDbNumber
+bool S7commVarTypeModule::set(const char*, Value& v, SnortConfig*)
+{
+    assert(v.is("~"));
+    long n;
+
+    if (v.strtol(n))
+        var_type = static_cast<uint8_t>(n);
+
+    return true;
+}
+
+static Module* mod_ctor()
+{
+    return new S7commVarTypeModule;
+}
+
+static void mod_dtor(Module* m)
+{
+    delete m;
+}
+
+static IpsOption* opt_ctor(Module* m, IpsInfo&)
+{
+    S7commVarTypeModule* mod = (S7commVarTypeModule*)m;
+    return new S7commVarTypeOption(mod->var_type);
+}
+
+static void opt_dtor(IpsOption* p)
+{
+    delete p;
+}
+
+
+static const IpsApi ips_api =
+{
+    {
+        PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        0,
+        API_RESERVED,
+        API_OPTIONS,
+        s_name,
+        s_help,
+        mod_ctor,
+        mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    0, PROTO_BIT__TCP,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    opt_ctor,
+    opt_dtor,
+    nullptr
+};
+
+const BaseApi* ips_s7comm_pi_var_type = &ips_api.base;
