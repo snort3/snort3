@@ -46,7 +46,8 @@ struct S7commSessionData
     uint8_t s7comm_error_code = 0;
     uint8_t s7comm_function_code = 0;
     uint8_t s7comm_item_count = -1;
-    bool is_read_write_var = false; // the message is read var or write var
+    bool has_item_count = false; // the message is read var or write var
+    uint8_t s7comm_function_group = 0; // for userdata messages
 
     // New fields for DB-type addressing mode (Request Items)
         struct RequestItem {
@@ -84,9 +85,10 @@ struct S7commSessionData
     {
         // Reset existing fields
         s7comm_proto_id = s7comm_message_type = s7comm_error_class = s7comm_error_code = 0;
-        s7comm_function_code = s7comm_item_count = 0;
+        s7comm_function_code = s7comm_function_group = 0;
+        s7comm_item_count = -1;
         s7comm_reserved = s7comm_pdu_reference = s7comm_parameter_length = s7comm_data_length = 0;
-        is_read_write_var = false;
+        has_item_count = false;
 
         // Reset new fields
         request_items.clear();

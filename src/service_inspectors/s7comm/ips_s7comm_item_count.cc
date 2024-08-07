@@ -27,10 +27,11 @@
 
 #include "framework/ips_option.h"
 #include "framework/module.h"
+#include "framework/range.h"
 #include "hash/hash_key_operations.h"
 #include "protocols/packet.h"
 #include "profiler/profiler.h"
-
+#include <iostream> // For debug output
 #include "s7comm.h"
 
 using namespace snort;
@@ -65,8 +66,9 @@ static THREAD_LOCAL ProfileStats s7comm_item_count_prof;
 class S7commItemCountOption : public IpsOption
 {
 public:
-    S7commItemCountOption(uint16_t ic) : IpsOption(s_name)
-    { item_count = ic; }
+    S7commItemCountOption(const RangeCheck& c)
+     : IpsOption(s_name), config(c)
+    {}
 
     uint32_t hash() const override;
     bool operator==(const IpsOption&) const override;
@@ -74,12 +76,12 @@ public:
     EvalStatus eval(Cursor&, Packet*) override;
 
 public:
-    uint16_t item_count;
+    RangeCheck config;
 };
 
 uint32_t S7commItemCountOption::hash() const
 {
-    uint32_t a = item_count, b = IpsOption::hash(), c = 0;
+    uint32_t a = config.hash(), b = IpsOption::hash(), c = 0;
 
     mix(a, b, c);
     finalize(a, b, c);
@@ -93,7 +95,7 @@ bool S7commItemCountOption::operator==(const IpsOption& ips) const
         return false;
 
     const S7commItemCountOption& rhs = (const S7commItemCountOption&)ips;
-    return (item_count == rhs.item_count);
+    return (config == rhs.config);
 }
 
 IpsOption::EvalStatus S7commItemCountOption::eval(Cursor&, Packet* p)
@@ -108,11 +110,14 @@ IpsOption::EvalStatus S7commItemCountOption::eval(Cursor&, Packet* p)
 
     S7commFlowData* mfd = (S7commFlowData*)p->flow->get_flow_data(S7commFlowData::inspector_id);
 
-    if (mfd && mfd->ssn_data.s7comm_message_type == s7comm_func_map[2].func) // Check for ack_data message type
+    if (mfd) // Check for ack_data message type
     {
-        if (!mfd->ssn_data.is_read_write_var ) return NO_MATCH;
-        if (mfd->ssn_data.s7comm_item_count == item_count)
+        if (!(mfd->ssn_data.has_item_count))
+
+            return NO_MATCH;
+        if (config.eval(mfd->ssn_data.s7comm_item_count))
             return MATCH;
+            
     }
 
     return NO_MATCH;
@@ -122,9 +127,11 @@ IpsOption::EvalStatus S7commItemCountOption::eval(Cursor&, Packet* p)
 // module
 //-------------------------------------------------------------------------
 
+#define RANGE "0:65535"
+
 static const Parameter s_params[] =
 {
-    { "~", Parameter::PT_STRING, nullptr, nullptr, "item count to match for ack_data messages" },
+    { "~range", Parameter::PT_INTERVAL, RANGE, nullptr, "item count to match for ack_data messages" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -137,6 +144,7 @@ class S7commItemCountModule : public Module
 public:
     S7commItemCountModule() : Module(s_name, s_help, s_params) {}
 
+    bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
     ProfileStats* get_profile() const override
@@ -150,21 +158,21 @@ public:
     }
 
 public:
-    uint16_t item_count = 0;
+    RangeCheck item_count;
 };
+
+bool S7commItemCountModule::begin(const char*, int, SnortConfig*)
+{
+    item_count.init();
+    return true;
+}
 
 bool S7commItemCountModule::set(const char* name, Value& v, SnortConfig*)
 {
-    assert(v.is("~"));
-    long n;
+    if ( v.is("~range") )
+        return item_count.validate(v.get_string(), RANGE);
 
-    if ( v.strtol(n) )
-        {
-            item_count = static_cast<uint16_t>(n);
-            return true;
-        }
-    else
-        return false; // Invalid item count
+    return false; // Invalid item count
 }
 
 //-------------------------------------------------------------------------

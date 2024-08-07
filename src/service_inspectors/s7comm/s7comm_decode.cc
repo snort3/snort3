@@ -89,7 +89,7 @@ static bool DecodeJobWriteVar(S7commSessionData* session, const uint8_t* data, i
     session->s7comm_item_count = *(data + offset + 1);
     offset += 2;
 
-    std::cout << "Item count: " << static_cast<int>(session->s7comm_item_count) << std::endl;
+    //std::cout << "Item count: " << static_cast<int>(session->s7comm_item_count) << std::endl;
 
     for (int i = 0; i < session->s7comm_item_count; ++i) {
         S7commSessionData::RequestItem request_item;
@@ -104,11 +104,11 @@ static bool DecodeJobWriteVar(S7commSessionData* session, const uint8_t* data, i
         session->request_items.push_back(request_item);
         offset += 12; // Move to the next request item
 
-        std::cout << "Request item " << i << " added with DB number: " << request_item.db_number << std::endl;
+        //std::cout << "Request item " << i << " added with DB number: " << request_item.db_number << std::endl;
     }
 
     for (int i = 0; i < session->s7comm_item_count; ++i) {
-        std::cout << "Processing data item " << i << std::endl;
+        //std::cout << "Processing data item " << i << std::endl;
 
         S7commSessionData::DataItem data_item;
         data_item.error_code = *(data + offset);
@@ -116,29 +116,29 @@ static bool DecodeJobWriteVar(S7commSessionData* session, const uint8_t* data, i
         data_item.length = ntohs(*(uint16_t*)(data + offset + 2));
         offset += 4; // Move to data
 
-        std::cout << "Data item " << i << " with length: " << data_item.length << std::endl;
+        //std::cout << "Data item " << i << " with length: " << data_item.length << std::endl;
 
         if (data_item.length > 0) {
             data_item.data.assign(data + offset, data + offset + data_item.length);
             session->data_items.push_back(data_item);
 
-            std::cout << "Data item " << i << " added with error code: " << static_cast<int>(data_item.error_code) << std::endl;
-            std::cout << "Data item " << i << " values: ";
+            //std::cout << "Data item " << i << " added with error code: " << static_cast<int>(data_item.error_code) << std::endl;
+            //std::cout << "Data item " << i << " values: ";
             for (const auto& byte : data_item.data) {
-                std::cout << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte) << " ";
+                //std::cout << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte) << " ";
             }
-            std::cout << std::dec << std::endl; // Switch back to decimal output
+            //std::cout << std::dec << std::endl; // Switch back to decimal output
 
             offset += data_item.length; // Move to the next data item
 
             // Print the length of data_items vector
-            std::cout << "Current length of data_items vector: " << session->data_items.size() << std::endl;
+            //std::cout << "Current length of data_items vector: " << session->data_items.size() << std::endl;
         }
 
         // Handle padding if length is odd and there's more data
         if (data_item.length % 2 != 0 && i < session->s7comm_item_count - 1) {
             offset += 1;
-            std::cout << "Padding byte skipped" << std::endl;
+            //std::cout << "Padding byte skipped" << std::endl;
         }
     }
 
@@ -162,7 +162,7 @@ static bool DecodeAckDataReadVar(S7commSessionData* session, const uint8_t* data
     offset += 2;
 
     for (int i = 0; i < session->s7comm_item_count; ++i) {
-        std::cout << "Processing data item " << i << std::endl;
+        //std::cout << "Processing data item " << i << std::endl;
 
         S7commSessionData::DataItem data_item;
         data_item.error_code = *(data + offset);
@@ -173,34 +173,34 @@ static bool DecodeAckDataReadVar(S7commSessionData* session, const uint8_t* data
         uint8_t byte2 = *(data + offset + 3);
         data_item.length = calculate_custom_length(byte1, byte2);
 
-        std::cout << "Raw length bytes: " << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte1) << " " << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte2) << std::dec << std::endl;
-        std::cout << "Interpreted length: " << data_item.length << std::endl;
+        //std::cout << "Raw length bytes: " << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte1) << " " << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte2) << std::dec << std::endl;
+        //std::cout << "Interpreted length: " << data_item.length << std::endl;
 
         offset += 4; // Move to data
 
-        std::cout << "Data item " << i << " with length: " << data_item.length << std::endl;
+        //std::cout << "Data item " << i << " with length: " << data_item.length << std::endl;
 
         if (data_item.length > 0) {
             data_item.data.assign(data + offset, data + offset + data_item.length);
             session->data_items.push_back(data_item);
 
-            std::cout << "Data item " << i << " added with error code: " << static_cast<int>(data_item.error_code) << std::endl;
-            std::cout << "Data item " << i << " values: ";
+            //std::cout << "Data item " << i << " added with error code: " << static_cast<int>(data_item.error_code) << std::endl;
+            //std::cout << "Data item " << i << " values: ";
             for (const auto& byte : data_item.data) {
-                std::cout << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte) << " ";
+                //std::cout << std::setw(2) << std::setfill('0') << std::hex << static_cast<int>(byte) << " ";
             }
-            std::cout << std::dec << std::endl; // Switch back to decimal output
+            //std::cout << std::dec << std::endl; // Switch back to decimal output
 
             offset += data_item.length; // Move to the next data item
 
             // Print the length of data_items vector
-            std::cout << "Current length of data_items vector: " << session->data_items.size() << std::endl;
+            //std::cout << "Current length of data_items vector: " << session->data_items.size() << std::endl;
         }
 
         // Handle padding if length is odd and there's more data
         if (data_item.length % 2 != 0 && i < session->s7comm_item_count - 1) {
             offset += 1;
-            std::cout << "Padding byte skipped" << std::endl;
+            //std::cout << "Padding byte skipped" << std::endl;
         }
     }
 
@@ -252,31 +252,51 @@ static bool S7commProtocolDecode(S7commSessionData* session, Packet* p)
     const S7commParameterHeader* s7comm_param_header;
     s7comm_param_header = (const S7commParameterHeader*)(p->data + offset);
     session->s7comm_function_code = s7comm_param_header->function_code;
+    session->s7comm_item_count = s7comm_param_header->item_count;
 
     //reset previous request and data items
     session->request_items.clear();
     session->data_items.clear();
-
-    switch (s7comm_header->message_type) {
+    // Extract the function group from the 7th byte in the parameter structure
+    session->s7comm_function_group = *(p->data + offset + 5) & 0x3F; // 0x3F = 00111111
+   
+    
+    switch (s7comm_header->message_type) {  //Decode the rest of the packet depending on its message type
         case JOB_REQUEST:
             if (session->s7comm_function_code == 0x04) {
+                session->has_item_count=true;
                 return DecodeJobReadVar(session, p->data, offset);
             } else if (session->s7comm_function_code == 0x05) {
+                session->has_item_count=true;
                 return DecodeJobWriteVar(session, p->data, offset);
             }
             break;
         case ACK_DATA:
             if (session->s7comm_function_code == 0x04) {
+                session->has_item_count=true;
                 return DecodeAckDataReadVar(session, p->data, offset);
             } else if (session->s7comm_function_code == 0x05) {
+                session->has_item_count=true;
                 return DecodeAckDataWriteVar(session, p->data, offset);
             }
             break;
+        
+        case USERDATA:
+            
+            if (session->s7comm_function_code == 0x00) {
+
+                if(session->s7comm_function_group == 0x02 || session->s7comm_function_group == 0x04) //check if the function subgroup is "S7COMM_UD_FUNCGROUP_CYCLIC" or "S7COMM_UD_FUNCGROUP_CPU"
+                    session->has_item_count=true;
+            }
+            break;
+
         default:
-            return false;
+            session->has_item_count=false;
+            break;
+            
     }
 
-    return false;
+    return true;
 }
 
 

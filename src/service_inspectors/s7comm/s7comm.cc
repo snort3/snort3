@@ -188,6 +188,7 @@ extern const BaseApi* ips_s7comm_parameter_length;
 extern const BaseApi* ips_s7comm_data_length;
 extern const BaseApi* ips_s7comm_function_code;
 extern const BaseApi* ips_s7comm_item_count;
+extern const BaseApi* ips_s7comm_var_type;
 
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
@@ -205,5 +206,6 @@ const BaseApi* sin_s7comm[] =
     ips_s7comm_data_length,
     ips_s7comm_function_code,
     ips_s7comm_item_count,
+    ips_s7comm_var_type,
     nullptr
 };

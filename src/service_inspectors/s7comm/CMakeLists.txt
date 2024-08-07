@@ -16,6 +16,7 @@ set( FILE_LIST
     ips_s7comm_data_length.cc
     ips_s7comm_function_code.cc
     ips_s7comm_item_count.cc
+    ips_s7comm_var_type.cc
 )
 
 if (STATIC_INSPECTORS)
