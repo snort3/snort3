@@ -25,6 +25,7 @@
 #include "daq_user.h"
 
 #include <arpa/inet.h>
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -373,7 +374,10 @@ static void parse_string(HextContext* hc, char* s, HextMsgDesc *desc)
     while (*s && *s != '"' && desc->msg.data_len < hc->snaplen)
     {
         if (unescape(*s++, &t))
+        {
+            assert(desc->data);
             desc->data[desc->msg.data_len++] = t;
+        }
     }
     desc->pkthdr.pktlen = desc->msg.data_len;
 }

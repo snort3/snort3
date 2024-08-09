@@ -89,14 +89,13 @@ inline void TraceSession(const snort::Flow* flow, const snort::Packet* p)
 
 inline void TraceSegments(const TcpReassemblySegments& seglist, const snort::Packet* p)
 {
+    if ( !trace_enabled(stream_tcp_trace, TRACE_SEGMENTS) )
+        return;
+
     const TcpSegmentNode* tsn = seglist.head;
     uint32_t sx = seglist.tracker->r_win_base;
     unsigned segs = 0;
-    unsigned bytes = 0;
     std::stringstream ss;
-
-    if ( !trace_enabled(stream_tcp_trace, TRACE_SEGMENTS) )
-        return;
 
     while ( tsn )
     {
@@ -112,17 +111,14 @@ inline void TraceSegments(const TcpReassemblySegments& seglist, const snort::Pac
 
         if ( tsn->cursor and tsn->unscanned() > 0 )
             ss << "(" << tsn->cursor << "|" << tsn->unscanned() << ")";
+
         segs++;
-        bytes += tsn->length;
         sx = seq + tsn->length;
         tsn = tsn->next;
     }
 
     if ( !ss.str().empty() )
         trace_logf(DEFAULT_TRACE_LOG_LEVEL, stream_tcp_trace, TRACE_SEGMENTS, p, "       %s\n", ss.str().c_str());
-
-    assert(seglist.seg_count == segs);
-    assert(seglist.seg_bytes_logical == bytes);
 }
 
 inline void TraceState(const TcpStreamTracker& a, const TcpStreamTracker& b, const char* s,

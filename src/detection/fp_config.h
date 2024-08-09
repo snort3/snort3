@@ -148,7 +148,6 @@ private:
 
     bool inspect_stream_insert = true;
     bool split_any_any = false;
-    bool debug_print_fast_pattern = false;
     bool debug = false;
     bool dedup = true;
 

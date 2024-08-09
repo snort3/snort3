@@ -840,7 +840,7 @@ static int _bnfa_conv_list_to_csparse_array(bnfa_struct_t* bnfa)
     bnfa_state_t* pi;     /* state indexes into ps */
     bnfa_state_t ps_index=0;
     unsigned nps;
-    bnfa_state_t full[BNFA_MAX_ALPHABET_SIZE];
+    bnfa_state_t full[BNFA_MAX_ALPHABET_SIZE] = {};
 
     /* count total state transitions, account for state and control words  */
     nps = 0;
