@@ -377,7 +377,7 @@ int HttpInspect::get_xtra_uri(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t
     HttpMsgRequest* const request = current_section->get_request();
     if (request == nullptr)
         return 0;
-    const Field& uri = request->get_uri();
+    const Field& uri = request->get_uri_norm_classic();
     if (uri.length() <= 0)
         return 0;
 
