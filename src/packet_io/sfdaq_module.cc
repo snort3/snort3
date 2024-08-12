@@ -271,8 +271,8 @@ void SFDAQModule::prep_counts(bool dump_stats)
     for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
         daq_stats.verdicts[i] = daq_stats_delta.verdicts[i];
 
-    daq_stats.outstanding = new_daq_stats.hw_packets_received -
-        new_daq_stats.packets_filtered - new_daq_stats.packets_received;
+    daq_stats.outstanding = new_daq_stats.packets_outstanding;
+
     if ( daq_stats.outstanding > daq_stats.outstanding_max )
         daq_stats.outstanding_max = daq_stats.outstanding;
 
