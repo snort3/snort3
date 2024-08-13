@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.3.2.0 2024-07-29 22:04:21 EDT TST
+Revision 3.3.3.0 2024-08-13 00:18:44 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -4262,6 +4262,12 @@ Peg counts:
     (sum)
   * http_inspect.skip_mime_attach: total number of HTTP requests with
     too many MIME attachments to inspect (sum)
+  * http_inspect.compressed_gzip: total number of HTTP bodies
+    compressed with GZIP (sum)
+  * http_inspect.compressed_not_supported: total number of HTTP
+    bodies compressed with known but not supported methods (sum)
+  * http_inspect.compressed_unknown: total number of HTTP bodies
+    compressed with unknown methods (sum)
 
 
 5.27. iec104
@@ -8145,10 +8151,6 @@ Configuration:
 
 Peg counts:
 
-  * pcre.pcre_rules: total rules processed with pcre option (sum)
-  * pcre.pcre_to_hyper: total pcre rules by hyperscan engine (sum)
-  * pcre.pcre_native: total pcre rules compiled by pcre engine (sum)
-  * pcre.pcre_negated: total pcre rules using negation syntax (sum)
   * pcre.pcre_match_limit: total number of times pcre hit the match
     limit (sum)
   * pcre.pcre_recursion_limit: total number of times pcre hit the
@@ -11994,6 +11996,12 @@ libraries see the Getting Started section of the manual.
   * http2_inspect.total_bytes: total HTTP/2 data bytes inspected
     (sum)
   * http_inspect.chunked: chunked message bodies (sum)
+  * http_inspect.compressed_gzip: total number of HTTP bodies
+    compressed with GZIP (sum)
+  * http_inspect.compressed_not_supported: total number of HTTP
+    bodies compressed with known but not supported methods (sum)
+  * http_inspect.compressed_unknown: total number of HTTP bodies
+    compressed with unknown methods (sum)
   * http_inspect.concurrent_sessions: total concurrent http sessions
     (now)
   * http_inspect.connect_requests: CONNECT requests inspected (sum)
@@ -12268,12 +12276,8 @@ libraries see the Getting Started section of the manual.
   * pcre.pcre_error: total number of times pcre returns error (sum)
   * pcre.pcre_match_limit: total number of times pcre hit the match
     limit (sum)
-  * pcre.pcre_native: total pcre rules compiled by pcre engine (sum)
-  * pcre.pcre_negated: total pcre rules using negation syntax (sum)
   * pcre.pcre_recursion_limit: total number of times pcre hit the
     recursion limit (sum)
-  * pcre.pcre_rules: total rules processed with pcre option (sum)
-  * pcre.pcre_to_hyper: total pcre rules by hyperscan engine (sum)
   * perf_monitor.flow_tracker_creates: total number of flow trackers
     created (sum)
   * perf_monitor.flow_tracker_prunes: flow trackers pruned for reuse

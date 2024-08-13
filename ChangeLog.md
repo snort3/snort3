@@ -1,3 +1,20 @@
+2024-08-13: 3.3.3.0
+
+* control: code cleanup
+* control: handle control commands after packet threads are fully initialised
+* daq: add outstanding packets counter
+* extractor: add flow hash key
+* file_api: max depth is set as part of initial config
+* file: remove unused variable in FileFlows destructor
+* filters: update dev_notes.txt with details for event_filter
+* flow: optimize timeout handling for different packet type
+* http_inspect: add peg counts for gzip, known-not-supported, and unknown
+* http_inspect: log normalized URI in extra data
+* ips_options: separate main thread pcre counts from packet threads stats
+* memory: account memory for profiler only when packet thread is involved
+* src: resolve various warnings
+* stream_tcp: make sure ports are correctly swapped when filling a meta-ACK packet
+
 2024-07-29: 3.3.2.0
 
 * appid: fixing cpp warnings and cosmetic changes for appid cpu profiler
