@@ -40,7 +40,7 @@ void FtpDataSplitter::restart_scan()
 }
 
 StreamSplitter::Status FtpDataSplitter::scan(Packet* pkt, const uint8_t*, uint32_t len,
-    uint32_t, uint32_t* fp)
+    uint32_t flags, uint32_t* fp)
 {
     Flow* flow = pkt->flow;
     assert(flow);
@@ -73,13 +73,24 @@ StreamSplitter::Status FtpDataSplitter::scan(Packet* pkt, const uint8_t*, uint32
             fdfd->session.mss_changed = true;
             expected_seg_size = len;
 
-            if (pkt->ptrs.tcph and !pkt->ptrs.tcph->is_fin())
+            if (!flow->assistant_gadget && pkt->ptrs.tcph and !pkt->ptrs.tcph->is_fin())
             {
                 // set flag for signature calculation in case this is the last packet
                 fdfd->session.packet_flags |= FTPDATA_FLG_FLUSH;
                 pkt->active->hold_packet(pkt);
                 return SEARCH;
             }
+        }
+
+        if (flow->assistant_gadget && (flags & FTPDATA_FLG_FLUSH))
+        {
+            fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::inspector_id);
+            if (!fdfd)
+                return SEARCH;
+
+            fdfd->session.packet_flags |= FTPDATA_FLG_FLUSH;
+            pkt->active->hold_packet(pkt);
+            return SEARCH;
         }
     }
 
