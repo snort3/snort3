@@ -159,9 +159,9 @@ static bool DecodeJobWriteVar(S7commSessionData* session, const uint8_t* data, i
 
 // Custom function to calculate length from two bytes
 uint16_t calculate_custom_length(uint8_t byte1, uint8_t byte2) {
-    uint8_t result= pow((byte1 & 0x0F) * 2, 3) 
-    + pow(((byte1 & 0xF0) >> 4) * 2, 4) 
-    + pow(((byte2 & 0xF0) >> 4) * 2, 1);
+    uint8_t result= pow((byte1 & 0x0F) * 2, 5) 
+    + pow(((byte1 & 0xF0) >> 4) * 2, 8) 
+    + pow(((byte2 & 0xF0) >> 4) * 2, 1);    
     uint8_t first_byte_num= (byte2 & 0x0F) ? 1: 0;
     return result+ first_byte_num;
 }

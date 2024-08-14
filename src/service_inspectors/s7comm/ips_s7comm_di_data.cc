@@ -125,8 +125,23 @@ public:
 bool S7commDataModule::set(const char*, Value& v, SnortConfig*)
 {
     assert(v.is("~"));
-    std::string data_str = v.get_string();
-    data = std::vector<uint8_t>(data_str.begin(), data_str.end());
+    long n;
+
+    if (v.strtol(n)) {
+        std::string data_str = v.get_string();
+        
+        if (data_str.rfind("0x", 0) == 0) {
+            data_str.erase(0, 2);  // Remove the first two characters ("0x")
+        }
+        // Convert the hex string into a byte vector
+        for (size_t i = 0; i < data_str.length(); i += 2) {
+            std::string byteString = data_str.substr(i, 2); // Get two characters
+            uint8_t byte = static_cast<uint8_t>(strtol(byteString.c_str(), nullptr, 16));
+            data.push_back(byte);
+        }
+
+        // Now 'data' contains the bytes represented by the hex string
+    }
 
     return true;
 }
