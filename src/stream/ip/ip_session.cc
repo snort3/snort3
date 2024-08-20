@@ -45,7 +45,7 @@ const PegInfo ip_pegs[] =
     { CountType::SUM, "total_bytes", "total number of bytes processed" },
     { CountType::SUM, "total_frags", "total fragments" },
     { CountType::NOW, "current_frags", "current fragments" },
-    { CountType::SUM, "max_frags", "max fragments" },
+    { CountType::MAX, "max_frags", "max fragments" },
     { CountType::SUM, "reassembled", "reassembled datagrams" },
     { CountType::SUM, "discards", "fragments discarded" },
     { CountType::SUM, "frag_timeouts", "datagrams abandoned" },

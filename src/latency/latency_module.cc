@@ -111,7 +111,7 @@ static const PegInfo latency_pegs[] =
 {
     { CountType::SUM, "total_packets", "total packets monitored" },
     { CountType::SUM, "total_usecs", "total usecs elapsed" },
-    { CountType::SUM, "max_usecs", "maximum usecs elapsed" },
+    { CountType::MAX, "max_usecs", "maximum usecs elapsed" },
     { CountType::SUM, "packet_timeouts", "packets that timed out" },
     { CountType::SUM, "total_rule_evals", "total rule evals monitored" },
     { CountType::SUM, "rule_eval_timeouts", "rule evals that timed out" },

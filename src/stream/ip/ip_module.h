@@ -62,25 +62,25 @@ extern THREAD_LOCAL const snort::Trace* stream_ip_trace;
 struct IpStats
 {
     SESSION_STATS;
-    PegCount total_bytes;        // total_ip_bytes_processed
-    PegCount total;             // total_ipfragmented_packets
-    PegCount current_frags;     // iCurrentFrags
-    PegCount max_frags;         // iMaxFrags
-    PegCount reassembles;       // total_ipreassembled_packets / iFragFlushes
+    PegCount total_bytes;
+    PegCount total;
+    PegCount current_frags;
+    PegCount max_frags;
+    PegCount reassembles;
     PegCount discards;
-    PegCount frag_timeouts;     // iFragTimeouts
+    PegCount frag_timeouts;
     PegCount overlaps;
     PegCount anomalies;
     PegCount alerts;
     PegCount drops;
-    PegCount trackers_created;  // iFragCreates
+    PegCount trackers_created;
     PegCount trackers_released;
-    PegCount trackers_cleared;  // iFragDeletes - delete meant dump the frag list
-    PegCount trackers_completed;// iFragComplete
-    PegCount nodes_created;     // iFragInserts tracked a similar stat (# calls to insert)
+    PegCount trackers_cleared;
+    PegCount trackers_completed;
+    PegCount nodes_created;
     PegCount nodes_released;
-    PegCount reassembled_bytes; // total_ipreassembled_bytes
-    PegCount fragmented_bytes;  // total_ipfragmented_bytes
+    PegCount reassembled_bytes;
+    PegCount fragmented_bytes;
 };
 
 extern const PegInfo ip_pegs[];
