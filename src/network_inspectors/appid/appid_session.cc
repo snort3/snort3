@@ -1076,16 +1076,17 @@ void AppIdSession::clear_http_data()
 AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index) const
 {
     if (stream_index < api.hsessions.size())
-        return api.hsessions[stream_index];
+        return api.hsessions[stream_index].get();
     else
         return nullptr;
 }
 
 AppIdHttpSession* AppIdSession::create_http_session(int64_t stream_id)
 {
-    AppIdHttpSession* hsession = new AppIdHttpSession(*this, stream_id);
-    api.hsessions.push_back(hsession);
-    return hsession;
+    auto hsession = std::make_unique<AppIdHttpSession>(*this, stream_id);
+    auto tmp_hsession = hsession.get();
+    api.hsessions.push_back(std::move(hsession));
+    return tmp_hsession;
 }
 
 AppIdHttpSession* AppIdSession::get_matching_http_session(int64_t stream_id) const
@@ -1093,7 +1094,7 @@ AppIdHttpSession* AppIdSession::get_matching_http_session(int64_t stream_id) con
     for (uint32_t stream_index=0; stream_index < api.hsessions.size(); stream_index++)
     {
         if(stream_id == api.hsessions[stream_index]->get_httpx_stream_id())
-            return api.hsessions[stream_index];
+            return api.hsessions[stream_index].get();
     }
     return nullptr;
 }

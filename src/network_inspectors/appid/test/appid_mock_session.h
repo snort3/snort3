@@ -172,17 +172,18 @@ AppId AppIdSession::pick_ss_referred_payload_app_id() const
 
 AppIdHttpSession* AppIdSession::create_http_session(int64_t)
 {
-    AppIdHttpSession* hsession = new MockAppIdHttpSession(*this);
-    AppidChangeBits change_bits;
+    auto hsession = std::make_unique<MockAppIdHttpSession>(*this);
+    auto tmp_hsession = hsession.get();
 
+    AppidChangeBits change_bits;
     hsession->client.set_id(APPID_UT_ID);
     hsession->client.set_version(APPID_UT_CLIENT_VERSION);
     change_bits.set(APPID_CLIENT_INFO_BIT);
     hsession->payload.set_id(APPID_UT_ID);
     hsession->misc_app_id = APPID_UT_ID;
     hsession->referred_payload_app_id = APPID_UT_ID;
-    api.hsessions.push_back(hsession);
-    return hsession;
+    api.hsessions.push_back(std::move(hsession));
+    return tmp_hsession;
 }
 
 AppIdHttpSession* AppIdSession::get_matching_http_session(int64_t stream_id) const
@@ -190,7 +191,7 @@ AppIdHttpSession* AppIdSession::get_matching_http_session(int64_t stream_id) con
     for (uint64_t stream_index=0; stream_index < api.hsessions.size(); stream_index++)
     {
         if (stream_id == api.hsessions[stream_index]->get_httpx_stream_id())
-            return api.hsessions[stream_index];
+            return api.hsessions[stream_index].get();
     }
     return nullptr;
 }
