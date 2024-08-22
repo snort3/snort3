@@ -67,7 +67,6 @@ dnp3 = { }
 iec104 = { }
 mms = { }
 modbus = { }
-s7comm = { }
 s7commplus = { }
 
 dce_smb = { }
@@ -157,7 +156,6 @@ binder =
     { when = { service = 'smtp' },             use = { type = 'smtp' } },
     { when = { service = 'ssl' },              use = { type = 'ssl' } },
     { when = { service = 'sunrpc' },           use = { type = 'rpc_decode' } },
-    { when = { service = 's7comm' },           use = { type = 's7comm' } },
     { when = { service = 's7commplus' },       use = { type = 's7commplus' } },
     { when = { service = 'telnet' },           use = { type = 'telnet' } },
 
@@ -190,9 +188,7 @@ ips =
     -- use include for rules files; be sure to set your path
     -- note that rules files can include other rules files
     -- (see also related path vars at the top of snort_defaults.lua)
-    rules = [[
-        include $RULE_PATH//s7comm_dev_tests.rules
-    ]],
+
     variables = default_variables
 }
 
@@ -276,5 +272,4 @@ rate_filter =
 
 if ( tweaks ~= nil ) then
     include(tweaks .. '.lua')
-end
-
+end`
