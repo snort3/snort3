@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// ips_s7comm_error_code.cc author Pradeep Damodharan <prdamodh@cisco.com>
+// ips_s7comm_error_code.cc author Yarin Peretz <yarinp123@gmail.com>
 // based on work by Jeffrey Gu <jgu@cisco.com>
 
 #ifdef HAVE_CONFIG_H

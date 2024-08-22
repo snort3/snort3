@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// s7comm_module.h author Pradeep Damodharan <prdamodh@cisco.com>
+// s7comm_module.h author Yarin Peretz <yarinp123@gmail.com>
 // based on work by Jeffrey Gu <jgu@cisco.com>
 
 #ifndef S7COMM_MODULE_H

@@ -18,7 +18,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// ips_s7comm_pdu_ref.cc author <Your Name> <Your Email>
+// ips_s7comm_pdu_ref.cc author Yarin Peretz <yarinp123@gmail.com>
 // based on work by Jeffrey Gu <jgu@cisco.com>
 
 #ifdef HAVE_CONFIG_H

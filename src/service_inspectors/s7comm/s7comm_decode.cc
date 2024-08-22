@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// s7comm_decode.cc author Pradeep Damodharan <prdamodh@cisco.com>
+// s7comm_decode.cc author Yarin Peretz <yarinp123@gmail.com>
 // based on work by Jeffrey Gu <jgu@cisco.com>
 
 /*

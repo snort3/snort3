@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// s7comm_paf.cc author Pradeep Damodharan <prdamodh@cisco.com>
+// s7comm_paf.cc author Yarin Peretz <yarinp123@gmail.com>
 // based on work by Jeffrey Gu <jgu@cisco.com>
 // Protocol-Aware Flushing (PAF) code for the S7comm inspector.
 
