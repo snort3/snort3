@@ -11,5 +11,6 @@
 #alert tcp any any -> any any (msg:"S7Comm s7comm_data_length <= 10  Detected"; s7comm_data_length:10; sid:120309;)
 #alert tcp any any -> any any (msg:"S7Comm s7comm_item_count<=2  Detected"; s7comm_item_count:2; sid:120311;)
 #alert tcp any any -> any any (msg:"S7Comm s7comm_data_length in range 30<=>50  Detected"; s7comm_data_length:30<=>50; sid:120313;)
-alert tcp any any -> any any (msg:"S7Comm item_count in size range 2<=>3 Detected"; s7comm_item_count:2<=>3; sid:120314;)
+#alert tcp any any -> any any (msg:"S7Comm item_count in size range 2<=>3 Detected"; s7comm_item_count:2<=>3; sid:120314;)
 #alert tcp any any -> any any (msg:"S7Comm s7comm_var_type=0x12 Detected"; s7comm_pi_var_type:0x12; sid:120314;)
+alert tcp any any -> any any (msg:"S7Comm data_length in size range 5<=>10 Detected"; s7comm_data_length:5<=>10; sid:120314;)

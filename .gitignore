@@ -41,6 +41,7 @@ doc/snort_manual.tgz
 doc/snort_manual.xml
 doc/version.txt
 lua/
+rules/
 extra/rule.xxd
 extra/snort_examples-1.0.tar.gz
 snort.pc
