@@ -521,6 +521,8 @@ public:  // FIXIT-M privatize if possible
         bool ips_block_event_suppressed : 1; // Set if event filters have suppressed a block ips event
         bool ips_wblock_event_suppressed : 1; // set if event filters have suppressed a would block/drop ips event
         bool ips_pblock_event_suppressed : 1; // set if event filters have suppressed a partial block ips event
+        bool binder_action_allow : 1;
+        bool binder_action_block : 1;
     } flags = {};
 
     FlowState flow_state = FlowState::SETUP;
