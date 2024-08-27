@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.3.3.0 2024-08-13 00:18:44 EDT TST
+Revision 3.3.4.0 2024-08-26 22:57:24 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1104,7 +1104,7 @@ Peg counts:
 
   * latency.total_packets: total packets monitored (sum)
   * latency.total_usecs: total usecs elapsed (sum)
-  * latency.max_usecs: maximum usecs elapsed (sum)
+  * latency.max_usecs: maximum usecs elapsed (max)
   * latency.packet_timeouts: packets that timed out (sum)
   * latency.total_rule_evals: total rule evals monitored (sum)
   * latency.rule_eval_timeouts: rule evals that timed out (sum)
@@ -2784,7 +2784,7 @@ Configuration:
   * string binder[].when.tenants: list of tenants
   * enum binder[].when.role = any: use the given configuration on one
     or any end of a session { client | server | any }
-  * string binder[].when.service: override default configuration
+  * string binder[].when.service: space separated list of services
   * enum binder[].use.action = inspect: what to do with matching
     traffic { reset | block | allow | inspect }
   * string binder[].use.file: use configuration in given file
@@ -3038,7 +3038,7 @@ Peg counts:
   * dce_smb.cache_misses: smbv2 cache did not find entry (sum)
   * dce_smb.cache_replaces: smbv2 cache found entry and replaced its
     value (sum)
-  * dce_smb.cache_max: smbv2 cache’s maximum byte usage (sum)
+  * dce_smb.cache_max: smbv2 cache’s maximum byte usage (max)
   * dce_smb.cache_prunes: smbv2 cache pruned entry to make space for
     new entry (sum)
   * dce_smb.cache_removes: smbv2 cache removed existing entry (sum)
@@ -3070,7 +3070,7 @@ Peg counts:
   * dce_smb.response_fragments: total connection-oriented response
     fragments (sum)
   * dce_smb.client_max_fragment_size: connection-oriented client
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_smb.client_min_fragment_size: connection-oriented client
     minimum fragment size (sum)
   * dce_smb.client_segs_reassembled: total connection-oriented client
@@ -3078,7 +3078,7 @@ Peg counts:
   * dce_smb.client_frags_reassembled: total connection-oriented
     client fragments reassembled (sum)
   * dce_smb.server_max_fragment_size: connection-oriented server
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_smb.server_min_fragment_size: connection-oriented server
     minimum fragment size (sum)
   * dce_smb.server_segs_reassembled: total connection-oriented server
@@ -3318,7 +3318,7 @@ Peg counts:
   * dce_tcp.response_fragments: total connection-oriented response
     fragments (sum)
   * dce_tcp.client_max_fragment_size: connection-oriented client
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_tcp.client_min_fragment_size: connection-oriented client
     minimum fragment size (sum)
   * dce_tcp.client_segs_reassembled: total connection-oriented client
@@ -3326,7 +3326,7 @@ Peg counts:
   * dce_tcp.client_frags_reassembled: total connection-oriented
     client fragments reassembled (sum)
   * dce_tcp.server_max_fragment_size: connection-oriented server
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_tcp.server_min_fragment_size: connection-oriented server
     minimum fragment size (sum)
   * dce_tcp.server_segs_reassembled: total connection-oriented server
@@ -3396,7 +3396,7 @@ Peg counts:
     (sum)
   * dce_udp.fragments: total connection-less fragments (sum)
   * dce_udp.max_fragment_size: connection-less maximum fragment size
-    (sum)
+    (max)
   * dce_udp.frags_reassembled: total connection-less fragments
     reassembled (sum)
   * dce_udp.max_seqnum: max connection-less seqnum (sum)
@@ -4582,7 +4582,7 @@ Peg counts:
   * netflow.cache_misses: netflow cache did not find entry (sum)
   * netflow.cache_replaces: netflow cache found entry and replaced
     its value (sum)
-  * netflow.cache_max: netflow cache’s maximum byte usage (sum)
+  * netflow.cache_max: netflow cache’s maximum byte usage (max)
   * netflow.cache_prunes: netflow cache pruned entry to make space
     for new entry (sum)
   * netflow.cache_removes: netflow cache removed existing entry (sum)
@@ -5950,7 +5950,7 @@ Peg counts:
   * stream_ip.total_bytes: total number of bytes processed (sum)
   * stream_ip.total_frags: total fragments (sum)
   * stream_ip.current_frags: current fragments (now)
-  * stream_ip.max_frags: max fragments (sum)
+  * stream_ip.max_frags: max fragments (max)
   * stream_ip.reassembled: reassembled datagrams (sum)
   * stream_ip.discards: fragments discarded (sum)
   * stream_ip.frag_timeouts: datagrams abandoned (sum)
@@ -9473,7 +9473,7 @@ libraries see the Getting Started section of the manual.
     | user | file }
   * enum binder[].when.role = any: use the given configuration on one
     or any end of a session { client | server | any }
-  * string binder[].when.service: override default configuration
+  * string binder[].when.service: space separated list of services
   * string binder[].when.src_groups: list of source interface group
     IDs
   * string binder[].when.src_intfs: list of source interface IDs
@@ -11551,7 +11551,7 @@ libraries see the Getting Started section of the manual.
   * dce_smb.binds: total connection-oriented binds (sum)
   * dce_smb.cache_adds: smbv2 cache added new entry (sum)
   * dce_smb.cache_hits: smbv2 cache found existing entry (sum)
-  * dce_smb.cache_max: smbv2 cache’s maximum byte usage (sum)
+  * dce_smb.cache_max: smbv2 cache’s maximum byte usage (max)
   * dce_smb.cache_misses: smbv2 cache did not find entry (sum)
   * dce_smb.cache_prunes: smbv2 cache pruned entry to make space for
     new entry (sum)
@@ -11562,7 +11562,7 @@ libraries see the Getting Started section of the manual.
   * dce_smb.client_frags_reassembled: total connection-oriented
     client fragments reassembled (sum)
   * dce_smb.client_max_fragment_size: connection-oriented client
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_smb.client_min_fragment_size: connection-oriented client
     minimum fragment size (sum)
   * dce_smb.client_segs_reassembled: total connection-oriented client
@@ -11595,7 +11595,7 @@ libraries see the Getting Started section of the manual.
   * dce_smb.server_frags_reassembled: total connection-oriented
     server fragments reassembled (sum)
   * dce_smb.server_max_fragment_size: connection-oriented server
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_smb.server_min_fragment_size: connection-oriented server
     minimum fragment size (sum)
   * dce_smb.server_segs_reassembled: total connection-oriented server
@@ -11748,7 +11748,7 @@ libraries see the Getting Started section of the manual.
   * dce_tcp.client_frags_reassembled: total connection-oriented
     client fragments reassembled (sum)
   * dce_tcp.client_max_fragment_size: connection-oriented client
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_tcp.client_min_fragment_size: connection-oriented client
     minimum fragment size (sum)
   * dce_tcp.client_segs_reassembled: total connection-oriented client
@@ -11776,7 +11776,7 @@ libraries see the Getting Started section of the manual.
   * dce_tcp.server_frags_reassembled: total connection-oriented
     server fragments reassembled (sum)
   * dce_tcp.server_max_fragment_size: connection-oriented server
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_tcp.server_min_fragment_size: connection-oriented server
     minimum fragment size (sum)
   * dce_tcp.server_segs_reassembled: total connection-oriented server
@@ -11801,7 +11801,7 @@ libraries see the Getting Started section of the manual.
   * dce_udp.max_concurrent_sessions: maximum concurrent sessions
     (max)
   * dce_udp.max_fragment_size: connection-less maximum fragment size
-    (sum)
+    (max)
   * dce_udp.max_seqnum: max connection-less seqnum (sum)
   * dce_udp.no_calls: total connection-less no calls (sum)
   * dce_udp.other_requests: total connection-less other requests
@@ -12113,7 +12113,7 @@ libraries see the Getting Started section of the manual.
     limit overflows (sum)
   * js_norm.identifiers: total number of unique identifiers processed
     (sum)
-  * latency.max_usecs: maximum usecs elapsed (sum)
+  * latency.max_usecs: maximum usecs elapsed (max)
   * latency.packet_timeouts: packets that timed out (sum)
   * latency.rule_eval_timeouts: rule evals that timed out (sum)
   * latency.rule_tree_enables: rule tree re-enables (sum)
@@ -12159,7 +12159,7 @@ libraries see the Getting Started section of the manual.
   * modbus.sessions: total sessions processed (sum)
   * netflow.cache_adds: netflow cache added new entry (sum)
   * netflow.cache_hits: netflow cache found existing entry (sum)
-  * netflow.cache_max: netflow cache’s maximum byte usage (sum)
+  * netflow.cache_max: netflow cache’s maximum byte usage (max)
   * netflow.cache_misses: netflow cache did not find entry (sum)
   * netflow.cache_prunes: netflow cache pruned entry to make space
     for new entry (sum)
@@ -12526,7 +12526,7 @@ libraries see the Getting Started section of the manual.
   * stream_ip.drops: fragments dropped (sum)
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
   * stream_ip.frag_timeouts: datagrams abandoned (sum)
-  * stream_ip.max_frags: max fragments (sum)
+  * stream_ip.max_frags: max fragments (max)
   * stream_ip.max: max ip sessions (max)
   * stream.ip_memcap_prunes: number of IP flows pruned due to memcap
     (sum)

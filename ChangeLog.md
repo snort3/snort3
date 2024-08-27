@@ -1,3 +1,11 @@
+2024-08-26: 3.3.4.0
+
+* appid: notify binder on service change
+* appid: replaced hsessions vector of raw pointers into vector of smart pointers
+* ftp_telnet: refactoring ftp-data
+* latency, dce, stream_ip: fix max pegs incorrectly declared sum
+* telnet: avoid flush when cr or lf is between commands
+
 2024-08-13: 3.3.3.0
 
 * control: code cleanup
