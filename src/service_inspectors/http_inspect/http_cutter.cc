@@ -752,9 +752,10 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
         return SCAN_DISCARD_PIECE;
     }
 
-    if (data_seen >= flow_target)
+    if (data_seen >= flow_target || octets_seen + length == MAX_OCTETS)
     {
         // We passed the flow_target and stretched to the end of the segment
+        // Or we reached the max we can reassemble in current section
         data_seen = 0;
         num_flush = length;
         return SCAN_FOUND_PIECE;
