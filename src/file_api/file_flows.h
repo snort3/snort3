@@ -91,12 +91,12 @@ public:
 
     // This is used when there is only one file per session
     bool file_process(Packet* p, const uint8_t* file_data, int data_size, FilePosition,
-        bool upload, size_t file_index = 0);
+        bool upload, size_t file_index = 0, const uint8_t* fname = nullptr, uint32_t name_size = 0);
 
     // This is used for each file context. Support multiple files per session
     bool file_process(Packet* p, uint64_t file_id, const uint8_t* file_data,
         int data_size, uint64_t offset, FileDirection, uint64_t multi_file_processing_id=0,
-        FilePosition=SNORT_FILE_POSITION_UNKNOWN);
+        FilePosition=SNORT_FILE_POSITION_UNKNOWN, const uint8_t* fname = nullptr, uint32_t name_size = 0);
 
     static unsigned file_flow_data_id;
 

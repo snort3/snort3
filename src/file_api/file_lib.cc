@@ -161,14 +161,13 @@ FileInfo& FileInfo::operator=(const FileInfo& other)
 
 /*File properties*/
 
-void FileInfo::set_file_name(const char* name, uint32_t name_size)
+void FileInfo::set_file_name(const char* name, uint32_t name_size, bool fn_set)
 {
     if (name and name_size)
-    {
         file_name.assign(name, name_size);
-    }
 
-    file_name_set = true;
+    if (fn_set)
+        file_name_set = fn_set;
 }
 
 void FileInfo::set_url(const char* url_name, uint32_t url_size)

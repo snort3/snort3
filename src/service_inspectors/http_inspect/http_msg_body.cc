@@ -26,6 +26,7 @@
 #include "decompress/file_olefile.h"
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
+#include "hash/hash_key_operations.h"
 #include "helpers/buffer_data.h"
 #include "js_norm/js_enum.h"
 #include "pub_sub/http_request_body_event.h"
@@ -688,11 +689,19 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
 
     const FileDirection dir = source_id == SRC_SERVER ? FILE_DOWNLOAD : FILE_UPLOAD;
 
-    const uint64_t file_index = get_header(source_id)->get_file_cache_index();
+    uint64_t file_index = get_header(source_id)->get_file_cache_index();
+
+    const uint8_t* filename_buffer = nullptr;
+    uint32_t filename_length = 0;
+    const uint8_t* uri_buffer = nullptr;
+    uint32_t uri_length = 0;
+    if (request != nullptr)
+        get_file_info(dir, filename_buffer, filename_length, uri_buffer, uri_length);
 
     bool continue_processing_file = file_flows->file_process(p, file_index, file_data.start(),
         fp_length, session_data->file_octets[source_id], dir,
-        get_header(source_id)->get_multi_file_processing_id(), file_position);
+        get_header(source_id)->get_multi_file_processing_id(), file_position,
+        filename_buffer, filename_length);
     if (continue_processing_file)
     {
         session_data->file_depth_remaining[source_id] -= fp_length;
@@ -702,12 +711,6 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
         {
             if (request != nullptr)
             {
-                const uint8_t* filename_buffer;
-                const uint8_t* uri_buffer;
-                uint32_t filename_length;
-                uint32_t uri_length;
-                get_file_info(dir, filename_buffer, filename_length, uri_buffer, uri_length);
-
                 continue_processing_file = file_flows->set_file_name(filename_buffer,
                     filename_length, 0,
                     get_header(source_id)->get_multi_file_processing_id(), uri_buffer,

@@ -55,7 +55,7 @@ public:
     FileInfo& operator=(const FileInfo& other);
     uint32_t get_file_type() const;
     void set_file_type(uint64_t index);
-    void set_file_name(const char* file_name, uint32_t name_size);
+    void set_file_name(const char* file_name, uint32_t name_size, bool fn_set = true);
     void set_url(const char* url, uint32_t url_size);
     std::string& get_file_name();
     std::string& get_url();

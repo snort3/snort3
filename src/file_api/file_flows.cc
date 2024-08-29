@@ -324,7 +324,7 @@ void FileFlows::remove_processed_file_context(uint64_t file_id)
  */
 bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_data,
     int data_size, uint64_t offset, FileDirection dir, uint64_t multi_file_processing_id,
-    FilePosition position)
+    FilePosition position, const uint8_t* fname, uint32_t name_size)
 {
     int64_t file_depth = FileService::get_max_file_depth();
     bool continue_processing;
@@ -342,13 +342,13 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
     }
 
     FileContext* context = get_file_context(file_id, true, is_new_context, multi_file_processing_id);
-
     if (!context)
     {
         FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, p,
             "file_process:context missing, returning \n");
         return false;
     }
+    context->set_file_name((const char*)fname, name_size, false);
 
     if (PacketTracer::is_daq_activated())
         PacketTracer::restart_timer();
@@ -423,7 +423,7 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
  *    false: ignore this file
  */
 bool FileFlows::file_process(Packet* p, const uint8_t* file_data, int data_size,
-    FilePosition position, bool upload, size_t file_index)
+    FilePosition position, bool upload, size_t file_index, const uint8_t* fname, uint32_t name_size)
 {
     FileContext* context;
     FileDirection direction = upload ? FILE_UPLOAD : FILE_DOWNLOAD;
@@ -448,6 +448,7 @@ bool FileFlows::file_process(Packet* p, const uint8_t* file_data, int data_size,
     context = find_main_file_context(position, direction, file_index);
 
     set_current_file_context(context);
+    context->set_file_name((const char*)fname, name_size, false);
 
     context->set_signature_state(gen_signature);
     bool file_process_ret = context->process(p, file_data, data_size, position, file_policy);
