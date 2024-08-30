@@ -240,6 +240,7 @@ bool ControlConn::respond(const char* format, va_list& ap)
             if (errno != EAGAIN && errno != EINTR)
             {
                 shutdown();
+                ErrorMessage("ControlConn: Error in writing response, closing the connection: %s\n", get_error(errno));
                 return false;
             }
         }
@@ -248,7 +249,6 @@ bool ControlConn::respond(const char* format, va_list& ap)
     }
 
     touch();
-
     return true;
 }
 

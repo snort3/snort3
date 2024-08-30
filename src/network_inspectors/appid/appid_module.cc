@@ -177,7 +177,7 @@ bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
     pkt_thread_tp_appid_ctxt = inspector.get_ctxt().get_tp_appid_ctxt();
     pkt_thread_tp_appid_ctxt->tinit();
     ThirdPartyAppIdContext::set_tp_reload_in_progress(false);
-
+    appid_log(nullptr, TRACE_INFO_LEVEL, "== third-party context swap in progress\n");
     return true;
 }
 
@@ -214,10 +214,14 @@ bool ACThirdPartyAppIdContextUnload::execute(Analyzer& ac, void**)
         reload_in_progress = pkt_thread_tp_appid_ctxt->tfini(true);
     else
         reload_in_progress = pkt_thread_tp_appid_ctxt->tfini();
-    if (reload_in_progress)
+
+    if (reload_in_progress) {
+        appid_log(nullptr, TRACE_INFO_LEVEL, "== rescheduling third-party context unload\n");
         return false;
+    }
     pkt_thread_tp_appid_ctxt = nullptr;
 
+    appid_log(nullptr, TRACE_INFO_LEVEL, "== third-party context unload in progress\n");
     return true;
 }
 
