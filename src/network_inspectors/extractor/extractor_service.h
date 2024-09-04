@@ -17,8 +17,8 @@
 //--------------------------------------------------------------------------
 // extractor_service.h author Maya Dagon <mdagon@cisco.com>
 
-#ifndef EXTRACTOR_SERVICES_H
-#define EXTRACTOR_SERVICES_H
+#ifndef EXTRACTOR_SERVICE_H
+#define EXTRACTOR_SERVICE_H
 
 #include <algorithm>
 #include <string>
@@ -68,6 +68,7 @@ struct ServiceBlueprint
     std::vector<std::string> supported_fields;
 };
 
+// FIXIT-P: make a template with Logger and Writer as parameters
 class ExtractorService
 {
 public:

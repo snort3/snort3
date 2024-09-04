@@ -26,6 +26,7 @@
 #include <cassert>
 
 #include "extractor_csv_logger.h"
+#include "extractor_json_logger.h"
 
 ExtractorLogger* ExtractorLogger::make_logger(FormatType f_type, OutputType o_type,
     const std::vector<std::string>& fields)
@@ -40,9 +41,39 @@ ExtractorLogger* ExtractorLogger::make_logger(FormatType f_type, OutputType o_ty
     case FormatType::CSV:
         logger = new CsvExtractorLogger(o_type, fields);
         break;
+    case FormatType::JSON:
+        logger = new JsonExtractorLogger(o_type, fields);
+        break;
+    case FormatType::MAX: // fallthrough
+    default:
+        break;
     }
 
     assert(logger);
 
     return logger;
 }
+
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+#include <memory.h>
+
+using namespace snort;
+
+TEST_CASE("Format Type", "[extractor]")
+{
+    SECTION("to string")
+    {
+        FormatType csv = FormatType::CSV;
+        FormatType json = FormatType::JSON;
+        FormatType max = FormatType::MAX;
+
+        CHECK_FALSE(strcmp("csv", csv.c_str()));
+        CHECK_FALSE(strcmp("json", json.c_str()));
+        CHECK_FALSE(strcmp("(not set)", max.c_str()));
+    }
+}
+
+#endif

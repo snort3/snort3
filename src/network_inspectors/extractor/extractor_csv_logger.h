@@ -17,8 +17,8 @@
 //--------------------------------------------------------------------------
 // csv_logger.h author Anna Norokh <anorokh@cisco.com>
 
-#ifndef CSV_LOGGER_H
-#define CSV_LOGGER_H
+#ifndef EXTRACTOR_CSV_LOGGER_H
+#define EXTRACTOR_CSV_LOGGER_H
 
 #include "framework/value.h"
 
@@ -38,7 +38,7 @@ public:
     ~CsvExtractorLogger() override;
 
     void add_header() override;
-    void add_field(const snort::Value&) override;
+    void add_field(const char*, const snort::Value&) override;
     void open_record() override;
     void close_record() override;
 

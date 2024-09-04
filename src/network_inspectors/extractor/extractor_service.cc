@@ -179,3 +179,27 @@ HttpExtractorService::HttpExtractorService(uint32_t tenant, const std::vector<st
         }
     }
 }
+
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+#include <memory.h>
+
+using namespace snort;
+
+TEST_CASE("Service Type", "[extractor]")
+{
+    SECTION("to string")
+    {
+        ServiceType http = ServiceType::HTTP;
+        ServiceType undef = ServiceType::UNDEFINED;
+        ServiceType max = ServiceType::MAX;
+
+        CHECK_FALSE(strcmp("http", http.c_str()));
+        CHECK_FALSE(strcmp("(not set)", undef.c_str()));
+        CHECK_FALSE(strcmp("(not set)", max.c_str()));
+    }
+}
+
+#endif

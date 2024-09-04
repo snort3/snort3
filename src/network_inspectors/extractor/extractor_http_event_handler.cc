@@ -35,6 +35,7 @@
 
 using namespace snort;
 
+// FIXIT-P: inspector's data passes many functions before getting to the logger
 
 typedef Value* (*GetFunc) (DataEvent*, Packet*, Flow*);
 
@@ -236,8 +237,9 @@ void HttpExtractorEventHandler::handle(DataEvent& event, Flow* flow)
     logger.open_record();
     for (const auto& field : fields)
     {
+        // FIXIT-P: this is way too slow (a map with a string key type)
         auto val = std::unique_ptr<Value>(event_getters[field](&event, p, flow));
-        logger.add_field(*val.get());
+        logger.add_field(field.c_str(), *val.get());
     }
     logger.close_record();
 

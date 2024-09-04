@@ -23,10 +23,10 @@
 
 #include "extractor_csv_logger.h"
 
-#include <algorithm>
 #include <cassert>
+#include <string>
 
-THREAD_LOCAL bool first_write;
+static THREAD_LOCAL bool first_write;
 
 void CsvExtractorLogger::add_header()
 {
@@ -56,7 +56,7 @@ void CsvExtractorLogger::close_record()
     writer->unlock();
 }
 
-void CsvExtractorLogger::add_field(const snort::Value& v)
+void CsvExtractorLogger::add_field(const char*, const snort::Value& v)
 {
     switch (v.get_type())
     {

@@ -15,44 +15,38 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// extractor_writer.cc author Anna Norokh <anorokh@cisco.com>
+// json_logger.h author Cisco
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef EXTRACTOR_JSON_LOGGER_H
+#define EXTRACTOR_JSON_LOGGER_H
 
+#include <sstream>
+
+#include "framework/value.h"
+#include "helpers/json_stream.h"
+
+#include "extractor_logger.h"
 #include "extractor_writer.h"
 
-ExtractorWriter* ExtractorWriter::make_writer(OutputType o_type)
+class JsonExtractorLogger : public ExtractorLogger
 {
-    switch (o_type)
-    {
-    case OutputType::STD:
-        return new StdExtractorWriter();
-    case OutputType::MAX: // fallthrough
-    default:
-        return nullptr;
-    }
-}
+public:
+    JsonExtractorLogger(OutputType o_type, const std::vector<std::string>& fields)
+        : ExtractorLogger(fields), writer(ExtractorWriter::make_writer(o_type)), oss(), js(oss)
+    { }
 
-#ifdef UNIT_TEST
+    ~JsonExtractorLogger() override
+    { delete writer; }
 
-#include "catch/snort_catch.h"
+    void add_field(const char*, const snort::Value&) override;
+    void open_record() override;
+    void close_record() override;
 
-#include <memory.h>
+private:
+    ExtractorWriter* const writer;
+    std::ostringstream oss;
+    snort::JsonStream js;
 
-using namespace snort;
-
-TEST_CASE("Output Type", "[extractor]")
-{
-    SECTION("to string")
-    {
-        OutputType std = OutputType::STD;
-        OutputType max = OutputType::MAX;
-
-        CHECK_FALSE(strcmp("stdout", std.c_str()));
-        CHECK_FALSE(strcmp("(not set)", max.c_str()));
-    }
-}
+};
 
 #endif

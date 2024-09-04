@@ -32,7 +32,9 @@ class FormatType
 public:
     enum Value : uint8_t
     {
-        CSV
+        CSV,
+        JSON,
+        MAX
     };
 
     FormatType() = default;
@@ -48,6 +50,9 @@ public:
         {
         case CSV:
             return "csv";
+        case JSON:
+            return "json";
+        case MAX: // fallthrough
         default:
             return "(not set)";
         }
@@ -71,7 +76,8 @@ public:
 
     virtual void add_header() {}
     virtual void add_footer() {}
-    virtual void add_field(const snort::Value&) {}
+    // FIXIT-P: replace Value type designed for parsing with a better type
+    virtual void add_field(const char*, const snort::Value&) {}
 
     virtual void open_record() {}
     virtual void close_record() {}

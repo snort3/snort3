@@ -15,44 +15,48 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// extractor_writer.cc author Anna Norokh <anorokh@cisco.com>
+// json_logger.cc author Cisco
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "extractor_writer.h"
+#include "extractor_json_logger.h"
 
-ExtractorWriter* ExtractorWriter::make_writer(OutputType o_type)
+#include <cassert>
+
+void JsonExtractorLogger::open_record()
 {
-    switch (o_type)
+    oss.str("");
+    js.open();
+}
+
+void JsonExtractorLogger::close_record()
+{
+    js.close();
+
+    writer->lock();
+    writer->write(oss.str().c_str());
+    writer->unlock();
+}
+
+void JsonExtractorLogger::add_field(const char* f, const snort::Value& v)
+{
+    switch (v.get_type())
     {
-    case OutputType::STD:
-        return new StdExtractorWriter();
-    case OutputType::MAX: // fallthrough
+    case snort::Value::ValueType::VT_UNUM:
+        js.uput(f, v.get_uint64());
+        break;
+
+    case snort::Value::ValueType::VT_STR:
+        js.put(f, v.get_string());
+        break;
+
+    case snort::Value::ValueType::VT_BOOL: // fallthrough
+    case snort::Value::ValueType::VT_NUM:  // fallthrough
+    case snort::Value::ValueType::VT_REAL: // fallthrough
     default:
-        return nullptr;
+        assert(false);
+        break;
     }
 }
-
-#ifdef UNIT_TEST
-
-#include "catch/snort_catch.h"
-
-#include <memory.h>
-
-using namespace snort;
-
-TEST_CASE("Output Type", "[extractor]")
-{
-    SECTION("to string")
-    {
-        OutputType std = OutputType::STD;
-        OutputType max = OutputType::MAX;
-
-        CHECK_FALSE(strcmp("stdout", std.c_str()));
-        CHECK_FALSE(strcmp("(not set)", max.c_str()));
-    }
-}
-
-#endif
