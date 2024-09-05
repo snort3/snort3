@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.3.4.0 2024-08-26 22:57:24 EDT TST
+Revision 3.3.5.0 2024-09-05 09:13:34 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -3550,7 +3550,7 @@ Instance Type: global
 Configuration:
 
   * enum extractor.formatting = csv: output format for extractor { 
-    csv }
+    csv | json }
   * enum extractor.output = stdout: output destination for extractor
     { stdout }
   * enum extractor.protocols[].service: service to extract from { 
@@ -9749,7 +9749,7 @@ libraries see the Getting Started section of the manual.
   * bool event_queue.process_all_events = false: process just first
     action group or all action groups
   * enum extractor.formatting = csv: output format for extractor { 
-    csv }
+    csv | json }
   * enum extractor.output = stdout: output destination for extractor
     { stdout }
   * string extractor.protocols[].fields: specify fields to log

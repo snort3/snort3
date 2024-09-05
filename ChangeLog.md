@@ -1,3 +1,18 @@
+2024-09-05: 3.3.5.0
+
+* appid: added new logs for reload third party
+* extractor: add field name to logging function
+* extractor: add json logger
+* extractor: add unit tests for enum types
+* extractor: fix guard-macro names
+* extractor: fix local variable
+* extractor: mention a field in initialization list
+* extractor: remove unused headers
+* extractor: take a note of FIXIT-P in key points
+* file_api: set file name for file processing
+* http_inspect: when cutting chunks check for MAX_OCTETS too
+* packet_tracer: add tcp window size, options and meta-ack info
+
 2024-08-26: 3.3.4.0
 
 * appid: notify binder on service change
