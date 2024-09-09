@@ -1,3 +1,10 @@
+set(FTP_INCLUDES
+    ftp_data.h
+    ftpdata_splitter.h
+    ftp_module.h
+    ftpp_ui_config.h
+    kmap.h
+)
 
 set (FILE_LIST
     ft_main.cc
@@ -46,3 +53,6 @@ else (STATIC_INSPECTORS)
 
 endif (STATIC_INSPECTORS)
 
+install(FILES ${FTP_INCLUDES}
+    DESTINATION "${INCLUDE_INSTALL_PATH}/service_inspectors/ftp_telnet"
+)

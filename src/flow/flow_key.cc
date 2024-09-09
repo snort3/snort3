@@ -233,8 +233,11 @@ bool FlowKey::init(
     PktType type, IpProtocol ip_proto,
     const SfIp *srcIP, uint16_t srcPort,
     const SfIp *dstIP, uint16_t dstPort,
-    uint16_t vlanId, uint32_t mplsId,
-    uint32_t addrSpaceId, uint32_t tid,
+    uint16_t vlanId, uint32_t mplsId, uint32_t addrSpaceId,
+#ifndef DISABLE_TENANT_ID
+    uint32_t tid, 
+#endif
+    bool significant_groups,
     int16_t ingress_group, int16_t egress_group)
 {
     bool reversed;
@@ -258,7 +261,9 @@ bool FlowKey::init(
 
     pkt_type = type;
     ip_protocol = (uint8_t)ip_proto;
+#ifndef DISABLE_TENANT_ID
     tenant_id = tid;
+#endif
 
     init_vlan(sc, vlanId);
     init_address_space(sc, addrSpaceId);
@@ -266,7 +271,7 @@ bool FlowKey::init(
 
     padding = flags.padding_bits = 0;
 
-    flags.group_used = (ingress_group != DAQ_PKTHDR_UNKNOWN and egress_group != DAQ_PKTHDR_UNKNOWN);
+    flags.group_used = significant_groups;
     init_groups(ingress_group, egress_group, reversed);
 
     return reversed;
@@ -301,59 +306,17 @@ bool FlowKey::init(
 
     pkt_type = type;
     ip_protocol = (uint8_t)ip_proto;
+#ifndef DISABLE_TENANT_ID
     tenant_id = pkt_hdr.tenant_id;
+#endif
 
     init_vlan(sc, vlanId);
     init_address_space(sc, pkt_hdr.address_space_id);
     init_mpls(sc, mplsId);
 
     padding = flags.padding_bits = 0;
-    flags.group_used = ((pkt_hdr.flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS) != 0);
+    flags.group_used = 0 != (pkt_hdr.flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS);
     init_groups(pkt_hdr.ingress_group, pkt_hdr.egress_group, reversed);
-
-    return reversed;
-}
-
-bool FlowKey::init(
-    const SnortConfig* sc,
-    PktType type, IpProtocol ip_proto,
-    const SfIp *srcIP, const SfIp *dstIP,
-    uint32_t id, uint16_t vlanId,
-    uint32_t mplsId, uint32_t addrSpaceId,
-    uint32_t tid, int16_t ingress_group,
-    int16_t egress_group)
-{
-    // to avoid confusing 2 different datagrams or confusing a datagram
-    // with a session, we don't order the addresses and we set version
-
-    uint16_t srcPort = id & 0xFFFF;
-    uint16_t dstPort = id >> 16;
-    bool reversed;
-
-    if (srcIP->is_ip4() && dstIP->is_ip4())
-    {
-        version = 4;
-        reversed = init4(ip_proto, srcIP, srcPort, dstIP, dstPort, false);
-        ip_protocol = (uint8_t)ip_proto;
-    }
-    else
-    {
-        version = 6;
-        reversed = init6(ip_proto, srcIP, srcPort, dstIP, dstPort, false);
-        ip_protocol = 0;
-    }
-
-    pkt_type = type;
-    tenant_id = tid;
-
-    init_vlan(sc, vlanId);
-    init_address_space(sc, addrSpaceId);
-    init_mpls(sc, mplsId);
-
-    padding = flags.padding_bits = 0;
-
-    flags.group_used = (ingress_group != DAQ_PKTHDR_UNKNOWN and egress_group != DAQ_PKTHDR_UNKNOWN);
-    init_groups(ingress_group, egress_group, reversed);
 
     return reversed;
 }
@@ -386,7 +349,9 @@ bool FlowKey::init(
     }
 
     pkt_type = type;
+#ifndef DISABLE_TENANT_ID
     tenant_id = pkt_hdr.tenant_id;
+#endif
 
     init_vlan(sc, vlanId);
     init_address_space(sc, pkt_hdr.address_space_id);
@@ -394,7 +359,7 @@ bool FlowKey::init(
 
     padding = flags.padding_bits = 0;
 
-    flags.group_used = ((pkt_hdr.flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS) != 0);
+    flags.group_used = 0 != (pkt_hdr.flags & DAQ_PKT_FLAG_SIGNIFICANT_GROUPS);
     init_groups(pkt_hdr.ingress_group, pkt_hdr.egress_group, reversed);
 
     return reversed;
@@ -431,6 +396,8 @@ unsigned FlowHashKeyOps::do_hash(const unsigned char* k, int)
     mix(a, b, c);
 
     a += d[9];   // addressSpaceId
+
+#ifndef DISABLE_TENANT_ID
     b += d[10];  // tenant_id
     c += d[11];  // port lo & port hi
 
@@ -439,6 +406,15 @@ unsigned FlowHashKeyOps::do_hash(const unsigned char* k, int)
     a += d[12];  // group lo & group hi
     b += d[13];  // vlan & padding
     c += d[14];  // ip_protocol & pkt_type, version, flags
+#else
+    b += d[10];  // port lo & port hi
+    c += d[11];  // group lo & group hi
+
+    mix(a, b, c);
+
+    b += d[12];  // vlan & padding
+    c += d[13];  // ip_protocol & pkt_type, version, flags
+#endif
 
     finalize(a, b, c);
 

@@ -48,7 +48,8 @@ PegCount Module::get_global_count(char const*) const { return 0; }
 
 }
 
-AppIdModule::AppIdModule(): snort::Module("appid_mock", "appid_mock_help") {}
+AppIdModule::AppIdModule(): snort::Module("appid_mock", "appid_mock_help") { }
+AppIdModule::~AppIdModule() = default;
 void AppIdModule::sum_stats(bool) {}
 void AppIdModule::show_dynamic_stats() {}
 bool AppIdModule::begin(char const*, int, snort::SnortConfig*) { return true; }
@@ -62,6 +63,9 @@ snort::ProfileStats* AppIdModule::get_profile(
 void AppIdModule::set_trace(const Trace*) const { }
 const TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
 
+AppIdConfig appid_config;
+AppIdInspector::AppIdInspector(AppIdModule&) : config(&appid_config), ctxt(appid_config)
+{ }
 AppIdInspector::~AppIdInspector() = default;
 void AppIdInspector::eval(snort::Packet*) { }
 bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
@@ -69,19 +73,9 @@ void AppIdInspector::show(const SnortConfig*) const { }
 void AppIdInspector::tinit() { }
 void AppIdInspector::tterm() { }
 void AppIdInspector::tear_down(snort::SnortConfig*) { }
-AppIdContext& AppIdInspector::get_ctxt() const { return *ctxt; }
 
 AppIdModule appid_mod;
-AppIdConfig appid_config;
-AppIdContext appid_ctxt(appid_config);
-THREAD_LOCAL OdpContext* pkt_thread_odp_ctxt = nullptr;
 AppIdInspector dummy_appid_inspector( appid_mod );
-
-AppIdInspector::AppIdInspector(AppIdModule& )
-{
-    ctxt = &appid_ctxt;
-    appid_config.app_detector_dir = "/path/to/appid/detectors/";
-    config = &appid_config;
-}
+THREAD_LOCAL OdpContext* pkt_thread_odp_ctxt = nullptr;
 
 #endif

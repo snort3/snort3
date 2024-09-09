@@ -89,8 +89,8 @@ void print_pattern(const PatternMatchData* pmd, Packet* p)
     get_pattern_info(pmd, hex, txt, opts);
 
     debug_logf(detection_trace, TRACE_RULE_EVAL, p,
-        "Fast pattern %s[%u] = '%s' |%s| %s\n",
-        pmd->sticky_buf,  pmd->pattern_size, txt.c_str(), hex.c_str(), opts.c_str());
+        "Fast pattern %s[%u] = %s %s %s\n",
+        pmd->sticky_buf,  pmd->fp_length, txt.c_str(), hex.c_str(), opts.c_str());
 }
 
 void dump_buffer(const uint8_t* buff, unsigned len, Packet* p)

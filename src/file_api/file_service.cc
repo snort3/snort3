@@ -150,49 +150,44 @@ bool FileService::is_file_service_enabled()
 /* Get maximal file depth based on configuration
  * This function must be called after all file services are configured/enabled.
  */
-int64_t FileService::get_max_file_depth()
+int64_t FileService::get_max_file_depth(FileConfig *fc)
 {
-    FileConfig* file_config = get_file_config();
+    FileConfig* file_config = fc ? fc : get_file_config();
 
     if (!file_config)
         return -1;
 
-    if (file_config->file_depth)
+    if (file_config->file_depth > 0)
         return file_config->file_depth;
 
-    file_config->file_depth = -1;
+    return -1;
+}
+
+void FileService::set_max_file_depth(const SnortConfig* sc)
+{
+    FileConfig* file_config = get_file_config(sc);
+
+    if (!file_config)
+        return;
 
     if (file_type_id_enabled)
     {
         file_config->file_depth = file_config->file_type_depth;
     }
 
-    if (file_signature_enabled)
+    if ((file_signature_enabled) and
+        (file_config->file_signature_depth > file_config->file_depth))
     {
-        if (file_config->file_signature_depth > file_config->file_depth)
-            file_config->file_depth = file_config->file_signature_depth;
+        file_config->file_depth = file_config->file_signature_depth;
     }
 
     if (file_config->file_depth > 0)
     {
         /*Extra byte for deciding whether file data will be over limit*/
         file_config->file_depth++;
-        return (file_config->file_depth);
     }
-    else
-    {
-        return -1;
-    }
-}
 
-void FileService::reset_depths()
-{
-    FileConfig* file_config = get_file_config();
-
-    if (file_config)
-        file_config->file_depth = 0;
-
-    decode_conf.sync_all_depths();
+    return;
 }
 
 namespace snort

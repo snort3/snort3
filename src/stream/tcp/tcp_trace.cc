@@ -42,9 +42,6 @@ const char* stream_tcp_state_to_str(const TcpStreamTracker& t)
     return statext[t.get_tcp_state()];
 }
 
-#ifndef DEBUG_MSGS
-void S5TraceTCP(const TcpSegmentDescriptor&, const snort::Packet*) { }
-#else
 #define LCL(p, x) ((p).x() - (p).get_iss())
 #define RMT(p, x, q) ((p).x - (q).get_iss())
 
@@ -77,7 +74,7 @@ inline void TraceEvent(const TcpSegmentDescriptor& tsd, uint32_t txd, uint32_t r
     uint32_t rseq = txd ? tsd.get_seq() - txd : tsd.get_seq();
     uint32_t rack = rxd ? tsd.get_ack() - rxd : tsd.get_ack();
 
-    debug_logf(stream_tcp_trace, TRACE_STATE, p,
+    trace_logf(DEFAULT_TRACE_LOG_LEVEL, stream_tcp_trace, TRACE_STATE, p,
         FMTu64("-3") " %s %s=0x%02x Seq=%-4u Ack=%-4u Win=%-4u Len=%-4hu%s\n",
         tsd.get_packet_number(), meta_ack_marker, flags, h->th_flags, rseq, rack, tsd.get_wnd(),
         tsd.get_len(), order);
@@ -85,48 +82,43 @@ inline void TraceEvent(const TcpSegmentDescriptor& tsd, uint32_t txd, uint32_t r
 
 inline void TraceSession(const snort::Flow* flow, const snort::Packet* p)
 {
-    debug_logf(stream_tcp_trace, TRACE_STATE, p,
+    trace_logf(DEFAULT_TRACE_LOG_LEVEL, stream_tcp_trace, TRACE_STATE, p,
         "      LWS: ST=0x%x SF=0x%x CP=%hu SP=%hu\n", (unsigned)flow->session_state,
         flow->ssn_state.session_flags, flow->client_port, flow->server_port);
 }
 
-inline void TraceSegments(const TcpReassemblerPolicy& trp, const snort::Packet* p)
+inline void TraceSegments(const TcpReassemblySegments& seglist, const snort::Packet* p)
 {
-    const TcpSegmentNode* tsn = trp.trs.sos.seglist.head;
-    uint32_t sx = trp.trs.tracker->r_win_base;
-    unsigned segs = 0;
-    unsigned bytes = 0;
-    std::stringstream ss;
-
     if ( !trace_enabled(stream_tcp_trace, TRACE_SEGMENTS) )
         return;
 
+    const TcpSegmentNode* tsn = seglist.head;
+    uint32_t sx = seglist.tracker->r_win_base;
+    unsigned segs = 0;
+    std::stringstream ss;
+
     while ( tsn )
     {
-        if ( SEQ_LT(sx, tsn->i_seq) )
-            ss << " +" << tsn->i_seq - sx;
-        else if ( SEQ_GT(sx, tsn->i_seq) )
-            ss << " -" << sx - tsn->i_seq;
+        uint32_t seq = tsn->start_seq();
 
-        ss << " " << tsn->i_len;
+        if ( SEQ_LT(sx, seq) )
+            ss << " +" << seq - sx;
 
-        if ( tsn->c_len and tsn->c_len != tsn->i_len )
-        {
-            ss << "(" << tsn->offset << "|" << tsn->c_len;
-            ss << "|" << tsn->i_len-tsn->offset-tsn->c_len << ")";
-        }
+        else if ( SEQ_GT(sx, seq) )
+            ss << " -" << sx - seq;
+
+        ss << " " << tsn->length;
+
+        if ( tsn->cursor and tsn->unscanned() > 0 )
+            ss << "(" << tsn->cursor << "|" << tsn->unscanned() << ")";
 
         segs++;
-        bytes += tsn->i_len;
-        sx = tsn->i_seq + tsn->i_len;
+        sx = seq + tsn->length;
         tsn = tsn->next;
     }
 
     if ( !ss.str().empty() )
-        debug_logf(stream_tcp_trace, TRACE_SEGMENTS, p, "       %s\n", ss.str().c_str());
-
-    assert(trp.trs.sos.seg_count == segs);
-    assert(trp.trs.sos.seg_bytes_logical == bytes);
+        trace_logf(DEFAULT_TRACE_LOG_LEVEL, stream_tcp_trace, TRACE_SEGMENTS, p, "       %s\n", ss.str().c_str());
 }
 
 inline void TraceState(const TcpStreamTracker& a, const TcpStreamTracker& b, const char* s,
@@ -135,22 +127,22 @@ inline void TraceState(const TcpStreamTracker& a, const TcpStreamTracker& b, con
     uint32_t ua = a.get_snd_una() ? LCL(a, get_snd_una) : 0;
     uint32_t ns = a.get_snd_nxt() ? LCL(a, get_snd_nxt) : 0;
 
-    debug_logf(stream_tcp_trace, TRACE_STATE, p,
+    trace_logf(DEFAULT_TRACE_LOG_LEVEL, stream_tcp_trace, TRACE_STATE, p,
         "      %s ST=%s      UA=%-4u NS=%-4u LW=%-5u RN=%-4u RW=%-4u ISS=%-4u IRS=%-4u\n",
         s, stream_tcp_state_to_str(a), ua, ns, a.get_snd_wnd( ),
         RMT(a, rcv_nxt, b), RMT(a, r_win_base, b), a.get_iss(), a.get_irs());
 
-    unsigned paf = a.is_splitter_paf() ? 2 : 0;
+    unsigned paf = a.reassembler->is_splitter_paf() ? 2 : 0;
     unsigned fpt = a.get_flush_policy() ? 192 : 0;
 
-    debug_logf(stream_tcp_trace, TRACE_STATE, p,
+    trace_logf(DEFAULT_TRACE_LOG_LEVEL, stream_tcp_trace, TRACE_STATE, p,
         "           FP=%s:%-4u SC=%-4u FL=%-4u SL=%-5u BS=%-4u\n",
         flushxt[a.get_flush_policy() + paf], fpt,
-        a.reassembler.get_seg_count(), a.reassembler.get_flush_count(),
-        a.reassembler.get_seg_bytes_logical(),
-        a.reassembler.get_seglist_base_seq() - b.get_iss());
+        a.seglist.get_seg_count(), a.seglist.get_flush_count(),
+        a.seglist.get_seg_bytes_logical(),
+        a.seglist.get_seglist_base_seq() - b.get_iss());
 
-    TraceSegments(a.reassembler, p);
+    TraceSegments(a.seglist, p);
 }
 
 void S5TraceTCP(const TcpSegmentDescriptor& tsd, const snort::Packet* p)
@@ -182,12 +174,11 @@ void S5TraceTCP(const TcpSegmentDescriptor& tsd, const snort::Packet* p)
 
     TraceEvent(tsd, txd, rxd, p);
 
-    if ( ssn->lws_init )
+    if ( ssn->tcp_init )
         TraceSession(tsd.get_flow(), p);
 
     TraceState(cli, srv, cdir, p);
     TraceState(srv, cli, sdir, p);
 }
 
-#endif // DEBUG_MSGS
 

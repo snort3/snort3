@@ -67,13 +67,14 @@ struct PatternMatchData
         LITERAL  = 0x08,
         FAST_PAT = 0x10,
         NO_FP    = 0x20,
+        SUB_SECT  = 0x40,
     };
 
     uint16_t flags = 0;          // from above enum
     uint16_t mpse_flags;     // passed through to mpse
 
-    uint16_t fp_offset;
-    uint16_t fp_length;
+    uint16_t fp_offset = 0;
+    uint16_t fp_length = 0;
 
     bool is_unbounded() const
     { return !depth; }
@@ -93,6 +94,9 @@ struct PatternMatchData
     void set_literal()
     { flags |= LITERAL; }
 
+    void set_sub_section()
+    { flags |= SUB_SECT; }
+
     bool is_fast_pattern() const
     { return (flags & FAST_PAT) != 0; }
 
@@ -107,6 +111,9 @@ struct PatternMatchData
 
     bool is_literal() const
     { return (flags & LITERAL) != 0; }
+
+    bool is_sub_section() const
+    { return (flags & SUB_SECT) != 0; }
 
     bool can_be_fp() const;
 

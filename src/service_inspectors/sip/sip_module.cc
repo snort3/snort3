@@ -149,6 +149,7 @@ static const PegInfo sip_pegs[] =
     { CountType::SUM, "sessions", "total sessions" },
     { CountType::NOW, "concurrent_sessions", "total concurrent SIP sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent SIP sessions" },
+    { CountType::SUM, "aborted_sessions", "total session aborted" },
     { CountType::SUM, "events", "events generated" },
     { CountType::SUM, "dialogs", "total dialogs" },
     { CountType::SUM, "ignored_channels", "total channels ignored" },

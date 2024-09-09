@@ -65,13 +65,14 @@ StreamSplitter::Status TelnetSplitter::scan(
                     ptr = lf;
                 else if ( cr && lf )
                     ptr = ( cr > lf ) ? cr : lf;
-                if ( ptr )
+
+                const uint8_t* iac_ptr = static_cast<const uint8_t*>(memchr( read_ptr, TNC_IAC, end - read_ptr));
+                if ( (ptr && iac_ptr && ptr < iac_ptr) || (ptr && !iac_ptr) )
                 {
                     fp_ptr = ptr;
                     read_ptr = fp_ptr;
                 }
 
-                const uint8_t* iac_ptr = static_cast<const uint8_t*>(memchr( read_ptr, TNC_IAC, end - read_ptr));
                 if ( iac_ptr )
                 {
                     state = TELNET_IAC;

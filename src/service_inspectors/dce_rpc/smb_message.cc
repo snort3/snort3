@@ -1627,7 +1627,7 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                     Dce2SmbFlowData* fd = (Dce2SmbFlowData*)p->flow->get_flow_data(
                         Dce2SmbFlowData::inspector_id);
                     p->flow->free_flow_data(fd);
-                    DCE2_Smb2SsnData* dce2_smb2_sess = dce2_create_new_smb2_session(p, config);
+                    DCE2_Smb2SsnData* dce2_smb2_sess = dce2_create_new_smb2_session(p, config, true);
                     DCE2_Smb2Process(dce2_smb2_sess);
                     if (!dce2_detected)
                         DCE2_Detect(&dce2_smb2_sess->sd);
@@ -2568,7 +2568,7 @@ static inline DCE2_Smb2SsnData* set_new_dce2_smb2_session(Packet* p)
     return((DCE2_Smb2SsnData*)fd->dce2_smb_session_data);
 }
 
-DCE2_Smb2SsnData* dce2_create_new_smb2_session(Packet* p, dce2SmbProtoConf* config)
+DCE2_Smb2SsnData* dce2_create_new_smb2_session(Packet* p, dce2SmbProtoConf* config, bool upgrade)
 {
     DCE2_Smb2SsnData* dce2_smb2_sess = set_new_dce2_smb2_session(p);
     if ( dce2_smb2_sess )
@@ -2578,7 +2578,10 @@ DCE2_Smb2SsnData* dce2_create_new_smb2_session(Packet* p, dce2SmbProtoConf* conf
 
         DCE2_ResetRopts(&dce2_smb2_sess->sd, p);
 
-        dce2_smb_stats.smb_sessions++;
+        if (upgrade)
+            dce2_smb_stats.total_smb1_sessions--;
+        else
+            dce2_smb_stats.smb_sessions++;
         dce2_smb_stats.total_smb2_sessions++;
 
         dce2_smb2_sess->sd.trans = DCE2_TRANS_TYPE__SMB;

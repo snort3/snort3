@@ -53,7 +53,7 @@ struct SnortConfig;
 class Module;
 
 // this is the current version of the api
-#define IPSAPI_VERSION ((BASE_API_VERSION << 16) | 1)
+#define IPSAPI_VERSION ((BASE_API_VERSION << 16) | 2)
 
 enum CursorActionType
 {
@@ -63,6 +63,7 @@ enum CursorActionType
     CAT_SET_OTHER,
     CAT_SET_RAW,
     CAT_SET_FAST_PATTERN,
+    CAT_SET_SUB_SECTION,
 };
 
 enum RuleDirection

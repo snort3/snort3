@@ -20,8 +20,12 @@ attacks.
 Event Filter - After the rules engine generates whatever actions it needs
 to, the Event Filter is then invoked to filter the logging of these events.
 Once again, tracking by event/address tuples, block the logging of events
-if the configured counts per time is exceeded.  This will tend to reduce
-the logging system load for rules that fire too often.
+if the configured counts per time is exceeded. This will tend to reduce
+the logging system load for rules that fire too often. Due to technical
+difficulties of a multi-threaded hash table, a thread local table is used.
+Thus, the modules work within a packet thread. A user might see events
+from different packet threads, even if they would be suppressed be it a
+single packet thread.
 
 All of the filters in this area are a collection of similar services
 brought together to share the same event tracking logic.  sfthreshold.cc

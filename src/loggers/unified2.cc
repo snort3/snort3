@@ -33,6 +33,7 @@
 
 #include "detection/detection_engine.h"
 #include "events/event.h"
+#include "flow/flow_key.h"
 #include "framework/logger.h"
 #include "framework/module.h"
 #include "log/messages.h"
@@ -350,9 +351,13 @@ static void AlertExtraData(
     const IpsContext* c = DetectionEngine::get_context();
     Obfuscator* obf = (c and c->packet) ? c->packet->obfuscator : nullptr;
     uint32_t tenant_id = 0;
+
+#ifndef DISABLE_TENANT_ID
     if (flow)
-        tenant_id = flow->tenant;
-    else if (c and c->packet)
+        tenant_id = flow->key->tenant_id;
+    else
+#endif
+    if (c and c->packet)
         tenant_id = c->packet->pkth->tenant_id;
 
     while ( xid && (xid <= max_count) )

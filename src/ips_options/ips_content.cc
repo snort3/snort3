@@ -731,6 +731,16 @@ bool ContentModule::end(const char*, int, SnortConfig*)
 
     if ( cd->pmd.is_negated() )
     {
+        if (cd->pmd.fp_length || cd->pmd.fp_offset)
+        {
+            ParseWarning(WARN_RULES,
+                "Fast pattern constraints for negated "
+                "content will be ignored");
+
+            cd->pmd.fp_length = cd->pmd.pattern_size;
+            cd->pmd.fp_offset = 0;
+        }
+
         cd->pmd.last_check = (PmdLastCheck*)snort_calloc(
             ThreadConfig::get_instance_max(), sizeof(*cd->pmd.last_check));
     }

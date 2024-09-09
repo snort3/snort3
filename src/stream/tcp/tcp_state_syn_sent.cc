@@ -81,6 +81,8 @@ bool TcpStateSynSent::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 bool TcpStateSynSent::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_tracker_ack_sent(tsd);
+    if ( SEQ_GT(tsd.get_ack(), trk.get_rcv_nxt()) )
+        trk.set_rcv_nxt(tsd.get_ack());
     trk.session->update_timestamp_tracking(tsd);
     if ( trk.session->flow->two_way_traffic() )
     {

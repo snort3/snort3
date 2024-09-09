@@ -111,18 +111,17 @@ public:
     AppIdDetector() = default;
     virtual ~AppIdDetector() = default;
 
-    virtual int initialize(AppIdInspector&);
-    virtual void reload();
+    int initialize(AppIdInspector&);
     virtual void do_custom_init() { }
     virtual void do_custom_reload() { }
     virtual int validate(AppIdDiscoveryArgs&) = 0;
     virtual void register_appid(AppId, unsigned extractsInfo, OdpContext& odp_ctxt) = 0;
 
-    virtual void* data_get(AppIdSession&);
-    virtual int data_add(AppIdSession&, void*, AppIdFreeFCN);
-    virtual void add_user(AppIdSession&, const char*, AppId, bool, AppidChangeBits&);
-    virtual void add_payload(AppIdSession&, AppId);
-    virtual void add_app(AppIdSession& asd, AppId service_id, AppId client_id, const char* version, AppidChangeBits& change_bits)
+    void* data_get(const AppIdSession&);
+    int data_add(AppIdSession&, void*, AppIdFreeFCN);
+    void add_user(AppIdSession&, const char*, AppId, bool, AppidChangeBits&);
+    void add_payload(AppIdSession&, AppId);
+    void add_app(AppIdSession& asd, AppId service_id, AppId client_id, const char* version, AppidChangeBits& change_bits)
     {
         if ( version )
             asd.set_client_version(version, change_bits);
@@ -131,7 +130,7 @@ public:
         asd.client_inferred_service_id = service_id;
         asd.set_client_id(client_id);
     }
-    virtual void add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId, const char*, AppidChangeBits&);
+    void add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId, const char*, AppidChangeBits&);
     const char* get_code_string(APPID_STATUS_CODE) const;
 
     const std::string& get_name() const

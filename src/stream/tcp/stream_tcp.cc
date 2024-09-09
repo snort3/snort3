@@ -26,8 +26,8 @@
 
 #include "tcp_ha.h"
 #include "tcp_module.h"
+#include "tcp_overlap_resolver.h"
 #include "tcp_session.h"
-#include "tcp_reassemblers.h"
 #include "tcp_state_machine.h"
 
 using namespace snort;
@@ -112,14 +112,14 @@ static void tcp_dtor(Inspector* p)
 static void stream_tcp_pinit()
 {
     TcpStateMachine::initialize();
-    TcpReassemblerFactory::initialize();
+    TcpOverlapResolverFactory::initialize();
     TcpNormalizerFactory::initialize();
 }
 
 static void stream_tcp_pterm()
 {
     TcpStateMachine::term();
-    TcpReassemblerFactory::term();
+    TcpOverlapResolverFactory::term();
     TcpNormalizerFactory::term();
 }
 

@@ -23,6 +23,7 @@
 
 // List of MIME decode and log configuration functions
 #include "main/snort_types.h"
+#include "main/snort_config.h"
 
 /*These are temporary values*/
 #define DEFAULT_MIME_MEMCAP           838860
@@ -71,7 +72,7 @@ public:
 
     int64_t get_file_depth() const;
     bool is_decoding_enabled() const;
-    void sync_all_depths();
+    void sync_all_depths(const SnortConfig*);
     void show(bool = false) const;
     int get_max_depth(int) const;
 

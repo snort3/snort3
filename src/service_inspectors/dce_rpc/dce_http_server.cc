@@ -25,7 +25,8 @@
 
 #include "dce_http_server_module.h"
 
-#include "stream/tcp/tcp_stream_session.h"
+#include "managers/inspector_manager.h"
+#include "stream/tcp/tcp_session.h"
 
 #include "dce_http_server_splitter.h"
 
@@ -58,7 +59,7 @@ void DceHttpServer::clear(Packet* p)
     {
         if ( !p->test_session_flags(SSNFLAG_ABORT_SERVER) )
         {
-            TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+            TcpSession* tcp_session = (TcpSession*)flow->session;
             DceHttpServerSplitter* splitter =
                 (DceHttpServerSplitter*)(tcp_session->get_splitter(false));
 

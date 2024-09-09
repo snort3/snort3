@@ -261,7 +261,7 @@ bool AppIdApi::is_inspection_needed(const Inspector& inspector) const
         return false;
 
     SnortProtocolId id = inspector.get_service();
-    const AppIdConfig& config = appid_inspector->get_ctxt().config;
+    const AppIdConfig& config = appid_inspector->get_config();
     if (id == config.snort_proto_ids[PROTO_INDEX_HTTP2] or id == config.snort_proto_ids[PROTO_INDEX_SSH]
 	    or id == config.snort_proto_ids[PROTO_INDEX_CIP])
         return true;

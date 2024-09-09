@@ -530,7 +530,7 @@ const AppIdHttpSession* AppIdSessionApi::get_matching_http_session(int64_t strea
     for (uint32_t stream_index=0; stream_index < hsessions.size(); stream_index++)
     {
         if(stream_id == hsessions[stream_index]->get_httpx_stream_id())
-            return hsessions[stream_index];
+            return hsessions[stream_index].get();
     }
     return nullptr;
 }
@@ -538,7 +538,7 @@ const AppIdHttpSession* AppIdSessionApi::get_matching_http_session(int64_t strea
 AppIdHttpSession* AppIdSessionApi::get_hsession(uint32_t stream_index) const
 {
     if (stream_index < hsessions.size())
-        return hsessions[stream_index];
+        return hsessions[stream_index].get();
     else
         return nullptr;
 }

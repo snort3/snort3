@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+
+#include "appid/appid_session_api.h"
 #include "detection/detection_engine.h"
 #include "flow/flow.h"
 #include "framework/pig_pen.h"
@@ -30,6 +32,7 @@
 #include "packet_io/active.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "pub_sub/appid_events.h"
 #include "pub_sub/assistant_gadget_event.h"
 #include "pub_sub/intrinsic_event_ids.h"
 #include "pub_sub/stream_event_ids.h"
@@ -198,7 +201,7 @@ static std::string to_string(const BindWhen& bw)
     }
 
     if (bw.has_criteria(BindWhen::Criteria::BWC_SVC))
-        when += " service = " + bw.svc + ",";
+        when += " service = " + bw.get_service_list() + ",";
 
     if (bw.has_criteria(BindWhen::Criteria::BWC_SPLIT_NETS))
     {
@@ -489,6 +492,7 @@ public:
     void handle_flow_service_change(Flow&);
     void handle_assistant_gadget(const char* service, Flow&);
     void handle_flow_after_reload(Flow&);
+    void handle_appid_service_change(DataEvent&,Flow&);
 
 private:
     void get_policy_bindings(Flow&, const char* service);
@@ -530,6 +534,19 @@ public:
         Binder* binder = (Binder*)InspectorManager::get_binder();
         if (binder && flow && !flow->flags.ha_flow)
             binder->handle_flow_setup(*flow);
+    }
+};
+
+class AppIDServiceChangeHandler : public DataHandler
+{
+    public:
+    AppIDServiceChangeHandler() : DataHandler(BIND_NAME) { }
+
+    void handle(DataEvent& event, Flow* flow) override
+    {
+        Binder* binder = (Binder*)InspectorManager::get_binder();
+        if (binder && flow)
+            binder->handle_appid_service_change(event, *flow);
     }
 };
 
@@ -636,6 +653,7 @@ bool Binder::configure(SnortConfig* sc)
     DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::FLOW_SERVICE_CHANGE, new FlowServiceChangeHandler());
     DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::FLOW_ASSISTANT_GADGET, new AssistantGadgetHandler());
     DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::FLOW_STATE_RELOADED, new RebindFlow());
+    DataBus::subscribe(appid_pub_key, AppIdEventIds::ANY_CHANGE, new AppIDServiceChangeHandler());
 
     DataBus::subscribe(stream_pub_key, StreamEventIds::HA_NEW_FLOW, new StreamHANewFlowHandler());
 
@@ -752,6 +770,49 @@ void Binder::handle_flow_setup(Flow& flow, bool standby)
     bstats.verdicts[stuff.action]++;
 }
 
+void Binder::handle_appid_service_change(DataEvent& event, Flow& flow)
+{
+    AppidEvent& appid_event = static_cast<AppidEvent&>(event);
+
+    if(appid_event.get_change_bitset().test(APPID_SERVICE_BIT))
+    {
+        if ((appid_event.get_appid_session_api().get_service_app_id() <= 0)
+            or (flow.ssn_state.snort_protocol_id == 0))
+            return;
+
+        Stuff stuff;
+        const SnortConfig* sc = SnortConfig::get_conf();
+        const char* service = sc->proto_ref->get_name(flow.ssn_state.snort_protocol_id);
+        get_bindings(flow, stuff, service);
+
+        if(stuff.action == BindUse::BA_ALLOW)
+        {
+            flow.set_deferred_trust(BinderModule::module_id, true);
+            flow.flags.binder_action_allow = true;
+        }
+        else if (stuff.action == BindUse::BA_BLOCK)
+        {
+            flow.flags.binder_action_block = true;
+        }
+    }
+
+    if(appid_event.get_change_bitset().test(APPID_DISCOVERY_FINISHED_BIT))
+    {
+        //apply action for delay
+        if(flow.flags.binder_action_allow)
+        {
+            flow.try_trust();
+            flow.set_deferred_trust(BinderModule::module_id, false);
+        }
+        else if(flow.flags.binder_action_block)
+        {
+            flow.block();
+            auto p = const_cast<Packet*>(appid_event.get_packet());
+            p->active->block_session(p, true);
+        }
+    }
+}
+
 void Binder::handle_flow_service_change(Flow& flow)
 {
     bstats.service_changes++;
@@ -763,6 +824,7 @@ void Binder::handle_flow_service_change(Flow& flow)
     if (stuff.action != BindUse::BA_INSPECT)
     {
         stuff.apply_action(flow);
+        flow.disable_inspection();
         return;
     }
 

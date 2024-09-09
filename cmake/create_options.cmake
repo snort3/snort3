@@ -18,6 +18,7 @@ option ( ENABLE_STATIC_DAQ "link static DAQ modules" ON )
 option ( ENABLE_SHELL "enable shell support" OFF )
 option ( ENABLE_UNIT_TESTS "enable unit tests" OFF )
 option ( ENABLE_BENCHMARK_TESTS "enable benchmark tests" OFF )
+option ( DISABLE_TENANT_ID "disable tenant ID in the FlowKey structure" OFF )
 
 option ( ENABLE_COREFILES "Prevent Snort from generating core files" ON )
 option ( ENABLE_LARGE_PCAP "Enable support for pcaps larger than 2 GB" OFF )

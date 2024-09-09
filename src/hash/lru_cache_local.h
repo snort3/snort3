@@ -34,7 +34,7 @@
     { CountType::SUM, "cache_hits", module " cache found existing entry" }, \
     { CountType::SUM, "cache_misses", module " cache did not find entry" }, \
     { CountType::SUM, "cache_replaces", module " cache found entry and replaced its value" }, \
-    { CountType::SUM, "cache_max", module " cache's maximum byte usage"}, \
+    { CountType::MAX, "cache_max", module " cache's maximum byte usage"}, \
     { CountType::SUM, "cache_prunes", module " cache pruned entry to make space for new entry" }, \
     { CountType::SUM, "cache_removes", module " cache removed existing entry"}
 

@@ -159,7 +159,7 @@ class ACThirdPartyAppIdContextSwap : public AnalyzerCommand
 {
 public:
     bool execute(Analyzer&, void**) override;
-    ACThirdPartyAppIdContextSwap(const AppIdInspector& inspector, ControlConn* conn)
+    ACThirdPartyAppIdContextSwap(AppIdInspector& inspector, ControlConn* conn)
         : AnalyzerCommand(conn), inspector(inspector)
     {
         appid_log(nullptr, TRACE_INFO_LEVEL, "== swapping third-party configuration\n");
@@ -168,7 +168,7 @@ public:
     ~ACThirdPartyAppIdContextSwap() override;
     const char* stringify() override { return "THIRD-PARTY_CONTEXT_SWAP"; }
 private:
-    const AppIdInspector& inspector;
+    AppIdInspector& inspector;
 };
 
 bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
@@ -195,13 +195,13 @@ class ACThirdPartyAppIdContextUnload : public AnalyzerCommand
 {
 public:
     bool execute(Analyzer&, void**) override;
-    ACThirdPartyAppIdContextUnload(const AppIdInspector& inspector, ThirdPartyAppIdContext* tp_ctxt,
+    ACThirdPartyAppIdContextUnload(AppIdInspector& inspector, ThirdPartyAppIdContext* tp_ctxt,
         ControlConn* conn): AnalyzerCommand(conn), inspector(inspector), tp_ctxt(tp_ctxt)
     { }
     ~ACThirdPartyAppIdContextUnload() override;
     const char* stringify() override { return "THIRD-PARTY_CONTEXT_UNLOAD"; }
 private:
-    const AppIdInspector& inspector;
+    AppIdInspector& inspector;
     ThirdPartyAppIdContext* tp_ctxt =  nullptr;
 };
 
@@ -235,34 +235,34 @@ class ACOdpContextSwap : public AnalyzerCommand
 {
 public:
     bool execute(Analyzer&, void**) override;
-    ACOdpContextSwap(const AppIdInspector& inspector, OdpContext& odp_ctxt, ControlConn* conn) :
+    ACOdpContextSwap(AppIdInspector& inspector, OdpContext& odp_ctxt, ControlConn* conn) :
         AnalyzerCommand(conn), inspector(inspector), odp_ctxt(odp_ctxt)
     { }
     ~ACOdpContextSwap() override;
     const char* stringify() override { return "ODP_CONTEXT_SWAP"; }
 private:
-    const AppIdInspector& inspector;
+    AppIdInspector& inspector;
     OdpContext& odp_ctxt;
 };
 
 bool ACOdpContextSwap::execute(Analyzer&, void**)
 {
-    AppIdContext& ctxt = inspector.get_ctxt();
-    OdpContext& current_odp_ctxt = ctxt.get_odp_ctxt();
-    assert(pkt_thread_odp_ctxt != &current_odp_ctxt);
-
     HostAttributesManager::clear_appid_services();
     AppIdServiceState::clean();
     AppIdPegCounts::cleanup_pegs();
-    AppIdServiceState::initialize(ctxt.config.memcap);
+    const AppIdConfig& config = inspector.get_config();
+    AppIdServiceState::initialize(config.memcap);
     AppIdPegCounts::init_pegs();
     ServiceDiscovery::set_thread_local_ftp_service();
+    AppIdContext& ctxt = inspector.get_ctxt();
+    OdpContext& current_odp_ctxt = ctxt.get_odp_ctxt();
+    assert(pkt_thread_odp_ctxt != &current_odp_ctxt);
     pkt_thread_odp_ctxt = &current_odp_ctxt;
 
     assert(odp_thread_local_ctxt);
     delete odp_thread_local_ctxt;
-    odp_thread_local_ctxt = new OdpThreadContext;
-    odp_thread_local_ctxt->initialize(SnortConfig::get_conf(), ctxt, false, true);
+    odp_thread_local_ctxt = new OdpPacketThreadContext;
+    odp_thread_local_ctxt->initialize(SnortConfig::get_conf());
     return true;
 }
 
@@ -273,7 +273,7 @@ ACOdpContextSwap::~ACOdpContextSwap()
     
     delete &odp_ctxt;
     AppIdContext& ctxt = inspector.get_ctxt();
-    LuaDetectorManager::cleanup_after_swap();
+    ControlLuaDetectorManager::cleanup_after_swap();
     if (ctxt.config.app_detector_dir)
     {
         std::string file_path = std::string(ctxt.config.app_detector_dir) + "/custom/userappid.conf";
@@ -417,10 +417,10 @@ static int show_cpu_profiler_stats(lua_State* L)
             if (display_rows_limit > APPID_CPU_PROFILER_MAX_DISPLAY_ROWS)
                 ctrlcon->respond("given number of rows exceeds maximum limit of %d, limiting to %d\n",
                                                    APPID_CPU_PROFILER_MAX_DISPLAY_ROWS, APPID_CPU_PROFILER_MAX_DISPLAY_ROWS);
-            displayed = odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(odp_ctxt, display_rows_limit);
+            displayed = odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(odp_ctxt, display_rows_limit, false, ctrlcon);
         }
         else
-            displayed = odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(appid, odp_ctxt);
+            displayed = odp_ctxt.get_appid_cpu_profiler_mgr().display_appid_cpu_profiler_table(appid, odp_ctxt, ctrlcon);
 
         switch (displayed){
             case DISPLAY_ERROR_TABLE_EMPTY:
@@ -450,7 +450,7 @@ static int show_cpu_profiler_status(lua_State* L)
     }
     const AppIdContext& ctxt = inspector->get_ctxt();
     OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
-    ctrlcon->respond("appid cpu profiler enabled: %s , running: %s \n",
+    ctrlcon->respond("appid cpu profiler enabled: %s, running: %s \n",
             odp_ctxt.is_appid_cpu_profiler_enabled() ? "yes" : "no", odp_ctxt.is_appid_cpu_profiler_running() ? "yes" : "no");
     return 0;
 }
@@ -492,19 +492,19 @@ static int reload_detectors(lua_State* L)
     clear_dynamic_host_cache_services();
     AppIdPegCounts::cleanup_peg_info();
     AppIdPegCounts::init_peg_info();
-    LuaDetectorManager::clear_lua_detector_mgrs();
+    ControlLuaDetectorManager::clear_lua_detector_mgrs();
     ctxt.create_odp_ctxt();
-    assert(odp_thread_local_ctxt);
-    odp_thread_local_ctxt->get_lua_detector_mgr().set_ignore_chp_cleanup(true);
-    delete odp_thread_local_ctxt;
-    odp_thread_local_ctxt = new OdpThreadContext;
+    assert(odp_control_thread_ctxt);
+    odp_control_thread_ctxt->set_ignore_chp_cleanup();
+    delete odp_control_thread_ctxt;
+    odp_control_thread_ctxt = new OdpControlContext;
 
     OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
     odp_ctxt.get_client_disco_mgr().initialize(*inspector);
     odp_ctxt.get_service_disco_mgr().initialize(*inspector);
     odp_ctxt.set_client_and_service_detectors();
 
-    odp_thread_local_ctxt->initialize(SnortConfig::get_conf(), ctxt, true, true);
+    odp_control_thread_ctxt->initialize(SnortConfig::get_conf(), ctxt);
     odp_ctxt.initialize(*inspector);
 
     ctrlcon->respond("== swapping detectors configuration\n");
@@ -575,7 +575,14 @@ static const PegInfo appid_pegs[] =
 };
 
 AppIdModule::AppIdModule() : Module(MOD_NAME, MOD_HELP, s_params)
-{ config = nullptr; }
+{
+}
+
+AppIdModule::~AppIdModule()
+{
+    AppIdPegCounts::cleanup_peg_info();
+    delete config;
+}
 
 void AppIdModule::set_trace(const Trace* trace) const
 { appid_trace = trace; }
@@ -607,7 +614,7 @@ snort::ProfileStats* AppIdModule::get_profile(
     return nullptr;
 }
 
-const AppIdConfig* AppIdModule::get_data()
+AppIdConfig* AppIdModule::get_data()
 {
     AppIdConfig* temp = config;
     config = nullptr;

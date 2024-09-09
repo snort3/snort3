@@ -39,7 +39,6 @@
 #include "utils/util.h"
 
 #include "ft_main.h"
-#include "ftp_module.h"
 #include "ftpp_si.h"
 #include "ftpdata_splitter.h"
 
@@ -256,44 +255,6 @@ void FtpDataFlowData::handle_eof(Packet* p)
     if (data_ssn->mss_changed)
         ftstats.total_sessions_mss_changed++;
 }
-
-//-------------------------------------------------------------------------
-// class stuff
-//-------------------------------------------------------------------------
-
-class FtpData : public Inspector
-{
-public:
-    FtpData() = default;
-
-    void eval(Packet*) override;
-    StreamSplitter* get_splitter(bool to_server) override;
-
-    bool can_carve_files() const override
-    { return true; }
-
-    bool can_start_tls() const override
-    { return true; }
-};
-
-class FtpDataModule : public Module
-{
-public:
-    FtpDataModule() : Module(FTP_DATA_NAME, s_help) { }
-
-    const PegInfo* get_pegs() const override;
-    PegCount* get_counts() const override;
-    ProfileStats* get_profile() const override;
-
-    bool set(const char*, Value&, SnortConfig*) override
-    { return false; }
-
-    Usage get_usage() const override
-    { return INSPECT; }
-
-    bool is_bindable() const override
-    { return true; }
-};
 
 const PegInfo* FtpDataModule::get_pegs() const
 { return simple_pegs; }

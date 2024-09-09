@@ -574,7 +574,7 @@ PatternMatchVector get_fp_content(
 
         if ( cat > CAT_ADJUST )
         {
-            if ( cat == CAT_SET_FAST_PATTERN or cat == CAT_SET_RAW )
+            if ( cat >= CAT_SET_RAW )
                 curr_opt = ofl->ips_opt;
 
             curr_cat = cat;
@@ -585,6 +585,9 @@ PatternMatchVector get_fp_content(
 
         if ( !tmp )
             continue;
+
+        if (curr_cat == CAT_SET_SUB_SECTION)
+            tmp->set_sub_section();
 
         content = true;
 
@@ -621,14 +624,16 @@ bool make_fast_pattern_only(const OptFpList* ofp, const PatternMatchData* pmd)
         return false;
 
     // FIXIT-L no_case consideration is mpse specific, delegate
-    if ( !pmd->is_relative() and !pmd->is_negated() and
-         !pmd->offset and !pmd->depth and pmd->is_no_case() )
-    {
-        ofp = ofp->next;
-        if ( !ofp || !ofp->ips_opt || !ofp->ips_opt->is_relative() )
-            return true;
-    }
-    return false;
+    if ( pmd->is_relative() or pmd->is_negated() or pmd->offset or pmd->depth or !pmd->is_no_case() or
+         pmd->is_sub_section())
+        return false;
+
+    ofp = ofp->next;
+
+    if ( ofp and ofp->ips_opt and ofp->ips_opt->is_relative() )
+        return false;
+
+    return true;
 }
 
 bool is_fast_pattern_only(const OptTreeNode* otn, const OptFpList* ofp, Mpse::MpseType mpse_type)

@@ -73,6 +73,8 @@ static std::string s_aux_rules;
 static std::string s_special_rules;
 static std::string s_special_includer;
 
+void show_pcre_counts();
+
 class RuleTreeHashKeyOps : public HashKeyOperations
 {
 public:
@@ -606,6 +608,7 @@ static void ShowPolicyStats(const SnortConfig* sc)
 
 void ParseRulesFinish(SnortConfig* sc)
 {
+    show_pcre_counts();
     ShowPolicyStats(sc);
 
     if ( !sc->dump_rule_info() )

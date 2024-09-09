@@ -68,6 +68,8 @@ public:
     Usage get_usage() const override
     { return INSPECT; }
 
+    static unsigned int module_id;
+
 private:
     Binding binding;
     std::vector<Binding> bindings;

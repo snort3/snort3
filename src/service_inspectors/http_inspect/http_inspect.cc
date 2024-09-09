@@ -137,10 +137,10 @@ HttpInspect::~HttpInspect()
     delete script_finder;
 }
 
-bool HttpInspect::configure(SnortConfig*)
+bool HttpInspect::configure(SnortConfig* sc)
 {
     params->js_norm_param.configure();
-    params->mime_decode_conf->sync_all_depths();
+    params->mime_decode_conf->sync_all_depths(sc);
     pub_id = DataBus::get_id(http_pub_key);
 
     return true;
@@ -377,7 +377,7 @@ int HttpInspect::get_xtra_uri(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t
     HttpMsgRequest* const request = current_section->get_request();
     if (request == nullptr)
         return 0;
-    const Field& uri = request->get_uri();
+    const Field& uri = request->get_uri_norm_classic();
     if (uri.length() <= 0)
         return 0;
 

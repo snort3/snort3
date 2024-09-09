@@ -198,7 +198,8 @@ static void snort_sip(SIP_PROTO_CONF* config, Packet* p)
     if (sessp->state_flags & SIP_FLG_MISSED_PACKETS)
         return;
 
-    SIP_Process(p,sessp, config);
+    if (!SIP_Process(p,sessp, config))
+        sessp->sip_aborted = true;
 }
 
 //-------------------------------------------------------------------------

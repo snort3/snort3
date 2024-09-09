@@ -9,7 +9,9 @@ add_subdirectory(file)
 add_subdirectory(test)
 
 set (STREAM_INCLUDES
+    flush_bucket.h
     paf.h
+    pafng.h
     stream.h
     stream_splitter.h
 )
@@ -26,6 +28,7 @@ add_library( stream_paf OBJECT
     flush_bucket.h
     paf.cc
     paf_stats.h
+    pafng.cc
 )
 
 install (FILES ${STREAM_INCLUDES}

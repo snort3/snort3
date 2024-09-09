@@ -19,10 +19,14 @@
 // tcp_segment_node.h author davis mcpherson <davmcphe@cisco.com>
 // Created on: Sep 21, 2015
 
-#ifndef TCP_SEGMENT_H
-#define TCP_SEGMENT_H
+#ifndef TCP_SEGMENT_NODE_H
+#define TCP_SEGMENT_NODE_H
 
-#include "tcp_segment_descriptor.h"
+#include <cassert>
+
+#include "protocols/packet.h"
+#include "protocols/tcp.h"
+
 #include "tcp_defs.h"
 
 class TcpSegmentDescriptor;
@@ -53,19 +57,46 @@ public:
     uint8_t* payload()
     { return data + offset; }
 
+    uint8_t* paf_data()
+    { return data + offset + cursor; }
+
+    uint32_t start_seq() const
+    { return seq + offset; }
+
+    uint32_t next_seq() const
+    { return start_seq() + length; }
+
+    uint32_t scan_seq() const
+    { return start_seq() + cursor; }
+
     bool is_packet_missing(uint32_t to_seq)
     {
         if ( next )
-            return !(SEQ_EQ((i_seq + i_len), next->i_seq));
+            return !(SEQ_EQ(next_seq(), next->start_seq()));
         else
-            return SEQ_LT((c_seq + c_len), to_seq);
+            return SEQ_LT(next_seq(), to_seq);
     }
 
-    void update_reassembly_cursor(uint16_t bytes)
+    void advance_cursor(uint16_t bytes)
+    { cursor += bytes; }
+
+    unsigned unscanned() const
     {
-        c_seq += bytes;
-        c_len -= bytes;
-        offset += bytes;
+        assert(cursor <= length);
+        return length - cursor;
+    }
+
+    bool next_no_gap()
+    {
+        return next and SEQ_EQ(next_seq(), next->start_seq());
+    }
+
+    bool next_acked_no_gap(uint32_t seq_acked)
+    {
+        if ( !next_no_gap() )
+            return false;
+
+        return SEQ_LT(next->start_seq() + next->cursor, seq_acked);
     }
 
 public:
@@ -74,83 +105,13 @@ public:
 
     struct timeval tv;
     uint32_t ts;
-    uint32_t i_seq;             // initial seq # of the data segment
-    uint32_t c_seq;             // current seq # of data for reassembly
-    uint16_t i_len;             // initial length of the data segment
-    uint16_t c_len;             // length of data remaining for reassembly
-    uint16_t offset;            // current offset into the data buffer for reassembly
-    uint16_t o_offset;          // offset into the data buffer due to overlaps
-    uint16_t size;              // actual allocated size (overlaps cause i_len to differ)
+
+    uint32_t seq;           // initial seq # of the data segment (fixed)
+    uint16_t length;        // working length of the segment data (relative to offset)
+    uint16_t offset;        // working start of segment data
+    uint16_t cursor;        // scan position (relative to offset)
+    uint16_t size;          // allocated payload size
     uint8_t data[1];
-};
-
-class TcpSegmentList
-{
-public:
-    uint32_t reset()
-    {
-        int i = 0;
-
-        while ( head )
-        {
-            i++;
-            TcpSegmentNode* dump_me = head;
-            head = head->next;
-            dump_me->term();
-        }
-
-        head = tail = cur_rseg = cur_sseg = nullptr;
-        count = 0;
-        return i;
-    }
-
-    void insert(TcpSegmentNode* prev, TcpSegmentNode* ss)
-    {
-        if ( prev )
-        {
-            ss->next = prev->next;
-            ss->prev = prev;
-            prev->next = ss;
-
-            if ( ss->next )
-                ss->next->prev = ss;
-            else
-                tail = ss;
-        }
-        else
-        {
-            ss->next = head;
-
-            if ( ss->next )
-                ss->next->prev = ss;
-            else
-                tail = ss;
-            head = ss;
-        }
-
-        count++;
-    }
-
-    void remove(TcpSegmentNode* ss)
-    {
-        if ( ss->prev )
-            ss->prev->next = ss->next;
-        else
-            head = ss->next;
-
-        if ( ss->next )
-            ss->next->prev = ss->prev;
-        else
-            tail = ss->prev;
-
-        count--;
-    }
-
-    TcpSegmentNode* head = nullptr;
-    TcpSegmentNode* tail = nullptr;
-    TcpSegmentNode* cur_rseg = nullptr;
-    TcpSegmentNode* cur_sseg = nullptr;
-    uint32_t count = 0;
 };
 
 #endif

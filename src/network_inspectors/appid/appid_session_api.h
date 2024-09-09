@@ -173,7 +173,7 @@ private:
         bool finished : 1;
         bool user_logged_in : 1;
     } flags = {};
-    std::vector<AppIdHttpSession*> hsessions;
+    std::vector<std::unique_ptr<AppIdHttpSession>> hsessions;
     AppIdDnsSession* dsession = nullptr;
     snort::SfIp initiator_ip;
     ServiceAppDescriptor service;
@@ -212,8 +212,6 @@ private:
 
     void delete_all_http_sessions()
     {
-        for (auto hsession : hsessions)
-            delete hsession;
         hsessions.clear();
     }
 

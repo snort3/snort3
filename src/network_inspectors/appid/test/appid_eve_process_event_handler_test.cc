@@ -119,7 +119,11 @@ TEST_GROUP(appid_eve_process_event_handler_tests)
     void setup() override
     {
         SfIp ip;
-        session = new AppIdSession(IpProtocol::TCP, &ip, 0, dummy_appid_inspector, stub_odp_ctxt, 0, 0);
+        session = new AppIdSession(IpProtocol::TCP, &ip, 0, dummy_appid_inspector, stub_odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+        ,0
+#endif
+        );
         pkt_thread_odp_ctxt = &stub_odp_ctxt;
         appidDebug = new AppIdDebug();
         appidDebug->activate(nullptr, nullptr, false);

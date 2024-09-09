@@ -23,6 +23,10 @@
 #include "appid_module.h"
 #include "appid_peg_counts.h"
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #define APPID_UT_ID 1492
 
 namespace snort
@@ -90,9 +94,8 @@ void ClientDiscovery::reload() {}
 FpSMBData* smb_data = nullptr;
 
 int AppIdDetector::initialize(AppIdInspector&){return 0;}
-void AppIdDetector::reload() { }
 int AppIdDetector::data_add(AppIdSession&, void*, AppIdFreeFCN){return 0;}
-void* AppIdDetector::data_get(AppIdSession&) {return nullptr;}
+void* AppIdDetector::data_get(const AppIdSession&) {return nullptr;}
 void AppIdDetector::add_user(AppIdSession&, const char*, AppId, bool, AppidChangeBits&){}
 void AppIdDetector::add_payload(AppIdSession&, AppId){}
 void AppIdDetector::add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId, const char*, AppidChangeBits&){}
@@ -163,7 +166,11 @@ AppIdContext stub_ctxt(stub_config);
 static OdpContext stub_odp_ctxt(stub_config, nullptr);
 OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector,
-    OdpContext&, uint16_t) : snort::FlowData(inspector_id, (snort::Inspector*)&inspector),
+    OdpContext&
+#ifndef DISABLE_TENANT_ID
+    ,uint16_t
+#endif
+    ) : snort::FlowData(inspector_id, (snort::Inspector*)&inspector),
     config(stub_config), api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt) { }
 AppIdSession::~AppIdSession() = default;
 DiscoveryFilter::~DiscoveryFilter(){}

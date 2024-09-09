@@ -36,6 +36,7 @@ struct SIPData
     SIP_DialogList dialogs;
     SIP_Roptions ropts;
     SIP_PROTO_CONF *sip_config;
+    bool sip_aborted;
 
     static unsigned pub_id;
 };

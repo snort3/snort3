@@ -21,6 +21,8 @@
 #define HTTP_ENUM_H
 
 #include <cstdint>
+#include <map>
+#include <string>
 
 namespace HttpEnums
 {
@@ -66,7 +68,8 @@ enum PEG_COUNT { PEG_FLOW = 0, PEG_SCAN, PEG_REASSEMBLE, PEG_INSPECT, PEG_REQUES
     PEG_CONCURRENT_SESSIONS, PEG_MAX_CONCURRENT_SESSIONS, PEG_SCRIPT_DETECTION,
     PEG_PARTIAL_INSPECT, PEG_EXCESS_PARAMS, PEG_PARAMS, PEG_CUTOVERS, PEG_SSL_SEARCH_ABND_EARLY,
     PEG_PIPELINED_FLOWS, PEG_PIPELINED_REQUESTS, PEG_TOTAL_BYTES, PEG_JS_INLINE, PEG_JS_EXTERNAL,
-    PEG_JS_PDF, PEG_SKIP_MIME_ATTACH, PEG_COUNT_MAX };
+    PEG_JS_PDF, PEG_SKIP_MIME_ATTACH, PEG_COMPRESSED_GZIP, PEG_COMPRESSED_NOT_SUPPORTED,
+    PEG_COMPRESSED_UNKNOWN, PEG_COUNT_MAX};
 
 // Result of scanning by splitter
 enum ScanResult { SCAN_NOT_FOUND, SCAN_NOT_FOUND_ACCELERATE, SCAN_FOUND, SCAN_FOUND_PIECE,
@@ -77,6 +80,7 @@ enum ChunkState { CHUNK_NEWLINES, CHUNK_ZEROS, CHUNK_LEADING_WS, CHUNK_NUMBER, C
     CHUNK_OPTIONS, CHUNK_HCRLF, CHUNK_DATA, CHUNK_DCRLF1, CHUNK_DCRLF2, CHUNK_BAD };
 
 // List of possible HTTP versions.
+// When making changes to this enum, also update VersionStrToEnum and VersionEnumToStr 
 enum VersionId { VERS__PROBLEMATIC=-12, VERS__NOT_PRESENT=-11, VERS__OTHER=1,
     VERS_1_0, VERS_1_1, VERS_2_0, VERS_3_0, VERS_0_9, VERS__MIN = VERS__PROBLEMATIC,
     VERS__MAX = VERS_0_9};
@@ -152,7 +156,7 @@ enum HeaderId { HEAD__NOT_COMPUTE=-14, HEAD__PROBLEMATIC=-12, HEAD__NOT_PRESENT=
     HEAD_CONTENT_TYPE, HEAD_EXPIRES, HEAD_LAST_MODIFIED, HEAD_X_FORWARDED_FOR, HEAD_TRUE_CLIENT_IP,
     HEAD_X_WORKING_WITH, HEAD_CONTENT_TRANSFER_ENCODING, HEAD_MIME_VERSION, HEAD_PROXY_AGENT,
     HEAD_CONTENT_DISPOSITION, HEAD_HTTP2_SETTINGS, HEAD_RESTRICT_ACCESS_TO_TENANTS,
-    HEAD_RESTRICT_ACCESS_CONTEXT, HEAD__MAX_VALUE };
+    HEAD_RESTRICT_ACCESS_CONTEXT, HEAD_ORIGIN, HEAD__MAX_VALUE };
 
 // All the infractions we might find while parsing and analyzing a message
 enum Infraction
@@ -453,6 +457,8 @@ extern const bool is_sp_tab_cr_lf_vt_ff[256];
 extern const bool is_sp_tab_quote_dquote[256];
 extern const bool is_print_char[256]; // printable includes SP, tab, CR, LF
 extern const bool is_sp_comma[256];
+extern const std::map <std::string, VersionId> VersionStrToEnum;
+extern const std::map <HttpEnums::VersionId, const char*> VersionEnumToStr;
 
 } // end namespace HttpEnums
 

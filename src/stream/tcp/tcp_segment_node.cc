@@ -27,8 +27,10 @@
 
 #include "utils/util.h"
 
-#include "segment_overlap_editor.h"
 #include "tcp_module.h"
+#include "tcp_segment_descriptor.h"
+
+using namespace snort;
 
 #define USE_RESERVE
 #ifdef USE_RESERVE
@@ -87,12 +89,14 @@ TcpSegmentNode* TcpSegmentNode::create(
         tcpStats.mem_in_use += len;
     }
     tsn->tv = tv;
-    tsn->i_len = tsn->c_len = len;
+    tsn->length = len;
     memcpy(tsn->data, payload, len);
 
     tsn->prev = tsn->next = nullptr;
-    tsn->i_seq = tsn->c_seq = 0;
-    tsn->offset = tsn->o_offset = 0;
+
+    tsn->seq = 0;
+    tsn->offset = 0;
+    tsn->cursor = 0;
     tsn->ts = 0;
 
     return tsn;
@@ -103,9 +107,9 @@ TcpSegmentNode* TcpSegmentNode::init(const TcpSegmentDescriptor& tsd)
     return create(tsd.get_pkt()->pkth->ts, tsd.get_pkt()->data, tsd.get_len());
 }
 
-TcpSegmentNode* TcpSegmentNode::init(TcpSegmentNode& tns)
+TcpSegmentNode* TcpSegmentNode::init(TcpSegmentNode& tsn)
 {
-    return create(tns.tv, tns.payload(), tns.c_len);
+    return create(tsn.tv, tsn.payload(), tsn.length);
 }
 
 void TcpSegmentNode::term()
@@ -130,12 +134,12 @@ bool TcpSegmentNode::is_retransmit(const uint8_t* rdata, uint16_t rsize,
     uint32_t rseq, uint16_t orig_dsize, bool *full_retransmit)
 {
     // retransmit must have same payload at same place
-    if ( !SEQ_EQ(i_seq, rseq) )
+    if ( !SEQ_EQ(seq, rseq) )
         return false;
 
-    if ( orig_dsize == c_len )
+    if ( orig_dsize == unscanned() )
     {
-        uint16_t cmp_len = ( c_len <= rsize ) ? c_len : rsize;
+        uint16_t cmp_len = ( length <= rsize ) ? length : rsize;
         if ( !memcmp(data, rdata, cmp_len) )
             return true;
     }

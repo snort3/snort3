@@ -30,6 +30,8 @@
 
 #include "perf_monitor.h"
 
+#include <appid/appid_api.h>
+#include "flow/stream_flow.h"
 #include "framework/data_bus.h"
 #include "framework/pig_pen.h"
 #include "hash/hash_defs.h"
@@ -114,7 +116,36 @@ public:
         if ( state == SFS_STATE_MAX )
             return;
 
-        tracker->update_state(&flow->client_ip, &flow->server_ip, state);
+        char appid_name[40] = {};
+        uint16_t src_port = 0;
+        uint16_t dst_port = 0;
+        uint8_t ip_protocol = 0;
+        uint64_t flow_latency = 0;
+        uint64_t rule_latency = 0;
+
+        if ( perf_monitor.get_constraints()->flow_ip_all )
+        {
+            const AppIdSessionApi* appid_session_api = appid_api.get_appid_session_api(*flow);
+            if ( appid_session_api )
+            {
+                AppId service_id = APP_ID_NONE;
+                appid_session_api->get_app_id(&service_id, nullptr, nullptr, nullptr, nullptr);
+                const char* app_name = appid_api.get_application_name(service_id, *flow);
+                if ( app_name )
+                {
+                    strncpy(appid_name, app_name, sizeof(appid_name) - 1);
+                    appid_name[sizeof(appid_name) - 1] = '\0';
+                }
+            }
+            src_port = flow->client_port;
+            dst_port = flow->server_port;
+            ip_protocol = flow->ip_proto;
+            flow_latency = flow->flowstats.total_flow_latency;
+            rule_latency = flow->flowstats.total_rule_latency;
+        }
+
+        tracker->update_state(&flow->client_ip, &flow->server_ip, state, appid_name,
+            src_port, dst_port, ip_protocol, flow_latency, rule_latency);
     }
 
 private:
@@ -128,10 +159,10 @@ static const char* to_string(const PerfOutput& po)
 {
     switch (po)
     {
-    case PerfOutput::TO_CONSOLE:
-        return "console";
-    case PerfOutput::TO_FILE:
-        return "file";
+        case PerfOutput::TO_CONSOLE:
+            return "console";
+        case PerfOutput::TO_FILE:
+            return "file";
     }
 
     return "";
@@ -141,14 +172,14 @@ static const char* to_string(const PerfFormat& pf)
 {
     switch (pf)
     {
-    case PerfFormat::TEXT:
-        return "text";
-    case PerfFormat::CSV:
-        return "csv";
-    case PerfFormat::JSON:
-        return "json";
-    case PerfFormat::MOCK:
-        return "mock";
+        case PerfFormat::TEXT:
+            return "text";
+        case PerfFormat::CSV:
+            return "csv";
+        case PerfFormat::JSON:
+            return "json";
+        case PerfFormat::MOCK:
+            return "mock";
     }
 
     return "";
@@ -164,7 +195,10 @@ void PerfMonitor::show(const SnortConfig*) const
         ConfigLogger::log_value("flow_ports", config->flow_max_port_to_track);
 
     if ( ConfigLogger::log_flag("flow_ip", config->perf_flags & PERF_FLOWIP) )
+    {
         ConfigLogger::log_value("flow_ip_memcap", config->flowip_memcap);
+        ConfigLogger::log_value("flow_ip_all", config->flow_ip_all);
+    }
 
     ConfigLogger::log_value("packets", config->pkt_cnt);
     ConfigLogger::log_value("seconds", config->sample_interval);
@@ -299,7 +333,7 @@ void PerfMonitor::swap_constraints(PerfConstraints* constraints)
 PerfConstraints* PerfMonitor::get_original_constraints()
 {
     auto* new_constraints = new PerfConstraints(false, config->sample_interval,
-        config->pkt_cnt);
+        config->pkt_cnt, config->flow_ip_all);
 
     return new_constraints;
 }

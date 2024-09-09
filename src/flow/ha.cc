@@ -89,7 +89,13 @@ private:
     bool use_daq_channel;
 };
 
+
+// Ensure to increment both versions simultaneously to maintain consistency
+#ifndef DISABLE_TENANT_ID
 static constexpr uint8_t HA_MESSAGE_VERSION = 4;
+#else
+static constexpr uint8_t HA_MESSAGE_VERSION = 5;
+#endif
 
 // define message size and content constants.
 static constexpr uint8_t KEY_SIZE_IP6 = sizeof(FlowKey);

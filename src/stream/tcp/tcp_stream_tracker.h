@@ -25,13 +25,13 @@
 #include <cstdint>
 #include <list>
 
-#include "stream/paf.h"
-
-#include "segment_overlap_editor.h"
+#include "tcp_alerts.h"
 #include "tcp_defs.h"
 #include "tcp_module.h"
 #include "tcp_normalizers.h"
-#include "tcp_reassemblers.h"
+#include "tcp_reassembler.h"
+#include "tcp_reassembly_segments.h"
+#include "tcp_segment_node.h"
 #include "tcp_segment_descriptor.h"
 
 extern const char* tcp_state_names[];
@@ -43,8 +43,9 @@ struct Packet;
 }
 
 class HeldPacket;
-class TcpReassembler;
 class TcpSession;
+
+enum FinSeqNumStatus : uint8_t { FIN_NOT_SEEN, FIN_WITH_SEQ_SEEN, FIN_WITH_SEQ_ACKED };
 
 class TcpStreamTracker
 {
@@ -88,10 +89,17 @@ public:
 
     enum PacketOrder : uint8_t { OUT_OF_SEQUENCE, IN_SEQUENCE, NONE };
 
-    enum FinSeqNumStatus : uint8_t { FIN_NOT_SEEN, FIN_WITH_SEQ_SEEN, FIN_WITH_SEQ_ACKED };
-
     TcpStreamTracker(bool client);
-    virtual ~TcpStreamTracker();
+    ~TcpStreamTracker();
+
+    void reset();
+    void clear_tracker(snort::Flow*, snort::Packet*, bool flush_segments, bool restart);
+
+    int eval_flush_policy_on_ack(snort::Packet*);
+    int eval_flush_policy_on_data(snort::Packet*);
+    void update_stream_order(const TcpSegmentDescriptor&, bool aligned);
+
+    void fallback();
 
     bool is_client_tracker() const
     { return client_tracker; }
@@ -255,54 +263,50 @@ public:
     bool is_rst_pkt_sent() const
     { return rst_pkt_sent; }
 
-    void set_flush_policy(FlushPolicy policy)
-    { flush_policy = policy; }
-
+    void set_flush_policy(FlushPolicy policy);
     FlushPolicy get_flush_policy() const
     { return flush_policy; }
 
-    virtual void init_tcp_state();
-    virtual void init_flush_policy();
-    virtual void set_splitter(snort::StreamSplitter* ss);
-    virtual void set_splitter(const snort::Flow* flow);
+    void set_order(uint8_t order)
+    { this->order = order; }
+
+    void init_tcp_state(TcpSession*);
+    void set_splitter(snort::StreamSplitter* ss);
+    void set_splitter(const snort::Flow* flow);
 
     snort::StreamSplitter* get_splitter()
     { return splitter; }
 
-    bool is_splitter_paf() const
-    { return splitter && splitter->is_paf(); }
+    void disable_reassembly(snort::Flow* f);
 
-    bool splitter_finish(snort::Flow* flow);
+    void init_on_syn_sent(TcpSegmentDescriptor&);
+    void init_on_syn_recv(const TcpSegmentDescriptor&);
+    void init_on_synack_sent(TcpSegmentDescriptor&);
+    void init_on_synack_recv(const TcpSegmentDescriptor&);
+    void init_on_data_seg_sent(TcpSegmentDescriptor&);
+    void init_on_data_seg_recv(const TcpSegmentDescriptor&);
+    void finish_server_init(TcpSegmentDescriptor&);
+    void finish_client_init(const TcpSegmentDescriptor&);
 
-    bool is_reassembly_enabled() const
-    { return  ( splitter and (flush_policy != STREAM_FLPOLICY_IGNORE) ); }
-
-    virtual void init_on_syn_sent(TcpSegmentDescriptor&);
-    virtual void init_on_syn_recv(TcpSegmentDescriptor&);
-    virtual void init_on_synack_sent(TcpSegmentDescriptor&);
-    virtual void init_on_synack_recv(TcpSegmentDescriptor&);
-    virtual void init_on_data_seg_sent(TcpSegmentDescriptor&);
-    virtual void init_on_data_seg_recv(TcpSegmentDescriptor&);
-    virtual void finish_server_init(TcpSegmentDescriptor&);
-    virtual void finish_client_init(TcpSegmentDescriptor&);
-
-    virtual void update_tracker_ack_recv(TcpSegmentDescriptor&);
-    virtual void update_tracker_ack_sent(TcpSegmentDescriptor&);
-    virtual void update_tracker_no_ack_recv(TcpSegmentDescriptor&);
-    virtual void update_tracker_no_ack_sent(TcpSegmentDescriptor&);
-    virtual bool update_on_3whs_ack(TcpSegmentDescriptor&);
-    virtual bool update_on_rst_recv(TcpSegmentDescriptor&);
-    virtual void update_on_rst_sent();
-    virtual bool update_on_fin_recv(TcpSegmentDescriptor&);
-    virtual bool update_on_fin_sent(TcpSegmentDescriptor&);
-    virtual bool is_segment_seq_valid(TcpSegmentDescriptor&);
+    void update_tracker_ack_recv(TcpSegmentDescriptor&);
+    void update_tracker_ack_sent(TcpSegmentDescriptor&);
+    void update_tracker_no_ack_recv(const TcpSegmentDescriptor&);
+    void update_tracker_no_ack_sent(const TcpSegmentDescriptor&);
+    bool update_on_3whs_ack(TcpSegmentDescriptor&);
+    bool update_on_rst_recv(TcpSegmentDescriptor&);
+    void update_on_rst_sent();
+    bool update_on_fin_recv(TcpSegmentDescriptor&);
+    bool update_on_fin_sent(TcpSegmentDescriptor&);
+    bool is_segment_seq_valid(TcpSegmentDescriptor&);
     bool set_held_packet(snort::Packet*);
     bool is_retransmit_of_held_packet(snort::Packet*);
     void finalize_held_packet(snort::Packet*);
     void finalize_held_packet(snort::Flow*);
     void perform_fin_recv_flush(TcpSegmentDescriptor&);
+    int32_t kickstart_asymmetric_flow(const TcpSegmentDescriptor& tsd, uint32_t max_queued_bytes);
     uint32_t perform_partial_flush();
-    bool is_holding_packet() const { return held_packet != null_iterator; }
+    bool is_holding_packet() const
+    { return held_packet != null_iterator; }
 
     // max_remove < 0 means time out all eligible packets.
     // Return whether there are more packets that need to be released.
@@ -313,23 +317,21 @@ public:
     static void thread_term();
 
 public:
-    uint32_t snd_una = 0; // SND.UNA - send unacknowledged
-    uint32_t snd_nxt = 0; // SND.NXT - send next
-    uint32_t snd_wnd = 0; // SND.WND - send window
-    uint32_t snd_wl1 = 0; // SND.WL1 - segment sequence number used for last window update
-    uint32_t snd_wl2 = 0; // SND.WL2 - segment acknowledgment number used for last window update
-    uint32_t iss = 0;     // ISS     - initial send sequence number
+    uint32_t snd_una = 0;          // SND.UNA - send unacknowledged
+    uint32_t snd_nxt = 0;          // SND.NXT - send next
+    uint32_t snd_wnd = 0;          // SND.WND - send window
+    uint32_t snd_wl1 = 0;          // SND.WL1 - segment sequence number used for last window update
+    uint32_t snd_wl2 = 0;          // SND.WL2 - segment acknowledgment number used for last window update
+    uint32_t iss = 0;              // ISS     - initial send sequence number
 
-    uint32_t rcv_nxt = 0; // RCV.NXT - receive next
-    uint32_t rcv_wnd = 0; // RCV.WND - receive window
-    uint32_t irs = 0;     // IRS     - initial receive sequence number
+    uint32_t rcv_nxt = 0;          // RCV.NXT - receive next
+    uint32_t rcv_wnd = 0;          // RCV.WND - receive window
+    uint32_t irs = 0;              // IRS     - initial receive sequence number
 
-    uint16_t snd_up = 0;  // SND.UP  - send urgent pointer
-    uint16_t rcv_up = 0;  // RCV.UP  - receive urgent pointer
+    uint16_t snd_up = 0;           // SND.UP  - send urgent pointer
+    uint16_t rcv_up = 0;           // RCV.UP  - receive urgent pointer
 
     uint32_t held_pkt_seq = 0;
-    uint32_t hole_left_edge = 0;   // First left hole
-    uint32_t hole_right_edge = 0;
 
     TcpState tcp_state;
     TcpEvent tcp_event = TCP_MAX_EVENTS;
@@ -342,18 +344,22 @@ public:
 // FIXIT-L make these non-public
 public:
     TcpNormalizerPolicy normalizer;
-    TcpReassemblerPolicy reassembler;
+    TcpReassemblySegments seglist;
+    TcpReassembler* reassembler = nullptr;
+    TcpReassembler* oaitw_reassembler = nullptr;
     TcpSession* session = nullptr;
+    TcpAlerts tcp_alerts;
 
     uint32_t r_win_base = 0; // remote side window base sequence number (the last ack we got)
     uint32_t small_seg_count = 0;
-    uint8_t order = IN_SEQUENCE;
-    FinSeqNumStatus fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
+    FinSeqNumStatus fin_seq_status = FIN_NOT_SEEN;
 
-protected:
+private:
+    void update_flush_policy(snort::StreamSplitter*);
+
+    snort::StreamSplitter* splitter = nullptr;
     static const std::list<HeldPacket>::iterator null_iterator;
     std::list<HeldPacket>::iterator held_packet;
-    snort::StreamSplitter* splitter = nullptr;
     uint32_t ts_last_packet = 0;
     uint32_t ts_last = 0;       // last timestamp (for PAWS)
     uint32_t fin_final_seq = 0;
@@ -367,7 +373,10 @@ protected:
     FlushPolicy flush_policy = STREAM_FLPOLICY_IGNORE;
     bool mac_addr_valid = false;
     bool fin_seq_set = false;  // FIXIT-M should be obviated by tcp state
-    bool splitter_finish_flag = false;
+
+    uint8_t order = IN_SEQUENCE;
+    uint32_t hole_left_edge = 0;   // First left hole
+    uint32_t hole_right_edge = 0;
 };
 
 // <--- note -- the 'state' parameter must be a reference

@@ -23,6 +23,7 @@
 
 #include "hash/xhash.h"
 
+#include "network_inspectors/appid/application_ids.h"
 #include "perf_tracker.h"
 
 enum FlowState
@@ -51,10 +52,16 @@ struct TrafficStats
 
 struct FlowStateValue
 {
-    TrafficStats traffic_stats[SFS_TYPE_MAX];
-    PegCount total_packets;
-    PegCount total_bytes;
-    PegCount state_changes[SFS_STATE_MAX];
+    char appid_name[40] = "APPID_NONE";
+    uint16_t port_a = 0;
+    uint16_t port_b = 0;
+    uint8_t protocol = 0;
+    TrafficStats traffic_stats[SFS_TYPE_MAX] = {};
+    PegCount total_packets = 0;
+    PegCount total_bytes = 0;
+    PegCount total_flow_latency = 0;
+    PegCount total_rule_latency = 0;
+    PegCount state_changes[SFS_STATE_MAX] = {};
 };
 
 class FlowIPTracker : public PerfTracker
@@ -67,18 +74,23 @@ public:
     void reset() override;
     void update(snort::Packet*) override;
     void process(bool) override;
-    int update_state(const snort::SfIp* src_addr, const snort::SfIp* dst_addr, FlowState);
+    int update_state(const snort::SfIp* src_addr, const snort::SfIp* dst_addr, FlowState,
+        const char* appid_name, uint16_t src_port, uint16_t dst_port, uint8_t ip_protocol,
+        uint64_t flow_latency, uint64_t rule_latency);
     snort::XHash* get_ip_map()
         { return ip_map; }
 
 private:
     FlowStateValue stats;
     snort::XHash* ip_map;
-    char ip_a[41], ip_b[41];
+    char ip_a[41], ip_b[41], port_a[8], port_b[8], protocol[8];
+    char appid_name[40] = "APPID_NONE", flow_latency[20] = {}, rule_latency[20] = {};
     int perf_flags;
     PerfConfig* perf_conf;
     size_t memcap;
-    FlowStateValue* find_stats(const snort::SfIp* src_addr, const snort::SfIp* dst_addr, int* swapped);
+    FlowStateValue* find_stats(const snort::SfIp* src_addr, const snort::SfIp* dst_addr,
+        int* swapped, const char* appid_name, uint16_t src_port, uint16_t dst_port,
+        uint8_t ip_protocol, uint64_t flow_latency, uint64_t rule_latency);
     void write_stats();
     void display_stats();
 

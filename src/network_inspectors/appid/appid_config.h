@@ -23,6 +23,7 @@
 #define APP_ID_CONFIG_H
 
 #include <array>
+#include <memory>
 #include <string>
 
 #include "helpers/discovery_filter.h"
@@ -87,6 +88,8 @@ class AppIdConfig
 public:
     AppIdConfig() = default;
     ~AppIdConfig();
+
+    void map_app_names_to_snort_ids(snort::SnortConfig&);
 
     // FIXIT-L: DECRYPT_DEBUG - Move this to ssl-module
 #ifdef REG_TEST
@@ -299,23 +302,65 @@ private:
 class OdpThreadContext
 {
 public:
-    ~OdpThreadContext();
-    void initialize(const snort::SnortConfig*, AppIdContext& ctxt, bool is_control=false,
-        bool reload_odp=false);
+    virtual ~OdpThreadContext() = default;
 
-    void set_lua_detector_mgr(LuaDetectorManager& mgr)
-    {
-        lua_detector_mgr = &mgr;
-    }
-
-    LuaDetectorManager& get_lua_detector_mgr() const
+    lua_State* get_lua_state() const
     {
         assert(lua_detector_mgr);
-        return *lua_detector_mgr;
+        return lua_detector_mgr->L;
     }
 
-private:
-    LuaDetectorManager* lua_detector_mgr = nullptr;
+    bool insert_cb_detector(AppId app_id, LuaObject* ud)
+    {
+        assert(lua_detector_mgr);
+        return lua_detector_mgr->insert_cb_detector(app_id, ud);
+    }
+
+    LuaObject* get_cb_detector(AppId app_id)
+    {
+        assert(lua_detector_mgr);
+        return lua_detector_mgr->get_cb_detector(app_id);
+    }
+
+protected:
+    std::shared_ptr<LuaDetectorManager> lua_detector_mgr;
+};
+
+class OdpControlContext : public OdpThreadContext
+{
+public:
+    ~OdpControlContext() override = default;
+    void initialize(const snort::SnortConfig*, AppIdContext&);
+    void set_ignore_chp_cleanup()
+    {
+        assert(lua_detector_mgr);
+        static_cast<ControlLuaDetectorManager*>(lua_detector_mgr.get())->set_ignore_chp_cleanup();
+    }
+};
+
+class OdpPacketThreadContext : public OdpThreadContext
+{
+public:
+    ~OdpPacketThreadContext() override = default;
+    void initialize(const snort::SnortConfig*);
+
+    void set_detector_flow(DetectorFlow* df)
+    {
+        assert(lua_detector_mgr);
+        static_cast<PacketLuaDetectorManager*>(lua_detector_mgr.get())->set_detector_flow(df);
+    }
+
+    DetectorFlow* get_detector_flow()
+    {
+        assert(lua_detector_mgr);
+        return static_cast<PacketLuaDetectorManager*>(lua_detector_mgr.get())->get_detector_flow();
+    }
+
+    void free_detector_flow()
+    {
+        assert(lua_detector_mgr);
+        static_cast<PacketLuaDetectorManager*>(lua_detector_mgr.get())->free_detector_flow();
+    }
 };
 
 class AppIdContext

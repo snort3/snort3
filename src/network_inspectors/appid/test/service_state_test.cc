@@ -108,7 +108,11 @@ AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
 OdpContext stub_odp_ctxt(stub_config, nullptr);
 AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector&,
-    OdpContext&, uint32_t, uint32_t) : FlowData(0), config(stub_config),
+    OdpContext&, uint32_t
+#ifndef DISABLE_TENANT_ID
+    ,uint32_t
+#endif
+    ) : FlowData(0), config(stub_config),
     api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt) { }
 AppIdSession::~AppIdSession() = default;
 AppIdDiscovery::~AppIdDiscovery() = default;
@@ -195,7 +199,11 @@ TEST(service_state_tests, set_service_id_failed)
     AppIdInspector inspector;
     SfIp client_ip;
     client_ip.set("1.2.3.4");
-    AppIdSession asd(IpProtocol::PROTO_NOT_SET, &client_ip, 0, inspector, stub_odp_ctxt, 0, 0);
+    AppIdSession asd(IpProtocol::PROTO_NOT_SET, &client_ip, 0, inspector, stub_odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
 
     // Testing 3+ failures to exceed STATE_ID_NEEDED_DUPE_DETRACT_COUNT with valid_count = 0
     sds.set_state(ServiceState::VALID);
@@ -215,7 +223,11 @@ TEST(service_state_tests, set_service_id_failed_with_valid)
     AppIdInspector inspector;
     SfIp client_ip;
     client_ip.set("1.2.3.4");
-    AppIdSession asd(IpProtocol::PROTO_NOT_SET, &client_ip, 0, inspector, stub_odp_ctxt, 0, 0);
+    AppIdSession asd(IpProtocol::PROTO_NOT_SET, &client_ip, 0, inspector, stub_odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
 
     // Testing 3+ failures to exceed STATE_ID_NEEDED_DUPE_DETRACT_COUNT with valid_count > 1
     sds.set_state(ServiceState::VALID);
