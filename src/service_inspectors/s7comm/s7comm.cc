@@ -18,6 +18,10 @@
 
 // s7comm.cc author Yarin Peretz <yarinp123@gmail.com>
 // based on work by Jeffrey Gu <jgu@cisco.com>
+// The s7comm service inspector is capable of decoding S7comm packets.
+// It can detect and decode S7comm packets, and extract information from them.
+// This service inspector has been created for item structures with any-type Addressing,
+// and it can detect all header fields, fields for ROSCTR 1 and 3, and Function Code 4 and 5.
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
