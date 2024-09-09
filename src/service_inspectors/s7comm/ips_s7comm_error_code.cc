@@ -30,29 +30,11 @@
 #include "profiler/profiler.h"
 
 #include "s7comm.h"
+#include "s7comm_helpers.h"
 
 using namespace snort;
 
 static const char* s_name = "s7comm_error_code";
-
-//-------------------------------------------------------------------------
-// func lookup
-//-------------------------------------------------------------------------
-
-struct S7commFuncMap
-{
-    const char* name;
-    uint8_t func;
-};
-
-/* Mapping of name -> message type for 's7comm_func' option. */
-static S7commFuncMap s7comm_func_map[] =
-{
-    { "job_request",    0x01 },
-    { "ack",            0x02 },
-    { "ack_data",       0x03 },
-    { "userdata",       0x07 }
-};
 
 //-------------------------------------------------------------------------
 // error code option

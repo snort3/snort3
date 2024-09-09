@@ -38,25 +38,6 @@ using namespace snort;
 static const char* s_name = "s7comm_parameter_length";
 
 //-------------------------------------------------------------------------
-// func lookup
-//-------------------------------------------------------------------------
-
-struct S7commFuncMap
-{
-    const char* name;
-    uint8_t func;
-};
-
-/* Mapping of name -> message type for 's7comm_func' option. */
-static S7commFuncMap s7comm_func_map[] =
-{
-    { "job_request",    0x01 },
-    { "ack",            0x02 },
-    { "ack_data",       0x03 },
-    { "userdata",       0x07 }
-};
-
-//-------------------------------------------------------------------------
 // parameter_length option
 //-------------------------------------------------------------------------
 

@@ -34,6 +34,7 @@
 
 #include "s7comm.h"
 
+
 using namespace snort;
 
 static const char* s_name = "s7comm_content";
