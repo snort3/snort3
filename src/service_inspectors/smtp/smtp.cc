@@ -1560,11 +1560,11 @@ Smtp::~Smtp()
     delete config;
 }
 
-bool Smtp::configure(SnortConfig*)
+bool Smtp::configure(SnortConfig* sc)
 {
     SMTP_RegXtraDataFuncs(config);
 
-    config->decode_conf.sync_all_depths();
+    config->decode_conf.sync_all_depths(sc);
 
     if (config->decode_conf.get_file_depth() > -1)
         config->log_config.log_filename = true;

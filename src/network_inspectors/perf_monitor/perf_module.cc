@@ -68,6 +68,9 @@ static const Parameter s_params[] =
     { "flow_ip", Parameter::PT_BOOL, nullptr, "false",
       "enable statistics on host pairs" },
 
+    { "flow_ip_all", Parameter::PT_BOOL, nullptr, "false",
+      "enable every stat of flow_ip profiling on host pairs" },
+
     { "packets", Parameter::PT_INT, "0:max32", "10000",
       "minimum packets to report" },
 
@@ -115,6 +118,8 @@ private:
     PerfMonitor* perf_monitor;
 };
 
+static bool current_packet_latency, current_rule_latency = false;
+
 static const Parameter flow_ip_profiling_params[] =
 {
     { "seconds", Parameter::PT_INT, "1:max32", nullptr,
@@ -122,6 +127,9 @@ static const Parameter flow_ip_profiling_params[] =
 
     { "packets", Parameter::PT_INT, "0:max32", nullptr,
       "minimum packets to report" },
+
+    { "flow_ip_all", Parameter::PT_BOOL, nullptr, nullptr,
+      "enable all flow ip statistics" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -149,13 +157,25 @@ static int enable_flow_ip_profiling(lua_State* L)
     }
 
     auto* new_constraints = new PerfConstraints(true, luaL_optint(L, 1, 0),
-        luaL_optint(L, 2, 0));
+        luaL_optint(L, 2, 0), luaL_opt(L,lua_toboolean, 3, false));
 
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     main_broadcast_command(new PerfMonFlowIPDebug(new_constraints, true, perf_monitor), ctrlcon);
 
-    LogMessage("Enabling flow ip profiling with sample interval %d packet count %d\n",
-        new_constraints->sample_interval, new_constraints->pkt_cnt);
+    if ( new_constraints->flow_ip_all )
+    {
+        const SnortConfig* sc = SnortConfig::get_conf();
+        if ( sc->get_packet_latency() )
+            current_packet_latency = true;
+        if ( sc->get_rule_latency() )
+            current_rule_latency = true;
+        sc->set_packet_latency(true);
+        sc->set_rule_latency(true);
+    }
+
+    LogMessage("Enabling flow ip profiling with sample interval %d packet count %d all stats tracking %s\n",
+            new_constraints->sample_interval, new_constraints->pkt_cnt,
+        ( new_constraints->flow_ip_all ) ? "enabled" : "disabled" );
 
     return 0;
 }
@@ -184,6 +204,14 @@ static int disable_flow_ip_profiling(lua_State* L)
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     main_broadcast_command(new PerfMonFlowIPDebug(new_constraints, false, perf_monitor), ctrlcon);
 
+    const SnortConfig* sc = SnortConfig::get_conf();
+
+    if ( !current_packet_latency )
+        sc->set_packet_latency(false);
+
+    if ( !current_rule_latency )
+        sc->set_rule_latency(false);
+
     LogMessage("Disabling flow ip profiling\n");
 
     return 0;
@@ -209,7 +237,7 @@ static int show_flow_ip_profiling(lua_State* L)
 static const Command perf_module_cmds[] =
 {
     { "enable_flow_ip_profiling", enable_flow_ip_profiling,
-      flow_ip_profiling_params, "enable statistics on host pairs" },
+      flow_ip_profiling_params, "enable all statistics on host pairs" },
 
     { "disable_flow_ip_profiling", disable_flow_ip_profiling,
       nullptr, "disable statistics on host pairs" },
@@ -269,6 +297,11 @@ bool PerfMonModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("seconds") )
     {
         config->sample_interval = v.get_uint32();
+    }
+    else if ( v.is("flow_ip_all") )
+    {
+        if ( v.get_bool() )
+            config->flow_ip_all = true;
     }
     else if ( v.is("flow_ip_memcap") )
     {
@@ -331,6 +364,12 @@ bool PerfMonModule::end(const char* fqn, int idx, SnortConfig* sc)
     if ( idx != 0 && strcmp(fqn, "perf_monitor.modules") == 0 )
         return config->modules.back().confirm_parse();
 
+    if ( config->flow_ip_all )
+    {
+        sc->set_packet_latency(true); 
+        sc->set_rule_latency(true);
+    }
+
     return true;
 }
 
@@ -341,6 +380,7 @@ PerfConfig* PerfMonModule::get_config()
     tmp->constraints->flow_ip_enabled = config->perf_flags & PERF_FLOWIP;
     tmp->constraints->sample_interval = config->sample_interval;
     tmp->constraints->pkt_cnt = config->pkt_cnt;
+    tmp->constraints->flow_ip_all = config->flow_ip_all;
 
     config = nullptr;
     return tmp;

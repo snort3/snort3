@@ -37,9 +37,9 @@ class HttpTransaction
 {
 public:
     ~HttpTransaction();
-    static HttpTransaction* attach_my_transaction(HttpFlowData* session_data,
-        HttpCommon::SourceId source_id);
-    static void delete_transaction(HttpTransaction* transaction, HttpFlowData* session_data);
+    static HttpTransaction* attach_my_transaction(HttpFlowData*,
+        HttpCommon::SourceId, snort::Flow* const);
+    static void delete_transaction(HttpTransaction*, HttpFlowData*);
 
     HttpMsgRequest* get_request() const { return request; }
     void set_request(HttpMsgRequest* request_) { request = request_; }
@@ -57,7 +57,7 @@ public:
         { trailer[source_id] = trailer_; }
     void set_body(HttpMsgBody* latest_body);
 
-    HttpInfractions* get_infractions(HttpCommon::SourceId source_id);
+    HttpInfractions* get_infractions(HttpCommon::SourceId);
 
     void set_one_hundred_response();
     bool final_response() const { return !second_response_expected; }
@@ -69,8 +69,9 @@ public:
     HttpTransaction* next = nullptr;
 
 private:
-    HttpTransaction(HttpFlowData* session_data_);
-    void discard_section(HttpMsgSection* section);
+    HttpTransaction(HttpFlowData*, snort::Flow* const);
+    void discard_section(HttpMsgSection*);
+    void publish_end_of_transaction();
 
     HttpFlowData* const session_data;
 
@@ -92,6 +93,9 @@ private:
     // transaction in the fairly rare case where the request and response are received in
     // parallel.
     bool shared_ownership = false;
+
+    unsigned pub_id;
+    snort::Flow* const flow;
 
     // Estimates of how much memory http_inspect uses to process a transaction
     static const uint16_t small_things = 400; // minor memory costs not otherwise accounted for

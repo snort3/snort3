@@ -60,12 +60,7 @@ int AppIdDetector::initialize(AppIdInspector& inspector)
     return APPID_SUCCESS;
 }
 
-void AppIdDetector::reload()
-{
-    do_custom_reload();
-}
-
-void* AppIdDetector::data_get(AppIdSession& asd)
+void* AppIdDetector::data_get(const AppIdSession& asd)
 {
     return asd.get_flow_data(flow_data_index);
 }

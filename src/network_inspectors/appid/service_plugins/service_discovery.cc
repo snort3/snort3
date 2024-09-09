@@ -141,9 +141,9 @@ void ServiceDiscovery::initialize(AppIdInspector& inspector)
 void ServiceDiscovery::reload()
 {
     for ( auto& kv : tcp_detectors )
-        kv.second->reload();
+        kv.second->do_custom_reload();
     for ( auto& kv : udp_detectors )
-        kv.second->reload();
+        kv.second->do_custom_reload();
 }
 
 void ServiceDiscovery::finalize_service_patterns()

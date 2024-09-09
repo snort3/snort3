@@ -40,6 +40,8 @@ using namespace std;
 #define INSPECTION_KEY ".inspection"
 #define IPS_KEY ".ips"
 
+unsigned int BinderModule::module_id = 0;
+
 THREAD_LOCAL BindStats bstats;
 
 static const PegInfo bind_pegs[] =
@@ -122,7 +124,7 @@ static const Parameter binder_when_params[] =
       "use the given configuration on one or any end of a session" },
 
     { "service", Parameter::PT_STRING, nullptr, nullptr,
-      "override default configuration" },
+      "space separated list of services" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -232,6 +234,9 @@ bool BinderModule::begin(const char* fqn, int idx, SnortConfig*)
         policy_type.clear();
     }
 
+    if (!module_id)
+        module_id = FlowData::create_flow_data_id();
+
     return true;
 }
 
@@ -240,7 +245,7 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
     // both
     if ( !strcmp(fqn, "binder.when.service") )
     {
-        binding.when.svc = v.get_string();
+        binding.when.parse_service(v.get_string());
         binding.when.add_criteria(BindWhen::Criteria::BWC_SVC);
     }
     else if ( !strcmp(fqn, "binder.use.service") )
@@ -483,7 +488,7 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
 void BinderModule::add(const char* svc, const char* type)
 {
     binding.clear();
-    binding.when.svc = svc;
+    binding.when.parse_service(svc);
     binding.when.add_criteria(BindWhen::Criteria::BWC_SVC);
     binding.use.type = type;
     binding.use.name = type;

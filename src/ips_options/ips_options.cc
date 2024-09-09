@@ -30,6 +30,7 @@ using namespace snort;
 // these have various dependencies:
 extern const BaseApi* ips_detection_filter[]; // perf stats 
 extern const BaseApi* ips_flowbits[];         // public methods like flowbits_setter
+extern const BaseApi* ips_pcre[];             // FIXIT-L called directly from parser
 extern const BaseApi* ips_replace[];          // needs snort::SFDAQ::can_replace
 extern const BaseApi* ips_so[];               // needs SO manager
 extern const BaseApi* ips_vba_data[];         // FIXIT-L some trace dependency
@@ -69,7 +70,6 @@ extern const BaseApi* ips_itype[];
 extern const BaseApi* ips_js_data[];
 extern const BaseApi* ips_metadata[];
 extern const BaseApi* ips_msg[];
-extern const BaseApi* ips_pcre[];
 extern const BaseApi* ips_pkt_data[];
 extern const BaseApi* ips_priority[];
 extern const BaseApi* ips_raw_data[];
@@ -97,6 +97,7 @@ void load_ips_options()
 {
     PluginManager::load_plugins(ips_detection_filter);
     PluginManager::load_plugins(ips_flowbits);
+    PluginManager::load_plugins(ips_pcre);
     PluginManager::load_plugins(ips_replace);
     PluginManager::load_plugins(ips_so);
     PluginManager::load_plugins(ips_vba_data);
@@ -136,7 +137,6 @@ void load_ips_options()
     PluginManager::load_plugins(ips_js_data);
     PluginManager::load_plugins(ips_metadata);
     PluginManager::load_plugins(ips_msg);
-    PluginManager::load_plugins(ips_pcre);
     PluginManager::load_plugins(ips_pkt_data);
     PluginManager::load_plugins(ips_priority);
     PluginManager::load_plugins(ips_raw_data);

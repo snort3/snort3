@@ -38,6 +38,8 @@
 #include "file_service.h"
 #include "file_stats.h"
 
+#define DEFAULT_FILE_LOOKUP_TIMEOUT_CACHED_ITEM 3600    // 1 hour
+
 using namespace snort;
 
 class ExpectedFileCache : public XHash
@@ -246,7 +248,7 @@ FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout)
 }
 
 FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create,
-    int64_t timeout)
+    int64_t timeout, bool using_cache_entry)
 {
     FileHashKey hashKey;
     hashKey.dip = flow->client_ip;
@@ -256,16 +258,22 @@ FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create,
     hashKey.file_id = file_id;
     hashKey.asid = flow->key->addressSpaceId;
     hashKey.padding[0] = hashKey.padding[1] = hashKey.padding[2] = 0;
-    FileContext* file = find(hashKey, timeout);
+    
+    FileContext* file = nullptr;
+    if (using_cache_entry)
+        file = find(hashKey, DEFAULT_FILE_LOOKUP_TIMEOUT_CACHED_ITEM);
+    else
+        file = find(hashKey, timeout);
+    
     if (to_create and !file)
         file = add(hashKey, timeout);
 
     return file;
 }
 
-FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create)
+FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create, bool using_cache_entry)
 {
-    return get_file(flow, file_id, to_create, lookup_timeout);
+    return get_file(flow, file_id, to_create, lookup_timeout, using_cache_entry);
 }
 
 FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
@@ -309,7 +317,7 @@ int FileCache::store_verdict(Flow* flow, FileInfo* file, int64_t timeout)
         return 0;
     }
 
-    FileContext* file_got = get_file(flow, file_id, true, timeout);
+    FileContext* file_got = get_file(flow, file_id, true, timeout, false);
     if (file_got)
     {
         *((FileInfo*)(file_got)) = *file;
@@ -501,7 +509,7 @@ FileVerdict FileCache::cached_verdict_lookup(Packet* p, FileInfo* file,
         return verdict;
     }
 
-    FileContext* file_found = get_file(flow, file_id, false);
+    FileContext* file_found = get_file(flow, file_id, false, false);
 
     if (file_found)
     {

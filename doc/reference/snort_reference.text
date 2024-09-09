@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.2.2.0 2024-06-03 00:01:20 EDT TST
+Revision 3.3.4.0 2024-08-26 22:57:24 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -106,44 +106,47 @@ Table of Contents
     5.15. dns
     5.16. domain_filter
     5.17. dpx
-    5.18. file_id
-    5.19. file_log
-    5.20. ftp_client
-    5.21. ftp_data
-    5.22. ftp_server
-    5.23. gtp_inspect
-    5.24. http2_inspect
-    5.25. http_inspect
-    5.26. iec104
-    5.27. imap
-    5.28. mem_test
-    5.29. mms
-    5.30. modbus
-    5.31. netflow
-    5.32. normalizer
-    5.33. null_trace_logger
-    5.34. packet_capture
-    5.35. perf_monitor
-    5.36. pop
-    5.37. port_scan
-    5.38. reputation
-    5.39. rna
-    5.40. rpc_decode
-    5.41. s7commplus
-    5.42. sip
-    5.43. smtp
-    5.44. so_proxy
-    5.45. ssh
-    5.46. ssl
-    5.47. stream
-    5.48. stream_file
-    5.49. stream_icmp
-    5.50. stream_ip
-    5.51. stream_tcp
-    5.52. stream_udp
-    5.53. stream_user
-    5.54. telnet
-    5.55. wizard
+    5.18. extractor
+    5.19. file_id
+    5.20. file_log
+    5.21. ftp_client
+    5.22. ftp_data
+    5.23. ftp_server
+    5.24. gtp_inspect
+    5.25. http2_inspect
+    5.26. http_inspect
+    5.27. iec104
+    5.28. imap
+    5.29. mem_test
+    5.30. mms
+    5.31. modbus
+    5.32. netflow
+    5.33. normalizer
+    5.34. null_trace_logger
+    5.35. packet_capture
+    5.36. perf_monitor
+    5.37. pop
+    5.38. port_scan
+    5.39. reputation
+    5.40. rna
+    5.41. rpc_decode
+    5.42. s7commplus
+    5.43. sip
+    5.44. smtp
+    5.45. snort_ml
+    5.46. snort_ml_engine
+    5.47. so_proxy
+    5.48. ssh
+    5.49. ssl
+    5.50. stream
+    5.51. stream_file
+    5.52. stream_icmp
+    5.53. stream_ip
+    5.54. stream_tcp
+    5.55. stream_udp
+    5.56. stream_user
+    5.57. telnet
+    5.58. wizard
 
 6. IPS Action Modules
 
@@ -1101,7 +1104,7 @@ Peg counts:
 
   * latency.total_packets: total packets monitored (sum)
   * latency.total_usecs: total usecs elapsed (sum)
-  * latency.max_usecs: maximum usecs elapsed (sum)
+  * latency.max_usecs: maximum usecs elapsed (max)
   * latency.packet_timeouts: packets that timed out (sum)
   * latency.total_rule_evals: total rule evals monitored (sum)
   * latency.rule_eval_timeouts: rule evals that timed out (sum)
@@ -1475,8 +1478,6 @@ Configuration:
     ac_full | hyperscan | lowmem }
   * string search_engine.rule_db_dir: deserialize rule databases from
     given directory
-  * bool search_engine.show_fast_patterns = false: print fast pattern
-    info for each rule
   * bool search_engine.split_any_any = true: evaluate any-any rules
     separately to save memory
   * int search_engine.queue_limit = 0: maximum number of fast pattern
@@ -1778,6 +1779,7 @@ Commands:
   * snort.log_command(command, logging): enable or disable command
     logging
   * snort.show_config_generation(): show loaded configuration ID
+  * snort.show_snort_cpu(): show snort cpu usage
   * snort.pause(): suspend packet processing
   * snort.resume(pkt_num): continue packet processing. If number of
     packets is specified, will resume for n packets and pause
@@ -1841,6 +1843,12 @@ Configuration:
   * int trace.modules.all: enable trace for all modules { 0:255 }
   * int trace.modules.appid.all: enable all trace options { 0:255 }
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
+  * int trace.modules.detection.all: enable all trace options { 0:255
+    }
+  * int trace.modules.detection.opt_tree: enable tree option trace
+    logging { 0:255 }
+  * int trace.modules.detection.fp_info: enable fast pattern info
+    logging { 0:255 }
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
   * int trace.modules.file_id.all: enable all trace options { 0:255 }
   * int trace.modules.js_norm.all: enable all trace options { 0:255 }
@@ -1851,6 +1859,12 @@ Configuration:
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
+  * int trace.modules.stream_tcp.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_tcp.segments: enable stream TCP segments
+    trace logging { 0:255 }
+  * int trace.modules.stream_tcp.state: enable stream TCP state trace
+    logging { 0:255 }
   * int trace.modules.vba_data.all: enable all trace options { 0:255
     }
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
@@ -2188,6 +2202,7 @@ Rules:
   * 116:460 (icmp6) ICMPv6 node info query/response packet with a
     code greater than 2
   * 116:474 (icmp6) ICMPv6 not encapsulated in IPv6
+  * 116:478 (icmp6) ICMPv6 option length field is set to 0
 
 Peg counts:
 
@@ -2633,8 +2648,8 @@ Commands:
   * appid.reload_third_party(): reload appid third-party module
   * appid.reload_detectors(): reload appid detectors
   * appid.print_appid_config(): print appid configs
-  * appid.show_cpu_profiler_stats(appid): show appid cpu profiling
-    stats
+  * appid.show_cpu_profiler_stats(appid, display_rows_limit): show
+    appid cpu profiling stats
   * appid.show_cpu_profiler_status(): show appid cpu profiling status
 
 Peg counts:
@@ -2769,7 +2784,7 @@ Configuration:
   * string binder[].when.tenants: list of tenants
   * enum binder[].when.role = any: use the given configuration on one
     or any end of a session { client | server | any }
-  * string binder[].when.service: override default configuration
+  * string binder[].when.service: space separated list of services
   * enum binder[].use.action = inspect: what to do with matching
     traffic { reset | block | allow | inspect }
   * string binder[].use.file: use configuration in given file
@@ -3023,7 +3038,7 @@ Peg counts:
   * dce_smb.cache_misses: smbv2 cache did not find entry (sum)
   * dce_smb.cache_replaces: smbv2 cache found entry and replaced its
     value (sum)
-  * dce_smb.cache_max: smbv2 cache’s maximum byte usage (sum)
+  * dce_smb.cache_max: smbv2 cache’s maximum byte usage (max)
   * dce_smb.cache_prunes: smbv2 cache pruned entry to make space for
     new entry (sum)
   * dce_smb.cache_removes: smbv2 cache removed existing entry (sum)
@@ -3055,7 +3070,7 @@ Peg counts:
   * dce_smb.response_fragments: total connection-oriented response
     fragments (sum)
   * dce_smb.client_max_fragment_size: connection-oriented client
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_smb.client_min_fragment_size: connection-oriented client
     minimum fragment size (sum)
   * dce_smb.client_segs_reassembled: total connection-oriented client
@@ -3063,7 +3078,7 @@ Peg counts:
   * dce_smb.client_frags_reassembled: total connection-oriented
     client fragments reassembled (sum)
   * dce_smb.server_max_fragment_size: connection-oriented server
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_smb.server_min_fragment_size: connection-oriented server
     minimum fragment size (sum)
   * dce_smb.server_segs_reassembled: total connection-oriented server
@@ -3303,7 +3318,7 @@ Peg counts:
   * dce_tcp.response_fragments: total connection-oriented response
     fragments (sum)
   * dce_tcp.client_max_fragment_size: connection-oriented client
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_tcp.client_min_fragment_size: connection-oriented client
     minimum fragment size (sum)
   * dce_tcp.client_segs_reassembled: total connection-oriented client
@@ -3311,7 +3326,7 @@ Peg counts:
   * dce_tcp.client_frags_reassembled: total connection-oriented
     client fragments reassembled (sum)
   * dce_tcp.server_max_fragment_size: connection-oriented server
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_tcp.server_min_fragment_size: connection-oriented server
     minimum fragment size (sum)
   * dce_tcp.server_segs_reassembled: total connection-oriented server
@@ -3381,7 +3396,7 @@ Peg counts:
     (sum)
   * dce_udp.fragments: total connection-less fragments (sum)
   * dce_udp.max_fragment_size: connection-less maximum fragment size
-    (sum)
+    (max)
   * dce_udp.frags_reassembled: total connection-less fragments
     reassembled (sum)
   * dce_udp.max_seqnum: max connection-less seqnum (sum)
@@ -3520,7 +3535,37 @@ Peg counts:
   * dpx.packets: total packets (sum)
 
 
-5.18. file_id
+5.18. extractor
+
+--------------
+
+Help: extracts protocol specific data
+
+Type: inspector (passive)
+
+Usage: global
+
+Instance Type: global
+
+Configuration:
+
+  * enum extractor.formatting = csv: output format for extractor { 
+    csv }
+  * enum extractor.output = stdout: output destination for extractor
+    { stdout }
+  * enum extractor.protocols[].service: service to extract from { 
+    http }
+  * int extractor.protocols[].tenant_id = 0: tenant_id of target
+    tenant { 0:max32 }
+  * string extractor.protocols[].on_events: specify events to log
+  * string extractor.protocols[].fields: specify fields to log
+
+Peg counts:
+
+  * extractor.total_events: total extractor events (sum)
+
+
+5.19. file_id
 
 --------------
 
@@ -3584,7 +3629,7 @@ Peg counts:
     concurrently on a flow (max)
 
 
-5.19. file_log
+5.20. file_log
 
 --------------
 
@@ -3608,7 +3653,7 @@ Peg counts:
   * file_log.total_events: total file events (sum)
 
 
-5.20. ftp_client
+5.21. ftp_client
 
 --------------
 
@@ -3636,7 +3681,7 @@ Configuration:
     sequences on FTP control channel
 
 
-5.21. ftp_data
+5.22. ftp_data
 
 --------------
 
@@ -3653,7 +3698,7 @@ Peg counts:
   * ftp_data.packets: total packets (sum)
 
 
-5.22. ftp_server
+5.23. ftp_server
 
 --------------
 
@@ -3739,7 +3784,7 @@ Peg counts:
     sessions with segment size change (sum)
 
 
-5.23. gtp_inspect
+5.24. gtp_inspect
 
 --------------
 
@@ -3782,7 +3827,7 @@ Peg counts:
   * gtp_inspect.unknown_infos: unknown information elements (sum)
 
 
-5.24. http2_inspect
+5.25. http2_inspect
 
 --------------
 
@@ -3884,7 +3929,7 @@ Peg counts:
     concurrent streams (sum)
 
 
-5.25. http_inspect
+5.26. http_inspect
 
 --------------
 
@@ -4217,9 +4262,15 @@ Peg counts:
     (sum)
   * http_inspect.skip_mime_attach: total number of HTTP requests with
     too many MIME attachments to inspect (sum)
+  * http_inspect.compressed_gzip: total number of HTTP bodies
+    compressed with GZIP (sum)
+  * http_inspect.compressed_not_supported: total number of HTTP
+    bodies compressed with known but not supported methods (sum)
+  * http_inspect.compressed_unknown: total number of HTTP bodies
+    compressed with unknown methods (sum)
 
 
-5.26. iec104
+5.27. iec104
 
 --------------
 
@@ -4351,7 +4402,7 @@ Peg counts:
     sessions (max)
 
 
-5.27. imap
+5.28. imap
 
 --------------
 
@@ -4415,7 +4466,7 @@ Peg counts:
   * imap.js_pdf_scripts: total number of PDF files processed (sum)
 
 
-5.28. mem_test
+5.29. mem_test
 
 --------------
 
@@ -4432,7 +4483,7 @@ Peg counts:
   * mem_test.packets: total packets (sum)
 
 
-5.29. mms
+5.30. mms
 
 --------------
 
@@ -4457,7 +4508,7 @@ Peg counts:
     (max)
 
 
-5.30. modbus
+5.31. modbus
 
 --------------
 
@@ -4486,7 +4537,7 @@ Peg counts:
     sessions (max)
 
 
-5.31. netflow
+5.32. netflow
 
 --------------
 
@@ -4531,7 +4582,7 @@ Peg counts:
   * netflow.cache_misses: netflow cache did not find entry (sum)
   * netflow.cache_replaces: netflow cache found entry and replaced
     its value (sum)
-  * netflow.cache_max: netflow cache’s maximum byte usage (sum)
+  * netflow.cache_max: netflow cache’s maximum byte usage (max)
   * netflow.cache_prunes: netflow cache pruned entry to make space
     for new entry (sum)
   * netflow.cache_removes: netflow cache removed existing entry (sum)
@@ -4555,7 +4606,7 @@ Peg counts:
     template cache (now)
 
 
-5.32. normalizer
+5.33. normalizer
 
 --------------
 
@@ -4691,7 +4742,7 @@ Peg counts:
   * normalizer.tcp_block: blocked segments (sum)
 
 
-5.33. null_trace_logger
+5.34. null_trace_logger
 
 --------------
 
@@ -4704,7 +4755,7 @@ Usage: global
 Instance Type: global
 
 
-5.34. packet_capture
+5.35. packet_capture
 
 --------------
 
@@ -4739,7 +4790,7 @@ Peg counts:
     (sum)
 
 
-5.35. perf_monitor
+5.36. perf_monitor
 
 --------------
 
@@ -4758,6 +4809,8 @@ Configuration:
   * bool perf_monitor.flow = false: enable traffic statistics
   * bool perf_monitor.flow_ip = false: enable statistics on host
     pairs
+  * bool perf_monitor.flow_ip_all = false: enable every stat of
+    flow_ip profiling on host pairs
   * int perf_monitor.packets = 10000: minimum packets to report {
     0:max32 }
   * int perf_monitor.seconds = 60: report interval { 0:max32 }
@@ -4778,8 +4831,8 @@ Configuration:
 
 Commands:
 
-  * perf_monitor.enable_flow_ip_profiling(seconds, packets): enable
-    statistics on host pairs
+  * perf_monitor.enable_flow_ip_profiling(seconds, packets,
+    flow_ip_all): enable all statistics on host pairs
   * perf_monitor.disable_flow_ip_profiling(): disable statistics on
     host pairs
   * perf_monitor.show_flow_ip_profiling(): show status of statistics
@@ -4799,7 +4852,7 @@ Peg counts:
     by new flows (sum)
 
 
-5.36. pop
+5.37. pop
 
 --------------
 
@@ -4864,7 +4917,7 @@ Peg counts:
   * pop.js_pdf_scripts: total number of PDF files processed (sum)
 
 
-5.37. port_scan
+5.38. port_scan
 
 --------------
 
@@ -5038,7 +5091,7 @@ Peg counts:
     portscan (now)
 
 
-5.38. reputation
+5.39. reputation
 
 --------------
 
@@ -5095,7 +5148,7 @@ Peg counts:
     monitored (sum)
 
 
-5.39. rna
+5.40. rna
 
 --------------
 
@@ -5242,7 +5295,7 @@ Peg counts:
   * rna.total_bytes_in_interval: count of bytes processed (sum)
 
 
-5.40. rpc_decode
+5.41. rpc_decode
 
 --------------
 
@@ -5271,7 +5324,7 @@ Peg counts:
     sessions (max)
 
 
-5.41. s7commplus
+5.42. s7commplus
 
 --------------
 
@@ -5300,7 +5353,7 @@ Peg counts:
     sessions (max)
 
 
-5.42. sip
+5.43. sip
 
 --------------
 
@@ -5377,6 +5430,7 @@ Peg counts:
   * sip.concurrent_sessions: total concurrent SIP sessions (now)
   * sip.max_concurrent_sessions: maximum concurrent SIP sessions
     (max)
+  * sip.aborted_sessions: total session aborted (sum)
   * sip.events: events generated (sum)
   * sip.dialogs: total dialogs (sum)
   * sip.ignored_channels: total channels ignored (sum)
@@ -5408,7 +5462,7 @@ Peg counts:
   * sip.code_9xx: 9xx (sum)
 
 
-5.43. smtp
+5.44. smtp
 
 --------------
 
@@ -5522,7 +5576,63 @@ Peg counts:
   * smtp.js_pdf_scripts: total number of PDF files processed (sum)
 
 
-5.44. so_proxy
+5.45. snort_ml
+
+--------------
+
+Help: machine learning based exploit detector
+
+Type: inspector (passive)
+
+Usage: inspect
+
+Instance Type: singleton
+
+Configuration:
+
+  * int snort_ml.uri_depth = -1: number of input HTTP URI bytes to
+    scan (-1 unlimited) { -1:max31 }
+  * int snort_ml.client_body_depth = 0: number of input HTTP client
+    body bytes to scan (-1 unlimited) { -1:max31 }
+  * real snort_ml.http_param_threshold = 0.95: alert threshold for
+    http_param_model { 0:1 }
+
+Rules:
+
+  * 411:1 (snort_ml) potential threat found in HTTP parameters via
+    Neural Network Based Exploit Detection
+
+Peg counts:
+
+  * snort_ml.uri_alerts: total number of alerts triggered on HTTP URI
+    (sum)
+  * snort_ml.client_body_alerts: total number of alerts triggered on
+    HTTP client body (sum)
+  * snort_ml.uri_bytes: total number of HTTP URI bytes processed
+    (sum)
+  * snort_ml.client_body_bytes: total number of HTTP client body
+    bytes processed (sum)
+  * snort_ml.libml_calls: total libml calls (sum)
+
+
+5.46. snort_ml_engine
+
+--------------
+
+Help: configure machine learning engine settings
+
+Type: inspector (passive)
+
+Usage: global
+
+Instance Type: global
+
+Configuration:
+
+  * string snort_ml_engine.http_param_model: path to the model file
+
+
+5.47. so_proxy
 
 --------------
 
@@ -5536,7 +5646,7 @@ Usage: global
 Instance Type: global
 
 
-5.45. ssh
+5.48. ssh
 
 --------------
 
@@ -5576,7 +5686,7 @@ Peg counts:
     (max)
 
 
-5.46. ssl
+5.49. ssl
 
 --------------
 
@@ -5627,7 +5737,7 @@ Peg counts:
     (max)
 
 
-5.47. stream
+5.50. stream
 
 --------------
 
@@ -5742,7 +5852,7 @@ Peg counts:
   * stream.uni_ip_flows: number of uni ip flows in cache (now)
 
 
-5.48. stream_file
+5.51. stream_file
 
 --------------
 
@@ -5759,7 +5869,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-5.49. stream_icmp
+5.52. stream_icmp
 
 --------------
 
@@ -5786,7 +5896,7 @@ Peg counts:
   * stream_icmp.prunes: icmp session prunes (sum)
 
 
-5.50. stream_ip
+5.53. stream_ip
 
 --------------
 
@@ -5840,7 +5950,7 @@ Peg counts:
   * stream_ip.total_bytes: total number of bytes processed (sum)
   * stream_ip.total_frags: total fragments (sum)
   * stream_ip.current_frags: current fragments (now)
-  * stream_ip.max_frags: max fragments (sum)
+  * stream_ip.max_frags: max fragments (max)
   * stream_ip.reassembled: reassembled datagrams (sum)
   * stream_ip.discards: fragments discarded (sum)
   * stream_ip.frag_timeouts: datagrams abandoned (sum)
@@ -5858,7 +5968,7 @@ Peg counts:
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-5.51. stream_tcp
+5.54. stream_tcp
 
 --------------
 
@@ -6053,7 +6163,7 @@ Peg counts:
     one-way traffic only (sum)
 
 
-5.52. stream_udp
+5.55. stream_udp
 
 --------------
 
@@ -6082,7 +6192,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-5.53. stream_user
+5.56. stream_user
 
 --------------
 
@@ -6100,7 +6210,7 @@ Configuration:
     1:max31 }
 
 
-5.54. telnet
+5.57. telnet
 
 --------------
 
@@ -6136,7 +6246,7 @@ Peg counts:
     sessions (max)
 
 
-5.55. wizard
+5.58. wizard
 
 --------------
 
@@ -8041,10 +8151,6 @@ Configuration:
 
 Peg counts:
 
-  * pcre.pcre_rules: total rules processed with pcre option (sum)
-  * pcre.pcre_to_hyper: total pcre rules by hyperscan engine (sum)
-  * pcre.pcre_native: total pcre rules compiled by pcre engine (sum)
-  * pcre.pcre_negated: total pcre rules using negation syntax (sum)
   * pcre.pcre_match_limit: total number of times pcre hit the match
     limit (sum)
   * pcre.pcre_recursion_limit: total number of times pcre hit the
@@ -9367,7 +9473,7 @@ libraries see the Getting Started section of the manual.
     | user | file }
   * enum binder[].when.role = any: use the given configuration on one
     or any end of a session { client | server | any }
-  * string binder[].when.service: override default configuration
+  * string binder[].when.service: space separated list of services
   * string binder[].when.src_groups: list of source interface group
     IDs
   * string binder[].when.src_intfs: list of source interface IDs
@@ -9642,6 +9748,16 @@ libraries see the Getting Started section of the manual.
     ordering incoming events { priority|content_length }
   * bool event_queue.process_all_events = false: process just first
     action group or all action groups
+  * enum extractor.formatting = csv: output format for extractor { 
+    csv }
+  * enum extractor.output = stdout: output destination for extractor
+    { stdout }
+  * string extractor.protocols[].fields: specify fields to log
+  * string extractor.protocols[].on_events: specify events to log
+  * enum extractor.protocols[].service: service to extract from { 
+    http }
+  * int extractor.protocols[].tenant_id = 0: tenant_id of target
+    tenant { 0:max32 }
   * string file_connector[].connector: connector name
   * enum file_connector[].direction: usage { receive | transmit | 
     duplex }
@@ -10345,6 +10461,8 @@ libraries see the Getting Started section of the manual.
   * bool perf_monitor.base = true: enable base statistics
   * bool perf_monitor.cpu = false: enable cpu statistics
   * bool perf_monitor.flow = false: enable traffic statistics
+  * bool perf_monitor.flow_ip_all = false: enable every stat of
+    flow_ip profiling on host pairs
   * bool perf_monitor.flow_ip = false: enable statistics on host
     pairs
   * int perf_monitor.flow_ip_memcap = 52428800: maximum memory in
@@ -10724,8 +10842,6 @@ libraries see the Getting Started section of the manual.
   * dynamic search_engine.search_method = ac_bnfa: set fast pattern
     algorithm - choose available search engine { ac_bnfa | ac_full |
     hyperscan | lowmem }
-  * bool search_engine.show_fast_patterns = false: print fast pattern
-    info for each rule
   * bool search_engine.split_any_any = true: evaluate any-any rules
     separately to save memory
   * interval seq.~range: check if TCP sequence number is in given
@@ -10950,7 +11066,14 @@ libraries see the Getting Started section of the manual.
     engines
   * string snort.--metadata-filter: <filter> load only rules
     containing filter string in metadata if set
+  * int snort_ml.client_body_depth = 0: number of input HTTP client
+    body bytes to scan (-1 unlimited) { -1:max31 }
+  * string snort_ml_engine.http_param_model: path to the model file
+  * real snort_ml.http_param_threshold = 0.95: alert threshold for
+    http_param_model { 0:1 }
   * implied snort.-M: log messages to syslog (not alerts)
+  * int snort_ml.uri_depth = -1: number of input HTTP URI bytes to
+    scan (-1 unlimited) { -1:max31 }
   * int snort.-m: <umask> set the process file mode creation mask {
     0x000:0x1FF }
   * int snort.-n: <count> stop after count packets { 0:max53 }
@@ -11229,6 +11352,12 @@ libraries see the Getting Started section of the manual.
   * int trace.modules.all: enable trace for all modules { 0:255 }
   * int trace.modules.appid.all: enable all trace options { 0:255 }
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
+  * int trace.modules.detection.all: enable all trace options { 0:255
+    }
+  * int trace.modules.detection.fp_info: enable fast pattern info
+    logging { 0:255 }
+  * int trace.modules.detection.opt_tree: enable tree option trace
+    logging { 0:255 }
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
   * int trace.modules.file_id.all: enable all trace options { 0:255 }
   * int trace.modules.js_norm.all: enable all trace options { 0:255 }
@@ -11239,6 +11368,12 @@ libraries see the Getting Started section of the manual.
   * int trace.modules.snort.all: enable all trace options { 0:255 }
   * int trace.modules.snort.inspector_manager: enable inspector
     manager trace logging { 0:255 }
+  * int trace.modules.stream_tcp.all: enable all trace options {
+    0:255 }
+  * int trace.modules.stream_tcp.segments: enable stream TCP segments
+    trace logging { 0:255 }
+  * int trace.modules.stream_tcp.state: enable stream TCP state trace
+    logging { 0:255 }
   * int trace.modules.vba_data.all: enable all trace options { 0:255
     }
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
@@ -11416,7 +11551,7 @@ libraries see the Getting Started section of the manual.
   * dce_smb.binds: total connection-oriented binds (sum)
   * dce_smb.cache_adds: smbv2 cache added new entry (sum)
   * dce_smb.cache_hits: smbv2 cache found existing entry (sum)
-  * dce_smb.cache_max: smbv2 cache’s maximum byte usage (sum)
+  * dce_smb.cache_max: smbv2 cache’s maximum byte usage (max)
   * dce_smb.cache_misses: smbv2 cache did not find entry (sum)
   * dce_smb.cache_prunes: smbv2 cache pruned entry to make space for
     new entry (sum)
@@ -11427,7 +11562,7 @@ libraries see the Getting Started section of the manual.
   * dce_smb.client_frags_reassembled: total connection-oriented
     client fragments reassembled (sum)
   * dce_smb.client_max_fragment_size: connection-oriented client
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_smb.client_min_fragment_size: connection-oriented client
     minimum fragment size (sum)
   * dce_smb.client_segs_reassembled: total connection-oriented client
@@ -11460,7 +11595,7 @@ libraries see the Getting Started section of the manual.
   * dce_smb.server_frags_reassembled: total connection-oriented
     server fragments reassembled (sum)
   * dce_smb.server_max_fragment_size: connection-oriented server
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_smb.server_min_fragment_size: connection-oriented server
     minimum fragment size (sum)
   * dce_smb.server_segs_reassembled: total connection-oriented server
@@ -11613,7 +11748,7 @@ libraries see the Getting Started section of the manual.
   * dce_tcp.client_frags_reassembled: total connection-oriented
     client fragments reassembled (sum)
   * dce_tcp.client_max_fragment_size: connection-oriented client
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_tcp.client_min_fragment_size: connection-oriented client
     minimum fragment size (sum)
   * dce_tcp.client_segs_reassembled: total connection-oriented client
@@ -11641,7 +11776,7 @@ libraries see the Getting Started section of the manual.
   * dce_tcp.server_frags_reassembled: total connection-oriented
     server fragments reassembled (sum)
   * dce_tcp.server_max_fragment_size: connection-oriented server
-    maximum fragment size (sum)
+    maximum fragment size (max)
   * dce_tcp.server_min_fragment_size: connection-oriented server
     minimum fragment size (sum)
   * dce_tcp.server_segs_reassembled: total connection-oriented server
@@ -11666,7 +11801,7 @@ libraries see the Getting Started section of the manual.
   * dce_udp.max_concurrent_sessions: maximum concurrent sessions
     (max)
   * dce_udp.max_fragment_size: connection-less maximum fragment size
-    (sum)
+    (max)
   * dce_udp.max_seqnum: max connection-less seqnum (sum)
   * dce_udp.no_calls: total connection-less no calls (sum)
   * dce_udp.other_requests: total connection-less other requests
@@ -11759,6 +11894,7 @@ libraries see the Getting Started section of the manual.
     out of global memory (sum)
   * event_filter.no_memory_local: number of times event filter ran
     out of local memory (sum)
+  * extractor.total_events: total extractor events (sum)
   * file_connector.messages: total messages (sum)
   * file_id.cache_failures: number of file cache add failures (sum)
   * file_id.files_not_processed: number of files not processed due to
@@ -11860,6 +11996,12 @@ libraries see the Getting Started section of the manual.
   * http2_inspect.total_bytes: total HTTP/2 data bytes inspected
     (sum)
   * http_inspect.chunked: chunked message bodies (sum)
+  * http_inspect.compressed_gzip: total number of HTTP bodies
+    compressed with GZIP (sum)
+  * http_inspect.compressed_not_supported: total number of HTTP
+    bodies compressed with known but not supported methods (sum)
+  * http_inspect.compressed_unknown: total number of HTTP bodies
+    compressed with unknown methods (sum)
   * http_inspect.concurrent_sessions: total concurrent http sessions
     (now)
   * http_inspect.connect_requests: CONNECT requests inspected (sum)
@@ -11971,7 +12113,7 @@ libraries see the Getting Started section of the manual.
     limit overflows (sum)
   * js_norm.identifiers: total number of unique identifiers processed
     (sum)
-  * latency.max_usecs: maximum usecs elapsed (sum)
+  * latency.max_usecs: maximum usecs elapsed (max)
   * latency.packet_timeouts: packets that timed out (sum)
   * latency.rule_eval_timeouts: rule evals that timed out (sum)
   * latency.rule_tree_enables: rule tree re-enables (sum)
@@ -12017,7 +12159,7 @@ libraries see the Getting Started section of the manual.
   * modbus.sessions: total sessions processed (sum)
   * netflow.cache_adds: netflow cache added new entry (sum)
   * netflow.cache_hits: netflow cache found existing entry (sum)
-  * netflow.cache_max: netflow cache’s maximum byte usage (sum)
+  * netflow.cache_max: netflow cache’s maximum byte usage (max)
   * netflow.cache_misses: netflow cache did not find entry (sum)
   * netflow.cache_prunes: netflow cache pruned entry to make space
     for new entry (sum)
@@ -12134,12 +12276,8 @@ libraries see the Getting Started section of the manual.
   * pcre.pcre_error: total number of times pcre returns error (sum)
   * pcre.pcre_match_limit: total number of times pcre hit the match
     limit (sum)
-  * pcre.pcre_native: total pcre rules compiled by pcre engine (sum)
-  * pcre.pcre_negated: total pcre rules using negation syntax (sum)
   * pcre.pcre_recursion_limit: total number of times pcre hit the
     recursion limit (sum)
-  * pcre.pcre_rules: total rules processed with pcre option (sum)
-  * pcre.pcre_to_hyper: total pcre rules by hyperscan engine (sum)
   * perf_monitor.flow_tracker_creates: total number of flow trackers
     created (sum)
   * perf_monitor.flow_tracker_prunes: flow trackers pruned for reuse
@@ -12244,6 +12382,7 @@ libraries see the Getting Started section of the manual.
     to overflow (sum)
   * search_engine.total_unique: total unique fast pattern hits (sum)
   * side_channel.packets: total packets (sum)
+  * sip.aborted_sessions: total session aborted (sum)
   * sip.ack: ack (sum)
   * sip.bye: bye (sum)
   * sip.cancel: cancel (sum)
@@ -12312,6 +12451,15 @@ libraries see the Getting Started section of the manual.
   * snort.inspector_deletions: number of times inspectors were
     deleted (sum)
   * snort.local_commands: total local commands processed (sum)
+  * snort_ml.client_body_alerts: total number of alerts triggered on
+    HTTP client body (sum)
+  * snort_ml.client_body_bytes: total number of HTTP client body
+    bytes processed (sum)
+  * snort_ml.libml_calls: total libml calls (sum)
+  * snort_ml.uri_alerts: total number of alerts triggered on HTTP URI
+    (sum)
+  * snort_ml.uri_bytes: total number of HTTP URI bytes processed
+    (sum)
   * snort.policy_reloads: number of times policies were reloaded
     (sum)
   * snort.remote_commands: total remote commands processed (sum)
@@ -12378,7 +12526,7 @@ libraries see the Getting Started section of the manual.
   * stream_ip.drops: fragments dropped (sum)
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
   * stream_ip.frag_timeouts: datagrams abandoned (sum)
-  * stream_ip.max_frags: max fragments (sum)
+  * stream_ip.max_frags: max fragments (max)
   * stream_ip.max: max ip sessions (max)
   * stream.ip_memcap_prunes: number of IP flows pruned due to memcap
     (sum)
@@ -12646,6 +12794,7 @@ libraries see the Getting Started section of the manual.
   * 154: js_norm
   * 175: domain_filter
   * 256: dpx
+  * 411: snort_ml
 
 
 11.7. Builtin Rules
@@ -12962,18 +13111,19 @@ The options length field extends past the end of the GENEVE header.
 
 116:250 (icmp4) ICMP original IP header truncated
 
-The ICMP error message’s original IP header is truncated.
+The ICMP or IP in ICMP error message’s original IP header is
+truncated.
 
 116:251 (icmp4) ICMP version and original IP header versions differ
 
-The ICMP error message’s original IP packet’s version and original IP
-header versions differ.
+The ICMP or IP in ICMP error message’s original IP packet’s version
+and original IP header versions differ.
 
 116:252 (icmp4) ICMP original datagram length < original IP header
 length
 
-The ICMP error message’s original datagram’s length is less than the
-original IP’s header length.
+The ICMP or IP in ICMP error message’s original datagram’s length is
+less than the original IP’s header length.
 
 116:253 (icmp4) ICMP original IP payload < 64 bits
 
@@ -13399,8 +13549,8 @@ An IPv6 packet was received with a routing type 0 extension header.
 
 116:462 (erspan2) ERSpan header version mismatch
 
-The ERSpan2 version is not equal to 1 (the value of 1 signals that
-it’s ERSpan2).
+Incorrect ERSpan version. ERSpan2 should have version 1, ERSpan3
+should have version 2.
 
 116:463 (erspan2) captured length < ERSpan type2 header length
 
@@ -13469,6 +13619,10 @@ The IPv6 packet has a reserved source address.
 116:477 (ipv6) IPv6 packet to reserved dest address
 
 The IPv6 packet has a reserved destination address.
+
+116:478 (icmp6) ICMPv6 option length field is set to 0
+
+ICMPv6 option length field is set to 0.
 
 119:1 (http_inspect) URI has percent-encoding of an unreserved
 character
@@ -15944,8 +16098,8 @@ alert is raised by the enhanced JavaScript normalizer.
   * appid.reload_third_party(): reload appid third-party module
   * appid.reload_detectors(): reload appid detectors
   * appid.print_appid_config(): print appid configs
-  * appid.show_cpu_profiler_stats(appid): show appid cpu profiling
-    stats
+  * appid.show_cpu_profiler_stats(appid, display_rows_limit): show
+    appid cpu profiling stats
   * appid.show_cpu_profiler_status(): show appid cpu profiling status
   * host_cache.dump(file_name): dump host cache
   * host_cache.delete_host(host_ip): delete host from host cache
@@ -15968,8 +16122,8 @@ alert is raised by the enhanced JavaScript normalizer.
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port,
     tenants): enable packet tracer debugging
   * packet_tracer.disable(): disable packet tracer
-  * perf_monitor.enable_flow_ip_profiling(seconds, packets): enable
-    statistics on host pairs
+  * perf_monitor.enable_flow_ip_profiling(seconds, packets,
+    flow_ip_all): enable all statistics on host pairs
   * perf_monitor.disable_flow_ip_profiling(): disable statistics on
     host pairs
   * perf_monitor.show_flow_ip_profiling(): show status of statistics
@@ -16008,6 +16162,7 @@ alert is raised by the enhanced JavaScript normalizer.
   * snort.log_command(command, logging): enable or disable command
     logging
   * snort.show_config_generation(): show loaded configuration ID
+  * snort.show_snort_cpu(): show snort cpu usage
   * snort.pause(): suspend packet processing
   * snort.resume(pkt_num): continue packet processing. If number of
     packets is specified, will resume for n packets and pause
@@ -16156,6 +16311,7 @@ and are not applicable elsewhere.
   * eth (codec): support for ethernet protocol (DLT 1) (DLT 51)
   * event_filter (basic): configure thresholding of events
   * event_queue (basic): configure event queue parameters
+  * extractor (inspector): extracts protocol specific data
   * fabricpath (codec): support for fabricpath
   * file_connector (connector): implement the file based connector
   * file_data (ips_option): rule option to set detection cursor to
@@ -16384,6 +16540,9 @@ and are not applicable elsewhere.
   * sip_stat_code (ips_option): detection option for sip stat code
   * smtp (inspector): smtp inspection
   * snort (basic): command line configuration and shell commands
+  * snort_ml (inspector): machine learning based exploit detector
+  * snort_ml_engine (inspector): configure machine learning engine
+    settings
   * so (ips_option): rule option to call custom eval function
   * so_proxy (inspector): a proxy inspector to track flow data from
     SO rules (internal use only)
@@ -16515,6 +16674,7 @@ and are not applicable elsewhere.
   * inspector::dns: dns inspection
   * inspector::domain_filter: alert on configured HTTP domains
   * inspector::dpx: dynamic inspector example
+  * inspector::extractor: extracts protocol specific data
   * inspector::file_id: configure file identification
   * inspector::file_log: log file event to file.log
   * inspector::ftp_client: FTP inspector client module
@@ -16544,6 +16704,9 @@ and are not applicable elsewhere.
   * inspector::s7commplus: s7commplus inspection
   * inspector::sip: sip inspection
   * inspector::smtp: smtp inspection
+  * inspector::snort_ml: machine learning based exploit detector
+  * inspector::snort_ml_engine: configure machine learning engine
+    settings
   * inspector::so_proxy: a proxy inspector to track flow data from SO
     rules (internal use only)
   * inspector::ssh: ssh inspection

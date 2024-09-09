@@ -63,7 +63,8 @@
 
 using namespace snort;
 THREAD_LOCAL ThirdPartyAppIdContext* pkt_thread_tp_appid_ctxt = nullptr;
-THREAD_LOCAL OdpThreadContext* odp_thread_local_ctxt = nullptr;
+OdpControlContext* odp_control_thread_ctxt = nullptr;
+THREAD_LOCAL OdpPacketThreadContext* odp_thread_local_ctxt = nullptr;
 THREAD_LOCAL OdpContext* pkt_thread_odp_ctxt = nullptr;
 
 unsigned AppIdInspector::cached_global_pub_id = 0;
@@ -95,31 +96,22 @@ static void add_appid_to_packet_trace(const Flow& flow, const OdpContext& odp_co
         (misc_name ? misc_name : ""), misc_id);
 }
 
-AppIdInspector::AppIdInspector(AppIdModule& mod)
+AppIdInspector::AppIdInspector(AppIdModule& mod) : config(mod.get_data()), ctxt(*config)
 {
-    config = mod.get_data();
-    assert(config);
 }
 
 AppIdInspector::~AppIdInspector()
 {
-    delete ctxt;
     delete config;
 }
 
-AppIdContext& AppIdInspector::get_ctxt() const
-{
-    assert(ctxt);
-    return *ctxt;
-}
-unsigned AppIdInspector::get_pub_id() 
+unsigned AppIdInspector::get_pub_id()
 {
     return appid_pub_id;
 }
 
 bool AppIdInspector::configure(SnortConfig* sc)
 {
-    assert(!ctxt);
     // cppcheck-suppress unreadVariable
     Profile profile(appid_perf_stats);
     struct rusage ru;
@@ -134,8 +126,9 @@ bool AppIdInspector::configure(SnortConfig* sc)
     }
     #endif
 
-    ctxt = new AppIdContext(const_cast<AppIdConfig&>(*config));
-    ctxt->init_appid(sc, *this);
+    assert(sc);
+    config->map_app_names_to_snort_ids(*sc);
+    ctxt.init_appid(sc, *this);
 
     #ifdef REG_TEST
     if ( config->log_memory_and_pattern_count )
@@ -145,7 +138,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
             appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: fetching memory usage failed\n");
         else
             appid_log(nullptr, TRACE_INFO_LEVEL, "appid: MaxRss diff: %li\n", ru.ru_maxrss - prev_maxrss);
-        appid_log(nullptr, TRACE_INFO_LEVEL, "appid: patterns loaded: %u\n", ctxt->get_odp_ctxt().get_pattern_count());
+        appid_log(nullptr, TRACE_INFO_LEVEL, "appid: patterns loaded: %u\n", ctxt.get_odp_ctxt().get_pattern_count());
     #ifdef REG_TEST
     }
     #endif
@@ -190,18 +183,18 @@ void AppIdInspector::tinit()
     AppIdStatistics::initialize_manager(*config);
 
     assert(!pkt_thread_odp_ctxt);
-    pkt_thread_odp_ctxt = &(ctxt->get_odp_ctxt());
+    pkt_thread_odp_ctxt = &ctxt.get_odp_ctxt();
 
     assert(!odp_thread_local_ctxt);
-    odp_thread_local_ctxt = new OdpThreadContext();
-    odp_thread_local_ctxt->initialize(SnortConfig::get_conf(), *ctxt);
+    odp_thread_local_ctxt = new OdpPacketThreadContext;
+    odp_thread_local_ctxt->initialize(SnortConfig::get_conf());
 
     AppIdServiceState::initialize(config->memcap);
     assert(!pkt_thread_tp_appid_ctxt);
-    pkt_thread_tp_appid_ctxt = ctxt->get_tp_appid_ctxt();
+    pkt_thread_tp_appid_ctxt = ctxt.get_tp_appid_ctxt();
     if (pkt_thread_tp_appid_ctxt)
         pkt_thread_tp_appid_ctxt->tinit();
-    if (ctxt->config.log_all_sessions)
+    if (config->log_all_sessions)
         appidDebug->set_enabled(true);
      if ( snort::HighAvailabilityManager::active() )
         AppIdHAManager::tinit();

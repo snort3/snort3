@@ -22,7 +22,7 @@
 #define MAIN_H
 
 struct lua_State;
-
+extern bool exit_requested;
 const char* get_prompt();
 
 // commands provided by the snort module

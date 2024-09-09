@@ -31,8 +31,9 @@ constexpr uint16_t ICMP6_HEADER_NORMAL_LEN = 8;
 
 #define ICMPv6_NS_MIN_LEN 24
 #define ICMPv6_NA_MIN_LEN 24
-#define ICMPv6_RS_MIN_LEN 24
+#define ICMPv6_RS_MIN_LEN 8
 #define ICMPv6_RA_MIN_LEN 16
+#define ICMPv6_RD_MIN_LEN 40
 
 #define ICMPV6_OPTION_SOURCE_LINKLAYER_ADDRESS 1
 #define ICMPV6_OPTION_TARGET_LINKLAYER_ADDRESS 2
@@ -40,7 +41,6 @@ constexpr uint16_t ICMP6_HEADER_NORMAL_LEN = 8;
 #define ICMPV6_OPTION_REDIRECT_HEADER          4
 #define ICMPV6_OPTION_MTU                      5
 
-//enum class Icmp6Types : std::uint8_t
 enum Icmp6Types : std::uint8_t
 {
     DESTINATION_UNREACHABLE = 1,
@@ -114,6 +114,14 @@ struct ICMP6TooBig
     uint32_t mtu;
 };
 
+struct NDPOptionFormatBasic
+{
+    uint8_t type;
+    uint8_t length;
+    // everything from this point depends on protocol,
+    // so should be implemented in a different structure
+};
+
 struct ICMP6RouterAdvertisement
 {
     uint8_t type;
@@ -124,6 +132,7 @@ struct ICMP6RouterAdvertisement
     uint16_t lifetime;
     uint32_t reachable_time;
     uint32_t retrans_time;
+    NDPOptionFormatBasic* options_start;
 };
 
 struct ICMP6RouterSolicitation
@@ -132,6 +141,7 @@ struct ICMP6RouterSolicitation
     uint8_t code;
     uint16_t csum;
     uint32_t reserved;
+    NDPOptionFormatBasic* options_start;
 };
 
 struct ICMP6NodeInfo
@@ -143,6 +153,42 @@ struct ICMP6NodeInfo
     uint16_t flags;
     uint64_t nonce;
 };
+
+struct ICMP6NeighborSolicitation
+{
+    uint8_t type;
+    uint8_t code;
+    uint16_t csum;
+    uint32_t reserved;
+    uint64_t target_address_1;
+    uint64_t target_address_2;
+    NDPOptionFormatBasic* options_start;
+};
+
+struct ICMP6NeighborAdvertisement
+{
+    uint8_t type;
+    uint8_t code;
+    uint16_t csum;
+    uint32_t flags;     // flags (3 bit) + reserved bytes
+    uint64_t target_address_1;
+    uint64_t target_address_2;
+    NDPOptionFormatBasic* options_start;
+};
+
+struct ICMP6Redirect
+{
+    uint8_t type;
+    uint8_t code;
+    uint16_t csum;
+    uint32_t reserved;
+    uint64_t target_address_1;
+    uint64_t target_address_2;
+    uint64_t dst_address_1;
+    uint64_t dst_address_2;
+    NDPOptionFormatBasic* options_start;
+};
+
 }  // namespace icmp
 }  // namespace snort
 

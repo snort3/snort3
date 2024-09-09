@@ -1,0 +1,52 @@
+Extractor is a global network inspector that logs flow data upon receiving
+a flow event.
+
+Supported services:
+ * HTTP
+ * HTTP2
+
+Supported events:
+ * end of HTTP transaction (request-response pair)
+
+An example configuration follows:
+
+    extractor =
+    {
+        protocols =
+        {
+            service = 'http',
+            tenant_id = 1,
+            on_events = 'eot',
+            fields = 'ts, uri, host, method'
+        }
+        {
+            service = 'http',
+            tenant_id = 2,
+            on_events = 'eot',
+            fields = 'ts, uri'
+        }
+    }
+
+Each tenant can have its own protocol configuration.
+
+A list of common fields which are logged:
+ * ts (timestamp)
+ * uid (connection id)
+ * id.orig_h (client IP address)
+ * id.orig_p (client TCP port)
+ * id.resp_h (server IP address)
+ * id.resp_p (server TCP port)
+ * pkt_num (packet number)
+
+The following fields are supported for HTTP:
+ * method
+ * host
+ * uri
+ * user_agent
+ * referrer
+ * origin
+ * version
+ * status_code
+ * status_msg
+ * trans_depth
+

@@ -72,10 +72,11 @@
 
 using namespace snort;
 
-static bool exit_requested = false;
+bool exit_requested = false;
 static int main_exit_code = 0;
 static bool paused = false;
 static bool pthreads_started = false;
+static bool pthreads_running = false;
 static std::queue<AnalyzerCommand*> orphan_commands;
 
 static std::mutex poke_mutex;
@@ -284,6 +285,7 @@ void Pig::reap_commands()
 
 
 static bool* pigs_started = nullptr;
+static bool* pigs_running = nullptr;
 static Pig* pigs = nullptr;
 static unsigned max_pigs = 0;
 static unsigned pigs_failed = 0;
@@ -899,7 +901,7 @@ static bool house_keeping()
 static void service_check()
 {
 #ifdef SHELL
-    if (pthreads_started && ControlMgmt::service_users())
+    if (pthreads_running && ControlMgmt::service_users())
         return;
 #endif
 
@@ -1107,9 +1109,14 @@ static void main_loop()
             if ( pig.analyzer )
             {
                 handle(pig, swine, pending_privileges);
-                if (!pigs_started[idx] && pig.analyzer && (pig.analyzer->get_state() ==
-                    Analyzer::State::STARTED))
+
+                if (!pigs_started[idx] && pig.analyzer && ((pig.analyzer->get_state() == Analyzer::State::STARTED)))
                     pigs_started[idx] = true;
+
+                if (!pigs_running[idx] && pig.analyzer && ((pig.analyzer->get_state() == Analyzer::State::PAUSED) ||
+                    (pig.analyzer->get_state() == Analyzer::State::RUNNING)))
+                    pigs_running[idx] = true;
+
                 if (pigs_started[idx] && (!pig.analyzer || pig.analyzer->get_state() ==
                     Analyzer::State::FAILED))
                     pigs_started[idx] = false;
@@ -1134,12 +1141,13 @@ static void main_loop()
             }
 
             pthreads_started = pigs_started_count && num_threads <= pigs_started_count + pigs_failed;
-
+            
             if (pthreads_started)
             {
 #ifdef REG_TEST
                 LogMessage("All pthreads started\n");
 #endif
+
 #ifdef SHELL
                 if (use_shell(SnortConfig::get_conf()))
                 {
@@ -1148,6 +1156,20 @@ static void main_loop()
                 }
 #endif
             }
+        }
+
+        if (!pthreads_running)
+        {
+            const unsigned num_threads = (!Trough::has_next()) ? max_swine : max_pigs;
+            unsigned pigs_running_count = 0;
+
+            for (unsigned i = 0; i < num_threads; i++)
+            {
+                if(pigs_running[i])
+                    pigs_running_count++;
+            }
+
+            pthreads_running = pigs_running_count && num_threads <= pigs_running_count + pigs_failed;
         }
 
         if ( !exit_requested and (swine < max_pigs) and (src = Trough::get_next()) )
@@ -1184,12 +1206,14 @@ static void snort_main()
     pig_poke = new Ring<unsigned>((max_pigs*max_grunts)+1);
     pigs = new Pig[max_pigs];
     pigs_started = new bool[max_pigs];
+    pigs_running = new bool[max_pigs];
 
     for (unsigned idx = 0; idx < max_pigs; idx++)
     {
         Pig& pig = pigs[idx];
         pig.set_index(idx);
         pigs_started[idx] = false;
+        pigs_running[idx] = false;
     }
 
     main_loop();
@@ -1199,6 +1223,8 @@ static void snort_main()
     pigs = nullptr;
     delete[] pigs_started;
     pigs_started = nullptr;
+    delete[] pigs_running;
+    pigs_running = nullptr;
 
 #ifdef SHELL
     ControlMgmt::socket_term();

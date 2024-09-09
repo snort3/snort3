@@ -68,6 +68,7 @@ Optional Features:
     --enable-jemalloc       enable using jemalloc for dynamic memory management
     --enable-jemalloc-static
                             same as --enable-jemalloc but linked statically
+    --disable-tenant-id     disable tenant ID in the FlowKey
     --enable-luajit-static  enable luajit linked statically
     --enable-appid-third-party
                             enable third party appid
@@ -347,6 +348,9 @@ while [ $# -ne 0 ]; do
             ;;
         --disable-jemalloc-static)
             append_cache_entry ENABLE_JEMALLOC          BOOL false
+            ;;
+        --disable-tenant-id)
+            append_cache_entry DISABLE_TENANT_ID        BOOL true
             ;;
         --enable-appid-third-party)
             ;;

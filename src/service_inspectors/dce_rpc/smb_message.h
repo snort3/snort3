@@ -2193,7 +2193,7 @@ inline uint16_t SmbWriteAndCloseRespCount(const SmbWriteAndCloseResp* resp)
 void DCE2_SmbInitGlobals();
 void DCE2_Smb1Process(struct DCE2_SmbSsnData*);
 struct DCE2_SmbSsnData* dce2_create_new_smb_session(snort::Packet*, struct dce2SmbProtoConf*);
-struct DCE2_Smb2SsnData* dce2_create_new_smb2_session(snort::Packet*, struct dce2SmbProtoConf*);
+struct DCE2_Smb2SsnData* dce2_create_new_smb2_session(snort::Packet*, struct dce2SmbProtoConf*, bool upgrade = false);
 void DCE2_SmbDataFree(DCE2_SmbSsnData*);
 void set_smb_reassembled_data(uint8_t* nb_ptr, uint16_t co_len);
 

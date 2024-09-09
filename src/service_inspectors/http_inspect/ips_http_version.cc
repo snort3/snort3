@@ -48,17 +48,6 @@ bool HttpVersionRuleOptModule::begin(const char*, int, SnortConfig*)
     return true;
 }
 
-static const std::map <std::string, VersionId> VersionStrToEnum =
-{
-    { "malformed", VERS__PROBLEMATIC },
-    { "other", VERS__OTHER },
-    { "1.0", VERS_1_0 },
-    { "1.1", VERS_1_1 },
-    { "2.0", VERS_2_0 },
-    { "3.0", VERS_3_0 },
-    { "0.9", VERS_0_9 }
-};
-
 bool HttpVersionRuleOptModule::parse_version_list(Value& v)
 {
     v.set_first_token();

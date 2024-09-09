@@ -72,7 +72,7 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     session_data(session_data_),
     flow(flow_),
     params(params_),
-    transaction(HttpTransaction::attach_my_transaction(session_data, source_id_)),
+    transaction(HttpTransaction::attach_my_transaction(session_data, source_id_, flow)),
     trans_num(STAT_NOT_PRESENT),
     status_code_num(STAT_NOT_PRESENT),
     source_id(source_id_),
@@ -88,7 +88,7 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
 void HttpMsgSection::update_depth() const{}
 bool HttpMsgSection::run_detection(snort::Packet*) { return true; }
 
-HttpTransaction*HttpTransaction::attach_my_transaction(HttpFlowData*, HttpCommon::SourceId)
+HttpTransaction*HttpTransaction::attach_my_transaction(HttpFlowData*, HttpCommon::SourceId, snort::Flow*)
     { return nullptr; }
 Field::Field(int32_t length, const uint8_t* start, bool own_the_buffer_) :
     strt(start), len(length), own_the_buffer(own_the_buffer_)

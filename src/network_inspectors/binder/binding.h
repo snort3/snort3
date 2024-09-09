@@ -21,6 +21,7 @@
 #define BINDING_H
 
 #include <string>
+#include <sstream>
 
 #include "main/policy.h"
 #include "sfip/sf_ipvar.h"
@@ -42,7 +43,6 @@ struct BindWhen
     unsigned ips_id_user;
     unsigned protos;
     Role role;
-    std::string svc;
 
     sfip_var_t* src_nets;
     sfip_var_t* dst_nets;
@@ -51,6 +51,8 @@ struct BindWhen
 
     PortBitSet src_ports;
     PortBitSet dst_ports;
+
+    std::unordered_set<std::string> svc_list;
 
     std::unordered_set<int32_t> src_intfs;
     std::unordered_set<int32_t> dst_intfs;
@@ -85,6 +87,28 @@ struct BindWhen
     { criteria_flags |= flags; }
     bool has_criteria(uint16_t flags) const
     { return (criteria_flags & flags) == flags; }
+
+    void parse_service(const std::string& service)
+    {
+        if (service.find(" ") == std::string::npos)
+        {
+            svc_list.emplace(service);
+            return;
+        }
+
+        std::string buf;
+        std::stringstream ss(service);
+        while(getline(ss, buf, ' '))
+            svc_list.emplace(buf);
+    }
+
+    std::string get_service_list() const
+    {
+        std::string res;
+        for(const auto& entry : svc_list)
+            res += entry;
+        return res;
+    }
 };
 
 struct BindUse

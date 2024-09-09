@@ -30,15 +30,18 @@
 #include "main/analyzer.h"
 #include "main/snort.h"
 #include "packet_io/active.h"
+#include "packet_io/packet_tracer.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/eth.h"
 #include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
 
 #include "held_packet_queue.h"
-#include "segment_overlap_editor.h"
+#include "tcp_overlap_resolver.h"
 #include "tcp_normalizers.h"
-#include "tcp_reassemblers.h"
+#include "tcp_reassembler.h"
+#include "tcp_reassembler_ids.h"
+#include "tcp_reassembler_ips.h"
 #include "tcp_session.h"
 
 using namespace snort;
@@ -68,10 +71,78 @@ const char* tcp_event_names[] = {
 TcpStreamTracker::TcpStreamTracker(bool client) :
     tcp_state(client ? TCP_STATE_NONE : TCP_LISTEN), client_tracker(client),
     held_packet(null_iterator)
-{ }
+{
+    reassembler = new  TcpReassemblerIgnore(*this, seglist);
+    reassembler->init(!client_tracker, nullptr);
+}
 
 TcpStreamTracker::~TcpStreamTracker()
-{ if (splitter != nullptr) splitter->go_away(); }
+{
+    delete reassembler;
+
+    if( oaitw_reassembler )
+    {
+        delete oaitw_reassembler;
+        oaitw_reassembler = nullptr;
+    }
+
+    if ( splitter )
+        splitter->go_away();
+}
+
+void TcpStreamTracker::reset()
+{
+    tcp_alerts.clear();
+    normalizer.reset();
+    seglist.reset();
+    reassembler->reset_paf();
+}
+
+void TcpStreamTracker::clear_tracker(snort::Flow* flow, snort::Packet* p, bool flush_segments, bool restart)
+{
+    if ( flush_segments )
+        reassembler->flush_queued_segments(flow, true, p);
+
+    if ( p )
+        finalize_held_packet(p);
+    else
+        finalize_held_packet(flow);
+
+    seglist.purge_segment_list();
+
+    if ( restart )
+        reassembler->reset_paf();
+    else
+        reassembler->clear_paf();
+
+    set_splitter((StreamSplitter*)nullptr);
+}
+
+int TcpStreamTracker::eval_flush_policy_on_ack(snort::Packet* p)
+{
+    if( oaitw_reassembler )
+    {
+        delete oaitw_reassembler;
+        oaitw_reassembler = nullptr;
+    }
+
+    reassembler->eval_flush_policy_on_ack(p);
+
+    return 0;
+}
+
+int TcpStreamTracker::eval_flush_policy_on_data(snort::Packet* p)
+{
+    if( oaitw_reassembler )
+    {
+        delete oaitw_reassembler;
+        oaitw_reassembler = nullptr;
+    }
+
+    reassembler->eval_flush_policy_on_data(p);
+
+    return 0;
+}
 
 TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescriptor& tsd)
 {
@@ -212,7 +283,6 @@ void TcpStreamTracker::cache_mac_address(const TcpSegmentDescriptor& tsd, uint8_
     }
 }
 
-
 void TcpStreamTracker::set_fin_seq_status_seen(const TcpSegmentDescriptor& tsd)
 {
     if ( !fin_seq_set and SEQ_GEQ(tsd.get_end_seq(), r_win_base) )
@@ -220,12 +290,13 @@ void TcpStreamTracker::set_fin_seq_status_seen(const TcpSegmentDescriptor& tsd)
         fin_i_seq = tsd.get_seq();
         fin_final_seq = tsd.get_end_seq();
         fin_seq_set = true;
-        fin_seq_status = TcpStreamTracker::FIN_WITH_SEQ_SEEN;
+        fin_seq_status = FIN_WITH_SEQ_SEEN;
     }
 }
 
-void TcpStreamTracker::init_tcp_state()
+void TcpStreamTracker::init_tcp_state(TcpSession* s)
 {
+    session = s;
     tcp_state = ( client_tracker ) ?
         TcpStreamTracker::TCP_STATE_NONE : TcpStreamTracker::TCP_LISTEN;
 
@@ -239,41 +310,146 @@ void TcpStreamTracker::init_tcp_state()
     mac_addr_valid = false;
     fin_i_seq = 0;
     fin_final_seq = 0;
-    fin_seq_status = TcpStreamTracker::FIN_NOT_SEEN;
+    fin_seq_status = FIN_NOT_SEEN;
     fin_seq_set = false;
     rst_pkt_sent = false;
     order = TcpStreamTracker::IN_SEQUENCE;
     held_packet = null_iterator;
+
     flush_policy = STREAM_FLPOLICY_IGNORE;
-    reassembler.reset();
-    splitter_finish_flag = false;
+    if( oaitw_reassembler )
+    {
+        delete oaitw_reassembler;
+        oaitw_reassembler = nullptr;
+    }
+    if ( reassembler )
+        delete reassembler;
+    reassembler = new  TcpReassemblerIgnore(*this, seglist);
+    reassembler->init(!client_tracker, nullptr);
+
+    normalizer.reset();
+    seglist.reset();
+    tcp_alerts.clear();
 }
 
-//-------------------------------------------------------------------------
-// flush policy stuff
-//-------------------------------------------------------------------------
-
-void TcpStreamTracker::init_flush_policy()
+void TcpStreamTracker::update_stream_order(const TcpSegmentDescriptor& tsd, bool aligned)
 {
-    if ( !splitter )
-        flush_policy = STREAM_FLPOLICY_IGNORE;
-    else if ( normalizer.is_tcp_ips_enabled() )
-        flush_policy = STREAM_FLPOLICY_ON_DATA;
+    uint32_t seq = tsd.get_seq();
+
+    switch ( order )
+    {
+        case TcpStreamTracker::IN_SEQUENCE:
+            if ( aligned )
+                tsd.set_packet_flags(PKT_STREAM_ORDER_OK);
+            else if ( SEQ_GT(seq, rcv_nxt) )
+            {
+                order = TcpStreamTracker::NONE;
+                hole_left_edge = rcv_nxt;
+                hole_right_edge = seq - 1;
+            }
+            break;
+
+        case TcpStreamTracker::NONE:
+            if ( aligned )
+            {
+                tsd.set_packet_flags(PKT_STREAM_ORDER_OK);
+                if ( SEQ_GT(tsd.get_end_seq(), hole_right_edge) )
+                    order = TcpStreamTracker::OUT_OF_SEQUENCE;
+                else
+                    hole_left_edge = tsd.get_end_seq();
+            }
+            else
+            {
+                if ( SEQ_LEQ(seq, hole_right_edge) )
+                {
+                    if ( SEQ_GT(seq, hole_left_edge) )
+                        hole_right_edge = seq - 1;
+                    else if ( SEQ_GT(tsd.get_end_seq(), hole_left_edge) )
+                    {
+                        hole_left_edge = tsd.get_end_seq();
+                        tsd.set_packet_flags(PKT_STREAM_ORDER_OK);
+                    }
+                }
+                // accounting for overlaps when not aligned
+                if ( SEQ_GT(hole_left_edge, hole_right_edge) )
+                    order = TcpStreamTracker::OUT_OF_SEQUENCE;
+            }
+            break;
+
+        case TcpStreamTracker::OUT_OF_SEQUENCE:
+            tsd.set_packet_flags(PKT_STREAM_ORDER_BAD);
+    }
+}
+
+void TcpStreamTracker::update_flush_policy(StreamSplitter* splitter)
+{
+    if( oaitw_reassembler )
+    {
+        delete oaitw_reassembler;
+        oaitw_reassembler = nullptr;
+    }
+
+   if ( reassembler and flush_policy == reassembler->get_flush_policy() )
+    {
+        reassembler->init(!client_tracker, splitter);
+        return;
+    }
+
+    if ( flush_policy == STREAM_FLPOLICY_IGNORE )
+    {
+        // switching to Ignore flush policy...save pointer to current reassembler to delete later
+        if ( reassembler )
+            oaitw_reassembler = reassembler;
+
+        reassembler = new  TcpReassemblerIgnore(*this, seglist);
+        reassembler->init(!client_tracker, splitter);
+    }
+    else if ( flush_policy == STREAM_FLPOLICY_ON_DATA )
+    {
+        if ( reassembler )
+        {
+            // update from IDS -> IPS is not supported
+            assert( reassembler->get_flush_policy() != STREAM_FLPOLICY_ON_ACK );
+            delete reassembler;
+        }
+
+        reassembler = new  TcpReassemblerIps(*this, seglist);
+        reassembler->init(!client_tracker, splitter);
+    }
     else
-        flush_policy = STREAM_FLPOLICY_ON_ACK;
+    {
+        if ( reassembler )
+        {
+            // update from IPS -> IDS is not supported
+            assert( reassembler->get_flush_policy() != STREAM_FLPOLICY_ON_DATA );
+            delete reassembler;
+        }
+
+        reassembler = new  TcpReassemblerIds(*this, seglist);
+        reassembler->init(!client_tracker, splitter);
+    }
 }
 
 void TcpStreamTracker::set_splitter(StreamSplitter* ss)
 {
     if ( splitter )
+    {
+        reassembler->release_splitter();
         splitter->go_away();
+    }
 
     splitter = ss;
-
-    if ( !splitter )
-        flush_policy = STREAM_FLPOLICY_IGNORE;
+    if ( ss )
+    {
+        if ( normalizer.is_tcp_ips_enabled() )
+            flush_policy = STREAM_FLPOLICY_ON_DATA;
+        else
+            flush_policy = STREAM_FLPOLICY_ON_ACK;
+    }
     else
-        reassembler.setup_paf();
+        flush_policy = STREAM_FLPOLICY_IGNORE;
+
+    update_flush_policy(ss);
 }
 
 void TcpStreamTracker::set_splitter(const Flow* flow)
@@ -284,24 +460,53 @@ void TcpStreamTracker::set_splitter(const Flow* flow)
         ins = flow->clouseau;
 
     if ( ins )
-        set_splitter(ins->get_splitter(!client_tracker) );
+        set_splitter(ins->get_splitter(!client_tracker));
     else
-        set_splitter(new AtomSplitter(!client_tracker) );
+        set_splitter(new AtomSplitter(!client_tracker));
 }
 
-bool TcpStreamTracker::splitter_finish(snort::Flow* flow)
+static inline bool both_splitters_aborted(Flow* flow)
 {
-    if (!splitter)
-        return true;
+    uint32_t both_splitters_yoinked = (SSNFLAG_ABORT_CLIENT | SSNFLAG_ABORT_SERVER);
+    return (flow->get_session_flags() & both_splitters_yoinked) == both_splitters_yoinked;
+}
 
-    if (!splitter_finish_flag)
+void TcpStreamTracker::fallback()
+{
+#ifndef NDEBUG
+    assert(splitter);
+
+    // FIXIT-L: consolidate these 3
+    //bool to_server = splitter->to_server();
+    //assert(server_side == to_server && server_side == !tracker.client_tracker);
+#endif
+
+    set_splitter(new AtomSplitter(!client_tracker));
+    tcpStats.partial_fallbacks++;
+
+    Flow* flow = session->flow;
+    if ( !client_tracker )
+        flow->set_session_flags(SSNFLAG_ABORT_SERVER);
+    else
+        flow->set_session_flags(SSNFLAG_ABORT_CLIENT);
+
+    if ( flow->gadget and both_splitters_aborted(flow) )
     {
-        splitter_finish_flag = true;
-        return splitter->finish(flow);
+        flow->clear_gadget();
+
+        if (flow->clouseau)
+            flow->clear_clouseau();
+
+        tcpStats.inspector_fallbacks++;
     }
-    // there shouldn't be any un-flushed data beyond this point,
-    // returning false here, discards it
-    return false;
+}
+
+void TcpStreamTracker::disable_reassembly(Flow* f)
+{
+    set_splitter((StreamSplitter*)nullptr);
+    seglist.reset();
+    reassembler->reset_paf();
+    finalize_held_packet(f);
 }
 
 void TcpStreamTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
@@ -328,13 +533,13 @@ void TcpStreamTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
     tcpStats.sessions_on_syn++;
 }
 
-void TcpStreamTracker::init_on_syn_recv(TcpSegmentDescriptor& tsd)
+void TcpStreamTracker::init_on_syn_recv(const TcpSegmentDescriptor& tsd)
 {
     irs = tsd.get_seq();
 
     rcv_nxt = tsd.get_seq() + 1;
     r_win_base = tsd.get_seq() + 1;
-    reassembler.set_seglist_base_seq(tsd.get_seq() + 1);
+    seglist.set_seglist_base_seq(tsd.get_seq() + 1);
 
     cache_mac_address(tsd, FROM_CLIENT);
     tcp_state = TcpStreamTracker::TCP_SYN_RECV;
@@ -354,7 +559,7 @@ void TcpStreamTracker::init_on_synack_sent(TcpSegmentDescriptor& tsd)
 
     r_win_base = tsd.get_ack();
     rcv_nxt = tsd.get_ack();
-    reassembler.set_seglist_base_seq(tsd.get_ack() );
+    seglist.set_seglist_base_seq(tsd.get_ack() );
 
     ts_last_packet = tsd.get_packet_timestamp();
     tf_flags |= normalizer.get_tcp_timestamp(tsd, false);
@@ -369,7 +574,7 @@ void TcpStreamTracker::init_on_synack_sent(TcpSegmentDescriptor& tsd)
     tcpStats.sessions_on_syn_ack++;
 }
 
-void TcpStreamTracker::init_on_synack_recv(TcpSegmentDescriptor& tsd)
+void TcpStreamTracker::init_on_synack_recv(const TcpSegmentDescriptor& tsd)
 {
     iss = tsd.get_ack() - 1;
     irs = tsd.get_seq();
@@ -378,7 +583,7 @@ void TcpStreamTracker::init_on_synack_recv(TcpSegmentDescriptor& tsd)
 
     rcv_nxt = tsd.get_seq() + 1;
     r_win_base = tsd.get_seq() + 1;
-    reassembler.set_seglist_base_seq(tsd.get_seq() + 1);
+    seglist.set_seglist_base_seq(tsd.get_seq() + 1);
 
     cache_mac_address(tsd, FROM_SERVER);
     if ( TcpStreamTracker::TCP_SYN_SENT == tcp_state )
@@ -404,7 +609,7 @@ void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
 
     r_win_base = tsd.get_ack();
     rcv_nxt = tsd.get_ack();
-    reassembler.set_seglist_base_seq(tsd.get_ack());
+    seglist.set_seglist_base_seq(tsd.get_ack());
 
     ts_last_packet = tsd.get_packet_timestamp();
     tf_flags |= normalizer.get_tcp_timestamp(tsd, false);
@@ -417,7 +622,7 @@ void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
     tcp_state = TcpStreamTracker::TCP_MID_STREAM_SENT;
 }
 
-void TcpStreamTracker::init_on_data_seg_recv(TcpSegmentDescriptor& tsd)
+void TcpStreamTracker::init_on_data_seg_recv(const TcpSegmentDescriptor& tsd)
 {
     iss = tsd.get_ack() - 1;
     irs = tsd.get_seq() - 1;
@@ -427,7 +632,7 @@ void TcpStreamTracker::init_on_data_seg_recv(TcpSegmentDescriptor& tsd)
 
     rcv_nxt = tsd.get_seq();
     r_win_base = tsd.get_seq();
-    reassembler.set_seglist_base_seq(tsd.get_seq());
+    seglist.set_seglist_base_seq(tsd.get_seq());
 
     cache_mac_address(tsd, tsd.get_direction() );
     tcpStats.sessions_on_data++;
@@ -455,26 +660,26 @@ void TcpStreamTracker::finish_server_init(TcpSegmentDescriptor& tsd)
     tf_flags |= ( tsd.init_mss(&mss) | tsd.init_wscale(&wscale) );
 }
 
-void TcpStreamTracker::finish_client_init(TcpSegmentDescriptor& tsd)
+void TcpStreamTracker::finish_client_init(const TcpSegmentDescriptor& tsd)
 {
     Flow* flow = tsd.get_flow();
     rcv_nxt = tsd.get_end_seq();
 
-    if ( reassembler.data_was_queued() )
+    if ( seglist.data_was_queued() )
         return;  // we already have state, don't mess it up
 
     if ( !( flow->session_state & STREAM_STATE_MIDSTREAM ) )
     {
         if ( tsd.get_tcph()->is_syn() )
-            reassembler.set_seglist_base_seq(tsd.get_seq() + 1);
+            seglist.set_seglist_base_seq(tsd.get_seq() + 1);
         else
-            reassembler.set_seglist_base_seq(tsd.get_seq());
+            seglist.set_seglist_base_seq(tsd.get_seq());
 
         r_win_base = tsd.get_end_seq();
     }
     else
     {
-        reassembler.set_seglist_base_seq(tsd.get_seq());
+        seglist.set_seglist_base_seq(tsd.get_seq());
         r_win_base = tsd.get_seq();
     }
 }
@@ -498,15 +703,15 @@ void TcpStreamTracker::update_tracker_ack_recv(TcpSegmentDescriptor& tsd)
 }
 
 // In no-ack policy, data is implicitly acked immediately.
-void TcpStreamTracker::update_tracker_no_ack_recv(TcpSegmentDescriptor& tsd)
+void TcpStreamTracker::update_tracker_no_ack_recv(const TcpSegmentDescriptor& tsd)
 {
     snd_una = snd_nxt = tsd.get_end_seq();
 }
 
-void TcpStreamTracker::update_tracker_no_ack_sent(TcpSegmentDescriptor& tsd)
+void TcpStreamTracker::update_tracker_no_ack_sent(const TcpSegmentDescriptor& tsd)
 {
     r_win_base = tsd.get_end_seq();
-    reassembler.flush_on_ack_policy(tsd.get_pkt());
+    eval_flush_policy_on_ack(tsd.get_pkt());
 }
 
 void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
@@ -522,13 +727,17 @@ void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
         snd_wnd = tsd.get_wnd();
     }
 
-    if ( ( fin_seq_status == TcpStreamTracker::FIN_WITH_SEQ_SEEN )
+    if ( flush_policy == STREAM_FLPOLICY_IGNORE
+        and SEQ_GT(tsd.get_ack(), rcv_nxt) )
+        rcv_nxt = tsd.get_ack();
+
+    if ( ( fin_seq_status == FIN_WITH_SEQ_SEEN )
         && SEQ_GEQ(tsd.get_ack(), fin_final_seq + 1) && !(tsd.is_meta_ack_packet()) )
     {
-        fin_seq_status = TcpStreamTracker::FIN_WITH_SEQ_ACKED;
+        fin_seq_status = FIN_WITH_SEQ_ACKED;
     }
 
-    reassembler.flush_on_ack_policy(tsd.get_pkt());
+    eval_flush_policy_on_ack(tsd.get_pkt());
 }
 
 bool TcpStreamTracker::update_on_3whs_ack(TcpSegmentDescriptor& tsd)
@@ -654,6 +863,36 @@ bool TcpStreamTracker::set_held_packet(Packet* p)
     return true;
 }
 
+int32_t TcpStreamTracker::kickstart_asymmetric_flow(const TcpSegmentDescriptor& tsd, uint32_t max_queued_bytes)
+{
+    seglist.skip_holes();
+
+    if ( reassembler->is_splitter_paf() )
+        fallback();
+    else
+        reassembler->reset_paf();
+
+    eval_flush_policy_on_data(tsd.get_pkt());
+
+    int32_t space_left = max_queued_bytes - seglist.get_seg_bytes_total();
+
+    if ( get_tcp_state() == TcpStreamTracker::TCP_MID_STREAM_RECV )
+    {
+        set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
+        if (PacketTracer::is_active())
+            PacketTracer::log("Stream: Kickstart of midstream asymmetric flow! Seglist queue space: %u\n",
+                space_left );
+    }
+    else
+    {
+        if (PacketTracer::is_active())
+            PacketTracer::log("Stream: Kickstart of asymmetric flow! Seglist queue space: %u\n",
+                space_left );
+    }
+
+    return space_left;
+}
+
 void TcpStreamTracker::perform_fin_recv_flush(TcpSegmentDescriptor& tsd)
 {
     if ( tsd.is_data_segment() )
@@ -661,7 +900,7 @@ void TcpStreamTracker::perform_fin_recv_flush(TcpSegmentDescriptor& tsd)
 
     if ( flush_policy == STREAM_FLPOLICY_ON_DATA and SEQ_EQ(tsd.get_end_seq(), rcv_nxt)
          and !tsd.get_flow()->searching_for_service() )
-        reassembler.finish_and_final_flush(tsd.get_flow(), true, tsd.get_pkt());
+        reassembler->finish_and_final_flush(tsd.get_flow(), true, tsd.get_pkt());
 }
 
 uint32_t TcpStreamTracker::perform_partial_flush()
@@ -670,7 +909,7 @@ uint32_t TcpStreamTracker::perform_partial_flush()
     if ( held_packet != null_iterator )
     {
         Packet* p;
-        flushed = reassembler.perform_partial_flush(session->flow, p);
+        flushed = reassembler->perform_partial_flush(session->flow, p);
 
         // If the held_packet hasn't been released by perform_partial_flush(),
         // call finalize directly.
@@ -727,7 +966,7 @@ void TcpStreamTracker::finalize_held_packet(Packet* cp)
                 tcpStats.held_packets_passed++;
             }
 
-            TcpStreamSession* tcp_session = (TcpStreamSession*)cp->flow->session;
+            TcpSession* tcp_session = (TcpSession*)cp->flow->session;
             tcp_session->held_packet_dir = SSN_DIR_NONE;
         }
 
@@ -755,7 +994,7 @@ void TcpStreamTracker::finalize_held_packet(Flow* flow)
         }
         else
         {
-            TcpStreamSession* tcp_session = (TcpStreamSession*)flow->session;
+            TcpSession* tcp_session = (TcpSession*)flow->session;
             tcp_session->held_packet_dir = SSN_DIR_NONE;
             Analyzer::get_local_analyzer()->finalize_daq_message(msg, DAQ_VERDICT_PASS);
             tcpStats.held_packets_passed++;

@@ -82,17 +82,9 @@ bool KaizenModule::set(const char*, Value& v, SnortConfig*)
         "Field::length maximum value should not exceed client_body_depth type range");
 
     if (v.is("uri_depth"))
-    {
         conf.uri_depth = v.get_int32();
-        if (conf.uri_depth == -1)
-            conf.uri_depth = INT32_MAX;
-    }
     else if (v.is("client_body_depth"))
-    {
         conf.client_body_depth = v.get_int32();
-        if (conf.client_body_depth == -1)
-            conf.client_body_depth = INT32_MAX;
-    }
     else if (v.is("http_param_threshold"))
         conf.http_param_threshold = v.get_real();
 

@@ -48,6 +48,8 @@ add_library (packet_io OBJECT
     ${TEST_FILES}
 )
 
+add_subdirectory ( test )
+
 install (FILES ${PACKET_IO_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/packet_io"
 )

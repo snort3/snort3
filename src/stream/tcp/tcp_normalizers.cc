@@ -27,7 +27,7 @@
 
 #include "tcp_module.h"
 #include "tcp_segment_descriptor.h"
-#include "tcp_stream_session.h"
+#include "tcp_session.h"
 #include "tcp_stream_tracker.h"
 
 using namespace snort;
@@ -214,9 +214,6 @@ public:
     TcpNormalizerMissed3whs()
     { my_name = "Missed3whs"; }
 
-    void init(TcpNormalizer* prev) override
-    { prev_norm = prev; }
-
     TcpNormalizer::NormStatus apply_normalizations(
         TcpNormalizerState&, TcpSegmentDescriptor&, uint32_t seq, bool stream_is_inorder) override;
     bool validate_rst(TcpNormalizerState&, TcpSegmentDescriptor&) override;
@@ -226,7 +223,7 @@ public:
 
 static inline int handle_repeated_syn_mswin(
     TcpStreamTracker* talker, TcpStreamTracker* listener,
-    const TcpSegmentDescriptor& tsd, TcpStreamSession* session)
+    const TcpSegmentDescriptor& tsd, TcpSession* session)
 {
     /* Windows has some strange behavior here.  If the sequence of the reset is the
      * next expected sequence, it Resets.  Otherwise it ignores the 2nd SYN.
@@ -242,7 +239,7 @@ static inline int handle_repeated_syn_mswin(
 }
 
 static inline int handle_repeated_syn_bsd(
-    TcpStreamTracker* talker, const TcpSegmentDescriptor& tsd, TcpStreamSession* session)
+    TcpStreamTracker* talker, const TcpSegmentDescriptor& tsd, TcpSession* session)
 {
     /* If its not a retransmission of the actual SYN... RESET */
     if ( !SEQ_EQ(tsd.get_seq(), talker->get_iss()) )
@@ -469,23 +466,14 @@ TcpNormalizer::NormStatus TcpNormalizerProxy::apply_normalizations(
     return NORM_OK;
 }
 
-bool TcpNormalizerProxy::validate_rst(
-    TcpNormalizerState&, TcpSegmentDescriptor&)
-{
-    return true;
-}
+bool TcpNormalizerProxy::validate_rst(TcpNormalizerState&, TcpSegmentDescriptor&)
+{ return true; }
 
-int TcpNormalizerProxy::handle_paws(
-    TcpNormalizerState&, TcpSegmentDescriptor&)
-{
-    return ACTION_NOTHING;
-}
+int TcpNormalizerProxy::handle_paws(TcpNormalizerState&, TcpSegmentDescriptor&)
+{ return ACTION_NOTHING; }
 
-int TcpNormalizerProxy::handle_repeated_syn(
-    TcpNormalizerState&, TcpSegmentDescriptor&)
-{
-    return ACTION_NOTHING;
-}
+int TcpNormalizerProxy::handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&)
+{ return ACTION_NOTHING; }
 
 TcpNormalizer::NormStatus TcpNormalizerMissed3whs::apply_normalizations(
     TcpNormalizerState&, TcpSegmentDescriptor&, uint32_t, bool)
@@ -498,31 +486,29 @@ bool TcpNormalizerMissed3whs::validate_rst(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
     if ( tns.session->flow->two_way_traffic() )
-        return prev_norm->validate_rst(tns, tsd);
+        return tns.prev_norm->validate_rst(tns, tsd);
 
-    if ( !prev_norm->get_name().compare("OS_Hpux11") )
+    if ( !tns.prev_norm->get_name().compare("OS_Hpux11") )
         return validate_rst_seq_geq(tns, tsd);
 
     return true;
 }
 
-int TcpNormalizerMissed3whs::handle_paws(
-    TcpNormalizerState& tns, TcpSegmentDescriptor& tsd) 
-{
-    return ACTION_NOTHING;
-}
+int TcpNormalizerMissed3whs::handle_paws(TcpNormalizerState&, TcpSegmentDescriptor&)
+{ return ACTION_NOTHING; }
 
 int TcpNormalizerMissed3whs::handle_repeated_syn(
-    TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
+		TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
-    return prev_norm->handle_repeated_syn(tns, tsd);
+    return tns.prev_norm->handle_repeated_syn(tns, tsd);
 }
 
-void TcpNormalizerPolicy::init(StreamPolicy os, TcpStreamSession* ssn, TcpStreamTracker* trk, TcpStreamTracker* peer)
+void TcpNormalizerPolicy::init(StreamPolicy os, TcpSession* ssn, TcpStreamTracker* trk, TcpStreamTracker* peer)
 {
-    TcpNormalizer* prev_norm = nullptr;
-    if ( os == StreamPolicy::MISSED_3WHS and os != tns.os_policy )
-        prev_norm = TcpNormalizerFactory::get_instance(tns.os_policy);
+    if ( os == StreamPolicy::MISSED_3WHS and os == tns.os_policy)
+        tns.prev_norm = TcpNormalizerFactory::get_instance(StreamPolicy::OS_DEFAULT);
+    else
+        tns.prev_norm = TcpNormalizerFactory::get_instance(tns.os_policy);
 
     tns.os_policy = os;
     tns.session = ssn;
@@ -543,11 +529,7 @@ void TcpNormalizerPolicy::init(StreamPolicy os, TcpStreamSession* ssn, TcpStream
     tns.opt_block = Normalize_GetMode(NORM_TCP_OPT);
 
     norm = TcpNormalizerFactory::get_instance(os);
-
-    if ( prev_norm )
-        norm->init(prev_norm);
-    else
-        norm->init(tns);
+    norm->init(tns);
 }
 
 TcpNormalizer* TcpNormalizerFactory::normalizers[StreamPolicy::OS_END_OF_LIST];

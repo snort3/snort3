@@ -71,7 +71,8 @@ public:
     HttpIpsOption(const HttpRuleOptModule* cm) :
         snort::IpsOption(cm->key),
         buffer_info(cm->rule_opt_index, cm->sub_id, cm->form),
-        cat(cm->cat), pdu_section(cm->pdu_section) {}
+        cat(cm->sub_id and cm->cat == snort::CAT_SET_FAST_PATTERN ? snort::CAT_SET_SUB_SECTION : cm->cat),
+        pdu_section(cm->pdu_section) {}
     snort::CursorActionType get_cursor_type() const override { return cat; }
     EvalStatus eval(Cursor&, snort::Packet*) override = 0;
     uint32_t hash() const override;

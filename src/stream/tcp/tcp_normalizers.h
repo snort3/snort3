@@ -24,8 +24,8 @@
 
 #include "stream/tcp/tcp_normalizer.h"
 
-class TcpStreamSession;
-class TcpStreamSession;
+class TcpSession;
+class TcpSession;
 
 class TcpNormalizerFactory
 {
@@ -46,7 +46,7 @@ public:
     TcpNormalizerPolicy() = default;
     ~TcpNormalizerPolicy() = default;
 
-    void init(StreamPolicy os, TcpStreamSession* ssn, TcpStreamTracker* trk, TcpStreamTracker* peer);
+    void init(StreamPolicy os, TcpSession* ssn, TcpStreamTracker* trk, TcpStreamTracker* peer);
     void reset()
     { init(StreamPolicy::OS_DEFAULT, nullptr, nullptr, nullptr); }
 
@@ -101,7 +101,8 @@ public:
     void set_zwp_seq(uint32_t seq)
     { return norm->set_zwp_seq(tns, seq); }
 
-    void log_drop_reason(const TcpSegmentDescriptor& tsd, bool inline_mode, const char *issuer, const std::string& log)
+    void log_drop_reason(const TcpSegmentDescriptor& tsd, bool inline_mode,
+        const char *issuer, const std::string& log)
     { return norm->log_drop_reason(tns, tsd, inline_mode, issuer, log); }
 
     bool is_keep_alive_probe(const TcpSegmentDescriptor& tsd)

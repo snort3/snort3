@@ -71,7 +71,11 @@ TEST_GROUP(appid_detector_tests)
     {
         SfIp ip;
         mock_session = new AppIdSession(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector,
-            dummy_appid_inspector.get_ctxt().get_odp_ctxt(), 0, 0);
+            dummy_appid_inspector.get_ctxt().get_odp_ctxt(), 0
+#ifndef DISABLE_TENANT_ID
+            ,0
+#endif
+            );
         flow = new Flow;
         flow->set_flow_data(mock_session);
     }

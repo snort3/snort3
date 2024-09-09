@@ -332,8 +332,6 @@ static void init_roles(Packet* p, Flow* flow)
         flow->server_group = p->pkth->egress_group;
     }
 
-    flow->tenant = p->pkth->tenant_id;
-
     flow->flags.app_direction_swapped = false;
     if ( flow->ssn_state.direction == FROM_CLIENT )
         p->packet_flags |= PKT_FROM_CLIENT;
@@ -615,7 +613,7 @@ void FlowControl::check_expected_flow(Flow* flow, Packet* p)
 
     if ( ignore )
     {
-        flow->ssn_state.ignore_direction = ignore;
+        flow->ssn_state.ignore_direction = SSN_DIR_BOTH;
         DetectionEngine::disable_all(p);
     }
 }

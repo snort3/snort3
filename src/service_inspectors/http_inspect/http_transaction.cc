@@ -23,9 +23,12 @@
 
 #include "http_transaction.h"
 
+#include "pub_sub/http_transaction_end_event.h"
+
 #include "http_common.h"
 #include "http_enum.h"
 #include "http_event.h"
+#include "http_inspect.h"
 #include "http_msg_body.h"
 #include "http_msg_header.h"
 #include "http_msg_request.h"
@@ -50,14 +53,25 @@ static void delete_section_list(HttpMsgSection* section_list)
     }
 }
 
-HttpTransaction::HttpTransaction(HttpFlowData* session_data_): session_data(session_data_)
+HttpTransaction::HttpTransaction(HttpFlowData* session_data_, snort::Flow* const f)
+    : session_data(session_data_), flow(f)
 {
     infractions[0] = nullptr;
     infractions[1] = nullptr;
+    HttpInspect* const hi = (session_data->is_for_httpx()) ?
+        (HttpInspect*)(flow->assistant_gadget) : (HttpInspect*)(flow->gadget);
+    pub_id = hi->get_pub_id();
+}
+
+void HttpTransaction::publish_end_of_transaction()
+{
+    HttpTransactionEndEvent http_event(this);
+    DataBus::publish(pub_id, HttpEventIds::END_OF_TRANSACTION, http_event, flow);
 }
 
 HttpTransaction::~HttpTransaction()
 {
+    publish_end_of_transaction();
     delete request;
     delete status;
     for (int k = 0; k <= 1; k++)
@@ -71,7 +85,7 @@ HttpTransaction::~HttpTransaction()
 }
 
 HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_data, SourceId
-    source_id)
+    source_id, Flow* const f)
 {
     // This factory method:
     // 1. creates new transactions for all request messages and orphaned response messages
@@ -126,7 +140,7 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
                 }
             }
         }
-        session_data->transaction[SRC_CLIENT] = new HttpTransaction(session_data);
+        session_data->transaction[SRC_CLIENT] = new HttpTransaction(session_data, f);
 
         // The StreamSplitter generates infractions related to this transaction while splitting the
         // request line and keeps them in temporary storage in the FlowData. Now we move them here.
@@ -160,7 +174,7 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
         if (session_data->pipeline_underflow)
         {
             // A previous underflow separated the two sides forever
-            session_data->transaction[SRC_SERVER] = new HttpTransaction(session_data);
+            session_data->transaction[SRC_SERVER] = new HttpTransaction(session_data, f);
         }
         else if ((session_data->transaction[SRC_SERVER] = session_data->take_from_pipeline()) ==
             nullptr)
@@ -171,7 +185,7 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
                 // Either there is no request at all or there is a request but a previous response
                 // already took it. Either way we have more responses than requests.
                 session_data->pipeline_underflow = true;
-                session_data->transaction[SRC_SERVER] = new HttpTransaction(session_data);
+                session_data->transaction[SRC_SERVER] = new HttpTransaction(session_data, f);
             }
 
             else if (session_data->type_expected[SRC_CLIENT] == SEC_REQUEST)

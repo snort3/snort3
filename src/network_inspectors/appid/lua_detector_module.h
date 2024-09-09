@@ -25,7 +25,9 @@
 #include <cstdint>
 #include <list>
 #include <map>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include <lua.hpp>
 #include <lua/lua.h>
@@ -52,48 +54,75 @@ bool get_lua_field(lua_State* L, int table, const char* field, IpProtocol& out);
 class LuaDetectorManager
 {
 public:
-    LuaDetectorManager(AppIdContext&, bool);
-    ~LuaDetectorManager();
-    static void initialize(const snort::SnortConfig*, AppIdContext&, bool is_control=false,
-        bool reload=false);
-    static void init_thread_manager(const snort::SnortConfig*, const AppIdContext&);
-    static void cleanup_after_swap();
-    static void clear_lua_detector_mgrs();
+    LuaDetectorManager(AppIdContext&, bool is_control);
+    virtual ~LuaDetectorManager();
+    virtual void initialize(const snort::SnortConfig*);
 
-    void set_detector_flow(DetectorFlow* df)
-    {
-        detector_flow = df;
-    }
-
-    DetectorFlow* get_detector_flow()
-    {
-        return detector_flow;
-    }
-
-    void set_ignore_chp_cleanup(bool value)
-    {
-        ignore_chp_cleanup = value;
-    }
-
-    void free_detector_flow();
-    lua_State* L;
+    bool load_detector(char* detector_name, bool is_custom, std::string& buf);
+    void set_num_odp_detectors()
+    { num_odp_detectors = allocated_objects.size(); }
     bool insert_cb_detector(AppId app_id, LuaObject* ud);
     LuaObject* get_cb_detector(AppId app_id);
 
-private:
-    void initialize_lua_detectors(bool is_control, bool reload = false);
+    lua_State* L;
+
+protected:
     void activate_lua_detectors(const snort::SnortConfig*);
-    void list_lua_detectors();
-    bool load_detector(char* detector_name, bool is_custom, bool is_control, bool reload, std::string& buf);
-    void load_lua_detectors(const char* path, bool is_custom, bool is_control, bool reload = false);
     LuaObject* create_lua_detector(const char* detector_name, bool is_custom,
         const char* detector_filename, bool& has_validate);
+    virtual void list_lua_detectors() = 0;
 
     AppIdContext& ctxt;
     std::list<LuaObject*> allocated_objects;
     size_t num_odp_detectors = 0;
     std::map<AppId, LuaObject*> cb_detectors;
+};
+
+class PacketLuaDetectorManager : public LuaDetectorManager
+{
+public:
+    explicit PacketLuaDetectorManager(AppIdContext& appid_ctxt) : LuaDetectorManager(appid_ctxt, false)
+    { }
+    ~PacketLuaDetectorManager() override
+    { free_detector_flow(); }
+
+    void set_detector_flow(DetectorFlow* df)
+    { detector_flow = df; }
+
+    DetectorFlow* get_detector_flow() const
+    { return detector_flow; }
+
+    void free_detector_flow();
+
+private:
+    void list_lua_detectors() override;
+
     DetectorFlow* detector_flow = nullptr;
+};
+
+class ControlLuaDetectorManager : public LuaDetectorManager
+{
+public:
+    explicit ControlLuaDetectorManager(AppIdContext&);
+    ~ControlLuaDetectorManager() override;
+    void initialize(const snort::SnortConfig*) override;
+
+    static std::shared_ptr<LuaDetectorManager> get_packet_lua_detector_manager();
+    static void clear_lua_detector_mgrs();
+    static void cleanup_after_swap();
+
+    void set_ignore_chp_cleanup()
+    {
+        ignore_chp_cleanup = true;
+    }
+
+private:
+    static std::vector<std::shared_ptr<PacketLuaDetectorManager>> lua_detector_mgr_list;
+
+    void initialize_lua_detectors();
+    void load_lua_detectors(const char* path, bool is_custom);
+    void list_lua_detectors() override;
+
     bool ignore_chp_cleanup = false;
 };
 

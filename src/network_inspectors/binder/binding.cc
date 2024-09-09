@@ -45,7 +45,7 @@ void Binding::clear()
     when.ips_id_user = 0;
     when.protos = PROTO_BIT__ANY_TYPE;
     when.role = BindWhen::BR_EITHER;
-    when.svc.clear();
+    when.svc_list.clear();
 
     if (when.src_nets)
     {
@@ -564,7 +564,11 @@ inline bool Binding::check_tenant(const Flow& flow) const
     if (!when.has_criteria(BindWhen::Criteria::BWC_TENANTS))
         return true;
 
-    return when.tenants.count(flow.tenant) != 0;
+#ifndef DISABLE_TENANT_ID
+    return when.tenants.count(flow.key->tenant_id) != 0;
+#else
+    return when.tenants.count(0) != 0;
+#endif
 }
 
 inline bool Binding::check_tenant(const Packet* p) const
@@ -583,7 +587,7 @@ inline bool Binding::check_service(const Flow& flow) const
     if (!flow.service)
         return false;
 
-    return when.svc == flow.service;
+    return when.svc_list.find(flow.service) != when.svc_list.end();
 }
 
 inline bool Binding::check_service(const char* service) const
@@ -593,7 +597,7 @@ inline bool Binding::check_service(const char* service) const
     if (!when.has_criteria(BindWhen::Criteria::BWC_SVC))
         return false;
 
-    return when.svc == service;
+    return when.svc_list.find(service) != when.svc_list.end();
 }
 
 inline bool Binding::check_service() const

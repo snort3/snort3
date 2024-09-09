@@ -73,13 +73,12 @@ void HttpBodyHandler::handle(DataEvent& de, Flow*)
         return;
 
     int32_t body_len = 0;
-
     const char* body = (const char*)he->get_client_body(body_len);
-
-    body_len = std::min(config.client_body_depth, body_len);
 
     if (!body || body_len <= 0)
         return;
+
+    const size_t len = std::min((size_t)config.client_body_depth, (size_t)body_len);
 
     assert(classifier);
 
@@ -87,12 +86,12 @@ void HttpBodyHandler::handle(DataEvent& de, Flow*)
 
     kaizen_stats.libml_calls++;
 
-    if (!classifier->run(body, (size_t)body_len, output))
+    if (!classifier->run(body, len, output))
         return;
 
-    kaizen_stats.client_body_bytes += body_len;
+    kaizen_stats.client_body_bytes += len;
 
-    debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "input (body): %.*s\n", body_len, body);
+    debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "input (body): %.*s\n", (int)len, body);
     debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "output: %f\n", static_cast<double>(output));
 
     if ((double)output > config.http_param_threshold)
@@ -131,10 +130,10 @@ void HttpUriHandler::handle(DataEvent& de, Flow*)
     int32_t query_len = 0;
     const char* query = (const char*)he->get_uri_query(query_len);
 
-    query_len = std::min(config.uri_depth, query_len);
-
     if (!query || query_len <= 0)
         return;
+
+    const size_t len = std::min((size_t)config.uri_depth, (size_t)query_len);
 
     assert(classifier);
 
@@ -142,12 +141,12 @@ void HttpUriHandler::handle(DataEvent& de, Flow*)
 
     kaizen_stats.libml_calls++;
 
-    if (!classifier->run(query, (size_t)query_len, output))
+    if (!classifier->run(query, (size_t)len, output))
         return;
 
-    kaizen_stats.uri_bytes += query_len;
+    kaizen_stats.uri_bytes += len;
 
-    debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "input (query): %.*s\n", query_len, query);
+    debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "input (query): %.*s\n", (int)len, query);
     debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "output: %f\n", static_cast<double>(output));
 
     if ((double)output > config.http_param_threshold)
@@ -164,17 +163,17 @@ void HttpUriHandler::handle(DataEvent& de, Flow*)
 
 void Kaizen::show(const SnortConfig*) const
 {
-    ConfigLogger::log_value("uri_depth", config.uri_depth);
-    ConfigLogger::log_value("client_body_depth", config.client_body_depth);
+    ConfigLogger::log_limit("uri_depth", config.uri_depth, -1);
+    ConfigLogger::log_limit("client_body_depth", config.client_body_depth, -1);
     ConfigLogger::log_value("http_param_threshold", config.http_param_threshold);
 }
 
 bool Kaizen::configure(SnortConfig* sc)
 {
-    if (config.uri_depth > 0)
+    if (config.uri_depth != 0)
         DataBus::subscribe(http_pub_key, HttpEventIds::REQUEST_HEADER, new HttpUriHandler(*this));
 
-    if (config.client_body_depth > 0)
+    if (config.client_body_depth != 0)
         DataBus::subscribe(http_pub_key, HttpEventIds::REQUEST_BODY, new HttpBodyHandler(*this));
 
     if(!InspectorManager::get_inspector(KZ_ENGINE_NAME, true, sc))

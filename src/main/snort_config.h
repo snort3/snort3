@@ -470,7 +470,10 @@ public:
     void set_utc(bool);
     void set_watchdog(uint16_t);
     void set_watchdog_min_thread_count(uint16_t);
-    SO_PUBLIC bool set_latency_enable();
+    SO_PUBLIC bool set_packet_latency(bool) const;
+    SO_PUBLIC bool get_packet_latency() const;
+    SO_PUBLIC bool set_rule_latency(bool) const;
+    SO_PUBLIC bool get_rule_latency() const;
 
     //------------------------------------------------------
     // accessor methods

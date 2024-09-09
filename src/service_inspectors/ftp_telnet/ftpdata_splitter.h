@@ -26,7 +26,7 @@
 //---------------------------------------------------------------------------------
 // FtpDataSplitter - flush when current seg size is different from previous segment
 //---------------------------------------------------------------------------------
-class FtpDataSplitter : public snort::StreamSplitter
+class SO_PUBLIC FtpDataSplitter : public snort::StreamSplitter
 {
 public:
     FtpDataSplitter(bool b, uint16_t sz = 0) : snort::StreamSplitter(b)

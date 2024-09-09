@@ -70,6 +70,7 @@ private:
     PDFRet h_lit_u16_unescape();
     PDFRet h_stream_open();
     PDFRet h_stream();
+    PDFRet h_array_nesting();
     bool h_stream_close();
     void h_stream_length();
     void h_ref();
@@ -116,10 +117,19 @@ private:
         char key[PDFTOKENIZER_NAME_MAX_SIZE] = {0};
     };
 
+    struct IndirectObject
+    {
+        void clear()
+        { ref_met = false; }
+
+        bool ref_met = false;
+    };
+
     struct Stream
     {
         int rem_length = -1;
         bool is_js = false;
+        bool is_ref_len = false;
     };
 
     ObjectString obj_string;
@@ -127,6 +137,7 @@ private:
     ObjectDictionary obj_dictionary;
     DictionaryEntry obj_entry;
     Stream obj_stream;
+    IndirectObject indirect_obj;
     std::unordered_set<unsigned int> js_stream_refs;
 
     // represents UTF-16BE code point
@@ -160,7 +171,9 @@ bool PDFTokenizer::h_lit_close()
 
 void PDFTokenizer::h_ind_obj_close()
 {
+    indirect_obj.clear();
     obj_stream.is_js = false;
+    obj_stream.is_ref_len = false;
 }
 
 }

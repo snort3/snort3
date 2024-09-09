@@ -144,6 +144,7 @@ struct FlowStats
     uint64_t server_bytes;
     struct timeval start_time;
     uint64_t total_flow_latency;
+    uint64_t total_rule_latency;
 };
 
 struct LwState
@@ -478,7 +479,6 @@ public:  // FIXIT-M privatize if possible
     unsigned inspection_policy_id = 0;
     unsigned ips_policy_id = 0;
     unsigned reload_id = 0;
-    uint32_t tenant = 0;
     uint32_t default_session_timeout = 0;
     uint32_t idle_timeout = 0;
     int32_t client_intf = 0;
@@ -521,6 +521,8 @@ public:  // FIXIT-M privatize if possible
         bool ips_block_event_suppressed : 1; // Set if event filters have suppressed a block ips event
         bool ips_wblock_event_suppressed : 1; // set if event filters have suppressed a would block/drop ips event
         bool ips_pblock_event_suppressed : 1; // set if event filters have suppressed a partial block ips event
+        bool binder_action_allow : 1;
+        bool binder_action_block : 1;
     } flags = {};
 
     FlowState flow_state = FlowState::SETUP;

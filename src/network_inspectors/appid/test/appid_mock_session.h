@@ -21,6 +21,10 @@
 #ifndef APPID_MOCK_SESSION_H
 #define APPID_MOCK_SESSION_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "flow/ha.h"
 
 #include "appid_dns_session.h"
@@ -77,11 +81,14 @@ OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 void FlowHAState::add(uint8_t) { }
 
 static AppIdConfig stub_config;
-static AppIdContext stub_ctxt(stub_config);
 static OdpContext stub_odp_ctxt(stub_config, nullptr);
 OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInspector& inspector,
-    OdpContext&, uint32_t, uint32_t) : FlowData(inspector_id, &inspector), config(stub_config),
+    OdpContext&, uint32_t
+#ifndef DISABLE_TENANT_ID
+    ,uint32_t
+#endif
+    ) : FlowData(inspector_id, &inspector), config(stub_config),
     protocol(proto), api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt)
 {
     this->set_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED);
@@ -165,17 +172,18 @@ AppId AppIdSession::pick_ss_referred_payload_app_id() const
 
 AppIdHttpSession* AppIdSession::create_http_session(int64_t)
 {
-    AppIdHttpSession* hsession = new MockAppIdHttpSession(*this);
-    AppidChangeBits change_bits;
+    auto hsession = std::make_unique<MockAppIdHttpSession>(*this);
+    auto tmp_hsession = hsession.get();
 
+    AppidChangeBits change_bits;
     hsession->client.set_id(APPID_UT_ID);
     hsession->client.set_version(APPID_UT_CLIENT_VERSION);
     change_bits.set(APPID_CLIENT_INFO_BIT);
     hsession->payload.set_id(APPID_UT_ID);
     hsession->misc_app_id = APPID_UT_ID;
     hsession->referred_payload_app_id = APPID_UT_ID;
-    api.hsessions.push_back(hsession);
-    return hsession;
+    api.hsessions.push_back(std::move(hsession));
+    return tmp_hsession;
 }
 
 AppIdHttpSession* AppIdSession::get_matching_http_session(int64_t stream_id) const
@@ -183,7 +191,7 @@ AppIdHttpSession* AppIdSession::get_matching_http_session(int64_t stream_id) con
     for (uint64_t stream_index=0; stream_index < api.hsessions.size(); stream_index++)
     {
         if (stream_id == api.hsessions[stream_index]->get_httpx_stream_id())
-            return api.hsessions[stream_index];
+            return api.hsessions[stream_index].get();
     }
     return nullptr;
 }

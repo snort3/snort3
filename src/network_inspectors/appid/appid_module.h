@@ -77,7 +77,7 @@ class AppIdModule : public snort::Module
 {
 public:
     AppIdModule();
-    ~AppIdModule() override = default;
+    ~AppIdModule() override;
 
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
@@ -89,7 +89,7 @@ public:
     snort::ProfileStats* get_profile(
         unsigned i, const char*& name, const char*& parent) const override;
 
-    const AppIdConfig* get_data();
+    AppIdConfig* get_data();
 
     void reset_stats() override;
 
@@ -102,7 +102,7 @@ public:
     const snort::TraceOption* get_trace_options() const override;
 
 private:
-    AppIdConfig* config;
+    AppIdConfig* config = nullptr;
 };
 
 class ACThirdPartyAppIdCleanup : public snort::AnalyzerCommand

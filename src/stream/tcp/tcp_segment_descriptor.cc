@@ -28,8 +28,10 @@
 #include "detection/rules.h"
 #include "packet_io/packet_tracer.h"
 #include "protocols/tcp_options.h"
-#include "stream/tcp/tcp_defs.h"
-#include "stream/tcp/tcp_stream_tracker.h"
+
+#include "tcp_defs.h"
+#include "tcp_event_logger.h"
+#include "tcp_stream_tracker.h"
 
 using namespace snort;
 
@@ -79,6 +81,8 @@ TcpSegmentDescriptor::TcpSegmentDescriptor
     pkt->pkth = p->pkth;
     pkt->ptrs = p->ptrs;
     pkt->ptrs.ip_api.set(*p->ptrs.ip_api.get_dst(), *p->ptrs.ip_api.get_src());
+    pkt->ptrs.dp = p->ptrs.sp;
+    pkt->ptrs.sp = p->ptrs.dp;
     pkt->active = p->active_inst;
     pkt->action = &p->action_inst;
     if( p->is_from_client() )
@@ -92,14 +96,15 @@ TcpSegmentDescriptor::TcpSegmentDescriptor
     pkt->flow = p->flow;
     pkt->context = p->context;
     pkt->dsize = 0;
+    pkt->daq_msg = p->daq_msg;
 
     seq = tcph->seq();
     ack = tcph->ack();
     wnd = tcph->win();
     end_seq = seq;
     timestamp_option = 0;
-    src_port = tcph->src_port();
-    dst_port = tcph->dst_port();
+    src_port = tcph->dst_port();
+    dst_port = tcph->src_port();
 
     packet_timestamp = p->pkth->ts.tv_sec;
     packet_from_client = !p->is_from_client();

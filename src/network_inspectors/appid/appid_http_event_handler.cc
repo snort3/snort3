@@ -54,6 +54,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     auto direction = event_type == REQUEST_EVENT ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
     bool is_debug_active = false;
 
+    const AppIdConfig& config = inspector.get_config();
     if ( !asd )
     {
         // The event is received before appid has seen any packet, e.g., data on SYN
@@ -90,7 +91,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         per_appid_event_cpu_timer.start();
     
     if (appidDebug->is_enabled() and !is_debug_active)
-        appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
+        appidDebug->activate(flow, asd, config.log_all_sessions);
 
     appid_log(p, TRACE_DEBUG_LEVEL, "Processing HTTP metadata from HTTP Inspector for stream %" PRId64 "\n",
         http_event->get_httpx_stream_id());

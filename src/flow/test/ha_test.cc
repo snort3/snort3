@@ -44,7 +44,9 @@ static const FlowKey s_test_key =
     /* .ip_h = */ { 5, 6, 7, 8 },
     /* .mplsLabel = */ 9,
     /* .addressSpaceId = */ 0,
+#ifndef DISABLE_TENANT_ID
     /* .tenant_id = */ 0,
+#endif
     /* .port_l = */ 10,
     /* .port_h = */ 11,
     /* .group_l = */ 0,
@@ -66,7 +68,11 @@ static struct __attribute__((__packed__)) TestDeleteMessage {
     {
         HA_DELETE_EVENT,
         HA_MESSAGE_VERSION,
+#ifndef DISABLE_TENANT_ID
         65,
+#else
+        61,
+#endif
         KEY_TYPE_IP6
     },
     s_test_key
@@ -82,7 +88,11 @@ static struct __attribute__((__packed__)) TestUpdateMessage {
     {
         HA_UPDATE_EVENT,
         HA_MESSAGE_VERSION,
+#ifndef DISABLE_TENANT_ID
         77,
+#else
+        73,
+#endif
         KEY_TYPE_IP6
     },
     s_test_key,

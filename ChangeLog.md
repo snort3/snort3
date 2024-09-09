@@ -1,3 +1,84 @@
+2024-08-26: 3.3.4.0
+
+* appid: notify binder on service change
+* appid: replaced hsessions vector of raw pointers into vector of smart pointers
+* ftp_telnet: refactoring ftp-data
+* latency, dce, stream_ip: fix max pegs incorrectly declared sum
+* telnet: avoid flush when cr or lf is between commands
+
+2024-08-13: 3.3.3.0
+
+* control: code cleanup
+* control: handle control commands after packet threads are fully initialised
+* daq: add outstanding packets counter
+* extractor: add flow hash key
+* file_api: max depth is set as part of initial config
+* file: remove unused variable in FileFlows destructor
+* filters: update dev_notes.txt with details for event_filter
+* flow: optimize timeout handling for different packet type
+* http_inspect: add peg counts for gzip, known-not-supported, and unknown
+* http_inspect: log normalized URI in extra data
+* ips_options: separate main thread pcre counts from packet threads stats
+* memory: account memory for profiler only when packet thread is involved
+* src: resolve various warnings
+* stream_tcp: make sure ports are correctly swapped when filling a meta-ACK packet
+
+2024-07-29: 3.3.2.0
+
+* appid: fixing cpp warnings and cosmetic changes for appid cpu profiler
+* appid: removing trailing whitespaces
+* daq: added outstanding packets counter
+* doc: builtin rule documentation updates
+* flow: added compile-time option to disable tenant_id
+* flow: clear deferred trust after the flow is trusted to stop repeated trusting
+* js_norm: address pdf tokenizer issues
+* kaizen: fix verbose mode output for unlimited options
+* main: fix coverage
+* sip: fallback functionality for sip inspector
+* stream: refactor paf logic into a c++ class
+* stream_tcp: delete lws_init, it was redundant with tcp_init; delete FIXITs that are no longer relevant
+* stream_tcp: improve variable and function names for overlap processing
+* stream_tcp: integrate and streamline setting of flush policy and splitter
+* stream_tcp: merge TcpStreamSession into TcpSession
+* stream_tcp: refactor segment nodes to implement reassembly cursor and eliminate tracking variables
+* stream_tcp: refactor TcpReassembler into a virtual base class and subclasses for each mode: ignore, IPS and IDS
+* stream_tcp: refactor to move alert functions to their own class
+* stream_tcp: refactor to move tcp overlap processing out of reassembly class
+
+2024-07-15: 3.3.1.0
+
+* appid: restructure the appid code to make it easier to follow and maintain
+* appid: updating appid cpu profiler cli
+* dce_rpc: correct the session counters post the upgrade to smb v2 from v1
+* detection: include OPT_TREE traces in release build
+* detection: make print of fast pattern as a trace module
+* extractor: support trans_depth, origin and referrer fields
+* file: fixing file context reuse
+* flow: clear flow stash when freeing the flow data
+* flow: handle significant groups with unknown group value as non-group flow keys
+* http_inspect: add origin header
+* parser: do not skip symbols while expanding variables
+* perf_monitor: introducing new parameters for ip flow profiling
+* stream_tcp: move prev_norm object from TcpNormalizer to TcpNormalizerState
+* stream_tcp: set daq_msg field in meta-ack pseudo-packet header to the value from the wire packet.
+* stream_tcp: support tracing without compilation flags
+* wizard: expand MMS curse
+
+2024-06-18: 3.3.0.0
+
+* appid: display rows limit of table and totals
+* appid: using different api for picking appids for appid cpu profiler
+* build: bump version to 3.2.0
+* codecs: add handling of NDP types
+* dns: set Flow timeout after getting DNS response
+* extractor: add protocol logging for HTTP
+* framework: add new Cursor Action Type
+* http_inspect: set CAT_SET_SUB_SECTION for buffer with a sub-selector configured
+* js_norm: fix prerequisites for FlexLexer includes
+* main: add CLI command to show snort cpu percentage
+* stream_tcp: use default size atomsplitter on fallback
+* utils: remove duplication of definition. Thanks to xxxx81 for reporting the issue.
+
 2024-06-02: 3.2.2.0
 
 * appid: appid cpu profiler max columns

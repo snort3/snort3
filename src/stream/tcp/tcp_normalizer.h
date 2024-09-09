@@ -30,15 +30,17 @@
 #include "normalize/norm_stats.h"
 #include "protocols/tcp_options.h"
 
-class TcpStreamSession;
+class TcpSession;
 class TcpStreamTracker;
 class TcpSegmentDescriptor;
+class TcpNormalizer;
 
 struct TcpNormalizerState
 {
-    TcpStreamSession* session = nullptr;
+    TcpSession* session = nullptr;
     TcpStreamTracker* tracker = nullptr;
     TcpStreamTracker* peer_tracker = nullptr;
+    TcpNormalizer* prev_norm = nullptr;
 
     StreamPolicy os_policy = StreamPolicy::OS_DEFAULT;
 
@@ -67,7 +69,6 @@ public:
     virtual ~TcpNormalizer() = default;
 
     virtual void init(State&) { }
-    virtual void init(TcpNormalizer*) { }
 
     virtual NormStatus apply_normalizations(
         State&, TcpSegmentDescriptor&, uint32_t seq, bool stream_is_inorder);
@@ -89,7 +90,8 @@ public:
     virtual int handle_repeated_syn(State&, TcpSegmentDescriptor&) = 0;
     virtual uint16_t set_urg_offset(State&, const snort::tcp::TCPHdr* tcph, uint16_t dsize);
     virtual void set_zwp_seq(State&, uint32_t seq);
-    virtual void log_drop_reason(State&, const TcpSegmentDescriptor&, bool inline_mode, const char *issuer, const std::string& log);
+    virtual void log_drop_reason(State&, const TcpSegmentDescriptor&, bool inline_mode,
+        const char *issuer, const std::string& log);
     virtual bool is_keep_alive_probe(State&, const TcpSegmentDescriptor&);
 
     static void reset_stats();
@@ -114,7 +116,6 @@ protected:
     virtual int handle_paws_no_timestamps(State&, TcpSegmentDescriptor&);
 
     std::string my_name;
-    TcpNormalizer* prev_norm = nullptr;
 };
 
 #endif

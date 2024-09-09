@@ -88,12 +88,6 @@ public:
     int get_debug_print_rule_groups_uncompiled() const
     { return portlists_flags & PL_DEBUG_PRINT_RULEGROUPS_UNCOMPILED; }
 
-    void set_debug_print_fast_patterns(bool b)
-    { debug_print_fast_pattern = b; }
-
-    bool get_debug_print_fast_patterns() const
-    { return debug_print_fast_pattern; }
-
     void set_split_any_any(bool enable)
     { split_any_any = enable; }
 
@@ -154,7 +148,6 @@ private:
 
     bool inspect_stream_insert = true;
     bool split_any_any = false;
-    bool debug_print_fast_pattern = false;
     bool debug = false;
     bool dedup = true;
 

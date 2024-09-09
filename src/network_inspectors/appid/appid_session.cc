@@ -116,7 +116,11 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
         port = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.sp : p->ptrs.dp;
 
     AppIdSession* asd = new AppIdSession(proto, ip, port, inspector, odp_context,
-        p->pkth->address_space_id, p->pkth->tenant_id);
+        p->pkth->address_space_id
+#ifndef DISABLE_TENANT_ID
+        ,p->pkth->tenant_id
+#endif
+        );
     is_session_monitored(asd->flags, p, inspector);
     asd->flow = p->flow;
     asd->stats.first_packet_second = p->pkth->ts.tv_sec;
@@ -126,9 +130,17 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
 }
 
 AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
-    AppIdInspector& inspector, OdpContext& odp_ctxt, uint32_t asid, uint32_t tenant_id)
+    AppIdInspector& inspector, OdpContext& odp_ctxt, uint32_t asid
+#ifndef DISABLE_TENANT_ID
+    ,uint32_t tenant_id
+#endif
+    )
     : FlowData(inspector_id, &inspector), config(inspector.get_ctxt().config),
-        initiator_port(port), tenant_id(tenant_id), asid(asid), protocol(proto),
+        initiator_port(port),
+#ifndef DISABLE_TENANT_ID
+        tenant_id(tenant_id),
+#endif
+        asid(asid), protocol(proto),
         api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(odp_ctxt),
         odp_ctxt_version(odp_ctxt.get_version()),
         tp_appid_ctxt(pkt_thread_tp_appid_ctxt)
@@ -141,7 +153,7 @@ AppIdSession::~AppIdSession()
      // Skip sessions using old odp context after reload detectors for appid cpu profiling
     if ((pkt_thread_odp_ctxt->get_version() == api.asd->get_odp_ctxt_version()) and api.asd->get_odp_ctxt().is_appid_cpu_profiler_running())
     {
-        api.asd->get_odp_ctxt().get_appid_cpu_profiler_mgr().check_appid_cpu_profiler_table_entry(api.asd, api.service.get_id(), api.client.get_id(), api.payload.get_id(), api.get_misc_app_id());
+        api.asd->get_odp_ctxt().get_appid_cpu_profiler_mgr().check_appid_cpu_profiler_table_entry(api.asd, api.get_service_app_id(), api.get_client_app_id(), api.get_payload_app_id(), api.get_misc_app_id());
     }
 
     if (!in_expected_cache)
@@ -235,7 +247,11 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     // FIXIT-RC - port parameter passed in as 0 since we may not know client port, verify
 
     AppIdSession* asd = new AppIdSession(proto, cliIp, 0, *inspector, odp_ctxt,
-        ctrlPkt->pkth->address_space_id, ctrlPkt->pkth->tenant_id);
+        ctrlPkt->pkth->address_space_id
+#ifndef DISABLE_TENANT_ID
+        ,ctrlPkt->pkth->tenant_id
+#endif
+        );
     is_session_monitored(asd->flags, ctrlPkt, *inspector);
 
     if (Stream::set_snort_protocol_id_expected(ctrlPkt, type, proto, cliIp,
@@ -422,7 +438,7 @@ void AppIdSession::check_tunnel_detection_restart()
 
     if (odp_ctxt.is_appid_cpu_profiler_running())
     {
-        odp_ctxt.get_appid_cpu_profiler_mgr().check_appid_cpu_profiler_table_entry(api.asd, api.service.get_id(), api.client.get_id(), api.payload.get_id(), api.get_misc_app_id());
+        odp_ctxt.get_appid_cpu_profiler_mgr().check_appid_cpu_profiler_table_entry(api.asd, api.get_service_app_id(), api.get_client_app_id(), api.get_payload_app_id(), api.get_misc_app_id());
         this->stats.processing_time = 0;
         this->stats.cpu_profiler_pkt_count = 0;
     }
@@ -1060,16 +1076,17 @@ void AppIdSession::clear_http_data()
 AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index) const
 {
     if (stream_index < api.hsessions.size())
-        return api.hsessions[stream_index];
+        return api.hsessions[stream_index].get();
     else
         return nullptr;
 }
 
 AppIdHttpSession* AppIdSession::create_http_session(int64_t stream_id)
 {
-    AppIdHttpSession* hsession = new AppIdHttpSession(*this, stream_id);
-    api.hsessions.push_back(hsession);
-    return hsession;
+    auto hsession = std::make_unique<AppIdHttpSession>(*this, stream_id);
+    auto tmp_hsession = hsession.get();
+    api.hsessions.push_back(std::move(hsession));
+    return tmp_hsession;
 }
 
 AppIdHttpSession* AppIdSession::get_matching_http_session(int64_t stream_id) const
@@ -1077,7 +1094,7 @@ AppIdHttpSession* AppIdSession::get_matching_http_session(int64_t stream_id) con
     for (uint32_t stream_index=0; stream_index < api.hsessions.size(); stream_index++)
     {
         if(stream_id == api.hsessions[stream_index]->get_httpx_stream_id())
-            return api.hsessions[stream_index];
+            return api.hsessions[stream_index].get();
     }
     return nullptr;
 }

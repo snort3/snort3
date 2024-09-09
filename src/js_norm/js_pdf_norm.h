@@ -20,8 +20,12 @@
 #ifndef JS_PDF_NORM_H
 #define JS_PDF_NORM_H
 
-#include <FlexLexer.h>
 #include <cstring>
+
+// This follows the prefix from pdf_tokenizer.l
+#undef yyFlexLexer
+#define yyFlexLexer pdfFlexLexer
+#include <FlexLexer.h>
 
 #include "helpers/streambuf.h"
 #include "js_norm/js_norm.h"
