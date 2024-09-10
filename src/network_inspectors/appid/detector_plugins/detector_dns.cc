@@ -187,7 +187,7 @@ DnsUdpServiceDetector::DnsUdpServiceDetector(ServiceDiscovery* sd)
 
 APPID_STATUS_CODE DnsValidator::add_dns_query_info(AppIdSession& asd, uint16_t id,
     const uint8_t* host, uint8_t host_len, uint16_t host_offset, uint16_t record_type,
-    AppidChangeBits& change_bits)
+    uint16_t options_offset, AppidChangeBits& change_bits)
 {
     AppIdDnsSession* dsession = asd.get_dns_session();
     if (!dsession)
@@ -211,6 +211,7 @@ APPID_STATUS_CODE DnsValidator::add_dns_query_info(AppIdSession& asd, uint16_t i
                 return APPID_NOMATCH;
             dsession->set_host(new_host, change_bits);
             dsession->set_host_offset(host_offset);
+            dsession->set_options_offset(options_offset);
             snort_free(new_host);
        }
     }
@@ -357,10 +358,10 @@ int DnsValidator::dns_validate_query(const uint8_t* data, uint16_t* offset, uint
             case PATTERN_SOA_REC:
             case PATTERN_NS_REC:
             case PATTERN_ANY_REC:
-                ret = add_dns_query_info(asd, id, host, host_len, host_offset, record_type, change_bits);
+                ret = add_dns_query_info(asd, id, host, host_len, host_offset, record_type, *offset, change_bits);
                 break;
             case PATTERN_PTR_REC:
-                ret = add_dns_query_info(asd, id, nullptr, 0, 0, record_type, change_bits);
+                ret = add_dns_query_info(asd, id, nullptr, 0, 0, record_type, *offset, change_bits);
                 break;
             default:
                 break;

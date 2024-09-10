@@ -39,6 +39,7 @@ char const* APPID_UT_SERVICE_IP_ADDR = "192.168.0.2";
 char const* APPID_UT_INITIATOR_IP_ADDR = "192.168.0.3";
 
 char const* APPID_ID_UT_DNS_HOST = "delphi.opendns.com";
+#define APPID_UT_DNS_OPTIONS_OFFSET 28
 #define APPID_UT_DNS_HOST_OFFSET 22
 #define APPID_UT_DNS_PATTERN_CNAME_REC  5
 #define APPID_UT_DNS_NOERROR 0
@@ -69,6 +70,7 @@ public:
     {
         host = (const char*) APPID_ID_UT_DNS_HOST;
         host_offset = APPID_UT_DNS_HOST_OFFSET;
+        options_offset = APPID_UT_DNS_OPTIONS_OFFSET;
         record_type = APPID_UT_DNS_PATTERN_CNAME_REC;
         response_type = APPID_UT_DNS_NOERROR;
         ttl = APPID_UT_DNS_TTL;

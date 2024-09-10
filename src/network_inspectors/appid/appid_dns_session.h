@@ -43,6 +43,7 @@ public:
         host_offset = 0;
         record_type = 0;
         ttl = 0;
+        options_offset = 0;
     }
 
     uint8_t get_state() const
@@ -93,6 +94,12 @@ public:
     void set_host_offset(uint16_t hostOffset)
     { host_offset = hostOffset; }
 
+    uint16_t get_options_offset() const
+    { return options_offset; }
+
+    void set_options_offset(uint16_t optionsOffset)
+    { options_offset = optionsOffset; }
+
 protected:
     uint8_t state = 0;
     uint8_t response_type = 0;
@@ -101,5 +108,6 @@ protected:
     uint32_t ttl = 0;
     std::string host;
     uint16_t host_offset = 0;
+    uint16_t options_offset = 0;
 };
 #endif

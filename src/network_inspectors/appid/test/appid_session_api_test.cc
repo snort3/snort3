@@ -539,6 +539,10 @@ TEST(appid_session_api, appid_dns_api)
     qoff = dsession->get_host_offset();
     CHECK_TRUE(qoff == APPID_UT_DNS_HOST_OFFSET);
 
+    uint16_t opoff;
+    opoff = dsession->get_options_offset();
+    CHECK_TRUE(opoff == APPID_UT_DNS_OPTIONS_OFFSET);
+
     uint16_t rt;
     rt = dsession->get_record_type();
     CHECK_TRUE(rt == APPID_UT_DNS_PATTERN_CNAME_REC);

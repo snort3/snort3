@@ -32,7 +32,7 @@ class DnsValidator
 {
 protected:
     APPID_STATUS_CODE add_dns_query_info(AppIdSession&, uint16_t, const uint8_t*,
-        uint8_t, uint16_t, uint16_t, AppidChangeBits&);
+        uint8_t, uint16_t, uint16_t, uint16_t, AppidChangeBits&);
     APPID_STATUS_CODE add_dns_response_info(AppIdSession&, uint16_t, const uint8_t*,
         uint8_t, uint16_t, uint8_t, uint32_t, AppidChangeBits&);
     APPID_STATUS_CODE dns_validate_label(const uint8_t*, uint16_t&, uint16_t, uint8_t&, bool&);
