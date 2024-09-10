@@ -81,7 +81,7 @@ class FlowCache
 {
 public:
     FlowCache(const FlowCacheConfig&);
-    ~FlowCache();
+    virtual ~FlowCache();
 
     FlowCache(const FlowCache&) = delete;
     FlowCache& operator=(const FlowCache&) = delete;
@@ -134,6 +134,9 @@ public:
     const FlowCacheConfig& get_flow_cache_config() const
     { return config; }
 
+    virtual bool filter_flows(const snort::Flow&, const FilterFlowCriteria&) const;
+    virtual void output_flow(std::fstream&, const snort::Flow&, const struct timeval&) const;
+
     unsigned get_flows_allocated() const;
 
     size_t uni_flows_size() const;
@@ -150,8 +153,6 @@ private:
     unsigned delete_active_flows(unsigned mode, unsigned num_to_delete, unsigned &deleted);
     static std::string timeout_to_str(time_t);
     bool is_ip_match(const snort::SfIp& flow_ip, const snort::SfIp& filter_ip, const snort::SfIp& subnet) const;
-    bool filter_flows(const snort::Flow&, const FilterFlowCriteria&) const;
-    void output_flow(std::fstream&, const snort::Flow&, const struct timeval&) const;
 
 private:
     uint8_t timeout_idx;

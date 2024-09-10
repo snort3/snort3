@@ -75,6 +75,8 @@ void Flow::init(PktType) { }
 const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 void FlowCache::unlink_uni(Flow*) { }
 bool FlowCache::dump_flows(std::fstream&, unsigned, const FilterFlowCriteria&, bool, uint8_t) const { return false; }
+void FlowCache::output_flow(std::fstream&, const Flow&, const struct timeval& ) const { }
+bool FlowCache::filter_flows(const Flow&, const FilterFlowCriteria&) const { return true; };
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
 void Flow::set_mpls_layer_per_dir(Packet*) { }

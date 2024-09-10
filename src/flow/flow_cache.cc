@@ -886,39 +886,39 @@ bool FlowCache::dump_flows(std::fstream& stream, unsigned count, const FilterFlo
     struct timeval now;
     packet_gettimeofday(&now);
     unsigned i;
+    bool has_more_flows = false;
+    Flow* walk_flow = nullptr;
 
     for(uint8_t proto_id = to_utype(PktType::NONE)+1; proto_id <= to_utype(PktType::ICMP); proto_id++)
     {
         if (first)
         {
-            Flow* walk_flow = static_cast<Flow*>(hash_table->get_walk_user_data(proto_id));
+            walk_flow = static_cast<Flow*>(hash_table->get_walk_user_data(proto_id));
             if (!walk_flow)
             {
                 //Return only if all the protocol caches are processed.
                 if (proto_id < to_utype(PktType::ICMP))
                     continue;
-
-                return true;
+                return !has_more_flows;
             }
             walk_flow->dump_code = code;
             bool matched_filter = filter_flows(*walk_flow, ffc);
             if (matched_filter)
                 output_flow(stream, *walk_flow, now);
             i = 1;
-
         }
         else
             i = 0;
         while (i < count)
         {
-            Flow* walk_flow = static_cast<Flow*>(hash_table->get_next_walk_user_data(proto_id));
+            walk_flow = static_cast<Flow*>(hash_table->get_next_walk_user_data(proto_id));
 
             if (!walk_flow )
             {
                 //Return only if all the protocol caches are processed.
                 if (proto_id < to_utype(PktType::ICMP))
                     break;
-                return true;
+                return !has_more_flows;
             }
             if (walk_flow->dump_code != code)
             {
@@ -933,6 +933,8 @@ bool FlowCache::dump_flows(std::fstream& stream, unsigned count, const FilterFlo
                 LogMessage("dump_flows skipping already dumped flow\n");
 #endif
         }
+        if(walk_flow) // we have output 'count' flows, but the protocol cache still has more flows
+            has_more_flows = true;
     }
     return false;
 }

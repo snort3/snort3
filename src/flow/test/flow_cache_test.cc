@@ -131,6 +131,15 @@ int ExpectCache::add_flow(const Packet*, PktType, IpProtocol, const SfIp*, uint1
 unsigned int get_random_seed()
 { return 3193; }
 
+class DummyCache : public FlowCache
+{
+    public:
+        DummyCache(const FlowCacheConfig& cfg) : FlowCache(cfg) {}
+        ~DummyCache() = default;
+        void output_flow(std::fstream& stream, const Flow& flow, const struct timeval& now) const override { (void)stream, (void)flow, (void)now; };
+        bool filter_flows(const Flow& flow, const FilterFlowCriteria& ffc) const override { (void)flow; (void)ffc; return true; };
+};
+
 TEST_GROUP(flow_prune) { };
 
 // No flows in the flow cache, pruning should not happen
@@ -382,6 +391,105 @@ TEST(flow_prune, prune_counts)
     stats.update(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::IP);
 
     CHECK_EQUAL(3, stats.get_proto_prune_count(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::IP));
+}
+
+TEST_GROUP(dump_flows) { };
+
+TEST(dump_flows, dump_flows_with_all_empty_caches)
+{
+    FlowCacheConfig fcg;
+    FilterFlowCriteria ffc;
+    std::fstream dump_stream;
+    DummyCache *cache = new DummyCache(fcg);
+    CHECK(cache->dump_flows(dump_stream, 100, ffc, true, 1 ) == true);
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+TEST(dump_flows, dump_flows_with_one_tcp_flow)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 5;
+    FilterFlowCriteria ffc;
+    std::fstream dump_stream;
+    DummyCache *cache = new DummyCache(fcg);
+
+    FlowKey flow_key;
+    flow_key.port_l = 1;
+    flow_key.pkt_type = PktType::TCP;
+    cache->allocate(&flow_key);
+    CHECK(cache->dump_flows(dump_stream, 100, ffc, true, 1 ) == true);
+    CHECK (cache->get_count() == 1);
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+TEST(dump_flows, dump_flows_with_102_tcp_flows)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 500;
+    FilterFlowCriteria ffc;
+    std::fstream dump_stream;
+    DummyCache *cache = new DummyCache(fcg);
+    int port = 1;
+
+    for ( unsigned i = 0; i < 102; i++ )
+    {
+        FlowKey flow_key;
+        flow_key.port_l = port++;
+        flow_key.pkt_type = PktType::TCP;
+        cache->allocate(&flow_key);
+    }
+    CHECK (cache->get_count() == 102);
+    //since we only dump 100 flows at a time. The first call will return false
+    //second time when it is called , it dumps the remaining 2 flows and returns true
+    CHECK(cache->dump_flows(dump_stream, 100, ffc, true, 1 ) == false);
+    CHECK(cache->dump_flows(dump_stream, 100, ffc, false, 1 ) == true);
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    CHECK (cache->get_count() == 0);
+    delete cache;
+}
+
+TEST(dump_flows, dump_flows_with_102_tcp_flows_and_202_udp_flows)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 500;
+    FilterFlowCriteria ffc;
+    std::fstream dump_stream;
+    DummyCache *cache = new DummyCache(fcg);
+    int port = 1;
+
+    for ( unsigned i = 0; i < 102; i++ )
+    {
+        FlowKey flow_key;
+        flow_key.port_l = port++;
+        flow_key.pkt_type = PktType::TCP;
+        cache->allocate(&flow_key);
+    }
+
+    for ( unsigned i = 0; i < 202; i++ )
+    {
+        FlowKey flow_key;
+        flow_key.port_l = port++;
+        flow_key.pkt_type = PktType::UDP;
+        cache->allocate(&flow_key);
+    }
+
+    CHECK (cache->get_count() == 304);
+    //since we only dump 100 flows at a time. The first 2 calls will return false
+    //third time when it is called , it dumps the remaining 2 UDP flows and returns true
+    CHECK(cache->dump_flows(dump_stream, 100, ffc, true, 1 ) == false);
+    CHECK(cache->dump_flows(dump_stream, 100, ffc, false, 1 ) == false);
+    CHECK(cache->dump_flows(dump_stream, 100, ffc, false, 1 ) == true);
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    CHECK (cache->get_count() == 0);
+    delete cache;
 }
 
 int main(int argc, char** argv)
