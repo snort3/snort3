@@ -85,6 +85,9 @@ public:
     static void update_pegs();
 
     static void dump_mem_stats(ControlConn*);
+    static void heap_profile_config(bool enable, uint64_t sample_rate);
+    static void dump_heap_profile(ControlConn*);
+    static void show_heap_profile_config(ControlConn*);
 #if defined(REG_TEST) || defined(UNIT_TEST)
     static void test_main_check();
 #endif

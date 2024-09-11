@@ -86,6 +86,8 @@ const struct timespec main_sleep = { 0, 1000000 }; // 0.001 sec
 
 static const char* prompt = "o\")~ ";
 
+static const uint64_t def_prof_sample = 19;
+
 static const std::map<std::string, clear_counter_type_t> counter_name_to_id =
 {
 	{"daq", clear_counter_type_t::TYPE_DAQ},
@@ -366,6 +368,34 @@ int main_dump_heap_stats(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     memory::MemoryCap::dump_mem_stats(ctrlcon);
+    return 0;
+}
+
+int main_heap_profile(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    if ( L )
+    {
+        const bool enable = luaL_opt(L,lua_toboolean, 1, false);
+        const uint64_t sample_rate = luaL_optint(L, 2, def_prof_sample);
+        memory::MemoryCap::heap_profile_config(enable, sample_rate);
+
+        memory::MemoryCap::show_heap_profile_config(ctrlcon);
+    }
+    return 0;
+}
+
+int main_dump_heap_profile(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    memory::MemoryCap::dump_heap_profile(ctrlcon);
+    return 0;
+}
+
+int main_show_heap_profile(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    memory::MemoryCap::show_heap_profile_config(ctrlcon);
     return 0;
 }
 

@@ -42,6 +42,10 @@ public:
     virtual void get_aux_counts(uint64_t& app_all, uint64_t& active, uint64_t& resident, uint64_t& retained)
     { app_all = active = resident = retained = 0; }
 
+    virtual void profile_config(bool, uint64_t) { }
+    virtual void dump_profile(ControlConn*) { }
+    virtual void show_profile_config(ControlConn*) { }
+
     static HeapInterface* get_instance();
 
 protected:

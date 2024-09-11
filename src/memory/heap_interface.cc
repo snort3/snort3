@@ -52,6 +52,10 @@ class JemallocInterface : public HeapInterface
     void print_stats(ControlConn*) override;
 
     void get_aux_counts(uint64_t&, uint64_t&, uint64_t&, uint64_t&) override;
+
+    void profile_config(bool enable, uint64_t sample_rate) override;
+    void dump_profile(ControlConn*) override;
+    void show_profile_config(ControlConn*) override;
 };
 
 static size_t stats_mib[2], mib_len = 2;
@@ -130,6 +134,55 @@ void JemallocInterface::get_aux_counts(uint64_t& all, uint64_t& act, uint64_t& r
     mallctl("stats.active", (void*)&act, &sz, nullptr, 0);
     mallctl("stats.resident", (void*)&res, &sz, nullptr, 0);
     mallctl("stats.retained", (void*)&ret, &sz, nullptr, 0);
+}
+
+void JemallocInterface::profile_config(bool enable, uint64_t sample_rate)
+{
+    bool en = enable;
+    int ret = mallctl("prof.active", nullptr, nullptr, &en, sizeof(bool));
+    if ( ret )
+        snort::LogMessage("Error in setting jemalloc profile config : %d", ret);
+    
+    if ( enable )
+    {
+        size_t sample = sample_rate;
+        ret = mallctl("prof.reset", nullptr, nullptr, &sample, sizeof(size_t));
+        if ( ret )
+            snort::LogMessage("Error in setting jemalloc sample rate : %d", ret);
+    }
+}
+
+void JemallocInterface::dump_profile(ControlConn* ctrlcon)
+{
+    int ret = mallctl("prof.dump", nullptr, nullptr, nullptr, 0);
+    if ( ret )
+        snort::LogMessage("Error in dumping jemalloc profile : %d", ret);
+    else
+        ctrlcon->respond("Jemalloc memory profile dumped\n");
+}
+
+void JemallocInterface::show_profile_config(ControlConn* ctrlcon)
+{
+    bool enable = false;
+    size_t sz = sizeof(enable);
+    int ret = mallctl("prof.active", &enable, &sz, nullptr, 0);
+    if ( ret )
+        snort::LogMessage("Error in getting jemalloc profiling config : %d", ret);
+
+    if ( enable )
+    {
+        size_t sample = 0;
+        sz = sizeof(sample);
+        ret = mallctl("prof.lg_sample", &sample, &sz, nullptr, 0);
+        if ( ret )
+            snort::LogMessage("Error in getting jemalloc sample rate : %d", ret);
+
+        ctrlcon->respond("Jemalloc memory profiling is enabled with sample rate %lu\n", sample);
+    }
+    else
+    {
+        ctrlcon->respond("Jemalloc memory profiling is disabled\n");
+    }
 }
 
 //--------------------------------------------------------------------------

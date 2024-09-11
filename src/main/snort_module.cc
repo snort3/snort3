@@ -125,6 +125,15 @@ static const Parameter reset_stat_param[] =
 	{ nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const Parameter s_heap_params[] =
+{
+    { "enable", Parameter::PT_BOOL, nullptr, nullptr,
+      "enable/disable jemalloc tracking" },
+    { "sample_rate", Parameter::PT_INT, "0:max32", nullptr,
+      "average interval(log base 2) between memory profile dumps, as measured in bytes of allocation activity" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Command snort_cmds[] =
 {
     { "set_watchdog_params", main_set_watchdog_params, s_watchdog, "set watchdog parameters" },
@@ -135,6 +144,9 @@ static const Command snort_cmds[] =
 
     { "dump_stats", main_dump_stats, nullptr, "show summary statistics" },
     { "dump_heap_stats", main_dump_heap_stats, nullptr, "show heap statistics" },
+    { "heap_profile", main_heap_profile, s_heap_params, "jemalloc memory tracking configuration"},
+    { "dump_heap_profile", main_dump_heap_profile, nullptr, "dump jemalloc memory profile"},
+    { "show_heap_profile", main_show_heap_profile, nullptr, "show jemalloc memory profiling configuration"},
     { "reset_stats", main_reset_stats, reset_stat_param, "clear summary statistics. "
       "Type can be: daq|module|appid|file_id|snort|ha|all. reset_stats() without a parameter clears all statistics."},
     { "rotate_stats", main_rotate_stats, nullptr, "roll perfmonitor log files" },

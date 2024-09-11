@@ -351,5 +351,21 @@ void MemoryCap::dump_mem_stats(ControlConn* ctrlcon)
 {
     heap->print_stats(ctrlcon);
 }
+
+void MemoryCap::heap_profile_config(bool enable, uint64_t sample_rate)
+{
+    heap->profile_config(enable, sample_rate);
+}
+
+void MemoryCap::dump_heap_profile(ControlConn* ctrlcon)
+{
+    heap->dump_profile(ctrlcon);
+}
+
+void MemoryCap::show_heap_profile_config(ControlConn* ctrlcon)
+{
+    heap->show_profile_config(ctrlcon);
+}
+
 } // namespace memory
 
