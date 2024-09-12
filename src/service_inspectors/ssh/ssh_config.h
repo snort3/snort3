@@ -37,6 +37,7 @@ struct SshStats
     PegCount total_bytes;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
+    PegCount aborted_sessions;
 };
 
 #endif

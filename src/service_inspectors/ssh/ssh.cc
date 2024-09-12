@@ -54,6 +54,7 @@ static bool process_ssh_version_string(SSH_PROTO_CONF* config, SSHData* sessionp
 static bool process_ssh1_key_exchange(SSHData *sessionp, Packet *p, uint8_t direction);
 static bool process_ssh2_kexinit(SSHData *sessionp, Packet *p, uint8_t direction);
 static bool process_ssh2_key_exchange(SSHData *sessionp, Packet *p, uint8_t direction);
+bool is_us_ascii(const char *str, uint16_t size);
 
 unsigned SshFlowData::inspector_id = 0;
 
@@ -150,6 +151,8 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
             {
                 SshEvent event(SSH_VALIDATION, SSH_INVALID_VERSION, "", pkt_direction, p);
                 DataBus::publish(pub_id, SshEventIds::STATE_CHANGE, event, p->flow);
+                if (sessp->version == NON_SSH_TRAFFIC)
+                    sessp->ssh_aborted = true;
             }
         }
         else if (!(sessp->state_flags & search_dir_keyinit))
@@ -237,6 +240,26 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
     }
 }
 
+bool is_us_ascii(const char *str, uint16_t size) 
+{
+    for (uint16_t i = 0, count = 0; i < size; i++) 
+    {
+        if ((((unsigned char)*str < 32) or (unsigned char)*str > 127) and 
+            (((unsigned char)*str != 10 ) and ((unsigned char)*str != 13)))
+        {
+            if ((count == 0) && (unsigned char)*str == '-')
+            {
+                count++;
+                str++;
+                continue;
+            }
+            return false; 
+        }
+        str++;
+    }
+    return true; 
+}
+
 static bool process_ssh_version_string(
     SSH_PROTO_CONF* config, SSHData* sessionp, Packet* p, uint8_t direction)
 {
@@ -260,6 +283,13 @@ static bool process_ssh_version_string(
         // so we will ignore them.
         return true;
     }
+
+    if (!(is_us_ascii((const char*) p->data + 4, p->dsize - 4)))
+    {
+        sessionp->version = NON_SSH_TRAFFIC;
+        return false;
+    }
+
     const char *proto_ver = (const char *)p->data + sizeof(SSH_BANNER) - 1;
     const char *proto_ver_end = (const char *)memchr(proto_ver, '-', p->dsize - sizeof(SSH_BANNER));
     if (!proto_ver_end)
@@ -285,10 +315,15 @@ static bool process_ssh_version_string(
             sessionp->version = SSH_VERSION_1;
         }
     }
-    else
+    else if (((proto_ver[0] >= '3') and (proto_ver[0] <= '9')) and proto_ver[1] == '.')
     {
         DetectionEngine::queue_event(GID_SSH, SSH_EVENT_VERSION);
         sessionp->version = SSH_VERSION_UNKNOWN;
+        return false;
+    }
+    else
+    {
+        sessionp->version = NON_SSH_TRAFFIC;
         return false;
     }
 

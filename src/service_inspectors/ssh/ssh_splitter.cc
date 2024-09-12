@@ -23,6 +23,7 @@
 #endif
 
 #include "ssh_splitter.h"
+#include "ssh_module.h"
 
 using namespace snort;
 
@@ -90,6 +91,12 @@ StreamSplitter::Status SshSplitter::scan(
 {
     Flow* flow = p->flow;
     SSHData* sessp = get_session_data(flow);
+
+    if (sessp and sessp->ssh_aborted)
+    {
+        sshstats.aborted_sessions++;
+        return ABORT;
+    }
 
     if (nullptr == sessp)
     {

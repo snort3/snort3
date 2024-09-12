@@ -74,6 +74,7 @@ const PegInfo ssh_pegs[] =
     { CountType::SUM, "total_bytes", "total number of bytes processed" },
     { CountType::NOW, "concurrent_sessions", "total concurrent ssh sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent ssh sessions" },
+    { CountType::SUM, "aborted_sessions", "total session aborted" },
     { CountType::END, nullptr, nullptr }
 };
 

@@ -86,6 +86,7 @@
 #define SSH_VERSION_UNKNOWN (0x0)
 #define SSH_VERSION_1       (0x1)
 #define SSH_VERSION_2       (0x2)
+#define NON_SSH_TRAFFIC     (0xF)
 
 // Per-session data block containing current state
 // of the SSH inspector for the session.
@@ -95,6 +96,7 @@ struct SSHData
     uint16_t num_enc_pkts;     // encrypted packets seen on this session
     uint16_t num_client_bytes; // bytes of encrypted data sent by client without a server response
     uint32_t state_flags;      // Bit vector describing the current state of the session
+    bool ssh_aborted;       // Set when the session is not a ssh traffic
 };
 
 class SshFlowData : public snort::FlowData
