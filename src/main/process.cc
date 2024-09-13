@@ -232,11 +232,24 @@ static void print_backtrace(SigSafePrinter& ssp)
 
     // walk the stack frames
     unsigned frame_num = 0;
+    bool signal_frame_found = false;
+
     while ((ret = unw_step(&cursor)) > 0)
     {
-        // skip printing any frames until we've found the frame that received the signal
-        if (frame_num == 0 && !unw_is_signal_frame(&cursor))
-            continue;
+        if (!signal_frame_found)
+        {
+            if (unw_is_signal_frame(&cursor))
+            {
+                signal_frame_found = true;
+#ifdef __aarch64__
+                // skip __kernel_rt_sigreturn in vDSO for arm
+                continue;
+#endif
+            }
+            else
+                // skip printing any frames until we've found the frame that received the signal
+                continue;
+        }
 
         unw_word_t pc;
         if ((ret = unw_get_reg(&cursor, UNW_REG_IP, &pc)) < 0)
@@ -246,12 +259,6 @@ static void print_backtrace(SigSafePrinter& ssp)
             return;
         }
 
-        unw_proc_info_t pip;
-        if ((ret = unw_get_proc_info(&cursor, &pip)) < 0)
-        {
-            ssp.printf("unw_get_proc_info failed: %s (%d)\n", unw_strerror(ret), ret);
-            return;
-        }
 
         ssp.printf("  #%u 0x%x", frame_num, pc);
 
@@ -274,11 +281,19 @@ static void print_backtrace(SigSafePrinter& ssp)
                 break;
         }
 
-        Dl_info dlinfo;
-        if (dladdr((void *)(uintptr_t)(pip.start_ip + offset), &dlinfo)
-            && dlinfo.dli_fname && *dlinfo.dli_fname)
+        unw_proc_info_t pip;
+        if ((ret = unw_get_proc_info(&cursor, &pip)) < 0)
         {
-            ssp.printf(" (%s @0x%x)", dlinfo.dli_fname, dlinfo.dli_fbase);
+            ssp.printf(" unw_get_proc_info failed: %s (%d)", unw_strerror(ret), ret);
+        }
+        else
+        {
+            Dl_info dlinfo;
+            if (dladdr((void*) (uintptr_t) (pip.start_ip + offset), &dlinfo)
+                && dlinfo.dli_fname && *dlinfo.dli_fname)
+            {
+                ssp.printf(" (%s @0x%x)", dlinfo.dli_fname, dlinfo.dli_fbase);
+            }
         }
 
         ssp.printf("\n");
