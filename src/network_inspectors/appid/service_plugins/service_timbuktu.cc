@@ -33,12 +33,15 @@ static char TIMBUKTU_BANNER[]  = "\001\001";
 
 #define TIMBUKTU_BANNER_LEN (sizeof(TIMBUKTU_BANNER)-1)
 
+namespace
+{
 enum TIMBUKTUState
 {
     TIMBUKTU_STATE_BANNER,
     TIMBUKTU_STATE_MESSAGE_LEN,
     TIMBUKTU_STATE_MESSAGE_DATA
 };
+}
 
 struct ServiceTIMBUKTUData
 {

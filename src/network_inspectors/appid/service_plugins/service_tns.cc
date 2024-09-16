@@ -48,6 +48,8 @@ static const uint8_t TNS_BANNER[]  = "\000\000";
 #define TNS_TYPE_CONTROL 14
 #define TNS_TYPE_MAX 19
 
+namespace
+{
 enum TNSState
 {
     TNS_STATE_MESSAGE_LEN,
@@ -58,6 +60,7 @@ enum TNSState
     TNS_STATE_MESSAGE_ACCEPT,
     TNS_STATE_MESSAGE_DATA
 };
+}
 
 #define ACCEPT_VERSION_OFFSET   8
 struct ServiceTNSData

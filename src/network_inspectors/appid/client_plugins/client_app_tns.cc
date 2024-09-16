@@ -51,6 +51,8 @@ static const char TNS_BANNER[] = "\000\000";
 #define USER_STRING "user="
 #define MAX_USER_POS ((int)sizeof(USER_STRING) - 2)
 
+namespace
+{
 enum TNSState
 {
     TNS_STATE_MESSAGE_LEN = 0,
@@ -66,6 +68,7 @@ enum TNSState
     TNS_STATE_MESSAGE_CONNECT_DATA,
     TNS_STATE_COLLECT_USER
 };
+}
 
 struct ClientTNSData
 {

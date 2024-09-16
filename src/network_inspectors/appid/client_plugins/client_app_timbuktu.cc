@@ -37,6 +37,8 @@ static const char TIMBUKTU_BANNER[] = "\000\001";
 #define TIMBUKTU_BANNER_LEN (sizeof(TIMBUKTU_BANNER)-1)
 #define MAX_ANY_SIZE    2
 
+namespace
+{
 enum TIMBUKTUState
 {
     TIMBUKTU_STATE_BANNER = 0,
@@ -44,6 +46,7 @@ enum TIMBUKTUState
     TIMBUKTU_STATE_MESSAGE_LEN,
     TIMBUKTU_STATE_MESSAGE_DATA
 };
+}
 
 struct ClientTIMBUKTUData
 {
