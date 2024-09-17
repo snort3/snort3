@@ -82,7 +82,46 @@ IpsOption::EvalStatus Http2IpsOption::eval(Cursor& c, Packet* p)
     return MATCH;
 }
 
-#ifdef REG_TEST
+//-------------------------------------------------------------------------
+// http2_frame_data
+//-------------------------------------------------------------------------
+
+#undef IPS_OPT
+#define IPS_OPT "http2_frame_data"
+#undef IPS_HELP
+#define IPS_HELP "rule option to set detection cursor to the HTTP/2 frame body"
+
+static Module* frame_data_mod_ctor()
+{
+    return new Http2CursorModule(IPS_OPT, IPS_HELP, HTTP2_BUFFER_FRAME_DATA, CAT_SET_OTHER,
+        PSI_FRAME_DATA);
+}
+
+static const IpsApi frame_data_api =
+{
+    {
+        PT_IPS_OPTION,
+        sizeof(IpsApi),
+        IPSAPI_VERSION,
+        1,
+        API_RESERVED,
+        API_OPTIONS,
+        IPS_OPT,
+        IPS_HELP,
+        frame_data_mod_ctor,
+        Http2CursorModule::mod_dtor
+    },
+    OPT_TYPE_DETECTION,
+    0, PROTO_BIT__TCP,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    Http2IpsOption::opt_ctor,
+    Http2IpsOption::opt_dtor,
+    nullptr
+};
+
 //-------------------------------------------------------------------------
 // http2_frame_header
 //-------------------------------------------------------------------------
@@ -122,7 +161,6 @@ static const IpsApi frame_header_api =
     Http2IpsOption::opt_dtor,
     nullptr
 };
-#endif
 
 #ifdef REG_TEST
 //-------------------------------------------------------------------------
@@ -169,8 +207,9 @@ static const IpsApi decoded_header_api =
 //-------------------------------------------------------------------------
 // plugins
 //-------------------------------------------------------------------------
-#ifdef REG_TEST
+const BaseApi* ips_http2_frame_data = &frame_data_api.base;
 const BaseApi* ips_http2_frame_header = &frame_header_api.base;
+#ifdef REG_TEST
 const BaseApi* ips_http2_decoded_header = &decoded_header_api.base;
 #endif
 

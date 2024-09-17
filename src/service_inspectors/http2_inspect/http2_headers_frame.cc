@@ -154,8 +154,10 @@ const Field& Http2HeadersFrame::get_buf(unsigned id)
     switch (id)
     {
     // FIXIT-E need to add a buffer for the decoded start line
+#ifdef REG_TEST
     case HTTP2_BUFFER_DECODED_HEADER:
         return http1_header;
+#endif
     default:
         return Http2Frame::get_buf(id);
     }

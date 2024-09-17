@@ -124,6 +124,8 @@ const Field& Http2Frame::get_buf(unsigned id)
     {
     case HTTP2_BUFFER_FRAME_HEADER:
         return header;
+    case HTTP2_BUFFER_FRAME_DATA:
+        return data;
     default:
         return Field::FIELD_NULL;
     }

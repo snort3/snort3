@@ -45,7 +45,11 @@ enum StreamState { STREAM_EXPECT_HEADERS, STREAM_EXPECT_BODY, STREAM_BODY, STREA
 
 // Message buffers available to clients
 // This enum must remain synchronized with Http2Api::classic_buffer_names[]
-enum HTTP2_BUFFER { HTTP2_BUFFER_FRAME_HEADER = 1, HTTP2_BUFFER_DECODED_HEADER, HTTP2_BUFFER__MAX };
+enum HTTP2_BUFFER { HTTP2_BUFFER_FRAME_HEADER = 1, HTTP2_BUFFER_FRAME_DATA,
+#ifdef REG_TEST
+    HTTP2_BUFFER_DECODED_HEADER,
+#endif
+    HTTP2_BUFFER__MAX };
 
 // Peg counts
 // This enum must remain synchronized with Http2Module::peg_names[] in http2_tables.cc

@@ -39,8 +39,9 @@ Inspector* Http2Api::http2_ctor(Module* mod)
 
 const char* Http2Api::classic_buffer_names[] =
 {
-#ifdef REG_TEST
     "http2_frame_header",
+    "http2_frame_data",
+#ifdef REG_TEST
     "http2_decoded_header",
 #endif
     HTTP_CLASSIC_BUFFER_NAMES,
@@ -75,8 +76,9 @@ const InspectApi Http2Api::http2_api =
     nullptr
 };
 
-#ifdef REG_TEST
 extern const BaseApi* ips_http2_frame_header;
+extern const BaseApi* ips_http2_frame_data;
+#ifdef REG_TEST
 extern const BaseApi* ips_http2_decoded_header;
 #endif
 
@@ -87,8 +89,9 @@ const BaseApi* sin_http2[] =
 #endif
 {
     &Http2Api::http2_api.base,
-#ifdef REG_TEST
     ips_http2_frame_header,
+    ips_http2_frame_data,
+#ifdef REG_TEST
     ips_http2_decoded_header,
 #endif
     nullptr
