@@ -35,6 +35,19 @@ ExtractorWriter* ExtractorWriter::make_writer(OutputType o_type)
     }
 }
 
+StdExtractorWriter::StdExtractorWriter() : ExtractorWriter(), extr_std_log(snort::TextLog_Init("stdout"))
+{}
+
+StdExtractorWriter::~StdExtractorWriter()
+{
+    snort::TextLog_Term(extr_std_log);
+}
+
+void StdExtractorWriter::write(const char* ss)
+{
+    snort::TextLog_Print(extr_std_log, "%s", ss);
+}
+
 #ifdef UNIT_TEST
 
 #include "catch/snort_catch.h"

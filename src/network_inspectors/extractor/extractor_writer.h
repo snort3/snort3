@@ -23,6 +23,8 @@
 #include <mutex>
 #include <string>
 
+#include "log/text_log.h"
+
 class OutputType
 {
 public:
@@ -77,10 +79,10 @@ protected:
 class StdExtractorWriter : public ExtractorWriter
 {
 public:
-    StdExtractorWriter() = default;
+    StdExtractorWriter();
+    ~StdExtractorWriter() override;
 
-    void write(const char* ss) override
-    { fprintf(stdout, "%s", ss); }
+    void write(const char* ss) override;
 
     void lock() override
     { write_mutex.lock(); }
@@ -90,6 +92,7 @@ public:
 
 private:
     std::mutex write_mutex;
+    TextLog* extr_std_log;
 };
 
 #endif
