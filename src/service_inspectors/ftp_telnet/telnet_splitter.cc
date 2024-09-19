@@ -25,6 +25,7 @@
 
 #include <cstring>
 
+#include "ftpp_si.h"
 #include "protocols/ssl.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
@@ -40,6 +41,17 @@ StreamSplitter::Status TelnetSplitter::scan(
     Packet* p, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t* fp)
 {
+    if (p->flow)
+    {
+        FTP_TELNET_SESSION* ft_ssn = nullptr;
+        
+        FtpFlowData* fd = (FtpFlowData*)p->flow->get_flow_data(FtpFlowData::inspector_id);
+        ft_ssn = fd ? &fd->session.ft_ssn : nullptr;
+
+        if (ft_ssn && ft_ssn->fallback)
+            return ABORT;
+    }
+    
     if ( IsSSL(data, len, p->packet_flags) )
     {
         *fp = len;

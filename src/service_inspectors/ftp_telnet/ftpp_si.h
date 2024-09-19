@@ -75,6 +75,7 @@
 typedef struct s_FTP_TELNET_SESSION
 {
     int proto;
+    bool fallback;
 } FTP_TELNET_SESSION;
 
 /*
@@ -287,6 +288,7 @@ struct FtpStats
     PegCount ssl_search_abandoned_too_soon;
     PegCount total_packets_mss_changed;
     PegCount total_sessions_mss_changed;
+    PegCount aborted_sessions;
 };
 
 struct TelnetStats

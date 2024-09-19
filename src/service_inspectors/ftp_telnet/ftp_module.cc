@@ -216,6 +216,9 @@ FtpCmd::FtpCmd(const std::string& key, const std::string& fmt, int num)
     "FTP bounce attempt"
 #define FTP_EVASIVE_TELNET_CMD_STR               \
     "evasive (incomplete) TELNET cmd on FTP command channel"
+#define FTP_ABORTED_SESSION_STR                  \
+    "FTP session aborted as server response invalid"
+
 
 //-------------------------------------------------------------------------
 
@@ -316,6 +319,7 @@ static const RuleMap ftp_server_rules[] =
     { FTP_ENCRYPTED, FTP_ENCRYPTED_STR },
     { FTP_BOUNCE, FTP_BOUNCE_STR },
     { FTP_EVASIVE_TELNET_CMD, FTP_EVASIVE_TELNET_CMD_STR },
+    { FTP_ABORTED_SESSION, FTP_ABORTED_SESSION_STR },
 
     { 0, nullptr }
 };
@@ -331,6 +335,8 @@ static const PegInfo ftp_pegs[] =
     { CountType::SUM, "ssl_srch_abandoned_early", "total SSL search abandoned too soon" },
     { CountType::SUM, "pkt_segment_size_changed", "total number of FTP data packets with segment size change" },
     { CountType::SUM, "flow_segment_size_changed", "total number of FTP sessions with segment size change" },
+    { CountType::SUM, "total_aborted_sessions", "total aborted sessions" },
+
     { CountType::END, nullptr, nullptr }
 };
 

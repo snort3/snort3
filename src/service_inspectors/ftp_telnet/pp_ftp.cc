@@ -1586,15 +1586,20 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                                 state = FTP_RESPONSE_ENDCONT;
                                 ftpssn->server.response.state = 0;
                             }
-                            else
+                            else if (req->cmd_size == 3)
                             {
                                 /* Single line response */
                                 state = FTP_RESPONSE;
                             }
+                            else
+                            {
+                                ftpssn->server.response.state = FTP_RESPONSE_INV;
+                            }
+
                         }
                     }
 
-                    if (ftpssn->server.response.state != 0)
+                    if (ftpssn->server.response.state > FTP_RESPONSE_INV)
                     {
                         req->cmd_begin = nullptr;
                         req->cmd_end = nullptr;
@@ -1618,12 +1623,16 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                             /* Continuation of previous response */
                             state = FTP_RESPONSE_CONT;
                         }
-                        else
+                        else if (req->cmd_size == 3)
                         {
                             /* Start of response, state stays as -2 */
                             state = FTP_RESPONSE_2BCONT;
                             ftpssn->server.response.state = resp_code;
                             rsp_code = resp_code;
+                        }
+                        else
+                        {
+                            ftpssn->server.response.state = FTP_RESPONSE_INV;
                         }
                     }
                     else
@@ -1692,6 +1701,15 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
             req->pipeline_req = (const char*)read_ptr;
         else
             req->pipeline_req = nullptr;
+        
+        
+        if (ftpssn->server.response.state == FTP_RESPONSE_INV)
+        {
+            ftpssn->ft_ssn.fallback = true;
+            DetectionEngine::queue_event(GID_FTP, FTP_ABORTED_SESSION);
+            ++ftstats.aborted_sessions;
+            return FTPP_ALERT;
+        }
 
         switch (state)
         {

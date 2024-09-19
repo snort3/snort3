@@ -35,6 +35,7 @@
 #define FTP_ENCRYPTED                    7
 #define FTP_BOUNCE                       8
 #define FTP_EVASIVE_TELNET_CMD           9
+#define FTP_ABORTED_SESSION              10
 
 namespace snort
 {
