@@ -20,11 +20,26 @@
 #ifndef EXTRACTOR_EVENT_HANDLERS_H
 #define EXTRACTOR_EVENT_HANDLERS_H
 
+#include <sys/time.h>
+#include <vector>
+
 #include "flow/flow_key.h"
 #include "framework/data_bus.h"
+#include "sfip/sf_ip.h"
 
 #include "extractor.h"
 #include "extractor_logger.h"
+
+template <typename Ret, class... Context>
+struct DataField
+{
+    DataField(const char* name, Ret (*get)(Context...)) : name(name), get(get) { }
+
+    const char* name;
+    Ret (*get)(Context...);
+};
+
+class Field;
 
 namespace snort
 {
@@ -32,29 +47,58 @@ namespace snort
 class ExtractorEvent
 {
 public:
+    using StrGetFn = const char* (*) (const DataEvent*, const Packet*, const Flow*);
+    using StrField = DataField<const char*, const DataEvent*, const Packet*, const Flow*>;
+    using SipGetFn = const SfIp& (*) (const DataEvent*, const Packet*, const Flow*);
+    using SipField = DataField<const SfIp&, const DataEvent*, const Packet*, const Flow*>;
+    using NumGetFn = uint64_t (*) (const DataEvent*, const Packet*, const Flow*);
+    using NumField = DataField<uint64_t, const DataEvent*, const Packet*, const Flow*>;
+    using NtsGetFn = struct timeval (*) (const DataEvent*, const Packet*, const Flow*);
+    using NtsField = DataField<struct timeval, const DataEvent*, const Packet*, const Flow*>;
+
     static FlowHashKeyOps& get_hash()
     {
         static thread_local FlowHashKeyOps flow_key_ops(0);
         return flow_key_ops;
     }
 
+    virtual std::vector<const char*> get_field_names() const;
+
 protected:
-    ExtractorEvent(uint32_t tid, const std::vector<std::string>& flds, ExtractorLogger& l)
-        : tenant_id(tid), fields(flds), logger(l) {}
+    ExtractorEvent(uint32_t tid, ExtractorLogger& l)
+        : tenant_id(tid), logger(l) {}
+
+    template<typename T, class... Context>
+    void log(const T& fields, Context... context)
+    {
+        for (const auto& f : fields)
+            logger.add_field(f.name, f.get(context...));
+    }
 
     uint32_t tenant_id;
-    const std::vector<std::string> fields;
     ExtractorLogger& logger;
+
+    std::vector<NtsField> nts_fields;
+    std::vector<SipField> sip_fields;
+    std::vector<NumField> num_fields;
+    std::vector<StrField> str_fields;
 };
 
 class HttpExtractorEventHandler : public DataHandler, public ExtractorEvent
 {
 public:
-    HttpExtractorEventHandler(uint32_t tenant, const std::vector<std::string>& flds,
-        ExtractorLogger& l) : DataHandler(S_NAME), ExtractorEvent(tenant, flds, l) {}
+    using SubGetFn = const Field& (*) (const DataEvent*, const Packet*, const Flow*);
+    using SubField = DataField<const Field&, const DataEvent*, const Packet*, const Flow*>;
+
+    HttpExtractorEventHandler(uint32_t tenant, const std::vector<std::string>& flds, ExtractorLogger& l);
 
     void handle(DataEvent&, Flow*) override;
+    std::vector<const char*> get_field_names() const override;
+
+private:
+    std::vector<SubField> sub_fields;
 };
 
 }
+
 #endif

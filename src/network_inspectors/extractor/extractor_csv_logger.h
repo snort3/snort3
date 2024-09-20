@@ -28,17 +28,20 @@
 class CsvExtractorLogger : public ExtractorLogger
 {
 public:
-    CsvExtractorLogger(OutputType o_type, const std::vector<std::string>& fields)
-        : ExtractorLogger(fields), writer(ExtractorWriter::make_writer(o_type))
-    {
-        if (writer)
-            CsvExtractorLogger::add_header();
-    }
+    CsvExtractorLogger(OutputType o_type)
+        : writer(ExtractorWriter::make_writer(o_type)) {}
 
     ~CsvExtractorLogger() override;
 
+    virtual bool is_strict() const override
+    { return true; }
+
     void add_header() override;
-    void add_field(const char*, const snort::Value&) override;
+    void add_field(const char*, const char*) override;
+    void add_field(const char*, const char*, size_t) override;
+    void add_field(const char*, uint64_t) override;
+    void add_field(const char*, struct timeval) override;
+    void add_field(const char*, const snort::SfIp&) override;
     void open_record() override;
     void close_record() override;
 

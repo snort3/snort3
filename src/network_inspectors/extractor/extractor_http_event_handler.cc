@@ -25,7 +25,6 @@
 
 #include "detection/detection_engine.h"
 #include "flow/flow_key.h"
-#include "framework/value.h"
 #include "profiler/profiler.h"
 #include "pub_sub/http_transaction_end_event.h"
 #include "service_inspectors/http_inspect/http_transaction.h"
@@ -34,188 +33,177 @@
 #include "utils/util_net.h"
 
 using namespace snort;
+using namespace std;
 
-// FIXIT-P: inspector's data passes many functions before getting to the logger
-
-typedef Value* (*GetFunc) (DataEvent*, Packet*, Flow*);
-
-// HttpTransactionEnd specific
-Value* get_method(DataEvent*, Packet*, Flow*);
-Value* get_host(DataEvent*, Packet*, Flow*);
-Value* get_user_agent(DataEvent*, Packet*, Flow*);
-Value* get_uri(DataEvent*, Packet*, Flow*);
-Value* get_referrer(DataEvent*, Packet*, Flow*);
-Value* get_origin(DataEvent*, Packet*, Flow*);
-Value* get_version(DataEvent*, Packet*, Flow*);
-Value* get_stat_code(DataEvent*, Packet*, Flow*);
-Value* get_stat_msg(DataEvent*, Packet*, Flow*);
-Value* get_trans_depth(DataEvent*, Packet*, Flow*);
-
-// Common
-Value* get_timestamp(DataEvent*, Packet*, Flow*);
-Value* get_ip_src(DataEvent*, Packet*, Flow*);
-Value* get_ip_dst(DataEvent*, Packet*, Flow*);
-Value* get_ip_src_port(DataEvent*, Packet*, Flow*);
-Value* get_ip_dst_port(DataEvent*, Packet*, Flow*);
-Value* get_pkt_num(DataEvent*, Packet*, Flow*);
-Value* get_uid(DataEvent*, Packet*, Flow*);
-
-static void field_to_string(const Field& field, std::string& value)
+static const Field& get_method(const DataEvent* event, const Packet*, const Flow*)
 {
-    if (field.length() > 0)
-        value.assign((const char*)field.start(), field.length());
+    return ((const HttpTransactionEndEvent*)event)->get_method();
 }
 
-Value* get_method(DataEvent* event, Packet*, Flow*)
+static const Field& get_host(const DataEvent* event, const Packet*, const Flow*)
 {
-    const Field& field = ((HttpTransactionEndEvent*)event)->get_method();
-    std::string str;
-    field_to_string(field, str);
-    return new Value(str.c_str());
+    return ((const HttpTransactionEndEvent*)event)->get_host_hdr();
 }
 
-Value* get_host(DataEvent* event, Packet*, Flow*)
+static const Field& get_user_agent(const DataEvent* event, const Packet*, const Flow*)
 {
-    const Field& field = ((HttpTransactionEndEvent*)event)->get_host_hdr();
-    std::string str;
-    field_to_string(field, str);
-    return new Value(str.c_str());
+    return ((const HttpTransactionEndEvent*)event)->get_user_agent();
 }
 
-Value* get_user_agent(DataEvent* event, Packet*, Flow*)
+static const Field& get_uri(const DataEvent* event, const Packet*, const Flow*)
 {
-    const Field& field = ((HttpTransactionEndEvent*)event)->get_user_agent();
-    std::string str;
-    field_to_string(field, str);
-    return new Value(str.c_str());
+    return ((const HttpTransactionEndEvent*)event)->get_uri();
 }
 
-Value* get_uri(DataEvent* event, Packet*, Flow*)
+static const Field& get_referrer(const DataEvent* event, const Packet*, const Flow*)
 {
-    const Field& field = ((HttpTransactionEndEvent*)event)->get_uri();
-    std::string str;
-    field_to_string(field, str);
-    return new Value(str.c_str());
+    return ((const HttpTransactionEndEvent*)event)->get_referer_hdr();
 }
 
-Value* get_referrer(DataEvent* event, Packet*, Flow*)
+static const Field& get_origin(const DataEvent* event, const Packet*, const Flow*)
 {
-    const Field& field = ((HttpTransactionEndEvent*)event)->get_referer_hdr();
-    std::string str;
-    field_to_string(field, str);
-    return new Value(str.c_str());
+    return ((const HttpTransactionEndEvent*)event)->get_origin_hdr();
 }
 
-Value* get_origin(DataEvent* event, Packet*, Flow*)
+static const char* get_version(const DataEvent* event, const Packet*, const Flow*)
 {
-    const Field& field = ((HttpTransactionEndEvent*)event)->get_origin_hdr();
-    std::string str;
-    field_to_string(field, str);
-    return new Value(str.c_str());
-}
-
-Value* get_version(DataEvent* event, Packet*, Flow*)
-{
-    HttpEnums::VersionId version = ((HttpTransactionEndEvent*)event)->get_version();
+    HttpEnums::VersionId version = ((const HttpTransactionEndEvent*)event)->get_version();
     const auto& iter = HttpEnums::VersionEnumToStr.find(version);
-    if (iter != HttpEnums::VersionEnumToStr.end())
-        return new Value(iter->second);
 
-    return new Value("");
+    return iter != HttpEnums::VersionEnumToStr.end() ? iter->second : "";
 }
 
-Value* get_stat_code(DataEvent* event, Packet*, Flow*)
+static const Field& get_stat_code(const DataEvent* event, const Packet*, const Flow*)
 {
-    const Field& field = ((HttpTransactionEndEvent*)event)->get_stat_code();
-    std::string str;
-    field_to_string(field, str);
-
-    return new Value((uint64_t)atoi(str.c_str()));
+    return ((const HttpTransactionEndEvent*)event)->get_stat_code();
 }
 
-Value* get_stat_msg(DataEvent* event, Packet*, Flow*)
+static const Field& get_stat_msg(const DataEvent* event, const Packet*, const Flow*)
 {
-    const Field& field = ((HttpTransactionEndEvent*)event)->get_stat_msg();
-    std::string str;
-    field_to_string(field, str);
-    return new Value(str.c_str());
+    return ((const HttpTransactionEndEvent*)event)->get_stat_msg();
 }
 
-Value* get_trans_depth(DataEvent* event, Packet*, Flow*)
+static uint64_t get_trans_depth(const DataEvent* event, const Packet*, const Flow*)
 {
-    const uint64_t trans_depth = ((HttpTransactionEndEvent*)event)->get_trans_depth();
-    return new Value(trans_depth);
+    return ((const HttpTransactionEndEvent*)event)->get_trans_depth();
 }
 
-Value* get_timestamp(DataEvent*, Packet* p, Flow*)
+static struct timeval get_timestamp(const DataEvent*, const Packet* p, const Flow*)
 {
-    char u_sec[8];
-    SnortSnprintf(u_sec, sizeof(u_sec),".%06d",(unsigned)p->pkth->ts.tv_usec);
-    auto str = std::to_string(p->pkth->ts.tv_sec) + u_sec;
-
-    return new Value(str.c_str());
+    return p->pkth->ts;
 }
 
-Value* get_ip_src(DataEvent*, Packet*, Flow* flow)
+static const SfIp& get_ip_src(const DataEvent*, const Packet*, const Flow* flow)
 {
-    InetBuf src;
-    const SfIp& flow_srcip = flow->flags.client_initiated ? flow->client_ip : flow->server_ip;
-    sfip_ntop(&flow_srcip, src, sizeof(src));
-    std::string str = src;
-    return new Value(str.c_str());
+    return flow->flags.client_initiated ? flow->client_ip : flow->server_ip;
 }
 
-Value* get_ip_dst(DataEvent*, Packet*, Flow* flow)
+static const SfIp& get_ip_dst(const DataEvent*, const Packet*, const Flow* flow)
 {
-    InetBuf dst;
-    const SfIp& flow_dstip = flow->flags.client_initiated ? flow->server_ip : flow->client_ip;
-    sfip_ntop(&flow_dstip, dst, sizeof(dst));
-    std::string str = dst;
-    return new Value(str.c_str());
+    return flow->flags.client_initiated ? flow->server_ip : flow->client_ip;
 }
 
-Value* get_ip_src_port(DataEvent*, Packet*, Flow* flow)
+static uint64_t get_ip_src_port(const DataEvent*, const Packet*, const Flow* flow)
 {
-    return new Value((uint64_t)flow->client_port);
+    return flow->client_port;
 }
 
-Value* get_ip_dst_port(DataEvent*, Packet*, Flow* flow)
+static uint64_t get_ip_dst_port(const DataEvent*, const Packet*, const Flow* flow)
 {
-    return new Value((uint64_t)flow->server_port);
+    return flow->server_port;
 }
 
-Value* get_pkt_num(DataEvent*, Packet* p, Flow*)
+static uint64_t get_pkt_num(const DataEvent*, const Packet* p, const Flow*)
 {
-    return new Value(p->context->packet_number);
+    return p->context->packet_number;
 }
 
-Value* get_uid(DataEvent*, Packet*, Flow* f)
+static uint64_t get_uid(const DataEvent*, const Packet*, const Flow* flow)
 {
-    unsigned key = ExtractorEvent::get_hash().do_hash((const unsigned char*)f->key, 0);
-
-    return new Value((uint64_t)key);
+    return ExtractorEvent::get_hash().do_hash((const unsigned char*)flow->key, 0);
 }
 
-static std::map<std::string, GetFunc> event_getters =
+static const map<string, ExtractorEvent::NtsGetFn> nts_getters =
 {
     {"ts", get_timestamp},
-    {"uid", get_uid},
+};
+
+static const map<string, ExtractorEvent::SipGetFn> sip_getters =
+{
     {"id.orig_h", get_ip_src},
-    {"id.resp_h", get_ip_dst},
+    {"id.resp_h", get_ip_dst}
+};
+
+static const map<string, ExtractorEvent::StrGetFn> str_getters =
+{
+    {"version", get_version}
+};
+
+static const map<string, ExtractorEvent::NumGetFn> num_getters =
+{
     {"id.orig_p", get_ip_src_port},
     {"id.resp_p", get_ip_dst_port},
+    {"uid", get_uid},
     {"pkt_num", get_pkt_num},
+    {"trans_depth", get_trans_depth}
+};
+
+static const map<string, HttpExtractorEventHandler::SubGetFn> sub_getters =
+{
     {"method", get_method},
     {"host", get_host},
     {"uri", get_uri},
     {"user_agent", get_user_agent},
     {"referrer", get_referrer},
     {"origin", get_origin},
-    {"version", get_version},
     {"status_code", get_stat_code},
-    {"status_msg", get_stat_msg},
-    {"trans_depth", get_trans_depth}
+    {"status_msg", get_stat_msg}
 };
+
+template<class T, class U, class V>
+static inline bool append(T& cont, const U& map, const V& key)
+{
+    auto it = map.find(key);
+
+    if (it == map.end())
+        return false;
+
+    cont.emplace_back(it->first.c_str(), it->second);
+
+    return true;
+}
+
+HttpExtractorEventHandler::HttpExtractorEventHandler(uint32_t t, const vector<string>& fields, ExtractorLogger& l)
+    : DataHandler(S_NAME), ExtractorEvent(t, l)
+{
+    for (const auto& f : fields)
+    {
+        if (append(nts_fields, nts_getters, f))
+            continue;
+        if (append(sip_fields, sip_getters, f))
+            continue;
+        if (append(num_fields, num_getters, f))
+            continue;
+        if (append(str_fields, str_getters, f))
+            continue;
+        if (append(sub_fields, sub_getters, f))
+            continue;
+    }
+}
+
+template<>
+void ExtractorEvent::log<vector<HttpExtractorEventHandler::SubField>, DataEvent*, Packet*, Flow*, bool>(
+    const vector<HttpExtractorEventHandler::SubField>& fields, DataEvent* event, Packet* pkt, Flow* flow, bool strict)
+{
+    for (const auto& f : fields)
+    {
+        const auto& d = f.get(event, pkt, flow);
+        if (d.length() > 0)
+            logger.add_field(f.name, (const char*)d.start(), d.length());
+        else if (strict)
+            logger.add_field(f.name, "");
+    }
+}
 
 void HttpExtractorEventHandler::handle(DataEvent& event, Flow* flow)
 {
@@ -232,16 +220,25 @@ void HttpExtractorEventHandler::handle(DataEvent& event, Flow* flow)
     if (tenant_id != tid)
         return;
 
-    Packet* p = DetectionEngine::get_current_packet();
+    Packet* packet = DetectionEngine::get_current_packet();
 
     logger.open_record();
-    for (const auto& field : fields)
-    {
-        // FIXIT-P: this is way too slow (a map with a string key type)
-        auto val = std::unique_ptr<Value>(event_getters[field](&event, p, flow));
-        logger.add_field(field.c_str(), *val.get());
-    }
+    log(nts_fields, &event, packet, flow);
+    log(sip_fields, &event, packet, flow);
+    log(num_fields, &event, packet, flow);
+    log(str_fields, &event, packet, flow);
+    log(sub_fields, &event, packet, flow, logger.is_strict());
     logger.close_record();
 
     extractor_stats.total_event++;
+}
+
+vector<const char*> HttpExtractorEventHandler::get_field_names() const
+{
+    vector<const char*> res = ExtractorEvent::get_field_names();
+
+    for (const auto& f : sub_fields)
+        res.push_back(f.name);
+
+    return res;
 }

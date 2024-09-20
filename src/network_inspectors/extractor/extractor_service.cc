@@ -55,7 +55,7 @@ ExtractorService::ExtractorService(uint32_t tenant, const std::vector<std::strin
 {
     add_fields(srv_fields);
     add_events(srv_events);
-    logger = ExtractorLogger::make_logger(f_type, o_type, get_fields());
+    logger = ExtractorLogger::make_logger(f_type, o_type);
 }
 
 void ExtractorService::add_events(const std::vector<std::string>& vals)
@@ -174,8 +174,13 @@ HttpExtractorService::HttpExtractorService(uint32_t tenant, const std::vector<st
     {
         if (!strcmp("eot", event.c_str()))
         {
-            DataBus::subscribe(http_pub_key, HttpEventIds::END_OF_TRANSACTION,
-                new HttpExtractorEventHandler(tenant_id, get_fields(), *logger));
+            auto eh = new HttpExtractorEventHandler(tenant_id, get_fields(), *logger);
+
+            DataBus::subscribe(http_pub_key, HttpEventIds::END_OF_TRANSACTION, eh);
+
+            auto names_set = eh->get_field_names();
+            logger->set_fields(names_set);
+            logger->add_header();
         }
     }
 }

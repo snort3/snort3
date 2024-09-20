@@ -28,21 +28,17 @@
 #include "extractor_csv_logger.h"
 #include "extractor_json_logger.h"
 
-ExtractorLogger* ExtractorLogger::make_logger(FormatType f_type, OutputType o_type,
-    const std::vector<std::string>& fields)
+ExtractorLogger* ExtractorLogger::make_logger(FormatType f_type, OutputType o_type)
 {
-    if (fields.empty())
-        return nullptr;
-
     ExtractorLogger* logger = nullptr;
 
     switch (f_type)
     {
     case FormatType::CSV:
-        logger = new CsvExtractorLogger(o_type, fields);
+        logger = new CsvExtractorLogger(o_type);
         break;
     case FormatType::JSON:
-        logger = new JsonExtractorLogger(o_type, fields);
+        logger = new JsonExtractorLogger(o_type);
         break;
     case FormatType::MAX: // fallthrough
     default:

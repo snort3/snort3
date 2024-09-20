@@ -26,19 +26,22 @@
 #include <cassert>
 #include <string>
 
+#include "utils/util_cstring.h"
+
 static THREAD_LOCAL bool first_write;
 
 void CsvExtractorLogger::add_header()
 {
     std::string header;
+    char d = '#';
 
-    header += "#";
-    header += fields_name[0];
-    for (size_t i = 1; i < fields_name.size(); ++i)
+    for (auto n : field_names)
     {
-        header += ",";
-        header += fields_name[i];
+        header += d;
+        header += n;
+        d = ',';
     }
+
     header += "\n";
 
     writer->write(header.c_str());
@@ -56,31 +59,43 @@ void CsvExtractorLogger::close_record()
     writer->unlock();
 }
 
-void CsvExtractorLogger::add_field(const char*, const snort::Value& v)
+void CsvExtractorLogger::add_field(const char*, const char* v)
 {
-    switch (v.get_type())
-    {
-    case snort::Value::ValueType::VT_UNUM:
-    {
-        first_write ? []() { first_write = false; } () : writer->write(",");
-        writer->write(std::to_string(v.get_uint64()).c_str());
-        break;
-    }
+    first_write ? []() { first_write = false; } () : writer->write(",");
+    writer->write(v);
+}
 
-    case snort::Value::ValueType::VT_STR:
-    {
-        first_write ? []() { first_write = false; } () : writer->write(",");
-        writer->write(v.get_string());
-        break;
-    }
+void CsvExtractorLogger::add_field(const char*, const char* v, size_t len)
+{
+    first_write ? []() { first_write = false; } () : writer->write(",");
+    writer->write(v, len);
+}
 
-    case snort::Value::ValueType::VT_BOOL: // fallthrough
-    case snort::Value::ValueType::VT_NUM:  // fallthrough
-    case snort::Value::ValueType::VT_REAL: // fallthrough
-    default:
-        assert(false);
-        break;
-    }
+void CsvExtractorLogger::add_field(const char*, uint64_t v)
+{
+    first_write ? []() { first_write = false; } () : writer->write(",");
+    writer->write(v);
+}
+
+void CsvExtractorLogger::add_field(const char*, struct timeval v)
+{
+    first_write ? []() { first_write = false; } () : writer->write(",");
+
+    char u_sec[8];
+    snort::SnortSnprintf(u_sec, sizeof(u_sec), ".%06d", (unsigned)v.tv_usec);
+
+    writer->write(v.tv_sec);
+    writer->write(u_sec);
+}
+
+void CsvExtractorLogger::add_field(const char*, const snort::SfIp& v)
+{
+    first_write ? []() { first_write = false; } () : writer->write(",");
+
+    snort::SfIpString buf;
+
+    v.ntop(buf);
+    writer->write(buf);
 }
 
 CsvExtractorLogger::~CsvExtractorLogger()

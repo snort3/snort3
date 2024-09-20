@@ -31,14 +31,17 @@
 class JsonExtractorLogger : public ExtractorLogger
 {
 public:
-    JsonExtractorLogger(OutputType o_type, const std::vector<std::string>& fields)
-        : ExtractorLogger(fields), writer(ExtractorWriter::make_writer(o_type)), oss(), js(oss)
-    { }
+    JsonExtractorLogger(OutputType o_type)
+        : writer(ExtractorWriter::make_writer(o_type)), oss(), js(oss) {}
 
     ~JsonExtractorLogger() override
     { delete writer; }
 
-    void add_field(const char*, const snort::Value&) override;
+    void add_field(const char*, const char*) override;
+    void add_field(const char*, const char*, size_t) override;
+    void add_field(const char*, uint64_t) override;
+    void add_field(const char*, struct timeval) override;
+    void add_field(const char*, const snort::SfIp&) override;
     void open_record() override;
     void close_record() override;
 

@@ -15,64 +15,32 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// json_logger.cc author Cisco
+// extractor_event.cc author Cisco
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "extractor_json_logger.h"
+#include "extractor_event_handlers.h"
 
-#include <cassert>
-#include <string>
+using namespace snort;
+using namespace std;
 
-#include "utils/util_cstring.h"
-
-void JsonExtractorLogger::open_record()
+vector<const char*> ExtractorEvent::get_field_names() const
 {
-    oss.str("");
-    js.open();
-}
+    vector<const char*> res;
 
-void JsonExtractorLogger::close_record()
-{
-    js.close();
+    for (auto& f : nts_fields)
+        res.push_back(f.name);
 
-    writer->lock();
-    writer->write(oss.str().c_str());
-    writer->unlock();
-}
+    for (auto& f : sip_fields)
+        res.push_back(f.name);
 
-void JsonExtractorLogger::add_field(const char* f, const char* v)
-{
-    js.put(f, v);
-}
+    for (auto& f : num_fields)
+        res.push_back(f.name);
 
-void JsonExtractorLogger::add_field(const char* f, const char* v, size_t len)
-{
-    std::string s(v, len);
+    for (auto& f : str_fields)
+        res.push_back(f.name);
 
-    js.put(f, s);
-}
-
-void JsonExtractorLogger::add_field(const char* f, uint64_t v)
-{
-    js.uput(f, v);
-}
-
-void JsonExtractorLogger::add_field(const char* f, struct timeval v)
-{
-    char u_sec[8];
-    snort::SnortSnprintf(u_sec, sizeof(u_sec), ".%06d",(unsigned)v.tv_usec);
-
-    auto str = std::to_string(v.tv_sec) + u_sec;
-    js.put(f, str);
-}
-
-void JsonExtractorLogger::add_field(const char* f, const snort::SfIp& v)
-{
-    snort::SfIpString buf;
-
-    v.ntop(buf);
-    js.put(f, buf);
+    return res;
 }

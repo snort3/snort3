@@ -3,6 +3,7 @@ set( FILE_LIST
     extractor.h
     extractor_csv_logger.cc
     extractor_csv_logger.h
+    extractor_event.cc
     extractor_event_handlers.h
     extractor_http_event_handler.cc
     extractor_json_logger.cc

@@ -20,10 +20,10 @@
 #ifndef EXTRACTOR_LOGGER_H
 #define EXTRACTOR_LOGGER_H
 
-#include <string>
+#include <sys/time.h>
 #include <vector>
 
-#include "framework/value.h"
+#include "sfip/sf_ip.h"
 
 #include "extractor_writer.h"
 
@@ -65,27 +65,33 @@ private:
 class ExtractorLogger
 {
 public:
-    static ExtractorLogger* make_logger(FormatType, OutputType, const std::vector<std::string>&);
+    static ExtractorLogger* make_logger(FormatType, OutputType);
 
-    ExtractorLogger() = delete;
+    ExtractorLogger() = default;
     ExtractorLogger(const ExtractorLogger&) = delete;
     ExtractorLogger& operator=(const ExtractorLogger&) = delete;
     ExtractorLogger(ExtractorLogger&&) = delete;
-
     virtual ~ExtractorLogger() = default;
+
+    virtual bool is_strict() const
+    { return false; }
+    virtual void set_fields(std::vector<const char*>& names)
+    { field_names = names; }
 
     virtual void add_header() {}
     virtual void add_footer() {}
-    // FIXIT-P: replace Value type designed for parsing with a better type
-    virtual void add_field(const char*, const snort::Value&) {}
+
+    virtual void add_field(const char*, const char*) {}
+    virtual void add_field(const char*, const char*, size_t) {}
+    virtual void add_field(const char*, uint64_t) {}
+    virtual void add_field(const char*, struct timeval) {}
+    virtual void add_field(const char*, const snort::SfIp&) {}
 
     virtual void open_record() {}
     virtual void close_record() {}
 
 protected:
-    ExtractorLogger(const std::vector<std::string>& fns) : fields_name(fns) {}
-
-    const std::vector<std::string>& fields_name;
+    std::vector<const char*> field_names;
 };
 
 #endif
