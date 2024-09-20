@@ -201,12 +201,13 @@ void SshEventHandler::handle(DataEvent& event, Flow* flow)
     case SSH_VERSION_STRING:
         if (handle_protocol(ssh_event, fd))
         {
-            if (asd->get_session_flags(APPID_SESSION_EARLY_SSH_DETECTED))
+            if ( asd->get_session_flags(APPID_SESSION_WAIT_FOR_EXTERNAL) and
+                ((ssh_event.get_direction() == PKT_FROM_CLIENT) or data->client_info.vendor.size()) )
             {
                 appid_log(p, TRACE_DEBUG_LEVEL, "Early detection of SSH\n");
                 handle_success(*data, ssh_event, *asd, change_bits);
                 asd->publish_appid_event(change_bits, *ssh_event.get_packet());
-                asd->clear_session_flags(APPID_SESSION_EARLY_SSH_DETECTED);
+                asd->clear_session_flags(APPID_SESSION_WAIT_FOR_EXTERNAL);
             }
         }
         else

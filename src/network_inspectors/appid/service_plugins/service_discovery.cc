@@ -435,6 +435,14 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
         sds->set_reset_time(0);
         ServiceState sds_state = sds->get_state();
 
+        if ( ((sds_state == ServiceState::FAILED) or (sds_state == ServiceState::SEARCHING_BRUTE_FORCE)) and
+            asd.get_session_flags(APPID_SESSION_WAIT_FOR_EXTERNAL))
+        {
+            if (appidDebug->is_active())
+                LogMessage("AppIdDbg %s No service match, waiting for external detection\n", appidDebug->get_debug_session());
+            return APPID_INPROCESS;
+        }
+
         if ( sds_state == ServiceState::FAILED )
         {
             appid_log(p, TRACE_DEBUG_LEVEL, "No service match, failed state\n");

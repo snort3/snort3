@@ -601,7 +601,8 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
     {
         appid_log(p, TRACE_DEBUG_LEVEL, "Setting the ignore and early detection flag\n");
          asd.get_odp_ctxt().get_app_info_mgr().set_app_info_flags(tp_app_id, APPINFO_FLAG_IGNORE);
-         asd.set_session_flags(APPID_SESSION_EARLY_SSH_DETECTED);
+         asd.set_session_flags(APPID_SESSION_WAIT_FOR_EXTERNAL);
+         asd.expected_external_app_id = tp_app_id;
     }
 
     unsigned app_info_flags = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_flags(tp_app_id,

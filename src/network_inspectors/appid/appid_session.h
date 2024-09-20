@@ -300,6 +300,9 @@ public:
     // this field is maintained inside AppIdHttpSession.
     AppId misc_app_id = APP_ID_NONE;
 
+    // Following field stores AppID detection of which is delegated to external module.
+    AppId expected_external_app_id = APP_ID_NONE;
+
     // AppId matching client side
     APPID_DISCOVERY_STATE client_disco_state = APPID_DISCO_STATE_NONE;
     AppId client_inferred_service_id = APP_ID_NONE;

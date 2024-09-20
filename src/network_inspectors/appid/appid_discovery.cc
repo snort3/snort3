@@ -355,6 +355,10 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
                 asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
                 asd->set_session_flags(APPID_SESSION_SERVICE_DETECTED |
                     APPID_SESSION_CLIENT_DETECTED);
+                    if ((asd->get_service_id() <= APP_ID_NONE) and (asd->expected_external_app_id > APP_ID_NONE))
+                    {
+                        asd->set_service_id(asd->expected_external_app_id, odp_ctxt);
+                    }
                 appid_log(p, TRACE_DEBUG_LEVEL, "stopped service/client discovery\n");
             }
         }
