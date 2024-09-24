@@ -88,12 +88,8 @@ public:
     void write(const char* ss) override;
     void write(const char* ss, size_t len) override;
     void write(uint64_t n) override;
-
-    void lock() override
-    { write_mutex.lock(); }
-
-    void unlock() override
-    { write_mutex.unlock(); }
+    void lock() override;
+    void unlock() override;
 
 private:
     std::mutex write_mutex;

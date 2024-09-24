@@ -60,6 +60,17 @@ void StdExtractorWriter::write(uint64_t n)
     TextLog_Print(extr_std_log, STDu64, n);
 }
 
+void StdExtractorWriter::lock()
+{
+    write_mutex.lock();
+}
+
+void StdExtractorWriter::unlock()
+{
+    TextLog_Flush(extr_std_log); // FIXIT-L: should be a part of API and have a well-defined point in the pipeline
+    write_mutex.unlock();
+}
+
 #ifdef UNIT_TEST
 
 #include "catch/snort_catch.h"
