@@ -289,6 +289,8 @@ void TcpSession::check_flow_missed_3whs()
 
 void TcpSession::set_os_policy()
 {
+    assert(tcp_config->policy <= StreamPolicy::OS_VISTA);
+
     StreamPolicy client_os_policy = flow->ssn_policy ?
         static_cast<StreamPolicy>( flow->ssn_policy ) : tcp_config->policy;
 
@@ -1346,9 +1348,8 @@ void TcpSession::start_proxy()
     if ( PacketTracer::is_active() )
         PacketTracer::log("Stream TCP normalization policy set to Proxy mode. Normalizations will be skipped\n");
 
-    tcp_config->policy = StreamPolicy::OS_PROXY;
-    client.normalizer.init(tcp_config->policy, this, &client, &server);
-    server.normalizer.init(tcp_config->policy, this, &server, &client);
+    client.normalizer.init(StreamPolicy::OS_PROXY, this, &client, &server);
+    server.normalizer.init(StreamPolicy::OS_PROXY, this, &server, &client);
     ++tcpStats.proxy_mode_flows;
 }
 
