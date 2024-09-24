@@ -124,7 +124,7 @@ static const Parameter binder_when_params[] =
       "use the given configuration on one or any end of a session" },
 
     { "service", Parameter::PT_STRING, nullptr, nullptr,
-      "space separated list of services" },
+      "name of service to match" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -245,7 +245,7 @@ bool BinderModule::set(const char* fqn, Value& v, SnortConfig*)
     // both
     if ( !strcmp(fqn, "binder.when.service") )
     {
-        binding.when.parse_service(v.get_string());
+        binding.when.svc = v.get_string();
         binding.when.add_criteria(BindWhen::Criteria::BWC_SVC);
     }
     else if ( !strcmp(fqn, "binder.use.service") )
@@ -488,7 +488,7 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
 void BinderModule::add(const char* svc, const char* type)
 {
     binding.clear();
-    binding.when.parse_service(svc);
+    binding.when.svc = svc;
     binding.when.add_criteria(BindWhen::Criteria::BWC_SVC);
     binding.use.type = type;
     binding.use.name = type;

@@ -201,7 +201,7 @@ static std::string to_string(const BindWhen& bw)
     }
 
     if (bw.has_criteria(BindWhen::Criteria::BWC_SVC))
-        when += " service = " + bw.get_service_list() + ",";
+        when += " service = " + bw.svc + ",";
 
     if (bw.has_criteria(BindWhen::Criteria::BWC_SPLIT_NETS))
     {
