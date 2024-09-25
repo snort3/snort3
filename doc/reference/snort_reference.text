@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.3.6.0 2024-09-05 12:57:08 EDT TST
+Revision 3.3.7.0 2024-09-24 21:59:30 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -208,90 +208,92 @@ Table of Contents
     7.44. gtp_info
     7.45. gtp_type
     7.46. gtp_version
-    7.47. http_client_body
-    7.48. http_cookie
-    7.49. http_header
-    7.50. http_header_test
-    7.51. http_max_header_line
-    7.52. http_max_trailer_line
-    7.53. http_method
-    7.54. http_num_cookies
-    7.55. http_num_headers
-    7.56. http_num_trailers
-    7.57. http_param
-    7.58. http_raw_body
-    7.59. http_raw_cookie
-    7.60. http_raw_header
-    7.61. http_raw_request
-    7.62. http_raw_status
-    7.63. http_raw_trailer
-    7.64. http_raw_uri
-    7.65. http_stat_code
-    7.66. http_stat_msg
-    7.67. http_trailer
-    7.68. http_trailer_test
-    7.69. http_true_ip
-    7.70. http_uri
-    7.71. http_version
-    7.72. http_version_match
-    7.73. icmp_id
-    7.74. icmp_seq
-    7.75. icode
-    7.76. id
-    7.77. iec104_apci_type
-    7.78. iec104_asdu_func
-    7.79. ip_proto
-    7.80. ipopts
-    7.81. isdataat
-    7.82. itype
-    7.83. js_data
-    7.84. md5
-    7.85. metadata
-    7.86. mms_data
-    7.87. mms_func
-    7.88. modbus_data
-    7.89. modbus_func
-    7.90. modbus_unit
-    7.91. msg
-    7.92. mss
-    7.93. pcre
-    7.94. pkt_data
-    7.95. pkt_num
-    7.96. priority
-    7.97. raw_data
-    7.98. reference
-    7.99. regex
-    7.100. rem
-    7.101. replace
-    7.102. rev
-    7.103. rpc
-    7.104. s7commplus_content
-    7.105. s7commplus_func
-    7.106. s7commplus_opcode
-    7.107. sd_pattern
-    7.108. seq
-    7.109. service
-    7.110. sha256
-    7.111. sha512
-    7.112. sid
-    7.113. sip_body
-    7.114. sip_header
-    7.115. sip_method
-    7.116. sip_stat_code
-    7.117. so
-    7.118. soid
-    7.119. ssl_state
-    7.120. ssl_version
-    7.121. stream_reassemble
-    7.122. stream_size
-    7.123. tag
-    7.124. target
-    7.125. tos
-    7.126. ttl
-    7.127. urg
-    7.128. vba_data
-    7.129. window
-    7.130. wscale
+    7.47. http2_frame_data
+    7.48. http2_frame_header
+    7.49. http_client_body
+    7.50. http_cookie
+    7.51. http_header
+    7.52. http_header_test
+    7.53. http_max_header_line
+    7.54. http_max_trailer_line
+    7.55. http_method
+    7.56. http_num_cookies
+    7.57. http_num_headers
+    7.58. http_num_trailers
+    7.59. http_param
+    7.60. http_raw_body
+    7.61. http_raw_cookie
+    7.62. http_raw_header
+    7.63. http_raw_request
+    7.64. http_raw_status
+    7.65. http_raw_trailer
+    7.66. http_raw_uri
+    7.67. http_stat_code
+    7.68. http_stat_msg
+    7.69. http_trailer
+    7.70. http_trailer_test
+    7.71. http_true_ip
+    7.72. http_uri
+    7.73. http_version
+    7.74. http_version_match
+    7.75. icmp_id
+    7.76. icmp_seq
+    7.77. icode
+    7.78. id
+    7.79. iec104_apci_type
+    7.80. iec104_asdu_func
+    7.81. ip_proto
+    7.82. ipopts
+    7.83. isdataat
+    7.84. itype
+    7.85. js_data
+    7.86. md5
+    7.87. metadata
+    7.88. mms_data
+    7.89. mms_func
+    7.90. modbus_data
+    7.91. modbus_func
+    7.92. modbus_unit
+    7.93. msg
+    7.94. mss
+    7.95. pcre
+    7.96. pkt_data
+    7.97. pkt_num
+    7.98. priority
+    7.99. raw_data
+    7.100. reference
+    7.101. regex
+    7.102. rem
+    7.103. replace
+    7.104. rev
+    7.105. rpc
+    7.106. s7commplus_content
+    7.107. s7commplus_func
+    7.108. s7commplus_opcode
+    7.109. sd_pattern
+    7.110. seq
+    7.111. service
+    7.112. sha256
+    7.113. sha512
+    7.114. sid
+    7.115. sip_body
+    7.116. sip_header
+    7.117. sip_method
+    7.118. sip_stat_code
+    7.119. so
+    7.120. soid
+    7.121. ssl_state
+    7.122. ssl_version
+    7.123. stream_reassemble
+    7.124. stream_size
+    7.125. tag
+    7.126. target
+    7.127. tos
+    7.128. ttl
+    7.129. urg
+    7.130. vba_data
+    7.131. window
+    7.132. wscale
 
 8. Search Engine Modules
 9. SO Rule Modules
@@ -1767,6 +1769,11 @@ Commands:
     default policy
   * snort.dump_stats(): show summary statistics
   * snort.dump_heap_stats(): show heap statistics
+  * snort.heap_profile(enable, sample_rate): jemalloc memory tracking
+    configuration
+  * snort.dump_heap_profile(): dump jemalloc memory profile
+  * snort.show_heap_profile(): show jemalloc memory profiling
+    configuration
   * snort.reset_stats(type): clear summary statistics. Type can be:
     daq|module|appid|file_id|snort|ha|all. reset_stats() without a
     parameter clears all statistics.
@@ -2784,7 +2791,7 @@ Configuration:
   * string binder[].when.tenants: list of tenants
   * enum binder[].when.role = any: use the given configuration on one
     or any end of a session { client | server | any }
-  * string binder[].when.service: space separated list of services
+  * string binder[].when.service: name of service to match
   * enum binder[].use.action = inspect: what to do with matching
     traffic { reset | block | allow | inspect }
   * string binder[].use.file: use configuration in given file
@@ -3765,6 +3772,8 @@ Rules:
   * 125:8 (ftp_server) FTP bounce attempt
   * 125:9 (ftp_server) evasive (incomplete) TELNET cmd on FTP command
     channel
+  * 125:10 (ftp_server) FTP session aborted as server response
+    invalid
 
 Peg counts:
 
@@ -3782,6 +3791,7 @@ Peg counts:
     packets with segment size change (sum)
   * ftp_server.flow_segment_size_changed: total number of FTP
     sessions with segment size change (sum)
+  * ftp_server.total_aborted_sessions: total aborted sessions (sum)
 
 
 5.24. gtp_inspect
@@ -5684,6 +5694,7 @@ Peg counts:
   * ssh.concurrent_sessions: total concurrent ssh sessions (now)
   * ssh.max_concurrent_sessions: maximum concurrent ssh sessions
     (max)
+  * ssh.aborted_sessions: total session aborted (sum)
 
 
 5.49. ssl
@@ -7270,7 +7281,30 @@ Configuration:
   * int gtp_version.~: version to match { 0:2 }
 
 
-7.47. http_client_body
+7.47. http2_frame_data
+
+--------------
+
+Help: rule option to set detection cursor to the HTTP/2 frame body
+
+Type: ips_option
+
+Usage: detect
+
+
+7.48. http2_frame_header
+
+--------------
+
+Help: rule option to set detection cursor to the 9-octet HTTP/2 frame
+header
+
+Type: ips_option
+
+Usage: detect
+
+
+7.49. http_client_body
 
 --------------
 
@@ -7281,7 +7315,7 @@ Type: ips_option
 Usage: detect
 
 
-7.48. http_cookie
+7.50. http_cookie
 
 --------------
 
@@ -7303,7 +7337,7 @@ Configuration:
     will be removed in a future release
 
 
-7.49. http_header
+7.51. http_header
 
 --------------
 
@@ -7328,7 +7362,7 @@ Configuration:
     will be removed in a future release
 
 
-7.50. http_header_test
+7.52. http_header_test
 
 --------------
 
@@ -7357,7 +7391,7 @@ Configuration:
   * implied http_header_test.absent: header is absent
 
 
-7.51. http_max_header_line
+7.53. http_max_header_line
 
 --------------
 
@@ -7375,7 +7409,7 @@ Configuration:
     from the request message even when examining the response
 
 
-7.52. http_max_trailer_line
+7.54. http_max_trailer_line
 
 --------------
 
@@ -7393,7 +7427,7 @@ Configuration:
     from the request message even when examining the response
 
 
-7.53. http_method
+7.55. http_method
 
 --------------
 
@@ -7414,7 +7448,7 @@ Configuration:
     will be removed in a future release
 
 
-7.54. http_num_cookies
+7.56. http_num_cookies
 
 --------------
 
@@ -7432,7 +7466,7 @@ Configuration:
     the request message even when examining the response
 
 
-7.55. http_num_headers
+7.57. http_num_headers
 
 --------------
 
@@ -7456,7 +7490,7 @@ Configuration:
     and will be removed in a future release
 
 
-7.56. http_num_trailers
+7.58. http_num_trailers
 
 --------------
 
@@ -7480,7 +7514,7 @@ Configuration:
     and will be removed in a future release
 
 
-7.57. http_param
+7.59. http_param
 
 --------------
 
@@ -7497,7 +7531,7 @@ Configuration:
   * implied http_param.nocase: case insensitive match
 
 
-7.58. http_raw_body
+7.60. http_raw_body
 
 --------------
 
@@ -7509,7 +7543,7 @@ Type: ips_option
 Usage: detect
 
 
-7.59. http_raw_cookie
+7.61. http_raw_cookie
 
 --------------
 
@@ -7532,7 +7566,7 @@ Configuration:
     and will be removed in a future release
 
 
-7.60. http_raw_header
+7.62. http_raw_header
 
 --------------
 
@@ -7557,7 +7591,7 @@ Configuration:
     and will be removed in a future release
 
 
-7.61. http_raw_request
+7.63. http_raw_request
 
 --------------
 
@@ -7578,7 +7612,7 @@ Configuration:
     and will be removed in a future release
 
 
-7.62. http_raw_status
+7.64. http_raw_status
 
 --------------
 
@@ -7597,7 +7631,7 @@ Configuration:
     and will be removed in a future release
 
 
-7.63. http_raw_trailer
+7.65. http_raw_trailer
 
 --------------
 
@@ -7620,7 +7654,7 @@ Configuration:
     will be removed in a future release
 
 
-7.64. http_raw_uri
+7.66. http_raw_uri
 
 --------------
 
@@ -7649,7 +7683,7 @@ Configuration:
     URI only
 
 
-7.65. http_stat_code
+7.67. http_stat_code
 
 --------------
 
@@ -7667,7 +7701,7 @@ Configuration:
     will be removed in a future release
 
 
-7.66. http_stat_msg
+7.68. http_stat_msg
 
 --------------
 
@@ -7686,7 +7720,7 @@ Configuration:
     will be removed in a future release
 
 
-7.67. http_trailer
+7.69. http_trailer
 
 --------------
 
@@ -7708,7 +7742,7 @@ Configuration:
     be removed in a future release
 
 
-7.68. http_trailer_test
+7.70. http_trailer_test
 
 --------------
 
@@ -7735,7 +7769,7 @@ Configuration:
   * implied http_trailer_test.absent: trailer is absent
 
 
-7.69. http_true_ip
+7.71. http_true_ip
 
 --------------
 
@@ -7756,7 +7790,7 @@ Configuration:
     will be removed in a future release
 
 
-7.70. http_uri
+7.72. http_uri
 
 --------------
 
@@ -7784,7 +7818,7 @@ Configuration:
     only
 
 
-7.71. http_version
+7.73. http_version
 
 --------------
 
@@ -7806,7 +7840,7 @@ Configuration:
     will be removed in a future release
 
 
-7.72. http_version_match
+7.74. http_version_match
 
 --------------
 
@@ -7830,7 +7864,7 @@ Configuration:
     and will be removed in a future release
 
 
-7.73. icmp_id
+7.75. icmp_id
 
 --------------
 
@@ -7846,7 +7880,7 @@ Configuration:
     0:65535 }
 
 
-7.74. icmp_seq
+7.76. icmp_seq
 
 --------------
 
@@ -7862,7 +7896,7 @@ Configuration:
     given range { 0:65535 }
 
 
-7.75. icode
+7.77. icode
 
 --------------
 
@@ -7878,7 +7912,7 @@ Configuration:
     0:255 }
 
 
-7.76. id
+7.78. id
 
 --------------
 
@@ -7894,7 +7928,7 @@ Configuration:
     }
 
 
-7.77. iec104_apci_type
+7.79. iec104_apci_type
 
 --------------
 
@@ -7909,7 +7943,7 @@ Configuration:
   * string iec104_apci_type.~: APCI type to match
 
 
-7.78. iec104_asdu_func
+7.80. iec104_asdu_func
 
 --------------
 
@@ -7924,7 +7958,7 @@ Configuration:
   * string iec104_asdu_func.~: function code to match
 
 
-7.79. ip_proto
+7.81. ip_proto
 
 --------------
 
@@ -7939,7 +7973,7 @@ Configuration:
   * string ip_proto.~proto: [!|>|<] name or number
 
 
-7.80. ipopts
+7.82. ipopts
 
 --------------
 
@@ -7955,7 +7989,7 @@ Configuration:
     lsrre|ssrr|satid|any }
 
 
-7.81. isdataat
+7.83. isdataat
 
 --------------
 
@@ -7972,7 +8006,7 @@ Configuration:
     buffer
 
 
-7.82. itype
+7.84. itype
 
 --------------
 
@@ -7988,7 +8022,7 @@ Configuration:
     0:255 }
 
 
-7.83. js_data
+7.85. js_data
 
 --------------
 
@@ -8000,7 +8034,7 @@ Type: ips_option
 Usage: detect
 
 
-7.84. md5
+7.86. md5
 
 --------------
 
@@ -8020,7 +8054,7 @@ Configuration:
     of buffer
 
 
-7.85. metadata
+7.87. metadata
 
 --------------
 
@@ -8037,7 +8071,7 @@ Configuration:
     pairs
 
 
-7.86. mms_data
+7.88. mms_data
 
 --------------
 
@@ -8048,7 +8082,7 @@ Type: ips_option
 Usage: detect
 
 
-7.87. mms_func
+7.89. mms_func
 
 --------------
 
@@ -8063,7 +8097,7 @@ Configuration:
   * string mms_func.~: func to match
 
 
-7.88. modbus_data
+7.90. modbus_data
 
 --------------
 
@@ -8074,7 +8108,7 @@ Type: ips_option
 Usage: detect
 
 
-7.89. modbus_func
+7.91. modbus_func
 
 --------------
 
@@ -8089,7 +8123,7 @@ Configuration:
   * string modbus_func.~: function code to match
 
 
-7.90. modbus_unit
+7.92. modbus_unit
 
 --------------
 
@@ -8104,7 +8138,7 @@ Configuration:
   * int modbus_unit.~: Modbus unit ID { 0:255 }
 
 
-7.91. msg
+7.93. msg
 
 --------------
 
@@ -8119,7 +8153,7 @@ Configuration:
   * string msg.~: message describing rule
 
 
-7.92. mss
+7.94. mss
 
 --------------
 
@@ -8135,7 +8169,7 @@ Configuration:
     }
 
 
-7.93. pcre
+7.95. pcre
 
 --------------
 
@@ -8158,7 +8192,7 @@ Peg counts:
   * pcre.pcre_error: total number of times pcre returns error (sum)
 
 
-7.94. pkt_data
+7.96. pkt_data
 
 --------------
 
@@ -8170,7 +8204,7 @@ Type: ips_option
 Usage: detect
 
 
-7.95. pkt_num
+7.97. pkt_num
 
 --------------
 
@@ -8186,7 +8220,7 @@ Configuration:
     { 1: }
 
 
-7.96. priority
+7.98. priority
 
 --------------
 
@@ -8202,7 +8236,7 @@ Configuration:
     1:max31 }
 
 
-7.97. raw_data
+7.99. raw_data
 
 --------------
 
@@ -8213,7 +8247,7 @@ Type: ips_option
 Usage: detect
 
 
-7.98. reference
+7.100. reference
 
 --------------
 
@@ -8228,7 +8262,7 @@ Configuration:
   * string reference.~ref: reference: <scheme>,<id>
 
 
-7.99. regex
+7.101. regex
 
 --------------
 
@@ -8252,7 +8286,7 @@ Configuration:
     instead of start of buffer
 
 
-7.100. rem
+7.102. rem
 
 --------------
 
@@ -8267,7 +8301,7 @@ Configuration:
   * string rem.~: comment
 
 
-7.101. replace
+7.103. replace
 
 --------------
 
@@ -8283,7 +8317,7 @@ Configuration:
   * string replace.~: byte code to replace with
 
 
-7.102. rev
+7.104. rev
 
 --------------
 
@@ -8298,7 +8332,7 @@ Configuration:
   * int rev.~: revision { 1:max32 }
 
 
-7.103. rpc
+7.105. rpc
 
 --------------
 
@@ -8315,7 +8349,7 @@ Configuration:
   * string rpc.~proc: procedure number or * for any
 
 
-7.104. s7commplus_content
+7.106. s7commplus_content
 
 --------------
 
@@ -8326,7 +8360,7 @@ Type: ips_option
 Usage: detect
 
 
-7.105. s7commplus_func
+7.107. s7commplus_func
 
 --------------
 
@@ -8341,7 +8375,7 @@ Configuration:
   * string s7commplus_func.~: function code to match
 
 
-7.106. s7commplus_opcode
+7.108. s7commplus_opcode
 
 --------------
 
@@ -8356,7 +8390,7 @@ Configuration:
   * string s7commplus_opcode.~: opcode code to match
 
 
-7.107. sd_pattern
+7.109. sd_pattern
 
 --------------
 
@@ -8380,7 +8414,7 @@ Peg counts:
   * sd_pattern.terminated: hyperscan terminated (sum)
 
 
-7.108. seq
+7.110. seq
 
 --------------
 
@@ -8396,7 +8430,7 @@ Configuration:
     range { 0: }
 
 
-7.109. service
+7.111. service
 
 --------------
 
@@ -8411,7 +8445,7 @@ Configuration:
   * string service.*: one or more comma-separated service names
 
 
-7.110. sha256
+7.112. sha256
 
 --------------
 
@@ -8431,7 +8465,7 @@ Configuration:
     start of buffer
 
 
-7.111. sha512
+7.113. sha512
 
 --------------
 
@@ -8451,7 +8485,7 @@ Configuration:
     start of buffer
 
 
-7.112. sid
+7.114. sid
 
 --------------
 
@@ -8466,7 +8500,7 @@ Configuration:
   * int sid.~: signature id { 1:max32 }
 
 
-7.113. sip_body
+7.115. sip_body
 
 --------------
 
@@ -8477,7 +8511,7 @@ Type: ips_option
 Usage: detect
 
 
-7.114. sip_header
+7.116. sip_header
 
 --------------
 
@@ -8489,7 +8523,7 @@ Type: ips_option
 Usage: detect
 
 
-7.115. sip_method
+7.117. sip_method
 
 --------------
 
@@ -8504,7 +8538,7 @@ Configuration:
   * string sip_method.*method: sip method
 
 
-7.116. sip_stat_code
+7.118. sip_stat_code
 
 --------------
 
@@ -8519,7 +8553,7 @@ Configuration:
   * int sip_stat_code.*code: status code { 1:999 }
 
 
-7.117. so
+7.119. so
 
 --------------
 
@@ -8536,7 +8570,7 @@ Configuration:
     buffer
 
 
-7.118. soid
+7.120. soid
 
 --------------
 
@@ -8552,7 +8586,7 @@ Configuration:
     like 3_45678_9
 
 
-7.119. ssl_state
+7.121. ssl_state
 
 --------------
 
@@ -8581,7 +8615,7 @@ Configuration:
     unknown
 
 
-7.120. ssl_version
+7.122. ssl_version
 
 --------------
 
@@ -8608,7 +8642,7 @@ Configuration:
     tls1.2
 
 
-7.121. stream_reassemble
+7.123. stream_reassemble
 
 --------------
 
@@ -8629,7 +8663,7 @@ Configuration:
     remainder of the session
 
 
-7.122. stream_size
+7.124. stream_size
 
 --------------
 
@@ -8647,7 +8681,7 @@ Configuration:
     direction(s) { either|to_server|to_client|both }
 
 
-7.123. tag
+7.125. tag
 
 --------------
 
@@ -8666,7 +8700,7 @@ Configuration:
   * int tag.bytes: tag for this many bytes { 1:max32 }
 
 
-7.124. target
+7.126. target
 
 --------------
 
@@ -8682,7 +8716,7 @@ Configuration:
     dst_ip }
 
 
-7.125. tos
+7.127. tos
 
 --------------
 
@@ -8697,7 +8731,7 @@ Configuration:
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
 
 
-7.126. ttl
+7.128. ttl
 
 --------------
 
@@ -8713,7 +8747,7 @@ Configuration:
     0:255 }
 
 
-7.127. urg
+7.129. urg
 
 --------------
 
@@ -8729,7 +8763,7 @@ Configuration:
     { 0:65535 }
 
 
-7.128. vba_data
+7.130. vba_data
 
 --------------
 
@@ -8741,7 +8775,7 @@ Type: ips_option
 Usage: detect
 
 
-7.129. window
+7.131. window
 
 --------------
 
@@ -8757,7 +8791,7 @@ Configuration:
     range { 0:65535 }
 
 
-7.130. wscale
+7.132. wscale
 
 --------------
 
@@ -9473,7 +9507,7 @@ libraries see the Getting Started section of the manual.
     | user | file }
   * enum binder[].when.role = any: use the given configuration on one
     or any end of a session { client | server | any }
-  * string binder[].when.service: space separated list of services
+  * string binder[].when.service: name of service to match
   * string binder[].when.src_groups: list of source interface group
     IDs
   * string binder[].when.src_intfs: list of source interface IDs
@@ -11918,6 +11952,7 @@ libraries see the Getting Started section of the manual.
   * ftp_server.ssl_srch_abandoned_early: total SSL search abandoned
     too soon (sum)
   * ftp_server.start_tls: total STARTTLS events generated (sum)
+  * ftp_server.total_aborted_sessions: total aborted sessions (sum)
   * ftp_server.total_bytes: total number of bytes processed (sum)
   * ftp_server.total_packets: total packets (sum)
   * gtp_inspect.concurrent_sessions: total concurrent gtp sessions
@@ -12464,6 +12499,7 @@ libraries see the Getting Started section of the manual.
     (sum)
   * snort.remote_commands: total remote commands processed (sum)
   * snort.signals: total signals processed (sum)
+  * ssh.aborted_sessions: total session aborted (sum)
   * ssh.concurrent_sessions: total concurrent ssh sessions (now)
   * ssh.max_concurrent_sessions: maximum concurrent ssh sessions
     (max)
@@ -16150,6 +16186,11 @@ alert is raised by the enhanced JavaScript normalizer.
     default policy
   * snort.dump_stats(): show summary statistics
   * snort.dump_heap_stats(): show heap statistics
+  * snort.heap_profile(enable, sample_rate): jemalloc memory tracking
+    configuration
+  * snort.dump_heap_profile(): dump jemalloc memory profile
+  * snort.show_heap_profile(): show jemalloc memory profiling
+    configuration
   * snort.reset_stats(type): clear summary statistics. Type can be:
     daq|module|appid|file_id|snort|ha|all. reset_stats() without a
     parameter clears all statistics.
@@ -16351,6 +16392,10 @@ and are not applicable elsewhere.
     hosts
   * host_tracker (basic): configure hosts
   * hosts (basic): configure hosts
+  * http2_frame_data (ips_option): rule option to set detection
+    cursor to the HTTP/2 frame body
+  * http2_frame_header (ips_option): rule option to set detection
+    cursor to the 9-octet HTTP/2 frame header
   * http2_inspect (inspector): HTTP/2 inspector
   * http_client_body (ips_option): rule option to set the detection
     cursor to the request body
@@ -16808,6 +16853,10 @@ and are not applicable elsewhere.
   * ips_option::gtp_info: rule option to check gtp info element
   * ips_option::gtp_type: rule option to check gtp types
   * ips_option::gtp_version: rule option to check GTP version
+  * ips_option::http2_frame_data: rule option to set detection cursor
+    to the HTTP/2 frame body
+  * ips_option::http2_frame_header: rule option to set detection
+    cursor to the 9-octet HTTP/2 frame header
   * ips_option::http_client_body: rule option to set the detection
     cursor to the request body
   * ips_option::http_cookie: rule option to set the detection cursor

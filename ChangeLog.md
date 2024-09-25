@@ -1,3 +1,23 @@
+2024-09-24: 3.3.7.0
+
+* appid: dns sinkhole support for edns
+* appid: early SSH detection brute-force fix
+* appid: fixes for one definiton rule violation
+* binder: change binding to have single service
+* extractor: flush data on unlocking a writer
+* extractor: notify handler whether it is a fixed-width formatting
+* extractor: refactor data pipe between an inspector and extractor's logger
+* extractor: rewrite std writer to use text_log utility
+* extractor: update logger with an internal set of fields for logging
+* ftp_telnet: adding fallback functionality for ftp
+* http2_inspect: add IPS options for frame header and data
+* memory: add shell commands for jemalloc heap profiling
+* process: skip vDSO frame on aarch64
+* ssh: added abort session in streamsplitter
+* stream: fix to dump all flows
+* stream_tcp: add assert to verify configured normalizer policy is valid
+* stream_tcp: do not overwrite global normalizer policy config option when proxy mode is enabled
+
 2024-09-05: 3.3.5.0
 
 * appid: added new logs for reload third party
