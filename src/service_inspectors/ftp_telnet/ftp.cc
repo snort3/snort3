@@ -21,10 +21,14 @@
 #include "config.h"
 #endif
 
+#include <atomic>
+
+#include "framework/data_bus.h"
 #include "framework/pig_pen.h"
 #include "main/snort_config.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "pub_sub/ftp_events.h"
 #include "stream/stream.h"
 #include "target_based/snort_protocols.h"
 #include "utils/util.h"
@@ -51,6 +55,8 @@ SnortProtocolId ftp_data_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 THREAD_LOCAL ProfileStats ftpPerfStats;
 THREAD_LOCAL FtpStats ftstats;
 
+static std::atomic<unsigned> pub_id = 0;
+
 //-------------------------------------------------------------------------
 // implementation stuff
 //-------------------------------------------------------------------------
@@ -60,16 +66,28 @@ static inline int InspectClientPacket(Packet* p)
     return p->has_paf_payload();
 }
 
+static void publish_ftp_request(const FTP_SESSION& session, Flow* flow)
+{
+    FtpRequestEvent event(session);
+    DataBus::publish(pub_id, FtpEventIds::FTP_REQUEST, event, flow);
+}
+
+static void publish_ftp_response(const FTP_SESSION& session, Flow* flow)
+{
+    FtpResponseEvent event(session);
+    DataBus::publish(pub_id, FtpEventIds::FTP_RESPONSE, event, flow);
+}
+
 static int SnortFTP(
     FTP_SESSION* FTPsession, Packet* p, int iInspectMode)
 {
     // cppcheck-suppress unreadVariable
     Profile profile(ftpPerfStats);
 
-    if ( !FTPsession || !FTPsession->server_conf || !FTPsession->client_conf )
+    if (!FTPsession || !FTPsession->server_conf || !FTPsession->client_conf)
         return FTPP_INVALID_SESSION;
 
-    if ( !FTPsession->server_conf->check_encrypted_data )
+    if (!FTPsession->server_conf->check_encrypted_data)
     {
         if ( FTPsession->encr_state == AUTH_TLS_ENCRYPTED ||
              FTPsession->encr_state == AUTH_SSL_ENCRYPTED ||
@@ -84,15 +102,15 @@ static int SnortFTP(
         //if ( !ScPafEnabled() )
         Stream::flush_client(p);
     }
-    else if ( !InspectClientPacket(p) )
+    else if (!InspectClientPacket(p))
         return FTPP_SUCCESS;
 
     int ret = initialize_ftp(FTPsession, p, iInspectMode);
-    if ( ret )
+    if (ret)
         return ret;
 
     ret = check_ftp(FTPsession, p, iInspectMode);
-    if ( ret == FTPP_SUCCESS )
+    if (ret == FTPP_SUCCESS)
     {
         // FIXIT-L ideally do_detection will look at the cmd & param buffers
         // or the rsp & msg buffers.  We should call it from inside check_ftp
@@ -100,6 +118,13 @@ static int SnortFTP(
 
         do_detection(p);
     }
+
+    assert(FTPsession);
+
+    if (iInspectMode == FTPP_SI_CLIENT_MODE)
+        publish_ftp_request(*FTPsession, p->flow);
+    else if (iInspectMode == FTPP_SI_SERVER_MODE)
+        publish_ftp_response(*FTPsession, p->flow);
 
     return ret;
 }
@@ -238,6 +263,7 @@ FtpServer::~FtpServer ()
 
 bool FtpServer::configure(SnortConfig* sc)
 {
+    pub_id = DataBus::get_id(ftp_pub_key);
     ftp_data_snort_protocol_id = sc->proto_ref->add("ftp-data");
     return !FTPCheckConfigs(sc, ftp_server);
 }

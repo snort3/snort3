@@ -12,6 +12,7 @@ set (PUB_SUB_INCLUDES
     expect_events.h
     external_event_ids.h
     finalize_packet_event.h
+    ftp_events.h
     http_event_ids.h
     http_events.h
     http_request_body_event.h
