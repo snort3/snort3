@@ -22,6 +22,7 @@
 
 #include <cstring>
 #include <sstream>
+#include <stack>
 #include <unordered_set>
 
 #include "main/snort_types.h"
@@ -38,15 +39,16 @@ public:
     {
         EOS = 0,
         NOT_NAME_IN_DICTIONARY_KEY,
-        INCOMPLETE_ARRAY_IN_DICTIONARY,
+        INCORRECT_BRACKETS_NESTING,
         STREAM_NO_LENGTH,
         UNEXPECTED_SYMBOL,
         TOKEN_TOO_LONG,
+        DICTIONARY_NESTING_OVERFLOW,
         MAX
     };
 
     PDFTokenizer() = delete;
-    explicit PDFTokenizer(std::istream& in, std::ostream& out);
+    explicit PDFTokenizer(std::istream& in, std::ostream& out, int dictionaries_max_size);
     ~PDFTokenizer() override;
 
     PDFRet process();
@@ -134,11 +136,12 @@ private:
 
     ObjectString obj_string;
     ObjectArray obj_array;
-    ObjectDictionary obj_dictionary;
+    std::stack<ObjectDictionary> dictionaries;
     DictionaryEntry obj_entry;
     Stream obj_stream;
     IndirectObject indirect_obj;
     std::unordered_set<unsigned int> js_stream_refs;
+    unsigned dictionaries_max_size;
 
     // represents UTF-16BE code point
     struct
@@ -151,12 +154,12 @@ private:
 
 bool PDFTokenizer::h_lit_str()
 {
-    return obj_dictionary.array_level == obj_array.nesting_level and !strcmp(obj_entry.key, "/JS");
+    return dictionaries.top().array_level == obj_array.nesting_level and !strcmp(obj_entry.key, "/JS");
 }
 
 bool PDFTokenizer::h_hex_str()
 {
-    return obj_dictionary.array_level == obj_array.nesting_level and !strcmp(obj_entry.key, "/JS");
+    return dictionaries.top().array_level == obj_array.nesting_level and !strcmp(obj_entry.key, "/JS");
 }
 
 bool PDFTokenizer::h_lit_open()

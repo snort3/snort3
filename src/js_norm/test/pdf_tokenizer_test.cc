@@ -33,6 +33,7 @@ using namespace jsn;
 using namespace std;
 using namespace std::string_literals;
 
+static constexpr int nesting_level = 10;
 typedef pair<string, string> Chunk;
 
 static void test_pdf_proc(const string& source, const string& expected,
@@ -40,7 +41,7 @@ static void test_pdf_proc(const string& source, const string& expected,
 {
     istringstream in(source);
     ostringstream out;
-    PDFTokenizer extractor(in, out);
+    PDFTokenizer extractor(in, out, nesting_level);
 
     auto r = extractor.process();
 
@@ -52,7 +53,7 @@ static void test_pdf_proc(const vector<Chunk>& chunks)
 {
     istringstream in;
     ostringstream out;
-    PDFTokenizer extractor(in, out);
+    PDFTokenizer extractor(in, out, nesting_level);
 
     for (const auto& chunk : chunks)
     {
@@ -273,6 +274,15 @@ TEST_CASE("basic", "[PDFTokenizer]")
             ""
         );
     }
+    SECTION("hex string in array")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "[ <0001020304 05> ] \n"
+            "endobj\n",
+            ""
+        );
+    }
     SECTION("key after literal string")
     {
         test_pdf_proc(
@@ -352,6 +362,15 @@ TEST_CASE("basic", "[PDFTokenizer]")
             "<< >>"
             "endobj"s,
             "",  PDFTokenizer::PDFRet::TOKEN_TOO_LONG
+        );
+    }
+    SECTION("dictionary nesting overflow")
+    {
+        test_pdf_proc(
+            "1 0 obj"
+            "<< << << << << << << << << << << << << >> >> >> >> >> >> >> >> >> >> >> >> >>"
+            "endobj",
+            "", PDFTokenizer::PDFRet::DICTIONARY_NESTING_OVERFLOW
         );
     }
 }
@@ -457,7 +476,7 @@ TEST_CASE("brackets balancing", "[PDFTokenizer]")
                 "<< /nested /dict "
                 "]"
                 "endobj",
-                "", PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+                "", PDFTokenizer::PDFRet::INCORRECT_BRACKETS_NESTING
             );
         }
         SECTION("redundant end")
@@ -468,7 +487,7 @@ TEST_CASE("brackets balancing", "[PDFTokenizer]")
                 "<< /nested /dict >> >>"
                 "]"
                 "endobj",
-                "", PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
+                "", PDFTokenizer::PDFRet::INCORRECT_BRACKETS_NESTING
             );
         }
     }
@@ -491,7 +510,7 @@ TEST_CASE("brackets balancing", "[PDFTokenizer]")
                 "/K1 [ /V1 /V2 /V3 "
                 ">>"
                 "endobj",
-                "", PDFTokenizer::PDFRet::INCOMPLETE_ARRAY_IN_DICTIONARY
+                "", PDFTokenizer::PDFRet::INCORRECT_BRACKETS_NESTING
             );
         }
         SECTION("redundant end")
@@ -502,7 +521,7 @@ TEST_CASE("brackets balancing", "[PDFTokenizer]")
                 "/K1 [ /V1 /V2 /V3 ]]"
                 ">>"
                 "endobj",
-                "", PDFTokenizer::PDFRet::INCOMPLETE_ARRAY_IN_DICTIONARY
+                "", PDFTokenizer::PDFRet::INCORRECT_BRACKETS_NESTING
             );
         }
     }
@@ -571,6 +590,51 @@ TEST_CASE("brackets balancing", "[PDFTokenizer]")
     }
     SECTION("multiple tokens inter-nesting")
     {
+        SECTION("array-dict-array")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "[ << /key [] >> ]"
+                "endobj",
+                ""
+            );
+        }
+        SECTION("array-dict-dict")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "[ << /key << /key2 null >> >> ]"
+                "endobj",
+                ""
+            );
+        }
+        SECTION("dict-array-array")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "<< /key [ [ null ] ] >>"
+                "endobj",
+                ""
+            );
+        }
+        SECTION("dict-array-dict")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "<< /key [ << /key2 /value >> ] >>"
+                "endobj",
+                ""
+            );
+        }
+        SECTION("complex-dict-array-nesting")
+        {
+            test_pdf_proc(
+                "1 0 obj"
+                "<< /key /value /key [ << /key2 /value >> << /key [ [ << /key [ << /key /value >> ] >> ] ] >> ] >>"
+                "endobj",
+                ""
+            );
+        }
         SECTION("array-array-array")
         {
             test_pdf_proc(

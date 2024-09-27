@@ -46,7 +46,8 @@ public:
 
     PDFJSNorm(JSNormConfig* cfg, uint32_t gen_id) :
         JSNorm(cfg, false, gen_id),
-        pdf_in(&buf_pdf_in), pdf_out(&buf_pdf_out), extractor(pdf_in, pdf_out)
+        pdf_in(&buf_pdf_in), pdf_out(&buf_pdf_out),
+        extractor(pdf_in, pdf_out, cfg ? cfg->pdf_max_dictionary_depth : 0)
     { }
 
 protected:

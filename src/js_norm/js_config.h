@@ -30,6 +30,7 @@ struct JSNormConfig
     uint8_t max_template_nesting = 32;
     uint32_t max_bracket_depth = 256;
     uint32_t max_scope_depth = 256;
+    uint32_t pdf_max_dictionary_depth = 32;
     std::unordered_set<std::string> ignored_ids;
     std::unordered_set<std::string> ignored_props;
 };

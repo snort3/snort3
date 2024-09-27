@@ -68,6 +68,9 @@ const Parameter JSNormModule::params[] =
     { "max_scope_depth", Parameter::PT_INT, "1:65535", "256",
       "maximum depth of scope nesting that enhanced JavaScript normalizer will process" },
 
+    { "pdf_max_dictionary_depth", Parameter::PT_INT, "1:65535", "32",
+      "maximum depth of dictionary nesting that PDF parser will process" },
+
     { "ident_ignore", Parameter::PT_LIST, ident_ignore_param, nullptr,
       "list of JavaScript ignored identifiers which will not be normalized" },
 
@@ -162,6 +165,10 @@ bool JSNormModule::set(const char*, Value& v, SnortConfig*)
     else if (v.is("prop_name"))
     {
         config->ignored_props.insert(v.get_string());
+    }
+    else if (v.is("pdf_max_dictionary_depth"))
+    {
+        config->pdf_max_dictionary_depth = v.get_uint32();
     }
 
     return true;
