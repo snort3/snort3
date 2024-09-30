@@ -15,6 +15,7 @@ add_subdirectory(modbus)
 add_subdirectory(netflow)
 add_subdirectory(pop)
 add_subdirectory(rpc_decode)
+add_subdirectory(s7comm)
 add_subdirectory(s7commplus)
 add_subdirectory(sip)
 add_subdirectory(smtp)
@@ -37,10 +38,10 @@ if (STATIC_INSPECTORS)
         $<TARGET_OBJECTS:netflow>
         $<TARGET_OBJECTS:pop>
         $<TARGET_OBJECTS:rpc_decode>
+        $<TARGET_OBJECTS:s7comm>
         $<TARGET_OBJECTS:s7commplus>
         $<TARGET_OBJECTS:smtp>
         $<TARGET_OBJECTS:ssh>
-        $<TARGET_OBJECTS:ssl>
         $<TARGET_OBJECTS:wizard>
     )
 endif()
@@ -49,6 +50,7 @@ set(STATIC_SERVICE_INSPECTOR_PLUGINS
     $<TARGET_OBJECTS:http_inspect>
     $<TARGET_OBJECTS:http2_inspect>
     $<TARGET_OBJECTS:sip>
+    $<TARGET_OBJECTS:ssl>
     $<TARGET_OBJECTS:dns>
     ${STATIC_INSPECTOR_OBJS}
     CACHE INTERNAL "STATIC_SERVICE_INSPECTOR_PLUGINS"

@@ -210,8 +210,8 @@ private:
 class ACShowSnortCPU : public snort::AnalyzerCommand
 {
 public:
-    explicit ACShowSnortCPU(ControlConn* conn) : AnalyzerCommand(conn)
-    { }
+    /*explicit ACShowSnortCPU(ControlConn* conn) : AnalyzerCommand(conn)
+    { }*/
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "SHOW_SNORT_CPU"; }
     ~ACShowSnortCPU() override;
