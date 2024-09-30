@@ -816,6 +816,9 @@ int main_help(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     std::list<Module*> modules = ModuleManager::get_all_modules();
+    std::set<std::string> no_prefix_cmds;
+    std::set<std::string> prefix_cmds;
+
     for (const auto& m : modules)
     {
         const Command* cmd = m->get_commands();
@@ -835,10 +838,22 @@ int main_help(lua_State* L)
             info += ": ";
             info += cmd->help;
             info += "\n";
-            send_response(ctrlcon, info.c_str());
+            if (prefix.empty())
+                no_prefix_cmds.emplace(info);
+            else
+                prefix_cmds.emplace(info);
             ++cmd;
         }
     }
+    
+    send_response(ctrlcon, "\nModule Commands:\n");
+    for (const auto& str : prefix_cmds)
+        send_response(ctrlcon, str.c_str());
+
+    send_response(ctrlcon, "\nTop Level Commands:\n");
+    for (const auto& str : no_prefix_cmds)
+        send_response(ctrlcon, str.c_str());
+    
     return 0;
 }
 
