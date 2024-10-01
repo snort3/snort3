@@ -153,7 +153,7 @@ int TcpReassemblerIps::eval_flush_policy_on_data(Packet* p)
     if ( tracker.is_retransmit_of_held_packet(p) )
         flushed = perform_partial_flush(p, flushed);
 
-    if ( flush_on_asymmetric_flow(flushed, p) )
+    if ( asymmetric_flow_flushed(flushed, p) )
     {
         purge_to_seq(seglist.head->start_seq() + flushed);
         tracker.r_win_base = seglist.seglist_base_seq;
@@ -161,6 +161,11 @@ int TcpReassemblerIps::eval_flush_policy_on_data(Packet* p)
     }
 
     return flushed;
+}
+
+int TcpReassemblerIps::eval_asymmetric_flush(snort::Packet* p)
+{
+    return eval_flush_policy_on_data(p);
 }
 
 int TcpReassemblerIps::flush_stream(Packet* p, uint32_t dir, bool final_flush)

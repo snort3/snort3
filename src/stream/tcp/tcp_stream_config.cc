@@ -51,7 +51,10 @@ void TcpStreamConfig::show() const
     str += std::to_string(max_queued_segs);
     str += " }";
     ConfigLogger::log_value("queue_limit", str.c_str());
-
+    str = "{ flush threshold = ";
+    str += std::to_string(asymmetric_ids_flush_threshold);
+    str += " }";
+    ConfigLogger::log_value("asymmetric_ids", str.c_str());
     ConfigLogger::log_flag("reassemble_async", !(flags & STREAM_CONFIG_NO_ASYNC_REASSEMBLY));
     ConfigLogger::log_limit("require_3whs", hs_timeout, -1, hs_timeout < 0 ? hs_timeout : -1);
     ConfigLogger::log_value("session_timeout", session_timeout);

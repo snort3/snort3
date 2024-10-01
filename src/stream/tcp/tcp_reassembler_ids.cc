@@ -231,25 +231,39 @@ int TcpReassemblerIds::eval_flush_policy_on_data(Packet* p)
     if ( tracker.is_retransmit_of_held_packet(p) )
         flushed = perform_partial_flush(p, flushed);
 
-    if ( flush_on_asymmetric_flow(flushed, p) )
+    if ( !p->flow->two_way_traffic() and
+        seglist.get_seg_bytes_total() > seglist.session->tcp_config->asymmetric_ids_flush_threshold )
     {
-        purge_to_seq(seglist.head->start_seq() + flushed);
-        tracker.r_win_base = seglist.seglist_base_seq;
-        tcpStats.flush_on_asymmetric_flow++;
+        seglist.skip_holes();
+        flushed += eval_asymmetric_flush(p);
     }
+
+    return flushed;
+}
+
+int TcpReassemblerIds::eval_asymmetric_flush(snort::Packet* p)
+{
+    // asymmetric flush in IDS mode.. advance r_win_base to end of in-order data
+    tracker.r_win_base = tracker.rcv_nxt;
+
+    uint32_t flushed = eval_flush_policy_on_ack(p);
+    if ( flushed )
+        tcpStats.flush_on_asymmetric_flow++;
 
     return flushed;
 }
 
 int TcpReassemblerIds::flush_stream(Packet* p, uint32_t dir, bool final_flush)
 {
-    if ( seglist.session->flow->two_way_traffic()
-        or (tracker.get_tcp_state() == TcpStreamTracker::TCP_MID_STREAM_RECV) )
-    {
-        uint32_t bytes = get_q_footprint();  // num bytes in post-ack mode
-        if ( bytes )
-            return flush_to_seq(bytes, p, dir);
-    }
+    uint32_t bytes = 0;
+
+    if ( seglist.session->flow->two_way_traffic() )
+         bytes = get_q_footprint();
+    else
+        bytes = get_q_sequenced();
+
+    if ( bytes )
+        return flush_to_seq(bytes, p, dir);
 
     if ( final_flush )
         return do_zero_byte_flush(p, dir);

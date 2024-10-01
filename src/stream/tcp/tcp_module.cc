@@ -238,6 +238,10 @@ static const Parameter s_params[] =
     { "idle_timeout", Parameter::PT_INT, "1:max31", "3600",
       "session deletion on idle " },
 
+    { "asymmetric_ids_flush_threshold", Parameter::PT_INT, "1:max31", "65535",
+      "max bytes queued on asymmetric flow before flush in IDS mode" },
+
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -330,6 +334,9 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("max_segments") )
         config->max_queued_segs = v.get_uint32();
+
+    else if ( v.is("asymmetric_ids_flush_threshold") )
+        config->asymmetric_ids_flush_threshold = v.get_uint32();
 
     else if ( v.is("max_window") )
         config->max_window = v.get_uint32();

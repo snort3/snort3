@@ -151,6 +151,7 @@ bool TcpStateSynSent::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         }
         trk.set_tcp_state(TcpStreamTracker::TCP_FIN_WAIT1);
     }
+
     return true;
 }
 

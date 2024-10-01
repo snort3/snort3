@@ -126,9 +126,7 @@ int TcpStreamTracker::eval_flush_policy_on_ack(snort::Packet* p)
         oaitw_reassembler = nullptr;
     }
 
-    reassembler->eval_flush_policy_on_ack(p);
-
-    return 0;
+    return reassembler->eval_flush_policy_on_ack(p);
 }
 
 int TcpStreamTracker::eval_flush_policy_on_data(snort::Packet* p)
@@ -140,6 +138,19 @@ int TcpStreamTracker::eval_flush_policy_on_data(snort::Packet* p)
     }
 
     reassembler->eval_flush_policy_on_data(p);
+
+    return 0;
+}
+
+int TcpStreamTracker::eval_asymmetric_flush(snort::Packet* p)
+{
+    if( oaitw_reassembler )
+    {
+        delete oaitw_reassembler;
+        oaitw_reassembler = nullptr;
+    }
+
+    reassembler->eval_asymmetric_flush(p);
 
     return 0;
 }
@@ -480,6 +491,10 @@ void TcpStreamTracker::fallback()
     //bool to_server = splitter->to_server();
     //assert(server_side == to_server && server_side == !tracker.client_tracker);
 #endif
+
+    if (PacketTracer::is_active())
+        PacketTracer::log("Stream: %s tracker fallback to the Atom splitter.\n",
+            client_tracker ? "client" : "server");
 
     set_splitter(new AtomSplitter(!client_tracker));
     tcpStats.partial_fallbacks++;
@@ -872,7 +887,7 @@ int32_t TcpStreamTracker::kickstart_asymmetric_flow(const TcpSegmentDescriptor& 
     else
         reassembler->reset_paf();
 
-    eval_flush_policy_on_data(tsd.get_pkt());
+    eval_asymmetric_flush(tsd.get_pkt());
 
     int32_t space_left = max_queued_bytes - seglist.get_seg_bytes_total();
 

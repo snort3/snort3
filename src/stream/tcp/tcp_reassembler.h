@@ -63,6 +63,7 @@ public:
 
     virtual int eval_flush_policy_on_ack(snort::Packet*) = 0;
     virtual int eval_flush_policy_on_data(snort::Packet*) = 0;
+    virtual int eval_asymmetric_flush(snort::Packet*) = 0;
     virtual int flush_stream(snort::Packet*, uint32_t dir, bool final_flush = false) = 0;
     void flush_queued_segments(snort::Flow* flow, bool clear, snort::Packet* = nullptr);
     void finish_and_final_flush(snort::Flow* flow, bool clear, snort::Packet*);
@@ -124,7 +125,7 @@ protected:
     void check_first_segment_hole();
     uint32_t perform_partial_flush(snort::Packet*, uint32_t flushed = 0);
     bool final_flush_on_fin(int32_t flush_amt, snort::Packet*, FinSeqNumStatus);
-    bool flush_on_asymmetric_flow(uint32_t flushed, snort::Packet *p);
+    bool asymmetric_flow_flushed(uint32_t flushed, snort::Packet *p);
 
     ProtocolAwareFlusher paf;
     TcpStreamTracker& tracker;
@@ -152,6 +153,9 @@ public:
     { return 0; }
 
     int eval_flush_policy_on_data(snort::Packet*) override
+    { return 0; }
+
+    int eval_asymmetric_flush(snort::Packet*) override
     { return 0; }
 
     int flush_stream(snort::Packet*, uint32_t, bool) override

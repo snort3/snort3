@@ -63,6 +63,7 @@ public:
 
     uint32_t max_queued_bytes = 4194304;
     uint32_t max_queued_segs = 3072;
+    uint32_t asymmetric_ids_flush_threshold = 65535;
 
     uint32_t max_consec_small_segs = STREAM_DEFAULT_CONSEC_SMALL_SEGS;
     uint32_t max_consec_small_seg_size = STREAM_DEFAULT_MAX_SMALL_SEG_SIZE;

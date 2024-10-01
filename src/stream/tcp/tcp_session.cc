@@ -612,9 +612,9 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
             tcpStats.exceeded_max_bytes++;
             bool ret_val = true;
 
-            // if inline and this is an asymmetric flow then skip over any seglist holes
+            // if this is an asymmetric flow then skip over any seglist holes
             // and flush to free up seglist space
-            if ( tsd.is_ips_policy_inline()  && !tsd.get_pkt()->flow->two_way_traffic() )
+            if ( !tsd.get_pkt()->flow->two_way_traffic() )
             {
                 space_left = listener->kickstart_asymmetric_flow(tsd, tcp_config->max_queued_bytes);
                 if ( space_left >= (int32_t)tsd.get_len() )
@@ -647,9 +647,9 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
         {
             tcpStats.exceeded_max_segs++;
 
-            // if inline and this is an asymmetric flow then skip over any seglist holes
+            // if this is an asymmetric flow then skip over any seglist holes
             // and flush to free up seglist space
-            if ( tsd.is_ips_policy_inline() && !tsd.get_pkt()->flow->two_way_traffic() )
+            if ( !tsd.get_pkt()->flow->two_way_traffic() )
             {
                 listener->kickstart_asymmetric_flow(tsd, tcp_config->max_queued_bytes);
                 if ( listener->seglist.get_seg_count() + 1 <= tcp_config->max_queued_segs )

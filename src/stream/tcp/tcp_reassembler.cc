@@ -595,7 +595,7 @@ bool TcpReassembler::final_flush_on_fin(int32_t flush_amt, Packet *p, FinSeqNumS
         && !p->flow->searching_for_service();
 }
 
-bool  TcpReassembler::flush_on_asymmetric_flow(uint32_t flushed, snort::Packet *p)
+bool TcpReassembler::asymmetric_flow_flushed(uint32_t flushed, snort::Packet *p)
 {
     bool asymmetric = flushed && seglist.seg_count && !p->flow->two_way_traffic() && !p->ptrs.tcph->is_syn();
     if ( asymmetric )

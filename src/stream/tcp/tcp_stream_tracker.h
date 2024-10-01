@@ -97,6 +97,7 @@ public:
 
     int eval_flush_policy_on_ack(snort::Packet*);
     int eval_flush_policy_on_data(snort::Packet*);
+    int eval_asymmetric_flush(snort::Packet*);
     void update_stream_order(const TcpSegmentDescriptor&, bool aligned);
 
     void fallback();
