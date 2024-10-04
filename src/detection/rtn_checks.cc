@@ -237,8 +237,11 @@ int CheckDstPortNotEq(Packet* p, RuleTreeNode* rtn_idx,
     return 0;
 }
 
-int CheckProto(Packet* p, RuleTreeNode* rtn_idx, RuleFpList*, int)
+int CheckProto(Packet* p, RuleTreeNode* rtn_idx, RuleFpList*, int check_ports)
 {
+    if ( !check_ports )
+        return 1;  // ignore proto when ignoring ports
+
     assert(rtn_idx->snort_protocol_id < SNORT_PROTO_MAX);
 
     const int proto_bits[SNORT_PROTO_MAX] =  // SNORT_PROTO_ to PROTO_BIT__*
