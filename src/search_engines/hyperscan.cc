@@ -261,7 +261,7 @@ public:
         unsigned id, unsigned long long from, unsigned long long to,
         unsigned flags, void*);
 
-    bool serialize(uint8_t*&, size_t&) const override;
+    int serialize(uint8_t*&, size_t&) const override;
     bool deserialize(const uint8_t*, size_t) override;
 
     void get_hash(std::string&) override;
@@ -274,6 +274,7 @@ private:
     PatternVector pvector;
 
     hs_database_t* hs_db = nullptr;
+    bool compiled = false;
 
 public:
     static uint64_t instances;
@@ -283,8 +284,13 @@ public:
 uint64_t HyperscanMpse::instances = 0;
 uint64_t HyperscanMpse::patterns = 0;
 
-bool HyperscanMpse::serialize(uint8_t*& buf, size_t& sz) const
-{ return hs_db and (hs_serialize_database(hs_db, (char**)&buf, &sz) == HS_SUCCESS) and buf; }
+int HyperscanMpse::serialize(uint8_t*& buf, size_t& sz) const
+{
+    if ( !compiled )
+        return 0;
+
+    return (hs_db and (hs_serialize_database(hs_db, (char**)&buf, &sz) == HS_SUCCESS) and buf) ? 1 : -1;
+}
 
 bool HyperscanMpse::deserialize(const uint8_t* buf, size_t sz)
 {
@@ -391,6 +397,8 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
         hs_free_compile_error(errptr);
         return -2;
     }
+
+    compiled = true;
 
     if ( agent )
         user_ctor(sc);
@@ -524,7 +532,7 @@ static const MpseApi hs_api =
         PT_SEARCH_ENGINE,
         sizeof(MpseApi),
         SEAPI_VERSION,
-        0,
+        1,
         API_RESERVED,
         API_OPTIONS,
         s_name,

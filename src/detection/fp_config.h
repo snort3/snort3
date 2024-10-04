@@ -112,11 +112,13 @@ public:
     void set_debug_print_rule_groups_uncompiled()
     { portlists_flags |= PL_DEBUG_PRINT_RULEGROUPS_UNCOMPILED; }
 
+#ifdef HAVE_HYPERSCAN
     void set_rule_db_dir(const char* s)
     { rule_db_dir = s; }
 
     const std::string& get_rule_db_dir() const
     { return rule_db_dir; }
+#endif
 
     bool set_search_method(const char*);
     const char* get_search_method() const;
@@ -160,7 +162,9 @@ private:
     int portlists_flags = 0;
     unsigned num_patterns_truncated = 0;  // due to max_pattern_len
 
+#ifdef HAVE_HYPERSCAN
     std::string rule_db_dir;
+#endif
 };
 
 #endif

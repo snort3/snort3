@@ -195,8 +195,10 @@ static const Parameter search_engine_params[] =
     { "offload_search_method", Parameter::PT_DYNAMIC, (void*)&get_search_methods, nullptr,
       "set fast pattern offload algorithm - choose available search engine" },
 
+#ifdef HAVE_HYPERSCAN
     { "rule_db_dir", Parameter::PT_STRING, nullptr, nullptr,
-      "deserialize rule databases from given directory" },
+      "directory for reading / writing rule group databases" },
+#endif
 
     { "split_any_any", Parameter::PT_BOOL, nullptr, "true",
       "evaluate any-any rules separately to save memory" },
@@ -294,8 +296,10 @@ bool SearchEngineModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("detect_raw_tcp") )
         fp->set_stream_insert(v.get_bool());
 
+#ifdef HAVE_HYPERSCAN
     else if ( v.is("rule_db_dir") )
         fp->set_rule_db_dir(v.get_string());
+#endif
 
     else if ( v.is("search_method") )
     {

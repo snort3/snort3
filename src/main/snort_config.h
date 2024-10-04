@@ -255,7 +255,6 @@ public:
     std::string chroot_dir;        /* -t or config chroot */
     std::string include_path;
     std::string plugin_path;
-    std::string rule_db_dir;
     std::vector<std::string> script_paths;
 
     mode_t file_mask = 0;
@@ -461,7 +460,6 @@ public:
     void set_overlay_trace_config(TraceConfig*);
     void set_include_path(const char*);
     void set_process_all_events(bool);
-    void set_rule_db_dir(const char*);
     void set_show_year(bool);
     void set_tunnel_verdicts(const char*);
     void set_tweaks(const char*);

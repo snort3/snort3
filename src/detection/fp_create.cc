@@ -1606,8 +1606,10 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
 
     if ( !sc->test_mode() or sc->mem_check() )
     {
+#ifdef HAVE_HYPERSCAN
         if ( !fp->get_rule_db_dir().empty() )
             mpse_loaded = fp_deserialize(sc, fp->get_rule_db_dir());
+#endif
 
         unsigned c = compile_mpses(sc, can_build_mt(fp));
         unsigned expected = mpse_count + offload_mpse_count;
@@ -1619,8 +1621,10 @@ int fpCreateFastPacketDetection(SnortConfig* sc)
     bool label = fp_print_port_groups(port_tables);
     fp_print_service_groups(sc->spgmmTable, !label);
 
-    if ( !sc->rule_db_dir.empty() )
-        mpse_dumped = fp_serialize(sc, sc->rule_db_dir);
+#ifdef HAVE_HYPERSCAN
+    if ( !fp->get_rule_db_dir().empty() )
+        mpse_dumped = fp_serialize(sc, fp->get_rule_db_dir());
+#endif
 
     if ( mpse_count )
     {

@@ -323,7 +323,9 @@ static bool db_dump(const std::string& path, const char* proto, const char* dir,
             uint8_t* db = nullptr;
             size_t len = 0;
 
-            if ( it->group.normal_mpse->serialize(db, len) and db and len > 0 )
+            int result = it->group.normal_mpse->serialize(db, len);
+
+            if ( result == 1 and db and len > 0 )
             {
                 store(file, db, len);
                 free(db);
@@ -331,7 +333,8 @@ static bool db_dump(const std::string& path, const char* proto, const char* dir,
             }
             else
             {
-                ParseWarning(WARN_RULES, "Failed to serialize %s", file.c_str());
+                if ( result != 0 )
+                    ParseWarning(WARN_RULES, "Failed to serialize %s", file.c_str());
                 return false;
             }
         }

@@ -38,7 +38,7 @@
 namespace snort
 {
 // this is the current version of the api
-#define SEAPI_VERSION ((BASE_API_VERSION << 16) | 1)
+#define SEAPI_VERSION ((BASE_API_VERSION << 16) | 2)
 
 struct SnortConfig;
 struct MpseApi;
@@ -100,7 +100,7 @@ public:
     virtual int print_info() { return 0; }
     virtual int get_pattern_count() const { return 0; }
 
-    virtual bool serialize(uint8_t*&, size_t&) const { return false; }
+    virtual int serialize(uint8_t*&, size_t&) const { return -1; }
     virtual bool deserialize(const uint8_t*, size_t) { return false; }
     virtual void get_hash(std::string&) { }
 
