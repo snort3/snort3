@@ -43,30 +43,27 @@ bool TcpStateEstablished::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 bool TcpStateEstablished::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.session->check_for_repeated_syn(tsd);
-    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
+    trk.normalizer.ecn_tracker(tsd.get_tcph());
     return true;
 }
 
 bool TcpStateEstablished::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.session->tcp_config->midstream_allowed(tsd.get_pkt()) )
+    // FIXIT-M there may be an issue when syn/ack from server is seen
+    // after ack from client which causes some tracker state variables to
+    // not be initialized... update_tracker_ack_sent may fix that but needs
+    // more testing
+    //trk.update_tracker_ack_sent( tsd );
+    Flow* flow = tsd.get_flow();
+    if ( !(flow->session_state & STREAM_STATE_ESTABLISHED) )
     {
-        // FIXIT-M there may be an issue when syn/ack from server is seen
-        // after ack from client which causes some tracker state variables to
-        // not be initialized... update_tracker_ack_sent may fix that but needs
-        // more testing
-        //trk.update_tracker_ack_sent( tsd );
-        Flow* flow = tsd.get_flow();
-        if ( !(flow->session_state & STREAM_STATE_ESTABLISHED) )
-        {
-            /* SYN-ACK from server */
-            if (flow->session_state != STREAM_STATE_NONE)
-                trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
-        }
+        /* SYN-ACK from server */
+        if (flow->session_state != STREAM_STATE_NONE)
+            trk.session->update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
     }
 
     if ( trk.is_server_tracker() )
-        trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs() );
+        trk.normalizer.ecn_tracker(tsd.get_tcph());
 
     return true;
 }

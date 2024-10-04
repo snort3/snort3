@@ -45,6 +45,7 @@
 #include "trace/trace_api.h"
 #include "utils/util.h"
 
+#include "tcp/tcp_module.h"
 #include "tcp/tcp_session.h"
 #include "tcp/tcp_stream_tracker.h"
 
@@ -156,6 +157,19 @@ FlowData* Stream::get_flow_data(
 //-------------------------------------------------------------------------
 // session status
 //-------------------------------------------------------------------------
+
+bool Stream::midstream_allowed(const Packet* p, bool alert)
+{
+    int t = get_network_policy()->hs_timeout;
+
+    if ( (t < 0) or (p->pkth->ts.tv_sec - packet_first_time() < t) )
+        return true;
+
+    if ( alert )
+        DetectionEngine::queue_event(GID_STREAM_TCP, STREAM_TCP_NO_3WHS);
+
+    return false;
+}
 
 void Stream::check_flow_closed(Packet* p)
 {

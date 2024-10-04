@@ -23,6 +23,7 @@
 #include "flow/flow.h"
 #include "flow/session.h"
 #include "protocols/packet.h"
+#include "stream/stream.h"
 
 #include "tcp_event_logger.h"
 #include "tcp_state_machine.h"
@@ -48,7 +49,7 @@ public:
 
     bool setup(snort::Packet*) override;
     void restart(snort::Packet* p) override;
-    void precheck(snort::Packet* p) override;
+    bool precheck(snort::Packet* p) override;
     int process(snort::Packet*) override;
 
     void clear() override;
@@ -94,9 +95,6 @@ public:
     void handle_data_on_syn(TcpSegmentDescriptor&);
     void update_ignored_session(TcpSegmentDescriptor&);
 
-    bool is_midstream_allowed(const TcpSegmentDescriptor& tsd)
-    { return tcp_config->midstream_allowed(tsd.get_pkt()); }
-
     uint16_t get_mss(bool to_server) const;
     uint8_t get_tcp_options_len(bool to_server) const;
 
@@ -104,15 +102,6 @@ public:
     bool can_set_no_ack();
     bool set_no_ack(bool);
     bool no_ack_mode_enabled() { return no_ack; }
-
-    void generate_no_3whs_event()
-    {
-        if ( generate_3whs_alert && flow->two_way_traffic())
-        {
-            tel.set_tcp_event(EVENT_NO_3WHS);
-            generate_3whs_alert = false;
-        }
-    }
 
     void set_pkt_action_flag(uint32_t flag)
     { pkt_action_mask |= flag; }
@@ -142,7 +131,6 @@ public:
     int16_t egress_group = DAQ_PKTHDR_UNKNOWN;
     uint32_t daq_flags = 0;
     uint32_t address_space_id = 0;
-    bool generate_3whs_alert = true;
     bool cleaning = false;
     uint8_t held_packet_dir = SSN_DIR_NONE;
     uint8_t ecn = 0;
@@ -155,7 +143,7 @@ private:
     void init_session_on_synack(TcpSegmentDescriptor&);
     void update_on_3whs_complete(TcpSegmentDescriptor&);
     bool ignore_this_packet(snort::Packet*);
-    void cleanup_session_if_expired(snort::Packet*);
+    bool cleanup_session_if_expired(snort::Packet*);
     void init_tcp_packet_analysis(TcpSegmentDescriptor&);
     void check_events_and_actions(const TcpSegmentDescriptor& tsd);
     void flush_tracker(TcpStreamTracker&, snort::Packet*, uint32_t dir, bool final_flush);

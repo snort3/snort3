@@ -42,7 +42,7 @@ bool TcpStateClosing::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateClosing::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
+    trk.normalizer.ecn_tracker(tsd.get_tcph());
     if ( tsd.is_data_segment() )
         trk.session->handle_data_on_syn(tsd);
     return true;

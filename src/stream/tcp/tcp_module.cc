@@ -215,7 +215,7 @@ static const Parameter s_params[] =
       "queue data for reassembly before traffic is seen in both directions" },
 
     { "require_3whs", Parameter::PT_INT, "-1:max31", "-1",
-      "don't track midstream sessions after given seconds from start up; -1 tracks all" },
+      "deprecated: use stream.require_3whs instead" },
 
     { "show_rebuilt_packets", Parameter::PT_BOOL, nullptr, "false",
       "enable cmg like output of reassembled packets" },
@@ -372,9 +372,10 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("require_3whs") )
     {
-        config->hs_timeout = v.get_int32();
+        int t = v.get_int32();
+        if ( t != -1 )
+            get_network_parse_policy()->hs_timeout = v.get_int32();
     }
-
     else if ( v.is("show_rebuilt_packets") )
     {
         if ( v.get_bool() )
@@ -406,13 +407,6 @@ bool StreamTcpModule::begin(const char* fqn, int, SnortConfig*)
         return false;
 
     config = new TcpStreamConfig;
-    return true;
-}
-
-bool StreamTcpModule::end(const char*, int, SnortConfig* sc)
-{
-    if ( config->hs_timeout >= 0 )
-        sc->set_run_flags(RUN_FLAG__TRACK_ON_SYN);
     return true;
 }
 

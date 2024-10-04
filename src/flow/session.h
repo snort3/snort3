@@ -48,7 +48,7 @@ public:
     virtual int process(snort::Packet*) { return 0; }
 
     virtual void restart(snort::Packet*) { }
-    virtual void precheck(snort::Packet*) { }
+    virtual bool precheck(snort::Packet*) { return false; }
     virtual void clear() = 0;
     virtual void cleanup(snort::Packet* = nullptr) { clear(); }
 

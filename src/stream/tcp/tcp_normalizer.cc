@@ -232,15 +232,13 @@ void TcpNormalizer::trim_mss_payload(
 }
 
 void TcpNormalizer::ecn_tracker(
-    TcpNormalizerState& tns, const tcp::TCPHdr* tcph, bool req3way)
+    TcpNormalizerState& tns, const tcp::TCPHdr* tcph)
 {
-    if ( tcph->is_syn_ack() )
-    {
-        if ( !req3way || tns.session->ecn )
-            tns.session->ecn = ((tcph->th_flags & (TH_ECE | TH_CWR)) == TH_ECE);
-    }
-    else if ( tcph->is_syn() )
+    if ( tcph->is_syn_only() )
         tns.session->ecn = tcph->are_flags_set(TH_ECE | TH_CWR);
+
+    else if ( tcph->is_syn_ack() )
+        tns.session->ecn = tns.session->ecn and ((tcph->th_flags & (TH_ECE | TH_CWR)) == TH_ECE);
 }
 
 void TcpNormalizer::ecn_stripper(

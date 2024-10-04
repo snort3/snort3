@@ -231,6 +231,8 @@ public:
     uint32_t checksum_eval = CHECKSUM_FLAG__ALL | CHECKSUM_FLAG__DEF;
     uint32_t checksum_drop = CHECKSUM_FLAG__DEF;
     uint32_t normal_mask = 0;
+
+    int hs_timeout = -1;
     bool cloned = false;
 
 private:

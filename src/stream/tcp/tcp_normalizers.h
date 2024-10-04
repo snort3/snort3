@@ -71,8 +71,8 @@ public:
     void trim_mss_payload(TcpSegmentDescriptor& tsd, uint32_t max = 0)
     { norm->trim_mss_payload(tns, tsd, max); }
 
-    void ecn_tracker(const snort::tcp::TCPHdr* tcph, bool req3way)
-    { norm->ecn_tracker(tns, tcph, req3way); }
+    void ecn_tracker(const snort::tcp::TCPHdr* tcph)
+    { norm->ecn_tracker(tns, tcph); }
 
     void ecn_stripper(TcpSegmentDescriptor& tsd)
     { norm->ecn_stripper(tns, tsd); }

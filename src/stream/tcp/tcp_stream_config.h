@@ -37,19 +37,6 @@ class TcpStreamConfig
 public:
     TcpStreamConfig();
 
-    bool require_3whs()
-    {
-        return hs_timeout >= 0;
-    }
-
-    bool midstream_allowed(snort::Packet* p)
-    {
-        if ( ( hs_timeout < 0 ) || ( p->pkth->ts.tv_sec - packet_first_time() < hs_timeout ) )
-            return true;
-
-        return false;
-    }
-
     void show() const;
 
     StreamPolicy policy = StreamPolicy::OS_DEFAULT;
@@ -69,7 +56,6 @@ public:
     uint32_t max_consec_small_seg_size = STREAM_DEFAULT_MAX_SMALL_SEG_SIZE;
 
     uint32_t paf_max = 16384;
-    int hs_timeout = -1;
 
     bool no_ack = false;
     uint32_t embryonic_timeout = STREAM_DEFAULT_SSN_TIMEOUT;

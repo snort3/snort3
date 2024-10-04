@@ -48,10 +48,10 @@ public:
 TcpSession::TcpSession( Flow* ) : Session( flow ) { }
 TcpSession::~TcpSession() = default;
 bool TcpSession::setup(Packet*){ return true; }
-void TcpSession::update_direction(char, SfIp const*, unsigned short){ }
-int TcpSession::process(Packet*){ return 0; }
-void TcpSession::restart(Packet*){ }
-void TcpSession::precheck(Packet*){ }
+void TcpSession::update_direction(char, SfIp const*, unsigned short) { }
+int TcpSession::process(Packet*) { return 0; }
+void TcpSession::restart(Packet*) { }
+bool TcpSession::precheck(Packet*) { return false; }
 void TcpSession::clear(){ }
 void TcpSession::cleanup(Packet* = nullptr){ }
 bool TcpSession::add_alert(Packet*, unsigned int, unsigned int){ return true; }

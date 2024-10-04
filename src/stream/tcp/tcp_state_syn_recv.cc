@@ -38,7 +38,7 @@ TcpStateSynRecv::TcpStateSynRecv(TcpStateMachine& tsm) :
 bool TcpStateSynRecv::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.finish_server_init(tsd);
-    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
+    trk.normalizer.ecn_tracker(tsd.get_tcph());
     trk.session->update_timestamp_tracking(tsd);
     Flow* flow = tsd.get_flow();
     if ( tsd.get_tcph()->are_flags_set(TH_ECE) &&
@@ -65,7 +65,7 @@ bool TcpStateSynRecv::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 bool TcpStateSynRecv::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.finish_server_init(tsd);
-    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
+    trk.normalizer.ecn_tracker(tsd.get_tcph());
 
     return true;
 }
@@ -76,7 +76,7 @@ bool TcpStateSynRecv::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
     {
         trk.irs = tsd.get_seq();
         trk.update_tracker_ack_recv(tsd);
-        trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
+        trk.normalizer.ecn_tracker(tsd.get_tcph());
         trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
         if ( tsd.is_data_segment() )
             trk.session->handle_data_on_syn(tsd);
@@ -87,7 +87,7 @@ bool TcpStateSynRecv::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateSynRecv::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.session->tcp_config->midstream_allowed(tsd.get_pkt()) && trk.session->flow->two_way_traffic() )
+    if ( trk.session->flow->two_way_traffic() )
     {
         TcpStreamTracker::TcpState listener_state = tsd.get_listener()->get_tcp_state();
         // Does this ACK finish 4-way handshake
@@ -119,20 +119,19 @@ bool TcpStateSynRecv::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateSynRecv::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.session->tcp_config->midstream_allowed(tsd.get_pkt()) )
+    trk.update_tracker_ack_sent(tsd);
+
+    if ( trk.session->no_ack_mode_enabled() )
+        trk.update_tracker_no_ack_recv(tsd);
+
+    if ( trk.session->flow->two_way_traffic() )
     {
-        trk.update_tracker_ack_sent(tsd);
-        if ( trk.session->no_ack_mode_enabled() )
-            trk.update_tracker_no_ack_recv(tsd);
-        if ( trk.session->flow->two_way_traffic() )
+        TcpStreamTracker::TcpState listener_state = tsd.get_listener()->get_tcp_state();
+        // Does this ACK finish 4-way handshake
+        if ( TcpStreamTracker::TCP_ESTABLISHED == listener_state )
         {
-            TcpStreamTracker::TcpState listener_state = tsd.get_listener()->get_tcp_state();
-            // Does this ACK finish 4-way handshake
-            if ( TcpStreamTracker::TCP_ESTABLISHED == listener_state )
-            {
-                trk.session->set_established(tsd);
-                trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
-            }
+            trk.session->set_established(tsd);
+            trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
         }
     }
     return true;

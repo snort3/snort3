@@ -338,7 +338,6 @@ public:
     TcpEvent tcp_event = TCP_MAX_EVENTS;
 
     bool client_tracker;
-    bool require_3whs = false;
     bool rst_pkt_sent = false;
     bool midstream_initial_ack_flush = false;
 

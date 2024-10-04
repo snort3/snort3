@@ -140,7 +140,6 @@ public:
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool begin(const char*, int, snort::SnortConfig*) override;
-    bool end(const char*, int, snort::SnortConfig*) override;
 
     const snort::RuleMap* get_rules() const override;
 

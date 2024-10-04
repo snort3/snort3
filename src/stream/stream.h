@@ -29,6 +29,9 @@
 #include <daq_common.h>
 
 #include "flow/flow.h"
+#include "main/policy.h"
+#include "protocols/packet.h"
+#include "time/packet_time.h"
 
 class HostAttributesDescriptor;
 typedef std::shared_ptr<HostAttributesDescriptor> HostAttributesEntry;
@@ -157,7 +160,6 @@ public:
         Flow*, Packet* p, uint32_t gid, uint32_t sid,
         uint32_t eventId, uint32_t eventSecond);
 
-
     static void disable_reassembly(Flow*);
 
     // Returns true if stream data for the flow is in sequence, otherwise return false.
@@ -217,12 +219,17 @@ public:
     // Handle session block pending state
     static void check_flow_closed(Packet*);
 
-    static void populate_flow_key(const Packet*, FlowKey*);
+    static bool require_3whs()
+    { return get_network_policy()->hs_timeout >= 0; }
 
-    static void set_snort_protocol_id_from_ha(Flow*, const SnortProtocolId);
+    static bool midstream_allowed(const Packet* p, bool alert = false);
 
     static bool is_midstream(Flow* flow)
     { return ((flow->ssn_state.session_flags & SSNFLAG_MIDSTREAM) != 0); }
+
+    static void populate_flow_key(const Packet*, FlowKey*);
+
+    static void set_snort_protocol_id_from_ha(Flow*, const SnortProtocolId);
 
     // Get the TTL value used at session setup
     // Set outer=false to get inner ip ttl for ip in ip; else outer=true

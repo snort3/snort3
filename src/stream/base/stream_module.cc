@@ -85,6 +85,9 @@ static const Parameter s_params[] =
       "use zero for production, non-zero for testing at given size (for TCP and user)" },
 #endif
 
+    { "held_packet_timeout", Parameter::PT_INT, "1:max32", "1000",
+      "timeout in milliseconds for held packets" },
+
     { "ip_frags_only", Parameter::PT_BOOL, nullptr, "false",
       "don't process non-frag flows" },
 
@@ -97,8 +100,8 @@ static const Parameter s_params[] =
     { "pruning_timeout", Parameter::PT_INT, "1:max32", "30",
       "minimum inactive time before being eligible for pruning" },
 
-    { "held_packet_timeout", Parameter::PT_INT, "1:max32", "1000",
-      "timeout in milliseconds for held packets" },
+    { "require_3whs", Parameter::PT_INT, "-1:max31", "-1",
+      "don't track midstream TCP sessions after given seconds from start up; -1 tracks all" },
 
     FLOW_TYPE_TABLE("ip_cache",   "ip",   ip_params),
     FLOW_TYPE_TABLE("icmp_cache", "icmp", icmp_params),
@@ -288,65 +291,61 @@ bool StreamModule::begin(const char* fqn, int, SnortConfig*)
 
 bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
 {
-    PktType type = PktType::NONE;
-
 #ifdef REG_TEST
     if ( v.is("footprint") )
-    {
         config.footprint = v.get_uint32();
-        return true;
-    }
+    else
 #endif
 
-    if ( v.is("ip_frags_only") )
+    if ( v.is("held_packet_timeout") )
+        config.held_packet_timeout = v.get_uint32();
+
+    else if ( v.is("ip_frags_only") )
     {
         if ( v.get_bool() )
             c->set_run_flags(RUN_FLAG__IP_FRAGS_ONLY);
-        return true;
     }
     else if ( v.is("max_flows") )
-    {
         config.flow_cache_cfg.max_flows = v.get_uint32();
-        return true;
-    }
-    else if ( v.is("prune_flows") )
-    {
-        config.flow_cache_cfg.prune_flows = v.get_uint32();
-        return true;
-    }
-    else if ( v.is("pruning_timeout") )
-    {
-        config.flow_cache_cfg.pruning_timeout = v.get_uint32();
-        return true;
-    }
-    else if ( v.is("held_packet_timeout") )
-    {
-        config.held_packet_timeout = v.get_uint32();
-        return true;
-    }
-    else if ( strstr(fqn, "ip_cache") )
-        type = PktType::IP;
-    else if ( strstr(fqn, "icmp_cache") )
-        type = PktType::ICMP;
-    else if ( strstr(fqn, "tcp_cache") )
-        type = PktType::TCP;
-    else if ( strstr(fqn, "udp_cache") )
-        type = PktType::UDP;
-    else if ( strstr(fqn, "user_cache") )
-        type = PktType::USER;
-    else if ( strstr(fqn, "file_cache") )
-        type = PktType::FILE;
-    else
-        return false;
 
-    if ( v.is("idle_timeout") )
-        config.flow_cache_cfg.proto[to_utype(type)].nominal_timeout = v.get_uint32();
+    else if ( v.is("prune_flows") )
+        config.flow_cache_cfg.prune_flows = v.get_uint32();
+
+    else if ( v.is("pruning_timeout") )
+        config.flow_cache_cfg.pruning_timeout = v.get_uint32();
+
+    else if ( v.is("require_3whs") )
+        config.hs_timeout = v.get_int32();
+
+    else if ( !strcmp(fqn, "stream.file_cache.idle_timeout") )
+        config.flow_cache_cfg.proto[to_utype(PktType::FILE)].nominal_timeout = v.get_uint32();
+
+    else if ( !strcmp(fqn, "stream.ip_cache.idle_timeout") )
+        config.flow_cache_cfg.proto[to_utype(PktType::IP)].nominal_timeout = v.get_uint32();
+
+    else if ( !strcmp(fqn, "stream.icmp_cache.idle_timeout") )
+        config.flow_cache_cfg.proto[to_utype(PktType::ICMP)].nominal_timeout = v.get_uint32();
+
+    else if ( !strcmp(fqn, "stream.tcp_cache.idle_timeout") )
+        config.flow_cache_cfg.proto[to_utype(PktType::TCP)].nominal_timeout = v.get_uint32();
+
+    else if ( !strcmp(fqn, "stream.udp_cache.idle_timeout") )
+        config.flow_cache_cfg.proto[to_utype(PktType::UDP)].nominal_timeout = v.get_uint32();
+
+    else
+    {
+        assert(!strcmp(fqn, "stream.user_cache.idle_timeout"));
+        config.flow_cache_cfg.proto[to_utype(PktType::USER)].nominal_timeout = v.get_uint32();
+    }
 
     return true;
 }
 
 bool StreamModule::end(const char* fqn, int, SnortConfig* sc)
 {
+    if ( config.hs_timeout != -1 ) // condition required until stream_tcp.require_3whs is removed
+        get_network_parse_policy()->hs_timeout = config.hs_timeout;
+
     if ( Snort::is_reloading() && strcmp(fqn, MOD_NAME) == 0 )
     {
         StreamReloadResourceManager* reload_resource_manager = new StreamReloadResourceManager;
@@ -484,6 +483,7 @@ void StreamModuleConfig::show() const
     ConfigLogger::log_value("max_aux_ip", SnortConfig::get_conf()->max_aux_ip);
     ConfigLogger::log_value("pruning_timeout", flow_cache_cfg.pruning_timeout);
     ConfigLogger::log_value("prune_flows", flow_cache_cfg.prune_flows);
+    ConfigLogger::log_limit("require_3whs", hs_timeout, -1, hs_timeout < 0 ? hs_timeout : -1);
 
     for (int i = to_utype(PktType::IP); i < to_utype(PktType::PDU); ++i)
     {

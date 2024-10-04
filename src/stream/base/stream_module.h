@@ -29,6 +29,8 @@
 #include "framework/module.h"
 #include "main/analyzer.h"
 #include "main/reload_tuner.h"
+#include "protocols/packet.h"
+#include "time/packet_time.h"
 
 namespace snort
 {
@@ -120,6 +122,7 @@ struct StreamModuleConfig
     unsigned footprint = 0;
 #endif
     uint32_t held_packet_timeout = 1000;  // in milliseconds
+    int hs_timeout = -1;
 
     void show() const;
 };

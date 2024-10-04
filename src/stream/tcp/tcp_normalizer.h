@@ -79,7 +79,7 @@ public:
     virtual void trim_win_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0,
         bool force = false);
     virtual void trim_mss_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
-    virtual void ecn_tracker(State&, const snort::tcp::TCPHdr*, bool req3way);
+    virtual void ecn_tracker(State&, const snort::tcp::TCPHdr*);
     virtual void ecn_stripper(State&, TcpSegmentDescriptor&);
     virtual uint32_t get_zwp_seq(State&);
     virtual uint32_t get_stream_window(State&, TcpSegmentDescriptor&);

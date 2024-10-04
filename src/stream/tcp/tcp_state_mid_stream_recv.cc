@@ -45,7 +45,7 @@ bool TcpStateMidStreamRecv::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker
 bool TcpStateMidStreamRecv::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.session->check_for_repeated_syn(tsd);
-    trk.normalizer.ecn_tracker(tsd.get_tcph(), trk.session->tcp_config->require_3whs());
+    trk.normalizer.ecn_tracker(tsd.get_tcph());
     return true;
 }
 

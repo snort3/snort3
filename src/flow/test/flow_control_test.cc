@@ -92,6 +92,8 @@ namespace ip
 {
 uint32_t IpApi::id() const { return 0; }
 }
+bool Stream::midstream_allowed(Packet const*, bool)
+{ return false; }
 }
 
 bool FlowKey::init(
