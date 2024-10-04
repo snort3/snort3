@@ -1,0 +1,49 @@
+
+The TcpPdu splitter provides a generic TCP stream flush function to support
+IPS.  This works for PDUs that contain a length field at a fixed offset that
+can be extracted and used to set a flush point.
+
+The general format supported looks like this:
+
+<flow> = <PDU> | <PDU> | ...
+<PDU> ::= <header>[<data>]
+<header> ::= [<offset>]<length>[<skip>]
+
+Where:
+
+* [ X ] indicates that X is optional and | is the flush point.
+
+* <flow> refers to one side of a flow.
+
+* All <PDU>s in both directions have the same header structure as defined by
+  the configuration.
+
+* <length> is assumed to be in network byte order.
+
+So a PDU with a 4 byte length field in the middle of a 12 byte header would be
+configured with offset = size = skip = 4.
+
+tcp_pdu is not service specific. An appropriate wizard pattern must direct the
+paylaod to a tcp_pdu instance configured for the flow.
+
+The initial implementation supports these parameters:
+
+* int tcp_pdu.offset = 0: index to first byte of length field { 0:65535 }
+* int tcp_pdu.size = 4: number of bytes in length field { 1:4 }
+* int tcp_pdu.skip = 0: bytes after length field to end of header { 0:65535 }
+* bool tcp_pdu.relative = false: extracted length follows field (instead of whole PDU)
+
+Additional parameters that may be supported in the future if required:
+
+* int tcp_pdu.bitmask = 0xFFFFFFFF: applies as an AND to the extracted value to get length { 0x1:0xFFFFFFFF }
+* int tcp_pdu.multiplier = 1: scale extracted value by given amount after masking { 1:65535 }
+
+Still other possibilities:
+
+* bool tcp_pdu.big = false: big endian
+* bool tcp_pdu.little = false: little endian
+* bool tcp_pdu.string = false: convert from string
+* bool tcp_pdu.hex = false: convert from hex string
+* bool tcp_pdu.oct = false: convert from octal string
+* bool tcp_pdu.dec = false: convert from decimal string
+
