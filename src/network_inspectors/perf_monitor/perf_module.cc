@@ -32,6 +32,8 @@
 #include "main/analyzer_command.h"
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
+#include "latency/packet_latency.h"
+#include "latency/rule_latency.h"
 
 #include "perf_monitor.h"
 #include "perf_pegs.h"
@@ -118,7 +120,7 @@ private:
     PerfMonitor* perf_monitor;
 };
 
-static bool current_packet_latency, current_rule_latency = false;
+static THREAD_LOCAL bool current_packet_latency, current_rule_latency = false;
 
 static const Parameter flow_ip_profiling_params[] =
 {
@@ -137,10 +139,27 @@ static const Parameter flow_ip_profiling_params[] =
 bool PerfMonFlowIPDebug::execute(Analyzer&, void**)
 {
     if (enable)
+    {
+        if ( constraints->flow_ip_all )
+        {
+            if (rule_latency::force_enabled())
+                current_rule_latency = true;
+            if (packet_latency::force_enabled())
+                current_packet_latency = true;
+            rule_latency::set_force_enable(true);
+            packet_latency::set_force_enable(true);
+        }
         perf_monitor->enable_profiling(constraints);
+    }
     else
-        perf_monitor->disable_profiling(constraints);
+    {
+        if ( !current_packet_latency )
+            packet_latency::set_force_enable(false);
+        if ( !current_rule_latency )
+            rule_latency::set_force_enable(false);
 
+        perf_monitor->disable_profiling(constraints);
+    }
     return true;
 }
 
@@ -161,17 +180,6 @@ static int enable_flow_ip_profiling(lua_State* L)
 
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     main_broadcast_command(new PerfMonFlowIPDebug(new_constraints, true, perf_monitor), ctrlcon);
-
-    if ( new_constraints->flow_ip_all )
-    {
-        const SnortConfig* sc = SnortConfig::get_conf();
-        if ( sc->get_packet_latency() )
-            current_packet_latency = true;
-        if ( sc->get_rule_latency() )
-            current_rule_latency = true;
-        sc->set_packet_latency(true);
-        sc->set_rule_latency(true);
-    }
 
     LogMessage("Enabling flow ip profiling with sample interval %d packet count %d all stats tracking %s\n",
             new_constraints->sample_interval, new_constraints->pkt_cnt,
@@ -203,14 +211,6 @@ static int disable_flow_ip_profiling(lua_State* L)
 
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     main_broadcast_command(new PerfMonFlowIPDebug(new_constraints, false, perf_monitor), ctrlcon);
-
-    const SnortConfig* sc = SnortConfig::get_conf();
-
-    if ( !current_packet_latency )
-        sc->set_packet_latency(false);
-
-    if ( !current_rule_latency )
-        sc->set_rule_latency(false);
 
     LogMessage("Disabling flow ip profiling\n");
 
@@ -366,8 +366,8 @@ bool PerfMonModule::end(const char* fqn, int idx, SnortConfig* sc)
 
     if ( config->flow_ip_all )
     {
-        sc->set_packet_latency(true); 
-        sc->set_rule_latency(true);
+        packet_latency::set_force_enable(true);
+        rule_latency::set_force_enable(true);
     }
 
     return true;

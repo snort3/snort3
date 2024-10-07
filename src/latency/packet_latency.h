@@ -21,9 +21,18 @@
 #ifndef PACKET_LATENCY_H
 #define PACKET_LATENCY_H
 
+#include "main/snort_types.h"
+
 namespace snort
 {
 struct Packet;
+}
+
+namespace packet_latency
+{
+    SO_PUBLIC bool force_enabled();
+
+    SO_PUBLIC void set_force_enable(bool force);
 }
 
 class PacketLatency

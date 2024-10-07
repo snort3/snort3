@@ -47,6 +47,7 @@
 #include "framework/data_bus.h"
 #include "latency/packet_latency.h"
 #include "latency/rule_latency.h"
+#include "latency/latency_config.h"
 #include "log/messages.h"
 #include "main/swapper.h"
 #include "main.h"
@@ -648,6 +649,9 @@ void Analyzer::init_unprivileged()
     HostAttributesManager::initialize();
     RuleContext::set_enabled(sc->profiler->rule.show);
     TimeProfilerStats::set_enabled(sc->profiler->time.show);
+    packet_latency::set_force_enable(sc->latency->packet_latency.enabled() ||
+        sc->latency->packet_latency.plugin_forced);
+    rule_latency::set_force_enable(sc->latency->rule_latency.enabled());
 
     // in case there are HA messages waiting, process them first
     HighAvailabilityManager::process_receive();

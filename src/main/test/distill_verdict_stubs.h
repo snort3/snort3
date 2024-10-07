@@ -96,7 +96,9 @@ void EventTrace_Term() { }
 void detection_filter_init(DetectionFilterConfig*) { }
 void detection_filter_term() { }
 void RuleLatency::tterm() { }
+void rule_latency::set_force_enable(bool) { }
 void PacketLatency::tterm() { }
+void packet_latency::set_force_enable(bool) { }
 void SideChannelManager::thread_init() { }
 void SideChannelManager::thread_term() { }
 void CodecManager::thread_init() { }

@@ -27,7 +27,10 @@
 #include <chrono>
 
 #include "main/snort_config.h"
+#include "main/reload_tuner.h"
 #include "trace/trace.h"
+#include "latency/packet_latency.h"
+#include "latency/rule_latency.h"
 
 #include "latency_config.h"
 #include "latency_rules.h"
@@ -171,6 +174,33 @@ static inline bool latency_set(const Value& v, RuleLatencyConfig& config)
     return true;
 }
 
+class LatencyTuner : public snort::ReloadResourceTuner
+{
+public:
+    explicit LatencyTuner(bool enable_packet, bool enable_rule)
+        : enable_packet(enable_packet), enable_rule(enable_rule)
+    {}
+    ~LatencyTuner() override = default;
+
+    bool tinit() override
+    {
+        packet_latency::set_force_enable(enable_packet);
+        rule_latency::set_force_enable(enable_rule);
+
+        return false;
+    }
+
+    bool tune_packet_context() override
+    { return true; }
+
+    bool tune_idle_context() override
+    { return true; }
+
+private:
+    bool enable_packet = false;
+    bool enable_rule = false;
+};
+
 LatencyModule::LatencyModule() : Module(s_name, s_help, s_params)
 { }
 
@@ -201,16 +231,20 @@ bool LatencyModule::set(const char* fqn, Value& v, SnortConfig* sc)
     return true;
 }
 
-bool LatencyModule::end(const char*, int, SnortConfig* sc)
+bool LatencyModule::end(const char* fqn, int, SnortConfig* sc)
 {
-    PacketLatencyConfig& packet_config = sc->latency->packet_latency;
-    RuleLatencyConfig& rule_config = sc->latency->rule_latency;
+    const PacketLatencyConfig& packet_config = sc->latency->packet_latency;
+    const RuleLatencyConfig& rule_config = sc->latency->rule_latency;
 
     if ( packet_config.max_time > CLOCK_ZERO )
-        packet_config.force_enable = true;
+        packet_latency::set_force_enable(true);
 
     if ( rule_config.max_time > CLOCK_ZERO )
-        rule_config.force_enable = true;
+        rule_latency::set_force_enable(true);
+
+    if ( strcmp(fqn, "latency") == 0 )
+        sc->register_reload_handler(new LatencyTuner(packet_latency::force_enabled(), 
+            rule_latency::force_enabled()));
 
     return true;
 }

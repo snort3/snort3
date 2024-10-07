@@ -47,6 +47,17 @@ static THREAD_LOCAL uint64_t elapsed = 0;
 
 namespace packet_latency
 {
+THREAD_LOCAL bool force_enable = false;
+
+bool force_enabled()
+{
+    return force_enable;
+}
+
+void set_force_enable(bool force)
+{
+    force_enable = force;
+}
 // -----------------------------------------------------------------------------
 // helpers
 // -----------------------------------------------------------------------------
@@ -233,7 +244,7 @@ static inline Impl<>& get_impl()
 
 void PacketLatency::push()
 {
-    if ( packet_latency::config->force_enabled())
+    if ( packet_latency::force_enabled())
     {
         packet_latency::get_impl().push();
         ++latency_stats.total_packets;
@@ -242,7 +253,7 @@ void PacketLatency::push()
 
 void PacketLatency::pop(const Packet* p)
 {
-    if ( packet_latency::config->force_enabled())
+    if ( packet_latency::force_enabled())
     {
         if ( packet_latency::get_impl().pop(p) )
             ++latency_stats.packet_timeouts;
@@ -260,7 +271,7 @@ void PacketLatency::pop(const Packet* p)
 
 bool PacketLatency::fastpath()
 {
-    if ( packet_latency::config->enabled() )
+    if ( packet_latency::force_enabled() )
         return packet_latency::get_impl().fastpath();
 
     return false;

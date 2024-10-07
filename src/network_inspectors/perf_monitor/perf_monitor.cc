@@ -54,7 +54,7 @@ THREAD_LOCAL ProfileStats perfmonStats;
 static THREAD_LOCAL std::vector<PerfTracker*>* trackers;
 static THREAD_LOCAL FlowIPTracker* flow_ip_tracker = nullptr;
 
-static THREAD_LOCAL PerfConstraints* t_constraints;
+THREAD_LOCAL PerfConstraints* t_constraints;
 
 //-------------------------------------------------------------------------
 // class stuff
@@ -123,7 +123,7 @@ public:
         uint64_t flow_latency = 0;
         uint64_t rule_latency = 0;
 
-        if ( perf_monitor.get_constraints()->flow_ip_all )
+        if ( t_constraints->flow_ip_all )
         {
             const AppIdSessionApi* appid_session_api = appid_api.get_appid_session_api(*flow);
             if ( appid_session_api )

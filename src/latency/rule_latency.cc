@@ -47,8 +47,20 @@
 
 using namespace snort;
 
+
 namespace rule_latency
 {
+THREAD_LOCAL bool force_enable = false;
+
+bool force_enabled()
+{
+    return force_enable;
+}
+
+void set_force_enable(bool force)
+{
+    force_enable = force;
+}
 // -----------------------------------------------------------------------------
 // helpers
 // -----------------------------------------------------------------------------
@@ -340,7 +352,7 @@ static inline Impl<>& get_impl()
 
 void RuleLatency::push(const detection_option_tree_root_t& root, Packet* p)
 {
-    if ( rule_latency::config->force_enabled() )
+    if ( rule_latency::force_enabled() )
     {
         if ( rule_latency::get_impl().push(root, p) )
             ++latency_stats.rule_tree_enables;
@@ -351,7 +363,7 @@ void RuleLatency::push(const detection_option_tree_root_t& root, Packet* p)
 
 void RuleLatency::pop()
 {
-    if ( rule_latency::config->force_enabled() )
+    if ( rule_latency::force_enabled() )
     {
         if ( rule_latency::get_impl().pop() )
             ++latency_stats.rule_eval_timeouts;
@@ -360,7 +372,7 @@ void RuleLatency::pop()
 
 bool RuleLatency::suspended()
 {
-    if ( rule_latency::config->enabled() )
+    if ( rule_latency::force_enabled() )
         return rule_latency::get_impl().suspended();
 
     return false;

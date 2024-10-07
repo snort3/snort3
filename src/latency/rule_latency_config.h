@@ -26,7 +26,6 @@
 struct RuleLatencyConfig
 {
     hr_duration max_time = 0_ticks;
-    bool force_enable = false;
     bool suspend = false;
     unsigned suspend_threshold = 0;
     hr_duration max_suspend_time = 0_ticks;
@@ -41,11 +40,6 @@ struct RuleLatencyConfig
             return true;
 #endif
         return max_time > 0_ticks;
-    }
-
-    bool force_enabled() const
-    {
-        return force_enable;
     }
 
     bool allow_reenable() const { return max_suspend_time > 0_ticks; }

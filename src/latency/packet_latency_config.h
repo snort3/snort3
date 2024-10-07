@@ -27,7 +27,7 @@ struct PacketLatencyConfig
 {
     hr_duration max_time = CLOCK_ZERO;
     bool fastpath = false;
-    bool force_enable = false;
+    bool plugin_forced = false;
 #ifdef REG_TEST
     bool test_timeout = false;
 #endif
@@ -39,11 +39,6 @@ struct PacketLatencyConfig
             return true;
 #endif
         return max_time > CLOCK_ZERO;
-    }
-
-    bool force_enabled() const
-    {
-        return force_enable;
     }
 };
 

@@ -21,10 +21,18 @@
 #ifndef RULE_LATENCY_H
 #define RULE_LATENCY_H
 
+#include "main/snort_types.h"
+
 struct detection_option_tree_root_t;
 namespace snort
 {
 struct Packet;
+}
+
+namespace rule_latency
+{
+    SO_PUBLIC bool force_enabled();
+    SO_PUBLIC void set_force_enable(bool force);
 }
 
 class RuleLatency

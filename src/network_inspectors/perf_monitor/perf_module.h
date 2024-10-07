@@ -136,6 +136,7 @@ private:
 
 extern THREAD_LOCAL PerfPegStats pmstats;
 extern THREAD_LOCAL snort::ProfileStats perfmonStats;
+extern THREAD_LOCAL PerfConstraints* t_constraints;
 
 #endif
 

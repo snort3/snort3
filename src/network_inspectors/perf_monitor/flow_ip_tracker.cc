@@ -193,8 +193,7 @@ void FlowIPTracker::update(Packet* p)
         uint64_t curr_flow_latency = 0;
         uint64_t curr_rule_latency = 0;
 
-        PerfMonitor* perf_monitor = (PerfMonitor*)PigPen::get_inspector(PERF_NAME, true);
-        if ( perf_monitor->get_constraints()->flow_ip_all == true )
+        if ( t_constraints->flow_ip_all == true )
         {
             if ( p->flow )
             {
