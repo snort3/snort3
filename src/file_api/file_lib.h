@@ -55,13 +55,21 @@ public:
     FileInfo& operator=(const FileInfo& other);
     uint32_t get_file_type() const;
     void set_file_type(uint64_t index);
-    void set_file_name(const char* file_name, uint32_t name_size, bool fn_set = true);
+    void set_file_name(const char* file_name, uint32_t name_size);
     void set_url(const char* url, uint32_t url_size);
-    std::string& get_file_name();
-    std::string& get_url();
+    void set_host(const char* host_name, uint32_t host_size);
+
+    void set_weak_url(const char* url_name, uint32_t url_size);
+    void set_weak_file_name(const char* file_name, uint32_t name_size);
+
+    const std::string& get_file_name() const;
+    const std::string& get_url() const;
+    const std::string& get_host_name() const;
+    
     // Whether file name has been set (could be empty file name)
     bool is_file_name_set() const { return file_name_set; }
     bool is_url_set() const { return url_set; }
+    bool is_host_set() const { return host_set; }
 
     void set_file_size(uint64_t size);
     uint64_t get_file_size() const;
@@ -101,6 +109,8 @@ protected:
     bool file_name_set = false;
     std::string url;
     bool url_set = false;
+    std::string host_name;
+    bool host_set = false;
     uint64_t file_size = 0;
     FileDirection direction = FILE_DOWNLOAD;
     uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;

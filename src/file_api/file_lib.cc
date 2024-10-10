@@ -129,6 +129,8 @@ void FileInfo::copy(const FileInfo& other, bool clear_data)
     file_name_set = other.file_name_set;
     url = other.url;
     url_set = other.url_set;
+    host_name = other.host_name;
+    host_set = other.host_set;
     verdict = other.verdict;
     file_type_enabled = other.file_type_enabled;
     file_signature_enabled = other.file_signature_enabled;
@@ -161,31 +163,57 @@ FileInfo& FileInfo::operator=(const FileInfo& other)
 
 /*File properties*/
 
-void FileInfo::set_file_name(const char* name, uint32_t name_size, bool fn_set)
+void FileInfo::set_file_name(const char* name, uint32_t name_size)
 {
     if (name and name_size)
         file_name.assign(name, name_size);
 
-    if (fn_set)
-        file_name_set = fn_set;
+    file_name_set = true;
+}
+
+void FileInfo::set_weak_file_name(const char* name, uint32_t name_size)
+{
+    if (name and name_size)
+        file_name.assign(name, name_size);
 }
 
 void FileInfo::set_url(const char* url_name, uint32_t url_size)
 {
     if (url_name and url_size)
-    {
         url.assign(url_name, url_size);
-    }
 
     url_set = true;
 }
 
-std::string& FileInfo::get_file_name()
+void FileInfo::set_weak_url(const char* url_name, uint32_t url_size)
+{
+    if (url_name and url_size)
+        url.assign(url_name, url_size);
+}
+
+void FileInfo::set_host(const char* host_name, uint32_t host_size)
+{
+    if (this->host_set)
+        return;
+
+    if (host_name and host_size)
+    {
+        this->host_name.assign(host_name, host_size);
+        this->host_set = true;
+    }
+}
+
+const std::string& FileInfo::get_host_name() const
+{
+    return host_name;
+}
+
+const std::string& FileInfo::get_file_name() const
 {
     return file_name;
 }
 
-std::string& FileInfo::get_url()
+const std::string& FileInfo::get_url() const
 {
     return url;
 }
@@ -940,6 +968,8 @@ void FileContext::print(std::ostream& log)
     print_file_name(log);
     if (url.length() > 0)
         log << "File URI: "<< url << std::endl;
+    if (host_name.length() > 0)
+        log << "Host name: "<< host_name << std::endl;
     log << "File type: " << config->file_type_name(file_type_id)
         << '('<< file_type_id  << ')' << std::endl;
     log << "File size: " << file_size << std::endl;

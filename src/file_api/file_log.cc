@@ -93,7 +93,7 @@ private:
 
 void LogHandler::log_file_name(TextLog* log, FileContext* file)
 {
-    std::string& name = file->get_file_name();
+    const std::string& name = file->get_file_name();
 
     if ( name.empty() )
         return;

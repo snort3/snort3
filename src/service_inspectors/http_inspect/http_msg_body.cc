@@ -690,7 +690,7 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
     const FileDirection dir = source_id == SRC_SERVER ? FILE_DOWNLOAD : FILE_UPLOAD;
 
     uint64_t file_index = get_header(source_id)->get_file_cache_index();
-
+    const std::string host = get_header(source_id)->get_host_header_field();
     const uint8_t* filename_buffer = nullptr;
     uint32_t filename_length = 0;
     const uint8_t* uri_buffer = nullptr;
@@ -701,7 +701,7 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
     bool continue_processing_file = file_flows->file_process(p, file_index, file_data.start(),
         fp_length, session_data->file_octets[source_id], dir,
         get_header(source_id)->get_multi_file_processing_id(), file_position,
-        filename_buffer, filename_length);
+        filename_buffer, filename_length, uri_buffer, uri_length, host);
     if (continue_processing_file)
     {
         session_data->file_depth_remaining[source_id] -= fp_length;

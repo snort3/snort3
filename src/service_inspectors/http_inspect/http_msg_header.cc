@@ -167,6 +167,14 @@ int32_t HttpMsgHeader::get_num_cookies()
     return num_cookies;
 }
 
+ std::string HttpMsgHeader::get_host_header_field() const
+ {
+    if (host_name.length() > STAT_EMPTY_STRING)
+        return std::string((const char*)host_name.start(), host_name.length());
+
+    return "";
+ }
+
 void HttpMsgHeader::gen_events()
 {
     if ((get_header_count(HEAD_CONTENT_LENGTH) > 0) &&
@@ -178,7 +186,7 @@ void HttpMsgHeader::gen_events()
 
     // Force inspection of the Host field
     if (source_id == SRC_CLIENT)
-        get_header_value_norm(HEAD_HOST);
+        host_name.set(get_header_value_norm(HEAD_HOST));
 
     // Host header value too long
     if ((params->maximum_host_length != -1) && (source_id == SRC_CLIENT))

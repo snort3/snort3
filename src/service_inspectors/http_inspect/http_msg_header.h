@@ -56,6 +56,8 @@ public:
     void set_multi_file_processing_id(const uint64_t transaction_id, const uint32_t stream_id);
     uint64_t get_multi_file_processing_id() { return multi_file_processing_id; }
 
+    std::string get_host_header_field() const;
+
 private:
     void prepare_body();
     void setup_mime();
@@ -69,6 +71,7 @@ private:
 
     bool mime_boundary_found = false;
 
+    Field host_name;
     Field true_ip;
     Field true_ip_addr;
     int32_t num_cookies = HttpCommon::STAT_NOT_COMPUTE;
