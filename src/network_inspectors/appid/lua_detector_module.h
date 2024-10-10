@@ -121,6 +121,7 @@ private:
 
     void initialize_lua_detectors();
     void load_lua_detectors(const char* path, bool is_custom);
+    void process_detector_file(char* detector_file_path, bool is_custom);
     void list_lua_detectors() override;
 
     bool ignore_chp_cleanup = false;

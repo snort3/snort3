@@ -78,6 +78,8 @@ static const Parameter s_params[] =
       "enable logging of alpn service mappings" },
     { "log_memory_and_pattern_count", Parameter::PT_BOOL, nullptr, "false",
       "enable logging of memory usage and pattern counts" },
+    { "required_lua_detectors", Parameter::PT_STRING, nullptr, nullptr,
+      "lists down the required lua detectors only" },
 #endif
     { "memcap", Parameter::PT_INT, "1024:maxSZ", "1048576",
       "max size of the service cache before we start pruning the cache" },
@@ -637,6 +639,8 @@ bool AppIdModule::set(const char*, Value& v, SnortConfig*)
         config->log_alpn_service_mappings = v.get_bool();
     else if (v.is("log_memory_and_pattern_count") )
         config->log_memory_and_pattern_count = v.get_bool();
+    else if (v.is("required_lua_detectors") )
+        config->required_lua_detectors = snort_strdup(v.get_string());
     else
 #endif
     if ( v.is("memcap") )

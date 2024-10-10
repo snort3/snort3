@@ -60,6 +60,9 @@ uint32_t OdpContext::next_version = 0;
 AppIdConfig::~AppIdConfig()
 {
     snort_free((void*)app_detector_dir);
+    #ifdef REG_TEST
+    snort_free((void*)required_lua_detectors);
+    #endif
 }
 
 void AppIdConfig::map_app_names_to_snort_ids(SnortConfig& sc)

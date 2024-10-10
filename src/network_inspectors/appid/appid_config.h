@@ -100,6 +100,7 @@ public:
     bool log_eve_process_client_mappings = false;
     bool log_alpn_service_mappings = false;
     bool log_memory_and_pattern_count = false;
+    const char* required_lua_detectors = nullptr;
 #endif
     bool log_stats = false;
     uint32_t app_stats_period = 300;

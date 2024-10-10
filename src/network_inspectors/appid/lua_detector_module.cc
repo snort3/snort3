@@ -516,12 +516,86 @@ void LuaDetectorManager::activate_lua_detectors(const SnortConfig* sc)
         ++lo;
     }
 }
+void ControlLuaDetectorManager::process_detector_file(char* detector_file_path, bool is_custom)
+{
+    ifstream file(detector_file_path, ios::ate);
+    int size = file.tellg();
+    //do not load empty lua files
+    if (size < MIN_LUA_DETECTOR_FILE_SIZE)
+    {
+        file.close();
+        return;
+    }
+    if (size > MAX_LUA_DETECTOR_FILE_SIZE)
+    {
+        appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not load Lua detector %s : \
+            size exceeded maximum limit\n", detector_file_path);
+        file.close();
+        return;
+    }
+    file.close();
+    // In the packet threads, we do not need to load Lua detectors that don't have validate
+    // function such as payload_group_*, ssl_group_*, etc. That's because the patterns they
+    // register are stored in global tables only in control thread. In packet threads, they
+    // do nothing. Skipping loading of these detectors in packet threads saves on the memory
+    // used by LuaJIT.
+
+    // Because the code flow for loading Lua detectors is different for initialization vs
+    // reload, the LuaJIT memory saving is achieved differently in these two cases.
+
+    // During initialization, load_lua_detectors() gets called for all the threads - first
+    // for the control thread and then for the packet threads. Control thread stores the
+    // detectors that have validate in lua_detectors_w_validate. Packet thread loads a
+    // detector in load_detector() only if it finds the detector in lua_detectors_w_validate.
+
+    // During reload, load_lua_detectors() gets called only for control thread. This
+    // function loads detectors for all the packet threads too during reload. It skips
+    // loading detectors that don't have validate for packet threads.
+
+    string buf;
+    bool has_validate = load_detector(detector_file_path, is_custom, buf);
+
+    for (auto& lua_detector_mgr : lua_detector_mgr_list)
+    {
+        if (has_validate)
+            lua_detector_mgr->load_detector(detector_file_path, is_custom, buf);
+    }
+    lua_settop(L, 0);
+}
+
 
 void ControlLuaDetectorManager::load_lua_detectors(const char* path, bool is_custom)
 {
     char pattern[PATH_MAX];
     snprintf(pattern, sizeof(pattern), "%s/*", path);
     glob_t globs;
+
+    #ifdef REG_TEST
+    if (!is_custom)
+    {
+        const char* required_lua_detectors = ctxt.config.required_lua_detectors;
+        if (required_lua_detectors)
+        {
+            std::ifstream file(required_lua_detectors);
+            if (!file)
+            {
+                appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not open required lua detectors list file %s\n", required_lua_detectors);
+            }
+            else
+            {
+                std::string line;
+                int lua_top = lua_gettop(L);
+                if (lua_top)
+                    appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before detector load\n", lua_top);
+                while (std::getline(file, line))
+                {
+                    process_detector_file(const_cast<char*>(line.c_str()), is_custom);
+                }
+            }
+            return;
+        }
+    }
+    #endif
 
     memset(&globs, 0, sizeof(globs));
     int rval = glob(pattern, 0, nullptr, &globs);
@@ -533,49 +607,7 @@ void ControlLuaDetectorManager::load_lua_detectors(const char* path, bool is_cus
 
         for (unsigned n = 0; n < globs.gl_pathc; n++)
         {
-            ifstream file(globs.gl_pathv[n], ios::ate);
-            int size = file.tellg();
-            //do not load empty lua files
-            if (size < MIN_LUA_DETECTOR_FILE_SIZE)
-            {
-                file.close();
-                continue;
-            }
-            if (size > MAX_LUA_DETECTOR_FILE_SIZE)
-            {
-                appid_log(nullptr, TRACE_ERROR_LEVEL, "Error - appid: can not load Lua detector %s : \
-                    size exceeded maximum limit\n", globs.gl_pathv[n]);
-                file.close();
-                continue;
-            }
-            file.close();
-
-            // In the packet threads, we do not need to load Lua detectors that don't have validate
-            // function such as payload_group_*, ssl_group_*, etc. That's because the patterns they
-            // register are stored in global tables only in control thread. In packet threads, they
-            // do nothing. Skipping loading of these detectors in packet threads saves on the memory
-            // used by LuaJIT.
-
-            // Because the code flow for loading Lua detectors is different for initialization vs
-            // reload, the LuaJIT memory saving is achieved differently in these two cases.
-
-            // During initialization, load_lua_detectors() gets called for all the threads - first
-            // for the control thread and then for the packet threads. Control thread stores the
-            // detectors that have validate in lua_detectors_w_validate. Packet thread loads a
-            // detector in load_detector() only if it finds the detector in lua_detectors_w_validate.
-
-            // During reload, load_lua_detectors() gets called only for control thread. This
-            // function loads detectors for all the packet threads too during reload. It skips
-            // loading detectors that don't have validate for packet threads.
-            string buf;
-            bool has_validate = load_detector(globs.gl_pathv[n], is_custom, buf);
-
-            for (auto& lua_detector_mgr : lua_detector_mgr_list)
-            {
-                if (has_validate)
-                    lua_detector_mgr->load_detector(globs.gl_pathv[n], is_custom, buf);
-            }
-            lua_settop(L, 0);
+            process_detector_file(globs.gl_pathv[n], is_custom);
         }
 
         globfree(&globs);
