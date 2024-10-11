@@ -37,8 +37,8 @@ public:
     void gen_events() override;
     void update_flow() override;
 
-    const Field& get_status_code() { return status_code; }
-    const Field& get_reason_phrase() { return reason_phrase; }
+    const Field& get_status_code() const { return status_code; }
+    const Field& get_reason_phrase() const { return reason_phrase; }
 
 #ifdef REG_TEST
     void print_section(FILE* output) override;

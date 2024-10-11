@@ -24,6 +24,7 @@ add_cpputest( pub_sub_http_transaction_end_event_test
         ../../service_inspectors/http_inspect/http_flow_data.cc
         ../../service_inspectors/http_inspect/http_test_manager.cc
         ../../service_inspectors/http_inspect/http_test_input.cc
+        ../../service_inspectors/http_inspect/http_field.cc
     LIBS ${ZLIB_LIBRARIES}
 )
 add_cpputest( pub_sub_ftp_events_test

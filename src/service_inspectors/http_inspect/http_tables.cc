@@ -143,6 +143,11 @@ const StrCode HttpMsgHeadShared::header_list[] =
     { HEAD_RESTRICT_ACCESS_TO_TENANTS, "restrict-access-to-tenants" },
     { HEAD_RESTRICT_ACCESS_CONTEXT,    "restrict-access-context" },
     { HEAD_ORIGIN,                     "origin" },
+    { HEAD_FORWARDED,                  "forwarded" },
+    { HEAD_X_FORWARDED_FROM,           "x-forwarded-from" },
+    { HEAD_CLIENT_IP,                  "client-ip" },
+    { HEAD_XROXY_CONNECTION,           "xroxy-connection" },
+    { HEAD_PROXY_CONNECTION,           "proxy-connection" },
     { 0,                               nullptr }
 };
 

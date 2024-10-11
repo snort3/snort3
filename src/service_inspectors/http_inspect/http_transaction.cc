@@ -81,7 +81,8 @@ HttpTransaction::~HttpTransaction()
         delete infractions[k];
     }
     delete_section_list(body_list);
-    delete_section_list(discard_list);
+    delete_section_list(archive_hdr_list);
+    delete_section_list(archive_status_list);
 }
 
 HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_data, SourceId
@@ -155,10 +156,10 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
               session_data->transaction[SRC_SERVER]->second_response_expected)
     {
         session_data->transaction[SRC_SERVER]->second_response_expected = false;
-        session_data->transaction[SRC_SERVER]->discard_section(
+        session_data->transaction[SRC_SERVER]->archive_status(
             session_data->transaction[SRC_SERVER]->status);
         session_data->transaction[SRC_SERVER]->status = nullptr;
-        session_data->transaction[SRC_SERVER]->discard_section(
+        session_data->transaction[SRC_SERVER]->archive_header(
             session_data->transaction[SRC_SERVER]->header[SRC_SERVER]);
         session_data->transaction[SRC_SERVER]->header[SRC_SERVER] = nullptr;
     }
@@ -217,13 +218,23 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
     return session_data->transaction[source_id];
 }
 
-void HttpTransaction::discard_section(HttpMsgSection* section)
+void HttpTransaction::archive_section(HttpMsgSection* section, HttpMsgSection** archive_list)
 {
     if (section != nullptr)
     {
-        section->next = discard_list;
-        discard_list = section;
+        section->next = *archive_list;
+        *archive_list = section;
     }
+}
+
+void HttpTransaction::archive_status(HttpMsgStatus* status)
+{
+    archive_section(status, &archive_status_list); 
+}
+
+void HttpTransaction::archive_header(HttpMsgHeader* hdr)
+{
+    archive_section(hdr, &archive_hdr_list); 
 }
 
 void HttpTransaction::clear_section()
@@ -288,4 +299,51 @@ void HttpTransaction::set_one_hundred_response()
     }
     one_hundred_response = true;
     second_response_expected = true;
+}
+
+inline bool is_info_code(int32_t code) 
+{
+    return ((99 < code) and (code < 200));
+}
+
+uint8_t HttpTransaction::get_info_code() const
+{     
+     if (status)
+     {
+         const int32_t code = status->get_status_code_num();
+         if (is_info_code(code))
+             return code;
+     }
+
+     const HttpMsgStatus* arch_status = (HttpMsgStatus*) archive_status_list;
+     while (arch_status)
+     {
+         const int32_t code = arch_status->get_status_code_num();
+         if (is_info_code(code))
+             return code;
+         arch_status = (HttpMsgStatus*)(arch_status->next);
+     }
+
+     return 0;
+}
+
+const Field& HttpTransaction::get_info_msg() const
+{     
+     if (status)
+     {
+         const int32_t code = status->get_status_code_num();
+         if (is_info_code(code))
+             return status->get_reason_phrase();
+     }
+
+     const HttpMsgStatus* arch_status = (HttpMsgStatus*) archive_status_list;
+     while (arch_status)
+     {
+         const int32_t code = arch_status->get_status_code_num();
+         if (is_info_code(code))
+             return arch_status->get_reason_phrase();
+         arch_status = (HttpMsgStatus*)(arch_status->next);
+     }
+
+     return Field::FIELD_NULL;
 }

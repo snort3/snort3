@@ -324,6 +324,8 @@ void HttpMsgBody::analyze()
         }
     }
     body_octets += msg_text.length();
+    if (!session_data->partial_flush[source_id])
+        transaction->add_body_len(source_id, detect_data.length());
     partial_inspected_octets = session_data->partial_flush[source_id] ? msg_text.length() : 0;
 }
 
@@ -715,6 +717,7 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
                     filename_length, 0,
                     get_header(source_id)->get_multi_file_processing_id(), uri_buffer,
                     uri_length);
+                transaction->set_filename(source_id, (const char*) filename_buffer, filename_length);
             }
         }
     }

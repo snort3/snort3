@@ -31,6 +31,7 @@
 #include "service_inspectors/http_inspect/http_transaction.h"
 
 using namespace snort;
+using namespace HttpEnums;
 
 HttpTransactionEndEvent::HttpTransactionEndEvent(const HttpTransaction* const trans)
     : transaction(trans) { }
@@ -112,4 +113,62 @@ uint64_t HttpTransactionEndEvent::get_trans_depth() const
         return transaction->get_status()->get_transaction_id();
 
     return 0;
+}
+
+uint64_t HttpTransactionEndEvent::get_request_body_len() const
+{
+    return transaction->get_body_len(HttpCommon::SRC_CLIENT);
+}
+
+uint64_t HttpTransactionEndEvent::get_response_body_len() const
+{
+    return transaction->get_body_len(HttpCommon::SRC_SERVER);
+}
+
+uint8_t HttpTransactionEndEvent::get_info_code() const
+{
+    return transaction->get_info_code();
+}
+
+const Field& HttpTransactionEndEvent::get_info_msg() const
+{
+    return transaction->get_info_msg();
+}
+
+const std::string& HttpTransactionEndEvent::get_filename(HttpCommon::SourceId src_id) const
+{
+    return transaction->get_filename(src_id);
+}
+
+const std::string& HttpTransactionEndEvent::get_proxied() const
+{
+    if (proxies != nullptr)
+        return *proxies;
+
+    const std::pair<HeaderId, const char*> proxy_headers[] =
+    {
+        { HEAD_FORWARDED, "FORWARDED" },
+        { HEAD_X_FORWARDED_FOR, "X-FORWARDED-FOR" },
+        { HEAD_X_FORWARDED_FROM, "X-FORWARDED-FROM" },
+        { HEAD_CLIENT_IP, "CLIENT-IP" },
+        { HEAD_VIA, "VIA" },
+        { HEAD_XROXY_CONNECTION, "XROXY-CONNECTION" },
+        { HEAD_PROXY_CONNECTION, "PROXY-CONNECTION" }
+    };
+
+    proxies = new std::string();
+    for (auto& hdr: proxy_headers)
+    {
+        const Field& val = get_client_header(hdr.first);
+        if (val.length() > 0)
+        {
+            if (!proxies->empty())
+                proxies->append(",");
+            proxies->append(hdr.second);
+            proxies->append(" -> ");
+            proxies->append((const char*)val.start(), val.length());
+        }
+    }
+
+    return *proxies;
 }

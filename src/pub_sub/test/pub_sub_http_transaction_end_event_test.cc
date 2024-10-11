@@ -28,6 +28,7 @@
 #include "service_inspectors/http_inspect/http_flow_data.h"
 #include "service_inspectors/http_inspect/http_inspect.h"
 #include "service_inspectors/http_inspect/http_module.h"
+#include "service_inspectors/http_inspect/http_msg_header.h"
 #include "service_inspectors/http_inspect/http_msg_section.h"
 #include "service_inspectors/http_inspect/http_transaction.h"
 #include "service_inspectors/http_inspect/test/http_unit_test_helpers.h"
@@ -70,9 +71,6 @@ unsigned StreamSplitter::max(snort::Flow*) { return 0; }
 HttpParaList::UriParam::UriParam() { }
 HttpParaList::JsNormParam::~JsNormParam() { }
 HttpParaList::~HttpParaList() { }
-const Field Field::FIELD_NULL { STAT_NO_SOURCE };
-const Field& HttpMsgSection::get_classic_buffer(unsigned, uint64_t, uint64_t)
-{ return Field::FIELD_NULL; }
 HttpInspect::HttpInspect(const HttpParaList* para) :
     params(para), xtra_trueip_id(0), xtra_uri_id(0),
     xtra_host_id(0), xtra_jsnorm_id(0)
@@ -106,7 +104,55 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow*, unsigned,
 bool HttpStreamSplitter::finish(snort::Flow*) { return false; }
 void HttpStreamSplitter::prep_partial_flush(snort::Flow*, uint32_t) { }
 
+HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
+    HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
+    const HttpParaList* params_) :
+    HttpMsgHeadShared(buffer, buf_size, session_data_, source_id_, buf_owner, flow_, params_)
+{}
+void HttpMsgHeader::publish(unsigned){}
+void HttpMsgHeader::gen_events() {}
+void HttpMsgHeader::update_flow() {}
+void HttpMsgHeader::prepare_body() {}
+#ifdef REG_TEST
+void HttpMsgHeader::print_section(FILE*) {}
+#endif
+HttpMsgHeadShared::HttpMsgHeadShared(const uint8_t* buffer, const uint16_t buf_size,
+    HttpFlowData* session_data_, HttpCommon::SourceId source_id_, bool buf_owner,
+    snort::Flow* flow_, const HttpParaList* params_): HttpMsgSection(buffer, buf_size,
+    session_data_, source_id_, buf_owner, flow_, params_), own_msg_buffer(buf_owner)
+{}
+HttpMsgHeadShared::~HttpMsgHeadShared() {}
+HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
+       HttpFlowData* session_data_, SourceId source_id_, bool buf_owner, Flow* flow_,
+       const HttpParaList* params_) :
+    msg_text(buf_size, buffer, buf_owner),
+    session_data(session_data_),
+    flow(flow_),
+    params(params_),
+    transaction(nullptr),
+    trans_num(0),
+    status_code_num(STAT_NOT_PRESENT),
+    source_id(source_id_),
+    version_id(VERS__NOT_PRESENT),
+    method_id(METH__NOT_PRESENT),
+    tcp_close(false)
+{}
+void HttpMsgSection::clear(){}
+bool HttpMsgSection::run_detection(snort::Packet*) { return false; }
+void HttpMsgHeadShared::analyze() {}
+
 THREAD_LOCAL PegCount HttpModule::peg_counts[PEG_COUNT_MAX] = { };
+
+//
+// get_classic_buffer mock
+//
+Field odd (3, (const uint8_t *)"odd", false);
+Field even (4, (const uint8_t *)"even", false);
+static uint32_t test_number = 0;
+const Field& HttpMsgSection::get_classic_buffer(unsigned, uint64_t, uint64_t)
+{
+    return ((test_number % 2) == 0) ? even : odd;
+}
 
 TEST_GROUP(pub_sub_http_transaction_end_event_test)
 {
@@ -127,17 +173,36 @@ TEST_GROUP(pub_sub_http_transaction_end_event_test)
     }
 };
 
-TEST(pub_sub_http_transaction_end_event_test, version_no_req_no_status)
+TEST(pub_sub_http_transaction_end_event_test, no_req_no_status)
 {
     section_type[SRC_CLIENT] = SEC_REQUEST;
     HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
     HttpTransactionEndEvent event(trans);
     HttpEnums::VersionId version = event.get_version();
     CHECK(version == HttpEnums::VERS__NOT_PRESENT);
+    uint64_t trans_depth = event.get_trans_depth();
+    CHECK(trans_depth == 0);
+}
+
+TEST(pub_sub_http_transaction_end_event_test, proxied_str_exists)
+{
+    section_type[SRC_CLIENT] = SEC_REQUEST;
+    HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
+    char buf[] = "something";
+    HttpMsgHeader* hdr = new HttpMsgHeader((uint8_t*)buf, sizeof(buf), flow_data, SRC_CLIENT, false, flow, &params);
+    trans->set_header(hdr, SRC_CLIENT);
+    HttpTransactionEndEvent event(trans);
+    const std::string result = "FORWARDED -> odd,X-FORWARDED-FOR -> odd,X-FORWARDED-FROM -> odd,"
+        "CLIENT-IP -> odd,VIA -> odd,XROXY-CONNECTION -> odd,PROXY-CONNECTION -> odd";
+    test_number = 1;
+    std::string proxied = event.get_proxied();
+    CHECK(proxied == result);
+    test_number = 2;
+    proxied = event.get_proxied();
+    CHECK(proxied == result);
 }
 
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

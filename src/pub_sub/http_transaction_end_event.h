@@ -38,6 +38,8 @@ class SO_PUBLIC HttpTransactionEndEvent : public snort::DataEvent
 {
 public:
     HttpTransactionEndEvent(const HttpTransaction* const);
+    ~HttpTransactionEndEvent() override
+    { delete proxies; }
 
     const Field& get_host_hdr() const;
     const Field& get_uri() const;
@@ -49,11 +51,18 @@ public:
     const Field& get_origin_hdr() const;
     HttpEnums::VersionId get_version() const;
     uint64_t get_trans_depth() const;
+    uint64_t get_request_body_len() const;
+    uint64_t get_response_body_len() const;
+    uint8_t get_info_code() const;
+    const Field& get_info_msg() const;
+    const std::string& get_filename(HttpCommon::SourceId) const;
+    const std::string& get_proxied() const;
 
 private:
     const Field& get_client_header(uint64_t sub_id) const;
 
     const HttpTransaction* const transaction;
+    mutable std::string* proxies = nullptr;
 };
 }
 #endif

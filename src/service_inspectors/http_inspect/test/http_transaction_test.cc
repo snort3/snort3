@@ -113,6 +113,7 @@ bool HttpStreamSplitter::finish(snort::Flow*) { return false; }
 void HttpStreamSplitter::prep_partial_flush(snort::Flow*, uint32_t) { }
 
 THREAD_LOCAL PegCount HttpModule::peg_counts[PEG_COUNT_MAX] = { };
+const Field Field::FIELD_NULL { STAT_NO_SOURCE };
 
 TEST_GROUP(http_transaction_test)
 {

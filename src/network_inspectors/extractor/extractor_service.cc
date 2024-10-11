@@ -159,7 +159,14 @@ ServiceBlueprint HttpExtractorService::blueprint =
       "version",
       "status_code",
       "status_msg",
-      "trans_depth"
+      "trans_depth",
+      "request_body_len",
+      "response_body_len",
+      "info_code",
+      "info_msg",
+      "proxied",
+      "orig_filenames",
+      "resp_filenames"
     },
 };
 

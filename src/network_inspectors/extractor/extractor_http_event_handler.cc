@@ -88,6 +88,41 @@ static uint64_t get_trans_depth(const DataEvent* event, const Packet*, const Flo
     return ((const HttpTransactionEndEvent*)event)->get_trans_depth();
 }
 
+static uint64_t get_request_body_len(const DataEvent* event, const Packet*, const Flow*)
+{
+    return ((const HttpTransactionEndEvent*)event)->get_request_body_len();
+}
+
+static uint64_t get_response_body_len(const DataEvent* event, const Packet*, const Flow*)
+{
+    return ((const HttpTransactionEndEvent*)event)->get_response_body_len();
+}
+
+static uint64_t get_info_code(const DataEvent* event, const Packet*, const Flow*)
+{
+    return ((const HttpTransactionEndEvent*)event)->get_info_code();
+}
+
+static const Field& get_info_msg(const DataEvent* event, const Packet*, const Flow*)
+{
+    return ((const HttpTransactionEndEvent*)event)->get_info_msg();
+}
+
+static const char* get_proxied(const DataEvent* event, const Packet*, const Flow*)
+{
+    return ((const HttpTransactionEndEvent*)event)->get_proxied().c_str();
+}
+
+static const char* get_orig_filenames(const DataEvent* event, const Packet*, const Flow*)
+{
+    return ((const HttpTransactionEndEvent*)event)->get_filename(HttpCommon::SRC_CLIENT).c_str();
+}
+
+static const char* get_resp_filenames(const DataEvent* event, const Packet*, const Flow*)
+{
+    return ((const HttpTransactionEndEvent*)event)->get_filename(HttpCommon::SRC_SERVER).c_str();
+}
+
 static struct timeval get_timestamp(const DataEvent*, const Packet* p, const Flow*)
 {
     return p->pkth->ts;
@@ -136,7 +171,10 @@ static const map<string, ExtractorEvent::SipGetFn> sip_getters =
 
 static const map<string, ExtractorEvent::StrGetFn> str_getters =
 {
-    {"version", get_version}
+    {"version", get_version},
+    {"proxied", get_proxied},
+    {"orig_filenames", get_orig_filenames},
+    {"resp_filenames", get_resp_filenames}
 };
 
 static const map<string, ExtractorEvent::NumGetFn> num_getters =
@@ -145,7 +183,10 @@ static const map<string, ExtractorEvent::NumGetFn> num_getters =
     {"id.resp_p", get_ip_dst_port},
     {"uid", get_uid},
     {"pkt_num", get_pkt_num},
-    {"trans_depth", get_trans_depth}
+    {"trans_depth", get_trans_depth},
+    {"request_body_len", get_request_body_len},
+    {"response_body_len", get_response_body_len},
+    {"info_code", get_info_code}
 };
 
 static const map<string, HttpExtractorEventHandler::SubGetFn> sub_getters =
@@ -157,7 +198,8 @@ static const map<string, HttpExtractorEventHandler::SubGetFn> sub_getters =
     {"referrer", get_referrer},
     {"origin", get_origin},
     {"status_code", get_stat_code},
-    {"status_msg", get_stat_msg}
+    {"status_msg", get_stat_msg},
+    {"info_msg", get_info_msg}
 };
 
 template<class T, class U, class V>
