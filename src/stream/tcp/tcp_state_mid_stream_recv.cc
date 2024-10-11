@@ -54,7 +54,7 @@ bool TcpStateMidStreamRecv::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTra
     if ( trk.normalizer.is_tcp_ips_enabled() )
     {
         trk.seglist.skip_midstream_pickup_seglist_hole(tsd);
-        trk.eval_flush_policy_on_data(tsd.get_pkt());
+        trk.reassembler->eval_flush_policy_on_data(tsd.get_pkt());
         trk.midstream_initial_ack_flush = true;
     }
 
@@ -68,7 +68,7 @@ bool TcpStateMidStreamRecv::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker
     if ( trk.normalizer.is_tcp_ips_enabled() )
     {
         trk.seglist.skip_midstream_pickup_seglist_hole(tsd);
-        trk.eval_flush_policy_on_data(tsd.get_pkt());
+        trk.reassembler->eval_flush_policy_on_data(tsd.get_pkt());
         trk.midstream_initial_ack_flush = true;
     }
 
@@ -88,7 +88,7 @@ bool TcpStateMidStreamRecv::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTr
     if ( trk.normalizer.is_tcp_ips_enabled() )
     {
         trk.seglist.skip_midstream_pickup_seglist_hole(tsd);
-        trk.eval_flush_policy_on_data(tsd.get_pkt());
+        trk.reassembler->eval_flush_policy_on_data(tsd.get_pkt());
         trk.midstream_initial_ack_flush = true;
     }
 
@@ -111,7 +111,7 @@ bool TcpStateMidStreamRecv::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker
     if ( trk.normalizer.is_tcp_ips_enabled() )
     {
         trk.seglist.skip_midstream_pickup_seglist_hole(tsd);
-        trk.eval_flush_policy_on_data(tsd.get_pkt());
+        trk.reassembler->eval_flush_policy_on_data(tsd.get_pkt());
         trk.midstream_initial_ack_flush = true;
     }
 

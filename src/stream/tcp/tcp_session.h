@@ -101,7 +101,7 @@ public:
     void get_packet_header_foo(DAQ_PktHdr_t*, const DAQ_PktHdr_t* orig, uint32_t dir);
     bool can_set_no_ack();
     bool set_no_ack(bool);
-    bool no_ack_mode_enabled() { return no_ack; }
+    inline bool no_ack_mode_enabled() { return no_ack; }
 
     void set_pkt_action_flag(uint32_t flag)
     { pkt_action_mask |= flag; }

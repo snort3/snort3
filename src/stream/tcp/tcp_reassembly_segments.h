@@ -52,7 +52,6 @@ public:
     int delete_reassembly_segment(TcpSegmentNode*);
     void advance_rcv_nxt(TcpSegmentNode *tsn = nullptr);
     void purge_flushed_segments(uint32_t flush_seq);
-    void purge_segments_left_of_hole(const TcpSegmentNode*);
     void skip_holes();
     void skip_midstream_pickup_seglist_hole(TcpSegmentDescriptor&);
     void purge_segment_list();
@@ -88,7 +87,7 @@ public:
 
 private:
     void insert_segment_data(TcpSegmentNode* prev, TcpSegmentNode*);
-
+    void purge_segments_left_of_hole(const TcpSegmentNode*);
 
     void insert(TcpSegmentNode* prev, TcpSegmentNode* ss)
     {

@@ -150,14 +150,14 @@ void TcpSession::restart(Packet* p)
     if ( talker->midstream_initial_ack_flush )
     {
         talker->midstream_initial_ack_flush = false;
-        talker->eval_flush_policy_on_data(p);
+        talker->reassembler->eval_flush_policy_on_data(p);
     }
 
     if (p->dsize > 0)
-        listener->eval_flush_policy_on_data(p);
+        listener->reassembler->eval_flush_policy_on_data(p);
 
     if (p->ptrs.tcph->is_ack())
-        talker->eval_flush_policy_on_ack(p);
+        talker->reassembler->eval_flush_policy_on_ack(p);
 
     tcpStats.restarts++;
 }
@@ -747,7 +747,7 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd, bool flush)
     }
 
     if ( flush )
-        listener->eval_flush_policy_on_data(tsd.get_pkt());
+        listener->reassembler->eval_flush_policy_on_data(tsd.get_pkt());
     else
         listener->reassembler->initialize_paf();
 }

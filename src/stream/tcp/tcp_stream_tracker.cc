@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_stream_tracker.cpp author davis mcpherson <davmcphe@cisco.com>
+// tcp_stream_tracker.cc author davis mcpherson <davmcphe@cisco.com>
 // Created on: Jun 24, 2015
 
 #ifdef HAVE_CONFIG_H
@@ -47,6 +47,7 @@
 using namespace snort;
 
 THREAD_LOCAL HeldPacketQueue* hpq = nullptr;
+TcpReassemblerIgnore* tcp_ignore_reassembler = new TcpReassemblerIgnore(nullptr, nullptr);
 
 const std::list<HeldPacket>::iterator TcpStreamTracker::null_iterator { };
 
@@ -71,14 +72,12 @@ const char* tcp_event_names[] = {
 TcpStreamTracker::TcpStreamTracker(bool client) :
     tcp_state(client ? TCP_STATE_NONE : TCP_LISTEN), client_tracker(client),
     held_packet(null_iterator)
-{
-    reassembler = new  TcpReassemblerIgnore(*this, seglist);
-    reassembler->init(!client_tracker, nullptr);
-}
+{ }
 
 TcpStreamTracker::~TcpStreamTracker()
 {
-    delete reassembler;
+    if ( reassembler->get_flush_policy() != STREAM_FLPOLICY_IGNORE )
+    	delete reassembler;
 
     if( oaitw_reassembler )
     {
@@ -116,43 +115,6 @@ void TcpStreamTracker::clear_tracker(snort::Flow* flow, snort::Packet* p, bool f
         reassembler->clear_paf();
 
     set_splitter((StreamSplitter*)nullptr);
-}
-
-int TcpStreamTracker::eval_flush_policy_on_ack(snort::Packet* p)
-{
-    if( oaitw_reassembler )
-    {
-        delete oaitw_reassembler;
-        oaitw_reassembler = nullptr;
-    }
-
-    return reassembler->eval_flush_policy_on_ack(p);
-}
-
-int TcpStreamTracker::eval_flush_policy_on_data(snort::Packet* p)
-{
-    if( oaitw_reassembler )
-    {
-        delete oaitw_reassembler;
-        oaitw_reassembler = nullptr;
-    }
-
-    reassembler->eval_flush_policy_on_data(p);
-
-    return 0;
-}
-
-int TcpStreamTracker::eval_asymmetric_flush(snort::Packet* p)
-{
-    if( oaitw_reassembler )
-    {
-        delete oaitw_reassembler;
-        oaitw_reassembler = nullptr;
-    }
-
-    reassembler->eval_asymmetric_flush(p);
-
-    return 0;
 }
 
 TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescriptor& tsd)
@@ -328,15 +290,7 @@ void TcpStreamTracker::init_tcp_state(TcpSession* s)
     held_packet = null_iterator;
 
     flush_policy = STREAM_FLPOLICY_IGNORE;
-    if( oaitw_reassembler )
-    {
-        delete oaitw_reassembler;
-        oaitw_reassembler = nullptr;
-    }
-    if ( reassembler )
-        delete reassembler;
-    reassembler = new  TcpReassemblerIgnore(*this, seglist);
-    reassembler->init(!client_tracker, nullptr);
+    update_flush_policy(nullptr);
 
     normalizer.reset();
     seglist.reset();
@@ -410,9 +364,12 @@ void TcpStreamTracker::update_flush_policy(StreamSplitter* splitter)
     {
         // switching to Ignore flush policy...save pointer to current reassembler to delete later
         if ( reassembler )
+        {
+            seglist.purge_segment_list();
             oaitw_reassembler = reassembler;
+        }
 
-        reassembler = new  TcpReassemblerIgnore(*this, seglist);
+        reassembler = tcp_ignore_reassembler;
         reassembler->init(!client_tracker, splitter);
     }
     else if ( flush_policy == STREAM_FLPOLICY_ON_DATA )
@@ -421,10 +378,9 @@ void TcpStreamTracker::update_flush_policy(StreamSplitter* splitter)
         {
             // update from IDS -> IPS is not supported
             assert( reassembler->get_flush_policy() != STREAM_FLPOLICY_ON_ACK );
-            delete reassembler;
         }
 
-        reassembler = new  TcpReassemblerIps(*this, seglist);
+        reassembler = new  TcpReassemblerIps(this, &seglist);
         reassembler->init(!client_tracker, splitter);
     }
     else
@@ -433,10 +389,9 @@ void TcpStreamTracker::update_flush_policy(StreamSplitter* splitter)
         {
             // update from IPS -> IDS is not supported
             assert( reassembler->get_flush_policy() != STREAM_FLPOLICY_ON_DATA );
-            delete reassembler;
         }
 
-        reassembler = new  TcpReassemblerIds(*this, seglist);
+        reassembler = new  TcpReassemblerIds(this, &seglist);
         reassembler->init(!client_tracker, splitter);
     }
 }
@@ -519,7 +474,7 @@ void TcpStreamTracker::fallback()
 void TcpStreamTracker::disable_reassembly(Flow* f)
 {
     set_splitter((StreamSplitter*)nullptr);
-    seglist.reset();
+    seglist.purge_segment_list();
     reassembler->reset_paf();
     finalize_held_packet(f);
 }
@@ -726,7 +681,7 @@ void TcpStreamTracker::update_tracker_no_ack_recv(const TcpSegmentDescriptor& ts
 void TcpStreamTracker::update_tracker_no_ack_sent(const TcpSegmentDescriptor& tsd)
 {
     r_win_base = tsd.get_end_seq();
-    eval_flush_policy_on_ack(tsd.get_pkt());
+    reassembler->eval_flush_policy_on_ack(tsd.get_pkt());
 }
 
 void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
@@ -752,7 +707,7 @@ void TcpStreamTracker::update_tracker_ack_sent(TcpSegmentDescriptor& tsd)
         fin_seq_status = FIN_WITH_SEQ_ACKED;
     }
 
-    eval_flush_policy_on_ack(tsd.get_pkt());
+    reassembler->eval_flush_policy_on_ack(tsd.get_pkt());
 }
 
 bool TcpStreamTracker::update_on_3whs_ack(TcpSegmentDescriptor& tsd)
@@ -887,7 +842,7 @@ int32_t TcpStreamTracker::kickstart_asymmetric_flow(const TcpSegmentDescriptor& 
     else
         reassembler->reset_paf();
 
-    eval_asymmetric_flush(tsd.get_pkt());
+    reassembler->eval_flush_policy_on_data(tsd.get_pkt());
 
     int32_t space_left = max_queued_bytes - seglist.get_seg_bytes_total();
 
