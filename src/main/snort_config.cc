@@ -789,6 +789,7 @@ void SnortConfig::set_overlay_trace_config(TraceConfig* tc)
     overlay_trace_config = tc;
 }
 
+// cppcheck-suppress unusedFunction
 bool SnortConfig::set_packet_latency() const
 {
     if ( latency )
@@ -1076,6 +1077,7 @@ const char* SnortConfig::get_static_name(const char* name)
     return static_names[name].c_str();
 }
 
+// cppcheck-suppress unusedFunction
 int SnortConfig::get_classification_id(const char* name)
 {
     auto& cls = get_conf()->classifications;
