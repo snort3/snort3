@@ -85,7 +85,8 @@ static void FTPDataProcess(
         file_flows->set_sig_gen_state(false);
 
     status = file_flows->file_process(p, file_data, data_length,
-        data_ssn->position, data_ssn->direction, data_ssn->path_hash);
+        data_ssn->position, data_ssn->direction, data_ssn->path_hash,
+        (uint8_t*)data_ssn->filename, data_ssn->file_xfer_info);
 
     if (p->active->packet_force_dropped())
     {
