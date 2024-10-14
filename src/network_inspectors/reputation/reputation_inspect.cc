@@ -374,8 +374,6 @@ static void snort_reputation(const ReputationConfig& config, ReputationData& dat
         // disable all preproc analysis and detection for this packet
         DetectionEngine::disable_all(p);
         act->block_session(p, true);
-        if (p->flow)
-            p->flow->set_state(Flow::FlowState::BLOCK);
         act->set_drop_reason("reputation");
         reputationstats.blocked++;
         if (PacketTracer::is_active())

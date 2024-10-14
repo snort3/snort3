@@ -156,9 +156,6 @@ InjectionReturnStatus PayloadInjector::inject_http_payload(Packet* p,
 
     DetectionEngine::disable_all(p);
 
-    if ( p->flow )
-        p->flow->set_state(Flow::FlowState::BLOCK);
-
     return status;
 }
 

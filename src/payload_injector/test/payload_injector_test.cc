@@ -54,7 +54,11 @@ uint32_t Active::send_data(snort::Packet*, EncodeFlags, unsigned char const*, un
     return 1;
 }
 
-void Active::block_session(snort::Packet*, bool) { }
+void Active::block_session(snort::Packet* p, bool force)
+{
+    if (force and p->flow)
+        p->flow->set_state(Flow::FlowState::BLOCK);
+}
 void DetectionEngine::disable_all(snort::Packet*) { }
 Flow::~Flow() = default;
 IpsContext::IpsContext(unsigned int) { }

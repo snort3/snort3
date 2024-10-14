@@ -725,6 +725,9 @@ void Active::block_session(Packet* p, bool force)
     if ( force or (p->context->conf->ips_inline_mode() and SFDAQ::forwarding_packet(p->pkth)))
         Stream::block_flow(p);
 
+    if ( force and p->flow )
+        p->flow->set_state(Flow::FlowState::BLOCK);
+
     p->disable_inspect = true;
 }
 
