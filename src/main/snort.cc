@@ -84,6 +84,10 @@
 #include "ac_shell_cmd.h"
 #endif
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
 #include "snort_config.h"
 #include "thread_config.h"
 
@@ -386,6 +390,15 @@ bool Snort::is_reloading()
 bool Snort::has_dropped_privileges()
 { return privileges_dropped; }
 
+unsigned Snort::get_process_id()
+{
+    const SnortConfig* sc = SnortConfig::get_conf();
+    if (!sc->id_offset)
+        return 1;
+    else
+        return sc->id_offset / ThreadConfig::get_instance_max() + 1;
+}
+
 void Snort::setup(int argc, char* argv[])
 {
     set_main_thread();
@@ -605,4 +618,41 @@ SnortConfig* Snort::get_updated_policy(
     reloading = false;
     return sc;
 }
+
+// -----------------------------------------------------------------------------
+// unit tests
+// -----------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+TEST_CASE("Check process ID handling", "[snort_process_id]")
+{
+    // Mock first process
+    snort::SnortConfig* sc = const_cast<snort::SnortConfig*>(snort::SnortConfig::get_conf());
+    snort::ThreadConfig::set_instance_max(4);
+    sc->id_offset = 0;
+    unsigned pid1 = Snort::get_process_id();
+    CHECK(pid1 == 1);
+
+    // Mock second process
+    sc->id_offset = 5;
+    unsigned pid2 = Snort::get_process_id();
+    CHECK(pid2 == 2);
+
+    // Mock third process
+    sc->id_offset = 9;
+    unsigned pid3 = Snort::get_process_id();
+    CHECK(pid3 == 3);
+
+    // Mock fourth process
+    sc->id_offset = 13;
+    unsigned pid4 = Snort::get_process_id();
+    CHECK(pid4 == 4);
+
+    // Restore prior configs
+    snort::ThreadConfig::set_instance_max(1);
+    sc->id_offset = 0;
+}
+
+#endif
 

@@ -48,6 +48,8 @@ public:
     static bool is_exiting() { return already_exiting; }
     static bool is_reloading();
 
+    static unsigned get_process_id();
+
 private:
     static void init(int, char**);
     static void term();
