@@ -199,10 +199,13 @@ TEST_GROUP(tcp_connector)
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "tcp";
         connector_config.address = "127.0.0.1";
-        connector_config.base_port = 10000;
+        connector_config.ports.push_back("10000");
         connector_config.setup = TcpConnectorConfig::Setup::CALL;
         connector_config.async_receive = false;
     }
+
+    void teardown() override
+    { connector_config.ports = std::move(std::vector<std::string>()); }
 };
 
 TEST(tcp_connector, mod_ctor_dtor)
@@ -233,7 +236,7 @@ TEST_GROUP(tcp_connector_call_error)
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "tcp";
         connector_config.address = "127.0.0.1";
-        connector_config.base_port = 10000;
+        connector_config.ports.push_back("10000");
         connector_config.setup = TcpConnectorConfig::Setup::CALL;
         connector_config.async_receive = false;
         CHECK(tcp_connector != nullptr);
@@ -245,15 +248,18 @@ TEST_GROUP(tcp_connector_call_error)
 
     void teardown() override
     {
-        connector = tcpc_api->tinit(&connector_config);
+        connector = tcpc_api->tinit(connector_config);
         CHECK(connector == nullptr);
         tcpc_api->dtor(connector_common);
         tcp_connector->mod_dtor(mod);
+        connector_config.ports = std::move(std::vector<std::string>());
     }
 };
 
 TEST_GROUP(tcp_connector_call_other)
 {
+    void teardown()
+    { connector_config.ports = std::move(std::vector<std::string>()); }
 };
 
 TEST_GROUP(tcp_connector_answer_error)
@@ -264,7 +270,7 @@ TEST_GROUP(tcp_connector_answer_error)
         set_normal_status();
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "tcp-a";
-        connector_config.base_port = 20000;
+        connector_config.ports.push_back("20000");
         connector_config.setup = TcpConnectorConfig::Setup::ANSWER;
         connector_config.async_receive = false;
         CHECK(tcp_connector != nullptr);
@@ -276,18 +282,13 @@ TEST_GROUP(tcp_connector_answer_error)
 
     void teardown() override
     {
-        connector = tcpc_api->tinit(&connector_config);
+        connector = tcpc_api->tinit(connector_config);
         CHECK(connector == nullptr);
-        tcpc_api->tterm(connector);
         tcpc_api->dtor(connector_common);
         tcp_connector->mod_dtor(mod);
+        connector_config.ports = std::move(std::vector<std::string>());
     }
 };
-
-TEST(tcp_connector_call_error, bad_port)
-{
-    s_instance = 65000;
-}
 
 TEST(tcp_connector_call_error, bad_socket)
 {
@@ -327,7 +328,7 @@ TEST(tcp_connector_call_other, bad_setup)
     connector_config.direction = Connector::CONN_DUPLEX;
     connector_config.connector_name = "tcp";
     connector_config.address = "127.0.0.1";
-    connector_config.base_port = 10000;
+    connector_config.ports.push_back("10000");
     connector_config.setup = (TcpConnectorConfig::Setup)(-1);
     connector_config.async_receive = false;
     CHECK(tcp_connector != nullptr);
@@ -335,7 +336,7 @@ TEST(tcp_connector_call_other, bad_setup)
     CHECK(mod != nullptr);
     connector_common = tcpc_api->ctor(mod);
     CHECK(connector_common != nullptr);
-    connector = tcpc_api->tinit(&connector_config);
+    connector = tcpc_api->tinit(connector_config);
     CHECK(connector == nullptr);
     tcpc_api->dtor(connector_common);
     tcp_connector->mod_dtor(mod);
@@ -351,7 +352,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_thread_call)
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "tcp";
         connector_config.address = "127.0.0.1";
-        connector_config.base_port = 10000;
+        connector_config.ports.push_back("10000");
         connector_config.setup = TcpConnectorConfig::Setup::CALL;
         connector_config.async_receive = true;
         CHECK(tcp_connector != nullptr);
@@ -359,7 +360,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_thread_call)
         CHECK(mod != nullptr);
         connector_common = tcpc_api->ctor(mod);
         CHECK(connector_common != nullptr);
-        connector = tcpc_api->tinit(&connector_config);
+        connector = tcpc_api->tinit(connector_config);
         CHECK(connector != nullptr);
         CHECK(connector->get_connector_direction() == Connector::CONN_DUPLEX);
     }
@@ -369,6 +370,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_thread_call)
         tcpc_api->tterm(connector);
         tcpc_api->dtor(connector_common);
         tcp_connector->mod_dtor(mod);
+        connector_config.ports = std::move(std::vector<std::string>());
     }
 };
 
@@ -382,7 +384,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_call)
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "tcp";
         connector_config.address = "127.0.0.1";
-        connector_config.base_port = 10000;
+        connector_config.ports.push_back("10000");
         connector_config.setup = TcpConnectorConfig::Setup::CALL;
         connector_config.async_receive = false;
         CHECK(tcp_connector != nullptr);
@@ -390,7 +392,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_call)
         CHECK(mod != nullptr);
         connector_common = tcpc_api->ctor(mod);
         CHECK(connector_common != nullptr);
-        connector = tcpc_api->tinit(&connector_config);
+        connector = tcpc_api->tinit(connector_config);
         CHECK(connector != nullptr);
         CHECK(connector->get_connector_direction() == Connector::CONN_DUPLEX);
     }
@@ -400,6 +402,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_call)
         tcpc_api->tterm(connector);
         tcpc_api->dtor(connector_common);
         tcp_connector->mod_dtor(mod);
+        connector_config.ports = std::move(std::vector<std::string>());
     }
 };
 
@@ -413,7 +416,7 @@ TEST_GROUP(tcp_connector_no_tinit_tterm_call)
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "tcp";
         connector_config.address = "127.0.0.1";
-        connector_config.base_port = 10000;
+        connector_config.ports.push_back("10000");
         connector_config.setup = TcpConnectorConfig::Setup::CALL;
         connector_config.async_receive = false;
         CHECK(tcp_connector != nullptr);
@@ -428,13 +431,14 @@ TEST_GROUP(tcp_connector_no_tinit_tterm_call)
         tcpc_api->tterm(connector);
         tcpc_api->dtor(connector_common);
         tcp_connector->mod_dtor(mod);
+        connector_config.ports = std::move(std::vector<std::string>());
     }
 };
 
 TEST(tcp_connector_no_tinit_tterm_call, poll_undesirable)
 {
     s_poll_undesirable = true;
-    connector = tcpc_api->tinit(&connector_config);
+    connector = tcpc_api->tinit(connector_config);
     CHECK(connector != nullptr);
     size_t size = sizeof(TcpConnectorMsgHdr) + 10;
     uint8_t* message = new uint8_t[size];
@@ -449,15 +453,18 @@ TEST(tcp_connector_no_tinit_tterm_call, poll_undesirable)
     tcpc->process_receive();
     tcpc->process_receive();
     tcpc->process_receive();
-    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
-    CHECK(handle == nullptr);
+
+    const ConnectorMsg msg = tcpc->receive_message(false);
+    CHECK(msg.get_data() == nullptr);
+    CHECK(msg.get_length() == 0);
+
     delete[] message;
 }
 
 TEST(tcp_connector_no_tinit_tterm_call, poll_error)
 {
     s_poll_error = true;
-    connector = tcpc_api->tinit(&connector_config);
+    connector = tcpc_api->tinit(connector_config);
     CHECK(connector != nullptr);
     size_t size = sizeof(TcpConnectorMsgHdr) + 10;
     uint8_t* message = new uint8_t[size];
@@ -472,8 +479,11 @@ TEST(tcp_connector_no_tinit_tterm_call, poll_error)
     tcpc->process_receive();
     tcpc->process_receive();
     tcpc->process_receive();
-    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
-    CHECK(handle == nullptr);
+
+    const ConnectorMsg msg = tcpc->receive_message(false);
+    CHECK(msg.get_data() == nullptr);
+    CHECK(msg.get_length() == 0);
+
     delete[] message;
 }
 
@@ -486,7 +496,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_answer)
         tcpc_api = (const ConnectorApi*) tcp_connector;
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "tcp-a";
-        connector_config.base_port = 20000;
+        connector_config.ports.push_back("20000");
         connector_config.setup = TcpConnectorConfig::Setup::ANSWER;
         connector_config.async_receive = false;
         CHECK(tcp_connector != nullptr);
@@ -494,7 +504,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_answer)
         CHECK(mod != nullptr);
         connector_common = tcpc_api->ctor(mod);
         CHECK(connector_common != nullptr);
-        connector = tcpc_api->tinit(&connector_config);
+        connector = tcpc_api->tinit(connector_config);
         CHECK(connector->get_connector_direction() == Connector::CONN_DUPLEX);
         CHECK(connector != nullptr);
     }
@@ -504,242 +514,273 @@ TEST_GROUP(tcp_connector_tinit_tterm_answer)
         tcpc_api->tterm(connector);
         tcpc_api->dtor(connector_common);
         tcp_connector->mod_dtor(mod);
+        connector_config.ports = std::move(std::vector<std::string>());
     }
 };
 
-TEST(tcp_connector_tinit_tterm_call, alloc_discard)
-{
-    const uint8_t* data = nullptr;
-    TcpConnector* tcpc = (TcpConnector*)connector;
-
-    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)(tcpc->alloc_message(40,&data));
-    CHECK(data != nullptr);
-    CHECK(handle->connector_msg.length == 40);
-    CHECK(handle->connector_msg.data == data);
-    tcpc->discard_message(handle);
-}
-
 TEST(tcp_connector_tinit_tterm_call, alloc_transmit)
 {
-    const uint8_t* data = nullptr;
+    const uint32_t len = 40;
+    const uint8_t* data = new uint8_t[len];
     TcpConnector* tcpc = (TcpConnector*)connector;
     set_normal_status();
 
-    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)(tcpc->alloc_message(40,&data));
-    CHECK(data != nullptr);
-    CHECK(handle->connector_msg.length == 40);
-    s_send_ret_other = 40;
-    CHECK(handle->connector_msg.data == data);
-    CHECK(tcpc->transmit_message(handle) == true);
+    ConnectorMsg msg(data, len, true);
+
+    CHECK(msg.get_length() == len);
+    CHECK(msg.get_data() == data);
+
+    s_send_ret_other = len;
+    CHECK(tcpc->transmit_message(msg) == true);
+    CHECK(tcpc->transmit_message(std::move(msg)) == true);
 }
 
 TEST(tcp_connector_tinit_tterm_call, alloc_transmit_header_fail)
 {
-    const uint8_t* data = nullptr;
+    const uint32_t len = 40;
+    const uint8_t* data = new uint8_t[len];
     TcpConnector* tcpc = (TcpConnector*)connector;
     set_normal_status();
 
-    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)(tcpc->alloc_message(40,&data));
-    CHECK(data != nullptr);
-    CHECK(handle->connector_msg.length == 40);
+    ConnectorMsg msg(data, len, true);
+
+    CHECK(msg.get_length() == len);
+    CHECK(msg.get_data() == data);
+
     s_send_ret_header = sizeof(TcpConnectorMsgHdr)-1;
-    s_send_ret_other = 40;
-    CHECK(handle->connector_msg.data == data);
-    CHECK(tcpc->transmit_message(handle) == false);
+    s_send_ret_other = len;
+    CHECK(tcpc->transmit_message(msg) == false);
+    CHECK(tcpc->transmit_message(std::move(msg)) == false);
 }
 
 TEST(tcp_connector_tinit_tterm_call, alloc_transmit_body_fail)
 {
-    const uint8_t* data = nullptr;
+    const uint32_t len = 40;
+    const uint8_t* data = new uint8_t[len];
     TcpConnector* tcpc = (TcpConnector*)connector;
     set_normal_status();
 
-    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)(tcpc->alloc_message(40,&data));
-    CHECK(data != nullptr);
-    CHECK(handle->connector_msg.length == 40);
+    ConnectorMsg msg(data, len, true);
+
+    CHECK(msg.get_length() == len);
+    CHECK(msg.get_data() == data);
+
     s_send_ret_other = 30;
-    CHECK(handle->connector_msg.data == data);
-    CHECK(tcpc->transmit_message(handle) == false);
+    CHECK(tcpc->transmit_message(msg) == false);
+    CHECK(tcpc->transmit_message(std::move(msg)) == false);
 }
 
 TEST(tcp_connector_tinit_tterm_call, alloc_transmit_no_sock)
 {
-    const uint8_t* data = nullptr;
+    const uint32_t len = 40;
+    const uint8_t* data = new uint8_t[len];
     TcpConnector* tcpc = (TcpConnector*)connector;
 
-    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)(tcpc->alloc_message(40,&data));
+    ConnectorMsg msg(data, len, true);
+
+    CHECK(msg.get_length() == len);
+    CHECK(msg.get_data() == data);
+
     tcpc->sock_fd = -1;
-    CHECK(data != nullptr);
-    CHECK(handle->connector_msg.length == 40);
-    CHECK(handle->connector_msg.data == data);
-    CHECK(tcpc->transmit_message(handle) == false);
+    CHECK(tcpc->transmit_message(msg) == false);
+    CHECK(tcpc->transmit_message(std::move(msg)) == false);
 }
 
 TEST(tcp_connector_tinit_tterm_call, receive_no_sock)
 {
     TcpConnector* tcpc = (TcpConnector*)connector;
     tcpc->sock_fd = -1;
-    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
-    CHECK(handle == nullptr);
+    const ConnectorMsg msg = tcpc->receive_message(false);
+    CHECK(msg.get_data() == nullptr);
+    CHECK(msg.get_length() == 0);
 }
 
 TEST(tcp_connector_tinit_tterm_call, receive)
 {
+    const uint32_t cmsg_len = 10;
     TcpConnector* tcpc = (TcpConnector*)connector;
-    size_t size = sizeof(TcpConnectorMsgHdr) + 10;
+    size_t size = sizeof(TcpConnectorMsgHdr) + cmsg_len;
     uint8_t* message = new uint8_t[size];
+
     for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
+
     TcpConnectorMsgHdr* hdr = (TcpConnectorMsgHdr*)message;
     hdr->version = TCP_FORMAT_VERSION;
-    hdr->connector_msg_length = 10;
+    hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
     s_rec_message_size = size; // also trigger the read action
     s_poll_data_available = true;
-    tcpc->process_receive();
-    tcpc->process_receive();
-    tcpc->process_receive();
-    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
-    ConnectorMsg* conn_msg = tcpc->get_connector_msg(handle);
 
-    CHECK(handle != nullptr);
-    CHECK(conn_msg->length == 10);
-    CHECK(memcmp( handle->connector_msg.data, (message+sizeof(TcpConnectorMsgHdr)), 10) == 0);
-    tcpc->discard_message(handle);
+    tcpc->process_receive();
+    tcpc->process_receive();
+    tcpc->process_receive();
+    ConnectorMsg conn_msg = tcpc->receive_message(false);
+
+    CHECK(conn_msg.get_length() == cmsg_len);
+    CHECK(memcmp(conn_msg.get_data(), (message+sizeof(TcpConnectorMsgHdr)), cmsg_len) == 0);
+
     delete[] message;
-    handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
-    CHECK(handle == nullptr);
+
+    conn_msg = std::move(tcpc->receive_message(false));
+    CHECK(conn_msg.get_data() == nullptr);
+    CHECK(conn_msg.get_length() == 0);
 }
 
 TEST(tcp_connector_no_tinit_tterm_call, receive_wrong_version)
 {
-    size_t size = sizeof(TcpConnectorMsgHdr) + 10;
+    const uint32_t cmsg_len = 10;
+    size_t size = sizeof(TcpConnectorMsgHdr) + cmsg_len;
     uint8_t* message = new uint8_t[size];
+
     for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
+
     TcpConnectorMsgHdr* hdr = (TcpConnectorMsgHdr*)message;
     hdr->version = TCP_FORMAT_VERSION+1;
-    hdr->connector_msg_length = 10;
+    hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
     s_rec_message_size = size; // also trigger the read action
     s_poll_data_available = true;
-    connector = tcpc_api->tinit(&connector_config);
+    connector = tcpc_api->tinit(connector_config);
     CHECK(connector != nullptr);
     TcpConnector* tcpc = (TcpConnector*)connector;
+
     tcpc->process_receive();
     tcpc->process_receive();
     tcpc->process_receive();
-    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
-    CHECK(handle == nullptr);
+    const ConnectorMsg conn_msg = tcpc->receive_message(false);
+
+    CHECK(conn_msg.get_data() == nullptr);
+    CHECK(conn_msg.get_length() == 0);
     delete[] message;
 }
 
 TEST(tcp_connector_no_tinit_tterm_call, receive_recv_error_EAGAIN)
 {
-    size_t size = sizeof(TcpConnectorMsgHdr) + 10;
+    const uint32_t cmsg_len = 10;
+    size_t size = sizeof(TcpConnectorMsgHdr) + cmsg_len;
     uint8_t* message = new uint8_t[size];
+
     for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
+
     TcpConnectorMsgHdr* hdr = (TcpConnectorMsgHdr*)message;
     hdr->version = TCP_FORMAT_VERSION;
-    hdr->connector_msg_length = 10;
+    hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
     s_rec_message_size = size; // also trigger the read action
     s_poll_data_available = true;
     s_rec_error = EAGAIN;
-    connector = tcpc_api->tinit(&connector_config);
+
+    connector = tcpc_api->tinit(connector_config);
     CHECK(connector != nullptr);
     TcpConnector* tcpc = (TcpConnector*)connector;
+
     tcpc->process_receive();
-    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
-    CHECK(handle != nullptr);
-    tcpc->discard_message(handle);
+    const ConnectorMsg conn_msg = tcpc->receive_message(false);
+
+    CHECK(conn_msg.get_length() == cmsg_len);
+    CHECK(memcmp(conn_msg.get_data(), (message+sizeof(TcpConnectorMsgHdr)), cmsg_len) == 0);
+
     delete[] message;
 }
 
 TEST(tcp_connector_no_tinit_tterm_call, receive_recv_error_EBADF)
 {
-    size_t size = sizeof(TcpConnectorMsgHdr) + 10;
+    const uint32_t cmsg_len = 10;
+    size_t size = sizeof(TcpConnectorMsgHdr) + cmsg_len;
     uint8_t* message = new uint8_t[size];
+
     for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
+
     TcpConnectorMsgHdr* hdr = (TcpConnectorMsgHdr*)message;
     hdr->version = TCP_FORMAT_VERSION;
-    hdr->connector_msg_length = 10;
+    hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
     s_rec_message_size = size; // also trigger the read action
     s_poll_data_available = true;
     s_rec_error = EBADF;
-    connector = tcpc_api->tinit(&connector_config);
+
+    connector = tcpc_api->tinit(connector_config);
     CHECK(connector != nullptr);
     TcpConnector* tcpc = (TcpConnector*)connector;
+
     tcpc->process_receive();
     tcpc->process_receive();
     tcpc->process_receive();
-    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
-    CHECK(handle != nullptr);
-    tcpc->discard_message(handle);
+    const ConnectorMsg conn_msg = tcpc->receive_message(false);
+
+    CHECK(conn_msg.get_length() == cmsg_len);
+    CHECK(memcmp(conn_msg.get_data(), (message+sizeof(TcpConnectorMsgHdr)), cmsg_len) == 0);
+
     delete[] message;
 }
 
 TEST(tcp_connector_no_tinit_tterm_call, receive_recv_closed)
 {
-    size_t size = sizeof(TcpConnectorMsgHdr) + 10;
+    const uint32_t cmsg_len = 10;
+    size_t size = sizeof(TcpConnectorMsgHdr) + cmsg_len;
     uint8_t* message = new uint8_t[size];
+
     for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
+
     TcpConnectorMsgHdr* hdr = (TcpConnectorMsgHdr*)message;
     hdr->version = TCP_FORMAT_VERSION;
-    hdr->connector_msg_length = 10;
+    hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
     s_rec_message_size = size; // also trigger the read action
     s_poll_data_available = true;
     s_rec_return_zero = true;
-    connector = tcpc_api->tinit(&connector_config);
+
+    connector = tcpc_api->tinit(connector_config);
     CHECK(connector != nullptr);
     TcpConnector* tcpc = (TcpConnector*)connector;
+
     tcpc->process_receive();
     tcpc->process_receive();
     tcpc->process_receive();
-    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
-    CHECK(handle == nullptr);
+    const ConnectorMsg conn_msg = tcpc->receive_message(false);
+
+    CHECK(conn_msg.get_data() == nullptr);
+    CHECK(conn_msg.get_length() == 0);
+
     delete[] message;
 }
 
 TEST(tcp_connector_no_tinit_tterm_call, receive_recv_body_closed)
 {
-    size_t size = sizeof(TcpConnectorMsgHdr) + 10;
+    const uint32_t cmsg_len = 10;
+    size_t size = sizeof(TcpConnectorMsgHdr) + cmsg_len;
     uint8_t* message = new uint8_t[size];
+
     for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
+
     TcpConnectorMsgHdr* hdr = (TcpConnectorMsgHdr*)message;
     hdr->version = TCP_FORMAT_VERSION;
-    hdr->connector_msg_length = 10;
-    s_rec_error_size = 10;  // only indicate the error on the 10 byte recv()
+    hdr->connector_msg_length = cmsg_len;
+    s_rec_error_size = cmsg_len;  // only indicate the error on the cmsg_len byte recv()
     s_rec_message = message;
     s_rec_message_size = size; // also trigger the read action
     s_poll_data_available = true;
     s_rec_return_zero = true;
-    connector = tcpc_api->tinit(&connector_config);
+
+    connector = tcpc_api->tinit(connector_config);
     CHECK(connector != nullptr);
     TcpConnector* tcpc = (TcpConnector*)connector;
+
     tcpc->process_receive();
     tcpc->process_receive();
     tcpc->process_receive();
-    TcpConnectorMsgHandle* handle = (TcpConnectorMsgHandle*)tcpc->receive_message(false);
-    CHECK(handle == nullptr);
+    const ConnectorMsg conn_msg = tcpc->receive_message(false);
+
+    CHECK(conn_msg.get_data() == nullptr);
+    CHECK(conn_msg.get_length() == 0);
+
     delete[] message;
-}
-
-TEST_GROUP(tcp_connector_msg_handle)
-{
-};
-
-TEST(tcp_connector_msg_handle, test)
-{
-    TcpConnectorMsgHandle handle(12);
-    CHECK(handle.connector_msg.length == 12);
-    CHECK(handle.connector_msg.data != nullptr);
 }
 
 int main(int argc, char** argv)

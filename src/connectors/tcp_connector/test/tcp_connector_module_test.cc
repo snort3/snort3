@@ -39,6 +39,7 @@ THREAD_LOCAL ProfileStats tcp_connector_perfstats;
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 
+unsigned instance_max = 1;
 namespace snort
 {
 char* snort_strdup(const char* s)
@@ -46,7 +47,11 @@ char* snort_strdup(const char* s)
 
 unsigned get_instance_id()
 { return 0; }
-unsigned ThreadConfig::get_instance_max() { return 1; }
+
+unsigned ThreadConfig::get_instance_max()
+{ return instance_max; }
+
+void ParseError(const char*, ...) { }
 }
 
 TEST_GROUP(tcp_connector_module)
@@ -57,32 +62,38 @@ TEST(tcp_connector_module, test_call)
 {
     Value connector_val("tcp-c");
     Value address_val("127.0.0.1");
-    Value base_port_val((double)10000);
+    Value base_port_val("10000 20000");
     Value setup_val("call");
     Parameter address_param =
         {"address", Parameter::PT_STRING, nullptr, nullptr, "address"};
     Parameter connector_param =
         {"connector", Parameter::PT_STRING, nullptr, nullptr, "connector"};
     Parameter base_port_param =
-        {"base_port", Parameter::PT_PORT, nullptr, nullptr, "base_port"};
+        {"ports", Parameter::PT_INT_LIST, "65535", nullptr, "list of ports"};
     Parameter setup_param =
         {"setup", Parameter::PT_ENUM, "call | answer", nullptr, "establishment"};
 
     TcpConnectorModule module;
 
     address_val.set(&address_param);
+    CHECK(true == address_param.validate(address_val));
     base_port_val.set(&base_port_param);
+    CHECK(true == base_port_param.validate(base_port_val));
     setup_val.set(&setup_param);
+    CHECK(true == setup_param.validate(setup_val));
     connector_val.set(&connector_param);
+    CHECK(true == connector_param.validate(connector_val));
 
-    module.begin("tcp_connector", 0, nullptr);
-    module.begin("tcp_connector", 1, nullptr);
-    module.set("tcp_connector.base_port", base_port_val, nullptr);
-    module.set("tcp_connector.address", address_val, nullptr);
-    module.set("tcp_connector.connector", connector_val, nullptr);
-    module.set("tcp_connector.setup", setup_val, nullptr);
-    module.end("tcp_connector", 1, nullptr);
-    module.end("tcp_connector", 0, nullptr);
+    instance_max = 2;
+
+    CHECK(module.begin("tcp_connector", 0, nullptr));
+    CHECK(module.begin("tcp_connector", 1, nullptr));
+    CHECK(module.set("tcp_connector.ports", base_port_val, nullptr));
+    CHECK(module.set("tcp_connector.address", address_val, nullptr));
+    CHECK(module.set("tcp_connector.connector", connector_val, nullptr));
+    CHECK(module.set("tcp_connector.setup", setup_val, nullptr));
+    CHECK(module.end("tcp_connector", 1, nullptr));
+    CHECK(module.end("tcp_connector", 0, nullptr));
 
     TcpConnectorConfig::TcpConnectorConfigSet* config_set = module.get_and_clear_config();
 
@@ -91,7 +102,8 @@ TEST(tcp_connector_module, test_call)
     CHECK(1 == config_set->size());
 
     TcpConnectorConfig config = *(config_set->front());
-    CHECK(10000 == config.base_port);
+    CHECK(10000 == std::stoi(config.ports[0]));
+    CHECK(20000 == std::stoi(config.ports[1]));
     CHECK("127.0.0.1" == config.address);
     CHECK(TcpConnectorConfig::Setup::CALL == config.setup);
     CHECK("tcp-c" == config.connector_name);
@@ -106,36 +118,37 @@ TEST(tcp_connector_module, test_call)
 
     config_set->clear();
     delete config_set;
+    instance_max = 1;
 }
 
-TEST(tcp_connector_module, test_answer)
+TEST(tcp_connector_module, test_ports_count_failure)
 {
     Value connector_val("tcp-a");
-    Value base_port_val((double)20000);
+    Value base_port_val("20000");
     Value setup_val("answer");
     Parameter connector_param =
         {"connector", Parameter::PT_STRING, nullptr, nullptr, "connector"};
     Parameter base_port_param =
-        {"base_port", Parameter::PT_PORT, nullptr, nullptr, "base_port"};
+        {"ports", Parameter::PT_INT_LIST, "65535", nullptr, "list of ports"};
     Parameter setup_param =
         {"setup", Parameter::PT_ENUM, "call | answer", nullptr, "establishment"};
 
     TcpConnectorModule module;
 
     base_port_val.set(&base_port_param);
-    CHECK( true == base_port_param.validate(base_port_val) );
+    CHECK(true == base_port_param.validate(base_port_val));
     setup_val.set(&setup_param);
-    CHECK( true == setup_param.validate(setup_val) );
+    CHECK(true == setup_param.validate(setup_val));
     connector_val.set(&connector_param);
-    CHECK( true == connector_param.validate(connector_val) );
+    CHECK(true == connector_param.validate(connector_val));
 
-    module.begin("tcp_connector", 0, nullptr);
-    module.begin("tcp_connector", 1, nullptr);
-    module.set("tcp_connector.base_port", base_port_val, nullptr);
-    module.set("tcp_connector.connector", connector_val, nullptr);
-    module.set("tcp_connector.setup", setup_val, nullptr);
-    module.end("tcp_connector", 1, nullptr);
-    module.end("tcp_connector", 0, nullptr);
+    CHECK(module.begin("tcp_connector", 0, nullptr));
+    CHECK(module.begin("tcp_connector", 1, nullptr));
+    CHECK(module.set("tcp_connector.ports", base_port_val, nullptr));
+    CHECK(module.set("tcp_connector.connector", connector_val, nullptr));
+    CHECK(module.set("tcp_connector.setup", setup_val, nullptr));
+    CHECK(module.end("tcp_connector", 1, nullptr));
+    CHECK(module.end("tcp_connector", 0, nullptr));
 
     TcpConnectorConfig::TcpConnectorConfigSet* config_set = module.get_and_clear_config();
 
@@ -144,8 +157,8 @@ TEST(tcp_connector_module, test_answer)
     CHECK(1 == config_set->size());
 
     TcpConnectorConfig config = *(config_set->front());
-    CHECK(20000 == config.base_port);
-//    CHECK(config.setup == TcpConnectorConfig::Setup::ANSWER);
+    CHECK(20000 == stoi(config.ports[0]));
+    CHECK(config.setup == TcpConnectorConfig::Setup::ANSWER);
     CHECK("tcp-a" == config.connector_name);
     CHECK(Connector::CONN_DUPLEX == config.direction);
 
@@ -154,6 +167,37 @@ TEST(tcp_connector_module, test_answer)
 
     config_set->clear();
     delete config_set;
+}
+
+TEST(tcp_connector_module, test_answer)
+{
+    Value connector_val("tcp-a");
+    Value base_port_val("20000 30000");
+    Value setup_val("answer");
+    Parameter connector_param =
+        {"connector", Parameter::PT_STRING, nullptr, nullptr, "connector"};
+    Parameter base_port_param =
+        {"ports", Parameter::PT_INT_LIST, "65535", nullptr, "list of ports"};
+    Parameter setup_param =
+        {"setup", Parameter::PT_ENUM, "call | answer", nullptr, "establishment"};
+
+    TcpConnectorModule module;
+
+    base_port_val.set(&base_port_param);
+    CHECK(true == base_port_param.validate(base_port_val));
+    setup_val.set(&setup_param);
+    CHECK(true == setup_param.validate(setup_val));
+    connector_val.set(&connector_param);
+    CHECK(true == connector_param.validate(connector_val));
+
+    instance_max = 3;
+    CHECK(module.begin("tcp_connector", 0, nullptr));
+    CHECK(module.begin("tcp_connector", 1, nullptr));
+    CHECK(module.set("tcp_connector.ports", base_port_val, nullptr));
+    CHECK(module.set("tcp_connector.connector", connector_val, nullptr));
+    CHECK(module.set("tcp_connector.setup", setup_val, nullptr));
+    CHECK(module.end("tcp_connector", 1, nullptr) == false);
+    CHECK(module.end("tcp_connector", 0, nullptr));
 }
 
 int main(int argc, char** argv)

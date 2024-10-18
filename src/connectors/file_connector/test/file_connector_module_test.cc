@@ -56,12 +56,12 @@ TEST(file_connector_module, test)
 {
     Value connector_val("rx");
     Value name_val("rx");
-    Value format_val("binary");
+    Value format_val(true);
     Value direction_val("receive");
     Parameter direction_param =
         {"direction", Parameter::PT_ENUM, "receive | transmit | duplex", nullptr, "direction"};
     Parameter format_param =
-        {"format", Parameter::PT_ENUM, "binary | text", nullptr, "format"};
+        {"text_format", Parameter::PT_BOOL, nullptr, "false", "format"};
     Parameter connector_param =
         {"connector", Parameter::PT_STRING, nullptr, nullptr, "connector"};
     Parameter name_param =
@@ -79,7 +79,7 @@ TEST(file_connector_module, test)
     module.set("file_connector.name", name_val, nullptr);
     module.set("file_connector.direction", direction_val, nullptr);
     module.set("file_connector.connector", connector_val, nullptr);
-    module.set("file_connector.format", format_val, nullptr);
+    module.set("file_connector.text_format", format_val, nullptr);
     module.end("file_connector", 1, nullptr);
     module.end("file_connector", 0, nullptr);
 
@@ -93,7 +93,7 @@ TEST(file_connector_module, test)
     CHECK("rx" == config.name);
     CHECK("rx" == config.connector_name);
     CHECK(Connector::CONN_RECEIVE == config.direction);
-    CHECK(false == config.text_format);
+    CHECK(true == config.text_format);
 
     for ( auto conf : *config_set )
         delete conf;

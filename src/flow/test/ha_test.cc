@@ -217,6 +217,10 @@ int SFDAQInstance::ioctl(DAQ_IoctlCmd, void*, size_t) { return DAQ_SUCCESS; }
 
 FlowStash::~FlowStash() = default;
 
+
+SideChannel::SideChannel(ScMsgFormat)
+{ }
+
 SideChannel* SideChannelManager::get_side_channel(SCPort)
 {
     return (SideChannel*)mock().getData("s_side_channel").getObjectPointer();
@@ -236,21 +240,19 @@ void SideChannel::register_receive_handler(const SCProcessMsgFunc& handler)
 
 void SideChannel::unregister_receive_handler() { }
 
-bool SideChannel::discard_message(SCMessage*)
+bool SideChannel::discard_message(SCMessage*) const
 { return true; }
 
-static SCMsgHdr s_sc_header = { 0, 1, 0, 0 };
 bool SideChannel::process(int)
 {
     SCMessage* msg = (SCMessage*)mock().getData("message_content").getObjectPointer();
     SCProcessMsgFunc* s_handler = (SCProcessMsgFunc*)mock().getData("s_handler").getObjectPointer();
     if (s_handler && nullptr != *s_handler && msg && msg->content && msg->content_length != 0)
     {
-        SCMessage s_rec_sc_message = {};
+        SCMessage s_rec_sc_message((SideChannel*)mock().getData("s_side_channel").getObjectPointer(),
+            msg->connector, ConnectorMsg());
         s_rec_sc_message.content = msg->content;
         s_rec_sc_message.content_length = msg->content_length;
-        s_rec_sc_message.hdr = &s_sc_header;
-        s_rec_sc_message.sc = (SideChannel*)mock().getData("s_side_channel").getObjectPointer();;
         (*s_handler)(&s_rec_sc_message);
         return true;
     }
@@ -258,7 +260,7 @@ bool SideChannel::process(int)
         return false;
 }
 
-bool SideChannel::transmit_message(SCMessage* msg)
+bool SideChannel::transmit_message(SCMessage* msg) const
 {
     mock().actualCall("transmit_message");
     mock().setDataObject("message", "SCMessage", msg);
@@ -400,14 +402,14 @@ TEST_GROUP(high_availability_test)
     StreamHAClient* s_ha_client;
     FlowHAClient* s_other_ha_client;
     uint8_t s_message[MSG_SIZE];
-    SCMessage s_sc_message;
+    SCMessage s_sc_message = SCMessage(nullptr, nullptr, ConnectorMsg());
     Packet s_pkt;
     struct timeval s_packet_time;
     HighAvailabilityConfig hac;
     FlowHAState* ha_state;
     FlowKey flow_key;
     SCProcessMsgFunc handler;
-    SideChannel side_channel;
+    SideChannel side_channel = SideChannel(ScMsgFormat::BINARY);
     FlowKey s_flow_key;
 
     void setup() override
@@ -426,7 +428,6 @@ TEST_GROUP(high_availability_test)
         mock().setDataObject("flow", "Flow", &s_flow);
         active = {};
         memset(s_message, 0, sizeof(s_message));
-        s_sc_message = {};
         s_sc_message.content = s_message;
         mock().setDataObject("message_content", "SCMessage", &s_sc_message);
         s_pkt.active = &active;

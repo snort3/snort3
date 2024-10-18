@@ -30,6 +30,8 @@
 
 #include "framework/connector.h"
 #include "log/messages.h"
+#include "main/thread.h"
+#include "main/thread_config.h"
 #include "utils/util.h"
 
 using namespace snort;
@@ -39,8 +41,11 @@ using namespace snort;
 // One ConnectorElem for each Connector within the ConnectorCommon configuration
 struct ConnectorElem
 {
+    ConnectorElem() : config(nullptr), thread_connectors(ThreadConfig::get_instance_max(), nullptr)
+    { }
+
     ConnectorConfig* config;
-    std::unordered_map<pid_t, Connector*> thread_connectors;
+    std::vector<Connector*> thread_connectors;
 };
 
 // One ConnectorCommonElem created for each ConnectorCommon configured
@@ -99,12 +104,12 @@ Connector* ConnectorManager::get_connector(const std::string& connector_name)
 {
     for ( auto& sc : s_connector_commons )
     {
-        pid_t tid = gettid();
+        unsigned instance = get_instance_id();
         if ( sc.connectors.count(connector_name) > 0 )
         {
             ConnectorElem* map = sc.connectors[connector_name];
-            if ( map->thread_connectors.count(tid) == 1 )
-                return ( map->thread_connectors[tid] );
+            if ( map->thread_connectors[instance] )
+                return ( map->thread_connectors[instance] );
         }
     }
     return ( nullptr );
@@ -112,27 +117,42 @@ Connector* ConnectorManager::get_connector(const std::string& connector_name)
 
 void ConnectorManager::thread_init()
 {
-    pid_t tid = gettid();
+    unsigned instance = get_instance_id();
 
     for ( auto& sc : s_connector_commons )
     {
         if ( sc.api->tinit )
         {
-            for ( auto& conn : sc.connectors )
+            for ( const auto& conn : sc.connectors )
             {
-                /* There must NOT be a connector for this thread present. */
-                assert(conn.second->thread_connectors.count(tid) == 0);
+                assert(!conn.second->thread_connectors[instance]);
 
-                Connector* connector = sc.api->tinit(conn.second->config);
-                conn.second->thread_connectors.emplace(tid, std::move(connector));
+                Connector* connector = sc.api->tinit(*conn.second->config);
+                assert(connector);
+                conn.second->thread_connectors[instance] = std::move(connector);
             }
+        }
+    }
+}
+
+void ConnectorManager::thread_reinit()
+{
+    unsigned instance = get_instance_id();
+
+    for ( auto& sc : s_connector_commons )
+    {
+        for ( auto& conn : sc.connectors )
+        {
+            assert(conn.second->thread_connectors[instance]);
+
+            conn.second->thread_connectors[instance]->reinit();
         }
     }
 }
 
 void ConnectorManager::thread_term()
 {
-    pid_t tid = gettid();
+    unsigned instance = get_instance_id();
 
     for ( auto& sc : s_connector_commons )
     {
@@ -140,12 +160,10 @@ void ConnectorManager::thread_term()
         {
             for ( auto& conn : sc.connectors )
             {
-                /* There must be a connector for this thread present. */
-                assert(conn.second->thread_connectors.count(tid) != 0);
+                assert(conn.second->thread_connectors[instance]);
 
-                sc.api->tterm(conn.second->thread_connectors[tid]);
-
-                conn.second->thread_connectors.clear();
+                sc.api->tterm(conn.second->thread_connectors[instance]);
+                conn.second->thread_connectors[instance] = nullptr;
             }
         }
     }

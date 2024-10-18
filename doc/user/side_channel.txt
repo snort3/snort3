@@ -11,6 +11,8 @@ SideChannel adds functionality onto the Connector as:
 * application receive processing - handler for received messages on a
     specific port.
 
+* message formatting - convert data to text format if configured to do so
+
 SideChannel's are always implement a duplex (bidirectional) messaging model
 and can map to separate transmit and receive Connectors.
 
@@ -42,7 +44,8 @@ configuration:
                     connector = 'file_tx_1',
                 }
             },
-        },  
+            format = "text"
+        },
     }
 
     file_connector =
@@ -50,13 +53,13 @@ configuration:
         {
             connector = 'file_tx_1',
             direction = 'transmit',
-            format = 'text',
+            text_format = true,
             name = 'HA'
         },
         {
             connector = 'file_rx_1',
             direction = 'receive',
-            format = 'text',
+            text_format = true,
             name = 'HA'
         },
     }

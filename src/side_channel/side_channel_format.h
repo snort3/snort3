@@ -16,31 +16,18 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_connector_config.h author Ed Borgoyn <eborgoyn@cisco.com>
-
-#ifndef TCP_CONNECTOR_CONFIG_H
-#define TCP_CONNECTOR_CONFIG_H
+#ifndef SIDE_CHANNEL_FORMAT_H
+#define SIDE_CHANNEL_FORMAT_H
 
 #include <string>
-#include <vector>
 
 #include "framework/connector.h"
+#include "side_channel/side_channel.h"
 
-class TcpConnectorConfig : public snort::ConnectorConfig
-{
-public:
-    enum Setup { CALL, ANSWER };
+#define TXT_UNIT_LEN                3
 
-    TcpConnectorConfig()
-    { direction = snort::Connector::CONN_DUPLEX; async_receive = true; }
-
-    std::vector<std::string> ports;
-    std::string address;
-    Setup setup = {};
-    bool async_receive;
-
-    typedef std::vector<TcpConnectorConfig*> TcpConnectorConfigSet;
-};
+std::string sc_msg_hdr_to_text(const SCMsgHdr* hdr);
+std::string sc_msg_data_to_text(const uint8_t* data, uint32_t length);
+snort::ConnectorMsg from_text(const char* str_ptr, uint32_t size);
 
 #endif
-

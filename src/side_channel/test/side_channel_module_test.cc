@@ -39,6 +39,7 @@ THREAD_LOCAL SimpleStats sc_stats;
 THREAD_LOCAL ProfileStats sc_perf_stats;
 
 static bool port_1_set = false;
+static bool text_fmt_set = false;
 
 static char* make_bit_string(int bit)
 {
@@ -51,9 +52,10 @@ static char* make_bit_string(int bit)
     return bit_string;
 }
 
-void SideChannelManager::instantiate(const SCConnectors*, const PortBitSet* ports)
+void SideChannelManager::instantiate(const SCConnectors*, const PortBitSet* ports, ScMsgFormat fmt)
 {
     port_1_set = ports->test(1);
+    text_fmt_set = fmt == ScMsgFormat::TEXT;
 }
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
@@ -78,14 +80,17 @@ TEST(side_channel_module, test_connector_module_valid)
     Value ports_val(make_bit_string(1));
     Value connector_t_val("transmit");
     Value connector_r_val("receive");
+    Value fmt_val((uint64_t)1);
     Parameter ports_param = {"ports", Parameter::PT_BIT_LIST, "65535", nullptr, "ports"};
     Parameter connector_param = {"connector", Parameter::PT_STRING, nullptr, nullptr, "connector"};
+    Parameter format_param = {"format", Parameter::PT_ENUM, "binary | text", nullptr, "format"};
 
     SideChannelModule module;
 
     ports_val.set(&ports_param);
     connector_t_val.set(&connector_param);
     connector_r_val.set(&connector_param);
+    fmt_val.set(&format_param);
 
     module.begin("side_channel", 0, nullptr);
     module.begin("side_channel", 1, nullptr);
@@ -98,10 +103,12 @@ TEST(side_channel_module, test_connector_module_valid)
     module.end("side_channel.connectors", 2, nullptr);
     module.end("side_channel.connectors", 0, nullptr);
     module.set("side_channel.ports", ports_val, nullptr);
+    module.set("side_channel.format", fmt_val, nullptr);
     module.end("side_channel", 1, nullptr);
     module.end("side_channel", 0, nullptr);
 
     CHECK(port_1_set == true);
+    CHECK(text_fmt_set == true);
 }
 
 int main(int argc, char** argv)

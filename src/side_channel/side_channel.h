@@ -24,7 +24,6 @@
 #include "framework/connector.h"
 #include "utils/bits.h"
 
-#define MAXIMUM_SC_MESSAGE_CONTENT 1024
 #define DISPATCH_ALL_RECEIVE 0
 
 class SideChannel;
@@ -36,20 +35,29 @@ typedef std::vector<std::string> SCConnectors;
 
 struct __attribute__((__packed__)) SCMsgHdr
 {
-    uint16_t port;
-    uint16_t sequence;
-    uint32_t time_u_seconds;
-    uint64_t time_seconds;
+    uint16_t port = 0;
+    uint16_t sequence = 0;
+    uint32_t time_u_seconds = 0;
+    uint64_t time_seconds = 0;
+};
+
+enum ScMsgFormat : uint8_t
+{
+    BINARY,
+    TEXT
 };
 
 struct SCMessage
 {
-    SideChannel* sc;
-    snort::Connector* connector;
-    snort::ConnectorMsgHandle* handle;
-    SCMsgHdr* hdr;
-    uint8_t* content;
-    uint32_t content_length;
+    SCMessage(const SideChannel* sc, const snort::Connector* conn, snort::ConnectorMsg&& cmsg) :
+        sc(sc), connector(conn), cmsg(std::move(cmsg))
+    {}
+
+    const SideChannel* sc;
+    const snort::Connector* connector;
+    const snort::ConnectorMsg cmsg;
+    uint8_t* content = nullptr;
+    uint32_t content_length = 0;
 };
 
 typedef std::function<void(SCMessage*)> SCProcessMsgFunc;
@@ -58,16 +66,15 @@ typedef std::function<void(SCMessage*)> SCProcessMsgFunc;
 class SideChannel
 {
 public:
-    SideChannel() = default;
+    SideChannel(ScMsgFormat);
 
     void register_receive_handler(const SCProcessMsgFunc& handler);
     void unregister_receive_handler();
 
     bool process(int max_messages);
     SCMessage* alloc_transmit_message(uint32_t content_length);
-    bool discard_message(SCMessage* msg);
-    bool transmit_message(SCMessage* msg);
-    void set_message_port(SCMessage* msg, SCPort port);
+    bool discard_message(SCMessage* msg) const;
+    bool transmit_message(SCMessage* msg) const;
     void set_default_port(SCPort port);
     snort::Connector::Direction get_direction();
 
@@ -75,9 +82,12 @@ public:
     snort::Connector* connector_transmit = nullptr;
 
 private:
+    SCMsgHdr get_header();
+
     SCSequence sequence = 0;
     SCPort default_port = 0;
     SCProcessMsgFunc receive_handler = nullptr;
+    ScMsgFormat msg_format;
 };
 
 // SideChannelManager is primary interface with Snort.
@@ -85,7 +95,7 @@ class SideChannelManager
 {
 public:
     // Instantiate new SideChannel configuration
-    static void instantiate(const SCConnectors* connectors, const PortBitSet* ports);
+    static void instantiate(const SCConnectors* connectors, const PortBitSet* ports, ScMsgFormat fmt);
 
     // Main thread, pre-config init
     static void pre_config_init();

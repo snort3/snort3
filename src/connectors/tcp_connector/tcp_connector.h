@@ -21,6 +21,7 @@
 #ifndef TCP_CONNECTOR_H
 #define TCP_CONNECTOR_H
 
+#include <atomic>
 #include <thread>
 
 #include "framework/connector.h"
@@ -46,14 +47,6 @@ public:
     uint16_t connector_msg_length;
 };
 
-class TcpConnectorMsgHandle : public snort::ConnectorMsgHandle
-{
-public:
-    TcpConnectorMsgHandle(const uint32_t length);
-    ~TcpConnectorMsgHandle();
-    snort::ConnectorMsg connector_msg;
-};
-
 class TcpConnectorCommon : public snort::ConnectorCommon
 {
 public:
@@ -64,29 +57,29 @@ public:
 class TcpConnector : public snort::Connector
 {
 public:
-    typedef Ring<TcpConnectorMsgHandle*> ReceiveRing;
-
-    TcpConnector(TcpConnectorConfig*, int sock_fd);
+    TcpConnector(const TcpConnectorConfig&, int sock_fd);
     ~TcpConnector() override;
-    snort::ConnectorMsgHandle* alloc_message(const uint32_t, const uint8_t**) override;
-    void discard_message(snort::ConnectorMsgHandle*) override;
-    bool transmit_message(snort::ConnectorMsgHandle*) override;
-    snort::ConnectorMsgHandle* receive_message(bool) override;
 
-    snort::ConnectorMsg* get_connector_msg(snort::ConnectorMsgHandle* handle) override
-    { return( &((TcpConnectorMsgHandle*)handle)->connector_msg ); }
-    Direction get_connector_direction() override
-    { return Connector::CONN_DUPLEX; }
+    bool transmit_message(const snort::ConnectorMsg&) override;
+    bool transmit_message(const snort::ConnectorMsg&&) override;
+
+    snort::ConnectorMsg receive_message(bool) override;
+
     void process_receive();
 
     int sock_fd;
 
 private:
-    bool run_thread = false;
-    std::thread* receive_thread;
+    typedef Ring<snort::ConnectorMsg*> ReceiveRing;
+
     void start_receive_thread();
     void stop_receive_thread();
     void receive_processing_thread();
+    snort::ConnectorMsg* read_message();
+    bool internal_transmit_message(const snort::ConnectorMsg&);
+
+    std::atomic<bool> run_thread;
+    std::thread* receive_thread;
     ReceiveRing* receive_ring;
 };
 

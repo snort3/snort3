@@ -149,10 +149,10 @@ TEST_GROUP(file_connector_tinit_tterm)
         CHECK(mod != nullptr);
         connector_common = fc_api->ctor(mod);
         CHECK(connector_common != nullptr);
-        connector_tt = fc_api->tinit(&connector_tx_text_config);
-        connector_rt = fc_api->tinit(&connector_rx_text_config);
-        connector_tb = fc_api->tinit(&connector_tx_binary_config);
-        connector_rb = fc_api->tinit(&connector_rx_binary_config);
+        connector_tt = fc_api->tinit(connector_tx_text_config);
+        connector_rt = fc_api->tinit(connector_rx_text_config);
+        connector_tb = fc_api->tinit(connector_tx_binary_config);
+        connector_rb = fc_api->tinit(connector_rx_binary_config);
         CHECK(connector_tt != nullptr);
         CHECK(connector_rt != nullptr);
         CHECK(connector_tb != nullptr);
@@ -169,18 +169,6 @@ TEST_GROUP(file_connector_tinit_tterm)
         file_connector->mod_dtor(mod);
     }
 };
-
-TEST(file_connector_tinit_tterm, alloc_discard)
-{
-    const uint8_t* data = nullptr;
-    FileConnector* fc_rt = (FileConnector*)connector_rt;
-
-    FileConnectorMsgHandle* handle = (FileConnectorMsgHandle*)(fc_rt->alloc_message(40,&data));
-    CHECK(data != nullptr);
-    CHECK(handle->connector_msg.length == 40);
-    CHECK(handle->connector_msg.data == data);
-    fc_rt->discard_message(handle);
-}
 
 TEST_GROUP(file_connector_text)
 {
@@ -199,46 +187,61 @@ TEST_GROUP(file_connector_text)
     }
 };
 
-TEST(file_connector_text, alloc_transmit_rename_receive_discard)
+TEST(file_connector_text, transmit_rename_receive)
 {
-    mod = file_connector->mod_ctor();
-    CHECK(mod != nullptr);
-    connector_common = fc_api->ctor(mod);
-    CHECK(connector_common != nullptr);
-    connector_tt = fc_api->tinit(&connector_tx_text_config);
-    CHECK(connector_tt != nullptr);
-    FileConnector* fc_tt = (FileConnector*)connector_tt;
+    uint32_t len = sizeof("foobar") - 1;
 
-    const uint8_t* data = nullptr;
-    FileConnectorMsgHandle* t_handle = (FileConnectorMsgHandle*)(fc_tt->alloc_message(40,&data));
-    CHECK(data != nullptr);
-    CHECK(t_handle->connector_msg.length == 40);
-    CHECK(t_handle->connector_msg.data == data);
-    CHECK(fc_tt->transmit_message(t_handle) == true);
+    {
+        mod = file_connector->mod_ctor();
+        CHECK(mod != nullptr);
+        connector_common = fc_api->ctor(mod);
+        CHECK(connector_common != nullptr);
+        connector_tt = fc_api->tinit(connector_tx_text_config);
+        CHECK(connector_tt != nullptr);
+        FileConnector* fc_tt = (FileConnector*)connector_tt;
 
-    fc_api->tterm(connector_tt);
-    fc_api->dtor(connector_common);
-    file_connector->mod_dtor(mod);
+        uint8_t* data = new uint8_t[len];
+        memcpy(data, "foobar", len);
+        ConnectorMsg t_msg(data, len, true);
+
+        CHECK(fc_tt->transmit_message(t_msg));
+
+        fc_api->tterm(connector_tt);
+        fc_api->dtor(connector_common);
+        file_connector->mod_dtor(mod);
+    }
+
+    {
+        std::ifstream transmit_res_file("file_connector_tx_t_transmit");
+        CHECK(transmit_res_file.is_open());
+
+        std::stringstream buffer;
+        buffer << transmit_res_file.rdbuf();
+
+        CHECK(buffer.str().size() == len + 1);
+        CHECK(buffer.str() == "foobar\n");
+    }
 
     std::rename("file_connector_tx_t_transmit", "file_connector_rx_t_receive");
 
-    mod = file_connector->mod_ctor();
-    CHECK(mod != nullptr);
-    connector_common = fc_api->ctor(mod);
-    CHECK(connector_common != nullptr);
-    connector_rt = fc_api->tinit(&connector_rx_text_config);
-    CHECK(connector_rt != nullptr);
-    FileConnector* fc_rt = (FileConnector*)connector_rt;
+    {
+        mod = file_connector->mod_ctor();
+        CHECK(mod != nullptr);
+        connector_common = fc_api->ctor(mod);
+        CHECK(connector_common != nullptr);
+        connector_rt = fc_api->tinit(connector_rx_text_config);
+        CHECK(connector_rt != nullptr);
+        FileConnector* fc_rt = (FileConnector*)connector_rt;
 
-    FileConnectorMsgHandle* r_handle = (FileConnectorMsgHandle*)(fc_rt->receive_message(true));
-    CHECK(r_handle != nullptr);
-    CHECK(r_handle->connector_msg.length == 40);
+        ConnectorMsg t_msg = fc_rt->receive_message(true);
 
-    fc_rt->discard_message(r_handle);
+        CHECK(t_msg.get_length() == len);
+        CHECK(strncmp((const char*)t_msg.get_data(), "foobar", len) == 0);
 
-    fc_api->tterm(connector_rt);
-    fc_api->dtor(connector_common);
-    file_connector->mod_dtor(mod);
+        fc_api->tterm(connector_rt);
+        fc_api->dtor(connector_common);
+        file_connector->mod_dtor(mod);
+    }
 }
 
 TEST_GROUP(file_connector_binary)
@@ -258,57 +261,59 @@ TEST_GROUP(file_connector_binary)
     }
 };
 
-TEST(file_connector_binary, alloc_transmit_rename_receive_discard)
+TEST(file_connector_binary, transmit_rename_receive)
 {
-    mod = file_connector->mod_ctor();
-    CHECK(mod != nullptr);
-    connector_common = fc_api->ctor(mod);
-    CHECK(connector_common != nullptr);
-    connector_tb = fc_api->tinit(&connector_tx_binary_config);
-    CHECK(connector_tb != nullptr);
-    FileConnector* fc_tb = (FileConnector*)connector_tb;
+    const uint32_t len = sizeof("foobar") - 1;
+    {
+        mod = file_connector->mod_ctor();
+        CHECK(mod != nullptr);
+        connector_common = fc_api->ctor(mod);
+        CHECK(connector_common != nullptr);
+        connector_tb = fc_api->tinit(connector_tx_binary_config);
+        CHECK(connector_tb != nullptr);
+        FileConnector* fc_tb = (FileConnector*)connector_tb;
 
-    const uint8_t* data = nullptr;
-    FileConnectorMsgHandle* t_handle = (FileConnectorMsgHandle*)(fc_tb->alloc_message(40,&data));
-    CHECK(data != nullptr);
-    CHECK(t_handle->connector_msg.length == 40);
-    CHECK(t_handle->connector_msg.data == data);
-    CHECK(fc_tb->transmit_message(t_handle) == true);
+        uint8_t* data = new uint8_t[len];
+        memcpy(data, "foobar", len);
+        ConnectorMsg t_msg(data, len, true);
 
-    fc_api->tterm(connector_tb);
-    fc_api->dtor(connector_common);
-    file_connector->mod_dtor(mod);
+        CHECK(fc_tb->transmit_message(std::move(t_msg)));
+
+        fc_api->tterm(connector_tb);
+        fc_api->dtor(connector_common);
+        file_connector->mod_dtor(mod);
+    }
+
+    {
+        std::ifstream transmit_res_file("file_connector_tx_b_transmit");
+        CHECK(transmit_res_file.is_open());
+
+        std::stringstream transmit_res;
+        transmit_res << transmit_res_file.rdbuf();
+
+        CHECK(transmit_res.str().size() == len + sizeof(FileConnectorMsgHdr));
+        CHECK(transmit_res.str().substr(sizeof(FileConnectorMsgHdr)) == ("foobar"));
+    }
 
     std::rename("file_connector_tx_b_transmit", "file_connector_rx_b_receive");
 
-    mod = file_connector->mod_ctor();
-    CHECK(mod != nullptr);
-    connector_common = fc_api->ctor(mod);
-    CHECK(connector_common != nullptr);
-    connector_rb = fc_api->tinit(&connector_rx_binary_config);
-    CHECK(connector_rb != nullptr);
-    FileConnector* fc_rb = (FileConnector*)connector_rb;
+    {
+        mod = file_connector->mod_ctor();
+        CHECK(mod != nullptr);
+        connector_common = fc_api->ctor(mod);
+        CHECK(connector_common != nullptr);
+        connector_rb = fc_api->tinit(connector_rx_binary_config);
+        CHECK(connector_rb != nullptr);
+        FileConnector* fc_rt = (FileConnector*)connector_rb;
 
-    FileConnectorMsgHandle* r_handle = (FileConnectorMsgHandle*)(fc_rb->receive_message(true));
-    CHECK(r_handle != nullptr);
-    CHECK(r_handle->connector_msg.length == 40);
+        ConnectorMsg t_msg = fc_rt->receive_message(true);
+        CHECK(t_msg.get_length() == len);
+        CHECK(strncmp((const char*)t_msg.get_data(), "foobar", len) == 0);
 
-    fc_rb->discard_message(r_handle);
-
-    fc_api->tterm(connector_rb);
-    fc_api->dtor(connector_common);
-    file_connector->mod_dtor(mod);
-}
-
-TEST_GROUP(file_connector_msg_handle)
-{
-};
-
-TEST(file_connector_msg_handle, test)
-{
-    FileConnectorMsgHandle handle(12);
-    CHECK(handle.connector_msg.length == 12);
-    CHECK(handle.connector_msg.data != nullptr);
+        fc_api->tterm(connector_rb);
+        fc_api->dtor(connector_common);
+        file_connector->mod_dtor(mod);
+    }
 }
 
 int main(int argc, char** argv)

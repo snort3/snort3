@@ -67,5 +67,12 @@ The dynamic message allocation architecture is flexible and asynchronous.  Upon
 transmitting the message, the client transfers ownership to the connector.  The
 connector then discards the message upon transmission.
 
+Side Channel can format messages in text and binary modes. In text mode
+messages are prepended with header in format "<port>:<time_sec>.<time_usec>"
+and content is printed with hex values separated with a comma. By using
+alloc_transmit_message() and discard_message() user ensures proper translation,
+since in text mode we need to allocate a buffer that will accommodate a
+converted message.
+
 A side channel can be bidirectional, but does not implement a request/reply
 paradigm.  Rather it should be viewed as two simplex channels.

@@ -36,17 +36,6 @@ using namespace snort;
 THREAD_LOCAL SimpleStats file_connector_stats;
 THREAD_LOCAL ProfileStats file_connector_perfstats;
 
-FileConnectorMsgHandle::FileConnectorMsgHandle(const uint32_t length)
-{
-    connector_msg.length = length;
-    connector_msg.data = new uint8_t[length];
-}
-
-FileConnectorMsgHandle::~FileConnectorMsgHandle()
-{
-    delete[] connector_msg.data;
-}
-
 FileConnectorCommon::FileConnectorCommon(FileConnectorConfig::FileConnectorConfigSet* conf)
 {
     config_set = (ConnectorConfig::ConfigSet*)conf;
@@ -64,161 +53,85 @@ FileConnectorCommon::~FileConnectorCommon()
     delete config_set;
 }
 
-FileConnector::FileConnector(FileConnectorConfig* file_connector_config)
+bool FileConnector::internal_transmit_message(const ConnectorMsg& msg)
 {
-    config = file_connector_config;
-}
+    if ( !msg.get_data() or msg.get_length() == 0 )
+        return false;
 
-ConnectorMsgHandle* FileConnector::alloc_message(const uint32_t length, const uint8_t** data)
-{
-    FileConnectorMsgHandle* msg = new FileConnectorMsgHandle(length);
-
-    *data = (uint8_t*)msg->connector_msg.data;
-
-    return msg;
-}
-
-void FileConnector::discard_message(ConnectorMsgHandle* msg)
-{
-    FileConnectorMsgHandle* fmsg = (FileConnectorMsgHandle*)msg;
-    delete fmsg;
-}
-
-bool FileConnector::transmit_message(ConnectorMsgHandle* msg)
-{
-    FileConnectorMsgHandle* fmsg = (FileConnectorMsgHandle*)msg;
-    const FileConnectorConfig* cfg = (const FileConnectorConfig*)config;
-
-    if ( cfg->text_format )
+    if ( cfg.text_format )
     {
-        unsigned char* message = (unsigned char*)(fmsg->connector_msg.data + sizeof(SCMsgHdr));
-        SCMsgHdr* hdr = (SCMsgHdr*)(fmsg->connector_msg.data);
-
-        file << hdr->port << ":" << hdr->time_seconds << "." << hdr->time_u_seconds;
-
-        for ( int i = 0; i<(int)(fmsg->connector_msg.length - sizeof(SCMsgHdr)); i++ )
-        {
-            char hex_string[4];
-            snprintf(hex_string, 4, ",%02X", *message++);
-            file << hex_string;
-        }
-
+        file.write((const char*)msg.get_data(), msg.get_length());
         file << "\n";
     }
     else
     {
-        FileConnectorMsgHdr fc_hdr(fmsg->connector_msg.length);
+        FileConnectorMsgHdr fc_hdr(msg.get_length());
 
-        file.write( (const char*)&fc_hdr, sizeof(fc_hdr) );
-        file.write( (const char*)fmsg->connector_msg.data, fmsg->connector_msg.length);
+        file.write((const char*)&fc_hdr, sizeof(fc_hdr) );
+        file.write((const char*)msg.get_data(), msg.get_length());
     }
 
-    delete fmsg;
-
-    return true;
+    return file.good();
 }
 
-ConnectorMsgHandle* FileConnector::receive_message_binary()
+bool FileConnector::transmit_message(const ConnectorMsg& msg)
+{ return internal_transmit_message(msg); }
+
+bool FileConnector::transmit_message(const ConnectorMsg&& msg)
+{ return internal_transmit_message(msg); }
+
+ConnectorMsg FileConnector::receive_message_binary()
 {
-    uint8_t* buffer = new uint8_t[MAXIMUM_SC_MESSAGE_CONTENT+sizeof(SCMsgHdr)+
-        sizeof(FileConnectorMsgHdr)];
-    // The FileConnectorMsgHdr is at the beginning of the buffer
-    FileConnectorMsgHdr* fc_hdr = (FileConnectorMsgHdr*)buffer;
+    uint8_t* fc_hdr_buf = new uint8_t[sizeof(FileConnectorMsgHdr)];
 
-    // Read the FileConnect and SC headers
-    file.read((char*)buffer, (sizeof(FileConnectorMsgHdr)+sizeof(SCMsgHdr)));
+    FileConnectorMsgHdr* fc_hdr = (FileConnectorMsgHdr*)fc_hdr_buf;
+    file.read((char*)fc_hdr_buf, sizeof(FileConnectorMsgHdr));
 
-    // If not present, then no message exists
-    if ( (unsigned)file.gcount() < (sizeof(FileConnectorMsgHdr)+sizeof(SCMsgHdr)) )
+    if ( (unsigned)file.gcount() < sizeof(FileConnectorMsgHdr) or
+        fc_hdr->connector_msg_length == 0 or fc_hdr->version != FILE_FORMAT_VERSION )
     {
-        delete[] buffer;
-        return nullptr;
+        delete[] fc_hdr_buf;
+        return ConnectorMsg();
     }
 
-    // Now read the SC message content
-    file.read((char*)(buffer+sizeof(FileConnectorMsgHdr)+sizeof(SCMsgHdr)),
-        (fc_hdr->connector_msg_length - sizeof(SCMsgHdr)));
+    uint8_t* data = new uint8_t[fc_hdr->connector_msg_length];
+    file.read((char*)data, fc_hdr->connector_msg_length);
 
-    // If not present, then no valid message exists
-    if ( (unsigned)file.gcount() < (fc_hdr->connector_msg_length - sizeof(SCMsgHdr)) )
+    if ( (unsigned)file.gcount() < fc_hdr->connector_msg_length )
     {
-        delete[] buffer;
-        return nullptr;
+        delete[] fc_hdr_buf;
+        delete[] data;
+        return ConnectorMsg();
     }
 
-    // The message is valid, make a ConnectorMsg to contain it.
-    FileConnectorMsgHandle* handle = new FileConnectorMsgHandle(fc_hdr->connector_msg_length);
+    ConnectorMsg msg(data, fc_hdr->connector_msg_length, true);
+    delete[] fc_hdr_buf;
 
-    // Copy the connector message into the new ConnectorMsg
-    memcpy(handle->connector_msg.data, (buffer+sizeof(FileConnectorMsgHdr)),
-        fc_hdr->connector_msg_length);
-    delete[] buffer;
-
-    return handle;
-}
-
-ConnectorMsgHandle* FileConnector::receive_message_text()
-{
-    char line_buffer[4*MAXIMUM_SC_MESSAGE_CONTENT];
-    char message[MAXIMUM_SC_MESSAGE_CONTENT];
-    char* current = line_buffer;
-    uint64_t time_seconds;
-    uint32_t time_u_seconds;
-    uint16_t port;
-    int length = 0;
-
-    // Read the record
-    file.getline(line_buffer, sizeof(line_buffer));
-
-    // If not present, then no message exists
-    //   (1 for type, 1 for colon, 1 for time, 1 for null)
-    if ( (unsigned)file.gcount() < 4 )
-    {
-        return nullptr;
-    }
-
-    // FIXIT-L Add sanity/retval checking for sscanfs below
-    sscanf(line_buffer, "%hu:%" SCNu64 ".%" SCNu32, &port, &time_seconds, &time_u_seconds);
-
-    while ( (current = strchr(current,(int)',')) != nullptr )
-    {
-        current += 1;   // step to the character after the comma
-        sscanf(current,"%hhx",(unsigned char*)&(message[length++]));
-    }
-
-    // The message is valid, make a ConnectorMsg to contain it.
-    FileConnectorMsgHandle* handle = new FileConnectorMsgHandle(length+sizeof(SCMsgHdr));
-
-    // Populate the new message header
-    SCMsgHdr* hdr = (SCMsgHdr*) handle->connector_msg.data;
-    hdr->port = port;
-    hdr->sequence = 0;
-    hdr->time_seconds = time_seconds;
-    hdr->time_u_seconds = time_u_seconds;
-    // Copy the connector message into the new ConnectorMsg
-    memcpy((handle->connector_msg.data+sizeof(SCMsgHdr)), message, length);
-
-    return handle;
+    return msg;
 }
 
 // Reading messages from files can never block.  Either a message exists
 //  or it does not.
-ConnectorMsgHandle* FileConnector::receive_message(bool)
+ConnectorMsg FileConnector::receive_message(bool)
 {
     if ( !file.is_open() )
-        return nullptr;
-    else
+        return ConnectorMsg();
+
+    if ( cfg.text_format )
     {
-        const FileConnectorConfig* cfg = (const FileConnectorConfig*)config;
-        if ( cfg->text_format )
-        {
-            return( receive_message_text() );
-        }
-        else
-        {
-            return( receive_message_binary() );
-        }
+        std::string line;
+        std::getline(file, line, file.widen('\n'));
+
+        if ( line.empty() )
+            return ConnectorMsg();
+
+        uint8_t* data = new uint8_t[line.size()];
+        memcpy(data, line.c_str(), line.size());
+
+        return ConnectorMsg(data, line.size(), true);
     }
+
+    return receive_message_binary();
 }
 
 //-------------------------------------------------------------------------
@@ -235,8 +148,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static Connector* file_connector_tinit_transmit(std::string filename,
-    FileConnectorConfig* cfg)
+static Connector* file_connector_tinit_transmit(std::string& filename, const FileConnectorConfig& cfg)
 {
     FileConnector* file_conn = new FileConnector(cfg);
     std::string pathname;
@@ -244,13 +156,12 @@ static Connector* file_connector_tinit_transmit(std::string filename,
     filename += "_transmit";
     (void)get_instance_file(pathname, filename.c_str());
     file_conn->file.open(pathname,
-        (std::ios::out | (cfg->text_format ? (std::ios::openmode)0 : std::ios::binary)) );
+        (std::ios::out | (cfg.text_format ? (std::ios::openmode)0 : std::ios::binary)) );
 
     return file_conn;
 }
 
-static Connector* file_connector_tinit_receive(std::string filename,
-    FileConnectorConfig* cfg)
+static Connector* file_connector_tinit_receive(std::string& filename, const FileConnectorConfig& cfg)
 {
     FileConnector* file_conn = new FileConnector(cfg);
     std::string pathname;
@@ -263,19 +174,19 @@ static Connector* file_connector_tinit_receive(std::string filename,
 }
 
 // Create a per-thread object
-static Connector* file_connector_tinit(ConnectorConfig* config)
+static Connector* file_connector_tinit(const ConnectorConfig& config)
 {
-    FileConnectorConfig* cfg = (FileConnectorConfig*)config;
+    const FileConnectorConfig& fconf = (const FileConnectorConfig&)config;
 
     std::string filename = FILE_CONNECTOR_NAME;
     filename += "_";
-    filename += cfg->name;
+    filename += fconf.name;
 
-    if ( cfg->direction == Connector::CONN_TRANSMIT )
-        return file_connector_tinit_transmit(filename,cfg);
+    if ( fconf.direction == Connector::CONN_TRANSMIT )
+        return file_connector_tinit_transmit(filename, fconf);
 
-    else if ( cfg->direction == Connector::CONN_RECEIVE )
-        return file_connector_tinit_receive(filename,cfg);
+    else if ( fconf.direction == Connector::CONN_RECEIVE )
+        return file_connector_tinit_receive(filename, fconf);
 
     return nullptr;
 }
@@ -309,7 +220,7 @@ const ConnectorApi file_connector_api =
         PT_CONNECTOR,
         sizeof(ConnectorApi),
         CONNECTOR_API_VERSION,
-        0,
+        1,
         API_RESERVED,
         API_OPTIONS,
         FILE_CONNECTOR_NAME,

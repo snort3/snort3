@@ -55,6 +55,9 @@ static const Parameter sc_params[] =
     { "connector", Parameter::PT_STRING, nullptr, nullptr,
       "connector handle" },
 
+    { "format", Parameter::PT_ENUM, "binary | text", nullptr,
+      "data output format" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -97,7 +100,10 @@ bool SideChannelModule::set(const char*, Value& v, SnortConfig*)
 {
     assert(config);
 
-    if ( v.is("connector") )
+    if ( v.is("format") )
+        config->format = (ScMsgFormat)v.get_uint8();
+
+    else if ( v.is("connector") )
         config->connectors.emplace_back(std::move(v.get_string()));
 
     else if ( v.is("ports") )
@@ -134,7 +140,7 @@ bool SideChannelModule::end(const char* fqn, int idx, SnortConfig*)
 
     // Instantiate the side channel.  The name links
     // to the side channel connector(s).
-    SideChannelManager::instantiate(&config->connectors, config->ports);
+    SideChannelManager::instantiate(&config->connectors, config->ports, config->format);
 
     delete config->ports;
     delete config;

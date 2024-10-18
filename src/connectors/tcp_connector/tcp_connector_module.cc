@@ -24,18 +24,25 @@
 
 #include "tcp_connector_module.h"
 
+#include <sstream>
+#include <string>
+
+#include "log/messages.h"
+#include "main/thread_config.h"
+
 using namespace snort;
+using namespace std;
 
 static const Parameter tcp_connector_params[] =
 {
     { "connector", Parameter::PT_STRING, nullptr, nullptr,
       "connector name" },
 
-    { "address", Parameter::PT_STRING, nullptr, nullptr,
-      "address" },
+    { "address", Parameter::PT_ADDR, nullptr, nullptr,
+      "address of the remote end-point" },
 
-    { "base_port", Parameter::PT_PORT, nullptr, nullptr,
-      "base port number" },
+    { "ports", Parameter::PT_INT_LIST, "65535", nullptr,
+      "list of ports of the remote end-point" },
 
     { "setup", Parameter::PT_ENUM, "call | answer", nullptr,
       "stream establishment" },
@@ -64,14 +71,21 @@ TcpConnectorModule::TcpConnectorModule() :
 
 TcpConnectorModule::~TcpConnectorModule()
 {
-    if ( config )
-        delete config;
-    if ( config_set )
-        delete config_set;
+    delete config;
+    delete config_set;
 }
 
 ProfileStats* TcpConnectorModule::get_profile() const
 { return &tcp_connector_perfstats; }
+
+static void fill_ports(vector<string>& ports, const string& s)
+{
+    string port;
+    stringstream ss(s);
+
+    while ( ss >> port )
+        ports.push_back(port);
+}
 
 bool TcpConnectorModule::set(const char*, Value& v, SnortConfig*)
 {
@@ -81,8 +95,8 @@ bool TcpConnectorModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("address") )
         config->address = v.get_string();
 
-    else if ( v.is("base_port") )
-        config->base_port = v.get_uint16();
+    else if ( v.is("ports") )
+        fill_ports(config->ports, v.get_string());
 
     else if ( v.is("setup") )
     {
@@ -98,6 +112,7 @@ bool TcpConnectorModule::set(const char*, Value& v, SnortConfig*)
             return false;
         }
     }
+
     return true;
 }
 
@@ -115,7 +130,9 @@ bool TcpConnectorModule::begin(const char*, int, SnortConfig*)
     if ( !config )
     {
         config = new TcpConnectorConfig;
+        config->direction = Connector::CONN_DUPLEX;
     }
+
     return true;
 }
 
@@ -123,6 +140,13 @@ bool TcpConnectorModule::end(const char*, int idx, SnortConfig*)
 {
     if (idx != 0)
     {
+        if ( config->ports.size() > 1 and config->ports.size() < ThreadConfig::get_instance_max() )
+        {
+            ParseError("The number of ports specified is insufficient to cover all threads. "
+                "Number of threads: %d.", ThreadConfig::get_instance_max());
+            return false;
+        }
+
         config_set->emplace_back(config);
         config = nullptr;
     }

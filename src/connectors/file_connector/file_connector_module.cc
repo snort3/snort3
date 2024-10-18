@@ -34,8 +34,8 @@ static const Parameter file_connector_params[] =
     { "name", Parameter::PT_STRING, nullptr, nullptr,
       "channel name" },
 
-    { "format", Parameter::PT_ENUM, "binary | text", nullptr,
-      "file format" },
+    { "text_format", Parameter::PT_BOOL, nullptr, "false",
+      "skip header and add newline at the end of the message" },
 
     { "direction", Parameter::PT_ENUM, "receive | transmit | duplex", nullptr,
       "usage" },
@@ -79,8 +79,8 @@ bool FileConnectorModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("name") )
         config->name = v.get_string();
 
-    else if ( v.is("format") )
-        config->text_format = ( v.get_uint8() == 1 );
+    else if ( v.is("text_format") )
+        config->text_format = v.get_bool();
 
     else if ( v.is("direction") )
     {

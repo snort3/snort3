@@ -43,14 +43,6 @@ public:
     uint32_t connector_msg_length;
 };
 
-class FileConnectorMsgHandle : public snort::ConnectorMsgHandle
-{
-public:
-    FileConnectorMsgHandle(const uint32_t length);
-    ~FileConnectorMsgHandle();
-    snort::ConnectorMsg connector_msg;
-};
-
 class FileConnectorCommon : public snort::ConnectorCommon
 {
 public:
@@ -61,23 +53,23 @@ public:
 class FileConnector : public snort::Connector
 {
 public:
-    FileConnector(FileConnectorConfig*);
-    snort::ConnectorMsgHandle* alloc_message(const uint32_t, const uint8_t**) override;
-    void discard_message(snort::ConnectorMsgHandle*) override;
-    bool transmit_message(snort::ConnectorMsgHandle*) override;
-    snort::ConnectorMsgHandle* receive_message(bool) override;
+    FileConnector(const FileConnectorConfig& conf) : Connector(conf), cfg(conf) {}
 
-    snort::ConnectorMsg* get_connector_msg(snort::ConnectorMsgHandle* handle) override
-    { return( &((FileConnectorMsgHandle*)handle)->connector_msg ); }
-    Direction get_connector_direction() override
-    { return( ((const FileConnectorConfig*)config)->direction ); }
+    bool transmit_message(const snort::ConnectorMsg&) override;
+    bool transmit_message(const snort::ConnectorMsg&&) override;
+
+    snort::ConnectorMsg receive_message(bool) override;
+
+    bool flush() override
+    { file.flush(); return file.good(); }
 
     std::fstream file;
 
 private:
-    snort::ConnectorMsgHandle* receive_message_binary();
-    snort::ConnectorMsgHandle* receive_message_text();
+    bool internal_transmit_message(const snort::ConnectorMsg&);
+    snort::ConnectorMsg receive_message_binary();
+
+    const FileConnectorConfig& cfg;
 };
 
 #endif
-

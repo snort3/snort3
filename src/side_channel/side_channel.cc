@@ -28,10 +28,13 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstring>
 
 #include "framework/counts.h"
 #include "managers/connector_manager.h"
 #include "profiler/profiler_defs.h"
+
+#include "side_channel_format.h"
 
 using namespace snort;
 
@@ -45,6 +48,7 @@ struct SideChannelMapping
     SideChannel* sc;
     std::vector<std::string> connectors;
     PortBitSet ports;
+    ScMsgFormat format;
 };
 
 typedef std::vector<SideChannelMapping*> SCMaps;
@@ -68,25 +72,19 @@ SideChannel* SideChannelManager::get_side_channel(SCPort port)
     return nullptr;
 }
 
-void SideChannel::set_message_port(SCMessage* msg, SCPort port)
-{
-    assert ( msg );
-    assert ( msg->hdr );
-    msg->hdr->port = port;
-}
-
 void SideChannel::set_default_port(SCPort port)
 {
     default_port = port;
 }
 
-void SideChannelManager::instantiate(const SCConnectors* connectors, const PortBitSet* ports)
+void SideChannelManager::instantiate(const SCConnectors* connectors, const PortBitSet* ports, ScMsgFormat fmt)
 {
     SideChannelMapping* scm = new SideChannelMapping;
 
     scm->sc = nullptr;
     scm->connectors = *connectors;
     scm->ports = *ports;
+    scm->format = fmt;
 
     s_maps.emplace_back(scm);
 }
@@ -100,10 +98,6 @@ void SideChannelManager::pre_config_init()
 // Within each thread, instantiate the connectors, etc.
 void SideChannelManager::thread_init()
 {
-
-    // First startup the connectors
-    ConnectorManager::thread_init();
-
     /* New SideChannel map vector just for this thread */
     SCMaps* map_list = new SCMaps;
 
@@ -112,11 +106,11 @@ void SideChannelManager::thread_init()
     {
         /* New SideChannel just for this thread */
         SideChannelMapping* map = new SideChannelMapping;
-        SideChannel* sc = new SideChannel;
+        SideChannel* sc = new SideChannel(scm->format);
         map->sc = sc;
         map->ports = scm->ports;
 
-        for ( auto& conn_name : scm->connectors )
+        for ( const auto& conn_name : scm->connectors )
         {
             Connector* connector = ConnectorManager::get_connector(conn_name);
             if ( connector == nullptr )
@@ -150,13 +144,9 @@ void SideChannelManager::thread_init()
 // Within each thread, shutdown the sidechannel
 void SideChannelManager::thread_term()
 {
-
-    // First shutdown the connectors
-    ConnectorManager::thread_term();
-
     if (tls_maps)
     {
-        for ( auto& map : *tls_maps )
+        for ( const auto& map : *tls_maps )
         {
             delete map->sc;
             delete map;
@@ -175,6 +165,9 @@ void SideChannelManager::term()
     s_maps.shrink_to_fit();
 }
 
+SideChannel::SideChannel(ScMsgFormat fmt) : msg_format(fmt)
+{ }
+
 // receive at most max_messages.  Zero indicates unlimited.
 // return true iff we received any messages.
 bool SideChannel::process(int max_messages)
@@ -184,35 +177,32 @@ bool SideChannel::process(int max_messages)
     while (true)
     {
         // get message if one is available.
-        ConnectorMsgHandle* handle = connector_receive->receive_message(false);
+        ConnectorMsg connector_msg = connector_receive->receive_message(false);
 
-        // if none, we are complete
-        if ( !handle )
+        if ( connector_msg.get_length() > 0 and msg_format == ScMsgFormat::TEXT )
+        {
+            connector_msg = from_text((const char*)connector_msg.get_data(), connector_msg.get_length());
+        }
+
+        // if none or invalid, we are complete
+        if ( connector_msg.get_length() == 0 )
             break;
 
-        else if ( receive_handler )
+        if ( receive_handler )
         {
-            SCMessage* msg = new SCMessage;
+            SCMessage* msg = new SCMessage(this, connector_receive, std::move(connector_msg));
 
-            // get the ConnectorMsg from the (at this point) abstract class
-            ConnectorMsg* connector_msg = connector_receive->get_connector_msg(handle);
-
-            msg->content = connector_msg->data;
-            msg->content_length = connector_msg->length;
+            msg->content = const_cast<uint8_t*>(msg->cmsg.get_data());
+            msg->content_length = msg->cmsg.get_length();
 
             // if the message is longer than the header, assume we have a header
-            if ( connector_msg->length >= sizeof(SCMsgHdr) )
+            if ( msg->cmsg.get_length() > sizeof(SCMsgHdr) )
             {
-                msg->sc = this;
-                msg->connector = connector_receive;
-                msg->hdr = (SCMsgHdr*)connector_msg->data;
                 msg->content += sizeof(SCMsgHdr);
                 msg->content_length -= sizeof( SCMsgHdr );
             }
 
-            msg->handle = handle;   // link back to the underlying SCC message
             received_message = true;
-
             receive_handler(msg);
         }
 
@@ -232,47 +222,100 @@ void SideChannel::unregister_receive_handler()
     receive_handler = nullptr;
 }
 
+SCMsgHdr SideChannel::get_header()
+{
+    struct timeval tm;
+    (void)gettimeofday(&tm, nullptr);
+
+    SCMsgHdr hdr;
+    hdr.port = default_port;
+    hdr.time_seconds = (uint64_t)tm.tv_sec;
+    hdr.time_u_seconds = (uint32_t)tm.tv_usec;
+    hdr.sequence = sequence++;
+
+    return hdr;
+}
+
 SCMessage* SideChannel::alloc_transmit_message(uint32_t content_length)
 {
-    SCMessage* msg = new SCMessage;
-    msg->handle = connector_transmit->alloc_message((content_length + sizeof(SCMsgHdr)),
-        const_cast<const uint8_t**>(reinterpret_cast<uint8_t**>(&msg->hdr)));
-    assert(msg->handle);
+    SCMessage* msg = nullptr;
+    const SCMsgHdr sc_hdr = get_header();
 
-    msg->sc = this;
-    msg->connector = connector_transmit;
-    msg->content_length = content_length;
-    msg->content = (uint8_t*)msg->hdr + sizeof(SCMsgHdr);
-    msg->hdr->port = default_port;
+    switch (msg_format)
+    {
+    case ScMsgFormat::BINARY:
+    {
+        uint8_t* msg_data = new uint8_t[sizeof(SCMsgHdr) + content_length];
+
+        memcpy(msg_data, &sc_hdr, sizeof(SCMsgHdr));
+
+        ConnectorMsg bin_cmsg(msg_data, sizeof(SCMsgHdr) + content_length, true);
+
+        msg = new SCMessage(this, connector_transmit, std::move(bin_cmsg));
+        msg->content = msg_data + sizeof(SCMsgHdr);
+        msg->content_length = content_length;
+
+        break;
+    }
+
+    case ScMsgFormat::TEXT:
+    {
+        std::string hdr_text = sc_msg_hdr_to_text(&sc_hdr);
+
+        if (hdr_text.empty())
+            break;
+
+        const uint32_t msg_len = hdr_text.size() + (content_length * TXT_UNIT_LEN);
+        uint8_t* msg_data = new uint8_t[msg_len];
+
+        memcpy(msg_data, hdr_text.c_str(), hdr_text.size());
+
+        ConnectorMsg text_cmsg(msg_data, msg_len, true);
+
+        msg = new SCMessage(this, connector_transmit, std::move(text_cmsg));
+        msg->content = msg_data + hdr_text.size();
+        msg->content_length = content_length;
+
+        break;
+    }
+
+    default:
+        break;
+    }
 
     return msg;
 }
 
-bool SideChannel::discard_message(SCMessage* msg)
+bool SideChannel::discard_message(SCMessage* msg) const
 {
     assert(msg);
-    assert(msg->handle);
 
-    msg->connector->discard_message (msg->handle);
     delete msg;
+
     return true;
 }
 
-bool SideChannel::transmit_message(SCMessage* msg)
+bool SideChannel::transmit_message(SCMessage* msg) const
 {
-    bool return_value = false;
+    if ( !connector_transmit or !msg )
+        return false;
 
-    if ( connector_transmit && msg->handle )
+    if ( msg_format == ScMsgFormat::TEXT )
     {
-        struct timeval tm;
-        (void)gettimeofday(&tm,nullptr);
-        msg->hdr->time_seconds = (uint64_t)tm.tv_sec;
-        msg->hdr->time_u_seconds = (uint32_t)tm.tv_usec;
-        msg->hdr->sequence = sequence++;
+        std::string text = sc_msg_data_to_text(msg->content, msg->content_length);
 
-        return_value = connector_transmit->transmit_message(msg->handle);
-        delete msg;
+        if ( text.size() != msg->cmsg.get_length() - (uint32_t)(msg->content - msg->cmsg.get_data()) )
+        {
+            delete msg;
+            return false;
+        }
+
+        memcpy(msg->content, text.c_str(), text.size());
     }
+
+    bool return_value = connector_transmit->transmit_message(msg->cmsg);
+
+    delete msg;
 
     return return_value;
 }

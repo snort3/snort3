@@ -581,11 +581,13 @@ static void send_sc_update_message(Flow& flow, SideChannel& sc)
 
     SCMessage* sc_msg = sc.alloc_transmit_message((uint32_t) (header_len + content_len));
     assert(sc_msg);
+
     HAMessage ha_msg(sc_msg->content, sc_msg->content_length);
 
-    write_msg_header(flow, HA_UPDATE_EVENT, header_len + content_len, ha_msg);
+    write_msg_header(flow, HA_UPDATE_EVENT, sc_msg->content_length, ha_msg);
     write_update_msg_content(flow, ha_msg, false);
     update_msg_header_length(ha_msg);
+
     sc.transmit_message(sc_msg);
 }
 
@@ -637,7 +639,10 @@ void HighAvailability::process_update(Flow* flow, Packet* p)
 static void send_sc_deletion_message(Flow& flow, SideChannel& sc)
 {
     const uint32_t msg_len = calculate_msg_header_length(flow);
+
     SCMessage* sc_msg = sc.alloc_transmit_message(msg_len);
+    assert(sc_msg);
+
     HAMessage ha_msg(sc_msg->content, sc_msg->content_length);
 
     // No content, only header+key

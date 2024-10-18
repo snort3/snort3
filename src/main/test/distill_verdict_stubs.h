@@ -34,6 +34,7 @@
 #include "log/messages.h"
 #include "managers/action_manager.h"
 #include "managers/codec_manager.h"
+#include "managers/connector_manager.h"
 #include "managers/event_manager.h"
 #include "managers/inspector_manager.h"
 #include "managers/ips_manager.h"
@@ -99,6 +100,9 @@ void RuleLatency::tterm() { }
 void rule_latency::set_force_enable(bool) { }
 void PacketLatency::tterm() { }
 void packet_latency::set_force_enable(bool) { }
+void ConnectorManager::thread_init() { }
+void ConnectorManager::thread_reinit() { }
+void ConnectorManager::thread_term() { }
 void SideChannelManager::thread_init() { }
 void SideChannelManager::thread_term() { }
 void CodecManager::thread_init() { }

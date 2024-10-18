@@ -44,6 +44,7 @@ public:
     static void instantiate(const snort::ConnectorApi*, snort::Module*, snort::SnortConfig*);
 
     static void thread_init();
+    static void thread_reinit();
     static void thread_term();
 
     /* get_connector() returns the thread-specific object. */

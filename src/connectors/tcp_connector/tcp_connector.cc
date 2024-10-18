@@ -41,17 +41,6 @@ using namespace snort;
 THREAD_LOCAL SimpleStats tcp_connector_stats;
 THREAD_LOCAL ProfileStats tcp_connector_perfstats;
 
-TcpConnectorMsgHandle::TcpConnectorMsgHandle(const uint32_t length)
-{
-    connector_msg.length = length;
-    connector_msg.data = new uint8_t[length];
-}
-
-TcpConnectorMsgHandle::~TcpConnectorMsgHandle()
-{
-    delete[] connector_msg.data;
-}
-
 TcpConnectorCommon::TcpConnectorCommon(TcpConnectorConfig::TcpConnectorConfigSet* conf)
 {
     config_set = (ConnectorConfig::ConfigSet*)conf;
@@ -116,7 +105,7 @@ static ReadDataOutcome read_message_data(int sockfd, uint16_t length, uint8_t *d
 }
 
 
-static TcpConnectorMsgHandle* read_message(int sock_fd)
+ConnectorMsg* TcpConnector::read_message()
 {
     TcpConnectorMsgHdr hdr;
     ReadDataOutcome outcome;
@@ -137,19 +126,19 @@ static TcpConnectorMsgHandle* read_message(int sock_fd)
         return nullptr;
     }
 
-    TcpConnectorMsgHandle* handle = new TcpConnectorMsgHandle(hdr.connector_msg_length);
+    uint8_t* data = new uint8_t[hdr.connector_msg_length];
 
-    if ((outcome = read_message_data(sock_fd, hdr.connector_msg_length, handle->connector_msg.data)) != SUCCESS)
+    if ((outcome = read_message_data(sock_fd, hdr.connector_msg_length, data)) != SUCCESS)
     {
         if (outcome == CLOSED)
             LogMessage("TcpC Input Thread: Connection closed while reading message data");
         else
             ErrorMessage("TcpC Input Thread: Unable to receive local message data: %d\n", (int)outcome);
-        delete handle;
+        delete[] data;
         return nullptr;
     }
 
-    return handle;
+    return new ConnectorMsg(data, hdr.connector_msg_length, true);
 }
 
 void TcpConnector::process_receive()
@@ -181,18 +170,18 @@ void TcpConnector::process_receive()
     }
     else if (rval > 0 && pfds[0].revents & POLLIN)
     {
-        TcpConnectorMsgHandle* handle = read_message(sock_fd);
-        if (handle && !receive_ring->put(handle))
+        ConnectorMsg* connector_msg = read_message();
+        if (connector_msg && !receive_ring->put(connector_msg))
         {
             ErrorMessage("TcpC Input Thread: overrun\n");
-            delete handle;
+            delete connector_msg;
         }
     }
 }
 
 void TcpConnector::receive_processing_thread()
 {
-    while (run_thread)
+    while (run_thread.load(std::memory_order_relaxed))
     {
         process_receive();
     }
@@ -200,7 +189,7 @@ void TcpConnector::receive_processing_thread()
 
 void TcpConnector::start_receive_thread()
 {
-    run_thread = true;
+    run_thread.store(true, std::memory_order_relaxed);
     receive_thread = new std::thread(&TcpConnector::receive_processing_thread, this);
 }
 
@@ -208,19 +197,17 @@ void TcpConnector::stop_receive_thread()
 {
     if ( receive_thread != nullptr )
     {
-        run_thread = false;
+        run_thread.store(false, std::memory_order_relaxed);
         receive_thread->join();
         delete receive_thread;
     }
 }
 
-TcpConnector::TcpConnector(TcpConnectorConfig* tcp_connector_config, int sfd)
+TcpConnector::TcpConnector(const TcpConnectorConfig& tcp_connector_config, int sfd) :
+    Connector(tcp_connector_config), sock_fd(sfd), run_thread(false), receive_thread(nullptr),
+    receive_ring(new ReceiveRing(50))
 {
-    receive_thread = nullptr;
-    config = tcp_connector_config;
-    receive_ring = new ReceiveRing(50);
-    sock_fd = sfd;
-    if ( tcp_connector_config->async_receive )
+    if ( tcp_connector_config.async_receive )
         start_receive_thread();
 }
 
@@ -231,60 +218,52 @@ TcpConnector::~TcpConnector()
     close(sock_fd);
 }
 
-ConnectorMsgHandle* TcpConnector::alloc_message(const uint32_t length, const uint8_t** data)
+bool TcpConnector::internal_transmit_message(const ConnectorMsg& msg)
 {
-    TcpConnectorMsgHandle* msg = new TcpConnectorMsgHandle(length);
-
-    *data = (uint8_t*)msg->connector_msg.data;
-
-    return msg;
-}
-
-void TcpConnector::discard_message(ConnectorMsgHandle* msg)
-{
-    TcpConnectorMsgHandle* tmsg = (TcpConnectorMsgHandle*)msg;
-    delete tmsg;
-}
-
-bool TcpConnector::transmit_message(ConnectorMsgHandle* msg)
-{
-    TcpConnectorMsgHandle* tmsg = (TcpConnectorMsgHandle*)msg;
+    if ( !msg.get_data() or msg.get_length() == 0 )
+        return false;
 
     if ( sock_fd < 0 )
     {
         ErrorMessage("TcpConnector: transmitting to a closed socket\n");
-        delete tmsg;
         return false;
     }
 
-    TcpConnectorMsgHdr tcpc_hdr(tmsg->connector_msg.length);
+    TcpConnectorMsgHdr tcpc_hdr(msg.get_length());
 
     if ( send( sock_fd, (const char*)&tcpc_hdr, sizeof(tcpc_hdr), 0 ) != sizeof(tcpc_hdr) )
     {
         ErrorMessage("TcpConnector: failed to transmit header\n");
-        delete tmsg;
         return false;
     }
 
-    if ( send( sock_fd, (const char*)tmsg->connector_msg.data, tmsg->connector_msg.length, 0 ) !=
-        tmsg->connector_msg.length )
-    {
-        delete tmsg;
+    if ( send( sock_fd, (const char*)msg.get_data(), msg.get_length(), 0 ) != msg.get_length() )
         return false;
-    }
-
-    delete tmsg;
 
     return true;
 }
 
-ConnectorMsgHandle* TcpConnector::receive_message(bool)
+bool TcpConnector::transmit_message(const ConnectorMsg& msg)
+{ return internal_transmit_message(msg); }
+
+bool TcpConnector::transmit_message(const ConnectorMsg&& msg)
+{ return internal_transmit_message(msg); }
+
+ConnectorMsg TcpConnector::receive_message(bool)
 {
     // If socket isn't open, return 'no message'
     if ( sock_fd < 0 )
-        return nullptr;
+        return ConnectorMsg();
 
-    return receive_ring->get(nullptr);
+    ConnectorMsg* received_msg = receive_ring->get(nullptr);
+
+    if ( !received_msg )
+        return ConnectorMsg();
+
+    ConnectorMsg ret_msg(std::move(*received_msg));
+    delete received_msg;
+
+    return ret_msg;
 }
 
 //-------------------------------------------------------------------------
@@ -301,7 +280,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
-static TcpConnector* tcp_connector_tinit_call(TcpConnectorConfig* cfg, const char* port)
+static TcpConnector* tcp_connector_tinit_call(const TcpConnectorConfig& cfg, const char* port)
 {
     struct addrinfo hints;
     struct addrinfo *result, *rp;
@@ -313,7 +292,7 @@ static TcpConnector* tcp_connector_tinit_call(TcpConnectorConfig* cfg, const cha
     hints.ai_flags = 0;
     hints.ai_protocol = 0;          /* Any protocol */
 
-    if ( (s = getaddrinfo(cfg->address.c_str(), port, &hints, &result)) != 0)
+    if ( (s = getaddrinfo(cfg.address.c_str(), port, &hints, &result)) != 0)
     {
         ErrorMessage("getaddrinfo: %s\n", gai_strerror(s));
         return nullptr;
@@ -348,7 +327,7 @@ static TcpConnector* tcp_connector_tinit_call(TcpConnectorConfig* cfg, const cha
     return tcp_conn;
 }
 
-static TcpConnector* tcp_connector_tinit_answer(TcpConnectorConfig* cfg, const char* port)
+static TcpConnector* tcp_connector_tinit_answer(const TcpConnectorConfig& cfg, const char* port)
 {
     struct addrinfo hints;
     struct addrinfo *result, *rp;
@@ -419,27 +398,23 @@ static TcpConnector* tcp_connector_tinit_answer(TcpConnectorConfig* cfg, const c
 }
 
 // Create a per-thread object
-static Connector* tcp_connector_tinit(ConnectorConfig* config)
+static Connector* tcp_connector_tinit(const ConnectorConfig& config)
 {
-    TcpConnectorConfig* cfg = (TcpConnectorConfig*)config;
+    const TcpConnectorConfig& cfg = (const TcpConnectorConfig&)config;
+    const auto& ports = cfg.ports;
+    auto idx = 0;
 
-    uint16_t instance = (uint16_t)get_instance_id();
-    char port_string[6];  // size based on decimal representation of an uint16_t
+    if ( ports.size() > 1 )
+        idx = get_instance_id() % ports.size();
 
-    if ( ((uint32_t)cfg->base_port + (uint32_t)instance) > (uint32_t)UINT16_MAX )
-    {
-        ErrorMessage("tcp_connector with improper base_port: %d\n",cfg->base_port);
-        return nullptr;
-    }
-
-    snprintf(port_string, sizeof(port_string), "%5hu", static_cast<uint16_t>(cfg->base_port + instance));
+    const char* port = ports[idx].c_str();
 
     TcpConnector* tcp_conn;
 
-    if ( cfg->setup == TcpConnectorConfig::Setup::CALL )
-        tcp_conn = tcp_connector_tinit_call(cfg, port_string);
-    else if ( cfg->setup == TcpConnectorConfig::Setup::ANSWER )
-        tcp_conn = tcp_connector_tinit_answer(cfg, port_string);
+    if ( cfg.setup == TcpConnectorConfig::Setup::CALL )
+        tcp_conn = tcp_connector_tinit_call(cfg, port);
+    else if ( cfg.setup == TcpConnectorConfig::Setup::ANSWER )
+        tcp_conn = tcp_connector_tinit_answer(cfg, port);
     else
         tcp_conn = nullptr;
 
@@ -474,7 +449,7 @@ const ConnectorApi tcp_connector_api =
         PT_CONNECTOR,
         sizeof(ConnectorApi),
         CONNECTOR_API_VERSION,
-        0,
+        1,
         API_RESERVED,
         API_OPTIONS,
         TCP_CONNECTOR_NAME,

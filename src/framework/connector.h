@@ -35,7 +35,7 @@
 namespace snort
 {
 // this is the current version of the api
-#define CONNECTOR_API_VERSION ((BASE_API_VERSION << 16) | 1)
+#define CONNECTOR_API_VERSION ((BASE_API_VERSION << 16) | 2)
 
 //-------------------------------------------------------------------------
 // api for class
@@ -45,14 +45,49 @@ namespace snort
 
 class ConnectorConfig;
 
-struct ConnectorMsg
+class ConnectorMsg
 {
-    uint32_t length;
-    uint8_t* data;
-};
+public:
+    ConnectorMsg() = default;
 
-class ConnectorMsgHandle
-{
+    ConnectorMsg(const uint8_t* data, uint32_t length, bool pass_ownership = false) :
+        data(data), length(length), owns(pass_ownership)
+    { }
+
+    ~ConnectorMsg()
+    { if (owns) delete[] data; }
+
+    ConnectorMsg(ConnectorMsg&) = delete;
+    ConnectorMsg& operator=(ConnectorMsg& other) = delete;
+
+    ConnectorMsg(ConnectorMsg&& other) :
+        data(other.data), length(other.length), owns(other.owns)
+    { other.owns = false; }
+
+    ConnectorMsg& operator=(ConnectorMsg&& other)
+    {
+        if ( owns )
+            delete[] data;
+
+        data = other.data;
+        length = other.length;
+        owns = other.owns;
+
+        other.owns = false;
+
+        return *this;
+    }
+
+    const uint8_t* get_data() const
+    { return data; }
+
+    uint32_t get_length() const
+    { return length; }
+
+private:
+    const uint8_t* data = nullptr;
+    uint32_t length = 0;
+    bool owns = false;
 };
 
 class SO_PUBLIC Connector
@@ -66,20 +101,25 @@ public:
         CONN_DUPLEX
     };
 
+    Connector(const ConnectorConfig& config) : config(config) { }
     virtual ~Connector() = default;
 
-    virtual ConnectorMsgHandle* alloc_message(const uint32_t, const uint8_t**) = 0;
-    virtual void discard_message(ConnectorMsgHandle*) = 0;
-    virtual bool transmit_message(ConnectorMsgHandle*) = 0;
-    virtual ConnectorMsgHandle* receive_message(bool block) = 0;
-    virtual ConnectorMsg* get_connector_msg(ConnectorMsgHandle*) = 0;
-    virtual Direction get_connector_direction() = 0;
+    virtual bool transmit_message(const ConnectorMsg&) = 0;
+    virtual bool transmit_message(const ConnectorMsg&&) = 0;
 
-    const std::string connector_name;
-    const ConnectorConfig* config = nullptr;
+    virtual ConnectorMsg receive_message(bool block) = 0;
+
+    virtual bool flush()
+    { return true; }
+
+    virtual void reinit()
+    { }
+
+    inline Direction get_connector_direction() const;
+    inline const std::string& get_connector_name() const;
 
 protected:
-    Connector() = default;
+    const ConnectorConfig& config;
 };
 
 class ConnectorConfig
@@ -92,6 +132,12 @@ public:
     virtual ~ConnectorConfig() = default;
 };
 
+Connector::Direction Connector::get_connector_direction() const
+{ return config.direction; }
+
+const std::string& Connector::get_connector_name() const
+{ return config.connector_name; }
+
 class SO_PUBLIC ConnectorCommon
 {
 public:
@@ -100,7 +146,7 @@ public:
 
 typedef ConnectorCommon* (* ConnectorNewFunc)(Module*);
 typedef void (* ConnectorDelFunc)(ConnectorCommon*);
-typedef Connector* (* ConnectorThreadInitFunc)(ConnectorConfig*);
+typedef Connector* (* ConnectorThreadInitFunc)(const ConnectorConfig&);
 typedef void (* ConnectorThreadTermFunc)(Connector*);
 typedef void (* ConnectorFunc)();
 

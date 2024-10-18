@@ -1,17 +1,17 @@
-Implement a connector plugin that reads/writes side channel messages from/to
-files.
+Implement a connector plugin that reads/writes messages from/to files.
 
 Each connector implements a simplex channel, either transmit or receive.  In-
-turn, each SideChannel owns a transmit and/or a receive connector object.
+turn, each client module owns a connector object.
 
-The "format = 'text'" option in the configuration sets text file input/output
-else binary file format is used.
+In binary files, an additional FileConnector message header is prepended to
+each message written to the output file.  This header specifies
+the file format version and the length of the message.  This length
+does not include the file connector message header, but does include the
+user's message header.
 
-In binary files, an additional FileConnector message header is pre-pended to
-each side channel message written to the output file.  This header specifies
-the file format version and the length of the side channel message.  This length
-does not include the file connector message header, but does include the side
-channel message header.
+The "text_format" option in the configuration sets text file input/output
+mode. In text mode, no header is added, but a newline symbol is appended
+to each message instead.
 
 The utility 'get_instance_file()' is used to uniquely name the files.  The
 complete file name convention is:
