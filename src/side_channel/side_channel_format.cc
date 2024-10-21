@@ -132,15 +132,21 @@ ConnectorMsg from_text(const char* str_ptr, uint32_t size)
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
 
-#define CHECK_CMSG(cmsg, expected_hdr, expected_msg)                                                 \
-    REQUIRE(cmsg.get_data());                                                                       \
-    REQUIRE(cmsg.get_length() == sizeof(expected_hdr) + sizeof(expected_msg));                      \
-    CHECK(memcmp(cmsg.get_data(), &expected_hdr, sizeof(expected_hdr)) == 0);                       \
-    CHECK(memcmp(cmsg.get_data() + sizeof(expected_hdr), expected_msg, sizeof(expected_msg)) == 0); \
+#define CHECK_CMSG(cmsg, expected_hdr, expected_msg)                                                    \
+    do                                                                                                  \
+    {                                                                                                   \
+        REQUIRE(cmsg.get_data());                                                                       \
+        REQUIRE(cmsg.get_length() == sizeof(expected_hdr) + sizeof(expected_msg));                      \
+        CHECK(memcmp(cmsg.get_data(), &expected_hdr, sizeof(expected_hdr)) == 0);                       \
+        CHECK(memcmp(cmsg.get_data() + sizeof(expected_hdr), expected_msg, sizeof(expected_msg)) == 0); \
+    } while ( false )
 
-#define CHECK_NO_CMSG(cmsg)                                                                          \
-    REQUIRE(cmsg.get_data() == nullptr);                                                            \
-    REQUIRE(cmsg.get_length() == 0);                                                                \
+#define CHECK_NO_CMSG(cmsg)                                                                             \
+    do                                                                                                  \
+    {                                                                                                   \
+        REQUIRE(cmsg.get_data() == nullptr);                                                            \
+        REQUIRE(cmsg.get_length() == 0);                                                                \
+    } while ( false )
 
 TEST_CASE("hdr_to_text", "[side_channel]")
 {
