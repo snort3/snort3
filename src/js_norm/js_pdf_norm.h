@@ -47,14 +47,19 @@ public:
     PDFJSNorm(JSNormConfig* cfg, uint32_t gen_id) :
         JSNorm(cfg, false, gen_id),
         pdf_in(&buf_pdf_in), pdf_out(&buf_pdf_out),
-        extractor(pdf_in, pdf_out, cfg ? cfg->pdf_max_dictionary_depth : 0)
+        extractor(pdf_in, pdf_out, state_buf, state_len, cfg ? cfg->pdf_max_dictionary_depth : 0)
     { }
+
+    virtual ~PDFJSNorm() override
+    { delete[] state_buf; }
 
 protected:
     bool pre_proc() override;
     bool post_proc(int) override;
 
 private:
+    char* state_buf = nullptr;
+    int state_len = 0;
     snort::istreambuf_glue buf_pdf_in;
     snort::ostreambuf_infl buf_pdf_out;
     std::istream pdf_in;

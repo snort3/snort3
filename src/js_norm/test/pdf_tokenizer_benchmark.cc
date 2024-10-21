@@ -36,6 +36,8 @@ using namespace jsn;
 using namespace snort;
 using namespace std;
 
+static constexpr int nesting_level = 10;
+
 static const string make_input(const char* begin, const char* mid, const char* end, size_t len)
 {
     string str(begin);
@@ -83,7 +85,9 @@ TEST_CASE("PDF Tokenizer, literals by 8 K", "[PDFTokenizer]")
     ostreambuf_infl buf_out;
     istream in(&buf_in);
     ostream out(&buf_out);
-    PDFTokenizer parser(in, out);
+    char* buf = nullptr;
+    int len;
+    PDFTokenizer parser(in, out, buf, len, nesting_level);
 
     BENCHMARK("memcpy()")
     {
@@ -124,6 +128,8 @@ TEST_CASE("PDF Tokenizer, literals by 8 K", "[PDFTokenizer]")
         rewind();
         return parser.process();
     };
+
+    delete[] buf;
 }
 
 TEST_CASE("PDF Parser, literals by 64 K", "[PDFTokenizer]")
@@ -143,7 +149,9 @@ TEST_CASE("PDF Parser, literals by 64 K", "[PDFTokenizer]")
     ostreambuf_infl buf_out;
     istream in(&buf_in);
     ostream out(&buf_out);
-    PDFTokenizer parser(in, out);
+    char* buf = nullptr;
+    int len;
+    PDFTokenizer parser(in, out, buf, len, nesting_level);
 
     BENCHMARK("memcpy()")
     {
@@ -184,6 +192,8 @@ TEST_CASE("PDF Parser, literals by 64 K", "[PDFTokenizer]")
         rewind();
         return parser.process();
     };
+
+    delete[] buf;
 }
 
 TEST_CASE("PDF Tokenizer, indirect objects", "[PDFTokenizer]")
@@ -195,7 +205,9 @@ TEST_CASE("PDF Tokenizer, indirect objects", "[PDFTokenizer]")
     ostreambuf_infl buf_out;
     istream in(&buf_in);
     ostream out(&buf_out);
-    PDFTokenizer parser(in, out);
+    char* buf = nullptr;
+    int len;
+    PDFTokenizer parser(in, out, buf, len, nesting_level);
 
     set_input(data);
     BENCHMARK("same object repeated")
@@ -203,6 +215,8 @@ TEST_CASE("PDF Tokenizer, indirect objects", "[PDFTokenizer]")
         rewind();
         return parser.process();
     };
+
+    delete[] buf;
 }
 
 #endif

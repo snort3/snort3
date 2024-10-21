@@ -27,6 +27,7 @@
 #include <FlexLexer.h>
 
 #include "catch/catch.hpp"
+#include "helpers/streambuf.h"
 #include "js_norm/pdf_tokenizer.h"
 
 using namespace jsn;
@@ -41,9 +42,13 @@ static void test_pdf_proc(const string& source, const string& expected,
 {
     istringstream in(source);
     ostringstream out;
-    PDFTokenizer extractor(in, out, nesting_level);
+    char* buf = nullptr;
+    int len = 0;
+    PDFTokenizer extractor(in, out, buf, len, nesting_level);
 
     auto r = extractor.process();
+
+    delete[] buf;
 
     CHECK(ret == r);
     CHECK(expected == out.str());
@@ -51,16 +56,21 @@ static void test_pdf_proc(const string& source, const string& expected,
 
 static void test_pdf_proc(const vector<Chunk>& chunks)
 {
-    istringstream in;
+    snort::istreambuf_glue in_buf;
+    istream in(&in_buf);
     ostringstream out;
-    PDFTokenizer extractor(in, out, nesting_level);
+    char* state_buf = nullptr;
+    int state_len = 0;
+    PDFTokenizer extractor(in, out, state_buf, state_len, nesting_level);
 
     for (const auto& chunk : chunks)
     {
         auto src = chunk.first;
         auto exp = chunk.second;
 
-        in.str(src);
+        in_buf.pubsetbuf(nullptr,0)
+            ->pubsetbuf(state_buf, state_len)
+            ->pubsetbuf(const_cast<char*>(src.c_str()), src.length());
         out.str("");
 
         auto r = extractor.process();
@@ -68,17 +78,12 @@ static void test_pdf_proc(const vector<Chunk>& chunks)
         CHECK(PDFTokenizer::PDFRet::EOS == r);
         CHECK(exp == out.str());
     }
+
+    delete[] state_buf;
 }
 
 TEST_CASE("basic", "[PDFTokenizer]")
 {
-    SECTION("no input")
-    {
-        test_pdf_proc(
-            "",
-            ""
-        );
-    }
     SECTION("minimal PDF")
     {
         test_pdf_proc(
@@ -350,6 +355,45 @@ TEST_CASE("basic", "[PDFTokenizer]")
             "/K1 /V1"
             "<62617a> /V2"
             "/K3 /V3"
+            ">>"
+            "endobj",
+            "",  PDFTokenizer::PDFRet::NOT_NAME_IN_DICTIONARY_KEY
+        );
+    }
+    SECTION("number as a key")
+    {
+        test_pdf_proc(
+            "1 0 obj"
+            "<<"
+            "/K1 /V1"
+            "1234 /V2"
+            "/JS (foo)"
+            ">>"
+            "endobj",
+            "",  PDFTokenizer::PDFRet::NOT_NAME_IN_DICTIONARY_KEY
+        );
+    }
+    SECTION("number as a key after a value")
+    {
+        test_pdf_proc(
+            "1 0 obj"
+            "<<"
+            "/K1 null "
+            "1234 (bar)"
+            "/JS (foo)"
+            ">>"
+            "endobj",
+            "",  PDFTokenizer::PDFRet::NOT_NAME_IN_DICTIONARY_KEY
+        );
+    }
+    SECTION("value as a key after a number")
+    {
+        test_pdf_proc(
+            "1 0 obj"
+            "<<"
+            "/K1 1234 "
+            "null (bar) "
+            "/JS (foo)"
             ">>"
             "endobj",
             "",  PDFTokenizer::PDFRet::NOT_NAME_IN_DICTIONARY_KEY
@@ -779,14 +823,7 @@ TEST_CASE("JS processing", "[PDFTokenizer]")
 
 TEST_CASE("split", "[PDFTokenizer]")
 {
-    SECTION("no input")
-    {
-        test_pdf_proc({
-            {"", ""},
-            {"", ""},
-            {"", ""}
-        });
-    }
+
     SECTION("minimal PDF")
     {
         test_pdf_proc({
@@ -812,6 +849,319 @@ TEST_CASE("split", "[PDFTokenizer]")
             {"script 2)", "script 2"},
             {">>\nendobj\n4 0 obj\n", ""},
             {"<</JS(script 3)>>\nendobj", "script 3"}
+        });
+    }
+
+    SECTION("split in indirect object index: first number")
+    {
+        test_pdf_proc({
+            {"\n1", ""},
+            {"23 0 obj\n", ""},
+            {"<< /JS (a % b) >>\nendobj\n", "a % b"},
+        });
+    }
+    SECTION("split in indirect object index: between numbers")
+    {
+        test_pdf_proc({
+            {"\n1", ""},
+            {" 0 obj\n", ""},
+            {"<< /JS (a % b) >>\nendobj\n", "a % b"},
+        });
+    }
+    SECTION("split in indirect object index: second number")
+    {
+        test_pdf_proc({
+            {"\n1 12", ""},
+            {"3 obj\n", ""},
+            {"<< /JS (a % b) >>\nendobj\n", "a % b"},
+        });
+    }
+    SECTION("split in indirect object index: after numbers")
+    {
+        test_pdf_proc({
+            {"\n1 0", ""},
+            {" obj\n", ""},
+            {"<< /JS (a % b) >>\nendobj\n", "a % b"},
+        });
+    }
+    SECTION("split in indirect object index: in keyword")
+    {
+        test_pdf_proc({
+            {"\n1 0 ob", ""},
+            {"j\n", ""},
+            {"<< /JS (a % b) >>\nendobj\n", "a % b"},
+        });
+    }
+    SECTION("split in indirect object index: multi-PDU reassembly")
+    {
+        test_pdf_proc({
+            {"\n1 ", ""},
+            {"0 ob", ""},
+            {"j\n<< /JS (a % b) >>\nendobj\n", "a % b"},
+        });
+    }
+    SECTION("split in indirect object close keyword")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<< /K /V /JS (foo % bar) >>\nend", "foo % bar"},
+            {"obj\n", ""},
+            {"2 0 obj\n<</JS (c % d)>>\nendobj\n","c % d"}
+        });
+    }
+    SECTION("split in dictionary opening brackets")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<", ""},
+            {"< /JS (a % b) >>\nendobj\n", "a % b"},
+        });
+    }
+    SECTION("split in dictionary closing brackets")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<< /K /V /JS (foo % bar) >", "foo % bar"},
+            {">\nendobj\n", ""},
+            {"2 0 obj\n<</JS (c % d)>>\nendobj\n","c % d"}
+        });
+    }
+    SECTION("split in name as dict-key")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<</K/V /J", ""},
+            {"S (a % b)>>\nendobj\n", "a % b"}
+        });
+    }
+    SECTION("split in name as dict-value")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<</K/V /foo /foo", ""},
+            {"bar /JS (a % b)>>\nendobj\n", "a % b"}
+        });
+    }
+    SECTION("split after name as dict-value")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<< /K /V ", ""},
+            {"/JS (a % b) >>\nendobj\n", "a % b"}
+        });
+    }
+    SECTION("split in object reference value: first number")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<</K 12", ""},
+            {"3 0 R /JS (a % b)>>\nendobj\n", "a % b"}
+        });
+    }
+    SECTION("split in object reference value: second number")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<</K 123 1", ""},
+            {"0 R /JS (a % b)>>\nendobj\n", "a % b"}
+        });
+    }
+    SECTION("split in integer number value")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<</K 12", ""},
+            {"345 /JS (a % b)>>\nendobj\n", "a % b"}
+        });
+    }
+    SECTION("split in integer number value after sign")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<</K +", ""},
+            {"1 /JS (a % b)>>\nendobj\n", "a % b"}
+        });
+    }
+    SECTION("split in real number value before the dot")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<</K 123 0", ""},
+            {".5 /JS (a % b)>>\nendobj\n", "a % b"}
+        });
+    }
+    SECTION("split in real number value after the dot")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<</K 123 0.", ""},
+            {"5 /JS (a % b)>>\nendobj\n", "a % b"}
+        });
+    }
+    SECTION("split in boolean value")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<</K tr", ""},
+            {"ue /JS (a % b)>>\nendobj\n", "a % b"}
+        });
+    }
+    SECTION("split in null value")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<</K nu", ""},
+            {"ll /JS (a % b)>>\nendobj\n", "a % b"}
+        });
+    }
+    SECTION("split in object reference to stream")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<</K /V /JS 2 ", ""},
+            {" 0 R >>\nendobj\n", ""},
+            {
+                "2 0 obj\n"
+                "<< /Length 20 >>\n"
+                "stream\n"
+                "JavaScript in stream\n"
+                "endstream\n"
+                "endobj\n",
+                "JavaScript in stream\n"
+            }
+        });
+    }
+    SECTION("split in hex string")
+    {
+        test_pdf_proc({
+            {"\n1 0 obj\n", ""},
+            {"<< /JS <", ""},
+            {"66 6F 6F 20 62 61 72> >>\nendobj\n", "foo bar"},
+        });
+    }
+    SECTION("split in stream: length key")
+    {
+        test_pdf_proc({
+            {
+                "\n1 0 obj\n"
+                "<</K /V /JS 2 0 R>>\n"
+                "endobj\n"
+                "2 0 obj\n"
+                "<< /Leng",
+                ""
+            },
+            {
+                "th 20 >>\n"
+                "stream\n"
+                "JavaScript in stream\n"
+                "endstream\n"
+                "endobj\n",
+                "JavaScript in stream\n"
+            }
+        });
+    }
+    SECTION("split in stream: length value")
+    {
+        test_pdf_proc({
+            {
+                "\n1 0 obj\n"
+                "<</K /V /JS 2 0 R>>\n"
+                "endobj\n"
+                "2 0 obj\n"
+                "<< /Length 2",
+                ""
+            },
+            {
+                "0 >>\n"
+                "stream\n"
+                "JavaScript in stream\n"
+                "endstream\n"
+                "endobj\n",
+                "JavaScript in stream\n"
+            }
+        });
+    }
+    SECTION("split in stream: stream keyword")
+    {
+        test_pdf_proc({
+            {
+                "\n1 0 obj\n"
+                "<</K /V /JS 2 0 R>>\n"
+                "endobj\n"
+                "2 0 obj\n"
+                "<< /Length 20 >>\n st",
+                ""
+            },
+            {
+                "ream\n"
+                "JavaScript in stream\n"
+                "endstream\n"
+                "endobj\n",
+                "JavaScript in stream\n"
+            }
+        });
+    }
+    SECTION("split in stream: content")
+    {
+        test_pdf_proc({
+            {
+                "\n1 0 obj\n"
+                "<</K /V /JS 2 0 R>>\n"
+                "endobj\n"
+                "2 0 obj\n"
+                "<< /Length 20 >>\n stream\n"
+                "JavaScript",
+                "JavaScript"
+            },
+            {
+                " in stream\n"
+                "endstream\n"
+                "endobj\n",
+                " in stream\n"
+            }
+        });
+    }
+    SECTION("split in stream: content that looks like endstream")
+    {
+        test_pdf_proc({
+            {
+                "\n1 0 obj\n"
+                "<</K /V /JS 2 0 R>>\n"
+                "endobj\n"
+                "2 0 obj\n"
+                "<< /Length 23 >>\n stream\n"
+                "end",
+                ""
+            },
+            {
+                "stream in JavaScript\n"
+                "endstream\n"
+                "endobj\n",
+                "endstream in JavaScript\n"
+            }
+        });
+    }
+    SECTION("split in stream: endstream keyword")
+    {
+        test_pdf_proc({
+            {
+                "\n1 0 obj\n"
+                "<</K /V /JS 2 0 R>>\n"
+                "endobj\n"
+                "2 0 obj\n"
+                "<< /Length 20 >>\n stream\n"
+                "JavaScript in stream\n"
+                "end",
+                "JavaScript in stream\n"
+            },
+            {
+                "stream\n"
+                "endobj\n"
+                "\n3 0 obj\n"
+                "<</K /V /JS (foo)>>\n"
+                "endobj\n",
+                "foo"
+            }
         });
     }
 }
@@ -866,7 +1216,7 @@ TEST_CASE("stream object", "[PDFTokenizer]")
             "bar\r\n"
             "endstream\n"
             "endobj\n",
-            "bar\n"
+            "bar\r\n"
         );
     }
     SECTION("reference as length")
@@ -903,7 +1253,7 @@ TEST_CASE("stream object", "[PDFTokenizer]")
             "\nendstream\n \r\n"
             "endstream\n"
             "endobj\n",
-            "\nendstream\n \n"
+            "\nendstream\n \r\n"
         );
     }
     SECTION("referenced JavaScript")
@@ -1143,8 +1493,7 @@ TEST_CASE("stream object malformed", "[PDFTokenizer]")
             "foo"
             "endstream\n"
             "endobj\n",
-            "fooendstream\n"
-            "endobj\n", PDFTokenizer::PDFRet::EOS
+            "foo", PDFTokenizer::PDFRet::EOS
         );
     }
 }
@@ -1292,6 +1641,24 @@ TEST_CASE("UTF-16, basic", "[PDFTokenizer]")
             "foo"s
         );
     }
+    SECTION("stream with 'endstream' content")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS 2 0 R"
+            ">>\n"
+            "endobj\n"
+            "2 0 obj\n"
+            "<</Length 8>>\n"
+            "stream\n"
+            "\xfe\xff\0e\0n\0d\0s\0t\0r\0e\0a\0m\n"
+            "endstream\n"
+            "endobj"s,
+            "endstream"s
+        );
+    }
     SECTION("hexadecimal string")
     {
         test_pdf_proc(
@@ -1424,6 +1791,17 @@ TEST_CASE("UTF-16, basic", "[PDFTokenizer]")
             PDFTokenizer::PDFRet::UNEXPECTED_SYMBOL
         );
     }
+    SECTION("unfinished trailing symbol")
+    {
+        test_pdf_proc(
+            "1 0 obj\n"
+            "<<"
+            "/S /JavaScript"
+            "/JS (\xfe\xff\0f\0o\0o\xF0)"
+            "/JS (\xfe\xff\0b\0a\0r\xBA)"s,
+            "foobar"s
+        );
+    }
 }
 
 TEST_CASE("UTF-16, cross-PDU", "[PDFTokenizer]")
@@ -1521,6 +1899,50 @@ TEST_CASE("UTF-16, cross-PDU", "[PDFTokenizer]")
                 "endstream\n"
                 "endobj"s,
                 "bar"s
+            }
+        });
+    }
+    SECTION("split in stream that looks like endstream")
+    {
+        test_pdf_proc({
+            {
+                "1 0 obj\n"
+                "<</S/JavaScript/JS 2 0 R>>\n"
+                "endobj\n"
+                "2 0 obj\n"
+                "<</Length 14>>\n"
+                "stream\n"
+                "\xfe\xff\0f\0o\0o\0e"s,
+                "foo"s
+            },
+            {
+                "\0n\0d\n"
+                "endstream\n"
+                "endobj"s,
+                "end"s
+            }
+        });
+    }
+    SECTION("split in endstream tag")
+    {
+        test_pdf_proc({
+            {
+                "1 0 obj\n"
+                "<</S/JavaScript/JS 2 0 R>>\n"
+                "endobj\n"
+                "2 0 obj\n"
+                "<</Length 14>>\n"
+                "stream\n"
+                "\xfe\xff\0f\0o\0o\nend"s,
+                "foo"s
+            },
+            {
+                "stream\n"
+                "endobj\n"
+                "3 0 obj\n"
+                "<</S/JavaScript/JS(foo)>>\n"
+                "endobj\n"s,
+                "foo"s
             }
         });
     }

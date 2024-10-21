@@ -50,6 +50,7 @@ bool PDFJSNorm::pre_proc()
     }
 
     buf_pdf_in.pubsetbuf(nullptr, 0)
+        ->pubsetbuf(state_buf, state_len)
         ->pubsetbuf(const_cast<char*>((const char*)src_ptr), src_end - src_ptr);
     pdf_out.clear();
     delete[] buf_pdf_out.take_data();

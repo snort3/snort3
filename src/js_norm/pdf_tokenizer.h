@@ -48,7 +48,7 @@ public:
     };
 
     PDFTokenizer() = delete;
-    explicit PDFTokenizer(std::istream& in, std::ostream& out, int dictionaries_max_size);
+    explicit PDFTokenizer(std::istream& in, std::ostream& out, char*& state_buf, int& state_len, int dictionaries_max_size);
     ~PDFTokenizer() override;
 
     PDFRet process();
@@ -56,9 +56,15 @@ public:
 private:
     int yylex() override;
 
+    void state_add(int len);
+    void state_store();
+    void state_clear();
+    void state_act();
+
     PDFRet h_dict_open();
     PDFRet h_dict_close();
     PDFRet h_dict_name();
+    PDFRet h_dict_number();
     PDFRet h_dict_other();
     inline bool h_lit_str();
     inline bool h_hex_str();
@@ -70,9 +76,12 @@ private:
     PDFRet h_hex_hex2chr_u16();
     PDFRet h_lit_u16();
     PDFRet h_lit_u16_unescape();
-    PDFRet h_stream_open();
-    PDFRet h_stream();
     PDFRet h_array_nesting();
+    PDFRet h_stream_open();
+    void h_stream();
+    void h_stream_part_close();
+    PDFRet h_stream_dump_remainder();
+    PDFRet h_stream_dump_remainder_u16();
     bool h_stream_close();
     void h_stream_length();
     void h_ref();
@@ -105,9 +114,10 @@ private:
     struct ObjectDictionary
     {
         void clear()
-        { key_value = true; array_level = 0; }
+        { key_value = true; consecutive_number = false; array_level = 0; }
 
         bool key_value = true;
+        bool consecutive_number = false;
         int array_level = 0;
     };
 
@@ -130,9 +140,14 @@ private:
     struct Stream
     {
         int rem_length = -1;
+        int endstream_part = 0;
         bool is_js = false;
         bool is_ref_len = false;
     };
+
+    char*& state_buf;
+    int& state_len;
+    bool state_added = false;
 
     ObjectString obj_string;
     ObjectArray obj_array;
