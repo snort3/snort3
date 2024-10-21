@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.3.7.0 2024-09-24 21:59:55 EDT TST
+Revision 3.5.0.0 2024-10-20 23:28:30 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -3493,8 +3493,8 @@ simplex.
 
 All subtypes of Connector have a direction configuration element and
 a connector element. The connector string is the key used to identify
-the element for sidechannel configuration. The direction element may
-have a default value, for instance TcpConnector’s are duplex.
+the element for client module configuration. The direction element
+may have a default value, for instance TcpConnector is duplex.
 
 There are currently two implementations of Connectors:
 
@@ -3513,9 +3513,11 @@ TcpConnector adds a few session setup configuration elements:
     initiate the connection. answer is used to have TcpConnector
     accept incoming connections.
   * address = <addr> - used for call setup to specify the partner
-  * base_port = port - used to construct the actual port number for 
-    call and answer modes. Actual port used is (base_port +
-    instance_id).
+  * ports = "port port …" - used to pick a port number for call and 
+    answer modes. If the ports list contains more than one port, the
+    "per-thread" destination mode will be assumed. In this mode, each
+    thread will connect to a corresponding destination port by
+    selecting a port number from the list based on the instance_id.
 
 An example segment of TcpConnector configuration:
 
@@ -3525,7 +3527,7 @@ tcp_connector =
         connector = 'tcp_1',
         address = '127.0.0.1',
         setup = 'call',
-        base_port = 11000
+        ports = "11000 11001 11002 11003",
     },
 }
 
@@ -3538,7 +3540,8 @@ to be CONN_TRANSMIT or CONN_RECEIVE.
 FileConnector configuration adds two additional element:
 
   * name = string - used as part of the message file name
-  * format = text or binary - FileConnector supports two file types
+  * text_format = bool - FileConnector works in binary mode by
+    default, the option switches it to text mode
 
 The configured name string is used to construct the actual names as
 in:
@@ -3552,8 +3555,6 @@ In the case of a receive FileConnector, all messages are read from
 the file prior to the start of packet processing. This allows the
 messages to establish state information for all processed packets.
 
-Connectors are used solely by SideChannel
-
 An example segment of FileConnector configuration:
 
 file_connector =
@@ -3561,13 +3562,13 @@ file_connector =
     {
         connector = 'file_tx_1',
         direction = 'transmit',
-        format = 'text',
+        text_format = true,
         name = 'HA'
     },
     {
         connector = 'file_rx_1',
         direction = 'receive',
-        format = 'text',
+        text_format = true,
         name = 'HA'
     },
 }
@@ -3585,6 +3586,8 @@ SideChannel adds functionality onto the Connector as:
     direct message to/from various SideClass instancs.
   * application receive processing - handler for received messages on
     a specific port.
+  * message formatting - convert data to text format if configured to
+    do so
 
 SideChannel’s are always implement a duplex (bidirectional) messaging
 model and can map to separate transmit and receive Connectors.
@@ -3618,6 +3621,7 @@ side_channel =
                 connector = 'file_tx_1',
             }
         },
+        format = "text"
     },
 }
 
@@ -3626,13 +3630,13 @@ file_connector =
     {
         connector = 'file_tx_1',
         direction = 'transmit',
-        format = 'text',
+        text_format = true,
         name = 'HA'
     },
     {
         connector = 'file_rx_1',
         direction = 'receive',
-        format = 'text',
+        text_format = true,
         name = 'HA'
     },
 }

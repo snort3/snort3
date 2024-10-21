@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.3.7.0 2024-09-24 21:59:30 EDT TST
+Revision 3.5.0.0 2024-10-20 23:28:19 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -145,8 +145,9 @@ Table of Contents
     5.54. stream_tcp
     5.55. stream_udp
     5.56. stream_user
-    5.57. telnet
-    5.58. wizard
+    5.57. tcp_pdu
+    5.58. telnet
+    5.59. wizard
 
 6. IPS Action Modules
 
@@ -1044,6 +1045,8 @@ Configuration:
     1:65535 }
   * int js_norm.max_scope_depth = 256: maximum depth of scope nesting
     that enhanced JavaScript normalizer will process { 1:65535 }
+  * int js_norm.pdf_max_dictionary_depth = 32: maximum depth of
+    dictionary nesting that PDF parser will process { 1:65535 }
   * string js_norm.ident_ignore[].ident_name: name of the identifier
     to ignore
   * string js_norm.prop_ignore[].prop_name: name of the object
@@ -1478,8 +1481,8 @@ Configuration:
   * dynamic search_engine.offload_search_method: set fast pattern
     offload algorithm - choose available search engine { ac_bnfa |
     ac_full | hyperscan | lowmem }
-  * string search_engine.rule_db_dir: deserialize rule databases from
-    given directory
+  * string search_engine.rule_db_dir: directory for reading / writing
+    rule group databases
   * bool search_engine.split_any_any = true: evaluate any-any rules
     separately to save memory
   * int search_engine.queue_limit = 0: maximum number of fast pattern
@@ -1516,6 +1519,7 @@ Configuration:
     65535 }
   * string side_channel[].connectors[].connector: connector handle
   * string side_channel[].connector: connector handle
+  * enum side_channel[].format: data output format { binary | text }
 
 Peg counts:
 
@@ -1619,8 +1623,6 @@ Configuration:
     loaded rules libraries
   * string snort.--dump-defaults: [<module prefix>] output module
     defaults in Lua format { (optional) }
-  * string snort.--dump-rule-databases: dump rule databases to given
-    directory (hyperscan only)
   * implied snort.--dump-rule-deps: dump rule dependencies in json
     format for use by other tools
   * implied snort.--dump-rule-meta: dump configured rule info in json
@@ -2566,7 +2568,8 @@ Configuration:
 
   * string file_connector[].connector: connector name
   * string file_connector[].name: channel name
-  * enum file_connector[].format: file format { binary | text }
+  * bool file_connector[].text_format = false: skip header and add
+    newline at the end of the message
   * enum file_connector[].direction: usage { receive | transmit | 
     duplex }
 
@@ -2588,8 +2591,9 @@ Usage: global
 Configuration:
 
   * string tcp_connector[].connector: connector name
-  * string tcp_connector[].address: address
-  * port tcp_connector[].base_port: base port number
+  * addr tcp_connector[].address: address of the remote end-point
+  * int_list tcp_connector[].ports: list of ports of the remote
+    end-point { 65535 }
   * enum tcp_connector[].setup: stream establishment { call | answer
     }
 
@@ -5762,6 +5766,8 @@ Instance Type: global
 
 Configuration:
 
+  * int stream.held_packet_timeout = 1000: timeout in milliseconds
+    for held packets { 1:max32 }
   * bool stream.ip_frags_only = false: don’t process non-frag flows
   * int stream.max_flows = 476288: maximum simultaneous flows tracked
     before pruning { 2:max32 }
@@ -5769,8 +5775,8 @@ Configuration:
     1:max32 }
   * int stream.pruning_timeout = 30: minimum inactive time before
     being eligible for pruning { 1:max32 }
-  * int stream.held_packet_timeout = 1000: timeout in milliseconds
-    for held packets { 1:max32 }
+  * int stream.require_3whs = -1: don’t track midstream TCP sessions
+    after given seconds from start up; -1 tracks all { -1:max31 }
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
@@ -6011,8 +6017,8 @@ Configuration:
     windows | win_2003 | vista | proxy | asymmetric }
   * bool stream_tcp.reassemble_async = true: queue data for
     reassembly before traffic is seen in both directions
-  * int stream_tcp.require_3whs = -1: don’t track midstream sessions
-    after given seconds from start up; -1 tracks all { -1:max31 }
+  * int stream_tcp.require_3whs = -1: deprecated: use
+    stream.require_3whs instead { -1:max31 }
   * bool stream_tcp.show_rebuilt_packets = false: enable cmg like
     output of reassembled packets
   * int stream_tcp.queue_limit.max_bytes = 4194304: don’t queue more
@@ -6033,6 +6039,8 @@ Configuration:
     timeout { 1:max31 }
   * int stream_tcp.idle_timeout = 3600: session deletion on idle {
     1:max31 }
+  * int stream_tcp.asymmetric_ids_flush_threshold = 65535: max bytes
+    queued on asymmetric flow before flush in IDS mode { 1:max31 }
 
 Rules:
 
@@ -6221,7 +6229,36 @@ Configuration:
     1:max31 }
 
 
-5.57. telnet
+5.57. tcp_pdu
+
+--------------
+
+Help: set TCP flush points based on PDU length field
+
+Type: inspector (service)
+
+Usage: inspect
+
+Instance Type: multiton
+
+Configuration:
+
+  * int tcp_pdu.offset = 0: index to first byte of length field {
+    0:65535 }
+  * int tcp_pdu.size = 4: number of bytes in length field { 1:4 }
+  * int tcp_pdu.skip = 0: bytes after length field to end of header {
+    0:65535 }
+  * bool tcp_pdu.relative = false: extracted length follows field
+    (instead of whole PDU)
+
+Peg counts:
+
+  * tcp_pdu.scans: total segments scanned (sum)
+  * tcp_pdu.flushes: total PDUs flushed for detection (sum)
+  * tcp_pdu.aborts: total unrecoverable scan errors (sum)
+
+
+5.58. telnet
 
 --------------
 
@@ -6257,7 +6294,7 @@ Peg counts:
     sessions (max)
 
 
-5.58. wizard
+5.59. wizard
 
 --------------
 
@@ -9215,8 +9252,6 @@ libraries see the Getting Started section of the manual.
     libraries
   * --dump-defaults [<module prefix>] output module defaults in Lua
     format (optional)
-  * --dump-rule-databases dump rule databases to given directory
-    (hyperscan only)
   * --dump-rule-deps dump rule dependencies in json format for use by
     other tools
   * --dump-rule-meta dump configured rule info in json format for use
@@ -9795,8 +9830,9 @@ libraries see the Getting Started section of the manual.
   * string file_connector[].connector: connector name
   * enum file_connector[].direction: usage { receive | transmit | 
     duplex }
-  * enum file_connector[].format: file format { binary | text }
   * string file_connector[].name: channel name
+  * bool file_connector[].text_format = false: skip header and add
+    newline at the end of the message
   * int file_id.block_timeout = 86400: stop blocking after this many
     seconds { 0:max31 }
   * bool file_id.block_timeout_lookup = false: block if lookup times
@@ -10313,6 +10349,8 @@ libraries see the Getting Started section of the manual.
   * int js_norm.max_tmpl_nest = 32: maximum depth of template literal
     nesting that enhanced JavaScript normalizer will process { 0:255
     }
+  * int js_norm.pdf_max_dictionary_depth = 32: maximum depth of
+    dictionary nesting that PDF parser will process { 1:65535 }
   * string js_norm.prop_ignore[].prop_name: name of the object
     property to ignore
   * bool latency.packet.fastpath = false: fastpath expensive packets
@@ -10871,8 +10909,8 @@ libraries see the Getting Started section of the manual.
     ac_full | hyperscan | lowmem }
   * int search_engine.queue_limit = 0: maximum number of fast pattern
     matches to queue per packet (0 is unlimited) { 0:max32 }
-  * string search_engine.rule_db_dir: deserialize rule databases from
-    given directory
+  * string search_engine.rule_db_dir: directory for reading / writing
+    rule group databases
   * dynamic search_engine.search_method = ac_bnfa: set fast pattern
     algorithm - choose available search engine { ac_bnfa | ac_full |
     hyperscan | lowmem }
@@ -10895,6 +10933,7 @@ libraries see the Getting Started section of the manual.
     start of buffer
   * string side_channel[].connector: connector handle
   * string side_channel[].connectors[].connector: connector handle
+  * enum side_channel[].format: data output format { binary | text }
   * bit_list side_channel[].ports: side channel message port list {
     65535 }
   * int sid.~: signature id { 1:max32 }
@@ -11021,8 +11060,6 @@ libraries see the Getting Started section of the manual.
     defaults in Lua format { (optional) }
   * implied snort.--dump-dynamic-rules: output stub rules for all
     loaded rules libraries
-  * string snort.--dump-rule-databases: dump rule databases to given
-    directory (hyperscan only)
   * implied snort.--dump-rule-deps: dump rule dependencies in json
     format for use by other tools
   * implied snort.--dump-rule-meta: dump configured rule info in json
@@ -11294,10 +11331,14 @@ libraries see the Getting Started section of the manual.
   * implied stream_reassemble.fastpath: optionally trust the
     remainder of the session
   * implied stream_reassemble.noalert: don’t alert when rule matches
+  * int stream.require_3whs = -1: don’t track midstream TCP sessions
+    after given seconds from start up; -1 tracks all { -1:max31 }
   * enum stream_size.~direction: compare applies to the given
     direction(s) { either|to_server|to_client|both }
   * interval stream_size.~range: check if the stream size is in the
     given range { 0: }
+  * int stream_tcp.asymmetric_ids_flush_threshold = 65535: max bytes
+    queued on asymmetric flow before flush in IDS mode { 1:max31 }
   * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream_tcp.embryonic_timeout = 30: Non-established connection
@@ -11327,8 +11368,8 @@ libraries see the Getting Started section of the manual.
     0:max32 }
   * bool stream_tcp.reassemble_async = true: queue data for
     reassembly before traffic is seen in both directions
-  * int stream_tcp.require_3whs = -1: don’t track midstream sessions
-    after given seconds from start up; -1 tracks all { -1:max31 }
+  * int stream_tcp.require_3whs = -1: deprecated: use
+    stream.require_3whs instead { -1:max31 }
   * int stream_tcp.session_timeout = 180: session tracking timeout {
     1:max31 }
   * bool stream_tcp.show_rebuilt_packets = false: enable cmg like
@@ -11360,11 +11401,19 @@ libraries see the Getting Started section of the manual.
   * int tag.seconds: tag for this many seconds { 1:max32 }
   * enum target.~: indicate the target of the attack { src_ip | 
     dst_ip }
-  * string tcp_connector[].address: address
-  * port tcp_connector[].base_port: base port number
+  * addr tcp_connector[].address: address of the remote end-point
   * string tcp_connector[].connector: connector name
+  * int_list tcp_connector[].ports: list of ports of the remote
+    end-point { 65535 }
   * enum tcp_connector[].setup: stream establishment { call | answer
     }
+  * int tcp_pdu.offset = 0: index to first byte of length field {
+    0:65535 }
+  * bool tcp_pdu.relative = false: extracted length follows field
+    (instead of whole PDU)
+  * int tcp_pdu.size = 4: number of bytes in length field { 1:4 }
+  * int tcp_pdu.skip = 0: bytes after length field to end of header {
+    0:65535 }
   * int telnet.ayt_attack_thresh = -1: alert beyond this number of
     consecutive Telnet AYT commands (-1 is disabled) { -1:max31 }
   * bool telnet.check_encrypted = false: check for end of encryption
@@ -12739,6 +12788,9 @@ libraries see the Getting Started section of the manual.
   * tcp.bad_tcp6_checksum: nonzero tcp over ipv6 checksums (sum)
   * tcp.checksum_bypassed: checksum calculations bypassed (sum)
   * tcp_connector.messages: total messages (sum)
+  * tcp_pdu.aborts: total unrecoverable scan errors (sum)
+  * tcp_pdu.flushes: total PDUs flushed for detection (sum)
+  * tcp_pdu.scans: total segments scanned (sum)
   * telnet.concurrent_sessions: total concurrent Telnet sessions
     (now)
   * telnet.max_concurrent_sessions: maximum concurrent Telnet
@@ -16616,6 +16668,8 @@ and are not applicable elsewhere.
   * target (ips_option): rule option to indicate target of attack
   * tcp (codec): support for transmission control protocol
   * tcp_connector (connector): implement the tcp stream connector
+  * tcp_pdu (inspector): set TCP flush points based on PDU length
+    field
   * telnet (inspector): telnet inspection and normalization
   * tenant_selector (policy_selector): configure traffic processing
     based on tenants
@@ -16767,6 +16821,8 @@ and are not applicable elsewhere.
   * inspector::stream_udp: stream inspector for UDP flow tracking
   * inspector::stream_user: stream inspector for user flow tracking
     and reassembly
+  * inspector::tcp_pdu: set TCP flush points based on PDU length
+    field
   * inspector::telnet: telnet inspection and normalization
   * inspector::wizard: inspector that implements port-independent
     protocol identification

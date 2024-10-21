@@ -1,3 +1,33 @@
+2024-10-20: 3.5.0.0
+
+* connectors: fix tsan warning in tcp connector
+* framework: update connector interface
+* main: move connectors initialization from SideChannel
+* managers: update connector manager
+
+2024-10-20: 3.4.0.0
+
+* appid: reading and loading only required lua detectors for regtests
+* extractor: add support for body length, info_code/msg, filename, proxied
+* file_api,http_inspect: extract and set hostname for file processing
+* ftp_telnet: add filename for ftp file processing
+* ips: ignore proto when service supersedes ports
+* js_norm: allow processing complex nested PDF objects
+* main: change help command to print in alphabetical order.
+* main: implement function to grab relative process id
+* main: suppress cppcheck issue
+* packet_io: set the flow state to block when forcing the session block
+* perf_monitor,latency: avoid data race when latency is enabled during flow ip profiling
+* pub_sub: add request and response FTP events
+* snort: bump minor version for MPSE API change
+* snort, search_engine: remove --dump-rule-databases
+* stream: recheck flow eligibility if session times out
+* stream_tcp: implement flush on asymmetric flows in IDS mode when queued bytes exceeds configure threshold
+* stream_tcp: implement ignore flush policy reassembler as a singleton to improve performance,
+* stream_tcp: move require_3whs to stream to avoid undesired flow creation
+* stream_tcp: streamline allocation and release of reassemblers, tweak ips flush_on_data process
+* tcp_pdu: new inspector for simple length based flushing
+
 2024-09-24: 3.3.7.0
 
 * appid: dns sinkhole support for edns
