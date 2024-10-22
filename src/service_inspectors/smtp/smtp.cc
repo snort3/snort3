@@ -1157,77 +1157,80 @@ static void SMTP_ProcessServerPacket(
         /* Check for response code */
         smtp_current_search = &smtp_resp_search[0];
 
-        int resp_found = smtp_resp_search_mpse->find(
-            (const char*)ptr, resp_line_len, SMTP_SearchStrFound);
-
-        if (resp_found > 0)
+        if (smtp_ssn->state != STATE_TLS_DATA or p->flow->flags.data_decrypted)
         {
-            switch (smtp_search_info.id)
+            int resp_found = smtp_resp_search_mpse->find(
+                (const char*)ptr, resp_line_len, SMTP_SearchStrFound);
+
+            if (resp_found > 0)
             {
-            case RESP_220:
-                /* This is either an initial server response or a STARTTLS response */
-                if (smtp_ssn->state == STATE_CONNECT)
-                    smtp_ssn->state = STATE_COMMAND;
-                break;
-
-            case RESP_250:
-            case RESP_221:
-            case RESP_334:
-            case RESP_354:
-                if ((smtp_ssn->state == STATE_DATA or smtp_ssn->state == STATE_BDATA)
-                    and !p->flow->flags.data_decrypted
-                    and !(smtp_ssn->state_flags & SMTP_FLAG_ABANDON_EVT))
+                switch (smtp_search_info.id)
                 {
-                    smtp_ssn->state_flags |= SMTP_FLAG_ABANDON_EVT;
-                    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::SSL_SEARCH_ABANDONED, p);
-                    ++smtpstats.ssl_search_abandoned;
-                }
-                break;
+                case RESP_220:
+                    /* This is either an initial server response or a STARTTLS response */
+                    if (smtp_ssn->state == STATE_CONNECT)
+                        smtp_ssn->state = STATE_COMMAND;
+                    break;
 
-            case RESP_235:
-                // Auth done
-                *next_state = STATE_COMMAND;
-                break;
+                case RESP_250:
+                case RESP_221:
+                case RESP_334:
+                case RESP_354:
+                    if ((smtp_ssn->state == STATE_DATA or smtp_ssn->state == STATE_BDATA)
+                        and !p->flow->flags.data_decrypted
+                        and !(smtp_ssn->state_flags & SMTP_FLAG_ABANDON_EVT))
+                    {
+                        smtp_ssn->state_flags |= SMTP_FLAG_ABANDON_EVT;
+                        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::SSL_SEARCH_ABANDONED, p);
+                        ++smtpstats.ssl_search_abandoned;
+                    }
+                    break;
 
-            default:
-                if (smtp_ssn->state != STATE_COMMAND and smtp_ssn->state != STATE_TLS_DATA)
-                {
+                case RESP_235:
+                    // Auth done
                     *next_state = STATE_COMMAND;
-                }
-                break;
-            }
-            //Count responses of client commands, reset starttls waiting flag if response to STARTTLS is not 220
-            if (smtp_ssn->pipelined_command_counter > 0 and --smtp_ssn->pipelined_command_counter == 0 and smtp_ssn->client_requested_starttls)
-            {
-                if (smtp_search_info.id != RESP_220)
-                {
-                    smtp_ssn->client_requested_starttls = false;
-                    smtp_ssn->server_accepted_starttls = false;
-                }
-                else
-                {
-                    smtp_ssn->server_accepted_starttls = true;
-                    smtp_ssn->state = STATE_TLS_CLIENT_PEND;
+                    break;
 
-                    OpportunisticTlsEvent event(p, p->flow->service);
-                    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::OPPORTUNISTIC_TLS, event, p->flow);
-                    ++smtpstats.starttls;
-                    if (smtp_ssn->state_flags & SMTP_FLAG_ABANDON_EVT)
-                        ++smtpstats.ssl_search_abandoned_too_soon;
+                default:
+                    if (smtp_ssn->state != STATE_COMMAND and smtp_ssn->state != STATE_TLS_DATA)
+                    {
+                        *next_state = STATE_COMMAND;
+                    }
+                    break;
+                }
+                //Count responses of client commands, reset starttls waiting flag if response to STARTTLS is not 220
+                if (smtp_ssn->pipelined_command_counter > 0 and --smtp_ssn->pipelined_command_counter == 0 and smtp_ssn->client_requested_starttls)
+                {
+                    if (smtp_search_info.id != RESP_220)
+                    {
+                        smtp_ssn->client_requested_starttls = false;
+                        smtp_ssn->server_accepted_starttls = false;
+                    }
+                    else
+                    {
+                        smtp_ssn->server_accepted_starttls = true;
+                        smtp_ssn->state = STATE_TLS_CLIENT_PEND;
+
+                        OpportunisticTlsEvent event(p, p->flow->service);
+                        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::OPPORTUNISTIC_TLS, event, p->flow);
+                        ++smtpstats.starttls;
+                        if (smtp_ssn->state_flags & SMTP_FLAG_ABANDON_EVT)
+                            ++smtpstats.ssl_search_abandoned_too_soon;
+                    }
                 }
             }
-        }
-        else
-        {
-            if ((smtp_ssn->session_flags & SMTP_FLAG_CHECK_SSL) &&
-                (IsSSL(ptr, end - ptr, p->packet_flags)))
+            else
             {
-                smtp_ssn->state = STATE_TLS_DATA;
-                return;
-            }
-            else if (smtp_ssn->session_flags & SMTP_FLAG_CHECK_SSL)
-            {
-                smtp_ssn->session_flags &= ~SMTP_FLAG_CHECK_SSL;
+                if ((smtp_ssn->session_flags & SMTP_FLAG_CHECK_SSL) &&
+                    (IsSSL(ptr, end - ptr, p->packet_flags)))
+                {
+                    smtp_ssn->state = STATE_TLS_DATA;
+                    return;
+                }
+                else if (smtp_ssn->session_flags & SMTP_FLAG_CHECK_SSL)
+                {
+                    smtp_ssn->session_flags &= ~SMTP_FLAG_CHECK_SSL;
+                }
             }
         }
 
