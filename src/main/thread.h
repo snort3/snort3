@@ -42,6 +42,7 @@ uint16_t get_run_num();
 namespace snort
 {
 SO_PUBLIC unsigned get_instance_id();
+SO_PUBLIC unsigned get_relative_instance_number();
 SO_PUBLIC SThreadType get_thread_type();
 
 SO_PUBLIC inline bool in_main_thread()

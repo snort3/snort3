@@ -76,3 +76,14 @@ performance or behavior. This, alongside with libhwloc, presents an efficient
 cross-platform mechanism for thread configuration and managing CPU affinity 
 of threads, not only considering CPU architecture but also memory access policies, 
 providing a more balanced and optimized execution environment.
+
+use of get_relative_instance_number() in thread.cc:
+
+packet thread's instance_id is zero indexed. id_offset if used will determine
+starting id of the thread relative to all snort processes in a multiprocess environment.
+get_relative_instance_number() is used by dump_flows to print the instance number
+of a thread. Please note relative instance number starts from 1 so thread with
+instance_id 0 will have relative instance number as 1.
+If there are 2 snort processes run in multi process environment each with 3 threads,
+snort process 1 threads will have relative instance number 1,2 and 3.
+The second process's threads will have relative instance number 4,5 and 6.

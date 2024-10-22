@@ -843,16 +843,16 @@ void FlowCache::output_flow(std::fstream& stream, const Flow& flow, const struct
     switch ( flow.pkt_type )
     {
         case PktType::IP:
-            out << "IP " << flow.key->addressSpaceId << ": " << src_ip << " " << dst_ip;
+            out << "Instance-ID: " << get_relative_instance_number() << " IP " << flow.key->addressSpaceId << ": " << src_ip << " " << dst_ip;
             break;
 
         case PktType::ICMP:
-            out << "ICMP " << flow.key->addressSpaceId << ": " << src_ip << " type " << src_port << " "
+            out << "Instance-ID: " << get_relative_instance_number() << " ICMP " << flow.key->addressSpaceId << ": " << src_ip << " type " << src_port << " "
                 << dst_ip;
             break;
 
         case PktType::TCP:
-            out << "TCP " << flow.key->addressSpaceId << ": " << src_ip << "/" << src_port << " "
+            out << "Instance-ID: " << get_relative_instance_number() << " TCP " << flow.key->addressSpaceId << ": " << src_ip << "/" << src_port << " "
                 << dst_ip << "/" << dst_port;
             if (flow.session)
             {
@@ -863,7 +863,7 @@ void FlowCache::output_flow(std::fstream& stream, const Flow& flow, const struct
             break;
 
         case PktType::UDP:
-            out << "UDP " << flow.key->addressSpaceId << ": "<< src_ip << "/" << src_port << " "
+            out << "Instance-ID: " << get_relative_instance_number() << " UDP " << flow.key->addressSpaceId << ": "<< src_ip << "/" << src_port << " "
                 << dst_ip << "/" << dst_port;
             break;
 

@@ -55,6 +55,13 @@ namespace snort
 unsigned get_instance_id()
 { return instance_id; }
 
+unsigned get_relative_instance_number()
+{ 
+    // Added +1 here so we get instance numbers starting from 1 for display purposes
+    const SnortConfig* sc = SnortConfig::get_conf();
+    return instance_id + sc->id_offset + 1;
+}
+
 SThreadType get_thread_type()
 { return thread_type; }
 

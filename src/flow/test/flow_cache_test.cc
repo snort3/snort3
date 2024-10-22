@@ -111,6 +111,7 @@ time_t packet_time() { return 0; }
 void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
 
 unsigned get_instance_id() { return 0; }
+unsigned get_relative_instance_number() { return 1; }
 
 namespace ip
 {
