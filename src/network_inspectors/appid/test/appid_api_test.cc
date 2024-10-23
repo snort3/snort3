@@ -274,7 +274,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     CHECK_EQUAL(service, APPID_UT_ID);
     CHECK_EQUAL(client, APPID_UT_ID);
     CHECK_EQUAL(payload, APPID_UT_ID);
-    STRCMP_EQUAL("Published change_bits == 00000000000000000000", test_log);
+    STRCMP_EQUAL("Published change_bits == 000000000000000000000", test_log);
 
     // Server name based detection
     service = APP_ID_NONE;
@@ -289,7 +289,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_first_alt_name(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_sni(),  APPID_UT_TLS_HOST);
-    STRCMP_EQUAL("Published change_bits == 00000000000100011000", test_log);
+    STRCMP_EQUAL("Published change_bits == 000000000000100011000", test_log);
 
     // Common name based detection
     mock_session->tsession->set_tls_host("www.cisco.com", 13, change_bits);
@@ -306,7 +306,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), "Cisco");
-    STRCMP_EQUAL("Published change_bits == 00000000000100011000", test_log);
+    STRCMP_EQUAL("Published change_bits == 000000000000100011000", test_log);
 
     // First alt name based detection
     change_bits.reset();
@@ -318,7 +318,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     CHECK_EQUAL(payload, APPID_UT_ID + 1);
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_first_alt_name(), APPID_UT_TLS_HOST);
-    STRCMP_EQUAL("Published change_bits == 00000000000100011000", test_log);
+    STRCMP_EQUAL("Published change_bits == 000000000000100011000", test_log);
 
     // Org unit based detection
     string host = "";
@@ -330,7 +330,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     CHECK_EQUAL(client, APPID_UT_ID + 3);
     CHECK_EQUAL(payload, APPID_UT_ID + 3);
     STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), APPID_UT_ORG_UNIT);
-    STRCMP_EQUAL("Published change_bits == 00000000000000011000", test_log);
+    STRCMP_EQUAL("Published change_bits == 000000000000000011000", test_log);
 
     // Override client id found by SSL pattern matcher with the client id provided by
     // Encrypted Visibility Engine if available
@@ -349,7 +349,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_first_alt_name(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
-    STRCMP_EQUAL("Published change_bits == 00000000000100011000", test_log);
+    STRCMP_EQUAL("Published change_bits == 000000000000100011000", test_log);
 
     //check for sni mismatch being stored in sni field
     change_bits.reset();

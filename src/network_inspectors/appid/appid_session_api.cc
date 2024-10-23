@@ -325,6 +325,15 @@ const char* AppIdSessionApi::get_tls_host() const
     return tls_host;
 }
 
+uint16_t AppIdSessionApi::get_tls_version() const
+{
+    if (asd and asd->tsession)
+    {
+        return asd->tsession->get_tls_version();
+    }
+    return 0;
+}
+
 const SfIp* AppIdSessionApi::get_initiator_ip() const
 {
     return &initiator_ip;

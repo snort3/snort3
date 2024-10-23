@@ -387,6 +387,16 @@ static inline void process_ssl(AppIdSession& asd,
             asd.tsession->set_tls_org_unit(field->c_str(), field->size());
         }
     }
+
+    if (asd.tsession->get_tls_version() == 0 and
+        (field = attribute_data.tls_version(false)) != nullptr)
+    {
+        asd.tsession->set_tls_version(field->c_str(), field->size(), change_bits);
+        if (reinspect_ssl_appid)
+        {
+            asd.scan_flags |= SCAN_SSL_VERSION_FLAG;
+        }
+    }
 }
 
 static inline void process_ftp_control(AppIdSession& asd,

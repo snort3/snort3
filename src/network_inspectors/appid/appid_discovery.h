@@ -60,6 +60,7 @@ struct Packet;
 #define SCAN_HTTP_URI_FLAG          (1<<9)
 #define SCAN_CERTVIZ_ENABLED_FLAG   (1<<10)
 #define SCAN_SPOOFED_SNI_FLAG       (1<<11)
+#define SCAN_SSL_VERSION_FLAG       (1<<12)
 
 enum FirstPktAppIdDiscovered
 {

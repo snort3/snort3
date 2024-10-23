@@ -167,6 +167,8 @@ public:
 
     bool get_tls_handshake_done() const { return tls_handshake_done; }
 
+    uint16_t get_tls_version() const { return tls_version; }
+
     // Duplicate only if len > 0, otherwise simply set (i.e., own the argument)
     void set_tls_host(const char* new_tls_host, uint32_t len, bool published=false)
     {
@@ -244,6 +246,15 @@ public:
 
     bool is_tls_host_unpublished() const { return tls_host_unpublished; }
 
+    void set_tls_version(const char* value, uint32_t length, AppidChangeBits& change_bits)
+    {
+        if (value and length == sizeof(uint16_t))
+        {
+            tls_version = *reinterpret_cast<const uint16_t*>(value);
+            change_bits.set(AppidChangeBit::APPID_TLS_VERSION_BIT);
+        }
+    }
+
 private:
     char* tls_host = nullptr;
     char* tls_host_mismatch = nullptr;
@@ -252,6 +263,7 @@ private:
     char* tls_org_unit = nullptr;
     bool tls_handshake_done = false;
     bool tls_host_unpublished = false;
+    uint16_t tls_version = 0;
     MatchedTlsType matched_tls_type = MATCHED_TLS_NONE;
 };
 

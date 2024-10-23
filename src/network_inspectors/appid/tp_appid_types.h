@@ -130,6 +130,7 @@ class ThirdPartyAppIDAttributeData
     string* tls_host_buf = nullptr;
     string* tls_cname_buf = nullptr;
     string* tls_org_unit_buf = nullptr;
+    string* tls_version_buf = nullptr;
     string* http_request_referer_buf = nullptr;
     string* ftp_command_user_buf = nullptr;
     string* quic_sni_buf = nullptr;
@@ -155,6 +156,7 @@ class ThirdPartyAppIDAttributeData
     bool tls_host_flush = true;
     bool tls_cname_flush = true;
     bool tls_org_unit_flush = true;
+    bool tls_version_flush = true;
     bool http_request_referer_flush = true;
     bool ftp_command_user_flush = true;
     bool quic_sni_flush = true;
@@ -187,6 +189,7 @@ public:
         if (tls_host_buf) delete tls_host_buf;
         if (tls_cname_buf) delete tls_cname_buf;
         if (tls_org_unit_buf) delete tls_org_unit_buf;
+        if (tls_version_buf) delete tls_version_buf;
         if (http_request_referer_buf) delete http_request_referer_buf;
         if (ftp_command_user_buf) delete ftp_command_user_buf;
         if (quic_sni_buf) delete quic_sni_buf;
@@ -213,6 +216,7 @@ public:
     TPAD_GET(tls_host)
     TPAD_GET(tls_cname)
     TPAD_GET(tls_org_unit)
+    TPAD_GET(tls_version)
     TPAD_GET(http_request_referer)
     TPAD_GET(ftp_command_user)
     TPAD_GET(quic_sni)
@@ -238,6 +242,7 @@ public:
     TPAD_SET(tls_host)
     TPAD_SET(tls_cname)
     TPAD_SET(tls_org_unit)
+    TPAD_SET(tls_version)
     TPAD_SET(http_request_referer)
     TPAD_SET(ftp_command_user)
     TPAD_SET(quic_sni)

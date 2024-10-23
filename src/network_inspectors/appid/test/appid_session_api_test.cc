@@ -368,6 +368,18 @@ TEST(appid_session_api, get_tls_host)
     STRCMP_EQUAL(val, APPID_UT_TLS_HOST);
 }
 
+TEST(appid_session_api, get_tls_version)
+{
+    AppidChangeBits change_bits;
+    mock_session->tsession->set_tls_version(nullptr, 0, change_bits);
+    CHECK_EQUAL(mock_session->get_api().get_tls_version(), 0);
+    CHECK_FALSE(change_bits.test(AppidChangeBit::APPID_TLS_VERSION_BIT));
+    const char tls_version[] = {0x03, 0x02};
+    mock_session->tsession->set_tls_version(tls_version, sizeof(tls_version), change_bits);
+    CHECK_EQUAL(mock_session->get_api().get_tls_version(), 0x0203);
+    CHECK_TRUE(change_bits.test(AppidChangeBit::APPID_TLS_VERSION_BIT));
+}
+
 TEST(appid_session_api, get_initiator_ip)
 {
     SfIp expected_ip;
