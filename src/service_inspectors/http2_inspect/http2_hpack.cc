@@ -28,13 +28,13 @@
 
 #include "http2_enum.h"
 #include "http2_flow_data.h"
+#include "http2_hpack_cookie_header_buffer.h"
 #include "http2_start_line.h"
 
 using namespace Http2Enums;
 #include "http2_varlen_int_decode_impl.h"
 #include "http2_varlen_string_decode_impl.h"
 
-using namespace HttpCommon;
 
 Http2HpackIntDecode Http2HpackDecoder::decode_int7(7);
 Http2HpackIntDecode Http2HpackDecoder::decode_int6(6);
@@ -300,7 +300,7 @@ bool Http2HpackDecoder::handle_dynamic_size_update(const uint8_t* encoded_header
 
 bool Http2HpackDecoder::decode_header_line(const uint8_t* encoded_header_buffer,
     const uint32_t encoded_header_length, uint32_t& bytes_consumed, uint8_t* decoded_header_buffer,
-    const uint32_t decoded_header_length, uint32_t& bytes_written)
+    const uint32_t decoded_header_length, uint32_t& bytes_written, Http2CookieHeaderBuffer* cookie_buffer)
 {
     const static uint8_t DYN_TABLE_SIZE_UPDATE_MASK = 0xe0;
     const static uint8_t DYN_TABLE_SIZE_UPDATE_PATTERN = 0x20;
@@ -339,7 +339,7 @@ bool Http2HpackDecoder::decode_header_line(const uint8_t* encoded_header_buffer,
             LITERAL_NO_INDEX_NAME_INDEX_MASK, decode_int4, false, bytes_consumed,
             decoded_header_buffer, decoded_header_length, bytes_written, name, value);
 
-    // Handle pseudoheaders
+    // Handle pseudoheaders or concatenated http1 headers (e.g, cookies)
     if (ret and bytes_written > 0)
     {
         if (decoded_header_buffer[0] == ':' and name.length() != 0)
@@ -363,6 +363,12 @@ bool Http2HpackDecoder::decode_header_line(const uint8_t* encoded_header_buffer,
         }
         else if (pseudo_headers_allowed)
             pseudo_headers_allowed = false;
+
+        if (Http2CookieHeaderBuffer::is_cookie(name.start(), name.length()))
+        {
+            cookie_buffer->append_value(value.start(), value.length());
+            bytes_written = 0;
+        }
     }
     return ret;
 }
@@ -382,6 +388,8 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     bool success = true;
     start_line = start_line_generator;
     decoded_headers = new uint8_t[MAX_OCTETS];
+    Http2CookieHeaderBuffer cookie_buffer;
+
     is_trailers = trailers;
     pseudo_headers_allowed = !is_trailers;
 
@@ -395,8 +403,17 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
         success = decode_header_line(encoded_headers + total_bytes_consumed,
             encoded_headers_length - total_bytes_consumed, line_bytes_consumed,
             decoded_headers + decoded_headers_size, MAX_OCTETS - decoded_headers_size,
-            line_bytes_written);
+            line_bytes_written, &cookie_buffer);
         total_bytes_consumed  += line_bytes_consumed;
+        decoded_headers_size += line_bytes_written;
+    }
+
+    // append cookie header
+    if (success and cookie_buffer.has_headers())
+    {
+        success = cookie_buffer.append_header_in_decoded_headers(
+            decoded_headers, decoded_headers_size, MAX_OCTETS,
+            line_bytes_written, infractions);
         decoded_headers_size += line_bytes_written;
     }
 
@@ -431,6 +448,7 @@ void Http2HpackDecoder::settings_table_size_update(uint32_t new_size)
 void Http2HpackDecoder::set_decoded_headers(Field& http1_header)
 {
     assert(decoded_headers);
+
     http1_header.set(decoded_headers_size, decoded_headers, true);
 
     // The headers frame object now owns this buffer

@@ -31,6 +31,8 @@ set (FILE_LIST
     http2_headers_frame_with_startline.h
     http2_hpack.cc
     http2_hpack.h
+    http2_hpack_cookie_header_buffer.cc
+    http2_hpack_cookie_header_buffer.h
     http2_hpack_dynamic_table.cc
     http2_hpack_dynamic_table.h
     http2_hpack_int_decode.h

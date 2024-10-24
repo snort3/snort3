@@ -31,6 +31,7 @@
 class Field;
 class Http2FlowData;
 class Http2StartLine;
+class Http2CookieHeaderBuffer;
 
 using Http2Infractions = Infractions<Http2Enums::INF__MAX_VALUE, Http2Enums::INF__NONE>;
 using Http2EventGen = EventGen<Http2Enums::EVENT__MAX_VALUE, Http2Enums::EVENT__NONE,
@@ -47,12 +48,18 @@ public:
         decode_table(flow_data) { }
     bool decode_headers(const uint8_t* encoded_headers, const uint32_t encoded_headers_length,
          Http2StartLine* start_line, bool trailers);
+    void set_decoded_headers(Field&);
+    bool are_pseudo_headers_allowed() { return pseudo_headers_allowed; }
+    void settings_table_size_update(const uint32_t size);
+    void cleanup();
+
+private:
     bool write_decoded_headers(const uint8_t* in_buffer, const uint32_t in_length,
         uint8_t* decoded_header_buffer, uint32_t decoded_header_length, uint32_t& bytes_written);
     bool decode_header_line(const uint8_t* encoded_header_buffer,
         const uint32_t encoded_header_length, uint32_t& bytes_consumed,
         uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
-        uint32_t& bytes_written);
+        uint32_t& bytes_written, Http2CookieHeaderBuffer* cookie_buffer);
     bool handle_dynamic_size_update(const uint8_t* encoded_header_buffer,
         const uint32_t encoded_header_length, uint32_t& bytes_consumed);
     const HpackTableEntry* get_hpack_table_entry(const uint8_t* encoded_header_buffer,
@@ -78,12 +85,6 @@ public:
         const uint32_t encoded_header_length, uint32_t& bytes_consumed,
         uint8_t* decoded_header_buffer, const uint32_t decoded_header_length,
         uint32_t& bytes_written, Field& field);
-
-    bool finalize_start_line();
-    void set_decoded_headers(Field&);
-    bool are_pseudo_headers_allowed() { return pseudo_headers_allowed; }
-    void settings_table_size_update(const uint32_t size);
-    void cleanup();
 
 private:
     Http2StartLine* start_line = nullptr;
