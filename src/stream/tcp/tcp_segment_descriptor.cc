@@ -171,7 +171,7 @@ void TcpSegmentDescriptor::set_retransmit_flag()
 {
     if ( PacketTracer::is_active() )
     {
-        PacketTracer::log("Packet was retransmitted and %s from the retry queue.\n",
+        PacketTracer::log("stream_tcp: Packet was retransmitted and %s from the retry queue.\n",
             pkt->is_retry() ? "is" : "is not");
     }
 

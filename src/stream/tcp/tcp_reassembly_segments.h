@@ -54,6 +54,7 @@ public:
     void purge_flushed_segments(uint32_t flush_seq);
     void skip_holes();
     void skip_midstream_pickup_seglist_hole(TcpSegmentDescriptor&);
+    bool skip_hole_at_beginning(TcpSegmentNode*);
     void purge_segment_list();
 
     bool is_segment_pending_flush() const;

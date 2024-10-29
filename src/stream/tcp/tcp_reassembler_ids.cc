@@ -31,6 +31,7 @@
 #include "log/log.h"
 #include "main/analyzer.h"
 #include "packet_io/active.h"
+#include "packet_io/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "protocols/packet_manager.h"
 #include "time/packet_time.h"
@@ -233,7 +234,7 @@ int TcpReassemblerIds::eval_flush_policy_on_data(Packet* p)
     if ( !p->flow->two_way_traffic() and
         seglist->get_seg_bytes_total() > seglist->session->tcp_config->asymmetric_ids_flush_threshold )
     {
-        seglist->skip_holes();
+        seglist->skip_hole_at_beginning(seglist->head);
         flushed += eval_asymmetric_flush(p);
     }
 
@@ -247,7 +248,11 @@ int TcpReassemblerIds::eval_asymmetric_flush(snort::Packet* p)
 
     uint32_t flushed = eval_flush_policy_on_ack(p);
     if ( flushed )
+    {
+        if (PacketTracer::is_active())
+            PacketTracer::log("stream_tcp: IDS mode - %u bytes flushed on asymmetric flow\n", flushed);
         tcpStats.flush_on_asymmetric_flow++;
+    }
 
     return flushed;
 }

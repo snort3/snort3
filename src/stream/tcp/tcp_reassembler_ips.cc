@@ -31,6 +31,7 @@
 #include "log/log.h"
 #include "main/analyzer.h"
 #include "packet_io/active.h"
+#include "packet_io/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "protocols/packet_manager.h"
 #include "time/packet_time.h"
@@ -155,6 +156,9 @@ int TcpReassemblerIps::eval_flush_policy_on_data(Packet* p)
 
     if ( asymmetric_flow_flushed(flushed, p) )
     {
+        if (PacketTracer::is_active())
+            PacketTracer::log("stream_tcp: IPS mode - %u bytes flushed on asymmetric flow\n", flushed);
+
         purge_to_seq(seglist->head->start_seq() + flushed);
         tracker->r_win_base = seglist->seglist_base_seq;
         tcpStats.flush_on_asymmetric_flow++;

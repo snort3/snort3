@@ -367,7 +367,7 @@ void TcpReassemblySegments::purge_segments_left_of_hole(const TcpSegmentNode* en
     tracker->set_order(TcpStreamTracker::OUT_OF_SEQUENCE);
 
     if (PacketTracer::is_active())
-        PacketTracer::log("Stream: Skipped %u packets before seglist hole\n", packets_skipped);
+        PacketTracer::log("stream_tcp: Skipped %u packets before seglist hole\n", packets_skipped);
 }
 
 void TcpReassemblySegments::advance_rcv_nxt(TcpSegmentNode *tsn)
@@ -384,28 +384,52 @@ void TcpReassemblySegments::advance_rcv_nxt(TcpSegmentNode *tsn)
     tracker->set_rcv_nxt(tsn->next_seq());
 }
 
-void TcpReassemblySegments::skip_holes()
+bool TcpReassemblySegments::skip_hole_at_beginning(TcpSegmentNode *tsn)
 {
-    TcpSegmentNode* tsn = head;
-    // if there is a hole at the beginning, skip it...
-    if ( SEQ_GT(tsn->seq, seglist_base_seq) )
+    assert( tsn );
+
+    bool hole_skipped = false;
+
+    if (SEQ_GT(tsn->seq, seglist_base_seq))
     {
+        hole_skipped = true;
         seglist_base_seq = tsn->seq;
         tracker->set_order(TcpStreamTracker::OUT_OF_SEQUENCE);
-
         if (PacketTracer::is_active())
-            PacketTracer::log("Stream: Skipped hole at beginning of the seglist\n");
+            PacketTracer::log("stream_tcp: Skipped hole at beginning of the seglist\n");
     }
+
+    return hole_skipped;
+}
+
+void TcpReassemblySegments::skip_holes()
+{
+    assert( head );
+
+    TcpSegmentNode* tsn = head;
+    uint32_t num_segs = 0, total_segs = 0, num_holes = 0;
+
+    // if there is a hole at the beginning, skip it...
+    if ( skip_hole_at_beginning(tsn) )
+        ++num_holes;
 
     while ( tsn )
     {
+        ++num_segs;
+
         if ( tsn->next and SEQ_GT(tsn->next->start_seq(), tsn->next_seq()) )
         {
+            ++num_holes;
+            total_segs += num_segs;
+            if (PacketTracer::is_active())
+                PacketTracer::log("stream_tcp: Seglist hole(%u): %u-->%u:%u. Segments purged: %u Total purged: %u\n",
+                    tsn->seq, tsn->next->seq, tsn->next->seq - tsn->seq, num_holes, num_segs, total_segs);
             tsn = tsn->next;
             purge_segments_left_of_hole(tsn);
             seglist_base_seq = head->start_seq();
+            num_segs = 0;
         }
-       else
+        else
             tsn = tsn->next;
     }
 

@@ -448,7 +448,7 @@ void TcpStreamTracker::fallback()
 #endif
 
     if (PacketTracer::is_active())
-        PacketTracer::log("Stream: %s tracker fallback to the Atom splitter.\n",
+        PacketTracer::log("stream_tcp: %s tracker fallback to the Atom splitter.\n",
             client_tracker ? "client" : "server");
 
     set_splitter(new AtomSplitter(!client_tracker));
@@ -850,13 +850,13 @@ int32_t TcpStreamTracker::kickstart_asymmetric_flow(const TcpSegmentDescriptor& 
     {
         set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
         if (PacketTracer::is_active())
-            PacketTracer::log("Stream: Kickstart of midstream asymmetric flow! Seglist queue space: %u\n",
+            PacketTracer::log("stream_tcp: Kickstart of midstream asymmetric flow! Seglist queue space: %u\n",
                 space_left );
     }
     else
     {
         if (PacketTracer::is_active())
-            PacketTracer::log("Stream: Kickstart of asymmetric flow! Seglist queue space: %u\n",
+            PacketTracer::log("stream_tcp: Kickstart of asymmetric flow! Seglist queue space: %u\n",
                 space_left );
     }
 

@@ -89,7 +89,7 @@ void TcpEventLogger::log_tcp_events()
         {
             DetectionEngine::queue_event(GID_STREAM_TCP, tcp_event_sids[idx].sid);
             if ( PacketTracer::is_active() )
-                PacketTracer::log("Stream: TCP raised %u:%u %s\n",
+                PacketTracer::log("stream_tcp: TCP raised %u:%u %s\n",
                     GID_STREAM_TCP, tcp_event_sids[idx].sid,
                     tcp_event_sids[idx].event_description);
             tcp_events ^= tcp_event_sids[idx].event_id;

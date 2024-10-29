@@ -279,7 +279,7 @@ void TcpSession::check_flow_missed_3whs()
         return;
 
     if ( PacketTracer::is_active() )
-        PacketTracer::log("Stream TCP did not see the complete 3-Way Handshake. "
+        PacketTracer::log("stream_tcp: TCP did not see the complete 3-Way Handshake. "
         "Not all normalizations will be in effect\n");
 
     client.normalizer.init(StreamPolicy::MISSED_3WHS, this, &client, &server);
@@ -627,7 +627,7 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
                 // FIXIT-M - only alert once per threshold exceeded event
                 tel.set_tcp_event(EVENT_MAX_QUEUED_BYTES_EXCEEDED);
                 listener->normalizer.log_drop_reason(tsd, inline_mode, "stream",
-                    "Stream: Flow exceeded the configured max byte threshold (" + std::to_string(tcp_config->max_queued_bytes) +
+                    "stream_tcp: Flow exceeded the configured max byte threshold (" + std::to_string(tcp_config->max_queued_bytes) +
                     "). You may want to adjust the 'max_bytes' parameter in the NAP policy"
                     " to a higher value, or '0' for unlimited.\n");
             }
@@ -657,7 +657,7 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
                 // FIXIT-M - only alert once per threshold exceeded event
                 tel.set_tcp_event(EVENT_MAX_QUEUED_SEGS_EXCEEDED);
                 listener->normalizer.log_drop_reason(tsd, inline_mode, "stream",
-                    "Stream: Flow exceeded the configured max segment threshold (" + std::to_string(tcp_config->max_queued_segs) +
+                    "stream_tcp: Flow exceeded the configured max segment threshold (" + std::to_string(tcp_config->max_queued_segs) +
                     "). You may want to adjust the 'max_segments' parameter in the NAP policy"
                     " to a higher value, or '0' for unlimited.\n");
             }
@@ -1344,7 +1344,7 @@ StreamSplitter* TcpSession::get_splitter(bool to_server)
 void TcpSession::start_proxy()
 {
     if ( PacketTracer::is_active() )
-        PacketTracer::log("Stream TCP normalization policy set to Proxy mode. Normalizations will be skipped\n");
+        PacketTracer::log("stream_tcp: TCP normalization policy set to Proxy mode. Normalizations will be skipped\n");
 
     client.normalizer.init(StreamPolicy::OS_PROXY, this, &client, &server);
     server.normalizer.init(StreamPolicy::OS_PROXY, this, &server, &client);

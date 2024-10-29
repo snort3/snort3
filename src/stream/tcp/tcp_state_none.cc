@@ -72,7 +72,7 @@ bool TcpStateNone::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
         flow->set_session_flags(SSNFLAG_MIDSTREAM);
 
         if ( PacketTracer::is_active() )
-            PacketTracer::log("Stream TCP did not see the complete 3-Way Handshake. "
+            PacketTracer::log("stream_tcp: TCP did not see the complete 3-Way Handshake. "
             "Not all normalizations will be in effect\n");
 
         DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_MIDSTREAM, tsd.get_pkt());

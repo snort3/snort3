@@ -93,11 +93,13 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
         {
             tcpStats.zero_win_probes++;
             trim_win_payload(tns, tsd, MAX_ZERO_WIN_PROBE_LEN, inline_mode);
-            log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Maximum Zero Window Probe length supported at a time is 1 byte\n");
+            log_drop_reason(tns, tsd, inline_mode, "stream",
+                "Normalizer: Maximum Zero Window Probe length supported at a time is 1 byte\n");
             return NORM_TRIMMED;
         }
 
-        log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Received data during a Zero Window that is not a Zero Window Probe\n");
+        log_drop_reason(tns, tsd, inline_mode, "stream",
+            "Normalizer: Received data during a Zero Window that is not a Zero Window Probe\n");
         trim_win_payload(tns, tsd, 0, inline_mode);
         return NORM_TRIMMED;
     }
@@ -148,9 +150,7 @@ void TcpNormalizer::session_blocker(
     p->active->block_session(p, true);
     p->active->set_drop_reason("stream");
     if (PacketTracer::is_active())
-        {
-            PacketTracer::log("Normalizer: TCP Zero Window Probe byte data mismatch\n");
-        }
+        PacketTracer::log("stream_tcp: TCP normalizer - Zero Window Probe byte data mismatch\n");
 }
 
 bool TcpNormalizer::packet_dropper(
@@ -182,7 +182,8 @@ bool TcpNormalizer::trim_syn_payload(
     if (len > max)
     {
         if ( PacketTracer::is_active() && (NormMode)tns.trim_syn == NORM_MODE_ON )
-            PacketTracer::log("Normalizer: Trimming payload of SYN packet with length (%u) to a maximum value of %u\n", len, max);
+            PacketTracer::log("stream_tcp: TCP normalizer - Trimming payload of SYN packet "
+                "with length (%u) to a maximum value of %u\n", len, max);
 
         return trim_payload(tns, tsd, max, (NormMode)tns.trim_syn, PC_TCP_TRIM_SYN);
     }
@@ -197,7 +198,8 @@ void TcpNormalizer::trim_rst_payload(
     if (len > max)
     {
         if ( PacketTracer::is_active() && (NormMode)tns.trim_rst == NORM_MODE_ON )
-            PacketTracer::log("Normalizer: Trimming payload of RST packet with length (%u) to a maximum value of %u\n", len, max);
+            PacketTracer::log("stream_tcp: TCP normalizer - Trimming payload of RST packet "
+                "with length (%u) to a maximum value of %u\n", len, max);
 
         trim_payload(tns, tsd, max, (NormMode)tns.trim_rst, PC_TCP_TRIM_RST);
     }
@@ -211,7 +213,8 @@ void TcpNormalizer::trim_win_payload(
     if (len > max)
     {
         if ( PacketTracer::is_active() && (force || (NormMode)tns.trim_win == NORM_MODE_ON) )
-            PacketTracer::log("Normalizer: Trimming payload with length (%u) to a maximum value of %u\n", len, max);
+            PacketTracer::log("stream_tcp: TCP normalizer - Trimming payload with length (%u) "
+                "to a maximum value of %u\n", len, max);
 
         trim_payload(tns, tsd, max, (NormMode)tns.trim_win, PC_TCP_TRIM_WIN, force);
     }
@@ -225,7 +228,8 @@ void TcpNormalizer::trim_mss_payload(
     if (len > max)
     {
         if ( PacketTracer::is_active() && (NormMode)tns.trim_mss == NORM_MODE_ON )
-            PacketTracer::log("Normalizer: Trimming payload with length (%u) to fit MSS size (%u)\n", len, max);
+            PacketTracer::log("stream_tcp: TCP normalizer - Trimming payload with length (%u) "
+                "to fit MSS size (%u)\n", len, max);
 
         trim_payload(tns, tsd, max, (NormMode)tns.trim_mss, PC_TCP_TRIM_MSS);
     }
@@ -516,7 +520,7 @@ void TcpNormalizer::log_drop_reason(TcpNormalizerState& tns, const TcpSegmentDes
     {
         tsd.get_pkt()->active->set_drop_reason(issuer);
         if (PacketTracer::is_active())
-            PacketTracer::log("%s", log.c_str());
+            PacketTracer::log("stream_tcp: %s", log.c_str());
         if (stream_tcp_trace_enabled)
             trace_logf(TRACE_WARNING_LEVEL, stream_tcp_trace, DEFAULT_TRACE_OPTION_ID, tsd.get_pkt(), "%s", log.c_str());
     }
