@@ -103,8 +103,10 @@ struct BaseStats
      PegCount user_memcap_prunes;
      PegCount file_memcap_prunes;
      PegCount pdu_memcap_prunes;
+     PegCount allowlist_memcap_prunes;
 
      // Keep the NOW stats at the bottom as it requires special sum_stats logic
+     PegCount allowlist_flows;
      PegCount current_flows;
      PegCount uni_flows;
      PegCount uni_ip_flows;

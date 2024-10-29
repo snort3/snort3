@@ -51,10 +51,18 @@ void Flow::trust() { }
 
 SFDAQInstance* SFDAQ::get_local_instance() { return nullptr; }
 
+
 unsigned int get_random_seed()
 { return 3193; }
 unsigned DataBus::get_id(const PubKey&)
 { return 0; }
+}
+
+const FlowCacheConfig& FlowControl::get_flow_cache_config() const
+{
+    static FlowCacheConfig cfg;
+    cfg.allowlist_cache = true;
+    return cfg;
 }
 
 using namespace snort;

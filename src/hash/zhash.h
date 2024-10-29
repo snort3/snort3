@@ -36,6 +36,7 @@ public:
     void* pop();
 
     void* get(const void* key, uint8_t type = 0);
+    uint64_t get_node_count(uint8_t type);
     void* remove(uint8_t type = 0);
 
     void* lru_first(uint8_t type = 0);

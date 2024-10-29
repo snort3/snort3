@@ -47,6 +47,20 @@ enum class PktType : std::uint8_t
     NONE, IP, TCP, UDP, ICMP, USER, FILE, PDU, MAX
 };
 
+enum class LRUType : std::uint8_t 
+{
+    NONE = static_cast<std::uint8_t>(PktType::NONE),
+    IP = static_cast<std::uint8_t>(PktType::IP),
+    TCP = static_cast<std::uint8_t>(PktType::TCP),
+    UDP = static_cast<std::uint8_t>(PktType::UDP),
+    ICMP = static_cast<std::uint8_t>(PktType::ICMP),
+    USER = static_cast<std::uint8_t>(PktType::USER),
+    FILE = static_cast<std::uint8_t>(PktType::FILE),
+    PDU = static_cast<std::uint8_t>(PktType::PDU),
+    ALLOW_LIST,
+    MAX
+};
+
 // the first several of these bits must map to PktType
 // eg PROTO_BIT__IP == BIT(PktType::IP), etc.
 #define PROTO_BIT__NONE             0x000000

@@ -305,13 +305,13 @@ void XHash::update_cursor()
     }
 }
 
-void* XHash::get_user_data(const void* key, uint8_t type)
+void* XHash::get_user_data(const void* key, uint8_t type, bool touch)
 {
     assert(key);
     assert(type < num_lru_caches);
 
     int rindex = 0;
-    HashNode* hnode = find_node_row(key, rindex, type);
+    HashNode* hnode = find_node_row(key, rindex, type, touch);
     return ( hnode ) ? hnode->data : nullptr;
 }
 
@@ -407,7 +407,14 @@ void XHash::move_to_front(HashNode* node,uint8_t type)
     lru_caches[type]->touch(node);
 }
 
-HashNode* XHash::find_node_row(const void* key, int& rindex, uint8_t type)
+void XHash::touch_last_found(uint8_t type)
+{
+    assert(type < num_lru_caches);
+    if ( lfind )
+        move_to_front(lfind, type);
+}
+
+HashNode* XHash::find_node_row(const void* key, int& rindex, uint8_t type, bool touch)
 {
     assert(type < num_lru_caches);
     unsigned hashkey = hashkey_ops->do_hash((const unsigned char*)key, keysize);
@@ -418,7 +425,9 @@ HashNode* XHash::find_node_row(const void* key, int& rindex, uint8_t type)
     {
         if ( hashkey_ops->key_compare(hnode->key, key, keysize) )
         {
-            move_to_front(hnode,type);
+            lfind = hnode;
+            if ( touch )
+                move_to_front(hnode, type);
             return hnode;
         }
     }
@@ -542,6 +551,28 @@ HashNode* XHash::release_lru_node(uint8_t type)
             hnode = lru_caches[type]->get_next_lru_node ();
     }
     return hnode;
+}
+
+void XHash::switch_node_lru_cache(HashNode* hnode, uint8_t old_type, uint8_t new_type)
+{
+    lru_caches[old_type]->remove_node(hnode);
+    lru_caches[new_type]->insert(hnode);
+}
+
+bool XHash::switch_lru_cache(const void* key, uint8_t old_type, uint8_t new_type)
+{
+    assert(old_type < num_lru_caches);
+    assert(new_type < num_lru_caches);
+
+    int rindex = 0;
+    HashNode* hnode = (HashNode*)find_node_row(key, rindex, old_type);
+    if ( hnode )
+    {
+        switch_node_lru_cache(hnode, old_type, new_type);
+        return true;
+    }
+
+    return false;
 }
 
 bool XHash::delete_lru_node(uint8_t type)

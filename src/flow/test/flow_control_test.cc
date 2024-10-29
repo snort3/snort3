@@ -85,6 +85,8 @@ ExpectCache::ExpectCache(uint32_t) { }
 ExpectCache::~ExpectCache() = default;
 bool ExpectCache::check(Packet*, Flow*) { return true; }
 Flow* HighAvailabilityManager::import(Packet&, FlowKey&) { return nullptr; }
+bool FlowCache::move_to_allowlist(snort::Flow*) { return true; }
+uint64_t FlowCache::get_lru_flow_count(uint8_t) const { return 0; }
 
 namespace snort
 {

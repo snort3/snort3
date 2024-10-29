@@ -67,6 +67,14 @@ static const Parameter name[] = \
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr } \
 }
 
+static const Parameter allowlist_cache_params[] =
+{
+    { "enable", Parameter::PT_BOOL, nullptr, "false",
+      "enable allowlist cache" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 FLOW_TYPE_PARAMS(ip_params, "180");
 FLOW_TYPE_PARAMS(icmp_params, "180");
 FLOW_TYPE_PARAMS(tcp_params, "3600");
@@ -102,6 +110,8 @@ static const Parameter s_params[] =
 
     { "require_3whs", Parameter::PT_INT, "-1:max31", "-1",
       "don't track midstream TCP sessions after given seconds from start up; -1 tracks all" },
+
+    { "allowlist_cache", Parameter::PT_TABLE, allowlist_cache_params, nullptr, "configure allowlist cache" },
 
     FLOW_TYPE_TABLE("ip_cache",   "ip",   ip_params),
     FLOW_TYPE_TABLE("icmp_cache", "icmp", icmp_params),
@@ -317,6 +327,9 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
     else if ( v.is("require_3whs") )
         config.hs_timeout = v.get_int32();
 
+    else if ( !strcmp(fqn, "stream.allowlist_cache.enable") )
+        config.flow_cache_cfg.allowlist_cache = v.get_bool();
+
     else if ( !strcmp(fqn, "stream.file_cache.idle_timeout") )
         config.flow_cache_cfg.proto[to_utype(PktType::FILE)].nominal_timeout = v.get_uint32();
 
@@ -492,6 +505,12 @@ void StreamModuleConfig::show() const
         tmp += " }";
 
         ConfigLogger::log_value(flow_type_names[i], tmp.c_str());
+    }
+    {
+        std::string tmp;
+        tmp += "{ enable = " + (flow_cache_cfg.allowlist_cache ? std::string("true") : std::string("false"));
+        tmp += " }";
+        ConfigLogger::log_value("allowlist_cache", tmp.c_str());
     }
 }
 

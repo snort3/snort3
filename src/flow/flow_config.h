@@ -35,6 +35,7 @@ struct FlowCacheConfig
     unsigned pruning_timeout = 0;
     FlowTypeConfig proto[to_utype(PktType::MAX)];
     unsigned prune_flows = 0;
+    bool allowlist_cache = false;
 };
 
 #endif

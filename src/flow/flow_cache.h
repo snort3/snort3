@@ -38,6 +38,12 @@
 #include "prune_stats.h"
 #include "filter_flow_critera.h"
 
+constexpr uint8_t max_protocols = static_cast<uint8_t>(to_utype(PktType::MAX));
+constexpr uint8_t allowlist_lru_index = max_protocols;
+constexpr uint8_t total_lru_count = max_protocols + 1;
+constexpr uint64_t all_lru_mask = (1ULL << max_protocols) - 1;
+constexpr uint8_t first_proto = to_utype(PktType::NONE) + 1;
+
 namespace snort
 {
 class Flow;
@@ -134,6 +140,8 @@ public:
     const FlowCacheConfig& get_flow_cache_config() const
     { return config; }
 
+    bool move_to_allowlist(snort::Flow* f);
+
     virtual bool filter_flows(const snort::Flow&, const FilterFlowCriteria&) const;
     virtual void output_flow(std::fstream&, const snort::Flow&, const struct timeval&) const;
 
@@ -142,6 +150,10 @@ public:
     size_t uni_flows_size() const;
     size_t uni_ip_flows_size() const;
     size_t flows_size() const;
+    PegCount get_lru_flow_count(uint8_t lru_idx) const;
+#ifdef UNIT_TEST
+    size_t count_flows_in_lru(uint8_t lru_index) const;
+#endif
 
 private:
     void delete_uni();
@@ -153,6 +165,24 @@ private:
     unsigned delete_active_flows(unsigned mode, unsigned num_to_delete, unsigned &deleted);
     static std::string timeout_to_str(time_t);
     bool is_ip_match(const snort::SfIp& flow_ip, const snort::SfIp& filter_ip, const snort::SfIp& subnet) const;
+
+    inline bool is_lru_checked(uint64_t checked_lrus_mask, uint64_t lru_mask)
+    { return (checked_lrus_mask & lru_mask) != 0; }
+
+    inline bool all_lrus_checked(uint64_t checked_lrus_mask)
+    { return checked_lrus_mask == all_lru_mask; }
+
+    inline void mark_lru_checked(uint64_t& checked_lrus_mask, uint64_t lru_mask)
+    { checked_lrus_mask |= lru_mask; }
+
+    inline uint64_t get_lru_mask(uint8_t lru_idx)
+    { return 1ULL << lru_idx; }
+
+    inline void mark_lru_checked(uint64_t& checked_lrus_mask, uint64_t& empty_lru_masks, uint64_t lru_mask)
+    {
+        checked_lrus_mask |= lru_mask;
+        empty_lru_masks |= lru_mask;
+    }
 
 private:
     uint8_t timeout_idx;
@@ -166,7 +196,8 @@ private:
 
     PruneStats prune_stats;
     FlowDeleteStats delete_stats;
-    uint64_t empty_proto;
+    uint64_t empty_lru_mask;
+
 };
 #endif
 

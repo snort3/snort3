@@ -26,6 +26,8 @@
 #include "detection/context_switcher.h"
 #include "detection/detection_engine.h"
 #include "flow/flow.h"
+#include "flow/flow_config.h"
+#include "flow/flow_control.h"
 #include "flow/flow_stash.h"
 #include "flow/ha.h"
 #include "framework/inspector.h"
@@ -44,6 +46,16 @@
 #include "flow_stubs.h"
 
 using namespace snort;
+THREAD_LOCAL class FlowControl* flow_con;
+
+const FlowCacheConfig& FlowControl::get_flow_cache_config() const
+{
+    static FlowCacheConfig fcc;
+    fcc.allowlist_cache = true;
+    return fcc;
+}
+
+bool FlowControl:: move_to_allowlist(snort::Flow*) { return true; }
 
 void Inspector::rem_ref() {}
 

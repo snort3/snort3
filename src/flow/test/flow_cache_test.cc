@@ -396,6 +396,243 @@ TEST(flow_prune, prune_counts)
     CHECK_EQUAL(3, stats.get_proto_prune_count(PruneReason::IDLE_PROTOCOL_TIMEOUT, PktType::IP));
 }
 
+TEST_GROUP(allowlist_test) { };
+
+TEST(allowlist_test, move_to_allowlist)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 5;
+    DummyCache* cache = new DummyCache(fcg);
+    int port = 1;
+
+    // Adding two UDP flows and moving them to allow list
+    for (unsigned i = 0; i < 2; ++i) {
+        FlowKey flow_key;
+        flow_key.port_l = port++;
+        flow_key.pkt_type = PktType::UDP;
+        
+        Flow* flow = cache->allocate(&flow_key);
+        CHECK(cache->move_to_allowlist(flow) == true);  // Move flow to allow list
+
+        Flow* found_flow = cache->find(&flow_key);
+        CHECK(found_flow == flow);  // Verify flow is found
+        CHECK(found_flow->flags.in_allowlist == 1);  // Verify it's in allowlist
+    }
+
+    CHECK_EQUAL(2, cache->get_count());  // Check two flows in cache
+    CHECK_EQUAL(2, cache->get_lru_flow_count(allowlist_lru_index));  // Check 2 allow list flows
+
+    cache->purge();
+    delete cache;
+}
+
+
+TEST(allowlist_test, allowlist_timeout_prune_fail)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 5;
+    DummyCache* cache = new DummyCache(fcg);
+    int port = 1;
+
+    for (unsigned i = 0; i < 2; ++i)
+    {
+        FlowKey flow_key;
+        flow_key.port_l = port++;
+        flow_key.pkt_type = PktType::TCP;
+        
+        Flow* flow = cache->allocate(&flow_key);
+        CHECK(cache->move_to_allowlist(flow) == true);
+    }
+
+    CHECK_EQUAL(2, cache->get_count());
+    CHECK_EQUAL(2, cache->get_lru_flow_count(allowlist_lru_index));
+
+    // Ensure pruning doesn't occur because all flows are allow listed
+    for (uint8_t i = 0; i < total_lru_count; ++i)
+        CHECK(cache->prune_one(PruneReason::IDLE_PROTOCOL_TIMEOUT, true, i) == false);
+    
+    CHECK_EQUAL(2, cache->get_count());
+    CHECK_EQUAL(2, cache->get_lru_flow_count(allowlist_lru_index));
+
+    cache->purge();
+    delete cache;
+}
+
+TEST(allowlist_test, allowlist_memcap_prune_pass)
+{
+    PruneStats stats;
+    FlowCacheConfig fcg;
+    fcg.max_flows = 10;
+    fcg.prune_flows = 5;
+    DummyCache* cache = new DummyCache(fcg);
+    int port = 1;
+
+    for (unsigned i = 0; i < 10; ++i)
+    {
+        FlowKey flow_key;
+        flow_key.port_l = port++;
+        flow_key.pkt_type = PktType::TCP;
+        
+        Flow* flow = cache->allocate(&flow_key);
+        CHECK(cache->move_to_allowlist(flow) == true);
+    }
+
+    CHECK_EQUAL(10, cache->get_count());  // Check 10 flows in cache
+    CHECK_EQUAL(10, cache->get_lru_flow_count(allowlist_lru_index));  // Check 2 allow listed flows
+
+    CHECK_EQUAL(5, cache->prune_multiple(PruneReason::MEMCAP, true));
+    CHECK_EQUAL(5, cache->get_count());
+    CHECK_EQUAL(5, cache->get_proto_prune_count(PruneReason::MEMCAP, (PktType)allowlist_lru_index));
+    CHECK_EQUAL(5, cache->get_lru_flow_count(allowlist_lru_index));
+
+    cache->purge();
+    delete cache;
+}
+
+
+TEST(allowlist_test, allowlist_timeout_with_other_protos)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 10;
+    fcg.prune_flows = 10;
+
+    for (uint8_t i = to_utype(PktType::NONE); i <= to_utype(PktType::MAX); ++i) 
+        fcg.proto[i].nominal_timeout = 5;
+    
+    FlowCache* cache = new FlowCache(fcg);
+    int port = 1;
+
+    for (unsigned i = 0; i < 2; ++i) 
+    {
+        FlowKey flow_key;
+        flow_key.port_l = port++;
+        flow_key.pkt_type = PktType::UDP;
+        
+        Flow* flow = cache->allocate(&flow_key);
+        CHECK(cache->move_to_allowlist(flow) == true);  // Move flow to allow list
+
+        Flow* found_flow = cache->find(&flow_key);
+        CHECK(found_flow == flow);
+        CHECK(found_flow->flags.in_allowlist == 1);
+    }
+
+    CHECK_EQUAL(2, cache->get_count());
+
+    // Ensure pruning doesn't occur because all flows are allow listed
+    for (uint8_t i = 0; i < to_utype(PktType::MAX) - 1; ++i) 
+        CHECK(cache->prune_one(PruneReason::NONE, true, i) == false);
+    
+    CHECK_EQUAL(2, cache->get_count());  // Ensure no flows were pruned
+
+    // Add a new ICMP flow
+    FlowKey flow_key_icmp;
+    flow_key_icmp.port_l = port++;
+    flow_key_icmp.pkt_type = PktType::ICMP;
+    cache->allocate(&flow_key_icmp);
+
+    CHECK_EQUAL(3, cache->get_count());
+    CHECK_EQUAL(2, cache->get_lru_flow_count(allowlist_lru_index));
+
+    // Prune Reason::NONE will not be able to prune allow listed flow, only 1 UDP
+    CHECK_EQUAL(1, cache->prune_multiple(PruneReason::NONE, true));
+
+    // we can't prune to 0 so 1 flow will be pruned
+    CHECK_EQUAL(1, cache->prune_multiple(PruneReason::MEMCAP, true));
+
+    CHECK_EQUAL(1, cache->get_count()); 
+    CHECK_EQUAL(1, cache->get_lru_flow_count(allowlist_lru_index));
+
+    // Adding five UDP flows, these will become the LRU flows
+    for (unsigned i = 0; i < 5; ++i) 
+    {
+        FlowKey flow_key;
+        flow_key.port_l = port++;
+        flow_key.pkt_type = PktType::UDP;
+        
+        Flow* flow = cache->allocate(&flow_key);
+        flow->last_data_seen = 2 + i;
+    }
+
+    CHECK_EQUAL(6, cache->get_count());
+
+    // Adding three TCP flows, move two to allow list, making them MRU
+    for (unsigned i = 0; i < 3; ++i) 
+    {
+        FlowKey flow_key;
+        flow_key.port_l = port++;
+        flow_key.pkt_type = PktType::TCP;
+        
+        Flow* flow = cache->allocate(&flow_key);
+        flow->last_data_seen = 4 + i;  // Set TCP flows to have later timeout
+
+        if (i > 0) 
+        {
+            CHECK(cache->move_to_allowlist(flow) == true);
+
+            Flow* found_flow = cache->find(&flow_key);
+            CHECK(found_flow == flow);
+            CHECK(found_flow->flags.in_allowlist == 1);
+        }
+    }
+
+    CHECK_EQUAL(5, cache->get_lru_flow_count(to_utype(PktType::UDP)));
+    CHECK_EQUAL(1, cache->get_lru_flow_count(to_utype(PktType::TCP)));
+    CHECK_EQUAL(3, cache->get_lru_flow_count(allowlist_lru_index));
+    CHECK_EQUAL(9, cache->get_count());  // Verify total flows (5 UDP + 1 TCP + 3 allow list)
+    CHECK_EQUAL(3, cache->get_lru_flow_count(allowlist_lru_index));  // Verify 3 allow listed flows
+
+    // Timeout 4 flows, 3 UDP and 1 TCP
+    CHECK_EQUAL(4, cache->timeout(5, 9));
+    CHECK_EQUAL(5, cache->get_count());  // Ensure 4 flows remain (2 UDP + 3 allow listed TCP)
+    CHECK_EQUAL(3, cache->count_flows_in_lru(allowlist_lru_index));
+    CHECK_EQUAL(0, cache->count_flows_in_lru(to_utype(PktType::TCP)));
+    CHECK_EQUAL(2, cache->count_flows_in_lru(to_utype(PktType::UDP)));
+
+    //try multiple prune 2 UDP flow should be pruned as other flows are allow listed
+    CHECK_EQUAL(2, cache->prune_multiple(PruneReason::NONE, true));
+
+    //memcap prune can prune all the flows
+    CHECK_EQUAL(2, cache->prune_multiple(PruneReason::MEMCAP, true));
+
+    CHECK_EQUAL(1, cache->get_count());
+    CHECK_EQUAL(1, cache->get_lru_flow_count(allowlist_lru_index));
+
+    // Clean up
+    cache->purge();
+    delete cache;
+}
+TEST(allowlist_test, excess_prune)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 5;
+    fcg.prune_flows = 2;
+    DummyCache* cache = new DummyCache(fcg);
+    int port = 1;
+
+    for (unsigned i = 0; i < 6; ++i)
+    {
+        FlowKey flow_key;
+        flow_key.port_l = port++;
+        flow_key.pkt_type = PktType::TCP;
+        
+        Flow* flow = cache->allocate(&flow_key);
+        CHECK(cache->move_to_allowlist(flow) == true);
+    }
+
+    // allocating 6 flows and moving all to allowlist
+    // max_flows is 5 one flow should be pruned
+    CHECK_EQUAL(5, cache->get_count());
+    CHECK_EQUAL(5, cache->get_lru_flow_count(allowlist_lru_index));
+
+    // Prune 3 flows, expect 2 flows pruned
+    CHECK_EQUAL(2, cache->prune_multiple(PruneReason::EXCESS, true));
+    CHECK_EQUAL(3, cache->get_count());
+    CHECK_EQUAL(3, cache->get_lru_flow_count(allowlist_lru_index));
+
+    cache->purge();
+    delete cache;
+}
+
 TEST_GROUP(dump_flows) { };
 
 TEST(dump_flows, dump_flows_with_all_empty_caches)
@@ -493,6 +730,139 @@ TEST(dump_flows, dump_flows_with_102_tcp_flows_and_202_udp_flows)
     CHECK(cache->get_flows_allocated() == 0);
     CHECK (cache->get_count() == 0);
     delete cache;
+}
+
+TEST(dump_flows, dump_flows_with_allowlist)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 500;
+    FilterFlowCriteria ffc;
+    std::fstream dump_stream;
+    DummyCache* cache = new DummyCache(fcg);
+    int port = 1;
+    FlowKey flow_key[10];
+
+    // Add TCP flows and mark some as allow listed
+    for (unsigned i = 0; i < 10; ++i)
+    {
+        flow_key[i].port_l = port++;
+        flow_key[i].pkt_type = PktType::TCP;
+        Flow* flow = cache->allocate(&flow_key[i]);
+        // Mark the first 5 flows as allow listed
+        if (i < 5)
+        {
+            CHECK(cache->move_to_allowlist(flow) == true);
+        }
+    }
+
+    CHECK(cache->get_count() == 10);
+
+    //check flows are properly moved to allow list
+    CHECK(cache->count_flows_in_lru(to_utype(PktType::TCP)) == 5);  // Check 5 TCP flows
+    CHECK(cache->count_flows_in_lru(allowlist_lru_index) == 5);  // Check 5 allow listed flows
+
+    // Check that the first dump call works (with allow listed and non-allow listed flows)
+    CHECK(cache->dump_flows(dump_stream, 10, ffc, true, 1) == true);
+
+
+    // Verify that allow listed flows exist and are correctly handled
+    for (unsigned i = 0; i < 5; ++i)
+    {
+        flow_key[i].port_l = i + 1;  // allow listed flow ports
+        flow_key[i].pkt_type = PktType::TCP;
+        Flow* flow = cache->find(&flow_key[i]);
+        CHECK(flow != nullptr);  // Ensure the flow is found
+        CHECK(flow->flags.in_allowlist == 1);  // Ensure the flow is allow listed
+    }
+
+    // Ensure cache cleanup and correct flow counts
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    CHECK(cache->get_count() == 0);
+    delete cache;
+}
+
+TEST(dump_flows, dump_flows_no_flows_to_dump)
+{
+    FlowCacheConfig fcg;
+    FilterFlowCriteria ffc;
+    fcg.max_flows = 10;
+    std::fstream dump_stream;
+
+    DummyCache* cache = new DummyCache(fcg);
+    CHECK(cache->dump_flows(dump_stream, 100, ffc, true, 1) == true);
+
+    delete cache;   
+}
+
+TEST_GROUP(flow_cache_lrus) 
+{ 
+    FlowCacheConfig fcg;
+    DummyCache* cache;
+
+    void setup()
+    {
+        fcg.max_flows = 20;
+        cache = new DummyCache(fcg);
+    }
+
+    void teardown()
+    {
+        cache->purge();
+        delete cache;
+    }
+};
+
+TEST(flow_cache_lrus, count_flows_in_lru_test)
+{
+    FlowKey flow_keys[10];
+    memset(flow_keys, 0, sizeof(flow_keys));
+
+    flow_keys[0].pkt_type = PktType::TCP;
+    flow_keys[1].pkt_type = PktType::UDP;
+    flow_keys[2].pkt_type = PktType::USER;
+    flow_keys[3].pkt_type = PktType::FILE;
+    flow_keys[4].pkt_type = PktType::TCP;
+    flow_keys[5].pkt_type = PktType::TCP;
+    flow_keys[6].pkt_type = PktType::PDU;
+    flow_keys[7].pkt_type = PktType::ICMP;
+    flow_keys[8].pkt_type = PktType::TCP;
+    flow_keys[9].pkt_type = PktType::ICMP;
+
+    //flow count 4 TCP, 1 UDP, 1 USER, 1 FILE, 1 PDU, 2 ICMP = 10
+    // Add the flows to the hash_table
+    for (int i = 0; i < 10; ++i)
+    {
+        flow_keys[i].port_l = i;
+        Flow* flow = cache->allocate(&flow_keys[i]);
+        CHECK(flow != nullptr);
+    }
+
+    CHECK_EQUAL(10, cache->get_count());  // Verify 10 flows in 
+    CHECK_EQUAL(4, cache->count_flows_in_lru(to_utype(PktType::TCP)));  // 4 TCP flows
+    CHECK_EQUAL(1, cache->count_flows_in_lru(to_utype(PktType::UDP)));  // 1 UDP flow
+    CHECK_EQUAL(1, cache->count_flows_in_lru(to_utype(PktType::USER)));  // 1 USER flow
+    CHECK_EQUAL(1, cache->count_flows_in_lru(to_utype(PktType::FILE)));  // 1 FILE flow
+    CHECK_EQUAL(1, cache->count_flows_in_lru(to_utype(PktType::PDU)));  // 1 PDU flow
+    CHECK_EQUAL(2, cache->count_flows_in_lru(to_utype(PktType::ICMP)));  // 2 ICMP flow
+
+    Flow* flow1 = cache->find(&flow_keys[0]);
+    Flow* flow2 = cache->find(&flow_keys[1]);
+    Flow* flow3 = cache->find(&flow_keys[6]);
+    CHECK(cache->move_to_allowlist(flow1));
+    CHECK(cache->move_to_allowlist(flow2));
+    CHECK(cache->move_to_allowlist(flow3));
+
+    CHECK_EQUAL(10, cache->get_count());
+    CHECK_EQUAL(3, cache->count_flows_in_lru(to_utype(PktType::TCP)));  // 3 TCP flows
+    CHECK_EQUAL(0, cache->count_flows_in_lru(to_utype(PktType::UDP)));  // 0 UDP flows
+    CHECK_EQUAL(1, cache->count_flows_in_lru(to_utype(PktType::USER)));  // 1 USER flow
+    CHECK_EQUAL(1, cache->count_flows_in_lru(to_utype(PktType::FILE)));  // 1 FILE flow
+    CHECK_EQUAL(0, cache->count_flows_in_lru(to_utype(PktType::PDU)));  // 0 PDU flows
+    CHECK_EQUAL(2, cache->count_flows_in_lru(to_utype(PktType::ICMP)));  // 2 ICMP flow
+    // Check the allow listed flows
+    CHECK_EQUAL(3, cache->count_flows_in_lru(allowlist_lru_index));  // 3 allowlist flows
+
 }
 
 int main(int argc, char** argv)

@@ -72,6 +72,7 @@ public:
     void timeout_flows(unsigned int, time_t cur_time);
     void check_expected_flow(snort::Flow*, snort::Packet*);
     unsigned prune_multiple(PruneReason, bool do_cleanup);
+    bool move_to_allowlist(snort::Flow*);
 
     bool dump_flows(std::fstream&, unsigned count, const FilterFlowCriteria& ffc, bool first, uint8_t code) const;
 
@@ -92,6 +93,7 @@ public:
     PegCount get_flows()
     { return num_flows; }
 
+    PegCount get_allowlist_flow_count() const;
     PegCount get_total_prunes() const;
     PegCount get_prunes(PruneReason) const;
     PegCount get_proto_prune_count(PruneReason, PktType) const;

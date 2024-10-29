@@ -116,6 +116,18 @@ void FlowControl::release_flow(const FlowKey* key)
         cache->release(flow, PruneReason::HA);
 }
 
+bool FlowControl::move_to_allowlist(Flow* f)
+{
+    // Preserve the flow only if it is a TCP or UDP flow,
+    // as only these flow types contain appid-related info needed at the EOF event.
+    if ( f->key->pkt_type != PktType::TCP and f->key->pkt_type != PktType::UDP )
+        return false;
+    return cache->move_to_allowlist(f);
+}
+
+PegCount FlowControl::get_allowlist_flow_count() const
+{ return cache->get_lru_flow_count(allowlist_lru_index); }
+
 void FlowControl::release_flow(Flow* flow, PruneReason reason)
 { cache->release(flow, reason); }
 

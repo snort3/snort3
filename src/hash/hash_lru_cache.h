@@ -78,12 +78,16 @@ public:
         return rnode;
     }
 
+    inline uint64_t get_node_count()
+    { return node_count; }
+
 private:
     snort::HashNode* head = nullptr;
     snort::HashNode* tail = nullptr;
     snort::HashNode* cursor = nullptr;
     //walk_cursor is used to traverse from tail to head while dumping the flows.
     snort::HashNode* walk_cursor = nullptr;
+    uint64_t node_count = 0;
 };
 
 #endif

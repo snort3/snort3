@@ -26,12 +26,14 @@
 #include "detection/context_switcher.h"
 #include "detection/detection_continuation.h"
 #include "detection/detection_engine.h"
+#include "flow/flow_control.h"
 #include "flow/flow_key.h"
 #include "flow/ha.h"
 #include "flow/session.h"
 #include "framework/data_bus.h"
 #include "helpers/bitop.h"
 #include "main/analyzer.h"
+#include "packet_io/packet_tracer.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "pub_sub/intrinsic_event_ids.h"
@@ -41,6 +43,7 @@
 #include "utils/util.h"
 
 using namespace snort;
+extern THREAD_LOCAL class FlowControl* flow_con;
 
 Flow::~Flow()
 {
@@ -537,4 +540,17 @@ void Flow::swap_roles()
     std::swap(inner_client_ttl, inner_server_ttl);
     std::swap(outer_client_ttl, outer_server_ttl);
     flags.client_initiated = !flags.client_initiated;
+}
+
+bool Flow::handle_allowlist()
+{
+    if ( flow_con->get_flow_cache_config().allowlist_cache and !flags.in_allowlist )
+    {
+        if ( flow_con->move_to_allowlist(this) )
+        {
+            PacketTracer::log("Flow: flow has been moved to allowlist cache\n");
+            return true;
+        }
+    }
+    return false;
 }

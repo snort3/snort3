@@ -134,3 +134,9 @@ void ZHash::lru_touch(uint8_t type)
     assert(node);
     lru_caches[type]->touch(node);
 }
+
+uint64_t ZHash::get_node_count(uint8_t type)
+{
+    assert(type < num_lru_caches);
+    return lru_caches[type]->get_node_count();
+}

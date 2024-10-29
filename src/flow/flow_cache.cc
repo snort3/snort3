@@ -60,9 +60,6 @@ static const unsigned OFFLOADED_FLOWS_TOO = 2;
 static const unsigned ALL_FLOWS = 3;
 static const unsigned WDT_MASK = 7; // kick watchdog once for every 8 flows deleted
 
-constexpr uint8_t MAX_PROTOCOLS = (uint8_t)to_utype(PktType::MAX) - 1; //removing PktType::NONE from count
-constexpr uint64_t max_skip_protos = (1ULL << MAX_PROTOCOLS) - 1;
-constexpr uint8_t first_proto = to_utype(PktType::NONE) + 1;
 
 uint8_t DumpFlows::dump_code = 0;
 
@@ -202,11 +199,11 @@ bool DumpFlows::execute(Analyzer&, void**)
 
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg)
 {
-    hash_table = new ZHash(config.max_flows, sizeof(FlowKey), MAX_PROTOCOLS, false);
+    hash_table = new ZHash(config.max_flows, sizeof(FlowKey), total_lru_count, false);
     uni_flows = new FlowUniList;
     uni_ip_flows = new FlowUniList;
     flags = 0x0;
-    empty_proto = ( 1 << MAX_PROTOCOLS ) - 1;
+    empty_lru_mask = ( 1 << max_protocols ) - 1;
     timeout_idx = first_proto;
 
     assert(prune_stats.get_total() == 0);
@@ -245,9 +242,14 @@ unsigned FlowCache::get_count()
 
 Flow* FlowCache::find(const FlowKey* key)
 {
-    Flow* flow = (Flow*)hash_table->get_user_data(key,to_utype(key->pkt_type));
+    Flow* flow = (Flow*)hash_table->get_user_data(key,to_utype(key->pkt_type), false);
     if ( flow )
     {
+        if ( flow->flags.in_allowlist )
+            hash_table->touch_last_found(allowlist_lru_index);
+        else
+            hash_table->touch_last_found(to_utype(key->pkt_type));
+
         time_t t = packet_time();
 
         if ( flow->last_data_seen < t )
@@ -321,7 +323,7 @@ Flow* FlowCache::allocate(const FlowKey* key)
     link_uni(flow);
     flow->last_data_seen = timestamp;
     flow->set_idle_timeout(config.proto[to_utype(flow->key->pkt_type)].nominal_timeout);
-    empty_proto &= ~(1ULL << to_utype(key->pkt_type)); // clear the bit for this protocol
+    empty_lru_mask &= ~(1ULL << to_utype(key->pkt_type)); // clear the bit for this protocol
 
     return flow;
 }
@@ -330,9 +332,13 @@ void FlowCache::remove(Flow* flow)
 {
     unlink_uni(flow);
     const snort::FlowKey* key = flow->key;
+    uint8_t in_allowlist = flow->flags.in_allowlist;
     // Delete before releasing the node, so that the key is valid until the flow is completely freed
     delete flow;
-    hash_table->release_node(key, to_utype(key->pkt_type));
+    if ( in_allowlist )
+        hash_table->release_node(key, allowlist_lru_index);
+    else
+        hash_table->release_node(key, to_utype(key->pkt_type));
 }
 
 bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
@@ -347,8 +353,9 @@ bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
         }
     }
 
+    uint8_t in_allowlist = flow->flags.in_allowlist;
     flow->reset(do_cleanup);
-    prune_stats.update(reason, flow->key->pkt_type);
+    prune_stats.update(reason, ( in_allowlist ? static_cast<PktType>(allowlist_lru_index) : flow->key->pkt_type ));
     remove(flow);
     return true;
 }
@@ -365,31 +372,30 @@ unsigned FlowCache::prune_idle(uint32_t thetime, const Flow* save_me)
     ActiveSuspendContext act_susp(Active::ASP_PRUNE);
 
     unsigned pruned = 0;
-    uint64_t skip_protos = empty_proto;
+    uint64_t checked_lrus_mask = empty_lru_mask;
 
-    assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
+    assert(max_protocols < 8 * sizeof(checked_lrus_mask));
 
     {
         PacketTracerSuspend pt_susp;
         while ( pruned <= cleanup_flows and 
-                skip_protos != max_skip_protos )
+                !all_lrus_checked(checked_lrus_mask) )
         {
-            // Round-robin through the proto types
-            for( uint8_t proto_idx = first_proto; proto_idx < MAX_PROTOCOLS; ++proto_idx ) 
+            // Round-robin through the LRU types
+            for( uint8_t lru_idx = first_proto; lru_idx < max_protocols; ++lru_idx )
             {
                 if( pruned > cleanup_flows )
                     break;
 
-                const uint64_t proto_mask = 1ULL << proto_idx;
+                const uint64_t lru_mask = get_lru_mask(lru_idx);
 
-                if ( skip_protos & proto_mask )
+                if( is_lru_checked(checked_lrus_mask, lru_mask) )
                     continue;
 
-                auto flow = static_cast<Flow*>(hash_table->lru_first(proto_idx));
+                auto flow = static_cast<Flow*>(hash_table->lru_first(lru_idx));
                 if ( !flow )
                 {
-                    skip_protos |= proto_mask;
-                    empty_proto |= proto_mask;
+                    mark_lru_checked(checked_lrus_mask, empty_lru_mask, lru_mask);
                     continue;
                 }
                 
@@ -397,7 +403,7 @@ unsigned FlowCache::prune_idle(uint32_t thetime, const Flow* save_me)
                     or flow->is_suspended()
                     or flow->last_data_seen + config.pruning_timeout >= thetime )
                 {
-                    skip_protos |= proto_mask;
+                    mark_lru_checked(checked_lrus_mask, lru_mask);
                     continue;
                 }
 
@@ -461,52 +467,53 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
 
     unsigned pruned = 0;
 
-    // initially skip offloads but if that doesn't work the hash table is iterated from the
-    // beginning again. prune offloads at that point.
+    // Initially skip offloads but if that doesn't work, the hash table is iterated from the
+    // beginning again. Prune offloads at that point.
     unsigned ignore_offloads = hash_table->get_num_nodes();
-    uint64_t skip_protos = 0;
+    uint64_t checked_lrus_mask = 0;
 
-    assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
+    assert(total_lru_count < 8 * sizeof(checked_lrus_mask));
 
     {
         PacketTracerSuspend pt_susp;
         unsigned blocks = 0;
+        // EXCESS pruning will start from the allowlist LRU
+        uint8_t lru_idx = allowlist_lru_index;
 
         while ( true )
         {
             auto num_nodes = hash_table->get_num_nodes();
-            if ( num_nodes <= max_cap or num_nodes <= blocks or 
-                    ignore_offloads == 0 or skip_protos == max_skip_protos )
-                    break;
-            
-            for( uint8_t proto_idx = first_proto; proto_idx < MAX_PROTOCOLS; ++proto_idx )  
+            if ( num_nodes <= max_cap or num_nodes <= blocks or
+                ignore_offloads == 0 or all_lrus_checked(checked_lrus_mask) )
+                break;
+
+            for (; lru_idx < total_lru_count; ++lru_idx)
             {
                 num_nodes = hash_table->get_num_nodes();
                 if ( num_nodes <= max_cap or num_nodes <= blocks )
                     break;
 
-                const uint64_t proto_mask = 1ULL << proto_idx;
+                const uint64_t lru_mask = get_lru_mask(lru_idx);
 
-                if ( skip_protos & proto_mask ) 
+                if ( is_lru_checked(checked_lrus_mask, lru_mask) )
                     continue;
 
-                auto flow = static_cast<Flow*>(hash_table->lru_first(proto_idx));
+                auto flow = static_cast<Flow*>(hash_table->lru_first(lru_idx));
                 if ( !flow )
                 {
-                    skip_protos |= proto_mask;
+                    mark_lru_checked(checked_lrus_mask, lru_mask);
                     continue;
                 }
 
                 if ( (save_me and flow == save_me) or flow->was_blocked() or 
                         (flow->is_suspended() and ignore_offloads) )
                 {
-                    // check for non-null save_me above to silence analyzer
-                    // "called C++ object pointer is null" here
+                    // Avoid pruning the current flow (save_me) or blocked/suspended flows
                     if ( flow->was_blocked() )
                         ++blocks;
-                    // FIXIT-M we should update last_data_seen upon touch to ensure
-                    // the hash_table LRU list remains sorted by time
-                    hash_table->lru_touch(proto_idx);
+
+                    // Ensure LRU list remains sorted by time on touch
+                    hash_table->lru_touch(lru_idx);
                 }
                 else
                 {
@@ -517,6 +524,9 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
                 if ( ignore_offloads > 0 )
                     --ignore_offloads;
             }
+
+            if ( lru_idx >= total_lru_count )
+                lru_idx = first_proto;
         }
 
         if ( !pruned and hash_table->get_num_nodes() > max_cap )
@@ -533,19 +543,22 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
 
 bool FlowCache::prune_one(PruneReason reason, bool do_cleanup, uint8_t type)
 {
-    // so we don't prune the current flow (assume current == MRU)
-    if ( hash_table->get_num_nodes() <= 1 )
+    // Avoid pruning the current flow (assume current == MRU)
+    if (hash_table->get_num_nodes() <= 1)
         return false;
 
-    // ZHash returns in LRU order, which is updated per packet via find --> move_to_front call
     auto flow = static_cast<Flow*>(hash_table->lru_first(type));
-    if( !flow )
+    if ( !flow )
         return false;
 
     flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
-    release(flow, reason, do_cleanup);
 
-    return true;
+    if ( type != allowlist_lru_index )
+        return release(flow, reason, do_cleanup);
+    else if ( reason == PruneReason::MEMCAP or reason == PruneReason::EXCESS )
+        return release(flow, reason, do_cleanup);
+
+    return false;
 }
 
 unsigned FlowCache::prune_multiple(PruneReason reason, bool do_cleanup)
@@ -554,28 +567,38 @@ unsigned FlowCache::prune_multiple(PruneReason reason, bool do_cleanup)
     // so we don't prune the current flow (assume current == MRU)
     if ( hash_table->get_num_nodes() <= 1 )
         return 0;
-    
-    uint8_t proto = 0;
-    uint64_t skip_protos = 0;
 
-    assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
+    uint8_t lru_idx = 0;
+    uint64_t checked_lrus_mask = 0;
 
-    
+    assert(max_protocols < 8 * sizeof(checked_lrus_mask));
+
+    if( reason == PruneReason::MEMCAP or reason == PruneReason::EXCESS )
+    {
+        // if MEMCAP or EXCESS, prune the allowlist first
+        while ( pruned < config.prune_flows )
+        {
+            if ( !prune_one(reason, do_cleanup, allowlist_lru_index) )
+                break;
+            pruned++;
+        }
+    }
+
     while ( pruned < config.prune_flows )
     {
-        const uint64_t proto_mask = 1ULL << proto;
-        if ( (skip_protos & proto_mask) or !prune_one(reason, do_cleanup, proto) )
+        const uint64_t lru_mask = get_lru_mask(lru_idx);
+        if ( is_lru_checked(checked_lrus_mask, lru_mask) or !prune_one(reason, do_cleanup, lru_idx) )
         {
+            mark_lru_checked(checked_lrus_mask, lru_mask);
 
-            skip_protos |= proto_mask;
-            if ( skip_protos == max_skip_protos )
+            if ( all_lrus_checked(checked_lrus_mask) )
                 break;
         }
         else
             pruned++;
-       
-        if ( ++proto >= MAX_PROTOCOLS )
-            proto = 0;
+
+        if ( ++lru_idx >= max_protocols )
+            lru_idx = 0;
     }
 
     if ( PacketTracer::is_active() and pruned )
@@ -589,21 +612,37 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
     ActiveSuspendContext act_susp(Active::ASP_TIMEOUT);
 
     unsigned retired = 0;
-    uint64_t skip_protos = empty_proto;
+    uint64_t checked_lrus_mask = empty_lru_mask;  // Start by skipping any protocols that have no flows.
 
-    assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
+#ifdef REG_TEST
+    if ( hash_table->get_node_count(allowlist_lru_index) > 0 )
+    {
+        uint64_t allowlist_timeout_count = 0;
+        auto flow = static_cast<Flow*>(hash_table->lru_first(allowlist_lru_index));
+        while ( flow )
+        {
+            if ( flow->last_data_seen + flow->idle_timeout > thetime )
+                allowlist_timeout_count++;
+            flow = static_cast<Flow*>(hash_table->lru_next(allowlist_lru_index));
+        }
+        if ( PacketTracer::is_active() and allowlist_timeout_count )
+            PacketTracer::log("Flow: %lu allowlist flow(s) timed out but not pruned \n", allowlist_timeout_count);
+    }
+#endif
+
+    assert(max_protocols < 8 * sizeof(checked_lrus_mask));
 
     {
         PacketTracerSuspend pt_susp;
 
-        while ( retired < num_flows and skip_protos != max_skip_protos )
+        while ( retired < num_flows and !all_lrus_checked(checked_lrus_mask) )
         {
-            for( ; timeout_idx < MAX_PROTOCOLS; ++timeout_idx ) 
+            for( ; timeout_idx < max_protocols; ++timeout_idx ) 
             {
 
-                const uint64_t proto_mask = 1ULL << timeout_idx;
+                const uint64_t lru_mask = get_lru_mask(timeout_idx);
 
-                if ( skip_protos & proto_mask ) 
+                if ( is_lru_checked(checked_lrus_mask, lru_mask) )
                     continue;
 
                 auto flow = static_cast<Flow*>(hash_table->lru_current(timeout_idx));
@@ -612,8 +651,7 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
                     flow = static_cast<Flow*>(hash_table->lru_first(timeout_idx));
                     if ( !flow )
                     {
-                        skip_protos |= proto_mask;
-                        empty_proto |= proto_mask;
+                        mark_lru_checked(checked_lrus_mask, empty_lru_mask, lru_mask);
                         continue;
                     }
                 }
@@ -622,13 +660,13 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
                 {
                     if ( flow->expire_time > static_cast<uint64_t>(thetime) )
                     {
-                        skip_protos |= proto_mask;
+                        mark_lru_checked(checked_lrus_mask, lru_mask);
                         continue;
                     }
                 }
                 else if ( flow->last_data_seen + flow->idle_timeout > thetime )
                 {
-                    skip_protos |= proto_mask;
+                    mark_lru_checked(checked_lrus_mask, lru_mask);
                     continue;
                 }
 
@@ -655,30 +693,29 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
 
 unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, unsigned &deleted)
 {
-    uint64_t skip_protos = empty_proto;
+    uint64_t checked_lrus_mask = empty_lru_mask;
     uint64_t undeletable = 0;
 
-    assert(MAX_PROTOCOLS < 8 * sizeof(skip_protos));
+    assert(max_protocols < 8 * sizeof(checked_lrus_mask));
 
 
-    while ( num_to_delete and skip_protos != max_skip_protos and
+    while ( num_to_delete and !all_lrus_checked(checked_lrus_mask) and
             undeletable < hash_table->get_num_nodes() )
     {
-        for( uint8_t proto_idx = first_proto; proto_idx < MAX_PROTOCOLS; ++proto_idx ) 
+        for ( uint8_t lru_idx = first_proto; lru_idx < max_protocols; ++lru_idx )
         {
-            if( num_to_delete == 0)
+            if ( num_to_delete == 0 )
                 break;
-            
-            const uint64_t proto_mask = 1ULL << proto_idx;
 
-            if ( skip_protos & proto_mask )
+            const uint64_t lru_mask = get_lru_mask(lru_idx);
+
+            if ( is_lru_checked(checked_lrus_mask, lru_mask) )
                 continue;
-            
-            auto flow = static_cast<Flow*>(hash_table->lru_first(proto_idx));
+
+            auto flow = static_cast<Flow*>(hash_table->lru_first(lru_idx));
             if ( !flow )
             {
-                skip_protos |= proto_mask;
-                empty_proto |= proto_mask;
+                mark_lru_checked(checked_lrus_mask, empty_lru_mask, lru_mask);
                 continue;
             }
 
@@ -686,7 +723,7 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
                 or (mode == OFFLOADED_FLOWS_TOO and flow->was_blocked()) )
             {
                 undeletable++;
-                hash_table->lru_touch(proto_idx);
+                hash_table->lru_touch(lru_idx);
                 continue;
             }
 
@@ -706,7 +743,7 @@ unsigned FlowCache::delete_active_flows(unsigned mode, unsigned num_to_delete, u
             // Delete before removing the node, so that the key is valid until the flow is completely freed
             delete flow;
             // The flow should not be removed from the hash before reset
-            hash_table->remove(proto_idx);
+            hash_table->remove(lru_idx);
             ++deleted;
             --num_to_delete;
         }
@@ -741,7 +778,7 @@ unsigned FlowCache::purge()
 
     unsigned retired = 0;
 
-    for( uint8_t proto_idx = first_proto; proto_idx < MAX_PROTOCOLS; ++proto_idx ) 
+    for( uint8_t proto_idx = first_proto; proto_idx < total_lru_count; ++proto_idx ) 
     {
         while ( auto flow = static_cast<Flow*>(hash_table->lru_first(proto_idx)) )
         {
@@ -840,7 +877,7 @@ void FlowCache::output_flow(std::fstream& stream, const Flow& flow, const struct
     }
     std::stringstream out;
     std::stringstream proto;
-    switch ( flow.pkt_type )
+    switch ( flow.key->pkt_type )
     {
         case PktType::IP:
             out << "Instance-ID: " << get_relative_instance_number() << " IP " << flow.key->addressSpaceId << ": " << src_ip << " " << dst_ip;
@@ -878,66 +915,50 @@ void FlowCache::output_flow(std::fstream& stream, const Flow& flow, const struct
         timeout_to_str(flow.expire_time - now.tv_sec) :
         timeout_to_str((flow.last_data_seen + config.proto[to_utype(flow.key->pkt_type)].nominal_timeout) - now.tv_sec);
     out << t;
-    stream << out.str() << proto.str() << std::endl;
+    stream << out.str() << proto.str() << (flow.flags.in_allowlist ? " (allowlist)" : "") << std::endl;
 }
 
 bool FlowCache::dump_flows(std::fstream& stream, unsigned count, const FilterFlowCriteria& ffc, bool first, uint8_t code) const
 {
     struct timeval now;
     packet_gettimeofday(&now);
-    unsigned i;
-    bool has_more_flows = false;
     Flow* walk_flow = nullptr;
+    bool has_more_flows = false;
 
-    for(uint8_t proto_id = to_utype(PktType::NONE)+1; proto_id <= to_utype(PktType::ICMP); proto_id++)
+    for (uint8_t proto_id = to_utype(PktType::NONE) + 1; proto_id < total_lru_count; ++proto_id)
     {
-        if (first)
-        {
+        if ( proto_id == to_utype(PktType::USER) or
+             proto_id == to_utype(PktType::FILE) or 
+             proto_id == to_utype(PktType::PDU) )
+            continue;
+
+        unsigned i = 0;
+
+        if ( first )
             walk_flow = static_cast<Flow*>(hash_table->get_walk_user_data(proto_id));
-            if (!walk_flow)
-            {
-                //Return only if all the protocol caches are processed.
-                if (proto_id < to_utype(PktType::ICMP))
-                    continue;
-                return !has_more_flows;
-            }
-            walk_flow->dump_code = code;
-            bool matched_filter = filter_flows(*walk_flow, ffc);
-            if (matched_filter)
-                output_flow(stream, *walk_flow, now);
-            i = 1;
-        }
         else
-            i = 0;
-        while (i < count)
-        {
             walk_flow = static_cast<Flow*>(hash_table->get_next_walk_user_data(proto_id));
 
-            if (!walk_flow )
-            {
-                //Return only if all the protocol caches are processed.
-                if (proto_id < to_utype(PktType::ICMP))
-                    break;
-                return !has_more_flows;
-            }
-            if (walk_flow->dump_code != code)
+        while ( walk_flow && i < count )
+        {
+            if  ( walk_flow->dump_code != code )
             {
                 walk_flow->dump_code = code;
-                bool matched_filter = filter_flows(*walk_flow, ffc);
-                if (matched_filter)
+                if( filter_flows(*walk_flow, ffc) )
                     output_flow(stream, *walk_flow, now);
                 ++i;
             }
-#ifdef REG_TEST
-            else
-                LogMessage("dump_flows skipping already dumped flow\n");
-#endif
+            if (i < count)
+                walk_flow = static_cast<Flow*>(hash_table->get_next_walk_user_data(proto_id));
         }
-        if(walk_flow) // we have output 'count' flows, but the protocol cache still has more flows
+
+        if ( walk_flow )
             has_more_flows = true;
     }
-    return false;
+
+    return !has_more_flows;
 }
+
 
 size_t FlowCache::uni_flows_size() const
 {
@@ -953,3 +974,32 @@ size_t FlowCache::flows_size() const
 {
     return hash_table->get_num_nodes();
 }
+
+PegCount FlowCache::get_lru_flow_count(uint8_t lru_idx) const
+{ 
+    return hash_table->get_node_count(lru_idx); 
+}
+
+bool FlowCache::move_to_allowlist(snort::Flow* f)
+{
+    if( hash_table->switch_lru_cache(f->key, to_utype(f->key->pkt_type), allowlist_lru_index) )
+    {
+        f->flags.in_allowlist = 1;
+        return true;
+    }
+    return false;
+}
+
+#ifdef UNIT_TEST
+size_t FlowCache::count_flows_in_lru(uint8_t lru_index) const
+{
+    size_t count = 0;
+    Flow* flow = static_cast<Flow*>(hash_table->get_walk_user_data(lru_index));
+    while (flow)
+    {
+        ++count;
+        flow = static_cast<Flow*>(hash_table->get_next_walk_user_data(lru_index));
+    }
+    return count;
+}
+#endif

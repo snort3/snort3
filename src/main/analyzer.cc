@@ -297,6 +297,8 @@ static DAQ_Verdict distill_verdict(Packet* p)
             verdict = DAQ_VERDICT_PASS;
             daq_stats.internal_whitelist++;
         }
+        else if ( p->flow )
+            p->flow->handle_allowlist();
     }
 
     if ( p->flow )

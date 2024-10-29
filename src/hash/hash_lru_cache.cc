@@ -44,6 +44,7 @@ void HashLruCache::insert(HashNode* hnode)
     else
         tail = hnode;
     head = hnode;
+    node_count++;
 }
 
 void HashLruCache::touch(HashNode* hnode)
@@ -83,4 +84,5 @@ void HashLruCache::remove_node(HashNode* hnode)
 
     if ( tail == hnode )
         tail = hnode->gprev;
+    node_count--;
 }

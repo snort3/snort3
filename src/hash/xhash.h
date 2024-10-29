@@ -58,7 +58,7 @@ public:
     HashNode* find_first_node();
     HashNode* find_next_node();
     void* get_user_data();
-    void* get_user_data(const void* key, uint8_t type = 0);
+    void* get_user_data(const void* key, uint8_t type = 0, bool touch = true);
     void release(uint8_t type = 0);
     int release_node(const void* key, uint8_t type = 0);
     int release_node(HashNode* node, uint8_t type = 0);
@@ -69,6 +69,8 @@ public:
     bool delete_lru_node(uint8_t type = 0);
     void clear_hash();
     bool full() const { return !fhead; }
+    bool switch_lru_cache(const void* key, uint8_t old_type, uint8_t new_type);
+    void touch_last_found(uint8_t type = 0);
 
     // set max hash nodes, 0 == no limit
     void set_max_nodes(int max)
@@ -100,7 +102,7 @@ protected:
 
     void initialize_node(HashNode*, const void* key, void* data, int index, uint8_t type = 0);
     HashNode* allocate_node(const void* key, void* data, int index);
-    HashNode* find_node_row(const void* key, int& rindex, uint8_t type = 0);
+    HashNode* find_node_row(const void* key, int& rindex, uint8_t type = 0, bool touch = true);
     void link_node(HashNode*);
     void unlink_node(HashNode*);
     bool delete_a_node();
@@ -130,6 +132,7 @@ private:
     HashKeyOperations* hashkey_ops = nullptr;
     HashNode* cursor = nullptr;
     HashNode* fhead = nullptr;
+    HashNode* lfind = nullptr;
     unsigned datasize = 0;
     unsigned long mem_cap = 0;
     unsigned max_nodes = 0;
@@ -142,6 +145,7 @@ private:
     HashNode* release_lru_node(uint8_t type = 0);
     void update_cursor();
     void purge_free_list();
+    void switch_node_lru_cache(HashNode* hnode, uint8_t old_type, uint8_t new_type);
 };
 
 } // namespace snort

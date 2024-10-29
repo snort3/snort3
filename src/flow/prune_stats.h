@@ -39,25 +39,25 @@ enum class PruneReason : uint8_t
     MAX
 };
 
-struct ProtoPruneStats
+struct LRUPruneStats
 {
-    using proto_t = std::underlying_type_t<PktType>;
-    PegCount proto_counts[static_cast<proto_t>(PktType::MAX)] { };
+    using lru_t = std::underlying_type_t<LRUType>;
+    PegCount lru_counts[static_cast<lru_t>(LRUType::MAX)] { };
 
     PegCount get_total() const
     {
         PegCount total = 0;
-        for ( proto_t i = 0; i < static_cast<proto_t>(PktType::MAX); ++i )
-            total += proto_counts[i];
+        for ( lru_t i = 0; i < static_cast<lru_t>(LRUType::MAX); ++i )
+            total += lru_counts[i];
 
         return total;
     }
 
     PegCount& get(PktType type)
-    { return proto_counts[static_cast<proto_t>(type)]; }
+    { return lru_counts[static_cast<lru_t>(type)]; }
 
     const PegCount& get(PktType type) const
-    { return proto_counts[static_cast<proto_t>(type)]; }
+    { return lru_counts[static_cast<lru_t>(type)]; }
 
     void update(PktType type)
     { ++get(type); }
@@ -68,7 +68,7 @@ struct PruneStats
     using reason_t = std::underlying_type<PruneReason>::type;
 
     PegCount prunes[static_cast<reason_t>(PruneReason::MAX)] { };
-    ProtoPruneStats protoPruneStats[static_cast<reason_t>(PruneReason::MAX)] { };
+    LRUPruneStats lruPruneStats[static_cast<reason_t>(PruneReason::MAX)] { };
 
     PegCount get_total() const
     {
@@ -88,20 +88,20 @@ struct PruneStats
     void update(PruneReason reason, PktType type = PktType::NONE)
     { 
         ++get(reason); 
-        protoPruneStats[static_cast<reason_t>(reason)].update(type);
+        lruPruneStats[static_cast<reason_t>(reason)].update(type);
     }
 
     PegCount& get_proto_prune_count(PruneReason reason, PktType type)
-    { return protoPruneStats[static_cast<reason_t>(reason)].get(type); }
+    { return lruPruneStats[static_cast<reason_t>(reason)].get(type); }
 
     const PegCount& get_proto_prune_count(PruneReason reason, PktType type) const
-    { return protoPruneStats[static_cast<reason_t>(reason)].get(type); }
+    { return lruPruneStats[static_cast<reason_t>(reason)].get(type); }
 
     PegCount get_proto_prune_count(PktType type) const
     {
         PegCount total = 0;
         for ( reason_t i = 0; i < static_cast<reason_t>(PruneReason::NONE); ++i )
-            total += protoPruneStats[i].get(type);
+            total += lruPruneStats[i].get(type);
 
         return total;
     }

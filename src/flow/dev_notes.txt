@@ -86,3 +86,21 @@ bias during pruning sessions, especially concerning UDP flows,
 but lays down a framework for more advanced and controlled data management 
 within the cache moving forward.
 
+10/25/2024
+Allowlist LRU
+To address the need for preserving flows that have been allowlisted and are 
+at risk of timing out, we've introduced a configurable Allowlist LRU cache 
+within the flow_cache. This enhancement enables the retention of flows marked 
+with a whitelist verdict, preventing them from being prematurely pruned due 
+to inactivity timeouts. This is particularly beneficial in scenarios where 
+Snort ceases to observe traffic for a flow after the whitelist decision, 
+especially if that flow is long-lived. Without this adjustment, 
+such flows may be pruned by the cache upon timeout, potentially impacting 
+event logging at the flow’s end-of-life (EOF) due to missing 
+pruned flow information.
+
+The Allowlist LRU cache is disabled by default but can be enabled by adding
+allowlist_cache = { enable = true } in the stream configuration. 
+Like the protocol-based LRUs, this allowlist functionality is an 
+additional LRU rather than a new hash_table, thereby maintaining 
+consistent performance with previous configurations.

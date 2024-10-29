@@ -428,6 +428,8 @@ public:
 
     uint64_t fetch_add_inspection_duration();
 
+    bool handle_allowlist();
+
 public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
     // void space
@@ -523,6 +525,7 @@ public:  // FIXIT-M privatize if possible
         bool ips_pblock_event_suppressed : 1; // set if event filters have suppressed a partial block ips event
         bool binder_action_allow : 1;
         bool binder_action_block : 1;
+        bool in_allowlist : 1; // Set if the flow is in the allowlist
     } flags = {};
 
     FlowState flow_state = FlowState::SETUP;
