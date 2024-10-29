@@ -225,6 +225,19 @@ void AppIdSessionApi::get_app_id(AppId* service, AppId* client,
         *referred = get_referred_app_id();
 }
 
+bool AppIdSessionApi::is_service_over_quic() const
+{
+    switch(get_service_app_id())
+    {
+        case APP_ID_HTTP3:
+        case APP_ID_QUIC:
+        case APP_ID_SMB_OVER_QUIC:
+        case APP_ID_DNS_OVER_QUIC:
+            return true;
+    }
+    return false;
+}
+
 bool AppIdSessionApi::is_appid_inspecting_session() const
 {
     if (!asd)

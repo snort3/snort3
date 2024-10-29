@@ -133,6 +133,7 @@ public:
     const char* get_netbios_name() const;
     const char* get_netbios_domain() const;
     ClientAppDetectType get_client_app_detect_type() const;
+    bool is_service_over_quic() const;
 
     // For protocols such as HTTP2/HTTP3 which can have multiple streams within a single flow,
     // get_first_stream_* methods return the appids in the first stream seen in a packet.
