@@ -151,6 +151,7 @@ SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
 AlpnPatternMatchers::~AlpnPatternMatchers() = default;
 CipPatternMatchers::~CipPatternMatchers() = default;
+UserDataMap::~UserDataMap() = default;
 snort::SearchTool::SearchTool(bool, const char*) { }
 snort::SearchTool::~SearchTool() = default;
 void appid_log(const snort::Packet*, unsigned char, char const* fmt, ...)

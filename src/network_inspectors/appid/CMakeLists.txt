@@ -209,6 +209,8 @@ set ( APPID_SOURCES
     tp_appid_module_api.cc
     appid_cpu_profile_table.cc 
     appid_cpu_profile_table.h
+    user_data_map.h
+    user_data_map.cc 
 )
 
 #if (STATIC_INSPECTORS)

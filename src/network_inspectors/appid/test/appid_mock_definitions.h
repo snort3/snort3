@@ -91,6 +91,7 @@ SipPatternMatchers::~SipPatternMatchers() = default;
 SslPatternMatchers::~SslPatternMatchers() = default;
 AlpnPatternMatchers::~AlpnPatternMatchers() = default;
 CipPatternMatchers::~CipPatternMatchers() = default;
+UserDataMap::~UserDataMap() = default;
 
 void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
 {

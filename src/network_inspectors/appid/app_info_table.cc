@@ -41,6 +41,7 @@
 #include "appid_debug.h"
 #include "appid_inspector.h"
 #include "appid_peg_counts.h"
+#include "user_data_map.h"
 
 using namespace snort;
 
@@ -106,8 +107,8 @@ bool AppInfoManager::add_entry_to_app_info_name_table(const char* app_name,
         app_info_name_table[app_name] = entry;
     else
     {
-        appid_log(nullptr, TRACE_WARNING_LEVEL, "App name, \"%s\" is a duplicate entry will be shared by "
-            "each detector.\n", app_name);
+        appid_log(nullptr, TRACE_WARNING_LEVEL, "App name, \"%s\" is a duplicate entry will be "
+            "shared by each detector.\n", app_name);
         added = false;
     }
     return added;
@@ -304,7 +305,6 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
         }
         char* conf_val = token;
 
-        /* APPID configurations are for anything else - currently we only have ssl_reinspect */
         if (!(strcasecmp(conf_type, "appid")))
         {
             if (!(strcasecmp(conf_key, "max_tp_flow_depth")))
@@ -398,7 +398,8 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
             else if (!(strcasecmp(conf_key, "bittorrent_aggressiveness")))
             {
                 int aggressiveness = atoi(conf_val);
-                appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: bittorrent_aggressiveness %d\n", aggressiveness);
+                appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: bittorrent_aggressiveness %d\n",
+                    aggressiveness);
                 if (aggressiveness >= 50)
                 {
                     odp_ctxt.host_port_app_cache_lookup_interval = 5;
@@ -406,59 +407,77 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                     set_app_info_flags(APP_ID_BITTORRENT, APPINFO_FLAG_DEFER);
                     set_app_info_flags(APP_ID_BITTORRENT, APPINFO_FLAG_DEFER_PAYLOAD);
                     odp_ctxt.max_tp_flow_depth = 25;
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: host_port_app_cache_lookup_interval %d\n",
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: "
+                        "host_port_app_cache_lookup_interval %d\n",
                         odp_ctxt.host_port_app_cache_lookup_interval);
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: recheck_for_portservice_appid enabled\n");
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_to_thirdparty %d\n", APP_ID_BITTORRENT);
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_payload_to_thirdparty %d\n", APP_ID_BITTORRENT);
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: max_tp_flow_depth %d\n", odp_ctxt.max_tp_flow_depth);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: recheck_for_portservice_appid "
+                        "enabled\n");
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_to_thirdparty %d\n",
+                        APP_ID_BITTORRENT);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_payload_to_thirdparty %d\n",
+                        APP_ID_BITTORRENT);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: max_tp_flow_depth %d\n",
+                        odp_ctxt.max_tp_flow_depth);
                 }
                 if (aggressiveness >= 80)
                 {
                     odp_ctxt.allow_port_wildcard_host_cache = true;
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: allow_port_wildcard_host_cache enabled\n");
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: allow_port_wildcard_host_cache "
+                        "enabled\n");
                 }
             }
             else if (!(strcasecmp(conf_key, "ultrasurf_aggressiveness")))
             {
                 int aggressiveness = atoi(conf_val);
-                appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: ultrasurf_aggressiveness %d\n", aggressiveness);
+                appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: ultrasurf_aggressiveness %d\n",
+                    aggressiveness);
                 if (aggressiveness >= 50)
                 {
                     odp_ctxt.check_host_cache_unknown_ssl = true;
                     set_app_info_flags(APP_ID_ULTRASURF, APPINFO_FLAG_DEFER);
                     set_app_info_flags(APP_ID_ULTRASURF, APPINFO_FLAG_DEFER_PAYLOAD);
                     odp_ctxt.max_tp_flow_depth = 25;
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: check_host_cache_unknown_ssl enabled\n");
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_to_thirdparty %d\n", APP_ID_ULTRASURF);
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_payload_to_thirdparty %d\n", APP_ID_ULTRASURF);
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: max_tp_flow_depth %d\n", odp_ctxt.max_tp_flow_depth);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: check_host_cache_unknown_ssl "
+                        "enabled\n");
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_to_thirdparty %d\n",
+                        APP_ID_ULTRASURF);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_payload_to_thirdparty %d\n",
+                        APP_ID_ULTRASURF);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: max_tp_flow_depth %d\n",
+                        odp_ctxt.max_tp_flow_depth);
                 }
                 if (aggressiveness >= 80)
                 {
                     odp_ctxt.allow_port_wildcard_host_cache = true;
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: allow_port_wildcard_host_cache enabled\n");
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: allow_port_wildcard_host_cache "
+                        "enabled\n");
                 }
             }
             else if (!(strcasecmp(conf_key, "psiphon_aggressiveness")))
             {
                 int aggressiveness = atoi(conf_val);
-                appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: psiphon_aggressiveness %d\n", aggressiveness);
+                appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: psiphon_aggressiveness %d\n",
+                    aggressiveness);
                 if (aggressiveness >= 50)
                 {
                     odp_ctxt.check_host_cache_unknown_ssl = true;
                     set_app_info_flags(APP_ID_PSIPHON, APPINFO_FLAG_DEFER);
                     set_app_info_flags(APP_ID_PSIPHON, APPINFO_FLAG_DEFER_PAYLOAD);
                     odp_ctxt.max_tp_flow_depth = 25;
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: check_host_cache_unknown_ssl enabled\n");
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_to_thirdparty %d\n", APP_ID_PSIPHON);
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_payload_to_thirdparty %d\n", APP_ID_PSIPHON);
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: max_tp_flow_depth %d\n", odp_ctxt.max_tp_flow_depth);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: check_host_cache_unknown_ssl "
+                        "enabled\n");
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_to_thirdparty %d\n",
+                        APP_ID_PSIPHON);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: defer_payload_to_thirdparty %d\n",
+                        APP_ID_PSIPHON);
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: max_tp_flow_depth %d\n",
+                        odp_ctxt.max_tp_flow_depth);
                 }
                 if (aggressiveness >= 80)
                 {
                     odp_ctxt.allow_port_wildcard_host_cache = true;
-                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: allow_port_wildcard_host_cache enabled\n");
+                    appid_log(nullptr, TRACE_INFO_LEVEL, "AppId: allow_port_wildcard_host_cache "
+                        "enabled\n");
                 }
             }
             else if (!(strcasecmp(conf_key, "tp_allow_probes")))
@@ -513,9 +532,9 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 uint64_t max_bytes_before_service_fail = atoi(conf_val);
                 if (max_bytes_before_service_fail < MIN_MAX_BYTES_BEFORE_SERVICE_FAIL)
                 {
-                    appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: invalid max_bytes_before_service_fail "
-                        "%" PRIu64 " must be greater than %u.\n", max_bytes_before_service_fail,
-                        MIN_MAX_BYTES_BEFORE_SERVICE_FAIL);
+                    appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: invalid "
+                        "max_bytes_before_service_fail %" PRIu64 ", must be greater than %u.\n",
+                        max_bytes_before_service_fail, MIN_MAX_BYTES_BEFORE_SERVICE_FAIL);
                 }
                 else
                 {
@@ -527,9 +546,9 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 uint16_t max_packet_before_service_fail = atoi(conf_val);
                 if (max_packet_before_service_fail < MIN_MAX_PKTS_BEFORE_SERVICE_FAIL)
                 {
-                    appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: invalid max_packet_before_service_fail "
-                        "%" PRIu16 ", must be greater than %u.\n", max_packet_before_service_fail,
-                        MIN_MAX_PKTS_BEFORE_SERVICE_FAIL);
+                    appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: invalid "
+                        "max_packet_before_service_fail %" PRIu16 ", must be greater than %u.\n",
+                        max_packet_before_service_fail, MIN_MAX_PKTS_BEFORE_SERVICE_FAIL);
                 }
                 else
                 {
@@ -542,9 +561,9 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 if (max_packet_service_fail_ignore_bytes <
                     MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES)
                 {
-                    appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: invalid max_packet_service_fail_ignore_bytes"
-                        "%" PRIu16 ", must be greater than %u.\n",
-                        max_packet_service_fail_ignore_bytes,
+                    appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: invalid "
+                        "max_packet_service_fail_ignore_bytes %" PRIu16 ", must be greater than "
+                        "%u.\n", max_packet_service_fail_ignore_bytes,
                         MIN_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES);
                 }
                 else
@@ -561,7 +580,8 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 token = strtok_r(nullptr, CONF_SEPARATORS, &context);
                 if (token == nullptr)
                 {
-                    ParseWarning(WARN_CONF, "appid: Could not read app_priority at line %u\n", line);
+                    ParseWarning(WARN_CONF, "appid: Could not read app_priority at line %u\n",
+                        line);
                     continue;
                 }
                 conf_val = token;
@@ -622,6 +642,27 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 {
                     odp_ctxt.appid_cpu_profiler = false;
                 }
+            }
+            else if (!(strcasecmp(conf_key, "user_detector_data_item")))
+            {
+                token = strtok_r(nullptr, CONF_SEPARATORS, &context);
+                if (token == nullptr)
+                {
+                    ParseWarning(WARN_CONF, "appid: user_detector_data directive requires "
+                        "table, key, and value at line %s:%u\n", path, line);
+                    continue;
+                }
+                char* token2 = strtok_r(nullptr, CONF_SEPARATORS, &context);
+                if (token2 == nullptr)
+                {
+                    ParseWarning(WARN_CONF, "appid: user_detector_data directive requires "
+                        "table, key, and value at line %s:%u\n", path, line);
+                    continue;
+                }
+                const std::string user_table(conf_val);
+                const std::string user_key(token);
+                const std::string user_value(token2);
+                odp_ctxt.get_user_data_map().add_user_data(user_table, user_key, user_value);
             }
             else
                 ParseWarning(WARN_CONF, "appid: unsupported configuration: %s\n", conf_key);
@@ -764,4 +805,4 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
         load_odp_config(odp_ctxt, filepath);
     }
 }
- 
+

@@ -3315,6 +3315,39 @@ static int detector_add_enip_command(lua_State *L)
     return 0;
 }
 
+static int get_user_detector_data_item(lua_State *L)
+{
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    ud->validate_lua_state(true);
+    const char* table = lua_tostring(L, 2);
+    if (!table)
+    {
+        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid detector data table string in %s.\n",
+            ud->get_detector()->get_name().c_str());
+        return 0;
+    }
+    const char* key = lua_tostring(L, 3);
+    if (!key)
+    {
+        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid detector data key string in %s.\n",
+            ud->get_detector()->get_name().c_str());
+        return 0;
+    }
+
+    const char* item = ud->get_odp_ctxt().get_user_data_map().get_user_data_value_str(table, key);
+    if (item)
+    {
+        size_t item_len = strlen(item);
+        lua_pushlstring(L, item, item_len);
+    }
+    else
+    {
+        lua_pushnil(L);
+    }
+
+    return 1;
+}
+
 static const luaL_Reg detector_methods[] =
 {
     /* Obsolete API names.  No longer use these!  They are here for backward
@@ -3435,6 +3468,8 @@ static const luaL_Reg detector_methods[] =
     { "isHttpTunnel",             is_http_tunnel },
     { "getHttpTunneledIp",        get_http_tunneled_ip },
     { "getHttpTunneledPort",      get_http_tunneled_port },
+
+    { "getUserDetectorDataItem",   get_user_detector_data_item },
 
      /* CIP registration */
     {"addCipConnectionClass",    detector_add_cip_connection_class},

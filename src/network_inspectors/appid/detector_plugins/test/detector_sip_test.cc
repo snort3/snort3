@@ -167,6 +167,7 @@ SslPatternMatchers::~SslPatternMatchers() = default;
 HttpPatternMatchers::~HttpPatternMatchers() = default;
 AlpnPatternMatchers::~AlpnPatternMatchers() = default;
 CipPatternMatchers::~CipPatternMatchers() = default;
+UserDataMap::~UserDataMap() = default;
 
 ClientDetector::ClientDetector() { }
 

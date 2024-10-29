@@ -48,6 +48,7 @@
 #include "utils/sflsq.h"
 #include "appid_cpu_profile_table.h"
 #include "profiler/profiler_defs.h"
+#include "user_data_map.h"
 
 #define APP_ID_PORT_ARRAY_SIZE  65536
 
@@ -263,7 +264,12 @@ public:
     {
         return app_cpu_profiler_mgr;
     }
-    
+   
+    UserDataMap& get_user_data_map()
+    {
+        return user_data_map;
+    }
+ 
     unsigned get_pattern_count();
     void add_port_service_id(IpProtocol, uint16_t, AppId);
     void add_protocol_service_id(IpProtocol, AppId);
@@ -291,6 +297,7 @@ private:
     PatternClientDetector* client_pattern_detector;
     PatternServiceDetector* service_pattern_detector;
     AlpnPatternMatchers alpn_matchers;
+    UserDataMap user_data_map;    
 
     std::array<AppId, APP_ID_PORT_ARRAY_SIZE> tcp_port_only = {}; // port-only TCP services
     std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only = {}; // port-only UDP services

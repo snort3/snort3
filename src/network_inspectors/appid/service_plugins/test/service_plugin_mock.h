@@ -88,6 +88,7 @@ SslPatternMatchers::~SslPatternMatchers() { }
 SipPatternMatchers::~SipPatternMatchers() { }
 HttpPatternMatchers::~HttpPatternMatchers() { }
 DnsPatternMatchers::~DnsPatternMatchers() { }
+UserDataMap::~UserDataMap() { }
 CipPatternMatchers::~CipPatternMatchers() { }
 void ClientDiscovery::initialize(AppIdInspector&) {}
 void ClientDiscovery::reload() {}
