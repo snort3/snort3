@@ -37,7 +37,7 @@ class TcpSegmentNode;
 class TcpReassemblerIps : public TcpReassembler
 {
 public:
-    TcpReassemblerIps(TcpStreamTracker* trk, TcpReassemblySegments* sl)
+    TcpReassemblerIps(TcpStreamTracker& trk, TcpReassemblySegments& sl)
         : TcpReassembler(trk, sl)
     { }
 

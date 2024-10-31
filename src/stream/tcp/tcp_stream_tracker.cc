@@ -47,7 +47,6 @@
 using namespace snort;
 
 THREAD_LOCAL HeldPacketQueue* hpq = nullptr;
-TcpReassemblerIgnore* tcp_ignore_reassembler = new TcpReassemblerIgnore(nullptr, nullptr);
 
 const std::list<HeldPacket>::iterator TcpStreamTracker::null_iterator { };
 
@@ -380,7 +379,7 @@ void TcpStreamTracker::update_flush_policy(StreamSplitter* splitter)
             assert( reassembler->get_flush_policy() != STREAM_FLPOLICY_ON_ACK );
         }
 
-        reassembler = new  TcpReassemblerIps(this, &seglist);
+        reassembler = new TcpReassemblerIps(*this, seglist);
         reassembler->init(!client_tracker, splitter);
     }
     else
@@ -391,7 +390,7 @@ void TcpStreamTracker::update_flush_policy(StreamSplitter* splitter)
             assert( reassembler->get_flush_policy() != STREAM_FLPOLICY_ON_DATA );
         }
 
-        reassembler = new  TcpReassemblerIds(this, &seglist);
+        reassembler = new TcpReassemblerIds(*this, seglist);
         reassembler->init(!client_tracker, splitter);
     }
 }

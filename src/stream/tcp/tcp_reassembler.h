@@ -52,7 +52,7 @@ public:
         FINAL_FLUSH_OK = -1
     };
 
-    TcpReassembler(TcpStreamTracker* trk, TcpReassemblySegments* seglist)
+    TcpReassembler(TcpStreamTracker& trk, TcpReassemblySegments& seglist)
         : tracker(trk), seglist(seglist)
     { }
 
@@ -84,16 +84,16 @@ public:
             return false;
     }
 
-    void initialize_paf()
+    virtual void initialize_paf()
     {
         assert( get_flush_policy() != STREAM_FLPOLICY_IGNORE );
 
         // only initialize if we have a data segment queued
-        if ( !seglist->head )
+        if ( !seglist.head )
             return;
 
-       if ( !paf.paf_initialized() or !SEQ_EQ(paf.seq_num, seglist->head->start_seq()) )
-            paf.paf_initialize(seglist->head->start_seq());
+       if ( !paf.paf_initialized() or !SEQ_EQ(paf.seq_num, seglist.head->start_seq()) )
+            paf.paf_initialize(seglist.head->start_seq());
     }
 
     void reset_paf()
@@ -125,8 +125,8 @@ protected:
     bool asymmetric_flow_flushed(uint32_t flushed, snort::Packet *p);
 
     ProtocolAwareFlusher paf;
-    TcpStreamTracker* tracker = nullptr;
-    TcpReassemblySegments* seglist = nullptr;
+    TcpStreamTracker& tracker;
+    TcpReassemblySegments& seglist;
     snort::StreamSplitter* splitter = nullptr;
 
     snort::Packet* last_pdu = nullptr;
@@ -139,8 +139,8 @@ protected:
 class TcpReassemblerIgnore : public TcpReassembler
 {
 public:
-	TcpReassemblerIgnore(TcpStreamTracker* trk, TcpReassemblySegments* sl)
-        : TcpReassembler(trk, sl)
+    TcpReassemblerIgnore();
+    ~TcpReassemblerIgnore() override
     { }
 
     void init(bool, snort::StreamSplitter*) override
@@ -169,9 +169,14 @@ public:
     void purge_flushed_ackd() override
     { }
 
+    virtual void initialize_paf() override
+    { }
+
     FlushPolicy get_flush_policy() const override
     { return STREAM_FLPOLICY_IGNORE; }
 };
+
+extern TcpReassemblerIgnore* tcp_ignore_reassembler;
 
 #endif
 

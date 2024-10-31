@@ -83,8 +83,8 @@ public:
     void clear_session(bool free_flow_data, bool flush_segments, bool restart, snort::Packet* p = nullptr);
     TcpStreamTracker::TcpState get_talker_state(const TcpSegmentDescriptor& tsd);
     TcpStreamTracker::TcpState get_listener_state(const TcpSegmentDescriptor& tsd);
-    TcpStreamTracker::TcpState get_peer_state(const TcpStreamTracker* me)
-    { return me == &client ? server.get_tcp_state() : client.get_tcp_state(); }
+    TcpStreamTracker::TcpState get_peer_state(const TcpStreamTracker& me)
+    { return me.client_tracker ? server.get_tcp_state() : client.get_tcp_state(); }
 
     void init_new_tcp_session(TcpSegmentDescriptor&);
     void update_perf_base_state(char new_state);

@@ -49,21 +49,21 @@ using namespace snort;
 // because we don't wait until it is acknowledged
 int32_t TcpReassemblerIps::scan_data_pre_ack(uint32_t* flags, Packet* p)
 {
-    assert(seglist->session->flow == p->flow);
+    assert(seglist.session->flow == p->flow);
 
     int32_t ret_val = FINAL_FLUSH_HOLD;
 
-    if ( SEQ_GT(seglist->head->scan_seq(), seglist->seglist_base_seq) )
+    if ( SEQ_GT(seglist.head->scan_seq(), seglist.seglist_base_seq) )
         return ret_val;
 
-    if ( !seglist->cur_rseg )
-        seglist->cur_rseg = seglist->cur_sseg;
+    if ( !seglist.cur_rseg )
+        seglist.cur_rseg = seglist.cur_sseg;
 
     if ( !is_q_sequenced() )
         return ret_val;
 
-    TcpSegmentNode* tsn = seglist->cur_sseg;
-    uint32_t total = tsn->scan_seq() - seglist->seglist_base_seq;
+    TcpSegmentNode* tsn = seglist.cur_sseg;
+    uint32_t total = tsn->scan_seq() - seglist.seglist_base_seq;
 
     ret_val = FINAL_FLUSH_OK;
     while ( tsn && *flags )
@@ -94,7 +94,7 @@ int32_t TcpReassemblerIps::scan_data_pre_ack(uint32_t* flags, Packet* p)
 
         if (flush_pt >= 0)
         {
-            seglist->cur_sseg = tsn;
+            seglist.cur_sseg = tsn;
             return flush_pt;
         }
 
@@ -108,7 +108,7 @@ int32_t TcpReassemblerIps::scan_data_pre_ack(uint32_t* flags, Packet* p)
         tsn = tsn->next;
     }
 
-    seglist->cur_sseg = tsn;
+    seglist.cur_sseg = tsn;
     
     return ret_val;
 }
@@ -122,7 +122,7 @@ int TcpReassemblerIps::eval_flush_policy_on_ack(Packet*)
 
 int TcpReassemblerIps::eval_flush_policy_on_data(Packet* p)
 {
-    if ( !seglist->head )
+    if ( !seglist.head )
         return 0;
 
     last_pdu = nullptr;
@@ -138,20 +138,20 @@ int TcpReassemblerIps::eval_flush_policy_on_data(Packet* p)
             break;
 
         flushed += flush_to_seq(flush_amt, p, flags);
-    } while ( seglist->head and !p->flow->is_inspection_disabled() );
+    } while ( seglist.head and !p->flow->is_inspection_disabled() );
 
     if ( (paf.state == StreamSplitter::ABORT) && is_splitter_paf() )
     {
-        tracker->fallback();
+        tracker.fallback();
         return eval_flush_policy_on_data(p);
     }
     else if ( final_flush_on_fin(flush_amt, p, FIN_WITH_SEQ_SEEN) )
         finish_and_final_flush(p->flow, true, p);
 
-    if ( !seglist->head )
+    if ( !seglist.head )
         return flushed;
 
-    if ( tracker->is_retransmit_of_held_packet(p) )
+    if ( tracker.is_retransmit_of_held_packet(p) )
         flushed += perform_partial_flush(p);
 
     if ( asymmetric_flow_flushed(flushed, p) )
@@ -159,8 +159,8 @@ int TcpReassemblerIps::eval_flush_policy_on_data(Packet* p)
         if (PacketTracer::is_active())
             PacketTracer::log("stream_tcp: IPS mode - %u bytes flushed on asymmetric flow\n", flushed);
 
-        purge_to_seq(seglist->head->start_seq() + flushed);
-        tracker->r_win_base = seglist->seglist_base_seq;
+        purge_to_seq(seglist.head->start_seq() + flushed);
+        tracker.r_win_base = seglist.seglist_base_seq;
         tcpStats.flush_on_asymmetric_flow++;
     }
 
@@ -174,8 +174,8 @@ int TcpReassemblerIps::eval_asymmetric_flush(snort::Packet* p)
 
 int TcpReassemblerIps::flush_stream(Packet* p, uint32_t dir, bool final_flush)
 {
-    if ( seglist->session->flow->two_way_traffic()
-        or (tracker->get_tcp_state() == TcpStreamTracker::TCP_MID_STREAM_RECV) )
+    if ( seglist.session->flow->two_way_traffic()
+        or (tracker.get_tcp_state() == TcpStreamTracker::TCP_MID_STREAM_RECV) )
     {
         uint32_t bytes = get_q_sequenced();  // num bytes in pre-ack mode
         if ( bytes )

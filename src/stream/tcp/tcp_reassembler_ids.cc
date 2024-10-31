@@ -47,7 +47,7 @@ using namespace snort;
 bool TcpReassemblerIds::has_seglist_hole(TcpSegmentNode& tsn, uint32_t& total, uint32_t& flags)
 {
     if ( !tsn.prev or SEQ_GEQ(tsn.prev->scan_seq() + tsn.prev->unscanned(), tsn.scan_seq())
-    	or SEQ_GEQ(tsn.scan_seq(), tracker->r_win_base) )
+    	or SEQ_GEQ(tsn.scan_seq(), tracker.r_win_base) )
     {
     	check_first_segment_hole();
     	return false;
@@ -70,7 +70,7 @@ void TcpReassemblerIds::skip_seglist_hole(Packet* p, uint32_t flags, int32_t flu
     {
         if ( flush_amt > 0 )
             update_skipped_bytes(flush_amt);
-        tracker->fallback();
+        tracker.fallback();
     }
     else
     {
@@ -79,17 +79,17 @@ void TcpReassemblerIds::skip_seglist_hole(Packet* p, uint32_t flags, int32_t flu
         paf.state = StreamSplitter::START;
     }
 
-    if ( seglist->head )
+    if ( seglist.head )
     {
         if ( flush_amt > 0 )
-            purge_to_seq(seglist->seglist_base_seq + flush_amt);
-        seglist->seglist_base_seq = seglist->head->scan_seq();
+            purge_to_seq(seglist.seglist_base_seq + flush_amt);
+        seglist.seglist_base_seq = seglist.head->scan_seq();
     }
     else
-        seglist->seglist_base_seq = tracker->r_win_base;  // FIXIT-H - do we need to set rcv_nxt here?
+        seglist.seglist_base_seq = tracker.r_win_base;  // FIXIT-H - do we need to set rcv_nxt here?
 
-    seglist->cur_rseg = seglist->head;
-    tracker->set_order(TcpStreamTracker::OUT_OF_SEQUENCE);
+    seglist.cur_rseg = seglist.head;
+    tracker.set_order(TcpStreamTracker::OUT_OF_SEQUENCE);
 }
 
 // iterate over seglist and scan all new acked bytes
@@ -108,44 +108,44 @@ void TcpReassemblerIds::skip_seglist_hole(Packet* p, uint32_t flags, int32_t flu
 //   know where we left off and can resume scanning the remainder
 int32_t TcpReassemblerIds::scan_data_post_ack(uint32_t* flags, Packet* p)
 {
-    assert(seglist->session->flow == p->flow);
+    assert(seglist.session->flow == p->flow);
 
     int32_t ret_val = FINAL_FLUSH_HOLD;
 
-    if ( !seglist->cur_sseg || SEQ_GEQ(seglist->seglist_base_seq, tracker->r_win_base) )
+    if ( !seglist.cur_sseg || SEQ_GEQ(seglist.seglist_base_seq, tracker.r_win_base) )
         return ret_val ;
 
-    if ( !seglist->cur_rseg )
-        seglist->cur_rseg = seglist->cur_sseg;
+    if ( !seglist.cur_rseg )
+        seglist.cur_rseg = seglist.cur_sseg;
 
     uint32_t total = 0;
-    TcpSegmentNode* tsn = seglist->cur_sseg;
+    TcpSegmentNode* tsn = seglist.cur_sseg;
     if ( paf.paf_initialized() )
     {
         uint32_t end_seq = tsn->scan_seq() + tsn->unscanned();
         if ( SEQ_EQ(end_seq, paf.paf_position()) )
         {
-            total = end_seq - seglist->seglist_base_seq;
+            total = end_seq - seglist.seglist_base_seq;
             tsn = tsn->next;
         }
         else
-            total = tsn->scan_seq() - seglist->cur_rseg->scan_seq();
+            total = tsn->scan_seq() - seglist.cur_rseg->scan_seq();
     }
 
     ret_val = FINAL_FLUSH_OK;
-    while (tsn && *flags && SEQ_LT(tsn->scan_seq(), tracker->r_win_base))
+    while (tsn && *flags && SEQ_LT(tsn->scan_seq(), tracker.r_win_base))
     {
         // only flush acked data that fits in pdu reassembly buffer...
         uint32_t end = tsn->scan_seq() + tsn->unscanned();
         uint32_t flush_len;
         int32_t flush_pt;
 
-        if ( SEQ_GT(end, tracker->r_win_base))
-            flush_len = tracker->r_win_base - tsn->scan_seq();
+        if ( SEQ_GT(end, tracker.r_win_base))
+            flush_len = tracker.r_win_base - tsn->scan_seq();
         else
             flush_len = tsn->unscanned();
 
-        if ( tsn->next_acked_no_gap(tracker->r_win_base) )
+        if ( tsn->next_acked_no_gap(tracker.r_win_base) )
             *flags |= PKT_MORE_TO_FLUSH;
         else
             *flags &= ~PKT_MORE_TO_FLUSH;
@@ -159,11 +159,11 @@ int32_t TcpReassemblerIds::scan_data_post_ack(uint32_t* flags, Packet* p)
         }
 
         // Get splitter from tracker as paf check may change it.
-        seglist->cur_sseg = tsn;
+        seglist.cur_sseg = tsn;
 
         if ( flush_pt >= 0 )
         {
-            seglist->seglist_base_seq = seglist->cur_rseg->scan_seq();
+            seglist.seglist_base_seq = seglist.cur_rseg->scan_seq();
             return flush_pt;
         }
 
@@ -201,13 +201,13 @@ int TcpReassemblerIds::eval_flush_policy_on_ack(Packet* p)
         assert( flushed );
 
         // ideally we would purge just once after this loop but that throws off base
-        if ( seglist->head )
-            purge_to_seq(seglist->seglist_base_seq);
-    } while ( seglist->head and !p->flow->is_inspection_disabled() );
+        if ( seglist.head )
+            purge_to_seq(seglist.seglist_base_seq);
+    } while ( seglist.head and !p->flow->is_inspection_disabled() );
 
     if ( (paf.state == StreamSplitter::ABORT) && is_splitter_paf() )
     {
-        tracker->fallback();
+        tracker.fallback();
         return eval_flush_policy_on_ack(p);
     }
     else if ( paf.state == StreamSplitter::SKIP )
@@ -225,16 +225,16 @@ int TcpReassemblerIds::eval_flush_policy_on_data(Packet* p)
 {
     uint32_t flushed = 0;
 
-    if ( !seglist->head )
+    if ( !seglist.head )
         return flushed;
 
-    if ( tracker->is_retransmit_of_held_packet(p) )
+    if ( tracker.is_retransmit_of_held_packet(p) )
         flushed += perform_partial_flush(p);
 
     if ( !p->flow->two_way_traffic() and
-        seglist->get_seg_bytes_total() > seglist->session->tcp_config->asymmetric_ids_flush_threshold )
+        seglist.get_seg_bytes_total() > seglist.session->tcp_config->asymmetric_ids_flush_threshold )
     {
-        seglist->skip_hole_at_beginning(seglist->head);
+        seglist.skip_hole_at_beginning(seglist.head);
         flushed += eval_asymmetric_flush(p);
     }
 
@@ -244,7 +244,7 @@ int TcpReassemblerIds::eval_flush_policy_on_data(Packet* p)
 int TcpReassemblerIds::eval_asymmetric_flush(snort::Packet* p)
 {
     // asymmetric flush in IDS mode.. advance r_win_base to end of in-order data
-    tracker->r_win_base = tracker->rcv_nxt;
+    tracker.r_win_base = tracker.rcv_nxt;
 
     uint32_t flushed = eval_flush_policy_on_ack(p);
     if ( flushed )
@@ -261,7 +261,7 @@ int TcpReassemblerIds::flush_stream(Packet* p, uint32_t dir, bool final_flush)
 {
     uint32_t bytes = 0;
 
-    if ( seglist->session->flow->two_way_traffic() )
+    if ( seglist.session->flow->two_way_traffic() )
         bytes = get_q_footprint();
     else
         bytes = get_q_sequenced();

@@ -36,9 +36,7 @@ class TcpSegmentNode;
 class TcpReassemblerIds : public TcpReassembler
 {
 public:
-
-
-    TcpReassemblerIds(TcpStreamTracker* trk, TcpReassemblySegments* sl)
+    TcpReassemblerIds(TcpStreamTracker& trk, TcpReassemblySegments& sl)
         : TcpReassembler(trk, sl)
     { }
 
