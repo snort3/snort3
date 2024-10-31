@@ -118,6 +118,24 @@ TEST(appid_session_api, get_client_app_id)
     CHECK_EQUAL(APP_ID_NONE, id);
 }
 
+TEST(appid_session_api, is_service_over_quic)
+{
+    SfIp ip{};
+    AppIdSession asd(IpProtocol::UDP, &ip, 1492, dummy_appid_inspector, odpctxt, 0
+    #ifndef DISABLE_TENANT_ID
+    ,0
+    #endif
+    );
+    asd.flow = &flow;
+    AppidChangeBits change_bits;
+    asd.set_ss_application_ids(APP_ID_QUIC, APPID_UT_ID, APPID_UT_ID, APPID_UT_ID, APPID_UT_ID, change_bits);
+    CHECK_EQUAL(asd.get_api().is_service_over_quic(), true);
+
+    asd.set_ss_application_ids(APP_ID_DNS, APPID_UT_ID, APPID_UT_ID, APPID_UT_ID, APPID_UT_ID, change_bits);
+    CHECK_EQUAL(asd.get_api().is_service_over_quic(), false);
+    delete &asd.get_api();
+}
+
 TEST(appid_session_api, get_client_app_id_with_eve_for_http2)
 {
     SfIp ip{};

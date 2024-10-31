@@ -227,7 +227,7 @@ void AppIdSessionApi::get_app_id(AppId* service, AppId* client,
 
 bool AppIdSessionApi::is_service_over_quic() const
 {
-    switch(get_service_app_id())
+    switch (get_service_app_id())
     {
         case APP_ID_HTTP3:
         case APP_ID_QUIC:
