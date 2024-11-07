@@ -15,39 +15,30 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// csv_logger.h author Anna Norokh <anorokh@cisco.com>
+// extractor_http.h author Maya Dagon <mdagon@cisco.com>
 
-#ifndef EXTRACTOR_CSV_LOGGER_H
-#define EXTRACTOR_CSV_LOGGER_H
+#ifndef EXTRACTOR_HTTP_H
+#define EXTRACTOR_HTTP_H
 
-#include "framework/value.h"
+#include "extractors.h"
 
-#include "extractor_logger.h"
-#include "extractor_writer.h"
+class Field;
 
-class CsvExtractorLogger : public ExtractorLogger
+class HttpExtractor : public ExtractorEvent
 {
 public:
-    CsvExtractorLogger(OutputType o_type)
-        : writer(ExtractorWriter::make_writer(o_type)) {}
+    using SubGetFn = const Field& (*) (const DataEvent*, const Packet*, const Flow*);
+    using SubField = DataField<const Field&, const DataEvent*, const Packet*, const Flow*>;
 
-    ~CsvExtractorLogger() override;
+    HttpExtractor(Extractor&, ExtractorLogger&, uint32_t tenant, const std::vector<std::string>& fields);
 
-    virtual bool is_strict() const override
-    { return true; }
-
-    void add_header() override;
-    void add_field(const char*, const char*) override;
-    void add_field(const char*, const char*, size_t) override;
-    void add_field(const char*, uint64_t) override;
-    void add_field(const char*, struct timeval) override;
-    void add_field(const char*, const snort::SfIp&) override;
-    void add_field(const char*, bool) override;
-    void open_record() override;
-    void close_record() override;
+    std::vector<const char*> get_field_names() const override;
+    void handle(DataEvent&, Flow*);
 
 private:
-    ExtractorWriter* const writer;
+    using Eot = Handler<HttpExtractor>;
+
+    std::vector<SubField> sub_fields;
 };
 
 #endif

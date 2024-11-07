@@ -77,6 +77,12 @@ public:
     const snort::SfIp& get_server_ip() const
     { return session.serverIP; }
 
+    int8_t get_mode() const
+    { return session.mode; }
+
+    bool is_passive() const
+    {  return session.mode == FTPP_XFER_PASSIVE ? true : false; }
+
 private:
     const FTP_SESSION& session;
 };

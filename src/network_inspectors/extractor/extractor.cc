@@ -31,9 +31,8 @@
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "protocols/packet.h"
-#include "pub_sub/http_events.h"
 
-#include "extractor_event_handlers.h"
+#include "extractors.h"
 #include "extractor_logger.h"
 #include "extractor_service.h"
 
@@ -48,7 +47,7 @@ THREAD_LOCAL ProfileStats extractor_perf_stats;
 
 static const Parameter extractor_proto_params[] =
 {
-    { "service", Parameter::PT_ENUM, "http", nullptr,
+    { "service", Parameter::PT_ENUM, "http | ftp", nullptr,
       "service to extract from" },
 
     { "tenant_id", Parameter::PT_INT, "0:max32", "0",
@@ -180,7 +179,7 @@ Extractor::Extractor(ExtractorModule* m)
 
     for (const auto& p : cfg.protocols)
     {
-        auto s = ExtractorService::make_service(p, format, output);
+        auto s = ExtractorService::make_service(*this, p, format, output);
 
         if (s)
             services.push_back(s);

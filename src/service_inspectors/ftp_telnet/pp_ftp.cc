@@ -1082,6 +1082,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                 int result;
                                 /* This is a passive data transfer */
                                 ftpdata->mode = FTPP_XFER_PASSIVE;
+                                session->mode = FTPP_XFER_PASSIVE;
                                 ftpdata->data_chan = session->server_conf->data_chan;
                                 if (session->flags & FTP_FLG_MALWARE)
                                     session->datassn = ftpdata;
@@ -1192,6 +1193,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                             int result;
                             /* This is a active data transfer */
                             ftpdata->mode = FTPP_XFER_ACTIVE;
+                            session->mode = FTPP_XFER_ACTIVE;
                             ftpdata->data_chan = session->server_conf->data_chan;
                             if (session->flags & FTP_FLG_MALWARE)
                                 session->datassn = ftpdata;
@@ -1603,6 +1605,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                     {
                         req->cmd_begin = nullptr;
                         req->cmd_end = nullptr;
+                        req->cmd_size = 0;
                         if (*read_ptr != SP && read_ptr != p->data)
                             read_ptr--;
                         state = FTP_RESPONSE_CONT;

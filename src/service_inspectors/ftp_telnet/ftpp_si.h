@@ -167,6 +167,7 @@ struct FTP_SESSION
     uint16_t clientPort;
     snort::SfIp serverIP;
     uint16_t serverPort;
+    int8_t mode;
 
     /* A file is being transferred on ftp-data channel */
     char* filename;
@@ -198,6 +199,7 @@ public:
 /* FTP-Data Transfer Modes */
 enum
 {
+    FTPP_XFER_NOT_SET = -1,
     FTPP_XFER_PASSIVE = 0,
     FTPP_XFER_ACTIVE  = 1
 };

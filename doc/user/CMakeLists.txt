@@ -15,6 +15,7 @@ set (
     daq.txt
     dcerpc.txt
     errors.txt
+    extractor.txt
     features.txt
     file_processing.txt
     ftp.txt

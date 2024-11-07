@@ -15,39 +15,13 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// csv_logger.h author Anna Norokh <anorokh@cisco.com>
+// extractor_flow_data.cc author Cisco
 
-#ifndef EXTRACTOR_CSV_LOGGER_H
-#define EXTRACTOR_CSV_LOGGER_H
-
-#include "framework/value.h"
-
-#include "extractor_logger.h"
-#include "extractor_writer.h"
-
-class CsvExtractorLogger : public ExtractorLogger
-{
-public:
-    CsvExtractorLogger(OutputType o_type)
-        : writer(ExtractorWriter::make_writer(o_type)) {}
-
-    ~CsvExtractorLogger() override;
-
-    virtual bool is_strict() const override
-    { return true; }
-
-    void add_header() override;
-    void add_field(const char*, const char*) override;
-    void add_field(const char*, const char*, size_t) override;
-    void add_field(const char*, uint64_t) override;
-    void add_field(const char*, struct timeval) override;
-    void add_field(const char*, const snort::SfIp&) override;
-    void add_field(const char*, bool) override;
-    void open_record() override;
-    void close_record() override;
-
-private:
-    ExtractorWriter* const writer;
-};
-
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
+
+#include "extractor_flow_data.h"
+
+const unsigned ExtractorFlowData::data_id = snort::FlowData::create_flow_data_id();
+

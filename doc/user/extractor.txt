@@ -1,0 +1,145 @@
+Snort 3 can log IPS events with some meta data and dump packets. The Data
+Logging feature extends that ability to log protocol-specific data, sniffing
+traffic alongside with normal inspection.
+
+
+==== Configurations
+
+The module's configuration consists of two parts:
+
+* global parameters
+  ** `formatting` - log record format
+  ** `output` - where to write logs
+* protocol-targeted parameters bind the targeted service and events with
+  filters and a set of fields to log
+  ** `service` - protocol name
+  ** `tenant_id` - a filter, apply the binding only for traffic marked with
+      the tenant ID
+  ** `on_events` - events in a protocol session to be logged
+  ** `fields` - data fields to log (if a field is not supported it will be ignored)
+
+Configuration from different bindings do not interfere. Among other
+things it allows tenants to get independent data logging configurations.
+
+    extractor =
+    {
+        formatting = 'csv',
+        output = 'stdout',
+
+        protocols =
+        {
+            { service = 'http', tenant_id = 1, on_events = 'eot', fields = 'ts, uri, host, method' },
+            { service = 'ftp', tenant_id = 1, on_events = 'request', fields = 'ts, command, arg' },
+            { service = 'http', tenant_id = 2, on_events = 'eot', fields = 'ts, uri' }
+        }
+    }
+
+==== Supported Parameters
+
+Services and their events:
+
+* HTTP, HTTP2
+  ** eot (request-response pair)
+* FTP
+  ** request
+  ** response
+  ** eot (a session defined by the following commands: APPE, DELE, RETR, STOR, STOU, ACCT, PORT, PASV, EPRT, EPSV)
+
+Common fields available for every service:
+
+* `ts` - timestamp of the current packet, which triggers logging
+* `uid` - connection id, to correlate log records related to the same flow
+* `id.orig_h` - client IP address
+* `id.orig_p` - client TCP port
+* `id.resp_h` - server IP address
+* `id.resp_p` - server TCP port
+* `pkt_num` - packet number
+
+Fields supported for HTTP:
+
+* `method` - verb used in HTTP request
+* `host` - Host header
+* `uri` - URI from request
+* `user_agent` - User-Agent header from client
+* `referrer` - Referrer header
+* `origin` - Origin header from client
+* `version` - Version from request
+* `status_code` - status code returned by server
+* `status_msg` - status message returned by server
+* `trans_depth` - number of request-response pairs seen in the session
+
+Fields supported for FTP:
+
+* `command` - last command seen in a session
+* `arg` - request parameters
+* `user` - user name set for a session
+* `reply_code` - reply code from server in response to command
+* `reply_msg` - reply message from server in response to command
+* `file_size` - size of the file transferred
+* `data_channel.passive` - data channel mode
+* `data_channel.orig_h` - IP address of data channel originator
+* `data_channel.resp_h` - IP address of data channel receiving point
+* `data_channel.resp_p` - TCP port of data channel receiving point
+
+==== Example
+
+Adding the following lines to a default snort configuration (which supports FTP
+inspection) would print some FTP logs to standard output in CSV format.
+
+FTP sessions with basic fields:
+
+    extractor =
+    {
+        formatting = csv',
+        output = 'stdout',
+        protocols =
+        {
+            {service = 'ftp', on_events = 'eot', fields = 'ts, command, user'}
+        }
+    }
+
+Output:
+
+    #ts,command,user
+    946684800.000014,PORT,ftptest
+    946684800.000016,RETR,
+    946684800.000034,PORT,anonymous
+    946684800.000036,RETR,
+    946684800.000053,PORT,sfuser
+    946684800.000055,RETR,
+
+Or FTP requests with the same set of fields:
+
+    extractor =
+    {
+        formatting = 'csv',
+        output = 'stdout',
+        protocols =
+        {
+            {service = 'ftp', on_events = 'request', fields = 'ts, command, user'}
+        }
+    }
+
+Output:
+
+    #ts,command,user
+    946684800.000005,USER,ftptest
+    946684800.000007,PASS,
+    946684800.000009,SYST,
+    946684800.000011,TYPE,
+    946684800.000013,PORT,
+    946684800.000015,RETR,
+    946684800.000018,QUIT,
+    946684800.000027,USER,anonymous
+    946684800.000029,PASS,
+    946684800.000031,TYPE,
+    946684800.000033,PORT,
+    946684800.000035,RETR,
+    946684800.000037,SYST,
+    946684800.000039,QUIT,
+    946684800.000048,USER,sfuser
+    946684800.000050,PASS,
+    946684800.000052,PORT,
+    946684800.000054,RETR,
+    946684800.000057,QUIT,
+

@@ -24,43 +24,13 @@
 #include <string>
 #include <vector>
 
+#include "extractor_enums.h"
 #include "extractor_logger.h"
 
+class Extractor;
 class ServiceConfig;
 
-class ServiceType
-{
-public:
-    enum Value : uint8_t
-    {
-        HTTP,
-        UNDEFINED,
-        MAX
-    };
-
-    ServiceType() = default;
-    constexpr ServiceType(Value a) : v(a) {}
-    template<typename T> constexpr ServiceType(T a) : v(Value(a)) {}
-
-    constexpr operator Value() const { return v; }
-    explicit operator bool() const = delete;
-
-    const char* c_str() const
-    {
-        switch (v)
-        {
-        case HTTP:
-            return "http";
-        case UNDEFINED: // fallthrough
-        case MAX:       // fallthrough
-        default:
-            return "(not set)";
-        }
-    }
-
-private:
-    Value v = UNDEFINED;
-};
+class ExtractorEvent;
 
 struct ServiceBlueprint
 {
@@ -68,19 +38,16 @@ struct ServiceBlueprint
     std::vector<std::string> supported_fields;
 };
 
-// FIXIT-P: make a template with Logger and Writer as parameters
 class ExtractorService
 {
 public:
-    static ExtractorService* make_service(const ServiceConfig&, FormatType, OutputType);
+    static ExtractorService* make_service(Extractor&, const ServiceConfig&, FormatType, OutputType);
 
     ExtractorService() = delete;
     ExtractorService(const ExtractorService&) = delete;
     ExtractorService& operator=(const ExtractorService&) = delete;
     ExtractorService(ExtractorService&&) = delete;
-
-    virtual ~ExtractorService()
-    { delete logger; }
+    virtual ~ExtractorService();
 
     void show(std::string&) const;
     uint32_t get_tenant() const { return tenant_id; }
@@ -89,7 +56,7 @@ public:
 
 protected:
     ExtractorService(uint32_t tenant, const std::vector<std::string>& fields, const std::vector<std::string>& events,
-        const ServiceBlueprint& srv_bp, ServiceType, FormatType, OutputType);
+        const ServiceBlueprint& srv_bp, ServiceType, FormatType, OutputType, Extractor&);
     void add_events(const std::vector<std::string>& vals);
     void add_fields(const std::vector<std::string>& vals);
     bool find_event(const std::string&) const;
@@ -102,6 +69,8 @@ protected:
     std::vector<std::string> events;
 
     ExtractorLogger* logger = nullptr;
+    Extractor& inspector;
+    std::vector<ExtractorEvent*> handlers;
 
     const ServiceBlueprint& sbp;
     const ServiceType type;
@@ -111,7 +80,17 @@ class HttpExtractorService : public ExtractorService
 {
 public:
     HttpExtractorService(uint32_t tenant, const std::vector<std::string>& fields,
-    const std::vector<std::string>& events, ServiceType, FormatType, OutputType);
+        const std::vector<std::string>& events, ServiceType, FormatType, OutputType, Extractor&);
+
+private:
+    static ServiceBlueprint blueprint;
+};
+
+class FtpExtractorService : public ExtractorService
+{
+public:
+    FtpExtractorService(uint32_t tenant, const std::vector<std::string>& fields,
+        const std::vector<std::string>& events, ServiceType, FormatType, OutputType, Extractor&);
 
 private:
     static ServiceBlueprint blueprint;

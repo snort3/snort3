@@ -76,3 +76,8 @@ void JsonExtractorLogger::add_field(const char* f, const snort::SfIp& v)
     v.ntop(buf);
     js.put(f, buf);
 }
+
+void JsonExtractorLogger::add_field(const char* f, bool v)
+{
+    v ? js.put_true(f) : js.put_false(f);
+}

@@ -77,8 +77,6 @@ void StdExtractorWriter::unlock()
 
 #include <memory.h>
 
-using namespace snort;
-
 TEST_CASE("Output Type", "[extractor]")
 {
     SECTION("to string")

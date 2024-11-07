@@ -25,42 +25,8 @@
 
 #include "sfip/sf_ip.h"
 
+#include "extractor_enums.h"
 #include "extractor_writer.h"
-
-class FormatType
-{
-public:
-    enum Value : uint8_t
-    {
-        CSV,
-        JSON,
-        MAX
-    };
-
-    FormatType() = default;
-    constexpr FormatType(Value a) : v(a) {}
-    template<typename T> constexpr FormatType(T a) : v((Value)a) {}
-
-    constexpr operator Value() const { return v; }
-    explicit operator bool() const = delete;
-
-    const char* c_str() const
-    {
-        switch (v)
-        {
-        case CSV:
-            return "csv";
-        case JSON:
-            return "json";
-        case MAX: // fallthrough
-        default:
-            return "(not set)";
-        }
-    }
-
-private:
-    Value v = CSV;
-};
 
 class ExtractorLogger
 {
@@ -86,6 +52,7 @@ public:
     virtual void add_field(const char*, uint64_t) {}
     virtual void add_field(const char*, struct timeval) {}
     virtual void add_field(const char*, const snort::SfIp&) {}
+    virtual void add_field(const char*, bool) {}
 
     virtual void open_record() {}
     virtual void close_record() {}

@@ -1,59 +1,215 @@
+This directory contains the data logger framework and targeted service extractors.
+
 Extractor is a global network inspector that logs flow data upon receiving
 a flow event.
 
-Supported services:
- * HTTP
- * HTTP2
+==== General Design
 
-Supported events:
- * end of HTTP transaction (request-response pair)
+As one can notice from extractor's configuration, the targeted service and
+events, filters and a set of fields are bound together as a single item of
+`extractor.protocols` array. Configurations from different bindings do not
+interfere. Among other things it allows tenants to get independent data
+logging configurations.
 
-An example configuration follows:
+The module's configuration scheme reflects how extractor works under the hood.
+Global settings (like `formatting` and `output`) are configured just once.
+While every logging rule in `protocols` array creates a new logging context,
+a service extractor.
 
-    extractor =
-    {
-        protocols =
-        {
-            service = 'http',
-            tenant_id = 1,
-            on_events = 'eot',
-            fields = 'ts, uri, host, method'
-        }
-        {
-            service = 'http',
-            tenant_id = 2,
-            on_events = 'eot',
-            fields = 'ts, uri'
-        }
-    }
+==== Logger
 
-Each tenant can have its own protocol configuration.
+`ExtractorLogger` is a base class which accepts data from a service extractor,
+transforms and pushes data further out of Snort. It has two purposes:
 
-A list of common fields which are logged:
- * ts (timestamp)
- * uid (connection id)
- * id.orig_h (client IP address)
- * id.orig_p (client TCP port)
- * id.resp_h (server IP address)
- * id.resp_p (server TCP port)
- * pkt_num (packet number)
+* formatting transformation
+* writing to a configured destination
 
-The following fields are supported for HTTP:
- * method
- * host
- * uri
- * user_agent
- * referrer
- * origin
- * version
- * status_code
- * status_msg
- * trans_depth
- * request_body_len
- * response_body_len
- * info_code
- * info_msg
- * proxied
- * orig_filenames
- * resp_filenames
+Formatting is performed within a given `ExtractorLogger` class.
+Interface methods of the base class accept a fixed set of data types only.
+Thus, every specialization of `ExtractorLogger` must know how to fit those
+types in the targeted formatting. Namely:
 
+* null-terminated string (`char*`)
+* sub-string, without null symbol (`char*`, `size_t`)
+* number (`uint64_t`)
+* timestamp (`struct timeval`)
+* IP address (`snort::SfIp`)
+* flag (`bool`)
+
+The idea is to keep this set to a bare minimum (so that a new specialization
+won't need to support a large range of types). Yet, big enough to cover common
+data types.
+
+A log unit is a log record. It is enclosed by `ExtractorLogger::open_record` and
+`ExtractorLogger::close_record` calls. A header (or a footer) can
+be added. They prepend (append) the set of log records with meta info.
+
+`ExtractorWriter` interface defines the set of methods to printout formatted
+data.
+
+Additionally, `StdExtractorWriter` (a writer to standard output) implements
+synchronization between threads. But that is not required, and is done just for
+user convenience. `StdExtractorWriter` is not a main writer, nor performant.
+`ExtractorWriter` specialization may do things in asynchronous way.
+
+There are plans to convert `ExtractorWriter` to `Connector` type.
+
+==== Logging Context
+
+A processing unit of Extractor is a service extractor.
+Each configuration entry in `extractor.protocols` array instantiates a service
+extractor of `ExtractorEvent` type.
+
+`ExtractorEvent` contains an entire logging context and does the following:
+
+* subscribes to events of the targeted protocol (`service` and `on_events`)
+* provides data field extracting functions
+* accepts a configured set of fields for logging (from the module's parser)
+* handles an event from data bus:
+  ** writes data out immediately via `ExtractorLogger`
+  ** accumulates data on the flow for further aggregation with subsequent events
+
+Also, each specific class of a service extractor spawns a specific
+`snort::DataHandler` (which is immediately subscribed to data bus events). The
+handler memory is solely managed by data bus. It is guaranteed that service
+extractor lives longer than a handler. This allows safe callbacks from event
+handler to a service extractor. So, memory management is split between data
+bus (event handlers) and the inspector (service extractors).
+
+===== Logging Context Over Reload
+With the memory management split between inspector manager and data bus, there
+is a kind of overlap occurring during configuration reload scenario.
+
+[options="header"]
+|===============================================================================
+| Inspector | Data Bus | Flow and Flow Data
+| **Before reload:**
+  1st instance of extractor is active
+| 1st event handler is alive and references to 1st instance
+| events from a flow goes via 1st event handler right to 1st inspector
+| **During reload:**
+  2nd instance is created, 1st instance is moved to trash and loses its event handler
+| 1st event handler is deleted completely, 2nd event handler becomes active
+| flow is not ended, but packets are not processed here
+| **After reload:**
+  1st instance in the trash still may process callbacks from the original flow data,
+  2nd instance sees new events and processes them, but using the original
+  flow data; if 2nd instance swaps flow data (creates its own) it will start
+  receiving callback from the new flow data
+| 2nd event handler is active and redirects all events to 2nd inspector
+| events from a flow goes to 2nd inspector, however if the original flow
+  data persists the 2nd inspector has to deal with it
+|===============================================================================
+
+
+==== Filtering
+
+Filtering helps to decrease the amount of traffic being logged. The goal is to
+keep performance overhead low. The check action is performed as early as
+possible, at the beginning of each event handling function.
+
+Currently, filtering by tenant ID is supported.
+
+*(Filtering by IP and port ranges yet to be implemented)*
+
+==== Extracting Data
+
+Data path from an inspector up to a writing function should conform the
+following targets:
+
+* be performant (make the path short in terms of number of stack frames and
+  other service function calls)
+* be configurable (to adjust fields set for logging)
+* be extensible, so that any new service/event/field can be added preserving
+  all static/dynamic checks
+
+The general path includes an inspector's protocol event, an event's getter
+functions, data extracting functions, formatting and writing functions.
+
+[options="header"]
+|===============================================================================
+| Layer               | Data types       | Notes
+| 1. Inspector        | (any type)       | generates an event (calling `DataEvent` constructor)
+| 2. Data Event       | (any type)       | provides getter functions, resides in snort3/src/pub_sub/
+| 3. Extractor Event  | `char*` `uint64_t` `timeval` `SfIp` `bool` | converts any type to a fixed type
+| 4. Extractor Logger | `char*` `uint64_t` `timeval` `SfIp` `bool` | decorates a fixed type to fit formatting
+| 5. Extractor Writer | `char*` `uint64_t` | accepts basic types: a number and a text string
+|===============================================================================
+
+_Inspector layer_ focuses on performance. It means we seek a minimal overhead
+on throwing an event (to add a bare minimum of new conditions and checks).
+Also, an event's constructor stores a reference to inspector's processing
+context. Ideally, it would be just inspector's flow data, which means no
+savings in the event itself (since flow data can be retrieved directly from the
+flow).
+
+A _Data Event_ specialization implements getter methods. They can present a
+general piece of aggregated data (say, a whole request or a transaction) or a
+specific property (like, a flag from protocol's state). A getter may cache an
+intermediate result of extra computations if any. Having _Data Event_
+implemented as usual in snort3/src/pub_sub/*.cc is just fine. It doesn't
+affect performance much (comparing to header-only implementation).
+
+_Extractor Event_ extracts data from an event according to the configured set
+of fields. `ExtractorEvent` class carries the following entities:
+
+* a generic data type with an extract function, `DataField` template and its
+  common instances define how to convert any type (a provided context) to a
+  given fixed type:
+    ** `const char*` for null-terminated strings
+    ** `snort::SfIp` for IP addresses
+    ** `uint64_t` for numbers
+    ** `struct timeval` for timestamps
+    ** `std::pair<const char*, uint16_t>` for sub-strings, which have just
+       length without null symbol
+* common extracting functions (IP address, port number, packet timestamp,
+  etc.)
+* a generic logging function, which can log a configured set of fields right
+  out of the provided context (any type)
+
+Template implementation of the generic data type `DataField`, its extracting
+function `Ret (*get)(Context...)` and the logging function `log(const T& fields,
+Context... context)` ensure:
+
+* static type checks are performed during compilation and everything matches on the
+  data path
+* the data path is easily extensible with a new data type, context types,
+  extracting or logging function (and customizable as well)
+
+Since _Extractor Logger_ interface accepts just a limited set of (basic) types,
+it should be able to decorate a data field and put it into a targeted format.
+
+_Extractor Writer_ is the final layer before data leaves Snort. It may
+implement output stream and external resource management (like, file
+rotation, socket operations), synchronization, buffering, queuing if needed.
+
+==== Flow Data
+
+Extractor's flow data is a bit different from the usual approach for other
+inspectors. There is a need to store multiple actual types on the flow. Each
+service extractor may get its own context or no context at all.
+
+`ExtractorFlowData` is the basic flow data type which:
+
+* complies with snort's flow framework, which expects one `DataFlow` type per
+  inspector
+* can be easily extended with a new service simply by providing `ServiceType type_id`
+  constant in the derived class
+* does static and dynamic type checks
+    ** if the underlying flow changes its service type, the actual type
+       of flow data changes as well (both are `ExtractorFlowData`, but distinct
+       derivatives)
+    ** `T* ExtractorFlowData::get(snort::Flow* f)` method ensures that
+       retrieved flow data is of the desired type
+* the virtual destructor allows a derived class to make a final callback to
+  the owning service extractor whenever the flow gets deleted (to make a
+  partial log record of an incomplete or abandoned session)
+
+Flow Data instance must bump reference count of the corresponding Extractor
+inspector. This is to make sure that the inspector's extractor service
+instance is always available for a callback from the flow data.
+
+For reasons mentioned in Logging Context Over Reload section, flow data
+content must be understood and processed properly (accepted or rejected) by
+service extractors of different generations (before and after configuration
+reload).

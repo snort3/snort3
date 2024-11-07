@@ -42,6 +42,7 @@ public:
     void add_field(const char*, uint64_t) override;
     void add_field(const char*, struct timeval) override;
     void add_field(const char*, const snort::SfIp&) override;
+    void add_field(const char*, bool) override;
     void open_record() override;
     void close_record() override;
 

@@ -56,8 +56,6 @@ ExtractorLogger* ExtractorLogger::make_logger(FormatType f_type, OutputType o_ty
 
 #include <memory.h>
 
-using namespace snort;
-
 TEST_CASE("Format Type", "[extractor]")
 {
     SECTION("to string")

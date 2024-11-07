@@ -29,9 +29,8 @@
 #include "main/snort_config.h"
 #include "profiler/profiler.h"
 
-#include "extractor_logger.h"
+#include "extractor_enums.h"
 #include "extractor_service.h"
-#include "extractor_writer.h"
 
 #define S_NAME "extractor"
 #define s_help "extracts protocol specific data"
@@ -57,7 +56,7 @@ struct ExtractorConfig
 
 static const PegInfo extractor_pegs[] =
 {
-    { CountType::SUM, "total_events", "total extractor events" },
+    { CountType::SUM, "total_events", "total events processed by extractor" },
     { CountType::END, nullptr, nullptr }
 };
 

@@ -98,6 +98,13 @@ void CsvExtractorLogger::add_field(const char*, const snort::SfIp& v)
     writer->write(buf);
 }
 
+void CsvExtractorLogger::add_field(const char*, bool v)
+{
+    first_write ? []() { first_write = false; } () : writer->write(",");
+
+    writer->write(v ? "true" : "false");
+}
+
 CsvExtractorLogger::~CsvExtractorLogger()
 {
     delete writer;

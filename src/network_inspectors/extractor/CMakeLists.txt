@@ -3,9 +3,11 @@ set( FILE_LIST
     extractor.h
     extractor_csv_logger.cc
     extractor_csv_logger.h
-    extractor_event.cc
-    extractor_event_handlers.h
-    extractor_http_event_handler.cc
+    extractor_enums.h
+    extractor_flow_data.cc
+    extractor_flow_data.h
+    extractor_ftp.cc
+    extractor_http.cc
     extractor_json_logger.cc
     extractor_json_logger.h
     extractor_logger.cc
@@ -14,6 +16,8 @@ set( FILE_LIST
     extractor_service.h
     extractor_writer.cc
     extractor_writer.h
+    extractors.cc
+    extractors.h
 )
 
 add_library(extractor OBJECT ${FILE_LIST})

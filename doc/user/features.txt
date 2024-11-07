@@ -97,6 +97,10 @@ include::pop_imap.txt[]
 
 include::port_scan.txt[]
 
+=== Protocol Data Logging
+
+include::extractor.txt[]
+
 === Sensitive Data Filtering
 
 include::sensitive_data.txt[]

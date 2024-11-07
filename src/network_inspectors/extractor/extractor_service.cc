@@ -23,19 +23,17 @@
 
 #include "extractor_service.h"
 
-#include "framework/data_bus.h"
 #include "log/messages.h"
-#include "pub_sub/http_events.h"
 
 #include "extractor.h"
-#include "extractor_event_handlers.h"
+#include "extractor_ftp.h"
+#include "extractor_http.h"
 
 using namespace snort;
 
-
-//////////////////////////////////////////////////////////////////////
-////  ExtractorService
-//////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+// ExtractorService
+//-------------------------------------------------------------------------
 
 std::vector<std::string> ExtractorService::common_fields =
 {
@@ -48,14 +46,21 @@ std::vector<std::string> ExtractorService::common_fields =
     "pkt_num"
 };
 
-
 ExtractorService::ExtractorService(uint32_t tenant, const std::vector<std::string>& srv_fields,
-    const std::vector<std::string>& srv_events, const ServiceBlueprint& srv_bp,
-    ServiceType s_type, FormatType f_type, OutputType o_type) : tenant_id(tenant), sbp(srv_bp), type(s_type)
+    const std::vector<std::string>& srv_events, const ServiceBlueprint& srv_bp, ServiceType s_type,
+    FormatType f_type, OutputType o_type, Extractor& ins) : tenant_id(tenant), inspector(ins), sbp(srv_bp), type(s_type)
 {
     add_fields(srv_fields);
     add_events(srv_events);
     logger = ExtractorLogger::make_logger(f_type, o_type);
+}
+
+ExtractorService::~ExtractorService()
+{
+    for (auto h : handlers)
+        delete h;
+
+    delete logger;
 }
 
 void ExtractorService::add_events(const std::vector<std::string>& vals)
@@ -80,7 +85,8 @@ void ExtractorService::add_fields(const std::vector<std::string>& vals)
     }
 }
 
-ExtractorService* ExtractorService::make_service(const ServiceConfig& cfg, FormatType f_type, OutputType o_type)
+ExtractorService* ExtractorService::make_service(Extractor& ins, const ServiceConfig& cfg,
+    FormatType f_type, OutputType o_type)
 {
     if (cfg.on_events.empty())
     {
@@ -93,7 +99,11 @@ ExtractorService* ExtractorService::make_service(const ServiceConfig& cfg, Forma
     switch (cfg.service)
     {
     case ServiceType::HTTP:
-        srv = new HttpExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, f_type, o_type);
+        srv = new HttpExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, f_type, o_type, ins);
+        break;
+
+    case ServiceType::FTP:
+        srv = new FtpExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, f_type, o_type, ins);
         break;
 
     case ServiceType::UNDEFINED: // fallthrough
@@ -138,9 +148,9 @@ void ExtractorService::show(std::string& str) const
     str += " }";
 }
 
-//////////////////////////////////////////////////////////////////////
-////  HttpExtractorService
-//////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+//  HttpExtractorService
+//-------------------------------------------------------------------------
 
 ServiceBlueprint HttpExtractorService::blueprint =
 {
@@ -171,26 +181,89 @@ ServiceBlueprint HttpExtractorService::blueprint =
 };
 
 HttpExtractorService::HttpExtractorService(uint32_t tenant, const std::vector<std::string>& srv_fields,
-    const std::vector<std::string>& srv_events, ServiceType s_type, FormatType f_type, OutputType o_type)
-    : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, f_type, o_type)
+    const std::vector<std::string>& srv_events, ServiceType s_type, FormatType f_type, OutputType o_type, Extractor& ins)
+    : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, f_type, o_type, ins)
 {
     if (!logger)
         return;
 
     for (const auto& event : get_events())
     {
+        ExtractorEvent* eh;
+
         if (!strcmp("eot", event.c_str()))
-        {
-            auto eh = new HttpExtractorEventHandler(tenant_id, get_fields(), *logger);
+            eh = new HttpExtractor(ins, *logger, tenant_id, get_fields());
 
-            DataBus::subscribe(http_pub_key, HttpEventIds::END_OF_TRANSACTION, eh);
+        else
+            continue;
 
-            auto names_set = eh->get_field_names();
-            logger->set_fields(names_set);
-            logger->add_header();
-        }
+        auto names = eh->get_field_names();
+        logger->set_fields(names);
+        logger->add_header();
+        handlers.push_back(eh);
     }
 }
+
+//-------------------------------------------------------------------------
+//  FtpExtractorService
+//-------------------------------------------------------------------------
+
+ServiceBlueprint FtpExtractorService::blueprint =
+{
+    // events
+    {
+      "request",
+      "response",
+      "eot",
+    },
+    // fields
+    {
+      "command",
+      "arg",
+      "user",
+      "reply_code",
+      "reply_msg",
+      "file_size",
+      "data_channel.passive",
+      "data_channel.orig_h",
+      "data_channel.resp_h",
+      "data_channel.resp_p"
+    },
+};
+
+FtpExtractorService::FtpExtractorService(uint32_t tenant, const std::vector<std::string>& srv_fields,
+    const std::vector<std::string>& srv_events, ServiceType s_type, FormatType f_type, OutputType o_type, Extractor& ins)
+    : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, f_type, o_type, ins)
+{
+    if (!logger)
+        return;
+
+    for (const auto& event : get_events())
+    {
+        ExtractorEvent* eh;
+
+        if (!strcmp("request", event.c_str()))
+            eh = new FtpRequestExtractor(ins, *logger, tenant_id, get_fields());
+
+        else if (!strcmp("response", event.c_str()))
+            eh = new FtpResponseExtractor(ins, *logger, tenant_id, get_fields());
+
+        else if (!strcmp("eot", event.c_str()))
+            eh = new FtpExtractor(ins, *logger, tenant_id, get_fields());
+
+        else
+            continue;
+
+        auto names = eh->get_field_names();
+        logger->set_fields(names);
+        logger->add_header();
+        handlers.push_back(eh);
+    }
+}
+
+//-------------------------------------------------------------------------
+//  Unit Tests
+//-------------------------------------------------------------------------
 
 #ifdef UNIT_TEST
 
@@ -198,17 +271,17 @@ HttpExtractorService::HttpExtractorService(uint32_t tenant, const std::vector<st
 
 #include <memory.h>
 
-using namespace snort;
-
 TEST_CASE("Service Type", "[extractor]")
 {
     SECTION("to string")
     {
         ServiceType http = ServiceType::HTTP;
+        ServiceType ftp = ServiceType::FTP;
         ServiceType undef = ServiceType::UNDEFINED;
         ServiceType max = ServiceType::MAX;
 
         CHECK_FALSE(strcmp("http", http.c_str()));
+        CHECK_FALSE(strcmp("ftp", ftp.c_str()));
         CHECK_FALSE(strcmp("(not set)", undef.c_str()));
         CHECK_FALSE(strcmp("(not set)", max.c_str()));
     }

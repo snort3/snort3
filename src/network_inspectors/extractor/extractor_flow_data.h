@@ -15,54 +15,41 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// extractor_writer.h author Anna Norokh <anorokh@cisco.com>
+// extractor_flow_data.h author Cisco
 
-#ifndef EXTRACTOR_WRITER_H
-#define EXTRACTOR_WRITER_H
+#ifndef EXTRACTOR_FLOW_DATA_H
+#define EXTRACTOR_FLOW_DATA_H
 
-#include <mutex>
-
-#include "log/text_log.h"
-#include "main/snort_types.h"
+#include "flow/flow.h"
+#include "flow/flow_data.h"
 
 #include "extractor_enums.h"
 
-class ExtractorWriter
+class ExtractorFlowData : public snort::FlowData
 {
 public:
-    static ExtractorWriter* make_writer(OutputType);
+    ~ExtractorFlowData() override {}
 
-    ExtractorWriter(const ExtractorWriter&) = delete;
-    ExtractorWriter& operator=(const ExtractorWriter&) = delete;
-    ExtractorWriter(ExtractorWriter&&) = delete;
+    template<typename T>
+    static T* get(snort::Flow* f)
+    {
+        auto fd = reinterpret_cast<ExtractorFlowData*>(f->get_flow_data(data_id));
 
-    virtual ~ExtractorWriter() = default;
+        if (fd and T::type_id == fd->type)
+            return reinterpret_cast<T*>(fd);
 
-    virtual void write(const char*) = 0;
-    virtual void write(const char*, size_t) = 0;
-    virtual void write(uint64_t) = 0;
-    virtual void lock() { }
-    virtual void unlock() { }
+        f->free_flow_data(data_id);
+
+        return nullptr;
+    }
 
 protected:
-    ExtractorWriter() = default;
-};
-
-class StdExtractorWriter : public ExtractorWriter
-{
-public:
-    StdExtractorWriter();
-    ~StdExtractorWriter() override;
-
-    void write(const char* ss) override;
-    void write(const char* ss, size_t len) override;
-    void write(uint64_t n) override;
-    void lock() override;
-    void unlock() override;
+    ExtractorFlowData(ServiceType type, snort::Inspector& insp)
+        : FlowData(data_id, &insp), type(type) {}
 
 private:
-    std::mutex write_mutex;
-    TextLog* extr_std_log;
+    const ServiceType type;
+    static const unsigned data_id;
 };
 
 #endif

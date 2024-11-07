@@ -405,6 +405,7 @@ static inline int FTPResetsession(FTP_SESSION* Ftpsession)
     Ftpsession->clientPort = 0;
     Ftpsession->serverIP.clear();
     Ftpsession->serverPort = 0;
+    Ftpsession->mode = FTPP_XFER_NOT_SET;
     Ftpsession->data_chan_state = NO_STATE;
     Ftpsession->data_chan_index = -1;
     Ftpsession->data_xfer_index = -1;
