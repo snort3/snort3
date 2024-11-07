@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.5.0.0 2024-10-20 23:28:19 EDT TST
+Revision 3.5.1.0 2024-11-06 12:04:16 EST TST
 
 ---------------------------------------------------------------------
 
@@ -5777,6 +5777,8 @@ Configuration:
     being eligible for pruning { 1:max32 }
   * int stream.require_3whs = -1: don’t track midstream TCP sessions
     after given seconds from start up; -1 tracks all { -1:max31 }
+  * bool stream.allowlist_cache.enable = false: enable allowlist
+    cache
   * int stream.ip_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream.icmp_cache.idle_timeout = 180: maximum inactive time
@@ -5864,6 +5866,10 @@ Peg counts:
     memcap (sum)
   * stream.pdu_memcap_prunes: number of PDU flows pruned due to
     memcap (sum)
+  * stream.allowlist_memcap_prunes: number of allowlist flows pruned
+    due to memcap (sum)
+  * stream.allowlist_flows: number of flows moved to the allow list
+    (now)
   * stream.current_flows: current number of flows in cache (now)
   * stream.uni_flows: number of uni flows in cache (now)
   * stream.uni_ip_flows: number of uni ip flows in cache (now)
@@ -6027,6 +6033,9 @@ Configuration:
   * int stream_tcp.queue_limit.max_segments = 3072: don’t queue more
     than given segments per session and direction, 0 = unlimited {
     0:max32 }
+  * int stream_tcp.queue_limit.asymmetric_ids_flush_threshold =
+    3145728: max bytes queued on asymmetric flow before flush in IDS
+    mode { 1:max31 }
   * int stream_tcp.small_segments.count = 0: number of consecutive
     (in the received order) TCP small segments considered to be
     excessive (129:12) { 0:2048 }
@@ -6039,8 +6048,6 @@ Configuration:
     timeout { 1:max31 }
   * int stream_tcp.idle_timeout = 3600: session deletion on idle {
     1:max31 }
-  * int stream_tcp.asymmetric_ids_flush_threshold = 65535: max bytes
-    queued on asymmetric flow before flush in IDS mode { 1:max31 }
 
 Rules:
 
@@ -11294,6 +11301,8 @@ libraries see the Getting Started section of the manual.
   * implied ssl_version.!tls1.2: check for records that are not
     tls1.2
   * implied ssl_version.tls1.2: check for tls1.2
+  * bool stream.allowlist_cache.enable = false: enable allowlist
+    cache
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
   * bool stream_file.upload = false: indicate file transfer direction
@@ -11337,8 +11346,6 @@ libraries see the Getting Started section of the manual.
     direction(s) { either|to_server|to_client|both }
   * interval stream_size.~range: check if the stream size is in the
     given range { 0: }
-  * int stream_tcp.asymmetric_ids_flush_threshold = 65535: max bytes
-    queued on asymmetric flow before flush in IDS mode { 1:max31 }
   * int stream.tcp_cache.idle_timeout = 3600: maximum inactive time
     before retiring session tracker { 1:max32 }
   * int stream_tcp.embryonic_timeout = 30: Non-established connection
@@ -11360,6 +11367,9 @@ libraries see the Getting Started section of the manual.
     characteristics like reassembly { first | last | linux | 
     old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | 
     windows | win_2003 | vista | proxy | asymmetric }
+  * int stream_tcp.queue_limit.asymmetric_ids_flush_threshold =
+    3145728: max bytes queued on asymmetric flow before flush in IDS
+    mode { 1:max31 }
   * int stream_tcp.queue_limit.max_bytes = 4194304: don’t queue more
     than given bytes per session and direction, 0 = unlimited {
     0:max32 }
@@ -12575,6 +12585,10 @@ libraries see the Getting Started section of the manual.
   * ssl.server_key_exchange: total server key exchanges (sum)
   * ssl.sessions_ignored: total sessions ignore (sum)
   * ssl.unrecognized_records: total unrecognized records (sum)
+  * stream.allowlist_flows: number of flows moved to the allow list
+    (now)
+  * stream.allowlist_memcap_prunes: number of allowlist flows pruned
+    due to memcap (sum)
   * stream.current_flows: current number of flows in cache (now)
   * stream.excess_prunes: sessions pruned due to excess (sum)
   * stream.expected_flows: total expected flows created within snort

@@ -1,3 +1,19 @@
+2024-11-06: 3.5.1.0
+
+* appid: add new api to check if service is over quic
+* appid: add tls_version capture in appid_session
+* appid: implement an API that allows users to specify values for data items used in lua detectors
+* appid: unit-test added for is_service_over_quic
+* doc: add details regarding RTN evaluation
+* flow: new allowlist LRU
+* http2_inspect: handle multiple cookie header fields
+* js_norm: add cross-PDU PDF token reassembly
+* side_channel: fix compiler warning in side channel formatting test
+* smtp: fixing the processing of SMTP response in case of encrypted traffic
+* stream: add thread instance number to dump_flows control command output
+* stream_tcp: pass tracker and seglist to TcpReassembler\* as refs, define dummy tracker & seglist for use by TcpReassemblerIgnore
+* stream_tcp: when queue limit thresholds are exceeded in IDS mode on asymmetric connections only skip a hole at the beginning of the seglist before flushing
+
 2024-10-20: 3.5.0.0
 
 * connectors: fix tsan warning in tcp connector

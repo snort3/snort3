@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.5.0.0 2024-10-20 23:28:30 EDT TST
+Revision 3.5.1.0 2024-11-06 12:04:30 EST TST
 
 ---------------------------------------------------------------------
 
@@ -958,6 +958,9 @@ balances speed and memory. For a faster search at the expense of
 significantly more memory, use ac_full. For best performance and
 reasonable memory, download the hyperscan source from Intel.
 
+Rule group summary is printed at start up under "port rule counts"
+and "service rule counts" sections.
+
 2.7.2. Fast Patterns
 
 Fast patterns are content strings that have the fast_pattern option
@@ -983,6 +986,50 @@ option in a rule and is a fairly costly process which is why fast
 patterns are so important. Rule evaluation aborts on the first
 non-matching option.
 
+For a port-based rule, all components of the rule header have to
+match before the rule fires. For a service-based rule, evaluation of
+the header is skipped. A rule becomes service-based in the following
+cases:
+
+  * "service" IPS option is present in the rule body
+  * a service specific IPS option is present (like http_param,
+    file_data, dnp3_data)
+  * a service protocol is defined in the rule header
+
+Examples:
+
+# Port group - protocol and ports are evaluated in any case
+alert tcp any 90 -> any 5321 (msg: "Port group rule";)
+
+# "any" port group - protocol and ports are evaluated in any case
+alert tcp (msg: "Port group rule with default header";)
+
+# "service" option puts the rule to SMTP group and port group.
+# If the SMTP service is assigned on flow, "tcp" proto and port "90" have no effect.
+# In other case, header is evaluated - since matched as a part of port group
+alert tcp any 90 -> any any (service: smtp; msg: "SMTP and port group";)
+
+# DNP3 service is detected automatically, DNP3 group only.
+# In a fact, "tcp" proto and port "90" has no effect at all.
+alert tcp any 90 -> any any (dnp3_data; msg: "DNP3 group";)
+
+# Service protocol in the header puts the rule to DNP3 group.
+# In a fact, "tcp" proto and port "90" has no effect at all.
+alert dnp3 any 90 -> any any (msg: "DNP3 group";)
+
+Note that detection module can extend a rule with more services. For
+details, check detection.service_extension option.
+
+In case you need to match the service-based rule with regard to
+specific protocol, take a look at IPS option "ip_proto" - it
+guarantees that specified protocol is used.
+
+Example when such explicit check is required:
+
+# Since the rule is added to both "any" port-group and "igmp" service group,
+# to decrease false-positive due to "any" port-group, ip_proto:2 is used.
+alert ip ( ip_proto:2; content:"foo";  service:igmp; )
+
 When rule evaluation takes place, the fast pattern match will
 automatically be skipped if possible. Note that this differs from
 Snort 2 which provided the fast_pattern:only option to designate such
@@ -1005,9 +1052,7 @@ Stateful evaluation is supported for the following buffers:
 
  1. pkt_data — as a sequence of TCP session bytes with respect to
     their direction (client-to-server, server-to-client)
- 2. js_data — normalized JavaScript text from the same data transfer
-    session
- 3. file_data — the same file bytes, e.g. flows from different files
+ 2. file_data — the same file bytes, e.g. flows from different files
     do not overlap
 
 
