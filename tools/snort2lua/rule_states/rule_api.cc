@@ -75,7 +75,7 @@ extern const ConvertMap* modbus_data_map;
 extern const ConvertMap* modbus_func_map;
 extern const ConvertMap* modbus_unit_map;
 extern const ConvertMap* msg_map;
-extern const ConvertMap* pcre_map;
+extern const ConvertMap* pcre2_map;
 extern const ConvertMap* pkt_data_map;
 extern const ConvertMap* priority_map;
 extern const ConvertMap* protected_content_map;
@@ -159,7 +159,7 @@ const std::vector<const ConvertMap*> rule_options_api =
     modbus_func_map,
     modbus_unit_map,
     msg_map,
-    pcre_map,
+    pcre2_map,
     pkt_data_map,
     priority_map,
     protected_content_map,

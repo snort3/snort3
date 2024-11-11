@@ -217,7 +217,7 @@ TEST(mpse_hs_match, regex)
     CHECK(hits == 3);
 }
 
-TEST(mpse_hs_match, pcre)
+TEST(mpse_hs_match, pcre2)
 {
     Mpse::PatternDescriptor desc;
 

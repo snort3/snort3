@@ -41,7 +41,7 @@ private:
 
 std::string SDPattern::convert_pattern(const std::string& pattern)
 {
-    const std::string unused_pcre_tokens("()[].+*^$|");
+    const std::string unused_pcre2_tokens("()[].+*^$|");
 
     std::string s3_pattern;
 
@@ -100,7 +100,7 @@ std::string SDPattern::convert_pattern(const std::string& pattern)
             break;
 
         default:
-            if (unused_pcre_tokens.find(sym) != std::string::npos)
+            if (unused_pcre2_tokens.find(sym) != std::string::npos)
                 s3_pattern.push_back('\\');
             s3_pattern.push_back(sym);
             break;

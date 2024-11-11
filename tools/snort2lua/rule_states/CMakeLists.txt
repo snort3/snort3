@@ -12,7 +12,7 @@ add_library( rule_states OBJECT
     rule_http_encode.cc
     rule_isdataat.cc
     rule_metadata.cc
-    rule_pcre.cc
+    rule_pcre2.cc
     rule_react.cc
     rule_reference.cc
     rule_replace.cc
