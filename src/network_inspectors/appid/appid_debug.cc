@@ -181,7 +181,7 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
         << dipstr << " " << dport << " "
         << std::to_string(to_utype(protocol))
         << " AS=" << address_space_id
-        << " ID=" << get_instance_id();
+        << " ID=" << get_relative_instance_number();
 
     if (inter_group_flow)
         oss << " GR=" << sgroup << "-" << dgroup;

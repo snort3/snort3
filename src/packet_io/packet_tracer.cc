@@ -402,7 +402,7 @@ void PacketTracer::add_ip_header_info(const Packet& p)
             << dipstr << " " << dport << " "
             << std::to_string(to_utype(proto))
             << " AS=" << p.pkth->address_space_id
-            << " ID=" << get_instance_id();
+            << " ID=" << get_relative_instance_number();
 
             if (p.is_inter_group_flow())
             {
@@ -426,7 +426,7 @@ void PacketTracer::add_ip_header_info(const Packet& p)
             << dipstr << ":" << dport << " "
             << "proto " << std::to_string(to_utype(proto))
             << " AS=" << p.pkth->address_space_id
-            << " ID=" << get_instance_id();
+            << " ID=" << get_relative_instance_number();
 
             if (p.is_inter_group_flow())
             {
@@ -507,7 +507,7 @@ void PacketTracer::add_eth_header_info(const Packet& p)
             std::ostringstream oss;
             oss << eh->to_string()
                 << " AS=" << p.pkth->address_space_id
-                << " ID=" << get_instance_id();
+                << " ID=" << get_relative_instance_number();
 
             if (p.is_inter_group_flow())
             {

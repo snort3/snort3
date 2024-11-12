@@ -56,10 +56,10 @@ unsigned get_instance_id()
 { return instance_id; }
 
 unsigned get_relative_instance_number()
-{ 
-    // Added +1 here so we get instance numbers starting from 1 for display purposes
+{
+    // Maintain the zero-based counting that we previously used; first pkt thread = 0
     const SnortConfig* sc = SnortConfig::get_conf();
-    return instance_id + sc->id_offset + 1;
+    return instance_id + sc->id_offset;
 }
 
 SThreadType get_thread_type()

@@ -54,6 +54,11 @@ namespace snort
     {
         return 0;
     }
+
+    unsigned get_relative_instance_number()
+    {
+        return 0;
+    }
 }
 
 void AppIdSession::set_ss_application_ids(AppId service_id, AppId client_id, AppId payload_id,

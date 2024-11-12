@@ -41,6 +41,7 @@ THREAD_LOCAL bool TimeProfilerStats::enabled = false;
 namespace snort
 {
 unsigned get_instance_id() { return 3; }
+unsigned get_relative_instance_number() { return 3; }
 
 Packet::Packet(bool) {}
 Packet::~Packet() = default;
