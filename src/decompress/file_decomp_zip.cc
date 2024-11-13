@@ -160,12 +160,16 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
             // check if we are done with the local_header
             if ( parser->Index == parser->Length )
             {
+                // read a header, reset the index
+                parser->Index = 0;
+
                 // check if we read a local_header
                 if ( parser->local_header != ZIP_LOCAL_HEADER )
-                    return output_blocked ? File_Decomp_BlockOut : File_Decomp_Complete;
-
-                // read a local_header, reset the index
-                parser->Index = 0;
+                {
+                    parser->State = ZIP_STATE_SEARCH;
+                    parser->Length = 0;
+                    continue;
+                }
 
                 // reset ZIP fields
                 parser->local_header = 0;

@@ -60,7 +60,7 @@ enum fd_ZIP_states
     ZIP_STATE_FILENAMELEN,    // filename length (2 bytes)
     ZIP_STATE_EXTRALEN,       // extra field length (2 bytes)
 
-    ZIP_STATE_FILENAME,    // filename field (filenamelen bytes)
+    ZIP_STATE_FILENAME,       // filename field (filenamelen bytes)
 
     //skipped:
     // ZIP_STATE_EXTRA,       // extra field (extralen bytes)
