@@ -43,7 +43,9 @@ enum SIPMethodsFlag
     SIP_METHOD_MESSAGE     = 12,   // 0x0800,
     SIP_METHOD_NOTIFY      = 13,   // 0x1000,
     SIP_METHOD_PRACK       = 14,   // 0x2000,
-    SIP_METHOD_USER_DEFINE = 15,   // 0x4000,
+    SIP_METHOD_PUBLISH     = 15,   // 0x4000,
+    SIP_METHOD_REPLACE     = 16,
+    SIP_METHOD_USER_DEFINE = 17,   
     SIP_METHOD_USER_DEFINE_MAX = 32// 0x80000000,
 };
 

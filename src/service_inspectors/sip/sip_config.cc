@@ -40,7 +40,6 @@ static SIPMethodNode* SIP_AddMethodToList(
 
 /*
  *  method names defined by standard, 14 methods defined up to Mar. 2011
- *  The first 6 methods are standard defined by RFC3261
  */
 
 SIPMethod StandardMethods[] =
@@ -59,10 +58,17 @@ SIPMethod StandardMethods[] =
     { "message", SIP_METHOD_MESSAGE },
     { "notify", SIP_METHOD_NOTIFY },
     { "prack", SIP_METHOD_PRACK },
+    { "publish", SIP_METHOD_PUBLISH },
+    { "replace", SIP_METHOD_REPLACE },
     { nullptr, SIP_METHOD_NULL }
 };
 
 static SIPMethodsFlag currentUseDefineMethod = SIP_METHOD_USER_DEFINE;
+
+void reset_currentUseDefineMethod()
+{
+    currentUseDefineMethod = SIP_METHOD_USER_DEFINE;
+}
 
 static int SIP_findMethod(const char* token, SIPMethod* methods)
 {
@@ -75,22 +81,6 @@ static int SIP_findMethod(const char* token, SIPMethod* methods)
         i++;
     }
     return METHOD_NOT_FOUND;
-}
-
-/*
- *  The first 6 methods are standard defined by RFC3261
- *  We use those first 6 methods as default
- *
- */
-void SIP_SetDefaultMethods(SIP_PROTO_CONF* config)
-{
-    int i;
-    config->methodsConfig = SIP_METHOD_DEFAULT;
-    for (i = 0; i < 6; i++)
-    {
-        SIP_AddMethodToList(StandardMethods[i].name,
-            StandardMethods[i].methodFlag, &config->methods);
-    }
 }
 
 /********************************************************************

@@ -27,7 +27,7 @@
 #include "framework/counts.h"
 #include "sip_common.h"
 
-#define SIP_METHOD_DEFAULT     0x003f
+#define SIP_METHOD_DEFAULT     0x3fff
 #define SIP_METHOD_ALL     0xffffffff
 
 #define SIP_STATUS_CODE_LEN (3)
@@ -114,8 +114,7 @@ struct SIP_PROTO_CONF
 void SIP_ParseMethods(
     const char* cur_tokenp, uint32_t* methodsConfig, SIPMethodlist* pmethods);
 
-// Sets the Default method lists
-void SIP_SetDefaultMethods(SIP_PROTO_CONF* config);
+void reset_currentUseDefineMethod();
 
 // API to add a user defined method to SIP config
 SIPMethodNode* SIP_AddUserDefinedMethod(

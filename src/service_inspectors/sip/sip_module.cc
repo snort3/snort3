@@ -23,6 +23,7 @@
 #endif
 
 #include "log/messages.h"
+#include "sip_config.h"
 #include "sip_module.h"
 
 #include <cassert>
@@ -57,7 +58,7 @@ using namespace std;
 #define SIP_EVENT_UNKOWN_METHOD_STR       "method is unknown"
 #define SIP_EVENT_MAX_DIALOGS_IN_A_SESSION_STR "maximum dialogs within a session reached"
 
-#define default_methods "invite cancel ack  bye register options"
+#define default_methods "invite cancel ack bye register options refer subscribe update join info message notify prack publish replace"
 
 static const Parameter s_params[] =
 {
@@ -169,6 +170,8 @@ static const PegInfo sip_pegs[] =
     { CountType::SUM, "message", "message" },
     { CountType::SUM, "notify", "notify" },
     { CountType::SUM, "prack", "prack" },
+    { CountType::SUM, "publish", "publish" },
+    { CountType::SUM, "replace", "replace" },
     { CountType::SUM, "total_responses", "total responses" },
     { CountType::SUM, "code_1xx", "1xx" },
     { CountType::SUM, "code_2xx", "2xx" },
@@ -211,6 +214,8 @@ ProfileStats* SipModule::get_profile() const
 
 bool SipModule::set(const char*, Value& v, SnortConfig*)
 {
+    reset_currentUseDefineMethod();
+
     if ( v.is("ignore_call_channel") )
         conf->ignoreChannel = v.get_bool();
 
@@ -273,7 +278,6 @@ bool SipModule::begin(const char*, int, SnortConfig*)
 
     conf->methodsConfig = SIP_METHOD_NULL;
     conf->methods = nullptr;
-    sip_methods = default_methods;
 
     return true;
 }
@@ -288,12 +292,6 @@ bool SipModule::end(const char*, int, SnortConfig*)
         while ( v.get_next_token(tok) )
             SIP_ParseMethods(tok.c_str(), &conf->methodsConfig, &conf->methods);
     }
-    /*If no methods defined, use the default*/
-    if (SIP_METHOD_NULL == conf->methodsConfig)
-    {
-        SIP_SetDefaultMethods(conf);
-    }
-
     return true;
 }
 
