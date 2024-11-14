@@ -177,6 +177,21 @@ void FileInfo::set_weak_file_name(const char* name, uint32_t name_size)
         file_name.assign(name, name_size);
 }
 
+void FileInfo::unset_file_name()
+{
+    file_name_set = false;
+}
+
+ void FileInfo::reset_sha()
+ {
+    if (sha256)
+    {
+        delete [] sha256;
+        sha256 = nullptr;
+        file_state.sig_state = FILE_SIG_PROCESSING;
+    }
+ }
+
 void FileInfo::set_url(const char* url_name, uint32_t url_size)
 {
     if (url_name and url_size)

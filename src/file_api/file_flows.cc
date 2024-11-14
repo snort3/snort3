@@ -101,7 +101,8 @@ void FileFlows::handle_retransmit(Packet* p)
 
     bool is_new_context = false;
     FileContext* file = get_file_context(pending_file_id, false, is_new_context);
-    if ((file == nullptr) or (file->verdict != FILE_VERDICT_PENDING))
+    if ((file == nullptr) or 
+        ((file->verdict != FILE_VERDICT_PENDING) and (file->is_cacheable())))
     {
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p,
             "handle_retransmit:context is null or verdict not pending, returning\n");

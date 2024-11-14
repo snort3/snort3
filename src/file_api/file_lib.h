@@ -66,6 +66,8 @@ public:
     const std::string& get_url() const;
     const std::string& get_host_name() const;
     
+    void unset_file_name();
+    void reset_sha();
     // Whether file name has been set (could be empty file name)
     bool is_file_name_set() const { return file_name_set; }
     bool is_url_set() const { return url_set; }
