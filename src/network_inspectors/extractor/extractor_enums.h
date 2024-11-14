@@ -20,6 +20,8 @@
 #ifndef EXTRACTOR_ENUMS_H
 #define EXTRACTOR_ENUMS_H
 
+#include <cstdint>
+
 class ServiceType
 {
 public:
