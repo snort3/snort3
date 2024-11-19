@@ -264,6 +264,7 @@ Packet* TcpReassembler::initialize_pdu(Packet* p, uint32_t pkt_flags, struct tim
 {
     // partial flushes already set the pdu for http_inspect splitter processing
     Packet* pdu = p->was_set() ? p : DetectionEngine::set_next_packet(p);
+    assert( pdu->daq_msg == p->daq_msg and pdu->daq_instance == p->daq_instance );
 
     EncodeFlags enc_flags = 0;
     DAQ_PktHdr_t pkth;
