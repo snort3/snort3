@@ -1,3 +1,25 @@
+2024-11-18: 3.5.2.0
+
+* decompress: handle ZIP central directory
+* doc: add extractor logging feature
+* extractor: add ftp service implementation
+* extractor: add imaginary transaction event to FTP
+* extractor: add user field
+* extractor: enable logging for FTP aggregated event
+* extractor: event handlers subscribe by themselves
+* extractor: fix memory management
+* extractor: include type support header explicitly
+* extractor: introduce flow data
+* extractor: log on last response
+* extractor: move extractor event out of snort namespace
+* extractor: refactor code
+* extractor: update dev_notes.txt
+* file_api: add helper methods to unset filename and reset sha
+* ftp: reset cmd_size when reset cmd_str
+* sip: parse all the SIP methods defined
+* stream_tcp: initialize the daq_instance field in the Packet instance allocated for a meta-ack to the value from the wire packet
+* thread: get_relative_instance_number now zero-based
+
 2024-11-06: 3.5.1.0
 
 * appid: add new api to check if service is over quic

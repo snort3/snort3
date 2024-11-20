@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.5.1.0 2024-11-06 12:04:16 EST TST
+Revision 3.5.2.0 2024-11-18 20:48:07 EST TST
 
 ---------------------------------------------------------------------
 
@@ -3565,7 +3565,7 @@ Configuration:
   * enum extractor.output = stdout: output destination for extractor
     { stdout }
   * enum extractor.protocols[].service: service to extract from { 
-    http }
+    http | ftp }
   * int extractor.protocols[].tenant_id = 0: tenant_id of target
     tenant { 0:max32 }
   * string extractor.protocols[].on_events: specify events to log
@@ -3573,7 +3573,7 @@ Configuration:
 
 Peg counts:
 
-  * extractor.total_events: total extractor events (sum)
+  * extractor.total_events: total events processed by extractor (sum)
 
 
 5.19. file_id
@@ -5398,8 +5398,9 @@ Configuration:
   * int sip.max_uri_len = 256: maximum request uri field size {
     0:65535 }
   * int sip.max_via_len = 1024: maximum via field size { 0:65535 }
-  * string sip.methods = invite cancel ack bye register options: list
-    of methods to check in SIP messages
+  * string sip.methods = invite cancel ack bye register options refer
+    subscribe update join info message notify prack publish replace:
+    list of methods to check in SIP messages
   * int sip.sip_timeout = 0: SIP Timeout value in milliseconds { 0: }
   * int sip.sip_media_timeout = 0: SIP Media timeout milliseconds {
     0: }
@@ -5464,6 +5465,8 @@ Peg counts:
   * sip.message: message (sum)
   * sip.notify: notify (sum)
   * sip.prack: prack (sum)
+  * sip.publish: publish (sum)
+  * sip.replace: replace (sum)
   * sip.total_responses: total responses (sum)
   * sip.code_1xx: 1xx (sum)
   * sip.code_2xx: 2xx (sum)
@@ -9831,7 +9834,7 @@ libraries see the Getting Started section of the manual.
   * string extractor.protocols[].fields: specify fields to log
   * string extractor.protocols[].on_events: specify events to log
   * enum extractor.protocols[].service: service to extract from { 
-    http }
+    http | ftp }
   * int extractor.protocols[].tenant_id = 0: tenant_id of target
     tenant { 0:max32 }
   * string file_connector[].connector: connector name
@@ -10962,8 +10965,9 @@ libraries see the Getting Started section of the manual.
     0:65535 }
   * int sip.max_via_len = 1024: maximum via field size { 0:65535 }
   * string sip_method.*method: sip method
-  * string sip.methods = invite cancel ack bye register options: list
-    of methods to check in SIP messages
+  * string sip.methods = invite cancel ack bye register options refer
+    subscribe update join info message notify prack publish replace:
+    list of methods to check in SIP messages
   * int sip.sip_disconnect_timeout = 0: SIP Disconnect timeout
     milliseconds { 0: }
   * int sip.sip_invite_timeout = 0: SIP Invite timeout milliseconds {
@@ -11987,7 +11991,7 @@ libraries see the Getting Started section of the manual.
     out of global memory (sum)
   * event_filter.no_memory_local: number of times event filter ran
     out of local memory (sum)
-  * extractor.total_events: total extractor events (sum)
+  * extractor.total_events: total events processed by extractor (sum)
   * file_connector.messages: total messages (sum)
   * file_id.cache_failures: number of file cache add failures (sum)
   * file_id.files_not_processed: number of files not processed due to
@@ -12504,8 +12508,10 @@ libraries see the Getting Started section of the manual.
   * sip.options: options (sum)
   * sip.packets: total packets (sum)
   * sip.prack: prack (sum)
+  * sip.publish: publish (sum)
   * sip.refer: refer (sum)
   * sip.register: register (sum)
+  * sip.replace: replace (sum)
   * sip.sessions: total sessions (sum)
   * sip.subscribe: subscribe (sum)
   * sip.total_requests: total requests (sum)
