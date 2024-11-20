@@ -46,6 +46,10 @@
 #include "pub_sub/intrinsic_event_ids.h"
 #include "utils/util.h"
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
 #include "file_api.h"
 #include "file_cache.h"
 #include "file_capture.h"
@@ -182,15 +186,16 @@ void FileInfo::unset_file_name()
     file_name_set = false;
 }
 
- void FileInfo::reset_sha()
- {
+// cppcheck-suppress unusedFunction
+void FileInfo::reset_sha()
+{
     if (sha256)
     {
         delete [] sha256;
         sha256 = nullptr;
         file_state.sig_state = FILE_SIG_PROCESSING;
     }
- }
+}
 
 void FileInfo::set_url(const char* url_name, uint32_t url_size)
 {
@@ -990,3 +995,33 @@ void FileContext::print(std::ostream& log)
     log << "File size: " << file_size << std::endl;
     log << "Processed size: " << processed_bytes << std::endl;
 }
+
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+class FI_TEST : public FileInfo
+{ };
+
+TEST_CASE ("unset_file_name", "[file_info]")
+{
+    FI_TEST info;
+    info.set_file_name("test", 4);
+
+    CHECK ( true == info.is_file_name_set());
+
+    info.unset_file_name();
+    CHECK (false == info.is_file_name_set());
+}
+
+TEST_CASE ("get_url", "[file_info]")
+{
+    FI_TEST info;
+    info.set_url("/var/tmp/test.pdf", 17);
+    CHECK (info.get_url() == std::string("/var/tmp/test.pdf"));
+}
+
+#endif
+
