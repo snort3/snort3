@@ -589,7 +589,8 @@ void ControlLuaDetectorManager::load_lua_detectors(const char* path, bool is_cus
                     appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before detector load\n", lua_top);
                 while (std::getline(file, line))
                 {
-                    process_detector_file(const_cast<char*>(line.c_str()), is_custom);
+                    std::string full_path = std::string(path) + "/" + line;
+                    process_detector_file(const_cast<char*>(full_path.c_str()), is_custom);
                 }
             }
             return;
