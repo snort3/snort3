@@ -148,8 +148,6 @@ bool HttpQueryParser::parse_key(Parameter& p)
 
 bool HttpQueryParser::parse_value(Parameter& p)
 {
-    const uint8_t* amp;
-    const uint8_t* semi;
     const uint8_t* term;
 
     if ( index >= buffer_len )
@@ -160,15 +158,7 @@ bool HttpQueryParser::parse_value(Parameter& p)
     unsigned remaining = buffer_len - index;
 
     // locate delimiter
-    amp = (const uint8_t*)memchr(p.value, '&', remaining);
-    semi = (const uint8_t*)memchr(p.value, ';', remaining);
-
-    if ( amp && !semi )
-        term = amp;
-    else if ( !amp && semi )
-        term = semi;
-    else
-        term = (amp < semi) ? amp : semi;
+    term = (const uint8_t*)memchr(p.value, '&', remaining);
 
     if ( !term )
     {
