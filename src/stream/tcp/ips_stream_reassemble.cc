@@ -280,6 +280,10 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
     Flow* flow = new Flow;
     Packet* pkt = get_syn_packet(flow);
     Cursor cursor(pkt);
+    InspectionPolicy ins;
+    set_inspection_policy(&ins);
+    NetworkPolicy net;
+    set_network_policy(&net);
 
     SECTION("reassembler initialization")
     {

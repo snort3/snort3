@@ -1147,9 +1147,13 @@ TEST_CASE("RNA pnd cpe os", "[cpe-os]")
         RNAFlow::init();
         RNAFlow* rna_flow = new RNAFlow();
         Packet p;
-        Flow flow;
-        p.flow = &flow;
+        Flow* flow = new Flow();
+        p.flow = flow;
         p.flow->set_flow_data(rna_flow);
+        InspectionPolicy ins;
+        set_inspection_policy(&ins);
+        NetworkPolicy net;
+        set_network_policy(&net);
 
         // Fill packet structure with required information
         eth::EtherHdr eh;
@@ -1200,6 +1204,8 @@ TEST_CASE("RNA pnd cpe os", "[cpe-os]")
 
         delete(cpeevent);
         p.flow->free_flow_data(rna_flow);
+
+        delete flow;
     }
 }
 #endif

@@ -124,8 +124,8 @@ TEST_CASE("RNA Flow", "[get_tracker]")
 {
     timeval curr_time;
     Packet p;
-    Flow flow;
-    p.flow=&flow;
+    Flow* flow = new Flow();
+    p.flow=flow;
 
     DiscoveryFilter filter("");
     RnaTracker ht(new HostTracker);
@@ -136,6 +136,11 @@ TEST_CASE("RNA Flow", "[get_tracker]")
 
     RnaTracker rt;
     uint32_t last_seen;
+
+    InspectionPolicy ins;
+    set_inspection_policy(&ins);
+    NetworkPolicy net;
+    set_network_policy(&net);
 
     // test the server path
     curr_time.tv_sec = 12345678;
@@ -157,7 +162,9 @@ TEST_CASE("RNA Flow", "[get_tracker]")
     last_seen = ht->get_last_seen();
     CHECK(last_seen == curr_time.tv_sec);
 
-    flow.free_flow_data();
+    flow->free_flow_data();
+
+    delete flow;
 }
 
 #endif

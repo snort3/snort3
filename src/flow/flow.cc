@@ -47,6 +47,8 @@ extern THREAD_LOCAL class FlowControl* flow_con;
 
 Flow::~Flow()
 {
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_END, nullptr, this);
+
     free_flow_data();
     delete session;
 

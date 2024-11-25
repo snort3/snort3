@@ -875,6 +875,10 @@ TEST_CASE("Stream API", "[stream_api][stream]")
     // initialization code here
     TcpNormalizerFactory::initialize();
     Flow* flow = new Flow;
+    InspectionPolicy ins;
+    set_inspection_policy(&ins);
+    NetworkPolicy net;
+    set_network_policy(&net);
 
     SECTION("set/get ignore direction")
     {

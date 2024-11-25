@@ -153,6 +153,7 @@ const BaseApi* ips_vba_data[] =
 #ifdef UNIT_TEST
 
 #include "catch/snort_catch.h"
+#include "main/policy.h"
 
 TEST_CASE("vba_data test", "[ips_vba_data]")
 {
@@ -171,12 +172,19 @@ TEST_CASE("vba_data test", "[ips_vba_data]")
 
     SECTION("null gadget")
     {
-        Flow f;
-        p.flow = &f;
+        Flow* f = new Flow();
+        InspectionPolicy ins;
+        set_inspection_policy(&ins);
+        NetworkPolicy net;
+        set_network_policy(&net);
+
+        p.flow = f;
         p.flow->gadget = nullptr;
 
         Cursor c(&p);
         REQUIRE(vba_data_opt.eval(c, &p) == IpsOption::NO_MATCH);
+
+        delete f;
     }
 }
 

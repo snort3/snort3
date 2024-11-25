@@ -257,30 +257,36 @@ public:
 
 TEST_CASE("IP Session", "[ip_session]")
 {
-    Flow lws;
+    Flow* lws = new Flow();
     Packet p(false);
     DAQ_PktHdr_t dh = {};
     p.pkth = &dh;
+    InspectionPolicy ins;
+    set_inspection_policy(&ins);
+    NetworkPolicy net;
+    set_network_policy(&net);
 
     SECTION("update_session without inspector")
     {
-        lws.ssn_server = nullptr;
+        lws->ssn_server = nullptr;
 
-        update_session(&p, &lws);
-        CHECK(lws.expire_time == 0);
+        update_session(&p, lws);
+        CHECK(lws->expire_time == 0);
     }
 
     SECTION("update_session with inspector")
     {
         StreamIpConfig* sic = new StreamIpConfig;
         sic->session_timeout = 360;
-        lws.set_default_session_timeout(sic->session_timeout, true);
+        lws->set_default_session_timeout(sic->session_timeout, true);
         StreamIp si(sic);
-        lws.ssn_server = &si;
+        lws->ssn_server = &si;
 
-        update_session(&p, &lws);
-        CHECK(lws.expire_time == 360);
-        lws.ssn_server = nullptr;
+        update_session(&p, lws);
+        CHECK(lws->expire_time == 360);
+        lws->ssn_server = nullptr;
     }
+
+    delete lws;
 }
 #endif
