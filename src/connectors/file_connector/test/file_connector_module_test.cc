@@ -83,23 +83,15 @@ TEST(file_connector_module, test)
     module.end("file_connector", 1, nullptr);
     module.end("file_connector", 0, nullptr);
 
-    FileConnectorConfig::FileConnectorConfigSet* config_set = module.get_and_clear_config();
+    ConnectorConfig::ConfigSet config_set = module.get_and_clear_config();
 
-    CHECK(nullptr != config_set);
+    CHECK(1 == config_set.size());
 
-    CHECK(1 == config_set->size());
-
-    FileConnectorConfig config = *(config_set->front());
+    const FileConnectorConfig& config = static_cast<const FileConnectorConfig&>(*config_set.front());
     CHECK("rx" == config.name);
     CHECK("rx" == config.connector_name);
     CHECK(Connector::CONN_RECEIVE == config.direction);
     CHECK(true == config.text_format);
-
-    for ( auto conf : *config_set )
-        delete conf;
-
-    config_set->clear();
-    delete config_set;
 }
 
 int main(int argc, char** argv)

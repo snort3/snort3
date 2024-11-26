@@ -23,17 +23,19 @@
 #include <sys/time.h>
 #include <vector>
 
+#include "framework/connector.h"
 #include "sfip/sf_ip.h"
 
 #include "extractor_enums.h"
-#include "extractor_writer.h"
 
 class ExtractorLogger
 {
 public:
-    static ExtractorLogger* make_logger(FormatType, OutputType);
+    static ExtractorLogger* make_logger(FormatType, const std::string&);
 
-    ExtractorLogger() = default;
+    ExtractorLogger(snort::Connector* conn) : output_conn(conn)
+    { }
+
     ExtractorLogger(const ExtractorLogger&) = delete;
     ExtractorLogger& operator=(const ExtractorLogger&) = delete;
     ExtractorLogger(ExtractorLogger&&) = delete;
@@ -41,11 +43,9 @@ public:
 
     virtual bool is_strict() const
     { return false; }
-    virtual void set_fields(std::vector<const char*>& names)
-    { field_names = names; }
 
-    virtual void add_header() {}
-    virtual void add_footer() {}
+    virtual void add_header(const std::vector<const char*>&, const snort::Connector::ID&) {}
+    virtual void add_footer(const snort::Connector::ID&) {}
 
     virtual void add_field(const char*, const char*) {}
     virtual void add_field(const char*, const char*, size_t) {}
@@ -54,11 +54,15 @@ public:
     virtual void add_field(const char*, const snort::SfIp&) {}
     virtual void add_field(const char*, bool) {}
 
+    const snort::Connector::ID get_id(const char* service_name) const
+    { return output_conn->get_id(service_name); }
+
     virtual void open_record() {}
-    virtual void close_record() {}
+    virtual void close_record(const snort::Connector::ID&) {}
+    void flush() { output_conn->flush(); }
 
 protected:
-    std::vector<const char*> field_names;
+    snort::Connector* const output_conn;
 };
 
 #endif

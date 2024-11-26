@@ -21,6 +21,9 @@
 #ifndef TCP_CONNECTOR_MODULE_H
 #define TCP_CONNECTOR_MODULE_H
 
+#include <memory>
+
+#include "framework/connector.h"
 #include "framework/module.h"
 
 #include "tcp_connector_config.h"
@@ -32,13 +35,12 @@ class TcpConnectorModule : public snort::Module
 {
 public:
     TcpConnectorModule();
-    ~TcpConnectorModule() override;
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
 
-    TcpConnectorConfig::TcpConnectorConfigSet* get_and_clear_config();
+    snort::ConnectorConfig::ConfigSet get_and_clear_config();
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
@@ -49,8 +51,8 @@ public:
     { return GLOBAL; }
 
 private:
-    TcpConnectorConfig::TcpConnectorConfigSet* config_set;
-    TcpConnectorConfig* config = nullptr;
+    snort::ConnectorConfig::ConfigSet config_set;
+    std::unique_ptr<TcpConnectorConfig> config;
 };
 
 #endif

@@ -65,15 +65,7 @@ extern THREAD_LOCAL ProfileStats tcp_connector_perfstats;
 
 TcpConnectorModule::TcpConnectorModule() :
     Module(TCP_CONNECTOR_NAME, TCP_CONNECTOR_HELP, tcp_connector_params, true)
-{
-    config_set = new TcpConnectorConfig::TcpConnectorConfigSet;
-}
-
-TcpConnectorModule::~TcpConnectorModule()
-{
-    delete config;
-    delete config_set;
-}
+{ }
 
 ProfileStats* TcpConnectorModule::get_profile() const
 { return &tcp_connector_perfstats; }
@@ -116,20 +108,16 @@ bool TcpConnectorModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-// clear my working config and hand-over the compiled list to the caller
-TcpConnectorConfig::TcpConnectorConfigSet* TcpConnectorModule::get_and_clear_config()
+ConnectorConfig::ConfigSet TcpConnectorModule::get_and_clear_config()
 {
-    TcpConnectorConfig::TcpConnectorConfigSet* temp_config = config_set;
-    config = nullptr;
-    config_set = nullptr;
-    return temp_config;
+    return std::move(config_set);
 }
 
 bool TcpConnectorModule::begin(const char*, int, SnortConfig*)
 {
     if ( !config )
     {
-        config = new TcpConnectorConfig;
+        config = std::make_unique<TcpConnectorConfig>();
         config->direction = Connector::CONN_DUPLEX;
     }
 
@@ -147,8 +135,7 @@ bool TcpConnectorModule::end(const char*, int idx, SnortConfig*)
             return false;
         }
 
-        config_set->emplace_back(config);
-        config = nullptr;
+        config_set.emplace_back(std::move(config));
     }
 
     return true;

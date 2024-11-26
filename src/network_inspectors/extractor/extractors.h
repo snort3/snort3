@@ -26,6 +26,7 @@
 #include "detection/detection_engine.h"
 #include "flow/flow_key.h"
 #include "framework/data_bus.h"
+#include "framework/connector.h"
 #include "sfip/sf_ip.h"
 
 #include "extractor_logger.h"
@@ -69,7 +70,10 @@ public:
 
     virtual ~ExtractorEvent() {}
 
+    void tinit(ExtractorLogger*, const snort::Connector::ID*);
+
     Extractor& get_inspector() const { return inspector; }
+
     virtual std::vector<const char*> get_field_names() const;
 
     void handle(DataEvent&, Flow*) {}
@@ -108,7 +112,7 @@ protected:
     void log(const T& fields, Context... context)
     {
         for (const auto& f : fields)
-            logger.add_field(f.name, f.get(context...));
+            logger->add_field(f.name, f.get(context...));
     }
 
     void log(const std::vector<StrField>& fields, DataEvent* event, Packet* pkt, Flow* flow, bool strict)
@@ -117,9 +121,9 @@ protected:
         {
             const auto& str = f.get(event, pkt, flow);
             if (str.second > 0)
-                logger.add_field(f.name, (const char*)str.first, str.second);
+                logger->add_field(f.name, (const char*)str.first, str.second);
             else if (strict)
-                logger.add_field(f.name, "");
+                logger->add_field(f.name, "");
         }
     }
 
@@ -132,12 +136,14 @@ protected:
         return it != map.end();
     }
 
-    ExtractorEvent(Extractor& i, ExtractorLogger& l, uint32_t tid)
-        : tenant_id(tid), logger(l), inspector(i) { }
+    ExtractorEvent(Extractor& i, uint32_t tid) : tenant_id(tid), inspector(i)
+    { }
+
+    virtual void internal_tinit(const snort::Connector::ID*) = 0;
 
     uint32_t tenant_id;
-    ExtractorLogger& logger;
     Extractor& inspector;
+    static THREAD_LOCAL ExtractorLogger* logger;
 
     std::vector<NtsField> nts_fields;
     std::vector<SipField> sip_fields;

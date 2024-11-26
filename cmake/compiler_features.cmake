@@ -1,5 +1,5 @@
 set ( _SAVE_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} )
-set ( CMAKE_REQUIRED_FLAGS "-std=c++14 -fPIC -shared -Wl,-undefined,dynamic_lookup" )
+set ( CMAKE_REQUIRED_FLAGS "-std=c++17 -fPIC -shared -Wl,-undefined,dynamic_lookup" )
 
 unset ( HAVE_EXTERN_GNU_TLS )
 check_cxx_source_compiles (

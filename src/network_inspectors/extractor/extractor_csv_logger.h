@@ -23,20 +23,17 @@
 #include "framework/value.h"
 
 #include "extractor_logger.h"
-#include "extractor_writer.h"
 
 class CsvExtractorLogger : public ExtractorLogger
 {
 public:
-    CsvExtractorLogger(OutputType o_type)
-        : writer(ExtractorWriter::make_writer(o_type)) {}
-
-    ~CsvExtractorLogger() override;
+    CsvExtractorLogger(snort::Connector* conn) : ExtractorLogger(conn)
+    { }
 
     virtual bool is_strict() const override
     { return true; }
 
-    void add_header() override;
+    void add_header(const std::vector<const char*>& field_names, const snort::Connector::ID&) override;
     void add_field(const char*, const char*) override;
     void add_field(const char*, const char*, size_t) override;
     void add_field(const char*, uint64_t) override;
@@ -44,10 +41,10 @@ public:
     void add_field(const char*, const snort::SfIp&) override;
     void add_field(const char*, bool) override;
     void open_record() override;
-    void close_record() override;
+    void close_record(const snort::Connector::ID&) override;
 
 private:
-    ExtractorWriter* const writer;
+    std::string buffer;
 };
 
 #endif

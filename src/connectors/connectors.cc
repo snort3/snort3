@@ -29,10 +29,12 @@ using namespace snort;
 
 extern const BaseApi* file_connector[];
 extern const BaseApi* tcp_connector[];
+extern const BaseApi* std_connector[];
 
 void load_connectors()
 {
     PluginManager::load_plugins(file_connector);
     PluginManager::load_plugins(tcp_connector);
+    PluginManager::load_plugins(std_connector);
 }
 

@@ -26,16 +26,12 @@
 #include "helpers/json_stream.h"
 
 #include "extractor_logger.h"
-#include "extractor_writer.h"
 
 class JsonExtractorLogger : public ExtractorLogger
 {
 public:
-    JsonExtractorLogger(OutputType o_type)
-        : writer(ExtractorWriter::make_writer(o_type)), oss(), js(oss) {}
-
-    ~JsonExtractorLogger() override
-    { delete writer; }
+    JsonExtractorLogger(snort::Connector* conn) : ExtractorLogger(conn), oss(), js(oss)
+    { }
 
     void add_field(const char*, const char*) override;
     void add_field(const char*, const char*, size_t) override;
@@ -44,10 +40,9 @@ public:
     void add_field(const char*, const snort::SfIp&) override;
     void add_field(const char*, bool) override;
     void open_record() override;
-    void close_record() override;
+    void close_record(const snort::Connector::ID&) override;
 
 private:
-    ExtractorWriter* const writer;
     std::ostringstream oss;
     snort::JsonStream js;
 

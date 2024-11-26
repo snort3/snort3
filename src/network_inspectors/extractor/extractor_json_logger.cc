@@ -34,13 +34,16 @@ void JsonExtractorLogger::open_record()
     js.open();
 }
 
-void JsonExtractorLogger::close_record()
+void JsonExtractorLogger::close_record(const snort::Connector::ID& service_id)
 {
     js.close();
 
-    writer->lock();
-    writer->write(oss.str().c_str());
-    writer->unlock();
+    // FIXIT-L: we're removing last character(\n) due to a limitation of
+    // Json Stream configuration
+    assert(oss.str()[oss.str().size() - 1] == '\n');
+
+    output_conn->transmit_message(snort::ConnectorMsg(
+        (const uint8_t*)oss.str().c_str(), oss.str().size() - 1, false), service_id);
 }
 
 void JsonExtractorLogger::add_field(const char* f, const char* v)

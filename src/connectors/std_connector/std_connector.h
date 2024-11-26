@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2015-2024 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2024-2024 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -16,53 +16,67 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// file_connector.h author Ed Borgoyn <eborgoyn@cisco.com>
+// std_connector.h author Vitalii Horbatov <vhorbato@cisco.com>
 
-#ifndef FILE_CONNECTOR_H
-#define FILE_CONNECTOR_H
-
-#include <fstream>
+#ifndef STD_CONNECTOR_H
+#define STD_CONNECTOR_H
 
 #include "framework/connector.h"
+#include "framework/module.h"
 
-#include "file_connector_config.h"
+#define S_NAME "std_connector"
+#define S_HELP "implement the stdout/stdin based connector"
 
-#define FILE_FORMAT_VERSION (1)
+struct TextLog;
 
 //-------------------------------------------------------------------------
-// class stuff
+// module stuff
 //-------------------------------------------------------------------------
 
-class __attribute__((__packed__)) FileConnectorMsgHdr
+class StdConnectorModule : public snort::Module
 {
 public:
-    FileConnectorMsgHdr(uint32_t length)
-    { version = FILE_FORMAT_VERSION; connector_msg_length = length; }
+    StdConnectorModule();
 
-    uint16_t version;
-    uint32_t connector_msg_length;
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
+
+    snort::ConnectorConfig::ConfigSet get_and_clear_config();
+
+    const PegInfo* get_pegs() const override;
+    PegCount* get_counts() const override;
+
+    snort::ProfileStats* get_profile() const override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
+
+private:
+    snort::ConnectorConfig::ConfigSet config_set;
+    std::unique_ptr<snort::ConnectorConfig> config;
 };
 
-class FileConnector : public snort::Connector
+//-------------------------------------------------------------------------
+// connector stuff
+//-------------------------------------------------------------------------
+
+class StdConnector : public snort::Connector
 {
 public:
-    FileConnector(const FileConnectorConfig& conf) : Connector(conf), cfg(conf) {}
+    StdConnector(const snort::ConnectorConfig& conf);
+    ~StdConnector() override;
 
     bool transmit_message(const snort::ConnectorMsg&, const ID& = null) override;
     bool transmit_message(const snort::ConnectorMsg&&, const ID& = null) override;
+    bool flush() override;
 
     snort::ConnectorMsg receive_message(bool) override;
 
-    bool flush() override
-    { file.flush(); return file.good(); }
-
-    std::fstream file;
-
 private:
     bool internal_transmit_message(const snort::ConnectorMsg&);
-    snort::ConnectorMsg receive_message_binary();
 
-    const FileConnectorConfig& cfg;
+    TextLog* extr_std_log;
 };
 
 #endif

@@ -47,21 +47,14 @@ public:
     uint16_t connector_msg_length;
 };
 
-class TcpConnectorCommon : public snort::ConnectorCommon
-{
-public:
-    TcpConnectorCommon(TcpConnectorConfig::TcpConnectorConfigSet*);
-    ~TcpConnectorCommon();
-};
-
 class TcpConnector : public snort::Connector
 {
 public:
     TcpConnector(const TcpConnectorConfig&, int sock_fd);
     ~TcpConnector() override;
 
-    bool transmit_message(const snort::ConnectorMsg&) override;
-    bool transmit_message(const snort::ConnectorMsg&&) override;
+    bool transmit_message(const snort::ConnectorMsg&, const ID& = null) override;
+    bool transmit_message(const snort::ConnectorMsg&&, const ID& = null) override;
 
     snort::ConnectorMsg receive_message(bool) override;
 

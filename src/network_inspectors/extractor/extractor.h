@@ -50,7 +50,7 @@ public:
 struct ExtractorConfig
 {
     FormatType formatting = FormatType::CSV;
-    OutputType output = OutputType::STD;
+    std::string output_conn;
     std::vector<ServiceConfig> protocols;
 };
 
@@ -64,6 +64,8 @@ struct ExtractorStats
 {
     PegCount total_event;
 };
+
+class ExtractorReloadSwapper;
 
 extern THREAD_LOCAL ExtractorStats extractor_stats;
 extern THREAD_LOCAL snort::ProfileStats extractor_perf_stats;
@@ -106,12 +108,21 @@ public:
     Extractor(ExtractorModule*);
     ~Extractor() override;
 
+    bool configure(snort::SnortConfig*) override;
+
     void show(const snort::SnortConfig*) const override;
+
+    void tinit() override;
+    void tterm() override;
+    void install_reload_handler(snort::SnortConfig*) override;
 
 private:
     std::vector<ExtractorService*> services;
     FormatType format;
-    OutputType output;
+    std::string output_conn;
+    static THREAD_LOCAL ExtractorLogger* logger;
+
+    friend class ExtractorReloadSwapper;
 };
 
 #endif

@@ -24,6 +24,8 @@
 #include <string>
 #include <vector>
 
+#include "framework/connector.h"
+
 #include "extractor_enums.h"
 #include "extractor_logger.h"
 
@@ -41,7 +43,7 @@ struct ServiceBlueprint
 class ExtractorService
 {
 public:
-    static ExtractorService* make_service(Extractor&, const ServiceConfig&, FormatType, OutputType);
+    static ExtractorService* make_service(Extractor&, const ServiceConfig&);
 
     ExtractorService() = delete;
     ExtractorService(const ExtractorService&) = delete;
@@ -50,13 +52,20 @@ public:
     virtual ~ExtractorService();
 
     void show(std::string&) const;
+    void tinit(ExtractorLogger* logger);
+    void tterm();
+
     uint32_t get_tenant() const { return tenant_id; }
     const std::vector<std::string>& get_events() const { return events; }
     const std::vector<std::string>& get_fields() const { return fields; }
 
 protected:
     ExtractorService(uint32_t tenant, const std::vector<std::string>& fields, const std::vector<std::string>& events,
-        const ServiceBlueprint& srv_bp, ServiceType, FormatType, OutputType, Extractor&);
+        const ServiceBlueprint& srv_bp, ServiceType, Extractor& ins);
+
+    virtual const snort::Connector::ID& internal_tinit() = 0;
+    virtual const snort::Connector::ID& get_log_id() = 0;
+
     void add_events(const std::vector<std::string>& vals);
     void add_fields(const std::vector<std::string>& vals);
     bool find_event(const std::string&) const;
@@ -68,9 +77,9 @@ protected:
     std::vector<std::string> fields;
     std::vector<std::string> events;
 
-    ExtractorLogger* logger = nullptr;
     Extractor& inspector;
     std::vector<ExtractorEvent*> handlers;
+    static THREAD_LOCAL ExtractorLogger* logger;
 
     const ServiceBlueprint& sbp;
     const ServiceType type;
@@ -80,20 +89,28 @@ class HttpExtractorService : public ExtractorService
 {
 public:
     HttpExtractorService(uint32_t tenant, const std::vector<std::string>& fields,
-        const std::vector<std::string>& events, ServiceType, FormatType, OutputType, Extractor&);
+        const std::vector<std::string>& events, ServiceType, Extractor&);
 
 private:
+    const snort::Connector::ID& internal_tinit() override;
+    const snort::Connector::ID& get_log_id() override;
+
     static ServiceBlueprint blueprint;
+    static THREAD_LOCAL snort::Connector::ID log_id;
 };
 
 class FtpExtractorService : public ExtractorService
 {
 public:
     FtpExtractorService(uint32_t tenant, const std::vector<std::string>& fields,
-        const std::vector<std::string>& events, ServiceType, FormatType, OutputType, Extractor&);
+        const std::vector<std::string>& events, ServiceType, Extractor&);
 
 private:
+    const snort::Connector::ID& internal_tinit() override;
+    const snort::Connector::ID& get_log_id() override;
+
     static ServiceBlueprint blueprint;
+    static THREAD_LOCAL snort::Connector::ID log_id;
 };
 
 #endif

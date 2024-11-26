@@ -51,6 +51,7 @@
 #include "main/policy.h"
 #include "main/process.h"
 #include "managers/action_manager.h"
+#include "managers/connector_manager.h"
 #include "managers/event_manager.h"
 #include "managers/inspector_manager.h"
 #include "managers/ips_manager.h"
@@ -1059,6 +1060,7 @@ void SnortConfig::cleanup_fatal_error()
         EventManager::release_plugins();
         IpsManager::release_plugins();
         InspectorManager::release_plugins();
+        ConnectorManager::release_plugins();
         host_cache.term();
     }
 #endif

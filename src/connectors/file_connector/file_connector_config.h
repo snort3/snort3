@@ -34,8 +34,6 @@ public:
 
     bool text_format;
     std::string name;
-
-    typedef std::vector<FileConnectorConfig*> FileConnectorConfigSet;
 };
 
 #endif

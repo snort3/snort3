@@ -30,7 +30,7 @@ public:
     using SubGetFn = const Field& (*) (const DataEvent*, const Packet*, const Flow*);
     using SubField = DataField<const Field&, const DataEvent*, const Packet*, const Flow*>;
 
-    HttpExtractor(Extractor&, ExtractorLogger&, uint32_t tenant, const std::vector<std::string>& fields);
+    HttpExtractor(Extractor&, uint32_t tenant, const std::vector<std::string>& fields);
 
     std::vector<const char*> get_field_names() const override;
     void handle(DataEvent&, Flow*);
@@ -38,7 +38,10 @@ public:
 private:
     using Eot = Handler<HttpExtractor>;
 
+    void internal_tinit(const snort::Connector::ID*) override;
+
     std::vector<SubField> sub_fields;
+    static THREAD_LOCAL const snort::Connector::ID* log_id;
 };
 
 #endif

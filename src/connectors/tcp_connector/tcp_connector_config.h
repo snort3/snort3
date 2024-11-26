@@ -38,8 +38,6 @@ public:
     std::string address;
     Setup setup = {};
     bool async_receive;
-
-    typedef std::vector<TcpConnectorConfig*> TcpConnectorConfigSet;
 };
 
 #endif

@@ -41,9 +41,9 @@ class DuplexConnector : public Connector
 public:
     DuplexConnector() : Connector(duplex_conf) { }
 
-    bool transmit_message(const ConnectorMsg&) override
+    bool transmit_message(const ConnectorMsg&, const Connector::ID&) override
     { return true; }
-    bool transmit_message(const ConnectorMsg&&) override
+    bool transmit_message(const ConnectorMsg&&, const Connector::ID&) override
     { return true; }
     ConnectorMsg receive_message(bool) override
     {
@@ -61,9 +61,9 @@ class ReceiveConnector : public Connector
 public:
     ReceiveConnector() : Connector(receive_conf) { }
 
-    bool transmit_message(const ConnectorMsg&) override
+    bool transmit_message(const ConnectorMsg&, const Connector::ID&) override
     { return false; }
-    bool transmit_message(const ConnectorMsg&&) override
+    bool transmit_message(const ConnectorMsg&&, const Connector::ID&) override
     { return false; }
     ConnectorMsg receive_message(bool) override
     {
@@ -81,9 +81,9 @@ class TransmitConnector : public Connector
 public:
     TransmitConnector() : Connector(transmit_conf) { }
 
-    bool transmit_message(const ConnectorMsg&) override
+    bool transmit_message(const ConnectorMsg&, const Connector::ID&) override
     { return true; }
-    bool transmit_message(const ConnectorMsg&&) override
+    bool transmit_message(const ConnectorMsg&&, const Connector::ID&) override
     { return true; }
     ConnectorMsg receive_message(bool) override
     { return ConnectorMsg(); }

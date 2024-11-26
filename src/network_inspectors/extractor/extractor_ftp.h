@@ -29,12 +29,16 @@ class FtpExtractorFlowData;
 class FtpRequestExtractor : public ExtractorEvent
 {
 public:
-    FtpRequestExtractor(Extractor&, ExtractorLogger&, uint32_t tenant, const std::vector<std::string>& fields);
+    FtpRequestExtractor(Extractor&, uint32_t tenant, const std::vector<std::string>& fields);
 
     void handle(DataEvent&, Flow*);
 
 private:
     using Req = Handler<FtpRequestExtractor>;
+
+    void internal_tinit(const snort::Connector::ID*) override;
+
+    static THREAD_LOCAL const snort::Connector::ID* log_id;
 };
 
 class FtpResponseExtractor : public ExtractorEvent
@@ -43,7 +47,7 @@ public:
     using SubGetFn = int8_t (*) (const DataEvent*, const Packet*, const Flow*);
     using SubField = DataField<int8_t, const DataEvent*, const Packet*, const Flow*>;
 
-    FtpResponseExtractor(Extractor&, ExtractorLogger&, uint32_t tenant, const std::vector<std::string>& fields);
+    FtpResponseExtractor(Extractor&, uint32_t tenant, const std::vector<std::string>& fields);
 
     std::vector<const char*> get_field_names() const override;
     void handle(DataEvent&, Flow*);
@@ -51,7 +55,10 @@ public:
 private:
     using Resp = Handler<FtpResponseExtractor>;
 
+    void internal_tinit(const snort::Connector::ID*) override;
+
     std::vector<SubField> sub_fields;
+    static THREAD_LOCAL const snort::Connector::ID* log_id;
 };
 
 class FtpExtractor : public ExtractorEvent
@@ -66,7 +73,7 @@ public:
     using FdSubGetFn = int8_t (*) (const FtpExtractorFlowData&);
     using FdSubField = DataField<int8_t, const FtpExtractorFlowData&>;
 
-    FtpExtractor(Extractor&, ExtractorLogger&, uint32_t tenant, const std::vector<std::string>& fields);
+    FtpExtractor(Extractor&, uint32_t tenant, const std::vector<std::string>& fields);
 
     std::vector<const char*> get_field_names() const override;
     void dump(const FtpExtractorFlowData&);
@@ -86,10 +93,13 @@ private:
         FtpExtractor& owner;
     };
 
+    void internal_tinit(const snort::Connector::ID*) override;
+
     std::vector<FdBufField> fd_buf_fields;
     std::vector<FdSipField> fd_sip_fields;
     std::vector<FdNumField> fd_num_fields;
     std::vector<FdSubField> fd_sub_fields;
+    static THREAD_LOCAL const snort::Connector::ID* log_id;
 };
 
 #endif

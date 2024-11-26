@@ -185,6 +185,7 @@ add_executable( snort
     $<TARGET_OBJECTS:sfip>
     $<TARGET_OBJECTS:sfrt>
     $<TARGET_OBJECTS:side_channel>
+    $<TARGET_OBJECTS:std_connector>
     $<TARGET_OBJECTS:stream>
     $<TARGET_OBJECTS:stream_base>
     $<TARGET_OBJECTS:stream_ip>

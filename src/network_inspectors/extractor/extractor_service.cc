@@ -46,22 +46,39 @@ std::vector<std::string> ExtractorService::common_fields =
     "pkt_num"
 };
 
+THREAD_LOCAL ExtractorLogger* ExtractorService::logger = nullptr;
+
 ExtractorService::ExtractorService(uint32_t tenant, const std::vector<std::string>& srv_fields,
     const std::vector<std::string>& srv_events, const ServiceBlueprint& srv_bp, ServiceType s_type,
-    FormatType f_type, OutputType o_type, Extractor& ins) : tenant_id(tenant), inspector(ins), sbp(srv_bp), type(s_type)
+    Extractor& ins) : tenant_id(tenant), inspector(ins), sbp(srv_bp), type(s_type)
 {
     add_fields(srv_fields);
     add_events(srv_events);
-    logger = ExtractorLogger::make_logger(f_type, o_type);
 }
 
 ExtractorService::~ExtractorService()
 {
     for (auto h : handlers)
         delete h;
-
-    delete logger;
 }
+
+void ExtractorService::tinit(ExtractorLogger* new_logger)
+{
+    assert(new_logger);
+
+    logger = new_logger;
+
+    const Connector::ID& service_id = internal_tinit();
+
+    for (auto handler : handlers)
+    {
+        handler->tinit(logger, &service_id);
+        logger->add_header(handler->get_field_names(), service_id);
+    }
+}
+
+void ExtractorService::tterm()
+{ logger->add_footer(get_log_id()); }
 
 void ExtractorService::add_events(const std::vector<std::string>& vals)
 {
@@ -85,8 +102,7 @@ void ExtractorService::add_fields(const std::vector<std::string>& vals)
     }
 }
 
-ExtractorService* ExtractorService::make_service(Extractor& ins, const ServiceConfig& cfg,
-    FormatType f_type, OutputType o_type)
+ExtractorService* ExtractorService::make_service(Extractor& ins, const ServiceConfig& cfg)
 {
     if (cfg.on_events.empty())
     {
@@ -99,11 +115,11 @@ ExtractorService* ExtractorService::make_service(Extractor& ins, const ServiceCo
     switch (cfg.service)
     {
     case ServiceType::HTTP:
-        srv = new HttpExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, f_type, o_type, ins);
+        srv = new HttpExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, ins);
         break;
 
     case ServiceType::FTP:
-        srv = new FtpExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, f_type, o_type, ins);
+        srv = new FtpExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, ins);
         break;
 
     case ServiceType::UNDEFINED: // fallthrough
@@ -180,29 +196,27 @@ ServiceBlueprint HttpExtractorService::blueprint =
     },
 };
 
-HttpExtractorService::HttpExtractorService(uint32_t tenant, const std::vector<std::string>& srv_fields,
-    const std::vector<std::string>& srv_events, ServiceType s_type, FormatType f_type, OutputType o_type, Extractor& ins)
-    : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, f_type, o_type, ins)
-{
-    if (!logger)
-        return;
+THREAD_LOCAL Connector::ID HttpExtractorService::log_id;
 
+HttpExtractorService::HttpExtractorService(uint32_t tenant, const std::vector<std::string>& srv_fields,
+    const std::vector<std::string>& srv_events, ServiceType s_type, Extractor& ins)
+    : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, ins)
+{
     for (const auto& event : get_events())
     {
-        ExtractorEvent* eh;
-
         if (!strcmp("eot", event.c_str()))
-            eh = new HttpExtractor(ins, *logger, tenant_id, get_fields());
+            handlers.push_back(new HttpExtractor(ins, tenant_id, get_fields()));
 
         else
             continue;
-
-        auto names = eh->get_field_names();
-        logger->set_fields(names);
-        logger->add_header();
-        handlers.push_back(eh);
     }
 }
+
+const snort::Connector::ID& HttpExtractorService::internal_tinit()
+{ return log_id = logger->get_id(type.c_str()); }
+
+const snort::Connector::ID& HttpExtractorService::get_log_id()
+{ return log_id; }
 
 //-------------------------------------------------------------------------
 //  FtpExtractorService
@@ -231,35 +245,30 @@ ServiceBlueprint FtpExtractorService::blueprint =
     },
 };
 
-FtpExtractorService::FtpExtractorService(uint32_t tenant, const std::vector<std::string>& srv_fields,
-    const std::vector<std::string>& srv_events, ServiceType s_type, FormatType f_type, OutputType o_type, Extractor& ins)
-    : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, f_type, o_type, ins)
-{
-    if (!logger)
-        return;
+THREAD_LOCAL Connector::ID FtpExtractorService::log_id;
 
+FtpExtractorService::FtpExtractorService(uint32_t tenant, const std::vector<std::string>& srv_fields,
+    const std::vector<std::string>& srv_events, ServiceType s_type, Extractor& ins)
+    : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, ins)
+{
     for (const auto& event : get_events())
     {
-        ExtractorEvent* eh;
-
         if (!strcmp("request", event.c_str()))
-            eh = new FtpRequestExtractor(ins, *logger, tenant_id, get_fields());
-
+            handlers.push_back(new FtpRequestExtractor(ins, tenant_id, get_fields()));
         else if (!strcmp("response", event.c_str()))
-            eh = new FtpResponseExtractor(ins, *logger, tenant_id, get_fields());
-
+            handlers.push_back(new FtpResponseExtractor(ins, tenant_id, get_fields()));
         else if (!strcmp("eot", event.c_str()))
-            eh = new FtpExtractor(ins, *logger, tenant_id, get_fields());
-
+            handlers.push_back(new FtpExtractor(ins, tenant_id, get_fields()));
         else
             continue;
-
-        auto names = eh->get_field_names();
-        logger->set_fields(names);
-        logger->add_header();
-        handlers.push_back(eh);
     }
 }
+
+const snort::Connector::ID& FtpExtractorService::internal_tinit()
+{ return log_id = logger->get_id(type.c_str()); }
+
+const snort::Connector::ID& FtpExtractorService::get_log_id()
+{ return log_id; }
 
 //-------------------------------------------------------------------------
 //  Unit Tests

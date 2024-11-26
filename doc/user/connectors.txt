@@ -18,11 +18,13 @@ element for client module configuration.  The 'direction' element may have a
 default value, for instance TcpConnector is 'duplex'.
 
 
-There are currently two implementations of Connectors:
+Currently there are the following implementations of the Connector:
 
 * TcpConnector - Exchange messages over a tcp channel.
 
 * FileConnector - Write messages to files and read messages from files.
+
+* StdConnector - Exchange messages over a standard input/output.
 
 
 ===== TcpConnector
@@ -96,4 +98,31 @@ An example segment of FileConnector configuration:
             name = 'HA'
         },
     }
+
+
+===== StdConnector
+
+StdConnector is an implementation of a Connector that has the capability to
+read from the standard input and write to the standard output. Its principal
+purpose is testing.
+
+All messages transmitted through the stdout are automatically appended with a new
+line. Therefore, it is expected that each message read from the stdin will also be
+separated by a newline.
+
+The std_connector module automatically sets-up three default connectors on startup:
+
+* `stdout`: the default transmit connector
+* `stdin`: the default receive connector
+* `stdio`: the default duplex connector.
+
+An example segment of a duplex StdConnector configuration:
+
+std_connector =
+{
+    {
+        connector = 'std_in_out',
+        direction = 'duplex'
+    }
+}
 

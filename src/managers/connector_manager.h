@@ -24,10 +24,10 @@
 
 #include <string>
 
+#include "framework/connector.h"
+
 namespace snort
 {
-class Connector;
-struct ConnectorApi;
 class Module;
 struct SnortConfig;
 }
@@ -42,6 +42,7 @@ public:
     static void release_plugins();
 
     static void instantiate(const snort::ConnectorApi*, snort::Module*, snort::SnortConfig*);
+    static snort::Connector::Direction is_instantiated(const std::string& name);
 
     static void thread_init();
     static void thread_reinit();

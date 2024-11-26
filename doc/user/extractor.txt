@@ -9,7 +9,8 @@ The module's configuration consists of two parts:
 
 * global parameters
   ** `formatting` - log record format
-  ** `output` - where to write logs
+  ** `connector` - Connector object through which logs will be sent. See Connectors page
+     for more details.
 * protocol-targeted parameters bind the targeted service and events with
   filters and a set of fields to log
   ** `service` - protocol name
@@ -24,7 +25,7 @@ things it allows tenants to get independent data logging configurations.
     extractor =
     {
         formatting = 'csv',
-        output = 'stdout',
+        connector = 'stdout',
 
         protocols =
         {
@@ -88,10 +89,12 @@ inspection) would print some FTP logs to standard output in CSV format.
 
 FTP sessions with basic fields:
 
+    std_connector = { }
+
     extractor =
     {
         formatting = csv',
-        output = 'stdout',
+        connector = 'stdout',
         protocols =
         {
             {service = 'ftp', on_events = 'eot', fields = 'ts, command, user'}
@@ -110,10 +113,12 @@ Output:
 
 Or FTP requests with the same set of fields:
 
+    std_connector = { }
+
     extractor =
     {
         formatting = 'csv',
-        output = 'stdout',
+        connector = 'stdout',
         protocols =
         {
             {service = 'ftp', on_events = 'request', fields = 'ts, command, user'}

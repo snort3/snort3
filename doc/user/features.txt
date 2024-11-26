@@ -32,6 +32,10 @@ include::byte_math.txt[]
 
 include::byte_options.txt[] 
 
+==== Connectors
+
+include::connectors.txt[]
+
 === Consolidated Config
 
 include::dump_config.txt[]
@@ -52,10 +56,6 @@ messaging subsystems.
 ==== HA
 
 include::high_availability.txt[]
-
-==== Connector
-
-include::connectors.txt[]
 
 ==== Side Channel
 

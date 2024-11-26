@@ -41,20 +41,6 @@ using namespace snort;
 THREAD_LOCAL SimpleStats tcp_connector_stats;
 THREAD_LOCAL ProfileStats tcp_connector_perfstats;
 
-TcpConnectorCommon::TcpConnectorCommon(TcpConnectorConfig::TcpConnectorConfigSet* conf)
-{
-    config_set = (ConnectorConfig::ConfigSet*)conf;
-}
-
-TcpConnectorCommon::~TcpConnectorCommon()
-{
-    for ( auto conf : *config_set )
-        delete conf;
-
-    config_set->clear();
-    delete config_set;
-}
-
 enum ReadDataOutcome { SUCCESS = 0, TRUNCATED, ERROR, CLOSED, PARTIAL, AGAIN };
 
 static ReadDataOutcome read_data(int sockfd, uint8_t *data, uint16_t length, ssize_t& read_offset)
@@ -243,10 +229,10 @@ bool TcpConnector::internal_transmit_message(const ConnectorMsg& msg)
     return true;
 }
 
-bool TcpConnector::transmit_message(const ConnectorMsg& msg)
+bool TcpConnector::transmit_message(const ConnectorMsg& msg, const ID&)
 { return internal_transmit_message(msg); }
 
-bool TcpConnector::transmit_message(const ConnectorMsg&& msg)
+bool TcpConnector::transmit_message(const ConnectorMsg&& msg, const ID&)
 { return internal_transmit_message(msg); }
 
 ConnectorMsg TcpConnector::receive_message(bool)
@@ -400,7 +386,7 @@ static TcpConnector* tcp_connector_tinit_answer(const TcpConnectorConfig& cfg, c
 // Create a per-thread object
 static Connector* tcp_connector_tinit(const ConnectorConfig& config)
 {
-    const TcpConnectorConfig& cfg = (const TcpConnectorConfig&)config;
+    const TcpConnectorConfig& cfg = static_cast<const TcpConnectorConfig&>(config);
     const auto& ports = cfg.ports;
     auto idx = 0;
 
@@ -431,16 +417,14 @@ static void tcp_connector_tterm(Connector* connector)
 static ConnectorCommon* tcp_connector_ctor(Module* m)
 {
     TcpConnectorModule* mod = (TcpConnectorModule*)m;
-    TcpConnectorCommon* tcp_connector_common = new TcpConnectorCommon(
-        mod->get_and_clear_config());
+    ConnectorCommon* tcp_connector_common = new ConnectorCommon(mod->get_and_clear_config());
 
     return tcp_connector_common;
 }
 
 static void tcp_connector_dtor(ConnectorCommon* c)
 {
-    TcpConnectorCommon* fc = (TcpConnectorCommon*)c;
-    delete fc;
+    delete c;
 }
 
 const ConnectorApi tcp_connector_api =
@@ -449,7 +433,7 @@ const ConnectorApi tcp_connector_api =
         PT_CONNECTOR,
         sizeof(ConnectorApi),
         CONNECTOR_API_VERSION,
-        1,
+        2,
         API_RESERVED,
         API_OPTIONS,
         TCP_CONNECTOR_NAME,

@@ -24,6 +24,15 @@
 #include "extractors.h"
 
 using namespace std;
+using namespace snort;
+
+THREAD_LOCAL ExtractorLogger* ExtractorEvent::logger = nullptr;
+
+void ExtractorEvent::tinit(ExtractorLogger* l, const snort::Connector::ID* service_id)
+{
+    logger = l;
+    internal_tinit(service_id);
+}
 
 vector<const char*> ExtractorEvent::get_field_names() const
 {

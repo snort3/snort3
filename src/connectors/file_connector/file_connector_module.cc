@@ -58,18 +58,22 @@ extern THREAD_LOCAL ProfileStats file_connector_perfstats;
 
 FileConnectorModule::FileConnectorModule() :
     Module(FILE_CONNECTOR_NAME, FILE_CONNECTOR_HELP, file_connector_params, true)
-{
-    config_set = new FileConnectorConfig::FileConnectorConfigSet;
-}
-
-FileConnectorModule::~FileConnectorModule()
-{
-    delete config;
-    delete config_set;
-}
+{ }
 
 ProfileStats* FileConnectorModule::get_profile() const
 { return &file_connector_perfstats; }
+
+// clear my working config and hand-over the compiled list to the caller
+ConnectorConfig::ConfigSet FileConnectorModule::get_and_clear_config()
+{ return std::move(config_set); }
+
+bool FileConnectorModule::begin(const char*, int, SnortConfig*)
+{
+    if (!config)
+        config = std::make_unique<FileConnectorConfig>();
+
+    return true;
+}
 
 bool FileConnectorModule::set(const char*, Value& v, SnortConfig*)
 {
@@ -102,31 +106,10 @@ bool FileConnectorModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-// clear my working config and hand-over the compiled list to the caller
-FileConnectorConfig::FileConnectorConfigSet* FileConnectorModule::get_and_clear_config()
-{
-    FileConnectorConfig::FileConnectorConfigSet* temp_config = config_set;
-    config = nullptr;
-    config_set = nullptr;
-    return temp_config;
-}
-
-bool FileConnectorModule::begin(const char*, int, SnortConfig*)
-{
-    if ( !config )
-    {
-        config = new FileConnectorConfig;
-    }
-    return true;
-}
-
 bool FileConnectorModule::end(const char*, int idx, SnortConfig*)
 {
     if (idx != 0)
-    {
-        config_set->emplace_back(config);
-        config = nullptr;
-    }
+        config_set.emplace_back(std::move(config));
 
     return true;
 }

@@ -26,7 +26,9 @@
 // the CONNECTOR_API_VERSION will change if anything in this file changes.
 // see also framework/base_api.h.
 
+#include <memory>
 #include <string>
+#include <variant>
 #include <vector>
 
 #include "framework/base_api.h"
@@ -35,7 +37,7 @@
 namespace snort
 {
 // this is the current version of the api
-#define CONNECTOR_API_VERSION ((BASE_API_VERSION << 16) | 2)
+#define CONNECTOR_API_VERSION ((BASE_API_VERSION << 16) | 3)
 
 //-------------------------------------------------------------------------
 // api for class
@@ -101,11 +103,16 @@ public:
         CONN_DUPLEX
     };
 
+    using ID = std::variant<const char*, int>;
+
     Connector(const ConnectorConfig& config) : config(config) { }
     virtual ~Connector() = default;
 
-    virtual bool transmit_message(const ConnectorMsg&) = 0;
-    virtual bool transmit_message(const ConnectorMsg&&) = 0;
+    virtual const ID get_id(const char*) const
+    { return null; }
+
+    virtual bool transmit_message(const ConnectorMsg&, const ID& = null) = 0;
+    virtual bool transmit_message(const ConnectorMsg&&, const ID& = null) = 0;
 
     virtual ConnectorMsg receive_message(bool block) = 0;
 
@@ -120,12 +127,13 @@ public:
 
 protected:
     const ConnectorConfig& config;
+    static constexpr ID null {nullptr};
 };
 
 class ConnectorConfig
 {
 public:
-    typedef std::vector<ConnectorConfig*> ConfigSet;
+    typedef std::vector<std::unique_ptr<ConnectorConfig>> ConfigSet;
     Connector::Direction direction;
     std::string connector_name;
 
@@ -141,7 +149,13 @@ const std::string& Connector::get_connector_name() const
 class SO_PUBLIC ConnectorCommon
 {
 public:
-    ConnectorConfig::ConfigSet* config_set;
+    ConnectorCommon(ConnectorConfig::ConfigSet&& c_s) :
+        config_set(std::move(c_s))
+    { }
+
+    virtual ~ConnectorCommon() = default;
+
+    const ConnectorConfig::ConfigSet config_set;
 };
 
 typedef ConnectorCommon* (* ConnectorNewFunc)(Module*);

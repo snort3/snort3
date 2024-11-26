@@ -21,7 +21,10 @@
 #ifndef FILE_CONNECTOR_MODULE_H
 #define FILE_CONNECTOR_MODULE_H
 
+#include "framework/connector.h"
 #include "framework/module.h"
+
+#include <memory>
 
 #include "file_connector_config.h"
 
@@ -32,13 +35,12 @@ class FileConnectorModule : public snort::Module
 {
 public:
     FileConnectorModule();
-    ~FileConnectorModule() override;
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
 
-    FileConnectorConfig::FileConnectorConfigSet* get_and_clear_config();
+    snort::ConnectorConfig::ConfigSet get_and_clear_config();
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
@@ -49,8 +51,8 @@ public:
     { return GLOBAL; }
 
 private:
-    FileConnectorConfig::FileConnectorConfigSet* config_set;
-    FileConnectorConfig* config = nullptr;
+    snort::ConnectorConfig::ConfigSet config_set;
+    std::unique_ptr<FileConnectorConfig> config;
 };
 
 #endif

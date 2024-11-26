@@ -25,20 +25,54 @@
 
 #include <cassert>
 
+#include "log/messages.h"
+#include "managers/connector_manager.h"
+
 #include "extractor_csv_logger.h"
 #include "extractor_json_logger.h"
 
-ExtractorLogger* ExtractorLogger::make_logger(FormatType f_type, OutputType o_type)
+using namespace snort;
+
+static Connector* get_connector(const std::string& conn_name)
+{
+    Connector* connector = ConnectorManager::get_connector(conn_name);
+
+    if (connector == nullptr)
+    {
+        ErrorMessage("Can't initialize extractor, unable to find Connector \"%s\"\n", conn_name.c_str());
+        abort();
+    }
+
+    switch (connector->get_connector_direction())
+    {
+    case Connector::CONN_DUPLEX:
+    case Connector::CONN_TRANSMIT:
+        return connector;
+
+    case Connector::CONN_RECEIVE:
+    case Connector::CONN_UNDEFINED:
+    default:
+        break;
+    }
+
+    return nullptr;
+}
+
+ExtractorLogger* ExtractorLogger::make_logger(FormatType f_type, const std::string& conn_name)
 {
     ExtractorLogger* logger = nullptr;
+
+    Connector* output_conn = get_connector(conn_name);
+
+    assert(output_conn);
 
     switch (f_type)
     {
     case FormatType::CSV:
-        logger = new CsvExtractorLogger(o_type);
+        logger = new CsvExtractorLogger(output_conn);
         break;
     case FormatType::JSON:
-        logger = new JsonExtractorLogger(o_type);
+        logger = new JsonExtractorLogger(output_conn);
         break;
     case FormatType::MAX: // fallthrough
     default:

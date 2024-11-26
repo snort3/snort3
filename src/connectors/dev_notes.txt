@@ -1,9 +1,17 @@
 Connectors house the collection of the plugin-type Connector.  As defined
 .../framework/connector.h, the Connector object implements a simplex
-communications channel that is in-turn used by SideChannel objects.
+communications channel that is in-turn used by SideChannel and other objects.
 
 Connectors have the standard plugin api and instantiation/destruction protocols.
 
 The file_connector writes messages to a file and reads messages from a file.
 
-Configuration entries map side channels to connector instances.
+Configuration entries map user modules to connector instances.
+
+Connector also accepts metadata for the transmit_message function, which is
+implemented using the `Connector::ID` object. The metadata can be presented
+as a string or a number. The specific Connector implements the `Connector::get_id`
+method, which should convert the input data into the form that it will work with
+in the `transmit_message`. Therefore, the user module should only call the
+`Connector::transmit_message` function with metadata obtained from the
+corresponding `Connector::get_id call`.

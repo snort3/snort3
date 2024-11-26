@@ -14,8 +14,6 @@ set( FILE_LIST
     extractor_logger.h
     extractor_service.cc
     extractor_service.h
-    extractor_writer.cc
-    extractor_writer.h
     extractors.cc
     extractors.h
 )

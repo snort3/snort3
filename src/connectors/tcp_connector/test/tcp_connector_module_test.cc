@@ -95,13 +95,11 @@ TEST(tcp_connector_module, test_call)
     CHECK(module.end("tcp_connector", 1, nullptr));
     CHECK(module.end("tcp_connector", 0, nullptr));
 
-    TcpConnectorConfig::TcpConnectorConfigSet* config_set = module.get_and_clear_config();
+    ConnectorConfig::ConfigSet config_set = module.get_and_clear_config();
 
-    CHECK(nullptr != config_set);
+    CHECK(1 == config_set.size());
 
-    CHECK(1 == config_set->size());
-
-    TcpConnectorConfig config = *(config_set->front());
+    const TcpConnectorConfig& config  = static_cast<const TcpConnectorConfig&>(*config_set.front());
     CHECK(10000 == std::stoi(config.ports[0]));
     CHECK(20000 == std::stoi(config.ports[1]));
     CHECK("127.0.0.1" == config.address);
@@ -112,13 +110,6 @@ TEST(tcp_connector_module, test_call)
     CHECK(nullptr != module.get_pegs());
     CHECK(nullptr != module.get_counts());
     CHECK(nullptr != module.get_profile());
-
-    for ( auto conf : *config_set )
-        delete conf;
-
-    config_set->clear();
-    delete config_set;
-    instance_max = 1;
 }
 
 TEST(tcp_connector_module, test_ports_count_failure)
@@ -150,23 +141,15 @@ TEST(tcp_connector_module, test_ports_count_failure)
     CHECK(module.end("tcp_connector", 1, nullptr));
     CHECK(module.end("tcp_connector", 0, nullptr));
 
-    TcpConnectorConfig::TcpConnectorConfigSet* config_set = module.get_and_clear_config();
+    ConnectorConfig::ConfigSet config_set = module.get_and_clear_config();
 
-    CHECK(nullptr != config_set);
+    CHECK(1 == config_set.size());
 
-    CHECK(1 == config_set->size());
-
-    TcpConnectorConfig config = *(config_set->front());
+    const TcpConnectorConfig& config  = static_cast<const TcpConnectorConfig&>(*config_set.front());
     CHECK(20000 == stoi(config.ports[0]));
     CHECK(config.setup == TcpConnectorConfig::Setup::ANSWER);
     CHECK("tcp-a" == config.connector_name);
     CHECK(Connector::CONN_DUPLEX == config.direction);
-
-    for ( auto conf : *config_set )
-        delete conf;
-
-    config_set->clear();
-    delete config_set;
 }
 
 TEST(tcp_connector_module, test_answer)

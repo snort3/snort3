@@ -28,7 +28,6 @@
 #include <map>
 #include <unordered_map>
 
-#include "framework/connector.h"
 #include "log/messages.h"
 #include "main/thread.h"
 #include "main/thread_config.h"
@@ -41,10 +40,11 @@ using namespace snort;
 // One ConnectorElem for each Connector within the ConnectorCommon configuration
 struct ConnectorElem
 {
-    ConnectorElem() : config(nullptr), thread_connectors(ThreadConfig::get_instance_max(), nullptr)
+    ConnectorElem(const ConnectorConfig& config) : config(config),
+        thread_connectors(ThreadConfig::get_instance_max(), nullptr)
     { }
 
-    ConnectorConfig* config;
+    const ConnectorConfig& config;
     std::vector<Connector*> thread_connectors;
 };
 
@@ -53,7 +53,7 @@ struct ConnectorCommonElem
 {
     const ConnectorApi* api;
     ConnectorCommon* connector_common;
-    std::map<std::string, ConnectorElem*> connectors;
+    std::map<std::string, ConnectorElem> connectors;
 
     ConnectorCommonElem(const ConnectorApi* p)
     {
@@ -88,9 +88,6 @@ void ConnectorManager::release_plugins()
         if ( sc.api->dtor )
             sc.api->dtor(sc.connector_common);
 
-        for ( const auto& conn : sc.connectors )
-            delete conn.second;
-
         sc.connectors.clear();
 
         if ( sc.api->pterm )
@@ -102,14 +99,16 @@ void ConnectorManager::release_plugins()
 
 Connector* ConnectorManager::get_connector(const std::string& connector_name)
 {
+    unsigned instance = get_instance_id();
+
     for ( auto& sc : s_connector_commons )
     {
-        unsigned instance = get_instance_id();
-        if ( sc.connectors.count(connector_name) > 0 )
+        auto connector_ptr = sc.connectors.find(connector_name);
+
+        if ( connector_ptr != sc.connectors.end() )
         {
-            ConnectorElem* map = sc.connectors[connector_name];
-            if ( map->thread_connectors[instance] )
-                return ( map->thread_connectors[instance] );
+            if ( connector_ptr->second.thread_connectors[instance] )
+                return ( connector_ptr->second.thread_connectors[instance] );
         }
     }
     return ( nullptr );
@@ -123,13 +122,13 @@ void ConnectorManager::thread_init()
     {
         if ( sc.api->tinit )
         {
-            for ( const auto& conn : sc.connectors )
+            for ( auto& conn : sc.connectors )
             {
-                assert(!conn.second->thread_connectors[instance]);
+                assert(!conn.second.thread_connectors[instance]);
 
-                Connector* connector = sc.api->tinit(*conn.second->config);
+                Connector* connector = sc.api->tinit(conn.second.config);
                 assert(connector);
-                conn.second->thread_connectors[instance] = std::move(connector);
+                conn.second.thread_connectors[instance] = std::move(connector);
             }
         }
     }
@@ -143,9 +142,9 @@ void ConnectorManager::thread_reinit()
     {
         for ( auto& conn : sc.connectors )
         {
-            assert(conn.second->thread_connectors[instance]);
+            assert(conn.second.thread_connectors[instance]);
 
-            conn.second->thread_connectors[instance]->reinit();
+            conn.second.thread_connectors[instance]->reinit();
         }
     }
 }
@@ -160,10 +159,10 @@ void ConnectorManager::thread_term()
         {
             for ( auto& conn : sc.connectors )
             {
-                assert(conn.second->thread_connectors[instance]);
+                assert(conn.second.thread_connectors[instance]);
 
-                sc.api->tterm(conn.second->thread_connectors[instance]);
-                conn.second->thread_connectors[instance] = nullptr;
+                sc.api->tterm(conn.second.thread_connectors[instance]);
+                conn.second.thread_connectors[instance] = nullptr;
             }
         }
     }
@@ -178,16 +177,32 @@ void ConnectorManager::instantiate(const ConnectorApi* api, Module* mod, SnortCo
     assert(connector_common);
 
     c.connector_common = connector_common;
-    ConnectorConfig::ConfigSet* config_set = connector_common->config_set;
 
     // iterate through the config_set and create the connector entries
-    for ( auto cfg : *config_set )
+    for ( auto& cfg : connector_common->config_set )
     {
-        ConnectorElem* connector_elem = new ConnectorElem;
-        connector_elem->config = &*cfg;
+        if ( is_instantiated(cfg->connector_name) != Connector::CONN_UNDEFINED )
+        {
+            ParseError("redefinition of \"%s\" connector", cfg->connector_name.c_str());
+            continue;
+        }
+
+        ConnectorElem connector_elem(*cfg);
         c.connectors.emplace(cfg->connector_name, std::move(connector_elem));
     }
 
     s_connector_commons.emplace_back(c);
 }
 
+Connector::Direction ConnectorManager::is_instantiated(const std::string& name)
+{
+    for ( auto& conn : s_connector_commons )
+    {
+        auto connector_ptr = conn.connectors.find(name);
+
+        if ( connector_ptr != conn.connectors.end() )
+            return connector_ptr->second.config.direction;
+    }
+
+    return Connector::CONN_UNDEFINED;
+}

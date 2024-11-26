@@ -154,8 +154,10 @@ static const map<string, HttpExtractor::SubGetFn> sub_getters =
     {"info_msg", get_info_msg}
 };
 
-HttpExtractor::HttpExtractor(Extractor& i, ExtractorLogger& l, uint32_t t, const vector<string>& fields)
-    : ExtractorEvent(i, l, t)
+THREAD_LOCAL const snort::Connector::ID* HttpExtractor::log_id = nullptr;
+
+HttpExtractor::HttpExtractor(Extractor& i, uint32_t t, const vector<string>& fields)
+    : ExtractorEvent(i, t)
 {
     for (const auto& f : fields)
     {
@@ -176,6 +178,9 @@ HttpExtractor::HttpExtractor(Extractor& i, ExtractorLogger& l, uint32_t t, const
     DataBus::subscribe(http_pub_key, HttpEventIds::END_OF_TRANSACTION, new Eot(*this, S_NAME));
 }
 
+void HttpExtractor::internal_tinit(const snort::Connector::ID* service_id)
+{ log_id = service_id; }
+
 template<>
 void ExtractorEvent::log<vector<HttpExtractor::SubField>, DataEvent*, Packet*, Flow*, bool>(
     const vector<HttpExtractor::SubField>& fields, DataEvent* event, Packet* pkt, Flow* flow, bool strict)
@@ -184,9 +189,9 @@ void ExtractorEvent::log<vector<HttpExtractor::SubField>, DataEvent*, Packet*, F
     {
         const auto& field = f.get(event, pkt, flow);
         if (field.length() > 0)
-            logger.add_field(f.name, (const char*)field.start(), field.length());
+            logger->add_field(f.name, (const char*)field.start(), field.length());
         else if (strict)
-            logger.add_field(f.name, "");
+            logger->add_field(f.name, "");
     }
 }
 
@@ -208,13 +213,13 @@ void HttpExtractor::handle(DataEvent& event, Flow* flow)
 
     Packet* packet = DetectionEngine::get_current_packet();
 
-    logger.open_record();
+    logger->open_record();
     log(nts_fields, &event, packet, flow);
     log(sip_fields, &event, packet, flow);
     log(num_fields, &event, packet, flow);
     log(buf_fields, &event, packet, flow);
-    log(sub_fields, &event, packet, flow, logger.is_strict());
-    logger.close_record();
+    log(sub_fields, &event, packet, flow, logger->is_strict());
+    logger->close_record(*log_id);
 }
 
 vector<const char*> HttpExtractor::get_field_names() const

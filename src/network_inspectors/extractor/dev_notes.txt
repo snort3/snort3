@@ -44,15 +44,23 @@ A log unit is a log record. It is enclosed by `ExtractorLogger::open_record` and
 `ExtractorLogger::close_record` calls. A header (or a footer) can
 be added. They prepend (append) the set of log records with meta info.
 
-`ExtractorWriter` interface defines the set of methods to printout formatted
-data.
+To printout formatted data the extractor utilizes `Connector` API, which allows
+to transmit data using different pre-configured channels. Specific connector
+is getting configured as a separate module and extractor accesses it by
+name.
 
-Additionally, `StdExtractorWriter` (a writer to standard output) implements
-synchronization between threads. But that is not required, and is done just for
-user convenience. `StdExtractorWriter` is not a main writer, nor performant.
-`ExtractorWriter` specialization may do things in asynchronous way.
+Both Logger and its Connector are allocated per thread, so no syncronization
+is required. If data channel poses multithreaded output restrictions, those
+should be handled by the Connector. `Connector` specialization may do things
+in asynchronous way and store the data for indefinite amount of time, but only
+if it was moved to it. Therefore, each logger should choose the appropriate
+method for transmitting the message.
 
-There are plans to convert `ExtractorWriter` to `Connector` type.
+`ExtractorLogger` instance is global and shared among all `ExtractorEvent`
+instances. Additionally, each `ExtractorService` has its own thread-local
+service ID object obtained from the `ExtractorLogger`. The service ID object
+is also utilized by the corresponding `ExtractorEvent` instances, although its
+lifespan is controlled by the `ExtractorService`.
 
 ==== Logging Context
 
@@ -133,7 +141,7 @@ functions, data extracting functions, formatting and writing functions.
 | 2. Data Event       | (any type)       | provides getter functions, resides in snort3/src/pub_sub/
 | 3. Extractor Event  | `char*` `uint64_t` `timeval` `SfIp` `bool` | converts any type to a fixed type
 | 4. Extractor Logger | `char*` `uint64_t` `timeval` `SfIp` `bool` | decorates a fixed type to fit formatting
-| 5. Extractor Writer | `char*` `uint64_t` | accepts basic types: a number and a text string
+| 5. Connector        | `ConnectorMsg`   | accepts an internal data type, which is an array of bytes of a given length
 |===============================================================================
 
 _Inspector layer_ focuses on performance. It means we seek a minimal overhead
@@ -179,7 +187,7 @@ Context... context)` ensure:
 Since _Extractor Logger_ interface accepts just a limited set of (basic) types,
 it should be able to decorate a data field and put it into a targeted format.
 
-_Extractor Writer_ is the final layer before data leaves Snort. It may
+_Connector_ is the final layer before data leaves Snort. It may
 implement output stream and external resource management (like, file
 rotation, socket operations), synchronization, buffering, queuing if needed.
 

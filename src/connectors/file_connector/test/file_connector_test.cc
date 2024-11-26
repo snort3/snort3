@@ -64,12 +64,10 @@ unsigned ThreadConfig::get_instance_max() { return 1; }
 
 FileConnectorModule::FileConnectorModule() :
     Module("FC", "FC Help", nullptr)
-{ config_set = nullptr; }
+{ }
 
-FileConnectorConfig::FileConnectorConfigSet* FileConnectorModule::get_and_clear_config()
-{ return new FileConnectorConfig::FileConnectorConfigSet; }
-
-FileConnectorModule::~FileConnectorModule() = default;
+ConnectorConfig::ConfigSet FileConnectorModule::get_and_clear_config()
+{ return ConnectorConfig::ConfigSet(); }
 
 ProfileStats* FileConnectorModule::get_profile() const { return nullptr; }
 

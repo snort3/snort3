@@ -36,23 +36,6 @@ using namespace snort;
 THREAD_LOCAL SimpleStats file_connector_stats;
 THREAD_LOCAL ProfileStats file_connector_perfstats;
 
-FileConnectorCommon::FileConnectorCommon(FileConnectorConfig::FileConnectorConfigSet* conf)
-{
-    config_set = (ConnectorConfig::ConfigSet*)conf;
-}
-
-FileConnectorCommon::~FileConnectorCommon()
-{
-    for ( auto conf : *config_set )
-    {
-        FileConnectorConfig* fconf = (FileConnectorConfig*)conf;
-        delete fconf;
-    }
-
-    config_set->clear();
-    delete config_set;
-}
-
 bool FileConnector::internal_transmit_message(const ConnectorMsg& msg)
 {
     if ( !msg.get_data() or msg.get_length() == 0 )
@@ -74,10 +57,10 @@ bool FileConnector::internal_transmit_message(const ConnectorMsg& msg)
     return file.good();
 }
 
-bool FileConnector::transmit_message(const ConnectorMsg& msg)
+bool FileConnector::transmit_message(const ConnectorMsg& msg, const ID&)
 { return internal_transmit_message(msg); }
 
-bool FileConnector::transmit_message(const ConnectorMsg&& msg)
+bool FileConnector::transmit_message(const ConnectorMsg&& msg, const ID&)
 { return internal_transmit_message(msg); }
 
 ConnectorMsg FileConnector::receive_message_binary()
@@ -176,7 +159,7 @@ static Connector* file_connector_tinit_receive(std::string& filename, const File
 // Create a per-thread object
 static Connector* file_connector_tinit(const ConnectorConfig& config)
 {
-    const FileConnectorConfig& fconf = (const FileConnectorConfig&)config;
+    const FileConnectorConfig& fconf = static_cast<const FileConnectorConfig&>(config);
 
     std::string filename = FILE_CONNECTOR_NAME;
     filename += "_";
@@ -202,16 +185,13 @@ static void file_connector_tterm(Connector* connector)
 static ConnectorCommon* file_connector_ctor(Module* m)
 {
     FileConnectorModule* mod = (FileConnectorModule*)m;
-    FileConnectorCommon* file_connector_common = new FileConnectorCommon(
-        mod->get_and_clear_config());
 
-    return file_connector_common;
+    return new ConnectorCommon(mod->get_and_clear_config());
 }
 
 static void file_connector_dtor(ConnectorCommon* c)
 {
-    FileConnectorCommon* fc = (FileConnectorCommon*)c;
-    delete fc;
+    delete c;
 }
 
 const ConnectorApi file_connector_api =
@@ -220,7 +200,7 @@ const ConnectorApi file_connector_api =
         PT_CONNECTOR,
         sizeof(ConnectorApi),
         CONNECTOR_API_VERSION,
-        1,
+        2,
         API_RESERVED,
         API_OPTIONS,
         FILE_CONNECTOR_NAME,

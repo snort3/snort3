@@ -75,8 +75,10 @@ static const map<string, ExtractorEvent::StrGetFn> sub_str_getters =
 };
 }
 
-FtpRequestExtractor::FtpRequestExtractor(Extractor& i, ExtractorLogger& l,
-    uint32_t t, const vector<string>& fields) : ExtractorEvent(i, l, t)
+THREAD_LOCAL const snort::Connector::ID* FtpRequestExtractor::log_id = nullptr;
+
+FtpRequestExtractor::FtpRequestExtractor(Extractor& i, uint32_t t, const vector<string>& fields) :
+    ExtractorEvent(i, t)
 {
     for (const auto& f : fields)
     {
@@ -92,6 +94,9 @@ FtpRequestExtractor::FtpRequestExtractor(Extractor& i, ExtractorLogger& l,
 
     DataBus::subscribe(ftp_pub_key, FtpEventIds::FTP_REQUEST, new Req(*this, S_NAME));
 }
+
+void FtpRequestExtractor::internal_tinit(const snort::Connector::ID* service_id)
+{ log_id = service_id; }
 
 void FtpRequestExtractor::handle(DataEvent& event, Flow* flow)
 {
@@ -111,12 +116,12 @@ void FtpRequestExtractor::handle(DataEvent& event, Flow* flow)
 
     Packet* packet = DetectionEngine::get_current_packet();
 
-    logger.open_record();
+    logger->open_record();
     log(nts_fields, &event, packet, flow);
     log(sip_fields, &event, packet, flow);
     log(num_fields, &event, packet, flow);
-    log(str_fields, &event, packet, flow, logger.is_strict());
-    logger.close_record();
+    log(str_fields, &event, packet, flow, logger->is_strict());
+    logger->close_record(*log_id);
 }
 
 static uint64_t parse_last_num(const char *str, uint16_t size)
@@ -217,8 +222,10 @@ static const map<string, FtpResponseExtractor::SubGetFn> sub_getters =
 };
 }
 
-FtpResponseExtractor::FtpResponseExtractor(Extractor& i, ExtractorLogger& l,
-    uint32_t t, const vector<string>& fields) : ExtractorEvent(i, l, t)
+THREAD_LOCAL const snort::Connector::ID* FtpResponseExtractor::log_id = nullptr;
+
+FtpResponseExtractor::FtpResponseExtractor(Extractor& i, uint32_t t, const vector<string>& fields) :
+    ExtractorEvent(i, t)
 {
     for (const auto& f : fields)
     {
@@ -241,6 +248,9 @@ FtpResponseExtractor::FtpResponseExtractor(Extractor& i, ExtractorLogger& l,
     DataBus::subscribe(ftp_pub_key, FtpEventIds::FTP_RESPONSE, new Resp(*this, S_NAME));
 }
 
+void FtpResponseExtractor::internal_tinit(const snort::Connector::ID* service_id)
+{ log_id = service_id; }
+
 template<>
 void ExtractorEvent::log<vector<FtpResponseExtractor::SubField>, DataEvent*, Packet*, Flow*, bool>(
     const vector<FtpResponseExtractor::SubField>& fields, DataEvent* event, Packet* pkt, Flow* flow, bool strict)
@@ -249,9 +259,9 @@ void ExtractorEvent::log<vector<FtpResponseExtractor::SubField>, DataEvent*, Pac
     {
         const auto mode = f.get(event, pkt, flow);
         if (mode != FTPP_XFER_NOT_SET)
-            mode == FTPP_XFER_PASSIVE ? logger.add_field(f.name, true) : logger.add_field(f.name, false);
+            mode == FTPP_XFER_PASSIVE ? logger->add_field(f.name, true) : logger->add_field(f.name, false);
         else if (strict)
-            logger.add_field(f.name, "");
+            logger->add_field(f.name, "");
     }
 }
 
@@ -273,13 +283,13 @@ void FtpResponseExtractor::handle(DataEvent& event, Flow* flow)
 
     Packet* packet = DetectionEngine::get_current_packet();
 
-    logger.open_record();
+    logger->open_record();
     log(nts_fields, &event, packet, flow);
     log(sip_fields, &event, packet, flow);
     log(num_fields, &event, packet, flow);
-    log(str_fields, &event, packet, flow, logger.is_strict());
-    log(sub_fields, &event, packet, flow, logger.is_strict());
-    logger.close_record();
+    log(str_fields, &event, packet, flow, logger->is_strict());
+    log(sub_fields, &event, packet, flow, logger->is_strict());
+    logger->close_record(*log_id);
 }
 
 vector<const char*> FtpResponseExtractor::get_field_names() const
@@ -406,8 +416,10 @@ static const map<string, FtpExtractor::FdSubGetFn> fd_sub_getters =
 };
 }
 
-FtpExtractor::FtpExtractor(Extractor& i, ExtractorLogger& l,
-    uint32_t t, const vector<string>& fields) : ExtractorEvent(i, l, t)
+THREAD_LOCAL const snort::Connector::ID* FtpExtractor::log_id = nullptr;
+
+FtpExtractor::FtpExtractor(Extractor& i, uint32_t t, const vector<string>& fields) :
+    ExtractorEvent(i, t)
 {
     for (const auto& f : fields)
     {
@@ -430,6 +442,9 @@ FtpExtractor::FtpExtractor(Extractor& i, ExtractorLogger& l,
     DataBus::subscribe(ftp_pub_key, FtpEventIds::FTP_REQUEST, new Req(*this, S_NAME));
     DataBus::subscribe(ftp_pub_key, FtpEventIds::FTP_RESPONSE, new Resp(*this, S_NAME));
 }
+
+void FtpExtractor::internal_tinit(const snort::Connector::ID* service_id)
+{ log_id = service_id; }
 
 vector<const char*> FtpExtractor::get_field_names() const
 {
@@ -473,7 +488,7 @@ void ExtractorEvent::log<vector<FtpExtractor::FdBufField>, const FtpExtractorFlo
     for (const auto& f : fields)
     {
         auto d = f.get(*fd);
-        logger.add_field(f.name, d);
+        logger->add_field(f.name, d);
     }
 }
 
@@ -484,7 +499,7 @@ void ExtractorEvent::log<vector<FtpExtractor::FdSipField>, const FtpExtractorFlo
     for (const auto& f : fields)
     {
         auto d = f.get(*fd);
-        logger.add_field(f.name, d);
+        logger->add_field(f.name, d);
     }
 }
 
@@ -495,7 +510,7 @@ void ExtractorEvent::log<vector<FtpExtractor::FdNumField>, const FtpExtractorFlo
     for (const auto& f : fields)
     {
         auto d = f.get(*fd);
-        logger.add_field(f.name, d);
+        logger->add_field(f.name, d);
     }
 }
 
@@ -507,9 +522,9 @@ void ExtractorEvent::log<vector<FtpExtractor::FdSubField>, const FtpExtractorFlo
     {
         const auto mode = f.get(*fd);
         if (mode != FTPP_XFER_NOT_SET)
-            mode == FTPP_XFER_PASSIVE ? logger.add_field(f.name, true) : logger.add_field(f.name, false);
+            mode == FTPP_XFER_PASSIVE ? logger->add_field(f.name, true) : logger->add_field(f.name, false);
         else if (strict)
-            logger.add_field(f.name, "");
+            logger->add_field(f.name, "");
     }
 }
 
@@ -539,15 +554,15 @@ void FtpExtractor::Req::handle(DataEvent& event, Flow* flow)
     else if (!fd->cmd.empty())
     {
         // log existing flow data
-        owner.logger.open_record();
+        owner.logger->open_record();
         owner.log(owner.nts_fields, &event, p, flow);
         owner.log(owner.sip_fields, &event, p, flow);
         owner.log(owner.num_fields, &event, p, flow);
         owner.log(owner.fd_buf_fields, (const FtpExtractorFlowData*)fd);
         owner.log(owner.fd_sip_fields, (const FtpExtractorFlowData*)fd);
         owner.log(owner.fd_num_fields, (const FtpExtractorFlowData*)fd);
-        owner.log(owner.fd_sub_fields, (const FtpExtractorFlowData*)fd, owner.logger.is_strict());
-        owner.logger.close_record();
+        owner.log(owner.fd_sub_fields, (const FtpExtractorFlowData*)fd, owner.logger->is_strict());
+        owner.logger->close_record(*log_id);
 
         fd->reset();
     }
@@ -629,21 +644,21 @@ void FtpExtractor::dump(const FtpExtractorFlowData& fd)
     // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
-    logger.open_record();
+    logger->open_record();
 
     for (const auto& f : nts_fields)
-        logger.add_field(f.name, fd.ts);
+        logger->add_field(f.name, fd.ts);
     for (const auto& f : sip_fields)
-        logger.add_field(f.name, "");
+        logger->add_field(f.name, "");
     for (const auto& f : num_fields)
-        logger.add_field(f.name, (uint64_t)0);
+        logger->add_field(f.name, (uint64_t)0);
 
     log(fd_buf_fields, &fd);
     log(fd_sip_fields, &fd);
     log(fd_num_fields, &fd);
-    log(fd_sub_fields, &fd, logger.is_strict());
+    log(fd_sub_fields, &fd, logger->is_strict());
 
-    logger.close_record();
+    logger->close_record(*log_id);
 }
 
 

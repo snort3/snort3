@@ -29,7 +29,9 @@
 #include "framework/inspector.h"
 #include "framework/module.h"
 #include "log/messages.h"
+#include "main/reload_tuner.h"
 #include "main/snort_config.h"
+#include "managers/connector_manager.h"
 #include "protocols/packet.h"
 
 #include "extractors.h"
@@ -40,6 +42,7 @@ using namespace snort;
 
 THREAD_LOCAL ExtractorStats extractor_stats;
 THREAD_LOCAL ProfileStats extractor_perf_stats;
+THREAD_LOCAL ExtractorLogger* Extractor::logger = nullptr;
 
 //-------------------------------------------------------------------------
 // module stuff
@@ -67,7 +70,7 @@ static const Parameter s_params[] =
     { "formatting", Parameter::PT_ENUM, "csv | json", "csv",
       "output format for extractor" },
 
-    { "output", Parameter::PT_ENUM, "stdout", "stdout",
+    { "connector", Parameter::PT_STRING, nullptr, nullptr,
       "output destination for extractor" },
 
     { "protocols", Parameter::PT_LIST, extractor_proto_params, nullptr,
@@ -132,8 +135,8 @@ bool ExtractorModule::set(const char*, Value& v, SnortConfig*)
     if (v.is("formatting"))
         extractor_config.formatting = (FormatType)(v.get_uint8());
 
-    else if (v.is("output"))
-        extractor_config.output = (OutputType)(v.get_uint8());
+    else if (v.is("connector"))
+        extractor_config.output_conn = v.get_string();
 
     else if (v.is("service"))
         service_config.service = (ServiceType)(v.get_uint8());
@@ -170,16 +173,37 @@ bool ExtractorModule::end(const char* fqn, int idx, SnortConfig*)
 // Inspector stuff
 //-------------------------------------------------------------------------
 
+class ExtractorReloadSwapper : public ReloadSwapper
+{
+public:
+    ExtractorReloadSwapper(Extractor& inspector) : inspector(inspector)
+    { }
+
+    void tswap() override
+    {
+        inspector.logger->flush();
+
+        delete inspector.logger;
+        inspector.logger = ExtractorLogger::make_logger(inspector.format, inspector.output_conn);
+
+        for (auto& s : inspector.services)
+            s->tinit(inspector.logger);
+    }
+
+private:
+    Extractor& inspector;
+};
+
 Extractor::Extractor(ExtractorModule* m)
 {
     auto& cfg = m->get_config();
 
     format = cfg.formatting;
-    output = cfg.output;
+    output_conn = cfg.output_conn;
 
     for (const auto& p : cfg.protocols)
     {
-        auto s = ExtractorService::make_service(*this, p, format, output);
+        auto s = ExtractorService::make_service(*this, p);
 
         if (s)
             services.push_back(s);
@@ -192,10 +216,24 @@ Extractor::~Extractor()
         delete s;
 }
 
+bool Extractor::configure(SnortConfig*)
+{
+    Connector::Direction mode = ConnectorManager::is_instantiated(output_conn);
+
+    if (mode != Connector::CONN_TRANSMIT and mode != Connector::CONN_DUPLEX)
+    {
+        ParseError("can't initialize extractor, cannot find Connector \"%s\" in transmit mode.\n",
+            output_conn.c_str());
+        return false;
+    }
+
+    return true;
+}
+
 void Extractor::show(const SnortConfig*) const
 {
     ConfigLogger::log_value("formatting", format.c_str());
-    ConfigLogger::log_value("output", output.c_str());
+    ConfigLogger::log_value("connector", output_conn.c_str());
 
     bool log_header = true;
     for (const auto& s : services)
@@ -211,6 +249,31 @@ void Extractor::show(const SnortConfig*) const
         ConfigLogger::log_list("", str.c_str(), "   ");
     }
 }
+
+void Extractor::tinit()
+{
+    logger = ExtractorLogger::make_logger(format, output_conn);
+
+    for (auto& s : services)
+        s->tinit(logger);
+}
+
+void Extractor::tterm()
+{
+    for (auto& s : services)
+        s->tterm();
+
+    logger->flush();
+
+    delete logger;
+    logger = nullptr;
+}
+
+void Extractor::install_reload_handler(SnortConfig* sc)
+{
+    sc->register_reload_handler(new ExtractorReloadSwapper(*this));
+}
+
 //-------------------------------------------------------------------------
 // api stuff
 //-------------------------------------------------------------------------

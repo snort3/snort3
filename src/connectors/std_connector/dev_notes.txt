@@ -1,0 +1,21 @@
+Implement a connector plugin that is capable of reading and writing
+messages from and to the standard input/output.
+
+This connector will print each message to the standard output, with
+each message appearing on a new line. If Connector::ID is supplied
+it will be prepended to the message in format _"<id>: <msg>\n"_.
+
+The std_connector can also read messages from the standard input,
+using the newline character as the delimiter.
+
+The configuration of the std_connector Connector results in the creation
+of a single ConnectorCommon object. This object is responsible for holding
+a list of all the Connectors being configured. Within the ConnectorCommon
+object, there is a vector<> that stores individual Connector config objects.
+The ConnectorManager then uses this vector<> to instantiate the desired set
+of Connectors.
+
+std_connector pre-configures 3 default connectors:
+* stdout: default transmit connector
+* stdin: default receive connector
+* stdio: default duplex connector
