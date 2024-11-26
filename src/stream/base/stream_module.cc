@@ -452,6 +452,14 @@ bool StreamReloadResourceManager::tune_resources(unsigned work_limit)
     return ( flows_to_delete ) ? false : true;
 }
 
+void StreamReloadResourceManager::report_progress()
+{
+    LogMessage("StreamReloadResourceManager[%u] flows allocated %u, max flows %u,"
+        " tuning packets %" PRIu64", tuning idle %" PRIu64"\n",
+        get_instance_id(), flow_con->get_flows_allocated(), config.flow_cache_cfg.max_flows,
+        stream_base_stats.reload_tuning_packets, stream_base_stats.reload_tuning_idle);
+}
+
 bool StreamUnloadReloadResourceManager::tinit()
 {
     unsigned max_flows = flow_con->get_flow_cache_config().max_flows;
@@ -488,6 +496,14 @@ bool StreamUnloadReloadResourceManager::tune_resources(unsigned work_limit)
         flows_to_delete -= flow_con->delete_flows(flows_to_delete);
 
     return (flows_to_delete) ? false : true;
+}
+
+void StreamUnloadReloadResourceManager::report_progress()
+{
+    LogMessage("StreamUnloadReloadResourceManager[%u] flows allocated %u,"
+        " tuning packets %" PRIu64", tuning idle %" PRIu64"\n",
+        get_instance_id(), flow_con->get_flows_allocated(),
+        stream_base_stats.reload_tuning_packets, stream_base_stats.reload_tuning_idle);
 }
 
 void StreamModuleConfig::show() const

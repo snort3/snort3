@@ -73,6 +73,9 @@ public:
         : mod_conf(mod_conf) { }
     ~FpProcReloadTuner() override = default;
 
+    const char* name() const override
+    { return "FpProcReloadTuner"; }
+
     bool tinit() override;
 
     bool tune_packet_context() override

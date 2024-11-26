@@ -40,6 +40,10 @@ class HostCacheReloadTuner : public snort::ReloadResourceTuner
 {
 public:
     explicit HostCacheReloadTuner(size_t memcap) : memcap(memcap) { }
+
+    const char* name() const override
+    { return "HostCacheReloadTuner"; }
+
     bool tinit() override
     { return host_cache.reload_resize(memcap); }
 

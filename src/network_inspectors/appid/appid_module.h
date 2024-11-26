@@ -53,6 +53,10 @@ public:
     explicit AppIdReloadTuner(size_t memcap) : memcap(memcap) { }
     ~AppIdReloadTuner() override = default;
 
+    const char* name() const override
+    {
+        return "AppIdReloadTuner";
+    }
     bool tinit() override;
     bool tune_packet_context() override
     {

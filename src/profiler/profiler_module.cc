@@ -462,6 +462,9 @@ public:
     {}
     ~ProfilerReloadTuner() override = default;
 
+    const char* name() const override
+    { return "ProfilerReloadTuner"; }
+
     bool tinit() override
     {
         RuleContext::set_enabled(enable_rule);
@@ -578,3 +581,18 @@ ProfileStats* ProfilerModule::get_profile(
     }
     return nullptr;
 }
+
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+#include <memory.h>
+
+TEST_CASE("Profiler reload tuner name", "[profiler_module]")
+{
+    ProfilerReloadTuner tuner(true, true);
+
+    REQUIRE(strcmp(tuner.name(), "ProfilerReloadTuner") == 0);
+}
+
+#endif

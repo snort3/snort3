@@ -134,9 +134,13 @@ class StreamReloadResourceManager : public snort::ReloadResourceTuner
 public:
     StreamReloadResourceManager() = default;
 
+    const char* name() const override
+    { return "StreamReloadResourceManager"; }
     bool tinit() override;
     bool tune_packet_context() override;
     bool tune_idle_context() override;
+
+    void report_progress() override;
 
     bool initialize(const StreamModuleConfig&);
 
@@ -153,6 +157,8 @@ public:
     explicit HPQReloadTuner(uint32_t packet_timeout) : held_packet_timeout(packet_timeout) { }
     ~HPQReloadTuner() override = default;
 
+    const char* name() const override
+    { return "HPQReloadTuner"; }
     bool tinit() override;
     bool tune_packet_context() override;
     bool tune_idle_context() override;
@@ -166,9 +172,12 @@ class StreamUnloadReloadResourceManager : public snort::ReloadResourceTuner
 public:
     StreamUnloadReloadResourceManager() = default;
 
+    const char* name() const override
+    { return "StreamUnloadReloadResourceManager"; }
     bool tinit() override;
     bool tune_packet_context() override;
     bool tune_idle_context() override;
+    void report_progress() override;
 
 private:
     bool tune_resources(unsigned work_limit);

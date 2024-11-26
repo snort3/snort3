@@ -51,6 +51,7 @@
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
+#include <memory.h>
 #endif
 
 using namespace snort;
@@ -708,6 +709,14 @@ TEST_CASE("RNA module", "[rna_module]")
 
         delete mod.get_config();
     }
+}
+
+TEST_CASE("Fingerprint processors tuner name", "[rna_module]")
+{
+    RnaModuleConfig mod_conf;
+    FpProcReloadTuner tuner(mod_conf);
+
+    REQUIRE(strcmp(tuner.name(), "FpProcReloadTuner") == 0);
 }
 
 #endif

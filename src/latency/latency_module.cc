@@ -182,6 +182,9 @@ public:
     {}
     ~LatencyTuner() override = default;
 
+    const char* name() const override
+    { return "LatencyTuner"; }
+
     bool tinit() override
     {
         packet_latency::set_force_enable(enable_packet);
@@ -260,3 +263,18 @@ const PegInfo* LatencyModule::get_pegs() const
 
 PegCount* LatencyModule::get_counts() const
 { return reinterpret_cast<PegCount*>(&latency_stats); }
+
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+#include <memory.h>
+
+TEST_CASE("Latency tuner name", "[latency_module]")
+{
+    LatencyTuner tuner(true, false);
+
+    REQUIRE(strcmp(tuner.name(), "LatencyTuner") == 0);
+}
+
+#endif

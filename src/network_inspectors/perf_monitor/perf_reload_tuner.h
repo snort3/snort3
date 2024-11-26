@@ -29,6 +29,9 @@ public:
     explicit PerfMonReloadTuner(size_t memcap) : memcap(memcap) { }
     ~PerfMonReloadTuner() override = default;
 
+    const char* name() const override
+        { return "PerfMonReloadTuner"; }
+
     bool tinit() override;
 
     bool tune_idle_context() override

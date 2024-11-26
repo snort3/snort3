@@ -31,12 +31,18 @@ public:
 
     virtual ~ReloadResourceTuner() = default;
 
+    // returns name of the tuner
+    virtual const char* name() const = 0;
+
     // returns true if resource tuning required, false otherwise
     virtual bool tinit() = 0;
 
     // each of these returns true if resource tuning is complete, false otherwise
     virtual bool tune_packet_context() = 0;
     virtual bool tune_idle_context() = 0;
+
+    // report progress and/or work left for the tuner
+    virtual void report_progress() {}
 
 protected:
     ReloadResourceTuner() = default;
@@ -49,6 +55,10 @@ class ReloadSwapper : public ReloadResourceTuner
 {
 public:
     virtual ~ReloadSwapper() override = default;
+
+    // returns name of the tuner
+    const char* name() const override
+    { return "ReloadSwapper"; }
 
     // each of these returns true if resource tuning is complete, false otherwise
     bool tune_packet_context() override

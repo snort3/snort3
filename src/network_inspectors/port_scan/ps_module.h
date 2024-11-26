@@ -145,6 +145,9 @@ public:
     explicit PortScanReloadTuner(size_t memcap) : memcap(memcap) { }
     ~PortScanReloadTuner() override = default;
 
+    const char* name() const override
+    { return "PortScanReloadTuner"; }
+
     bool tinit() override
     { return ps_init_hash(memcap); }
 

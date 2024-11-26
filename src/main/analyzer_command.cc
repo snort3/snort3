@@ -24,15 +24,17 @@
 #include "analyzer_command.h"
 
 #include <cassert>
+#include <sys/time.h>
 
 #include "control/control.h"
 #include "framework/module.h"
 #include "log/messages.h"
 #include "managers/module_manager.h"
+#include "packet_io/sfdaq_instance.h"
 #include "protocols/packet_manager.h"
 #include "target_based/host_attributes.h"
+#include "time/packet_time.h"
 #include "utils/stats.h"
-#include "packet_io/sfdaq_instance.h"
 
 #include "analyzer.h"
 #include "reload_tracker.h"
@@ -43,6 +45,29 @@
 #include "swapper.h"
 
 using namespace snort;
+
+static THREAD_LOCAL timeval report_time{};
+static const timeval report_period = {10, 0};
+
+static void tuner_next(ReloadResourceTuner* tuner)
+{
+    LogMessage("ReloadResourceTuner[%u] running %s\n", get_instance_id(), tuner->name());
+
+    timeval now;
+    packet_gettimeofday(&now);
+    timeradd(&now, &report_period, &report_time);
+}
+
+static void tuner_update(ReloadResourceTuner* tuner)
+{
+    timeval now;
+    packet_gettimeofday(&now);
+    if (timercmp(&now, &report_time, >))
+    {
+        timeradd(&now, &report_period, &report_time);
+        tuner->report_progress();
+    }
+}
 
 void AnalyzerCommand::log_message(ControlConn* ctrlcon, const char* format, va_list& ap)
 {
@@ -168,6 +193,7 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
 
             if ( !*ac_state )
             {
+                LogMessage("ReloadResourceTuner[%u] start\n", get_instance_id());
                 reload_tuners = new std::list<ReloadResourceTuner*>(sc->get_reload_resource_tuners());
                 std::list<ReloadResourceTuner*>::iterator rtt = reload_tuners->begin();
                 while ( rtt != reload_tuners->end() )
@@ -178,6 +204,8 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
                         rtt = reload_tuners->erase(rtt);
                 }
                 *ac_state = reload_tuners;
+                if (!reload_tuners->empty())
+                    tuner_next(reload_tuners->front());
             }
             else
                 reload_tuners = (std::list<ReloadResourceTuner*>*)*ac_state;
@@ -185,21 +213,21 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
             if ( !reload_tuners->empty() )
             {
                 auto rrt = reload_tuners->front();
-                if ( analyzer.is_idling() )
+                bool tuning_complete = analyzer.is_idling() ? rrt->tune_idle_context() : rrt->tune_packet_context();
+                if (tuning_complete)
                 {
-                    if ( rrt->tune_idle_context() )
-                        reload_tuners->pop_front();
+                    reload_tuners->pop_front();
+                    if (!reload_tuners->empty())
+                        tuner_next(reload_tuners->front());
                 }
                 else
-                {
-                    if ( rrt->tune_packet_context() )
-                        reload_tuners->pop_front();
-                }
+                    tuner_update(rrt);
             }
 
             // check for empty again and free list instance if we are done
             if ( reload_tuners->empty() )
             {
+                LogMessage("ReloadResourceTuner[%d] complete\n", get_instance_id());
                 delete reload_tuners;
                 ps->finish(analyzer);
                 return true;

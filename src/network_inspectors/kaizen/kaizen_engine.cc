@@ -80,6 +80,9 @@ public:
     explicit KaizenReloadTuner(const string& http_param_model) : http_param_model(http_param_model) {}
     ~KaizenReloadTuner() override = default;
 
+    const char* name() const override
+    { return "KaizenReloadTuner"; }
+
     bool tinit() override
     {
         delete classifier;
@@ -233,3 +236,19 @@ const BaseApi* nin_kaizen_engine[] =
     &kaizen_engine_api.base,
     nullptr
 };
+
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+#include <memory.h>
+
+TEST_CASE("Kaizen tuner name", "[kaizen_module]")
+{
+    const string http_param_model("model");
+    KaizenReloadTuner tuner(http_param_model);
+
+    REQUIRE(strcmp(tuner.name(), "KaizenReloadTuner") == 0);
+}
+
+#endif

@@ -61,6 +61,9 @@ class HostAttributesReloadTuner : public snort::ReloadResourceTuner
 public:
     HostAttributesReloadTuner() = default;
 
+    const char* name() const override
+    { return "HostAttributesReloadTuner"; }
+
     bool tinit() override
     {
         HostAttributesManager::initialize();
