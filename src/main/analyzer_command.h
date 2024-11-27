@@ -27,6 +27,7 @@
 #include <mutex>
 
 #include "main/snort_types.h"
+#include "main/thread_config.h"
 
 class Analyzer;
 class ControlConn;
@@ -210,19 +211,22 @@ private:
 class ACShowSnortCPU : public snort::AnalyzerCommand
 {
 public:
-    explicit ACShowSnortCPU(ControlConn* conn) : AnalyzerCommand(conn)
+    explicit ACShowSnortCPU(ControlConn* conn) 
+        : AnalyzerCommand(conn), cpu_usage(snort::ThreadConfig::get_instance_max())
     { }
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "SHOW_SNORT_CPU"; }
     ~ACShowSnortCPU() override;
 
 private:
+    struct CpuUsage
+    {
+       double cpu_usage_30s;
+       double cpu_usage_120s;
+       double cpu_usage_300s;
+    };
+    std::vector<CpuUsage> cpu_usage;
     int status = DAQ_SUCCESS;
-    double cpu_usage_30s = 0.0;
-    double cpu_usage_120s = 0.0;
-    double cpu_usage_300s = 0.0;
-    int instance_num = 0;
-    std::mutex cpu_usage_mutex;
 };
 
 namespace snort

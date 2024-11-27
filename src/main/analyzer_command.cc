@@ -304,9 +304,27 @@ ACShowSnortCPU::~ACShowSnortCPU()
 {
     if (DAQ_SUCCESS == status)
     {
-        LogRespond(ctrlcon, "\nSummary \t%.1f%% \t%.1f%% \t%.1f%%\n",
-            cpu_usage_30s/instance_num, cpu_usage_120s/instance_num,
-            cpu_usage_300s/instance_num);
+        double cpu_usage_30s = 0.0;
+        double cpu_usage_120s = 0.0;
+        double cpu_usage_300s = 0.0;
+        int instance = 0;
+
+        for (const auto& cu : cpu_usage) 
+        {
+             log_message("%-3d \t%-6d \t%.1f%% \t%.1f%% \t%.1f%%\n",
+                 instance, ThreadConfig::get_instance_tid(instance), cu.cpu_usage_30s,
+                 cu.cpu_usage_120s, cu.cpu_usage_300s);
+
+             cpu_usage_30s += cu.cpu_usage_30s;
+             cpu_usage_120s += cu.cpu_usage_120s;
+             cpu_usage_300s += cu.cpu_usage_300s;
+             instance++;
+        }
+
+        if (instance)
+            log_message("\nSummary \t%.1f%% \t%.1f%% \t%.1f%%\n",
+                cpu_usage_30s/instance, cpu_usage_120s/instance,
+                cpu_usage_300s/instance);
     }
 }
 
@@ -314,40 +332,21 @@ bool ACShowSnortCPU::execute(Analyzer& analyzer, void**)
 {
     DIOCTL_GetCpuProfileData get_data = {};
 
+    SFDAQInstance* instance = get_daq_instance(analyzer);
+
+    status = instance->ioctl((DAQ_IoctlCmd)DIOCTL_GET_CPU_PROFILE_DATA,
+        (void *)(&get_data), sizeof(DIOCTL_GetCpuProfileData));
+
+    if (DAQ_SUCCESS != status)
     {
-        std::lock_guard<std::mutex> lock(cpu_usage_mutex);
-        assert(DAQ_SUCCESS == status);
-
-        SFDAQInstance* instance = get_daq_instance(analyzer);
-        ThreadConfig *thread_config = SnortConfig::get_conf()->thread_config;
-        int tid = thread_config->get_instance_tid(get_instance_id());
-
-        status = instance->ioctl(
-                     (DAQ_IoctlCmd)DIOCTL_GET_CPU_PROFILE_DATA,
-                     (void *)(&get_data),
-                     sizeof(DIOCTL_GetCpuProfileData));
-
-        if (DAQ_SUCCESS != status)
-        {
-            LogRespond(ctrlcon, "Fetching profile data failed from DAQ instance\n");
-            return true; 
-        }
-
-        double cpu_30s = static_cast<double> (get_data.cpu_usage_percent_30s);
-        double cpu_120s = static_cast<double> (get_data.cpu_usage_percent_120s);
-        double cpu_300s = static_cast<double> (get_data.cpu_usage_percent_300s);
-
-        // Print CPU usage
-        LogRespond(ctrlcon, "%-3d \t%-6d \t%.1f%% \t%.1f%% \t%.1f%%\n",
-            instance_num, tid, cpu_30s, cpu_120s, cpu_300s);
-
-        // Add CPU usage data
-        cpu_usage_30s += cpu_30s;
-        cpu_usage_120s += cpu_120s;
-        cpu_usage_300s += cpu_300s;
-        instance_num++;
-
+        LogRespond(ctrlcon, "Fetching profile data failed from DAQ instance %d\n", get_instance_id());
+        return true; 
     }
 
+    auto& stat = cpu_usage[get_instance_id()];
+    stat.cpu_usage_30s = static_cast<double>(get_data.cpu_usage_percent_30s);
+    stat.cpu_usage_120s = static_cast<double>(get_data.cpu_usage_percent_120s);
+    stat.cpu_usage_300s = static_cast<double>(get_data.cpu_usage_percent_300s); 
+ 
     return true;
 }
