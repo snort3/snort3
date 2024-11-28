@@ -47,13 +47,13 @@ ConnectorCommon* connector_common;
 Connector* connector_transmit;
 Connector* connector_receive;
 
-struct TextLog
+struct MockLog
 {
     std::string accumulated_buffer;
     std::string flushed_buffer;
 };
 
-TextLog output_buffer;
+MockLog output_buffer;
 
 namespace snort
 {
@@ -61,31 +61,34 @@ TextLog* TextLog_Init(const char*, unsigned int = 0, size_t = 0, bool = true)
 {
     output_buffer.accumulated_buffer.clear();
     output_buffer.flushed_buffer.clear();
-    return &output_buffer;
+    return (TextLog*)&output_buffer;
 }
 
 bool TextLog_Print(TextLog* const txt, const char* fmt, ...)
 {
+    MockLog* txt_mock = (MockLog*)txt;
     va_list ap;
     va_start(ap, fmt);
     char data[100];
     vsnprintf(data, 100, fmt, ap);
-    txt->accumulated_buffer.append(data);
+    txt_mock->accumulated_buffer.append(data);
     va_end(ap);
     return true;
 }
 
 bool TextLog_Flush(TextLog* const txt)
 {
-    txt->flushed_buffer.append(txt->accumulated_buffer);
-    txt->accumulated_buffer.clear();
+    MockLog* txt_mock = (MockLog*)txt;
+    txt_mock->flushed_buffer.append(txt_mock->accumulated_buffer);
+    txt_mock->accumulated_buffer.clear();
     return true;
 }
 
-void TextLog_Term(TextLog*)
+void TextLog_Term(TextLog* txt)
 {
-    output_buffer.accumulated_buffer.clear();
-    output_buffer.flushed_buffer.clear();
+    MockLog* txt_mock = (MockLog*)txt;
+    txt_mock->accumulated_buffer.clear();
+    txt_mock->flushed_buffer.clear();
 }
 
 const char* get_instance_file(std::string& file, const char* name) { file += name; return nullptr; }
