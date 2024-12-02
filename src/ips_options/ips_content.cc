@@ -695,6 +695,7 @@ ContentData* ContentModule::get_data()
 
 bool ContentModule::begin(const char*, int, SnortConfig*)
 {
+    delete cd;
     cd = new ContentData();
     return true;
 }

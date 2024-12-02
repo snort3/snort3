@@ -40,7 +40,7 @@ static THREAD_LOCAL ProfileStats lenCheckPerfStats;
 class LenOption : public IpsOption
 {
 public:
-    LenOption(const RangeCheck& c, bool r) : IpsOption(s_name), config(c), relative(r)
+    LenOption(const RangeCheck& c, bool r) : IpsOption(s_name), range(c), relative(r)
     { }
 
     uint32_t hash() const override;
@@ -55,7 +55,7 @@ public:
     { return CAT_READ; }
 
 private:
-    RangeCheck config;
+    RangeCheck range;
     bool relative;
 };
 
@@ -65,9 +65,9 @@ private:
 
 uint32_t LenOption::hash() const
 {
-    uint32_t a = config.hash();
+    uint32_t a = range.hash();
     uint32_t b = IpsOption::hash();
-    uint32_t c = 0;
+    uint32_t c = relative ? 1 : 0;
 
     mix(a,b,c);
     finalize(a,b,c);
@@ -80,7 +80,7 @@ bool LenOption::operator==(const IpsOption& ips) const
         return false;
 
     const LenOption& rhs = (const LenOption&)ips;
-    return ( config == rhs.config and relative == rhs.relative );
+    return ( range == rhs.range and relative == rhs.relative );
 }
 
 IpsOption::EvalStatus LenOption::eval(Cursor& c, Packet*)
@@ -89,7 +89,7 @@ IpsOption::EvalStatus LenOption::eval(Cursor& c, Packet*)
     RuleProfile profile(lenCheckPerfStats);
     unsigned n = relative ? c.length() : c.size();
 
-    if ( config.eval(n) )
+    if ( range.eval(n) )
         return MATCH;
 
     return NO_MATCH;
@@ -134,6 +134,8 @@ public:
 bool LenModule::begin(const char*, int, SnortConfig*)
 {
     data.init();
+    relative = false;
+
     return true;
 }
 

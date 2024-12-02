@@ -83,12 +83,8 @@ struct SdPatternConfig
     bool forced_boundary = false;
     int (* validate)(const uint8_t* buf, unsigned long long buflen) = nullptr;
 
-    inline bool operator==(const SdPatternConfig& rhs) const
-    {
-        if ( pii == rhs.pii and threshold == rhs.threshold )
-            return true;
-        return false;
-    }
+    bool operator==(const SdPatternConfig& rhs) const
+    { return pii == rhs.pii and threshold == rhs.threshold; }
 
     SdPatternConfig()
     { reset(); }
@@ -100,6 +96,7 @@ struct SdPatternConfig
         can_be_obfuscated = false;
         validate = nullptr;
         db = nullptr;
+        pmd = { };
     }
 };
 
@@ -411,7 +408,7 @@ bool SdPatternModule::begin(const char*, int, SnortConfig*)
         return false;
     }
 
-    config = SdPatternConfig();
+    config.reset();
     return true;
 }
 

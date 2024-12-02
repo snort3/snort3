@@ -60,7 +60,7 @@ struct RegexConfig
         re.clear();
         db = nullptr;
         pcre_upgrade = false;
-        pmd.flags = pmd.mpse_flags = 0;
+        pmd = { };
     }
 };
 

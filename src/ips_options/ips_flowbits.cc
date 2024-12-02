@@ -458,6 +458,7 @@ bool FlowbitsModule::begin(const char*, int, SnortConfig*)
 {
     delete fbc;
     bits.clear();
+    op = FlowBitCheck::Op::SET;
     return true;
 }
 

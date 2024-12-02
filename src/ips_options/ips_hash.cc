@@ -309,7 +309,7 @@ HashMatchData* HashModule::get_data()
 
 bool HashModule::begin(const char*, int, SnortConfig*)
 {
-    assert(!hmd);
+    delete hmd;
     hmd = new HashMatchData;
     return true;
 }
@@ -317,7 +317,10 @@ bool HashModule::begin(const char*, int, SnortConfig*)
 bool HashModule::end(const char*, int, SnortConfig*)
 {
     if ( !hmd->length )
+    {
         ParseError("%s requires length parameter", get_name());
+        return false;
+    }
 
     return true;
 }
