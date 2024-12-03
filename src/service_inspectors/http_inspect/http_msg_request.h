@@ -51,6 +51,7 @@ public:
     const Field& get_uri();
     const Field& get_uri_norm_classic();
     std::string get_aux_ip();
+    std::string get_host_string();
     HttpUri* get_http_uri() { return uri; }
     ParameterMap& get_query_params();
     ParameterMap& get_body_params();

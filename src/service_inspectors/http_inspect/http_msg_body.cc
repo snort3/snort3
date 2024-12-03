@@ -194,11 +194,11 @@ void HttpMsgBody::analyze()
         }
         else
             mime_bufs = new std::list<MimeBufs>;
-
+        
         while (ptr < section_end)
         {
             // After process_mime_data(), ptr will point to the last byte processed in the current MIME part
-            ptr = session_data->mime_state[source_id]->process_mime_data(p, ptr,
+            ptr = session_data->mime_state[source_id]->process_mime_data(p, ptr, 
                 (section_end - ptr), true, SNORT_FILE_POSITION_UNKNOWN);
             ptr++;
 
@@ -692,13 +692,19 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
     const FileDirection dir = source_id == SRC_SERVER ? FILE_DOWNLOAD : FILE_UPLOAD;
 
     uint64_t file_index = get_header(source_id)->get_file_cache_index();
-    const std::string host = get_header(source_id)->get_host_header_field();
+    // Get host from the header field.
+    std::string host = get_header(source_id)->get_host_header_field();
+    
     const uint8_t* filename_buffer = nullptr;
     uint32_t filename_length = 0;
     const uint8_t* uri_buffer = nullptr;
     uint32_t uri_length = 0;
     if (request != nullptr)
         get_file_info(dir, filename_buffer, filename_length, uri_buffer, uri_length);
+
+    // Get host from the uri.
+    if (host.empty() and request != nullptr)
+        host = request->get_host_string();
 
     bool continue_processing_file = file_flows->file_process(p, file_index, file_data.start(),
         fp_length, session_data->file_octets[source_id], dir,

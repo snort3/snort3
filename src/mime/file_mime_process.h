@@ -80,6 +80,9 @@ public:
     MailLogState* get_log_state();
     void set_mime_stats(MimeStats*);
 
+    void set_host_name(const std::string& host);
+    bool is_host_set() const;
+
     const BufferData& get_ole_buf();
     const BufferData& get_vba_inspect_buf();
 
@@ -105,6 +108,8 @@ private:
     MimeStats* mime_stats = nullptr;
     FilenameState filename_state = CONT_DISP_FILENAME_PARAM_NAME;
     std::string filename;
+    std::string host_name {""};
+    bool host_set = false;
     bool continue_inspecting_file = true;
     // This counter is not an accurate count of files; used only for creating a unique mime_file_id
     uint32_t file_counter = 0;
@@ -116,8 +121,7 @@ private:
     const int32_t uri_length;
     uint64_t get_file_cache_file_id();
     uint64_t get_multiprocessing_file_id();
-    void mime_file_process(Packet* p, const uint8_t* data, int data_size,
-        FilePosition position, bool upload);
+    void mime_file_process(Packet* p, const uint8_t* data, int data_size, FilePosition position, bool upload);
     void reset_part_state();
 
     // Individual service inspectors may have different implementations for these

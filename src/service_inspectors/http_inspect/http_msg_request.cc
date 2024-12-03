@@ -394,6 +394,17 @@ string HttpMsgRequest::get_aux_ip()
     return ip_str;
 }
 
+std::string HttpMsgRequest::get_host_string()
+{
+    if (!uri)
+        return "";
+
+    const Field& host = uri->get_host();
+    if (host.length() > STAT_EMPTY_STRING)
+        return string((const char*)host.start(), (size_t)host.length());
+    return "";
+}
+
 #ifdef REG_TEST
 
 void HttpMsgRequest::print_section(FILE* output)

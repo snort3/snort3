@@ -551,6 +551,18 @@ void HttpMsgHeader::setup_mime()
                     session_data->mime_state[source_id] = new MimeSession(p,
                         params->mime_decode_conf, &mime_conf, get_multi_file_processing_id());
 
+                // Get host from the header field.
+                if (!session_data->mime_state[source_id]->is_host_set())
+                {
+                    std::string host = get_host_header_field();
+                    // Get host from the uri.
+                    if (host.empty())
+                        host = request->get_host_string();
+
+                    session_data->mime_state[source_id]->set_host_name(host);
+                }
+
+
                 // Show file processing the Content-Type header as if it were regular data.
                 // This will enable it to find the boundary string.
                 // FIXIT-L develop a proper interface for passing the boundary string.

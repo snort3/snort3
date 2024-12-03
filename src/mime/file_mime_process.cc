@@ -914,7 +914,7 @@ void MimeSession::mime_file_process(Packet* p, const uint8_t* data, int data_siz
             const FileDirection dir = upload ? FILE_UPLOAD : FILE_DOWNLOAD;
             continue_inspecting_file = file_flows->file_process(p, get_file_cache_file_id(), data,
                 data_size, file_offset, dir, get_multiprocessing_file_id(), position, (const uint8_t*)filename.c_str(),
-                filename.length());
+                filename.length(), uri, uri_length, host_name);
         }
         else
         {
@@ -930,4 +930,18 @@ void MimeSession::mime_file_process(Packet* p, const uint8_t* data, int data_siz
             filename.clear();
         }
     }
+}
+
+void MimeSession::set_host_name(const std::string& host)
+{
+    if (host.empty())
+        return;
+    
+    host_name = host;
+    host_set = true;
+}
+
+bool MimeSession::is_host_set() const
+{
+    return host_set;
 }
