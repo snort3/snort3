@@ -59,7 +59,7 @@ enum RunFlag
     RUN_FLAG__PCAP_SHOW           = 0x00001000,
     RUN_FLAG__SHOW_FILE_CODES     = 0x00002000,
     RUN_FLAG__PAUSE               = 0x00004000,
-    RUN_FLAG__NO_PCRE             = 0x00008000,
+    RUN_FLAG__NO_PCRE2            = 0x00008000,
 
     RUN_FLAG__DUMP_RULE_STATE     = 0x00010000,
     RUN_FLAG__DUMP_RULE_DEPS      = 0x00020000,
@@ -213,13 +213,13 @@ public:
 
     //------------------------------------------------------
     // detection module stuff
-    // FIXIT-L pcre_match_limit* are interdependent
+    // FIXIT-L pcre2_match_limit* are interdependent
     // somehow a packet thread needs a much lower setting
-    long int pcre_match_limit = 1500;
-    long int pcre_match_limit_recursion = 1500;
+    long int pcre2_match_limit = 1500;
+    long int pcre2_match_limit_recursion = 1500;
 
-    int pcre_ovector_size = 0;
-    bool pcre_override = true;
+    int pcre2_ovector_size = 0;
+    bool pcre2_override = true;
 
     uint32_t run_flags = 0;
 
@@ -227,7 +227,7 @@ public:
     unsigned offload_threads = 0;    // disabled
 
     bool hyperscan_literals = false;
-    bool pcre_to_regex = false;
+    bool pcre2_to_regex = false;
 
     bool global_rule_state = false;
     bool global_default_rule_state = true;
@@ -594,8 +594,8 @@ public:
     bool alert_before_pass() const
     { return run_flags & RUN_FLAG__ALERT_BEFORE_PASS; }
 
-    bool no_pcre() const
-    { return run_flags & RUN_FLAG__NO_PCRE; }
+    bool no_pcre2() const
+    { return run_flags & RUN_FLAG__NO_PCRE2; }
 
     bool conf_error_out() const
     { return run_flags & RUN_FLAG__CONF_ERROR_OUT; }
@@ -610,11 +610,11 @@ public:
     uint8_t new_ttl() const
     { return get_network_policy()->new_ttl; }
 
-    long int get_pcre_match_limit() const
-    { return pcre_match_limit; }
+    long int get_pcre2_match_limit() const
+    { return pcre2_match_limit; }
 
-    long int get_pcre_match_limit_recursion() const
-    { return pcre_match_limit_recursion; }
+    long int get_pcre2_match_limit_recursion() const
+    { return pcre2_match_limit_recursion; }
 
     const ProfilerConfig* get_profiler() const
     { return profiler; }

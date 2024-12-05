@@ -98,21 +98,21 @@ static const Parameter detection_params[] =
     { "offload_threads", Parameter::PT_INT, "0:max32", "0",
       "maximum number of simultaneous offloads (defaults to disabled)" },
 
-    { "pcre_enable", Parameter::PT_BOOL, nullptr, "true",
-      "enable pcre pattern matching" },
+    { "pcre2_enable", Parameter::PT_BOOL, nullptr, "true",
+      "enable pcre2 pattern matching" },
 
-    { "pcre_match_limit", Parameter::PT_INT, "0:max32", "1500",
-      "limit pcre backtracking, 0 = off" },
+    { "pcre2_match_limit", Parameter::PT_INT, "0:max32", "1500",
+      "limit pcre2 backtracking, 0 = off" },
 
-    { "pcre_match_limit_recursion", Parameter::PT_INT, "0:max32", "1500",
-      "limit pcre stack consumption, 0 = off" },
+    { "pcre2_match_limit_recursion", Parameter::PT_INT, "0:max32", "1500",
+      "limit pcre2 stack consumption, 0 = off" },
 
-    { "pcre_override", Parameter::PT_BOOL, nullptr, "true",
-      "enable pcre match limit overrides when pattern matching (ie ignore /O)" },
+    { "pcre2_override", Parameter::PT_BOOL, nullptr, "true",
+      "enable pcre2 match limit overrides when pattern matching (ie ignore /O)" },
 
 #ifdef HAVE_HYPERSCAN
-    { "pcre_to_regex", Parameter::PT_BOOL, nullptr, "false",
-      "enable the use of regex instead of pcre for compatible expressions" },
+    { "pcre2_to_regex", Parameter::PT_BOOL, nullptr, "false",
+      "enable the use of regex instead of pcre2 for compatible expressions" },
 #endif
 
     { "enable_address_anomaly_checks", Parameter::PT_BOOL, nullptr, "false",
@@ -222,13 +222,13 @@ bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( v.is("offload_threads") )
         sc->offload_threads = v.get_uint32();
 
-    else if ( v.is("pcre_enable") )
-        v.update_mask(sc->run_flags, RUN_FLAG__NO_PCRE, true);
+    else if ( v.is("pcre2_enable") )
+        v.update_mask(sc->run_flags, RUN_FLAG__NO_PCRE2, true);
 
-    else if ( v.is("pcre_match_limit") )
-        sc->pcre_match_limit = v.get_uint32();
+    else if ( v.is("pcre2_match_limit") )
+        sc->pcre2_match_limit = v.get_uint32();
 
-    else if ( v.is("pcre_match_limit_recursion") )
+    else if ( v.is("pcre2_match_limit_recursion") )
     {
         // Cap the pcre recursion limit to not exceed the stack size.
         //
@@ -253,21 +253,21 @@ bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
         if (max_rec < 0)
             max_rec = 0;
 
-        sc->pcre_match_limit_recursion = v.get_uint32();
-        if (sc->pcre_match_limit_recursion > max_rec)
+        sc->pcre2_match_limit_recursion = v.get_uint32();
+        if (sc->pcre2_match_limit_recursion > max_rec)
         {
-            sc->pcre_match_limit_recursion = max_rec;
-            LogMessage("Capping pcre_match_limit_recursion to %ld, thread stack_size %ld.\n",
-                sc->pcre_match_limit_recursion, thread_stack_size);
+            sc->pcre2_match_limit_recursion = max_rec;
+            LogMessage("Capping pcre2_match_limit_recursion to %ld, thread stack_size %ld.\n",
+                sc->pcre2_match_limit_recursion, thread_stack_size);
         }
     }
 
-    else if ( v.is("pcre_override") )
-        sc->pcre_override = v.get_bool();
+    else if ( v.is("pcre2_override") )
+        sc->pcre2_override = v.get_bool();
 
 #ifdef HAVE_HYPERSCAN
-    else if ( v.is("pcre_to_regex") )
-        sc->pcre_to_regex = v.get_bool();
+    else if ( v.is("pcre2_to_regex") )
+        sc->pcre2_to_regex = v.get_bool();
 #endif
 
     else if ( v.is("enable_address_anomaly_checks") )
