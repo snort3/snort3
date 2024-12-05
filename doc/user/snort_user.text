@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.5.2.0 2024-11-18 20:48:24 EST TST
+Revision 3.6.0.0 2024-12-03 21:38:24 EST TST
 
 ---------------------------------------------------------------------
 
@@ -1074,7 +1074,7 @@ to figure out more advanced usage.
 
 Required:
 
-  * a compiler that supports the C++14 feature set
+  * a compiler that supports the C++17 feature set
   * cmake to build from source
   * daq from https://github.com/snort3/libdaq for packet IO
   * dnet from https://github.com/dugsong/libdnet.git for network
@@ -2622,6 +2622,128 @@ amount of bytes to be extracted from payload can be less than
 specified by user. This might happen when the buffer has fewer bytes
 (from the cursor position) than specified in the option.
 
+5.4.6. Connectors
+
+Connectors are a set of modules that are used to exchange
+message-oriented data among Snort threads and the external world. A
+typical use-case is HA (High Availability) message exchange.
+Connectors serve to decouple the message transport from the message
+creation/consumption. Connectors expose a common API for several
+forms of message transport.
+
+Connectors are a Snort plugin type.
+
+5.4.6.1. Connector (parent plugin class)
+
+Connectors may either be a simplex channel and perform unidirectional
+communications. Or may be duplex and perform bidirectional
+communications. The TcpConnector is duplex while the FileConnector is
+simplex.
+
+All subtypes of Connector have a direction configuration element and
+a connector element. The connector string is the key used to identify
+the element for client module configuration. The direction element
+may have a default value, for instance TcpConnector is duplex.
+
+Currently there are the following implementations of the Connector:
+
+  * TcpConnector - Exchange messages over a tcp channel.
+  * FileConnector - Write messages to files and read messages from
+    files.
+  * StdConnector - Exchange messages over a standard input/output.
+
+5.4.6.2. TcpConnector
+
+TcpConnector is a subclass of Connector and implements a DUPLEX type
+Connector, able to send and receive messages over a tcp session.
+
+TcpConnector adds a few session setup configuration elements:
+
+  * setup = call or answer - call is used to have TcpConnector
+    initiate the connection. answer is used to have TcpConnector
+    accept incoming connections.
+  * address = <addr> - used for call setup to specify the partner
+  * ports = "port port …" - used to pick a port number for call and 
+    answer modes. If the ports list contains more than one port, the
+    "per-thread" destination mode will be assumed. In this mode, each
+    thread will connect to a corresponding destination port by
+    selecting a port number from the list based on the instance_id.
+
+An example segment of TcpConnector configuration:
+
+tcp_connector =
+{
+    {
+        connector = 'tcp_1',
+        address = '127.0.0.1',
+        setup = 'call',
+        ports = "11000 11001 11002 11003",
+    },
+}
+
+5.4.6.3. FileConnector
+
+FileConnector implements a Connector that can either read from files
+or write to files. FileConnector’s are simplex and must be configured
+to be CONN_TRANSMIT or CONN_RECEIVE.
+
+FileConnector configuration adds two additional element:
+
+  * name = string - used as part of the message file name
+  * text_format = bool - FileConnector works in binary mode by
+    default, the option switches it to text mode
+
+The configured name string is used to construct the actual names as
+in:
+
+  * file_connector_NAME_transmit and file_connector_NAME_receive
+
+All messages for one Snort invocation are read and written to one
+file.
+
+In the case of a receive FileConnector, all messages are read from
+the file prior to the start of packet processing. This allows the
+messages to establish state information for all processed packets.
+
+An example segment of FileConnector configuration:
+
+file_connector =
+{
+    {
+        connector = 'file_tx_1',
+        direction = 'transmit',
+        text_format = true,
+        name = 'HA'
+    },
+    {
+        connector = 'file_rx_1',
+        direction = 'receive',
+        text_format = true,
+        name = 'HA'
+    },
+}
+
+5.4.6.4. StdConnector
+
+StdConnector is an implementation of a Connector that has the
+capability to read from the standard input and write to the standard
+output. Its principal purpose is testing.
+
+All messages transmitted through the stdout are automatically
+appended with a new line. Therefore, it is expected that each message
+read from the stdin will also be separated by a newline.
+
+The std_connector module automatically sets-up three default
+connectors on startup:
+
+  * stdout: the default transmit connector
+  * stdin: the default receive connector
+  * stdio: the default duplex connector.
+
+An example segment of a duplex StdConnector configuration:
+
+std_connector = { { connector = std_in_out, direction = duplex } }
+
 
 5.5. Consolidated Config
 
@@ -3519,107 +3641,7 @@ message content. The stream HA content is always present in the
 messages while the ancillary module content is only present when
 requested via a status change request.
 
-5.8.2. Connector
-
-Connectors are a set of modules that are used to exchange
-message-oriented data among Snort threads and the external world. A
-typical use-case is HA (High Availability) message exchange.
-Connectors serve to decouple the message transport from the message
-creation/consumption. Connectors expose a common API for several
-forms of message transport.
-
-Connectors are a Snort plugin type.
-
-5.8.2.1. Connector (parent plugin class)
-
-Connectors may either be a simplex channel and perform unidirectional
-communications. Or may be duplex and perform bidirectional
-communications. The TcpConnector is duplex while the FileConnector is
-simplex.
-
-All subtypes of Connector have a direction configuration element and
-a connector element. The connector string is the key used to identify
-the element for client module configuration. The direction element
-may have a default value, for instance TcpConnector is duplex.
-
-There are currently two implementations of Connectors:
-
-  * TcpConnector - Exchange messages over a tcp channel.
-  * FileConnector - Write messages to files and read messages from
-    files.
-
-5.8.2.2. TcpConnector
-
-TcpConnector is a subclass of Connector and implements a DUPLEX type
-Connector, able to send and receive messages over a tcp session.
-
-TcpConnector adds a few session setup configuration elements:
-
-  * setup = call or answer - call is used to have TcpConnector
-    initiate the connection. answer is used to have TcpConnector
-    accept incoming connections.
-  * address = <addr> - used for call setup to specify the partner
-  * ports = "port port …" - used to pick a port number for call and 
-    answer modes. If the ports list contains more than one port, the
-    "per-thread" destination mode will be assumed. In this mode, each
-    thread will connect to a corresponding destination port by
-    selecting a port number from the list based on the instance_id.
-
-An example segment of TcpConnector configuration:
-
-tcp_connector =
-{
-    {
-        connector = 'tcp_1',
-        address = '127.0.0.1',
-        setup = 'call',
-        ports = "11000 11001 11002 11003",
-    },
-}
-
-5.8.2.3. FileConnector
-
-FileConnector implements a Connector that can either read from files
-or write to files. FileConnector’s are simplex and must be configured
-to be CONN_TRANSMIT or CONN_RECEIVE.
-
-FileConnector configuration adds two additional element:
-
-  * name = string - used as part of the message file name
-  * text_format = bool - FileConnector works in binary mode by
-    default, the option switches it to text mode
-
-The configured name string is used to construct the actual names as
-in:
-
-  * file_connector_NAME_transmit and file_connector_NAME_receive
-
-All messages for one Snort invocation are read and written to one
-file.
-
-In the case of a receive FileConnector, all messages are read from
-the file prior to the start of packet processing. This allows the
-messages to establish state information for all processed packets.
-
-An example segment of FileConnector configuration:
-
-file_connector =
-{
-    {
-        connector = 'file_tx_1',
-        direction = 'transmit',
-        text_format = true,
-        name = 'HA'
-    },
-    {
-        connector = 'file_rx_1',
-        direction = 'receive',
-        text_format = true,
-        name = 'HA'
-    },
-}
-
-5.8.3. Side Channel
+5.8.2. Side Channel
 
 SideChannel is a Snort module that uses Connectors to implement a
 messaging infrastructure that is used to communicate between Snort
@@ -5796,7 +5818,8 @@ The module’s configuration consists of two parts:
   * global parameters
 
       + formatting - log record format
-      + output - where to write logs
+      + connector - Connector object through which logs will be sent.
+        See Connectors page for more details.
   * protocol-targeted parameters bind the targeted service and events
     with filters and a set of fields to log
 
@@ -5814,7 +5837,7 @@ configurations.
 extractor =
 {
     formatting = 'csv',
-    output = 'stdout',
+    connector = 'stdout',
 
     protocols =
     {
@@ -5884,10 +5907,12 @@ in CSV format.
 
 FTP sessions with basic fields:
 
+std_connector = { }
+
 extractor =
 {
     formatting = csv',
-    output = 'stdout',
+    connector = 'stdout',
     protocols =
     {
         {service = 'ftp', on_events = 'eot', fields = 'ts, command, user'}
@@ -5906,10 +5931,12 @@ Output:
 
 Or FTP requests with the same set of fields:
 
+std_connector = { }
+
 extractor =
 {
     formatting = 'csv',
-    output = 'stdout',
+    connector = 'stdout',
     protocols =
     {
         {service = 'ftp', on_events = 'request', fields = 'ts, command, user'}

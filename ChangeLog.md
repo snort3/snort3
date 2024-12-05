@@ -1,3 +1,18 @@
+2024-12-03: 3.6.0.0
+
+* analyzer: add logging for resource tuning progress
+* appid: adding full path to read list of lua detectors
+* build: update docs about the bump of C++ compiler supported feature set requirement
+* connectors: add std I/O connector and connector API update
+* connectors: fix cppcheck warning in std_connector test
+* extractor: update logger
+* file_api: add unit tests for fileinfo methods
+* flow: publish flow end event
+* http_inspect, mime: add hostname and url for http with mime
+* http_inspect: remove semicolon http_param delimiter
+* ips_options: update module::begin method and reset 'relative' flag
+* main: remove mutex from snort command to show snort cpu
+
 2024-11-18: 3.5.2.0
 
 * decompress: handle ZIP central directory

@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.5.2.0 2024-11-18 20:48:07 EST TST
+Revision 3.6.0.0 2024-12-03 21:38:11 EST TST
 
 ---------------------------------------------------------------------
 
@@ -85,7 +85,8 @@ Table of Contents
 4. Connector Modules
 
     4.1. file_connector
-    4.2. tcp_connector
+    4.2. std_connector
+    4.3. tcp_connector
 
 5. Inspector Modules
 
@@ -2578,7 +2579,31 @@ Peg counts:
   * file_connector.messages: total messages (sum)
 
 
-4.2. tcp_connector
+4.2. std_connector
+
+--------------
+
+Help: implement the stdout/stdin based connector
+
+Type: connector
+
+Usage: global
+
+Configuration:
+
+  * string std_connector[].connector: connector name
+  * enum std_connector[].direction: usage { receive | transmit | 
+    duplex }
+
+Peg counts:
+
+  * std_connector.messages_received: total number of messages
+    received (sum)
+  * std_connector.messages_transmitted: total number of messages
+    transmitted (sum)
+
+
+4.3. tcp_connector
 
 --------------
 
@@ -3562,8 +3587,7 @@ Configuration:
 
   * enum extractor.formatting = csv: output format for extractor { 
     csv | json }
-  * enum extractor.output = stdout: output destination for extractor
-    { stdout }
+  * string extractor.connector: output destination for extractor
   * enum extractor.protocols[].service: service to extract from { 
     http | ftp }
   * int extractor.protocols[].tenant_id = 0: tenant_id of target
@@ -9827,10 +9851,9 @@ libraries see the Getting Started section of the manual.
     ordering incoming events { priority|content_length }
   * bool event_queue.process_all_events = false: process just first
     action group or all action groups
+  * string extractor.connector: output destination for extractor
   * enum extractor.formatting = csv: output format for extractor { 
     csv | json }
-  * enum extractor.output = stdout: output destination for extractor
-    { stdout }
   * string extractor.protocols[].fields: specify fields to log
   * string extractor.protocols[].on_events: specify events to log
   * enum extractor.protocols[].service: service to extract from { 
@@ -11305,6 +11328,9 @@ libraries see the Getting Started section of the manual.
   * implied ssl_version.!tls1.2: check for records that are not
     tls1.2
   * implied ssl_version.tls1.2: check for tls1.2
+  * string std_connector[].connector: connector name
+  * enum std_connector[].direction: usage { receive | transmit | 
+    duplex }
   * bool stream.allowlist_cache.enable = false: enable allowlist
     cache
   * int stream.file_cache.idle_timeout = 180: maximum inactive time
@@ -12591,6 +12617,10 @@ libraries see the Getting Started section of the manual.
   * ssl.server_key_exchange: total server key exchanges (sum)
   * ssl.sessions_ignored: total sessions ignore (sum)
   * ssl.unrecognized_records: total unrecognized records (sum)
+  * std_connector.messages_received: total number of messages
+    received (sum)
+  * std_connector.messages_transmitted: total number of messages
+    transmitted (sum)
   * stream.allowlist_flows: number of flows moved to the allow list
     (now)
   * stream.allowlist_memcap_prunes: number of allowlist flows pruned
@@ -16668,6 +16698,8 @@ and are not applicable elsewhere.
   * ssl (inspector): ssl inspection
   * ssl_state (ips_option): detection option for ssl state
   * ssl_version (ips_option): detection option for ssl version
+  * std_connector (connector): implement the stdout/stdin based
+    connector
   * stream (inspector): common flow tracking
   * stream_file (inspector): stream inspector for file flow tracking
     and processing
@@ -16771,6 +16803,8 @@ and are not applicable elsewhere.
   * codec::wlan: support for wireless local area network protocol
     (DLT 105)
   * connector::file_connector: implement the file based connector
+  * connector::std_connector: implement the stdout/stdin based
+    connector
   * connector::tcp_connector: implement the tcp stream connector
   * inspector::appid: application and service identification
   * inspector::appid_listener: log selected published data to
