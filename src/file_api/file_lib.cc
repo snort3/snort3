@@ -510,6 +510,50 @@ void FileContext::check_policy(Flow* flow, FileDirection dir, FilePolicyBase* po
     policy->policy_check(flow, this);
 }
 
+void FileInfo::reset()
+{
+    verdict = FILE_VERDICT_UNKNOWN;
+    processing_complete = false;
+    set_file_size(0);
+    reset_sha();
+    if (is_file_name_set())
+        unset_file_name();
+}
+
+void FileInfo::set_re_eval()
+{
+    re_eval = true;
+}
+
+bool FileInfo::has_to_re_eval()
+{
+    return re_eval;
+}
+
+void FileInfo::unset_re_eval()
+{
+    re_eval = false;
+}
+
+void FileContext::remove_segments()
+{
+    if (file_segments == nullptr)
+        return;
+    delete file_segments;
+    file_segments = nullptr;
+}
+
+void FileContext::reset()
+{
+    verdict = FILE_VERDICT_UNKNOWN;
+    processing_complete = false;
+    set_file_size(0);
+    reset_sha();
+    if (is_file_name_set())
+        unset_file_name();
+    remove_segments();
+}
+
 /*
  * Return:
  *    true: continue processing/log/block this file
@@ -1010,7 +1054,7 @@ TEST_CASE ("unset_file_name", "[file_info]")
     FI_TEST info;
     info.set_file_name("test", 4);
 
-    CHECK ( true == info.is_file_name_set());
+    CHECK (true == info.is_file_name_set());
 
     info.unset_file_name();
     CHECK (false == info.is_file_name_set());
@@ -1023,5 +1067,28 @@ TEST_CASE ("get_url", "[file_info]")
     CHECK (info.get_url() == std::string("/var/tmp/test.pdf"));
 }
 
+TEST_CASE ("reset", "[file_info]")
+{
+    FI_TEST info;
+    info.verdict = FILE_VERDICT_BLOCK;
+    info.processing_complete = true;
+    info.set_file_name("test", 4);
+
+    info.reset();
+
+    CHECK (false == info.processing_complete);
+    CHECK (FILE_VERDICT_UNKNOWN == info.verdict);
+    CHECK (false == info.is_file_name_set());
+}
+
+TEST_CASE ("re_eval", "[file_info]")
+{
+    FI_TEST info;
+    CHECK (false == info.has_to_re_eval());
+    info.set_re_eval();
+    CHECK (true == info.has_to_re_eval());
+    info.unset_re_eval();
+    CHECK (false == info.has_to_re_eval());
+}
 #endif
 

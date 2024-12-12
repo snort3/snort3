@@ -350,6 +350,10 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
             "file_process:context missing, returning \n");
         return false;
     }
+
+    if (context->has_to_re_eval() and context->processing_complete)
+        context->reset();
+
     context->set_weak_file_name((const char*)fname, name_size);
     context->set_weak_url((const char*)url, url_size);
     context->set_host(host_name.c_str(), host_name.size());

@@ -94,6 +94,7 @@ public:
     void set_file_data(UserFileDataBase* fd);
     UserFileDataBase* get_file_data() const;
     void copy(const FileInfo& other, bool clear_data = true);
+    void reset();
     // Preserve the file in memory until it is released
     // The file reserved will be returned and it will be detached from file context/session
     FileCaptureState reserve_file(FileCapture*& dest);
@@ -105,6 +106,14 @@ public:
     bool processing_complete = false;
     std::mutex user_file_data_mutex;
     struct timeval pending_expire_time = {0, 0};
+
+    void set_re_eval();
+    bool has_to_re_eval();
+    void unset_re_eval();
+
+    // Flag which indicates that the file requires re-eval even though it was fully processed before.
+    // If "true" and the policy was checked - has to be set to "false" again.
+    bool re_eval = false;
 
 protected:
     std::string file_name;
@@ -164,6 +173,10 @@ public:
     bool is_cacheable() { return cacheable; }
     bool segments_queued() { return (file_segments != nullptr); }
 
+    // Configuration functions
+    void remove_segments();
+    void reset();
+    
 private:
     uint64_t processed_bytes = 0;
     void* file_type_context;
