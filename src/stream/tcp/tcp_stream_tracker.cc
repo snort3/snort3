@@ -368,27 +368,20 @@ void TcpStreamTracker::update_flush_policy(StreamSplitter* splitter)
             oaitw_reassembler = reassembler;
         }
 
-        reassembler = tcp_ignore_reassembler;
-        reassembler->init(!client_tracker, splitter);
+        reassembler = TcpReassemblerIgnore::get_instance(!client_tracker);
     }
     else if ( flush_policy == STREAM_FLPOLICY_ON_DATA )
     {
-        if ( reassembler )
-        {
-            // update from IDS -> IPS is not supported
-            assert( reassembler->get_flush_policy() != STREAM_FLPOLICY_ON_ACK );
-        }
+        // update from IDS -> IPS is not supported
+        assert( !reassembler or reassembler->get_flush_policy() != STREAM_FLPOLICY_ON_ACK );
 
         reassembler = new TcpReassemblerIps(*this, seglist);
         reassembler->init(!client_tracker, splitter);
     }
     else
     {
-        if ( reassembler )
-        {
-            // update from IPS -> IDS is not supported
-            assert( reassembler->get_flush_policy() != STREAM_FLPOLICY_ON_DATA );
-        }
+        // update from IPS -> IDS is not supported
+        assert( !reassembler or reassembler->get_flush_policy() != STREAM_FLPOLICY_ON_DATA );
 
         reassembler = new TcpReassemblerIds(*this, seglist);
         reassembler->init(!client_tracker, splitter);
@@ -999,6 +992,8 @@ void TcpStreamTracker::thread_init()
 {
     assert(!hpq);
     hpq = new HeldPacketQueue();
+
+    TcpReassembler::tinit();
 }
 
 void TcpStreamTracker::thread_term()
@@ -1006,4 +1001,6 @@ void TcpStreamTracker::thread_term()
     assert(hpq->empty());
     delete hpq;
     hpq = nullptr;
+
+    TcpReassembler::tterm();
 }

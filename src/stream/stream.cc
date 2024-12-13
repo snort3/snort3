@@ -874,6 +874,7 @@ TEST_CASE("Stream API", "[stream_api][stream]")
 {
     // initialization code here
     TcpNormalizerFactory::initialize();
+    TcpReassembler::tinit();
     Flow* flow = new Flow;
     InspectionPolicy ins;
     set_inspection_policy(&ins);
@@ -989,6 +990,7 @@ TEST_CASE("Stream API", "[stream_api][stream]")
 
     delete flow;
     TcpNormalizerFactory::term();
+    TcpReassembler::tterm();
 }
 
 #endif

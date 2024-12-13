@@ -33,11 +33,11 @@
 class TcpSegmentDescriptor;
 class TcpSegmentNode;
 
-class TcpReassemblerIds : public TcpReassembler
+class TcpReassemblerIds : public TcpReassemblerBase
 {
 public:
     TcpReassemblerIds(TcpStreamTracker& trk, TcpReassemblySegments& sl)
-        : TcpReassembler(trk, sl)
+        : TcpReassemblerBase(trk, sl)
     { }
 
     ~TcpReassemblerIds() override

@@ -43,7 +43,7 @@
 
 using namespace snort;
 
-void TcpReassembler::init(bool server, StreamSplitter* ss)
+void TcpReassemblerBase::init(bool server, StreamSplitter* ss)
 {
     splitter = ss;
     paf.paf_setup(ss);
@@ -66,20 +66,20 @@ void TcpReassembler::init(bool server, StreamSplitter* ss)
     }
 }
 
-bool TcpReassembler::fin_no_gap(const TcpSegmentNode& tsn)
+bool TcpReassemblerBase::fin_no_gap(const TcpSegmentNode& tsn)
 {
     return tracker.fin_seq_status >= FIN_WITH_SEQ_SEEN
         and SEQ_GEQ(tsn.next_seq(), tracker.get_fin_i_seq());
 }
 
-bool TcpReassembler::fin_acked_no_gap(const TcpSegmentNode& tsn)
+bool TcpReassemblerBase::fin_acked_no_gap(const TcpSegmentNode& tsn)
 {
     return tracker.fin_seq_status >= FIN_WITH_SEQ_ACKED
         and SEQ_GEQ(tsn.next_seq(), tracker.get_fin_i_seq());
 }
 
 // If we are skipping seglist hole, update tsn so that we can purge
-void TcpReassembler::update_skipped_bytes(uint32_t remaining_bytes)
+void TcpReassemblerBase::update_skipped_bytes(uint32_t remaining_bytes)
 {
     TcpSegmentNode* tsn;
 
@@ -98,7 +98,7 @@ void TcpReassembler::update_skipped_bytes(uint32_t remaining_bytes)
     }
 }
 
-void TcpReassembler::purge_to_seq(uint32_t flush_seq)
+void TcpReassemblerBase::purge_to_seq(uint32_t flush_seq)
 {
     seglist.purge_flushed_segments(flush_seq);
 
@@ -116,7 +116,7 @@ void TcpReassembler::purge_to_seq(uint32_t flush_seq)
 // part of a segment
 // * FIXIT-L need flag to mark any reassembled packets that have a gap
 //   (if we reassemble such)
-void TcpReassembler::purge_flushed_ackd()
+void TcpReassemblerBase::purge_flushed_ackd()
 {
     if ( !seglist.head )
         return;
@@ -138,7 +138,7 @@ void TcpReassembler::purge_flushed_ackd()
         purge_to_seq(seq);
 }
 
-void TcpReassembler::show_rebuilt_packet(Packet* pkt)
+void TcpReassemblerBase::show_rebuilt_packet(Packet* pkt)
 {
     if ( seglist.session->tcp_config->flags & STREAM_CONFIG_SHOW_PACKETS )
     {
@@ -149,7 +149,7 @@ void TcpReassembler::show_rebuilt_packet(Packet* pkt)
     }
 }
 
-int TcpReassembler::flush_data_segments(uint32_t flush_len, Packet* pdu)
+int TcpReassemblerBase::flush_data_segments(uint32_t flush_len, Packet* pdu)
 {
     uint32_t flags = PKT_PDU_HEAD;
 
@@ -213,7 +213,7 @@ int TcpReassembler::flush_data_segments(uint32_t flush_len, Packet* pdu)
 }
 
 // FIXIT-L consolidate encode format, update, and this into new function?
-void TcpReassembler::prep_pdu(Flow* flow, Packet* p, uint32_t pkt_flags, Packet* pdu)
+void TcpReassemblerBase::prep_pdu(Flow* flow, Packet* p, uint32_t pkt_flags, Packet* pdu)
 {
     pdu->ptrs.set_pkt_type(PktType::PDU);
     pdu->proto_bits |= PROTO_BIT__TCP;
@@ -260,7 +260,7 @@ void TcpReassembler::prep_pdu(Flow* flow, Packet* p, uint32_t pkt_flags, Packet*
     }
 }
 
-Packet* TcpReassembler::initialize_pdu(Packet* p, uint32_t pkt_flags, struct timeval tv)
+Packet* TcpReassemblerBase::initialize_pdu(Packet* p, uint32_t pkt_flags, struct timeval tv)
 {
     // partial flushes already set the pdu for http_inspect splitter processing
     Packet* pdu = p->was_set() ? p : DetectionEngine::set_next_packet(p);
@@ -290,7 +290,7 @@ Packet* TcpReassembler::initialize_pdu(Packet* p, uint32_t pkt_flags, struct tim
 }
 
 // flush a seglist up to the given point, generate a pseudopacket, and fire it thru the system.
-int TcpReassembler::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
+int TcpReassemblerBase::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
 {
     assert( p && seglist.cur_rseg);
 
@@ -344,7 +344,7 @@ int TcpReassembler::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_flags)
     return flushed_bytes;
 }
 
-int TcpReassembler::do_zero_byte_flush(Packet* p, uint32_t pkt_flags)
+int TcpReassemblerBase::do_zero_byte_flush(Packet* p, uint32_t pkt_flags)
 {
     unsigned bytes_copied = 0;
 
@@ -371,7 +371,7 @@ int TcpReassembler::do_zero_byte_flush(Packet* p, uint32_t pkt_flags)
 // get the footprint for the current seglist, the difference
 // between our base sequence and the last ack'd sequence we received
 
-uint32_t TcpReassembler::get_q_footprint()
+uint32_t TcpReassemblerBase::get_q_footprint()
 {
     int32_t footprint = 0;
     int32_t sequenced = 0;
@@ -389,7 +389,7 @@ uint32_t TcpReassembler::get_q_footprint()
 // boosted by tracking sequenced bytes as seglist is updated
 // to avoid the while loop, etc. below.
 
-uint32_t TcpReassembler::get_q_sequenced()
+uint32_t TcpReassemblerBase::get_q_sequenced()
 {
     TcpSegmentNode* tsn = seglist.cur_rseg;
 
@@ -423,7 +423,7 @@ uint32_t TcpReassembler::get_q_sequenced()
     return len;
 }
 
-bool TcpReassembler::is_q_sequenced()
+bool TcpReassemblerBase::is_q_sequenced()
 {
     TcpSegmentNode* tsn = seglist.cur_rseg;
 
@@ -449,7 +449,7 @@ bool TcpReassembler::is_q_sequenced()
     return (tsn->unscanned() != 0);
 }
 
-void TcpReassembler::final_flush(Packet* p, uint32_t dir)
+void TcpReassemblerBase::final_flush(Packet* p, uint32_t dir)
 {
     tracker.set_tf_flags(TF_FORCE_FLUSH);
 
@@ -504,7 +504,7 @@ static Packet* get_packet(Flow* flow, uint32_t flags, bool c2s)
     return p;
 }
 
-bool TcpReassembler::splitter_finish(snort::Flow* flow)
+bool TcpReassemblerBase::splitter_finish(snort::Flow* flow)
 {
     if (!splitter)
         return true;
@@ -519,7 +519,7 @@ bool TcpReassembler::splitter_finish(snort::Flow* flow)
     return false;
 }
 
-void TcpReassembler::finish_and_final_flush(Flow* flow, bool clear, Packet* p)
+void TcpReassemblerBase::finish_and_final_flush(Flow* flow, bool clear, Packet* p)
 {
     bool pending = clear and paf.paf_initialized() and splitter_finish(flow);
 
@@ -528,7 +528,7 @@ void TcpReassembler::finish_and_final_flush(Flow* flow, bool clear, Packet* p)
 }
 
 // Call this only from outside reassembly.
-void TcpReassembler::flush_queued_segments(Flow* flow, bool clear, Packet* p)
+void TcpReassemblerBase::flush_queued_segments(Flow* flow, bool clear, Packet* p)
 {
     if ( p )
     {
@@ -551,7 +551,7 @@ void TcpReassembler::flush_queued_segments(Flow* flow, bool clear, Packet* p)
 }
 
 
-void TcpReassembler::check_first_segment_hole()
+void TcpReassemblerBase::check_first_segment_hole()
 {
     if ( SEQ_LT(seglist.seglist_base_seq, seglist.head->start_seq()) )
     {
@@ -561,14 +561,14 @@ void TcpReassembler::check_first_segment_hole()
     }
 }
 
-uint32_t TcpReassembler::perform_partial_flush(Flow* flow, Packet*& p)
+uint32_t TcpReassemblerBase::perform_partial_flush(Flow* flow, Packet*& p)
 {
     p = get_packet(flow, packet_dir, server_side);
     return perform_partial_flush(p);
 }
 
 // No error checking here, so the caller must ensure that p, p->flow are not null.
-uint32_t TcpReassembler::perform_partial_flush(Packet* p)
+uint32_t TcpReassemblerBase::perform_partial_flush(Packet* p)
 {
     uint32_t flushed = 0;
     if ( splitter->init_partial_flush(p->flow) )
@@ -590,7 +590,7 @@ uint32_t TcpReassembler::perform_partial_flush(Packet* p)
 // we are on a FIN, the data has been scanned, it has no gaps,
 // but somehow we are waiting for more data - do final flush here
 // FIXIT-M this convoluted expression needs some refactoring to simplify
-bool TcpReassembler::final_flush_on_fin(int32_t flush_amt, Packet *p, FinSeqNumStatus fin_status)
+bool TcpReassemblerBase::final_flush_on_fin(int32_t flush_amt, Packet *p, FinSeqNumStatus fin_status)
 {
     return tracker.fin_seq_status >= fin_status
         && -1 <= flush_amt && flush_amt <= 0
@@ -598,7 +598,7 @@ bool TcpReassembler::final_flush_on_fin(int32_t flush_amt, Packet *p, FinSeqNumS
         && !p->flow->searching_for_service();
 }
 
-bool TcpReassembler::asymmetric_flow_flushed(uint32_t flushed, snort::Packet *p)
+bool TcpReassemblerBase::asymmetric_flow_flushed(uint32_t flushed, snort::Packet *p)
 {
     bool asymmetric = flushed && seglist.seg_count && !p->flow->two_way_traffic() && !p->ptrs.tcph->is_syn();
     if ( asymmetric )
@@ -611,27 +611,48 @@ bool TcpReassembler::asymmetric_flow_flushed(uint32_t flushed, snort::Packet *p)
     return asymmetric;
 }
 
-// define a tracker to assign to the Ignore Flush Policy reassembler and
-// create an instance of the Ignore reassembler.  When reassembly is ignored
-// all operations are no-ops so a single instance is created and shared by
-// all TCP sessions with a flush policy of ignore.  Minimal initialization
-// is performed as no state or processing is done by this reassembler.
-// The ignore tracker reassembler member variable is set to the ignore
-// reassembler as it is referenced in the dtor of the tracker.  The ignore
-// tracker is never assigned or used by a Flow, it's only purpose is to
-// be passed into the ignore reassembler (along with the tracker's seglist)
-TcpStreamTracker ignore_tracker(false);
-TcpReassemblerIgnore* tcp_ignore_reassembler = new TcpReassemblerIgnore();
+// Allocate an instance of the ignore reassembler for the client side trackers
+// and the server side trackers for each packet thread. The ignore reassemblers
+// do not maintain any state so are shared by all TCP sessions of a packet thread.
+// The server and client instances are created during thread initialization and
+// deleted at thread termination.
+static THREAD_LOCAL TcpReassemblerIgnore* ignore_reassembler_server = nullptr;
+static THREAD_LOCAL TcpReassemblerIgnore* ignore_reassembler_client = nullptr;
 
-TcpReassemblerIgnore::TcpReassemblerIgnore()
-    : TcpReassembler(ignore_tracker, ignore_tracker.seglist)
+void TcpReassembler::tinit()
 {
-    tracker.reassembler = this;
+    ignore_reassembler_server = new TcpReassemblerIgnore(true);
+    ignore_reassembler_client = new TcpReassemblerIgnore(false);
 }
 
+void TcpReassembler::tterm()
+{
+    delete ignore_reassembler_server;
+    ignore_reassembler_server = nullptr;
+
+    delete ignore_reassembler_client;
+    ignore_reassembler_client = nullptr;
+}
+
+TcpReassemblerIgnore::TcpReassemblerIgnore(bool server)
+{
+    server_side = server;
+    packet_dir = server ? PKT_FROM_CLIENT : PKT_FROM_SERVER;
+}
+
+// FIXIT-M The caller should allocate the Packet when one is needed for a partial flush
 uint32_t TcpReassemblerIgnore::perform_partial_flush(snort::Flow* flow, snort::Packet*& p)
 {
     p = get_packet(flow, packet_dir, server_side);
     return 0;
 }
+
+TcpReassemblerIgnore* TcpReassemblerIgnore::get_instance(bool server_tracker)
+{
+    if ( server_tracker )
+        return ignore_reassembler_server;
+    else
+        return ignore_reassembler_client;
+}
+
 

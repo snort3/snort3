@@ -34,11 +34,11 @@
 class TcpSegmentDescriptor;
 class TcpSegmentNode;
 
-class TcpReassemblerIps : public TcpReassembler
+class TcpReassemblerIps : public TcpReassemblerBase
 {
 public:
     TcpReassemblerIps(TcpStreamTracker& trk, TcpReassemblySegments& sl)
-        : TcpReassembler(trk, sl)
+        : TcpReassemblerBase(trk, sl)
     { }
 
     ~TcpReassemblerIps() override

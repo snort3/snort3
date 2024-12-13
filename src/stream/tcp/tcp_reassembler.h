@@ -52,31 +52,123 @@ public:
         FINAL_FLUSH_OK = -1
     };
 
-    TcpReassembler(TcpStreamTracker& trk, TcpReassemblySegments& seglist)
-        : tracker(trk), seglist(seglist)
+    TcpReassembler()
     { }
 
     virtual ~TcpReassembler()
     { }
 
-    virtual void init(bool server, snort::StreamSplitter* ss);
+    virtual void init(bool server, snort::StreamSplitter* ss) = 0;
     virtual int eval_flush_policy_on_ack(snort::Packet*) = 0;
     virtual int eval_flush_policy_on_data(snort::Packet*) = 0;
     virtual int eval_asymmetric_flush(snort::Packet*) = 0;
     virtual int flush_stream(snort::Packet*, uint32_t dir, bool final_flush = false) = 0;
-    virtual void flush_queued_segments(snort::Flow* flow, bool clear, snort::Packet* = nullptr);
-    virtual void finish_and_final_flush(snort::Flow* flow, bool clear, snort::Packet*);
-    virtual uint32_t perform_partial_flush(snort::Flow*, snort::Packet*&);
-    virtual void purge_flushed_ackd();
+    virtual void flush_queued_segments(snort::Flow* flow, bool clear, snort::Packet* = nullptr) = 0;
+    virtual void finish_and_final_flush(snort::Flow* flow, bool clear, snort::Packet*) = 0;
+    virtual uint32_t perform_partial_flush(snort::Flow*, snort::Packet*&) = 0;
+    virtual void purge_flushed_ackd() = 0;
     virtual FlushPolicy get_flush_policy() const = 0;
+    virtual void release_splitter() = 0;
+    virtual bool is_splitter_paf() const = 0;
+    virtual bool segment_already_scanned(uint32_t seq) = 0;
+    virtual void initialize_paf() = 0;
+    virtual void reset_paf() = 0;
+    virtual void clear_paf() = 0;
 
-    void release_splitter()
+    // static methods for TcpReassembler per thread initialization and termination
+    static void tinit();
+    static void tterm();
+
+protected:
+    uint8_t packet_dir = 0;
+    bool server_side = true;
+};
+
+class TcpReassemblerIgnore : public TcpReassembler
+{
+public:
+    TcpReassemblerIgnore(bool server);
+
+    void init(bool, snort::StreamSplitter*) override
+    { }
+
+    int eval_flush_policy_on_ack(snort::Packet*) override
+    { return 0; }
+
+    int eval_flush_policy_on_data(snort::Packet*) override
+    { return 0; }
+
+    int eval_asymmetric_flush(snort::Packet*) override
+    { return 0; }
+
+    int flush_stream(snort::Packet*, uint32_t, bool) override
+    { return 0; }
+
+    void flush_queued_segments(snort::Flow*, bool, snort::Packet*) override
+    { }
+
+    void finish_and_final_flush(snort::Flow*, bool, snort::Packet*) override
+    { }
+
+    uint32_t perform_partial_flush(snort::Flow*, snort::Packet*&) override;
+
+    void purge_flushed_ackd() override
+    { }
+
+    void release_splitter() override
+    { }
+
+    bool is_splitter_paf() const override
+    { return false; }
+
+    bool segment_already_scanned(uint32_t) override
+    { return false; }
+
+    void reset_paf() override
+    { }
+
+    void clear_paf() override
+    { }
+
+    void initialize_paf() override
+    { }
+
+    FlushPolicy get_flush_policy() const override
+    { return STREAM_FLPOLICY_IGNORE; }
+
+    static TcpReassemblerIgnore* get_instance(bool server_side);
+};
+
+class  TcpReassemblerBase : public TcpReassembler
+{
+public:
+
+    // OK means FIN seen, data scanned, flush point not found, no gaps
+    enum ScanStatus {
+        FINAL_FLUSH_HOLD = -2,
+        FINAL_FLUSH_OK = -1
+    };
+
+    TcpReassemblerBase(TcpStreamTracker& trk, TcpReassemblySegments& seglist)
+        : tracker(trk), seglist(seglist)
+    { }
+
+    virtual ~TcpReassemblerBase() override
+    { }
+
+    virtual void init(bool server, snort::StreamSplitter* ss) override;
+    virtual void flush_queued_segments(snort::Flow* flow, bool clear, snort::Packet* = nullptr) override;
+    virtual void finish_and_final_flush(snort::Flow* flow, bool clear, snort::Packet*) override;
+    virtual uint32_t perform_partial_flush(snort::Flow*, snort::Packet*&) override;
+    virtual void purge_flushed_ackd() override;
+
+    void release_splitter() override
     { splitter = nullptr; }
 
-    bool is_splitter_paf() const
+    bool is_splitter_paf() const override
     { return splitter && splitter->is_paf(); }
 
-    bool segment_already_scanned(uint32_t seq)
+    bool segment_already_scanned(uint32_t seq) override
     {
         if ( paf.paf_initialized() and SEQ_GT(paf.pos, seq) )
             return true;
@@ -84,7 +176,7 @@ public:
             return false;
     }
 
-    virtual void initialize_paf()
+    virtual void initialize_paf() override
     {
         assert( get_flush_policy() != STREAM_FLPOLICY_IGNORE );
 
@@ -96,10 +188,10 @@ public:
             paf.paf_initialize(seglist.head->start_seq());
     }
 
-    void reset_paf()
+    void reset_paf() override
     { paf.paf_reset(); }
 
-    void clear_paf()
+    void clear_paf() override
     { paf.paf_clear(); }
 
 protected:
@@ -131,52 +223,8 @@ protected:
 
     snort::Packet* last_pdu = nullptr;
     uint8_t ignore_dir = 0;
-    uint8_t packet_dir = 0;
-    bool server_side = true;
     bool splitter_finish_flag = false;
 };
-
-class TcpReassemblerIgnore : public TcpReassembler
-{
-public:
-    TcpReassemblerIgnore();
-    ~TcpReassemblerIgnore() override
-    { }
-
-    void init(bool, snort::StreamSplitter*) override
-    { }
-
-    int eval_flush_policy_on_ack(snort::Packet*) override
-    { return 0; }
-
-    int eval_flush_policy_on_data(snort::Packet*) override
-    { return 0; }
-
-    int eval_asymmetric_flush(snort::Packet*) override
-    { return 0; }
-
-    int flush_stream(snort::Packet*, uint32_t, bool) override
-    { return 0; }
-
-    void flush_queued_segments(snort::Flow*, bool, snort::Packet*) override
-    { }
-
-    void finish_and_final_flush(snort::Flow*, bool, snort::Packet*) override
-    { }
-
-    uint32_t perform_partial_flush(snort::Flow*, snort::Packet*&) override;
-
-    void purge_flushed_ackd() override
-    { }
-
-    virtual void initialize_paf() override
-    { }
-
-    FlushPolicy get_flush_policy() const override
-    { return STREAM_FLPOLICY_IGNORE; }
-};
-
-extern TcpReassemblerIgnore* tcp_ignore_reassembler;
 
 #endif
 
