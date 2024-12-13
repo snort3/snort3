@@ -27,6 +27,7 @@
 #include "mime/file_mime_paf.h"
 #include "stream/stream_splitter.h"
 
+#define POP_MAX_OCTETS 5120
 // Structure used to record expected server termination sequence
 enum PopExpectedResp
 {
@@ -40,7 +41,8 @@ enum PopParseCmdState
 {
     POP_CMD_SEARCH,         // Search for Command
     POP_CMD_FIN,            // Found space. Finished parsing Command
-    POP_CMD_ARG             // Parsing command with multi-line response iff arg given
+    POP_CMD_ARG,            // Parsing command with multi-line response iff arg given
+    POP_CMD_INVALID         //Command is not recognized so finish parsing and update threshold counter
 };
 
 // saves data when parsing client commands
@@ -59,6 +61,8 @@ struct PopPafData
     DataEndState end_state;          // Current termination sequence state
     MimeDataPafInfo data_info;       // Mime Information
     bool cmd_continued;              // data continued from previous packet?
+    uint32_t client_bytes_seen;
+    uint32_t server_bytes_seen;
     bool end_of_data;
 };
 

@@ -67,7 +67,7 @@ static bool search_for_command(PopPafData* pfdata, const uint8_t ch)
     }
     else
     {
-        pfdata->cmd_state.status = POP_CMD_FIN;
+        pfdata->cmd_state.status = POP_CMD_INVALID;
     }
 
     return false;
@@ -86,6 +86,21 @@ static bool init_command_search(PopPafData* pfdata, const uint8_t ch)
     case 'C':
         pfdata->cmd_state.exp_resp = POP_PAF_MULTI_LINE_STATE;
         pfdata->cmd_state.next_letter = &(pop_known_cmds[CMD_CAPA].name[1]);
+        break;
+    case 'a':
+    case 'A':
+        pfdata->cmd_state.exp_resp = POP_PAF_SINGLE_LINE_STATE;
+        pfdata->cmd_state.next_letter = &(pop_known_cmds[CMD_APOP].name[1]);
+        break;
+    case 'd':
+    case 'D':
+        pfdata->cmd_state.exp_resp = POP_PAF_SINGLE_LINE_STATE;
+        pfdata->cmd_state.next_letter = &(pop_known_cmds[CMD_DELE].name[1]);
+        break;
+    case 'p':
+    case 'P':
+        pfdata->cmd_state.exp_resp = POP_PAF_SINGLE_LINE_STATE;
+        pfdata->cmd_state.next_letter = &(pop_known_cmds[CMD_PASS].name[1]);
         break;
     case 'l':
     case 'L':
@@ -107,8 +122,23 @@ static bool init_command_search(PopPafData* pfdata, const uint8_t ch)
         pfdata->cmd_state.exp_resp = POP_PAF_HAS_ARG;
         pfdata->cmd_state.next_letter = &(pop_known_cmds[CMD_UIDL].name[1]);
         break;
+    case 'n':
+    case 'N':
+        pfdata->cmd_state.exp_resp = POP_PAF_SINGLE_LINE_STATE;
+        pfdata->cmd_state.next_letter = &(pop_known_cmds[CMD_NOOP].name[1]);
+        break;
+    case 'q':
+    case 'Q':
+        pfdata->cmd_state.exp_resp = POP_PAF_SINGLE_LINE_STATE;
+        pfdata->cmd_state.next_letter = &(pop_known_cmds[CMD_QUIT].name[1]);
+        break;
+    case 's':
+    case 'S':
+        pfdata->cmd_state.exp_resp = POP_PAF_SINGLE_LINE_STATE;
+        pfdata->cmd_state.next_letter = &(pop_known_cmds[CMD_STAT].name[1]);
+        break;
     default:
-        pfdata->cmd_state.status = POP_CMD_FIN;
+        pfdata->cmd_state.status = POP_CMD_INVALID;
     }
 
     return false;
@@ -153,12 +183,21 @@ static inline void reset_data_states(PopPafData* pfdata)
  *     -ERR.
  *
  *  RETURNS:
- *           true - if the character is a +
+ *           true - if the character is a + or -
  *           false - if the character is anything else
  */
-static inline int valid_response(const uint8_t data)
+static inline bool valid_response(PopPafData* pfdata, const uint8_t data)
 {
-    return (data == '+');
+    if (data == '+')
+    {
+        return true;
+    } else if (data == '-')
+    {
+        //-ERR is always single line
+        pfdata->pop_state = POP_PAF_SINGLE_LINE_STATE;
+        return true;
+    }
+    return false;
 }
 
 /*
@@ -256,8 +295,20 @@ static StreamSplitter::Status pop_paf_server(PopPafData* pfdata,
     uint32_t boundary_start = 0;
 
     // if a negative response was received, it will be a one line response.
-    if (!pfdata->cmd_continued && !valid_response(*data))
-        pfdata->pop_state = POP_PAF_SINGLE_LINE_STATE;
+    if (!pfdata->cmd_continued && !valid_response(pfdata, *data))
+    {
+        pfdata->server_bytes_seen += len;
+        if (pfdata->server_bytes_seen > POP_MAX_OCTETS)
+        {
+            pfdata->server_bytes_seen = 0;
+            reset_data_states(pfdata);
+            return StreamSplitter::ABORT;
+        }
+    }
+    else 
+    {
+        pfdata->server_bytes_seen = 0;
+    }
 
     for (i = 0; i < len; i++)
     {
@@ -336,14 +387,30 @@ static StreamSplitter::Status pop_paf_client(Flow* ssn, PopPafData* pfdata,
             if (find_data_end_single_line(pfdata, ch, true) )
             {
                 // reset command parsing data
+                pfdata->client_bytes_seen = 0;
                 *fp = i + 1;
                 return StreamSplitter::FLUSH;
             }
             break;
 
+        case POP_CMD_INVALID:
+            if (find_data_end_single_line(pfdata, ch, true))
+            {
+                pfdata->client_bytes_seen += len;
+                if(pfdata->client_bytes_seen > POP_MAX_OCTETS)
+                {
+                    pfdata->client_bytes_seen = 0;
+                    reset_client_cmd_info(pfdata);
+                    return StreamSplitter::ABORT;
+                }
+                *fp = i + 1;
+                return StreamSplitter::FLUSH;
+            }
+            break;
         case POP_CMD_ARG:
             if (find_data_end_single_line(pfdata, ch, true))
             {
+                pfdata->client_bytes_seen = 0;
                 set_server_state(ssn, POP_PAF_MULTI_LINE_STATE);
                 *fp = i + 1;
                 return StreamSplitter::FLUSH;
@@ -353,6 +420,13 @@ static StreamSplitter::Status pop_paf_client(Flow* ssn, PopPafData* pfdata,
                 pfdata->cmd_state.status = POP_CMD_FIN;
             }
         }
+    }
+
+    pfdata->client_bytes_seen += len;
+    if(pfdata->client_bytes_seen > POP_MAX_OCTETS) 
+    {
+        reset_client_cmd_info(pfdata);
+        return StreamSplitter::ABORT;
     }
 
     return StreamSplitter::SEARCH;
@@ -366,6 +440,7 @@ PopSplitter::PopSplitter(bool c2s) : StreamSplitter(c2s)
 {
     memset(&state, 0, sizeof(state));
     reset_data_states(&state);
+    reset_client_cmd_info(&state);
 }
 
 
