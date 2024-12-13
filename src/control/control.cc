@@ -223,6 +223,9 @@ bool ControlConn::show_prompt()
 
 bool ControlConn::respond(const char* format, va_list& ap)
 {
+    if (is_closed() or is_removed())
+        return false;
+
     char buf[STD_BUF];
     int response_len = vsnprintf(buf, sizeof(buf), format, ap);
 
@@ -240,7 +243,7 @@ bool ControlConn::respond(const char* format, va_list& ap)
             if (errno != EAGAIN && errno != EINTR)
             {
                 shutdown();
-                ErrorMessage("ControlConn: Error in writing response, closing the connection: %s\n", get_error(errno));
+                ErrorMessage("ControlConn: Error in writing response, closing the connection: %s, buf: %s\n", get_error(errno), buf);
                 return false;
             }
         }
