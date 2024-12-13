@@ -3,7 +3,11 @@ add_subdirectory(appid)
 add_subdirectory(arp_spoof)
 add_subdirectory(binder)
 add_subdirectory(extractor)
-add_subdirectory(kaizen)
+
+if ( HAVE_LIBML OR USE_LIBML_MOCK )
+    add_subdirectory(kaizen)
+endif()
+
 add_subdirectory(normalize)
 add_subdirectory(packet_capture)
 add_subdirectory(perf_monitor)
@@ -19,11 +23,17 @@ if(STATIC_INSPECTORS)
     )
 endif()
 
+if ( HAVE_LIBML OR USE_LIBML_MOCK )
+    set(KAIZEN_STATIC_OBJ
+        $<TARGET_OBJECTS:kaizen>
+    )
+endif()
+
 set(STATIC_NETWORK_INSPECTOR_PLUGINS
     $<TARGET_OBJECTS:appid>
     $<TARGET_OBJECTS:binder>
     $<TARGET_OBJECTS:extractor>
-    $<TARGET_OBJECTS:kaizen>
+    ${KAIZEN_STATIC_OBJ}
     $<TARGET_OBJECTS:normalize>
     $<TARGET_OBJECTS:port_scan>
     $<TARGET_OBJECTS:reputation>

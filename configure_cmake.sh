@@ -479,7 +479,7 @@ while [ $# -ne 0 ]; do
             append_cache_entry ML_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         --without-libml)
-            append_cache_entry ENABLE_KAIZEN_MOCK BOOL true
+            append_cache_entry USE_LIBML_MOCK BOOL true
             ;;
         SIGNAL_SNORT_RELOAD=*)
             append_cache_entry SIGNAL_SNORT_RELOAD STRING $optarg

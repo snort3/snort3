@@ -32,8 +32,12 @@ extern const BaseApi* nin_reputation;
 
 extern const BaseApi* nin_appid[];
 extern const BaseApi* nin_extractor[];
+
+#if defined(HAVE_LIBML) || defined(USE_LIBML_MOCK)
 extern const BaseApi* nin_kaizen_engine[];
 extern const BaseApi* nin_kaizen[];
+#endif
+
 extern const BaseApi* nin_port_scan[];
 extern const BaseApi* nin_rna[];
 
@@ -56,8 +60,12 @@ void load_network_inspectors()
     PluginManager::load_plugins(network_inspectors);
     PluginManager::load_plugins(nin_appid);
     PluginManager::load_plugins(nin_extractor);
+
+#if defined(HAVE_LIBML) || defined(USE_LIBML_MOCK)
     PluginManager::load_plugins(nin_kaizen_engine);
     PluginManager::load_plugins(nin_kaizen);
+#endif
+
     PluginManager::load_plugins(nin_port_scan);
     PluginManager::load_plugins(nin_rna);
 

@@ -9,6 +9,6 @@ find_package_handle_standard_args(ML
     ML_INCLUDE_DIRS
 )
 
-if (ML_FOUND AND NOT ENABLE_KAIZEN_MOCK)
+if (ML_FOUND AND NOT USE_LIBML_MOCK)
     set(HAVE_LIBML TRUE)
 endif()

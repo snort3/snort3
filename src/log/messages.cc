@@ -101,7 +101,7 @@ namespace snort
 {
 void ParseWarning(WarningGroup wg, const char* format, ...)
 {
-    if ( !(SnortConfig::get_conf()->warning_flags & (1 << wg)) )
+    if ( SnortConfig::get_conf() and !(SnortConfig::get_conf()->warning_flags & (1 << wg)) )
         return;
 
     char buf[STD_BUF+1];

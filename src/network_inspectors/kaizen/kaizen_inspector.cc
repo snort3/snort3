@@ -210,11 +210,7 @@ static void kaizen_dtor(Inspector* p)
 static const InspectApi kaizen_api =
 {
     {
-#if defined(HAVE_LIBML) || defined(REG_TEST)
         PT_INSPECTOR,
-#else
-        PT_MAX,
-#endif
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,

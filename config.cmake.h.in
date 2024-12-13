@@ -156,6 +156,9 @@
 /* libml available */
 #cmakedefine HAVE_LIBML 1
 
+/* don't worry about libml and mock the inspector */
+#cmakedefine USE_LIBML_MOCK 1
+
 /*  Availability of specific library functions */
 
 /* Define to 1 if you have the `malloc_trim' function. */
