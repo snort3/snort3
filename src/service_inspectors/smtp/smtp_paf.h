@@ -26,17 +26,19 @@
 #include "mime/file_mime_paf.h"
 #include "stream/stream_splitter.h"
 
+#define SMTP_MAX_OCTETS 5120
+
 // State tracker for SMTP PAF
 enum SmtpPafState
 {
     SMTP_PAF_CMD_STATE,
-    SMTP_PAF_DATA_STATE
+    SMTP_PAF_DATA_STATE,
 };
-// State tracker for data command
+// State tracker for client commands
 typedef enum _SmtpPafCmdState
 {
-    SMTP_PAF_CMD_UNKNOWN,
     SMTP_PAF_CMD_START,
+    SMTP_PAF_CMD_INVALID, // Invalid command
     SMTP_PAF_CMD_DETECT,
     SMTP_PAF_CMD_DATA_LENGTH_STATE,
     SMTP_PAF_CMD_DATA_END_STATE
@@ -47,6 +49,7 @@ struct SmtpCmdSearchInfo
     SmtpPafCmdState cmd_state;
     int search_id;
     const char* search_state;
+    bool invalid_cmd;
 };
 
 // State tracker for SMTP PAF
@@ -57,6 +60,8 @@ struct SmtpPafData
     SmtpPafState smtp_state;
     SmtpCmdSearchInfo cmd_info;
     MimeDataPafInfo data_info;
+    uint32_t server_bytes_seen;
+    uint32_t client_bytes_seen;
     bool end_of_data;
 };
 

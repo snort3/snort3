@@ -36,6 +36,13 @@ enum SmtpDataCMD
     SMTP_PAF_AUTH_CMD,
     SMTP_PAF_BDAT_CMD,
     SMTP_PAF_DATA_CMD,
+    SMTP_PAF_HELO_CMD,
+    SMTP_PAF_EHLO_CMD,
+    SMTP_PAF_MAIL_CMD,
+    SMTP_PAF_RCPT_CMD,
+    SMTP_PAF_NOOP_CMD,
+    SMTP_PAF_VRFY_CMD,
+    SMTP_PAF_QUIT_CMD,
     SMTP_PAF_XEXCH50_CMD
 };
 
@@ -52,6 +59,13 @@ const SmtpPAFToken smtp_paf_tokens[] =
     { "AUTH",         4, SMTP_PAF_AUTH_CMD, false },
     { "BDAT",         4, SMTP_PAF_BDAT_CMD, true },
     { "DATA",         4, SMTP_PAF_DATA_CMD, true },
+    { "HELO",         4, SMTP_PAF_HELO_CMD, true },
+    { "EHLO",         4, SMTP_PAF_EHLO_CMD, true },
+    { "MAIL FROM",    9, SMTP_PAF_MAIL_CMD, true },
+    { "RCPT TO",      7, SMTP_PAF_RCPT_CMD, true },
+    { "NOOP",         4, SMTP_PAF_NOOP_CMD, true },
+    { "VRFY",         4, SMTP_PAF_VRFY_CMD, true },
+    { "QUIT",         4, SMTP_PAF_QUIT_CMD, false },
     { "XEXCH50",      7, SMTP_PAF_XEXCH50_CMD, true },
     { nullptr,           0, 0, false }
 };
@@ -83,12 +97,31 @@ static inline void reset_data_states(SmtpPafData* pfdata)
     pfdata->length = 0;
 }
 
+static inline bool smtp_check_codes(char c)
+{
+    // Check that first character in message isn't a letter
+    return !isupper(c) && !islower(c);
+}
+
 static inline StreamSplitter::Status smtp_paf_server(SmtpPafData* pfdata,
     const uint8_t* data, uint32_t len, uint32_t* fp)
 {
     const char* pch;
 
-    pfdata->smtp_state = SMTP_PAF_CMD_STATE;
+    bool valid_status_code = smtp_check_codes(data[0]);
+    if (!valid_status_code)
+    {
+        pfdata->server_bytes_seen += len;
+        if (pfdata->server_bytes_seen > SMTP_MAX_OCTETS)
+        {
+            reset_data_states(pfdata);
+            return StreamSplitter::ABORT;
+        }
+    } else {
+        pfdata->server_bytes_seen = 0;
+    }
+
+
     pch = (const char*)memchr (data, '\n', len);
 
     if (pch != nullptr)
@@ -120,6 +153,41 @@ static inline const char* init_cmd_search(SmtpCmdSearchInfo* search_info,  uint8
         search_info->search_state = &smtp_paf_tokens[SMTP_PAF_DATA_CMD].name[1];
         search_info->search_id = SMTP_PAF_DATA_CMD;
         break;
+    case 'h':
+    case 'H':
+        search_info->search_state = &smtp_paf_tokens[SMTP_PAF_HELO_CMD].name[1];
+        search_info->search_id = SMTP_PAF_HELO_CMD;
+        break;
+    case 'e':
+    case 'E':
+        search_info->search_state = &smtp_paf_tokens[SMTP_PAF_EHLO_CMD].name[1];
+        search_info->search_id = SMTP_PAF_EHLO_CMD;
+        break;
+    case 'm':
+    case 'M':
+        search_info->search_state = &smtp_paf_tokens[SMTP_PAF_MAIL_CMD].name[1];
+        search_info->search_id = SMTP_PAF_MAIL_CMD;
+        break;
+    case 'n':
+    case 'N':
+        search_info->search_state = &smtp_paf_tokens[SMTP_PAF_NOOP_CMD].name[1];
+        search_info->search_id = SMTP_PAF_NOOP_CMD;
+        break;
+    case 'r':
+    case 'R':
+        search_info->search_state = &smtp_paf_tokens[SMTP_PAF_RCPT_CMD].name[1];
+        search_info->search_id = SMTP_PAF_RCPT_CMD;
+        break;
+    case 'q':
+    case 'Q':
+        search_info->search_state = &smtp_paf_tokens[SMTP_PAF_QUIT_CMD].name[1];
+        search_info->search_id = SMTP_PAF_QUIT_CMD;
+        break;
+    case 'v':
+    case 'V':
+        search_info->search_state = &smtp_paf_tokens[SMTP_PAF_VRFY_CMD].name[1];
+        search_info->search_id = SMTP_PAF_VRFY_CMD;
+        break;
     case 'x':
     case 'X':
         search_info->search_state = &smtp_paf_tokens[SMTP_PAF_XEXCH50_CMD].name[1];
@@ -127,6 +195,7 @@ static inline const char* init_cmd_search(SmtpCmdSearchInfo* search_info,  uint8
         break;
     default:
         search_info->search_state = nullptr;
+        search_info->invalid_cmd = true;
         break;
     }
     return search_info->search_state;
@@ -145,15 +214,27 @@ static inline void validate_command(SmtpCmdSearchInfo* search_info,  uint8_t val
             /* Found data command, change to SMTP_PAF_CMD_DATA_LENGTH_STATE */
             if (*(search_info->search_state) == '\0')
             {
+                /*reset client bytes seen when a command is validated*/
                 search_info->search_state = nullptr;
-                search_info->cmd_state = SMTP_PAF_CMD_DATA_LENGTH_STATE;
-                return;
+                switch (search_info->search_id)
+                {
+                case SMTP_PAF_AUTH_CMD:
+                case SMTP_PAF_BDAT_CMD:
+                case SMTP_PAF_DATA_CMD:
+                case SMTP_PAF_XEXCH50_CMD:
+                    search_info->cmd_state = SMTP_PAF_CMD_DATA_LENGTH_STATE;
+                    return;
+                default:
+                    return;
+                }
             }
         }
         else
         {
             search_info->search_state = nullptr;
-            search_info->cmd_state = SMTP_PAF_CMD_UNKNOWN;
+            search_info->cmd_state = SMTP_PAF_CMD_INVALID;
+            if (search_info->search_id != SMTP_PAF_XEXCH50_CMD)
+                search_info->invalid_cmd = true;
             return;
         }
     }
@@ -218,13 +299,11 @@ static inline bool process_command(SmtpPafData* pfdata,  uint8_t val)
 
     switch (pfdata->cmd_info.cmd_state)
     {
-    case SMTP_PAF_CMD_UNKNOWN:
-        break;
     case SMTP_PAF_CMD_START:
         if (init_cmd_search(&(pfdata->cmd_info), val))
             pfdata->cmd_info.cmd_state = SMTP_PAF_CMD_DETECT;
         else
-            pfdata->cmd_info.cmd_state = SMTP_PAF_CMD_UNKNOWN;
+            pfdata->cmd_info.cmd_state = SMTP_PAF_CMD_INVALID;
         break;
     case SMTP_PAF_CMD_DETECT:
         /* Search for data command */
@@ -239,6 +318,8 @@ static inline bool process_command(SmtpPafData* pfdata,  uint8_t val)
         break;
     case SMTP_PAF_CMD_DATA_END_STATE:
         /* Change to Data state at EOL*/
+        break;
+    case SMTP_PAF_CMD_INVALID:
         break;
     default:
         break;
@@ -286,6 +367,7 @@ static inline StreamSplitter::Status smtp_paf_client(SmtpPafData* pfdata,
     uint32_t i;
     uint32_t boundary_start = 0;
     bool alert_generated = false;
+    pfdata->cmd_info.invalid_cmd = false;
 
     for (i = 0; i < len; i++)
     {
@@ -295,6 +377,19 @@ static inline StreamSplitter::Status smtp_paf_client(SmtpPafData* pfdata,
         case SMTP_PAF_CMD_STATE:
             if (process_command(pfdata, ch))
             {
+                if (pfdata->cmd_info.invalid_cmd)
+                {
+                    pfdata->client_bytes_seen += len;
+                    if (pfdata->client_bytes_seen > SMTP_MAX_OCTETS)
+                    {
+                        reset_data_states(pfdata);
+                        return StreamSplitter::ABORT;
+                    }
+                }
+                else
+                {
+                    pfdata->client_bytes_seen = 0;
+                }
                 *fp = i + 1;
                 return StreamSplitter::FLUSH;
             }
@@ -320,6 +415,7 @@ static inline StreamSplitter::Status smtp_paf_client(SmtpPafData* pfdata,
             }
             else if (process_data(pfdata, ch))
             {
+                pfdata->client_bytes_seen = 0;
                 *fp = i + 1;
                 return StreamSplitter::FLUSH;
             }
@@ -330,6 +426,20 @@ static inline StreamSplitter::Status smtp_paf_client(SmtpPafData* pfdata,
         default:
             break;
         }
+    }
+
+    if (pfdata->cmd_info.invalid_cmd)
+    {
+    	pfdata->client_bytes_seen += len;
+        if (pfdata->client_bytes_seen > SMTP_MAX_OCTETS)
+        {
+        	reset_data_states(pfdata);
+        	return StreamSplitter::ABORT;
+    	}
+    }
+	else
+    {
+    	pfdata->client_bytes_seen = 0;
     }
 
     if ( scanning_boundary(&pfdata->data_info, boundary_start, fp) )
