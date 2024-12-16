@@ -2072,8 +2072,6 @@ inline void InspectorManager::internal_execute(Packet* p)
 // new it_xxx) is run just once per flow (and all non-flow packets).
 void InspectorManager::execute(Packet* p)
 {
-    p->inspection_started_timestamp = TO_USECS_FROM_EPOCH(SnortClock::now());
-
     if ( trace_enabled(snort_trace, TRACE_INSPECTOR_MANAGER, DEFAULT_TRACE_LOG_LEVEL, p) )
         internal_execute<true>(p);
     else

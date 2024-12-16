@@ -641,8 +641,11 @@ bool DetectionEngine::inspect(Packet* p)
         {
             enable_content(p);
 
+            p->inspection_started_timestamp = TO_USECS_FROM_EPOCH(SnortClock::now());
             InspectorManager::execute(p);
+
             inspected = true;
+            p->inspection_started_timestamp = TO_USECS_FROM_EPOCH(SnortClock::now());
 
             if ( !all_disabled(p) )
             {
@@ -651,6 +654,10 @@ bool DetectionEngine::inspect(Packet* p)
 
                 if ( detect(p, offload_enabled) )
                     return false; // don't finish out offloaded packets
+            }
+            if ( p->flow )
+            {
+                p->flow->add_inspection_duration(TO_USECS_FROM_EPOCH(SnortClock::now()) - p->inspection_started_timestamp);
             }
         }
         finish_inspect_with_latency(p);
