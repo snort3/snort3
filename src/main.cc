@@ -513,6 +513,12 @@ int main_reload_config(lua_State* L)
     send_response(ctrlcon, ".. reloading configuration\n");
     ReloadTracker::update(ctrlcon,"start loading ...");
     const SnortConfig* old = SnortConfig::get_conf();
+
+    if (plugin_path != nullptr)
+        LogMessage("SO rules plugins will be reloaded from %s\n", plugin_path);
+    else
+        LogMessage("SO rules plugins will not be reloaded\n");
+
     SnortConfig* sc = Snort::get_reload_config(fname, plugin_path, old);
 
     if ( !sc )
