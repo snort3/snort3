@@ -24,6 +24,7 @@
 
 #include "flow/flow.h"
 
+#include "protocols/packet.h"
 #include "pub_sub/dns_events.h"
 
 // Implementation header with definitions, datatypes and flowdata class for
@@ -204,7 +205,10 @@ struct DNSData
 
     bool publish_response() const;
     bool has_events() const;
+    bool valid_dns(const DNSHdr&) const;
 };
+
+DNSData* get_dns_session_data(snort::Packet* p, bool from_server, DNSData& udpSessionData);
 
 class DnsResponseIp
 {

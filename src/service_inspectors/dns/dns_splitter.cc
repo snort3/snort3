@@ -25,13 +25,29 @@
 
 #include <cassert>
 
+#include "log/messages.h"
+#include "protocols/packet.h"
+
+#include "dns.h"
+#include "dns_module.h"
+
 using namespace snort;
 
 StreamSplitter::Status DnsSplitter::scan(
-    Packet*, const uint8_t* data, uint32_t len,
+    Packet* p, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t* fp)
 {
     assert(len > 0);
+
+    DNSData udp_session_data;
+    bool from_server = p->is_from_server();
+    DNSData* dnsSessionData = get_dns_session_data(p, from_server, udp_session_data);
+
+    if ( dnsSessionData and ( dnsSessionData->flags & DNS_FLAG_NOT_DNS ) )
+    {
+        dnsstats.aborted_sessions++;
+        return ABORT;
+    }
 
     if ( partial )
     {

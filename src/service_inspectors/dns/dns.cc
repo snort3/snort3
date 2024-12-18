@@ -31,7 +31,6 @@
 #include "dns_config.h"
 #include "log/messages.h"
 #include "profiler/profiler.h"
-#include "protocols/packet.h"
 #include "stream/stream.h"
 
 #include "dns_module.h"
@@ -53,6 +52,7 @@ const PegInfo dns_peg_names[] =
     { CountType::SUM, "responses", "total dns responses" },
     { CountType::NOW, "concurrent_sessions", "total concurrent dns sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent dns sessions" },
+    { CountType::SUM, "aborted_sessions", "total dns sessions aborted" },
 
     { CountType::END, nullptr, nullptr }
 };
@@ -100,10 +100,31 @@ static DNSData* SetNewDNSData(Packet* p)
     return &fd->session;
 }
 
-static DNSData* get_dns_session_data(Packet* p, bool from_server, DNSData& udpSessionData)
+bool DNSData::valid_dns(const DNSHdr& dns_header) const
+{
+    // Check QR bit (Query/Response)
+    bool is_query = ((dns_header.flags & 0x8000) == 0);
+
+    // Check Opcode (should be 0 for standard queries)
+    uint16_t opcode = (dns_header.flags & 0x7800) >> 11;
+    if (opcode > 2) 
+        return false;
+
+    // Check for reserved bits and RCODE
+    if (dns_header.flags & 0x7800)
+        return false;
+
+    // Validate Recursion bits (RA should not be set in a query)
+    bool ra_bit = (dns_header.flags & 0x0080) != 0;
+    if (is_query && ra_bit) 
+        return false;
+
+    return true;
+}
+
+DNSData* get_dns_session_data(Packet* p, bool from_server, DNSData& udpSessionData)
 {
     DnsFlowData* fd;
-
     if (p->is_udp())
     {
         if(p->dsize > MAX_UDP_PAYLOAD)
@@ -1145,6 +1166,12 @@ static void snort_dns(Packet* p, const DnsConfig* dns_config)
     {
         bool needNextPacket = false;
         ParseDNSResponseMessage(p, dnsSessionData, needNextPacket);
+
+        if (!dnsSessionData->valid_dns(dnsSessionData->hdr))
+        {
+            dnsSessionData->flags |= DNS_FLAG_NOT_DNS;
+            return;
+        }
 
         if (!needNextPacket and dnsSessionData->has_events())
             DataBus::publish(Dns::get_pub_id(), DnsEventIds::DNS_RESPONSE_DATA, dnsSessionData->dns_events);
