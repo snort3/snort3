@@ -1,3 +1,16 @@
+2024-12-22: 3.6.1.0
+
+* appid: enhanced control error message with additional info
+* build: include/exclude snort_ml module conditionally
+* dns: adding fallback functionality
+* file_api: add re_eval flag to fileinfo
+* inspector_manager: refactored instrumentation code of connection profiling
+* log: print all warnings before command line is parsed
+* main: improve logging reload_config arguments
+* pop: adding wrong bytes threshold to determine if pop splitter should fallback
+* smtp: smtp inspector fallback functionality for invalid commands and responses
+* stream_tcp: refactor tcp reasseabler class structure and init to avoid thread data race scenarios
+
 2024-12-03: 3.6.0.0
 
 * analyzer: add logging for resource tuning progress

@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.6.0.0 2024-12-03 21:38:11 EST TST
+Revision 3.6.1.0 2024-12-22 20:09:48 EST TST
 
 ---------------------------------------------------------------------
 
@@ -3514,6 +3514,7 @@ Peg counts:
   * dns.concurrent_sessions: total concurrent dns sessions (now)
   * dns.max_concurrent_sessions: maximum concurrent dns sessions
     (max)
+  * dns.aborted_sessions: total dns sessions aborted (sum)
 
 
 5.16. domain_filter
@@ -12004,6 +12005,7 @@ libraries see the Getting Started section of the manual.
   * dnp3.tcp_pdus: total tcp pdus (sum)
   * dnp3.total_packets: total packets (sum)
   * dnp3.udp_packets: total udp packets (sum)
+  * dns.aborted_sessions: total dns sessions aborted (sum)
   * dns.concurrent_sessions: total concurrent dns sessions (now)
   * dns.max_concurrent_sessions: maximum concurrent dns sessions
     (max)
