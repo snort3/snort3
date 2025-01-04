@@ -27,7 +27,8 @@
 #include <luajit.h>
 #include <openssl/crypto.h>
 #include <pcap.h>
-#include <pcre.h>
+#define PCRE2_CODE_UNIT_WIDTH 8
+#include <pcre2.h>
 #include <pwd.h>
 #include <sys/file.h>
 #include <sys/resource.h>
@@ -675,9 +676,12 @@ void StoreSnortInfoStrings()
 
 int DisplayBanner()
 {
+    PCRE2_UCHAR pcre2_version[32];
     const char* ljv = LUAJIT_VERSION;
     while ( *ljv && !isdigit(*ljv) )
         ++ljv;
+
+    pcre2_config(PCRE2_CONFIG_VERSION, pcre2_version);
 
     LogMessage("\n");
     LogMessage("   ,,_     -*> Snort++ <*-\n");
@@ -707,7 +711,7 @@ int DisplayBanner()
     LogMessage("           Using LZMA version %s\n", lzma_version_string());
 #endif
     LogMessage("           Using %s\n", OpenSSL_version(SSLEAY_VERSION));
-    LogMessage("           Using PCRE version %s\n", pcre_version());
+    LogMessage("           Using PCRE2 version %s\n", pcre2_version);
     LogMessage("           Using ZLIB version %s\n", zlib_version);
 
     LogMessage("\n");

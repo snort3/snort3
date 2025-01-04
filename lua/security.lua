@@ -9,8 +9,8 @@ ftp_server.check_encrypted = true
 
 detection =
 {
-    pcre_match_limit = 3500,
-    pcre_match_limit_recursion = 3500
+    pcre2_match_limit = 3500,
+    pcre2_match_limit_recursion = 3500
 }
 
 http_inspect.decompress_pdf = true

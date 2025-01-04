@@ -10,13 +10,13 @@ ftp_server.check_encrypted = true
 
 detection =
 {
-    pcre_match_limit = 3500,
-    pcre_match_limit_recursion = 3500,
+    pcre2_match_limit = 3500,
+    pcre2_match_limit_recursion = 3500,
 
     -- enable for hyperscan for best throughput
     -- use multiple packet threads for fast startup
     --hyperscan_literals = true,
-    --pcre_to_regex = true
+    --pcre2_to_regex = true
 }
 
 http_inspect.decompress_pdf = true

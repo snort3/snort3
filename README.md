@@ -8,13 +8,14 @@ topics:
 
 ---
 
-* [Overview](#overview)
-* [Dependencies](#dependencies)
-* [Download](#download)
-* [Build Snort](#build-snort)
-* [Run Snort](#run-snort)
-* [Documentation](#documentation)
-* [Squeal](#squeal)
+- [Snort++](#snort)
+- [OVERVIEW](#overview)
+- [DEPENDENCIES](#dependencies)
+- [DOWNLOAD](#download)
+- [BUILD SNORT](#build-snort)
+- [RUN SNORT](#run-snort)
+- [DOCUMENTATION](#documentation)
+- [SQUEAL](#squeal)
 
 # OVERVIEW
 
@@ -61,7 +62,7 @@ the latest:
 * OpenSSL from https://www.openssl.org/source/ for SHA and MD5 file signatures,
   the protected_content rule option, and SSL service detection
 * pcap from http://www.tcpdump.org for tcpdump style logging
-* pcre from http://www.pcre.org for regular expression pattern matching
+* pcre2 from http://www.pcre.org for regular expression pattern matching
 * pkgconfig from https://www.freedesktop.org/wiki/Software/pkg-config/ to locate build dependencies
 * zlib from http://www.zlib.net for decompression
 

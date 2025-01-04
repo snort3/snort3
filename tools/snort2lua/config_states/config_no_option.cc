@@ -250,18 +250,18 @@ static const ConvertMap enable_mpls_overlapping_ip_api =
 const ConvertMap* enable_mpls_overlapping_ip_map = &enable_mpls_overlapping_ip_api;
 
 /*************************************************
- ********************  nopcre  *******************
+ ********************  nopcre2  *******************
  *************************************************/
 
-static const std::string nopcre = "nopcre";
-static const std::string pcre_enable = "pcre_enable";
-static const ConvertMap nopcre_api =
+static const std::string nopcre2 = "nopcre2";
+static const std::string pcre2_enable = "pcre2_enable";
+static const ConvertMap nopcre2_api =
 {
-    nopcre,
-    config_false_no_opt_ctor<& nopcre, & detection, & pcre_enable>
+    nopcre2,
+    config_false_no_opt_ctor<& nopcre2, & detection, & pcre2_enable>
 };
 
-const ConvertMap* nopcre_map = &nopcre_api;
+const ConvertMap* nopcre2_map = &nopcre2_api;
 
 /*************************************************
  ******************  obfuscate  ******************

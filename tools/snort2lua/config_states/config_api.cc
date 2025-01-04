@@ -105,13 +105,13 @@ extern const ConvertMap* min_ttl_map;
 extern const ConvertMap* na_policy_mode_map;
 extern const ConvertMap* new_ttl_map;
 extern const ConvertMap* nolog_map;
-extern const ConvertMap* nopcre_map;
+extern const ConvertMap* nopcre2_map;
 extern const ConvertMap* no_promisc_map;
 extern const ConvertMap* obfuscate_map;
 extern const ConvertMap* order_map;
 extern const ConvertMap* paf_max_map;
-extern const ConvertMap* pcre_match_limit_map;
-extern const ConvertMap* pcre_match_limit_recursion_map;
+extern const ConvertMap* pcre2_match_limit_map;
+extern const ConvertMap* pcre2_match_limit_recursion_map;
 extern const ConvertMap* pkt_count_map;
 extern const ConvertMap* ppm_map;
 extern const ConvertMap* policy_id_map;
@@ -224,13 +224,13 @@ const std::vector<const ConvertMap*> config_api =
     na_policy_mode_map,
     new_ttl_map,
     nolog_map,
-    nopcre_map,
+    nopcre2_map,
     no_promisc_map,
     obfuscate_map,
     order_map,
     paf_max_map,
-    pcre_match_limit_map,
-    pcre_match_limit_recursion_map,
+    pcre2_match_limit_map,
+    pcre2_match_limit_recursion_map,
     pkt_count_map,
     ppm_map,
     policy_id_map,

@@ -603,7 +603,7 @@ static bool exec(
 // that individual rule options can do whatever
 static int get_escape(const string& s)
 {
-    if ( s == "pcre" )
+    if ( s == "pcre2" )
         return 0;  // no escape, option goes to ;
 
     else if ( s == "regex" || s == "sd_pattern" )
