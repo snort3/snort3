@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstdlib>
 
 #include "js_norm/js_enum.h"
 #include "js_norm/js_identifier_ctx.h"
@@ -1258,6 +1259,11 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 
 // static helper functions
 
+static unsigned int str2num(const std::string& s, int base)
+{
+    return std::min(strtoul(s.c_str(), nullptr, base), 0xffffffffUL);
+}
+
 static std::string unicode_to_utf8(const unsigned int code)
 {
     std::string res;
@@ -1331,7 +1337,7 @@ static std::string unescape_unicode(const char* lexeme)
             unicode_str += ch;
             if (!(--digits_left))
             {
-                const unsigned int unicode = std::stoi(unicode_str, nullptr, 16);
+                const unsigned int unicode = str2num(unicode_str, 16);
                 res += unicode_to_utf8(unicode);
 
                 unicode_str = "";
@@ -1345,7 +1351,7 @@ static std::string unescape_unicode(const char* lexeme)
         {
             if (ch == '}')
             {
-                const unsigned int code_point = std::stoi(unicode_str, nullptr, 16);
+                const unsigned int code_point = str2num(unicode_str, 16);
                 res += unicode_to_utf8(code_point);
 
                 unicode_str = "";
@@ -2982,14 +2988,14 @@ void JSTokenizer::escaped_unicode_latin_1()
 {
     // truncate escape symbol, get hex number only
     std::string code(YYText() + 2);
-    yyout << (char)std::stoi(code, nullptr, 16);
+    yyout << (char)str2num(code, 16);
 }
 
 void JSTokenizer::escaped_unicode_utf_8()
 {
     // truncate escape symbol, get hex number only
     std::string code(YYText() + 2);
-    yyout << unicode_to_utf8(std::stoi(code, nullptr, 16));
+    yyout << unicode_to_utf8(str2num(code, 16));
 }
 
 void JSTokenizer::escaped_code_point()
@@ -2997,21 +3003,21 @@ void JSTokenizer::escaped_code_point()
     // truncate escape symbols, get hex number only
     std::string code(YYText() + 3);
     code.resize(code.size() - 1);
-    yyout << unicode_to_utf8(std::stoi(code, nullptr, 16));
+    yyout << unicode_to_utf8(str2num(code, 16));
 }
 
 void JSTokenizer::escaped_url_sequence_latin_1()
 {
     // truncate escape symbol, get hex number only
     std::string code(YYText() + 1);
-    yyout << (char)std::stoi(code, nullptr, 16);
+    yyout << (char)str2num(code, 16);
 }
 
 void JSTokenizer::lit_int_code_point(int base)
 {
     std::string code(base != 10 && !isdigit(YYText()[1]) ? YYText() + 2 : YYText());
     code.erase(std::remove(code.begin(), code.end(), '_'), code.end());
-    yyout << unicode_to_utf8(std::stoi(code, nullptr, base));
+    yyout << unicode_to_utf8(str2num(code, base));
 }
 
 void JSTokenizer::char_code_no_match()

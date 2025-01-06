@@ -1398,6 +1398,16 @@ TEST_CASE("Internal limits", "[JSNormalizer]")
             "$/i).test(var_0001)}"
         );
     }
+
+    SECTION("Out of range value")
+    {
+        test_normalization(
+            "String.fromCodePoint(0xFFFFFFFFFFFF);"
+            "String.fromCharCode(0xFFFFFFFFFFFF);",
+            "'\xf7\xbf\xbf\xbf';"
+            "'\xf7\xbf\xbf\xbf';"
+        );
+    }
 }
 
 TEST_CASE("Function type detection", "[JSNormalizer]")
