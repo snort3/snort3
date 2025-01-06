@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_pdu_test.cc author Russ Combs <rucombs@cisco.com>
+// tlv_pdu_test.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -29,7 +29,7 @@
 #include "stream/flush_bucket.h"
 #include "stream/stream.h"
 
-#include "../tcp_pdu.h"
+#include "../tlv_pdu.h"
 
 // must appear after snort_config.h to avoid broken c++ map include
 #include <CppUTest/CommandLineTestRunner.h>
@@ -77,8 +77,8 @@ TEST_GROUP(relative_length_only)
 
     void setup() override
     {
-        TcpPduConfig c = { 4, 0, 0, true };
-        ss = new TcpPduSplitter(true, c);  // cppcheck-suppress unreadVariable
+        TlvPduConfig c = { 4, 0, 0, true };
+        ss = new TlvPduSplitter(true, c);  // cppcheck-suppress unreadVariable
     }
     void teardown() override
     { delete ss; }
@@ -158,8 +158,8 @@ TEST_GROUP(relative_offset_length)
 
     void setup() override
     {
-        TcpPduConfig c = { 4, 3, 2, true };
-        ss = new TcpPduSplitter(true, c);  // cppcheck-suppress unreadVariable
+        TlvPduConfig c = { 4, 3, 2, true };
+        ss = new TlvPduSplitter(true, c);  // cppcheck-suppress unreadVariable
     }
     void teardown() override
     { delete ss; }
@@ -261,8 +261,8 @@ TEST_GROUP(various)
 
 TEST(various, absolute2)
 {
-    TcpPduConfig c = { 2, 3, 0, false };
-    ss = new TcpPduSplitter(true, c);
+    TlvPduConfig c = { 2, 3, 0, false };
+    ss = new TlvPduSplitter(true, c);
 
     uint32_t fp = 0;
     StreamSplitter::Status result;
@@ -277,8 +277,8 @@ TEST(various, absolute2)
 
 TEST(various, absolute3)
 {
-    TcpPduConfig c = { 3, 2, 0, false };
-    ss = new TcpPduSplitter(true, c);
+    TlvPduConfig c = { 3, 2, 0, false };
+    ss = new TlvPduSplitter(true, c);
 
     uint32_t fp = 0;
     StreamSplitter::Status result;
@@ -293,8 +293,8 @@ TEST(various, absolute3)
 
 TEST(various, abort)
 {
-    TcpPduConfig c = { 1, 2, 0, false };
-    ss = new TcpPduSplitter(true, c);
+    TlvPduConfig c = { 1, 2, 0, false };
+    ss = new TlvPduSplitter(true, c);
 
     uint32_t fp = 0;
     StreamSplitter::Status result;
@@ -305,8 +305,8 @@ TEST(various, abort)
 
 TEST(various, header_only)
 {
-    TcpPduConfig c = { 1, 2, 0, true };
-    ss = new TcpPduSplitter(true, c);
+    TlvPduConfig c = { 1, 2, 0, true };
+    ss = new TlvPduSplitter(true, c);
 
     uint32_t fp = 0;
     StreamSplitter::Status result;
@@ -331,8 +331,8 @@ TEST_GROUP(multi_flush)
 
     void setup() override
     {
-        TcpPduConfig c = { 1, 2, 0, true };
-        ss = new TcpPduSplitter(true, c);  // cppcheck-suppress unreadVariable
+        TlvPduConfig c = { 1, 2, 0, true };
+        ss = new TlvPduSplitter(true, c);  // cppcheck-suppress unreadVariable
     }
     void teardown() override
     { delete ss; }

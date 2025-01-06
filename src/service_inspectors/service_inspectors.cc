@@ -43,7 +43,7 @@ extern const BaseApi* sin_pop;
 extern const BaseApi* sin_rpc_decode;
 extern const BaseApi* sin_smtp;
 extern const BaseApi* sin_ssh;
-extern const BaseApi* sin_tcp_pdu;
+extern const BaseApi* sin_tlv_pdu;
 extern const BaseApi* sin_telnet;
 extern const BaseApi* sin_wizard;
 
@@ -72,7 +72,7 @@ const BaseApi* service_inspectors[] =
     sin_rpc_decode,
     sin_smtp,
     sin_ssh,
-    sin_tcp_pdu,
+    sin_tlv_pdu,
     sin_telnet,
     sin_wizard,
 #endif

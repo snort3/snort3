@@ -145,21 +145,6 @@ void DataBus::subscribe_global(const PubKey& key, unsigned eid, DataHandler* h, 
     sc.global_dbus->_subscribe(key, eid, h);
 }
 
-void DataBus::unsubscribe(const PubKey& key, unsigned eid, DataHandler* h)
-{
-    get_data_bus()._unsubscribe(key, eid, h);
-}
-
-void DataBus::unsubscribe_network(const PubKey& key, unsigned eid, DataHandler* h)
-{
-    get_network_data_bus()._unsubscribe(key, eid, h);
-}
-
-void DataBus::unsubscribe_global(const PubKey& key, unsigned eid, DataHandler* h, SnortConfig& sc)
-{
-    sc.global_dbus->_unsubscribe(key, eid, h);
-}
-
 // notify subscribers of event
 void DataBus::publish(unsigned pid, unsigned eid, DataEvent& e, Flow* f)
 {
@@ -244,24 +229,6 @@ void DataBus::_subscribe(const PubKey& key, unsigned eid, DataHandler* h)
 {
     unsigned pid = get_id(key);
     _subscribe(pid, eid, h);
-}
-
-void DataBus::_unsubscribe(const PubKey& key, unsigned eid, const DataHandler* h)
-{
-    unsigned pid = get_id(key);
-    unsigned idx = pid + eid;
-    assert(idx < pub_sub.size());
-
-    SubList& subs = pub_sub[idx];
-
-    for ( unsigned i = 0; i < subs.size(); i++ )
-    {
-        if ( subs[i] == h )
-        {
-            subs.erase(subs.begin() + i--);
-            break;
-        }
-    }
 }
 
 void DataBus::_publish(unsigned pid, unsigned eid, DataEvent& e, Flow* f) const

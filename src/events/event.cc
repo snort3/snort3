@@ -153,6 +153,17 @@ bool Event::get_target(bool& src) const
     return false;
 }
 
-const SigInfo& Event::get_sig_info() const
-{ return sig_info; }
+bool Event::get_reference(unsigned idx, const char*& name, const char*& id, const char*& url) const
+{
+    if ( idx >= sig_info.refs.size() )
+        return false;
+
+    name = sig_info.refs[idx]->system->name.c_str();
+    id = sig_info.refs[idx]->id.c_str();
+
+    auto* ref = reference_system_lookup(SnortConfig::get_conf(), sig_info.refs[idx]->system->name);
+    url = (ref ? ref->url.c_str() : nullptr);
+
+    return true;
+}
 

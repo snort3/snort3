@@ -142,22 +142,16 @@ TEST_GROUP(data_bus)
 
 TEST(data_bus, subscribe_global)
 {
-    UTestHandler h;
-    DataBus::subscribe_global(pub_key, DbUtIds::EVENT, &h, *snort_conf);
+    UTestHandler* h = new UTestHandler();
+    DataBus::subscribe_global(pub_key, DbUtIds::EVENT, h, *snort_conf);
 
     UTestEvent event(100);
     DataBus::publish(pub_id, DbUtIds::EVENT, event);
-    CHECK(100 == h.evt_msg);
+    CHECK(100 == h->evt_msg);
 
     UTestEvent event1(200);
     DataBus::publish(pub_id, DbUtIds::EVENT, event1);
-    CHECK(200 == h.evt_msg);
-
-    DataBus::unsubscribe_global(pub_key, DbUtIds::EVENT, &h, *snort_conf);
-
-    UTestEvent event2(300);
-    DataBus::publish(pub_id, DbUtIds::EVENT, event2);
-    CHECK(200 == h.evt_msg); // unsubscribed!
+    CHECK(200 == h->evt_msg);
 }
 
 TEST(data_bus, subscribe_network)
@@ -172,14 +166,6 @@ TEST(data_bus, subscribe_network)
     UTestEvent event1(200);
     DataBus::publish(pub_id, DbUtIds::EVENT, event1);
     CHECK(200 == h->evt_msg);
-
-    DataBus::unsubscribe_network(pub_key, DbUtIds::EVENT, h);
-
-    UTestEvent event2(300);
-    DataBus::publish(pub_id, DbUtIds::EVENT, event2);
-    CHECK(200 == h->evt_msg); // unsubscribed!
-
-    delete h;
 }
 
 TEST(data_bus, subscribe)
@@ -194,14 +180,6 @@ TEST(data_bus, subscribe)
     UTestEvent event1(200);
     DataBus::publish(pub_id, DbUtIds::EVENT, event1);
     CHECK(200 == h->evt_msg);
-
-    DataBus::unsubscribe(pub_key, DbUtIds::EVENT, h);
-
-    UTestEvent event2(300);
-    DataBus::publish(pub_id, DbUtIds::EVENT, event2);
-    CHECK(200 == h->evt_msg); // unsubscribed!
-
-    delete h;
 }
 
 TEST(data_bus, order1)
@@ -222,14 +200,6 @@ TEST(data_bus, order1)
     CHECK(1 == h1->seq);
     CHECK(2 == h9->seq);
     CHECK(3 == h0->seq);
-
-    DataBus::unsubscribe(pub_key, DbUtIds::EVENT, h0);
-    DataBus::unsubscribe(pub_key, DbUtIds::EVENT, h1);
-    DataBus::unsubscribe(pub_key, DbUtIds::EVENT, h9);
-
-    delete h0;
-    delete h1;
-    delete h9;
 }
 
 TEST(data_bus, order2)
@@ -250,14 +220,6 @@ TEST(data_bus, order2)
     CHECK(1 == h1->seq);
     CHECK(2 == h9->seq);
     CHECK(3 == h0->seq);
-
-    DataBus::unsubscribe(pub_key, DbUtIds::EVENT, h0);
-    DataBus::unsubscribe(pub_key, DbUtIds::EVENT, h1);
-    DataBus::unsubscribe(pub_key, DbUtIds::EVENT, h9);
-
-    delete h0;
-    delete h1;
-    delete h9;
 }
 
 //-------------------------------------------------------------------------

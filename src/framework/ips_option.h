@@ -119,7 +119,6 @@ public:
 
     static void set_priority(const IpsInfo&, uint32_t);
     static void set_classtype(IpsInfo&, const char*);
-    static void set_reference(IpsInfo&, const char* scheme, const char* id);
 
     enum Enable { NO, YES, INHERIT };
     static void set_enabled(IpsInfo&, Enable);

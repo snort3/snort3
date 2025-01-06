@@ -20,7 +20,7 @@ add_subdirectory(sip)
 add_subdirectory(smtp)
 add_subdirectory(ssh)
 add_subdirectory(ssl)
-add_subdirectory(tcp_pdu)
+add_subdirectory(tlv_pdu)
 add_subdirectory(wizard)
 
 if (STATIC_INSPECTORS)
@@ -42,7 +42,7 @@ if (STATIC_INSPECTORS)
         $<TARGET_OBJECTS:smtp>
         $<TARGET_OBJECTS:ssh>
         $<TARGET_OBJECTS:ssl>
-        $<TARGET_OBJECTS:tcp_pdu>
+        $<TARGET_OBJECTS:tlv_pdu>
         $<TARGET_OBJECTS:wizard>
     )
 endif()

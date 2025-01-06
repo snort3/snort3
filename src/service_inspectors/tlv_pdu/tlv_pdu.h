@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_pdu.h author Russ Combs <rucombs@cisco.com>
+// tlv_pdu.h author Russ Combs <rucombs@cisco.com>
 
 // provides a simple flush mechanism for TCP PDUs with
 // a fixed size header containing a length field
@@ -28,7 +28,7 @@
 #include "main/snort_types.h"
 #include "stream/stream_splitter.h"
 
-struct TcpPduConfig
+struct TlvPduConfig
 {
     unsigned size = 0;
     unsigned offset = 0;
@@ -45,17 +45,17 @@ struct PduCounts
 
 extern THREAD_LOCAL PduCounts pdu_counts;
 
-class TcpPduSplitter : public snort::StreamSplitter
+class TlvPduSplitter : public snort::StreamSplitter
 {
 public:
-    TcpPduSplitter(bool b, TcpPduConfig& c) : snort::StreamSplitter(b), config(c) { }
+    TlvPduSplitter(bool b, TlvPduConfig& c) : snort::StreamSplitter(b), config(c) { }
 
     bool is_paf() override { return true; }
 
     Status scan(struct snort::Packet*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
 
 private:
-    TcpPduConfig config;
+    TlvPduConfig config;
     unsigned index = 0;
     uint32_t value = 0;
 };

@@ -54,9 +54,6 @@ using namespace snort;
 const ReferenceSystem* reference_system_add(
     SnortConfig* sc, const std::string& name, const char* url)
 {
-    if ( !sc->alert_refs() )
-        return nullptr;
-
     assert(!name.empty());
 
     ReferenceSystem* sys = new ReferenceSystem(name, url);
@@ -65,7 +62,7 @@ const ReferenceSystem* reference_system_add(
     return sys;
 }
 
-static const ReferenceSystem* reference_system_lookup(SnortConfig* sc, const std::string& key)
+const ReferenceSystem* reference_system_lookup(const SnortConfig* sc, const std::string& key)
 {
     const auto it = sc->references.find(key);
 

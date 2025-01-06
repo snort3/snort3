@@ -1020,18 +1020,17 @@ void LogICMPHeader(TextLog* log, Packet* p)
 
 void LogXrefs(TextLog* log, const Event& e)
 {
-    const SigInfo& sig_info = e.get_sig_info();
+    unsigned idx = 0;
+    const char* name = nullptr;
+    const char* id = nullptr;
+    const char* url = nullptr;
 
-    for ( const auto ref : sig_info.refs )
+    while ( e.get_reference(idx++, name, id, url) )
     {
-        if ( !ref->system )
-            TextLog_Print(log, "[Xref => %s]", ref->id.c_str());
-
-        else if ( !ref->system->url.empty() )
-            TextLog_Print(log, "[Xref => %s%s]", ref->system->url.c_str(), ref->id.c_str());
-
+        if ( url and *url )
+            TextLog_Print(log, "[Xref => %s%s]", url, id);
         else
-            TextLog_Print(log, "[Xref => %s %s]", ref->system->name.c_str(), ref->id.c_str());
+            TextLog_Print(log, "[Xref => %s %s]", name, id);
     }
 }
 

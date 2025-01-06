@@ -113,11 +113,6 @@ public:
     static void subscribe_network(const PubKey&, unsigned id, DataHandler*);
     static void subscribe_global(const PubKey&, unsigned id, DataHandler*, SnortConfig&);
 
-    // FIXIT-L these should be called during cleanup
-    static void unsubscribe(const PubKey&, unsigned id, DataHandler*);
-    static void unsubscribe_network(const PubKey&, unsigned id, DataHandler*);
-    static void unsubscribe_global(const PubKey&, unsigned id, DataHandler*, SnortConfig&);
-
     // runtime methods
     static void publish(unsigned pub_id, unsigned evt_id, DataEvent&, Flow* = nullptr);
 
@@ -129,7 +124,6 @@ public:
 private:
     void _subscribe(unsigned pub_id, unsigned evt_id, DataHandler*);
     void _subscribe(const PubKey&, unsigned evt_id, DataHandler*);
-    void _unsubscribe(const PubKey&, unsigned evt_id, const DataHandler*);
     void _publish(unsigned pub_id, unsigned evt_id, DataEvent&, Flow*) const;
 
 private:

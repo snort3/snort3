@@ -16,13 +16,13 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_pdu_splitter.cc author Russ Combs <rucombs@cisco.com>
+// tlv_pdu_splitter.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "tcp_pdu.h"
+#include "tlv_pdu.h"
 
 using namespace snort;
 
@@ -30,7 +30,7 @@ using namespace snort;
 // splitter foo
 //-------------------------------------------------------------------------
 
-StreamSplitter::Status TcpPduSplitter::scan(Packet*, const uint8_t* data, uint32_t len, uint32_t, uint32_t* fp)
+StreamSplitter::Status TlvPduSplitter::scan(Packet*, const uint8_t* data, uint32_t len, uint32_t, uint32_t* fp)
 {
     ++pdu_counts.scans;
     unsigned prefix = config.offset + config.size;

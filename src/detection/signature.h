@@ -48,6 +48,8 @@ struct ReferenceSystem
 
 const ReferenceSystem* reference_system_add(snort::SnortConfig*, const std::string&, const char* = "");
 
+const ReferenceSystem* reference_system_lookup(const snort::SnortConfig*, const std::string& key);
+
 struct ReferenceNode
 {
     ReferenceNode(const ReferenceSystem* sys, const std::string& id) : system(sys), id(id) { }

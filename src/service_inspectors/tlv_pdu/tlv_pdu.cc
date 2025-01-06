@@ -16,7 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// tcp_pdu.cc author Russ Combs <rucombs@cisco.com>
+// tlv_pdu.cc author Russ Combs <rucombs@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -27,7 +27,7 @@
 #include "framework/module.h"
 #include "profiler/profiler.h"
 
-#include "tcp_pdu.h"
+#include "tlv_pdu.h"
 
 using namespace snort;
 using namespace std;
@@ -36,7 +36,7 @@ using namespace std;
 // common foo
 //-------------------------------------------------------------------------
 
-#define s_name "tcp_pdu"
+#define s_name "tlv_pdu"
 #define s_help "set TCP flush points based on PDU length field"
 
 static const PegInfo pdu_pegs[] =
@@ -72,10 +72,10 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-class TcpPduModule : public snort::Module
+class TlvPduModule : public snort::Module
 {
 public:
-    TcpPduModule() : Module(s_name, s_help, s_params)
+    TlvPduModule() : Module(s_name, s_help, s_params)
     { }
 
     const PegInfo* get_pegs() const override
@@ -95,14 +95,14 @@ public:
 
     bool set(const char*, Value&, SnortConfig*) override;
 
-    TcpPduConfig& get_config()
+    TlvPduConfig& get_config()
     { return config; }
 
 private:
-    TcpPduConfig config;
+    TlvPduConfig config;
 };
 
-bool TcpPduModule::set(const char*, Value& v, SnortConfig*)
+bool TlvPduModule::set(const char*, Value& v, SnortConfig*)
 {
     if (v.is("offset"))
         config.offset = v.get_int32();
@@ -123,16 +123,16 @@ bool TcpPduModule::set(const char*, Value& v, SnortConfig*)
 // inspector foo
 //-------------------------------------------------------------------------
 
-class TcpPdu : public Inspector
+class TlvPdu : public Inspector
 {
 public:
-    TcpPdu(TcpPduConfig& c) : config(c) { }
+    TlvPdu(TlvPduConfig& c) : config(c) { }
 
     StreamSplitter* get_splitter(bool c2s) override
-    { return new TcpPduSplitter(c2s, config); }
+    { return new TlvPduSplitter(c2s, config); }
 
 private:
-    TcpPduConfig config;
+    TlvPduConfig config;
 };
 
 //-------------------------------------------------------------------------
@@ -140,15 +140,15 @@ private:
 //-------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{ return new TcpPduModule; }
+{ return new TlvPduModule; }
 
 static void mod_dtor(Module* m)
 { delete m; }
 
 static Inspector* pdu_ctor(Module* m)
 {
-    TcpPduModule* tpm = (TcpPduModule*)m;
-    return new TcpPdu(tpm->get_config());
+    TlvPduModule* tpm = (TlvPduModule*)m;
+    return new TlvPdu(tpm->get_config());
 }
 
 static void pdu_dtor(Inspector* p)
@@ -191,6 +191,6 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
     nullptr
 };
 #else
-const BaseApi* sin_tcp_pdu = &pdu_api.base;
+const BaseApi* sin_tlv_pdu = &pdu_api.base;
 #endif
 

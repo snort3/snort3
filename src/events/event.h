@@ -34,8 +34,6 @@ public:
     static uint16_t get_next_seq_num();
     static uint32_t get_next_event_id();
 
-    const SigInfo& get_sig_info() const;
-
     uint32_t get_seconds() const;
     void get_timestamp(uint32_t& sec, uint32_t& usec) const;
 
@@ -56,6 +54,9 @@ public:
 
     uint32_t get_class_id() const;
     uint32_t get_priority() const;
+
+    // start at idx 0 and increment while true to get all refs
+    bool get_reference(unsigned idx, const char*& name, const char*& id, const char*& url) const;
 
     // returns false if not specified; otherwise src indicates target is source or dest
     bool get_target(bool& src) const;

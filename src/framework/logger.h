@@ -27,17 +27,16 @@
 // the LOGAPI_VERSION will change if anything in this file changes.
 // see also framework/base_api.h.
 
+#include "events/event.h"
 #include "framework/base_api.h"
 #include "main/snort_types.h"
-
-class Event;
 
 namespace snort
 {
 struct Packet;
 
 // this is the current version of the api
-#define LOGAPI_VERSION ((BASE_API_VERSION << 16) | 1)
+#define LOGAPI_VERSION ((BASE_API_VERSION << 16) | 2)
 
 #define OUTPUT_TYPE_FLAG__NONE  0x0
 #define OUTPUT_TYPE_FLAG__ALERT 0x1
