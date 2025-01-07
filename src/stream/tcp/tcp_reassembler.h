@@ -178,8 +178,6 @@ public:
 
     virtual void initialize_paf() override
     {
-        assert( get_flush_policy() != STREAM_FLPOLICY_IGNORE );
-
         // only initialize if we have a data segment queued
         if ( !seglist.head )
             return;

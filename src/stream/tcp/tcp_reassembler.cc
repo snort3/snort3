@@ -453,12 +453,22 @@ void TcpReassemblerBase::final_flush(Packet* p, uint32_t dir)
 {
     tracker.set_tf_flags(TF_FORCE_FLUSH);
 
-    if ( flush_stream(p, dir, true) )
+    // if the flow is one-way (asymmetric) then eval flush on asymmetric connection first
+    if ( !p->flow->two_way_traffic() )
+    {
+        eval_asymmetric_flush(p);
+    }
+
+    uint32_t flushed = flush_stream(p, dir, true);
+    if ( flushed  )
     {
         if ( server_side )
             tcpStats.server_cleanups++;
         else
             tcpStats.client_cleanups++;
+
+        if ( !p->flow->two_way_traffic() )
+            tcpStats.flush_on_asymmetric_flow++;
 
         purge_flushed_ackd();
     }
@@ -536,6 +546,10 @@ void TcpReassemblerBase::flush_queued_segments(Flow* flow, bool clear, Packet* p
     }
     else
     {
+        // if this is an asymmetric flow and no data has been scanned then initialize paf
+        if ( !flow->two_way_traffic() and !paf.paf_initialized() )
+            initialize_paf();
+
         Packet* pdu = get_packet(flow, packet_dir, server_side);
 
         bool pending = clear and paf.paf_initialized();
@@ -600,7 +614,8 @@ bool TcpReassemblerBase::final_flush_on_fin(int32_t flush_amt, Packet *p, FinSeq
 
 bool TcpReassemblerBase::asymmetric_flow_flushed(uint32_t flushed, snort::Packet *p)
 {
-    bool asymmetric = flushed && seglist.seg_count && !p->flow->two_way_traffic() && !p->ptrs.tcph->is_syn();
+    bool asymmetric = flushed && seglist.seg_count && !p->flow->two_way_traffic()
+        && ( !p->ptrs.tcph or !p->ptrs.tcph->is_syn() );
     if ( asymmetric )
     {
         TcpStreamTracker::TcpState peer = tracker.session->get_peer_state(tracker);

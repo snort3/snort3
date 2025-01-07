@@ -834,7 +834,7 @@ int32_t TcpStreamTracker::kickstart_asymmetric_flow(const TcpSegmentDescriptor& 
     else
         reassembler->reset_paf();
 
-    reassembler->eval_flush_policy_on_data(tsd.get_pkt());
+    reassembler->eval_asymmetric_flush(tsd.get_pkt());
 
     int32_t space_left = max_queued_bytes - seglist.get_seg_bytes_total();
 
@@ -860,9 +860,12 @@ void TcpStreamTracker::perform_fin_recv_flush(TcpSegmentDescriptor& tsd)
     if ( tsd.is_data_segment() )
         session->handle_data_segment(tsd);
 
+    Packet* p = tsd.get_pkt();
     if ( flush_policy == STREAM_FLPOLICY_ON_DATA and SEQ_EQ(tsd.get_end_seq(), rcv_nxt)
-         and !tsd.get_flow()->searching_for_service() )
-        reassembler->finish_and_final_flush(tsd.get_flow(), true, tsd.get_pkt());
+         and !p->flow->searching_for_service() )
+        reassembler->finish_and_final_flush(p->flow, true, p);
+    else if ( !p->flow->two_way_traffic() )
+        reassembler->eval_asymmetric_flush(p);
 }
 
 uint32_t TcpStreamTracker::perform_partial_flush()
