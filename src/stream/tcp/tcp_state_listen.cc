@@ -67,8 +67,8 @@ bool TcpStateListen::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
         TcpStreamTracker* listener = tsd.get_listener();
         TcpStreamTracker* talker = tsd.get_talker();
 
-        trk.normalizer.init(StreamPolicy::MISSED_3WHS, trk.session, listener, talker);
-        trk.normalizer.init(StreamPolicy::MISSED_3WHS, trk.session, talker, listener);
+        talker->normalizer.init(StreamPolicy::MISSED_3WHS, trk.session, talker, listener);
+        listener->normalizer.init(StreamPolicy::MISSED_3WHS, trk.session, listener, talker);
         flow->set_session_flags(SSNFLAG_MIDSTREAM);
 
         if ( PacketTracer::is_active() )
