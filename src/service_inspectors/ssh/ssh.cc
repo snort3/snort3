@@ -604,7 +604,9 @@ Ssh::~Ssh()
 
 bool Ssh::configure(SnortConfig*)
 {
-    pub_id = DataBus::get_id(ssh_pub_key);
+    if ( !pub_id )
+        pub_id = DataBus::get_id(ssh_pub_key);
+
     return true;
 }
 

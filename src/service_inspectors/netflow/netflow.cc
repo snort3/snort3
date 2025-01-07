@@ -843,7 +843,9 @@ static std::string to_string(const std::vector <int>& zones)
 
 bool NetFlowInspector::configure(SnortConfig*)
 {
-    pub_id = DataBus::get_id(netflow_pub_key);
+    if ( !pub_id )
+        pub_id = DataBus::get_id(netflow_pub_key);
+
     return true;
 }
 

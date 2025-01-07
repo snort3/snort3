@@ -119,7 +119,10 @@ Dce2Tcp::Dce2Tcp(const dce2TcpProtoConf& pc) :
 bool Dce2Tcp::configure(snort::SnortConfig* sc)
 {
     esm.set_proto_id(sc->proto_ref->add(DCE_RPC_SERVICE_NAME));
-    pub_id = DataBus::get_id(dce_tcp_pub_key);
+
+    if (!pub_id)
+        pub_id = DataBus::get_id(dce_tcp_pub_key);
+
     return true;
 }
 

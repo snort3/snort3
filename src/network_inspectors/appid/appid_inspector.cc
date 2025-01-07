@@ -165,7 +165,9 @@ bool AppIdInspector::configure(SnortConfig* sc)
     DataBus::subscribe_global(intrinsic_pub_key, IntrinsicEventIds::FLOW_NO_SERVICE,
          new AppIdServiceEventHandler(*this), *sc);
 
-    cached_global_pub_id = DataBus::get_id(appid_pub_key);
+    if (!cached_global_pub_id)
+        cached_global_pub_id = DataBus::get_id(appid_pub_key);
+
     appid_pub_id = cached_global_pub_id;
     return true;
 }

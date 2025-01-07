@@ -1113,7 +1113,9 @@ void Dns::eval(Packet* p)
 
 bool Dns::configure(snort::SnortConfig*)
 {
-    pub_id = DataBus::get_id(dns_pub_key);
+    if ( !pub_id )
+        pub_id = DataBus::get_id(dns_pub_key);
+
     return true;
 }
 

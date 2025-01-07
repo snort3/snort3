@@ -583,7 +583,9 @@ bool Reputation::configure(SnortConfig*)
     DataBus::subscribe_network(intrinsic_pub_key, IntrinsicEventIds::AUXILIARY_IP, new AuxiliaryIpRepHandler(*this));
     DataBus::subscribe_network(intrinsic_pub_key, IntrinsicEventIds::PKT_WITHOUT_FLOW, new IpRepHandler(*this));
 
-    pub_id = DataBus::get_id(reputation_pub_key);
+    if (!pub_id)
+        pub_id = DataBus::get_id(reputation_pub_key);
+
     return true;
 }
 

@@ -514,7 +514,8 @@ void Ssl::eval(Packet* p)
 
 bool Ssl::configure(SnortConfig*)
 {
-    pub_id = DataBus::get_id(ssl_pub_key);
+    if ( !pub_id )
+        pub_id = DataBus::get_id(ssl_pub_key);
 
     DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::FINALIZE_PACKET, new SslFinalizePacketHandler());
     DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::OPPORTUNISTIC_TLS, new SslStartTlsEventtHandler());

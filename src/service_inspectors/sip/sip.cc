@@ -245,7 +245,9 @@ Sip::~Sip()
 
 bool Sip::configure(SnortConfig*)
 {
-    SIPData::pub_id = DataBus::get_id(sip_pub_key);
+    if ( !SIPData::pub_id )
+        SIPData::pub_id = DataBus::get_id(sip_pub_key);
+
     return true;
 }
 

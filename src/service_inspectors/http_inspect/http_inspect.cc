@@ -141,7 +141,9 @@ bool HttpInspect::configure(SnortConfig* sc)
 {
     params->js_norm_param.configure();
     params->mime_decode_conf->sync_all_depths(sc);
-    pub_id = DataBus::get_id(http_pub_key);
+
+    if (!pub_id)
+        pub_id = DataBus::get_id(http_pub_key);
 
     return true;
 }

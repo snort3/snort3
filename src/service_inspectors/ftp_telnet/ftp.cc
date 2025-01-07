@@ -263,7 +263,9 @@ FtpServer::~FtpServer ()
 
 bool FtpServer::configure(SnortConfig* sc)
 {
-    pub_id = DataBus::get_id(ftp_pub_key);
+    if ( !pub_id )
+        pub_id = DataBus::get_id(ftp_pub_key);
+
     ftp_data_snort_protocol_id = sc->proto_ref->add("ftp-data");
     return !FTPCheckConfigs(sc, ftp_server);
 }

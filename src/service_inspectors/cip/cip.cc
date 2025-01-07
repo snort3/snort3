@@ -267,21 +267,16 @@ private:
 };
 
 Cip::Cip(CipProtoConf* pc)
-{
-    config = pc;
-}
+{ config = pc; }
 
 Cip::~Cip()
-{
-    if (config)
-    {
-        delete config;
-    }
-}
+{ delete config; }
 
 bool Cip::configure(SnortConfig*)
 {
-    CipEventData::pub_id = DataBus::get_id(cip_pub_key);
+    if (!CipEventData::pub_id)
+        CipEventData::pub_id = DataBus::get_id(cip_pub_key);
+
     return true;
 }
 

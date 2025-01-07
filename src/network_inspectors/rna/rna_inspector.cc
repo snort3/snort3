@@ -94,7 +94,8 @@ RnaInspector::~RnaInspector()
 
 bool RnaInspector::configure(SnortConfig*)
 {
-    RnaConfig::pub_id = DataBus::get_id(rna_pub_key);
+    if (!RnaConfig::pub_id)
+        RnaConfig::pub_id = DataBus::get_id(rna_pub_key);
 
     DataBus::subscribe_network( appid_pub_key, AppIdEventIds::ANY_CHANGE, new RnaAppidEventHandler(*pnd) );
     DataBus::subscribe_network( appid_pub_key, AppIdEventIds::DHCP_INFO, new RnaDHCPInfoEventHandler(*pnd) );
