@@ -25,6 +25,7 @@ set (PUB_SUB_INCLUDES
     rna_events.h
     sip_events.h
     stream_event_ids.h
+    shadowtraffic_aggregator.h
     smb_events.h
     ssh_events.h
     ssl_events.h
