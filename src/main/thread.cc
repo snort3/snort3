@@ -23,10 +23,17 @@
 
 #include "thread.h"
 
+#include <fstream>
+#include <iostream>
 #include <sys/stat.h>
 
+#include "log/messages.h"
+
+#include "snort.h"
 #include "snort_config.h"
 #include "thread_config.h"
+
+#define INST_MAP_NAME "instance_mappings.csv"
 
 //-------------------------------------------------------------------------
 // FIXIT-L instance_id zero indicates main thread during parse time and the
@@ -52,6 +59,38 @@ void set_thread_type(SThreadType type)
 
 namespace snort
 {
+
+void populate_instance_maps()
+{
+    std::string path;
+
+    get_instance_file(path, INST_MAP_NAME);
+
+    std::ofstream inst_file;
+    inst_file.open(path);
+
+    inst_file << "pid, snort process number, instance_id, relative_instance_id, max_instances\n";
+    inst_file << getpid() << ", ";
+    inst_file << Snort::get_process_id() << ", ";
+    inst_file << instance_id << ", ";
+    inst_file << get_relative_instance_number() << ", ";
+    inst_file << ThreadConfig::get_instance_max();
+    inst_file << "\n";
+
+    inst_file.close();
+}
+
+void invalidate_instance_maps()
+{
+    std::string path;
+
+    get_instance_file(path, INST_MAP_NAME);
+    std::ofstream inst_file;
+    inst_file.open(path);
+    inst_file << "(instance is inactive or has terminated)\n";
+    inst_file.close();
+}
+
 unsigned get_instance_id()
 { return instance_id; }
 

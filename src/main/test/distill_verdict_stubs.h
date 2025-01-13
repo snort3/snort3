@@ -236,6 +236,8 @@ bool Flow::handle_allowlist() { return true; }
 void ThreadConfig::implement_thread_affinity(SThreadType, unsigned) { }
 void ThreadConfig::apply_thread_policy(SThreadType , unsigned ) { }
 void ThreadConfig::set_instance_tid(int) { }
+void populate_instance_maps() { }
+void invalidate_instance_maps() { }
 }
 
 bool FlowControl::move_to_allowlist(snort::Flow*) { return true; }

@@ -640,6 +640,8 @@ void Analyzer::init_unprivileged()
     InitTag();
     EventTrace_Init();
 
+    populate_instance_maps();
+
     memory::MemoryCap::thread_init();
     EventManager::open_outputs();
     IpsManager::setup_options(sc);
@@ -696,6 +698,8 @@ void Analyzer::term()
         Profile profile(daqPerfStats);
         daq_instance->finalize_message(msg, DAQ_VERDICT_BLOCK);
     }
+
+    invalidate_instance_maps();
 
     DetectionEngine::idle();
     InspectorManager::thread_stop(sc);

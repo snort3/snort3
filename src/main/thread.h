@@ -41,6 +41,9 @@ uint16_t get_run_num();
 
 namespace snort
 {
+void populate_instance_maps();
+void invalidate_instance_maps();
+
 SO_PUBLIC unsigned get_instance_id();
 SO_PUBLIC unsigned get_relative_instance_number();
 SO_PUBLIC SThreadType get_thread_type();

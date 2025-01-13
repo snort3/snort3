@@ -23,6 +23,7 @@
 
 #include "snort.h"
 
+#include <cmath>
 #include <daq.h>
 #include <sys/stat.h>
 #include <syslog.h>
@@ -396,7 +397,7 @@ unsigned Snort::get_process_id()
     if (!sc->id_offset)
         return 1;
     else
-        return sc->id_offset / ThreadConfig::get_instance_max() + 1;
+        return std::ceil(sc->id_offset / (float) ThreadConfig::get_instance_max());
 }
 
 void Snort::setup(int argc, char* argv[])
