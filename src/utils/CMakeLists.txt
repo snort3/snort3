@@ -18,6 +18,7 @@ add_library ( utils OBJECT
     sflsq.cc
     sflsq.h
     snort_bounds.h
+    snort_pcre.h
     stats.cc
     stats.h
     util.cc

@@ -51,8 +51,8 @@ Additional features on the roadmap include:
 If you already build Snort, you may have everything you need.  If not, grab
 the latest:
 
-* cmake to build from source
-* daq from https://github.com/snort3/libdaq for packet IO
+* CMake to build from source
+* DAQ from https://github.com/snort3/libdaq for packet IO
 * dnet from https://github.com/dugsong/libdnet.git for network utility functions
 * flex >= 2.6.0 from https://github.com/westes/flex for JavaScript syntax parser
 * g++ >= 7 or other C++17 compiler
@@ -61,7 +61,7 @@ the latest:
 * OpenSSL from https://www.openssl.org/source/ for SHA and MD5 file signatures,
   the protected_content rule option, and SSL service detection
 * pcap from http://www.tcpdump.org for tcpdump style logging
-* pcre from http://www.pcre.org for regular expression pattern matching
+* PCRE2 from http://www.pcre.org for regular expression pattern matching
 * pkgconfig from https://www.freedesktop.org/wiki/Software/pkg-config/ to locate build dependencies
 * zlib from http://www.zlib.net for decompression
 

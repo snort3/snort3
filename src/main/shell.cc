@@ -29,7 +29,6 @@
 #include <fstream>
 #include <openssl/crypto.h>
 #include <pcap.h>
-#include <pcre.h>
 #include <stdexcept>
 #include <vector>
 #include <zlib.h>
@@ -58,6 +57,7 @@ extern "C" {
 #include "managers/module_manager.h"
 #include "parser/parse_conf.h"
 #include "parser/parser.h"
+#include "utils/snort_pcre.h"
 #include "utils/stats.h"
 
 #include "lua_bootstrap.h"
@@ -140,6 +140,12 @@ static void install_dependencies_strings(Shell* sh, lua_State* L)
 {
     assert(dep_versions[0]);
 
+    char pcre2_version[64] { };
+    int pcre2_version_size = pcre2_config(PCRE2_CONFIG_VERSION, pcre2_version);
+
+    if (pcre2_version_size <= 0 or static_cast<size_t>(pcre2_version_size) > sizeof(pcre2_version))
+        abort();
+
     std::vector<const char*> vs;
     const char* ljv = LUAJIT_VERSION;
     const char* osv = OpenSSL_version(SSLEAY_VERSION);
@@ -156,7 +162,7 @@ static void install_dependencies_strings(Shell* sh, lua_State* L)
     vs.push_back(ljv);
     vs.push_back(osv);
     vs.push_back(lpv);
-    vs.push_back(pcre_version());
+    vs.push_back(pcre2_version);
     vs.push_back(zlib_version);
 #ifdef HAVE_HYPERSCAN
     vs.push_back(hs_version());

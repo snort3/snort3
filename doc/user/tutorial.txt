@@ -26,7 +26,7 @@ Required:
 
 * pcap from http://www.tcpdump.org for tcpdump style logging
 
-* pcre from http://www.pcre.org for regular expression pattern matching
+* pcre2 from http://www.pcre.org for regular expression pattern matching
 
 * pkgconfig from https://www.freedesktop.org/wiki/Software/pkg-config/ to locate
   build dependencies

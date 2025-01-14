@@ -27,7 +27,6 @@
 #include <luajit.h>
 #include <openssl/crypto.h>
 #include <pcap.h>
-#include <pcre.h>
 #include <pwd.h>
 #include <sys/file.h>
 #include <sys/resource.h>
@@ -72,6 +71,7 @@ extern "C" {
 #include "protocols/packet.h"   // For NUM_IP_PROTOS
 #include "utils/cpp_macros.h"
 #include "utils/stats.h"
+#include "utils/snort_pcre.h"
 #include "utils/util.h"
 
 #include "main.h"
@@ -679,6 +679,12 @@ int DisplayBanner()
     while ( *ljv && !isdigit(*ljv) )
         ++ljv;
 
+    char pcre2_version[64] { };
+    int pcre2_version_size = pcre2_config(PCRE2_CONFIG_VERSION, pcre2_version);
+
+    if (pcre2_version_size <= 0 or static_cast<size_t>(pcre2_version_size) > sizeof(pcre2_version))
+        abort();
+
     LogMessage("\n");
     LogMessage("   ,,_     -*> Snort++ <*-\n");
 #ifdef BUILD
@@ -707,7 +713,7 @@ int DisplayBanner()
     LogMessage("           Using LZMA version %s\n", lzma_version_string());
 #endif
     LogMessage("           Using %s\n", OpenSSL_version(SSLEAY_VERSION));
-    LogMessage("           Using PCRE version %s\n", pcre_version());
+    LogMessage("           Using PCRE2 version %s\n", (char*) pcre2_version);
     LogMessage("           Using ZLIB version %s\n", zlib_version);
 
     LogMessage("\n");
