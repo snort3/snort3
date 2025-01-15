@@ -518,6 +518,8 @@ void FileInfo::reset()
     reset_sha();
     if (is_file_name_set())
         unset_file_name();
+    pending_expire_time.tv_sec = 0;
+    pending_expire_time.tv_usec = 0;
 }
 
 void FileInfo::set_re_eval()
