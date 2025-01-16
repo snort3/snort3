@@ -907,13 +907,15 @@ void FlowCache::output_flow(std::fstream& stream, const Flow& flow, const struct
         default:
             assert(false);
     }
+    int remaining_time = (flow.last_data_seen + flow.idle_timeout) - now.tv_sec;
+    std::string display_str = ( remaining_time < 0 ) ?  "s, timed out for " : "s, timeout in ";
     out << " pkts/bytes client " << flow.flowstats.client_pkts << "/" << flow.flowstats.client_bytes
         << " server " << flow.flowstats.server_pkts << "/" << flow.flowstats.server_bytes
         << " idle " << (now.tv_sec - flow.last_data_seen) << "s, uptime "
-        << (now.tv_sec - flow.flowstats.start_time.tv_sec) << "s, timeout ";
+        << (now.tv_sec - flow.flowstats.start_time.tv_sec) << display_str;
     std::string t = flow.is_hard_expiration() ?
-        timeout_to_str(flow.expire_time - now.tv_sec) :
-        timeout_to_str((flow.last_data_seen + config.proto[to_utype(flow.key->pkt_type)].nominal_timeout) - now.tv_sec);
+        timeout_to_str(abs((int)(flow.expire_time - now.tv_sec))) :
+        timeout_to_str(abs(remaining_time));
     out << t;
     stream << out.str() << proto.str() << (flow.flags.in_allowlist ? " (allowlist)" : "") << std::endl;
 }
