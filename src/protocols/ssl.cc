@@ -201,6 +201,10 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
             {
                 certs_rec = (const ServiceSSLV3CertsRecord*)handshake;
                 server_cert_data->certs_len = ntoh3(certs_rec->certs_len);
+                if ( server_cert_data->certs_len > (size - sizeof(certs_rec->certs_len)) )
+                {
+                    return retval | SSL_TRUNCATED_FLAG;
+                }
                 server_cert_data->certs_data = (uint8_t*)snort_alloc(server_cert_data->certs_len);
                 memcpy(server_cert_data->certs_data, pkt + sizeof(certs_rec->certs_len), server_cert_data->certs_len);
 
