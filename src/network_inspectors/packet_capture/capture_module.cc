@@ -53,6 +53,9 @@ static const Parameter s_capture[] =
     { "tenants", Parameter::PT_STRING, nullptr, nullptr,
       "comma-separated tenants filter to use for packet capturing" },
 
+    { "check_inner_pkt", Parameter::PT_BOOL, nullptr, "true",
+      "apply filter on inner packet headers" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -66,6 +69,9 @@ static const Parameter capture_params[] =
 
     { "tenants", Parameter::PT_STRING, nullptr, nullptr,
       "comma-separated tenants filter to use for packet capturing" },
+
+    { "check_inner_pkt", Parameter::PT_BOOL, nullptr, "true",
+      "apply filter on inner packet headers" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -93,7 +99,7 @@ THREAD_LOCAL ProfileStats cap_prof_stats;
 class PacketCaptureDebug : public AnalyzerCommand
 {
 public:
-    PacketCaptureDebug(const char* f, const int16_t g, const char* t);
+    PacketCaptureDebug(const char* f, const int16_t g, const char* t, const bool ci);
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "PACKET_CAPTURE_DEBUG"; }
 private:
@@ -101,6 +107,7 @@ private:
     std::string filter;
     int16_t group = -1;
     std::string tenants;
+    bool check_inner_pkt = true;
 };
 
 // -----------------------------------------------------------------------------
@@ -109,13 +116,13 @@ private:
 static int enable(lua_State* L)
 {
     main_broadcast_command(new PacketCaptureDebug(luaL_optstring(L, 1, ""),
-        luaL_optint(L, 2, 0), luaL_optstring(L, 3, "")), ControlConn::query_from_lua(L));
+        luaL_optint(L, 2, 0), luaL_optstring(L, 3, ""), luaL_opt(L, lua_toboolean, 4, true)), ControlConn::query_from_lua(L));
     return 0;
 }
 
 static int disable(lua_State* L)
 {
-    main_broadcast_command(new PacketCaptureDebug(nullptr, -1, nullptr), ControlConn::query_from_lua(L));
+    main_broadcast_command(new PacketCaptureDebug(nullptr, -1, nullptr, true), ControlConn::query_from_lua(L));
     return 0;
 }
 
@@ -123,7 +130,7 @@ static int disable(lua_State* L)
 // non-static functions
 // -----------------------------------------------------------------------------
 
-PacketCaptureDebug::PacketCaptureDebug(const char* f, const int16_t g, const char* t)
+PacketCaptureDebug::PacketCaptureDebug(const char* f, const int16_t g, const char* t, const bool ci)
 {
     if (f)
     {
@@ -131,13 +138,14 @@ PacketCaptureDebug::PacketCaptureDebug(const char* f, const int16_t g, const cha
         group = g;
         enable = true;
         tenants = t == nullptr ? "" : t;
+        check_inner_pkt = ci;
     }
 }
 
 bool PacketCaptureDebug::execute(Analyzer&, void**)
 {
     if (enable)
-        packet_capture_enable(filter, group, tenants);
+        packet_capture_enable(filter, group, tenants, check_inner_pkt);
     else
         packet_capture_disable();
 
@@ -165,6 +173,9 @@ bool CaptureModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("tenants") )
         str_to_int_vector(v.get_string(), ',', config.tenants);
+
+    else if ( v.is("check_inner_pkt") )
+        config.check_inner_pkt = v.get_bool();
 
     return true;
 }

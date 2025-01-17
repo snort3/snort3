@@ -354,6 +354,16 @@ struct SO_PUBLIC Packet
     uint32_t get_flow_geneve_vni() const;
     std::vector<snort::geneve::GeneveOptData> get_geneve_options(bool inner) const;
 
+    /*
+     * Get the offset of the inner packet if the packet is encapsulated in an outer packet
+     * like a Geneve packet, or 0 otherwise. Note this MUST be called when this packet's
+     * "layers" field is fully populated.
+     * @return the first byte index of the inner packet - the actual customer traffic
+     *         packet - in this packet's "pkt" field if it is encapsulated, or 0 if it
+     *         is not encapsulated.
+     */
+    uint16_t get_inner_pkt_offset() const;
+
     int16_t get_ingress_group() const
     {
         if (is_inter_group_flow())

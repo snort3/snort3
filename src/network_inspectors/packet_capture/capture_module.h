@@ -32,6 +32,7 @@ struct CaptureConfig
     int16_t group;
     std::string filter;
     std::vector<uint32_t> tenants;
+    bool check_inner_pkt;
 };
 
 struct CaptureStats

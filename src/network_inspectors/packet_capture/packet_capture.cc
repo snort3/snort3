@@ -132,13 +132,14 @@ static bool open_pcap_dumper()
 }
 
 // for unit test
-static void _packet_capture_enable(const string& f, const int16_t g = -1, const string& t = "")
+static void _packet_capture_enable(const string& f, const int16_t g = -1, const string& t = "", const bool ci = true)
 {
     if ( !config.enabled )
     {
         config.filter = f;
         config.enabled = true;
         config.group = g;
+        config.check_inner_pkt = ci;
         str_to_int_vector(t, ',', config.tenants);
     }
 }
@@ -149,6 +150,7 @@ static void _packet_capture_disable()
     config.enabled = false;
     config.group = -1;
     config.tenants.clear();
+    config.check_inner_pkt = true;
     LogMessage("Packet capture disabled\n");
 }
 
@@ -156,10 +158,10 @@ static void _packet_capture_disable()
 // non-static functions
 // -----------------------------------------------------------------------------
 
-void packet_capture_enable(const string& f, const int16_t g, const string& t)
+void packet_capture_enable(const string& f, const int16_t g, const string& t, const bool ci)
 {
 
-    _packet_capture_enable(f, g, t);
+    _packet_capture_enable(f, g, t, ci);
 
     if ( !capture_initialized() )
     {
@@ -263,8 +265,30 @@ void PacketCapture::eval(Packet* p)
             }
         }
 
-        if ( !bpf.bf_insns || bpf_filter(bpf.bf_insns, p->pkt,
-                p->pktlen, p->pkth->pktlen) )
+        bool matched_filter = false;
+        if (!bpf.bf_insns)
+        {
+            matched_filter = true;
+        }
+        else
+        {
+            const uint8_t* filter_pkt = p->pkt;
+            uint32_t filter_pkt_len = p->pktlen;
+            uint32_t filter_pkth_len = p->pkth->pktlen;
+            if (config.check_inner_pkt)
+            {
+                uint16_t inner_offset = p->get_inner_pkt_offset();
+                if (inner_offset > 0 && inner_offset < filter_pkt_len && inner_offset < filter_pkth_len)
+                {
+                    filter_pkt += inner_offset;
+                    filter_pkt_len -= inner_offset;
+                    filter_pkth_len -= inner_offset;
+                }
+            }
+            matched_filter = bpf_filter(bpf.bf_insns, filter_pkt, filter_pkt_len, filter_pkth_len);
+        }
+
+        if (matched_filter)
         {
             write_packet(p);
             cap_count_stats.matched++;

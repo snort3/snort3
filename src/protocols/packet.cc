@@ -284,6 +284,28 @@ std::vector<snort::geneve::GeneveOptData> Packet::get_geneve_options(bool inner)
         return {};
 }
 
+uint16_t Packet::get_inner_pkt_offset() const
+{
+    uint16_t offset = 0;
+    if (num_layers > 0 && proto_bits & PROTO_BIT__GENEVE)
+    {
+        for (int i = num_layers-1; i >= 0; i--)
+        {
+            if (layers[i].prot_id == ProtocolId::GENEVE)
+            {
+                offset = layers[i].start - layers[0].start + layers[i].length;
+                break;
+            }
+        }
+    }
+    // TODO: Add support for other encapsulation types
+
+    if (offset >= pktlen)
+        return 0;
+
+    return offset;
+}
+
 bool Packet::is_from_application_client() const
 {
     if (flow)
