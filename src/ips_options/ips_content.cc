@@ -70,6 +70,9 @@ public:
     unsigned match_delta;   /* Maximum distance we can jump to search for this pattern again. */
 
     bool depth_configured = true;
+
+    uint8_t char_width;  /* Byte width to expand to */
+    bool little_endian;  /* Endianness of multi-byte characters */
 };
 
 ContentData::ContentData()
@@ -78,6 +81,8 @@ ContentData::ContentData()
     offset_var = IPS_OPTIONS_NO_VAR;
     depth_var = IPS_OPTIONS_NO_VAR;
     match_delta = 0;
+    char_width = 1;
+    little_endian = false;
 }
 
 ContentData::~ContentData()
@@ -649,6 +654,12 @@ static const Parameter s_params[] =
     { "within", Parameter::PT_STRING, nullptr, nullptr,
       "var or maximum number of bytes to search from cursor" },
 
+    { "width", Parameter::PT_ENUM, "8|16|32", "8",
+      "char width to convert to" },
+
+    { "endian", Parameter::PT_ENUM, "big|little", "big",
+      "specify big/little endian for wide string conversions" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -702,6 +713,25 @@ bool ContentModule::begin(const char*, int, SnortConfig*)
 
 bool ContentModule::end(const char*, int, SnortConfig*)
 {
+    if ( cd->char_width > 1 )
+    {
+        // An endian flip of a single byte is just an offset
+        int endian_offset = cd->little_endian ? 0 : cd->char_width - 1;
+
+        char* temp = new char[cd->char_width * cd->pmd.pattern_size]();
+
+        for ( unsigned i = 0; i < cd->pmd.pattern_size; i++ )
+        {
+            temp[(i * cd->char_width) + endian_offset] = cd->pmd.pattern_buf[i];
+        }
+
+        delete[] cd->pmd.pattern_buf;
+        cd->pmd.pattern_buf = temp;
+        cd->pmd.pattern_size *= cd->char_width;
+        cd->pmd.fp_length *= cd->char_width;
+        cd->pmd.fp_offset *= cd->char_width;
+    }
+
     if ( (int)cd->pmd.pattern_size <= cd->pmd.fp_offset )
     {
         ParseError(
@@ -785,6 +815,26 @@ bool ContentModule::set(const char*, Value& v, SnortConfig*)
         cd->pmd.fp_length = v.get_uint16();
         cd->pmd.set_fast_pattern();
     }
+    else if ( v.is("width") )
+    {
+        switch ( v.get_uint8() )
+        {
+        case 0:  // "8"
+            cd->char_width = 1;
+            break;
+        case 1:  // "16"
+            cd->char_width = 2;
+            break;
+        case 2:  // "32"
+            cd->char_width = 4;
+            break;
+        }
+    }
+    else if ( v.is("endian") )
+    {
+        cd->little_endian = v.get_uint8() == 1;
+    }
+
     return true;
 }
 
