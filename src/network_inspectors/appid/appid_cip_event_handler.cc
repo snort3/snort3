@@ -104,7 +104,7 @@ void CipEventHandler::handle(DataEvent& event, Flow* flow)
 
         const char* app_name_service = asd->get_odp_ctxt().get_app_info_mgr().get_app_name(APP_ID_CIP);
         const char* app_name_payload = asd->get_odp_ctxt().get_app_info_mgr().get_app_name(payload_id);
-        appid_log(p, TRACE_DEBUG_LEVEL, "CIP event handler service %s (%d) and payload %s (%d) are detected\n",
+        APPID_LOG(p, TRACE_DEBUG_LEVEL, "CIP event handler service %s (%d) and payload %s (%d) are detected\n",
             app_name_service, APP_ID_CIP, app_name_payload, payload_id);
     }
 

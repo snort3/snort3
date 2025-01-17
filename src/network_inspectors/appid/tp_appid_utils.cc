@@ -424,7 +424,7 @@ static inline void process_quic(AppIdSession& asd,
 
     if ( !asd.tsession->get_tls_host() and (field=attribute_data.quic_sni()) != nullptr )
     {
-        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Flow is QUIC\n");
+        APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Flow is QUIC\n");
         asd.tsession->set_tls_host(field->c_str(), field->size(), change_bits);
         if ( asd.get_service_id() <= APP_ID_NONE )
             asd.set_service_appid_data(APP_ID_QUIC, change_bits);
@@ -440,13 +440,13 @@ static inline void process_third_party_results(const Packet& p, AppIdSession& as
 
     if ( contains(proto_list, APP_ID_HTTP) )
     {
-        appid_log(&p, TRACE_DEBUG_LEVEL, "Flow is HTTP\n");
+        APPID_LOG(&p, TRACE_DEBUG_LEVEL, "Flow is HTTP\n");
         asd.set_session_flags(APPID_SESSION_HTTP_SESSION);
     }
 
     if ( contains(proto_list, APP_ID_SPDY) )
     {
-        appid_log(&p, TRACE_DEBUG_LEVEL, "Flow is SPDY\n");
+        APPID_LOG(&p, TRACE_DEBUG_LEVEL, "Flow is SPDY\n");
         asd.set_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_SPDY_SESSION);
     }
 
@@ -501,7 +501,7 @@ static void set_tp_reinspect(AppIdSession& asd, const Packet* p, AppidSessionDir
     {
         asd.tp_reinspect_by_initiator = true;
         asd.set_session_flags(APPID_SESSION_APP_REINSPECT);
-        appid_log(p, TRACE_DEBUG_LEVEL, "3rd party allow reinspect http\n");
+        APPID_LOG(p, TRACE_DEBUG_LEVEL, "3rd party allow reinspect http\n");
         
         // If on reinspection, payload is found, a new record would be inserted for that
         //  payload, only for the time and packets processed from this point onwards
@@ -540,7 +540,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
         if ( p->ptrs.ip_api.tos() == 8 )
         {
             asd.set_payload_id(APP_ID_SFTP);
-            appid_log(p, TRACE_DEBUG_LEVEL, "Payload is SFTP\n");
+            APPID_LOG(p, TRACE_DEBUG_LEVEL, "Payload is SFTP\n");
         }
 
         return true;
@@ -569,7 +569,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
         TpAppIdCreateSession tpsf = tph->tpsession_factory();
         if ( !(asd.tpsession = tpsf(tp_appid_ctxt)) )
         {
-            appid_log(p, TRACE_ERROR_LEVEL, "Could not allocate asd.tpsession data");
+            APPID_LOG(p, TRACE_ERROR_LEVEL, "Could not allocate asd.tpsession data");
             return false;
         }
     }
@@ -596,7 +596,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
     }
 
     const char *app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
-    appid_log(p, TRACE_DEBUG_LEVEL, "3rd party returned %s (%d)\n", app_name ? app_name : "unknown", tp_app_id);
+    APPID_LOG(p, TRACE_DEBUG_LEVEL, "3rd party returned %s (%d)\n", app_name ? app_name : "unknown", tp_app_id);
 
     process_third_party_results(*p, asd, tp_confidence, tp_proto_list, tp_attribute_data, change_bits);
 
@@ -609,7 +609,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
 
     if (tp_app_id == APP_ID_SSH)
     {
-        appid_log(p, TRACE_DEBUG_LEVEL, "Setting the ignore and early detection flag\n");
+        APPID_LOG(p, TRACE_DEBUG_LEVEL, "Setting the ignore and early detection flag\n");
          asd.get_odp_ctxt().get_app_info_mgr().set_app_info_flags(tp_app_id, APPINFO_FLAG_IGNORE);
          asd.set_session_flags(APPID_SESSION_WAIT_FOR_EXTERNAL);
          asd.expected_external_app_id = tp_app_id;
@@ -629,7 +629,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
 
     if ( app_info_flags & APPINFO_FLAG_IGNORE )
     {
-        appid_log(p, TRACE_DEBUG_LEVEL, "3rd party ignored\n");
+        APPID_LOG(p, TRACE_DEBUG_LEVEL, "3rd party ignored\n");
 
         if (asd.get_session_flags(APPID_SESSION_HTTP_SESSION))
             tp_app_id = APP_ID_HTTP;
@@ -716,7 +716,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                 asd.set_port_service_id(portAppId);
                 const char *service_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
                 const char *port_service_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(asd.get_port_service_id());
-                appid_log(p, TRACE_DEBUG_LEVEL, "SSL is service %s (%d), portServiceAppId %s (%d)\n",
+                APPID_LOG(p, TRACE_DEBUG_LEVEL, "SSL is service %s (%d), portServiceAppId %s (%d)\n",
                     service_name ? service_name : "unknown", tp_app_id,
                     port_service_name ? port_service_name : "unknown", asd.get_port_service_id());
             }
@@ -726,7 +726,7 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                     asd.set_tp_payload_app_id(*p, direction, tp_app_id, change_bits);
                 tp_app_id = portAppId;
                 const char *tp_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
-                appid_log(p, TRACE_DEBUG_LEVEL, "SSL is %s (%d)\n", tp_app_name ? tp_app_name : "unknown", tp_app_id);
+                APPID_LOG(p, TRACE_DEBUG_LEVEL, "SSL is %s (%d)\n", tp_app_name ? tp_app_name : "unknown", tp_app_id);
             }
             snort_app_id = APP_ID_SSL;
         }

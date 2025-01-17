@@ -32,6 +32,8 @@
 #include "protocols/protocol_ids.h"
 #include "sfip/sf_ip.h"
 
+extern THREAD_LOCAL bool appid_trace_enabled;
+
 class AppIdSession;
 namespace snort
 {
@@ -42,6 +44,12 @@ namespace snort
 #define CURRENT_PACKET snort::DetectionEngine::get_current_packet()
 
 void appid_log(const snort::Packet*, const uint8_t log_level, const char*, ...);
+
+#define APPID_LOG(pkt, log_level, ...) do { \
+    if ((log_level > 2) || (appidDebug and appidDebug->is_active()) || (appid_trace_enabled)) { \
+        	appid_log(pkt, log_level, __VA_ARGS__); \
+    } \
+} while(0)
 
 struct AppIdDebugSessionConstraints
 {

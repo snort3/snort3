@@ -43,6 +43,7 @@
 #include "src/main.h"
 #include "target_based/host_attributes.h"
 #include "trace/trace.h"
+#include "trace/trace_api.h"
 #include "utils/util.h"
 
 #include "app_info_table.h"
@@ -56,7 +57,7 @@ using namespace snort;
 using namespace std;
 
 THREAD_LOCAL const Trace* appid_trace = nullptr;
-
+THREAD_LOCAL bool appid_trace_enabled = false;
 //-------------------------------------------------------------------------
 // appid module
 //-------------------------------------------------------------------------
@@ -164,7 +165,7 @@ public:
     ACThirdPartyAppIdContextSwap(AppIdInspector& inspector, ControlConn* conn)
         : AnalyzerCommand(conn), inspector(inspector)
     {
-        appid_log(nullptr, TRACE_INFO_LEVEL, "== swapping third-party configuration\n");
+        APPID_LOG(nullptr, TRACE_INFO_LEVEL, "== swapping third-party configuration\n");
     }
 
     ~ACThirdPartyAppIdContextSwap() override;
@@ -179,7 +180,7 @@ bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
     pkt_thread_tp_appid_ctxt = inspector.get_ctxt().get_tp_appid_ctxt();
     pkt_thread_tp_appid_ctxt->tinit();
     ThirdPartyAppIdContext::set_tp_reload_in_progress(false);
-    appid_log(nullptr, TRACE_INFO_LEVEL, "== third-party context swap in progress\n");
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "== third-party context swap in progress\n");
     return true;
 }
 
@@ -189,7 +190,7 @@ ACThirdPartyAppIdContextSwap::~ACThirdPartyAppIdContextSwap()
     std::string file_path = ctxt.get_tp_appid_ctxt()->get_user_config();
     ctxt.get_odp_ctxt().get_app_info_mgr().dump_appid_configurations(file_path);
     log_message("== reload third-party complete\n");
-    appid_log(nullptr, TRACE_INFO_LEVEL, "== third-party configuration swap complete\n");
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "== third-party configuration swap complete\n");
     ReloadTracker::end(ctrlcon, true);
 }
 
@@ -218,12 +219,12 @@ bool ACThirdPartyAppIdContextUnload::execute(Analyzer& ac, void**)
         reload_in_progress = pkt_thread_tp_appid_ctxt->tfini();
 
     if (reload_in_progress) {
-        appid_log(nullptr, TRACE_INFO_LEVEL, "== rescheduling third-party context unload\n");
+        APPID_LOG(nullptr, TRACE_INFO_LEVEL, "== rescheduling third-party context unload\n");
         return false;
     }
     pkt_thread_tp_appid_ctxt = nullptr;
 
-    appid_log(nullptr, TRACE_INFO_LEVEL, "== third-party context unload in progress\n");
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "== third-party context unload in progress\n");
     return true;
 }
 
@@ -305,7 +306,7 @@ static int enable_debug(lua_State* L)
     if (sipstr)
     {
         if (constraints.sip.set(sipstr) != SFIP_SUCCESS)
-            appid_log(nullptr, TRACE_INFO_LEVEL, "Invalid source IP address provided: %s\n", sipstr);
+            APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Invalid source IP address provided: %s\n", sipstr);
         else if (constraints.sip.is_set())
             constraints.sip_flag = true;
     }
@@ -313,7 +314,7 @@ static int enable_debug(lua_State* L)
     if (dipstr)
     {
         if (constraints.dip.set(dipstr) != SFIP_SUCCESS)
-            appid_log(nullptr, TRACE_INFO_LEVEL, "Invalid destination IP address provided: %s\n", dipstr);
+            APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Invalid destination IP address provided: %s\n", dipstr);
         else if (constraints.dip.is_set())
             constraints.dip_flag = true;
     }
@@ -522,8 +523,8 @@ static int reload_detectors(lua_State* L)
     {
     #endif
         getrusage(RUSAGE_SELF, &ru);
-        appid_log(nullptr, TRACE_INFO_LEVEL, "appid: MaxRss diff: %li\n", ru.ru_maxrss - prev_maxrss);
-        appid_log(nullptr, TRACE_INFO_LEVEL, "appid: patterns loaded: %u\n", odp_ctxt.get_pattern_count());
+        APPID_LOG(nullptr, TRACE_INFO_LEVEL, "appid: MaxRss diff: %li\n", ru.ru_maxrss - prev_maxrss);
+        APPID_LOG(nullptr, TRACE_INFO_LEVEL, "appid: patterns loaded: %u\n", odp_ctxt.get_pattern_count());
     #ifdef REG_TEST
     }
     #endif
@@ -592,15 +593,16 @@ AppIdModule::~AppIdModule()
 }
 
 void AppIdModule::set_trace(const Trace* trace) const
-{ appid_trace = trace; }
+{ 
+    appid_trace = trace;
+    appid_trace_enabled = trace_enabled(appid_trace, DEFAULT_TRACE_OPTION_ID);
+}
 
 const TraceOption* AppIdModule::get_trace_options() const
 {
     static const TraceOption appid_trace_options(nullptr, 0, nullptr);
     return &appid_trace_options;
 }
-
-
 
 snort::ProfileStats* AppIdModule::get_profile(
         unsigned i, const char*& name, const char*& parent) const

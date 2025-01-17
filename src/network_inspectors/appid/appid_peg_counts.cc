@@ -93,7 +93,7 @@ public:
     {
         if (!peg_ids)
         {
-            appid_log(nullptr, TRACE_WARNING_LEVEL, "AppId peg counts thread created with no ids\n");
+            APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "AppId peg counts thread created with no ids\n");
             peg_ids = std::make_shared<AppIdPegCountIdInfo>();
         }
     }

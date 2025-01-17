@@ -409,7 +409,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
 
     if (snmp_verify_packet(&data, data+size, &pdu, &version))
     {
-        appid_log(args.pkt, TRACE_DEBUG_LEVEL, "SNMP payload verify failed\n");
+        APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "SNMP payload verify failed\n");
         if (args.asd.get_session_flags(APPID_SESSION_UDP_REVERSED))
         {
             if (args.dir == APP_ID_FROM_RESPONDER)
@@ -426,7 +426,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
     }
 
-    appid_log(args.pkt, TRACE_DEBUG_LEVEL, "SNMP state %d\n", sd->state);
+    APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "SNMP state %d\n", sd->state);
 
     switch (sd->state)
     {

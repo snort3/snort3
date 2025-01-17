@@ -78,7 +78,7 @@ ServiceDetector* ServiceDiscoveryState::select_detector_by_brute_force(IpProtoco
             service = tcp_brute_force_mgr->current();
         }
 
-        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Brute-force state %s\n", service? "" : "failed - no more TCP detectors");
+        APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Brute-force state %s\n", service? "" : "failed - no more TCP detectors");
     }
     else if (proto == IpProtocol::UDP)
     {
@@ -95,7 +95,7 @@ ServiceDetector* ServiceDiscoveryState::select_detector_by_brute_force(IpProtoco
             service = udp_brute_force_mgr->current();
         }
 
-        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Brute-force state %s\n", service? "" : "failed - no more UDP detectors");
+        APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Brute-force state %s\n", service? "" : "failed - no more UDP detectors");
     }
     else
         service = nullptr;
@@ -305,7 +305,7 @@ void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port,
 
         ipstr[0] = 0;
         sfip_ntop(ip, ipstr, sizeof(ipstr));
-        appid_log(CURRENT_PACKET, TRACE_ERROR_LEVEL, "Failed to remove from hash: %s:%u:%hu\n", ipstr,
+        APPID_LOG(CURRENT_PACKET, TRACE_ERROR_LEVEL, "Failed to remove from hash: %s:%u:%hu\n", ipstr,
             (unsigned)proto, port);
     }
 }

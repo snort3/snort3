@@ -43,7 +43,7 @@ bool TPLibHandler::load_callback(const char* const path)
     self->tp_so_handle = dlopen(path, RTLD_NOW | RTLD_LOCAL);
     if (self->tp_so_handle == nullptr)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "Failed to load 3rd party AppID library: %s - %s\n", path, dlerror());
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Failed to load 3rd party AppID library: %s - %s\n", path, dlerror());
         return false;
     }
 
@@ -69,7 +69,7 @@ bool TPLibHandler::load_callback(const char* const path)
         if (*(index->local_sym) == nullptr)
         {
             char* error;
-            appid_log(nullptr, TRACE_ERROR_LEVEL, "AppId: Failed to resolve symbol: %s %s\n", index->lib_sym,
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "AppId: Failed to resolve symbol: %s %s\n", index->lib_sym,
                 (error = dlerror()) ? error : "");
             dlclose(self->tp_so_handle);
             self->tp_so_handle = nullptr;
@@ -108,7 +108,7 @@ ThirdPartyAppIdContext* TPLibHandler::create_tp_appid_ctxt(const AppIdConfig& co
     ThirdPartyAppIdContext* tp_appid_ctxt = self->tp_appid_create_ctxt(tp_config);
     if (tp_appid_ctxt == nullptr)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "Failed to create third party appId context.\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Failed to create third party appId context.\n");
         dlclose(self->tp_so_handle);
         self->tp_so_handle = nullptr;
         return nullptr;
@@ -117,7 +117,7 @@ ThirdPartyAppIdContext* TPLibHandler::create_tp_appid_ctxt(const AppIdConfig& co
     if ( (tp_appid_ctxt->get_api_version() != THIRD_PARTY_APPID_API_VERSION)
         || (tp_appid_ctxt->module_name().empty()) )
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "Ignoring incomplete 3rd party AppID module (%s, %u, %s)!\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Ignoring incomplete 3rd party AppID module (%s, %u, %s)!\n",
             config.tp_appid_path.c_str(), tp_appid_ctxt->get_api_version(),
             tp_appid_ctxt->module_name().empty() ? "empty" : tp_appid_ctxt->module_name().c_str());
 
@@ -140,7 +140,7 @@ void TPLibHandler::tfini()
         ret = self->tp_appid_tfini();
 
     if (ret != 0)
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "Could not terminate packet thread in 3rd party AppID module (%d)!\n", ret);
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Could not terminate packet thread in 3rd party AppID module (%d)!\n", ret);
 }
 
 void TPLibHandler::pfini()
@@ -153,7 +153,7 @@ void TPLibHandler::pfini()
         ret = self->tp_appid_pfini();
 
     if (ret != 0)
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "Could not terminate 3rd party AppID module (%d)!\n", ret);
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Could not terminate 3rd party AppID module (%d)!\n", ret);
 
     AppIdContext::delete_tp_appid_ctxt();
 

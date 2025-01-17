@@ -39,7 +39,7 @@
 using namespace snort;
 THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 
-void appid_log(const Packet* p, const uint8_t log_level, const char* format, ...)
+inline void appid_log(const Packet* p, const uint8_t log_level, const char* format, ...)
 {
     va_list args;
     va_start(args, format);
@@ -226,7 +226,7 @@ void AppIdDebug::set_constraints(const char *desc,
         info.sip.ntop(sipstr, sizeof(sipstr));
         info.dip.ntop(dipstr, sizeof(dipstr));
 
-        appid_log(nullptr, TRACE_INFO_LEVEL, "Debugging %s with %s-%hu and %s-%hu %hhu and tenants:%s\n", desc,
+        APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Debugging %s with %s-%hu and %s-%hu %hhu and tenants:%s\n", desc,
             sipstr, info.sport, dipstr, info.dport, static_cast<uint8_t>(info.protocol),
             int_vector_to_str(info.tenants).c_str());
 
@@ -234,7 +234,7 @@ void AppIdDebug::set_constraints(const char *desc,
     }
     else
     {
-        appid_log(nullptr, TRACE_INFO_LEVEL, "Debugging %s disabled\n", desc);
+        APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Debugging %s disabled\n", desc);
         enabled = false;
         active = false;
     }

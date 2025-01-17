@@ -235,7 +235,7 @@ void HostPortCache::dump()
         HostPortVal hv = kv.second;
 
         inet_ntop(AF_INET6, &hk.ip, inet_buffer, sizeof(inet_buffer));
-        appid_log(nullptr, TRACE_INFO_LEVEL, "\tip=%s, \tport %d, \tip_proto %u, \ttype=%u, \tappId=%d\n",
+        APPID_LOG(nullptr, TRACE_INFO_LEVEL, "\tip=%s, \tport %d, \tip_proto %u, \ttype=%u, \tappId=%d\n",
             inet_buffer, hk.port, (unsigned)hk.proto, hv.type, hv.appId);
     }
 }

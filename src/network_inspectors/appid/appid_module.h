@@ -42,6 +42,7 @@ class Trace;
 extern THREAD_LOCAL snort::ProfileStats appid_perf_stats;
 extern THREAD_LOCAL snort::ProfileStats tp_appid_perf_stats;
 extern THREAD_LOCAL const snort::Trace* appid_trace;
+extern THREAD_LOCAL bool appid_trace_enabled;
 
 #define MOD_NAME "appid"
 #define MOD_HELP "application and service identification"

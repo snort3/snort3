@@ -202,30 +202,30 @@ unsigned OdpContext::get_pattern_count()
 
 void OdpContext::dump_appid_config()
 {
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: dns_host_reporting                   %s\n", (dns_host_reporting ? "True" : "False"));
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: referred_appId_disabled              %s\n", (referred_appId_disabled ? "True" : "False"));
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: mdns_user_reporting                  %s\n", (mdns_user_reporting ? "True" : "False"));
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: chp_userid_disabled                  %s\n", (chp_userid_disabled ? "True" : "False"));
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: is_host_port_app_cache_runtime       %s\n", (is_host_port_app_cache_runtime ? "True" : "False"));
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: check_host_port_app_cache            %s\n", (check_host_port_app_cache ? "True" : "False"));
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: check_host_cache_unknown_ssl         %s\n", (check_host_cache_unknown_ssl ? "True" : "False"));
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: ftp_userid_disabled                  %s\n", (ftp_userid_disabled ? "True" : "False"));
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: chp_body_collection_disabled         %s\n", (chp_body_collection_disabled ? "True" : "False"));
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: chp_body_collection_max              %d\n", chp_body_collection_max);
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: rtmp_max_packets                     %d\n", rtmp_max_packets);
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_tp_flow_depth                    %d\n", max_tp_flow_depth);
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: tp_allow_probes                      %s\n", (tp_allow_probes ? "True" : "False"));
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: host_port_app_cache_lookup_interval  %d\n", host_port_app_cache_lookup_interval);
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: host_port_app_cache_lookup_range     %d\n", host_port_app_cache_lookup_range);
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: allow_port_wildcard_host_cache       %s\n", (allow_port_wildcard_host_cache ? "True" : "False"));
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: recheck_for_portservice_appid        %s\n", (recheck_for_portservice_appid ? "True" : "False"));
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_bytes_before_service_fail        %" PRIu64" \n", max_bytes_before_service_fail);
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_packet_before_service_fail       %" PRIu16" \n", max_packet_before_service_fail);
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_packet_service_fail_ignore_bytes %" PRIu16" \n", max_packet_service_fail_ignore_bytes);
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: eve_http_client                      %s\n", (eve_http_client ? "True" : "False"));
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: appid_cpu_profiler                   %s\n", (appid_cpu_profiler ? "True" : "False"));
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: brute_force_inprocess_threshold      %" PRId8" \n", brute_force_inprocess_threshold);
-    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: failed_state_expiration_secs         %" PRId32" \n", failed_state_expiration_secs);
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: dns_host_reporting                   %s\n", (dns_host_reporting ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: referred_appId_disabled              %s\n", (referred_appId_disabled ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: mdns_user_reporting                  %s\n", (mdns_user_reporting ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: chp_userid_disabled                  %s\n", (chp_userid_disabled ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: is_host_port_app_cache_runtime       %s\n", (is_host_port_app_cache_runtime ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: check_host_port_app_cache            %s\n", (check_host_port_app_cache ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: check_host_cache_unknown_ssl         %s\n", (check_host_cache_unknown_ssl ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: ftp_userid_disabled                  %s\n", (ftp_userid_disabled ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: chp_body_collection_disabled         %s\n", (chp_body_collection_disabled ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: chp_body_collection_max              %d\n", chp_body_collection_max);
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: rtmp_max_packets                     %d\n", rtmp_max_packets);
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_tp_flow_depth                    %d\n", max_tp_flow_depth);
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: tp_allow_probes                      %s\n", (tp_allow_probes ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: host_port_app_cache_lookup_interval  %d\n", host_port_app_cache_lookup_interval);
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: host_port_app_cache_lookup_range     %d\n", host_port_app_cache_lookup_range);
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: allow_port_wildcard_host_cache       %s\n", (allow_port_wildcard_host_cache ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: recheck_for_portservice_appid        %s\n", (recheck_for_portservice_appid ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_bytes_before_service_fail        %" PRIu64" \n", max_bytes_before_service_fail);
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_packet_before_service_fail       %" PRIu16" \n", max_packet_before_service_fail);
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_packet_service_fail_ignore_bytes %" PRIu16" \n", max_packet_service_fail_ignore_bytes);
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: eve_http_client                      %s\n", (eve_http_client ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: appid_cpu_profiler                   %s\n", (appid_cpu_profiler ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: brute_force_inprocess_threshold      %" PRId8" \n", brute_force_inprocess_threshold);
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: failed_state_expiration_secs         %" PRId32" \n", failed_state_expiration_secs);
 }
 
 bool OdpContext::is_appid_cpu_profiler_running()
@@ -284,7 +284,7 @@ void OdpContext::set_client_and_service_detectors()
     Pop3ClientDetector* c_pop = (Pop3ClientDetector*) client_disco_mgr.get_client_detector("pop3");
     if (!s_pop or !c_pop)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: failed to initialize pop3 detector\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: failed to initialize pop3 detector\n");
         return;
     }
     s_pop->set_client_detector(c_pop);
@@ -294,7 +294,7 @@ void OdpContext::set_client_and_service_detectors()
     KerberosClientDetector* c_krb = (KerberosClientDetector*) client_disco_mgr.get_client_detector("kerberos");
     if (!s_krb or !c_krb)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: failed to initialize kerberos detector\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: failed to initialize kerberos detector\n");
         return;
     }
     s_krb->set_client_detector(c_krb);
@@ -304,7 +304,7 @@ void OdpContext::set_client_and_service_detectors()
     SmtpClientDetector* c_smtp = (SmtpClientDetector*) client_disco_mgr.get_client_detector("SMTP");
     if (!s_smtp or !c_smtp)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: failed to initialize smtp detector\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: failed to initialize smtp detector\n");
         return;
     }
     s_smtp->set_client_detector(c_smtp);
@@ -313,7 +313,7 @@ void OdpContext::set_client_and_service_detectors()
     ImapClientDetector* c_imap = (ImapClientDetector*) client_disco_mgr.get_client_detector("IMAP");
     if (!s_imap or !c_imap)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: failed to initialize imap detector\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: failed to initialize imap detector\n");
         return;
     }
     s_imap->set_client_detector(c_imap);
@@ -323,7 +323,7 @@ SipServiceDetector* OdpContext::get_sip_service_detector()
 {
     SipServiceDetector* s_sip = (SipServiceDetector*) service_disco_mgr.get_service_detector("sip");
     if (!s_sip)
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: failed to initialize sip service detector\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: failed to initialize sip service detector\n");
     return s_sip;
 }
 
@@ -331,7 +331,7 @@ SipUdpClientDetector* OdpContext::get_sip_client_detector()
 {
     SipUdpClientDetector* c_sip = (SipUdpClientDetector*) client_disco_mgr.get_client_detector("SIP");
     if (!c_sip)
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: failed to initialize sip client detector\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: failed to initialize sip client detector\n");
     return c_sip;
 }
 
@@ -342,7 +342,7 @@ void OdpContext::add_port_service_id(IpProtocol proto, uint16_t port, AppId appi
     else if (proto == IpProtocol::UDP)
         udp_port_only[port] = appid;
     else
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: invalid port service for proto %d port %d app %d\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: invalid port service for proto %d port %d app %d\n",
             static_cast<int>(proto), port, appid);
 }
 

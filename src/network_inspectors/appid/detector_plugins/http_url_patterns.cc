@@ -1689,7 +1689,7 @@ uint32_t HttpPatternMatchers::parse_multiple_http_patterns(const char* pattern,
             for (unsigned i = 0; i <= partNum; i++)
                 snort_free((void*)parts[i].pattern);
 
-            appid_log(nullptr, TRACE_ERROR_LEVEL, "Failed to allocate memory");
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Failed to allocate memory");
             return 0;
         }
         partNum++;

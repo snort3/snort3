@@ -130,7 +130,7 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     // cppcheck-suppress nullPointerRedundantCheck
-    appid_log(args.pkt, TRACE_DEBUG_LEVEL, "RSHELL state %d\n",rd->state);
+    APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "RSHELL state %d\n",rd->state);
 
     switch (rd->state) // cppcheck-suppress nullPointerRedundantCheck
     {

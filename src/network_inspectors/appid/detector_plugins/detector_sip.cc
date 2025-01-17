@@ -447,7 +447,7 @@ void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession& asd,
             asd.set_session_flags(APPID_SESSION_CONTINUE);
             service->add_service(change_bits, asd, sip_event.get_packet(), direction, APP_ID_SIP,
                 ss->vendor[0] ? ss->vendor : nullptr);
-            appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Sip service detected. Setting APPID_SESSION_CONTINUE flag\n");
+            APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Sip service detected. Setting APPID_SESSION_CONTINUE flag\n");
         }
     }
 }

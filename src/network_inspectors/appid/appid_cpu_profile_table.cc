@@ -73,7 +73,7 @@ static void print_log(ControlConn* ctrlcon, AppidCPUProfilerOutputType output_ty
             LogRespond(ctrlcon, "%s", buffer.data());
             break;
         case OUPUT_LOGFILE:
-            appid_log(nullptr, level, "%s", buffer.data());
+            APPID_LOG(nullptr, level, "%s", buffer.data());
             break;
         default:
             break;
@@ -234,7 +234,7 @@ void AppidCPUProfilingManager::stats_bucket_insert(AppId appid, const char* app_
 {
     if (!processed_packets or !processing_time)
     {
-        appid_log(nullptr, TRACE_INFO_LEVEL, "appid: processed packets/time are NULL for appid : %d , app_name : %s , processing time :%lu \n", appid, app_name, processing_time);
+        APPID_LOG(nullptr, TRACE_INFO_LEVEL, "appid: processed packets/time are NULL for appid : %d , app_name : %s , processing time :%lu \n", appid, app_name, processing_time);
         return;
     }
 

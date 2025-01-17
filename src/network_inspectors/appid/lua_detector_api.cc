@@ -154,7 +154,7 @@ static inline int toipprotocol(lua_State *L, int index,
     if (tmp_proto > (unsigned)IpProtocol::RESERVED)
     {
         if (print_err)
-            appid_log(nullptr, TRACE_ERROR_LEVEL, "Invalid protocol value %u\n", tmp_proto);
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Invalid protocol value %u\n", tmp_proto);
         return -1;
     }
 
@@ -208,7 +208,7 @@ static int service_init(lua_State* L)
         }
     }
 
-    appid_log(nullptr, TRACE_ERROR_LEVEL, "%s: attempted setting validator/fini to non-function\n",
+    APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "%s: attempted setting validator/fini to non-function\n",
         ud->sd->get_name().c_str());
     lua_pop(L, 1);
     return 0;
@@ -319,20 +319,20 @@ static int detector_log_message(lua_State* L)
     switch (level)
     {
     case LUA_LOG_CRITICAL:
-        appid_log(nullptr, TRACE_CRITICAL_LEVEL, "%s:%s\n", name.c_str(), message);
+        APPID_LOG(nullptr, TRACE_CRITICAL_LEVEL, "%s:%s\n", name.c_str(), message);
         break;
 
     case LUA_LOG_ERR:
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "%s:%s\n", name.c_str(), message);
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "%s:%s\n", name.c_str(), message);
         break;
 
     case LUA_LOG_WARN:
-        appid_log(nullptr, TRACE_WARNING_LEVEL, "%s:%s\n", name.c_str(), message);
+        APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "%s:%s\n", name.c_str(), message);
         break;
 
     case LUA_LOG_NOTICE:
     case LUA_LOG_INFO:
-        appid_log(nullptr, TRACE_INFO_LEVEL, "%s:%s\n", name.c_str(), message);
+        APPID_LOG(nullptr, TRACE_INFO_LEVEL, "%s:%s\n", name.c_str(), message);
         break;
 
     case LUA_LOG_TRACE:
@@ -356,27 +356,27 @@ static int detector_log_snort_message(lua_State* L)
     switch (level)
     {
     case LUA_LOG_CRITICAL:
-        appid_log(nullptr, TRACE_CRITICAL_LEVEL, "%s:%s\n", name.c_str(), message);
+        APPID_LOG(nullptr, TRACE_CRITICAL_LEVEL, "%s:%s\n", name.c_str(), message);
         break;
 
     case LUA_LOG_ERR:
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "%s:%s\n", name.c_str(), message);
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "%s:%s\n", name.c_str(), message);
         break;
 
     case LUA_LOG_WARN:
-        appid_log(nullptr, TRACE_WARNING_LEVEL, "%s:%s\n", name.c_str(), message);
+        APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "%s:%s\n", name.c_str(), message);
         break;
 
     case LUA_LOG_NOTICE:
     case LUA_LOG_INFO:
         if ( !appidDebug or !appidDebug->is_enabled() )
             return 0;
-        appid_log(nullptr, TRACE_INFO_LEVEL, "AppIdDbg %s:%s\n", name.c_str(), message);
+        APPID_LOG(nullptr, TRACE_INFO_LEVEL, "AppIdDbg %s:%s\n", name.c_str(), message);
         break;
 
     case LUA_LOG_TRACE:
         auto curr_packet = (Analyzer::get_local_analyzer() and snort::DetectionEngine::get_context()) ? snort::DetectionEngine::get_current_packet() : nullptr;
-        appid_log(curr_packet, TRACE_DEBUG_LEVEL, curr_packet ? "%s:%s\n" : "AppIdDbg %s:%s\n", name.c_str(), message);
+        APPID_LOG(curr_packet, TRACE_DEBUG_LEVEL, curr_packet ? "%s:%s\n" : "AppIdDbg %s:%s\n", name.c_str(), message);
         break;
     }
 
@@ -553,7 +553,7 @@ static int service_set_validator(lua_State* L)
     lua_getfield(L, -1, pValidator);
     if (!lua_isfunction(L, -1))
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "%s: attempted setting validator to non-function\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "%s: attempted setting validator to non-function\n",
             ud->sd->get_name().c_str());
 
         lua_pop(L, 1);
@@ -746,7 +746,7 @@ static int detector_get_pcre_groups(lua_State* L)
     if (re == nullptr)
     {
         pcre2_get_error_message(errorcode, error, 128);
-        appid_log(lsd->ldp.pkt, TRACE_ERROR_LEVEL, "PCRE compilation failed at offset %d: %s\n", erroffset, error);
+        APPID_LOG(lsd->ldp.pkt, TRACE_ERROR_LEVEL, "PCRE compilation failed at offset %d: %s\n", erroffset, error);
         return 0;
     }
 
@@ -771,12 +771,12 @@ static int detector_get_pcre_groups(lua_State* L)
         {
             /*overflow of matches */
             rc = OVECCOUNT / 3;
-            appid_log(lsd->ldp.pkt, TRACE_WARNING_LEVEL, "ovector only has room for %d captured substrings\n", rc - 1);
+            APPID_LOG(lsd->ldp.pkt, TRACE_WARNING_LEVEL, "ovector only has room for %d captured substrings\n", rc - 1);
         }
 
         if (!lua_checkstack(L, rc))
         {
-            appid_log(lsd->ldp.pkt, TRACE_WARNING_LEVEL, "Cannot grow Lua stack by %d slots to hold "
+            APPID_LOG(lsd->ldp.pkt, TRACE_WARNING_LEVEL, "Cannot grow Lua stack by %d slots to hold "
                 "PCRE matches\n", rc);
             return 0;
         }
@@ -792,7 +792,7 @@ static int detector_get_pcre_groups(lua_State* L)
     {
         // log errors except no matches
         if (rc != PCRE2_ERROR_NOMATCH)
-            appid_log(lsd->ldp.pkt, TRACE_WARNING_LEVEL, "PCRE regular expression group match failed. rc: %d\n", rc);
+            APPID_LOG(lsd->ldp.pkt, TRACE_WARNING_LEVEL, "PCRE regular expression group match failed. rc: %d\n", rc);
         rc = 0;
     }
 
@@ -819,7 +819,7 @@ static int detector_get_substr(lua_State* L)
     unsigned int substr_len = lua_tonumber(L, 3);
     if (offset + substr_len > lsd->ldp.size)
     {
-        appid_log(lsd->ldp.pkt, TRACE_WARNING_LEVEL, "Requested substr end offset %d is greater than data size %d\n",
+        APPID_LOG(lsd->ldp.pkt, TRACE_WARNING_LEVEL, "Requested substr end offset %d is greater than data size %d\n",
             offset + substr_len, lsd->ldp.size);
         return 0;
     }
@@ -1151,7 +1151,7 @@ static int add_alpn_to_service_mapping(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
     if (!tmp_string or !pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid alpn service string: appid %u.\n", appid);
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid alpn service string: appid %u.\n", appid);
         return 0;
     }
     const std::string service_name(tmp_string);
@@ -1187,7 +1187,7 @@ static int add_process_to_client_mapping(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
     if (!tmp_string or !pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid eve process_name string: appid %u.\n", appid);
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid eve process_name string: appid %u.\n", appid);
         return 0;
     }
     const std::string process_name(tmp_string);
@@ -1218,7 +1218,7 @@ static int add_process_to_client_mapping_regex(lua_State* L)
 
     const FastPatternConfig* const fp = SnortConfig::get_conf()->fast_pattern_config;
     if (!MpseManager::is_regex_capable(fp->get_search_api())){
-        appid_log(nullptr, TRACE_WARNING_LEVEL, "WARNING: appid: Regex patterns require usage of "
+        APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "WARNING: appid: Regex patterns require usage of "
             "regex capable search engine like hyperscan in %s\n", ud->get_detector()->get_name().c_str());
             return 0;
     }
@@ -1231,7 +1231,7 @@ static int add_process_to_client_mapping_regex(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
     if (!tmp_string or !pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid eve process_name regex string: appid %u.\n", appid);
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid eve process_name regex string: appid %u.\n", appid);
         return 0;
     }
     const std::string process_name(tmp_string);
@@ -1287,7 +1287,7 @@ static int detector_add_http_pattern(lua_State* L)
     enum httpPatternType pat_type = (enum httpPatternType)lua_tointeger(L, ++index);
     if (pat_type < HTTP_PAYLOAD or pat_type > HTTP_URL)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid HTTP pattern type in %s.\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid HTTP pattern type in %s.\n",
             ud->get_detector()->get_name().c_str());
         return 0;
     }
@@ -1304,7 +1304,7 @@ static int detector_add_http_pattern(lua_State* L)
     const uint8_t* pattern_str = (const uint8_t*)lua_tolstring(L, ++index, &pattern_size);
     if (!pattern_str or !pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid HTTP pattern string in %s.\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid HTTP pattern string in %s.\n",
             ud->get_detector()->get_name().c_str());
         return 0;
     }
@@ -1341,7 +1341,7 @@ static int detector_add_ssl_cert_pattern(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
     if (!tmp_string or !pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid SSL Host pattern string in %s.\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid SSL Host pattern string in %s.\n",
             ud->get_detector()->get_name().c_str());
         return 0;
     }
@@ -1364,7 +1364,7 @@ static int detector_add_ssl_cert_regex_pattern(lua_State* L)
 
     const FastPatternConfig* const fp = SnortConfig::get_conf()->fast_pattern_config;
     if (!MpseManager::is_regex_capable(fp->get_search_api())){
-        appid_log(nullptr, TRACE_WARNING_LEVEL, "WARNING: appid: Regex patterns require usage of "
+        APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "WARNING: appid: Regex patterns require usage of "
             "regex capable search engine like hyperscan in %s\n", ud->get_detector()->get_name().c_str());
             return 0;
     }
@@ -1377,7 +1377,7 @@ static int detector_add_ssl_cert_regex_pattern(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
     if (!tmp_string or !pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid SSL Host regex pattern string in %s.\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid SSL Host regex pattern string in %s.\n",
             ud->get_detector()->get_name().c_str());
         return 0;
     }
@@ -1407,7 +1407,7 @@ static int detector_add_ssl_cname_pattern(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
     if (!tmp_string or !pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid SSL CN pattern string in %s.\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid SSL CN pattern string in %s.\n",
             ud->get_detector()->get_name().c_str());
         return 0;
     }
@@ -1430,7 +1430,7 @@ static int detector_add_ssl_cname_regex_pattern(lua_State* L)
 
     const FastPatternConfig* const fp = SnortConfig::get_conf()->fast_pattern_config;
     if (!MpseManager::is_regex_capable(fp->get_search_api())){
-        appid_log(nullptr, TRACE_WARNING_LEVEL, "WARNING: appid: Regex patterns require usage of "
+        APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "WARNING: appid: Regex patterns require usage of "
             "regex capable search engine like hyperscan in %s\n", ud->get_detector()->get_name().c_str());
             return 0;
     }
@@ -1444,7 +1444,7 @@ static int detector_add_ssl_cname_regex_pattern(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
     if (!tmp_string or !pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid SSL CN regex pattern string in %s.\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid SSL CN regex pattern string in %s.\n",
             ud->get_detector()->get_name().c_str());
         return 0;
     }
@@ -1475,7 +1475,7 @@ static int detector_add_dns_host_pattern(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &pattern_size);
     if (!tmp_string or !pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid DNS Host pattern string.\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid DNS Host pattern string.\n");
         return 0;
     }
 
@@ -1511,7 +1511,7 @@ static int detector_add_host_first_pkt_application(lua_State* L)
 
     if (!cidr_str or !ipaddr_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "First packet API: No IP address provided\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "First packet API: No IP address provided\n");
         return 0;
     }
 
@@ -1519,7 +1519,7 @@ static int detector_add_host_first_pkt_application(lua_State* L)
     {
         if (!convert_string_to_address(cidr_str, &ip_address))
         {
-            appid_log(nullptr, TRACE_ERROR_LEVEL, "First packet API: Invalid IP address: %s\n", cidr_str);
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "First packet API: Invalid IP address: %s\n", cidr_str);
             return 0;
         }
     }
@@ -1537,7 +1537,7 @@ static int detector_add_host_first_pkt_application(lua_State* L)
 
         if (!netip_str or !convert_string_to_address(netip_str, &ip_address))
         {
-            appid_log(nullptr, TRACE_ERROR_LEVEL, "First packet API: Invalid IP address: %s\n", netip_str);
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "First packet API: Invalid IP address: %s\n", netip_str);
             return 0;
         }
 
@@ -1548,14 +1548,14 @@ static int detector_add_host_first_pkt_application(lua_State* L)
             {
                 if (bits < 0 or bits > 32)
                 {
-                    appid_log(nullptr, TRACE_ERROR_LEVEL, "First packet API: Invalid IPv4 prefix range: %d\n", bits);
+                    APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "First packet API: Invalid IPv4 prefix range: %d\n", bits);
                     return 0;
                 }
             }
             else if (strchr(netip_str, ':'))
             {
                 if (bits < 0 or bits > 128) {
-                    appid_log(nullptr, TRACE_ERROR_LEVEL, "First packet API: Invalid IPv6 prefix range: %d\n", bits);
+                    APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "First packet API: Invalid IPv6 prefix range: %d\n", bits);
                     return 0;
                 }
             }
@@ -1582,7 +1582,7 @@ static int detector_add_host_first_pkt_application(lua_State* L)
         }
         else
         {
-            appid_log(nullptr, TRACE_ERROR_LEVEL, "First packet API: Invalid prefix bit: %s\n", tokens[1].c_str());
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "First packet API: Invalid prefix bit: %s\n", tokens[1].c_str());
             return 0;
         }
     }
@@ -1598,7 +1598,7 @@ static int detector_add_host_first_pkt_application(lua_State* L)
 
     if (!ud->get_odp_ctxt().host_first_pkt_add(
         sc, &ip_address, netmask_parsed ? netmask32 : nullptr, (uint16_t)port, proto, protocol_appid, client_appid, web_appid, reinspect))
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "%s:Failed to backend call first pkt add\n", __func__);
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "%s:Failed to backend call first pkt add\n", __func__);
 
     return 0;
 }
@@ -1620,7 +1620,7 @@ static int detector_add_host_port_application(lua_State* L)
     const char* ip_str= lua_tolstring(L, ++index, &ipaddr_size);
     if (!ip_str or !ipaddr_size or !convert_string_to_address(ip_str, &ip_address))
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "%s: Invalid IP address: %s\n", __func__, ip_str);
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "%s: Invalid IP address: %s\n", __func__, ip_str);
         return 0;
     }
 
@@ -1634,7 +1634,7 @@ static int detector_add_host_port_application(lua_State* L)
     lua_pop(L, 1);
     if (!ud->get_odp_ctxt().host_port_cache_add(
         sc, &ip_address, (uint16_t)port, proto, type, app_id))
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "%s:Failed to backend call\n", __func__);
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "%s:Failed to backend call\n", __func__);
 
     return 0;
 }
@@ -1674,7 +1674,7 @@ static int detector_add_host_port_dynamic(lua_State* L)
     if (added)
     {
         AppIdSession::incr_inferred_svcs_ver();
-        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Added hostPortCache entry ip=%s, port %d, ip_proto %u, "
+        APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Added hostPortCache entry ip=%s, port %d, ip_proto %u, "
             "type=%u, appId=%d\n", ip_str, port, (unsigned)proto, type, appid);
     }
 
@@ -1695,7 +1695,7 @@ static int detector_add_content_type_pattern(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &stringSize);
     if (!tmp_string or !stringSize)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid HTTP Header string.\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid HTTP Header string.\n");
         return 0;
     }
     uint8_t* pattern = (uint8_t*)snort_strdup(tmp_string);
@@ -1725,7 +1725,7 @@ static int detector_add_ssh_client_pattern(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &string_size);
     if (!tmp_string || !string_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid SSH Client string.\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid SSH Client string.\n");
         return 0;
     }
     std::string pattern(tmp_string);
@@ -1758,7 +1758,7 @@ static int register_callback(lua_State* L, LuaObject& ud, AppInfoFlags flag)
         {
             if (entry->flags & flag)
             {
-                appid_log(nullptr, TRACE_ERROR_LEVEL, "AppId: detector callback already registered for app %d\n",
+                APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "AppId: detector callback already registered for app %d\n",
                     app_id);
                 return 1;
             }
@@ -1766,7 +1766,7 @@ static int register_callback(lua_State* L, LuaObject& ud, AppInfoFlags flag)
         }
         else
         {
-            appid_log(nullptr, TRACE_ERROR_LEVEL, "AppId: detector callback cannot be registered for invalid app %d\n",
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "AppId: detector callback cannot be registered for invalid app %d\n",
                 app_id);
             return 1;
         }
@@ -1779,7 +1779,7 @@ static int register_callback(lua_State* L, LuaObject& ud, AppInfoFlags flag)
 
         if (!odp_thread_local_ctxt->insert_cb_detector(app_id, &ud))
         {
-            appid_log(nullptr, TRACE_ERROR_LEVEL, "AppId: detector callback already registered for app %d\n", app_id);
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "AppId: detector callback already registered for app %d\n", app_id);
             return 1;
         }
     }
@@ -1815,7 +1815,7 @@ static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDir
     // when an ODP detector triggers the detector callback to be called, there are some elements
     // in the stack. Checking here to make sure the number of elements is not too many
     if (lua_gettop(my_lua_state) > 20)
-        appid_log(&p, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before detector callback\n",
+        APPID_LOG(&p, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before detector callback\n",
             lua_gettop(my_lua_state));
 
     const string& cb_fn_name = ud.get_cb_fn_name();
@@ -1833,7 +1833,7 @@ static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDir
     lua_getfield(my_lua_state, -1, cb_fn_name.c_str());
     if (lua_pcall(my_lua_state, 0, 1, 0))
     {
-        appid_log(&p, TRACE_ERROR_LEVEL, "Detector %s: Error validating %s\n", detector_name,
+        APPID_LOG(&p, TRACE_ERROR_LEVEL, "Detector %s: Error validating %s\n", detector_name,
             lua_tostring(my_lua_state, -1));
         ud.lsd.ldp.pkt = nullptr;
         lua_settop(my_lua_state, 0);
@@ -1846,7 +1846,7 @@ static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDir
     // retrieve result
     if (!lua_isnumber(my_lua_state, -1))
     {
-        appid_log(&p, TRACE_ERROR_LEVEL, "Detector %s: Validator returned non-numeric value\n", detector_name);
+        APPID_LOG(&p, TRACE_ERROR_LEVEL, "Detector %s: Validator returned non-numeric value\n", detector_name);
         ud.lsd.ldp.pkt = nullptr;
         lua_settop(my_lua_state, 0);
         return -10;
@@ -1880,7 +1880,7 @@ void check_detector_callback(const Packet& p, AppIdSession& asd, AppidSessionDir
         ud->set_running(true);
 
         int ret = detector_callback(p.data, p.dsize, dir, asd, p, *ud, change_bits);
-        appid_log(&p, TRACE_DEBUG_LEVEL, "%s detector callback returned %d\n",
+        APPID_LOG(&p, TRACE_DEBUG_LEVEL, "%s detector callback returned %d\n",
             ud->get_detector()->get_name().empty() ? "UKNOWN" : ud->get_detector()->get_name().c_str(), ret);
         ud->set_running(false);
     }
@@ -1895,7 +1895,7 @@ static int create_chp_application(AppId appIdInstance, unsigned app_type_flags, 
 
     if (CHP_glossary->emplace(appIdInstance, new_app).second == false)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Failed to add CHP for appId %d, instance %d",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Failed to add CHP for appId %d, instance %d",
             CHP_APPIDINSTANCE_TO_ID(appIdInstance), CHP_APPIDINSTANCE_TO_INSTANCE(appIdInstance));
         delete new_app;
         return -1;
@@ -1922,7 +1922,7 @@ static int detector_chp_create_application(lua_State* L)
     // We only want one of these for each appId.
     if (CHP_glossary->find(appIdInstance) != CHP_glossary->end())
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Attempt to add more than one CHP for appId %d - "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Attempt to add more than one CHP for appId %d - "
             "use CHPMultiCreateApp.\n", appId);
         return 0;
     }
@@ -1941,7 +1941,7 @@ static inline int get_chp_pattern_type(lua_State* L, int index, HttpFieldIds* pa
     *pattern_type = (HttpFieldIds)lua_tointeger(L, index);
     if (*pattern_type >= NUM_HTTP_FIELDS)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid CHP Action pattern type.\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid CHP Action pattern type.\n");
         return -1;
     }
     return 0;
@@ -1957,7 +1957,7 @@ static inline int get_chp_pattern_data_and_size(lua_State* L, int index, char** 
     // non-empty pattern required
     if (!tmp_string or !*pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid CHP Action PATTERN string.\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid CHP Action PATTERN string.\n");
         return -1;
     }
     *pattern_data = snort_strdup(tmp_string);
@@ -1969,7 +1969,7 @@ static inline int get_chp_action_type(lua_State* L, int index, ActionType& actio
     action_type = (ActionType)lua_tointeger(L, index);
     if (action_type < NO_ACTION or action_type > MAX_ACTION_TYPE)
     {
-        appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: Unsupported CHP Action type: %d, "
+        APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "appid: Unsupported CHP Action type: %d, "
             "possible version mismatch.\n", action_type);
         return -1;
     }
@@ -2010,7 +2010,7 @@ static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, HttpFie
     auto chp_entry = CHP_glossary->find(appIdInstance);
     if (chp_entry == CHP_glossary->end() or !chp_entry->second)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid attempt to add a CHP action for "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid attempt to add a CHP action for "
             "unknown appId %d, instance %d. - pattern:\"%s\" - action \"%s\"\n", CHP_APPIDINSTANCE_TO_ID(appIdInstance),
             CHP_APPIDINSTANCE_TO_INSTANCE(appIdInstance), patternData, optionalActionData ? optionalActionData : "");
         snort_free(patternData);
@@ -2133,7 +2133,7 @@ static int detector_create_chp_multi_application(lua_State* L)
     // We only want a maximum of these for each appId.
     if (instance == CHP_APPID_INSTANCE_MAX)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Attempt to create more than %d CHP for appId %d",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Attempt to create more than %d CHP for appId %d",
             CHP_APPID_INSTANCE_MAX, appId);
         return 0;
     }
@@ -2260,7 +2260,7 @@ static int detector_add_length_app_cache(lua_State* L)
         or ((sequence_cnt == 0) or (sequence_cnt > LENGTH_SEQUENCE_CNT_MAX))
         or ((sequence_str == nullptr) or (strlen(sequence_str) == 0)))
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Invalid input (%d,%u,%u,\"%s\")!",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Invalid input (%d,%u,%u,\"%s\")!",
             appId, (unsigned)proto, (unsigned)sequence_cnt, sequence_str ? sequence_str : "");
         lua_pushnumber(L, -1);
         return 1;
@@ -2284,7 +2284,7 @@ static int detector_add_length_app_cache(lua_State* L)
             length_sequence.sequence[i].direction = APP_ID_FROM_RESPONDER;
             break;
         default:
-            appid_log(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Invalid sequence string (\"%s\")!",
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Invalid sequence string (\"%s\")!",
                 sequence_str);
             lua_pushnumber(L, -1);
             return 1;
@@ -2293,7 +2293,7 @@ static int detector_add_length_app_cache(lua_State* L)
 
         if (*str_ptr != '/')
         {
-            appid_log(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Invalid sequence string (\"%s\")!",
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Invalid sequence string (\"%s\")!",
                 sequence_str);
             lua_pushnumber(L, -1);
             return 1;
@@ -2304,7 +2304,7 @@ static int detector_add_length_app_cache(lua_State* L)
 
         if (length == 0)
         {
-            appid_log(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Invalid sequence string (\"%s\")!",
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Invalid sequence string (\"%s\")!",
                 sequence_str);
             lua_pushnumber(L, -1);
             return 1;
@@ -2320,7 +2320,7 @@ static int detector_add_length_app_cache(lua_State* L)
         if ((!last_one and (*str_ptr != ','))
             or (last_one and (*str_ptr != 0)))
         {
-            appid_log(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Invalid sequence string (\"%s\")!",
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Invalid sequence string (\"%s\")!",
                 sequence_str);
             lua_pushnumber(L, -1);
             return 1;
@@ -2330,7 +2330,7 @@ static int detector_add_length_app_cache(lua_State* L)
 
     if (!ud->get_odp_ctxt().length_cache_add(length_sequence, appId))
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Could not add entry to cache!");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "LuaDetectorApi:Could not add entry to cache!");
         lua_pushnumber(L, -1);
         return 1;
     }
@@ -2361,7 +2361,7 @@ static int detector_add_url_application(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &host_pattern_size);
     if (!tmp_string or !host_pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid host pattern string: service_id %u; "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid host pattern string: service_id %u; "
             "client_id %u; payload_id %u.\n", service_id, client_id, payload_id);
         return 0;
     }
@@ -2374,7 +2374,7 @@ static int detector_add_url_application(lua_State* L)
     tmp_string = lua_tolstring(L, ++index, &path_pattern_size);
     if (!tmp_string or !path_pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid path pattern string: service_id %u; "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid path pattern string: service_id %u; "
             "client_id %u; payload %u.\n", service_id, client_id, payload_id);
         snort_free(host_pattern);
         return 0;
@@ -2388,7 +2388,7 @@ static int detector_add_url_application(lua_State* L)
     tmp_string = lua_tolstring(L, ++index, &schemePatternSize);
     if (!tmp_string or !schemePatternSize)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid scheme pattern string: service_id %u; "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid scheme pattern string: service_id %u; "
             "client_id %u; payload %u.\n", service_id, client_id, payload_id);
         snort_free(path_pattern);
         snort_free(host_pattern);
@@ -2441,7 +2441,7 @@ static int detector_add_url_application_regex(lua_State* L)
 
     const FastPatternConfig* const fp = SnortConfig::get_conf()->fast_pattern_config;
     if (!MpseManager::is_regex_capable(fp->get_search_api())){
-        appid_log(nullptr, TRACE_WARNING_LEVEL, "WARNING: appid: Regex patterns require usage of "
+        APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "WARNING: appid: Regex patterns require usage of "
             "regex capable search engine like hyperscan in %s\n", ud->get_detector()->get_name().c_str());
             return 0;
     }
@@ -2461,7 +2461,7 @@ static int detector_add_url_application_regex(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &host_pattern_size);
     if (!tmp_string or !host_pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid host regex pattern string: service_id %u; "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid host regex pattern string: service_id %u; "
             "client_id %u; payload_id %u.\n", service_id, client_id, payload_id);
         return 0;
     }
@@ -2474,7 +2474,7 @@ static int detector_add_url_application_regex(lua_State* L)
     tmp_string = lua_tolstring(L, ++index, &path_pattern_size);
     if (!tmp_string or !path_pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid path regex pattern string: service_id %u; "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid path regex pattern string: service_id %u; "
             "client_id %u; payload %u.\n", service_id, client_id, payload_id);
         snort_free(host_pattern);
         return 0;
@@ -2488,7 +2488,7 @@ static int detector_add_url_application_regex(lua_State* L)
     tmp_string = lua_tolstring(L, ++index, &schemePatternSize);
     if (!tmp_string or !schemePatternSize)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid scheme regex pattern string: service_id %u; "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid scheme regex pattern string: service_id %u; "
             "client_id %u; payload %u.\n", service_id, client_id, payload_id);
         snort_free(path_pattern);
         snort_free(host_pattern);
@@ -2552,7 +2552,7 @@ static int detector_add_rtmp_url(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &host_pattern_size);
     if (!tmp_string or !host_pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid RTMP host pattern string: service_id %u; "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid RTMP host pattern string: service_id %u; "
             "client_id %u; payload_id %u.\n", service_id, client_id, payload_id);
         return 0;
     }
@@ -2563,7 +2563,7 @@ static int detector_add_rtmp_url(lua_State* L)
     tmp_string = lua_tolstring(L, ++index, &path_pattern_size);
     if (!tmp_string or !path_pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid RTMP path pattern string: service_id %u; "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid RTMP path pattern string: service_id %u; "
             "client_id %u; payload_id %u.\n", service_id, client_id, payload_id);
         snort_free(host_pattern);
         return 0;
@@ -2575,7 +2575,7 @@ static int detector_add_rtmp_url(lua_State* L)
     tmp_string = lua_tolstring(L, ++index, &schemePatternSize);
     if (!tmp_string or !schemePatternSize)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid RTMP scheme pattern string: service_id %u; "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid RTMP scheme pattern string: service_id %u; "
             "client_id %u; payload_id %u.\n", service_id, client_id, payload_id);
         snort_free(path_pattern);
         snort_free(host_pattern);
@@ -2637,7 +2637,7 @@ static int detector_add_sip_user_agent(lua_State* L)
     const char* client_version = lua_tostring(L, ++index);
     if (!client_version)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid sip client version string.\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid sip client version string.\n");
         return 0;
     }
 
@@ -2646,7 +2646,7 @@ static int detector_add_sip_user_agent(lua_State* L)
     const char* ua_pattern = lua_tolstring(L, ++index, &ua_len);
     if (!ua_pattern or !ua_len)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid sip ua pattern string.\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid sip ua pattern string.\n");
         return 0;
     }
 
@@ -2672,7 +2672,7 @@ static int create_custom_application(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &appNameLen);
     if (!tmp_string or !appNameLen)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "Invalid appName string.\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Invalid appName string.\n");
         lua_pushnumber(L, APP_ID_NONE);
         return 1;   /*number of results */
     }
@@ -2758,7 +2758,7 @@ static int add_http_pattern(lua_State* L)
     enum httpPatternType pat_type = (enum httpPatternType)lua_tointeger(L, ++index);
     if (pat_type < HTTP_PAYLOAD or pat_type > HTTP_URL)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid HTTP pattern type in %s.\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid HTTP pattern type in %s.\n",
             ud->get_detector()->get_name().c_str());
         return 0;
     }
@@ -2773,7 +2773,7 @@ static int add_http_pattern(lua_State* L)
     const uint8_t* pattern_str = (const uint8_t*)lua_tolstring(L, ++index, &pattern_size);
     if (!pattern_str or !pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid HTTP pattern string in %s.\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid HTTP pattern string in %s.\n",
             ud->get_detector()->get_name().c_str());
         return 0;
     }
@@ -2812,7 +2812,7 @@ static int add_url_pattern(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &host_pattern_size);
     if (!tmp_string or !host_pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid host pattern string: service_id %u; "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid host pattern string: service_id %u; "
             "client_id %u; payload_id %u.\n", service_id, client_id, payload_id);
         return 0;
     }
@@ -2824,7 +2824,7 @@ static int add_url_pattern(lua_State* L)
     tmp_string = lua_tolstring(L, ++index, &path_pattern_size);
     if (!tmp_string or !path_pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid path pattern string: service_id %u; "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid path pattern string: service_id %u; "
             "client_id %u; payload_id %u.\n", service_id, client_id, payload_id);
         snort_free(host_pattern);
         return 0;
@@ -2837,7 +2837,7 @@ static int add_url_pattern(lua_State* L)
     tmp_string = lua_tolstring(L, ++index, &schemePatternSize);
     if (!tmp_string or !schemePatternSize)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid scheme pattern string: service_id %u; "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid scheme pattern string: service_id %u; "
             "client_id %u; payload_id %u.\n", service_id, client_id, payload_id);
         snort_free(path_pattern);
         snort_free(host_pattern);
@@ -2906,7 +2906,7 @@ static int add_port_pattern_client(lua_State* L)
     if (appid <= APP_ID_NONE or !pattern or !pattern_size or
         (protocol != IpProtocol::TCP and protocol != IpProtocol::UDP))
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: addPortPatternClient() - Invalid input in %s.\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: addPortPatternClient() - Invalid input in %s.\n",
             ud->get_detector()->get_name().c_str());
         return 0;
     }
@@ -2964,7 +2964,7 @@ static int add_port_pattern_service(lua_State* L)
     if (appid <= APP_ID_NONE or !pattern or !pattern_size or
         (protocol != IpProtocol::TCP and protocol != IpProtocol::UDP))
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: addPortPatternService() - Invalid input in %s.\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: addPortPatternService() - Invalid input in %s.\n",
             ud->get_detector()->get_name().c_str());
         return 0;
     }
@@ -2999,7 +2999,7 @@ static int detector_add_sip_server(lua_State* L)
     const char* client_version = lua_tostring(L, ++index);
     if (!client_version)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid sip client version string.\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid sip client version string.\n");
         return 0;
     }
 
@@ -3008,7 +3008,7 @@ static int detector_add_sip_server(lua_State* L)
     const char* server_pattern = lua_tolstring(L, ++index, &pattern_size);
     if (!server_pattern or !pattern_size)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid sip server pattern string.\n");
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid sip server pattern string.\n");
         return 0;
     }
 
@@ -3332,14 +3332,14 @@ static int get_user_detector_data_item(lua_State *L)
     const char* table = lua_tostring(L, 2);
     if (!table)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid detector data table string in %s.\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid detector data table string in %s.\n",
             ud->get_detector()->get_name().c_str());
         return 0;
     }
     const char* key = lua_tostring(L, 3);
     if (!key)
     {
-        appid_log(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid detector data key string in %s.\n",
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid detector data key string in %s.\n",
             ud->get_detector()->get_name().c_str());
         return 0;
     }
@@ -3558,7 +3558,7 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
     auto my_lua_state = odp_thread_local_ctxt->get_lua_state();
     if (!my_lua_state)
     {
-        appid_log(args.pkt, TRACE_ERROR_LEVEL, "lua detector %s: no LUA state\n", package_info.name.c_str());
+        APPID_LOG(args.pkt, TRACE_ERROR_LEVEL, "lua detector %s: no LUA state\n", package_info.name.c_str());
         lua_settop(my_lua_state, 0);
         return APPID_ENULL;
     }
@@ -3587,7 +3587,7 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
         // Runtime Lua errors are suppressed in production code since detectors are written for
         // efficiency and with defensive minimum checks. Errors are dealt as exceptions
         // that don't impact processing by other detectors or future packets by the same detector.
-        appid_log(args.pkt, TRACE_ERROR_LEVEL, "lua detector %s: error validating %s\n",
+        APPID_LOG(args.pkt, TRACE_ERROR_LEVEL, "lua detector %s: error validating %s\n",
             package_info.name.c_str(), lua_tostring(my_lua_state, -1));
         ldp.pkt = nullptr;
         odp_thread_local_ctxt->free_detector_flow();
@@ -3601,7 +3601,7 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
     /* retrieve result */
     if (!lua_isnumber(my_lua_state, -1))
     {
-        appid_log(args.pkt, TRACE_ERROR_LEVEL, "lua detector %s: returned non-numeric value\n",
+        APPID_LOG(args.pkt, TRACE_ERROR_LEVEL, "lua detector %s: returned non-numeric value\n",
             package_info.name.c_str());
         ldp.pkt = nullptr;
         lua_settop(my_lua_state, 0);
@@ -3695,7 +3695,7 @@ int LuaServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     auto my_lua_state = odp_thread_local_ctxt->get_lua_state();
     if (lua_gettop(my_lua_state))
-    appid_log(args.pkt, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before service validate\n",
+    	APPID_LOG(args.pkt, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before service validate\n",
         lua_gettop(my_lua_state));
 
     std::string name = this->name + "_";
@@ -3771,7 +3771,7 @@ int LuaClientDetector::validate(AppIdDiscoveryArgs& args)
 {
     auto my_lua_state = odp_thread_local_ctxt->get_lua_state();
     if (lua_gettop(my_lua_state))
-        appid_log(args.pkt, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before client validate\n",
+        APPID_LOG(args.pkt, TRACE_WARNING_LEVEL, "appid: leak of %d lua stack elements before client validate\n",
             lua_gettop(my_lua_state));
 
     std::string name = this->name + "_";

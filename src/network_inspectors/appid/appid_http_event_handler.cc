@@ -65,7 +65,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
             appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
             is_debug_active = true;
         }
-        appid_log(p, TRACE_DEBUG_LEVEL, "New AppId session at HTTP event\n");
+        APPID_LOG(p, TRACE_DEBUG_LEVEL, "New AppId session at HTTP event\n");
     }
     else if ( asd->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version() )
         return; // Skip detection for sessions using old odp context after odp reload
@@ -93,7 +93,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     if (appidDebug->is_enabled() and !is_debug_active)
         appidDebug->activate(flow, asd, config.log_all_sessions);
 
-    appid_log(p, TRACE_DEBUG_LEVEL, "Processing HTTP metadata from HTTP Inspector for stream %" PRId64 "\n",
+    APPID_LOG(p, TRACE_DEBUG_LEVEL, "Processing HTTP metadata from HTTP Inspector for stream %" PRId64 "\n",
         http_event->get_httpx_stream_id());
 
     asd->set_session_flags(APPID_SESSION_HTTP_SESSION);

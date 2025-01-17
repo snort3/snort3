@@ -268,7 +268,7 @@ void ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p,
     {
         AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, asd, p, change_bits);
         ret = asd.client_detector->validate(disco_args);
-        appid_log(p, TRACE_DEBUG_LEVEL, "%s client detector returned %s (%d)\n",
+        APPID_LOG(p, TRACE_DEBUG_LEVEL, "%s client detector returned %s (%d)\n",
             asd.client_detector->get_log_name().c_str(),
             asd.client_detector->get_code_string((APPID_STATUS_CODE)ret), ret);
     }
@@ -278,7 +278,7 @@ void ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p,
         {
             AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, asd, p, change_bits);
             int result = kv->second->validate(disco_args);
-            appid_log(p, TRACE_DEBUG_LEVEL, "%s client candidate returned %s (%d)\n",
+            APPID_LOG(p, TRACE_DEBUG_LEVEL, "%s client candidate returned %s (%d)\n",
                 kv->second->get_log_name().c_str(),
                 kv->second->get_code_string((APPID_STATUS_CODE)result), result);
 

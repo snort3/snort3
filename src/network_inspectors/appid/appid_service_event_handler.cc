@@ -61,7 +61,7 @@ void AppIdServiceEventHandler::handle(DataEvent&, Flow* flow)
             inspector, *pkt_thread_odp_ctxt);
         if (appidDebug->is_enabled())
             appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
-        appid_log(p, TRACE_DEBUG_LEVEL, "New AppId session at service event\n");
+        APPID_LOG(p, TRACE_DEBUG_LEVEL, "New AppId session at service event\n");
     }
     else if (asd->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version())
         return; // Skip detection for sessions using old odp context after odp reload
@@ -72,11 +72,11 @@ void AppIdServiceEventHandler::handle(DataEvent&, Flow* flow)
 
     if (!asd->has_no_service_candidate())
     {
-        appid_log(p, TRACE_DEBUG_LEVEL, "No service inspector\n");
+        APPID_LOG(p, TRACE_DEBUG_LEVEL, "No service inspector\n");
         return;
     }
 
-    appid_log(p, TRACE_DEBUG_LEVEL, "No service candidate and no inspector\n");
+    APPID_LOG(p, TRACE_DEBUG_LEVEL, "No service candidate and no inspector\n");
 
     const SfIp* service_ip;
     uint16_t port;

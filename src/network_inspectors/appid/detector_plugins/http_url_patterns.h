@@ -30,6 +30,7 @@
 #include "trace/trace.h"
 #include "utils/util.h"
 
+//#include "appid_module.h"
 #include "appid_debug.h"
 #include "appid_types.h"
 #include "appid_utils/sf_mlmp.h"
@@ -103,13 +104,13 @@ struct DetectorHTTPPattern
     {
         if( !pat )
         {
-            appid_log(nullptr, TRACE_ERROR_LEVEL, "HTTP pattern string is null.");
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "HTTP pattern string is null.");
             return false;
         }
 
         if (seq < SINGLE || seq > USER_AGENT_HEADER)
         {
-            appid_log(nullptr, TRACE_ERROR_LEVEL, "Invalid HTTP DHP Sequence.");
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Invalid HTTP DHP Sequence.");
             return false;
         }
 

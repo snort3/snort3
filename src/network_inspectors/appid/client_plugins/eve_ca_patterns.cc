@@ -45,7 +45,7 @@ void EveCaPatternMatchers::add_eve_ca_pattern(AppId app_id, const string& patter
     if (match != eve_ca_load_list.end())
     {
         if ((*match)->app_id != app_id)
-            appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: detector %s - process name '%s' for client app %d is already "
+            APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "appid: detector %s - process name '%s' for client app %d is already "
                 "mapped to client app %d\n", detector.c_str(), (*match)->pattern.c_str(), app_id,
                 (*match)->app_id);
     }
@@ -118,7 +118,7 @@ void EveCaPatternMatchers::finalize_patterns()
         AppIdInspector* inspector =
             (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true);
         if (inspector and inspector->get_ctxt().config.log_eve_process_client_mappings)
-            appid_log(nullptr, TRACE_INFO_LEVEL, "Adding EVE Client App pattern %d %s %d\n",
+            APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Adding EVE Client App pattern %d %s %d\n",
                 p->app_id, p->pattern.c_str(), p->confidence);
         #endif
     }

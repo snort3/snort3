@@ -144,7 +144,7 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
         data_add(args.asd, td, &snort_free);
         td->state = TFTP_STATE_CONNECTION;
     }
-    appid_log(args.pkt, TRACE_DEBUG_LEVEL, "TFTP state %d\n", td->state);
+    APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "TFTP state %d\n", td->state);
 
     if (td->state == TFTP_STATE_CONNECTION && args.dir == APP_ID_FROM_RESPONDER)
         goto fail;
@@ -215,10 +215,10 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
     case TFTP_STATE_TRANSFER:
         if ((mode=tftp_verify_header(data, size, &block)) < 0)
         {
-            appid_log(args.pkt, TRACE_DEBUG_LEVEL, "TFTP failed to verify\n");
+            APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "TFTP failed to verify\n");
             goto fail;
         }
-        appid_log(args.pkt, TRACE_DEBUG_LEVEL, "TFTP mode %d and block %u\n", mode, (unsigned)block);
+        APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "TFTP mode %d and block %u\n", mode, (unsigned)block);
         if (mode == TFTP_STATE_ACK)
         {
             if (block != 0)
@@ -255,11 +255,11 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 goto fail;
             else
             {
-                appid_log(args.pkt, TRACE_DEBUG_LEVEL, "TFTP failed to verify\n");
+                APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "TFTP failed to verify\n");
                 goto bail;
             }
         }
-        appid_log(args.pkt, TRACE_DEBUG_LEVEL, "TFTP mode %d\n", mode);
+        APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "TFTP mode %d\n", mode);
         if (mode == TFTP_STATE_ERROR)
         {
             td->state = TFTP_STATE_TRANSFER;
@@ -267,7 +267,7 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
         if (args.dir == APP_ID_FROM_INITIATOR && mode != TFTP_STATE_DATA)
         {
-            appid_log(args.pkt, TRACE_DEBUG_LEVEL, "TFTP bad mode\n");
+            APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "TFTP bad mode\n");
             goto bail;
         }
         if (args.dir == APP_ID_FROM_RESPONDER && mode != TFTP_STATE_ACK)
@@ -315,7 +315,7 @@ inprocess:
     return APPID_INPROCESS;
 
 success:
-    appid_log(args.pkt, TRACE_DEBUG_LEVEL, "TFTP success\n");
+    APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "TFTP success\n");
     return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_TFTP);
 
 bail:

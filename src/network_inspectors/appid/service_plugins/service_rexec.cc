@@ -134,7 +134,7 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
         rd->state = REXEC_STATE_PORT;
     }
     // cppcheck-suppress nullPointerRedundantCheck
-    appid_log(args.pkt, TRACE_DEBUG_LEVEL, "rexec state %d\n", rd->state);
+    APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "rexec state %d\n", rd->state);
 
     switch (rd->state) // cppcheck-suppress nullPointerRedundantCheck
     {

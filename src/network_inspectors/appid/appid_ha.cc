@@ -55,7 +55,7 @@ static AppIdSession* create_appid_session(Flow& flow, const FlowKey* key,
 #endif
         );
 
-        appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - New AppId session created in consume\n");
+        APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - New AppId session created in consume\n");
 
     flow.set_flow_data(asd);
     asd->flow = &flow;
@@ -83,7 +83,7 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
         appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
 
     Packet* p = CURRENT_PACKET;
-    appid_log(p, TRACE_DEBUG_LEVEL, "high-avail - Consuming app data - flags 0x%x, service %d, "
+    APPID_LOG(p, TRACE_DEBUG_LEVEL, "high-avail - Consuming app data - flags 0x%x, service %d, "
         "client %d, payload %d, misc %d, referred %d, client_inferred_service %d, "
         "port_service %d, tp_app %d, tp_payload %d\n",
         appHA->flags, appHA->appId[APPID_HA_APP_SERVICE],
@@ -115,7 +115,7 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
             const TPLibHandler* tph = TPLibHandler::get();
             TpAppIdCreateSession tpsf = tph->tpsession_factory();
             if ( !(asd->tpsession = tpsf(*asd->get_tp_appid_ctxt())) )
-                appid_log(p, TRACE_ERROR_LEVEL, "appid: Could not allocate asd.tpsession data in consume");
+                APPID_LOG(p, TRACE_ERROR_LEVEL, "appid: Could not allocate asd.tpsession data in consume");
             else
             {
                 asd->tpsession->set_state(TP_STATE_HA);
@@ -209,7 +209,7 @@ bool AppIdHAAppsClient::produce(Flow& flow, HAMessage& msg)
     appHA->appId[APPID_HA_APP_TP] = asd->get_tp_app_id();
     appHA->appId[APPID_HA_APP_TP_PAYLOAD] = asd->get_tp_payload_app_id();
 
-    appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Producing app data - flags 0x%x, service %d, client %d, "
+    	APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Producing app data - flags 0x%x, service %d, client %d, "
         "payload %d, misc %d, referred %d, client_inferred_service %d, port_service %d, "
         "tp_app %d, tp_payload %d\n",
         appHA->flags, appHA->appId[APPID_HA_APP_SERVICE],
@@ -242,7 +242,7 @@ bool AppIdHAHttpClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
     if (appidDebug->is_enabled())
         appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
 
-    appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Consuming HTTP data - URL %s, host %s\n",
+    APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Consuming HTTP data - URL %s, host %s\n",
         appHA->url, appHA->host);
 
     if (!asd)
@@ -305,7 +305,7 @@ bool AppIdHAHttpClient::produce(Flow& flow, HAMessage& msg)
     else
         appHA->host[0] = '\0';
 
-    appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Producing HTTP data - URL %s, host %s\n",
+    APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Producing HTTP data - URL %s, host %s\n",
         appHA->url, appHA->host);
 
     msg.advance_cursor(sizeof(AppIdSessionHAHttp));
@@ -330,7 +330,7 @@ bool AppIdHATlsHostClient::consume(Flow*& flow, const FlowKey* key, HAMessage& m
     if (appidDebug->is_enabled())
         appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
 
-    appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Consuming TLS host - %s\n", appHA->tls_host);
+    APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Consuming TLS host - %s\n", appHA->tls_host);
 
     if (!asd)
         asd = create_appid_session(*flow, key, *inspector);
@@ -361,7 +361,7 @@ bool AppIdHATlsHostClient::produce(Flow& flow, HAMessage& msg)
     memcpy(appHA->tls_host, tls_host, length);
     appHA->tls_host[length] = '\0';
 
-    appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Producing TLS host - %s\n", appHA->tls_host);
+    APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Producing TLS host - %s\n", appHA->tls_host);
 
     msg.advance_cursor(sizeof(AppIdSessionHATlsHost));
     return true;

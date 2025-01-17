@@ -36,7 +36,7 @@ void UserDataMap::add_user_data(const std::string& table, const std::string& key
     {
         if (user_data_maps[table].find(key) != user_data_maps[table].end())
         {
-            appid_log(nullptr, TRACE_WARNING_LEVEL,"ignoring duplicate key %s in table %s",
+            APPID_LOG(nullptr, TRACE_WARNING_LEVEL,"ignoring duplicate key %s in table %s",
                 key.c_str(), table.c_str());
             return;
         }
