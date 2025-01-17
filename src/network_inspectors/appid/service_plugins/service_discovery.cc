@@ -435,12 +435,17 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
         sds->set_reset_time(0);
         ServiceState sds_state = sds->get_state();
 
-        if ( ((sds_state == ServiceState::FAILED) or (sds_state == ServiceState::SEARCHING_BRUTE_FORCE)) and
-            asd.get_session_flags(APPID_SESSION_WAIT_FOR_EXTERNAL))
+        if ( ((sds_state == ServiceState::FAILED) or (sds_state == ServiceState::SEARCHING_BRUTE_FORCE)) )
         {
-            if (appidDebug->is_active())
-                LogMessage("AppIdDbg %s No service match, waiting for external detection\n", appidDebug->get_debug_session());
-            return APPID_INPROCESS;
+            if ( asd.get_session_flags(APPID_SESSION_WAIT_FOR_EXTERNAL) )
+            {
+                if ( appidDebug->is_active() )
+                    LogMessage("AppIdDbg %s No service match, waiting for external detection\n", appidDebug->get_debug_session());
+                return APPID_INPROCESS;
+            }
+
+            if ( sds->check_and_expire_failed_state() )
+                sds_state = sds->get_state();
         }
 
         if ( sds_state == ServiceState::FAILED )
@@ -538,6 +543,16 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
 
             asd.set_no_service_candidate();
         }
+    }
+
+    /*Move brute force iterator if provided detector failed*/
+    if ( ret > APPID_INPROCESS )
+    {
+        if ( !sds )
+            sds = AppIdServiceState::add(ip, proto, port, group, asd.asid, asd.is_decrypted(), true);
+
+        if ( sds->get_state() == ServiceState::SEARCHING_BRUTE_FORCE )
+            sds->next_brute_force(proto);
     }
 
     /* Failed all candidates, or no detector identified after seeing bidirectional exchange */

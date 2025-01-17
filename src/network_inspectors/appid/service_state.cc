@@ -38,6 +38,8 @@
 using namespace snort;
 
 static THREAD_LOCAL MapList* service_state_cache = nullptr;
+static THREAD_LOCAL uint32_t failed_state_expiration_threshold_secs = 0;
+static THREAD_LOCAL uint8_t brute_force_inprocess_threshold = 0;
 
 const size_t MapList::sz = sizeof(ServiceDiscoveryState) +
     sizeof(Map_t::value_type) + sizeof(Queue_t::value_type);
@@ -48,6 +50,8 @@ ServiceDiscoveryState::ServiceDiscoveryState()
     last_detract.clear();
     last_invalid_client.clear();
     reset_time = 0;
+    failed_timestamp = TIME_POINT_ZERO;
+    brute_force_inprocess_count = 0;
 }
 
 ServiceDiscoveryState::~ServiceDiscoveryState()
@@ -63,14 +67,34 @@ ServiceDetector* ServiceDiscoveryState::select_detector_by_brute_force(IpProtoco
     {
         if ( !tcp_brute_force_mgr )
             tcp_brute_force_mgr = new AppIdDetectorList(IpProtocol::TCP, sd);
-        service = tcp_brute_force_mgr->next();
+
+        if ( ++brute_force_inprocess_count >= brute_force_inprocess_threshold )
+        {
+            service = tcp_brute_force_mgr->next();
+            brute_force_inprocess_count = 0;
+        }
+        else
+        {
+            service = tcp_brute_force_mgr->current();
+        }
+
         appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Brute-force state %s\n", service? "" : "failed - no more TCP detectors");
     }
     else if (proto == IpProtocol::UDP)
     {
         if ( !udp_brute_force_mgr )
             udp_brute_force_mgr = new AppIdDetectorList(IpProtocol::UDP, sd);
-        service = udp_brute_force_mgr->next();
+        
+        if ( ++brute_force_inprocess_count > brute_force_inprocess_threshold )
+        {
+            service = udp_brute_force_mgr->next();
+            brute_force_inprocess_count = 0;
+        }
+        else
+        {
+            service = udp_brute_force_mgr->current();
+        }
+
         appid_log(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Brute-force state %s\n", service? "" : "failed - no more UDP detectors");
     }
     else
@@ -86,6 +110,8 @@ void ServiceDiscoveryState::set_service_id_valid(ServiceDetector* sd)
 {
     service = sd;
     reset_time = 0;
+    failed_timestamp = TIME_POINT_ZERO;
+    brute_force_inprocess_count = 0;
     if ( state != ServiceState::VALID )
     {
         state = ServiceState::VALID;
@@ -171,6 +197,8 @@ void ServiceDiscoveryState::set_service_id_failed(AppIdSession& asd, const SfIp*
             state = SEARCHING_BRUTE_FORCE;
         else
             state = FAILED;
+        
+        failed_timestamp = SnortClock::now();
     }
 }
 
@@ -188,6 +216,42 @@ void ServiceDiscoveryState::update_service_incompatible(const SfIp* ip)
     }
 }
 
+bool ServiceDiscoveryState::check_and_expire_failed_state()
+{
+    if ( failed_timestamp == TIME_POINT_ZERO or !failed_state_expiration_threshold_secs )
+        return false;
+
+    if ( clock_usecs(TO_USECS(SnortClock::now() - failed_timestamp)) > (failed_state_expiration_threshold_secs * 1000000) )
+    {
+        reset();
+        return true;
+    }
+
+    return false;
+}
+
+void ServiceDiscoveryState::reset()
+{
+    state = ServiceState::SEARCHING_PORT_PATTERN;
+    last_detract.clear();
+    last_invalid_client.clear();
+    reset_time = 0;
+    failed_timestamp = TIME_POINT_ZERO;
+    invalid_client_count = 0;
+    valid_count = 0;
+    detract_count = 0;
+    service = nullptr;
+    brute_force_inprocess_count = 0;
+
+    if ( tcp_brute_force_mgr )
+        delete tcp_brute_force_mgr;
+    if ( udp_brute_force_mgr )
+        delete udp_brute_force_mgr;
+
+    tcp_brute_force_mgr = nullptr;
+    udp_brute_force_mgr = nullptr;
+}
+
 bool AppIdServiceState::initialize(size_t memcap)
 {
     if ( !service_state_cache )
@@ -201,10 +265,18 @@ bool AppIdServiceState::initialize(size_t memcap)
     return false;
 }
 
+void AppIdServiceState::set_service_thresholds(uint32_t _failed_state_expiration_threshold_secs, uint8_t _brute_force_inprocess_threshold)
+{
+    failed_state_expiration_threshold_secs = _failed_state_expiration_threshold_secs;  
+    brute_force_inprocess_threshold = _brute_force_inprocess_threshold;
+}
+
 void AppIdServiceState::clean()
 {
     delete service_state_cache;
     service_state_cache = nullptr;
+    failed_state_expiration_threshold_secs = 0;
+    brute_force_inprocess_threshold = 0;
 }
 
 ServiceDiscoveryState* AppIdServiceState::add(const SfIp* ip, IpProtocol proto, uint16_t port,

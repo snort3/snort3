@@ -168,11 +168,13 @@ TEST_GROUP(service_state_tests)
     {
         appidDebug = new AppIdDebug();
         appidDebug->activate(nullptr, nullptr, false);
+        AppIdServiceState::set_service_thresholds(0, 1);
     }
 
     void teardown() override
     {
         delete appidDebug;
+        AppIdServiceState::clean();
     }
 };
 

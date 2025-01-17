@@ -192,6 +192,7 @@ void AppIdInspector::tinit()
     odp_thread_local_ctxt->initialize(SnortConfig::get_conf());
 
     AppIdServiceState::initialize(config->memcap);
+    AppIdServiceState::set_service_thresholds(pkt_thread_odp_ctxt->failed_state_expiration_secs, pkt_thread_odp_ctxt->brute_force_inprocess_threshold);
     assert(!pkt_thread_tp_appid_ctxt);
     pkt_thread_tp_appid_ctxt = ctxt.get_tp_appid_ctxt();
     if (pkt_thread_tp_appid_ctxt)

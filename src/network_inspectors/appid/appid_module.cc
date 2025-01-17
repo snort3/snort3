@@ -262,6 +262,7 @@ bool ACOdpContextSwap::execute(Analyzer&, void**)
     ServiceDiscovery::set_thread_local_ftp_service();
     AppIdContext& ctxt = inspector.get_ctxt();
     OdpContext& current_odp_ctxt = ctxt.get_odp_ctxt();
+    AppIdServiceState::set_service_thresholds(current_odp_ctxt.failed_state_expiration_secs, current_odp_ctxt.brute_force_inprocess_threshold);
     assert(pkt_thread_odp_ctxt != &current_odp_ctxt);
     pkt_thread_odp_ctxt = &current_odp_ctxt;
 

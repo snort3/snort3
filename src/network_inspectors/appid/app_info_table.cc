@@ -572,6 +572,50 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                         max_packet_service_fail_ignore_bytes;
                 }
             }
+            else if (!(strcasecmp(conf_key, "failed_state_expiration_secs")))
+            {
+                int32_t brute_force_failed_state_expiration_secs = atoi(conf_val);
+                if (brute_force_failed_state_expiration_secs < MIN_BRUTE_FORCE_FAILED_EXPIRATION_SECS)
+                {
+                    appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: invalid "
+                        "failed_state_expiration_secs %" PRIi32 ", must be greater than "
+                        "%u.\n", brute_force_failed_state_expiration_secs,
+                        MIN_BRUTE_FORCE_FAILED_EXPIRATION_SECS);
+                }
+                else if (brute_force_failed_state_expiration_secs > MAX_BRUTE_FORCE_FAILED_EXPIRATION_SECS)
+                {
+                    appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: invalid "
+                        "failed_state_expiration_secs %" PRIi32 ", must be less than "
+                        "%u.\n", brute_force_failed_state_expiration_secs,
+                        MAX_BRUTE_FORCE_FAILED_EXPIRATION_SECS);
+                }
+                else
+                {
+                    odp_ctxt.failed_state_expiration_secs = brute_force_failed_state_expiration_secs;
+                }
+            }
+            else if (!(strcasecmp(conf_key, "brute_force_inprocess_threshold")))
+            {
+                int32_t brute_force_inprocess_threshold = atoi(conf_val);
+                if (brute_force_inprocess_threshold < MIN_BRUTE_FORCE_INPROCESS_STATE_THRESHOLD)
+                {
+                    appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: invalid "
+                        "brute_force_inprocess_state_threshold %" PRIi32 ", must be greater than "
+                        "%u.\n", brute_force_inprocess_threshold,
+                        MIN_BRUTE_FORCE_INPROCESS_STATE_THRESHOLD);
+                }
+                else if (brute_force_inprocess_threshold > MAX_BRUTE_FORCE_INPROCESS_STATE_THRESHOLD)
+                {
+                    appid_log(nullptr, TRACE_WARNING_LEVEL, "appid: invalid "
+                        "brute_force_inprocess_state_threshold %" PRIi32 ", must be less than "
+                        "%u.\n", brute_force_inprocess_threshold,
+                        MAX_BRUTE_FORCE_INPROCESS_STATE_THRESHOLD);
+                }
+                else
+                {
+                    odp_ctxt.brute_force_inprocess_threshold = brute_force_inprocess_threshold;
+                }
+            }
             /* App Priority bit set*/
             else if (!(strcasecmp(conf_key, "app_priority")))
             {

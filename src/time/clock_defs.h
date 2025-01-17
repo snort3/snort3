@@ -23,6 +23,7 @@
 #ifdef USE_TSC_CLOCK
 #include "time/tsc_clock.h"
 using SnortClock = TscClock;
+#define TIME_POINT_ZERO 0
 #define CLOCK_ZERO 0
 #define DURA_ZERO 0
 #define TO_TICKS(t) (t)
@@ -36,6 +37,7 @@ using SnortClock = TscClock;
 using hr_clock = std::chrono::high_resolution_clock;
 using SnortClock = hr_clock;
 inline long clock_scale() { return 1; }
+#define TIME_POINT_ZERO SnortClock::time_point::min()
 #define CLOCK_ZERO 0_ticks
 #define DURA_ZERO Clock::duration::zero()
 #define TO_TICKS(t) (t.count())

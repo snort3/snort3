@@ -27,6 +27,7 @@
 
 #include "protocols/protocol_ids.h"
 #include "sfip/sf_ip.h"
+#include "time/clock_defs.h"
 #include "utils/cpp_macros.h"
 #include "utils/util.h"
 
@@ -65,8 +66,17 @@ public:
     {
         ServiceDetector* detector = nullptr;
 
-        if ( dit != detectors->end())
+        if ( dit != detectors->end() )
             detector = (ServiceDetector*)(dit++)->second;
+        return detector;
+    }
+
+    ServiceDetector* current()
+    {
+        ServiceDetector* detector = nullptr;
+
+        if ( dit != detectors->end() )
+            detector = (ServiceDetector*)(dit)->second;
         return detector;
     }
 
@@ -90,6 +100,7 @@ public:
     void set_service_id_failed(AppIdSession& asd, const snort::SfIp* client_ip,
         unsigned invalid_delta = 0);
     void update_service_incompatible(const snort::SfIp* ip);
+    bool check_and_expire_failed_state();
 
     ServiceState get_state() const
     {
@@ -121,9 +132,20 @@ public:
         reset_time = resetTime;
     }
 
+    void next_brute_force(IpProtocol proto)
+    {
+        if ( proto == IpProtocol::TCP )
+            tcp_brute_force_mgr->next();
+        else if  (proto == IpProtocol::UDP )
+            udp_brute_force_mgr->next();
+        brute_force_inprocess_count = 0;
+    }
+
     Queue_t::iterator qptr; // Our place in service_state_queue
 
 private:
+    void reset();
+
     ServiceState state;
     ServiceDetector* service = nullptr;
     AppIdDetectorList* tcp_brute_force_mgr = nullptr;
@@ -141,12 +163,15 @@ private:
      */
     snort::SfIp last_invalid_client;
     time_t reset_time;
+    SnortClock::time_point failed_timestamp;
+    uint8_t brute_force_inprocess_count;
 };
 
 class AppIdServiceState
 {
 public:
     static bool initialize(size_t memcap);
+    static void set_service_thresholds(uint32_t _failed_state_expiration_threshold_secs, uint8_t _brute_force_inprocess_threshold);
     static void clean();
     static ServiceDiscoveryState* add(const snort::SfIp*, IpProtocol, uint16_t port,
         int16_t group, uint32_t asid, bool decrypted, bool do_touch = false);

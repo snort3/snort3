@@ -59,6 +59,14 @@
 #define DEFAULT_MAX_BYTES_BEFORE_SERVICE_FAIL 4096
 #define DEFAULT_MAX_PKTS_BEFORE_SERVICE_FAIL  5
 #define DEFAULT_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES 10
+    
+#define DEFAULT_FAILED_STATE_EXPIRATION_SECS 7200
+#define MIN_BRUTE_FORCE_FAILED_EXPIRATION_SECS 0
+#define MAX_BRUTE_FORCE_FAILED_EXPIRATION_SECS 86400
+
+#define DEFAULT_BRUTE_FORCE_INPROCESS_STATE_THRESHOLD 5
+#define MIN_BRUTE_FORCE_INPROCESS_STATE_THRESHOLD 1
+#define MAX_BRUTE_FORCE_INPROCESS_STATE_THRESHOLD 50
 
 
 enum SnortProtoIdIndex
@@ -133,23 +141,25 @@ public:
     bool ftp_userid_disabled = false;
     bool chp_body_collection_disabled = false;
     bool need_reinspection = false;
+    bool tp_allow_probes = false;
+    bool allow_port_wildcard_host_cache = false;
+    bool recheck_for_portservice_appid = false;
+    bool eve_http_client = true;
+    bool appid_cpu_profiler = true;
+    uint8_t brute_force_inprocess_threshold = DEFAULT_BRUTE_FORCE_INPROCESS_STATE_THRESHOLD;
+    uint16_t max_packet_before_service_fail = DEFAULT_MAX_PKTS_BEFORE_SERVICE_FAIL;
+    uint16_t max_packet_service_fail_ignore_bytes = DEFAULT_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES;
     AppId first_pkt_service_id = 0;
     AppId first_pkt_payload_id = 0;
     AppId first_pkt_client_id = 0;
     uint32_t chp_body_collection_max = 0;
     uint32_t rtmp_max_packets = 15;
     uint32_t max_tp_flow_depth = 5;
-    bool tp_allow_probes = false;
+    uint32_t failed_state_expiration_secs = DEFAULT_FAILED_STATE_EXPIRATION_SECS;
     uint32_t host_port_app_cache_lookup_interval = 10;
     uint32_t host_port_app_cache_lookup_range = 100000;
-    bool allow_port_wildcard_host_cache = false;
-    bool recheck_for_portservice_appid = false;
     uint64_t max_bytes_before_service_fail = DEFAULT_MAX_BYTES_BEFORE_SERVICE_FAIL;
-    uint16_t max_packet_before_service_fail = DEFAULT_MAX_PKTS_BEFORE_SERVICE_FAIL;
-    uint16_t max_packet_service_fail_ignore_bytes = DEFAULT_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES;
     FirstPktAppIdDiscovered first_pkt_appid_prefix = NO_APPID_FOUND;
-    bool eve_http_client = true;
-    bool appid_cpu_profiler = true;
 
     OdpContext(const AppIdConfig&, snort::SnortConfig*);
     void initialize(AppIdInspector& inspector);

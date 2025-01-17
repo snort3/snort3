@@ -224,6 +224,8 @@ void OdpContext::dump_appid_config()
     appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_packet_service_fail_ignore_bytes %" PRIu16" \n", max_packet_service_fail_ignore_bytes);
     appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: eve_http_client                      %s\n", (eve_http_client ? "True" : "False"));
     appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: appid_cpu_profiler                   %s\n", (appid_cpu_profiler ? "True" : "False"));
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: brute_force_inprocess_threshold      %" PRId8" \n", brute_force_inprocess_threshold);
+    appid_log(nullptr, TRACE_INFO_LEVEL, "Appid Config: failed_state_expiration_secs         %" PRId32" \n", failed_state_expiration_secs);
 }
 
 bool OdpContext::is_appid_cpu_profiler_running()
