@@ -7,21 +7,40 @@
 find_package(PkgConfig QUIET)
 pkg_check_modules(PC_JEMALLOC QUIET jemalloc)
 
+if (PC_JEMALLOC_INCLUDE_DIRS)
+    find_path(JEMALLOC_INCLUDE_DIR
+        NAMES jemalloc/jemalloc.h
+        HINTS ${PC_JEMALLOC_INCLUDE_DIRS}
+        NO_DEFAULT_PATH
+    )
+endif()
 find_path(JEMALLOC_INCLUDE_DIR
   NAMES jemalloc/jemalloc.h
-  HINTS ${PC_JEMALLOC_INCLUDE_DIRS}
 )
 
 if ( STATIC_JEMALLOC )
-  find_library(JEMALLOC_LIBRARY
-    NAMES libjemalloc.a jemalloc
-    HINTS ${PC_JEMALLOC_LIBRARY_DIRS}
-)
+    if (PC_JEMALLOC_LIBRARY_DIRS)
+      find_library(JEMALLOC_LIBRARY
+        NAMES libjemalloc.a jemalloc
+        HINTS ${PC_JEMALLOC_LIBRARY_DIRS}
+        NO_DEFAULT_PATH
+      )
+    endif()
+    find_library(JEMALLOC_LIBRARY
+      NAMES libjemalloc.a jemalloc
+    )
+
 else()
+  if (PC_JEMALLOC_LIBRARY_DIRS)
+    find_library(JEMALLOC_LIBRARY
+      NAMES jemalloc
+      HINTS ${PC_JEMALLOC_LIBRARY_DIRS}
+      NO_DEFAULT_PATH
+    )
+  endif()
   find_library(JEMALLOC_LIBRARY
     NAMES jemalloc
-    HINTS ${PC_JEMALLOC_LIBRARY_DIRS}
-)
+  )
 endif()
 
 if(JEMALLOC_INCLUDE_DIR)

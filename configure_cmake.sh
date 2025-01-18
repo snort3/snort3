@@ -433,6 +433,12 @@ while [ $# -ne 0 ]; do
         --with-dnet-libraries=*)
             append_cache_entry DNET_LIBRARIES_DIR_HINT PATH $optarg
             ;;
+        --with-jemalloc-includes=*)
+            append_cache_entry PC_JEMALLOC_INCLUDE_DIRS PATH $optarg
+            ;;
+        --with-jemalloc-libraries=*)
+            append_cache_entry PC_JEMALLOC_LIBRARY_DIRS PATH $optarg
+            ;;
         --with-daq-includes=*)
             append_cache_entry DAQ_INCLUDE_DIR_HINT PATH $optarg
             ;;
