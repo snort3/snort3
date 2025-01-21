@@ -1,3 +1,27 @@
+2025-01-19: 3.6.2.0
+
+* appid: adding thresholds to brute-force detection
+* appid: optimised appid logs and trace
+* cmake: modification to search custom jemalloc first
+* data_bus: fix publisher registration data races
+* data_bus: remove unsubscribe methods
+* doc: stylize dependency names in README.md
+* file_api: add pending expire time reset for FileInfo
+* flow: use timeout set on flow rather than using configured timeout
+* hyperscan: fix debug log tsan issue
+* ips: add access to Event references
+* ips_options: ips_content.cc given width and endian parameters for simpler multi-byte char matches
+* ips: update pcre to pcre2
+* js_norm: add stoi out of range exception handling
+* main: support an instance ID dump per-thread
+* pcap: filter Geneve encapsulated packets using inner headers
+* pub_sub: implemented header defintions for shadow traffic aggregator
+* ssl: added length check for cert data processing
+* stream_tcp: evaluate flush policy on asymmetric connections when the connection closes or the tcp session is cleared
+* stream_tcp: initialize 3whs normalizer for peer tracker separately
+* tcp_pdu: rename to tlv_pdu
+* utils: add new header/wrapper for pcre2 code unit width
+
 2024-12-22: 3.6.1.0
 
 * appid: enhanced control error message with additional info

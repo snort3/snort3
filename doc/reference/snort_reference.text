@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.6.1.0 2024-12-22 20:09:48 EST TST
+Revision 3.6.2.0 2025-01-19 22:53:58 EST TST
 
 ---------------------------------------------------------------------
 
@@ -146,8 +146,8 @@ Table of Contents
     5.54. stream_tcp
     5.55. stream_udp
     5.56. stream_user
-    5.57. tcp_pdu
-    5.58. telnet
+    5.57. telnet
+    5.58. tlv_pdu
     5.59. wizard
 
 6. IPS Action Modules
@@ -4815,11 +4815,13 @@ Configuration:
     capturing { -1:32767 }
   * string packet_capture.tenants: comma-separated tenants filter to
     use for packet capturing
+  * bool packet_capture.check_inner_pkt = true: apply filter on inner
+    packet headers
 
 Commands:
 
-  * packet_capture.enable(filter, group, tenants): capture raw
-    packets
+  * packet_capture.enable(filter, group, tenants, check_inner_pkt):
+    capture raw packets
   * packet_capture.disable(): stop packet capturing
 
 Peg counts:
@@ -6264,36 +6266,7 @@ Configuration:
     1:max31 }
 
 
-5.57. tcp_pdu
-
---------------
-
-Help: set TCP flush points based on PDU length field
-
-Type: inspector (service)
-
-Usage: inspect
-
-Instance Type: multiton
-
-Configuration:
-
-  * int tcp_pdu.offset = 0: index to first byte of length field {
-    0:65535 }
-  * int tcp_pdu.size = 4: number of bytes in length field { 1:4 }
-  * int tcp_pdu.skip = 0: bytes after length field to end of header {
-    0:65535 }
-  * bool tcp_pdu.relative = false: extracted length follows field
-    (instead of whole PDU)
-
-Peg counts:
-
-  * tcp_pdu.scans: total segments scanned (sum)
-  * tcp_pdu.flushes: total PDUs flushed for detection (sum)
-  * tcp_pdu.aborts: total unrecoverable scan errors (sum)
-
-
-5.58. telnet
+5.57. telnet
 
 --------------
 
@@ -6327,6 +6300,35 @@ Peg counts:
     (now)
   * telnet.max_concurrent_sessions: maximum concurrent Telnet
     sessions (max)
+
+
+5.58. tlv_pdu
+
+--------------
+
+Help: set TCP flush points based on PDU length field
+
+Type: inspector (service)
+
+Usage: inspect
+
+Instance Type: multiton
+
+Configuration:
+
+  * int tlv_pdu.offset = 0: index to first byte of length field {
+    0:65535 }
+  * int tlv_pdu.size = 4: number of bytes in length field { 1:4 }
+  * int tlv_pdu.skip = 0: bytes after length field to end of header {
+    0:65535 }
+  * bool tlv_pdu.relative = false: extracted length follows field
+    (instead of whole PDU)
+
+Peg counts:
+
+  * tlv_pdu.scans: total segments scanned (sum)
+  * tlv_pdu.flushes: total PDUs flushed for detection (sum)
+  * tlv_pdu.aborts: total unrecoverable scan errors (sum)
 
 
 5.59. wizard
@@ -6946,6 +6948,9 @@ Configuration:
     start search
   * string content.within: var or maximum number of bytes to search
     from cursor
+  * enum content.width = 8: char width to convert to { 8|16|32 }
+  * enum content.endian = big: specify big/little endian for wide
+    string conversions { big|little }
 
 
 7.21. cvs
@@ -9696,6 +9701,8 @@ libraries see the Getting Started section of the manual.
     from beginning of buffer
   * string content.distance: var or number of bytes from cursor to
     start search
+  * enum content.endian = big: specify big/little endian for wide
+    string conversions { big|little }
   * int content.fast_pattern_length: maximum number of characters
     from this content the fast pattern matcher should use { 1:65535 }
   * int content.fast_pattern_offset = 0: number of leading characters
@@ -9706,6 +9713,7 @@ libraries see the Getting Started section of the manual.
   * implied content.nocase: case insensitive match
   * string content.offset: var or number of bytes from start of
     buffer to start search
+  * enum content.width = 8: char width to convert to { 8|16|32 }
   * string content.within: var or maximum number of bytes to search
     from cursor
   * implied cvs.invalid-entry: looks for an invalid Entry string
@@ -10540,6 +10548,8 @@ libraries see the Getting Started section of the manual.
   * bool output.verbose = false: be verbose (same as -v)
   * bool output.wide_hex_dump = false: output 20 bytes per lines
     instead of 16 when dumping buffers
+  * bool packet_capture.check_inner_pkt = true: apply filter on inner
+    packet headers
   * bool packet_capture.enable = false: state of packet capturing
   * string packet_capture.filter: bpf filter to use for packet
     capturing
@@ -11448,13 +11458,6 @@ libraries see the Getting Started section of the manual.
     end-point { 65535 }
   * enum tcp_connector[].setup: stream establishment { call | answer
     }
-  * int tcp_pdu.offset = 0: index to first byte of length field {
-    0:65535 }
-  * bool tcp_pdu.relative = false: extracted length follows field
-    (instead of whole PDU)
-  * int tcp_pdu.size = 4: number of bytes in length field { 1:4 }
-  * int tcp_pdu.skip = 0: bytes after length field to end of header {
-    0:65535 }
   * int telnet.ayt_attack_thresh = -1: alert beyond this number of
     consecutive Telnet AYT commands (-1 is disabled) { -1:max31 }
   * bool telnet.check_encrypted = false: check for end of encryption
@@ -11462,6 +11465,13 @@ libraries see the Getting Started section of the manual.
   * bool telnet.normalize = false: eliminate escape sequences
   * string tenant_selector[].file: use configuration in given file
   * string tenant_selector[].tenants: list of tenants to match
+  * int tlv_pdu.offset = 0: index to first byte of length field {
+    0:65535 }
+  * bool tlv_pdu.relative = false: extracted length follows field
+    (instead of whole PDU)
+  * int tlv_pdu.size = 4: number of bytes in length field { 1:4 }
+  * int tlv_pdu.skip = 0: bytes after length field to end of header {
+    0:65535 }
   * interval tos.~range: check if IP TOS is in given range { 0:255 }
   * string trace.constraints.dst_ip: destination IP address filter
   * int trace.constraints.dst_port: destination port filter { 0:65535
@@ -12840,9 +12850,6 @@ libraries see the Getting Started section of the manual.
   * tcp.bad_tcp6_checksum: nonzero tcp over ipv6 checksums (sum)
   * tcp.checksum_bypassed: checksum calculations bypassed (sum)
   * tcp_connector.messages: total messages (sum)
-  * tcp_pdu.aborts: total unrecoverable scan errors (sum)
-  * tcp_pdu.flushes: total PDUs flushed for detection (sum)
-  * tcp_pdu.scans: total segments scanned (sum)
   * telnet.concurrent_sessions: total concurrent Telnet sessions
     (now)
   * telnet.max_concurrent_sessions: maximum concurrent Telnet
@@ -12851,6 +12858,9 @@ libraries see the Getting Started section of the manual.
   * tenant_selector.no_match: selection evaluations that had no
     matches (sum)
   * tenant_selector.packets: packets evaluated (sum)
+  * tlv_pdu.aborts: total unrecoverable scan errors (sum)
+  * tlv_pdu.flushes: total PDUs flushed for detection (sum)
+  * tlv_pdu.scans: total segments scanned (sum)
   * udp.bad_udp4_checksum: nonzero udp over ipv4 checksums (sum)
   * udp.bad_udp6_checksum: nonzero udp over ipv6 checksums (sum)
   * udp.checksum_bypassed: checksum calculations bypassed (sum)
@@ -16256,8 +16266,8 @@ alert is raised by the enhanced JavaScript normalizer.
     cache segment(s)
   * network.set_policy(id): set the network policy for commands given
     the user policy id
-  * packet_capture.enable(filter, group, tenants): capture raw
-    packets
+  * packet_capture.enable(filter, group, tenants, check_inner_pkt):
+    capture raw packets
   * packet_capture.disable(): stop packet capturing
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port,
     tenants): enable packet tracer debugging
@@ -16722,11 +16732,11 @@ and are not applicable elsewhere.
   * target (ips_option): rule option to indicate target of attack
   * tcp (codec): support for transmission control protocol
   * tcp_connector (connector): implement the tcp stream connector
-  * tcp_pdu (inspector): set TCP flush points based on PDU length
-    field
   * telnet (inspector): telnet inspection and normalization
   * tenant_selector (policy_selector): configure traffic processing
     based on tenants
+  * tlv_pdu (inspector): set TCP flush points based on PDU length
+    field
   * token_ring (codec): support for token ring decoding
   * tos (ips_option): rule option to check type of service field
   * trace (basic): configure trace log messages
@@ -16877,9 +16887,9 @@ and are not applicable elsewhere.
   * inspector::stream_udp: stream inspector for UDP flow tracking
   * inspector::stream_user: stream inspector for user flow tracking
     and reassembly
-  * inspector::tcp_pdu: set TCP flush points based on PDU length
-    field
   * inspector::telnet: telnet inspection and normalization
+  * inspector::tlv_pdu: set TCP flush points based on PDU length
+    field
   * inspector::wizard: inspector that implements port-independent
     protocol identification
   * ips_action::alert: generate alert on the current packet
