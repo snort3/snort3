@@ -126,14 +126,14 @@ void HostAttributesDescriptor::clear_appid_services()
     }
 }
 
-void HostAttributesDescriptor::get_host_attributes(uint16_t port,HostAttriInfo* host_info) const
+void HostAttributesDescriptor::get_host_attributes(uint16_t protocol, uint16_t port, HostAttriInfo* host_info) const
 {
     std::lock_guard<std::mutex> slk(host_attributes_lock);
     host_info->frag_policy = policies.fragPolicy;
     host_info->stream_policy = policies.streamPolicy;
     host_info->snort_protocol_id = UNKNOWN_PROTOCOL_ID;
     auto it = std::find_if(services.cbegin(), services.cend(),
-        [port](const HostServiceDescriptor &s){ return s.port == port; });
+        [protocol,port](const HostServiceDescriptor &s){ return protocol == s.ipproto and s.port == port; });
     if (it != services.cend())
         host_info->snort_protocol_id = (*it).snort_protocol_id;
 }
@@ -193,7 +193,7 @@ void HostAttributesManager::swap_cleanup()
 void HostAttributesManager::term()
 { delete active_cache; }
 
-bool HostAttributesManager::get_host_attributes(const snort::SfIp& host_ip, uint16_t port, HostAttriInfo* host_info)
+bool HostAttributesManager::get_host_attributes(const snort::SfIp& host_ip, uint16_t protocol, uint16_t port, HostAttriInfo* host_info)
 {
     if ( !active_cache )
         return false;
@@ -201,10 +201,38 @@ bool HostAttributesManager::get_host_attributes(const snort::SfIp& host_ip, uint
     HostAttributesEntry h = active_cache->find(host_ip);
     if (h)
     {
-        h->get_host_attributes(port, host_info);
+        h->get_host_attributes(protocol, port, host_info);
         return true;
     }
     return false;
+}
+
+bool HostAttributesManager::get_host_attributes(const snort::SfIp& host_ip, PktType pkt_type, uint16_t port, HostAttriInfo* host_info)
+{
+    if ( !active_cache )
+        return false;
+
+    uint16_t ipproto = 0;
+
+    switch (pkt_type)
+    {
+        case PktType::TCP:
+            ipproto = SNORT_PROTO_TCP;
+            break;
+    
+        case PktType::UDP:
+            ipproto = SNORT_PROTO_UDP;
+            break;
+    
+        case PktType::ICMP:
+            ipproto = SNORT_PROTO_ICMP;
+            break;
+    
+        default:
+            break;
+    }
+
+    return get_host_attributes(host_ip, ipproto, port, host_info);
 }
 
 void HostAttributesManager::update_service(const snort::SfIp& host_ip, uint16_t port,

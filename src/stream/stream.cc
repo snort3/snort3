@@ -433,7 +433,7 @@ SnortProtocolId Stream::get_snort_protocol_id(Flow* flow)
         set_ip_protocol(flow);
 
     HostAttriInfo host;
-    if (HostAttributesManager::get_host_attributes(flow->server_ip, flow->server_port, &host))
+    if (HostAttributesManager::get_host_attributes(flow->server_ip, flow->ssn_state.ipprotocol, flow->server_port, &host))
     {
         set_snort_protocol_id_from_ha(flow, host.snort_protocol_id);
 
@@ -441,7 +441,7 @@ SnortProtocolId Stream::get_snort_protocol_id(Flow* flow)
             return flow->ssn_state.snort_protocol_id;
     }
 
-    if (HostAttributesManager::get_host_attributes(flow->client_ip, flow->client_port, &host))
+    if (HostAttributesManager::get_host_attributes(flow->client_ip, flow->ssn_state.ipprotocol, flow->client_port, &host))
     {
         set_snort_protocol_id_from_ha(flow, host.snort_protocol_id);
 

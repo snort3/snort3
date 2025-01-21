@@ -30,6 +30,7 @@
 #include <vector>
 
 #include "framework/counts.h"
+#include "framework/decode_data.h"
 #include "sfip/sf_ip.h"
 #include "target_based/snort_protocols.h"
 
@@ -93,7 +94,7 @@ public:
     bool update_service(uint16_t port, uint16_t protocol, SnortProtocolId, bool& updated,
         bool is_appid_service = false);
     void clear_appid_services();
-    void get_host_attributes(uint16_t, HostAttriInfo*) const;
+    void get_host_attributes(uint16_t protocol, uint16_t port, HostAttriInfo*) const;
 
     // Note: the following get/set are only called from main thread on a temp LRU table
     const snort::SfIp& get_ip_addr() const
@@ -149,7 +150,8 @@ public:
     static void term();
 
     static bool add_host(HostAttributesEntry, snort::SnortConfig*);
-    static bool get_host_attributes(const snort::SfIp&, uint16_t, HostAttriInfo*);
+    static bool get_host_attributes(const snort::SfIp&, uint16_t protocol, uint16_t port, HostAttriInfo*);
+    static bool get_host_attributes(const snort::SfIp&, PktType pkt_type, uint16_t port, HostAttriInfo*);
     static void update_service(const snort::SfIp&, uint16_t port, uint16_t protocol,
         SnortProtocolId, bool is_appid_service = false);
     static void clear_appid_services();

@@ -733,7 +733,8 @@ void Binder::handle_flow_setup(Flow& flow, bool standby)
     // in binder, but it *does* need to occur before the binding lookup (for service information)
     HostAttriInfo host;
     HostAttriInfo* p_host = nullptr;
-    if ( HostAttributesManager::get_host_attributes(flow.server_ip, flow.server_port, &host) )
+
+    if ( HostAttributesManager::get_host_attributes(flow.server_ip, flow.pkt_type, flow.server_port, &host) )
         p_host = &host;
 
     if (p_host)
