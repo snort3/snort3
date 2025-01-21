@@ -1244,6 +1244,11 @@ static void snort_main()
     ControlMgmt::socket_init(SnortConfig::get_conf());
 #endif
 
+#ifdef USE_TSC_CLOCK
+    // Call clock_scale once to determine internal ticks to time scale
+    clock_scale();
+#endif
+
     SnortConfig::get_conf()->thread_config->implement_thread_affinity(
         STHREAD_TYPE_MAIN, get_instance_id());
 
