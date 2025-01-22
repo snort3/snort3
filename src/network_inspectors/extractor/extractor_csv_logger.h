@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// csv_logger.h author Anna Norokh <anorokh@cisco.com>
+// extractor_csv_logger.h author Anna Norokh <anorokh@cisco.com>
 
 #ifndef EXTRACTOR_CSV_LOGGER_H
 #define EXTRACTOR_CSV_LOGGER_H

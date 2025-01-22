@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2024-2024 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2025-2025 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,37 +15,33 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// extractor_json_logger.h author Cisco
+// extractor_null_conn.h author Vitalii Horbatov <vhorbato@cisco.com>
 
-#ifndef EXTRACTOR_JSON_LOGGER_H
-#define EXTRACTOR_JSON_LOGGER_H
+#ifndef EXTRACTOR_NULL_CONN_H
+#define EXTRACTOR_NULL_CONN_H
 
-#include <sstream>
+#include "framework/connector.h"
 
-#include "framework/value.h"
-#include "helpers/json_stream.h"
-
-#include "extractor_logger.h"
-
-class JsonExtractorLogger : public ExtractorLogger
+class ExtractorNullConnector : public snort::Connector
 {
 public:
-    JsonExtractorLogger(snort::Connector* conn) : ExtractorLogger(conn), oss(), js(oss)
-    { }
+    ExtractorNullConnector() : snort::Connector(conf)
+    {
+        conf.connector_name = "null";
+        conf.direction = snort::Connector::CONN_DUPLEX;
+    }
 
-    void add_field(const char*, const char*) override;
-    void add_field(const char*, const char*, size_t) override;
-    void add_field(const char*, uint64_t) override;
-    void add_field(const char*, struct timeval) override;
-    void add_field(const char*, const snort::SfIp&) override;
-    void add_field(const char*, bool) override;
-    void open_record() override;
-    void close_record(const snort::Connector::ID&) override;
+    bool transmit_message(const snort::ConnectorMsg&, const ID& = null) override
+    { return true; }
+
+    bool transmit_message(const snort::ConnectorMsg&&, const ID& = null) override
+    { return true; }
+
+    snort::ConnectorMsg receive_message(bool) override
+    { return snort::ConnectorMsg(); }
 
 private:
-    std::ostringstream oss;
-    snort::JsonStream js;
-
+    snort::ConnectorConfig conf;
 };
 
 #endif

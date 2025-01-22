@@ -26,6 +26,7 @@
 #include <cassert>
 
 #include "log/messages.h"
+#include "main/thread.h"
 #include "managers/connector_manager.h"
 
 #include "extractor_csv_logger.h"
@@ -33,14 +34,18 @@
 
 using namespace snort;
 
-static Connector* get_connector(const std::string& conn_name)
+Connector* ExtractorLogger::get_connector(const std::string& conn_name)
 {
     Connector* connector = ConnectorManager::get_connector(conn_name);
 
     if (connector == nullptr)
     {
-        ErrorMessage("Can't initialize extractor, unable to find Connector \"%s\"\n", conn_name.c_str());
-        abort();
+        ErrorMessage("Unable to get '%s' connector in thread %d, fallback to default\n",
+            conn_name.c_str(), get_instance_id());
+
+        static ExtractorNullConnector default_connector;
+
+        return &default_connector;
     }
 
     switch (connector->get_connector_direction())

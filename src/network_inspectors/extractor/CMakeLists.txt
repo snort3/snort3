@@ -16,6 +16,7 @@ set( FILE_LIST
     extractor_service.h
     extractors.cc
     extractors.h
+    extractor_null_conn.h
 )
 
 add_library(extractor OBJECT ${FILE_LIST})

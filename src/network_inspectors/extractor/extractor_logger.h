@@ -26,6 +26,7 @@
 #include "framework/connector.h"
 #include "sfip/sf_ip.h"
 
+#include "extractor_null_conn.h"
 #include "extractor_enums.h"
 
 class ExtractorLogger
@@ -62,6 +63,8 @@ public:
     void flush() { output_conn->flush(); }
 
 protected:
+    static snort::Connector* get_connector(const std::string& conn_name);
+
     snort::Connector* const output_conn;
 };
 

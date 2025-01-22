@@ -127,7 +127,6 @@ void ConnectorManager::thread_init()
                 assert(!conn.second.thread_connectors[instance]);
 
                 Connector* connector = sc.api->tinit(conn.second.config);
-                assert(connector);
                 conn.second.thread_connectors[instance] = std::move(connector);
             }
         }
@@ -142,9 +141,8 @@ void ConnectorManager::thread_reinit()
     {
         for ( auto& conn : sc.connectors )
         {
-            assert(conn.second.thread_connectors[instance]);
-
-            conn.second.thread_connectors[instance]->reinit();
+            if (conn.second.thread_connectors[instance])
+                conn.second.thread_connectors[instance]->reinit();
         }
     }
 }
@@ -159,10 +157,11 @@ void ConnectorManager::thread_term()
         {
             for ( auto& conn : sc.connectors )
             {
-                assert(conn.second.thread_connectors[instance]);
-
-                sc.api->tterm(conn.second.thread_connectors[instance]);
-                conn.second.thread_connectors[instance] = nullptr;
+                if ( conn.second.thread_connectors[instance] )
+                {
+                    sc.api->tterm(conn.second.thread_connectors[instance]);
+                    conn.second.thread_connectors[instance] = nullptr;
+                }
             }
         }
     }
