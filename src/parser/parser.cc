@@ -289,14 +289,14 @@ static RuleListNode* addNodeToOrderedList
     return ordered_list;
 }
 
-static bool parse_file(SnortConfig* sc, Shell* sh, bool is_root)
+static bool parse_file(SnortConfig* sc, Shell* sh, bool is_root, std::list<ConfigData*> *config_data_to_dump)
 {
     const char* fname = sh->get_file();
 
     if ( !fname || !*fname )
         return false;
 
-    bool success = sh->configure(sc, is_root);
+    bool success = sh->configure(sc, is_root, config_data_to_dump);
 
     return success;
 }
@@ -331,6 +331,7 @@ SnortConfig* ParseSnortConf(const SnortConfig* cmd_line_conf, const char* fname)
     sc->output_flags = cmd_line_conf->output_flags;
     sc->tweaks = cmd_line_conf->tweaks;
     sc->dump_config_type = cmd_line_conf->dump_config_type;
+    sc->dump_config_file = cmd_line_conf->dump_config_file;
 
     if ( !fname )
         fname = get_snort_conf();
@@ -361,22 +362,37 @@ SnortConfig* ParseSnortConf(const SnortConfig* cmd_line_conf, const char* fname)
     bool parse_file_failed = false;
     auto output = current_conf->create_config_output();
     bool is_top = current_conf->dump_config_type == DUMP_CONFIG_JSON_TOP;
+    std::list<ConfigData*> *config_data_to_dump = new std::list<ConfigData*>;
+
     for ( unsigned i = 0; true; i++ )
     {
         sh = sc->policy_map->get_shell(i);
 
         if ( !sh )
+        {
+            if (!sc->gen_dump_config())
+                break;
+            sc->generate_dump(config_data_to_dump);
+            config_data_to_dump = nullptr;
             break;
+        }
 
         auto shell_output = ( i != 0 && is_top ) ? nullptr : output;
         Shell::set_config_output(shell_output);
         set_policies(sc, sh);
 
-        if (!parse_file(sc, sh, (i == 0)))
+        if (!parse_file(sc, sh, (i == 0), config_data_to_dump))
         {
             parse_file_failed = true;
             break;
         }
+    }
+
+    if (config_data_to_dump)
+    {
+        for (auto i : *config_data_to_dump)
+            delete i;
+        delete config_data_to_dump;
     }
 
     delete output;

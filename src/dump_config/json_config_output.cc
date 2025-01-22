@@ -21,6 +21,11 @@
 #include "config.h"
 #endif
 
+#include <cstring>
+#include <cerrno>
+
+#include <log/messages.h>
+
 #include "json_config_output.h"
 
 #include "config_data.h"
@@ -90,24 +95,49 @@ static void dump_tree(JsonStream& json, const BaseConfigNode* node, bool list_no
         dump_value(json, node_name_cstr, node);
 }
 
-JsonAllConfigOutput::JsonAllConfigOutput() :
-    ConfigOutput(), json(std::cout)
-{ json.open_array(); }
+JsonAllConfigOutput::JsonAllConfigOutput(const char *file_name) :
+    ConfigOutput(), file(nullptr), json(nullptr)
+{
+    if (file_name)
+        file = new std::fstream(std::string(file_name), std::ios::out);
+
+    if (file and !file->is_open())
+    {
+        ErrorMessage("File %s is not opened: %s\n", file_name, std::strerror(errno));
+        delete file;
+        file = nullptr;
+        return;
+    }
+
+    json = file ? new snort::JsonStream(*file) : new snort::JsonStream(std::cout);
+
+    json->open_array();
+}
 
 JsonAllConfigOutput::~JsonAllConfigOutput()
-{ json.close_array(); }
+{
+    if (json)
+    {
+        json->close_array();
+        delete json;
+    }
+    if (file)
+        delete file;
+}
 
 void JsonAllConfigOutput::dump(const ConfigData& config_data)
 {
-    json.open();
-    json.put("filename", config_data.file_name);
-    json.open("config");
+    if (!json)
+        return;
+    json->open();
+    json->put("filename", config_data.file_name);
+    json->open("config");
 
     for ( const auto config_tree: config_data.config_trees )
-        dump_tree(json, config_tree);
+        dump_tree(*json, config_tree);
 
-    json.close();
-    json.close();
+    json->close();
+    json->close();
 }
 
 void JsonTopConfigOutput::dump(const ConfigData& config_data)

@@ -833,7 +833,7 @@ SO_PUBLIC bool open_table(const char* s, int idx)
         s_current = unique_key;
     }
 
-    if ( s_config->dump_config_mode() )
+    if ( s_config->dump_config_mode() or s_config->gen_dump_config() )
     {
         std::string table_name = get_sub_table(s);
         bool is_top_level = false;

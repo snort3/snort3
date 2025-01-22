@@ -20,6 +20,8 @@
 #ifndef JSON_CONFIG_OUTPUT_H
 #define JSON_CONFIG_OUTPUT_H
 
+#include <fstream>
+
 #include "config_output.h"
 #include "helpers/json_stream.h"
 
@@ -28,14 +30,15 @@ class BaseConfigNode;
 class JsonAllConfigOutput : public ConfigOutput
 {
 public:
-    JsonAllConfigOutput();
+    JsonAllConfigOutput(const char *file_name = nullptr);
     ~JsonAllConfigOutput() override;
 
 private:
     void dump(const ConfigData&) override;
 
 private:
-    snort::JsonStream json;
+    std::fstream *file;
+    snort::JsonStream *json;
 };
 
 class JsonTopConfigOutput : public ConfigOutput

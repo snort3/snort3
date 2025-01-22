@@ -27,6 +27,7 @@
 
 #include <list>
 #include <mutex>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -69,6 +70,7 @@ enum RunFlag
     RUN_FLAG__TRACK_ON_SYN        = 0x00100000,
     RUN_FLAG__IP_FRAGS_ONLY       = 0x00200000,
     RUN_FLAG__TEST_FEATURES       = 0x00400000,
+    RUN_FLAG__GEN_DUMP_CONFIG     = 0x00800000,
 
 #ifdef SHELL
     RUN_FLAG__SHELL               = 0x01000000,
@@ -131,6 +133,7 @@ class ControlConn;
 class FastPatternConfig;
 class RuleStateMap;
 class TraceConfig;
+class ConfigData;
 
 struct srmm_table_t;
 struct sopg_table_t;
@@ -413,6 +416,9 @@ public:
     SoRules* so_rules = nullptr;
 
     DumpConfigType dump_config_type = DUMP_CONFIG_NONE;
+
+    std::string dump_config_file;
+    std::thread* config_dumper = nullptr;
 private:
     std::list<ReloadResourceTuner*> reload_tuners;
     static std::mutex reload_id_mutex;
@@ -603,6 +609,9 @@ public:
     bool test_features() const
     { return run_flags & RUN_FLAG__TEST_FEATURES; }
 
+    bool gen_dump_config() const
+    { return run_flags & RUN_FLAG__GEN_DUMP_CONFIG; }
+
     // other stuff
     uint8_t min_ttl() const
     { return get_network_policy()->min_ttl; }
@@ -670,6 +679,8 @@ public:
 
     unsigned get_reload_id() const
     { return reload_id; }
+
+    void generate_dump(std::list<ConfigData*>*);
 
     bool get_default_rule_state() const;
 

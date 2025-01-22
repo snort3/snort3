@@ -10,6 +10,10 @@ The dump mode is activated by the following options:
 --dump-config-text, --dump-config=all, --dump-config=top.
 They are described in detail below.
 
+The --gen-dump-config <file> option enables Snort to generate a dump
+configuration file with a timestamp and config generation ID
+during startup and reload.
+
 The simple configuration is used in examples.
 The output contains applied configurations (defaults and configured).
 To simplify the output we show a brief list of default options.
@@ -289,3 +293,15 @@ Example:
             "show_rebuilt_packets": true
         },
     }
+
+==== Configuration Dump Generation During Startup and Reload
+
+The --gen-dump-config <file> option dumps configuration in a file in
+JSON format, similar to the --dump-config=all option. It creates a file
+during startup and reload, with the specified name, timestamp and config
+generation ID appended.
+
+Example: snort -c snort.lua --gen-dump-config dump_output
+
+After execution, the "dump_output_<timestamp>_<config_gen_id>" file
+will be generated.

@@ -54,7 +54,7 @@ public:
     void set_overrides(const char*);
     void set_overrides(Shell*);
 
-    bool configure(snort::SnortConfig*, bool is_root = false);
+    bool configure(snort::SnortConfig*, bool is_root = false, std::list<ConfigData*>* = nullptr);
     void install(const char*, const struct luaL_Reg*);
     void execute(const char*, std::string&);
 
@@ -131,6 +131,7 @@ private:
     bool set_sandbox_env();
     bool load_string(const char* s, bool load_in_sandbox, const char* message);
     bool load_config(const char* file, bool load_in_sandbox);
+    static bool dump_enabled();
 
 private:
     bool loaded;
@@ -142,7 +143,7 @@ private:
     Allowlist allowlist;
     Allowlist internal_allowlist;
     Allowlist allowlist_prefixes;
-    ConfigData config_data;
+    ConfigData* config_data;
     uint64_t network_user_policy_id = UNDEFINED_NETWORK_USER_POLICY_ID;
     bool load_defaults;
 };

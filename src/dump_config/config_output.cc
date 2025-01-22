@@ -25,10 +25,11 @@
 
 #include "config_data.h"
 
-void ConfigOutput::dump_config(ConfigData& config_data)
+void ConfigOutput::dump_config(ConfigData& config_data, bool to_clear)
 {
     config_data.sort();
     dump(config_data);
-    config_data.clear();
+    if (to_clear)
+        config_data.clear();
 }
 

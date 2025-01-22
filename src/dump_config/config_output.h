@@ -28,7 +28,7 @@ public:
     ConfigOutput() = default;
     virtual ~ConfigOutput() = default;
 
-    void dump_config(ConfigData&);
+    void dump_config(ConfigData&, bool to_clear = true);
 
 private:
     virtual void dump(const ConfigData&) = 0;

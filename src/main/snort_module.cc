@@ -428,6 +428,9 @@ static const Parameter s_params[] =
     { "--enable-test-features", Parameter::PT_IMPLIED, nullptr, nullptr,
       "enable features used in testing" },
 
+    { "--gen-dump-config", Parameter::PT_STRING, nullptr, nullptr,
+      "<file> dump configuration to <file_timestamp> during startup and configuration reload" },
+
     { "--gen-msg-map", Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump configured rules in gen-msg.map format for use by other tools" },
 
@@ -997,7 +1000,11 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__TEST_FEATURES;
         SfIp::test_features = true;
     }
-
+    else if ( is(v, "--gen-dump-config") )
+    {
+        sc->run_flags |= RUN_FLAG__GEN_DUMP_CONFIG;
+        sc->dump_config_file = v.get_string();
+    }
     else if ( is(v, "--gen-msg-map") )
     {
         sc->run_flags |= (RUN_FLAG__DUMP_MSG_MAP | RUN_FLAG__TEST);

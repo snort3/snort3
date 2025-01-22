@@ -23,6 +23,7 @@
 
 #include "snort_config.h"
 
+#include <atomic>
 #include <grp.h>
 #include <mutex>
 #include <pwd.h>
@@ -34,6 +35,7 @@
 #include "detection/detection_engine.h"
 #include "detection/fp_config.h"
 #include "detection/fp_create.h"
+#include "dump_config/config_data.h"
 #include "dump_config/json_config_output.h"
 #include "dump_config/text_config_output.h"
 #include "events/event_queue.h"
@@ -207,6 +209,31 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
     }
 }
 
+static const int threads_max = 16;
+static std::atomic<int> threads_cnt = 0;
+
+static void generate_config_dump(std::list<ConfigData*> *config_data, time_t timestamp,
+    unsigned int reload_id, std::string file_name)
+{
+    ++threads_cnt;
+
+    file_name += "_";
+    file_name += std::to_string(timestamp);
+    file_name += "_";
+    file_name += std::to_string(reload_id);
+
+    ConfigOutput* o = new JsonAllConfigOutput(file_name.c_str());
+    for (auto i : *config_data)
+    {
+        o->dump_config(*i);
+        delete i;
+    }
+    delete o;
+    delete config_data;
+
+    --threads_cnt;
+}
+
 //-------------------------------------------------------------------------
 // public methods
 //-------------------------------------------------------------------------
@@ -277,6 +304,12 @@ SnortConfig::~SnortConfig()
     policy_map = nullptr;
     InspectorManager::delete_config(this);
     ActionManager::delete_config(this);
+
+    if (config_dumper)
+    {
+        config_dumper->join();
+        delete config_dumper;
+    }
 
     delete[] state;
     delete thread_config;
@@ -1044,6 +1077,19 @@ void SnortConfig::update_reload_id()
     std::lock_guard<std::mutex> reload_id_lock(reload_id_mutex);
     static unsigned reload_id_tracker = 0;
     reload_id = ++reload_id_tracker;
+}
+
+void SnortConfig::generate_dump(std::list<ConfigData*> *config_data_to_dump)
+{
+    if (threads_cnt < threads_max)
+    {
+        config_dumper = new std::thread(generate_config_dump, config_data_to_dump,
+            time(nullptr), SnortConfig::get_conf()->get_reload_id(), dump_config_file);
+    }
+    else
+    {
+        delete config_data_to_dump;
+    }
 }
 
 void SnortConfig::cleanup_fatal_error()
