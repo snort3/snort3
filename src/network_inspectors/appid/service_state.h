@@ -134,9 +134,9 @@ public:
 
     void next_brute_force(IpProtocol proto)
     {
-        if ( proto == IpProtocol::TCP )
+        if ( tcp_brute_force_mgr and (proto == IpProtocol::TCP) )
             tcp_brute_force_mgr->next();
-        else if  (proto == IpProtocol::UDP )
+        else if  ( udp_brute_force_mgr and (proto == IpProtocol::UDP) )
             udp_brute_force_mgr->next();
         brute_force_inprocess_count = 0;
     }
