@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// hashes.h author Russ Combs <rucombs@cisco.com>
+// hashes.h author Alexandre Guerlach <grlch.alexandre@proton.me>
 
 #ifndef HASHES_H
 #define HASHES_H
@@ -35,4 +35,3 @@ SO_PUBLIC void sha256(const unsigned char* data, size_t size, unsigned char* dig
 SO_PUBLIC void sha512(const unsigned char* data, size_t size, unsigned char* digest);
 }
 #endif
-
