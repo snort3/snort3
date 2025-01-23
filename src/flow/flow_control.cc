@@ -147,6 +147,9 @@ unsigned FlowControl::prune_multiple(PruneReason reason, bool do_cleanup)
 bool FlowControl::dump_flows(std::fstream& stream, unsigned count, const FilterFlowCriteria& ffc, bool first, uint8_t code) const
 { return cache->dump_flows(stream, count, ffc, first, code); }
 
+bool FlowControl::dump_flows_summary(FlowsSummary& flows_summary, const FilterFlowCriteria &ffc) const
+{ return cache->dump_flows_summary(flows_summary, ffc); }
+
 void FlowControl::timeout_flows(unsigned max, time_t cur_time)
 {
     cache->timeout(max, cur_time);

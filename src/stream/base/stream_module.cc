@@ -263,9 +263,97 @@ uncompleted queue*/
     return 0;
 }
 
+static int dump_flows_summary(lua_State* L)
+{
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    PktType proto_type = PktType::NONE;
+    Inspector* inspector = InspectorManager::get_inspector("stream", Module::GLOBAL, IT_STREAM);
+    if (!inspector)
+    {
+        LogRespond(ctrlcon, "Dump flows requires stream to be configured\n");
+        return -1;
+    }
+    const char* protocol = luaL_optstring(L, 1, nullptr);
+    if (!protocol)
+    {
+        LogRespond(ctrlcon, "protocol must be a string or convertible to a string\n");
+        return -1;
+    }
+    
+    if (protocol[0] != '\0')
+    {
+        auto proto_it = protocol_to_type.find(protocol);
+        if (proto_it == protocol_to_type.end())
+        {
+            LogRespond(ctrlcon, "valid protocols are IP/TCP/UDP/ICMP\n");
+            return -1;
+        }
+        else
+            proto_type = proto_it->second;
+    }
+
+    std::string source_ip = luaL_optstring(L, 2, nullptr);
+    if (!source_ip.c_str())
+    {
+        LogRespond(ctrlcon, "source_ip must be a string or convertible to a string\n");
+        return -1;
+    }
+    std::string destination_ip= luaL_optstring(L, 3, nullptr);
+    if (!destination_ip.c_str())
+    {
+        LogRespond(ctrlcon, "destination_ip must be a string or convertible to a string\n");
+        return -1;
+    }
+    int source_port = luaL_optint(L, 4, -1);
+    if ( source_port<0 || source_port>65535 )
+    {
+        LogRespond(ctrlcon, "source_port must be between 0-65535\n");
+        return -1;
+    }
+    int destination_port = luaL_optint(L, 5, -1);
+    if ( destination_port<0 || destination_port>65535)
+    {
+        LogRespond(ctrlcon, "destination_port must be between 0-65535\n");
+        return -1;
+    }
+
+    DumpFlowsSummary* dfs = new DumpFlowsSummary(ctrlcon);
+
+    SfIp src_ip,src_subnet;
+    if (!dfs->set_ip(source_ip, src_ip, src_subnet))
+    {
+        LogRespond(ctrlcon, "Invalid source ip\n");
+        delete dfs;
+        return -1;
+    }
+    SfIp dst_ip,dst_subnet;
+    if (!dfs->set_ip(destination_ip, dst_ip, dst_subnet))
+    {
+        LogRespond(ctrlcon, "Invalid destination ip\n");
+        delete dfs;
+        return -1;
+    }
+
+    FilterFlowCriteria ffc;
+    ffc.pkt_type = proto_type;
+    ffc.source_port = static_cast<uint16_t>(source_port);
+    ffc.destination_port = static_cast<uint16_t>(destination_port);
+    ffc.source_sfip=src_ip;
+    ffc.destination_sfip=dst_ip;
+    ffc.source_subnet_sfip=src_subnet;
+    ffc.destination_subnet_sfip=dst_subnet;
+    dfs->set_filter_criteria(ffc);
+
+
+    LogRespond(ctrlcon, "== dumping connection summaries\n");
+    main_broadcast_command(dfs, ctrlcon);
+    return 0;
+}
+
 static const Command stream_cmds[] =
 {
     { "dump_flows", dump_flows, nullptr, "dump the flow table" },
+    { "dump_flows_summary", dump_flows_summary, nullptr, "dump the flow summaries" },
 
     { nullptr, nullptr, nullptr, nullptr }
 };

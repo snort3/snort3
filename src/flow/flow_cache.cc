@@ -24,6 +24,7 @@
 
 #include "flow/flow_cache.h"
 
+#include <numeric>
 #include <sstream>
 
 #include "control/control.h"
@@ -61,39 +62,11 @@ static const unsigned ALL_FLOWS = 3;
 static const unsigned WDT_MASK = 7; // kick watchdog once for every 8 flows deleted
 
 
-uint8_t DumpFlows::dump_code = 0;
+DumpFlowsBase::DumpFlowsBase(ControlConn *conn)
+    : snort::AnalyzerCommand(conn)
+{}
 
-#ifndef REG_TEST
-DumpFlows::DumpFlows(unsigned count,  ControlConn* conn)
-#else
-DumpFlows::DumpFlows(unsigned count, ControlConn* conn, int resume)
-#endif
-    : snort::AnalyzerCommand(conn), dump_count(count)
-#ifdef REG_TEST
-    , resume(resume)
-#endif
-{
-    next.resize(ThreadConfig::get_instance_max());
-    ++dump_code;
-}
-
-bool DumpFlows::open_files(const std::string& base_name)
-{
-    dump_stream.resize(ThreadConfig::get_instance_max());
-    for (unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i)
-    {
-        std::string file_name = base_name + std::to_string(i + 1);
-        dump_stream[i].open(file_name, std::fstream::out | std::fstream::trunc);
-        if (0 != (dump_stream[i].rdstate() & std::fstream::failbit))
-        {
-            LogRespond(ctrlcon, "Dump flows failed to open %s\n", file_name.c_str());
-            return false;
-        }
-    }
-    return true;
-}
-
-void DumpFlows::cidr2mask(const uint32_t cidr, uint32_t* mask) const
+void DumpFlowsBase::cidr2mask(const uint32_t cidr, uint32_t* mask) const
 {
     size_t i;
 
@@ -104,7 +77,7 @@ void DumpFlows::cidr2mask(const uint32_t cidr, uint32_t* mask) const
     }
 }
 
-bool DumpFlows::set_ip(std::string filter_ip, snort::SfIp& ip, snort::SfIp& subnet) const
+bool DumpFlowsBase::set_ip(std::string filter_ip, snort::SfIp &ip, snort::SfIp &subnet) const
 {
     size_t slash_pos = filter_ip.find('/');
     if (slash_pos != std::string::npos)
@@ -179,6 +152,38 @@ bool DumpFlows::set_ip(std::string filter_ip, snort::SfIp& ip, snort::SfIp& subn
     return false;
 }
 
+uint8_t DumpFlows::dump_code = 0;
+
+#ifndef REG_TEST
+DumpFlows::DumpFlows(unsigned count,  ControlConn* conn)
+#else
+DumpFlows::DumpFlows(unsigned count, ControlConn* conn, int resume)
+#endif
+    : DumpFlowsBase(conn), dump_count(count)
+#ifdef REG_TEST
+    , resume(resume)
+#endif
+{
+    next.resize(ThreadConfig::get_instance_max());
+    ++dump_code;
+}
+
+bool DumpFlows::open_files(const std::string& base_name)
+{
+    dump_stream.resize(ThreadConfig::get_instance_max());
+    for (unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i)
+    {
+        std::string file_name = base_name + std::to_string(i + 1);
+        dump_stream[i].open(file_name, std::fstream::out | std::fstream::trunc);
+        if (0 != (dump_stream[i].rdstate() & std::fstream::failbit))
+        {
+            LogRespond(ctrlcon, "Dump flows failed to open %s\n", file_name.c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
 bool DumpFlows::execute(Analyzer&, void**)
 {
     if (!flow_con)
@@ -191,6 +196,85 @@ bool DumpFlows::execute(Analyzer&, void**)
     bool first = !next[id];
     next[id] = 1;
     return flow_con->dump_flows(dump_stream[id], dump_count, ffc, first, dump_code);
+}
+
+DumpFlowsSummary::DumpFlowsSummary(ControlConn* conn)
+    : DumpFlowsBase(conn)
+{
+    flows_summaries.resize(ThreadConfig::get_instance_max());
+}
+
+DumpFlowsSummary::~DumpFlowsSummary()
+{
+    FlowsTypeSummary type_summary{};
+    FlowsStateSummary state_summary{};
+    unsigned total_pkts = 0;
+
+    for (const auto& flows_sum : flows_summaries)
+    {
+        for (unsigned i = 0; i < type_summary.size(); ++i)
+        {
+            type_summary[i] += flows_sum.type_summary[i];
+            total_pkts += flows_sum.type_summary[i];
+        }
+        for (unsigned i = 0; i < state_summary.size(); ++i)
+        {
+            state_summary[i] += flows_sum.state_summary[i];
+        }
+    }
+
+    LogRespond(ctrlcon, "Total: %u\n", total_pkts);
+    for (unsigned i = 0; i < type_summary.size(); ++i)
+    {
+        PktType proto = static_cast<PktType>(i);
+
+        switch (proto)
+        {
+            case PktType::IP:
+                LogRespond(ctrlcon, "IP: %u\n", type_summary[i]);
+                break;
+            case PktType::ICMP:
+                LogRespond(ctrlcon, "ICMP: %u\n", type_summary[i]);
+                break;
+            case PktType::TCP:
+                LogRespond(ctrlcon, "TCP: %u\n", type_summary[i]);
+                break;
+            case PktType::UDP:
+                LogRespond(ctrlcon, "UDP: %u\n", type_summary[i]);
+                break;                                            
+            default:
+                break;
+        }
+    }
+
+    unsigned pending = 0;
+    for (unsigned i = 0; i < state_summary.size(); ++i)
+    {
+        snort::Flow::FlowState state = static_cast<snort::Flow::FlowState>(i);
+
+        switch (state)
+        {
+            case snort::Flow::FlowState::ALLOW:
+                LogRespond(ctrlcon, "Allowed: %u\n", state_summary[i]);
+                break;
+            case snort::Flow::FlowState::BLOCK:
+                LogRespond(ctrlcon, "Blocked: %u\n", state_summary[i]);
+                break; 
+            default:
+                pending += state_summary[i];
+                break;
+        }
+    }
+    LogRespond(ctrlcon, "Pending: %u\n", pending);
+}
+
+bool DumpFlowsSummary::execute(Analyzer &, void **)
+{
+    if (!flow_con)
+        return true;
+    unsigned id = get_instance_id();
+
+    return flow_con->dump_flows_summary(flows_summaries[id], ffc);
 }
 
 //-------------------------------------------------------------------------
@@ -961,7 +1045,34 @@ bool FlowCache::dump_flows(std::fstream& stream, unsigned count, const FilterFlo
     return !has_more_flows;
 }
 
+bool FlowCache::dump_flows_summary(FlowsSummary& flows_summary, const FilterFlowCriteria& ffc) const
+{
+    Flow* walk_flow = nullptr;
 
+    for (uint8_t proto_id = to_utype(PktType::NONE) + 1; proto_id < total_lru_count; ++proto_id)
+    {
+        if ( proto_id == to_utype(PktType::USER) or
+             proto_id == to_utype(PktType::FILE) or 
+             proto_id == to_utype(PktType::PDU) )
+            continue;
+
+
+        walk_flow = static_cast<Flow*>(hash_table->get_walk_user_data(proto_id));
+
+        while ( walk_flow )
+        {
+            if( filter_flows(*walk_flow, ffc) )
+            {
+                flows_summary.type_summary[to_utype(walk_flow->key->pkt_type)]++;
+                flows_summary.state_summary[to_utype(walk_flow->flow_state)]++;
+            }
+
+            walk_flow = static_cast<Flow*>(hash_table->get_next_walk_user_data(proto_id));
+        }
+    }
+
+    return true;
+}
 size_t FlowCache::uni_flows_size() const
 {
     return uni_flows ? uni_flows->get_count() : 0;
@@ -1005,3 +1116,5 @@ size_t FlowCache::count_flows_in_lru(uint8_t lru_index) const
     return count;
 }
 #endif
+
+

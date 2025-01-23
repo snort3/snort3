@@ -143,6 +143,14 @@ class DummyCache : public FlowCache
         bool filter_flows(const Flow& flow, const FilterFlowCriteria& ffc) const override { (void)flow; (void)ffc; return true; };
 };
 
+class DummyCacheWithFilter : public FlowCache
+{
+    public:
+        DummyCacheWithFilter(const FlowCacheConfig& cfg) : FlowCache(cfg) {}
+        ~DummyCacheWithFilter() = default;
+        void output_flow(std::fstream& stream, const Flow& flow, const struct timeval& now) const override { (void)stream, (void)flow, (void)now; };
+};
+
 TEST_GROUP(flow_prune) { };
 
 // No flows in the flow cache, pruning should not happen
@@ -794,6 +802,271 @@ TEST(dump_flows, dump_flows_no_flows_to_dump)
 
     delete cache;   
 }
+
+TEST_GROUP(dump_flows_summary) { };
+
+TEST(dump_flows_summary, dump_flows_summary_with_all_empty_caches)
+{
+    FlowCacheConfig fcg;
+    FilterFlowCriteria ffc;
+    FlowsSummary flows_summary;
+    DummyCache *cache = new DummyCache(fcg);
+    CHECK(cache->dump_flows_summary(flows_summary, ffc) == true);
+    CHECK(cache->get_flows_allocated() == 0);
+
+    FlowsTypeSummary expected_type{};
+    CHECK(expected_type == flows_summary.type_summary);
+
+    FlowsStateSummary expected_state{};
+    CHECK(expected_state == flows_summary.state_summary);
+
+    delete cache;
+}
+
+TEST(dump_flows_summary, dump_flows_summary_with_one_tcp_flow)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 5;
+    FilterFlowCriteria ffc;
+    FlowsSummary flows_summary;
+    DummyCache *cache = new DummyCache(fcg);
+
+    FlowKey flow_key;
+    flow_key.port_l = 1;
+    flow_key.pkt_type = PktType::TCP;
+    cache->allocate(&flow_key);
+    CHECK(cache->dump_flows_summary(flows_summary, ffc) == true);
+    CHECK(cache->get_count() == 1);
+
+    FlowsTypeSummary expected_type{};
+    expected_type[to_utype(PktType::TCP)] = 1;
+    CHECK(expected_type == flows_summary.type_summary);
+
+    FlowsStateSummary expected_state{};
+    expected_state[to_utype(snort::Flow::FlowState::SETUP)] = 1;
+    CHECK(expected_state == flows_summary.state_summary);
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+
+TEST(dump_flows_summary, dump_flows_summary_with_5_of_each_flow)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 50;
+    FilterFlowCriteria ffc;
+    FlowsSummary flows_summary;
+    DummyCache *cache = new DummyCache(fcg);
+    int port = 1;
+
+    std::vector<PktType> types = {PktType::IP, PktType::ICMP, PktType::TCP, PktType::UDP};
+
+    for (const auto& type : types) 
+    {
+        for (unsigned i = 0; i < 5; i++)
+        {
+            FlowKey flow_key;
+            flow_key.port_l = port++;
+            flow_key.pkt_type = type;
+            cache->allocate(&flow_key);
+        }
+    }
+    CHECK (cache->get_count() == 5 * types.size());
+    CHECK(cache->dump_flows_summary(flows_summary, ffc) == true);
+
+    FlowsTypeSummary expected_type{};
+    for (const auto& type : types) 
+        expected_type[to_utype(type)] = 5;
+    CHECK(expected_type == flows_summary.type_summary);
+
+    FlowsStateSummary expected_state{};
+    expected_state[to_utype(snort::Flow::FlowState::SETUP)] = 5 * types.size();
+    CHECK(expected_state == flows_summary.state_summary);
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    CHECK (cache->get_count() == 0);
+    delete cache;
+}
+
+TEST(dump_flows_summary, dump_flows_summary_with_different_flow_states)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 50;
+    FilterFlowCriteria ffc;
+    FlowsSummary flows_summary;
+    DummyCache *cache = new DummyCache(fcg);
+    int port = 1;
+    unsigned flows_number = 5;
+
+    std::vector<snort::Flow::FlowState> types = {snort::Flow::FlowState::BLOCK, snort::Flow::FlowState::ALLOW, snort::Flow::FlowState::SETUP};
+
+    for (const auto& type : types) 
+    {
+        for (unsigned i = 0; i < 5; i++)
+        {
+            FlowKey flow_key;
+            flow_key.port_l = port++;
+            flow_key.pkt_type = PktType::TCP;
+            cache->allocate(&flow_key);
+            Flow* flow = cache->find(&flow_key);
+            flow->flow_state = type;
+        }
+    }
+
+    CHECK(cache->dump_flows_summary(flows_summary, ffc) == true);
+    CHECK(cache->get_count() == flows_number * types.size());
+
+    FlowsTypeSummary expected_type{};
+    expected_type[to_utype(PktType::TCP)] = flows_number * types.size();
+    CHECK(expected_type == flows_summary.type_summary);
+
+    FlowsStateSummary expected_state{};
+    for (const auto& type : types) 
+    {
+        expected_state[to_utype(type)] = flows_number;
+    }
+    CHECK(expected_state == flows_summary.state_summary);
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+TEST(dump_flows_summary, dump_flows_summary_with_allowlist)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 50;
+    FilterFlowCriteria ffc;
+    FlowsSummary flows_summary{};
+    DummyCache* cache = new DummyCache(fcg);
+    int port = 1;
+    FlowKey flow_key[10];
+
+    // Add TCP flows and mark some as allow listed
+    for (unsigned i = 0; i < 10; ++i)
+    {
+        flow_key[i].port_l = port++;
+        flow_key[i].pkt_type = PktType::TCP;
+        Flow* flow = cache->allocate(&flow_key[i]);
+        // Mark the first 5 flows as allow listed
+        if (i < 5)
+        {
+            CHECK(cache->move_to_allowlist(flow) == true);
+        }
+    }
+
+    CHECK(cache->get_count() == 10);
+
+    //check flows are properly moved to allow list
+    CHECK(cache->count_flows_in_lru(to_utype(PktType::TCP)) == 5);  // Check 5 TCP flows
+    CHECK(cache->count_flows_in_lru(allowlist_lru_index) == 5);  // Check 5 allow listed flows
+
+    CHECK(cache->dump_flows_summary(flows_summary, ffc) == true);
+
+    FlowsTypeSummary expected_type{};
+    expected_type[to_utype(PktType::TCP)] = 10;
+    CHECK(expected_type == flows_summary.type_summary);
+
+    FlowsStateSummary expected_state{};
+    expected_state[to_utype(snort::Flow::FlowState::SETUP)] = 10;
+    CHECK(expected_state == flows_summary.state_summary);
+
+    // Verify that allow listed flows exist and are correctly handled
+    for (unsigned i = 0; i < 5; ++i)
+    {
+        flow_key[i].port_l = i + 1;  // allow listed flow ports
+        flow_key[i].pkt_type = PktType::TCP;
+        Flow* flow = cache->find(&flow_key[i]);
+        CHECK(flow != nullptr);  // Ensure the flow is found
+        CHECK(flow->flags.in_allowlist == 1);  // Ensure the flow is allow listed
+    }
+
+    // Ensure cache cleanup and correct flow counts
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    CHECK(cache->get_count() == 0);
+    delete cache;
+}
+
+TEST(dump_flows_summary, dump_flows_summary_with_filter)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 50;
+    FilterFlowCriteria ffc;
+    FlowsSummary flows_summary;
+    DummyCacheWithFilter *cache = new DummyCacheWithFilter(fcg);
+    unsigned flows_number = 5;
+
+    std::vector<PktType> types = {PktType::IP, PktType::ICMP, PktType::TCP, PktType::UDP};
+
+    for (const auto& type : types) 
+    {
+        int port = 1;
+        for (unsigned i = 0; i < 5; i++)
+        {
+            FlowKey flow_key;
+            flow_key.port_l = port++;
+            flow_key.port_h = 80;
+            flow_key.pkt_type = type;
+            cache->allocate(&flow_key);
+
+            Flow* flow = cache->find(&flow_key);
+            flow->pkt_type = type;
+        }
+    }
+    CHECK(cache->get_count() == flows_number * types.size());
+
+    // check proto filter
+    ffc.pkt_type = PktType::TCP;
+    CHECK(cache->dump_flows_summary(flows_summary, ffc) == true);
+
+    FlowsTypeSummary expected_type{};
+    expected_type[to_utype(PktType::TCP)] = flows_number;
+    CHECK(expected_type == flows_summary.type_summary);
+
+    FlowsStateSummary expected_state{};
+    expected_state[to_utype(snort::Flow::FlowState::SETUP)] = flows_number;
+    CHECK(expected_state == flows_summary.state_summary);
+
+    //check port filter
+    ffc.pkt_type = PktType::NONE;
+    ffc.source_port = 1;
+    flows_summary = {};
+    CHECK(cache->dump_flows_summary(flows_summary, ffc) == true);
+
+    expected_type = {};
+    for (const auto& type : types) 
+        expected_type[to_utype(type)] = 1;
+    CHECK(expected_type == flows_summary.type_summary);
+
+    expected_state = {};
+    expected_state[to_utype(snort::Flow::FlowState::SETUP)] = types.size();
+    CHECK(expected_state == flows_summary.state_summary);
+
+    // check combined filter
+    ffc.pkt_type = PktType::UDP;
+    ffc.source_port = 1;
+    ffc.destination_port = 80;
+    flows_summary = {};
+    CHECK(cache->dump_flows_summary(flows_summary, ffc) == true);
+
+    expected_type = {};
+    expected_type[to_utype(PktType::UDP)] = 1;
+    CHECK(expected_type == flows_summary.type_summary);
+
+    expected_state = {};
+    expected_state[to_utype(snort::Flow::FlowState::SETUP)] = 1;
+    CHECK(expected_state == flows_summary.state_summary);
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+
 
 TEST_GROUP(flow_cache_lrus) 
 { 

@@ -75,6 +75,8 @@ public:
     bool move_to_allowlist(snort::Flow*);
 
     bool dump_flows(std::fstream&, unsigned count, const FilterFlowCriteria& ffc, bool first, uint8_t code) const;
+    bool dump_flows_summary(FlowsSummary&, const FilterFlowCriteria& ffc) const;
+
 
     int add_expected_ignore(
         const snort::Packet* ctrlPkt, PktType, IpProtocol,

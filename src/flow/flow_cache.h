@@ -25,6 +25,7 @@
 // there is a FlowCache instance for each protocol.
 // Flows are stored in a ZHash instance by FlowKey.
 
+#include <array>
 #include <ctime>
 #include <fstream>
 #include <mutex>
@@ -32,11 +33,12 @@
 #include <vector>
 #include <memory>
 
+#include "filter_flow_critera.h"
 #include "framework/counts.h"
 #include "flow_config.h"
+#include "flow.h"
 #include "main/analyzer_command.h"
 #include "prune_stats.h"
-#include "filter_flow_critera.h"
 
 constexpr uint8_t max_protocols = static_cast<uint8_t>(to_utype(PktType::MAX));
 constexpr uint8_t allowlist_lru_index = max_protocols;
@@ -44,13 +46,38 @@ constexpr uint8_t total_lru_count = max_protocols + 1;
 constexpr uint64_t all_lru_mask = (1ULL << max_protocols) - 1;
 constexpr uint8_t first_proto = to_utype(PktType::NONE) + 1;
 
+typedef std::array<unsigned, to_utype(PktType::MAX)> FlowsTypeSummary;
+typedef std::array<unsigned, to_utype(snort::Flow::FlowState::ALLOW) + 1> FlowsStateSummary;
+
+struct FlowsSummary
+{
+    FlowsTypeSummary type_summary{};
+    FlowsStateSummary state_summary{};
+};
+
 namespace snort
 {
 class Flow;
 struct FlowKey;
 }
 
-class DumpFlows : public snort::AnalyzerCommand
+class DumpFlowsBase : public snort::AnalyzerCommand
+{
+public:
+    DumpFlowsBase(ControlConn*);
+    virtual ~DumpFlowsBase() override= default;
+    void cidr2mask(const uint32_t cidr, uint32_t* mask) const;
+    bool set_ip(std::string filter_ip, snort::SfIp& ip, snort::SfIp& subnet) const;
+    bool execute(Analyzer&, void**) override = 0;
+    const char* stringify() override = 0;
+    void set_filter_criteria(const FilterFlowCriteria& filter_criteria)
+    {ffc = filter_criteria;}
+
+protected:
+    FilterFlowCriteria ffc;
+};
+
+class DumpFlows : public DumpFlowsBase
 {
 public:
 #ifndef REG_TEST
@@ -60,13 +87,9 @@ public:
 #endif
     ~DumpFlows() override = default;
     bool open_files(const std::string& base_name);
-    void cidr2mask(const uint32_t cidr, uint32_t* mask) const;
-    bool set_ip(std::string filter_ip, snort::SfIp& ip, snort::SfIp& subnet) const;
     bool execute(Analyzer&, void**) override;
     const char* stringify() override
     { return "DumpFlows"; }
-    void set_filter_criteria(const FilterFlowCriteria& filter_criteria)
-    {ffc = filter_criteria;}
 
 private:
     //dump_code is to track if the flow is dumped only once per dump_flow command.
@@ -74,12 +97,24 @@ private:
     std::vector<std::fstream> dump_stream;
     std::vector<unsigned> next;
     unsigned dump_count;
-    FilterFlowCriteria ffc;
 #ifdef REG_TEST
     int resume = -1;
 #endif
 };
 
+class DumpFlowsSummary : public DumpFlowsBase
+{
+public:
+    DumpFlowsSummary(ControlConn*);
+
+    ~DumpFlowsSummary() override;
+    bool execute(Analyzer&, void**) override;
+    const char* stringify() override
+    { return "DumpFlowsSummary"; }
+
+private:
+    std::vector<FlowsSummary> flows_summaries;
+};
 
 class FlowUniList;
 
@@ -104,6 +139,8 @@ public:
     unsigned delete_flows(unsigned num_to_delete);
     unsigned prune_multiple(PruneReason, bool do_cleanup);
     bool dump_flows(std::fstream&, unsigned count, const FilterFlowCriteria& ffc, bool first, uint8_t code) const;
+    bool dump_flows_summary(FlowsSummary&, const FilterFlowCriteria& ffc) const;
+
 
     unsigned purge();
     unsigned get_count();
