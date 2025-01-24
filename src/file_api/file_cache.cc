@@ -366,7 +366,10 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
         return false;
     case FILE_VERDICT_LOG:
         if (resume)
+        {
+            file_ctx->log_file_event(flow, policy);
             policy->log_file_action(flow, file_ctx, FILE_RESUME_LOG);
+        }
         return false;
     case FILE_VERDICT_BLOCK:
         // can't block session inside a session
