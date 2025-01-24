@@ -69,9 +69,10 @@ void populate_instance_maps()
     std::ofstream inst_file;
     inst_file.open(path);
 
-    inst_file << "pid, snort process number, instance_id, relative_instance_id, max_instances\n";
+    inst_file << "pid, snort process number, thread_id, instance_id, relative_instance_id, max_instances\n";
     inst_file << getpid() << ", ";
     inst_file << Snort::get_process_id() << ", ";
+    inst_file << ThreadConfig::get_instance_tid(instance_id) << ", ";
     inst_file << instance_id << ", ";
     inst_file << get_relative_instance_number() << ", ";
     inst_file << ThreadConfig::get_instance_max();
