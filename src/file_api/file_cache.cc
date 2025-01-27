@@ -162,7 +162,7 @@ FileContext* FileCache::find_add(const FileHashKey& hashKey, int64_t timeout)
     return node->file;
 }
 
-FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout)
+FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout, bool &cache_full)
 {
     FileNode new_node;
     /*
@@ -184,13 +184,18 @@ FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout)
     FileContext* file = find_add(hashKey, timeout);
 
     if (!file) {
-        if (fileHash->insert((void*)&hashKey, &new_node) != HASH_OK)
+        int ret = fileHash->insert((void*)&hashKey, &new_node);
+        if (ret != HASH_OK)
         {
-            /* Uh, shouldn't get here...
-             * There is already a node or couldn't alloc space
-             * for key.  This means bigger problems, but fail
-             * gracefully.
+            /* There is already a node or couldn't alloc space for key or cache is full.
+             * We would retry the packet in case of HASH_NOMEM and fail gracefully in other cases.
              */
+            if (ret == HASH_NOMEM)
+            {
+                if (PacketTracer::is_active())
+                    PacketTracer::log("add:Insert failed in file cache, returning\n");
+                cache_full = true;
+            }
             FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, GET_CURRENT_PACKET,
                 "add:Insert failed in file cache, returning\n");
             file_counts.cache_add_fails++;
@@ -203,7 +208,6 @@ FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout)
     {
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, GET_CURRENT_PACKET,
             "add:file already found in file cache, returning\n");
-        file_counts.cache_add_fails++;
         delete new_node.file;
         return file;
     }
@@ -248,7 +252,7 @@ FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout)
 }
 
 FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create,
-    int64_t timeout, bool using_cache_entry)
+    int64_t timeout, bool using_cache_entry, bool &cache_full)
 {
     FileHashKey hashKey;
     hashKey.dip = flow->client_ip;
@@ -266,14 +270,15 @@ FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create,
         file = find(hashKey, timeout);
     
     if (to_create and !file)
-        file = add(hashKey, timeout);
+        file = add(hashKey, timeout, cache_full);
 
     return file;
 }
 
 FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create, bool using_cache_entry)
 {
-    return get_file(flow, file_id, to_create, lookup_timeout, using_cache_entry);
+    bool cache_full = false;
+    return get_file(flow, file_id, to_create, lookup_timeout, using_cache_entry, cache_full);
 }
 
 FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
@@ -305,7 +310,7 @@ FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
     return verdict;
 }
 
-int FileCache::store_verdict(Flow* flow, FileInfo* file, int64_t timeout)
+int FileCache::store_verdict(Flow* flow, FileInfo* file, int64_t timeout, bool &cache_full)
 {
     assert(file);
     uint64_t file_id = file->get_file_id();
@@ -317,7 +322,7 @@ int FileCache::store_verdict(Flow* flow, FileInfo* file, int64_t timeout)
         return 0;
     }
 
-    FileContext* file_got = get_file(flow, file_id, true, timeout, false);
+    FileContext* file_got = get_file(flow, file_id, true, timeout, false, cache_full);
     if (file_got)
     {
         *((FileInfo*)(file_got)) = *file;
@@ -352,6 +357,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
     Active* act = p->active;
     struct timeval now = {0, 0};
     struct timeval add_time;
+    bool cache_full = false;
 
     if (verdict != FILE_VERDICT_PENDING)
         timerclear(&file_ctx->pending_expire_time);
@@ -463,11 +469,22 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
 
             if (resume)
                 policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);
-            else if (store_verdict(flow, file_ctx, lookup_timeout) != 0)
+            else if (store_verdict(flow, file_ctx, lookup_timeout, cache_full) != 0)
             {
-                FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
-                    "apply_verdict:FILE_VERDICT_PENDING with action drop\n");
-                act->set_delayed_action(Active::ACT_DROP, true);
+                if (cache_full)
+                {
+                    act->set_delayed_action(Active::ACT_RETRY, true);
+                    if (PacketTracer::is_active())
+                    {
+                        PacketTracer::log("apply_verdict:FILE_VERDICT_PENDING with action retry\n");
+                    }
+                }
+                else
+                {
+                    act->set_delayed_action(Active::ACT_DROP, true);
+                    FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+                        "apply_verdict:FILE_VERDICT_PENDING with action drop\n");
+                }
             }
             else if (files)
             {
@@ -489,9 +506,18 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
     }
     else if (file_ctx->is_cacheable())
     {
-        store_verdict(flow, file_ctx, block_timeout);
-        FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+        if (store_verdict(flow, file_ctx, block_timeout, cache_full) != 0)
+        {
+            if (PacketTracer::is_active())
+            {
+                PacketTracer::log("apply_verdict:storing the file verdict failed\n");
+            }
+        }
+        else
+        {
+            FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
             "apply_verdict:storing the file verdict\n");
+        }
     }
 
     return true;

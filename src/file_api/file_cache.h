@@ -67,13 +67,13 @@ PADDING_GUARD_END
         snort::FilePolicyBase*);
 
 private:
-    snort::FileContext* add(const FileHashKey&, int64_t timeout);
+    snort::FileContext* add(const FileHashKey&, int64_t timeout, bool &cache_full);
     snort::FileContext* find(const FileHashKey&, int64_t);
     snort::FileContext* find_add(const FileHashKey&, int64_t);
     snort::FileContext* get_file(snort::Flow*, uint64_t file_id, bool to_create,
-        int64_t timeout, bool using_cache_entry);
+        int64_t timeout, bool using_cache_entry, bool &cache_full);
     FileVerdict check_verdict(snort::Packet*, snort::FileInfo*, snort::FilePolicyBase*);
-    int store_verdict(snort::Flow*, snort::FileInfo*, int64_t timeout);
+    int store_verdict(snort::Flow*, snort::FileInfo*, int64_t timeout, bool &cache_full);
 
     /* The hash table of expected files */
     ExpectedFileCache* fileHash = nullptr;
