@@ -29,8 +29,10 @@
 
 #include "detection/detection_engine.h"
 #include "log/log.h"
+#include "main/analyzer.h"
 #include "packet_io/active.h"
 #include "packet_io/packet_tracer.h"
+#include "packet_io/sfdaq.h"
 #include "profiler/profiler.h"
 #include "protocols/packet_manager.h"
 #include "stream/stream_splitter.h"
@@ -478,11 +480,12 @@ void TcpReassemblerBase::final_flush(Packet* p, uint32_t dir)
 static Packet* get_packet(Flow* flow, uint32_t flags, bool c2s)
 {
     Packet* p = DetectionEngine::set_next_packet(nullptr, flow);
-
     DAQ_PktHdr_t* ph = p->context->pkth;
     memset(ph, 0, sizeof(*ph));
     packet_gettimeofday(&ph->ts);
 
+    if ( !p->daq_instance )
+        p->daq_instance = SFDAQ::get_local_instance();
     p->pktlen = 0;
     p->data = nullptr;
     p->dsize = 0;

@@ -397,8 +397,10 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
         node->head = node->tail = nullptr;
         node->count = 0;
         last = nullptr;
-        /* Only add TCP and UDP expected flows for now via the DAQ module. */
-        if ((ip_proto == IpProtocol::TCP || ip_proto == IpProtocol::UDP) && ctrlPkt->daq_instance)
+        // Only add TCP and UDP expected flows for now via the DAQ module. Additionally only
+        // add the expected flow when the daq_msg field is non-null.  A null daq_msg field
+        // indicates the flow is closing and it is too late to add an expected flow.
+        if ((ip_proto == IpProtocol::TCP || ip_proto == IpProtocol::UDP) && ctrlPkt->daq_msg)
         {
             if (PacketTracer::is_active())
             {

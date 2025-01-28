@@ -201,6 +201,9 @@ DAQ_RecvStatus SFDAQInstance::receive_messages(unsigned max_recv)
 
 int SFDAQInstance::finalize_message(DAQ_Msg_h msg, DAQ_Verdict verdict)
 {
+    if ( !msg )
+        return DAQ_ERROR_INVAL;
+
     int rval = daq_instance_msg_finalize(instance, msg, verdict);
     if (rval == DAQ_SUCCESS)
         pool_available++;
@@ -273,6 +276,9 @@ bool SFDAQInstance::stop()
 
 int SFDAQInstance::inject(DAQ_Msg_h msg, int rev, const uint8_t* buf, uint32_t len)
 {
+    if ( !msg )
+        return DAQ_ERROR_INVAL;
+
     int rval = daq_instance_inject_relative(instance, msg, buf, len, rev);
 #ifdef DEBUG_MSGS
     if (rval != DAQ_SUCCESS)
@@ -305,6 +311,9 @@ int SFDAQInstance::ioctl(DAQ_IoctlCmd cmd, void *arg, size_t arglen)
 
 int SFDAQInstance::modify_flow_opaque(DAQ_Msg_h msg, uint32_t opaque)
 {
+    if ( !msg )
+        return DAQ_ERROR_INVAL;
+
     DIOCTL_SetFlowOpaque d_sfo;
     d_sfo.msg = msg;
     d_sfo.value = opaque;
@@ -314,6 +323,9 @@ int SFDAQInstance::modify_flow_opaque(DAQ_Msg_h msg, uint32_t opaque)
 
 int SFDAQInstance::set_packet_verdict_reason(DAQ_Msg_h msg, uint8_t verdict_reason)
 {
+    if ( !msg )
+        return DAQ_ERROR_INVAL;
+
     DIOCTL_SetPacketVerdictReason d_spvr;
 
     d_spvr.msg = msg;
@@ -324,6 +336,9 @@ int SFDAQInstance::set_packet_verdict_reason(DAQ_Msg_h msg, uint8_t verdict_reas
 
 int SFDAQInstance::set_packet_trace_data(DAQ_Msg_h msg, uint8_t* buff, uint32_t buff_len)
 {
+    if ( !msg )
+        return DAQ_ERROR_INVAL;
+
     DIOCTL_SetPacketTraceData d_sptd;
 
     d_sptd.msg = msg;
