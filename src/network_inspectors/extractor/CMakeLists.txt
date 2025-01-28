@@ -1,6 +1,7 @@
 set( FILE_LIST
     extractor.cc
     extractor.h
+    extractor_conn.cc
     extractor_csv_logger.cc
     extractor_csv_logger.h
     extractor_enums.h

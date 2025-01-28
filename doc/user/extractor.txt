@@ -31,7 +31,8 @@ things it allows tenants to get independent data logging configurations.
         {
             { service = 'http', tenant_id = 1, on_events = 'eot', fields = 'ts, uri, host, method' },
             { service = 'ftp', tenant_id = 1, on_events = 'request', fields = 'ts, command, arg' },
-            { service = 'http', tenant_id = 2, on_events = 'eot', fields = 'ts, uri' }
+            { service = 'http', tenant_id = 2, on_events = 'eot', fields = 'ts, uri' },
+            { service = 'conn', tenant_id = 1, on_events = 'eof', fields = 'ts, uid, service' }
         }
     }
 
@@ -45,6 +46,8 @@ Services and their events:
   ** request
   ** response
   ** eot (a session defined by the following commands: APPE, DELE, RETR, STOR, STOU, ACCT, PORT, PASV, EPRT, EPSV)
+* connection (conn)
+  ** eof (end of flow)
 
 Common fields available for every service:
 
@@ -81,6 +84,14 @@ Fields supported for FTP:
 * `data_channel.orig_h` - IP address of data channel originator
 * `data_channel.resp_h` - IP address of data channel receiving point
 * `data_channel.resp_p` - TCP port of data channel receiving point
+
+Fields supported for connection:
+
+* `duration` - connection duration in seconds
+* `proto` - transport layer protocol of the connection
+* `service` - connection's application protocol
+* `orig_pkts` - number of packets originator sent
+* `resp_pkts` - number of packets responder sent
 
 ==== Example
 

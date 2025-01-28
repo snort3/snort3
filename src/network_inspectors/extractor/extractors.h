@@ -28,6 +28,7 @@
 #include "framework/data_bus.h"
 #include "framework/connector.h"
 #include "sfip/sf_ip.h"
+#include "time/packet_time.h"
 
 #include "extractor_logger.h"
 
@@ -88,7 +89,14 @@ protected:
     };
 
     static struct timeval get_timestamp(const DataEvent*, const Packet* p, const Flow*)
-    { return p->pkth->ts; }
+    {
+        if (p != nullptr)
+            return p->pkth->ts;
+
+        struct timeval timestamp;
+        snort::packet_gettimeofday(&timestamp);
+        return timestamp;
+    }
 
     static const SfIp& get_ip_src(const DataEvent*, const Packet*, const Flow* flow)
     { return flow->flags.client_initiated ? flow->client_ip : flow->server_ip; }
@@ -103,7 +111,7 @@ protected:
     { return flow->server_port; }
 
     static uint64_t get_pkt_num(const DataEvent*, const Packet* p, const Flow*)
-    { return p->context->packet_number; }
+    { return (p != nullptr) ? p->context->packet_number : 0; }
 
     static uint64_t get_uid(const DataEvent*, const Packet*, const Flow* flow)
     { return ExtractorEvent::get_hash().do_hash((const unsigned char*)flow->key, 0); }

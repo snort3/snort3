@@ -29,6 +29,7 @@ public:
     {
         HTTP,
         FTP,
+        CONN,
         UNDEFINED,
         MAX
     };
@@ -48,6 +49,8 @@ public:
             return "http";
         case FTP:
             return "ftp";
+        case CONN:
+            return "conn";
         case UNDEFINED: // fallthrough
         case MAX:       // fallthrough
         default:

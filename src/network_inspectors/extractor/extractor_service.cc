@@ -26,6 +26,7 @@
 #include "log/messages.h"
 
 #include "extractor.h"
+#include "extractor_conn.h"
 #include "extractor_ftp.h"
 #include "extractor_http.h"
 
@@ -122,6 +123,10 @@ ExtractorService* ExtractorService::make_service(Extractor& ins, const ServiceCo
         srv = new FtpExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, ins);
         break;
 
+    case ServiceType::CONN:
+        srv = new ConnExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, ins);
+        break;
+
     case ServiceType::UNDEFINED: // fallthrough
     default:
         ParseError("'%s' service is not supported", cfg.service.c_str());
@@ -206,9 +211,6 @@ HttpExtractorService::HttpExtractorService(uint32_t tenant, const std::vector<st
     {
         if (!strcmp("eot", event.c_str()))
             handlers.push_back(new HttpExtractor(ins, tenant_id, get_fields()));
-
-        else
-            continue;
     }
 }
 
@@ -259,8 +261,6 @@ FtpExtractorService::FtpExtractorService(uint32_t tenant, const std::vector<std:
             handlers.push_back(new FtpResponseExtractor(ins, tenant_id, get_fields()));
         else if (!strcmp("eot", event.c_str()))
             handlers.push_back(new FtpExtractor(ins, tenant_id, get_fields()));
-        else
-            continue;
     }
 }
 
@@ -268,6 +268,45 @@ const snort::Connector::ID& FtpExtractorService::internal_tinit()
 { return log_id = logger->get_id(type.c_str()); }
 
 const snort::Connector::ID& FtpExtractorService::get_log_id()
+{ return log_id; }
+
+//-------------------------------------------------------------------------
+//  ConnExtractorService
+//-------------------------------------------------------------------------
+
+ServiceBlueprint ConnExtractorService::blueprint =
+{
+    // events
+    {
+        "eof",
+    },
+    // fields
+    {
+        "proto",
+        "service",
+        "orig_pkts",
+        "resp_pkts",
+        "duration"
+    },
+};
+
+THREAD_LOCAL Connector::ID ConnExtractorService::log_id;
+
+ConnExtractorService::ConnExtractorService(uint32_t tenant, const std::vector<std::string>& srv_fields,
+    const std::vector<std::string>& srv_events, ServiceType s_type, Extractor& ins)
+    : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, ins)
+{
+    for (const auto& event : get_events())
+    {
+        if (!strcmp("eof", event.c_str()))
+            handlers.push_back(new ConnExtractor(ins, tenant_id, get_fields()));
+    }
+}
+
+const snort::Connector::ID& ConnExtractorService::internal_tinit()
+{ return log_id = logger->get_id(type.c_str()); }
+
+const snort::Connector::ID& ConnExtractorService::get_log_id()
 { return log_id; }
 
 //-------------------------------------------------------------------------
@@ -286,11 +325,13 @@ TEST_CASE("Service Type", "[extractor]")
     {
         ServiceType http = ServiceType::HTTP;
         ServiceType ftp = ServiceType::FTP;
+        ServiceType conn = ServiceType::CONN;
         ServiceType undef = ServiceType::UNDEFINED;
         ServiceType max = ServiceType::MAX;
 
         CHECK_FALSE(strcmp("http", http.c_str()));
         CHECK_FALSE(strcmp("ftp", ftp.c_str()));
+        CHECK_FALSE(strcmp("conn", conn.c_str()));
         CHECK_FALSE(strcmp("(not set)", undef.c_str()));
         CHECK_FALSE(strcmp("(not set)", max.c_str()));
     }

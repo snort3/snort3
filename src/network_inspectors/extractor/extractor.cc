@@ -50,7 +50,7 @@ THREAD_LOCAL ExtractorLogger* Extractor::logger = nullptr;
 
 static const Parameter extractor_proto_params[] =
 {
-    { "service", Parameter::PT_ENUM, "http | ftp", nullptr,
+    { "service", Parameter::PT_ENUM, "http | ftp | conn", nullptr,
       "service to extract from" },
 
     { "tenant_id", Parameter::PT_INT, "0:max32", "0",
