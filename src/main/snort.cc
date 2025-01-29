@@ -429,6 +429,11 @@ void Snort::setup(int argc, char* argv[])
     ((HostTrackerModule*)ModuleManager::get_module(HOST_TRACKER_NAME))->init_data();
     host_cache.print_config();
 
+#ifdef USE_TSC_CLOCK
+    // Call clock_scale once to determine internal ticks to time scale
+    clock_scale();
+#endif
+
     TimeStart();
 }
 
