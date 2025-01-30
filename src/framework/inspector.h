@@ -43,7 +43,7 @@ struct SnortConfig;
 struct Packet;
 
 // this is the current version of the api
-#define INSAPI_VERSION ((BASE_API_VERSION << 16) | 1)
+#define INSAPI_VERSION ((BASE_API_VERSION << 16) | 2)
 
 struct InspectionBuffer
 {
@@ -201,13 +201,6 @@ public:
     virtual const uint8_t* adjust_log_packet(Packet*, uint16_t&)
     { return nullptr; }
 
-    static unsigned get_slot()
-#ifndef _WIN64
-    { return slot; }
-#else
-    { return get_instance_id(); }
-#endif
-
 protected:
     // main thread functions
     Inspector();  // internal init only at this point
@@ -221,12 +214,6 @@ private:
     const char* alias_name = nullptr;
     uint64_t network_policy_user_id = 0;
     bool network_policy_user_id_set = false;
-
-#ifndef _WIN64
-private:
-    friend class InspectorManager;
-    static THREAD_LOCAL unsigned slot;
-#endif
 };
 
 // at present there is no sequencing among like types except that appid

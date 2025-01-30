@@ -90,7 +90,7 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
         if ( ip_map->insert(&key, nullptr) != HASH_OK )
             return nullptr;
         value = (FlowStateValue*)ip_map->get_user_data();
-        memset(value, 0, sizeof(FlowStateValue));
+        *value = {};
     }
 
     return value;

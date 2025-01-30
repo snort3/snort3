@@ -61,7 +61,6 @@ void DetectionEngine::disable_content(Packet*) { }
 unsigned SnortConfig::get_thread_reload_id() { return 1; }
 void SnortConfig::update_thread_reload_id() { }
 
-THREAD_LOCAL unsigned Inspector::slot = 0;
 bool Inspector::is_inactive() { return true; }
 Inspector::Inspector() { ref_count = nullptr; }
 Inspector::~Inspector() { }

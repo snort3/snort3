@@ -293,7 +293,7 @@ void InspectorList::tterm(PHObjectList* handlers)
 void InspectorList::tterm_removed()
 {
     for ( auto& ri : removed_ilist )
-        ri.instance->tterm(ri.handlers[Inspector::get_slot()]);
+        ri.instance->tterm(ri.handlers[get_instance_id()]);
 }
 
 static PHInstance* get_instance(InspectorList* il, const char* keyword);
@@ -459,7 +459,7 @@ void TrafficPolicy::vectorize(SnortConfig*)
 
 PHObjectList* TrafficPolicy::get_specific_handlers()
 {
-    unsigned slot = Inspector::get_slot();
+    unsigned slot = get_instance_id();
     assert(ts_handlers);
     PHObjectList* handlers = ts_handlers->olists[slot];
     if (!handlers)
@@ -607,7 +607,7 @@ void SingleInstanceInspectorPolicy::tterm(PHObjectList* handlers)
 void SingleInstanceInspectorPolicy::tterm_removed()
 {
     if (removed_instance)
-        removed_instance->tterm(s_tl_handlers[Inspector::get_slot()]);
+        removed_instance->tterm(s_tl_handlers[get_instance_id()]);
 }
 
 void SingleInstanceInspectorPolicy::print_config(SnortConfig* sc, const char* title)
@@ -1352,13 +1352,10 @@ void PHInstance::tterm(PHObjectList* handlers)
 void InspectorManager::thread_init(const SnortConfig* sc)
 {
     SnortConfig::update_thread_reload_id();
-#ifndef _WIN64
-    Inspector::slot = get_instance_id();
-#endif
 
     // Initial build out of this thread's configured plugin registry
     PHObjectList* g_handlers = new PHObjectList;
-    s_tl_handlers[Inspector::get_slot()] = g_handlers;
+    s_tl_handlers[get_instance_id()] = g_handlers;
     for ( auto* p : sc->framework_config->clist )
     {
         PHObject& phg = get_thread_local_plugin(p->api, g_handlers);
@@ -1401,7 +1398,7 @@ void InspectorManager::thread_reinit(const SnortConfig* sc)
         sc->policy_map->set_inspector_tinit_complete(instance_id, true);
 
         // Update this thread's configured plugin registry with any newly configured inspectors
-        PHObjectList* g_handlers = s_tl_handlers[Inspector::get_slot()];
+        PHObjectList* g_handlers = s_tl_handlers[get_instance_id()];
         for ( auto* p : sc->framework_config->clist )
         {
             PHObject& phg = get_thread_local_plugin(p->api, g_handlers);
@@ -1471,7 +1468,7 @@ void InspectorManager::thread_stop_removed(const SnortConfig* sc)
 void InspectorManager::thread_stop(const SnortConfig* sc)
 {
     // If thread_init() was never called, we have nothing to do.
-    PHObjectList* g_handlers = s_tl_handlers[Inspector::get_slot()];
+    PHObjectList* g_handlers = s_tl_handlers[get_instance_id()];
     if ( !g_handlers )
         return;
 
@@ -1503,7 +1500,7 @@ void InspectorManager::thread_stop(const SnortConfig* sc)
 void InspectorManager::thread_term()
 {
     // If thread_init() was never called, we have nothing to do.
-    PHObjectList* handlers = s_tl_handlers[Inspector::get_slot()];
+    PHObjectList* handlers = s_tl_handlers[get_instance_id()];
     if ( !handlers )
         return;
 
@@ -1514,7 +1511,7 @@ void InspectorManager::thread_term()
             phg.api.tterm();
     }
     delete handlers;
-    s_tl_handlers[Inspector::get_slot()] = nullptr;
+    s_tl_handlers[get_instance_id()] = nullptr;
 }
 
 //-------------------------------------------------------------------------

@@ -42,10 +42,6 @@ public:
 
 using namespace snort;
 
-#ifndef _WIN64
-unsigned THREAD_LOCAL Inspector::slot = 0;
-#endif
-
 //-------------------------------------------------------------------------
 // packet handler stuff
 //-------------------------------------------------------------------------
@@ -122,10 +118,10 @@ bool Inspector::likes(Packet* p)
 }
 
 void Inspector::add_ref()
-{ ++ref_count[get_slot()]; }
+{ ++ref_count[get_instance_id()]; }
 
 void Inspector::rem_ref()
-{ --ref_count[get_slot()]; }
+{ --ref_count[get_instance_id()]; }
 
 void Inspector::add_global_ref()
 { ++ref_count[0]; }
@@ -147,10 +143,10 @@ void Inspector::copy_thread_storage(Inspector* ins)
 }
 
 void Inspector::set_thread_specific_data(void* tsd)
-{ thread_specific_data->data[get_slot()] = tsd; }
+{ thread_specific_data->data[get_instance_id()] = tsd; }
 
 void* Inspector::get_thread_specific_data() const
-{ return thread_specific_data->data[get_slot()]; }
+{ return thread_specific_data->data[get_instance_id()]; }
 
 static const char* InspectorTypeNames[IT_MAX] =
 {
