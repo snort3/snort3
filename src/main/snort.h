@@ -24,6 +24,9 @@
 // Snort is the top-level application class.
 #include <daq_common.h>
 
+#include "snort_types.h"
+
+
 class ContextSwitcher;
 
 namespace snort
@@ -48,7 +51,7 @@ public:
     static bool is_exiting() { return already_exiting; }
     static bool is_reloading();
 
-    static unsigned get_process_id();
+    SO_PUBLIC static unsigned get_process_id();
 
 private:
     static void init(int, char**);

@@ -8,6 +8,7 @@ set (INCLUDES
     snort_types.h
     thread.h
     thread_config.h
+    snort.h
 )
 
 set (LOCAL_INCLUDES
