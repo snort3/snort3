@@ -204,7 +204,7 @@ static const IpsApi icmp_id_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__ICMP,
+    -1, PROTO_BIT__ICMP,
     nullptr,
     nullptr,
     nullptr,

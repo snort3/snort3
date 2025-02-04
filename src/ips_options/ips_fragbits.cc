@@ -429,7 +429,7 @@ static const IpsApi fragbits_api =
 
     //IpsApi struct
     OPT_TYPE_DETECTION, //RuleOptType
-    1,                  //max per rule
+    -1,//max per rule
     0,                  //IpsOptFunc protos
     nullptr,            //IpsOptFunc pinit
     nullptr,            //IpsOptFunc pterm

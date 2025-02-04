@@ -413,7 +413,7 @@ static const IpsApi flags_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP,
+    -1, PROTO_BIT__TCP,
     nullptr,
     nullptr,
     nullptr,

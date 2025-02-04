@@ -336,7 +336,7 @@ static const IpsApi rpc_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, PROTO_BIT__TCP|PROTO_BIT__UDP,
+    -1, PROTO_BIT__TCP|PROTO_BIT__UDP,
     nullptr,
     nullptr,
     nullptr,

@@ -175,7 +175,7 @@ static const IpsApi fragoffset_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, 0,
+    -1, 0,
     nullptr,
     nullptr,
     nullptr,

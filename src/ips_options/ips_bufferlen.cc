@@ -190,7 +190,7 @@ static const IpsApi len_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, 0,
+    -5, 0,
     nullptr,
     nullptr,
     nullptr,

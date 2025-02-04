@@ -262,7 +262,7 @@ static const IpsApi ipopts_api =
         mod_dtor
     },
     OPT_TYPE_DETECTION,
-    1, 0,
+    -1, 0,
     nullptr,
     nullptr,
     nullptr,
