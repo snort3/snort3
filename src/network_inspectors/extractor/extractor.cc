@@ -73,6 +73,9 @@ static const Parameter s_params[] =
     { "connector", Parameter::PT_STRING, nullptr, nullptr,
       "output destination for extractor" },
 
+    { "default_filter", Parameter::PT_ENUM, "pick | skip", "pick",
+      "default action for protocol with no filter provided" },
+
     { "protocols", Parameter::PT_LIST, extractor_proto_params, nullptr,
       "protocols to extract data" },
 
@@ -81,7 +84,7 @@ static const Parameter s_params[] =
 
 void ServiceConfig::clear()
 {
-    service = ServiceType::UNDEFINED;
+    service = ServiceType::ANY;
     on_events.clear();
     tenant_id = 0;
     fields.clear();
@@ -138,6 +141,9 @@ bool ExtractorModule::set(const char*, Value& v, SnortConfig*)
     else if (v.is("connector"))
         extractor_config.output_conn = v.get_string();
 
+    if (v.is("default_filter"))
+        extractor_config.pick_by_default = v.get_uint8() == 0;
+
     else if (v.is("service"))
         service_config.service = (ServiceType)(v.get_uint8());
 
@@ -184,7 +190,7 @@ public:
         inspector.logger->flush();
 
         delete inspector.logger;
-        inspector.logger = ExtractorLogger::make_logger(inspector.format, inspector.output_conn);
+        inspector.logger = ExtractorLogger::make_logger(inspector.cfg.formatting, inspector.cfg.output_conn);
 
         for (auto& s : inspector.services)
             s->tinit(inspector.logger);
@@ -195,19 +201,10 @@ private:
 };
 
 Extractor::Extractor(ExtractorModule* m)
+    : cfg(m->get_config())
 {
-    auto& cfg = m->get_config();
-
-    format = cfg.formatting;
-    output_conn = cfg.output_conn;
-
     for (const auto& p : cfg.protocols)
-    {
-        auto s = ExtractorService::make_service(*this, p);
-
-        if (s)
-            services.push_back(s);
-    }
+        ExtractorService::validate(p);
 }
 
 Extractor::~Extractor()
@@ -216,14 +213,25 @@ Extractor::~Extractor()
         delete s;
 }
 
-bool Extractor::configure(SnortConfig*)
+bool Extractor::configure(SnortConfig* sc)
 {
-    Connector::Direction mode = ConnectorManager::is_instantiated(output_conn);
+    assert(sc);
+    snort_config = sc;
+
+    for (const auto& p : cfg.protocols)
+    {
+        auto s = ExtractorService::make_service(*this, p);
+
+        if (s)
+            services.push_back(s);
+    }
+
+    Connector::Direction mode = ConnectorManager::is_instantiated(cfg.output_conn);
 
     if (mode != Connector::CONN_TRANSMIT and mode != Connector::CONN_DUPLEX)
     {
         ParseError("can't initialize extractor, cannot find Connector \"%s\" in transmit mode.\n",
-            output_conn.c_str());
+            cfg.output_conn.c_str());
         return false;
     }
 
@@ -232,8 +240,9 @@ bool Extractor::configure(SnortConfig*)
 
 void Extractor::show(const SnortConfig*) const
 {
-    ConfigLogger::log_value("formatting", format.c_str());
-    ConfigLogger::log_value("connector", output_conn.c_str());
+    ConfigLogger::log_value("formatting", cfg.formatting.c_str());
+    ConfigLogger::log_value("connector", cfg.output_conn.c_str());
+    ConfigLogger::log_value("pick_by_default", cfg.pick_by_default ? "pick" : "skip");
 
     bool log_header = true;
     for (const auto& s : services)
@@ -252,7 +261,7 @@ void Extractor::show(const SnortConfig*) const
 
 void Extractor::tinit()
 {
-    logger = ExtractorLogger::make_logger(format, output_conn);
+    logger = ExtractorLogger::make_logger(cfg.formatting, cfg.output_conn);
 
     for (auto& s : services)
         s->tinit(logger);

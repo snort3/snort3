@@ -38,7 +38,7 @@
 class ServiceConfig
 {
 public:
-    ServiceConfig() : service(ServiceType::UNDEFINED), tenant_id(0) {}
+    ServiceConfig() : service(ServiceType::ANY), tenant_id(0) {}
     void clear();
 
     ServiceType service;
@@ -51,6 +51,7 @@ struct ExtractorConfig
 {
     FormatType formatting = FormatType::CSV;
     std::string output_conn;
+    bool pick_by_default = true;
     std::vector<ServiceConfig> protocols;
 };
 
@@ -116,10 +117,16 @@ public:
     void tterm() override;
     void install_reload_handler(snort::SnortConfig*) override;
 
+    snort::SnortConfig& get_snort_config() const
+    { return snort_config ? *snort_config : *snort::SnortConfig::get_main_conf(); }
+
+    bool get_default_filter() const
+    { return cfg.pick_by_default; }
+
 private:
+    snort::SnortConfig* snort_config = nullptr;
+    ExtractorConfig cfg;
     std::vector<ExtractorService*> services;
-    FormatType format;
-    std::string output_conn;
     static THREAD_LOCAL ExtractorLogger* logger;
 
     friend class ExtractorReloadSwapper;

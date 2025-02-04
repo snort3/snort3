@@ -78,7 +78,7 @@ static const map<string, ExtractorEvent::StrGetFn> sub_str_getters =
 THREAD_LOCAL const snort::Connector::ID* FtpRequestExtractor::log_id = nullptr;
 
 FtpRequestExtractor::FtpRequestExtractor(Extractor& i, uint32_t t, const vector<string>& fields) :
-    ExtractorEvent(i, t)
+    ExtractorEvent(ServiceType::FTP, i, t)
 {
     for (const auto& f : fields)
     {
@@ -92,7 +92,8 @@ FtpRequestExtractor::FtpRequestExtractor(Extractor& i, uint32_t t, const vector<
             continue;
     }
 
-    DataBus::subscribe(ftp_pub_key, FtpEventIds::FTP_REQUEST, new Req(*this, S_NAME));
+    DataBus::subscribe_global(ftp_pub_key, FtpEventIds::FTP_REQUEST,
+        new Req(*this, S_NAME), i.get_snort_config());
 }
 
 void FtpRequestExtractor::internal_tinit(const snort::Connector::ID* service_id)
@@ -103,14 +104,8 @@ void FtpRequestExtractor::handle(DataEvent& event, Flow* flow)
     // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
-    uint32_t tid = 0;
-
-#ifndef DISABLE_TENANT_ID
-    tid = flow->key->tenant_id;
-#endif
-
-    if (tenant_id != tid)
-        return;
+    if (!filter(flow))
+         return;
 
     extractor_stats.total_event++;
 
@@ -225,7 +220,7 @@ static const map<string, FtpResponseExtractor::SubGetFn> sub_getters =
 THREAD_LOCAL const snort::Connector::ID* FtpResponseExtractor::log_id = nullptr;
 
 FtpResponseExtractor::FtpResponseExtractor(Extractor& i, uint32_t t, const vector<string>& fields) :
-    ExtractorEvent(i, t)
+    ExtractorEvent(ServiceType::FTP, i, t)
 {
     for (const auto& f : fields)
     {
@@ -245,7 +240,8 @@ FtpResponseExtractor::FtpResponseExtractor(Extractor& i, uint32_t t, const vecto
             continue;
     }
 
-    DataBus::subscribe(ftp_pub_key, FtpEventIds::FTP_RESPONSE, new Resp(*this, S_NAME));
+    DataBus::subscribe_global(ftp_pub_key, FtpEventIds::FTP_RESPONSE,
+        new Resp(*this, S_NAME), i.get_snort_config());
 }
 
 void FtpResponseExtractor::internal_tinit(const snort::Connector::ID* service_id)
@@ -270,14 +266,8 @@ void FtpResponseExtractor::handle(DataEvent& event, Flow* flow)
     // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
-    uint32_t tid = 0;
-
-#ifndef DISABLE_TENANT_ID
-    tid = flow->key->tenant_id;
-#endif
-
-    if (tenant_id != tid)
-        return;
+    if (!filter(flow))
+         return;
 
     extractor_stats.total_event++;
 
@@ -419,7 +409,7 @@ static const map<string, FtpExtractor::FdSubGetFn> fd_sub_getters =
 THREAD_LOCAL const snort::Connector::ID* FtpExtractor::log_id = nullptr;
 
 FtpExtractor::FtpExtractor(Extractor& i, uint32_t t, const vector<string>& fields) :
-    ExtractorEvent(i, t)
+    ExtractorEvent(ServiceType::FTP, i, t)
 {
     for (const auto& f : fields)
     {
@@ -439,8 +429,10 @@ FtpExtractor::FtpExtractor(Extractor& i, uint32_t t, const vector<string>& field
             continue;
     }
 
-    DataBus::subscribe(ftp_pub_key, FtpEventIds::FTP_REQUEST, new Req(*this, S_NAME));
-    DataBus::subscribe(ftp_pub_key, FtpEventIds::FTP_RESPONSE, new Resp(*this, S_NAME));
+    DataBus::subscribe_global(ftp_pub_key, FtpEventIds::FTP_REQUEST,
+        new Req(*this, S_NAME), i.get_snort_config());
+    DataBus::subscribe_global(ftp_pub_key, FtpEventIds::FTP_RESPONSE,
+        new Resp(*this, S_NAME), i.get_snort_config());
 }
 
 void FtpExtractor::internal_tinit(const snort::Connector::ID* service_id)
@@ -535,13 +527,7 @@ void FtpExtractor::Req::handle(DataEvent& event, Flow* flow)
     // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
-    uint32_t tid = 0;
-
-#ifndef DISABLE_TENANT_ID
-    tid = flow->key->tenant_id;
-#endif
-
-    if (owner.tenant_id != tid)
+    if (!owner.filter(flow))
         return;
 
     extractor_stats.total_event++;
@@ -592,13 +578,7 @@ void FtpExtractor::Resp::handle(DataEvent& event, Flow* flow)
     // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
-    uint32_t tid = 0;
-
-#ifndef DISABLE_TENANT_ID
-    tid = flow->key->tenant_id;
-#endif
-
-    if (owner.tenant_id != tid)
+    if (!owner.filter(flow))
         return;
 
     extractor_stats.total_event++;

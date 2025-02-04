@@ -30,7 +30,7 @@ public:
         HTTP,
         FTP,
         CONN,
-        UNDEFINED,
+        ANY,
         MAX
     };
 
@@ -51,15 +51,15 @@ public:
             return "ftp";
         case CONN:
             return "conn";
-        case UNDEFINED: // fallthrough
-        case MAX:       // fallthrough
+        case ANY: // fallthrough
+        case MAX: // fallthrough
         default:
             return "(not set)";
         }
     }
 
 private:
-    Value v = UNDEFINED;
+    Value v = ANY;
 };
 
 class FormatType

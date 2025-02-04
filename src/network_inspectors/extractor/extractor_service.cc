@@ -87,8 +87,6 @@ void ExtractorService::add_events(const std::vector<std::string>& vals)
     {
         if (find_event(val))
             events.push_back(val);
-        else
-            ParseWarning(WARN_CONF_STRICT, "unsupported '%s' event in protocols.on_events", val.c_str());
     }
 }
 
@@ -98,8 +96,6 @@ void ExtractorService::add_fields(const std::vector<std::string>& vals)
     {
         if (find_field(val))
             fields.push_back(val);
-        else
-            ParseWarning(WARN_CONF_STRICT, "unsupported '%s' field in protocols.fields", val.c_str());
     }
 }
 
@@ -107,7 +103,7 @@ ExtractorService* ExtractorService::make_service(Extractor& ins, const ServiceCo
 {
     if (cfg.on_events.empty())
     {
-        ParseError("%s service misses on_events field", cfg.service.c_str());
+        ErrorMessage("Extractor: %s service misses on_events field\n", cfg.service.c_str());
         return nullptr;
     }
 
@@ -127,9 +123,9 @@ ExtractorService* ExtractorService::make_service(Extractor& ins, const ServiceCo
         srv = new ConnExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, ins);
         break;
 
-    case ServiceType::UNDEFINED: // fallthrough
+    case ServiceType::ANY: // fallthrough
     default:
-        ParseError("'%s' service is not supported", cfg.service.c_str());
+        ErrorMessage("Extractor: '%s' service is not supported\n", cfg.service.c_str());
     }
 
     return srv;
@@ -137,15 +133,12 @@ ExtractorService* ExtractorService::make_service(Extractor& ins, const ServiceCo
 
 bool ExtractorService::find_event(const std::string& event) const
 {
-    return std::find(sbp.supported_events.begin(), sbp.supported_events.end(), event)
-        != sbp.supported_events.end();
+    return find_event(sbp, event);
 }
 
 bool ExtractorService::find_field(const std::string& field) const
 {
-    return ((std::find(common_fields.begin(), common_fields.end(), field) != common_fields.end()) or
-        (std::find(sbp.supported_fields.begin(), sbp.supported_fields.end(),field)
-          != sbp.supported_fields.end()));
+    return find_field(sbp, field);
 }
 
 void ExtractorService::show(std::string& str) const
@@ -169,11 +162,70 @@ void ExtractorService::show(std::string& str) const
     str += " }";
 }
 
+bool ExtractorService::find_event(const ServiceBlueprint& sbp, const std::string& event)
+{
+    return std::find(sbp.supported_events.begin(), sbp.supported_events.end(), event)
+        != sbp.supported_events.end();
+}
+
+bool ExtractorService::find_field(const ServiceBlueprint& sbp, const std::string& field)
+{
+    return ((std::find(common_fields.begin(), common_fields.end(), field) != common_fields.end())
+        or (std::find(sbp.supported_fields.begin(), sbp.supported_fields.end(),field)
+        != sbp.supported_fields.end()));
+}
+
+void ExtractorService::validate_events(const ServiceBlueprint& sbp, const std::vector<std::string>& vals)
+{
+    for (const auto& val : vals)
+    {
+        if (!find_event(sbp, val))
+            ParseWarning(WARN_CONF_STRICT, "unsupported '%s' event in protocols.on_events", val.c_str());
+    }
+}
+
+void ExtractorService::validate_fields(const ServiceBlueprint& sbp, const std::vector<std::string>& vals)
+{
+    for (auto& val : vals)
+    {
+        if (!find_field(sbp, val))
+            ParseWarning(WARN_CONF_STRICT, "unsupported '%s' field in protocols.fields\n", val.c_str());
+    }
+}
+
+void ExtractorService::validate(const ServiceConfig& cfg)
+{
+    if (cfg.on_events.empty())
+        ParseError("%s service misses on_events field", cfg.service.c_str());
+
+    switch (cfg.service)
+    {
+    case ServiceType::HTTP:
+        validate_events(HttpExtractorService::blueprint, cfg.on_events);
+        validate_fields(HttpExtractorService::blueprint, cfg.fields);
+        break;
+
+    case ServiceType::FTP:
+        validate_events(FtpExtractorService::blueprint, cfg.on_events);
+        validate_fields(FtpExtractorService::blueprint, cfg.fields);
+        break;
+
+    case ServiceType::CONN:
+        validate_events(ConnExtractorService::blueprint, cfg.on_events);
+        validate_fields(ConnExtractorService::blueprint, cfg.fields);
+        break;
+
+    case ServiceType::ANY: // fallthrough
+    default:
+        ParseError("'%s' service is not supported", cfg.service.c_str());
+    }
+}
+
 //-------------------------------------------------------------------------
 //  HttpExtractorService
 //-------------------------------------------------------------------------
 
-ServiceBlueprint HttpExtractorService::blueprint =
+const ServiceBlueprint HttpExtractorService::blueprint =
 {
     // events
     {
@@ -224,7 +276,7 @@ const snort::Connector::ID& HttpExtractorService::get_log_id()
 //  FtpExtractorService
 //-------------------------------------------------------------------------
 
-ServiceBlueprint FtpExtractorService::blueprint =
+const ServiceBlueprint FtpExtractorService::blueprint =
 {
     // events
     {
@@ -274,7 +326,7 @@ const snort::Connector::ID& FtpExtractorService::get_log_id()
 //  ConnExtractorService
 //-------------------------------------------------------------------------
 
-ServiceBlueprint ConnExtractorService::blueprint =
+const ServiceBlueprint ConnExtractorService::blueprint =
 {
     // events
     {
@@ -326,13 +378,13 @@ TEST_CASE("Service Type", "[extractor]")
         ServiceType http = ServiceType::HTTP;
         ServiceType ftp = ServiceType::FTP;
         ServiceType conn = ServiceType::CONN;
-        ServiceType undef = ServiceType::UNDEFINED;
+        ServiceType any = ServiceType::ANY;
         ServiceType max = ServiceType::MAX;
 
         CHECK_FALSE(strcmp("http", http.c_str()));
         CHECK_FALSE(strcmp("ftp", ftp.c_str()));
         CHECK_FALSE(strcmp("conn", conn.c_str()));
-        CHECK_FALSE(strcmp("(not set)", undef.c_str()));
+        CHECK_FALSE(strcmp("(not set)", any.c_str()));
         CHECK_FALSE(strcmp("(not set)", max.c_str()));
     }
 }

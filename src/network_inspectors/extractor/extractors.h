@@ -30,9 +30,9 @@
 #include "sfip/sf_ip.h"
 #include "time/packet_time.h"
 
+#include "extractor.h"
+#include "extractor_enums.h"
 #include "extractor_logger.h"
-
-class Extractor;
 
 template <typename Ret, class... Context>
 struct DataField
@@ -144,14 +144,19 @@ protected:
         return it != map.end();
     }
 
-    ExtractorEvent(Extractor& i, uint32_t tid) : tenant_id(tid), inspector(i)
-    { }
+    inline bool filter(Flow*);
+
+    ExtractorEvent(ServiceType st, Extractor& i, uint32_t tid)
+        : service_type(st), pick_by_default(i.get_default_filter()), tenant_id(tid), inspector(i) { }
 
     virtual void internal_tinit(const snort::Connector::ID*) = 0;
 
+    static THREAD_LOCAL ExtractorLogger* logger;
+
+    ServiceType service_type;
+    bool pick_by_default;
     uint32_t tenant_id;
     Extractor& inspector;
-    static THREAD_LOCAL ExtractorLogger* logger;
 
     std::vector<NtsField> nts_fields;
     std::vector<SipField> sip_fields;
@@ -163,5 +168,32 @@ protected:
     static const std::map<std::string, ExtractorEvent::SipGetFn> sip_getters;
     static const std::map<std::string, ExtractorEvent::NumGetFn> num_getters;
 };
+
+bool ExtractorEvent::filter(Flow* flow)
+{
+    if (!flow)
+        return false;
+
+    auto& filter = flow->data_log_filtering_state;
+    assert(filter.size() >= ServiceType::MAX);
+
+#ifdef DISABLE_TENANT_ID
+    uint32_t tid = 0;
+#else
+    uint32_t tid = flow->key->tenant_id;
+#endif
+
+    // computed by external filter
+    if (filter.test(ServiceType::ANY))
+        return filter.test(service_type) and tenant_id == tid;
+
+    if (!pick_by_default)
+        return false;
+
+    // extractor sets targeted filtering
+    filter.set(service_type);
+
+    return filter.test(service_type) and tenant_id == tid;
+}
 
 #endif

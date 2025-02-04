@@ -116,9 +116,18 @@ Filtering helps to decrease the amount of traffic being logged. The goal is to
 keep performance overhead low. The check action is performed as early as
 possible, at the beginning of each event handling function.
 
-Currently, filtering by tenant ID is supported.
+Filtering may be performed by external modules or by extractor itself.
+The module stores filtering results on the flow, so it becomes
+cached for the flow. However, tenant ID filter is not cached.
 
-*(Filtering by IP and port ranges yet to be implemented)*
+To override extractor's filtering, an external module sets `ServiceType::ANY`
+bit in the filtering item.
+
+For `extractor.protocols` entries which don't set filtering items,
+`extractor.default_filter` action is applied (until an external module
+re-computes filtering for the flow).
+
+*(IP and port filtering by extractor yet to be implemented)*
 
 ==== Extracting Data
 

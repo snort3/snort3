@@ -37,7 +37,7 @@
 #include "framework/policy_selector.h"
 #include "framework/so_rule.h"
 
-// forward decls we must explicitly include here to 
+// forward decls we must explicitly include here to
 // generate the complete set of API dependencies:
 
 #include "flow/flow.h"

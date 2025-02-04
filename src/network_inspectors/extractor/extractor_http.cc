@@ -157,7 +157,7 @@ static const map<string, HttpExtractor::SubGetFn> sub_getters =
 THREAD_LOCAL const snort::Connector::ID* HttpExtractor::log_id = nullptr;
 
 HttpExtractor::HttpExtractor(Extractor& i, uint32_t t, const vector<string>& fields)
-    : ExtractorEvent(i, t)
+    : ExtractorEvent(ServiceType::HTTP, i, t)
 {
     for (const auto& f : fields)
     {
@@ -175,7 +175,8 @@ HttpExtractor::HttpExtractor(Extractor& i, uint32_t t, const vector<string>& fie
             continue;
     }
 
-    DataBus::subscribe(http_pub_key, HttpEventIds::END_OF_TRANSACTION, new Eot(*this, S_NAME));
+    DataBus::subscribe_global(http_pub_key, HttpEventIds::END_OF_TRANSACTION,
+        new Eot(*this, S_NAME), i.get_snort_config());
 }
 
 void HttpExtractor::internal_tinit(const snort::Connector::ID* service_id)
@@ -200,13 +201,7 @@ void HttpExtractor::handle(DataEvent& event, Flow* flow)
     // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
-    uint32_t tid = 0;
-
-#ifndef DISABLE_TENANT_ID
-    tid = flow->key->tenant_id;
-#endif
-
-    if (tenant_id != tid)
+    if (!filter(flow))
         return;
 
     extractor_stats.total_event++;

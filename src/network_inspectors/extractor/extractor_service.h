@@ -43,6 +43,7 @@ struct ServiceBlueprint
 class ExtractorService
 {
 public:
+    static void validate(const ServiceConfig&);
     static ExtractorService* make_service(Extractor&, const ServiceConfig&);
 
     ExtractorService() = delete;
@@ -83,11 +84,19 @@ protected:
 
     const ServiceBlueprint& sbp;
     const ServiceType type;
+
+private:
+    static void validate_events(const ServiceBlueprint&, const std::vector<std::string>& vals);
+    static void validate_fields(const ServiceBlueprint&, const std::vector<std::string>& vals);
+    static bool find_event(const ServiceBlueprint&, const std::string&);
+    static bool find_field(const ServiceBlueprint&, const std::string&);
 };
 
 class HttpExtractorService : public ExtractorService
 {
 public:
+    static const ServiceBlueprint blueprint;
+
     HttpExtractorService(uint32_t tenant, const std::vector<std::string>& fields,
         const std::vector<std::string>& events, ServiceType, Extractor&);
 
@@ -95,13 +104,14 @@ private:
     const snort::Connector::ID& internal_tinit() override;
     const snort::Connector::ID& get_log_id() override;
 
-    static ServiceBlueprint blueprint;
     static THREAD_LOCAL snort::Connector::ID log_id;
 };
 
 class FtpExtractorService : public ExtractorService
 {
 public:
+    static const ServiceBlueprint blueprint;
+
     FtpExtractorService(uint32_t tenant, const std::vector<std::string>& fields,
         const std::vector<std::string>& events, ServiceType, Extractor&);
 
@@ -109,13 +119,14 @@ private:
     const snort::Connector::ID& internal_tinit() override;
     const snort::Connector::ID& get_log_id() override;
 
-    static ServiceBlueprint blueprint;
     static THREAD_LOCAL snort::Connector::ID log_id;
 };
 
 class ConnExtractorService : public ExtractorService
 {
 public:
+    static const ServiceBlueprint blueprint;
+
     ConnExtractorService(uint32_t tenant, const std::vector<std::string>& fields,
         const std::vector<std::string>& events, ServiceType, Extractor&);
 
@@ -123,7 +134,6 @@ private:
     const snort::Connector::ID& internal_tinit() override;
     const snort::Connector::ID& get_log_id() override;
 
-    static ServiceBlueprint blueprint;
     static THREAD_LOCAL snort::Connector::ID log_id;
 };
 

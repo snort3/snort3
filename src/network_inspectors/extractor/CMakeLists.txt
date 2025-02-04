@@ -1,3 +1,11 @@
+set ( INCLUDES
+    extractor_enums.h
+)
+
+install ( FILES ${INCLUDES}
+    DESTINATION "${INCLUDE_INSTALL_PATH}/network_inspectors/extractor"
+)
+
 set( FILE_LIST
     extractor.cc
     extractor.h

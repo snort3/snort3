@@ -88,7 +88,7 @@ static const map<string, ExtractorEvent::BufGetFn> sub_buf_getters =
 THREAD_LOCAL const snort::Connector::ID* ConnExtractor::log_id = nullptr;
 
 ConnExtractor::ConnExtractor(Extractor& i, uint32_t t, const vector<string>& fields)
-    : ExtractorEvent(i, t)
+    : ExtractorEvent(ServiceType::CONN, i, t)
 {
     for (const auto& f : fields)
     {
@@ -104,7 +104,8 @@ ConnExtractor::ConnExtractor(Extractor& i, uint32_t t, const vector<string>& fie
             continue;
     }
 
-    DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::FLOW_END, new Eof(*this, S_NAME));
+    DataBus::subscribe_global(intrinsic_pub_key, IntrinsicEventIds::FLOW_END,
+        new Eof(*this, S_NAME), i.get_snort_config());
 }
 
 void ConnExtractor::internal_tinit(const snort::Connector::ID* service_id)
@@ -115,16 +116,7 @@ void ConnExtractor::handle(DataEvent& event, Flow* flow)
     // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
 
-    uint32_t tid = 0;
-
-    if ((flow->pkt_type < PktType::IP) or (flow->pkt_type > PktType::ICMP))
-        return;
-
-#ifndef DISABLE_TENANT_ID
-    tid = flow->key->tenant_id;
-#endif
-
-    if (tenant_id != tid)
+    if (flow->pkt_type < PktType::IP or flow->pkt_type > PktType::ICMP or !filter(flow))
         return;
 
     Packet* packet = (DetectionEngine::get_context()) ? DetectionEngine::get_current_packet() : nullptr;
@@ -156,7 +148,7 @@ TEST_CASE("Conn Proto", "[extractor]")
     set_inspection_policy(&ins);
     NetworkPolicy net;
     set_network_policy(&net);
-  
+
     SECTION("unknown")
     {
         flow->pkt_type = PktType::NONE;
