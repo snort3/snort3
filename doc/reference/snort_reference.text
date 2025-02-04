@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.6.2.0 2025-01-19 22:53:58 EST TST
+Revision 3.6.3.0 2025-02-04 00:09:48 EST TST
 
 ---------------------------------------------------------------------
 
@@ -1636,6 +1636,8 @@ Configuration:
     Operation
   * implied snort.--enable-test-features: enable features used in
     testing
+  * string snort.--gen-dump-config: <file> dump configuration to
+    <file_timestamp> during startup and configuration reload
   * implied snort.--gen-msg-map: dump configured rules in gen-msg.map
     format for use by other tools
   * implied snort.--help: show help overview
@@ -3590,7 +3592,7 @@ Configuration:
     csv | json }
   * string extractor.connector: output destination for extractor
   * enum extractor.protocols[].service: service to extract from { 
-    http | ftp }
+    http | ftp | conn }
   * int extractor.protocols[].tenant_id = 0: tenant_id of target
     tenant { 0:max32 }
   * string extractor.protocols[].on_events: specify events to log
@@ -5825,6 +5827,7 @@ Configuration:
 Commands:
 
   * stream.dump_flows(): dump the flow table
+  * stream.dump_flows_summary(): dump the flow summaries
 
 Rules:
 
@@ -9302,6 +9305,8 @@ libraries see the Getting Started section of the manual.
     the version
   * --enable-inline-test enable Inline-Test Mode Operation
   * --enable-test-features enable features used in testing
+  * --gen-dump-config <file> dump configuration to <file_timestamp>
+    during startup and configuration reload
   * --gen-msg-map dump configured rules in gen-msg.map format for use
     by other tools
   * --help show help overview
@@ -9866,7 +9871,7 @@ libraries see the Getting Started section of the manual.
   * string extractor.protocols[].fields: specify fields to log
   * string extractor.protocols[].on_events: specify events to log
   * enum extractor.protocols[].service: service to extract from { 
-    http | ftp }
+    http | ftp | conn }
   * int extractor.protocols[].tenant_id = 0: tenant_id of target
     tenant { 0:max32 }
   * string file_connector[].connector: connector name
@@ -11120,6 +11125,8 @@ libraries see the Getting Started section of the manual.
     testing
   * implied snort.-f: turn off fflush() calls after binary log writes
   * int snort.-G: <0xid> (same as --logid) { 0:65535 }
+  * string snort.--gen-dump-config: <file> dump configuration to
+    <file_timestamp> during startup and configuration reload
   * implied snort.--gen-msg-map: dump configured rules in gen-msg.map
     format for use by other tools
   * string snort.-g: <gname> run snort gid as <gname> group (or gid)
@@ -16325,6 +16332,7 @@ alert is raised by the enhanced JavaScript normalizer.
   * snort.quit(): shutdown and dump-stats
   * snort.help(): this output
   * stream.dump_flows(): dump the flow table
+  * stream.dump_flows_summary(): dump the flow summaries
   * trace.set(modules, constraints, ntuple, timestamp): set modules
     traces, constraints, ntuple and timestamp options
   * trace.clear(): clear modules traces and constraints

@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.6.2.0 2025-01-19 22:54:24 EST TST
+Revision 3.6.3.0 2025-02-04 00:10:05 EST TST
 
 ---------------------------------------------------------------------
 
@@ -2761,6 +2761,10 @@ The dump mode is activated by the following options:
 --dump-config-text, --dump-config=all, --dump-config=top. They are
 described in detail below.
 
+The --gen-dump-config <file> option enables Snort to generate a dump
+configuration file with a timestamp and config generation ID during
+startup and reload.
+
 The simple configuration is used in examples. The output contains
 applied configurations (defaults and configured). To simplify the
 output we show a brief list of default options.
@@ -3040,6 +3044,18 @@ Example: snort -c snort.lua --dump-config=top | jq .
         "show_rebuilt_packets": true
     },
 }
+
+5.5.3. Configuration Dump Generation During Startup and Reload
+
+The --gen-dump-config <file> option dumps configuration in a file in
+JSON format, similar to the --dump-config=all option. It creates a
+file during startup and reload, with the specified name, timestamp
+and config generation ID appended.
+
+Example: snort -c snort.lua --gen-dump-config dump_output
+
+After execution, the "dump_output_<timestamp>_<config_gen_id>" file
+will be generated.
 
 
 5.6. DCE Inspectors
@@ -5843,7 +5859,8 @@ extractor =
     {
         { service = 'http', tenant_id = 1, on_events = 'eot', fields = 'ts, uri, host, method' },
         { service = 'ftp', tenant_id = 1, on_events = 'request', fields = 'ts, command, arg' },
-        { service = 'http', tenant_id = 2, on_events = 'eot', fields = 'ts, uri' }
+        { service = 'http', tenant_id = 2, on_events = 'eot', fields = 'ts, uri' },
+        { service = 'conn', tenant_id = 1, on_events = 'eof', fields = 'ts, uid, service' }
     }
 }
 
@@ -5860,6 +5877,9 @@ Services and their events:
       + response
       + eot (a session defined by the following commands: APPE, DELE,
         RETR, STOR, STOU, ACCT, PORT, PASV, EPRT, EPSV)
+  * connection (conn)
+
+      + eof (end of flow)
 
 Common fields available for every service:
 
@@ -5898,6 +5918,14 @@ Fields supported for FTP:
   * data_channel.orig_h - IP address of data channel originator
   * data_channel.resp_h - IP address of data channel receiving point
   * data_channel.resp_p - TCP port of data channel receiving point
+
+Fields supported for connection:
+
+  * duration - connection duration in seconds
+  * proto - transport layer protocol of the connection
+  * service - connection’s application protocol
+  * orig_pkts - number of packets originator sent
+  * resp_pkts - number of packets responder sent
 
 5.18.3. Example
 

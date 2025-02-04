@@ -1,3 +1,22 @@
+2025-02-03: 3.6.3.0
+
+* appid: added check for brute force manager presence
+* dump_config: implement dump config generation in a file
+* extractor: add handling for connector creation failure
+* extractor: support connection logs
+* file: malware and file events when action changed from block malware to cloud malware lookup event
+* file: retrying the packet when file cache is full
+* flow: add command that dumps only flow summaries
+* framework: remove inspector slot and use get_instance_id instead
+* ftp_telnet: only add expected flows when the daq_msg field in the control packet is not null.
+* hosts: added check to verify ip protocol match on hosts lookup
+* main: add thread_id in instance_mapping output file
+* main: acquire TSC time scale at the startup
+* mercury: telemetry file changes for multiprocess snort
+* packet_io: check the DAQ_Msg_h parameter on api calls and return an error code when it is a null pointer
+* perf_monitor: update structure clearing to C++ method
+* perf_monitor: update flow state value reset
+
 2025-01-19: 3.6.2.0
 
 * appid: adding thresholds to brute-force detection
