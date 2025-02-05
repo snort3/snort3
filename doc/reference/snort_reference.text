@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.6.3.0 2025-02-04 00:09:48 EST TST
+Revision 3.7.0.0 2025-02-04 17:21:58 EST TST
 
 ---------------------------------------------------------------------
 
@@ -3591,6 +3591,8 @@ Configuration:
   * enum extractor.formatting = csv: output format for extractor { 
     csv | json }
   * string extractor.connector: output destination for extractor
+  * enum extractor.default_filter = pick: default action for protocol
+    with no filter provided { pick | skip }
   * enum extractor.protocols[].service: service to extract from { 
     http | ftp | conn }
   * int extractor.protocols[].tenant_id = 0: tenant_id of target
@@ -9866,6 +9868,8 @@ libraries see the Getting Started section of the manual.
   * bool event_queue.process_all_events = false: process just first
     action group or all action groups
   * string extractor.connector: output destination for extractor
+  * enum extractor.default_filter = pick: default action for protocol
+    with no filter provided { pick | skip }
   * enum extractor.formatting = csv: output format for extractor { 
     csv | json }
   * string extractor.protocols[].fields: specify fields to log

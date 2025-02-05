@@ -1,3 +1,12 @@
+2025-02-04: 3.7.0.0
+
+* extractor: add default filter
+* extractor: add logging constraints
+* framework: add interface to warn about reaching limit of ips opt re-usage
+* framework: bump base API version
+* framework: bump ips option version
+* ips_options: warn about excessive detection options
+
 2025-02-03: 3.6.3.0
 
 * appid: added check for brute force manager presence
