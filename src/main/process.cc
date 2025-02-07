@@ -755,8 +755,7 @@ void CreatePidFile(pid_t pid)
 {
     SnortConfig* sc = SnortConfig::get_main_conf();
 
-    sc->pid_filename = sc->log_dir;
-    sc->pid_filename += "/snort.pid";
+    sc->pid_filename = sc->log_dir + '/' + sc->pid_filename;
 
     std::string pid_lockfilename;
 

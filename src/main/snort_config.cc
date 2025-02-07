@@ -586,6 +586,19 @@ void SnortConfig::set_create_pid_file(bool enabled)
         run_flags &= ~RUN_FLAG__CREATE_PID_FILE;
 }
 
+void SnortConfig::set_pid_filename(const char* name)
+{
+    if (name && name[0] != '\0')
+        pid_filename = name;
+    else
+        pid_filename = DEFAULT_PID_FILENAME;
+}
+
+void SnortConfig::set_max_procs(uint8_t n)
+{
+    max_procs = n;
+}
+
 void SnortConfig::set_daemon(bool enabled)
 {
     if (enabled)
