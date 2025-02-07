@@ -89,12 +89,6 @@ TEST(pub_sub_ftp_events_test, ftp_request_event)
     CHECK(event.get_request().cmd_size == 4);
     CHECK(param == "file.txt");
     CHECK(event.get_request().param_size == 8);
-
-    InetBuf src;
-    sfip_ntop(&event.get_client_ip(), src, sizeof(src));
-    std::string client = src;
-    CHECK(client == "10.10.10.1");
-    CHECK(event.get_client_port() == 40000);
 }
 
 TEST(pub_sub_ftp_events_test, ftp_response_event)

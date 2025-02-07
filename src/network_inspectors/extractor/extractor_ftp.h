@@ -44,8 +44,8 @@ private:
 class FtpResponseExtractor : public ExtractorEvent
 {
 public:
-    using SubGetFn = int8_t (*) (const DataEvent*, const Packet*, const Flow*);
-    using SubField = DataField<int8_t, const DataEvent*, const Packet*, const Flow*>;
+    using SubGetFn = int8_t (*) (const DataEvent*, const Flow*);
+    using SubField = DataField<int8_t, const DataEvent*, const Flow*>;
 
     FtpResponseExtractor(Extractor&, uint32_t tenant, const std::vector<std::string>& fields);
 

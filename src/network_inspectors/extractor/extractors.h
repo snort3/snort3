@@ -52,22 +52,25 @@ public:
     using Packet = snort::Packet;
     using SfIp = snort::SfIp;
 
-    using BufGetFn = const char* (*) (const DataEvent*, const Packet*, const Flow*);
-    using BufField = DataField<const char*, const DataEvent*, const Packet*, const Flow*>;
-    using SipGetFn = const SfIp& (*) (const DataEvent*, const Packet*, const Flow*);
-    using SipField = DataField<const SfIp&, const DataEvent*, const Packet*, const Flow*>;
-    using NumGetFn = uint64_t (*) (const DataEvent*, const Packet*, const Flow*);
-    using NumField = DataField<uint64_t, const DataEvent*, const Packet*, const Flow*>;
-    using NtsGetFn = struct timeval (*) (const DataEvent*, const Packet*, const Flow*);
-    using NtsField = DataField<struct timeval, const DataEvent*, const Packet*, const Flow*>;
-    using StrGetFn = std::pair<const char*, uint16_t> (*) (const DataEvent*, const Packet*, const Flow*);
-    using StrField = DataField<std::pair<const char*, uint16_t>, const DataEvent*, const Packet*, const Flow*>;
+    using BufGetFn = const char* (*) (const DataEvent*, const Flow*);
+    using BufField = DataField<const char*, const DataEvent*, const Flow*>;
+    using SipGetFn = const SfIp& (*) (const DataEvent*, const Flow*);
+    using SipField = DataField<const SfIp&, const DataEvent*, const Flow*>;
+    using NumGetFn = uint64_t (*) (const DataEvent*, const Flow*);
+    using NumField = DataField<uint64_t, const DataEvent*, const Flow*>;
+    using NtsGetFn = struct timeval (*) (const DataEvent*, const Flow*);
+    using NtsField = DataField<struct timeval, const DataEvent*, const Flow*>;
+    using StrGetFn = std::pair<const char*, uint16_t> (*) (const DataEvent*, const Flow*);
+    using StrField = DataField<std::pair<const char*, uint16_t>, const DataEvent*, const Flow*>;
 
     static snort::FlowHashKeyOps& get_hash()
     {
         static thread_local snort::FlowHashKeyOps flow_key_ops(0);
         return flow_key_ops;
     }
+
+    static const snort::Packet* get_packet()
+    { return snort::DetectionEngine::get_context() ? snort::DetectionEngine::get_current_packet() : nullptr; }
 
     virtual ~ExtractorEvent() {}
 
@@ -88,8 +91,10 @@ protected:
         T& owner;
     };
 
-    static struct timeval get_timestamp(const DataEvent*, const Packet* p, const Flow*)
+    static struct timeval get_timestamp(const DataEvent*, const Flow*)
     {
+        const Packet* p = ExtractorEvent::get_packet();
+
         if (p != nullptr)
             return p->pkth->ts;
 
@@ -98,22 +103,29 @@ protected:
         return timestamp;
     }
 
-    static const SfIp& get_ip_src(const DataEvent*, const Packet*, const Flow* flow)
+    static const SfIp& get_ip_src(const DataEvent*, const Flow* flow)
     { return flow->flags.client_initiated ? flow->client_ip : flow->server_ip; }
 
-    static const SfIp& get_ip_dst(const DataEvent*, const Packet*, const Flow* flow)
+    static const SfIp& get_ip_dst(const DataEvent*, const Flow* flow)
     { return flow->flags.client_initiated ? flow->server_ip : flow->client_ip; }
 
-    static uint64_t get_ip_src_port(const DataEvent*, const Packet*, const Flow* flow)
+    static uint64_t get_ip_src_port(const DataEvent*, const Flow* flow)
     { return flow->client_port; }
 
-    static uint64_t get_ip_dst_port(const DataEvent*, const Packet*, const Flow* flow)
+    static uint64_t get_ip_dst_port(const DataEvent*, const Flow* flow)
     { return flow->server_port; }
 
-    static uint64_t get_pkt_num(const DataEvent*, const Packet* p, const Flow*)
-    { return (p != nullptr) ? p->context->packet_number : 0; }
+    static uint64_t get_pkt_num(const DataEvent*, const Flow*)
+    {
+        const Packet* p = ExtractorEvent::get_packet();
 
-    static uint64_t get_uid(const DataEvent*, const Packet*, const Flow* flow)
+        if (p != nullptr)
+            return p->context->packet_number;
+
+        return 0;
+    }
+
+    static uint64_t get_uid(const DataEvent*, const Flow* flow)
     { return ExtractorEvent::get_hash().do_hash((const unsigned char*)flow->key, 0); }
 
     template<typename T, class... Context>
@@ -123,11 +135,11 @@ protected:
             logger->add_field(f.name, f.get(context...));
     }
 
-    void log(const std::vector<StrField>& fields, DataEvent* event, Packet* pkt, Flow* flow, bool strict)
+    void log(const std::vector<StrField>& fields, DataEvent* event, Flow* flow, bool strict)
     {
         for (const auto& f : fields)
         {
-            const auto& str = f.get(event, pkt, flow);
+            const auto& str = f.get(event, flow);
             if (str.second > 0)
                 logger->add_field(f.name, (const char*)str.first, str.second);
             else if (strict)

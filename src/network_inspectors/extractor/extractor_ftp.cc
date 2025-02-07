@@ -45,19 +45,19 @@ using namespace std;
 
 namespace req
 {
-static pair<const char*, uint16_t> get_cmd(const DataEvent* event, const Packet*, const Flow*)
+static pair<const char*, uint16_t> get_cmd(const DataEvent* event, const Flow*)
 {
     const auto& req = ((const FtpRequestEvent*)event)->get_request();
     return {req.cmd_begin, req.cmd_size};
 }
 
-static pair<const char*, uint16_t> get_arg(const DataEvent* event, const Packet*, const Flow*)
+static pair<const char*, uint16_t> get_arg(const DataEvent* event, const Flow*)
 {
     const auto& req = ((const FtpRequestEvent*)event)->get_request();
     return {req.param_begin, req.param_size};
 }
 
-static pair<const char*, uint16_t> get_user(const DataEvent* event, const Packet*, const Flow*)
+static pair<const char*, uint16_t> get_user(const DataEvent* event, const Flow*)
 {
     const auto& req = ((const FtpRequestEvent*)event)->get_request();
     const auto cmd = string(req.cmd_begin, req.cmd_size);
@@ -109,13 +109,11 @@ void FtpRequestExtractor::handle(DataEvent& event, Flow* flow)
 
     extractor_stats.total_event++;
 
-    Packet* packet = DetectionEngine::get_current_packet();
-
     logger->open_record();
-    log(nts_fields, &event, packet, flow);
-    log(sip_fields, &event, packet, flow);
-    log(num_fields, &event, packet, flow);
-    log(str_fields, &event, packet, flow, logger->is_strict());
+    log(nts_fields, &event, flow);
+    log(sip_fields, &event, flow);
+    log(num_fields, &event, flow);
+    log(str_fields, &event, flow, logger->is_strict());
     logger->close_record(*log_id);
 }
 
@@ -141,19 +139,19 @@ static uint64_t parse_last_num(const char *str, uint16_t size)
 
 namespace resp
 {
-static pair<const char*, uint16_t> get_code(const DataEvent* event, const Packet*, const Flow*)
+static pair<const char*, uint16_t> get_code(const DataEvent* event, const Flow*)
 {
     const auto& response = ((const FtpResponseEvent*)event)->get_response();
     return {response.rsp_begin, response.rsp_size};
 }
 
-static pair<const char*, uint16_t> get_msg(const DataEvent* event, const Packet*, const Flow*)
+static pair<const char*, uint16_t> get_msg(const DataEvent* event, const Flow*)
 {
     const auto& response = ((const FtpResponseEvent*)event)->get_response();
     return {response.msg_begin, response.msg_size};
 }
 
-static const SfIp& get_orig_ip(const DataEvent* event, const Packet*, const Flow*)
+static const SfIp& get_orig_ip(const DataEvent* event, const Flow*)
 {
     if (((const FtpResponseEvent*)event)->is_passive())
         return ((const FtpResponseEvent*)event)->get_client_ip();
@@ -161,7 +159,7 @@ static const SfIp& get_orig_ip(const DataEvent* event, const Packet*, const Flow
         return ((const FtpResponseEvent*)event)->get_server_ip();
 }
 
-static const SfIp& get_resp_ip(const DataEvent* event, const Packet*, const Flow*)
+static const SfIp& get_resp_ip(const DataEvent* event, const Flow*)
 {
     if (((const FtpResponseEvent*)event)->is_passive())
         return ((const FtpResponseEvent*)event)->get_server_ip();
@@ -169,7 +167,7 @@ static const SfIp& get_resp_ip(const DataEvent* event, const Packet*, const Flow
         return ((const FtpResponseEvent*)event)->get_client_ip();
 }
 
-static uint64_t get_resp_port(const DataEvent* event, const Packet*, const Flow*)
+static uint64_t get_resp_port(const DataEvent* event, const Flow*)
 {
     if (((const FtpResponseEvent*)event)->is_passive())
         return (uint64_t)((const FtpResponseEvent*)event)->get_server_port();
@@ -177,7 +175,7 @@ static uint64_t get_resp_port(const DataEvent* event, const Packet*, const Flow*
         return (uint64_t)((const FtpResponseEvent*)event)->get_client_port();
 }
 
-static uint64_t get_file_size(const DataEvent* event, const Packet*, const Flow*)
+static uint64_t get_file_size(const DataEvent* event, const Flow*)
 {
     const auto& resp = ((const FtpResponseEvent*)event)->get_response();
     const auto& code = string(resp.rsp_begin, resp.rsp_size);
@@ -188,7 +186,7 @@ static uint64_t get_file_size(const DataEvent* event, const Packet*, const Flow*
     return 0;
 }
 
-static int8_t get_mode(const DataEvent* event, const Packet*, const Flow*)
+static int8_t get_mode(const DataEvent* event, const Flow*)
 {
     return ((const FtpResponseEvent*)event)->get_mode();
 }
@@ -248,12 +246,12 @@ void FtpResponseExtractor::internal_tinit(const snort::Connector::ID* service_id
 { log_id = service_id; }
 
 template<>
-void ExtractorEvent::log<vector<FtpResponseExtractor::SubField>, DataEvent*, Packet*, Flow*, bool>(
-    const vector<FtpResponseExtractor::SubField>& fields, DataEvent* event, Packet* pkt, Flow* flow, bool strict)
+void ExtractorEvent::log<vector<FtpResponseExtractor::SubField>, DataEvent*, Flow*, bool>(
+    const vector<FtpResponseExtractor::SubField>& fields, DataEvent* event, Flow* flow, bool strict)
 {
     for (const auto& f : fields)
     {
-        const auto mode = f.get(event, pkt, flow);
+        const auto mode = f.get(event, flow);
         if (mode != FTPP_XFER_NOT_SET)
             mode == FTPP_XFER_PASSIVE ? logger->add_field(f.name, true) : logger->add_field(f.name, false);
         else if (strict)
@@ -271,14 +269,12 @@ void FtpResponseExtractor::handle(DataEvent& event, Flow* flow)
 
     extractor_stats.total_event++;
 
-    Packet* packet = DetectionEngine::get_current_packet();
-
     logger->open_record();
-    log(nts_fields, &event, packet, flow);
-    log(sip_fields, &event, packet, flow);
-    log(num_fields, &event, packet, flow);
-    log(str_fields, &event, packet, flow, logger->is_strict());
-    log(sub_fields, &event, packet, flow, logger->is_strict());
+    log(nts_fields, &event, flow);
+    log(sip_fields, &event, flow);
+    log(num_fields, &event, flow);
+    log(str_fields, &event, flow, logger->is_strict());
+    log(sub_fields, &event, flow, logger->is_strict());
     logger->close_record(*log_id);
 }
 
@@ -532,7 +528,6 @@ void FtpExtractor::Req::handle(DataEvent& event, Flow* flow)
 
     extractor_stats.total_event++;
 
-    Packet* p = DetectionEngine::get_current_packet();
     auto fd = ExtractorFlowData::get<FtpExtractorFlowData>(flow);
 
     if (!fd)
@@ -541,9 +536,9 @@ void FtpExtractor::Req::handle(DataEvent& event, Flow* flow)
     {
         // log existing flow data
         owner.logger->open_record();
-        owner.log(owner.nts_fields, &event, p, flow);
-        owner.log(owner.sip_fields, &event, p, flow);
-        owner.log(owner.num_fields, &event, p, flow);
+        owner.log(owner.nts_fields, &event, flow);
+        owner.log(owner.sip_fields, &event, flow);
+        owner.log(owner.num_fields, &event, flow);
         owner.log(owner.fd_buf_fields, (const FtpExtractorFlowData*)fd);
         owner.log(owner.fd_sip_fields, (const FtpExtractorFlowData*)fd);
         owner.log(owner.fd_num_fields, (const FtpExtractorFlowData*)fd);
@@ -569,7 +564,13 @@ void FtpExtractor::Req::handle(DataEvent& event, Flow* flow)
     fd->cmd = cmd;
     fd->arg = string(req.param_begin, req.param_size);
 
-    fd->ts = p->pkth->ts;
+    const Packet* packet = ExtractorEvent::get_packet();
+
+    if (packet)
+        fd->ts = packet->pkth->ts;
+    else
+        snort::packet_gettimeofday(&fd->ts);
+
     fd->has_data = true;
 }
 

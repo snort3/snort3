@@ -25,8 +25,8 @@
 class ConnExtractor : public ExtractorEvent
 {
 public:
-    using ConnNumGetFn = uint64_t (*) (const DataEvent*, const Packet*, const Flow*);
-    using ConnNumField = DataField<uint64_t, const DataEvent*, const Packet*, const Flow*>;
+    using ConnNumGetFn = uint64_t (*) (const DataEvent*, const Flow*);
+    using ConnNumField = DataField<uint64_t, const DataEvent*, const Flow*>;
 
     ConnExtractor(Extractor&, uint32_t tenant, const std::vector<std::string>& fields);
 

@@ -47,12 +47,6 @@ public:
     const FTP_CLIENT_REQ& get_request() const
     { return session.client.request; }
 
-    uint64_t get_client_port() const
-    { return (uint64_t)session.clientPort; }
-
-    const snort::SfIp& get_client_ip() const
-    { return session.clientIP; }
-
 private:
     const FTP_SESSION& session;
 };
