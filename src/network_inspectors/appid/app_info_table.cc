@@ -56,14 +56,14 @@ static const char* APP_CONFIG_FILE = "appid.conf";
 static const char* USR_CONFIG_FILE = "userappid.conf";
 const char* APP_MAPPING_FILE = "appMapping.data";
 
-AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name)
-    : appId(id), serviceId(id), clientId(id), payloadId(id), app_name(name)
+AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name, uint32_t attr)
+    : appId(id), serviceId(id), clientId(id), payloadId(id), app_name(name), attributes(attr)
 {
     app_name_key = AppInfoManager::strdup_to_lower(name);
 }
 
-AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name, AppId sid, AppId cid, AppId pid) :
-    appId(id), serviceId(sid), clientId(cid), payloadId(pid), app_name(name)
+AppInfoTableEntry::AppInfoTableEntry(AppId id, char* name, AppId sid, AppId cid, AppId pid, uint32_t attr) :
+    appId(id), serviceId(sid), clientId(cid), payloadId(pid), app_name(name), attributes(attr)
 {
     app_name_key = AppInfoManager::strdup_to_lower(name);
 }
@@ -762,7 +762,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
         while (fgets(buf, sizeof(buf), tableFile))
         {
             AppId app_id;
-            uint32_t client_id, service_id, payload_id;
+            uint32_t client_id, service_id, payload_id, attributes = 0;
             char* app_name;
             char* context;
 
@@ -809,15 +809,49 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
             }
             payload_id = strtoul(token, nullptr, 10);
 
-            AppInfoTableEntry* entry = new AppInfoTableEntry(app_id, app_name, service_id,
-                client_id, payload_id);
-
             /* snort service key, if it exists */
+            const char* snort_service_key = strtok_r(nullptr, CONF_SEPARATORS, &context); 
+            /* skipping 7th column app_snort_key*/
+            strtok_r(nullptr, CONF_SEPARATORS, &context);
+            /* parsing 8th column attributes*/
             token = strtok_r(nullptr, CONF_SEPARATORS, &context);
+            if (token) 
+            { 
+                char attr_token_buffer[MAX_TABLE_LINE_LEN]; 
+                strncpy(attr_token_buffer, token, sizeof(attr_token_buffer) - 1); 
+                attr_token_buffer[sizeof(attr_token_buffer) - 1] = '\0';
+                char* attr_token; 
+                char* attr_context; 
+                attr_token = strtok_r(attr_token_buffer, ",", &attr_context); 
+                while (attr_token) 
+                { 
+                    if (strcmp(attr_token, "~") == 0) 
+                    { 
+                        attributes |= ATTR_EMPTY; 
+                        break; 
+                    } 
+                    if (strcmp(attr_token, "evasivevpn") == 0) 
+                    { 
+                        attributes |= ATTR_APPEVASIVEVPN; 
+                    } 
+                    else if (strcmp(attr_token, "encrypteddns") == 0) 
+                    { 
+                        attributes |= ATTR_APPENCRYPTEDDNS; 
+                    } 
+                    else if (strcmp(attr_token, "multihopproxy")== 0) 
+                    { 
+                        attributes |=  ATTR_APPMULTIHOPPROXY;  
+                    } 
+                attr_token = strtok_r(nullptr, ",", &attr_context); 
+                } 
+            }
 
-            // FIXIT-RC: Sometimes the token is "~". Should we ignore those?
-            if (token)
-                entry->snort_protocol_id = add_appid_protocol_reference(token, sc);
+            AppInfoTableEntry* entry = new AppInfoTableEntry(app_id, app_name, service_id,
+                client_id, payload_id, attributes);
+
+             // FIXIT-RC: Sometimes the token is "~". Should we ignore those?
+            if (snort_service_key) 
+                entry->snort_protocol_id = add_appid_protocol_reference(snort_service_key, sc);
 
             if (!add_entry_to_app_info_name_table(entry->app_name_key, entry))
                 delete entry;
@@ -848,5 +882,14 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
                 USR_CONFIG_FILE);
         load_odp_config(odp_ctxt, filepath);
     }
+}
+
+uint32_t AppInfoManager::getAttributeBits(AppId id) 
+{  
+    AppInfoTableEntry* entry = get_app_info_entry(id); 
+    if (! entry) { 
+        return 0;    
+    } 
+    return entry->attributes;  
 }
 

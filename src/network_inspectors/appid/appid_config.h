@@ -279,6 +279,16 @@ public:
     {
         return user_data_map;
     }
+
+    void set_appid_shadow_traffic_status(bool status)
+    { 
+        appid_shadow_traffic_status = status; 
+    }
+
+    bool get_appid_shadow_traffic_status() const
+    { 
+        return appid_shadow_traffic_status; 
+    }
  
     unsigned get_pattern_count();
     void add_port_service_id(IpProtocol, uint16_t, AppId);
@@ -315,6 +325,7 @@ private:
 
     uint32_t version;
     static uint32_t next_version;
+    bool appid_shadow_traffic_status = true;
 };
 
 class OdpThreadContext

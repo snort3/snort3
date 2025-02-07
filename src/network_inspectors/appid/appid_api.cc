@@ -287,3 +287,13 @@ void AppIdApi::reset_appid_cpu_profiler_stats()
     OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
     odp_ctxt.get_appid_cpu_profiler_mgr().cleanup_appid_cpu_profiler_table();
 }
+
+void AppIdApi::update_shadow_traffic_status(bool status)
+{
+   AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
+    if (!inspector)
+        return;
+    const AppIdContext& ctxt = inspector->get_ctxt();
+    OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
+    odp_ctxt.set_appid_shadow_traffic_status(status);
+}

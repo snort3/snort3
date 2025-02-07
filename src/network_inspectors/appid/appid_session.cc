@@ -34,6 +34,7 @@
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "pub_sub/appid_events.h"
+#include "pub_sub/shadowtraffic_aggregator.h"
 #include "stream/stream.h"
 #include "target_based/snort_protocols.h"
 #include "time/packet_time.h"
@@ -154,6 +155,15 @@ AppIdSession::~AppIdSession()
     if ((pkt_thread_odp_ctxt->get_version() == api.asd->get_odp_ctxt_version()) and api.asd->get_odp_ctxt().is_appid_cpu_profiler_running())
     {
         api.asd->get_odp_ctxt().get_appid_cpu_profiler_mgr().check_appid_cpu_profiler_table_entry(api.asd, api.get_service_app_id(), api.get_client_app_id(), api.get_payload_app_id(), api.get_misc_app_id());
+    }
+ 
+    if ((pkt_thread_odp_ctxt->get_version() == api.asd->get_odp_ctxt_version()) and api.asd->get_odp_ctxt().get_appid_shadow_traffic_status())
+    { 
+        if (get_shadow_traffic_publishing_appid() > APP_ID_NONE)
+        {
+            if (api.asd->appid_shadow_traffic_bits != 0)
+                api.asd->publish_shadow_traffic_event(api.asd->appid_shadow_traffic_bits, api.asd->flow);
+        } 
     }
 
     if (!in_expected_cache)
@@ -1197,6 +1207,36 @@ void AppIdSession::set_tp_payload_app_id(const Packet& p, AppidSessionDirection 
     }
 }
 
+void AppIdSession::publish_shadow_traffic_event(const uint32_t &shadow_traffic_bits, snort::Flow *) const
+{
+    if (shadow_traffic_bits == 0) 
+        return;
+     
+    const char* app_name;
+    unsigned shadow_traffic_pub_id = 0;
+    std::string str_print; 
+
+    AppId publishing_appid = get_shadow_traffic_publishing_appid();
+    app_name = api.asd->get_odp_ctxt().get_app_info_mgr().get_app_name(publishing_appid);
+    if (app_name == nullptr)
+    {
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Appname is invalid, not publishing shadow traffic event without appname\n");
+        return;
+    }
+
+    shadow_traffic_pub_id = DataBus::get_id(shadowtraffic_pub_key);
+  
+    ShadowTrafficEvent shadow_event(shadow_traffic_bits, "", "", app_name);
+    DataBus::publish(shadow_traffic_pub_id, ShadowTrafficEventIds::SHADOWTRAFFIC_FLOW_DETECTED, shadow_event, flow); 
+
+    if (appidDebug and appidDebug->is_active())
+        change_shadow_traffic_bits_to_string(shadow_traffic_bits, str_print);
+    
+    APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, 
+        "AppID: ShadowTraffic Published event for: %s, application_name: %s(%d)\n", 
+        str_print.c_str(), app_name, publishing_appid);
+} 
+
 void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packet& p,
     bool is_httpx, uint32_t httpx_stream_index)
 {
@@ -1251,4 +1291,47 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
             str.c_str(), httpx_stream_index);
     else
         APPID_LOG(&p, TRACE_DEBUG_LEVEL, "Published event for changes: %s\n",  str.c_str());
+}
+
+void AppIdSession::check_shadow_traffic_bits(AppId id, uint32_t& shadow_bits, AppId& publishing_appid, bool& is_publishing_set)
+{
+   if (id > APP_ID_NONE)
+   {
+        uint32_t attributeBits = api.asd->get_odp_ctxt().get_app_info_mgr().getAttributeBits(id); 
+        if (attributeBits & ATTR_APPENCRYPTEDDNS)
+        {
+            shadow_bits |= ShadowTraffic_Type_Encrypted_DNS;
+            if (!is_publishing_set)
+            {
+                publishing_appid = id;
+                is_publishing_set = true;
+            }
+        }
+    }
+}
+
+void AppIdSession::process_shadow_traffic_appids()
+{
+    uint32_t shadow_bits = 0;
+    AppId publishing_appid = APP_ID_NONE;
+    bool is_publishing_set = false;
+    AppId service_id = api.get_service_app_id();
+    AppId payload_id = api.get_payload_app_id();
+    AppId client_id = api.get_client_app_id();
+    AppId misc_id = api.get_misc_app_id();
+
+    if (service_id > 0)
+        check_shadow_traffic_bits(service_id, shadow_bits, publishing_appid, is_publishing_set);
+    if (payload_id > 0) 
+        check_shadow_traffic_bits(payload_id, shadow_bits, publishing_appid, is_publishing_set);
+    if (client_id > 0)
+        check_shadow_traffic_bits(client_id, shadow_bits, publishing_appid, is_publishing_set);
+    if (misc_id > 0) 
+        check_shadow_traffic_bits(misc_id, shadow_bits, publishing_appid, is_publishing_set); 
+
+    if (shadow_bits != 0)
+    {
+        set_shadow_traffic_bits(shadow_bits);
+        set_shadow_traffic_publishing_appid(publishing_appid);
+    } 
 }

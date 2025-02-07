@@ -40,6 +40,7 @@
 #include "application_ids.h"
 #include "detector_plugins/http_url_patterns.h"
 #include "length_app_cache.h"
+#include "pub_sub/shadowtraffic_aggregator.h"
 #include "service_state.h"
 
 namespace snort
@@ -434,6 +435,9 @@ public:
         AppidChangeBits& change_bits);
     void publish_appid_event(AppidChangeBits&, const snort::Packet&, bool is_httpx = false,
         uint32_t httpx_stream_index = 0);
+    void publish_shadow_traffic_event(const uint32_t& shadow_traffic_bits,snort::Flow*)const;
+    void process_shadow_traffic_appids();
+    void check_shadow_traffic_bits(AppId id, uint32_t& shadow_bits, AppId &publishing_appid, bool& is_publishing_set);
 
     bool need_to_delete_tp_conn(ThirdPartyAppIdContext*) const;
 
@@ -759,6 +763,49 @@ public:
         return get_session_flags(APPID_SESSION_OPPORTUNISTIC_TLS) and !flow->flags.data_decrypted;
     }
 
+    void set_shadow_traffic_bits(uint32_t lv_bits)
+    {
+       appid_shadow_traffic_bits = lv_bits;
+    }
+
+    uint32_t get_shadow_traffic_bits()
+    {
+        return appid_shadow_traffic_bits;
+    }
+
+    void set_shadow_traffic_publishing_appid(AppId id)
+    {
+       shadow_traffic_appid = id; 
+    }
+
+    AppId get_shadow_traffic_publishing_appid() const
+    {
+        return shadow_traffic_appid;
+    }
+    
+    inline void change_shadow_traffic_bits_to_string (const uint32_t& st_bits,std::string& str) const 
+    {  
+        std::string tempStr;
+
+        if (st_bits & ShadowTraffic_Type_Encrypted_DNS) {
+            tempStr.append("Encrypted_DNS ");
+        }
+        if (st_bits & ShadowTraffic_Type_Evasive_VPN) {
+            tempStr.append("Evasive_VPN ");
+        }
+        if (st_bits & ShadowTraffic_Type_Multihop_Proxy) {
+            tempStr.append("Multihop_Proxy ");
+        }
+        if (st_bits & ShadowTraffic_Type_Domain_Fronting) {
+            tempStr.append("Domain_Fronting ");
+        }
+        if (!tempStr.empty()) {
+            tempStr.pop_back();
+        }
+        
+        str.append(tempStr);     
+    } 
+
 private:
     uint16_t prev_httpx_raw_packet = 0;
 
@@ -782,6 +829,8 @@ private:
     bool no_service_candidate = false;
     bool no_service_inspector = false;
     bool client_info_unpublished = false;
+    uint32_t appid_shadow_traffic_bits = 0;
+    AppId shadow_traffic_appid = APP_ID_NONE;
 };
 
 #endif

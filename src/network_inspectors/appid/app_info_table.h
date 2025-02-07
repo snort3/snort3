@@ -38,6 +38,11 @@
 #define SF_APPID_CSD_MIN        1000000
 #define SF_APPID_DYNAMIC_MIN    2000000
 
+#define ATTR_EMPTY 0 
+#define ATTR_APPEVASIVEVPN       (1<<0) 
+#define ATTR_APPMULTIHOPPROXY    (1<<1) 
+#define ATTR_APPENCRYPTEDDNS     (1<<2)
+
 class AppIdConfig;
 class ClientDetector;
 class OdpContext;
@@ -65,8 +70,8 @@ enum AppInfoFlags
 class AppInfoTableEntry
 {
 public:
-    AppInfoTableEntry(AppId id, char* name);
-    AppInfoTableEntry(AppId id, char* name, AppId sid, AppId cid, AppId pid);
+    AppInfoTableEntry(AppId id, char* name, uint32_t attr=0);
+    AppInfoTableEntry(AppId id, char* name, AppId sid, AppId cid, AppId pid, uint32_t attr=0);
     ~AppInfoTableEntry();
 
     AppId appId;
@@ -80,6 +85,7 @@ public:
     ServiceDetector* service_detector = nullptr;
     char* app_name = nullptr;
     char* app_name_key = nullptr;
+    uint32_t attributes = 0;
 };
 
 typedef std::unordered_map<AppId, AppInfoTableEntry*> AppInfoTable;
@@ -138,6 +144,7 @@ public:
     void dump_app_info_table();
     SnortProtocolId add_appid_protocol_reference(const char* protocol, snort::SnortConfig*);
     void dump_appid_configurations(const std::string&) const;
+    uint32_t getAttributeBits(AppId id);
 
 private:
     void load_odp_config(OdpContext&, const char* path);

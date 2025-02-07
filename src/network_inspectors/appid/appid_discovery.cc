@@ -890,5 +890,8 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
     if (PacketTracer::is_daq_activated())
         populate_trace_data(asd);
 
+    if (is_discovery_done and asd.get_shadow_traffic_bits() == 0 )
+        asd.process_shadow_traffic_appids();
+
     asd.publish_appid_event(change_bits, *p);
 }
