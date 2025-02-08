@@ -56,6 +56,7 @@ public:
     uint8_t get_info_code() const;
     const Field& get_info_msg() const;
     const std::string& get_filename(HttpCommon::SourceId) const;
+    const std::string& get_content_type(HttpCommon::SourceId) const;
     const std::string& get_proxied() const;
 
 private:

@@ -71,6 +71,15 @@ Fields supported for HTTP:
 * `status_code` - status code returned by server
 * `status_msg` - status message returned by server
 * `trans_depth` - number of request-response pairs seen in the session
+* `request_body_len` - length of the body, decompressed and normalized, of the HTTP request
+* `response_body_len` - length of the body, decompressed and normalized, of the HTTP response
+* `info_code` - last informational status code returned by the server
+* `info_msg` - last informational reason phrase returned by the server
+* `proxied` - list with the headers associated with proxied requests
+* `orig_filenames` - list with the names of the files sent by client
+* `resp_filenames` - list with the names of the files sent by server
+* `orig_mime_types` - list with the content types of the files sent by client
+* `resp_mime_types` - list with the content types of the files sent by server
 
 Fields supported for FTP:
 

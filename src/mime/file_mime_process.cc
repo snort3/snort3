@@ -374,7 +374,10 @@ bool MimeSession::process_header_line(const uint8_t*& ptr, const uint8_t* eol, c
         {
             setup_attachment_processing();
         }
-        // We don't need the value, so it doesn't matter if we're folding
+
+        int len = extract_content_type((const char*&)header_value_ptr, header_value_len);
+        if (len > 0)
+            content_type.assign((const char*)header_value_ptr, len);
         state_flags &= ~MIME_FLAG_IN_CONTENT_TYPE;
     }
     else if (state_flags & MIME_FLAG_IN_CONT_TRANS_ENC)
@@ -493,7 +496,8 @@ void MimeSession::reset_mime_state()
 }
 
 const uint8_t* MimeSession::process_mime_data_paf(
-    Packet* p, const uint8_t* start, const uint8_t* end, bool upload, FilePosition position)
+    Packet* p, const uint8_t* start, const uint8_t* end, bool upload, FilePosition position,
+    AttachmentBuffer* attachment)
 {
     Flow* flow = p->flow;
     bool done_data = is_end_of_data(flow);
@@ -594,9 +598,19 @@ const uint8_t* MimeSession::process_mime_data_paf(
                     else
                         set_file_data(decomp_buffer, decomp_buf_size, file_counter);
 
-                    attachment.data = decomp_buffer;
-                    attachment.length = decomp_buf_size;
-                    attachment.finished = isFileEnd(position);
+                    if (attachment)
+                    {
+                        attachment->data = decomp_buffer;
+                        attachment->length = decomp_buf_size;
+                        attachment->finished = isFileEnd(position);
+
+                        attachment->started = isFileStart(position);
+                        if (attachment->started)
+                        {
+                            attachment->filename = filename;
+                            attachment->content_type = content_type;
+                        }
+                    }
                 }
 
                 // Process file type/file signature
@@ -664,6 +678,7 @@ void MimeSession::reset_part_state()
 
     // Clear MIME's file data to prepare for next file
     filename.clear();
+    content_type.clear();
     file_counter++;
     file_offset = 0;
     current_file_cache_file_id = 0;
@@ -674,21 +689,20 @@ void MimeSession::reset_part_state()
 // Main function for mime processing
 // This should be called when mime data is available
 const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
-    int data_size, bool upload, FilePosition position)
+    int data_size, bool upload, FilePosition position, AttachmentBuffer* attachment)
 {
     const uint8_t* attach_start = start;
     const uint8_t* attach_end;
 
     const uint8_t* data_end_marker = start + data_size;
 
-    attachment.data = nullptr;
-    attachment.length = 0;
-    attachment.finished = true;
+    if (attachment)
+        attachment->clear();
 
     if (position != SNORT_FILE_POSITION_UNKNOWN)
     {
         process_mime_data_paf(p, attach_start, data_end_marker,
-            upload, position);
+            upload, position, attachment);
         return data_end_marker;
     }
 
@@ -702,7 +716,7 @@ const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
             attach_end = start;
             finalFilePosition(&position);
             process_mime_data_paf(p, attach_start, attach_end,
-                upload, position);
+                upload, position, attachment);
             data_state = STATE_MIME_HEADER;
             return attach_end;
         }
@@ -714,7 +728,7 @@ const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
     {
         updateFilePosition(&position, file_offset);
         process_mime_data_paf(p, attach_start, data_end_marker,
-            upload, position);
+            upload, position, attachment);
     }
 
     return data_end_marker;
@@ -825,6 +839,24 @@ int MimeSession::extract_file_name(const char*& start, int length)
         return (end - start);
     }
     return -1;
+}
+
+int MimeSession::extract_content_type(const char*& start, uint32_t length)
+{
+    assert(start);
+
+    const char* tmp = start;
+    const char* end = start + length;
+
+    while (tmp < end and isspace(*tmp))
+        tmp++;
+    start = tmp;
+
+    while (tmp < end and *tmp != ';' and !isspace(*tmp))
+        tmp++;
+    end = tmp;
+
+    return (end - start);
 }
 
 /*

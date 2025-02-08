@@ -62,6 +62,8 @@ enum FilenameState
 class SO_PUBLIC MimeSession
 {
 public:
+    struct AttachmentBuffer;
+
     MimeSession(Packet*, const DecodeConfig*, MailLogConfig*, uint64_t base_file_id=0,
         const uint8_t* uri=nullptr, const int32_t uri_length=0);
     virtual ~MimeSession();
@@ -73,7 +75,7 @@ public:
     static void exit();
 
     const uint8_t* process_mime_data(Packet*, const uint8_t *data, int data_size,
-        bool upload, FilePosition);
+        bool upload, FilePosition, AttachmentBuffer* attachment = nullptr);
 
     int get_data_state();
     void set_data_state(int);
@@ -85,15 +87,6 @@ public:
 
     const BufferData& get_ole_buf();
     const BufferData& get_vba_inspect_buf();
-
-    struct AttachmentBuffer
-    {
-        const uint8_t* data = nullptr;
-        uint32_t length = 0;
-        bool finished = true;
-    };
-
-    const AttachmentBuffer get_attachment() { return attachment; }
 
 protected:
     MimeDecode* decode_state = nullptr;
@@ -108,6 +101,7 @@ private:
     MimeStats* mime_stats = nullptr;
     FilenameState filename_state = CONT_DISP_FILENAME_PARAM_NAME;
     std::string filename;
+    std::string content_type;
     std::string host_name {""};
     bool host_set = false;
     bool continue_inspecting_file = true;
@@ -139,16 +133,34 @@ private:
         uint8_t* start_hdr, Packet* p);
     const uint8_t* process_mime_body(const uint8_t* ptr, const uint8_t* data_end, FilePosition);
     const uint8_t* process_mime_data_paf(Packet*, const uint8_t* start, const uint8_t* end,
-        bool upload, FilePosition);
+        bool upload, FilePosition, AttachmentBuffer* attachment);
     int extract_file_name(const char*& start, int length);
+    int extract_content_type(const char*& start, uint32_t length);
+
 
     uint8_t* partial_header = nullptr;      // single header line split into multiple sections
     uint32_t partial_header_len = 0;
     uint8_t* partial_data = nullptr;        // attachment's trailing bytes (suspected boundary)
     uint32_t partial_data_len = 0;
     uint8_t* rebuilt_data = nullptr;        // prepended attachment data for detection module
+};
 
-    AttachmentBuffer attachment;            // decoded and uncompressed file body
+struct MimeSession::AttachmentBuffer
+{
+    std::string filename;
+    std::string content_type;
+    const uint8_t* data = nullptr;
+    uint32_t length = 0;
+    bool started = false;
+    bool finished = true;
+
+    void clear()
+    {
+        data = nullptr;
+        length = 0;
+        started = false;
+        finished = true;
+    }
 };
 }
 #endif

@@ -140,6 +140,11 @@ const std::string& HttpTransactionEndEvent::get_filename(HttpCommon::SourceId sr
     return transaction->get_filename(src_id);
 }
 
+const std::string& HttpTransactionEndEvent::get_content_type(HttpCommon::SourceId src_id) const
+{
+    return transaction->get_content_type(src_id);
+}
+
 const std::string& HttpTransactionEndEvent::get_proxied() const
 {
     if (proxies != nullptr)
@@ -163,9 +168,9 @@ const std::string& HttpTransactionEndEvent::get_proxied() const
         if (val.length() > 0)
         {
             if (!proxies->empty())
-                proxies->append(",");
+                proxies->append(" ");
             proxies->append(hdr.second);
-            proxies->append(" -> ");
+            proxies->append("->");
             proxies->append((const char*)val.start(), val.length());
         }
     }

@@ -347,3 +347,32 @@ const Field& HttpTransaction::get_info_msg() const
 
      return Field::FIELD_NULL;
 }
+
+void HttpTransaction::append_separator_if_needed(HttpCommon::SourceId source_id)
+{
+    static const std::string separator = " ";
+
+    if (!filename[source_id].empty())
+    {
+        filename[source_id].append(separator);
+        content_type[source_id].append(separator);
+    }
+}
+
+void HttpTransaction::add_filename(HttpCommon::SourceId source_id, const char* fname, uint32_t len,
+    const char* ftype, uint32_t tlen)
+{
+    append_separator_if_needed(source_id);
+    if (len)
+        filename[source_id].append(fname, len);
+    if (tlen)
+        content_type[source_id].append(ftype, tlen);
+}
+
+void HttpTransaction::add_filename(HttpCommon::SourceId source_id, const std::string& fname,
+    const std::string& ftype)
+{
+    append_separator_if_needed(source_id);
+    filename[source_id].append(fname);
+    content_type[source_id].append(ftype);
+}

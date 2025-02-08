@@ -192,8 +192,8 @@ TEST(pub_sub_http_transaction_end_event_test, proxied_str_exists)
     HttpMsgHeader* hdr = new HttpMsgHeader((uint8_t*)buf, sizeof(buf), flow_data, SRC_CLIENT, false, flow, &params);
     trans->set_header(hdr, SRC_CLIENT);
     HttpTransactionEndEvent event(trans);
-    const std::string result = "FORWARDED -> odd,X-FORWARDED-FOR -> odd,X-FORWARDED-FROM -> odd,"
-        "CLIENT-IP -> odd,VIA -> odd,XROXY-CONNECTION -> odd,PROXY-CONNECTION -> odd";
+    const std::string result = "FORWARDED->odd X-FORWARDED-FOR->odd X-FORWARDED-FROM->odd "
+        "CLIENT-IP->odd VIA->odd XROXY-CONNECTION->odd PROXY-CONNECTION->odd";
     test_number = 1;
     std::string proxied = event.get_proxied();
     CHECK(proxied == result);

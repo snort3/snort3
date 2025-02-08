@@ -125,12 +125,24 @@ static const char* get_resp_filenames(const DataEvent* event, const Flow*)
     return ((const HttpTransactionEndEvent*)event)->get_filename(HttpCommon::SRC_SERVER).c_str();
 }
 
+static const char* get_orig_mime_types(const DataEvent* event, const Flow*)
+{
+    return ((const HttpTransactionEndEvent*)event)->get_content_type(HttpCommon::SRC_CLIENT).c_str();
+}
+
+static const char* get_resp_mime_types(const DataEvent* event, const Flow*)
+{
+    return ((const HttpTransactionEndEvent*)event)->get_content_type(HttpCommon::SRC_SERVER).c_str();
+}
+
 static const map<string, ExtractorEvent::BufGetFn> sub_buf_getters =
 {
     {"version", get_version},
     {"proxied", get_proxied},
     {"orig_filenames", get_orig_filenames},
-    {"resp_filenames", get_resp_filenames}
+    {"resp_filenames", get_resp_filenames},
+    {"orig_mime_types", get_orig_mime_types},
+    {"resp_mime_types", get_resp_mime_types}
 };
 
 static const map<string, ExtractorEvent::NumGetFn> sub_num_getters =

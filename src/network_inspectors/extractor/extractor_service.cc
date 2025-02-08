@@ -249,7 +249,9 @@ const ServiceBlueprint HttpExtractorService::blueprint =
       "info_msg",
       "proxied",
       "orig_filenames",
-      "resp_filenames"
+      "resp_filenames",
+      "orig_mime_types",
+      "resp_mime_types"
     },
 };
 
