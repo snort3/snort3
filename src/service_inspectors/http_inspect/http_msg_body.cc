@@ -603,6 +603,7 @@ static FilePosition find_range_file_pos(const std::string& hdr_content, bool fro
     if (errno or end_ptr != hdr_content.c_str() + dash_pos)
         return SNORT_FILE_POSITION_UNKNOWN;
 
+    // return middle no matter what range actually is
     if (range_start != 0)
         return SNORT_FILE_MIDDLE;
 
@@ -652,6 +653,7 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
     const bool front = (body_octets == 0) &&
         (session_data->partial_inspected_octets[source_id] == 0);
     const bool back = (session_data->cutter[source_id] == nullptr) || tcp_close;
+    bool is_partially_downloaded = false;
 
     if (session_data->status_code_num != 206 or source_id != SRC_SERVER)
     {
@@ -680,6 +682,8 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
 
         if (file_position == SNORT_FILE_POSITION_UNKNOWN)
             return;
+
+        is_partially_downloaded = true;
     }
 
     const int32_t fp_length = (file_data.length() <=
@@ -695,7 +699,7 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
     uint64_t file_index = get_header(source_id)->get_file_cache_index();
     // Get host from the header field.
     std::string host = get_header(source_id)->get_host_header_field();
-    
+
     const uint8_t* filename_buffer = nullptr;
     uint32_t filename_length = 0;
     const uint8_t* filetype_buffer = nullptr;
@@ -714,7 +718,7 @@ void HttpMsgBody::do_file_processing(const Field& file_data)
     bool continue_processing_file = file_flows->file_process(p, file_index, file_data.start(),
         fp_length, session_data->file_octets[source_id], dir,
         get_header(source_id)->get_multi_file_processing_id(), file_position,
-        filename_buffer, filename_length, uri_buffer, uri_length, host);
+        filename_buffer, filename_length, uri_buffer, uri_length, host, is_partially_downloaded);
     if (continue_processing_file)
     {
         session_data->file_depth_remaining[source_id] -= fp_length;

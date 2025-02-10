@@ -97,7 +97,7 @@ public:
     bool file_process(Packet* p, uint64_t file_id, const uint8_t* file_data,
         int data_size, uint64_t offset, FileDirection, uint64_t multi_file_processing_id=0,
         FilePosition=SNORT_FILE_POSITION_UNKNOWN, const uint8_t* fname = nullptr, uint32_t name_size = 0,
-        const uint8_t* url = nullptr, uint32_t url_size = 0, const std::string& host_name = "");
+        const uint8_t* url = nullptr, uint32_t url_size = 0, const std::string& host_name = "", const bool is_partial = false);
 
     static unsigned file_flow_data_id;
 

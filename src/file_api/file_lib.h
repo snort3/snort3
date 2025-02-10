@@ -111,9 +111,8 @@ public:
     bool has_to_re_eval();
     void unset_re_eval();
 
-    // Flag which indicates that the file requires re-eval even though it was fully processed before.
-    // If "true" and the policy was checked - has to be set to "false" again.
-    bool re_eval = false;
+    void set_partial_flag(bool partial);
+    bool is_partial_download() const;
 
 protected:
     std::string file_name;
@@ -134,6 +133,12 @@ protected:
     FileState file_state = { FILE_CAPTURE_SUCCESS, FILE_SIG_PROCESSING };
     uint32_t policy_id = 0;
     UserFileDataBase* user_file_data = nullptr;
+
+    // Flag which indicates that the file requires re-eval even though it was fully processed before.
+    // If "true" and the policy was checked - has to be set to "false" again.
+    bool re_eval = false;
+    // Indicates that file transmission goes through 206 HTTP Partial Content
+    bool is_partial = false;
 };
 
 class SO_PUBLIC FileContext : public FileInfo
@@ -176,7 +181,6 @@ public:
     // Configuration functions
     void remove_segments();
     void reset();
-    
 private:
     uint64_t processed_bytes = 0;
     void* file_type_context;

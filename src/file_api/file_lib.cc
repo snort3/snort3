@@ -137,6 +137,7 @@ void FileInfo::copy(const FileInfo& other, bool clear_data)
     host_set = other.host_set;
     verdict = other.verdict;
     file_type_enabled = other.file_type_enabled;
+    is_partial = other.is_partial;
     file_signature_enabled = other.file_signature_enabled;
     file_capture_enabled = other.file_capture_enabled;
     file_state = other.file_state;
@@ -508,6 +509,16 @@ void FileContext::check_policy(Flow* flow, FileDirection dir, FilePolicyBase* po
     file_counts.files_total++;
     set_file_direction(dir);
     policy->policy_check(flow, this);
+}
+
+void FileInfo::set_partial_flag(bool partial)
+{
+    is_partial = partial;
+}
+
+bool FileInfo::is_partial_download() const
+{
+    return is_partial;
 }
 
 void FileInfo::reset()
@@ -1091,6 +1102,16 @@ TEST_CASE ("re_eval", "[file_info]")
     CHECK (true == info.has_to_re_eval());
     info.unset_re_eval();
     CHECK (false == info.has_to_re_eval());
+}
+
+TEST_CASE ("is_partial", "[file_info]")
+{
+    FI_TEST info;
+    CHECK (false == info.is_partial_download());
+    info.set_partial_flag(true);
+    CHECK (true == info.is_partial_download());
+    info.set_partial_flag(false);
+    CHECK (false == info.is_partial_download());
 }
 #endif
 
