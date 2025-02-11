@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2023-2024 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2023-2025 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,25 +15,25 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// kaizen_module.h author Brandon Stultz <brastult@cisco.com>
+// snort_ml_module.h author Brandon Stultz <brastult@cisco.com>
 
-#ifndef KAIZEN_MODULE_H
-#define KAIZEN_MODULE_H
+#ifndef SNORT_ML_MODULE_H
+#define SNORT_ML_MODULE_H
 
 #include "framework/module.h"
 #include "main/thread.h"
 #include "profiler/profiler.h"
 #include "trace/trace_api.h"
 
-#define KZ_GID 411
-#define KZ_SID 1
+#define SNORT_ML_GID 411
+#define SNORT_ML_SID 1
 
-#define KZ_NAME "snort_ml"
-#define KZ_HELP "machine learning based exploit detector"
+#define SNORT_ML_NAME "snort_ml"
+#define SNORT_ML_HELP "machine learning based exploit detector"
 
 enum { TRACE_CLASSIFIER };
 
-struct KaizenStats
+struct SnortMLStats
 {
     PegCount uri_alerts;
     PegCount client_body_alerts;
@@ -42,11 +42,11 @@ struct KaizenStats
     PegCount libml_calls;
 };
 
-extern THREAD_LOCAL KaizenStats kaizen_stats;
-extern THREAD_LOCAL snort::ProfileStats kaizen_prof;
-extern THREAD_LOCAL const snort::Trace* kaizen_trace;
+extern THREAD_LOCAL SnortMLStats snort_ml_stats;
+extern THREAD_LOCAL snort::ProfileStats snort_ml_prof;
+extern THREAD_LOCAL const snort::Trace* snort_ml_trace;
 
-struct KaizenConfig
+struct SnortMLConfig
 {
     std::string http_param_model_path;
     double http_param_threshold;
@@ -54,19 +54,19 @@ struct KaizenConfig
     int32_t client_body_depth;
 };
 
-class KaizenModule : public snort::Module
+class SnortMLModule : public snort::Module
 {
 public:
-    KaizenModule();
+    SnortMLModule();
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
 
-    const KaizenConfig& get_conf() const
+    const SnortMLConfig& get_conf() const
     { return conf; }
 
     unsigned get_gid() const override
-    { return KZ_GID; }
+    { return SNORT_ML_GID; }
 
     const snort::RuleMap* get_rules() const override;
 
@@ -82,7 +82,7 @@ public:
     const snort::TraceOption* get_trace_options() const override;
 
 private:
-    KaizenConfig conf = {};
+    SnortMLConfig conf = {};
 };
 
 #endif

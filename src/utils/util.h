@@ -65,6 +65,7 @@
 
 unsigned int get_random_seed();
 bool get_file_size(const std::string&, size_t&);
+bool is_directory_path(const std::string&);
 
 namespace
 {

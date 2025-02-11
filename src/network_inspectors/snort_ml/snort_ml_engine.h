@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2023-2024 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2023-2025 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,46 +15,49 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// kaizen_engine.h author Vitalii Horbatov <vhorbato@cisco.com>
+// snort_ml_engine.h author Vitalii Horbatov <vhorbato@cisco.com>
+//                   author Brandon Stultz <brastult@cisco.com>
 
-#ifndef KAIZEN_ENGINE_H
-#define KAIZEN_ENGINE_H
+#ifndef SNORT_ML_ENGINE_H
+#define SNORT_ML_ENGINE_H
 
 #include "framework/module.h"
 #include "framework/inspector.h"
 
+#define SNORT_ML_ENGINE_NAME "snort_ml_engine"
+#define SNORT_ML_ENGINE_HELP "configure machine learning engine settings"
 
-#define KZ_ENGINE_NAME "snort_ml_engine"
-#define KZ_ENGINE_HELP "configure machine learning engine settings"
+namespace libml
+{
+    class BinaryClassifierSet;
+}
 
-class BinaryClassifier;
-struct KaizenEngineConfig
+struct SnortMLEngineConfig
 {
     std::string http_param_model_path;
 };
 
-class KaizenEngineModule : public snort::Module
+class SnortMLEngineModule : public snort::Module
 {
 public:
-    KaizenEngineModule();
+    SnortMLEngineModule();
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
 
     Usage get_usage() const override
     { return GLOBAL; }
 
-    const KaizenEngineConfig& get_config()
+    const SnortMLEngineConfig& get_config()
     { return conf; }
 
 private:
-    KaizenEngineConfig conf;
+    SnortMLEngineConfig conf;
 };
 
-
-class KaizenEngine : public snort::Inspector
+class SnortMLEngine : public snort::Inspector
 {
 public:
-    KaizenEngine(const KaizenEngineConfig&);
+    SnortMLEngine(const SnortMLEngineConfig&);
 
     void show(const snort::SnortConfig*) const override;
     void eval(snort::Packet*) override {}
@@ -64,40 +67,48 @@ public:
 
     void install_reload_handler(snort::SnortConfig*) override;
 
-    static BinaryClassifier* get_classifier();
+    static libml::BinaryClassifierSet* get_classifiers();
 
 private:
-    std::string read_model();
-    bool validate_model();
+    bool read_models();
+    bool read_model(const std::string&);
 
-    KaizenEngineConfig config;
-    std::string http_param_model;
+    bool validate_models();
+
+    SnortMLEngineConfig config;
+    std::vector<std::string> http_param_models;
 };
 
-
-// Mock Classifier for tests if LibML absents.
-// However, when REG_TEST is undefined, the entire code below won't be executed.
-// Check the plugin type provided in kaizen_engine_api in the cc file
+// Mock BinaryClassifierSet for tests if LibML is absent.
+// The code below won't be executed if REG_TEST is undefined.
+// Check the plugin type provided in the snort_ml_engine.cc file.
 #ifndef HAVE_LIBML
-class BinaryClassifier
+namespace libml
+{
+
+class BinaryClassifierSet
 {
 public:
-    bool build(const std::string& model)
+    bool build(const std::vector<std::string>& models)
     {
-        pattern = model;
+        if (!models.empty())
+            pattern = models[0];
+
         return pattern != "error";
     }
 
-    bool run(const char* ptr, size_t len, float& threshold)
+    bool run(const char* ptr, size_t len, float& out)
     {
         std::string data(ptr, len);
-        threshold = std::string::npos == data.find(pattern) ? 0.0f : 1.0f;
+        out = data.find(pattern) == std::string::npos ? 0.0f : 1.0f;
         return pattern != "fail";
     }
 
 private:
     std::string pattern;
 };
+
+}
 #endif
 
 #endif

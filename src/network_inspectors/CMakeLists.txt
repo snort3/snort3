@@ -5,7 +5,7 @@ add_subdirectory(binder)
 add_subdirectory(extractor)
 
 if ( HAVE_LIBML OR USE_LIBML_MOCK )
-    add_subdirectory(kaizen)
+    add_subdirectory(snort_ml)
 endif()
 
 add_subdirectory(normalize)
@@ -24,8 +24,8 @@ if(STATIC_INSPECTORS)
 endif()
 
 if ( HAVE_LIBML OR USE_LIBML_MOCK )
-    set(KAIZEN_STATIC_OBJ
-        $<TARGET_OBJECTS:kaizen>
+    set(SNORT_ML_STATIC_OBJ
+        $<TARGET_OBJECTS:snort_ml>
     )
 endif()
 
@@ -33,7 +33,7 @@ set(STATIC_NETWORK_INSPECTOR_PLUGINS
     $<TARGET_OBJECTS:appid>
     $<TARGET_OBJECTS:binder>
     $<TARGET_OBJECTS:extractor>
-    ${KAIZEN_STATIC_OBJ}
+    ${SNORT_ML_STATIC_OBJ}
     $<TARGET_OBJECTS:normalize>
     $<TARGET_OBJECTS:port_scan>
     $<TARGET_OBJECTS:reputation>

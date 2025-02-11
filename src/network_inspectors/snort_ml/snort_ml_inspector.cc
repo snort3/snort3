@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2023-2024 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2023-2025 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,13 +15,13 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// kaizen_inspector.cc author Brandon Stultz <brastult@cisco.com>
+// snort_ml_inspector.cc author Brandon Stultz <brastult@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "kaizen_inspector.h"
+#include "snort_ml_inspector.h"
 
 #include <cassert>
 
@@ -36,13 +36,13 @@
 #include "pub_sub/http_request_body_event.h"
 #include "utils/util.h"
 
-#include "kaizen_engine.h"
+#include "snort_ml_engine.h"
 
 using namespace snort;
 using namespace std;
 
-THREAD_LOCAL KaizenStats kaizen_stats;
-THREAD_LOCAL ProfileStats kaizen_prof;
+THREAD_LOCAL SnortMLStats snort_ml_stats;
+THREAD_LOCAL ProfileStats snort_ml_prof;
 
 //--------------------------------------------------------------------------
 // HTTP body event handler
@@ -51,22 +51,22 @@ THREAD_LOCAL ProfileStats kaizen_prof;
 class HttpBodyHandler : public DataHandler
 {
 public:
-    HttpBodyHandler(Kaizen& kz)
-        : DataHandler(KZ_NAME), inspector(kz) {}
+    HttpBodyHandler(SnortML& ml)
+        : DataHandler(SNORT_ML_NAME), inspector(ml) {}
 
     void handle(DataEvent& de, Flow*) override;
 
 private:
-    Kaizen& inspector;
+    SnortML& inspector;
 };
 
 void HttpBodyHandler::handle(DataEvent& de, Flow*)
 {
     // cppcheck-suppress unreadVariable
-    Profile profile(kaizen_prof);
+    Profile profile(snort_ml_prof);
 
-    BinaryClassifier* classifier = KaizenEngine::get_classifier();
-    KaizenConfig config = inspector.get_config();
+    libml::BinaryClassifierSet* classifiers = SnortMLEngine::get_classifiers();
+    SnortMLConfig config = inspector.get_config();
     HttpRequestBodyEvent* he = (HttpRequestBodyEvent*)&de;
 
     if (he->is_mime())
@@ -80,25 +80,25 @@ void HttpBodyHandler::handle(DataEvent& de, Flow*)
 
     const size_t len = std::min((size_t)config.client_body_depth, (size_t)body_len);
 
-    assert(classifier);
+    assert(classifiers);
 
     float output = 0.0;
 
-    kaizen_stats.libml_calls++;
+    snort_ml_stats.libml_calls++;
 
-    if (!classifier->run(body, len, output))
+    if (!classifiers->run(body, len, output))
         return;
 
-    kaizen_stats.client_body_bytes += len;
+    snort_ml_stats.client_body_bytes += len;
 
-    debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "input (body): %.*s\n", (int)len, body);
-    debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "output: %f\n", static_cast<double>(output));
+    debug_logf(snort_ml_trace, TRACE_CLASSIFIER, nullptr, "input (body): %.*s\n", (int)len, body);
+    debug_logf(snort_ml_trace, TRACE_CLASSIFIER, nullptr, "output: %f\n", static_cast<double>(output));
 
     if ((double)output > config.http_param_threshold)
     {
-        kaizen_stats.client_body_alerts++;
-        debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "<ALERT>\n");
-        DetectionEngine::queue_event(KZ_GID, KZ_SID);
+        snort_ml_stats.client_body_alerts++;
+        debug_logf(snort_ml_trace, TRACE_CLASSIFIER, nullptr, "<ALERT>\n");
+        DetectionEngine::queue_event(SNORT_ML_GID, SNORT_ML_SID);
     }
 }
 
@@ -109,22 +109,22 @@ void HttpBodyHandler::handle(DataEvent& de, Flow*)
 class HttpUriHandler : public DataHandler
 {
 public:
-    HttpUriHandler(Kaizen& kz)
-        : DataHandler(KZ_NAME), inspector(kz) {}
+    HttpUriHandler(SnortML& ml)
+        : DataHandler(SNORT_ML_NAME), inspector(ml) {}
 
     void handle(DataEvent&, Flow*) override;
 
 private:
-    Kaizen& inspector;
+    SnortML& inspector;
 };
 
 void HttpUriHandler::handle(DataEvent& de, Flow*)
 {
     // cppcheck-suppress unreadVariable
-    Profile profile(kaizen_prof);
+    Profile profile(snort_ml_prof);
 
-    BinaryClassifier* classifier = KaizenEngine::get_classifier();
-    KaizenConfig config = inspector.get_config();
+    libml::BinaryClassifierSet* classifiers = SnortMLEngine::get_classifiers();
+    SnortMLConfig config = inspector.get_config();
     HttpEvent* he = (HttpEvent*)&de;
 
     int32_t query_len = 0;
@@ -135,25 +135,25 @@ void HttpUriHandler::handle(DataEvent& de, Flow*)
 
     const size_t len = std::min((size_t)config.uri_depth, (size_t)query_len);
 
-    assert(classifier);
+    assert(classifiers);
 
     float output = 0.0;
 
-    kaizen_stats.libml_calls++;
+    snort_ml_stats.libml_calls++;
 
-    if (!classifier->run(query, (size_t)len, output))
+    if (!classifiers->run(query, len, output))
         return;
 
-    kaizen_stats.uri_bytes += len;
+    snort_ml_stats.uri_bytes += len;
 
-    debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "input (query): %.*s\n", (int)len, query);
-    debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "output: %f\n", static_cast<double>(output));
+    debug_logf(snort_ml_trace, TRACE_CLASSIFIER, nullptr, "input (query): %.*s\n", (int)len, query);
+    debug_logf(snort_ml_trace, TRACE_CLASSIFIER, nullptr, "output: %f\n", static_cast<double>(output));
 
     if ((double)output > config.http_param_threshold)
     {
-        kaizen_stats.uri_alerts++;
-        debug_logf(kaizen_trace, TRACE_CLASSIFIER, nullptr, "<ALERT>\n");
-        DetectionEngine::queue_event(KZ_GID, KZ_SID);
+        snort_ml_stats.uri_alerts++;
+        debug_logf(snort_ml_trace, TRACE_CLASSIFIER, nullptr, "<ALERT>\n");
+        DetectionEngine::queue_event(SNORT_ML_GID, SNORT_ML_SID);
     }
 }
 
@@ -161,14 +161,14 @@ void HttpUriHandler::handle(DataEvent& de, Flow*)
 // inspector
 //--------------------------------------------------------------------------
 
-void Kaizen::show(const SnortConfig*) const
+void SnortML::show(const SnortConfig*) const
 {
     ConfigLogger::log_limit("uri_depth", config.uri_depth, -1);
     ConfigLogger::log_limit("client_body_depth", config.client_body_depth, -1);
     ConfigLogger::log_value("http_param_threshold", config.http_param_threshold);
 }
 
-bool Kaizen::configure(SnortConfig* sc)
+bool SnortML::configure(SnortConfig* sc)
 {
     if (config.uri_depth != 0)
         DataBus::subscribe(http_pub_key, HttpEventIds::REQUEST_HEADER, new HttpUriHandler(*this));
@@ -176,9 +176,9 @@ bool Kaizen::configure(SnortConfig* sc)
     if (config.client_body_depth != 0)
         DataBus::subscribe(http_pub_key, HttpEventIds::REQUEST_BODY, new HttpBodyHandler(*this));
 
-    if(!InspectorManager::get_inspector(KZ_ENGINE_NAME, true, sc))
+    if(!InspectorManager::get_inspector(SNORT_ML_ENGINE_NAME, true, sc))
     {
-        ParseError("snort_ml requires %s to be configured in the global policy.", KZ_ENGINE_NAME);
+        ParseError("snort_ml requires %s to be configured in the global policy.", SNORT_ML_ENGINE_NAME);
         return false;
     }
 
@@ -190,24 +190,24 @@ bool Kaizen::configure(SnortConfig* sc)
 //--------------------------------------------------------------------------
 
 static Module* mod_ctor()
-{ return new KaizenModule; }
+{ return new SnortMLModule; }
 
 static void mod_dtor(Module* m)
 { delete m; }
 
-static Inspector* kaizen_ctor(Module* m)
+static Inspector* snort_ml_ctor(Module* m)
 {
-    KaizenModule* km = (KaizenModule*)m;
-    return new Kaizen(km->get_conf());
+    SnortMLModule* km = (SnortMLModule*)m;
+    return new SnortML(km->get_conf());
 }
 
-static void kaizen_dtor(Inspector* p)
+static void snort_ml_dtor(Inspector* p)
 {
     assert(p);
     delete p;
 }
 
-static const InspectApi kaizen_api =
+static const InspectApi snort_ml_api =
 {
     {
         PT_INSPECTOR,
@@ -216,8 +216,8 @@ static const InspectApi kaizen_api =
         0,
         API_RESERVED,
         API_OPTIONS,
-        KZ_NAME,
-        KZ_HELP,
+        SNORT_ML_NAME,
+        SNORT_ML_HELP,
         mod_ctor,
         mod_dtor
     },
@@ -229,8 +229,8 @@ static const InspectApi kaizen_api =
     nullptr,  // pterm
     nullptr,  // tinit
     nullptr,  // tterm
-    kaizen_ctor,
-    kaizen_dtor,
+    snort_ml_ctor,
+    snort_ml_dtor,
     nullptr,  // ssn
     nullptr   // reset
 };
@@ -238,9 +238,9 @@ static const InspectApi kaizen_api =
 #ifdef BUILDING_SO
 SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
-const BaseApi* nin_kaizen[] =
+const BaseApi* nin_snort_ml[] =
 #endif
 {
-    &kaizen_api.base,
+    &snort_ml_api.base,
     nullptr
 };

@@ -20,9 +20,9 @@ normalizations.
 
 packet_capture - A tool for dumping the wire packets that Snort receives.
 
-kaizen - Machine learning based exploit detector capable of detecting novel
-attacks fitting known vulnerability types. Kaizen uses a neural network
-provided by a model file to detect exploit patterns. The Kaizen Snort module
+snort_ml - Machine learning based exploit detector capable of detecting novel
+attacks fitting known vulnerability types. SnortML uses a neural network
+provided by a model file to detect exploit patterns. The SnortML module
 subscribes to HTTP events published by the HTTP inspector, performs inference
 on HTTP queries/posts, and generates events if the neural network detects
 an exploit.

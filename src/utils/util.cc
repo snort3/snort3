@@ -47,8 +47,10 @@
 
 #ifdef _WIN32
 #define ISREG(m) (((m) & _S_IFMT) == _S_IFREG)
+#define ISDIR(m) (((m) & _S_IFMT) == _S_IFDIR)
 #else
 #define ISREG(m) S_ISREG(m)
+#define ISDIR(m) S_ISDIR(m)
 #endif
 
 using namespace snort;
@@ -81,6 +83,16 @@ bool get_file_size(const std::string& path, size_t& size)
 
     size = static_cast<size_t>(sb.st_size);
     return true;
+}
+
+bool is_directory_path(const std::string& path)
+{
+    struct STAT sb;
+
+    if (STAT(path.c_str(), &sb))
+        return false;
+
+    return ISDIR(sb.st_mode);
 }
 
 namespace snort

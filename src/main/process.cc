@@ -45,6 +45,10 @@
 #include <jemalloc/jemalloc.h>
 #endif
 
+#ifdef HAVE_LIBML
+#include <libml.h>
+#endif
+
 #ifdef HAVE_LIBUNWIND
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
@@ -706,6 +710,9 @@ int DisplayBanner()
     size_t sz = sizeof(jv);
     mallctl("version", &jv,  &sz, NULL, 0);
     LogMessage("           Using Jemalloc version %s\n", jv);
+#endif
+#ifdef HAVE_LIBML
+    LogMessage("           Using LibML version %s\n", libml::version());
 #endif
     LogMessage("           Using %s\n", pcap_lib_version());
     LogMessage("           Using LuaJIT version %s\n", ljv);

@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2023-2024 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2023-2025 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,22 +15,22 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// kaizen_module.cc author Brandon Stultz <brastult@cisco.com>
+// snort_ml_module.cc author Brandon Stultz <brastult@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "kaizen_module.h"
+#include "snort_ml_module.h"
 
 #include "log/messages.h"
 #include "service_inspectors/http_inspect/http_field.h"
 
 using namespace snort;
 
-THREAD_LOCAL const Trace* kaizen_trace = nullptr;
+THREAD_LOCAL const Trace* snort_ml_trace = nullptr;
 
-static const Parameter kaizen_params[] =
+static const Parameter snort_ml_params[] =
 {
     { "uri_depth", Parameter::PT_INT, "-1:max31", "-1",
       "number of input HTTP URI bytes to scan (-1 unlimited)" },
@@ -44,9 +44,9 @@ static const Parameter kaizen_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const RuleMap kaizen_rules[] =
+static const RuleMap snort_ml_rules[] =
 {
-    { KZ_SID, "potential threat found in HTTP parameters via Neural Network Based Exploit Detection" },
+    { SNORT_ML_SID, "potential threat found in HTTP parameters via Neural Network Based Exploit Detection" },
     { 0, nullptr }
 };
 
@@ -61,7 +61,7 @@ static const PegInfo peg_names[] =
 };
 
 #ifdef DEBUG_MSGS
-static const TraceOption kaizen_trace_options[] =
+static const TraceOption snort_ml_trace_options[] =
 {
     { "classifier", TRACE_CLASSIFIER, "enable Snort ML classifier trace logging" },
     { nullptr, 0, nullptr }
@@ -72,9 +72,9 @@ static const TraceOption kaizen_trace_options[] =
 // module
 //--------------------------------------------------------------------------
 
-KaizenModule::KaizenModule() : Module(KZ_NAME, KZ_HELP, kaizen_params) {}
+SnortMLModule::SnortMLModule() : Module(SNORT_ML_NAME, SNORT_ML_HELP, snort_ml_params) {}
 
-bool KaizenModule::set(const char*, Value& v, SnortConfig*)
+bool SnortMLModule::set(const char*, Value& v, SnortConfig*)
 {
     static_assert(std::is_same<decltype((Field().length())), decltype(conf.uri_depth)>::value,
         "Field::length maximum value should not exceed uri_depth type range");
@@ -91,7 +91,7 @@ bool KaizenModule::set(const char*, Value& v, SnortConfig*)
     return true;
 }
 
-bool KaizenModule::end(const char*, int, snort::SnortConfig*)
+bool SnortMLModule::end(const char*, int, snort::SnortConfig*)
 {
     if (!conf.uri_depth && !conf.client_body_depth)
         ParseWarning(WARN_CONF,
@@ -100,26 +100,26 @@ bool KaizenModule::end(const char*, int, snort::SnortConfig*)
     return true;
 }
 
-const RuleMap* KaizenModule::get_rules() const
-{ return kaizen_rules; }
+const RuleMap* SnortMLModule::get_rules() const
+{ return snort_ml_rules; }
 
-const PegInfo* KaizenModule::get_pegs() const
+const PegInfo* SnortMLModule::get_pegs() const
 { return peg_names; }
 
-PegCount* KaizenModule::get_counts() const
-{ return (PegCount*)&kaizen_stats; }
+PegCount* SnortMLModule::get_counts() const
+{ return (PegCount*)&snort_ml_stats; }
 
-ProfileStats* KaizenModule::get_profile() const
-{ return &kaizen_prof; }
+ProfileStats* SnortMLModule::get_profile() const
+{ return &snort_ml_prof; }
 
-void KaizenModule::set_trace(const Trace* trace) const
-{ kaizen_trace = trace; }
+void SnortMLModule::set_trace(const Trace* trace) const
+{ snort_ml_trace = trace; }
 
-const TraceOption* KaizenModule::get_trace_options() const
+const TraceOption* SnortMLModule::get_trace_options() const
 {
 #ifndef DEBUG_MSGS
     return nullptr;
 #else
-    return kaizen_trace_options;
+    return snort_ml_trace_options;
 #endif
 }

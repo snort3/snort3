@@ -171,7 +171,7 @@ static void install_dependencies_strings(Shell* sh, lua_State* L)
     vs.push_back(lzma_version_string());
 #endif
 #ifdef HAVE_LIBML
-    vs.push_back(libml_version());
+    vs.push_back(libml::version());
 #endif
 
     lua_createtable(L, 0, vs.size());
