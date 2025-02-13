@@ -403,8 +403,8 @@ inline void FileContext::finalize_file_type()
 
 void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
 {
-    // wait for file name is set to log file event
-    if ( is_file_name_set() )
+    // log file event either when filename is set or if it is a asymmetric flow  
+    if ( is_file_name_set() or !flow->two_way_traffic() )
     {
         bool log_needed = true;
 
