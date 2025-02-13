@@ -1307,6 +1307,24 @@ void AppIdSession::check_shadow_traffic_bits(AppId id, uint32_t& shadow_bits, Ap
                 is_publishing_set = true;
             }
         }
+	    if (attributeBits & ATTR_APPEVASIVEVPN)
+        {
+            shadow_bits |= ShadowTraffic_Type_Evasive_VPN;
+            if (!is_publishing_set)
+            {
+                publishing_appid = id;
+                is_publishing_set = true;
+            }
+        }
+        if (attributeBits & ATTR_APPMULTIHOPPROXY)
+        {
+            shadow_bits |= ShadowTraffic_Type_Multihop_Proxy;
+            if (!is_publishing_set)
+            {
+                publishing_appid = id;
+                is_publishing_set = true;
+            }
+        }
     }
 }
 
