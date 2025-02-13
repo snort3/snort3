@@ -188,8 +188,9 @@ void Continuation::eval(snort::Packet& p)
         {
             assert(0 < states_cnt);
             assert(st != &states);
+            assert((**st).packet_number != p.context->packet_number);
+
             --states_cnt;
-            st->leave_group();
             delete st;
         }
     }
