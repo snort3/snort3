@@ -96,6 +96,7 @@ public:
     int64_t get_max_file_capture_size() { return capture_max_size; }
     int64_t get_file_capture_size() { return capture_size; }
     void get_file_reset() { current_block = head; }
+    void set_data(const uint8_t* file_data, const uint32_t size) {current_data = file_data; current_data_len = size;}
 
 private:
 

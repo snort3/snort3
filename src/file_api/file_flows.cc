@@ -382,7 +382,7 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
     if ((context->is_cacheable() and not is_new_context) or context->is_partial_download()) // If partial header was seen - check file_cache
     {
         FileVerdict verdict = FileService::get_file_cache()->cached_verdict_lookup(p, context,
-            file_policy);
+            file_policy, file_data, data_size);
         if (verdict != FILE_VERDICT_UNKNOWN and verdict != FILE_VERDICT_PENDING)
         {
             context->processing_complete = true;

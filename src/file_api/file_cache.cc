@@ -282,7 +282,7 @@ FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create, b
 }
 
 FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
-    FilePolicyBase* policy)
+    FilePolicyBase* policy, const uint8_t* current_data, uint32_t current_data_len)
 {
     assert(file);
 
@@ -301,6 +301,7 @@ FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
     if ( file->get_file_sig_sha256() and verdict <= FILE_VERDICT_LOG )
     {
         file->user_file_data_mutex.lock();
+        file->set_capture_file_data(current_data, current_data_len);
         verdict = policy->signature_lookup(p, file);
         file->user_file_data_mutex.unlock();
     }
@@ -524,7 +525,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
 }
 
 FileVerdict FileCache::cached_verdict_lookup(Packet* p, FileInfo* file,
-    FilePolicyBase* policy)
+    FilePolicyBase* policy, const uint8_t* current_data, uint32_t current_data_len)
 {
     Flow* flow = p->flow;
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
@@ -543,7 +544,7 @@ FileVerdict FileCache::cached_verdict_lookup(Packet* p, FileInfo* file,
     if (file_found)
     {
         /*Query the file policy in case verdict has been changed*/
-        verdict = check_verdict(p, file_found, policy);
+        verdict = check_verdict(p, file_found, policy, current_data, current_data_len);
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
             "cached_verdict_lookup:Verdict received from cached_verdict_lookup %d\n", verdict);
         apply_verdict(p, file_found, verdict, true, policy);

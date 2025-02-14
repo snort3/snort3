@@ -366,6 +366,12 @@ void FileInfo::set_file_data(UserFileDataBase* fd)
     user_file_data = fd;
 }
 
+void FileInfo::set_capture_file_data(const uint8_t* file_data, uint32_t size)
+{
+    if (file_capture)
+        file_capture->set_data(file_data, size);
+}
+
 UserFileDataBase* FileInfo::get_file_data() const
 {
     return user_file_data;
@@ -598,7 +604,7 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
         return false;
     }
 
-    if (cacheable and (FileService::get_file_cache()->cached_verdict_lookup(p, this, policy) !=
+    if (cacheable and (FileService::get_file_cache()->cached_verdict_lookup(p, this, policy, file_data, data_size) !=
         FILE_VERDICT_UNKNOWN))
     {
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
@@ -687,7 +693,9 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
         /*Fails to capture, when out of memory or size limit, need lookup*/
         if (is_file_capture_enabled())
         {
+            user_file_data_mutex.lock();
             process_file_capture(file_data, data_size, position);
+            user_file_data_mutex.unlock();
         }
 
         finish_signature_lookup(p, ( file_state.sig_state != FILE_SIG_FLUSH ), policy);

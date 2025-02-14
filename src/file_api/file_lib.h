@@ -95,6 +95,7 @@ public:
     UserFileDataBase* get_file_data() const;
     void copy(const FileInfo& other, bool clear_data = true);
     void reset();
+    void set_capture_file_data(const uint8_t* file_data, uint32_t size);
     // Preserve the file in memory until it is released
     // The file reserved will be returned and it will be detached from file context/session
     FileCaptureState reserve_file(FileCapture*& dest);
