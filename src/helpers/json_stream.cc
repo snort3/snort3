@@ -24,6 +24,8 @@
 #include "json_stream.h"
 
 #include <cassert>
+#include <cctype>
+#include <cstring>
 #include <iomanip>
 
 using namespace snort;
@@ -119,7 +121,7 @@ void JsonStream::put(const char* key, const char* val)
         out << std::quoted(key) << ": ";
 
     if (val)
-        out << std::quoted(val);
+        put_escaped(val, strlen(val));
     else
         out << "null";
 }
@@ -134,7 +136,7 @@ void JsonStream::put(const char* key, const std::string& val)
     if ( key )
         out << std::quoted(key) << ": ";
 
-    out << std::quoted(val);
+    put_escaped(val.c_str(), val.size());
 }
 
 void JsonStream::put(const char* key, double val, int precision)
@@ -180,3 +182,118 @@ void JsonStream::put_eol()
 {
     out << std::endl;
 }
+
+void JsonStream::put_escaped(const char* v, size_t len)
+{
+    char* buf = new char[2 * len + 2];
+    char* dst = buf;
+
+    *dst++ = '\"';
+
+    while (len--)
+    {
+        char c = *v++;
+
+        switch (c)
+        {
+        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
+        case '\"': *dst++ = '\\'; *dst++ = '"'; break;
+        case '\b': *dst++ = '\\'; *dst++ = 'b'; break;
+        case '\f': *dst++ = '\\'; *dst++ = 'f'; break;
+        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
+        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
+        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
+        default:
+            if (isprint(c))
+                *dst++ = c;
+            else
+            {
+                out.write(buf, dst - buf);
+                dst = buf;
+                out << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (0xFF & c);
+            }
+        }
+    }
+
+    *dst++ = '\"';
+    out.write(buf, dst - buf);
+
+    delete[] buf;
+}
+
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+class JsonStreamTest : public JsonStream
+{
+public:
+    JsonStreamTest() : JsonStream(oss), oss() { }
+
+    void check_escaping(const char* f, const char* input, size_t i_len, const std::string& expected)
+    {
+        oss.str(std::string());
+        put(f, std::string(input, i_len));
+        CHECK(oss.str() == expected);
+    }
+
+private:
+    std::ostringstream oss;
+};
+
+TEST_CASE_METHOD(JsonStreamTest, "escape: special chars", "[Json_Stream]")
+{
+    const char* field = "Special characters";
+    const char* value = "\" \\ \b \f \n \r \t";
+    size_t len = strlen(value);
+
+    std::string expected = "\"Special characters\": \"\\\" \\\\ \\b \\f \\n \\r \\t\"";
+    check_escaping(field, value, len, expected);
+}
+
+TEST_CASE_METHOD(JsonStreamTest, "escape: non printable chars", "[Json_Stream]")
+{
+    // __STRDUMP_DISABLE__
+    const char* field = "Non printable";
+    const char* value = "\x01\x02\x03";
+    size_t len = strlen(value);
+
+    std::string expected = "\"Non printable\": \"\\u0001\\u0002\\u0003\"";
+    check_escaping(field, value, len, expected);
+    // __STRDUMP_ENABLE__
+}
+
+TEST_CASE_METHOD(JsonStreamTest, "escape: printable chars", "[Json_Stream]")
+{
+    const char* field = "Printable characters";
+    const char* value = "ABC abc 123";
+    size_t len = strlen(value);
+
+    std::string expected = "\"Printable characters\": \"ABC abc 123\"";
+    check_escaping(field, value, len, expected);
+}
+
+TEST_CASE_METHOD(JsonStreamTest, "escape: mixed chars", "[Json_Stream]")
+{
+    // __STRDUMP_DISABLE__
+    const char* field = "Mixed";
+    const char* value = "ABC \x01 \" \\ \b \f \n \r \t 123";
+    size_t len = strlen(value);
+
+    std::string expected = "\"Mixed\": \"ABC \\u0001 \\\" \\\\ \\b \\f \\n \\r \\t 123\"";
+    check_escaping(field, value, len, expected);
+    // __STRDUMP_ENABLE__
+}
+
+TEST_CASE_METHOD(JsonStreamTest, "escape: empty string", "[Json_Stream]")
+{
+    const char* field = "Empty string";
+    const char* value = "";
+    size_t len = strlen(value);
+
+    std::string expected = "";
+    check_escaping(field, value, len, expected);
+}
+
+#endif
+

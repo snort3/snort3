@@ -43,7 +43,9 @@ public:
     void open_record() override;
     void close_record(const snort::Connector::ID&) override;
 
-private:
+protected:
+    void add_escaped(const char*, size_t);
+
     std::string buffer;
 };
 

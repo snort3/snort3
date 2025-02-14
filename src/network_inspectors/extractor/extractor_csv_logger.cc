@@ -24,6 +24,8 @@
 #include "extractor_csv_logger.h"
 
 #include <cassert>
+#include <cctype>
+#include <cstddef>
 #include <limits>
 #include <string>
 
@@ -66,13 +68,13 @@ void CsvExtractorLogger::close_record(const Connector::ID& service_id)
 void CsvExtractorLogger::add_field(const char*, const char* v)
 {
     first_write ? []() { first_write = false; } () : buffer.push_back(',');
-    buffer.append(v);
+    add_escaped(v, strlen(v));
 }
 
 void CsvExtractorLogger::add_field(const char*, const char* v, size_t len)
 {
     first_write ? []() { first_write = false; } () : buffer.push_back(',');
-    buffer.append(v, len);
+    add_escaped(v, len);
 }
 
 void CsvExtractorLogger::add_field(const char*, uint64_t v)
@@ -108,3 +110,165 @@ void CsvExtractorLogger::add_field(const char*, bool v)
     buffer.append(v ? "true" : "false");
 }
 
+void CsvExtractorLogger::add_escaped(const char* v, size_t len)
+{
+    if (!v || len == 0)
+        return;
+
+    constexpr float escape_resize_factor = 1.2;
+
+    const char* p = v;
+    const char* end = v + len;
+
+    buffer.reserve(buffer.length() + len * escape_resize_factor);
+
+    bool to_quote = false;
+    std::vector<ptrdiff_t> quote_positions;
+
+    while (p < end)
+    {
+        if (*p == '"')
+        {
+            to_quote = true;
+            quote_positions.push_back(p - v);
+        }
+
+        to_quote = to_quote or *p == ',' or !isprint(*p) or (isblank(*p) and (p == v or p == end - 1));
+
+        ++p;
+    }
+
+    if (!to_quote)
+    {
+        buffer.append(v, len);
+        return;
+    }
+
+    buffer.push_back('"');
+
+    ptrdiff_t curr_pos = 0;
+    for (ptrdiff_t quote_pos : quote_positions)
+    {
+        assert(quote_pos >= curr_pos);
+        buffer.append(v + curr_pos, quote_pos - curr_pos);
+        buffer.push_back('"');
+        curr_pos = quote_pos;
+    }
+
+    buffer.append(v + curr_pos, len - curr_pos);
+    buffer.push_back('"');
+}
+
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+class CsvExtractorLoggerTest : public CsvExtractorLogger
+{
+public:
+    CsvExtractorLoggerTest() : CsvExtractorLogger(nullptr) {}
+
+    void check_escaping(const char* input, size_t i_len, const std::string& expected)
+    {
+        buffer.clear();
+        add_escaped(input, i_len);
+        CHECK(buffer == expected);
+    }
+};
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: nullptr", "[extractor]")
+{
+    check_escaping(nullptr, 1, "");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: zero len", "[extractor]")
+{
+    const char* input = "";
+    check_escaping(input, 0, "");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: no special chars", "[extractor]")
+{
+    const char* input = "simple_text";
+    check_escaping(input, strlen(input), "simple_text");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: comma", "[extractor]")
+{
+    const char* input = "text,with,commas";
+    check_escaping(input, strlen(input), "\"text,with,commas\"");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: newline", "[extractor]")
+{
+    const char* input = "text\nwith\nnewlines";
+    check_escaping(input, strlen(input), "\"text\nwith\nnewlines\"");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: CR", "[extractor]")
+{
+    const char* input = "text\rwith\rreturns";
+    check_escaping(input, strlen(input), "\"text\rwith\rreturns\"");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: whitespaces", "[extractor]")
+{
+    const char* input = "text with ws";
+    check_escaping(input, strlen(input), "text with ws");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: whitespace at the beginning", "[extractor]")
+{
+    const char* input = " start_with_ws";
+    check_escaping(input, strlen(input), "\" start_with_ws\"");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: whitespace at the end", "[extractor]")
+{
+    const char* input = "end_with_ws ";
+    check_escaping(input, strlen(input), "\"end_with_ws \"");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: quotes", "[extractor]")
+{
+    const char* input = "text\"with\"quotes";
+    check_escaping(input, strlen(input), "\"text\"\"with\"\"quotes\"");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: mixed", "[extractor]")
+{
+    const char* input = "text,with\nmixed\"chars\r";
+    check_escaping(input, strlen(input), "\"text,with\nmixed\"\"chars\r\"");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: single quote", "[extractor]")
+{
+    const char* input = "\"";
+    check_escaping(input, strlen(input), "\"\"\"\"");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: single comma", "[extractor]")
+{
+    const char* input = ",";
+    check_escaping(input, strlen(input), "\",\"");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: single newline", "[extractor]")
+{
+    const char* input = "\n";
+    check_escaping(input, strlen(input), "\"\n\"");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: single CR", "[extractor]")
+{
+    const char* input = "\r";
+    check_escaping(input, strlen(input), "\"\r\"");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: single whitespace", "[extractor]")
+{
+    const char* input = " ";
+    check_escaping(input, strlen(input), "\" \"");
+}
+
+#endif

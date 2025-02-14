@@ -51,6 +51,9 @@ public:
 
     void put_eol();
 
+protected:
+    void put_escaped(const char* v, size_t len);
+
 private:
     void split();
 

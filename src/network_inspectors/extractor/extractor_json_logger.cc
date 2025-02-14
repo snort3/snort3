@@ -53,9 +53,7 @@ void JsonExtractorLogger::add_field(const char* f, const char* v)
 
 void JsonExtractorLogger::add_field(const char* f, const char* v, size_t len)
 {
-    std::string s(v, len);
-
-    js.put(f, s);
+    js.put(f, {v, len});
 }
 
 void JsonExtractorLogger::add_field(const char* f, uint64_t v)

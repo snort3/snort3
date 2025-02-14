@@ -45,7 +45,6 @@ public:
 private:
     std::ostringstream oss;
     snort::JsonStream js;
-
 };
 
 #endif
