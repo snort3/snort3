@@ -367,6 +367,9 @@ static const Parameter s_params[] =
       "<file> to create unix socket" },
 #endif
 
+    { "--create-instance-file", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "create instance mappings file for this Snort process at startup" },
+
     { "--create-pidfile", Parameter::PT_STRING, "(optional)", nullptr,
       "create PID file, even when not in Daemon mode" },
 
@@ -909,6 +912,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( is(v, "--max-procs") )
         sc->set_max_procs(v.get_uint8());
+
+    else if ( is(v, "--create-instance-file") )
+        sc->set_create_instance_file(true);
 
     else if ( is(v, "--daq") )
         module_config = sc->daq_config->add_module_config(v.get_string());

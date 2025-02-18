@@ -578,6 +578,14 @@ void SnortConfig::set_chroot_dir(const char* directory)
         chroot_dir.clear();
 }
 
+void SnortConfig::set_create_instance_file(bool enabled)
+{
+    if (enabled)
+        run_flags |= RUN_FLAG__CREATE_INST_FILE;
+    else
+        run_flags &= ~RUN_FLAG__CREATE_INST_FILE;
+}
+
 void SnortConfig::set_create_pid_file(bool enabled)
 {
     if (enabled)

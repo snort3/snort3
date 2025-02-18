@@ -62,6 +62,10 @@ namespace snort
 
 void populate_instance_maps()
 {
+    const SnortConfig* sc = SnortConfig::get_conf();
+    if (!sc->create_inst_file())
+        return;
+
     std::string path;
 
     get_instance_file(path, INST_MAP_NAME);
@@ -83,6 +87,10 @@ void populate_instance_maps()
 
 void invalidate_instance_maps()
 {
+    const SnortConfig* sc = SnortConfig::get_conf();
+    if (!sc->create_inst_file())
+        return;
+
     std::string path;
 
     get_instance_file(path, INST_MAP_NAME);

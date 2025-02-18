@@ -73,8 +73,10 @@ enum RunFlag
     RUN_FLAG__TEST_FEATURES       = 0x00400000,
     RUN_FLAG__GEN_DUMP_CONFIG     = 0x00800000,
 
+    RUN_FLAG__CREATE_INST_FILE    = 0x01000000,
+
 #ifdef SHELL
-    RUN_FLAG__SHELL               = 0x01000000,
+    RUN_FLAG__SHELL               = 0x02000000,
 #endif
 };
 
@@ -452,6 +454,7 @@ public:
     void set_alert_mode(const char*);
     void set_chroot_dir(const char*);
     void set_create_pid_file(bool);
+    void set_create_instance_file(bool);
     void set_pid_filename(const char*);
     void set_max_procs(uint8_t);
     void set_daemon(bool);
@@ -615,6 +618,9 @@ public:
 
     bool gen_dump_config() const
     { return run_flags & RUN_FLAG__GEN_DUMP_CONFIG; }
+
+    bool create_inst_file() const
+    { return run_flags & RUN_FLAG__CREATE_INST_FILE; }
 
     // other stuff
     uint8_t min_ttl() const
