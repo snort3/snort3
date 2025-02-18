@@ -26,6 +26,7 @@
 #include "sfip/sf_ip.h"
 #include "appid_session_api.h"
 #include "application_ids.h"
+#include "pub_sub/domain_fronting.h"
 
 enum class IpProtocol : uint8_t;
 
@@ -55,6 +56,8 @@ public:
     const char* get_appid_detector_directory() const;
     void reset_appid_cpu_profiler_stats();
     void update_shadow_traffic_status(bool status);
+    void set_ssl_certificate_key(const Flow& flow, const std::string& cert_key);
+    void ssl_hostname_cert_lookup_verdict(const snort::Flow &flow, DomainFrontingStatus status);
 
     bool is_service_http_type(AppId service_id) const
     {

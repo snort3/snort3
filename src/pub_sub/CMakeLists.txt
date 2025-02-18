@@ -8,6 +8,7 @@ set (PUB_SUB_INCLUDES
     daq_message_event.h
     dcerpc_events.h
     dhcp_events.h
+    domain_fronting.h
     eve_process_event.h
     expect_events.h
     external_event_ids.h

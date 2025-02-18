@@ -438,6 +438,7 @@ public:
     void publish_shadow_traffic_event(const uint32_t& shadow_traffic_bits,snort::Flow*)const;
     void process_shadow_traffic_appids();
     void check_shadow_traffic_bits(AppId id, uint32_t& shadow_bits, AppId &publishing_appid, bool& is_publishing_set);
+    void check_domain_fronting_status();
 
     bool need_to_delete_tp_conn(ThirdPartyAppIdContext*) const;
 
@@ -805,6 +806,16 @@ public:
         
         str.append(tempStr);     
     } 
+    
+    void set_cert_key (const std::string& key)
+    {
+        ssl_cert_key = key;
+    }
+
+    const std::string& get_cert_key() const
+    {
+        return ssl_cert_key;
+    }
 
 private:
     uint16_t prev_httpx_raw_packet = 0;
@@ -829,6 +840,7 @@ private:
     bool no_service_candidate = false;
     bool no_service_inspector = false;
     bool client_info_unpublished = false;
+    string ssl_cert_key;
     uint32_t appid_shadow_traffic_bits = 0;
     AppId shadow_traffic_appid = APP_ID_NONE;
 };

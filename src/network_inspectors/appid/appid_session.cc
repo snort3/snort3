@@ -158,7 +158,9 @@ AppIdSession::~AppIdSession()
     }
  
     if ((pkt_thread_odp_ctxt->get_version() == api.asd->get_odp_ctxt_version()) and api.asd->get_odp_ctxt().get_appid_shadow_traffic_status())
-    { 
+    {
+        check_domain_fronting_status();
+        
         if (get_shadow_traffic_publishing_appid() > APP_ID_NONE)
         {
             if (api.asd->appid_shadow_traffic_bits != 0)
@@ -1353,3 +1355,18 @@ void AppIdSession::process_shadow_traffic_appids()
         set_shadow_traffic_publishing_appid(publishing_appid);
     } 
 }
+
+void AppIdSession::check_domain_fronting_status()  
+{
+    if (api.asd->get_session_flags(APPID_SESSION_DECRYPTED) or api.asd->get_session_flags(APPID_SESSION_APP_REINSPECT)) 
+    { 
+        AppIdHttpSession* hsession = api.asd->get_http_session();
+        Packet* p = DetectionEngine::get_current_packet();
+        if (hsession) 
+        { 
+            const char* host = hsession->get_cfield(REQ_HOST_FID); 
+            if (host)
+                TLSDomainFrontCheckEvent(p, api.asd->get_cert_key(), host); 
+        } 
+    } 
+} 

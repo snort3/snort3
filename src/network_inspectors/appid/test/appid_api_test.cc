@@ -53,6 +53,7 @@ using namespace snort;
 static SnortProtocolId dummy_http2_protocol_id = 1;
 char const* APPID_UT_ORG_UNIT = "Google";
 THREAD_LOCAL bool TimeProfilerStats::enabled = false;
+#define ShadowTraffic_Type_Domain_Fronting    0x00000010
 
 namespace snort
 {
@@ -257,6 +258,49 @@ TEST(appid_api, get_application_id)
     AppIdContext ctxt(config);
     AppId id = appid_api.get_application_id(test_app_name, ctxt);
     CHECK_EQUAL(id, 1492);
+}
+
+TEST(appid_api, set_ssl_certificate_key)
+{
+    AppIdConfig config;
+    OdpContext odpctxt(config, nullptr);
+    SfIp ip{};
+    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
+    string cert_key = "valid_certificate_key";
+    appid_api.set_ssl_certificate_key(*flow, cert_key);
+    asd.set_cert_key(cert_key);
+    CHECK_EQUAL(asd.get_cert_key(), cert_key);
+    delete &asd.get_api(); 
+}
+
+TEST(appid_api, ssl_hostname_cert_lookup_verdict)
+{
+    AppIdConfig config;
+    OdpContext odpctxt(config, nullptr);
+    SfIp ip{};
+    AppIdSession asd(IpProtocol::TCP, &ip, 1492, dummy_appid_inspector, odpctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
+    AppidChangeBits change_bits;
+    asd.set_ss_application_ids(APPID_UT_ID, APPID_UT_ID, APPID_UT_ID,
+        APPID_UT_ID, APPID_UT_ID, change_bits);
+    DomainFrontingStatus status = DomainFrontingStatus::MISMATCH;
+    appid_api.ssl_hostname_cert_lookup_verdict(*flow, status);
+
+    AppId id = asd.get_api().get_payload_app_id();
+    asd.set_shadow_traffic_publishing_appid(id);
+    CHECK_EQUAL(asd.get_shadow_traffic_publishing_appid(), APPID_UT_ID); 
+
+    uint32_t expected_shadow_bits = ShadowTraffic_Type_Domain_Fronting;
+    asd.set_shadow_traffic_bits(expected_shadow_bits);
+    CHECK_EQUAL(asd.get_shadow_traffic_bits(), expected_shadow_bits);
+    delete &asd.get_api();
 }
 
 TEST(appid_api, ssl_app_group_id_lookup)

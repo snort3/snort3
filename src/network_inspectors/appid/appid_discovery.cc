@@ -46,6 +46,7 @@
 #include "detector_plugins/detector_dns.h"
 #include "detector_plugins/http_url_patterns.h"
 #include "host_port_app_cache.h"
+#include "pub_sub/domain_fronting.h"
 #include "service_plugins/service_discovery.h"
 #include "tp_lib_handler.h"
 #include "tp_appid_utils.h"
