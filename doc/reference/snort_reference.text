@@ -1344,6 +1344,8 @@ Configuration:
     (seconds, 0 to disable) { 0:60 }
   * int process.watchdog_min_thread_count = 1: minimum unresponsive
     threads for watchdog to trigger { 1:65535 }
+  * string process.numa_memory_policy = "preferred": set 
+    default|preferred|bind|local memory policy for NUMA
 
 
 2.27. profiler
@@ -10763,6 +10765,8 @@ libraries see the Getting Started section of the manual.
     threads for watchdog to trigger { 1:65535 }
   * int process.watchdog_timer = 0: watchdog timer for packet threads
     (seconds, 0 to disable) { 0:60 }
+  * string process.numa_memory_policy = "preferred": set 
+    default|preferred|bind|local memory policy for NUMA
   * int profiler.memory.count = 0: limit results to count items per
     level (0 = no limit) { 0:max32 }
   * int profiler.memory.dump_file_size = 1073741824: files will be

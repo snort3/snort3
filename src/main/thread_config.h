@@ -25,6 +25,10 @@
 
 #include "main/thread.h"
 
+#ifdef HAVE_NUMA
+#include "numa.h"
+#endif
+
 struct CpuSet;
 
 namespace snort
@@ -50,7 +54,11 @@ public:
     void set_named_thread_affinity(const std::string&, CpuSet*);
     void implement_thread_affinity(SThreadType, unsigned id);
     void implement_named_thread_affinity(const std::string& name);
+
+#ifdef HAVE_NUMA
     bool implement_thread_mempolicy(SThreadType type, unsigned id);
+    void set_numa_mempolicy(const std::string& policy);
+#endif
 
     static constexpr unsigned int DEFAULT_THREAD_ID = 0;
 
@@ -74,8 +82,12 @@ private:
     std::map<TypeIdPair, CpuSet*, TypeIdPairComparer> thread_affinity;
     std::map<std::string, CpuSet*> named_thread_affinity;
 
-    bool set_preferred_mempolicy(int node);
+#ifdef HAVE_NUMA
+    NumaMemPolicy numa_mempolicy = NumaMemPolicy::PREFERRED;
+
+    bool apply_numa_mempolicy(int node);
     int get_numa_node(hwloc_topology_t, hwloc_cpuset_t);
+#endif
 };
 }
 #endif

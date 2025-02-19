@@ -20,10 +20,26 @@
 #ifndef NUMA_H
 #define NUMA_H
 
+#include <unordered_map>
+#include <string>
+
 #include <numa.h>
 #include <numaif.h>
 #include <sched.h>
 #include <hwloc.h>
+
+enum NumaMemPolicy : uint8_t
+{
+    DEFAULT = MPOL_DEFAULT,
+    PREFERRED = MPOL_PREFERRED,
+    BIND = MPOL_BIND,
+    LOCAL = MPOL_LOCAL,
+    UNKNOWN = 255
+};
+
+NumaMemPolicy convert_string_to_numa_mempolicy(const std::string& policy);
+
+std::string stringify_numa_mempolicy(const NumaMemPolicy& policy);
 
 class NumaWrapper
 {
@@ -36,10 +52,6 @@ public:
     virtual int max_node()
     {
         return numa_max_node();
-    }
-    virtual int preferred()
-    {
-        return numa_preferred();
     }
     virtual int set_mem_policy(int mode, const unsigned long *nodemask,
                               unsigned long maxnode)
@@ -64,9 +76,13 @@ public:
     {
         return hwloc_get_type_depth(topology, type);
     }
-    virtual int bitmap_intersects(hwloc_const_cpuset_t set1, hwloc_const_cpuset_t set2)
+    virtual int bitmap_isincluded(hwloc_const_cpuset_t sub_set, hwloc_const_cpuset_t super_set)
     {
-        return hwloc_bitmap_intersects(set1, set2);
+        return hwloc_bitmap_isincluded(sub_set, super_set);
+    }
+    virtual int bitmap_iszero(hwloc_const_cpuset_t set)
+    {
+        return hwloc_bitmap_iszero(set);
     }
 };
 #endif

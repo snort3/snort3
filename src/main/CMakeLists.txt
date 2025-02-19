@@ -33,6 +33,7 @@ add_library (main OBJECT
     network_module.cc
     network_module.h
     numa.h
+    numa.cc
     oops_handler.cc
     oops_handler.h
     policy.cc

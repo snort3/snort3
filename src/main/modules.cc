@@ -1191,6 +1191,9 @@ static const Parameter process_params[] =
     { "watchdog_min_thread_count", Parameter::PT_INT, "1:65535", "1",
       "minimum unresponsive threads for watchdog to trigger" },
 
+    { "numa_memory_policy", Parameter::PT_STRING, nullptr, "preferred",
+        "set default|preferred|bind|local memory policy for NUMA" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -1260,6 +1263,11 @@ bool ProcessModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( v.is("watchdog_min_thread_count") )
         sc->set_watchdog_min_thread_count(v.get_uint16());
+
+#ifdef HAVE_NUMA
+    else if ( v.is("numa_memory_policy") )
+        sc->thread_config->set_numa_mempolicy(v.get_string());
+#endif
 
     return true;
 }
