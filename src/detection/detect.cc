@@ -37,6 +37,7 @@
 #include "packet_io/active.h"
 #include "ports/port_object.h"
 #include "profiler/profiler_defs.h"
+#include "pub_sub/detection_events.h"
 #include "reputation/reputation_common.h"
 #include "sfip/sf_ipvar.h"
 #include "stream/stream.h"
@@ -94,6 +95,9 @@ void CallLogFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
         p->data = data;
         p->dsize = dsize;
     }
+
+    IpsRuleEvent data_event(event, p);
+    DataBus::publish(DetectionEngine::get_pub_id(), DetectionEventIds::IPS_LOGGING, data_event, p->flow);
 
     OutputSet* idx = head ? head->LogList : nullptr;
     EventManager::call_loggers(idx, p, otn->sigInfo.message.c_str(), &event);

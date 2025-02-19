@@ -47,6 +47,7 @@ public:
     ~DetectionEngine();
 
 public:
+    static void init();
     static void thread_init();
     static void thread_term();
 
@@ -107,6 +108,8 @@ public:
     static bool get_check_tags(Packet*);
 
     static void wait_for_context();
+
+    static unsigned get_pub_id();
 
 private:
     static struct SF_EVENTQ* get_event_queue();

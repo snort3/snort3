@@ -31,6 +31,7 @@
 #include "actions/ips_actions.h"
 #include "codecs/codec_api.h"
 #include "connectors/connectors.h"
+#include "detection/detection_engine.h"
 #include "detection/fp_config.h"
 #include "file_api/file_service.h"
 #include "filters/detection_filter.h"
@@ -115,6 +116,8 @@ void Snort::init(int argc, char** argv)
 
     InitProtoNames();
     DataBus::init();
+
+    DetectionEngine::init();
 
     load_actions();
     load_codecs();

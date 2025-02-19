@@ -40,6 +40,7 @@
 #include "parser/parser.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
+#include "pub_sub/detection_events.h"
 #include "stream/stream.h"
 #include "time/packet_time.h"
 #include "trace/trace_api.h"
@@ -60,6 +61,8 @@ using namespace snort;
 
 static THREAD_LOCAL RegexOffload* offloader = nullptr;
 bool DetectionEngine::offload_enabled = false;
+
+static unsigned de_pub_id = 0;
 
 //--------------------------------------------------------------------------
 // basic de
@@ -124,6 +127,12 @@ DetectionEngine::~DetectionEngine()
         // FIXIT-L if might not be needed anymore with wire packet checks in finish_packet
         finish_packet(context->packet, true);
     }
+}
+
+void DetectionEngine::init()
+{
+    assert(in_main_thread());
+    de_pub_id = DataBus::get_id(de_pub_key);
 }
 
 void DetectionEngine::enable_offload()
@@ -763,4 +772,7 @@ void DetectionEngine::clear_events(Packet* p)
     SF_EVENTQ* pq = p->context->equeue;
     pc.log_limit += sfeventq_reset(pq);
 }
+
+unsigned DetectionEngine::get_pub_id()
+{ return de_pub_id; }
 
