@@ -174,7 +174,7 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
     tcp_init = false;
     tcpStats.released++;
 
-    if ( !flow->two_way_traffic() and free_flow_data )
+    if ( is_data_transferred_asymmetrically() and free_flow_data )
         tcpStats.asymmetric_flows++;
 
     client.clear_tracker(flow, p, flush_segments, restart);
@@ -186,6 +186,12 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
         flow->restart(free_flow_data);
     else
         flow->clear(free_flow_data);
+}
+
+bool TcpSession::is_data_transferred_asymmetrically() const
+{
+    return !flow->two_way_traffic()
+        && (client.seglist.data_was_queued() != server.seglist.data_was_queued());
 }
 
 void TcpSession::update_perf_base_state(char newState)

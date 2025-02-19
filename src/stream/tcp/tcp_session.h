@@ -110,6 +110,7 @@ public:
     void set_pseudo_established(snort::Packet*);
     void check_for_pseudo_established(snort::Packet*);
     bool check_for_one_sided_session(snort::Packet*);
+    bool is_data_transferred_asymmetrically() const;
 
     void check_for_repeated_syn(TcpSegmentDescriptor&);
     void check_for_session_hijack(TcpSegmentDescriptor&);
