@@ -29,7 +29,7 @@
 #define ShadowTraffic_Type_Evasive_VPN        0x00000004
 #define ShadowTraffic_Type_Multihop_Proxy     0x00000008
 #define ShadowTraffic_Type_Domain_Fronting    0x00000010
-#define ShadowTraffic_Type_Domain_Faking      0x00000020
+#define ShadowTraffic_Type_Fake_TLS      0x00000020
 
 namespace snort
 {
