@@ -1365,8 +1365,11 @@ void AppIdSession::check_domain_fronting_status()
         if (hsession) 
         { 
             const char* host = hsession->get_cfield(REQ_HOST_FID); 
-            if (host)
-                TLSDomainFrontCheckEvent(p, api.asd->get_cert_key(), host); 
+            if (host) 
+            {
+                TLSDomainFrontCheckEvent domain_front_event(p, api.asd->get_cert_key(), host);
+		        DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::DOMAIN_FRONTING, domain_front_event, p->flow);
+	        }
         } 
     } 
 } 

@@ -34,6 +34,7 @@ struct AppIdEventIds
     DHCP_DATA,
     DHCP_INFO,
     FP_SMB_DATA,
+    DOMAIN_FRONTING,
 
     num_ids
 }; };
