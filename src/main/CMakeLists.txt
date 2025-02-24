@@ -22,6 +22,10 @@ endif ( ENABLE_SHELL )
 
 add_subdirectory(test)
 
+if ( HAVE_NUMA )
+    set ( NUMA_SOURCES numa.h numa.cc)
+endif( HAVE_NUMA )
+
 add_library (main OBJECT
     analyzer.cc
     analyzer.h
@@ -32,8 +36,6 @@ add_library (main OBJECT
     modules.h
     network_module.cc
     network_module.h
-    numa.h
-    numa.cc
     oops_handler.cc
     oops_handler.h
     policy.cc
@@ -55,6 +57,7 @@ add_library (main OBJECT
     ${INCLUDES}
     ${LOCAL_INCLUDES}
     ${SHELL_SOURCES}
+    ${NUMA_SOURCES}
 )
 
 add_custom_command (
