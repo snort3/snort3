@@ -160,12 +160,8 @@ AppIdSession::~AppIdSession()
     if ((pkt_thread_odp_ctxt->get_version() == api.asd->get_odp_ctxt_version()) and api.asd->get_odp_ctxt().get_appid_shadow_traffic_status())
     {
         check_domain_fronting_status();
-        
-        if (get_shadow_traffic_publishing_appid() > APP_ID_NONE)
-        {
-            if (api.asd->appid_shadow_traffic_bits != 0)
-                api.asd->publish_shadow_traffic_event(api.asd->appid_shadow_traffic_bits, api.asd->flow);
-        } 
+        if (api.asd->appid_shadow_traffic_bits != 0)
+            api.asd->publish_shadow_traffic_event(api.asd->appid_shadow_traffic_bits, api.asd->flow);
     }
 
     if (!in_expected_cache)
@@ -1222,7 +1218,7 @@ void AppIdSession::publish_shadow_traffic_event(const uint32_t &shadow_traffic_b
     app_name = api.asd->get_odp_ctxt().get_app_info_mgr().get_app_name(publishing_appid);
     if (app_name == nullptr)
     {
-        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Appname is invalid, not publishing shadow traffic event without appname\n");
+        APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL,"Appname is invalid, not publishing shadow traffic event without appname\n");
         return;
     }
 
@@ -1361,15 +1357,22 @@ void AppIdSession::check_domain_fronting_status()
     if (api.asd->get_session_flags(APPID_SESSION_DECRYPTED) or api.asd->get_session_flags(APPID_SESSION_APP_REINSPECT)) 
     { 
         AppIdHttpSession* hsession = api.asd->get_http_session();
-        Packet* p = DetectionEngine::get_current_packet();
         if (hsession) 
-        { 
-            const char* host = hsession->get_cfield(REQ_HOST_FID); 
-            if (host) 
+        {
+            const std::string* host = hsession->get_field(REQ_HOST_FID); 
+            if (host)
             {
-                TLSDomainFrontCheckEvent domain_front_event(p, api.asd->get_cert_key(), host);
-		        DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::DOMAIN_FRONTING, domain_front_event, p->flow);
-	        }
+                TLSDomainFrontCheckEvent domain_front_event(api.asd->get_cert_key(), *host);
+                DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::DOMAIN_FRONTING, domain_front_event);
+                if (DomainFrontingStatus::MISMATCH == domain_front_event.get_cert_lookup_verdict())
+                {
+                    uint32_t shadow_bits = get_shadow_traffic_bits();
+                    shadow_bits |= ShadowTraffic_Type_Domain_Fronting;
+                    set_shadow_traffic_bits(shadow_bits);
+                    AppId payload_id = api.asd->get_api().get_payload_app_id();
+                    set_shadow_traffic_publishing_appid(payload_id);
+                }
+            }
         } 
     } 
 } 

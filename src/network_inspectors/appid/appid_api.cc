@@ -302,19 +302,6 @@ void AppIdApi::update_shadow_traffic_status(bool status)
 void AppIdApi::set_ssl_certificate_key(const Flow& flow, const std::string& cert_key)
 {
     AppIdSession* asd = get_appid_session(flow);
-    if (asd != nullptr and !cert_key.empty())
+    if (asd != nullptr and asd->get_odp_ctxt().get_appid_shadow_traffic_status() and !cert_key.empty())
         asd->set_cert_key(cert_key);
 }
-
-void AppIdApi::ssl_hostname_cert_lookup_verdict(const snort::Flow &flow, DomainFrontingStatus status) 
-{ 
-    AppIdSession* asd = get_appid_session(flow);
-    if (asd != nullptr and status == DomainFrontingStatus::MISMATCH)  
-    { 
-        uint32_t shadow_bits = asd->get_shadow_traffic_bits();
-        shadow_bits |= ShadowTraffic_Type_Domain_Fronting;
-        asd->set_shadow_traffic_bits(shadow_bits);
-        AppId payload_id = asd->get_api().get_payload_app_id();
-        asd->set_shadow_traffic_publishing_appid(payload_id);
-    }  
-} 

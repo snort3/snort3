@@ -21,28 +21,33 @@
 #define DOMAIN_FRONTING_H
 
 #include "framework/data_bus.h"
+#include "pub_sub/appid_events.h"
 #include <string>
 
 enum class DomainFrontingStatus  
 {
+     UNDEFINED,
      MISMATCH,  
      MATCHES,  
      CERT_NOT_IN_CACHE  
 };
 
-class TLSDomainFrontCheckEvent : public snort::DataEvent 
+class SO_PUBLIC TLSDomainFrontCheckEvent : public snort::DataEvent 
 {
 public: 
-     TLSDomainFrontCheckEvent(const snort::Packet& packet, const std::string& certificate_id, 
-     const std::string& hostname): cert_id(certificate_id), hostname(hostname), pkt(&packet) {}
+     TLSDomainFrontCheckEvent(const std::string& certificate_id, 
+          const std::string& hostname)
+     : cert_id(certificate_id), hostname(hostname) {}
 
-     const snort::Packet* get_packet() const override
-     { return pkt; }
+     const std::string& get_cert_id() { return cert_id; }
+     const std::string& get_hostname () { return hostname; }
+     void set_cert_lookup_verdict(DomainFrontingStatus status) { this->df_status = status; }
+     DomainFrontingStatus get_cert_lookup_verdict() const { return df_status; }
 
 private:
-     const std::string cert_id;
-     const std::string hostname;
-     const snort::Packet* pkt;
+     const std::string &cert_id;
+     const std::string &hostname;
+     DomainFrontingStatus df_status = DomainFrontingStatus::UNDEFINED;
 };
 
 #endif
