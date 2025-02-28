@@ -223,6 +223,8 @@ void JsonStream::put_escaped(const char* v, size_t len)
 
 #ifdef UNIT_TEST
 
+#include <sstream>
+
 #include "catch/snort_catch.h"
 
 class JsonStreamTest : public JsonStream
