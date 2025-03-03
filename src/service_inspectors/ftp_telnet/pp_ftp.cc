@@ -753,8 +753,9 @@ static int validate_param(Packet* p,
         session->clientIP = ipAddr;
         session->clientPort = port;
         session->data_chan_state |= DATA_CHAN_PORT_CMD_ISSUED;
+
         if (session->data_chan_state & DATA_CHAN_PASV_CMD_ISSUED)
-        {
+        {   
             /*
              * If there was a PORT command previously in
              * a series of pipelined requests, this
@@ -765,6 +766,65 @@ static int validate_param(Packet* p,
 
         session->serverIP.clear();
         session->serverPort = 0;
+
+        if (session->clientIP.is_set())
+        {
+            /* This means we're not in passive mode. */
+            /* Server is listening/sending from its own IP,
+             * FTP Port -1 */
+            /* Client IP, Port specified via PORT command */
+            session->serverIP = *p->ptrs.ip_api.get_dst();
+
+            /* Can't necessarily guarantee this, especially
+             * in the case of a proxy'd connection where the
+             * data channel might not be on port 20 (or server
+             * port-1).  Comment it out for now.
+            */
+            /*
+             session->serverPort = ntohs(p->ptrs.tcph->th_sport) -1;
+            */
+            if ((FileService::get_max_file_depth() > 0) ||
+                   !(session->server_conf->data_chan))
+            {
+                FtpDataFlowData* fd = new FtpDataFlowData(p);
+                FTP_DATA_SESSION* ftpdata = &fd->session;
+
+                int result;
+                /* This is a active data transfer */
+                ftpdata->mode = FTPP_XFER_ACTIVE;
+                session->mode = FTPP_XFER_ACTIVE;
+                ftpdata->data_chan = session->server_conf->data_chan;
+                if (session->flags & FTP_FLG_MALWARE)
+                    session->datassn = ftpdata;
+
+                if (p->flow->flags.data_decrypted and
+                    (session->flags & FTP_PROTP_CMD_ACCEPT))
+                    fd->in_tls = true;
+
+                    /* Call into Streams to mark data channel as ftp-data */
+                result = Stream::set_snort_protocol_id_expected(
+                    p, PktType::TCP, IpProtocol::TCP,
+                    &session->serverIP, session->serverPort,
+                    &session->clientIP, session->clientPort,
+                    ftp_data_snort_protocol_id, fd, true);
+
+                if (result < 0)
+                {
+                    delete fd;
+                    session->datassn = nullptr;
+                }
+            }
+            else if (session->server_conf->data_chan)
+            {
+                 /* Call into Streams to mark data channel as something
+                  * to ignore. */
+                  Stream::ignore_flow(
+                      p, PktType::TCP, IpProtocol::TCP,
+                      &session->serverIP, session->serverPort,
+                      &session->clientIP, session->clientPort,
+                      SSN_DIR_BOTH, (new FtpDataFlowData(p)));
+            }
+        }
     }
     break;
     }
@@ -1168,64 +1228,6 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                     session->data_chan_state &= ~DATA_CHAN_PORT_CMD_ISSUED;
                     session->data_chan_state |= DATA_CHAN_PORT_CMD_ACCEPT;
                     session->data_chan_index = -1;
-                    if (session->clientIP.is_set())
-                    {
-                        /* This means we're not in passive mode. */
-                        /* Server is listening/sending from its own IP,
-                         * FTP Port -1 */
-                        /* Client IP, Port specified via PORT command */
-                        session->serverIP = *p->ptrs.ip_api.get_src();
-
-                        /* Can't necessarily guarantee this, especially
-                         * in the case of a proxy'd connection where the
-                         * data channel might not be on port 20 (or server
-                         * port-1).  Comment it out for now.
-                         */
-                        /*
-                        session->serverPort = ntohs(p->ptrs.tcph->th_sport) -1;
-                        */
-                        if ((FileService::get_max_file_depth() > 0) ||
-                            !(session->server_conf->data_chan))
-                        {
-                            FtpDataFlowData* fd = new FtpDataFlowData(p);
-                            FTP_DATA_SESSION* ftpdata = &fd->session;
-
-                            int result;
-                            /* This is a active data transfer */
-                            ftpdata->mode = FTPP_XFER_ACTIVE;
-                            session->mode = FTPP_XFER_ACTIVE;
-                            ftpdata->data_chan = session->server_conf->data_chan;
-                            if (session->flags & FTP_FLG_MALWARE)
-                                session->datassn = ftpdata;
-
-                            if (p->flow->flags.data_decrypted and
-                                (session->flags & FTP_PROTP_CMD_ACCEPT))
-                                fd->in_tls = true;
-
-                            /* Call into Streams to mark data channel as ftp-data */
-                            result = Stream::set_snort_protocol_id_expected(
-                                p, PktType::TCP, IpProtocol::TCP,
-                                &session->serverIP, session->serverPort,
-                                &session->clientIP, session->clientPort,
-                                ftp_data_snort_protocol_id, fd, true);
-
-                            if (result < 0)
-                            {
-                                delete fd;
-                                session->datassn = nullptr;
-                            }
-                        }
-                        else if (session->server_conf->data_chan)
-                        {
-                            /* Call into Streams to mark data channel as something
-                             * to ignore. */
-                            Stream::ignore_flow(
-                                p, PktType::TCP, IpProtocol::TCP,
-                                &session->serverIP, session->serverPort,
-                                &session->clientIP, session->clientPort,
-                                SSN_DIR_BOTH, (new FtpDataFlowData(p)));
-                        }
-                    }
                 }
                 else if (ftp_cmd_pipe_index == session->data_chan_index)
                 {
