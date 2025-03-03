@@ -49,10 +49,10 @@ to transmit data using different pre-configured channels. Specific connector
 is getting configured as a separate module and extractor accesses it by
 name.
 
-Both Logger and its Connector are allocated per thread, so no syncronization
-is required. If data channel poses multithreaded output restrictions, those
+Both Logger and its Connector are allocated per thread, so no synchronization
+is required. If the data channel poses multithreaded output restrictions, those
 should be handled by the Connector. `Connector` specialization may do things
-in asynchronous way and store the data for indefinite amount of time, but only
+in asynchronous way and store the data for an indefinite amount of time, but only
 if it was moved to it. Therefore, each logger should choose the appropriate
 method for transmitting the message.
 
@@ -79,8 +79,8 @@ extractor of `ExtractorEvent` type.
 
 Also, each specific class of a service extractor spawns a specific
 `snort::DataHandler` (which is immediately subscribed to data bus events). The
-handler memory is solely managed by data bus. It is guaranteed that service
-extractor lives longer than a handler. This allows safe callbacks from event
+handler memory is solely managed by data bus. It is guaranteed that the service
+extractor lives longer than the handler. This allows safe callbacks from event
 handler to a service extractor. So, memory management is split between data
 bus (event handlers) and the inspector (service extractors).
 
