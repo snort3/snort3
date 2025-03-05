@@ -726,8 +726,7 @@ void SnortConfig::set_obfuscation_mask(const char* mask)
         return;
 
     output_flags |= OUTPUT_FLAG__OBFUSCATE;
-
-    obfuscation_net.set(mask);
+    static_cast<void>(obfuscation_net.set(mask));
 }
 
 void SnortConfig::set_gid(const char* args)
