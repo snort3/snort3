@@ -110,8 +110,10 @@ FileInfo::~FileInfo ()
         user_file_data_mutex.unlock();
     }
 
-    if (sha256)
+    if (sha256) {
         delete[] sha256;
+        sha256 = nullptr;
+    }
 }
 
 void FileInfo::copy(const FileInfo& other, bool clear_data)
