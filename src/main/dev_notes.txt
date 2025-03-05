@@ -70,12 +70,13 @@ the NUMA (Non Uniform Memory Access) policy that is supported by
 the Linux kernel. Preferred memory mode support for NUMA systems 
 has been added. set_mempolicy() is used to establish the memory policy 
 for packet threads operating on different nodes within a NUMA system. 
-The libnuma-dev library must be installed to enable this support. 
-In systems without NUMA architecture, this feature will not affect system 
-performance or behavior. This, alongside with libhwloc, presents an efficient 
-cross-platform mechanism for thread configuration and managing CPU affinity 
-of threads, not only considering CPU architecture but also memory access policies, 
-providing a more balanced and optimized execution environment.
+The libnuma-dev library, version 2.0.14 or higher, must be installed to 
+enable this support. In systems without NUMA architecture, this feature 
+will not affect system performance or behavior. This, alongside with libhwloc, 
+presents an efficient cross-platform mechanism for thread configuration and 
+managing CPU affinity of threads, not only considering CPU architecture but 
+also memory access policies, providing a more balanced and optimized 
+execution environment.
 
 use of get_relative_instance_number() in thread.cc:
 

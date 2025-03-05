@@ -126,6 +126,10 @@ Optional Packages:
     --with-libml-libraries=DIR
                             libml library directory
     --without-libml         build Snort ML with mock of LibML
+    --with-libnuma-includes=DIR
+                            libnuma include directory
+    --with-libnuma-libraries=DIR
+                            libnuma library directory
 
 Some influential variable definitions:
     SIGNAL_SNORT_RELOAD=<int>
@@ -486,6 +490,12 @@ while [ $# -ne 0 ]; do
             ;;
         --without-libml)
             append_cache_entry USE_LIBML_MOCK BOOL true
+            ;;
+        --with-libnuma-includes=*)
+            append_cache_entry NUMA_INCLUDE_DIR_HINT PATH $optarg
+            ;;
+        --with-libnuma-libraries=*)
+            append_cache_entry NUMA_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         SIGNAL_SNORT_RELOAD=*)
             append_cache_entry SIGNAL_SNORT_RELOAD STRING $optarg
