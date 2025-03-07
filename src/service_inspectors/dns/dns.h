@@ -55,6 +55,9 @@ struct DNSHdr
 #define DNS_HDR_FLAG_OPCODE_MASK            0x7800
 #define DNS_HDR_FLAG_RESPONSE               0x8000
 
+#define DNS_HDR_FLAG_Z (DNS_HDR_FLAG_NON_AUTHENTICATED_OK | DNS_HDR_FLAG_ANS_AUTHENTICATED | DNS_HDR_FLAG_RESERVED)
+#define DNS_HDR_FLAG_Z_SHIFT 4
+
 struct DNSQuestion
 {
     uint16_t type = 0;
@@ -202,10 +205,13 @@ struct DNSData
     const DnsConfig* dns_config = nullptr;
     snort::DnsResponseDataEvents dns_events;
     DnsResponseFqdn cur_fqdn_event;
+    std::string resp_query;
+    std::string answers;
 
     bool publish_response() const;
     bool has_events() const;
     bool valid_dns(const DNSHdr&) const;
+    void add_answer(const char* answer);
 };
 
 DNSData* get_dns_session_data(snort::Packet* p, bool from_server, DNSData& udpSessionData);

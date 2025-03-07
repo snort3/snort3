@@ -50,6 +50,7 @@ struct DnsEventIds
     enum : unsigned
     {
         DNS_RESPONSE_DATA,
+        DNS_RESPONSE,
         num_ids
     };
 };
@@ -58,6 +59,7 @@ const snort::PubKey dns_pub_key { "dns", DnsEventIds::num_ids };
 
 class DnsResponseIp;
 class DnsResponseFqdn;
+struct DNSData;
 
 namespace snort
 {
@@ -73,6 +75,32 @@ private:
     std::vector<DnsResponseIp> dns_ips;
     std::vector<DnsResponseFqdn> dns_fqdns;
 };
+
+class SO_PUBLIC DnsResponseEvent : public snort::DataEvent
+{
+public:
+    DnsResponseEvent(const DNSData& ssn) : session(ssn) { }
+
+    uint16_t get_trans_id() const;
+    const std::string& get_query() const;
+    uint16_t get_query_class() const;
+    const std::string& get_query_class_name() const;
+    uint16_t get_query_type() const;
+    const std::string& get_query_type_name() const;
+    uint8_t get_rcode() const;
+    const std::string& get_rcode_name() const;
+    bool get_AA() const;
+    bool get_TC() const;
+    bool get_RD() const;
+    bool get_RA() const;
+    uint8_t get_Z() const;
+    const std::string& get_answers() const;
+    bool get_rejected() const;
+
+private:
+    const DNSData& session;
+};
+
 }
 
 #endif

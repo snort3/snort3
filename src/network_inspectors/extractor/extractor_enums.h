@@ -30,6 +30,7 @@ public:
         HTTP,
         FTP,
         CONN,
+        DNS,
         ANY,
         MAX
     };
@@ -51,6 +52,8 @@ public:
             return "ftp";
         case CONN:
             return "conn";
+        case DNS:
+            return "dns";
         case ANY: // fallthrough
         case MAX: // fallthrough
         default:

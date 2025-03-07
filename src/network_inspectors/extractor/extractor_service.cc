@@ -27,6 +27,7 @@
 
 #include "extractor.h"
 #include "extractor_conn.h"
+#include "extractor_dns.h"
 #include "extractor_ftp.h"
 #include "extractor_http.h"
 
@@ -123,6 +124,10 @@ ExtractorService* ExtractorService::make_service(Extractor& ins, const ServiceCo
         srv = new ConnExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, ins);
         break;
 
+    case ServiceType::DNS:
+        srv = new DnsExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, ins);
+        break;
+
     case ServiceType::ANY: // fallthrough
     default:
         ErrorMessage("Extractor: '%s' service is not supported\n", cfg.service.c_str());
@@ -213,6 +218,11 @@ void ExtractorService::validate(const ServiceConfig& cfg)
     case ServiceType::CONN:
         validate_events(ConnExtractorService::blueprint, cfg.on_events);
         validate_fields(ConnExtractorService::blueprint, cfg.fields);
+        break;
+
+    case ServiceType::DNS:
+        validate_events(DnsExtractorService::blueprint, cfg.on_events);
+        validate_fields(DnsExtractorService::blueprint, cfg.fields);
         break;
 
     case ServiceType::ANY: // fallthrough
@@ -364,6 +374,56 @@ const snort::Connector::ID& ConnExtractorService::get_log_id()
 { return log_id; }
 
 //-------------------------------------------------------------------------
+//  DnsExtractorService
+//-------------------------------------------------------------------------
+
+const ServiceBlueprint DnsExtractorService::blueprint =
+{
+    // events
+    {
+        "response",
+    },
+    // fields
+    {
+        "proto",
+        "trans_id",
+        "query",
+        "qclass",
+        "qclass_name",
+        "qtype",
+        "qtype_name",
+        "rcode",
+        "rcode_name",
+        "AA",
+        "TC",
+        "RD",
+        "RA",
+        "Z",
+        "answers",
+        "rejected"
+    },
+};
+
+THREAD_LOCAL Connector::ID DnsExtractorService::log_id;
+
+DnsExtractorService::DnsExtractorService(uint32_t tenant, const std::vector<std::string>& srv_fields,
+    const std::vector<std::string>& srv_events, ServiceType s_type, Extractor& ins)
+    : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, ins)
+{
+    for (const auto& event : get_events())
+    {
+        if (!strcmp("response", event.c_str()))
+            handlers.push_back(new DnsResponseExtractor(ins, tenant_id, get_fields()));
+    }
+}
+
+const snort::Connector::ID& DnsExtractorService::internal_tinit()
+{ return log_id = logger->get_id(type.c_str()); }
+
+const snort::Connector::ID& DnsExtractorService::get_log_id()
+{ return log_id; }
+
+//-------------------------------------------------------------------------
 //  Unit Tests
 //-------------------------------------------------------------------------
 
@@ -380,12 +440,14 @@ TEST_CASE("Service Type", "[extractor]")
         ServiceType http = ServiceType::HTTP;
         ServiceType ftp = ServiceType::FTP;
         ServiceType conn = ServiceType::CONN;
+        ServiceType dns = ServiceType::DNS;
         ServiceType any = ServiceType::ANY;
         ServiceType max = ServiceType::MAX;
 
         CHECK_FALSE(strcmp("http", http.c_str()));
         CHECK_FALSE(strcmp("ftp", ftp.c_str()));
         CHECK_FALSE(strcmp("conn", conn.c_str()));
+        CHECK_FALSE(strcmp("dns", dns.c_str()));
         CHECK_FALSE(strcmp("(not set)", any.c_str()));
         CHECK_FALSE(strcmp("(not set)", max.c_str()));
     }

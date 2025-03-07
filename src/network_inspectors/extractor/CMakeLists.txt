@@ -12,6 +12,7 @@ set( FILE_LIST
     extractor_conn.cc
     extractor_csv_logger.cc
     extractor_csv_logger.h
+    extractor_dns.cc
     extractor_enums.h
     extractor_flow_data.cc
     extractor_flow_data.h
