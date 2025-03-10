@@ -51,6 +51,7 @@ struct ExtractorConfig
 {
     FormatType formatting = FormatType::CSV;
     std::string output_conn;
+    TimeType time_formatting = TimeType::UNIX;
     bool pick_by_default = true;
     std::vector<ServiceConfig> protocols;
 };

@@ -29,12 +29,40 @@
 #include <limits>
 #include <string>
 
+#include "utils/util.h"
 #include "utils/util_cstring.h"
 
 using namespace snort;
 using namespace std;
 
 static THREAD_LOCAL bool first_write;
+
+CsvExtractorLogger::CsvExtractorLogger(snort::Connector* conn, TimeType ts_type)
+    : ExtractorLogger(conn)
+{
+    switch (ts_type)
+    {
+    case TimeType::SNORT:
+        add_ts = &CsvExtractorLogger::ts_snort;
+        break;
+    case TimeType::SNORT_YY:
+        add_ts = &CsvExtractorLogger::ts_snort_yy;
+        break;
+    case TimeType::UNIX:
+        add_ts = &CsvExtractorLogger::ts_unix;
+        break;
+    case TimeType::UNIX_S:
+        add_ts = &CsvExtractorLogger::ts_sec;
+        break;
+    case TimeType::UNIX_US:
+        add_ts = &CsvExtractorLogger::ts_usec;
+        break;
+    case TimeType::MAX: // fallthrough
+    default:
+        add_ts = &CsvExtractorLogger::ts_snort;
+        break;
+    }
+}
 
 void CsvExtractorLogger::add_header(const vector<const char*>& field_names, const Connector::ID& service_id)
 {
@@ -81,16 +109,6 @@ void CsvExtractorLogger::add_field(const char*, uint64_t v)
 {
     first_write ? []() { first_write = false; } () : buffer.push_back(',');
     buffer.append(to_string(v));
-}
-
-void CsvExtractorLogger::add_field(const char*, struct timeval v)
-{
-    first_write ? []() { first_write = false; } () : buffer.push_back(',');
-
-    char time_str[numeric_limits<uint64_t>::digits10 + 8];
-    snort::SnortSnprintf(time_str, sizeof(time_str), "%" PRIu64 ".%06d", (uint64_t)v.tv_sec, (unsigned)v.tv_usec);
-
-    buffer.append(time_str);
 }
 
 void CsvExtractorLogger::add_field(const char*, const snort::SfIp& v)
@@ -159,6 +177,51 @@ void CsvExtractorLogger::add_escaped(const char* v, size_t len)
     buffer.push_back('"');
 }
 
+void CsvExtractorLogger::add_field(const char*, struct timeval v)
+{
+    first_write ? []() { first_write = false; } () : buffer.push_back(',');
+    (this->*add_ts)(v);
+}
+
+void CsvExtractorLogger::ts_snort(const struct timeval& v)
+{
+    char ts[TIMEBUF_SIZE];
+    ts_print(&v, ts, false);
+
+    buffer.append(ts);
+}
+
+void CsvExtractorLogger::ts_snort_yy(const struct timeval& v)
+{
+    char ts[TIMEBUF_SIZE];
+    ts_print(&v, ts, true);
+
+    buffer.append(ts);
+}
+
+void CsvExtractorLogger::ts_unix(const struct timeval& v)
+{
+    char ts[numeric_limits<uint64_t>::digits10 + 8];
+
+    snort::SnortSnprintf(ts, sizeof(ts), "%" PRIu64 ".%06d", (uint64_t)v.tv_sec, (unsigned)v.tv_usec);
+    buffer.append(ts);
+}
+
+void CsvExtractorLogger::ts_sec(const struct timeval& v)
+{
+    uint64_t sec = (uint64_t)v.tv_sec;
+
+    buffer.append(to_string(sec));
+}
+
+void CsvExtractorLogger::ts_usec(const struct timeval& v)
+{
+    uint64_t sec = (uint64_t)v.tv_sec;
+    uint64_t usec = (uint64_t)v.tv_usec;
+
+    buffer.append(to_string(sec * 1000000 + usec));
+}
+
 #ifdef UNIT_TEST
 
 #include "catch/snort_catch.h"
@@ -166,7 +229,7 @@ void CsvExtractorLogger::add_escaped(const char* v, size_t len)
 class CsvExtractorLoggerTest : public CsvExtractorLogger
 {
 public:
-    CsvExtractorLoggerTest() : CsvExtractorLogger(nullptr) {}
+    CsvExtractorLoggerTest() : CsvExtractorLogger(nullptr, TimeType::MAX) {}
 
     void check_escaping(const char* input, size_t i_len, const std::string& expected)
     {

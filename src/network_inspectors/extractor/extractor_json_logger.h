@@ -22,7 +22,6 @@
 
 #include <sstream>
 
-#include "framework/value.h"
 #include "helpers/json_stream.h"
 
 #include "extractor_logger.h"
@@ -30,8 +29,7 @@
 class JsonExtractorLogger : public ExtractorLogger
 {
 public:
-    JsonExtractorLogger(snort::Connector* conn) : ExtractorLogger(conn), oss(), js(oss)
-    { }
+    JsonExtractorLogger(snort::Connector*, TimeType);
 
     void add_field(const char*, const char*) override;
     void add_field(const char*, const char*, size_t) override;
@@ -43,8 +41,15 @@ public:
     void close_record(const snort::Connector::ID&) override;
 
 private:
+    void ts_snort(const char*, const struct timeval&);
+    void ts_snort_yy(const char*, const struct timeval&);
+    void ts_unix(const char*, const struct timeval&);
+    void ts_sec(const char*, const struct timeval&);
+    void ts_usec(const char*, const struct timeval&);
+
     std::ostringstream oss;
     snort::JsonStream js;
+    void (JsonExtractorLogger::*add_ts)(const char*, const struct timeval&);
 };
 
 #endif

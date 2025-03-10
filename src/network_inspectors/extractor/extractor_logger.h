@@ -32,7 +32,7 @@
 class ExtractorLogger
 {
 public:
-    static ExtractorLogger* make_logger(FormatType, const std::string&);
+    static ExtractorLogger* make_logger(FormatType, const std::string&, TimeType);
 
     ExtractorLogger(snort::Connector* conn) : output_conn(conn)
     { }

@@ -2,7 +2,6 @@ Snort 3 can log IPS events with some meta data and dump packets. The Data
 Logging feature extends that ability to log protocol-specific data, sniffing
 traffic alongside with normal inspection.
 
-
 ==== Configurations
 
 The module's configuration consists of two parts:
@@ -11,6 +10,7 @@ The module's configuration consists of two parts:
   ** `formatting` - log record format
   ** `connector` - Connector object through which logs will be sent. See Connectors page
      for more details.
+  ** `time` - timestamp format
 * protocol-targeted parameters bind the targeted service and events with
   filters and a set of fields to log
   ** `service` - protocol name
@@ -29,28 +29,38 @@ things it allows tenants to get independent data logging configurations.
 
         protocols =
         {
-            { service = 'http', tenant_id = 1, on_events = 'eot', fields = 'ts, uri, host, method' },
-            { service = 'ftp', tenant_id = 1, on_events = 'request', fields = 'ts, command, arg' },
-            { service = 'http', tenant_id = 2, on_events = 'eot', fields = 'ts, uri' },
-            { service = 'conn', tenant_id = 1, on_events = 'eof', fields = 'ts, uid, service' },
-            { service = 'dns', tenant_id = 1, on_events = 'response', fields = 'ts, uid, query, answers' }
+            { service = 'http', on_events = 'eot', fields = 'ts, uri, host, method' },
+            { service = 'ftp', on_events = 'request', fields = 'ts, command, arg' },
+            { service = 'http', on_events = 'eot', fields = 'ts, uri' },
+            { service = 'conn', on_events = 'eof', fields = 'ts, uid, service' },
+            { service = 'dns', on_events = 'response', fields = 'ts, uid, query, answers' }
         }
     }
 
 ==== Supported Parameters
 
+Timestamp formats:
+
+* `snort` prints timestamp as in IPS events (see snort command line options
+   `-U` and `-y`) (string `ts` field)
+* `snort_yy` same as above, but using YYYY-MM-DD format (string `ts` field)
+* `unix` prints UTC time in seconds (integer part) and microseconds (fractional part)
+   (floating `ts` field)
+* `unix_s` prints UTC time in seconds (integer `ts` field)
+* `unix_us` prints UTC time in microseconds (integer `ts` field)
+
 Services and their events:
 
 * HTTP, HTTP2
-  ** eot (request-response pair)
+  ** `eot` (request-response pair)
 * FTP
-  ** request
-  ** response
-  ** eot (a session defined by the following commands: APPE, DELE, RETR, STOR, STOU, ACCT, PORT, PASV, EPRT, EPSV)
+  ** `request`
+  ** `response`
+  ** `eot` (a session defined by the following commands: APPE, DELE, RETR, STOR, STOU, ACCT, PORT, PASV, EPRT, EPSV)
 * DNS
-  ** response
+  ** `response`
 * connection (conn)
-  ** eof (end of flow)
+  ** `eof` (end of flow)
 
 Common fields available for every service:
 

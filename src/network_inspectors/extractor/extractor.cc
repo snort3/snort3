@@ -73,6 +73,9 @@ static const Parameter s_params[] =
     { "connector", Parameter::PT_STRING, nullptr, nullptr,
       "output destination for extractor" },
 
+    { "time", Parameter::PT_ENUM, "snort | snort_yy | unix | unix_s | unix_us", "unix",
+      "output format for timestamp values" },
+
     { "default_filter", Parameter::PT_ENUM, "pick | skip", "pick",
       "default action for protocol with no filter provided" },
 
@@ -141,6 +144,9 @@ bool ExtractorModule::set(const char*, Value& v, SnortConfig*)
     else if (v.is("connector"))
         extractor_config.output_conn = v.get_string();
 
+    else if (v.is("time"))
+        extractor_config.time_formatting = (TimeType)(v.get_uint8());
+
     if (v.is("default_filter"))
         extractor_config.pick_by_default = v.get_uint8() == 0;
 
@@ -190,7 +196,8 @@ public:
         inspector.logger->flush();
 
         delete inspector.logger;
-        inspector.logger = ExtractorLogger::make_logger(inspector.cfg.formatting, inspector.cfg.output_conn);
+        inspector.logger = ExtractorLogger::make_logger(
+            inspector.cfg.formatting, inspector.cfg.output_conn, inspector.cfg.time_formatting);
 
         for (auto& s : inspector.services)
             s->tinit(inspector.logger);
@@ -242,6 +249,7 @@ void Extractor::show(const SnortConfig*) const
 {
     ConfigLogger::log_value("formatting", cfg.formatting.c_str());
     ConfigLogger::log_value("connector", cfg.output_conn.c_str());
+    ConfigLogger::log_value("time", cfg.time_formatting.c_str());
     ConfigLogger::log_value("pick_by_default", cfg.pick_by_default ? "pick" : "skip");
 
     bool log_header = true;
@@ -261,7 +269,7 @@ void Extractor::show(const SnortConfig*) const
 
 void Extractor::tinit()
 {
-    logger = ExtractorLogger::make_logger(cfg.formatting, cfg.output_conn);
+    logger = ExtractorLogger::make_logger(cfg.formatting, cfg.output_conn, cfg.time_formatting);
 
     for (auto& s : services)
         s->tinit(logger);
@@ -337,3 +345,34 @@ const BaseApi* nin_extractor[] =
     nullptr
 };
 
+//-------------------------------------------------------------------------
+//  Unit Tests
+//-------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+#include <memory.h>
+
+TEST_CASE("Time Type", "[extractor]")
+{
+    SECTION("to string")
+    {
+        TimeType a = TimeType::SNORT;
+        TimeType b = TimeType::SNORT_YY;
+        TimeType c = TimeType::UNIX;
+        TimeType d = TimeType::UNIX_S;
+        TimeType e = TimeType::UNIX_US;
+        TimeType f = TimeType::MAX;
+
+        CHECK_FALSE(strcmp("snort", a.c_str()));
+        CHECK_FALSE(strcmp("snort_yy", b.c_str()));
+        CHECK_FALSE(strcmp("unix", c.c_str()));
+        CHECK_FALSE(strcmp("unix_s", d.c_str()));
+        CHECK_FALSE(strcmp("unix_us", e.c_str()));
+        CHECK_FALSE(strcmp("(not set)", f.c_str()));
+    }
+}
+
+#endif

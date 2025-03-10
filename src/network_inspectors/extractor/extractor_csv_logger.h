@@ -20,15 +20,12 @@
 #ifndef EXTRACTOR_CSV_LOGGER_H
 #define EXTRACTOR_CSV_LOGGER_H
 
-#include "framework/value.h"
-
 #include "extractor_logger.h"
 
 class CsvExtractorLogger : public ExtractorLogger
 {
 public:
-    CsvExtractorLogger(snort::Connector* conn) : ExtractorLogger(conn)
-    { }
+    CsvExtractorLogger(snort::Connector*, TimeType);
 
     virtual bool is_strict() const override
     { return true; }
@@ -45,8 +42,14 @@ public:
 
 protected:
     void add_escaped(const char*, size_t);
+    void ts_snort(const struct timeval&);
+    void ts_snort_yy(const struct timeval&);
+    void ts_unix(const struct timeval&);
+    void ts_sec(const struct timeval&);
+    void ts_usec(const struct timeval&);
 
     std::string buffer;
+    void (CsvExtractorLogger::*add_ts)(const struct timeval&);
 };
 
 #endif

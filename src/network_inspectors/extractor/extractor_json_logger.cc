@@ -26,7 +26,35 @@
 #include <cassert>
 #include <string>
 
+#include "utils/util.h"
 #include "utils/util_cstring.h"
+
+JsonExtractorLogger::JsonExtractorLogger(snort::Connector* conn, TimeType ts_type)
+    : ExtractorLogger(conn), oss(), js(oss)
+{
+    switch (ts_type)
+    {
+    case TimeType::SNORT:
+        add_ts = &JsonExtractorLogger::ts_snort;
+        break;
+    case TimeType::SNORT_YY:
+        add_ts = &JsonExtractorLogger::ts_snort_yy;
+        break;
+    case TimeType::UNIX:
+        add_ts = &JsonExtractorLogger::ts_unix;
+        break;
+    case TimeType::UNIX_S:
+        add_ts = &JsonExtractorLogger::ts_sec;
+        break;
+    case TimeType::UNIX_US:
+        add_ts = &JsonExtractorLogger::ts_usec;
+        break;
+    case TimeType::MAX: // fallthrough
+    default:
+        add_ts = &JsonExtractorLogger::ts_snort;
+        break;
+    }
+}
 
 void JsonExtractorLogger::open_record()
 {
@@ -61,15 +89,6 @@ void JsonExtractorLogger::add_field(const char* f, uint64_t v)
     js.uput(f, v);
 }
 
-void JsonExtractorLogger::add_field(const char* f, struct timeval v)
-{
-    char u_sec[8];
-    snort::SnortSnprintf(u_sec, sizeof(u_sec), ".%06d",(unsigned)v.tv_usec);
-
-    auto str = std::to_string(v.tv_sec) + u_sec;
-    js.put(f, str);
-}
-
 void JsonExtractorLogger::add_field(const char* f, const snort::SfIp& v)
 {
     snort::SfIpString buf;
@@ -81,4 +100,48 @@ void JsonExtractorLogger::add_field(const char* f, const snort::SfIp& v)
 void JsonExtractorLogger::add_field(const char* f, bool v)
 {
     v ? js.put_true(f) : js.put_false(f);
+}
+
+void JsonExtractorLogger::add_field(const char* f, struct timeval v)
+{
+    (this->*add_ts)(f, v);
+}
+
+void JsonExtractorLogger::ts_snort(const char* f, const struct timeval& v)
+{
+    char ts[TIMEBUF_SIZE];
+    snort::ts_print(&v, ts, false);
+
+    js.put(f, ts);
+}
+
+void JsonExtractorLogger::ts_snort_yy(const char* f, const struct timeval& v)
+{
+    char ts[TIMEBUF_SIZE];
+    snort::ts_print(&v, ts, true);
+
+    js.put(f, ts);
+}
+
+void JsonExtractorLogger::ts_unix(const char* f, const struct timeval& v)
+{
+   double sec = (uint64_t)v.tv_sec;
+   double usec = (uint64_t)v.tv_usec;
+
+   js.put(f, sec + usec / 1000000.0, 6);
+}
+
+void JsonExtractorLogger::ts_sec(const char* f, const struct timeval& v)
+{
+   uint64_t sec = (uint64_t)v.tv_sec;
+
+   js.uput(f, sec);
+}
+
+void JsonExtractorLogger::ts_usec(const char* f, const struct timeval& v)
+{
+   uint64_t sec = (uint64_t)v.tv_sec;
+   uint64_t usec = (uint64_t)v.tv_usec;
+
+   js.uput(f, sec * 1000000 + usec);
 }

@@ -63,7 +63,7 @@ Connector* ExtractorLogger::get_connector(const std::string& conn_name)
     return nullptr;
 }
 
-ExtractorLogger* ExtractorLogger::make_logger(FormatType f_type, const std::string& conn_name)
+ExtractorLogger* ExtractorLogger::make_logger(FormatType f_type, const std::string& conn_name, TimeType ts_type)
 {
     ExtractorLogger* logger = nullptr;
 
@@ -74,10 +74,10 @@ ExtractorLogger* ExtractorLogger::make_logger(FormatType f_type, const std::stri
     switch (f_type)
     {
     case FormatType::CSV:
-        logger = new CsvExtractorLogger(output_conn);
+        logger = new CsvExtractorLogger(output_conn, ts_type);
         break;
     case FormatType::JSON:
-        logger = new JsonExtractorLogger(output_conn);
+        logger = new JsonExtractorLogger(output_conn, ts_type);
         break;
     case FormatType::MAX: // fallthrough
     default:
