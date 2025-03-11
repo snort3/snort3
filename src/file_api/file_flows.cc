@@ -352,8 +352,11 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
     }
 
     if (context->has_to_re_eval() and context->processing_complete and not is_partial)
+    {
+        FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, p,
+            "file_process:reset context for re-evaluation \n");
         context->reset();
-
+    }
     context->set_partial_flag(is_partial);
     context->set_weak_file_name((const char*)fname, name_size);
     context->set_weak_url((const char*)url, url_size);
