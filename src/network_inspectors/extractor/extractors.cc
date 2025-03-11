@@ -72,5 +72,6 @@ const std::map<std::string, ExtractorEvent::NumGetFn> ExtractorEvent::num_getter
     {"id.orig_p", ExtractorEvent::get_ip_src_port},
     {"id.resp_p", ExtractorEvent::get_ip_dst_port},
     {"uid", ExtractorEvent::get_uid},
-    {"pkt_num", ExtractorEvent::get_pkt_num}
+    {"pkt_num", ExtractorEvent::get_pkt_num},
+    {"tenant_id", ExtractorEvent::get_tenant_id}
 };

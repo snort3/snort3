@@ -45,7 +45,8 @@ std::vector<std::string> ExtractorService::common_fields =
     "id.orig_p",
     "id.resp_h",
     "id.resp_p",
-    "pkt_num"
+    "pkt_num",
+    "tenant_id"
 };
 
 THREAD_LOCAL ExtractorLogger* ExtractorService::logger = nullptr;

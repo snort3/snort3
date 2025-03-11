@@ -71,6 +71,7 @@ Common fields available for every service:
 * `id.resp_h` - server IP address
 * `id.resp_p` - server TCP port
 * `pkt_num` - packet number
+* `tenant_id` - tenant identifier
 
 Fields supported for HTTP:
 

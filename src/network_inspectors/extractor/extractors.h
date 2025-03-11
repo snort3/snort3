@@ -115,6 +115,15 @@ protected:
     static uint64_t get_ip_dst_port(const DataEvent*, const Flow* flow)
     { return flow->server_port; }
 
+    static uint64_t get_tenant_id(const DataEvent*, const Flow* flow)
+    {
+#ifdef DISABLE_TENANT_ID
+        return 0;
+#else
+        return flow->key->tenant_id;
+#endif
+    }
+
     static uint64_t get_pkt_num(const DataEvent*, const Flow*)
     {
         const Packet* p = ExtractorEvent::get_packet();
