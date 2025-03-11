@@ -128,12 +128,12 @@ AppIdSession::~AppIdSession()
     delete tsession;
 }
 
-void* AppIdSession::get_flow_data(unsigned) const
+AppIdFlowData* AppIdSession::get_flow_data(unsigned) const
 {
     return nullptr;
 }
 
-int AppIdSession::add_flow_data(void*, unsigned, AppIdFreeFCN)
+int AppIdSession::add_flow_data(AppIdFlowData*, unsigned)
 {
     return 0;
 }

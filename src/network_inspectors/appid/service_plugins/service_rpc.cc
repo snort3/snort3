@@ -163,22 +163,27 @@ struct ServiceRPCReply
 
 #pragma pack()
 
-struct ServiceRPCData
+class ServiceRPCData : public AppIdFlowData
 {
+public:
+    explicit ServiceRPCData(RPCState state): state(state)
+    { }
+    ~ServiceRPCData() override = default;
+
     RPCState state;
-    RPCTCPState tcpstate[APP_ID_APPID_SESSION_DIRECTION_MAX];
-    RPCTCPState tcpfragstate[APP_ID_APPID_SESSION_DIRECTION_MAX];
-    uint32_t program;
-    uint32_t program_version;
-    uint32_t procedure;
-    uint32_t xid;
-    IpProtocol proto;
-    uint32_t tcpsize[APP_ID_APPID_SESSION_DIRECTION_MAX];
-    uint32_t tcpfragpos[APP_ID_APPID_SESSION_DIRECTION_MAX];
-    uint32_t tcpauthsize[APP_ID_APPID_SESSION_DIRECTION_MAX];
-    uint32_t tcppos[APP_ID_APPID_SESSION_DIRECTION_MAX];
-    uint8_t tcpdata[APP_ID_APPID_SESSION_DIRECTION_MAX][RPC_MAX_TCP_PACKET_SIZE];
-    int once;
+    RPCTCPState tcpstate[APP_ID_APPID_SESSION_DIRECTION_MAX] = {};
+    RPCTCPState tcpfragstate[APP_ID_APPID_SESSION_DIRECTION_MAX] = {};
+    uint32_t program = 0;
+    uint32_t program_version = 0;
+    uint32_t procedure = 0;
+    uint32_t xid = 0;
+    IpProtocol proto = {};
+    uint32_t tcpsize[APP_ID_APPID_SESSION_DIRECTION_MAX] = {};
+    uint32_t tcpfragpos[APP_ID_APPID_SESSION_DIRECTION_MAX] = {};
+    uint32_t tcpauthsize[APP_ID_APPID_SESSION_DIRECTION_MAX] = {};
+    uint32_t tcppos[APP_ID_APPID_SESSION_DIRECTION_MAX] = {};
+    uint8_t tcpdata[APP_ID_APPID_SESSION_DIRECTION_MAX][RPC_MAX_TCP_PACKET_SIZE] = {};
+    int once = 0;
 };
 
 #define RPC_PORT_PORTMAPPER 111
@@ -584,9 +589,8 @@ int RpcServiceDetector::rpc_udp_validate(AppIdDiscoveryArgs& args)
     rd = (ServiceRPCData*)data_get(args.asd);
     if (!rd)
     {
-        rd = (ServiceRPCData*)snort_calloc(sizeof(ServiceRPCData));
-        data_add(args.asd, rd, &snort_free);
-        rd->state = (dir == APP_ID_FROM_INITIATOR) ? RPC_STATE_CALL : RPC_STATE_REPLY;
+        rd = new ServiceRPCData((dir == APP_ID_FROM_INITIATOR) ? RPC_STATE_CALL : RPC_STATE_REPLY);
+        data_add(args.asd, rd);
         rd->xid = 0xFFFFFFFF;
     }
 
@@ -670,9 +674,8 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
     rd = (ServiceRPCData*)data_get(args.asd);
     if (!rd)
     {
-        rd = (ServiceRPCData*)snort_calloc(sizeof(ServiceRPCData));
-        data_add(args.asd, rd, &snort_free);
-        rd->state = RPC_STATE_CALL;
+        rd = new ServiceRPCData(RPC_STATE_CALL);
+        data_add(args.asd, rd);
         for (ret=0; ret<APP_ID_APPID_SESSION_DIRECTION_MAX; ret++)
         {
             rd->tcpstate[ret] = RPC_TCP_STATE_FRAG;

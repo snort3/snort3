@@ -60,14 +60,14 @@ int AppIdDetector::initialize(AppIdInspector& inspector)
     return APPID_SUCCESS;
 }
 
-void* AppIdDetector::data_get(const AppIdSession& asd)
+AppIdFlowData* AppIdDetector::data_get(const AppIdSession& asd)
 {
     return asd.get_flow_data(flow_data_index);
 }
 
-int AppIdDetector::data_add(AppIdSession& asd, void* data, AppIdFreeFCN fcn)
+int AppIdDetector::data_add(AppIdSession& asd, AppIdFlowData* data)
 {
-    return asd.add_flow_data(data, flow_data_index, fcn);
+    return asd.add_flow_data(data, flow_data_index);
 }
 
 void AppIdDetector::add_user(AppIdSession& asd, const char* username, AppId appId, bool success,

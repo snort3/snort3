@@ -95,11 +95,14 @@ struct KRBState
     unsigned flags;
 };
 
-struct KerberosDetectorData
+class KerberosDetectorData : public AppIdFlowData
 {
-    KRBState clnt_state;
-    KRBState svr_state;
-    int need_continue;
+public:
+    ~KerberosDetectorData() override = default;
+
+    KRBState clnt_state = {};
+    KRBState svr_state = {};
+    int need_continue = 1;
 };
 
 #define ASN_1_APPLICATION   0x40
@@ -865,8 +868,8 @@ KerberosDetectorData* KerberosClientDetector::get_common_data(AppIdSession& asd)
     KerberosDetectorData* dd = (KerberosDetectorData*)data_get(asd);
     if (!dd)
     {
-        dd = (KerberosDetectorData*)snort_calloc(sizeof(KerberosDetectorData));
-        data_add(asd, dd, &snort_free);
+        dd = new KerberosDetectorData;
+        data_add(asd, dd);
         if (asd.protocol == IpProtocol::TCP)
         {
             dd->clnt_state.state = KRB_STATE_TCP_LENGTH;
@@ -878,7 +881,6 @@ KerberosDetectorData* KerberosClientDetector::get_common_data(AppIdSession& asd)
             dd->svr_state.state = KRB_STATE_APP;
         }
 
-        dd->need_continue = 1;
         asd.set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 

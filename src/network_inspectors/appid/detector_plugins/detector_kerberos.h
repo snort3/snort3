@@ -32,7 +32,7 @@ struct Packet;
 }
 
 struct KRBState;
-struct KerberosDetectorData;
+class KerberosDetectorData;
 class KerberosServiceDetector;
 
 class KerberosClientDetector : public ClientDetector

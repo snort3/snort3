@@ -121,11 +121,19 @@ struct ServicePOP3Data
     int error;
 };
 
-struct POP3DetectorData
+class POP3DetectorData : public AppIdFlowData
 {
-    ClientPOP3Data client;
-    ServicePOP3Data server;
-    int need_continue;
+public:
+    POP3DetectorData()
+    {
+        server.state = POP3_STATE_CONNECT;
+        client.state = POP3_CLIENT_STATE_AUTH;
+    }
+    ~POP3DetectorData() override;
+
+    ClientPOP3Data client = {};
+    ServicePOP3Data server = {};
+    int need_continue = 1;
 };
 
 static AppIdFlowContentPattern pop3_client_patterns[] =
@@ -247,23 +255,16 @@ static int pop3_pattern_match(void* id, void*, int match_end_pos, void* data, vo
     return 1;
 }
 
-static void pop3_free_state(void* data)
+POP3DetectorData::~POP3DetectorData()
 {
-    POP3DetectorData* dd = (POP3DetectorData*)data;
-    if (dd)
+    while (server.subtype)
     {
-        ServicePOP3Data* sd = &dd->server;
-        while (sd->subtype)
-        {
-            AppIdServiceSubtype* sub = sd->subtype;
-            sd->subtype = sub->next;
-            delete sub;
-        }
-        ClientPOP3Data* cd = &dd->client;
-        if (cd->username)
-            snort_free(cd->username);
-        snort_free(dd);
+        AppIdServiceSubtype* sub = server.subtype;
+        server.subtype = sub->next;
+        delete sub;
     }
+    if (client.username)
+        snort_free(client.username);
 }
 
 static int pop3_check_line(const uint8_t** data, const uint8_t* end)
@@ -549,11 +550,8 @@ POP3DetectorData* Pop3ClientDetector::get_common_data(AppIdSession& asd)
     POP3DetectorData* dd = (POP3DetectorData*)data_get(asd);
     if (!dd)
     {
-        dd = (POP3DetectorData*)snort_calloc(sizeof(POP3DetectorData));
-        data_add(asd, dd, &pop3_free_state);
-        dd->server.state = POP3_STATE_CONNECT;
-        dd->client.state = POP3_CLIENT_STATE_AUTH;
-        dd->need_continue = 1;
+        dd = new POP3DetectorData;
+        data_add(asd, dd);
         asd.set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 

@@ -26,7 +26,7 @@
 
 class AppIdSession;
 class ServiceDiscovery;
-struct ServiceRPCData;
+class ServiceRPCData;
 
 class RpcServiceDetector : public ServiceDetector
 {

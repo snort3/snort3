@@ -117,8 +117,8 @@ public:
     virtual int validate(AppIdDiscoveryArgs&) = 0;
     virtual void register_appid(AppId, unsigned extractsInfo, OdpContext& odp_ctxt) = 0;
 
-    void* data_get(const AppIdSession&);
-    int data_add(AppIdSession&, void*, AppIdFreeFCN);
+    AppIdFlowData* data_get(const AppIdSession&);
+    int data_add(AppIdSession&, AppIdFlowData*);
     void add_user(AppIdSession&, const char*, AppId, bool, AppidChangeBits&);
     void add_payload(AppIdSession&, AppId);
     void add_app(AppIdSession& asd, AppId service_id, AppId client_id, const char* version, AppidChangeBits& change_bits)
@@ -156,9 +156,6 @@ public:
 
     bool is_client() const
     { return client; }
-
-    virtual LuaStateDescriptor* validate_lua_state(bool /*packet_context*/)
-    { return nullptr; }
 
 protected:
     AppIdDiscovery* handler = nullptr;

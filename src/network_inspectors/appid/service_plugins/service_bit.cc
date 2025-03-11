@@ -43,16 +43,19 @@ enum BITState
     BIT_STATE_MESSAGE_DATA
 };
 
-struct ServiceBITData
+class ServiceBITData : public AppIdFlowData
 {
-    BITState state;
-    unsigned stringlen;
-    unsigned pos;
+public:
+    ~ServiceBITData() override = default;
+
+    BITState state = BIT_STATE_BANNER;
+    unsigned stringlen = 0;
+    unsigned pos = 0;
     union
     {
         uint32_t len;
         uint8_t raw_len[4];
-    } l;
+    } l = {};
 };
 
 #pragma pack(1)
@@ -99,24 +102,21 @@ BitServiceDetector::BitServiceDetector(ServiceDiscovery* sd)
 
 int BitServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceBITData* ss;
-    const uint8_t* data = args.data;
-    uint16_t offset;
-
-    if (!args.size)
-        goto inprocess;
-    if (args.dir != APP_ID_FROM_RESPONDER)
-        goto inprocess;
-
-    ss = (ServiceBITData*)data_get(args.asd);
-    if (!ss)
+    if (!args.size || args.dir != APP_ID_FROM_RESPONDER)
     {
-        ss = (ServiceBITData*)snort_calloc(sizeof(ServiceBITData));
-        data_add(args.asd, ss, &snort_free);
-        ss->state = BIT_STATE_BANNER;
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
     }
 
-    offset = 0;
+    ServiceBITData* ss = (ServiceBITData*)data_get(args.asd);
+    if (!ss)
+    {
+        ss = new ServiceBITData;
+        data_add(args.asd, ss);
+    }
+
+    const uint8_t* data = args.data;
+    uint16_t offset  = 0;
     while (offset < args.size)
     {
         switch (ss->state)
@@ -167,7 +167,6 @@ int BitServiceDetector::validate(AppIdDiscoveryArgs& args)
         offset++;
     }
 
-inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 

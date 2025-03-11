@@ -37,9 +37,12 @@ enum RSYNCState
     RSYNC_STATE_DONE
 };
 
-struct ServiceRSYNCData
+class ServiceRSYNCData : public AppIdFlowData
 {
-    RSYNCState state;
+public:
+    ~ServiceRSYNCData() override = default;
+
+    RSYNCState state = RSYNC_STATE_BANNER;
 };
 
 RsyncServiceDetector::RsyncServiceDetector(ServiceDiscovery* sd)
@@ -70,23 +73,22 @@ RsyncServiceDetector::RsyncServiceDetector(ServiceDiscovery* sd)
 
 int RsyncServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceRSYNCData* rd;
+    if (!args.size || args.dir != APP_ID_FROM_RESPONDER)
+    {
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
+
+    ServiceRSYNCData* rd = (ServiceRSYNCData*)data_get(args.asd);
+    if (!rd)
+    {
+        rd = new ServiceRSYNCData;
+        data_add(args.asd, rd);
+    }
+
     int i;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
-
-    if (!size)
-        goto inprocess;
-    if (args.dir != APP_ID_FROM_RESPONDER)
-        goto inprocess;
-
-    rd = (ServiceRSYNCData*)data_get(args.asd);
-    if (!rd)
-    {
-        rd = (ServiceRSYNCData*)snort_calloc(sizeof(ServiceRSYNCData));
-        data_add(args.asd, rd, &snort_free);
-        rd->state = RSYNC_STATE_BANNER;
-    }
 
     switch (rd->state)
     {
@@ -116,7 +118,6 @@ int RsyncServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto fail;
     }
 
-inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 

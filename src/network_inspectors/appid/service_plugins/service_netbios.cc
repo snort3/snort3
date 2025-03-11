@@ -430,6 +430,9 @@ int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (hdr->QCount)
     {
         count = ntohs(hdr->QCount);
+        // Coverity doesn't realize that nbns_validate_query() checks the packet data for valid values
+        // which validates the count
+        // coverity[tainted_scalar]
         for (i=0; i<count; i++)
         {
             if (nbns_validate_query(&data, begin, end))
@@ -440,6 +443,9 @@ int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (hdr->ACount)
     {
         count = ntohs(hdr->ACount);
+        // Coverity doesn't realize that nbns_validate_answer() checks the packet data for valid values
+        // which validates the count
+        // coverity[tainted_scalar]
         for (i=0; i<count; i++)
         {
             if (nbns_validate_answer(&data, begin, end))
@@ -450,6 +456,9 @@ int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (hdr->NSCount)
     {
         count = ntohs(hdr->NSCount);
+        // Coverity doesn't realize that nbns_validate_answer() checks the packet data for valid values
+        // which validates the count
+        // coverity[tainted_scalar]
         for (i=0; i<count; i++)
         {
             if (nbns_validate_answer(&data, begin, end))
@@ -460,6 +469,9 @@ int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (hdr->ARCount)
     {
         count = ntohs(hdr->ARCount);
+        // Coverity doesn't realize that nbns_validate_answer() checks the packet data for valid values
+        // which validates the count
+        // coverity[tainted_scalar]
         for (i=0; i<count; i++)
         {
             if (nbns_validate_answer(&data, begin, end))

@@ -26,7 +26,7 @@
 #include "service_plugins/service_detector.h"
 
 class AppIdSession;
-struct ImapDetectorData;
+class ImapDetectorData;
 
 class ImapClientDetector : public ClientDetector
 {

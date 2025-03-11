@@ -64,14 +64,17 @@ enum RTMPState
                                          server". */
 };
 
-struct ServiceRTMPData
+class ServiceRTMPData : public AppIdFlowData
 {
-    RTMPState client_state;
-    RTMPState server_state;
-    uint16_t client_bytes_left;
-    uint16_t server_bytes_left;
-    char* swfUrl;
-    char* pageUrl;
+public:
+    ~ServiceRTMPData() override;
+
+    char* swfUrl = nullptr;
+    char* pageUrl = nullptr;
+    RTMPState client_state = {};
+    RTMPState server_state = {};
+    uint16_t client_bytes_left = 0;
+    uint16_t server_bytes_left = 0;
 };
 
 RtmpServiceDetector::RtmpServiceDetector(ServiceDiscovery* sd)
@@ -95,12 +98,10 @@ RtmpServiceDetector::RtmpServiceDetector(ServiceDiscovery* sd)
     handler->register_detector(name, this, proto);
 }
 
-static void rtmp_free(void* ss)    /* AppIdFreeFCN */
+ServiceRTMPData::~ServiceRTMPData()
 {
-    ServiceRTMPData* ss_tmp = (ServiceRTMPData*)ss;
-    snort_free(ss_tmp->swfUrl);
-    snort_free(ss_tmp->pageUrl);
-    snort_free(ss_tmp);
+    snort_free(swfUrl);
+    snort_free(pageUrl);
 }
 
 static int parse_rtmp_chunk_basic_header(const uint8_t** data_inout, uint16_t* size_inout,
@@ -414,16 +415,17 @@ parse_rtmp_message_fail:
 
 int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceRTMPData* ss;
-
     if (!args.size)
-        goto inprocess;
+    {
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
 
-    ss = (ServiceRTMPData*)data_get(args.asd);
+    ServiceRTMPData* ss = (ServiceRTMPData*)data_get(args.asd);
     if (!ss)
     {
-        ss = (ServiceRTMPData*)snort_calloc(sizeof(ServiceRTMPData));
-        data_add(args.asd, ss, &rtmp_free);
+        ss = new ServiceRTMPData;
+        data_add(args.asd, ss);
     }
 
     /* Client -> Server */
@@ -618,7 +620,6 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto fail;
     }
 
-inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 

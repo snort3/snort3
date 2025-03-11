@@ -51,20 +51,23 @@ enum SSLState
     SSL_STATE_HEADER,
 };
 
-struct ServiceSSLData
+class ServiceSSLData : public AppIdFlowData
 {
-    SSLState state;
-    int pos;
-    int length;
-    int tot_length;
+public:
+    ~ServiceSSLData() override;
+
+    SSLState state = SSL_STATE_INITIATE;
+    int pos = 0;
+    int length = 0;
+    int tot_length = 0;
     /* From client: */
     SSLV3ClientHelloData client_hello;
     /* From server: */
-    SSLV3ServerCertData server_cert;
-    int in_certs;         // Currently collecting certificates?
-    int certs_curr_len;   // Current amount of collected certificate data.
-    uint8_t* cached_data;
-    uint16_t cached_len;
+    SSLV3ServerCertData server_cert = {};
+    int in_certs = 0;         // Currently collecting certificates?
+    int certs_curr_len = 0;   // Current amount of collected certificate data.
+    uint8_t* cached_data = nullptr;
+    uint16_t cached_len = 0;
 };
 
 #pragma pack(1)
@@ -184,13 +187,11 @@ static void ssl_cache_free(uint8_t*& ssl_cache, uint16_t& len)
     len = 0;
 }
 
-static void ssl_free(void* ss)
+ServiceSSLData::~ServiceSSLData()
 {
-    ServiceSSLData* ss_tmp = (ServiceSSLData*)ss;
-    ss_tmp->client_hello.clear();
-    ss_tmp->server_cert.clear();
-    ssl_cache_free(ss_tmp->cached_data, ss_tmp->cached_len);
-    snort_free(ss_tmp);
+    client_hello.clear();
+    server_cert.clear();
+    ssl_cache_free(cached_data, cached_len);
 }
 
 static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceSSLData* ss)
@@ -223,7 +224,19 @@ static void save_ssl_cache(ServiceSSLData* ss, uint16_t size, const uint8_t* dat
 
 int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceSSLData* ss;
+    if (!args.size)
+    {
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
+
+    ServiceSSLData* ss = (ServiceSSLData*)data_get(args.asd);
+    if (!ss)
+    {
+        ss = new ServiceSSLData;
+        data_add(args.asd, ss);
+    }
+
     const ServiceSSLPCTHdr* pct;
     const ServiceSSLV2Hdr* hdr2;
     const ServiceSSLV3Hdr* hdr3;
@@ -233,19 +246,6 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
     const uint8_t* data = args.data;
     uint16_t size = args.size;
     uint8_t* reallocated_data = nullptr;
-
-    if (!size)
-        goto inprocess;
-
-    ss = (ServiceSSLData*)data_get(args.asd);
-    if (!ss)
-    {
-        ss = (ServiceSSLData*)snort_calloc(sizeof(ServiceSSLData));
-        data_add(args.asd, ss, &ssl_free);
-        ss->state = SSL_STATE_INITIATE;
-        ss->cached_data = nullptr;
-        ss->cached_len = 0;
-    }
 
     if (ss->cached_len and ss->cached_data and (args.dir == APP_ID_FROM_RESPONDER))
     {

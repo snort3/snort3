@@ -482,7 +482,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
             port = p->ptrs.sp;
         }
     }
-    HostPortVal* hv = nullptr;
+    const HostPortVal* hv = nullptr;
 
     if (check_static and
         (hv = asd.get_odp_ctxt().host_port_cache_find(ip, port, protocol)))
@@ -574,8 +574,7 @@ bool AppIdDiscovery::detect_on_first_pkt(Packet* p, AppIdSession& asd,
         port = p->ptrs.sp;
     }
 
-    HostAppIdsVal* hv = nullptr;
-    hv = asd.get_odp_ctxt().host_first_pkt_find(ip, port, protocol);
+    const HostAppIdsVal* hv = asd.get_odp_ctxt().host_first_pkt_find(ip, port, protocol);
     if (hv)
     {
         const char *service_app_name = nullptr, *client_app_name = nullptr, *payload_app_name = nullptr;

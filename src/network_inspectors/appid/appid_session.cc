@@ -721,41 +721,44 @@ void AppIdSession::delete_session_data()
     delete tsession;
 }
 
-int AppIdSession::add_flow_data(void* data, unsigned id, AppIdFreeFCN fcn)
+int AppIdSession::add_flow_data(AppIdFlowData* data, unsigned id)
 {
-    AppIdFlowDataIter it = flow_data.find(id);
+    auto it = flow_data.find(id);
     if (it != flow_data.end())
         return -1;
 
-    AppIdFlowData* fd = new AppIdFlowData(data, id, fcn);
-    flow_data[id] = fd;
+    flow_data[id] = data;
     return 0;
 }
 
-void* AppIdSession::get_flow_data(unsigned id) const
+AppIdFlowData* AppIdSession::get_flow_data(unsigned id) const
 {
-    AppIdFlowDataIter it = flow_data.find(id);
+    auto it = flow_data.find(id);
     if (it != flow_data.end())
-        return it->second->fd_data;
+    {
+        assert(id == it->first);
+        return it->second;
+    }
     else
         return nullptr;
 }
 
 void AppIdSession::free_flow_data()
 {
-    for (AppIdFlowDataIter it = flow_data.cbegin();
-         it != flow_data.cend();
-         ++it)
-        delete it->second;
-
+    std::for_each(std::cbegin(flow_data), std::cend(flow_data),
+        [](const std::pair<unsigned, AppIdFlowData*>& p)
+        {
+            delete p.second;
+        });
     flow_data.clear();
 }
 
 void AppIdSession::free_flow_data_by_id(unsigned id)
 {
-    AppIdFlowDataIter it = flow_data.find(id);
+    auto it = flow_data.find(id);
     if (it != flow_data.end())
     {
+        assert(id == it->first);
         delete it->second;
         flow_data.erase(it);
     }
@@ -763,14 +766,16 @@ void AppIdSession::free_flow_data_by_id(unsigned id)
 
 void AppIdSession::free_flow_data_by_mask(unsigned mask)
 {
-    for (AppIdFlowDataIter it = flow_data.cbegin(); it != flow_data.cend();)
-        if (!mask or (it->second->fd_id & mask))
+    for (auto it = flow_data.cbegin(); it != flow_data.cend();)
+    {
+        if (!mask or (it->first & mask))
         {
             delete it->second;
             it = flow_data.erase(it);
         }
         else
             ++it;
+    }
 }
 
 int AppIdSession::add_flow_data_id(uint16_t port, ServiceDetector* service)

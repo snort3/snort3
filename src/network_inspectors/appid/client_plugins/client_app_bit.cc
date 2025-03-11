@@ -47,16 +47,19 @@ enum BITState
     BIT_STATE_MESSAGE_DATA
 };
 
-struct ClientBITData
+class ClientBITData : public AppIdFlowData
 {
-    BITState state;
-    unsigned stringlen;
-    unsigned pos;
+public:
+    ~ClientBITData() override = default;
+
+    BITState state = BIT_STATE_BANNER;
+    unsigned stringlen = 0;
+    unsigned pos = 0;
     union
     {
         uint32_t len;
         uint8_t raw_len[4];
-    } l;
+    } l = {};
 };
 
 #pragma pack(1)
@@ -100,9 +103,8 @@ int BitClientDetector::validate(AppIdDiscoveryArgs& args)
     fd = (ClientBITData*)data_get(args.asd);
     if (!fd)
     {
-        fd = (ClientBITData*)snort_calloc(sizeof(ClientBITData));
-        data_add(args.asd, fd, &snort_free);
-        fd->state = BIT_STATE_BANNER;
+        fd = new ClientBITData;
+        data_add(args.asd, fd);
     }
 
     offset = 0;

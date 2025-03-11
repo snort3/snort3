@@ -174,7 +174,7 @@ ClientDetector::ClientDetector() { }
 // LCOV_EXCL_START
 void ClientDetector::register_appid(int, unsigned int, OdpContext&) { }
 int AppIdDetector::initialize(AppIdInspector&) { return 1; }
-int AppIdDetector::data_add(AppIdSession&, void*, void (*)(void*)) { return 1; }
+int AppIdDetector::data_add(AppIdSession&, AppIdFlowData*) { return 1; }
 void AppIdDetector::add_user(AppIdSession&, char const*, int, bool, AppidChangeBits&) { }
 void AppIdDetector::add_payload(AppIdSession&, int) { }
 void AppIdDetector::add_app(snort::Packet const&, AppIdSession&, AppidSessionDirection, int,
@@ -189,11 +189,11 @@ bool SipEvent::is_dialog_established() const { return false; }
 int SipPatternMatchers::get_client_from_ua(char const*, unsigned int, int&, char*&) { return 0; }  // LCOV_EXCL_LINE
 void SipEventHandler::service_handler(SipEvent&, AppIdSession&, AppidChangeBits&) { }
 
-void* AppIdDetector::data_get(const AppIdSession&)
+AppIdFlowData* AppIdDetector::data_get(const AppIdSession&)
 {
-    sip_data = new ClientSIPData();
+    sip_data = new ClientSIPData(nullptr);
     sip_data->from = "<sip:1001@51.1.1.130:11810>";
-    return (void*)sip_data;
+    return sip_data;
 }
 
 TEST_GROUP(detector_sip_tests)

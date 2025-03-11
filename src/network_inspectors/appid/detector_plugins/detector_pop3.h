@@ -25,7 +25,7 @@
 #include "client_plugins/client_detector.h"
 #include "service_plugins/service_detector.h"
 
-struct POP3DetectorData;
+class POP3DetectorData;
 class Pop3ServiceDetector;
 
 class Pop3ClientDetector : public ClientDetector

@@ -206,10 +206,15 @@ private:
     {
         delete_all_http_sessions();
         snort_free(tls_host);
+        tls_host = nullptr;
         snort_free(netbios_name);
+        netbios_name = nullptr;
         snort_free(netbios_domain);
+        netbios_domain = nullptr;
         snort_free(tls_sni);
+        tls_sni = nullptr;
         delete dsession;
+        dsession = nullptr;
     }
 
     void delete_all_http_sessions()
@@ -221,8 +226,7 @@ private:
     {
         if (host)
         {
-            if (tls_host)
-                snort_free(tls_host);
+            snort_free(tls_host);
             tls_host = snort_strdup(host);
         }
     }
@@ -231,8 +235,7 @@ private:
     {
         if (sni and sni != tls_sni)
         {
-            if (tls_sni)
-                snort_free(tls_sni);
+            snort_free(tls_sni);
             tls_sni = snort_strdup(sni);
         }
     }

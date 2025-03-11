@@ -61,11 +61,14 @@ enum BITType
     BIT_TYPE_ERROR
 };
 
-struct ClientBITData
+class ClientBITData : public AppIdFlowData
 {
-    BITState state;
-    BITType type;
-    unsigned pos;
+public:
+    ~ClientBITData() override = default;
+
+    BITState state = BIT_STATE_BANNER;
+    BITType type = {};
+    unsigned pos = 0;
 };
 } // anonymous
 
@@ -95,21 +98,17 @@ BitTrackerClientDetector::BitTrackerClientDetector(ClientDiscovery* cdm)
 
 int BitTrackerClientDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ClientBITData* fd;
-    uint16_t offset;
-
     if (args.size < (UDP_BIT_FIRST_LEN + UDP_BIT_END_LEN + 3))
         return APPID_EINVALID;
 
-    fd = (ClientBITData*)data_get(args.asd);
+    ClientBITData* fd = (ClientBITData*)data_get(args.asd);
     if (!fd)
     {
-        fd = (ClientBITData*)snort_calloc(sizeof(ClientBITData));
-        data_add(args.asd, fd, &snort_free);
-        fd->state = BIT_STATE_BANNER;
+        fd = new ClientBITData;
+        data_add(args.asd, fd);
     }
 
-    offset = 0;
+    uint16_t offset = 0;
     while (offset < args.size)
     {
         switch (fd->state)

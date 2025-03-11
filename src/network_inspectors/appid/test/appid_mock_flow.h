@@ -50,7 +50,7 @@ int Flow::set_flow_data(FlowData* fd)
     return 0;
 }
 
-FlowStash::~FlowStash() = default;
+bool FlowStash::get(const std::string &, StashGenericObject*&) { return false; }
 
 #endif
 

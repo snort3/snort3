@@ -53,11 +53,16 @@ enum RSHELLState
     RSHELL_STATE_STDERR_DONE
 };
 
-struct ServiceRSHELLData
+class ServiceRSHELLData : public AppIdFlowData
 {
+public:
+    explicit ServiceRSHELLData(RSHELLState state) : state(state)
+    { }
+    ~ServiceRSHELLData() override;
+
+    ServiceRSHELLData* parent = nullptr;
+    ServiceRSHELLData* child = nullptr;
     RSHELLState state;
-    ServiceRSHELLData* parent;
-    ServiceRSHELLData* child;
 };
 
 RshellServiceDetector::RshellServiceDetector(ServiceDiscovery* sd)
@@ -81,23 +86,17 @@ RshellServiceDetector::RshellServiceDetector(ServiceDiscovery* sd)
 }
 
 
-static void rshell_free_state(void* data)
+ServiceRSHELLData::~ServiceRSHELLData()
 {
-    ServiceRSHELLData* rd = (ServiceRSHELLData*)data;
-
-    if (rd)
+    if (parent)
     {
-        if (rd->parent)
-        {
-            rd->parent->child = nullptr;
-            rd->parent->parent = nullptr;
-        }
-        if (rd->child)
-        {
-            rd->child->parent = nullptr;
-            rd->child->child = nullptr;
-        }
-        snort_free(rd);
+        parent->child = nullptr;
+        parent->parent = nullptr;
+    }
+    if (child)
+    {
+        child->parent = nullptr;
+        child->child = nullptr;
     }
 }
 
@@ -114,25 +113,26 @@ void RshellServiceDetector::rshell_bail(ServiceRSHELLData* rd)
 
 int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
+    ServiceRSHELLData* rd = (ServiceRSHELLData*)data_get(args.asd);
+    if (!rd)
+    {
+        if (!args.size)
+        {
+            service_inprocess(args.asd, args.pkt, args.dir);
+            return APPID_INPROCESS;
+        }
+        rd = new ServiceRSHELLData(RSHELL_STATE_PORT);
+        data_add(args.asd, rd);
+    }
+
+    APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "RSHELL state %d\n",rd->state);
+
     int i = 0;
     uint32_t port = 0;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
 
-    ServiceRSHELLData* rd = (ServiceRSHELLData*)data_get(args.asd);
-    if (!rd)
-    {
-        if (!size)
-            goto inprocess;
-        rd = (ServiceRSHELLData*)snort_calloc(sizeof(ServiceRSHELLData));
-        data_add(args.asd, rd, &rshell_free_state);
-        rd->state = RSHELL_STATE_PORT;
-    }
-
-    // cppcheck-suppress nullPointerRedundantCheck
-    APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "RSHELL state %d\n",rd->state);
-
-    switch (rd->state) // cppcheck-suppress nullPointerRedundantCheck
+    switch (rd->state)
     {
     case RSHELL_STATE_PORT:
         if (args.dir != APP_ID_FROM_INITIATOR)
@@ -161,12 +161,10 @@ int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
 
             if (pf)
             {
-                ServiceRSHELLData* tmp_rd = (ServiceRSHELLData*)snort_calloc(
-                    sizeof(ServiceRSHELLData));
-                tmp_rd->state = RSHELL_STATE_STDERR_CONNECT_SYN;
+                ServiceRSHELLData* tmp_rd = new ServiceRSHELLData(RSHELL_STATE_STDERR_CONNECT_SYN);
                 tmp_rd->parent = rd;
                 pf->client_disco_state = APPID_DISCO_STATE_FINISHED;
-                data_add(*pf, tmp_rd, &rshell_free_state);
+                data_add(*pf, tmp_rd);
                 if (pf->add_flow_data_id((uint16_t)port, this))
                 {
                     pf->service_disco_state = APPID_DISCO_STATE_FINISHED;

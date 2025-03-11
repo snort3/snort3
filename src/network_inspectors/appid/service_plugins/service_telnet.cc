@@ -66,9 +66,12 @@ enum TELNET_COMMAND_VALUE
     TELNET_CMD_IAC
 };
 
-struct ServiceTelnetData
+class ServiceTelnetData : public AppIdFlowData
 {
-    unsigned count;
+public:
+    ~ServiceTelnetData() override = default;
+
+    unsigned count = 0;
 };
 
 TelnetServiceDetector::TelnetServiceDetector(ServiceDiscovery* sd)
@@ -95,22 +98,22 @@ TelnetServiceDetector::TelnetServiceDetector(ServiceDiscovery* sd)
 
 int TelnetServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceTelnetData* td;
+    if (!args.size || args.dir != APP_ID_FROM_RESPONDER)
+    {
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
+
+    ServiceTelnetData* td = (ServiceTelnetData*)data_get(args.asd);
+    if (!td)
+    {
+        td = new ServiceTelnetData;
+        data_add(args.asd, td);
+    }
+
     const uint8_t* end;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
-
-    if (!size)
-        goto inprocess;
-    if (args.dir != APP_ID_FROM_RESPONDER)
-        goto inprocess;
-
-    td = (ServiceTelnetData*)data_get(args.asd);
-    if (!td)
-    {
-        td = (ServiceTelnetData*)snort_calloc(sizeof(ServiceTelnetData));
-        data_add(args.asd, td, &snort_free);
-    }
 
     for (end=(data+size); data<end; data++)
     {
@@ -138,7 +141,7 @@ int TelnetServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto fail;
         }
     }
-inprocess:
+
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 

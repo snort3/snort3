@@ -40,10 +40,13 @@ enum RADIUSState
     RADIUS_STATE_RESPONSE
 };
 
-struct ServiceRADIUSData
+class ServiceRADIUSData : public AppIdFlowData
 {
-    RADIUSState state;
-    uint8_t id;
+public:
+    ~ServiceRADIUSData() override = default;
+
+    RADIUSState state = RADIUS_STATE_REQUEST;
+    uint8_t id = 0;
 };
 
 #pragma pack(1)
@@ -82,25 +85,28 @@ RadiusServiceDetector::RadiusServiceDetector(ServiceDiscovery* sd)
 
 int RadiusServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceRADIUSData* rd;
-    const RADIUSHeader* hdr = (const RADIUSHeader*)args.data;
-    uint16_t len;
-    int new_dir;
-
     if (!args.size)
-        goto inprocess;
-    if (args.size < sizeof(RADIUSHeader))
-        goto fail;
-
-    rd = (ServiceRADIUSData*)data_get(args.asd);
-    if (!rd)
     {
-        rd = (ServiceRADIUSData*)snort_calloc(sizeof(ServiceRADIUSData));
-        data_add(args.asd, rd, &snort_free);
-        rd->state = RADIUS_STATE_REQUEST;
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
+    if (args.size < sizeof(RADIUSHeader))
+    {
+        fail_service(args.asd, args.pkt, args.dir);
+        return APPID_NOMATCH;
     }
 
-    new_dir = args.dir;
+    ServiceRADIUSData* rd = (ServiceRADIUSData*)data_get(args.asd);
+    if (!rd)
+    {
+        rd = new ServiceRADIUSData;
+        data_add(args.asd, rd);
+    }
+
+    const RADIUSHeader* hdr = (const RADIUSHeader*)args.data;
+    uint16_t len;
+    int new_dir = args.dir;
+
     if (rd->state == RADIUS_STATE_REQUEST)
     {
         if (hdr->code == RADIUS_CODE_ACCESS_ACCEPT ||
@@ -203,25 +209,27 @@ RadiusAcctServiceDetector::RadiusAcctServiceDetector(ServiceDiscovery* sd)
 
 int RadiusAcctServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceRADIUSData* rd;
-    const RADIUSHeader* hdr = (const RADIUSHeader*)args.data;
-    uint16_t len;
-    int new_dir;
-
     if (!args.size)
-        goto inprocess;
-    if (args.size < sizeof(RADIUSHeader))
-        goto fail;
-
-    rd = (ServiceRADIUSData*)data_get(args.asd);
-    if (!rd)
     {
-        rd = (ServiceRADIUSData*)snort_calloc(sizeof(ServiceRADIUSData));
-        data_add(args.asd, rd, &snort_free);
-        rd->state = RADIUS_STATE_REQUEST;
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
+    if (args.size < sizeof(RADIUSHeader))
+    {
+        fail_service(args.asd, args.pkt, args.dir);
+        return APPID_NOMATCH;
     }
 
-    new_dir = args.dir;
+    ServiceRADIUSData* rd = (ServiceRADIUSData*)data_get(args.asd);
+    if (!rd)
+    {
+        rd = new ServiceRADIUSData;
+        data_add(args.asd, rd);
+    }
+
+    const RADIUSHeader* hdr = (const RADIUSHeader*)args.data;
+    uint16_t len;
+    int new_dir = args.dir;
     if (rd->state == RADIUS_STATE_REQUEST)
     {
         if (hdr->code == RADIUS_CODE_ACCOUNTING_RESPONSE)

@@ -142,7 +142,7 @@ bool HostPortCache::add(const SnortConfig* sc, const SfIp* ip, uint16_t port, Ip
     return true;
 }
 
-HostAppIdsVal* HostPortCache::find_on_first_pkt(const SfIp* ip, uint16_t port, IpProtocol protocol,
+const HostAppIdsVal* HostPortCache::find_on_first_pkt(const SfIp* ip, uint16_t port, IpProtocol protocol,
     const OdpContext& odp_ctxt)
 {
     uint16_t lookup_port = (odp_ctxt.allow_port_wildcard_host_cache)? 0 : port;
@@ -161,7 +161,7 @@ HostAppIdsVal* HostPortCache::find_on_first_pkt(const SfIp* ip, uint16_t port, I
             return &check_cache->second;
     }
 
-    for (std::map<FirstPktkey ,HostAppIdsVal>::iterator iter = cache_first_subnet.begin(); iter != cache_first_subnet.end(); ++iter)
+    for (auto iter = cache_first_subnet.begin(); iter != cache_first_subnet.end(); ++iter)
     {
         if (iter->first.port == lookup_port and iter->first.proto == protocol and
             check_ip_range(iter->first.max_network_range, iter->first.network_address, *ip, &iter->first.netmask[0]))

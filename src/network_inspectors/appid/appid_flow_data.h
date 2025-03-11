@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2021-2025 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2024-2025 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,42 +15,17 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// appid_ssh_event_handler.h  author Daniel McGarvey <danmcgar@cisco.com>
 
-#ifndef APPID_SSH_EVENT_HANDLER_H
-#define APPID_SSH_EVENT_HANDLER_H
+// appid_flow_data.h author Ron Dempster <rdempste@cisco.com>
 
-#include "pub_sub/ssh_events.h"
+#ifndef APPID_FLOW_DATA_H
+#define APPID_FLOW_DATA_H
 
-#include "appid_flow_data.h"
-#include "appid_module.h"
-
-class SshEventHandler : public snort::DataHandler
+class AppIdFlowData
 {
 public:
-    SshEventHandler() : snort::DataHandler(MOD_NAME)
-    { id = snort::FlowData::create_flow_data_id(); }
-
-    void handle(snort::DataEvent &, snort::Flow *) override;
-
-private:
-    static unsigned int id;
-};
-
-struct SshAppIdInfo
-{
-    std::string vendor;
-    std::string version;
-    bool finished = false;
-};
-
-class SshEventFlowData : public AppIdFlowData
-{
-public:
-    ~SshEventFlowData() override = default;
-    SshAppIdInfo service_info;
-    SshAppIdInfo client_info;
-    bool failed = false;
+    AppIdFlowData() = default;
+    virtual ~AppIdFlowData() = default;
 };
 
 #endif

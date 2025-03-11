@@ -159,6 +159,7 @@ set ( APPID_SOURCES
     appid_dns_session.h
     appid_eve_process_event_handler.cc
     appid_eve_process_event_handler.h
+    appid_flow_data.h
     appid_ha.cc
     appid_ha.h
     appid_http_session.cc

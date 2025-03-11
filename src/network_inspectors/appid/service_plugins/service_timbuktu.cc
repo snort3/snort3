@@ -43,11 +43,14 @@ enum TIMBUKTUState
 };
 }
 
-struct ServiceTIMBUKTUData
+class ServiceTIMBUKTUData : public AppIdFlowData
 {
-    TIMBUKTUState state;
-    unsigned stringlen;
-    unsigned pos;
+public:
+    ~ServiceTIMBUKTUData() override = default;
+
+    TIMBUKTUState state = TIMBUKTU_STATE_BANNER;
+    unsigned stringlen = 0;
+    unsigned pos = 0;
 };
 
 #pragma pack(1)
@@ -88,24 +91,21 @@ TimbuktuServiceDetector::TimbuktuServiceDetector(ServiceDiscovery* sd)
 
 int TimbuktuServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceTIMBUKTUData* ss;
-    const uint8_t* data = args.data;
-    uint16_t offset=0;
-
-    if (!args.size)
-        goto inprocess;
-    if (args.dir != APP_ID_FROM_RESPONDER)
-        goto inprocess;
-
-    ss = (ServiceTIMBUKTUData*)data_get(args.asd);
-    if (!ss)
+    if (!args.size || args.dir != APP_ID_FROM_RESPONDER)
     {
-        ss = (ServiceTIMBUKTUData*)snort_calloc(sizeof(ServiceTIMBUKTUData));
-        data_add(args.asd, ss, &snort_free);
-        ss->state = TIMBUKTU_STATE_BANNER;
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
     }
 
-    offset = 0;
+    ServiceTIMBUKTUData* ss = (ServiceTIMBUKTUData*)data_get(args.asd);
+    if (!ss)
+    {
+        ss = new ServiceTIMBUKTUData;
+        data_add(args.asd, ss);
+    }
+
+    const uint8_t* data = args.data;
+    uint16_t offset = 0;
     while (offset < args.size)
     {
         switch (ss->state)
@@ -152,7 +152,6 @@ int TimbuktuServiceDetector::validate(AppIdDiscoveryArgs& args)
         offset++;
     }
 
-inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 

@@ -40,18 +40,21 @@ enum RTPState
 #define MAX_REMOTE_SIZE    128
 #define NUMBER_OF_PACKETS  3
 
-struct ClientRTPData
+class ClientRTPData : public AppIdFlowData
 {
-    RTPState state;
-    uint8_t pos;
-    uint16_t init_seq;
-    uint16_t resp_seq;
-    uint8_t init_count;
-    uint8_t resp_count;
-    uint32_t init_timestamp;
-    uint32_t resp_timestamp;
-    uint32_t init_ssrc;
-    uint32_t resp_ssrc;
+public:
+    ~ClientRTPData() override = default;
+
+    RTPState state = RTP_STATE_CONNECTION;
+    uint8_t pos = 0;
+    uint16_t init_seq = 0;
+    uint16_t resp_seq = 0;
+    uint8_t init_count = 0;
+    uint8_t resp_count = 0;
+    uint32_t init_timestamp = 0;
+    uint32_t resp_timestamp = 0;
+    uint32_t init_ssrc = 0;
+    uint32_t resp_ssrc = 0;
 };
 
 #pragma pack(1)
@@ -212,20 +215,17 @@ RtpClientDetector::RtpClientDetector(ClientDiscovery* cdm)
 
 int RtpClientDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ClientRTPData* fd;
-    const ClientRTPMsg* hdr;
-
     if (!args.size)
         return APPID_INPROCESS;
 
-    fd = (ClientRTPData*)data_get(args.asd);
+    ClientRTPData* fd = (ClientRTPData*)data_get(args.asd);
     if (!fd)
     {
-        fd = (ClientRTPData*)snort_calloc(sizeof(ClientRTPData));
-        data_add(args.asd, fd, &snort_free);
-        fd->state = RTP_STATE_CONNECTION;
+        fd = new ClientRTPData;
+        data_add(args.asd, fd);
     }
 
+    const ClientRTPMsg* hdr;
     switch (fd->state)
     {
     case RTP_STATE_CONNECTION:

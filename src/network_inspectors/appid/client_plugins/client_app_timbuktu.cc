@@ -48,16 +48,19 @@ enum TIMBUKTUState
 };
 }
 
-struct ClientTIMBUKTUData
+class ClientTIMBUKTUData : public AppIdFlowData
 {
-    TIMBUKTUState state;
-    uint16_t stringlen;
-    unsigned pos;
+public:
+    ~ClientTIMBUKTUData() override = default;
+
+    TIMBUKTUState state = TIMBUKTU_STATE_BANNER;
+    uint16_t stringlen = 0;
+    unsigned pos = 0;
     union
     {
         uint16_t len;
         uint8_t raw_len[2];
-    } l;
+    } l = {};
 };
 
 #pragma pack(1)
@@ -92,21 +95,17 @@ TimbuktuClientDetector::TimbuktuClientDetector(ClientDiscovery* cdm)
 
 int TimbuktuClientDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ClientTIMBUKTUData* fd;
-    uint16_t offset;
-
     if (args.dir != APP_ID_FROM_INITIATOR)
         return APPID_INPROCESS;
 
-    fd = (ClientTIMBUKTUData*)data_get(args.asd);
+    ClientTIMBUKTUData* fd = (ClientTIMBUKTUData*)data_get(args.asd);
     if (!fd)
     {
-        fd = (ClientTIMBUKTUData*)snort_calloc(sizeof(ClientTIMBUKTUData));
-        data_add(args.asd, fd, &snort_free);
-        fd->state = TIMBUKTU_STATE_BANNER;
+        fd = new ClientTIMBUKTUData;
+        data_add(args.asd, fd);
     }
 
-    offset = 0;
+    uint16_t offset = 0;
     while (offset < args.size)
     {
         switch (fd->state)

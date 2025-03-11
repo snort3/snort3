@@ -81,11 +81,18 @@ struct ServiceSMTPData
     int multiline;
 };
 
-struct SMTPDetectorData
+class SMTPDetectorData : public AppIdFlowData
 {
-    ClientSMTPData client;
-    ServiceSMTPData server;
-    int need_continue;
+public:
+    SMTPDetectorData()
+    {
+        client.state = SMTP_CLIENT_STATE_HELO;
+    }
+    ~SMTPDetectorData() override;
+
+    ClientSMTPData client = {};
+    ServiceSMTPData server = {};
+    int need_continue = 1;
 };
 
 #define HELO "HELO "
@@ -342,16 +349,10 @@ int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const 
     return 1;
 }
 
-static void smtp_free_state(void* data)
+SMTPDetectorData::~SMTPDetectorData()
 {
-    SMTPDetectorData* dd = (SMTPDetectorData*)data;
-    if (dd)
-    {
-        ClientSMTPData* cd = &dd->client;
-        if (cd->headerline)
-            snort_free(cd->headerline);
-        snort_free(dd);
-    }
+    if (client.headerline)
+        snort_free(client.headerline);
 }
 
 SMTPDetectorData* SmtpClientDetector::get_common_data(AppIdSession& asd)
@@ -359,8 +360,8 @@ SMTPDetectorData* SmtpClientDetector::get_common_data(AppIdSession& asd)
     SMTPDetectorData* dd = (SMTPDetectorData*)data_get(asd);
     if (!dd)
     {
-        dd = (SMTPDetectorData*)snort_calloc(1, sizeof(*dd));
-        data_add(asd, dd, &smtp_free_state);
+        dd = new SMTPDetectorData;
+        data_add(asd, dd);
 
         if (asd.get_session_flags(APPID_SESSION_DECRYPTED))
         {
@@ -370,8 +371,6 @@ SMTPDetectorData* SmtpClientDetector::get_common_data(AppIdSession& asd)
         else
             dd->server.state = SMTP_SERVICE_STATE_CONNECTION;
 
-        dd->client.state = SMTP_CLIENT_STATE_HELO;
-        dd->need_continue = 1;
         asd.set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 

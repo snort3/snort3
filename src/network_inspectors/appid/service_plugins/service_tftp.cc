@@ -47,12 +47,17 @@ enum TFTPState
     TFTP_STATE_ERROR
 };
 
-struct ServiceTFTPData
+class ServiceTFTPData : public AppIdFlowData
 {
+public:
+    explicit ServiceTFTPData(TFTPState state) : state(state)
+    { }
+    ~ServiceTFTPData() override = default;
+
     TFTPState state;
-    unsigned count;
-    int last;
-    uint16_t block;
+    unsigned count = 0;
+    int last = 0;
+    uint16_t block= 0;
 };
 
 #pragma pack(1)
@@ -123,8 +128,20 @@ static int tftp_verify_header(const uint8_t* data, uint16_t size,
 
 int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceTFTPData* td = nullptr;
-    ServiceTFTPData* tmp_td = nullptr;
+    if (!args.size)
+    {
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
+
+    ServiceTFTPData* td = (ServiceTFTPData*)data_get(args.asd);
+    if (!td)
+    {
+        td = new ServiceTFTPData(TFTP_STATE_CONNECTION);
+        data_add(args.asd, td);
+    }
+    APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "TFTP state %d\n", td->state);
+
     int mode = 0;
     uint16_t block = 0;
     uint16_t tmp = 0;
@@ -133,18 +150,6 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
     AppIdSession* pf = nullptr;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
-
-    if (!size)
-        goto inprocess;
-
-    td = (ServiceTFTPData*)data_get(args.asd);
-    if (!td)
-    {
-        td = (ServiceTFTPData*)snort_calloc(sizeof(ServiceTFTPData));
-        data_add(args.asd, td, &snort_free);
-        td->state = TFTP_STATE_CONNECTION;
-    }
-    APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "TFTP state %d\n", td->state);
 
     if (td->state == TFTP_STATE_CONNECTION && args.dir == APP_ID_FROM_RESPONDER)
         goto fail;
@@ -181,35 +186,35 @@ int TftpServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (strcasecmp((const char*)data, "netascii") && strcasecmp((const char*)data, "octet"))
             goto bail;
 
-
-        tmp_td = (ServiceTFTPData*)snort_calloc(sizeof(ServiceTFTPData));
-        tmp_td->state = TFTP_STATE_TRANSFER;
-        dip = args.pkt->ptrs.ip_api.get_dst();
-        sip = args.pkt->ptrs.ip_api.get_src();
-        pf = AppIdSession::create_future_session(args.pkt,
-            dip, 0, sip, args.pkt->ptrs.sp, args.asd.protocol,
-            args.asd.config.snort_proto_ids[PROTO_INDEX_TFTP], args.asd.get_odp_ctxt());
-
-        if (pf)
         {
-            data_add(*pf, tmp_td, &snort_free);
-            if (pf->add_flow_data_id(args.pkt->ptrs.dp, this))
+            ServiceTFTPData* tmp_td = new ServiceTFTPData(TFTP_STATE_TRANSFER);
+            dip = args.pkt->ptrs.ip_api.get_dst();
+            sip = args.pkt->ptrs.ip_api.get_src();
+            pf = AppIdSession::create_future_session(args.pkt,
+                dip, 0, sip, args.pkt->ptrs.sp, args.asd.protocol,
+                args.asd.config.snort_proto_ids[PROTO_INDEX_TFTP], args.asd.get_odp_ctxt());
+
+            if (pf)
             {
-                pf->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
-                pf->clear_session_flags(APPID_SESSION_CONTINUE);
-                tmp_td->state = TFTP_STATE_ERROR;
-                return APPID_ENOMEM;
+                data_add(*pf, tmp_td);
+                if (pf->add_flow_data_id(args.pkt->ptrs.dp, this))
+                {
+                    pf->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+                    pf->clear_session_flags(APPID_SESSION_CONTINUE);
+                    tmp_td->state = TFTP_STATE_ERROR;
+                    return APPID_ENOMEM;
+                }
+                args.asd.initialize_future_session(*pf, APPID_SESSION_EXPECTED_EVALUATE);
+                pf->set_initiator_ip(*sip);
+                pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
+                pf->scan_flags |= SCAN_HOST_PORT_FLAG;
             }
-            args.asd.initialize_future_session(*pf, APPID_SESSION_EXPECTED_EVALUATE);
-            pf->set_initiator_ip(*sip);
-            pf->service_disco_state = APPID_DISCO_STATE_STATEFUL;
-            pf->scan_flags |= SCAN_HOST_PORT_FLAG;
-        }
-        else
-        {
-            snort_free(tmp_td);
-            goto inprocess;   /* Assume that the flow already exists
-                                 as in a retransmit situation */
+            else
+            {
+                delete tmp_td;
+                goto inprocess;   /* Assume that the flow already exists
+                                    as in a retransmit situation */
+            }
         }
         break;
     case TFTP_STATE_TRANSFER:

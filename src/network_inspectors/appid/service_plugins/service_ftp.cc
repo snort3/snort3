@@ -71,19 +71,21 @@ enum FTPCmd
 };
 
 #define MAX_STRING_SIZE 64
-struct ServiceFTPData
+class ServiceFTPData : public AppIdFlowData
 {
-    FTPState state;
-    FTPReplyState rstate;
-    int code;
-    char vendor[MAX_STRING_SIZE];
-    char version[MAX_STRING_SIZE];
-    FTPCmd cmd;
-    SfIp address;
-    uint16_t port;
-    int part_code_resp = 0;
-    int part_code_len;
+public:
+    ~ServiceFTPData() override = default;
 
+    FTPState state = FTP_STATE_CONNECTION;
+    FTPReplyState rstate = FTP_REPLY_BEGIN;
+    int code = 0;
+    char vendor[MAX_STRING_SIZE] = {};
+    char version[MAX_STRING_SIZE] = {};
+    FTPCmd cmd = FTP_CMD_NONE;
+    SfIp address = {};
+    int part_code_resp = 0;
+    int part_code_len = 0;
+    uint16_t port = 0;
 };
 
 #pragma pack(1)
@@ -919,7 +921,26 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
     static const char FTP_EPSV_CMD[] = "EPSV";
     static const char FTP_PORT_CMD[] = "PORT ";
     static const char FTP_EPRT_CMD[] = "EPRT ";
-    ServiceFTPData* fd = nullptr;
+
+    //ignore packets while encryption is on in explicit mode. In future, this will be changed
+    //to direct traffic to SSL detector to extract payload from certs. This will require
+    // maintaining
+    //two detector states at the same time.
+    if (!args.size
+        || APPID_SESSION_ENCRYPTED == args.asd.get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED))
+    {
+        if (!args.asd.is_service_detected())
+            service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
+
+    ServiceFTPData* fd = (ServiceFTPData*)data_get(args.asd);
+    if (!fd)
+    {
+        fd = new ServiceFTPData;
+        data_add(args.asd, fd);
+    }
+
     uint16_t offset = 0;
     uint16_t init_offset = 0;
     int code = 0;
@@ -929,31 +950,6 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
     int retval = APPID_INPROCESS;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
-
-    if (!size)
-        goto inprocess;
-
-    //ignore packets while encryption is on in explicit mode. In future, this will be changed
-    //to direct traffic to SSL detector to extract payload from certs. This will require
-    // maintaining
-    //two detector states at the same time.
-    if (args.asd.get_session_flags(APPID_SESSION_ENCRYPTED))
-    {
-        if (!args.asd.get_session_flags(APPID_SESSION_DECRYPTED))
-        {
-            goto inprocess;
-        }
-    }
-
-    fd = (ServiceFTPData*)data_get(args.asd);
-    if (!fd)
-    {
-        fd = (ServiceFTPData*)snort_calloc(sizeof(ServiceFTPData));
-        data_add(args.asd, fd, &snort_free);
-        fd->state = FTP_STATE_CONNECTION;
-        fd->rstate = FTP_REPLY_BEGIN;
-        fd->cmd = FTP_CMD_NONE;
-    }
 
     if (args.dir != APP_ID_FROM_RESPONDER)
     {

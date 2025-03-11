@@ -188,7 +188,7 @@ public:
         return service_disco_mgr;
     }
 
-    HostPortVal* host_port_cache_find(const snort::SfIp* ip, uint16_t port, IpProtocol proto)
+    const HostPortVal* host_port_cache_find(const snort::SfIp* ip, uint16_t port, IpProtocol proto)
     {
         return host_port_cache.find(ip, port, proto, *this);
     }
@@ -205,7 +205,7 @@ public:
         return first_pkt_cache.add_host(sc, ip, netmask, port, proto, protocol_appid, client_appid, web_appid, reinspect);
     }
 
-    HostAppIdsVal* host_first_pkt_find(const snort::SfIp* ip, uint16_t port, IpProtocol proto)
+    const HostAppIdsVal* host_first_pkt_find(const snort::SfIp* ip, uint16_t port, IpProtocol proto)
     {
         return first_pkt_cache.find_on_first_pkt(ip, port, proto, *this);
     }

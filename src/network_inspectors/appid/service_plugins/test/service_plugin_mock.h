@@ -95,8 +95,8 @@ void ClientDiscovery::reload() {}
 FpSMBData* smb_data = nullptr;
 
 int AppIdDetector::initialize(AppIdInspector&){return 0;}
-int AppIdDetector::data_add(AppIdSession&, void*, AppIdFreeFCN){return 0;}
-void* AppIdDetector::data_get(const AppIdSession&) {return nullptr;}
+int AppIdDetector::data_add(AppIdSession&, AppIdFlowData*){return 0;}
+AppIdFlowData* AppIdDetector::data_get(const AppIdSession&) {return nullptr;}
 void AppIdDetector::add_user(AppIdSession&, const char*, AppId, bool, AppidChangeBits&){}
 void AppIdDetector::add_payload(AppIdSession&, AppId){}
 void AppIdDetector::add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId, const char*, AppidChangeBits&){}
@@ -112,7 +112,7 @@ void AppIdDiscovery::register_udp_pattern(AppIdDetector*, const uint8_t* const, 
     int, unsigned){}
 int AppIdDiscovery::add_service_port(AppIdDetector*, const ServiceDetectorPort&){return 0;}
 void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&){}
-int AppIdSession::add_flow_data(void*, unsigned, AppIdFreeFCN) { return 0; }
+int AppIdSession::add_flow_data(void*, unsigned) { return 0; }
 int dcerpc_validate(const uint8_t*, int){return 0; }
 AppIdDiscovery::~AppIdDiscovery() { }
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }

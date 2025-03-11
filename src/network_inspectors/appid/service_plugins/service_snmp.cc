@@ -57,8 +57,13 @@ enum SNMPState
     SNMP_STATE_ERROR
 };
 
-struct ServiceSNMPData
+class ServiceSNMPData : public AppIdFlowData
 {
+public:
+    explicit ServiceSNMPData(SNMPState state) : state(state)
+    { }
+    ~ServiceSNMPData() override = default;
+
     SNMPState state;
 };
 
@@ -388,24 +393,24 @@ static int snmp_verify_packet(const uint8_t** const data,
 
 int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceSNMPData* sd = nullptr;
-    ServiceSNMPData* tmp_sd = nullptr;
+    if (!args.size)
+    {
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
+
+    ServiceSNMPData* sd = (ServiceSNMPData*)data_get(args.asd);
+    if (!sd)
+    {
+        sd = new ServiceSNMPData(SNMP_STATE_CONNECTION);
+        data_add(args.asd, sd);
+    }
+
     uint8_t pdu = 0;
     uint8_t version = 0;
     const char* version_str = nullptr;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
-
-    if (!size)
-        goto inprocess;
-
-    sd = (ServiceSNMPData*)data_get(args.asd);
-    if (!sd)
-    {
-        sd = (ServiceSNMPData*)snort_calloc(sizeof(ServiceSNMPData));
-        data_add(args.asd, sd, &snort_free);
-        sd->state = SNMP_STATE_CONNECTION;
-    }
 
     if (snmp_verify_packet(&data, data+size, &pdu, &version))
     {
@@ -470,9 +475,8 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
 
         if (pf)
         {
-            tmp_sd = (ServiceSNMPData*)snort_calloc(sizeof(ServiceSNMPData));
-            tmp_sd->state = SNMP_STATE_RESPONSE;
-            data_add(*pf, tmp_sd, &snort_free);
+            ServiceSNMPData* tmp_sd = new ServiceSNMPData(SNMP_STATE_RESPONSE);
+            data_add(*pf, tmp_sd);
             if (pf->add_flow_data_id(args.pkt->ptrs.dp, this))
             {
                 pf->set_session_flags(APPID_SESSION_SERVICE_DETECTED);
@@ -534,7 +538,6 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto bail;
     }
 
-inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 

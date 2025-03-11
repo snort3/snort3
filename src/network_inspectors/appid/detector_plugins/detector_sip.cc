@@ -68,8 +68,13 @@ enum tSIP_FLAGS
     SIP_FLAG_SERVER_CHECKED = (1<< 0)
 };
 
-struct ClientSIPData
+class ClientSIPData : public AppIdFlowData
 {
+public:
+    explicit ClientSIPData(void* owner) : owner(owner)
+    { }
+    ~ClientSIPData() override = default;
+
     void* owner = nullptr;
     SIPState state = SIP_STATE_INIT;
     uint32_t flags = 0;
@@ -77,11 +82,6 @@ struct ClientSIPData
     std::string user_agent;
     std::string from;
 };
-
-static void clientDataFree(void* data)
-{
-    delete (ClientSIPData*)data;
-}
 
 SipUdpClientDetector::SipUdpClientDetector(ClientDiscovery* cdm)
 {
@@ -116,9 +116,8 @@ int SipUdpClientDetector::validate(AppIdDiscoveryArgs& args)
     ClientSIPData* fd = (ClientSIPData*)data_get(args.asd);
     if ( !fd )
     {
-        fd = new ClientSIPData();
-        data_add(args.asd, fd, &clientDataFree);
-        fd->owner = this;
+        fd = new ClientSIPData(this);
+        data_add(args.asd, fd);
         args.asd.set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 
@@ -160,19 +159,21 @@ int SipTcpClientDetector::validate(AppIdDiscoveryArgs& args)
     ClientSIPData* fd = (ClientSIPData*)data_get(args.asd);
     if ( !fd )
     {
-        fd = new ClientSIPData();
-        data_add(args.asd, fd, &clientDataFree);
-        fd->owner = this;
+        fd = new ClientSIPData(this);
+        data_add(args.asd, fd);
         args.asd.set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 
     return APPID_INPROCESS;
 }
 
-struct ServiceSIPData
+class ServiceSIPData : public AppIdFlowData
 {
-    uint8_t serverPkt;
-    char vendor[MAX_VENDOR_SIZE];
+public:
+    ~ServiceSIPData() override = default;
+
+    uint8_t serverPkt = 0;
+    char vendor[MAX_VENDOR_SIZE] = {};
 };
 
 void SipServiceDetector::createRtpFlow(AppIdSession& asd, const Packet* pkt, const SfIp* cliIp,
@@ -280,8 +281,8 @@ int SipServiceDetector::validate(AppIdDiscoveryArgs& args)
     ServiceSIPData* ss = (ServiceSIPData*)data_get(args.asd);
     if (!ss)
     {
-        ss = (ServiceSIPData*)snort_calloc(sizeof(ServiceSIPData));
-        data_add(args.asd, ss, &snort_free);
+        ss = new ServiceSIPData;
+        data_add(args.asd, ss);
     }
 
     if (args.size && args.dir == APP_ID_FROM_RESPONDER)
@@ -349,9 +350,8 @@ void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession& asd,
     ClientSIPData* fd = (ClientSIPData*)client->data_get(asd);
     if ( !fd )
     {
-        fd = new ClientSIPData();
-        client->data_add(asd, fd, &clientDataFree);
-        fd->owner = client;
+        fd = new ClientSIPData(client);
+        client->data_add(asd, fd);
         asd.set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 
@@ -408,10 +408,10 @@ void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession& asd,
         return;
 
     ServiceSIPData* ss = (ServiceSIPData*)service->data_get(asd);
-    if ( !ss )
+    if (!ss)
     {
-        ss = (ServiceSIPData*)snort_calloc(sizeof(ServiceSIPData));
-        service->data_add(asd, ss, &snort_free);
+        ss = new ServiceSIPData;
+        service->data_add(asd, ss);
     }
 
     ss->serverPkt = 0;

@@ -48,33 +48,33 @@ static const uint8_t TNS_BANNER[]  = "\000\000";
 #define TNS_TYPE_CONTROL 14
 #define TNS_TYPE_MAX 19
 
-namespace
+enum TNSSvcState
 {
-enum TNSState
-{
-    TNS_STATE_MESSAGE_LEN,
-    TNS_STATE_MESSAGE_CHECKSUM,
-    TNS_STATE_MESSAGE,
-    TNS_STATE_MESSAGE_RES,
-    TNS_STATE_MESSAGE_HD_CHECKSUM,
-    TNS_STATE_MESSAGE_ACCEPT,
-    TNS_STATE_MESSAGE_DATA
+    SVC_MSG_LEN = 0,
+    SVC_MSG_CHECKSUM,
+    SVC_MSG,
+    SVC_MSG_RES,
+    SVC_MSG_HD_CHECKSUM,
+    SVC_MSG_ACCEPT,
+    SVC_MSG_DATA
 };
-}
 
 #define ACCEPT_VERSION_OFFSET   8
-struct ServiceTNSData
+class ServiceTNSData : public AppIdFlowData
 {
-    TNSState state;
-    unsigned stringlen;
-    unsigned pos;
-    unsigned message;
+public:
+    ~ServiceTNSData() override = default;
+
+    const char* version = nullptr;
+    TNSSvcState state = SVC_MSG_LEN;
+    unsigned stringlen = 0;
+    unsigned pos = 0;
+    unsigned message = 0;
     union
     {
         uint16_t len;
         uint8_t raw_len[2];
-    } l;
-    const char* version;
+    } l = {};
 };
 
 #pragma pack(1)
@@ -117,30 +117,30 @@ TnsServiceDetector::TnsServiceDetector(ServiceDiscovery* sd)
 
 int TnsServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceTNSData* ss;
-    uint16_t offset;
-    const uint8_t* data = args.data;
-    uint16_t size = args.size;
-
-    if (!size)
-        goto inprocess;
-    if (args.dir != APP_ID_FROM_RESPONDER)
-        goto inprocess;
-
-    ss = (ServiceTNSData*)data_get(args.asd);
-    if (!ss)
+    if (!args.size || args.dir != APP_ID_FROM_RESPONDER)
     {
-        ss = (ServiceTNSData*)snort_calloc(sizeof(ServiceTNSData));
-        data_add(args.asd, ss, &snort_free);
-        ss->state = TNS_STATE_MESSAGE_LEN;
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
     }
 
-    offset = 0;
+    ServiceTNSData* ss = (ServiceTNSData*)data_get(args.asd);
+    if (!ss)
+    {
+        ss = new ServiceTNSData();
+        data_add(args.asd, ss);
+    }
+
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
+    uint16_t offset = 0;
     while (offset < size)
     {
+        // For some reason, coverity cannot follow the state machine. It does state transitions that are not possible
+        // This makes the coverity overrun exceptions necessary
         switch (ss->state)
         {
-        case TNS_STATE_MESSAGE_LEN:
+        case SVC_MSG_LEN:
+            // coverity[overrun]
             ss->l.raw_len[ss->pos++] = data[offset];
             if (ss->pos >= offsetof(ServiceTNSMsg, checksum))
             {
@@ -153,44 +153,39 @@ int TnsServiceDetector::validate(AppIdDiscoveryArgs& args)
                 }
                 else if (ss->stringlen < 2)
                     goto fail;
-                else
-                {
-                    ss->state = TNS_STATE_MESSAGE_CHECKSUM;
-                }
+                ss->state = SVC_MSG_CHECKSUM;
             }
             break;
 
-        case TNS_STATE_MESSAGE_CHECKSUM:
+        case SVC_MSG_CHECKSUM:
             if (data[offset] != 0)
                 goto fail;
             ss->pos++;
             if (ss->pos >= offsetof(ServiceTNSMsg, msg))
-            {
-                ss->state = TNS_STATE_MESSAGE;
-            }
+                ss->state = SVC_MSG;
             break;
 
-        case TNS_STATE_MESSAGE:
+        case SVC_MSG:
             ss->message = data[offset];
             if (ss->message < TNS_TYPE_CONNECT || ss->message > TNS_TYPE_MAX)
                 goto fail;
             ss->pos++;
-            ss->state = TNS_STATE_MESSAGE_RES;
+            ss->state = SVC_MSG_RES;
             break;
 
-        case TNS_STATE_MESSAGE_RES:
+        case SVC_MSG_RES:
             ss->pos++;
-            ss->state = TNS_STATE_MESSAGE_HD_CHECKSUM;
+            ss->state = SVC_MSG_HD_CHECKSUM;
             break;
 
-        case TNS_STATE_MESSAGE_HD_CHECKSUM:
+        case SVC_MSG_HD_CHECKSUM:
             ss->pos++;
             if (ss->pos >= offsetof(ServiceTNSMsg, data))
             {
                 switch (ss->message)
                 {
                 case TNS_TYPE_ACCEPT:
-                    ss->state = TNS_STATE_MESSAGE_ACCEPT;
+                    ss->state = SVC_MSG_ACCEPT;
                     break;
                 case TNS_TYPE_ACK:
                 case TNS_TYPE_REFUSE:
@@ -208,14 +203,14 @@ int TnsServiceDetector::validate(AppIdDiscoveryArgs& args)
                         else
                             goto fail;
                     }
-                    ss->state = TNS_STATE_MESSAGE_DATA;
+                    ss->state = SVC_MSG_DATA;
                     break;
                 case TNS_TYPE_RESEND:
                     if (ss->pos == ss->stringlen)
                     {
                         if (offset == (size - 1))
                         {
-                            ss->state = TNS_STATE_MESSAGE_LEN;
+                            ss->state = SVC_MSG_LEN;
                             ss->pos = 0;
                             goto inprocess;
                         }
@@ -230,9 +225,8 @@ int TnsServiceDetector::validate(AppIdDiscoveryArgs& args)
             }
             break;
 
-        case TNS_STATE_MESSAGE_ACCEPT:
-            if (ss->pos >= (ACCEPT_VERSION_OFFSET + 2))
-                break;
+        case SVC_MSG_ACCEPT:
+            // coverity[overrun]
             ss->l.raw_len[ss->pos - ACCEPT_VERSION_OFFSET] = data[offset];
             ss->pos++;
             if (ss->pos == (ACCEPT_VERSION_OFFSET + 2))
@@ -257,10 +251,10 @@ int TnsServiceDetector::validate(AppIdDiscoveryArgs& args)
                 default:
                     break;
                 }
-                ss->state = TNS_STATE_MESSAGE_DATA;
+                ss->state = SVC_MSG_DATA;
             }
             break;
-        case TNS_STATE_MESSAGE_DATA:
+        case SVC_MSG_DATA:
             ss->pos++;
             if (ss->pos == ss->stringlen)
             {

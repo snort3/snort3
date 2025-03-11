@@ -51,15 +51,18 @@ enum IRCState
     IRC_STATE_USER_MID_TERM
 };
 
-struct ServiceIRCData
+class ServiceIRCData : public AppIdFlowData
 {
-    IRCState state;
-    unsigned pos;
-    const char* command;
-    IRCState initiator_state;
-    unsigned initiator_pos;
-    const char* initiator_command;
-    unsigned count;
+public:
+    ~ServiceIRCData() override = default;
+
+    const char* command = nullptr;
+    const char* initiator_command = nullptr;
+    IRCState state = IRC_STATE_BEGIN;
+    unsigned pos = 0;
+    IRCState initiator_state = IRC_STATE_BEGIN;
+    unsigned initiator_pos = 0;
+    unsigned count = 0;
 };
 
 IrcServiceDetector::IrcServiceDetector(ServiceDiscovery* sd)
@@ -85,26 +88,24 @@ IrcServiceDetector::IrcServiceDetector(ServiceDiscovery* sd)
 
 int IrcServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceIRCData* id;
-    const uint8_t* end;
+    if (!args.size)
+    {
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
+
+    ServiceIRCData* id = (ServiceIRCData*)data_get(args.asd);
+    if (!id)
+    {
+        id = new ServiceIRCData;
+        data_add(args.asd, id);
+    }
+
     IRCState* state;
     unsigned* pos;
     const char** command;
     const uint8_t* data = args.data;
-
-    if (!args.size)
-        goto inprocess;
-
-    id = (ServiceIRCData*)data_get(args.asd);
-    if (!id)
-    {
-        id =  (ServiceIRCData*)snort_calloc(sizeof(ServiceIRCData));
-        data_add(args.asd, id, &snort_free);
-        id->initiator_state = IRC_STATE_BEGIN;
-        id->state = IRC_STATE_BEGIN;
-    }
-
-    end = (const uint8_t*)(data + args.size);
+    const uint8_t* end = (const uint8_t*)(data + args.size);
 
     if (args.dir == APP_ID_FROM_RESPONDER)
     {

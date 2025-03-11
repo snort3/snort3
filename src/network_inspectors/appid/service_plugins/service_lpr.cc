@@ -52,11 +52,14 @@ enum LPRSubCommand
     LPR_SUBCMD_DATA
 };
 
-struct ServiceLPRData
+class ServiceLPRData : public AppIdFlowData
 {
-    LPRState state;
-    unsigned no_data_count;
-    unsigned count;
+public:
+    ~ServiceLPRData() override = default;
+
+    LPRState state = LPR_STATE_COMMAND;
+    unsigned no_data_count = 0;
+    unsigned count = 0;
 };
 
 LprServiceDetector::LprServiceDetector(ServiceDiscovery* sd)
@@ -82,21 +85,22 @@ LprServiceDetector::LprServiceDetector(ServiceDiscovery* sd)
 
 int LprServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceLPRData* ld;
+    if (!args.size)
+    {
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
+
+    ServiceLPRData* ld = (ServiceLPRData*)data_get(args.asd);
+    if (!ld)
+    {
+        ld = new ServiceLPRData;
+        data_add(args.asd, ld);
+    }
+
     int i;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
-
-    if (!size)
-        goto inprocess;
-
-    ld = (ServiceLPRData*)data_get(args.asd);
-    if (!ld)
-    {
-        ld = (ServiceLPRData*)snort_calloc(sizeof(ServiceLPRData));
-        data_add(args.asd, ld, &snort_free);
-        ld->state = LPR_STATE_COMMAND;
-    }
 
     switch (ld->state)
     {

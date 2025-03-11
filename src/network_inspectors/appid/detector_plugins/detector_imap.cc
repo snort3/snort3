@@ -149,11 +149,19 @@ struct ImapServiceData
     char tagValue[IMAP_TAG_MAX_LEN+1];
 };
 
-struct ImapDetectorData
+class ImapDetectorData : public AppIdFlowData
 {
-    ImapClientData client;
-    ImapServiceData server;
-    int need_continue;
+public:
+    ImapDetectorData()
+    {
+        server.state = IMAP_STATE_BEGIN;
+        server.flags = IMAP_FLAG_FIRST_PACKET;
+    }
+    ~ImapDetectorData() override = default;
+
+    ImapClientData client = {};
+    ImapServiceData server = {};
+    int need_continue = 1;
 };
 
 static int isImapTagChar(uint8_t tag)
@@ -556,11 +564,8 @@ ImapDetectorData* ImapClientDetector::get_common_data(AppIdSession& asd)
     ImapDetectorData* dd = (ImapDetectorData*)data_get(asd);
     if (!dd)
     {
-        dd = (ImapDetectorData*)snort_calloc(sizeof(ImapDetectorData));
-        data_add(asd, dd, &snort_free);
-        dd->server.state = IMAP_STATE_BEGIN;
-        dd->server.flags = IMAP_FLAG_FIRST_PACKET;
-        dd->need_continue = 1;
+        dd = new ImapDetectorData;
+        data_add(asd, dd);
         asd.set_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
     }
 

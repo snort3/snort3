@@ -53,11 +53,16 @@ enum REXECState
     REXEC_STATE_STDERR_DONE
 };
 
-struct ServiceREXECData
+class ServiceREXECData : public AppIdFlowData
 {
+public:
+    explicit ServiceREXECData(REXECState state) : state(state)
+    { }
+    ~ServiceREXECData() override;
+
+    ServiceREXECData* parent = nullptr;
+    ServiceREXECData* child = nullptr;
     REXECState state;
-    struct ServiceREXECData* parent;
-    struct ServiceREXECData* child;
 };
 
 static const uint64_t REXEC_EXPECTED_SESSION_FLAGS = APPID_SESSION_CONTINUE |
@@ -85,23 +90,17 @@ RexecServiceDetector::RexecServiceDetector(ServiceDiscovery* sd)
 }
 
 
-static void rexec_free_state(void* data)
+ServiceREXECData::~ServiceREXECData()
 {
-    ServiceREXECData* rd = (ServiceREXECData*)data;
-
-    if (rd)
+    if (parent)
     {
-        if (rd->parent)
-        {
-            rd->parent->child = nullptr;
-            rd->parent->parent = nullptr;
-        }
-        if (rd->child)
-        {
-            rd->child->parent = nullptr;
-            rd->child->child = nullptr;
-        }
-        snort_free(rd);
+        parent->child = nullptr;
+        parent->parent = nullptr;
+    }
+    if (child)
+    {
+        child->parent = nullptr;
+        child->child = nullptr;
     }
 }
 
@@ -119,24 +118,25 @@ void RexecServiceDetector::rexec_bail(ServiceREXECData* rd)
 
 int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
+    ServiceREXECData* rd = (ServiceREXECData*)data_get(args.asd);
+    if (!rd)
+    {
+        if (!args.size)
+        {
+            service_inprocess(args.asd, args.pkt, args.dir);
+            return APPID_INPROCESS;
+        }
+        rd = new ServiceREXECData(REXEC_STATE_PORT);
+        data_add(args.asd, rd);
+    }
+    APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "rexec state %d\n", rd->state);
+
     int i = 0;
     uint32_t port = 0;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
 
-    ServiceREXECData* rd = (ServiceREXECData*)data_get(args.asd);
-    if (!rd)
-    {
-        if (!size)
-            goto inprocess;
-        rd = (ServiceREXECData*)snort_calloc(sizeof(ServiceREXECData));
-        data_add(args.asd, rd, &rexec_free_state);
-        rd->state = REXEC_STATE_PORT;
-    }
-    // cppcheck-suppress nullPointerRedundantCheck
-    APPID_LOG(args.pkt, TRACE_DEBUG_LEVEL, "rexec state %d\n", rd->state);
-
-    switch (rd->state) // cppcheck-suppress nullPointerRedundantCheck
+    switch (rd->state)
     {
     case REXEC_STATE_PORT:
         if (args.dir != APP_ID_FROM_INITIATOR)
@@ -168,12 +168,10 @@ int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
 
             if (pf)
             {
-                ServiceREXECData* tmp_rd = (ServiceREXECData*)snort_calloc(
-                    sizeof(ServiceREXECData));
-                tmp_rd->state = REXEC_STATE_STDERR_CONNECT_SYN;
+                ServiceREXECData* tmp_rd = new ServiceREXECData(REXEC_STATE_STDERR_CONNECT_SYN);
                 tmp_rd->parent = rd;
 
-                data_add(*pf, tmp_rd, &rexec_free_state);
+                data_add(*pf, tmp_rd);
                 if (pf->add_flow_data_id((uint16_t)port, this))
                 {
                     pf->service_disco_state = APPID_DISCO_STATE_FINISHED;

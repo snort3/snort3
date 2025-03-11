@@ -32,9 +32,12 @@
 
 #define min(x,y) ((x)<(y) ? (x) : (y))
 
-struct ServiceDCERPCData
+class ServiceDCERPCData : public AppIdFlowData
 {
-    unsigned count;
+public:
+    ~ServiceDCERPCData() override = default;
+
+    unsigned count = 0;
 };
 
 DceRpcServiceDetector::DceRpcServiceDetector(ServiceDiscovery* sd)
@@ -69,23 +72,24 @@ int DceRpcServiceDetector::validate(AppIdDiscoveryArgs& args)
 
 int DceRpcServiceDetector::tcp_validate(AppIdDiscoveryArgs& args)
 {
-    ServiceDCERPCData* dd;
+
+    if (!args.size || args.dir != APP_ID_FROM_RESPONDER)
+    {
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
+
+    ServiceDCERPCData* dd = (ServiceDCERPCData*)data_get(args.asd);
+    if (!dd)
+    {
+        dd = new ServiceDCERPCData;
+        data_add(args.asd, dd);
+    }
+
     int retval = APPID_INPROCESS;
     int length;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
-
-    if (args.dir != APP_ID_FROM_RESPONDER)
-        goto inprocess;
-    if (!size)
-        goto inprocess;
-
-    dd = (ServiceDCERPCData*)data_get(args.asd);
-    if (!dd)
-    {
-        dd = (ServiceDCERPCData*)snort_calloc(sizeof(ServiceDCERPCData));
-        data_add(args.asd, dd, &snort_free);
-    }
 
     while (size)
     {
@@ -101,7 +105,6 @@ int DceRpcServiceDetector::tcp_validate(AppIdDiscoveryArgs& args)
     if (retval == APPID_SUCCESS)
         return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_DCE_RPC);
 
-inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 
@@ -112,23 +115,23 @@ fail:
 
 int DceRpcServiceDetector::udp_validate(AppIdDiscoveryArgs& args)
 {
-    ServiceDCERPCData* dd;
+    if (!args.size || args.dir != APP_ID_FROM_RESPONDER)
+    {
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
+
+    ServiceDCERPCData* dd = (ServiceDCERPCData*)data_get(args.asd);
+    if (!dd)
+    {
+        dd = new ServiceDCERPCData;
+        data_add(args.asd, dd);
+    }
+
     int retval = APPID_NOMATCH;
     int length;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
-
-    if (args.dir != APP_ID_FROM_RESPONDER)
-        goto inprocess;
-    if (!size)
-        goto inprocess;
-
-    dd = (ServiceDCERPCData*)data_get(args.asd);
-    if (!dd)
-    {
-        dd = (ServiceDCERPCData*)snort_calloc(sizeof(ServiceDCERPCData));
-        data_add(args.asd, dd, &snort_free);
-    }
 
     while (size)
     {
@@ -144,7 +147,6 @@ int DceRpcServiceDetector::udp_validate(AppIdDiscoveryArgs& args)
     if (retval == APPID_SUCCESS)
         return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_DCE_RPC);
 
-inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 

@@ -61,9 +61,12 @@ enum MDNSState
     MDNS_STATE_CONNECTION_ERROR
 };
 
-struct ServiceMDNSData
+class ServiceMDNSData : public AppIdFlowData
 {
-    MDNSState state;
+public:
+    ~ServiceMDNSData() override = default;
+
+    MDNSState state = MDNS_STATE_CONNECTION;
 };
 
 struct MdnsPattern
@@ -118,19 +121,16 @@ void MdnsServiceDetector::do_custom_reload()
 
 int MdnsServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    int ret_val;
-
     ServiceMDNSData* fd = (ServiceMDNSData*)data_get(args.asd);
     if (!fd)
     {
-        fd = (ServiceMDNSData*)snort_calloc(sizeof(ServiceMDNSData));
-        data_add(args.asd, fd, &snort_free);
-        fd->state = MDNS_STATE_CONNECTION;
+        fd = new ServiceMDNSData();
+        data_add(args.asd, fd);
     }
 
     if (args.pkt->ptrs.dp == MDNS_PORT || args.pkt->ptrs.sp == MDNS_PORT )
     {
-        ret_val = validate_reply(args.data, args.size);
+        int ret_val = validate_reply(args.data, args.size);
         if (ret_val == 1)
         {
             if (args.asd.get_odp_ctxt().mdns_user_reporting)

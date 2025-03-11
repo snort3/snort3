@@ -25,7 +25,7 @@
 #include "service_detector.h"
 
 class ServiceDiscovery;
-struct ServiceREXECData;
+class ServiceREXECData;
 
 class RexecServiceDetector : public ServiceDetector
 {

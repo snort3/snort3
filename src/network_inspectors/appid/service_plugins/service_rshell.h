@@ -25,7 +25,7 @@
 #include "service_detector.h"
 
 class ServiceDiscovery;
-struct ServiceRSHELLData;
+class ServiceRSHELLData;
 
 class RshellServiceDetector : public ServiceDetector
 {

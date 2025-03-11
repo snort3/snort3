@@ -134,10 +134,13 @@ enum DNSState
     DNS_STATE_RESPONSE
 };
 
-struct ServiceDNSData
+class ServiceDNSData : public AppIdFlowData
 {
-    DNSState state;
-    uint16_t id;
+public:
+    ~ServiceDNSData() override = default;
+
+    DNSState state = DNS_STATE_QUERY;
+    uint16_t id = 0;
 };
 
 DnsTcpServiceDetector::DnsTcpServiceDetector(ServiceDiscovery* sd)
@@ -563,6 +566,8 @@ int DnsUdpServiceDetector::validate(AppIdDiscoveryArgs& args)
             {
                 // To get here, we missed the initial query, but now we've got
                 // a response.
+                // Coverity doesn't realize that validate_packet() checks the packet data for valid values
+                // coverity[tainted_scalar]
                 rval = validate_packet(args.data, args.size, args.dir,
                     args.asd.get_odp_ctxt().dns_host_reporting, args.asd, args.change_bits);
                 if (rval == APPID_SUCCESS)
@@ -577,6 +582,8 @@ int DnsUdpServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto udp_done;
     }
 
+    // Coverity doesn't realize that validate_packet() checks the packet data for valid values
+    // coverity[tainted_scalar]
     rval = validate_packet(args.data, args.size, args.dir,
         args.asd.get_odp_ctxt().dns_host_reporting, args.asd, args.change_bits);
     if ((rval == APPID_SUCCESS) && (args.dir == APP_ID_FROM_INITIATOR))
@@ -642,6 +649,8 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 goto fail;
         }
 
+        // Coverity doesn't realize that validate_packet() checks the packet data for valid values
+        // coverity[tainted_scalar]
         rval = validate_packet(data, size, args.dir,
             args.asd.get_odp_ctxt().dns_host_reporting, args.asd, args.change_bits);
         if (rval != APPID_SUCCESS)
@@ -650,9 +659,8 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
         ServiceDNSData* dd = static_cast<ServiceDNSData*>(data_get(args.asd));
         if (!dd)
         {
-            dd = static_cast<ServiceDNSData*>(snort_calloc(sizeof(ServiceDNSData)));
-            if (data_add(args.asd, dd, &snort_free))
-                dd->state = DNS_STATE_QUERY;
+            dd = new ServiceDNSData;
+            data_add(args.asd, dd);
         }
 
         if (dd->state == DNS_STATE_QUERY)

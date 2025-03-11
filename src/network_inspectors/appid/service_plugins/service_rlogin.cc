@@ -39,9 +39,12 @@ enum RLOGINState
     RLOGIN_STATE_DONE
 };
 
-struct ServiceRLOGINData
+class ServiceRLOGINData: public AppIdFlowData
 {
-    RLOGINState state;
+public:
+    ~ServiceRLOGINData() override = default;
+
+    RLOGINState state = RLOGIN_STATE_HANDSHAKE;
 };
 
 RloginServiceDetector::RloginServiceDetector(ServiceDiscovery* sd)
@@ -67,21 +70,20 @@ RloginServiceDetector::RloginServiceDetector(ServiceDiscovery* sd)
 
 int RloginServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceRLOGINData* rd;
-    const uint8_t* data = args.data;
+    if (!args.size || args.dir != APP_ID_FROM_RESPONDER)
+    {
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
 
-    if (!args.size)
-        goto inprocess;
-    if (args.dir != APP_ID_FROM_RESPONDER)
-        goto inprocess;
-
-    rd = (ServiceRLOGINData*)data_get(args.asd);
+    ServiceRLOGINData* rd = (ServiceRLOGINData*)data_get(args.asd);
     if (!rd)
     {
-        rd = (ServiceRLOGINData*)snort_calloc(sizeof(ServiceRLOGINData));
-        data_add(args.asd, rd, &snort_free);
-        rd->state = RLOGIN_STATE_HANDSHAKE;
+        rd = new ServiceRLOGINData;
+        data_add(args.asd, rd);
     }
+
+    const uint8_t* data = args.data;
 
     switch (rd->state)
     {
@@ -124,7 +126,6 @@ int RloginServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto fail;
     }
 
-inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 

@@ -296,7 +296,7 @@ HostPortVal* HostPortCache::find(const SfIp*, uint16_t, IpProtocol, const OdpCon
     return nullptr;
 }
 
-HostAppIdsVal* HostPortCache::find_on_first_pkt(const SfIp*, uint16_t, IpProtocol, const OdpContext&)
+const HostAppIdsVal* HostPortCache::find_on_first_pkt(const SfIp*, uint16_t, IpProtocol, const OdpContext&)
 {
     return nullptr;
 }

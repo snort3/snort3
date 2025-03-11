@@ -43,11 +43,14 @@ enum NNTPState
 #define NNTP_MID_LINE       0x0002
 #define NNTP_MID_TERM       0x0004
 
-struct ServiceNNTPData
+class ServiceNNTPData : public AppIdFlowData
 {
-    NNTPState state;
-    uint32_t flags;
-    unsigned count;
+public:
+    ~ServiceNNTPData() override = default;
+
+    NNTPState state = NNTP_STATE_CONNECTION;
+    uint32_t flags = 0;
+    unsigned count = 0;
 };
 
 #pragma pack(1)
@@ -262,26 +265,23 @@ static int nntp_validate_data(const uint8_t* data, uint16_t* offset, uint16_t si
 
 int NntpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceNNTPData* nd;
-    uint16_t offset;
+    if (!args.size || args.dir != APP_ID_FROM_RESPONDER)
+    {
+        service_inprocess(args.asd, args.pkt, args.dir);
+        return APPID_INPROCESS;
+    }
+
+    ServiceNNTPData* nd = (ServiceNNTPData*)data_get(args.asd);
+    if (!nd)
+    {
+        nd = new ServiceNNTPData();
+        data_add(args.asd, nd);
+    }
+
     int code;
     const uint8_t* data = args.data;
     uint16_t size = args.size;
-
-    if (!size)
-        goto inprocess;
-    if (args.dir != APP_ID_FROM_RESPONDER)
-        goto inprocess;
-
-    nd = (ServiceNNTPData*)data_get(args.asd);
-    if (!nd)
-    {
-        nd = (ServiceNNTPData*)snort_calloc(sizeof(ServiceNNTPData));
-        data_add(args.asd, nd, &snort_free);
-        nd->state = NNTP_STATE_CONNECTION;
-    }
-
-    offset = 0;
+    uint16_t offset = 0;
     while (offset < size)
     {
         if (nd->state == NNTP_STATE_DATA)

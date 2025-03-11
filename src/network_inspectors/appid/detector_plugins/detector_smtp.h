@@ -27,7 +27,7 @@
 #include "framework/counts.h"
 
 struct ClientSMTPData;
-struct SMTPDetectorData;
+class SMTPDetectorData;
 
 class SmtpClientDetector : public ClientDetector
 {

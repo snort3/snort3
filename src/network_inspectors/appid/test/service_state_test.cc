@@ -288,13 +288,15 @@ TEST(service_state_tests, service_cache)
 
     // The cache should now be  ip6:3007, ip4:3008, ip6:3009.
     // Check that the order in the cache is correct.
-    Queue_t::iterator it = ServiceCache.newest();
-    std::vector<ServiceDiscoveryState*>::iterator vit = --ssvec.end();
-    for( size_t i=0; i<max_entries; i++, --it, --vit )
+    auto it = ServiceCache.end();
+    auto vit = ssvec.cend();
+    do
     {
-        Map_t::iterator mit = *it;
-        CHECK_TRUE( mit->second == *vit );
-    }
+        --it;
+        --vit;
+        CHECK_TRUE( vit != ssvec.begin() );
+        CHECK_TRUE( (*it)->second == *vit );
+    } while( it != ServiceCache.oldest() );
 
     // Now get e.g. the oldest from the cache and check that it got touched:
     it = ServiceCache.oldest();

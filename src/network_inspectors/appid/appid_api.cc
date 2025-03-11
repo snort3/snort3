@@ -145,7 +145,7 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
         {
             asd->tsession->process_sni_mismatch();
         }
-            
+
 
         if (sni_mismatch)
             asd->scan_flags |= SCAN_SPOOFED_SNI_FLAG;
@@ -246,12 +246,8 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
 
 const AppIdSessionApi* AppIdApi::get_appid_session_api(const Flow& flow) const
 {
-    AppIdSession* asd = (AppIdSession*)flow.get_flow_data(AppIdSession::inspector_id);
-
-    if (asd)
-        return &asd->get_api();
-
-    return nullptr;
+    StashGenericObject* item;
+    return flow.get_attr(STASH_APPID_DATA, item) ? static_cast<AppIdSessionApi*>(item) : nullptr;
 }
 
 bool AppIdApi::is_inspection_needed(const Inspector& inspector) const

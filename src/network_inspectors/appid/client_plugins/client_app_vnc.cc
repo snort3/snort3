@@ -40,11 +40,14 @@ enum VNCState
 };
 
 #define MAX_VNC_VERSION_SIZE    8
-struct ClientVNCData
+class ClientVNCData : public AppIdFlowData
 {
-    VNCState state;
-    unsigned pos;
-    uint8_t version[MAX_VNC_VERSION_SIZE];
+public:
+    ~ClientVNCData() override = default;
+
+    VNCState state = VNC_STATE_BANNER;
+    unsigned pos = 0;
+    uint8_t version[MAX_VNC_VERSION_SIZE] = {};
 };
 
 VncClientDetector::VncClientDetector(ClientDiscovery* cdm)
@@ -73,21 +76,17 @@ VncClientDetector::VncClientDetector(ClientDiscovery* cdm)
 
 int VncClientDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ClientVNCData* fd;
-    uint16_t offset;
-
     if (args.dir != APP_ID_FROM_INITIATOR)
         return APPID_INPROCESS;
 
-    fd = (ClientVNCData*)data_get(args.asd);
+    ClientVNCData* fd = (ClientVNCData*)data_get(args.asd);
     if (!fd)
     {
-        fd = (ClientVNCData*)snort_calloc(sizeof(ClientVNCData));
-        data_add(args.asd, fd, &snort_free);
-        fd->state = VNC_STATE_BANNER;
+        fd = new ClientVNCData;
+        data_add(args.asd, fd);
     }
 
-    offset = 0;
+    uint16_t offset = 0;
     while (offset < args.size)
     {
         switch (fd->state)

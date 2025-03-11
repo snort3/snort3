@@ -51,39 +51,38 @@ static const char TNS_BANNER[] = "\000\000";
 #define USER_STRING "user="
 #define MAX_USER_POS ((int)sizeof(USER_STRING) - 2)
 
-namespace
+enum TNSClntState
 {
-enum TNSState
-{
-    TNS_STATE_MESSAGE_LEN = 0,
-    TNS_STATE_MESSAGE_CHECKSUM,
-    TNS_STATE_MESSAGE,
-    TNS_STATE_MESSAGE_RES,
-    TNS_STATE_MESSAGE_HD_CHECKSUM,
-    TNS_STATE_MESSAGE_DATA,
-    TNS_STATE_MESSAGE_CONNECT,
-    TNS_STATE_MESSAGE_CONNECT_OFFSET_DC,
-    TNS_STATE_MESSAGE_CONNECT_OFFSET,
-    TNS_STATE_MESSAGE_CONNECT_PREDATA,
-    TNS_STATE_MESSAGE_CONNECT_DATA,
-    TNS_STATE_COLLECT_USER
+    CLNT_MSG_LEN = 0,
+    CLNT_MSG_CHECKSUM,
+    CLNT_MSG,
+    CLNT_MSG_RES,
+    CLNT_MSG_HD_CHECKSUM,
+    CLNT_MSG_DATA,
+    CLNT_MSG_CONNECT,
+    CLNT_MSG_CONNECT_OFFSET_DC,
+    CLNT_MSG_CONNECT_OFFSET,
+    CLNT_MSG_CONNECT_PREDATA,
+    CLNT_MSG_CONNECT_DATA,
+    CLNT_COLLECT_USER
 };
-}
 
-struct ClientTNSData
+class ClientTNSData : public AppIdFlowData
 {
-    TNSState state;
-    unsigned stringlen;
-    unsigned offsetlen;
-    unsigned pos;
-    unsigned message;
+public:
+    ~ClientTNSData() override = default;
+
+    const char* version = nullptr;
+    TNSClntState state = CLNT_MSG_LEN;
+    unsigned stringlen = 0;
+    unsigned offsetlen = 0;
+    unsigned pos = 0;
+    unsigned message = 0;
     union
     {
         uint16_t len;
         uint8_t raw_len[2];
-    } l;
-    const char* version;
-    uint8_t* data;
+    } l = {};
 };
 
 #pragma pack(1)
@@ -120,44 +119,40 @@ TnsClientDetector::TnsClientDetector(ClientDiscovery* cdm)
 }
 
 
-static int reset_flow_data(ClientTNSData* fd)
+static int reset_flow_data(ClientTNSData& fd)
 {
-    memset(fd, '\0', sizeof(ClientTNSData));
-    fd->state = TNS_STATE_MESSAGE_LEN;
+    fd = {};
     return APPID_EINVALID;
 }
 
 #define TNS_MAX_INFO_SIZE    63
 int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
 {
+    if (args.dir != APP_ID_FROM_INITIATOR)
+        return APPID_INPROCESS;
+
+    ClientTNSData* fd = (ClientTNSData*)data_get(args.asd);
+    if (!fd)
+    {
+        fd = new ClientTNSData;
+        data_add(args.asd, fd);
+    }
+
     char username[TNS_MAX_INFO_SIZE + 1];
-    ClientTNSData* fd;
-    uint16_t offset;
     int user_pos = 0;
     int user_size = 0;
     uint16_t user_start = 0;
     uint16_t user_end = 0;
 
-    if (args.dir != APP_ID_FROM_INITIATOR)
-        return APPID_INPROCESS;
-
-    fd = (ClientTNSData*)data_get(args.asd);
-    if (!fd)
-    {
-        fd = (ClientTNSData*)snort_calloc(sizeof(ClientTNSData));
-        data_add(args.asd, fd, &snort_free);
-        fd->state = TNS_STATE_MESSAGE_LEN;
-    }
-
-    offset = 0;
+    uint16_t offset = 0;
     while (offset < args.size)
     {
+        // For some reason, coverity cannot follow the state machine. It does state transitions that are not possible
+        // This makes the coverity overrun exceptions necessary
         switch (fd->state)
         {
-        case TNS_STATE_MESSAGE_LEN:
-            if (fd->pos >= 2)
-                    break;
-
+        case CLNT_MSG_LEN:
+            // coverity[overrun]
             fd->l.raw_len[fd->pos++] = args.data[offset];
             if (fd->pos >= offsetof(ClientTNSMsg, checksum))
             {
@@ -166,44 +161,43 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
                 {
                     if (offset == args.size - 1)
                         goto done;
-                    return reset_flow_data(fd);
+                    return reset_flow_data(*fd);
                 }
                 else if (fd->stringlen < 2)
-                    return reset_flow_data(fd);
+                    return reset_flow_data(*fd);
                 else if (fd->stringlen > args.size)
-                    return reset_flow_data(fd);
-                else
-                    fd->state = TNS_STATE_MESSAGE_CHECKSUM;
+                    return reset_flow_data(*fd);
+                fd->state = CLNT_MSG_CHECKSUM;
             }
             break;
 
-        case TNS_STATE_MESSAGE_CHECKSUM:
+        case CLNT_MSG_CHECKSUM:
             if (args.data[offset] != 0)
-                return reset_flow_data(fd);
+                return reset_flow_data(*fd);
             fd->pos++;
             if (fd->pos >= offsetof(ClientTNSMsg, msg))
-                fd->state = TNS_STATE_MESSAGE;
+                fd->state = CLNT_MSG;
             break;
 
-        case TNS_STATE_MESSAGE:
+        case CLNT_MSG:
             fd->message = args.data[offset];
             if (fd->message < TNS_TYPE_CONNECT || fd->message > TNS_TYPE_MAX)
-                return reset_flow_data(fd);
+                return reset_flow_data(*fd);
             fd->pos++;
-            fd->state = TNS_STATE_MESSAGE_RES;
+            fd->state = CLNT_MSG_RES;
             break;
-        case TNS_STATE_MESSAGE_RES:
-            fd->state = TNS_STATE_MESSAGE_HD_CHECKSUM;
+        case CLNT_MSG_RES:
+            fd->state = CLNT_MSG_HD_CHECKSUM;
             fd->pos++;
             break;
-        case TNS_STATE_MESSAGE_HD_CHECKSUM:
+        case CLNT_MSG_HD_CHECKSUM:
             fd->pos++;
             if (fd->pos >= offsetof(ClientTNSMsg, data))
             {
                 switch (fd->message)
                 {
                 case TNS_TYPE_CONNECT:
-                    fd->state = TNS_STATE_MESSAGE_CONNECT;
+                    fd->state = CLNT_MSG_CONNECT;
                     break;
                 case TNS_TYPE_ACK:
                 case TNS_TYPE_REFUSE:
@@ -218,78 +212,72 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
                     {
                         if (offset == (args.size - 1))
                             goto done;
-                        return reset_flow_data(fd);
+                        return reset_flow_data(*fd);
                     }
-                    fd->state = TNS_STATE_MESSAGE_DATA;
+                    fd->state = CLNT_MSG_DATA;
                     break;
                 case TNS_TYPE_ACCEPT:
                 case TNS_TYPE_REDIRECT:
                 default:
-                    return reset_flow_data(fd);
+                    return reset_flow_data(*fd);
                 }
             }
             break;
-        case TNS_STATE_MESSAGE_CONNECT:
-            if (fd->pos >= (CONNECT_VERSION_OFFSET + 2))
-                break;
+        case CLNT_MSG_CONNECT:
+            // coverity[overrun]
             fd->l.raw_len[fd->pos - CONNECT_VERSION_OFFSET] = args.data[offset];
             fd->pos++;
             if (fd->pos == (CONNECT_VERSION_OFFSET + 2))
             {
+                switch (ntohs(fd->l.len))
                 {
-                    switch (ntohs(fd->l.len))
-                    {
-                    case 0x136:
-                        fd->version = "8";
-                        break;
-                    case 0x137:
-                        fd->version = "9i R1";
-                        break;
-                    case 0x138:
-                        fd->version = "9i R2";
-                        break;
-                    case 0x139:
-                        fd->version = "10g R1/R2";
-                        break;
-                    case 0x13A:
-                        fd->version = "11g R1";
-                        break;
-                    default:
-                        break;
-                    }
+                case 0x136:
+                    fd->version = "8";
+                    break;
+                case 0x137:
+                    fd->version = "9i R1";
+                    break;
+                case 0x138:
+                    fd->version = "9i R2";
+                    break;
+                case 0x139:
+                    fd->version = "10g R1/R2";
+                    break;
+                case 0x13A:
+                    fd->version = "11g R1";
+                    break;
+                default:
+                    break;
                 }
                 fd->l.len = 0;
-                fd->state = TNS_STATE_MESSAGE_CONNECT_OFFSET_DC;
+                fd->state = CLNT_MSG_CONNECT_OFFSET_DC;
             }
             break;
-        case TNS_STATE_MESSAGE_CONNECT_OFFSET_DC:
+        case CLNT_MSG_CONNECT_OFFSET_DC:
             fd->pos++;
             if (fd->pos >= CONNECT_DATA_OFFSET)
-                fd->state = TNS_STATE_MESSAGE_CONNECT_OFFSET;
+                fd->state = CLNT_MSG_CONNECT_OFFSET;
             break;
-        case TNS_STATE_MESSAGE_CONNECT_OFFSET:
+        case CLNT_MSG_CONNECT_OFFSET:
             if (fd->pos >= CONNECT_DATA_OFFSET + 2)
-                break; 
+                break;
+            // coverity[overrun]
             fd->l.raw_len[fd->pos - CONNECT_DATA_OFFSET] = args.data[offset];
             fd->pos++;
             if (fd->pos == (CONNECT_DATA_OFFSET + 2))
             {
                 fd->offsetlen = ntohs(fd->l.len);
                 if (fd->offsetlen > args.size)
-                {
-                    return reset_flow_data(fd);
-                }
-                fd->state = TNS_STATE_MESSAGE_CONNECT_PREDATA;
+                    return reset_flow_data(*fd);
+                fd->state = CLNT_MSG_CONNECT_PREDATA;
             }
             break;
-        case TNS_STATE_MESSAGE_CONNECT_PREDATA:
+        case CLNT_MSG_CONNECT_PREDATA:
             fd->pos++;
             if (fd->pos >= fd->offsetlen)
-            {
-                fd->state = TNS_STATE_MESSAGE_CONNECT_DATA;
-            }
+                fd->state = CLNT_MSG_CONNECT_DATA;
             break;
-        case TNS_STATE_MESSAGE_CONNECT_DATA:
+        case CLNT_MSG_CONNECT_DATA:
             if (tolower(args.data[offset]) != USER_STRING[user_pos])
             {
                 user_pos = 0;
@@ -299,7 +287,7 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
             else if (++user_pos > MAX_USER_POS)
             {
                 user_start = offset+1;
-                fd->state = TNS_STATE_COLLECT_USER;
+                fd->state = CLNT_COLLECT_USER;
             }
 
             fd->pos++;
@@ -307,30 +295,28 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
             {
                 if (offset == (args.size - 1))
                     goto done;
-                return reset_flow_data(fd);
+                return reset_flow_data(*fd);
             }
             break;
-        case TNS_STATE_COLLECT_USER:
+        case CLNT_COLLECT_USER:
             if (user_end == 0 && args.data[offset] == ')')
-            {
                 user_end = offset;
-            }
 
-            fd->pos++;
-            if (fd->pos  >= fd->stringlen)
-            {
-                if (offset == (args.size - 1))
-                    goto done;
-                return reset_flow_data(fd);
-            }
-            break;
-        case TNS_STATE_MESSAGE_DATA:
             fd->pos++;
             if (fd->pos >= fd->stringlen)
             {
                 if (offset == (args.size - 1))
                     goto done;
-                return reset_flow_data(fd);
+                return reset_flow_data(*fd);
+            }
+            break;
+        case CLNT_MSG_DATA:
+            fd->pos++;
+            if (fd->pos >= fd->stringlen)
+            {
+                if (offset == (args.size - 1))
+                    goto done;
+                return reset_flow_data(*fd);
             }
             break;
         default:

@@ -141,12 +141,6 @@ static void handle_success(SshEventFlowData& data, const SshEvent& event,
     APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "SSH event handler service detected\n");
 }
 
-
-static void free_ssh_flow_data(void* data)
-{
-    delete (SshEventFlowData* )data;
-}
-
 unsigned int SshEventHandler::id;
 
 void SshEventHandler::handle(DataEvent& event, Flow* flow)
@@ -181,7 +175,7 @@ void SshEventHandler::handle(DataEvent& event, Flow* flow)
     if (!data)
     {
         data = new SshEventFlowData;
-        asd->add_flow_data(data, id, &free_ssh_flow_data);
+        asd->add_flow_data(data, id);
     }
 
     SshEvent& ssh_event = (SshEvent&)event;
