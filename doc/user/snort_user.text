@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.7.0.0 2025-02-04 17:22:15 EST TST
+Revision 3.7.1.0 2025-03-12 00:16:23 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -5836,6 +5836,7 @@ The module’s configuration consists of two parts:
       + formatting - log record format
       + connector - Connector object through which logs will be sent.
         See Connectors page for more details.
+      + time - timestamp format
   * protocol-targeted parameters bind the targeted service and events
     with filters and a set of fields to log
 
@@ -5857,14 +5858,26 @@ extractor =
 
     protocols =
     {
-        { service = 'http', tenant_id = 1, on_events = 'eot', fields = 'ts, uri, host, method' },
-        { service = 'ftp', tenant_id = 1, on_events = 'request', fields = 'ts, command, arg' },
-        { service = 'http', tenant_id = 2, on_events = 'eot', fields = 'ts, uri' },
-        { service = 'conn', tenant_id = 1, on_events = 'eof', fields = 'ts, uid, service' }
+        { service = 'http', on_events = 'eot', fields = 'ts, uri, host, method' },
+        { service = 'ftp', on_events = 'request', fields = 'ts, command, arg' },
+        { service = 'http', on_events = 'eot', fields = 'ts, uri' },
+        { service = 'conn', on_events = 'eof', fields = 'ts, uid, service' },
+        { service = 'dns', on_events = 'response', fields = 'ts, uid, query, answers' }
     }
 }
 
 5.18.2. Supported Parameters
+
+Timestamp formats:
+
+  * snort prints timestamp as in IPS events (see snort command line
+    options -U and -y) (string ts field)
+  * snort_yy same as above, but using YYYY-MM-DD format (string ts
+    field)
+  * unix prints UTC time in seconds (integer part) and microseconds
+    (fractional part) (floating ts field)
+  * unix_s prints UTC time in seconds (integer ts field)
+  * unix_us prints UTC time in microseconds (integer ts field)
 
 Services and their events:
 
@@ -5877,6 +5890,9 @@ Services and their events:
       + response
       + eot (a session defined by the following commands: APPE, DELE,
         RETR, STOR, STOU, ACCT, PORT, PASV, EPRT, EPSV)
+  * DNS
+
+      + response
   * connection (conn)
 
       + eof (end of flow)
@@ -5891,6 +5907,7 @@ Common fields available for every service:
   * id.resp_h - server IP address
   * id.resp_p - server TCP port
   * pkt_num - packet number
+  * tenant_id - tenant identifier
 
 Fields supported for HTTP:
 
@@ -5905,6 +5922,20 @@ Fields supported for HTTP:
   * status_msg - status message returned by server
   * trans_depth - number of request-response pairs seen in the
     session
+  * request_body_len - length of the body, decompressed and
+    normalized, of the HTTP request
+  * response_body_len - length of the body, decompressed and
+    normalized, of the HTTP response
+  * info_code - last informational status code returned by the server
+  * info_msg - last informational reason phrase returned by the
+    server
+  * proxied - list with the headers associated with proxied requests
+  * orig_filenames - list with the names of the files sent by client
+  * resp_filenames - list with the names of the files sent by server
+  * orig_mime_types - list with the content types of the files sent
+    by client
+  * resp_mime_types - list with the content types of the files sent
+    by server
 
 Fields supported for FTP:
 
@@ -5918,6 +5949,35 @@ Fields supported for FTP:
   * data_channel.orig_h - IP address of data channel originator
   * data_channel.resp_h - IP address of data channel receiving point
   * data_channel.resp_p - TCP port of data channel receiving point
+
+Fields supported for DNS:
+
+  * proto - transport protocol for DNS connection
+  * trans_id - A 16 bit identifier assigned by the program that
+    generates the query
+  * query - The domain name that is the subject of this DNS
+    transaction
+  * qclass - A 16 bit integer that specifies the class of the query
+  * qclass_name - A descriptive name for the class of the query
+  * qtype - A 16 bit integer that specifies the type of the query
+  * qtype_name - A descriptive name for the type of the query
+  * rcode - A 16 bit integer that specifies the response code to the
+    query
+  * rcode_name - A descriptive name for the response code to the
+    query
+  * AA - A boolean, true when this is an Authoritative Answer to the
+    query
+  * TC - A boolean, true when the message was truncated due to UDP
+    PDU size limits
+  * RD - A boolean, true when the client asks the server to pursue
+    the query recursively
+  * RA - A boolean, denotes the availability of recursive query
+    support at the server
+  * Z - A 3 bit integer set to 0 unless DNSSEC is used (see RFC 2535)
+  * answers - The list of answers to the query, only A and AAAA types
+    are currently supported
+  * rejected - A boolean, true when the server responds with an error
+    code and no query
 
 Fields supported for connection:
 

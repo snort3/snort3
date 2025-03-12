@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.7.0.0 2025-02-04 17:21:58 EST TST
+Revision 3.7.1.0 2025-03-12 00:16:10 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1344,8 +1344,8 @@ Configuration:
     (seconds, 0 to disable) { 0:60 }
   * int process.watchdog_min_thread_count = 1: minimum unresponsive
     threads for watchdog to trigger { 1:65535 }
-  * string process.numa_memory_policy = "preferred": set 
-    default|preferred|bind|local memory policy for NUMA
+  * string process.numa_memory_policy = preferred: set default|
+    preferred|bind|local memory policy for NUMA
 
 
 2.27. profiler
@@ -1600,8 +1600,12 @@ Configuration:
     seen in TCPDump
   * string snort.--c2x: output hex for given char (see also --x2c)
   * string snort.--control-socket: <file> to create unix socket
-  * implied snort.--create-pidfile: create PID file, even when not in
-    Daemon mode
+  * implied snort.--create-instance-file: create instance mappings
+    file for this Snort process at startup
+  * string snort.--create-pidfile: create PID file, even when not in
+    Daemon mode { (optional) }
+  * int snort.--max-procs: number of simultaneous Snort processes {
+    1: }
   * string snort.--daq: <type> select packet acquisition module
     (default is pcap)
   * int snort.--daq-batch-size: <size> set the DAQ receive batch
@@ -3593,10 +3597,12 @@ Configuration:
   * enum extractor.formatting = csv: output format for extractor { 
     csv | json }
   * string extractor.connector: output destination for extractor
+  * enum extractor.time = unix: output format for timestamp values { 
+    snort | snort_yy | unix | unix_s | unix_us }
   * enum extractor.default_filter = pick: default action for protocol
     with no filter provided { pick | skip }
   * enum extractor.protocols[].service: service to extract from { 
-    http | ftp | conn }
+    http | ftp | conn | dns }
   * int extractor.protocols[].tenant_id = 0: tenant_id of target
     tenant { 0:max32 }
   * string extractor.protocols[].on_events: specify events to log
@@ -5679,7 +5685,7 @@ Instance Type: global
 
 Configuration:
 
-  * string snort_ml_engine.http_param_model: path to the model file
+  * string snort_ml_engine.http_param_model: path to model file(s)
 
 
 5.47. so_proxy
@@ -9278,7 +9284,11 @@ libraries see the Getting Started section of the manual.
     TCPDump
   * --c2x output hex for given char (see also --x2c)
   * --control-socket <file> to create unix socket
+  * --create-instance-file create instance mappings file for this
+    Snort process at startup
   * --create-pidfile create PID file, even when not in Daemon mode
+    (optional)
+  * --max-procs number of simultaneous Snort processes (1:)
   * --daq <type> select packet acquisition module (default is pcap)
   * --daq-batch-size <size> set the DAQ receive batch size; default
     is 64 (1:)
@@ -9877,9 +9887,11 @@ libraries see the Getting Started section of the manual.
   * string extractor.protocols[].fields: specify fields to log
   * string extractor.protocols[].on_events: specify events to log
   * enum extractor.protocols[].service: service to extract from { 
-    http | ftp | conn }
+    http | ftp | conn | dns }
   * int extractor.protocols[].tenant_id = 0: tenant_id of target
     tenant { 0:max32 }
+  * enum extractor.time = unix: output format for timestamp values { 
+    snort | snort_yy | unix | unix_s | unix_us }
   * string file_connector[].connector: connector name
   * enum file_connector[].direction: usage { receive | transmit | 
     duplex }
@@ -10748,6 +10760,8 @@ libraries see the Getting Started section of the manual.
   * string process.chroot: set chroot directory (same as -t)
   * bool process.daemon = false: fork as a daemon (same as -D)
   * bool process.dirty_pig = false: shutdown without internal cleanup
+  * string process.numa_memory_policy = preferred: set default|
+    preferred|bind|local memory policy for NUMA
   * string process.set_gid: set group ID (same as -g)
   * string process.set_uid: set user ID (same as -u)
   * string process.threads[].cpuset: pin the associated thread to
@@ -10765,8 +10779,6 @@ libraries see the Getting Started section of the manual.
     threads for watchdog to trigger { 1:65535 }
   * int process.watchdog_timer = 0: watchdog timer for packet threads
     (seconds, 0 to disable) { 0:60 }
-  * string process.numa_memory_policy = "preferred": set 
-    default|preferred|bind|local memory policy for NUMA
   * int profiler.memory.count = 0: limit results to count items per
     level (0 = no limit) { 0:max32 }
   * int profiler.memory.dump_file_size = 1073741824: files will be
@@ -11090,8 +11102,10 @@ libraries see the Getting Started section of the manual.
   * string snort.--control-socket: <file> to create unix socket
   * implied snort.-C: print out payloads with character data only (no
     hex)
-  * implied snort.--create-pidfile: create PID file, even when not in
-    Daemon mode
+  * implied snort.--create-instance-file: create instance mappings
+    file for this Snort process at startup
+  * string snort.--create-pidfile: create PID file, even when not in
+    Daemon mode { (optional) }
   * int snort.--daq-batch-size: <size> set the DAQ receive batch
     size; default is 64 { 1: }
   * string snort.--daq-dir: <dir> tell snort where to find desired
@@ -11193,13 +11207,15 @@ libraries see the Getting Started section of the manual.
   * implied snort.--markup: output help in asciidoc compatible format
   * int snort.--max-packet-threads: <count> configure maximum number
     of packet threads (same as -z) { 0:max32 }
+  * int snort.--max-procs: number of simultaneous Snort processes {
+    1: }
   * implied snort.--mem-check: like -T but also compile search
     engines
   * string snort.--metadata-filter: <filter> load only rules
     containing filter string in metadata if set
   * int snort_ml.client_body_depth = 0: number of input HTTP client
     body bytes to scan (-1 unlimited) { -1:max31 }
-  * string snort_ml_engine.http_param_model: path to the model file
+  * string snort_ml_engine.http_param_model: path to model file(s)
   * real snort_ml.http_param_threshold = 0.95: alert threshold for
     http_param_model { 0:1 }
   * implied snort.-M: log messages to syslog (not alerts)

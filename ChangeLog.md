@@ -1,3 +1,44 @@
+2025-03-11: 3.7.1.0
+
+* appid: added publishing of domain fronting event
+* appid: adding general appid support and encrypted dns
+* appid: adding log while creating third party context to monitor hanging
+* appid: change get_appid_session_api to use the stash
+* appid: convert appid flow data to use objects
+* appid: fixes for coverity and cppcheck issues
+* appid: implemented domain fronting support for shadow traffic
+* appid: implemented support for shadow traffic evasive vpn & multihop proxy
+* build: add version check for numactl
+* copyright: update year to 2025
+* detection: fix leave_group call which should be against current packet only
+* extractor: add configuration option for time formatting
+* extractor: add escaping for special characters
+* extractor: add support for file name and type for mime
+* extractor: add tenant id as common field
+* extractor: add time formatting in loggers
+* extractor: dns support
+* extractor: fix spelling
+* extractor: print null for fields that require missing packet context
+* extractor: remove obsolete includes
+* file_api: add log message for reset ctx
+* file_api: file event generated for asymmetric flow
+* file_api, http_inspect: add info about partial download to FileInfo
+* file_api: making sha256 point to null to avoid dangling cases
+* file_api: setting current file data inside mutex with file data received before accessing it
+* ftp_telnet: flow data creation when port command is issued for active ftp
+* helpers: add missing include for unit tests
+* ips: fix tsan issue with logging rule tree construction
+* main: allow toggling generation of instance_map output
+* main: snort --create-pidfile cmd line parameter update and support for --max-peers command line parameter implemented
+* network_inspectors: rename kaizen to snort_ml
+* pub_sub: add ips rule event for extractor
+* pub_sub: changes for domain faking for shadowtraffic_aggregator
+* snort_ml: build models into a BinaryClassifierSet
+* stream_tcp: changed asymmetric flows counter increment conditions
+* thread_config: add option for setting NUMA memory policy
+* thread_config: fix numa build issue
+* utils: add is_directory_path
+
 2025-02-04: 3.7.0.0
 
 * extractor: add default filter
