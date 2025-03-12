@@ -24,10 +24,12 @@
 
 #include "capture_module.h"
 
+#include <filesystem>
 #include <lua.hpp>
 
 #include "control/control.h"
 #include "main/analyzer_command.h"
+#include "log/messages.h"
 #include "profiler/profiler.h"
 #include "utils/util.h"
 
@@ -38,6 +40,7 @@ using namespace std;
 
 static int enable(lua_State*);
 static int disable(lua_State*);
+bool is_path_valid(const std::string& path);
 
 static const Parameter s_capture[] =
 {
@@ -55,6 +58,12 @@ static const Parameter s_capture[] =
 
     { "check_inner_pkt", Parameter::PT_BOOL, nullptr, "true",
       "apply filter on inner packet headers" },
+    
+    { "capture_path", Parameter::PT_STRING, nullptr, nullptr,
+      "directory path to capture pcaps" },
+    
+    { "max_packet_count", Parameter::PT_INT, "0:max32", "1000000",
+      "cap the number of packets per thread" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -72,6 +81,12 @@ static const Parameter capture_params[] =
 
     { "check_inner_pkt", Parameter::PT_BOOL, nullptr, "true",
       "apply filter on inner packet headers" },
+
+    { "capture_path", Parameter::PT_STRING, nullptr, nullptr,
+      "directory path to capture pcaps" },
+    
+    { "max_packet_count", Parameter::PT_INT, "0:max32", "1000000",
+      "cap the number of packets per thread" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -99,7 +114,8 @@ THREAD_LOCAL ProfileStats cap_prof_stats;
 class PacketCaptureDebug : public AnalyzerCommand
 {
 public:
-    PacketCaptureDebug(const char* f, const int16_t g, const char* t, const bool ci);
+    PacketCaptureDebug(const char* f, const int16_t g, const char* t, const bool ci, 
+                       const char* p, const unsigned max);
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "PACKET_CAPTURE_DEBUG"; }
 private:
@@ -108,6 +124,8 @@ private:
     int16_t group = -1;
     std::string tenants;
     bool check_inner_pkt = true;
+    std::string capture_path;
+    unsigned max_packet_count = 0;
 };
 
 // -----------------------------------------------------------------------------
@@ -115,14 +133,38 @@ private:
 // -----------------------------------------------------------------------------
 static int enable(lua_State* L)
 {
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    auto log_response = [ctrlcon](const char* response)
+    {
+      if (ctrlcon)
+        ctrlcon->respond("%s", response);
+      else
+        LogMessage("%s", response);
+    };
+    
+    std::string path = luaL_optstring(L, 5, "");
+    if ( !path.empty() && !is_path_valid(path) )
+    {
+      log_response("== Capture path invalid\n"); 
+      return 0;
+    }
+
+    auto max_limit = luaL_optint(L, 6, 0);
+    if ( max_limit < 0)
+    {
+      log_response("== Max packet count invalid\n"); 
+      return 0;
+    }
     main_broadcast_command(new PacketCaptureDebug(luaL_optstring(L, 1, ""),
-        luaL_optint(L, 2, 0), luaL_optstring(L, 3, ""), luaL_opt(L, lua_toboolean, 4, true)), ControlConn::query_from_lua(L));
+        luaL_optint(L, 2, 0), luaL_optstring(L, 3, ""), luaL_opt(L, lua_toboolean, 4, true), 
+        path.c_str(), max_limit), ctrlcon);
     return 0;
 }
 
 static int disable(lua_State* L)
 {
-    main_broadcast_command(new PacketCaptureDebug(nullptr, -1, nullptr, true), ControlConn::query_from_lua(L));
+    main_broadcast_command(new PacketCaptureDebug(nullptr, -1, nullptr, true, nullptr, 0), 
+        ControlConn::query_from_lua(L));
     return 0;
 }
 
@@ -130,7 +172,8 @@ static int disable(lua_State* L)
 // non-static functions
 // -----------------------------------------------------------------------------
 
-PacketCaptureDebug::PacketCaptureDebug(const char* f, const int16_t g, const char* t, const bool ci)
+PacketCaptureDebug::PacketCaptureDebug(const char* f, const int16_t g, const char* t, const bool ci, \
+                                       const char* p, const unsigned max)
 {
     if (f)
     {
@@ -139,13 +182,15 @@ PacketCaptureDebug::PacketCaptureDebug(const char* f, const int16_t g, const cha
         enable = true;
         tenants = t == nullptr ? "" : t;
         check_inner_pkt = ci;
+        capture_path = p;
+        max_packet_count = max;
     }
 }
 
 bool PacketCaptureDebug::execute(Analyzer&, void**)
 {
     if (enable)
-        packet_capture_enable(filter, group, tenants, check_inner_pkt);
+        packet_capture_enable(filter, group, tenants, check_inner_pkt, capture_path, max_packet_count);
     else
         packet_capture_disable();
 
@@ -176,6 +221,18 @@ bool CaptureModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("check_inner_pkt") )
         config.check_inner_pkt = v.get_bool();
+    
+    else if ( v.is("capture_path") )
+    {
+        if ( !is_path_valid(v.get_string()) )
+        {
+          return false;
+        }
+        config.capture_path = v.get_string();
+    }
+    
+    else if ( v.is("max_packet_count") )
+        config.max_packet_count = v.get_uint32();
 
     return true;
 }
@@ -195,3 +252,12 @@ const PegInfo* CaptureModule::get_pegs() const
 PegCount* CaptureModule::get_counts() const
 { return (PegCount*)&cap_count_stats; }
 
+bool is_path_valid(const std::string& path)
+{
+  if ( !std::filesystem::exists(path) )
+  {
+    WarningMessage("Cannot create pcap at %s; directory does not exist\n", path.c_str());
+    return false;
+  }
+  return true;
+}

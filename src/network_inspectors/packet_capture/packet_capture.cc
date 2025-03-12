@@ -28,6 +28,7 @@
 
 #include "framework/inspector.h"
 #include "log/messages.h"
+#include "main/thread_config.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/packet.h"
 #include "utils/util.h"
@@ -53,6 +54,7 @@ static CaptureConfig config;
 static THREAD_LOCAL pcap_t* pcap = nullptr;
 static THREAD_LOCAL pcap_dumper_t* dumper = nullptr;
 static THREAD_LOCAL struct bpf_program bpf;
+static THREAD_LOCAL unsigned packet_count = 0;
 
 // -----------------------------------------------------------------------------
 // static functions
@@ -118,7 +120,17 @@ static bool bpf_compile_and_validate()
 static bool open_pcap_dumper()
 {
     string fname;
-    get_instance_file(fname, FILE_NAME);
+    if ( config.capture_path.empty() ) 
+        get_instance_file(fname, FILE_NAME);
+    else
+    {
+        auto file_name = std::string(FILE_NAME);
+        if ( ThreadConfig::get_instance_max() > 1 )
+            file_name.insert(file_name.find(".pcap"), 
+                            ("_" + std::to_string(get_instance_id()) + \
+                             "_" + std::to_string(get_relative_instance_number())));
+        fname = config.capture_path + "/" + file_name;
+    }
 
     pcap = pcap_open_dead(get_dlt(), SNAP_LEN);
     dumper = pcap ? pcap_dump_open(pcap, fname.c_str()) : nullptr;
@@ -132,7 +144,8 @@ static bool open_pcap_dumper()
 }
 
 // for unit test
-static void _packet_capture_enable(const string& f, const int16_t g = -1, const string& t = "", const bool ci = true)
+static void _packet_capture_enable(const string& f, const int16_t g = -1, const string& t = "", 
+                                   const bool ci = true, const string& path = "", const unsigned max = 0)
 {
     if ( !config.enabled )
     {
@@ -141,6 +154,8 @@ static void _packet_capture_enable(const string& f, const int16_t g = -1, const 
         config.group = g;
         config.check_inner_pkt = ci;
         str_to_int_vector(t, ',', config.tenants);
+        config.capture_path = path;
+        config.max_packet_count = max;
     }
 }
 
@@ -151,6 +166,8 @@ static void _packet_capture_disable()
     config.group = -1;
     config.tenants.clear();
     config.check_inner_pkt = true;
+    config.capture_path.clear();
+    config.max_packet_count = 0;
     LogMessage("Packet capture disabled\n");
 }
 
@@ -158,10 +175,11 @@ static void _packet_capture_disable()
 // non-static functions
 // -----------------------------------------------------------------------------
 
-void packet_capture_enable(const string& f, const int16_t g, const string& t, const bool ci)
+void packet_capture_enable(const string& f, const int16_t g, const string& t, const bool ci, 
+                           const string& p, const unsigned max)
 {
 
-    _packet_capture_enable(f, g, t, ci);
+    _packet_capture_enable(f, g, t, ci, p, max);
 
     if ( !capture_initialized() )
     {
@@ -234,6 +252,8 @@ void PacketCapture::show(const SnortConfig*) const
     {
         ConfigLogger::log_value("filter", config.filter.c_str());
         ConfigLogger::log_value("tenants", int_vector_to_str(config.tenants).c_str());
+        ConfigLogger::log_value("capture_path", config.capture_path.c_str());
+        ConfigLogger::log_value("max_packet_count", config.max_packet_count);
     }
 }
 
@@ -302,6 +322,13 @@ void PacketCapture::eval(Packet* p)
 
 void PacketCapture::write_packet(Packet* p)
 {
+    if ( config.max_packet_count )
+    {
+        if ( packet_count >= config.max_packet_count )
+            return;
+
+        packet_count++;
+    }
     struct pcap_pkthdr pcaphdr;
     pcaphdr.ts = p->pkth->ts;
     pcaphdr.caplen = p->pktlen;

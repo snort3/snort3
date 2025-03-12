@@ -33,6 +33,8 @@ struct CaptureConfig
     std::string filter;
     std::vector<uint32_t> tenants;
     bool check_inner_pkt;
+    std::string capture_path;
+    unsigned max_packet_count = 0;
 };
 
 struct CaptureStats
