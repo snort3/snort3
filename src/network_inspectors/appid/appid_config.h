@@ -325,7 +325,7 @@ private:
 
     uint32_t version;
     static uint32_t next_version;
-    bool appid_shadow_traffic_status = true;
+    bool appid_shadow_traffic_status = false;
 };
 
 class OdpThreadContext
