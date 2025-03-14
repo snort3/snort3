@@ -306,12 +306,20 @@ struct ServiceSSLV3ExtensionServerName
 
 namespace snort
 {
+
+enum class ParseCHResult
+{
+    SUCCESS = 0,
+    FRAGMENTED_PACKET = 1,
+    FAILED = 2
+};
+
 SO_PUBLIC uint32_t SSL_decode(
     const uint8_t* pkt, int size, uint32_t pktflags, uint32_t prevflags,
     uint8_t* alert_flags, uint16_t* partial_rec_len, int hblen, uint32_t* info_flags = nullptr,
     SSLV3ClientHelloData* data = nullptr, SSLV3ServerCertData* server_cert_data = nullptr);
 
-    void parse_client_hello_data(const uint8_t* pkt, uint16_t size, SSLV3ClientHelloData*);
+    ParseCHResult parse_client_hello_data(const uint8_t* pkt, uint16_t size, SSLV3ClientHelloData*);
     bool parse_server_certificates(SSLV3ServerCertData* server_cert_data);
 
 SO_PUBLIC bool IsTlsClientHello(const uint8_t* ptr, const uint8_t* end);

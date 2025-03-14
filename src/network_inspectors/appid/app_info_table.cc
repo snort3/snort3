@@ -616,6 +616,14 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                     odp_ctxt.brute_force_inprocess_threshold = brute_force_inprocess_threshold;
                 }
             }
+            else if (!(strcasecmp(conf_key, "inspect_ooo_flows")))
+            {
+                if (!(strcasecmp(conf_val, "enabled")))
+                {
+                    odp_ctxt.inspect_ooo_flows = true;
+                    continue;
+                }
+            }
             /* App Priority bit set*/
             else if (!(strcasecmp(conf_key, "app_priority")))
             {

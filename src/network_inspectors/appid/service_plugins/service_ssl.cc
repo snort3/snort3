@@ -68,6 +68,7 @@ public:
     int certs_curr_len = 0;   // Current amount of collected certificate data.
     uint8_t* cached_data = nullptr;
     uint16_t cached_len = 0;
+    bool cached_client_data = false;
 };
 
 #pragma pack(1)
@@ -194,25 +195,25 @@ ServiceSSLData::~ServiceSSLData()
     ssl_cache_free(cached_data, cached_len);
 }
 
-static void parse_client_initiation(const uint8_t* data, uint16_t size, ServiceSSLData* ss)
+static ParseCHResult parse_client_initiation(const uint8_t* data, uint16_t size, ServiceSSLData* ss)
 {
     const ServiceSSLV3Hdr* hdr3;
     uint16_t ver;
 
     /* Sanity check header stuff. */
     if (size < sizeof(ServiceSSLV3Hdr))
-        return;
+        return ParseCHResult::FAILED;
     hdr3 = (const ServiceSSLV3Hdr*)data;
     ver = ntohs(hdr3->version);
     if (hdr3->type != SSL_HANDSHAKE || (ver != 0x0300 && ver != 0x0301 && ver != 0x0302 &&
         ver != 0x0303))
     {
-        return;
+        return ParseCHResult::FAILED;
     }
     data += sizeof(ServiceSSLV3Hdr);
     size -= sizeof(ServiceSSLV3Hdr);
 
-    parse_client_hello_data(data, size, &ss->client_hello);
+    return parse_client_hello_data(data, size, &ss->client_hello);
 }
 
 static void save_ssl_cache(ServiceSSLData* ss, uint16_t size, const uint8_t* data)
@@ -247,14 +248,52 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
     uint16_t size = args.size;
     uint8_t* reallocated_data = nullptr;
 
-    if (ss->cached_len and ss->cached_data and (args.dir == APP_ID_FROM_RESPONDER))
+    if (!size)
+        goto inprocess;
+
+    ss = (ServiceSSLData*)data_get(args.asd);
+    if (!ss)
     {
-        reallocated_data = (uint8_t*)snort_calloc(ss->cached_len + size, sizeof(uint8_t));
-        memcpy(reallocated_data, ss->cached_data, ss->cached_len);
-        memcpy(reallocated_data + ss->cached_len, args.data, args.size);
-        size = ss->cached_len + args.size;
-        ssl_cache_free(ss->cached_data, ss->cached_len);
-        data = reallocated_data;
+        ss = (ServiceSSLData*)snort_calloc(sizeof(ServiceSSLData));
+        data_add(args.asd, ss);
+        ss->state = SSL_STATE_INITIATE;
+        ss->cached_data = nullptr;
+        ss->cached_len = 0;
+    }
+
+    if ( args.asd.get_session_flags(APPID_SESSION_OOO)
+         and ss->state == SSL_STATE_INITIATE
+         and args.dir == APP_ID_FROM_INITIATOR
+         and !(args.asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG))
+    {
+        if (ss->cached_data)
+        {
+            reallocated_data = (uint8_t*)snort_calloc(ss->cached_len + size, sizeof(uint8_t));
+            memcpy(reallocated_data, args.data, args.size);
+            memcpy(reallocated_data + args.size, ss->cached_data, ss->cached_len);
+            size = ss->cached_len + args.size;
+            ssl_cache_free(ss->cached_data, ss->cached_len);
+            data = reallocated_data;
+        }
+        else
+        {
+            save_ssl_cache(ss, size, data);
+            ss->cached_client_data = true;
+            goto inprocess;
+        }
+    }
+
+    if (ss->cached_len and ss->cached_data)
+    {
+        if ( (ss->cached_client_data and (args.dir == APP_ID_FROM_INITIATOR)) or (!ss->cached_client_data and (args.dir == APP_ID_FROM_RESPONDER)) )
+        {
+            reallocated_data = (uint8_t*)snort_calloc(ss->cached_len + size, sizeof(uint8_t));
+            memcpy(reallocated_data, ss->cached_data, ss->cached_len);
+            memcpy(reallocated_data + ss->cached_len, args.data, args.size);
+            size = ss->cached_len + args.size;
+            ssl_cache_free(ss->cached_data, ss->cached_len);
+            data = reallocated_data;
+        }
     }
     /* Start off with a Client Hello from client to server. */
     if (ss->state == SSL_STATE_INITIATE)
@@ -264,8 +303,18 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (!(args.asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG) and
             args.dir == APP_ID_FROM_INITIATOR)
         {
-            parse_client_initiation(data, size, ss);
-            goto inprocess;
+            auto parse_status = parse_client_initiation(data, size, ss);
+            if (parse_status == ParseCHResult::FRAGMENTED_PACKET)
+            {
+                save_ssl_cache(ss, size, data);
+                ss->cached_client_data = true;
+                ss->state = SSL_STATE_INITIATE;
+                goto inprocess;
+            }
+            else if (parse_status == ParseCHResult::FAILED)
+            {
+                goto inprocess;
+            }
         }
     }
 
@@ -343,6 +392,7 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
                     if (size < sizeof(ServiceSSLV3Hdr))
                     {
                         save_ssl_cache(ss, size, data);
+                        ss->cached_client_data = false;
                         goto inprocess;
                     }
 
@@ -368,6 +418,7 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
                 if (size < offsetof(ServiceSSLV3Record, version))
                 {
                     save_ssl_cache(ss, size, data);
+                    ss->cached_client_data = false;
                     goto inprocess;
                 }
 
@@ -498,12 +549,6 @@ fail:
     return APPID_NOMATCH;
 
 success:
-    if (reallocated_data)
-    {
-        snort_free(reallocated_data);
-        reallocated_data = nullptr;
-    }
-
     if (ss->server_cert.certs_data && ss->server_cert.certs_len)
     {
         if (!(args.asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG) and
@@ -511,6 +556,12 @@ success:
         {
             goto fail;
         }
+    }
+
+    if (reallocated_data)
+    {
+        snort_free(reallocated_data);
+        reallocated_data = nullptr;
     }
 
     args.asd.set_session_flags(APPID_SESSION_SSL_SESSION);
@@ -613,3 +664,4 @@ bool is_service_over_ssl(AppId appId)
 
     return false;
 }
+

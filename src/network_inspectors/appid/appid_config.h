@@ -146,6 +146,7 @@ public:
     bool recheck_for_portservice_appid = false;
     bool eve_http_client = true;
     bool appid_cpu_profiler = true;
+    bool inspect_ooo_flows = false;
     uint8_t brute_force_inprocess_threshold = DEFAULT_BRUTE_FORCE_INPROCESS_STATE_THRESHOLD;
     uint16_t max_packet_before_service_fail = DEFAULT_MAX_PKTS_BEFORE_SERVICE_FAIL;
     uint16_t max_packet_service_fail_ignore_bytes = DEFAULT_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES;
@@ -160,6 +161,7 @@ public:
     uint32_t host_port_app_cache_lookup_range = 100000;
     uint64_t max_bytes_before_service_fail = DEFAULT_MAX_BYTES_BEFORE_SERVICE_FAIL;
     FirstPktAppIdDiscovered first_pkt_appid_prefix = NO_APPID_FOUND;
+    
 
     OdpContext(const AppIdConfig&, snort::SnortConfig*);
     void initialize(AppIdInspector& inspector);

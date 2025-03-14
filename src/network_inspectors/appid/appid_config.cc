@@ -226,6 +226,7 @@ void OdpContext::dump_appid_config()
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: appid_cpu_profiler                   %s\n", (appid_cpu_profiler ? "True" : "False"));
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: brute_force_inprocess_threshold      %" PRId8" \n", brute_force_inprocess_threshold);
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: failed_state_expiration_secs         %" PRId32" \n", failed_state_expiration_secs);
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: inspect_ooo_flows                    %s\n", inspect_ooo_flows ? "True" : "False");
 }
 
 bool OdpContext::is_appid_cpu_profiler_running()

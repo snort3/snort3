@@ -346,8 +346,8 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
 
             // Shut off service/client discoveries, since they skip not-ok data packets and
             // may keep failing on subsequent data packets causing performance degradation
-            if (!asd->get_session_flags(APPID_SESSION_MID) or
-                (p->ptrs.sp != 21 and p->ptrs.dp != 21)) // exception for ftp-control
+            if ((!asd->get_session_flags(APPID_SESSION_MID) or
+                (p->ptrs.sp != 21 and p->ptrs.dp != 21)) and !odp_ctxt.inspect_ooo_flows) // exception for ftp-control
             {
                 asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
                 if (asd->get_payload_id() == APP_ID_NONE and
@@ -772,7 +772,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         }
     }
     // FIXIT-M - snort 2.x has added a check for midstream pickup to this, do we need that?
-    else if (protocol != IpProtocol::TCP or (p->packet_flags & PKT_STREAM_ORDER_OK))
+    else if (protocol != IpProtocol::TCP or ((p->packet_flags & PKT_STREAM_ORDER_OK) || asd.get_session_flags(APPID_SESSION_OOO)))
     {
         if (asd.service_disco_state != APPID_DISCO_STATE_FINISHED)
             is_discovery_done =

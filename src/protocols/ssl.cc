@@ -612,61 +612,61 @@ bool IsSSL(const uint8_t* ptr, int len, int pkt_flags)
     return false;
 }
 
-void parse_client_hello_data(const uint8_t* pkt, uint16_t size, SSLV3ClientHelloData* client_hello_data)
+ParseCHResult parse_client_hello_data(const uint8_t* pkt, uint16_t size, SSLV3ClientHelloData* client_hello_data)
 {
     if (client_hello_data == nullptr)
-        return;
+        return ParseCHResult::FAILED;
 
     if (size < sizeof(ServiceSSLV3Record))
-        return;
+        return ParseCHResult::FAILED;
     const ServiceSSLV3Record* rec = (const ServiceSSLV3Record*)pkt;
     uint16_t ver = ntohs(rec->version);
     if (rec->type != SSLV3RecordType::CLIENT_HELLO || (ver != 0x0300 && ver != 0x0301 && ver != 0x0302 &&
         ver != 0x0303) || rec->length_msb)
     {
-        return;
+        return ParseCHResult::FAILED;
     }
     unsigned length = ntohs(rec->length) + offsetof(ServiceSSLV3Record, version);
     if (size < length)
-        return;
+        return ParseCHResult::FRAGMENTED_PACKET;
     pkt += sizeof(ServiceSSLV3Record);
     size -= sizeof(ServiceSSLV3Record);
 
     /* Session ID (1-byte length). */
     if (size < 1)
-        return;
+        return ParseCHResult::FAILED;
     length = *((const uint8_t*)pkt);
     pkt += length + 1;
     if (size < (length + 1))
-        return;
+        return ParseCHResult::FAILED;
     size -= length + 1;
 
     /* Cipher Suites (2-byte length). */
     if (size < 2)
-        return;
+        return ParseCHResult::FAILED;
     length = ntohs(*((const uint16_t*)pkt));
     pkt += length + 2;
     if (size < (length + 2))
-        return;
+        return ParseCHResult::FAILED;
     size -= length + 2;
 
     /* Compression Methods (1-byte length). */
     if (size < 1)
-        return;
+        return ParseCHResult::FAILED;
     length = *((const uint8_t*)pkt);
     pkt += length + 1;
     if (size < (length + 1))
-        return;
+        return ParseCHResult::FAILED;
     size -= length + 1;
 
     /* Extensions (2-byte length) */
     if (size < 2)
-        return;
+        return ParseCHResult::FAILED;
     length = ntohs(*((const uint16_t*)pkt));
     pkt += 2;
     size -= 2;
     if (size < length)
-        return;
+        return ParseCHResult::FAILED;
 
     /* We need at least type (2 bytes) and length (2 bytes) in the extension. */
     while (length >= 4)
@@ -676,25 +676,27 @@ void parse_client_hello_data(const uint8_t* pkt, uint16_t size, SSLV3ClientHello
         {
             /* Found server host name. */
             if (length < sizeof(ServiceSSLV3ExtensionServerName))
-                return;
+                return ParseCHResult::FAILED;
 
             unsigned len = ntohs(ext->string_length);
             if ((length - sizeof(ServiceSSLV3ExtensionServerName)) < len)
-                return;
+                return ParseCHResult::FAILED;
 
             const uint8_t* str = pkt + offsetof(ServiceSSLV3ExtensionServerName, string_length) +
                 sizeof(ext->string_length);
             client_hello_data->host_name = snort_strndup((const char*)str, len);
-            return;
+            return ParseCHResult::SUCCESS;
         }
 
         unsigned len = ntohs(ext->length) + offsetof(ServiceSSLV3ExtensionServerName, list_length);
         if (len > length)
-            return;
+            return ParseCHResult::FAILED;
 
         pkt += len;
         length -= len;
     }
+    
+    return ParseCHResult::FAILED;
 }
 
 bool parse_server_certificates(SSLV3ServerCertData* server_cert_data)
