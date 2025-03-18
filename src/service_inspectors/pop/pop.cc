@@ -167,10 +167,8 @@ static POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
     pop_ssn->mime_ssn = new PopMime(p, &(config->decode_conf), &(config->log_config));
     pop_ssn->mime_ssn->set_mime_stats(&(popstats.mime_stats));
 
-    if (p->packet_flags & SSNFLAG_MIDSTREAM)
-    {
+    if (Stream::is_midstream(p->flow))
         pop_ssn->state = STATE_UNKNOWN;
-    }
 
     return pop_ssn;
 }

@@ -157,7 +157,7 @@ bool TcpStateMidStreamSent::check_for_window_slam(TcpSegmentDescriptor& tsd, Tcp
 {
     if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt() ) )
     {
-        if ( (trk.normalizer.get_os_policy() == StreamPolicy::OS_WINDOWS)
+        if ( (trk.normalizer.get_norm_policy() == Normalizer::Policy::WINDOWS)
             && (tsd.get_wnd() == 0))
         {
             trk.session->tel.set_tcp_event(EVENT_WINDOW_SLAM);

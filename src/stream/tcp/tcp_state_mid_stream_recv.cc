@@ -32,8 +32,7 @@ using namespace snort;
 
 TcpStateMidStreamRecv::TcpStateMidStreamRecv(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_MID_STREAM_RECV, tsm)
-{
-}
+{ }
 
 bool TcpStateMidStreamRecv::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {

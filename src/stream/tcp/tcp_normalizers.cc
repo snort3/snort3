@@ -25,6 +25,8 @@
 
 #include "tcp_normalizers.h"
 
+#include "packet_io/packet_tracer.h"
+
 #include "tcp_module.h"
 #include "tcp_segment_descriptor.h"
 #include "tcp_session.h"
@@ -503,14 +505,18 @@ int TcpNormalizerMissed3whs::handle_repeated_syn(
     return tns.prev_norm->handle_repeated_syn(tns, tsd);
 }
 
-void TcpNormalizerPolicy::init(StreamPolicy os, TcpSession* ssn, TcpStreamTracker* trk, TcpStreamTracker* peer)
+void TcpNormalizerPolicy::init(Normalizer::Policy os, TcpSession* ssn, TcpStreamTracker* trk, TcpStreamTracker* peer)
 {
-    if ( os == StreamPolicy::MISSED_3WHS and os == tns.os_policy)
-        tns.prev_norm = TcpNormalizerFactory::get_instance(StreamPolicy::OS_DEFAULT);
-    else
-        tns.prev_norm = TcpNormalizerFactory::get_instance(tns.os_policy);
+    if ( os == Normalizer::Policy::MISSED_3WHS )
+    {
+        // missed 3whs may have been set earlier
+        if ( os == tns.norm_policy )
+            return;
 
-    tns.os_policy = os;
+        tns.prev_norm = norm;
+    }
+
+    tns.norm_policy = os;
     tns.session = ssn;
     tns.tracker = trk;
     tns.peer_tracker = peer;
@@ -530,38 +536,52 @@ void TcpNormalizerPolicy::init(StreamPolicy os, TcpSession* ssn, TcpStreamTracke
 
     norm = TcpNormalizerFactory::get_instance(os);
     norm->init(tns);
+
+    if ( PacketTracer::is_active() )
+    {
+        if ( os == Normalizer::Policy::MISSED_3WHS )
+            PacketTracer::log("stream_tcp: %s tracker normalization policy set to %s. Some normalizations are disabled.\n",
+                trk->client_tracker ? "client" : "server", norm->get_name().c_str());
+        else if ( os == Normalizer::Policy::PROXY )
+            PacketTracer::log("stream_tcp: %s tracker normalization policy set to %s. Normalizations are disabled.\n",
+                trk->client_tracker ? "client" : "server", norm->get_name().c_str());
+        else
+            PacketTracer::log("stream_tcp: %s tracker normalization policy set to %s\n",
+                trk->client_tracker ? "client" : "server", norm->get_name().c_str());
+    }
+
 }
 
-TcpNormalizer* TcpNormalizerFactory::normalizers[StreamPolicy::OS_END_OF_LIST];
+TcpNormalizer* TcpNormalizerFactory::normalizers[Normalizer::Policy::MAX_NORM_POLICY];
 
 void TcpNormalizerFactory::initialize()
 {
-    normalizers[StreamPolicy::OS_FIRST] = new TcpNormalizerFirst;
-    normalizers[StreamPolicy::OS_LAST] = new TcpNormalizerLast;
-    normalizers[StreamPolicy::OS_LINUX] = new TcpNormalizerLinux;
-    normalizers[StreamPolicy::OS_OLD_LINUX] = new TcpNormalizerOldLinux;
-    normalizers[StreamPolicy::OS_BSD] = new TcpNormalizerBSD;
-    normalizers[StreamPolicy::OS_MACOS] = new TcpNormalizerMacOS;
-    normalizers[StreamPolicy::OS_SOLARIS] = new TcpNormalizerSolaris;
-    normalizers[StreamPolicy::OS_IRIX] = new TcpNormalizerIrix;
-    normalizers[StreamPolicy::OS_HPUX11] = new TcpNormalizerHpux11;
-    normalizers[StreamPolicy::OS_HPUX10] = new TcpNormalizerHpux10;
-    normalizers[StreamPolicy::OS_WINDOWS] = new TcpNormalizerWindows;
-    normalizers[StreamPolicy::OS_WINDOWS2K3] = new TcpNormalizerWindows2K3;
-    normalizers[StreamPolicy::OS_VISTA] = new TcpNormalizerVista;
-    normalizers[StreamPolicy::OS_PROXY] = new TcpNormalizerProxy;
-    normalizers[StreamPolicy::MISSED_3WHS] = new TcpNormalizerMissed3whs;
+    normalizers[Normalizer::Policy::FIRST] = new TcpNormalizerFirst;
+    normalizers[Normalizer::Policy::LAST] = new TcpNormalizerLast;
+    normalizers[Normalizer::Policy::LINUX] = new TcpNormalizerLinux;
+    normalizers[Normalizer::Policy::OLD_LINUX] = new TcpNormalizerOldLinux;
+    normalizers[Normalizer::Policy::BSD] = new TcpNormalizerBSD;
+    normalizers[Normalizer::Policy::MACOS] = new TcpNormalizerMacOS;
+    normalizers[Normalizer::Policy::SOLARIS] = new TcpNormalizerSolaris;
+    normalizers[Normalizer::Policy::IRIX] = new TcpNormalizerIrix;
+    normalizers[Normalizer::Policy::HPUX11] = new TcpNormalizerHpux11;
+    normalizers[Normalizer::Policy::HPUX10] = new TcpNormalizerHpux10;
+    normalizers[Normalizer::Policy::WINDOWS] = new TcpNormalizerWindows;
+    normalizers[Normalizer::Policy::WINDOWS2K3] = new TcpNormalizerWindows2K3;
+    normalizers[Normalizer::Policy::VISTA] = new TcpNormalizerVista;
+    normalizers[Normalizer::Policy::PROXY] = new TcpNormalizerProxy;
+    normalizers[Normalizer::Policy::MISSED_3WHS] = new TcpNormalizerMissed3whs;
 }
 
 void TcpNormalizerFactory::term()
 {
-    for ( auto sp = StreamPolicy::OS_FIRST; sp < StreamPolicy::OS_END_OF_LIST; sp++ )
+    for ( auto sp = Normalizer::Policy::FIRST; sp < Normalizer::Policy::MAX_NORM_POLICY; sp++ )
         delete normalizers[sp];
 }
 
-TcpNormalizer* TcpNormalizerFactory::get_instance(StreamPolicy sp)
+TcpNormalizer* TcpNormalizerFactory::get_instance(Normalizer::Policy sp)
 {
-    assert( sp < StreamPolicy::OS_END_OF_LIST );
+    assert( sp < Normalizer::Policy::MAX_NORM_POLICY );
     return normalizers[sp];
 }
 

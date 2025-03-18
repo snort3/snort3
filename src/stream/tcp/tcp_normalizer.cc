@@ -275,7 +275,7 @@ uint32_t TcpNormalizer::get_stream_window(
 {
     if ( tns.tracker->get_snd_wnd() )
     {
-        if ( !(tns.session->flow->session_state & STREAM_STATE_MIDSTREAM ) )
+        if ( !Stream::is_midstream(tns.session->flow) )
             return tns.tracker->get_snd_wnd();
     }
     else if ( tns.session->flow->two_way_traffic() )
@@ -437,7 +437,7 @@ int TcpNormalizer::validate_paws(
         tns.session->tel.set_tcp_event(EVENT_NO_TIMESTAMP);
 
         /* Ignore the timestamp for this first packet, next one will checked. */
-        if ( tns.session->tcp_config->policy == StreamPolicy::OS_SOLARIS )
+        if ( tns.session->tcp_config->policy == Normalizer::Policy::SOLARIS )
             tns.tracker->clear_tf_flags(TF_TSTAMP);
 
         packet_dropper(tns, tsd, NORM_TCP_OPT);

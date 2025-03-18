@@ -74,7 +74,7 @@ bool TcpStateSynRecv::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 {
     if ( trk.is_ack_valid(tsd.get_ack()) )
     {
-        trk.irs = tsd.get_seq();
+        trk.set_irs(tsd.get_seq());
         trk.update_tracker_ack_recv(tsd);
         trk.normalizer.ecn_tracker(tsd.get_tcph());
         trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);

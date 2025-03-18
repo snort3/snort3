@@ -315,31 +315,15 @@ public:
     static void thread_term();
 
 public:
-    uint32_t snd_una = 0;          // SND.UNA - send unacknowledged
-    uint32_t snd_nxt = 0;          // SND.NXT - send next
-    uint32_t snd_wnd = 0;          // SND.WND - send window
-    uint32_t snd_wl1 = 0;          // SND.WL1 - segment sequence number used for last window update
-    uint32_t snd_wl2 = 0;          // SND.WL2 - segment acknowledgment number used for last window update
-    uint32_t iss = 0;              // ISS     - initial send sequence number
-
     uint32_t rcv_nxt = 0;          // RCV.NXT - receive next
     uint32_t rcv_wnd = 0;          // RCV.WND - receive window
-    uint32_t irs = 0;              // IRS     - initial receive sequence number
-
-    uint16_t snd_up = 0;           // SND.UP  - send urgent pointer
-    uint16_t rcv_up = 0;           // RCV.UP  - receive urgent pointer
 
     uint32_t held_pkt_seq = 0;
 
-    TcpState tcp_state;
-    TcpEvent tcp_event = TCP_MAX_EVENTS;
-
     bool client_tracker;
-    bool rst_pkt_sent = false;
     bool midstream_initial_ack_flush = false;
 
 // FIXIT-L make these non-public
-public:
     TcpNormalizerPolicy normalizer;
     TcpReassemblySegments seglist;
     TcpReassembler* reassembler = nullptr;
@@ -353,6 +337,9 @@ public:
 
 private:
     void update_flush_policy(snort::StreamSplitter*);
+
+    TcpState tcp_state;
+    TcpEvent tcp_event = TCP_MAX_EVENTS;
 
     snort::StreamSplitter* splitter = nullptr;
     static const std::list<HeldPacket>::iterator null_iterator;
@@ -370,10 +357,21 @@ private:
     FlushPolicy flush_policy = STREAM_FLPOLICY_IGNORE;
     bool mac_addr_valid = false;
     bool fin_seq_set = false;  // FIXIT-M should be obviated by tcp state
+    bool rst_pkt_sent = false;
 
     uint8_t order = IN_SEQUENCE;
     uint32_t hole_left_edge = 0;   // First left hole
     uint32_t hole_right_edge = 0;
+
+    uint32_t snd_una = 0;          // SND.UNA - send unacknowledged
+    uint32_t snd_nxt = 0;          // SND.NXT - send next
+    uint32_t snd_wnd = 0;          // SND.WND - send window
+    uint32_t snd_wl1 = 0;          // SND.WL1 - segment sequence number used for last window update
+    uint32_t snd_wl2 = 0;          // SND.WL2 - segment acknowledgment number used for last window update
+    uint32_t iss = 0;              // ISS     - initial send sequence number
+    uint32_t irs = 0;              // IRS     - initial receive sequence number
+    uint16_t snd_up = 0;           // SND.UP  - send urgent pointer
+    uint16_t rcv_up = 0;           // RCV.UP  - receive urgent pointer
 };
 
 // <--- note -- the 'state' parameter must be a reference

@@ -41,7 +41,7 @@ bool TcpStateSynSent::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateSynSent::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.irs = tsd.get_seq();
+    trk.set_irs(tsd.get_seq());
     trk.finish_client_init(tsd);
     if ( tsd.is_data_segment() )
         trk.session->handle_data_on_syn(tsd);
@@ -55,7 +55,7 @@ bool TcpStateSynSent::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
     {
         trk.session->check_for_repeated_syn(tsd);
         trk.update_tracker_ack_sent(tsd);
-        trk.iss = tsd.get_seq();
+        trk.set_iss(tsd.get_seq());
         trk.session->update_timestamp_tracking(tsd);
     }
     return true;

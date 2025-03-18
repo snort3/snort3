@@ -36,8 +36,7 @@ using namespace snort;
 
 TcpStateListen::TcpStateListen(TcpStateMachine& tsm) :
     TcpStateHandler(TcpStreamTracker::TCP_LISTEN, tsm)
-{
-}
+{ }
 
 bool TcpStateListen::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
@@ -62,21 +61,11 @@ bool TcpStateListen::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
     Flow* flow = tsd.get_flow();
     flow->session_state |= STREAM_STATE_MIDSTREAM;
 
-    if ( !Stream::is_midstream(flow) )
-    {
-        TcpStreamTracker* listener = tsd.get_listener();
-        TcpStreamTracker* talker = tsd.get_talker();
+    assert ( !Stream::is_midstream(flow) );
 
-        talker->normalizer.init(StreamPolicy::MISSED_3WHS, trk.session, talker, listener);
-        listener->normalizer.init(StreamPolicy::MISSED_3WHS, trk.session, listener, talker);
-        flow->set_session_flags(SSNFLAG_MIDSTREAM);
-
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("stream_tcp: TCP did not see the complete 3-Way Handshake. "
-            "Not all normalizations will be in effect\n");
-
-        DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_MIDSTREAM, tsd.get_pkt());
-    }
+    trk.normalizer.init(Normalizer::Policy::MISSED_3WHS, trk.session, &trk, tsd.get_listener());
+    flow->set_session_flags(SSNFLAG_MIDSTREAM);
+    DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_MIDSTREAM, tsd.get_pkt());
 
     trk.init_on_data_seg_sent(tsd);
     trk.session->init_new_tcp_session(tsd);
@@ -85,8 +74,7 @@ bool TcpStateListen::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateListen::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    Flow* flow = tsd.get_flow();
-    flow->session_state |= STREAM_STATE_MIDSTREAM;
+    trk.normalizer.init(Normalizer::Policy::MISSED_3WHS, trk.session, &trk, tsd.get_talker());
     trk.init_on_data_seg_recv(tsd);
     trk.normalizer.ecn_tracker(tsd.get_tcph());
     trk.session->handle_data_segment(tsd, !trk.normalizer.is_tcp_ips_enabled());

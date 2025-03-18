@@ -44,7 +44,7 @@ TcpReassemblySegments::~TcpReassemblySegments()
     delete tos;
 }
 
-void TcpReassemblySegments::init(TcpSession* ssn, TcpStreamTracker* trk, StreamPolicy pol)
+void TcpReassemblySegments::init(TcpSession* ssn, TcpStreamTracker* trk, Overlap::Policy pol)
 {
     session = ssn;
     tracker = trk;
@@ -366,7 +366,7 @@ void TcpReassemblySegments::purge_segments_left_of_hole(const TcpSegmentNode* en
 
     tracker->set_order(TcpStreamTracker::OUT_OF_SEQUENCE);
 
-    if (PacketTracer::is_active())
+    if ( PacketTracer::is_active() )
         PacketTracer::log("stream_tcp: Skipped %u packets before seglist hole\n", packets_skipped);
 }
 
@@ -379,7 +379,7 @@ void TcpReassemblySegments::advance_rcv_nxt(TcpSegmentNode *tsn)
         tsn = head;
     }
 
-    while (tsn->next_no_gap())
+    while ( tsn->next_no_gap() )
         tsn = tsn->next;
     tracker->set_rcv_nxt(tsn->next_seq());
 }
@@ -390,12 +390,12 @@ bool TcpReassemblySegments::skip_hole_at_beginning(TcpSegmentNode *tsn)
 
     bool hole_skipped = false;
 
-    if (SEQ_GT(tsn->seq, seglist_base_seq))
+    if ( SEQ_GT(tsn->seq, seglist_base_seq) )
     {
         hole_skipped = true;
         seglist_base_seq = tsn->seq;
         tracker->set_order(TcpStreamTracker::OUT_OF_SEQUENCE);
-        if (PacketTracer::is_active())
+        if ( PacketTracer::is_active() )
             PacketTracer::log("stream_tcp: Skipped hole at beginning of the seglist\n");
     }
 
@@ -421,7 +421,7 @@ void TcpReassemblySegments::skip_holes()
         {
             ++num_holes;
             total_segs += num_segs;
-            if (PacketTracer::is_active())
+            if ( PacketTracer::is_active() )
                 PacketTracer::log("stream_tcp: Seglist hole(%u): %u-->%u:%u. Segments purged: %u Total purged: %u\n",
                     tsn->seq, tsn->next->seq, tsn->next->seq - tsn->seq, num_holes, num_segs, total_segs);
             tsn = tsn->next;

@@ -77,7 +77,7 @@ public:
     void eval_left(TcpOverlapState&);
     void eval_right(TcpOverlapState&);
 
-    StreamPolicy get_overlap_policy()
+    Overlap::Policy get_overlap_policy()
     { return overlap_policy; }
 
 protected:
@@ -101,7 +101,7 @@ protected:
     virtual void insert_right_overlap(TcpOverlapState&) = 0;
     virtual void insert_full_overlap(TcpOverlapState&) = 0;
 
-    StreamPolicy overlap_policy = StreamPolicy::OS_DEFAULT;
+    Overlap::Policy overlap_policy = Overlap::Policy::DEFAULT_POLICY;
 };
 
 class TcpOverlapResolverFactory
@@ -109,12 +109,12 @@ class TcpOverlapResolverFactory
 public:
     static void initialize();
     static void term();
-    static TcpOverlapResolver* get_instance(StreamPolicy);
+    static TcpOverlapResolver* get_instance(Overlap::Policy);
 
 private:
     TcpOverlapResolverFactory() = delete;
 
-    static TcpOverlapResolver* overlap_resolvers[StreamPolicy::OS_END_OF_LIST];
+    static TcpOverlapResolver* overlap_resolvers[Overlap::Policy::MAX_OVERLAP_POLICY];
 };
 
 #endif

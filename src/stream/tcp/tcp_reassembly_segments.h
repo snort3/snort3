@@ -40,7 +40,7 @@ public:
     TcpReassemblySegments() = default;
     ~TcpReassemblySegments();
 
-    void init(TcpSession* ssn, TcpStreamTracker* trk, StreamPolicy pol);
+    void init(TcpSession* ssn, TcpStreamTracker* trk, Overlap::Policy);
     void reset();
 
     void update_next(TcpSegmentNode*);

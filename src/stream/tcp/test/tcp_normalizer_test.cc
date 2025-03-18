@@ -101,19 +101,19 @@ TEST_GROUP(tcp_normalizers)
 {
 };
 
-TEST(tcp_normalizers, os_policy)
+TEST(tcp_normalizers, norm_policy)
 {
-    StreamPolicy os_policy;
+    Normalizer::Policy norm_policy;
     Flow* flow = new Flow;
     TcpSession* session = new TcpSessionMock( flow );
     TcpNormalizerState tns;
 
-    for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
+    for( norm_policy = Normalizer::Policy::OS_FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
     {
         TcpNormalizer* normalizer = TcpNormalizerFactory::create(
-            tns, os_policy, session, session->client, session->server);
+            tns, norm_policy, session, session->client, session->server);
 
-        CHECK( normalizer.get_os_policy(tns) == os_policy );
+        CHECK( normalizer.get_norm_policy(tns) == norm_policy );
     }
 
     delete flow;
@@ -122,19 +122,19 @@ TEST(tcp_normalizers, os_policy)
 
 TEST(tcp_normalizers, paws_fudge_config)
 {
-    StreamPolicy os_policy;
+    Normalizer::Policy norm_policy;
     Flow* flow = new Flow;
     TcpSession* session = new TcpSessionMock( flow );
     TcpNormalizerState tns;
 
-    for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
+    for( norm_policy = Normalizer::Policy::OS_FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
     {
         TcpNormalizer* normalizer = TcpNormalizerFactory::create(
-            tns, os_policy, session, session->client, session->server);
+            tns, norm_policy, session, session->client, session->server);
 
-        switch ( os_policy )
+        switch ( norm_policy )
         {
-        case StreamPolicy::OS_LINUX:
+        case Normalizer::Policy::LINUX:
             CHECK( normalizer.get_paws_ts_fudge(tns) == 1 );
             break;
 
@@ -150,23 +150,23 @@ TEST(tcp_normalizers, paws_fudge_config)
 
 TEST(tcp_normalizers, paws_drop_zero_ts_config)
 {
-    StreamPolicy os_policy;
+    Normalizer::Policy norm_policy;
     Flow* flow = new Flow;
     TcpSession* session = new TcpSessionMock( flow );
     TcpNormalizerState tns;
 
-    for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
+    for( norm_policy = Normalizer::Policy::OS_FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
     {
         TcpNormalizer* normalizer = TcpNormalizerFactory::create(
-            tns, os_policy, session, session->client, session->server );
+            tns, norm_policy, session, session->client, session->server );
 
-        switch ( os_policy )
+        switch ( norm_policy )
         {
-        case StreamPolicy::OS_OLD_LINUX:
-        case StreamPolicy::OS_SOLARIS:
-        case StreamPolicy::OS_WINDOWS:
-        case StreamPolicy::OS_WINDOWS2K3:
-        case StreamPolicy::OS_VISTA:
+        case Normalizer::Policy::OLD_LINUX:
+        case Normalizer::Policy::SOLARIS:
+        case Normalizer::Policy::WINDOWS:
+        case Normalizer::Policy::WINDOWS2K3:
+        case Normalizer::Policy::VISTA:
             CHECK( !normalizer.is_paws_drop_zero_ts(tns) );
             break;
 
@@ -182,16 +182,16 @@ TEST(tcp_normalizers, paws_drop_zero_ts_config)
 
 TEST(tcp_normalizers, norm_options_enabled)
 {
-    StreamPolicy os_policy;
+    Normalizer::Policy norm_policy;
     Flow* flow = new Flow;
     TcpSession* session = new TcpSessionMock( flow );
 
     norm_enabled = true;
-    for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
+    for( norm_policy = Normalizer::Policy::OS_FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
     {
         TcpNormalizerState tns;
         TcpNormalizer* normalizer = TcpNormalizerFactory::create(
-            tns, os_policy, session, session->client, session->server);
+            tns, norm_policy, session, session->client, session->server);
 
         CHECK( normalizer.get_opt_block(tns) == NORM_MODE_ON );
         CHECK( normalizer.get_strip_ecn(tns) == NORM_MODE_ON );
@@ -204,11 +204,11 @@ TEST(tcp_normalizers, norm_options_enabled)
     }
 
     norm_enabled = false;
-    for( os_policy = StreamPolicy::OS_FIRST; os_policy <= StreamPolicy::OS_PROXY; ++os_policy )
+    for( norm_policy = Normalizer::Policy::OS_FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
     {
         TcpNormalizerState tns;
         TcpNormalizer* normalizer = TcpNormalizerFactory::create(
-            tns, os_policy, session, session->client, session->server);
+            tns, norm_policy, session, session->client, session->server);
 
         CHECK( normalizer.get_opt_block(tns) == NORM_MODE_TEST );
         CHECK( normalizer.get_strip_ecn(tns) == NORM_MODE_TEST );

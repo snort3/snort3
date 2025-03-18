@@ -69,13 +69,16 @@ const char* tcp_event_names[] = {
 };
 
 TcpStreamTracker::TcpStreamTracker(bool client) :
-    tcp_state(client ? TCP_STATE_NONE : TCP_LISTEN), client_tracker(client),
+    client_tracker(client), tcp_state(client ? TCP_STATE_NONE : TCP_LISTEN),
     held_packet(null_iterator)
-{ }
+{ 
+    flush_policy = STREAM_FLPOLICY_IGNORE;
+    update_flush_policy(nullptr);
+}
 
 TcpStreamTracker::~TcpStreamTracker()
 {
-    if ( reassembler->get_flush_policy() != STREAM_FLPOLICY_IGNORE )
+    if ( reassembler and (reassembler->get_flush_policy() != STREAM_FLPOLICY_IGNORE) )
     	delete reassembler;
 
     if( oaitw_reassembler )
@@ -91,7 +94,6 @@ TcpStreamTracker::~TcpStreamTracker()
 void TcpStreamTracker::reset()
 {
     tcp_alerts.clear();
-    normalizer.reset();
     seglist.reset();
     reassembler->reset_paf();
 }
@@ -291,7 +293,6 @@ void TcpStreamTracker::init_tcp_state(TcpSession* s)
     flush_policy = STREAM_FLPOLICY_IGNORE;
     update_flush_policy(nullptr);
 
-    normalizer.reset();
     seglist.reset();
     tcp_alerts.clear();
 }
@@ -630,7 +631,7 @@ void TcpStreamTracker::finish_client_init(const TcpSegmentDescriptor& tsd)
     if ( seglist.data_was_queued() )
         return;  // we already have state, don't mess it up
 
-    if ( !( flow->session_state & STREAM_STATE_MIDSTREAM ) )
+    if ( !Stream::is_midstream(flow) )
     {
         if ( tsd.get_tcph()->is_syn() )
             seglist.set_seglist_base_seq(tsd.get_seq() + 1);

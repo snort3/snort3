@@ -86,9 +86,6 @@ TcpSession::TcpSession(Flow* f)
     : Session(f), client(true), server(false)
 {
     tsm = TcpStateMachine::get_instance();
-    client.init_tcp_state(this);
-    server.init_tcp_state(this);
-
     tcpStats.instantiated++;
 }
 
@@ -133,7 +130,7 @@ void TcpSession::restart(Packet* p)
     TcpStreamTracker* talker;
     TcpStreamTracker* listener;
 
-    if (p->is_from_server())
+    if ( p->is_from_server() )
     {
         talker = &server;
         listener = &client;
@@ -153,10 +150,10 @@ void TcpSession::restart(Packet* p)
         talker->reassembler->eval_flush_policy_on_data(p);
     }
 
-    if (p->dsize > 0)
+    if ( p->dsize > 0 )
         listener->reassembler->eval_flush_policy_on_data(p);
 
-    if (p->ptrs.tcph->is_ack())
+    if ( p->ptrs.tcph->is_ack() )
         talker->reassembler->eval_flush_policy_on_ack(p);
 
     tcpStats.restarts++;
@@ -284,35 +281,39 @@ void TcpSession::check_flow_missed_3whs()
     if ( flow->two_way_traffic() )
         return;
 
-    if ( PacketTracer::is_active() )
-        PacketTracer::log("stream_tcp: TCP did not see the complete 3-Way Handshake. "
-        "Not all normalizations will be in effect\n");
-
-    client.normalizer.init(StreamPolicy::MISSED_3WHS, this, &client, &server);
-    server.normalizer.init(StreamPolicy::MISSED_3WHS, this, &server, &client);
+    client.normalizer.init(Normalizer::Policy::MISSED_3WHS, this, &client, &server);
+    server.normalizer.init(Normalizer::Policy::MISSED_3WHS, this, &server, &client);
 }
 
 void TcpSession::set_os_policy()
 {
-    assert(tcp_config->policy <= StreamPolicy::OS_VISTA);
+    assert(tcp_config->policy <= Normalizer::Policy::VISTA);
 
-    StreamPolicy client_os_policy = flow->ssn_policy ?
-        static_cast<StreamPolicy>( flow->ssn_policy ) : tcp_config->policy;
+    Normalizer::Policy client_norm_policy = flow->ssn_policy ?
+        static_cast<Normalizer::Policy>( flow->ssn_policy ) : tcp_config->policy;
 
-    StreamPolicy server_os_policy = flow->ssn_policy ?
-        static_cast<StreamPolicy>( flow->ssn_policy ) : tcp_config->policy;
+    Normalizer::Policy server_norm_policy = flow->ssn_policy ?
+        static_cast<Normalizer::Policy>( flow->ssn_policy ) : tcp_config->policy;
 
-    client.normalizer.init(client_os_policy, this, &client, &server);
-    server.normalizer.init(server_os_policy, this, &server, &client);
+    client.normalizer.init(client_norm_policy, this, &client, &server);
+    server.normalizer.init(server_norm_policy, this, &server, &client);
 
-    if (Normalize_GetMode(NORM_TCP_IPS) == NORM_MODE_ON)
+    Overlap::Policy client_overlap_policy;
+    Overlap::Policy server_overlap_policy;
+
+    if ( Normalize_GetMode(NORM_TCP_IPS) == NORM_MODE_ON )
     {
-        client_os_policy = StreamPolicy::OS_FIRST;
-        server_os_policy = StreamPolicy::OS_FIRST;
+        client_overlap_policy = Overlap::Policy::FIRST;
+        server_overlap_policy = Overlap::Policy::FIRST;
+    }
+    else
+    {
+        client_overlap_policy =  static_cast<Overlap::Policy>( client_norm_policy );
+        server_overlap_policy =  static_cast<Overlap::Policy>( server_norm_policy );
     }
 
-    client.seglist.init(this, &client, client_os_policy);
-    server.seglist.init(this, &server, server_os_policy);
+    client.seglist.init(this, &client, client_overlap_policy);
+    server.seglist.init(this, &server, server_overlap_policy);
 }
 
 // FIXIT-M this is no longer called (but should be)
@@ -376,8 +377,8 @@ void TcpSession::update_timestamp_tracking(TcpSegmentDescriptor& tsd)
     TcpStreamTracker* talker = tsd.get_talker();
 
     talker->set_tf_flags(listener->normalizer.get_timestamp_flags());
-    if (listener->normalizer.handling_timestamps()
-        && SEQ_EQ(listener->rcv_nxt, tsd.get_seq()))
+    if ( listener->normalizer.handling_timestamps()
+        && SEQ_EQ(listener->rcv_nxt, tsd.get_seq()) )
     {
         talker->set_ts_last_packet(tsd.get_packet_timestamp());
         talker->set_ts_last(tsd.get_timestamp());
@@ -563,7 +564,7 @@ void TcpSession::check_for_session_hijack(TcpSegmentDescriptor& tsd)
 
 bool TcpSession::check_for_window_slam(TcpSegmentDescriptor& tsd)
 {
-    if (Stream::is_midstream(tsd.get_flow()) or !flow->two_way_traffic())
+    if ( Stream::is_midstream(tsd.get_flow()) or !flow->two_way_traffic() )
         return false;
 
     TcpStreamTracker* listener = tsd.get_listener();
@@ -578,7 +579,7 @@ bool TcpSession::check_for_window_slam(TcpSegmentDescriptor& tsd)
     }
     else if ( tsd.is_packet_from_client() && (tsd.get_wnd() <= SLAM_MAX)
         && (tsd.get_ack() == listener->get_iss() + 1)
-        && !(tsd.get_tcph()->is_fin() || tsd.get_tcph()->is_rst()))
+        && !(tsd.get_tcph()->is_fin() || tsd.get_tcph()->is_rst()) )
     {
         /* got a window slam alert! */
         tel.set_tcp_event(EVENT_WINDOW_SLAM);
@@ -628,7 +629,7 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
             else
                 space_left = 0;
 
-            if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON)
+            if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON )
             {
                 // FIXIT-M - only alert once per threshold exceeded event
                 tel.set_tcp_event(EVENT_MAX_QUEUED_BYTES_EXCEEDED);
@@ -689,11 +690,11 @@ bool TcpSession::filter_packet_for_reassembly(TcpSegmentDescriptor& tsd, TcpStre
 void TcpSession::check_small_segment_threshold(const TcpSegmentDescriptor &tsd, TcpStreamTracker *listener)
 {
     // alert if small segments threshold is exceeded
-    if (tcp_config->max_consec_small_segs)
+    if ( tcp_config->max_consec_small_segs )
     {
-        if (tsd.get_len() >= tcp_config->max_consec_small_seg_size)
+        if ( tsd.get_len() >= tcp_config->max_consec_small_seg_size )
             listener->small_seg_count = 0;
-        else if (++listener->small_seg_count == tcp_config->max_consec_small_segs)
+        else if ( ++listener->small_seg_count == tcp_config->max_consec_small_segs )
             tel.set_tcp_event(EVENT_MAX_SMALL_SEGS_EXCEEDED);
     }
 }
@@ -785,7 +786,7 @@ void TcpSession::check_for_repeated_syn(TcpSegmentDescriptor& tsd)
         action = listener->normalizer.handle_repeated_syn(tsd);
     }
 
-    if (action != ACTION_NOTHING)
+    if ( action != ACTION_NOTHING )
     {
         tel.set_tcp_event(EVENT_SYN_ON_EST);
         pkt_action_mask |= action;
@@ -1350,11 +1351,8 @@ StreamSplitter* TcpSession::get_splitter(bool to_server)
 
 void TcpSession::start_proxy()
 {
-    if ( PacketTracer::is_active() )
-        PacketTracer::log("stream_tcp: TCP normalization policy set to Proxy mode. Normalizations will be skipped\n");
-
-    client.normalizer.init(StreamPolicy::OS_PROXY, this, &client, &server);
-    server.normalizer.init(StreamPolicy::OS_PROXY, this, &server, &client);
+    client.normalizer.init(Normalizer::Policy::PROXY, this, &client, &server);
+    server.normalizer.init(Normalizer::Policy::PROXY, this, &server, &client);
     ++tcpStats.proxy_mode_flows;
 }
 
@@ -1363,11 +1361,11 @@ void TcpSession::set_established(const TcpSegmentDescriptor& tsd)
     update_perf_base_state(TcpStreamTracker::TCP_ESTABLISHED);
     flow->session_state |= STREAM_STATE_ESTABLISHED;
     flow->set_idle_timeout(this->tcp_config->idle_timeout);
-    if (SSNFLAG_ESTABLISHED != (SSNFLAG_ESTABLISHED & flow->get_session_flags()))
+    if ( SSNFLAG_ESTABLISHED != (SSNFLAG_ESTABLISHED & flow->get_session_flags()) )
     {
         flow->set_session_flags(SSNFLAG_ESTABLISHED);
         // Only send 1 event
-        if (SSNFLAG_TCP_PSEUDO_EST != (SSNFLAG_TCP_PSEUDO_EST & flow->get_session_flags()))
+        if ( SSNFLAG_TCP_PSEUDO_EST != (SSNFLAG_TCP_PSEUDO_EST & flow->get_session_flags()) )
             DataBus::publish(Stream::get_pub_id(), StreamEventIds::TCP_ESTABLISHED, tsd.get_pkt());
     }
 }
@@ -1386,7 +1384,7 @@ bool TcpSession::check_for_one_sided_session(Packet* p)
     {
         uint64_t initiator_packets;
         uint64_t responder_packets;
-        if (flow.flags.client_initiated)
+        if ( flow.flags.client_initiated )
         {
             initiator_packets = flow.flowstats.client_pkts;
             responder_packets = flow.flowstats.server_pkts;

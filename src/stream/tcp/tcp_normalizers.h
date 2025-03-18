@@ -32,12 +32,12 @@ class TcpNormalizerFactory
 public:
     static void initialize();
     static void term();
-    static TcpNormalizer* get_instance(StreamPolicy);
+    static TcpNormalizer* get_instance(Normalizer::Policy);
 
 private:
     TcpNormalizerFactory() = delete;
 
-    static TcpNormalizer* normalizers[StreamPolicy::OS_END_OF_LIST];
+    static TcpNormalizer* normalizers[Normalizer::Policy::MAX_NORM_POLICY];
 };
 
 class TcpNormalizerPolicy
@@ -46,9 +46,7 @@ public:
     TcpNormalizerPolicy() = default;
     ~TcpNormalizerPolicy() = default;
 
-    void init(StreamPolicy os, TcpSession* ssn, TcpStreamTracker* trk, TcpStreamTracker* peer);
-    void reset()
-    { init(StreamPolicy::OS_DEFAULT, nullptr, nullptr, nullptr); }
+    void init(Normalizer::Policy os, TcpSession* ssn, TcpStreamTracker* trk, TcpStreamTracker* peer);
 
     TcpNormalizer::NormStatus apply_normalizations(TcpSegmentDescriptor& tsd, uint32_t seq, bool stream_is_inorder)
     { return norm->apply_normalizations(tns, tsd, seq, stream_is_inorder); }
@@ -111,8 +109,8 @@ public:
     uint16_t set_urg_offset(const snort::tcp::TCPHdr* tcph, uint16_t dsize)
     { return norm->set_urg_offset(tns, tcph, dsize); }
 
-    StreamPolicy get_os_policy() const
-    { return tns.os_policy; }
+    Normalizer::Policy get_norm_policy() const
+    { return tns.norm_policy; }
 
     bool is_paws_drop_zero_ts() const
     { return tns.paws_drop_zero_ts; }

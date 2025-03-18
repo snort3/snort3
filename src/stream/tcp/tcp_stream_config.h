@@ -39,7 +39,7 @@ public:
 
     void show() const;
 
-    StreamPolicy policy = StreamPolicy::OS_DEFAULT;
+    Normalizer::Policy policy = Normalizer::Policy::DEFAULT;
 
     uint16_t flags = 0;
     uint16_t flush_factor = 0;

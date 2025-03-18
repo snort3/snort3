@@ -57,35 +57,76 @@ struct Packet;
 #define MAX_ZERO_WIN_PROBE_LEN 1
 #define MAX_KEEP_ALIVE_PROBE_LEN 1
 
-// target-based policy types - changes to this enum require changes to stream.h::TCP_POLICIES
-enum StreamPolicy : uint8_t
+// The normalizer policy options FIRST thru VISTA are user configurable normalizer polices and this sequence
+// must match with the configuration strings defined by TCP_POLICIES in stream.h.  The normalizer policy types 
+// defined after VISTA are determined dynamically and assigned to a flow when appropriate, they are not configurable.
+namespace Normalizer
 {
-    OS_FIRST = 0,
-    OS_LAST,
-    OS_LINUX,
-    OS_OLD_LINUX,
-    OS_BSD,
-    OS_MACOS,
-    OS_SOLARIS,
-    OS_IRIX,
-    OS_HPUX11,
-    OS_HPUX10,
-    OS_WINDOWS,
-    OS_WINDOWS2K3,
-    OS_VISTA,
-    OS_PROXY,
-    MISSED_3WHS,
-    OS_END_OF_LIST,
-    OS_DEFAULT = OS_BSD
-};
+    enum Policy : uint8_t
+    {
+        FIRST = 0,
+        LAST,
+        LINUX,
+        OLD_LINUX,
+        BSD,
+        MACOS,
+        SOLARIS,
+        IRIX,
+        HPUX11,
+        HPUX10,
+        WINDOWS,
+        WINDOWS2K3,
+        VISTA,
+        PROXY,
+        MISSED_3WHS,
+        MAX_NORM_POLICY,
+        DEFAULT = BSD
+    };
+}
 
 // increment operator...
-inline StreamPolicy& operator++(StreamPolicy& c, int)
+inline Normalizer::Policy& operator++(Normalizer::Policy& c, int)
 {
-    if ( c < StreamPolicy::OS_END_OF_LIST )
-        c = static_cast<StreamPolicy>( static_cast<int>(c) + 1 );
+    if ( c < Normalizer::Policy::MAX_NORM_POLICY )
+        c = static_cast<Normalizer::Policy>( static_cast<int>(c) + 1 );
     else
-        c = StreamPolicy::OS_END_OF_LIST;
+        c = Normalizer::Policy::MAX_NORM_POLICY;
+
+    return c;
+}
+
+// The overlap policy options FIRST thru VISTA are user configurable normalizer polices and this sequence
+// must match with the configuration strings defined by TCP_POLICIES in stream.h.  Note that the FIRST overlap
+// policy is configurable but is also the policy used for all flows when stream is configured to be in IPS mode.
+namespace Overlap
+{
+    enum Policy : uint8_t
+    {
+        FIRST = 0,
+        LAST,
+        LINUX,
+        OLD_LINUX,
+        BSD,
+        MACOS,
+        SOLARIS,
+        IRIX,
+        HPUX11,
+        HPUX10,
+        WINDOWS,
+        WINDOWS2K3,
+        VISTA,
+        MAX_OVERLAP_POLICY,
+        DEFAULT_POLICY = BSD
+    };
+}
+
+// increment operator...
+inline Overlap::Policy& operator++(Overlap::Policy& c, int)
+{
+    if ( c < Overlap::Policy::MAX_OVERLAP_POLICY )
+        c = static_cast<Overlap::Policy>( static_cast<int>(c) + 1 );
+    else
+        c = Overlap::Policy::MAX_OVERLAP_POLICY;
 
     return c;
 }

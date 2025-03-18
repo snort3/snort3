@@ -60,10 +60,12 @@ class StreamSplitter;
 #define IP_POLICIES  \
     "first | linux | bsd | bsd_right | last | windows | solaris"
 
-// sequence must match enum StreamPolicy defines in tcp_defs.h
+// This sequence defines the user configurable options for TCP normalization behavior and
+// TCP overlap resolution behavior.  The enums Normalizer::Policy and Overlap::Policy defined
+// in tcp_defs.h must match the order of the policy types defined here. 
 #define TCP_POLICIES \
     "first | last | linux | old_linux | bsd | macos | solaris | irix | " \
-    "hpux11 | hpux10 | windows | win_2003 | vista | proxy | asymmetric"
+    "hpux11 | hpux10 | windows | win_2003 | vista"
 
 struct AlertInfo
 {
