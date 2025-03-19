@@ -885,10 +885,14 @@ private:
     string kafka_topic;
     vector<JsonFunc> fields;
     char errstr[512];
-    rd_kafka_t *rk = nullptr;
-    rd_kafka_conf_t *conf = nullptr;
-    rd_kafka_topic_t *rkt = nullptr;
+    thread_local static rd_kafka_t *rk;
+    thread_local static rd_kafka_conf_t *conf;
+    thread_local static rd_kafka_topic_t *rkt;
 };
+
+thread_local rd_kafka_t *KafkaExporterStrategy::rk = nullptr;
+thread_local rd_kafka_conf_t *KafkaExporterStrategy::conf = nullptr;
+thread_local rd_kafka_topic_t *KafkaExporterStrategy::rkt = nullptr;
 
 class StdoutExporterStrategy : public  LogExporterBaseStrategy {
 public:
