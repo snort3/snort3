@@ -208,6 +208,7 @@ bool TextLog_Flush(TextLog* const txt)
     return false;
 }
 
+#ifdef HAVE_RDKAFKA
 /*-------------------------------------------------------------------
  * TextLog_GetBuffer: return txt->buf
  *-------------------------------------------------------------------
@@ -216,6 +217,7 @@ char* TextLog_GetBuffer(TextLog* const txt)
 {
     return txt->buf;
 }
+#endif
 /*-------------------------------------------------------------------
  * TextLog_Putc: append char to buffer
  *-------------------------------------------------------------------

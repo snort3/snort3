@@ -126,6 +126,10 @@ Optional Packages:
     --with-libml-libraries=DIR
                             libml library directory
     --without-libml         build Snort ML with mock of LibML
+    --with-librdkafka-includes=DIR
+                            librdkafka include directory
+    --with-librdkafka-libraries=DIR
+                            librdkafka library directory
     --with-libnuma-includes=DIR
                             libnuma include directory
     --with-libnuma-libraries=DIR
