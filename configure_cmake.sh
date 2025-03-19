@@ -130,6 +130,8 @@ Optional Packages:
                             librdkafka include directory
     --with-librdkafka-libraries=DIR
                             librdkafka library directory
+    --enable-alert-kafka=BOOL
+                            enable kafka alerts in alert_json plugin
     --with-libnuma-includes=DIR
                             libnuma include directory
     --with-libnuma-libraries=DIR
@@ -496,7 +498,10 @@ while [ $# -ne 0 ]; do
             append_cache_entry RDKAFKA_INCLUDE_DIR_HINT PATH $optarg
             ;;
         --with-librdkafka-libraries=*)
-            append_cache_entry  RDKAFKA_LIBRARIES_DIR_HINT PATH $optarg
+            append_cache_entry RDKAFKA_LIBRARIES_DIR_HINT PATH $optarg
+            ;;
+        --enable-alert-kafka)
+            append_cache_entry ENABLE_ALERT_KAFKA BOOL true
             ;;
         --without-libml)
             append_cache_entry USE_LIBML_MOCK BOOL true
