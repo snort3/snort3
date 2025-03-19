@@ -212,4 +212,12 @@ else ()
     LibML:          OFF")
 endif ()
 
+if (HAVE_RDKAFKA)
+    message("\
+    LIBRDKAFKA:      ON")
+else ()
+    message("\
+    LIBRDKAFKA:     OFF")
+endif ()
+
 message("-------------------------------------------------------\n")

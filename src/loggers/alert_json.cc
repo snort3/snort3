@@ -46,23 +46,27 @@
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 #include "protocols/vlan.h"
+#ifdef HAVE_RDKAFKA
 #include <librdkafka/rdkafka.h>
-
+#endif
 using namespace snort;
 using namespace std;
 
 #define LOG_BUFFER (4*K_BYTES)
 
+#ifdef HAVE_RDKAFKA
 #define EXPORT_TYPE_KAFKA "kafka"
+#endif
 #define EXPORT_TYPE_STDOUT "stdout"
 
 static THREAD_LOCAL TextLog* json_log;
 
 #define S_NAME "alert_json"
 #define F_NAME S_NAME ".txt"
+#ifdef HAVE_RDKAFKA
 #define D_TOPIC "rb_event"
 #define D_KAFKA_HOST "kafka.service:9092"
-
+#endif
 //-------------------------------------------------------------------------
 // field formatting functions
 //-------------------------------------------------------------------------
@@ -705,7 +709,7 @@ static const Parameter s_params[] =
 {
     { "file", Parameter::PT_BOOL, nullptr, "false",
       "output to " F_NAME " instead of stdout" },
-
+#ifdef HAVE_RDKAFKA
     {"kafka_topic", Parameter::PT_STRING, nullptr, D_TOPIC,
         "send data to topic " D_TOPIC},
 
@@ -714,7 +718,7 @@ static const Parameter s_params[] =
 
     { "type", Parameter::PT_STRING, nullptr, EXPORT_TYPE_STDOUT,
       "Default export type" },
-
+#endif
     { "fields", Parameter::PT_MULTI, json_range, json_deflt,
       "selected fields will be output in given order left to right" },
 
@@ -743,9 +747,11 @@ public:
 
 public:
     bool file = false;
+#ifdef HAVE_RDKAFKA
     string kafka_broker;
     string kafka_topic;
     string type;
+#endif
     size_t limit = 0;
     string sep;
     vector<JsonFunc> fields;
@@ -753,6 +759,7 @@ public:
 
 bool JsonModule::set(const char*, Value& v, SnortConfig*)
 {
+#ifdef HAVE_RDKAFKA
     if ( v.is("type") )
         type = v.get_string();
 
@@ -761,7 +768,7 @@ bool JsonModule::set(const char*, Value& v, SnortConfig*)
 
     if (v.is("kafka_topic"))
         kafka_topic = v.get_string();
-
+#endif
     if ( v.is("file") )
         file = v.get_bool();
 
@@ -822,6 +829,7 @@ public:
     virtual void alert(Packet *p, const char *msg, const Event &event) = 0;
 };
 
+#ifdef HAVE_RDKAFKA
 class KafkaExporterStrategy : public LogExporterBaseStrategy {
 public:
     KafkaExporterStrategy(const string& broker, const string& topic, vector<JsonFunc> fields)
@@ -893,6 +901,7 @@ private:
 thread_local rd_kafka_t *KafkaExporterStrategy::rk = nullptr;
 thread_local rd_kafka_conf_t *KafkaExporterStrategy::conf = nullptr;
 thread_local rd_kafka_topic_t *KafkaExporterStrategy::rkt = nullptr;
+#endif
 
 class StdoutExporterStrategy : public  LogExporterBaseStrategy {
 public:
@@ -934,9 +943,11 @@ private:
 class LogExporterFactory {
 public:
     static unique_ptr<LogExporterBaseStrategy> create(JsonModule* m) {
+#ifdef HAVE_RDKAFKA
         if(m->type == EXPORT_TYPE_KAFKA) {
             return make_unique<KafkaExporterStrategy>(m->kafka_broker, m->kafka_topic, m->fields);
         }
+#endif
         return make_unique<StdoutExporterStrategy>(m->file, m->limit, m->fields);
     }
 };

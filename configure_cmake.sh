@@ -488,6 +488,12 @@ while [ $# -ne 0 ]; do
         --with-libml-libraries=*)
             append_cache_entry ML_LIBRARIES_DIR_HINT PATH $optarg
             ;;
+        --with-librdkafka-includes=*)
+            append_cache_entry RDKAFKA_INCLUDE_DIR_HINT PATH $optarg
+            ;;
+        --with-librdkafka-libraries=*)
+            append_cache_entry  RDKAFKA_LIBRARIES_DIR_HINT PATH $optarg
+            ;;
         --without-libml)
             append_cache_entry USE_LIBML_MOCK BOOL true
             ;;

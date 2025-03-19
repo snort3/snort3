@@ -8,19 +8,16 @@ else()
     message(WARNING "librdkafka not found using pkg-config. Ensure it is installed.")
 endif()
 
-# Attempt to find the include directory
 find_path(RDKAFKA_INCLUDE_DIR
     NAMES rdkafka.h
-    HINTS ${PC_RDKAFKA_INCLUDEDIR} ${CMAKE_SOURCE_DIR}/include /usr/include/librdkafka /usr/local/include
+    HINTS ${RDKAFKA_INCLUDE_DIR_HINT} ${PC_RDKAFKA_INCLUDEDIR} ${CMAKE_SOURCE_DIR}/include /usr/include/librdkafka /usr/local/include
 )
 
-# Attempt to find the library
 find_library(RDKAFKA_LIBRARY
     NAMES rdkafka
-    HINTS ${PC_RDKAFKA_LIBDIR} ${CMAKE_SOURCE_DIR}/lib /usr/lib /usr/local/lib
+    HINTS ${RDKAFKA_INCLUDE_LIB_HINT} ${PC_RDKAFKA_LIBDIR} ${CMAKE_SOURCE_DIR}/lib /usr/lib /usr/local/lib
 )
 
-# Check if we found the library and include directory
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
     Rdkafka
@@ -28,6 +25,7 @@ find_package_handle_standard_args(
 )
 
 if (RDKAFKA_FOUND)
+    set(HAVE_RDKAFKA TRUE)
     message(STATUS "librdkafka found: ${RDKAFKA_LIBRARIES}")
 else()
     message(FATAL_ERROR "librdkafka not found! Please ensure the library is installed.")
