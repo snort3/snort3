@@ -186,6 +186,7 @@ static void TextLog_Roll(TextLog* const txt)
  * TextLog_Flush: write buffered stream to file
  *-------------------------------------------------------------------
  */
+
 bool TextLog_Flush(TextLog* const txt)
 {
     int ok;
@@ -207,6 +208,14 @@ bool TextLog_Flush(TextLog* const txt)
     return false;
 }
 
+/*-------------------------------------------------------------------
+ * TextLog_GetBuffer: return txt->buf
+ *-------------------------------------------------------------------
+ */
+char* TextLog_GetBuffer(TextLog* const txt)
+{
+    return txt->buf;
+}
 /*-------------------------------------------------------------------
  * TextLog_Putc: append char to buffer
  *-------------------------------------------------------------------
