@@ -1,4 +1,4 @@
-find_package(PkgConfig REQUIRED)
+find_package(PkgConfig)
 pkg_check_modules(PC_RDKAFKA rdkafka)
 
 if(NOT DEFINED RDKAFKA_INCLUDE_DIR_HINT)
