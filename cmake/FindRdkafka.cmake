@@ -27,8 +27,6 @@ find_package_handle_standard_args(
 if (RDKAFKA_FOUND)
     set(HAVE_RDKAFKA TRUE)
     message(STATUS "librdkafka found: ${RDKAFKA_LIBRARIES}")
-else()
-    message(FATAL_ERROR "librdkafka not found! Please ensure the library is installed.")
 endif()
 
 mark_as_advanced(
