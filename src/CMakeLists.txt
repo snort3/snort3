@@ -8,7 +8,6 @@ set(EXTERNAL_LIBRARIES
     ${CMAKE_THREAD_LIBS_INIT} # GCC says we must link to the threads library
     ${HWLOC_LIBRARIES}
     ${LUAJIT_LIBRARIES}
-    ${RDKAFKA_LIBRARIES}
     ${OPENSSL_CRYPTO_LIBRARY}
     ${PCAP_LIBRARIES}
     ${PCRE2_LIBRARIES}
