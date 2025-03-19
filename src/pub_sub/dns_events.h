@@ -71,9 +71,16 @@ public:
     void get_dns_data(IPFqdnCacheItem& ip_fqdn_cache_item);
     bool empty() const;
 
+    const Packet* get_packet() const override
+    { return packet; }
+
+    void set_packet(Packet* p)
+    { packet = p; }
+
 private:
     std::vector<DnsResponseIp> dns_ips;
     std::vector<DnsResponseFqdn> dns_fqdns;
+    Packet* packet = nullptr;
 };
 
 class SO_PUBLIC DnsResponseEvent : public snort::DataEvent

@@ -95,8 +95,9 @@ static DNSData* SetNewDNSData(Packet* p)
         return nullptr;
 
     fd = new DnsFlowData;
-
+    fd->session.dns_events.set_packet(p);
     p->flow->set_flow_data(fd);
+
     return &fd->session;
 }
 
@@ -147,12 +148,17 @@ DNSData* get_dns_session_data(Packet* p, bool from_server, DNSData& udpSessionDa
             if (p->dsize < (sizeof(DNSHdr)))
                 return nullptr;
         }
-
+        udpSessionData.dns_events.set_packet(p);
         return &udpSessionData;
     }
 
     fd = (DnsFlowData*)((p->flow)->get_flow_data(DnsFlowData::inspector_id));
-    return fd ? &fd->session : nullptr;
+    if (fd)
+    {
+        fd->session.dns_events.set_packet(p);
+        return &fd->session;
+    }
+    return nullptr;
 }
 
 static uint16_t ParseDNSHeader(
