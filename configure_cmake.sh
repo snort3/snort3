@@ -130,7 +130,7 @@ Optional Packages:
                             librdkafka include directory
     --with-librdkafka-libraries=DIR
                             librdkafka library directory
-    --enable-alert-kafka=BOOL
+    --enable-alert-kafka
                             enable kafka alerts in alert_json plugin
     --with-libnuma-includes=DIR
                             libnuma include directory
