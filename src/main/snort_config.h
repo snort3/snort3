@@ -381,6 +381,7 @@ public:
     std::string tweaks;
 
     DataBus* global_dbus = nullptr;
+    MPDataBus* mp_dbus = nullptr;
 
     uint16_t tunnel_mask = 0;
 

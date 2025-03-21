@@ -14,6 +14,7 @@ set (FRAMEWORK_INCLUDES
     ips_option.h
     logger.h
     module.h
+    mp_data_bus.h
     mpse.h
     mpse_batch.h
     parameter.h
@@ -40,6 +41,7 @@ add_library ( framework OBJECT
     parameter.cc
     pig_pen.cc
     module.cc
+    mp_data_bus.cc
     mpse.cc
     mpse_batch.cc
     range.cc

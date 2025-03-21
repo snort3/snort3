@@ -40,6 +40,7 @@ typedef unsigned char uuid_t[16];
 #include <vector>
 
 #include "framework/data_bus.h"
+#include "framework/mp_data_bus.h"
 
 namespace snort
 {

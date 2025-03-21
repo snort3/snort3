@@ -568,6 +568,8 @@ SnortConfig* Snort::get_updated_policy(
 
     SnortConfig* sc = new SnortConfig(other_conf, iname);
     sc->global_dbus->clone(*other_conf->global_dbus, iname);
+    if (sc->max_procs > 1)
+        sc->mp_dbus->clone(*other_conf->mp_dbus, iname);
 
     if ( fname )
     {
