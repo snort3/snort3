@@ -1,0 +1,39 @@
+Implements a connector plugin that reads and writes messages across a IPC
+stream channel using Unix Domain sockets.
+
+Each connector implements a duplex channel, both transmit and receive. When used
+by a side_channel object, a single UnixDomainConnector object is used for both the
+transmit and receive connectors.
+
+An additional UnixDomainConnector message header is pre-pended to each message transmitted.
+This header specifies the protocol format version and the length of the message.
+This length does not include the unixdomain connector message header, but does include the
+user's message header.
+
+The unixdomain_connector Connector configuration results in ONE ConnectorCommon
+object which is used to contain a list of all Connectors being configured.
+A vector<> in the ConnectorCommon object holds individual Connector config
+objects.  The ConnectorManager then uses this vector<> to instantiate the
+set of desired Connectors.
+
+UnixDomain connector configuration includes a partner path, connection retries flag,
+retry interval, maximum number of retries, connection setup direction. If the 'paths' list 
+contains more than one path,
+the "per-thread" destination mode will be assumed. In this mode, each thread
+will connect to a corresponding destination path by selecting a path
+from the list based on the instance_id.
+
+The call setup depends on the conn_retries flag. If this flag is set to true, the system will 
+repeatedly attempt to connect to the remote endpoint at intervals specified by retry_interval,
+which defaults to 4 seconds, until a specified maximum number of retry
+attempts has been reached. The maximum number of retry attempts is determined by the
+max_retries configuration parameter, which defaults to 5.
+
+A UnixDomain connector can be either the active partner and initiate the stream channel connection
+or can be the passive partner and expect to be called by the active side.  This
+is controlled by the 'setup' configuration element.
+
+Receive messages are managed via separate thread and ring buffer queue structure.
+The thread's purpose is to read messages from the stream and insert them into the queue.
+Then the packet processing thread is able to read a whole message from the queue.
+

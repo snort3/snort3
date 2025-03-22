@@ -61,6 +61,7 @@ struct SO_PUBLIC Parameter
         PT_INT_LIST,   // string that contains ints
         PT_ADDR_LIST,  // Snort 2 ip list in [ ]
         PT_IMPLIED,    // rule option args w/o values eg relative
+        PT_STR_LIST,   // string that contains strings
         PT_MAX
     };
     const char* name;

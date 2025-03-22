@@ -87,6 +87,7 @@ Table of Contents
     4.1. file_connector
     4.2. std_connector
     4.3. tcp_connector
+    4.4. unixdomain_connector
 
 5. Inspector Modules
 
@@ -2634,6 +2635,31 @@ Peg counts:
 
   * tcp_connector.messages: total messages (sum)
 
+
+4.4. unixdomain_connector
+
+--------------
+
+Help: implement the unix domain stream connector
+
+Type: connector
+
+Usage: global
+
+Configuration:
+
+  * string unixdomain_connector[].connector: connector name
+  * str_list unixdomain_connector[].paths: list of paths to the remote
+    end-points
+  * bool unixdomain_connector[].conn_retries: retries to establish connection 
+    enabled or not
+  * enum unixdomain_connector[].setup: stream establishment { call | answer}
+  * int unixdomain_connector[].retry_interval: retry interval in seconds
+  * int unixdomain_connector[].max_retries: maximum number of retries
+
+Peg counts:
+
+  * unixdomain_connector.messages: total messages (sum)
 
 ---------------------------------------------------------------------
 

@@ -43,6 +43,8 @@ public:
 
     static void instantiate(const snort::ConnectorApi*, snort::Module*, snort::SnortConfig*);
     static snort::Connector::Direction is_instantiated(const std::string& name);
+    static void update_thread_connector(const std::string& connector_name, int instance_id, snort::Connector* connector);
+
 
     static void thread_init();
     static void thread_reinit();

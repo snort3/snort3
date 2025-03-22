@@ -114,6 +114,25 @@ Connector* ConnectorManager::get_connector(const std::string& connector_name)
     return ( nullptr );
 }
 
+void ConnectorManager::update_thread_connector(const std::string& connector_name, int instance_id, snort::Connector* connector)
+{
+    for (auto& sc : s_connector_commons)
+    {
+        auto connector_ptr = sc.connectors.find(connector_name);
+
+        if (connector_ptr != sc.connectors.end())
+        {
+            if (connector_ptr->second.thread_connectors[instance_id]) {
+                if (connector != connector_ptr->second.thread_connectors[instance_id])
+                    sc.api->tterm(connector_ptr->second.thread_connectors[instance_id]);
+            }
+            
+            connector_ptr->second.thread_connectors[instance_id] = connector;
+            break;
+        }
+    }
+}
+
 void ConnectorManager::thread_init()
 {
     unsigned instance = get_instance_id();

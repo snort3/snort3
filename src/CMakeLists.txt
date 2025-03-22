@@ -197,6 +197,7 @@ add_executable( snort
     $<TARGET_OBJECTS:stream_paf>
     $<TARGET_OBJECTS:target_based>
     $<TARGET_OBJECTS:tcp_connector>
+    $<TARGET_OBJECTS:unixdomain_connector>
     $<TARGET_OBJECTS:time>
     $<TARGET_OBJECTS:trace>
     $<TARGET_OBJECTS:utils>

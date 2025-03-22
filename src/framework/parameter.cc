@@ -533,6 +533,26 @@ static bool valid_int_list(Value& v, const char* r)
     return true;
 }
 
+
+
+static bool valid_str_list(Value& v, const char* r)
+{
+    if ( v.get_type() != Value::VT_STR )
+        return false;
+
+    string pl = v.get_string();
+    vector<string> list;
+    split(pl, list);
+
+    for (const auto& p : list)
+    {
+        Value val(p.c_str());
+        if (!valid_string(val, r)) // valid_str
+            return false;
+    }
+    return true;
+}
+
 //--------------------------------------------------------------------------
 // Parameter methods
 //--------------------------------------------------------------------------
@@ -591,6 +611,9 @@ bool Parameter::validate(Value& v) const
     case PT_IMPLIED:
         return true;
 
+    case PT_STR_LIST:
+        return valid_str_list(v, (const char*)range);
+
     default:
         break;
     }
@@ -603,7 +626,8 @@ static const char* const pt2str[Parameter::PT_MAX] =
     "bool", "int", "interval", "real", "port",
     "string", "select", "multi", "enum",
     "mac", "ip4", "addr",
-    "bit_list", "int_list", "addr_list", "implied"
+    "bit_list", "int_list", "addr_list", "implied",
+    "str_list"
 };
 
 const char* Parameter::get_type() const
@@ -950,6 +974,11 @@ string_tests[] =
     { false, valid_int_list, "65535", "1" },
     { false, valid_int_list, "1", "0" },
     { true, valid_int_list, "0", "0" },
+
+    { true, valid_str_list, "/tmp/file_path1", nullptr },
+    { true, valid_str_list, "/tmp/file_path1 /tmp/file_path2", "100" },
+    { false, valid_str_list, "green", "4" },
+    { false, valid_str_list, "/file_path3", "1" },
 
     { false, nullptr, nullptr, nullptr }
 // __STRDUMP_ENABLE__
