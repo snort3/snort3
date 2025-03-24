@@ -287,7 +287,7 @@ void TcpSession::check_flow_missed_3whs()
 
 void TcpSession::set_os_policy()
 {
-    assert(tcp_config->policy <= Normalizer::Policy::VISTA);
+    assert(tcp_config->policy <= Normalizer::Policy::OS_VISTA);
 
     Normalizer::Policy client_norm_policy = flow->ssn_policy ?
         static_cast<Normalizer::Policy>( flow->ssn_policy ) : tcp_config->policy;

@@ -66,21 +66,21 @@ namespace Normalizer
     {
         FIRST = 0,
         LAST,
-        LINUX,
-        OLD_LINUX,
-        BSD,
-        MACOS,
-        SOLARIS,
-        IRIX,
-        HPUX11,
-        HPUX10,
-        WINDOWS,
-        WINDOWS2K3,
-        VISTA,
+        OS_LINUX,
+        OS_OLD_LINUX,
+        OS_BSD,
+        OS_MACOS,
+        OS_SOLARIS,
+        OS_IRIX,
+        OS_HPUX11,
+        OS_HPUX10,
+        OS_WINDOWS,
+        OS_WINDOWS2K3,
+        OS_VISTA,
         PROXY,
         MISSED_3WHS,
         MAX_NORM_POLICY,
-        DEFAULT = BSD
+        DEFAULT = OS_BSD
     };
 }
 
@@ -104,19 +104,19 @@ namespace Overlap
     {
         FIRST = 0,
         LAST,
-        LINUX,
-        OLD_LINUX,
-        BSD,
-        MACOS,
-        SOLARIS,
-        IRIX,
-        HPUX11,
-        HPUX10,
-        WINDOWS,
-        WINDOWS2K3,
-        VISTA,
+        OS_LINUX,
+        OS_OLD_LINUX,
+        OS_BSD,
+        OS_MACOS,
+        OS_SOLARIS,
+        OS_IRIX,
+        OS_HPUX11,
+        OS_HPUX10,
+        OS_WINDOWS,
+        OS_WINDOWS2K3,
+        OS_VISTA,
         MAX_OVERLAP_POLICY,
-        DEFAULT_POLICY = BSD
+        DEFAULT_POLICY = OS_BSD
     };
 }
 

@@ -108,7 +108,7 @@ TEST(tcp_normalizers, norm_policy)
     TcpSession* session = new TcpSessionMock( flow );
     TcpNormalizerState tns;
 
-    for( norm_policy = Normalizer::Policy::OS_FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
+    for( norm_policy = Normalizer::Policy::FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
     {
         TcpNormalizer* normalizer = TcpNormalizerFactory::create(
             tns, norm_policy, session, session->client, session->server);
@@ -127,14 +127,14 @@ TEST(tcp_normalizers, paws_fudge_config)
     TcpSession* session = new TcpSessionMock( flow );
     TcpNormalizerState tns;
 
-    for( norm_policy = Normalizer::Policy::OS_FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
+    for( norm_policy = Normalizer::Policy::FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
     {
         TcpNormalizer* normalizer = TcpNormalizerFactory::create(
             tns, norm_policy, session, session->client, session->server);
 
         switch ( norm_policy )
         {
-        case Normalizer::Policy::LINUX:
+        case Normalizer::Policy::OS_LINUX:
             CHECK( normalizer.get_paws_ts_fudge(tns) == 1 );
             break;
 
@@ -155,18 +155,18 @@ TEST(tcp_normalizers, paws_drop_zero_ts_config)
     TcpSession* session = new TcpSessionMock( flow );
     TcpNormalizerState tns;
 
-    for( norm_policy = Normalizer::Policy::OS_FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
+    for( norm_policy = Normalizer::Policy::FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
     {
         TcpNormalizer* normalizer = TcpNormalizerFactory::create(
             tns, norm_policy, session, session->client, session->server );
 
         switch ( norm_policy )
         {
-        case Normalizer::Policy::OLD_LINUX:
-        case Normalizer::Policy::SOLARIS:
-        case Normalizer::Policy::WINDOWS:
-        case Normalizer::Policy::WINDOWS2K3:
-        case Normalizer::Policy::VISTA:
+        case Normalizer::Policy::OS_OLD_LINUX:
+        case Normalizer::Policy::OS_SOLARIS:
+        case Normalizer::Policy::OS_WINDOWS:
+        case Normalizer::Policy::OS_WINDOWS2K3:
+        case Normalizer::Policy::OS_VISTA:
             CHECK( !normalizer.is_paws_drop_zero_ts(tns) );
             break;
 
@@ -187,7 +187,7 @@ TEST(tcp_normalizers, norm_options_enabled)
     TcpSession* session = new TcpSessionMock( flow );
 
     norm_enabled = true;
-    for( norm_policy = Normalizer::Policy::OS_FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
+    for( norm_policy = Normalizer::Policy::FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
     {
         TcpNormalizerState tns;
         TcpNormalizer* normalizer = TcpNormalizerFactory::create(
@@ -204,7 +204,7 @@ TEST(tcp_normalizers, norm_options_enabled)
     }
 
     norm_enabled = false;
-    for( norm_policy = Normalizer::Policy::OS_FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
+    for( norm_policy = Normalizer::Policy::FIRST; norm_policy < Normalizer::Policy::MAX_NORM_POLICY; ++norm_policy )
     {
         TcpNormalizerState tns;
         TcpNormalizer* normalizer = TcpNormalizerFactory::create(

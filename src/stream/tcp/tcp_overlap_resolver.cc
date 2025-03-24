@@ -492,7 +492,7 @@ class TcpOverlapResolverLinux : public TcpOverlapResolver
 {
 public:
     TcpOverlapResolverLinux()
-    { overlap_policy = Overlap::Policy::LINUX; }
+    { overlap_policy = Overlap::Policy::OS_LINUX; }
 
 private:
     void insert_left_overlap(TcpOverlapState& tos) override
@@ -509,7 +509,7 @@ class TcpOverlapResolverOldLinux : public TcpOverlapResolver
 {
 public:
     TcpOverlapResolverOldLinux()
-    { overlap_policy = Overlap::Policy::OLD_LINUX; }
+    { overlap_policy = Overlap::Policy::OS_OLD_LINUX; }
 
 private:
     void insert_left_overlap(TcpOverlapState& tos) override
@@ -526,7 +526,7 @@ class TcpOverlapResolverBSD : public TcpOverlapResolver
 {
 public:
     TcpOverlapResolverBSD()
-    { overlap_policy = Overlap::Policy::BSD; }
+    { overlap_policy = Overlap::Policy::OS_BSD; }
 
 private:
     void insert_left_overlap(TcpOverlapState& tos) override
@@ -543,7 +543,7 @@ class TcpOverlapResolverMacOS : public TcpOverlapResolver
 {
 public:
     TcpOverlapResolverMacOS()
-    { overlap_policy = Overlap::Policy::MACOS; }
+    { overlap_policy = Overlap::Policy::OS_MACOS; }
 
 private:
     void insert_left_overlap(TcpOverlapState& tos) override
@@ -560,7 +560,7 @@ class TcpOverlapResolverSolaris : public TcpOverlapResolver
 {
 public:
     TcpOverlapResolverSolaris()
-    { overlap_policy = Overlap::Policy::SOLARIS; }
+    { overlap_policy = Overlap::Policy::OS_SOLARIS; }
 
 private:
     void insert_left_overlap(TcpOverlapState& tos) override
@@ -577,7 +577,7 @@ class TcpOverlapResolverIrix : public TcpOverlapResolver
 {
 public:
     TcpOverlapResolverIrix()
-    { overlap_policy = Overlap::Policy::IRIX; }
+    { overlap_policy = Overlap::Policy::OS_IRIX; }
 
 private:
     void insert_left_overlap(TcpOverlapState& tos) override
@@ -594,7 +594,7 @@ class TcpOverlapResolverHpux11 : public TcpOverlapResolver
 {
 public:
     TcpOverlapResolverHpux11()
-    { overlap_policy = Overlap::Policy::HPUX11; }
+    { overlap_policy = Overlap::Policy::OS_HPUX11; }
 
 private:
     void insert_left_overlap(TcpOverlapState& tos) override
@@ -611,7 +611,7 @@ class TcpOverlapResolverHpux10 : public TcpOverlapResolver
 {
 public:
     TcpOverlapResolverHpux10()
-    { overlap_policy = Overlap::Policy::HPUX10; }
+    { overlap_policy = Overlap::Policy::OS_HPUX10; }
 
 private:
     void insert_left_overlap(TcpOverlapState& tos) override
@@ -628,7 +628,7 @@ class TcpOverlapResolverWindows : public TcpOverlapResolver
 {
 public:
     TcpOverlapResolverWindows()
-    { overlap_policy = Overlap::Policy::WINDOWS; }
+    { overlap_policy = Overlap::Policy::OS_WINDOWS; }
 
 private:
     void insert_left_overlap(TcpOverlapState& tos) override
@@ -645,7 +645,7 @@ class TcpOverlapResolverWindows2K3 : public TcpOverlapResolver
 {
 public:
     TcpOverlapResolverWindows2K3()
-    { overlap_policy = Overlap::Policy::WINDOWS2K3; }
+    { overlap_policy = Overlap::Policy::OS_WINDOWS2K3; }
 
 private:
     void insert_left_overlap(TcpOverlapState& tos) override
@@ -662,7 +662,7 @@ class TcpOverlapResolverVista : public TcpOverlapResolver
 {
 public:
     TcpOverlapResolverVista()
-    { overlap_policy = Overlap::Policy::VISTA; }
+    { overlap_policy = Overlap::Policy::OS_VISTA; }
 
 private:
     void insert_left_overlap(TcpOverlapState& tos) override
@@ -681,17 +681,17 @@ void TcpOverlapResolverFactory::initialize()
 {
     overlap_resolvers[Overlap::Policy::FIRST] = new TcpOverlapResolverFirst;
     overlap_resolvers[Overlap::Policy::LAST] = new TcpOverlapResolverLast;
-    overlap_resolvers[Overlap::Policy::LINUX] = new TcpOverlapResolverLinux;
-    overlap_resolvers[Overlap::Policy::OLD_LINUX] = new TcpOverlapResolverOldLinux;
-    overlap_resolvers[Overlap::Policy::BSD] = new TcpOverlapResolverBSD;
-    overlap_resolvers[Overlap::Policy::MACOS] = new TcpOverlapResolverMacOS;
-    overlap_resolvers[Overlap::Policy::SOLARIS] = new TcpOverlapResolverSolaris;
-    overlap_resolvers[Overlap::Policy::IRIX] = new TcpOverlapResolverIrix;
-    overlap_resolvers[Overlap::Policy::HPUX11] = new TcpOverlapResolverHpux11;
-    overlap_resolvers[Overlap::Policy::HPUX10] = new TcpOverlapResolverHpux10;
-    overlap_resolvers[Overlap::Policy::WINDOWS] = new TcpOverlapResolverWindows;
-    overlap_resolvers[Overlap::Policy::WINDOWS2K3] = new TcpOverlapResolverWindows2K3;
-    overlap_resolvers[Overlap::Policy::VISTA] = new TcpOverlapResolverVista;
+    overlap_resolvers[Overlap::Policy::OS_LINUX] = new TcpOverlapResolverLinux;
+    overlap_resolvers[Overlap::Policy::OS_OLD_LINUX] = new TcpOverlapResolverOldLinux;
+    overlap_resolvers[Overlap::Policy::OS_BSD] = new TcpOverlapResolverBSD;
+    overlap_resolvers[Overlap::Policy::OS_MACOS] = new TcpOverlapResolverMacOS;
+    overlap_resolvers[Overlap::Policy::OS_SOLARIS] = new TcpOverlapResolverSolaris;
+    overlap_resolvers[Overlap::Policy::OS_IRIX] = new TcpOverlapResolverIrix;
+    overlap_resolvers[Overlap::Policy::OS_HPUX11] = new TcpOverlapResolverHpux11;
+    overlap_resolvers[Overlap::Policy::OS_HPUX10] = new TcpOverlapResolverHpux10;
+    overlap_resolvers[Overlap::Policy::OS_WINDOWS] = new TcpOverlapResolverWindows;
+    overlap_resolvers[Overlap::Policy::OS_WINDOWS2K3] = new TcpOverlapResolverWindows2K3;
+    overlap_resolvers[Overlap::Policy::OS_VISTA] = new TcpOverlapResolverVista;
 }
 
 void TcpOverlapResolverFactory::term()

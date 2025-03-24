@@ -38,7 +38,7 @@ class TcpNormalizerFirst : public TcpNormalizer
 {
 public:
     TcpNormalizerFirst()
-    { my_name = "OS_First"; }
+    { my_name = "First"; }
 
 
     int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
@@ -48,7 +48,7 @@ class TcpNormalizerLast : public TcpNormalizer
 {
 public:
     TcpNormalizerLast()
-    { my_name = "OS_Last"; }
+    { my_name = "Last"; }
 
 
     int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
@@ -558,17 +558,17 @@ void TcpNormalizerFactory::initialize()
 {
     normalizers[Normalizer::Policy::FIRST] = new TcpNormalizerFirst;
     normalizers[Normalizer::Policy::LAST] = new TcpNormalizerLast;
-    normalizers[Normalizer::Policy::LINUX] = new TcpNormalizerLinux;
-    normalizers[Normalizer::Policy::OLD_LINUX] = new TcpNormalizerOldLinux;
-    normalizers[Normalizer::Policy::BSD] = new TcpNormalizerBSD;
-    normalizers[Normalizer::Policy::MACOS] = new TcpNormalizerMacOS;
-    normalizers[Normalizer::Policy::SOLARIS] = new TcpNormalizerSolaris;
-    normalizers[Normalizer::Policy::IRIX] = new TcpNormalizerIrix;
-    normalizers[Normalizer::Policy::HPUX11] = new TcpNormalizerHpux11;
-    normalizers[Normalizer::Policy::HPUX10] = new TcpNormalizerHpux10;
-    normalizers[Normalizer::Policy::WINDOWS] = new TcpNormalizerWindows;
-    normalizers[Normalizer::Policy::WINDOWS2K3] = new TcpNormalizerWindows2K3;
-    normalizers[Normalizer::Policy::VISTA] = new TcpNormalizerVista;
+    normalizers[Normalizer::Policy::OS_LINUX] = new TcpNormalizerLinux;
+    normalizers[Normalizer::Policy::OS_OLD_LINUX] = new TcpNormalizerOldLinux;
+    normalizers[Normalizer::Policy::OS_BSD] = new TcpNormalizerBSD;
+    normalizers[Normalizer::Policy::OS_MACOS] = new TcpNormalizerMacOS;
+    normalizers[Normalizer::Policy::OS_SOLARIS] = new TcpNormalizerSolaris;
+    normalizers[Normalizer::Policy::OS_IRIX] = new TcpNormalizerIrix;
+    normalizers[Normalizer::Policy::OS_HPUX11] = new TcpNormalizerHpux11;
+    normalizers[Normalizer::Policy::OS_HPUX10] = new TcpNormalizerHpux10;
+    normalizers[Normalizer::Policy::OS_WINDOWS] = new TcpNormalizerWindows;
+    normalizers[Normalizer::Policy::OS_WINDOWS2K3] = new TcpNormalizerWindows2K3;
+    normalizers[Normalizer::Policy::OS_VISTA] = new TcpNormalizerVista;
     normalizers[Normalizer::Policy::PROXY] = new TcpNormalizerProxy;
     normalizers[Normalizer::Policy::MISSED_3WHS] = new TcpNormalizerMissed3whs;
 }

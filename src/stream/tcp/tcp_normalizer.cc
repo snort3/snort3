@@ -437,7 +437,7 @@ int TcpNormalizer::validate_paws(
         tns.session->tel.set_tcp_event(EVENT_NO_TIMESTAMP);
 
         /* Ignore the timestamp for this first packet, next one will checked. */
-        if ( tns.session->tcp_config->policy == Normalizer::Policy::SOLARIS )
+        if ( tns.session->tcp_config->policy == Normalizer::Policy::OS_SOLARIS )
             tns.tracker->clear_tf_flags(TF_TSTAMP);
 
         packet_dropper(tns, tsd, NORM_TCP_OPT);

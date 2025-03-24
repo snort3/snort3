@@ -133,7 +133,7 @@ bool TcpStateFinWait1::check_for_window_slam(TcpSegmentDescriptor& tsd, TcpStrea
 {
     if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt() ) )
     {
-        if ( (trk.normalizer.get_norm_policy() == Normalizer::Policy::WINDOWS)
+        if ( (trk.normalizer.get_norm_policy() == Normalizer::Policy::OS_WINDOWS)
             && (tsd.get_wnd() == 0))
         {
             trk.session->tel.set_tcp_event(EVENT_WINDOW_SLAM);
