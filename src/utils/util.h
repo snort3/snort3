@@ -65,7 +65,6 @@
 
 unsigned int get_random_seed();
 bool get_file_size(const std::string&, size_t&);
-bool is_directory_path(const std::string&);
 
 namespace
 {
@@ -119,6 +118,7 @@ SO_PUBLIC std::string int_vector_to_str(const std::vector<uint32_t>& elems, char
 SO_PUBLIC bool rotate_file_for_max_size(const char* file_owner, const char* old_file,
     FILE* old_fh, uint32_t max_file_size);
 SO_PUBLIC bool check_file_size(FILE* fh, uint64_t max_file_size);
+SO_PUBLIC bool is_directory_path(const std::string&);
 }
 
 #endif

@@ -85,6 +85,8 @@ bool get_file_size(const std::string& path, size_t& size)
     return true;
 }
 
+namespace snort
+{
 bool is_directory_path(const std::string& path)
 {
     struct STAT sb;
@@ -95,8 +97,6 @@ bool is_directory_path(const std::string& path)
     return ISDIR(sb.st_mode);
 }
 
-namespace snort
-{
 const char* get_error(int errnum)
 {
     static THREAD_LOCAL char buf[128];

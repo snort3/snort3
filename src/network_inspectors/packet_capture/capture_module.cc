@@ -24,7 +24,6 @@
 
 #include "capture_module.h"
 
-#include <filesystem>
 #include <lua.hpp>
 
 #include "control/control.h"
@@ -254,7 +253,7 @@ PegCount* CaptureModule::get_counts() const
 
 bool is_path_valid(const std::string& path)
 {
-  if ( !std::filesystem::exists(path) )
+  if ( !is_directory_path(path) )
   {
     WarningMessage("Cannot create pcap at %s; directory does not exist\n", path.c_str());
     return false;
