@@ -25,6 +25,7 @@
 
 #include <cmath>
 #include <daq.h>
+#include <openssl/crypto.h>
 #include <sys/stat.h>
 #include <syslog.h>
 
@@ -118,6 +119,8 @@ void Snort::init(int argc, char** argv)
     DataBus::init();
 
     DetectionEngine::init();
+
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, nullptr);
 
     load_actions();
     load_codecs();
