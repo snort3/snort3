@@ -28,6 +28,8 @@
 #include <mutex>
 #include <pwd.h>
 #include <syslog.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <unordered_map>
 
 #include "actions/ips_actions.h"
@@ -219,6 +221,8 @@ static void generate_config_dump(std::list<ConfigData*> *config_data, time_t tim
 {
     ++threads_cnt;
 
+    file_name += "_";
+    file_name += std::to_string(getpid());
     file_name += "_";
     file_name += std::to_string(timestamp);
     file_name += "_";

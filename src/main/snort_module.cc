@@ -435,7 +435,7 @@ static const Parameter s_params[] =
       "enable features used in testing" },
 
     { "--gen-dump-config", Parameter::PT_STRING, nullptr, nullptr,
-      "<file> dump configuration to <file_timestamp> during startup and configuration reload" },
+      "<file> dump configuration to a file during startup and configuration reload" },
 
     { "--gen-msg-map", Parameter::PT_IMPLIED, nullptr, nullptr,
       "dump configured rules in gen-msg.map format for use by other tools" },

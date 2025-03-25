@@ -10,9 +10,8 @@ The dump mode is activated by the following options:
 --dump-config-text, --dump-config=all, --dump-config=top.
 They are described in detail below.
 
-The --gen-dump-config <file> option enables Snort to generate a dump
-configuration file with a timestamp and config generation ID
-during startup and reload.
+The --gen-dump-config <file> option enables Snort to dump configuration to
+a file with PID, timestamp, and config generation ID during startup and reload.
 
 The simple configuration is used in examples.
 The output contains applied configurations (defaults and configured).
