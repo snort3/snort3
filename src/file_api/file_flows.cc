@@ -173,11 +173,12 @@ void FileFlows::set_current_file_context(FileContext* ctx)
     {
         int64_t file_id  = current_context->get_file_id();
         delete current_context;
+        current_context = nullptr;
         current_context_delete_pending = false;
         FileCache* file_cache = FileService::get_file_cache();
         assert(file_cache);
         FileContext* file_got = file_cache->get_file(flow, file_id, false, false);
-        if (file_got and file_got->verdict == FILE_VERDICT_PENDING and current_context != file_got)
+        if (file_got and file_got->verdict == FILE_VERDICT_PENDING)
         {
             file_got->user_file_data_mutex.lock();
             delete(file_got->get_file_data());
