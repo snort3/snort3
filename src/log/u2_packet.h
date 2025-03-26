@@ -28,6 +28,7 @@
 #include "protocols/ipv4.h"
 #include "protocols/ipv6.h"
 #include "protocols/tcp.h"
+#include "protocols/udp.h"
 
 #include "main/snort_types.h"
 
@@ -49,6 +50,7 @@ private:
     void cook_ip4(const Packet*, ip::IP4Hdr&);
     void cook_ip6(const Packet*, ip::IP6Hdr&);
     void cook_tcp(const Packet*, tcp::TCPHdr&);
+    void cook_udp(const Packet*, udp::UDPHdr&);
 
     static const unsigned offset = 2;
     static const unsigned max_size =
@@ -64,7 +66,11 @@ private:
             uint8_t align[offset];
             eth::EtherHdr eth;
             ip::IP4Hdr ip4;
-            tcp::TCPHdr tcp;
+            union
+            {
+                tcp::TCPHdr tcp;
+                udp::UDPHdr udp;
+            } proto;
         } v4;
 
         struct
@@ -72,7 +78,11 @@ private:
             uint8_t align[offset];
             eth::EtherHdr eth;
             ip::IP6Hdr ip6;
-            tcp::TCPHdr tcp;
+            union
+            {
+                tcp::TCPHdr tcp;
+                udp::UDPHdr udp;
+            } proto;
         } v6;
 
         uint8_t buf[max_size];

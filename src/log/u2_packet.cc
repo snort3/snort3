@@ -43,19 +43,30 @@ static const uint8_t u2_ttl = 64;
 U2PseudoHeader::U2PseudoHeader(const Packet* p)
 {
     assert(p->flow);
-
+    
     if ( p->flow->key->version == 0x4 )
     {
         cook_eth(p, u.v4.eth);
         cook_ip4(p, u.v4.ip4);
-        cook_tcp(p, u.v4.tcp);
+        memset(&(u.v4.proto), 0, sizeof(u.v4.proto));
+        if (p->ip_proto_next == IpProtocol::UDP)
+            cook_udp(p, u.v4.proto.udp);
+        else
+            cook_tcp(p, u.v4.proto.tcp);
+
         size = sizeof(u.v4) - offset;
     }
     else if ( p->flow->key->version == 0x6 )
     {
         cook_eth(p, u.v6.eth);
         cook_ip6(p, u.v6.ip6);
-        cook_tcp(p, u.v6.tcp);
+        memset(&(u.v6.proto), 0, sizeof(u.v6.proto));
+
+        if (p->ip_proto_next == IpProtocol::UDP)
+            cook_udp(p, u.v6.proto.udp);
+        else
+            cook_tcp(p, u.v6.proto.tcp);
+        
         size = sizeof(u.v6) - offset;
     }
     else size = 0;
@@ -98,7 +109,9 @@ void U2PseudoHeader::cook_eth(const Packet* p, eth::EtherHdr& h)
 
 void U2PseudoHeader::cook_ip4(const Packet* p, ip::IP4Hdr& h)
 {
-    const uint16_t overhead = sizeof(h) + sizeof(tcp::TCPHdr);
+    const uint16_t overhead = (p->ip_proto_next == IpProtocol::UDP) ? 
+            (sizeof(h) + sizeof(udp::UDPHdr)) : (sizeof(h) + sizeof(tcp::TCPHdr));
+
     const uint16_t max_data = IP_MAXPACKET - overhead;
     dsize = p->dsize;
 
@@ -107,7 +120,12 @@ void U2PseudoHeader::cook_ip4(const Packet* p, ip::IP4Hdr& h)
 
     h.ip_verhl = 0x45;
     h.ip_len = htons(overhead + dsize);
-    h.ip_proto = IpProtocol::TCP;
+
+    if (p->ip_proto_next == IpProtocol::UDP)
+        h.ip_proto = IpProtocol::UDP;
+    else
+        h.ip_proto = IpProtocol::TCP;
+
     h.ip_ttl = u2_ttl;
 
     if (p->is_from_client())
@@ -129,7 +147,9 @@ void U2PseudoHeader::cook_ip4(const Packet* p, ip::IP4Hdr& h)
 
 void U2PseudoHeader::cook_ip6(const Packet* p, ip::IP6Hdr& h)
 {
-    const uint16_t overhead = sizeof(tcp::TCPHdr);
+    const uint16_t overhead = (p->ip_proto_next == IpProtocol::UDP) ? 
+                                sizeof(udp::UDPHdr) : sizeof(tcp::TCPHdr);
+
     const uint16_t max_data = IP_MAXPACKET - overhead;
     dsize = p->dsize;
 
@@ -138,7 +158,12 @@ void U2PseudoHeader::cook_ip6(const Packet* p, ip::IP6Hdr& h)
 
     h.ip6_vtf = htonl(0x60 << 24);
     h.ip6_payload_len = htons(overhead + dsize);
-    h.ip6_next = IpProtocol::TCP;
+
+    if (p->ip_proto_next == IpProtocol::UDP)
+        h.ip6_next = IpProtocol::UDP;
+    else
+        h.ip6_next = IpProtocol::TCP;
+
     h.ip6_hoplim = u2_ttl;
 
     if (p->is_from_client())
@@ -151,6 +176,14 @@ void U2PseudoHeader::cook_ip6(const Packet* p, ip::IP6Hdr& h)
         COPY4(h.ip6_src.u6_addr32, p->flow->server_ip.get_ip6_ptr());
         COPY4(h.ip6_dst.u6_addr32, p->flow->client_ip.get_ip6_ptr());
     }
+}
+
+void U2PseudoHeader::cook_udp(const Packet* p, udp::UDPHdr& h)
+{
+    h.uh_sport = htons(p->ptrs.sp);
+    h.uh_dport = htons(p->ptrs.dp);
+    h.uh_len = 0;
+    h.uh_len = htons(sizeof(h) + p->dsize);
 }
 
 void U2PseudoHeader::cook_tcp(const Packet* p, tcp::TCPHdr& h)
