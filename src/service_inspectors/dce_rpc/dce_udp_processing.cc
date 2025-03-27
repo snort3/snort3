@@ -132,6 +132,8 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
         {
         case DCERPC_PDU_TYPE__REQUEST:
             dce2_udp_stats.cl_request++;
+            // Down casting from uint8_t const * to "DceRpcClHdr" is checked with data_len
+            // coverity[tainted_scalar]
             DCE2_ClRequest(sd, at, cl_hdr, data_ptr, data_len);
             break;
 
