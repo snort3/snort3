@@ -21,6 +21,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <cstdint>
 
 #include "conversion_state.h"
 #include "helpers/converter.h"

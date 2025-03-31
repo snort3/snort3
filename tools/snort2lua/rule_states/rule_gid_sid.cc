@@ -27,6 +27,7 @@
 
 #include <sstream>
 #include <unordered_map>
+#include <cstdint>
 
 #include "conversion_state.h"
 #include "helpers/converter.h"

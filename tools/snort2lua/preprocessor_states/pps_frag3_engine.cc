@@ -19,6 +19,7 @@
 
 #include <sstream>
 #include <vector>
+#include <cstdint>
 
 #include "conversion_state.h"
 #include "helpers/converter.h"
