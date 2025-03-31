@@ -1,3 +1,26 @@
+2025-03-30: 3.7.2.0
+
+* appid: added flag to inspect out-of-order packets
+* appid: modified shadow traffic status to default
+* connectors: new unix domain connector
+* dce_rpc: ignoring false positives and fixing spell checks
+* dns: pass packet in DnsResponseEvent
+* dump_config: include PID into dump file name
+* file_api: making current_context as nullptr before it gets the value of ctx and removing redundant check
+* imap:pop: delete if expression that compared session flag to the packet_flag filed
+* main: initialize openssl at startup
+* packet_capture: support packet capture limit and location
+* packet_capture: use existing util function to check directory path
+* pub_sub: basic framework with skeleton APIs multiprocess databus
+* stream_tcp: eliminate redundant calls to initialize the normalizer policy
+* stream_tcp: initialize each tracker's normalizer for missed 3whs behavior invidually when the initial packet is processed by the tracker
+* stream_tcp: make member variables private to improve tracker class encapsulation
+* stream_tcp: only allow legacy OS and FIRST normalizer policies to be configurable. Proxy and missed 3whs modes are determined dynamically per flow
+* stream_tcp: reduce verbosity of packet tracer log messages for normalizer initialization actions
+* stream_tcp: rename OS policy names to prevent conflict with existing macros
+* stream_tcp: split StreamPolicy enum into enums specific to normalization and to overlap resolution
+* unified2: add packet dump to unified event with reassembled udp packet
+
 2025-03-11: 3.7.1.0
 
 * appid: added publishing of domain fronting event

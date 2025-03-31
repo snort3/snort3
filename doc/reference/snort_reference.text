@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.7.1.0 2025-03-12 00:16:10 EDT TST
+Revision 3.7.2.0 2025-03-30 22:14:23 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -911,7 +911,7 @@ Configuration:
     | bsd | bsd_right | last | windows | solaris }
   * enum hosts[].tcp_policy: TCP reassembly policy { first | last | 
     linux | old_linux | bsd | macos | solaris | irix | hpux11 | 
-    hpux10 | windows | win_2003 | vista | proxy | asymmetric }
+    hpux10 | windows | win_2003 | vista }
   * string hosts[].services[].name: service identifier
   * enum hosts[].services[].proto = tcp: IP protocol { tcp | udp }
   * port hosts[].services[].port: port number
@@ -1643,8 +1643,8 @@ Configuration:
     Operation
   * implied snort.--enable-test-features: enable features used in
     testing
-  * string snort.--gen-dump-config: <file> dump configuration to
-    <file_timestamp> during startup and configuration reload
+  * string snort.--gen-dump-config: <file> dump configuration to a
+    file during startup and configuration reload
   * implied snort.--gen-msg-map: dump configured rules in gen-msg.map
     format for use by other tools
   * implied snort.--help: show help overview
@@ -2649,17 +2649,21 @@ Usage: global
 Configuration:
 
   * string unixdomain_connector[].connector: connector name
-  * str_list unixdomain_connector[].paths: list of paths to the remote
-    end-points
-  * bool unixdomain_connector[].conn_retries: retries to establish connection 
-    enabled or not
-  * enum unixdomain_connector[].setup: stream establishment { call | answer}
-  * int unixdomain_connector[].retry_interval: retry interval in seconds
-  * int unixdomain_connector[].max_retries: maximum number of retries
+  * str_list unixdomain_connector[].paths: list of paths to remote
+    end-point
+  * bool unixdomain_connector[].conn_retries = false: retries to
+    establish connection enabled or not
+  * enum unixdomain_connector[].setup: stream establishment { call | 
+    answer }
+  * int unixdomain_connector[].retry_interval = 4: retry interval in
+    seconds { 1:50 }
+  * int unixdomain_connector[].max_retries = 5: maximum number of
+    retries { 1:50 }
 
 Peg counts:
 
   * unixdomain_connector.messages: total messages (sum)
+
 
 ---------------------------------------------------------------------
 
@@ -4855,11 +4859,15 @@ Configuration:
     use for packet capturing
   * bool packet_capture.check_inner_pkt = true: apply filter on inner
     packet headers
+  * string packet_capture.capture_path: directory path to capture
+    pcaps
+  * int packet_capture.max_packet_count = 1000000: cap the number of
+    packets per thread { 0:max32 }
 
 Commands:
 
-  * packet_capture.enable(filter, group, tenants, check_inner_pkt):
-    capture raw packets
+  * packet_capture.enable(filter, group, tenants, check_inner_pkt,
+    capture_path, max_packet_count): capture raw packets
   * packet_capture.disable(): stop packet capturing
 
 Peg counts:
@@ -6089,7 +6097,7 @@ Configuration:
   * enum stream_tcp.policy = bsd: determines operating system
     characteristics like reassembly { first | last | linux | 
     old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | 
-    windows | win_2003 | vista | proxy | asymmetric }
+    windows | win_2003 | vista }
   * bool stream_tcp.reassemble_async = true: queue data for
     reassembly before traffic is seen in both directions
   * int stream_tcp.require_3whs = -1: deprecated: use
@@ -9345,8 +9353,8 @@ libraries see the Getting Started section of the manual.
     the version
   * --enable-inline-test enable Inline-Test Mode Operation
   * --enable-test-features enable features used in testing
-  * --gen-dump-config <file> dump configuration to <file_timestamp>
-    during startup and configuration reload
+  * --gen-dump-config <file> dump configuration to a file during
+    startup and configuration reload
   * --gen-msg-map dump configured rules in gen-msg.map format for use
     by other tools
   * --help show help overview
@@ -10092,7 +10100,7 @@ libraries see the Getting Started section of the manual.
   * enum hosts[].services[].proto = tcp: IP protocol { tcp | udp }
   * enum hosts[].tcp_policy: TCP reassembly policy { first | last | 
     linux | old_linux | bsd | macos | solaris | irix | hpux11 | 
-    hpux10 | windows | win_2003 | vista | proxy | asymmetric }
+    hpux10 | windows | win_2003 | vista }
   * addr host_tracker[].ip: hosts address / cidr
   * port host_tracker[].services[].port: port number
   * enum host_tracker[].services[].proto: IP protocol { ip | tcp | 
@@ -10597,6 +10605,8 @@ libraries see the Getting Started section of the manual.
   * bool output.verbose = false: be verbose (same as -v)
   * bool output.wide_hex_dump = false: output 20 bytes per lines
     instead of 16 when dumping buffers
+  * string packet_capture.capture_path: directory path to capture
+    pcaps
   * bool packet_capture.check_inner_pkt = true: apply filter on inner
     packet headers
   * bool packet_capture.enable = false: state of packet capturing
@@ -10604,6 +10614,8 @@ libraries see the Getting Started section of the manual.
     capturing
   * int packet_capture.group = -1: group filter to use for packet
     capturing { -1:32767 }
+  * int packet_capture.max_packet_count = 1000000: cap the number of
+    packets per thread { 0:max32 }
   * string packet_capture.tenants: comma-separated tenants filter to
     use for packet capturing
   * bool packets.address_space_agnostic = false: determines whether
@@ -11173,8 +11185,8 @@ libraries see the Getting Started section of the manual.
     testing
   * implied snort.-f: turn off fflush() calls after binary log writes
   * int snort.-G: <0xid> (same as --logid) { 0:65535 }
-  * string snort.--gen-dump-config: <file> dump configuration to
-    <file_timestamp> during startup and configuration reload
+  * string snort.--gen-dump-config: <file> dump configuration to a
+    file during startup and configuration reload
   * implied snort.--gen-msg-map: dump configured rules in gen-msg.map
     format for use by other tools
   * string snort.-g: <gname> run snort gid as <gname> group (or gid)
@@ -11464,7 +11476,7 @@ libraries see the Getting Started section of the manual.
   * enum stream_tcp.policy = bsd: determines operating system
     characteristics like reassembly { first | last | linux | 
     old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | 
-    windows | win_2003 | vista | proxy | asymmetric }
+    windows | win_2003 | vista }
   * int stream_tcp.queue_limit.asymmetric_ids_flush_threshold =
     3145728: max bytes queued on asymmetric flow before flush in IDS
     mode { 1:max31 }
@@ -11587,6 +11599,17 @@ libraries see the Getting Started section of the manual.
     is unlimited) { 0:maxSZ }
   * bool unified2.nostamp = true: append file creation time to name
     (in Unix Epoch format)
+  * string unixdomain_connector[].connector: connector name
+  * bool unixdomain_connector[].conn_retries = false: retries to
+    establish connection enabled or not
+  * int unixdomain_connector[].max_retries = 5: maximum number of
+    retries { 1:50 }
+  * str_list unixdomain_connector[].paths: list of paths to remote
+    end-point
+  * int unixdomain_connector[].retry_interval = 4: retry interval in
+    seconds { 1:50 }
+  * enum unixdomain_connector[].setup: stream establishment { call | 
+    answer }
   * interval urg.~range: check if tcp urgent offset is in given range
     { 0:65535 }
   * int_list vlan.extra_tpid_ether_types = 0x9100 0x9200: set
@@ -12921,6 +12944,7 @@ libraries see the Getting Started section of the manual.
   * udp.bad_udp4_checksum: nonzero udp over ipv4 checksums (sum)
   * udp.bad_udp6_checksum: nonzero udp over ipv6 checksums (sum)
   * udp.checksum_bypassed: checksum calculations bypassed (sum)
+  * unixdomain_connector.messages: total messages (sum)
   * wizard.tcp_hits: tcp identifications (sum)
   * wizard.tcp_misses: tcp searches abandoned (sum)
   * wizard.tcp_scans: tcp payload scans (sum)
@@ -16323,8 +16347,8 @@ alert is raised by the enhanced JavaScript normalizer.
     cache segment(s)
   * network.set_policy(id): set the network policy for commands given
     the user policy id
-  * packet_capture.enable(filter, group, tenants, check_inner_pkt):
-    capture raw packets
+  * packet_capture.enable(filter, group, tenants, check_inner_pkt,
+    capture_path, max_packet_count): capture raw packets
   * packet_capture.disable(): stop packet capturing
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port,
     tenants): enable packet tracer debugging
@@ -16802,6 +16826,8 @@ and are not applicable elsewhere.
   * udp (codec): support for user datagram protocol
   * unified2 (logger): output event and packet in unified2 format
     file
+  * unixdomain_connector (connector): implement the unix domain
+    stream connector
   * urg (ips_option): detection for TCP urgent pointer
   * vba_data (ips_option): rule option to set the detection cursor to
     the MS Office Visual Basic for Applications macros buffer
@@ -16876,6 +16902,8 @@ and are not applicable elsewhere.
   * connector::std_connector: implement the stdout/stdin based
     connector
   * connector::tcp_connector: implement the tcp stream connector
+  * connector::unixdomain_connector: implement the unix domain stream
+    connector
   * inspector::appid: application and service identification
   * inspector::appid_listener: log selected published data to
     appid_listener.log
