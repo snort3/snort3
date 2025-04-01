@@ -25,6 +25,7 @@
 #include "service_inspectors/http_inspect/http_field.h"
 
 #include "http2_enum.h"
+#include "http2_module.h"
 
 /* This class is called Http2Frame, but an object of this class may not represent exactly one
  * HTTP/2 frame as received on the wire. For HEADERS frames, the Http2Frame object contains the
@@ -43,7 +44,7 @@ public:
     virtual ~Http2Frame() = default;
     static Http2Frame* new_frame(const uint8_t* header_buffer, const uint32_t header_len,
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* session_data,
-        HttpCommon::SourceId source_id, Http2Stream* stream);
+        HttpCommon::SourceId source_id, const Http2ParaList* params, Http2Stream* stream);
     virtual bool valid_sequence(Http2Enums::StreamState) { return true; }
     virtual void analyze_http1(snort::Packet*) { }
     virtual void clear(snort::Packet*) { }

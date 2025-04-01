@@ -47,11 +47,12 @@ Http2Stream::~Http2Stream()
 }
 
 void Http2Stream::eval_frame(const uint8_t* header_buffer, uint32_t header_len,
-    const uint8_t* data_buffer, uint32_t data_len, SourceId source_id, Packet* p)
+    const uint8_t* data_buffer, uint32_t data_len, SourceId source_id, Packet* p,
+    const Http2ParaList* params)
 {
     assert(current_frame == nullptr);
     current_frame = Http2Frame::new_frame(header_buffer, header_len, data_buffer,
-        data_len, session_data, source_id, this);
+        data_len, session_data, source_id, params, this);
     if (!session_data->abort_flow[source_id] && (get_state(source_id) != STREAM_ERROR))
     {
         if (current_frame->valid_sequence(state[source_id]))

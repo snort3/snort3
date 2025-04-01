@@ -28,7 +28,7 @@ class Http2RstStreamFrame : public Http2Frame
 {
 public:
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const uint32_t, const uint8_t*,
-        const uint32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
+        const uint32_t, Http2FlowData*, HttpCommon::SourceId, const Http2ParaList* params, Http2Stream* stream);
     bool is_detection_required() const override { return false; }
     bool valid_sequence(Http2Enums::StreamState state) override;
     void update_stream_state() override;

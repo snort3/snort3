@@ -28,6 +28,10 @@ This limits the maximum number of HTTP/2 streams Snort will process concurrently
 flow. The default and minimum configurable value is 100. It can be configured up to a maximum of
 1000.
 
+===== settings_max_frame_size
+This sets the maximum allowed value for settings frame SETTINGS_MAX_FRAME_SIZE.
+The default and max value is 16777215. The minimum configurable value is 16384.
+
 ==== Detection rules
 
 Since HTTP/2 traffic is processed through the HTTP inspector, all of the rule options discussed

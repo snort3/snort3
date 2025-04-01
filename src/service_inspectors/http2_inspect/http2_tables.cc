@@ -77,6 +77,7 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_INVALID_GOAWAY_FRAME, "invalid HTTP/2 GOAWAY frame" },
     { EVENT_SETTINGS_QUEUE_OVERFLOW, "too many unacknowledged settings" },
     { EVENT_SETTINGS_QUEUE_UNDERFLOW, "setting acknowledgment without actual settings" },
+    { EVENT_ABOVE_SETTINGS_MAX_FRAME_SIZE, "settings frame size greater than settings_max_frame_size"},
     { 0, nullptr }
 };
 

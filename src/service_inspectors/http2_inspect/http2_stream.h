@@ -30,6 +30,7 @@ class Http2DataCutter;
 class Http2FlowData;
 class HttpFlowData;
 class HttpMsgSection;
+struct Http2ParaList;
 
 class Http2Stream
 {
@@ -38,7 +39,7 @@ public:
     ~Http2Stream();
     uint32_t get_stream_id() const { return stream_id; }
     void eval_frame(const uint8_t* header_buffer, uint32_t header_len, const uint8_t* data_buffer,
-        uint32_t data_len, HttpCommon::SourceId source_id, snort::Packet* p);
+        uint32_t data_len, HttpCommon::SourceId source_id, snort::Packet* p, const Http2ParaList* params);
     void check_and_cleanup_completed();
     void clear_frame(snort::Packet* p);
     const Field& get_buf(unsigned id);

@@ -1481,6 +1481,11 @@ More than 6 unacknowledged settings frames.
 
 Unexpected settings ACK.
 
+121:44
+
+SETTINGS_MAX_FRAME_SIZE value sent in HTTP/2 settings frame is greater than maximum value,
+as configured by settings_max_frame_size.
+
 122:1
 
 Basic one host to one host TCP portscan where multiple TCP ports are scanned on

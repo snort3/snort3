@@ -38,7 +38,7 @@ public:
     virtual const uint8_t* get_frame_data(uint32_t& length) const override;
 
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const uint32_t, const uint8_t*,
-        const uint32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
+        const uint32_t, Http2FlowData*, HttpCommon::SourceId, const Http2ParaList* params, Http2Stream* stream);
 
 #ifdef REG_TEST
     void print_frame(FILE* output) override;

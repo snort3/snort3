@@ -47,7 +47,7 @@ public:
         Http2Infractions* const infractions, const uint8_t* data_buffer, uint32_t data_len);
 
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const uint32_t, const uint8_t*,
-        const uint32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
+        const uint32_t, Http2FlowData*, HttpCommon::SourceId, const Http2ParaList* params, Http2Stream* stream);
 
 #ifdef REG_TEST
     void print_frame(FILE* output) override;

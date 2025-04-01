@@ -35,6 +35,7 @@ struct Http2ParaList
 {
 public:
     uint32_t concurrent_streams_limit;
+    uint32_t settings_max_frame_size;
 #ifdef REG_TEST
 
     bool test_input;

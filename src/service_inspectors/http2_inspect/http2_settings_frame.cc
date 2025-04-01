@@ -48,8 +48,8 @@ static uint32_t get_parameter_value(const uint8_t* data_buffer)
 
 Http2SettingsFrame::Http2SettingsFrame(const uint8_t* header_buffer, const uint32_t header_len,
     const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
-    HttpCommon::SourceId src_id, Http2Stream* stream_) : Http2Frame(header_buffer, header_len,
-    data_buffer, data_len, ssn_data, src_id, stream_)
+    HttpCommon::SourceId src_id, Http2Stream* stream_, const Http2ParaList* params_) : Http2Frame(header_buffer, header_len,
+    data_buffer, data_len, ssn_data, src_id, stream_), params(params_)
 {
     if (!sanity_check())
     {
@@ -100,6 +100,11 @@ void Http2SettingsFrame::queue_settings()
         {
             session_data->events[source_id]->create_event(EVENT_BAD_SETTINGS_VALUE);
             *session_data->infractions[source_id] += INF_BAD_SETTINGS_PUSH_VALUE;
+        }
+        else if (parameter_id == SFID_MAX_FRAME_SIZE and parameter_value > params->settings_max_frame_size)
+        {
+            session_data->events[source_id]->create_event(EVENT_ABOVE_SETTINGS_MAX_FRAME_SIZE);
+            *session_data->infractions[source_id] += INF_ABOVE_SETTINGS_MAX_FRAME_SIZE;
         }
         else
             settings.set_param(parameter_id, parameter_value);

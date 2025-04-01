@@ -57,7 +57,7 @@ Http2Frame::Http2Frame(const uint8_t* header_buffer, const uint32_t header_len,
 
 Http2Frame* Http2Frame::new_frame(const uint8_t* header, const uint32_t header_len,
     const uint8_t* data, const uint32_t data_len, Http2FlowData* session_data, SourceId source_id,
-    Http2Stream* stream)
+    const Http2ParaList* params, Http2Stream* stream)
 {
     Http2Frame* frame = nullptr;
 
@@ -77,7 +77,7 @@ Http2Frame* Http2Frame::new_frame(const uint8_t* header, const uint32_t header_l
             break;
         case FT_SETTINGS:
             frame = new Http2SettingsFrame(header, header_len, data, data_len, session_data,
-                source_id, stream);
+                source_id, stream, params);
             break;
         case FT_DATA:
             frame = new Http2DataFrame(header, header_len, data, data_len, session_data, source_id,

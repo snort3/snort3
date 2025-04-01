@@ -148,7 +148,7 @@ void Http2Inspect::eval(Packet* p)
     uint8_t* const frame_header_copy = new uint8_t[FRAME_HEADER_LENGTH];
     memcpy(frame_header_copy, session_data->lead_frame_header[source_id], FRAME_HEADER_LENGTH);
     stream->eval_frame(frame_header_copy, FRAME_HEADER_LENGTH,
-        session_data->frame_data[source_id], session_data->frame_data_size[source_id], source_id, p);
+        session_data->frame_data[source_id], session_data->frame_data_size[source_id], source_id, p, params);
 
     if (!stream->get_current_frame()->is_detection_required())
         DetectionEngine::disable_all(p);
@@ -208,6 +208,7 @@ void Http2Inspect::show(const SnortConfig*) const
 {
     assert(params);
     ConfigLogger::log_value("concurrent_streams_limit", params->concurrent_streams_limit);
+    ConfigLogger::log_value("settings_max_frame_size", params->settings_max_frame_size);
 }
 
 #ifdef REG_TEST

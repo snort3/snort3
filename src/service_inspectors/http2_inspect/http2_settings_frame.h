@@ -21,6 +21,7 @@
 #define HTTP2_SETTINGS_FRAME_H
 
 #include "http2_frame.h"
+#include "http2_module.h"
 
 class Field;
 class Http2ConnectionSettings;
@@ -30,7 +31,7 @@ class Http2SettingsFrame : public Http2Frame
 {
 public:
     friend Http2Frame* Http2Frame::new_frame(const uint8_t*, const uint32_t, const uint8_t*,
-        const uint32_t, Http2FlowData*, HttpCommon::SourceId, Http2Stream* stream);
+        const uint32_t, Http2FlowData*, HttpCommon::SourceId, const Http2ParaList* params, Http2Stream* stream);
 
 #ifdef REG_TEST
     void print_frame(FILE* output) override;
@@ -39,7 +40,7 @@ public:
 private:
     Http2SettingsFrame(const uint8_t* header_buffer, const uint32_t header_len,
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
-        HttpCommon::SourceId src_id, Http2Stream* stream);
+        HttpCommon::SourceId src_id, Http2Stream* stream, const Http2ParaList* params_);
 
     void queue_settings();
     bool sanity_check();
@@ -50,6 +51,7 @@ private:
     { return Http2Enums::FLAG_ACK; }
 
     bool bad_frame = false;
+    const Http2ParaList* params;
 };
 
 class Http2ConnectionSettings
