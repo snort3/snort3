@@ -530,7 +530,7 @@ bool FtpServer::convert(std::istringstream& data_stream)
     {
         table_api.open_table("cmd_validity");
 
-        for (auto c : commands)
+        for (auto& c : commands)
         {
             table_api.open_table();
             bool tmpval1 = table_api.add_option("command", c.name);

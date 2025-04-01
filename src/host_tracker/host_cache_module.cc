@@ -392,7 +392,7 @@ bool HostCacheModule::set(const char*, Value& v, SnortConfig*)
         if (segments == 0 || (segments & (segments - 1)) != 0)
         {
             uint8_t highestBitSet = 0;
-            while (segments >>= 1)
+            while ((segments = segments >> 1))
                 highestBitSet++;
             segments = 1 << highestBitSet;
             LogMessage("== WARNING: host_cache segments is not the power of 2. setting to %d\n", segments);

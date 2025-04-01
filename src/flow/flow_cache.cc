@@ -451,7 +451,7 @@ void FlowCache::retire(Flow* flow)
     remove(flow);
 }
 
-unsigned FlowCache::prune_idle(uint32_t thetime, const Flow* save_me)
+unsigned FlowCache::prune_idle(time_t thetime, const Flow* save_me)
 {
     ActiveSuspendContext act_susp(Active::ASP_PRUNE);
 

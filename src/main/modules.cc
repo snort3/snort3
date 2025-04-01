@@ -1601,7 +1601,7 @@ class RateFilterModule : public Module
 {
 public:
     RateFilterModule() : Module("rate_filter", rate_filter_help, rate_filter_params, true)
-    { thdx.applyTo = nullptr; }
+    { thdx.init(); }
 
     ~RateFilterModule() override;
     bool set(const char*, Value&, SnortConfig*) override;
@@ -1670,7 +1670,7 @@ bool RateFilterModule::set(const char*, Value& v, SnortConfig*)
 bool RateFilterModule::begin(const char*, int, SnortConfig* sc)
 {
     SFRF_Alloc(sc->rate_filter_config->memcap);
-    memset(&thdx, 0, sizeof(thdx));
+    thdx.init();
     return true;
 }
 

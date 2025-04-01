@@ -93,7 +93,7 @@ void NetworkPolicy::init(NetworkPolicy* other_network_policy, const char* exclud
         }
         user_inspection = other_network_policy->user_inspection;
         // Fix references to inspection_policy[0]
-        for ( auto p : other_network_policy->user_inspection )
+        for (  const auto& p : other_network_policy->user_inspection )
         {
             if ( p.second == other_network_policy->inspection_policy[0] )
                 user_inspection[p.first] = inspection_policy[0];
@@ -302,7 +302,7 @@ void PolicyMap::clone(PolicyMap *other_map, const char* exclude_name)
 
     shell_map = other_map->shell_map;
     // Fix references to network_policy[0] and inspection_policy[0]
-    for ( auto p : other_map->shell_map )
+    for ( auto& p : other_map->shell_map )
     {
         for ( unsigned idx = 0; idx < other_map->network_policy.size(); ++idx)
         {

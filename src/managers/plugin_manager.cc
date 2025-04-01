@@ -216,7 +216,7 @@ static bool register_plugin(
 
     p.key = key;
     p.api = api;
-    p.handle = handle;
+    p.handle = std::move(handle);
     p.source = file;
 
     return true;

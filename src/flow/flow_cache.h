@@ -132,7 +132,7 @@ public:
 
     bool release(snort::Flow*, PruneReason = PruneReason::NONE, bool do_cleanup = true);
 
-    unsigned prune_idle(uint32_t thetime, const snort::Flow* save_me);
+    unsigned prune_idle(time_t thetime, const snort::Flow* save_me);
     unsigned prune_excess(const snort::Flow* save_me);
     bool prune_one(PruneReason, bool do_cleanup, uint8_t type = 0);
     unsigned timeout(unsigned num_flows, time_t cur_time);

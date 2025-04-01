@@ -28,6 +28,7 @@
 #include <sys/stat.h>
 
 #include "log/messages.h"
+#include "utils/util.h"
 
 #include "snort.h"
 #include "snort_config.h"
@@ -157,7 +158,9 @@ const char* get_instance_file(std::string& file, const char* name)
 
         if ( stat(file.c_str(), &s) )
             // FIXIT-L getting random 0750 or 0700 (umask not thread local)?
-            mkdir(file.c_str(), 0770);
+            if ( mkdir(file.c_str(), 0770) == -1 )
+                ParseError("Failed to create directory %s - %s",
+                    file.c_str(),  get_error(errno));
     }
     else if ( sep )
         file += '_';

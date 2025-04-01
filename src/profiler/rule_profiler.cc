@@ -112,7 +112,7 @@ static std::vector<View> build_entries(const std::unordered_map<SigInfo*, OtnSta
 {
     std::vector<View> entries;
 
-    for (auto stat : stats)
+    for (auto& stat : stats)
         if (stat.second.is_active())
             entries.emplace_back(stat.second, stat.first);
 

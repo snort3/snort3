@@ -241,7 +241,7 @@ void ActionManager::initialize_policies(SnortConfig* sc)
         if ( !policy )
             continue;
 
-        for ( auto actor : s_actors )
+        for ( const auto& actor : s_actors )
             ActionManager::instantiate(actor.api, nullptr, sc, policy);
     }
 }

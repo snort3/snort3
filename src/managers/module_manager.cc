@@ -1762,7 +1762,7 @@ void ModuleManager::dump_rules(const char* pfx, const char* opts)
 {
     std::vector<RulePtr> rule_set = get_rules(pfx);
 
-    for ( auto rp : rule_set )
+    for ( const auto& rp : rule_set )
         make_rule(cout, rp.mod, rp.rule, opts);
 
     if ( !rule_set.size() )
@@ -1773,7 +1773,7 @@ void ModuleManager::show_rules(const char* pfx, bool exact)
 {
     std::vector<RulePtr> rule_set = get_rules(pfx, exact);
 
-    for ( auto rp : rule_set )
+    for ( auto& rp : rule_set )
     {
         cout << Markup::item();
         cout << Markup::emphasis_on();

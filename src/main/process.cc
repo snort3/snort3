@@ -568,19 +568,17 @@ void help_signals()
 
 static void snuff_stdio()
 {
-    bool err = (close(STDIN_FILENO) != 0);
-    err = err or (close(STDOUT_FILENO) != 0);
-    err = err or (close(STDERR_FILENO) != 0);
+    // Redirect stdin to /dev/null
+    if (freopen("/dev/null", "r", stdin) == nullptr)
+        FatalError("failed to snuff stdin - %s", get_error(errno));
 
-    /* redirect stdin/stdout/stderr to /dev/null */
-    err = err or (open("/dev/null", O_RDWR) != STDIN_FILENO);  // fd 0
-
-    err = err or (dup(STDIN_FILENO) != STDOUT_FILENO);  // fd 0 => fd 1
-    err = err or (dup(STDIN_FILENO) != STDERR_FILENO);  // fd 0 => fd 2
-
-    if ( err )
-        // message is hit or miss but we will exit with failure
-        FatalError("failed to snuff stdio - %s", get_error(errno));
+    // Redirect stdout to /dev/null
+    if (freopen("/dev/null", "w", stdout) == nullptr)
+        FatalError("failed to snuff stdout - %s", get_error(errno));
+ 
+    // Redirect stderr to /dev/null
+    if (freopen("/dev/null", "w", stderr) == nullptr)
+        FatalError("failed to snuff stderr - %s", get_error(errno));
 }
 
 // All threads need to be created after daemonizing.  If created in the

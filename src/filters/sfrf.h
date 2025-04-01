@@ -42,6 +42,7 @@ struct SnortConfig;
 
 typedef enum
 {
+    SFRF_TRACK_BY_NONE = 0,
     SFRF_TRACK_BY_SRC = 1,
     SFRF_TRACK_BY_DST,
     SFRF_TRACK_BY_RULE,
@@ -65,20 +66,34 @@ typedef enum
 
 struct tSFRFConfigNode
 {
-    int tid;
-    unsigned gid;
-    unsigned sid;
-    PolicyId policyId;
-    SFRF_TRACK tracking;
-    unsigned count;
-    unsigned seconds;
+    int tid = 0;
+    unsigned gid = 0;
+    unsigned sid = 0;
+    PolicyId policyId = 0;
+    SFRF_TRACK tracking = SFRF_TRACK_BY_NONE;
+    unsigned count = 0;
+    unsigned seconds = 0;
 
     // Action that replaces original rule action on reaching threshold
-    snort::IpsAction::Type newAction;
+    snort::IpsAction::Type newAction = 0;
 
     // Threshold action duration in seconds before reverting to original rule action
-    unsigned timeout;
-    sfip_var_t* applyTo;
+    unsigned timeout = 0;
+    sfip_var_t* applyTo = nullptr;
+
+    void init()
+    {
+        tid = 0;
+        gid = 0;
+        sid = 0;
+        policyId = 0;
+        tracking = SFRF_TRACK_BY_NONE;
+        count = 0;
+        seconds = 0;
+        newAction = 0;
+        timeout = 0;
+        applyTo = nullptr;
+    }
 };
 
 struct tSFRFSidNode

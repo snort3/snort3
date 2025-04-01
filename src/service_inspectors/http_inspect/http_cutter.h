@@ -138,8 +138,8 @@ private:
     uint8_t string_length = 0;
     z_stream* compress_stream = nullptr;
     ScriptFinder* const finder;
-    const uint8_t* match_string;
-    const uint8_t* match_string_upper;
+    const uint8_t* match_string = nullptr;
+    const uint8_t* match_string_upper = nullptr;
 };
 
 class HttpBodyClCutter : public HttpBodyCutter

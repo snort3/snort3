@@ -73,7 +73,7 @@ struct U2
     FILE* stream;
     unsigned int current;
     int base_proto;
-    uint32_t timestamp;
+    time_t timestamp;
     char filepath[STD_BUF];
 };
 
@@ -111,11 +111,11 @@ static void Unified2InitFile(Unified2Config* config)
     char filepath[STD_BUF];
     char* fname_ptr;
 
-    u2.timestamp = (uint32_t)time(nullptr);
+    u2.timestamp = time(nullptr);
 
     if (!config->nostamp)
     {
-        if (SnortSnprintf(filepath, sizeof(filepath), "%s.%u",
+        if (SnortSnprintf(filepath, sizeof(filepath), "%s.%lu",
             u2.filepath, u2.timestamp) != SNORT_SNPRINTF_SUCCESS)
         {
             FatalError("unified2 failed to copy file path.\n");
@@ -286,9 +286,7 @@ static void _WriteExtraData(Unified2Config* config,
     Serial_Unified2_Header hdr;
     SerialUnified2ExtraData alertdata;
     Unified2ExtraDataHdr alertHdr;
-    uint8_t write_buffer[MAX_XDATA_WRITE_BUF_LEN];
-    uint8_t* ptr = nullptr;
-
+ 
     uint32_t write_len = sizeof(hdr) + sizeof(alertHdr);
 
     alertdata.sensor_id = htonl(tenant_id);
@@ -304,7 +302,7 @@ static void _WriteExtraData(Unified2Config* config,
     alertHdr.event_type = htonl(EVENT_TYPE_EXTRA_DATA);
     alertHdr.event_length = htonl(write_len - sizeof(hdr));
 
-    if (write_len > sizeof(write_buffer))
+    if (write_len > MAX_XDATA_WRITE_BUF_LEN)
         return;
 
     if ( config->limit && (u2.current + write_len) > config->limit )
@@ -313,26 +311,26 @@ static void _WriteExtraData(Unified2Config* config,
     hdr.length = htonl(write_len - sizeof(hdr));
     hdr.type = htonl(UNIFIED2_EXTRA_DATA);
 
-    ptr = write_buffer;
+    uint8_t* write_buffer = (uint8_t*)snort_alloc(MAX_XDATA_WRITE_BUF_LEN);
+    uint8_t* ptr = write_buffer;
 
-    memcpy_s(ptr, sizeof(write_buffer), &hdr, sizeof(hdr));
-
+    memcpy_s(ptr, MAX_XDATA_WRITE_BUF_LEN, &hdr, sizeof(hdr));
     size_t offset = sizeof(hdr);
 
-    memcpy_s(ptr + offset, sizeof(write_buffer) - offset, &alertHdr, sizeof(alertHdr));
-
+    memcpy_s(ptr + offset, MAX_XDATA_WRITE_BUF_LEN - offset, &alertHdr, sizeof(alertHdr));
     offset += sizeof(alertHdr);
 
-    memcpy_s(ptr + offset, sizeof(write_buffer) - offset, &alertdata, sizeof(alertdata));
-
+    memcpy_s(ptr + offset, MAX_XDATA_WRITE_BUF_LEN - offset, &alertdata, sizeof(alertdata));
     offset += sizeof(alertdata);
 
-    memcpy_s(ptr + offset, sizeof(write_buffer) - offset, buffer, len);
+    memcpy_s(ptr + offset, MAX_XDATA_WRITE_BUF_LEN - offset, buffer, len);
 
     if (obf)
         obfuscate(ptr + offset, obf, type);
 
     Unified2Write(write_buffer, write_len, config);
+
+    snort_free(write_buffer);
 }
 
 static void AlertExtraData(
@@ -505,7 +503,7 @@ static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config
             }
             else
             {
-                ErrorMessage("unified2 failed to write to file (%s.%u): %s\n",
+                ErrorMessage("unified2 failed to write to file (%s.%lu): %s\n",
                     u2.filepath, u2.timestamp, get_error(error));
             }
 
@@ -556,7 +554,7 @@ static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config
                 }
                 else
                 {
-                    ErrorMessage("unified2 rotated file: %s.%u\n", u2.filepath, u2.timestamp);
+                    ErrorMessage("unified2 rotated file: %s.%lu\n", u2.filepath, u2.timestamp);
                 }
 
                 if (((fwcount = fwrite(buf, (size_t)buf_len, 1, u2.stream)) == 1) &&
@@ -580,7 +578,7 @@ static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config
                 }
                 else
                 {
-                    ErrorMessage("unified2 failed to write to file (%s.%u): %s\n",
+                    ErrorMessage("unified2 failed to write to file (%s.%lu): %s\n",
                         u2.filepath, u2.timestamp, get_error(error));
                 }
 

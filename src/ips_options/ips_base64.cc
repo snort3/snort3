@@ -31,6 +31,7 @@
 #include "log/messages.h"
 #include "mime/decode_b64.h"
 #include "profiler/profiler.h"
+#include "utils/util.h"
 #include "utils/util_unfold.h"
 
 using namespace snort;
@@ -140,11 +141,14 @@ IpsOption::EvalStatus Base64DecodeOption::eval(Cursor& c, Packet* p)
     start_ptr += idx->offset;
     size -= idx->offset;
 
-    uint8_t base64_buf[DECODE_BLEN];
+    uint8_t* base64_buf = (uint8_t*)snort_alloc(DECODE_BLEN);
     uint32_t base64_size = 0;
 
-    if (sf_unfold_header(start_ptr, size, base64_buf, sizeof(base64_buf), &base64_size, 0, nullptr) != 0)
+    if (sf_unfold_header(start_ptr, size, base64_buf, DECODE_BLEN, &base64_size, 0, nullptr) != 0)
+    {
+        snort_free(base64_buf);
         return NO_MATCH;
+    }
 
     if (idx->bytes_to_decode && (base64_size > idx->bytes_to_decode))
     {
@@ -153,8 +157,12 @@ IpsOption::EvalStatus Base64DecodeOption::eval(Cursor& c, Packet* p)
 
     if (sf_base64decode(base64_buf, base64_size, base64_decode_buffer.data,
         base64_decode_buffer.decode_blen, &base64_decode_buffer.len) != 0)
-        return NO_MATCH;
+        {
+            snort_free(base64_buf);
+            return NO_MATCH;
+        }
 
+    snort_free(base64_buf);
     return MATCH;
 }
 

@@ -339,7 +339,7 @@ bool Smtp::convert(std::istringstream& data_stream)
     {
         table_api.open_table("alt_max_command_line_len");
 
-        for (auto c : commands)
+        for (const auto& c : commands)
         {
             table_api.open_table();
             bool tmpval1 = table_api.add_option("command", c.name);
