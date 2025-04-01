@@ -23,6 +23,7 @@
 #ifndef CONTROL_H
 #define CONTROL_H
 
+#include <atomic>
 #include <cstdarg>
 #include <ctime>
 #include <queue>
@@ -84,7 +85,7 @@ private:
     int blocked = 0; // a number of commands blocking the channel
     bool local = false;
     bool removed = false;
-    time_t touched;
+    std::atomic<time_t> touched;
 
     static std::vector<std::string> log_exclusion_list;
     static unsigned pending_cmds_count; //counter to serialize commands across control connections

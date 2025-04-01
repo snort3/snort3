@@ -46,7 +46,11 @@
 using namespace snort;
 
 static constexpr unsigned MAX_CONTROL_FDS = 16;
+#ifndef REG_TEST
 static constexpr unsigned MAX_CONTROL_IDLE_TIME = 60;
+#else
+static constexpr unsigned MAX_CONTROL_IDLE_TIME = 5;
+#endif
 
 static int listener = -1;
 static socklen_t sock_addr_size = 0;

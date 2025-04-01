@@ -196,12 +196,12 @@ void ControlConn::remove()
 
 void ControlConn::touch()
 {
-    touched = time(nullptr);
+    touched.store(time(nullptr), std::memory_order_relaxed);
 }
 
 time_t ControlConn::get_touched() const
 {
-    return touched;
+    return touched.load(std::memory_order_relaxed);
 }
 
 void ControlConn::unblock()
