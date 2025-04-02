@@ -1217,14 +1217,23 @@ void AppIdSession::publish_shadow_traffic_event(const uint32_t &shadow_traffic_b
      
     const char* app_name;
     unsigned shadow_traffic_pub_id = 0;
-    std::string str_print; 
+    std::string str_print;
 
     AppId publishing_appid = get_shadow_traffic_publishing_appid();
     app_name = api.asd->get_odp_ctxt().get_app_info_mgr().get_app_name(publishing_appid);
+
     if (app_name == nullptr)
     {
-        APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL,"Appname is invalid, not publishing shadow traffic event without appname\n");
-        return;
+        if ((shadow_traffic_bits & ShadowTraffic_Type_Domain_Fronting) && 
+            !(shadow_traffic_bits & ~ShadowTraffic_Type_Domain_Fronting))
+        { 
+            app_name = "unknown"; 
+        }
+        else 
+        {
+            APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL,"Appname is invalid, not publishing shadow traffic event without appname\n");
+            return; 
+        }
     }
 
     shadow_traffic_pub_id = DataBus::get_id(shadowtraffic_pub_key);
