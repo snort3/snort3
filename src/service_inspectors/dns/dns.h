@@ -22,6 +22,8 @@
 #ifndef DNS_H
 #define DNS_H
 
+#include <set>
+
 #include "flow/flow.h"
 
 #include "protocols/packet.h"
@@ -233,6 +235,7 @@ private:
     uint16_t type = 0;
 };
 
+// Flow data class for DNS over TCP
 class DnsFlowData : public snort::FlowData
 {
 public:
@@ -245,6 +248,20 @@ public:
 public:
     static unsigned inspector_id;
     DNSData session;
+};
+
+// Flow data class for DNS over UDP
+class DnsUdpFlowData : public snort::FlowData
+{
+public:
+    DnsUdpFlowData();
+
+    static void init()
+    { inspector_id = snort::FlowData::create_flow_data_id(); }
+
+public:
+    static unsigned inspector_id;
+    std::set<uint16_t> trans_ids;
 };
 
 #endif
