@@ -6,6 +6,7 @@ set( FILE_LIST
     dns_config.h
     dns_module.cc
     dns_module.h
+    dns_rr_decoder.cc
     dns_splitter.cc
     dns_splitter.h
 )

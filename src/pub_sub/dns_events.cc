@@ -312,7 +312,22 @@ uint8_t DnsResponseEvent::get_Z() const
 
 const std::string& DnsResponseEvent::get_answers() const
 {
-    return session.answers;
+    if (!answers_set)
+    {
+        session.get_answers(packet, answers, ttls);
+        answers_set = true;
+    }
+    return answers;
+}
+
+const std::string& DnsResponseEvent::get_TTLs() const
+{
+    if (!answers_set)
+    {
+        session.get_answers(packet, answers, ttls);
+        answers_set = true;
+    }
+    return ttls;
 }
 
 bool DnsResponseEvent::get_rejected() const
@@ -320,4 +335,24 @@ bool DnsResponseEvent::get_rejected() const
     return session.hdr.flags & DNS_HDR_FLAG_RESPONSE &&
         session.hdr.flags & DNS_HDR_FLAG_REPLY_CODE_MASK &&
         !session.hdr.questions;
+}
+
+const std::string& DnsResponseEvent::get_auth() const
+{
+    if (!auth_set)
+    {
+        session.get_auth(packet, auth);
+        auth_set = true;
+    }
+    return auth;
+}
+
+const std::string& DnsResponseEvent::get_addl() const
+{
+    if (!addl_set)
+    {
+        session.get_addl(packet, addl);
+        addl_set = true;
+    }
+    return addl;
 }

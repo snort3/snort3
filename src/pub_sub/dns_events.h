@@ -86,7 +86,7 @@ private:
 class SO_PUBLIC DnsResponseEvent : public snort::DataEvent
 {
 public:
-    DnsResponseEvent(const DNSData& ssn) : session(ssn) { }
+    DnsResponseEvent(const DNSData& ssn, Packet* p) : session(ssn), packet(p) { }
 
     uint16_t get_trans_id() const;
     const std::string& get_query() const;
@@ -102,10 +102,21 @@ public:
     bool get_RA() const;
     uint8_t get_Z() const;
     const std::string& get_answers() const;
+    const std::string& get_TTLs() const;
     bool get_rejected() const;
+    const std::string& get_auth() const;
+    const std::string& get_addl() const;
 
 private:
     const DNSData& session;
+    const Packet* packet = nullptr;
+    mutable std::string answers;
+    mutable std::string ttls;
+    mutable std::string auth;
+    mutable std::string addl;
+    mutable bool answers_set = false;
+    mutable bool auth_set = false;
+    mutable bool addl_set = false;
 };
 
 }

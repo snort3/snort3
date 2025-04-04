@@ -401,7 +401,10 @@ const ServiceBlueprint DnsExtractorService::blueprint =
         "RA",
         "Z",
         "answers",
-        "rejected"
+        "TTLs",
+        "rejected",
+        "auth",
+        "addl"
     },
 };
 

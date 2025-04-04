@@ -124,8 +124,14 @@ Fields supported for DNS:
 * `RD` - A boolean, true when the client asks the server to pursue the query recursively
 * `RA` - A boolean, denotes the availability of recursive query support at the server
 * `Z` - A 3 bit integer set to 0 unless DNSSEC is used (see RFC 2535)
-* `answers` - The list of answers to the query, only A and AAAA types are currently supported
+* `answers` - The list of answers to the query
+* `TTLs` - The list of caching intervals for the corresponding answers
 * `rejected` - A boolean, true when the server responds with an error code and no query
+* `auth` - The list of authoritative responses
+* `addl` - The list of additional responses
+
+In the answers, auth, and addl lists the decoding of the following RR types is supported:
+A, AAAA, CNAME, DS, MX, NS, NSEC, PTR, RRSIG, SOA, TXT
 
 Fields supported for connection:
 

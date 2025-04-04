@@ -124,9 +124,24 @@ static const char* get_answers(const DataEvent* event, const Flow*)
     return ((const DnsResponseEvent*)event)->get_answers().c_str();
 }
 
+static const char* get_TTLs(const DataEvent* event, const Flow*)
+{
+    return ((const DnsResponseEvent*)event)->get_TTLs().c_str();
+}
+
 static const char* get_rejected(const DataEvent* event, const Flow*)
 {
     return ((const DnsResponseEvent*)event)->get_rejected() ? "T" : "F";
+}
+
+static const char* get_auth(const DataEvent* event, const Flow*)
+{
+    return ((const DnsResponseEvent*)event)->get_auth().c_str();
+}
+
+static const char* get_addl(const DataEvent* event, const Flow*)
+{
+    return ((const DnsResponseEvent*)event)->get_addl().c_str();
 }
 
 static const map<string, ExtractorEvent::BufGetFn> sub_buf_getters =
@@ -141,7 +156,10 @@ static const map<string, ExtractorEvent::BufGetFn> sub_buf_getters =
     {"RD", get_RD},
     {"RA", get_RA},
     {"answers", get_answers},
-    {"rejected", get_rejected}
+    {"TTLs", get_TTLs},
+    {"rejected", get_rejected},
+    {"auth", get_auth},
+    {"addl", get_addl}
 };
 
 THREAD_LOCAL const snort::Connector::ID* DnsResponseExtractor::log_id = nullptr;

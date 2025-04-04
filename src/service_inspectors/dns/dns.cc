@@ -40,7 +40,6 @@
 using namespace snort;
 
 #define MAX_UDP_PAYLOAD 0x1FFF
-#define DNS_RR_PTR 0xC0
 
 THREAD_LOCAL ProfileStats dnsPerfStats;
 THREAD_LOCAL DnsStats dnsstats;
@@ -125,13 +124,6 @@ bool DNSData::valid_dns(const DNSHdr& dns_header) const
         return false;
 
     return true;
-}
-
-void DNSData::add_answer(const char* answer)
-{
-    if (!answers.empty())
-        answers.append(" ");
-    answers.append(answer);
 }
 
 DNSData* get_dns_session_data(Packet* p, bool from_server, DNSData& udpSessionData)
@@ -512,7 +504,8 @@ static uint16_t ParseDNSQuestion(
 }
 
 static uint16_t ParseDNSAnswer(
-    const unsigned char* data, uint16_t bytes_unused, DNSData* dnsSessionData)
+    const unsigned char* data, uint16_t bytes_unused, DNSData* dnsSessionData,
+    const Packet* p, std::vector<uint16_t>& tabs)
 {
     if ( !bytes_unused )
         return 0;
@@ -540,6 +533,7 @@ static uint16_t ParseDNSAnswer(
     switch (dnsSessionData->curr_rec_state)
     {
     case DNS_RESP_STATE_RR_TYPE:
+        tabs.emplace_back(data - p->data);
         dnsSessionData->curr_rr.type = (uint8_t)*data << 8;
         data++;
 
@@ -756,8 +750,7 @@ static uint16_t SkipDNSRData(
 static uint16_t ParseDNSRData(
     const unsigned char* data,
     uint16_t bytes_unused,
-    DNSData* dnsSessionData,
-    void (DNSData::*save_rdata)(const char*) = nullptr)
+    DNSData* dnsSessionData)
 {
     if (bytes_unused == 0)
     {
@@ -789,23 +782,13 @@ static uint16_t ParseDNSRData(
         break;
     case DNS_RR_TYPE_A:
     case DNS_RR_TYPE_AAAA:
+        if (dnsSessionData->publish_response())
         {
-            auto resp_ip = DnsResponseIp(data, dnsSessionData->curr_rr.type);
-            if (dnsSessionData->publish_response())
-            {
-                dnsSessionData->dns_events.add_fqdn(dnsSessionData->cur_fqdn_event, dnsSessionData->curr_rr.ttl);
-                dnsSessionData->dns_events.add_ip(resp_ip);
-            }
-
-            if (save_rdata)
-            {
-                SfIpString ipbuf;
-                resp_ip.get_ip().ntop(ipbuf);
-                (dnsSessionData->*save_rdata)(ipbuf);
-            }
+            dnsSessionData->dns_events.add_fqdn(dnsSessionData->cur_fqdn_event, dnsSessionData->curr_rr.ttl);
+            dnsSessionData->dns_events.add_ip(DnsResponseIp(data, dnsSessionData->curr_rr.type));
         }
-        bytes_unused = SkipDNSRData(data, bytes_unused, dnsSessionData);
 
+        bytes_unused = SkipDNSRData(data, bytes_unused, dnsSessionData);
         break;
     case DNS_RR_TYPE_CNAME:
         if (dnsSessionData->publish_response())
@@ -819,6 +802,9 @@ static uint16_t ParseDNSRData(
     case DNS_RR_TYPE_PTR:
     case DNS_RR_TYPE_HINFO:
     case DNS_RR_TYPE_MX:
+    case DNS_RR_TYPE_RRSIG:
+    case DNS_RR_TYPE_NSEC:
+    case DNS_RR_TYPE_DS:
         bytes_unused = SkipDNSRData(data, bytes_unused, dnsSessionData);
         break;
     default:
@@ -916,7 +902,7 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData, bool& ne
         case DNS_RESP_STATE_ANS_RR: /* ANSWERS section */
             for (i=dnsSessionData->curr_rec; i<dnsSessionData->hdr.answers; i++)
             {
-                bytes_unused = ParseDNSAnswer(data, bytes_unused, dnsSessionData);
+                bytes_unused = ParseDNSAnswer(data, bytes_unused, dnsSessionData, p, dnsSessionData->answer_tabs);
 
                 if (bytes_unused == 0)
                 {
@@ -933,7 +919,7 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData, bool& ne
                 case DNS_RESP_STATE_RR_RDATA_MID:
                     /* Data now points to the beginning of the RDATA */
                     data = p->data + (p->dsize - bytes_unused);
-                    bytes_unused = ParseDNSRData(data, bytes_unused, dnsSessionData, &DNSData::add_answer);
+                    bytes_unused = ParseDNSRData(data, bytes_unused, dnsSessionData);
                     if (dnsSessionData->curr_rec_state != DNS_RESP_STATE_RR_COMPLETE)
                     {
                         needNextPacket = true;
@@ -961,7 +947,7 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData, bool& ne
         case DNS_RESP_STATE_AUTH_RR: /* AUTHORITIES section */
             for (i=dnsSessionData->curr_rec; i<dnsSessionData->hdr.authorities; i++)
             {
-                bytes_unused = ParseDNSAnswer(data, bytes_unused, dnsSessionData);
+                bytes_unused = ParseDNSAnswer(data, bytes_unused, dnsSessionData, p, dnsSessionData->auth_tabs);
 
                 if (bytes_unused == 0)
                 {
@@ -1006,7 +992,7 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData, bool& ne
         case DNS_RESP_STATE_ADD_RR: /* ADDITIONALS section */
             for (i=dnsSessionData->curr_rec; i<dnsSessionData->hdr.additionals; i++)
             {
-                bytes_unused = ParseDNSAnswer(data, bytes_unused, dnsSessionData);
+                bytes_unused = ParseDNSAnswer(data, bytes_unused, dnsSessionData, p, dnsSessionData->addl_tabs);
 
                 if (bytes_unused == 0)
                 {
@@ -1268,7 +1254,7 @@ static void snort_dns(Packet* p, const DnsConfig* dns_config)
             if (!needNextPacket and dnsSessionData->has_events())
                 DataBus::publish(Dns::get_pub_id(), DnsEventIds::DNS_RESPONSE_DATA, dnsSessionData->dns_events);
 
-            DnsResponseEvent dns_response_event(*dnsSessionData);
+            DnsResponseEvent dns_response_event(*dnsSessionData, p);
             DataBus::publish(Dns::get_pub_id(), DnsEventIds::DNS_RESPONSE, dns_response_event, p->flow);
         }
 
