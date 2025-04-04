@@ -222,7 +222,7 @@ static bool poll_control_fds(FdEvents ready[MAX_CONTROL_FDS], unsigned& nready)
         return false;
     }
     nready = 0;
-    for (int i = 0; i < npfds; i++)
+    for (unsigned i = 0; i < npfds; i++)
     {
         struct pollfd* pfd = &pfds[i];
         int fd = pfd->fd;

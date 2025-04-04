@@ -25,7 +25,7 @@
 class CsvExtractorLogger : public ExtractorLogger
 {
 public:
-    CsvExtractorLogger(snort::Connector*, TimeType);
+    CsvExtractorLogger(snort::Connector*, TimeType, char delimiter = ',');
 
     virtual bool is_strict() const override
     { return true; }
@@ -48,7 +48,8 @@ protected:
     void ts_sec(const struct timeval&);
     void ts_usec(const struct timeval&);
 
-    std::string buffer;
+    std::string record;
+    const char delimiter;
     void (CsvExtractorLogger::*add_ts)(const struct timeval&);
 };
 

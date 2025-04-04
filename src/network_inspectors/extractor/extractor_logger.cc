@@ -76,6 +76,9 @@ ExtractorLogger* ExtractorLogger::make_logger(FormatType f_type, const std::stri
     case FormatType::CSV:
         logger = new CsvExtractorLogger(output_conn, ts_type);
         break;
+    case FormatType::TSV:
+        logger = new CsvExtractorLogger(output_conn, ts_type, '\t');
+        break;
     case FormatType::JSON:
         logger = new JsonExtractorLogger(output_conn, ts_type);
         break;
@@ -100,10 +103,12 @@ TEST_CASE("Format Type", "[extractor]")
     SECTION("to string")
     {
         FormatType csv = FormatType::CSV;
+        FormatType tsv = FormatType::TSV;
         FormatType json = FormatType::JSON;
         FormatType max = FormatType::MAX;
 
         CHECK_FALSE(strcmp("csv", csv.c_str()));
+        CHECK_FALSE(strcmp("tsv", tsv.c_str()));
         CHECK_FALSE(strcmp("json", json.c_str()));
         CHECK_FALSE(strcmp("(not set)", max.c_str()));
     }

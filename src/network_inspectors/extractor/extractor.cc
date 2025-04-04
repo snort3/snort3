@@ -67,7 +67,7 @@ static const Parameter extractor_proto_params[] =
 
 static const Parameter s_params[] =
 {
-    { "formatting", Parameter::PT_ENUM, "csv | json", "csv",
+    { "formatting", Parameter::PT_ENUM, "csv | tsv | json", "csv",
       "output format for extractor" },
 
     { "connector", Parameter::PT_STRING, nullptr, nullptr,

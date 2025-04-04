@@ -71,6 +71,7 @@ public:
     enum Value : uint8_t
     {
         CSV,
+        TSV,
         JSON,
         MAX
     };
@@ -88,6 +89,8 @@ public:
         {
         case CSV:
             return "csv";
+        case TSV:
+            return "tsv";
         case JSON:
             return "json";
         case MAX: // fallthrough

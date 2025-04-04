@@ -16,6 +16,7 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 // extractor_csv_logger.cc author Anna Norokh <anorokh@cisco.com>
+// extractor_csv_logger.cc author Cisco
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -35,10 +36,8 @@
 using namespace snort;
 using namespace std;
 
-static THREAD_LOCAL bool first_write;
-
-CsvExtractorLogger::CsvExtractorLogger(snort::Connector* conn, TimeType ts_type)
-    : ExtractorLogger(conn)
+CsvExtractorLogger::CsvExtractorLogger(snort::Connector* conn, TimeType ts_type, char delim)
+    : ExtractorLogger(conn), delimiter(delim)
 {
     switch (ts_type)
     {
@@ -73,7 +72,7 @@ void CsvExtractorLogger::add_header(const vector<const char*>& field_names, cons
     {
         header += d;
         header += n;
-        d = ',';
+        d = delimiter;
     }
 
     ConnectorMsg cmsg((const uint8_t*)header.c_str(), header.size(), false);
@@ -82,63 +81,66 @@ void CsvExtractorLogger::add_header(const vector<const char*>& field_names, cons
 
 void CsvExtractorLogger::open_record()
 {
-    first_write = true;
+    record.clear();
 }
 
 void CsvExtractorLogger::close_record(const Connector::ID& service_id)
 {
-    ConnectorMsg cmsg((const uint8_t*)buffer.c_str(), buffer.size(), false);
-    output_conn->transmit_message(cmsg, service_id);
+    if (record.empty())
+        return;
 
-    buffer.clear();
+    auto data = (const uint8_t*)record.data() + 1;
+    auto size = record.size() - 1;
+    ConnectorMsg cmsg(data, size, false);
+
+    output_conn->transmit_message(cmsg, service_id);
 }
 
 void CsvExtractorLogger::add_field(const char*, const char* v)
 {
-    first_write ? []() { first_write = false; } () : buffer.push_back(',');
+    record.push_back(delimiter);
     add_escaped(v, strlen(v));
 }
 
 void CsvExtractorLogger::add_field(const char*, const char* v, size_t len)
 {
-    first_write ? []() { first_write = false; } () : buffer.push_back(',');
+    record.push_back(delimiter);
     add_escaped(v, len);
 }
 
 void CsvExtractorLogger::add_field(const char*, uint64_t v)
 {
-    first_write ? []() { first_write = false; } () : buffer.push_back(',');
-    buffer.append(to_string(v));
+    record.push_back(delimiter);
+    record.append(to_string(v));
 }
 
 void CsvExtractorLogger::add_field(const char*, const snort::SfIp& v)
 {
-    first_write ? []() { first_write = false; } () : buffer.push_back(',');
+    record.push_back(delimiter);
 
     snort::SfIpString buf;
 
     v.ntop(buf);
-    buffer.append(buf);
+    record.append(buf);
 }
 
 void CsvExtractorLogger::add_field(const char*, bool v)
 {
-    first_write ? []() { first_write = false; } () : buffer.push_back(',');
+    record.push_back(delimiter);
 
-    buffer.append(v ? "true" : "false");
+    record.append(v ? "true" : "false");
 }
 
-void CsvExtractorLogger::add_escaped(const char* v, size_t len)
+static void escape_csv_style(string& record, const char* v, size_t len, char delimiter)
 {
-    if (!v || len == 0)
-        return;
+    assert(v);
+    assert(len);
 
     constexpr float escape_resize_factor = 1.2;
-
     const char* p = v;
     const char* end = v + len;
 
-    buffer.reserve(buffer.length() + len * escape_resize_factor);
+    record.reserve(record.length() + len * escape_resize_factor);
 
     bool to_quote = false;
     std::vector<ptrdiff_t> quote_positions;
@@ -151,35 +153,89 @@ void CsvExtractorLogger::add_escaped(const char* v, size_t len)
             quote_positions.push_back(p - v);
         }
 
-        to_quote = to_quote or *p == ',' or !isprint(*p) or (isblank(*p) and (p == v or p == end - 1));
+        to_quote = to_quote or *p == delimiter or !isprint(*p) or (isblank(*p) and (p == v or p == end - 1));
 
         ++p;
     }
 
     if (!to_quote)
     {
-        buffer.append(v, len);
+        record.append(v, len);
         return;
     }
 
-    buffer.push_back('"');
+    record.push_back('"');
 
     ptrdiff_t curr_pos = 0;
     for (ptrdiff_t quote_pos : quote_positions)
     {
         assert(quote_pos >= curr_pos);
-        buffer.append(v + curr_pos, quote_pos - curr_pos);
-        buffer.push_back('"');
+        record.append(v + curr_pos, quote_pos - curr_pos);
+        record.push_back('"');
         curr_pos = quote_pos;
     }
 
-    buffer.append(v + curr_pos, len - curr_pos);
-    buffer.push_back('"');
+    record.append(v + curr_pos, len - curr_pos);
+    record.push_back('"');
+}
+
+static void escape_tsv_style(string& record, const char* v, size_t len, char delimiter)
+{
+    assert(v);
+    assert(len);
+
+    const char* p = v - 1;
+    const char* end = v + len;
+    bool clean = true;
+
+    while (++p < end and clean)
+        clean = !(*p == delimiter or *p == '\r' or *p == '\n' or *p == '\\');
+
+    if (clean)
+    {
+        record.append(v, len);
+        return;
+    }
+
+    p = v - 1;
+    end = v + len;
+
+    while (++p < end)
+    {
+        if (*p == '\t')
+            record.append("\\t");
+        else if (*p == '\r')
+            record.append("\\r");
+        else if (*p == '\n')
+            record.append("\\n");
+        else if (*p == '\\')
+            record.append("\\\\");
+        else
+            record.push_back(*p);
+
+        assert(delimiter == '\t');
+    }
+}
+
+void CsvExtractorLogger::add_escaped(const char* v, size_t len)
+{
+    bool visible = isprint(delimiter);
+
+    if (!v || len == 0)
+    {
+        if (!visible)
+            record.append("-");
+        return;
+    }
+
+    return visible
+        ? escape_csv_style(record, v, len, delimiter)
+        : escape_tsv_style(record, v, len, delimiter);
 }
 
 void CsvExtractorLogger::add_field(const char*, struct timeval v)
 {
-    first_write ? []() { first_write = false; } () : buffer.push_back(',');
+    record.push_back(delimiter);
     (this->*add_ts)(v);
 }
 
@@ -188,7 +244,7 @@ void CsvExtractorLogger::ts_snort(const struct timeval& v)
     char ts[TIMEBUF_SIZE];
     ts_print(&v, ts, false);
 
-    buffer.append(ts);
+    record.append(ts);
 }
 
 void CsvExtractorLogger::ts_snort_yy(const struct timeval& v)
@@ -196,7 +252,7 @@ void CsvExtractorLogger::ts_snort_yy(const struct timeval& v)
     char ts[TIMEBUF_SIZE];
     ts_print(&v, ts, true);
 
-    buffer.append(ts);
+    record.append(ts);
 }
 
 void CsvExtractorLogger::ts_unix(const struct timeval& v)
@@ -204,14 +260,14 @@ void CsvExtractorLogger::ts_unix(const struct timeval& v)
     char ts[numeric_limits<uint64_t>::digits10 + 8];
 
     snort::SnortSnprintf(ts, sizeof(ts), "%" PRIu64 ".%06d", (uint64_t)v.tv_sec, (unsigned)v.tv_usec);
-    buffer.append(ts);
+    record.append(ts);
 }
 
 void CsvExtractorLogger::ts_sec(const struct timeval& v)
 {
     uint64_t sec = (uint64_t)v.tv_sec;
 
-    buffer.append(to_string(sec));
+    record.append(to_string(sec));
 }
 
 void CsvExtractorLogger::ts_usec(const struct timeval& v)
@@ -219,119 +275,164 @@ void CsvExtractorLogger::ts_usec(const struct timeval& v)
     uint64_t sec = (uint64_t)v.tv_sec;
     uint64_t usec = (uint64_t)v.tv_usec;
 
-    buffer.append(to_string(sec * 1000000 + usec));
+    record.append(to_string(sec * 1000000 + usec));
 }
 
 #ifdef UNIT_TEST
 
 #include "catch/snort_catch.h"
 
-class CsvExtractorLoggerTest : public CsvExtractorLogger
+class CsvExtractorLoggerHelper : public CsvExtractorLogger
 {
 public:
-    CsvExtractorLoggerTest() : CsvExtractorLogger(nullptr, TimeType::MAX) {}
+    CsvExtractorLoggerHelper(char delimiter) : CsvExtractorLogger(nullptr, TimeType::MAX, delimiter) {}
 
-    void check_escaping(const char* input, size_t i_len, const std::string& expected)
+    void check(const char* input, size_t i_len, const std::string& expected)
     {
-        buffer.clear();
+        record.clear();
         add_escaped(input, i_len);
-        CHECK(buffer == expected);
+        CHECK(record == expected);
     }
+};
+
+class CsvExtractorLoggerTest
+{
+public:
+
+    void check_csv(const char* input, size_t i_len, const std::string& expected)
+    { csv.check(input, i_len, expected); }
+
+    void check_tsv(const char* input, size_t i_len, const std::string& expected)
+    { tsv.check(input, i_len, expected); }
+
+private:
+    CsvExtractorLoggerHelper csv{','};
+    CsvExtractorLoggerHelper tsv{'\t'};
 };
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: nullptr", "[extractor]")
 {
-    check_escaping(nullptr, 1, "");
+    check_csv(nullptr, 1, "");
+    check_tsv(nullptr, 1, "-");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: zero len", "[extractor]")
 {
     const char* input = "";
-    check_escaping(input, 0, "");
+    check_csv(input, 0, "");
+    check_tsv(input, 0, "-");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: no special chars", "[extractor]")
 {
     const char* input = "simple_text";
-    check_escaping(input, strlen(input), "simple_text");
+    check_csv(input, strlen(input), "simple_text");
+    check_tsv(input, strlen(input), "simple_text");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: comma", "[extractor]")
 {
     const char* input = "text,with,commas";
-    check_escaping(input, strlen(input), "\"text,with,commas\"");
+    check_csv(input, strlen(input), "\"text,with,commas\"");
+    check_tsv(input, strlen(input), "text,with,commas");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: tab", "[extractor]")
+{
+    const char* input = "text\t with\t tabs";
+    check_csv(input, strlen(input), "\"text\t with\t tabs\"");
+    check_tsv(input, strlen(input), "text\\t with\\t tabs");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: newline", "[extractor]")
 {
-    const char* input = "text\nwith\nnewlines";
-    check_escaping(input, strlen(input), "\"text\nwith\nnewlines\"");
+    const char* input = "text\n with\n newlines";
+    check_csv(input, strlen(input), "\"text\n with\n newlines\"");
+    check_tsv(input, strlen(input), "text\\n with\\n newlines");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: CR", "[extractor]")
 {
-    const char* input = "text\rwith\rreturns";
-    check_escaping(input, strlen(input), "\"text\rwith\rreturns\"");
+    const char* input = "text\r with\r returns";
+    check_csv(input, strlen(input), "\"text\r with\r returns\"");
+    check_tsv(input, strlen(input), "text\\r with\\r returns");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: whitespaces", "[extractor]")
 {
     const char* input = "text with ws";
-    check_escaping(input, strlen(input), "text with ws");
+    check_csv(input, strlen(input), "text with ws");
+    check_tsv(input, strlen(input), "text with ws");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: whitespace at the beginning", "[extractor]")
 {
     const char* input = " start_with_ws";
-    check_escaping(input, strlen(input), "\" start_with_ws\"");
+    check_csv(input, strlen(input), "\" start_with_ws\"");
+    check_tsv(input, strlen(input), " start_with_ws");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: whitespace at the end", "[extractor]")
 {
     const char* input = "end_with_ws ";
-    check_escaping(input, strlen(input), "\"end_with_ws \"");
+    check_csv(input, strlen(input), "\"end_with_ws \"");
+    check_tsv(input, strlen(input), "end_with_ws ");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: quotes", "[extractor]")
 {
     const char* input = "text\"with\"quotes";
-    check_escaping(input, strlen(input), "\"text\"\"with\"\"quotes\"");
+    check_csv(input, strlen(input), "\"text\"\"with\"\"quotes\"");
+    check_tsv(input, strlen(input), "text\"with\"quotes");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: mixed", "[extractor]")
 {
-    const char* input = "text,with\nmixed\"chars\r";
-    check_escaping(input, strlen(input), "\"text,with\nmixed\"\"chars\r\"");
+    const char* input = "text,with\n mixed\"chars\r";
+    check_csv(input, strlen(input), "\"text,with\n mixed\"\"chars\r\"");
+    check_tsv(input, strlen(input), "text,with\\n mixed\"chars\\r");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: single quote", "[extractor]")
 {
     const char* input = "\"";
-    check_escaping(input, strlen(input), "\"\"\"\"");
+    check_csv(input, strlen(input), "\"\"\"\"");
+    check_tsv(input, strlen(input), "\"");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: single comma", "[extractor]")
 {
     const char* input = ",";
-    check_escaping(input, strlen(input), "\",\"");
+    check_csv(input, strlen(input), "\",\"");
+    check_tsv(input, strlen(input), ",");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: single tab", "[extractor]")
+{
+    const char* input = "\t";
+    check_csv(input, strlen(input), "\"\t\"");
+    check_tsv(input, strlen(input), "\\t");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: single newline", "[extractor]")
 {
     const char* input = "\n";
-    check_escaping(input, strlen(input), "\"\n\"");
+    check_csv(input, strlen(input), "\"\n\"");
+    check_tsv(input, strlen(input), "\\n");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: single CR", "[extractor]")
 {
     const char* input = "\r";
-    check_escaping(input, strlen(input), "\"\r\"");
+    check_csv(input, strlen(input), "\"\r\"");
+    check_tsv(input, strlen(input), "\\r");
 }
 
 TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: single whitespace", "[extractor]")
 {
     const char* input = " ";
-    check_escaping(input, strlen(input), "\" \"");
+    check_csv(input, strlen(input), "\" \"");
+    check_tsv(input, strlen(input), " ");
 }
 
 #endif
