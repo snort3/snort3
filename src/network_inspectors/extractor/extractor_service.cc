@@ -186,7 +186,7 @@ void ExtractorService::validate_events(const ServiceBlueprint& sbp, const std::v
     for (const auto& val : vals)
     {
         if (!find_event(sbp, val))
-            ParseWarning(WARN_CONF_STRICT, "unsupported '%s' event in protocols.on_events", val.c_str());
+            ParseError("unsupported '%s' event in protocols.on_events", val.c_str());
     }
 }
 
@@ -195,7 +195,7 @@ void ExtractorService::validate_fields(const ServiceBlueprint& sbp, const std::v
     for (auto& val : vals)
     {
         if (!find_field(sbp, val))
-            ParseWarning(WARN_CONF_STRICT, "unsupported '%s' field in protocols.fields\n", val.c_str());
+            ParseError("unsupported '%s' field in protocols.fields\n", val.c_str());
     }
 }
 
