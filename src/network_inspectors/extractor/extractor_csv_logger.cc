@@ -285,7 +285,7 @@ void CsvExtractorLogger::ts_usec(const struct timeval& v)
 class CsvExtractorLoggerHelper : public CsvExtractorLogger
 {
 public:
-    CsvExtractorLoggerHelper(char delimiter) : CsvExtractorLogger(nullptr, TimeType::MAX, delimiter) {}
+    CsvExtractorLoggerHelper(char separator) : CsvExtractorLogger(nullptr, TimeType::MAX, separator) {}
 
     void check(const char* input, size_t i_len, const std::string& expected)
     {
