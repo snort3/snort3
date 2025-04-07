@@ -137,11 +137,52 @@ enum DNSState
 class ServiceDNSData : public AppIdFlowData
 {
 public:
-    ~ServiceDNSData() override = default;
+    ServiceDNSData();
+    ~ServiceDNSData() override;
+    void save_dns_cache(uint16_t size, const uint8_t* data);
+    void free_dns_cache();
 
     DNSState state = DNS_STATE_QUERY;
+    uint8_t* cached_data = nullptr;
+    uint16_t cached_len = 0; 
     uint16_t id = 0;
 };
+
+void ServiceDNSData::save_dns_cache(uint16_t size, const uint8_t* data)
+{
+    if(size > 0) 
+    {
+        cached_data = (uint8_t*)snort_calloc(size, sizeof(uint8_t));
+        if(cached_data) 
+        {
+            memcpy(cached_data, data, size);
+        }
+        cached_len = size;
+    }
+}
+
+void ServiceDNSData::free_dns_cache()
+{
+    if(cached_data)
+    {
+        snort_free(cached_data);
+        cached_data = nullptr;
+    }
+
+    cached_len = 0;
+}
+
+ServiceDNSData::ServiceDNSData()
+{
+    state = DNS_STATE_QUERY;
+    cached_data = nullptr;
+    cached_len = 0;
+}
+
+ServiceDNSData::~ServiceDNSData()
+{
+    free_dns_cache();
+}
 
 DnsTcpServiceDetector::DnsTcpServiceDetector(ServiceDiscovery* sd)
 {
@@ -621,10 +662,15 @@ inprocess:
 int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     int rval;
+    uint8_t* reallocated_data = nullptr;
+    const uint8_t* data = args.data;
+    uint16_t size = args.size;
+    ServiceDNSData* dd = static_cast<ServiceDNSData*>(data_get(args.asd));
 
     {
         if (!args.size)
             goto inprocess;
+
         if (args.size < sizeof(DNSTCPHeader))
         {
             if (args.dir == APP_ID_FROM_INITIATOR)
@@ -632,13 +678,35 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
             else
                 goto fail;
         }
-        const DNSTCPHeader* hdr = (const DNSTCPHeader*)args.data;
-        const uint8_t* data = args.data + sizeof(DNSTCPHeader);
-        uint16_t size = args.size - sizeof(DNSTCPHeader);
+
+        if (!dd)
+        {
+            dd = new ServiceDNSData;
+            data_add(args.asd, dd);
+        }
+
+        if (dd->cached_data and dd->cached_len and args.dir == APP_ID_FROM_INITIATOR)
+        {
+            reallocated_data = static_cast<uint8_t*>(snort_calloc(dd->cached_len + args.size, sizeof(uint8_t)));
+            memcpy(reallocated_data, dd->cached_data, dd->cached_len);
+            memcpy(reallocated_data + dd->cached_len, args.data, args.size);
+            size = dd->cached_len + args.size;
+            dd->free_dns_cache();
+            data = reallocated_data;
+        }
+
+        const DNSTCPHeader* hdr = (const DNSTCPHeader*)data;
+        data = data + sizeof(DNSTCPHeader);
+        size = size - sizeof(DNSTCPHeader);
         uint16_t tmp = ntohs(hdr->length);
 
-        if (tmp > size)
+        if (tmp > size and args.dir == APP_ID_FROM_INITIATOR)
+        {
+            dd->save_dns_cache(args.size, args.data);
+            goto inprocess;
+        } else if (tmp > size and args.dir == APP_ID_FROM_RESPONDER) {
             goto not_compatible;
+        }
 
         if (tmp < sizeof(DNSHeader) || dns_validate_header(args.dir, (const DNSHeader*)data,
             args.asd.get_odp_ctxt().dns_host_reporting, args.asd))
@@ -655,13 +723,6 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
             args.asd.get_odp_ctxt().dns_host_reporting, args.asd, args.change_bits);
         if (rval != APPID_SUCCESS)
             goto tcp_done;
-
-        ServiceDNSData* dd = static_cast<ServiceDNSData*>(data_get(args.asd));
-        if (!dd)
-        {
-            dd = new ServiceDNSData;
-            data_add(args.asd, dd);
-        }
 
         if (dd->state == DNS_STATE_QUERY)
         {
@@ -689,22 +750,31 @@ tcp_done:
     case APPID_INPROCESS:
         goto inprocess;
     default:
+        dd->free_dns_cache();
         return rval;
     }
 
 success:
+    if (reallocated_data)
+        snort_free(reallocated_data);
     args.asd.set_session_flags(APPID_SESSION_CONTINUE);
     return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_DNS);
 
 not_compatible:
+    if (reallocated_data)
+        snort_free(reallocated_data);
     incompatible_data(args.asd, args.pkt, args.dir);
     return APPID_NOT_COMPATIBLE;
 
 fail:
+    if (reallocated_data)
+        snort_free(reallocated_data);
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 
 inprocess:
+    if (reallocated_data)
+        snort_free(reallocated_data);
     add_app(args.asd, APP_ID_NONE, APP_ID_DNS, nullptr, args.change_bits);
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
