@@ -127,8 +127,7 @@ static bool open_pcap_dumper()
         auto file_name = std::string(FILE_NAME);
         if ( ThreadConfig::get_instance_max() > 1 )
             file_name.insert(file_name.find(".pcap"), 
-                            ("_" + std::to_string(get_instance_id()) + \
-                             "_" + std::to_string(get_relative_instance_number())));
+                            "_" + std::to_string(get_relative_instance_number()));
         fname = config.capture_path + "/" + file_name;
     }
 
@@ -309,10 +308,7 @@ void PacketCapture::eval(Packet* p)
         }
 
         if (matched_filter)
-        {
             write_packet(p);
-            cap_count_stats.matched++;
-        }
 
         cap_count_stats.checked++;
     }
@@ -329,6 +325,7 @@ void PacketCapture::write_packet(Packet* p)
 
         packet_count++;
     }
+    cap_count_stats.matched++;
     struct pcap_pkthdr pcaphdr;
     pcaphdr.ts = p->pkth->ts;
     pcaphdr.caplen = p->pktlen;
@@ -453,6 +450,7 @@ protected:
     {
         pcap.emplace_back(p);
         write_packet_called = true;
+        cap_count_stats.matched++;
     }
 
     bool capture_init() override

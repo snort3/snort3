@@ -61,7 +61,7 @@ static const Parameter s_capture[] =
     { "capture_path", Parameter::PT_STRING, nullptr, nullptr,
       "directory path to capture pcaps" },
     
-    { "max_packet_count", Parameter::PT_INT, "0:max32", "1000000",
+    { "max_packet_count", Parameter::PT_INT, "0:max32", "0",
       "cap the number of packets per thread" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -84,7 +84,7 @@ static const Parameter capture_params[] =
     { "capture_path", Parameter::PT_STRING, nullptr, nullptr,
       "directory path to capture pcaps" },
     
-    { "max_packet_count", Parameter::PT_INT, "0:max32", "1000000",
+    { "max_packet_count", Parameter::PT_INT, "0:max32", "0",
       "cap the number of packets per thread" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
