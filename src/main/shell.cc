@@ -660,7 +660,7 @@ bool Shell::configure(SnortConfig* sc, bool is_root, std::list<ConfigData*> *con
         config_output->dump_config(*config_data, to_clear);
     }
 
-    if ( sc->gen_dump_config() )
+    if ( sc->gen_dump_config() and config_data_to_dump )
     {
         config_data_to_dump->push_back(config_data);
         config_data = nullptr;
