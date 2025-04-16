@@ -157,6 +157,7 @@ static const Command snort_cmds[] =
     { "log_command", main_log_command,main_log_command_param, "enable or disable command logging"},
     { "show_config_generation", main_show_config_generation, nullptr, "show loaded configuration ID"},
     { "show_snort_cpu", show_snort_cpu, nullptr, "show snort cpu usage"},
+    { "show_snort_packet_latency", show_snort_packet_latency, nullptr, "show snort packet latency data"},
 
     // FIXIT-M rewrite trough to permit updates on the fly
     //{ "process", main_process, nullptr, "process given pcap" },

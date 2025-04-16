@@ -871,6 +871,13 @@ int show_snort_cpu(lua_State* L)
     return 0;
 }
 
+int show_snort_packet_latency(lua_State* L)
+{
+    ControlConn* ctrlconn = ControlConn::query_from_lua(L);
+    send_response(ctrlconn, "Snort Packet latency data\n\n");
+    main_broadcast_command(new ACShowSnortPacketLatencyData(ctrlconn), ctrlconn);
+    return 0;
+}
 //-------------------------------------------------------------------------
 // housekeeping foo
 //-------------------------------------------------------------------------

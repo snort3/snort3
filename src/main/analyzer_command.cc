@@ -302,30 +302,27 @@ SFDAQInstance* AnalyzerCommand::get_daq_instance(Analyzer& analyzer)
 
 ACShowSnortCPU::~ACShowSnortCPU()
 {
-    if (DAQ_SUCCESS == status)
+    double cpu_usage_30s = 0.0;
+    double cpu_usage_120s = 0.0;
+    double cpu_usage_300s = 0.0;
+    int instance = 0;
+
+    for (const auto& cu : cpu_usage) 
     {
-        double cpu_usage_30s = 0.0;
-        double cpu_usage_120s = 0.0;
-        double cpu_usage_300s = 0.0;
-        int instance = 0;
+        log_message("%-3d \t%-6d \t%.1f%% \t%.1f%% \t%.1f%%\n",
+            instance, ThreadConfig::get_instance_tid(instance), cu.cpu_usage_30s,
+            cu.cpu_usage_120s, cu.cpu_usage_300s);
 
-        for (const auto& cu : cpu_usage) 
-        {
-             log_message("%-3d \t%-6d \t%.1f%% \t%.1f%% \t%.1f%%\n",
-                 instance, ThreadConfig::get_instance_tid(instance), cu.cpu_usage_30s,
-                 cu.cpu_usage_120s, cu.cpu_usage_300s);
-
-             cpu_usage_30s += cu.cpu_usage_30s;
-             cpu_usage_120s += cu.cpu_usage_120s;
-             cpu_usage_300s += cu.cpu_usage_300s;
-             instance++;
-        }
-
-        if (instance)
-            log_message("\nSummary \t%.1f%% \t%.1f%% \t%.1f%%\n",
-                cpu_usage_30s/instance, cpu_usage_120s/instance,
-                cpu_usage_300s/instance);
+        cpu_usage_30s += cu.cpu_usage_30s;
+        cpu_usage_120s += cu.cpu_usage_120s;
+        cpu_usage_300s += cu.cpu_usage_300s;
+		instance++;
     }
+
+    if (instance)
+        log_message("\nSummary \t%.1f%% \t%.1f%% \t%.1f%%\n",
+            cpu_usage_30s/instance, cpu_usage_120s/instance,
+            cpu_usage_300s/instance);
 }
 
 bool ACShowSnortCPU::execute(Analyzer& analyzer, void**)
@@ -333,20 +330,82 @@ bool ACShowSnortCPU::execute(Analyzer& analyzer, void**)
     DIOCTL_GetCpuProfileData get_data = {};
 
     SFDAQInstance* instance = get_daq_instance(analyzer);
+    if (!instance)
+        return true;
+    
+    int instance_id = get_instance_id();
 
-    status = instance->ioctl((DAQ_IoctlCmd)DIOCTL_GET_CPU_PROFILE_DATA,
+    int status = instance->ioctl((DAQ_IoctlCmd)DIOCTL_GET_CPU_PROFILE_DATA,
         (void *)(&get_data), sizeof(DIOCTL_GetCpuProfileData));
 
     if (DAQ_SUCCESS != status)
     {
-        LogRespond(ctrlcon, "Fetching profile data failed from DAQ instance %d\n", get_instance_id());
+        LogRespond(ctrlcon, "Fetching profile data failed from DAQ instance %d\n", instance_id);
         return true; 
     }
 
-    auto& stat = cpu_usage[get_instance_id()];
+    auto& stat = cpu_usage[instance_id];
     stat.cpu_usage_30s = static_cast<double>(get_data.cpu_usage_percent_30s);
     stat.cpu_usage_120s = static_cast<double>(get_data.cpu_usage_percent_120s);
     stat.cpu_usage_300s = static_cast<double>(get_data.cpu_usage_percent_300s); 
  
+    return true;
+}
+
+ACShowSnortPacketLatencyData::~ACShowSnortPacketLatencyData()
+{
+    const std::array<const char*, 3> protocol_names = { "TCP", "UDP", "Others" };
+    int instance = 0;
+
+    LogRespond(ctrlcon, "%-3s \t%-6s \t%-8s \t%-12s \t%-12s \t%-12s \t%-20s \t%-15s \t%-12s\n", 
+        "Id", "Tid", "Proto", "Max_pkt(us)", "Pkt_count", "Sum_time(us)", 
+        "Conn_meta_null", "Avg Packet Time(us)", "Max Latency(us)");
+
+    for (auto& ld: latency_data)
+    {   
+        for (size_t i = 0; i < protocol_names.size(); i++)
+        {
+            auto& latency_data_proto = ld.snort_latency_data[i];
+            double average_pkt_time = latency_data_proto.pkt_count > 0 ? 
+            (latency_data_proto.sum_time*1.0 / latency_data_proto.pkt_count / 1000.0) : 0.0;
+
+            LogRespond(ctrlcon, "%-3d \t%-6d \t%-8s \t%-12lu \t%-12lu \t%-12lu \t%-20lu \t%-15.3f \t%-12lu\n",
+                instance, ThreadConfig::get_instance_tid(instance),
+                protocol_names[i],
+                latency_data_proto.snort_up_max_pkt_time/1000, 
+                latency_data_proto.pkt_count,
+                latency_data_proto.sum_time/1000,
+                latency_data_proto.conn_meta_null_counters, 
+                average_pkt_time,
+                latency_data_proto.max_pkt_time/1000);
+        }
+        LogRespond(ctrlcon, "----------------------------------------------------\n");
+		instance++;
+    }
+}
+
+bool ACShowSnortPacketLatencyData::execute(Analyzer& analyzer, void**)
+{
+    DIOCTL_GetSnortLatencyData latency_data_array = {};
+
+    SFDAQInstance* instance = get_daq_instance(analyzer);
+    if (!instance){
+        LogRespond(ctrlcon, "Fetching latency data failed from DAQ instance\n");
+        return true;
+    }
+    int instance_id = get_instance_id();
+    int status = instance->ioctl(
+                    (DAQ_IoctlCmd)DIOCTL_GET_SNORT_LATENCY_DATA,
+                    (void *)(&latency_data_array),
+                    sizeof(DIOCTL_GetSnortLatencyData));
+
+    if (DAQ_SUCCESS != status)
+    {
+        LogRespond(ctrlcon, "Fetching latency data failed from DAQ instance\n");
+        return true;
+    }
+
+    auto& stat = latency_data[instance_id];
+    stat = latency_data_array;
     return true;
 }

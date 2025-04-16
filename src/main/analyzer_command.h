@@ -226,7 +226,19 @@ private:
        double cpu_usage_300s;
     };
     std::vector<CpuUsage> cpu_usage;
-    int status = DAQ_SUCCESS;
+};
+
+class ACShowSnortPacketLatencyData : public snort::AnalyzerCommand
+{
+public:
+    explicit ACShowSnortPacketLatencyData(ControlConn* conn)
+         : AnalyzerCommand(conn), latency_data(snort::ThreadConfig::get_instance_max()) 
+    { }
+    bool execute(Analyzer&, void**) override;
+    const char* stringify() override { return "SHOW_SNORT_PACKET_LATENCY_DATA"; }
+    ~ACShowSnortPacketLatencyData() override;
+private:
+    std::vector<DIOCTL_GetSnortLatencyData> latency_data;
 };
 
 namespace snort
