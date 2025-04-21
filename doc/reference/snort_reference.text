@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.7.2.0 2025-03-30 22:14:23 EDT TST
+Revision 3.7.3.0 2025-04-20 11:40:57 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1799,6 +1799,7 @@ Commands:
     logging
   * snort.show_config_generation(): show loaded configuration ID
   * snort.show_snort_cpu(): show snort cpu usage
+  * snort.show_snort_packet_latency(): show snort packet latency data
   * snort.pause(): suspend packet processing
   * snort.resume(pkt_num): continue packet processing. If number of
     packets is specified, will resume for n packets and pause
@@ -3625,7 +3626,7 @@ Instance Type: global
 Configuration:
 
   * enum extractor.formatting = csv: output format for extractor { 
-    csv | json }
+    csv | tsv | json }
   * string extractor.connector: output destination for extractor
   * enum extractor.time = unix: output format for timestamp values { 
     snort | snort_yy | unix | unix_s | unix_us }
@@ -3925,6 +3926,9 @@ Configuration:
   * int http2_inspect.concurrent_streams_limit = 100: Maximum number
     of concurrent streams allowed in a single HTTP/2 flow { 100:1000
     }
+  * int http2_inspect.settings_max_frame_size = 16777215: Maximum
+    allowed value for settings frame SETTINGS_MAX_FRAME_SIZE {
+    16384:16777215 }
 
 Rules:
 
@@ -3990,6 +3994,8 @@ Rules:
   * 121:42 (http2_inspect) too many unacknowledged settings
   * 121:43 (http2_inspect) setting acknowledgment without actual
     settings
+  * 121:44 (http2_inspect) settings frame size greater than
+    settings_max_frame_size
 
 Peg counts:
 
@@ -4861,7 +4867,7 @@ Configuration:
     packet headers
   * string packet_capture.capture_path: directory path to capture
     pcaps
-  * int packet_capture.max_packet_count = 1000000: cap the number of
+  * int packet_capture.max_packet_count = 0: cap the number of
     packets per thread { 0:max32 }
 
 Commands:
@@ -9917,7 +9923,7 @@ libraries see the Getting Started section of the manual.
   * enum extractor.default_filter = pick: default action for protocol
     with no filter provided { pick | skip }
   * enum extractor.formatting = csv: output format for extractor { 
-    csv | json }
+    csv | tsv | json }
   * string extractor.protocols[].fields: specify fields to log
   * string extractor.protocols[].on_events: specify events to log
   * enum extractor.protocols[].service: service to extract from { 
@@ -10108,6 +10114,9 @@ libraries see the Getting Started section of the manual.
   * int http2_inspect.concurrent_streams_limit = 100: Maximum number
     of concurrent streams allowed in a single HTTP/2 flow { 100:1000
     }
+  * int http2_inspect.settings_max_frame_size = 16777215: Maximum
+    allowed value for settings frame SETTINGS_MAX_FRAME_SIZE {
+    16384:16777215 }
   * implied http_cookie.request: match against the cookie from the
     request message even when examining the response
   * implied http_cookie.with_body: option is no longer used and will
@@ -10614,7 +10623,7 @@ libraries see the Getting Started section of the manual.
     capturing
   * int packet_capture.group = -1: group filter to use for packet
     capturing { -1:32767 }
-  * int packet_capture.max_packet_count = 1000000: cap the number of
+  * int packet_capture.max_packet_count = 0: cap the number of
     packets per thread { 0:max32 }
   * string packet_capture.tenants: comma-separated tenants filter to
     use for packet capturing
@@ -14750,6 +14759,12 @@ More than 6 unacknowledged settings frames.
 
 Unexpected settings ACK.
 
+121:44 (http2_inspect) settings frame size greater than
+settings_max_frame_size
+
+SETTINGS_MAX_FRAME_SIZE value sent in HTTP/2 settings frame is
+greater than maximum value, as configured by settings_max_frame_size.
+
 122:1 (port_scan) TCP portscan
 
 Basic one host to one host TCP portscan where multiple TCP ports are
@@ -16399,6 +16414,7 @@ alert is raised by the enhanced JavaScript normalizer.
     logging
   * snort.show_config_generation(): show loaded configuration ID
   * snort.show_snort_cpu(): show snort cpu usage
+  * snort.show_snort_packet_latency(): show snort packet latency data
   * snort.pause(): suspend packet processing
   * snort.resume(pkt_num): continue packet processing. If number of
     packets is specified, will resume for n packets and pause

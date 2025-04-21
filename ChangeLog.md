@@ -1,3 +1,29 @@
+2025-04-20: 3.7.3.0
+
+* appid: added caching for dns detector
+* appid: fixed unknown payload case for domain fronting
+* control: fix data race in ControlConn touch method
+* dns: handle multi transaction-IDs in single DNS-UDP flow
+* extractor: enable TSV(Tab-Separated Values) formatting
+* extractor: extend dns logging
+* extractor: fix static checker warning
+* extractor: make parsing more strict
+* extractor: simplify CSV logger implementation and add configurable delimiter
+* filters: initialize struct fields when instance is defined
+* flow: fix coverity SWAPPED ARGUMENTS and Y2K38_SAFETY issues
+* helpers: validate input from conf file to verify port number string is valid digits
+* host_tracker: recode while loop to avoid bogus coverity infinite loop warning
+* http2_inspect: added settings_max_frame_size parameter and built-in rule 121:44 to check for max frame size
+* http: initialize class member variables in the ctor
+* ips_options: allocate large buffer for base64 decode from heap instead of on stack
+* loggers: allocate large buffer for writing unified2 extra data from heap instead of stack
+* main: added show_snort_packet_latency() help command support
+* main: do not collect configurations for utility shells
+* main: redirect stdin, stdout, stderr to /dev/null with the freopen system call
+* main: refactor signal handling switch statement, return codes and FatalError
+* managers: use std::move to pass shared ptr to new owner to avoid a copy
+* packet_capture: rename pcaps and change default values
+
 2025-03-30: 3.7.2.0
 
 * appid: added flag to inspect out-of-order packets

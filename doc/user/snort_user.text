@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.7.2.0 2025-03-30 22:14:35 EDT TST
+Revision 3.7.3.0 2025-04-20 11:41:15 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -4817,6 +4817,12 @@ concurrently in a single HTTP/2 flow. The default and minimum
 configurable value is 100. It can be configured up to a maximum of
 1000.
 
+5.11.2.2. settings_max_frame_size
+
+This sets the maximum allowed value for settings frame
+SETTINGS_MAX_FRAME_SIZE. The default and max value is 16777215. The
+minimum configurable value is 16384.
+
 5.11.3. Detection rules
 
 Since HTTP/2 traffic is processed through the HTTP inspector, all of
@@ -5974,10 +5980,17 @@ Fields supported for DNS:
   * RA - A boolean, denotes the availability of recursive query
     support at the server
   * Z - A 3 bit integer set to 0 unless DNSSEC is used (see RFC 2535)
-  * answers - The list of answers to the query, only A and AAAA types
-    are currently supported
+  * answers - The list of answers to the query
+  * TTLs - The list of caching intervals for the corresponding
+    answers
   * rejected - A boolean, true when the server responds with an error
     code and no query
+  * auth - The list of authoritative responses
+  * addl - The list of additional responses
+
+In the answers, auth, and addl lists the decoding of the following RR
+types is supported: A, AAAA, CNAME, DS, MX, NS, NSEC, PTR, RRSIG,
+SOA, TXT
 
 Fields supported for connection:
 
