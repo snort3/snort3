@@ -60,47 +60,6 @@ static void UdpSessionCleanup(Flow* lwssn)
         udpStats.released++;
 }
 
-static int ProcessUdp(Flow* lwssn, Packet* p, StreamUdpConfig*)
-{
-    assert(lwssn->pkt_type == PktType::UDP);
-
-    if ( Stream::blocked_flow(p) )
-        return 0;
-
-    if ( Stream::ignored_flow(lwssn, p) )
-    {
-        udpStats.ignored++;
-        return 0;
-    }
-    udpStats.total_bytes += p->dsize;
-    /* if both seen, mark established */
-    if (p->is_from_server())
-    {
-        lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_RESPONDER;
-        lwssn->set_ttl(p, false);
-    }
-    else
-    {
-        lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
-        lwssn->set_ttl(p, true);
-    }
-
-    if (!(lwssn->ssn_state.session_flags & SSNFLAG_ESTABLISHED))
-    {
-        if ((lwssn->ssn_state.session_flags & SSNFLAG_SEEN_SENDER) &&
-            (lwssn->ssn_state.session_flags & SSNFLAG_SEEN_RESPONDER))
-        {
-            lwssn->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
-            DataBus::publish(Stream::get_pub_id(), StreamEventIds::UDP_BIDIRECTIONAL, p);
-        }
-    }
-
-    if ( lwssn->clouseau )
-        lwssn->clouseau->eval(p);
-
-    return 0;
-}
-
 //-------------------------------------------------------------------------
 // UdpSession methods
 //-------------------------------------------------------------------------
@@ -168,11 +127,53 @@ void UdpSession::update_direction(
     flow->swap_roles();
 }
 
+int UdpSession::process_udp(Flow* lwssn, Packet* p)
+{
+    assert(lwssn->pkt_type == PktType::UDP);
+
+    if ( Stream::blocked_flow(p) )
+        return 0;
+
+    if ( Stream::ignored_flow(lwssn, p) )
+    {
+        udpStats.ignored++;
+        return 0;
+    }
+    udpStats.total_bytes += p->dsize;
+    /* if both seen, mark established */
+    if (p->is_from_server())
+    {
+        lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_RESPONDER;
+        lwssn->set_ttl(p, false);
+        payload_bytes_seen_server += p->dsize;
+    }
+    else
+    {
+        lwssn->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
+        lwssn->set_ttl(p, true);
+        payload_bytes_seen_client += p->dsize;
+    }
+
+    if (!(lwssn->ssn_state.session_flags & SSNFLAG_ESTABLISHED))
+    {
+        if ((lwssn->ssn_state.session_flags & SSNFLAG_SEEN_SENDER) &&
+            (lwssn->ssn_state.session_flags & SSNFLAG_SEEN_RESPONDER))
+        {
+            lwssn->ssn_state.session_flags |= SSNFLAG_ESTABLISHED;
+            DataBus::publish(Stream::get_pub_id(), StreamEventIds::UDP_BIDIRECTIONAL, p);
+        }
+    }
+
+    if ( lwssn->clouseau )
+        lwssn->clouseau->eval(p);
+
+    return 0;
+}
+
 int UdpSession::process(Packet* p)
 {
     Profile profile(udp_perf_stats);    // cppcheck-suppress unreadVariable
 
-    StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
     // Check if the session is expired.
     // Should be done before we do something with the packet...
     if ( Stream::expired_flow(flow, p) )
@@ -185,7 +186,7 @@ int UdpSession::process(Packet* p)
         UdpHAManager::process_deletion(*flow);
     }
 
-    ProcessUdp(flow, p, pc);
+    process_udp(flow, p);
     flow->markup_packet_flags(p);
 
     flow->set_expire(p, flow->default_session_timeout);

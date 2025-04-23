@@ -37,6 +37,11 @@ public:
 
 public:
     struct timeval ssn_time = {};
+    uint64_t payload_bytes_seen_client = 0;
+    uint64_t payload_bytes_seen_server = 0;
+
+private:
+    int process_udp(snort::Flow*, snort::Packet*);
 };
 
 #endif

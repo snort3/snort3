@@ -28,6 +28,8 @@
 #include "profiler/profiler.h"
 #include "pub_sub/intrinsic_event_ids.h"
 #include "sfip/sf_ip.h"
+#include "stream/tcp/tcp_session.h"
+#include "stream/udp/udp_session.h"
 #include "utils/util.h"
 #include "utils/util_net.h"
 
@@ -52,11 +54,55 @@ static uint64_t get_duration(const DataEvent*, const Flow* f)
     return f->last_data_seen - f->flowstats.start_time.tv_sec;
 }
 
+static uint64_t get_orig_bytes_tcp(const TcpSession* tcpssn)
+{
+    uint32_t client_bytes = tcpssn->client.get_snd_nxt() - tcpssn->client.get_iss();
+    // get_snd_nxt is the next expected sequence number (last seen + 1)
+    if (client_bytes != 0)
+        client_bytes -= 1;
+    return client_bytes; 
+}
+
+static uint64_t get_orig_bytes(const DataEvent*, const Flow* f)
+{
+    if (f->session == nullptr)
+        return 0;
+    if (f->pkt_type == PktType::TCP)
+        return get_orig_bytes_tcp((const TcpSession*)f->session);
+    else if (f->pkt_type == PktType::UDP)
+        return ((UdpSession*)(f->session))->payload_bytes_seen_client;
+
+    return 0;
+}
+
+static uint64_t get_resp_bytes_tcp(const TcpSession* tcpssn)
+{
+    uint32_t server_bytes = tcpssn->server.get_snd_nxt() - tcpssn->server.get_iss();
+    if (server_bytes != 0)
+        server_bytes -= 1;
+    return server_bytes;
+}
+
+static uint64_t get_resp_bytes(const DataEvent*, const Flow* f)
+{
+    if (f->session == nullptr)
+        return 0;
+    
+    if (f->pkt_type == PktType::TCP)
+        return get_resp_bytes_tcp((const TcpSession*)f->session);
+    else if (f->pkt_type == PktType::UDP)
+        return ((UdpSession*)(f->session))->payload_bytes_seen_server;
+
+    return 0;
+}
+
 static const map<string, ExtractorEvent::NumGetFn> sub_num_getters =
 {
     {"orig_pkts", get_orig_pkts},
     {"resp_pkts", get_resp_pkts},
-    {"duration", get_duration}
+    {"duration", get_duration},
+    {"orig_bytes", get_orig_bytes},
+    {"resp_bytes", get_resp_bytes}
 };
 
 static const char* get_service(const DataEvent*, const Flow* f)
@@ -152,6 +198,25 @@ TEST_CASE("Conn Proto", "[extractor]")
         flow->pkt_type = PktType::NONE;
         const char* proto = get_proto(nullptr, flow);
         CHECK_FALSE(strcmp("", proto));
+    }
+
+    delete flow;
+}
+
+TEST_CASE("Conn payload bytes", "[extractor]")
+{
+    Flow* flow = new Flow;
+    InspectionPolicy ins;
+    set_inspection_policy(&ins);
+    NetworkPolicy net;
+    set_network_policy(&net);
+
+    SECTION("no session")
+    {
+        uint64_t bytes = get_orig_bytes(nullptr, flow);
+        CHECK(bytes == 0);
+        bytes = get_resp_bytes(nullptr, flow);
+        CHECK(bytes == 0);
     }
 
     delete flow;

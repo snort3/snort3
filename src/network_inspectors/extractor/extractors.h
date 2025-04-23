@@ -104,10 +104,10 @@ protected:
     }
 
     static const SfIp& get_ip_src(const DataEvent*, const Flow* flow)
-    { return flow->flags.client_initiated ? flow->client_ip : flow->server_ip; }
+    { return  flow->client_ip; }
 
     static const SfIp& get_ip_dst(const DataEvent*, const Flow* flow)
-    { return flow->flags.client_initiated ? flow->server_ip : flow->client_ip; }
+    { return flow->server_ip; }
 
     static uint64_t get_ip_src_port(const DataEvent*, const Flow* flow)
     { return flow->client_port; }

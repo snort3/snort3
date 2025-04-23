@@ -138,8 +138,13 @@ Fields supported for connection:
 * `duration` - connection duration in seconds
 * `proto` - transport layer protocol of the connection
 * `service` - connection's application protocol
-* `orig_pkts` - number of packets originator sent
-* `resp_pkts` - number of packets responder sent
+* `orig_pkts` - number of packets client sent
+* `resp_pkts` - number of packets server sent
+* `orig_bytes` - tcp/udp payload bytes client sent
+* `resp_bytes` - tcp/udp payload bytes server sent
+
+For TCP orig_bytes and resp_bytes are calculated using first seen sequence number and next expected sequence number.
+These are reset during TCP flow restart. For this case only bytes seen following the restart will be reported.
 
 ==== Example
 

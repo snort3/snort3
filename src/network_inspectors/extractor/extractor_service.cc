@@ -351,7 +351,9 @@ const ServiceBlueprint ConnExtractorService::blueprint =
         "service",
         "orig_pkts",
         "resp_pkts",
-        "duration"
+        "duration",
+        "orig_bytes",
+        "resp_bytes"
     },
 };
 
