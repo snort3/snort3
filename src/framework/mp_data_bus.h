@@ -39,6 +39,7 @@
 
 #include "main/snort_types.h"
 #include "data_bus.h"
+#include "framework/mp_transport.h"
 #include <bitset>
 
 namespace snort
@@ -47,8 +48,8 @@ class Flow;
 struct Packet;
 struct SnortConfig;
 
-typedef bool (*MPSerializeFunc)(const DataEvent& event, char** buffer, size_t* length);
-typedef bool (*MPDeserializeFunc)(const char* buffer, size_t length, DataEvent* event);
+typedef bool (*MPSerializeFunc)(DataEvent* event, char*& buffer, uint16_t* length);
+typedef bool (*MPDeserializeFunc)(const char* buffer, uint16_t length, DataEvent*& event);
 
 // Similar to the DataBus class, the MPDataBus class uses uses a combination of PubKey and event ID
 // for event subscriptions and publishing. New MP-specific event type enums should be added to the
@@ -62,16 +63,16 @@ struct MPEventInfo
 {
     MPEventType type;
     unsigned pub_id;
-    DataEvent event;
-    MPEventInfo(const DataEvent& e, MPEventType t, unsigned id = 0)
+    DataEvent* event;
+    MPEventInfo(DataEvent* e, MPEventType t, unsigned id = 0)
         : type(t), pub_id(id), event(e) {}
 };
 
 struct MPHelperFunctions {
-    MPSerializeFunc* serializer;
-    MPDeserializeFunc* deserializer;
+    MPSerializeFunc serializer;
+    MPDeserializeFunc deserializer;
     
-    MPHelperFunctions(MPSerializeFunc* s, MPDeserializeFunc* d) 
+    MPHelperFunctions(MPSerializeFunc s, MPDeserializeFunc d) 
         : serializer(s), deserializer(d) {}
 };
 

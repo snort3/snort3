@@ -83,37 +83,61 @@ static bool attempt_connection(int& sfd, const char* path) {
 }
 
 // Function to handle connection retries
-static void connection_retry_handler(const UnixDomainConnectorConfig& cfg, size_t idx) {
-    ConnectorManager::update_thread_connector(cfg.connector_name, idx, nullptr);
+static void connection_retry_handler(const UnixDomainConnectorConfig& cfg, size_t idx, UnixDomainConnectorUpdateHandler update_handler = nullptr) {
+    if(update_handler)
+        update_handler(nullptr, (cfg.conn_retries > 0));
+    else
+        ConnectorManager::update_thread_connector(cfg.connector_name, idx, nullptr);
 
-    if ( cfg.setup == UnixDomainConnectorConfig::Setup::CALL and cfg.conn_retries) {
 
+    if (cfg.conn_retries)
+    {
         const auto& paths = cfg.paths;
 
         if (idx >= paths.size())
             return;
-        
-        uint32_t retry_count = 0; 
+
         const char* path = paths[idx].c_str();
 
-        while (retry_count < cfg.max_retries) {
-            int sfd;
-            if (attempt_connection(sfd, path)) {
-                // Connection successful
-                UnixDomainConnector* unixdomain_conn = new UnixDomainConnector(cfg, sfd, idx);
-                LogMessage("UnixDomainC: Connected to %s", path);
-                ConnectorManager::update_thread_connector(cfg.connector_name, idx, unixdomain_conn);
-                break;
-            }
+        if(cfg.setup == UnixDomainConnectorConfig::Setup::CALL)
+        {
+            LogMessage("UnixDomainC: Attempting to reconnect to %s\n", cfg.paths[idx].c_str());
 
-            std::this_thread::sleep_for(std::chrono::seconds(cfg.retry_interval));
-            retry_count++;
+            uint32_t retry_count = 0;
+
+            while (retry_count < cfg.max_retries) {
+                int sfd;
+                if (attempt_connection(sfd, path)) {
+                    // Connection successful
+                    UnixDomainConnector* unixdomain_conn = new UnixDomainConnector(cfg, sfd, idx);
+                    LogMessage("UnixDomainC: Connected to %s", path);
+                    if(update_handler)
+                    {
+                        unixdomain_conn->set_update_handler(update_handler);
+                        update_handler(unixdomain_conn, false);
+                    }
+                    else
+                        ConnectorManager::update_thread_connector(cfg.connector_name, idx, unixdomain_conn);
+                    break;
+                }
+            
+                std::this_thread::sleep_for(std::chrono::seconds(cfg.retry_interval));
+                retry_count++;
+            }
+        }
+        else if (cfg.setup == UnixDomainConnectorConfig::Setup::ANSWER)
+        {
+            return;
+        }
+        else
+        {
+            LogMessage("UnixDomainC: Unexpected setup type at retry connection\n");
         }
     }
 }
 
-static void start_retry_thread(const UnixDomainConnectorConfig& cfg, size_t idx) {
-    std::thread retry_thread(connection_retry_handler, cfg, idx);
+static void start_retry_thread(const UnixDomainConnectorConfig& cfg, size_t idx, UnixDomainConnectorUpdateHandler update_handler = nullptr) {
+    std::thread retry_thread(connection_retry_handler, cfg, idx, update_handler);
     retry_thread.detach();
 }
 
@@ -254,7 +278,7 @@ void UnixDomainConnector::process_receive() {
             sock_fd = -1;
         }   
 
-        start_retry_thread(cfg, instance_id);
+        start_retry_thread(cfg, instance_id, update_handler);
         return;
     } 
     else if (rval > 0 && pfds[0].revents & POLLIN) {
@@ -263,7 +287,21 @@ void UnixDomainConnector::process_receive() {
             ErrorMessage("UnixDomainC: Input Thread: overrun\n");
             delete connector_msg;
         }
+        if(message_received_handler)
+        {
+            message_received_handler();
+        }
     }
+}
+
+void UnixDomainConnector::set_update_handler(UnixDomainConnectorUpdateHandler handler)
+{
+    update_handler = std::move(handler);
+}
+
+void UnixDomainConnector::set_message_received_handler(UnixDomainConnectorMessageReceivedHandler handler)
+{
+    message_received_handler = std::move(handler);
 }
 
 void UnixDomainConnector::receive_processing_thread() {
@@ -347,12 +385,12 @@ static void mod_dtor(Module* m) {
     delete m;
 }
 
-static UnixDomainConnector* unixdomain_connector_tinit_call(const UnixDomainConnectorConfig& cfg, const char* path, size_t idx) {
+UnixDomainConnector* unixdomain_connector_tinit_call(const UnixDomainConnectorConfig& cfg, const char* path, size_t idx, const UnixDomainConnectorUpdateHandler& update_handler) {
     int sfd;
     if (!attempt_connection(sfd, path)) {
         if (cfg.conn_retries) {
             // Spawn a new thread to handle connection retries
-            start_retry_thread(cfg, idx);
+            start_retry_thread(cfg, idx, update_handler);
 
             return nullptr; // Return nullptr as the connection is not yet established
         } else {
@@ -362,6 +400,10 @@ static UnixDomainConnector* unixdomain_connector_tinit_call(const UnixDomainConn
     }
     LogMessage("UnixDomainC: Connected to %s", path);
     UnixDomainConnector* unixdomain_conn = new UnixDomainConnector(cfg, sfd, idx);
+    unixdomain_conn->set_update_handler(update_handler);
+    if(update_handler)
+        update_handler(unixdomain_conn, false);
+    
     return unixdomain_conn;
 }
 
@@ -400,7 +442,7 @@ static UnixDomainConnector* unixdomain_connector_tinit_answer(const UnixDomainCo
 
     LogMessage("UnixDomainC: Accepted connection from %s \n", path);
     return new UnixDomainConnector(cfg, peer_sfd, idx);
-} 
+}
 
 static bool is_valid_path(const std::string& path) {
     if (path.empty()) {
@@ -491,3 +533,92 @@ const BaseApi* unixdomain_connector[] =
     &unixdomain_connector_api.base,
     nullptr
 };
+
+UnixDomainConnectorListener::UnixDomainConnectorListener(const char *path)
+{
+    assert(path);
+    
+    sock_path = strdup(path);
+    sock_fd = 0;
+    accept_thread = nullptr;
+    should_accept = false;
+}
+
+UnixDomainConnectorListener::~UnixDomainConnectorListener()
+{
+    stop_accepting_connections();
+    free(sock_path);
+    sock_path = nullptr;
+}
+
+void UnixDomainConnectorListener::start_accepting_connections(UnixDomainConnectorAcceptHandler handler, UnixDomainConnectorConfig* config)
+{
+    assert(accept_thread == nullptr);
+    assert(sock_path);
+
+    should_accept = true;
+    accept_thread = new std::thread([this, handler, config]()
+    {
+        sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
+        if (sock_fd == -1) {
+            ErrorMessage("UnixDomainC: socket error: %s \n", strerror(errno));
+            return;
+        }
+
+        struct sockaddr_un addr;
+        memset(&addr, 0, sizeof(struct sockaddr_un));
+        addr.sun_family = AF_UNIX;
+        strncpy(addr.sun_path, sock_path, sizeof(addr.sun_path) - 1);
+
+        unlink(sock_path);
+
+        if (bind(sock_fd, (struct sockaddr*)&addr, sizeof(struct sockaddr_un)) == -1) {
+            ErrorMessage("UnixDomainC: bind error: %s \n", strerror(errno));
+            close(sock_fd);
+            return;
+        }
+
+        if (listen(sock_fd, 10) == -1) {
+            ErrorMessage("UnixDomainC: listen error: %s \n", strerror(errno));
+            close(sock_fd);
+            return;
+        }
+
+        ushort error_count = 0;
+
+        while (should_accept) {
+            if(error_count > 10)
+            {
+                ErrorMessage("UnixDomainC: Too many errors, stopping accept thread\n");
+                close(sock_fd);
+                return;
+            }
+            int peer_sfd = accept(sock_fd, nullptr, nullptr);
+            if (peer_sfd == -1) 
+            {
+                error_count++;
+                ErrorMessage("UnixDomainC: accept error: %s \n", strerror(errno));
+                continue;
+            }
+            error_count = 0;
+            auto config_copy = new UnixDomainConnectorConfig(*config);
+            auto unix_conn = new UnixDomainConnector(*config_copy, peer_sfd, 0);
+            handler(unix_conn, config_copy);
+        }
+    });
+
+}
+
+void UnixDomainConnectorListener::stop_accepting_connections()
+{
+    if(should_accept)
+    {
+        should_accept = false;
+        close(sock_fd);
+        if (accept_thread && accept_thread->joinable()) {
+            accept_thread->join();
+        }
+        delete accept_thread;
+        accept_thread = nullptr;
+    }
+}

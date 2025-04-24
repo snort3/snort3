@@ -137,6 +137,7 @@ add_subdirectory(policy_selectors)
 add_subdirectory(search_engines)
 add_subdirectory(side_channel)
 add_subdirectory(connectors)
+add_subdirectory(mp_transport)
 
 
 # FIXIT-L Delegate building out the target objects list to subdirectories
@@ -198,8 +199,10 @@ add_executable( snort
     $<TARGET_OBJECTS:target_based>
     $<TARGET_OBJECTS:tcp_connector>
     $<TARGET_OBJECTS:unixdomain_connector>
+    $<TARGET_OBJECTS:mp_unix_transport>
     $<TARGET_OBJECTS:time>
     $<TARGET_OBJECTS:trace>
+    $<TARGET_OBJECTS:mp_transports>
     $<TARGET_OBJECTS:utils>
     ${STATIC_CODEC_PLUGINS}
     ${STATIC_NETWORK_INSPECTOR_PLUGINS}

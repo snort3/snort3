@@ -31,6 +31,8 @@
 #include "pub_sub/intrinsic_event_ids.h"
 #include "utils/stats.h"
 #include "main/snort_types.h"
+#include "managers/mp_transport_manager.h"
+#include "log/messages.h"
 
 using namespace snort;
 
@@ -104,6 +106,7 @@ void MPDataBus::receive_message(const MPEventInfo& event_info)
 {
     UNUSED(event_info);
 }
+
 
 //--------------------------------------------------------------------------
 // private methods

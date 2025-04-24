@@ -34,6 +34,7 @@
 #include "managers/plugin_manager.h"
 #include "managers/script_manager.h"
 #include "managers/so_manager.h"
+#include "managers/mp_transport_manager.h"
 #include "packet_io/sfdaq.h"
 #include "utils/util.h"
 
@@ -211,6 +212,7 @@ enum HelpType
     ModuleManager::term();
     PluginManager::release_plugins();
     ScriptManager::release_scripts();
+    MPTransportManager::term();
     delete SnortConfig::get_conf();
     exit(0);
 }

@@ -38,6 +38,8 @@ add_library( managers OBJECT
     so_manager.h
     connector_manager.cc
     connector_manager.h
+    mp_transport_manager.cc
+    mp_transport_manager.h
 )
 
 add_custom_command (

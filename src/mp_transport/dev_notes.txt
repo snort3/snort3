@@ -1,0 +1,5 @@
+The `mp_transport` files provide the foundation for message-passing transport mechanisms, enabling communication 
+between distributed components or processes in a modular and extensible manner. These files abstract the complexities 
+of underlying communication protocols, offering a unified API for sending, receiving, and managing messages. This 
+abstraction ensures that developers can focus on higher-level application logic without worrying about protocol-specific 
+details. These transports are utilized by `mp_data_bus.h` to transfer events between distributed Snort instances.

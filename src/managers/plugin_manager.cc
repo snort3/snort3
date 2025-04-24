@@ -42,6 +42,7 @@
 #include "ips_manager.h"
 #include "module_manager.h"
 #include "mpse_manager.h"
+#include "mp_transport_manager.h"
 #include "policy_selector_manager.h"
 #include "script_manager.h"
 #include "so_manager.h"
@@ -72,6 +73,7 @@ static Symbol symbols[PT_MAX] =
     { "logger", LOGAPI_VERSION, sizeof(LogApi) },
     { "connector", CONNECTOR_API_VERSION, sizeof(ConnectorApi) },
     { "policy_selector", POLICY_SELECTOR_API_VERSION, sizeof(PolicySelectorApi) },
+    { "mp_transport", MP_TRANSPORT_API_VERSION, sizeof(MPTransportApi) },
 };
 #else
 // this gets around the sequence issue with some compilers
@@ -88,7 +90,9 @@ static Symbol symbols[PT_MAX] =
     [PT_LOGGER] = { stringify(PT_LOGGER), LOGAPI_VERSION, sizeof(LogApi) },
     [PT_CONNECTOR] = { stringify(PT_CONNECTOR), CONNECTOR_API_VERSION, sizeof(ConnectorApi) },
     [PT_POLICY_SELECTOR] = { stringify(PT_POLICY_SELECTOR), POLICY_SELECTOR_API_VERSION,
-        sizeof(PolicySelectorApi) }
+        sizeof(PolicySelectorApi) },
+    [PT_MP_TRANSPORT] = { stringify(PT_MP_TRANSPORT), MP_TRANSPORT_API_VERSION,
+        sizeof(MPTransportApi) }
 };
 #endif
 
@@ -321,6 +325,10 @@ static void add_plugin(Plugin& p)
     case PT_POLICY_SELECTOR:
         PolicySelectorManager::add_plugin((const PolicySelectorApi*)p.api);
         break;
+    
+    case PT_MP_TRANSPORT:
+        MPTransportManager::add_plugin((const MPTransportApi*)p.api);
+        break;
 
     default:
         assert(false);
@@ -544,6 +552,10 @@ void PluginManager::instantiate(
     case PT_SO_RULE:
         // do not instantiate here; done later
         //IpsManager::instantiate((SoApi*)api, mod, sc);
+        break;
+
+    case PT_MP_TRANSPORT:
+        MPTransportManager::instantiate((const MPTransportApi*)api, mod, sc);
         break;
 
     case PT_LOGGER:

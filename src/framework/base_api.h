@@ -54,6 +54,7 @@ enum PlugType
     PT_LOGGER,
     PT_CONNECTOR,
     PT_POLICY_SELECTOR,
+    PT_MP_TRANSPORT,
     PT_MAX
 };
 

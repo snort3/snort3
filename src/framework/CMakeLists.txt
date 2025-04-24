@@ -25,6 +25,7 @@ set (FRAMEWORK_INCLUDES
     range.h
     so_rule.h
     value.h
+    mp_transport.h
 )
 
 add_library ( framework OBJECT

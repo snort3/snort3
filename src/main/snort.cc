@@ -60,6 +60,7 @@
 #include "managers/plugin_manager.h"
 #include "managers/policy_selector_manager.h"
 #include "managers/script_manager.h"
+#include "managers/mp_transport_manager.h"
 #include "memory/memory_cap.h"
 #include "network_inspectors/network_inspectors.h"
 #include "packet_io/active.h"
@@ -79,6 +80,7 @@
 #include "trace/trace_api.h"
 #include "trace/trace_config.h"
 #include "trace/trace_logger.h"
+#include "mp_transport/mp_transports.h"
 #include "utils/stats.h"
 #include "utils/util.h"
 
@@ -132,6 +134,7 @@ void Snort::init(int argc, char** argv)
     load_stream_inspectors();
     load_network_inspectors();
     load_service_inspectors();
+    load_mp_transports();
 
     snort_cmd_line_conf = parse_cmd_line(argc, argv);
     SnortConfig::set_conf(snort_cmd_line_conf);
@@ -371,6 +374,7 @@ void Snort::term()
     host_cache.term();
     PluginManager::release_plugins();
     ScriptManager::release_scripts();
+    MPTransportManager::term();
     memory::MemoryCap::term();
     detection_filter_term();
 

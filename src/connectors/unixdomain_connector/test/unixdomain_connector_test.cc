@@ -148,8 +148,19 @@ int socket (int, int, int) { return s_socket_return; }
 int bind (int, const struct sockaddr*, socklen_t) { return s_bind_return; }
 int listen (int, int) { return s_listen_return; }
 #endif
-
-int accept (int, struct sockaddr*, socklen_t*) { return s_accept_return; }
+static bool use_test_accept_counter = false;
+static uint test_accept_counter = 0;
+int accept (int, struct sockaddr*, socklen_t*)
+{
+    if ( use_test_accept_counter )
+    {
+        if ( test_accept_counter == 0 )
+            return -1;
+        else
+            test_accept_counter--;
+    }
+    return s_accept_return;
+}
 int close (int) { return 0; }
 
 static void set_normal_status()
@@ -751,6 +762,65 @@ TEST(unixdomain_connector_no_tinit_tterm_call, receive_recv_body_closed)
     CHECK(conn_msg.get_length() == 0);
 
     delete[] message;
+}
+
+static const char* test_listener_path = "/tmp/test_path";
+UnixDomainConnectorListener* test_listener = nullptr;
+
+TEST_GROUP(unixdomain_connector_listener)
+{
+    void setup() override
+    {
+        test_listener = new UnixDomainConnectorListener(test_listener_path);
+    }
+
+    void teardown() override
+    {
+        if (test_listener)
+        {
+            delete test_listener;
+            test_listener = nullptr;
+        }
+    }
+};
+
+UnixDomainConnector* test_listener_connector = nullptr;
+UnixDomainConnectorConfig* test_listener_config = nullptr;
+
+void connection_callback(UnixDomainConnector* c, UnixDomainConnectorConfig* conf)
+{
+    assert(c != nullptr);
+    assert(conf != nullptr);
+
+    test_listener_connector = c;
+    test_listener_config = conf;
+}
+
+TEST(unixdomain_connector_listener, listener_accept_stop)
+{
+    UnixDomainConnectorConfig cfg;
+    cfg.direction = Connector::CONN_DUPLEX;
+    cfg.connector_name = "unixdomain";
+    cfg.paths.push_back(test_listener_path);
+    cfg.setup = UnixDomainConnectorConfig::Setup::ANSWER;
+    cfg.async_receive = true;
+
+    use_test_accept_counter = true;
+    test_accept_counter = 1;
+
+    test_listener->start_accepting_connections(&connection_callback, &cfg);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    test_listener->stop_accepting_connections();
+
+    CHECK(test_listener_connector != nullptr);
+    CHECK(test_listener_config != nullptr);
+    CHECK(test_listener_connector->get_connector_direction() == Connector::CONN_DUPLEX);
+    CHECK(test_listener_config->async_receive == true);
+
+    delete test_listener_connector;
+    test_listener_connector = nullptr;
+    delete test_listener_config;
+    test_listener_config = nullptr;
 }
 
 int main(int argc, char** argv)

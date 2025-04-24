@@ -27,11 +27,23 @@ public:
     UnixDomainConnectorConfig()
     { direction = snort::Connector::CONN_DUPLEX; async_receive = true; }
 
+    UnixDomainConnectorConfig(const UnixDomainConnectorConfig& other) :
+        paths(other.paths), setup(other.setup),
+        conn_retries(other.conn_retries),
+        retry_interval(other.retry_interval),
+        max_retries(other.max_retries),
+        connect_timeout_seconds(other.connect_timeout_seconds),
+        async_receive(other.async_receive)
+    {
+        direction = other.direction;
+    }
+
     std::vector<std::string> paths; 
     Setup setup = {};
     bool conn_retries = false;
     uint32_t retry_interval = 4;
     uint32_t max_retries = 5;
+    uint32_t connect_timeout_seconds = 30;
     bool async_receive;
 };
 

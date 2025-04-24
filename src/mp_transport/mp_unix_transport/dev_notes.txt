@@ -1,0 +1,13 @@
+The MP Unix Domain Transport provides an implementation of the Multi-Process (MP) Transport
+interface using existing `UnixDomainConnector` infrastructure. This transport enables
+inter-process communication (IPC) between multiple Snort instances running on the same host,
+allowing them to exchange events and data.
+
+ * MPUnixDomainTransport - Main class implementing the MPTransport interface with Unix domain socket functionality
+ * MPUnixDomainTransportModule - Module class that handles configuration parameters and provides an API for MPUnixDomainTransport creation
+ * MPUnixDomainTransportConfig - Configuration structure for socket paths and connection parameters
+
+Connention between snort establishes in next sequence:
+* First Snort instance acts as a server socket accepting connections from other instances
+* Additional instances connect to existing socket paths
+* Dynamic re-connection handling with configurable retry parameters

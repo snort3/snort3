@@ -172,6 +172,9 @@ SideChannel::SideChannel(ScMsgFormat fmt) : msg_format(fmt)
 // return true iff we received any messages.
 bool SideChannel::process(int max_messages)
 {
+    if(!connector_receive)
+        return false;
+    
     bool received_message = false;
 
     while (true)

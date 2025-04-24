@@ -23,6 +23,7 @@
 
 #include <atomic>
 #include <thread>
+#include <functional>
 
 #include "framework/connector.h"
 #include "managers/connector_manager.h"
@@ -48,6 +49,11 @@ public:
     uint16_t connector_msg_length;
 };
 
+class UnixDomainConnector;
+
+typedef std::function<void (UnixDomainConnector*,bool)> UnixDomainConnectorUpdateHandler;
+typedef std::function<void ()> UnixDomainConnectorMessageReceivedHandler;
+
 class UnixDomainConnector :  public snort::Connector 
 {
 public:
@@ -59,6 +65,9 @@ public:
 
     snort::ConnectorMsg receive_message(bool) override;
     void process_receive();
+
+    void set_update_handler(UnixDomainConnectorUpdateHandler handler);
+    void set_message_received_handler(UnixDomainConnectorMessageReceivedHandler handler);
 
     int sock_fd;
 
@@ -77,7 +86,31 @@ private:
     ReceiveRing* receive_ring;
     size_t instance_id;
     UnixDomainConnectorConfig cfg;
+
+    UnixDomainConnectorUpdateHandler update_handler;
+    UnixDomainConnectorMessageReceivedHandler message_received_handler;
 };
+
+typedef std::function<void (UnixDomainConnector*, UnixDomainConnectorConfig*)> UnixDomainConnectorAcceptHandler;
+
+class UnixDomainConnectorListener
+{
+public:
+    UnixDomainConnectorListener(const char* path);
+    ~UnixDomainConnectorListener();
+
+    void start_accepting_connections(UnixDomainConnectorAcceptHandler handler, UnixDomainConnectorConfig* config);
+    void stop_accepting_connections();
+
+    private:
+    char* sock_path;
+    int sock_fd;
+    std::thread* accept_thread;
+    std::atomic<bool> should_accept;
+
+};
+
+extern SO_PUBLIC UnixDomainConnector* unixdomain_connector_tinit_call(const UnixDomainConnectorConfig& cfg, const char* path, size_t idx, const UnixDomainConnectorUpdateHandler& update_handler = nullptr);
 
 #endif // UNIXDOMAIN_CONNECTOR_H
 
