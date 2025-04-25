@@ -225,15 +225,15 @@ static int s_connect_return = 1;
 int socket (int, int, int) __THROW { test_socket_calls++; return s_socket_return; }
 int bind (int, const struct sockaddr*, socklen_t) __THROW { test_bind_calls++; return s_bind_return; }
 int listen (int, int) __THROW { test_listen_calls++; return s_listen_return; }
-int connect (int, const struct sockaddr*, socklen_t) __THROW { test_connect_calls++; return s_connect_return; }
 int unlink (const char *__name) __THROW { return 0;};
 #else
 int socket (int, int, int) { test_socket_calls++; return s_socket_return; }
 int bind (int, const struct sockaddr*, socklen_t) { test_bind_calls++; return s_bind_return; }
 int listen (int, int) { test_listen_calls++; return s_listen_return; }
-int connect (int, const struct sockaddr*, socklen_t) { test_connect_calls++; return s_connect_return; }
 int unlink (const char *__name) { return 0;};
 #endif
+
+int connect (int, const struct sockaddr*, socklen_t) { test_connect_calls++; return s_connect_return; }
 
 int fcntl (int __fd, int __cmd, ...) { return 0;}
 ssize_t send (int, const void*, size_t n, int) { return n; }
@@ -316,7 +316,7 @@ TEST_GROUP(unix_transport_test_messaging)
         snort_instance_id = 1;
         test_transport_message_1->configure(&test_snort_config);
         test_transport_message_1->init_connection();
-        test_transport_message_1->register_receive_handler([reciveved_1_msg_cnt](const snort::MPEventInfo& e)
+        test_transport_message_1->register_receive_handler([](const snort::MPEventInfo& e)
         {
             reciveved_1_msg_cnt++;
         });
@@ -327,7 +327,7 @@ TEST_GROUP(unix_transport_test_messaging)
         snort_instance_id = 2;
         test_transport_message_2->configure(&test_snort_config);
         test_transport_message_2->init_connection();
-        test_transport_message_2->register_receive_handler([reciveved_2_msg_cnt](const snort::MPEventInfo& e)
+        test_transport_message_2->register_receive_handler([](const snort::MPEventInfo& e)
         {
             reciveved_2_msg_cnt++;
         });
