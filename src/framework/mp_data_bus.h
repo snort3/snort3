@@ -35,12 +35,31 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <mutex>
+#include <condition_variable>
 #include <queue>
+#include <atomic>
+#include <thread>
 
 #include "main/snort_types.h"
 #include "data_bus.h"
 #include "framework/mp_transport.h"
 #include <bitset>
+#include "framework/mp_transport.h"
+
+#define DEFAULT_TRANSPORT "unix_transport"
+#define DEFAULT_MAX_EVENTQ_SIZE 1000
+#define WORKER_THREAD_SLEEP 100
+
+#define MP_DATABUS_LOG(msg, ...) do { \
+        if (!MPDataBus::enable_debug) \
+            break; \
+        LogMessage(msg, __VA_ARGS__); \
+    } while (0)
+
+
+template <typename T>
+class Ring;
 
 namespace snort
 {
@@ -59,13 +78,13 @@ typedef bool (*MPDeserializeFunc)(const char* buffer, uint16_t length, DataEvent
 // manner analogous to the approach used for intra-snort pub_sub.
 typedef unsigned MPEventType;
 
-struct MPEventInfo 
+struct MPEventInfo
 {
-    MPEventType type;
     unsigned pub_id;
-    DataEvent* event;
-    MPEventInfo(DataEvent* e, MPEventType t, unsigned id = 0)
-        : type(t), pub_id(id), event(e) {}
+    MPEventType type;
+    std::shared_ptr<DataEvent> event;
+    MPEventInfo(std::shared_ptr<DataEvent> e, MPEventType t, unsigned id = 0)
+        : pub_id(id), type(t), event(std::move(e)) {}
 };
 
 struct MPHelperFunctions {
@@ -76,39 +95,78 @@ struct MPHelperFunctions {
         : serializer(s), deserializer(d) {}
 };
 
+struct pair_hash
+{
+    template <class T1, class T2>
+    std::size_t operator()(const std::pair<T1, T2>& pair) const
+    {
+        std::hash<T1> hash1;
+        std::hash<T2> hash2;
+        return hash1(pair.first) ^ (hash2(pair.second) << 1);
+    }
+};
+
 class SO_PUBLIC MPDataBus
 { 
 public: 
-    MPDataBus(); 
+    MPDataBus();
     ~MPDataBus();
+    
+    static uint32_t mp_max_eventq_size;
+    static std::string transport;
+    static bool enable_debug;
 
-    static unsigned init(int);
+    static MPTransport * transport_layer;
+    unsigned init(int);
     void clone(MPDataBus& from, const char* exclude_name = nullptr);
 
-    unsigned get_id(const PubKey& key) 
-    { return DataBus::get_id(key); }
+    static unsigned get_id(const PubKey& key);
 
-    bool valid(unsigned pub_id)
+    static bool valid(unsigned pub_id)
     { return pub_id != 0; }
 
-    void subscribe(const PubKey& key, unsigned id, DataHandler* handler); 
+    static void subscribe(const PubKey& key, unsigned id, DataHandler* handler); 
 
-    bool publish(unsigned pub_id, unsigned evt_id, DataEvent& e, Flow* f = nullptr); 
+    // API for publishing the DataEvent to the peer Snort processes
+    // The user needs to pass a shared_ptr to the DataEvent object as the third argument
+    // This is to ensure that the DataEvent object is not deleted before it is published
+    // or consumed by the worker thread
+    // and the shared_ptr will handle the memory management by reference counting
+    static bool publish(unsigned pub_id, unsigned evt_id, std::shared_ptr<DataEvent> e, Flow* f = nullptr);
 
-    void register_event_helpers(const PubKey& key, unsigned evt_id, MPSerializeFunc* mp_serializer_helper, MPDeserializeFunc* mp_deserializer_helper);
+    static void register_event_helpers(const PubKey& key, unsigned evt_id, MPSerializeFunc& mp_serializer_helper, MPDeserializeFunc& mp_deserializer_helper);
 
     // API for receiving the DataEvent and Event type from transport layer using EventInfo
     void receive_message(const MPEventInfo& event_info);
 
+    Ring<std::shared_ptr<MPEventInfo>>* get_event_queue()
+    { return mp_event_queue; }
+
 private: 
     void _subscribe(unsigned pid, unsigned eid, DataHandler* h);
+    void _subscribe(const PubKey& key, unsigned eid, DataHandler* h);
+
     void _publish(unsigned pid, unsigned eid, DataEvent& e, Flow* f);
 
 private:
     typedef std::vector<DataHandler*> SubList;
-    std::vector<SubList> mp_pub_sub;
+
+    std::unordered_map<std::pair<unsigned, unsigned>, SubList, pair_hash> mp_pub_sub;
+
+    std::atomic<bool> run_thread;
+    std::unique_ptr<std::thread> worker_thread;
+
+    Ring<std::shared_ptr<MPEventInfo>>* mp_event_queue;
+
+    static std::condition_variable queue_cv;
+    static std::mutex queue_mutex;
+
+    void start_worker_thread();
+    void stop_worker_thread();
+    void worker_thread_func();
+    void process_event_queue();
 };
-}
+};
 
 #endif
 

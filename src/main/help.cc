@@ -209,10 +209,10 @@ enum HelpType
         PluginManager::list_plugins();
         break;
     }
+    MPTransportManager::term();
     ModuleManager::term();
     PluginManager::release_plugins();
     ScriptManager::release_scripts();
-    MPTransportManager::term();
     delete SnortConfig::get_conf();
     exit(0);
 }

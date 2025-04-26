@@ -110,7 +110,7 @@ static void connection_retry_handler(const UnixDomainConnectorConfig& cfg, size_
                 if (attempt_connection(sfd, path)) {
                     // Connection successful
                     UnixDomainConnector* unixdomain_conn = new UnixDomainConnector(cfg, sfd, idx);
-                    LogMessage("UnixDomainC: Connected to %s", path);
+                    LogMessage("UnixDomainC: Connected to %s\n", path);
                     if(update_handler)
                     {
                         unixdomain_conn->set_update_handler(update_handler);
@@ -398,7 +398,7 @@ UnixDomainConnector* unixdomain_connector_tinit_call(const UnixDomainConnectorCo
             return nullptr;
         }
     }
-    LogMessage("UnixDomainC: Connected to %s", path);
+    LogMessage("UnixDomainC: Connected to %s\n", path);
     UnixDomainConnector* unixdomain_conn = new UnixDomainConnector(cfg, sfd, idx);
     unixdomain_conn->set_update_handler(update_handler);
     if(update_handler)
@@ -591,11 +591,15 @@ void UnixDomainConnectorListener::start_accepting_connections(UnixDomainConnecto
             {
                 ErrorMessage("UnixDomainC: Too many errors, stopping accept thread\n");
                 close(sock_fd);
+                sock_fd = -1;
+                should_accept = false;
                 return;
             }
             int peer_sfd = accept(sock_fd, nullptr, nullptr);
             if (peer_sfd == -1) 
             {
+                if (!should_accept)
+                    return;
                 error_count++;
                 ErrorMessage("UnixDomainC: accept error: %s \n", strerror(errno));
                 continue;
@@ -611,13 +615,16 @@ void UnixDomainConnectorListener::start_accepting_connections(UnixDomainConnecto
 
 void UnixDomainConnectorListener::stop_accepting_connections()
 {
-    if(should_accept)
+    should_accept = false;
+    if (sock_fd)
     {
-        should_accept = false;
+        shutdown(sock_fd, SHUT_RDWR);
         close(sock_fd);
-        if (accept_thread && accept_thread->joinable()) {
-            accept_thread->join();
-        }
+        sock_fd = -1;
+    }
+    
+    if (accept_thread && accept_thread->joinable()) {
+        accept_thread->join();
         delete accept_thread;
         accept_thread = nullptr;
     }

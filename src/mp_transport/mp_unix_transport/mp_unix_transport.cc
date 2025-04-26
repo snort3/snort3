@@ -101,11 +101,10 @@ void MPUnixDomainTransport::side_channel_receive_handler(SCMessage* msg)
 
         DataEvent* internal_event = nullptr;
         (deserialize_func)((const char*)(msg->content + sizeof(MPTransportMessageHeader)), transport_message_header->data_length, internal_event);
-        MPEventInfo event(internal_event, transport_message_header->event_id, transport_message_header->pub_id);
+        MPEventInfo event(std::shared_ptr<DataEvent> (internal_event), transport_message_header->event_id, transport_message_header->pub_id);
 
         (transport_receive_handler)(event);
 
-        delete internal_event;
     }
     delete msg;
 }
@@ -151,9 +150,9 @@ bool MPUnixDomainTransport::send_to_transport(MPEventInfo &event)
     transport_message.header.type = EVENT_MESSAGE;
     transport_message.header.pub_id = event.pub_id;
     transport_message.header.event_id = event.type;
-
     
-    (serialize_func)(event.event, transport_message.data, &transport_message.header.data_length);
+
+    (serialize_func)(event.event.get(), transport_message.data, &transport_message.header.data_length);
     for (auto &&sc_handler : this->side_channels)
     {
         auto msg = sc_handler->side_channel->alloc_transmit_message(sizeof(MPTransportMessageHeader) + transport_message.header.data_length);

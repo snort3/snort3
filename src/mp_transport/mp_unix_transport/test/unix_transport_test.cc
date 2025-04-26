@@ -454,15 +454,16 @@ TEST(unix_transport_test_messaging, send_to_transport_biderectional)
     test_transport_message_1->register_event_helpers(0, 0, mp_helper_functions_mock);
     test_transport_message_2->register_event_helpers(0, 0, mp_helper_functions_mock);
 
-    MPEventInfo event(&test_event, 0, 0);
+    std::shared_ptr<TestDataEvent> event = std::make_shared<TestDataEvent>();
 
-    auto res = test_transport_message_1->send_to_transport(event);
+    MPEventInfo event_info(event, 0, 0);
+    auto res = test_transport_message_1->send_to_transport(event_info);
     
 
     CHECK(res == true);
     CHECK(test_serialize_calls == 1);
 
-    res = test_transport_message_2->send_to_transport(event);
+    res = test_transport_message_2->send_to_transport(event_info);
     
     CHECK(res == true);
     CHECK(test_serialize_calls == 2);
@@ -479,7 +480,9 @@ TEST(unix_transport_test_messaging, send_to_transport_no_helpers)
 {
     clear_test_calls();
 
-    MPEventInfo event(&test_event, 0, 0);
+    std::shared_ptr<TestDataEvent> event_in = std::make_shared<TestDataEvent>();
+
+    MPEventInfo event(event_in, 0, 0);
 
     auto res = test_transport_message_1->send_to_transport(event);
     CHECK(res == false);

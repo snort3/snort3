@@ -199,8 +199,6 @@ void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* p
         policy_map = new PolicyMap;
         thread_config = new ThreadConfig();
         global_dbus = new DataBus();
-        if (max_procs > 1)
-            mp_dbus = new MPDataBus();
 
         proto_ref = new ProtocolReference(protocol_reference);
         so_rules = new SoRules;
@@ -264,7 +262,7 @@ SnortConfig::~SnortConfig()
     if ( cloned )
     {
         delete global_dbus;
-        if (max_procs > 1)
+        if (mp_dbus)
             delete mp_dbus;
         policy_map->set_cloned(true);
         delete policy_map;
@@ -325,7 +323,7 @@ SnortConfig::~SnortConfig()
     delete overlay_trace_config;
     delete ha_config;
     delete global_dbus;
-    if (max_procs > 1)
+    if (mp_dbus)
         delete mp_dbus;
 
     delete profiler;

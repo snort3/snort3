@@ -171,6 +171,11 @@ void Snort::init(int argc, char** argv)
     // This call must be immediately after "SnortConfig::set_conf(sc)"
     // since the first trace call may happen somewhere after this point
     TraceApi::thread_init(sc->trace_config);
+    if (sc->max_procs > 1)
+    {
+        sc->mp_dbus = new MPDataBus();
+        sc->mp_dbus->init(sc->max_procs);
+    }
 
     PluginManager::load_so_plugins(sc);
 
@@ -330,6 +335,7 @@ void Snort::term()
 
     const SnortConfig* sc = SnortConfig::get_conf();
 
+    MPTransportManager::term();
     IpsManager::global_term(sc);
     HostAttributesManager::term();
 
@@ -374,7 +380,6 @@ void Snort::term()
     host_cache.term();
     PluginManager::release_plugins();
     ScriptManager::release_scripts();
-    MPTransportManager::term();
     memory::MemoryCap::term();
     detection_filter_term();
 
@@ -575,7 +580,8 @@ SnortConfig* Snort::get_updated_policy(
 
     SnortConfig* sc = new SnortConfig(other_conf, iname);
     sc->global_dbus->clone(*other_conf->global_dbus, iname);
-    if (sc->max_procs > 1)
+
+    if (other_conf->mp_dbus != nullptr)
         sc->mp_dbus->clone(*other_conf->mp_dbus, iname);
 
     if ( fname )

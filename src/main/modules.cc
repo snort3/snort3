@@ -393,6 +393,102 @@ bool ClassificationsModule::set(const char*, Value& v, SnortConfig*)
 }
 
 //-------------------------------------------------------------------------
+// multiprocess data bus module
+//-------------------------------------------------------------------------
+
+static const Parameter mp_data_bus_params[] =
+{
+    { "max_eventq_size", Parameter::PT_INT, "100:65535", "1000",
+      "maximum events to queue" },
+
+    { "transport", Parameter::PT_STRING, nullptr, nullptr,
+      "transport to use for inter-process communication" },
+
+    { "debug", Parameter::PT_BOOL, nullptr, "false",
+      "enable debugging" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static int enable_debug(lua_State*)
+{
+    if(SnortConfig::get_conf()->mp_dbus)
+        SnortConfig::get_conf()->mp_dbus->enable_debug = true;
+
+    return 0;
+}
+
+static int disable_debug(lua_State*)
+{
+    if(SnortConfig::get_conf()->mp_dbus)
+        SnortConfig::get_conf()->mp_dbus->enable_debug = false;
+
+    return 0;
+}
+
+static const Command mp_dbus_cmds[] =
+{
+    {"enable", enable_debug, nullptr, "enable multiprocess data bus debugging"},
+    {"disable", disable_debug, nullptr, "disable multiprocess data bus debugging"},
+    {nullptr, nullptr, nullptr, nullptr}
+};
+
+#define mp_data_bus_help \
+    "configure multiprocess data bus"
+
+class MPDataBusModule : public Module
+{
+public:
+    MPDataBusModule() :
+        Module("mp_data_bus", mp_data_bus_help, mp_data_bus_params) { }
+
+    bool set(const char*, Value&, SnortConfig*) override;
+    bool begin(const char*, int, SnortConfig*) override;
+    bool end(const char*, int, SnortConfig*) override;
+    const Command* get_commands() const override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
+};
+
+bool MPDataBusModule::begin(const char*, int, SnortConfig*)
+{
+    return true;
+}
+
+bool MPDataBusModule::end(const char*, int, SnortConfig*)
+{
+    return true;
+}
+
+bool MPDataBusModule::set(const char*, Value& v, SnortConfig*)
+{
+    if ( v.is("max_eventq_size") )
+    {
+        MPDataBus::mp_max_eventq_size = v.get_uint32();
+    }
+    else if ( v.is("transport") )
+    {
+        MPDataBus::transport = v.get_string();
+    }
+    else if ( v.is("debug") )
+    {
+        MPDataBus::enable_debug = v.get_bool();
+    }
+    else 
+    {
+        WarningMessage("MPDataBus: Unknown parameter '%s' in mp_data_bus module\n", v.get_name());
+        return false;
+    }
+    return true;
+}
+
+const Command* MPDataBusModule::get_commands() const
+{
+    return mp_dbus_cmds;
+}
+
+//-------------------------------------------------------------------------
 // reference module
 //-------------------------------------------------------------------------
 
@@ -1969,6 +2065,7 @@ void module_init()
     ModuleManager::add_module(new CodecModule);
     ModuleManager::add_module(new DetectionModule);
     ModuleManager::add_module(new MemoryModule);
+    ModuleManager::add_module(new MPDataBusModule);
     ModuleManager::add_module(new PacketTracerModule);
     ModuleManager::add_module(new PacketsModule);
     ModuleManager::add_module(new ProcessModule);
