@@ -796,21 +796,9 @@ static uint16_t ParseDNSRData(
 
         bytes_unused = SkipDNSRData(data, bytes_unused, dnsSessionData);
         break;
-    case DNS_RR_TYPE_NS:
-    case DNS_RR_TYPE_SOA:
-    case DNS_RR_TYPE_WKS:
-    case DNS_RR_TYPE_PTR:
-    case DNS_RR_TYPE_HINFO:
-    case DNS_RR_TYPE_MX:
-    case DNS_RR_TYPE_RRSIG:
-    case DNS_RR_TYPE_NSEC:
-    case DNS_RR_TYPE_DS:
-        bytes_unused = SkipDNSRData(data, bytes_unused, dnsSessionData);
-        break;
     default:
-        /* Not one of the known types.  Stop looking at this session
-         * as DNS. */
-        dnsSessionData->flags |= DNS_FLAG_NOT_DNS;
+        /* An unknown RR type or one w/o special handling, skip */
+        bytes_unused = SkipDNSRData(data, bytes_unused, dnsSessionData);
         break;
     }
 
@@ -900,6 +888,7 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData, bool& ne
         switch (dnsSessionData->state)
         {
         case DNS_RESP_STATE_ANS_RR: /* ANSWERS section */
+            dnsSessionData->answer_tabs.emplace_back(data - p->data);
             for (i=dnsSessionData->curr_rec; i<dnsSessionData->hdr.answers; i++)
             {
                 bytes_unused = ParseDNSAnswer(data, bytes_unused, dnsSessionData, p, dnsSessionData->answer_tabs);
@@ -945,6 +934,7 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData, bool& ne
             dnsSessionData->curr_rec = 0;
         /* Fall through */
         case DNS_RESP_STATE_AUTH_RR: /* AUTHORITIES section */
+            dnsSessionData->auth_tabs.emplace_back(data - p->data);
             for (i=dnsSessionData->curr_rec; i<dnsSessionData->hdr.authorities; i++)
             {
                 bytes_unused = ParseDNSAnswer(data, bytes_unused, dnsSessionData, p, dnsSessionData->auth_tabs);
@@ -990,6 +980,7 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData, bool& ne
             dnsSessionData->curr_rec = 0;
         /* Fall through */
         case DNS_RESP_STATE_ADD_RR: /* ADDITIONALS section */
+            dnsSessionData->addl_tabs.emplace_back(data - p->data);
             for (i=dnsSessionData->curr_rec; i<dnsSessionData->hdr.additionals; i++)
             {
                 bytes_unused = ParseDNSAnswer(data, bytes_unused, dnsSessionData, p, dnsSessionData->addl_tabs);

@@ -130,8 +130,13 @@ Fields supported for DNS:
 * `auth` - The list of authoritative responses
 * `addl` - The list of additional responses
 
-In the answers, auth, and addl lists the decoding of the following RR types is supported:
-A, AAAA, CNAME, DS, MX, NS, NSEC, PTR, RRSIG, SOA, TXT
+The answers, auth, and addl lists contain all the RRs found in the corresponding message sections. Each RR is
+represented by a summary of its decoding. For these RR types the decoding contains type specific information
+(ip addresses, domain names, etc.): A, AAAA, BIND9 signing, CNAME, DNSKEY, DS, LOC, MX, NS, NSEC, OPT, PTR, RRSIG,
+SOA, SPF, SRV, SSHFP, TXT. For these RR types: CAA, HINFO, HTTPS, NSEC3, NSEC3PARAM, SVCB, TKEY, TSIG, the decoding
+contains only the name of the RR type. This is also the default decoding applied to all RR types that don't have
+a type specific decoder. When the name of the type is not known it is decoded as UNKNOWN-N, where N is RR type
+numeric value.
 
 Fields supported for connection:
 

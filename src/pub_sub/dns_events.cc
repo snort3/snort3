@@ -50,112 +50,9 @@ static const std::string& class_name(uint16_t query_class)
     return it != class_names.end() ? it->second : unknown;
 }
 
-static const std::string& qtype_name(uint16_t query_type)
-{
-    static const std::map<uint16_t, std::string> qtype_names =
-    {
-        {1,     "A"},          // RFC 1035
-        {2,     "NS"},         // RFC 1035
-        {3,     "MD"},         // RFC 1035
-        {4,     "MF"},         // RFC 1035
-        {5,     "CNAME"},      // RFC 1035
-        {6,     "SOA"},        // RFC 1035
-        {7,     "MB"},         // RFC 1035
-        {8,     "MG"},         // RFC 1035
-        {9,     "MR"},         // RFC 1035
-        {10,    "NULL"},       // RFC 1035
-        {11,    "WKS"},        // RFC 1035
-        {12,    "PTR"},        // RFC 1035
-        {13,    "HINFO"},      // RFC 1035
-        {14,    "MINFO"},      // RFC 1035
-        {15,    "MX"},         // RFC 1035
-        {16,    "TXT"},        // RFC 1035
-        {17,    "RP"},         // RFC 1183
-        {18,    "AFSDB"},      // RFC 1183
-        {19,    "X25"},        // RFC 1183
-        {20,    "ISDN"},       // RFC 1183
-        {21,    "RT"},         // RFC 1183
-        {22,    "NSAP"},       // RFC 1706
-        {23,    "NSAP_PTR"},   // RFC 1348
-        {24,    "SIG"},        // RFC 2536
-        {25,    "KEY"},        // RFC 2536
-        {26,    "PX"},         // RFC 2163
-        {27,    "GPOS"},       // RFC 1712
-        {28,    "AAAA"},       // RFC 3596
-        {29,    "LOC"},        // RFC 1876
-        {30,    "NXT"},        // RFC 2535
-        {31,    "EID"},
-        {32,    "NIMLOC"},
-        {33,    "SRV"},        // RFC 2782
-        {34,    "ATMA"},
-        {35,    "NAPTR"},      // RFC 3403
-        {36,    "KX"},         // RFC 2230
-        {37,    "CERT"},       // RFC 4398
-        {38,    "A6"},         // RFC 2874
-        {39,    "DNAME"},      // RFC 6672
-        {40,    "SINK"},
-        {41,    "OPT"},        // RFC 6891
-        {42,    "APL"},        // RFC 3123
-        {43,    "DS"},         // RFC 4034
-        {44,    "SSHFP"},      // RFC 4255
-        {45,    "IPSECKEY"},   // RFC 4025
-        {46,    "RRSIG"},      // RFC 4034
-        {47,    "NSEC"},       // RFC 4034
-        {48,    "DNSKEY"},     // RFC 4034
-        {49,    "DHCID"},      // RFC 4701
-        {50,    "NSEC3"},      // RFC 5155
-        {51,    "NSEC3PARAM"}, // RFC 5155
-        {52,    "TLSA"},       // RFC 6698
-        {53,    "SMIMEA"},     // RFC 8162
-        {55,    "HIP"},        // RFC 8005
-        {56,    "NINFO"},
-        {57,    "RKEY"},
-        {58,    "TALINK"},
-        {59,    "CDS"},        // RFC 7344
-        {60,    "CDNSKEY"},    // RFC 7344
-        {61,    "OPENPGPKEY"}, // RFC 7929
-        {62,    "CSYNC"},      // RFC 7477
-        {63,    "ZONEMD"},     // RFC 8976
-        {64,    "SVCB"},       // RFC 9460
-        {65,    "HTTPS"},      // RFC 9460
-        {66,    "DSYNC"},
-        {99,    "SPF"},        // RFC 7208
-        {100,   "UINFO"},
-        {101,   "UID"},
-        {102,   "GID"},
-        {103,   "UNSPEC"},
-        {104,   "NID"},        // RFC 6742
-        {105,   "L32"},        // RFC 6742
-        {106,   "L64"},        // RFC 6742
-        {107,   "LP"},         // RFC 6742
-        {108,   "EUI48"},      // RFC 7043
-        {109,   "EUI64"},      // RFC 7043
-        {249,   "TKEY"},       // RFC 2930
-        {250,   "TSIG"},       // RFC 8945
-        {251,   "IXFR"},       // RFC 1995
-        {252,   "AXFR"},       // RFC 1035
-        {253,   "MAILB"},      // RFC 1035
-        {254,   "MAILA"},      // RFC 1035
-        {255,   "*"},          // RFC 1035, also known as ANY
-        {256,   "URI"},        // RFC 7553
-        {257,   "CAA"},        // RFC 8659
-        {32768, "TA"},
-        {32769, "DLV"},        // RFC 4431
-        {65281, "WINS"},       // Microsoft
-        {65282, "WINS-R"},     // Microsoft
-        {65521, "INTEGRITY"}   // Chromium Design Doc: Querying HTTPSSVC
-        // Add more QTYPEs as needed
-    };
-
-    static const std::string unknown = "UNKNOWN";
-
-    auto it = qtype_names.find(query_type);
-    return it != qtype_names.end() ? it->second : unknown;
-}
-
 static const std::string& rcode_name(uint16_t rcode)
 {
-    static const std::map<uint8_t, std::string> rcode_names =
+    static const std::map<uint16_t, std::string> rcode_names =
     {
         {0,  "NOERROR"},   // RFC 1035
         {1,  "FORMERR"},   // RFC 1035
@@ -272,7 +169,7 @@ const std::string& DnsResponseEvent::get_query_type_name() const
     static const std::string empty = "";
     if (session.hdr.questions == 0)
         return empty;
-    return qtype_name(get_query_type());
+    return DNSData::qtype_name(get_query_type());
 }
 
 uint8_t DnsResponseEvent::get_rcode() const
@@ -332,9 +229,14 @@ const std::string& DnsResponseEvent::get_TTLs() const
 
 bool DnsResponseEvent::get_rejected() const
 {
-    return session.hdr.flags & DNS_HDR_FLAG_RESPONSE &&
-        session.hdr.flags & DNS_HDR_FLAG_REPLY_CODE_MASK &&
-        !session.hdr.questions;
+    if (session.hdr.flags & DNS_HDR_FLAG_RESPONSE)
+    {
+        if (session.hdr.flags & DNS_HDR_FLAG_REPLY_CODE_MASK && !session.hdr.questions)
+            return true;
+        if (session.hdr.answers == 0 && session.hdr.authorities == 0 && session.hdr.additionals == 0)
+            return true;
+    }
+    return false;
 }
 
 const std::string& DnsResponseEvent::get_auth() const

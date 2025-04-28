@@ -94,7 +94,6 @@ struct DNSNameState
     }
 };
 
-// FIXIT-L  remove obsolete flags?
 #define DNS_RR_TYPE_A                       0x0001
 #define DNS_RR_TYPE_NS                      0x0002
 #define DNS_RR_TYPE_MD                      0x0003 // obsolete
@@ -112,9 +111,23 @@ struct DNSNameState
 #define DNS_RR_TYPE_MX                      0x000f
 #define DNS_RR_TYPE_TXT                     0x0010
 #define DNS_RR_TYPE_AAAA                    0x001c
+#define DNS_RR_TYPE_LOC                     0x001d
+#define DNS_RR_TYPE_SRV                     0x0021
+#define DNS_RR_TYPE_OPT                     0x0029
 #define DNS_RR_TYPE_RRSIG                   0x002e
 #define DNS_RR_TYPE_NSEC                    0x002f
 #define DNS_RR_TYPE_DS                      0x002b
+#define DNS_RR_TYPE_SSHFP                   0x002c
+#define DNS_RR_TYPE_DNSKEY                  0x0030
+#define DNS_RR_TYPE_NSEC3                   0x0032
+#define DNS_RR_TYPE_NSEC3PARAM              0x0033
+#define DNS_RR_TYPE_SVCB                    0x0040
+#define DNS_RR_TYPE_HTTPS                   0x0041
+#define DNS_RR_TYPE_SPF                     0x0063
+#define DNS_RR_TYPE_TKEY                    0x00f9
+#define DNS_RR_TYPE_TSIG                    0x00fa
+#define DNS_RR_TYPE_CAA                     0x0101
+#define DNS_RR_TYPE_BIND9_SIGNING           0xfffe
 
 #define DNS_RR_PTR 0xC0
 
@@ -221,7 +234,7 @@ struct DNSData
     bool has_events() const;
     bool valid_dns(const DNSHdr&) const;
 
-    void decode_rdata(const snort::Packet* p, const uint8_t* rdata, uint16_t rdlength,
+    void decode_rdata(const snort::Packet* p, const uint8_t* rr, const uint8_t* rdata, uint16_t rdlength,
         uint16_t type, std::string& rdata_str) const;
     void get_rr_data(const snort::Packet *p, const std::vector<uint16_t>& tabs,
         std::string& rrs, std::string* ttls = nullptr) const;
@@ -229,6 +242,8 @@ struct DNSData
     { get_rr_data(p, answer_tabs, answers, &ttls); }
     void get_auth(const snort::Packet *p, std::string& auth) const { get_rr_data(p, auth_tabs, auth); }
     void get_addl(const snort::Packet *p, std::string& addl) const { get_rr_data(p, addl_tabs, addl); }
+
+    static const std::string& qtype_name(uint16_t query_type, bool* is_unknown = nullptr);
 };
 
 DNSData* get_dns_session_data(snort::Packet* p, bool from_server, DNSData& udpSessionData);
