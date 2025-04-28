@@ -42,6 +42,8 @@ namespace snort
 }
 
 #define CURRENT_PACKET snort::DetectionEngine::get_current_packet()
+#define SAFE_CURRENT_PACKET ((Analyzer::get_local_analyzer() && snort::DetectionEngine::get_context()) ? \
+                     snort::DetectionEngine::get_current_packet() : nullptr)
 
 void appid_log(const snort::Packet*, const uint8_t log_level, const char*, ...);
 

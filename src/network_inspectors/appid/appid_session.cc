@@ -1218,9 +1218,15 @@ void AppIdSession::publish_shadow_traffic_event(const uint32_t &shadow_traffic_b
     const char* app_name;
     unsigned shadow_traffic_pub_id = 0;
     std::string str_print;
+    Packet* curr_packet = nullptr;
 
     AppId publishing_appid = get_shadow_traffic_publishing_appid();
     app_name = api.asd->get_odp_ctxt().get_app_info_mgr().get_app_name(publishing_appid);
+
+    if ((appidDebug and appidDebug->is_active()) || (appid_trace_enabled))
+    {
+        curr_packet = SAFE_CURRENT_PACKET;
+    }
 
     if (app_name == nullptr)
     {
@@ -1231,7 +1237,7 @@ void AppIdSession::publish_shadow_traffic_event(const uint32_t &shadow_traffic_b
         }
         else 
         {
-            APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL,"Appname is invalid, not publishing shadow traffic event without appname\n");
+            APPID_LOG(curr_packet, TRACE_DEBUG_LEVEL,"Appname is invalid, not publishing shadow traffic event without appname\n");
             return; 
         }
     }
@@ -1244,7 +1250,7 @@ void AppIdSession::publish_shadow_traffic_event(const uint32_t &shadow_traffic_b
     if (appidDebug and appidDebug->is_active())
         change_shadow_traffic_bits_to_string(shadow_traffic_bits, str_print);
     
-    APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, 
+    APPID_LOG(curr_packet, TRACE_DEBUG_LEVEL, 
         "AppID: ShadowTraffic Published event for: %s, application_name: %s(%d)\n", 
         str_print.c_str(), app_name, publishing_appid);
 } 
