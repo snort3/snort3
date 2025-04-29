@@ -27,10 +27,6 @@ else()
     HINTS ${LUAJIT_LIBRARIES_DIR_HINT} ${PC_LUAJIT_LIBDIR} ${PC_LUAJIT_LIBRARY_DIRS})
 endif()
 
-if (APPLE)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LUAJIT_LIBRARIES} -pagezero_size 10000 -image_base 100000000")
-endif()
-
 if(LUAJIT_INCLUDE_DIR AND EXISTS "${LUAJIT_INCLUDE_DIR}/luajit.h")
     file(STRINGS "${LUAJIT_INCLUDE_DIR}/luajit.h" luajit_version_str REGEX "^#define[ \t]+LUAJIT_VERSION[ \t]+\"LuaJIT .+\"")
 
@@ -46,6 +42,14 @@ find_package_handle_standard_args(LuaJIT
     VERSION_VAR LUAJIT_VERSION_STRING
     FAIL_MESSAGE "${ERROR_MESSAGE}"
 )
+
+if (APPLE)
+    if(LUAJIT_VERSION_STRING VERSION_LESS "2.1")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LUAJIT_LIBRARIES} -pagezero_size 10000 -image_base 100000000")
+    else()
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LUAJIT_LIBRARIES}")
+    endif()
+endif()
 
 mark_as_advanced(LUAJIT_INCLUDE_DIR LUAJIT_LIBRARIES)
 
