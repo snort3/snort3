@@ -30,7 +30,9 @@
 #include "file_api/file_service.h"
 #include "hash/hash_key_operations.h"
 #include "pub_sub/http_events.h"
+#include "pub_sub/http_event_ids.h"
 #include "pub_sub/http_request_body_event.h"
+#include "pub_sub/http_publish_length_event.h"
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
 #include "sfip/sf_ip.h"
 
@@ -483,11 +485,13 @@ void HttpMsgHeader::update_flow()
 // Common activities of preparing for upcoming body
 void HttpMsgHeader::prepare_body()
 {
+    const bool is_request = (source_id == SRC_CLIENT);
+
     session_data->body_octets[source_id] = 0;
     setup_mime();
     if (!session_data->mime_state[source_id])
     {
-        const int64_t& depth = (source_id == SRC_CLIENT) ? params->request_depth :
+        const int64_t& depth = is_request ? params->request_depth :
             params->response_depth;
         session_data->detect_depth_remaining[source_id] = (depth != -1) ? depth : INT64_MAX;
     }
@@ -499,11 +503,31 @@ void HttpMsgHeader::prepare_body()
         // body
         session_data->detect_depth_remaining[source_id] = INT64_MAX;
     }
-    if ((source_id == SRC_CLIENT) and params->publish_request_body)
+
+    // Set the default depth if we're publishing the request body.
+    if (params->publish_request_body and is_request)
     {
         session_data->publish_octets[source_id] = 0;
         session_data->publish_depth_remaining[source_id] = REQUEST_PUBLISH_DEPTH;
     }
+
+    // Dynamically update the publish depth.
+    int32_t cur_depth = session_data->publish_depth_remaining[source_id];
+    HttpPublishLengthEvent http_publish_length_event = { is_request, cur_depth };
+    DataBus::publish(DataBus::get_id(http_pub_key), HttpEventIds::HTTP_PUBLISH_LENGTH, http_publish_length_event, flow);
+    int32_t new_depth = http_publish_length_event.get_publish_length();
+
+    if (is_request)
+        flow->stash->store(STASH_PUBLISH_REQUEST_BODY, http_publish_length_event.should_publish_body());
+    else
+        flow->stash->store(STASH_PUBLISH_RESPONSE_BODY, http_publish_length_event.should_publish_body());
+
+    if (new_depth > session_data->publish_depth_remaining[source_id])
+    {
+        session_data->publish_octets[source_id] = 0;
+        session_data->publish_depth_remaining[source_id] = new_depth;
+    }
+
     setup_file_processing();
     setup_encoding_decompression();
     setup_utf_decoding();
@@ -513,7 +537,7 @@ void HttpMsgHeader::prepare_body()
     if ((source_id == SRC_SERVER) && (params->script_detection))
         session_data->accelerated_blocking[source_id] = true;
 
-    if (source_id == SRC_CLIENT)
+    if (is_request)
     {
         HttpModule::increment_peg_counts(PEG_REQUEST_BODY);
 

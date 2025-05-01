@@ -21,11 +21,9 @@
 #include "config.h"
 #endif
 
-#include <cstring>
+#include "http_msg_section.h"
 
 #include "service_inspectors/http2_inspect/http2_flow_data.h"
-
-#include "http_msg_section.h"
 
 #include "http_context_data.h"
 #include "http_common.h"

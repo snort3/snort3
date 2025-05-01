@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2022-2025 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2025-2025 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,35 +15,18 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
+// http_body_event.cc author Vitalii Tron <vtron@cisco.com>
 
-// http_event_ids.h author Russ Combs <rucombs@cisco.com>
-
-// Inspection events published by the Http Inspector. Modules can subscribe
-// to receive the events.
-
-#ifndef HTTP_EVENT_IDS_H
-#define HTTP_EVENT_IDS_H
-
-#include "framework/data_bus.h"
-
-namespace snort
-{
-// These are common values between the HTTP inspector and the subscribers.
-struct HttpEventIds
-{ enum : unsigned {
-
-    REQUEST_HEADER,
-    RESPONSE_HEADER,
-    REQUEST_BODY,
-    BODY,
-    END_OF_TRANSACTION,
-    HTTP_PUBLISH_LENGTH,
-
-    num_ids
-}; };
-
-const PubKey http_pub_key { "http_inspect", HttpEventIds::num_ids };
-
-}
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
 
+#include "http_body_event.h"
+
+using namespace snort;
+
+const uint8_t* HttpBodyEvent::get_body(int32_t& length) const
+{
+    length = http_body_length;
+    return http_body_ptr;
+}

@@ -34,8 +34,10 @@ namespace snort
 class SO_PUBLIC HttpRequestBodyEvent : public snort::DataEvent
 {
 public:
-    HttpRequestBodyEvent(HttpMsgBody* msg_body, int32_t offset, bool last, HttpFlowData* flow_data)
-        : http_msg_body(msg_body), msg_offset(offset), last_piece(last), http_flow_data(flow_data)
+    HttpRequestBodyEvent(HttpMsgBody* msg_body, int32_t publish_length, int32_t offset, bool last,
+        HttpFlowData* flow_data)
+        : http_msg_body(msg_body), publish_length(publish_length), msg_offset(offset), last_piece(last),
+        http_flow_data(flow_data)
         { }
 
     const uint8_t* get_request_body_data(int32_t& length, int32_t& offset);
@@ -46,10 +48,13 @@ public:
 
 private:
     HttpMsgBody* const http_msg_body;
+    // Length to be published, might be smaller than the body length due to REQUEST_PUBLISH_DEPTH
+    int32_t publish_length;
     const int32_t msg_offset;
     const bool last_piece;
     HttpFlowData* const http_flow_data;
 };
+
 }
 #endif
 

@@ -25,6 +25,7 @@
 
 #include "file_api/file_flows.h"
 #include "pub_sub/http_request_body_event.h"
+#include "pub_sub/http_body_event.h"
 
 #include "http_common.h"
 #include "http_cutter.h"
@@ -194,20 +195,45 @@ bool HttpStreamSplitter::finish(Flow* flow)
 #endif
             }
         }
-        // If we were publishing a request body need to publish that body is complete
+
+        // If we were publishing a request or response body need to publish that body is complete
         if (session_data->publish_depth_remaining[source_id] > 0)
         {
-            HttpRequestBodyEvent http_request_body_event(nullptr,
-                session_data->publish_octets[source_id], true, session_data);
-            DataBus::publish(my_inspector->get_pub_id(), HttpEventIds::REQUEST_BODY, http_request_body_event, flow);
-#ifdef REG_TEST
-            if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
+            int32_t should_publish_body = 0;
+            if (source_id == SRC_CLIENT)
+                flow->stash->get(STASH_PUBLISH_REQUEST_BODY, should_publish_body);
+            else
+                flow->stash->get(STASH_PUBLISH_RESPONSE_BODY, should_publish_body);
+
+            if (should_publish_body)
             {
-                fprintf(HttpTestManager::get_output_file(),
-                    "Request body event published during finish()\n");
-                fflush(HttpTestManager::get_output_file());
-            }
+                HttpBodyEvent http_body_event(nullptr, 0, (source_id == SRC_CLIENT), true);
+                DataBus::publish(my_inspector->get_pub_id(), HttpEventIds::BODY, http_body_event, flow);
+#ifdef REG_TEST
+                if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
+                {
+                    fprintf(HttpTestManager::get_output_file(),
+                        "Http Body event published during finish(). Originated from %s.\n",
+                        (source_id == HttpCommon::SourceId::SRC_CLIENT ? "client" : "server"));
+                    fflush(HttpTestManager::get_output_file());
+                }
 #endif
+            }
+
+            if ((source_id == SRC_CLIENT) and (session_data->publish_octets[source_id] < REQUEST_PUBLISH_DEPTH))
+            {
+                HttpRequestBodyEvent http_request_body_event(nullptr, 0,
+                    session_data->publish_octets[source_id], true, session_data);
+                DataBus::publish(my_inspector->get_pub_id(), HttpEventIds::REQUEST_BODY, http_request_body_event, flow);
+#ifdef REG_TEST
+                if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
+                {
+                    fprintf(HttpTestManager::get_output_file(),
+                        "Request body event published during finish()\n");
+                    fflush(HttpTestManager::get_output_file());
+                }
+#endif
+            }
         }
         return false;
     }

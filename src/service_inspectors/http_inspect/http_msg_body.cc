@@ -30,6 +30,7 @@
 #include "helpers/buffer_data.h"
 #include "js_norm/js_enum.h"
 #include "pub_sub/http_request_body_event.h"
+#include "pub_sub/http_body_event.h"
 
 #include "http_api.h"
 #include "http_common.h"
@@ -79,24 +80,66 @@ void HttpMsgBody::publish(unsigned pub_id)
     if (publish_length <= 0)
         return;
 
+    const bool is_request = (source_id == SRC_CLIENT);
     const int32_t& pub_depth_remaining = session_data->publish_depth_remaining[source_id];
     int32_t& publish_octets = session_data->publish_octets[source_id];
     const bool last_piece = (session_data->cutter[source_id] == nullptr) || tcp_close ||
         (pub_depth_remaining == 0);
 
-    HttpRequestBodyEvent http_request_body_event(this, publish_octets, last_piece, session_data);
+    // Publish entire request/response body limited dynamically
+    int32_t should_publish_body = 0;
+    if (is_request)
+        flow->stash->get(STASH_PUBLISH_REQUEST_BODY, should_publish_body);
+    else
+        flow->stash->get(STASH_PUBLISH_RESPONSE_BODY, should_publish_body);
 
-    DataBus::publish(pub_id, HttpEventIds::REQUEST_BODY, http_request_body_event, flow);
-    publish_octets += publish_length;
-#ifdef REG_TEST
-    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
+    if (should_publish_body)
     {
-        fprintf(HttpTestManager::get_output_file(),
-            "Published %" PRId32 " bytes of request body. last: %s\n", publish_length,
-            (last_piece ? "true" : "false"));
-        fflush(HttpTestManager::get_output_file());
+        HttpBodyEvent http_body_event(msg_text_new.start(), publish_length, is_request,
+            last_piece);
+        DataBus::publish(pub_id, HttpEventIds::BODY, http_body_event, flow);
+    #ifdef REG_TEST
+        if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
+        {
+            fprintf(HttpTestManager::get_output_file(),
+                "Published %" PRId32 " bytes of body. Originated from %s. last: %s\n",
+                publish_length, (is_request ? "client" : "server"), 
+                (last_piece ? "true" : "false"));
+            fflush(HttpTestManager::get_output_file());
+        }
+    #endif
     }
-#endif
+
+    // Publish request body limited statically
+    if (params->publish_request_body and is_request and (publish_octets < REQUEST_PUBLISH_DEPTH))
+    {
+        // Exclude already published octets (publish_octets):
+        const auto request_publish_depth_remaining = REQUEST_PUBLISH_DEPTH - publish_octets;
+
+        // We should not publish more than the remaining publish depth:
+        auto request_publish_length = (publish_length > request_publish_depth_remaining) ?
+            request_publish_depth_remaining : publish_length;
+
+        // If it is not the last piece of the request, it should be marked as such because of REQUEST_PUBLISH_DEPTH limit:
+        // if sum of already published octets (publish_octets) and current publishing length (request_publish_length)
+        // is greater than the request publish depth. 
+        auto request_last_piece = last_piece ? 
+            true : (publish_octets + request_publish_length >= REQUEST_PUBLISH_DEPTH);
+
+        HttpRequestBodyEvent http_request_body_event(this, request_publish_length, publish_octets, request_last_piece, session_data);
+        DataBus::publish(pub_id, HttpEventIds::REQUEST_BODY, http_request_body_event, flow);
+    #ifdef REG_TEST
+        if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
+        {
+            fprintf(HttpTestManager::get_output_file(),
+                "Published %" PRId32 " bytes of request body. last: %s\n", request_publish_length,
+                (request_last_piece ? "true" : "false"));
+            fflush(HttpTestManager::get_output_file());
+        }
+    #endif
+    }
+
+    publish_octets += publish_length;
 }
 
 void HttpMsgBody::bookkeeping_regular_flush(uint32_t& partial_detect_length,
@@ -123,6 +166,7 @@ void HttpMsgBody::clean_partial(uint32_t& partial_inspected_octets, uint32_t& pa
         const int32_t detect_length =
             (partial_js_detect_length <= session_data->detect_depth_remaining[source_id]) ?
             partial_js_detect_length : session_data->detect_depth_remaining[source_id];
+
         bookkeeping_regular_flush(partial_detect_length, partial_detect_buffer,
             partial_js_detect_length, detect_length);
     }
@@ -194,11 +238,11 @@ void HttpMsgBody::analyze()
         }
         else
             mime_bufs = new std::list<MimeBufs>;
-        
+
         while (ptr < section_end)
         {
             // After process_mime_data(), ptr will point to the last byte processed in the current MIME part
-            ptr = session_data->mime_state[source_id]->process_mime_data(p, ptr, 
+            ptr = session_data->mime_state[source_id]->process_mime_data(p, ptr,
                 (section_end - ptr), true, SNORT_FILE_POSITION_UNKNOWN, &latest_attachment);
             ptr++;
 

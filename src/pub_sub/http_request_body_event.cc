@@ -34,13 +34,14 @@ const uint8_t* HttpRequestBodyEvent::get_request_body_data(int32_t& length, int3
 {
     offset = msg_offset;
 
-    if (http_msg_body)
+    if (http_msg_body and (publish_length > 0))
     {
         const Field& body = http_msg_body->get_msg_text_new();
-        length = http_msg_body->get_publish_length();
-        if (length > 0)
+        const auto body_length = body.length();
+
+        if (body_length > 0)
         {
-            assert(body.length() >= length);
+            length = publish_length > body_length ? body_length : publish_length;
             return body.start();
         }
     }

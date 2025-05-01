@@ -22,6 +22,9 @@
 
 #include <cstdint>
 
+#define STASH_PUBLISH_REQUEST_BODY "publish_request_body"
+#define STASH_PUBLISH_RESPONSE_BODY "publish_response_body"
+
 namespace HttpCommon
 {
 // Field status codes for when no valid value is present in length or integer value. Positive

@@ -137,7 +137,7 @@ void HttpFlowData::half_reset(SourceId source_id)
     data_length[source_id] = STAT_NOT_PRESENT;
     body_octets[source_id] = STAT_NOT_PRESENT;
     file_octets[source_id] = STAT_NOT_PRESENT;
-    publish_octets[source_id] = STAT_NOT_PRESENT;
+
     partial_inspected_octets[source_id] = 0;
     section_size_target[source_id] = 0;
     stretch_section_to_packet[source_id] = false;

@@ -129,6 +129,7 @@ TEST_GROUP(pub_sub_http_request_body_event_test)
 TEST(pub_sub_http_request_body_event_test, first_event)
 {
     int32_t msg_len = 500;
+    int32_t max_pub_len = 2000;
     int32_t length, offset;
     uint32_t stream_id = 1;
     std::string msg(msg_len, 'A');
@@ -136,7 +137,7 @@ TEST(pub_sub_http_request_body_event_test, first_event)
     mock().setData("stream_id", stream_id);
     HttpMsgBody* body = new HttpMsgBodyCl((const uint8_t*)msg.c_str(), msg_len, nullptr,
         HttpCommon::SRC_CLIENT, false, nullptr, nullptr);
-    HttpRequestBodyEvent event(body, 0, false, nullptr);
+    HttpRequestBodyEvent event(body, max_pub_len, 0, false, nullptr);
     const uint8_t* data = event.get_request_body_data(length, offset);
     CHECK(memcmp(data, msg.data(), length) == 0);
     CHECK(length == msg_len);
@@ -149,6 +150,7 @@ TEST(pub_sub_http_request_body_event_test, first_event)
 TEST(pub_sub_http_request_body_event_test, last_event)
 {
     int32_t msg_len = 500;
+    int32_t max_pub_len = 2000;
     int32_t in_offset = REQUEST_PUBLISH_DEPTH - msg_len;
     int32_t length, offset;
     uint32_t stream_id = 3;
@@ -157,7 +159,7 @@ TEST(pub_sub_http_request_body_event_test, last_event)
     mock().setData("pub_length", msg_len);
     HttpMsgBody* body = new HttpMsgBodyCl((const uint8_t*)msg.c_str(), msg_len, nullptr,
         HttpCommon::SRC_CLIENT, false, nullptr, nullptr);
-    HttpRequestBodyEvent event(body, in_offset, true, nullptr);
+    HttpRequestBodyEvent event(body, max_pub_len, in_offset, true, nullptr);
     const uint8_t* data = event.get_request_body_data(length, offset);
     CHECK(memcmp(data, msg.data(), length) == 0);
     CHECK(length == msg_len);
@@ -170,16 +172,60 @@ TEST(pub_sub_http_request_body_event_test, last_event)
 TEST(pub_sub_http_request_body_event_test, empty_data_last_event)
 {
     int32_t in_offset = 1500;
+    int32_t max_pub_len = 2000;
     int32_t length, offset;
     uint32_t stream_id = 5;
     mock().setData("stream_id", stream_id);
-    HttpRequestBodyEvent event(nullptr, in_offset, true, nullptr);
+    HttpRequestBodyEvent event(nullptr, max_pub_len, in_offset, true, nullptr);
     const uint8_t* data = event.get_request_body_data(length, offset);
     CHECK(data == nullptr);
     CHECK(length == 0);
     CHECK(offset == 1500);
     CHECK(event.get_httpx_stream_id() == stream_id);
     CHECK(event.is_last_request_body_piece());
+}
+
+
+TEST(pub_sub_http_request_body_event_test, publish_length_lt_message_length)
+{
+    int32_t msg_len = 500;
+    int32_t max_pub_len = 200;
+    int32_t length, offset;
+    uint32_t stream_id = 1;
+    std::string msg(msg_len, 'A');
+    mock().setData("pub_length", msg_len);
+    mock().setData("stream_id", stream_id);
+    HttpMsgBody* body = new HttpMsgBodyCl((const uint8_t*)msg.c_str(), msg_len, nullptr,
+        HttpCommon::SRC_CLIENT, false, nullptr, nullptr);
+    HttpRequestBodyEvent event(body, max_pub_len, 0, false, nullptr);
+    const uint8_t* data = event.get_request_body_data(length, offset);
+    CHECK(memcmp(data, msg.data(), length) == 0);
+    CHECK(length == max_pub_len);
+    CHECK(offset == 0);
+    CHECK(event.get_httpx_stream_id() == stream_id);
+    CHECK_FALSE(event.is_last_request_body_piece());
+    delete body;
+}
+
+TEST(pub_sub_http_request_body_event_test, zero_publish_length)
+{
+    int32_t msg_len = 500;
+    int32_t max_pub_len = 0;
+    int32_t length, offset;
+    uint32_t stream_id = 1;
+    std::string msg(msg_len, 'A');
+    mock().setData("pub_length", msg_len);
+    mock().setData("stream_id", stream_id);
+    HttpMsgBody* body = new HttpMsgBodyCl((const uint8_t*)msg.c_str(), msg_len, nullptr,
+        HttpCommon::SRC_CLIENT, false, nullptr, nullptr);
+    HttpRequestBodyEvent event(body, max_pub_len, 0, false, nullptr);
+    const uint8_t* data = event.get_request_body_data(length, offset);
+    CHECK(memcmp(data, msg.data(), length) == 0);
+    CHECK(length == max_pub_len);
+    CHECK(offset == 0);
+    CHECK(event.get_httpx_stream_id() == stream_id);
+    CHECK_FALSE(event.is_last_request_body_piece());
+    delete body;
 }
 
 int main(int argc, char** argv)
