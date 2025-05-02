@@ -40,23 +40,17 @@
 #include <queue>
 #include <atomic>
 #include <thread>
+#include <bitset>
 
+#include "control/control.h"
+#include "framework/mp_transport.h"
+#include "framework/counts.h"
 #include "main/snort_types.h"
 #include "data_bus.h"
-#include "framework/mp_transport.h"
-#include <bitset>
-#include "framework/mp_transport.h"
 
 #define DEFAULT_TRANSPORT "unix_transport"
 #define DEFAULT_MAX_EVENTQ_SIZE 1000
 #define WORKER_THREAD_SLEEP 100
-
-#define MP_DATABUS_LOG(msg, ...) do { \
-        if (!MPDataBus::enable_debug) \
-            break; \
-        LogMessage(msg, __VA_ARGS__); \
-    } while (0)
-
 
 template <typename T>
 class Ring;
@@ -66,6 +60,33 @@ namespace snort
 class Flow;
 struct Packet;
 struct SnortConfig;
+
+struct MPDataBusStats
+{
+    MPDataBusStats() :
+        total_messages_sent(0),
+        total_messages_received(0),
+        total_messages_dropped(0),
+        total_messages_published(0),
+        total_messages_delivered(0)
+    { }
+
+    PegCount total_messages_sent;
+    PegCount total_messages_received;
+    PegCount total_messages_dropped;
+    PegCount total_messages_published;
+    PegCount total_messages_delivered;
+};
+
+static const PegInfo mp_databus_pegs[] =
+{
+    { CountType::SUM, "total_messages_sent", "total messages sent" },
+    { CountType::SUM, "total_messages_received", "total messages received" },
+    { CountType::SUM, "total_messages_dropped", "total messages dropped" },
+    { CountType::SUM, "total_messages_published", "total messages published" },
+    { CountType::SUM, "total_messages_delivered", "total messages delivered" },
+    { CountType::END, nullptr, nullptr },
+};
 
 typedef bool (*MPSerializeFunc)(DataEvent* event, char*& buffer, uint16_t* length);
 typedef bool (*MPDeserializeFunc)(const char* buffer, uint16_t length, DataEvent*& event);
@@ -115,12 +136,17 @@ public:
     static uint32_t mp_max_eventq_size;
     static std::string transport;
     static bool enable_debug;
+#ifdef REG_TEST
+    static bool hold_events;
+#endif
 
     static MPTransport * transport_layer;
+    static MPDataBusStats mp_global_stats;
     unsigned init(int);
     void clone(MPDataBus& from, const char* exclude_name = nullptr);
 
     static unsigned get_id(const PubKey& key);
+    static const char* get_name_from_id(unsigned id);
 
     static bool valid(unsigned pub_id)
     { return pub_id != 0; }
@@ -142,11 +168,19 @@ public:
     Ring<std::shared_ptr<MPEventInfo>>* get_event_queue()
     { return mp_event_queue; }
 
+    void set_debug_enabled(bool flag);
+
+    void sum_stats();
+
+    void dump_stats(ControlConn* ctrlconn, const char* module_name);
+    void dump_events(ControlConn* ctrlconn, const char* module_name);
+    void show_channel_status(ControlConn* ctrlconn);
+
 private: 
     void _subscribe(unsigned pid, unsigned eid, DataHandler* h);
     void _subscribe(const PubKey& key, unsigned eid, DataHandler* h);
 
-    void _publish(unsigned pid, unsigned eid, DataEvent& e, Flow* f);
+    bool _publish(unsigned pid, unsigned eid, DataEvent& e, Flow* f);
 
 private:
     typedef std::vector<DataHandler*> SubList;
@@ -160,6 +194,8 @@ private:
 
     static std::condition_variable queue_cv;
     static std::mutex queue_mutex;
+
+    std::unordered_map<unsigned, MPDataBusStats> mp_pub_stats;
 
     void start_worker_thread();
     void stop_worker_thread();

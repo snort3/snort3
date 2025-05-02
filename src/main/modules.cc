@@ -47,6 +47,7 @@
 #include "js_norm/js_norm_module.h"
 #include "latency/latency_module.h"
 #include "log/messages.h"
+#include "lua/lua.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "memory/memory_module.h"
@@ -406,14 +407,64 @@ static const Parameter mp_data_bus_params[] =
 
     { "debug", Parameter::PT_BOOL, nullptr, "false",
       "enable debugging" },
+#ifdef REG_TEST
+    { "hold_events", Parameter::PT_BOOL, nullptr, "false",
+      "hold events from publishing" },
+#endif
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static int dump_mp_stats(lua_State* L)
+{
+    if (!L)
+        return 0;
+
+    ControlConn* ctrlconn = ControlConn::query_from_lua(L);
+    
+    auto mod_name = luaL_optstring(L, 1, nullptr);
+
+    if (mod_name and strlen(mod_name) == 0)
+        mod_name = nullptr;
+
+    if(SnortConfig::get_conf()->mp_dbus)
+        SnortConfig::get_conf()->mp_dbus->dump_stats(ctrlconn, mod_name);
+
+    return 0;
+}
+
+static int dump_mp_events(lua_State* L)
+{
+    if (!L)
+        return 0;
+
+    ControlConn* ctrlconn = ControlConn::query_from_lua(L);
+    
+    auto mod_name = luaL_optstring(L, 1, nullptr);
+
+    if (mod_name and strlen(mod_name) == 0)
+        mod_name = nullptr;
+
+    if(SnortConfig::get_conf()->mp_dbus)
+        SnortConfig::get_conf()->mp_dbus->dump_events(ctrlconn, mod_name);
+
+    return 0;
+}
+
+static int show_mp_channel_status(lua_State* L)
+{
+    ControlConn* ctrlconn = ControlConn::query_from_lua(L);
+
+    if(SnortConfig::get_conf()->mp_dbus)
+        SnortConfig::get_conf()->mp_dbus->show_channel_status(ctrlconn);
+
+    return 0;
+}
+
 static int enable_debug(lua_State*)
 {
     if(SnortConfig::get_conf()->mp_dbus)
-        SnortConfig::get_conf()->mp_dbus->enable_debug = true;
+        SnortConfig::get_conf()->mp_dbus->set_debug_enabled(true);
 
     return 0;
 }
@@ -421,7 +472,7 @@ static int enable_debug(lua_State*)
 static int disable_debug(lua_State*)
 {
     if(SnortConfig::get_conf()->mp_dbus)
-        SnortConfig::get_conf()->mp_dbus->enable_debug = false;
+        SnortConfig::get_conf()->mp_dbus->set_debug_enabled(false);
 
     return 0;
 }
@@ -430,6 +481,9 @@ static const Command mp_dbus_cmds[] =
 {
     {"enable", enable_debug, nullptr, "enable multiprocess data bus debugging"},
     {"disable", disable_debug, nullptr, "disable multiprocess data bus debugging"},
+    { "dump_stats", dump_mp_stats, nullptr, "dump multiprocess data bus statistics" },
+    { "dump_events", dump_mp_events, nullptr, "dump multiprocess data bus events" },
+    { "show_channel_status", show_mp_channel_status, nullptr, "show multiprocess data bus channel status" },
     {nullptr, nullptr, nullptr, nullptr}
 };
 
@@ -446,6 +500,8 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
     const Command* get_commands() const override;
+    const PegInfo* get_pegs() const override;
+    PegCount* get_counts() const override;
 
     Usage get_usage() const override
     { return GLOBAL; }
@@ -475,6 +531,12 @@ bool MPDataBusModule::set(const char*, Value& v, SnortConfig*)
     {
         MPDataBus::enable_debug = v.get_bool();
     }
+#ifdef REG_TEST
+    else if ( v.is("hold_events") )
+    {
+        MPDataBus::hold_events = v.get_bool();
+    }
+#endif
     else 
     {
         WarningMessage("MPDataBus: Unknown parameter '%s' in mp_data_bus module\n", v.get_name());
@@ -488,6 +550,17 @@ const Command* MPDataBusModule::get_commands() const
     return mp_dbus_cmds;
 }
 
+const PegInfo* MPDataBusModule::get_pegs() const
+{
+    return mp_databus_pegs;
+}
+
+PegCount* MPDataBusModule::get_counts() const
+{
+    if(SnortConfig::get_conf()->mp_dbus)
+        SnortConfig::get_conf()->mp_dbus->sum_stats();
+    return (PegCount*)&MPDataBus::mp_global_stats;
+}
 //-------------------------------------------------------------------------
 // reference module
 //-------------------------------------------------------------------------

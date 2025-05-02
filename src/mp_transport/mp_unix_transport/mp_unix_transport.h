@@ -32,6 +32,29 @@
 namespace snort
 {
 
+struct MPUnixTransportStats
+{
+    MPUnixTransportStats() :
+        sent_events(0),
+        sent_bytes(0),
+        received_events(0),
+        received_bytes(0),
+        send_errors(0),
+        successful_connections(0),
+        closed_connections(0),
+        connection_retries(0)
+    { }
+    
+    PegCount sent_events;
+    PegCount sent_bytes;
+    PegCount received_events;
+    PegCount received_bytes;
+    PegCount send_errors;
+    PegCount successful_connections;
+    PegCount closed_connections;
+    PegCount connection_retries;
+};
+
 struct MPUnixDomainTransportConfig
 {
     std::string unix_domain_socket_path;
@@ -60,14 +83,15 @@ struct SerializeFunctionHandle
 
 struct SideChannelHandle
 {
-    SideChannelHandle(SideChannel* sc, UnixDomainConnectorConfig* cc) :
-        side_channel(sc), connector_config(cc)
+    SideChannelHandle(SideChannel* sc, UnixDomainConnectorConfig* cc, const ushort& channel_id) :
+        side_channel(sc), connector_config(cc), channel_id(channel_id)
     { }
 
     ~SideChannelHandle();
 
     SideChannel* side_channel;
     UnixDomainConnectorConfig* connector_config;
+    ushort channel_id;
 };
 
 struct UnixAcceptorHandle
@@ -80,7 +104,7 @@ class MPUnixDomainTransport : public MPTransport
 {
     public:
 
-    MPUnixDomainTransport(MPUnixDomainTransportConfig* c);
+    MPUnixDomainTransport(MPUnixDomainTransportConfig* c, MPUnixTransportStats& stats);
     ~MPUnixDomainTransport() override;
 
     bool configure(const SnortConfig*) override;
@@ -95,6 +119,7 @@ class MPUnixDomainTransport : public MPTransport
     void disable_logging() override;
     bool is_logging_enabled() override;
     void cleanup();
+    MPTransportChannelStatusHandle* get_channel_status(uint& size) override;
 
     MPUnixDomainTransportConfig* get_config()
     { return config; }
@@ -105,13 +130,16 @@ class MPUnixDomainTransport : public MPTransport
     void init_side_channels();
     void cleanup_side_channels();
     void side_channel_receive_handler(SCMessage* msg);
-    void handle_new_connection(UnixDomainConnector* connector, UnixDomainConnectorConfig* cfg);
+    void handle_new_connection(UnixDomainConnector* connector, UnixDomainConnectorConfig* cfg, const ushort& channel_id);
     void process_messages_from_side_channels();
     void notify_process_thread();
     void connector_update_handler(UnixDomainConnector* connector, bool is_recconecting, SideChannel* side_channel);
+    void MPTransportLog(const char* msg, ...);
 
     MPSerializeFunc get_event_serialization_function(unsigned pub_id, unsigned event_id);
     MPDeserializeFunc get_event_deserialization_function(unsigned pub_id, unsigned event_id);
+
+    uint mp_current_process_id = 0;
 
     TransportReceiveEventHandler transport_receive_handler = nullptr;
     MPUnixDomainTransportConfig* config = nullptr;
@@ -126,6 +154,8 @@ class MPUnixDomainTransport : public MPTransport
 
     std::thread* consume_thread = nullptr;
     std::condition_variable consume_thread_cv;
+
+    MPUnixTransportStats& transport_stats;
 };
 
 }

@@ -42,10 +42,14 @@ class MPUnixDomainTransportModule : public Module
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
 
+    const PegInfo* get_pegs() const override;
+    PegCount* get_counts() const override;
+
     Usage get_usage() const override
     { return GLOBAL; }
 
     MPUnixDomainTransportConfig* config;
+    MPUnixTransportStats unix_transport_stats;
 };
 
 static Module* mod_ctor()
@@ -61,7 +65,7 @@ static void mod_dtor(Module* m)
 static MPTransport* mp_unixdomain_transport_ctor(Module* m)
 {
     auto unix_tr_mod = (MPUnixDomainTransportModule*)m;
-    return new MPUnixDomainTransport(unix_tr_mod->config);
+    return new MPUnixDomainTransport(unix_tr_mod->config, unix_tr_mod->unix_transport_stats);
 }
 
 static void mp_unixdomain_transport_dtor(MPTransport* t)

@@ -25,6 +25,7 @@
 
 #include "main/snort_config.h"
 #include "log/messages.h"
+#include "utils/stats.h"
 
 #define DEFAULT_UNIX_DOMAIN_SOCKET_PATH "/tmp/snort_unix_connectors"
 
@@ -40,6 +41,19 @@ static const Parameter unix_transport_params[] =
     { "consume_message_batch_size", Parameter::PT_INT, nullptr, "5", "consume message batch size" },
     { "enable_logging", Parameter::PT_BOOL, nullptr, "false", "enable logging" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const PegInfo mp_unix_transport_pegs[] =
+{
+    { CountType::SUM, "sent_events", "mp_transport events sent count" },
+    { CountType::SUM, "sent_bytes", "mp_transport events bytes sent count" },
+    { CountType::SUM, "receive_events", "mp_transport events received count" },
+    { CountType::SUM, "receive_bytes", "mp_transport events bytes received count" },
+    { CountType::SUM, "sent_errors", "mp_transport events errors count" },
+    { CountType::SUM, "successful_connections", "successful mp_transport connections count" },
+    { CountType::SUM, "closed_connections", "closed mp_transport connections count" },
+    { CountType::SUM, "connection_retries", "mp_transport connection retries count" },
+    { CountType::END, nullptr, nullptr },
 };
 
 MPUnixDomainTransportModule::MPUnixDomainTransportModule(): Module(MODULE_NAME, MODULE_HELP, unix_transport_params)
@@ -94,6 +108,16 @@ bool MPUnixDomainTransportModule::set(const char *, Value & v, SnortConfig *)
     }
 
     return true;
+}
+
+const PegInfo *MPUnixDomainTransportModule::get_pegs() const
+{
+    return mp_unix_transport_pegs;
+}
+
+PegCount *MPUnixDomainTransportModule::get_counts() const
+{
+    return (PegCount*)&unix_transport_stats;
 }
 
 static struct MPTransportApi mp_unixdomain_transport_api =

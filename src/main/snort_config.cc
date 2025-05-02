@@ -63,6 +63,7 @@
 #include "managers/mpse_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/so_manager.h"
+#include "managers/mp_transport_manager.h"
 #include "memory/memory_config.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/sfdaq_config.h"
@@ -1133,6 +1134,7 @@ void SnortConfig::cleanup_fatal_error()
     const SnortConfig* sc = SnortConfig::get_conf();
     if ( sc && !sc->dirty_pig )
     {
+        MPTransportManager::term();
         ModuleManager::term();
         EventManager::release_plugins();
         IpsManager::release_plugins();

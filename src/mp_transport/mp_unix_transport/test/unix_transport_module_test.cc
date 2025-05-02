@@ -42,11 +42,9 @@ namespace snort
         return 1;
     }
 
-    MPUnixDomainTransport::MPUnixDomainTransport(MPUnixDomainTransportConfig* config) :
-        MPTransport()
-    {
-        this->config = config;
-    }
+    MPUnixDomainTransport::MPUnixDomainTransport(MPUnixDomainTransportConfig* config, MPUnixTransportStats& stats) :
+        MPTransport(), config(config), transport_stats(stats)
+    { }
     MPUnixDomainTransport::~MPUnixDomainTransport()
     { destroy_cnt++; }
     void MPUnixDomainTransport::thread_init()
@@ -73,6 +71,11 @@ namespace snort
     {}
     void MPUnixDomainTransport::disable_logging()
     {}
+    MPTransportChannelStatusHandle* MPUnixDomainTransport::get_channel_status(unsigned int& size)
+    {
+        size = 0;
+        return nullptr;
+    }
 
     char* snort_strdup(const char*)
     {

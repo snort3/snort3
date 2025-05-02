@@ -56,6 +56,11 @@ class MockTransport : public MPTransport
     { }
     virtual bool is_logging_enabled() override
     { return false; }
+    MPTransportChannelStatusHandle* get_channel_status(uint& size) override
+    {
+        size = 0;
+        return nullptr;
+    }
 };
 
 unsigned get_instance_id() { return 0; }
@@ -65,10 +70,8 @@ unsigned ThreadConfig::get_instance_max() { return 1; }
 
 using namespace snort;
 
-void show_stats(unsigned long*, PegInfo const*, std::vector<unsigned int, std::allocator<unsigned int> > const&, char const*, _IO_FILE*)
-{}
-void show_stats(unsigned long*, PegInfo const*, unsigned int, char const*)
-{}
+void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
+void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 
 static void mock_transport_tinit(MPTransport* t)
 {

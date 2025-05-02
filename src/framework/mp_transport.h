@@ -24,6 +24,7 @@
 #include "framework/base_api.h"
 
 #include <functional>
+#include <string>
 
 namespace snort
 {
@@ -35,6 +36,32 @@ struct MPEventInfo;
 struct MPHelperFunctions;
 
 typedef std::function<void (const MPEventInfo& event_info)> TransportReceiveEventHandler;
+
+enum MPTransportChannelStatus
+{
+    DISCONNECTED = 0,
+    CONNECTING,
+    CONNECTED,
+    MAX
+};
+
+struct MPTransportChannelStatusHandle
+{
+    int id = 0;
+    std::string name;
+    MPTransportChannelStatus status = DISCONNECTED;
+
+    const char* get_status_string() const
+    {
+        switch (status)
+        {
+            case DISCONNECTED: return "DISCONNECTED";
+            case CONNECTING: return "CONNECTING";
+            case CONNECTED: return "CONNECTED";
+            default: return "UNKNOWN";
+        }
+    }
+};
 
 class MPTransport
 {
@@ -54,6 +81,7 @@ class MPTransport
     virtual void enable_logging() = 0;
     virtual void disable_logging() = 0;
     virtual bool is_logging_enabled() = 0;
+    virtual MPTransportChannelStatusHandle* get_channel_status(uint& size) = 0;
 };
 
 

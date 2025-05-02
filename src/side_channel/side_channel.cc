@@ -300,8 +300,14 @@ bool SideChannel::discard_message(SCMessage* msg) const
 
 bool SideChannel::transmit_message(SCMessage* msg) const
 {
-    if ( !connector_transmit or !msg )
+    if(!msg)
         return false;
+
+    if ( !connector_transmit)
+    {
+        delete msg;
+        return false;
+    }
 
     if ( msg_format == ScMsgFormat::TEXT )
     {

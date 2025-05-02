@@ -204,6 +204,7 @@ UnixDomainConnector* unixdomain_connector_tinit_call(const UnixDomainConnectorCo
         test_call_sock_created++;
         auto new_conn = new UnixDomainConnector(cfg, 0, idx);
         call_connector = new_conn;
+        update_handler(new_conn, false);
         return new_conn;
     }
     assert(false);
@@ -269,6 +270,7 @@ bool deserialize_mock(const char* buffer, uint16_t length, DataEvent*& event)
 MPHelperFunctions mp_helper_functions_mock(serialize_mock, deserialize_mock);
 
 static MPUnixDomainTransportConfig test_config;
+static MPUnixTransportStats test_stats;
 static MPUnixDomainTransport* test_transport = nullptr;
 
 static SnortConfig test_snort_config(nullptr, nullptr);
@@ -278,7 +280,7 @@ TEST_GROUP(unix_transport_test_connectivity_group)
     void setup() override
     {
         test_snort_config.max_procs = 2;
-        test_transport = new MPUnixDomainTransport(&test_config);
+        test_transport = new MPUnixDomainTransport(&test_config, test_stats);
         test_transport->configure(&test_snort_config);
     }
 
@@ -294,8 +296,8 @@ static MPUnixDomainTransportConfig test_config_message;
 static MPTransport* test_transport_message_1 = nullptr;
 static MPTransport* test_transport_message_2 = nullptr;
 
-static int reciveved_1_msg_cnt = 0;
-static int reciveved_2_msg_cnt = 0;
+static int received_1_msg_cnt = 0;
+static int received_2_msg_cnt = 0;
 
 TEST_GROUP(unix_transport_test_messaging)
 {
@@ -305,31 +307,31 @@ TEST_GROUP(unix_transport_test_messaging)
 
         accept_cnt = 1;
 
-        test_config_message.unix_domain_socket_path = "/tmp";
+        test_config_message.unix_domain_socket_path = ".";
         test_config_message.max_processes = 2;
         test_config_message.conn_retries = false;
         test_config_message.retry_interval_seconds = 0;
         test_config_message.max_retries = 0;
         test_config_message.connect_timeout_seconds = 30;
 
-        test_transport_message_1 = new MPUnixDomainTransport(&test_config_message);
+        test_transport_message_1 = new MPUnixDomainTransport(&test_config_message, test_stats);
         snort_instance_id = 1;
         test_transport_message_1->configure(&test_snort_config);
         test_transport_message_1->init_connection();
         test_transport_message_1->register_receive_handler([](const snort::MPEventInfo& e)
         {
-            reciveved_1_msg_cnt++;
+            received_1_msg_cnt++;
         });
         
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-        test_transport_message_2 = new MPUnixDomainTransport(&test_config_message);
+        test_transport_message_2 = new MPUnixDomainTransport(&test_config_message, test_stats);
         snort_instance_id = 2;
         test_transport_message_2->configure(&test_snort_config);
         test_transport_message_2->init_connection();
         test_transport_message_2->register_receive_handler([](const snort::MPEventInfo& e)
         {
-            reciveved_2_msg_cnt++;
+            received_2_msg_cnt++;
         });
     }
 
@@ -369,7 +371,7 @@ TEST(unix_transport_test_connectivity_group, set_logging_enabled_disabled)
 TEST(unix_transport_test_connectivity_group, init_connection_single_snort_instance)
 {
     clear_test_calls();
-    test_config.unix_domain_socket_path = "/tmp";
+    test_config.unix_domain_socket_path = ".";
     test_config.max_processes = 1;
 
     test_transport->init_connection();
@@ -389,7 +391,7 @@ TEST(unix_transport_test_connectivity_group, init_connection_first_snort_instanc
     clear_test_calls();
     snort_instance_id = 1;
 
-    test_config.unix_domain_socket_path = "/tmp";
+    test_config.unix_domain_socket_path = ".";
     test_config.max_processes = 2;
 
     accept_cnt = 1;
@@ -406,7 +408,7 @@ TEST(unix_transport_test_connectivity_group, init_connection_second_snort_instan
 {
     clear_test_calls();
     snort_instance_id = 2;
-    test_config.unix_domain_socket_path = "/tmp";
+    test_config.unix_domain_socket_path = ".";
     test_config.max_processes = 2;
 
     test_transport->init_connection();
@@ -425,7 +427,7 @@ TEST(unix_transport_test_connectivity_group, connector_update_handler_call)
 {
     clear_test_calls();
     
-    test_config.unix_domain_socket_path = "/tmp";
+    test_config.unix_domain_socket_path = ".";
     test_config.max_processes = 2;
 
     accept_cnt = 1;
@@ -470,10 +472,10 @@ TEST(unix_transport_test_messaging, send_to_transport_biderectional)
 
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
-    CHECK(test_deserialize_calls == 2);
-    CHECK(reciveved_1_msg_cnt == 1);
-    CHECK(reciveved_2_msg_cnt == 1);
-    CHECK(test_send_calls == 2);
+    CHECK_EQUAL(2, test_deserialize_calls);
+    CHECK_EQUAL(1 ,received_1_msg_cnt);
+    CHECK_EQUAL(1, received_2_msg_cnt);
+    CHECK_EQUAL(2, test_send_calls);
 };
 
 TEST(unix_transport_test_messaging, send_to_transport_no_helpers)
@@ -488,16 +490,16 @@ TEST(unix_transport_test_messaging, send_to_transport_no_helpers)
     CHECK(res == false);
     CHECK(test_serialize_calls == 0);
     CHECK(test_deserialize_calls == 0);
-    CHECK(reciveved_1_msg_cnt == 0);
-    CHECK(reciveved_2_msg_cnt == 0);
+    CHECK(received_1_msg_cnt == 0);
+    CHECK(received_2_msg_cnt == 0);
     CHECK(test_send_calls == 0);
 
     res = test_transport_message_2->send_to_transport(event);
     CHECK(res == false);
     CHECK(test_serialize_calls == 0);
     CHECK(test_deserialize_calls == 0);
-    CHECK(reciveved_1_msg_cnt == 0);
-    CHECK(reciveved_2_msg_cnt == 0);
+    CHECK(received_1_msg_cnt == 0);
+    CHECK(received_2_msg_cnt == 0);
     CHECK(test_send_calls == 0);
 }
 

@@ -174,7 +174,6 @@ void Snort::init(int argc, char** argv)
     if (sc->max_procs > 1)
     {
         sc->mp_dbus = new MPDataBus();
-        sc->mp_dbus->init(sc->max_procs);
     }
 
     PluginManager::load_so_plugins(sc);
@@ -194,6 +193,11 @@ void Snort::init(int argc, char** argv)
 
     ModuleManager::init_stats();
     ModuleManager::reset_stats(sc);
+
+    if (sc->mp_dbus)
+    {
+        sc->mp_dbus->init(sc->max_procs);
+    }
 
     if (sc->alert_before_pass())
         sc->rule_order = IpsAction::get_default_priorities(true);

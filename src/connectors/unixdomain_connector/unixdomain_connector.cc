@@ -85,7 +85,7 @@ static bool attempt_connection(int& sfd, const char* path) {
 // Function to handle connection retries
 static void connection_retry_handler(const UnixDomainConnectorConfig& cfg, size_t idx, UnixDomainConnectorUpdateHandler update_handler = nullptr) {
     if(update_handler)
-        update_handler(nullptr, (cfg.conn_retries > 0));
+        update_handler(nullptr, ( (cfg.conn_retries > 0) and (cfg.setup == UnixDomainConnectorConfig::Setup::CALL) ));
     else
         ConnectorManager::update_thread_connector(cfg.connector_name, idx, nullptr);
 

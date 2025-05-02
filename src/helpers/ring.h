@@ -43,6 +43,8 @@ public:
     T get(T);
     bool put(T);
 
+    T* grab_store(int& ix);
+
     int count();
     bool full();
     bool empty();
@@ -110,6 +112,16 @@ bool Ring<T>::put(T v)
     *p = v;
     push();
     return true;
+}
+
+template <typename T>
+T* Ring<T>::grab_store(int& ix)
+{
+    int i = logic.read();
+    if ( i < 0 )
+        return nullptr;
+    ix = i;
+    return store;
 }
 
 template <typename T>

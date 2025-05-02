@@ -26,6 +26,8 @@
 #include "../main/snort_config.h"
 #include "utils/stats.h"
 #include "helpers/ring.h"
+#include "main/snort.h"
+#include "managers/module_manager.h"
 #include <condition_variable>
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -55,7 +57,30 @@ SnortConfig::SnortConfig(const SnortConfig* const, const char*)
 
 SnortConfig::~SnortConfig()
 { }
+
+void set_log_conn(ControlConn*) { }
+
+unsigned Snort::get_process_id()
+{
+    return 0;
 }
+
+Module* ModuleManager::get_module(const char*)
+{
+    return nullptr;
+}
+}
+
+void show_stats(PegCount*, const PegInfo*, unsigned, const char*) 
+{
+    mock().actualCall("show_stats");
+}
+void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
+void show_stats(unsigned long*, PegInfo const*, char const*) {}
+
+bool ControlConn::respond(const char*, ...) { return true; }
+
+static bool test_transport_send_result = true;
 
 class MockMPTransport : public MPTransport
 {
@@ -68,6 +93,11 @@ public:
         return count;
     }
 
+    static void reset_count()
+    {
+        count = 0;
+    }
+
     static int get_test_register_helpers_calls()
     {
         return test_register_helpers_calls;
@@ -76,7 +106,7 @@ public:
     bool send_to_transport(MPEventInfo&) override
     {
         count++;
-        return true;
+        return test_transport_send_result;
     }
 
     void register_event_helpers(const unsigned&, const unsigned&, MPHelperFunctions&) override
@@ -129,6 +159,13 @@ public:
     {
         return true;
     }
+
+    MPTransportChannelStatusHandle* get_channel_status(uint& size) override
+    {
+        size = 0;
+        return nullptr;
+    }
+
 private:
     inline static int count = 0;
     inline static int test_register_helpers_calls = 0;
@@ -224,6 +261,7 @@ TEST_GROUP(mp_data_bus_pub)
     MPDataBus* mp_dbus = nullptr;
     void setup() override
     {
+        MockMPTransport::reset_count();
         mp_dbus = new MPDataBus();
         mp_dbus->init(2);
         pub_id1 = MPDataBus::get_id(pub_key1);
@@ -247,9 +285,44 @@ TEST(mp_data_bus_pub, publish)
 
     std::this_thread::sleep_for(std::chrono::milliseconds(150));
 
+    mp_dbus->sum_stats();
+    CHECK_EQUAL(1, MPDataBus::mp_global_stats.total_messages_published);
+    CHECK_EQUAL(1, MPDataBus::mp_global_stats.total_messages_sent);
+    CHECK_EQUAL(0, MPDataBus::mp_global_stats.total_messages_dropped);
+
+    mock().expectNCalls(2, "show_stats");
+
+    mp_dbus->dump_stats(nullptr, nullptr);
+    mp_dbus->dump_stats(nullptr, "mp_ut1");
+
+    mock().checkExpectations();
+
     delete mp_dbus;
 
-    CHECK(1 == MockMPTransport::get_count());
+    CHECK_EQUAL(1, MockMPTransport::get_count());
+}
+
+TEST(mp_data_bus_pub, publish_fail_to_send)
+{
+    CHECK_TRUE(mp_dbus->get_event_queue()->empty());
+    CHECK_TRUE(mp_dbus->get_event_queue()->count() == 0);
+
+    test_transport_send_result = false;
+
+    std::shared_ptr<UTestEvent> event = std::make_shared<UTestEvent>(100);
+
+    mp_dbus->publish(pub_id1, DbUtIds::EVENT1, event);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+
+    mp_dbus->sum_stats();
+    CHECK_EQUAL(1, MPDataBus::mp_global_stats.total_messages_published);
+    CHECK_EQUAL(0, MPDataBus::mp_global_stats.total_messages_sent);
+    CHECK_EQUAL(1, MPDataBus::mp_global_stats.total_messages_dropped);
+
+    delete mp_dbus;
+
+    test_transport_send_result = true;
 }
 
 TEST_GROUP(mp_data_bus)
@@ -331,6 +404,9 @@ TEST(mp_data_bus, subscribe_and_receive)
     MPEventInfo event_info1(event1, MPEventType(DbUtIds::EVENT1), pub_id1);
     SnortConfig::get_conf()->mp_dbus->receive_message(event_info1);
     
+    SnortConfig::get_conf()->mp_dbus->sum_stats();
+    CHECK_EQUAL(2, MPDataBus::mp_global_stats.total_messages_received);
+
     CHECK_EQUAL(200, h1->evt_msg);
 }
 
