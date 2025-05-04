@@ -92,6 +92,8 @@ TEST(tp_lib_handler, load_unload)
     ThirdPartyAppIdContext* tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(config, ctxt.get_odp_ctxt());
     CHECK_TRUE(tp_appid_ctxt != nullptr);
 
+    TPLibHandler::tp_mp_init(*tp_appid_ctxt);
+
     TpAppIdCreateSession asf = tph->tpsession_factory();
     ThirdPartyAppIdSession* tpsession = asf(*tp_appid_ctxt);
 
@@ -108,6 +110,21 @@ TEST(tp_lib_handler, tp_lib_handler_get)
     tph = TPLibHandler::get();
     TPLibHandler* tph2 = TPLibHandler::get();
     CHECK_EQUAL(tph, tph2);
+    TPLibHandler::pfini();
+}
+
+TEST(tp_lib_handler, tp_mp_init)
+{
+    config.tp_appid_path="./libtp_mock.so";
+    config.tp_appid_config="./tp.config";
+
+    tph = TPLibHandler::get();
+    ThirdPartyAppIdContext* tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(config, ctxt.get_odp_ctxt());
+
+    TPLibHandler::tp_mp_init(*tp_appid_ctxt);
+    CHECK_TRUE(tp_appid_ctxt != nullptr);
+
+    delete tp_appid_ctxt;
     TPLibHandler::pfini();
 }
 

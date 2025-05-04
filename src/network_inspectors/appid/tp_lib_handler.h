@@ -31,6 +31,7 @@ class OdpContext;
 // Must return null if it fails to create the object.
 typedef ThirdPartyAppIdContext* (* TpAppIdCreateCtxt)(ThirdPartyConfig& );
 typedef ThirdPartyAppIdSession* (* TpAppIdCreateSession)(ThirdPartyAppIdContext& ctxt);
+typedef int (* TpMPInit)(ThirdPartyAppIdContext& ctxt);
 typedef int (* TpAppIdPfini)();
 typedef int (* TpAppIdTfini)();
 
@@ -50,6 +51,7 @@ public:
         const OdpContext& odp_ctxt);
     static void tfini();
     static void pfini();
+    static void tp_mp_init(ThirdPartyAppIdContext& tp_appid_ctxt);
 
     TpAppIdCreateSession tpsession_factory() const
     {
@@ -66,6 +68,7 @@ private:
     TpAppIdCreateSession tp_appid_create_session = nullptr;
     TpAppIdPfini tp_appid_pfini = nullptr;
     TpAppIdTfini tp_appid_tfini = nullptr;
+    TpMPInit tp_appid_mp_init = nullptr;
 
     bool load_callback(const char* path);
 };

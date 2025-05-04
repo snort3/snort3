@@ -61,6 +61,7 @@ public:
 
     int tinit() override {return 0;}
     bool tfini(bool) override {return false;}
+    int tp_mp_init(ThirdPartyAppIdContext *tp_appid_ctxt) {return true;}
     const string& get_user_config() const override { return user_config; }
 
 private:
@@ -105,12 +106,22 @@ extern "C"
         return new ThirdPartyAppIdSessionImpl(ctxt);
     }
 
+    SO_PUBLIC int tp_mp_init(ThirdPartyAppIdContext& ctxt)
+    {
+        return 0;
+    }
+
     SO_PUBLIC int tp_appid_pfini()
     {
         return 0;
     }
 
     SO_PUBLIC int tp_appid_tfini()
+    {
+        return 0;
+    }
+
+    SO_PUBLIC int tp_appid_mp_init(ThirdPartyAppIdContext& ctxt)
     {
         return 0;
     }

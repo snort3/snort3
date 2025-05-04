@@ -153,7 +153,11 @@ bool AppIdContext::init_appid(SnortConfig* sc, AppIdInspector& inspector)
 
         // do not reload third party on reload_config()
         if (!tp_appid_ctxt)
+        {
             tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(config, *odp_ctxt);
+            if (sc->max_procs > 1)
+                TPLibHandler::tp_mp_init(*tp_appid_ctxt);
+        }
         once = true;
     }
     else

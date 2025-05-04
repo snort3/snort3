@@ -119,7 +119,7 @@ unsigned MPDataBus::init(int max_procs)
     if (transport_layer == nullptr)
     {
         ErrorMessage("MPDataBus: Failed to get transport layer\n");
-        return 0;
+        return 1;
     }
 
     transport_layer->register_receive_handler(std::bind(&MPDataBus::receive_message, this, std::placeholders::_1));
@@ -215,7 +215,7 @@ bool MPDataBus::publish(unsigned pub_id, unsigned evt_id, std::shared_ptr<DataEv
 
 void MPDataBus::register_event_helpers(const PubKey& key, unsigned evt_id, MPSerializeFunc& mp_serializer_helper, MPDeserializeFunc& mp_deserializer_helper)
 {
-    if (!SnortConfig::get_conf()->mp_dbus && !SnortConfig::get_conf()->mp_dbus->transport_layer)
+    if (!SnortConfig::get_conf()->mp_dbus or !SnortConfig::get_conf()->mp_dbus->transport_layer)
     {
         ErrorMessage("MPDataBus: MPDataBus or transport layer not initialized\n");
         return;
@@ -277,6 +277,12 @@ void MPDataBus::process_event_queue()
         if (event_info) {
             MPDataBusLog("Processing event for publisher ID %u \n",
                         event_info->pub_id);
+
+            if (!transport_layer){
+                run_thread.store(false);
+                ErrorMessage("MPDataBus: Transport layer not initialized\n");
+                return;
+            }
 
             auto send_res = transport_layer->send_to_transport(*event_info);
 

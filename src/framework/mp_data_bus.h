@@ -160,8 +160,10 @@ public:
     // and the shared_ptr will handle the memory management by reference counting
     static bool publish(unsigned pub_id, unsigned evt_id, std::shared_ptr<DataEvent> e, Flow* f = nullptr);
 
+    // The user needs to pass the MPSerializeFunc and MPDeserializeFunc function pointers
+    // to the register_event_helpers function, which will be used to serialize and deserialize
+    // before publishing any events to the MPDataBus
     static void register_event_helpers(const PubKey& key, unsigned evt_id, MPSerializeFunc& mp_serializer_helper, MPDeserializeFunc& mp_deserializer_helper);
-
     // API for receiving the DataEvent and Event type from transport layer using EventInfo
     void receive_message(const MPEventInfo& event_info);
 

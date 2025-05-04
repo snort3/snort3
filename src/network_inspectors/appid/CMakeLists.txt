@@ -10,6 +10,8 @@ set (APPID_INCLUDES
     tp_appid_module_api.h
     tp_appid_session_api.h
     tp_appid_types.h
+    ../../framework/mp_data_bus.h
+    ../../framework/mp_data_bus.cc
 )
 
 set ( APPID_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR} )

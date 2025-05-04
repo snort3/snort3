@@ -52,6 +52,7 @@
 #include "appid_peg_counts.h"
 #include "service_state.h"
 #include "appid_cpu_profile_table.h"
+#include "tp_lib_handler.h"
 
 using namespace snort;
 using namespace std;
@@ -233,6 +234,8 @@ ACThirdPartyAppIdContextUnload::~ACThirdPartyAppIdContextUnload()
     delete tp_ctxt;
     AppIdContext& ctxt = inspector.get_ctxt();
     ctxt.create_tp_appid_ctxt();
+    if (SnortConfig::get_conf()->max_procs > 1)
+            TPLibHandler::tp_mp_init(*ctxt.get_tp_appid_ctxt());
     main_broadcast_command(new ACThirdPartyAppIdContextSwap(inspector, ctrlcon), ctrlcon);
     log_message("== unload old third-party complete\n");
     ReloadTracker::update(ctrlcon, "unload old third-party complete, start swapping to new configuration.");

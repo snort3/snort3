@@ -56,6 +56,7 @@ bool TPLibHandler::load_callback(const char* const path)
     {
         { "tp_appid_create_ctxt", (dummyFunc*)&tp_appid_create_ctxt },
         { "tp_appid_create_session", (dummyFunc*)&tp_appid_create_session },
+        { "tp_appid_mp_init", (dummyFunc*)&tp_appid_mp_init },
         { "tp_appid_pfini", (dummyFunc*)&tp_appid_pfini },
         { "tp_appid_tfini", (dummyFunc*)&tp_appid_tfini },
         { nullptr, nullptr }
@@ -129,6 +130,25 @@ ThirdPartyAppIdContext* TPLibHandler::create_tp_appid_ctxt(const AppIdConfig& co
     }
 
     return tp_appid_ctxt;
+}
+
+void TPLibHandler::tp_mp_init(ThirdPartyAppIdContext& tp_appid_ctxt)
+{
+    assert(self != nullptr);
+    int ret = 0;
+
+    if (self->tp_appid_mp_init)
+    {
+        ret = self->tp_appid_mp_init(tp_appid_ctxt);
+    }
+
+    if (ret != 0)
+    {
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Could not subscribe to the appid tp syncevent\n", ret);
+        return;
+    }
+
+    return;
 }
 
 void TPLibHandler::tfini()
