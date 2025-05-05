@@ -64,7 +64,7 @@ static const PegInfo extractor_pegs[] =
 
 struct ExtractorStats
 {
-    PegCount total_event;
+    PegCount total_events;
 };
 
 class ExtractorReloadSwapper;

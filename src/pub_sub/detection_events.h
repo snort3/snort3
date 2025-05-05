@@ -22,6 +22,7 @@
 
 #include "events/event.h"
 #include "framework/data_bus.h"
+#include "protocols/packet.h"
 
 namespace snort
 {
@@ -31,6 +32,7 @@ struct DetectionEventIds
     enum : unsigned
     {
         IPS_LOGGING,
+        BUILTIN,
         MAX
     };
 };
@@ -40,13 +42,33 @@ const PubKey de_pub_key { "detection", DetectionEventIds::MAX };
 class IpsRuleEvent : public DataEvent, public Event
 {
 public:
-    IpsRuleEvent(const Event& e, const Packet* p) : Event(e), p(p) {}
+    IpsRuleEvent(const Event& e) : Event(e) {}
+    ~IpsRuleEvent() override
+    {
+        for (const char* ref : references)
+            delete[] ref;
+    }
 
-    const snort::Packet* get_packet() const override
-    { return p; }
+    const std::string& get_stripped_msg() const;
+
+    const std::vector<const char*>& get_references() const;
+
+protected:
+    mutable std::vector<const char*> references;
 
 private:
-    const Packet* p;
+    mutable std::string stripped_msg;
+};
+
+class IpsQueuingEvent : public DataEvent, public Event
+{
+public:
+    IpsQueuingEvent(const SigInfo& sig_info) : Event(0, 0, sig_info, nullptr, "") {}
+
+    const std::string& get_stripped_msg() const;
+
+private:
+    mutable std::string stripped_msg;
 };
 
 }

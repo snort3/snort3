@@ -55,6 +55,10 @@ public:
     virtual void add_field(const char*, const snort::SfIp&) {}
     virtual void add_field(const char*, bool) {}
 
+    virtual void add_field(const char*, const std::vector<const char*>&) {}
+    virtual void add_field(const char*, const std::vector<uint64_t>&) {}
+    virtual void add_field(const char*, const std::vector<bool>&) {}
+
     const snort::Connector::ID get_id(const char* service_name) const
     { return output_conn->get_id(service_name); }
 

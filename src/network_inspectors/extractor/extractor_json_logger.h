@@ -37,8 +37,16 @@ public:
     void add_field(const char*, struct timeval) override;
     void add_field(const char*, const snort::SfIp&) override;
     void add_field(const char*, bool) override;
+
+    void add_field(const char*, const std::vector<const char*>&) override;
+    void add_field(const char*, const std::vector<uint64_t>&) override;
+    void add_field(const char*, const std::vector<bool>&) override;
+
     void open_record() override;
     void close_record(const snort::Connector::ID&) override;
+
+protected:
+    std::ostringstream oss;
 
 private:
     void ts_snort(const char*, const struct timeval&);
@@ -47,7 +55,6 @@ private:
     void ts_sec(const char*, const struct timeval&);
     void ts_usec(const char*, const struct timeval&);
 
-    std::ostringstream oss;
     snort::JsonStream js;
     void (JsonExtractorLogger::*add_ts)(const char*, const struct timeval&);
 };

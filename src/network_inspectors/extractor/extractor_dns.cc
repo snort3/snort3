@@ -198,7 +198,7 @@ void DnsResponseExtractor::handle(DataEvent& event, Flow* flow)
     if (!filter(flow))
         return;
 
-    extractor_stats.total_event++;
+    extractor_stats.total_events++;
 
     logger->open_record();
     log(nts_fields, &event, flow);

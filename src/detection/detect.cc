@@ -96,7 +96,7 @@ void CallLogFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
         p->dsize = dsize;
     }
 
-    IpsRuleEvent data_event(event, p);
+    IpsRuleEvent data_event(event);
     DataBus::publish(DetectionEngine::get_pub_id(), DetectionEventIds::IPS_LOGGING, data_event, p->flow);
 
     OutputSet* idx = head ? head->LogList : nullptr;

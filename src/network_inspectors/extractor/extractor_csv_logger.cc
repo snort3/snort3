@@ -278,7 +278,74 @@ void CsvExtractorLogger::ts_usec(const struct timeval& v)
     record.append(to_string(sec * 1000000 + usec));
 }
 
+void CsvExtractorLogger::add_array_separator()
+{
+    record.push_back(' ');
+}
+
+void CsvExtractorLogger::add_field(const char*, const std::vector<const char*>& v)
+{
+    record.push_back(delimiter);
+
+    if (v.empty())
+    {
+        if (!isprint(delimiter))
+            record.append("-");
+        return;
+    }
+
+    if (v[0] && v[0][0])
+        add_escaped(v[0], strlen(v[0]));
+
+    for (size_t i = 1; i < v.size(); ++i)
+    {
+        add_array_separator();
+        if (v[i] && v[i][0])
+            add_escaped(v[i], strlen(v[i]));
+    }
+}
+
+void CsvExtractorLogger::add_field(const char*, const std::vector<uint64_t>& v)
+{
+    record.push_back(delimiter);
+
+    if (v.empty())
+    {
+        if (!isprint(delimiter))
+            record.append("-");
+        return;
+    }
+
+    record.append(to_string(v[0]));
+    for (size_t i = 1; i < v.size(); ++i)
+    {
+        add_array_separator();
+        record.append(to_string(v[i]));
+    }
+}
+
+void CsvExtractorLogger::add_field(const char*, const std::vector<bool>& v)
+{
+    record.push_back(delimiter);
+
+    if (v.empty())
+    {
+        if (!isprint(delimiter))
+            record.append("-");
+        return;
+    }
+
+    record.append(v[0] ? "true" : "false");
+    for (size_t i = 1; i < v.size(); ++i)
+    {
+        add_array_separator();
+        record.append(v[i] ? "true" : "false");
+    }
+}
+
 #ifdef UNIT_TEST
+
+#include <vector>
 
 #include "catch/snort_catch.h"
 
@@ -293,6 +360,30 @@ public:
         add_escaped(input, i_len);
         CHECK(record == expected);
     }
+
+    void check(const std::vector<bool>& v, const std::string& expected)
+    {
+        record.clear();
+        add_field(nullptr, v);
+        auto data = record.substr(1);
+        CHECK(data == expected);
+    }
+
+    void check(const std::vector<uint64_t>& v, const std::string& expected)
+    {
+        record.clear();
+        add_field(nullptr, v);
+        auto data = record.substr(1);
+        CHECK(data == expected);
+    }
+
+    void check(const std::vector<const char*>& v, const std::string& expected)
+    {
+        record.clear();
+        add_field(nullptr, v);
+        auto data = record.substr(1);
+        CHECK(data == expected);
+    }
 };
 
 class CsvExtractorLoggerTest
@@ -304,6 +395,24 @@ public:
 
     void check_tsv(const char* input, size_t i_len, const std::string& expected)
     { tsv.check(input, i_len, expected); }
+
+    void check_csv_vec(const std::vector<bool>& v, const std::string& expected)
+    { csv.check(v, expected); }
+
+    void check_csv_vec(const std::vector<uint64_t>& v, const std::string& expected)
+    { csv.check(v, expected); }
+
+    void check_csv_vec(const std::vector<const char*>& v, const std::string& expected)
+    { csv.check(v, expected); }
+
+    void check_tsv_vec(const std::vector<bool>& v, const std::string& expected)
+    { tsv.check(v, expected); }
+
+    void check_tsv_vec(const std::vector<uint64_t>& v, const std::string& expected)
+    { tsv.check(v, expected); }
+
+    void check_tsv_vec(const std::vector<const char*>& v, const std::string& expected)
+    { tsv.check(v, expected); }
 
 private:
     CsvExtractorLoggerHelper csv{','};
@@ -433,6 +542,48 @@ TEST_CASE_METHOD(CsvExtractorLoggerTest, "escape: single whitespace", "[extracto
     const char* input = " ";
     check_csv(input, strlen(input), "\" \"");
     check_tsv(input, strlen(input), " ");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "csv/tsv vector bool: empty", "[extractor]")
+{
+    const std::vector<bool> bool_vec = {};
+    check_csv_vec(bool_vec, "");
+    check_tsv_vec(bool_vec, "-");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "csv/tsv vector bool: 3 items", "[extractor]")
+{
+    const std::vector<bool> bool_vec = {true, false, true};
+    check_csv_vec(bool_vec, "true false true");
+    check_tsv_vec(bool_vec, "true false true");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "csv/tsv vector uint64_t: empty", "[extractor]")
+{
+    const std::vector<uint64_t> unum_vec = {};
+    check_csv_vec(unum_vec, "");
+    check_tsv_vec(unum_vec, "-");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "csv/tsv vector uint64_t: 3 items", "[extractor]")
+{
+    const std::vector<uint64_t> unum_vec = {1,2,3};
+    check_csv_vec(unum_vec, "1 2 3");
+    check_tsv_vec(unum_vec, "1 2 3");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "csv/tsv vector str: empty", "[extractor]")
+{
+    const std::vector<const char*> char_vec = {};
+    check_csv_vec(char_vec, "");
+    check_tsv_vec(char_vec, "-");
+}
+
+TEST_CASE_METHOD(CsvExtractorLoggerTest, "csv/tsv vector str: 3 items", "[extractor]")
+{
+    const std::vector<const char*> char_vec = {"exe", "pdf", "txt"};
+    check_csv_vec(char_vec, "exe pdf txt");
+    check_tsv_vec(char_vec, "exe pdf txt");
 }
 
 #endif

@@ -31,6 +31,8 @@ public:
         FTP,
         CONN,
         DNS,
+        IPS_BUILTIN,
+        IPS_USER,
         ANY,
         MAX
     };
@@ -54,6 +56,10 @@ public:
             return "conn";
         case DNS:
             return "dns";
+        case IPS_BUILTIN:
+            return "weird";
+        case IPS_USER:
+            return "notice";
         case ANY: // fallthrough
         case MAX: // fallthrough
         default:

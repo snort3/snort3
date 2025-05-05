@@ -107,7 +107,7 @@ void FtpRequestExtractor::handle(DataEvent& event, Flow* flow)
     if (!filter(flow))
          return;
 
-    extractor_stats.total_event++;
+    extractor_stats.total_events++;
 
     logger->open_record();
     log(nts_fields, &event, flow);
@@ -267,7 +267,7 @@ void FtpResponseExtractor::handle(DataEvent& event, Flow* flow)
     if (!filter(flow))
          return;
 
-    extractor_stats.total_event++;
+    extractor_stats.total_events++;
 
     logger->open_record();
     log(nts_fields, &event, flow);
@@ -526,7 +526,7 @@ void FtpExtractor::Req::handle(DataEvent& event, Flow* flow)
     if (!owner.filter(flow))
         return;
 
-    extractor_stats.total_event++;
+    extractor_stats.total_events++;
 
     auto fd = ExtractorFlowData::get<FtpExtractorFlowData>(flow);
 
@@ -582,7 +582,7 @@ void FtpExtractor::Resp::handle(DataEvent& event, Flow* flow)
     if (!owner.filter(flow))
         return;
 
-    extractor_stats.total_event++;
+    extractor_stats.total_events++;
 
     auto fd = ExtractorFlowData::get<FtpExtractorFlowData>(flow);
 

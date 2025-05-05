@@ -37,10 +37,16 @@ public:
     void add_field(const char*, struct timeval) override;
     void add_field(const char*, const snort::SfIp&) override;
     void add_field(const char*, bool) override;
+
+    void add_field(const char*, const std::vector<const char*>&) override;
+    void add_field(const char*, const std::vector<uint64_t>&) override;
+    void add_field(const char*, const std::vector<bool>&) override;
+
     void open_record() override;
     void close_record(const snort::Connector::ID&) override;
 
 protected:
+    void add_array_separator();
     void add_escaped(const char*, size_t);
     void ts_snort(const struct timeval&);
     void ts_snort_yy(const struct timeval&);

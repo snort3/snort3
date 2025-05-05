@@ -12,6 +12,8 @@ set( FILE_LIST
     extractor_conn.cc
     extractor_csv_logger.cc
     extractor_csv_logger.h
+    extractor_detection.cc
+    extractor_detection.h
     extractor_dns.cc
     extractor_enums.h
     extractor_flow_data.cc
@@ -22,11 +24,11 @@ set( FILE_LIST
     extractor_json_logger.h
     extractor_logger.cc
     extractor_logger.h
+    extractor_null_conn.h
     extractor_service.cc
     extractor_service.h
     extractors.cc
     extractors.h
-    extractor_null_conn.h
 )
 
 add_library(extractor OBJECT ${FILE_LIST})

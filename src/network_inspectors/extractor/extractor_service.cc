@@ -27,6 +27,7 @@
 
 #include "extractor.h"
 #include "extractor_conn.h"
+#include "extractor_detection.h"
 #include "extractor_dns.h"
 #include "extractor_ftp.h"
 #include "extractor_http.h"
@@ -129,6 +130,14 @@ ExtractorService* ExtractorService::make_service(Extractor& ins, const ServiceCo
         srv = new DnsExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, ins);
         break;
 
+    case ServiceType::IPS_BUILTIN:
+        srv = new BuiltinExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, ins);
+        break;
+
+    case ServiceType::IPS_USER:
+        srv = new IpsUserExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, ins);
+        break;
+
     case ServiceType::ANY: // fallthrough
     default:
         ErrorMessage("Extractor: '%s' service is not supported\n", cfg.service.c_str());
@@ -224,6 +233,16 @@ void ExtractorService::validate(const ServiceConfig& cfg)
     case ServiceType::DNS:
         validate_events(DnsExtractorService::blueprint, cfg.on_events);
         validate_fields(DnsExtractorService::blueprint, cfg.fields);
+        break;
+
+    case ServiceType::IPS_BUILTIN:
+        validate_fields(BuiltinExtractorService::blueprint, cfg.fields);
+        validate_events(BuiltinExtractorService::blueprint, cfg.on_events);
+        break;
+
+    case ServiceType::IPS_USER:
+        validate_fields(IpsUserExtractorService::blueprint, cfg.fields);
+        validate_events(IpsUserExtractorService::blueprint, cfg.on_events);
         break;
 
     case ServiceType::ANY: // fallthrough
@@ -430,6 +449,87 @@ const snort::Connector::ID& DnsExtractorService::get_log_id()
 { return log_id; }
 
 //-------------------------------------------------------------------------
+//  IpsUserExtractorService
+//-------------------------------------------------------------------------
+
+const ServiceBlueprint IpsUserExtractorService::blueprint =
+{
+    // events
+    {
+        "ips_logging",
+    },
+    // fields
+    {
+        "action",
+        "sid",
+        "gid",
+        "rev",
+        "msg",
+        "refs",
+        "proto",
+        "source",
+    },
+};
+
+THREAD_LOCAL Connector::ID IpsUserExtractorService::log_id;
+
+IpsUserExtractorService::IpsUserExtractorService(uint32_t tenant, const std::vector<std::string>& srv_fields,
+    const std::vector<std::string>& srv_events, ServiceType s_type, Extractor& ins)
+    : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, ins)
+{
+    for (const auto& event : get_events())
+    {
+        if (!strcmp("ips_logging", event.c_str()))
+            handlers.push_back(new IpsUserExtractor(ins, tenant_id, get_fields()));
+    }
+}
+
+const snort::Connector::ID& IpsUserExtractorService::internal_tinit()
+{ return log_id = logger->get_id(type.c_str()); }
+
+const snort::Connector::ID& IpsUserExtractorService::get_log_id()
+{ return log_id; }
+
+//-------------------------------------------------------------------------
+//  BuiltinExtractorService
+//-------------------------------------------------------------------------
+
+const ServiceBlueprint BuiltinExtractorService::blueprint =
+{
+    // events
+    {
+        "builtin",
+    },
+    // fields
+    {
+        "sid",
+        "gid",
+        "msg",
+        "proto",
+        "source",
+    },
+};
+
+THREAD_LOCAL Connector::ID BuiltinExtractorService::log_id;
+
+BuiltinExtractorService::BuiltinExtractorService(uint32_t tenant, const std::vector<std::string>& srv_fields,
+    const std::vector<std::string>& srv_events, ServiceType s_type, Extractor& ins)
+    : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, ins)
+{
+    for (const auto& event : get_events())
+    {
+        if (!strcmp("builtin", event.c_str()))
+            handlers.push_back(new BuiltinExtractor(ins, tenant_id, get_fields()));
+    }
+}
+
+const snort::Connector::ID& BuiltinExtractorService::internal_tinit()
+{ return log_id = logger->get_id(type.c_str()); }
+
+const snort::Connector::ID& BuiltinExtractorService::get_log_id()
+{ return log_id; }
+
+//-------------------------------------------------------------------------
 //  Unit Tests
 //-------------------------------------------------------------------------
 
@@ -447,6 +547,8 @@ TEST_CASE("Service Type", "[extractor]")
         ServiceType ftp = ServiceType::FTP;
         ServiceType conn = ServiceType::CONN;
         ServiceType dns = ServiceType::DNS;
+        ServiceType weird = ServiceType::IPS_BUILTIN;
+        ServiceType notice = ServiceType::IPS_USER;
         ServiceType any = ServiceType::ANY;
         ServiceType max = ServiceType::MAX;
 
@@ -454,6 +556,8 @@ TEST_CASE("Service Type", "[extractor]")
         CHECK_FALSE(strcmp("ftp", ftp.c_str()));
         CHECK_FALSE(strcmp("conn", conn.c_str()));
         CHECK_FALSE(strcmp("dns", dns.c_str()));
+        CHECK_FALSE(strcmp("weird", weird.c_str()));
+        CHECK_FALSE(strcmp("notice", notice.c_str()));
         CHECK_FALSE(strcmp("(not set)", any.c_str()));
         CHECK_FALSE(strcmp("(not set)", max.c_str()));
     }

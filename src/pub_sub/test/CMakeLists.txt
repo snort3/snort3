@@ -36,3 +36,7 @@ add_cpputest( pub_sub_ftp_events_test
         ../ftp_events.h
         $<TARGET_OBJECTS:extr_cpputest_deps>
 )
+add_cpputest( pub_sub_detection_events_test
+    SOURCES
+        ../detection_events.cc
+)

@@ -145,3 +145,110 @@ void JsonExtractorLogger::ts_usec(const char* f, const struct timeval& v)
 
    js.uput(f, sec * 1000000 + usec);
 }
+
+void JsonExtractorLogger::add_field(const char* f, const std::vector<const char*>& v)
+{
+    if (v.empty())
+        return;
+
+    js.open_array(f);
+    for (const auto& val : v)
+        js.put(nullptr, val);
+
+    js.close_array();
+}
+
+void JsonExtractorLogger::add_field(const char* f, const std::vector<uint64_t>& v)
+{
+    if (v.empty())
+        return;
+
+    js.open_array(f);
+    for (const auto unum : v)
+        js.put(nullptr, unum);
+
+    js.close_array();
+}
+
+void JsonExtractorLogger::add_field(const char* f, const std::vector<bool>& v)
+{
+    if (v.empty())
+        return;
+
+    js.open_array(f);
+    for (bool b : v)
+        b ? js.put_true(nullptr) : js.put_false(nullptr);
+
+    js.close_array();
+}
+
+#ifdef UNIT_TEST
+
+#include <vector>
+
+#include "catch/snort_catch.h"
+
+class JsonExtractorLoggerTest : public JsonExtractorLogger
+{
+public:
+    JsonExtractorLoggerTest() : JsonExtractorLogger(nullptr, TimeType::MAX) { }
+
+    void check(const char* f, const std::vector<bool>& v, const std::string& expected)
+    {
+        oss.str(std::string());
+        add_field(f, v);
+        CHECK(oss.str() == expected);
+    }
+
+    void check(const char* f, const std::vector<uint64_t>& v, const std::string& expected)
+    {
+        oss.str(std::string());
+        add_field(f, v);
+        CHECK(oss.str() == expected);
+    }
+
+    void check(const char* f, const std::vector<const char*>& v, const std::string& expected)
+    {
+        oss.str(std::string());
+        add_field(f, v);
+        CHECK(oss.str() == expected);
+    }
+};
+
+TEST_CASE_METHOD(JsonExtractorLoggerTest, "json vector bool: empty", "[extractor]")
+{
+    const std::vector<bool> bool_vec = {};
+    check("bool", bool_vec, "");
+}
+
+TEST_CASE_METHOD(JsonExtractorLoggerTest, "json vector bool: 3 items", "[extractor]")
+{
+    const std::vector<bool> bool_vec = {true, false, true};
+    check("bool", bool_vec, "\"bool\": [ true, false, true ]\n");
+}
+
+TEST_CASE_METHOD(JsonExtractorLoggerTest, "json vector uint64_t: empty", "[extractor]")
+{
+    const std::vector<uint64_t> num_vec = {};
+    check("num", num_vec, "");
+}
+
+TEST_CASE_METHOD(JsonExtractorLoggerTest, "json vector uint64_t: 3 items", "[extractor]")
+{
+    const std::vector<uint64_t> num_vec = {1,2,3};
+    check("num", num_vec, "\"num\": [ 1, 2, 3 ]\n");
+}
+
+TEST_CASE_METHOD(JsonExtractorLoggerTest, "json vector str: empty", "[extractor]")
+{
+    const std::vector<const char*> char_vec = {};
+    check("str", char_vec, "");
+}
+
+TEST_CASE_METHOD(JsonExtractorLoggerTest, "json vector str: 3 items", "[extractor]")
+{
+    const std::vector<const char*> num_vec = {"exe", "pdf", "txt"};
+    check("str", num_vec, "\"str\": [ \"exe\", \"pdf\", \"txt\" ]\n");
+}
+
+#endif

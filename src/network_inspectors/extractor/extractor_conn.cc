@@ -165,7 +165,7 @@ void ConnExtractor::handle(DataEvent& event, Flow* flow)
     if (flow->pkt_type < PktType::IP or flow->pkt_type > PktType::ICMP or !filter(flow))
         return;
 
-    extractor_stats.total_event++;
+    extractor_stats.total_events++;
 
     logger->open_record();
     log(nts_fields, &event, flow);

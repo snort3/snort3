@@ -715,6 +715,13 @@ int DetectionEngine::queue_event(unsigned gid, unsigned sid)
     if ( !otn )
         return 0;
 
+    const Packet* p = get_current_packet();
+    if ( p )
+    {
+        IpsQueuingEvent data_event(otn->sigInfo);
+        DataBus::publish(get_pub_id(), DetectionEventIds::BUILTIN, data_event, p->flow);
+    }
+
     SF_EVENTQ* pq = get_event_queue();
     EventNode* en = (EventNode*)sfeventq_event_alloc(pq);
 
