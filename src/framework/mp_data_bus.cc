@@ -43,8 +43,6 @@ using namespace snort;
 
 void MPDataBusLog(const char* msg, ...);
 
-std::condition_variable MPDataBus::queue_cv;
-std::mutex MPDataBus::queue_mutex;
 uint32_t MPDataBus::mp_max_eventq_size = DEFAULT_MAX_EVENTQ_SIZE;
 std::string MPDataBus::transport = DEFAULT_TRANSPORT;
 bool MPDataBus::enable_debug = false;
@@ -56,7 +54,7 @@ bool MPDataBus::hold_events = false;
 
 static std::unordered_map<std::string, unsigned> mp_pub_ids;
 static std::mutex mp_stats_mutex;
-static uint mp_current_process_id = 0;
+static uint32_t mp_current_process_id = 0;
 
 void MPDataBusLog(const char* msg, ...)
 {
@@ -76,7 +74,10 @@ void MPDataBusLog(const char* msg, ...)
 // public methods
 //-------------------------------------------------------------------------
 
-MPDataBus::MPDataBus() : run_thread(true)
+MPDataBus::MPDataBus() :
+    run_thread(true),
+    worker_thread(nullptr),
+    mp_event_queue(nullptr)
 {
     mp_event_queue = new Ring<std::shared_ptr<MPEventInfo>>(mp_max_eventq_size);
     start_worker_thread();
@@ -201,12 +202,11 @@ bool MPDataBus::publish(unsigned pub_id, unsigned evt_id, std::shared_ptr<DataEv
         return false;
     }
 
-    if (sc->mp_dbus->mp_event_queue != nullptr and !sc->mp_dbus->mp_event_queue->full() and !sc->mp_dbus->mp_event_queue->put(event_info)) {
+    if (!sc->mp_dbus->_enqueue_event(std::move(event_info)))
+    {
         ErrorMessage("MPDataBus: Failed to enqueue event for publisher ID %u and event ID %u\n", pub_id, evt_id);
         return false;
     }
-
-    queue_cv.notify_one();
 
     MPDataBusLog("Event published for publisher ID %u and event ID %u\n", pub_id, evt_id);
 
@@ -268,9 +268,9 @@ void MPDataBus::process_event_queue()
 
     std::unique_lock<std::mutex> u_lock(queue_mutex);
 
-    queue_cv.wait_for(u_lock, std::chrono::milliseconds(WORKER_THREAD_SLEEP), [this]() {
-        return mp_event_queue != nullptr && !mp_event_queue->empty();
-    });
+    if( (std::cv_status::timeout == queue_cv.wait_for(u_lock, std::chrono::milliseconds(WORKER_THREAD_SLEEP))) and
+        mp_event_queue->empty() )
+        return;
 
     while (!mp_event_queue->empty()) {
         std::shared_ptr<MPEventInfo> event_info = mp_event_queue->get(nullptr);
@@ -403,7 +403,7 @@ void MPDataBus::dump_stats(ControlConn *ctrlconn, const char *module_name)
             auto transport_pegs = transport_module->get_pegs();
             if(transport_pegs)
             {
-                uint size = 0;
+                uint32_t size = 0;
                 while(transport_pegs[size].type != CountType::END)
                 {
                     size++;
@@ -418,7 +418,7 @@ void MPDataBus::dump_stats(ControlConn *ctrlconn, const char *module_name)
 void MPDataBus::dump_events(ControlConn *ctrlconn, const char *module_name)
 {
     int current_read_idx = 0;
-    uint ring_items = mp_event_queue->count();
+    uint32_t ring_items = mp_event_queue->count();
     if(ring_items == 0)
     {
         if (ctrlconn)
@@ -442,7 +442,7 @@ void MPDataBus::dump_events(ControlConn *ctrlconn, const char *module_name)
         current_read_idx--;
     }
 
-    for (uint i = current_read_idx; i <= ring_items; i++)
+    for (uint32_t i = current_read_idx; i <= ring_items; i++)
     {
         if(i >= mp_max_eventq_size)
         {
@@ -478,7 +478,7 @@ void snort::MPDataBus::show_channel_status(ControlConn *ctrlconn)
         return;
     }
 
-    uint size = 0;
+    unsigned int size = 0;
     auto transport_status = transport_layer->get_channel_status(size);
     if (size == 0)
     {
@@ -486,7 +486,7 @@ void snort::MPDataBus::show_channel_status(ControlConn *ctrlconn)
         return;
     }
     std::string response;
-    for (uint i = 0; i < size; i++)
+    for (unsigned int i = 0; i < size; i++)
     {
         const auto& channel = transport_status[i];
         response += "Channel ID: " + std::to_string(channel.id) + ", Name: " + channel.name + ", Status: " + channel.get_status_string() + "\n";
@@ -533,3 +533,9 @@ bool MPDataBus::_publish(unsigned pid, unsigned eid, DataEvent& e, Flow* f)
     return true;
 }
 
+bool snort::MPDataBus::_enqueue_event(std::shared_ptr<MPEventInfo> ev_info)
+{
+    bool res = mp_event_queue != nullptr and !mp_event_queue->full() and mp_event_queue->put(std::move(ev_info));
+    if(res) queue_cv.notify_one();
+    return res;
+}

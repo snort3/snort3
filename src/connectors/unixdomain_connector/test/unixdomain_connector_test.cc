@@ -149,7 +149,7 @@ int bind (int, const struct sockaddr*, socklen_t) { return s_bind_return; }
 int listen (int, int) { return s_listen_return; }
 #endif
 static bool use_test_accept_counter = false;
-static uint test_accept_counter = 0;
+static uint32_t test_accept_counter = 0;
 int accept (int, struct sockaddr*, socklen_t*)
 {
     if ( use_test_accept_counter )

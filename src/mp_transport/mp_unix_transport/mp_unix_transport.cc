@@ -25,11 +25,11 @@
 
 #include <cstring>
 #include <fcntl.h>
-#include <filesystem>
 #include <iostream>
 #include <poll.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "framework/mp_data_bus.h"
@@ -105,7 +105,7 @@ void MPUnixDomainTransport::side_channel_receive_handler(SCMessage* msg)
     delete msg;
 }
 
-void MPUnixDomainTransport::handle_new_connection(UnixDomainConnector *connector, UnixDomainConnectorConfig* cfg, const ushort& channel_id)
+void MPUnixDomainTransport::handle_new_connection(UnixDomainConnector *connector, UnixDomainConnectorConfig* cfg, const unsigned short& channel_id)
 {
     assert(connector);
     assert(cfg);
@@ -374,18 +374,17 @@ void MPUnixDomainTransport::init_side_channels()
 
     this->is_running = true;
 
-    if ( std::filesystem::is_directory(config->unix_domain_socket_path) == false )
+    struct stat st;
+    if (::stat(config->unix_domain_socket_path.c_str(), &st) != 0 || !S_ISDIR(st.st_mode))
     {
-        std::error_code ec;
-        std::filesystem::create_directories(config->unix_domain_socket_path, ec);
-        if (ec)
+        if (mkdir(config->unix_domain_socket_path.c_str(), 0755) != 0)
         {
             MPTransportLog("Failed to create directory %s\n", config->unix_domain_socket_path.c_str());
             return;
         }
     }
 
-    for (ushort i = instance_id; i < max_processes; i++)
+    for (unsigned short i = instance_id; i < max_processes; i++)
     {
         auto listen_path = config->unix_domain_socket_path + UNIX_SOCKET_NAME_PREFIX + std::to_string(i);
 
@@ -418,7 +417,7 @@ void MPUnixDomainTransport::init_side_channels()
         this->accept_handlers.push_back(unix_listener_handle);
     }
 
-    for (ushort i = 1; i < instance_id; i++)
+    for (unsigned short i = 1; i < instance_id; i++)
     {
         auto side_channel = new SideChannel(ScMsgFormat::BINARY);
         side_channel->register_receive_handler([this](SCMessage* msg) { this->side_channel_receive_handler(msg); });
@@ -447,7 +446,7 @@ void MPUnixDomainTransport::cleanup_side_channels()
     std::lock_guard<std::mutex> guard_send(_send_mutex);
     std::lock_guard<std::mutex> guard_read(_read_mutex);
 
-    for (uint i = 0; i < this->side_channels.size(); i++)
+    for (uint32_t i = 0; i < this->side_channels.size(); i++)
     {
         delete this->side_channels[i];
     }
@@ -484,7 +483,7 @@ bool MPUnixDomainTransport::is_logging_enabled()
     return this->is_logging_enabled_flag;
 }
 
-MPTransportChannelStatusHandle *MPUnixDomainTransport::get_channel_status(uint &size)
+MPTransportChannelStatusHandle *MPUnixDomainTransport::get_channel_status(unsigned& size)
 {
     std::lock_guard<std::mutex> guard_send(_send_mutex);
     std::lock_guard<std::mutex> guard_read(_read_mutex);
@@ -496,7 +495,7 @@ MPTransportChannelStatusHandle *MPUnixDomainTransport::get_channel_status(uint &
     MPTransportChannelStatusHandle* result = new MPTransportChannelStatusHandle[this->side_channels.size()];
 
     size = this->side_channels.size();
-    uint it = 0;
+    unsigned int it = 0;
 
     for (auto &&sc_handler : this->side_channels)
     {

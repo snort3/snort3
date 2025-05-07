@@ -83,7 +83,7 @@ struct SerializeFunctionHandle
 
 struct SideChannelHandle
 {
-    SideChannelHandle(SideChannel* sc, UnixDomainConnectorConfig* cc, const ushort& channel_id) :
+    SideChannelHandle(SideChannel* sc, UnixDomainConnectorConfig* cc, const unsigned short& channel_id) :
         side_channel(sc), connector_config(cc), channel_id(channel_id)
     { }
 
@@ -91,7 +91,7 @@ struct SideChannelHandle
 
     SideChannel* side_channel;
     UnixDomainConnectorConfig* connector_config;
-    ushort channel_id;
+    unsigned short channel_id;
 };
 
 struct UnixAcceptorHandle
@@ -119,7 +119,7 @@ class MPUnixDomainTransport : public MPTransport
     void disable_logging() override;
     bool is_logging_enabled() override;
     void cleanup();
-    MPTransportChannelStatusHandle* get_channel_status(uint& size) override;
+    MPTransportChannelStatusHandle* get_channel_status(unsigned& size) override;
 
     MPUnixDomainTransportConfig* get_config()
     { return config; }
@@ -130,7 +130,7 @@ class MPUnixDomainTransport : public MPTransport
     void init_side_channels();
     void cleanup_side_channels();
     void side_channel_receive_handler(SCMessage* msg);
-    void handle_new_connection(UnixDomainConnector* connector, UnixDomainConnectorConfig* cfg, const ushort& channel_id);
+    void handle_new_connection(UnixDomainConnector* connector, UnixDomainConnectorConfig* cfg, const unsigned short& channel_id);
     void process_messages_from_side_channels();
     void notify_process_thread();
     void connector_update_handler(UnixDomainConnector* connector, bool is_recconecting, SideChannel* side_channel);
@@ -139,7 +139,7 @@ class MPUnixDomainTransport : public MPTransport
     MPSerializeFunc get_event_serialization_function(unsigned pub_id, unsigned event_id);
     MPDeserializeFunc get_event_deserialization_function(unsigned pub_id, unsigned event_id);
 
-    uint mp_current_process_id = 0;
+    uint32_t mp_current_process_id = 0;
 
     TransportReceiveEventHandler transport_receive_handler = nullptr;
     MPUnixDomainTransportConfig* config = nullptr;

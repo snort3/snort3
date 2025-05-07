@@ -584,7 +584,7 @@ void UnixDomainConnectorListener::start_accepting_connections(UnixDomainConnecto
             return;
         }
 
-        ushort error_count = 0;
+        unsigned short error_count = 0;
 
         while (should_accept) {
             if(error_count > 10)

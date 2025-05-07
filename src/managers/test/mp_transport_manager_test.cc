@@ -56,7 +56,7 @@ class MockTransport : public MPTransport
     { }
     virtual bool is_logging_enabled() override
     { return false; }
-    MPTransportChannelStatusHandle* get_channel_status(uint& size) override
+    MPTransportChannelStatusHandle* get_channel_status(unsigned int& size) override
     {
         size = 0;
         return nullptr;

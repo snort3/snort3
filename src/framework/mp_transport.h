@@ -81,7 +81,7 @@ class MPTransport
     virtual void enable_logging() = 0;
     virtual void disable_logging() = 0;
     virtual bool is_logging_enabled() = 0;
-    virtual MPTransportChannelStatusHandle* get_channel_status(uint& size) = 0;
+    virtual MPTransportChannelStatusHandle* get_channel_status(unsigned& size) = 0;
 };
 
 

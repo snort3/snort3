@@ -160,7 +160,7 @@ public:
         return true;
     }
 
-    MPTransportChannelStatusHandle* get_channel_status(uint& size) override
+    MPTransportChannelStatusHandle* get_channel_status(unsigned int& size) override
     {
         size = 0;
         return nullptr;

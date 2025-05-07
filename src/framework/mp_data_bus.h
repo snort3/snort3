@@ -183,6 +183,7 @@ private:
     void _subscribe(const PubKey& key, unsigned eid, DataHandler* h);
 
     bool _publish(unsigned pid, unsigned eid, DataEvent& e, Flow* f);
+    bool _enqueue_event(std::shared_ptr<MPEventInfo> ev_info);
 
 private:
     typedef std::vector<DataHandler*> SubList;
@@ -194,8 +195,8 @@ private:
 
     Ring<std::shared_ptr<MPEventInfo>>* mp_event_queue;
 
-    static std::condition_variable queue_cv;
-    static std::mutex queue_mutex;
+    std::condition_variable queue_cv;
+    std::mutex queue_mutex;
 
     std::unordered_map<unsigned, MPDataBusStats> mp_pub_stats;
 
