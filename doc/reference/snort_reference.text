@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.7.3.0 2025-04-20 11:40:57 EDT TST
+Revision 3.7.4.0 2025-05-08 07:20:33 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -37,20 +37,21 @@ Table of Contents
     2.18. js_norm
     2.19. latency
     2.20. memory
-    2.21. network
-    2.22. output
-    2.23. packet_tracer
-    2.24. packets
-    2.25. payload_injector
-    2.26. process
-    2.27. profiler
-    2.28. rate_filter
-    2.29. references
-    2.30. search_engine
-    2.31. side_channel
-    2.32. snort
-    2.33. suppress
-    2.34. trace
+    2.21. mp_data_bus
+    2.22. network
+    2.23. output
+    2.24. packet_tracer
+    2.25. packets
+    2.26. payload_injector
+    2.27. process
+    2.28. profiler
+    2.29. rate_filter
+    2.30. references
+    2.31. search_engine
+    2.32. side_channel
+    2.33. snort
+    2.34. suppress
+    2.35. trace
 
 3. Codec Modules
 
@@ -1165,7 +1166,46 @@ Peg counts:
   * memory.retained: total bytes not returned to OS (now)
 
 
-2.21. network
+2.21. mp_data_bus
+
+--------------
+
+Help: configure multiprocess data bus
+
+Type: basic
+
+Usage: global
+
+Configuration:
+
+  * int mp_data_bus.max_eventq_size = 1000: maximum events to queue {
+    100:65535 }
+  * string mp_data_bus.transport: transport to use for inter-process
+    communication
+  * bool mp_data_bus.debug = false: enable debugging
+
+Commands:
+
+  * mp_data_bus.enable(): enable multiprocess data bus debugging
+  * mp_data_bus.disable(): disable multiprocess data bus debugging
+  * mp_data_bus.dump_stats(): dump multiprocess data bus statistics
+  * mp_data_bus.dump_events(): dump multiprocess data bus events
+  * mp_data_bus.show_channel_status(): show multiprocess data bus
+    channel status
+
+Peg counts:
+
+  * mp_data_bus.total_messages_sent: total messages sent (sum)
+  * mp_data_bus.total_messages_received: total messages received
+    (sum)
+  * mp_data_bus.total_messages_dropped: total messages dropped (sum)
+  * mp_data_bus.total_messages_published: total messages published
+    (sum)
+  * mp_data_bus.total_messages_delivered: total messages delivered
+    (sum)
+
+
+2.22. network
 
 --------------
 
@@ -1203,7 +1243,7 @@ Commands:
     the user policy id
 
 
-2.22. output
+2.23. output
 
 --------------
 
@@ -1241,7 +1281,7 @@ Rules:
   * 2:1 (output) tagged packet
 
 
-2.23. packet_tracer
+2.24. packet_tracer
 
 --------------
 
@@ -1265,7 +1305,7 @@ Commands:
   * packet_tracer.disable(): disable packet tracer
 
 
-2.24. packets
+2.25. packets
 
 --------------
 
@@ -1291,7 +1331,7 @@ Configuration:
     are used to track fragments and connections
 
 
-2.25. payload_injector
+2.26. payload_injector
 
 --------------
 
@@ -1313,7 +1353,7 @@ Peg counts:
     inject mid-frame (sum)
 
 
-2.26. process
+2.27. process
 
 --------------
 
@@ -1349,7 +1389,7 @@ Configuration:
     preferred|bind|local memory policy for NUMA
 
 
-2.27. profiler
+2.28. profiler
 
 --------------
 
@@ -1398,7 +1438,7 @@ Commands:
   * profiler.module_status(): show module time profiler status
 
 
-2.28. rate_filter
+2.29. rate_filter
 
 --------------
 
@@ -1430,7 +1470,7 @@ Peg counts:
     memory (sum)
 
 
-2.29. references
+2.30. references
 
 --------------
 
@@ -1446,7 +1486,7 @@ Configuration:
   * string references[].url: where this reference is defined
 
 
-2.30. search_engine
+2.31. search_engine
 
 --------------
 
@@ -1507,7 +1547,7 @@ Peg counts:
   * search_engine.qualified_events: total qualified events (sum)
 
 
-2.31. side_channel
+2.32. side_channel
 
 --------------
 
@@ -1530,7 +1570,7 @@ Peg counts:
   * side_channel.packets: total packets (sum)
 
 
-2.32. snort
+2.33. snort
 
 --------------
 
@@ -1828,7 +1868,7 @@ Peg counts:
     failed due to attribute table full (sum)
 
 
-2.33. suppress
+2.34. suppress
 
 --------------
 
@@ -1848,7 +1888,7 @@ Configuration:
     according to track
 
 
-2.34. trace
+2.35. trace
 
 --------------
 
@@ -3633,7 +3673,7 @@ Configuration:
   * enum extractor.default_filter = pick: default action for protocol
     with no filter provided { pick | skip }
   * enum extractor.protocols[].service: service to extract from { 
-    http | ftp | conn | dns }
+    http | ftp | conn | dns | weird | notice }
   * int extractor.protocols[].tenant_id = 0: tenant_id of target
     tenant { 0:max32 }
   * string extractor.protocols[].on_events: specify events to log
@@ -9927,7 +9967,7 @@ libraries see the Getting Started section of the manual.
   * string extractor.protocols[].fields: specify fields to log
   * string extractor.protocols[].on_events: specify events to log
   * enum extractor.protocols[].service: service to extract from { 
-    http | ftp | conn | dns }
+    http | ftp | conn | dns | weird | notice }
   * int extractor.protocols[].tenant_id = 0: tenant_id of target
     tenant { 0:max32 }
   * enum extractor.time = unix: output format for timestamp values { 
@@ -10506,6 +10546,11 @@ libraries see the Getting Started section of the manual.
   * string mms_func.~: func to match
   * string modbus_func.~: function code to match
   * int modbus_unit.~: Modbus unit ID { 0:255 }
+  * bool mp_data_bus.debug = false: enable debugging
+  * int mp_data_bus.max_eventq_size = 1000: maximum events to queue {
+    100:65535 }
+  * string mp_data_bus.transport: transport to use for inter-process
+    communication
   * int mpls.max_stack_depth = -1: set maximum MPLS stack depth {
     -1:255 }
   * enum mpls.payload_type = auto: force encapsulated payload type { 
@@ -11619,6 +11664,19 @@ libraries see the Getting Started section of the manual.
     seconds { 1:50 }
   * enum unixdomain_connector[].setup: stream establishment { call | 
     answer }
+  * int unix_transport.connect_timeout_seconds = 30: connect timeout
+    in seconds
+  * int unix_transport.consume_message_batch_size = 5: consume
+    message batch size
+  * int unix_transport.consume_message_timeout_milliseconds = 100:
+    consume message timeout in milliseconds
+  * bool unix_transport.enable_logging = false: enable logging
+  * int unix_transport.max_connect_retries = 5: max connection
+    retries
+  * int unix_transport.retry_interval_seconds = 30: retry interval in
+    seconds
+  * string unix_transport.unix_domain_socket_path = /tmp/
+    snort_unix_connectors: unix socket folder
   * interval urg.~range: check if tcp urgent offset is in given range
     { 0:65535 }
   * int_list vlan.extra_tpid_ether_types = 0x9100 0x9200: set
@@ -12382,6 +12440,14 @@ libraries see the Getting Started section of the manual.
   * modbus.max_concurrent_sessions: maximum concurrent modbus
     sessions (max)
   * modbus.sessions: total sessions processed (sum)
+  * mp_data_bus.total_messages_delivered: total messages delivered
+    (sum)
+  * mp_data_bus.total_messages_dropped: total messages dropped (sum)
+  * mp_data_bus.total_messages_published: total messages published
+    (sum)
+  * mp_data_bus.total_messages_received: total messages received
+    (sum)
+  * mp_data_bus.total_messages_sent: total messages sent (sum)
   * netflow.cache_adds: netflow cache added new entry (sum)
   * netflow.cache_hits: netflow cache found existing entry (sum)
   * netflow.cache_max: netflow cache’s maximum byte usage (max)
@@ -12954,6 +13020,21 @@ libraries see the Getting Started section of the manual.
   * udp.bad_udp6_checksum: nonzero udp over ipv6 checksums (sum)
   * udp.checksum_bypassed: checksum calculations bypassed (sum)
   * unixdomain_connector.messages: total messages (sum)
+  * unix_transport.closed_connections: closed mp_transport
+    connections count (sum)
+  * unix_transport.connection_retries: mp_transport connection
+    retries count (sum)
+  * unix_transport.receive_bytes: mp_transport events bytes received
+    count (sum)
+  * unix_transport.receive_events: mp_transport events received count
+    (sum)
+  * unix_transport.sent_bytes: mp_transport events bytes sent count
+    (sum)
+  * unix_transport.sent_errors: mp_transport events errors count
+    (sum)
+  * unix_transport.sent_events: mp_transport events sent count (sum)
+  * unix_transport.successful_connections: successful mp_transport
+    connections count (sum)
   * wizard.tcp_hits: tcp identifications (sum)
   * wizard.tcp_misses: tcp searches abandoned (sum)
   * wizard.tcp_scans: tcp payload scans (sum)
@@ -16360,6 +16441,12 @@ alert is raised by the enhanced JavaScript normalizer.
   * host_cache.get_stats(): get current host cache usage and pegs
   * host_cache.get_segment_stats(segment): get usage and pegs for
     cache segment(s)
+  * mp_data_bus.enable(): enable multiprocess data bus debugging
+  * mp_data_bus.disable(): disable multiprocess data bus debugging
+  * mp_data_bus.dump_stats(): dump multiprocess data bus statistics
+  * mp_data_bus.dump_events(): dump multiprocess data bus events
+  * mp_data_bus.show_channel_status(): show multiprocess data bus
+    channel status
   * network.set_policy(id): set the network policy for commands given
     the user policy id
   * packet_capture.enable(filter, group, tenants, check_inner_pkt,
@@ -16716,6 +16803,7 @@ and are not applicable elsewhere.
   * modbus_func (ips_option): rule option to check modbus function
     code
   * modbus_unit (ips_option): rule option to check Modbus unit ID
+  * mp_data_bus (basic): configure multiprocess data bus
   * mpls (codec): support for multiprotocol label switching
   * msg (ips_option): rule option summarizing rule purpose output
     with events
@@ -16842,6 +16930,7 @@ and are not applicable elsewhere.
   * udp (codec): support for user datagram protocol
   * unified2 (logger): output event and packet in unified2 format
     file
+  * unix_transport (mp_transport): manage the unix transport layer
   * unixdomain_connector (connector): implement the unix domain
     stream connector
   * urg (ips_option): detection for TCP urgent pointer
@@ -17230,6 +17319,7 @@ and are not applicable elsewhere.
   * logger::log_null: disable logging of packets
   * logger::log_pcap: log packet in pcap format
   * logger::unified2: output event and packet in unified2 format file
+  * mp_transport::unix_transport: manage the unix transport layer
   * policy_selector::address_space_selector: configure traffic
     processing based on address space
   * policy_selector::tenant_selector: configure traffic processing

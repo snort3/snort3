@@ -1,3 +1,19 @@
+2025-05-07: 3.7.4.0
+
+* appid: fixed crash while printing appid debug
+* appid: multiprocess init for appid third-party syncevents
+* build: apply workaround only for lower versions of LuaJIT. Thanks to Michael Cho for reporting the issue.
+* extractor: add weird and notice logging
+* extractor: extend dns support
+* extractor: support conn.log orig_bytes, resp_bytes
+* flow: don't offset flow instance number by 1 when printing flows
+* http_inspect: add dynamic length-limited publishing of request and response body
+* mp_data_bus: adding peg stats and socket commands for multiprocess databus
+* mp_data_bus: core logic for multi-process databus
+* mp_data_bus: standartize data types
+* mp_unix_transport: clang compilation fix for multiprocess
+* mp_unix_transport: multiprocess_transport plugin type, implementation of unix domain name based multiprocess transport
+
 2025-04-20: 3.7.3.0
 
 * appid: added caching for dns detector

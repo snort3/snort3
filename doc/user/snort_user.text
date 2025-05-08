@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.7.3.0 2025-04-20 11:41:15 EDT TST
+Revision 3.7.4.0 2025-05-08 07:20:47 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -5829,9 +5829,10 @@ filtered scans, since these are more prone to false positives.
 
 --------------
 
-Snort 3 can log IPS events with some meta data and dump packets. The
-Data Logging feature extends that ability to log protocol-specific
-data, sniffing traffic alongside with normal inspection.
+Snort 3 can log IPS events with some meta data and dump packets.
+Advanced Logging feature extends that ability to log
+protocol-specific data, sniffing traffic alongside with normal
+inspection.
 
 5.18.1. Configurations
 
@@ -5854,8 +5855,7 @@ The module’s configuration consists of two parts:
         will be ignored)
 
 Configuration from different bindings do not interfere. Among other
-things it allows tenants to get independent data logging
-configurations.
+things it allows tenants to get independent logging configurations.
 
 extractor =
 {
@@ -5869,6 +5869,8 @@ extractor =
         { service = 'http', on_events = 'eot', fields = 'ts, uri' },
         { service = 'conn', on_events = 'eof', fields = 'ts, uid, service' },
         { service = 'dns', on_events = 'response', fields = 'ts, uid, query, answers' }
+        { service = 'weird', on_events = 'builtin', fields = 'ts, msg, gid, sid' }
+        { service = 'notice', on_events = 'ips_logging', fields = 'msg, sid, refs' }
     }
 }
 
@@ -5902,6 +5904,13 @@ Services and their events:
   * connection (conn)
 
       + eof (end of flow)
+  * internal built-in checks which failed (weird)
+
+      + builtin (internally-detected infraction is queued for further
+        processing)
+  * triggered IPS rule, whether built-in or text or SO (notice)
+
+      + ips_logging (matched rules sent to IPS logging)
 
 Common fields available for every service:
 
@@ -5988,17 +5997,46 @@ Fields supported for DNS:
   * auth - The list of authoritative responses
   * addl - The list of additional responses
 
-In the answers, auth, and addl lists the decoding of the following RR
-types is supported: A, AAAA, CNAME, DS, MX, NS, NSEC, PTR, RRSIG,
-SOA, TXT
+The answers, auth, and addl lists contain all the RRs found in the
+corresponding message sections. Each RR is represented by a summary
+of its decoding. For these RR types the decoding contains type
+specific information (ip addresses, domain names, etc.): A, AAAA,
+BIND9 signing, CNAME, DNSKEY, DS, LOC, MX, NS, NSEC, OPT, PTR, RRSIG,
+SOA, SPF, SRV, SSHFP, TXT. For these RR types: CAA, HINFO, HTTPS,
+NSEC3, NSEC3PARAM, SVCB, TKEY, TSIG, the decoding contains only the
+name of the RR type. This is also the default decoding applied to all
+RR types that don’t have a type specific decoder. When the name of
+the type is not known it is decoded as UNKNOWN-N, where N is RR type
+numeric value.
 
 Fields supported for connection:
 
   * duration - connection duration in seconds
   * proto - transport layer protocol of the connection
   * service - connection’s application protocol
-  * orig_pkts - number of packets originator sent
-  * resp_pkts - number of packets responder sent
+  * orig_pkts - number of packets client sent
+  * resp_pkts - number of packets server sent
+  * orig_bytes - tcp/udp payload bytes client sent
+  * resp_bytes - tcp/udp payload bytes server sent
+
+For TCP orig_bytes and resp_bytes are calculated using first seen
+sequence number and next expected sequence number. These are reset
+during TCP flow restart. For this case only bytes seen following the
+restart will be reported.
+
+Fields supported for weird and notice logs:
+
+  * sid - unique signature number of the rule
+  * gid - component ID which generated the event
+  * msg - rule message
+  * proto - transport protocol
+  * source - assigned inspector
+
+notice events for text rules also get the following fields:
+
+  * action - action of triggered event
+  * refs - references mentioned in a rule
+  * rev - particular revision number of the rule
 
 5.18.3. Example
 
