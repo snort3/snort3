@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <cstdint>
 
 namespace preprocessors
 {
