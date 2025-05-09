@@ -90,6 +90,9 @@ const SnortConfig* SnortConfig::get_conf()
 Module::Module(const char* name, const char*) : name(name), help(nullptr), params(nullptr), list(false)
 { }
 
+void Inspector::set_alias_name(const char* n)
+{ alias_name = n; }
+
 class TestInspector : public Inspector
 {
 public:

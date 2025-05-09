@@ -43,7 +43,7 @@ struct SnortConfig;
 struct Packet;
 
 // this is the current version of the api
-#define INSAPI_VERSION ((BASE_API_VERSION << 16) | 2)
+#define INSAPI_VERSION ((BASE_API_VERSION << 16) | 3)
 
 struct InspectionBuffer
 {
@@ -160,9 +160,7 @@ public:
 
     const char* get_name() const;
 
-    void set_alias_name(const char* name)
-    { alias_name = name; }
-
+    void set_alias_name(const char*);
     const char* get_alias_name() const
     { return alias_name; }
 
@@ -210,7 +208,6 @@ private:
     std::shared_ptr<ThreadSpecificData> thread_specific_data;
     std::atomic_uint* ref_count;
     SnortProtocolId snort_protocol_id = 0;
-    // FIXIT-E Use std::string to avoid storing a pointer to external std::string buffers
     const char* alias_name = nullptr;
     uint64_t network_policy_user_id = 0;
     bool network_policy_user_id_set = false;

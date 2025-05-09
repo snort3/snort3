@@ -112,6 +112,7 @@ enum ReloadType
 
 typedef vector<PHObject> PHObjectList;
 typedef vector<PHObjectList*> PHTSObjectLists;
+
 struct ThreadSpecificHandlers
 {
     explicit ThreadSpecificHandlers(unsigned max)
@@ -145,9 +146,9 @@ struct PHInstance
 
     bool is_reloaded()
     {
-        return ((reload_type == RELOAD_TYPE_REENABLED)or
-                   (reload_type == RELOAD_TYPE_DELETED) or
-                   (reload_type == RELOAD_TYPE_NEW));
+        return reload_type == RELOAD_TYPE_REENABLED
+            or reload_type == RELOAD_TYPE_DELETED
+            or reload_type == RELOAD_TYPE_NEW;
     }
 
     ReloadType get_reload_type()
@@ -181,14 +182,17 @@ PHInstance::~PHInstance()
 typedef vector<PHObject*> PHGlobalList;
 typedef vector<PHClass*> PHClassList;
 typedef vector<PHInstance*> PHInstanceList;
+
 struct PHRemovedInstance
 {
     PHRemovedInstance(PHInstance* i, PHTSObjectLists& handlers)
         : instance(i), handlers(handlers)
     { }
+
     PHInstance* instance;
     PHTSObjectLists& handlers;
 };
+
 typedef vector<PHRemovedInstance> PHRemovedInstanceList;
 typedef list<Inspector*> PHList;
 
@@ -196,7 +200,6 @@ static PHGlobalList s_handlers;
 static PHList s_trash;
 static PHList s_trash2;
 static bool s_sorted = false;
-
 static PHTSObjectLists s_tl_handlers;
 
 void InspectorManager::global_init()

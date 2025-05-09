@@ -26,6 +26,7 @@
 #include "main/thread_config.h"
 #include "protocols/packet.h"
 #include "stream/stream_splitter.h"
+#include "utils/util.h"
 
 namespace snort
 {
@@ -60,6 +61,7 @@ Inspector::~Inspector()
         assert(0 == ref_count[i]);
 
     delete[] ref_count;
+    delete[] alias_name;
 }
 
 bool Inspector::is_inactive()
@@ -147,6 +149,12 @@ void Inspector::set_thread_specific_data(void* tsd)
 
 void* Inspector::get_thread_specific_data() const
 { return thread_specific_data->data[get_instance_id()]; }
+
+void Inspector::set_alias_name(const char* name)
+{
+    delete[] alias_name;
+    alias_name = snort_strdup(name);
+}
 
 static const char* InspectorTypeNames[IT_MAX] =
 {
