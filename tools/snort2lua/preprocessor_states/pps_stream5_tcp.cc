@@ -17,6 +17,7 @@
 //--------------------------------------------------------------------------
 // pps_stream_tcp.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#include <cstdint>
 #include <sstream>
 #include <vector>
 #include <string>

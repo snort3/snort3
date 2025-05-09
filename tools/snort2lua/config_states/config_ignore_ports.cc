@@ -17,6 +17,7 @@
 //--------------------------------------------------------------------------
 // config_ignore_ports.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#include <cstdint>
 #include <sstream>
 #include <vector>
 #include <string>

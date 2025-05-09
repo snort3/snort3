@@ -194,3 +194,7 @@ int UdpSession::process(Packet* p)
     return 0;
 }
 
+void UdpSession::count_stale_packet()
+{
+    udpStats.stale_packets++;
+}

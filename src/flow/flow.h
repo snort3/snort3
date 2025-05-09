@@ -479,6 +479,8 @@ public:  // FIXIT-M privatize if possible
     uint64_t expire_time = 0;
 
     unsigned network_policy_id = 0;
+    struct timeval prev_packet_time = {0, 0};
+    
     unsigned inspection_policy_id = 0;
     unsigned ips_policy_id = 0;
     unsigned reload_id = 0;

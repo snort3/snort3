@@ -17,6 +17,7 @@
 //--------------------------------------------------------------------------
 // pps_frag3_engine.cc author Josh Rosenbaum <jrosenba@cisco.com>
 
+#include <cstdint>
 #include <sstream>
 #include <vector>
 

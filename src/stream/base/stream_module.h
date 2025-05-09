@@ -125,7 +125,8 @@ struct StreamModuleConfig
 #endif
     uint32_t held_packet_timeout = 1000;  // in milliseconds
     int hs_timeout = -1;
-
+    bool drop_stale_packets = false;
+    
     void show() const;
 };
 

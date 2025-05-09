@@ -20,7 +20,10 @@
 #define ICMP_SESSION_H
 
 #include <sys/time.h>
+
 #include "flow/session.h"
+
+#include "icmp_module.h"
 
 class IcmpSession : public Session
 {
@@ -31,7 +34,8 @@ public:
     bool setup(snort::Packet*) override;
     int process(snort::Packet*) override;
     void clear() override;
-
+    void count_stale_packet() override
+    { icmpStats.stale_packets++; }
 public:
     uint32_t echo_count = 0;
     struct timeval ssn_time = {};

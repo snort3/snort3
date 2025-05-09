@@ -78,6 +78,7 @@ enum RunFlag
 #ifdef SHELL
     RUN_FLAG__SHELL               = 0x02000000,
 #endif
+    RUN_FLAG__DROP_STALE_PACKETS  = 0x04000000,
 };
 
 enum OutputFlag
@@ -675,6 +676,9 @@ public:
     bool ip_frags_only() const
     { return (run_flags & RUN_FLAG__IP_FRAGS_ONLY) != 0; }
 
+    bool drop_stale_packets() const
+    { return (run_flags & RUN_FLAG__DROP_STALE_PACKETS) != 0; }
+    
     void clear_run_flags(RunFlag flag)
     { run_flags &= ~flag; }
 

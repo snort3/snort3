@@ -20,6 +20,8 @@
 #include "config.h"
 #endif
 
+#include <sys/time.h>
+
 #include <daq_common.h>
 
 #include "flow_control.h"
@@ -35,6 +37,7 @@
 #include "pub_sub/intrinsic_event_ids.h"
 #include "pub_sub/packet_events.h"
 #include "stream/stream.h"
+#include "utils/stats.h"
 #include "utils/util.h"
 
 #include "expect_cache.h"
@@ -401,6 +404,36 @@ static bool want_flow(PktType type, Packet* p)
     return false;
 }
 
+static void log_stale_packet(snort::Packet *p, snort::Flow *flow, bool drop_packet)
+{
+    char ts_flow[TIMEBUF_SIZE];
+    char ts_pkt[TIMEBUF_SIZE];
+    ts_print((const struct timeval *)&p->pkth->ts, ts_pkt);
+    ts_print((const struct timeval *)&flow->prev_packet_time, ts_flow);
+
+    if ( drop_packet )
+        PacketTracer::log("Flow: Dropping stale packet. current packet ts: %s < previous packet ts: %s.\n",
+                          ts_pkt, ts_flow);
+    else
+        PacketTracer::log("Flow: Detected stale packet, dropping disabled. current packet ts: %s < previous packet ts: %s.\n",
+                          ts_pkt, ts_flow);
+}
+
+static inline bool is_packet_stale(const Flow* flow, const Packet* p)
+{
+    return timercmp(&flow->prev_packet_time, &p->pkth->ts, >);
+}
+
+static void drop_stale_packet(snort::Packet *p, snort::Flow *flow)
+{
+    // This is a stale packet, ignore it.
+    p->active->set_drop_reason("snort");
+    p->active->drop_packet(p);
+    p->disable_inspect = true;
+    if ( PacketTracer::is_active() )
+        log_stale_packet(p, flow, true);
+}
+
 bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
 {
     if ( !get_proto_session[to_utype(type)] )
@@ -410,8 +443,26 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
     bool reversed = set_key(&key, p);
     Flow* flow = cache->find(&key);
 
-    if (flow)
+    if ( flow )
+    {
+        if ( !p->is_retry() and is_packet_stale(flow, p) )
+        {
+            flow->session->count_stale_packet();
+
+            if ( p->context->conf->drop_stale_packets() )
+            {
+                drop_stale_packet(p, flow);
+                return true;
+            }
+            else
+            {
+                if ( PacketTracer::is_active() )
+                    log_stale_packet(p, flow, false);
+            }
+        }
+        
         flow = stale_flow_cleanup(cache, flow, p);
+    }
 
     bool new_ha_flow = false;
     if ( !flow )
@@ -469,6 +520,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
     unsigned news = 0;
 
     flow->previous_ssn_state = flow->ssn_state;
+    flow->prev_packet_time = p->pkth->ts;
 
     p->flow = flow;
     p->disable_inspect = flow->is_inspection_disabled();

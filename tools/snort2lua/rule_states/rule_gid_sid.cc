@@ -25,6 +25,7 @@
 // sid.
 // Handle 2 cases: sid was read before/after gid.
 
+#include <cstdint>
 #include <sstream>
 #include <unordered_map>
 

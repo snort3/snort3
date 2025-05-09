@@ -113,6 +113,9 @@ static const Parameter s_params[] =
 
     { "allowlist_cache", Parameter::PT_TABLE, allowlist_cache_params, nullptr, "configure allowlist cache" },
 
+    { "drop_stale_packets", Parameter::PT_BOOL, nullptr, "false",
+      "enable dropping of packets with stale timestamp" },
+
     FLOW_TYPE_TABLE("ip_cache",   "ip",   ip_params),
     FLOW_TYPE_TABLE("icmp_cache", "icmp", icmp_params),
     FLOW_TYPE_TABLE("tcp_cache",  "tcp",  tcp_params),
@@ -433,6 +436,15 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
     else if ( !strcmp(fqn, "stream.udp_cache.idle_timeout") )
         config.flow_cache_cfg.proto[to_utype(PktType::UDP)].nominal_timeout = v.get_uint32();
 
+    else if ( v.is("drop_stale_packets") )
+    {
+        config.drop_stale_packets = v.get_bool();
+        if (config.drop_stale_packets)
+            c->set_run_flags(RUN_FLAG__DROP_STALE_PACKETS);
+        else
+            c->clear_run_flags(RUN_FLAG__DROP_STALE_PACKETS);
+        return true;
+    }
     else
     {
         assert(!strcmp(fqn, "stream.user_cache.idle_timeout"));
@@ -601,7 +613,8 @@ void StreamModuleConfig::show() const
     ConfigLogger::log_value("pruning_timeout", flow_cache_cfg.pruning_timeout);
     ConfigLogger::log_value("prune_flows", flow_cache_cfg.prune_flows);
     ConfigLogger::log_limit("require_3whs", hs_timeout, -1, hs_timeout < 0 ? hs_timeout : -1);
-
+    ConfigLogger::log_value("drop_stale_packets", drop_stale_packets ? "enabled" : "disabled");
+    
     for (int i = to_utype(PktType::IP); i < to_utype(PktType::PDU); ++i)
     {
         std::string tmp;

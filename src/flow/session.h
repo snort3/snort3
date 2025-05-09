@@ -79,6 +79,7 @@ public:
     virtual uint8_t missing_in_reassembled(uint8_t /*dir*/) const { return SSN_MISSING_NONE; }
 
     virtual bool set_packet_action_to_hold(snort::Packet*) { return false; }
+    virtual void count_stale_packet() { }
 
 protected:
     Session(snort::Flow* f) { flow = f; }
@@ -96,7 +97,8 @@ public:
     { CountType::SUM, "created", module " session trackers created" }, \
     { CountType::SUM, "released", module " session trackers released" }, \
     { CountType::SUM, "timeouts", module " session timeouts" }, \
-    { CountType::SUM, "prunes", module " session prunes" }
+    { CountType::SUM, "prunes", module " session prunes" }, \
+    { CountType::SUM, "stale_packets", module " stale packets" }
 
 // See above. Add to end of stats array.
 #define SESSION_STATS \
@@ -105,7 +107,8 @@ public:
     PegCount created; \
     PegCount released; \
     PegCount timeouts; \
-    PegCount prunes
+    PegCount prunes; \
+    PegCount stale_packets
 
 // Do not change the semantics of max. Max = the highest seen during the perf interval.
 // To obtain max over the entire run, determine the maximum of reported max pegs.

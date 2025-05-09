@@ -25,6 +25,8 @@
 struct Fragment;
 struct FragEngine;
 
+extern THREAD_LOCAL IpStats ip_stats;
+
 /* Only track a certain number of alerts per session */
 #define MAX_FRAG_ALERTS 8
 
@@ -84,12 +86,12 @@ public:
 
     bool add_alert(snort::Packet*, uint32_t gid, uint32_t sid) override;
     bool check_alerted(snort::Packet*, uint32_t gid, uint32_t sid) override;
+    void count_stale_packet() override
+    { ip_stats.stale_packets++; }
 
 public:
     FragTracker tracker = {};
 };
-
-extern THREAD_LOCAL IpStats ip_stats;
 
 #endif
 

@@ -23,6 +23,7 @@
 
 #include "pps_dcerpc_server.h"
 
+#include <cstdint>
 #include <algorithm>
 #include <cstring>
 

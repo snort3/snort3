@@ -105,6 +105,7 @@ void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
 void Flow::set_mpls_layer_per_dir(Packet*) { }
 void packet_gettimeofday(struct timeval* ) { }
+SO_PUBLIC void ts_print(const struct timeval*, char*, bool) { }
 
 time_t packet_time() { return 0; }
 

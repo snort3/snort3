@@ -119,6 +119,9 @@ public:
     void handle_data_segment(TcpSegmentDescriptor&, bool flush = true);
     bool validate_packet_established_session(TcpSegmentDescriptor&);
 
+    void count_stale_packet() override
+    { tcpStats.stale_packets++; }
+
     TcpStreamTracker client;
     TcpStreamTracker server;
     TcpStreamConfig* tcp_config = nullptr;

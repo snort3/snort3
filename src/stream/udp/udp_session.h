@@ -25,6 +25,7 @@
 #include "flow/session.h"
 
 class SO_PUBLIC UdpSession : public Session
+
 {
 public:
     UdpSession(snort::Flow*);
@@ -34,8 +35,9 @@ public:
     void update_direction(char dir, const snort::SfIp*, uint16_t port) override;
     int process(snort::Packet*) override;
     void clear() override;
+    void count_stale_packet() override;
 
-public:
+    public:
     struct timeval ssn_time = {};
     uint64_t payload_bytes_seen_client = 0;
     uint64_t payload_bytes_seen_server = 0;
