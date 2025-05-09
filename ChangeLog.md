@@ -1,3 +1,9 @@
+2025-05-08: 3.8.0.0
+
+* framework: make alias name internal to inspector instance
+* managers: update formatting
+* packet_io: add trace logs when injecting packets
+
 2025-05-07: 3.7.4.0
 
 * appid: fixed crash while printing appid debug
