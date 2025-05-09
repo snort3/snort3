@@ -55,7 +55,7 @@ void TcpStreamConfig::show() const
     str += std::to_string(asymmetric_ids_flush_threshold);
     str += " }";
     ConfigLogger::log_value("asymmetric_ids", str.c_str());
-    ConfigLogger::log_flag("reassemble_async", !(flags & STREAM_CONFIG_NO_ASYNC_REASSEMBLY));
+    ConfigLogger::log_value("reassemble_async", "deprecated, has no effect");
     ConfigLogger::log_value("session_timeout", session_timeout);
 
     str = "{ count = ";

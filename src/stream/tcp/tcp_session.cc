@@ -679,9 +679,7 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
 
 bool TcpSession::filter_packet_for_reassembly(TcpSegmentDescriptor& tsd, TcpStreamTracker* listener)
 {
-    if ( tsd.are_packet_flags_set(PKT_IGNORE)
-        or listener->get_flush_policy() == STREAM_FLPOLICY_IGNORE
-        or ( ( tcp_config->flags & STREAM_CONFIG_NO_ASYNC_REASSEMBLY ) && !flow->two_way_traffic() ) )
+    if ( tsd.are_packet_flags_set(PKT_IGNORE) or listener->get_flush_policy() == STREAM_FLPOLICY_IGNORE )
         return false;
 
     return !check_reassembly_queue_thresholds(tsd, listener);

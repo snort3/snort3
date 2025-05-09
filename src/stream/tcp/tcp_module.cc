@@ -363,10 +363,8 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("reassemble_async") )
     {
-        if ( v.get_bool() )
-            config->flags &= ~STREAM_CONFIG_NO_ASYNC_REASSEMBLY;
-        else
-            config->flags |= STREAM_CONFIG_NO_ASYNC_REASSEMBLY;
+        // this option is deprecated, reassembly on asymmetric connections 
+        // is always enabled
     }
 
     else if ( v.is("require_3whs") )
