@@ -30,6 +30,7 @@
 #include "main/snort_config.h"
 #include "managers/action_manager.h"
 #include "profiler/profiler.h"
+#include "packet_io/packet_tracer.h"
 #include "protocols/tcp.h"
 #include "pub_sub/active_events.h"
 #include "stream/stream.h"
@@ -217,6 +218,49 @@ void Active::thread_term()
 }
 
 //--------------------------------------------------------------------
+static void add_trace_log(EncodeFlags ef, bool direct_inject, bool success,
+    const char* prefix, const char* pkt_type, uint32_t payload_len)
+{
+    if ( not prefix or not pkt_type)
+        return;
+
+    bool forward_direction = ef & ENC_FLAG_FWD;
+    const char *direction = "reverse";
+    const char *inject_type = "injection";
+    const char *status = "failed";
+    if ( forward_direction )
+        direction = "forward";
+
+    if ( success )
+        status = "successful";
+
+    if ( direct_inject )
+        inject_type = "direct injection";
+
+    if ( payload_len )
+        PacketTracer::log("%s: %s %s of %s (length %u) in %s direction\n", prefix, status, inject_type, pkt_type, payload_len, direction);
+    else
+        PacketTracer::log("%s: %s %s of %s in %s direction\n", prefix, status, inject_type, pkt_type, direction);
+}
+
+void Active::add_reset_trace_log(EncodeFlags ef, bool direct_inject, bool success, const char* prefix)
+{
+    add_trace_log(ef, direct_inject, success, prefix, "RST packet", 0);
+}
+void Active::add_fin_trace_log(EncodeFlags ef, bool direct_inject, bool success, const char* prefix)
+{
+    add_trace_log(ef, direct_inject, success, prefix, "FIN packet", 0);
+}
+
+void Active::add_unreach_trace_log(EncodeFlags ef, bool direct_inject, bool success, const char* prefix)
+{
+    add_trace_log(ef, direct_inject, success, prefix, "packet unreachable", 0);
+}
+
+void Active::add_payload_trace_log(EncodeFlags ef, bool direct_inject, bool success, const char* prefix, uint32_t payload_len)
+{
+    add_trace_log(ef, direct_inject, success, prefix, "payload packet", payload_len);
+}
 
 void Active::send_reset(Packet* p, EncodeFlags ef)
 {
@@ -236,10 +280,14 @@ void Active::send_reset(Packet* p, EncodeFlags ef)
             if ( ret != DAQ_SUCCESS )
             {
                 active_counts.failed_direct_injects++;
+                if (PacketTracer::is_active())
+                    add_reset_trace_log(ef, true, false, "send_reset");
                 return;
             }
 
             active_counts.direct_injects++;
+            if (PacketTracer::is_active())
+                add_reset_trace_log(ef, true, true, "send_reset");
         }
         else
         {
@@ -252,14 +300,24 @@ void Active::send_reset(Packet* p, EncodeFlags ef)
             if ( !rej )
             {
                 active_counts.failed_injects++;
+                if (PacketTracer::is_active())
+                    add_reset_trace_log(ef, false, false, "send_reset failed to encode");
                 return;
             }
 
             int ret = s_send(p->daq_msg, !(ef & ENC_FLAG_FWD), rej, len);
             if ( ret )
+            {
                 active_counts.failed_injects++;
+                if (PacketTracer::is_active())
+                    add_reset_trace_log(ef, false, false, "send_reset");
+            }
             else
+            {
                 active_counts.injects++;
+                if (PacketTracer::is_active())
+                    add_reset_trace_log(ef, false, true, "send_reset");
+            }
         }
     }
 }
@@ -277,14 +335,24 @@ void Active::send_unreach(Packet* p, UnreachResponse type)
     if ( !rej )
     {
         active_counts.failed_injects++;
+        if (PacketTracer::is_active())
+            add_unreach_trace_log(flags, false, false, "send_unreach failed to encode");
         return;
     }
 
     int ret = s_send(p->daq_msg, 1, rej, len);
     if ( ret )
+    {
         active_counts.failed_injects++;
+        if (PacketTracer::is_active())
+            add_unreach_trace_log(flags, false, false, "send_unreach");
+    }
     else
+    {
         active_counts.injects++;
+        if (PacketTracer::is_active())
+            add_unreach_trace_log(flags, false, true, "send_unreach");
+    }
 }
 
 uint32_t Active::send_data(
@@ -313,10 +381,14 @@ uint32_t Active::send_data(
             if ( ret != DAQ_SUCCESS )
             {
                 active_counts.failed_direct_injects++;
+                if (PacketTracer::is_active())
+                    add_reset_trace_log(tmp_flags, true, false, "send_data to originator");
                 return 0;
             }
 
             active_counts.direct_injects++;
+            if (PacketTracer::is_active())
+                add_reset_trace_log(tmp_flags, true, true, "send_data to originator");
         }
         else
         {
@@ -327,12 +399,24 @@ uint32_t Active::send_data(
             {
                 ret = s_send(p->daq_msg, !(tmp_flags & ENC_FLAG_FWD), seg, plen);
                 if ( ret )
+                {
                     active_counts.failed_injects++;
+                    if (PacketTracer::is_active())
+                        add_reset_trace_log(tmp_flags, false, false, "send_data to originator");
+                }
                 else
+                {
                     active_counts.injects++;
+                    if (PacketTracer::is_active())
+                        add_reset_trace_log(tmp_flags, false, true, "send_data to originator");
+                }
             }
             else
+            {
                 active_counts.failed_injects++;
+                if (PacketTracer::is_active())
+                    add_reset_trace_log(tmp_flags, false, false, "send_data to originator failed to encode");
+            }
         }
     }
     flags |= ENC_FLAG_SEQ;
@@ -357,11 +441,15 @@ uint32_t Active::send_data(
             if ( ret != DAQ_SUCCESS )
             {
                 active_counts.failed_direct_injects++;
+                if (PacketTracer::is_active())
+                    add_payload_trace_log(flags, true, false, "send_data", blen);
                 return 0;
             }
 
             sent = blen;
             active_counts.direct_injects++;
+            if (PacketTracer::is_active())
+                add_payload_trace_log(flags, true, true, "send_data", blen);
         }
         else
         {
@@ -370,6 +458,7 @@ uint32_t Active::send_data(
             if (maxPayload)
             {
                 uint32_t toSend;
+                bool success = true;
                 do
                 {
                     plen = 0;
@@ -381,12 +470,17 @@ uint32_t Active::send_data(
                     if ( !seg )
                     {
                         active_counts.failed_injects++;
+                        if (PacketTracer::is_active())
+                            add_payload_trace_log(flags, false, false, "send_data failed to encode", blen);
                         return sent;
                     }
 
                     ret = s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
                     if ( ret )
+                    {
                         active_counts.failed_injects++;
+                        success = false;
+                    }
                     else
                         active_counts.injects++;
 
@@ -394,6 +488,9 @@ uint32_t Active::send_data(
                     buf += toSend;
                 }
                 while (blen -= toSend);
+
+                if (PacketTracer::is_active())
+                    add_payload_trace_log(flags, false, success, "send_data", sent);
             }
         }
     }
@@ -409,14 +506,24 @@ uint32_t Active::send_data(
         if ( !seg )
         {
             active_counts.failed_injects++;
+            if (PacketTracer::is_active())
+                add_fin_trace_log(flags, false, false, "send_data failed to encode");
             return sent;
         }
 
         ret = s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
         if ( ret )
+        {
             active_counts.failed_injects++;
+            if (PacketTracer::is_active())
+                add_fin_trace_log(flags, false, false, "send_data");
+        }
         else
+        {
             active_counts.injects++;
+            if (PacketTracer::is_active())
+                add_fin_trace_log(flags, false, true, "send_data");
+        }
 
         // Sending a FIN requires that we bump the seq by 1.
         sent++;
@@ -435,10 +542,14 @@ uint32_t Active::send_data(
             if ( ret != DAQ_SUCCESS )
             {
                 active_counts.failed_direct_injects++;
+                if (PacketTracer::is_active())
+                    add_reset_trace_log(flags, true, false, "send_data");
                 return sent;
             }
 
             active_counts.direct_injects++;
+            if (PacketTracer::is_active())
+                add_reset_trace_log(flags, true, true, "send_data");
         }
         else
         {
@@ -449,12 +560,24 @@ uint32_t Active::send_data(
             {
                 ret = s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
                 if ( ret )
+                {
                     active_counts.failed_injects++;
+                    if (PacketTracer::is_active())
+                        add_reset_trace_log(flags, false, false, "send_data");
+                }
                 else
+                {
                     active_counts.injects++;
+                    if (PacketTracer::is_active())
+                        add_reset_trace_log(flags, false, true, "send_data");
+                }
             }
             else
+            {
                 active_counts.failed_injects++;
+                if (PacketTracer::is_active())
+                    add_reset_trace_log(flags, false, false, "send_data failed to encode");
+            }
         }
     }
 
@@ -477,14 +600,24 @@ void Active::inject_data(
     if ( !seg )
     {
         active_counts.failed_injects++;
+        if (PacketTracer::is_active())
+            add_payload_trace_log(flags, false, false, "inject_data failed to encode", blen);
         return;
     }
 
     int ret = s_send(p->daq_msg, !(flags & ENC_FLAG_FWD), seg, plen);
     if ( ret )
+    {
         active_counts.failed_injects++;
+        if (PacketTracer::is_active())
+            add_payload_trace_log(flags, false, false, "inject_data", blen);
+    }
     else
+    {
         active_counts.injects++;
+        if (PacketTracer::is_active())
+            add_payload_trace_log(flags, false, true, "inject_data", blen);
+    }
 }
 
 //--------------------------------------------------------------------

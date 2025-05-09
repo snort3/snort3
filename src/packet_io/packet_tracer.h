@@ -63,16 +63,8 @@ public:
     static SO_PUBLIC void unpause();
     static SO_PUBLIC bool is_paused();
 
-#ifdef _WIN64
     static SO_PUBLIC bool is_active();
     static SO_PUBLIC bool is_daq_activated();
-#else
-    static bool is_active()
-    { return s_pkt_trace ? s_pkt_trace->active : false; }
-
-    static bool is_daq_activated()
-    { return s_pkt_trace ? s_pkt_trace->daq_activated : false; }
-#endif
 
     static SO_PUBLIC TracerMute get_mute();
 

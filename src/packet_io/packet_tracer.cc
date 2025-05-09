@@ -78,13 +78,11 @@ static constexpr int max_buff_size = 2048;
 // static functions
 // -----------------------------------------------------------------------------
 
-#ifdef _WIN64
 bool PacketTracer::is_active()
 { return s_pkt_trace ? s_pkt_trace->active : false; }
 
 bool PacketTracer::is_daq_activated()
 { return s_pkt_trace ? s_pkt_trace->daq_activated : false; }
-#endif
 
 static std::string stringify_tcp_options(const Packet* const pkt)
 {

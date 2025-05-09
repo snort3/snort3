@@ -187,6 +187,11 @@ public:
     const char* get_drop_reason()
     { return drop_reason; }
 
+    static void add_reset_trace_log(EncodeFlags, bool direct_inject, bool success, const char* prefix);
+    static void add_fin_trace_log(EncodeFlags, bool direct_inject, bool success, const char* prefix);
+    static void add_unreach_trace_log(EncodeFlags, bool direct_inject, bool success, const char* prefix);
+    static void add_payload_trace_log(EncodeFlags, bool direct_inject, bool success, const char* prefix, uint32_t payload_len);
+
 private:
     static bool open(const char*);
     static void close();

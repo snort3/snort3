@@ -65,11 +65,17 @@
 #include "utils/dnet_header.h"
 #include "utils/stats.h"
 
+using namespace snort;
+
 THREAD_LOCAL DAQStats daq_stats;
 THREAD_LOCAL bool RuleContext::enabled = false;
 THREAD_LOCAL bool snort::TimeProfilerStats::enabled;
 THREAD_LOCAL snort::PacketTracer* snort::PacketTracer::s_pkt_trace;
 THREAD_LOCAL class FlowControl* flow_con;
+
+void Flow::trust() { }
+void DeferredTrust::finalize(snort::Active&) { }
+SFDAQInstance* SFDAQ::get_local_instance() { return nullptr; }
 
 void Profiler::start() { }
 void Profiler::stop(uint64_t) { }
@@ -161,11 +167,9 @@ const char* SFDAQInstance::get_error() { return nullptr; }
 bool SFDAQInstance::interrupt() { return false; }
 int SFDAQInstance::inject(DAQ_Msg_h, int, const uint8_t*, uint32_t) { return -1; }
 DAQ_RecvStatus SFDAQInstance::receive_messages(unsigned) { return DAQ_RSTAT_ERROR; }
-int SFDAQInstance::ioctl(DAQ_IoctlCmd, void*, size_t) { return -4; }
 void SFDAQ::set_local_instance(SFDAQInstance*) { }
 const char* SFDAQ::verdict_to_string(DAQ_Verdict) { return nullptr; }
 bool SFDAQ::forwarding_packet(const DAQ_PktHdr_t*) { return false; }
-int SFDAQ::inject(DAQ_Msg_h, int, const uint8_t*, uint32_t) { return -1; }
 bool SFDAQ::can_inject() { return false; }
 bool SFDAQ::can_inject_raw() { return false; }
 bool SFDAQ::can_replace() { return false; }
@@ -187,12 +191,9 @@ const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 void SnortConfig::update_thread_reload_id() { }
 void PacketTracer::thread_init() { }
 void PacketTracer::thread_term() { }
-void PacketTracer::log(const char*, ...) { }
 void PacketTracer::dump(Packet*) { }
 void PacketTracer::daq_dump(Packet*) { }
 void PacketTracer::activate(const Packet&) { }
-bool PacketTracer::is_active() { return false; }
-bool PacketTracer::is_daq_activated() { return false; }
 void TraceApi::thread_init(const TraceConfig*) { }
 void TraceApi::thread_term() { }
 void TraceApi::thread_reinit(const TraceConfig*) { }
@@ -201,11 +202,6 @@ void PacketManager::decode(
     Packet*, const DAQ_PktHdr_t*, const uint8_t*, uint32_t, bool, bool) { }
 void PacketManager::encode_update(Packet*) { }
 void PacketManager::thread_term() { }
-const uint8_t* PacketManager::encode_response(TcpResponse, EncodeFlags, const Packet*, uint32_t&,
-    const uint8_t* const, uint32_t) { return nullptr; }
-uint16_t PacketManager::encode_get_max_payload(const Packet*) { return 0; }
-const uint8_t* PacketManager::encode_reject(UnreachResponse, EncodeFlags, const Packet*, uint32_t&)
-{ return nullptr; }
 void FileService::thread_init() { }
 void FileService::thread_term() { }
 void ErrorMessage(const char*,...) { }

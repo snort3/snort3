@@ -55,6 +55,7 @@ const char* AppIdApi::get_application_name(AppId, OdpContext&) { return NULL; }
 void PacketTracer::daq_log(const char*, ...) { }
 uint64_t PacketTracer::get_time() { return 0; }
 THREAD_LOCAL PacketTracer* PacketTracer::s_pkt_trace = nullptr;
+bool PacketTracer::is_daq_activated() { return false; }
 
 // Stubs for packet
 Packet::Packet(bool) {}

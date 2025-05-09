@@ -57,6 +57,7 @@ void PacketTracer::dump_to_daq(Packet*) { }
 void PacketTracer::reset(bool) { }
 void PacketTracer::pause() { }
 void PacketTracer::unpause() { }
+bool PacketTracer::is_active() { return false; }
 
 namespace layer
 {

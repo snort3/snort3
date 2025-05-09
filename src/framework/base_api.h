@@ -38,7 +38,7 @@
 // depends on includes installed in framework/snort_api.h
 // see framework/plugins.h
 
-#define BASE_API_VERSION 21
+#define BASE_API_VERSION 22
 
 // set the reserved field to this to be future proof
 #define API_RESERVED 0
