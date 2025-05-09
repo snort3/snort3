@@ -567,7 +567,6 @@ void TcpReassemblerBase::flush_queued_segments(Flow* flow, bool clear, Packet* p
     }
 }
 
-
 void TcpReassemblerBase::check_first_segment_hole()
 {
     if ( SEQ_LT(seglist.seglist_base_seq, seglist.head->start_seq()) )
@@ -672,5 +671,4 @@ TcpReassemblerIgnore* TcpReassemblerIgnore::get_instance(bool server_tracker)
     else
         return ignore_reassembler_client;
 }
-
 

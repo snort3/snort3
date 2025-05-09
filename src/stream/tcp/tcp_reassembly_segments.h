@@ -56,6 +56,7 @@ public:
     void skip_midstream_pickup_seglist_hole(TcpSegmentDescriptor&);
     bool skip_hole_at_beginning(TcpSegmentNode*);
     void purge_segment_list();
+    void print_stream_state(TcpStreamTracker* talker);
 
     bool is_segment_pending_flush() const;
 

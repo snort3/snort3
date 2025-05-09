@@ -23,6 +23,8 @@
 #include "config.h"
 #endif
 
+#include <sstream>
+
 #include "tcp_reassembly_segments.h"
 
 #include "log/messages.h"
@@ -118,6 +120,27 @@ bool TcpReassemblySegments::segment_within_seglist_window(TcpSegmentDescriptor& 
         return false;
 
     return true;
+}
+
+void TcpReassemblySegments::print_stream_state(TcpStreamTracker* talker)
+{
+    if ( !PacketTracer::is_active() )
+        return;
+
+    std::stringstream ss;
+
+    ss << "Stream State:";
+    ss << " seglist_base_seq: " << seglist_base_seq;
+    ss << ", rcv_next: " << tracker->get_rcv_nxt();
+    ss << ", r_win_base: " << talker->r_win_base;
+    if(head)
+        ss << ", head: " << head->start_seq();
+    if(cur_sseg)
+        ss << ", cur_sseg: " << cur_sseg->start_seq();
+    if(cur_rseg)
+        ss << ", cur_rseg: " << cur_rseg->start_seq();
+    ss << "\n";
+    PacketTracer::log("%s", ss.str().c_str());
 }
 
 void TcpReassemblySegments::queue_reassembly_segment(TcpSegmentDescriptor& tsd)

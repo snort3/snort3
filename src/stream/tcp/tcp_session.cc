@@ -633,6 +633,7 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
             {
                 // FIXIT-M - only alert once per threshold exceeded event
                 tel.set_tcp_event(EVENT_MAX_QUEUED_BYTES_EXCEEDED);
+                listener->seglist.print_stream_state(tsd.get_talker());
                 listener->normalizer.log_drop_reason(tsd, inline_mode, "stream",
                     "stream_tcp: Flow exceeded the configured max byte threshold (" + std::to_string(tcp_config->max_queued_bytes) +
                     "). You may want to adjust the 'max_bytes' parameter in the NAP policy"
@@ -663,6 +664,7 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
             {
                 // FIXIT-M - only alert once per threshold exceeded event
                 tel.set_tcp_event(EVENT_MAX_QUEUED_SEGS_EXCEEDED);
+                listener->seglist.print_stream_state(tsd.get_talker());
                 listener->normalizer.log_drop_reason(tsd, inline_mode, "stream",
                     "stream_tcp: Flow exceeded the configured max segment threshold (" + std::to_string(tcp_config->max_queued_segs) +
                     "). You may want to adjust the 'max_segments' parameter in the NAP policy"
@@ -940,6 +942,9 @@ bool TcpSession::cleanup_session_if_expired(Packet* p)
     // the packet...Insert a packet, or handle state change SYN, FIN, RST, etc.
     if ( Stream::expired_flow(flow, p) )
     {
+        if ( PacketTracer::is_active() and p and p->ptrs.tcph )
+            PacketTracer::log("Stream TCP session expired with session flags 0x%x, flow state %hhu, and seq %u\n",
+                flow->get_session_flags(), static_cast<uint8_t>(flow->flow_state), p->ptrs.tcph->seq());
         /* Session is timed out, if also reset then restart, otherwise clear */
         if ( flow->get_session_flags() & SSNFLAG_RESET )
             clear_session(true, true, true, p);
