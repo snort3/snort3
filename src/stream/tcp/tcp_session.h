@@ -159,6 +159,7 @@ private:
     void set_packet_header_foo(const TcpSegmentDescriptor&);
     void update_session_on_server_packet(TcpSegmentDescriptor&);
     void update_session_on_client_packet(TcpSegmentDescriptor&);
+    bool is_hole_present(TcpStreamTracker*, snort::Packet*);
 
     TcpStateMachine* tsm;
     bool splitter_init = false;

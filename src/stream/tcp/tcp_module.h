@@ -121,6 +121,8 @@ struct TcpStats
     PegCount full_retransmits;
     PegCount flush_on_asymmetric_flow;
     PegCount asymmetric_flows;
+    PegCount max_bytes_exceeded_hole;
+    PegCount max_segs_exceeded_hole;
 };
 
 extern THREAD_LOCAL struct TcpStats tcpStats;
