@@ -499,7 +499,7 @@ unsigned FlowCache::prune_idle(time_t thetime, const Flow* save_me)
     }
 
     if ( PacketTracer::is_active() and pruned )
-        PacketTracer::log("Flow: Pruned %u flows\n", pruned);
+        PacketTracer::log("Flow: Pruned idle %u flows\n", pruned);
 
     return pruned;
 }
@@ -537,7 +537,7 @@ unsigned FlowCache::prune_unis(PktType pkt_type)
     }
 
     if ( PacketTracer::is_active() and pruned )
-        PacketTracer::log("Flow: Pruned %u flows\n", pruned);
+        PacketTracer::log("Flow: Pruned uni %u flows\n", pruned);
 
     return pruned;
 }
@@ -550,6 +550,7 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
     assert(max_cap > 0);
 
     unsigned pruned = 0;
+    unsigned allowed = 0;
 
     // Initially skip offloads but if that doesn't work, the hash table is iterated from the
     // beginning again. Prune offloads at that point.
@@ -558,11 +559,19 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
 
     assert(total_lru_count < 8 * sizeof(checked_lrus_mask));
 
+    uint8_t lru_idx = allowlist_lru_index;
+    uint8_t last_lru_idx = total_lru_count;
+
+    if ( is_allowlist_on_excess() )
+    {
+        max_cap += hash_table->get_node_count(allowlist_lru_index);
+        lru_idx = first_proto;
+        last_lru_idx = max_protocols;
+    }
+
     {
         PacketTracerSuspend pt_susp;
         unsigned blocks = 0;
-        // EXCESS pruning will start from the allowlist LRU
-        uint8_t lru_idx = allowlist_lru_index;
 
         while ( true )
         {
@@ -571,7 +580,7 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
                 ignore_offloads == 0 or all_lrus_checked(checked_lrus_mask) )
                 break;
 
-            for (; lru_idx < total_lru_count; ++lru_idx)
+            for (; lru_idx < last_lru_idx; ++lru_idx)
             {
                 num_nodes = hash_table->get_num_nodes();
                 if ( num_nodes <= max_cap or num_nodes <= blocks )
@@ -599,6 +608,12 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
                     // Ensure LRU list remains sorted by time on touch
                     hash_table->lru_touch(lru_idx);
                 }
+                else if ( allowlist_on_excess(flow) )
+                {
+                    pruned++;
+                    max_cap++;
+                    allowed++;
+                }
                 else
                 {
                     flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
@@ -609,7 +624,7 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
                     --ignore_offloads;
             }
 
-            if ( lru_idx >= total_lru_count )
+            if ( lru_idx >= last_lru_idx )
                 lru_idx = first_proto;
         }
 
@@ -619,9 +634,13 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
         }
     }
 
-    if ( PacketTracer::is_active() and pruned )
-        PacketTracer::log("Flow: Pruned %u flows\n", pruned);
-
+    if ( PacketTracer::is_active() )
+    {
+        if ( allowed )
+            PacketTracer::log("Flow: Moved %u flows to allowlist\n", allowed);
+        else if ( pruned )
+            PacketTracer::log("Flow: Pruned excess %u flows\n", pruned);
+    }
     return pruned;
 }
 
@@ -636,13 +655,12 @@ bool FlowCache::prune_one(PruneReason reason, bool do_cleanup, uint8_t type)
         return false;
 
     flow->ssn_state.session_flags |= SSNFLAG_PRUNED;
-
-    if ( type != allowlist_lru_index )
-        return release(flow, reason, do_cleanup);
-    else if ( reason == PruneReason::MEMCAP or reason == PruneReason::EXCESS )
-        return release(flow, reason, do_cleanup);
-
-    return false;
+    
+    bool flow_handled;
+    if ( handle_allowlist_pruning(flow, reason, type, flow_handled) )
+        return flow_handled;
+    
+    return release(flow, reason, do_cleanup);
 }
 
 unsigned FlowCache::prune_multiple(PruneReason reason, bool do_cleanup)
@@ -875,6 +893,48 @@ unsigned FlowCache::purge()
     return retired;
 }
 
+bool FlowCache::allowlist_on_excess(snort::Flow *f)
+{
+    if ( is_allowlist_on_excess() )
+    {
+        Stream::disable_reassembly(f);
+        f->free_flow_data();
+        f->trust();
+        f->last_verdict = DAQ_VERDICT_WHITELIST;
+        if ( move_to_allowlist(f) )
+        {
+            excess_to_allowlist_count++;
+            f->flags.allowed_on_excess = true;
+            return true;
+        }
+    }
+    else if ( PacketTracer::is_active() and config.move_to_allowlist_on_excess and !config.allowlist_cache )
+        PacketTracer::log("Flow: Warning! move_to_allowlist_on_excess is enabled with no allowlist cache\n");
+    return false;
+}
+
+bool FlowCache::handle_allowlist_pruning(snort::Flow* flow, PruneReason reason, uint8_t type, bool& flow_handled)
+{
+    flow_handled = true;
+
+    if ( type == allowlist_lru_index )
+    {
+        if ( reason == PruneReason::EXCESS )
+            return is_allowlist_on_excess();
+        else if ( reason != PruneReason::MEMCAP )
+        {
+            flow_handled = false;
+            return true;
+        }
+        return false;
+    }
+
+    else if ( reason == PruneReason::EXCESS )
+        return allowlist_on_excess(flow);
+
+    return false;
+}
+
 std::string FlowCache::timeout_to_str(time_t t)
 {
     std::stringstream out;
@@ -894,7 +954,6 @@ std::string FlowCache::timeout_to_str(time_t t)
         out << t << "s";
     return out.str();
 }
-
 
 bool FlowCache::is_ip_match(const SfIp& flow_sfip, const SfIp& filter_sfip, const SfIp& filter_subnet_sfip) const
 {
@@ -1001,7 +1060,12 @@ void FlowCache::output_flow(std::fstream& stream, const Flow& flow, const struct
         timeout_to_str(abs((int)(flow.expire_time - now.tv_sec))) :
         timeout_to_str(abs(remaining_time));
     out << t;
-    stream << out.str() << proto.str() << (flow.flags.in_allowlist ? " (allowlist)" : "") << std::endl;
+    std::string allow_s;
+    if ( flow.flags.allowed_on_excess )
+        allow_s = " (allowlist on excess)";
+    else if ( flow.flags.in_allowlist )
+        allow_s = " (allowlist)";
+    stream << out.str() << proto.str() << allow_s << std::endl;
 }
 
 bool FlowCache::dump_flows(std::fstream& stream, unsigned count, const FilterFlowCriteria& ffc, bool first, uint8_t code) const

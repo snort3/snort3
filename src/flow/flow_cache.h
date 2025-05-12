@@ -188,6 +188,8 @@ public:
     size_t uni_ip_flows_size() const;
     size_t flows_size() const;
     PegCount get_lru_flow_count(uint8_t lru_idx) const;
+    PegCount get_excess_to_allowlist_count() const
+    { return excess_to_allowlist_count; }
 #ifdef UNIT_TEST
     size_t count_flows_in_lru(uint8_t lru_index) const;
 #endif
@@ -199,9 +201,15 @@ private:
     void remove(snort::Flow*);
     void retire(snort::Flow*);
     unsigned prune_unis(PktType);
+    bool allowlist_on_excess(snort::Flow*);
+    bool handle_allowlist_pruning(snort::Flow*, PruneReason, uint8_t, bool&);
+
     unsigned delete_active_flows(unsigned mode, unsigned num_to_delete, unsigned &deleted);
     static std::string timeout_to_str(time_t);
     bool is_ip_match(const snort::SfIp& flow_ip, const snort::SfIp& filter_ip, const snort::SfIp& subnet) const;
+
+    inline bool is_allowlist_on_excess() const
+    { return config.allowlist_cache and config.move_to_allowlist_on_excess; }
 
     inline bool is_lru_checked(uint64_t checked_lrus_mask, uint64_t lru_mask)
     { return (checked_lrus_mask & lru_mask) != 0; }
@@ -234,6 +242,7 @@ private:
     PruneStats prune_stats;
     FlowDeleteStats delete_stats;
     uint64_t empty_lru_mask;
+    PegCount excess_to_allowlist_count = 0;
 
 };
 #endif

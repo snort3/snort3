@@ -100,12 +100,15 @@ Flow::~Flow() = default;
 void Flow::init(PktType) { }
 void Flow::flush(bool) { }
 void Flow::reset(bool) { }
+void Flow::trust() { }
 void Flow::free_flow_data() { }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
 void Flow::set_mpls_layer_per_dir(Packet*) { }
 void packet_gettimeofday(struct timeval* ) { }
 SO_PUBLIC void ts_print(const struct timeval*, char*, bool) { }
+
+void Stream::disable_reassembly(Flow*) { }
 
 time_t packet_time() { return 0; }
 
@@ -1137,6 +1140,321 @@ TEST(flow_cache_lrus, count_flows_in_lru_test)
     // Check the allow listed flows
     CHECK_EQUAL(3, cache->count_flows_in_lru(allowlist_lru_index));  // 3 allowlist flows
 
+}
+
+TEST_GROUP(flow_cache_allowlist_pruning) { };
+
+TEST(flow_cache_allowlist_pruning, allowlist_on_excess_true)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 3;
+    fcg.allowlist_cache = true;
+    fcg.move_to_allowlist_on_excess = true;
+
+    DummyCache* cache = new DummyCache(fcg);
+
+    // Add flows until we trigger excess pruning
+    for (int i = 0; i < 4; i++) {
+        FlowKey flow_key;
+        flow_key.port_l = 1000 + i;
+        flow_key.pkt_type = PktType::TCP;
+        Flow* flow = cache->allocate(&flow_key);
+        cache->unlink_uni(flow);
+    }
+
+    CHECK_EQUAL(4, cache->get_count());
+    CHECK(cache->get_lru_flow_count(allowlist_lru_index) > 0);
+    CHECK(cache->get_excess_to_allowlist_count() > 0);
+
+    cache->purge();
+    delete cache;
+}
+
+TEST(flow_cache_allowlist_pruning, allowlist_on_excess_false_no_allowlist)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 3;
+    fcg.allowlist_cache = false; // Disable allowlist_cache
+    fcg.move_to_allowlist_on_excess = true;
+
+    DummyCache* cache = new DummyCache(fcg);
+
+    for (int i = 0; i < 4; i++) {
+        FlowKey flow_key;
+        flow_key.port_l = 1000 + i;
+        flow_key.pkt_type = PktType::TCP;
+        Flow* flow = cache->allocate(&flow_key);
+        cache->unlink_uni(flow);
+    }
+    
+    // Should prune normally, no allowlist flows
+    CHECK_EQUAL(3, cache->get_count());
+    CHECK_EQUAL(0, cache->get_lru_flow_count(allowlist_lru_index));
+    CHECK_EQUAL(0, cache->get_excess_to_allowlist_count());
+
+    cache->purge();
+    delete cache;
+}
+
+// Test that allowlist_on_excess behavior when move_to_allowlist_on_excess is disabled
+TEST(flow_cache_allowlist_pruning, allowlist_on_excess_false_no_move_on_excess)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 3;
+    fcg.allowlist_cache = true;
+    fcg.move_to_allowlist_on_excess = false; // Disable move_to_allowlist_on_excess
+
+    DummyCache* cache = new DummyCache(fcg);
+
+    // Add flows until we trigger excess pruning
+    for (int i = 0; i < 4; i++) {
+        FlowKey flow_key;
+        flow_key.port_l = 1000 + i;
+        flow_key.pkt_type = PktType::TCP;
+        Flow* flow = cache->allocate(&flow_key);
+        cache->unlink_uni(flow);
+    }
+    
+    // Should prune normally, no allowlist flows from excess
+    CHECK_EQUAL(3, cache->get_count());
+    CHECK_EQUAL(0, cache->get_lru_flow_count(allowlist_lru_index));
+    CHECK_EQUAL(0, cache->get_excess_to_allowlist_count());
+
+    cache->purge();
+    delete cache;
+}
+
+// Test how prune_one handles allowed flows with EXCESS reason
+TEST(flow_cache_allowlist_pruning, prune_one_excess_in_allowlist)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 10;
+    fcg.allowlist_cache = true;
+    fcg.move_to_allowlist_on_excess = true;
+
+    DummyCache* cache = new DummyCache(fcg);
+    // Create a test flow
+    FlowKey flow_key;
+    flow_key.port_l = 1234;
+    flow_key.pkt_type = PktType::TCP;
+    Flow* flow = cache->allocate(&flow_key);
+
+    // Set the flow as allowed
+    CHECK(cache->move_to_allowlist(flow));
+    CHECK(flow->flags.in_allowlist == 1);
+
+    // move_to_allowlist_on_excess is true, so Prune Reason::EXCESS on allowed flow should not succeed
+    CHECK(cache->prune_one(PruneReason::EXCESS, true, allowlist_lru_index) == false);
+
+    // cache still have the allowed flow
+    CHECK_EQUAL(1, cache->get_lru_flow_count(allowlist_lru_index));
+    CHECK_EQUAL(1, cache->get_count()); 
+
+    cache->purge();
+    delete cache;
+}
+
+// Test how prune_one handles allowed flows with timeout reasons
+TEST(flow_cache_allowlist_pruning, prune_one_timeout_in_allowlist)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 10;
+    fcg.allowlist_cache = true;
+
+    DummyCache* cache = new DummyCache(fcg);
+
+    FlowKey flow_key;
+    flow_key.port_l = 1234;
+    flow_key.pkt_type = PktType::TCP;
+    Flow* flow = cache->allocate(&flow_key);
+
+    CHECK(cache->move_to_allowlist(flow));
+    CHECK(flow->flags.in_allowlist == 1);
+
+    CHECK_FALSE(cache->prune_one(PruneReason::IDLE_PROTOCOL_TIMEOUT, true, allowlist_lru_index));
+
+    CHECK_EQUAL(1, cache->get_count());
+
+    cache->purge();
+    delete cache;
+}
+
+// Test how prune_one handles allowed flows with MEMCAP reason
+TEST(flow_cache_allowlist_pruning, prune_one_memcap_in_allowlist)
+{
+    FlowCacheConfig fcg;
+    fcg.allowlist_cache = true;
+    fcg.move_to_allowlist_on_excess = true;
+    fcg.max_flows = 10;
+
+    DummyCache* cache = new DummyCache(fcg);
+
+    for (int i = 0; i < 11; i++)
+    {
+        FlowKey flow_key;
+        flow_key.port_l = 1000 + i;
+        flow_key.pkt_type = PktType::TCP;
+        Flow* flow = cache->allocate(&flow_key);
+        cache->unlink_uni(flow);
+        if (i < 5)
+            CHECK(cache->move_to_allowlist(flow));
+    }
+
+    CHECK_EQUAL(11, cache->get_count());
+    CHECK_EQUAL(0, cache->get_excess_to_allowlist_count());
+    CHECK_EQUAL(5, cache->get_lru_flow_count(allowlist_lru_index));
+
+    for (int i = 0; i < 5; i++)
+    {
+        FlowKey flow_key;
+        flow_key.port_l = 3000 + i;
+        flow_key.pkt_type = PktType::TCP;
+        Flow* flow = cache->allocate(&flow_key);
+        cache->unlink_uni(flow);
+    }
+
+    // max flow cap is increased to 16 = max_flows + allowlist flows
+    // 5 allowed + 1 excess flow
+    CHECK_EQUAL(16, cache->get_count());
+    CHECK_EQUAL(1, cache->get_excess_to_allowlist_count());
+    CHECK_EQUAL(6, cache->get_lru_flow_count(allowlist_lru_index));
+    // Attempt to prune with MEMCAP reason, it should succeed for allowed flows
+    CHECK(cache->prune_one(PruneReason::MEMCAP, true, allowlist_lru_index));
+
+    // one allowlist Flow should be gone due to memcap
+    CHECK_EQUAL(15, cache->get_count());
+    CHECK_EQUAL(5, cache->get_lru_flow_count(allowlist_lru_index));
+
+    cache->purge();
+    delete cache;
+}
+
+// Test prune_one for non-allowed flows with EXCESS reason and allowlist enabled
+TEST(flow_cache_allowlist_pruning, prune_one_excess_regular_flow_moves_to_allowlist)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 10;
+    fcg.allowlist_cache = true;
+    fcg.move_to_allowlist_on_excess = true;
+
+    DummyCache* cache = new DummyCache(fcg);
+
+    FlowKey flow_key;
+    flow_key.port_l = 1234;
+    flow_key.pkt_type = PktType::TCP;
+    Flow* flow = cache->allocate(&flow_key);
+    
+    FlowKey flow_key2;
+    flow_key2.port_l = 5678;
+    flow_key2.pkt_type = PktType::TCP;
+    flow = cache->allocate(&flow_key2);
+
+    // Try to prune with EXCESS reason
+    CHECK(cache->prune_one(PruneReason::EXCESS, true, to_utype(PktType::TCP)));
+
+    // Check no flows were removed from the cache
+    // and one flow was moved to allowlist
+    CHECK_EQUAL(2, cache->get_count());
+    CHECK_EQUAL(1, cache->get_lru_flow_count(allowlist_lru_index));
+    CHECK_EQUAL(1, cache->get_lru_flow_count(to_utype(PktType::TCP)));
+
+    // The remaining flow should be moved to allowlist
+    flow = cache->find(&flow_key);
+    CHECK(flow != nullptr);
+    CHECK(flow->flags.in_allowlist == 1);
+
+    cache->purge();
+    delete cache;
+}
+
+TEST(flow_cache_allowlist_pruning, prune_multiple_allowlist_pruning)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 10;
+    fcg.prune_flows = 5;
+    fcg.allowlist_cache = true;
+
+    DummyCache* cache = new DummyCache(fcg);
+
+    for (int i = 0; i < 5; i++)
+    {
+        FlowKey flow_key;
+        flow_key.port_l = 1000 + i;
+        flow_key.pkt_type = PktType::TCP;
+        Flow* flow = cache->allocate(&flow_key);
+        cache->unlink_uni(flow);
+    }
+
+    for (int i = 0; i < 5; i++)
+    {
+        FlowKey flow_key;
+        flow_key.port_l = 2000 + i;
+        flow_key.pkt_type = PktType::UDP;
+        Flow* flow = cache->allocate(&flow_key);
+        CHECK(cache->move_to_allowlist(flow));
+    }
+
+    CHECK_EQUAL(10, cache->get_count());
+    CHECK_EQUAL(5, cache->get_lru_flow_count(to_utype(PktType::TCP)));
+    CHECK_EQUAL(5, cache->get_lru_flow_count(allowlist_lru_index));
+
+    // Using MEMCAP reason should first prune from allowlist LRU
+    CHECK_EQUAL(5, cache->prune_multiple(PruneReason::MEMCAP, true));
+
+    // Check that we now have only TCP flows, allowlist was pruned first
+    CHECK_EQUAL(5, cache->get_count());
+    CHECK_EQUAL(5, cache->get_lru_flow_count(to_utype(PktType::TCP)));
+    CHECK_EQUAL(0, cache->get_lru_flow_count(allowlist_lru_index));
+
+    cache->purge();
+    delete cache;
+}
+
+TEST(flow_cache_allowlist_pruning, prune_excess_with_prioritization)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 8;  // Setting a small max to force pruning
+    fcg.allowlist_cache = true;
+    fcg.move_to_allowlist_on_excess = true;
+
+    DummyCache* cache = new DummyCache(fcg);
+
+    for (int i = 0; i < 5; i++)
+    {
+        FlowKey flow_key;
+        flow_key.port_l = 1000 + i;
+        flow_key.pkt_type = PktType::TCP;
+        Flow* flow = cache->allocate(&flow_key);
+        flow->last_data_seen = i;
+        cache->unlink_uni(flow);
+    }
+
+    for (int i = 0; i < 5; i++)
+    {
+        FlowKey flow_key;
+        flow_key.port_l = 2000 + i;
+        flow_key.pkt_type = PktType::UDP;
+        Flow* flow = cache->allocate(&flow_key);
+        cache->unlink_uni(flow);
+    }
+
+    // move_to_allowlist_on_excess enabled, should not be able to prune
+    CHECK_EQUAL(10, cache->get_count()); // Max flows is 10
+
+    FlowKey flow_key;
+    flow_key.port_l = 3000;
+    flow_key.pkt_type = PktType::ICMP;
+    Flow* flow = cache->allocate(&flow_key);
+    cache->unlink_uni(flow);
+
+    CHECK_EQUAL(11, cache->get_count());
+
+    // Check if any flows moved to allowlist during pruning
+    CHECK(cache->get_lru_flow_count(allowlist_lru_index) == 3);
+    CHECK(cache->get_excess_to_allowlist_count() == 3);
+    
+    cache->purge();
+    delete cache;
 }
 
 int main(int argc, char** argv)

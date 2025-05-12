@@ -131,6 +131,9 @@ bool FlowControl::move_to_allowlist(Flow* f)
 PegCount FlowControl::get_allowlist_flow_count() const
 { return cache->get_lru_flow_count(allowlist_lru_index); }
 
+PegCount FlowControl::get_excess_to_allowlist_count() const
+{ return cache->get_excess_to_allowlist_count(); }
+
 void FlowControl::release_flow(Flow* flow, PruneReason reason)
 { cache->release(flow, reason); }
 

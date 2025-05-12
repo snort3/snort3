@@ -36,6 +36,7 @@ struct FlowCacheConfig
     FlowTypeConfig proto[to_utype(PktType::MAX)];
     unsigned prune_flows = 0;
     bool allowlist_cache = false;
+    bool move_to_allowlist_on_excess = false;
 };
 
 #endif

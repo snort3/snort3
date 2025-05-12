@@ -104,6 +104,7 @@ struct BaseStats
      PegCount file_memcap_prunes;
      PegCount pdu_memcap_prunes;
      PegCount allowlist_memcap_prunes;
+     PegCount excess_to_allowlist;
 
      // Keep the NOW stats at the bottom as it requires special sum_stats logic
      PegCount allowlist_flows;

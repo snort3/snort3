@@ -96,6 +96,7 @@ public:
     { return num_flows; }
 
     PegCount get_allowlist_flow_count() const;
+    PegCount get_excess_to_allowlist_count() const;
     PegCount get_total_prunes() const;
     PegCount get_prunes(PruneReason) const;
     PegCount get_proto_prune_count(PruneReason, PktType) const;

@@ -72,6 +72,9 @@ static const Parameter allowlist_cache_params[] =
     { "enable", Parameter::PT_BOOL, nullptr, "false",
       "enable allowlist cache" },
 
+    { "move_on_excess", Parameter::PT_BOOL, nullptr, "false",
+      "move flows to allowlist instead of removing when max flows limit reached" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -421,6 +424,9 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
     else if ( !strcmp(fqn, "stream.allowlist_cache.enable") )
         config.flow_cache_cfg.allowlist_cache = v.get_bool();
 
+    else if ( !strcmp(fqn, "stream.allowlist_cache.move_on_excess") )
+        config.flow_cache_cfg.move_to_allowlist_on_excess = v.get_bool();
+
     else if ( !strcmp(fqn, "stream.file_cache.idle_timeout") )
         config.flow_cache_cfg.proto[to_utype(PktType::FILE)].nominal_timeout = v.get_uint32();
 
@@ -626,6 +632,7 @@ void StreamModuleConfig::show() const
     {
         std::string tmp;
         tmp += "{ enable = " + (flow_cache_cfg.allowlist_cache ? std::string("true") : std::string("false"));
+        tmp += ", move_on_excess = " + (flow_cache_cfg.move_to_allowlist_on_excess ? std::string("true") : std::string("false"));
         tmp += " }";
         ConfigLogger::log_value("allowlist_cache", tmp.c_str());
     }

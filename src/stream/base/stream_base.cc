@@ -97,9 +97,10 @@ const PegInfo base_pegs[] =
     { CountType::SUM, "file_memcap_prunes", "number of FILE flows pruned due to memcap" },
     { CountType::SUM, "pdu_memcap_prunes", "number of PDU flows pruned due to memcap" },
     { CountType::SUM, "allowlist_memcap_prunes", "number of allowlist flows pruned due to memcap" },
+    { CountType::SUM, "excess_to_allowlist", "number of flows moved to the allowlist due to excess" },
 
     // Keep the NOW stats at the bottom as it requires special sum_stats logic
-    { CountType::NOW, "allowlist_flows", "number of flows moved to the allow list" },
+    { CountType::NOW, "allowlist_flows", "number of flows moved to the allowlist" },
     { CountType::NOW, "current_flows", "current number of flows in cache" },
     { CountType::NOW, "uni_flows", "number of uni flows in cache" },
     { CountType::NOW, "uni_ip_flows", "number of uni ip flows in cache" },
@@ -142,6 +143,7 @@ void base_prep()
     stream_base_stats.file_memcap_prunes = flow_con->get_proto_prune_count(PruneReason::MEMCAP, PktType::FILE);
     stream_base_stats.pdu_memcap_prunes = flow_con->get_proto_prune_count(PruneReason::MEMCAP, PktType::PDU);
     stream_base_stats.allowlist_memcap_prunes = flow_con->get_proto_prune_count(PruneReason::MEMCAP, static_cast<PktType>(allowlist_lru_index));
+    stream_base_stats.excess_to_allowlist = flow_con->get_excess_to_allowlist_count();
 
     stream_base_stats.allowlist_flows = flow_con->get_allowlist_flow_count();
     stream_base_stats.current_flows = flow_con->get_num_flows();

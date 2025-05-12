@@ -529,6 +529,7 @@ public:  // FIXIT-M privatize if possible
         bool binder_action_allow : 1;
         bool binder_action_block : 1;
         bool in_allowlist : 1; // Set if the flow is in the allowlist
+        bool allowed_on_excess : 1; // Set if the flow is allowed on excess
     } flags = {};
 
     FlowState flow_state = FlowState::SETUP;
