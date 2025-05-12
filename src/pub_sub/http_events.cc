@@ -47,6 +47,12 @@ const uint8_t* HttpEvent::get_header(unsigned id, uint64_t sub_id, int32_t& leng
     }
 }
 
+// Returns all HTTP headers plus cookies.
+const uint8_t* HttpEvent::get_all_raw_headers(int32_t& length)
+{
+    return get_header(HttpEnums::HTTP_BUFFER_RAW_HEADER, 0, length);
+}
+
 const uint8_t* HttpEvent::get_content_type(int32_t& length)
 {
     return get_header(HttpEnums::HTTP_BUFFER_HEADER,
@@ -115,6 +121,11 @@ const uint8_t* HttpEvent::get_referer(int32_t& length)
         length);
 }
 
+const uint8_t*  HttpEvent::get_response_phrase(int32_t &length)
+{
+    return get_header(HttpEnums::HTTP_BUFFER_STAT_MSG, 0, length);
+}
+
 int32_t HttpEvent::get_response_code()
 {
     return http_msg_header->get_status_code_num();
@@ -162,6 +173,11 @@ const uint8_t* HttpEvent::get_x_working_with(int32_t& length)
 {
     return get_header(HttpEnums::HTTP_BUFFER_HEADER,
         HttpEnums::HEAD_X_WORKING_WITH, length);
+}
+
+const uint8_t* HttpEvent::get_method(int32_t& length)
+{
+    return get_header(HttpEnums::HTTP_BUFFER_METHOD, 0, length);
 }
 
 bool HttpEvent::contains_webdav_method()

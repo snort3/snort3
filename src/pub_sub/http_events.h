@@ -37,12 +37,14 @@ public:
     HttpEvent(HttpMsgHeader* http_msg_header_, bool httpx, int64_t stream_id) :
         http_msg_header(http_msg_header_), is_httpx(httpx), httpx_stream_id(stream_id) { }
 
+    const uint8_t* get_all_raw_headers(int32_t &length); // Returns all HTTP headers plus cookies.
     const uint8_t* get_content_type(int32_t &length);
     const uint8_t* get_cookie(int32_t &length);
     const uint8_t* get_authority(int32_t &length);
     const uint8_t* get_uri_host(int32_t &length);
     const uint8_t* get_uri_query(int32_t &length);
     const uint8_t* get_location(int32_t &length);
+    const uint8_t* get_method(int32_t &length);
     const uint8_t* get_referer(int32_t &length);
     const uint8_t* get_server(int32_t &length);
     const uint8_t* get_trueip_addr(int32_t& length);
@@ -50,6 +52,7 @@ public:
     const uint8_t* get_user_agent(int32_t &length);
     const uint8_t* get_via(int32_t &length);
     const uint8_t* get_x_working_with(int32_t &length);
+    const uint8_t* get_response_phrase(int32_t &length);
     int32_t get_response_code();
     bool contains_webdav_method();
     bool get_is_httpx() const;

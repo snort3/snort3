@@ -49,8 +49,13 @@ void Field::set(const Field& input)
 }
 
 const Field Field::FIELD_NULL { STAT_NO_SOURCE };
-const Field& HttpMsgSection::get_classic_buffer(unsigned, uint64_t, uint64_t)
-{ return Field::FIELD_NULL; }
+const Field& HttpMsgSection::get_classic_buffer(unsigned buffer_type, uint64_t, uint64_t)
+{
+    mock().actualCall("get_classic_buffer").withParameter("buffer_type", buffer_type);
+    Field *out = (Field*)mock().getData("output").getObjectPointer();
+    return (*out);
+}
+
 const Field& HttpMsgHeader::get_true_ip_addr()
 {
     Field *out = (Field*)mock().getData("output").getObjectPointer();
@@ -110,6 +115,55 @@ TEST(pub_sub_http_event_test, true_ip_addr)
     header_start = event.get_trueip_addr(header_length);
     CHECK(header_length == 7);
     CHECK(memcmp(header_start, "1.1.1.1", 7) == 0);
+    mock().checkExpectations();
+}
+
+TEST(pub_sub_http_event_test, get_method)
+{
+    const uint8_t* header_start;
+    int32_t header_length;
+
+    mock().expectOneCall("get_classic_buffer").withParameter("buffer_type", HttpEnums::HTTP_BUFFER_METHOD);
+    Field input(7, (const uint8_t*) "CONNECT");
+    mock().setDataObject("output", "Field", &input);
+    HttpEvent event(nullptr, false, 0);
+    header_start = event.get_method(header_length);
+    CHECK(7 == header_length);
+    CHECK(memcmp(header_start, "CONNECT", 7) == 0);
+    mock().checkExpectations();
+}
+
+TEST(pub_sub_http_event_test, get_response_phrase)
+{
+    const uint8_t* header_start;
+    int32_t header_length;
+
+    mock().expectOneCall("get_classic_buffer").withParameter("buffer_type", HttpEnums::HTTP_BUFFER_STAT_MSG);
+
+    Field input(7, (const uint8_t*) "CONNECT");
+    mock().setDataObject("output", "Field", &input);
+    HttpEvent event(nullptr, false, 0);
+    header_start = event.get_response_phrase(header_length);
+    CHECK(7 == header_length);
+    CHECK(memcmp(header_start, "CONNECT", 7) == 0);
+    mock().checkExpectations();
+}
+
+TEST(pub_sub_http_event_test, get_all_raw_headers)
+{
+    const char* headers = "Content-Type: application/pdf\n"
+        "Content-Length: 20000\n";
+    int32_t header_length = strlen(headers);
+    const uint8_t* header_start;
+    int32_t discovered_length;
+
+    mock().expectOneCall("get_classic_buffer").withParameter("buffer_type", HttpEnums::HTTP_BUFFER_RAW_HEADER);
+    Field input(header_length, (const uint8_t*) headers);
+    mock().setDataObject("output", "Field", &input);
+    HttpEvent event(nullptr, false, 0);
+    header_start = event.get_all_raw_headers(discovered_length);
+    CHECK(discovered_length == header_length);
+    CHECK(memcmp(header_start, headers, header_length) == 0);
     mock().checkExpectations();
 }
 
