@@ -158,6 +158,7 @@ void SFDAQInstance::reload() { }
 bool SFDAQInstance::start() { return false; }
 bool SFDAQInstance::stop() { return false; }
 const char* SFDAQInstance::get_error() { return nullptr; }
+const char* SFDAQInstance::get_input_spec() const { return nullptr; }
 bool SFDAQInstance::interrupt() { return false; }
 int SFDAQInstance::inject(DAQ_Msg_h, int, const uint8_t*, uint32_t) { return -1; }
 DAQ_RecvStatus SFDAQInstance::receive_messages(unsigned) { return DAQ_RSTAT_ERROR; }

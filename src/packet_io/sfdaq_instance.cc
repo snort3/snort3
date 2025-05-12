@@ -79,19 +79,20 @@ bool SFDAQInstance::init(DAQ_Config_h daqcfg, const std::string& bpf_string)
         daq_config_set_instance_id(daqcfg, instance_id);
     if ((rval = daq_instance_instantiate(daqcfg, &instance, buf, sizeof(buf))) != DAQ_SUCCESS)
     {
-        ErrorMessage("Couldn't construct a DAQ instance: %s (%d)\n", buf, rval);
+        ErrorMessage("Couldn't construct a DAQ instance (%s): %s (%d)\n",
+            input_spec.c_str(), buf, rval);
         return false;
     }
 
     if (!DAQ_ValidateInstance(instance))
-        FatalError("DAQ configuration incompatible with intended operation.\n");
+        FatalError("DAQ configuration incompatible with intended operation, DAQ instance (%s).\n", input_spec.c_str());
 
     if (!bpf_string.empty())
     {
         rval = daq_instance_set_filter(instance, bpf_string.c_str());
         if (rval != DAQ_SUCCESS)
-            FatalError("Couldn't set DAQ instance BPF filter to '%s': %s (%d)\n",
-                bpf_string.c_str(), daq_instance_get_error(instance), rval);
+            FatalError("Couldn't set DAQ instance (%s) BPF filter to '%s': %s (%d)\n",
+                input_spec.c_str(), bpf_string.c_str(), daq_instance_get_error(instance), rval);
     }
 
     return true;
@@ -158,7 +159,8 @@ bool SFDAQInstance::start()
     int rval = daq_instance_start(instance);
     if (rval != DAQ_SUCCESS)
     {
-        ErrorMessage("Couldn't start DAQ instance: %s (%d)\n", daq_instance_get_error(instance), rval);
+        ErrorMessage("Couldn't start DAQ instance (%s): %s (%d)\n",
+            input_spec.c_str(), daq_instance_get_error(instance), rval);
         return false;
     }
 
@@ -166,7 +168,8 @@ bool SFDAQInstance::start()
     rval = daq_instance_get_msg_pool_info(instance, &mpool_info);
     if (rval != DAQ_SUCCESS)
     {
-        ErrorMessage("Couldn't query DAQ message pool info: %s (%d)\n", daq_instance_get_error(instance), rval);
+        ErrorMessage("Couldn't query DAQ message pool info (%s): %s (%d)\n",
+            input_spec.c_str(), daq_instance_get_error(instance), rval);
         stop();
         return false;
     }
@@ -175,8 +178,10 @@ bool SFDAQInstance::start()
     assert(pool_size == pool_available);
     if (SnortConfig::log_verbose())
     {
-        LogMessage("Instance %d daq pool size: %d\n", get_instance_id(), pool_size);
-        LogMessage("Instance %d daq batch size: %d\n", get_instance_id(), batch_size);
+        LogMessage("DAQ instance (%s) %d daq pool size: %d\n",
+            input_spec.c_str(), get_instance_id(), pool_size);
+        LogMessage("DAQ instance (%s) %d daq batch size: %d\n",
+            input_spec.c_str(), get_instance_id(), batch_size);
     }
     dlt = daq_instance_get_datalink_type(instance);
     get_tunnel_capabilities();
@@ -269,7 +274,8 @@ bool SFDAQInstance::stop()
     int rval = daq_instance_stop(instance);
 
     if (rval != DAQ_SUCCESS)
-        LogMessage("Couldn't stop DAQ instance: %s (%d)\n", daq_instance_get_error(instance), rval);
+        LogMessage("Couldn't stop DAQ instance (%s): %s (%d)\n",
+            input_spec.c_str(), daq_instance_get_error(instance), rval);
 
     return (rval == DAQ_SUCCESS);
 }
@@ -282,7 +288,8 @@ int SFDAQInstance::inject(DAQ_Msg_h msg, int rev, const uint8_t* buf, uint32_t l
     int rval = daq_instance_inject_relative(instance, msg, buf, len, rev);
 #ifdef DEBUG_MSGS
     if (rval != DAQ_SUCCESS)
-        LogMessage("Couldn't inject on DAQ instance: %s (%d)\n", daq_instance_get_error(instance), rval);
+        LogMessage("Couldn't inject on DAQ instance (%s): %s (%d)\n",
+            input_spec.c_str(), daq_instance_get_error(instance), rval);
 #endif
     return rval;
 }
@@ -298,7 +305,8 @@ const DAQ_Stats_t* SFDAQInstance::get_stats()
     {
         int rval = daq_instance_get_stats(instance, &daq_instance_stats);
         if (rval != DAQ_SUCCESS)
-            LogMessage("Couldn't query DAQ stats: %s (%d)\n", daq_instance_get_error(instance), rval);
+            LogMessage("Couldn't query DAQ instance (%s) stats: %s (%d)\n",
+                input_spec.c_str(), daq_instance_get_error(instance), rval);
     }
 
     return &daq_instance_stats;

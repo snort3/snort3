@@ -967,7 +967,8 @@ void Analyzer::analyze()
                 if (rstat == DAQ_RSTAT_NOBUF)
                     ErrorMessage("Exhausted the DAQ message pool!\n");
                 else if (rstat == DAQ_RSTAT_ERROR)
-                    ErrorMessage("Error receiving message from the DAQ instance: %s\n", daq_instance->get_error());
+                    ErrorMessage("Error receiving message from the DAQ instance (%s): %s\n",
+                        daq_instance->get_input_spec(), daq_instance->get_error());
                 // Implicitly handled:
                 // DAQ_RSTAT_EOF - File readback completed, job well done; let's get out of here.
                 // DAQ_RSTAT_INVALID - This really shouldn't happen.
