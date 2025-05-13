@@ -170,10 +170,11 @@ DumpFlows::DumpFlows(unsigned count, ControlConn* conn, int resume)
 
 bool DumpFlows::open_files(const std::string& base_name)
 {
+    const auto id_offset = SnortConfig::get_conf()->id_offset;
     dump_stream.resize(ThreadConfig::get_instance_max());
     for (unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i)
     {
-        std::string file_name = base_name + std::to_string(i + 1);
+        std::string file_name = base_name + std::to_string(i + id_offset);
         dump_stream[i].open(file_name, std::fstream::out | std::fstream::trunc);
         if (0 != (dump_stream[i].rdstate() & std::fstream::failbit))
         {
