@@ -10,6 +10,7 @@ set (PUB_SUB_INCLUDES
     detection_events.h
     dhcp_events.h
     domain_fronting.h
+    eof_event.h
     eve_process_event.h
     expect_events.h
     external_event_ids.h
@@ -42,6 +43,7 @@ add_library( pub_sub OBJECT
     http_events.cc
     detection_events.cc
     dns_events.cc
+    eof_event.cc
     http_request_body_event.cc
     http_body_event.cc
     http_transaction_end_event.cc

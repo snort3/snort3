@@ -26,6 +26,7 @@
 #include "detection/detection_engine.h"
 #include "flow/flow_key.h"
 #include "profiler/profiler.h"
+#include "pub_sub/eof_event.h"
 #include "pub_sub/intrinsic_event_ids.h"
 #include "sfip/sf_ip.h"
 #include "stream/tcp/tcp_session.h"
@@ -125,10 +126,22 @@ static const char* get_proto(const DataEvent*, const Flow* f)
     return (iter != pkttype_to_protocol.end()) ? iter->second.c_str() : "";
 }
 
+static const char* get_history(const DataEvent* event, const Flow*)
+{
+    return ((const EofEvent*)event)->get_history().c_str();
+}
+
+static const char* get_state(const DataEvent* event, const Flow*)
+{
+    return ((const EofEvent*)event)->get_state().c_str();
+}
+
 static const map<string, ExtractorEvent::BufGetFn> sub_buf_getters =
 {
     {"proto", get_proto},
-    {"service", get_service}
+    {"service", get_service},
+    {"history", get_history},
+    {"conn_state", get_state}
 };
 
 THREAD_LOCAL const snort::Connector::ID* ConnExtractor::log_id = nullptr;

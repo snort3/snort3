@@ -97,7 +97,7 @@ include::pop_imap.txt[]
 
 include::port_scan.txt[]
 
-=== Protocol Data Logging
+=== Advanced Logging
 
 include::extractor.txt[]
 

@@ -139,6 +139,14 @@ public:
     uint8_t held_packet_dir = SSN_DIR_NONE;
     uint8_t ecn = 0;
 
+    struct TcpSessionStats
+    {
+         using TcpEvents = std::bitset<TcpStreamTracker::TcpEvent::TCP_MAX_TALKER_EVENT + 1>;
+         TcpEvents client_events;
+         TcpEvents server_events;
+    };
+    TcpSessionStats tcp_ssn_stats;
+
 private:
     int process_tcp_packet(TcpSegmentDescriptor&, const snort::Packet*);
     void set_os_policy();

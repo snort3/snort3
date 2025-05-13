@@ -36,6 +36,7 @@
 #include "packet_io/packet_tracer.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
+#include "pub_sub/eof_event.h"
 #include "pub_sub/intrinsic_event_ids.h"
 #include "sfip/sf_ip.h"
 #include "time/clock_defs.h"
@@ -47,8 +48,9 @@ extern THREAD_LOCAL class FlowControl* flow_con;
 
 Flow::~Flow()
 {
-    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_END, nullptr, this);
-
+    EofEvent eof_event(this);
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_END, eof_event, this);
+  
     free_flow_data();
     delete session;
 

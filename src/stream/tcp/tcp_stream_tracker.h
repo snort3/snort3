@@ -72,18 +72,19 @@ public:
     enum TcpEvent : uint8_t
     {
         TCP_SYN_SENT_EVENT,
-        TCP_SYN_RECV_EVENT,
         TCP_SYN_ACK_SENT_EVENT,
-        TCP_SYN_ACK_RECV_EVENT,
         TCP_ACK_SENT_EVENT,
-        TCP_ACK_RECV_EVENT,
         TCP_DATA_SEG_SENT_EVENT,
-        TCP_DATA_SEG_RECV_EVENT,
         TCP_FIN_SENT_EVENT,
-        TCP_FIN_RECV_EVENT,
         TCP_RST_SENT_EVENT,
-        TCP_RST_RECV_EVENT,
         TCP_NO_FLAGS_EVENT,
+        TCP_MAX_TALKER_EVENT = TCP_NO_FLAGS_EVENT,
+        TCP_SYN_RECV_EVENT,
+        TCP_SYN_ACK_RECV_EVENT,
+        TCP_ACK_RECV_EVENT,
+        TCP_DATA_SEG_RECV_EVENT,
+        TCP_FIN_RECV_EVENT,
+        TCP_RST_RECV_EVENT,
         TCP_MAX_EVENTS
     };
 

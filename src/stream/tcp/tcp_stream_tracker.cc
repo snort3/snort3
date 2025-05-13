@@ -53,7 +53,7 @@ const std::list<HeldPacket>::iterator TcpStreamTracker::null_iterator { };
 const char* tcp_state_names[] =
 {
     "TCP_LISTEN", "TCP_SYN_SENT", "TCP_SYN_RECV",
-    "TCP_ESTABLISHED",
+    "TCP_ESTABLISHED", "TCP_MID_STREAM_SENT", "TCP_MID_STREAM_RECV",
     "TCP_FIN_WAIT1", "TCP_FIN_WAIT2", "TCP_CLOSE_WAIT", "TCP_CLOSING",
     "TCP_LAST_ACK", "TCP_TIME_WAIT", "TCP_CLOSED",
     "TCP_STATE_NONE"
@@ -171,6 +171,9 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescr
             tcpStats.no_flags_set++;
             tcp_event = TCP_NO_FLAGS_EVENT;
         }
+
+        (client_tracker) ? session->tcp_ssn_stats.client_events.set(tcp_event) :
+            session->tcp_ssn_stats.server_events.set(tcp_event);
     }
     else
     {

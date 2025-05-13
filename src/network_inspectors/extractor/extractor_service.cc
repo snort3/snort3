@@ -372,7 +372,9 @@ const ServiceBlueprint ConnExtractorService::blueprint =
         "resp_pkts",
         "duration",
         "orig_bytes",
-        "resp_bytes"
+        "resp_bytes",
+        "history",
+        "conn_state"
     },
 };
 
