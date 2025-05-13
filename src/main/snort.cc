@@ -139,6 +139,8 @@ void Snort::init(int argc, char** argv)
     snort_cmd_line_conf = parse_cmd_line(argc, argv);
     SnortConfig::set_conf(snort_cmd_line_conf);
 
+    init_process_id();
+
     LogMessage("--------------------------------------------------\n");
 #ifdef BUILD
     LogMessage("%s  Snort++ %s-%s\n", get_prompt(), VERSION, BUILD);
@@ -410,14 +412,17 @@ bool Snort::is_reloading()
 bool Snort::has_dropped_privileges()
 { return privileges_dropped; }
 
-unsigned Snort::get_process_id()
+void Snort::init_process_id()
 {
     const SnortConfig* sc = SnortConfig::get_conf();
     if (!sc->id_offset)
-        return 1;
+        process_id = 1;
     else
-        return std::ceil(sc->id_offset / (float) ThreadConfig::get_instance_max());
+        process_id = std::ceil(sc->id_offset / (float) ThreadConfig::get_instance_max());
 }
+
+unsigned Snort::get_process_id()
+{ return process_id; }
 
 void Snort::setup(int argc, char* argv[])
 {
@@ -658,28 +663,33 @@ TEST_CASE("Check process ID handling", "[snort_process_id]")
     // Mock first process
     snort::SnortConfig* sc = const_cast<snort::SnortConfig*>(snort::SnortConfig::get_conf());
     snort::ThreadConfig::set_instance_max(4);
+    Snort::init_process_id();
     sc->id_offset = 0;
     unsigned pid1 = Snort::get_process_id();
     CHECK(pid1 == 1);
 
     // Mock second process
     sc->id_offset = 5;
+    Snort::init_process_id();
     unsigned pid2 = Snort::get_process_id();
     CHECK(pid2 == 2);
 
     // Mock third process
     sc->id_offset = 9;
+    Snort::init_process_id();
     unsigned pid3 = Snort::get_process_id();
     CHECK(pid3 == 3);
 
     // Mock fourth process
     sc->id_offset = 13;
+    Snort::init_process_id();
     unsigned pid4 = Snort::get_process_id();
     CHECK(pid4 == 4);
 
     // Restore prior configs
     snort::ThreadConfig::set_instance_max(1);
     sc->id_offset = 0;
+    Snort::init_process_id();
 }
 
 #endif

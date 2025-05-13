@@ -51,6 +51,7 @@ public:
     static bool is_exiting() { return already_exiting; }
     static bool is_reloading();
 
+    static void init_process_id();
     SO_PUBLIC static unsigned get_process_id();
 
 private:
@@ -64,6 +65,7 @@ private:
     static bool reloading;
     static bool privileges_dropped;
     static bool already_exiting;
+    inline static unsigned process_id = 0;
 };
 }
 
