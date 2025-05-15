@@ -140,6 +140,7 @@ struct IP6Hdr
         case IpProtocol::MPLS_IP:
         case IpProtocol::GRE:
         case IpProtocol::MOBILITY_IPV6:
+        case IpProtocol::ESP:
             return true;
         default:
             break;
