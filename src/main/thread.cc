@@ -154,13 +154,13 @@ const char* get_instance_file(std::string& file, const char* name)
     if ( sc->id_subdir )
     {
         file += '/';
-        struct stat s;
 
-        if ( stat(file.c_str(), &s) )
-            // FIXIT-L getting random 0750 or 0700 (umask not thread local)?
-            if ( mkdir(file.c_str(), 0770) == -1 )
-                ParseError("Failed to create directory %s - %s",
-                    file.c_str(),  get_error(errno));
+        // Explicitly set mode to avoid umask issues (fixes random 0750/0700)
+        mode_t old_mask = umask(0);
+        if ( mkdir(file.c_str(), 0770) == -1 and errno != EEXIST )
+            ParseError("Failed to create directory %s - %s",
+                file.c_str(), get_error(errno));
+        umask(old_mask);
     }
     else if ( sep )
         file += '_';

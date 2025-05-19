@@ -159,7 +159,7 @@ void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker
 }
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
-   const struct in6_addr* ip, const char* user, AppId appid, uint32_t event_time)
+   const struct in6_addr* ip, const char* user, AppId appid, time_t event_time)
 {
     log(type, subtype, ip, nullptr, ht, p, event_time, 0,
         nullptr, nullptr, nullptr, nullptr, nullptr, user, appid);
@@ -174,32 +174,32 @@ void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
     const struct in6_addr* src_ip, const uint8_t* src_mac, const FpFingerprint* fp,
-    uint32_t event_time, const char* device_info, bool jail_broken)
+    time_t event_time, const char* device_info, bool jail_broken)
 {
     log(type, subtype, src_ip, src_mac, ht, p, event_time, 0, nullptr, nullptr,
         fp, nullptr, nullptr, nullptr, APP_ID_NONE, device_info, jail_broken);
 }
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
-    const struct in6_addr* src_ip, const uint8_t* src_mac, uint32_t event_time)
+    const struct in6_addr* src_ip, const uint8_t* src_mac, time_t event_time)
 {
     log(type, subtype, src_ip, src_mac, ht, p, event_time);
 }
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
-    const struct in6_addr* src_ip, const uint8_t* src_mac, const HostMac* hm, uint32_t event_time)
+    const struct in6_addr* src_ip, const uint8_t* src_mac, const HostMac* hm, time_t event_time)
 {
     log(type, subtype, src_ip, src_mac, ht, p, event_time, 0, hm);
 }
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker* ht,
-    uint16_t proto, const uint8_t* src_mac, const struct in6_addr* src_ip, uint32_t event_time)
+    uint16_t proto, const uint8_t* src_mac, const struct in6_addr* src_ip, time_t event_time)
 {
     log(type, subtype, src_ip, src_mac, ht, p, event_time, proto);
 }
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, const uint8_t* src_mac,
-    const struct in6_addr* src_ip, RnaTracker* ht, uint32_t event_time, void* cond_var)
+    const struct in6_addr* src_ip, RnaTracker* ht, time_t event_time, void* cond_var)
 {
     log(type, subtype, src_ip, src_mac, ht, p, event_time, 0,
         nullptr, nullptr, nullptr, cond_var);
@@ -215,7 +215,7 @@ void RnaLogger::log(uint16_t type, uint16_t subtype, const snort::Packet* p, Rna
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
     const struct in6_addr* src_ip, const uint8_t* src_mac, const FpFingerprint* fp,
-    const vector<const char*>* cpeos, uint32_t event_time)
+    const vector<const char*>* cpeos, time_t event_time)
 {
     log(type, subtype, src_ip, src_mac, ht, p, event_time, 0, nullptr, nullptr, fp,
         nullptr, nullptr, nullptr, APP_ID_NONE, nullptr, false, 0, 0, nullptr,
@@ -223,7 +223,7 @@ void RnaLogger::log(uint16_t type, uint16_t subtype, const snort::Packet* p, Rna
 }
 
 bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_ip,
-    const uint8_t* src_mac, RnaTracker* ht, const Packet* p, uint32_t event_time,
+    const uint8_t* src_mac, RnaTracker* ht, const Packet* p, time_t event_time,
     uint16_t proto, const HostMac* hm, const HostApplication* ha,
     const FpFingerprint* fp, void* cond_var, const HostClient* hc,
     const char* user, AppId appid, const char* di, bool jb, uint32_t lease,
@@ -244,7 +244,9 @@ bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_
 
     if ( event_time )
     {
-        rle.event_time = event_time;
+        //coverity[y2k38_safety]
+        rle.event_time = (uint32_t)event_time;
+        //coverity[y2k38_safety]
         (*ht)->update_last_event(event_time);
     }
 

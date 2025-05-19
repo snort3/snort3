@@ -47,7 +47,10 @@ class HostTrackerMac
 {
 public:
     HostTrackerMac()
-    { last_seen = (uint32_t) snort::packet_time(); }
+    {
+        //coverity[y2k38_safety]
+        last_seen = (uint32_t) snort::packet_time(); 
+    }
 
     bool add_network_proto(const uint16_t type);
     void update_last_seen(uint32_t p_last_seen);

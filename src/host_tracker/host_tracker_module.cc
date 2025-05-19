@@ -67,8 +67,10 @@ bool HostTrackerModule::set(const char*, Value& v, SnortConfig*)
         v.get_addr(addr);
 
     else if ( v.is("port") )
+    {
+        // coverity[missing_lock] : lock not needed, as this is called at start or reload time
         app.port = v.get_uint16();
-
+    }
     else if ( v.is("proto") )
     {
         const IpProtocol mask[] =

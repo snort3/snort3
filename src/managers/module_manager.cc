@@ -547,7 +547,9 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
     }
     else
     {
-        assert(p);
+        if (!p)
+            return false;
+
         if ( (!idx and p->type == Parameter::PT_LIST) or
              (idx and p->type != Parameter::PT_LIST) )
         {

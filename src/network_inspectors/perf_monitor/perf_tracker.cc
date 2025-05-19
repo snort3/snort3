@@ -24,9 +24,10 @@
 
 #include "perf_tracker.h"
 
-#include <sys/stat.h>
-
 #include <climits>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -87,36 +88,44 @@ void PerfTracker::close()
         }
     }
 }
-
 bool PerfTracker::open(bool append)
 {
     if (fname.length())
     {
-        // FIXIT-L this should be deleted; was added as 1-time workaround to
-        // get around the borked perms due to a bug that has been fixed
-        struct stat pt;
-        mode_t mode =  S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP|S_IROTH|S_IWOTH;
+        mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
         const char* file_name = fname.c_str();
         bool existed = false;
 
-        // Check file before change permission
-        if (stat(file_name, &pt) == 0)
+        // Open file securely and create if it doesn't exist
+        int flags = O_NOFOLLOW | O_CREAT | (append ? O_APPEND : O_TRUNC) | O_RDWR;
+        mode_t old_umask = umask(022); // Ensure file is world-readable
+        int fd = ::open(file_name, flags, mode);
+        umask(old_umask);
+
+        if (fd < 0)
+        {
+            ErrorMessage("perfmonitor: Cannot open stats file '%s'.\n", file_name);
+            return false;
+        }
+
+        struct stat pt;
+        if (fstat(fd, &pt) == 0)
         {
             existed = true;
 
-            // Only change permission for file owned by root
-            if ((0 == pt.st_uid) || (0 == pt.st_gid))
+            // Only change ownership if file is owned by root
+            if (pt.st_uid == 0 || pt.st_gid == 0)
             {
-                if (chmod(file_name, mode) != 0)
+                const SnortConfig* sc = SnortConfig::get_conf();
+
+                if (fchmod(fd, mode) != 0)
                 {
                     WarningMessage("perfmonitor: Unable to change mode of "
                         "stats file '%s' to mode:%u: %s.\n",
                         file_name, mode, get_error(errno));
                 }
 
-                const SnortConfig* sc = SnortConfig::get_conf();
-
-                if (chown(file_name, sc->get_uid(), sc->get_gid()) != 0)
+                if (fchown(fd, sc->get_uid(), sc->get_gid()) != 0)
                 {
                     WarningMessage("perfmonitor: Unable to change permissions of "
                         "stats file '%s' to user:%d and group:%d: %s.\n",
@@ -125,16 +134,12 @@ bool PerfTracker::open(bool append)
             }
         }
 
-        // This file needs to be readable by everyone
-        mode_t old_umask = umask(022);
-        // Append to the existing file if just starting up, otherwise we've
-        // rotated so start a new one.
-        fh = fopen(file_name, append ? "a" : "w");
-        umask(old_umask);
-
+        // Convert file descriptor to FILE*
+        fh = fdopen(fd, append ? "a" : "w");
         if (!fh)
         {
             ErrorMessage("perfmonitor: Cannot open stats file '%s'.\n", file_name);
+            ::close(fd);
             return false;
         }
 

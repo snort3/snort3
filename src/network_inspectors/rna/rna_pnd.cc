@@ -241,7 +241,6 @@ void RnaPnd::analyze_netflow_host(NetFlowEvent* nfe)
     if ( ht->add_xport_proto(ptype) )
         logger.log(RNA_EVENT_NEW, NEW_XPORT_PROTOCOL, p, &ht, ptype, src_mac, src_ip_ptr,
             packet_time());
-
     if ( !new_host )
         generate_change_host_update(&ht, p, &src_ip, src_mac, packet_time());
 }
@@ -269,6 +268,7 @@ void RnaPnd::analyze_netflow_service(NetFlowEvent* nfe)
     ht->update_last_seen();
 
     bool is_new = false;
+    //coverity[y2k38_safety]
     auto ha = ht->add_service(port, proto, (uint32_t) packet_time(), is_new, service);
 
     ht->update_service_info(ha, nullptr, nullptr, conf->max_host_service_info);
@@ -358,7 +358,6 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
     if ( new_mac and !new_host )
     {
         HostMac hm;
-
         logger.log(RNA_EVENT_CHANGE, CHANGE_MAC_ADD, p, &ht, src_ip_ptr, src_mac,
             ht->get_hostmac(src_mac, hm) ? &hm : nullptr, packet_time());
     }
@@ -612,7 +611,7 @@ void RnaPnd::generate_change_host_update_eth(HostTrackerMac* mt, const Packet* p
     {
         logger.log(RNA_EVENT_CHANGE, CHANGE_HOST_UPDATE, p, src_mac, nullptr,
             &rt, last_seen, (void*) &timestamp);
-
+        //coverity[y2k38_safety]
         mt->update_last_event(sec);
     }
 
@@ -701,7 +700,7 @@ void RnaPnd::discover_network_ethernet(const Packet* p)
     if ( !p->is_eth() )
         return;
 
-    RnaTracker rt = shared_ptr<snort::HostTracker>(new HostTracker());
+    RnaTracker rt = std::make_shared<snort::HostTracker>();
 
     if ( layer::get_arp_layer(p) )
         retval = discover_network_arp(p, &rt);
@@ -841,7 +840,7 @@ int RnaPnd::discover_network_arp(const Packet* p, RnaTracker* ht_ref)
     return 0;
 }
 
-int RnaPnd::discover_network_bpdu(const Packet* p, const uint8_t* data, RnaTracker ht_ref)
+int RnaPnd::discover_network_bpdu(const Packet* p, const uint8_t* data, RnaTracker& ht_ref)
 {
     const uint8_t* dst_mac = layer::get_eth_layer(p)->ether_dst;
 
@@ -858,7 +857,7 @@ int RnaPnd::discover_network_bpdu(const Packet* p, const uint8_t* data, RnaTrack
     return discover_switch(p, ht_ref);
 }
 
-int RnaPnd::discover_switch(const Packet* p, RnaTracker ht_ref)
+int RnaPnd::discover_switch(const Packet* p, RnaTracker& ht_ref)
 {
     bool new_host_mac = false;
     MacKey mk(layer::get_eth_layer(p)->ether_src);

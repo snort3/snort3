@@ -202,6 +202,7 @@ bool RnaAppDiscovery::discover_service(const Packet* p, DiscoveryFilter& filter,
     bool is_new = false;
 
     // Work on a local copy instead of reference as we release lock during event generations
+    //coverity[y2k38_safety]
     auto ha = htp->add_service(port, proto, (uint32_t) packet_time(), is_new, service);
     if ( is_new )
     {
@@ -311,6 +312,7 @@ void RnaAppDiscovery::update_service_info(const Packet* p, DiscoveryFilter& filt
         return;
 
     // Work on a local copy for eventing purpose
+    //coverity[y2k38_safety]
     ha.last_seen = (uint32_t) packet_time();
 
     if ( proto == IpProtocol::TCP )
@@ -339,6 +341,7 @@ void RnaAppDiscovery::discover_banner(const Packet* p, DiscoveryFilter& filter, 
         return;
 
     HostApplication ha(p->flow->server_port, proto, service, false);
+    //coverity[y2k38_safety]
     ha.last_seen = (uint32_t) packet_time();
     logger.log(RNA_EVENT_CHANGE, CHANGE_BANNER_UPDATE, p, &rt,
         (const struct in6_addr*) p->flow->server_ip.get_ip6_ptr(),
@@ -392,12 +395,13 @@ void RnaAppDiscovery::discover_user(const Packet* p, DiscoveryFilter& filter, RN
     if ( !rt )
         return;
 
-    if ( rt->update_service_user(p->flow->server_port, proto, username,
-        (uint32_t) packet_time(), conf ? conf->max_host_services : 0, login_success) )
+    //coverity[y2k38_safety]
+    if ( rt->update_service_user(p->flow->server_port, proto, username, (uint32_t) packet_time(),
+            conf ? conf->max_host_services : 0, login_success) )
     {
         logger.log(RUA_EVENT, login_success ? CHANGE_USER_LOGIN : FAILED_USER_LOGIN,
             p, &rt, (const struct in6_addr*) p->ptrs.ip_api.get_dst()->get_ip6_ptr(),
-            username, service, (uint32_t) packet_time());
+            username, service, packet_time());
     }
 }
 
@@ -415,7 +419,7 @@ void RnaAppDiscovery::discover_netbios_name(const snort::Packet* p, DiscoveryFil
         const uint8_t* src_mac = layer::get_eth_layer(p)->ether_src;
 
         logger.log(RNA_EVENT_CHANGE, CHANGE_NETBIOS_NAME, src_ip_ptr, src_mac,
-            &rt, p, (uint32_t) packet_time(), 0, nullptr, nullptr, nullptr, nullptr, nullptr,
+            &rt, p, packet_time(), 0, nullptr, nullptr, nullptr, nullptr, nullptr,
             nullptr, APP_ID_NONE, nullptr, false, 0, 0, nullptr, nb_name);
     }
 }

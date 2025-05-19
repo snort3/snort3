@@ -48,6 +48,7 @@ const uint8_t snort::zero_mac[MAC_SIZE] = {0, 0, 0, 0, 0, 0};
 
 HostTracker::HostTracker()
 {
+    //coverity[y2k38_safety]
     last_seen = nat_count_start = (uint32_t) packet_time();
     visibility = host_cache.get_valid_id(0);
 }
@@ -55,6 +56,7 @@ HostTracker::HostTracker()
 void HostTracker::update_last_seen()
 {
     lock_guard<mutex> lck(host_tracker_lock);
+    //coverity[y2k38_safety]
     last_seen = (uint32_t) packet_time();
 }
 

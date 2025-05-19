@@ -493,8 +493,7 @@ int UserSession::process(Packet* p)
     if ( !ut.splitter or p->ptrs.decode_flags & DECODE_SOF )
         start(p, flow);
 
-    //coverity[forward_null]
-    if ( p->data && p->dsize )
+    if ( p->data && p->dsize && ut.splitter )
         ut.add_data(p);
 
     if ( p->ptrs.decode_flags & DECODE_EOF )
