@@ -31,15 +31,15 @@ void Http2CookieHeaderBuffer::append_value(const uint8_t* start, int32_t length)
     // quoting (RFC 6265) for specifics to cookies.
     if ( !buffer.empty() )
     {
-        buffer += (const uint8_t*)"; ";
+        buffer += "; ";
     }
     else
     {
         // let's initialize the buffer to reduce dynamic allocation for std::basic_string<uint8_t>;
         buffer.reserve(Http2CookieHeaderBuffer::initial_buffer_size);
-        buffer = (const uint8_t*)"cookie: ";
+        buffer = "cookie: ";
     }
-    buffer.append(start, length);
+    buffer.append((const char*)start, length);
 }
 
 bool Http2CookieHeaderBuffer::append_header_in_decoded_headers(uint8_t* decoded_header_buffer,
@@ -48,10 +48,10 @@ bool Http2CookieHeaderBuffer::append_header_in_decoded_headers(uint8_t* decoded_
 {
     if ( !buffer.empty() )
     {
-        buffer += (const uint8_t*)"\r\n";
+        buffer += "\r\n";
     }
-    const u8string& in = buffer;
-    const uint32_t in_length = in.length();
+    const std::string& in = buffer;
+    const uint32_t in_length = in.size();
 
     bytes_written = 0;
 
