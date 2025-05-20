@@ -309,7 +309,7 @@ ACShowSnortCPU::~ACShowSnortCPU()
 
     for (const auto& cu : cpu_usage) 
     {
-        log_message("%-3d \t%-6d \t%.1f%% \t%.1f%% \t%.1f%%\n",
+        LogRespond(ctrlcon, "%-3d \t%-6d \t%.1f%% \t%.1f%% \t%.1f%%\n",
             instance, ThreadConfig::get_instance_tid(instance), cu.cpu_usage_30s,
             cu.cpu_usage_120s, cu.cpu_usage_300s);
 
@@ -320,7 +320,7 @@ ACShowSnortCPU::~ACShowSnortCPU()
     }
 
     if (instance)
-        log_message("\nSummary \t%.1f%% \t%.1f%% \t%.1f%%\n",
+        LogRespond(ctrlcon, "\nSummary \t%.1f%% \t%.1f%% \t%.1f%%\n",
             cpu_usage_30s/instance, cpu_usage_120s/instance,
             cpu_usage_300s/instance);
 }
