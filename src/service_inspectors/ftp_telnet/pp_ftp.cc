@@ -999,6 +999,9 @@ int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode)
             if (iRet == FTPP_ALERT)
                 DetectionEngine::queue_event(GID_FTP, FTP_EVASIVE_TELNET_CMD);
 
+            else if (iRet == FTPP_AYT_FOUND)
+                DetectionEngine::queue_event(GID_FTP, FTP_TELNET_CMD);
+
             return iRet;
         }
 

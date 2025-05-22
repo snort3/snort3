@@ -96,6 +96,11 @@ StreamSplitter::Status TelnetSplitter::scan(
             {
                 if ( *read_ptr == (unsigned char)TNC_SB )
                     state = TELNET_IAC_SB;
+                else if ( *read_ptr == (unsigned char)TNC_AYT )
+                {
+                    state = TELNET_NONE;
+                    fp_ptr = read_ptr;
+                }
                 else if ( *read_ptr != (unsigned char)TNC_IAC )
                     state = TELNET_NONE;
                 break;

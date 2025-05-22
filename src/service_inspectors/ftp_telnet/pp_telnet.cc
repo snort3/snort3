@@ -229,6 +229,8 @@ int normalize_telnet(
                         return FTPP_ALERT;
                     }
                 }
+                else if (on_ftp_channel && p->dsize == 2)
+                    return FTPP_AYT_FOUND;
             /* Fall through */
             case TNC_BRK:
             case TNC_DM:

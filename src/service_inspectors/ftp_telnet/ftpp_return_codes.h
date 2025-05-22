@@ -53,6 +53,7 @@
 #define FTPP_PORT_ATTACK        9
 
 #define FTPP_INVALID_SESSION    10
+#define FTPP_AYT_FOUND          11
 
 #define FTPP_OR_FOUND           100
 #define FTPP_OPT_END_FOUND      101
