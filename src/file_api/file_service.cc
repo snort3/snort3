@@ -41,7 +41,7 @@
 
 using namespace snort;
 
-bool FileService::file_type_id_enabled = false;
+std::atomic<bool> FileService::file_type_id_enabled(false);
 bool FileService::file_signature_enabled = false;
 bool FileService::file_capture_enabled = false;
 bool FileService::file_processing_initiated = false;
@@ -127,7 +127,7 @@ void FileService::thread_term()
 
 void FileService::enable_file_type()
 {
-    file_type_id_enabled = true;
+    file_type_id_enabled.store(true, std::memory_order_relaxed);
 }
 
 void FileService::enable_file_signature()
@@ -144,7 +144,7 @@ void FileService::enable_file_capture()
 
 bool FileService::is_file_service_enabled()
 {
-    return (file_type_id_enabled or file_signature_enabled);
+    return (file_type_id_enabled.load() or file_signature_enabled);
 }
 
 /* Get maximal file depth based on configuration
@@ -170,7 +170,7 @@ void FileService::set_max_file_depth(const SnortConfig* sc)
     if (!file_config)
         return;
 
-    if (file_type_id_enabled)
+    if (file_type_id_enabled.load())
     {
         file_config->file_depth = file_config->file_type_depth;
     }

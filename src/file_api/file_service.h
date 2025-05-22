@@ -55,7 +55,7 @@ public:
     static void enable_file_type();
     static void enable_file_signature();
     static void enable_file_capture();
-    static bool is_file_type_id_enabled() { return file_type_id_enabled; }
+    static bool is_file_type_id_enabled() { return file_type_id_enabled.load(); }
     static bool is_file_signature_enabled() { return file_signature_enabled; }
     static bool is_file_capture_enabled() { return file_capture_enabled; }
     static bool is_file_service_enabled();
@@ -66,7 +66,7 @@ public:
     static DecodeConfig decode_conf;
 
 private:
-    static bool file_type_id_enabled;
+    static std::atomic<bool> file_type_id_enabled;
     static bool file_signature_enabled;
     static bool file_capture_enabled;
     static bool file_processing_initiated;
