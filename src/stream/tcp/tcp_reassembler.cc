@@ -567,6 +567,7 @@ void TcpReassemblerBase::flush_queued_segments(Flow* flow, bool clear, Packet* p
     }
 }
 
+
 void TcpReassemblerBase::check_first_segment_hole()
 {
     if ( SEQ_LT(seglist.seglist_base_seq, seglist.head->start_seq()) )
@@ -593,11 +594,6 @@ uint32_t TcpReassemblerBase::perform_partial_flush(Packet* p)
         paf.paf_jump(flushed);
         tcpStats.partial_flushes++;
         tcpStats.partial_flush_bytes += flushed;
-        if ( seglist.seg_count )
-        {
-            purge_to_seq(seglist.head->start_seq() + flushed);
-            tracker.r_win_base = seglist.seglist_base_seq;
-        }
     }
 
     return flushed;
@@ -671,4 +667,5 @@ TcpReassemblerIgnore* TcpReassemblerIgnore::get_instance(bool server_tracker)
     else
         return ignore_reassembler_client;
 }
+
 
