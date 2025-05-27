@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.8.0.0 2025-05-09 10:27:45 EDT TST
+Revision 3.8.1.0 2025-05-26 18:17:32 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -72,7 +72,7 @@ Table of Contents
     5.15. Performance Monitor
     5.16. POP and IMAP
     5.17. Port Scan
-    5.18. Protocol Data Logging
+    5.18. Advanced Logging
     5.19. Sensitive Data Filtering
     5.20. SMTP
     5.21. Telnet
@@ -5825,7 +5825,7 @@ require the least tuning. The low sensitivity level does not catch
 filtered scans, since these are more prone to false positives.
 
 
-5.18. Protocol Data Logging
+5.18. Advanced Logging
 
 --------------
 
@@ -6023,6 +6023,40 @@ For TCP orig_bytes and resp_bytes are calculated using first seen
 sequence number and next expected sequence number. These are reset
 during TCP flow restart. For this case only bytes seen following the
 restart will be reported.
+
+  * conn_state - records the connection state, which varies depending
+    on the protocol (UDP, TCP, or others):
+
+UDP Connection States:
+
+  * CLT_SRV_UDP_SEEN: Packets were seen from both the client and
+    server.
+  * CLT_UDP_SEEN: Only client packets were observed.
+  * SRV_UDP_SEEN: Only server packets were observed.
+
+TCP Connection States:
+
+The TCP connection state tracks both client and server states, each
+prefixed with CLT_ (for the client) and SRV_ (for the server). These
+states follow the TCP state machine as defined by the RFC, with the
+addition of TCP_MID_STREAM_SENT and TCP_MID_STREAM_REC to handle
+mid-stream traffic and TCP_STATE_NONE.
+
+OTH (Other Traffic):
+
+The OTH state is used for all non-UDP and non-TCP traffic, as well as
+for error cases.
+
+  * history - a string that tracks the connection’s history. It uses
+    letters to represent events, with uppercase letters denoting
+    client-side events and lowercase letters for server-side events.
+    Each letter appears only once for each direction, regardless of
+    how many times the event occurs.
+
+UDP Events: d: Packet with payload.
+
+TCP Events: s: SYN, h: SYN-ACK, a: Pure ACK or PUSH, d: Packet with
+payload, f: FIN, r: Reset.
 
 Fields supported for weird and notice logs:
 

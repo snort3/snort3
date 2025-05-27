@@ -1,3 +1,27 @@
+2025-05-26: 3.8.1.0
+
+* analyzer: print DAQ input specification next to its message
+* build: set CMake minimal version to 3.5
+* extractor: support conn.log history field
+* file_api: introduced atomicity for is_file_service_enabled
+* flow: add id_offset to filenames created by stream.dump_flows()
+* flow: add option to move excess flows to allowlist
+* flow: always count stale packets, only drop if that is enabled by config, set default value for drop_stale_packets to false (disabled)
+* flow: implement a per flow check of the packet timestamp and drop packets if the timestamp is earlier than the timestamp of the previous packet
+* http2_inspect: rid of removed base template
+* http2_inspect: rid of removed base template in unit tests
+* main: change process_id to a global var such that we don't require constant access to the SnortConfig
+* main: remove snort cpu command output from log
+* protocol: add ESP to valid next headers in IPv6
+* pub_sub: get all headers, response str and method from HttpEvent
+* rna: coverity fixes
+* snort2lua: add include for cstdint to provide standard c++ integer types
+* stream: detection of gaps in packet stream
+* stream_tcp: deprecate the reassemble_async configuration option
+* stream_tcp: do not purge seglist data on held packet retransmit
+* stream_tcp: print stream_tcp state upon hitting queue_limits
+* telnet: handle ayt commands in splitter
+
 2025-05-08: 3.8.0.0
 
 * framework: make alias name internal to inspector instance
