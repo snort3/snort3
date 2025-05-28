@@ -20,6 +20,7 @@
 #ifndef EXTRACTORS_H
 #define EXTRACTORS_H
 
+#include <map>
 #include <sys/time.h>
 #include <vector>
 

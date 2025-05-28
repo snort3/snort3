@@ -138,7 +138,7 @@ bool TcpStateSynSent::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker&
 bool TcpStateSynSent::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_on_fin_sent(tsd);
-    trk.session->flow->call_handlers(tsd.get_pkt(), true);
+    trk.session->flow->call_handlers(tsd.get_pkt(), FlowDataStore::HANDLER_EOF);
     trk.session->update_timestamp_tracking(tsd);
     if ( trk.session->flow->two_way_traffic() )
     {

@@ -34,7 +34,7 @@ class FpFingerprint;
 
 struct RnaLoggerEvent : public Event
 {
-    RnaLoggerEvent (uint16_t t, uint16_t st, const uint8_t* mc, const RnaTracker* rt,
+    RnaLoggerEvent (uint16_t t, uint16_t st, const uint8_t* mc, const RnaTracker& rt,
         const snort::HostMac* hmp, uint16_t pr, void* cv, const snort::HostApplication* hap,
         const snort::FpFingerprint* fpr, const snort::HostClient* hcp, const char* u,
         int32_t app, const char* di, bool jb, uint32_t ls, uint32_t nm,
@@ -50,7 +50,7 @@ struct RnaLoggerEvent : public Event
     uint16_t subtype;
     const struct in6_addr* ip = nullptr;
     const uint8_t* mac;
-    const RnaTracker* ht;
+    const RnaTracker& ht;
     const snort::HostMac* hm;
     uint16_t proto;
     void* cond_var;

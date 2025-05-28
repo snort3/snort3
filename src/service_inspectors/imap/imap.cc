@@ -155,7 +155,6 @@ const PegInfo imap_peg_names[] =
 
 ImapFlowData::ImapFlowData() : FlowData(inspector_id)
 {
-    memset(&session, 0, sizeof(session));
     imapstats.concurrent_sessions++;
     if(imapstats.max_concurrent_sessions < imapstats.concurrent_sessions)
         imapstats.max_concurrent_sessions = imapstats.concurrent_sessions;

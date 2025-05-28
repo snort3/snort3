@@ -61,7 +61,7 @@ The HA subsystem implements these classes:
     information.
   - FlowHAClient - All HA coordination is managed via a set of FlowHAClient's.
     Every function that desires to use HA capabilities defines one FlowHAClient
-    object within the packet processing thread.  Each client is provided a 
+    object within the packet processing thread.  Each client is provided a
     handle bit-mask as part of the pending logic.  The client may set the
     pending bit to indicate the desire to add content to the HA message.
     A maximum of 17 clients may existing (numbers 1-16, corresponding to the
@@ -71,36 +71,46 @@ The HA subsystem implements these classes:
 
 
 09/25/2023
-In response to the need for more nuanced management of different protocol 
-types within the `flow_cache`, we've leveraged the newly added feature in 
-xhash. This enhancement includes the introduction of Protocol-Based 
-Least Recently Used (LRU) caches, which substantially improves the handling 
+In response to the need for more nuanced management of different protocol
+types within the `flow_cache`, we've leveraged the newly added feature in
+xhash. This enhancement includes the introduction of Protocol-Based
+Least Recently Used (LRU) caches, which substantially improves the handling
 of multiple protocol types in the cache.
-With this implementation, during various pruning sessions (idle, 
-excess, and timeout etc), we've adopted a round-robin method to cycle through 
-the LRU lists designated for each protocol type. This methodology ensures 
-that every protocol, irrespective of its inherent timeout characteristics, 
+With this implementation, during various pruning sessions (idle,
+excess, and timeout etc), we've adopted a round-robin method to cycle through
+the LRU lists designated for each protocol type. This methodology ensures
+that every protocol, irrespective of its inherent timeout characteristics,
 is given an equal opportunity for pruning and retirement from the cache.
-This adjustment to `flow_cache` not only addresses the previously observed 
-bias during pruning sessions, especially concerning UDP flows, 
-but lays down a framework for more advanced and controlled data management 
+This adjustment to `flow_cache` not only addresses the previously observed
+bias during pruning sessions, especially concerning UDP flows,
+but lays down a framework for more advanced and controlled data management
 within the cache moving forward.
 
 10/25/2024
 Allowlist LRU
-To address the need for preserving flows that have been allowlisted and are 
-at risk of timing out, we've introduced a configurable Allowlist LRU cache 
-within the flow_cache. This enhancement enables the retention of flows marked 
-with a whitelist verdict, preventing them from being prematurely pruned due 
-to inactivity timeouts. This is particularly beneficial in scenarios where 
-Snort ceases to observe traffic for a flow after the whitelist decision, 
-especially if that flow is long-lived. Without this adjustment, 
-such flows may be pruned by the cache upon timeout, potentially impacting 
-event logging at the flow’s end-of-life (EOF) due to missing 
+To address the need for preserving flows that have been allowlisted and are
+at risk of timing out, we've introduced a configurable Allowlist LRU cache
+within the flow_cache. This enhancement enables the retention of flows marked
+with a whitelist verdict, preventing them from being prematurely pruned due
+to inactivity timeouts. This is particularly beneficial in scenarios where
+Snort ceases to observe traffic for a flow after the whitelist decision,
+especially if that flow is long-lived. Without this adjustment,
+such flows may be pruned by the cache upon timeout, potentially impacting
+event logging at the flow’s end-of-life (EOF) due to missing
 pruned flow information.
 
 The Allowlist LRU cache is disabled by default but can be enabled by adding
-allowlist_cache = { enable = true } in the stream configuration. 
-Like the protocol-based LRUs, this allowlist functionality is an 
-additional LRU rather than a new hash_table, thereby maintaining 
+allowlist_cache = { enable = true } in the stream configuration.
+Like the protocol-based LRUs, this allowlist functionality is an
+additional LRU rather than a new hash_table, thereby maintaining
 consistent performance with previous configurations.
+
+04/07/2025
+Changed the flow data hash to start with 7 hash buckets. This is trying to balance
+between memory usage and speed.
+The flow data hash load factor controls the when a hash table rebalance happens. We
+don't ever want a hash rebalance to happen for flow data as that would mean allocating
+a new bigger bucket array and rehashing all of the elements in the hash. So, a max
+load factor of 5.0 was chosen. This means that the average depth for all buckets in
+the hash would need to be 5 or more before a rebalance would happen. This is very
+unlikely to happen.

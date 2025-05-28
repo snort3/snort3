@@ -48,7 +48,6 @@ void GtpFlowData::init()
 
 GtpFlowData::GtpFlowData() : FlowData(inspector_id)
 {
-    memset(&ropts, 0, sizeof(ropts));
     gtp_stats.concurrent_sessions++;
     if(gtp_stats.max_concurrent_sessions < gtp_stats.concurrent_sessions)
         gtp_stats.max_concurrent_sessions = gtp_stats.concurrent_sessions;

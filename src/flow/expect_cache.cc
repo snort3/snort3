@@ -24,6 +24,8 @@
 #include "expect_cache.h"
 #include "expect_flow.h"
 
+#include <algorithm>
+
 #include "detection/ips_context.h"
 #include "hash/zhash.h"
 #include "packet_io/packet_tracer.h"
@@ -47,33 +49,38 @@ using namespace snort;
 static THREAD_LOCAL std::vector<ExpectFlow*>* packet_expect_flows = nullptr;
 
 ExpectFlow::~ExpectFlow()
-{
-    clear();
-}
+{ clear(); }
 
 void ExpectFlow::clear()
 {
-    while (data)
-    {
-        FlowData* fd = data;
-        data = data->next;
-        delete fd;
-    }
-    data = nullptr;
+    std::for_each(std::begin(data), std::end(data),
+        [](FlowData* f)
+        { delete f; }
+        );
+    data.clear();
 }
 
-int ExpectFlow::add_flow_data(FlowData* fd)
+void ExpectFlow::add_flow_data(FlowData* fd)
 {
-    if (data)
-    {
-        FlowData* prev_fd;
-        for (prev_fd = data; prev_fd && prev_fd->next; prev_fd = prev_fd->next);
-
-        prev_fd->next = fd;
-    }
+    unsigned id = fd->get_id();
+    if (data.size() == data.capacity())
+        data.reserve(data.size() + FlowDataStore::FLOW_DATA_INCREMENTS);
+    auto lower = std::lower_bound(data.begin(), data.end(), id,
+        [](const FlowData* the_fd, unsigned id)
+        { return the_fd->get_id() < id; });
+    if (lower == data.end())
+        data.emplace_back(fd);
     else
-        data = fd;
-    return 0;
+    {
+        FlowData* lower_fd = *lower;
+        if (lower_fd->get_id() == id)
+        {
+            delete lower_fd;
+            *lower = fd;
+        }
+        else
+            data.emplace(lower, fd);
+    }
 }
 
 std::vector<ExpectFlow*>* ExpectFlow::get_expect_flows()
@@ -98,12 +105,13 @@ void ExpectFlow::handle_expected_flows(const Packet* p)
 
 FlowData* ExpectFlow::get_flow_data(unsigned id)
 {
-    for (FlowData* p = data; p; p = p->next)
-    {
-        if (p->get_id() == id)
-            return p;
-    }
-    return nullptr;
+    auto lower = std::lower_bound(data.begin(), data.end(), id,
+        [](const FlowData* the_fd, unsigned id)
+        { return the_fd->get_id() < id; });
+    if (lower == data.end())
+        return nullptr;
+    FlowData* fd = *lower;
+    return (fd->get_id() == id) ? fd : nullptr;
 }
 
 struct ExpectNode
@@ -229,30 +237,29 @@ ExpectNode* ExpectCache::find_node_by_packet(Packet* p, FlowKey &key)
 
 bool ExpectCache::process_expected(ExpectNode* node, FlowKey& key, Packet* p, Flow* lws)
 {
-    ExpectFlow* head;
-    FlowData* fd;
-    bool ignoring = false;
-
     assert(node->count && node->head);
 
     /* Pull the first set of expected flow data off of the Expect node and apply it
         in its entirety to the target flow.  Discard the set (and potentially the
         entire node, it empty) after this is done. */
     node->count--;
-    head = node->head;
+    ExpectFlow* head = node->head;
     node->head = head->next;
 
-    while ((fd = head->data))
-    {
-        head->data = fd->next;
-        lws->set_flow_data(fd);
-        ++realized;
-        fd->handle_expected(p);
-    }
+    std::for_each(std::begin(head->data), std::end(head->data),
+        [this, p, lws](FlowData* fd)
+        {
+            lws->set_flow_data(fd);
+            ++realized;
+            fd->handle_expected(p);
+        }
+        );
+    head->data.clear();
     head->next = free_list;
     free_list = head;
 
     /* If this is 0, we're ignoring, otherwise setting id of new session */
+    bool ignoring = false;
     if (!node->snort_protocol_id)
         ignoring = node->direction != 0;
     else
@@ -289,7 +296,6 @@ ExpectCache::ExpectCache(uint32_t max)
     for (unsigned i = 0; i < max; ++i)
     {
         ExpectFlow* p = pool + i;
-        p->data = nullptr;
         p->next = free_list;
         free_list = p;
     }
@@ -341,7 +347,7 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
     int16_t expected_ingress_group = ctrlPkt->pkth->egress_group;
     int16_t expected_egress_group = ctrlPkt->pkth->ingress_group;
     bool reversed_key = key.init(ctrlPkt->context->conf, type, ip_proto, cliIP, cliPort,
-        srvIP, srvPort, vlanId, mplsId, ctrlPkt->pkth->address_space_id, 
+        srvIP, srvPort, vlanId, mplsId, ctrlPkt->pkth->address_space_id,
 #ifndef DISABLE_TENANT_ID
         ctrlPkt->pkth->tenant_id,
 #endif
@@ -378,16 +384,8 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
         last = node->tail;
         if ( last )
         {
-            FlowData* lfd = last->data;
-            while ( lfd )
-            {
-                if ( lfd->get_id() == fd->get_id() )
-                {
-                    last = nullptr;
-                    break;
-                }
-                lfd = lfd->next;
-            }
+            if ( last->get_flow_data(fd->get_id()) )
+                last = nullptr;
         }
     }
     else

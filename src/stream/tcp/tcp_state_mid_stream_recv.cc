@@ -115,7 +115,7 @@ bool TcpStateMidStreamRecv::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker
     }
 
     trk.update_on_fin_sent(tsd);
-    trk.session->flow->call_handlers(tsd.get_pkt(), true);
+    trk.session->flow->call_handlers(tsd.get_pkt(), FlowDataStore::HANDLER_EOF);
     TcpStreamTracker::TcpState listener_state = tsd.get_listener()->get_tcp_state();
     // If one sided has sent a FIN
     if ( TcpStreamTracker::TCP_FIN_WAIT1 == listener_state )

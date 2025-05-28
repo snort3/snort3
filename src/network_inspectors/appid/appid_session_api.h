@@ -23,7 +23,6 @@
 #define APPID_SESSION_API_H
 
 #include "flow/flow.h"
-#include "flow/stash_item.h"
 #include "main/snort_types.h"
 #include "pub_sub/appid_events.h"
 #include "sfip/sf_ip.h"

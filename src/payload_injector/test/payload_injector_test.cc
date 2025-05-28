@@ -89,6 +89,7 @@ Packet::~Packet() = default;
 int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
 FlowData::~FlowData() = default;
 FlowData::FlowData(unsigned int, snort::Inspector*) { }
+FlowDataStore::~FlowDataStore() = default;
 
 // Inspector mocks, used by MockInspector class
 InspectApi mock_api;
@@ -133,7 +134,7 @@ InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl,
     return translation_status;
 }
 
-// Mocks for snort::Flow::get_flow_data
+// Mocks for snort::FlowDataStore::get
 
 unsigned Http2FlowData::inspector_id = 0;
 Http2Stream::~Http2Stream() = default;
@@ -155,7 +156,8 @@ Http2FlowData::~Http2FlowData() = default;
 Http2FlowData http2_flow_data(nullptr);
 void Http2FlowData::set_mid_frame(bool val) { continuation_expected[SRC_SERVER] = val; }
 bool Http2FlowData::is_mid_frame() const { return continuation_expected[SRC_SERVER]; }
-FlowData* snort::Flow::get_flow_data(unsigned int) const { return &http2_flow_data; }
+FlowData* FlowDataStore::get(unsigned) const
+{ return &http2_flow_data; }
 
 TEST_GROUP(payload_injector_test)
 {

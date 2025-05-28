@@ -61,29 +61,33 @@
 //    a la FlowCache)
 //-------------------------------------------------------------------------
 
+#include <memory>
+#include <unordered_map>
 #include <vector>
 
+#include "flow/flow_data.h"
 #include "main/snort_types.h"
 
 struct ExpectNode;
 
 namespace snort
 {
-class FlowData;
 struct Packet;
 
 struct SO_PUBLIC ExpectFlow
 {
-    struct ExpectFlow* next;
-    snort::FlowData* data;
+    ExpectFlow* next = nullptr;
+    // This cannot use a unique_ptr because we need to move to a real flow during realization
+    std::vector<FlowData*> data;
 
+    ExpectFlow() = default;
     ~ExpectFlow();
     void clear();
-    int add_flow_data(snort::FlowData*);
-    snort::FlowData* get_flow_data(unsigned);
+    void add_flow_data(FlowData*);
+    FlowData* get_flow_data(unsigned);
     static std::vector<ExpectFlow*>* get_expect_flows();
     static void reset_expect_flows();
-    static void handle_expected_flows(const snort::Packet*);
+    static void handle_expected_flows(const Packet*);
 };
 }
 

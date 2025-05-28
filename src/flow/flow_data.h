@@ -20,6 +20,8 @@
 #ifndef FLOW_DATA_H
 #define FLOW_DATA_H
 
+#include <vector>
+
 // FlowData is how inspectors maintain flow state
 // use Flow::set/get_flow_data() to attach to a flow
 
@@ -35,24 +37,26 @@ class SO_PUBLIC FlowData
 public:
     virtual ~FlowData();
 
-    unsigned get_id()
+    unsigned get_id() const
     { return id; }
 
     static unsigned create_flow_data_id()
     { return ++flow_data_id; }
 
-    Inspector* get_handler() { return handler; }
+    Inspector* get_handler() const
+    { return handler; }
 
-    virtual void handle_expected(Packet*) { }
-    virtual void handle_retransmit(Packet*) { }
-    virtual void handle_eof(Packet*) { }
+    void set_handler(Inspector*);
+
+    virtual void handle_expected(Packet*)
+    { }
+    virtual void handle_retransmit(Packet*)
+    { }
+    virtual void handle_eof(Packet*)
+    { }
 
 protected:
     FlowData(unsigned u, Inspector* = nullptr);
-
-public:  // FIXIT-L privatize
-    FlowData* next;
-    FlowData* prev;
 
 private:
     static unsigned flow_data_id;
@@ -68,6 +72,35 @@ protected:
     RuleFlowData(unsigned u);
 public:
     ~RuleFlowData() override = default;
+};
+
+class SO_PUBLIC FlowDataStore
+{
+public:
+    FlowDataStore() = default;
+    ~FlowDataStore();
+
+    void set(FlowData*);
+    FlowData* get(unsigned) const;
+
+    void erase(unsigned);
+    void erase(FlowData*);
+    void clear();
+
+    bool empty() const;
+
+    enum FlowDataHandlerType
+    {
+        HANDLER_RETRANSMIT,
+        HANDLER_EOF,
+    };
+
+    void call_handlers(Packet*, FlowDataHandlerType) const;
+
+    static constexpr unsigned FLOW_DATA_INCREMENTS = 7;
+
+private:
+    std::vector<FlowData*> flow_data;
 };
 
 }

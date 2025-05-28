@@ -137,7 +137,7 @@ public:
 
 public:
     static unsigned inspector_id;
-    POPData session;
+    POPData session = {};
 };
 
 #endif

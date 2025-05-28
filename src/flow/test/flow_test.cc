@@ -67,10 +67,6 @@ FlowHAState::FlowHAState() = default;
 
 void FlowHAState::reset() {}
 
-FlowStash::~FlowStash() = default;
-
-void FlowStash::reset() {}
-
 void DetectionEngine::onload(Flow*) {}
 
 Packet* DetectionEngine::set_next_packet(const Packet*, Flow*) { return nullptr; }
@@ -145,6 +141,118 @@ TEST(inspection_time_presence, inspection_time_addition)
 
     CHECK(flow->get_inspection_duration() == 5);
     CHECK(flow->get_inspected_packet_count() == 6);
+
+    delete flow;
+}
+
+class TestFlowData : public FlowData
+{
+public:
+    explicit TestFlowData(unsigned v) : FlowData(module_id), version(v)
+    { }
+    ~TestFlowData() override = default;
+
+    unsigned get_version() const
+    { return version; }
+
+    static unsigned module_id;
+
+    static void init()
+    { module_id = FlowData::create_flow_data_id(); }
+
+protected:
+    unsigned version;
+};
+
+unsigned TestFlowData::module_id = 0;
+
+class HigherIdFlowData : public FlowData
+{
+public:
+    HigherIdFlowData() : FlowData(module_id)
+    { }
+    ~HigherIdFlowData() override = default;
+
+    static unsigned module_id;
+
+    static void init()
+    { module_id = FlowData::create_flow_data_id(); }
+};
+
+unsigned HigherIdFlowData::module_id = 0;
+
+TEST_GROUP(flow_data_test)
+{
+};
+
+TEST(flow_data_test, flow_data_access)
+{
+    unsigned lower_module_id = FlowData::create_flow_data_id();
+    TestFlowData::init();
+    HigherIdFlowData::init();
+    unsigned higher_module_id = FlowData::create_flow_data_id();
+
+    Flow *flow = new Flow;
+
+    TestFlowData* existing_fd = static_cast<TestFlowData*>(flow->get_flow_data(TestFlowData::module_id));
+    CHECK_TEXT(!existing_fd, "FlowData should not exist");
+
+    // new
+    TestFlowData* fd = new TestFlowData(1);
+    flow->set_flow_data(fd);
+    existing_fd = static_cast<TestFlowData*>(flow->get_flow_data(TestFlowData::module_id));
+    CHECK_TEXT(existing_fd, "FlowData should exist");
+    UNSIGNED_LONGS_EQUAL_TEXT(1, existing_fd->get_version(), "FlowData version should be 1");
+
+    // overwrite
+    fd = new TestFlowData(2);
+    flow->set_flow_data(fd);
+    existing_fd = static_cast<TestFlowData*>(flow->get_flow_data(TestFlowData::module_id));
+    CHECK_TEXT(existing_fd, "FlowData should exist");
+    UNSIGNED_LONGS_EQUAL_TEXT(2, existing_fd->get_version(), "FlowData version should be 2");
+
+    // free by object
+    flow->free_flow_data(fd);
+    existing_fd = static_cast<TestFlowData*>(flow->get_flow_data(TestFlowData::module_id));
+    CHECK_TEXT(!existing_fd, "FlowData should not exist");
+
+    HigherIdFlowData* hid_fd = new HigherIdFlowData;
+    flow->set_flow_data(hid_fd);
+    HigherIdFlowData* hid_existing_fd =
+        static_cast<HigherIdFlowData*>(flow->get_flow_data(HigherIdFlowData::module_id));
+    CHECK_TEXT(hid_existing_fd, "HigherIdFlowData should exist");
+
+    fd = new TestFlowData(3);
+    flow->set_flow_data(fd);
+    existing_fd = static_cast<TestFlowData*>(flow->get_flow_data(TestFlowData::module_id));
+    CHECK_TEXT(existing_fd, "FlowData should exist");
+    UNSIGNED_LONGS_EQUAL_TEXT(3, existing_fd->get_version(), "FlowData version should be 3");
+
+    // free by id not found lower
+    flow->free_flow_data(lower_module_id);
+    existing_fd = static_cast<TestFlowData*>(flow->get_flow_data(TestFlowData::module_id));
+    CHECK_TEXT(existing_fd, "FlowData should exist");
+    UNSIGNED_LONGS_EQUAL_TEXT(3, existing_fd->get_version(), "FlowData version should be 3");
+    hid_existing_fd = static_cast<HigherIdFlowData*>(flow->get_flow_data(HigherIdFlowData::module_id));
+    CHECK_TEXT(hid_existing_fd, "HigherIdFlowData should exist");
+
+    // free by id not found higher
+    flow->free_flow_data(higher_module_id);
+    existing_fd = static_cast<TestFlowData*>(flow->get_flow_data(TestFlowData::module_id));
+    CHECK_TEXT(existing_fd, "FlowData should exist");
+    UNSIGNED_LONGS_EQUAL_TEXT(3, existing_fd->get_version(), "FlowData version should be 3");
+    hid_existing_fd = static_cast<HigherIdFlowData*>(flow->get_flow_data(HigherIdFlowData::module_id));
+    CHECK_TEXT(hid_existing_fd, "HigherIdFlowData should exist");
+
+    // free by id
+    flow->free_flow_data(TestFlowData::module_id);
+    existing_fd = static_cast<TestFlowData*>(flow->get_flow_data(TestFlowData::module_id));
+    CHECK_TEXT(!existing_fd, "FlowData should not exist");
+    hid_existing_fd = static_cast<HigherIdFlowData*>(flow->get_flow_data(HigherIdFlowData::module_id));
+    CHECK_TEXT(hid_existing_fd, "HigherIdFlowData should exist");
+    flow->free_flow_data(hid_existing_fd);
+    hid_existing_fd = static_cast<HigherIdFlowData*>(flow->get_flow_data(HigherIdFlowData::module_id));
+    CHECK_TEXT(!hid_existing_fd, "HigherIdFlowData should not exist");
 
     delete flow;
 }

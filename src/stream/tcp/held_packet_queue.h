@@ -40,7 +40,7 @@ public:
         return expired;
     }
 
-    bool has_expired()
+    bool has_expired() const
     { return expired; }
 
     TcpStreamTracker& get_tracker() const { return tracker; }
@@ -61,10 +61,10 @@ class HeldPacketQueue
 public:
 
     using list_t = std::list<HeldPacket>;
-    using iter_t = list_t::iterator;
+    using iter_t = list_t::const_iterator;
 
-    iter_t append(DAQ_Msg_h msg, uint32_t seq, TcpStreamTracker& trk);
-    void erase(iter_t it);
+    const iter_t append(DAQ_Msg_h msg, uint32_t seq, TcpStreamTracker& trk);
+    void erase(const iter_t it);
 
     // Return whether there still are expired packets in the queue.
     bool execute(const timeval& cur_time, int max_remove);
@@ -80,6 +80,9 @@ public:
 
     bool empty() const
     { return q.empty(); }
+
+    auto end() const
+    { return q.end(); }
 
     // This must be called at reload time only, with now = reload time.
     // Return true if, upon exit, there are expired packets in the queue.

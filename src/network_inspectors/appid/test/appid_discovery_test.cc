@@ -124,8 +124,8 @@ void IpApi::set(const SfIp& sip, const SfIp& dip)
 }
 } // namespace ip
 
-AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
-    StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
+AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&)
+{ }
 void AppIdSessionApi::get_first_stream_app_ids(AppId&, AppId&, AppId&, AppId&) const { }
 
 // Mocks for publish
@@ -221,7 +221,7 @@ const char* AppInfoManager::get_app_name(int32_t)
 uint32_t AppInfoManager::getAttributeBits(AppId)
 {
     return 0;
-} 
+}
 
 // Stubs for AppIdSession
 void AppIdSession::sync_with_snort_protocol_id(AppId, Packet*) {}

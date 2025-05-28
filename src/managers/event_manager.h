@@ -55,7 +55,7 @@ public:
     static unsigned get_output_type_flags(char*);
 
     static void add_output(OutputSet**, snort::Logger*);
-    static void copy_outputs(OutputSet* dst, OutputSet* src);
+    static void copy_outputs(OutputSet* dst, const OutputSet* src);
     static void release_outputs(OutputSet*);
 
     static void open_outputs();

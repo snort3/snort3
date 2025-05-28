@@ -63,8 +63,8 @@ static DetectorHTTPPattern mpattern;
 
 namespace snort
 {
-AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
-    StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
+AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&)
+{ }
 SearchTool::SearchTool(bool, const char*) { }
 void SearchTool::reload() { }
 static bool test_find_all_done = false;

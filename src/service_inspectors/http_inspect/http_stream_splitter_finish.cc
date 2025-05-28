@@ -201,9 +201,9 @@ bool HttpStreamSplitter::finish(Flow* flow)
         {
             int32_t should_publish_body = 0;
             if (source_id == SRC_CLIENT)
-                flow->stash->get(STASH_PUBLISH_REQUEST_BODY, should_publish_body);
+                flow->get_attr(STASH_PUBLISH_REQUEST_BODY, should_publish_body);
             else
-                flow->stash->get(STASH_PUBLISH_RESPONSE_BODY, should_publish_body);
+                flow->get_attr(STASH_PUBLISH_RESPONSE_BODY, should_publish_body);
 
             if (should_publish_body)
             {

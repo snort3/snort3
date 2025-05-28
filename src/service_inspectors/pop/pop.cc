@@ -112,7 +112,6 @@ const PegInfo pop_peg_names[] =
 
 PopFlowData::PopFlowData() : FlowData(inspector_id)
 {
-    memset(&session, 0, sizeof(session));
     popstats.concurrent_sessions++;
     if(popstats.max_concurrent_sessions < popstats.concurrent_sessions)
         popstats.max_concurrent_sessions = popstats.concurrent_sessions;

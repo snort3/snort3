@@ -304,8 +304,7 @@ public:
     void perform_fin_recv_flush(TcpSegmentDescriptor&);
     int32_t kickstart_asymmetric_flow(const TcpSegmentDescriptor& tsd, uint32_t max_queued_bytes);
     uint32_t perform_partial_flush();
-    bool is_holding_packet() const
-    { return held_packet != null_iterator; }
+    bool is_holding_packet() const;
 
     // max_remove < 0 means time out all eligible packets.
     // Return whether there are more packets that need to be released.
@@ -343,8 +342,7 @@ private:
     TcpEvent tcp_event = TCP_MAX_EVENTS;
 
     snort::StreamSplitter* splitter = nullptr;
-    static const std::list<HeldPacket>::iterator null_iterator;
-    std::list<HeldPacket>::iterator held_packet;
+    std::list<HeldPacket>::const_iterator held_packet;
     uint32_t ts_last_packet = 0;
     uint32_t ts_last = 0;       // last timestamp (for PAWS)
     uint32_t fin_final_seq = 0;

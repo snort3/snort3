@@ -48,8 +48,6 @@ using namespace snort;
 
 THREAD_LOCAL HeldPacketQueue* hpq = nullptr;
 
-const std::list<HeldPacket>::iterator TcpStreamTracker::null_iterator { };
-
 const char* tcp_state_names[] =
 {
     "TCP_LISTEN", "TCP_SYN_SENT", "TCP_SYN_RECV",
@@ -69,11 +67,12 @@ const char* tcp_event_names[] = {
 };
 
 TcpStreamTracker::TcpStreamTracker(bool client) :
-    client_tracker(client), tcp_state(client ? TCP_STATE_NONE : TCP_LISTEN),
-    held_packet(null_iterator)
+    client_tracker(client), tcp_state(client ? TCP_STATE_NONE : TCP_LISTEN)
 { 
     flush_policy = STREAM_FLPOLICY_IGNORE;
     update_flush_policy(nullptr);
+    if (hpq)
+        held_packet = hpq->end();
 }
 
 TcpStreamTracker::~TcpStreamTracker()
@@ -291,7 +290,10 @@ void TcpStreamTracker::init_tcp_state(TcpSession* s)
     fin_seq_set = false;
     rst_pkt_sent = false;
     order = TcpStreamTracker::IN_SEQUENCE;
-    held_packet = null_iterator;
+    if (hpq)
+        held_packet = hpq->end();
+    else
+        held_packet = {};
 
     flush_policy = STREAM_FLPOLICY_IGNORE;
     update_flush_policy(nullptr);
@@ -814,9 +816,15 @@ bool TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
     return valid_seq;
 }
 
+bool TcpStreamTracker::is_holding_packet() const
+{
+    assert(hpq);
+    return held_packet != hpq->end();
+}
+
 bool TcpStreamTracker::set_held_packet(Packet* p)
 {
-    if ( held_packet != null_iterator )
+    if ( is_holding_packet() )
         return false;
 
     held_packet = hpq->append(p->daq_msg, p->ptrs.tcph->seq(), *this);
@@ -875,7 +883,7 @@ void TcpStreamTracker::perform_fin_recv_flush(TcpSegmentDescriptor& tsd)
 uint32_t TcpStreamTracker::perform_partial_flush()
 {
     uint32_t flushed = 0;
-    if ( held_packet != null_iterator )
+    if ( is_holding_packet() )
     {
         Packet* p;
         flushed = reassembler->perform_partial_flush(session->flow, p);
@@ -897,7 +905,10 @@ uint32_t TcpStreamTracker::perform_partial_flush()
 
 bool TcpStreamTracker::is_retransmit_of_held_packet(Packet* cp)
 {
-    if ( (held_packet == null_iterator) or ( cp->daq_msg == held_packet->get_daq_msg() ) )
+    if ( !is_holding_packet() )
+        return false;
+
+    if ( cp->daq_msg == held_packet->get_daq_msg() )
         return false;
 
     uint32_t next_send_seq = cp->ptrs.tcph->seq() + (uint32_t)cp->dsize;
@@ -912,7 +923,7 @@ bool TcpStreamTracker::is_retransmit_of_held_packet(Packet* cp)
 
 void TcpStreamTracker::finalize_held_packet(Packet* cp)
 {
-    if ( held_packet != null_iterator )
+    if ( is_holding_packet() )
     {
         DAQ_Msg_h msg = held_packet->get_daq_msg();
 
@@ -940,7 +951,7 @@ void TcpStreamTracker::finalize_held_packet(Packet* cp)
         }
 
         hpq->erase(held_packet);
-        held_packet = null_iterator;
+        held_packet = hpq->end();
         tcpStats.current_packets_held--;
     }
 
@@ -950,7 +961,7 @@ void TcpStreamTracker::finalize_held_packet(Packet* cp)
 
 void TcpStreamTracker::finalize_held_packet(Flow* flow)
 {
-    if ( held_packet != null_iterator )
+    if ( is_holding_packet() )
     {
         DAQ_Msg_h msg = held_packet->get_daq_msg();
 
@@ -970,7 +981,7 @@ void TcpStreamTracker::finalize_held_packet(Flow* flow)
         }
 
         hpq->erase(held_packet);
-        held_packet = null_iterator;
+        held_packet = hpq->end();
         tcpStats.current_packets_held--;
     }
 }

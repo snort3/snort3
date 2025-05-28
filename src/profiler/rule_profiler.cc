@@ -74,37 +74,37 @@ static const ProfilerSorter<View> sorters[] =
     {
         "checks",
         [](const View& lhs, const View& rhs)
-        { return lhs.checks() >= rhs.checks(); }
+        { return lhs.checks() > rhs.checks(); }
     },
     {
         "avg_check",
         [](const View& lhs, const View& rhs)
-        { return lhs.avg_check() >= rhs.avg_check(); }
+        { return lhs.avg_check() > rhs.avg_check(); }
     },
     {
         "total_time",
         [](const View& lhs, const View& rhs)
-        { return TO_TICKS(lhs.elapsed()) >= TO_TICKS(rhs.elapsed()); }
+        { return TO_TICKS(lhs.elapsed()) > TO_TICKS(rhs.elapsed()); }
     },
     {
         "matches",
         [](const View& lhs, const View& rhs)
-        { return lhs.matches() >= rhs.matches(); }
+        { return lhs.matches() > rhs.matches(); }
     },
     {
         "no_matches",
         [](const View& lhs, const View& rhs)
-        { return lhs.no_matches() >= rhs.no_matches(); }
+        { return lhs.no_matches() > rhs.no_matches(); }
     },
     {
         "avg_match",
         [](const View& lhs, const View& rhs)
-        { return lhs.avg_match() >= rhs.avg_match(); }
+        { return lhs.avg_match() > rhs.avg_match(); }
     },
     {
         "avg_no_match",
         [](const View& lhs, const View& rhs)
-        { return lhs.avg_no_match() >= rhs.avg_no_match(); }
+        { return lhs.avg_no_match() > rhs.avg_no_match(); }
     }
 };
 

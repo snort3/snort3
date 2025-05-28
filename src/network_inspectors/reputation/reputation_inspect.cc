@@ -387,11 +387,14 @@ static void snort_reputation(const ReputationConfig& config, ReputationData& dat
 
     if ( p->flow and p->flow->reload_id > 0 )
     {
-        const auto& aux_ip_list =  p->flow->stash->get_aux_ip_list();
-        for ( const auto& ip : aux_ip_list )
+        const auto* aux_ip_list = p->flow->get_aux_ip_list();
+        if (aux_ip_list)
         {
-            if ( BLOCKED == snort_reputation_aux_ip(config, data, p, &ip) )
-                return;
+            for ( const auto& ip : *aux_ip_list )
+            {
+                if ( BLOCKED == snort_reputation_aux_ip(config, data, p, &ip) )
+                    return;
+            }
         }
     }
 

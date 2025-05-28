@@ -27,9 +27,13 @@
 // state.  Inspector state is stored in FlowData, and Flow manages a list
 // of FlowData items.
 
+#include <atomic>
 #include <bitset>
+#include <list>
+#include <memory>
 #include <string>
 #include <sys/time.h>
+#include <unordered_map>
 
 #include <daq_common.h>
 
@@ -184,13 +188,27 @@ public:
     void restart(bool dump_flow_data = true);
     void clear(bool dump_flow_data = true);
 
-    int set_flow_data(FlowData*);
-    FlowData* get_flow_data(uint32_t proto) const;
-    void free_flow_data(uint32_t proto);
-    void free_flow_data(FlowData*);
+    void set_flow_data(FlowData* fd)
+    {
+        assert(fd);
+        flow_data.set(fd);
+    }
+    FlowData* get_flow_data(unsigned id) const
+    { return flow_data.get(id); }
+    void free_flow_data(unsigned id)
+    { flow_data.erase(id); }
+    void free_flow_data(FlowData* fd)
+    {
+        if ( fd )
+            flow_data.erase(fd->get_id());
+    }
     void free_flow_data();
+    void call_handlers(Packet* p,
+        FlowDataStore::FlowDataHandlerType handler_type = FlowDataStore::HANDLER_RETRANSMIT) const
+    {
+        flow_data.call_handlers(p, handler_type);
+    }
 
-    void call_handlers(Packet* p, bool eof = false);
     void markup_packet_flags(Packet*);
     void set_client_initiate(Packet*);
     void set_direction(Packet*);
@@ -198,34 +216,24 @@ public:
     bool expired(const Packet*) const;
     void set_ttl(Packet*, bool client);
     void set_mpls_layer_per_dir(Packet*);
-    Layer get_mpls_layer_per_dir(bool);
+    Layer* get_mpls_layer_per_dir(bool);
     void swap_roles();
     void set_service(Packet*, const char* new_service);
-    bool get_attr(const std::string& key, int32_t& val) const;
-    bool get_attr(const std::string& key, std::string& val) const;
-    void set_attr(const std::string& key, const int32_t& val);
-    void set_attr(const std::string& key, const std::string& val);
-    // Use this API when the publisher of the attribute allocated memory for it and can give up its
-    // ownership after the call.
-    void set_attr(const std::string& key, std::string* val)
-    {
-        assert(stash);
-        stash->store(key, val);
-    }
 
     template<typename T>
     bool get_attr(const std::string& key, T& val) const
-    {
-        assert(stash);
-        return stash->get(key, val);
-    }
-
+    { return stash.get(key, val); }
     template<typename T>
-    void set_attr(const std::string& key, const T& val)
-    {
-        assert(stash);
-        stash->store(key, val);
-    }
+    void set_attr(const std::string& key, T& val)
+    { stash.store(key, val); }
+    void set_attr(const std::string& key, const std::string& val)
+    { stash.store(key, val); }
+    void set_attr(const std::string& key, StashGenericObject* val)
+    { stash.store(key, val); }
+    bool set_attr(const snort::SfIp& ip, const SnortConfig* sc = nullptr)
+    { return stash.store(ip, sc); }
+    const std::list<SfIp>* get_aux_ip_list() const
+    { return stash.get_aux_ip_list(); }
 
     uint32_t update_session_flags(uint32_t ssn_flags)
     { return ssn_state.session_flags = ssn_flags; }
@@ -280,7 +288,7 @@ public:
     { return (flow_state <= FlowState::INSPECT) and !is_inspection_disabled(); }
 
     void set_state(FlowState fs)
-    { 
+    {
         flow_state = fs;
         if (fs > FlowState::INSPECT)
         {
@@ -308,6 +316,8 @@ public:
 
     void set_clouseau(Inspector* ins)
     {
+        if (clouseau)
+            clouseau->rem_ref();
         clouseau = ins;
         clouseau->add_ref();
     }
@@ -325,6 +335,8 @@ public:
 
     void set_gadget(Inspector* ins)
     {
+        if (gadget)
+            gadget->rem_ref();
         gadget = ins;
         gadget->add_ref();
     }
@@ -339,6 +351,8 @@ public:
 
     void set_assistant_gadget(Inspector* ins)
     {
+        if (assistant_gadget)
+            assistant_gadget->rem_ref();
         assistant_gadget = ins;
         assistant_gadget->add_ref();
     }
@@ -351,6 +365,8 @@ public:
 
     void set_data(Inspector* pd)
     {
+        if (data)
+            data->rem_ref();
         data = pd;
         data->add_ref();
     }
@@ -431,21 +447,27 @@ public:
 
     bool handle_allowlist();
 
+protected:
+    static void delete_mpls_layer(Layer* mpls_layer)
+    {
+        if ( mpls_layer )
+        {
+            if ( mpls_layer->length )
+                delete[] mpls_layer->start;
+            delete mpls_layer;
+        }
+    }
+    DeferredTrust deferred_trust;
+    FlowStash stash;
+    FlowDataStore flow_data;
+
 public:  // FIXIT-M privatize if possible
     // fields are organized by initialization and size to minimize
     // void space
 
-    std::unordered_map<uint32_t, std::unique_ptr<FlowData>> flow_data;
-
-    DeferredTrust deferred_trust;
-
     const FlowKey* key = nullptr;
     BitOp* bitop = nullptr;
     FlowHAState* ha_state = nullptr;
-    FlowStash* stash = nullptr;
-
-    uint8_t ip_proto = 0;
-    PktType pkt_type = PktType::NONE; // ^^
 
     // these fields are always set; not zeroed
     Flow* prev = nullptr;
@@ -456,11 +478,10 @@ public:  // FIXIT-M privatize if possible
     Continuation* ips_cont = nullptr;
 
     long last_data_seen = 0;
-    Layer mpls_client = {};
-    Layer mpls_server = {};
+    Layer* mpls_client = nullptr;
+    Layer* mpls_server = nullptr;
 
     IpsContextChain context_chain;
-    FlowData* current_flow_data = nullptr;
     FlowStats flowstats = {};
     class StreamFlowIntf* stream_intf = nullptr;
 
@@ -478,6 +499,12 @@ public:  // FIXIT-M privatize if possible
 
     uint64_t expire_time = 0;
 
+    std::bitset<64> data_log_filtering_state;
+
+    FilteringState filtering_state;
+
+    DAQ_Verdict last_verdict = MAX_DAQ_VERDICT;
+
     unsigned network_policy_id = 0;
     struct timeval prev_packet_time = {0, 0};
     
@@ -486,25 +513,6 @@ public:  // FIXIT-M privatize if possible
     unsigned reload_id = 0;
     uint32_t default_session_timeout = 0;
     uint32_t idle_timeout = 0;
-    int32_t client_intf = 0;
-    int32_t server_intf = 0;
-
-    int16_t client_group = 0;
-    int16_t server_group = 0;
-
-    uint16_t client_port = 0;
-    uint16_t server_port = 0;
-
-    uint16_t ssn_policy = 0;
-    uint16_t session_state = 0;
-
-    uint8_t inner_client_ttl = 0;
-    uint8_t inner_server_ttl = 0;
-    uint8_t outer_client_ttl = 0;
-    uint8_t outer_server_ttl = 0;
-
-    uint8_t response_count = 0;
-    uint8_t dump_code = 0;
 
     struct
     {
@@ -532,13 +540,30 @@ public:  // FIXIT-M privatize if possible
         bool allowed_on_excess : 1; // Set if the flow is allowed on excess
     } flags = {};
 
+    int32_t client_intf = 0;
+    int32_t server_intf = 0;
+
+    int16_t client_group = 0;
+    int16_t server_group = 0;
+
+    uint16_t client_port = 0;
+    uint16_t server_port = 0;
+
+    uint16_t ssn_policy = 0;
+    uint16_t session_state = 0;
+
+    uint8_t ip_proto = 0;
+    PktType pkt_type = PktType::NONE; // ^^
+
+    uint8_t inner_client_ttl = 0;
+    uint8_t inner_server_ttl = 0;
+    uint8_t outer_client_ttl = 0;
+    uint8_t outer_server_ttl = 0;
+
+    uint8_t response_count = 0;
+    uint8_t dump_code = 0;
+
     FlowState flow_state = FlowState::SETUP;
-
-    FilteringState filtering_state;
-
-    DAQ_Verdict last_verdict = MAX_DAQ_VERDICT;
-
-    std::bitset<64> data_log_filtering_state;
 
 private:
     void clean();

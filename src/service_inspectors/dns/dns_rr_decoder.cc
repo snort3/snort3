@@ -24,6 +24,7 @@
 #include "dns.h"
 
 #include <iomanip>
+#include <map>
 #include <sstream>
 #include <string>
 #include "sfip/sf_ip.h"

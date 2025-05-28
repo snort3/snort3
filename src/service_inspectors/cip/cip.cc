@@ -49,7 +49,6 @@ static void free_cip_data(void* data);
 
 CipFlowData::CipFlowData() : FlowData(inspector_id)
 {
-    memset(&session, 0, sizeof(session));
     cip_stats.sessions++;
     cip_stats.concurrent_sessions++;
     if (cip_stats.max_concurrent_sessions < cip_stats.concurrent_sessions)

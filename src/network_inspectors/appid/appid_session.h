@@ -29,6 +29,7 @@
 #include <unordered_map>
 
 #include <daq_common.h>
+#include "flow/flow_data.h"
 #include "pub_sub/appid_events.h"
 
 #include "app_info_table.h"
@@ -43,6 +44,8 @@
 #include "length_app_cache.h"
 #include "pub_sub/shadowtraffic_aggregator.h"
 #include "service_state.h"
+
+#define STASH_APPID_DATA "appid_data"
 
 namespace snort
 {
@@ -340,7 +343,7 @@ public:
     static unsigned inspector_id;
     static std::mutex inferred_svcs_lock;
 
-    static void init() { inspector_id = FlowData::create_flow_data_id(); }
+    static void init() { inspector_id = snort::FlowData::create_flow_data_id(); }
 
     void set_session_flags(uint64_t set_flags) { flags |= set_flags; }
     void clear_session_flags(uint64_t clear_flags) { flags &= ~clear_flags; }
@@ -756,16 +759,16 @@ public:
 
     void set_shadow_traffic_publishing_appid(AppId id)
     {
-       shadow_traffic_appid = id; 
+       shadow_traffic_appid = id;
     }
 
     AppId get_shadow_traffic_publishing_appid() const
     {
         return shadow_traffic_appid;
     }
-    
-    inline void change_shadow_traffic_bits_to_string (const uint32_t& st_bits,std::string& str) const 
-    {  
+
+    inline void change_shadow_traffic_bits_to_string (const uint32_t& st_bits,std::string& str) const
+    {
         std::string tempStr;
 
         if (st_bits & ShadowTraffic_Type_Encrypted_DNS) {
@@ -783,10 +786,10 @@ public:
         if (!tempStr.empty()) {
             tempStr.pop_back();
         }
-        
-        str.append(tempStr);     
-    } 
-    
+
+        str.append(tempStr);
+    }
+
     void set_cert_key (const std::string& key)
     {
         ssl_cert_key = key;

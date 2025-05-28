@@ -70,8 +70,8 @@ Packet* DetectionEngine::get_current_packet()
     return &p;
 }
 
-AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
-    StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
+AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&)
+{ }
 }
 
 void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
@@ -274,7 +274,7 @@ TEST(appid_api, set_ssl_certificate_key)
     appid_api.set_ssl_certificate_key(*flow, cert_key);
     asd.set_cert_key(cert_key);
     CHECK_EQUAL(asd.get_cert_key(), cert_key);
-    delete &asd.get_api(); 
+    delete &asd.get_api();
 }
 
 TEST(appid_api, ssl_app_group_id_lookup)
@@ -386,7 +386,8 @@ TEST(appid_api, ssl_app_group_id_lookup)
     // When appid session is not existing
     // 1. Match based on server name
     Flow* f = new Flow;
-    flow->set_flow_data(nullptr);
+    // This call just sets mock_flow_data pointer to nullptr, so mocks work correctly for the test.
+    flow->free_flow_data(1);
     service = APP_ID_NONE;
     client = APP_ID_NONE;
     payload = APP_ID_NONE;

@@ -95,7 +95,7 @@ public:
 
 public:
     static unsigned inspector_id;
-    CipSessionData session;
+    CipSessionData session = {};
 };
 
 CipSessionData* get_cip_session_data(const snort::Flow*);

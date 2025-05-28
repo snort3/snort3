@@ -147,7 +147,7 @@ void TcpOverlapResolver::eval_right(TcpOverlapState& tos)
 
         // Treat sequence number overlap as a retransmission,
         // only check right side since left side happens rarely
-        tos.seglist.session->flow->call_handlers(tos.tsd->get_pkt(), false);
+        tos.seglist.session->flow->call_handlers(tos.tsd->get_pkt());
         if ( tos.overlap < tos.right->length )
         {
             if ( tos.right->is_retransmit(tos.rdata, tos.rsize,

@@ -1793,8 +1793,6 @@ TEST_CASE("handle_header_line", "[smtp]")
     Packet p;
     Flow flow;
     p.flow = &flow;
-    FlowStash stash;
-    p.flow->stash = &stash;
     p.context = new IpsContext(1);
     SmtpMime mime_ssn(&p, &decode_conf, &log_config);
     smtp_normalizing = true;
@@ -1812,7 +1810,6 @@ TEST_CASE("handle_header_line", "[smtp]")
 
     // Cleanup
     delete p.context;
-    p.flow->stash = nullptr;
 }
 
 TEST_CASE("normalize_data", "[smtp]")
@@ -1825,8 +1822,6 @@ TEST_CASE("normalize_data", "[smtp]")
     Packet p;
     Flow flow;
     p.flow =& flow;
-    FlowStash stash;
-    p.flow->stash = &stash;
     p.context = new IpsContext(1);
     SmtpMime mime_ssn(&p, &decode_conf, &log_config);
     smtp_normalizing = true;
@@ -1844,6 +1839,5 @@ TEST_CASE("normalize_data", "[smtp]")
 
     // Cleanup
     delete p.context;
-    p.flow->stash = nullptr;
 }
 #endif

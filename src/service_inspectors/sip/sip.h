@@ -52,7 +52,7 @@ public:
 
 public:
     static unsigned inspector_id;
-    SIPData session;
+    SIPData session = {};
 };
 
 SIPData* get_sip_session_data(const snort::Flow*);

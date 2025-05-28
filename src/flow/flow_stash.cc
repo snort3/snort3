@@ -26,133 +26,127 @@
 
 #include <cassert>
 
+#include "framework/data_bus.h"
 #include "main/snort_config.h"
 #include "pub_sub/auxiliary_ip_event.h"
-#include "pub_sub/stash_events.h"
 
 using namespace snort;
 using namespace std;
 
-FlowStash::~FlowStash()
-{
-    reset();
-}
-
-void FlowStash::reset()
-{
-    for(auto it = container.begin(); it != container.end(); ++it)
-    {
-        delete it->second;
-    }
-    container.clear();
-}
-
-bool FlowStash::get(const string& key, int32_t& val)
+bool FlowStash::get(const string& key, int32_t& val) const
 {
     return get(key, val, STASH_ITEM_TYPE_INT32);
 }
 
-bool FlowStash::get(const string& key, uint32_t& val)
+bool FlowStash::get(const string& key, uint32_t& val) const
 {
     return get(key, val, STASH_ITEM_TYPE_UINT32);
 }
 
-bool FlowStash::get(const string& key, string& val)
+bool FlowStash::get(const string& key, string& val) const
 {
     return get(key, val, STASH_ITEM_TYPE_STRING);
 }
 
-bool FlowStash::get(const string& key, StashGenericObject* &val)
+bool FlowStash::get(const string& key, StashGenericObject* &val) const
 {
     return get(key, val, STASH_ITEM_TYPE_GENERIC_OBJECT);
 }
 
-void FlowStash::store(const string& key, int32_t val, unsigned pubid, unsigned evid)
+void FlowStash::store(const string& key, int32_t val)
 {
-    store(key, val, STASH_ITEM_TYPE_INT32, pubid, evid);
+    internal_store(key, val);
 }
 
-void FlowStash::store(const string& key, uint32_t val, unsigned pubid, unsigned evid)
+void FlowStash::store(const string& key, uint32_t val)
 {
-    store(key, val, STASH_ITEM_TYPE_UINT32, pubid, evid);
+    internal_store(key, val);
 }
 
-void FlowStash::store(const string& key, const string& val, unsigned pubid, unsigned evid)
+void FlowStash::store(const string& key, const string& val)
 {
-    store(key, val, STASH_ITEM_TYPE_STRING, pubid, evid);
+    internal_store(key, val);
 }
 
-void FlowStash::store(const string& key, string* val, unsigned pubid, unsigned evid)
+void FlowStash::store(const string& key, string* val)
 {
-    store(key, val, STASH_ITEM_TYPE_STRING, pubid, evid);
+    internal_store(key, val);
 }
 
-void FlowStash::store(const string& key, StashGenericObject* val, unsigned pubid, unsigned evid)
+void FlowStash::store(const string& key, StashGenericObject* val)
 {
-    store(key, val, STASH_ITEM_TYPE_GENERIC_OBJECT, pubid, evid);
-}
-
-void FlowStash::store(const string& key, StashGenericObject* &val, StashItemType type, unsigned pubid, unsigned evid)
-{
-#ifdef NDEBUG
-    UNUSED(type);
-#endif
-    auto item = new StashItem(val);
-    auto it_and_status = container.emplace(key, item);
-
-    if (!it_and_status.second)
-    {
-        StashGenericObject* stored_object;
-        assert(it_and_status.first->second->get_type() == type);
-        it_and_status.first->second->get_val(stored_object);
-        assert(stored_object->get_object_type() == val->get_object_type());
-        delete it_and_status.first->second;
-        it_and_status.first->second = item;
-    }
-
-    if (DataBus::valid(pubid))
-    {
-        StashEvent e(item);
-        DataBus::publish(pubid, evid, e);
-    }
+    internal_store(key, val);
 }
 
 template<typename T>
-bool FlowStash::get(const string& key, T& val, StashItemType type)
+bool FlowStash::get(const string& key, T& val, StashItemType type) const
 {
-#ifdef NDEBUG
-    UNUSED(type);
-#endif
-    auto it = container.find(key);
-
-    if (it != container.end())
+    auto lower = lower_bound(container.begin(), container.end(), key,
+        [](const unique_ptr<StashItem>& item, const string& key)
+        { return 0 > item->get_key().compare(key); });
+    if (lower == container.end())
+        return false;
+    StashItem* item = lower->get();
+    if (item->get_key() == key)
     {
-        assert(it->second->get_type() == type);
-        it->second->get_val(val);
-        return true;
+        if (item->get_type() == type)
+        {
+            item->get_val(val);
+            return true;
+        }
+        assert(item->get_type() == type);
     }
     return false;
 }
 
 template<typename T>
-void FlowStash::store(const string& key, T& val, StashItemType type, unsigned pubid, unsigned evid)
+void FlowStash::internal_store(const string& key, T& val)
 {
-#ifdef NDEBUG
-    UNUSED(type);
-#endif
-    auto item = new StashItem(val);
-    auto it_and_status = container.emplace(key, item);
-
-    if (!it_and_status.second)
+    if (container.size() == container.capacity())
+        container.reserve(container.size() + FLOW_STASH_INCREMENTS);
+    StashItem* new_item = new StashItem(key, val);
+    auto lower = lower_bound(container.begin(), container.end(), key,
+        [](const unique_ptr<StashItem>& item, const string& key)
+        { return 0 > item->get_key().compare(key); });
+    if (lower == container.end())
+        container.emplace_back(new_item);
+    else
     {
-        assert(it_and_status.first->second->get_type() == type);
-        delete it_and_status.first->second;
-        it_and_status.first->second = item;
+        unique_ptr<StashItem>& lower_item = *lower;
+        if (lower_item->get_key() == key)
+            lower_item.reset(new_item);
+        else
+            container.emplace(lower, new_item);
+    }
+}
+
+#define STASH_AUX_IP "aux_ip"
+
+class AuxIPStashItem : public StashGenericObject
+{
+public:
+    AuxIPStashItem() = default;
+    ~AuxIPStashItem() override = default;
+    bool update(const SfIp& ip, const SnortConfig* sc)
+    {
+        if ( any_of(aux_ip_fifo.cbegin(), aux_ip_fifo.cend(),
+            [ip](const snort::SfIp& aip)
+            { return aip == ip; }) )
+            return false;
+
+        while ( aux_ip_fifo.size() >= (unsigned)sc->max_aux_ip )
+            aux_ip_fifo.pop_back();
+
+        aux_ip_fifo.emplace_front(ip);
+        return true;
     }
 
-    StashEvent e(item);
-    DataBus::publish(pubid, evid, e);
-}
+    const list<snort::SfIp>& get_aux_ip_list() const
+    { return aux_ip_fifo; }
+
+protected:
+    list<snort::SfIp> aux_ip_fifo;
+};
 
 bool FlowStash::store(const SfIp& ip, const SnortConfig* sc)
 {
@@ -164,17 +158,30 @@ bool FlowStash::store(const SfIp& ip, const SnortConfig* sc)
 
     if ( sc->max_aux_ip > 0 )
     {
-        if ( std::any_of(aux_ip_fifo.cbegin(), aux_ip_fifo.cend(),
-            [ip](const snort::SfIp& aip){ return aip == ip; }) )
+        AuxIPStashItem* item;
+        StashGenericObject* stash_value;
+        if (!get(STASH_AUX_IP, stash_value))
+        {
+            item = new AuxIPStashItem;
+            store(STASH_AUX_IP, item);
+        }
+        else
+            item = static_cast<AuxIPStashItem*>(stash_value);
+
+        if (!item->update(ip, sc))
             return false;
-
-        if ( aux_ip_fifo.size() == (unsigned)sc->max_aux_ip )
-            aux_ip_fifo.pop_back();
-
-        aux_ip_fifo.emplace_front(ip);
     }
 
     AuxiliaryIpEvent event(ip);
     DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::AUXILIARY_IP, event);
     return true;
+}
+
+const list<snort::SfIp>* FlowStash::get_aux_ip_list() const
+{
+    StashGenericObject* stash_value;
+    if (!get(STASH_AUX_IP, stash_value))
+        return nullptr;
+    AuxIPStashItem* item = static_cast<AuxIPStashItem*>(stash_value);
+    return &item->get_aux_ip_list();
 }

@@ -37,53 +37,53 @@ public:
     RnaLogger(const bool enable) : enabled(enable) { }
 
     // for host application
-    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker& ht,
         const struct in6_addr* src_ip, const uint8_t* src_mac, const snort::HostApplication* ha);
 
     // for host client
-    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker& ht,
         const struct in6_addr* src_ip, const uint8_t* src_mac, const snort::HostClient* hcp);
 
     // for host user
-    void log(uint16_t type, uint16_t subtype, const snort::Packet*, RnaTracker*,
+    void log(uint16_t type, uint16_t subtype, const snort::Packet*, RnaTracker&,
         const struct in6_addr*, const char* user, AppId appid, time_t event_time);
 
     // for cpe os info event
-    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker& ht,
         const struct in6_addr* src_ip, const uint8_t* src_mac, const snort::FpFingerprint* fp,
         const std::vector<const char*>* cpeos, time_t event_time);
 
     // for fingerprint
-    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker& ht,
         const struct in6_addr* src_ip, const uint8_t* src_mac, const snort::FpFingerprint* fp,
         time_t event_time, const char* device_info = nullptr, bool jail_broken = false);
 
     // for event time
-    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker& ht,
         const struct in6_addr* src_ip, const uint8_t* src_mac, time_t event_time);
 
     // for mac event
-    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker& ht,
         const struct in6_addr* src_ip, const uint8_t* src_mac,
         const snort::HostMac* hm = nullptr, time_t event_time = 0);
 
     // for protocol event
-    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker& ht,
         uint16_t proto, const uint8_t* mac, const struct in6_addr* ip = nullptr,
         time_t event_time = 0);
 
     // for timeout update
     void log(uint16_t type, uint16_t subtype, const snort::Packet* p, const uint8_t* src_mac,
-        const struct in6_addr* src_ip, RnaTracker* ht, time_t event_time, void* cond_var);
+        const struct in6_addr* src_ip, RnaTracker& ht, time_t event_time, void* cond_var);
 
     // for dhcp info event
-    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker* ht,
+    void log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker& ht,
         const struct in6_addr* src_ip, const uint8_t* src_mac, uint32_t lease, uint32_t netmask,
         const struct in6_addr* router);
 
     // for all
     bool log(uint16_t type, uint16_t subtype, const struct in6_addr* src_ip,
-        const uint8_t* src_mac, RnaTracker* ht, const snort::Packet* p = nullptr,
+        const uint8_t* src_mac, RnaTracker& ht, const snort::Packet* p = nullptr,
         time_t event_time = 0, uint16_t proto = 0, const snort::HostMac* hm = nullptr,
         const snort::HostApplication* ha = nullptr, const snort::FpFingerprint* fp = nullptr,
         void* cond_var = nullptr, const snort::HostClient* hc = nullptr,

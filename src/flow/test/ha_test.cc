@@ -206,6 +206,7 @@ namespace snort
 Flow::~Flow() = default;
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
+FlowDataStore::~FlowDataStore() = default;
 
 void packet_gettimeofday(struct timeval* tv)
 {
@@ -214,9 +215,6 @@ void packet_gettimeofday(struct timeval* tv)
 }
 
 int SFDAQInstance::ioctl(DAQ_IoctlCmd, void*, size_t) { return DAQ_SUCCESS; }
-
-FlowStash::~FlowStash() = default;
-
 
 SideChannel::SideChannel(ScMsgFormat)
 { }

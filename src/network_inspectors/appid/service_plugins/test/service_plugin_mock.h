@@ -35,7 +35,7 @@ namespace snort
 void ParseWarning(WarningGroup, const char*, ...) { }
 
 // Stubs for appid sessions
-FlowData::FlowData(unsigned, Inspector*) : next(nullptr), prev(nullptr), handler(nullptr), id(0)
+FlowData::FlowData(unsigned, Inspector*) : handler(nullptr), id(0)
 { }
 FlowData::~FlowData() = default;
 
@@ -78,8 +78,8 @@ void Module::sum_stats(bool){}
 void Module::main_accumulate_stats(){}
 void Module::reset_stats() {}
 
-AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
-    StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
+AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&)
+{ }
 }
 
 AlpnPatternMatchers::~AlpnPatternMatchers() {}

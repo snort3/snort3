@@ -143,7 +143,7 @@ public:
 
 private:
     // generate change event for single host
-    void generate_change_host_update(RnaTracker*, const snort::Packet*,
+    void generate_change_host_update(RnaTracker&, const snort::Packet*,
         const snort::SfIp*, const uint8_t* src_mac, const time_t&);
     void generate_change_host_update_eth(HostTrackerMac*, const snort::Packet*,
         const uint8_t* src_mac, const time_t&);
@@ -155,9 +155,9 @@ private:
 
     // Change vlan event related utilities
     inline void update_vlan(const snort::Packet*, HostTrackerMac&);
-    void generate_change_vlan_update(RnaTracker*, const snort::Packet*,
+    void generate_change_vlan_update(RnaTracker&, const snort::Packet*,
         const uint8_t* src_mac, HostTrackerMac&, bool isnew);
-    void generate_change_vlan_update(RnaTracker*, const snort::Packet*,
+    void generate_change_vlan_update(RnaTracker&, const snort::Packet*,
         const uint8_t* src_mac, const snort::SfIp*, bool isnew);
 
     void generate_new_host_mac(const snort::Packet*, RnaTracker, bool discover_proto = false);
@@ -172,7 +172,7 @@ private:
 
     // RNA utilities for non-IP packets
     void discover_network_ethernet(const snort::Packet*);
-    int discover_network_arp(const snort::Packet*, RnaTracker*);
+    int discover_network_arp(const snort::Packet*, RnaTracker&);
     int discover_network_bpdu(const snort::Packet*, const uint8_t* data, RnaTracker&);
     int discover_network_cdp(const snort::Packet*, const uint8_t* data, uint16_t rlen,
         RnaTracker&);

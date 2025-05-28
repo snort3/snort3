@@ -360,7 +360,7 @@ void HttpMsgRequest::publish(unsigned)
         {
             SfIp aux_ip;
             if (parse_ip_from_uri(aux_ip_str, aux_ip))
-                flow->stash->store(aux_ip);
+                flow->set_attr(aux_ip);
         }
     }
 }

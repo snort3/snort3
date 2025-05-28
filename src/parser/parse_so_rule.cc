@@ -247,14 +247,14 @@ bool get_so_stub(const char* in, std::string& stub)
 //--------------------------------------------------------------------------
 
 #ifdef UNIT_TEST
-struct TestCase
+struct ParseSOTestCase
 {
     const char* rule;
     const char* expect;
     bool result;
 };
 
-static const TestCase syntax_tests[] =
+static const ParseSOTestCase syntax_tests[] =
 {
     { "alert()", "alert()", true },
     { " alert() ", "alert()", true },
@@ -287,7 +287,7 @@ static const TestCase syntax_tests[] =
     { nullptr, nullptr, false }
 };
 
-static const TestCase basic_tests[] =
+static const ParseSOTestCase basic_tests[] =
 {
     { "alert( sid:1; )", "alert( sid:1; )", true },
 
@@ -306,7 +306,7 @@ static const TestCase basic_tests[] =
 };
 
 // __STRDUMP_DISABLE__
-static const TestCase stub_tests[] =
+static const ParseSOTestCase stub_tests[] =
 {
     { "alert( id:0; )", "alert( )", true },
     { "alert( sid:1; id:0; )", "alert( sid:1; )", true },
@@ -337,7 +337,7 @@ static const TestCase stub_tests[] =
 
 TEST_CASE("parse_so_rule.syntax", "[parser]")
 {
-    const TestCase* tc = syntax_tests;
+    const ParseSOTestCase* tc = syntax_tests;
 
     while ( tc->rule )
     {
@@ -353,7 +353,7 @@ TEST_CASE("parse_so_rule.syntax", "[parser]")
 
 TEST_CASE("parse_so_rule.basic", "[parser]")
 {
-    const TestCase* tc = basic_tests;
+    const ParseSOTestCase* tc = basic_tests;
 
     while ( tc->rule )
     {
@@ -369,7 +369,7 @@ TEST_CASE("parse_so_rule.basic", "[parser]")
 
 TEST_CASE("get_so_stub", "[parser]")
 {
-    const TestCase* tc = stub_tests;
+    const ParseSOTestCase* tc = stub_tests;
 
     while ( tc->rule )
     {

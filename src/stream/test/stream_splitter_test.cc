@@ -46,6 +46,7 @@ const SnortConfig* SnortConfig::get_conf()
 static StreamSplitter* next_splitter = nullptr;
 
 Flow::~Flow() = default;
+FlowDataStore::~FlowDataStore() = default;
 Packet::Packet(bool) { }
 Packet::~Packet() = default;
 

@@ -183,7 +183,7 @@ public:
 
 public:
     static unsigned inspector_id;
-    IMAPData session;
+    IMAPData session = {};
 };
 
 #endif

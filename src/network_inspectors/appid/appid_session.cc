@@ -248,9 +248,10 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     char src_ip[INET6_ADDRSTRLEN];
     char dst_ip[INET6_ADDRSTRLEN];
 
-    AppIdInspector* inspector = (AppIdInspector*)ctrlPkt->flow->current_flow_data->get_handler();
-    if ((inspector == nullptr) or strcmp(inspector->get_name(), MOD_NAME))
-        inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true);
+    AppIdInspector* inspector =
+        static_cast<AppIdInspector*>(
+            InspectorManager::get_inspector(MOD_NAME, MOD_USAGE, appid_inspector_api.type));
+    assert(inspector);
 
     // FIXIT-RC - port parameter passed in as 0 since we may not know client port, verify
 
@@ -1260,8 +1261,8 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
 {
     if (!api.flags.stored_in_stash)
     {
-        assert(p.flow and p.flow->stash);
-        p.flow->stash->store(STASH_APPID_DATA, &api, false);
+        assert(p.flow);
+        p.flow->set_attr(STASH_APPID_DATA, &api);
         api.flags.stored_in_stash = true;
     }
 

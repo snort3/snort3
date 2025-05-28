@@ -285,7 +285,7 @@ static inline void process_http_session(const Packet& p, AppIdSession& asd,
         {
             SfIp aux_ip;
             if (parse_ip_from_uri(*uri, aux_ip))
-                p.flow->stash->store(aux_ip);
+                p.flow->set_attr(aux_ip);
         }
     }
 }

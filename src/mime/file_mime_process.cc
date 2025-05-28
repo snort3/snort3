@@ -893,7 +893,7 @@ MimeSession::MimeSession(Packet* p, const DecodeConfig* dconf, MailLogConfig* lc
     uri(uri),
     uri_length(uri_length)
 {
-    p->flow->stash->store(STASH_EXTRADATA_MIME, log_state);
+    p->flow->set_attr(STASH_EXTRADATA_MIME, log_state);
     reset_mime_paf_state(&mime_boundary);
 }
 

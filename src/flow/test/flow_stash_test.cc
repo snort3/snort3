@@ -26,7 +26,6 @@
 
 #include "flow/flow_stash.h"
 #include "main/snort_config.h"
-#include "pub_sub/stash_events.h"
 #include "utils/util.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -34,36 +33,6 @@
 
 using namespace snort;
 using namespace std;
-
-template<class Type>
-class DBConsumer : public DataHandler
-{
-public:
-
-    static const char* STASH_EVENT;
-
-    DBConsumer(const char* mod_name) : DataHandler(mod_name) {}
-
-    void handle(DataEvent& e, Flow*) override
-    {
-        const StashEvent* se = static_cast<const StashEvent*>(&e);
-        se->get_item()->get_val(value);
-    }
-
-    Type get_from_stash(FlowStash& stash)
-    {
-        stash.get(STASH_EVENT, value);
-        return value;
-    }
-
-    Type get_value() const { return value; }
-
-private:
-    Type value;
-};
-
-template<class Type>
-const char* DBConsumer<Type>::STASH_EVENT = "foo.stash.event";
 
 static DataHandler* s_handler = nullptr;
 
@@ -100,42 +69,6 @@ char* snort_strdup(const char* str)
 
 TEST_GROUP(stash_tests)
 { };
-
-// DataBus tests
-TEST(stash_tests, data_bus_publish_test)
-{
-    typedef int32_t value_t;
-
-    DBConsumer<value_t> c("foo");
-    PubKey pub_key { };
-
-    DataBus::subscribe(pub_key, 0, &c);
-
-    FlowStash stash;
-    value_t vin, vout;
-
-    // stash/publish 10
-    vin = 10;
-    stash.store(DBConsumer<value_t>::STASH_EVENT, vin, 1, 1);
-    vout = c.get_value();
-    CHECK_EQUAL(vin, vout);
-
-    // stash/publish 20, with the same key as before
-    vin = 20;
-    stash.store(DBConsumer<value_t>::STASH_EVENT, vin, 1, 1);
-    vout = c.get_value();
-    CHECK_EQUAL(vin, vout);
-
-    // do we get some event that we're not listening to?
-    value_t before = c.get_value();
-    stash.store("bar.stash.event", 30);
-    value_t after = c.get_value();
-    CHECK_EQUAL(before, after);
-
-    // do we still get our own STASH_EVENT from the stash, at a later time?
-    vout = c.get_from_stash(stash);
-    CHECK_EQUAL(vin, vout);
-}
 
 // Stash tests
 TEST(stash_tests, new_int32_item)
@@ -239,23 +172,22 @@ TEST(stash_tests, non_existent_item)
 TEST(stash_tests, new_generic_object)
 {
     FlowStash stash;
-    StashGenericObject *test_object = new StashGenericObject(111);
+    StashGenericObject *test_object = new StashGenericObject;
 
     stash.store("item_1", test_object);
 
     StashGenericObject *retrieved_object;
     CHECK(stash.get("item_1", retrieved_object));
     POINTERS_EQUAL(test_object, retrieved_object);
-    CHECK_EQUAL(test_object->get_object_type(), ((StashGenericObject*)retrieved_object)->get_object_type());
 }
 
 TEST(stash_tests, update_generic_object)
 {
     FlowStash stash;
-    StashGenericObject *test_object = new StashGenericObject(111);
+    StashGenericObject *test_object = new StashGenericObject;
     stash.store("item_1", test_object);
 
-    StashGenericObject *new_test_object = new StashGenericObject(111);
+    StashGenericObject *new_test_object = new StashGenericObject;
     stash.store("item_1", new_test_object);
 
     StashGenericObject *retrieved_object;
@@ -273,7 +205,7 @@ TEST(stash_tests, non_existent_generic_object)
 TEST(stash_tests, mixed_items)
 {
     FlowStash stash;
-    StashGenericObject *test_object = new StashGenericObject(111);
+    StashGenericObject *test_object = new StashGenericObject;
 
     stash.store("item_1", 10);
     stash.store("item_2", "value_2");
@@ -293,7 +225,6 @@ TEST(stash_tests, mixed_items)
     StashGenericObject *retrieved_object;
     CHECK(stash.get("item_4", retrieved_object));
     POINTERS_EQUAL(test_object, retrieved_object);
-    CHECK_EQUAL(test_object->get_object_type(), ((StashGenericObject*)retrieved_object)->get_object_type());
 }
 
 TEST(stash_tests, store_ip)
@@ -304,31 +235,31 @@ TEST(stash_tests, store_ip)
 
     // Disabled
     snort_conf.max_aux_ip = -1;
-    CHECK_FALSE(stash.store(ip));
+    CHECK_FALSE(stash.store(ip, nullptr));
 
     // Enabled without stashing, no duplicate IP checking
     snort_conf.max_aux_ip = 0;
-    CHECK_TRUE(stash.store(ip));
-    CHECK_TRUE(stash.store(ip));
+    CHECK_TRUE(stash.store(ip, nullptr));
+    CHECK_TRUE(stash.store(ip, nullptr));
 
     // Enabled with FIFO stashing, duplicate IP checking
     snort_conf.max_aux_ip = 2;
-    CHECK_TRUE(stash.store(ip));
-    CHECK_FALSE(stash.store(ip));
+    CHECK_TRUE(stash.store(ip, nullptr));
+    CHECK_FALSE(stash.store(ip, nullptr));
 
     SfIp ip2;
     CHECK(ip2.set("1.1.1.2") == SFIP_SUCCESS);
-    CHECK_TRUE(stash.store(ip2));
-    CHECK_FALSE(stash.store(ip2));
+    CHECK_TRUE(stash.store(ip2, nullptr));
+    CHECK_FALSE(stash.store(ip2, nullptr));
 
     SfIp ip3;
     CHECK(ip3.set("1111::8888") == SFIP_SUCCESS);
-    CHECK_TRUE(stash.store(ip3));
-    CHECK_FALSE(stash.store(ip3));
-    CHECK_FALSE(stash.store(ip2));
-    CHECK_TRUE(stash.store(ip));
-    CHECK_FALSE(stash.store(ip));
-    CHECK_FALSE(stash.store(ip3));
+    CHECK_TRUE(stash.store(ip3, nullptr));
+    CHECK_FALSE(stash.store(ip3, nullptr));
+    CHECK_FALSE(stash.store(ip2, nullptr));
+    CHECK_TRUE(stash.store(ip, nullptr));
+    CHECK_FALSE(stash.store(ip, nullptr));
+    CHECK_FALSE(stash.store(ip3, nullptr));
 }
 
 int main(int argc, char** argv)

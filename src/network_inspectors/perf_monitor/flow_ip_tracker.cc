@@ -152,7 +152,7 @@ FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME)
         &stats.state_changes[SFS_STATE_TCP_CLOSED]);
     formatter->register_field("udp_created", (PegCount*)
         &stats.state_changes[SFS_STATE_UDP_CREATED]);
-    formatter->register_field("app_id", appid_name); 
+    formatter->register_field("app_id", appid_name);
     formatter->register_field("port_a", port_a);
     formatter->register_field("port_b", port_b);
     formatter->register_field("protocol", protocol);

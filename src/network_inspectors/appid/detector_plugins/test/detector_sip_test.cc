@@ -61,8 +61,8 @@ static bool prep_patterns = true;
 namespace snort
 {
 AppIdApi appid_api;
-AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
-    StashGenericObject(STASH_GENERIC_OBJECT_APPID) { }
+AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&)
+{ }
 Flow::~Flow() = default;
 AppIdSession* AppIdApi::get_appid_session(snort::Flow const&) { return nullptr; }
 

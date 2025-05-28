@@ -23,7 +23,6 @@
 
 FlowData::FlowData(unsigned, Inspector*)
 {
-    next = prev = nullptr;
     handler = nullptr;
     id = 222;
 }
@@ -34,23 +33,29 @@ FlowData* mock_flow_data = nullptr;
 
 typedef int32_t AppId;
 Flow::~Flow() = default;
+FlowDataStore::~FlowDataStore() = default;
 
 class FakeFlow : public Flow
 {
 };
 
-FlowData* Flow::get_flow_data(unsigned) const
+FlowData* FlowDataStore::get(unsigned) const
 {
     return mock_flow_data;
 }
 
-int Flow::set_flow_data(FlowData* fd)
+void FlowDataStore::set(FlowData* fd)
 {
     mock_flow_data = fd;
-    return 0;
 }
 
-bool FlowStash::get(const std::string &, StashGenericObject*&) { return false; }
+void FlowDataStore::erase(unsigned)
+{
+    mock_flow_data = nullptr;
+}
+
+bool FlowStash::get(const std::string &, StashGenericObject*&) const
+{ return false; }
 
 #endif
 

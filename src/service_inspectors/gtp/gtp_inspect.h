@@ -45,7 +45,7 @@ public:
 
 public:
     static unsigned inspector_id;
-    GTP_Roptions ropts;
+    GTP_Roptions ropts = {};
 };
 
 namespace snort

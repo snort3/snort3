@@ -44,12 +44,13 @@ using namespace HttpEnums;
 namespace snort
 {
 unsigned FlowData::flow_data_id = 0;
-FlowData::FlowData(unsigned, Inspector*) : next(nullptr), prev(nullptr), handler(nullptr), id(0)
+FlowData::FlowData(unsigned, Inspector*) : handler(nullptr), id(0)
 { }
 FlowData::~FlowData() = default;
-FlowData* Flow::get_flow_data(uint32_t) const { return nullptr; }
-int Flow::set_flow_data(FlowData*) { return 0; }
+FlowData* FlowDataStore::get(uint32_t) const { return nullptr; }
+void FlowDataStore::set(FlowData*) { }
 Flow::~Flow() = default;
+FlowDataStore::~FlowDataStore() = default;
 unsigned DataBus::get_id(PubKey const&) { return 0; }
 void DataBus::publish(unsigned int, unsigned int, DataEvent&, Flow*) { }
 int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }

@@ -517,10 +517,11 @@ void HttpMsgHeader::prepare_body()
     DataBus::publish(DataBus::get_id(http_pub_key), HttpEventIds::HTTP_PUBLISH_LENGTH, http_publish_length_event, flow);
     int32_t new_depth = http_publish_length_event.get_publish_length();
 
+    int32_t should_publish = (int32_t)http_publish_length_event.should_publish_body();
     if (is_request)
-        flow->stash->store(STASH_PUBLISH_REQUEST_BODY, http_publish_length_event.should_publish_body());
+        flow->set_attr(STASH_PUBLISH_REQUEST_BODY, should_publish);
     else
-        flow->stash->store(STASH_PUBLISH_RESPONSE_BODY, http_publish_length_event.should_publish_body());
+        flow->set_attr(STASH_PUBLISH_RESPONSE_BODY, should_publish);
 
     if (new_depth > session_data->publish_depth_remaining[source_id])
     {

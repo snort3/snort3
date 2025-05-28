@@ -146,9 +146,10 @@ void EventManager::add_output(OutputSet** ofn, Logger* eh)
     (*ofn)->outputs.emplace_back(eh);
 }
 
-void EventManager::copy_outputs(OutputSet* dst, OutputSet* src)
+void EventManager::copy_outputs(OutputSet* dst, const OutputSet* src)
 {
-    dst->outputs = src->outputs;
+    if (dst && src && src->outputs.size())
+        dst->outputs = src->outputs;
 }
 
 //-------------------------------------------------------------------------

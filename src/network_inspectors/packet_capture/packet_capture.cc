@@ -120,7 +120,7 @@ static bool bpf_compile_and_validate()
 static bool open_pcap_dumper()
 {
     string fname;
-    if ( config.capture_path.empty() ) 
+    if ( config.capture_path.empty() )
         get_instance_file(fname, FILE_NAME);
     else
     {
@@ -143,7 +143,7 @@ static bool open_pcap_dumper()
 }
 
 // for unit test
-static void _packet_capture_enable(const string& f, const int16_t g = -1, const string& t = "", 
+static void _packet_capture_enable(const string& f, const int16_t g = -1, const string& t = "",
                                    const bool ci = true, const string& path = "", const unsigned max = 0)
 {
     if ( !config.enabled )
@@ -174,7 +174,7 @@ static void _packet_capture_disable()
 // non-static functions
 // -----------------------------------------------------------------------------
 
-void packet_capture_enable(const string& f, const int16_t g, const string& t, const bool ci, 
+void packet_capture_enable(const string& f, const int16_t g, const string& t, const bool ci,
                            const string& p, const unsigned max)
 {
 
@@ -247,7 +247,7 @@ bool PacketCapture::capture_init()
 void PacketCapture::show(const SnortConfig*) const
 {
     ConfigLogger::log_flag("enable", config.enabled);
-    if (config.enabled) 
+    if (config.enabled)
     {
         ConfigLogger::log_value("filter", config.filter.c_str());
         ConfigLogger::log_value("tenants", int_vector_to_str(config.tenants).c_str());
@@ -275,9 +275,12 @@ void PacketCapture::eval(Packet* p)
 
         if (!config.tenants.empty())
         {
-            if (!std::any_of(config.tenants.begin(), config.tenants.end(),[&p](uint32_t tenant_id){
-            return p->pkth->tenant_id == tenant_id;
-            }))
+            uint32_t packet_tenant_id = p->pkth->tenant_id;
+            if (std::none_of(config.tenants.cbegin(), config.tenants.cend(),
+                [packet_tenant_id](uint32_t tenant_id)
+                {
+                    return packet_tenant_id == tenant_id;
+                }))
             {
                 cap_count_stats.checked++;
                 return;
@@ -642,7 +645,7 @@ TEST_CASE("bpf filter", "[PacketCapture]")
         "\x0a\x96";
 
     Packet p_match(false), p_non_match(false);
-    DAQ_PktHdr_t daq_hdr;
+    DAQ_PktHdr_t daq_hdr = {};
 
     p_match.pkth = &daq_hdr;
     p_non_match.pkth = &daq_hdr;

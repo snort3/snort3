@@ -119,17 +119,17 @@ static const ProfilerSorter<View> sorters[] =
     {
         "checks",
         [](const View& lhs, const View& rhs)
-        { return lhs.checks() >= rhs.checks(); }
+        { return lhs.checks() > rhs.checks(); }
     },
     {
         "avg_check",
         [](const View& lhs, const View& rhs)
-        { return lhs.avg_check() >= rhs.avg_check(); }
+        { return lhs.avg_check() > rhs.avg_check(); }
     },
     {
         "total_time",
         [](const View& lhs, const View& rhs)
-        { return lhs.elapsed() >= rhs.elapsed(); }
+        { return lhs.elapsed() > rhs.elapsed(); }
     }
 };
 

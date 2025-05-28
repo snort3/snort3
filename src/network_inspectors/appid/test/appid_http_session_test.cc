@@ -54,8 +54,8 @@ namespace snort
 Packet::Packet(bool) {}
 Packet::~Packet() = default;
 Packet* DetectionEngine::get_current_packet() { return nullptr; }
-AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
-    StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
+AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&)
+{ }
 }
 
 void FlowHAState::add(uint8_t) { }

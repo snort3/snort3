@@ -45,7 +45,7 @@ HeldPacket::HeldPacket(DAQ_Msg_h msg, uint32_t seq, const timeval& exp, TcpStrea
     : daq_msg(msg), seq_num(seq), expiration(exp), tracker(trk), expired(false)
 { }
 
-HeldPacketQueue::iter_t HeldPacketQueue::append(DAQ_Msg_h msg, uint32_t seq,
+const HeldPacketQueue::iter_t HeldPacketQueue::append(DAQ_Msg_h msg, uint32_t seq,
     TcpStreamTracker& trk)
 {
     timeval now, expiration;
@@ -56,7 +56,7 @@ HeldPacketQueue::iter_t HeldPacketQueue::append(DAQ_Msg_h msg, uint32_t seq,
     return --q.end();
 }
 
-void HeldPacketQueue::erase(iter_t it)
+void HeldPacketQueue::erase(const iter_t it)
 {
     q.erase(it);
 }

@@ -226,7 +226,7 @@ using namespace snort;
 //stringify the macro
 #define sm(code) #code
 
-struct TestCase
+struct TraceTestCase
 {
     const char* test;
     const char* expected;
@@ -243,7 +243,7 @@ static void test_log(const char* log_msg, const char* name,
 
 TEST_CASE("macros", "[trace]")
 {
-    TestCase cases[] =
+    TraceTestCase cases[] =
     {
         {
             sx(debug_log(1, test_trace, "my message")),

@@ -73,7 +73,6 @@ bool get_buf_sip(unsigned id, snort::Packet* p, snort::InspectionBuffer& b)
 
 SipFlowData::SipFlowData() : FlowData(inspector_id)
 {
-    memset(&session, 0, sizeof(session));
     sip_stats.sessions++;
     sip_stats.concurrent_sessions++;
     if(sip_stats.max_concurrent_sessions < sip_stats.concurrent_sessions)

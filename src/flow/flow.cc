@@ -54,10 +54,8 @@ Flow::~Flow()
     free_flow_data();
     delete session;
 
-    if ( mpls_client.length )
-        delete[] mpls_client.start;
-    if ( mpls_server.length )
-        delete[] mpls_server.start;
+    delete_mpls_layer(mpls_client);
+    delete_mpls_layer(mpls_server);
     delete bitop;
 
     if ( ssn_client )
@@ -79,7 +77,6 @@ Flow::~Flow()
         clear_data();
 
     delete ha_state;
-    delete stash;
     delete ips_cont;
 }
 
@@ -93,24 +90,16 @@ void Flow::init(PktType type)
         ha_state = new FlowHAState;
         previous_ssn_state = ssn_state;
     }
-    mpls_client.length = 0;
-    mpls_server.length = 0;
-
-    stash = new FlowStash;
+    assert(!mpls_client);
+    assert(!mpls_server);
 }
 
 inline void Flow::clean()
 {
-    if ( mpls_client.length )
-    {
-        delete[] mpls_client.start;
-        mpls_client.length = 0;
-    }
-    if ( mpls_server.length )
-    {
-        delete[] mpls_server.start;
-        mpls_server.length = 0;
-    }
+    delete_mpls_layer(mpls_client);
+    mpls_client = nullptr;
+    delete_mpls_layer(mpls_server);
+    mpls_server = nullptr;
     delete bitop;
     bitop = nullptr;
     filtering_state.clear();
@@ -229,45 +218,11 @@ uint64_t Flow::fetch_add_inspection_duration()
     return get_inspection_duration();
 }
 
-int Flow::set_flow_data(FlowData* fd)
-{
-    if ( !fd ) return -1;
-
-    current_flow_data = fd;
-    uint32_t id = fd->get_id();
-    // operator[] will create a new entry if it does not exist
-    // or replace the existing one if it does
-    // when replacing, the old entry is deleted
-    flow_data[id] = std::unique_ptr<FlowData>(fd);
-    return 0;
-}
-
-
-FlowData* Flow::get_flow_data(unsigned id) const
-{
-    auto it = flow_data.find(id);
-    if ( it != flow_data.end() )
-        return it->second.get();
-    return nullptr;
-}
-
-void Flow::free_flow_data(FlowData* fd)
-{
-    if ( fd )
-        flow_data.erase(fd->get_id());
-}
-
-void Flow::free_flow_data(uint32_t proto)
-{
-    flow_data.erase(proto);
-}
-
 void Flow::free_flow_data()
 {
     if ( flow_data.empty() )
     {
-        if (stash)
-            stash->reset();
+        stash.reset();
         return;
     }
     const SnortConfig* sc = SnortConfig::get_conf();
@@ -302,26 +257,13 @@ void Flow::free_flow_data()
     }
 
     flow_data.clear();
-    if (stash)
-        stash->reset();
+    stash.reset();
 
     if (ps)
     {
         set_network_policy(np);
         set_inspection_policy(ip);
         set_ips_policy(ipsp);
-    }
-}
-
-void Flow::call_handlers(Packet* p, bool eof)
-{
-    for (auto& fd_pair : flow_data)
-    {
-        FlowData* fd = fd_pair.second.get();
-        if ( eof )
-            fd->handle_eof(p);
-        else
-            fd->handle_retransmit(p);
     }
 }
 
@@ -479,29 +421,18 @@ void Flow::set_mpls_layer_per_dir(Packet* p)
     if ( !mpls_lyr || !(mpls_lyr->start) )
         return;
 
-    if ( p->packet_flags & PKT_FROM_CLIENT )
+    Layer*& mpls_layer = ( p->packet_flags & PKT_FROM_CLIENT ) ? mpls_client : mpls_server;
+    if ( !mpls_layer )
     {
-        if ( !mpls_client.length )
-        {
-            mpls_client.length = mpls_lyr->length;
-            mpls_client.prot_id = mpls_lyr->prot_id;
-            mpls_client.start = new uint8_t[mpls_lyr->length];
-            memcpy((void *)mpls_client.start, mpls_lyr->start, mpls_lyr->length);
-        }
-    }
-    else
-    {
-        if ( !mpls_server.length )
-        {
-            mpls_server.length = mpls_lyr->length;
-            mpls_server.prot_id = mpls_lyr->prot_id;
-            mpls_server.start = new uint8_t[mpls_lyr->length];
-            memcpy((void *)mpls_server.start, mpls_lyr->start, mpls_lyr->length);
-        }
+        mpls_layer = new Layer;
+        mpls_layer->length = mpls_lyr->length;
+        mpls_layer->prot_id = mpls_lyr->prot_id;
+        mpls_layer->start = new uint8_t[mpls_lyr->length];
+        memcpy((void *)mpls_layer->start, mpls_lyr->start, mpls_lyr->length);
     }
 }
 
-Layer Flow::get_mpls_layer_per_dir(bool client)
+Layer* Flow::get_mpls_layer_per_dir(bool client)
 {
     if ( client )
         return mpls_client;

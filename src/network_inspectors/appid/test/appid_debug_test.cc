@@ -47,8 +47,7 @@ Packet::Packet(bool) {}
 Packet::~Packet() = default;
 FlowData::FlowData(unsigned, Inspector*) { }
 FlowData::~FlowData() = default;
-AppIdSessionApi::AppIdSessionApi(const AppIdSession* asd, const SfIp& ip) :
-    StashGenericObject(STASH_GENERIC_OBJECT_APPID), asd(asd), initiator_ip(ip) {}
+AppIdSessionApi::AppIdSessionApi(const AppIdSession* asd, const SfIp& ip) : asd(asd), initiator_ip(ip) { }
 [[noreturn]] void FatalError(const char*,...) {  exit(-1); }
 void ErrorMessage(const char*, va_list&) { }
 void WarningMessage(const char*, va_list&) { }

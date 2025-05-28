@@ -62,8 +62,8 @@ Packet* DetectionEngine::get_current_packet()
     return &p;
 }
 
-AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&) :
-    StashGenericObject(STASH_GENERIC_OBJECT_APPID) {}
+AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&)
+{ }
 }
 
 void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }

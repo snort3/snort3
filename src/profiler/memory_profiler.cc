@@ -120,17 +120,17 @@ static const ProfilerSorter<View> sorters[] =
     {
         "allocations",
         [](const View& lhs, const View& rhs)
-        { return lhs.allocs() >= rhs.allocs(); }
+        { return lhs.allocs() > rhs.allocs(); }
     },
     {
         "total_used",
         [](const View& lhs, const View& rhs)
-        { return lhs.total() >= rhs.total(); }
+        { return lhs.total() > rhs.total(); }
     },
     {
         "avg_allocation",
         [](const View& lhs, const View& rhs)
-        { return lhs.avg_alloc() >= rhs.avg_alloc(); }
+        { return lhs.avg_alloc() > rhs.avg_alloc(); }
     },
 };
 

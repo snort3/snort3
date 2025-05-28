@@ -105,6 +105,7 @@ void Flow::free_flow_data() { }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
 void Flow::set_mpls_layer_per_dir(Packet*) { }
+FlowDataStore::~FlowDataStore() = default;
 void packet_gettimeofday(struct timeval* ) { }
 SO_PUBLIC void ts_print(const struct timeval*, char*, bool) { }
 
@@ -422,7 +423,7 @@ TEST(allowlist_test, move_to_allowlist)
         FlowKey flow_key;
         flow_key.port_l = port++;
         flow_key.pkt_type = PktType::UDP;
-        
+
         Flow* flow = cache->allocate(&flow_key);
         CHECK(cache->move_to_allowlist(flow) == true);  // Move flow to allow list
 
@@ -451,7 +452,7 @@ TEST(allowlist_test, allowlist_timeout_prune_fail)
         FlowKey flow_key;
         flow_key.port_l = port++;
         flow_key.pkt_type = PktType::TCP;
-        
+
         Flow* flow = cache->allocate(&flow_key);
         CHECK(cache->move_to_allowlist(flow) == true);
     }
@@ -462,7 +463,7 @@ TEST(allowlist_test, allowlist_timeout_prune_fail)
     // Ensure pruning doesn't occur because all flows are allow listed
     for (uint8_t i = 0; i < total_lru_count; ++i)
         CHECK(cache->prune_one(PruneReason::IDLE_PROTOCOL_TIMEOUT, true, i) == false);
-    
+
     CHECK_EQUAL(2, cache->get_count());
     CHECK_EQUAL(2, cache->get_lru_flow_count(allowlist_lru_index));
 
@@ -484,7 +485,7 @@ TEST(allowlist_test, allowlist_memcap_prune_pass)
         FlowKey flow_key;
         flow_key.port_l = port++;
         flow_key.pkt_type = PktType::TCP;
-        
+
         Flow* flow = cache->allocate(&flow_key);
         CHECK(cache->move_to_allowlist(flow) == true);
     }
@@ -508,18 +509,18 @@ TEST(allowlist_test, allowlist_timeout_with_other_protos)
     fcg.max_flows = 10;
     fcg.prune_flows = 10;
 
-    for (uint8_t i = to_utype(PktType::NONE); i <= to_utype(PktType::MAX); ++i) 
+    for (uint8_t i = to_utype(PktType::NONE); i <= to_utype(PktType::MAX); ++i)
         fcg.proto[i].nominal_timeout = 5;
-    
+
     FlowCache* cache = new FlowCache(fcg);
     int port = 1;
 
-    for (unsigned i = 0; i < 2; ++i) 
+    for (unsigned i = 0; i < 2; ++i)
     {
         FlowKey flow_key;
         flow_key.port_l = port++;
         flow_key.pkt_type = PktType::UDP;
-        
+
         Flow* flow = cache->allocate(&flow_key);
         CHECK(cache->move_to_allowlist(flow) == true);  // Move flow to allow list
 
@@ -531,9 +532,9 @@ TEST(allowlist_test, allowlist_timeout_with_other_protos)
     CHECK_EQUAL(2, cache->get_count());
 
     // Ensure pruning doesn't occur because all flows are allow listed
-    for (uint8_t i = 0; i < to_utype(PktType::MAX) - 1; ++i) 
+    for (uint8_t i = 0; i < to_utype(PktType::MAX) - 1; ++i)
         CHECK(cache->prune_one(PruneReason::NONE, true, i) == false);
-    
+
     CHECK_EQUAL(2, cache->get_count());  // Ensure no flows were pruned
 
     // Add a new ICMP flow
@@ -551,16 +552,16 @@ TEST(allowlist_test, allowlist_timeout_with_other_protos)
     // we can't prune to 0 so 1 flow will be pruned
     CHECK_EQUAL(1, cache->prune_multiple(PruneReason::MEMCAP, true));
 
-    CHECK_EQUAL(1, cache->get_count()); 
+    CHECK_EQUAL(1, cache->get_count());
     CHECK_EQUAL(1, cache->get_lru_flow_count(allowlist_lru_index));
 
     // Adding five UDP flows, these will become the LRU flows
-    for (unsigned i = 0; i < 5; ++i) 
+    for (unsigned i = 0; i < 5; ++i)
     {
         FlowKey flow_key;
         flow_key.port_l = port++;
         flow_key.pkt_type = PktType::UDP;
-        
+
         Flow* flow = cache->allocate(&flow_key);
         flow->last_data_seen = 2 + i;
     }
@@ -568,16 +569,16 @@ TEST(allowlist_test, allowlist_timeout_with_other_protos)
     CHECK_EQUAL(6, cache->get_count());
 
     // Adding three TCP flows, move two to allow list, making them MRU
-    for (unsigned i = 0; i < 3; ++i) 
+    for (unsigned i = 0; i < 3; ++i)
     {
         FlowKey flow_key;
         flow_key.port_l = port++;
         flow_key.pkt_type = PktType::TCP;
-        
+
         Flow* flow = cache->allocate(&flow_key);
         flow->last_data_seen = 4 + i;  // Set TCP flows to have later timeout
 
-        if (i > 0) 
+        if (i > 0)
         {
             CHECK(cache->move_to_allowlist(flow) == true);
 
@@ -626,7 +627,7 @@ TEST(allowlist_test, excess_prune)
         FlowKey flow_key;
         flow_key.port_l = port++;
         flow_key.pkt_type = PktType::TCP;
-        
+
         Flow* flow = cache->allocate(&flow_key);
         CHECK(cache->move_to_allowlist(flow) == true);
     }
@@ -804,7 +805,7 @@ TEST(dump_flows, dump_flows_no_flows_to_dump)
     DummyCache* cache = new DummyCache(fcg);
     CHECK(cache->dump_flows(dump_stream, 100, ffc, true, 1) == true);
 
-    delete cache;   
+    delete cache;
 }
 
 TEST_GROUP(dump_flows_summary) { };
@@ -867,7 +868,7 @@ TEST(dump_flows_summary, dump_flows_summary_with_5_of_each_flow)
 
     std::vector<PktType> types = {PktType::IP, PktType::ICMP, PktType::TCP, PktType::UDP};
 
-    for (const auto& type : types) 
+    for (const auto& type : types)
     {
         for (unsigned i = 0; i < 5; i++)
         {
@@ -881,7 +882,7 @@ TEST(dump_flows_summary, dump_flows_summary_with_5_of_each_flow)
     CHECK(cache->dump_flows_summary(flows_summary, ffc) == true);
 
     FlowsTypeSummary expected_type{};
-    for (const auto& type : types) 
+    for (const auto& type : types)
         expected_type[to_utype(type)] = 5;
     CHECK(expected_type == flows_summary.type_summary);
 
@@ -907,7 +908,7 @@ TEST(dump_flows_summary, dump_flows_summary_with_different_flow_states)
 
     std::vector<snort::Flow::FlowState> types = {snort::Flow::FlowState::BLOCK, snort::Flow::FlowState::ALLOW, snort::Flow::FlowState::SETUP};
 
-    for (const auto& type : types) 
+    for (const auto& type : types)
     {
         for (unsigned i = 0; i < 5; i++)
         {
@@ -928,7 +929,7 @@ TEST(dump_flows_summary, dump_flows_summary_with_different_flow_states)
     CHECK(expected_type == flows_summary.type_summary);
 
     FlowsStateSummary expected_state{};
-    for (const auto& type : types) 
+    for (const auto& type : types)
     {
         expected_state[to_utype(type)] = flows_number;
     }
@@ -1006,7 +1007,7 @@ TEST(dump_flows_summary, dump_flows_summary_with_filter)
 
     std::vector<PktType> types = {PktType::IP, PktType::ICMP, PktType::TCP, PktType::UDP};
 
-    for (const auto& type : types) 
+    for (const auto& type : types)
     {
         int port = 1;
         for (unsigned i = 0; i < 5; i++)
@@ -1042,7 +1043,7 @@ TEST(dump_flows_summary, dump_flows_summary_with_filter)
     CHECK(cache->dump_flows_summary(flows_summary, ffc) == true);
 
     expected_type = {};
-    for (const auto& type : types) 
+    for (const auto& type : types)
         expected_type[to_utype(type)] = 1;
     CHECK(expected_type == flows_summary.type_summary);
 
@@ -1072,8 +1073,8 @@ TEST(dump_flows_summary, dump_flows_summary_with_filter)
 
 
 
-TEST_GROUP(flow_cache_lrus) 
-{ 
+TEST_GROUP(flow_cache_lrus)
+{
     FlowCacheConfig fcg;
     DummyCache* cache;
 
@@ -1115,7 +1116,7 @@ TEST(flow_cache_lrus, count_flows_in_lru_test)
         CHECK(flow != nullptr);
     }
 
-    CHECK_EQUAL(10, cache->get_count());  // Verify 10 flows in 
+    CHECK_EQUAL(10, cache->get_count());  // Verify 10 flows in
     CHECK_EQUAL(4, cache->count_flows_in_lru(to_utype(PktType::TCP)));  // 4 TCP flows
     CHECK_EQUAL(1, cache->count_flows_in_lru(to_utype(PktType::UDP)));  // 1 UDP flow
     CHECK_EQUAL(1, cache->count_flows_in_lru(to_utype(PktType::USER)));  // 1 USER flow

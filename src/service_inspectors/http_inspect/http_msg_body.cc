@@ -89,9 +89,9 @@ void HttpMsgBody::publish(unsigned pub_id)
     // Publish entire request/response body limited dynamically
     int32_t should_publish_body = 0;
     if (is_request)
-        flow->stash->get(STASH_PUBLISH_REQUEST_BODY, should_publish_body);
+        flow->get_attr(STASH_PUBLISH_REQUEST_BODY, should_publish_body);
     else
-        flow->stash->get(STASH_PUBLISH_RESPONSE_BODY, should_publish_body);
+        flow->get_attr(STASH_PUBLISH_RESPONSE_BODY, should_publish_body);
 
     if (should_publish_body)
     {
@@ -103,7 +103,7 @@ void HttpMsgBody::publish(unsigned pub_id)
         {
             fprintf(HttpTestManager::get_output_file(),
                 "Published %" PRId32 " bytes of body. Originated from %s. last: %s\n",
-                publish_length, (is_request ? "client" : "server"), 
+                publish_length, (is_request ? "client" : "server"),
                 (last_piece ? "true" : "false"));
             fflush(HttpTestManager::get_output_file());
         }
@@ -122,8 +122,8 @@ void HttpMsgBody::publish(unsigned pub_id)
 
         // If it is not the last piece of the request, it should be marked as such because of REQUEST_PUBLISH_DEPTH limit:
         // if sum of already published octets (publish_octets) and current publishing length (request_publish_length)
-        // is greater than the request publish depth. 
-        auto request_last_piece = last_piece ? 
+        // is greater than the request publish depth.
+        auto request_last_piece = last_piece ?
             true : (publish_octets + request_publish_length >= REQUEST_PUBLISH_DEPTH);
 
         HttpRequestBodyEvent http_request_body_event(this, request_publish_length, publish_octets, request_last_piece, session_data);

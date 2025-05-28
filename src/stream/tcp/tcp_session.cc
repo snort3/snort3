@@ -926,7 +926,7 @@ bool TcpSession::ignore_this_packet(Packet* p)
         // Don't need to process a retry packet through stream again,
         // just make sure the retransmit handler is called so that
         // we do things like update file inspection.
-        flow->call_handlers(p, false);
+        flow->call_handlers(p);
         return true;
     }
 

@@ -100,7 +100,7 @@ bool TcpStateEstablished::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTrac
 bool TcpStateEstablished::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     trk.update_on_fin_sent(tsd);
-    trk.session->flow->call_handlers(tsd.get_pkt(), true);
+    trk.session->flow->call_handlers(tsd.get_pkt(), FlowDataStore::HANDLER_EOF);
     trk.set_tcp_state(TcpStreamTracker::TCP_FIN_WAIT1);
     return true;
 }

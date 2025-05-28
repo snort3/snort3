@@ -57,6 +57,7 @@ void Active::set_drop_reason(char const*) { }
 FlowCache::FlowCache(const FlowCacheConfig& cfg) : config(cfg) { }
 FlowCache::~FlowCache() = default;
 Flow::~Flow() = default;
+FlowDataStore::~FlowDataStore() = default;
 DetectionEngine::DetectionEngine() { context = nullptr; }
 DetectionEngine::~DetectionEngine() = default;
 unsigned FlowCache::purge() { return 1; }
