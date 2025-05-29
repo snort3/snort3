@@ -5,7 +5,7 @@
 set(prefix "${CMAKE_INSTALL_PREFIX}")
 set(exec_prefix "\${prefix}")
 set(bindir "\${exec_prefix}/bin")
-set(libdir "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
+set(libdir "\${CMAKE_INSTALL_FULL_LIBDIR}")
 set(includedir "\${prefix}/include")
 set(datarootdir "\${prefix}/share")
 set(datadir "\${datarootdir}")
