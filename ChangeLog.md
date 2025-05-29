@@ -1,3 +1,9 @@
+2025-05-28: 3.9.0.0
+
+* codec, flow: make mpls layers in flow pointers to save memory
+* flow: use vector and binary search for flow data and stash
+* managers, profiler, stream: fix glibc debug and assertion issues
+
 2025-05-26: 3.8.1.0
 
 * analyzer: print DAQ input specification next to its message
