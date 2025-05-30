@@ -52,8 +52,14 @@ Swapper::Swapper()
 Swapper::~Swapper()
 {
     if ( new_conf and old_conf )
+    {
         // don't do this to startup configs
         InspectorManager::clear_removed_inspectors(new_conf);
+
+        //transfer ownership of mp_dbus to new config
+        if ( new_conf->mp_dbus == old_conf->mp_dbus )
+            const_cast<SnortConfig*>(old_conf)->mp_dbus = nullptr;
+    }
 
     if ( old_conf )
         delete old_conf;

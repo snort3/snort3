@@ -560,6 +560,19 @@ int main_reload_config(lua_State* L)
     TraceApi::thread_reinit(sc->trace_config);
     proc_stats.conf_reloads++;
 
+    if(sc->max_procs > 1)
+    {
+        if (old and old->mp_dbus != nullptr)
+        {
+            sc->mp_dbus = old->mp_dbus;
+        }
+        else
+        {
+            sc->mp_dbus = new MPDataBus();
+            sc->mp_dbus->init(sc->max_procs);
+        }
+    }
+
     ReloadTracker::update(ctrlcon, "start swapping configuration ...");
     send_response(ctrlcon, ".. swapping configuration\n");
     main_broadcast_command(new ACSwap(new Swapper(old, sc), ctrlcon), ctrlcon);
