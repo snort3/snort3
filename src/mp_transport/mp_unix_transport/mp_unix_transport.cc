@@ -113,6 +113,9 @@ void MPUnixDomainTransport::handle_new_connection(UnixDomainConnector *connector
     std::lock_guard<std::mutex> guard_send(_send_mutex);
     std::lock_guard<std::mutex> guard_read(_read_mutex);
 
+    if(!this->is_running.load())
+        return;
+
     transport_stats.successful_connections++;
 
     auto side_channel = new SideChannel(ScMsgFormat::BINARY);
@@ -122,6 +125,7 @@ void MPUnixDomainTransport::handle_new_connection(UnixDomainConnector *connector
     connector->set_message_received_handler(std::bind(&MPUnixDomainTransport::notify_process_thread, this));
     this->side_channels.push_back(new SideChannelHandle(side_channel, cfg, channel_id));
     connector->set_update_handler(std::bind(&MPUnixDomainTransport::connector_update_handler, this, std::placeholders::_1, std::placeholders::_2, side_channel));
+    connector->start_receive_thread();
 }
 
 MPUnixDomainTransport::MPUnixDomainTransport(MPUnixDomainTransportConfig *c, MPUnixTransportStats& stats) : MPTransport(), 
@@ -235,10 +239,14 @@ void MPUnixDomainTransport::notify_process_thread()
     this->consume_message_received = true;
 }
 
-void MPUnixDomainTransport::connector_update_handler(UnixDomainConnector *connector, bool is_recconecting, SideChannel *side_channel)
+void MPUnixDomainTransport::connector_update_handler(UnixDomainConnector *connector, bool is_reconecting, SideChannel *side_channel)
 {
     std::lock_guard<std::mutex> guard_send(_send_mutex);
     std::lock_guard<std::mutex> guard_read(_read_mutex);
+
+    if(!this->is_running.load())
+        return;
+
     if (side_channel->connector_receive)
     {
         delete side_channel->connector_receive;
@@ -249,11 +257,12 @@ void MPUnixDomainTransport::connector_update_handler(UnixDomainConnector *connec
     {
         connector->set_message_received_handler(std::bind(&MPUnixDomainTransport::notify_process_thread, this));
         side_channel->connector_receive = side_channel->connector_transmit = connector;
+        connector->start_receive_thread();
         this->transport_stats.successful_connections++;
     }
     else
     {
-        if (is_recconecting == false)
+        if (is_reconecting == false)
         {
             MPTransportLog("Accepted connection interrupted, removing handle\n");
             for(auto it = this->side_channels.begin(); it != this->side_channels.end(); ++it)
@@ -369,6 +378,9 @@ void MPUnixDomainTransport::init_side_channels()
     if (config->max_processes < 2)
         return;
 
+    if (this->is_running.load())
+        return;
+
     auto instance_id = mp_current_process_id = Snort::get_process_id();//Snort instance id
     auto max_processes = config->max_processes;
 
@@ -392,7 +404,7 @@ void MPUnixDomainTransport::init_side_channels()
         
         UnixDomainConnectorConfig* unix_config = new UnixDomainConnectorConfig();
         unix_config->setup = UnixDomainConnectorConfig::Setup::ANSWER;
-        unix_config->async_receive = true;
+        unix_config->async_receive = false;
         if (config->conn_retries)
         {
             unix_config->conn_retries = config->conn_retries;
@@ -426,18 +438,22 @@ void MPUnixDomainTransport::init_side_channels()
 
         UnixDomainConnectorConfig* connector_conf = new UnixDomainConnectorConfig();
         connector_conf->setup = UnixDomainConnectorConfig::Setup::CALL;
-        connector_conf->async_receive = true;
+        connector_conf->async_receive = false;
         connector_conf->conn_retries = config->conn_retries;
         connector_conf->retry_interval = config->retry_interval_seconds;
         connector_conf->max_retries = config->max_retries;
         connector_conf->connect_timeout_seconds = config->connect_timeout_seconds;
         connector_conf->paths.push_back(send_path);
 
-        unixdomain_connector_tinit_call(*connector_conf, send_path.c_str(), 0, std::bind(&MPUnixDomainTransport::connector_update_handler, this, std::placeholders::_1, std::placeholders::_2, side_channel));
+        UnixDomainConnectorReconnectHelper* reconnect_helper = new UnixDomainConnectorReconnectHelper(*connector_conf, 
+            std::bind(&MPUnixDomainTransport::connector_update_handler, this, std::placeholders::_1, std::placeholders::_2, side_channel));
+
+        reconnect_helper->connect(send_path.c_str(), 0);
         
-        this->side_channels.push_back( new SideChannelHandle(side_channel, connector_conf, i));
+        this->side_channels.push_back( new SideChannelHandle(side_channel, connector_conf, i, reconnect_helper));
     }
 
+    assert(!this->consume_thread);
     this->consume_thread = new std::thread(&MPUnixDomainTransport::process_messages_from_side_channels, this);
 }
 
@@ -456,6 +472,9 @@ void MPUnixDomainTransport::cleanup_side_channels()
 
 SideChannelHandle::~SideChannelHandle()
 {
+    if(reconnect_helper)
+        reconnect_helper->set_reconnect_enabled(false);
+
     if (side_channel)
     {
         if (side_channel->connector_receive)
@@ -463,6 +482,9 @@ SideChannelHandle::~SideChannelHandle()
 
         delete side_channel;
     }
+
+    if(reconnect_helper)
+        delete reconnect_helper;
     
     if (connector_config)
         delete connector_config;

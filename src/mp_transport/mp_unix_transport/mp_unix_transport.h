@@ -83,8 +83,9 @@ struct SerializeFunctionHandle
 
 struct SideChannelHandle
 {
-    SideChannelHandle(SideChannel* sc, UnixDomainConnectorConfig* cc, const unsigned short& channel_id) :
-        side_channel(sc), connector_config(cc), channel_id(channel_id)
+    SideChannelHandle(SideChannel* sc, UnixDomainConnectorConfig* cc, const unsigned short& channel_id, 
+                      UnixDomainConnectorReconnectHelper* reconnect_helper = nullptr) :
+        side_channel(sc), connector_config(cc), channel_id(channel_id), reconnect_helper(reconnect_helper)
     { }
 
     ~SideChannelHandle();
@@ -92,6 +93,7 @@ struct SideChannelHandle
     SideChannel* side_channel;
     UnixDomainConnectorConfig* connector_config;
     unsigned short channel_id;
+    UnixDomainConnectorReconnectHelper* reconnect_helper;
 };
 
 struct UnixAcceptorHandle
@@ -133,7 +135,7 @@ class MPUnixDomainTransport : public MPTransport
     void handle_new_connection(UnixDomainConnector* connector, UnixDomainConnectorConfig* cfg, const unsigned short& channel_id);
     void process_messages_from_side_channels();
     void notify_process_thread();
-    void connector_update_handler(UnixDomainConnector* connector, bool is_recconecting, SideChannel* side_channel);
+    void connector_update_handler(UnixDomainConnector* connector, bool is_reconecting, SideChannel* side_channel);
     void MPTransportLog(const char* msg, ...);
 
     MPSerializeFunc get_event_serialization_function(unsigned pub_id, unsigned event_id);

@@ -46,7 +46,7 @@ THREAD_LOCAL ProfileStats unixdomain_connector_perfstats;
 
 /* Module *****************************************************************/
 
-static bool attempt_connection(int& sfd, const char* path) {
+static bool attempt_connection(int& sfd, const char* path, unsigned long timeout_sec) {
     sfd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sfd == -1) {
         ErrorMessage("UnixDomainC: socket error: %s \n", strerror(errno));
@@ -73,7 +73,31 @@ static bool attempt_connection(int& sfd, const char* path) {
     strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
 
     if (connect(sfd, (struct sockaddr*)&addr, sizeof(struct sockaddr_un)) == -1) {
-        if (errno != EINPROGRESS) {
+        if (errno == EINPROGRESS) {
+            // Wait for the socket to be writable (connection established or failed)
+            fd_set writefds;
+            FD_ZERO(&writefds);
+            FD_SET(sfd, &writefds);
+
+            struct timeval tv;
+            tv.tv_sec = timeout_sec;
+            tv.tv_usec = 0;
+
+            int sel = select(sfd + 1, nullptr, &writefds, nullptr, &tv);
+            if (sel <= 0) {
+                ErrorMessage("UnixDomainC: connect timeout or select error: %s \n", strerror(errno));
+                close(sfd);
+                return false;
+            }
+
+            int so_error = 0;
+            socklen_t len = sizeof(so_error);
+            if (getsockopt(sfd, SOL_SOCKET, SO_ERROR, &so_error, &len) < 0 || so_error != 0) {
+                ErrorMessage("UnixDomainC: connect failed after select: %s \n", strerror(so_error ? so_error : errno));
+                close(sfd);
+                return false;
+            }
+        } else {
             ErrorMessage("UnixDomainC: connect error: %s \n", strerror(errno));
             close(sfd);
             return false;
@@ -83,8 +107,9 @@ static bool attempt_connection(int& sfd, const char* path) {
 }
 
 // Function to handle connection retries
-static void connection_retry_handler(const UnixDomainConnectorConfig& cfg, size_t idx, UnixDomainConnectorUpdateHandler update_handler = nullptr) {
-    if(update_handler)
+static void connection_retry_handler(const UnixDomainConnectorConfig& cfg, size_t idx,
+     UnixDomainConnectorUpdateHandler update_handler = nullptr, UnixDomainConnectorReconnectHelper* reconnect_helper = nullptr) {
+    if (update_handler)
         update_handler(nullptr, ( (cfg.conn_retries > 0) and (cfg.setup == UnixDomainConnectorConfig::Setup::CALL) ));
     else
         ConnectorManager::update_thread_connector(cfg.connector_name, idx, nullptr);
@@ -99,19 +124,22 @@ static void connection_retry_handler(const UnixDomainConnectorConfig& cfg, size_
 
         const char* path = paths[idx].c_str();
 
-        if(cfg.setup == UnixDomainConnectorConfig::Setup::CALL)
+        if (cfg.setup == UnixDomainConnectorConfig::Setup::CALL)
         {
             LogMessage("UnixDomainC: Attempting to reconnect to %s\n", cfg.paths[idx].c_str());
 
             uint32_t retry_count = 0;
 
             while (retry_count < cfg.max_retries) {
+                if (reconnect_helper and reconnect_helper->is_reconnect_enabled() == false)
+                    return;
+
                 int sfd;
-                if (attempt_connection(sfd, path)) {
+                if (attempt_connection(sfd, path, cfg.connect_timeout_seconds)) {
                     // Connection successful
-                    UnixDomainConnector* unixdomain_conn = new UnixDomainConnector(cfg, sfd, idx);
+                    UnixDomainConnector* unixdomain_conn = new UnixDomainConnector(cfg, sfd, idx, reconnect_helper);
                     LogMessage("UnixDomainC: Connected to %s\n", path);
-                    if(update_handler)
+                    if (update_handler)
                     {
                         unixdomain_conn->set_update_handler(update_handler);
                         update_handler(unixdomain_conn, false);
@@ -137,13 +165,13 @@ static void connection_retry_handler(const UnixDomainConnectorConfig& cfg, size_
 }
 
 static void start_retry_thread(const UnixDomainConnectorConfig& cfg, size_t idx, UnixDomainConnectorUpdateHandler update_handler = nullptr) {
-    std::thread retry_thread(connection_retry_handler, cfg, idx, update_handler);
+    std::thread retry_thread(connection_retry_handler, cfg, idx, update_handler, nullptr);
     retry_thread.detach();
 }
 
-UnixDomainConnector::UnixDomainConnector(const UnixDomainConnectorConfig& unixdomain_connector_config, int sfd, size_t idx)
-    : Connector(unixdomain_connector_config), sock_fd(sfd), run_thread(false), receive_thread(nullptr), 
-      receive_ring(new ReceiveRing(50)), instance_id(idx), cfg(unixdomain_connector_config) {
+UnixDomainConnector::UnixDomainConnector(const UnixDomainConnectorConfig& unixdomain_connector_config, int sfd, size_t idx, UnixDomainConnectorReconnectHelper* reconnect_helper)
+    : Connector(unixdomain_connector_config), sock_fd(sfd), run_thread(false), receive_thread(nullptr),
+      receive_ring(new ReceiveRing(50)), instance_id(idx), cfg(unixdomain_connector_config), reconnect_helper(reconnect_helper) {
     if (unixdomain_connector_config.async_receive) {
         start_receive_thread();
     }
@@ -278,7 +306,11 @@ void UnixDomainConnector::process_receive() {
             sock_fd = -1;
         }   
 
-        start_retry_thread(cfg, instance_id, update_handler);
+        if (reconnect_helper)
+            reconnect_helper->reconnect(instance_id);
+        else
+            start_retry_thread(cfg, instance_id, update_handler);
+        
         return;
     } 
     else if (rval > 0 && pfds[0].revents & POLLIN) {
@@ -387,7 +419,7 @@ static void mod_dtor(Module* m) {
 
 UnixDomainConnector* unixdomain_connector_tinit_call(const UnixDomainConnectorConfig& cfg, const char* path, size_t idx, const UnixDomainConnectorUpdateHandler& update_handler) {
     int sfd;
-    if (!attempt_connection(sfd, path)) {
+    if (!attempt_connection(sfd, path, 0)) {
         if (cfg.conn_retries) {
             // Spawn a new thread to handle connection retries
             start_retry_thread(cfg, idx, update_handler);
@@ -628,4 +660,69 @@ void UnixDomainConnectorListener::stop_accepting_connections()
         delete accept_thread;
         accept_thread = nullptr;
     }
+}
+
+UnixDomainConnectorReconnectHelper::~UnixDomainConnectorReconnectHelper()
+{
+    if(connection_thread)
+    {
+        if (connection_thread->joinable())
+            connection_thread->join();
+        delete connection_thread;
+        connection_thread = nullptr;
+    }
+}
+
+void UnixDomainConnectorReconnectHelper::connect(const char* path, size_t idx)
+{
+    int sfd;
+    if (!attempt_connection(sfd, path, cfg.connect_timeout_seconds)) {
+        if (cfg.conn_retries) {
+            
+            connection_thread = new std::thread(connection_retry_handler, cfg, idx, update_handler, this);
+            return; 
+        } else {
+            close(sfd);
+            return;
+        }
+    }
+    if(update_handler)
+    {
+        LogMessage("UnixDomainC: Connected to %s\n", path);
+        UnixDomainConnector* unixdomain_conn = new UnixDomainConnector(cfg, sfd, idx, this);
+        unixdomain_conn->set_update_handler(update_handler);
+        update_handler(unixdomain_conn, false);
+    }
+    else
+    {
+        assert(true);
+        close(sfd);
+    }
+}
+
+void UnixDomainConnectorReconnectHelper::reconnect(size_t idx)
+{
+    if(!reconnect_enabled.load())
+    {
+        return;
+    }
+    if (connection_thread)
+    {
+        if (connection_thread->joinable())
+            connection_thread->join();
+        delete connection_thread;
+        connection_thread = nullptr;
+    }
+    
+    connection_thread = new std::thread(connection_retry_handler, cfg, idx, update_handler, this);
+}
+
+void UnixDomainConnectorReconnectHelper::set_reconnect_enabled(bool enabled)
+{
+    reconnect_enabled.store(enabled);
+}
+
+bool UnixDomainConnectorReconnectHelper::is_reconnect_enabled() const
+{
+    return reconnect_enabled.load();
 }

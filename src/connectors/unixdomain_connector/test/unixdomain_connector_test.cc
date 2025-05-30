@@ -46,6 +46,7 @@ static unsigned s_instance = 0;
 static unsigned char* s_rec_message = nullptr;
 static size_t s_rec_message_size = 0;
 static int s_socket_return = 1;
+static bool s_socket_return_switch = false;
 static int s_bind_return = 0;
 static int s_listen_return = 0;
 static int s_accept_return = 2;
@@ -140,11 +141,29 @@ ssize_t recv (int, void *buf, size_t n, int)
 }
 
 #ifdef __GLIBC__
-int socket (int, int, int) __THROW { return s_socket_return; }
+int socket (int, int, int) __THROW 
+{
+    if(s_socket_return_switch)
+    {
+        auto tmp_ret = s_socket_return;
+        s_socket_return = s_socket_return > 0 ? -1 : 1;
+        return tmp_ret;
+    }
+    return s_socket_return;
+}
 int bind (int, const struct sockaddr*, socklen_t) __THROW { return s_bind_return; }
 int listen (int, int) __THROW { return s_listen_return; }
 #else
-int socket (int, int, int) { return s_socket_return; }
+int socket (int, int, int)
+{
+    if(s_socket_return_switch)
+    {
+        auto tmp_ret = s_socket_return;
+        s_socket_return = s_socket_return > 0 ? -1 : 1;
+        return tmp_ret;
+    }
+    return s_socket_return;
+}
 int bind (int, const struct sockaddr*, socklen_t) { return s_bind_return; }
 int listen (int, int) { return s_listen_return; }
 #endif
@@ -798,6 +817,7 @@ void connection_callback(UnixDomainConnector* c, UnixDomainConnectorConfig* conf
 
 TEST(unixdomain_connector_listener, listener_accept_stop)
 {
+    set_normal_status();
     UnixDomainConnectorConfig cfg;
     cfg.direction = Connector::CONN_DUPLEX;
     cfg.connector_name = "unixdomain";
@@ -821,6 +841,88 @@ TEST(unixdomain_connector_listener, listener_accept_stop)
     test_listener_connector = nullptr;
     delete test_listener_config;
     test_listener_config = nullptr;
+}
+
+UnixDomainConnectorReconnectHelper* reconnect_helper = nullptr;
+UnixDomainConnector* test_reconnect_connector = nullptr;
+
+void reconnect_update_callback(UnixDomainConnector* connector, bool is_reconnecting)
+{
+    test_reconnect_connector = connector;
+}
+
+TEST_GROUP(unixdomain_connector_reconnect_helper)
+{
+    UnixDomainConnectorConfig reconnect_config;
+    int reconnect_sfd = 0;
+    void setup()
+    {
+        reconnect_config.direction = Connector::CONN_DUPLEX;
+        reconnect_config.connector_name = "unixdomain-reconnect";
+        reconnect_config.paths.push_back("/tmp/pub_sub_reconnect");
+        reconnect_config.setup = UnixDomainConnectorConfig::Setup::CALL;
+        reconnect_config.conn_retries = 2;
+        reconnect_config.async_receive = false;
+        reconnect_helper = new UnixDomainConnectorReconnectHelper(reconnect_config, reconnect_update_callback);
+    }
+
+    void teardown()
+    {
+        if (reconnect_helper)
+        {
+            delete reconnect_helper;
+            reconnect_helper = nullptr;
+        }
+    }
+};
+
+TEST(unixdomain_connector_reconnect_helper, connect_then_reconnect_call)
+{
+    set_normal_status();
+    reconnect_helper->connect("/tmp/pub_sub_reconnect", 0);
+
+    CHECK(test_reconnect_connector != nullptr);
+
+    s_poll_undesirable = true;
+
+    auto tmp_test_connector = test_reconnect_connector;
+
+    //trigger the reconnect
+    test_reconnect_connector->process_receive();
+
+    //collapse the reconnect_helper joining reconnect thread
+    delete reconnect_helper;
+    reconnect_helper = nullptr;
+
+    CHECK(test_reconnect_connector != nullptr);
+    CHECK(test_reconnect_connector != tmp_test_connector);
+    delete test_reconnect_connector;
+
+    delete tmp_test_connector;
+}
+
+TEST(unixdomain_connector_reconnect_helper, connect_in_other_thread)
+{
+    set_normal_status();
+    s_socket_return = -1;
+    s_socket_return_switch = true;
+    reconnect_helper->connect("/tmp/pub_sub_reconnect", 0);
+
+    delete reconnect_helper;
+    reconnect_helper = nullptr;
+
+    CHECK(test_reconnect_connector != nullptr);
+    delete test_reconnect_connector;
+    test_reconnect_connector = nullptr;
+}
+
+TEST(unixdomain_connector_reconnect_helper, is_reconnect_available_flag)
+{
+    CHECK(reconnect_helper->is_reconnect_enabled() == true);
+    reconnect_helper->set_reconnect_enabled(false);
+    CHECK(reconnect_helper->is_reconnect_enabled() == false);
+    reconnect_helper->set_reconnect_enabled(true);
+    CHECK(reconnect_helper->is_reconnect_enabled() == true);
 }
 
 int main(int argc, char** argv)

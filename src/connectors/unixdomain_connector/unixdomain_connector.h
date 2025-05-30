@@ -50,6 +50,7 @@ public:
 };
 
 class UnixDomainConnector;
+class UnixDomainConnectorReconnectHelper;
 
 typedef std::function<void (UnixDomainConnector*,bool)> UnixDomainConnectorUpdateHandler;
 typedef std::function<void ()> UnixDomainConnectorMessageReceivedHandler;
@@ -57,7 +58,7 @@ typedef std::function<void ()> UnixDomainConnectorMessageReceivedHandler;
 class UnixDomainConnector :  public snort::Connector 
 {
 public:
-    UnixDomainConnector(const UnixDomainConnectorConfig& config, int sfd, size_t idx);
+    UnixDomainConnector(const UnixDomainConnectorConfig& config, int sfd, size_t idx, UnixDomainConnectorReconnectHelper* reconnect_helper = nullptr);
     ~UnixDomainConnector() override;
 
     bool transmit_message(const snort::ConnectorMsg&, const ID& = null) override;
@@ -69,12 +70,13 @@ public:
     void set_update_handler(UnixDomainConnectorUpdateHandler handler);
     void set_message_received_handler(UnixDomainConnectorMessageReceivedHandler handler);
 
+    void start_receive_thread();
+
     int sock_fd;
 
 private:
     typedef Ring<snort::ConnectorMsg*> ReceiveRing;
 
-    void start_receive_thread();
     void stop_receive_thread();
     void receive_processing_thread();
 
@@ -89,6 +91,8 @@ private:
 
     UnixDomainConnectorUpdateHandler update_handler;
     UnixDomainConnectorMessageReceivedHandler message_received_handler;
+
+    UnixDomainConnectorReconnectHelper* reconnect_helper;
 };
 
 typedef std::function<void (UnixDomainConnector*, UnixDomainConnectorConfig*)> UnixDomainConnectorAcceptHandler;
@@ -108,6 +112,25 @@ public:
     std::thread* accept_thread;
     std::atomic<bool> should_accept;
 
+};
+
+class UnixDomainConnectorReconnectHelper
+{
+    public:
+    UnixDomainConnectorReconnectHelper(const UnixDomainConnectorConfig& cfg, const UnixDomainConnectorUpdateHandler& update_handler = nullptr)
+        : cfg(cfg), update_handler(update_handler), connection_thread(nullptr), reconnect_enabled(true) { }
+    ~UnixDomainConnectorReconnectHelper();
+
+    void connect(const char* path, size_t idx);
+    void reconnect(size_t idx);
+    void set_reconnect_enabled(bool enabled);
+    bool is_reconnect_enabled() const;
+    
+    private:
+    UnixDomainConnectorConfig cfg;
+    UnixDomainConnectorUpdateHandler update_handler;
+    std::thread* connection_thread;
+    std::atomic<bool> reconnect_enabled;
 };
 
 extern SO_PUBLIC UnixDomainConnector* unixdomain_connector_tinit_call(const UnixDomainConnectorConfig& cfg, const char* path, size_t idx, const UnixDomainConnectorUpdateHandler& update_handler = nullptr);

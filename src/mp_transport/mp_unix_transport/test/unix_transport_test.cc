@@ -108,6 +108,11 @@ void UnixDomainConnector::set_update_handler(std::function<void (UnixDomainConne
         test_update_handler = h;
 }
 
+void UnixDomainConnector::start_receive_thread()
+{
+
+}
+
 static snort::ConnectorMsg* test_msg_answer = nullptr;
 static snort::ConnectorMsg* test_msg_call = nullptr;
 static uint8_t* test_msg_call_data = nullptr;
@@ -190,11 +195,27 @@ snort::ConnectorMsg UnixDomainConnector::receive_message(bool)
     }
     return snort::ConnectorMsg();
 }
-UnixDomainConnector::UnixDomainConnector(const UnixDomainConnectorConfig& config, int sfd, size_t idx) : Connector(config) // cppcheck-suppress uninitMemberVar
+UnixDomainConnector::UnixDomainConnector(const UnixDomainConnectorConfig& config, int sfd, size_t idx, UnixDomainConnectorReconnectHelper*) : Connector(config) // cppcheck-suppress uninitMemberVar
 { cfg  = config; } // cppcheck-suppress useInitializationList
 UnixDomainConnector::~UnixDomainConnector()
 {
     close(0);
+}
+
+UnixDomainConnectorReconnectHelper::~UnixDomainConnectorReconnectHelper()
+{}
+
+void UnixDomainConnectorReconnectHelper::connect(const char* path, size_t idx)
+{
+    unixdomain_connector_tinit_call(cfg, path, idx, update_handler);
+}
+
+void UnixDomainConnectorReconnectHelper::reconnect(size_t idx)
+{}
+
+void UnixDomainConnectorReconnectHelper::set_reconnect_enabled(bool enabled)
+{
+    reconnect_enabled.store(enabled);
 }
 
 UnixDomainConnector* unixdomain_connector_tinit_call(const UnixDomainConnectorConfig& cfg, const char* path, size_t idx, const UnixDomainConnectorUpdateHandler& update_handler)
