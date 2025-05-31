@@ -54,7 +54,8 @@ enum AppidChangeBit
     APPID_REFERER_BIT,
 
     // dns
-    APPID_DNS_HOST_BIT,
+    APPID_DNS_REQUEST_HOST_BIT,
+    APPID_DNS_RESPONSE_HOST_BIT,
 
     // other
     APPID_SERVICE_INFO_BIT,
@@ -100,8 +101,10 @@ inline void change_bits_to_string(const AppidChangeBits& change_bits, std::strin
         --n? str.append("response, ") : str.append("response");
     if (change_bits.test(APPID_REFERER_BIT))
         --n? str.append("referrer, ") : str.append("referrer");
-    if (change_bits.test(APPID_DNS_HOST_BIT))
+    if (change_bits.test(APPID_DNS_REQUEST_HOST_BIT))
         --n? str.append("dns-host, ") : str.append("dns-host");
+    if (change_bits.test(APPID_DNS_RESPONSE_HOST_BIT))
+        --n? str.append("dns-response-host, ") : str.append("dns-response-host");
     if (change_bits.test(APPID_SERVICE_INFO_BIT))
         --n? str.append("service-info, ") : str.append("service-info");
     if (change_bits.test(APPID_CLIENT_INFO_BIT))

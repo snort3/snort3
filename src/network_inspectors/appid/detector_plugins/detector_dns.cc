@@ -131,29 +131,30 @@ struct DNSAnswerData
 enum DNSState
 {
     DNS_STATE_QUERY,
-    DNS_STATE_RESPONSE
+    DNS_STATE_RESPONSE,
+    DNS_STATE_MULTI_QUERY
 };
 
 class ServiceDNSData : public AppIdFlowData
 {
 public:
-    ServiceDNSData();
+    ServiceDNSData() = default;
     ~ServiceDNSData() override;
     void save_dns_cache(uint16_t size, const uint8_t* data);
     void free_dns_cache();
 
     DNSState state = DNS_STATE_QUERY;
     uint8_t* cached_data = nullptr;
-    uint16_t cached_len = 0; 
+    uint16_t cached_len = 0;
     uint16_t id = 0;
 };
 
 void ServiceDNSData::save_dns_cache(uint16_t size, const uint8_t* data)
 {
-    if(size > 0) 
+    if(size > 0)
     {
         cached_data = (uint8_t*)snort_calloc(size, sizeof(uint8_t));
-        if(cached_data) 
+        if(cached_data)
         {
             memcpy(cached_data, data, size);
         }
@@ -169,13 +170,6 @@ void ServiceDNSData::free_dns_cache()
         cached_data = nullptr;
     }
 
-    cached_len = 0;
-}
-
-ServiceDNSData::ServiceDNSData()
-{
-    state = DNS_STATE_QUERY;
-    cached_data = nullptr;
     cached_len = 0;
 }
 
@@ -253,7 +247,7 @@ APPID_STATUS_CODE DnsValidator::add_dns_query_info(AppIdSession& asd, uint16_t i
             char* new_host = dns_parse_host(host, host_len);
             if (!new_host)
                 return APPID_NOMATCH;
-            dsession->set_host(new_host, change_bits);
+            dsession->set_host(new_host, change_bits, true);
             dsession->set_host_offset(host_offset);
             dsession->set_options_offset(options_offset);
             snort_free(new_host);
@@ -288,7 +282,7 @@ APPID_STATUS_CODE DnsValidator::add_dns_response_info(AppIdSession& asd, uint16_
             char* new_host = dns_parse_host(host, host_len);
             if (!new_host)
                 return APPID_NOMATCH;
-            dsession->set_host(new_host, change_bits);
+            dsession->set_host(new_host, change_bits, false);
             dsession->set_host_offset(host_offset);
             snort_free(new_host);
         }
@@ -724,19 +718,21 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
         if (rval != APPID_SUCCESS)
             goto tcp_done;
 
-        if (dd->state == DNS_STATE_QUERY)
+        if (dd->state == DNS_STATE_QUERY || dd->state == DNS_STATE_MULTI_QUERY)
         {
             if (args.dir != APP_ID_FROM_INITIATOR)
                 goto fail;
             dd->id = ((const DNSHeader*)data)->id;
+            DNSState current_state = dd->state;
             dd->state = DNS_STATE_RESPONSE;
-            goto inprocess;
+            if (current_state == DNS_STATE_QUERY)
+                goto inprocess;
+            goto success;
         }
+        else if (args.dir == APP_ID_FROM_RESPONDER && dd->id == ((const DNSHeader*)data)->id)
+            dd->state = DNS_STATE_MULTI_QUERY;
         else
-        {
-            if (args.dir != APP_ID_FROM_RESPONDER || dd->id != ((const DNSHeader*)data)->id)
-                goto fail;
-        }
+            goto fail;
     }
 tcp_done:
     switch (rval)

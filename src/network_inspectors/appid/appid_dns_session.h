@@ -79,10 +79,19 @@ public:
     const char* get_host() const
     { return host.c_str(); }
 
-    void set_host(char* host, AppidChangeBits& change_bits)
+    void set_host(const char* host, AppidChangeBits& change_bits, bool request)
     {
         this->host = host;
-        change_bits.set(APPID_DNS_HOST_BIT);
+        if (request)
+        {
+            change_bits.reset(APPID_DNS_RESPONSE_HOST_BIT);
+            change_bits.set(APPID_DNS_REQUEST_HOST_BIT);
+        }
+        else
+        {
+            change_bits.reset(APPID_DNS_REQUEST_HOST_BIT);
+            change_bits.set(APPID_DNS_RESPONSE_HOST_BIT);
+        }
     }
 
     uint32_t get_host_len() const
