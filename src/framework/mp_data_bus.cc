@@ -375,6 +375,32 @@ void MPDataBus::sum_stats()
     }
 }
 
+void MPDataBus::reset_stats()
+{
+    std::lock_guard<std::mutex> lock(mp_stats_mutex);
+
+    for(auto& [_, pub_stats] : mp_pub_stats)
+    {
+        pub_stats.total_messages_sent = 0;
+        pub_stats.total_messages_received = 0;
+        pub_stats.total_messages_dropped = 0;
+        pub_stats.total_messages_published = 0;
+        pub_stats.total_messages_delivered = 0;
+    }
+    
+    mp_global_stats.total_messages_sent = 0;
+    mp_global_stats.total_messages_received = 0;
+    mp_global_stats.total_messages_dropped = 0;
+    mp_global_stats.total_messages_published = 0;
+    mp_global_stats.total_messages_delivered = 0;
+
+    auto transport_module = ModuleManager::get_module(transport.c_str());
+    if (transport_module)
+    {
+        transport_module->reset_stats();
+    }
+}
+
 void MPDataBus::dump_stats(ControlConn *ctrlconn, const char *module_name)
 {
     set_log_conn(ctrlconn);

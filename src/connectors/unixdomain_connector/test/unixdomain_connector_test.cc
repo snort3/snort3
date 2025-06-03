@@ -888,7 +888,9 @@ TEST(unixdomain_connector_reconnect_helper, connect_then_reconnect_call)
     auto tmp_test_connector = test_reconnect_connector;
 
     //trigger the reconnect
-    test_reconnect_connector->process_receive();
+    test_reconnect_connector->start_receive_thread();
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     //collapse the reconnect_helper joining reconnect thread
     delete reconnect_helper;

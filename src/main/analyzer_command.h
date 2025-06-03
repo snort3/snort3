@@ -85,6 +85,7 @@ typedef enum clear_counter_type
     TYPE_FILE_ID,
     TYPE_SNORT,
     TYPE_HA,
+    TYPE_MESSAGING,
 	TYPE_ALL
 } clear_counter_type_t;
 
@@ -98,7 +99,8 @@ static std::vector<const char*> clear_counter_type_string_map
     "appid",
     "file_id",
     "snort",
-    "high_availability"
+    "high_availability",
+    "mp_data_bus"
 };
 
 class ACResetStats : public snort::AnalyzerCommand

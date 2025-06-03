@@ -40,6 +40,7 @@ typedef std::function<void (const MPEventInfo& event_info)> TransportReceiveEven
 enum MPTransportChannelStatus
 {
     DISCONNECTED = 0,
+    ACCEPTING,
     CONNECTING,
     CONNECTED,
     MAX
@@ -58,6 +59,7 @@ struct MPTransportChannelStatusHandle
             case DISCONNECTED: return "DISCONNECTED";
             case CONNECTING: return "CONNECTING";
             case CONNECTED: return "CONNECTED";
+            case ACCEPTING: return "ACCEPTING";
             default: return "UNKNOWN";
         }
     }

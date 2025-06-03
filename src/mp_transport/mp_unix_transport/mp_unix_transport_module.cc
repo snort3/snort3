@@ -65,7 +65,7 @@ bool MPUnixDomainTransportModule::begin(const char *, int, SnortConfig *sc)
 {
     assert(sc);
     assert(!config);
-    config = new MPUnixDomainTransportConfig;
+    config = new MPUnixDomainTransportConfig;    
     config->max_processes = sc->max_procs;
     return true;
 }
@@ -117,7 +117,22 @@ const PegInfo *MPUnixDomainTransportModule::get_pegs() const
 
 PegCount *MPUnixDomainTransportModule::get_counts() const
 {
+    if (transport_handle)
+    {
+        transport_handle->sum_stats();
+    }
+    
     return (PegCount*)&unix_transport_stats;
+}
+
+void MPUnixDomainTransportModule::reset_stats()
+{
+    unix_transport_stats = MPUnixTransportStats();
+    if (transport_handle)
+    {
+        transport_handle->reset_stats();
+    }
+    Module::reset_stats();
 }
 
 static struct MPTransportApi mp_unixdomain_transport_api =

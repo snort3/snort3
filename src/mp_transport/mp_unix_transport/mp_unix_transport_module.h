@@ -44,12 +44,15 @@ class MPUnixDomainTransportModule : public Module
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
+    bool global_stats() const override { return true; }
+    void reset_stats() override;
 
     Usage get_usage() const override
     { return GLOBAL; }
 
     MPUnixDomainTransportConfig* config;
     MPUnixTransportStats unix_transport_stats;
+    MPUnixDomainTransport* transport_handle = nullptr;
 };
 
 static Module* mod_ctor()
@@ -65,7 +68,8 @@ static void mod_dtor(Module* m)
 static MPTransport* mp_unixdomain_transport_ctor(Module* m)
 {
     auto unix_tr_mod = (MPUnixDomainTransportModule*)m;
-    return new MPUnixDomainTransport(unix_tr_mod->config, unix_tr_mod->unix_transport_stats);
+    unix_tr_mod->transport_handle = new MPUnixDomainTransport(unix_tr_mod->config, unix_tr_mod->unix_transport_stats);
+    return unix_tr_mod->transport_handle;
 }
 
 static void mp_unixdomain_transport_dtor(MPTransport* t)

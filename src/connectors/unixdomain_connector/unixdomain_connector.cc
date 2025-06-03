@@ -295,6 +295,13 @@ void UnixDomainConnector::process_receive() {
     } 
     else if ((pfds[0].revents & (POLLHUP | POLLERR | POLLNVAL)) != 0) 
     {
+        if (run_thread.load() == false)
+        {
+            close(sock_fd);
+            sock_fd = -1;
+            return;
+        }
+
         ErrorMessage("UnixDomainC Input Thread: Undesirable return event while polling on socket %d: 0x%x\n",
                 pfds[0].fd, pfds[0].revents);
 
@@ -349,8 +356,8 @@ void UnixDomainConnector::start_receive_thread() {
 
 void UnixDomainConnector::stop_receive_thread() {
 
+    run_thread.store(false, std::memory_order_relaxed);
     if (receive_thread != nullptr) {
-        run_thread.store(false, std::memory_order_relaxed);
         if (receive_thread->joinable()) {
             receive_thread->join();
         }

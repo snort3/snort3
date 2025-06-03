@@ -502,6 +502,7 @@ public:
     const Command* get_commands() const override;
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
+    void reset_stats() override;
 
     Usage get_usage() const override
     { return GLOBAL; }
@@ -560,6 +561,12 @@ PegCount* MPDataBusModule::get_counts() const
     if(SnortConfig::get_conf()->mp_dbus)
         SnortConfig::get_conf()->mp_dbus->sum_stats();
     return (PegCount*)&MPDataBus::mp_global_stats;
+}
+
+void MPDataBusModule::reset_stats()
+{
+    if(SnortConfig::get_conf()->mp_dbus)
+        SnortConfig::get_conf()->mp_dbus->reset_stats();
 }
 //-------------------------------------------------------------------------
 // reference module

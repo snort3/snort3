@@ -76,6 +76,14 @@ namespace snort
         size = 0;
         return nullptr;
     }
+    void MPUnixDomainTransport::reset_stats()
+    {
+        transport_stats = MPUnixTransportStats();
+    }
+    void MPUnixDomainTransport::sum_stats()
+    {
+        
+    }
 
     char* snort_strdup(const char*)
     {

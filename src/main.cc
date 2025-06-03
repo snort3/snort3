@@ -96,6 +96,7 @@ static const std::map<std::string, clear_counter_type_t> counter_name_to_id =
 	{"file_id", clear_counter_type_t::TYPE_FILE_ID},
 	{"snort", clear_counter_type_t::TYPE_SNORT},
 	{"ha", clear_counter_type_t::TYPE_HA},
+    {"messaging", clear_counter_type_t::TYPE_MESSAGING},
 	{"all", clear_counter_type_t::TYPE_ALL}
 };
 

@@ -173,6 +173,7 @@ public:
     void set_debug_enabled(bool flag);
 
     void sum_stats();
+    void reset_stats();
 
     void dump_stats(ControlConn* ctrlconn, const char* module_name);
     void dump_events(ControlConn* ctrlconn, const char* module_name);
