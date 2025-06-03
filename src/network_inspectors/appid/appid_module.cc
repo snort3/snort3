@@ -177,9 +177,13 @@ private:
 
 bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
 {
-    assert(!pkt_thread_tp_appid_ctxt);
-    pkt_thread_tp_appid_ctxt = inspector.get_ctxt().get_tp_appid_ctxt();
-    pkt_thread_tp_appid_ctxt->tinit();
+    if (!pkt_thread_tp_appid_ctxt) 
+        pkt_thread_tp_appid_ctxt = inspector.get_ctxt().get_tp_appid_ctxt();
+    int reload_in_progress = pkt_thread_tp_appid_ctxt->tinit();
+    if (reload_in_progress) {
+        APPID_LOG(nullptr, TRACE_INFO_LEVEL, "== rescheduling third-party context swap\n");
+        return false;
+    }
     ThirdPartyAppIdContext::set_tp_reload_in_progress(false);
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "== third-party context swap in progress\n");
     return true;

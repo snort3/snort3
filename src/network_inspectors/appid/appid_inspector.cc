@@ -177,6 +177,12 @@ void AppIdInspector::show(const SnortConfig*) const
     config->show();
 }
 
+void AppIdInspector::third_party_tinit()
+{
+    while (pkt_thread_tp_appid_ctxt->tinit())
+        ;
+}
+
 void AppIdInspector::tinit()
 {
     appid_pub_id = cached_global_pub_id;
@@ -196,7 +202,7 @@ void AppIdInspector::tinit()
     assert(!pkt_thread_tp_appid_ctxt);
     pkt_thread_tp_appid_ctxt = ctxt.get_tp_appid_ctxt();
     if (pkt_thread_tp_appid_ctxt)
-        pkt_thread_tp_appid_ctxt->tinit();
+        third_party_tinit();
     if (config->log_all_sessions)
         appidDebug->set_enabled(true);
      if ( snort::HighAvailabilityManager::active() )

@@ -58,6 +58,7 @@ private:
     AppIdConfig* config = nullptr;
     AppIdContext ctxt;
     static unsigned cached_global_pub_id;
+    void third_party_tinit();
 };
 
 extern const snort::InspectApi appid_inspector_api;
