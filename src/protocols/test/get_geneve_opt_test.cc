@@ -23,6 +23,7 @@
 
 #include "flow/expect_flow.h"
 #include "framework/api_options.h"
+#include "packet_io/sfdaq_instance.h"
 #include "protocols/packet.h"
 #include "protocols/packet_manager.h"
 
@@ -37,6 +38,7 @@ const char* PacketManager::get_proto_name(ProtocolId) { return nullptr; }
 const vlan::VlanTagHdr* layer::get_vlan_layer(const Packet*) { return nullptr; }
 const geneve::GeneveLyr* layer::get_geneve_layer(const Packet*, bool) { return nullptr; }
 void ip::IpApi::reset() {}
+int SFDAQInstance::inject(_daq_msg const*, int, unsigned char const*, unsigned int) { return -1; }
 
 uint8_t PacketManager::max_layers = DEFAULT_LAYERMAX;
 

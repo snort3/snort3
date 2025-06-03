@@ -30,6 +30,7 @@
 #include "managers/codec_manager.h"
 #include "packet_io/packet_tracer.h"
 #include "packet_io/sfdaq.h"
+#include "packet_io/sfdaq_instance.h"
 #include "profiler/profiler_defs.h"
 #include "stream/stream.h"
 #include "trace/trace_api.h"
@@ -70,6 +71,7 @@ int layer::get_inner_ip_lyr_index(const Packet* const) { return 0; }
 int layer::get_inner_ip6_frag_index(const Packet* const) { return 0; }
 uint8_t Stream::get_flow_ttl(Flow*, char, bool) { return 0; }
 bool SFDAQ::forwarding_packet(const DAQ_PktHdr_t*) { return false; }
+int SFDAQInstance::inject(_daq_msg const*, int, unsigned char const*, unsigned int) { return -1; }
 void sum_stats(PegCount*, PegCount*, unsigned, bool) {}
 IpsContext::IpsContext(unsigned):
     packet(nullptr), encode_packet(nullptr), pkth (nullptr), buf(nullptr),

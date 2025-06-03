@@ -27,6 +27,7 @@
 using namespace Http2Enums;
 #include "../http2_hpack_int_decode.h"
 #include "../http2_varlen_int_decode_impl.h"
+#include "packet_io/sfdaq_instance.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -36,6 +37,7 @@ namespace snort
 {
 // Stubs whose sole purpose is to make the test code link
 int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
+int SFDAQInstance::inject(_daq_msg const*, int, unsigned char const*, unsigned int) { return -1; }
 }
 
 

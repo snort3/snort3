@@ -30,6 +30,7 @@
 #include "log/obfuscator.h"
 #include "main/snort_config.h"
 #include "packet_io/active.h"
+#include "packet_io/sfdaq_instance.h"
 
 #include "packet_manager.h"
 #include "vlan.h"
@@ -320,6 +321,12 @@ bool Packet::is_from_application_server() const
         return flow->flags.app_direction_swapped ? is_from_client() : is_from_server();
     else
         return is_from_server();
+}
+
+int Packet::inject()
+{
+    set_pkt_injected();
+    return daq_instance->inject(daq_msg, 0, pkt, pktlen);
 }
 
 } // namespace snort

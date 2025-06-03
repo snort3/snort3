@@ -27,6 +27,7 @@
 #include "log/messages.h"
 
 #include "main/thread_config.h"
+#include "packet_io/sfdaq_instance.h"
 #include "service_inspectors/http_inspect/http_js_norm.h"
 #include "service_inspectors/http_inspect/http_uri_norm.h"
 
@@ -54,6 +55,7 @@ void DecodeConfig::set_decompress_pdf(bool) {}
 void DecodeConfig::set_decompress_swf(bool) {}
 void DecodeConfig::set_decompress_zip(bool) {}
 void DecodeConfig::set_decompress_vba(bool) {}
+int SFDAQInstance::inject(_daq_msg const*, int, unsigned char const*, unsigned int) { return -1; }
 SearchTool::~SearchTool() {}
 unsigned get_instance_id()
 { return 0; }

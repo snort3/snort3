@@ -121,6 +121,9 @@ bool TcpNormalizer::trim_payload(TcpNormalizerState&, TcpSegmentDescriptor& tsd,
         tsd.set_len(max);
         tsd.set_packet_flags(PKT_RESIZED);
         tsd.set_end_seq(tsd.get_end_seq() - fat);
+        if (stream_tcp_trace_enabled)
+            trace_logf(TRACE_WARNING_LEVEL, stream_tcp_trace, DEFAULT_TRACE_OPTION_ID, \
+                       tsd.get_pkt(), "stream_tcp: Packet resized, length set to %u bytes", max);
         return true;
     }
     return false;

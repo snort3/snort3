@@ -148,6 +148,7 @@ Packet::Packet(bool)
     packet_flags = PKT_FROM_CLIENT;
 }
 Packet::~Packet()  = default;
+int Packet::inject() { return 0; }
 IpsPolicy* get_ips_policy() { return nullptr; }
 void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
 void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }

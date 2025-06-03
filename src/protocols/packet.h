@@ -91,6 +91,7 @@ class SFDAQInstance;
 #define PKT_TCP_PSEUDO_EST        0x80000000 // A one-sided or bidirectional without LWS TCP session was detected
 
 #define TS_PKT_OFFLOADED          0x01
+#define TS_PKT_INJECT             0x02
 
 #define PKT_PDU_FULL (PKT_PDU_HEAD | PKT_PDU_TAIL)
 
@@ -327,6 +328,12 @@ struct SO_PUBLIC Packet
     void clear_offloaded()
     { ts_packet_flags &= (~TS_PKT_OFFLOADED); }
 
+    bool is_pkt_injected() const
+    { return (ts_packet_flags & TS_PKT_INJECT) != 0; }
+
+    void set_pkt_injected()
+    { ts_packet_flags |= TS_PKT_INJECT; }
+
     bool has_parent() const
     { return (packet_flags & PKT_HAS_PARENT) != 0; }
 
@@ -382,6 +389,8 @@ struct SO_PUBLIC Packet
 
     void set_pdu_section(PduSection pdu_sect)
     { sect = pdu_sect; }
+
+    int inject();
 
 private:
     bool allocated;
