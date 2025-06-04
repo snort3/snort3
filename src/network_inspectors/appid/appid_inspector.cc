@@ -210,6 +210,12 @@ void AppIdInspector::tinit()
     ServiceDiscovery::set_thread_local_ftp_service();
 }
 
+void AppIdInspector::third_party_tfini()
+{
+    while (pkt_thread_tp_appid_ctxt->tfini())
+        ;
+}
+
 void AppIdInspector::tterm()
 {
     AppIdStatistics::cleanup();
@@ -218,7 +224,7 @@ void AppIdInspector::tterm()
     delete odp_thread_local_ctxt;
     odp_thread_local_ctxt = nullptr;
     if (pkt_thread_tp_appid_ctxt)
-        pkt_thread_tp_appid_ctxt->tfini();
+        third_party_tfini();
     if ( snort::HighAvailabilityManager::active() )
         AppIdHAManager::tterm();
     ServiceDiscovery::reset_thread_local_ftp_service();
