@@ -210,7 +210,10 @@ void JsonStream::put_escaped(const char* v, size_t len)
             {
                 out.write(buf, dst - buf);
                 dst = buf;
+
+                std::ios_base::fmtflags flags = out.flags();
                 out << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (0xFF & c);
+                out.flags(flags);
             }
         }
     }
@@ -235,8 +238,15 @@ public:
     void check_escaping(const char* f, const char* input, size_t i_len, const std::string& expected)
     {
         oss.str(std::string());
+        auto flags_before = oss.flags();
+        auto precision_before = oss.precision();
+        auto width_before = oss.width();
+
         put(f, std::string(input, i_len));
         CHECK(oss.str() == expected);
+        CHECK(oss.flags() == flags_before);
+        CHECK(oss.precision() == precision_before);
+        CHECK(oss.width() == width_before);
     }
 
 private:
