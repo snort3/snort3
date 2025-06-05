@@ -155,7 +155,9 @@ IpsOption::EvalStatus ByteExtractOption::eval(Cursor& c, Packet* p)
 
     SetVarValueByIndex(value, config.var_number);
 
-    c.add_pos(config.offset + bytes_read);
+    auto result = c.add_pos(config.offset + bytes_read);
+    assert(result);
+    UNUSED(result);
 
     return MATCH;
 }

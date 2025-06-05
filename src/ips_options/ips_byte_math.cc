@@ -244,6 +244,7 @@ int ByteMathOption::calc(uint32_t& value, const uint32_t rvalue)
             break;
         }
     case BM_DIVIDE:
+        assert(rvalue != 0);
         value /= rvalue;
         break;
 

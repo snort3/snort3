@@ -268,6 +268,7 @@ static void pcre_parse(const SnortConfig* sc, const char* data, PcreData* pcre_d
 
         default:
             ParseError("unknown/extra pcre option encountered");
+            snort_free(free_me);
             return;
         }
         opts++;

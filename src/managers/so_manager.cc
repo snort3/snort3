@@ -31,13 +31,16 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <random>
 
 #include "log/messages.h"
 #include "framework/decode_data.h"
 #include "framework/inspector.h"
 #include "framework/module.h"
 #include "main/snort_config.h"
+#include "main/snort_types.h"
 #include "parser/parse_so_rule.h"
+#include "utils/util.h"
 
 using namespace snort;
 using namespace std;
@@ -156,12 +159,13 @@ static void strvrt(const string& text, string& data)
 
     data.assign((const char*)d, len);
 
-    // generate xor key.  there is no hard core crypto requirement here but
-    // rand() is known to be weak, especially in the lower bits nonetheless
-    // this seems to work as good as the basic C++ 11 default generator and
-    // uniform distribution
+    static auto seed = get_random_seed();
 
-    uint8_t key = (uint8_t)(rand() >> 16);
+    assert(in_main_thread());
+    static std::mt19937 generator(seed + get_instance_id() + get_thread_type());
+    std::uniform_int_distribution<uint8_t> dist(0, UINT8_MAX);
+
+    uint8_t key = dist(generator);
 
     if ( !key )
         key = 0xA5;
