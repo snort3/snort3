@@ -77,6 +77,11 @@ static THREAD_LOCAL MIMESearch* mime_current_search = nullptr;
 SearchTool* mime_hdr_search_mpse = nullptr;
 MIMESearch mime_hdr_search[HDR_LAST];
 
+static bool is_wsp(const uint8_t* c)
+{
+    return (*c == ' ' or *c == '\t');
+}
+
 static bool get_mime_eol(const uint8_t* ptr, const uint8_t* end,
     const uint8_t** eol, const uint8_t** eolm)
 {
@@ -92,6 +97,12 @@ static bool get_mime_eol(const uint8_t* ptr, const uint8_t* end,
     }
 
     tmp_eol = (const uint8_t*)memchr(ptr, '\n', end - ptr);
+    while (tmp_eol and tmp_eol < end - 1 and is_wsp(tmp_eol + 1))
+    {
+        const size_t search_size = end - tmp_eol - 1;
+        tmp_eol = (const uint8_t*)memchr(tmp_eol + 1, '\n', search_size);
+    }
+
     if (tmp_eol == nullptr)
     {
         *eol = *eolm = end;
@@ -240,11 +251,6 @@ const uint8_t* MimeSession::process_mime_header(Packet* p, const uint8_t* ptr,
     return ptr;
 }
 
-static bool is_wsp(const uint8_t* c)
-{
-    return (*c == ' ' or *c == '\t');
-}
-
 bool MimeSession::process_header_line(const uint8_t*& ptr, const uint8_t* eol, const uint8_t* eolm,
     const uint8_t* start_hdr, Packet* p)
 {
@@ -367,7 +373,14 @@ bool MimeSession::process_header_line(const uint8_t*& ptr, const uint8_t* eol, c
 
     // Now handle the header value
     const uint32_t header_value_len = eolm - header_value_ptr;
+    ptr = eol;
 
+    if (!header_value_ptr)
+    {
+        // FIXIT-L: either no data in header value OR this is folding split across PDU - second case should be implemented later on
+        return true;
+    }
+   
     if (state_flags & MIME_FLAG_IN_CONTENT_TYPE)
     {
         if (data_state == STATE_MIME_HEADER)
@@ -405,7 +418,6 @@ bool MimeSession::process_header_line(const uint8_t*& ptr, const uint8_t* eol, c
         }
     }
 
-    ptr = eol;
     return true;
 }
 
@@ -968,7 +980,7 @@ void MimeSession::set_host_name(const std::string& host)
 {
     if (host.empty())
         return;
-    
+
     host_name = host;
     host_set = true;
 }
@@ -977,3 +989,83 @@ bool MimeSession::is_host_set() const
 {
     return host_set;
 }
+
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+TEST_CASE("get_mime_eol out of bound", "[mime]")
+{
+    // Here we imagine that \n in ptr is out of bounds and just happened to be present in the memory
+    const uint8_t ptr[3] = {'\r', '\r', '\n' };
+
+    const uint8_t* end = ptr + 2;
+
+    const uint8_t* eol = nullptr;
+    const uint8_t* eolm = nullptr;
+
+    const auto r = get_mime_eol(ptr, end, &eol, &eolm);
+
+    CHECK(r == false);
+    CHECK(eol == end);
+    CHECK(eolm == end);
+}
+
+TEST_CASE("get_mime_eol in bound", "[mime]")
+{
+    // Here we imagine that the latest ' ' in ptr is out of bounds and just happened to be present in the memory
+    const uint8_t ptr[8] = {'\r', '\r', '\n', ' ', '\r', '\r', '\n', ' '};
+
+    const uint8_t* end = ptr + 7;
+
+    const uint8_t* eol = nullptr;
+    const uint8_t* eolm = nullptr;
+
+    const auto r = get_mime_eol(ptr, end, &eol, &eolm);
+
+    CHECK(r == true);
+    CHECK(end - eol == 0);
+    CHECK(end - eolm == 2);
+}
+
+TEST_CASE("get_mime_eol out of bound content-disposition", "[mime]")
+{
+    // Here we imagine that the latest \n in ptr is out of bounds and just happened to be present in the memory
+    const char ptr[] = "Content-Disposition:\r\n attachment;\r\n name=\"file\";\r\n filename=\"file.exe\"\r\r\n";
+
+    const uint8_t LAST_ACCESSIBLE_ELEMENT_OFFSET = 2;
+    const uint8_t* end = (const uint8_t*)ptr + sizeof(ptr) - LAST_ACCESSIBLE_ELEMENT_OFFSET;
+
+    const uint8_t* eol = nullptr;
+    const uint8_t* eolm = nullptr;
+
+    const auto r = get_mime_eol((const uint8_t*)ptr, end, &eol, &eolm);
+
+    CHECK(r == false);
+    CHECK(eol == end);
+    CHECK(eolm == end);
+}
+
+TEST_CASE("get_mime_eol in bound content-disposition", "[mime]")
+{
+    // Here we imagine that the latest \n in ptr is out of bounds and just happened to be present in the memory
+    const char ptr[] = "Content-Disposition:\r\n attachment;\r\n name=\"file\";\r\n filename=\"file.exe\"\r\n\n";
+
+    const uint8_t LAST_ACCESSIBLE_ELEMENT_OFFSET = 2;
+    const uint8_t* end = (const uint8_t*)ptr + sizeof(ptr) - LAST_ACCESSIBLE_ELEMENT_OFFSET;
+
+    const uint8_t* eol = nullptr;
+    const uint8_t* eolm = nullptr;
+
+    const auto r = get_mime_eol((const uint8_t*)ptr, end, &eol, &eolm);
+
+    CHECK(r == true);
+    CHECK(end - eol == 0);
+    CHECK(end - eolm == 2);
+}
+
+#endif
