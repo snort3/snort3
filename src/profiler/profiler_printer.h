@@ -170,6 +170,11 @@ public:
         print_t(ss.str().c_str());
     }
 
+    float get_total()
+    {
+        return total;
+    }
+
 private:
     const StatsTable::Field* fields;
     const PrintFn print;

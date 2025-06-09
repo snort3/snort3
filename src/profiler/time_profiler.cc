@@ -22,6 +22,8 @@
 #include "config.h"
 #endif
 
+#include <cmath>
+
 #include "time_profiler.h"
 
 #include "profiler_nodes.h"
@@ -184,6 +186,9 @@ void print_time_profiler_stats(ProfilerNodeMap& nodes, const TimeProfilerConfig&
 
     ProfilerPrinter<time_stats::View> printer(time_stats::fields, time_stats::print_fn, sorter, printer_t);
     printer.print_table(s_time_table_title, root, config.count, config.max_depth);
+
+    if (std::roundf(printer.get_total()) > 100.0f)
+        LogRespond(ctrlcon, "Note: Total time for a module includes time spent in submodules. Total percentage may exceed 100\n");
 }
 
 #ifdef UNIT_TEST
