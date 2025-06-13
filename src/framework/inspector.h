@@ -188,6 +188,9 @@ public:
     virtual bool supports_no_ips() const
     { return false; }
 
+    virtual bool can_decrypt() const
+    { return false; }
+
     void allocate_thread_storage();
     void set_thread_specific_data(void*);
     void* get_thread_specific_data() const;

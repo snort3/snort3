@@ -148,6 +148,7 @@ struct Binding
     bool check_service(const snort::Flow&) const;
     bool check_service(const char* service) const;
     bool check_service() const;
+    bool check_inspector(const snort::Flow&) const;
 };
 
 #endif

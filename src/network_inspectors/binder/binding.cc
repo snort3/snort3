@@ -605,6 +605,11 @@ inline bool Binding::check_service() const
     return when.has_criteria(BindWhen::Criteria::BWC_SVC) ? false : true;
 }
 
+inline bool Binding::check_inspector(const Flow& flow) const
+{
+    return !(use.inspector and use.inspector->can_decrypt() and flow.flags.do_not_decrypt);
+}
+
 bool Binding::check_all(const Flow& flow, const char* service) const
 {
     // Do the service check first to optimize service change re-evaluations
@@ -653,6 +658,9 @@ bool Binding::check_all(const Flow& flow, const char* service) const
         return false;
 
     if (!check_tenant(flow))
+        return false;
+
+    if (!check_inspector(flow))
         return false;
 
     return true;
