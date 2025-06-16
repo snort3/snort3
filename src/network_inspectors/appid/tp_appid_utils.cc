@@ -650,11 +650,8 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
 
     if ( tp_app_id > APP_ID_NONE )
     {
-        AppId snort_app_id = APP_ID_NONE;
-
         if ( hsession )
         {
-            snort_app_id = APP_ID_HTTP;
             //data should never be APP_ID_HTTP
             if (tp_app_id != APP_ID_HTTP)
                 asd.set_tp_payload_app_id(*p, direction, tp_app_id, change_bits);
@@ -728,18 +725,11 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
                 const char *tp_app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(tp_app_id);
                 APPID_LOG(p, TRACE_DEBUG_LEVEL, "SSL is %s (%d)\n", tp_app_name ? tp_app_name : "unknown", tp_app_id);
             }
-            snort_app_id = APP_ID_SSL;
         }
         else if (asd.get_service_id() == APP_ID_QUIC)
             asd.set_tp_payload_app_id(*p, direction, tp_app_id, change_bits);
-        else
-        {
-            //for non-http protocols, tp id is treated like serviceId
-            snort_app_id = tp_app_id;
-        }
 
         asd.set_tp_app_id(*p, direction, tp_app_id, change_bits);
-        asd.sync_with_snort_protocol_id(snort_app_id, p);
     }
 
     if (direction == APP_ID_FROM_INITIATOR)

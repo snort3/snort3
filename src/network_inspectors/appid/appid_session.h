@@ -393,7 +393,7 @@ public:
     void check_tunnel_detection_restart();
     void update_encrypted_app_id(AppId);
     void examine_rtmp_metadata(AppidChangeBits& change_bits);
-    void sync_with_snort_protocol_id(AppId, snort::Packet*);
+    void sync_with_snort_protocol_id(AppId, snort::Packet*, AppidChangeBits&);
     void stop_service_inspection(snort::Packet*,  AppidSessionDirection);
 
     void clear_http_flags();

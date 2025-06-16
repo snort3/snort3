@@ -65,6 +65,7 @@ enum AppidChangeBit
     APPID_NETBIOS_DOMAIN_BIT,
     APPID_DISCOVERY_FINISHED_BIT,
     APPID_TLS_VERSION_BIT,
+    APPID_PROTOCOL_ID_BIT,
 
     APPID_MAX_BIT
 };
@@ -119,6 +120,8 @@ inline void change_bits_to_string(const AppidChangeBits& change_bits, std::strin
         --n? str.append("finished, ") : str.append("finished");
     if (change_bits.test(APPID_TLS_VERSION_BIT))
         --n? str.append("tls-version, ") : str.append("tls-version");
+    if (change_bits.test(APPID_PROTOCOL_ID_BIT))
+        --n? str.append("protocol-id, ") : str.append("protocol-id");
     if (n != 0) // make sure all bits from AppidChangeBit enum get translated
         str.append("change_bits_to_string error!");
 }

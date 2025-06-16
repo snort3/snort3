@@ -857,8 +857,8 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
             AppInfoTableEntry* entry = new AppInfoTableEntry(app_id, app_name, service_id,
                 client_id, payload_id, attributes);
 
-             // FIXIT-RC: Sometimes the token is "~". Should we ignore those?
-            if (snort_service_key) 
+            //Ignore "~" service key, which is used to indicate an empty service key
+            if (snort_service_key and (strcmp(snort_service_key, "~") != 0))
                 entry->snort_protocol_id = add_appid_protocol_reference(snort_service_key, sc);
 
             if (!add_entry_to_app_info_name_table(entry->app_name_key, entry))

@@ -346,7 +346,7 @@ void AppIdSession::reinit_session_data(AppidChangeBits& change_bits,
         APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT);
 }
 
-void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
+void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p, AppidChangeBits& change_bits)
 {
     if (newAppId  <= APP_ID_NONE or newAppId >= SF_APPID_MAX)
         return;
@@ -386,10 +386,15 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p)
     // A particular APP_ID_xxx may not be assigned a service_snort_key value
     // in the appMapping.data file entry; so ignore the snort_protocol_id ==
     // UNKNOWN_PROTOCOL_ID case.
-    if (tmp_snort_protocol_id != snort_protocol_id)
+    if (tmp_snort_protocol_id)
     {
-        snort_protocol_id = tmp_snort_protocol_id;
-        Stream::set_snort_protocol_id(p->flow, tmp_snort_protocol_id, true);
+        if (tmp_snort_protocol_id != snort_protocol_id)
+        {
+            if (tmp_snort_protocol_id != p->flow->ssn_state.snort_protocol_id)
+                change_bits.set(APPID_PROTOCOL_ID_BIT);
+            snort_protocol_id = tmp_snort_protocol_id;
+            Stream::set_snort_protocol_id(p->flow, tmp_snort_protocol_id, true);
+        }
     }
 }
 
@@ -1133,7 +1138,7 @@ AppIdDnsSession* AppIdSession::get_dns_session() const
 
 bool AppIdSession::is_tp_appid_done() const
 {
-    if (get_session_flags(APPID_SESSION_FUTURE_FLOW) or !tp_appid_ctxt)
+    if (get_session_flags(APPID_SESSION_FUTURE_FLOW | APPID_SESSION_NO_TPI) or !tp_appid_ctxt)
         return true;
 
     if (!tpsession)

@@ -775,15 +775,12 @@ void Binder::handle_appid_service_change(DataEvent& event, Flow& flow)
 {
     AppidEvent& appid_event = static_cast<AppidEvent&>(event);
 
-    if(appid_event.get_change_bitset().test(APPID_SERVICE_BIT))
+    if(appid_event.get_change_bitset().test(APPID_PROTOCOL_ID_BIT))
     {
-        if ((appid_event.get_appid_session_api().get_service_app_id() <= 0)
-            or (flow.ssn_state.snort_protocol_id == 0))
-            return;
-
         Stuff stuff;
         const SnortConfig* sc = SnortConfig::get_conf();
         const char* service = sc->proto_ref->get_name(flow.ssn_state.snort_protocol_id);
+        
         get_bindings(flow, stuff, service);
 
         if(stuff.action == BindUse::BA_ALLOW)

@@ -309,6 +309,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
             asd->pick_ss_referred_payload_app_id(), change_bits);
         if (PacketTracer::is_daq_activated())
             populate_trace_data(*asd);
+        change_bits.set(APPID_PROTOCOL_ID_BIT);
         asd->publish_appid_event(change_bits, *p);
         asd->set_session_flags(APPID_SESSION_FUTURE_FLOW_IDED);
 
@@ -498,8 +499,9 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
             asd.set_payload_id(hv->appId);
             break;
         default:
+            AppidChangeBits tmp_bits;
             asd.set_service_id(hv->appId, asd.get_odp_ctxt());
-            asd.sync_with_snort_protocol_id(hv->appId, p);
+            asd.sync_with_snort_protocol_id(hv->appId, p, tmp_bits);
             asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
@@ -722,14 +724,23 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
                 const char *app_name = asd.get_odp_ctxt().get_app_info_mgr().get_app_name(ps_id);
                 APPID_LOG(p, TRACE_DEBUG_LEVEL, "Protocol service %s (%d) from protocol\n",
                     app_name ? app_name : "unknown", ps_id);
+
+                asd.sync_with_snort_protocol_id(id, p, change_bits);
             }
             asd.set_session_flags(APPID_SESSION_PORT_SERVICE_DONE);
+            
         }
         else
         {
             service_id = asd.pick_service_app_id();
             misc_id = asd.pick_ss_misc_app_id();
         }
+        if (asd.tpsession)
+            asd.tpsession->set_state(TP_STATE_TERMINATED);
+        asd.set_session_flags(APPID_SESSION_NO_TPI);
+        asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
+        asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
+        asd.service_disco_state = APPID_DISCO_STATE_FINISHED;
         return true;
     }
 
@@ -892,6 +903,11 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
 
     if (is_discovery_done and asd.get_shadow_traffic_bits() == 0 )
         asd.process_shadow_traffic_appids();
+
+    if (change_bits.test(APPID_SERVICE_BIT))
+    {
+        asd.sync_with_snort_protocol_id(service_id, p, change_bits);
+    }
 
     asd.publish_appid_event(change_bits, *p);
 }

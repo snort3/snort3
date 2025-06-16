@@ -224,7 +224,7 @@ uint32_t AppInfoManager::getAttributeBits(AppId)
 }
 
 // Stubs for AppIdSession
-void AppIdSession::sync_with_snort_protocol_id(AppId, Packet*) {}
+void AppIdSession::sync_with_snort_protocol_id(AppId, Packet*,AppidChangeBits&) {}
 void AppIdSession::check_app_detection_restart(AppidChangeBits&, ThirdPartyAppIdContext*) {}
 void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*) {}
 void AppIdSession::examine_rtmp_metadata(AppidChangeBits&) {}
@@ -420,9 +420,9 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
 
     AppIdDiscovery::do_application_discovery(&p, ins, app_ctxt.get_odp_ctxt(), nullptr);
 
-    // Detect changes in service, client, payload, and misc appid
+    // Detect changes in service, client, payload, misc appid and snort protocol id
     mock().checkExpectations();
-    STRCMP_EQUAL("Published change_bits == 0000000000000001111100", test_log);
+    STRCMP_EQUAL("Published change_bits == 10000000000000001111100", test_log);
 
     delete &asd->get_api();
     delete asd;
@@ -461,7 +461,7 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
 
     // Detect changes in service, client, payload, and misc appid
     mock().checkExpectations();
-    STRCMP_EQUAL("Published change_bits == 0000000000000001111100", test_log);
+    STRCMP_EQUAL("Published change_bits == 00000000000000001111100", test_log);
     delete &asd->get_api();
     delete asd;
     delete flow;
@@ -569,10 +569,10 @@ TEST(appid_discovery_tests, change_bits_to_string)
     change_bits_to_string(change_bits, str);
     STRCMP_EQUAL(str.c_str(), "created, reset, service, client, payload, misc, referred, host,"
         " tls-host, url, user-agent, response, referrer, dns-host, dns-response-host, service-info, client-info,"
-        " user-info, netbios-name, netbios-domain, finished, tls-version");
+        " user-info, netbios-name, netbios-domain, finished, tls-version, protocol-id");
 
     // Failure of this test is a reminder that enum is changed, hence translator needs update
-    CHECK_EQUAL(APPID_MAX_BIT, 22);
+    CHECK_EQUAL(APPID_MAX_BIT, 23);
 }
 
 int main(int argc, char** argv)

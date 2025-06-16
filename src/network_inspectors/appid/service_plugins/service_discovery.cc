@@ -771,13 +771,6 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
             asd.examine_rtmp_metadata(change_bits);
         else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) and asd.tsession)
             asd.examine_ssl_metadata(change_bits);
-
-        if (tp_app_id <= APP_ID_NONE and asd.get_session_flags(
-            APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_NOT_A_SERVICE |
-            APPID_SESSION_IGNORE_HOST) == APPID_SESSION_SERVICE_DETECTED)
-        {
-            asd.sync_with_snort_protocol_id(asd.get_service_id(), p);
-        }
     }
 
     return is_discovery_done;

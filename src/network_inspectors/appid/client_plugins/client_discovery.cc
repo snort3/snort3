@@ -313,7 +313,6 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
 {
     bool is_discovery_done = false;
     AppInfoTableEntry* entry;
-    bool was_service = asd.is_service_detected();
     AppId tp_app_id = asd.get_tp_app_id();
 
     if (asd.client_disco_state == APPID_DISCO_STATE_NONE and
@@ -379,9 +378,6 @@ bool ClientDiscovery::do_client_discovery(AppIdSession& asd, Packet* p,
             exec_client_detectors(asd, p, direction, change_bits);
         }
     }
-
-    if ( !was_service && asd.is_service_detected() )
-        asd.sync_with_snort_protocol_id(asd.get_service_id(), p);
 
     return is_discovery_done;
 }
