@@ -4,3 +4,35 @@ Experimental Record Types.
 
 DNS looks are DNS Response traffic over UDP and TCP and it requires Stream
 inspector to be enabled for TCP decoding.
+
+DNS Over UDP:
+
+This has simpler packet scenarios. In a UDP flow between a client and a DNS server,
+the client may send one or multiple UDP packets to the server and each of the UDP
+packets contains a complete DNS query message which has a unique DNS transaction ID
+across this UDP flow. The server may send back one UDP packet containing a complete
+DNS response message matching a query transaction ID. This DNS inspector maintains
+minimum flow data for each DNS over UDP flow: it extracts the transaction ID from
+each DNS query message and saves it into the flow data object, and it parses a DNS
+response message to look for FQDN and IP mapping only when the response message's
+transaction ID matches one of the cached query transaction IDs. It marks the
+underlying UDP flow as "closed" when all the cached query transaction IDs have been
+matched.
+
+DNS Over TCP:
+
+This has relatively more complex packet scenarios. Each DNS query message sent from
+a DNS client may be split into multiple TCP packets and each DNS response message
+sent from a DNS server may also be split into multiple TCP packets, and there may
+be one or multiple pairs of DNS query and response messages exchanged within a single
+TCP connection. This DNS inspector creates a DNS session data object and saves it into
+the TCP connection's flow data cache and this session data object is reused to serve
+multiple DNS transactions in the connection: when a new DNS response message arrives,
+the DNS response parser first updates the data buffer with the new message data and
+clears the data fields in the session data's dns event object, then it will parse the
+response message to get the domain name and IP address mapping information and save it
+into the session data's dns event object. Eventually it will publish the enclosed DNS
+event object for the event subscribers to comsume. Each event subscriber may use the
+domain name and IP address mapping information in the event object to look up the
+actual domain name and IP address values saved in the session data object's data buffer.
+

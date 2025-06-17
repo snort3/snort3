@@ -70,6 +70,7 @@ public:
     void add_fqdn(DnsResponseFqdn& event, uint32_t ttl);
     void get_dns_data(IPFqdnCacheItem& ip_fqdn_cache_item);
     bool empty() const;
+    void clear_data();
 
     const Packet* get_packet() const override
     { return packet; }

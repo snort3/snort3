@@ -136,6 +136,12 @@ bool DnsResponseDataEvents::empty() const
     return (dns_ips.empty() or dns_fqdns.empty());
 }
 
+void DnsResponseDataEvents::clear_data()
+{
+    dns_ips.clear();
+    dns_fqdns.clear();
+}
+
 uint16_t DnsResponseEvent::get_trans_id() const
 {
     return session.hdr.id;

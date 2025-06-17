@@ -381,9 +381,10 @@ static uint16_t ParseDNSName(
                     if (dnsSessionData->length > 0)
                         dnsSessionData->curr_txt.offset += 2; // first two bytes are length in TCP
 
-                    if (parse_dns_name)
+                    if (parse_dns_name && dnsSessionData->data.size() > dnsSessionData->curr_txt.offset)
                     {
-                        // parse recursively relative name
+                        // If the name field is a pointer, then parse the name field at that offset only if
+                        // the offset is within the bounds of the data buffer.
                         dnsSessionData->curr_txt.name_state = DNS_RESP_STATE_NAME_SIZE;
                         return ParseDNSName(&dnsSessionData->data[0] + dnsSessionData->curr_txt.offset,
                             dnsSessionData->bytes_unused, dnsSessionData, parse_dns_name);
@@ -810,11 +811,23 @@ static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData, bool& ne
     uint16_t bytes_unused = p->dsize;
     int i;
     const unsigned char* data = p->data;
-    if (dnsSessionData->dns_config->publish_response and dnsSessionData->data.empty())
+
+    // For DNS over TCP, it's possible that multiple DNS transactions may be processed in a single TCP connection.
+    // When a new transaction's DNS response message arrives, the reused DNS session's data field may not be empty,
+    // so we must use the field "state" to determine if we are processing a new DNS response message.
+    // For DNS over UDP, a new session data object is created for each DNS response message, so the following condition
+    // is always met as the data field is always empty.
+    if (dnsSessionData->dns_config->publish_response and (dnsSessionData->data.empty() or
+        dnsSessionData->state == DNS_RESP_STATE_LENGTH))
     {
+        // We are at the beginning of a new DNS response message, so we need to clear the data field
+        // and the event object, which are reused by multiple DNS transactions in a single TCP connection.
         dnsSessionData->data.resize(bytes_unused);
         memcpy((void*)&dnsSessionData->data[0], data, bytes_unused);
         dnsSessionData->bytes_unused = bytes_unused;
+        // For DNS over TCP, the reused event object may hold domain names and IP addresses extracted
+        // from previous DNS response message which must be cleared before processing a new DNS message.
+        dnsSessionData->dns_events.clear_data();
     }
 
     while (bytes_unused)
