@@ -29,6 +29,8 @@
 #include "appid_peg_counts.h"
 #include "service_inspectors/http_inspect/http_msg_header.h"
 
+THREAD_LOCAL bool appid_trace_enabled = false;
+
 class ThirdPartyAppIdContext;
 
 ThirdPartyAppIdContext* tp_appid_ctxt = nullptr;

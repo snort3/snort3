@@ -48,7 +48,8 @@ namespace snort
 void appid_log(const snort::Packet*, const uint8_t log_level, const char*, ...);
 
 #define APPID_LOG(pkt, log_level, ...) do { \
-    if ((log_level > 2) || (appidDebug and appidDebug->is_active()) || (appid_trace_enabled)) { \
+    if ((log_level >= TRACE_CRITICAL_LEVEL and log_level <= TRACE_INFO_LEVEL) || \
+        (appidDebug and appidDebug->is_active()) || (appid_trace_enabled)) { \
         	appid_log(pkt, log_level, __VA_ARGS__); \
     } \
 } while(0)

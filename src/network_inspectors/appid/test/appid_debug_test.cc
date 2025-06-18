@@ -48,10 +48,27 @@ Packet::~Packet() = default;
 FlowData::FlowData(unsigned, Inspector*) { }
 FlowData::~FlowData() = default;
 AppIdSessionApi::AppIdSessionApi(const AppIdSession* asd, const SfIp& ip) : asd(asd), initiator_ip(ip) { }
-[[noreturn]] void FatalError(const char*,...) {  exit(-1); }
-void ErrorMessage(const char*, va_list&) { }
-void WarningMessage(const char*, va_list&) { }
-void LogMessage(const char*, va_list&) { }
+// Stubs for logs
+char test_log[256];
+void FatalError(const char* format,...) 
+{
+    va_list ap;
+    va_start(ap,format);
+    vsprintf(test_log, format, ap); 
+    va_end(ap);  
+}
+void ErrorMessage(const char* format, va_list& args)
+{
+    vsprintf(test_log, format, args);
+}
+void WarningMessage(const char* format, va_list& args)
+{
+    vsprintf(test_log, format, args);
+}
+void LogMessage(const char* format, va_list& args)
+{
+    vsprintf(test_log, format, args);
+}
 void TraceApi::filter(snort::Packet const&) { }
 void trace_vprintf(const char*, unsigned char, const char*, const Packet*, const char*, va_list) { }
 uint8_t TraceApi::get_constraints_generation() { return 0; }
@@ -541,4 +558,75 @@ int main(int argc, char** argv)
 {
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
     return rc;
+}
+
+TEST(appid_debug, no_appidDebug_logging)
+{
+    test_log[0] = '\0';
+    APPID_LOG(nullptr, TRACE_CRITICAL_LEVEL, "TRACE_CRITICAL_LEVEL log message");
+    STRCMP_EQUAL(test_log, "TRACE_CRITICAL_LEVEL log message");
+
+    test_log[0] = '\0';
+    APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "TRACE_ERROR_LEVEL log message");
+    STRCMP_EQUAL(test_log, "TRACE_ERROR_LEVEL log message");
+
+    test_log[0] = '\0';
+    APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "TRACE_WARNING_LEVEL log message");
+    STRCMP_EQUAL(test_log, "TRACE_WARNING_LEVEL log message");
+
+    test_log[0] = '\0';
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "TRACE_INFO_LEVEL log message");
+    STRCMP_EQUAL(test_log, "TRACE_INFO_LEVEL log message");
+
+    test_log[0] = '\0';
+    APPID_LOG(nullptr, TRACE_DEBUG_LEVEL, "TRACE_DEBUG_LEVEL log message");
+    STRCMP_EQUAL(test_log, "");
+}
+
+TEST(appid_debug, appidDebug_logging)
+{
+    // Activating appidDebug for debug messages
+    SfIp sip;
+    SfIp dip;
+    dip.set("10.1.2.3");
+    AppIdInspector inspector;
+    AppIdSession session(IpProtocol::PROTO_NOT_SET, &dip, 0, inspector, stub_odp_ctxt, 0
+#ifndef DISABLE_TENANT_ID
+    ,0
+#endif
+    );
+    // This packet...
+    sip.set("10.9.8.7");    // this would be a reply back
+    uint16_t sport = 80;
+    uint16_t dport = 48620;
+    IpProtocol protocol = IpProtocol::TCP;
+    uint32_t address_space_id = 0;
+    // The session...
+    session.initiator_port = dport;    // session initiator is now dst
+    // activate()
+    appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
+        protocol, 4, address_space_id, &session, true, 0);
+
+    test_log[0] = '\0';
+    APPID_LOG(nullptr , TRACE_DEBUG_LEVEL, "TRACE_DEBUG_LEVEL log message");
+    STRCMP_EQUAL(test_log, "TRACE_DEBUG_LEVEL log message");
+
+    Packet packet(true);
+    test_log[0] = '\0';
+    APPID_LOG(&packet , TRACE_DEBUG_LEVEL, "TRACE_DEBUG_LEVEL log message");
+    STRCMP_EQUAL(test_log, (string("AppIdDbg ") + appidDebug->get_debug_session() + 
+        " TRACE_DEBUG_LEVEL log message").c_str());
+
+    delete &session.get_api();
+}
+
+TEST(appid_debug, trace_on_logging)
+{
+    appid_trace_enabled = true; // Enable appid_trace for debug messages
+
+    test_log[0] = '\0';
+    APPID_LOG(nullptr , TRACE_DEBUG_LEVEL, "TRACE_DEBUG_LEVEL log message");
+    STRCMP_EQUAL(test_log, "TRACE_DEBUG_LEVEL log message");
+
+    appid_trace_enabled = false; // Disable appid_trace
 }

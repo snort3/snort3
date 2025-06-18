@@ -44,6 +44,7 @@
 
 uint32_t ThirdPartyAppIdContext::next_version = 0;
 THREAD_LOCAL bool TimeProfilerStats::enabled = false;
+THREAD_LOCAL bool appid_trace_enabled = false;
 
 namespace snort
 {

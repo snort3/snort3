@@ -29,6 +29,7 @@
 #include <vector>
 
 THREAD_LOCAL bool TimeProfilerStats::enabled = false;
+THREAD_LOCAL bool appid_trace_enabled = false;
 
 namespace snort
 {
