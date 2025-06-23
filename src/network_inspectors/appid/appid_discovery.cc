@@ -908,6 +908,15 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
     {
         asd.sync_with_snort_protocol_id(service_id, p, change_bits);
     }
+    
+    if (asd.get_odp_ctxt().get_appid_shadow_traffic_status())
+    {
+        if (asd.get_shadow_traffic_bits() != 0)
+        {
+            uint32_t shadow_bits = asd.get_shadow_traffic_bits();
+            asd.publish_shadow_traffic_event(shadow_bits, asd.flow);
+        }
+    }
 
     asd.publish_appid_event(change_bits, *p);
 }

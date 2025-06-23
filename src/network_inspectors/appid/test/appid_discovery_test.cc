@@ -248,6 +248,12 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
     DataBus::publish(0, AppIdEventIds::ANY_CHANGE, app_event, p.flow);
 }
 
+void AppIdSession::publish_shadow_traffic_event(const uint32_t &shadow_traffic_bits, snort::Flow *)
+{
+    ShadowTrafficEvent shadow_event(shadow_traffic_bits, "", "", nullptr);
+    DataBus::publish(0, ShadowTrafficEventIds::SHADOWTRAFFIC_FLOW_DETECTED, shadow_event, flow); 
+}
+
 void AppIdHttpSession::set_tun_dest(){}
 
 // Stubs for ServiceDiscovery

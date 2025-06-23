@@ -87,6 +87,7 @@ FakeHttpMsgHeader* fake_msg_header = nullptr;
 
 bool OdpContext::is_appid_cpu_profiler_enabled() { return false; }
 bool OdpContext::is_appid_cpu_profiler_running() { return false; }
+void AppIdSession::check_domain_fronting_status(const std::string&) {}
 
 AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol, AppidSessionDirection,
     AppIdInspector&, OdpContext&)

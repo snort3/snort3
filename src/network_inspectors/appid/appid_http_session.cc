@@ -780,6 +780,18 @@ void AppIdHttpSession::clear_all_fields()
     }
 }
 
+void AppIdHttpSession::check_domain_fronting(HttpFieldIds id)
+{
+    if (id == REQ_HOST_FID)
+    {
+        if (asd.get_session_flags(APPID_SESSION_DECRYPTED) or asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
+        {
+            if (asd.get_odp_ctxt().get_appid_shadow_traffic_status())
+                asd.check_domain_fronting_status(*meta_data[id]);
+        }
+    }
+}
+
 void AppIdHttpSession::set_field(HttpFieldIds id, const std::string* str,
     AppidChangeBits& change_bits)
 {
@@ -790,6 +802,7 @@ void AppIdHttpSession::set_field(HttpFieldIds id, const std::string* str,
         set_http_change_bits(change_bits, id);
         set_scan_flags(id);
 
+        check_domain_fronting(id);
         print_field(id, str);
     }
     else if (str)
@@ -806,6 +819,7 @@ void AppIdHttpSession::set_field(HttpFieldIds id, const uint8_t* str, int32_t le
         set_http_change_bits(change_bits, id);
         set_scan_flags(id);
 
+        check_domain_fronting(id);
         print_field(id, meta_data[id]);
     }
 }

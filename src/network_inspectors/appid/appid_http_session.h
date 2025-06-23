@@ -72,6 +72,7 @@ public:
         HttpPatternMatchers& http_matchers);
 
     void update_url(AppidChangeBits& change_bits);
+    void check_domain_fronting(HttpFieldIds id);
     void set_field(HttpFieldIds id, const std::string* str, AppidChangeBits& change_bits);
     void set_field(HttpFieldIds id, const uint8_t* str, int32_t len, AppidChangeBits& change_bits);
     void set_req_body_field(HttpFieldIds id, const uint8_t* str, int32_t len,

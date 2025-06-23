@@ -159,6 +159,8 @@ void AppIdSession::update_encrypted_app_id(AppId)
 {
 }
 
+void AppIdSession::check_domain_fronting_status(const std::string&) {}
+
 void AppIdModule::reset_stats() {}
 
 // AppIdDebug mock functions
