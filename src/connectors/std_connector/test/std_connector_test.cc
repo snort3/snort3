@@ -31,14 +31,19 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
-using namespace snort;
+StdConnectorBuffer::StdConnectorBuffer(const char*) {}
+StdConnectorBuffer::~StdConnectorBuffer() {}
+void StdConnectorBuffer::start() {}
+Ring2::Writer StdConnectorBuffer::acquire(unsigned long) { return Ring2(0).writer(); }
+bool StdConnectorBuffer::release(Ring2::Writer const&) { return false; }
 
+using namespace snort;
 
 extern const BaseApi* std_connector;
 const ConnectorApi* stdc_api = nullptr;
 
-ConnectorConfig connector_transmit_config;
-ConnectorConfig connector_receive_config;
+StdConnectorConfig connector_transmit_config;
+StdConnectorConfig connector_receive_config;
 
 Module* mod;
 

@@ -32,3 +32,5 @@ set( FILE_LIST
 )
 
 add_library(extractor OBJECT ${FILE_LIST})
+
+add_subdirectory(test)

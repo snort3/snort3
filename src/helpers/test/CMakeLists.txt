@@ -40,3 +40,16 @@ add_catch_test( streambuf_test
         ../streambuf.cc
 )
 
+add_catch_test( ring2_test
+    SOURCES
+        ../ring2.h
+)
+
+if (ENABLE_BENCHMARK_TESTS)
+
+    add_catch_test( ring2_benchmark
+        SOURCES
+            ../ring2.h
+    )
+
+endif(ENABLE_BENCHMARK_TESTS)

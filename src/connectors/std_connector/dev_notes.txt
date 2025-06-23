@@ -19,3 +19,30 @@ std_connector pre-configures 3 default connectors:
 * stdout: default transmit connector
 * stdin: default receive connector
 * stdio: default duplex connector
+
+---
+
+The connector is able to synchronize printouts from multiple threads. It
+leverages buffers. `Ring2` buffer guarantees asynchronous reading and writing
+operations to the buffer, implementing the following scheme for data path
+"Writer->Buffer->Readers[]".
+
+`StdConnectorBuffer` instance is expected to be unique per Snort configuration.
+It ensures that the 1-1-? scheme above is strictly followed:
+
+* Public part grants `Writer` objects only
++
+1. No way for client code to break the scheme.
+2. Connector instance can acquire a buffer.
+3. Connector writes data to the buffer via Writer.
+4. Connector should abandon Writers before Snort configuration removes `StdConnectorBuffer` instance.
+
+* Private part keeps `Ring2` and `Reader`
++
+1. Two last pieces complete the scheme.
+2. Resource management is encapsulated.
+3. All readers are available in a single place (for the printing thread).
+4. The printing thread builds the list of readers from the actual pool of buffers.
+
+Once connector instance gets a writer, its output becomes buffered and
+synchronized with other instances via `StdConnectorBuffer` instance.

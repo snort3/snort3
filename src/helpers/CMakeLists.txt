@@ -23,6 +23,7 @@ set (HELPERS_INCLUDES
     json_stream.h
     literal_search.h
     memcap_allocator.h
+    ring2.h
     scratch_allocator.h
     sigsafe.h
     utf.h

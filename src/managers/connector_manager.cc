@@ -126,7 +126,7 @@ void ConnectorManager::update_thread_connector(const std::string& connector_name
                 if (connector != connector_ptr->second.thread_connectors[instance_id])
                     sc.api->tterm(connector_ptr->second.thread_connectors[instance_id]);
             }
-            
+
             connector_ptr->second.thread_connectors[instance_id] = connector;
             break;
         }

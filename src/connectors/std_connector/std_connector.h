@@ -21,13 +21,31 @@
 #ifndef STD_CONNECTOR_H
 #define STD_CONNECTOR_H
 
+#include <list>
+#include <string>
+
 #include "framework/connector.h"
 #include "framework/module.h"
+#include "helpers/ring2.h"
+
+#include "std_connector_buffer.h"
 
 #define S_NAME "std_connector"
 #define S_HELP "implement the stdout/stdin based connector"
 
 struct TextLog;
+
+//-------------------------------------------------------------------------
+// config
+//-------------------------------------------------------------------------
+
+class StdConnectorConfig : public snort::ConnectorConfig
+{
+public:
+    uint32_t buffer_size = 0;
+    StdConnectorBuffer* buffer = nullptr;
+    std::string output = "stdout";
+};
 
 //-------------------------------------------------------------------------
 // module stuff
@@ -54,17 +72,26 @@ public:
 
 private:
     snort::ConnectorConfig::ConfigSet config_set;
-    std::unique_ptr<snort::ConnectorConfig> config;
+    std::unique_ptr<StdConnectorConfig> config;
 };
 
 //-------------------------------------------------------------------------
 // connector stuff
 //-------------------------------------------------------------------------
 
+class StdConnectorCommon : public snort::ConnectorCommon
+{
+public:
+    StdConnectorCommon(snort::ConnectorConfig::ConfigSet&&);
+
+private:
+    std::list<StdConnectorBuffer> buffers;
+};
+
 class StdConnector : public snort::Connector
 {
 public:
-    StdConnector(const snort::ConnectorConfig& conf);
+    StdConnector(const StdConnectorConfig& conf);
     ~StdConnector() override;
 
     bool transmit_message(const snort::ConnectorMsg&, const ID& = null) override;
@@ -76,7 +103,10 @@ public:
 private:
     bool internal_transmit_message(const snort::ConnectorMsg&);
 
-    TextLog* extr_std_log;
+    bool buffered;
+    TextLog* text_log;
+    Ring2::Writer writer;
+    StdConnectorBuffer& buffer;
 };
 
 #endif

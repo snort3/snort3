@@ -39,6 +39,7 @@ struct StdConnectorStats
 {
     PegCount messages_received;
     PegCount messages_transmitted;
+    PegCount tx_messages_stalled;
 };
 
 THREAD_LOCAL StdConnectorStats std_connector_stats;
@@ -56,6 +57,12 @@ static const Parameter std_connector_params[] =
     { "direction", Parameter::PT_ENUM, "receive | transmit | duplex", nullptr,
       "usage" },
 
+    { "buffer_size", Parameter::PT_INT, "0:max32", "0",
+     "per-instance buffer size in bytes (0 no buffering, otherwise buffered and synchronized across threads)" },
+
+    { "redirect", Parameter::PT_STRING, nullptr, nullptr,
+     "output file name where printout is redirected" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -63,6 +70,7 @@ static const PegInfo std_connector_pegs[] =
 {
     { CountType::SUM, "messages_received", "total number of messages received" },
     { CountType::SUM, "messages_transmitted", "total number of messages transmitted" },
+    { CountType::SUM, "messages_stalled", "total number of messages attempted for transmission but overflowed" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -77,24 +85,26 @@ bool StdConnectorModule::begin(const char* mod, int idx, SnortConfig*)
 {
     if (idx == 0 and strcmp(mod, "std_connector") == 0)
     {
-        auto out_conn = std::make_unique<snort::ConnectorConfig>();
+        auto out_conn = std::make_unique<StdConnectorConfig>();
         out_conn->direction = Connector::CONN_TRANSMIT;
         out_conn->connector_name = "stdout";
+        out_conn->buffer_size = 0;
         config_set.push_back(std::move(out_conn));
 
-        auto in_conn = std::make_unique<snort::ConnectorConfig>();
+        auto in_conn = std::make_unique<StdConnectorConfig>();
         in_conn->direction = Connector::CONN_RECEIVE;
         in_conn->connector_name = "stdin";
         config_set.push_back(std::move(in_conn));
 
-        auto io_conn = std::make_unique<snort::ConnectorConfig>();
+        auto io_conn = std::make_unique<StdConnectorConfig>();
         io_conn->direction = Connector::CONN_DUPLEX;
         io_conn->connector_name = "stdio";
+        io_conn->buffer_size = 0;
         config_set.push_back(std::move(io_conn));
     }
 
     if ( !config )
-        config = std::make_unique<snort::ConnectorConfig>();
+        config = std::make_unique<StdConnectorConfig>();
 
     return true;
 }
@@ -121,6 +131,11 @@ bool StdConnectorModule::set(const char*, Value& v, SnortConfig*)
             return false;
         }
     }
+    else if ( v.is("buffer_size") )
+        config->buffer_size = v.get_uint32();
+    else if ( v.is("redirect") )
+        config->output = v.get_string();
+
     return true;
 }
 
@@ -145,20 +160,70 @@ PegCount* StdConnectorModule::get_counts() const
 // connector stuff
 //-------------------------------------------------------------------------
 
-StdConnector::StdConnector(const snort::ConnectorConfig& conf) :
-    snort::Connector(conf), extr_std_log(TextLog_Init("stdout"))
-{ }
+static StdConnectorBuffer fail_safe_buffer(nullptr);
+static Ring2 fail_safe_ring(0);
+
+StdConnectorCommon::StdConnectorCommon(snort::ConnectorConfig::ConfigSet&& c_s)
+    : ConnectorCommon(std::move(c_s))
+{
+    for (auto& config : config_set)
+    {
+        StdConnectorConfig& std_config = (StdConnectorConfig&)*config;
+
+        if (std_config.buffer_size > 0)
+            std_config.buffer = &buffers.emplace_back(std_config.output.c_str());
+    }
+}
+
+StdConnector::StdConnector(const StdConnectorConfig& conf) :
+    snort::Connector(conf),
+    buffered(conf.buffer and conf.buffer_size != 0),
+    text_log(TextLog_Init(conf.output.c_str(), false)),
+    writer(buffered ? conf.buffer->acquire(conf.buffer_size) : fail_safe_ring.writer()),
+    buffer(conf.buffer ? *conf.buffer : fail_safe_buffer)
+{
+    buffer.start();
+}
 
 StdConnector::~StdConnector()
-{ TextLog_Term(extr_std_log); }
+{
+    TextLog_Term(text_log);
+
+    if (buffered)
+        buffer.release(writer);
+}
 
 bool StdConnector::internal_transmit_message(const ConnectorMsg& msg)
 {
     if ( !msg.get_data() or msg.get_length() == 0 )
         return false;
 
-    return TextLog_Print(extr_std_log, "%.*s\n", msg.get_length(), msg.get_data()) &&
-        ++(std_connector_stats.messages_transmitted);
+    if (!buffered)
+        return TextLog_Print(text_log, "%.*s\n", msg.get_length(), msg.get_data())
+            and ++std_connector_stats.messages_transmitted;
+
+#ifdef REG_TEST
+    const bool safe = false;
+#else
+    const bool safe = true;
+#endif
+
+    bool success = false;
+
+    do
+    {
+        writer.retry();
+        success = writer.write(msg.get_data(), msg.get_length());
+    } while (!success and !safe);
+
+    writer.push();
+
+    if (success)
+        ++std_connector_stats.messages_transmitted;
+    else
+        ++std_connector_stats.tx_messages_stalled;
+
+    return success;
 }
 
 bool StdConnector::transmit_message(const ConnectorMsg& msg, const ID&)
@@ -168,7 +233,14 @@ bool StdConnector::transmit_message(const ConnectorMsg&& msg, const ID&)
 { return internal_transmit_message(msg); }
 
 bool StdConnector::flush()
-{ return TextLog_Flush(extr_std_log); }
+{
+    if (!buffered)
+        return TextLog_Flush(text_log);
+
+    writer.push();
+
+    return true;
+}
 
 ConnectorMsg StdConnector::receive_message(bool)
 {
@@ -194,7 +266,11 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static Connector* std_connector_tinit(const ConnectorConfig& config)
-{ return new StdConnector(config); }
+{
+    const StdConnectorConfig& conf = (const StdConnectorConfig&)config;
+
+    return new StdConnector(conf);
+}
 
 static void std_connector_tterm(Connector* connector)
 { delete connector; }
@@ -202,7 +278,8 @@ static void std_connector_tterm(Connector* connector)
 static ConnectorCommon* std_connector_ctor(Module* m)
 {
     StdConnectorModule* mod = (StdConnectorModule*)m;
-    ConnectorCommon* std_connector_common = new ConnectorCommon(mod->get_and_clear_config());
+    ConnectorCommon* std_connector_common = new StdConnectorCommon(mod->get_and_clear_config());
+
     return std_connector_common;
 }
 
