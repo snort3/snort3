@@ -49,25 +49,19 @@ FlowData::FlowData(unsigned, Inspector*) { }
 FlowData::~FlowData() = default;
 AppIdSessionApi::AppIdSessionApi(const AppIdSession* asd, const SfIp& ip) : asd(asd), initiator_ip(ip) { }
 // Stubs for logs
-char test_log[256];
-void FatalError(const char* format,...) 
-{
-    va_list ap;
-    va_start(ap,format);
-    vsprintf(test_log, format, ap); 
-    va_end(ap);  
-}
+char test_log[512] = {0};
+void FatalError(const char*,...) { exit(-1); }
 void ErrorMessage(const char* format, va_list& args)
 {
-    vsprintf(test_log, format, args);
+    vsnprintf(test_log, sizeof(test_log), format, args);
 }
 void WarningMessage(const char* format, va_list& args)
 {
-    vsprintf(test_log, format, args);
+    vsnprintf(test_log, sizeof(test_log), format, args);
 }
 void LogMessage(const char* format, va_list& args)
 {
-    vsprintf(test_log, format, args);
+    vsnprintf(test_log, sizeof(test_log), format, args);
 }
 void TraceApi::filter(snort::Packet const&) { }
 void trace_vprintf(const char*, unsigned char, const char*, const Packet*, const char*, va_list) { }
@@ -142,6 +136,7 @@ TEST_GROUP(appid_debug)
 // This matches the basic pcap/expect regression test that we have for this command.
 TEST(appid_debug, basic_test)
 {
+    memset(test_log, 0, sizeof(test_log));
     // set_constraints()
     AppIdDebugSessionConstraints constraints = { };
     SetConstraints(IpProtocol::TCP, "10.1.2.3", 0, "10.9.8.7", 80, constraints);
@@ -180,6 +175,7 @@ TEST(appid_debug, basic_test)
 // Test matching a packet in reverse direction (from constraints).
 TEST(appid_debug, reverse_direction_activate_test)
 {
+    memset(test_log, 0, sizeof(test_log));
     // set_constraints()
     AppIdDebugSessionConstraints constraints = { };
     SetConstraints(IpProtocol::TCP, "10.1.2.3", 0, "10.9.8.7", 80, constraints);
@@ -218,6 +214,7 @@ TEST(appid_debug, reverse_direction_activate_test)
 // Test IPv6 matches.
 TEST(appid_debug, ipv6_test)
 {
+    memset(test_log, 0, sizeof(test_log));
     // set_constraints()
     SfIp::test_features = true;
     AppIdDebugSessionConstraints constraints = { };
@@ -260,6 +257,7 @@ TEST(appid_debug, ipv6_test)
 // Test matching on session initiator IP (rather than port).
 TEST(appid_debug, no_initiator_port_test)
 {
+    memset(test_log, 0, sizeof(test_log));
     // set_constraints()
     AppIdDebugSessionConstraints constraints = { };
     SetConstraints(IpProtocol::TCP, "10.1.2.3", 0, "10.9.8.7", 80, constraints);
@@ -298,6 +296,7 @@ TEST(appid_debug, no_initiator_port_test)
 // Test matching on session initiator IP (reverse direction packet).
 TEST(appid_debug, no_initiator_port_reversed_test)
 {
+    memset(test_log, 0, sizeof(test_log));
     // set_constraints()
     AppIdDebugSessionConstraints constraints = { };
     SetConstraints(IpProtocol::TCP, "10.1.2.3", 0, "10.9.8.7", 80, constraints);
@@ -336,6 +335,7 @@ TEST(appid_debug, no_initiator_port_reversed_test)
 // Check for null session pointer (won't activate).
 TEST(appid_debug, null_session_test)
 {
+    memset(test_log, 0, sizeof(test_log));
     // set_constraints()
     AppIdDebugSessionConstraints constraints = { };
     SetConstraints(IpProtocol::TCP, "10.1.2.3", 0, "10.9.8.7", 80, constraints);
@@ -357,6 +357,7 @@ TEST(appid_debug, null_session_test)
 // Check for null flow pointer (won't activate).
 TEST(appid_debug, null_flow_test)
 {
+    memset(test_log, 0, sizeof(test_log));
     // set_constraints()
     AppIdDebugSessionConstraints constraints = { };
     SetConstraints(IpProtocol::TCP, "10.1.2.3", 0, "10.9.8.7", 80, constraints);
@@ -371,6 +372,7 @@ TEST(appid_debug, null_flow_test)
 // Check a packet that doesn't get a match to constraints (won't activate).
 TEST(appid_debug, no_match_test)
 {
+    memset(test_log, 0, sizeof(test_log));
     // set_constraints()
     AppIdDebugSessionConstraints constraints = { };
     SetConstraints(IpProtocol::TCP, nullptr, 0, nullptr, 0, constraints);    // just TCP
@@ -405,6 +407,7 @@ TEST(appid_debug, no_match_test)
 // Set all constraints (must match all).
 TEST(appid_debug, all_constraints_test)
 {
+    memset(test_log, 0, sizeof(test_log));
     // set_constraints()
     AppIdDebugSessionConstraints constraints = { };
     SetConstraints(IpProtocol::TCP, "10.1.2.3", 48620, "10.9.8.7", 80, constraints);    // must match all constraints
@@ -443,6 +446,7 @@ TEST(appid_debug, all_constraints_test)
 // Only set protocol in constraints.
 TEST(appid_debug, just_proto_test)
 {
+    memset(test_log, 0, sizeof(test_log));
     // set_constraints()
     AppIdDebugSessionConstraints constraints = { };
     SetConstraints(IpProtocol::TCP, nullptr, 0, nullptr, 0, constraints);    // only need to match proto
@@ -481,6 +485,7 @@ TEST(appid_debug, just_proto_test)
 // Only set IP in constraints.
 TEST(appid_debug, just_ip_test)
 {
+    memset(test_log, 0, sizeof(test_log));
     // set_constraints()
     AppIdDebugSessionConstraints constraints = { };
     SetConstraints(IpProtocol::PROTO_NOT_SET, nullptr, 0, "10.9.8.7", 0, constraints);    // only need to match (dst) IP
@@ -519,6 +524,7 @@ TEST(appid_debug, just_ip_test)
 // Only set port in constraints.
 TEST(appid_debug, just_port_test)
 {
+    memset(test_log, 0, sizeof(test_log));
     // set_constraints()
     AppIdDebugSessionConstraints constraints = { };
     SetConstraints(IpProtocol::PROTO_NOT_SET, nullptr, 0, nullptr, 80, constraints);    // just need to match (dst) port
@@ -562,23 +568,19 @@ int main(int argc, char** argv)
 
 TEST(appid_debug, no_appidDebug_logging)
 {
-    test_log[0] = '\0';
-    APPID_LOG(nullptr, TRACE_CRITICAL_LEVEL, "TRACE_CRITICAL_LEVEL log message");
-    STRCMP_EQUAL(test_log, "TRACE_CRITICAL_LEVEL log message");
-
-    test_log[0] = '\0';
+    memset(test_log, 0, sizeof(test_log));
     APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "TRACE_ERROR_LEVEL log message");
     STRCMP_EQUAL(test_log, "TRACE_ERROR_LEVEL log message");
 
-    test_log[0] = '\0';
+    memset(test_log, 0, sizeof(test_log));
     APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "TRACE_WARNING_LEVEL log message");
     STRCMP_EQUAL(test_log, "TRACE_WARNING_LEVEL log message");
 
-    test_log[0] = '\0';
+    memset(test_log, 0, sizeof(test_log));
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "TRACE_INFO_LEVEL log message");
     STRCMP_EQUAL(test_log, "TRACE_INFO_LEVEL log message");
 
-    test_log[0] = '\0';
+    memset(test_log, 0, sizeof(test_log));
     APPID_LOG(nullptr, TRACE_DEBUG_LEVEL, "TRACE_DEBUG_LEVEL log message");
     STRCMP_EQUAL(test_log, "");
 }
@@ -607,12 +609,12 @@ TEST(appid_debug, appidDebug_logging)
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
         protocol, 4, address_space_id, &session, true, 0);
 
-    test_log[0] = '\0';
+    memset(test_log, 0, sizeof(test_log));
     APPID_LOG(nullptr , TRACE_DEBUG_LEVEL, "TRACE_DEBUG_LEVEL log message");
     STRCMP_EQUAL(test_log, "TRACE_DEBUG_LEVEL log message");
 
     Packet packet(true);
-    test_log[0] = '\0';
+    memset(test_log, 0, sizeof(test_log));
     APPID_LOG(&packet , TRACE_DEBUG_LEVEL, "TRACE_DEBUG_LEVEL log message");
     STRCMP_EQUAL(test_log, (string("AppIdDbg ") + appidDebug->get_debug_session() + 
         " TRACE_DEBUG_LEVEL log message").c_str());
@@ -624,7 +626,7 @@ TEST(appid_debug, trace_on_logging)
 {
     appid_trace_enabled = true; // Enable appid_trace for debug messages
 
-    test_log[0] = '\0';
+    memset(test_log, 0, sizeof(test_log));
     APPID_LOG(nullptr , TRACE_DEBUG_LEVEL, "TRACE_DEBUG_LEVEL log message");
     STRCMP_EQUAL(test_log, "TRACE_DEBUG_LEVEL log message");
 
