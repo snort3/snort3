@@ -67,6 +67,7 @@ Services and their events:
   ** 'builtin' (internally-detected infraction is queued for further processing)
 * triggered IPS rule, whether built-in or text or SO (notice)
   ** `ips_logging` (matched rules sent to IPS logging)
+  ** `context_logging` (matched rule in an IPS logger)
 
 Common fields available for every service:
 
@@ -168,13 +169,16 @@ UDP Connection States:
 TCP Connection States:
 
 The TCP connection state tracks both client and server states, each prefixed with CLT_ (for the client) and SRV_ (for the server).
-These states follow the TCP state machine as defined by the RFC, with the addition of TCP_MID_STREAM_SENT and TCP_MID_STREAM_REC to handle mid-stream traffic and TCP_STATE_NONE.
+These states follow the TCP state machine as defined by the RFC, with the addition of TCP_MID_STREAM_SENT
+and TCP_MID_STREAM_REC to handle mid-stream traffic and TCP_STATE_NONE.
 
 OTH (Other Traffic):
 
 The OTH state is used for all non-UDP and non-TCP traffic, as well as for error cases.
 
-* `history` - a string that tracks the connection's history. It uses letters to represent events, with uppercase letters denoting client-side events and lowercase letters for server-side events. Each letter appears only once for each direction, regardless of how many times the event occurs.
+* `history` - a string that tracks the connection's history. It uses letters to represent events, with
+uppercase letters denoting client-side events and lowercase letters for server-side events.
+Each letter appears only once for each direction, regardless of how many times the event occurs.
 
 UDP Events: d: Packet with payload.
 

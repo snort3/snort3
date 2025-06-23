@@ -43,7 +43,7 @@ public:
     using VecGetFn = const std::vector<const char*>& (*) (const DataEvent*, const Flow*);
     using VecField = DataField<const std::vector<const char*>&, const DataEvent*, const Flow*>;
 
-    IpsUserExtractor(Extractor&, uint32_t tenant, const std::vector<std::string>& fields);
+    IpsUserExtractor(Extractor&, uint32_t tenant, const std::vector<std::string>& fields, bool contextual);
 
     std::vector<const char*> get_field_names() const override;
     void handle(DataEvent&, Flow*);

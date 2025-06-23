@@ -196,7 +196,7 @@ static const map<string, IpsUserExtractor::VecGetFn> vec_getters =
 
 THREAD_LOCAL const snort::Connector::ID* IpsUserExtractor::log_id = nullptr;
 
-IpsUserExtractor::IpsUserExtractor(Extractor& i, uint32_t t, const vector<string>& fields)
+IpsUserExtractor::IpsUserExtractor(Extractor& i, uint32_t t, const vector<string>& fields, bool contextual)
     : ExtractorEvent(ServiceType::IPS_USER, i, t)
 {
     for (const auto& f : fields)
@@ -215,7 +215,8 @@ IpsUserExtractor::IpsUserExtractor(Extractor& i, uint32_t t, const vector<string
             continue;
     }
 
-    DataBus::subscribe_global(de_pub_key, DetectionEventIds::IPS_LOGGING, new IpsUser(*this, S_NAME), i.get_snort_config());
+    auto event = contextual ? DetectionEventIds::CONTEXT_LOGGING : DetectionEventIds::IPS_LOGGING;
+    DataBus::subscribe_global(de_pub_key, event, new IpsUser(*this, S_NAME), i.get_snort_config());
 }
 
 void IpsUserExtractor::internal_tinit(const snort::Connector::ID* service_id)

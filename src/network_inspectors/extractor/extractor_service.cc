@@ -459,6 +459,7 @@ const ServiceBlueprint IpsUserExtractorService::blueprint =
     // events
     {
         "ips_logging",
+        "context_logging",
     },
     // fields
     {
@@ -481,8 +482,9 @@ IpsUserExtractorService::IpsUserExtractorService(uint32_t tenant, const std::vec
 {
     for (const auto& event : get_events())
     {
-        if (!strcmp("ips_logging", event.c_str()))
-            handlers.push_back(new IpsUserExtractor(ins, tenant_id, get_fields()));
+        bool contextual = !strcmp("context_logging", event.c_str());
+        if (contextual or !strcmp("ips_logging", event.c_str()))
+            handlers.push_back(new IpsUserExtractor(ins, tenant_id, get_fields(), contextual));
     }
 }
 

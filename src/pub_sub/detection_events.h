@@ -31,8 +31,9 @@ struct DetectionEventIds
 {
     enum : unsigned
     {
-        IPS_LOGGING,
-        BUILTIN,
+        IPS_LOGGING,     // before IPS loggers invoked
+        CONTEXT_LOGGING, // in an IPS logger
+        BUILTIN,         // built-in event added in the event queue
         MAX
     };
 };
