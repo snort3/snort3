@@ -1294,6 +1294,11 @@ HTTP request method is not on allowed methods list or is on disallowed methods l
 
 HTTP reserved GZIP flags are set
 
+119:289
+
+Too many partial flushes. Partial depth is enabled and 20 or more partial flushes are
+made before a regular flush.
+
 121:1
 
 Invalid flag set on HTTP/2 frame header

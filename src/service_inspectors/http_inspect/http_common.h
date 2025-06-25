@@ -40,6 +40,11 @@ enum SectionType { SEC_DISCARD = -19, SEC_ABORT = -18, SEC__NOT_COMPUTE=-14, SEC
     SEC_REQUEST = 2, SEC_STATUS, SEC_HEADER, SEC_BODY_CL, SEC_BODY_CHUNK, SEC_TRAILER,
     SEC_BODY_OLD, SEC_BODY_HX };
 
+inline bool is_body(SectionType st)
+{
+    return (st == SEC_BODY_CL || st == SEC_BODY_CHUNK || st == SEC_BODY_OLD || st == SEC_BODY_HX);
+}
+
 // Caters to all extended versions of HTTP, i.e. HTTP/2, HTTP/3
 enum HXBodyState { HX_BODY_NOT_COMPLETE, HX_BODY_LAST_SEG, HX_BODY_COMPLETE,
     HX_BODY_COMPLETE_EXPECT_TRAILERS, HX_BODY_NO_BODY };

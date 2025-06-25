@@ -1,16 +1,12 @@
-When the end of a script is found and the normal flush point has not been found, the current TCP
-segment and all previous segments for the current message section are flushed using a special
-procedure known as partial inspection. From the perspective of Stream (or H2I) a partial inspection
-is a regular flush in every respect.
-
-scan() calls prep_partial_flush() to prepare for the partial inspection. Then it returns a normal
-flush point to Stream at the end of the current TCP segment. Partial inspections perform all of the
-functions of a regular inspection including forwarding data to file processing and detection.
-
 The difference between a partial inspection and a regular inspection is reassemble() saves the
 input data for future reuse. Eventually there will be a regular full inspection of the entire
 message section. reassemble() will accomplish this by combining the input data for the partial
-inspection with later data that complete the message section.
+inspection with later data that completes the message section.
+
+scan() calls prep_partial_flush() to prepare for the partial inspection. Then it returns a normal
+flush point to Stream at the end of the current TCP segment. Partial inspections perform all of the
+functions of a regular inspection including forwarding data to file processing and detection. From
+the perspective of Stream (or H2I) a partial inspection is a regular flush in every respect.
 
 Correct and efficient execution of a full inspection following a partial inspection requires
 special handling of certain functions. Unzipping is only done once in reassemble(). The stored
@@ -26,12 +22,30 @@ Compared to just doing a full inspection, a partial inspection followed by a ful
 will not miss anything. The benefits of partial inspection are in addition to the benefits of a
 full inspection.
 
-The http_inspect partial inspection mechanism is also used by http2_inspect to manage frame
-boundaries. When inspecting HTTP/2, a partial inspection by http_inspect may occur because script
-detection triggered it, because H2I wanted it, or both. 
+Partial inspection is used in multiple scenarios, described below, and in combinations of them.
 
-Some applications may be affected by blocks too late scenarios related to seeing part of the
-zero-length chunk. For example a TCP packet that ends with:
+Script detection uses partial inspection for message bodies containing Javascripts. The stream
+splitter scan() method searches its input for the end-of-script tag "</script>". When the end
+of a script is found and the normal flush point has not been found, the current TCP segment and
+all previous segments for the current message section are flushed using partial inspection.
+
+Searching for the end-of-script tag may require scan() to unzip the data. This is an extra unzip
+as storage limitations preclude saving the unzipped version of the data for subsequent reassembly.
+
+Update: the previous sentence has been discovered to be incorrect. The memory requirements of
+zlib are very large. It would save a lot of memory and some processing time for script detection
+to unzip one time in scan() and store the result for eventual use by reassemble(). The memory
+lost by storing partial message sections in HI while waiting for reassemble() would be more than
+compensated for by not having two instances of zlib.
+
+For request bodies, when partial_depth parameter is set to a non zero value, a partial body will
+be subjected to partial inspection if its length is below partial_depth value. When the partial_depth
+parameter is set to -1, the entire body will be subjected to inspection regardless of its length.
+
+The http_inspect partial inspection mechanism is invoked by http2_inspect on frame boundaries.
+
+With chunking some applications may be affected by blocks too late scenarios related to seeing part
+of the zero-length chunk. For example a TCP packet that ends with:
 
     8<CR><LF>abcdefgh<CR><LF>0
 

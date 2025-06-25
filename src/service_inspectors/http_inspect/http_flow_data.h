@@ -120,6 +120,7 @@ private:
     uint32_t num_good_chunks[2] = { 0, 0 };
     uint32_t octets_expected[2] = { 0, 0 };
     bool is_broken_chunk[2] = { false, false };
+    uint64_t partial_flush_counter = 0;
 
     // *** StreamSplitter => Inspector (facts about the most recent message section)
     HttpCommon::SectionType section_type[2] = { HttpCommon::SEC__NOT_COMPUTE,

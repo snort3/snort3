@@ -158,6 +158,7 @@ void HttpInspect::show(const SnortConfig*) const
 
     ConfigLogger::log_limit("request_depth", params->request_depth, -1);
     ConfigLogger::log_limit("response_depth", params->response_depth, -1);
+    ConfigLogger::log_limit("partial_depth", params->partial_depth, -1, 0);
     ConfigLogger::log_flag("unzip", params->unzip);
     ConfigLogger::log_flag("normalize_utf", params->normalize_utf);
     ConfigLogger::log_flag("decompress_pdf", params->decompress_pdf);

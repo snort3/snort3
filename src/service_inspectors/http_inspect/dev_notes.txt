@@ -9,17 +9,7 @@ unexpectedly).
 The nature of splitting allows packets to be forwarded before they are aggregated into a message
 section and inspected. This may lead to problems when the target consumes a partial message
 body even though the end of the message body was never received because Snort blocked it.
-
-Script detection is a feature developed to solve this problem for message bodies containing
-Javascripts. The stream splitter scan() method searches its input for the end-of-script tag
-"</script>". When necessary this requires scan() to unzip the data. This is an extra unzip as
-storage limitations preclude saving the unzipped version of the data for subsequent reassembly.
-
-Update: the previous sentence has been discovered to be incorrect. The memory requirements of
-zlib are very large. It would save a lot of memory and some processing time for script detection
-to unzip one time in scan() and store the result for eventual use by reassemble(). The memory
-lost by storing partial message sections in HI while waiting for reassemble() would be more than
-compensated for by not having two instances of zlib.
+Partial inspection was developed to solve this problem.
 
 HttpFlowData is a data class representing all HI information relating to a flow. It serves as
 persistent memory between invocations of HI by the framework. It also glues together the inspector,

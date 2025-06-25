@@ -354,6 +354,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_DISALLOWED_METHOD,          "HTTP request method is not on allowed methods list or is on "
                                         "disallowed methods list" },
     { EVENT_GZIP_RESERVED_FLAGS,        "HTTP gzip body with reserved flag set" },
+    { EVENT_MAX_PARTIAL_FLUSH,          "Too many partial flushes" },
     { 0, nullptr }
 };
 

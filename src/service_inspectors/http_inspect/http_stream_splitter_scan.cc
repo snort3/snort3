@@ -190,7 +190,7 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
     }
 
     const uint32_t max_length = MAX_OCTETS - cutter->get_octets_seen();
-    const ScanResult cut_result = cutter->cut(data, (length <= max_length) ? length :
+    ScanResult cut_result = cutter->cut(data, (length <= max_length) ? length :
         max_length, session_data->get_infractions(source_id), session_data->events[source_id],
         session_data->section_size_target[source_id],
         session_data->stretch_section_to_packet[source_id],
@@ -215,6 +215,16 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
             delete cutter;
             cutter = nullptr;
             return status_value(StreamSplitter::ABORT);
+        }
+
+        if (is_body(type) && source_id == SRC_CLIENT &&
+            (my_inspector->params->partial_depth == -1 ||
+             (cutter->get_octets_seen() < my_inspector->params->partial_depth && cutter->get_num_flush() == 0)))
+        {
+            static const uint64_t MAX_PARTIAL_FLUSH_COUNTER = 20;
+            if (++session_data->partial_flush_counter == MAX_PARTIAL_FLUSH_COUNTER)
+                session_data->events[source_id]->create_event(HttpEnums::EVENT_MAX_PARTIAL_FLUSH);
+            cut_result = SCAN_NOT_FOUND_ACCELERATE;
         }
 
         if (cut_result == SCAN_NOT_FOUND_ACCELERATE)
@@ -252,6 +262,7 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
     case SCAN_FOUND:
     case SCAN_FOUND_PIECE:
       {
+        session_data->partial_flush_counter = 0;
         const uint32_t flush_octets = cutter->get_num_flush();
         prepare_flush(session_data, flush_offset, type, flush_octets, cutter->get_num_excess(),
             cutter->get_num_head_lines(), cutter->get_is_broken_chunk(),
