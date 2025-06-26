@@ -201,7 +201,7 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
             {
                 certs_rec = (const ServiceSSLV3CertsRecord*)handshake;
                 server_cert_data->certs_len = ntoh3(certs_rec->certs_len);
-                if ( server_cert_data->certs_len > (size - sizeof(certs_rec->certs_len)) )
+                if (server_cert_data->certs_len + sizeof(certs_rec->certs_len) > (unsigned int)size)
                 {
                     return retval | SSL_TRUNCATED_FLAG;
                 }
@@ -695,7 +695,7 @@ ParseCHResult parse_client_hello_data(const uint8_t* pkt, uint16_t size, SSLV3Cl
         pkt += len;
         length -= len;
     }
-    
+
     return ParseCHResult::FAILED;
 }
 
