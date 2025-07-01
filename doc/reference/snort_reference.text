@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.9.0.0 2025-05-28 13:58:01 EDT TST
+Revision 3.9.1.0 2025-06-29 23:11:37 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -2644,6 +2644,11 @@ Configuration:
   * string std_connector[].connector: connector name
   * enum std_connector[].direction: usage { receive | transmit | 
     duplex }
+  * int std_connector[].buffer_size = 0: per-instance buffer size in
+    bytes (0 no buffering, otherwise buffered and synchronized across
+    threads) { 0:max32 }
+  * string std_connector[].redirect: output file name where printout
+    is redirected
 
 Peg counts:
 
@@ -2651,6 +2656,8 @@ Peg counts:
     received (sum)
   * std_connector.messages_transmitted: total number of messages
     transmitted (sum)
+  * std_connector.messages_stalled: total number of messages
+    attempted for transmission but overflowed (sum)
 
 
 4.3. tcp_connector
@@ -4074,6 +4081,8 @@ Configuration:
     bytes to examine (-1 no limit) { -1:max53 }
   * int http_inspect.response_depth = -1: maximum response message
     body bytes to examine (-1 no limit) { -1:max53 }
+  * int http_inspect.partial_depth = 0: maximum request body to send
+    to early detection (0 disabled, -1 no limit) { -1:16384 }
   * bool http_inspect.unzip = true: decompress gzip and deflate
     message bodies
   * int http_inspect.maximum_host_length = -1: maximum allowed length
@@ -4332,6 +4341,7 @@ Rules:
   * 119:287 (http_inspect) HTTP request method is not on allowed
     methods list or is on disallowed methods list
   * 119:288 (http_inspect) HTTP gzip body with reserved flag set
+  * 119:289 (http_inspect) Too many partial flushes
 
 Peg counts:
 
@@ -10252,6 +10262,8 @@ libraries see the Getting Started section of the manual.
     encodings in response bodies
   * int http_inspect.oversize_dir_length = 300: maximum length for
     URL directory { 1:65535 }
+  * int http_inspect.partial_depth = 0: maximum request body to send
+    to early detection (0 disabled, -1 no limit) { -1:16384 }
   * bool http_inspect.percent_u = false: normalize %uNNNN and %UNNNN
     encodings
   * bool http_inspect.plus_to_space = true: replace + with <sp> when
@@ -11476,9 +11488,14 @@ libraries see the Getting Started section of the manual.
   * implied ssl_version.!tls1.2: check for records that are not
     tls1.2
   * implied ssl_version.tls1.2: check for tls1.2
+  * int std_connector[].buffer_size = 0: per-instance buffer size in
+    bytes (0 no buffering, otherwise buffered and synchronized across
+    threads) { 0:max32 }
   * string std_connector[].connector: connector name
   * enum std_connector[].direction: usage { receive | transmit | 
     duplex }
+  * string std_connector[].redirect: output file name where printout
+    is redirected
   * bool stream.allowlist_cache.enable = false: enable allowlist
     cache
   * bool stream.allowlist_cache.move_on_excess = false: move flows to
@@ -12804,6 +12821,8 @@ libraries see the Getting Started section of the manual.
   * ssl.unrecognized_records: total unrecognized records (sum)
   * std_connector.messages_received: total number of messages
     received (sum)
+  * std_connector.messages_stalled: total number of messages
+    attempted for transmission but overflowed (sum)
   * std_connector.messages_transmitted: total number of messages
     transmitted (sum)
   * stream.allowlist_flows: number of flows moved to the allowlist
@@ -14656,6 +14675,11 @@ disallowed methods list.
 119:288 (http_inspect) HTTP gzip body with reserved flag set
 
 HTTP reserved GZIP flags are set
+
+119:289 (http_inspect) Too many partial flushes
+
+Too many partial flushes. Partial depth is enabled and 20 or more
+partial flushes are made before a regular flush.
 
 121:1 (http2_inspect) invalid flag set on HTTP/2 frame
 

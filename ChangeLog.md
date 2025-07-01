@@ -1,3 +1,36 @@
+2025-06-29: 3.9.1.0
+
+* appid: appid_debug_test and critical log fix
+* appid: broadcast command for third party tfini during tterm rather than doing it sequentially
+* appid: differentiate between request and response DNS host
+* appid: fixed APPID_LOG macro for correct usage of log_level
+* appid: fixed stash issue by fixing publishing shadow traffic
+* appid: fix tcp dns multiple transaction support
+* appid: queue analyzer command for third party setup during appid id tinit and stagger packet threads during third party tinit
+* appid: sync flow service with protocol based detection
+* binder, flow, framework: add a facility to block binding based on a do_not_decrypt flow flag and inspector can_decrypt method
+* build: address coverity warnings
+* connectors: add buffered output to std_connector
+* connectors: add redirect option to print to a file
+* connectors: give name to flusher thread
+* connectors: rebuild readers as they might be outdated at exit
+* connectors: rename text log field
+* connectors: set affinity for flusher thread
+* dns: handle multi DNS transactions one TCP connection
+* extractor: add context logging event for notice
+* helpers: add 1-reader-1-writer ring buffer
+* helpers: fix JSON stream flags after escaping
+* http_inspect: add support for partial_depth configuration option
+* main: clarify the DAQ verdict for inject
+* mime: fix crash in folding right after colon
+* mime: fix eol search and add unit tests
+* mp_dbus: transfer ownership of MPDataBus to new config during reload
+* mp_unix_transport: refactored socket reconnect
+* mp_unix_transport: use shared mutex in message processing
+* profiler: add note for total percentage for profiler_dump
+* ssl: fix integer underflow in certificate parsing
+* unixdomain_connector: explicit include of select.h
+
 2025-05-28: 3.9.0.0
 
 * codec, flow: make mpls layers in flow pointers to save memory

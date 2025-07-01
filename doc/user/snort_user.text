@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.9.0.0 2025-05-28 13:58:18 EDT TST
+Revision 3.9.1.0 2025-06-29 23:11:50 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -4094,7 +4094,23 @@ consumes somewhat more of the sensor’s resources.
 This feature is off by default. script_detection = true will activate
 it.
 
-5.10.3.4. gzip
+5.10.3.4. partial_depth
+
+Partial depth detection is a feature that enables Snort to more
+quickly detect and block malicious requests. It is configured by the
+partial_depth parameter which can take values in the range -1-16384
+bytes. The feature is enabled by setting partial_depth to some non
+zero value. When the feature is enabled and either, the number of
+bytes received in the request body is below the value specified by
+partial_depth, or partial_depth is set to -1, unlimited; it
+immediately forwards the available part of the message body for early
+detection. This enables earlier threat detection but consumes
+somewhat more of the sensor’s resources.
+
+This feature is turned off by default by setting partial_depth = 0.
+To activate it, set partial_depth to the desired value.
+
+5.10.3.5. gzip
 
 http_inspect by default decompresses deflate and gzip message bodies
 before inspecting them. This feature can be turned off by unzip =
@@ -4103,14 +4119,14 @@ improvement but at a very high price. It is unlikely that any
 meaningful inspection of message bodies will be possible. Effectively
 HTTP processing would be limited to the headers.
 
-5.10.3.5. normalize_utf
+5.10.3.6. normalize_utf
 
 http_inspect will decode utf-8, utf-7, utf-16le, utf-16be, utf-32le,
 and utf-32be in response message bodies based on the Content-Type
 header. This feature is on by default: normalize_utf = false will
 deactivate it.
 
-5.10.3.6. decompress_pdf
+5.10.3.7. decompress_pdf
 
 decompress_pdf = true will enable decompression of compressed
 portions of PDF files encountered in a message body. http_inspect
@@ -4119,7 +4135,7 @@ locate PDF streams with a single /FlateDecode filter. The compressed
 content is decompressed and made available through the file data rule
 option.
 
-5.10.3.7. decompress_swf
+5.10.3.8. decompress_swf
 
 decompress_swf = true will enable decompression of compressed SWF
 (Adobe Flash content) files encountered in a message body. The
@@ -4129,13 +4145,13 @@ LZMA. The compressed content is decompressed and made available
 through the file data rule option. The compressed SWF file signature
 is converted to FWS to indicate an uncompressed file.
 
-5.10.3.8. decompress_zip
+5.10.3.9. decompress_zip
 
 decompress_zip = true will enable decompression of compressed zip
 archives encountered in a message body. The compressed content is
 decompressed and made available through the file_data rule option.
 
-5.10.3.9. decompress_vba
+5.10.3.10. decompress_vba
 
 decompress_vba = true will enable decompression of RLE (Run Length
 Encoding) compressed vba (Visual Basic for Applications) macro data
@@ -4145,7 +4161,7 @@ Linking and Embedding) file embedded with the files containing RLE
 compressed vba macro data. The decompressed vba macro data is then
 made available through the vba_data ips rule option.
 
-5.10.3.10. max_mime_attach
+5.10.3.11. max_mime_attach
 
 HTTP request message bodies may be in MIME format. Each file
 attachment is separately incorporated in the file_data rule option.
@@ -4154,7 +4170,7 @@ may consume a lot of processing power. This parameter limits the
 number of files from one message that are inspected. The default
 value is 5.
 
-5.10.3.11. normalize_javascript
+5.10.3.12. normalize_javascript
 
 normalize_javascript = true will enable legacy normalizer of
 JavaScript within the HTTP response body. http_inspect looks for
@@ -4167,7 +4183,7 @@ http_inspect also replaces consecutive whitespaces with a single
 space and normalizes the plus by concatenating the strings. Such
 normalizations refer to basic JavaScript normalization.
 
-5.10.3.12. xff_headers
+5.10.3.13. xff_headers
 
 This configuration supports defining custom x-forwarded-for type
 headers. In a multi-vendor world, it is quite possible that the
@@ -4182,7 +4198,7 @@ they are defined, e.g "x-forwarded-for" will be preferred than
 "true-client-ip" if both headers are present in the stream. The
 header names should be delimited by a space.
 
-5.10.3.13. maximum_host_length
+5.10.3.14. maximum_host_length
 
 Setting maximum_host_length causes http_inspect to generate 119:25 if
 the Host header value including optional white space exceeds the
@@ -4190,7 +4206,7 @@ specified length. In the abnormal case of multiple Host headers, the
 total length of the combined values is used. The default value is -1,
 meaning do not perform this check.
 
-5.10.3.14. maximum_chunk_length
+5.10.3.15. maximum_chunk_length
 
 http_inspect strictly limits individual chunks within a chunked
 message body to be less than four gigabytes.
@@ -4198,17 +4214,17 @@ message body to be less than four gigabytes.
 A lower limit may be configured by setting maximum_chunk_length. Any
 chunk longer than maximum chunk length will generate a 119:16 alert.
 
-5.10.3.15. maximum_header_length
+5.10.3.16. maximum_header_length
 
 http_inspect generates 119:19 when the length of a header exceeds
 maximum_header_length = N {0 : 65535} (default 4096).
 
-5.10.3.16. maximum_headers
+5.10.3.17. maximum_headers
 
 http_inspect generates 119:20 when the number of headers exceeds
 maximum_headers = N {0 : 65535} (default 200).
 
-5.10.3.17. maximum_pipelined_requests
+5.10.3.18. maximum_pipelined_requests
 
 http_inspect generates 119:34 when the number of pipelined requests
 exceeds maximum_pipelined_requests = N {0 : 99} (default 99). This
@@ -4218,7 +4234,7 @@ the case of an alternating sequence of requests and responses. It
 will trigger the alert once the client issue a request before getting
 the response to a previous request.
 
-5.10.3.18. URI processing
+5.10.3.19. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -5911,6 +5927,7 @@ Services and their events:
   * triggered IPS rule, whether built-in or text or SO (notice)
 
       + ips_logging (matched rules sent to IPS logging)
+      + context_logging (matched rule in an IPS logger)
 
 Common fields available for every service:
 
