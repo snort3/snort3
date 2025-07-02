@@ -48,7 +48,7 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
         bool inline_mode = tsd.is_nap_policy_inline();
         tcpStats.invalid_seq_num++;
         log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Sequence number is invalid\n");
-        trim_win_payload(tns, tsd, 0, inline_mode);
+        packet_dropper(tns, tsd, NORM_TCP_IPS);
         return NORM_BAD_SEQ;
     }
 
@@ -71,7 +71,7 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
             if ( !data_inside_window(tns, tsd) )
             {
                 log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Data is outside the TCP Window\n");
-                trim_win_payload(tns, tsd, 0, inline_mode);
+                packet_dropper(tns, tsd, NORM_TCP_IPS);
                 return NORM_TRIMMED;
             }
 
@@ -100,7 +100,7 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
 
         log_drop_reason(tns, tsd, inline_mode, "stream",
             "Normalizer: Received data during a Zero Window that is not a Zero Window Probe\n");
-        trim_win_payload(tns, tsd, 0, inline_mode);
+        packet_dropper(tns, tsd, NORM_TCP_IPS);
         return NORM_TRIMMED;
     }
 
@@ -162,7 +162,11 @@ bool TcpNormalizer::packet_dropper(
     if ( tsd.is_meta_ack_packet() )
         return false;
 
-    const int8_t mode = (f == NORM_TCP_BLOCK) ? tns.tcp_block : tns.opt_block;
+    int8_t mode = (f == NORM_TCP_BLOCK) ? tns.tcp_block : tns.opt_block;
+
+    // Even if normalization mode is not on, need to force drop for inline mode
+    if( tsd.is_nap_policy_inline() )
+        mode = NORM_MODE_ON;
 
     norm_stats[PC_TCP_BLOCK][mode]++;
 
