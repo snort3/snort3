@@ -30,6 +30,73 @@
 
 using namespace snort;
 
+static inline size_t str_esc_pos(const char* str, size_t len)
+{
+    for (size_t i = 0; i < len; ++i)
+    {
+        switch (str[i])
+        {
+        case '\\':
+        case '\"':
+        case '\b':
+        case '\f':
+        case '\n':
+        case '\r':
+        case '\t':
+            return i;
+        default:
+            if (!isprint(str[i]))
+                return i;
+        }
+    }
+
+    return len;
+}
+
+void escape_json_append(std::string& out, const char* v, size_t len)
+{
+    if (!v or len == 0)
+        return;
+
+    size_t pos = str_esc_pos(v, len);
+
+    if (pos != 0)
+        out.append(v, pos);
+
+    if (pos == len)
+        return;
+
+    len -= pos;
+    v += pos;
+
+    out.reserve(out.size() + 2 * len);
+
+    while (len--)
+    {
+        const unsigned char c = *v++;
+
+        switch (c)
+        {
+        case '\\': out.push_back('\\'); out.push_back('\\'); break;
+        case '\"': out.push_back('\\'); out.push_back('"'); break;
+        case '\b': out.push_back('\\'); out.push_back('b'); break;
+        case '\f': out.push_back('\\'); out.push_back('f'); break;
+        case '\n': out.push_back('\\'); out.push_back('n'); break;
+        case '\r': out.push_back('\\'); out.push_back('r'); break;
+        case '\t': out.push_back('\\'); out.push_back('t'); break;
+        default:
+            if (isprint(c))
+                out.push_back(c);
+            else
+            {
+                char buf[7];
+                std::snprintf(buf, sizeof(buf), "\\u%04x", static_cast<unsigned int>(0xFF & c));
+                out.append(buf);
+            }
+        }
+    }
+}
+
 void JsonStream::open(const char* key)
 {
     split();
@@ -121,7 +188,11 @@ void JsonStream::put(const char* key, const char* val)
         out << std::quoted(key) << ": ";
 
     if (val)
-        put_escaped(val, strlen(val));
+    {
+        std::string escaped;
+        escape_json_append(escaped, val, strlen(val));
+        out << '"' << escaped << '"';
+    }
     else
         out << "null";
 }
@@ -136,7 +207,9 @@ void JsonStream::put(const char* key, const std::string& val)
     if ( key )
         out << std::quoted(key) << ": ";
 
-    put_escaped(val.c_str(), val.size());
+    std::string escaped;
+    escape_json_append(escaped, val.c_str(), val.size());
+    out << '"' << escaped << '"';
 }
 
 void JsonStream::put(const char* key, double val, int precision)
@@ -181,47 +254,6 @@ void JsonStream::split()
 void JsonStream::put_eol()
 {
     out << std::endl;
-}
-
-void JsonStream::put_escaped(const char* v, size_t len)
-{
-    char* buf = new char[2 * len + 2];
-    char* dst = buf;
-
-    *dst++ = '\"';
-
-    while (len--)
-    {
-        char c = *v++;
-
-        switch (c)
-        {
-        case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
-        case '\"': *dst++ = '\\'; *dst++ = '"'; break;
-        case '\b': *dst++ = '\\'; *dst++ = 'b'; break;
-        case '\f': *dst++ = '\\'; *dst++ = 'f'; break;
-        case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
-        case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
-        case '\t': *dst++ = '\\'; *dst++ = 't'; break;
-        default:
-            if (isprint(c))
-                *dst++ = c;
-            else
-            {
-                out.write(buf, dst - buf);
-                dst = buf;
-
-                std::ios_base::fmtflags flags = out.flags();
-                out << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (0xFF & c);
-                out.flags(flags);
-            }
-        }
-    }
-
-    *dst++ = '\"';
-    out.write(buf, dst - buf);
-
-    delete[] buf;
 }
 
 #ifdef UNIT_TEST
@@ -304,6 +336,16 @@ TEST_CASE_METHOD(JsonStreamTest, "escape: empty string", "[Json_Stream]")
     size_t len = strlen(value);
 
     std::string expected = "";
+    check_escaping(field, value, len, expected);
+}
+
+TEST_CASE_METHOD(JsonStreamTest, "escape: no escaping", "[Json_Stream]")
+{
+    const char* field = "Normal string";
+    const char* value = "foobar";
+    size_t len = strlen(value);
+
+    std::string expected = "\"Normal string\": \"foobar\"";
     check_escaping(field, value, len, expected);
 }
 

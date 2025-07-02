@@ -20,9 +20,9 @@
 #ifndef EXTRACTOR_JSON_LOGGER_H
 #define EXTRACTOR_JSON_LOGGER_H
 
-#include <sstream>
-
-#include "helpers/json_stream.h"
+#include <string>
+#include <sys/time.h>
+#include <vector>
 
 #include "extractor_logger.h"
 
@@ -46,17 +46,19 @@ public:
     void close_record(const snort::Connector::ID&) override;
 
 protected:
-    std::ostringstream oss;
+    std::string out_buffer;
 
 private:
+    void write_key(const char*);
+
     void ts_snort(const char*, const struct timeval&);
     void ts_snort_yy(const char*, const struct timeval&);
     void ts_unix(const char*, const struct timeval&);
     void ts_sec(const char*, const struct timeval&);
     void ts_usec(const char*, const struct timeval&);
 
-    snort::JsonStream js;
     void (JsonExtractorLogger::*add_ts)(const char*, const struct timeval&);
+    bool first_field_written = false;
 };
 
 #endif

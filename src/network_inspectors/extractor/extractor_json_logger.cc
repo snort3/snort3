@@ -26,11 +26,27 @@
 #include <cassert>
 #include <string>
 
+#include "helpers/json_stream.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+void JsonExtractorLogger::write_key(const char* key)
+{
+    if (!first_field_written)
+        first_field_written = true;
+    else
+        out_buffer += ", ";
+
+    out_buffer += '"';
+
+    if (key)
+        out_buffer += key;
+
+    out_buffer += "\": ";
+}
+
 JsonExtractorLogger::JsonExtractorLogger(snort::Connector* conn, TimeType ts_type)
-    : ExtractorLogger(conn), oss(), js(oss)
+    : ExtractorLogger(conn), first_field_written(false)
 {
     switch (ts_type)
     {
@@ -58,35 +74,47 @@ JsonExtractorLogger::JsonExtractorLogger(snort::Connector* conn, TimeType ts_typ
 
 void JsonExtractorLogger::open_record()
 {
-    oss.str("");
-    js.open();
+    out_buffer.clear();
+    out_buffer += "{ ";
+    first_field_written = false;
 }
 
 void JsonExtractorLogger::close_record(const snort::Connector::ID& service_id)
 {
-    js.close();
+    out_buffer += " }";
 
-    // FIXIT-L: we're removing last character(\n) due to a limitation of
-    // Json Stream configuration
-    assert(oss.str()[oss.str().size() - 1] == '\n');
+    snort::ConnectorMsg cmsg(reinterpret_cast<const uint8_t*>(out_buffer.c_str()),
+        out_buffer.length(), false);
 
-    output_conn->transmit_message(snort::ConnectorMsg(
-        (const uint8_t*)oss.str().c_str(), oss.str().size() - 1, false), service_id);
+    output_conn->transmit_message(cmsg, service_id);
 }
 
 void JsonExtractorLogger::add_field(const char* f, const char* v)
 {
-    js.put(f, v);
+    if (!v or v[0] == '\0')
+        return;
+
+    write_key(f);
+    out_buffer += '"';
+    escape_json_append(out_buffer, v, std::strlen(v));
+    out_buffer += '"';
 }
 
 void JsonExtractorLogger::add_field(const char* f, const char* v, size_t len)
 {
-    js.put(f, {v, len});
+    if (!v or v[0] == '\0' or len == 0)
+        return;
+
+    write_key(f);
+    out_buffer += '"';
+    escape_json_append(out_buffer, v, len);
+    out_buffer += '"';
 }
 
 void JsonExtractorLogger::add_field(const char* f, uint64_t v)
 {
-    js.uput(f, v);
+    write_key(f);
+    out_buffer += std::to_string(v);
 }
 
 void JsonExtractorLogger::add_field(const char* f, const snort::SfIp& v)
@@ -94,12 +122,20 @@ void JsonExtractorLogger::add_field(const char* f, const snort::SfIp& v)
     snort::SfIpString buf;
 
     v.ntop(buf);
-    js.put(f, buf);
+
+    if (buf[0] == '\0')
+        return;
+
+    write_key(f);
+    out_buffer += '"';
+    out_buffer += buf;
+    out_buffer += '"';
 }
 
 void JsonExtractorLogger::add_field(const char* f, bool v)
 {
-    v ? js.put_true(f) : js.put_false(f);
+    write_key(f);
+    out_buffer += (v ? "true" : "false");
 }
 
 void JsonExtractorLogger::add_field(const char* f, struct timeval v)
@@ -112,7 +148,10 @@ void JsonExtractorLogger::ts_snort(const char* f, const struct timeval& v)
     char ts[TIMEBUF_SIZE];
     snort::ts_print(&v, ts, false);
 
-    js.put(f, ts);
+    write_key(f);
+    out_buffer += '"';
+    out_buffer += ts;
+    out_buffer += '"';
 }
 
 void JsonExtractorLogger::ts_snort_yy(const char* f, const struct timeval& v)
@@ -120,30 +159,43 @@ void JsonExtractorLogger::ts_snort_yy(const char* f, const struct timeval& v)
     char ts[TIMEBUF_SIZE];
     snort::ts_print(&v, ts, true);
 
-    js.put(f, ts);
+    write_key(f);
+    out_buffer += '"';
+    out_buffer += ts;
+    out_buffer += '"';
 }
 
 void JsonExtractorLogger::ts_unix(const char* f, const struct timeval& v)
 {
-   double sec = (uint64_t)v.tv_sec;
-   double usec = (uint64_t)v.tv_usec;
+    double sec = static_cast<double>(v.tv_sec);
+    double usec = static_cast<double>(v.tv_usec);
+    double val = sec + usec / 1000000.0;
 
-   js.put(f, sec + usec / 1000000.0, 6);
+    const unsigned precision = 6;
+    const unsigned buf_size = 20 + 1 + precision + 1;
+
+    char buf[buf_size];
+    std::snprintf(buf, sizeof(buf), "%.*f", precision, val);
+
+    write_key(f);
+    out_buffer += buf;
 }
 
 void JsonExtractorLogger::ts_sec(const char* f, const struct timeval& v)
 {
-   uint64_t sec = (uint64_t)v.tv_sec;
+    uint64_t sec = static_cast<uint64_t>(v.tv_sec);
 
-   js.uput(f, sec);
+    write_key(f);
+    out_buffer += std::to_string(sec);
 }
 
 void JsonExtractorLogger::ts_usec(const char* f, const struct timeval& v)
 {
-   uint64_t sec = (uint64_t)v.tv_sec;
-   uint64_t usec = (uint64_t)v.tv_usec;
+    uint64_t sec = static_cast<uint64_t>(v.tv_sec);
+    uint64_t usec = static_cast<uint64_t>(v.tv_usec);
 
-   js.uput(f, sec * 1000000 + usec);
+    write_key(f);
+    out_buffer += std::to_string(sec * 1000000 + usec);
 }
 
 void JsonExtractorLogger::add_field(const char* f, const std::vector<const char*>& v)
@@ -151,11 +203,22 @@ void JsonExtractorLogger::add_field(const char* f, const std::vector<const char*
     if (v.empty())
         return;
 
-    js.open_array(f);
-    for (const auto& val : v)
-        js.put(nullptr, val);
+    write_key(f);
+    out_buffer += "[ ";
 
-    js.close_array();
+    auto it = v.cbegin();
+
+    out_buffer += '"';
+    escape_json_append(out_buffer, *it, std::strlen(*it));
+    out_buffer += '"';
+
+    for (++it; it != v.cend(); ++it)
+    {
+        out_buffer += ", \"";
+        escape_json_append(out_buffer, *it, std::strlen(*it));
+        out_buffer += '"';
+    }
+    out_buffer += " ]";
 }
 
 void JsonExtractorLogger::add_field(const char* f, const std::vector<uint64_t>& v)
@@ -163,11 +226,19 @@ void JsonExtractorLogger::add_field(const char* f, const std::vector<uint64_t>& 
     if (v.empty())
         return;
 
-    js.open_array(f);
-    for (const auto unum : v)
-        js.put(nullptr, unum);
+    write_key(f);
+    out_buffer += "[ ";
 
-    js.close_array();
+    auto it = v.cbegin();
+    out_buffer += std::to_string(*it);
+
+    for (++it; it != v.cend(); ++it)
+    {
+        out_buffer += ", ";
+        out_buffer += std::to_string(*it);
+    }
+
+    out_buffer += " ]";
 }
 
 void JsonExtractorLogger::add_field(const char* f, const std::vector<bool>& v)
@@ -175,11 +246,16 @@ void JsonExtractorLogger::add_field(const char* f, const std::vector<bool>& v)
     if (v.empty())
         return;
 
-    js.open_array(f);
-    for (bool b : v)
-        b ? js.put_true(nullptr) : js.put_false(nullptr);
+    write_key(f);
+    out_buffer += "[ ";
 
-    js.close_array();
+    auto it = v.cbegin();
+    out_buffer += (*it ? "true" : "false");
+
+    for (++it; it != v.cend(); ++it)
+        out_buffer += (*it ? ", true" : ", false");
+
+    out_buffer += " ]";
 }
 
 #ifdef UNIT_TEST
@@ -188,67 +264,134 @@ void JsonExtractorLogger::add_field(const char* f, const std::vector<bool>& v)
 
 #include "catch/snort_catch.h"
 
+#include "extractor_null_conn.h"
+
 class JsonExtractorLoggerTest : public JsonExtractorLogger
 {
 public:
-    JsonExtractorLoggerTest() : JsonExtractorLogger(nullptr, TimeType::MAX) { }
+    JsonExtractorLoggerTest() : JsonExtractorLogger(new ExtractorNullConnector, TimeType::MAX) { }
+
+    ~JsonExtractorLoggerTest() override
+    { delete output_conn; }
 
     void check(const char* f, const std::vector<bool>& v, const std::string& expected)
     {
-        oss.str(std::string());
         add_field(f, v);
-        CHECK(oss.str() == expected);
+        CHECK(out_buffer == expected);
+        out_buffer.clear();
     }
 
     void check(const char* f, const std::vector<uint64_t>& v, const std::string& expected)
     {
-        oss.str(std::string());
         add_field(f, v);
-        CHECK(oss.str() == expected);
+        CHECK(out_buffer == expected);
+        out_buffer.clear();
     }
 
     void check(const char* f, const std::vector<const char*>& v, const std::string& expected)
     {
-        oss.str(std::string());
         add_field(f, v);
-        CHECK(oss.str() == expected);
+        CHECK(out_buffer == expected);
+        out_buffer.clear();
     }
 };
 
 TEST_CASE_METHOD(JsonExtractorLoggerTest, "json vector bool: empty", "[extractor]")
 {
-    const std::vector<bool> bool_vec = {};
+    const std::vector<bool> bool_vec = { };
     check("bool", bool_vec, "");
 }
 
 TEST_CASE_METHOD(JsonExtractorLoggerTest, "json vector bool: 3 items", "[extractor]")
 {
-    const std::vector<bool> bool_vec = {true, false, true};
-    check("bool", bool_vec, "\"bool\": [ true, false, true ]\n");
+    const std::vector<bool> bool_vec = { true, false, true };
+    check("bool", bool_vec, "\"bool\": [ true, false, true ]");
 }
 
 TEST_CASE_METHOD(JsonExtractorLoggerTest, "json vector uint64_t: empty", "[extractor]")
 {
-    const std::vector<uint64_t> num_vec = {};
+    const std::vector<uint64_t> num_vec = { };
     check("num", num_vec, "");
 }
 
 TEST_CASE_METHOD(JsonExtractorLoggerTest, "json vector uint64_t: 3 items", "[extractor]")
 {
-    const std::vector<uint64_t> num_vec = {1,2,3};
-    check("num", num_vec, "\"num\": [ 1, 2, 3 ]\n");
+    const std::vector<uint64_t> num_vec = { 1,2,3 };
+    check("num", num_vec, "\"num\": [ 1, 2, 3 ]");
 }
 
 TEST_CASE_METHOD(JsonExtractorLoggerTest, "json vector str: empty", "[extractor]")
 {
-    const std::vector<const char*> char_vec = {};
+    const std::vector<const char*> char_vec = { };
     check("str", char_vec, "");
 }
 
 TEST_CASE_METHOD(JsonExtractorLoggerTest, "json vector str: 3 items", "[extractor]")
 {
-    const std::vector<const char*> num_vec = {"exe", "pdf", "txt"};
-    check("str", num_vec, "\"str\": [ \"exe\", \"pdf\", \"txt\" ]\n");
+    const std::vector<const char*> num_vec = { "exe", "pdf", "txt" };
+    check("str", num_vec, "\"str\": [ \"exe\", \"pdf\", \"txt\" ]");
+}
+
+TEST_CASE_METHOD(JsonExtractorLoggerTest, "json multiple fields", "[extractor]")
+{
+    add_field("1", "foo");
+    add_field("2", "bar", 3);
+    add_field("3", (uint64_t)123);
+    add_field("4", true);
+    add_field("5", false);
+
+    snort::SfIp ip;
+    ip.pton(AF_INET, "1.1.1.1");
+    add_field("6", ip);
+
+    CHECK(out_buffer == "\"1\": \"foo\", \"2\": \"bar\", \"3\": 123, "
+        "\"4\": true, \"5\": false, \"6\": \"1.1.1.1\"");
+    out_buffer.clear();
+}
+
+TEST_CASE_METHOD(JsonExtractorLoggerTest, "json field with empty and null values", "[extractor]")
+{
+    add_field("1", "foo");
+    add_field("2", nullptr);
+    add_field("3", "");
+    add_field("4", "bar");
+    CHECK(out_buffer == "\"1\": \"foo\", \"4\": \"bar\"");
+}
+
+TEST_CASE_METHOD(JsonExtractorLoggerTest, "json field with empty and null values with length", "[extractor]")
+{
+    add_field("1", "foo", 3);
+    add_field("2", nullptr, 5);
+    add_field("3", "");
+    add_field("4", "not empty", 0);
+    add_field("5", "bar", 3);
+    CHECK(out_buffer == "\"1\": \"foo\", \"5\": \"bar\"");
+}
+
+TEST_CASE_METHOD(JsonExtractorLoggerTest, "json field bad ip", "[extractor]")
+{
+    snort::SfIp ip;
+    ip.pton(AF_INET, "10.10.10.10");
+    add_field("ipv4", ip);
+    ip = { };
+
+    ip.pton(AF_INET, "bad ip");
+    add_field("bad_ip", ip);
+    ip = { };
+
+    ip.pton(AF_INET6, "2001:db8:85a3::8a2e:370:7334");
+    add_field("ipv6", ip);
+
+    CHECK(out_buffer == "\"ipv4\": \"10.10.10.10\", "
+        "\"ipv6\": \"2001:0db8:85a3:0000:0000:8a2e:0370:7334\"");
+}
+
+TEST_CASE_METHOD(JsonExtractorLoggerTest, "json open/close record", "[extractor]")
+{
+    open_record();
+    close_record(snort::Connector::ID(1));
+    CHECK(out_buffer == "{  }");
 }
 
 #endif
+

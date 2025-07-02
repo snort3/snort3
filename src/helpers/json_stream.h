@@ -25,8 +25,11 @@
 #include <iostream>
 #include "main/snort_types.h"
 
+void escape_json_append(std::string& out, const char* v, size_t len);
+
 namespace snort
 {
+
 class SO_PUBLIC JsonStream
 {
 public:
@@ -50,9 +53,6 @@ public:
     void put_false(const char* key);
 
     void put_eol();
-
-protected:
-    void put_escaped(const char* v, size_t len);
 
 private:
     void split();
