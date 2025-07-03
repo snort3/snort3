@@ -32,11 +32,13 @@
 #include "packet_io/active.h"
 #include "packet_io/packet_tracer.h"
 #include "time/packet_time.h"
+#include "pub_sub/file_events.h"
 
 #include "file_flows.h"
 #include "file_module.h"
 #include "file_service.h"
 #include "file_stats.h"
+#include "file_cache_share.h"
 
 #define DEFAULT_FILE_LOOKUP_TIMEOUT_CACHED_ITEM 3600    // 1 hour
 
@@ -127,7 +129,6 @@ void FileCache::set_max_files(int64_t max)
 
 FileContext* FileCache::find_add(const FileHashKey& hashKey, int64_t timeout)
 {
-
     if ( !fileHash->get_num_nodes() )
         return nullptr;
 
@@ -162,7 +163,7 @@ FileContext* FileCache::find_add(const FileHashKey& hashKey, int64_t timeout)
     return node->file;
 }
 
-FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout, bool &cache_full)
+FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout, bool &cache_full, int64_t& cache_expire, FileInspect* ins)
 {
     FileNode new_node;
     /*
@@ -177,14 +178,19 @@ FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout, bool &c
     struct timeval time_to_add = { static_cast<time_t>(timeout), 0 };
     timeradd(&now, &time_to_add, &new_node.cache_expire_time);
 
-    new_node.file = new FileContext;
-
     std::lock_guard<std::mutex> lock(cache_mutex);
-
     FileContext* file = find_add(hashKey, timeout);
 
-    if (!file) {
+    if (!file)
+    {
+        if (ins)
+            new_node.file = new FileContext(ins);
+        else
+            new_node.file = new FileContext;
+
         int ret = fileHash->insert((void*)&hashKey, &new_node);
+        cache_expire = new_node.cache_expire_time.tv_sec;
+
         if (ret != HASH_OK)
         {
             /* There is already a node or couldn't alloc space for key or cache is full.
@@ -196,24 +202,26 @@ FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout, bool &c
                     PacketTracer::log("add:Insert failed in file cache, returning\n");
                 cache_full = true;
             }
-            FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, GET_CURRENT_PACKET,
-                "add:Insert failed in file cache, returning\n");
+            if (!ins)
+                FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, GET_CURRENT_PACKET,
+                    "add:Insert failed in file cache, returning\n");
             file_counts.cache_add_fails++;
             delete new_node.file;
             return nullptr;
         }
+
         return new_node.file;
     }
     else
     {
-        FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, GET_CURRENT_PACKET,
-            "add:file already found in file cache, returning\n");
-        delete new_node.file;
+        if (!ins)
+            FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, GET_CURRENT_PACKET,
+                "add:file already found in file cache, returning\n");
         return file;
     }
 }
 
-FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout)
+FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout, int64_t& cache_expire)
 {
     std::lock_guard<std::mutex> lock(cache_mutex);
 
@@ -233,7 +241,6 @@ FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout)
 
     struct timeval now;
     packet_gettimeofday(&now);
-
     if ( timercmp(&node->cache_expire_time, &now, <) )
     {
         fileHash->release_node(hash_node);
@@ -248,11 +255,12 @@ FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout)
     if (timercmp(&node->cache_expire_time, &next_expire_time, <))
         node->cache_expire_time = next_expire_time;
 
+    cache_expire = node->cache_expire_time.tv_sec;
     return node->file;
 }
 
 FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create,
-    int64_t timeout, bool using_cache_entry, bool &cache_full)
+    int64_t timeout, bool using_cache_entry, bool &cache_full, int64_t& cache_expire)
 {
     FileHashKey hashKey;
     hashKey.dip = flow->client_ip;
@@ -265,12 +273,12 @@ FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create,
     
     FileContext* file = nullptr;
     if (using_cache_entry)
-        file = find(hashKey, DEFAULT_FILE_LOOKUP_TIMEOUT_CACHED_ITEM);
+        file = find(hashKey, DEFAULT_FILE_LOOKUP_TIMEOUT_CACHED_ITEM, cache_expire);
     else
-        file = find(hashKey, timeout);
-    
+        file = find(hashKey, timeout, cache_expire);
+
     if (to_create and !file)
-        file = add(hashKey, timeout, cache_full);
+        file = add(hashKey, timeout, cache_full, cache_expire);
 
     return file;
 }
@@ -278,7 +286,8 @@ FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create,
 FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create, bool using_cache_entry)
 {
     bool cache_full = false;
-    return get_file(flow, file_id, to_create, lookup_timeout, using_cache_entry, cache_full);
+    int64_t cache_expire = 0;
+    return get_file(flow, file_id, to_create, lookup_timeout, using_cache_entry, cache_full, cache_expire);
 }
 
 FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
@@ -311,10 +320,34 @@ FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
     return verdict;
 }
 
+void FileCache::publish_file_cache_event(Flow* flow, FileInfo* file, int64_t timeout)
+{
+    if (SnortConfig::get_conf()->mp_dbus)
+    {	    
+        FileHashKey hashkey;
+        hashkey.dip = flow->client_ip;
+        hashkey.sip = flow->server_ip;
+        hashkey.dgroup = flow->client_group;
+        hashkey.sgroup = flow->server_group;
+        hashkey.file_id = file->get_file_id();
+        hashkey.asid = flow->key->addressSpaceId;
+        hashkey.padding[0] = hashkey.padding[1] = hashkey.padding[2] = 0;
+
+
+        std::shared_ptr<FileMPEvent> fe = std::make_shared<FileMPEvent>(hashkey, timeout, *file);
+        unsigned file_pub_id = MPDataBus::get_id(file_pub_key);
+        MPDataBus::publish(file_pub_id, FileMPEvents::FILE_SHARE_SYNC, fe);
+
+        FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
+            "File Cache Sharing: Publish event with file_id %lu\n", hashkey.file_id);
+    }
+}
+
 int FileCache::store_verdict(Flow* flow, FileInfo* file, int64_t timeout, bool &cache_full)
 {
     assert(file);
     uint64_t file_id = file->get_file_id();
+    int64_t cache_expire = 0;
 
     if (!file_id)
     {
@@ -323,9 +356,10 @@ int FileCache::store_verdict(Flow* flow, FileInfo* file, int64_t timeout, bool &
         return 0;
     }
 
-    FileContext* file_got = get_file(flow, file_id, true, timeout, false, cache_full);
+    FileContext* file_got = get_file(flow, file_id, true, timeout, false, cache_full, cache_expire);
     if (file_got)
     {
+        publish_file_cache_event(flow, file, cache_expire);
         *((FileInfo*)(file_got)) = *file;
 
         if (FILE_VERDICT_PENDING == file->verdict and file != file_got)

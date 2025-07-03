@@ -115,6 +115,9 @@ public:
     void set_partial_flag(bool partial);
     bool is_partial_download() const;
 
+    void serialize(char* buffer, uint16_t* offset);
+    void deserialize(const char* buffer, uint16_t& offset);
+
 protected:
     std::string file_name;
     bool file_name_set = false;
@@ -146,6 +149,7 @@ class SO_PUBLIC FileContext : public FileInfo
 {
 public:
     FileContext();
+    FileContext (FileInspect* ins);
     ~FileContext() override;
 
     void check_policy(Flow*, FileDirection, FilePolicyBase*);

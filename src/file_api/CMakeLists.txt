@@ -35,6 +35,8 @@ add_library ( file_api OBJECT
     file_service.cc
     file_stats.cc
     file_stats.h
+    file_cache_share.cc
+    file_cache_share.h
 )
 
 install (FILES ${FILE_API_INCLUDES}

@@ -45,7 +45,6 @@
 #include "protocols/packet.h"
 #include "pub_sub/intrinsic_event_ids.h"
 #include "utils/util.h"
-
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
 #endif
@@ -151,6 +150,104 @@ void FileInfo::copy(const FileInfo& other, bool clear_data)
         policy_id = 0;
         user_file_data = nullptr;
     }
+}
+
+void FileInfo::serialize(char* buffer, uint16_t* len)
+{
+    int offset = *len;
+
+    auto write_bool = [&](bool val) {
+        memcpy(buffer + offset, &val, sizeof(val));
+        offset += sizeof(val);
+    };
+
+    auto write_string = [&](const std::string& str, bool is_set) {
+        write_bool(is_set);
+        if (is_set)
+        {
+            uint32_t len = static_cast<uint32_t>(str.length());
+            memcpy(buffer + offset, &len, sizeof(len));
+            offset += sizeof(len);
+            memcpy(buffer + offset, str.data(), len);
+            offset += len;
+        }
+    };
+
+    memcpy(buffer + offset,(uint16_t *) sha256, SHA256_HASH_SIZE); 
+    offset += SHA256_HASH_SIZE;
+    memcpy(buffer + offset, &verdict, sizeof(verdict)); 
+    offset += sizeof(verdict);
+    memcpy(buffer + offset, &file_size, sizeof(file_size)); 
+    offset += sizeof(file_size);
+    memcpy(buffer + offset, &direction, sizeof(direction)); 
+    offset += sizeof(direction);
+    memcpy(buffer + offset, &file_id, sizeof(file_id));
+    offset += sizeof(file_id);
+    memcpy(buffer + offset, &file_type_id, sizeof(file_type_id)); 
+    offset += sizeof(file_type_id);
+    memcpy(buffer + offset, &file_state.capture_state, sizeof(file_state.capture_state)); 
+    offset += sizeof(file_state.capture_state);
+    memcpy(buffer + offset, &file_state.sig_state, sizeof(file_state.sig_state)); 
+    offset += sizeof(file_state.sig_state);
+    memcpy(buffer + offset, &policy_id, sizeof(policy_id));
+    offset += sizeof(policy_id);
+    write_string(file_name, file_name_set);
+    write_string(url, url_set);
+    write_string(host_name, host_set);
+    write_bool(file_type_enabled);
+    write_bool(file_signature_enabled);
+    write_bool(file_capture_enabled);
+    write_bool(is_partial);
+
+    *len = offset;
+}
+
+void FileInfo::deserialize(const char* buffer, uint16_t& offset)
+{
+    auto read_bool = [&](bool& val) {
+        memcpy(&val, buffer + offset, sizeof(val));
+        offset += sizeof(val);
+    };
+
+    auto read_string = [&](std::string& str, bool& is_set) {
+        read_bool(is_set);
+        if (is_set)
+        {
+            uint32_t len = 0;
+            memcpy(&len, buffer + offset, sizeof(len));
+            offset += sizeof(len);
+            str.assign(buffer + offset, len);
+            offset += len;
+        }
+    };
+
+    if (!sha256)
+        sha256 = new uint8_t[SHA256_HASH_SIZE];  
+    memcpy(sha256, (const uint8_t *)(buffer + offset), SHA256_HASH_SIZE);
+    offset += SHA256_HASH_SIZE;
+    memcpy(&verdict, buffer + offset, sizeof(verdict)); 
+    offset += sizeof(verdict);
+    memcpy(&file_size, buffer + offset, sizeof(file_size)); 
+    offset += sizeof(file_size);
+    memcpy(&direction, buffer + offset, sizeof(direction)); 
+    offset += sizeof(direction);
+    memcpy(&file_id, buffer + offset, sizeof(file_id));
+    offset += sizeof(file_id);
+    memcpy(&file_type_id, buffer + offset, sizeof(file_type_id)); 
+    offset += sizeof(file_type_id);
+    memcpy(&file_state.capture_state, buffer + offset, sizeof(file_state.capture_state)); 
+    offset += sizeof(file_state.capture_state);
+    memcpy(&file_state.sig_state, buffer + offset, sizeof(file_state.sig_state)); 
+    offset += sizeof(file_state.sig_state);
+    memcpy(&policy_id, buffer + offset, sizeof(policy_id));
+    offset += sizeof(policy_id);
+    read_string(file_name, file_name_set);
+    read_string(url, url_set);
+    read_string(host_name, host_set);
+    read_bool(file_type_enabled);
+    read_bool(file_signature_enabled);
+    read_bool(file_capture_enabled);
+    read_bool(is_partial);
 }
 
 FileInfo::FileInfo(const FileInfo& other)
@@ -377,6 +474,17 @@ void FileInfo::set_capture_file_data(const uint8_t* file_data, uint32_t size)
 UserFileDataBase* FileInfo::get_file_data() const
 {
     return user_file_data;
+}
+
+FileContext::FileContext (FileInspect* ins)
+{
+    file_type_context = nullptr;
+    file_signature_context = nullptr;
+    file_capture = nullptr;
+    file_segments = nullptr;
+    inspector = ins;
+    ins->add_global_ref();
+    config = ins->config;
 }
 
 FileContext::FileContext ()

@@ -36,6 +36,7 @@
 #include "file_flows.h"
 #include "file_module.h"
 #include "file_service.h"
+#include "file_cache_share.h"
 
 using namespace snort;
 
@@ -65,6 +66,14 @@ bool FileInspect::configure(SnortConfig* sc)
 
     FileService::set_max_file_depth(sc);
 
+    if(sc->mp_dbus)
+    {
+        MPSerializeFunc serialize_func = serialize_file_event;
+        MPDeserializeFunc deserialize_func = deserialize_file_event;
+
+        MPDataBus::register_event_helpers(file_pub_key, FileMPEvents::FILE_SHARE_SYNC, serialize_func, deserialize_func);
+        MPDataBus::subscribe(file_pub_key, FileMPEvents::FILE_SHARE_SYNC, new FileCacheShare(this));
+    }
     return true;
 }
 

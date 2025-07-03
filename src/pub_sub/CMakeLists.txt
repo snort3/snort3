@@ -35,6 +35,8 @@ set (PUB_SUB_INCLUDES
     ssh_events.h
     ssl_events.h
     dns_events.h
+    file_events.h
+    file_events_ids.h
 )
 
 add_library( pub_sub OBJECT
