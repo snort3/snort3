@@ -64,6 +64,8 @@ public:
     static void thread_term();
     // print all of the codec plugins
     static void dump_plugins();
+    // get the current grinder
+    static uint8_t get_grinder();
 
 private:
     struct CodecApiWrapper;

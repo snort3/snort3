@@ -109,6 +109,7 @@ void SideChannelManager::thread_init() { }
 void SideChannelManager::thread_term() { }
 void CodecManager::thread_init() { }
 void CodecManager::thread_term() { }
+uint8_t CodecManager::get_grinder() { return 0; }
 void EventManager::open_outputs() { }
 void EventManager::close_outputs() { }
 void EventManager::reload_outputs() { }

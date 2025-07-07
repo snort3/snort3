@@ -998,6 +998,16 @@ void Analyzer::run(bool paused)
 {
     assert(state == State::STARTED);
     init_unprivileged();
+
+    uint8_t codec_dlt = CodecManager::get_grinder();
+    if (codec_dlt == 0)
+    {
+        ErrorMessage("No codec for DAQ base protocol, stopping packet processing\n");
+        exit_requested = true;
+        set_state(State::FAILED);
+        return;
+    }
+
     if ( paused )
         set_state(State::PAUSED);
     else

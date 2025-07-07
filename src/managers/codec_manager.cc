@@ -221,7 +221,7 @@ void CodecManager::thread_init()
     }
 
     if (!grinder)
-        ParseError("Unable to find a Codec with data link type %d", daq_dlt);
+        ErrorMessage("No codec found for data link type %d\n", daq_dlt);
 }
 
 void CodecManager::thread_term()
@@ -241,5 +241,10 @@ void CodecManager::dump_plugins()
 
     for ( const CodecApiWrapper& wrap : s_codecs )
         d.dump(wrap.api->base.name, wrap.api->base.version);
+}
+
+uint8_t CodecManager::get_grinder()
+{
+    return grinder;
 }
 
