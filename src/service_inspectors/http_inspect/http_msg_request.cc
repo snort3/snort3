@@ -211,6 +211,12 @@ ParameterMap& HttpMsgRequest::get_body_params()
     return *body_params;
 }
 
+void HttpMsgRequest::clear_body_params()
+{
+    if (body_params != nullptr)
+        body_params->clear();
+}
+
 void HttpMsgRequest::gen_events()
 {
     if (*transaction->get_infractions(source_id) & INF_BAD_REQ_LINE)

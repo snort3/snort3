@@ -55,6 +55,7 @@ public:
     HttpUri* get_http_uri() { return uri; }
     ParameterMap& get_query_params();
     ParameterMap& get_body_params();
+    void clear_body_params();
 
     static bool is_webdav(HttpEnums::MethodId method)
     {

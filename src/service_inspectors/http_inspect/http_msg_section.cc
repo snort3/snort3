@@ -329,7 +329,7 @@ const Field& HttpMsgSection::get_param_buffer(Cursor& c, const HttpParam& param)
         const Field& rb = body->get_detect_data();
         const Field& nb = body->get_classic_client_body();
 
-        if (rb.length() > 0 && nb.length() > 0 && body->is_first())
+        if (rb.length() > 0 && nb.length() > 0)
         {
             HttpQueryParser parser(rb.start(), rb.length(),
                 nb.start(), nb.length(), uri_config,

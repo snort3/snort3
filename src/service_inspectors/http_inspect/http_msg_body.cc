@@ -853,6 +853,9 @@ void HttpMsgBody::clear()
         session_data->partial_mime_last_complete[source_id] = last_attachment_complete;
     }
 
+    if (request != nullptr)
+        request->clear_body_params();
+        
     HttpMsgSection::clear();
 }
 
