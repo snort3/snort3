@@ -218,8 +218,8 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
         }
 
         if (is_body(type) && source_id == SRC_CLIENT &&
-            (my_inspector->params->partial_depth == -1 ||
-             (cutter->get_octets_seen() < my_inspector->params->partial_depth && cutter->get_num_flush() == 0)))
+            (my_inspector->params->partial_depth_body == -1 ||
+             (cutter->get_octets_seen() < my_inspector->params->partial_depth_body && cutter->get_num_flush() == 0)))
         {
             static const uint64_t MAX_PARTIAL_FLUSH_COUNTER = 20;
             if (++session_data->partial_flush_counter == MAX_PARTIAL_FLUSH_COUNTER)

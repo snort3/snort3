@@ -49,7 +49,7 @@ public:
     ~HttpParaList();
     int64_t request_depth = -1;
     int64_t response_depth = -1;
-    int64_t partial_depth = 0;
+    int64_t partial_depth_body = 0;
 
     bool unzip = true;
     bool normalize_utf = true;

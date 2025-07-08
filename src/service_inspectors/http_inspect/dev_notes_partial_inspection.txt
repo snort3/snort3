@@ -38,9 +38,10 @@ to unzip one time in scan() and store the result for eventual use by reassemble(
 lost by storing partial message sections in HI while waiting for reassemble() would be more than
 compensated for by not having two instances of zlib.
 
-For request bodies, when partial_depth parameter is set to a non zero value, a partial body will
-be subjected to partial inspection if its length is below partial_depth value. When the partial_depth
-parameter is set to -1, the entire body will be subjected to inspection regardless of its length.
+For request bodies, when partial_depth_body parameter is set to a non zero value, a partial body
+will be subjected to partial inspection if its length is below partial_depth_body value. When
+the partial_depth_body parameter is set to -1, the entire body will be subjected to inspection
+regardless of its length.
 
 The http_inspect partial inspection mechanism is invoked by http2_inspect on frame boundaries.
 
