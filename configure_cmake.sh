@@ -520,7 +520,10 @@ while [ $# -ne 0 ]; do
     shift
 done
 
-if [ "$tcm" -eq 1 -a "$jem" -eq 1 ] ; then
+tcm=${tcm:-0}
+jem=${jem:-0}
+
+if [ "$tcm" -eq 1 ] && [ "$jem" -eq 1 ]; then
     echo "--enable-jemalloc and --enable-tcmalloc are mutually exclusive; enable at most one"
     exit 2
 fi
