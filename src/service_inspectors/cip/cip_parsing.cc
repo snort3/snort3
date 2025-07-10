@@ -139,7 +139,7 @@ static bool parse_message_router_request(const uint8_t* data,
     CipGlobalSessionData* global_data);
 
 /// Functions
-static bool enip_command_valid(uint16_t command)
+bool enip_command_valid(uint16_t command)
 {
     if ((ENIP_COMMAND_RESERVED1_START <= command && command <= ENIP_COMMAND_RESERVED1_END)
         || (ENIP_COMMAND_RESERVED2_START <= command))

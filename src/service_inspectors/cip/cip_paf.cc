@@ -32,6 +32,12 @@ static const uint16_t ENIP_PAF_FIELD_SIZE = 4;
 
 using namespace snort;
 
+static inline void reset_states(cip_paf_data* pafdata)
+{
+    pafdata->paf_state = CIP_PAF_STATE__COMMAND_1;
+    pafdata->enip_length = 0;
+}
+
 /* Function: CIPPaf()
 
    Purpose: CIP PAF callback.
@@ -44,6 +50,8 @@ static StreamSplitter::Status cip_paf(cip_paf_data* pafdata, const uint8_t* data
     uint32_t len, uint32_t* fp)
 {
     uint32_t bytes_processed = 0;
+    uint16_t command = 0;
+    uint32_t total_length = 0;
 
     /* Process this packet 1 byte at a time */
     while (bytes_processed < len)
@@ -51,13 +59,21 @@ static StreamSplitter::Status cip_paf(cip_paf_data* pafdata, const uint8_t* data
         switch (pafdata->paf_state)
         {
         case CIP_PAF_STATE__COMMAND_1:
-            // Skip ENIP command.
+            command = *(data + bytes_processed);
             pafdata->paf_state = CIP_PAF_STATE__COMMAND_2;
             break;
 
         case CIP_PAF_STATE__COMMAND_2:
-            // Skip ENIP command.
-            pafdata->paf_state = CIP_PAF_STATE__LENGTH_1;
+            command |= (*(data + bytes_processed) << 8);
+            if (!enip_command_valid(command))
+            {
+                pafdata->bytes_seen += len;
+                pafdata->paf_state = CIP_PAF_STATE__INVALID;
+            } else
+            {
+                pafdata->bytes_seen = 0;
+                pafdata->paf_state = CIP_PAF_STATE__LENGTH_1;
+            }
             break;
 
         case CIP_PAF_STATE__LENGTH_1:
@@ -70,13 +86,33 @@ static StreamSplitter::Status cip_paf(cip_paf_data* pafdata, const uint8_t* data
             pafdata->paf_state = CIP_PAF_STATE__SET_FLUSH;
             break;
 
+        case CIP_PAF_STATE__INVALID:
+            if (pafdata->bytes_seen > CIP_MAX_OCTETS)
+            {
+                pafdata->bytes_seen = 0;
+                reset_states(pafdata);
+                return StreamSplitter::ABORT;
+            }
+            pafdata->paf_state = CIP_PAF_STATE__COMMAND_1;
+            pafdata->enip_length = 0;
+            return StreamSplitter::SEARCH;
+
         case CIP_PAF_STATE__SET_FLUSH:
-            *fp = bytes_processed +
+            total_length = bytes_processed +
                 pafdata->enip_length + (ENIP_HEADER_SIZE - ENIP_PAF_FIELD_SIZE);
 
-            pafdata->paf_state = CIP_PAF_STATE__COMMAND_1;
-            return StreamSplitter::FLUSH;
-
+            if(total_length > len)
+            {
+                pafdata->bytes_seen += len;
+                pafdata->paf_state = CIP_PAF_STATE__INVALID;
+            } else
+            {
+                pafdata->bytes_seen = 0;
+                *fp = total_length;
+                pafdata->paf_state = CIP_PAF_STATE__COMMAND_1;
+                return StreamSplitter::FLUSH;
+            }
+        break;
         default:
             // Will not happen.
             break;
@@ -92,6 +128,7 @@ CipSplitter::CipSplitter(bool c2s) : StreamSplitter(c2s)
 {
     state.paf_state = CIP_PAF_STATE__COMMAND_1;
     state.enip_length = 0;
+    state.bytes_seen = 0;
 }
 
 StreamSplitter::Status CipSplitter::scan(
@@ -101,4 +138,3 @@ StreamSplitter::Status CipSplitter::scan(
     cip_paf_data* pfdata = &state;
     return cip_paf(pfdata, data, len, fp);
 }
-

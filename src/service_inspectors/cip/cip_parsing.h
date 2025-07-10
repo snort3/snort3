@@ -60,6 +60,7 @@ bool parse_enip_layer(const uint8_t* data,
     CipGlobalSessionData* global_data);
 
 void pack_cip_request_event(const CipRequest* request, CipEventData* cip_event_data);
+bool enip_command_valid(uint16_t command);
 
 #endif  // CIP_PARSING_H
 
