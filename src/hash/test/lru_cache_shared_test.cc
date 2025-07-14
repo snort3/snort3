@@ -109,6 +109,7 @@ TEST(lru_cache_shared, max_size)
 TEST(lru_cache_shared, remove_test)
 {
     std::string data;
+    size_t cache_size = 0;
     LruCacheShared<int, std::string, std::hash<int> > lru_cache(5);
 
     for (int i = 0; i < 5; i++)
@@ -124,7 +125,8 @@ TEST(lru_cache_shared, remove_test)
     std::shared_ptr<std::string> data_ptr;
     lru_cache[1]->assign("one");
     CHECK(1 == lru_cache.size());
-    CHECK(true == lru_cache.remove(1, data_ptr));
+    CHECK(true == lru_cache.remove(1, data_ptr, &cache_size));
+    CHECK_EQUAL(0, cache_size);
     CHECK(*data_ptr == "one");
     CHECK(0 == lru_cache.size());
 
@@ -134,8 +136,12 @@ TEST(lru_cache_shared, remove_test)
 
     //  Verify that removing an item that does not exist does not affect
     //  cache.
-    CHECK(false == lru_cache.remove(3));
-    CHECK(false == lru_cache.remove(4, data_ptr));
+    cache_size = 0;
+    CHECK(false == lru_cache.remove(3, &cache_size));
+    CHECK_EQUAL(2, cache_size);
+    cache_size = 0;
+    CHECK(false == lru_cache.remove(4, data_ptr, &cache_size));
+    CHECK_EQUAL(2, cache_size);
     CHECK(2 == lru_cache.size());
 
     auto vec = lru_cache.get_all_data();
@@ -171,9 +177,26 @@ TEST(lru_cache_shared, find_else_insert)
     CHECK(2 == lru_cache.size());
 }
 
+TEST(lru_cache_shared, find_else_create)
+{
+    LruCacheShared<int, int, std::hash<int>> lru_cache(3);
+    bool is_new = false;
+
+    auto entry = lru_cache.find_else_create(4, &is_new);
+    CHECK_EQUAL(true, is_new);
+    *entry = 400;
+
+    // Subsequent calls would return the same one
+    entry = lru_cache.find_else_create(4, &is_new);
+    CHECK_EQUAL(400, *entry);
+    CHECK_EQUAL(false, is_new);
+    CHECK_EQUAL(1, lru_cache.size());
+}
+
 //  Test statistics counters.
 TEST(lru_cache_shared, stats_test)
 {
+    size_t cache_size = 0;
     LruCacheShared<int, std::string, std::hash<int> > lru_cache(5);
 
     for (int i = 0; i < 10; i++)
@@ -188,8 +211,11 @@ TEST(lru_cache_shared, stats_test)
 
     CHECK(lru_cache.set_max_size(3) == true); // change size prunes; in addition to previous 5
 
-    lru_cache.remove(7);    // Removes - hit
-    lru_cache.remove(10);   // Removes - miss
+    CHECK_EQUAL(false, lru_cache.remove(10, &cache_size));   // Removes - miss
+    CHECK_EQUAL(3, cache_size);
+
+    CHECK_EQUAL(true, lru_cache.remove(7, &cache_size));    // Removes - hit
+    CHECK_EQUAL(2, cache_size);
 
     const PegCount* stats = lru_cache.get_counts();
 

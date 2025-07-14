@@ -70,9 +70,9 @@ public:
     std::shared_ptr<Value> find_else_create(const Key& key, bool* new_data);
     std::vector<std::pair<Key, std::shared_ptr<Value>>> get_all_data();
     bool find_else_insert(const Key& key, std::shared_ptr<Value>& value);
-    bool remove(const Key& key);
+    bool remove(const Key& key, size_t* new_size = nullptr);
     bool remove(const Key& key, typename LruCacheSharedMemcap
-        <snort::SfIp, snort::HostTracker, HashIp, IpEqualTo, HTPurgatory>::Data& data);
+        <snort::SfIp, snort::HostTracker, HashIp, IpEqualTo, HTPurgatory>::Data& data, size_t* new_size = nullptr);
     size_t mem_size();
 
     std::vector<HostCacheIp*> seg_list;
@@ -362,17 +362,17 @@ size_t HostCacheSegmented<Key, Value>::get_mem_chunk()
 }
 
 template<typename Key, typename Value>
-bool HostCacheSegmented<Key, Value>::remove(const Key& key)
+bool HostCacheSegmented<Key, Value>::remove(const Key& key, size_t* new_size)
 {
     uint8_t idx = get_segment_idx(key);
-    return seg_list[idx]->remove(key);
+    return seg_list[idx]->remove(key, new_size);
 }
 
 template<typename Key, typename Value>
-bool HostCacheSegmented<Key, Value>::remove(const Key& key, typename LruCacheSharedMemcap<snort::SfIp, snort::HostTracker, HashIp, IpEqualTo, HTPurgatory>::Data& data)
+bool HostCacheSegmented<Key, Value>::remove(const Key& key, typename LruCacheSharedMemcap<snort::SfIp, snort::HostTracker, HashIp, IpEqualTo, HTPurgatory>::Data& data, size_t* new_size)
 {
     uint8_t idx = get_segment_idx(key);
-    return seg_list[idx]->remove(key, data);
+    return seg_list[idx]->remove(key, data, new_size);
 }
 
 /*

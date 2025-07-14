@@ -125,6 +125,13 @@ TEST(segmented_lru_cache, remove_test)
     std::shared_ptr<std::string> data(new std::string("one"));
     lru_cache.find_else_insert(1,data);
     CHECK(1 == lru_cache.size());
+
+    // Try to remove an entry that doesn't exist from the same segment.
+    size_t cache_size = 0;
+    CHECK(false == lru_cache.remove(5, data_ptr, &cache_size));
+    CHECK_EQUAL(1, cache_size);
+
+    // Remove an entry that does exist.
     CHECK(true == lru_cache.remove(1, data_ptr));
     CHECK(*data_ptr == "one");
     CHECK(0 == lru_cache.size());
@@ -144,7 +151,7 @@ TEST(segmented_lru_cache, find_else_insert)
 }
 
 // Test 8 segments
-TEST (segmented_lru_cache, segements_8)
+TEST (segmented_lru_cache, segments_8)
 {
     SegmentedLruCache<int, std::string> lru_cache(1024,8);
     std::shared_ptr<std::string> data(new std::string("12345"));
@@ -175,9 +182,17 @@ TEST(segmented_lru_cache, stats_test)
 
     CHECK(lru_cache.set_max_size(16) == true);
 
-    lru_cache.remove(7);
-    lru_cache.remove(8);
-    lru_cache.remove(11); // not in cache
+    size_t cache_size = 0;
+    lru_cache.remove(7, &cache_size);
+    CHECK_EQUAL(1, cache_size);
+
+    cache_size = 0;
+    lru_cache.remove(8, &cache_size);
+    CHECK_EQUAL(1, cache_size);
+
+    cache_size = 0;
+    lru_cache.remove(11, &cache_size); // not in cache
+    CHECK_EQUAL(1, cache_size);
 
     const PegCount* stats = lru_cache.get_counts();
 

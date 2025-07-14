@@ -185,8 +185,10 @@ TEST(host_cache_allocator_ht, allocate)
     // any such reference will inherently  break the deadlock. We want to see
     // that this mechanism is built-in into the remove function.
 
-    bool res = host_cache.remove(ip);
+    size_t cache_size = 0;
+    bool res = host_cache.remove(ip, &cache_size);
     CHECK(res == true);
+    CHECK_EQUAL(3, cache_size);
 
     // And, finally, a remove with a reference too:
     i--;
@@ -195,9 +197,10 @@ TEST(host_cache_allocator_ht, allocate)
     ip.set(hk);
 
     HostCacheIp::Data ht_ptr;
-    res = host_cache.remove(ip, ht_ptr);
+    res = host_cache.remove(ip, ht_ptr, &cache_size);
     CHECK(res == true);
     CHECK(ht_ptr != nullptr);
+    CHECK_EQUAL(2, cache_size);
 }
 
 int main(int argc, char** argv)

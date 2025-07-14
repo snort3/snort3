@@ -56,13 +56,21 @@ TEST(lru_cache_local, basic)
     CHECK(vec[0].first == 3 and vec[0].second == 300);
     CHECK(vec[1].first == 2 and vec[1].second == 200);
 
+    bool is_new = false;
+
     // Check non-existent entry; find_else_create() would return a new entry
-    auto& entry = lru_cache.find_else_create(4);
+    auto& entry = lru_cache.find_else_create(4, &is_new);
+    CHECK_EQUAL(true, is_new);
     entry = 400;
+
     // Subsequent calls would return the same one
-    CHECK(lru_cache.find_else_create(4) == 400);
+    CHECK(lru_cache.find_else_create(4, &is_new) == 400);
+    CHECK_EQUAL(false, is_new);
     entry = 4000;
-    CHECK(lru_cache.find_else_create(4) == 4000);
+
+    is_new = true;
+    CHECK(lru_cache.find_else_create(4, &is_new) == 4000);
+    CHECK_EQUAL(false, is_new);
 
     // The cache is changed after the above calls
     vec.clear();

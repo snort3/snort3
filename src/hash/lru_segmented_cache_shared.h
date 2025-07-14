@@ -63,16 +63,16 @@ public:
         return (*segments[segment_idx])[key];
     }
 
-    bool remove(const Key& key)
+    bool remove(const Key& key, size_t* new_size = nullptr)
     {
         std::size_t segment_idx = get_segment_idx(key);
-        return segments[segment_idx]->remove(key);
+        return segments[segment_idx]->remove(key, new_size);
     }
 
-    bool remove(const Key& key, Data& data)
+    bool remove(const Key& key, Data& data, size_t* new_size = nullptr)
     {
         std::size_t idx = get_segment_idx(key);
-        return segments[idx]->remove(key, data);
+        return segments[idx]->remove(key, data, new_size);
     }
 
     Data find_else_create(const Key& key, bool* new_data)

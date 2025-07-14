@@ -177,19 +177,31 @@ TEST(host_cache_module, misc)
     // cache, because sum_stats resets the pegs.
     module.sum_stats(true);
 
-    // add 3 entries to segment 3
-    SfIp ip1, ip2, ip3;
+    // add 4 entries to segment 3 and remove 1
+    SfIp ip1, ip2, ip3, ip4;
     ip1.set("1.1.1.1");
     ip2.set("2.2.2.2");
     ip3.set("3.3.3.3");
+    ip4.set("4.4.4.4");
 
-    host_cache.find_else_create(ip1, nullptr);
-    host_cache.find_else_create(ip2, nullptr);
-    host_cache.find_else_create(ip3, nullptr);
+    bool is_new;
+    host_cache.find_else_create(ip1, &is_new);
+    CHECK(is_new);
+    host_cache.find_else_create(ip2, &is_new);
+    CHECK(is_new);
+    host_cache.find_else_create(ip3, &is_new);
+    CHECK(is_new);
+    host_cache.find_else_create(ip4, &is_new);
+    CHECK(is_new);
+
+    size_t cache_size = 0;
+    CHECK_EQUAL(true, host_cache.remove(ip4, &cache_size));
+    CHECK_EQUAL(3, cache_size);
+
     module.sum_stats(true);      // does not call reset
-    CHECK(ht_stats[0] == 3);
-    CHECK(ht_stats[2] == 3*mc);  // bytes_in_use
-    CHECK(ht_stats[3] == 3);     // items_in_use
+    CHECK_EQUAL(4, ht_stats[0]);       // adds
+    CHECK_EQUAL(3*mc, ht_stats[2]);    // bytes_in_use
+    CHECK_EQUAL(3, ht_stats[3]);       // items_in_use
 
     // no pruning needed for resizing higher than current size in segment 3
     CHECK(host_cache.seg_list[2]->reload_resize(host_cache.get_mem_chunk() * 10 ) == false);
@@ -226,24 +238,29 @@ TEST(host_cache_module, misc)
     CHECK(ht_stats[3] == 1);     // one left
 
     // alloc_prune 1 entry
-    host_cache.find_else_create(ip1, nullptr);
+    is_new = false;
+    host_cache.find_else_create(ip1, &is_new);
+    CHECK_EQUAL(true, is_new);
 
     // 1 hit, 1 remove
-    host_cache.find_else_create(ip1, nullptr);
-    host_cache.remove(ip1);
+    host_cache.find_else_create(ip1, &is_new);
+    CHECK_EQUAL(false, is_new);
+
+    host_cache.remove(ip1, &cache_size);
+    CHECK_EQUAL(0, cache_size);
 
     module.sum_stats(true);
-    CHECK(ht_stats[0] == 4); // 4 adds
+    CHECK(ht_stats[0] == 5); // 5 adds
     CHECK(ht_stats[1] == 1); // 1 alloc_prunes
     CHECK(ht_stats[2] == 0); // 0 bytes_in_use
     CHECK(ht_stats[3] == 0); // 0 items_in_use
     CHECK(ht_stats[4] == 1); // 1 hit
-    CHECK(ht_stats[5] == 4); // 4 misses
+    CHECK(ht_stats[5] == 5); // 5 misses
     CHECK(ht_stats[6] == 2); // 2 reload_prunes
-    CHECK(ht_stats[7] == 1); // 1 remove
+    CHECK(ht_stats[7] == 2); // 2 removes
 
     ht_stats = module.get_counts();
-    CHECK(ht_stats[0] == 4);
+    CHECK(ht_stats[0] == 5); // adds
 }
 
 

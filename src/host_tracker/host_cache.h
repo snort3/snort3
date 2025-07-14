@@ -265,15 +265,15 @@ class HostCacheIp : public HostCacheIpSpec
 public:
     HostCacheIp(const size_t initial_size) : HostCacheIpSpec(initial_size) { }
 
-    bool remove(const KeyType& key) override
+    bool remove(const KeyType& key, size_t* new_size = nullptr) override
     {
         LruBase::Data data;
-        return remove(key, data);
+        return remove(key, data, new_size);
     }
 
-    bool remove(const KeyType& key, LruBase::Data& data) override
+    bool remove(const KeyType& key, LruBase::Data& data, size_t* new_size = nullptr) override
     {
-        bool out = LruBase::remove(key, data);
+        bool out = LruBase::remove(key, data, new_size);
         data->remove_flows();
         return out;
     }

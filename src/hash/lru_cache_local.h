@@ -139,6 +139,8 @@ Value& LruCacheLocal<Key, Value, Hash>::find_else_create(const Key& key, bool* i
         return list.begin()->second;
     }
 
+    if ( is_new )
+        *is_new = false;
     stats.cache_hits++;
     list.splice(list.begin(), list, it->second);
     return list.begin()->second;
