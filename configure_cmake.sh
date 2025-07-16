@@ -520,10 +520,10 @@ while [ $# -ne 0 ]; do
     shift
 done
 
-if [ "$tcm" -eq 1 -a "$jem" -eq 1 ] ; then
+if ((tcm == 1)) ; then if ((jem == 1)) ; then
     echo "--enable-jemalloc and --enable-tcmalloc are mutually exclusive; enable at most one"
     exit 2
-fi
+fi fi
 
 if [ -d $builddir ]; then
     # If build directory exists, check if it has a CMake cache
