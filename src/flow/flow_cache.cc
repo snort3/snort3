@@ -980,15 +980,41 @@ bool FlowCache::is_ip_match(const SfIp& flow_sfip, const SfIp& filter_sfip, cons
 
 bool FlowCache::filter_flows(const Flow& flow, const FilterFlowCriteria& ffc) const
 {
-    const SfIp& flow_srcip = flow.flags.client_initiated ? flow.client_ip : flow.server_ip;
-    const SfIp& flow_dstip = flow.flags.client_initiated ? flow.server_ip : flow.client_ip;
+    if ( ffc.pkt_type != PktType::NONE and flow.pkt_type != ffc.pkt_type )
+        return false;
 
-    return ((ffc.pkt_type == PktType::NONE || flow.pkt_type == ffc.pkt_type)
-            && is_ip_match(flow_srcip, ffc.source_sfip, ffc.source_subnet_sfip)
-            && is_ip_match(flow_dstip, ffc.destination_sfip, ffc.destination_subnet_sfip)
-            && (!ffc.source_port || ffc.source_port == (flow.flags.key_is_reversed ? flow.key->port_h : flow.key->port_l))
-            && (!ffc.destination_port || ffc.destination_port == (flow.flags.key_is_reversed ? flow.key->port_l : flow.key->port_h)));
+    if ( ffc.source_port != 0 )
+    {
+        uint16_t flow_src_port = flow.flags.key_is_reversed ? flow.key->port_h : flow.key->port_l;
+        if (ffc.source_port != flow_src_port)
+            return false;
+    }
 
+    if ( ffc.destination_port != 0 )
+    {
+        uint16_t flow_dst_port = flow.flags.key_is_reversed ? flow.key->port_l : flow.key->port_h;
+        if (ffc.destination_port != flow_dst_port)
+            return false;
+    }
+
+    if ( !ffc.source_sfip.is_set() and !ffc.destination_sfip.is_set() )
+        return true;
+
+    if ( ffc.source_sfip.is_set() )
+    {
+        const SfIp& flow_srcip = flow.flags.client_initiated ? flow.client_ip : flow.server_ip;
+        if ( !is_ip_match(flow_srcip, ffc.source_sfip, ffc.source_subnet_sfip) )
+            return false;
+    }
+
+    if ( ffc.destination_sfip.is_set() )
+    {
+        const SfIp& flow_dstip = flow.flags.client_initiated ? flow.server_ip : flow.client_ip;
+        if ( !is_ip_match(flow_dstip, ffc.destination_sfip, ffc.destination_subnet_sfip) )
+            return false;
+    }
+
+    return true;
 }
 
 void FlowCache::output_flow(std::fstream& stream, const Flow& flow, const struct timeval& now) const
@@ -1076,6 +1102,13 @@ bool FlowCache::dump_flows(std::fstream& stream, unsigned count, const FilterFlo
     Flow* walk_flow = nullptr;
     bool has_more_flows = false;
 
+    // Fast path: check if all filter fields are empty to avoid expensive filter_flows calls
+    bool all_flows = ( ffc.pkt_type == PktType::NONE and 
+                     !ffc.source_sfip.is_set() and
+                     !ffc.destination_sfip.is_set() and 
+                     ffc.source_port == 0 and
+                     ffc.destination_port == 0 );
+
     for (uint8_t proto_id = to_utype(PktType::NONE) + 1; proto_id < total_lru_count; ++proto_id)
     {
         if ( proto_id == to_utype(PktType::USER) or
@@ -1095,7 +1128,7 @@ bool FlowCache::dump_flows(std::fstream& stream, unsigned count, const FilterFlo
             if  ( walk_flow->dump_code != code )
             {
                 walk_flow->dump_code = code;
-                if( filter_flows(*walk_flow, ffc) )
+                if( all_flows or filter_flows(*walk_flow, ffc) )
                     output_flow(stream, *walk_flow, now);
                 ++i;
             }
@@ -1113,7 +1146,15 @@ bool FlowCache::dump_flows(std::fstream& stream, unsigned count, const FilterFlo
 bool FlowCache::dump_flows_summary(FlowsSummary& flows_summary, const FilterFlowCriteria& ffc) const
 {
     Flow* walk_flow = nullptr;
+    uint32_t processed_count = 0;
 
+    // Fast path: check if all filter fields are empty to avoid expensive filter_flows calls
+    bool all_flows = ( ffc.pkt_type == PktType::NONE and 
+                     !ffc.source_sfip.is_set() and
+                     !ffc.destination_sfip.is_set() and 
+                     ffc.source_port == 0 and
+                     ffc.destination_port == 0 );
+    
     for (uint8_t proto_id = to_utype(PktType::NONE) + 1; proto_id < total_lru_count; ++proto_id)
     {
         if ( proto_id == to_utype(PktType::USER) or
@@ -1126,13 +1167,16 @@ bool FlowCache::dump_flows_summary(FlowsSummary& flows_summary, const FilterFlow
 
         while ( walk_flow )
         {
-            if( filter_flows(*walk_flow, ffc) )
+            if( all_flows or filter_flows(*walk_flow, ffc) )
             {
                 flows_summary.type_summary[to_utype(walk_flow->key->pkt_type)]++;
                 flows_summary.state_summary[to_utype(walk_flow->flow_state)]++;
             }
 
             walk_flow = static_cast<Flow*>(hash_table->get_next_walk_user_data(proto_id));
+
+            if ( (++processed_count & WDT_MASK) == 0 )
+                ThreadConfig::preemptive_kick();
         }
     }
 

@@ -77,8 +77,15 @@ bool HighAvailabilityManager::in_standby(Flow*) { return false; }
 uint8_t TraceApi::get_constraints_generation() { return 0; }
 void TraceApi::filter(const Packet&) {}
 
-void ThreadConfig::preemptive_kick() {}
+// Mock counter for preemptive_kick calls
+static unsigned preemptive_kick_count = 0;
+
+void ThreadConfig::preemptive_kick() { preemptive_kick_count++; }
 unsigned ThreadConfig::get_instance_max() { return 0; }
+
+// Helper function to reset and get kick count
+unsigned get_preemptive_kick_count() { return preemptive_kick_count; }
+void reset_preemptive_kick_count() { preemptive_kick_count = 0; }
 
 SfIpRet SfIp::set(void const*, int) { return SFIP_SUCCESS; }
 SfIpRet SfIp::set(void const*) { return SFIP_SUCCESS; }
@@ -1065,6 +1072,50 @@ TEST(dump_flows_summary, dump_flows_summary_with_filter)
     expected_state = {};
     expected_state[to_utype(snort::Flow::FlowState::SETUP)] = 1;
     CHECK(expected_state == flows_summary.state_summary);
+
+    cache->purge();
+    CHECK(cache->get_flows_allocated() == 0);
+    delete cache;
+}
+
+TEST(dump_flows_summary, watchdog_kick_functionality)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 1000;
+    FilterFlowCriteria ffc;
+    FlowsSummary flows_summary;
+    DummyCache *cache = new DummyCache(fcg);
+    int port = 1;
+
+    // Reset kick counter before test
+    reset_preemptive_kick_count();
+
+    // Add flows that will trigger watchdog kicks
+    // watch dog mask = 7, so kick happens every 8 flows (when count & 7 == 0)
+    // Add 64 flows to trigger multiple kicks
+    for (unsigned i = 0; i < 64; i++)
+    {
+        FlowKey flow_key;
+        flow_key.port_l = port++;
+        flow_key.pkt_type = PktType::TCP;
+        cache->allocate(&flow_key);
+    }
+
+    CHECK(cache->get_count() == 64);
+
+    // Call dump_flows_summary which should trigger watchdog kicks
+    CHECK(cache->dump_flows_summary(flows_summary, ffc) == true);
+
+    // Check that watchdog was kicked the expected number of times
+    // With 64 flows and watch dog mask = 7, kicks should happen at:
+    // flow 8 (8 & 7 = 0), flow 16 (16 & 7 = 0), flow 24, 32, 40, 48, 56, 64
+    // That's 8 kicks total
+    unsigned kick_count = get_preemptive_kick_count();
+    CHECK_EQUAL(8, kick_count);
+
+    // Verify all flows were processed correctly
+    CHECK_EQUAL(64, flows_summary.type_summary[to_utype(PktType::TCP)]);
+    CHECK_EQUAL(64, flows_summary.state_summary[to_utype(snort::Flow::FlowState::SETUP)]);
 
     cache->purge();
     CHECK(cache->get_flows_allocated() == 0);
