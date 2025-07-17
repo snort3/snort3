@@ -102,11 +102,9 @@ uint32_t TcpReassemblySegments::get_pending_segment_count(const unsigned max) co
 
 bool TcpReassemblySegments::segment_within_seglist_window(TcpSegmentDescriptor& tsd)
 {
-    if ( !head )
-        return true;
-
-    // Left side
+    assert (head);
     uint32_t start;
+
     if ( SEQ_LT(seglist_base_seq, head->start_seq()) )
         start = seglist_base_seq;
     else

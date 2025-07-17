@@ -784,9 +784,9 @@ bool TcpStreamTracker::update_on_fin_sent(TcpSegmentDescriptor& tsd)
     return true;
 }
 
-bool TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
+ValidSeqStatus TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
 {
-    bool valid_seq = true;
+    ValidSeqStatus valid_seq = ValidSeqStatus::VALID;
 
     int right_ok;
     uint32_t left_seq;
@@ -806,12 +806,12 @@ bool TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
         uint32_t win = normalizer.get_stream_window(tsd);
 
         if ( SEQ_LEQ(tsd.get_seq(), r_win_base + win) )
-            return true;
+            return ValidSeqStatus::VALID;
         else
-            valid_seq = false;
+            valid_seq = ValidSeqStatus::RIGHT_INVALID;
     }
     else
-        valid_seq = false;
+        valid_seq = ValidSeqStatus::LEFT_INVALID;
 
     return valid_seq;
 }

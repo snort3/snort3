@@ -599,8 +599,7 @@ void TcpSession::mark_packet_for_drop(TcpSegmentDescriptor& tsd)
 
 bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, TcpStreamTracker* listener)
 {
-    // if this packet fits within the current queue limit window then it's good
-    if ( listener->seglist.segment_within_seglist_window(tsd) )
+    if ( !listener->seglist.head )
         return false;
 
     bool inline_mode = tsd.is_nap_policy_inline();
@@ -612,12 +611,14 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
 
         if ( space_left < (int32_t)tsd.get_len() )
         {
+            // if this packet fits within the current queue limit window then it's good
+            if ( listener->seglist.segment_within_seglist_window(tsd) )
+                return false;
+
             tcpStats.exceeded_max_bytes++;
 
             if ( is_hole_present(listener, tsd.get_pkt()) )
                 tcpStats.max_bytes_exceeded_hole++;
-
-            bool ret_val = true;
 
             // if this is an asymmetric flow then skip over any seglist holes
             // and flush to free up seglist space
@@ -627,6 +628,8 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
                 if ( space_left >= (int32_t)tsd.get_len() )
                     return false;
             }
+
+            bool ret_val = true;
 
             if ( space_left > 0 )
                 ret_val = !inline_mode; // For partial trim, reassemble only if we can force an inject
@@ -653,6 +656,10 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
     {
         if ( listener->seglist.get_seg_count() + 1 > tcp_config->max_queued_segs )
         {
+            // if this packet fits within the current queue limit window then it's good
+            if ( listener->seglist.segment_within_seglist_window(tsd) )
+                return false;
+
             tcpStats.exceeded_max_segs++;
 
             if ( is_hole_present(listener, tsd.get_pkt()) )

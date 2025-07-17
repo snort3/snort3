@@ -46,6 +46,7 @@ class HeldPacket;
 class TcpSession;
 
 enum FinSeqNumStatus : uint8_t { FIN_NOT_SEEN, FIN_WITH_SEQ_SEEN, FIN_WITH_SEQ_ACKED };
+enum ValidSeqStatus : uint8_t { VALID, LEFT_INVALID, RIGHT_INVALID };
 
 class TcpStreamTracker
 {
@@ -296,7 +297,7 @@ public:
     void update_on_rst_sent();
     bool update_on_fin_recv(TcpSegmentDescriptor&);
     bool update_on_fin_sent(TcpSegmentDescriptor&);
-    bool is_segment_seq_valid(TcpSegmentDescriptor&);
+    ValidSeqStatus is_segment_seq_valid(TcpSegmentDescriptor&);
     bool set_held_packet(snort::Packet*);
     bool is_retransmit_of_held_packet(snort::Packet*);
     void finalize_held_packet(snort::Packet*);

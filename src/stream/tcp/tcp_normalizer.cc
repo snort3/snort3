@@ -40,14 +40,32 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, uint32_t seq, bool stream_is_inorder)
 {
     // drop packet if sequence num is invalid
-    if ( !tns.tracker->is_segment_seq_valid(tsd) )
+    ValidSeqStatus invalid_seq = tns.tracker->is_segment_seq_valid(tsd);
+    if (invalid_seq)
     {
-        if ( is_keep_alive_probe(tns, tsd) )
-            return NORM_BAD_SEQ;
-
         bool inline_mode = tsd.is_nap_policy_inline();
-        tcpStats.invalid_seq_num++;
-        log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Sequence number is invalid\n");
+        switch (invalid_seq)
+        {
+        case ValidSeqStatus::LEFT_INVALID:
+            if (is_keep_alive_probe(tns, tsd))
+                return NORM_BAD_SEQ;
+
+            tcpStats.invalid_seq_left++;
+            log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Received a Spurious Retransmission\n");
+            break;
+
+        case ValidSeqStatus::RIGHT_INVALID:
+            tcpStats.invalid_seq_right++;
+            log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Received a packet to the right of the allowed TCP window \n");
+            break;
+        
+        default:
+            break;
+        }
+        if (PacketTracer::is_active())
+            PacketTracer::log("Current TCP window : [ %u - %u ]\n"
+            , tns.tracker->r_win_base, tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
+        tns.tracker->seglist.print_stream_state(tsd.get_talker());
         trim_win_payload(tns, tsd, 0, inline_mode);
         return NORM_BAD_SEQ;
     }
@@ -71,6 +89,10 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
             if ( !data_inside_window(tns, tsd) )
             {
                 log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Data is outside the TCP Window\n");
+                if (PacketTracer::is_active())
+                    PacketTracer::log("Current TCP window : [ %u - %u ]\n"
+                    , tns.tracker->r_win_base, tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
+                tns.tracker->seglist.print_stream_state(tsd.get_talker());
                 trim_win_payload(tns, tsd, 0, inline_mode);
                 return NORM_TRIMMED;
             }
@@ -99,7 +121,9 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
         }
 
         log_drop_reason(tns, tsd, inline_mode, "stream",
-            "Normalizer: Received data during a Zero Window that is not a Zero Window Probe\n");
+            "Normalizer: Received seq during a Zero Window that is not a Zero Window Probe ("
+                + std::to_string(tns.tracker->rcv_nxt) + ")\n");
+        tns.tracker->seglist.print_stream_state(tsd.get_talker());
         trim_win_payload(tns, tsd, 0, inline_mode);
         return NORM_TRIMMED;
     }

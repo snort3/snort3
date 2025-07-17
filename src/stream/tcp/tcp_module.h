@@ -65,7 +65,8 @@ struct TcpStats
     PegCount resyns;
     PegCount discards;
     PegCount discards_skipped;
-    PegCount invalid_seq_num;
+    PegCount invalid_seq_left;
+    PegCount invalid_seq_right;
     PegCount invalid_ack;
     PegCount no_flags_set;
     PegCount events;
