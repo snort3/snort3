@@ -26,6 +26,8 @@
 
 #include "stream/stream_splitter.h"
 
+#define MODBUS_MAX_OCTETS 2600 // modbus PDU times 10
+
 enum modbus_paf_state_t
 {
     MODBUS_PAF_STATE__TRANS_ID_1,
@@ -34,6 +36,9 @@ enum modbus_paf_state_t
     MODBUS_PAF_STATE__PROTO_ID_2,
     MODBUS_PAF_STATE__LENGTH_1,
     MODBUS_PAF_STATE__LENGTH_2,
+    MODBUS_PAF_STATE__UNIT_ID,
+    MODBUS_PAF_STATE__FUNC_CODE,
+    MODBUS_PAF_STATE__INVALID,
     MODBUS_PAF_STATE__SET_FLUSH
 };
 
@@ -47,9 +52,12 @@ public:
 
     bool is_paf() override { return true; }
 
+    void reset();
+
 private:
     modbus_paf_state_t state;
     uint16_t modbus_length;
+    uint32_t bytes_seen;
 };
 
 #endif

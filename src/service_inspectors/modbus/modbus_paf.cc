@@ -33,10 +33,19 @@
 
 using namespace snort;
 
-#define MODBUS_MIN_HDR_LEN 2        // Enough for Unit ID + Function
-#define MODBUS_MAX_HDR_LEN 254      // Max PDU size is 260, 6 bytes already seen
+#define MODBUS_MIN_HDR_LEN              2     // Enough for Unit ID + Function
+#define MODBUS_MAX_HDR_LEN              254   // Max PDU size is 260, 6 bytes already seen
+#define MODBUS_INVALID_CLIENT_FUNC_CODE 0x80  // Invalid function code for client requests
+#define MODBUS_INVALID_FUNC_CODE        0x00  // Invalid function code
 
 ModbusSplitter::ModbusSplitter(bool b) : StreamSplitter(b)
+{
+    state = MODBUS_PAF_STATE__TRANS_ID_1;
+    modbus_length = 0;
+    bytes_seen = 0;
+}
+
+void ModbusSplitter::reset()
 {
     state = MODBUS_PAF_STATE__TRANS_ID_1;
     modbus_length = 0;
@@ -47,12 +56,15 @@ ModbusSplitter::ModbusSplitter(bool b) : StreamSplitter(b)
 // Reads up until the length octet is found, then sets a flush point.
 
 StreamSplitter::Status ModbusSplitter::scan(
-    Packet*, const uint8_t* data, uint32_t len, uint32_t /*flags*/, uint32_t* fp)
+    Packet* p, const uint8_t* data, uint32_t len, uint32_t /*flags*/, uint32_t* fp)
 {
     uint32_t bytes_processed = 0;
-
+    bool isInvalid = false; 
     /* Process this packet 1 byte at a time */
-    while (bytes_processed < len)
+    /* Special case: when packet length equals the minimum Modbus frame size,
+       we need to check the SET_FLUSH state even after processing all bytes
+       to ensure proper fallback execution */
+    while (bytes_processed < len || state == MODBUS_PAF_STATE__SET_FLUSH)
     {
         switch (state)
         {
@@ -73,19 +85,35 @@ StreamSplitter::Status ModbusSplitter::scan(
 
         case MODBUS_PAF_STATE__LENGTH_2:
             modbus_length |= *(data + bytes_processed);
-            state = (modbus_paf_state_t)(((int)state) + 1);
-            break;
-
-        case MODBUS_PAF_STATE__SET_FLUSH:
             if ((modbus_length < MODBUS_MIN_HDR_LEN) ||
                 (modbus_length > MODBUS_MAX_HDR_LEN))
             {
                 DetectionEngine::queue_event(GID_MODBUS, MODBUS_BAD_LENGTH);
+                state = MODBUS_PAF_STATE__INVALID;
             }
-
-            *fp = modbus_length + bytes_processed;
-            state = MODBUS_PAF_STATE__TRANS_ID_1;
-            modbus_length = 0;
+            else
+            {
+                state = (modbus_paf_state_t)(((int)state) + 1);
+            }
+            break;
+        case MODBUS_PAF_STATE__UNIT_ID:
+            state = (modbus_paf_state_t)(((int)state) + 1);
+            break;
+        case MODBUS_PAF_STATE__FUNC_CODE:
+            isInvalid = *(data + bytes_processed) == MODBUS_INVALID_FUNC_CODE ||
+                (p->is_from_client() && *(data + bytes_processed) >= MODBUS_INVALID_CLIENT_FUNC_CODE);
+            state = isInvalid? MODBUS_PAF_STATE__INVALID: MODBUS_PAF_STATE__SET_FLUSH;
+            break;
+        case MODBUS_PAF_STATE__INVALID:
+            reset();
+            bytes_seen += len;
+            return bytes_seen >= MODBUS_MAX_OCTETS ? StreamSplitter::ABORT : StreamSplitter::SEARCH;
+        case MODBUS_PAF_STATE__SET_FLUSH:
+            // Length - The length field is a byte count of the following fields, including the Unit
+            // identifier and data fields. so we subtract 2 to account for the Unit ID and Function Code.
+            *fp = modbus_length + bytes_processed - 2;
+            bytes_seen = 0;
+            reset();
             modbus_stats.frames++;
             return StreamSplitter::FLUSH;
         }
@@ -93,6 +121,7 @@ StreamSplitter::Status ModbusSplitter::scan(
         bytes_processed++;
     }
 
+    bytes_seen += len;
     return StreamSplitter::SEARCH;
 }
 
