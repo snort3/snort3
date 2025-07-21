@@ -1,3 +1,18 @@
+2025-07-20: 3.9.2.0
+
+* build: fix comparison of empty integers. Thanks to Hatix Ntsoa.
+* cip: cip inspector fallback functionality
+* extractor: modify JSON Formatter to improve performance
+* file_api: multi instance snort related file cache sharing
+* flow: watchdog kick in dump flow summary
+* hash: ensure that find_else_create functions set is_new field in all cases
+* hash: return cache size from remove so new size check can be atomic
+* http_inspect: parameter name change from partial_depth to partial_depth_body
+* http_param: clear body http_param after each flush
+* main: do not start Analyzer if codec manager doesn't match any codec
+* modbus: modbus paf abort
+* stream_tcp: separate logs and counters for left and right invalid sequence numbers
+
 2025-06-29: 3.9.1.0
 
 * appid: appid_debug_test and critical log fix

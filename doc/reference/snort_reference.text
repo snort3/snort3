@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.9.1.0 2025-06-29 23:11:37 EDT TST
+Revision 3.9.2.0 2025-07-20 23:16:33 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -4081,8 +4081,8 @@ Configuration:
     bytes to examine (-1 no limit) { -1:max53 }
   * int http_inspect.response_depth = -1: maximum response message
     body bytes to examine (-1 no limit) { -1:max53 }
-  * int http_inspect.partial_depth = 0: maximum request body to send
-    to early detection (0 disabled, -1 no limit) { -1:16384 }
+  * int http_inspect.partial_depth_body = 0: maximum request body to
+    send to early detection (0 disabled, -1 no limit) { -1:16384 }
   * bool http_inspect.unzip = true: decompress gzip and deflate
     message bodies
   * int http_inspect.maximum_host_length = -1: maximum allowed length
@@ -6237,8 +6237,10 @@ Peg counts:
   * stream_tcp.discards: tcp packets discarded (sum)
   * stream_tcp.discards_skipped: tcp packet discards skipped due to
     normalization disabled (sum)
-  * stream_tcp.invalid_seq_num: tcp packets received with an invalid
-    sequence number (sum)
+  * stream_tcp.invalid_seq_left: tcp packets received that fall to
+    the left of the current TCP window (spurious retransmits) (sum)
+  * stream_tcp.invalid_seq_right: tcp packets received that fall to
+    the right of the current TCP window (sum)
   * stream_tcp.invalid_ack: tcp packets received with an invalid ack
     number (sum)
   * stream_tcp.no_flags_set: tcp packets received with no TCP flags
@@ -10262,8 +10264,8 @@ libraries see the Getting Started section of the manual.
     encodings in response bodies
   * int http_inspect.oversize_dir_length = 300: maximum length for
     URL directory { 1:65535 }
-  * int http_inspect.partial_depth = 0: maximum request body to send
-    to early detection (0 disabled, -1 no limit) { -1:16384 }
+  * int http_inspect.partial_depth_body = 0: maximum request body to
+    send to early detection (0 disabled, -1 no limit) { -1:16384 }
   * bool http_inspect.percent_u = false: normalize %uNNNN and %UNNNN
     encodings
   * bool http_inspect.plus_to_space = true: replace + with <sp> when
@@ -12960,8 +12962,10 @@ libraries see the Getting Started section of the manual.
   * stream_tcp.internal_events: 135:X events generated (sum)
   * stream_tcp.invalid_ack: tcp packets received with an invalid ack
     number (sum)
-  * stream_tcp.invalid_seq_num: tcp packets received with an invalid
-    sequence number (sum)
+  * stream_tcp.invalid_seq_left: tcp packets received that fall to
+    the left of the current TCP window (spurious retransmits) (sum)
+  * stream_tcp.invalid_seq_right: tcp packets received that fall to
+    the right of the current TCP window (sum)
   * stream_tcp.keep_alive_probes: number of tcp keep-alive probes
     (sum)
   * stream_tcp.max_bytes_exceeded_hole: number of times max bytes
