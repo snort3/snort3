@@ -17,8 +17,9 @@
 //--------------------------------------------------------------------------
 //  file_cache_share.cc author Shilpa Nagpal <shinagpa@cisco.com>
 
-
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
 
 #include "file_cache_share.h"
 #include "file_service.h"
@@ -33,14 +34,12 @@ void FileCacheShare::handle(DataEvent& de, Flow*)
     FileHashKey key = fe.get_hashkey();
     FileInfo file = fe.get_file_ctx();
 
-    LogMessage("File Cache Sharing: Received event with file_id %lu\n", key.file_id);
-
     FileCache* file_cache = FileService::get_file_cache();
     if (file_cache)
     {
         bool cache_full = false;
         int64_t cache_expire = 0;
-        FileContext* file_got = file_cache->add(key, timeout, cache_full, cache_expire, ins);
+        FileContext* file_got = file_cache->add(key, timeout, cache_full, cache_expire, true);
         if (file_got)
         {    
             *((FileInfo*)(file_got)) = file;
@@ -48,30 +47,31 @@ void FileCacheShare::handle(DataEvent& de, Flow*)
     }
 }
 
-bool serialize_file_event(snort::DataEvent* event, char*& buffer, uint16_t* len)
+bool serialize_file_event(DataEvent* event, char*& buffer, uint16_t* len)
 {
     if (!event)
         return false;
 
-    snort::FileMPEvent* file_event = static_cast<snort::FileMPEvent*>(event);
+    FileMPEvent* file_event = static_cast<FileMPEvent*>(event);
     uint16_t event_buffer_len = file_event->get_data_len();
     if (event_buffer_len == 0)
         return false;
-    
+
     buffer = new char[event_buffer_len];
     if (!buffer)
         return false;
 
-    file_event->serialize(buffer, len);
+    *len = event_buffer_len;
+    file_event->serialize(buffer, *len);
     return true;
 }
 
-bool deserialize_file_event(const char* buffer, uint16_t len, snort::DataEvent*& event)
+bool deserialize_file_event(const char* buffer, uint16_t len, DataEvent*& event)
 {
     if (!buffer || len == 0)
         return false;
 
-    snort::FileMPEvent* file_event = new snort::FileMPEvent();
+    FileMPEvent* file_event = new FileMPEvent();
     if (!file_event)
         return false;
 

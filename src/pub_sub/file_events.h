@@ -23,9 +23,9 @@
 #ifndef FILE_MP_EVENTS_H
 #define FILE_MP_EVENTS_H
 
-#include "framework/mp_data_bus.h"
-#include "file_events_ids.h"
 #include "file_api/file_cache.h"
+#include "file_events_ids.h"
+#include "framework/mp_data_bus.h"
 #include "hash/hashes.h"
 
 namespace snort
@@ -33,25 +33,25 @@ namespace snort
 
 class SO_PUBLIC FileMPEvent : public snort::DataEvent
 {
-    public:
+public:
 
     FileMPEvent(const FileHashKey& key, int64_t tm, FileInfo& file) : timeout(tm), hashkey(key), file_ctx(file)
     { 
-        len = sizeof(timeout) + sizeof(hashkey.sip) + sizeof(hashkey.sgroup) + 
-              sizeof(hashkey.dip) + sizeof(hashkey.dgroup) +
-              sizeof(hashkey.file_id) + sizeof(hashkey.asid) + sizeof(hashkey.padding) +
-              sizeof(file) + SHA256_HASH_SIZE;
+        len = sizeof(timeout) + sizeof(hashkey.sip) + sizeof(hashkey.sgroup)
+            + sizeof(hashkey.dip) + sizeof(hashkey.dgroup)
+            + sizeof(hashkey.file_id) + sizeof(hashkey.asid) + sizeof(hashkey.padding)
+            + sizeof(file) + SHA256_HASH_SIZE;
     }
 
     FileMPEvent() : hashkey()
     {
-	timeout = 0;
+        timeout = 0;
         len = 0;
     }
 
     int64_t get_timeout()
     {
-         return timeout;
+        return timeout;
     }
 
     FileInfo get_file_ctx()
@@ -69,30 +69,31 @@ class SO_PUBLIC FileMPEvent : public snort::DataEvent
         return len;
     }
 
-    void deserialize(const char* d, uint16_t len)
+    void deserialize(const char* buffer, uint16_t len)
     {
         uint16_t offset = 0;
-        memcpy(&timeout, d, sizeof(timeout));
+        memcpy(&timeout, buffer, sizeof(timeout));
         offset += sizeof(timeout);
-        memcpy(&hashkey.sip, d + offset, sizeof(hashkey.sip));
+        memcpy(&hashkey.sip, buffer + offset, sizeof(hashkey.sip));
         offset += sizeof(hashkey.sip);
-        memcpy(&hashkey.sgroup, d + offset, sizeof(hashkey.sgroup));
+        memcpy(&hashkey.sgroup, buffer + offset, sizeof(hashkey.sgroup));
         offset += sizeof(hashkey.sgroup);
-        memcpy(&hashkey.dip, d + offset, sizeof(hashkey.dip));
+        memcpy(&hashkey.dip, buffer + offset, sizeof(hashkey.dip));
         offset += sizeof(hashkey.dip);
-        memcpy(&hashkey.dgroup, d + offset, sizeof(hashkey.dgroup));
+        memcpy(&hashkey.dgroup, buffer + offset, sizeof(hashkey.dgroup));
         offset += sizeof(hashkey.dgroup);
-        memcpy(&hashkey.file_id, d + offset, sizeof(hashkey.file_id));
+        memcpy(&hashkey.file_id, buffer + offset, sizeof(hashkey.file_id));
         offset += sizeof(hashkey.file_id);
-        memcpy(&hashkey.asid, d + offset, sizeof(hashkey.asid));
+        memcpy(&hashkey.asid, buffer + offset, sizeof(hashkey.asid));
         offset += sizeof(hashkey.asid);
-        memcpy(&hashkey.padding, d + offset, sizeof(hashkey.padding));
+        memcpy(&hashkey.padding, buffer + offset, sizeof(hashkey.padding));
         offset += sizeof(hashkey.padding);
-        file_ctx.deserialize(d, offset);
+        if (offset < len)
+            file_ctx.deserialize(buffer + offset, len - offset);
         this->len = len;
     }
 
-    void serialize(char* buffer, uint16_t* len)
+    void serialize(char* buffer, uint16_t len)
     {
         uint16_t offset = 0;
         memcpy(buffer, &timeout, sizeof(timeout));
@@ -111,15 +112,15 @@ class SO_PUBLIC FileMPEvent : public snort::DataEvent
         offset += sizeof(hashkey.asid);
         memcpy(buffer + offset, &hashkey.padding, sizeof(hashkey.padding));
         offset += sizeof(hashkey.padding);
-        file_ctx.serialize(buffer, &offset);
-        *len = offset;
+        if (offset < len)
+            file_ctx.serialize(buffer + offset, len - offset);
     }
 
-    private:
-        int64_t timeout;
-        FileHashKey hashkey;
-        FileInfo file_ctx;
-        uint16_t len;
+private:
+    int64_t timeout;
+    FileHashKey hashkey;
+    FileInfo file_ctx;
+    uint16_t len;
 };
 
 }

@@ -24,15 +24,15 @@
 #include "framework/mp_data_bus.h"
 #include "pub_sub/file_events.h"
 
+namespace snort
+{
 class FileCacheShare : public snort::DataHandler
 {
 public:
-    FileCacheShare(FileInspect* fi) : DataHandler(FILE_ID_NAME) { ins = fi; }
+    FileCacheShare() : DataHandler(FILE_ID_NAME) {}
     void handle(snort::DataEvent&, snort::Flow*) override;
-private:
-    FileInspect* ins;
 };
-
+}
 bool serialize_file_event(snort::DataEvent* event, char*& buffer, uint16_t* len);
 bool deserialize_file_event(const char* buffer, uint16_t len, snort::DataEvent*& event);
 

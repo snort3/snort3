@@ -14,6 +14,8 @@ set (PUB_SUB_INCLUDES
     eve_process_event.h
     expect_events.h
     external_event_ids.h
+    file_events.h
+    file_events_ids.h
     finalize_packet_event.h
     ftp_events.h
     http_event_ids.h
@@ -35,8 +37,6 @@ set (PUB_SUB_INCLUDES
     ssh_events.h
     ssl_events.h
     dns_events.h
-    file_events.h
-    file_events_ids.h
 )
 
 add_library( pub_sub OBJECT

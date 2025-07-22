@@ -31,14 +31,13 @@
 #include "main/thread_config.h"
 #include "packet_io/active.h"
 #include "packet_io/packet_tracer.h"
-#include "time/packet_time.h"
 #include "pub_sub/file_events.h"
+#include "time/packet_time.h"
 
 #include "file_flows.h"
 #include "file_module.h"
 #include "file_service.h"
 #include "file_stats.h"
-#include "file_cache_share.h"
 
 #define DEFAULT_FILE_LOOKUP_TIMEOUT_CACHED_ITEM 3600    // 1 hour
 
@@ -163,7 +162,7 @@ FileContext* FileCache::find_add(const FileHashKey& hashKey, int64_t timeout)
     return node->file;
 }
 
-FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout, bool &cache_full, int64_t& cache_expire, FileInspect* ins)
+FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout, bool &cache_full, int64_t& cache_expire, bool cache_sync)
 {
     FileNode new_node;
     /*
@@ -183,11 +182,7 @@ FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout, bool &c
 
     if (!file)
     {
-        if (ins)
-            new_node.file = new FileContext(ins);
-        else
-            new_node.file = new FileContext;
-
+        new_node.file = new FileContext;
         int ret = fileHash->insert((void*)&hashKey, &new_node);
         cache_expire = new_node.cache_expire_time.tv_sec;
 
@@ -202,7 +197,8 @@ FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout, bool &c
                     PacketTracer::log("add:Insert failed in file cache, returning\n");
                 cache_full = true;
             }
-            if (!ins)
+
+            if (!cache_sync)
                 FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, GET_CURRENT_PACKET,
                     "add:Insert failed in file cache, returning\n");
             file_counts.cache_add_fails++;
@@ -214,7 +210,7 @@ FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout, bool &c
     }
     else
     {
-        if (!ins)
+        if (!cache_sync)
             FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, GET_CURRENT_PACKET,
                 "add:file already found in file cache, returning\n");
         return file;

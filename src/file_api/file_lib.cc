@@ -152,10 +152,9 @@ void FileInfo::copy(const FileInfo& other, bool clear_data)
     }
 }
 
-void FileInfo::serialize(char* buffer, uint16_t* len)
+void FileInfo::serialize(char* buffer, uint16_t buffer_len)
 {
-    int offset = *len;
-
+    uint16_t offset = 0;
     auto write_bool = [&](bool val) {
         memcpy(buffer + offset, &val, sizeof(val));
         offset += sizeof(val);
@@ -163,7 +162,7 @@ void FileInfo::serialize(char* buffer, uint16_t* len)
 
     auto write_string = [&](const std::string& str, bool is_set) {
         write_bool(is_set);
-        if (is_set)
+        if (is_set && offset < buffer_len)
         {
             uint32_t len = static_cast<uint32_t>(str.length());
             memcpy(buffer + offset, &len, sizeof(len));
@@ -172,10 +171,20 @@ void FileInfo::serialize(char* buffer, uint16_t* len)
             offset += len;
         }
     };
+    
+    if (sha256)
+        is_sha256_set = true;
 
-    memcpy(buffer + offset,(uint16_t *) sha256, SHA256_HASH_SIZE); 
-    offset += SHA256_HASH_SIZE;
-    memcpy(buffer + offset, &verdict, sizeof(verdict)); 
+    memcpy(buffer, &is_sha256_set, sizeof(is_sha256_set));
+    offset += sizeof(is_sha256_set);
+
+    if (is_sha256_set && sha256 && offset < buffer_len)
+    {
+        memcpy(buffer + offset,(uint16_t *) sha256, SHA256_HASH_SIZE);
+        offset += SHA256_HASH_SIZE;
+    }
+
+    memcpy(buffer + offset, &verdict, sizeof(verdict));
     offset += sizeof(verdict);
     memcpy(buffer + offset, &file_size, sizeof(file_size)); 
     offset += sizeof(file_size);
@@ -198,12 +207,11 @@ void FileInfo::serialize(char* buffer, uint16_t* len)
     write_bool(file_signature_enabled);
     write_bool(file_capture_enabled);
     write_bool(is_partial);
-
-    *len = offset;
 }
 
-void FileInfo::deserialize(const char* buffer, uint16_t& offset)
+void FileInfo::deserialize(const char* buffer, uint16_t buffer_len)
 {
+    uint16_t offset = 0;
     auto read_bool = [&](bool& val) {
         memcpy(&val, buffer + offset, sizeof(val));
         offset += sizeof(val);
@@ -211,7 +219,7 @@ void FileInfo::deserialize(const char* buffer, uint16_t& offset)
 
     auto read_string = [&](std::string& str, bool& is_set) {
         read_bool(is_set);
-        if (is_set)
+        if (is_set && offset < buffer_len)
         {
             uint32_t len = 0;
             memcpy(&len, buffer + offset, sizeof(len));
@@ -221,10 +229,16 @@ void FileInfo::deserialize(const char* buffer, uint16_t& offset)
         }
     };
 
-    if (!sha256)
-        sha256 = new uint8_t[SHA256_HASH_SIZE];  
-    memcpy(sha256, (const uint8_t *)(buffer + offset), SHA256_HASH_SIZE);
-    offset += SHA256_HASH_SIZE;
+    memcpy(&is_sha256_set, buffer + offset, sizeof(is_sha256_set));
+    offset += sizeof(is_sha256_set);
+
+    if (is_sha256_set && offset < buffer_len)
+    {
+        if (!sha256)
+            sha256 = new uint8_t[SHA256_HASH_SIZE];  
+        memcpy(sha256, (const uint8_t *)(buffer + offset), SHA256_HASH_SIZE);
+        offset += SHA256_HASH_SIZE;
+    }
     memcpy(&verdict, buffer + offset, sizeof(verdict)); 
     offset += sizeof(verdict);
     memcpy(&file_size, buffer + offset, sizeof(file_size)); 
@@ -476,25 +490,22 @@ UserFileDataBase* FileInfo::get_file_data() const
     return user_file_data;
 }
 
-FileContext::FileContext (FileInspect* ins)
-{
-    file_type_context = nullptr;
-    file_signature_context = nullptr;
-    file_capture = nullptr;
-    file_segments = nullptr;
-    inspector = ins;
-    ins->add_global_ref();
-    config = ins->config;
-}
-
 FileContext::FileContext ()
 {
     file_type_context = nullptr;
     file_signature_context = nullptr;
     file_capture = nullptr;
     file_segments = nullptr;
-    inspector = (FileInspect*)InspectorManager::acquire_file_inspector();
-    config = inspector->config;
+    if (SnortConfig::get_conf())
+    {
+        inspector = (FileInspect*)InspectorManager::acquire_file_inspector();
+        config = inspector->config;
+    }
+    else
+    {
+        inspector = nullptr;
+        config = nullptr;
+    }
 }
 
 FileContext::~FileContext ()
@@ -506,7 +517,9 @@ FileContext::~FileContext ()
         stop_file_capture();
 
     delete file_segments;
-    InspectorManager::release(inspector);
+
+    if (inspector)
+        InspectorManager::release(inspector);
 }
 
 /* stop file type identification */

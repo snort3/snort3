@@ -115,8 +115,8 @@ public:
     void set_partial_flag(bool partial);
     bool is_partial_download() const;
 
-    void serialize(char* buffer, uint16_t* offset);
-    void deserialize(const char* buffer, uint16_t& offset);
+    void serialize(char* buffer, uint16_t buffer_len);
+    void deserialize(const char* buffer, uint16_t buffer_len);
 
 protected:
     std::string file_name;
@@ -129,6 +129,7 @@ protected:
     FileDirection direction = FILE_DOWNLOAD;
     uint32_t file_type_id = SNORT_FILE_TYPE_CONTINUE;
     uint8_t* sha256 = nullptr;
+    bool is_sha256_set = false;
     uint64_t file_id = 0;
     FileCapture* file_capture = nullptr;
     bool file_type_enabled = false;
@@ -186,6 +187,8 @@ public:
     // Configuration functions
     void remove_segments();
     void reset();
+    void set_config(FileConfig* fc) { config = fc; }
+    FileConfig* get_config() { return config; }
 private:
     uint64_t processed_bytes = 0;
     void* file_type_context;

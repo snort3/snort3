@@ -29,12 +29,13 @@ namespace snort
 {
 
 struct FileMPEvents
-{ enum : unsigned {
-    
-    FILE_SHARE = 0,
-    FILE_SHARE_SYNC,
-    num_ids
-}; };
+{
+    enum : unsigned {
+        FILE_SHARE = 0,
+        FILE_SHARE_SYNC,
+        num_ids
+    };
+};
 
 const PubKey file_pub_key { "file_mp_events", FileMPEvents::num_ids };
 

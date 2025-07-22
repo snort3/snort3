@@ -276,6 +276,13 @@ FileContext* FileFlows::get_file_context(
         FileCache* file_cache = FileService::get_file_cache();
         assert(file_cache);
         context = file_cache->get_file(flow, file_id, false, true);
+        if (context)
+        {
+            FileConfig *fc = get_file_config(SnortConfig::get_conf());  
+            
+            if (!context->get_config())
+                context->set_config(fc);
+        }
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
             "get_file_context:trying to get context from cache\n");
     }

@@ -59,13 +59,12 @@ public:
     void set_block_timeout(int64_t);
     void set_lookup_timeout(int64_t);
     void set_max_files(int64_t);
-    snort::FileContext* add(const FileHashKey&, int64_t timeout, bool &cache_full, int64_t& cache_expire, FileInspect* ins = nullptr);
+    snort::FileContext* add(const FileHashKey&, int64_t timeout, bool &cache_full, int64_t& cache_expire, bool cache_sync = false);
     snort::FileContext* get_file(snort::Flow*, uint64_t file_id, bool to_create, bool using_cache_entry);
     FileVerdict cached_verdict_lookup(snort::Packet*, snort::FileInfo*,
         snort::FilePolicyBase*,const uint8_t* current_data, uint32_t current_data_len);
     bool apply_verdict(snort::Packet*, snort::FileContext*, FileVerdict, bool resume,
         snort::FilePolicyBase*);
-    
 
 private: 
     snort::FileContext* find(const FileHashKey&, int64_t, int64_t& cache_expire);

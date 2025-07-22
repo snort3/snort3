@@ -15,6 +15,8 @@ add_library ( file_api OBJECT
     file_capture.cc
     file_cache.cc
     file_cache.h
+    file_cache_share.cc
+    file_cache_share.h
     file_config.cc
     file_config.h
     file_flows.cc
@@ -35,8 +37,6 @@ add_library ( file_api OBJECT
     file_service.cc
     file_stats.cc
     file_stats.h
-    file_cache_share.cc
-    file_cache_share.h
 )
 
 install (FILES ${FILE_API_INCLUDES}
