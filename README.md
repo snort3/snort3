@@ -49,21 +49,21 @@ Additional features on the roadmap include:
 # DEPENDENCIES
 
 If you already build Snort, you may have everything you need.  If not, grab
-the latest:
+the latest (listed in topological order):
 
-* CMake to build from source
-* DAQ from https://github.com/snort3/libdaq for packet IO
-* dnet from https://github.com/dugsong/libdnet.git for network utility functions
-* flex >= 2.6.0 from https://github.com/westes/flex for JavaScript syntax parser
 * g++ >= 7 or other C++17 compiler
-* hwloc from https://www.open-mpi.org/projects/hwloc/ for CPU affinity management
+* pkgconfig from https://www.freedesktop.org/wiki/Software/pkg-config/ to locate build dependencies
+* CMake to build from source
+* flex >= 2.6.0 from https://github.com/westes/flex for JavaScript syntax parser
+* zlib from http://www.zlib.net for decompression
 * LuaJIT from http://luajit.org for configuration and scripting
+* dnet from https://github.com/dugsong/libdnet.git for network utility functions
+* hwloc from https://www.open-mpi.org/projects/hwloc/ for CPU affinity management
 * OpenSSL from https://www.openssl.org/source/ for SHA and MD5 file signatures,
   the protected_content rule option, and SSL service detection
-* pcap from http://www.tcpdump.org for tcpdump style logging
 * PCRE2 from http://www.pcre.org for regular expression pattern matching
-* pkgconfig from https://www.freedesktop.org/wiki/Software/pkg-config/ to locate build dependencies
-* zlib from http://www.zlib.net for decompression
+* pcap from http://www.tcpdump.org for tcpdump style logging
+* DAQ from https://github.com/snort3/libdaq for packet IO
 
 Additional packages provide optional features.  Check the manual for more.
 
