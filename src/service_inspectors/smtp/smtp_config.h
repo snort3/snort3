@@ -87,6 +87,7 @@ enum SMTPCmdEnum
     CMD_XTRN,
     CMD_XUSR,
     CMD_ABORT,
+    CMD_X_ANONYMOUSTLS,
     CMD_LAST
 };
 

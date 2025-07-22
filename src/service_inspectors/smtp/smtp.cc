@@ -110,6 +110,7 @@ const SMTPToken smtp_known_cmds[] =
     { "XSTA",          4, CMD_XSTA, SMTP_CMD_TYPE_NORMAL },
     { "XTRN",          4, CMD_XTRN, SMTP_CMD_TYPE_NORMAL },
     { "XUSR",          4, CMD_XUSR, SMTP_CMD_TYPE_NORMAL },
+    { "X-ANONYMOUSTLS", 14, CMD_X_ANONYMOUSTLS, SMTP_CMD_TYPE_NORMAL },
     { "*",             1, CMD_ABORT, SMTP_CMD_TYPE_NORMAL },
     { nullptr,            0, 0, SMTP_CMD_TYPE_NORMAL }
 };
@@ -885,6 +886,11 @@ static const uint8_t* SMTP_HandleCommand(SmtpProtoConf* config, Packet* p, SMTPD
             smtp_ssn->client_requested_starttls = true;
         }
 
+        break;
+
+    case CMD_X_ANONYMOUSTLS:
+        if (eol == end)
+            smtp_ssn->state = STATE_TLS_CLIENT_PEND;
         break;
 
     case CMD_X_LINK2STATE:
