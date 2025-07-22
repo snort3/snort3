@@ -47,6 +47,8 @@ public:
 private:
     iec104_paf_state_t state;
     uint16_t iec104_apci_length;
+    uint32_t bytes_seen;
+    bool valid_bytes;
 };
 
 #endif
