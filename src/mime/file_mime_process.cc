@@ -459,7 +459,7 @@ const uint8_t* MimeSession::process_mime_body(const uint8_t* ptr,
 {
     auto data_size = data_end - ptr;
 
-    if (partial_data && mime_boundary.boundary_search_len < data_size)
+    if (partial_data)
     {
         delete[] rebuilt_data;
         rebuilt_data = new uint8_t[partial_data_len + data_size];
@@ -474,7 +474,9 @@ const uint8_t* MimeSession::process_mime_body(const uint8_t* ptr,
         partial_data_len = 0;
     }
 
-    const uint8_t* attach_end = isFileEnd(position) && mime_boundary.boundary_search_len < data_size
+    assert(isFileEnd(position) or mime_boundary.boundary_search_len <= data_size);
+
+    const uint8_t* attach_end = isFileEnd(position)
         ? GetDataEnd(ptr, ptr + data_size) : ptr + data_size - mime_boundary.boundary_search_len;
 
     if (!isFileEnd(position)
@@ -484,6 +486,9 @@ const uint8_t* MimeSession::process_mime_body(const uint8_t* ptr,
         partial_data_len = mime_boundary.boundary_search_len;
         partial_data = new uint8_t[partial_data_len];
         memcpy(partial_data, attach_end, partial_data_len);
+
+        assert(ptr <= attach_end);
+        assert(ptr + data_size == attach_end + partial_data_len);
     }
 
     if (ptr < attach_end && decode_state)
