@@ -22,6 +22,7 @@
 #ifndef APP_ID_CONFIG_H
 #define APP_ID_CONFIG_H
 
+#include <atomic>
 #include <array>
 #include <memory>
 #include <string>
@@ -284,12 +285,12 @@ public:
 
     void set_appid_shadow_traffic_status(bool status)
     { 
-        appid_shadow_traffic_status = status; 
+        appid_shadow_traffic_status.store(status, std::memory_order_relaxed); 
     }
 
     bool get_appid_shadow_traffic_status() const
     { 
-        return appid_shadow_traffic_status; 
+        return appid_shadow_traffic_status.load(std::memory_order_relaxed); 
     }
  
     unsigned get_pattern_count();
@@ -327,7 +328,7 @@ private:
 
     uint32_t version;
     static uint32_t next_version;
-    bool appid_shadow_traffic_status = false;
+    std::atomic<bool> appid_shadow_traffic_status = false;
 };
 
 class OdpThreadContext
