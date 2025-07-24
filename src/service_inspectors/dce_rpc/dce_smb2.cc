@@ -23,6 +23,7 @@
 #include "config.h"
 #endif
 
+#include <cstdint>
 #include "dce_smb2.h"
 
 #include "flow/flow_key.h"
@@ -516,6 +517,16 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
             }
             if (next_command_offset)
             {
+                // Check if adding next_command_offset would cause integer overflow
+                if (next_command_offset > SIZE_MAX - (uintptr_t)((const uint8_t*)smb_hdr))
+                {
+                    dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
+                        (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+                    SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+                        p, "integer overflow in next command offset\n");
+                    dce2_smb_stats.v2_bad_next_cmd_offset++;
+                    return;
+                }
                 smb_hdr = (const Smb2Hdr*)((const uint8_t*)smb_hdr + next_command_offset);
                 compound_request_index++;
             }
@@ -562,4 +573,3 @@ DCE2_SmbVersion DCE2_Smb2Version(const Packet* p)
 
     return DCE2_SMB_VERSION_NULL;
 }
-
