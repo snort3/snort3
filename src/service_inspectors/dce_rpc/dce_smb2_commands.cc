@@ -299,7 +299,7 @@ bool DCE2_IsSmb2DurableReconnect(const Smb2CreateRequestHdr* smb_create_hdr, con
             (data_offset & 0x7) != 0 or
             (data_offset and (data_offset < name_offset + name_length)) or
             (data_offset > remaining) or
-            (data_offset + data_length > remaining))
+            (data_offset + data_length > remaining) or (data_offset + data_length < data_length))
         {
             return false;
         }
