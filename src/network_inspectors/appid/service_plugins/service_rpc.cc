@@ -329,7 +329,7 @@ static bool  validate_and_parse_universal_address(string& data, uint32_t &addres
     string tok;
     while (getline(tokenizer, tok, '.'))
     {
-        if (!all_of(tok.begin(), tok.end(), ::isdigit))
+        if (!all_of(tok.begin(), tok.end(), ::isdigit) || tok.length() > 3 || tok.empty())
             return false;
         int tmp = stoi(tok);
         if (tmp > 255)
