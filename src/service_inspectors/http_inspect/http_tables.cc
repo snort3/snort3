@@ -398,6 +398,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "compressed_gzip", "total number of HTTP bodies compressed with GZIP" },
     { CountType::SUM, "compressed_not_supported", "total number of HTTP bodies compressed with known but not supported methods" },
     { CountType::SUM, "compressed_unknown", "total number of HTTP bodies compressed with unknown methods" },
+    { CountType::SUM, "max_publish_depth_hits", "total number of times the maximum publish depth was exceeded" },
     { CountType::END, nullptr, nullptr }
 };
 

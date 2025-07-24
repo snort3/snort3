@@ -28,6 +28,7 @@
 #include "file_api/file_service.h"
 #include "hash/hash_key_operations.h"
 #include "helpers/buffer_data.h"
+#include "http_module.h"
 #include "js_norm/js_enum.h"
 #include "pub_sub/http_request_body_event.h"
 #include "pub_sub/http_body_event.h"
@@ -213,6 +214,23 @@ void HttpMsgBody::analyze()
         publish_length = (pub_depth_remaining > msg_text_new.length()) ?
             msg_text_new.length() : pub_depth_remaining;
         pub_depth_remaining -= publish_length;
+
+        // If we're about to hit the max requested publish depth (as requested
+        // by responding to an "HTTP publish length" event), then increment the
+        // max-publish-depth peg count.
+        if (pub_depth_remaining == 0)
+        {
+            const bool is_request = (source_id == SRC_CLIENT);
+            int32_t should_publish_body = 0;
+            if (is_request)
+                flow->get_attr(STASH_PUBLISH_REQUEST_BODY, should_publish_body);
+            else
+                flow->get_attr(STASH_PUBLISH_RESPONSE_BODY, should_publish_body);
+            if (should_publish_body)
+            {
+                HttpModule::increment_peg_counts(PEG_MAX_PUBLISH_DEPTH_HITS);
+            }
+        }
     }
 
     if (session_data->mime_state[source_id])
