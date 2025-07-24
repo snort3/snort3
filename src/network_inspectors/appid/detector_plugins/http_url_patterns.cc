@@ -1035,9 +1035,9 @@ void HttpPatternMatchers::identify_user_agent(const char* start, int size, AppId
                 if (match->client_id == APP_ID_INTERNET_EXPLORER
                     && strstr((const char*)buffPtr, "SLCC2"))
                 {
-                    if ((MAX_VERSION_SIZE-i) >= (sizeof(COMPATIBLE_BROWSER_STRING) - 1))
+                    if ((MAX_VERSION_SIZE-i-1) >= (sizeof(COMPATIBLE_BROWSER_STRING) - 1))
                     {
-                        strncat(temp_ver, COMPATIBLE_BROWSER_STRING, MAX_VERSION_SIZE - i);
+                        strncat(temp_ver, COMPATIBLE_BROWSER_STRING, MAX_VERSION_SIZE - i - 1);
                     }
                 }
                 // Pick firefox over some things, but pick a misc app over Firefox.
@@ -1697,4 +1697,3 @@ uint32_t HttpPatternMatchers::parse_multiple_http_patterns(const char* pattern,
 
     return partNum;
 }
-
