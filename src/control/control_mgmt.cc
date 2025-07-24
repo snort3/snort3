@@ -31,9 +31,11 @@
 #include <sys/un.h>
 
 #include <cassert>
+#include <chrono>
 #include <unordered_map>
 
 #include "log/messages.h"
+#include "main.h"
 #include "main/shell.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
@@ -53,7 +55,7 @@ static constexpr unsigned MAX_CONTROL_IDLE_TIME = 5;
 #endif
 
 static int listener = -1;
-static socklen_t sock_addr_size = 0;
+static socklen_t sock_addr_size = 0, my_sock_addr_size = 0;
 static struct sockaddr* sock_addr = nullptr;
 static struct sockaddr_in in_addr;
 static struct sockaddr_un unix_addr;
@@ -486,7 +488,7 @@ int ControlMgmt::socket_init(const SnortConfig* sc)
     // FIXIT-M want to disable time wait
     int on = 1;
     setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
-
+    my_sock_addr_size = sock_addr_size;
     if (bind(listener, sock_addr, sock_addr_size) < 0)
         FatalError("Failed to bind control listener: %s\n", get_error(errno));
 
@@ -498,6 +500,82 @@ int ControlMgmt::socket_init(const SnortConfig* sc)
 
     return 0;
 }
+
+// Helper function to wait for the prompt with a timeout
+static bool wait_for_prompt(int fd, const std::string& prompt, int timeout_ms)
+{
+    char buffer[1024];
+    std::string response;
+    auto start_time = std::chrono::steady_clock::now();
+
+    while (true)
+    {
+        ssize_t bytes = read(fd, buffer, sizeof(buffer) - 1);
+        if (bytes < 0)
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                // Check if the timeout has been exceeded
+                auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    std::chrono::steady_clock::now() - start_time);
+                if (elapsed.count() >= timeout_ms)
+                {
+                    return false; // Timeout
+                }
+                continue; // Retry
+            }
+            else
+            {
+                ErrorMessage("Failed to read response: %s\n", get_error(errno));
+                return false;
+            }
+        }
+        else if (bytes == 0)
+        {
+            return false; // Connection closed
+        }
+
+        buffer[bytes] = '\0';
+        response += buffer;
+
+        // Check if the prompt is found in the response
+        if (response.find(prompt) != std::string::npos)
+        {
+            return true;
+        }
+    }
+}
+
+bool ControlMgmt::send_command_to_socket(const std::string& command)
+{
+    std::string prompt = get_prompt();
+    if (listener < 0)
+    {
+        ErrorMessage("Listener is not initialized.\n");
+        return false;
+    }
+
+    int fd = socket(sock_addr->sa_family, SOCK_STREAM, 0);
+    if (fd < 0)
+    {
+        ErrorMessage("Failed to create socket: %s\n", get_error(errno));
+        return false;
+    }
+
+    if (connect(fd, sock_addr, my_sock_addr_size) >= 0 && wait_for_prompt(fd, prompt, 30) &&
+        write(fd, command.c_str(), command.size()) >= 0)
+    {
+        // Wait for the prompt again to ensure the command was processed
+        if (wait_for_prompt(fd, prompt, 90))
+        {
+            close(fd);
+            return true;
+        }
+    }
+    close(fd);
+    return false;
+}
+
 
 void ControlMgmt::socket_term()
 {

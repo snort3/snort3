@@ -122,6 +122,8 @@ protected:
     void open_file();
     virtual void dump_to_daq(Packet*);
     void reset(bool);
+private:
+    std::string dbg_str;
 };
 
 struct PacketTracerSuspend

@@ -93,6 +93,7 @@
 #include "catch/snort_catch.h"
 #endif
 
+#include "log/batched_logger.h"
 #include "snort_config.h"
 #include "thread_config.h"
 
@@ -434,6 +435,7 @@ void Snort::setup(int argc, char* argv[])
 
     init(argc, argv);
     const SnortConfig* sc = SnortConfig::get_conf();
+    BatchedLogger::BatchedLogManager::init();
 
     if ( sc->daemon_mode() )
         daemonize();
@@ -472,9 +474,9 @@ void Snort::cleanup()
     if ( !SnortConfig::get_conf()->test_mode() )  // FIXIT-M ideally the check is in one place
         PrintStatistics();
 
-    CloseLogger();
     ThreadConfig::term();
     clean_exit(0);
+    CloseLogger();
 }
 
 void Snort::reload_failure_cleanup(SnortConfig* sc)

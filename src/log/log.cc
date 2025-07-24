@@ -32,6 +32,7 @@
 #include "utils/util.h"
 #include "utils/util_cstring.h"
 
+#include "batched_logger.h"
 #include "log_text.h"
 #include "messages.h"
 
@@ -122,6 +123,7 @@ void OpenLogger()
 
 void CloseLogger()
 {
+    BatchedLogger::BatchedLogManager::shutdown();
     TextLog_Term(text_log);
 }
 

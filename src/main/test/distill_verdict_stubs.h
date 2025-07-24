@@ -130,7 +130,6 @@ eth_t* eth_open(const char*) { return nullptr; }
 eth_t* eth_close(eth_t*) { return nullptr; }
 ssize_t eth_send(eth_t*, const void*, size_t) { return -1; }
 void HostAttributesManager::initialize() { }
-
 void select_default_policy(const _daq_pkt_hdr&, const snort::SnortConfig*) { }
 void select_default_policy(const _daq_flow_stats&, const snort::SnortConfig*) { }
 

@@ -27,6 +27,7 @@
 #include <lua.hpp>
 
 #include "control/control.h"
+#include "log/batched_logger.h"
 #include "log/messages.h"
 #include "main/analyzer_command.h"
 #include "main/snort_config.h"
@@ -60,6 +61,8 @@ static const Parameter enable_packet_tracer_params[] =
     {"dst_ip", Parameter::PT_STRING, nullptr, nullptr, "destination IP address filter"},
     {"dst_port", Parameter::PT_INT, "0:65535", nullptr, "destination port filter"},
     {"tenants", Parameter::PT_STRING, nullptr, nullptr, "tenants filter"},
+    {"regex", Parameter::PT_STRING, nullptr, nullptr, "regex filter"},
+    {"stop_after_match", Parameter::PT_BOOL, nullptr, nullptr, "stop trace after match is found"},
     {nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr}
 };
 
@@ -110,6 +113,8 @@ static int enable(lua_State* L)
     int dport = luaL_optint(L, 5, 0);
 
     const char *tenantsstr = luaL_optstring(L, 6, nullptr);
+    const char *regexstr = luaL_optstring(L, 7, nullptr);
+    bool stop_after_match = luaL_opt(L,lua_toboolean, 8, false);
 
     SfIp sip, dip;
     sip.clear();
@@ -159,6 +164,10 @@ static int enable(lua_State* L)
         constraints.set_bits |= PacketConstraints::SetBits::SRC_PORT;
     if ( dport )
         constraints.set_bits |= PacketConstraints::SetBits::DST_PORT;
+
+    std::string filter_str = regexstr ? regexstr : "";
+    if (!filter_str.empty()) filter_str = (stop_after_match ? "Y" : "N") + filter_str;
+    BatchedLogger::BatchedLogManager::set_filter(filter_str);
     main_broadcast_command(new PacketTracerDebug(&constraints), ControlConn::query_from_lua(L));
     return 0;
 }

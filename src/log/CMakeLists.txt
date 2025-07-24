@@ -11,6 +11,8 @@ set (LOG_INCLUDES
 
 add_library ( log OBJECT
     ${LOG_INCLUDES}
+    batched_logger.cc
+    batched_logger.h
     log.cc
     log.h
     log_errors.h

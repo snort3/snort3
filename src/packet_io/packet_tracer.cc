@@ -30,7 +30,9 @@
 #include <sstream>
 
 #include "detection/ips_context.h"
+#include "log/batched_logger.h"
 #include "log/messages.h"
+#include "main/snort_config.h"
 #include "main/thread.h"
 #include "protocols/eth.h"
 #include "protocols/icmp4.h"
@@ -157,7 +159,10 @@ void PacketTracer::dump(Packet* p)
         const char* drop_reason = p->active->get_drop_reason();
         if (drop_reason)
             PacketTracer::log("Verdict Reason: %s, %s\n", drop_reason, p->active->get_action_string() );
-        LogMessage(s_pkt_trace->log_fh, "%s\n", s_pkt_trace->buffer);
+        if (s_pkt_trace->buff_len < max_buff_size - 1)
+            s_pkt_trace->buffer[s_pkt_trace->buff_len++] = '\n';
+        BatchedLogger::BatchedLogManager::log(s_pkt_trace->log_fh, SnortConfig::log_syslog(),
+            s_pkt_trace->buffer, s_pkt_trace->buff_len);
     }
 
     s_pkt_trace->reset(false);
@@ -321,11 +326,13 @@ void PacketTracer::restart_timer()
 // -----------------------------------------------------------------------------
 
 PacketTracer::PacketTracer()
+    : pt_timer(new Stopwatch<SnortClock>),
+      buffer(new char[max_buff_size]()),
+      daq_buffer(new char[max_buff_size]()),
+      debug_session(new char[PT_DEBUG_SESSION_ID_SIZE])
 {
-    pt_timer = new Stopwatch<SnortClock>;
-    buffer = new char[max_buff_size] { };
-    daq_buffer = new char[max_buff_size] { };
-    debug_session = new char[PT_DEBUG_SESSION_ID_SIZE];
+    dbg_str.reserve(256);
+    debugstr.reserve(256);
 
     mutes.resize(global_mutes.val, false);
     open_file();
@@ -359,7 +366,6 @@ void PacketTracer::populate_buf(const char* format, va_list ap, char* buffer, ui
 void PacketTracer::log_va(const char* format, va_list ap, bool daq_log, bool msg_only)
 {
     // FIXIT-L Need to find way to add 'PktTracerDbg' string as part of format string.
-    std::string dbg_str;
     if (shell_enabled and !daq_log) // only add debug string during shell execution
     {
         dbg_str = "PktTracerDbg ";
@@ -395,7 +401,6 @@ void PacketTracer::add_ip_header_info(const Packet& p)
     if (shell_enabled)
     {
         PacketTracer::log("\n");
-
         oss << sipstr << " " << sport << " -> "
             << dipstr << " " << dport << " "
             << std::to_string(to_utype(proto))

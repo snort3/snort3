@@ -24,6 +24,8 @@
 #ifndef CONTROL_MGMT_H
 #define CONTROL_MGMT_H
 
+#include <string>
+
 class ControlConn;
 struct lua_State;
 
@@ -42,6 +44,7 @@ public:
     static void socket_term();
 
     static ControlConn* find_control(const lua_State*);
+    static bool send_command_to_socket(const std::string& command);
 
     static bool service_users();
 };
