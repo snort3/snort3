@@ -376,7 +376,7 @@ void OleFile :: populate_fat_list()
         if ((byte_offset + header->get_sector_size()) > buf_len)
             return;
 
-        while ((count - (fat_sector_curr_cnt * max_secchain_cnt)) < (max_secchain_cnt))
+        while ((count - (fat_sector_curr_cnt * max_secchain_cnt)) < (max_secchain_cnt) and count < fat_list_len)
         {
             if (!header->get_byte_order())
                 fat_list[count] = LETOHL_UNALIGNED(buf);
@@ -384,6 +384,9 @@ void OleFile :: populate_fat_list()
                 fat_list[count] = BETOHL_UNALIGNED(buf);
             count++;
             buf += 4;
+        }
+        if (count >= fat_list_len) {
+            break;
         }
         fat_sector_curr_cnt++;
         if (fat_sector_curr_cnt < MAX_DIFAT_SECTORS)
@@ -433,7 +436,7 @@ void OleFile :: populate_mini_fat_list()
 
         buf += byte_offset;
 
-        while ((count - (minfat_curr_cnt * max_secchain_cnt)) < max_secchain_cnt)
+        while ((count - (minfat_curr_cnt * max_secchain_cnt)) < max_secchain_cnt and count < mini_fat_list_len)
         {
             if (!header->get_byte_order())
                 mini_fat_list[count] = LETOHL_UNALIGNED(buf);
@@ -441,6 +444,9 @@ void OleFile :: populate_mini_fat_list()
                 mini_fat_list[count] = BETOHL_UNALIGNED(buf);
             count++;
             buf += 4;
+        }
+        if (count >= mini_fat_list_len) {
+            break;
         }
         minfat_curr_cnt++;
         int32_t next_sector = get_next_fat_sector(current_sector);
