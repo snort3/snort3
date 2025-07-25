@@ -231,6 +231,8 @@ int32_t OleFile :: get_mini_fat_offset(int32_t sec_id)
     int32_t sec_position, mini_sec_position, count, current_sector;
     int32_t byte_offset, mini_fat_persector;
 
+    if (header->get_mini_sector_size() <= 0)
+        return -1;
     mini_fat_persector = header->get_sector_size() / header->get_mini_sector_size();
 
     if (sec_id >=  mini_fat_persector)
@@ -345,7 +347,7 @@ void OleFile :: get_file_data(FileProperty* node, uint8_t*& file_data, uint32_t&
                 }
                 visited_mini_sectors.insert(mini_sector);
                 byte_offset = get_mini_fat_offset(mini_sector);
-                if (byte_offset > buf_len)
+                if (byte_offset == -1 || byte_offset > buf_len)
                     return;
 
                 bytes_to_copy = find_bytes_to_copy(byte_offset, data_len,
