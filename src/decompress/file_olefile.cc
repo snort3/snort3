@@ -68,8 +68,15 @@ void OleFile :: walk_directory_list()
 
     dir_list = new DirectoryList();
 
+    std::unordered_set<int32_t> visited_dir_sectors;
     while (current_sector > INVALID_SECTOR)
     {
+        if (visited_dir_sectors.count(current_sector)) {
+            VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, CURRENT_PACKET,
+                "Potential loop in Directory FAT sector chain at sector %d. Aborting walk_directory_list.\n", current_sector);
+            return;
+        }
+        visited_dir_sectors.insert(current_sector);
         const uint8_t* buf = file_buf;
         uint32_t start_offset = get_fat_offset(current_sector);
 
@@ -300,8 +307,15 @@ void OleFile :: get_file_data(FileProperty* node, uint8_t*& file_data, uint32_t&
         {
             int32_t current_sector = starting_sector;
             uint16_t sector_size = header->get_sector_size();
+            std::unordered_set<int32_t> visited_sectors;
             while (current_sector > INVALID_SECTOR)
             {
+                if (visited_sectors.count(current_sector)) {
+                    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, CURRENT_PACKET,
+                        "Potential loop in FAT sector chain at sector %d. Aborting get_file_data.\n", current_sector);
+                    return;
+                }
+                visited_sectors.insert(current_sector);
                 byte_offset = get_fat_offset(current_sector);
                 if (byte_offset > buf_len)
                     return;
@@ -321,8 +335,15 @@ void OleFile :: get_file_data(FileProperty* node, uint8_t*& file_data, uint32_t&
         {
             int32_t mini_sector = node->get_starting_sector();
             uint16_t mini_sector_size = header->get_mini_sector_size();
+            std::unordered_set<int32_t> visited_mini_sectors;
             while (mini_sector > INVALID_SECTOR)
             {
+                if (visited_mini_sectors.count(mini_sector)) {
+                    VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, CURRENT_PACKET,
+                        "Potential loop in Mini-FAT sector chain at sector %d. Aborting get_file_data.\n", mini_sector);
+                    return;
+                }
+                visited_mini_sectors.insert(mini_sector);
                 byte_offset = get_mini_fat_offset(mini_sector);
                 if (byte_offset > buf_len)
                     return;
@@ -430,9 +451,16 @@ void OleFile :: populate_mini_fat_list()
 
     current_sector = minifat_sector;
     int32_t minfat_curr_cnt = 0;
+    std::unordered_set<int32_t> visited_mini_fat_sectors;
     while (current_sector > INVALID_SECTOR)
     {
         uint32_t sector_size = header->get_sector_size();
+        if (visited_mini_fat_sectors.count(current_sector)) {
+            VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, CURRENT_PACKET,
+                "Potential loop in Mini-FAT FAT sector chain at sector %d. Aborting populate_mini_fat_list.\n", current_sector);
+            return;
+        }
+        visited_mini_fat_sectors.insert(current_sector);
         uint32_t byte_offset = OLE_HEADER_LEN + (current_sector * sector_size);
 
         // Integer overflow check
