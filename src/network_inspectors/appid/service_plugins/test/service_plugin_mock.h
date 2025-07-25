@@ -84,7 +84,7 @@ AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&)
 
 AlpnPatternMatchers::~AlpnPatternMatchers() {}
 EveCaPatternMatchers::~EveCaPatternMatchers() { }
-SslPatternMatchers::~SslPatternMatchers() { }
+HostPatternMatchers::~HostPatternMatchers() { }
 SipPatternMatchers::~SipPatternMatchers() { }
 HttpPatternMatchers::~HttpPatternMatchers() { }
 DnsPatternMatchers::~DnsPatternMatchers() { }

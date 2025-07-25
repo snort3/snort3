@@ -1310,15 +1310,23 @@ static int detector_add_http_pattern(lua_State* L)
     }
 
     uint32_t app_id = lua_tointeger(L, ++index);
-    DetectorHTTPPattern pattern;
-    if (pattern.init(pattern_str, pattern_size, seq, service_id, client_id,
-        payload_id, app_id))
+    if (pat_type != HTTP_USER_AGENT)
     {
-        ud->get_odp_ctxt().get_http_matchers().insert_http_pattern(pat_type, pattern);
-        aim.set_app_info_active(service_id);
-        aim.set_app_info_active(client_id);
-        aim.set_app_info_active(payload_id);
-        aim.set_app_info_active(app_id);
+        ud->get_odp_ctxt().get_host_matchers().add_host_pattern(pattern_str, pattern_size, 0, client_id,
+            payload_id, HostPatternType::HOST_PATTERN_TYPE_URL, true, ud->get_odp_ctxt().get_app_info_mgr().get_app_info_flags(payload_id, APPINFO_FLAG_REFERRED));
+    }
+    else
+    {
+        DetectorHTTPPattern pattern;
+        if (pattern.init(pattern_str, pattern_size, seq, service_id, client_id,
+            payload_id, app_id))
+        {
+            ud->get_odp_ctxt().get_http_matchers().insert_http_pattern(pat_type, pattern);
+            aim.set_app_info_active(service_id);
+            aim.set_app_info_active(client_id);
+            aim.set_app_info_active(payload_id);
+            aim.set_app_info_active(app_id);
+        }
     }
 
     return 0;
@@ -1346,9 +1354,8 @@ static int detector_add_ssl_cert_pattern(lua_State* L)
         return 0;
     }
 
-    uint8_t* pattern_str = (uint8_t*)snort_strdup(tmp_string);
-    ud->get_odp_ctxt().get_ssl_matchers().add_cert_pattern(pattern_str, pattern_size, type, app_id,
-        false);
+    ud->get_odp_ctxt().get_host_matchers().add_host_pattern((const uint8_t*)tmp_string, pattern_size, type, type ? app_id : 0, !type ? app_id : 0,
+        HostPatternType::HOST_PATTERN_TYPE_SNI);
     ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
 
     return 0;
@@ -1382,9 +1389,8 @@ static int detector_add_ssl_cert_regex_pattern(lua_State* L)
         return 0;
     }
 
-    uint8_t* pattern_str = (uint8_t*)snort_strdup(tmp_string);
-    ud->get_odp_ctxt().get_ssl_matchers().add_cert_pattern(pattern_str, pattern_size, type, app_id,
-        false, false);
+    ud->get_odp_ctxt().get_host_matchers().add_host_pattern((const uint8_t*)tmp_string, pattern_size, type, type ? app_id : 0, !type ? app_id : 0,
+        HostPatternType::HOST_PATTERN_TYPE_SNI, false);
     ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
 
     return 0;
@@ -1412,9 +1418,8 @@ static int detector_add_ssl_cname_pattern(lua_State* L)
         return 0;
     }
 
-    uint8_t* pattern_str = (uint8_t*)snort_strdup(tmp_string);
-    ud->get_odp_ctxt().get_ssl_matchers().add_cert_pattern(pattern_str, pattern_size, type, app_id,
-        true);
+    ud->get_odp_ctxt().get_host_matchers().add_host_pattern((const uint8_t*)tmp_string, pattern_size, type, type ? app_id : 0, !type ? app_id : 0,
+        HostPatternType::HOST_PATTERN_TYPE_CNAME);
     ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
 
     return 0;
@@ -1449,9 +1454,8 @@ static int detector_add_ssl_cname_regex_pattern(lua_State* L)
         return 0;
     }
 
-    uint8_t* pattern_str = (uint8_t*)snort_strdup(tmp_string);
-    ud->get_odp_ctxt().get_ssl_matchers().add_cert_pattern(pattern_str, pattern_size, type, app_id,
-        true, false);
+    ud->get_odp_ctxt().get_host_matchers().add_host_pattern((const uint8_t*)tmp_string, pattern_size, type, type ? app_id : 0, !type ? app_id : 0,
+        HostPatternType::HOST_PATTERN_TYPE_CNAME, false);
     ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(app_id);
 
     return 0;
@@ -2372,30 +2376,12 @@ static int detector_add_url_application(lua_State* L)
     size_t path_pattern_size = 0;
     uint8_t* path_pattern = nullptr;
     tmp_string = lua_tolstring(L, ++index, &path_pattern_size);
-    if (!tmp_string or !path_pattern_size)
+    if (tmp_string and path_pattern_size)
     {
-        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid path pattern string: service_id %u; "
-            "client_id %u; payload %u.\n", service_id, client_id, payload_id);
-        snort_free(host_pattern);
-        return 0;
-    }
-    else
         path_pattern = (uint8_t*)snort_strdup(tmp_string);
-
-    /* Verify that scheme pattern is a valid string */
-    size_t schemePatternSize;
-    uint8_t* schemePattern = nullptr;
-    tmp_string = lua_tolstring(L, ++index, &schemePatternSize);
-    if (!tmp_string or !schemePatternSize)
-    {
-        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid scheme pattern string: service_id %u; "
-            "client_id %u; payload %u.\n", service_id, client_id, payload_id);
-        snort_free(path_pattern);
-        snort_free(host_pattern);
-        return 0;
     }
-    else
-        schemePattern = (uint8_t*)snort_strdup(tmp_string);
+    
+    ++index;
 
     /* Verify that query pattern is a valid string */
     size_t query_pattern_size;
@@ -2406,34 +2392,43 @@ static int detector_add_url_application(lua_State* L)
 
     uint32_t appId = lua_tointeger(L, ++index);
     AppInfoManager& app_info_manager = ud->get_odp_ctxt().get_app_info_mgr();
-    DetectorAppUrlPattern* pattern =
-        (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
-    pattern->userData.service_id        = app_info_manager.get_appid_by_service_id(service_id);
-    pattern->userData.client_id        = app_info_manager.get_appid_by_client_id(client_id);
-    pattern->userData.payload_id           = app_info_manager.get_appid_by_payload_id(payload_id);
-    pattern->userData.appId             = appId;
-    pattern->userData.query.pattern     = query_pattern;
-    pattern->userData.query.patternSize = query_pattern_size;
-    pattern->patterns.host.pattern      = host_pattern;
-    pattern->patterns.host.patternSize  = (int)host_pattern_size;
-    pattern->patterns.path.pattern      = path_pattern;
-    pattern->patterns.path.patternSize  = (int)path_pattern_size;
-    pattern->patterns.scheme.pattern    = schemePattern;
-    pattern->patterns.scheme.patternSize = (int)schemePatternSize;
-    pattern->is_literal = true;
-    ud->get_odp_ctxt().get_http_matchers().insert_url_pattern(pattern);
 
-    app_info_manager.set_app_info_active(pattern->userData.service_id);
-    app_info_manager.set_app_info_active(pattern->userData.client_id);
-    app_info_manager.set_app_info_active(pattern->userData.payload_id);
-    app_info_manager.set_app_info_active(appId);
+    if ( query_pattern or ( path_pattern and ( path_pattern_size > 1 )) )
+    {
+        DetectorAppUrlPattern* pattern =
+            (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
+        pattern->userData.service_id        = app_info_manager.get_appid_by_service_id(service_id);
+        pattern->userData.client_id        = app_info_manager.get_appid_by_client_id(client_id);
+        pattern->userData.payload_id           = app_info_manager.get_appid_by_payload_id(payload_id);
+        pattern->userData.appId             = appId;
+        pattern->userData.query.pattern     = query_pattern;
+        pattern->userData.query.patternSize = query_pattern_size;
+        pattern->patterns.host.pattern      = host_pattern;
+        pattern->patterns.host.patternSize  = (int)host_pattern_size;
+        pattern->patterns.path.pattern      = path_pattern;
+        pattern->patterns.path.patternSize  = (int)path_pattern_size;
+        pattern->is_literal = true;
+        ud->get_odp_ctxt().get_http_matchers().insert_url_pattern(pattern);
+    }
+    else
+    {
+        AppId linked_payload_id = app_info_manager.get_appid_by_payload_id(payload_id);
+        ud->get_odp_ctxt().get_host_matchers().add_host_pattern((const uint8_t*)host_pattern, host_pattern_size, 0,
+             app_info_manager.get_appid_by_client_id(client_id), linked_payload_id, HostPatternType::HOST_PATTERN_TYPE_URL, true,
+             ud->get_odp_ctxt().get_app_info_mgr().get_app_info_flags(linked_payload_id, APPINFO_FLAG_REFERRED));
+        snort_free(host_pattern);
+        snort_free(path_pattern);
+        snort_free(query_pattern);
+    }
+    
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appId);
 
     return 0;
 }
 
 static int detector_add_url_application_regex(lua_State* L)
 {
-    // Verify detector user data and that we are NOT in packet context
+     // Verify detector user data and that we are NOT in packet context
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
     ud->validate_lua_state(false);
     if (!init(L))
@@ -2445,7 +2440,6 @@ static int detector_add_url_application_regex(lua_State* L)
             "regex capable search engine like hyperscan in %s\n", ud->get_detector()->get_name().c_str());
             return 0;
     }
-
 
     int index = 1;
 
@@ -2461,7 +2455,7 @@ static int detector_add_url_application_regex(lua_State* L)
     const char* tmp_string = lua_tolstring(L, ++index, &host_pattern_size);
     if (!tmp_string or !host_pattern_size)
     {
-        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid host regex pattern string: service_id %u; "
+        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid host pattern string: service_id %u; "
             "client_id %u; payload_id %u.\n", service_id, client_id, payload_id);
         return 0;
     }
@@ -2472,30 +2466,12 @@ static int detector_add_url_application_regex(lua_State* L)
     size_t path_pattern_size = 0;
     uint8_t* path_pattern = nullptr;
     tmp_string = lua_tolstring(L, ++index, &path_pattern_size);
-    if (!tmp_string or !path_pattern_size)
+    if (tmp_string and path_pattern_size)
     {
-        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid path regex pattern string: service_id %u; "
-            "client_id %u; payload %u.\n", service_id, client_id, payload_id);
-        snort_free(host_pattern);
-        return 0;
-    }
-    else
         path_pattern = (uint8_t*)snort_strdup(tmp_string);
-
-    /* Verify that scheme pattern is a valid string */
-    size_t schemePatternSize;
-    uint8_t* schemePattern = nullptr;
-    tmp_string = lua_tolstring(L, ++index, &schemePatternSize);
-    if (!tmp_string or !schemePatternSize)
-    {
-        APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid scheme regex pattern string: service_id %u; "
-            "client_id %u; payload %u.\n", service_id, client_id, payload_id);
-        snort_free(path_pattern);
-        snort_free(host_pattern);
-        return 0;
     }
-    else
-        schemePattern = (uint8_t*)snort_strdup(tmp_string);
+    
+    ++index;
 
     /* Verify that query pattern is a valid string */
     size_t query_pattern_size;
@@ -2505,28 +2481,38 @@ static int detector_add_url_application_regex(lua_State* L)
         query_pattern = (uint8_t*)snort_strdup(tmp_string);
 
     uint32_t appId = lua_tointeger(L, ++index);
-    AppInfoManager& app_info_manager = ud->get_odp_ctxt().get_app_info_mgr();
-    DetectorAppUrlPattern* pattern =
-        (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
-    pattern->userData.service_id        = app_info_manager.get_appid_by_service_id(service_id);
-    pattern->userData.client_id        = app_info_manager.get_appid_by_client_id(client_id);
-    pattern->userData.payload_id           = app_info_manager.get_appid_by_payload_id(payload_id);
-    pattern->userData.appId             = appId;
-    pattern->userData.query.pattern     = query_pattern;
-    pattern->userData.query.patternSize = query_pattern_size;
-    pattern->patterns.host.pattern      = host_pattern;
-    pattern->patterns.host.patternSize  = (int)host_pattern_size;
-    pattern->patterns.path.pattern      = path_pattern;
-    pattern->patterns.path.patternSize  = (int)path_pattern_size;
-    pattern->patterns.scheme.pattern    = schemePattern;
-    pattern->patterns.scheme.patternSize = (int)schemePatternSize;
-    pattern->is_literal = false;
-    ud->get_odp_ctxt().get_http_matchers().insert_url_pattern(pattern);
 
-    app_info_manager.set_app_info_active(pattern->userData.service_id);
-    app_info_manager.set_app_info_active(pattern->userData.client_id);
-    app_info_manager.set_app_info_active(pattern->userData.payload_id);
-    app_info_manager.set_app_info_active(appId);
+    AppInfoManager& app_info_manager = ud->get_odp_ctxt().get_app_info_mgr();
+
+    if ( query_pattern or ( path_pattern and ( path_pattern_size > 1 )) )
+    {
+        DetectorAppUrlPattern* pattern =
+            (DetectorAppUrlPattern*)snort_calloc(sizeof(DetectorAppUrlPattern));
+        pattern->userData.service_id        = app_info_manager.get_appid_by_service_id(service_id);
+        pattern->userData.client_id        = app_info_manager.get_appid_by_client_id(client_id);
+        pattern->userData.payload_id           = app_info_manager.get_appid_by_payload_id(payload_id);
+        pattern->userData.appId             = appId;
+        pattern->userData.query.pattern     = query_pattern;
+        pattern->userData.query.patternSize = query_pattern_size;
+        pattern->patterns.host.pattern      = host_pattern;
+        pattern->patterns.host.patternSize  = (int)host_pattern_size;
+        pattern->patterns.path.pattern      = path_pattern;
+        pattern->patterns.path.patternSize  = (int)path_pattern_size;
+        pattern->is_literal = false;
+        ud->get_odp_ctxt().get_http_matchers().insert_url_pattern(pattern);
+    }
+    else
+    {
+        AppId linked_payload_id = app_info_manager.get_appid_by_payload_id(payload_id);
+        ud->get_odp_ctxt().get_host_matchers().add_host_pattern((const uint8_t*)host_pattern, host_pattern_size, 0,
+             app_info_manager.get_appid_by_client_id(client_id), linked_payload_id, HostPatternType::HOST_PATTERN_TYPE_URL, false,
+             ud->get_odp_ctxt().get_app_info_mgr().get_app_info_flags(linked_payload_id, APPINFO_FLAG_REFERRED));
+        snort_free(host_pattern);
+        snort_free(path_pattern);
+        snort_free(query_pattern);
+    }
+    
+    ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appId);
 
     return 0;
 }

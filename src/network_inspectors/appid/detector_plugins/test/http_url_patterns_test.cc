@@ -94,13 +94,15 @@ int AppIdDiscovery::add_service_port(AppIdDetector*, ServiceDetectorPort const&)
 DnsPatternMatchers::~DnsPatternMatchers() = default;
 EveCaPatternMatchers::~EveCaPatternMatchers() = default;
 SipPatternMatchers::~SipPatternMatchers() = default;
-SslPatternMatchers::~SslPatternMatchers() = default;
+HostPatternMatchers::~HostPatternMatchers() = default;
 AlpnPatternMatchers::~AlpnPatternMatchers() = default;
 UserDataMap::~UserDataMap() = default;
 CipPatternMatchers::~CipPatternMatchers() = default;
+bool HostPatternMatchers::scan_url(const uint8_t*, size_t, AppId&, AppId&, bool*){ return true; }   
 void AppIdModule::reset_stats() {}
 bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
 void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
+void HostPatternMatchers::add_host_pattern(unsigned char const*, unsigned long, unsigned char, int, int, HostPatternType, bool, bool) {}
 
 TEST_GROUP(http_url_patterns_tests)
 {

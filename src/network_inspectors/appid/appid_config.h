@@ -37,7 +37,7 @@
 #include "detector_plugins/dns_patterns.h"
 #include "detector_plugins/http_url_patterns.h"
 #include "detector_plugins/sip_patterns.h"
-#include "detector_plugins/ssl_patterns.h"
+#include "detector_plugins/host_patterns.h"
 #include "host_port_app_cache.h"
 #include "length_app_cache.h"
 #include "lua_detector_flow_api.h"
@@ -248,9 +248,9 @@ public:
         return sip_matchers;
     }
 
-    SslPatternMatchers& get_ssl_matchers()
+    HostPatternMatchers& get_host_matchers()
     {
-        return ssl_matchers;
+        return host_matchers;
     }
 
     SshPatternMatchers& get_ssh_matchers()
@@ -315,7 +315,7 @@ private:
     EveCaPatternMatchers eve_ca_matchers;
     ServiceDiscovery service_disco_mgr;
     SipPatternMatchers sip_matchers;
-    SslPatternMatchers ssl_matchers;
+    HostPatternMatchers host_matchers;
     SshPatternMatchers ssh_matchers;
     PatternClientDetector* client_pattern_detector;
     PatternServiceDetector* service_pattern_detector;

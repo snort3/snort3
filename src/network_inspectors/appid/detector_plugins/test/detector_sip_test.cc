@@ -163,7 +163,7 @@ void AppIdModule::reset_stats() { }
 
 DnsPatternMatchers::~DnsPatternMatchers() = default;
 EveCaPatternMatchers::~EveCaPatternMatchers() = default;
-SslPatternMatchers::~SslPatternMatchers() = default;
+HostPatternMatchers::~HostPatternMatchers() = default;
 HttpPatternMatchers::~HttpPatternMatchers() = default;
 AlpnPatternMatchers::~AlpnPatternMatchers() = default;
 CipPatternMatchers::~CipPatternMatchers() = default;

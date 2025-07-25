@@ -547,7 +547,7 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits)
     if (tls_str)
     {
         size_t size = strlen(tls_str);
-        if (odp_ctxt.get_ssl_matchers().scan_cname((const uint8_t*)tls_str, size,
+        if (odp_ctxt.get_host_matchers().scan_cname((const uint8_t*)tls_str, size,
             client_id, payload_id))
         {
             set_client_appid_data(client_id, change_bits);
@@ -558,7 +558,7 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits)
     if ((scan_flags & SCAN_SSL_HOST_FLAG) and (tls_str = tsession->get_tls_host()))
     {
         size_t size = strlen(tls_str);
-        if (odp_ctxt.get_ssl_matchers().scan_hostname((const uint8_t*)tls_str, size,
+        if (odp_ctxt.get_host_matchers().scan_hostname((const uint8_t*)tls_str, size,
             client_id, payload_id))
         {
             if (api.client.get_id() == APP_ID_NONE or api.client.get_id() == APP_ID_SSL_CLIENT)
@@ -570,7 +570,7 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits)
     if ((scan_flags & SCAN_SSL_CERTIFICATE_FLAG) and (tls_str = tsession->get_tls_cname()))
     {
         size_t size = strlen(tls_str);
-        if (odp_ctxt.get_ssl_matchers().scan_cname((const uint8_t*)tls_str, size,
+        if (odp_ctxt.get_host_matchers().scan_cname((const uint8_t*)tls_str, size,
             client_id, payload_id))
         {
             if (api.client.get_id() == APP_ID_NONE or api.client.get_id() == APP_ID_SSL_CLIENT)

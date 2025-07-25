@@ -275,6 +275,7 @@ public:
     uint32_t client_id = APP_ID_NONE;
     AppId appId = APP_ID_NONE;
     DHPSequence seq = SINGLE;
+    bool is_referred = false;
 };
 
 class HttpPatternMatchers
@@ -285,7 +286,7 @@ public:
     { }
     ~HttpPatternMatchers();
 
-    int finalize_patterns();
+    int finalize_patterns(OdpContext&);
     void reload_patterns();
     unsigned get_pattern_count();
     void insert_chp_pattern(CHPListElement*);
@@ -296,8 +297,8 @@ public:
     void insert_rtmp_url_pattern(DetectorAppUrlPattern*);
     void insert_app_url_pattern(DetectorAppUrlPattern*);
     int process_chp_list(CHPListElement*);
-    int process_host_patterns(DetectorHTTPPatterns&);
-    int process_mlmp_patterns();
+    int process_host_patterns(const DetectorHTTPPatterns&, OdpContext&);
+    int process_mlmp_patterns(OdpContext&);
     void process_http_field_patterns(FieldPattern*, size_t);
 
     void scan_key_chp(ChpMatchDescriptor&);
@@ -334,8 +335,8 @@ private:
     unsigned chp_pattern_count = 0;
 
     void free_chp_app_elements();
-    int add_mlmp_pattern(tMlmpTree* matcher, DetectorHTTPPattern& pattern );
-    int add_mlmp_pattern(tMlmpTree* matcher, DetectorAppUrlPattern& pattern);
+    int add_mlmp_pattern(tMlmpTree* matcher, DetectorHTTPPattern& pattern, OdpContext& odp_ctxt);
+    int add_mlmp_pattern(tMlmpTree* matcher, DetectorAppUrlPattern& pattern, OdpContext& odp_ctxt);
 
 };
 

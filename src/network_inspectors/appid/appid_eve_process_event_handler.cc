@@ -122,7 +122,7 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
         asd->tsession->set_tls_host(server_name.c_str(), server_name.length());
         asd->set_tls_host();
 
-        odp_ctxt.get_ssl_matchers().scan_hostname(reinterpret_cast<const uint8_t*>(server_name.c_str()),
+        odp_ctxt.get_host_matchers().scan_hostname(reinterpret_cast<const uint8_t*>(server_name.c_str()),
             server_name.length(), tmp_client_id, tmp_payload_id);
         asd->set_payload_id(tmp_payload_id);
     }

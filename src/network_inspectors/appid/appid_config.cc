@@ -199,7 +199,7 @@ unsigned OdpContext::get_pattern_count()
         eve_ca_matchers.get_pattern_count() +
         alpn_matchers.get_pattern_count() +
         sip_matchers.get_pattern_count() +
-        ssl_matchers.get_pattern_count() +
+        host_matchers.get_pattern_count() +
         ssh_matchers.get_pattern_count() +
         dns_matchers.get_pattern_count();
 }
@@ -257,13 +257,13 @@ void OdpContext::initialize(AppIdInspector& inspector)
     client_pattern_detector->finalize_client_port_patterns(inspector);
     service_disco_mgr.finalize_service_patterns();
     client_disco_mgr.finalize_client_patterns();
-    http_matchers.finalize_patterns();
+    http_matchers.finalize_patterns(*this);
     eve_ca_matchers.finalize_patterns();
     alpn_matchers.finalize_patterns();
     // sip patterns need to be finalized after http patterns because they
     // are dependent on http patterns
     sip_matchers.finalize_patterns(*this);
-    ssl_matchers.finalize_patterns();
+    host_matchers.finalize_patterns();
     dns_matchers.finalize_patterns();
 }
 
@@ -278,7 +278,7 @@ void OdpContext::reload()
     eve_ca_matchers.reload_patterns();
     http_matchers.reload_patterns();
     sip_matchers.reload_patterns();
-    ssl_matchers.reload_patterns();
+    host_matchers.reload_patterns();
     dns_matchers.reload_patterns();
     alpn_matchers.reload_patterns();
 }

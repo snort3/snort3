@@ -131,8 +131,8 @@ set ( DP_APPID_SOURCES
     detector_plugins/sip_patterns.h
     detector_plugins/ssh_patterns.cc
     detector_plugins/ssh_patterns.h
-    detector_plugins/ssl_patterns.cc
-    detector_plugins/ssl_patterns.h
+    detector_plugins/host_patterns.cc
+    detector_plugins/host_patterns.h
 )
 
 set ( UTIL_APPID_SOURCES

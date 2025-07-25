@@ -138,7 +138,7 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
             return false;
 
         AppidChangeBits change_bits;
-        SslPatternMatchers& ssl_matchers = asd->get_odp_ctxt().get_ssl_matchers();
+        HostPatternMatchers& host_matchers = asd->get_odp_ctxt().get_host_matchers();
         if (!asd->tsession)
             asd->tsession = new TlsSession();
         else if (sni_mismatch)
@@ -155,7 +155,7 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
             asd->tsession->set_tls_org_unit(org_unit, strlen(org_unit));
             if (client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
             {
-                ssl_matchers.scan_cname((const uint8_t*)org_unit, strlen(org_unit),
+                host_matchers.scan_cname((const uint8_t*)org_unit, strlen(org_unit),
                     client_id, payload_id);
                 if (client_id != APP_ID_NONE or payload_id != APP_ID_NONE)
                     asd->tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_ORG_UNIT);
@@ -165,7 +165,7 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
         if (server_name and !sni_mismatch)
         {
             asd->tsession->set_tls_host(server_name, strlen(server_name), change_bits);
-            ssl_matchers.scan_hostname((const uint8_t*)server_name, strlen(server_name),
+            host_matchers.scan_hostname((const uint8_t*)server_name, strlen(server_name),
                 client_id, payload_id);
             if (client_id != APP_ID_NONE or payload_id != APP_ID_NONE)
                 asd->tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_HOST);
@@ -176,7 +176,7 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
             asd->tsession->set_tls_first_alt_name(first_alt_name, strlen(first_alt_name), change_bits);
             if (client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
             {
-                ssl_matchers.scan_hostname((const uint8_t*)first_alt_name, strlen(first_alt_name),
+                host_matchers.scan_hostname((const uint8_t*)first_alt_name, strlen(first_alt_name),
                     client_id, payload_id);
                 if (client_id != APP_ID_NONE or payload_id != APP_ID_NONE)
                     asd->tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_FIRST_SAN);
@@ -188,7 +188,7 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
             asd->tsession->set_tls_cname(common_name, strlen(common_name), change_bits);
             if (client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
             {
-                ssl_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name),
+                host_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name),
                     client_id, payload_id);
                 if (client_id != APP_ID_NONE or payload_id != APP_ID_NONE)
                     asd->tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_CNAME);
@@ -220,19 +220,19 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
     }
     else
     {
-        SslPatternMatchers& ssl_matchers = pkt_thread_odp_ctxt->get_ssl_matchers();
+        HostPatternMatchers& host_matchers = pkt_thread_odp_ctxt->get_host_matchers();
 
         if (server_name and !sni_mismatch)
-            ssl_matchers.scan_hostname((const uint8_t*)server_name, strlen(server_name),
+            host_matchers.scan_hostname((const uint8_t*)server_name, strlen(server_name),
                 client_id, payload_id);
         if (first_alt_name and client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
-            ssl_matchers.scan_hostname((const uint8_t*)first_alt_name, strlen(first_alt_name),
+            host_matchers.scan_hostname((const uint8_t*)first_alt_name, strlen(first_alt_name),
                 client_id, payload_id);
         if (common_name and client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
-            ssl_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name), client_id,
+            host_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name), client_id,
                 payload_id);
         if (org_unit and client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
-            ssl_matchers.scan_cname((const uint8_t*)org_unit, strlen(org_unit), client_id,
+            host_matchers.scan_cname((const uint8_t*)org_unit, strlen(org_unit), client_id,
                 payload_id);
     }
 

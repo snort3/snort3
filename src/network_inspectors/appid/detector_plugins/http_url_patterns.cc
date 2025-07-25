@@ -471,7 +471,7 @@ void HttpPatternMatchers::insert_app_url_pattern(DetectorAppUrlPattern* pattern)
     HttpPatternMatchers::insert_url_pattern(pattern);
 }
 
-int HttpPatternMatchers::add_mlmp_pattern(tMlmpTree* matcher, DetectorHTTPPattern& pattern)
+int HttpPatternMatchers::add_mlmp_pattern(tMlmpTree* matcher, DetectorHTTPPattern& pattern, OdpContext& odp_ctxt)
 {
     assert(pattern.pattern);
 
@@ -492,6 +492,8 @@ int HttpPatternMatchers::add_mlmp_pattern(tMlmpTree* matcher, DetectorHTTPPatter
     else
         detector->appId = pattern.service_id;
 
+    detector->is_referred = odp_ctxt.get_app_info_mgr().get_app_info_flags(detector->payload_id, APPINFO_FLAG_REFERRED);
+
     tMlmpPattern patterns[PATTERN_PART_MAX];
     int num_patterns = parse_multiple_http_patterns((const char*)pattern.pattern, patterns,
         PATTERN_PART_MAX, 0, true);
@@ -499,7 +501,7 @@ int HttpPatternMatchers::add_mlmp_pattern(tMlmpTree* matcher, DetectorHTTPPatter
     return mlmpAddPattern(matcher, patterns, detector);
 }
 
-int HttpPatternMatchers::add_mlmp_pattern(tMlmpTree* matcher, DetectorAppUrlPattern& pattern)
+int HttpPatternMatchers::add_mlmp_pattern(tMlmpTree* matcher, DetectorAppUrlPattern& pattern, OdpContext& odp_ctxt)
 {
     assert(pattern.patterns.host.pattern);
 
@@ -523,6 +525,7 @@ int HttpPatternMatchers::add_mlmp_pattern(tMlmpTree* matcher, DetectorAppUrlPatt
     detector->service_id = pattern.userData.service_id;
     detector->client_id = pattern.userData.client_id;
     detector->seq = SINGLE;
+    detector->is_referred = odp_ctxt.get_app_info_mgr().get_app_info_flags(detector->payload_id, APPINFO_FLAG_REFERRED);
     if (pattern.userData.appId > APP_ID_NONE)
         detector->appId = pattern.userData.appId;
     else if (pattern.userData.payload_id > APP_ID_NONE)
@@ -543,18 +546,18 @@ int HttpPatternMatchers::add_mlmp_pattern(tMlmpTree* matcher, DetectorAppUrlPatt
     return mlmpAddPattern(matcher, patterns, detector);
 }
 
-int HttpPatternMatchers::process_mlmp_patterns()
+int HttpPatternMatchers::process_mlmp_patterns(OdpContext& ctxt)
 {
     for (auto& pattern: host_payload_patterns)
-        if ( add_mlmp_pattern(host_url_matcher, pattern) < 0 )
+        if ( add_mlmp_pattern(host_url_matcher, pattern, ctxt) < 0 )
             return -1;
 
     if (std::any_of(rtmp_url_patterns.begin(), rtmp_url_patterns.end(),
-        [this](DetectorAppUrlPattern* pattern){ return add_mlmp_pattern(rtmp_host_url_matcher, *pattern) < 0; }))
+        [this, &ctxt](DetectorAppUrlPattern* pattern) mutable { return add_mlmp_pattern(rtmp_host_url_matcher, *pattern, ctxt) < 0; }))
         return -1;
 
     if (std::any_of(app_url_patterns.begin(), app_url_patterns.end(),
-        [this](DetectorAppUrlPattern* pattern){ return add_mlmp_pattern(host_url_matcher, *pattern) < 0; }))
+        [this, &ctxt](DetectorAppUrlPattern* pattern) mutable { return add_mlmp_pattern(host_url_matcher, *pattern, ctxt) < 0; }))
         return -1;
 
     return 0;
@@ -642,7 +645,7 @@ static int http_pattern_match(void* id, void*, int match_end_pos, void* data, vo
         return 0;
 }
 
-int HttpPatternMatchers::process_host_patterns(DetectorHTTPPatterns& patterns)
+int HttpPatternMatchers::process_host_patterns(const DetectorHTTPPatterns& patterns, OdpContext& ctxt)
 {
     if (!host_url_matcher)
         host_url_matcher = mlmpCreate();
@@ -650,13 +653,14 @@ int HttpPatternMatchers::process_host_patterns(DetectorHTTPPatterns& patterns)
     if (!rtmp_host_url_matcher)
         rtmp_host_url_matcher = mlmpCreate();
 
-    for (auto& pat : patterns)
+    for (const auto& pat : patterns)
     {
-        if ( add_mlmp_pattern(host_url_matcher, pat) < 0 )
-            return -1;
+        ctxt.get_host_matchers().add_host_pattern(pat.pattern, pat.pattern_size, 0,
+            pat.client_id, pat.payload_id, HostPatternType::HOST_PATTERN_TYPE_URL, true,
+            ctxt.get_app_info_mgr().get_app_info_flags(pat.payload_id, APPINFO_FLAG_REFERRED));
     }
 
-    if ( HttpPatternMatchers::process_mlmp_patterns() < 0 )
+    if ( HttpPatternMatchers::process_mlmp_patterns(ctxt) < 0 )
         return -1;
 
     mlmpProcessPatterns(host_url_matcher);
@@ -717,14 +721,14 @@ static void process_patterns(SearchTool& matcher, DetectorHTTPPatterns& patterns
         matcher.prep();
 }
 
-int HttpPatternMatchers::finalize_patterns()
+int HttpPatternMatchers::finalize_patterns(OdpContext& ctxt)
 {
     process_patterns(via_matcher, static_via_http_detector_patterns);
     process_patterns(url_matcher, url_patterns);
     process_patterns(client_agent_matcher, static_client_agent_patterns, false);
     process_patterns(client_agent_matcher, client_agent_patterns);
 
-    if (process_host_patterns(static_http_host_payload_patterns) < 0)
+    if (process_host_patterns(static_http_host_payload_patterns, ctxt) < 0)
         return -1;
 
     process_patterns(content_type_matcher, static_content_type_patterns, false);
@@ -1410,50 +1414,36 @@ bool HttpPatternMatchers::get_appid_from_url(const char* host, const char* url, 
     const char* referer, AppId* ClientAppId, AppId* serviceAppId, AppId* payloadAppId,
     AppId* referredPayloadAppId, bool from_rtmp, OdpContext& odp_ctxt)
 {
-    char* temp_host = nullptr;
+    if (!host && !url)
+        return false;
+
     tMlmpPattern patterns[3];
     bool payload_found = false;
     tMlmpTree* matcher = from_rtmp ? rtmp_host_url_matcher : host_url_matcher;
-
-    if (!host && !url)
-        return false;
+    auto& host_matcher = odp_ctxt.get_host_matchers();
+    bool is_referred_appid = false;
 
     int url_len = 0;
     if (url)
     {
-        size_t scheme_len = strlen(url);
-        if (scheme_len > URL_SCHEME_MAX_LEN)
-            scheme_len = URL_SCHEME_MAX_LEN;    // only search the first few bytes for scheme
-        const char* url_offset = (const char*)service_strstr((const uint8_t*)url, scheme_len,
-            (const uint8_t*)URL_SCHEME_END_PATTERN, sizeof(URL_SCHEME_END_PATTERN)-1);
+        const char* url_offset = strstr(url, URL_SCHEME_END_PATTERN);
         if (url_offset)
-            url_offset += sizeof(URL_SCHEME_END_PATTERN)-1;
+            url = url_offset + sizeof(URL_SCHEME_END_PATTERN)-1;
         else
             return false;
 
-        url = url_offset;
         url_len = strlen(url);
     }
 
     int host_len;
     if (!host)
     {
-        host = strchr(url, '/');
-        if (host != nullptr)
-            host_len = host - url;
+        host = url;
+        auto path_offset = strchr(url, '/');
+        if (path_offset != nullptr)
+            host_len = path_offset - url;
         else
             host_len = url_len;
-        if (host_len > 0)
-        {
-            temp_host = snort_strndup(url, host_len);
-            if (!temp_host)
-            {
-                host_len = 0;
-                host = nullptr;
-            }
-            else
-                host = temp_host;
-        }
     }
     else
         host_len = strlen(host);
@@ -1464,102 +1454,141 @@ bool HttpPatternMatchers::get_appid_from_url(const char* host, const char* url, 
     {
         if (url_len < host_len)
         {
-            snort_free(temp_host);
             return false;
         }
         path = strchr(url, '/');
         if (path)
-            path_len = url + url_len - path;
-    }
-
-    if (!path_len)
-    {
-        path = "/";
-        path_len = 1;
-    }
-
-    patterns[0].pattern = (const uint8_t*)host;
-    patterns[0].patternSize = host_len;
-    patterns[1].pattern = (const uint8_t*)path;
-    patterns[1].patternSize = path_len;
-    patterns[2].pattern = nullptr;
-
-    HostUrlDetectorPattern* data = (HostUrlDetectorPattern*)mlmpMatchPatternUrl(matcher, patterns);
-    if ( data )
-    {
-        payload_found = true;
-        if ( url )
         {
-            const char* q = strchr(url, '?');
-            if ( q != nullptr )
-            {
-                tMlpPattern query;
-                char temp_ver[MAX_VERSION_SIZE];
-                temp_ver[0] = 0;
-                query.pattern = (const uint8_t*)++q;
-                query.patternSize = strlen(q);
+            path_len = url + url_len - path;
+            if(path_len == 1)
+                path_len = 0;
+        }
+            
+    }
 
-                match_query_elements(&query, &data->query, temp_ver, MAX_VERSION_SIZE);
-
-                if (temp_ver[0] != 0)
-                    replace_optional_string(version, temp_ver);
-            }
+    if (!path_len and !from_rtmp)
+    {
+        payload_found = host_matcher.scan_url((const uint8_t*)host, host_len, *ClientAppId , *payloadAppId);
+    }
+    else
+    {
+        if (!path_len)
+        {
+            path = "/";
+            path_len = 1;
         }
 
-        *ClientAppId = data->client_id;
-        *serviceAppId = data->service_id;
-        *payloadAppId = data->payload_id;
+        patterns[0].pattern = (const uint8_t*)host;
+        patterns[0].patternSize = host_len;
+        patterns[1].pattern = (const uint8_t*)path;
+        patterns[1].patternSize = path_len;
+        patterns[2].pattern = nullptr;
+
+        HostUrlDetectorPattern* data = (HostUrlDetectorPattern*)mlmpMatchPatternUrl(matcher, patterns);
+        if ( data )
+        {
+            if ( url )
+            {
+                const char* q = strchr(url, '?');
+                if ( q != nullptr )
+                {
+                    tMlpPattern query;
+                    char temp_ver[MAX_VERSION_SIZE];
+                    temp_ver[0] = 0;
+                    query.pattern = (const uint8_t*)++q;
+                    query.patternSize = strlen(q);
+
+                    match_query_elements(&query, &data->query, temp_ver, MAX_VERSION_SIZE);
+
+                    if (temp_ver[0] != 0)
+                        replace_optional_string(version, temp_ver);
+                }
+            }
+
+            *ClientAppId = data->client_id;
+            *serviceAppId = data->service_id;
+            *payloadAppId = data->payload_id;
+            payload_found = data->payload_id;
+            is_referred_appid = data->is_referred;
+        }
+
+        if (!payload_found and !from_rtmp)
+        {
+            payload_found = host_matcher.scan_url((const uint8_t*)host, host_len, *ClientAppId, *payloadAppId, &is_referred_appid);
+        }
     }
 
-    snort_free(temp_host);
-
     /* if referred_id feature id disabled, referer will be null */
-    if ( referer and (referer[0] != '\0') and (!payload_found or
-        odp_ctxt.get_app_info_mgr().get_app_info_flags(data->payload_id,
-        APPINFO_FLAG_REFERRED)) )
+    if ( (!payload_found or is_referred_appid)
+         and ( referer and (referer[0] != '\0') ) )
     {
         const char* referer_start = referer;
-        size_t ref_len = strlen(referer);
 
-        const char* referer_offset = (const char*)service_strstr((const uint8_t*)referer_start, ref_len,
-            (const uint8_t*)URL_SCHEME_END_PATTERN, sizeof(URL_SCHEME_END_PATTERN)-1);
+        const char* referer_offset = strstr(referer_start, URL_SCHEME_END_PATTERN);
 
         if ( !referer_offset )
             return payload_found;
 
-        referer_offset += sizeof(URL_SCHEME_END_PATTERN)-1;
-        referer_start = referer_offset;
+        referer_start = referer_offset + sizeof(URL_SCHEME_END_PATTERN)-1;
         int referer_len = strlen(referer_start);
         const char* referer_path = strchr(referer_start, '/');
-        int referer_path_len = 0;
+        bool referer_found = false;
 
-        if ( referer_path )
+        if ( referer_path or from_rtmp)
         {
-            referer_path_len = strlen(referer_path);
-            referer_len -= referer_path_len;
-        }
-        else
-        {
-            referer_path = "/";
-            referer_path_len = 1;
+            int referer_path_len = 0;
+
+            if(!referer_path)
+            {
+                referer_path = "/";
+                referer_path_len = 1;
+            }
+            else
+            {
+                referer_path_len = strlen(referer_path);
+                referer_len -= referer_path_len;
+            }
+
+            if ( referer_len > 0 )
+            {
+                patterns[0].pattern = (const uint8_t*)referer_start;
+                patterns[0].patternSize = referer_len;
+                patterns[1].pattern = (const uint8_t*)referer_path;
+                patterns[1].patternSize = referer_path_len;
+                patterns[2].pattern = nullptr;
+                HostUrlDetectorPattern* url_pattern_data = (HostUrlDetectorPattern*)mlmpMatchPatternUrl(matcher,
+                    patterns);
+                if ( url_pattern_data != nullptr )
+                {
+                    referer_found = true;
+                    if ( payload_found )
+                        *referredPayloadAppId = *payloadAppId;
+                    else
+                        payload_found = true;
+                    *payloadAppId = url_pattern_data->payload_id;
+                }
+            }
         }
 
-        if ( referer_len > 0 )
+        if ( !referer_found and !from_rtmp)
         {
-            patterns[0].pattern = (const uint8_t*)referer_start;
-            patterns[0].patternSize = referer_len;
-            patterns[1].pattern = (const uint8_t*)referer_path;
-            patterns[1].patternSize = referer_path_len;
-            patterns[2].pattern = nullptr;
-            HostUrlDetectorPattern* url_pattern_data = (HostUrlDetectorPattern*)mlmpMatchPatternUrl(matcher,
-                patterns);
-            if ( url_pattern_data != nullptr )
+            AppId cl_id = 0;
+            AppId pl_id = 0;
+
+            host_matcher.scan_url((const uint8_t*)referer_start, referer_len, cl_id, pl_id);
+
+            if ( pl_id )
             {
                 if ( payload_found )
+                {
                     *referredPayloadAppId = *payloadAppId;
+                }
                 else
+                {
                     payload_found = true;
-                *payloadAppId = url_pattern_data->payload_id;
+                }
+
+                *payloadAppId = pl_id;
             }
         }
     }

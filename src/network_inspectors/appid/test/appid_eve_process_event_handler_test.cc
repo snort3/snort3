@@ -73,7 +73,7 @@ void AppIdSession::publish_appid_event(AppidChangeBits&, const Packet&, bool, ui
     return;
 }
 
-bool SslPatternMatchers::scan_hostname(const uint8_t*, size_t, AppId&, AppId& payload)
+bool HostPatternMatchers::scan_hostname(const uint8_t*, size_t, AppId&, AppId& payload)
 {
     payload = APPID_UT_ID + 1;
     return true;
