@@ -6,5 +6,7 @@ Comentarios
 
 CRISTIAN CALDERON
 
+Pienso que como analistas de seguridad debemos estar atentos a todos los riesgos que conlleva no poder detectar intrusos y hacer uso de todas las herramientas que tenemos al alcance para poder hacerlo en este caso sort, saber como detectar intrusos nos puede ayudar proteger la red.
+
 
 FERNANDO CASTRO
