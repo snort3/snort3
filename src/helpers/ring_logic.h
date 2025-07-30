@@ -20,6 +20,7 @@
 #ifndef RING_LOGIC_H
 #define RING_LOGIC_H
 
+#include <atomic>
 // Logic for simple ring implementation
 
 class RingLogic
@@ -45,16 +46,12 @@ private:
 
 private:
     int sz;
-    volatile int rx;
-    volatile int wx;
+    std::atomic<int> rx;
+    std::atomic<int> wx;
 };
 
-inline RingLogic::RingLogic(int size)
-{
-    sz = size;
-    rx = 0;
-    wx = 1;
-}
+inline RingLogic::RingLogic(int size) : sz(size), rx(0), wx(1)
+{}
 
 inline int RingLogic::read()
 {
@@ -65,7 +62,7 @@ inline int RingLogic::read()
 inline int RingLogic::write()
 {
     int nx = next(wx);
-    return ( nx == rx ) ? -1 : wx;
+    return ( nx == rx.load() ) ? -1 : wx.load();
 }
 
 inline bool RingLogic::push()
