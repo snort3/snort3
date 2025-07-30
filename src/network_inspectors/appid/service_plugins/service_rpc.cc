@@ -408,12 +408,12 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
         rd->program_version = ntohl(call->program_version);
         rd->procedure = ntohl(call->procedure);
         tmp = ntohl(call->cred.length);
-        if (sizeof(ServiceRPCCall)+tmp > size)
+        if (sizeof(ServiceRPCCall) > (tmp > size ? 0 : size - tmp))
             return APPID_NOT_COMPATIBLE;
         data += (sizeof(ServiceRPCCall) - sizeof(ServiceRPCAuth)) + tmp;
         a = (const ServiceRPCAuth*)data;
         tmp = ntohl(a->length);
-        if (tmp+sizeof(ServiceRPCAuth) > (unsigned)(end-data))
+        if (sizeof(ServiceRPCAuth) > (tmp > (unsigned)(end-data) ? 0 : (unsigned)(end-data) - tmp))
             return APPID_NOT_COMPATIBLE;
         data += sizeof(ServiceRPCAuth) + tmp;
         if (rd->program >= 0x60000000)
@@ -428,8 +428,8 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
                 data += (PROGRAM_LENGTH + VERSION_LENGTH);
                 const NetId* net_id = (const NetId*) data;
                 tmp = ntohl(net_id->length);
-                if (tmp == 0 or (sizeof(ServiceRPCCall) + PROGRAM_LENGTH + VERSION_LENGTH +
-                    sizeof(NetId) + tmp > size))
+                if (tmp == 0 or ((sizeof(ServiceRPCCall) + PROGRAM_LENGTH + VERSION_LENGTH +
+                    sizeof(NetId)) > (tmp > size ? 0 : size - tmp)))
                     return APPID_NOT_COMPATIBLE;
 
                 data += sizeof(NetId);
@@ -462,7 +462,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
         if (rd->xid != reply->header.xid && rd->xid != 0xFFFFFFFF)
             return APPID_NOMATCH;
         tmp = ntohl(reply->verify.length);
-        if (sizeof(ServiceRPCReply)+tmp > size)
+        if (sizeof(ServiceRPCReply) > (tmp > size ? 0 : size - tmp))
             return APPID_NOMATCH;
         data += sizeof(ServiceRPCReply) + tmp;
         tmp = ntohl(reply->reply_state);
@@ -487,8 +487,8 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
                         return APPID_NOMATCH;
                     const UniversalAddress* u_addr = (const UniversalAddress*) data;
                     tmp = ntohl(u_addr->length);
-                    if (tmp == 0 or
-                        ((sizeof(ServiceRPCReply) + sizeof(UniversalAddress) + tmp) > size))
+                     if (tmp == 0 or 
+                        (sizeof(ServiceRPCReply) + sizeof(UniversalAddress)) > (tmp > size ? 0 : size - tmp))
                         return APPID_NOMATCH;
                     uint32_t address = 0;
                     uint16_t port = 0;
