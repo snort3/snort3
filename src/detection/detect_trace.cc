@@ -28,12 +28,15 @@
 #include "protocols/packet.h"
 #include "utils/stats.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "detection_options.h"
+#include "extract.h"
 #include "fp_create.h"
 #include "fp_utils.h"
 #include "ips_context.h"
 #include "pattern_match_data.h"
+#include "treenodes.h"
 
 using namespace snort;
 using namespace std;
@@ -139,26 +142,62 @@ void node_eval_trace(const detection_option_tree_node_t* node, const Cursor& cur
     }
 }
 
+void ips_variables_trace(const Packet* const p)
+{
+    if ( !trace_enabled(detection_trace, TRACE_RULE_VARS) )
+        return;
+
+    char var_buf[100];
+    std::string rule_vars;
+    rule_vars.reserve(sizeof(var_buf));
+    uint32_t dbg_extract_vars[]{0,0};
+
+    for ( unsigned i = 0; i < NUM_IPS_OPTIONS_VARS; ++i )
+    {
+        GetVarValueByIndex(&(dbg_extract_vars[i]), (int8_t)i);
+        safe_snprintf(var_buf, sizeof(var_buf), "var[%u]=0x%X ", i, dbg_extract_vars[i]);
+        rule_vars.append(var_buf);
+    }
+
+    debug_logf(detection_trace, TRACE_RULE_VARS, p, "Rule options variables: %s\n",
+        rule_vars.c_str());
+}
+
+void print_option_tree(detection_option_tree_node_t* node, int level)
+{
+    if ( !trace_enabled(detection_trace, TRACE_OPTION_TREE) )
+        return;
+
+    char buf[32];
+    const char* opt;
+
+    if ( node->option_type != RULE_OPTION_TYPE_LEAF_NODE )
+        opt = ((IpsOption*)node->option_data)->get_name();
+    else
+    {
+        const OptTreeNode* otn = (OptTreeNode*)node->option_data;
+        const SigInfo& si = otn->sigInfo;
+        snprintf(buf, sizeof(buf), "%u:%u:%u", si.gid, si.sid, si.rev);
+        opt = buf;
+    }
+
+    const char* srtn = node->otn ? " (rtn)" : "";
+
+    debug_logf(detection_trace, TRACE_OPTION_TREE, nullptr, "%3d %3d  %p %*s%s\n",
+        level+1, node->num_children, node->option_data, (int)(level + strlen(opt)), opt, srtn);
+
+    for ( int i=0; i<node->num_children; i++ )
+        print_option_tree(node->children[i], level+1);
+}
+
 #else
 
-void clear_trace_cursor_info()
-{
-}
-
-void print_pkt_info(Packet*, const char*)
-{
-}
-
-void print_pattern(const PatternMatchData*, Packet*)
-{
-}
-
-void dump_buffer(const uint8_t*, unsigned, Packet*)
-{
-}
-
-void node_eval_trace(const detection_option_tree_node_t*, const Cursor&, Packet*)
-{
-}
+void clear_trace_cursor_info() { }
+void print_pkt_info(Packet*, const char*) { }
+void print_pattern(const PatternMatchData*, Packet*) { }
+void dump_buffer(const uint8_t*, unsigned, Packet*) { }
+void node_eval_trace(const detection_option_tree_node_t*, const Cursor&, Packet*) { }
+void ips_variables_trace(const Packet* const) { }
+void print_option_tree(detection_option_tree_node_t*, int) { }
 
 #endif

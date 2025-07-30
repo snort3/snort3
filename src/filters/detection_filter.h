@@ -37,6 +37,7 @@ namespace snort
 extern THREAD_LOCAL snort::ProfileStats detectionFilterPerfStats;
 
 struct SfIp;
+struct Packet;
 }
 
 struct DetectionFilterConfig
@@ -52,8 +53,8 @@ void DetectionFilterConfigFree(DetectionFilterConfig*);
 void detection_filter_init(DetectionFilterConfig*);
 void detection_filter_term();
 
-int detection_filter_test(void*, const snort::SfIp* sip, const snort::SfIp* dip, long curtime);
 struct THD_NODE* detection_filter_create(DetectionFilterConfig*, struct THDX_STRUCT*);
+int detection_filter_test(THD_NODE*, const snort::Packet* const p);
 
 #endif
 

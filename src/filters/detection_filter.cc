@@ -25,6 +25,7 @@
 
 #include "hash/xhash.h"
 #include "log/messages.h"
+#include "protocols/packet.h"
 #include "utils/util.h"
 
 #include "sfthd.h"
@@ -54,15 +55,20 @@ void DetectionFilterConfigFree(DetectionFilterConfig* config)
     snort_free(config);
 }
 
-int detection_filter_test(void* pv, const SfIp* sip, const SfIp* dip, long curtime)
+int detection_filter_test(THD_NODE* pv, const Packet* const p)
 {
+    assert(p);
     // cppcheck-suppress unreadVariable
     RuleProfile profile(detectionFilterPerfStats);
 
     if (pv == nullptr)
         return 0;
 
-    return sfthd_test_rule(detection_filter_hash, (THD_NODE*)pv,
+    const SfIp* sip = p->ptrs.ip_api.get_src();
+    const SfIp* dip = p->ptrs.ip_api.get_dst();
+    long curtime = p->pkth->ts.tv_sec;
+
+    return sfthd_test_rule(detection_filter_hash, pv,
         sip, dip, curtime, get_ips_policy()->policy_id);
 }
 

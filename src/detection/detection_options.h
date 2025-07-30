@@ -17,7 +17,8 @@
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
 
-// detection_options.h author Steven Sturges <ssturges@cisco.com>
+// detection_options.cc author Steve Sturges <ssturges@cisco.com>
+// detection_options.cc author Yehor Velykozhon <yvelykoz@cisco.com>
 
 #ifndef DETECTION_OPTIONS_H
 #define DETECTION_OPTIONS_H
@@ -33,6 +34,7 @@
 
 #include <sys/time.h>
 
+#include "detection/ips_context.h"
 #include "detection/rule_option_types.h"
 #include "latency/rule_latency_state.h"
 #include "main/thread_config.h"
@@ -66,6 +68,16 @@ struct dot_node_state_t
         uint16_t run_num;
         char result;
         char flowbit_failed;
+
+        void set(const snort::Packet& p, int last_result)
+        {
+            ts = p.pkth->ts;
+            run_num = get_run_num();
+            context_num = p.context->context_num;
+            flowbit_failed = 0;
+            rebuild_flag = p.packet_flags & PKT_REBUILT_STREAM;
+            result = last_result;
+        }
     } last_check;
     void* conts;
     uint64_t context_num;
@@ -137,7 +149,7 @@ struct detection_option_tree_node_t : public detection_option_tree_bud_t
     dot_node_state_t* state;
     int is_relative;
     option_type_t option_type;
-    
+
     detection_option_tree_node_t(option_type_t type, void* data) :
         evaluate(nullptr), option_data(data), is_relative(0), option_type(type)
     {
