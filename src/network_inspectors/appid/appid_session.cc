@@ -126,7 +126,11 @@ AppIdSession* AppIdSession::allocate_session(const Packet* p, IpProtocol proto,
     asd->flow = p->flow;
     asd->stats.first_packet_second = p->pkth->ts.tv_sec;
     asd->snort_protocol_id = asd->config.snort_proto_ids[PROTO_INDEX_UNSYNCHRONIZED];
-    p->flow->set_flow_data(asd);
+
+    if (!p->flow)
+        APPID_LOG(CURRENT_PACKET, TRACE_ERROR_LEVEL,"flow is null, allocated appid session:%p\n", asd);
+    else
+        p->flow->set_flow_data(asd);
     return asd;
 }
 

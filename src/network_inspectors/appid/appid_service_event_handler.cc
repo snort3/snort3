@@ -33,12 +33,12 @@
 
 using namespace snort;
 
-void AppIdServiceEventHandler::handle(DataEvent&, Flow* flow)
+void AppIdServiceEventHandler::handle(DataEvent& event, Flow* flow)
 {
     if (!pkt_thread_odp_ctxt or !flow)
         return;
 
-    Packet* p = DetectionEngine::get_current_packet();
+    const Packet* p = event.get_packet();
     assert(p);
 
     // FIXIT-E: For now, wait for snort service inspection only for TCP. In the future, if AppId
