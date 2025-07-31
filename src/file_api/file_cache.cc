@@ -276,6 +276,11 @@ FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create,
     if (to_create and !file)
         file = add(hashKey, timeout, cache_full, cache_expire);
 
+    if (file and !file->get_config())
+    {
+        FileConfig *fc = get_file_config(SnortConfig::get_conf());  
+        file->set_config(fc);
+    }
     return file;
 }
 
