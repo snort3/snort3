@@ -154,6 +154,11 @@ bool SFDAQInstance::can_whitelist() const
     return (daq_instance_get_capabilities(instance) & DAQ_CAPA_WHITELIST) != 0;
 }
 
+bool SFDAQInstance::can_invoke_inject_drop() const
+{
+    return (daq_instance_get_capabilities(instance) & DAQ_CAPA_INJECT_DROP) != 0;
+}
+
 bool SFDAQInstance::start()
 {
     int rval = daq_instance_start(instance);

@@ -260,8 +260,11 @@ static DAQ_Verdict distill_verdict(Packet* p)
         // we never increase, only trim, but daq doesn't support resizing wire packet
         PacketManager::encode_update(p);
 
-        if ( p->inject() == DAQ_SUCCESS )
+        int ret = p->inject();
+        if ( ret == DAQ_SUCCESS )
             verdict = DAQ_VERDICT_BLOCK;
+        else
+            PacketTracer::log("Packet inject failed: %d\n", ret);
         // FIXIT-M X Should we be blocking the wire packet even if the injection fails?
     }
     else if ( p->packet_flags & PKT_MODIFIED )

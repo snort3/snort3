@@ -72,6 +72,8 @@ int layer::get_inner_ip6_frag_index(const Packet* const) { return 0; }
 uint8_t Stream::get_flow_ttl(Flow*, char, bool) { return 0; }
 bool SFDAQ::forwarding_packet(const DAQ_PktHdr_t*) { return false; }
 int SFDAQInstance::inject(_daq_msg const*, int, unsigned char const*, unsigned int) { return -1; }
+int snort::SFDAQInstance::ioctl(DAQ_IoctlCmd cmd, void *arg, size_t arglen) { return DAQ_ERROR_NOTSUP; }
+bool SFDAQInstance::can_invoke_inject_drop() const { return false; }
 void sum_stats(PegCount*, PegCount*, unsigned, bool) {}
 IpsContext::IpsContext(unsigned):
     packet(nullptr), encode_packet(nullptr), pkth (nullptr), buf(nullptr),

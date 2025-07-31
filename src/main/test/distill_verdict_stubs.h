@@ -164,6 +164,7 @@ bool SFDAQInstance::interrupt() { return false; }
 int SFDAQInstance::inject(DAQ_Msg_h, int, const uint8_t*, uint32_t) { return -1; }
 DAQ_RecvStatus SFDAQInstance::receive_messages(unsigned) { return DAQ_RSTAT_ERROR; }
 int SFDAQInstance::ioctl(DAQ_IoctlCmd, void*, size_t) { return -4; }
+bool SFDAQInstance::can_invoke_inject_drop() const { return false; }
 void SFDAQ::set_local_instance(SFDAQInstance*) { }
 const char* SFDAQ::verdict_to_string(DAQ_Verdict) { return nullptr; }
 bool SFDAQ::forwarding_packet(const DAQ_PktHdr_t*) { return false; }

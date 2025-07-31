@@ -69,6 +69,7 @@ public:
     bool can_inject_raw() const;
     bool can_replace() const;
     bool can_start_unprivileged() const;
+    bool can_invoke_inject_drop() const;
     SO_PUBLIC bool can_whitelist() const;
 
     int inject(DAQ_Msg_h, int rev, const uint8_t* buf, uint32_t len);

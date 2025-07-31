@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <daq_common.h>
+
 #include "packet.h"
 
 #include "detection/ips_context.h"
@@ -30,6 +32,7 @@
 #include "log/obfuscator.h"
 #include "main/snort_config.h"
 #include "packet_io/active.h"
+#include "packet_io/packet_tracer.h"
 #include "packet_io/sfdaq_instance.h"
 
 #include "packet_manager.h"
@@ -326,6 +329,12 @@ bool Packet::is_from_application_server() const
 int Packet::inject()
 {
     set_pkt_injected();
+    if ( daq_instance->can_invoke_inject_drop() )
+    {
+        int ret = daq_instance->ioctl((DAQ_IoctlCmd)DIOCTL_SET_INJECT_DROP, (void*)daq_msg, sizeof(*daq_msg));
+        if ( ret != DAQ_SUCCESS )
+            PacketTracer::log("DIOCTL_SET_INJECT_DROP failed: %d\n", ret);
+    }
     return daq_instance->inject(daq_msg, 0, pkt, pktlen);
 }
 
