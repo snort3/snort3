@@ -423,7 +423,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
         case RPC_PROGRAM_PORTMAP:
             if (rd->program_version == 3 and rd->procedure == RPC_BIND_PORTMAP_GETADDR)
             {
-                if (sizeof(ServiceRPCCall) + PROGRAM_LENGTH + VERSION_LENGTH + sizeof(NetId) > size)
+                if ((PROGRAM_LENGTH + VERSION_LENGTH + sizeof(NetId)) > (unsigned)(end - data))
                     return APPID_NOT_COMPATIBLE;
                 data += (PROGRAM_LENGTH + VERSION_LENGTH);
                 const NetId* net_id = (const NetId*) data;
@@ -483,7 +483,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
             case RPC_PROGRAM_PORTMAP:
                 if (rd->program_version == 3 and rd->procedure == RPC_BIND_PORTMAP_GETADDR)
                 {
-                    if ((sizeof(ServiceRPCReply) + sizeof(UniversalAddress)) > size)
+                    if (sizeof(UniversalAddress) > (unsigned)(end-data))
                         return APPID_NOMATCH;
                     const UniversalAddress* u_addr = (const UniversalAddress*) data;
                     tmp = ntohl(u_addr->length);
