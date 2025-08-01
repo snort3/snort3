@@ -842,7 +842,7 @@ void AppIdHttpSession::set_req_body_field(HttpFieldIds id, const uint8_t* str, i
         {
             std::string* req_body = new std::string(*meta_data[id]);
             delete meta_data[id];
-            req_body->append((const char*)str);
+            req_body->append((const char*)str, len);
             meta_data[id] = req_body;
         }
         set_http_change_bits(change_bits, id);

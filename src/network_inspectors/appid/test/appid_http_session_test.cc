@@ -337,6 +337,34 @@ TEST(appid_http_session, change_bits_for_referred_appid)
     CHECK_EQUAL(change_bits.test(APPID_REFERRED_BIT), true);
 }
 
+TEST(appid_http_session, set_req_body_field)
+{
+    AppidChangeBits change_bits;
+    const uint8_t test_data1[] = {'a'};
+    const uint8_t test_data2[] = {'b', '1'};
+    const uint8_t test_data3[] = {'c', '2'};
+
+    // Test 1: Setting initial request body field
+    mock_hsession->set_req_body_field(REQ_BODY_FID, test_data1, sizeof(test_data1[0]), change_bits);
+    
+    const std::string* field = mock_hsession->get_field(REQ_BODY_FID);
+    CHECK(field != nullptr);
+    STRCMP_EQUAL(field->c_str(), "a");
+    
+    // Test 2: Appending to existing request body field
+    mock_hsession->set_req_body_field(REQ_BODY_FID, test_data2, sizeof(test_data2[0]), change_bits);
+    
+    field = mock_hsession->get_field(REQ_BODY_FID);
+    CHECK(field != nullptr);
+    STRCMP_EQUAL(field->c_str(), "ab");
+    
+    mock_hsession->set_req_body_field(REQ_BODY_FID, test_data3, sizeof(test_data3[0]), change_bits);
+
+    field = mock_hsession->get_field(REQ_BODY_FID);
+    CHECK(field != nullptr);
+    STRCMP_EQUAL(field->c_str(), "abc");
+}
+
 int main(int argc, char** argv)
 {
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
