@@ -791,7 +791,7 @@ void free_detection_option_root(void** existing_tree)
 
 #include "filters/sfthd.h"
 
-void set_was_evaluated(detection_option_tree_node_t& n, Packet* p,
+static void set_was_evaluated(detection_option_tree_node_t& n, Packet* p,
     dot_node_state_t& s, uint64_t& c_num)
 {
     n.is_relative = false;
@@ -1071,20 +1071,20 @@ class MockIpsBufSetter : public IpsOption
 {
 public:
     MockIpsBufSetter(const char* s) : IpsOption(s)
-    { };
+    { }
 
     CursorActionType get_cursor_type() const override
-    { return CAT_SET_SUB_SECTION; };
+    { return CAT_SET_SUB_SECTION; }
 };
 
 class MockIpsOptRead : public IpsOption
 {
 public:
     MockIpsOptRead(const char* s) : IpsOption(s)
-    { };
+    { }
 
     CursorActionType get_cursor_type() const override
-    { return CAT_READ; };
+    { return CAT_READ; }
 };
 
 TEST_CASE("Detection Engine: match_node", "[de_core]")
@@ -1120,13 +1120,13 @@ class MockIpsOptPMD : public IpsOption
 {
 public:
     MockIpsOptPMD(const char* s) : IpsOption(s)
-    { pmd = new PatternMatchData(); };
+    { pmd = new PatternMatchData(); }
 
-    ~MockIpsOptPMD()
+    ~MockIpsOptPMD() override
     { delete pmd; }
 
     CursorActionType get_cursor_type() const override
-    { return CAT_READ; };
+    { return CAT_READ; }
 
     PatternMatchData* get_pattern(SnortProtocolId, RuleDirection) override
     { return pmd; }
