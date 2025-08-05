@@ -8,9 +8,11 @@
 *.trs
 *~
 ._Xcode*
+.cache/
 .vscode/
 Cbuild/
 Xcode*/
+compile_commands.json
 doc/basic.txt
 doc/builtin.txt
 doc/codec.txt
