@@ -132,6 +132,7 @@ void PacketTracer::thread_init()
 
 void PacketTracer::thread_term()
 {
+    BatchedLogger::BatchedLogManager::flush_thread_buffers();
     delete s_pkt_trace;
     s_pkt_trace = nullptr;
 }
@@ -161,8 +162,14 @@ void PacketTracer::dump(Packet* p)
             PacketTracer::log("Verdict Reason: %s, %s\n", drop_reason, p->active->get_action_string() );
         if (s_pkt_trace->buff_len < max_buff_size - 1)
             s_pkt_trace->buffer[s_pkt_trace->buff_len++] = '\n';
-        BatchedLogger::BatchedLogManager::log(s_pkt_trace->log_fh, SnortConfig::log_syslog(),
-            s_pkt_trace->buffer, s_pkt_trace->buff_len);
+        if (s_pkt_trace->log_fh && s_pkt_trace->log_fh != stdout)
+        {
+            fprintf(s_pkt_trace->log_fh, "%.*s", s_pkt_trace->buff_len, s_pkt_trace->buffer);
+            fflush(s_pkt_trace->log_fh);
+        }
+        else
+            BatchedLogger::BatchedLogManager::log(s_pkt_trace->log_fh, SnortConfig::log_syslog(),
+                s_pkt_trace->buffer, s_pkt_trace->buff_len);
     }
 
     s_pkt_trace->reset(false);
