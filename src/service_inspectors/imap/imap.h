@@ -46,6 +46,9 @@
 #define IMAP_FLAG_CHECK_SSL                  0x00000010
 #define IMAP_FLAG_ABANDON_EVT                0x00000020
 
+#define IMAP_MIN_BASE_FILE_ID 1
+#define IMAP_MAX_BASE_FILE_ID 10000000
+
 typedef enum _IMAPCmdEnum
 {
     CMD_APPEND = 0,

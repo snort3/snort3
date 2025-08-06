@@ -23,6 +23,7 @@
 #endif
 
 #include "pop.h"
+#include <random>
 
 #include "detection/detection_engine.h"
 #include "js_norm/js_pdf_norm.h"
@@ -154,16 +155,26 @@ static inline PDFJSNorm* acquire_js_ctx(POPData& pop_ssn, const void* data, size
     return pop_ssn.jsn;
 }
 
+static uint64_t get_pop_base_file_id()
+{
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(POP_MIN_BASE_FILE_ID, POP_MAX_BASE_FILE_ID);
+    uint64_t randomId = distrib(gen);
+    return randomId;
+}
+
 static POPData* SetNewPOPData(POP_PROTO_CONF* config, Packet* p)
 {
     POPData* pop_ssn;
     PopFlowData* fd = new PopFlowData;
+    uint64_t base_file_id = get_pop_base_file_id();
 
     p->flow->set_flow_data(fd);
     pop_ssn = &fd->session;
 
     popstats.sessions++;
-    pop_ssn->mime_ssn = new PopMime(p, &(config->decode_conf), &(config->log_config));
+    pop_ssn->mime_ssn = new PopMime(p, &(config->decode_conf), &(config->log_config), base_file_id);
     pop_ssn->mime_ssn->set_mime_stats(&(popstats.mime_stats));
 
     if (Stream::is_midstream(p->flow))

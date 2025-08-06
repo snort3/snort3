@@ -79,6 +79,9 @@
 
 #define MAX_AUTH_NAME_LEN  20  // Max length of SASL mechanisms, defined in RFC 4422
 
+#define SMTP_MIN_BASE_FILE_ID 1
+#define SMTP_MAX_BASE_FILE_ID 10000000
+
 enum SMTPRespEnum
 {
     RESP_220 = 0,

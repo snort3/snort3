@@ -46,6 +46,9 @@
 #define POP_FLAG_CHECK_SSL                  0x00000010
 #define POP_FLAG_ABANDON_EVT               0x00000020
 
+#define POP_MIN_BASE_FILE_ID 1
+#define POP_MAX_BASE_FILE_ID 10000000
+
 typedef enum _POPCmdEnum
 {
     CMD_APOP = 0,

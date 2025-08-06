@@ -23,6 +23,7 @@
 #endif
 
 #include "imap.h"
+#include <random>
 
 #include "detection/detection_engine.h"
 #include "js_norm/js_pdf_norm.h"
@@ -197,16 +198,26 @@ static inline PDFJSNorm* acquire_js_ctx(IMAPData& imap_ssn, const void* data, si
     return imap_ssn.jsn;
 }
 
+static uint64_t get_imap_base_file_id()
+{    
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distrib(IMAP_MIN_BASE_FILE_ID, IMAP_MAX_BASE_FILE_ID);
+    uint64_t randomId = distrib(gen);   
+    return randomId;
+}
+
 static IMAPData* SetNewIMAPData(IMAP_PROTO_CONF* config, Packet* p)
 {
     IMAPData* imap_ssn;
     ImapFlowData* fd = new ImapFlowData;
+    uint64_t base_file_id = get_imap_base_file_id();
 
     p->flow->set_flow_data(fd);
     imap_ssn = &fd->session;
 
     imapstats.sessions++;
-    imap_ssn->mime_ssn= new ImapMime(p, &(config->decode_conf), &(config->log_config));
+    imap_ssn->mime_ssn= new ImapMime(p, &(config->decode_conf), &(config->log_config), base_file_id);
     imap_ssn->mime_ssn->set_mime_stats(&(imapstats.mime_stats));
 
     if (Stream::is_midstream(p->flow))
