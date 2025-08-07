@@ -166,7 +166,7 @@ static int snmp_verify_packet(const uint8_t** const data,
         return -1;
     if (snmp_ans1_length(data, end, &overall_length))
         return -1;
-    if (overall_length < 3 || (int)overall_length > end-(*data))
+    if (overall_length < 3 || (*data >= end) || overall_length > static_cast<uint32_t>(end - *data))
         return -1;
     if (**data != 0x02)
         return -1;

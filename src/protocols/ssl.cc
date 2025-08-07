@@ -711,7 +711,7 @@ bool parse_server_certificates(SSLV3ServerCertData* server_cert_data)
     int common_name_len = 0;
     int org_unit_len  = 0;
 
-    while (len > 0 and !(common_name and org_unit))
+    while (len > 2 and !(common_name and org_unit))
     {
         X509* cert = nullptr;
         X509_NAME* cert_name = nullptr;

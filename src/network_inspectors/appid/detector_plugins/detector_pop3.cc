@@ -290,7 +290,7 @@ static int pop3_check_line(const uint8_t** data, const uint8_t* end)
 
 int Pop3ServiceDetector::pop3_server_validate(POP3DetectorData* dd, const uint8_t* data, uint16_t size,
     AppIdSession& asd, int server, AppidChangeBits& change_bits)
-{
+{    
     ServicePOP3Data* pd = &dd->server;
     const uint8_t* begin = nullptr;
 
@@ -305,7 +305,7 @@ int Pop3ServiceDetector::pop3_server_validate(POP3DetectorData* dd, const uint8_
         // fallthrough
 
     case POP3_STATE_RESPONSE:
-        if (!begin && data[0] == '+' && data[1] == ' ')
+        if (!begin && size >= 2 && data[0] == '+' && data[1] == ' ')
         {
             data += 2;
             if (pop3_check_line(&data, end))

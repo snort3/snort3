@@ -125,9 +125,9 @@ static int parse_rtmp_chunk_basic_header(const uint8_t** data_inout, uint16_t* s
     }
     else if (*chunk_stream_id == 1)
     {
-        *chunk_stream_id = data[2] * 256 + data[1] + 64;
         if (size < 3)
             return 0;
+        *chunk_stream_id = data[2] * 256 + data[1] + 64;
         data += 3;
         size -= 3;
     }

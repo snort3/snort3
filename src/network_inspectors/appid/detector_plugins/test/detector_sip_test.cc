@@ -27,14 +27,8 @@
 #include "detector_plugins/detector_sip.cc"
 #include "detector_plugins/sip_patterns.cc"
 
-#include "framework/data_bus.h"
-#include "framework/module.cc"
 #include "framework/mpse_batch.h"
-#include "main/thread_config.h"
-#include "network_inspectors/appid/appid_utils/sf_mlmp.cc"
-#include "protocols/protocol_ids.h"
 #include "service_inspectors/sip/sip_parser.h"
-#include "utils/util_cstring.cc"
 
 #include "appid_inspector.h"
 #include "detector_plugins_mock.h"
@@ -58,11 +52,13 @@ ClientSIPData* sip_data = nullptr;
 MpseGroup mpse_group;
 static bool prep_patterns = true;
 
+// Stubs for AppIdInspector
+AppIdConfig test_app_config;
+AppIdInspector::AppIdInspector(AppIdModule&) : config(&test_app_config), ctxt(test_app_config) { }
+
 namespace snort
 {
 AppIdApi appid_api;
-AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&)
-{ }
 Flow::~Flow() = default;
 AppIdSession* AppIdApi::get_appid_session(snort::Flow const&) { return nullptr; }
 
@@ -83,23 +79,6 @@ unsigned get_instance_id()
 unsigned ThreadConfig::get_instance_max() { return 1; }
 }
 
-AppIdInspector::AppIdInspector(AppIdModule&) : config(&s_config), ctxt(s_config)
-{ }
-
-bool AppIdInspector::configure(snort::SnortConfig*)
-{
-    return true;
-}
-
-// LCOV_EXCL_START
-void AppIdInspector::eval(Packet*) { }
-void AppIdInspector::show(const SnortConfig*) const { }
-void AppIdInspector::tinit() { }
-void AppIdInspector::tterm() { }
-void AppIdInspector::tear_down(SnortConfig*) { }
-// LCOV_EXCL_STOP
-
-AppIdInspector::~AppIdInspector() = default;
 
 void AppIdContext::create_odp_ctxt()
 {
@@ -139,40 +118,8 @@ AppIdSession* AppIdSession::allocate_session(snort::Packet const*, IpProtocol,
 }
 
 void AppIdSession::publish_appid_event(AppidChangeBits&, const Packet&, bool, uint32_t) { }
-AppIdDiscovery::~AppIdDiscovery() = default;
 
 // LCOV_EXCL_START
-void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection,
-    AppId, AppidChangeBits&) { }
-void ClientDiscovery::initialize(AppIdInspector&) { }
-void ClientDiscovery::reload() { }
-// LCOV_EXCL_STOP
-
-void AppIdDiscovery::register_detector(const string&, AppIdDetector*, IpProtocol) { }
-
-// LCOV_EXCL_START
-void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool&, int,
-    unsigned char const*, unsigned int, unsigned int) { }
-void AppIdDiscovery::register_tcp_pattern(AppIdDetector*, unsigned char const*, unsigned int,
-    int, unsigned int) { }
-void AppIdDiscovery::register_udp_pattern(AppIdDetector*, unsigned char const*, unsigned int,
-    int, unsigned int) { }
-int AppIdDiscovery::add_service_port(AppIdDetector*, ServiceDetectorPort const&) { return 0; }
-void AppIdModule::reset_stats() { }
-// LCOV_EXCL_STOP
-
-DnsPatternMatchers::~DnsPatternMatchers() = default;
-EveCaPatternMatchers::~EveCaPatternMatchers() = default;
-HostPatternMatchers::~HostPatternMatchers() = default;
-HttpPatternMatchers::~HttpPatternMatchers() = default;
-AlpnPatternMatchers::~AlpnPatternMatchers() = default;
-CipPatternMatchers::~CipPatternMatchers() = default;
-UserDataMap::~UserDataMap() = default;
-
-ClientDetector::ClientDetector() { }
-
-// LCOV_EXCL_START
-void ClientDetector::register_appid(int, unsigned int, OdpContext&) { }
 int AppIdDetector::initialize(AppIdInspector&) { return 1; }
 int AppIdDetector::data_add(AppIdSession&, AppIdFlowData*) { return 1; }
 void AppIdDetector::add_user(AppIdSession&, char const*, int, bool, AppidChangeBits&) { }

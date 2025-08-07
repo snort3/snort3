@@ -21,13 +21,13 @@
 #include "config.h"
 #endif
 
-#include "network_inspectors/appid/detector_plugins/http_url_patterns.cc"
+#define HTTP_PATTERNS_UNIT_TEST
 
-#include "main/thread_config.h"
-#include "protocols/protocol_ids.h"
-#include "framework/module.cc"
+#include "../http_url_patterns.h"
+#include "../http_url_patterns.cc"
+
 #include "network_inspectors/appid/appid_utils/sf_mlmp.cc"
-#include "utils/util_cstring.cc"
+
 #include "detector_plugins_mock.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -61,15 +61,16 @@ static AppId service_id = APP_ID_NONE;
 static AppId client_id = APP_ID_NONE;
 static DetectorHTTPPattern mpattern;
 
+// Stubs for AppIdInspector
+AppIdConfig test_app_config;
+AppIdInspector::AppIdInspector(AppIdModule&) : config(&test_app_config), ctxt(test_app_config) { }
+
 namespace snort
 {
-AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&)
-{ }
-SearchTool::SearchTool(bool, const char*) { }
-void SearchTool::reload() { }
 static bool test_find_all_done = false;
 static bool test_find_all_enabled = false;
 static MatchedPatterns* mock_mp = nullptr;
+void SearchTool::reload() { }
 int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void* mp_arg, const SnortConfig*)
 {
     test_find_all_done = true;
@@ -77,32 +78,7 @@ int SearchTool::find_all(const char*, unsigned, MpseMatch, bool, void* mp_arg, c
         memcpy(mp_arg, &mock_mp, sizeof(MatchedPatterns*));
     return 0;
 }
-unsigned get_instance_id()
-{ return 0; }
-unsigned ThreadConfig::get_instance_max() { return 1; }
 }
-
-void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
-AppIdDiscovery::~AppIdDiscovery() = default;
-void ClientDiscovery::initialize(AppIdInspector&) { }
-void ClientDiscovery::reload() { }
-void AppIdDiscovery::register_detector(const string&, AppIdDetector*, IpProtocol) { }
-void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool&, int, unsigned char const*, unsigned int, unsigned int) { }
-void AppIdDiscovery::register_tcp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
-void AppIdDiscovery::register_udp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
-int AppIdDiscovery::add_service_port(AppIdDetector*, ServiceDetectorPort const&) { return 0; }
-DnsPatternMatchers::~DnsPatternMatchers() = default;
-EveCaPatternMatchers::~EveCaPatternMatchers() = default;
-SipPatternMatchers::~SipPatternMatchers() = default;
-HostPatternMatchers::~HostPatternMatchers() = default;
-AlpnPatternMatchers::~AlpnPatternMatchers() = default;
-UserDataMap::~UserDataMap() = default;
-CipPatternMatchers::~CipPatternMatchers() = default;
-bool HostPatternMatchers::scan_url(const uint8_t*, size_t, AppId&, AppId&, bool*){ return true; }   
-void AppIdModule::reset_stats() {}
-bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
-void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
-void HostPatternMatchers::add_host_pattern(unsigned char const*, unsigned long, unsigned char, int, int, HostPatternType, bool, bool) {}
 
 TEST_GROUP(http_url_patterns_tests)
 {
@@ -556,6 +532,23 @@ TEST(http_url_patterns_tests, identify_user_agent_skypedirect)
     snort_free(version);
     version = nullptr;
     test_find_all_enabled = false;
+}
+
+TEST(http_url_patterns_tests, empty_server_vendor_version)
+{
+    char* version = nullptr;
+    char* vendor = nullptr;
+    AppIdServiceSubtype* subtype = nullptr;
+    hm->get_server_vendor_version("test/", 5, &version, &vendor, &subtype);
+
+    CHECK(version);
+    CHECK(version[0] == '\0');
+
+    CHECK(vendor);
+    CHECK_EQUAL(strcmp(vendor, "test"), 0);
+
+    snort_free(version);
+    snort_free(vendor);
 }
 
 int main(int argc, char** argv)

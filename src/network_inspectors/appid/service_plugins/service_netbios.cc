@@ -230,6 +230,8 @@ static int netbios_validate_name_and_decode(const uint8_t** data,
         *data += sizeof(NBNSLabelData);
         break;
     case 0xC0:
+        if (end - *data < (int)sizeof(NBNSLabelPtr))
+            return -1;
         lbl_ptr = (const NBNSLabelPtr*)(*data);
         *data += sizeof(NBNSLabelPtr);
         if (begin + lbl_ptr->position + sizeof(NBNSLabelData) > end)
@@ -286,6 +288,8 @@ static int netbios_validate_name(const uint8_t** data,
         *data += sizeof(NBNSLabelData);
         break;
     case 0xC0:
+        if (end - *data < (int)sizeof(NBNSLabelPtr))
+            return -1;
         lbl_ptr = (const NBNSLabelPtr*)(*data);
         *data += sizeof(NBNSLabelPtr);
         if (begin + lbl_ptr->position + sizeof(NBNSLabelData) > end)

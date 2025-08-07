@@ -23,15 +23,22 @@
 #include "config.h"
 #endif
 
-#if 0
-#include "network_inspectors/appid/detector_plugins/detector_smtp.cc"
+#include "appid_inspector.h"
+#include "appid_session.h"
+#include "detector_plugins_mock.h"
+
+
+#include "../detector_smtp.h"
+#include "../detector_smtp.cc"
+
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
-#include <string>
+using namespace snort;
 
+#if 0
 struct AddAppData
 {
     AppId client_id = 0;
@@ -239,15 +246,87 @@ TEST(client_app_smtp, identify_client_version_mozilla_thunderbird)
     check_client_version(client_str, APP_ID_THUNDERBIRD, "5.0",
         &appid_stats.smtp_thunderbird_clients);
 }
-
 #endif
-//  FIXIT-M Add additional tests for other client types (Outlook, etc).
 
-int main(int, char**)
+
+static ClientDiscovery test_discovery;
+
+// Stubs for AppIdInspector
+AppIdConfig test_app_config;
+AppIdInspector::AppIdInspector(AppIdModule&) : config(&test_app_config), ctxt(test_app_config) { }
+
+int AppIdDetector::data_add(AppIdSession&, AppIdFlowData*) { return 1; }
+
+SMTPDetectorData* test_data_get = nullptr;
+
+AppIdFlowData* AppIdDetector::data_get(const AppIdSession&)
 {
-#if 0
-    int return_value = CommandLineTestRunner::RunAllTests(argc, argv);
-    return return_value;
-#endif
+    return test_data_get;
 }
 
+int ServiceDetector::fail_service(AppIdSession& asd, const Packet* pkt, AppidSessionDirection dir) { return 1; }
+
+TEST_GROUP(detector_smtp_tests)
+{
+    SmtpClientDetector *test_detector = nullptr;
+    void setup() override
+    {
+        test_detector = new SmtpClientDetector(&test_discovery);
+    }
+
+    void teardown() override
+    {
+        delete test_detector;
+        test_detector = nullptr;
+    }
+};
+
+TEST(detector_smtp_tests, client_message_wrong_len_1)
+{
+    OdpContext test_odp_ctxt(test_app_config, nullptr);
+    AppIdModule test_module;
+    AppIdInspector test_inspector(test_module);
+    AppIdSession test_asd(IpProtocol::TCP, nullptr, (uint16_t)0, test_inspector, test_odp_ctxt, (uint32_t)0, 0);
+    const uint8_t* test_data = (const uint8_t*)".";
+    uint16_t test_data_size = 1;
+    AppidChangeBits cb;
+
+    test_data_get = new SMTPDetectorData;
+    test_data_get->client.state = SMTP_CLIENT_STATE_MESSAGE;
+
+    AppIdDiscoveryArgs test_args(test_data, test_data_size, AppidSessionDirection::APP_ID_FROM_INITIATOR, test_asd, nullptr, cb);
+
+    auto result = test_detector->validate(test_args);
+    CHECK_EQUAL(result, APPID_INPROCESS);
+    CHECK_EQUAL(test_asd.is_client_detected(), false);
+
+    delete test_data_get;
+}
+
+TEST(detector_smtp_tests, client_message_wrong_len_2)
+{
+    OdpContext test_odp_ctxt(test_app_config, nullptr);
+    AppIdModule test_module;
+    AppIdInspector test_inspector(test_module);
+    AppIdSession test_asd(IpProtocol::TCP, nullptr, (uint16_t)0, test_inspector, test_odp_ctxt, (uint32_t)0, 0);
+    const uint8_t* test_data = (const uint8_t*)".\t";
+    uint16_t test_data_size = 2;
+    AppidChangeBits cb;
+
+    test_data_get = new SMTPDetectorData;
+    test_data_get->client.state = SMTP_CLIENT_STATE_MESSAGE;
+
+    AppIdDiscoveryArgs test_args(test_data, test_data_size, AppidSessionDirection::APP_ID_FROM_INITIATOR, test_asd, nullptr, cb);
+
+    auto result = test_detector->validate(test_args);
+    CHECK_EQUAL(result, APPID_INPROCESS);
+    CHECK_EQUAL(test_asd.is_client_detected(), false);
+
+    delete test_data_get;
+}
+
+int main(int argc, char** argv)
+{
+    int return_value = CommandLineTestRunner::RunAllTests(argc, argv);
+    return return_value;
+}

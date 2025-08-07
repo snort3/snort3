@@ -24,6 +24,12 @@
 #include "config.h"
 #endif
 
+#include <utils/util_cstring.h>
+#include <framework/module.h>
+#include <appid/service_plugins/service_detector.h>
+#include <appid/client_plugins/client_detector.h>
+#include <appid/appid_inspector.h>
+
 #include "log/messages.h"
 #include "utils/stats.h"
 
@@ -93,18 +99,6 @@ void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 // LCOV_EXCL_STOP
 
-#ifndef SIP_UNIT_TEST
-class AppIdInspector : public snort::Inspector
-{
-public:
-    AppIdInspector(AppIdModule&) { }
-    ~AppIdInspector() override = default;
-    bool configure(snort::SnortConfig*) override;
-private:
-    AppIdContext* ctxt = nullptr;
-};
-#endif
-
 // Stubs for modules, config
 AppIdConfig::~AppIdConfig() = default;
 AppIdModule::AppIdModule()
@@ -127,7 +121,7 @@ bool AppIdModule::end(const char*, int, snort::SnortConfig*)
     return false;
 }
 
-const Command* AppIdModule::get_commands() const
+const snort::Command* AppIdModule::get_commands() const
 {
     return nullptr;
 }
@@ -148,8 +142,8 @@ snort::ProfileStats* AppIdModule::get_profile(
     return nullptr;
 }
 
-void AppIdModule::set_trace(const Trace*) const { }
-const TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
+void AppIdModule::set_trace(const snort::Trace*) const { }
+const snort::TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
 // LCOV_EXCL_STOP
 
 // Stubs for inspectors
@@ -157,15 +151,15 @@ unsigned AppIdSession::inspector_id = 0;
 AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
 OdpContext stub_odp_ctxt(stub_config, nullptr);
-AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector,
+AppIdSession::AppIdSession(IpProtocol, const snort::SfIp* ip, uint16_t, AppIdInspector& inspector,
     OdpContext& odpctxt, uint32_t
 #ifndef DISABLE_TENANT_ID
     ,uint32_t
 #endif
     ) : snort::FlowData(inspector_id, (snort::Inspector*)&inspector),
-        config(stub_config), api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(odpctxt)
+        config(stub_config), api(*(new snort::AppIdSessionApi(this, *ip))), odp_ctxt(odpctxt)
 {
-    this->set_session_flags(APPID_SESSION_DISCOVER_APP);
+    
 }
 AppIdSession::~AppIdSession() { delete &api; }
 AppIdHttpSession::AppIdHttpSession(AppIdSession& asd, int64_t http2_stream_id)
@@ -235,4 +229,76 @@ OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*)
 { }
 
 THREAD_LOCAL OdpContext* pkt_thread_odp_ctxt = nullptr;
+
+// Stubs for module
+snort::Module::Module(char const*, char const*) {}
+void snort::Module::sum_stats(bool) {}
+void snort::Module::show_interval_stats(std::vector<unsigned>&, FILE*) {}
+void snort::Module::show_stats() {}
+void snort::Module::init_stats(bool) {}
+void snort::Module::reset_stats() {}
+void snort::Module::main_accumulate_stats() {}
+PegCount snort::Module::get_global_count(char const*) const { return 0; }
+
+
+void ApplicationDescriptor::set_id(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
+AppIdDiscovery::~AppIdDiscovery() = default;
+void ClientDiscovery::initialize(AppIdInspector&) { }
+void ClientDiscovery::reload() { }
+void AppIdDiscovery::register_detector(const string&, AppIdDetector*, IpProtocol) { }
+void AppIdDiscovery::add_pattern_data(AppIdDetector*, snort::SearchTool&, int, unsigned char const*, unsigned int, unsigned int) { }
+void AppIdDiscovery::register_tcp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
+void AppIdDiscovery::register_udp_pattern(AppIdDetector*, unsigned char const*, unsigned int, int, unsigned int) { }
+int AppIdDiscovery::add_service_port(AppIdDetector*, ServiceDetectorPort const&) { return 0; }
+DnsPatternMatchers::~DnsPatternMatchers() = default;
+EveCaPatternMatchers::~EveCaPatternMatchers() = default;
+#ifndef SIP_UNIT_TEST
+SipPatternMatchers::~SipPatternMatchers() = default;
+#endif
+HostPatternMatchers::~HostPatternMatchers() = default;
+AlpnPatternMatchers::~AlpnPatternMatchers() = default;
+#ifndef HTTP_PATTERNS_UNIT_TEST
+HttpPatternMatchers::~HttpPatternMatchers() = default;
+#endif
+UserDataMap::~UserDataMap() = default;
+CipPatternMatchers::~CipPatternMatchers() = default;
+bool HostPatternMatchers::scan_url(const uint8_t*, size_t, AppId&, AppId&, bool*){ return true; }   
+void AppIdModule::reset_stats() {}
+bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
+void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
+void HostPatternMatchers::add_host_pattern(unsigned char const*, unsigned long, unsigned char, int, int, HostPatternType, bool, bool) {}
+
+#ifndef SIP_UNIT_TEST
+snort::SearchTool::SearchTool(bool, const char*) { }
+#endif
+
+ServiceDetector::ServiceDetector() {}
+void ServiceDetector::register_appid(AppId appId, unsigned extractsInfo, OdpContext& odp_ctxt) {}
+int ServiceDetector::add_service_consume_subtype(AppIdSession& asd, const snort::Packet* pkt,
+    AppidSessionDirection dir, AppId appId, const char* vendor, const char* version,
+    AppIdServiceSubtype* subtype, AppidChangeBits& change_bits)
+    { return 0; }
+int ServiceDetector::add_service(AppidChangeBits& change_bits, AppIdSession& asd,
+    const snort::Packet* pkt, AppidSessionDirection dir, AppId appId, const char* vendor,
+    const char* version, AppIdServiceSubtype* subtype)
+    { return 0; }
+int ServiceDetector::service_inprocess(AppIdSession& asd, const snort::Packet* pkt, AppidSessionDirection dir) { return 0; }
+
+snort::AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&)
+{ }
+
+AppIdInspector::~AppIdInspector() = default;
+
+void ClientDetector::register_appid(int, unsigned int, OdpContext&) { }
+
+void AppIdInspector::eval(snort::Packet*) { }
+void AppIdInspector::show(const snort::SnortConfig*) const { }
+void AppIdInspector::tinit() { }
+void AppIdInspector::tterm() { }
+void AppIdInspector::tear_down(snort::SnortConfig*) { }
+
+ClientDetector::ClientDetector() { }
+
+void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*) { }
+int AppIdSession::add_flow_data_id(uint16_t, ServiceDetector*) { return 0; }
 #endif

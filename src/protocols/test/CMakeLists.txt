@@ -8,3 +8,5 @@ add_cpputest( decode_err_len_test
       ../packet.cc
       ../packet_manager.cc
 )
+
+add_cpputest( ssl_protocol_test )

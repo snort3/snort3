@@ -1614,7 +1614,7 @@ void HttpPatternMatchers::get_server_vendor_version(const char* data, int len, c
         vendor_len = ver - data;
         ver++;
 
-        for (p = ver; *p && p < end; p++)
+        for (p = ver; p < end && *p; p++)
         {
             if ( *p == '(' )
             {

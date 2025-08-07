@@ -361,50 +361,50 @@ int DnsValidator::dns_validate_query(const uint8_t* data, uint16_t* offset, uint
     uint16_t id, bool host_reporting, AppIdSession& asd, AppidChangeBits& change_bits)
 {
     int ret;
-    const uint8_t* host;
-    uint8_t host_len;
-    bool host_len_valid;
-    uint16_t host_offset;
+    const uint8_t* host = data + *offset;
+    uint8_t host_len = 0;
+    bool host_len_valid = false;
+    uint16_t host_offset = *offset;
 
-    host = data + *offset;
-    host_offset = *offset;
     ret = dns_validate_label(data, *offset, size, host_len, host_len_valid);
 
-    if (ret == APPID_SUCCESS)
+    if ((ret == APPID_SUCCESS) and (host_reporting))
     {
+        if ((*offset > size) || ((size - *offset) < (uint16_t)sizeof(DNSQueryFixed)))
+            return APPID_NOMATCH;
+
         const DNSQueryFixed* query = (const DNSQueryFixed*)(data + *offset);
+
         *offset += sizeof(DNSQueryFixed);
 
-        if (host_reporting)
-        {
-            uint16_t record_type = ntohs(query->QType);
+        uint16_t record_type = ntohs(query->QType);
 
-            if ((host_len == 0) || (!host_len_valid))
-            {
-                host        = nullptr;
-                host_len    = 0;
-                host_offset = 0;
-            }
-            switch (record_type)
-            {
-            case PATTERN_A_REC:
-            case PATTERN_AAAA_REC:
-            case PATTERN_CNAME_REC:
-            case PATTERN_SRV_REC:
-            case PATTERN_TXT_REC:
-            case PATTERN_MX_REC:
-            case PATTERN_SOA_REC:
-            case PATTERN_NS_REC:
-            case PATTERN_ANY_REC:
-                ret = add_dns_query_info(asd, id, host, host_len, host_offset, record_type, *offset, change_bits);
-                break;
-            case PATTERN_PTR_REC:
-                ret = add_dns_query_info(asd, id, nullptr, 0, 0, record_type, *offset, change_bits);
-                break;
-            default:
-                break;
-            }
+        if ((host_len == 0) || (!host_len_valid))
+        {
+            host        = nullptr;
+            host_len    = 0;
+            host_offset = 0;
         }
+        switch (record_type)
+        {
+        case PATTERN_A_REC:
+        case PATTERN_AAAA_REC:
+        case PATTERN_CNAME_REC:
+        case PATTERN_SRV_REC:
+        case PATTERN_TXT_REC:
+        case PATTERN_MX_REC:
+        case PATTERN_SOA_REC:
+        case PATTERN_NS_REC:
+        case PATTERN_ANY_REC:
+            ret = add_dns_query_info(asd, id, host, host_len, host_offset, record_type, *offset, change_bits);
+            break;
+        case PATTERN_PTR_REC:
+            ret = add_dns_query_info(asd, id, nullptr, 0, 0, record_type, *offset, change_bits);
+            break;
+        default:
+            break;
+        }
+    
     }
     return ret;
 }
