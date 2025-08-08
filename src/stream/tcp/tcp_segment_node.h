@@ -96,7 +96,7 @@ public:
         if ( !next_no_gap() )
             return false;
 
-        return SEQ_LT(next->start_seq() + next->cursor, seq_acked);
+        return SEQ_LT(next->start_seq(), seq_acked);
     }
 
 public:

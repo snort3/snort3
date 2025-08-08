@@ -208,8 +208,6 @@ protected:
 
     bool fin_no_gap(const TcpSegmentNode&);
     bool fin_acked_no_gap(const TcpSegmentNode&);
-    void update_skipped_bytes(uint32_t);
-    void check_first_segment_hole();
     uint32_t perform_partial_flush(snort::Packet*);
     bool final_flush_on_fin(int32_t flush_amt, snort::Packet*, FinSeqNumStatus);
     bool asymmetric_flow_flushed(uint32_t flushed, snort::Packet *p);

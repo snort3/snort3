@@ -80,26 +80,6 @@ bool TcpReassemblerBase::fin_acked_no_gap(const TcpSegmentNode& tsn)
         and SEQ_GEQ(tsn.next_seq(), tracker.get_fin_i_seq());
 }
 
-// If we are skipping seglist hole, update tsn so that we can purge
-void TcpReassemblerBase::update_skipped_bytes(uint32_t remaining_bytes)
-{
-    TcpSegmentNode* tsn;
-
-    while ( remaining_bytes and (tsn = seglist.cur_rseg) )
-    {
-        auto bytes_skipped = ( tsn->unscanned() <= remaining_bytes ) ? tsn->unscanned() : remaining_bytes;
-
-        remaining_bytes -= bytes_skipped;
-        tsn->advance_cursor(bytes_skipped);
-
-        if ( !tsn->unscanned() )
-        {
-            seglist.flush_count++;
-            seglist.update_next(tsn);
-        }
-    }
-}
-
 void TcpReassemblerBase::purge_to_seq(uint32_t flush_seq)
 {
     seglist.purge_flushed_segments(flush_seq);
@@ -192,9 +172,8 @@ int TcpReassemblerBase::flush_data_segments(uint32_t flush_len, Packet* pdu)
 
         /* Check for a gap/missing packet */
         // FIXIT-L FIN may be in to_seq causing bogus gap counts.
-        if ( tsn->is_packet_missing(to_seq) or paf.state == StreamSplitter::SKIP )
+        if ( tsn->is_packet_missing(to_seq) )
         {
-            // FIXIT-H // assert(false); find when this scenario happens
             // FIXIT-L this is suboptimal - better to exclude fin from to_seq
             if ( !tracker.is_fin_seq_set() or
                 SEQ_LEQ(to_seq, tracker.get_fin_final_seq()) )
@@ -207,9 +186,6 @@ int TcpReassemblerBase::flush_data_segments(uint32_t flush_len, Packet* pdu)
         if ( sb.data || !seglist.cur_rseg )
             break;
     }
-
-    if ( paf.state == StreamSplitter::SKIP )
-        update_skipped_bytes(remaining_bytes);
 
     return total_flushed;
 }
@@ -564,17 +540,6 @@ void TcpReassemblerBase::flush_queued_segments(Flow* flow, bool clear, Packet* p
 
         if ( pending and !(flow->ssn_state.ignore_direction & ignore_dir) )
             final_flush(pdu, packet_dir);
-    }
-}
-
-
-void TcpReassemblerBase::check_first_segment_hole()
-{
-    if ( SEQ_LT(seglist.seglist_base_seq, seglist.head->start_seq()) )
-    {
-        seglist.seglist_base_seq = seglist.head->start_seq();
-        seglist.advance_rcv_nxt();
-        paf.state = StreamSplitter::START;
     }
 }
 

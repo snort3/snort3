@@ -57,3 +57,8 @@ build.env
 coverage.info
 coverage.txt
 src/uncovered.txt
+build/
+
+# vscode config
+snort3.code-workspace
+

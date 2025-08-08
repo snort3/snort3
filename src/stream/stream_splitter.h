@@ -80,6 +80,7 @@ public:
         unsigned& copied       // actual data copied (1 <= copied <= len)
         );
 
+    virtual bool restart() { return false; }
     virtual bool sync_on_start() const { return false; }
     virtual bool is_paf() { return false; }
     virtual unsigned max(Flow* = nullptr);
@@ -106,6 +107,8 @@ public:
     AtomSplitter(bool, uint16_t size = 0);
 
     Status scan(Packet*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override;
+
+    bool restart() override;
 
 private:
     void reset();

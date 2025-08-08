@@ -53,8 +53,7 @@ public:
 
 private:
     int32_t scan_data_post_ack(uint32_t* flags, snort::Packet*);
-    bool has_seglist_hole(TcpSegmentNode&, uint32_t& total, uint32_t& flags);
-    void skip_seglist_hole(snort::Packet*, uint32_t flags, int32_t flush_amt);
+    void skip_seglist_hole();
 };
 
 #endif

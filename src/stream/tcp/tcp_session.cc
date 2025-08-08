@@ -696,7 +696,16 @@ bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, Tc
 bool TcpSession::filter_packet_for_reassembly(TcpSegmentDescriptor& tsd, TcpStreamTracker* listener)
 {
     if ( tsd.are_packet_flags_set(PKT_IGNORE) or listener->get_flush_policy() == STREAM_FLPOLICY_IGNORE )
+    {
+        listener->update_stream_order(tsd, tsd.is_packet_inorder());
+
+        if ( tsd.is_packet_inorder() )
+            listener->set_rcv_nxt(tsd.get_end_seq());
+        else if ( SEQ_GT(listener->r_win_base, listener->rcv_nxt) )
+            listener->set_rcv_nxt(listener->r_win_base); 
+
         return false;
+    }
 
     return !check_reassembly_queue_thresholds(tsd, listener);
 }
@@ -747,11 +756,9 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd, bool flush)
                     tel.set_tcp_event(EVENT_EXCESSIVE_OVERLAP);
                     listener->seglist.set_overlap_count(0);
                 }
+                
+                listener->update_stream_order(tsd, tsd.is_packet_inorder());
             }
-            else if ( tsd.is_packet_inorder() )
-                listener->set_rcv_nxt(tsd.get_end_seq());
-
-            listener->update_stream_order(tsd, tsd.is_packet_inorder());
 
             break;
 

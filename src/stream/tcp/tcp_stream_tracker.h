@@ -315,7 +315,6 @@ public:
     static void thread_init();
     static void thread_term();
 
-public:
     uint32_t rcv_nxt = 0;          // RCV.NXT - receive next
     uint32_t rcv_wnd = 0;          // RCV.WND - receive window
 
@@ -331,6 +330,10 @@ public:
     TcpReassembler* oaitw_reassembler = nullptr;
     TcpSession* session = nullptr;
     TcpAlerts tcp_alerts;
+
+    uint64_t bytes_skipped = 0;    // number of bytes skipped in the stream
+    uint64_t bytes_missing = 0;    // number of bytes missing in the stream
+    uint32_t holes_detected = 0;   // number of holes detected in the stream
 
     uint32_t r_win_base = 0; // remote side window base sequence number (the last ack we got)
     uint32_t small_seg_count = 0;
@@ -372,6 +375,7 @@ private:
     uint32_t irs = 0;              // IRS     - initial receive sequence number
     uint16_t snd_up = 0;           // SND.UP  - send urgent pointer
     uint16_t rcv_up = 0;           // RCV.UP  - receive urgent pointer
+
 };
 
 // <--- note -- the 'state' parameter must be a reference

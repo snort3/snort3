@@ -66,6 +66,8 @@ const char* tcp_event_names[] = {
     "TCP_RST_SENT_EVENT", "TCP_RST_RECV_EVENT"
 };
 
+static constexpr uint32_t BOTH_SPLITTERS_YOINKED = (SSNFLAG_ABORT_CLIENT | SSNFLAG_ABORT_SERVER);
+
 TcpStreamTracker::TcpStreamTracker(bool client) :
     client_tracker(client), tcp_state(client ? TCP_STATE_NONE : TCP_LISTEN)
 { 
@@ -431,8 +433,7 @@ void TcpStreamTracker::set_splitter(const Flow* flow)
 
 static inline bool both_splitters_aborted(Flow* flow)
 {
-    uint32_t both_splitters_yoinked = (SSNFLAG_ABORT_CLIENT | SSNFLAG_ABORT_SERVER);
-    return (flow->get_session_flags() & both_splitters_yoinked) == both_splitters_yoinked;
+    return (flow->get_session_flags() & BOTH_SPLITTERS_YOINKED) == BOTH_SPLITTERS_YOINKED;
 }
 
 void TcpStreamTracker::fallback()

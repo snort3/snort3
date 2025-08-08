@@ -98,6 +98,12 @@ StreamSplitter::Status AtomSplitter::scan(
     return SEARCH;
 }
 
+bool AtomSplitter::restart()
+{ 
+    reset();
+    return true;
+}
+
 void AtomSplitter::reset()
 {  segs = bytes_scanned = 0; }
 
