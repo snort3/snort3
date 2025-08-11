@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.9.2.0 2025-07-20 23:16:33 EDT TST
+Revision 3.9.3.0 2025-08-10 20:21:55 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1301,7 +1301,7 @@ Configuration:
 Commands:
 
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port,
-    tenants): enable packet tracer debugging
+    tenants, regex, stop_after_match): enable packet tracer debugging
   * packet_tracer.disable(): disable packet tracer
 
 
@@ -4405,6 +4405,8 @@ Peg counts:
     bodies compressed with known but not supported methods (sum)
   * http_inspect.compressed_unknown: total number of HTTP bodies
     compressed with unknown methods (sum)
+  * http_inspect.max_publish_depth_hits: total number of times the
+    maximum publish depth was exceeded (sum)
 
 
 5.27. iec104
@@ -6313,6 +6315,8 @@ Peg counts:
     service inspector (sum)
   * stream_tcp.partial_fallbacks: count of fallbacks from assigned
     service stream splitter (sum)
+  * stream_tcp.splitter_restarts: count of splitter restarts from
+    skipping seglist holes (sum)
   * stream_tcp.max_segs: maximum number of segments queued in any
     flow (max)
   * stream_tcp.max_bytes: maximum number of bytes queued in any flow
@@ -12342,6 +12346,8 @@ libraries see the Getting Started section of the manual.
     (sum)
   * http_inspect.max_concurrent_sessions: maximum concurrent http
     sessions (max)
+  * http_inspect.max_publish_depth_hits: total number of times the
+    maximum publish depth was exceeded (sum)
   * http_inspect.options_requests: OPTIONS requests inspected (sum)
   * http_inspect.other_requests: other request methods inspected
     (sum)
@@ -13014,6 +13020,8 @@ libraries see the Getting Started section of the manual.
     flushed when session released (sum)
   * stream_tcp.sessions: total tcp sessions (sum)
   * stream_tcp.setups: session initializations (sum)
+  * stream_tcp.splitter_restarts: count of splitter restarts from
+    skipping seglist holes (sum)
   * stream_tcp.stale_packets: tcp stale packets (sum)
   * stream_tcp.syn_acks: number of syn-ack packets (sum)
   * stream_tcp.syn_ack_trackers: tcp session tracking started on
@@ -16509,7 +16517,7 @@ alert is raised by the enhanced JavaScript normalizer.
     capture_path, max_packet_count): capture raw packets
   * packet_capture.disable(): stop packet capturing
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port,
-    tenants): enable packet tracer debugging
+    tenants, regex, stop_after_match): enable packet tracer debugging
   * packet_tracer.disable(): disable packet tracer
   * perf_monitor.enable_flow_ip_profiling(seconds, packets,
     flow_ip_all): enable all statistics on host pairs

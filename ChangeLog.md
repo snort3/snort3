@@ -1,3 +1,38 @@
+2025-08-10: 3.9.3.0
+
+* appid: accounting for tmp offset in RPC
+* appid: change appid_shadow_traffic_status to atomic for thread safety
+* appid: combined host pattern matchers
+* appid: fix ASAN issue in AppIdHttpSession::set_req_body_field
+* appid: fix out-of-bounds caused by strncat in identify_user_agent
+* appid: getting packet from event than from detectionengine
+* appid: out-of-range readings fix
+* appid: prevent out_of_range and invalid_argument in rpc
+* appid: rpc integer overflow fix
+* build: enable exporting compile commands
+* dce_rpc: checked for integer overflow of smb_hdr + next_command_offset
+* dce_rpc: checking integer overflow on data_offset + data_length
+* detection: extract children-related evaluation logic into separated functions
+* detection: extract current node evaluation logic into separated function
+* detection: fix compile warnings in detection_options.cc
+* file_api: multi-process snort file cache crash fix
+* file_api: multi process snort file cache sharing crash fix
+* helpers: ringLogic framework updated to use atomic than volatile
+* http_inspect: add peg count for when published body has hit the requested max size
+* iec104: fallback functionality for abort scenario
+* logger: add batched logger to improve packet_tracer output performace
+* logger: add cpu affinity for log writer thread
+* main: notify DAQ via ioctl message when a packet is injected
+* mime: fix out-of-bounds in case of short boundary chunks
+* packet_tracer: file output will not be using batched logger
+* service_inspectors: Added random base file id generation for imap/pop/smtp.
+* smtp: fix overflow caused by tls data processing in smtp
+* stream_tcp: add splitter restart function, restart when hole skipped by AtomSplitter
+* stream_tcp: fix issues with skipping seglist holes in ids mode
+* stream_tcp: when reassembly is disable/ignored update rcv_nxt to left edge of first hole or to end of seglist
+* vba_decompress: avoiding heap buffer overflows
+* vba_decompress: exception handled
+
 2025-07-20: 3.9.2.0
 
 * build: fix comparison of empty integers. Thanks to Hatix Ntsoa.
