@@ -64,6 +64,7 @@ the latest:
 * PCRE2 from http://www.pcre.org for regular expression pattern matching
 * pkgconfig from https://www.freedesktop.org/wiki/Software/pkg-config/ to locate build dependencies
 * zlib from http://www.zlib.net for decompression
+* LZMA/xz from https://tukaani.org/xz/ for compression
 
 Additional packages provide optional features.  Check the manual for more.
 
