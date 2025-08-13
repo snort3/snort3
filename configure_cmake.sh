@@ -126,6 +126,12 @@ Optional Packages:
     --with-libml-libraries=DIR
                             libml library directory
     --without-libml         build Snort ML with mock of LibML
+    --with-librdkafka-includes=DIR
+                            librdkafka include directory
+    --with-librdkafka-libraries=DIR
+                            librdkafka library directory
+    --enable-alert-kafka
+                            enable kafka alerts in alert_json plugin
     --with-libnuma-includes=DIR
                             libnuma include directory
     --with-libnuma-libraries=DIR
@@ -487,6 +493,15 @@ while [ $# -ne 0 ]; do
             ;;
         --with-libml-libraries=*)
             append_cache_entry ML_LIBRARIES_DIR_HINT PATH $optarg
+            ;;
+        --with-librdkafka-includes=*)
+            append_cache_entry RDKAFKA_INCLUDE_DIR_HINT PATH $optarg
+            ;;
+        --with-librdkafka-libraries=*)
+            append_cache_entry RDKAFKA_LIBRARIES_DIR_HINT PATH $optarg
+            ;;
+        --enable-alert-kafka)
+            append_cache_entry ENABLE_ALERT_KAFKA BOOL true
             ;;
         --without-libml)
             append_cache_entry USE_LIBML_MOCK BOOL true

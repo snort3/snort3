@@ -46,17 +46,27 @@
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
 #include "protocols/vlan.h"
-
+#ifdef HAVE_RDKAFKA
+#include <librdkafka/rdkafka.h>
+#endif
 using namespace snort;
 using namespace std;
 
 #define LOG_BUFFER (4*K_BYTES)
 
+#ifdef HAVE_RDKAFKA
+#define EXPORT_TYPE_KAFKA "kafka"
+#endif
+#define EXPORT_TYPE_STDOUT "stdout"
+
 static THREAD_LOCAL TextLog* json_log;
 
 #define S_NAME "alert_json"
 #define F_NAME S_NAME ".txt"
-
+#ifdef HAVE_RDKAFKA
+#define D_TOPIC "rb_event"
+#define D_KAFKA_HOST "kafka.service:9092"
+#endif
 //-------------------------------------------------------------------------
 // field formatting functions
 //-------------------------------------------------------------------------
@@ -699,7 +709,16 @@ static const Parameter s_params[] =
 {
     { "file", Parameter::PT_BOOL, nullptr, "false",
       "output to " F_NAME " instead of stdout" },
+#ifdef HAVE_RDKAFKA
+    {"kafka_topic", Parameter::PT_STRING, nullptr, D_TOPIC,
+        "send data to topic " D_TOPIC},
 
+    {"kafka_broker", Parameter::PT_STRING, nullptr, D_KAFKA_HOST,
+        "Kafka broker host"},
+
+    { "type", Parameter::PT_STRING, nullptr, EXPORT_TYPE_STDOUT,
+      "Default export type" },
+#endif
     { "fields", Parameter::PT_MULTI, json_range, json_deflt,
       "selected fields will be output in given order left to right" },
 
@@ -728,6 +747,11 @@ public:
 
 public:
     bool file = false;
+#ifdef HAVE_RDKAFKA
+    string kafka_broker;
+    string kafka_topic;
+    string type;
+#endif
     size_t limit = 0;
     string sep;
     vector<JsonFunc> fields;
@@ -735,6 +759,16 @@ public:
 
 bool JsonModule::set(const char*, Value& v, SnortConfig*)
 {
+#ifdef HAVE_RDKAFKA
+    if ( v.is("type") )
+        type = v.get_string();
+
+    if (v.is("kafka_broker"))
+        kafka_broker = v.get_string();
+
+    if (v.is("kafka_topic"))
+        kafka_topic = v.get_string();
+#endif
     if ( v.is("file") )
         file = v.get_bool();
 
@@ -787,51 +821,158 @@ bool JsonModule::begin(const char*, int, SnortConfig*)
 // logger stuff
 //-------------------------------------------------------------------------
 
-class JsonLogger : public Logger
-{
+class LogExporterBaseStrategy {
 public:
-    JsonLogger(JsonModule*);
-
-    void open() override;
-    void close() override;
-
-    void alert(Packet*, const char* msg, const Event&) override;
-
-public:
-    string file;
-    unsigned long limit;
-    vector<JsonFunc> fields;
-    string sep;
+    virtual ~LogExporterBaseStrategy() = default;
+    virtual void open() = 0;
+    virtual void close() = 0;
+    virtual void alert(Packet *p, const char *msg, const Event &event) = 0;
 };
 
-JsonLogger::JsonLogger(JsonModule* m) : file(m->file ? F_NAME : "stdout"), limit(m->limit), fields(std::move(m->fields)), sep(m->sep)
-{ }
+#ifdef HAVE_RDKAFKA
+class KafkaExporterStrategy : public LogExporterBaseStrategy {
+public:
+    KafkaExporterStrategy(const string& broker, const string& topic, vector<JsonFunc> fields)
+        : kafka_broker(broker.empty() ? D_KAFKA_HOST : broker),
+          kafka_topic(topic.empty() ? D_TOPIC : topic),
+          fields(fields)
+    {}
 
-void JsonLogger::open()
-{
-    json_log = TextLog_Init(file.c_str(), LOG_BUFFER, limit);
-}
-
-void JsonLogger::close()
-{
-    if ( json_log )
-        TextLog_Term(json_log);
-}
-
-void JsonLogger::alert(Packet* p, const char* msg, const Event& event)
-{
-    Args a = { p, msg, event, false };
-    TextLog_Putc(json_log, '{');
-
-    for ( JsonFunc f : fields )
-    {
-        f(a);
-        a.comma = true;
+    void open() override {
+        json_log = TextLog_Init(F_NAME, LOG_BUFFER, 0);
+        conf = rd_kafka_conf_new();
+        rd_kafka_conf_set(conf, "bootstrap.servers", kafka_broker.c_str(), errstr, sizeof(errstr));
+        rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf, errstr, sizeof(errstr));
+        rkt = rd_kafka_topic_new(rk, kafka_topic.c_str(), nullptr);
     }
 
-    TextLog_Print(json_log, " }\n");
-    TextLog_Flush(json_log);
-}
+    void close() override {
+        if ( json_log )
+            TextLog_Term(json_log);
+        if (rkt)
+        {
+            rd_kafka_topic_destroy(rkt);
+        }
+        if (rk)
+        {
+            rd_kafka_flush(rk, 10000);
+            rd_kafka_destroy(rk);
+        }
+    }
+
+    void alert(Packet *p, const char *msg, const Event &event) override {
+        Args a = {p, msg, event, false};
+        TextLog_Putc(json_log, '{');
+        for (JsonFunc f : fields)
+        {
+            f(a);
+            a.comma = true;
+        }
+
+        TextLog_Print(json_log, " }\n");
+        char* json_event = TextLog_GetBuffer(json_log);
+        if (json_event)
+        {
+            size_t json_event_size = strlen(json_event);
+
+            if (rd_kafka_produce(
+                    rkt, RD_KAFKA_PARTITION_UA, RD_KAFKA_MSG_F_COPY,
+                    json_event, json_event_size,
+                    NULL, 0, NULL) == -1)
+            {
+                fprintf(stderr, "Failed to send event to Kafka: %s\n", 
+                        rd_kafka_err2str(rd_kafka_last_error()));
+            }
+        }
+        TextLog_Flush(json_log);
+        rd_kafka_poll(rk, 0);
+    }
+
+private:
+    string kafka_broker;
+    string kafka_topic;
+    vector<JsonFunc> fields;
+    char errstr[512];
+    thread_local static rd_kafka_t *rk;
+    thread_local static rd_kafka_conf_t *conf;
+    thread_local static rd_kafka_topic_t *rkt;
+};
+
+thread_local rd_kafka_t *KafkaExporterStrategy::rk = nullptr;
+thread_local rd_kafka_conf_t *KafkaExporterStrategy::conf = nullptr;
+thread_local rd_kafka_topic_t *KafkaExporterStrategy::rkt = nullptr;
+#endif
+
+class StdoutExporterStrategy : public  LogExporterBaseStrategy {
+public:
+    StdoutExporterStrategy(const bool filename, unsigned long limit, vector<JsonFunc> fields)
+        : file(filename), logLimit(limit), fields(fields)
+    {}
+
+    void open() override {
+        filename = file ? F_NAME : "stdout";
+        json_log = TextLog_Init(filename.c_str(), LOG_BUFFER, logLimit);
+    }
+
+    void close() override {
+        if ( json_log )
+            TextLog_Term(json_log);
+    }
+
+    void alert(Packet *p, const char *msg, const Event &event) override {
+        Args a = { p, msg, event, false };
+        TextLog_Putc(json_log, '{');
+
+        for ( JsonFunc f : fields )
+        {
+            f(a);
+            a.comma = true;
+        }
+
+        TextLog_Print(json_log, " }\n");
+        TextLog_Flush(json_log);
+    }
+
+private:
+    bool file;
+    string filename;
+    vector<JsonFunc> fields;
+    unsigned long logLimit;
+};
+
+class LogExporterFactory {
+public:
+    static unique_ptr<LogExporterBaseStrategy> create(JsonModule* m) {
+#ifdef HAVE_RDKAFKA
+        if(m->type == EXPORT_TYPE_KAFKA) {
+            return make_unique<KafkaExporterStrategy>(m->kafka_broker, m->kafka_topic, m->fields);
+        }
+#endif
+        return make_unique<StdoutExporterStrategy>(m->file, m->limit, m->fields);
+    }
+};
+
+class JsonLogger : public Logger {
+public:
+    JsonLogger(JsonModule* m) : Logger() {
+        exporter = LogExporterFactory::create(m);
+    }
+
+    void open() override {
+        exporter->open();
+    }
+
+    void close() override {
+        exporter->close();
+    }
+
+    void alert(Packet *p, const char *msg, const Event &event) override {
+        exporter->alert(p, msg, event);
+    }
+
+private:
+    std::unique_ptr<LogExporterBaseStrategy> exporter;
+};
 
 //-------------------------------------------------------------------------
 // api stuff
