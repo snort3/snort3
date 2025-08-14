@@ -47,11 +47,16 @@ static inline void reset_data_states(ImapPafData* pfdata)
 
     // reset server info
     pfdata->imap_state = IMAP_PAF_CMD_IDENTIFIER;
+    pfdata->data_end_state = IMAP_PAF_DATA_END_UNKNOWN;
+    pfdata->end_of_data = false;
 
-    // reset fetch data information information
+    // reset fetch data information
     pfdata->imap_data_info.paren_cnt = 0;
     pfdata->imap_data_info.next_letter = nullptr;
+    pfdata->imap_data_info.found_len = false;
     pfdata->imap_data_info.length = 0;
+    pfdata->imap_data_info.esc_nxt_char = false;
+    pfdata->imap_data_info.cmd = nullptr;
 }
 
 static inline bool is_untagged(const uint8_t ch)
@@ -215,6 +220,38 @@ static bool find_data_end_mime_data(const uint8_t ch, ImapPafData* pfdata)
 }
 
 /*
+ * This function only does something when the character is a blank or a CR/LF.
+ * In those specific cases, this function will set the appropriate next
+ * state information
+ *
+ * PARAMS:
+ *        const uint8_t ch - the next character to analyze.
+ *        ImapPafData *pfdata - the struct containing all imap paf information
+ *        ImapPafData base_state - if a space is not found, revert to this state
+ *        ImapPafData next_state - if a space is found, go to this state
+ * RETURNS:
+ *        true - if the status has been eaten
+ *        false - if a CR or LF has been found
+ */
+static inline void eat_character(const uint8_t ch, ImapPafData* pfdata,
+    ImapPafState base_state, ImapPafState next_state)
+{
+    switch (ch)
+    {
+    case ' ':
+    case '\t':
+    case '[':
+        pfdata->imap_state = next_state;
+        break;
+
+    case '\r':
+    case '\n':
+        pfdata->imap_state = base_state;
+        break;
+    }
+}
+
+/*
  * Initial command processing function.  Determine if this command
  * may be analyzed irregularly ( which currently means if emails
  * and email attachments need to be analyzed).
@@ -223,14 +260,134 @@ static bool find_data_end_mime_data(const uint8_t ch, ImapPafData* pfdata)
  *        const uint8_t ch - the next character to analyze.
  *        ImapPafData *pfdata - the struct containing all imap paf information
  */
-static inline void init_command_search(const uint8_t ch, ImapPafData* pfdata)
+static inline void init_command_search(const uint8_t ch, const uint8_t next_ch, ImapPafData* pfdata)
 {
     switch (ch)
     {
+    case '[':
+         eat_character(ch, pfdata, IMAP_PAF_REG_STATE, IMAP_PAF_CMD_SEARCH);
+         break;
     case 'F':
     case 'f':
-        // may be a FETCH response
-        pfdata->imap_data_info.next_letter = &(imap_resps[RESP_FETCH].name[1]);
+        if (pfdata->imap_state == IMAP_PAF_CMD_STATUS)
+        {
+            pfdata->imap_data_info.next_letter = &(imap_resps[RESP_FLAGS].name[1]);
+        }
+        else if (pfdata->imap_state == IMAP_PAF_CMD_SEARCH)
+        {
+            pfdata->imap_data_info.next_letter = &(imap_resps[RESP_FETCH].name[1]);
+            pfdata->imap_data_info.cmd = imap_resps[RESP_FETCH].name;
+        }
+        break;
+
+    case 'N':
+    case 'n':
+        if (imap_resps[RESP_NAMESPACE].name[1] == next_ch)
+        {
+            pfdata->imap_data_info.next_letter = &(imap_resps[RESP_NAMESPACE].name[1]);
+        }
+        break; 
+
+    case 'L':
+    case 'l':
+            if (imap_resps[RESP_LIST].name[1] == next_ch)
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_LIST].name[1]);
+            }
+            else if (imap_resps[RESP_LSUB].name[1] == next_ch)
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_LSUB].name[1]);
+            }
+        break;
+
+    case 'S':
+    case 's':
+            if (imap_resps[RESP_SEARCH].name[1] == next_ch)
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_SEARCH].name[1]);
+            }
+            else if (imap_resps[RESP_STATUS].name[1] == next_ch)
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_STATUS].name[1]);
+            }
+            else if (imap_resps[RESP_SUBSCRIBE].name[1] == next_ch)
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_SUBSCRIBE].name[1]);
+            }
+        break;
+
+    case 'C':
+    case 'c':
+            if (imap_resps[RESP_CREATE].name[1] == next_ch)
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_CREATE].name[1]);
+            }
+            else if (imap_resps[RESP_CAPABILITY].name[1] == next_ch) 
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_CAPABILITY].name[1]);
+            }
+        break;
+
+    case 'D':
+    case 'd':
+            if (imap_resps[RESP_DELETE].name[1] == next_ch)
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_DELETE].name[1]);
+            }
+        break;
+    
+    case 'E':
+    case 'e':
+            if (imap_resps[RESP_EXISTS].name[1] == next_ch)
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_EXISTS].name[1]);
+            }
+            else if (imap_resps[RESP_EXPUNGE].name[1] == next_ch)
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_EXPUNGE].name[1]);
+            }
+
+        break;
+    
+    case 'R':
+    case 'r':
+            if (imap_resps[RESP_RENAME].name[1] == next_ch)
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_RENAME].name[1]);
+            }
+        break;
+
+    case 'A':
+    case 'a':
+            if (imap_resps[RESP_APPEND].name[1] == next_ch)
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_APPEND].name[1]);
+            }
+        break;
+
+    case 'B':
+    case 'b':
+            if (imap_resps[RESP_BAD].name[1] == next_ch)
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_BAD].name[1]);
+            }
+            else if (imap_resps[RESP_BYE].name[1] == next_ch)
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_BYE].name[1]);
+            }
+        break;
+
+    case 'O':
+    case 'o':
+        pfdata->imap_data_info.next_letter = &(imap_resps[RESP_OK].name[1]);
+        break;
+    
+    case 'U':
+    case 'u':
+            if (imap_resps[RESP_UID].name[1] == next_ch)
+            {
+                pfdata->imap_data_info.next_letter = &(imap_resps[RESP_UID].name[1]);
+            }
         break;
 
     default:
@@ -254,8 +411,21 @@ static inline void parse_command(const uint8_t ch, ImapPafData* pfdata)
     char val = *(pfdata->imap_data_info.next_letter);
 
     if (val == '\0' && isblank(ch))
-        pfdata->imap_state = IMAP_PAF_DATA_HEAD_STATE;
-
+    {
+        if (pfdata->imap_state == IMAP_PAF_CMD_STATUS)
+        {
+            pfdata->imap_state = IMAP_PAF_CMD_SEARCH;
+            pfdata->imap_data_info.next_letter = nullptr;
+            return;
+        }
+        
+        if (pfdata->imap_state == IMAP_PAF_CMD_SEARCH)
+        {
+            pfdata->imap_state = (pfdata->imap_data_info.cmd == imap_resps[RESP_FETCH].name) 
+                ? IMAP_PAF_DATA_HEAD_STATE 
+                : IMAP_PAF_VAL_STATE;
+        }
+    }
     else if (toupper(ch) == toupper(val))
         pfdata->imap_data_info.next_letter++;
 
@@ -272,57 +442,30 @@ static inline void parse_command(const uint8_t ch, ImapPafData* pfdata)
  *        const uint8_t ch - the next character to analyze.
  *        ImapPafData *pfdata - the struct containing all imap paf information
  */
-static inline void process_command(const uint8_t ch, ImapPafData* pfdata)
+static inline void process_command(const uint8_t ch, const uint8_t next_ch, ImapPafData* pfdata)
 {
     if (pfdata->imap_data_info.next_letter)
         parse_command(ch, pfdata);
     else
-        init_command_search(ch, pfdata);
+        init_command_search(ch, next_ch, pfdata);
 }
 
-/*
- * This function only does something when the character is a blank or a CR/LF.
- * In those specific cases, this function will set the appropriate next
- * state information
- *
- * PARAMS:
- *        const uint8_t ch - the next character to analyze.
- *        ImapPafData *pfdata - the struct containing all imap paf information
- *        ImapPafData base_state - if a space is not found, revert to this state
- *        ImapPafData next_state - if a space is found, go to this state
- * RETURNS:
- *        true - if the status has been eaten
- *        false - if a CR or LF has been found
- */
-static inline void eat_character(const uint8_t ch, ImapPafData* pfdata,
-    ImapPafState base_state, ImapPafState next_state)
+static inline void process_second_argument(const uint8_t ch, const uint8_t next_ch, ImapPafData* pfdata)
 {
-    switch (ch)
+    if (isdigit(ch))
+        return;
+    else if (isblank(ch))
     {
-    case ' ':
-    case '\t':
-        pfdata->imap_state = next_state;
-        break;
-
-    case '\r':
-    case '\n':
-        pfdata->imap_state = base_state;
-        break;
+        pfdata->imap_state = IMAP_PAF_CMD_SEARCH;
+        return;
     }
+
+    if (pfdata->imap_data_info.next_letter)
+        parse_command(ch, pfdata);
+    else
+        init_command_search(ch, next_ch, pfdata);
 }
 
-/*
- *  defined above in the eat_character function
- *
- * Keeping the next two functions to ease any future development
- * where these cases will no longer be simple or identical
- */
-static inline void eat_second_argument(const uint8_t ch, ImapPafData* pfdata)
-{
-    eat_character(ch, pfdata, IMAP_PAF_REG_STATE, IMAP_PAF_CMD_SEARCH);
-}
-
-/* explanation in 'eat_second_argument' above */
 static inline void eat_response_identifier(const uint8_t ch, ImapPafData* pfdata)
 {
     eat_character(ch, pfdata, IMAP_PAF_REG_STATE, IMAP_PAF_CMD_STATUS);
@@ -351,9 +494,14 @@ static StreamSplitter::Status imap_paf_server(ImapPafData* pfdata,
 
     pfdata->end_of_data = false;
 
+    bool saw_reg_state = false;
     for (i = 0; i < len; i++)
     {
         uint8_t ch = data[i];
+        uint8_t next_ch = 0;
+        if(i+1 < len)
+            next_ch = data[i+1];
+
         switch (pfdata->imap_state)
         {
         case IMAP_PAF_CMD_IDENTIFIER:
@@ -376,16 +524,23 @@ static StreamSplitter::Status imap_paf_server(ImapPafData* pfdata,
 
         case IMAP_PAF_CMD_STATUS:
             // can be a command name, msg sequence number, msg count, etc...
-            // since we are only interested in fetch, eat this argument
-            eat_second_argument(ch, pfdata);
+            process_second_argument(ch, next_ch, pfdata);
+            find_data_end_single_line(ch, pfdata);
+
             break;
 
         case IMAP_PAF_CMD_SEARCH:
-            process_command(ch, pfdata);
+            process_command(ch, next_ch, pfdata);
             find_data_end_single_line(ch, pfdata);
             break;
+        
+        case IMAP_PAF_VAL_STATE:
+            pfdata->server_bytes_seen = 0;
+            reset_data_states(pfdata);
+            return StreamSplitter::SEARCH;
 
         case IMAP_PAF_REG_STATE:
+            saw_reg_state = true;
             find_data_end_single_line(ch, pfdata); // data reset when end of line hit
             break;
 
@@ -424,6 +579,19 @@ static StreamSplitter::Status imap_paf_server(ImapPafData* pfdata,
         }
     }
 
+    if( saw_reg_state )
+    {
+        pfdata->server_bytes_seen += len;
+        if (pfdata->server_bytes_seen > IMAP_MAX_OCTETS)
+        {
+            return StreamSplitter::ABORT;
+        }
+    }
+    else 
+    {
+        pfdata->server_bytes_seen = 0;
+    }
+
     if (flush_len)
     {
         // flush at the final termination sequence
@@ -451,15 +619,96 @@ static StreamSplitter::Status imap_paf_server(ImapPafData* pfdata,
  *    StreamSplitter::Status - StreamSplitter::FLUSH if flush point found,
  *    StreamSplitter::SEARCH otherwise
  */
-static StreamSplitter::Status imap_paf_client(const uint8_t* data, uint32_t len, uint32_t* fp)
+
+static StreamSplitter::Status imap_paf_client(ImapPafData* pfdata, const uint8_t* data, uint32_t len, uint32_t* fp)
 {
-    const char* pch;
-
-    pch = (const char *)memchr (data, '\n', len);
-
-    if (pch != nullptr)
+    uint32_t i;
+    uint32_t flush_len = 0;
+    ImapClientState client_state = IMAP_CLIENT_FIRST_CHAR;
+    bool is_valid_command = false;
+    bool is_valid_base64 = len >= MIN_BASE64_LEN;
+    bool found_space = false;
+    
+    for (i = 0; i < len; i++)
     {
-        *fp = (uint32_t)(pch - (const char*)data) + 1;
+        uint8_t ch = data[i];
+        
+        if (ch == '\n')
+        {
+            flush_len = i + 1;
+            break;
+        }
+        else if (ch == '\r')
+        {
+            continue;
+        }
+
+        switch (client_state)
+        {
+        case IMAP_CLIENT_FIRST_CHAR:
+            if (isalnum(ch))
+            {
+                is_valid_command = true;
+                client_state = IMAP_CLIENT_COMMAND_TAG;
+            }
+            else
+            {
+                is_valid_command = false;
+                client_state = is_valid_base64 ? IMAP_CLIENT_BASE64_CHECK : IMAP_CLIENT_FLUSH_LINE;
+            }
+            break;
+
+        case IMAP_CLIENT_COMMAND_TAG:
+            if (ch == ' ')
+            {
+                found_space = true;
+                client_state = IMAP_CLIENT_FLUSH_LINE;
+            }
+            else if (!isalnum(ch) && ch != '-')
+            {
+                is_valid_command = false;
+                client_state = is_valid_base64 ? IMAP_CLIENT_BASE64_CHECK : IMAP_CLIENT_FLUSH_LINE;
+            }
+            break;
+
+        case IMAP_CLIENT_BASE64_CHECK:
+            if (i < MIN_BASE64_LEN)
+            {
+                if (!(isalnum(ch) || ch == '+' || ch == '/' || ch == '='))
+                {
+                    is_valid_base64 = false;
+                    client_state = IMAP_CLIENT_FLUSH_LINE;
+                }
+            }
+            break;
+
+        case IMAP_CLIENT_FLUSH_LINE:
+            break;
+        }
+    }
+
+    is_valid_command = is_valid_command && found_space;
+    bool is_valid = is_valid_command || is_valid_base64;
+    uint32_t check_len = flush_len ? flush_len : len;
+
+    if (is_valid)
+    {
+        pfdata->client_bytes_seen = 0;
+    }
+    else
+    {
+        pfdata->client_bytes_seen += check_len;
+        
+        if (pfdata->client_bytes_seen > IMAP_MAX_OCTETS)
+        {
+            pfdata->client_bytes_seen = 0;
+            return StreamSplitter::ABORT;
+        }
+    }
+    
+    if (flush_len)
+    {
+        *fp = flush_len;
         return StreamSplitter::FLUSH;
     }
     return StreamSplitter::SEARCH;
@@ -505,7 +754,7 @@ StreamSplitter::Status ImapSplitter::scan(
     if (flags & PKT_FROM_SERVER)
         return imap_paf_server(pfdata, data, len, fp);
     else
-        return imap_paf_client(data, len, fp);
+        return imap_paf_client(pfdata, data, len, fp);
 }
 
 bool imap_is_data_end(Flow* ssn)

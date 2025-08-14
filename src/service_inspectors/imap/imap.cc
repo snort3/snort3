@@ -113,14 +113,27 @@ IMAPToken imap_resps[] =
     { "RECENT",          6, RESP_RECENT },
     { "EXPUNGE",         7, RESP_EXPUNGE },
     { "FETCH",           5, RESP_FETCH },
+    { "LOGIN",           5, RESP_LOGIN },
+    { "LOGOUT",          6, RESP_LOGOUT },
+    { "SELECT",          6, RESP_SELECT },
+    { "EXAMINE",         7, RESP_EXAMINE },
+    { "CREATE",          6, RESP_CREATE },
+    { "DELETE",          6, RESP_DELETE },
+    { "RENAME",          6, RESP_RENAME },
+    { "SUBSCRIBE",       9, RESP_SUBSCRIBE },
+    { "UNSUBSCRIBE",    11, RESP_UNSUBSCRIBE },
+    { "APPEND",          6, RESP_APPEND },
+    { "COPY",            4, RESP_COPY },
     { "BAD",             3, RESP_BAD },
     { "BYE",             3, RESP_BYE },
     { "NO",              2, RESP_NO },
     { "OK",              2, RESP_OK },
     { "PREAUTH",         7, RESP_PREAUTH },
     { "ENVELOPE",        8, RESP_ENVELOPE },
+    { "NAMESPACE",       9, RESP_NAMESPACE },
     { "UID",             3, RESP_UID },
-    { nullptr,   0,  0 }
+
+    { nullptr,           0, 0 }
 };
 
 SearchTool* imap_resp_search_mpse = nullptr;

@@ -27,6 +27,9 @@
 #include "mime/file_mime_paf.h"
 #include "stream/stream_splitter.h"
 
+#define IMAP_MAX_OCTETS 5120
+#define MIN_BASE64_LEN 4
+
 struct ImapDataInfo
 {
     int paren_cnt;            // The open parentheses count in fetch
@@ -34,12 +37,15 @@ struct ImapDataInfo
     bool found_len;
     uint32_t length;
     bool esc_nxt_char;        // true if the next character has been escaped
+    const char* cmd;
+
 };
 
-// States for IMAP PAF
+// States for IMAP PAF (Server)
 typedef enum _ImapPafState
 {
     IMAP_PAF_REG_STATE,           // default state. eat until LF
+    IMAP_PAF_VAL_STATE,           // parse a valid command 
     IMAP_PAF_DATA_HEAD_STATE,     // parses the fetch header
     IMAP_PAF_DATA_LEN_STATE,      // parse the literal length
     IMAP_PAF_DATA_STATE,          // search for and flush on MIME boundaries
@@ -49,6 +55,16 @@ typedef enum _ImapPafState
     IMAP_PAF_CMD_STATUS,          // currently parsing second argument
     IMAP_PAF_CMD_SEARCH           // currently searching data for a command
 } ImapPafState;
+
+// States for IMAP PAF (Client)
+typedef enum _ImapClientState
+{
+    IMAP_CLIENT_FIRST_CHAR,       // analyzing first character
+    IMAP_CLIENT_COMMAND_TAG,      // parsing command tag/name
+    IMAP_CLIENT_BASE64_CHECK,     // checking for base64-like data
+    IMAP_CLIENT_FLUSH_LINE        // ready to flush at newline
+} ImapClientState;
+
 
 typedef enum _ImapDataEnd
 {
@@ -64,6 +80,8 @@ struct ImapPafData
     ImapDataInfo imap_data_info;  // Used for parsing data
     ImapDataEnd data_end_state;
     bool end_of_data;
+    uint32_t server_bytes_seen;
+    uint32_t client_bytes_seen;
 };
 
 class ImapSplitter : public snort::StreamSplitter
