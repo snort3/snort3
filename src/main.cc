@@ -312,11 +312,15 @@ static AnalyzerCommand* get_command(AnalyzerCommand* ac, ControlConn* ctrlcon)
 #ifndef SHELL
     UNUSED(ctrlcon);
 #else
+    // If broadcast doesn't provide ControlConn but inner command has one,
+    // use the inner command's ControlConn for wrapping
+    if (!ctrlcon && ac->ctrlcon)
+        ctrlcon = ac->ctrlcon;
+
     if (ctrlcon)
-        return ( new ACShellCmd(ctrlcon, ac) );
-    else
+        return new ACShellCmd(ctrlcon, ac);
 #endif
-        return ac;
+    return ac;
 }
 
 static void send_response(ControlConn* ctrlcon, const char* response)
@@ -865,7 +869,7 @@ int main_help(lua_State* L)
             ++cmd;
         }
     }
-    
+
     send_response(ctrlcon, "\nModule Commands:\n");
     for (const auto& str : prefix_cmds)
         send_response(ctrlcon, str.c_str());
@@ -873,7 +877,7 @@ int main_help(lua_State* L)
     send_response(ctrlcon, "\nTop Level Commands:\n");
     for (const auto& str : no_prefix_cmds)
         send_response(ctrlcon, str.c_str());
-    
+
     return 0;
 }
 
@@ -1215,7 +1219,7 @@ static void main_loop()
             }
 
             pthreads_started = pigs_started_count && num_threads <= pigs_started_count + pigs_failed;
-            
+
             if (pthreads_started)
             {
 #ifdef REG_TEST
@@ -1326,4 +1330,3 @@ int main(int argc, char* argv[])
 
     return main_exit_code;
 }
-
