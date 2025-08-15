@@ -353,6 +353,9 @@ static void oops_handler(int signal)
     if ( !is_main_thread )
         OopsHandler::handle_crash(STDERR_FILENO);
 
+    if (ssp.flush() != 0)
+        ssp.printf("Failed to flush output. Error: %s\n", strerror(errno));
+
     // Finally, raise the signal so that the original handler can handle it.
     raise(signal);
 }

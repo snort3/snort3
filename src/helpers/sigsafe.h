@@ -31,6 +31,7 @@ public:
     SigSafePrinter(char *buf, size_t size);
     SigSafePrinter(int fd) : fd(fd) { }
 
+    int flush();
     void hex_dump(const uint8_t* data, unsigned len);
     void printf(const char* format, ...);
 

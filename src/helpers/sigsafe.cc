@@ -264,9 +264,17 @@ void SigSafePrinter::printf(const char *format, ...)
     write_string(fmt_buf);
 }
 
+int SigSafePrinter::flush()
+{
+    if (fd >= 0)
+        return fsync(fd);
+    return 0;
+}
+
 #ifdef CATCH_TEST_BUILD
 
 #include <cinttypes>
+#include <iostream>
 
 #include "catch/catch.hpp"
 
@@ -445,6 +453,19 @@ TEST_CASE("sigsafe printer", "[SigsafePrinter]")
         snprintf(expected + offset, sizeof(expected) - offset, "\n");
         SigSafePrinter(actual, sizeof(actual)).hex_dump(data, sizeof(data));
         CHECK_THAT(expected, Equals(actual));
+    }
+    SECTION("flush buffer")
+    {
+        snprintf(expected, sizeof(expected), "%32s", "test");
+        SigSafePrinter ssp(actual, sizeof(actual));
+        ssp.printf("%32s", "test");
+        ssp.flush();
+        CHECK_THAT(expected, Equals(actual));
+    }
+    SECTION("flush fd")
+    {
+        SigSafePrinter ssp(STDOUT_FILENO);
+        ssp.flush();
     }
 }
 
