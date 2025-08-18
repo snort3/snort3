@@ -1,26 +1,55 @@
-# Resumen y Justificación del Repositorio Escogido: Snort3
+# 📝 Resumen: Utilidad y función principal
 
-## 📌 Resumen  
-Snort3 es un sistema de detección y prevención de intrusiones (IDS/IPS) desarrollado inicialmente por Sourcefire y actualmente mantenido por Cisco. Su función principal es analizar el tráfico de red en tiempo real para identificar patrones de ataque, intentos de explotación y comportamientos maliciosos.  
+**Snort** es un sistema de detección y prevención de intrusiones (**IDS/IPS**) de código abierto, diseñado para proteger redes frente a amenazas como ataques **DDoS**. Utiliza un conjunto de reglas integradas que definen comportamientos maliciosos en la red, y analiza los paquetes en tiempo real para identificar coincidencias. Cuando detecta actividad sospechosa, genera alertas para los administradores.
 
-Entre sus principales características destacan:  
-- **Alta personalización** mediante reglas escritas en un lenguaje sencillo.  
-- **Escalabilidad y rendimiento** en entornos de red de gran tamaño.  
-- **Amplia comunidad de soporte** y reglas actualizadas constantemente para nuevas amenazas.  
+Snort es capaz de identificar ataques recientes, infecciones de malware, sistemas comprometidos y violaciones de políticas de seguridad. Su motor de detección se basa en un lenguaje de reglas que combina inspección por anomalías, protocolos y firmas, lo que le permite detectar actividades potencialmente maliciosas con alta precisión.
 
-## 📌 Justificación  
-Elegimos este repositorio porque **Snort3 es una de las herramientas más reconocidas y utilizadas en el ámbito de la ciberseguridad defensiva**, tanto en entornos académicos como empresariales. Su importancia radica en que es un estándar de facto en la detección de intrusos y ha sido comparado ampliamente con otras soluciones como Suricata.  
+**Snort 3** representa una evolución significativa respecto a versiones anteriores, destacando por su mayor rendimiento, flexibilidad y facilidad de mantenimiento.
 
-De acuerdo con papers académicos, Snort ha sido utilizado en proyectos de **detección temprana de ataques en redes corporativas**, mostrando eficacia en escenarios de defensa perimetral ([Albin, 2019](https://ieeexplore.ieee.org/document/8844872)). Además, estudios recientes validan que Snort3 ofrece mejoras en rendimiento respecto a versiones anteriores, manteniendo una baja tasa de falsos positivos ([Shiravi et al., 2020](https://link.springer.com/chapter/10.1007/978-3-030-38961-1_5)).  
+### Función principal
 
-En términos de comunidad y métricas, el repositorio de **Snort3 en GitHub** cuenta con más de 2.7k estrellas, contribuciones activas y soporte directo de Cisco, lo cual lo hace confiable y sostenible en el tiempo. Asimismo, su inclusión en laboratorios de seguridad y su documentación en múltiples libros de redes y seguridad informática (por ejemplo, *"Network Security Monitoring"* de Bejtlich, 2014) respaldan su relevancia técnica.  
+Analizar el tráfico de red en tiempo real para detectar y bloquear amenazas como:
 
-En conclusión, seleccionamos Snort3 porque combina **uso real en la industria, validación académica y respaldo comunitario**, convirtiéndolo en una herramienta clave para entender la detección de amenazas en redes modernas.  
+- Ataques de denegación de servicio (**DoS/DDoS**)
+- Escaneos de puertos
+- Desbordamientos de búfer
+- Malware, phishing y spam
+
+📘 Para más detalles sobre su instalación y la creación de reglas personalizadas, consulta el siguiente recurso oficial:  
+[Using Snort - Snort 3 Rule Writing Guide](https://docs.snort.org/start/)
 
 ---
 
-## 📚 Referencias  
-- Albin, E. (2019). *Intrusion Detection and Prevention Systems: Snort IDS/IPS*. IEEE Xplore. Disponible en: [https://ieeexplore.ieee.org/document/8844872](https://ieeexplore.ieee.org/document/8844872)  
-- Shiravi, A., Ghorbani, A. A., & Lashkari, A. H. (2020). *Evaluation of Intrusion Detection Systems: A Comparative Study*. Springer. Disponible en: [https://link.springer.com/chapter/10.1007/978-3-030-38961-1_5](https://link.springer.com/chapter/10.1007/978-3-030-38961-1_5)  
-- Bejtlich, R. (2014). *The Practice of Network Security Monitoring: Understanding Incident Detection and Response*. No Starch Press.  
-- Repositorio oficial de Snort3: [https://github.com/snort3/snort3](https://github.com/snort3/snort3)  
+# 📝 Justificación
+
+Se eligió el repositorio `snort3/snort3` en GitHub porque **Snort** se ha consolidado como uno de los sistemas de detección y prevención de intrusos (**IDS/IPS**) más utilizados a nivel mundial. Es empleado tanto por empresas como por usuarios individuales para proteger redes domésticas, corporativas y educativas.
+
+El repositorio seleccionado es el principal y oficial del proyecto **Snort 3**, mantenido por el equipo de desarrollo original. Esto garantiza acceso directo a actualizaciones, correcciones de errores, nuevas funcionalidades y compatibilidad con estándares modernos.
+
+Snort ofrece tres funcionalidades principales:
+
+- Actuar como un rastreador de paquetes similar a `tcpdump`
+- Funcionar como un registrador de paquetes útil para la depuración de tráfico
+- Operar como un sistema completo de prevención de intrusiones en red
+
+Además, Snort ha sido utilizado en diversos proyectos académicos que abordan la seguridad de redes desde enfoques prácticos y metodológicos. Por ejemplo:
+
+- Un estudio de la **Universidad de Sevilla** analizó la capacidad de detección de ataques en red de Snort utilizando la matriz **MITRE ATT&CK** y la plataforma **Caldera**, demostrando su eficacia en entornos simulados (González et al., 2024).
+- Una investigación reciente propone un sistema colaborativo distribuido, en el que múltiples nodos con Snort se conectan a un servidor central que emplea **SIEM** (como LogScale), mejorando la correlación en tiempo real y reduciendo falsos positivos. Este enfoque mostró alta efectividad en la detección de ataques distribuidos (Alvarez & Chen, 2025).
+
+Estos proyectos evidencian que **Snort 3** está siendo activamente utilizado en investigaciones académicas para evaluar, comparar y fortalecer sistemas de detección de intrusos en redes modernas.
+
+---
+
+# ✅ Conclusión
+
+La elección de **Snort 3** para este trabajo se fundamenta en la solidez, relevancia y evolución continua de la herramienta como sistema de detección y prevención de intrusiones. Es una solución útil, gratuita y respaldada por una comunidad activa, que permite fortalecer la seguridad de red de quienes la implementan.
+
+---
+
+# 📚 Referencias
+
+- Alvarez, J., & Chen, L. (2025). *A collaborative intrusion detection system using Snort IDS nodes*. arXiv. https://arxiv.org/abs/2504.16550  
+- González, M., Pérez, A., & Ruiz, D. (2024). *Evaluación de Snort bajo MITRE ATT&CK y Caldera*. Universidad de Sevilla.  
+- Roesch, M. (1999). *Snort - Lightweight Intrusion Detection for Networks*. Proceedings of the 13th USENIX Conference on System Administration. https://www.snort.org
+
