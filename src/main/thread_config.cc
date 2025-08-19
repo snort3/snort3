@@ -394,28 +394,20 @@ struct Watchdog
     Watchdog(uint16_t tm) : seconds_count(tm)
     {
         resp = new std::atomic_bool[ThreadConfig::get_instance_max()];
+        thread_is_active = new std::atomic_bool[ThreadConfig::get_instance_max()];
+        for ( unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
+            thread_is_active[i] = false;
     }
-    ~Watchdog() { delete[] resp; }
+    ~Watchdog()
+    {
+        delete[] resp;
+        delete[] thread_is_active;
+    }
     void kick();
     bool waiting = false;
     std::atomic_bool* resp;
     uint16_t seconds_count;
-};
-
-class WatchdogKick : public AnalyzerCommand
-{
-public:
-    WatchdogKick(Watchdog* d) : dog(d) { }
-    bool execute(Analyzer&, void**) override
-    {
-        dog->resp[get_instance_id()] = true;
-        return true;
-    }
-    const char* stringify() override { return "WATCHDOG_KICK"; }
-
-    ~WatchdogKick() override { }
-private:
-    Watchdog* dog;
+    std::atomic_bool* thread_is_active;
 };
 
 void Watchdog::kick()
@@ -426,7 +418,7 @@ void Watchdog::kick()
         uint16_t thread_count = 0;
         for ( unsigned i = 0; i < max; ++i )
         {
-            if ( !resp[i] )
+            if ( !resp[i] && thread_is_active[i] )
             {
                 ++thread_count;
                 if (thread_count == 1)
@@ -455,7 +447,6 @@ void Watchdog::kick()
     for ( unsigned i = 0; i < max; ++i )
         resp[i] = false;
 
-    main_broadcast_command(new WatchdogKick(this), nullptr);
     waiting = true;
 }
 
@@ -485,15 +476,30 @@ void ThreadConfig::start_watchdog()
     Periodic::register_handler(s_watchdog_handler, nullptr, 0, 1000);
 }
 
-void ThreadConfig::preemptive_kick()
+void ThreadConfig::kick_watchdog()
 {
-    if (SnortConfig::get_conf()->watchdog_timer)
+    static const bool watchdog_is_enabled = (SnortConfig::get_conf()->watchdog_timer > 0);
+    if (watchdog_is_enabled)
     {
-        Watchdog& dog = get_watchdog();
-        dog.resp[get_instance_id()] = true;
+        static THREAD_LOCAL std::atomic_bool* tl_resp_ptr = nullptr;
+        if (!tl_resp_ptr)
+            tl_resp_ptr = &get_watchdog().resp[get_instance_id()];
+
+        (*tl_resp_ptr).store(true, std::memory_order_relaxed);
     }
 }
 
+void ThreadConfig::preemptive_kick()
+{
+    kick_watchdog();
+}
+
+void ThreadConfig::update_thread_status(bool status)
+{
+    static const bool watchdog_is_enabled = (SnortConfig::get_conf()->watchdog_timer > 0);
+    if (watchdog_is_enabled)
+        get_watchdog().thread_is_active[get_instance_id()] = status;
+}
 
 // -----------------------------------------------------------------------------
 // unit tests

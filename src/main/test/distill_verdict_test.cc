@@ -27,6 +27,7 @@
 
 #include "framework/data_bus.h"
 #include "main/analyzer.h"
+#include "main/thread_config.h"
 #include "memory/memory_cap.h"
 #include "packet_io/sfdaq_instance.h"
 #include "packet_io/sfdaq.h"
@@ -56,6 +57,8 @@ unsigned int get_random_seed()
 { return 3193; }
 unsigned DataBus::get_id(const PubKey&)
 { return 0; }
+void ThreadConfig::update_thread_status(bool) {}
+void ThreadConfig::kick_watchdog() {}
 }
 
 const FlowCacheConfig& FlowControl::get_flow_cache_config() const

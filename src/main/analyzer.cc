@@ -555,6 +555,7 @@ void Analyzer::set_state(State s)
 {
     state = s;
     main_poke(id);
+    ThreadConfig::update_thread_status(s == State::RUNNING);
 }
 
 const char* Analyzer::get_state_string()
@@ -608,6 +609,7 @@ void Analyzer::idle()
     handle_uncompleted_commands();
 
     idling = false;
+    ThreadConfig::kick_watchdog();
 }
 
 /*
@@ -877,6 +879,7 @@ void Analyzer::handle_uncompleted_commands()
         }
         else
             ++it;
+        ThreadConfig::kick_watchdog();
     }
 }
 
@@ -918,6 +921,7 @@ DAQ_RecvStatus Analyzer::process_messages()
         num_recv++;
         // IMPORTANT: process_daq_msg() is responsible for finalizing the messages.
         process_daq_msg(msg, false);
+        ThreadConfig::kick_watchdog();
         DetectionEngine::onload();
         process_retry_queue();
         handle_uncompleted_commands();
