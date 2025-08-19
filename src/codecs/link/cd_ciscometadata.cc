@@ -87,6 +87,7 @@ public:
     void get_protocol_ids(std::vector<ProtocolId>& v) override;
     bool decode(const RawData&, CodecData&, DecodeData&) override;
     void log(TextLog* const, const uint8_t* raw_pkt, const uint16_t lyr_len) override;
+    bool encode(const uint8_t* const raw_in, const uint16_t raw_len, EncState&, Buffer&, Flow*) override;
 };
 
 constexpr uint8_t CISCO_META_VALID_HDR_VER = 1;
@@ -170,6 +171,20 @@ void CiscoMetaDataCodec::log(TextLog* const text_log, const uint8_t* raw_pkt,
 
     TextLog_Print(text_log, "Ver:%hhu  SGT:%hu  EtherNext:0x%X",
             cmdh->version, cmdh->sgt_val(), ntohs(cmdh->ether_type));
+}
+
+bool CiscoMetaDataCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len, EncState& enc,
+    Buffer& buf, Flow*)
+{
+    if (!buf.allocate(raw_len))
+        return false;
+
+    memcpy(buf.data(), raw_in, raw_len);
+
+    enc.next_ethertype = ProtocolId::ETHERTYPE_NOT_SET;
+    enc.next_proto = IpProtocol::PROTO_NOT_SET;
+
+    return true;
 }
 
 //-------------------------------------------------------------------------
