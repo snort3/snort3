@@ -245,6 +245,82 @@ TEST(fat_mini_fat_list, mini_fat_list_short_buf_len)
     delete olefile;
 }
 
+// Test: overflow in populate_fat_list via crafted OLE header
+TEST(fat_mini_fat_list, fat_list_overflow_guard)
+{
+    uint8_t ole_buf[512] = {0};
+    uint8_t ole_header_sig[8] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1};
+    memcpy(ole_buf, ole_header_sig, 8);
+    // Set sector size to 512 (little-endian at offset 30)
+    ole_buf[30] = 0x00;
+    ole_buf[31] = 0x02;
+    uint32_t sector_size = 512;
+    // Set first FAT sector index in DIFAT array (offset 76) to cause overflow
+    uint32_t fat_sector = (UINT32_MAX - OLE_HEADER_LEN - 256) / sector_size;
+    ole_buf[76] = (uint8_t)(fat_sector & 0xFF);
+    ole_buf[77] = (uint8_t)((fat_sector >> 8) & 0xFF);
+    ole_buf[78] = (uint8_t)((fat_sector >> 16) & 0xFF);
+    ole_buf[79] = (uint8_t)((fat_sector >> 24) & 0xFF);
+
+    OleFile* olefile = new OleFile(ole_buf, sizeof(ole_buf));
+    olefile->parse_ole_header();
+    // This test makes populate_fat_list hit its integer overflow check.
+    // i.e ( byte_offset + sector_size < byte_offset ) condition
+    olefile->populate_fat_list();
+    
+    delete olefile;
+}
+
+// Test: overflow in populate_mini_fat_list via crafted OLE header
+TEST(fat_mini_fat_list, mini_fat_list_overflow_guard)
+{
+    uint8_t ole_buf[512] = {0};
+    uint8_t ole_header_sig[8] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1};
+    memcpy(ole_buf, ole_header_sig, 8);
+    ole_buf[30] = 0x00;
+    ole_buf[31] = 0x02;
+    uint32_t sector_size = 512;
+    // Set first mini FAT sector index (offset 60)
+    uint32_t minifat_sector = (UINT32_MAX - OLE_HEADER_LEN - 256) / sector_size;
+    ole_buf[60] = (uint8_t)(minifat_sector & 0xFF);
+    ole_buf[61] = (uint8_t)((minifat_sector >> 8) & 0xFF);
+    ole_buf[62] = (uint8_t)((minifat_sector >> 16) & 0xFF);
+    ole_buf[63] = (uint8_t)((minifat_sector >> 24) & 0xFF);
+
+    OleFile* olefile = new OleFile(ole_buf, sizeof(ole_buf));
+    olefile->parse_ole_header();
+    // This test makes populate_mini_fat_list hit its integer overflow check.
+    // i.e ( byte_offset + sector_size < byte_offset ) condition
+    olefile->populate_mini_fat_list();
+
+    delete olefile;
+}
+
+// Test: overflow in walk_directory_list via crafted OLE header
+TEST(fat_mini_fat_list, walk_directory_list_overflow_guard)
+{
+    uint8_t ole_buf[512] = {0};
+    uint8_t ole_header_sig[8] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1};
+    memcpy(ole_buf, ole_header_sig, 8);
+    ole_buf[30] = 0x00;
+    ole_buf[31] = 0x02;
+    uint32_t sector_size = 512;
+    // Set first directory sector index (offset 48)
+    uint32_t dir_sector = (UINT32_MAX - OLE_HEADER_LEN - 256) / sector_size;
+    ole_buf[48] = (uint8_t)(dir_sector & 0xFF);
+    ole_buf[49] = (uint8_t)((dir_sector >> 8) & 0xFF);
+    ole_buf[50] = (uint8_t)((dir_sector >> 16) & 0xFF);
+    ole_buf[51] = (uint8_t)((dir_sector >> 24) & 0xFF);
+
+    OleFile* olefile = new OleFile(ole_buf, sizeof(ole_buf));
+    olefile->parse_ole_header();
+    // This test makes walk_directory_list hit its integer overflow check.
+    // i.e ( start_offset + sector_size < start_offset ) condition
+    olefile->walk_directory_list();
+
+    delete olefile;
+}
+
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
