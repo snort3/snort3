@@ -273,6 +273,11 @@ private:
     int32_t fat_list_len = 0;
     int32_t* mini_fat_list = nullptr;
     int32_t mini_fat_list_len = 0;
+
+#ifdef UNIT_TEST
+public:
+    void set_header(OleHeader* h) { header = h; }
+#endif
 };
 
 void oleprocess(const uint8_t* const, const uint32_t, uint8_t*&, uint32_t&);

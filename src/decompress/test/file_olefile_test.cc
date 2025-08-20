@@ -182,6 +182,18 @@ TEST(Olefile_ole, bytes_to_copy_test)
     delete olefile;
 }
 
+TEST(Olefile_ole, get_mini_fat_offset_divide_by_zero)
+{
+    uint8_t dummy_buf[512] = {0};
+    OleFile* olefile = new OleFile(dummy_buf, sizeof(dummy_buf));
+    OleHeader* test_header = new OleHeader();
+    test_header->set_mini_sector_size_raw(0);
+    olefile->set_header(test_header);
+    int32_t result = olefile->get_mini_fat_offset(0);
+    CHECK(result == -1);
+    delete olefile;
+}
+
 TEST_GROUP(fat_mini_fat_list)
 {
 };

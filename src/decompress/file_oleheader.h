@@ -102,6 +102,11 @@ private:
     int32_t difat_array[MAX_DIFAT_SECTORS] = {};
 
     byte_order_endianess byte_order_endian = LITL_END;
+
+#ifdef UNIT_TEST
+public:
+    void set_mini_sector_size_raw(uint16_t val) { mini_sector_size = val; }
+#endif
 };
 #endif
 
