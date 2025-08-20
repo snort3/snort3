@@ -333,8 +333,73 @@ TEST(fat_mini_fat_list, walk_directory_list_overflow_guard)
     delete olefile;
 }
 
+TEST_GROUP(OLECycleDetection)
+{
+};
+
+TEST(OLECycleDetection, FatSectorCycle)
+{
+    uint8_t ole_buf[OLE_HEADER_LEN + 2*512] = {0};
+    const uint8_t sig[8] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1};
+    memcpy(ole_buf, sig, 8);
+    ole_buf[28] = 0xFF; ole_buf[29] = 0xFE;
+    ole_buf[30] = 0x09; ole_buf[31] = 0x00;
+    ole_buf[76] = 0x00; ole_buf[77] = 0x00; ole_buf[78] = 0x00; ole_buf[79] = 0x00;
+    ole_buf[44] = 0x03; ole_buf[45] = 0x00; ole_buf[46] = 0x00; ole_buf[47] = 0x00;
+    ole_buf[48] = 0x01; ole_buf[49] = 0x00; ole_buf[50] = 0x00; ole_buf[51] = 0x00;
+    int32_t* fat = (int32_t*)(ole_buf + OLE_HEADER_LEN);
+    fat[0] = 1; fat[1] = 2; fat[2] = 1;
+    int dir_offset = OLE_HEADER_LEN + 512; 
+    ole_buf[dir_offset + 66] = 0x02; 
+    ole_buf[dir_offset + 116] = 0x00; 
+    uint64_t stream_size = 8;
+    memcpy(ole_buf + dir_offset + 120, &stream_size, sizeof(stream_size));
+    uint8_t* vba_buf = nullptr;
+    uint32_t vba_buf_len = 0;
+    oleprocess(ole_buf, sizeof(ole_buf), vba_buf, vba_buf_len);
+    CHECK(vba_buf_len == 0);
+}
+
+TEST(OLECycleDetection, DirectorySectorCycle)
+{
+    uint8_t ole_buf[OLE_HEADER_LEN + 2*512] = {0};
+    const uint8_t sig[8] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1};
+    memcpy(ole_buf, sig, 8);
+    ole_buf[28] = 0xFF; ole_buf[29] = 0xFE;
+    ole_buf[30] = 0x09; ole_buf[31] = 0x00;
+    ole_buf[48] = 0x00; ole_buf[49] = 0x00; ole_buf[50] = 0x00; ole_buf[51] = 0x00;
+    ole_buf[44] = 0x03; ole_buf[45] = 0x00; ole_buf[46] = 0x00; ole_buf[47] = 0x00;
+    ole_buf[76] = 0x01; ole_buf[77] = 0x00; ole_buf[78] = 0x00; ole_buf[79] = 0x00;
+    int32_t* fat = (int32_t*)(ole_buf + OLE_HEADER_LEN);
+    fat[0] = 1; fat[1] = 2; fat[2] = 1;
+    OleFile olefile(ole_buf, sizeof(ole_buf));
+    olefile.parse_ole_header();
+    olefile.populate_fat_list();
+    olefile.walk_directory_list();
+    CHECK_TRUE(true);
+}
+
+TEST(OLECycleDetection, MiniFatSectorCycle)
+{
+    uint8_t ole_buf[OLE_HEADER_LEN + 2*512] = {0};
+    const uint8_t sig[8] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1};
+    memcpy(ole_buf, sig, 8);
+    ole_buf[28] = 0xFF; ole_buf[29] = 0xFE;
+    ole_buf[30] = 0x09; ole_buf[31] = 0x00;
+    ole_buf[60] = 0x00; ole_buf[61] = 0x00; ole_buf[62] = 0x00; ole_buf[63] = 0x00;
+    ole_buf[64] = 0x03; ole_buf[65] = 0x00; ole_buf[66] = 0x00; ole_buf[67] = 0x00;
+    ole_buf[44] = 0x03; ole_buf[45] = 0x00; ole_buf[46] = 0x00; ole_buf[47] = 0x00;
+    ole_buf[76] = 0x01; ole_buf[77] = 0x00; ole_buf[78] = 0x00; ole_buf[79] = 0x00;
+    int32_t* fat = (int32_t*)(ole_buf + OLE_HEADER_LEN);
+    fat[0] = 1; fat[1] = 2; fat[2] = 1;
+    OleFile olefile(ole_buf, sizeof(ole_buf));
+    olefile.parse_ole_header();
+    olefile.populate_fat_list();
+    olefile.populate_mini_fat_list();
+    CHECK_TRUE(true);
+}
+
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-
