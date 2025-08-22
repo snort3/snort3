@@ -44,8 +44,8 @@ class MPUnixDomainTransportModule : public Module
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    bool global_stats() const override { return true; }
     void reset_stats() override;
+    void sum_stats(bool dump_stats) override;
 
     Usage get_usage() const override
     { return GLOBAL; }

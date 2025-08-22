@@ -355,6 +355,15 @@ void snort::MPDataBus::set_debug_enabled(bool flag)
     }
 }
 
+MPDataBusStats MPDataBus::get_stats_copy()
+{
+    sum_stats();
+    {
+        std::lock_guard<std::mutex> lock(mp_stats_mutex);
+        return mp_global_stats;
+    }
+}
+
 void MPDataBus::sum_stats()
 {
     std::lock_guard<std::mutex> lock(mp_stats_mutex);
@@ -429,6 +438,7 @@ void MPDataBus::dump_stats(ControlConn *ctrlconn, const char *module_name)
             auto transport_pegs = transport_module->get_pegs();
             if(transport_pegs)
             {
+                transport_module->sum_stats(false);
                 uint32_t size = 0;
                 while(transport_pegs[size].type != CountType::END)
                 {

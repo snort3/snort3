@@ -503,6 +503,7 @@ public:
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
     void reset_stats() override;
+    void sum_stats(bool dump_stats) override;
 
     Usage get_usage() const override
     { return GLOBAL; }
@@ -558,16 +559,33 @@ const PegInfo* MPDataBusModule::get_pegs() const
 
 PegCount* MPDataBusModule::get_counts() const
 {
-    if(SnortConfig::get_conf()->mp_dbus)
-        SnortConfig::get_conf()->mp_dbus->sum_stats();
-    return (PegCount*)&MPDataBus::mp_global_stats;
+    return const_cast<PegCount*>(counts[get_instance_id()].data());
 }
 
 void MPDataBusModule::reset_stats()
 {
     if(SnortConfig::get_conf()->mp_dbus)
+    {
         SnortConfig::get_conf()->mp_dbus->reset_stats();
+    }
+    Module::reset_stats();
 }
+
+void MPDataBusModule::sum_stats(bool dump_stats)
+{
+    if (get_instance_id() != 0)
+        return;
+    
+    if(SnortConfig::get_conf()->mp_dbus)
+    {
+        auto stats = SnortConfig::get_conf()->mp_dbus->get_stats_copy();
+        for (int i = 0; i < get_num_counts(); i++)
+        {
+            set_peg_count(i, ((PegCount*)&stats)[i], dump_stats);
+        }
+    }
+}
+
 //-------------------------------------------------------------------------
 // reference module
 //-------------------------------------------------------------------------

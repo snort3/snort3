@@ -172,6 +172,8 @@ public:
 
     void set_debug_enabled(bool flag);
 
+    MPDataBusStats get_stats_copy();
+
     void sum_stats();
     void reset_stats();
 

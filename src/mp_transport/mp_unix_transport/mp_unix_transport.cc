@@ -500,6 +500,12 @@ bool MPUnixDomainTransport::is_logging_enabled()
     return this->is_logging_enabled_flag;
 }
 
+MPUnixTransportStats MPUnixDomainTransport::get_stats_copy()
+{
+    std::shared_lock<std::shared_mutex> _guard(_connection_update_mutex);
+    return this->transport_stats;
+}
+
 void MPUnixDomainTransport::sum_stats()
 {
     std::lock_guard<std::shared_mutex> _guard(_connection_update_mutex);

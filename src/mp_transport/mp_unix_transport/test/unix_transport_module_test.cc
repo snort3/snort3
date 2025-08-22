@@ -71,6 +71,10 @@ namespace snort
     {}
     void MPUnixDomainTransport::disable_logging()
     {}
+    MPUnixTransportStats MPUnixDomainTransport::get_stats_copy()
+    {
+        return {};
+    }
     MPTransportChannelStatusHandle* MPUnixDomainTransport::get_channel_status(unsigned int& size)
     {
         size = 0;

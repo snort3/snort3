@@ -151,6 +151,7 @@ class MPUnixDomainTransport : public MPTransport
     MPUnixDomainTransportConfig* get_config()
     { return config; }
 
+    MPUnixTransportStats get_stats_copy();
 
     void sum_stats();
     void reset_stats();

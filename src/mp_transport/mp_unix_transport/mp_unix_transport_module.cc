@@ -116,18 +116,30 @@ const PegInfo *MPUnixDomainTransportModule::get_pegs() const
 }
 
 PegCount *MPUnixDomainTransportModule::get_counts() const
+{   
+    return const_cast<PegCount*>(counts[get_instance_id()].data());
+}
+
+void MPUnixDomainTransportModule::sum_stats(bool dump_stats)
 {
+    if (get_instance_id() != 0)
+        return;
+
     if (transport_handle)
     {
         transport_handle->sum_stats();
+
+        auto stats = transport_handle->get_stats_copy();
+
+        for (int i = 0; i < get_num_counts(); i++)
+        {
+            set_peg_count(i, ((PegCount*)&stats)[i], dump_stats);
+        }
     }
-    
-    return (PegCount*)&unix_transport_stats;
 }
 
 void MPUnixDomainTransportModule::reset_stats()
 {
-    unix_transport_stats = MPUnixTransportStats();
     if (transport_handle)
     {
         transport_handle->reset_stats();
