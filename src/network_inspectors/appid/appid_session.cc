@@ -826,13 +826,13 @@ AppId AppIdSession::pick_service_app_id() const
         {
             if ((rval = api.service.get_id()) > APP_ID_NONE)
                 return rval;
-            else if (odp_ctxt.first_pkt_service_id > APP_ID_NONE)
-                return odp_ctxt.first_pkt_service_id;
+            else if (first_pkt_service_id > APP_ID_NONE)
+                return first_pkt_service_id;
             else
                 rval = APP_ID_UNKNOWN;
         }
-        else if (odp_ctxt.first_pkt_service_id > APP_ID_NONE)
-            return odp_ctxt.first_pkt_service_id;
+        else if (first_pkt_service_id > APP_ID_NONE)
+            return first_pkt_service_id;
     }
     else
     {
@@ -842,8 +842,8 @@ AppId AppIdSession::pick_service_app_id() const
 
             if (api.service.get_id() > APP_ID_NONE and !deferred)
                 return api.service.get_id();
-            if (odp_ctxt.first_pkt_service_id > APP_ID_NONE)
-                return odp_ctxt.first_pkt_service_id;
+            if (first_pkt_service_id > APP_ID_NONE)
+                return first_pkt_service_id;
 
             if (is_tp_appid_available())
             {
@@ -859,8 +859,8 @@ AppId AppIdSession::pick_service_app_id() const
         }
         else if (tp_app_id > APP_ID_NONE)
             return tp_app_id;
-        else if (odp_ctxt.first_pkt_service_id > APP_ID_NONE)
-            return odp_ctxt.first_pkt_service_id;
+        else if (first_pkt_service_id > APP_ID_NONE)
+            return first_pkt_service_id;
     }
 
     if (client_inferred_service_id > APP_ID_NONE)
@@ -927,10 +927,10 @@ AppId AppIdSession::pick_ss_client_app_id() const
         return api.client.get_id();
     }
 
-    if (odp_ctxt.first_pkt_client_id > APP_ID_NONE)
+    if (first_pkt_client_id > APP_ID_NONE)
     {
         api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_APPID);
-        return odp_ctxt.first_pkt_client_id;
+        return first_pkt_client_id;
     }
 
     api.client.set_eve_client_app_detect_type(CLIENT_APP_DETECT_APPID);
@@ -942,7 +942,7 @@ AppId AppIdSession::check_first_pkt_tp_payload_app_id() const
     if (get_session_flags(APPID_SESSION_FIRST_PKT_CACHE_MATCHED) and
         (api.payload.get_id() <= APP_ID_NONE))
     {
-        if ((odp_ctxt.first_pkt_payload_id > APP_ID_NONE) and (tp_payload_app_id > APP_ID_NONE))
+        if ((first_pkt_payload_id > APP_ID_NONE) and (tp_payload_app_id > APP_ID_NONE))
         {
             return tp_payload_app_id;
         }
@@ -973,8 +973,8 @@ AppId AppIdSession::pick_ss_payload_app_id(AppId service_id) const
                 return api.payload.get_id();
             else if (tp_payload_app_id > APP_ID_NONE)
                 return tp_payload_app_id;
-            else if (odp_ctxt.first_pkt_payload_id > APP_ID_NONE)
-                return odp_ctxt.first_pkt_payload_id;
+            else if (first_pkt_payload_id > APP_ID_NONE)
+                return first_pkt_payload_id;
         }
         else
             return tmp_id;
@@ -993,8 +993,8 @@ AppId AppIdSession::pick_ss_payload_app_id(AppId service_id) const
     if (encrypted.payload_id > APP_ID_NONE)
         return encrypted.payload_id;
 
-    if (odp_ctxt.first_pkt_payload_id > APP_ID_NONE)
-        return odp_ctxt.first_pkt_payload_id;
+    if (first_pkt_payload_id > APP_ID_NONE)
+        return first_pkt_payload_id;
 
     // APP_ID_UNKNOWN is valid only for HTTP type services
     if (tmp_id == APP_ID_UNKNOWN)

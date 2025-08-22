@@ -144,6 +144,7 @@ public:
     bool need_reinspection = false;
     bool tp_allow_probes = false;
     bool allow_port_wildcard_host_cache = false;
+    bool allow_port_wildcard_firstpkt_cache = false;
     bool recheck_for_portservice_appid = false;
     bool eve_http_client = true;
     bool appid_cpu_profiler = true;
@@ -151,18 +152,13 @@ public:
     uint8_t brute_force_inprocess_threshold = DEFAULT_BRUTE_FORCE_INPROCESS_STATE_THRESHOLD;
     uint16_t max_packet_before_service_fail = DEFAULT_MAX_PKTS_BEFORE_SERVICE_FAIL;
     uint16_t max_packet_service_fail_ignore_bytes = DEFAULT_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES;
-    AppId first_pkt_service_id = 0;
-    AppId first_pkt_payload_id = 0;
-    AppId first_pkt_client_id = 0;
     uint32_t chp_body_collection_max = 0;
     uint32_t rtmp_max_packets = 15;
     uint32_t max_tp_flow_depth = 5;
     uint32_t failed_state_expiration_secs = DEFAULT_FAILED_STATE_EXPIRATION_SECS;
     uint32_t host_port_app_cache_lookup_interval = 10;
     uint32_t host_port_app_cache_lookup_range = 100000;
-    uint64_t max_bytes_before_service_fail = DEFAULT_MAX_BYTES_BEFORE_SERVICE_FAIL;
-    FirstPktAppIdDiscovered first_pkt_appid_prefix = NO_APPID_FOUND;
-    
+    uint64_t max_bytes_before_service_fail = DEFAULT_MAX_BYTES_BEFORE_SERVICE_FAIL;    
 
     OdpContext(const AppIdConfig&, snort::SnortConfig*);
     void initialize(AppIdInspector& inspector);

@@ -388,6 +388,13 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                     odp_ctxt.allow_port_wildcard_host_cache = true;
                 }
             }
+            else if (!(strcasecmp(conf_key, "allow_port_wildcard_firstpkt_cache")))
+            {
+                if (!(strcasecmp(conf_val, "enabled")))
+                {
+                    odp_ctxt.allow_port_wildcard_firstpkt_cache = true;
+                }
+            }
             else if (!(strcasecmp(conf_key, "recheck_for_portservice_appid")))
             {
                 if (!(strcasecmp(conf_val, "enabled")))

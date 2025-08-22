@@ -282,6 +282,11 @@ public:
     uint16_t session_packet_count = 0;
     uint16_t init_pkts_without_reply = 0;
     uint64_t init_bytes_without_reply = 0;
+    AppId first_pkt_service_id = 0;
+    AppId first_pkt_payload_id = 0;
+    AppId first_pkt_client_id = 0;
+    FirstPktAppIdDiscovered first_pkt_appid_prefix = NO_APPID_FOUND;
+
 
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
     uint8_t previous_tcp_flags = 0;

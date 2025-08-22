@@ -222,6 +222,7 @@ void OdpContext::dump_appid_config()
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: host_port_app_cache_lookup_interval  %d\n", host_port_app_cache_lookup_interval);
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: host_port_app_cache_lookup_range     %d\n", host_port_app_cache_lookup_range);
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: allow_port_wildcard_host_cache       %s\n", (allow_port_wildcard_host_cache ? "True" : "False"));
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: allow_port_wildcard_firstpkt_cache   %s\n", (allow_port_wildcard_firstpkt_cache ? "True" : "False"));
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: recheck_for_portservice_appid        %s\n", (recheck_for_portservice_appid ? "True" : "False"));
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_bytes_before_service_fail        %" PRIu64" \n", max_bytes_before_service_fail);
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_packet_before_service_fail       %" PRIu16" \n", max_packet_before_service_fail);

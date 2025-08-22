@@ -145,7 +145,7 @@ bool HostPortCache::add(const SnortConfig* sc, const SfIp* ip, uint16_t port, Ip
 const HostAppIdsVal* HostPortCache::find_on_first_pkt(const SfIp* ip, uint16_t port, IpProtocol protocol,
     const OdpContext& odp_ctxt)
 {
-    uint16_t lookup_port = (odp_ctxt.allow_port_wildcard_host_cache)? 0 : port;
+    uint16_t lookup_port = (odp_ctxt.allow_port_wildcard_firstpkt_cache)? 0 : port;
 
     if (!cache_first_ip.empty())
     {
@@ -186,7 +186,7 @@ bool HostPortCache::add_host(const SnortConfig* sc, const SfIp* ip, uint32_t* ne
         assert(inspector);
 
         const AppIdContext& ctxt = inspector->get_ctxt();
-        hk.port = (ctxt.get_odp_ctxt().allow_port_wildcard_host_cache)? 0 : port;
+        hk.port = (ctxt.get_odp_ctxt().allow_port_wildcard_firstpkt_cache)? 0 : port;
         hk.proto = proto;
 
         hv.protocol_appId = protocol_appId;
@@ -212,7 +212,7 @@ bool HostPortCache::add_host(const SnortConfig* sc, const SfIp* ip, uint32_t* ne
         assert(inspector);
 
         const AppIdContext& ctxt = inspector->get_ctxt();
-        hk.port = (ctxt.get_odp_ctxt().allow_port_wildcard_host_cache)? 0 : port;
+        hk.port = (ctxt.get_odp_ctxt().allow_port_wildcard_firstpkt_cache)? 0 : port;
         hk.proto = proto;
 
         hv.protocol_appId = protocol_appId;
