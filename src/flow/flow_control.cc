@@ -174,7 +174,10 @@ Flow* FlowControl::stale_flow_cleanup(FlowCache* cache, Flow* flow, Packet* p)
             PacketTracerSuspend pt_susp;
 
             if ( cache->release(flow, PruneReason::STALE) )
+            {
                 flow = nullptr;
+                p->flow = nullptr;
+            }
         }
     }
 
