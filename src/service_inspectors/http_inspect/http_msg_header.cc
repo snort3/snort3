@@ -29,6 +29,7 @@
 #include "file_api/file_flows.h"
 #include "file_api/file_service.h"
 #include "hash/hash_key_operations.h"
+#include "pub_sub/opportunistic_tls_event.h"
 #include "pub_sub/http_events.h"
 #include "pub_sub/http_event_ids.h"
 #include "pub_sub/http_request_body_event.h"
@@ -298,7 +299,9 @@ void HttpMsgHeader::update_flow()
                     "cutover to wizard\n");
             }
 #endif
-
+            Packet* p = DetectionEngine::get_current_packet();
+            OpportunisticTlsEvent event(p, nullptr);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::OPPORTUNISTIC_TLS, event, p->flow);
             return;
         }
         if ((status_code_num >= 100) && (status_code_num < 200))
