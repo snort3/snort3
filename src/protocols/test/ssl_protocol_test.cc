@@ -35,7 +35,12 @@ using namespace snort;
 typedef struct X509_name_entry_st X509_NAME_ENTRY;
 X509_NAME *X509_get_subject_name(const X509 *a) { return nullptr; }
 void X509_free(X509* a) { }
-int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos) { return -1; }
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos)
+#else
+int X509_NAME_get_index_by_NID(const X509_NAME *name, int nid, int lastpos)
+#endif
+{ return -1; }
 X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc) { return nullptr; }
 ASN1_STRING *X509_NAME_ENTRY_get_data(const X509_NAME_ENTRY *ne) { return nullptr; }
 const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x) { return nullptr; }
