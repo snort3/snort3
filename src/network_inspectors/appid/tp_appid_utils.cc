@@ -360,34 +360,6 @@ static inline void process_ssl(AppIdSession& asd,
 
     reinspect_ssl_appid = check_ssl_appid_for_reinspect(tmpAppId, asd.get_odp_ctxt());
 
-    if (!(asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG) and
-        asd.tsession->get_tls_host() == nullptr and
-        (field = attribute_data.tls_host(false)) != nullptr)
-    {
-        asd.tsession->set_tls_host(field->c_str(), field->size(), change_bits);
-        if (reinspect_ssl_appid)
-            asd.scan_flags |= SCAN_SSL_HOST_FLAG;
-    }
-
-    if (!(asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG) and
-        asd.tsession->get_tls_cname() == nullptr and
-        (field = attribute_data.tls_cname()) != nullptr)
-    {
-        asd.tsession->set_tls_cname(field->c_str(), field->size(), change_bits);
-        if (reinspect_ssl_appid)
-            asd.scan_flags |= SCAN_SSL_CERTIFICATE_FLAG;
-    }
-
-    if (reinspect_ssl_appid)
-    {
-        if (!(asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG) and
-            asd.tsession->get_tls_org_unit() == nullptr and
-            (field = attribute_data.tls_org_unit()) != nullptr)
-        {
-            asd.tsession->set_tls_org_unit(field->c_str(), field->size());
-        }
-    }
-
     if (asd.tsession->get_tls_version() == 0 and
         (field = attribute_data.tls_version(false)) != nullptr)
     {
@@ -395,6 +367,38 @@ static inline void process_ssl(AppIdSession& asd,
         if (reinspect_ssl_appid)
         {
             asd.scan_flags |= SCAN_SSL_VERSION_FLAG;
+        }
+    }
+
+    if (asd.scan_flags & SCAN_CERTVIZ_ENABLED_FLAG)
+        return;
+
+    if ( asd.tsession->get_tls_sni() == nullptr and
+        (field = attribute_data.tls_host(false)) != nullptr)
+    {
+        asd.tsession->set_tls_sni(field->c_str(), field->size());
+        if (reinspect_ssl_appid)
+            asd.scan_flags |= SCAN_SSL_HOST_FLAG;
+    }
+
+    if ( asd.tsession->get_tls_cname() == nullptr and
+        (field = attribute_data.tls_cname()) != nullptr)
+    {
+        asd.tsession->set_tls_cname(field->c_str(), field->size());
+        if (reinspect_ssl_appid)
+            asd.scan_flags |= SCAN_SSL_CERTIFICATE_FLAG;
+
+        asd.tsession->set_tls_handshake_done();
+    }
+
+    if (reinspect_ssl_appid)
+    {
+        if ( asd.tsession->get_tls_org_unit() == nullptr and
+            (field = attribute_data.tls_org_unit()) != nullptr)
+        {
+            asd.tsession->set_tls_org_unit(field->c_str(), field->size());
+            asd.tsession->set_tls_handshake_done();
+            asd.scan_flags |= SCAN_SSL_ORG_UNIT_FLAG;
         }
     }
 }
@@ -422,10 +426,12 @@ static inline void process_quic(AppIdSession& asd,
     if ( !asd.tsession )
         asd.tsession = new TlsSession();
 
-    if ( !asd.tsession->get_tls_host() and (field=attribute_data.quic_sni()) != nullptr )
+    if ( !asd.tsession->get_tls_sni() and (field=attribute_data.quic_sni()) != nullptr )
     {
         APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Flow is QUIC\n");
-        asd.tsession->set_tls_host(field->c_str(), field->size(), change_bits);
+        asd.tsession->set_tls_sni(field->c_str(), field->size());
+        asd.tsession->set_tls_handshake_done();
+        asd.scan_flags |= SCAN_SSL_HOST_FLAG;
         if ( asd.get_service_id() <= APP_ID_NONE )
             asd.set_service_appid_data(APP_ID_QUIC, change_bits);
     }
@@ -693,7 +699,6 @@ bool do_tp_discovery(ThirdPartyAppIdContext& tp_appid_ctxt, AppIdSession& asd, I
         }
         else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) && asd.tsession)
         {
-            asd.examine_ssl_metadata(change_bits);
             uint16_t serverPort;
             AppId portAppId;
             serverPort = (direction == APP_ID_FROM_INITIATOR) ? p->ptrs.dp : p->ptrs.sp;

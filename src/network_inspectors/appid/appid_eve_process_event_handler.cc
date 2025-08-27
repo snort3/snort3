@@ -113,18 +113,15 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
 
     if (!server_name.empty())
     {
-        AppId tmp_client_id = APP_ID_NONE;
-        AppId tmp_payload_id = APP_ID_NONE;
-
+        AppidChangeBits change_bits;
         if (!asd->tsession)
             asd->tsession = new TlsSession();
 
-        asd->tsession->set_tls_host(server_name.c_str(), server_name.length());
-        asd->set_tls_host();
-
-        odp_ctxt.get_host_matchers().scan_hostname(reinterpret_cast<const uint8_t*>(server_name.c_str()),
-            server_name.length(), tmp_client_id, tmp_payload_id);
-        asd->set_payload_id(tmp_payload_id);
+        asd->tsession->set_tls_sni(server_name.c_str(), server_name.length());
+        if (is_quic)
+            asd->tsession->set_tls_handshake_done();
+        asd->scan_flags |= SCAN_SSL_HOST_FLAG;
+        asd->examine_ssl_metadata(change_bits, true);
     }
 
     std::string debug_str;

@@ -565,32 +565,33 @@ success:
     }
 
     args.asd.set_session_flags(APPID_SESSION_SSL_SESSION);
+    if (!args.asd.tsession)
+            args.asd.tsession = new TlsSession();
     if (ss->client_hello.host_name || ss->server_cert.common_name || ss->server_cert.org_unit)
     {
-        if (!args.asd.tsession)
-            args.asd.tsession = new TlsSession();
-
         /* TLS Host */
         if (ss->client_hello.host_name)
         {
-            args.asd.tsession->set_tls_host(ss->client_hello.host_name, 0, args.change_bits);
+            args.asd.tsession->set_tls_sni(ss->client_hello.host_name, 0);
             args.asd.scan_flags |= SCAN_SSL_HOST_FLAG;
         }
 
         /* TLS Common Name */
         if (ss->server_cert.common_name)
         {
-            args.asd.tsession->set_tls_cname(ss->server_cert.common_name, 0, args.change_bits);
+            args.asd.tsession->set_tls_cname(ss->server_cert.common_name, 0);
             args.asd.scan_flags |= SCAN_SSL_CERTIFICATE_FLAG;
-            args.asd.scan_flags |= SCAN_SSL_HOST_FLAG;
         }
         /* TLS Org Unit */
         if (ss->server_cert.org_unit)
+        {
             args.asd.tsession->set_tls_org_unit(ss->server_cert.org_unit, 0);
+            args.asd.scan_flags |= SCAN_SSL_ORG_UNIT_FLAG;
+        }   
 
         ss->client_hello.host_name = ss->server_cert.common_name = ss->server_cert.org_unit = nullptr;
-        args.asd.tsession->set_tls_handshake_done();
     }
+    args.asd.tsession->set_tls_handshake_done();
     return add_service(args.change_bits, args.asd, args.pkt, args.dir,
         getSslServiceAppId(args.pkt->ptrs.sp));
 }

@@ -72,6 +72,11 @@ void AppIdSession::set_application_ids_service(AppId service_id, AppidChangeBits
     api.set_application_ids_service(service_id, change_bits, *flow);
 }
 
+void AppIdSession::examine_ssl_metadata(AppidChangeBits& bits, bool)
+{
+    api.set_tls_host(tsession->get_tls_sni());
+}
+
 TEST_GROUP(appid_session_api)
 {
     void setup() override
@@ -379,16 +384,12 @@ TEST(appid_session_api, get_first_stream_appids_for_http2)
 TEST(appid_session_api, get_tls_host)
 {
     AppidChangeBits change_bits;
-    change_bits.set(APPID_TLSHOST_BIT);
-    mock_session->tsession->set_tls_host(nullptr, 0, change_bits);
-    mock_session->set_tls_host(change_bits);
-    const char* val = mock_session->get_api().get_tls_host();
-    STRCMP_EQUAL(val, nullptr);
     char* host = snort_strdup(APPID_UT_TLS_HOST);
-    mock_session->tsession->set_tls_host(host, 0, change_bits);
-    mock_session->set_tls_host(change_bits);
-    val = mock_session->get_api().get_tls_host();
+    mock_session->tsession->set_tls_sni(host, 0);
+    mock_session->examine_ssl_metadata(change_bits, true);
+    auto val = mock_session->get_api().get_tls_host();
     STRCMP_EQUAL(val, APPID_UT_TLS_HOST);
+    mock_session->tsession->set_tls_sni(nullptr, 0);
 }
 
 TEST(appid_session_api, get_tls_version)
@@ -608,9 +609,8 @@ TEST(appid_session_api, is_http_inspection_done)
     mock_session->service_disco_state = APPID_DISCO_STATE_STATEFUL;
     mock_session->set_session_flags(APPID_SESSION_SSL_SESSION);
     char* host = snort_strdup(APPID_UT_TLS_HOST);
-    mock_session->tsession->set_tls_host(host, 0, change_bits);
-    change_bits.set(APPID_TLSHOST_BIT);
-    mock_session->set_tls_host(change_bits);
+    mock_session->tsession->set_tls_sni(host, 0);
+    mock_session->examine_ssl_metadata(change_bits, true);
     val = mock_session->get_api().is_http_inspection_done();
     CHECK_TRUE(val);
     mock_session->service_disco_state = APPID_DISCO_STATE_FINISHED;

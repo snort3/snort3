@@ -60,16 +60,16 @@ const PegInfo* AppIdModule::get_pegs() const { return nullptr; }
 PegCount* AppIdModule::get_counts() const { return nullptr; }
 snort::ProfileStats* AppIdModule::get_profile(
         unsigned, const char*&, const char*& ) const { return nullptr; }
-void AppIdModule::set_trace(const Trace*) const { }
-const TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
+void AppIdModule::set_trace(const snort::Trace*) const { }
+const snort::TraceOption* AppIdModule::get_trace_options() const { return nullptr; }
 
 AppIdConfig appid_config;
 AppIdInspector::AppIdInspector(AppIdModule&) : config(&appid_config), ctxt(appid_config)
-{ }
+{ appid_config.app_detector_dir = "test_dir"; }
 AppIdInspector::~AppIdInspector() = default;
 void AppIdInspector::eval(snort::Packet*) { }
 bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
-void AppIdInspector::show(const SnortConfig*) const { }
+void AppIdInspector::show(const snort::SnortConfig*) const { }
 void AppIdInspector::tinit() { }
 void AppIdInspector::tterm() { }
 void AppIdInspector::tear_down(snort::SnortConfig*) { }

@@ -539,27 +539,31 @@ void AppIdSession::update_encrypted_app_id(AppId service_id)
     }
 }
 
-void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits)
+void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits, bool partial_inspect)
 {
+    assert(tsession);
     AppId client_id = 0;
     AppId payload_id = 0;
-    const char* tls_str = tsession->get_tls_org_unit();
+    const char* tls_str = nullptr;
 
-    if (scan_flags & SCAN_CERTVIZ_ENABLED_FLAG)
-        return;
-
-    if (tls_str)
+    if (!partial_inspect and !tsession->get_tls_handshake_done())
     {
-        size_t size = strlen(tls_str);
-        if (odp_ctxt.get_host_matchers().scan_cname((const uint8_t*)tls_str, size,
-            client_id, payload_id))
-        {
-            set_client_appid_data(client_id, change_bits);
-            set_payload_appid_data(payload_id);
-        }
-        tsession->set_tls_org_unit(nullptr, 0);
+        return;
     }
-    if ((scan_flags & SCAN_SSL_HOST_FLAG) and (tls_str = tsession->get_tls_host()))
+
+    if (tsession->is_tls_data_finished())
+    {
+        if (tsession->is_tls_host_published() == false)
+        {
+            change_bits.set(APPID_TLSHOST_BIT);
+        }
+        return;
+    }
+
+
+    bool match_found = false;
+
+    if ((scan_flags & SCAN_SSL_HOST_FLAG) and !(scan_flags & SCAN_SPOOFED_SNI_FLAG) and (tls_str = tsession->get_tls_sni()))
     {
         size_t size = strlen(tls_str);
         if (odp_ctxt.get_host_matchers().scan_hostname((const uint8_t*)tls_str, size,
@@ -568,10 +572,14 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits)
             if (api.client.get_id() == APP_ID_NONE or api.client.get_id() == APP_ID_SSL_CLIENT)
                 set_client_appid_data(client_id, change_bits);
             set_payload_appid_data(payload_id);
+            match_found = true;
+            if (api.get_tls_host() and (strcmp(api.get_tls_host(), tls_str) != 0))
+                tsession->set_tls_host_published(false);
+            tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_SNI);
         }
         scan_flags &= ~SCAN_SSL_HOST_FLAG;
     }
-    if ((scan_flags & SCAN_SSL_CERTIFICATE_FLAG) and (tls_str = tsession->get_tls_cname()))
+    if (!match_found and (scan_flags & SCAN_SSL_CERTIFICATE_FLAG) and (tls_str = tsession->get_tls_cname()))
     {
         size_t size = strlen(tls_str);
         if (odp_ctxt.get_host_matchers().scan_cname((const uint8_t*)tls_str, size,
@@ -580,15 +588,71 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits)
             if (api.client.get_id() == APP_ID_NONE or api.client.get_id() == APP_ID_SSL_CLIENT)
                 set_client_appid_data(client_id, change_bits);
             set_payload_appid_data(payload_id);
+            match_found = true;
+            if (api.get_tls_host() and (strcmp(api.get_tls_host(), tls_str) != 0))
+                tsession->set_tls_host_published(false);
+            tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_CNAME);
         }
-        scan_flags &= ~SCAN_SSL_CERTIFICATE_FLAG;
+        else if (odp_ctxt.get_host_matchers().scan_hostname((const uint8_t*)tls_str, size,
+            client_id, payload_id))
+        {
+            if (api.client.get_id() == APP_ID_NONE or api.client.get_id() == APP_ID_SSL_CLIENT)
+                set_client_appid_data(client_id, change_bits);
+            set_payload_appid_data(payload_id);
+            match_found = true;
+            if (api.get_tls_host() and (strcmp(api.get_tls_host(), tls_str) != 0))
+                tsession->set_tls_host_published(false);
+            tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_CNAME);
+        }
+        scan_flags &= ~SCAN_SSL_CERTIFICATE_FLAG;    
     }
-    if (tsession->get_tls_handshake_done() and
-        api.payload.get_id() == APP_ID_NONE)
+    
+    if (!match_found and (scan_flags & SCAN_SSL_ORG_UNIT_FLAG) and (tls_str = tsession->get_tls_org_unit()) )
     {
-        APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "End of SSL/TLS handshake detected with no payloadAppId, "
-            "so setting to unknown\n");
-        api.payload.set_id(APP_ID_UNKNOWN);
+        size_t size = strlen(tls_str);
+        if (odp_ctxt.get_host_matchers().scan_cname((const uint8_t*)tls_str, size,
+            client_id, payload_id))
+        {
+            if (api.client.get_id() == APP_ID_NONE or api.client.get_id() == APP_ID_SSL_CLIENT)
+                set_client_appid_data(client_id, change_bits);
+            set_payload_appid_data(payload_id);
+            match_found = true;
+            if (api.get_tls_host() and (strcmp(api.get_tls_host(), tls_str) != 0))
+                tsession->set_tls_host_published(false);
+            tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_ORG_UNIT);
+        }
+    }
+    if (!match_found and (scan_flags & SCAN_SSL_ALT_NAME) and (tls_str = tsession->get_tls_first_alt_name()))
+    {
+        size_t size = strlen(tls_str);
+        if (odp_ctxt.get_host_matchers().scan_hostname((const uint8_t*)tls_str, size,
+            client_id, payload_id))
+        {
+            if (api.client.get_id() == APP_ID_NONE or api.client.get_id() == APP_ID_SSL_CLIENT)
+                set_client_appid_data(client_id, change_bits);
+            set_payload_appid_data(payload_id);
+            if (api.get_tls_host() and (strcmp(api.get_tls_host(), tls_str) != 0))
+                tsession->set_tls_host_published(false);
+            tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_FIRST_SAN);
+        }
+        scan_flags &= ~SCAN_SSL_HOST_FLAG;
+    }
+
+    if (!tsession->is_tls_host_published())
+    {
+        if (tsession->get_tls_host())
+        {
+            api.set_tls_host(tsession->get_tls_host());
+            api.set_tls_sni(tsession->get_tls_sni());
+            change_bits.set(APPID_TLSHOST_BIT);
+        }
+    }
+    else if (tsession->is_tls_host_mismatched() and 
+            (api.get_tls_host() and (strcmp(api.get_tls_host(), tsession->get_tls_host()) != 0)))
+    {
+        api.set_tls_host(tsession->get_tls_host());
+        api.set_tls_sni(tsession->get_tls_sni());
+        change_bits.set(APPID_TLSHOST_BIT);
     }
 }
 
@@ -1311,6 +1375,11 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
         clear_session_flags(APPID_SESSION_DO_NOT_DECRYPT);
     else if (change_bits.none())
         return;
+
+    if (tsession and change_bits.test(APPID_TLSHOST_BIT))
+    {
+        tsession->set_tls_host_published(true);
+    }
 
     AppidEvent app_event(change_bits, is_httpx, httpx_stream_index, api, p);
     DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::ANY_CHANGE, app_event, p.flow);

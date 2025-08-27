@@ -229,12 +229,12 @@ void AppIdSession::sync_with_snort_protocol_id(AppId, Packet*,AppidChangeBits&) 
 void AppIdSession::check_app_detection_restart(AppidChangeBits&, ThirdPartyAppIdContext*) {}
 void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*) {}
 void AppIdSession::examine_rtmp_metadata(AppidChangeBits&) {}
-void AppIdSession::examine_ssl_metadata(AppidChangeBits&) {}
 void AppIdSession::update_encrypted_app_id(AppId) {}
 bool AppIdSession::is_tp_processing_done() const {return false;}
 AppId AppIdSession::pick_ss_payload_app_id(AppId) const { return get_payload_id(); }
 bool AppIdSession::need_to_delete_tp_conn(ThirdPartyAppIdContext*) const { return true; }
 void AppIdSession::process_shadow_traffic_appids() {}
+void AppIdSession::examine_ssl_metadata(AppidChangeBits&,bool) {}
 
 AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
     AppidSessionDirection, AppIdInspector&, OdpContext&)
@@ -494,18 +494,6 @@ TEST(appid_discovery_tests, change_bits_for_client_version)
     CHECK_EQUAL(change_bits.test(APPID_CLIENT_INFO_BIT), true);
     delete &asd->get_api();
     delete asd;
-}
-
-TEST(appid_discovery_tests, change_bits_for_tls_host)
-{
-    // Testing set_tls_host
-    AppidChangeBits change_bits;
-    char* host = snort_strdup(APPID_UT_TLS_HOST);
-    TlsSession tls;
-    tls.set_tls_host(host, 0, change_bits);
-
-    // Detect changes in tls_host
-    CHECK_EQUAL(change_bits.test(APPID_TLSHOST_BIT), true);
 }
 
 TEST(appid_discovery_tests, change_bits_for_non_http_appid)

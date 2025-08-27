@@ -769,8 +769,6 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
         }
         else if (asd.get_service_id() == APP_ID_RTMP)
             asd.examine_rtmp_metadata(change_bits);
-        else if (asd.get_session_flags(APPID_SESSION_SSL_SESSION) and asd.tsession)
-            asd.examine_ssl_metadata(change_bits);
     }
 
     return is_discovery_done;

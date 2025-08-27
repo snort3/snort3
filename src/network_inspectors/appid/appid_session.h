@@ -80,7 +80,7 @@ enum APPID_DISCOVERY_STATE
 enum MatchedTlsType
 {
     MATCHED_TLS_NONE = 0,
-    MATCHED_TLS_HOST,
+    MATCHED_TLS_SNI,
     MATCHED_TLS_FIRST_SAN,
     MATCHED_TLS_CNAME,
     MATCHED_TLS_ORG_UNIT,
@@ -94,54 +94,50 @@ public:
 
     ~TlsSession()
     {
-        if (tls_host)
-            snort_free(tls_host);
+        if (tls_sni)
+            snort_free(tls_sni);
         if (tls_first_alt_name)
             snort_free(tls_first_alt_name);
         if (tls_cname)
             snort_free(tls_cname);
         if (tls_org_unit)
             snort_free(tls_org_unit);
-        if (tls_host_mismatch)
-            snort_free(tls_host_mismatch);
     }
 
     const char* get_tls_host() const
     {
         switch (matched_tls_type)
         {
-            case MATCHED_TLS_HOST:
-                return tls_host;
+            case MATCHED_TLS_SNI:
+                return tls_sni;
             case MATCHED_TLS_FIRST_SAN:
                 return tls_first_alt_name;
             case MATCHED_TLS_CNAME:
                 return tls_cname;
+            case MATCHED_TLS_ORG_UNIT:
             default:
-                if (tls_host)
-                    return tls_host;
-                else if (tls_first_alt_name)
-                    return tls_first_alt_name;
+                if (tls_sni and !tls_host_mismatch)
+                    return tls_sni;
                 else if (tls_cname)
                     return tls_cname;
+                else if (tls_first_alt_name)
+                    return tls_first_alt_name;
+                
+                return nullptr;
         }
-        return nullptr;
     }
 
     const char* get_tls_sni() const
     {
-        return tls_host_mismatch ? tls_host_mismatch : tls_host;
+        return tls_sni;
     }
 
     void process_sni_mismatch()
     {
-        if(tls_host)
-        {
-            if(tls_host_mismatch)
-                snort_free(tls_host_mismatch);
-            tls_host_mismatch = tls_host;
-            tls_host = nullptr;
-        }
+        tls_host_mismatch = true;
     }
+
+    bool is_tls_host_mismatched() const { return tls_host_mismatch; }
 
     const char* get_tls_first_alt_name() const { return tls_first_alt_name; }
 
@@ -153,30 +149,24 @@ public:
 
     uint16_t get_tls_version() const { return tls_version; }
 
-    // Duplicate only if len > 0, otherwise simply set (i.e., own the argument)
-    void set_tls_host(const char* new_tls_host, uint32_t len, bool published=false)
+    void set_tls_sni(const char* new_tls_sni, uint32_t len)
     {
-        if (tls_host)
-            snort_free(tls_host);
-        if (!new_tls_host or *new_tls_host == '\0')
+        if (tls_sni)
         {
-            tls_host = nullptr;
-            return;
+            snort_free(tls_sni);
         }
-        tls_host = len? snort::snort_strndup(new_tls_host,len) : const_cast<char*>(new_tls_host);
-
-        if (!published)
-            tls_host_unpublished = true;
+        if (new_tls_sni)
+        {
+            tls_sni = len ? snort::snort_strndup(new_tls_sni, len) :
+                const_cast<char*>(new_tls_sni);
+        }
+        else
+        {
+            tls_sni = nullptr;
+        }
     }
 
-    void set_tls_host(const char* new_tls_host, uint32_t len, AppidChangeBits& change_bits)
-    {
-        set_tls_host(new_tls_host, len, true);
-        if (new_tls_host and *new_tls_host != '\0')
-            change_bits.set(APPID_TLSHOST_BIT);
-    }
-
-    void set_tls_first_alt_name(const char* new_tls_first_alt_name, uint32_t len, AppidChangeBits& change_bits)
+    void set_tls_first_alt_name(const char* new_tls_first_alt_name, uint32_t len)
     {
         if (tls_first_alt_name)
             snort_free(tls_first_alt_name);
@@ -187,11 +177,9 @@ public:
         }
         tls_first_alt_name = len? snort::snort_strndup(new_tls_first_alt_name, len) :
             const_cast<char*>(new_tls_first_alt_name);
-        if (!tls_host)
-            change_bits.set(APPID_TLSHOST_BIT);
     }
 
-    void set_tls_cname(const char* new_tls_cname, uint32_t len, AppidChangeBits& change_bits)
+    void set_tls_cname(const char* new_tls_cname, uint32_t len)
     {
         if (tls_cname)
             snort_free(tls_cname);
@@ -202,8 +190,6 @@ public:
         }
         tls_cname = len? snort::snort_strndup(new_tls_cname,len) :
             const_cast<char*>(new_tls_cname);
-        if (tls_host == nullptr)
-            change_bits.set(APPID_TLSHOST_BIT);
     }
 
     void set_tls_org_unit(const char* new_tls_org_unit, uint32_t len)
@@ -221,14 +207,20 @@ public:
 
     void set_tls_handshake_done() { tls_handshake_done = true; }
 
-    void set_matched_tls_type(MatchedTlsType type)
+    MatchedTlsType get_matched_tls_type() const
     {
-        matched_tls_type = type;
+        return matched_tls_type;
     }
 
-    void set_tls_host_unpublished(bool val) { tls_host_unpublished = val; }
+    void set_matched_tls_type(MatchedTlsType type, bool is_tls_data_finished = true)
+    {
+        matched_tls_type = type;
+        tls_data_finished = is_tls_data_finished;
+    }
 
-    bool is_tls_host_unpublished() const { return tls_host_unpublished; }
+    void set_tls_host_published(bool val) { tls_host_published = val; }
+
+    bool is_tls_host_published() const { return tls_host_published; }
 
     void set_tls_version(const char* value, uint32_t length, AppidChangeBits& change_bits)
     {
@@ -239,14 +231,17 @@ public:
         }
     }
 
+    bool is_tls_data_finished() const { return tls_data_finished; }
+
 private:
-    char* tls_host = nullptr;
-    char* tls_host_mismatch = nullptr;
+    char* tls_sni = nullptr;
     char* tls_first_alt_name = nullptr;
     char* tls_cname = nullptr;
     char* tls_org_unit = nullptr;
     bool tls_handshake_done = false;
-    bool tls_host_unpublished = false;
+    bool tls_host_published = false;
+    bool tls_host_mismatch = false;
+    bool tls_data_finished = false;
     uint16_t tls_version = 0;
     MatchedTlsType matched_tls_type = MATCHED_TLS_NONE;
 };
@@ -386,7 +381,7 @@ public:
     void set_ss_application_ids_payload(AppId payload, AppidChangeBits& change_bits);
     void set_application_ids_service(AppId service_id, AppidChangeBits& change_bits);
 
-    void examine_ssl_metadata(AppidChangeBits& change_bits);
+    void examine_ssl_metadata(AppidChangeBits& change_bits, bool partial_inspect = false);
     void set_client_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void set_client_appid_data(AppId, char* version = nullptr, bool published=false);
     void set_service_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
@@ -632,29 +627,6 @@ public:
         api.service.set_service_port(port);
     }
 
-    void set_tls_host(const AppidChangeBits& change_bits)
-    {
-        if (tsession and change_bits[APPID_TLSHOST_BIT])
-        {
-            api.set_tls_host(tsession->get_tls_host());
-            api.set_tls_sni(tsession->get_tls_sni());
-        }
-    }
-
-    void set_tls_host(const char* tls_host)
-    {
-        api.set_tls_host(tls_host);
-    }
-
-    void set_tls_host()
-    {
-        if (tsession and tsession->is_tls_host_unpublished())
-        {
-            api.set_tls_host(tsession->get_tls_host());
-            api.set_tls_sni(tsession->get_tls_sni());
-        }
-    }
-
     void set_netbios_name(AppidChangeBits& change_bits, const char *name)
     {
         api.set_netbios_name(change_bits, name);
@@ -663,6 +635,11 @@ public:
     void set_netbios_domain(AppidChangeBits& change_bits, const char *domain)
     {
         api.set_netbios_domain(change_bits, domain);
+    }
+
+    void consume_ha_tls_host(const char* tls_host)
+    {
+        api.set_tls_host(tls_host);
     }
 
     OdpContext& get_odp_ctxt() const

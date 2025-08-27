@@ -90,6 +90,8 @@ void AppIdSession::set_client_appid_data(AppId, char*, bool)
     return;
 }
 
+void AppIdSession::examine_ssl_metadata(AppidChangeBits&,bool) {}
+
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection,
     AppId, AppidChangeBits&) { }
 void AppIdModule::reset_stats() { }
@@ -169,7 +171,7 @@ TEST(appid_eve_process_event_handler_tests, eve_server_name_event_handler)
     AppIdEveProcessEventHandler event_handler(dummy_appid_inspector);
     Flow* flow = new Flow;
     event_handler.handle(event, flow);
-    CHECK(session->get_payload_id() == APPID_UT_ID + 1);
+    STRCMP_EQUAL(session->tsession->get_tls_sni(),"www.google.com");
     delete flow;
 }
 

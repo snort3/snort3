@@ -55,11 +55,13 @@ char const* APPID_UT_ORG_UNIT = "Google";
 THREAD_LOCAL bool TimeProfilerStats::enabled = false;
 #define ShadowTraffic_Type_Domain_Fronting    0x00000010
 
+bool mock_inspector_exist = true;
+
 namespace snort
 {
 
 class Inspector* InspectorManager::get_inspector(const char*, bool, const SnortConfig*)
-{ return &dummy_appid_inspector; }
+{ return mock_inspector_exist ? &dummy_appid_inspector : nullptr; }
 
 Packet::Packet(bool) { }
 Packet::~Packet() = default;
@@ -97,6 +99,16 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
 {
     AppidEvent app_event(change_bits, false, 0, this->get_api(), p);
     DataBus::publish(0, AppIdEventIds::ANY_CHANGE, app_event, p.flow);
+}
+
+void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits, bool partial_inspect)
+{
+    if (tsession == nullptr)
+        return;
+
+    set_service_id(APPID_UT_ID, get_odp_ctxt());
+    api.client.set_id(APPID_UT_ID);
+    api.payload.set_id(APPID_UT_ID);
 }
 
 bool HostPatternMatchers::scan_hostname(const uint8_t* server_name, size_t, AppId& client_id, AppId& payload_id)
@@ -213,6 +225,7 @@ void AppidCPUProfilingManager::cleanup_appid_cpu_profiler_table() {}
 AppIdHttpSession* AppIdSession::get_http_session(uint32_t) const { return nullptr; }
 
 Flow* flow = nullptr;
+Flow* flow_no_session = nullptr;
 AppIdSession* mock_session = nullptr;
 
 TEST_GROUP(appid_api)
@@ -244,12 +257,41 @@ TEST_GROUP(appid_api)
     }
 };
 
+TEST_GROUP(appid_api_no_session)
+{
+    void setup()
+    {
+        mock_init_appid_pegs();
+        flow_no_session = new Flow;
+    }
+
+    void teardown()
+    {
+        mock_cleanup_appid_pegs();
+        delete flow_no_session;
+    }
+};
+
 TEST(appid_api, get_application_name)
 {
     AppIdConfig config;
     AppIdContext ctxt(config);
     const char* app_name = appid_api.get_application_name(1066, ctxt.get_odp_ctxt());
     STRCMP_EQUAL(app_name, test_app_name);
+}
+
+TEST(appid_api, get_appid_detector_directory_inspector_exist)
+{
+    auto res = appid_api.get_appid_detector_directory();
+    STRCMP_EQUAL("test_dir", res);
+}
+
+TEST(appid_api, get_appid_detector_directory_inspector_does_not_exist)
+{
+    mock_inspector_exist = false;
+    auto res = appid_api.get_appid_detector_directory();
+    STRCMP_EQUAL("", res);
+    mock_inspector_exist = true;
 }
 
 TEST(appid_api, get_application_id)
@@ -279,119 +321,70 @@ TEST(appid_api, set_ssl_certificate_key)
 
 TEST(appid_api, ssl_app_group_id_lookup)
 {
-    mock().expectNCalls(7, "publish");
+    mock().expectNCalls(1, "publish");
     AppId service, client, payload = APP_ID_NONE;
     bool val = false;
 
     AppidChangeBits change_bits;
-    mock_session->set_ss_application_ids(APPID_UT_ID, APPID_UT_ID, APPID_UT_ID,
-        APPID_UT_ID, APPID_UT_ID, change_bits);
-    val = appid_api.ssl_app_group_id_lookup(flow, nullptr, nullptr, nullptr, nullptr,
-        false, service, client, payload);
+
+    mock_session->set_ss_application_ids(0,0,0,0,0, change_bits);
+    mock_session->tsession->set_tls_sni(nullptr, 0);
+    mock_session->tsession->set_tls_cname(nullptr, 0);
+    mock_session->tsession->set_tls_first_alt_name(nullptr, 0);
+    mock_session->tsession->set_tls_org_unit(nullptr, 0);
+
+    val = appid_api.ssl_app_group_id_lookup(flow, (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST,
+        (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_ORG_UNIT, false, service, client, payload);
+
     CHECK_TRUE(val);
     CHECK_EQUAL(service, APPID_UT_ID);
     CHECK_EQUAL(client, APPID_UT_ID);
     CHECK_EQUAL(payload, APPID_UT_ID);
-    STRCMP_EQUAL("Published change_bits == 00000000000000000000000", test_log);
-
-    // Server name based detection
-    service = APP_ID_NONE;
-    client = APP_ID_NONE;
-    payload = APP_ID_NONE;
-    val = appid_api.ssl_app_group_id_lookup(flow, (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST,
-        (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST, false, service, client, payload);
-    CHECK_TRUE(val);
-    CHECK_EQUAL(client, APPID_UT_ID + 1);
-    CHECK_EQUAL(payload, APPID_UT_ID + 1);
-    STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
+    STRCMP_EQUAL(mock_session->tsession->get_tls_sni(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_first_alt_name(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
-    STRCMP_EQUAL(mock_session->tsession->get_tls_sni(),  APPID_UT_TLS_HOST);
-    STRCMP_EQUAL("Published change_bits == 00000000000000100011000", test_log);
-
-    // Common name based detection
-    mock_session->tsession->set_tls_host("www.cisco.com", 13, change_bits);
-    mock_session->tsession->set_tls_cname("www.cisco.com", 13, change_bits);
-    mock_session->tsession->set_tls_org_unit("Cisco", 5);
-    STRCMP_EQUAL(mock_session->tsession->get_tls_host(), "www.cisco.com");
-    STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), "www.cisco.com");
-    STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), "Cisco");
-    val = appid_api.ssl_app_group_id_lookup(flow, (const char*)"www.google.com",
-        nullptr, (const char*)APPID_UT_TLS_HOST, nullptr, false, service, client, payload);
-    CHECK_TRUE(val);
-    CHECK_EQUAL(client, APPID_UT_ID + 2);
-    CHECK_EQUAL(payload, APPID_UT_ID + 2);
-    STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
-    STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
-    STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), "Cisco");
-    STRCMP_EQUAL("Published change_bits == 00000000000000100011000", test_log);
-
-    // First alt name based detection
-    change_bits.reset();
-    mock_session->tsession->set_tls_host("", 0, change_bits);
-    val = appid_api.ssl_app_group_id_lookup(flow, nullptr, (const char*)APPID_UT_TLS_HOST,
-        nullptr, nullptr, false, service, client, payload);
-    CHECK_TRUE(val);
-    CHECK_EQUAL(client, APPID_UT_ID + 1);
-    CHECK_EQUAL(payload, APPID_UT_ID + 1);
-    STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
-    STRCMP_EQUAL(mock_session->tsession->get_tls_first_alt_name(), APPID_UT_TLS_HOST);
-    STRCMP_EQUAL("Published change_bits == 00000000000000100011000", test_log);
-
-    // Org unit based detection
-    string host = "";
-    change_bits.reset();
-    mock_session->tsession->set_tls_host("", 0, change_bits);
-    val = appid_api.ssl_app_group_id_lookup(flow, nullptr, nullptr,
-        nullptr, (const char*)APPID_UT_ORG_UNIT, false, service, client, payload);
-    CHECK_TRUE(val);
-    CHECK_EQUAL(client, APPID_UT_ID + 3);
-    CHECK_EQUAL(payload, APPID_UT_ID + 3);
     STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), APPID_UT_ORG_UNIT);
-    STRCMP_EQUAL("Published change_bits == 00000000000000000011000", test_log);
+    mock().checkExpectations();
+}
 
-    // Override client id found by SSL pattern matcher with the client id provided by
-    // Encrypted Visibility Engine if available
-    service = APP_ID_NONE;
-    client = APP_ID_NONE;
-    payload = APP_ID_NONE;
-    change_bits.reset();
-    mock_session->tsession->set_tls_host("", 0, change_bits);
-    mock_session->set_client_id(APP_ID_NONE);
-    mock_session->set_eve_client_app_id(APPID_UT_ID + 100);
+TEST(appid_api, ssl_app_group_id_lookup_sni_mismatch)
+{
+    mock().expectNCalls(1, "publish");
+    AppId service, client, payload = APP_ID_NONE;
+    bool val = false;
+
+    AppidChangeBits change_bits;
+
+    mock_session->set_ss_application_ids(0,0,0,0,0, change_bits);
+    mock_session->tsession->set_tls_sni(nullptr, 0);
+    mock_session->tsession->set_tls_cname(nullptr, 0);
+    mock_session->tsession->set_tls_first_alt_name(nullptr, 0);
+    mock_session->tsession->set_tls_org_unit(nullptr, 0);
+
     val = appid_api.ssl_app_group_id_lookup(flow, (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST,
-        (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST, false, service, client, payload);
+        (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_ORG_UNIT, true, service, client, payload);
+
     CHECK_TRUE(val);
-    CHECK_EQUAL(client, APPID_UT_ID + 100);
-    CHECK_EQUAL(payload, APPID_UT_ID + 1);
-    STRCMP_EQUAL(mock_session->tsession->get_tls_host(), APPID_UT_TLS_HOST);
+    CHECK_TRUE(mock_session->tsession->is_tls_host_mismatched());
+    CHECK_EQUAL(service, APPID_UT_ID);
+    CHECK_EQUAL(client, APPID_UT_ID);
+    CHECK_EQUAL(payload, APPID_UT_ID);
+    STRCMP_EQUAL(mock_session->tsession->get_tls_sni(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_first_alt_name(), APPID_UT_TLS_HOST);
     STRCMP_EQUAL(mock_session->tsession->get_tls_cname(), APPID_UT_TLS_HOST);
-    STRCMP_EQUAL("Published change_bits == 00000000000000100011000", test_log);
-
-    //check for sni mismatch being stored in sni field
-    change_bits.reset();
-    mock_session->tsession->set_tls_host("mismatchedsni.com", 17, change_bits);
-    service = APP_ID_NONE;
-    client = APP_ID_NONE;
-    payload = APP_ID_NONE;
-    val = appid_api.ssl_app_group_id_lookup(flow, (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST,
-        nullptr, nullptr, true, service, client, payload);
-    CHECK_TRUE(val);
-    STRCMP_EQUAL(APPID_UT_TLS_HOST, mock_session->tsession->get_tls_host());
-    STRCMP_EQUAL("mismatchedsni.com", mock_session->tsession->get_tls_sni());
-
+    STRCMP_EQUAL(mock_session->tsession->get_tls_org_unit(), APPID_UT_ORG_UNIT);
     mock().checkExpectations();
+}
 
-    // When appid session is not existing
-    // 1. Match based on server name
-    Flow* f = new Flow;
-    // This call just sets mock_flow_data pointer to nullptr, so mocks work correctly for the test.
-    flow->free_flow_data(1);
-    service = APP_ID_NONE;
-    client = APP_ID_NONE;
-    payload = APP_ID_NONE;
-    val = appid_api.ssl_app_group_id_lookup(f, (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST,
+TEST(appid_api_no_session, ssl_app_group_id_lookup)
+{
+    AppId service, client, payload = APP_ID_NONE;
+    bool val = false;
+
+    AppidChangeBits change_bits;
+    
+    flow_no_session->free_flow_data(1);
+    val = appid_api.ssl_app_group_id_lookup(flow_no_session, (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST,
         (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST, false, service, client, payload);
     CHECK_TRUE(val);
     CHECK_EQUAL(client, APPID_UT_ID + 1);
@@ -400,8 +393,8 @@ TEST(appid_api, ssl_app_group_id_lookup)
     // 2. First alt name match
     client = APP_ID_NONE;
     payload = APP_ID_NONE;
-    val = appid_api.ssl_app_group_id_lookup(f, nullptr, (const char*)APPID_UT_TLS_HOST,
-        (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST, false, service, client, payload);
+    val = appid_api.ssl_app_group_id_lookup(flow_no_session, nullptr, (const char*)APPID_UT_TLS_HOST,
+        nullptr, (const char*)APPID_UT_TLS_HOST, false, service, client, payload);
     CHECK_TRUE(val);
     CHECK_EQUAL(client, APPID_UT_ID + 1);
     CHECK_EQUAL(payload, APPID_UT_ID + 1);
@@ -409,7 +402,7 @@ TEST(appid_api, ssl_app_group_id_lookup)
     // 3. CN match
     client = APP_ID_NONE;
     payload = APP_ID_NONE;
-    val = appid_api.ssl_app_group_id_lookup(f, nullptr, nullptr, (const char*)APPID_UT_TLS_HOST,
+    val = appid_api.ssl_app_group_id_lookup(flow_no_session, nullptr, nullptr, (const char*)APPID_UT_TLS_HOST,
         (const char*)APPID_UT_TLS_HOST, false, service, client, payload);
     CHECK_TRUE(val);
     CHECK_EQUAL(client, APPID_UT_ID + 2);
@@ -418,13 +411,11 @@ TEST(appid_api, ssl_app_group_id_lookup)
     // 4. Org unit match
     client = APP_ID_NONE;
     payload = APP_ID_NONE;
-    val = appid_api.ssl_app_group_id_lookup(f, nullptr, nullptr, nullptr, (const char*)APPID_UT_TLS_HOST,
+    val = appid_api.ssl_app_group_id_lookup(flow_no_session, nullptr, nullptr, nullptr, (const char*)APPID_UT_TLS_HOST,
         false, service, client, payload);
     CHECK_TRUE(val);
     CHECK_EQUAL(client, APPID_UT_ID + 2);
     CHECK_EQUAL(payload, APPID_UT_ID + 2);
-
-    delete f;
 }
 
 TEST(appid_api, is_inspection_needed)

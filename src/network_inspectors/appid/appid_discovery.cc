@@ -796,6 +796,9 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         asd.set_session_flags(APPID_SESSION_ADDITIONAL_PACKET);
     }
 
+    if (asd.tsession)
+        asd.examine_ssl_metadata(change_bits, true);
+
     service_id = asd.pick_service_app_id();
 
     // Length-based service detection if no service is found yet
@@ -885,12 +888,6 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
 
     asd.set_ss_application_ids(service_id, client_id, payload_id, misc_id,
         asd.pick_ss_referred_payload_app_id(), change_bits);
-    asd.set_tls_host(change_bits);
-    if (asd.tsession and asd.tsession->is_tls_host_unpublished())
-    {
-        change_bits.set(APPID_TLSHOST_BIT);
-        asd.tsession->set_tls_host_unpublished(false);
-    }
 
     if (asd.is_client_info_unpublished())
     {

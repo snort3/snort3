@@ -138,81 +138,49 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
             return false;
 
         AppidChangeBits change_bits;
-        HostPatternMatchers& host_matchers = asd->get_odp_ctxt().get_host_matchers();
         if (!asd->tsession)
             asd->tsession = new TlsSession();
-        else if (sni_mismatch)
+        
+        if (sni_mismatch)
         {
             asd->tsession->process_sni_mismatch();
-        }
-
-
-        if (sni_mismatch)
             asd->scan_flags |= SCAN_SPOOFED_SNI_FLAG;
+        }   
 
         if (org_unit)
         {
             asd->tsession->set_tls_org_unit(org_unit, strlen(org_unit));
-            if (client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
-            {
-                host_matchers.scan_cname((const uint8_t*)org_unit, strlen(org_unit),
-                    client_id, payload_id);
-                if (client_id != APP_ID_NONE or payload_id != APP_ID_NONE)
-                    asd->tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_ORG_UNIT);
-            }
+            asd->scan_flags |= SCAN_SSL_ORG_UNIT_FLAG;
         }
 
-        if (server_name and !sni_mismatch)
+        if (server_name)
         {
-            asd->tsession->set_tls_host(server_name, strlen(server_name), change_bits);
-            host_matchers.scan_hostname((const uint8_t*)server_name, strlen(server_name),
-                client_id, payload_id);
-            if (client_id != APP_ID_NONE or payload_id != APP_ID_NONE)
-                asd->tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_HOST);
+            asd->tsession->set_tls_sni(server_name, strlen(server_name));
+            if (!sni_mismatch)
+                asd->scan_flags |= SCAN_SSL_HOST_FLAG;
         }
 
         if (first_alt_name)
         {
-            asd->tsession->set_tls_first_alt_name(first_alt_name, strlen(first_alt_name), change_bits);
-            if (client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
-            {
-                host_matchers.scan_hostname((const uint8_t*)first_alt_name, strlen(first_alt_name),
-                    client_id, payload_id);
-                if (client_id != APP_ID_NONE or payload_id != APP_ID_NONE)
-                    asd->tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_FIRST_SAN);
-            }
+            asd->tsession->set_tls_first_alt_name(first_alt_name, strlen(first_alt_name));
+            asd->scan_flags |= SCAN_SSL_ALT_NAME;
         }
 
         if (common_name)
         {
-            asd->tsession->set_tls_cname(common_name, strlen(common_name), change_bits);
-            if (client_id == APP_ID_NONE and payload_id == APP_ID_NONE)
-            {
-                host_matchers.scan_cname((const uint8_t*)common_name, strlen(common_name),
-                    client_id, payload_id);
-                if (client_id != APP_ID_NONE or payload_id != APP_ID_NONE)
-                    asd->tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_CNAME);
-            }
+            asd->tsession->set_tls_cname(common_name, strlen(common_name));
+            asd->scan_flags |= SCAN_SSL_CERTIFICATE_FLAG;
+            asd->tsession->set_tls_handshake_done();
         }
 
         asd->scan_flags |= SCAN_CERTVIZ_ENABLED_FLAG;
 
-        service_id = asd->get_api().get_service_app_id();
-
-        if (asd->use_eve_client_app_id())
-            client_id = asd->get_eve_client_app_id();
-        else if (client_id == APP_ID_NONE)
-            client_id = asd->get_api().get_client_app_id();
-        else
-            asd->set_client_id(client_id);
-
-        if (payload_id == APP_ID_NONE)
-            payload_id = asd->get_api().get_payload_app_id();
-        else
-            asd->set_payload_id(payload_id);
-
+        asd->examine_ssl_metadata(change_bits, true);
+        service_id = asd->pick_service_app_id();
+        client_id = asd->pick_ss_client_app_id();
+        payload_id = asd->pick_ss_payload_app_id();
+        
         asd->set_ss_application_ids(client_id, payload_id, change_bits);
-        asd->set_tls_host(change_bits);
 
         Packet* p = DetectionEngine::get_current_packet();
         assert(p);

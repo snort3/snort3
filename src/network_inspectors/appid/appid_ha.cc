@@ -335,7 +335,7 @@ bool AppIdHATlsHostClient::consume(Flow*& flow, const FlowKey* key, HAMessage& m
     if (!asd)
         asd = create_appid_session(*flow, key, *inspector);
 
-    asd->set_tls_host(appHA->tls_host);
+    asd->consume_ha_tls_host(appHA->tls_host);
 
     asd->set_consumed_ha_data(true);
 
