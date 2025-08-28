@@ -74,6 +74,7 @@ class FileMetaModule : public Module
 {
 public:
     FileMetaModule() : Module(s_name, s_help, s_params) { }
+    bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
@@ -85,6 +86,12 @@ public:
 public:
     FileMetaData fmc;
 };
+
+bool FileMetaModule::begin(const char*, int, SnortConfig*)
+{
+    fmc.groups.clear();
+    return true;
+}
 
 bool FileMetaModule::set(const char*, Value& v, SnortConfig*)
 {
