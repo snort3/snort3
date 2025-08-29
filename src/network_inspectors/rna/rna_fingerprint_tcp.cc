@@ -836,11 +836,97 @@ TEST_CASE("get_tcp_option", "[rna_fingerprint_tcp]")
     int pos;
 
     // Check the default case when the desired option does not match
-    CHECK( -1 == get_tcp_option(&p, tcp::TcpOptCode::EOL, pos) );
+    CHECK(( -1 == get_tcp_option(&p, tcp::TcpOptCode::EOL, pos) && pos == -1 ));
 
-    // Check the case when NOP option is matched
-    cooked_pkt[54] = 1; // 34 + TCP_MIN_HEADER_LEN = 54
-    CHECK( get_tcp_option(&p, tcp::TcpOptCode::NOP, pos) == 1 );
+    p.layers = saved_layers;
+}
+
+TEST_CASE("get_tcp_option_NOP", "[rna_fingerprint_tcp]")
+{
+    // Hex buffer from a packet with NOP option
+    uint8_t cooked_pkt[] = "\x00\x21\x91\x01\xb2\x48\xaa\x00\x04\x00\x0a\x04\x08\x00" // Ethernet Header
+                       "\x45\x00\x00\x2c\x00\x01\x00\x00\x40\x06\x82\xa8" // IP Header
+                       "\xc0\xa8\x00\x59\x48\xa7\xe8\x90" // IP Source and Destination Addresses
+                       "\x23\x34\x00\x50" // TCP Source Port, Destination Port
+                       "\x00\x00\x23\x5a\x00\x00\x00\x00" // TCP Sequence Number, Acknowledgement Number
+                       "\x60\x02" // TCP Data Offset, Flags (SYN)
+                       "\x20\x00" // TCP Window Size
+                       "\x17\xf8" // TCP Checksum
+                       "\x00\x00" // TCP Urgent Pointer
+                       "\x01\x01\x01\x01"; // TCP Options: NOPs (0x01)
+    Packet p(false);
+    p.pkt = cooked_pkt;
+    p.ptrs.tcph = ( const tcp::TCPHdr* )( cooked_pkt + 34 );
+    p.num_layers = 1;
+    Layer cooked_layer;
+    cooked_layer.start = cooked_pkt + 34;
+    cooked_layer.length = 24; // TCP_MIN_HEADER_LEN + 4
+    auto saved_layers = p.layers;
+    p.layers = &cooked_layer;
+    int pos;
+
+    CHECK((get_tcp_option(&p, tcp::TcpOptCode::NOP, pos) == 1 && pos == 0));
+    CHECK((get_tcp_option(&p, tcp::TcpOptCode::TIMESTAMP, pos) == -1 && pos == -1));
+
+    p.layers = saved_layers;
+}
+
+TEST_CASE("get_tcp_option_bad_layers", "[rna_fingerprint_tcp]")
+{
+    // Hex buffer from a packet without options and 4 bytes of payload after header
+    uint8_t cooked_pkt[] = "\x00\x21\x91\x01\xb2\x48\xaa\x00\x04\x00\x0a\x04\x08\x00" // Ethernet Header
+                       "\x45\x00\x00\x28\x00\x01\x00\x00\x40\x06\x88\x96" // IP Header
+                       "\xc0\xa8\x00\x59\x48\xa7\xe8\x90" // IP Source and Destination Addresses
+                       "\x23\x34\x00\x50" // TCP Source Port, Destination Port
+                       "\x00\x00\x23\x5a\x00\x00\x00\x00" // TCP Sequence Number, Acknowledgement Number
+                       "\x50\x02" // TCP Data Offset, Flags (SYN)
+                       "\x20\x00" // TCP Window Size
+                       "\x56\xcb" // TCP Checksum
+                       "\x00\x00" // TCP Urgent Pointer
+                       "\x05\x00\x0e\x07";
+    Packet p(false);
+    p.pkt = cooked_pkt;
+    p.ptrs.tcph = (const tcp::TCPHdr*)(cooked_pkt + 34);
+    p.num_layers = 1;
+    Layer cooked_layer;
+    cooked_layer.start = cooked_pkt + 34;
+    cooked_layer.length = 32; // Incorrect length in layer
+    auto saved_layers = p.layers;
+    p.layers = &cooked_layer;
+    int pos;
+
+    CHECK((get_tcp_option(&p, tcp::TcpOptCode::NOP, pos) == -1 && pos == -1));
+    CHECK((get_tcp_option(&p, tcp::TcpOptCode::SACK, pos) == -1 && pos == -1));
+
+    p.layers = saved_layers;
+}
+
+TEST_CASE("get_tcp_option_malformed", "[rna_fingerprint_tcp]")
+{
+    // Hex buffer from a packet with 1 malformed option of type SACKOK
+    uint8_t cooked_pkt[] = "\x00\x21\x91\x01\xb2\x48\xaa\x00\x04\x00\x0a\x04\x08\x00" // Ethernet Header
+                       "\x45\x00\x00\x2c\x00\x01\x00\x00\x40\x06\x88\x92" // IP Header
+                       "\xc0\xa8\x00\x59\x48\xa7\xe8\x90" // IP Source and Destination Addresses
+                       "\x23\x34\x00\x50" // TCP Source Port, Destination Port
+                       "\x00\x00\x23\x5a\x00\x00\x00\x00" // TCP Sequence Number, Acknowledgement Number
+                       "\x60\x02" // TCP Data Offset, Flags (SYN)
+                       "\x20\x00" // TCP Window Size
+                       "\x41\xc3" // TCP Checksum
+                       "\x00\x00" // TCP Urgent Pointer
+                       "\x04\x00\x0e\x07"; // malformed SACKOK option, length 0
+    Packet p(false);
+    p.pkt = cooked_pkt;
+    p.ptrs.tcph = (const tcp::TCPHdr*)(cooked_pkt + 34);
+    p.num_layers = 1;
+    Layer cooked_layer;
+    cooked_layer.start = cooked_pkt + 34;
+    cooked_layer.length = 24;
+    auto saved_layers = p.layers;
+    p.layers = &cooked_layer;
+    int pos;
+
+    CHECK((get_tcp_option(&p, tcp::TcpOptCode::SACKOK, pos) == 1 && pos == 0));
+    CHECK((get_tcp_option(&p, tcp::TcpOptCode::NOP, pos) == -1 && pos == -1));
 
     p.layers = saved_layers;
 }

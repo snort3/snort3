@@ -54,6 +54,9 @@ TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const Packet* con
     start_ptr = hdr + TCP_MIN_HEADER_LEN;
     end_ptr = start_ptr; // == begin()
 
+    if (!tcp_header->has_options())
+        return;
+
     for (int i = p->num_layers-1; i >= 0; --i)
     {
         if (p->layers[i].start == (const uint8_t*)tcp_header)

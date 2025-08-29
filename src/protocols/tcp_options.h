@@ -111,6 +111,11 @@ struct TcpOption
     {
         if ( (uint8_t)code <= 1 )
             return reinterpret_cast<const TcpOption&>(len);
+        else if (len < 2)
+        {
+            static const TcpOption eol_opt = {TcpOptCode::EOL, 0, {0}};
+            return eol_opt;
+        }
         else
             return reinterpret_cast<const TcpOption&>(data[len -2]);
     }

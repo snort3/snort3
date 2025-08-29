@@ -41,6 +41,9 @@ IpOptionIterator::IpOptionIterator(const IP4Hdr* const ip4_header, const Packet*
     start_ptr = hdr + IP4_HEADER_LEN;
     end_ptr = start_ptr;
 
+    if (!ip4_header->has_options())
+        return;
+
     for (int i = p->num_layers-1; i >= 0; --i)
     {
         if (p->layers[i].start == (const uint8_t*)ip4_header)

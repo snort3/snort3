@@ -73,6 +73,11 @@ struct IpOptions
         // ... and the legible code
         if ( (uint8_t)code <= 1 )
             return reinterpret_cast<const IpOptions&>(len);
+        else if (len < 2)
+        {
+            static const IpOptions eol_opt = {IPOptionCodes::EOL, 0, {0}};
+            return eol_opt;
+        }
         else
             return reinterpret_cast<const IpOptions&>(data[len -2]);
 #endif
