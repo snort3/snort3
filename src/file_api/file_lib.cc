@@ -29,7 +29,7 @@
 
 #include "file_lib.h"
 
-#include <openssl/sha.h>
+#include <openssl/evp.h>
 
 #include <iostream>
 #include <iomanip>
@@ -66,21 +66,21 @@ THREAD_LOCAL ProfileStats file_perf_stats;
 
 // Convert UTF16-LE file name to UTF-8.
 // Returns allocated name. Caller responsible for freeing the buffer.
-char* FileContext::get_UTF8_fname(size_t* converted_len)
+char *FileContext::get_UTF8_fname(size_t *converted_len)
 {
     FileCharEncoding encoding = get_character_encoding(file_name.c_str(), file_name.length());
-    char* outbuf = nullptr;
+    char *outbuf = nullptr;
     if (encoding == SNORT_CHAR_ENCODING_UTF_16LE)
     {
 #ifdef HAVE_ICONV
         // UTF-16LE takes 2 or 4 bytes per character, UTF-8 can take max 4
         const size_t outbytesleft = (file_name.length() - UTF_16_LE_BOM_LEN) * 2;
-        char* inbuf = (char*)snort_alloc(file_name.length());
+        char *inbuf = (char *)snort_alloc(file_name.length());
         memcpy(inbuf, file_name.c_str(), file_name.length());
-        outbuf = (char*)snort_alloc(outbytesleft + 1);
-        char* const buf_start = outbuf;
+        outbuf = (char *)snort_alloc(outbytesleft + 1);
+        char *const buf_start = outbuf;
         outbuf = UtfDecodeSession::convert_character_encoding("UTF-8", "UTF-16LE", inbuf + UTF_16_LE_BOM_LEN,
-            outbuf, file_name.length() - UTF_16_LE_BOM_LEN, outbytesleft, converted_len);
+                                                              outbuf, file_name.length() - UTF_16_LE_BOM_LEN, outbytesleft, converted_len);
         snort_free(inbuf);
         if (outbuf == nullptr)
         {
@@ -88,10 +88,10 @@ char* FileContext::get_UTF8_fname(size_t* converted_len)
             return nullptr;
         }
 #else
-        *converted_len = (file_name.length()- UTF_16_LE_BOM_LEN) >> 1;
-        outbuf = (char*)snort_alloc(*converted_len + 1);
-        uint32_t i, k= 0;
-        for ( i = UTF_16_LE_BOM_LEN; i < file_name.length(); i+=2, k++)
+        *converted_len = (file_name.length() - UTF_16_LE_BOM_LEN) >> 1;
+        outbuf = (char *)snort_alloc(*converted_len + 1);
+        uint32_t i, k = 0;
+        for (i = UTF_16_LE_BOM_LEN; i < file_name.length(); i += 2, k++)
             outbuf[k] = (char)file_name[i];
         outbuf[k] = 0;
 #endif
@@ -99,7 +99,7 @@ char* FileContext::get_UTF8_fname(size_t* converted_len)
     return outbuf;
 }
 
-FileInfo::~FileInfo ()
+FileInfo::~FileInfo()
 {
     if (user_file_data)
     {
@@ -109,13 +109,14 @@ FileInfo::~FileInfo ()
         user_file_data_mutex.unlock();
     }
 
-    if (sha256) {
+    if (sha256)
+    {
         delete[] sha256;
         sha256 = nullptr;
     }
 }
 
-void FileInfo::copy(const FileInfo& other, bool clear_data)
+void FileInfo::copy(const FileInfo &other, bool clear_data)
 {
     if (&other == this)
         return;
@@ -123,7 +124,7 @@ void FileInfo::copy(const FileInfo& other, bool clear_data)
     if (other.sha256)
     {
         sha256 = new uint8_t[SHA256_HASH_SIZE];
-        memcpy( (char*)sha256, (const char*)other.sha256, SHA256_HASH_SIZE);
+        memcpy((char *)sha256, (const char *)other.sha256, SHA256_HASH_SIZE);
     }
 
     file_size = other.file_size;
@@ -152,15 +153,17 @@ void FileInfo::copy(const FileInfo& other, bool clear_data)
     }
 }
 
-void FileInfo::serialize(char* buffer, uint16_t buffer_len)
+void FileInfo::serialize(char *buffer, uint16_t buffer_len)
 {
     uint16_t offset = 0;
-    auto write_bool = [&](bool val) {
+    auto write_bool = [&](bool val)
+    {
         memcpy(buffer + offset, &val, sizeof(val));
         offset += sizeof(val);
     };
 
-    auto write_string = [&](const std::string& str, bool is_set) {
+    auto write_string = [&](const std::string &str, bool is_set)
+    {
         write_bool(is_set);
         if (is_set && offset < buffer_len)
         {
@@ -171,7 +174,7 @@ void FileInfo::serialize(char* buffer, uint16_t buffer_len)
             offset += len;
         }
     };
-    
+
     if (sha256)
         is_sha256_set = true;
 
@@ -180,23 +183,23 @@ void FileInfo::serialize(char* buffer, uint16_t buffer_len)
 
     if (is_sha256_set && sha256 && offset < buffer_len)
     {
-        memcpy(buffer + offset,(uint16_t *) sha256, SHA256_HASH_SIZE);
+        memcpy(buffer + offset, (uint16_t *)sha256, SHA256_HASH_SIZE);
         offset += SHA256_HASH_SIZE;
     }
 
     memcpy(buffer + offset, &verdict, sizeof(verdict));
     offset += sizeof(verdict);
-    memcpy(buffer + offset, &file_size, sizeof(file_size)); 
+    memcpy(buffer + offset, &file_size, sizeof(file_size));
     offset += sizeof(file_size);
-    memcpy(buffer + offset, &direction, sizeof(direction)); 
+    memcpy(buffer + offset, &direction, sizeof(direction));
     offset += sizeof(direction);
     memcpy(buffer + offset, &file_id, sizeof(file_id));
     offset += sizeof(file_id);
-    memcpy(buffer + offset, &file_type_id, sizeof(file_type_id)); 
+    memcpy(buffer + offset, &file_type_id, sizeof(file_type_id));
     offset += sizeof(file_type_id);
-    memcpy(buffer + offset, &file_state.capture_state, sizeof(file_state.capture_state)); 
+    memcpy(buffer + offset, &file_state.capture_state, sizeof(file_state.capture_state));
     offset += sizeof(file_state.capture_state);
-    memcpy(buffer + offset, &file_state.sig_state, sizeof(file_state.sig_state)); 
+    memcpy(buffer + offset, &file_state.sig_state, sizeof(file_state.sig_state));
     offset += sizeof(file_state.sig_state);
     memcpy(buffer + offset, &policy_id, sizeof(policy_id));
     offset += sizeof(policy_id);
@@ -209,15 +212,17 @@ void FileInfo::serialize(char* buffer, uint16_t buffer_len)
     write_bool(is_partial);
 }
 
-void FileInfo::deserialize(const char* buffer, uint16_t buffer_len)
+void FileInfo::deserialize(const char *buffer, uint16_t buffer_len)
 {
     uint16_t offset = 0;
-    auto read_bool = [&](bool& val) {
+    auto read_bool = [&](bool &val)
+    {
         memcpy(&val, buffer + offset, sizeof(val));
         offset += sizeof(val);
     };
 
-    auto read_string = [&](std::string& str, bool& is_set) {
+    auto read_string = [&](std::string &str, bool &is_set)
+    {
         read_bool(is_set);
         if (is_set && offset < buffer_len)
         {
@@ -235,23 +240,23 @@ void FileInfo::deserialize(const char* buffer, uint16_t buffer_len)
     if (is_sha256_set && offset < buffer_len)
     {
         if (!sha256)
-            sha256 = new uint8_t[SHA256_HASH_SIZE];  
+            sha256 = new uint8_t[SHA256_HASH_SIZE];
         memcpy(sha256, (const uint8_t *)(buffer + offset), SHA256_HASH_SIZE);
         offset += SHA256_HASH_SIZE;
     }
-    memcpy(&verdict, buffer + offset, sizeof(verdict)); 
+    memcpy(&verdict, buffer + offset, sizeof(verdict));
     offset += sizeof(verdict);
-    memcpy(&file_size, buffer + offset, sizeof(file_size)); 
+    memcpy(&file_size, buffer + offset, sizeof(file_size));
     offset += sizeof(file_size);
-    memcpy(&direction, buffer + offset, sizeof(direction)); 
+    memcpy(&direction, buffer + offset, sizeof(direction));
     offset += sizeof(direction);
     memcpy(&file_id, buffer + offset, sizeof(file_id));
     offset += sizeof(file_id);
-    memcpy(&file_type_id, buffer + offset, sizeof(file_type_id)); 
+    memcpy(&file_type_id, buffer + offset, sizeof(file_type_id));
     offset += sizeof(file_type_id);
-    memcpy(&file_state.capture_state, buffer + offset, sizeof(file_state.capture_state)); 
+    memcpy(&file_state.capture_state, buffer + offset, sizeof(file_state.capture_state));
     offset += sizeof(file_state.capture_state);
-    memcpy(&file_state.sig_state, buffer + offset, sizeof(file_state.sig_state)); 
+    memcpy(&file_state.sig_state, buffer + offset, sizeof(file_state.sig_state));
     offset += sizeof(file_state.sig_state);
     memcpy(&policy_id, buffer + offset, sizeof(policy_id));
     offset += sizeof(policy_id);
@@ -264,12 +269,12 @@ void FileInfo::deserialize(const char* buffer, uint16_t buffer_len)
     read_bool(is_partial);
 }
 
-FileInfo::FileInfo(const FileInfo& other)
+FileInfo::FileInfo(const FileInfo &other)
 {
     copy(other);
 }
 
-FileInfo& FileInfo::operator=(const FileInfo& other)
+FileInfo &FileInfo::operator=(const FileInfo &other)
 {
     // check for self-assignment
     if (&other == this)
@@ -281,7 +286,7 @@ FileInfo& FileInfo::operator=(const FileInfo& other)
 
 /*File properties*/
 
-void FileInfo::set_file_name(const char* name, uint32_t name_size)
+void FileInfo::set_file_name(const char *name, uint32_t name_size)
 {
     if (name and name_size)
         file_name.assign(name, name_size);
@@ -289,7 +294,7 @@ void FileInfo::set_file_name(const char* name, uint32_t name_size)
     file_name_set = true;
 }
 
-void FileInfo::set_weak_file_name(const char* name, uint32_t name_size)
+void FileInfo::set_weak_file_name(const char *name, uint32_t name_size)
 {
     if (name and name_size)
         file_name.assign(name, name_size);
@@ -305,13 +310,13 @@ void FileInfo::reset_sha()
 {
     if (sha256)
     {
-        delete [] sha256;
+        delete[] sha256;
         sha256 = nullptr;
         file_state.sig_state = FILE_SIG_PROCESSING;
     }
 }
 
-void FileInfo::set_url(const char* url_name, uint32_t url_size)
+void FileInfo::set_url(const char *url_name, uint32_t url_size)
 {
     if (url_name and url_size)
         url.assign(url_name, url_size);
@@ -319,13 +324,13 @@ void FileInfo::set_url(const char* url_name, uint32_t url_size)
     url_set = true;
 }
 
-void FileInfo::set_weak_url(const char* url_name, uint32_t url_size)
+void FileInfo::set_weak_url(const char *url_name, uint32_t url_size)
 {
     if (url_name and url_size)
         url.assign(url_name, url_size);
 }
 
-void FileInfo::set_host(const char* host_name, uint32_t host_size)
+void FileInfo::set_host(const char *host_name, uint32_t host_size)
 {
     if (this->host_set)
         return;
@@ -337,17 +342,17 @@ void FileInfo::set_host(const char* host_name, uint32_t host_size)
     }
 }
 
-const std::string& FileInfo::get_host_name() const
+const std::string &FileInfo::get_host_name() const
 {
     return host_name;
 }
 
-const std::string& FileInfo::get_file_name() const
+const std::string &FileInfo::get_file_name() const
 {
     return file_name;
 }
 
-const std::string& FileInfo::get_url() const
+const std::string &FileInfo::get_url() const
 {
     return url;
 }
@@ -392,16 +397,16 @@ FileDirection FileInfo::get_file_direction() const
     return direction;
 }
 
-uint8_t* FileInfo::get_file_sig_sha256() const
+uint8_t *FileInfo::get_file_sig_sha256() const
 {
     return (sha256);
 }
 
-std::string FileInfo::sha_to_string(const uint8_t* sha256)
+std::string FileInfo::sha_to_string(const uint8_t *sha256)
 {
     uint8_t conv[] = "0123456789ABCDEF";
-    const uint8_t* index;
-    const uint8_t* end;
+    const uint8_t *index;
+    const uint8_t *end;
     std::string sha_out;
 
     index = sha256;
@@ -409,8 +414,8 @@ std::string FileInfo::sha_to_string(const uint8_t* sha256)
 
     while (index < end)
     {
-        sha_out.push_back(conv[((*index & 0xFF)>>4)]);
-        sha_out.push_back(conv[((*index & 0xFF)&0x0F)]);
+        sha_out.push_back(conv[((*index & 0xFF) >> 4)]);
+        sha_out.push_back(conv[((*index & 0xFF) & 0x0F)]);
         index++;
     }
 
@@ -457,7 +462,7 @@ uint32_t FileInfo::get_policy_id()
     return policy_id;
 }
 
-FileCaptureState FileInfo::reserve_file(FileCapture*& dest)
+FileCaptureState FileInfo::reserve_file(FileCapture *&dest)
 {
     if (!file_capture)
         return FileCapture::error_capture(FILE_CAPTURE_FAIL);
@@ -474,23 +479,23 @@ int64_t FileInfo::get_max_file_capture_size()
     return (file_capture ? file_capture->get_max_file_capture_size() : 0);
 }
 
-void FileInfo::set_file_data(UserFileDataBase* fd)
+void FileInfo::set_file_data(UserFileDataBase *fd)
 {
     user_file_data = fd;
 }
 
-void FileInfo::set_capture_file_data(const uint8_t* file_data, uint32_t size)
+void FileInfo::set_capture_file_data(const uint8_t *file_data, uint32_t size)
 {
     if (file_capture)
         file_capture->set_data(file_data, size);
 }
 
-UserFileDataBase* FileInfo::get_file_data() const
+UserFileDataBase *FileInfo::get_file_data() const
 {
     return user_file_data;
 }
 
-FileContext::FileContext ()
+FileContext::FileContext()
 {
     file_type_context = nullptr;
     file_signature_context = nullptr;
@@ -498,7 +503,7 @@ FileContext::FileContext ()
     file_segments = nullptr;
     if (SnortConfig::get_conf())
     {
-        inspector = (FileInspect*)InspectorManager::acquire_file_inspector();
+        inspector = (FileInspect *)InspectorManager::acquire_file_inspector();
         config = inspector->config;
     }
     else
@@ -508,7 +513,7 @@ FileContext::FileContext ()
     }
 }
 
-FileContext::~FileContext ()
+FileContext::~FileContext()
 {
     if (file_signature_context)
         snort_free(file_signature_context);
@@ -525,15 +530,15 @@ FileContext::~FileContext ()
 /* stop file type identification */
 inline void FileContext::finalize_file_type()
 {
-    if (SNORT_FILE_TYPE_CONTINUE ==  file_type_id)
+    if (SNORT_FILE_TYPE_CONTINUE == file_type_id)
         file_type_id = SNORT_FILE_TYPE_UNKNOWN;
     file_type_context = nullptr;
 }
 
-void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
+void FileContext::log_file_event(Flow *flow, FilePolicyBase *policy)
 {
-    // log file event either when filename is set or if it is a asymmetric flow  
-    if ( is_file_name_set() or !flow->two_way_traffic() )
+    // log file event either when filename is set or if it is a asymmetric flow
+    if (is_file_name_set() or !flow->two_way_traffic())
     {
         bool log_needed = true;
 
@@ -541,16 +546,16 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
         {
         case FILE_VERDICT_LOG:
             // Log file event through data bus
-            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FILE_VERDICT, (const uint8_t*)"LOG", 3, flow);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FILE_VERDICT, (const uint8_t *)"LOG", 3, flow);
             break;
 
         case FILE_VERDICT_BLOCK:
             // can't block session inside a session
-            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FILE_VERDICT, (const uint8_t*)"BLOCK", 5, flow);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FILE_VERDICT, (const uint8_t *)"BLOCK", 5, flow);
             break;
 
         case FILE_VERDICT_REJECT:
-            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FILE_VERDICT, (const uint8_t*)"RESET", 5, flow);
+            DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FILE_VERDICT, (const uint8_t *)"RESET", 5, flow);
             break;
         default:
             log_needed = false;
@@ -564,18 +569,18 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
 
         user_file_data_mutex.unlock();
 
-        if ( config->trace_type )
+        if (config->trace_type)
             print(std::cout);
     }
 }
 
-FileVerdict FileContext::file_signature_lookup(Packet* p)
+FileVerdict FileContext::file_signature_lookup(Packet *p)
 {
-    Flow* flow = p->flow;
+    Flow *flow = p->flow;
 
     if (get_file_sig_sha256())
     {
-        FilePolicyBase* policy = FileFlows::get_file_policy(flow);
+        FilePolicyBase *policy = FileFlows::get_file_policy(flow);
 
         if (policy)
             return policy->signature_lookup(p, this);
@@ -584,26 +589,25 @@ FileVerdict FileContext::file_signature_lookup(Packet* p)
     return FILE_VERDICT_UNKNOWN;
 }
 
-void FileContext::finish_signature_lookup(Packet* p, bool final_lookup, FilePolicyBase* policy)
+void FileContext::finish_signature_lookup(Packet *p, bool final_lookup, FilePolicyBase *policy)
 {
-    Flow* flow = p->flow;
+    Flow *flow = p->flow;
 
     if (get_file_sig_sha256())
     {
         verdict = policy->signature_lookup(p, this);
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
-            p, "finish signature lookup verdict %d\n", verdict);
-        if ( verdict != FILE_VERDICT_UNKNOWN || final_lookup )
+                   p, "finish signature lookup verdict %d\n", verdict);
+        if (verdict != FILE_VERDICT_UNKNOWN || final_lookup)
         {
-            FileCache* file_cache = FileService::get_file_cache();
+            FileCache *file_cache = FileService::get_file_cache();
             if (file_cache)
                 file_cache->apply_verdict(p, this, verdict, false, policy);
 
-            if ( PacketTracer::is_active() and ( verdict == FILE_VERDICT_BLOCK
-                    or verdict == FILE_VERDICT_REJECT ))
+            if (PacketTracer::is_active() and (verdict == FILE_VERDICT_BLOCK or verdict == FILE_VERDICT_REJECT))
             {
                 PacketTracer::log("File: signature lookup verdict %s\n",
-                    verdict == FILE_VERDICT_BLOCK ? "block" : "reject");
+                                  verdict == FILE_VERDICT_BLOCK ? "block" : "reject");
             }
             log_file_event(flow, policy);
             config_file_signature(false);
@@ -619,9 +623,9 @@ void FileContext::finish_signature_lookup(Packet* p, bool final_lookup, FilePoli
 
 void FileContext::set_signature_state(bool gen_sig)
 {
-    if ( gen_sig )
+    if (gen_sig)
     {
-        if ( sha256 )
+        if (sha256)
         {
             snort_free(sha256);
             sha256 = nullptr;
@@ -633,7 +637,7 @@ void FileContext::set_signature_state(bool gen_sig)
         file_state.sig_state = FILE_SIG_PROCESSING;
 }
 
-void FileContext::check_policy(Flow* flow, FileDirection dir, FilePolicyBase* policy)
+void FileContext::check_policy(Flow *flow, FileDirection dir, FilePolicyBase *policy)
 {
     file_counts.files_total++;
     set_file_direction(dir);
@@ -701,17 +705,17 @@ void FileContext::reset()
  *    true: continue processing/log/block this file
  *    false: ignore this file
  */
-bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
-    FilePosition position, FilePolicyBase* policy)
+bool FileContext::process(Packet *p, const uint8_t *file_data, int data_size,
+                          FilePosition position, FilePolicyBase *policy)
 {
     // cppcheck-suppress unreadVariable
     Profile profile(file_perf_stats);
-    Flow* flow = p->flow;
+    Flow *flow = p->flow;
 
-    if ( config->trace_stream )
+    if (config->trace_stream)
     {
         FileContext::print_file_data(stdout, file_data, data_size,
-            config->show_data_depth);
+                                     config->show_data_depth);
     }
 
     file_counts.file_data_total += data_size;
@@ -721,17 +725,17 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
         update_file_size(data_size, position);
         processing_complete = true;
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
-            p, "File: Type and Sig not enabled\n");
+                   p, "File: Type and Sig not enabled\n");
         if (PacketTracer::is_active())
             PacketTracer::log("File: Type and Sig not enabled\n");
         return false;
     }
 
     if (cacheable and (FileService::get_file_cache()->cached_verdict_lookup(p, this, policy, file_data, data_size) !=
-        FILE_VERDICT_UNKNOWN))
+                       FILE_VERDICT_UNKNOWN))
     {
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
-            p, "file process completed in file context process\n");
+                   p, "file process completed in file context process\n");
         processing_complete = true;
         return true;
     }
@@ -750,7 +754,7 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
             processing_complete = true;
             stop_file_capture();
             FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
-                "File: Type unknown\n");
+                       "File: Type unknown\n");
             if (PacketTracer::is_active())
                 PacketTracer::log("File: Type unknown\n");
             return false;
@@ -759,37 +763,36 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
         if (get_file_type() != SNORT_FILE_TYPE_CONTINUE)
         {
             FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
-                "File: Type-%s found\n", file_type_name(get_file_type()).c_str());
+                       "File: Type-%s found\n", file_type_name(get_file_type()).c_str());
             if (PacketTracer::is_active())
                 PacketTracer::log("File: Type-%s found\n",
-                    file_type_name(get_file_type()).c_str());
+                                  file_type_name(get_file_type()).c_str());
             config_file_type(false);
 
             if (PacketTracer::is_active() and (!(is_file_signature_enabled())))
             {
                 FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
-                   "File: signature config is disabled\n");
+                           "File: signature config is disabled\n");
                 PacketTracer::log("File: signature config is disabled\n");
             }
 
             file_stats->files_processed[get_file_type()][get_file_direction()]++;
-            //Check file type based on file policy
+            // Check file type based on file policy
             FileVerdict v = policy->type_lookup(p, this);
-            if ( v != FILE_VERDICT_UNKNOWN )
+            if (v != FILE_VERDICT_UNKNOWN)
             {
                 if (v == FILE_VERDICT_STOP)
                     config_file_signature(false);
-                FileCache* file_cache = FileService::get_file_cache();
+                FileCache *file_cache = FileService::get_file_cache();
                 if (file_cache)
                     file_cache->apply_verdict(p, this, v, false, policy);
 
-                if ( PacketTracer::is_active() and ( v == FILE_VERDICT_BLOCK
-                        or v == FILE_VERDICT_REJECT ))
+                if (PacketTracer::is_active() and (v == FILE_VERDICT_BLOCK or v == FILE_VERDICT_REJECT))
                 {
                     FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
-                       "File: file type verdict %s\n", v == FILE_VERDICT_BLOCK ? "block" : "reject");
+                               "File: file type verdict %s\n", v == FILE_VERDICT_BLOCK ? "block" : "reject");
                     PacketTracer::log("File: file type verdict %s\n",
-                        v == FILE_VERDICT_BLOCK ? "block" : "reject");
+                                      v == FILE_VERDICT_BLOCK ? "block" : "reject");
                 }
             }
 
@@ -801,16 +804,15 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
     if (is_file_signature_enabled())
     {
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
-            "file signature is enabled\n");
+                   "file signature is enabled\n");
         if (!sha256)
             process_file_signature_sha256(file_data, data_size, position);
 
-        file_stats->data_processed[get_file_type()][get_file_direction()]
-            += data_size;
+        file_stats->data_processed[get_file_type()][get_file_direction()] += data_size;
 
         update_file_size(data_size, position);
 
-        if ( config->trace_signature )
+        if (config->trace_signature)
             print_file_sha256(std::cout);
 
         /*Fails to capture, when out of memory or size limit, need lookup*/
@@ -821,23 +823,23 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
             user_file_data_mutex.unlock();
         }
 
-        finish_signature_lookup(p, ( file_state.sig_state != FILE_SIG_FLUSH ), policy);
+        finish_signature_lookup(p, (file_state.sig_state != FILE_SIG_FLUSH), policy);
 
         if (file_state.sig_state == FILE_SIG_DEPTH_FAIL)
         {
             verdict = policy->signature_lookup(p, this);
-            if ( verdict != FILE_VERDICT_UNKNOWN )
+            if (verdict != FILE_VERDICT_UNKNOWN)
             {
-                FileCache* file_cache = FileService::get_file_cache();
+                FileCache *file_cache = FileService::get_file_cache();
                 if (file_cache)
-                    file_cache->apply_verdict(p, this , verdict, false, policy);
+                    file_cache->apply_verdict(p, this, verdict, false, policy);
 
                 log_file_event(flow, policy);
             }
             else
             {
                 FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
-                    "File: Sig depth exceeded\n");
+                           "File: Sig depth exceeded\n");
                 if (PacketTracer::is_active())
                     PacketTracer::log("File: Sig depth exceeded\n");
                 return false;
@@ -852,8 +854,8 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
     return true;
 }
 
-bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
-    uint64_t offset, FilePolicyBase* policy, FilePosition position)
+bool FileContext::process(Packet *p, const uint8_t *file_data, int data_size,
+                          uint64_t offset, FilePolicyBase *policy, FilePosition position)
 {
     if (!file_segments)
         file_segments = new FileSegments(this);
@@ -870,8 +872,8 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
  * 3) file magics are exhausted in depth
  *
  */
-void FileContext::find_file_type_from_ips(Packet* pkt, const uint8_t* file_data, int data_size,
-    FilePosition position)
+void FileContext::find_file_type_from_ips(Packet *pkt, const uint8_t *file_data, int data_size,
+                                          FilePosition position)
 {
     bool depth_exhausted = false;
 
@@ -879,15 +881,15 @@ void FileContext::find_file_type_from_ips(Packet* pkt, const uint8_t* file_data,
     {
         data_size = config->file_type_depth - processed_bytes;
         if (data_size < 0)
-	        return;
+            return;
         depth_exhausted = true;
     }
-    const FileConfig* const conf = get_file_config();
+    const FileConfig *const conf = get_file_config();
     Packet *p = DetectionEngine::set_next_packet(pkt);
     DetectionEngine de;
     p->flow = pkt->flow;
 
-    p->context->file_data = { file_data, (unsigned int)data_size };
+    p->context->file_data = {file_data, (unsigned int)data_size};
     p->context->file_pos = processed_bytes;
     p->context->file_type_process = true;
     p->context->set_snort_protocol_id(conf->snort_protocol_id);
@@ -895,10 +897,10 @@ void FileContext::find_file_type_from_ips(Packet* pkt, const uint8_t* file_data,
     p->proto_bits |= PROTO_BIT__PDU;
 
     bool set_file_context = false;
-    FileFlows* files = FileFlows::get_file_flows(p->flow, false);
+    FileFlows *files = FileFlows::get_file_flows(p->flow, false);
     if (files)
     {
-        FileContext* context = files->get_current_file_context();
+        FileContext *context = files->get_current_file_context();
         if (!context or context != this)
         {
             files->set_current_file_context(this);
@@ -913,43 +915,43 @@ void FileContext::find_file_type_from_ips(Packet* pkt, const uint8_t* file_data,
         finalize_file_type();
 }
 
-void FileContext::process_file_type(Packet* pkt,const uint8_t* file_data, int data_size,
-    FilePosition position)
+void FileContext::process_file_type(Packet *pkt, const uint8_t *file_data, int data_size,
+                                    FilePosition position)
 {
     /* file type already found and no magics to continue */
     if (SNORT_FILE_TYPE_CONTINUE == file_type_id)
         find_file_type_from_ips(pkt, file_data, data_size, position);
 }
 
-void FileContext::process_file_signature_sha256(const uint8_t* file_data, int data_size,
-    FilePosition position)
+void FileContext::process_file_signature_sha256(const uint8_t *file_data, int data_size,
+                                                FilePosition position)
 {
     if ((int64_t)processed_bytes + data_size > config->file_signature_depth)
     {
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, GET_CURRENT_PACKET,
-            "process_file_signature_sha256:FILE_SIG_DEPTH_FAIL\n");
+                   "process_file_signature_sha256:FILE_SIG_DEPTH_FAIL\n");
         file_state.sig_state = FILE_SIG_DEPTH_FAIL;
         return;
     }
 
     FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
-        "processing file signature position: %d sig state %d \n", position, file_state.sig_state);
+               "processing file signature position: %d sig state %d \n", position, file_state.sig_state);
     switch (position)
     {
     case SNORT_FILE_START:
         if (!file_signature_context)
-            file_signature_context = snort_calloc(sizeof(SHA256_CTX));
-        SHA256_Init((SHA256_CTX*)file_signature_context);
-        SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
+            file_signature_context = EVP_MD_CTX_new();
+        EVP_DigestInit_ex((EVP_MD_CTX *)file_signature_context, EVP_sha256(), nullptr);
+        EVP_DigestUpdate((EVP_MD_CTX *)file_signature_context, file_data, data_size);
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
-            "position is start of file\n");
+                   "position is start of file\n");
         if (file_state.sig_state == FILE_SIG_FLUSH)
         {
             static uint8_t file_signature_context_backup[sizeof(SHA256_CTX)];
-            sha256 = (uint8_t*)snort_alloc(SHA256_HASH_SIZE);
+            sha256 = (uint8_t *)snort_alloc(SHA256_HASH_SIZE);
             memcpy(file_signature_context_backup, file_signature_context, sizeof(SHA256_CTX));
 
-            SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
+            EVP_DigestFinal_ex((EVP_MD_CTX*)file_signature_context, sha256, nullptr);
             memcpy(file_signature_context, file_signature_context_backup, sizeof(SHA256_CTX));
         }
         break;
@@ -957,17 +959,17 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int da
     case SNORT_FILE_MIDDLE:
         if (!file_signature_context)
             return;
-        SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
+        EVP_DigestUpdate((EVP_MD_CTX*)file_signature_context, file_data, data_size);
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
-            "position is middle of the file\n");
+                   "position is middle of the file\n");
         if (file_state.sig_state == FILE_SIG_FLUSH)
         {
             static uint8_t file_signature_context_backup[sizeof(SHA256_CTX)];
-            if ( !sha256 )
-                sha256 = (uint8_t*)snort_alloc(SHA256_HASH_SIZE);
+            if (!sha256)
+                sha256 = (uint8_t *)snort_alloc(SHA256_HASH_SIZE);
             memcpy(file_signature_context_backup, file_signature_context, sizeof(SHA256_CTX));
 
-            SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
+            EVP_DigestFinal_ex((EVP_MD_CTX*)file_signature_context, sha256, nullptr);
             memcpy(file_signature_context, file_signature_context_backup, sizeof(SHA256_CTX));
         }
 
@@ -976,24 +978,24 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int da
     case SNORT_FILE_END:
         if (!file_signature_context)
             return;
-        SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
+        EVP_DigestUpdate((EVP_MD_CTX*)file_signature_context, file_data, data_size);
         sha256 = new uint8_t[SHA256_HASH_SIZE];
-        SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
+        EVP_DigestFinal_ex((EVP_MD_CTX*)file_signature_context, sha256, nullptr);
         file_state.sig_state = FILE_SIG_DONE;
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
-            "position is end of the file\n");
+                   "position is end of the file\n");
         break;
 
     case SNORT_FILE_FULL:
         if (!file_signature_context)
-            file_signature_context = snort_calloc(sizeof (SHA256_CTX));
-        SHA256_Init((SHA256_CTX*)file_signature_context);
-        SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
+            file_signature_context = snort_calloc(sizeof(SHA256_CTX));
+        EVP_DigestInit_ex((EVP_MD_CTX*)file_signature_context, EVP_sha256(), nullptr);
+        EVP_DigestUpdate((EVP_MD_CTX*)file_signature_context, file_data, data_size);
         sha256 = new uint8_t[SHA256_HASH_SIZE];
-        SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
+        EVP_DigestFinal_ex((EVP_MD_CTX*)file_signature_context, sha256, nullptr);
         file_state.sig_state = FILE_SIG_DONE;
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
-            "position is full file\n");
+                   "position is full file\n");
         break;
 
     default:
@@ -1001,13 +1003,13 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int da
     }
 }
 
-FileCaptureState FileContext::process_file_capture(const uint8_t* file_data,
-    int data_size, FilePosition position)
+FileCaptureState FileContext::process_file_capture(const uint8_t *file_data,
+                                                   int data_size, FilePosition position)
 {
     if (!file_capture)
     {
         file_capture = new FileCapture(config->capture_min_size,
-            config->capture_max_size);
+                                       config->capture_max_size);
     }
 
     file_state.capture_state =
@@ -1035,10 +1037,10 @@ void FileContext::update_file_size(int data_size, FilePosition position)
     processed_bytes += data_size;
 
     FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
-        GET_CURRENT_PACKET,
-        "Updating file size of file_id %lu at position %d with processed_bytes %lu\n",
-        file_id, position, processed_bytes);
-    if ((position == SNORT_FILE_END)or (position == SNORT_FILE_FULL))
+               GET_CURRENT_PACKET,
+               "Updating file size of file_id %lu at position %d with processed_bytes %lu\n",
+               file_id, position, processed_bytes);
+    if ((position == SNORT_FILE_END) or (position == SNORT_FILE_FULL))
     {
         file_size = processed_bytes;
         processed_bytes = 0;
@@ -1051,16 +1053,16 @@ uint64_t FileContext::get_processed_bytes()
     return processed_bytes;
 }
 
-void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth)
+void FileContext::print_file_data(FILE *fp, const uint8_t *data, int len, int max_depth)
 {
     if (max_depth < len)
         len = max_depth;
 
-    fprintf(fp,"Show length: %d \n", len);
+    fprintf(fp, "Show length: %d \n", len);
 
     int pos = 0;
     char str[18];
-    for (int i=0; i<len; i++)
+    for (int i = 0; i < len; i++)
     {
         char c = (char)data[i];
         if (isprint(c) and (c == ' ' or !isspace(c)))
@@ -1105,19 +1107,19 @@ void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int ma
 /*
  * Print a 32-byte hash value.
  */
-void FileContext::print_file_sha256(std::ostream& log)
+void FileContext::print_file_sha256(std::ostream &log)
 {
-    unsigned char* hash = sha256;
+    unsigned char *hash = sha256;
 
     if (!sha256)
         return;
 
     std::ios::fmtflags f(log.flags());
-    log <<"SHA256: ";
-    for (int i = 0; i < SHA256_HASH_SIZE; i+=2)
+    log << "SHA256: ";
+    for (int i = 0; i < SHA256_HASH_SIZE; i += 2)
     {
         log << std::setfill('0') << std::setw(2) << std::hex << std::uppercase << (int)hash[i];
-        log << std::setfill('0') << std::setw(2) << std::hex << std::uppercase << (int)hash[i+1];
+        log << std::setfill('0') << std::setw(2) << std::hex << std::uppercase << (int)hash[i + 1];
         if (i < SHA256_HASH_SIZE - 2)
             log << ' ';
     }
@@ -1126,17 +1128,17 @@ void FileContext::print_file_sha256(std::ostream& log)
     log.flags(f);
 }
 
-void FileContext::print_file_name(std::ostream& log)
+void FileContext::print_file_name(std::ostream &log)
 {
     size_t fname_len = file_name.length();
     if (!fname_len)
         return;
 
-    char* outbuf = get_UTF8_fname(&fname_len);
-    const char* fname  = (outbuf != nullptr) ? outbuf : file_name.c_str();
+    char *outbuf = get_UTF8_fname(&fname_len);
+    const char *fname = (outbuf != nullptr) ? outbuf : file_name.c_str();
 
     if (!PacketTracer::is_daq_activated())
-    	log << "File name: ";
+        log << "File name: ";
 
     size_t pos = 0;
     while (pos < fname_len)
@@ -1165,21 +1167,21 @@ void FileContext::print_file_name(std::ostream& log)
     }
 
     if (!PacketTracer::is_daq_activated())
-    	log << std::endl;
+        log << std::endl;
 
     if (outbuf)
         snort_free(outbuf);
 }
 
-void FileContext::print(std::ostream& log)
+void FileContext::print(std::ostream &log)
 {
     print_file_name(log);
     if (url.length() > 0)
-        log << "File URI: "<< url << std::endl;
+        log << "File URI: " << url << std::endl;
     if (host_name.length() > 0)
-        log << "Host name: "<< host_name << std::endl;
+        log << "Host name: " << host_name << std::endl;
     log << "File type: " << config->file_type_name(file_type_id)
-        << '('<< file_type_id  << ')' << std::endl;
+        << '(' << file_type_id << ')' << std::endl;
     log << "File size: " << file_size << std::endl;
     log << "Processed size: " << processed_bytes << std::endl;
 }
@@ -1191,27 +1193,28 @@ void FileContext::print(std::ostream& log)
 #ifdef UNIT_TEST
 
 class FI_TEST : public FileInfo
-{ };
+{
+};
 
-TEST_CASE ("unset_file_name", "[file_info]")
+TEST_CASE("unset_file_name", "[file_info]")
 {
     FI_TEST info;
     info.set_file_name("test", 4);
 
-    CHECK (true == info.is_file_name_set());
+    CHECK(true == info.is_file_name_set());
 
     info.unset_file_name();
-    CHECK (false == info.is_file_name_set());
+    CHECK(false == info.is_file_name_set());
 }
 
-TEST_CASE ("get_url", "[file_info]")
+TEST_CASE("get_url", "[file_info]")
 {
     FI_TEST info;
     info.set_url("/var/tmp/test.pdf", 17);
-    CHECK (info.get_url() == std::string("/var/tmp/test.pdf"));
+    CHECK(info.get_url() == std::string("/var/tmp/test.pdf"));
 }
 
-TEST_CASE ("reset", "[file_info]")
+TEST_CASE("reset", "[file_info]")
 {
     FI_TEST info;
     info.verdict = FILE_VERDICT_BLOCK;
@@ -1220,29 +1223,28 @@ TEST_CASE ("reset", "[file_info]")
 
     info.reset();
 
-    CHECK (false == info.processing_complete);
-    CHECK (FILE_VERDICT_UNKNOWN == info.verdict);
-    CHECK (false == info.is_file_name_set());
+    CHECK(false == info.processing_complete);
+    CHECK(FILE_VERDICT_UNKNOWN == info.verdict);
+    CHECK(false == info.is_file_name_set());
 }
 
-TEST_CASE ("re_eval", "[file_info]")
+TEST_CASE("re_eval", "[file_info]")
 {
     FI_TEST info;
-    CHECK (false == info.has_to_re_eval());
+    CHECK(false == info.has_to_re_eval());
     info.set_re_eval();
-    CHECK (true == info.has_to_re_eval());
+    CHECK(true == info.has_to_re_eval());
     info.unset_re_eval();
-    CHECK (false == info.has_to_re_eval());
+    CHECK(false == info.has_to_re_eval());
 }
 
-TEST_CASE ("is_partial", "[file_info]")
+TEST_CASE("is_partial", "[file_info]")
 {
     FI_TEST info;
-    CHECK (false == info.is_partial_download());
+    CHECK(false == info.is_partial_download());
     info.set_partial_flag(true);
-    CHECK (true == info.is_partial_download());
+    CHECK(true == info.is_partial_download());
     info.set_partial_flag(false);
-    CHECK (false == info.is_partial_download());
+    CHECK(false == info.is_partial_download());
 }
 #endif
-
