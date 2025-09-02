@@ -52,6 +52,9 @@ const Parameter HttpModule::http_params[] =
     { "response_depth", Parameter::PT_INT, "-1:max53", "-1",
       "maximum response message body bytes to examine (-1 no limit)" },
 
+    { "partial_depth_header", Parameter::PT_INT, "-1:max53", "0",
+      "maximum request header to send to early detection (0 disabled, -1 no limit)" },
+
     { "partial_depth_body", Parameter::PT_INT, "-1:16384", "0",
       "maximum request body to send to early detection (0 disabled, -1 no limit)" },
 
@@ -211,6 +214,10 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     else if (val.is("response_depth"))
     {
         params->response_depth = val.get_int64();
+    }
+    else if (val.is("partial_depth_header"))
+    {
+        params->partial_depth_header = val.get_int64();
     }
     else if (val.is("partial_depth_body"))
     {

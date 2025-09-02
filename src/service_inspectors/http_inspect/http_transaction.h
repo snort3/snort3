@@ -48,8 +48,7 @@ public:
     void set_status(HttpMsgStatus* status_) { status = status_; }
 
     HttpMsgHeader* get_header(HttpCommon::SourceId source_id) const { return header[source_id]; }
-    void set_header(HttpMsgHeader* header_, HttpCommon::SourceId source_id)
-    { header[source_id] = header_; }
+    void set_header(HttpMsgHeader* header_, HttpCommon::SourceId source_id);
 
     HttpMsgTrailer* get_trailer(HttpCommon::SourceId source_id) const
     { return trailer[source_id]; }

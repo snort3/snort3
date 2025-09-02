@@ -217,19 +217,35 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
             return status_value(StreamSplitter::ABORT);
         }
 
-        if (is_body(type) && source_id == SRC_CLIENT &&
-            (my_inspector->params->partial_depth_body == -1 ||
-             (cutter->get_octets_seen() < my_inspector->params->partial_depth_body && cutter->get_num_flush() == 0)))
+        if (source_id == SRC_CLIENT)
         {
-            static const uint64_t MAX_PARTIAL_FLUSH_COUNTER = 20;
-            if (++session_data->partial_flush_counter == MAX_PARTIAL_FLUSH_COUNTER)
-                session_data->events[source_id]->create_event(HttpEnums::EVENT_MAX_PARTIAL_FLUSH);
-            cut_result = SCAN_NOT_FOUND_ACCELERATE;
+            int64_t partial_depth = 0;
+            auto params = my_inspector->params;
+
+            if (type == SEC_HEADER)
+            {
+                if (params->partial_depth_header != 0 && !session_data->for_httpx)
+                    partial_depth = params->partial_depth_header;
+            }
+            else if (is_body(type))
+            {
+                if (params->partial_depth_body != 0 &&
+                    (params->partial_depth_body == -1 || cutter->get_num_flush() == 0))
+                    partial_depth = params->partial_depth_body;
+            }
+
+            if (partial_depth == -1 || cutter->get_octets_seen() < partial_depth)
+            {
+                static const uint64_t MAX_PARTIAL_FLUSH_COUNTER = 20;
+                if (++session_data->partial_flush_counter == MAX_PARTIAL_FLUSH_COUNTER)
+                    session_data->events[source_id]->create_event(HttpEnums::EVENT_MAX_PARTIAL_FLUSH);
+                cut_result = SCAN_NOT_FOUND_ACCELERATE;
+            }
         }
 
         if (cut_result == SCAN_NOT_FOUND_ACCELERATE)
         {
-            prep_partial_flush(flow, length);
+            prep_partial_flush(flow, length, cutter->get_num_excess(), cutter->get_num_head_lines());
 #ifdef REG_TEST
             if (!HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
 #endif

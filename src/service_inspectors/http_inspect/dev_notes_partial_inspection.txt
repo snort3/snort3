@@ -22,6 +22,10 @@ Compared to just doing a full inspection, a partial inspection followed by a ful
 will not miss anything. The benefits of partial inspection are in addition to the benefits of a
 full inspection.
 
+Header inspections, partial or not, are done on the latest reassembled buffer. The result of
+a previous partial inspection is ignored by deleting the previous header from HttpTransaction.
+Partial header inspections ignore truncated fields at the end of the header fragment.
+
 Partial inspection is used in multiple scenarios, described below, and in combinations of them.
 
 Script detection uses partial inspection for message bodies containing Javascripts. The stream

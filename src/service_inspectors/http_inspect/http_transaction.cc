@@ -278,6 +278,12 @@ void HttpTransaction::delete_transaction(HttpTransaction* transaction, HttpFlowD
     }
 }
 
+void HttpTransaction::set_header(HttpMsgHeader* header_, HttpCommon::SourceId source_id)
+{
+    delete (header[source_id]);
+    header[source_id] = header_;
+}
+
 void HttpTransaction::set_body(HttpMsgBody* latest_body)
 {
     latest_body->next = body_list;

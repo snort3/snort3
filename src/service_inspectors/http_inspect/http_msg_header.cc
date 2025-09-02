@@ -61,6 +61,9 @@ HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,
 
 void HttpMsgHeader::publish(unsigned pub_id)
 {
+    if (session_data->partial_flush[source_id])
+        return;
+
     const int64_t stream_id = session_data->get_hx_stream_id();
 
     HttpEvent http_header_event(this, session_data->for_httpx, stream_id);

@@ -429,7 +429,8 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
             buffer = new uint8_t[MAX_OCTETS];
         else
         {
-            const uint32_t buffer_size = (total > 0) ? total : 1;
+            uint32_t buffer_size = (total > 0) ? total : 1;
+            buffer_size += partial_buffer_length;
             buffer = new uint8_t[buffer_size];
         }
     }
@@ -477,12 +478,12 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
         {
             // It's possible we're doing a partial flush but there is no actual data to flush after
             // decompression.
-            if (buf_size > 0)
+            if (session_data->section_offset[source_id] > 0)
             {
                 // Store the data from a partial flush for reuse
-                partial_buffer = new uint8_t[buf_size];
-                memcpy(partial_buffer, buffer, buf_size);
-                partial_buffer_length = buf_size;
+                partial_buffer = new uint8_t[session_data->section_offset[source_id]];
+                memcpy(partial_buffer, buffer, session_data->section_offset[source_id]);
+                partial_buffer_length = session_data->section_offset[source_id];
             }
             partial_raw_bytes += total;
         }

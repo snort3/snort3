@@ -241,7 +241,8 @@ bool HttpStreamSplitter::finish(Flow* flow)
     return false;
 }
 
-void HttpStreamSplitter::prep_partial_flush(Flow* flow, uint32_t num_flush)
+void HttpStreamSplitter::prep_partial_flush(Flow* flow, uint32_t num_flush,
+    uint32_t num_excess, uint32_t num_head_lines)
 {
     // cppcheck-suppress unreadVariable
     Profile profile(HttpModule::get_profile_stats());
@@ -261,7 +262,8 @@ void HttpStreamSplitter::prep_partial_flush(Flow* flow, uint32_t num_flush)
 
     // Set up to process partial message section
     uint32_t not_used;
-    prepare_flush(session_data, &not_used, session_data->type_expected[source_id], num_flush, 0, 0,
+    prepare_flush(session_data, &not_used, session_data->type_expected[source_id], num_flush,
+        num_excess, num_head_lines,
         session_data->cutter[source_id]->get_is_broken_chunk(),
         session_data->cutter[source_id]->get_num_good_chunks(),
         session_data->cutter[source_id]->get_octets_seen() - num_flush);

@@ -148,20 +148,25 @@ more of the sensor's resources.
 
 This feature is off by default. script_detection = true will activate it.
 
-===== partial_depth_body
+===== partial_depth_body and partial_depth_header
 
-Partial depth detection is a feature that enables Snort to more quickly detect
-and block malicious requests. It is configured by the partial_depth_body parameter
-which can take values in the range -1-16384 bytes. The feature is enabled by
-setting partial_depth_body to some non zero value. When the feature is enabled and
-either, the number of bytes received in the request body is below the value
-specified by partial_depth_body, or partial_depth_body is set to -1, unlimited; it
-immediately forwards the available part of the message body for early detection.
-This enables earlier threat detection but consumes somewhat more of the sensor's
-resources.
+Partial depth detection enables faster threat detection by immediately forwarding
+partial message data to the detection engine before the complete message arrives.
+This feature can be configured independently for HTTP request bodies
+(partial_depth_body) and headers (partial_depth_header).
 
-This feature is turned off by default by setting partial_depth_body = 0. To activate
-it, set partial_depth_body to the desired value.
+    Configuration options:
+    0 (default):    Feature disabled
+    -1 (unlimited): Enable for all partial messages regardless of size
+    Positive value: Enable only when received bytes are below the specified threshold
+
+For HTTP request bodies only, the maximum configurable value is 16,384 bytes. Use
+partial_depth_body = -1 when early detection is needed beyond this limit. HTTP
+headers have no such limitation.
+
+This feature is turned off by default by setting partial_depth_body = 0
+and partial_depth_header = 0. To activate it, set the corresponding parameter to
+the desired value.
 
 ===== gzip
 

@@ -129,9 +129,12 @@ void HttpMsgHeadShared::parse_header_block()
     // calculated correctly.
     while (bytes_used < msg_text.length())
     {
-        assert(num_headers < session_data->num_head_lines[source_id]);
         const int32_t header_length = find_next_header(msg_text.start() + bytes_used,
             msg_text.length() - bytes_used, num_seps);
+        if (header_length == 0)
+            break;
+
+        assert(num_headers < session_data->num_head_lines[source_id]);
         if (header_length >  max_header_line)
         {
             max_header_line = header_length;
@@ -203,6 +206,8 @@ int32_t HttpMsgHeadShared::find_next_header(const uint8_t* buffer, int32_t lengt
             }
         }
     }
+    if (session_data->partial_flush[source_id] && session_data->num_excess[source_id] == 0)
+        return 0;
     return length - num_seps;
 }
 

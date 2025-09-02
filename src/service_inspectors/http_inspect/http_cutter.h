@@ -113,7 +113,7 @@ public:
 private:
     enum LineEndState { ZERO, HALF, ONE, THREEHALF };
     LineEndState state = ONE;
-    int32_t num_head_lines = 0;
+    uint32_t num_head_lines = 0;
 };
 
 class HttpBodyCutter : public HttpCutter
