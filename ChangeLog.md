@@ -1,3 +1,22 @@
+2025-09-03: 3.9.5.0
+
+* appid: first packet API fixes for using asd instead of odp
+* appid: fix multiple mdns issues
+* appid: move tls metadata handling into single place
+* codecs: override default encode for ciscometadata codec
+* control: fix heap-use-after-free in is_local
+* decompress: add unit test for vba decompression - infinite loops, divide-by-zero, integer overflow and out-of-bound
+* file_api: clear file meta group before setting it during reload
+* flow: clear flow ref in pkt on stale flow cleanup
+* helpers: add syscall to flush new data written by SigSafePrinter to disk
+* http_inspect: partial inspection for headers
+* http_inspect: publish OPPORTUNISTIC_TLS
+* imap: abort fallback functionality
+* mp_dbus: make MPDataBusModule stats thread safe
+* protocols: add sanity checks for tcp and ipv4 options to prevent out-of-buffer access
+* ssl: fix unit test for OpenSSL v3+
+* watchdog: replace watchdog command with atomic kicking from packet threads
+
 2025-08-10: 3.9.3.0
 
 * appid: accounting for tmp offset in RPC

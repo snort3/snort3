@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.9.4.0 2025-08-12 10:56:17 EDT TST
+Revision 3.9.5.0 2025-09-03 21:10:35 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -4081,6 +4081,8 @@ Configuration:
     bytes to examine (-1 no limit) { -1:max53 }
   * int http_inspect.response_depth = -1: maximum response message
     body bytes to examine (-1 no limit) { -1:max53 }
+  * int http_inspect.partial_depth_header = 0: maximum request header
+    to send to early detection (0 disabled, -1 no limit) { -1:max53 }
   * int http_inspect.partial_depth_body = 0: maximum request body to
     send to early detection (0 disabled, -1 no limit) { -1:16384 }
   * bool http_inspect.unzip = true: decompress gzip and deflate
@@ -10270,6 +10272,8 @@ libraries see the Getting Started section of the manual.
     URL directory { 1:65535 }
   * int http_inspect.partial_depth_body = 0: maximum request body to
     send to early detection (0 disabled, -1 no limit) { -1:16384 }
+  * int http_inspect.partial_depth_header = 0: maximum request header
+    to send to early detection (0 disabled, -1 no limit) { -1:max53 }
   * bool http_inspect.percent_u = false: normalize %uNNNN and %UNNNN
     encodings
   * bool http_inspect.plus_to_space = true: replace + with <sp> when
