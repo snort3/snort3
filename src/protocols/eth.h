@@ -35,6 +35,7 @@ namespace eth
 constexpr uint16_t MTU_LEN = 1500;
 constexpr uint16_t MAX_FRAME_LENGTH = 1500;
 constexpr uint16_t ETH_HEADER_LEN = 14;
+constexpr uint16_t ETH_ADDR_STR_LEN = 18;
 
 struct EtherHdr
 {
