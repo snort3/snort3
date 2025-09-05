@@ -17,39 +17,42 @@
 //--------------------------------------------------------------------------
 // hashes.h author Russ Combs <rucombs@cisco.com>
 
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include "hashes.h"
 
-#include <openssl/md5.h>
-#include <openssl/sha.h>
+#include <openssl/evp.h>
 
 namespace snort
 {
 void sha256(const unsigned char* data, size_t size, unsigned char* digest)
 {
-    SHA256_CTX c;
-    SHA256_Init(&c);
-    SHA256_Update(&c, data, size);
-    SHA256_Final(digest, &c);
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr);
+    EVP_DigestUpdate(ctx, data, size);
+    EVP_DigestFinal_ex(ctx, digest, nullptr);
+    EVP_MD_CTX_free(ctx);
 }
 
 void sha512(const unsigned char* data, size_t size, unsigned char* digest)
 {
-    SHA512_CTX c;
-    SHA512_Init(&c);
-    SHA512_Update(&c, data, size);
-    SHA512_Final(digest, &c);
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(ctx, EVP_sha512(), nullptr);
+    EVP_DigestUpdate(ctx, data, size);
+    EVP_DigestFinal_ex(ctx, digest, nullptr);
+    EVP_MD_CTX_free(ctx);
 }
 
 void md5(const unsigned char* data, size_t size, unsigned char* digest)
 {
-    MD5_CTX c;
-    MD5_Init(&c);
-    MD5_Update(&c, data, size);
-    MD5_Final(digest, &c);
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(ctx, EVP_md5(), nullptr);
+    EVP_DigestUpdate(ctx, data, size);
+    EVP_DigestFinal_ex(ctx, digest, nullptr);
+    EVP_MD_CTX_free(ctx);
 }
 
 }

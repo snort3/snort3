@@ -29,7 +29,7 @@
 
 #include "file_lib.h"
 
-#include <openssl/sha.h>
+#include <openssl/evp.h>
 
 #include <iostream>
 #include <iomanip>
@@ -938,9 +938,9 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int da
     {
     case SNORT_FILE_START:
         if (!file_signature_context)
-            file_signature_context = snort_calloc(sizeof(SHA256_CTX));
-        SHA256_Init((SHA256_CTX*)file_signature_context);
-        SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
+            file_signature_context = EVP_MD_CTX_new();
+        EVP_DigestInit_ex((EVP_MD_CTX*)file_signature_context, EVP_sha256(), nullptr);
+        EVP_DigestUpdate((EVP_MD_CTX*)file_signature_context, file_data, data_size);
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
             "position is start of file\n");
         if (file_state.sig_state == FILE_SIG_FLUSH)
@@ -949,15 +949,15 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int da
             sha256 = (uint8_t*)snort_alloc(SHA256_HASH_SIZE);
             memcpy(file_signature_context_backup, file_signature_context, sizeof(SHA256_CTX));
 
-            SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
-            memcpy(file_signature_context, file_signature_context_backup, sizeof(SHA256_CTX));
+            EVP_DigestFinal_ex((EVP_MD_CTX*)file_signature_context, sha256, nullptr);
+            memcpy(file_signature_context, file_signature_context_backup, sizeof(EVP_MD_CTX));
         }
         break;
 
     case SNORT_FILE_MIDDLE:
         if (!file_signature_context)
             return;
-        SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
+        EVP_DigestUpdate((EVP_MD_CTX*)file_signature_context, file_data, data_size);
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
             "position is middle of the file\n");
         if (file_state.sig_state == FILE_SIG_FLUSH)
@@ -967,8 +967,8 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int da
                 sha256 = (uint8_t*)snort_alloc(SHA256_HASH_SIZE);
             memcpy(file_signature_context_backup, file_signature_context, sizeof(SHA256_CTX));
 
-            SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
-            memcpy(file_signature_context, file_signature_context_backup, sizeof(SHA256_CTX));
+            EVP_DigestFinal_ex((EVP_MD_CTX*)file_signature_context, sha256, nullptr);
+            memcpy(file_signature_context, file_signature_context_backup, sizeof(EVP_MD_CTX));
         }
 
         break;
@@ -976,9 +976,9 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int da
     case SNORT_FILE_END:
         if (!file_signature_context)
             return;
-        SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
+        EVP_DigestUpdate((EVP_MD_CTX*)file_signature_context, file_data, data_size);
         sha256 = new uint8_t[SHA256_HASH_SIZE];
-        SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
+        EVP_DigestFinal_ex((EVP_MD_CTX*)file_signature_context, sha256, nullptr);
         file_state.sig_state = FILE_SIG_DONE;
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
             "position is end of the file\n");
@@ -987,10 +987,10 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int da
     case SNORT_FILE_FULL:
         if (!file_signature_context)
             file_signature_context = snort_calloc(sizeof (SHA256_CTX));
-        SHA256_Init((SHA256_CTX*)file_signature_context);
-        SHA256_Update((SHA256_CTX*)file_signature_context, file_data, data_size);
+        EVP_DigestInit_ex((EVP_MD_CTX*)file_signature_context, EVP_sha256(), nullptr);
+        EVP_DigestUpdate((EVP_MD_CTX*)file_signature_context, file_data, data_size);
         sha256 = new uint8_t[SHA256_HASH_SIZE];
-        SHA256_Final(sha256, (SHA256_CTX*)file_signature_context);
+        EVP_DigestFinal_ex((EVP_MD_CTX*)file_signature_context, sha256, nullptr);
         file_state.sig_state = FILE_SIG_DONE;
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
             "position is full file\n");
@@ -1245,4 +1245,3 @@ TEST_CASE ("is_partial", "[file_info]")
     CHECK (false == info.is_partial_download());
 }
 #endif
-
