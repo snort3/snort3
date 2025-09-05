@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// hashes.h author Russ Combs <rucombs@cisco.com>
+// hashes.h author Alexandre Guerlach <grlch.alexandre@proton.me>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -25,31 +25,122 @@
 
 #include <openssl/md5.h>
 #include <openssl/sha.h>
+#include <openssl/evp.h>
+#include <string.h>
 
 namespace snort
 {
-void sha256(const unsigned char* data, size_t size, unsigned char* digest)
-{
-    SHA256_CTX c;
-    SHA256_Init(&c);
-    SHA256_Update(&c, data, size);
-    SHA256_Final(digest, &c);
+void sha256(const unsigned char *data, size_t size, unsigned char *digest) {
+    EVP_MD_CTX *mdctx;
+    const EVP_MD *md;
+    
+    unsigned char md_value[EVP_MAX_MD_SIZE];
+    unsigned int md_len, i;
+
+    mdctx = EVP_MD_CTX_new();
+
+    md = EVP_sha256();
+    if (!md) {
+        printf("Unknow algorithm\n");
+        EVP_MD_CTX_free(mdctx);
+        exit(1);
+    }
+
+    if (EVP_DigestInit_ex(mdctx, md, NULL) != 1) {
+        printf("Erreur : Initialisation du hachage échouée.\n");
+        EVP_MD_CTX_free(mdctx);
+        exit(1);
+    }
+
+    if (EVP_DigestUpdate(mdctx, data, size) != 1) {
+        printf("Message digest update failed.\n");
+        EVP_MD_CTX_free(mdctx);
+        exit(1);
+    }
+
+    if (EVP_DigestFinal_ex(mdctx, md_value, &md_len) != 1) {
+        printf("Message digest finalization failed.\n");
+        EVP_MD_CTX_free(mdctx);
+        exit(1);
+    }
+
+    memcpy(digest, md_value, md_len);
+    EVP_MD_CTX_free(mdctx);
 }
 
-void sha512(const unsigned char* data, size_t size, unsigned char* digest)
-{
-    SHA512_CTX c;
-    SHA512_Init(&c);
-    SHA512_Update(&c, data, size);
-    SHA512_Final(digest, &c);
+void sha512(const unsigned char *data, size_t size, unsigned char *digest) {
+    EVP_MD_CTX *mdctx;
+    const EVP_MD *md;
+    
+    unsigned char md_value[EVP_MAX_MD_SIZE];
+    unsigned int md_len, i;
+
+    mdctx = EVP_MD_CTX_new();
+
+    md = EVP_sha512();
+    if (!md) {
+        printf("Unknow algorithm\n");
+        EVP_MD_CTX_free(mdctx);
+        exit(1);
+    }
+
+    if (EVP_DigestInit_ex(mdctx, md, NULL) != 1) {
+        printf("Erreur : Initialisation du hachage échouée.\n");
+        EVP_MD_CTX_free(mdctx);
+        exit(1);
+    }
+
+    if (EVP_DigestUpdate(mdctx, data, size) != 1) {
+        printf("Message digest update failed.\n");
+        EVP_MD_CTX_free(mdctx);
+        exit(1);
+    }
+
+    if (EVP_DigestFinal_ex(mdctx, md_value, &md_len) != 1) {
+        printf("Message digest finalization failed.\n");
+        EVP_MD_CTX_free(mdctx);
+        exit(1);
+    }
+
+    memcpy(digest, md_value, md_len);
+    EVP_MD_CTX_free(mdctx);
 }
 
-void md5(const unsigned char* data, size_t size, unsigned char* digest)
-{
-    MD5_CTX c;
-    MD5_Init(&c);
-    MD5_Update(&c, data, size);
-    MD5_Final(digest, &c);
-}
+void md5(const unsigned char *data, size_t size, unsigned char *digest) {
+    EVP_MD_CTX *mdctx;
+    const EVP_MD *md;
+    
+    unsigned char md_value[EVP_MAX_MD_SIZE];
+    unsigned int md_len, i;
 
+    mdctx = EVP_MD_CTX_new();
+
+    md = EVP_md5();
+    if (!md) {
+        printf("Unknow algorithm\n");
+        EVP_MD_CTX_free(mdctx);
+        exit(1);
+    }
+
+    if (EVP_DigestInit_ex(mdctx, md, NULL) != 1) {
+        printf("Erreur : Initialisation du hachage échouée.\n");
+        EVP_MD_CTX_free(mdctx);
+        exit(1);
+    }
+
+    if (EVP_DigestUpdate(mdctx, data, size) != 1) {
+        printf("Message digest update failed.\n");
+        EVP_MD_CTX_free(mdctx);
+        exit(1);
+    }
+
+    if (EVP_DigestFinal_ex(mdctx, md_value, &md_len) != 1) {
+        printf("Message digest finalization failed.\n");
+        EVP_MD_CTX_free(mdctx);
+        exit(1);
+    }
+
+    memcpy(digest, md_value, md_len);
+    EVP_MD_CTX_free(mdctx);
+}
 }

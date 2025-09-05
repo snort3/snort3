@@ -35,4 +35,3 @@ SO_PUBLIC void sha256(const unsigned char* data, size_t size, unsigned char* dig
 SO_PUBLIC void sha512(const unsigned char* data, size_t size, unsigned char* digest);
 }
 #endif
-
