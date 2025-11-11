@@ -53,7 +53,7 @@ using namespace std;
 #define FAST_BUF (4*K_BYTES)
 
 static THREAD_LOCAL TextLog* fast_log = nullptr;
-static once_flag init_flag;
+static std::once_flag init_flag;
 
 #define S_NAME "alert_fast"
 #define F_NAME S_NAME ".txt"
@@ -319,7 +319,7 @@ void FastLogger::set_buffer_ids(Inspector* gadget)
 const BufferIds& FastLogger::get_buffer_ids(Inspector* gadget, Packet* p)
 {
     // lazy init required because loggers don't have a configure (yet)
-    call_once(init_flag, set_buffer_ids, gadget);
+    std::call_once(init_flag, set_buffer_ids, gadget);
 
     InspectionBuffer buf;
     const std::vector<unsigned>& idv =
