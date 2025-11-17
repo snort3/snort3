@@ -38,6 +38,7 @@
 #include "helpers/base64_encoder.h"
 #include "log/log_text.h"
 #include "log/text_log.h"
+#include "network_inspectors/appid/appid_api.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "protocols/cisco_meta_data.h"
@@ -85,6 +86,22 @@ static bool ff_action(const Args& a)
     print_label(a, "action");
     TextLog_Quote(json_log, a.pkt->active->get_action_string());
     return true;
+}
+
+static bool ff_app_id(const Args& a)
+{
+    if ( a.pkt->flow )
+    {
+        const char* app_name = appid_api.get_application_name(*a.pkt->flow, a.pkt->is_from_client());
+
+        if ( app_name )
+        {
+            print_label(a, "app_id");
+            TextLog_Quote(json_log, app_name);
+            return true;
+        }
+    }
+    return false;
 }
 
 static bool ff_class(const Args& a)
@@ -672,7 +689,7 @@ typedef bool (*JsonFunc)(const Args&);
 
 static const JsonFunc json_func[] =
 {
-    ff_action, ff_class, ff_b64_data, ff_client_bytes, ff_client_pkts, ff_dir,
+    ff_action, ff_app_id, ff_class, ff_b64_data, ff_client_bytes, ff_client_pkts, ff_dir,
     ff_dst_addr, ff_dst_ap, ff_dst_port, ff_eth_dst, ff_eth_len, ff_eth_src,
     ff_eth_type, ff_flowstart_time, ff_geneve_vni, ff_gid, ff_icmp_code, ff_icmp_id, ff_icmp_seq,
     ff_icmp_type, ff_iface, ff_ip_id, ff_ip_len, ff_msg, ff_mpls, ff_pkt_gen, ff_pkt_len,
@@ -683,7 +700,7 @@ static const JsonFunc json_func[] =
 };
 
 #define json_range \
-    "action | class | b64_data | client_bytes | client_pkts | dir | " \
+    "action | app_id | class | b64_data | client_bytes | client_pkts | dir | " \
     "dst_addr | dst_ap | dst_port | eth_dst | eth_len | eth_src | " \
     "eth_type | flowstart_time | geneve_vni | gid | icmp_code | icmp_id | icmp_seq | " \
     "icmp_type | iface | ip_id | ip_len | msg | mpls | pkt_gen | pkt_len | " \
