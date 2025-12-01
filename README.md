@@ -26,6 +26,23 @@ below:
     Binary = snort
     Version = 3.0.0 (Build 250) from 2.9.11
 
+## Snort 3 vs Snort 2: Configuration Files
+
+**Important:** Snort 3 uses **Lua configuration files** (`.lua`), not the older
+`.conf` files used by Snort 2. This is a key difference that affects installation
+and setup across different systems:
+
+* **Snort 3** (this project): Uses `snort.lua` configuration files
+* **Snort 2.X**: Uses `snort.conf` configuration files
+
+When installing via package managers:
+* Some distributions (e.g., Kali Linux rolling) provide Snort 3 packages with `.lua` configs
+* Other distributions (e.g., Ubuntu LTS) may still provide Snort 2.9.X packages with `.conf` configs
+
+**If you are building Snort 3 from source** (as recommended), you will always get
+Lua-based configuration regardless of your Linux distribution. See the
+[Build Snort](#build-snort) section below.
+
 Here are some key features of Snort++:
 
 * Support multiple packet processing threads
@@ -57,7 +74,8 @@ the latest:
 * flex >= 2.6.0 from https://github.com/westes/flex for JavaScript syntax parser
 * g++ >= 7 or other C++17 compiler
 * hwloc from https://www.open-mpi.org/projects/hwloc/ for CPU affinity management
-* LuaJIT from http://luajit.org for configuration and scripting
+* **LuaJIT** from http://luajit.org for configuration and scripting
+  (**required** - Snort 3 uses Lua for all configuration)
 * OpenSSL from https://www.openssl.org/source/ for SHA and MD5 file signatures,
   the protected_content rule option, and SSL service detection
 * pcap from http://www.tcpdump.org for tcpdump style logging
@@ -68,6 +86,17 @@ the latest:
 Additional packages provide optional features.  Check the manual for more.
 
 # DOWNLOAD
+
+**Note on Package Managers vs Source Installation:**
+
+If you install Snort via `apt install snort` or similar package managers, you may
+receive different versions depending on your distribution:
+* **Ubuntu** LTS repositories typically provide Snort 2.9.X (with `.conf` configuration)
+* **Kali Linux** rolling repositories provide Snort 3 (with `.lua` configuration)
+* **Other distributions** vary
+
+For the most up-to-date Snort 3 experience with consistent configuration across
+all systems, **building from source is recommended** as shown below.
 
 There is a source tarball available in the Downloads section on snort.org:
 
