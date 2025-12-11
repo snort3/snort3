@@ -60,6 +60,28 @@ A module's usage determines how it may be configured:
 
 * Detect: configured at most once in an IPS policy, eg ips.
 
+==== Making Modules Bindable
+
+For inspector modules that need to be referenced in binder configuration,
+the Module class must override the *is_bindable()* method to return true.
+By default, modules are not bindable. For example:
+
+    class MyInspectorModule : public Module
+    {
+    public:
+        MyInspectorModule() : Module("my_inspector", "my inspector help") {}
+
+        Usage get_usage() const override
+        { return INSPECT; }
+
+        bool is_bindable() const override
+        { return true; }
+    };
+
+Without overriding is_bindable() to return true, attempting to use the
+module in a binder configuration will result in an error like:
+"Type 'my_inspector' is not bindable"
+
 === Inspectors
 
 There are several types of inspector, which determines which inspectors are
