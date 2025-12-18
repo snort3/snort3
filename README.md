@@ -13,6 +13,7 @@ topics:
 * [Download](#download)
 * [Build Snort](#build-snort)
 * [Run Snort](#run-snort)
+* [Troubleshooting](#troubleshooting)
 * [Documentation](#documentation)
 * [Squeal](#squeal)
 
@@ -174,6 +175,55 @@ snort_defaults.lua.
     ```
 
 Additional examples are given in doc/usage.txt.
+
+# TROUBLESHOOTING
+
+## Common Build Issues
+
+### Undefined reference to `dbus_*` symbols
+
+If you see errors like:
+```
+/usr/bin/ld: /usr/local/lib/libpcap.so: undefined reference to `dbus_create'
+/usr/bin/ld: /usr/local/lib/libpcap.so: undefined reference to `dbus_findalldevs'
+```
+
+This occurs when libpcap was compiled with D-Bus support (for Bluetooth capture)
+but the D-Bus library is not being linked. Solutions:
+
+1. **Install D-Bus development libraries** and ensure libpcap's pkg-config file
+   properly lists the dependency:
+   ```shell
+   # Debian/Ubuntu
+   sudo apt-get install libdbus-1-dev
+   # Fedora/RHEL
+   sudo dnf install dbus-devel
+   ```
+
+2. **Reinstall libpcap without D-Bus support** if Bluetooth capture is not needed:
+   ```shell
+   ./configure --disable-dbus
+   make && sudo make install
+   ```
+
+3. **Verify your libpcap installation** reports correct dependencies:
+   ```shell
+   pkg-config --libs libpcap
+   ```
+
+### Library not found errors
+
+If libraries are installed in non-standard locations (e.g., `/usr/local/lib`),
+ensure the linker can find them:
+```shell
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+# Or add to /etc/ld.so.conf.d/ and run: sudo ldconfig
+```
+
+Also ensure pkg-config can find the `.pc` files:
+```shell
+export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
+```
 
 # DOCUMENTATION
 
