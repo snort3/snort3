@@ -31,7 +31,8 @@ Required:
 * pkgconfig from https://www.freedesktop.org/wiki/Software/pkg-config/ to locate
   build dependencies
 
-* zlib from http://www.zlib.net for decompression (>= 1.2.8 recommended)
+* zlib from http://www.zlib.net for decompression (>= 1.2.12 recommended due to
+  CVE-2018-25032)
 
 Optional:
 
