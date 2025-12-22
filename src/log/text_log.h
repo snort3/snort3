@@ -60,6 +60,7 @@ SO_PUBLIC bool TextLog_Print(TextLog* const, const char* format, ...) __attribut
 SO_PUBLIC bool TextLog_Flush(TextLog* const);
 SO_PUBLIC int TextLog_Avail(TextLog* const);
 SO_PUBLIC void TextLog_Reset(TextLog* const);
+SO_PUBLIC void TextLog_DeferRollover(TextLog* const, bool defer);
 } // namespace snort
 
 /*-------------------------------------------------------------------

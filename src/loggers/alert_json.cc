@@ -838,6 +838,8 @@ void JsonLogger::close()
 void JsonLogger::alert(Packet* p, const char* msg, const Event& event)
 {
     Args a = { p, msg, event, false };
+    
+    TextLog_DeferRollover(json_log, true);
     TextLog_Putc(json_log, '{');
 
     for ( JsonFunc f : fields )
@@ -847,6 +849,7 @@ void JsonLogger::alert(Packet* p, const char* msg, const Event& event)
     }
 
     TextLog_Print(json_log, " }\n");
+    TextLog_DeferRollover(json_log, false);
     TextLog_Flush(json_log);
 }
 
