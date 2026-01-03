@@ -76,7 +76,7 @@ static const Parameter s_params[] =
 {
     { "module_dirs", Parameter::PT_LIST, path_list_param, nullptr, "directories to search for dynamic DAQ modules" },
     { "inputs", Parameter::PT_LIST, input_list_param, nullptr, "input sources" },
-    { "snaplen", Parameter::PT_INT, "0:65535", "1518", "set snap length (same as -s)" },
+    { "snaplen", Parameter::PT_INT, "0:65535", "65535", "set snap length (same as -s)" },
     { "batch_size", Parameter::PT_INT, "1:", "64", "set receive batch size (same as --daq-batch-size)" },
     { "modules", Parameter::PT_LIST, daq_module_param, nullptr, "DAQ modules to use" },
 

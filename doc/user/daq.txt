@@ -62,7 +62,7 @@ overridden on a per-DAQ module basis with the --daq-mode option on the command
 line or the 'daq.modules[].mode' property.
 
 The DAQ module receive timeout is always configured to 1 second.  The packet
-capture length (snaplen) defaults to 1518 bytes and can be overridden by the -s
+capture length (snaplen) defaults to 65535 bytes and can be overridden by the -s
 command line option or 'daq.snaplen' property.
 
 Finally, and most importantly, is the input specification for the DAQ module.
@@ -115,7 +115,7 @@ Lua form:
         {
             'eth1:eth2',
         },
-        snaplen = 1518
+        snaplen = 65535
     }
 
 The 'daq.snaplen' property was included for completeness and may be omitted if

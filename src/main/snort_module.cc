@@ -319,7 +319,7 @@ static const Parameter s_params[] =
       "<pcap>... (same as --pcap-list)" },
 
     { "-s", Parameter::PT_INT, "0:65535", nullptr,
-      "<snap> (same as --snaplen); default is 1518" },
+      "<snap> (same as --snaplen); default is 65535" },
 
     { "-T", Parameter::PT_IMPLIED, nullptr, nullptr,
       "test and report on the current Snort configuration" },

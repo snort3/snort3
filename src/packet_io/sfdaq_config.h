@@ -78,7 +78,7 @@ struct SFDAQConfig
     static constexpr uint32_t BATCH_SIZE_UNSET = 0;
     static constexpr int SNAPLEN_UNSET = -1;
     static constexpr uint32_t BATCH_SIZE_DEFAULT = 64;
-    static constexpr int SNAPLEN_DEFAULT = 1518;
+    static constexpr int SNAPLEN_DEFAULT = 65535;
     static constexpr unsigned TIMEOUT_DEFAULT = 1000;
 };
 
