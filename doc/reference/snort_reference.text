@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.10.2.0 2026-01-21 15:52:22 EST TST
+Revision 3.11.0.0 2026-01-22 13:06:12 EST TST
 
 ---------------------------------------------------------------------
 
@@ -125,33 +125,32 @@ Table of Contents
     5.31. modbus
     5.32. netflow
     5.33. normalizer
-    5.34. null_trace_logger
-    5.35. opcua
-    5.36. packet_capture
-    5.37. perf_monitor
-    5.38. pop
-    5.39. port_scan
-    5.40. reputation
-    5.41. rna
-    5.42. rpc_decode
-    5.43. s7commplus
-    5.44. sip
-    5.45. smtp
-    5.46. snort_ml
-    5.47. snort_ml_engine
-    5.48. so_proxy
-    5.49. ssh
-    5.50. ssl
-    5.51. stream
-    5.52. stream_file
-    5.53. stream_icmp
-    5.54. stream_ip
-    5.55. stream_tcp
-    5.56. stream_udp
-    5.57. stream_user
-    5.58. telnet
-    5.59. tlv_pdu
-    5.60. wizard
+    5.34. opcua
+    5.35. packet_capture
+    5.36. perf_monitor
+    5.37. pop
+    5.38. port_scan
+    5.39. reputation
+    5.40. rna
+    5.41. rpc_decode
+    5.42. s7commplus
+    5.43. sip
+    5.44. smtp
+    5.45. snort_ml
+    5.46. snort_ml_engine
+    5.47. so_proxy
+    5.48. ssh
+    5.49. ssl
+    5.50. stream
+    5.51. stream_file
+    5.52. stream_icmp
+    5.53. stream_ip
+    5.54. stream_tcp
+    5.55. stream_udp
+    5.56. stream_user
+    5.57. telnet
+    5.58. tlv_pdu
+    5.59. wizard
 
 6. IPS Action Modules
 
@@ -1950,8 +1949,7 @@ Configuration:
   * bool trace.constraints.match = true: use constraints to filter
     traces
   * string trace.constraints.tenants: tenants filter
-  * enum trace.output: output method for trace log messages { stdout
-    | syslog }
+  * string trace.output: output method for trace log messages
   * bool trace.ntuple = false: print packet n-tuple info with trace
     messages
   * bool trace.timestamp = false: print message timestamps with trace
@@ -4901,20 +4899,7 @@ Peg counts:
   * normalizer.tcp_block: blocked segments (sum)
 
 
-5.34. null_trace_logger
-
---------------
-
-Help: trace logger with a null printout
-
-Type: inspector (passive)
-
-Usage: global
-
-Instance Type: global
-
-
-5.35. opcua
+5.34. opcua
 
 --------------
 
@@ -4967,7 +4952,7 @@ Peg counts:
     across multiple packets was detected (sum)
 
 
-5.36. packet_capture
+5.35. packet_capture
 
 --------------
 
@@ -5008,7 +4993,7 @@ Peg counts:
     (sum)
 
 
-5.37. perf_monitor
+5.36. perf_monitor
 
 --------------
 
@@ -5070,7 +5055,7 @@ Peg counts:
     by new flows (sum)
 
 
-5.38. pop
+5.37. pop
 
 --------------
 
@@ -5135,7 +5120,7 @@ Peg counts:
   * pop.js_pdf_scripts: total number of PDF files processed (sum)
 
 
-5.39. port_scan
+5.38. port_scan
 
 --------------
 
@@ -5309,7 +5294,7 @@ Peg counts:
     portscan (now)
 
 
-5.40. reputation
+5.39. reputation
 
 --------------
 
@@ -5366,7 +5351,7 @@ Peg counts:
     monitored (sum)
 
 
-5.41. rna
+5.40. rna
 
 --------------
 
@@ -5513,7 +5498,7 @@ Peg counts:
   * rna.total_bytes_in_interval: count of bytes processed (sum)
 
 
-5.42. rpc_decode
+5.41. rpc_decode
 
 --------------
 
@@ -5542,7 +5527,7 @@ Peg counts:
     sessions (max)
 
 
-5.43. s7commplus
+5.42. s7commplus
 
 --------------
 
@@ -5571,7 +5556,7 @@ Peg counts:
     sessions (max)
 
 
-5.44. sip
+5.43. sip
 
 --------------
 
@@ -5683,7 +5668,7 @@ Peg counts:
   * sip.code_9xx: 9xx (sum)
 
 
-5.45. smtp
+5.44. smtp
 
 --------------
 
@@ -5797,7 +5782,7 @@ Peg counts:
   * smtp.js_pdf_scripts: total number of PDF files processed (sum)
 
 
-5.46. snort_ml
+5.45. snort_ml
 
 --------------
 
@@ -5835,7 +5820,7 @@ Peg counts:
     bytes processed (sum)
 
 
-5.47. snort_ml_engine
+5.46. snort_ml_engine
 
 --------------
 
@@ -5879,7 +5864,7 @@ Peg counts:
   * snort_ml_engine.libml_calls: total libml calls (sum)
 
 
-5.48. so_proxy
+5.47. so_proxy
 
 --------------
 
@@ -5893,7 +5878,7 @@ Usage: global
 Instance Type: global
 
 
-5.49. ssh
+5.48. ssh
 
 --------------
 
@@ -5934,7 +5919,7 @@ Peg counts:
   * ssh.aborted_sessions: total session aborted (sum)
 
 
-5.50. ssl
+5.49. ssl
 
 --------------
 
@@ -5985,7 +5970,7 @@ Peg counts:
     (max)
 
 
-5.51. stream
+5.50. stream
 
 --------------
 
@@ -6150,7 +6135,7 @@ Peg counts:
   * stream.uni_ip_flows: number of uni ip flows in cache (now)
 
 
-5.52. stream_file
+5.51. stream_file
 
 --------------
 
@@ -6167,7 +6152,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-5.53. stream_icmp
+5.52. stream_icmp
 
 --------------
 
@@ -6195,7 +6180,7 @@ Peg counts:
   * stream_icmp.stale_packets: icmp stale packets (sum)
 
 
-5.54. stream_ip
+5.53. stream_ip
 
 --------------
 
@@ -6268,7 +6253,7 @@ Peg counts:
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-5.55. stream_tcp
+5.54. stream_tcp
 
 --------------
 
@@ -6487,7 +6472,7 @@ Peg counts:
     exceeded due to a hole (sum)
 
 
-5.56. stream_udp
+5.55. stream_udp
 
 --------------
 
@@ -6517,7 +6502,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-5.57. stream_user
+5.56. stream_user
 
 --------------
 
@@ -6535,7 +6520,7 @@ Configuration:
     1:max31 }
 
 
-5.58. telnet
+5.57. telnet
 
 --------------
 
@@ -6571,7 +6556,7 @@ Peg counts:
     sessions (max)
 
 
-5.59. tlv_pdu
+5.58. tlv_pdu
 
 --------------
 
@@ -6600,7 +6585,7 @@ Peg counts:
   * tlv_pdu.aborts: total unrecoverable scan errors (sum)
 
 
-5.60. wizard
+5.59. wizard
 
 --------------
 
@@ -10277,6 +10262,10 @@ libraries see the Getting Started section of the manual.
   * string file_policy.rules[].when.sha256: SHA 256
   * int file_policy.verdict_delay = 0: number of queries to return
     final verdict { 0:max53 }
+  * bool file_trace.enable: enable file trace logger
+  * string file_trace.filename = trace_output.log: output filename
+  * int file_trace.max_file_size = 10485760: maximum file size in
+    bytes (default 10MB, 0=unlimited) { 0: }
   * string file_type.~: list of file type IDs to match
   * string flags.~mask_flags: these flags are don’t cares
   * string flags.~test_flags: these flags are tested
@@ -10882,6 +10871,7 @@ libraries see the Getting Started section of the manual.
   * bool normalizer.tcp.trim_win = false: trim data to window
   * bool normalizer.tcp.urp = false: adjust urgent pointer if beyond
     segment length
+  * bool null_trace_logger.enable: enable null trace logger
   * string opcua_msg_service.~: message service to match
   * string opcua_msg_type.~: message type to match
   * string opcua_node_id.~: message node id to match
@@ -11728,6 +11718,7 @@ libraries see the Getting Started section of the manual.
     duplex }
   * string std_connector[].redirect: output file name where printout
     is redirected
+  * bool stdout_trace.enable: enable stdout trace logger
   * bool stream.allowlist_cache.enable = false: enable allowlist
     cache
   * bool stream.allowlist_cache.move_on_excess = false: move flows to
@@ -11835,6 +11826,9 @@ libraries see the Getting Started section of the manual.
   * int suppress[].sid = 0: rule signature ID { 0:max32 }
   * enum suppress[].track: suppress only matching source or
     destination addresses { by_src | by_dst }
+  * bool syslog_trace.enable: enable syslog trace logger
+  * enum syslog_trace.priority = info: select syslog priority { emerg
+    | alert | crit | err | warning | notice | info | debug }
   * int tag.bytes: tag for this many bytes { 1:max32 }
   * enum tag.~: log all packets in session or all packets to or from
     host { session|host_src|host_dst }
@@ -11903,8 +11897,7 @@ libraries see the Getting Started section of the manual.
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
   * bool trace.ntuple = false: print packet n-tuple info with trace
     messages
-  * enum trace.output: output method for trace log messages { stdout
-    | syslog }
+  * string trace.output: output method for trace log messages
   * bool trace.timestamp = false: print message timestamps with trace
     messages
   * interval ttl.~range: check if IP TTL is in the given range {
@@ -17042,6 +17035,7 @@ and are not applicable elsewhere.
   * file_meta (ips_option): rule option to set file metadata (file
     type and id)
   * file_policy (basic): configure file policy
+  * file_trace (trace): file trace logger
   * file_type (ips_option): rule option to check file type
   * flags (ips_option): rule option to test TCP control flags
   * flow (ips_option): rule option to check session properties
@@ -17190,7 +17184,7 @@ and are not applicable elsewhere.
   * netflow (inspector): netflow inspection
   * network (basic): configure basic network parameters
   * normalizer (inspector): packet scrubbing for inline mode
-  * null_trace_logger (inspector): trace logger with a null printout
+  * null_trace_logger (trace): trace logger with a null printout
   * opcua (inspector): opcua inspection
   * opcua_msg_service (ips_option): rule option to check the OPC UA
     message service
@@ -17286,6 +17280,7 @@ and are not applicable elsewhere.
   * ssl_version (ips_option): detection option for ssl version
   * std_connector (connector): implement the stdout/stdin based
     connector
+  * stdout_trace (trace): trace logger that prints to stdout
   * stream (inspector): common flow tracking
   * stream_file (inspector): stream inspector for file flow tracking
     and processing
@@ -17302,6 +17297,7 @@ and are not applicable elsewhere.
   * stream_user (inspector): stream inspector for user flow tracking
     and reassembly
   * suppress (basic): configure event suppressions
+  * syslog_trace (trace): syslog trace logger
   * tag (ips_option): rule option to log additional packets
   * target (ips_option): rule option to indicate target of attack
   * tcp (codec): support for transmission control protocol
@@ -17434,7 +17430,6 @@ and are not applicable elsewhere.
   * inspector::modbus: modbus inspection
   * inspector::netflow: netflow inspection
   * inspector::normalizer: packet scrubbing for inline mode
-  * inspector::null_trace_logger: trace logger with a null printout
   * inspector::opcua: opcua inspection
   * inspector::packet_capture: raw packet dumping facility
   * inspector::perf_monitor: performance monitoring and flow
@@ -17730,4 +17725,8 @@ and are not applicable elsewhere.
   * search_engine::lowmem: Keyword Trie (low memory, low performance)
     MPSE
   * so_rule::3|18758: SO rule example
+  * trace::file_trace: file trace logger
+  * trace::null_trace_logger: trace logger with a null printout
+  * trace::stdout_trace: trace logger that prints to stdout
+  * trace::syslog_trace: syslog trace logger
 

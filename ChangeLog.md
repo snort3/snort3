@@ -1,3 +1,7 @@
+2026-01-22: 3.11.0.0
+
+* trace: implemented multi-logging feature to support new lua configuration
+
 2026-01-21: 3.10.2.0
 
 * appid: configurable midstream service discovery
