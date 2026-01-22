@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-// Copyright (C) 2020-2025 Cisco and/or its affiliates. All rights reserved.
+// Copyright (C) 2025-2025 Cisco and/or its affiliates. All rights reserved.
 //
 // This program is free software; you can redistribute it and/or modify it
 // under the terms of the GNU General Public License Version 2 as published
@@ -15,44 +15,19 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// trace_logger.h author Oleksandr Serhiienko <oserhiie@cisco.com>
+// trace_loader.h author Pranav Jain <ppramodj@cisco.com>
 
-#ifndef TRACE_LOGGER_H
-#define TRACE_LOGGER_H
+#ifndef TRACE_LOADER_H
+#define TRACE_LOADER_H
 
-#include <cstdint>
+#include "protocols/packet.h"
+#include "utils/util.h"
+#include <string>
 
-namespace snort
-{
-struct Packet;
+void load_trace();
+std::string g_timestamp(bool timestamp);
+std::string g_ntuple(bool ntuple, const snort::Packet* p);
+char get_current_thread_type();
 
-class TraceLogger
-{
-public:
-    virtual ~TraceLogger() = default;
-
-    virtual void log(const char* log_msg, const char* name,
-        uint8_t log_level, const char* trace_option, const Packet* p) = 0;
-
-    void set_ntuple(bool flag)
-    { ntuple = flag; }
-
-    void set_timestamp(bool flag)
-    { timestamp = flag; }
-
-protected:
-    bool ntuple = false;
-    bool timestamp = false;
-};
-
-class TraceLoggerFactory
-{
-public:
-    virtual ~TraceLoggerFactory() = default;
-
-    virtual TraceLogger* instantiate() = 0;
-};
-}
-
-#endif // TRACE_LOGGER_H
+#endif
 

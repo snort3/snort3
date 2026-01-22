@@ -46,6 +46,7 @@
 #include "policy_selector_manager.h"
 #include "script_manager.h"
 #include "so_manager.h"
+#include "trace_logger_manager.h"
 
 using namespace snort;
 using namespace std;
@@ -74,6 +75,7 @@ static Symbol symbols[PT_MAX] =
     { "connector", CONNECTOR_API_VERSION, sizeof(ConnectorApi) },
     { "policy_selector", POLICY_SELECTOR_API_VERSION, sizeof(PolicySelectorApi) },
     { "mp_transport", MP_TRANSPORT_API_VERSION, sizeof(MPTransportApi) },
+    { "trace", TRACE_LOGAPI_VERSION, sizeof(TraceLogApi) }
 };
 #else
 // this gets around the sequence issue with some compilers
@@ -93,6 +95,7 @@ static Symbol symbols[PT_MAX] =
         sizeof(PolicySelectorApi) },
     [PT_MP_TRANSPORT] = { stringify(PT_MP_TRANSPORT), MP_TRANSPORT_API_VERSION,
         sizeof(MPTransportApi) }
+    [PT_TRACE] = { stringify(PT_TRACE), TRACE_LOGAPI_VERSION, sizeof(TraceLogApi) },
 };
 #endif
 
@@ -141,7 +144,7 @@ SoHandle::~SoHandle()
 
 static Plugins s_plugins;
 
-static void set_key(string& key, Symbol* sym, const char* name)
+static void set_key(string& key, const Symbol* sym, const char* name)
 {
     key = sym->name;
     key += "::";
@@ -329,6 +332,10 @@ static void add_plugin(Plugin& p)
     case PT_MP_TRANSPORT:
         MPTransportManager::add_plugin((const MPTransportApi*)p.api);
         break;
+    
+    case PT_TRACE:
+        TraceLoggerManager::add_plugin((const TraceLogApi*)p.api);
+        break;
 
     default:
         assert(false);
@@ -483,6 +490,7 @@ void PluginManager::dump_plugins()
     EventManager::dump_plugins();
     ConnectorManager::dump_plugins();
     PolicySelectorManager::dump_plugins();
+    TraceLoggerManager::dump_plugins();
 }
 
 void PluginManager::release_plugins()
@@ -495,6 +503,7 @@ void PluginManager::release_plugins()
     CodecManager::release_plugins();
     ConnectorManager::release_plugins();
     PolicySelectorManager::release_plugins();
+    TraceLoggerManager::release_plugins();
 
     unload_plugins();
 }
@@ -560,6 +569,10 @@ void PluginManager::instantiate(
 
     case PT_LOGGER:
         EventManager::instantiate((const LogApi*)api, mod, sc);
+        break;
+
+    case PT_TRACE:
+        TraceLoggerManager::instantiate((const TraceLogApi*)api, mod, api->name);
         break;
 
     default:

@@ -15,17 +15,18 @@ set (FRAMEWORK_INCLUDES
     logger.h
     module.h
     mp_data_bus.h
-    mpse.h
+    mp_transport.h
     mpse_batch.h
+    mpse.h
     parameter.h
-    pig_pen.h
     pdu_section.h
-    policy_selector.h
+    pig_pen.h
     plugins.h
+    policy_selector.h
     range.h
     so_rule.h
+    tracer.h
     value.h
-    mp_transport.h
 )
 
 add_library ( framework OBJECT

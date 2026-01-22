@@ -58,6 +58,7 @@
 #include "managers/ips_manager.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"
+#include "managers/trace_logger_manager.h"
 #include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "packet_io/packet_tracer.h"
@@ -637,6 +638,7 @@ void Analyzer::init_unprivileged()
 
     // This should be called as soon as possible
     // to handle all trace log messages
+    TraceLoggerManager::thread_init();
     TraceApi::thread_init(sc->trace_config);
 
     CodecManager::thread_init();
@@ -745,6 +747,7 @@ void Analyzer::term()
 
     sfthreshold_free();
     TraceApi::thread_term();
+    TraceLoggerManager::thread_term();
 }
 
 Analyzer::Analyzer(SFDAQInstance* instance, unsigned i, const char* s, uint64_t msg_cnt, const uint32_t retry_timeout) :

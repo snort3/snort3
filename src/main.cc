@@ -54,7 +54,6 @@
 #include "time/periodic.h"
 #include "trace/trace_api.h"
 #include "trace/trace_config.h"
-#include "trace/trace_logger.h"
 #include "utils/safec.h"
 #include "utils/stats.h"
 #include "utils/util.h"

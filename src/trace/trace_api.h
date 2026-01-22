@@ -22,6 +22,8 @@
 
 #include <cstdarg>
 #include <cstdint>
+#include <string>
+#include <unordered_set>
 
 #include "main/snort_types.h"
 #include "protocols/packet.h"
@@ -33,9 +35,6 @@ namespace snort
 {
 struct Packet;
 struct SnortConfig;
-
-class TraceLoggerFactory;
-
 class SO_PUBLIC TraceApi
 {
 public:
@@ -43,15 +42,30 @@ public:
     static void thread_reinit(const TraceConfig* tc);
     static void thread_term();
 
-    // This method will change an ownership of the passed TraceLoggerFactory
-    // from the caller to the passed SnortConfig
-    static bool override_logger_factory(SnortConfig*, TraceLoggerFactory*);
+
+
+    // Tracer registration for multi-trace support
+    static void register_enabled_tracer(const std::string& tracer_name);
+    static void unregister_tracer(const std::string& tracer_name);
+    static void resolve_multi_trace_for_config(TraceConfig& config);
+    static std::unordered_set<std::string>& get_enabled_tracers();
 
     static void log(const char* log_msg, const char* name,
         uint8_t log_level, const char* trace_option, const Packet* p);
     static void filter(const Packet& p);
     static uint8_t get_constraints_generation();
 };
+
+
+inline void TraceApi::register_enabled_tracer(const std::string& tracer_name)
+{
+    get_enabled_tracers().insert(tracer_name);
+}
+
+inline void TraceApi::unregister_tracer(const std::string& tracer_name)
+{
+    get_enabled_tracers().erase(tracer_name);
+}
 }
 
 static inline bool trace_enabled(const snort::Trace* trace,

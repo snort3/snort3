@@ -23,20 +23,27 @@
 
 #include "trace_module.h"
 
-#include <syslog.h>
-
 #include "main/snort_config.h"
 #include "managers/module_manager.h"
+#include "managers/plugin_manager.h"
+#include "managers/trace_logger_manager.h"
 #include "packet_io/packet_constraints.h"
 
+#include "trace_api.h"
 #include "trace_config.h"
-#include "trace_loggers.h"
 #include "trace_parser.h"
 #include "trace_swap.h"
 
 using namespace snort;
 
 // Helpers
+
+static bool validate_trace_logger(const std::string& logger_name)
+{
+    // Check if this trace logger plugin is available
+    const BaseApi* api = PluginManager::get_api(PT_TRACE, logger_name.c_str());
+    return (api != nullptr);
+}
 
 static std::string extract_module_option(const char* fqn)
 {
@@ -147,7 +154,7 @@ void TraceModule::generate_params()
         { "constraints", Parameter::PT_TABLE, trace_constraints_params,
           nullptr, "trace filtering constraints" },
 
-        { "output", Parameter::PT_ENUM, "stdout | syslog", nullptr,
+        { "output", Parameter::PT_STRING, nullptr, nullptr,
           "output method for trace log messages" },
 
         { "ntuple", Parameter::PT_BOOL, nullptr, "false",
@@ -167,13 +174,6 @@ bool TraceModule::begin(const char* fqn, int, SnortConfig* sc)
     if ( !strcmp(fqn, "trace") )
     {
         trace_parser = new TraceParser(*sc->trace_config);
-
-        // Init default output type based on Snort run-mode
-        if ( sc->daemon_mode() or SnortConfig::log_syslog() )
-            log_output_type = OUTPUT_TYPE_SYSLOG;
-        else
-            log_output_type = OUTPUT_TYPE_STDOUT;
-
     }
     return true;
 }
@@ -182,17 +182,13 @@ bool TraceModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     if ( v.is("output") )
     {
-        switch ( v.get_uint8() )
-        {
-            case OUTPUT_TYPE_STDOUT:
-                log_output_type = OUTPUT_TYPE_STDOUT;
-                break;
-            case OUTPUT_TYPE_SYSLOG:
-                log_output_type = OUTPUT_TYPE_SYSLOG;
-                break;
-            default:
-                return false;
-        }
+        std::string output_str = v.get_string();
+
+        // Validate that the requested trace logger plugin is available
+        if (!validate_trace_logger(output_str))
+            return false;
+
+        trace_parser->set_output(std::move(output_str));
         return true;
     }
     else if ( v.is("ntuple") )
@@ -226,28 +222,16 @@ bool TraceModule::end(const char* fqn, int, SnortConfig* sc)
             trace_parser->clear_traces();
         else
         {
-            switch ( log_output_type )
-            {
-            case OUTPUT_TYPE_STDOUT:
-                trace_parser->get_trace_config().logger_factory = new StdoutLoggerFactory();
-                break;
-            case OUTPUT_TYPE_SYSLOG:
-                trace_parser->get_trace_config().logger_factory = new SyslogLoggerFactory();
-                break;
-            default:
-                break;
-            }
-
-            // "output=syslog" config override case
-            // do not closelog() here since it will be closed in Snort::clean_exit()
-            if ( !SnortConfig::log_syslog() and log_output_type == OUTPUT_TYPE_SYSLOG
-                and !local_syslog )
-            {
-                local_syslog = true;
-                openlog("snort", LOG_PID | LOG_CONS, LOG_DAEMON);
-            }
-
             trace_parser->finalize_constraints();
+            
+            // If no output is configured, set default output logger
+            auto& trace_config = trace_parser->get_trace_config();
+            if ( trace_config.output_traces.empty() )
+            {
+                TraceApi::register_enabled_tracer(DEFAULT_OUTPUT_TRACE);
+                trace_config.output_traces.push_back(DEFAULT_OUTPUT_TRACE);
+                trace_config.has_multi_trace = true;
+            }
         }
 
         trace_parser->get_trace_config().initialized = true;

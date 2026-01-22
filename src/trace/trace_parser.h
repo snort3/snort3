@@ -40,6 +40,8 @@ public:
 
     bool set_traces(const std::string& option_name, const snort::Value& val);
     bool set_constraints(const snort::Value& val);
+    void set_output_trace(std::string output_trace);
+    void set_output(std::string output_trace);
 
     void finalize_constraints();
     void clear_traces();

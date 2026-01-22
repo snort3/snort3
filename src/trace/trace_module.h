@@ -21,19 +21,12 @@
 #define TRACE_MODULE_H
 
 #include "framework/module.h"
+static std::string DEFAULT_OUTPUT_TRACE = "stdout_trace";
 
 class TraceParser;
 
 class TraceModule : public snort::Module
 {
-private:
-    enum OutputType
-    {
-        OUTPUT_TYPE_STDOUT = 0,
-        OUTPUT_TYPE_SYSLOG,
-        OUTPUT_TYPE_NO_INIT
-    };
-
 public:
     TraceModule();
     ~TraceModule() override;
@@ -50,9 +43,6 @@ private:
     void generate_params();
 
 private:
-    OutputType log_output_type = OUTPUT_TYPE_NO_INIT;
-    bool local_syslog = false;
-
     std::vector<snort::Parameter> modules_params;
     std::vector<std::vector<snort::Parameter>> module_ranges;
     std::vector<std::string> modules_help;

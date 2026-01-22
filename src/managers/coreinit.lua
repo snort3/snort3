@@ -39,6 +39,8 @@ packets = { }
 process = { }
 search_engine = { }
 so_proxy = { }
+stdout_trace = { }
+syslog_trace = { }
 trace = { }
 
 -- exceptions:

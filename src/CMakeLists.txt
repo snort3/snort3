@@ -126,6 +126,7 @@ add_subdirectory(pub_sub)
 add_subdirectory(time)
 add_subdirectory(profiler)
 add_subdirectory(trace)
+add_subdirectory(tracer)
 add_subdirectory(utils)
 add_subdirectory(helpers)
 add_subdirectory(lua)
@@ -148,6 +149,7 @@ add_executable( snort
     main.cc
     $<TARGET_OBJECTS:codecs>
     $<TARGET_OBJECTS:connectors>
+    $<TARGET_OBJECTS:tracer>
     $<TARGET_OBJECTS:control>
     $<TARGET_OBJECTS:decompress>
     $<TARGET_OBJECTS:detection>

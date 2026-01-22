@@ -79,7 +79,7 @@
 #include "time/periodic.h"
 #include "trace/trace_api.h"
 #include "trace/trace_config.h"
-#include "trace/trace_logger.h"
+#include "tracer/trace_loader.h"
 #include "mp_transport/mp_transports.h"
 #include "utils/stats.h"
 #include "utils/util.h"
@@ -135,6 +135,7 @@ void Snort::init(int argc, char** argv)
     load_network_inspectors();
     load_service_inspectors();
     load_mp_transports();
+    load_trace();
 
     snort_cmd_line_conf = parse_cmd_line(argc, argv);
     SnortConfig::set_conf(snort_cmd_line_conf);

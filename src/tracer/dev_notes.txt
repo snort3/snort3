@@ -1,0 +1,70 @@
+The directory contains pluggable trace logger implementations for Snort3.
+
+==== TraceLoggerPlug
+
+The tracer module implements TraceLoggerPlug plugins that extend the core trace
+framework with different output destinations. Each logger inherits from the base
+TraceLoggerPlug class defined in framework/tracer.h and provides custom log()
+method implementations.
+
+Available trace logger plugins:
+* stdout_trace_logger - outputs traces to standard output
+* syslog_trace_logger - outputs traces to system syslog
+* file_trace_logger - outputs traces to configurable log files
+
+==== Module Architecture
+
+Each trace logger follows the standard Snort3 plugin pattern:
+* Module class inherits from Module and handles configuration
+* Logger class inherits from TraceLoggerPlug and implements logging
+* Plugin API structure defines module lifecycle functions
+* Registration with PluginManager via extern BaseApi arrays
+
+The module classes (StdoutTraceModule, SyslogTraceModule, FileTraceModule) parse
+configuration parameters and manage logger instances. The logger classes implement
+the actual trace output functionality.
+
+==== Configuration
+
+Each logger supports an 'enable' boolean parameter to activate/deactivate logging.
+
+Configuration changes trigger runtime updates via update_config() methods.
+
+==== Lua Configuration
+
+The trace loggers are configured through Snort3's Lua configuration files. Each
+logger type has its own configuration section:
+
+stdout_trace = { enable = true }
+
+syslog_trace = { 
+    enable = true,
+    facility = LOG_LOCAL0,
+    priority = LOG_INFO 
+}
+
+file_trace = {
+    enable = true,
+    filename = "trace_output.log",
+    max_file_size = 10485760,
+}
+
+The loggers work in conjunction with the main trace configuration which specifies
+output destinations and module trace levels:
+
+trace = {
+    output = {"stdout_trace", "syslog_trace", "file_trace"},
+    timestamp = true,
+    modules = { all = 1 }
+}
+
+Multiple trace loggers can be enabled simultaneously by setting their respective
+enable parameters to true. The trace output will be sent to all enabled loggers.
+
+==== Plugin Registration
+
+load_trace() in trace_loader.cc registers all trace logger plugins with
+PluginManager. This function is called during Snort3 initialization to make
+the trace loggers available for configuration and instantiation.
+
+

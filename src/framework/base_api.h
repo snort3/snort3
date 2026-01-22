@@ -38,7 +38,7 @@
 // depends on includes installed in framework/snort_api.h
 // see framework/plugins.h
 
-#define BASE_API_VERSION 22
+#define BASE_API_VERSION 23
 
 // set the reserved field to this to be future proof
 #define API_RESERVED 0
@@ -55,6 +55,7 @@ enum PlugType
     PT_CONNECTOR,
     PT_POLICY_SELECTOR,
     PT_MP_TRANSPORT,
+    PT_TRACE,
     PT_MAX
 };
 

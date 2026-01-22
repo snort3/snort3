@@ -1,7 +1,6 @@
 set ( INCLUDES
     trace.h
     trace_api.h
-    trace_logger.h
 )
 
 set ( TRACE_SOURCES
@@ -9,8 +8,6 @@ set ( TRACE_SOURCES
     trace_api.cc
     trace_config.cc
     trace_config.h
-    trace_loggers.cc
-    trace_loggers.h
     trace_module.cc
     trace_module.h
     trace_parser.cc

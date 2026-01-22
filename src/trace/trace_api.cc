@@ -23,22 +23,25 @@
 
 #include "trace_api.h"
 
+#include <algorithm>
 #include <cstring>
 
 #include "main/snort.h"
 #include "main/snort_config.h"
+#include "main/thread.h"
+#include "managers/trace_logger_manager.h"
 #include "packet_io/packet_constraints.h"
 #include "protocols/packet.h"
 #include "utils/safec.h"
 
 #include "trace_config.h"
-#include "trace_logger.h"
 
 using namespace snort;
 
-static THREAD_LOCAL TraceLogger* g_trace_logger = nullptr;
 static THREAD_LOCAL PacketConstraints* g_packet_constraints = nullptr;
 static THREAD_LOCAL uint8_t g_constraints_generation = 0;
+static THREAD_LOCAL std::vector<snort::TraceLoggerPlug*>* g_trace_logger_plug = nullptr;
+static THREAD_LOCAL bool g_trace_initialized = false;
 
 static void update_constraints(PacketConstraints* new_cs)
 {
@@ -54,21 +57,46 @@ static void update_constraints(PacketConstraints* new_cs)
     g_packet_constraints = new_cs;
 }
 
-static inline void set_logger_options(const TraceConfig* trace_config)
+
+
+void TraceApi::resolve_multi_trace_for_config(TraceConfig& config)
 {
-    if ( g_trace_logger )
+    for (const auto& tracer_name : get_enabled_tracers())
     {
-        g_trace_logger->set_ntuple(trace_config->ntuple);
-        g_trace_logger->set_timestamp(trace_config->timestamp);
+        if (std::find(config.output_traces.begin(), config.output_traces.end(), tracer_name) == config.output_traces.end())
+        {
+            config.output_traces.push_back(tracer_name);
+        }
     }
 }
 
 void TraceApi::thread_init(const TraceConfig* trace_config)
 {
-    if ( trace_config->logger_factory )
-        g_trace_logger = trace_config->logger_factory->instantiate();
+    if (g_trace_initialized)
+        return;
+    
+    g_trace_initialized = true;
+    
+    const_cast<TraceConfig*>(trace_config)->resolve_multi_trace();
+    
+    if (!g_trace_logger_plug)
+        g_trace_logger_plug = new std::vector<snort::TraceLoggerPlug*>();
+    
+    g_trace_logger_plug->clear();
+    for (const auto& tracer_name : trace_config->output_traces)
+    {
+        auto tracer_plugin = TraceLoggerManager::get_logger(tracer_name);
+        if (tracer_plugin)
+        {
+            tracer_plugin->set_timestamp(trace_config->timestamp);
+            tracer_plugin->set_ntuple(trace_config->ntuple);
+            tracer_plugin->set_thread_type(get_thread_type());
+            tracer_plugin->set_instance_id(get_instance_id());
+            g_trace_logger_plug->push_back(tracer_plugin);
+        }
+    }
 
-    set_logger_options(trace_config);
+
     update_constraints(trace_config->constraints);
     trace_config->setup_module_trace();
 }
@@ -76,39 +104,54 @@ void TraceApi::thread_init(const TraceConfig* trace_config)
 void TraceApi::thread_term()
 {
     g_packet_constraints = nullptr;
-
-    delete g_trace_logger;
-    g_trace_logger = nullptr;
+    if (g_trace_logger_plug)
+    {
+        g_trace_logger_plug->clear();
+        delete g_trace_logger_plug;
+        g_trace_logger_plug = nullptr;
+    }
+    g_trace_initialized = false;
 }
 
 void TraceApi::thread_reinit(const TraceConfig* trace_config)
 {
-    set_logger_options(trace_config);
+    const_cast<TraceConfig*>(trace_config)->resolve_multi_trace();
+    
+    if (!g_trace_logger_plug)
+        g_trace_logger_plug = new std::vector<snort::TraceLoggerPlug*>();
+
+    g_trace_logger_plug->clear();
+    for (const auto& tracer_name : trace_config->output_traces)
+    {
+        auto tracer_plugin = TraceLoggerManager::get_logger(tracer_name);
+        if (tracer_plugin)
+        {
+            tracer_plugin->set_timestamp(trace_config->timestamp);
+            tracer_plugin->set_ntuple(trace_config->ntuple);
+            tracer_plugin->set_thread_type(get_thread_type());
+            tracer_plugin->set_instance_id(get_instance_id());
+            g_trace_logger_plug->push_back(tracer_plugin);
+        }
+    }
     update_constraints(trace_config->constraints);
     trace_config->setup_module_trace();
 }
 
-bool TraceApi::override_logger_factory(SnortConfig* sc, TraceLoggerFactory* factory)
-{
-    if ( !sc or !sc->trace_config or !factory )
-        return false;
 
-    delete sc->trace_config->logger_factory;
-    sc->trace_config->logger_factory = factory;
-
-    if ( !Snort::is_reloading() )
-    {
-        delete g_trace_logger;
-        g_trace_logger = sc->trace_config->logger_factory->instantiate();
-    }
-
-    return true;
-}
 
 void TraceApi::log(const char* log_msg, const char* name,
     uint8_t log_level, const char* trace_option, const Packet* p)
 {
-    g_trace_logger->log(log_msg, name, log_level, trace_option, p);
+    if (g_trace_logger_plug && !g_trace_logger_plug->empty())
+    {
+        for (const auto& tracer_plugin : *g_trace_logger_plug)
+        {
+            if (tracer_plugin && tracer_plugin->get_enabled())
+            {
+                tracer_plugin->log(log_msg, name, log_level, trace_option, p);
+            }
+        }
+    }
 }
 
 void TraceApi::filter(const Packet& p)
@@ -137,6 +180,12 @@ void TraceApi::filter(const Packet& p)
 uint8_t TraceApi::get_constraints_generation()
 {
     return g_constraints_generation;
+}
+
+std::unordered_set<std::string>& TraceApi::get_enabled_tracers()
+{
+    static std::unordered_set<std::string> enabled_tracers;
+    return enabled_tracers;
 }
 
 #define BUF_SIZE_MIN (1 << 10) // guaranteed size, this one will be allocated on stack
@@ -243,7 +292,7 @@ static void test_log(const char* log_msg, const char* name,
 
 TEST_CASE("macros", "[trace]")
 {
-    TraceTestCase cases[] =
+    const TraceTestCase cases[] =
     {
         {
             sx(debug_log(1, test_trace, "my message")),

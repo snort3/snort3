@@ -28,8 +28,9 @@
 #include "framework/module.h"
 #include "managers/module_manager.h"
 #include "packet_io/packet_constraints.h"
+#include "trace_api.h"
+#include "trace_parser.h"
 
-#include "trace_logger.h"
 
 using namespace snort;
 
@@ -49,15 +50,14 @@ TraceConfig::TraceConfig(const TraceConfig& other)
     traces = other.traces;
     ntuple = other.ntuple;
     timestamp = other.timestamp;
+    has_multi_trace = other.has_multi_trace;
+    output_traces = other.output_traces;
     if ( other.constraints )
         constraints = new PacketConstraints(*other.constraints);
 }
 
 TraceConfig::~TraceConfig()
 {
-    delete logger_factory;
-    logger_factory = nullptr;
-
     delete constraints;
     constraints = nullptr;
 }
@@ -73,12 +73,20 @@ bool TraceConfig::set_trace(const std::string& module_name, const std::string& t
     return false;
 }
 
+void TraceConfig::resolve_multi_trace()
+{
+    if (has_multi_trace)
+    {
+        has_multi_trace = false;
+        
+        TraceApi::resolve_multi_trace_for_config(*this);
+    }
+}
+
 void TraceConfig::clear()
 {
     clear_traces();
     initialized = false;
-    delete logger_factory;
-    logger_factory = nullptr;
 }
 
 void TraceConfig::clear_traces()
