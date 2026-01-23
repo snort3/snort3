@@ -262,6 +262,7 @@ void ServiceDiscovery::reload() {}
 void ServiceDiscovery::finalize_service_patterns() {}
 void ServiceDiscovery::match_by_pattern(AppIdSession&, const Packet*, IpProtocol) {}
 void ServiceDiscovery::get_port_based_services(IpProtocol, uint16_t, AppIdSession&) {}
+void ServiceDiscovery::get_port_based_services(IpProtocol, uint16_t, uint16_t, AppIdSession&) {}
 void ServiceDiscovery::get_next_service(const Packet*, const AppidSessionDirection, AppIdSession&) {}
 int ServiceDiscovery::identify_service(AppIdSession&, Packet*, AppidSessionDirection,
     AppidChangeBits&) { return 0; }

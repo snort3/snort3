@@ -88,6 +88,7 @@ public:
 private:
     void get_next_service(const snort::Packet*, const AppidSessionDirection dir, AppIdSession&);
     void get_port_based_services(IpProtocol, uint16_t port, AppIdSession&);
+    void get_port_based_services(IpProtocol, uint16_t port1, uint16_t port2, AppIdSession&);
     void match_by_pattern(AppIdSession&, const snort::Packet*, IpProtocol);
     static ServiceDiscovery* discovery_manager;
     std::vector<AppIdDetector*> service_detector_list;

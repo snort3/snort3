@@ -28,6 +28,7 @@
 #include <netdb.h>
 #include <sstream>
 #include <string>
+#include <deque>
 
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(USE_TIRPC)
 #include <rpc/rpc.h>
@@ -89,6 +90,9 @@ enum RPCReplyState
 #define RPC_MAX_DENIED   5
 
 #define RPC_TCP_FRAG_MASK   0x80000000
+
+/* fragment header (4) + xid (4) + message type (4) */
+#define RPC_TCP_MIN_HEADER_SIZE 12
 
 /* sizeof(ServiceRPCCall)+sizeof(_SERVICE_RPC_PORTMAP)==56 */
 #define RPC_MAX_TCP_PACKET_SIZE  56
@@ -176,7 +180,7 @@ public:
     uint32_t program = 0;
     uint32_t program_version = 0;
     uint32_t procedure = 0;
-    uint32_t xid = 0;
+    std::deque<uint32_t> call_xids;
     IpProtocol proto = {};
     uint32_t tcpsize[APP_ID_APPID_SESSION_DIRECTION_MAX] = {};
     uint32_t tcpfragpos[APP_ID_APPID_SESSION_DIRECTION_MAX] = {};
@@ -186,10 +190,11 @@ public:
     int once = 0;
 };
 
-#define RPC_PORT_PORTMAPPER 111
-#define RPC_PORT_NFS        2049
+#define RPC_MAX_PENDING_XIDS 2  
 #define RPC_PORT_MOUNTD     4046
+#define RPC_PORT_NFS        2049
 #define RPC_PORT_NLOCKMGR   4045
+#define RPC_PORT_PORTMAPPER 111
 
 struct RPCProgram
 {
@@ -351,7 +356,7 @@ static bool  validate_and_parse_universal_address(string& data, uint32_t &addres
     return true;
 }
 
-int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, AppidSessionDirection dir,
+int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size,
     AppIdSession& asd, Packet* pkt, ServiceRPCData* rd, const char** pname, uint32_t* program)
 {
     const ServiceRPCCall* call = nullptr;
@@ -382,20 +387,13 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
             {
                 asd.set_session_flags(APPID_SESSION_UDP_REVERSED);
                 rd->state = RPC_STATE_REPLY;
-                dir = APP_ID_FROM_RESPONDER;
             }
-        }
-        else if (asd.get_session_flags(APPID_SESSION_UDP_REVERSED))
-        {
-            dir = (dir == APP_ID_FROM_RESPONDER) ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         }
     }
 
     switch (rd->state)
     {
     case RPC_STATE_CALL:
-        if (dir != APP_ID_FROM_INITIATOR)
-            return APPID_INPROCESS;
         rd->state = RPC_STATE_DONE;
         if (size < sizeof(ServiceRPCCall))
             return APPID_NOT_COMPATIBLE;
@@ -447,20 +445,41 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
         default:
             break;
         }
-        rd->xid = call->header.xid;
+
+        // store call xid with fifo limit
+        if (rd->call_xids.size() >= RPC_MAX_PENDING_XIDS)
+            rd->call_xids.pop_front();  
+        rd->call_xids.push_back(call->header.xid);
+
         rd->state = RPC_STATE_REPLY;
         break;
     case RPC_STATE_REPLY:
-        if (dir != APP_ID_FROM_RESPONDER)
-            return APPID_INPROCESS;
+    {
         rd->state = RPC_STATE_DONE;
         if (size < sizeof(ServiceRPCReply))
             return APPID_NOMATCH;
         reply = (const ServiceRPCReply*)data;
         if (ntohl(reply->header.type) != RPC_TYPE_REPLY)
             return APPID_NOMATCH;
-        if (rd->xid != reply->header.xid && rd->xid != 0xFFFFFFFF)
-            return APPID_NOMATCH;
+
+        // check if this reply matches a stored call xid
+        bool found_xid = false;
+        for (size_t i = 0; i < rd->call_xids.size(); i++)
+        {
+            if (rd->call_xids[i] == reply->header.xid)
+            {
+                rd->call_xids.erase(rd->call_xids.begin() + i);
+                found_xid = true;
+                break;
+            }
+        }
+
+        if (!found_xid)
+        {
+            if (!asd.get_session_flags(APPID_SESSION_MID) || !rd->call_xids.empty())
+                return APPID_NOMATCH;
+        }
+
         tmp = ntohl(reply->verify.length);
         if (sizeof(ServiceRPCReply) > (tmp > size ? 0 : size - tmp))
             return APPID_NOMATCH;
@@ -471,11 +490,6 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
         {
             if (val > RPC_MAX_ACCEPTED)
                 return APPID_NOMATCH;
-            if (rd->xid == 0xFFFFFFFF && reply->header.xid != 0xFFFFFFFF)
-            {
-                rd->state = RPC_STATE_CALL;
-                return APPID_INPROCESS;
-            }
             *program = rd->program;
 
             switch (rd->program)
@@ -561,6 +575,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size, Appi
             return APPID_NOMATCH;
         rd->state = RPC_STATE_CALL;
         return APPID_SUCCESS;
+    }
     default:
         return APPID_NOMATCH;
     }
@@ -591,10 +606,9 @@ int RpcServiceDetector::rpc_udp_validate(AppIdDiscoveryArgs& args)
     {
         rd = new ServiceRPCData((dir == APP_ID_FROM_INITIATOR) ? RPC_STATE_CALL : RPC_STATE_REPLY);
         data_add(args.asd, rd);
-        rd->xid = 0xFFFFFFFF;
     }
 
-    rval = validate_packet(data, size, dir, args.asd, pkt, rd, &pname, &program);
+    rval = validate_packet(data, size, args.asd, pkt, rd, &pname, &program);
 
 done:
     switch (rval)
@@ -665,7 +679,7 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
     const char* pname = nullptr;
     const uint8_t* data = args.data;
     Packet* pkt = args.pkt;
-    const AppidSessionDirection dir = args.dir;
+    AppidSessionDirection dir = args.dir;
     uint16_t size = args.size;
 
     if (!size)
@@ -674,12 +688,28 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
     rd = (ServiceRPCData*)data_get(args.asd);
     if (!rd)
     {
-        rd = new ServiceRPCData(RPC_STATE_CALL);
+        rd = new ServiceRPCData(RPC_STATE_CALL); 
         data_add(args.asd, rd);
         for (ret=0; ret<APP_ID_APPID_SESSION_DIRECTION_MAX; ret++)
         {
             rd->tcpstate[ret] = RPC_TCP_STATE_FRAG;
             rd->tcpfragstate[ret] = RPC_TCP_STATE_HEADER;
+        }
+    }
+
+    // determine direction and state based on actual message type in the packet
+    if (size >= RPC_TCP_MIN_HEADER_SIZE && (ntohl(*reinterpret_cast<const uint32_t*>(data)) & RPC_TCP_FRAG_MASK) == RPC_TCP_FRAG_MASK)
+    {
+        uint32_t msg_type = ntohl(*reinterpret_cast<const uint32_t*>(data + 8));
+        if (msg_type == RPC_TYPE_CALL)
+        {
+            dir = APP_ID_FROM_INITIATOR;
+            rd->state = RPC_STATE_CALL;
+        }
+        else if (msg_type == RPC_TYPE_REPLY)
+        {
+            dir = APP_ID_FROM_RESPONDER;
+            rd->state = RPC_STATE_REPLY;
         }
     }
 
@@ -742,8 +772,6 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
             }
             break;
         case RPC_TCP_STATE_CRED:
-            if (dir != APP_ID_FROM_INITIATOR)
-                goto bail;
             length = min(fragsize, sizeof(ServiceRPCAuth) - rd->tcppos[dir]);
             memcpy(&rd->tcpdata[dir][offsetof(ServiceRPCCall, cred)+rd->tcppos[dir]],
                 data, length);
@@ -767,8 +795,6 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
             }
             break;
         case RPC_TCP_STATE_CRED_DATA:
-            if (dir != APP_ID_FROM_INITIATOR)
-                goto bail;
             length = min(fragsize, rd->tcpauthsize[dir] - rd->tcppos[dir]);
             rd->tcppos[dir] += length;
             rd->tcpfragpos[dir] += length;
@@ -832,7 +858,7 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
                         if (rd->tcpsize[dir] & RPC_TCP_FRAG_MASK)
                         {
 
-                            ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], dir, args.asd,
+                            ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], args.asd,
                                 pkt, rd, &pname, &program);
 
 
@@ -903,7 +929,7 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
                 if (rd->tcpsize[dir] & RPC_TCP_FRAG_MASK)
                 {
 
-                    ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], dir, args.asd, pkt,
+                    ret = validate_packet(rd->tcpdata[dir], rd->tcppos[dir], args.asd, pkt,
                         rd, &pname, &program);
 
 

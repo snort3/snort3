@@ -39,7 +39,7 @@ public:
 private:
     int rpc_udp_validate(AppIdDiscoveryArgs&);
     int rpc_tcp_validate(AppIdDiscoveryArgs&);
-    int validate_packet(const uint8_t* data, uint16_t size, AppidSessionDirection dir, AppIdSession&,
+    int validate_packet(const uint8_t* data, uint16_t size, AppIdSession&,
         snort::Packet*, ServiceRPCData*, const char** pname, uint32_t* program);
 };
 #endif
