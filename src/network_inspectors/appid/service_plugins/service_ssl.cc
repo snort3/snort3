@@ -353,6 +353,19 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
             }
         }
 
+        /* If during midstream, we see valid TLS Application Data or Change Cipher Spec, 
+           accept it without requiring full handshake */
+        if (args.asd.get_session_flags(APPID_SESSION_MID) &&
+            size >= sizeof(ServiceSSLV3Hdr))
+        {
+            ver = ntohs(hdr3->version);
+            if ((hdr3->type == SSL_APPLICATION_DATA || hdr3->type == SSL_CHANGE_CIPHER) &&
+                (ver == 0x0300 || ver == 0x0301 || ver == 0x0302 || ver == 0x0303))
+            {
+                goto success;
+            }
+        }
+
         /* Its probably an SSLv3, TLS 1.2, or TLS 1.3 header.
            First record must be a handshake (type 22). */
         if (size < sizeof(ServiceSSLV3Hdr) || hdr3->type != SSL_HANDSHAKE ||
