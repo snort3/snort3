@@ -53,6 +53,12 @@ const uint8_t* HttpEvent::get_all_raw_headers(int32_t& length)
     return get_header(HttpEnums::HTTP_BUFFER_RAW_HEADER, 0, length);
 }
 
+const uint8_t* HttpEvent::get_content_length(int32_t& length)
+{
+    return get_header(HttpEnums::HTTP_BUFFER_HEADER,
+        HttpEnums::HEAD_CONTENT_LENGTH, length);
+}
+
 const uint8_t* HttpEvent::get_content_type(int32_t& length)
 {
     return get_header(HttpEnums::HTTP_BUFFER_HEADER,
