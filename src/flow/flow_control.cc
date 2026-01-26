@@ -524,6 +524,7 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
                 return true;
             }
 
+            flow->flow_id = p->pkth->flow_id;
             if ( p->is_tcp() and p->ptrs.tcph->is_syn_ack() )
                 flow->flags.key_is_reversed = !reversed;
             else

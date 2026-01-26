@@ -159,7 +159,7 @@ const TraceOption* StreamModule::get_trace_options() const
 #endif
 }
 
-enum DumpFlowsParams {FileName, Count, Protocol, SrcIp, DstIp, SrcPort, DstPort, Resume};
+enum DumpFlowsParams {FileName, Count, Protocol, ipA, ipB, portA, portB, Resume};
 struct DumpFlowsLuaParameters
 {
     DumpFlowsParams param;
@@ -171,20 +171,31 @@ std::vector<DumpFlowsLuaParameters> df_params =
     { DumpFlowsParams::FileName, 1 },
     { DumpFlowsParams::Count, 2 },
     { DumpFlowsParams::Protocol, 3 },
-    { DumpFlowsParams::SrcIp, 4 },
-    { DumpFlowsParams:: DstIp, 5 },
-    { DumpFlowsParams::SrcPort, 6 },
-    { DumpFlowsParams::DstPort, 7 },
+    { DumpFlowsParams::ipA, 4 },
+    { DumpFlowsParams::ipB, 5 },
+    { DumpFlowsParams::portA, 6 },
+    { DumpFlowsParams::portB, 7 },
     { DumpFlowsParams::Resume, 8 }
+};
+
+std::vector<DumpFlowsLuaParameters> dfb_params =
+{
+    { DumpFlowsParams::FileName, 1 },
+    { DumpFlowsParams::Protocol, 2 },
+    { DumpFlowsParams::ipA, 3 },
+    { DumpFlowsParams::ipB, 4 },
+    { DumpFlowsParams::portA, 5 },
+    { DumpFlowsParams::portB, 6 },
+    { DumpFlowsParams::Resume, 7 }
 };
 
 std::vector<DumpFlowsLuaParameters> dfs_params =
 {
     { DumpFlowsParams::Protocol, 1 },
-    { DumpFlowsParams::SrcIp, 2 },
-    { DumpFlowsParams:: DstIp, 3 },
-    { DumpFlowsParams::SrcPort, 4 },
-    { DumpFlowsParams::DstPort, 5 },
+    { DumpFlowsParams::ipA, 2 },
+    { DumpFlowsParams::ipB, 3 },
+    { DumpFlowsParams::portA, 4 },
+    { DumpFlowsParams::portB, 5 },
 };
 
 static int validate_cmd_parameters(ControlConn* ctrlcon, lua_State* L, std::vector<DumpFlowsLuaParameters>& cmd_params, DumpFlowsFilter* dff)
@@ -241,10 +252,10 @@ static int validate_cmd_parameters(ControlConn* ctrlcon, lua_State* L, std::vect
                 break;
             }
             
-            case DumpFlowsParams::SrcIp:
+            case DumpFlowsParams::ipA:
             {
                 const char* ip_addr = luaL_optstring(L, param.lua_index, nullptr);
-                if ( ip_addr  and !dff->set_srcip(ip_addr) )
+                if ( ip_addr  and !dff->set_ipA(ip_addr) )
                 {
                     LogRespond(ctrlcon, "Invalid source ip\n");
                     return false;
@@ -253,10 +264,10 @@ static int validate_cmd_parameters(ControlConn* ctrlcon, lua_State* L, std::vect
                 break;
             }
 
-            case DumpFlowsParams::DstIp:
+            case DumpFlowsParams::ipB:
             {
                 const char* ip_addr = luaL_optstring(L, param.lua_index, nullptr);
-                if ( ip_addr and !dff->set_dstip(ip_addr) )
+                if ( ip_addr and !dff->set_ipB(ip_addr) )
                 {
                     LogRespond(ctrlcon, "Invalid destination ip\n");
                     return false;
@@ -265,7 +276,7 @@ static int validate_cmd_parameters(ControlConn* ctrlcon, lua_State* L, std::vect
                 break;
             }
 
-            case DumpFlowsParams::SrcPort:
+            case DumpFlowsParams::portA:
             {
                 unsigned port = luaL_optint(L, param.lua_index, 0);
                 if ( port > 65535 )
@@ -274,12 +285,12 @@ static int validate_cmd_parameters(ControlConn* ctrlcon, lua_State* L, std::vect
                     return false;
                 }
                 if ( port )
-                    dff->set_src_port(static_cast<uint16_t>(port));
+                    dff->set_portA(static_cast<uint16_t>(port));
 
                 break;
             }
 
-            case DumpFlowsParams::DstPort:
+            case DumpFlowsParams::portB:
             {
                 unsigned port = luaL_optint(L, param.lua_index, 0);
                 if ( port > 65535 )
@@ -289,7 +300,7 @@ static int validate_cmd_parameters(ControlConn* ctrlcon, lua_State* L, std::vect
                 }
 
                 if ( port )
-                    dff->set_dst_port(static_cast<uint16_t>(port));
+                    dff->set_portB(static_cast<uint16_t>(port));
                 break;
             }
             
@@ -315,11 +326,24 @@ static int dump_flows_worker(lua_State* L, bool enable_binary)
         return -1;
     }
 
-    DumpFlowsFilter* dff = new DumpFlowsFilterAnd(enable_binary);
-    if ( !validate_cmd_parameters(ctrlcon, L, df_params, dff) )
+    DumpFlowsFilter* dff = nullptr;
+    if ( enable_binary )
     {
-        delete dff;
-        return -1;
+        dff = new DumpFlowsFilterOr(enable_binary);
+        if ( !validate_cmd_parameters(ctrlcon, L, dfb_params, dff) )
+        {
+            delete dff;
+            return -1;
+        }
+    }
+    else
+    {
+        dff = new DumpFlowsFilterAnd(enable_binary);
+        if ( !validate_cmd_parameters(ctrlcon, L, df_params, dff) )
+        {
+            delete dff;
+            return -1;
+        }
     }
 
     // set filter for flow selection

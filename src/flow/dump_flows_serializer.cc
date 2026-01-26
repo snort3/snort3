@@ -34,19 +34,21 @@ using namespace snort;
 
 void DumpFlowsSerializer::initialize(const Flow& flow, const struct timeval& now)
 {
+    dfd.flow_id = flow.flow_id;
+    
     if ( flow.flags.key_is_reversed )
     {
-        dfd.src_ip.set(flow.key->ip_h);
-        dfd.dst_ip.set(flow.key->ip_l);
-        dfd.src_port = flow.key->port_h;
-        dfd.dst_port = flow.key->port_l;
+        dfd.client_ip.set(flow.key->ip_h);
+        dfd.server_ip.set(flow.key->ip_l);
+        dfd.client_port = flow.key->port_h;
+        dfd.server_port = flow.key->port_l;
     }
     else
     {
-        dfd.src_ip.set(flow.key->ip_l);
-        dfd.dst_ip.set(flow.key->ip_h);
-        dfd.src_port = flow.key->port_l;
-        dfd.dst_port = flow.key->port_h;
+        dfd.client_ip.set(flow.key->ip_l);
+        dfd.server_ip.set(flow.key->ip_h);
+        dfd.client_port = flow.key->port_l;
+        dfd.server_port = flow.key->port_h;
     }
      
     dfd.instance_number = get_relative_instance_number();

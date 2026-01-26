@@ -96,76 +96,67 @@ public:
     virtual bool filter_flow(const snort::SfIp& , const snort::SfIp&, uint16_t, uint16_t, PktType = PktType::NONE)
     { return true; }
 
-    void set_filter_state()
-    { 
-        // Fast path: check if all filter fields are empty to avoid expensive filter_flow calls
-        filter_none = ( !src_ip.is_set() and
-                        !dst_ip.is_set() and 
-                        src_port == 0 and
-                        dst_port == 0 );
-    }
-
     static void cidr2mask(uint32_t cidr, uint32_t* mask)
     {
         while( cidr-- )
             mask[cidr / 32] |= (unsigned)0x00000001 << (cidr % 32);
     }
 
-    bool set_ip(const std::string& filter_ip, snort::SfIp& ip, snort::SfIp& subnet) const
+    bool set_ip(const std::string& ip, snort::SfIp& filter_ip, snort::SfIp& filter_subnet) const
     {
-        size_t slash_pos = filter_ip.find('/');
+        size_t slash_pos = ip.find('/');
         if ( slash_pos != std::string::npos )
         {
-            std::string ip_part = filter_ip.substr(0, slash_pos);
-            std::string subnet_part = filter_ip.substr(slash_pos + 1);
+            std::string ip_addr = ip.substr(0, slash_pos);
+            std::string ip_subnet = ip.substr(slash_pos + 1);
 
-            if ( ip_part.find(':') != std::string::npos )
+            if ( ip_addr.find(':') != std::string::npos )
             {
                 // filter is IPV6
-                if ( ip.pton(AF_INET6, ip_part.c_str()) != SFIP_SUCCESS )
+                if ( filter_ip.pton(AF_INET6, ip_addr.c_str()) != SFIP_SUCCESS )
                     return false;
 
-                if  (subnet_part.find(':') == std::string::npos )
+                if  (ip_subnet.find(':') == std::string::npos )
                 {
                     // IPV6 cidr
                     uint32_t mask_v6[4] = {0};
-                    uint32_t cidr = std::stoi(subnet_part);
+                    uint32_t cidr = std::stoi(ip_subnet);
                     if ( cidr > 128 )
                         return false;
 
                     cidr2mask(cidr, mask_v6);
-                    if ( subnet.set(&mask_v6, AF_INET6) != SFIP_SUCCESS )
+                    if ( filter_subnet.set(&mask_v6, AF_INET6) != SFIP_SUCCESS )
                         return false;
                 }
-                else if ( subnet_part.empty() || (subnet.pton(AF_INET6, subnet_part.c_str()) != SFIP_SUCCESS) )
+                else if ( ip_subnet.empty() || (filter_subnet.pton(AF_INET6, ip_subnet.c_str()) != SFIP_SUCCESS) )
                     return false;
 
                 return true;
             }
-            else if ( ip_part.find('.') != std::string::npos )
+            else if ( ip_addr.find('.') != std::string::npos )
             {
                 // filter is  IPV4
-                if ( ip.pton(AF_INET, ip_part.c_str()) != SFIP_SUCCESS )
+                if ( filter_ip.pton(AF_INET, ip_addr.c_str()) != SFIP_SUCCESS )
                     return false;
 
-                if ( subnet_part.find('.') == std::string::npos )
+                if ( ip_subnet.find('.') == std::string::npos )
                 {
                     // IPV4 cidr
                     uint32_t mask_v4[1] = {0};
-                    uint32_t cidr = std::stoi(subnet_part);
+                    uint32_t cidr = std::stoi(ip_subnet);
                     if ( cidr > 32 )
                         return false;
 
                     cidr2mask(cidr, mask_v4);
-                    if ( subnet.set(&mask_v4, AF_INET) != SFIP_SUCCESS )
+                    if ( filter_subnet.set(&mask_v4, AF_INET) != SFIP_SUCCESS )
                         return false;
                 }
-                else if ( subnet_part.empty() )
+                else if ( ip_subnet.empty() )
                     return false;
                 else
                 {
                     // IPV4 netmask
-                    if ( subnet.pton(AF_INET, subnet_part.c_str()) != SFIP_SUCCESS )
+                    if ( filter_subnet.pton(AF_INET, ip_subnet.c_str()) != SFIP_SUCCESS )
                         return false;
                 }
 
@@ -177,59 +168,55 @@ public:
         else
         {
             // No mask
-            if ( filter_ip.find(':') != std::string::npos )
-                return ip.pton(AF_INET6, filter_ip.c_str()) == SFIP_SUCCESS;
-            else if ( filter_ip.find('.') != std::string::npos )
-                return ip.pton(AF_INET, filter_ip.c_str()) == SFIP_SUCCESS;
+            if ( ip.find(':') != std::string::npos )
+                return filter_ip.pton(AF_INET6, ip.c_str()) == SFIP_SUCCESS;
+            else if ( ip.find('.') != std::string::npos )
+                return filter_ip.pton(AF_INET, ip.c_str()) == SFIP_SUCCESS;
         }
 
         return false;
     }
 
-     bool set_srcip(const std::string& filter_ip)
+     bool set_ipA(const std::string& ip)
      {
-        if ( filter_ip.empty() )
+        if ( ip.empty() )
             return true;
 
         filter_none = false;
-        return set_ip(filter_ip, src_ip, src_subnet);
+        return set_ip(ip, ipA, ipA_subnet);
      }
 
-     bool set_dstip(const std::string& filter_ip)
+     bool set_ipB(const std::string& ip)
      {
-        if ( filter_ip.empty() )
+        if ( ip.empty() )
             return true;
 
         filter_none = false;
-        return set_ip(filter_ip, dst_ip, dst_subnet);
+        return set_ip(ip, ipB, ipB_subnet);
      }
 
-     void set_src_port(uint16_t filter_port)
+     void set_portA(uint16_t filter_port)
      { 
-        src_port = filter_port;
         filter_none = false;
+        portA = filter_port;
      }
 
-     void set_dst_port(uint16_t filter_port) 
+     void set_portB(uint16_t filter_port) 
      { 
-        dst_port = filter_port;
         filter_none = false; 
+        portB = filter_port;
      }
 
     bool binary_output = false;
     unsigned count = 100;
     bool filter_none = true;
     PktType proto_type = PktType::NONE;
-    snort::SfIp src_ip;
-    snort::SfIp dst_ip;
-	uint16_t src_port = 0;
-	uint16_t dst_port = 0;
-    snort::SfIp src_subnet;
-    snort::SfIp dst_subnet;
-
-    snort::SfIp filter_ip;
-    snort::SfIp filter_subnet;
-    uint16_t filter_port = 0;
+    snort::SfIp ipA;
+    snort::SfIp ipB;
+    snort::SfIp ipA_subnet;
+    snort::SfIp ipB_subnet;
+	uint16_t portA = 0;
+	uint16_t portB = 0;
 
     std::string file_name;
     int resume = -1;
@@ -247,22 +234,22 @@ public:
     ~DumpFlowsFilterAnd() override
     { }
 
-    bool filter_flow(const snort::SfIp& flow_srcip, const snort::SfIp& flow_dstip, 
-        uint16_t flow_src_port, uint16_t flow_dst_port, PktType = PktType::NONE) override
+    bool filter_flow(const snort::SfIp& server_ip, const snort::SfIp& client_ip, 
+        uint16_t server_port, uint16_t client_port, PktType = PktType::NONE) override
     {
-        if ( src_port != 0 and  src_port != flow_src_port )
+        if ( portA != 0 and portA != server_port )
             return false;
 
-        if ( dst_port != 0 and dst_port != flow_dst_port )
+        if ( portB != 0 and portB != client_port )
             return false;
 
-        if ( !src_ip.is_set() and !dst_ip.is_set() )
+        if ( !ipA.is_set() and !ipB.is_set() )
             return true;
 
-        if ( src_ip.is_set() and !is_ip_match(flow_srcip, src_ip, src_subnet) )
+        if ( ipA.is_set() and !is_ip_match(server_ip, ipA, ipA_subnet) )
             return false;
 
-        if ( dst_ip.is_set() and !is_ip_match(flow_dstip, dst_ip, dst_subnet) )
+        if ( ipB.is_set() and !is_ip_match(client_ip, ipB, ipB_subnet) )
             return false;
 
         return true;
@@ -280,21 +267,54 @@ public:
     ~DumpFlowsFilterOr() override
     { }
 
-    bool filter_flow(const snort::SfIp& flow_srcip, const snort::SfIp& flow_dstip, 
-        uint16_t flow_src_port, uint16_t flow_dst_port, PktType = PktType::NONE) override
+    bool filter_flow(const snort::SfIp& server_ip, const snort::SfIp& client_ip, 
+        uint16_t server_port, uint16_t client_port, PktType = PktType::NONE) override
     {
-        // if port unspecified or matches either src or dst port then check the ip addresses
-        if ( filter_port == 0 or filter_port == flow_src_port or filter_port == flow_dst_port )
+
+        if ( ipA.is_set() )
         {
-            if ( !filter_ip.is_set() )
+            if ( ipB.is_set() )
+            {
+                if ( is_ip_match(server_ip, ipA, ipA_subnet) and is_ip_match(client_ip, ipB, ipB_subnet) )
+                {
+                    if ( (!portA or portA == server_port ) and (!portB or portB == client_port) )
+                        return true;
+                    else
+                        return false;
+                }
+                else if ( is_ip_match(client_ip, ipA, ipA_subnet) and is_ip_match(server_ip, ipB, ipB_subnet) )
+                {
+                    if ( (!portA or portA == client_port ) and (!portB or portB == server_port) )
+                        return true;
+                    else
+                        return false;
+                }
+                else
+                    return false;
+            }
+            else if ( is_ip_match(server_ip, ipA, ipA_subnet) and (!portA or portA == server_port) )
                 return true;
-
-            if ( is_ip_match(flow_srcip, filter_ip, filter_subnet) or is_ip_match(flow_dstip, filter_ip, filter_subnet) )
+            else if ( is_ip_match(client_ip, ipA, ipA_subnet) and (!portA or portA == client_port) )
                 return true;
-
+            else
+                return false;
         }
-            
-        return false;
+        else if ( portA )
+        {
+            if ( portB )
+            {
+                if ( (portA == server_port and portB == client_port) or (portA == client_port and portB == server_port) )
+                    return true;
+                else
+                    return false;
+            }
+            else if ( portA == server_port or portA == client_port )
+                return true;
+            else
+                return false;
+        }
+
+        return true;
     }
 };
 class DumpFlowsDescriptor
@@ -303,10 +323,11 @@ public:
     DumpFlowsDescriptor() = default;
     ~DumpFlowsDescriptor() = default;
 
-    snort::SfIp src_ip;
-    snort::SfIp dst_ip;
-    uint16_t src_port = 0;
-    uint16_t dst_port = 0;
+    uint32_t flow_id = 0; 
+    snort::SfIp client_ip;
+    snort::SfIp server_ip;
+    uint16_t client_port = 0;
+    uint16_t server_port = 0;
     uint8_t pkt_type = static_cast<uint8_t>(PktType::NONE);
     unsigned instance_number = 0;
     uint32_t address_space_id = 0;
@@ -330,20 +351,22 @@ public:
         char dip[INET6_ADDRSTRLEN];
         dip[0] = 0;
 
-        if ( !inet_ntop(src_ip.get_family(),  src_ip.get_ptr(), sip, sizeof(sip)) )
+        if ( !inet_ntop(client_ip.get_family(),  client_ip.get_ptr(), sip, sizeof(sip)) )
         {
             text_stream << "inet_ntop on src ip failed: " <<  strerror(errno) << " - errno: " << errno << std::endl;
             return;
         }
 
-        if ( !inet_ntop(dst_ip.get_family(),  dst_ip.get_ptr(), dip, sizeof(dip)) )
+        if ( !inet_ntop(server_ip.get_family(),  server_ip.get_ptr(), dip, sizeof(dip)) )
         {
            text_stream << "inet_ntop on dst ip failed: " <<  strerror(errno) << " - errno: " << errno << std::endl; 
             return;
         }
 
-        std::stringstream out;
         std::stringstream proto;
+        std::stringstream out;
+        
+        out << "Flow ID: " << flow_id << " ";
         switch ( static_cast<PktType>(pkt_type) )
         {
             case PktType::IP:
@@ -352,12 +375,12 @@ public:
 
             case PktType::ICMP:
                 out << "Instance-ID: " << instance_number << " ICMP " << address_space_id << ": " << sip 
-                    << " type " << src_port << " " << dip;
+                    << " type " << client_port << " " << dip;
                 break;
 
             case PktType::TCP:
                 out << "Instance-ID: " << instance_number << " TCP " << address_space_id << ": " << sip
-                    << "/" << src_port << " " << dip << "/" << dst_port;
+                    << "/" << client_port << " " << dip << "/" << server_port;
                 
                 proto << " state client " << stream_tcp_state_to_str(tcp_client_state)
                     << " server " << stream_tcp_state_to_str(tcp_server_state);
@@ -365,8 +388,8 @@ public:
                 break;
 
             case PktType::UDP:
-                out << "Instance-ID: " << instance_number << " UDP " << address_space_id << ": " << sip << "/" << src_port << " "
-                    << dip << "/" << dst_port;
+                out << "Instance-ID: " << instance_number << " UDP " << address_space_id << ": " << sip << "/" << client_port << " "
+                    << dip << "/" << server_port;
                 break;
 
             default:

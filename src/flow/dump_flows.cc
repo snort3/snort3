@@ -23,6 +23,8 @@
 
 #include "dump_flows.h"
 
+#include <filesystem>
+
 #include "hash/zhash.h"
 #include "log/messages.h"
 #include "main/analyzer.h"
@@ -134,41 +136,33 @@ void DumpFlows::dump_flows(DumpFlowsControl& dfc, unsigned idx)
         if ( dfc.flow_cursor[idx]->dump_code != dump_code )
         {
             DumpFlowsSerializer dfs;
-            SfIp flow_srcip, flow_dstip; 
-            uint16_t flow_src_port, flow_dst_port;
+            SfIp server_ip, client_ip; 
+            uint16_t server_port, client_port;
             const Flow& flow = *dfc.flow_cursor[idx];
-
-            if ( flow.flags.client_initiated )
-            {
-                flow_srcip = flow.client_ip;
-                flow_dstip = flow.server_ip;
-            }
-            else
-            {
-                flow_srcip = flow.server_ip;
-                flow_dstip = flow.client_ip;
-            }
 
             if ( flow.flags.key_is_reversed )
             {
-                flow_src_port = flow.key->port_h;
-                flow_dst_port = flow.key->port_l;
+                server_ip.set(flow.key->ip_h);
+                server_port = flow.key->port_h;
+                client_ip.set(flow.key->ip_l);
+                client_port = flow.key->port_l;
             }
             else
             {
-                flow_src_port = flow.key->port_l;
-                flow_dst_port = flow.key->port_h;
+                server_ip.set(flow.key->ip_l);
+                server_port = flow.key->port_l;
+                client_ip.set(flow.key->ip_h);
+                client_port = flow.key->port_h;
             }
 
-            if ( dff.binary_output )
+            if ( dff.filter_none or dff.filter_flow(server_ip, client_ip, server_port, client_port) )
             {
                 dfs.initialize(*dfc.flow_cursor[idx], now);
-                dfs.write(dfc.dump_stream);
-            }
-            else if ( dff.filter_none or dff.filter_flow(flow_srcip, flow_dstip, flow_src_port, flow_dst_port) )
-            {
-                dfs.initialize(*dfc.flow_cursor[idx], now);
-                dfs.print(dfc.dump_stream);
+
+                if ( dff.binary_output )
+                    dfs.write(dfc.dump_stream);
+                else 
+                    dfs.print(dfc.dump_stream);
             }
                         
             dfc.flow_cursor[idx]->dump_code = dump_code;
@@ -281,34 +275,25 @@ bool DumpFlowsSummary::dump_flows_summary(DumpFlowsControl& dfc, unsigned idx, F
 
     while ( dfc.flow_cursor[idx] )
     {
+        SfIp server_ip, client_ip; 
+        uint16_t server_port, client_port;
         const Flow& flow = *dfc.flow_cursor[idx];
-
-        SfIp flow_srcip, flow_dstip; 
-        uint16_t flow_src_port, flow_dst_port;
-            
-        if ( flow.flags.client_initiated )
-        {
-             flow_srcip = flow.client_ip;
-            flow_dstip = flow.server_ip;
-        }
-        else
-        {
-            flow_srcip = flow.server_ip;
-            flow_dstip = flow.client_ip;
-         }
-
         if ( flow.flags.key_is_reversed )
         {
-            flow_src_port = flow.key->port_h;
-            flow_dst_port = flow.key->port_l;
+            server_ip.set(flow.key->ip_h);
+            server_port = flow.key->port_h;
+            client_ip.set(flow.key->ip_l);
+            client_port = flow.key->port_l;
         }
         else
         {
-            flow_src_port = flow.key->port_l;
-            flow_dst_port = flow.key->port_h;
+            server_ip.set(flow.key->ip_l);
+            server_port = flow.key->port_l;
+            client_ip.set(flow.key->ip_h);
+            client_port = flow.key->port_h;
         }
 
-        if ( dff.filter_none or dff.filter_flow(flow_srcip, flow_dstip, flow_src_port, flow_dst_port) )
+        if ( dff.filter_none or dff.filter_flow(server_ip, client_ip, server_port, client_port) )
         {
             flows_summary.type_summary[to_utype(dfc.flow_cursor[idx]->key->pkt_type)]++;
             flows_summary.state_summary[to_utype(dfc.flow_cursor[idx]->flow_state)]++;

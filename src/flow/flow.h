@@ -513,7 +513,7 @@ public:  // FIXIT-M privatize if possible
     unsigned reload_id = 0;
     uint32_t default_session_timeout = 0;
     uint32_t idle_timeout = 0;
-
+    uint32_t flow_id = 0;           // Flow ID value provided from the DAQ module or underlying hardware.
     struct
     {
         bool client_initiated : 1;  // Set if the first packet on the flow was from the side that is

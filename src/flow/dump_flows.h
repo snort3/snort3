@@ -81,7 +81,6 @@ public:
     const char* stringify() override
     { return "DumpFlows"; }
 
-
  protected:
     //dump_code is to track if the flow is dumped only once per dump_flow command.
     static uint8_t dump_code;

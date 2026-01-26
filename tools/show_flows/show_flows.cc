@@ -73,26 +73,26 @@ public:
     virtual ~DumpFlowsFilterAllAnd() override
     { }
 
-    bool filter_flow(const snort::SfIp& flow_srcip, const snort::SfIp& flow_dstip, 
-        uint16_t flow_src_port, uint16_t flow_dst_port, PktType flow_pkt_type ) override
+    bool filter_flow(const snort::SfIp& server_ip, const snort::SfIp& client_ip, 
+        uint16_t server_port, uint16_t client_port, PktType flow_pkt_type ) override
     {
         if ( proto_type != PktType::NONE and proto_type != flow_pkt_type )
             return false;
 
-        if ( src_port != 0 and src_port != flow_src_port )
+        if ( portA != 0 and portA != server_port )
             return false;
 
-        if ( dst_port != 0 and dst_port != flow_dst_port )
+        if ( portB != 0 and portB != client_port )
             return false;
 
-        if ( !src_ip.is_set() and !dst_ip.is_set() )
+        if ( !ipA.is_set() and !ipB.is_set() )
             return true;
 
-        if ( src_ip.is_set() and !is_ip_match(flow_srcip, src_ip, src_subnet) )
-        return false;
+        if ( ipA.is_set() and !is_ip_match(server_ip, ipA, ipA_subnet) )
+            return false;
 
-        if ( dst_ip.is_set() and !is_ip_match(flow_dstip, dst_ip, dst_subnet) )
-        return false;
+        if ( ipB.is_set() and !is_ip_match(client_ip, ipB, ipB_subnet) )
+            return false;
 
         return true;
     }
@@ -124,7 +124,7 @@ void DumpFlowsDeSerializer::deserialize(std::fstream& bin_stream, std::fstream& 
     else
     {
         while ( bin_stream.read(reinterpret_cast<char*>(&dfd), sizeof(DumpFlowsDescriptor)) )
-            if ( dff.filter_flow(dfd.src_ip, dfd.dst_ip, dfd.src_port, dfd.dst_port, (PktType) dfd.pkt_type) )
+            if ( dff.filter_flow(dfd.client_ip, dfd.server_ip, dfd.client_port, dfd.server_port, (PktType) dfd.pkt_type) )
                 dfd.print(text_stream);
     }
 }
@@ -169,7 +169,7 @@ int main(int argc, char* argv[])
         case 'r':
         {  
             std::string srcip(optarg);
-            if ( !dff.set_srcip(srcip) )
+            if ( !dff.set_ipA(srcip) )
             {
                 std::cerr << "inet_pton on src ip failed: " <<  strerror(errno) << " - errno: " << errno << std::endl; 
                 exit(1);
@@ -182,7 +182,7 @@ int main(int argc, char* argv[])
         case 't':
         {
             std::string dstip(optarg);
-            if ( !dff.set_dstip(dstip) )
+            if ( !dff.set_ipB(dstip) )
             {
                 std::cerr << "inet_pton on dest ip failed: " <<  strerror(errno) << " - errno: " << errno << std::endl; 
                 exit(1);
@@ -193,12 +193,12 @@ int main(int argc, char* argv[])
         }
 
         case 'd':
-            dff.dst_port = atoi(optarg);
+            dff.portB = atoi(optarg);
             dff.filter_none = false;
             break;
 
         case 's':
-            dff.src_port = atoi(optarg);
+            dff.portA = atoi(optarg);
             dff.filter_none = false;
             break;
 

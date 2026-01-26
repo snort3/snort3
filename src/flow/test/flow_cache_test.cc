@@ -170,18 +170,18 @@ class DumpFlowsTest : public DumpFlows
         const snort::SfIp& src_subnet, const snort::SfIp& dst_subnet,
         const uint16_t src_port, const uint16_t dst_port)
     {
-        dff.src_port = src_port;
-        dff.dst_port = dst_port;
-        dff.src_ip = src_ip;
-        dff.dst_ip = dst_ip;
-        dff.src_subnet = src_subnet;
-        dff.dst_subnet = dst_subnet;
+        dff.portA = src_port;
+        dff.portB = dst_port;
+        dff.ipA = src_ip;
+        dff.ipB = dst_ip;
+        dff.ipA_subnet = src_subnet;
+        dff.ipB_subnet = dst_subnet;
 
         // Fast path: check if all filter fields are empty to avoid expensive filter_flows calls
-        dff.filter_none = ( !dff.src_ip.is_set() and
-            !dff.dst_ip.is_set() and
-             dff.src_port == 0 and
-             dff.dst_port == 0 );
+        dff.filter_none = ( !dff.ipA.is_set() and
+            !dff.ipB.is_set() and
+             dff.portA == 0 and
+             dff.portB == 0 );
     }
 };
 
@@ -230,18 +230,18 @@ class DumpFlowsSummaryTest : public DumpFlowsSummary
         const snort::SfIp& src_subnet, const snort::SfIp& dst_subnet,
         const uint16_t src_port, const uint16_t dst_port)
     {
-        dff.src_port = src_port;
-        dff.dst_port = dst_port;
-        dff.src_ip = src_ip;
-        dff.dst_ip = dst_ip;
-        dff.src_subnet = src_subnet;
-        dff.dst_subnet = dst_subnet;
+        dff.portA = src_port;
+        dff.portB = dst_port;
+        dff.ipA = src_ip;
+        dff.ipB = dst_ip;
+        dff.ipA_subnet = src_subnet;
+        dff.ipB_subnet = dst_subnet;
 
         // Fast path: check if all filter fields are empty to avoid expensive filter_flows calls
-        dff.filter_none = ( !dff.src_ip.is_set() and
-            !dff.dst_ip.is_set() and
-             dff.src_port == 0 and
-             dff.dst_port == 0 );
+        dff.filter_none = ( !dff.ipA.is_set() and
+            !dff.ipB.is_set() and
+             dff.portA == 0 and
+             dff.portB == 0 );
     }
 };
 
