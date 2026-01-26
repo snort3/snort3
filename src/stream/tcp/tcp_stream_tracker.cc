@@ -935,7 +935,7 @@ uint32_t TcpStreamTracker::perform_partial_flush()
 
 bool TcpStreamTracker::is_retransmit_of_held_packet(Packet* cp)
 {
-    if ( !is_holding_packet() )
+    if ( !is_holding_packet() or !cp->ptrs.tcph )
         return false;
 
     if ( cp->daq_msg == held_packet->get_daq_msg() )
