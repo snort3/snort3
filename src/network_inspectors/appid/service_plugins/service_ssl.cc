@@ -218,6 +218,9 @@ static ParseHelloResult parse_client_initiation(const uint8_t* data, uint16_t si
 
 static void save_ssl_cache(ServiceSSLData* ss, uint16_t size, const uint8_t* data)
 {
+    if(size == 0)
+        return;
+
     ss->cached_data = (uint8_t*)snort_calloc(size, sizeof(uint8_t));
     memcpy(ss->cached_data, data, size);
     ss->cached_len = size;
@@ -285,7 +288,7 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
     }
 
-    if (ss->cached_len and ss->cached_data)
+    if (ss->cached_data)
     {
         if ( (ss->cached_client_data and (args.dir == APP_ID_FROM_INITIATOR)) or (!ss->cached_client_data and (args.dir == APP_ID_FROM_RESPONDER)) )
         {
