@@ -1644,8 +1644,13 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
                         req->cmd_begin = nullptr;
                         req->cmd_end = nullptr;
                         req->cmd_size = 0;
-                        if (*read_ptr != SP && read_ptr != p->data)
+                        
+                        // Track actual buffer boundaries
+                        const uint8_t* buffer_start = (buf.len) ? buf.data : p->data;
+                        
+                        if (*read_ptr != SP && read_ptr > buffer_start)
                             read_ptr--;
+                            
                         state = FTP_RESPONSE_CONT;
                     }
                 }

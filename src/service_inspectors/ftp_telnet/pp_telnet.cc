@@ -284,17 +284,20 @@ int normalize_telnet(
             }
         }
         /* check for subnegotiation */
-        else if (((read_ptr + 1) < end) &&
+        else if (((read_ptr + 2) < end) &&
             (*read_ptr == (unsigned char)TNC_IAC) &&
             (*(read_ptr+1) == (unsigned char)TNC_SB))
         {
             sb_start = read_ptr;
 
+            if ((read_ptr + 2) >= end) break;
             switch (*(read_ptr+2))
             {
             case 0x26: /* Encryption -- RFC 2946 */
                 /* printf("Telnet: Saw SB for Encryption\n"); */
+                if ((read_ptr + 3) >= end) break;
                 read_ptr += 3;
+                if (read_ptr >= end) break;
                 switch (*read_ptr)
                 {
 #ifdef TRACK_ENCRYPTION_NEGOTIATION
@@ -302,6 +305,7 @@ int normalize_telnet(
                     /* Client sending the Encryption IS marker
                      * followed by address. */
                 {
+                    if ((read_ptr + 1) >= end) break;
                     read_ptr++;
                     if (*read_ptr != 0x00)
                     /* Encryption type is not null */
@@ -316,6 +320,7 @@ int normalize_telnet(
                     /* Client sending the Encryption START marker
                      * followed by address. */
                 {
+                    if ((read_ptr + 1) >= end) break;
                     read_ptr++;
                     /* printf("Encryption started by telnet client\n"); */
                     if (tnssn)
@@ -343,7 +348,8 @@ int normalize_telnet(
              * for the TNC_IAC could end it too early. */
             while (read_ptr < end)
             {
-                if ((*read_ptr == (unsigned char)TNC_IAC) &&
+                if (((read_ptr + 1) < end) &&
+                    (*read_ptr == (unsigned char)TNC_IAC) &&
                     (*(read_ptr+1) == (unsigned char)TNC_SE))
                 {
                     sb_start = nullptr;
