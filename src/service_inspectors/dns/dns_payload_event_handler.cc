@@ -47,12 +47,16 @@ void DnsPayloadEventHandler::handle(DataEvent& event, Flow* flow)
     const uint8_t* old_data = p->data;
     const uint32_t old_dsize = p->dsize;
     SnortProtocolId old_protocol_id = p->flow->ssn_state.snort_protocol_id;
+    bool is_insert_set = p->packet_flags & PKT_STREAM_INSERT;
 
     {
         p->data = dns_payload;
         p->dsize = payload_length;
         p->flow->ssn_state.snort_protocol_id = inspector.get_service();
+        p->context->snapshot_flow(p->flow);
         p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
+        if (is_insert_set)
+            p->packet_flags &= ~PKT_STREAM_INSERT;
         DetectionEngine::detect(p);
     }
 
@@ -62,5 +66,8 @@ void DnsPayloadEventHandler::handle(DataEvent& event, Flow* flow)
     p->data = old_data;
     p->dsize = old_dsize;
     p->flow->ssn_state.snort_protocol_id = old_protocol_id;
+    p->context->snapshot_flow(flow);
+    if (is_insert_set)
+        p->packet_flags |= PKT_STREAM_INSERT;
 
 }
