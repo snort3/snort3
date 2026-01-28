@@ -1,0 +1,548 @@
+# Generated BUILD.bazel for src/codecs/link
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_codecs_link_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: link_codecs
+cc_library(
+    name = "link_codecs",
+    srcs = [
+    "cd_arp.cc",
+    "cd_erspan2.cc",
+    "cd_erspan3.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_mpls.cc",
+    "cd_ppp_encap.cc",
+    "cd_pppoe.cc",
+    "cd_trans_bridge.cc",
+    "cd_vlan.cc",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Plugin module: cd_arp
+
+cc_binary(
+    name = "cd_arp",
+    srcs = [
+    "cd_arp.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_arp",
+    srcs = [
+    "cd_arp.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_erspan2
+
+cc_binary(
+    name = "cd_erspan2",
+    srcs = [
+    "cd_erspan2.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_erspan2",
+    srcs = [
+    "cd_erspan2.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_erspan3
+
+cc_binary(
+    name = "cd_erspan3",
+    srcs = [
+    "cd_erspan3.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_erspan3",
+    srcs = [
+    "cd_erspan3.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_ciscometadata
+
+cc_binary(
+    name = "cd_ciscometadata",
+    srcs = [
+    "cd_ciscometadata.cc",
+    "cd_ppp_encap.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_ciscometadata",
+    srcs = [
+    "cd_ciscometadata.cc",
+    "cd_ppp_encap.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_fabricpath
+
+cc_binary(
+    name = "cd_fabricpath",
+    srcs = [
+    "cd_fabricpath.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_fabricpath",
+    srcs = [
+    "cd_fabricpath.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_mpls
+
+cc_binary(
+    name = "cd_mpls",
+    srcs = [
+    "cd_mpls.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_mpls",
+    srcs = [
+    "cd_mpls.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_ppp_encap
+
+cc_binary(
+    name = "cd_ppp_encap",
+    srcs = [
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_ppp_encap",
+    srcs = [
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_pppoe
+
+cc_binary(
+    name = "cd_pppoe",
+    srcs = [
+    "cd_pppoe.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_pppoe",
+    srcs = [
+    "cd_pppoe.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_trans_bridge
+
+cc_binary(
+    name = "cd_trans_bridge",
+    srcs = [
+    "cd_trans_bridge.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_trans_bridge",
+    srcs = [
+    "cd_trans_bridge.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_vlan.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_vlan
+
+cc_binary(
+    name = "cd_vlan",
+    srcs = [
+    "cd_vlan.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_vlan",
+    srcs = [
+    "cd_vlan.cc",
+    "cd_ppp_encap.cc",
+    "cd_ciscometadata.cc",
+    "cd_fabricpath.cc",
+    "cd_trans_bridge.cc",
+    "cd_mpls.cc",
+    "cd_erspan2.cc",
+    "cd_pppoe.cc",
+    "cd_erspan3.cc",
+    "cd_arp.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)

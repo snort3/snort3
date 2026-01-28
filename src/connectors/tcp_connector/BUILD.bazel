@@ -1,0 +1,44 @@
+# Generated BUILD.bazel for src/connectors/tcp_connector
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_connectors_tcp_connector_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: tcp_connector
+cc_library(
+    name = "tcp_connector",
+    srcs = [
+    "tcp_connector.cc",
+    "tcp_connector_module.cc",
+],
+    hdrs = [
+    "tcp_connector.h",
+    "tcp_connector_config.h",
+    "tcp_connector_module.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/framework:src_framework_headers",
+    "//src/helpers:src_helpers_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/profiler:src_profiler_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,58 @@
+# Generated BUILD.bazel for src/hash
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_hash_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: hash
+cc_library(
+    name = "hash",
+    srcs = [
+    "ghash.cc",
+    "hashes.cc",
+    "hash_lru_cache.cc",
+    "hash_key_operations.cc",
+    "lru_cache_shared.cc",
+    "primetable.cc",
+    "xhash.cc",
+    "zhash.cc",
+],
+    hdrs = [
+    "hashes.h",
+    "hash_key_operations.h",
+    "lru_cache_local.h",
+    "lru_cache_shared.h",
+    "lru_segmented_cache_shared.h",
+    "xhash.h",
+    "ghash.h",
+    "hash_defs.h",
+    "hash_lru_cache.h",
+    "primetable.h",
+    "zhash.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/helpers:src_helpers_headers",
+    "//src/main:src_main_headers",
+    "//src/utils:src_utils_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

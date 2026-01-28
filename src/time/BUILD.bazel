@@ -1,0 +1,43 @@
+# Generated BUILD.bazel for src/time
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_time_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: time
+cc_library(
+    name = "time",
+    srcs = [
+    "packet_time.cc",
+    "periodic.cc",
+],
+    hdrs = [
+    "periodic.h",
+    "timersub.h",
+    "clock_defs.h",
+    "packet_time.h",
+    "stopwatch.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/catch:src_catch_headers",
+    "//src/main:src_main_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

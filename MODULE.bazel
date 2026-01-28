@@ -1,0 +1,26 @@
+# Generated MODULE.bazel for snort
+# This file uses Bazelmod (bzlmod) for dependency management.
+
+module(
+    name = "snort",
+    version = "3.10.1.0",
+)
+
+# Core Bazel dependencies
+bazel_dep(name = "platforms", version = "0.0.10")
+bazel_dep(name = "rules_cc", version = "0.0.9")
+
+# External dependencies (detected from CMake find_package)
+# Note: Configure system libraries via linkopts in defs.bzl
+# Required: daq
+# Required: dnet
+# Required: flex
+# Required: flexlexer
+# Required: hwloc
+# Required: jemalloc
+# Required: luajit
+# Required: openssl
+# Required: pcap
+# Required: pcre2
+# Required: tcmalloc
+# Required: zlib

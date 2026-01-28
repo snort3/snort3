@@ -1,0 +1,53 @@
+# Generated BUILD.bazel for src/pub_sub
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_pub_sub_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: pub_sub
+cc_library(
+    name = "pub_sub",
+    srcs = glob(["*.cc"], exclude = ["test/**"]),
+    hdrs = glob(["*.h"], exclude = ["test/**"]),
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/catch:src_catch_headers",
+    "//src/events:src_events_headers",
+    "//src/file_api:src_file_api_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/hash:src_hash_headers",
+    "//src/network_inspectors/appid:src_network_inspectors_appid_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/protocols:src_protocols_headers",
+    "//src/service_inspectors/cip:src_service_inspectors_cip_headers",
+    "//src/service_inspectors/dns:src_service_inspectors_dns_headers",
+    "//src/service_inspectors/ftp_telnet:src_service_inspectors_ftp_telnet_headers",
+    "//src/service_inspectors/http_inspect:src_service_inspectors_http_inspect_headers",
+    "//src/service_inspectors/netflow:src_service_inspectors_netflow_headers",
+    "//src/service_inspectors/sip:src_service_inspectors_sip_headers",
+    "//src/service_inspectors/ssh:src_service_inspectors_ssh_headers",
+    "//src/sfip:src_sfip_headers",
+    "//src/stream/tcp:src_stream_tcp_headers",
+    "//src/stream/udp:src_stream_udp_headers",
+    "//src/target_based:src_target_based_headers",
+    "//src/utils:src_utils_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,56 @@
+# Generated BUILD.bazel for src/catch
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_catch_headers",
+    hdrs = glob(["*.h","*.cc","*.hpp"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: catch_tests
+cc_library(
+    name = "catch_tests",
+    srcs = ["unit_test.cc"],
+    hdrs = [
+    "catch.hpp",
+    "snort_catch.h",
+    "unit_test.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/main:src_main_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: catch_main
+cc_library(
+    name = "catch_main",
+    srcs = ["catch_main.cc"],
+    hdrs = [
+    "catch.hpp",
+    "snort_catch.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/main:src_main_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,47 @@
+# Generated BUILD.bazel for src/payload_injector
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_payload_injector_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    visibility = ["//visibility:public"],
+)
+
+# Library: payload_injector
+cc_library(
+    name = "payload_injector",
+    srcs = [
+    "payload_injector.cc",
+    "payload_injector_module.cc",
+    "payload_injector_translate_page.cc",
+],
+    hdrs = [
+    "payload_injector.h",
+    "payload_injector_config.h",
+    "payload_injector_module.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/detection:src_detection_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/main:src_main_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/protocols:src_protocols_headers",
+    "//src/service_inspectors/http2_inspect:src_service_inspectors_http2_inspect_headers",
+    "//src/utils:src_utils_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

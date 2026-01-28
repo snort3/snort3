@@ -1,0 +1,51 @@
+# Generated BUILD.bazel for src/stream/udp
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_stream_udp_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: stream_udp
+cc_library(
+    name = "stream_udp",
+    srcs = [
+    "stream_udp.cc",
+    "udp_ha.cc",
+    "udp_module.cc",
+    "udp_session.cc",
+],
+    hdrs = [
+    "stream_udp.h",
+    "udp_ha.h",
+    "udp_module.h",
+    "udp_session.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/hash:src_hash_headers",
+    "//src/log:src_log_headers",
+    "//src/profiler:src_profiler_headers",
+    "//src/protocols:src_protocols_headers",
+    "//src/pub_sub:src_pub_sub_headers",
+    "//src/stream/base:src_stream_base_headers",
+    "//src/stream:src_stream_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

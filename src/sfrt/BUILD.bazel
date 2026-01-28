@@ -1,0 +1,38 @@
+# Generated BUILD.bazel for src/sfrt
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_sfrt_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    visibility = ["//visibility:public"],
+)
+
+# Library: sfrt
+cc_library(
+    name = "sfrt",
+    srcs = [
+    "sfrt_flat.cc",
+    "sfrt_flat_dir.cc",
+],
+    hdrs = [
+    "sfrt_flat.h",
+    "sfrt_flat_dir.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/sfip:src_sfip_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

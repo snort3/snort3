@@ -1,0 +1,58 @@
+# Generated BUILD.bazel for src/detection
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_detection_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: detection
+cc_library(
+    name = "detection",
+    srcs = glob(["*.cc"], exclude = ["test/**"]),
+    hdrs = glob(["*.h"], exclude = ["test/**"]),
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/catch:src_catch_headers",
+    "//src/events:src_events_headers",
+    "//src/filters:src_filters_headers",
+    "//src/framework:src_framework_headers",
+    "//src/hash:src_hash_headers",
+    "//src/helpers:src_helpers_headers",
+    "//src/ips_options:src_ips_options_headers",
+    "//src/latency:src_latency_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/managers:src_managers_headers",
+    "//src/network_inspectors/reputation:src_network_inspectors_reputation_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/parser:src_parser_headers",
+    "//src/ports:src_ports_headers",
+    "//src/profiler:src_profiler_headers",
+    "//src/protocols:src_protocols_headers",
+    "//src/pub_sub:src_pub_sub_headers",
+    "//src/search_engines:src_search_engines_headers",
+    "//src/service_inspectors/dce_rpc:src_service_inspectors_dce_rpc_headers",
+    "//src/sfip:src_sfip_headers",
+    "//src/stream:src_stream_headers",
+    "//src/target_based:src_target_based_headers",
+    "//src/time:src_time_headers",
+    "//src/trace:src_trace_headers",
+    "//src/utils:src_utils_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

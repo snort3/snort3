@@ -1,0 +1,61 @@
+# Generated BUILD.bazel for src/host_tracker
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_host_tracker_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: host_tracker
+cc_library(
+    name = "host_tracker",
+    srcs = [
+    "cache_allocator.cc",
+    "host_cache.cc",
+    "host_cache_module.cc",
+    "host_tracker_module.cc",
+    "host_tracker.cc",
+],
+    hdrs = [
+    "cache_allocator.h",
+    "cache_interface.h",
+    "host_cache.h",
+    "host_tracker.h",
+    "host_cache_module.h",
+    "host_cache_segmented.h",
+    "host_tracker_module.h",
+    "host_tracker_stats.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/control:src_control_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/hash:src_hash_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/managers:src_managers_headers",
+    "//src/network_inspectors/appid:src_network_inspectors_appid_headers",
+    "//src/network_inspectors/rna:src_network_inspectors_rna_headers",
+    "//src/protocols:src_protocols_headers",
+    "//src/sfip:src_sfip_headers",
+    "//src/time:src_time_headers",
+    "//src/trace:src_trace_headers",
+    "//src/utils:src_utils_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

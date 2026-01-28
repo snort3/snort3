@@ -1,0 +1,41 @@
+# Generated BUILD.bazel for src/network_inspectors/arp_spoof
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_network_inspectors_arp_spoof_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: arp_spoof
+cc_library(
+    name = "arp_spoof",
+    srcs = [
+    "arp_spoof.cc",
+    "arp_module.cc",
+],
+    hdrs = ["arp_module.h"],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/detection:src_detection_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/profiler:src_profiler_headers",
+    "//src/protocols:src_protocols_headers",
+    "//src/sfip:src_sfip_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

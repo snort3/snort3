@@ -1,0 +1,35 @@
+# Generated BUILD.bazel for tools/snort2lua/config_states
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "tools_snort2lua_config_states_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    visibility = ["//visibility:public"],
+)
+
+# Library: config_states
+cc_library(
+    name = "config_states",
+    srcs = glob(["*.cc"], exclude = ["test/**"]),
+    hdrs = glob(["*.h"], exclude = ["test/**"]),
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//tools/snort2lua/data/data_types:tools_snort2lua_data_data_types_headers",
+    "//tools/snort2lua/data:tools_snort2lua_data_headers",
+    "//tools/snort2lua/helpers:tools_snort2lua_helpers_headers",
+    "//tools/snort2lua:tools_snort2lua_headers",
+],
+    copts = COPTS,
+    includes = [".", ".."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

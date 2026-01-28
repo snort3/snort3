@@ -1,0 +1,52 @@
+# Generated BUILD.bazel for src/decompress
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_decompress_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    visibility = ["//visibility:public"],
+)
+
+# Library: decompress
+cc_library(
+    name = "decompress",
+    srcs = [
+    "file_decomp.cc",
+    "file_decomp_pdf.cc",
+    "file_decomp_swf.cc",
+    "file_decomp_zip.cc",
+    "file_olefile.cc",
+    "file_oleheader.cc",
+],
+    hdrs = [
+    "file_decomp.h",
+    "file_decomp_pdf.h",
+    "file_decomp_swf.h",
+    "file_decomp_zip.h",
+    "file_olefile.h",
+    "file_oleheader.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/catch:src_catch_headers",
+    "//src/detection:src_detection_headers",
+    "//src/helpers:src_helpers_headers",
+    "//src/ips_options:src_ips_options_headers",
+    "//src/main:src_main_headers",
+    "//src/trace:src_trace_headers",
+    "//src/utils:src_utils_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

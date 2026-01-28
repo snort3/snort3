@@ -1,0 +1,40 @@
+# Generated BUILD.bazel for src/helpers
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_helpers_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: helpers
+cc_library(
+    name = "helpers",
+    srcs = glob(["*.cc"], exclude = ["test/**"]),
+    hdrs = glob(["*.h"], exclude = ["test/**"]),
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/catch:src_catch_headers",
+    "//src/detection:src_detection_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/protocols:src_protocols_headers",
+    "//src/sfip:src_sfip_headers",
+    "//src/utils:src_utils_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

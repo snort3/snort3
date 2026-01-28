@@ -1,0 +1,57 @@
+# Generated BUILD.bazel for src/network_inspectors/appid
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h", "**/*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_network_inspectors_appid_headers",
+    hdrs = glob(["*.h", "appid_utils/*.h", "client_plugins/*.h", "detector_plugins/*.h", "service_plugins/*.h"], allow_empty = True),
+    deps = ["//:config_h"],
+    includes = [".", "appid_utils", "client_plugins", "detector_plugins", "service_plugins"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: appid
+cc_library(
+    name = "appid",
+    srcs = glob(["*.cc", "appid_utils/*.cc", "client_plugins/*.cc", "detector_plugins/*.cc", "service_plugins/*.cc"], exclude = ["test/**"]),
+    hdrs = glob(["*.h", "appid_utils/*.h", "client_plugins/*.h", "detector_plugins/*.h", "service_plugins/*.h"], exclude = ["test/**"]),
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/control:src_control_headers",
+    "//src/detection:src_detection_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/hash:src_hash_headers",
+    "//src/helpers:src_helpers_headers",
+    "//src/host_tracker:src_host_tracker_headers",
+    "//src/log:src_log_headers",
+    "//src/lua:src_lua_headers",
+    "//src/main:src_main_headers",
+    "//src/managers:src_managers_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/profiler:src_profiler_headers",
+    "//src/protocols:src_protocols_headers",
+    "//src/pub_sub:src_pub_sub_headers",
+    "//src/search_engines:src_search_engines_headers",
+    "//src/service_inspectors/ssh:src_service_inspectors_ssh_headers",
+    "//src/sfip:src_sfip_headers",
+    "//src/stream:src_stream_headers",
+    "//src/target_based:src_target_based_headers",
+    "//src/time:src_time_headers",
+    "//src/trace:src_trace_headers",
+    "//src/utils:src_utils_headers",
+    "//src:src_headers",
+],
+    copts = COPTS,
+    includes = [".", "appid_utils", "client_plugins", "detector_plugins", "service_plugins"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

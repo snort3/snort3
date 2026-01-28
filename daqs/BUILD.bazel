@@ -1,0 +1,69 @@
+# Generated BUILD.bazel for daqs
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "daqs_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Plugin module: daq_file
+
+cc_binary(
+    name = "daq_file",
+    srcs = [
+    "daq_file.c",
+    "daq_user.h",
+] + glob(["*.h"], exclude = ["daq_user.h"], allow_empty = True),
+    deps = [":daqs_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_daq_file",
+    srcs = [
+    "daq_file.c",
+    "daq_user.h",
+] + glob(["*.h"], exclude = ["daq_user.h"], allow_empty = True),
+    deps = [":daqs_headers"],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: daq_hext
+
+cc_binary(
+    name = "daq_hext",
+    srcs = [
+    "daq_hext.c",
+    "daq_user.h",
+] + glob(["*.h"], exclude = ["daq_user.h"], allow_empty = True),
+    deps = [":daqs_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_daq_hext",
+    srcs = [
+    "daq_hext.c",
+    "daq_user.h",
+] + glob(["*.h"], exclude = ["daq_user.h"], allow_empty = True),
+    deps = [":daqs_headers"],
+    copts = COPTS,
+    linkstatic = True,
+)

@@ -1,0 +1,34 @@
+# Generated BUILD.bazel for tools/u2spewfoo
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "tools_u2spewfoo_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    visibility = ["//visibility:public"],
+)
+
+# Binary: u2spewfoo
+cc_binary(
+    name = "u2spewfoo",
+    srcs = [
+    "u2spewfoo.cc",
+    "u2_common.h",
+],
+    deps = [
+    "//:config_h",
+    "//src/log:src_log_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    includes = ["../../src"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    visibility = ["//visibility:public"],
+)

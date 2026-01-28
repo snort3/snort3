@@ -1,0 +1,49 @@
+# Generated BUILD.bazel for snort
+#
+# This is the root build file. Build with:
+#   bazel build //:all          # Build everything
+
+load(":defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Header libraries - export all headers from source directories
+
+# Config header library
+cc_library(
+    name = "config_h",
+    hdrs = ["build/config.h"],
+    strip_include_prefix = "build",
+    copts = COPTS,
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "src_headers",
+    hdrs = [],
+    includes = ["src"],
+    deps = [":config_h", "//src/actions:src_actions_headers", "//src/catch:src_catch_headers", "//src/codecs:src_codecs_headers", "//src/codecs/ip:src_codecs_ip_headers", "//src/codecs/link:src_codecs_link_headers", "//src/codecs/misc:src_codecs_misc_headers", "//src/codecs/root:src_codecs_root_headers", "//src/connectors:src_connectors_headers", "//src/connectors/file_connector:src_connectors_file_connector_headers", "//src/connectors/std_connector:src_connectors_std_connector_headers", "//src/connectors/tcp_connector:src_connectors_tcp_connector_headers", "//src/connectors/unixdomain_connector:src_connectors_unixdomain_connector_headers", "//src/control:src_control_headers", "//src/decompress:src_decompress_headers", "//src/detection:src_detection_headers", "//src/dump_config:src_dump_config_headers", "//src/events:src_events_headers", "//src/file_api:src_file_api_headers", "//src/filters:src_filters_headers", "//src/flow:src_flow_headers", "//src/framework:src_framework_headers", "//src/hash:src_hash_headers", "//src/helpers:src_helpers_headers", "//src/host_tracker:src_host_tracker_headers", "//src/ips_options:src_ips_options_headers", "//src/js_norm:src_js_norm_headers", "//src/latency:src_latency_headers", "//src/log:src_log_headers", "//src/loggers:src_loggers_headers", "//src/lua:src_lua_headers", "//src/main:src_main_headers", "//src/managers:src_managers_headers", "//src/memory:src_memory_headers", "//src/mime:src_mime_headers", "//src/mp_transport:src_mp_transport_headers", "//src/mp_transport/mp_unix_transport:src_mp_transport_mp_unix_transport_headers", "//src/network_inspectors:src_network_inspectors_headers", "//src/network_inspectors/appid:src_network_inspectors_appid_headers", "//src/network_inspectors/arp_spoof:src_network_inspectors_arp_spoof_headers", "//src/network_inspectors/binder:src_network_inspectors_binder_headers", "//src/network_inspectors/extractor:src_network_inspectors_extractor_headers", "//src/network_inspectors/normalize:src_network_inspectors_normalize_headers", "//src/network_inspectors/packet_capture:src_network_inspectors_packet_capture_headers", "//src/network_inspectors/perf_monitor:src_network_inspectors_perf_monitor_headers", "//src/network_inspectors/port_scan:src_network_inspectors_port_scan_headers", "//src/network_inspectors/reputation:src_network_inspectors_reputation_headers", "//src/network_inspectors/rna:src_network_inspectors_rna_headers", "//src/network_inspectors/snort_ml:src_network_inspectors_snort_ml_headers", "//src/packet_io:src_packet_io_headers", "//src/parser:src_parser_headers", "//src/payload_injector:src_payload_injector_headers", "//src/policy_selectors:src_policy_selectors_headers", "//src/policy_selectors/address_space_selector:src_policy_selectors_address_space_selector_headers", "//src/policy_selectors/tenant_selector:src_policy_selectors_tenant_selector_headers", "//src/ports:src_ports_headers", "//src/profiler:src_profiler_headers", "//src/protocols:src_protocols_headers", "//src/pub_sub:src_pub_sub_headers", "//src/search_engines:src_search_engines_headers", "//src/service_inspectors:src_service_inspectors_headers", "//src/service_inspectors/back_orifice:src_service_inspectors_back_orifice_headers", "//src/service_inspectors/cip:src_service_inspectors_cip_headers", "//src/service_inspectors/dce_rpc:src_service_inspectors_dce_rpc_headers", "//src/service_inspectors/dnp3:src_service_inspectors_dnp3_headers", "//src/service_inspectors/dns:src_service_inspectors_dns_headers", "//src/service_inspectors/ftp_telnet:src_service_inspectors_ftp_telnet_headers", "//src/service_inspectors/gtp:src_service_inspectors_gtp_headers", "//src/service_inspectors/http2_inspect:src_service_inspectors_http2_inspect_headers", "//src/service_inspectors/http_inspect:src_service_inspectors_http_inspect_headers", "//src/service_inspectors/iec104:src_service_inspectors_iec104_headers", "//src/service_inspectors/imap:src_service_inspectors_imap_headers", "//src/service_inspectors/mms:src_service_inspectors_mms_headers", "//src/service_inspectors/modbus:src_service_inspectors_modbus_headers", "//src/service_inspectors/netflow:src_service_inspectors_netflow_headers", "//src/service_inspectors/opcua:src_service_inspectors_opcua_headers", "//src/service_inspectors/pop:src_service_inspectors_pop_headers", "//src/service_inspectors/rpc_decode:src_service_inspectors_rpc_decode_headers", "//src/service_inspectors/s7commplus:src_service_inspectors_s7commplus_headers", "//src/service_inspectors/sip:src_service_inspectors_sip_headers", "//src/service_inspectors/smtp:src_service_inspectors_smtp_headers", "//src/service_inspectors/ssh:src_service_inspectors_ssh_headers", "//src/service_inspectors/ssl:src_service_inspectors_ssl_headers", "//src/service_inspectors/tlv_pdu:src_service_inspectors_tlv_pdu_headers", "//src/service_inspectors/wizard:src_service_inspectors_wizard_headers", "//src/sfip:src_sfip_headers", "//src/sfrt:src_sfrt_headers", "//src/side_channel:src_side_channel_headers", "//src/stream:src_stream_headers", "//src/stream/base:src_stream_base_headers", "//src/stream/file:src_stream_file_headers", "//src/stream/icmp:src_stream_icmp_headers", "//src/stream/ip:src_stream_ip_headers", "//src/stream/tcp:src_stream_tcp_headers", "//src/stream/udp:src_stream_udp_headers", "//src/stream/user:src_stream_user_headers", "//src/target_based:src_target_based_headers", "//src/time:src_time_headers", "//src/trace:src_trace_headers", "//src/utils:src_utils_headers"],
+    copts = COPTS,
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "tools_headers",
+    hdrs = [],
+    includes = ["tools"],
+    deps = [":config_h", "//tools/snort2lua:tools_snort2lua_headers", "//tools/snort2lua/config_states:tools_snort2lua_config_states_headers", "//tools/snort2lua/data:tools_snort2lua_data_headers", "//tools/snort2lua/data/data_types:tools_snort2lua_data_data_types_headers", "//tools/snort2lua/helpers:tools_snort2lua_helpers_headers", "//tools/snort2lua/keyword_states:tools_snort2lua_keyword_states_headers", "//tools/snort2lua/output_states:tools_snort2lua_output_states_headers", "//tools/snort2lua/preprocessor_states:tools_snort2lua_preprocessor_states_headers", "//tools/snort2lua/rule_states:tools_snort2lua_rule_states_headers", "//tools/u2boat:tools_u2boat_headers", "//tools/u2spewfoo:tools_u2spewfoo_headers"],
+    copts = COPTS,
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "all_headers",
+    deps = [":src_headers", ":tools_headers"],
+    visibility = ["//visibility:public"],
+)
+
+# Main target - builds the primary executable
+alias(
+    name = "all",
+    actual = "//src:snort",
+)

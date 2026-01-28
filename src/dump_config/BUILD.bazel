@@ -1,0 +1,46 @@
+# Generated BUILD.bazel for src/dump_config
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_dump_config_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: dump_config
+cc_library(
+    name = "dump_config",
+    srcs = [
+    "config_data.cc",
+    "config_output.cc",
+    "json_config_output.cc",
+    "text_config_output.cc",
+],
+    hdrs = [
+    "config_data.h",
+    "config_output.h",
+    "json_config_output.h",
+    "text_config_output.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/catch:src_catch_headers",
+    "//src/framework:src_framework_headers",
+    "//src/helpers:src_helpers_headers",
+    "//src/log:src_log_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

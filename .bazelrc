@@ -1,0 +1,14 @@
+# Generated .bazelrc for snort
+
+# Build settings
+build --cxxopt=-std=c++17
+build --copt=-fPIC
+build --cxxopt=-fPIC
+
+
+# Test settings
+test --test_output=errors
+
+# Output
+build --color=yes
+build --show_timestamps

@@ -1,0 +1,56 @@
+# Generated BUILD.bazel for src/service_inspectors/ssl
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_service_inspectors_ssl_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: ssl
+cc_library(
+    name = "ssl",
+    srcs = [
+    "ips_ssl_state.cc",
+    "ips_ssl_version.cc",
+    "ssl_inspector.cc",
+    "ssl_flow_data.cc",
+    "ssl_module.cc",
+    "ssl_splitter.cc",
+],
+    hdrs = [
+    "ssl_config.h",
+    "ssl_inspector.h",
+    "ssl_module.h",
+    "ssl_splitter.h",
+    "ssl_flow_data.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/detection:src_detection_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/hash:src_hash_headers",
+    "//src/log:src_log_headers",
+    "//src/profiler:src_profiler_headers",
+    "//src/protocols:src_protocols_headers",
+    "//src/pub_sub:src_pub_sub_headers",
+    "//src/stream:src_stream_headers",
+    "//src/trace:src_trace_headers",
+    "//src/utils:src_utils_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

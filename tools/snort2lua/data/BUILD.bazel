@@ -1,0 +1,44 @@
+# Generated BUILD.bazel for tools/snort2lua/data
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "tools_snort2lua_data_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: conversion_data
+cc_library(
+    name = "conversion_data",
+    srcs = [
+    "dt_data.cc",
+    "dt_rule_api.cc",
+    "dt_state_api.cc",
+    "dt_table_api.cc",
+],
+    hdrs = [
+    "dt_data.h",
+    "dt_rule_api.h",
+    "dt_state_api.h",
+    "dt_table_api.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//tools/snort2lua/data/data_types:tools_snort2lua_data_data_types_headers",
+    "//tools/snort2lua/helpers:tools_snort2lua_helpers_headers",
+],
+    copts = COPTS,
+    includes = [".", ".."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

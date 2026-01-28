@@ -1,0 +1,424 @@
+# Generated BUILD.bazel for src/codecs/misc
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_codecs_misc_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: misc_codecs
+cc_library(
+    name = "misc_codecs",
+    srcs = [
+    "cd_default.cc",
+    "cd_gtp.cc",
+    "cd_icmp4_ip.cc",
+    "cd_icmp6_ip.cc",
+    "cd_llc.cc",
+    "cd_teredo.cc",
+    "cd_user.cc",
+    "cd_vxlan.cc",
+    "cd_geneve.cc",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//daqs:daqs_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Plugin module: cd_gtp
+
+cc_binary(
+    name = "cd_gtp",
+    srcs = [
+    "cd_gtp.cc",
+    "cd_llc.cc",
+    "cd_teredo.cc",
+    "cd_vxlan.cc",
+    "cd_icmp4_ip.cc",
+    "cd_geneve.cc",
+    "cd_icmp6_ip.cc",
+    "cd_user.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_gtp",
+    srcs = [
+    "cd_gtp.cc",
+    "cd_llc.cc",
+    "cd_teredo.cc",
+    "cd_vxlan.cc",
+    "cd_icmp4_ip.cc",
+    "cd_geneve.cc",
+    "cd_icmp6_ip.cc",
+    "cd_user.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//daqs:daqs_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_icmp4_ip
+
+cc_binary(
+    name = "cd_icmp4_ip",
+    srcs = [
+    "cd_icmp4_ip.cc",
+    "cd_gtp.cc",
+    "cd_llc.cc",
+    "cd_teredo.cc",
+    "cd_vxlan.cc",
+    "cd_geneve.cc",
+    "cd_icmp6_ip.cc",
+    "cd_user.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_icmp4_ip",
+    srcs = [
+    "cd_icmp4_ip.cc",
+    "cd_gtp.cc",
+    "cd_llc.cc",
+    "cd_teredo.cc",
+    "cd_vxlan.cc",
+    "cd_geneve.cc",
+    "cd_icmp6_ip.cc",
+    "cd_user.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//daqs:daqs_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_icmp6_ip
+
+cc_binary(
+    name = "cd_icmp6_ip",
+    srcs = [
+    "cd_icmp6_ip.cc",
+    "cd_gtp.cc",
+    "cd_llc.cc",
+    "cd_teredo.cc",
+    "cd_vxlan.cc",
+    "cd_icmp4_ip.cc",
+    "cd_geneve.cc",
+    "cd_user.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_icmp6_ip",
+    srcs = [
+    "cd_icmp6_ip.cc",
+    "cd_gtp.cc",
+    "cd_llc.cc",
+    "cd_teredo.cc",
+    "cd_vxlan.cc",
+    "cd_icmp4_ip.cc",
+    "cd_geneve.cc",
+    "cd_user.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//daqs:daqs_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_llc
+
+cc_binary(
+    name = "cd_llc",
+    srcs = [
+    "cd_llc.cc",
+    "cd_gtp.cc",
+    "cd_teredo.cc",
+    "cd_vxlan.cc",
+    "cd_icmp4_ip.cc",
+    "cd_geneve.cc",
+    "cd_icmp6_ip.cc",
+    "cd_user.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_llc",
+    srcs = [
+    "cd_llc.cc",
+    "cd_gtp.cc",
+    "cd_teredo.cc",
+    "cd_vxlan.cc",
+    "cd_icmp4_ip.cc",
+    "cd_geneve.cc",
+    "cd_icmp6_ip.cc",
+    "cd_user.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//daqs:daqs_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_teredo
+
+cc_binary(
+    name = "cd_teredo",
+    srcs = [
+    "cd_teredo.cc",
+    "cd_gtp.cc",
+    "cd_llc.cc",
+    "cd_vxlan.cc",
+    "cd_icmp4_ip.cc",
+    "cd_geneve.cc",
+    "cd_icmp6_ip.cc",
+    "cd_user.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_teredo",
+    srcs = [
+    "cd_teredo.cc",
+    "cd_gtp.cc",
+    "cd_llc.cc",
+    "cd_vxlan.cc",
+    "cd_icmp4_ip.cc",
+    "cd_geneve.cc",
+    "cd_icmp6_ip.cc",
+    "cd_user.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//daqs:daqs_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_user
+
+cc_binary(
+    name = "cd_user",
+    srcs = [
+    "cd_user.cc",
+    "cd_gtp.cc",
+    "cd_llc.cc",
+    "cd_teredo.cc",
+    "cd_vxlan.cc",
+    "cd_icmp4_ip.cc",
+    "cd_geneve.cc",
+    "cd_icmp6_ip.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_user",
+    srcs = [
+    "cd_user.cc",
+    "cd_gtp.cc",
+    "cd_llc.cc",
+    "cd_teredo.cc",
+    "cd_vxlan.cc",
+    "cd_icmp4_ip.cc",
+    "cd_geneve.cc",
+    "cd_icmp6_ip.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//daqs:daqs_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_vxlan
+
+cc_binary(
+    name = "cd_vxlan",
+    srcs = [
+    "cd_vxlan.cc",
+    "cd_gtp.cc",
+    "cd_llc.cc",
+    "cd_teredo.cc",
+    "cd_icmp4_ip.cc",
+    "cd_geneve.cc",
+    "cd_icmp6_ip.cc",
+    "cd_user.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_vxlan",
+    srcs = [
+    "cd_vxlan.cc",
+    "cd_gtp.cc",
+    "cd_llc.cc",
+    "cd_teredo.cc",
+    "cd_icmp4_ip.cc",
+    "cd_geneve.cc",
+    "cd_icmp6_ip.cc",
+    "cd_user.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//daqs:daqs_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)
+
+# Plugin module: cd_geneve
+
+cc_binary(
+    name = "cd_geneve",
+    srcs = [
+    "cd_geneve.cc",
+    "cd_gtp.cc",
+    "cd_llc.cc",
+    "cd_teredo.cc",
+    "cd_vxlan.cc",
+    "cd_icmp4_ip.cc",
+    "cd_icmp6_ip.cc",
+    "cd_user.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = ["//:src_headers"],
+    copts = COPTS,
+    linkopts = LINKOPTS,
+    linkshared = True,
+)
+
+# Static version for linking into binaries
+cc_library(
+    name = "libsnort_static_cd_geneve",
+    srcs = [
+    "cd_geneve.cc",
+    "cd_gtp.cc",
+    "cd_llc.cc",
+    "cd_teredo.cc",
+    "cd_vxlan.cc",
+    "cd_icmp4_ip.cc",
+    "cd_icmp6_ip.cc",
+    "cd_user.cc",
+] + glob(["*.h"], allow_empty = True),
+    deps = [
+    "//:src_headers",
+    "//daqs:daqs_headers",
+    "//src/codecs:src_codecs_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/protocols:src_protocols_headers",
+],
+    copts = COPTS,
+    linkstatic = True,
+)

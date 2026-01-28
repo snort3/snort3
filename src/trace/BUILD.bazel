@@ -1,0 +1,58 @@
+# Generated BUILD.bazel for src/trace
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_trace_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: trace
+cc_library(
+    name = "trace",
+    srcs = [
+    "trace.cc",
+    "trace_api.cc",
+    "trace_config.cc",
+    "trace_loggers.cc",
+    "trace_module.cc",
+    "trace_parser.cc",
+    "trace_swap.cc",
+],
+    hdrs = [
+    "trace_config.h",
+    "trace_loggers.h",
+    "trace_module.h",
+    "trace_parser.h",
+    "trace_swap.h",
+    "trace.h",
+    "trace_logger.h",
+    "trace_api.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/catch:src_catch_headers",
+    "//src/control:src_control_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/managers:src_managers_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/protocols:src_protocols_headers",
+    "//src/utils:src_utils_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

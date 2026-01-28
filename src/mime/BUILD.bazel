@@ -1,0 +1,45 @@
+# Generated BUILD.bazel for src/mime
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_mime_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: mime
+cc_library(
+    name = "mime",
+    srcs = glob(["*.cc"], exclude = ["test/**"]),
+    hdrs = glob(["*.h"], exclude = ["test/**"]),
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/catch:src_catch_headers",
+    "//src/decompress:src_decompress_headers",
+    "//src/detection:src_detection_headers",
+    "//src/file_api:src_file_api_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/hash:src_hash_headers",
+    "//src/helpers:src_helpers_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/search_engines:src_search_engines_headers",
+    "//src/trace:src_trace_headers",
+    "//src/utils:src_utils_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

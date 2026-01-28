@@ -1,0 +1,59 @@
+# Generated BUILD.bazel for src/stream/ip
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_stream_ip_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: stream_ip
+cc_library(
+    name = "stream_ip",
+    srcs = [
+    "ip_defrag.cc",
+    "ip_ha.cc",
+    "ip_module.cc",
+    "ip_session.cc",
+    "stream_ip.cc",
+],
+    hdrs = [
+    "ip_defrag.h",
+    "ip_ha.h",
+    "ip_module.h",
+    "ip_session.h",
+    "stream_ip.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/catch:src_catch_headers",
+    "//src/detection:src_detection_headers",
+    "//src/flow:src_flow_headers",
+    "//src/framework:src_framework_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/packet_io:src_packet_io_headers",
+    "//src/profiler:src_profiler_headers",
+    "//src/protocols:src_protocols_headers",
+    "//src/pub_sub:src_pub_sub_headers",
+    "//src/stream/base:src_stream_base_headers",
+    "//src/stream:src_stream_headers",
+    "//src/time:src_time_headers",
+    "//src/trace:src_trace_headers",
+    "//src/utils:src_utils_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)

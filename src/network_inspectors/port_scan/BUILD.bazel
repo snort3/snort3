@@ -1,0 +1,53 @@
+# Generated BUILD.bazel for src/network_inspectors/port_scan
+
+load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
+
+package(default_visibility = DEFAULT_VISIBILITY)
+
+# Export all local files for cross-package references
+exports_files(glob(["*.cc", "*.h"], allow_empty = True))
+
+# Header library for cross-package includes (sandbox compatible)
+cc_library(
+    name = "src_network_inspectors_port_scan_headers",
+    hdrs = glob(["*.h","*.cc"], allow_empty = True),
+    deps = ["//:config_h"],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
+
+# Library: port_scan
+cc_library(
+    name = "port_scan",
+    srcs = [
+    "port_scan.cc",
+    "ps_detect.cc",
+    "ps_module.cc",
+    "ipobj.cc",
+],
+    hdrs = [
+    "ps_detect.h",
+    "ps_inspect.h",
+    "ps_module.h",
+    "ipobj.h",
+],
+    deps = [
+    "//:src_headers",
+    "//:tools_headers",
+    "//src/detection:src_detection_headers",
+    "//src/framework:src_framework_headers",
+    "//src/hash:src_hash_headers",
+    "//src/log:src_log_headers",
+    "//src/main:src_main_headers",
+    "//src/profiler:src_profiler_headers",
+    "//src/protocols:src_protocols_headers",
+    "//src/sfip:src_sfip_headers",
+    "//src/stream:src_stream_headers",
+    "//src/time:src_time_headers",
+    "//src/utils:src_utils_headers",
+],
+    copts = COPTS,
+    includes = ["."],
+    alwayslink = True,
+    visibility = ["//visibility:public"],
+)
