@@ -40,6 +40,9 @@ enum MMS_State
     MMS_STATE__OSI_SESSION_SPDU_CN_LEN,
     MMS_STATE__OSI_SESSION_SPDU_AC_LEN,
     MMS_STATE__OSI_SESSION_SPDU_PARAMS,
+    MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE,
+    MMS_STATE__OSI_SESSION_SPDU_PARAM_LEN,
+    MMS_STATE__OSI_SESSION_SPDU_PARAM_DATA,
     MMS_STATE__OSI_SESSION_SPDU_USER_DATA_LEN,
     MMS_STATE__OSI_PRES_CP_CPA,
     MMS_STATE__OSI_PRES_CP_CPA_USER_DATA_ACSE_LOCATE,
@@ -88,6 +91,7 @@ public:
     MMS_State last_state = MMS_State::MMS_STATE__TPKT_VER;
     bool connect_accept_item_likely = false;
     bool session_requirement_likely = false;
+    unsigned state_remain = 0; // used to track remaining bytes in current state
 };
 
 #endif

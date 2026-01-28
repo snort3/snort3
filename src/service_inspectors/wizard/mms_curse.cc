@@ -186,54 +186,95 @@ static uint32_t search_for_osi_session_spdu_params( MmsTracker& mms, const uint8
         CN_SPDU_PARAM__SESSION_USER_DATA = 0xC1,
     };
 
-    // len reduction is to allow space for the forward looking checks
-    while ( idx < len - 3 )
+    assert( data );
+
+    while ( idx < len )
     {
-        // check for the possibility of a connect accept item
-        if ( data[idx] == CN_SPDU_PARAM__CONNECT_ACCEPT_ITEM )
+        switch ( mms.state )
         {
-            // track that the item was found
-            mms.connect_accept_item_likely = true;
-        }
-        // check for the possibility of a session requirement
-        else if ( data[idx] == CN_SPDU_PARAM__SESSION_REQUIREMENT )
+        case MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE:
         {
-            // track that the item was found
-            mms.session_requirement_likely = true;
-        }
-        // check for the possibility of a session user data item
-        else if ( data[idx] == CN_SPDU_PARAM__SESSION_USER_DATA )
-        {
-            // when this has been found and there is a good chance all of the other required items exist, move on to look for mms
-            if ( mms.connect_accept_item_likely &&
-                mms.session_requirement_likely )
+            // check for the possibility of a connect accept item
+            if ( data[idx] == CN_SPDU_PARAM__CONNECT_ACCEPT_ITEM )
             {
-                mms.state = MMS_STATE__OSI_SESSION_SPDU_USER_DATA_LEN;
-                break;
+                // track that the item was found
+                mms.connect_accept_item_likely = true;
             }
-            // otherwise it is unlikely that this is mms
-            else
+            // check for the possibility of a session requirement
+            else if ( data[idx] == CN_SPDU_PARAM__SESSION_REQUIREMENT )
             {
-                mms.state = MMS_STATE__NOT_FOUND;
-                break;
+                // track that the item was found
+                mms.session_requirement_likely = true;
             }
-        }
-        // no else case as we want to allow for the possibility of non-standard items
+            // check for the possibility of a session user data item
+            else if ( data[idx] == CN_SPDU_PARAM__SESSION_USER_DATA )
+            {
+                // when this has been found and there is a good chance all of the other required items exist, move on to look for mms
+                if ( mms.connect_accept_item_likely &&
+                    mms.session_requirement_likely )
+                {
+                    mms.state = MMS_STATE__OSI_SESSION_SPDU_USER_DATA_LEN;
+                    mms.state_remain = 0;
+                    return idx;
+                }
+                // otherwise it is unlikely that this is mms
+                else
+                {
+                    mms.state = MMS_STATE__NOT_FOUND;
+                    mms.state_remain = 0;
+                    return idx;
+                }
+            }
 
-        // increment the index to look at the item length field
-        idx++;
-        // increment the index to the end of the item data
-        idx += data[idx];
-        // increment the index to the start of the next item
-        idx++;
+            mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_LEN;
+            mms.state_remain = 1;
 
-        // if the index has gotten larger than the available buffer, bail
-        if ( idx >= len )
-        {
-            mms.state = MMS_STATE__NOT_FOUND;
             break;
         }
+
+        case MMS_STATE__OSI_SESSION_SPDU_PARAM_LEN:
+        {
+            mms.state_remain = data[idx];
+
+            if ( mms.state_remain > 0 )
+                mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_DATA;
+            else
+            {
+                // no data for this parameter; move on to the next parameter type.
+                mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE;
+                mms.state_remain = 1;
+            }
+
+            break;
+        }
+
+        case MMS_STATE__OSI_SESSION_SPDU_PARAM_DATA:
+        {
+            uint32_t advance_len = std::min<uint32_t>(
+                static_cast<uint32_t>( mms.state_remain ), len - idx );
+
+            // move to the end of data, adjusting for the upcoming idx++ at the end of the loop
+            idx += advance_len - 1;
+
+            mms.state_remain -= advance_len;
+
+            if ( mms.state_remain == 0 )
+            {
+                mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE;
+                mms.state_remain = 1;
+            }
+
+            break;
+        }
+
+        default:
+            assert( false );
+            break;
+        }
+
+        idx++;
     }
+
     return idx;
 }
 
@@ -583,19 +624,21 @@ bool CurseBook::mms_curse( const uint8_t* data, unsigned len, CurseTracker* trac
         // skip the CN SPDU length field
         case MMS_STATE__OSI_SESSION_SPDU_CN_LEN:
         {
-            mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAMS;
+            mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE;
             break;
         }
 
         // skip the AC SPDU length field
         case MMS_STATE__OSI_SESSION_SPDU_AC_LEN:
         {
-            mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAMS;
+            mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE;
             break;
         }
 
         // check the parameters
-        case MMS_STATE__OSI_SESSION_SPDU_PARAMS:
+        case MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE:    // fallthrough intentional
+        case MMS_STATE__OSI_SESSION_SPDU_PARAM_LEN:     // fallthrough intentional
+        case MMS_STATE__OSI_SESSION_SPDU_PARAM_DATA:
         {
             idx = search_for_osi_session_spdu_params(mms, data, len, idx);
             break;
@@ -705,3 +748,193 @@ bool CurseBook::mms_curse( const uint8_t* data, unsigned len, CurseTracker* trac
 
     return false;
 }
+
+
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+TEST_CASE("search_for_osi_session_spdu_params user data success", "[mms]")
+{
+    const uint8_t data[] = { 0xC1 };
+
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE;
+    mms.connect_accept_item_likely = true;
+    mms.session_requirement_likely = true;
+
+    const uint32_t r = search_for_osi_session_spdu_params(mms, data, sizeof(data), 0);
+
+    CHECK(r == 0);
+    CHECK(mms.state == MMS_STATE__OSI_SESSION_SPDU_USER_DATA_LEN);
+    CHECK(mms.state_remain == 0);
+}
+
+TEST_CASE("search_for_osi_session_spdu_params user data missing prerequisite", "[mms]")
+{
+    const uint8_t data[] = { 0xC1 };
+
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE;
+
+    const uint32_t r = search_for_osi_session_spdu_params(mms, data, sizeof(data), 0);
+
+    CHECK(r == 0);
+    CHECK(mms.state == MMS_STATE__NOT_FOUND);
+    CHECK(mms.state_remain == 0);
+}
+
+TEST_CASE("search_for_osi_session_spdu_params zero length parameters", "[mms]")
+{
+    const uint8_t data[] = {
+        0x05, 0x00,
+        0x14, 0x00,
+        0xC1
+    };
+
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE;
+
+    const uint32_t r = search_for_osi_session_spdu_params(mms, data, sizeof(data), 0);
+
+    CHECK(r == 4);
+    CHECK(mms.state == MMS_STATE__OSI_SESSION_SPDU_USER_DATA_LEN);
+    CHECK(mms.connect_accept_item_likely);
+    CHECK(mms.session_requirement_likely);
+}
+
+TEST_CASE("search_for_osi_session_spdu_params data in same buffer", "[mms]")
+{
+    const uint8_t data[] = {
+        0x05, 0x01, 0xAA,
+        0x14, 0x01, 0xBB,
+        0xC1
+    };
+
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE;
+
+    const uint32_t r = search_for_osi_session_spdu_params(mms, data, sizeof(data), 0);
+
+    CHECK(r == 6);
+    CHECK(mms.state == MMS_STATE__OSI_SESSION_SPDU_USER_DATA_LEN);
+    CHECK(mms.connect_accept_item_likely);
+    CHECK(mms.session_requirement_likely);
+}
+
+TEST_CASE("search_for_osi_session_spdu_params unknown tag skip", "[mms]")
+{
+    const uint8_t data[] = {
+        0xEE, 0x02, 0xAA, 0xBB,
+        0x05, 0x00,
+        0x14, 0x00,
+        0xC1
+    };
+
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE;
+
+    const uint32_t r = search_for_osi_session_spdu_params(mms, data, sizeof(data), 0);
+
+    CHECK(r == 8);
+    CHECK(mms.state == MMS_STATE__OSI_SESSION_SPDU_USER_DATA_LEN);
+    CHECK(mms.connect_accept_item_likely);
+    CHECK(mms.session_requirement_likely);
+}
+
+TEST_CASE("search_for_osi_session_spdu_params split type and len", "[mms]")
+{
+    const uint8_t data1[] = { 0x05 };
+    const uint8_t data2[] = { 0x01, 0x00, 0x14, 0x01, 0x00, 0xC1 };
+
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE;
+
+    uint32_t r = search_for_osi_session_spdu_params(mms, data1, sizeof(data1), 0);
+    CHECK(r == 1);
+    CHECK(mms.state == MMS_STATE__OSI_SESSION_SPDU_PARAM_LEN);
+    CHECK(mms.state_remain == 1);
+    CHECK(mms.connect_accept_item_likely);
+
+    r = search_for_osi_session_spdu_params(mms, data2, sizeof(data2), 0);
+    CHECK(r == 5);
+    CHECK(mms.state == MMS_STATE__OSI_SESSION_SPDU_USER_DATA_LEN);
+    CHECK(mms.session_requirement_likely);
+}
+
+TEST_CASE("search_for_osi_session_spdu_params split len and data", "[mms]")
+{
+    const uint8_t data1[] = { 0x05, 0x02 };
+    const uint8_t data2[] = { 0xAA, 0xBB, 0x14, 0x01, 0x00, 0xC1 };
+
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE;
+
+    uint32_t r = search_for_osi_session_spdu_params(mms, data1, sizeof(data1), 0);
+    CHECK(r == 2);
+    CHECK(mms.state == MMS_STATE__OSI_SESSION_SPDU_PARAM_DATA);
+    CHECK(mms.state_remain == 2);
+    CHECK(mms.connect_accept_item_likely);
+
+    r = search_for_osi_session_spdu_params(mms, data2, sizeof(data2), 0);
+    CHECK(r == 5);
+    CHECK(mms.state == MMS_STATE__OSI_SESSION_SPDU_USER_DATA_LEN);
+    CHECK(mms.session_requirement_likely);
+}
+
+TEST_CASE("search_for_osi_session_spdu_params split midway through data", "[mms]")
+{
+    const uint8_t data1[] = { 0x05, 0x03, 0xAA };
+    const uint8_t data2[] = { 0xBB, 0xCC, 0x14, 0x01, 0x00, 0xC1 };
+
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE;
+
+    uint32_t r = search_for_osi_session_spdu_params(mms, data1, sizeof(data1), 0);
+    CHECK(r == 3);
+    CHECK(mms.state == MMS_STATE__OSI_SESSION_SPDU_PARAM_DATA);
+    CHECK(mms.state_remain == 2);
+    CHECK(mms.connect_accept_item_likely);
+
+    r = search_for_osi_session_spdu_params(mms, data2, sizeof(data2), 0);
+    CHECK(r == 5);
+    CHECK(mms.state == MMS_STATE__OSI_SESSION_SPDU_USER_DATA_LEN);
+    CHECK(mms.session_requirement_likely);
+}
+
+TEST_CASE("search_for_osi_session_spdu_params split at data end", "[mms]")
+{
+    const uint8_t data1[] = { 0x05, 0x01, 0xAA };
+    const uint8_t data2[] = { 0x14, 0x01, 0x00, 0xC1 };
+
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE;
+
+    uint32_t r = search_for_osi_session_spdu_params(mms, data1, sizeof(data1), 0);
+    CHECK(r == 3);
+    CHECK(mms.state == MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE);
+    CHECK(mms.state_remain == 1);
+    CHECK(mms.connect_accept_item_likely);
+
+    r = search_for_osi_session_spdu_params(mms, data2, sizeof(data2), 0);
+    CHECK(r == 3);
+    CHECK(mms.state == MMS_STATE__OSI_SESSION_SPDU_USER_DATA_LEN);
+    CHECK(mms.session_requirement_likely);
+}
+
+TEST_CASE("search_for_osi_session_spdu_params OOB index", "[mms]")
+{
+    const uint8_t data[] = { 1, 2, 3, 4, 5, 6 };
+
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_SESSION_SPDU_PARAM_TYPE;
+
+    const uint32_t r = search_for_osi_session_spdu_params(mms, data, sizeof(data), UINT32_MAX);
+    CHECK(r == UINT32_MAX);
+}
+
+#endif
