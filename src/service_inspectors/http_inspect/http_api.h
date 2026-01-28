@@ -48,6 +48,7 @@
     "http_version",               \
     "js_data",                    \
     "vba_data",                   \
+    "http_decoded_uri",           \
     "http_method_str",            \
     "http_request_size",          \
     "http_response_size",         \

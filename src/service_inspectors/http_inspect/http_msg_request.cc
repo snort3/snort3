@@ -456,6 +456,8 @@ void HttpMsgRequest::print_section(FILE* output)
         HttpApi::classic_buffer_names[HTTP_BUFFER_METHOD-1]);
     get_classic_buffer(HTTP_BUFFER_RAW_URI, 0, 0).print(output,
         HttpApi::classic_buffer_names[HTTP_BUFFER_RAW_URI-1]);
+    get_classic_buffer(HTTP_BUFFER_DECODED_URI, 0, 0).print(output,
+        HttpApi::classic_buffer_names[HTTP_BUFFER_DECODED_URI-1]);
     get_classic_buffer(HTTP_BUFFER_URI, 0, 0).print(output,
         HttpApi::classic_buffer_names[HTTP_BUFFER_URI-1]);
     get_classic_buffer(HTTP_BUFFER_VERSION, 0, 0).print(output,

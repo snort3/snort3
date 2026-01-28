@@ -145,6 +145,7 @@ protected:
 
 private:
     const Field& get_tmp_buffer(const HttpBufferInfo& buf);
+    Field* compute_http_decoded_uri(const HttpBufferInfo& buf);
     Field* compute_http_method_str(const HttpBufferInfo& buf);
     Field* compute_http_request_size(const HttpBufferInfo& buf);
     Field* compute_http_response_size(const HttpBufferInfo& buf);

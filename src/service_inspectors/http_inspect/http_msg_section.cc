@@ -123,6 +123,17 @@ static Field* tmp_field(const Field& f)
     return tmp_field_from_data(reinterpret_cast<const uint8_t*>(escaped.c_str()), escaped.length());
 }
 
+Field* HttpMsgSection::compute_http_decoded_uri(const HttpBufferInfo&)
+{
+    if (request)
+    {
+        HttpUri* uri = request->get_http_uri();
+        if (uri)
+            return uri->create_decoded_uri();
+    }
+    return new Field(STAT_NOT_PRESENT);
+}
+
 Field* HttpMsgSection::compute_http_method_str(const HttpBufferInfo&)
 {
     return tmp_field(get_classic_buffer(HTTP_BUFFER_METHOD, 0, 0));
@@ -211,6 +222,7 @@ const Field& HttpMsgSection::get_tmp_buffer(const HttpBufferInfo& buf)
     typedef Field* (HttpMsgSection::*ComputeFunction)(const HttpBufferInfo&);
 
     static const ComputeFunction compute_functions[TMP_BUFFER_CNT] = {
+        &HttpMsgSection::compute_http_decoded_uri,      // HTTP_BUFFER_DECODED_URI
         &HttpMsgSection::compute_http_method_str,       // HTTP_BUFFER_METHOD_STR
         &HttpMsgSection::compute_http_request_size,     // HTTP_BUFFER_REQUEST_SIZE
         &HttpMsgSection::compute_http_response_size,    // HTTP_BUFFER_RESPONSE_SIZE

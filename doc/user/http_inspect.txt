@@ -518,12 +518,13 @@ or more and 200 headers or less:
     alert tcp any any -> any any ( msg:"between [100,200] headers";
     http_num_headers: 100<=>200; sid:95; rev:1; )
 
-===== http_uri and http_raw_uri
+===== http_uri, http_decoded_uri and http_raw_uri
 
 These provide the URI of the request message. The raw form is exactly as it
 appeared in the message and the normalized form is determined by the URI
-normalization options you selected. In addition to searching the entire URI
-there are six components that can be searched individually:
+normalization options you selected. The decoded form provides normalization
+without path simplification. In addition to searching the entire URI there are
+six components that can be searched individually:
 
     alert tcp any any -> any any (
         msg:"URI path";
@@ -572,7 +573,7 @@ components are normalized. In these cases, http_uri represents the normalized
 path, query, and fragment (/path?query#fragment). If the uri is of type 
 authority (host and port), the host is normalized and http_uri represents the 
 normalized host with the port number. In all other cases http_uri is the same 
-as http_raw_uri.  
+as http_raw_uri. http_decoded_uri does not support those six options.
 
 Note: this section uses informal language to explain some things. Nothing
 here is intended to conflict with the technical language of the HTTP RFCs
