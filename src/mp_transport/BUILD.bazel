@@ -1,4 +1,3 @@
-# Generated BUILD.bazel for src/mp_transport
 
 load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
 

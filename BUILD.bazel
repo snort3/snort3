@@ -1,4 +1,3 @@
-# Generated BUILD.bazel for snort
 #
 # This is the root build file. Build with:
 #   bazel build //:all          # Build everything

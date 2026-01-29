@@ -1,4 +1,3 @@
-# Generated BUILD.bazel for src/service_inspectors/rpc_decode
 
 load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
 

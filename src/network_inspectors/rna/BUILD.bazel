@@ -1,4 +1,3 @@
-# Generated BUILD.bazel for src/network_inspectors/rna
 
 load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
 

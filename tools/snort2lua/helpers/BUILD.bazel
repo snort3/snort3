@@ -1,4 +1,3 @@
-# Generated BUILD.bazel for tools/snort2lua/helpers
 
 load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
 

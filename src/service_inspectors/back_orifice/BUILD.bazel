@@ -1,4 +1,3 @@
-# Generated BUILD.bazel for src/service_inspectors/back_orifice
 
 load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
 

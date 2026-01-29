@@ -1,4 +1,3 @@
-# Generated BUILD.bazel for src/stream/file
 
 load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
 

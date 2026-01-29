@@ -1,4 +1,3 @@
-# Generated BUILD.bazel for src/policy_selectors/address_space_selector
 
 load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
 

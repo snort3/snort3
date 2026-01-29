@@ -1,4 +1,3 @@
-# Generated BUILD.bazel for src/connectors/unixdomain_connector
 
 load("//:defs.bzl", "COPTS", "LINKOPTS", "DEFAULT_VISIBILITY")
 
