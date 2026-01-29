@@ -311,7 +311,7 @@ to load the external rules file named rules.txt.  You can only specify
 one file this way but rules files can include other rules files with the
 include statement.  In addition you can load rules like:
 
-    $ sort -c snort.lua -R rules.txt
+    $ snort -c snort.lua -R rules.txt
 
 You can use both approaches together.
 
