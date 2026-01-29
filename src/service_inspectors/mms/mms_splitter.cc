@@ -149,6 +149,9 @@ MmsSplitter::MmsSplitter(bool b) :
 StreamSplitter::Status MmsSplitter::scan(Packet* p, const uint8_t* data, uint32_t len,
     uint32_t /*flags*/, uint32_t* fp)
 {
+    if (!p->flow)
+        return StreamSplitter::ABORT;
+
     // create TPKT flow data and add it to the packet
     TpktFlowData* tpktfd = (TpktFlowData*)p->flow->get_flow_data(TpktFlowData::inspector_id);
 

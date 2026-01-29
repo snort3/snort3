@@ -468,7 +468,10 @@ static TpktAppliSearchStateType decode_osi_pres_normal_mode_params(BerReader* be
 TpktAppliSearchStateType tpkt_internal_search_from_osi_pres_layer(Cursor* tpkt_cur)
 {
     // get the flow data
-    Packet* p      = DetectionEngine::get_current_packet();
+    Packet* p = DetectionEngine::get_current_packet();
+    if (!p || !p->flow)
+        return TPKT_APPLI_SEARCH_STATE__EXIT;
+
     TpktFlowData* tpktfd = (TpktFlowData*)p->flow->get_flow_data(TpktFlowData::inspector_id);
 
     // if flow data cannot be found something went wrong and we should just

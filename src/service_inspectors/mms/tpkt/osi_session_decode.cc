@@ -209,7 +209,10 @@ TpktAppliSearchStateType tpkt_internal_search_from_osi_session_layer(Cursor* tpk
     const OsiSessionHdr* hdr = (const OsiSessionHdr*)tpkt_cur->start();
 
     // get the flow data
-    const Packet* p      = DetectionEngine::get_current_packet();
+    const Packet* p = DetectionEngine::get_current_packet();
+    if (!p || !p->flow)
+        return TPKT_APPLI_SEARCH_STATE__EXIT;
+
     TpktFlowData* tpktfd = (TpktFlowData*)p->flow->get_flow_data(TpktFlowData::inspector_id);
 
     bool checks_pass = false;
