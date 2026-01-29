@@ -523,6 +523,7 @@ void Stream::log_extra_data(
     // coverity[missing_lock]
     if ( mask && stream.extra_data_log )
     {
+        // coverity[missing_lock]
         stream.extra_data_log(
             flow, stream.extra_data_context, stream.xtradata_map,
             stream.xtradata_func_count, mask, alert_info);

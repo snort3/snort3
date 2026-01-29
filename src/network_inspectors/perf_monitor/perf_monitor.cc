@@ -255,15 +255,12 @@ void PerfMonitor::tinit()
     if (config->perf_flags & PERF_CPU )
         trackers->emplace_back(new CPUTracker(config));
 
-    // Second condition is to prevent overflow, shouldn't happen in practice
-    for (unsigned i = 0; i < trackers->size() && i < std::numeric_limits<unsigned>::max(); i++)
+    for (size_t i = 0; i < trackers->size(); i++)
     {
-        if (!(*trackers)[i]->open(true))
+        if (!(*trackers)[i]->open(true) && i > 0)
         {
             disable_tracker(i);
-
-            if (i > 0)
-                i--;
+            i--;
         }
     }
 
@@ -402,11 +399,14 @@ void PerfMonitor::eval(Packet* p)
 #ifdef ENABLE_MEMORY_PROFILER
             PigPen::show_runtime_memory_stats();
 #endif
-            for (unsigned i = 0; i < trackers->size(); i++)
+            for (size_t i = 0; i < trackers->size(); i++)
             {
                 (*trackers)[i]->process(false);
-                if (!(*trackers)[i]->auto_rotate())
-                    disable_tracker(i--);
+                if (!(*trackers)[i]->auto_rotate() && i > 0)
+                {
+                    disable_tracker(i);
+                    i--;
+                }
             }
         }
     }
