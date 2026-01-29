@@ -1,0 +1,443 @@
+socks inspector is a service inspector for the SOCKS protocol, a circuit-level
+proxy protocol that operates at the session layer.
+
+==== Overview
+
+SOCKS (Socket Secure) is a protocol that relays traffic through a proxy server
+without interpreting it, making it protocol-agnostic. Unlike application-level
+proxies, SOCKS operates at the session layer and can tunnel any TCP or UDP
+traffic.
+
+SOCKS does not define a specific TCP port for its use, but port 1080 is
+commonly used by convention.
+
+The `socks` service inspector decodes SOCKS4/4a and SOCKS5 handshake messages,
+extracts tunnel metadata (target address, port, command type), and provides
+rule options to access protocol fields. After successful handshake, the
+inspector hands off tunneled traffic to the wizard for protocol detection,
+allowing Snort to inspect the actual tunneled protocols (HTTP, HTTPS, SMTP,
+DNS, etc.) rather than just the SOCKS wrapper.
+
+==== Detection Flow
+
+SOCKS detection in Snort3 uses a two-stage process for optimal performance:
+
+1. **Initial Detection (Wizard Curse)**: The wizard's SOCKS curse performs fast
+   pattern matching on the first application-layer bytes to identify SOCKS
+   traffic. It detects SOCKS4/4a client greetings (version + command + port +
+   IP + userid) and SOCKS5 client greetings (version + nmethods + methods).
+   The curse uses strict validation to minimize false positives, particularly
+   on protocols like SQL Server that may have similar byte patterns.
+
+2. **Full Inspection (Service Inspector)**: Once the wizard classifies a flow
+   as SOCKS, the full service inspector is bound to the flow. The inspector
+   processes the complete handshake with state machine validation, extracts
+   tunnel metadata, and provides IPS rule options for detection.
+
+This approach provides fast rejection of non-SOCKS traffic while maintaining
+comprehensive protocol analysis for confirmed SOCKS flows.
+
+==== UDP ASSOCIATE Flow Binding
+
+For SOCKS5 UDP ASSOCIATE, the inspector creates a dynamic UDP flow expectation
+when the server sends a successful reply with the bind address and port:
+
+When the TCP control channel completes the UDP ASSOCIATE handshake, the
+inspector automatically creates an expected flow for UDP traffic between the
+client and the proxy's UDP relay endpoint (BND.ADDR:BND.PORT from the server
+response). This expected flow is bidirectional, allowing both client-to-proxy
+and proxy-to-client UDP packets to be automatically bound to the SOCKS
+inspector without requiring additional wizard pattern matching.
+
+The expected UDP flow is pre-configured with SOCKS5 UDP ASSOCIATE state, so
+incoming UDP packets are immediately recognized as SOCKS-UDP traffic. The
+inspector then strips the SOCKS5-UDP header and hands off the inner payload to
+the wizard for protocol detection (DNS, SIP, etc.).
+
+==== Configuration
+
+SOCKS messages can be sent across multiple TCP packets, and the `socks` service
+inspector normalizes the traffic such that only complete SOCKS messages are
+presented. The inspector supports both TCP tunneling (CONNECT), reverse
+connections (BIND), and UDP relay (UDP ASSOCIATE).
+
+The SOCKS inspector supports the following configuration option:
+
+* `block_udp_fragmentation` (boolean, default: true) - Block entire flow when
+  SOCKS5 UDP fragmentation is detected (frag > 0). When disabled, only the
+  fragmented packets are dropped and an alert is generated. Strict blocking is
+  recommended for high-security environments as UDP fragmentation is rarely
+  used in legitimate traffic (RFC 1928 §7) and can indicate evasion attempts or
+  DoS attacks.
+
+
+==== Quick Guide
+
+A typical SOCKS configuration looks like the following:
+
+   wizard = { curses = {'socks'}, }
+   socks = { }
+   
+   binder =
+   {
+       { when = { service = 'socks' }, use = { type = 'socks' } },
+       { use = { type = 'wizard' } }
+   }
+
+In this example, the `socks` inspector is defined based on patterns known to
+be consistent with SOCKS messages.
+
+UDP fragmentation blocking is strict by default. To allow fragmented SOCKS5
+UDP packets (drop only the fragments and keep the flow alive), disable the
+flag explicitly:
+
+   socks =
+   {
+       block_udp_fragmentation = false
+   }
+
+
+==== Rule Options
+
+New rule options are supported by enabling the `socks` inspector:
+
+* socks_version
+* socks_state
+* socks_command
+* socks_address_type
+* socks_remote_address
+* socks_remote_port
+
+===== socks_version
+
+`socks_version` takes the supplied version number as an integer and compares
+it with the version field in the SOCKS message being analyzed. Valid values
+are 4 (SOCKS4/4a) and 5 (SOCKS5).
+
+This option takes one argument.
+
+In the following example, the rule is using the `socks_version` rule option
+with an integer argument to match SOCKS5 traffic. This is combined with a
+content match for the version byte as a fast pattern.
+
+    alert tcp any any -> any 1080 ( \
+      msg: "SOCKS5 connection detected"; \
+      flow: to_server, established; \
+      content:"|05|", depth 1; \
+      socks_version:5; \
+      sid:1000000; \
+    )
+
+===== socks_state
+
+`socks_state` matches the SOCKS inspector state for the flow. It accepts
+either a numeric value or a name:
+
+* 1 (auth) - SOCKS5 authentication negotiation or username/password auth
+* 2 (request_response) - request/response phase for SOCKS4/4a and SOCKS5
+* 3 (established) - successful handshake, tunnel established
+* 4 (error) - handshake failed (protocol violation, auth failure, connect failure)
+
+This option takes one argument.
+
+In the following example, the rule sets a flowbit once a SOCKS tunnel is
+established:
+
+    alert tcp any any -> any 1080 ( \
+      msg: "SOCKS tunnel established"; \
+      flow: to_server, established; \
+      socks_state:established; \
+      flowbits:set,socks.tunnel; \
+      sid:1000003; \
+    )
+
+
+===== socks_command
+
+`socks_command` takes the supplied command type as an integer and compares it
+with the command field in the SOCKS message being analyzed. Valid values are:
+1 (CONNECT - TCP tunneling), 2 (BIND - reverse connections), and 3 (UDP
+ASSOCIATE - UDP relay, SOCKS5 only).
+
+This option takes one argument.
+
+In the following example, the rule is using the `socks_command` rule option
+to detect CONNECT commands. This is combined with a content match for the
+SOCKS5 version byte.
+
+    alert tcp any any -> any 1080 ( \
+      msg: "SOCKS5 CONNECT command detected"; \
+      flow: to_server, established; \
+      content:"|05|"; \
+      socks_command:1; \
+      sid:1000001; \
+    )
+
+
+===== socks_address_type
+
+`socks_address_type` takes the supplied address type as an integer and
+compares it with the address type field in the SOCKS5 message being analyzed.
+Valid values are: 1 (IPv4), 3 (Domain name), and 4 (IPv6). This option is
+only applicable to SOCKS5 traffic.
+
+This option takes one argument.
+
+In the following example, the rule is using the `socks_address_type` rule
+option to detect domain name requests. This is combined with a content match
+for the SOCKS5 version byte.
+
+    alert tcp any any -> any 1080 ( \
+      msg: "SOCKS5 domain name request detected"; \
+      flow: to_server, established; \
+      content:"|05|"; \
+      socks_address_type:3; \
+      sid:1000002; \
+    )
+
+
+===== socks_remote_address
+
+`socks_remote_address` sets the cursor to the target destination address in
+the SOCKS message. The address can be a domain name or an IP address string,
+depending on the address type. This buffer option is typically used with the
+`content` keyword to match specific destinations.
+
+This option takes no arguments.
+
+In the following example, the rule is using the `socks_remote_address` buffer
+option to set the cursor, then uses `content` to match a malicious domain.
+Note that `socks_version:5` is used to trigger rule evaluation on SOCKS traffic.
+
+    alert tcp any any -> any 1080 ( \
+      msg: "SOCKS5 tunnel to malicious domain"; \
+      flow: to_server, established; \
+      socks_version:5; \
+      socks_remote_address; \
+      content:"evil.com"; \
+      sid:1000003; \
+    )
+
+The following example detects tunnels to a specific IP address:
+
+    alert tcp any any -> any 1080 ( \
+      msg: "SOCKS5 tunnel to C2 server"; \
+      flow: to_server, established; \
+      socks_version:5; \
+      socks_remote_address; \
+      content:"203.0.113.50"; \
+      sid:1000004; \
+    )
+
+
+===== socks_remote_port
+
+`socks_remote_port` takes the supplied port number as an integer and compares
+it with the target destination port in the SOCKS message being analyzed. This
+allows detection of tunnels to specific services.
+
+This option takes one argument.
+
+In the following example, the rule is using the `socks_remote_port` rule
+option to detect tunnels to HTTPS (port 443). This is combined with a content
+match for the SOCKS5 version byte.
+
+    alert tcp any any -> any 1080 ( \
+      msg: "SOCKS5 tunnel to HTTPS"; \
+      flow: to_server, established; \
+      content:"|05|"; \
+      socks_remote_port:443; \
+      sid:1000005; \
+    )
+
+Multiple rule options can be combined for more specific detection:
+
+    alert tcp any any -> any 1080 ( \
+      msg: "SOCKS5 CONNECT to suspicious domain on port 443"; \
+      flow: to_server, established; \
+      socks_version:5; \
+      socks_command:1; \
+      socks_address_type:3; \
+      socks_remote_address; \
+      content:"suspicious.com"; \
+      socks_remote_port:443; \
+      sid:1000006; \
+    )
+
+Note: When using `socks_remote_address` with `content:`, do not include a
+packet content fast pattern (like `content:"|05|"`) before the buffer option,
+as this will prevent the buffer content match from working correctly. SOCKS IPS
+options like `socks_version:5` provide the necessary trigger for rule evaluation.
+
+
+==== Advanced Use Case: Blocking Tunneled File Traffic
+
+A common security requirement is to block file transfers over SOCKS tunnels
+(e.g., data exfiltration) while allowing direct file transfers. This requires
+distinguishing between "HTTP over SOCKS" and "HTTP direct".
+
+The recommended approach uses `flowbits` to tag SOCKS tunnels, then conditionally
+blocks file traffic based on that tag:
+
+    # Step 1: Tag SOCKS CONNECT tunnels with a flowbit
+    alert tcp any any -> any 1080 ( \
+      msg: "SOCKS tunnel established"; \
+      flow: to_server, established; \
+      socks_command:1; \
+      flowbits:set,socks.tunnel; \
+      flowbits:noalert; \
+      sid:1000100; \
+    )
+
+    # Step 2: Block file downloads only if tunneled through SOCKS
+    drop tcp any any -> any any ( \
+      msg: "Blocked file download over SOCKS tunnel"; \
+      flow: from_server, established; \
+      flowbits:isset,socks.tunnel; \
+      file_data; \
+      content:"application/octet-stream"; http_header; \
+      sid:1000101; \
+    )
+
+    # Step 3: Allow direct file downloads (no SOCKS tunnel)
+    # (No rule needed - traffic without socks.tunnel flowbit passes through)
+
+In this example:
+
+* Rule 1000100 sets the `socks.tunnel` flowbit when a SOCKS CONNECT command
+  is detected. The `flowbits:noalert` prevents this from generating an alert.
+
+* Rule 1000101 blocks file downloads (identified by Content-Type header) only
+  when the `socks.tunnel` flowbit is set. This rule triggers on the tunneled
+  HTTP response traffic after wizard hands off to HTTP inspector.
+
+* Direct HTTP file downloads (without SOCKS) do not have the flowbit set and
+  are not blocked.
+
+This approach works because:
+
+1. SOCKS handshake completes first, setting the flowbit on the flow
+2. SOCKS inspector hands off tunneled traffic to wizard
+3. Wizard detects HTTP and hands off to HTTP inspector
+4. HTTP inspector processes the tunneled HTTP traffic
+5. File detection rules check the flowbit to determine if traffic is tunneled
+
+You can extend this pattern to block other tunneled protocols:
+
+    # Block SMTP over SOCKS (email exfiltration)
+    drop tcp any any -> any any ( \
+      msg: "Blocked SMTP over SOCKS tunnel"; \
+      flow: established; \
+      flowbits:isset,socks.tunnel; \
+      content:"MAIL FROM"; \
+      sid:1000102; \
+    )
+
+    # Block FTP over SOCKS
+    drop tcp any any -> any any ( \
+      msg: "Blocked FTP over SOCKS tunnel"; \
+      flow: established; \
+      flowbits:isset,socks.tunnel; \
+      content:"STOR "; depth 5; \
+      sid:1000103; \
+    )
+
+
+==== Built-in Rules
+
+The SOCKS inspector includes 4 built-in rules (GID 155) that detect protocol
+anomalies and potential security threats:
+
+* 155:1 - SOCKS unknown command
+  Detects malformed/malicious requests with invalid command bytes. Indicates
+  exploit attempts or protocol fuzzing.
+
+* 155:2 - SOCKS protocol violation
+  Detects protocol violations such as non-zero reserved fields. Critical
+  security indicator for protocol confusion attacks, exploits, or evasion.
+
+* 155:3 - SOCKS5 unknown address type
+  Detects malformed requests with invalid address types. Indicates exploit
+  attempts or fuzzing.
+
+* 155:4 - SOCKS5 UDP fragmentation detected
+  Detects SOCKS5 UDP packets with fragmentation (frag > 0). UDP fragmentation
+  is rarely used in legitimate traffic (RFC 1928 §7) and can indicate evasion
+  techniques or DoS attacks. When `block_udp_fragmentation` remains enabled
+  (default), this also triggers flow blocking.
+
+
+==== Events and Logging
+
+The SOCKS inspector publishes events via DataBus for external consumption and
+logs target destination IP to unified2 as XFF (X-Forwarded-For) data for
+correlation with SIEM/FMC. This allows security analysts to see the true
+destination hidden inside the SOCKS tunnel, not just the proxy address.
+
+Example unified2 alert:
+
+    Alert: SOCKS5 tunnel to C2 server
+      SRC: 192.168.1.100 (client - from packet header)
+      DST: 10.0.0.5 (proxy - from packet header)
+      XFF: 203.0.113.50 (target - from SOCKS protocol)
+
+
+==== Protocol Support
+
+The SOCKS inspector supports:
+
+* SOCKS4/4a: CONNECT command (TCP tunneling), BIND command (reverse
+  connections), and domain name resolution via SOCKS4a extension.
+
+* SOCKS5: Authentication methods (No Auth, Username/Password), CONNECT
+  command (TCP tunneling), BIND command (reverse connections), UDP ASSOCIATE
+  command (UDP relay), and address types (IPv4, Domain, IPv6).
+
+After successful handshake, tunneled traffic is handed off to the wizard for
+protocol detection, enabling inspection of HTTP, HTTPS, SMTP, DNS, and other
+protocols tunneled through SOCKS.
+
+
+==== Known Limitations
+
+* Authentication: Only No Auth (0x00) and Username/Password (0x02) are fully
+  supported. GSSAPI (0x01) and private methods (0x80-0xFE) skip the auth
+  phase but still allow tunnel metadata extraction.
+
+* UDP Fragmentation: Standalone UDP packets (FRAG=0) are processed and sent
+  to wizard for protocol detection. Fragmented packets (FRAG≠0) are not
+  reassembled and cause flow inspection to be disabled to prevent false
+  positives.
+
+* Encrypted SOCKS: SOCKS over TLS/SSL is not supported (wizard would detect
+  SSL first, preventing SOCKS detection).
+
+* XFF Logging: The SOCKS inspector logs the target destination IP as XFF
+  (X-Forwarded-For) data to unified2 for correlation with SIEM/FMC. However,
+  XFF data has timing and availability constraints:
+  
+  - XFF is only available after the SOCKS CONNECT request is parsed (when
+    target IP becomes known), not during earlier handshake phases.
+  
+  - XFF is not available for domain-based targets (SOCKS4a or SOCKS5 address
+    type 3), only for IPv4/IPv6 targets.
+  
+  - XFF data is lost after protocol handoff to wizard/other inspectors. To
+    capture XFF in alerts, rules must trigger on the SOCKS CONNECT request
+    using `socks_command:1`, not on later tunneled traffic.
+  
+  - Example rule that captures XFF correctly:
+    
+      alert tcp any any -> any 1080 ( \
+        msg: "SOCKS tunnel with XFF logging"; \
+        socks_command:1; \
+        sid:1000200; \
+      )
+
+
+==== References
+
+* RFC 1928: SOCKS Protocol Version 5
+* RFC 1929: Username/Password Authentication for SOCKS V5
+* SOCKS4 Protocol: http://ftp.icm.edu.pl/packages/socks/socks4/SOCKS4.protocol
+* SOCKS4a Extension: http://ftp.icm.edu.pl/packages/socks/socks4/SOCKS4A.protocol

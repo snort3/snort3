@@ -56,6 +56,8 @@ public:
     void cleanup(snort::Packet* = nullptr) override;
 
     void set_splitter(bool, snort::StreamSplitter*) override;
+    void set_splitter_with_rescan(bool to_server, snort::StreamSplitter* ss, uint32_t seq) override;
+    uint32_t get_paf_position(bool to_server) const override;
     snort::StreamSplitter* get_splitter(bool) override;
 
     void disable_reassembly(snort::Flow*) override;

@@ -431,6 +431,20 @@ void TcpStreamTracker::set_splitter(const Flow* flow)
         set_splitter(new AtomSplitter(!client_tracker));
 }
 
+uint32_t TcpStreamTracker::get_paf_position() const
+{
+    if ( reassembler )
+        return reassembler->get_paf_position();
+    return 0;
+}
+
+void TcpStreamTracker::set_splitter_with_rescan(StreamSplitter* ss, uint32_t seq)
+{
+    set_splitter(ss);
+    if ( reassembler )
+        reassembler->reinitialize_paf(seq);
+}
+
 static inline bool both_splitters_aborted(Flow* flow)
 {
     return (flow->get_session_flags() & BOTH_SPLITTERS_YOINKED) == BOTH_SPLITTERS_YOINKED;

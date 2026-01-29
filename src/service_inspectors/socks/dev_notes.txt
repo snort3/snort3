@@ -1,0 +1,157 @@
+The SOCKS inspector processes stream reassembled packets and decodes SOCKS4/4a
+and SOCKS5 protocols. SOCKS is a circuit-level proxy protocol that operates at
+the session layer and relays traffic without interpreting it, making it
+protocol-agnostic.
+
+The inspector supports TCP tunneling (CONNECT), reverse connections (BIND), and
+UDP relay (UDP ASSOCIATE). It detects the SOCKS handshake, extracts tunnel
+metadata (target address, port, command type), and hands off the tunneled
+traffic to the wizard for protocol detection. This allows Snort to inspect the
+actual tunneled protocols (HTTP, HTTPS, SMTP, DNS, etc.) rather than just the
+SOCKS wrapper.
+
+SOCKS does not define a specific TCP port for its use, but port 1080 is
+commonly used by convention.
+
+==== Detection Flow
+
+SOCKS detection in Snort3 follows a two-stage process:
+
+1. Initial Protocol Detection (Wizard Curse):
+   - Wizard curse function (socks_curse in wizard/socks_curse.cc) performs fast
+     initial detection on first application-layer bytes
+   - Detects SOCKS4/4a client greeting (VER + CMD + PORT + IP + USERID)
+   - Detects SOCKS5 client greeting (VER + NMETHODS + METHODS)
+   - Uses stateless pattern matching with strict validation to reduce false
+     positives (e.g., SQL Server on port 1433)
+   - Returns true on successful detection, triggering flow classification as
+     "socks" service
+   - Curse is invoked at start of TCP stream (byte 0 of application data)
+
+2. Full Protocol Inspection (Service Inspector):
+   - After wizard classifies flow as "socks", full SOCKS inspector is bound
+   - Inspector processes complete handshake with state machine validation
+   - Extracts tunnel metadata (target address, port, command type)
+   - Provides IPS options for rule matching (socks_version, socks_command, etc.)
+   - Triggers handoff to wizard after tunnel establishment for tunneled protocol
+     detection
+
+This two-stage approach provides fast rejection of non-SOCKS traffic (curse)
+while maintaining comprehensive protocol analysis for confirmed SOCKS flows
+(inspector).
+
+==== Architecture
+
+The SOCKS inspector is divided into several major components:
+
+SocksSplitter (socks_splitter.cc/h) - Stream splitter that identifies SOCKS
+message boundaries. Handles both client-to-server and server-to-client traffic.
+Implements state machine for SOCKS4/4a/5 handshake phases. Returns FLUSH when
+complete message is available.
+
+SocksInspector (socks.cc/h) - Main inspector that processes flushed SOCKS
+messages. Parses handshake messages and extracts tunnel metadata. Manages flow
+data and state transitions. Triggers handoff to wizard after tunnel
+establishment. Publishes events via DataBus for logging/correlation.
+
+SocksFlowData (socks_flow_data.cc/h) - Persistent per-flow state storage.
+Tracks handshake progress, target address/port, protocol version. Implements
+state machine with 14 states (see SocksState enum).
+
+IPS Options (ips_socks_protocol.cc/h) - Protocol matchers: socks_version,
+socks_command, socks_address_type. Buffer options: socks_remote_address (target
+domain/IP), socks_remote_port. Enable rule-based detection on SOCKS tunnel
+metadata.
+
+==== State Machine
+
+The SOCKS inspector implements a comprehensive state machine to track handshake
+progress and ensure correct message ordering. State transitions are enforced to
+prevent protocol confusion attacks. Invalid state transitions trigger warnings
+and connection termination.
+
+SOCKS4/4a flow:
+INIT -> CLIENT_HELLO -> WAIT_SERVER_CONNECT_REPLY -> TUNNEL_ESTABLISHED
+
+SOCKS5 flow (No Auth):
+INIT -> CLIENT_HELLO -> WAIT_SERVER_AUTH_REPLY -> WAIT_CLIENT_CONNECT_REQUEST
+-> WAIT_SERVER_CONNECT_REPLY -> TUNNEL_ESTABLISHED
+
+SOCKS5 flow (Username/Password):
+INIT -> CLIENT_HELLO -> WAIT_SERVER_AUTH_REPLY -> WAIT_CLIENT_AUTH_REQUEST ->
+WAIT_SERVER_AUTH_RESPONSE -> WAIT_CLIENT_CONNECT_REQUEST ->
+WAIT_SERVER_CONNECT_REPLY -> TUNNEL_ESTABLISHED
+
+SOCKS5 UDP ASSOCIATE:
+... -> WAIT_SERVER_CONNECT_REPLY -> UDP_ASSOCIATE_ESTABLISHED
+
+==== Handoff Mechanism
+
+After successful SOCKS handshake, the inspector triggers immediate handoff to
+the wizard for protocol detection of tunneled traffic.
+
+TCP Tunneling (CONNECT): Handoff occurs after server sends success reply
+(0x00). Wizard examines first bytes of tunneled traffic. Common protocols:
+HTTP, HTTPS/TLS, SMTP, FTP, SSH.
+
+PAF Rescan for Piggybacked Data:
+Tunneled protocol data can be "piggybacked" on the same packet as the SOCKS
+CONNECT response, or queued in TCP reassembly segments. This happens in both
+normal and reverse SOCKS flows. The Protocol-Aware Flushing (PAF) system tracks
+which bytes have been "scanned" and won't re-scan them for a new splitter. To
+handle this, the inspector uses Stream::get_paf_position() to get where the
+SOCKS splitter left off, then Stream::set_splitter_with_rescan() to install
+the wizard's splitter with a reset PAF position. This allows the wizard to
+detect protocols in data that was already scanned by the SOCKS splitter.
+
+For reverse SOCKS (server initiates SOCKS), the wizard splitter directions are
+swapped so the wizard sees tunneled protocol data in the correct direction.
+
+Reverse Connection (BIND): Handoff occurs after second server reply (incoming
+connection). Wizard detects protocol of reverse connection.
+
+UDP Relay (UDP ASSOCIATE): Standalone UDP packets (FRAG=0) are handed off to
+wizard via pseudo-packet injection for protocol detection. Fragmented packets
+are dropped without handoff.
+
+==== UDP Processing
+
+SOCKS5 UDP ASSOCIATE is detected on the TCP control channel. When the server
+sends a successful reply (REP=0x00) with BND.ADDR and BND.PORT, the inspector
+creates a dynamic UDP expectation:
+
+Expected Flow Creation:
+- Source: SOCKS client IP (from TCP control flow)
+- Source Port: Any (0)
+- Destination: BND.ADDR (proxy's UDP relay endpoint from server response)
+- Destination Port: BND.PORT (from server response)
+- Protocol: UDP
+- Bidirectional: Yes (allows both client->proxy and proxy->client UDP packets)
+- Flow Data: Pre-configured SocksFlowData with UDP_ASSOCIATE state
+
+This expectation automatically binds matching UDP packets to the SOCKS inspector
+without requiring wizard pattern matching. The pre-configured flow data ensures
+UDP packets are immediately recognized as SOCKS5-UDP traffic.
+
+For UDP packets received on the expected flow:
+
+Standalone packets (FRAG=0x00): Validated, SOCKS5-UDP header stripped, and
+inner payload sent to wizard via pseudo-packet for protocol detection (DNS,
+SIP, etc.).
+
+Fragmented packets (FRAG≠0x00): Detected, alerted (GID 155:4), and dropped.
+Flow inspection is disabled in both directions to avoid false positives. If
+block_udp_fragmentation is enabled, the entire flow is blocked via
+block_session(). UDP fragmentation reassembly is not supported.
+
+==== Unified2 Extra Data
+
+The inspector logs target destination IP to unified2 as XFF (X-Forwarded-For)
+data for correlation with SIEM/FMC. This allows security analysts to see the
+true destination hidden inside the SOCKS tunnel, not just the proxy address.
+
+Example:
+  SRC: 192.168.1.100 (client - from packet header)
+  DST: 10.0.0.5 (proxy - from packet header)
+  XFF: 203.0.113.50 (target - from SOCKS protocol)
+

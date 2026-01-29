@@ -269,6 +269,8 @@ public:
     void init_tcp_state(TcpSession*);
     void set_splitter(snort::StreamSplitter* ss);
     void set_splitter(const snort::Flow* flow);
+    void set_splitter_with_rescan(snort::StreamSplitter* ss, uint32_t seq);
+    uint32_t get_paf_position() const;
 
     snort::StreamSplitter* get_splitter()
     { return splitter; }

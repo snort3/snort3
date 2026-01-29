@@ -189,6 +189,8 @@ public:
     static void init_active_response(const Packet*, Flow*);
 
     static void set_splitter(Flow*, bool toServer, StreamSplitter* = nullptr);
+    static void set_splitter_with_rescan(Flow*, bool toServer, StreamSplitter*, uint32_t seq);
+    static uint32_t get_paf_position(Flow*, bool toServer);
     static StreamSplitter* get_splitter(Flow*, bool toServer);
 
     // Turn off inspection for potential session. Adds session identifiers to a hash table.

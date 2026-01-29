@@ -74,6 +74,8 @@ public:
     virtual void initialize_paf() = 0;
     virtual void reset_paf() = 0;
     virtual void clear_paf() = 0;
+    virtual void reinitialize_paf(uint32_t seq) = 0;
+    virtual uint32_t get_paf_position() const = 0;
 
     // static methods for TcpReassembler per thread initialization and termination
     static void tinit();
@@ -133,6 +135,12 @@ public:
     void initialize_paf() override
     { }
 
+    void reinitialize_paf(uint32_t) override
+    { }
+
+    uint32_t get_paf_position() const override
+    { return 0; }
+
     FlushPolicy get_flush_policy() const override
     { return STREAM_FLPOLICY_IGNORE; }
 
@@ -191,6 +199,12 @@ public:
 
     void clear_paf() override
     { paf.paf_clear(); }
+
+    void reinitialize_paf(uint32_t seq) override
+    { paf.paf_initialize(seq); }
+
+    uint32_t get_paf_position() const override
+    { return paf.seq_num; }
 
 protected:
     void show_rebuilt_packet(snort::Packet*);

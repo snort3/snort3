@@ -13,6 +13,8 @@ set(FILE_LIST
     opcua_curse.h
     s7commplus_curse.cc
     s7commplus_curse.h
+    socks_curse.cc
+    socks_curse.h
     ssl_curse.cc
     ssl_curse.h
     hexes.cc
@@ -34,4 +36,5 @@ add_catch_test(curses_test
     NO_TEST_SOURCE
     SOURCES
         ssl_curse.cc
+        socks_curse.cc
 )

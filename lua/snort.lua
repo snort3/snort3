@@ -58,6 +58,7 @@ normalizer = { }
 pop = { }
 rpc_decode = { }
 sip = { }
+socks = { }
 ssh = { }
 ssl = { }
 telnet = { }
@@ -156,6 +157,7 @@ binder =
     { when = { service = 'ssh' },              use = { type = 'ssh' } },
     { when = { service = 'sip' },              use = { type = 'sip' } },
     { when = { service = 'smtp' },             use = { type = 'smtp' } },
+    { when = { service = 'socks' },            use = { type = 'socks' } },
     { when = { service = 'ssl' },              use = { type = 'ssl' } },
     { when = { service = 'sunrpc' },           use = { type = 'rpc_decode' } },
     { when = { service = 's7commplus' },       use = { type = 's7commplus' } },

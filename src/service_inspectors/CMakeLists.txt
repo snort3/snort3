@@ -23,6 +23,7 @@ add_subdirectory(ssh)
 add_subdirectory(ssl)
 add_subdirectory(tlv_pdu)
 add_subdirectory(wizard)
+add_subdirectory(socks)
 
 if (STATIC_INSPECTORS)
     set (STATIC_INSPECTOR_OBJS
@@ -54,6 +55,7 @@ set(STATIC_SERVICE_INSPECTOR_PLUGINS
     $<TARGET_OBJECTS:http2_inspect>
     $<TARGET_OBJECTS:sip>
     $<TARGET_OBJECTS:dns>
+    $<TARGET_OBJECTS:socks>
     ${STATIC_INSPECTOR_OBJS}
     CACHE INTERNAL "STATIC_SERVICE_INSPECTOR_PLUGINS"
 )

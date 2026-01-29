@@ -29,6 +29,7 @@
 #include "mms_curse.h"
 #include "opcua_curse.h"
 #include "s7commplus_curse.h"
+#include "socks_curse.h"
 #include "ssl_curse.h"
 
 class CurseTracker
@@ -38,6 +39,7 @@ public:
     MmsTracker mms;
     OpcuaTracker opcua;
     S7commplusTracker s7commplus;
+    SocksTracker socks;
     SslTracker ssl;
 };
 
@@ -71,6 +73,7 @@ private:
 #ifdef CATCH_TEST_BUILD
 public:
 #endif
+    static bool socks_curse(const uint8_t* data, unsigned len, CurseTracker*);
     static bool ssl_v2_curse(const uint8_t* data, unsigned len, CurseTracker*);
 };
 

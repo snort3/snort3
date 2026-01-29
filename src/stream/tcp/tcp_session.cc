@@ -1361,6 +1361,19 @@ void TcpSession::set_splitter(bool to_server, StreamSplitter* ss)
     trk.set_splitter(ss);
 }
 
+uint32_t TcpSession::get_paf_position(bool to_server) const
+{
+    const TcpStreamTracker& trk = ( to_server ) ? server : client;
+    return trk.get_paf_position();
+}
+
+void TcpSession::set_splitter_with_rescan(bool to_server, StreamSplitter* ss, uint32_t seq)
+{
+    TcpStreamTracker& trk = ( to_server ) ? server : client;
+
+    trk.set_splitter_with_rescan(ss, seq);
+}
+
 uint16_t TcpSession::get_mss(bool to_server) const
 {
     const TcpStreamTracker& trk = (to_server) ? client : server;

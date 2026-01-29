@@ -184,6 +184,9 @@ static const char* guess_service(const char* opt)
     if ( !strncmp(opt, "sip_", 4) )
         return "sip";
 
+    if ( !strncmp(opt, "socks_", 6) )
+        return "socks";
+
     if ( !strncmp(opt, "ssl_", 4) )
         return "ssl";
 
