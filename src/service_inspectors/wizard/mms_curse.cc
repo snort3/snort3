@@ -307,19 +307,57 @@ static uint32_t search_for_osi_acse_type( MmsTracker& mms, const uint8_t* data, 
 
 static uint32_t search_for_osi_acse_data( MmsTracker& mms, const uint8_t* data, unsigned len, uint32_t idx )
 {
-    // this will likely be a good distance from the current position
-    // minus three is to give space for the forward checks for the direct and indirect reference
-    for ( uint32_t k = 0; idx+k < len-3; k++ )
+    assert( data );
+
+    enum
     {
-        // look for the MMS presentation context ( | 02 01 03 | )
-        if ( data[idx+k] == 0x02 && data[idx+k+1] == 0x01 && data[idx+k+2] == 0x03 )
+        ACSE_CONTEXT_TAG = 0x02,
+        ACSE_CONTEXT_LEN = 0x01,
+        ACSE_MMS_CONTEXT = 0x03,
+        ACSE_ACSE_CONTEXT = 0x01,
+    };
+
+    while ( idx < len )
+    {
+        switch ( mms.state )
         {
-            mms.state = MMS_STATE__MMS;
-            // increment the index to the end of the mms context id reference
-            idx += k+2;
+        case MMS_STATE__OSI_ACSE_DATA_FIND_TAG:
+            if ( data[idx] == ACSE_CONTEXT_TAG )
+                mms.state = MMS_STATE__OSI_ACSE_DATA_CHECK_LEN;
+            break;
+
+        case MMS_STATE__OSI_ACSE_DATA_CHECK_LEN:
+            if ( data[idx] == ACSE_CONTEXT_LEN )
+                mms.state = MMS_STATE__OSI_ACSE_DATA_CHECK_CONTEXT;
+            else
+                mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+            break;
+
+        case MMS_STATE__OSI_ACSE_DATA_CHECK_CONTEXT:
+            switch ( data[idx] )
+            {
+            case ACSE_MMS_CONTEXT:
+                mms.state = MMS_STATE__MMS;
+                return idx;
+
+            case ACSE_ACSE_CONTEXT:
+                mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+                break;
+
+            default:
+                mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+            }
+            break;
+
+        default:
+            mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+            assert( false );
             break;
         }
+
+        idx++;
     }
+
     return idx;
 }
 
@@ -696,6 +734,15 @@ bool CurseBook::mms_curse( const uint8_t* data, unsigned len, CurseTracker* trac
         //
         case MMS_STATE__OSI_ACSE_DATA:
         {
+            mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+            continue;
+        }
+
+        // ACSE data search states
+        case MMS_STATE__OSI_ACSE_DATA_FIND_TAG:
+        case MMS_STATE__OSI_ACSE_DATA_CHECK_LEN:
+        case MMS_STATE__OSI_ACSE_DATA_CHECK_CONTEXT:
+        {
             idx = search_for_osi_acse_data(mms, data, len, idx);
             break;
         }
@@ -935,6 +982,359 @@ TEST_CASE("search_for_osi_session_spdu_params OOB index", "[mms]")
 
     const uint32_t r = search_for_osi_session_spdu_params(mms, data, sizeof(data), UINT32_MAX);
     CHECK(r == UINT32_MAX);
+}
+
+TEST_CASE("search_for_osi_acse_data: pattern found", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    uint8_t data[] = { 0x02, 0x01, 0x03 };
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    CHECK(mms.state == MMS_STATE__MMS);
+    CHECK(result == 2);
+}
+
+TEST_CASE("search_for_osi_acse_data: pattern not found", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    uint8_t data[] = { 0x01, 0x02, 0x03, 0x04 };
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    CHECK(mms.state == MMS_STATE__OSI_ACSE_DATA_FIND_TAG);
+    CHECK(result == len);
+}
+
+TEST_CASE("search_for_osi_acse_data: pattern at offset", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    uint8_t data[] = { 0xFF, 0xAA, 0x02, 0x01, 0x03, 0x00 };
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    CHECK(mms.state == MMS_STATE__MMS);
+    CHECK(result == 4);
+}
+
+TEST_CASE("search_for_osi_acse_data: wrong length byte", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    uint8_t data[] = { 0x02, 0x02, 0x03 }; // Wrong length (0x02 instead of 0x01)
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    CHECK(mms.state == MMS_STATE__OSI_ACSE_DATA_FIND_TAG);
+    CHECK(result == len);
+}
+
+TEST_CASE("search_for_osi_acse_data: ACSE context found continues search", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    // First ACSE context (02 01 01), then MMS context (02 01 03)
+    uint8_t data[] = { 0x02, 0x01, 0x01, 0xAA, 0x02, 0x01, 0x03 };
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    CHECK(mms.state == MMS_STATE__MMS);
+    CHECK(result == 6);
+}
+
+TEST_CASE("search_for_osi_acse_data: partial match at buffer end", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    uint8_t data[] = { 0xAA, 0xBB, 0x02 }; // Tag found at end
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    // Should be in CHECK_LEN state waiting for next byte
+    CHECK(mms.state == MMS_STATE__OSI_ACSE_DATA_CHECK_LEN);
+    CHECK(result == len);
+}
+
+TEST_CASE("search_for_osi_acse_data: resume from CHECK_LEN state", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_CHECK_LEN;
+
+    uint8_t data[] = { 0x01, 0x03 }; // Length and context
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    CHECK(mms.state == MMS_STATE__MMS);
+    CHECK(result == 1);
+}
+
+TEST_CASE("search_for_osi_acse_data: resume from CHECK_CONTEXT state", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_CHECK_CONTEXT;
+
+    uint8_t data[] = { 0x03 }; // MMS context
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    CHECK(mms.state == MMS_STATE__MMS);
+    CHECK(result == 0);
+}
+
+TEST_CASE("search_for_osi_acse_data: empty buffer", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    uint8_t data[1] = { };
+    unsigned len = 0;
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    CHECK(mms.state == MMS_STATE__OSI_ACSE_DATA_FIND_TAG);
+    CHECK(result == 0);
+}
+
+TEST_CASE("search_for_osi_acse_data: multiple patterns only first found", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    uint8_t data[] = { 0x02, 0x01, 0x03, 0xFF, 0x02, 0x01, 0x03 };
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    CHECK(mms.state == MMS_STATE__MMS);
+    CHECK(result == 2); // Stops at first match
+}
+
+TEST_CASE("search_for_osi_acse_data: unknown context resets", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    uint8_t data[] = { 0x02, 0x01, 0x05, 0xAA, 0x02, 0x01, 0x03 }; // Unknown context 0x05
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    CHECK(mms.state == MMS_STATE__MMS);
+    CHECK(result == 6); // Found second pattern after reset
+}
+
+TEST_CASE("search_for_osi_acse_data: pattern at start of buffer", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    uint8_t data[] = { 0x02, 0x01, 0x03, 0xFF };
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    CHECK(mms.state == MMS_STATE__MMS);
+    CHECK(result == 2);
+}
+
+TEST_CASE("search_for_osi_acse_data: long search with pattern at end", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    uint8_t data[] = { 0xFF, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0x02, 0x01, 0x03 };
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    CHECK(mms.state == MMS_STATE__MMS);
+    CHECK(result == 8);
+}
+
+TEST_CASE("search_for_osi_acse_data: fragmented across packets", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    // First packet: tag found
+    uint8_t data1[] = { 0xAA, 0x02 };
+    uint32_t result1 = search_for_osi_acse_data(mms, data1, sizeof(data1), 0);
+
+    CHECK(mms.state == MMS_STATE__OSI_ACSE_DATA_CHECK_LEN);
+    CHECK(result1 == sizeof(data1));
+
+    // Second packet: length and context
+    uint8_t data2[] = { 0x01, 0x03 };
+    uint32_t result2 = search_for_osi_acse_data(mms, data2, sizeof(data2), 0);
+
+    CHECK(mms.state == MMS_STATE__MMS);
+    CHECK(result2 == 1);
+}
+
+TEST_CASE("search_for_osi_acse_data: wrong length resets and finds next", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    uint8_t data[] = { 0x02, 0x03, 0xAA, 0x02, 0x01, 0x03 }; // Wrong len, then correct
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    CHECK(mms.state == MMS_STATE__MMS);
+    CHECK(result == 5);
+}
+
+TEST_CASE("search_for_osi_acse_data: buffer boundary tag and length only", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    // Buffer ends after tag and length, no context byte
+    uint8_t data[] = { 0x02, 0x01 };
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    // Should be waiting for context byte in next packet
+    CHECK(mms.state == MMS_STATE__OSI_ACSE_DATA_CHECK_CONTEXT);
+    CHECK(result == len);
+}
+
+TEST_CASE("search_for_osi_acse_data: buffer boundary tag only", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    // Buffer ends after tag only
+    uint8_t data[] = { 0x02 };
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    // Should be waiting for length byte in next packet
+    CHECK(mms.state == MMS_STATE__OSI_ACSE_DATA_CHECK_LEN);
+    CHECK(result == len);
+}
+
+TEST_CASE("search_for_osi_acse_data: buffer boundary with junk then tag", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    // Buffer with junk data, then tag at very end
+    uint8_t data[] = { 0xFF, 0xAA, 0xBB, 0x02 };
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    // Should find tag at end and wait for length
+    CHECK(mms.state == MMS_STATE__OSI_ACSE_DATA_CHECK_LEN);
+    CHECK(result == len);
+}
+
+TEST_CASE("search_for_osi_acse_data: buffer boundary complete pattern at end", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    // Complete pattern exactly at buffer end
+    uint8_t data[] = { 0xFF, 0x02, 0x01, 0x03 };
+    unsigned len = sizeof(data);
+    uint32_t idx = 0;
+
+    uint32_t result = search_for_osi_acse_data(mms, data, len, idx);
+
+    // Should find complete pattern
+    CHECK(mms.state == MMS_STATE__MMS);
+    CHECK(result == 3); // Points to last byte of pattern
+}
+
+TEST_CASE("search_for_osi_acse_data: three packet fragmentation", "[mms][acse]")
+{
+    MmsTracker mms;
+    mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+
+    // First packet: ends with tag
+    uint8_t data1[] = { 0xFF, 0x02 };
+    uint32_t result1 = search_for_osi_acse_data(mms, data1, sizeof(data1), 0);
+    CHECK(mms.state == MMS_STATE__OSI_ACSE_DATA_CHECK_LEN);
+    CHECK(result1 == sizeof(data1));
+
+    // Second packet: only length
+    uint8_t data2[] = { 0x01 };
+    uint32_t result2 = search_for_osi_acse_data(mms, data2, sizeof(data2), 0);
+    CHECK(mms.state == MMS_STATE__OSI_ACSE_DATA_CHECK_CONTEXT);
+    CHECK(result2 == sizeof(data2));
+
+    // Third packet: context
+    uint8_t data3[] = { 0x03 };
+    uint32_t result3 = search_for_osi_acse_data(mms, data3, sizeof(data3), 0);
+    CHECK(mms.state == MMS_STATE__MMS);
+    CHECK(result3 == 0);
+}
+
+TEST_CASE("search_for_osi_acse_data: single byte buffer at each state", "[mms][acse]")
+{
+    // Test each state with minimal single-byte buffers
+
+    // State 1: FIND_TAG with single byte
+    MmsTracker mms1;
+    mms1.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
+    uint8_t data1[] = { 0xFF };
+    uint32_t result1 = search_for_osi_acse_data(mms1, data1, sizeof(data1), 0);
+    CHECK(mms1.state == MMS_STATE__OSI_ACSE_DATA_FIND_TAG);
+    CHECK(result1 == 1);
+
+    // State 2: CHECK_LEN with wrong byte
+    MmsTracker mms2;
+    mms2.state = MMS_STATE__OSI_ACSE_DATA_CHECK_LEN;
+    uint8_t data2[] = { 0xFF };
+    uint32_t result2 = search_for_osi_acse_data(mms2, data2, sizeof(data2), 0);
+    CHECK(mms2.state == MMS_STATE__OSI_ACSE_DATA_FIND_TAG);
+    CHECK(result2 == 1);
+
+    // State 3: CHECK_CONTEXT with unknown context
+    MmsTracker mms3;
+    mms3.state = MMS_STATE__OSI_ACSE_DATA_CHECK_CONTEXT;
+    uint8_t data3[] = { 0xFF };
+    uint32_t result3 = search_for_osi_acse_data(mms3, data3, sizeof(data3), 0);
+    CHECK(mms3.state == MMS_STATE__OSI_ACSE_DATA_FIND_TAG);
+    CHECK(result3 == 1);
 }
 
 #endif
