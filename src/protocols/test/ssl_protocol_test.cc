@@ -107,7 +107,7 @@ TEST(ssl_protocol_tests, cert_data_incomplete_len_2)
     test_data.certs_len = 2;
     auto result = parse_server_certificates(&test_data);
     CHECK_EQUAL(true, result);
-    CHECK_EQUAL(nullptr, test_data.certs_data);
+    POINTERS_EQUAL(nullptr, test_data.certs_data);
     CHECK_EQUAL(0, test_data.certs_len);
 }
 
