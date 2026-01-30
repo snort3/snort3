@@ -169,17 +169,6 @@ bool TcpNormalizer::strip_tcp_timestamp(
     return false;
 }
 
-void TcpNormalizer::session_blocker(
-    TcpNormalizerState&, TcpSegmentDescriptor& tsd)
-{
-    Packet *p = tsd.get_pkt();
-    DetectionEngine::disable_all(p);
-    p->active->block_session(p, true);
-    p->active->set_drop_reason("stream");
-    if (PacketTracer::is_active())
-        PacketTracer::log("stream_tcp: TCP normalizer - Zero Window Probe byte data mismatch\n");
-}
-
 bool TcpNormalizer::packet_dropper(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, NormFlags f)
 {

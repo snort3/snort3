@@ -74,7 +74,6 @@ public:
 
     virtual NormStatus apply_normalizations(
         State&, TcpSegmentDescriptor&, uint32_t seq, bool stream_is_inorder);
-    virtual void session_blocker(State&, TcpSegmentDescriptor&);
     virtual bool packet_dropper(State&, TcpSegmentDescriptor&, NormFlags);
     virtual bool trim_syn_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);
     virtual void trim_rst_payload(State&, TcpSegmentDescriptor&, uint32_t max = 0);

@@ -83,7 +83,6 @@ public:
 protected:
     virtual bool is_segment_retransmit(TcpOverlapState&, bool*);
     virtual void drop_old_segment(TcpOverlapState&);
-    virtual bool zwp_data_mismatch(TcpOverlapState&, TcpSegmentDescriptor&, uint32_t);
 
     virtual void left_overlap_keep_first(TcpOverlapState&);
     virtual void left_overlap_trim_first(TcpOverlapState&);
