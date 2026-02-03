@@ -109,6 +109,8 @@ static const PegInfo file_pegs[] =
     { CountType::SUM, "cache_failures", "number of file cache add failures" },
     { CountType::SUM, "files_not_processed", "number of files not processed due to per-flow limit" },
     { CountType::MAX, "max_concurrent_files", "maximum files processed concurrently on a flow" },
+    { CountType::MAX, "buffers_max", "maximum number of file buffers that can be allocated" },
+    { CountType::NOW, "buffers_in_use", "number of file buffers currently in use" },
     { CountType::END, nullptr, nullptr }
 };
 
@@ -136,7 +138,10 @@ const PegInfo* FileIdModule::get_pegs() const
 { return file_pegs; }
 
 PegCount* FileIdModule::get_counts() const
-{ return (PegCount*)&file_counts; }
+{
+  file_counts_update_buffers();
+  return (PegCount*)&file_counts;
+}
 
 static const RuleMap file_id_rules[] =
 {

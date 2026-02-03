@@ -36,6 +36,8 @@ struct FileCounts
     PegCount cache_add_fails;
     PegCount files_over_flow_limit_not_processed;
     PegCount max_concurrent_files_per_flow;
+    PegCount file_buffers_max;              // maximum number of file buffers that can be allocated
+    PegCount file_buffers_in_use;
     PegCount files_buffered_total;
     PegCount files_released_total;
     PegCount files_freed_total;
@@ -74,6 +76,8 @@ void file_stats_term();
 void file_stats_sum();
 void file_stats_print();
 void file_stats_clear();
+
+void file_counts_update_buffers();
 
 #endif
 

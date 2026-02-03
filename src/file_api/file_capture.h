@@ -90,6 +90,8 @@ public:
     static FileCaptureState error_capture(FileCaptureState);
 
     static int64_t get_block_size() { return capture_block_size; }
+    static int64_t get_buffers_max();
+    static int64_t get_buffers_in_use();
 
     snort::FileInfo* get_file_info() { return file_info; }
 

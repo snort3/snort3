@@ -55,6 +55,12 @@ void file_stats_term()
     snort_free(file_stats);
 }
 
+void file_counts_update_buffers()
+{
+    file_counts.file_buffers_max = FileCapture::get_buffers_max();
+    file_counts.file_buffers_in_use = FileCapture::get_buffers_in_use();
+}
+
 void file_stats_sum()
 {
     if (!file_stats)
