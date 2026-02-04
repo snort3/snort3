@@ -51,9 +51,9 @@ struct DIOCTL_GetCpuProfileData
     uint64_t placeholder;  // Placeholder for compatibility
 };
 
-#define DIOCTL_GET_SNORT_LATENCY_DATA 0  // Stub command ID
-#define DIOCTL_GET_CPU_PROFILE_DATA 1    // Stub command ID
-#define DIOCTL_SET_INJECT_DROP 2          // Stub command ID
+#define DIOCTL_GET_SNORT_LATENCY_DATA 0
+#define DIOCTL_GET_CPU_PROFILE_DATA 1
+#define DIOCTL_SET_INJECT_DROP 2
 
 #endif  // DAQ version check
 
