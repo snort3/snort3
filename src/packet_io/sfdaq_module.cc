@@ -25,6 +25,12 @@
 #include "sfdaq_module.h"
 
 #include <cassert>
+#include <daq_version.h>
+
+// Helper macro for DAQ version comparison
+#ifndef DAQ_VERSION
+#define DAQ_VERSION(major, minor, patch) (((major) << 24) | ((minor) << 16) | ((patch) << 8))
+#endif
 
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -231,7 +237,9 @@ static DAQ_Stats_t operator-(const DAQ_Stats_t& left, const DAQ_Stats_t& right)
     ret.packets_received = left.packets_received - right.packets_received;
     ret.packets_filtered = left.packets_filtered - right.packets_filtered;
     ret.packets_injected = left.packets_injected - right.packets_injected;
+#if defined(DAQ_VERSION_NUMERIC) && DAQ_VERSION_NUMERIC >= DAQ_VERSION(3, 0, 24)
     ret.packets_outstanding = left.packets_outstanding - right.packets_outstanding;
+#endif
 
     for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
         ret.verdicts[i] = left.verdicts[i] - right.verdicts[i];
@@ -271,10 +279,12 @@ void SFDAQModule::prep_counts(bool dump_stats)
     for ( unsigned i = 0; i < MAX_DAQ_VERDICT; i++ )
         daq_stats.verdicts[i] = daq_stats_delta.verdicts[i];
 
+#if defined(DAQ_VERSION_NUMERIC) && DAQ_VERSION_NUMERIC >= DAQ_VERSION(3, 0, 24)
     daq_stats.outstanding = new_daq_stats.packets_outstanding;
 
     if ( daq_stats.outstanding > daq_stats.outstanding_max )
         daq_stats.outstanding_max = daq_stats.outstanding;
+#endif
 
     if ( !dump_stats )
         prev_daq_stats = new_daq_stats;

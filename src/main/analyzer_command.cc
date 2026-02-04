@@ -334,6 +334,7 @@ ACShowSnortCPU::~ACShowSnortCPU()
 
 bool ACShowSnortCPU::execute(Analyzer& analyzer, void**)
 {
+#if defined(DAQ_VERSION_NUMERIC) && DAQ_VERSION_NUMERIC >= DAQ_VERSION(3, 0, 24)
     DIOCTL_GetCpuProfileData get_data = {};
 
     SFDAQInstance* instance = get_daq_instance(analyzer);
@@ -355,12 +356,16 @@ bool ACShowSnortCPU::execute(Analyzer& analyzer, void**)
     stat.cpu_usage_30s = static_cast<double>(get_data.cpu_usage_percent_30s);
     stat.cpu_usage_120s = static_cast<double>(get_data.cpu_usage_percent_120s);
     stat.cpu_usage_300s = static_cast<double>(get_data.cpu_usage_percent_300s); 
+#else
+    LogRespond(ctrlcon, "CPU profiling requires DAQ 3.0.24 or later\n");
+#endif
  
     return true;
 }
 
 ACShowSnortPacketLatencyData::~ACShowSnortPacketLatencyData()
 {
+#if defined(DAQ_VERSION_NUMERIC) && DAQ_VERSION_NUMERIC >= DAQ_VERSION(3, 0, 24)
     const std::array<const char*, 3> protocol_names = { "TCP", "UDP", "Others" };
     int instance = 0;
 
@@ -420,10 +425,14 @@ ACShowSnortPacketLatencyData::~ACShowSnortPacketLatencyData()
         LogRespond(ctrlcon, "------------------------------------------------------------\n");
 		instance++;
     }
+#else
+    LogRespond(ctrlcon, "Packet latency tracking requires DAQ 3.0.24 or later\n");
+#endif
 }
 
 bool ACShowSnortPacketLatencyData::execute(Analyzer& analyzer, void**)
 {
+#if defined(DAQ_VERSION_NUMERIC) && DAQ_VERSION_NUMERIC >= DAQ_VERSION(3, 0, 24)
     DIOCTL_GetSnortLatencyData latency_data_array = {};
 
     SFDAQInstance* instance = get_daq_instance(analyzer);
@@ -445,5 +454,8 @@ bool ACShowSnortPacketLatencyData::execute(Analyzer& analyzer, void**)
 
     auto& stat = latency_data[instance_id];
     stat = latency_data_array;
+#else
+    LogRespond(ctrlcon, "Packet latency tracking requires DAQ 3.0.24 or later\n");
+#endif
     return true;
 }

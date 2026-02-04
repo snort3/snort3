@@ -22,6 +22,17 @@
 #endif
 
 #include <daq_common.h>
+#include <daq_version.h>
+
+// Helper macro for DAQ version comparison
+#ifndef DAQ_VERSION
+#define DAQ_VERSION(major, minor, patch) (((major) << 24) | ((minor) << 16) | ((patch) << 8))
+#endif
+
+// DAQ 3.0.24+ compatibility - inject/drop capability
+#if !defined(DAQ_VERSION_NUMERIC) || DAQ_VERSION_NUMERIC < DAQ_VERSION(3, 0, 24)
+#define DIOCTL_SET_INJECT_DROP 2
+#endif
 
 #include "packet.h"
 

@@ -25,6 +25,12 @@
 #include "sfdaq_instance.h"
 
 #include <daq.h>
+#include <daq_version.h>
+
+// Helper macro for DAQ version comparison
+#ifndef DAQ_VERSION
+#define DAQ_VERSION(major, minor, patch) (((major) << 24) | ((minor) << 16) | ((patch) << 8))
+#endif
 
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -156,7 +162,11 @@ bool SFDAQInstance::can_whitelist() const
 
 bool SFDAQInstance::can_invoke_inject_drop() const
 {
+#if defined(DAQ_VERSION_NUMERIC) && DAQ_VERSION_NUMERIC >= DAQ_VERSION(3, 0, 24)
     return (daq_instance_get_capabilities(instance) & DAQ_CAPA_INJECT_DROP) != 0;
+#else
+    return (daq_instance_get_capabilities(instance) & DAQ_CAPA_INJECT_RAW) != 0;
+#endif
 }
 
 bool SFDAQInstance::start()

@@ -21,6 +21,7 @@
 #define ANALYZER_COMMANDS_H
 
 #include <daq_common.h>
+#include <daq_version.h>
 
 #include <cstdarg>
 #include <vector>
@@ -28,6 +29,33 @@
 
 #include "main/snort_types.h"
 #include "main/thread_config.h"
+
+// Helper macro to construct DAQ version number for comparison
+#ifndef DAQ_VERSION
+#define DAQ_VERSION(major, minor, patch) (((major) << 24) | ((minor) << 16) | ((patch) << 8))
+#endif
+
+// DAQ 3.0.24+ backward compatibility layer
+// These types and IOCTL commands were introduced in DAQ 3.0.24 for latency monitoring,
+// CPU profiling, and packet injection control. For older DAQ versions, we provide stub
+// definitions to allow compilation while gracefully degrading functionality.
+#if !defined(DAQ_VERSION_NUMERIC) || DAQ_VERSION_NUMERIC < DAQ_VERSION(3, 0, 24)
+
+struct DIOCTL_GetSnortLatencyData
+{
+    uint64_t placeholder;  // Placeholder for compatibility
+};
+
+struct DIOCTL_GetCpuProfileData
+{
+    uint64_t placeholder;  // Placeholder for compatibility
+};
+
+#define DIOCTL_GET_SNORT_LATENCY_DATA 0  // Stub command ID
+#define DIOCTL_GET_CPU_PROFILE_DATA 1    // Stub command ID
+#define DIOCTL_SET_INJECT_DROP 2          // Stub command ID
+
+#endif  // DAQ version check
 
 class Analyzer;
 class ControlConn;
