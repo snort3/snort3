@@ -61,6 +61,8 @@ public:
     UnixDomainConnector(const UnixDomainConnectorConfig& config, int sfd, size_t idx, UnixDomainConnectorReconnectHelper* reconnect_helper = nullptr);
     ~UnixDomainConnector() override;
 
+    snort::ConnectorMsg allocate_connector_message(uint32_t length) override;
+
     bool transmit_message(const snort::ConnectorMsg&, const ID& = null) override;
     bool transmit_message(const snort::ConnectorMsg&&, const ID& = null) override;
 

@@ -169,6 +169,12 @@ void UnixDomainConnector::process_receive()
         message_received_handler();
     }
 }
+snort::ConnectorMsg UnixDomainConnector::allocate_connector_message(uint32_t length)
+{
+    uint8_t* data = new uint8_t[length];
+    return snort::ConnectorMsg(data, length, true);
+}
+
 bool UnixDomainConnector::transmit_message(const snort::ConnectorMsg&&, const ID&)
 { return true; }
 snort::ConnectorMsg UnixDomainConnector::receive_message(bool)

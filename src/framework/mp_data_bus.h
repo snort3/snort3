@@ -45,15 +45,13 @@
 #include "control/control.h"
 #include "framework/mp_transport.h"
 #include "framework/counts.h"
+#include "helpers/lockless_ring.h"
 #include "main/snort_types.h"
 #include "data_bus.h"
 
 #define DEFAULT_TRANSPORT "unix_transport"
-#define DEFAULT_MAX_EVENTQ_SIZE 1000
+#define DEFAULT_MAX_EVENTQ_SIZE 4096
 #define WORKER_THREAD_SLEEP 100
-
-template <typename T>
-class Ring;
 
 namespace snort
 {
@@ -116,6 +114,8 @@ struct MPHelperFunctions {
         : serializer(s), deserializer(d) {}
 };
 
+using MPEventQueue = LocklessRing<std::shared_ptr<MPEventInfo>, false>;
+
 struct pair_hash
 {
     template <class T1, class T2>
@@ -175,9 +175,6 @@ public:
     // API for receiving the DataEvent and Event type from transport layer using EventInfo
     void receive_message(const MPEventInfo& event_info);
 
-    Ring<std::shared_ptr<MPEventInfo>>* get_event_queue()
-    { return mp_event_queue; }
-
     void set_debug_enabled(bool flag);
 
     MPDataBusStats get_stats_copy();
@@ -188,6 +185,10 @@ public:
     void dump_stats(ControlConn* ctrlconn, const char* module_name);
     void dump_events(ControlConn* ctrlconn, const char* module_name);
     void show_channel_status(ControlConn* ctrlconn);
+
+#ifdef MP_DATA_BUS_UNIT_TEST
+    MPEventQueue* get_event_queue() { return mp_event_queue; }
+#endif
 
 private: 
     void _subscribe(unsigned pid, unsigned eid, DataHandler* h);
@@ -206,7 +207,7 @@ private:
     std::atomic<bool> run_thread;
     std::unique_ptr<std::thread> worker_thread;
 
-    Ring<std::shared_ptr<MPEventInfo>>* mp_event_queue;
+    MPEventQueue* mp_event_queue;
 
     std::condition_variable queue_cv;
     std::mutex queue_mutex;

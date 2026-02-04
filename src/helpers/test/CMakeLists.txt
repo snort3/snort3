@@ -45,6 +45,13 @@ add_catch_test( ring2_test
         ../ring2.h
 )
 
+add_catch_test( lockless_ring_test
+    SOURCES
+        ../lockless_ring.h
+    LIBS
+        ${CMAKE_THREAD_LIBS_INIT}
+)
+
 if (ENABLE_BENCHMARK_TESTS)
 
     add_catch_test( ring2_benchmark

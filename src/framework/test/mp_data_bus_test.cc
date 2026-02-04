@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#define MP_DATA_BUS_UNIT_TEST
 
 #include "../mp_data_bus.h"
 #include "../main/snort_config.h"
@@ -271,13 +272,14 @@ TEST_GROUP(mp_data_bus_pub)
     }
 
     void teardown() override
-    { }
+    { 
+    }
 };
 
 TEST(mp_data_bus_pub, publish)
 {
-    CHECK_TRUE(mp_dbus->get_event_queue()->empty());
-    CHECK_TRUE(mp_dbus->get_event_queue()->count() == 0);
+    CHECK_TRUE(mp_dbus->get_event_queue()->is_empty());
+    CHECK_TRUE(mp_dbus->get_event_queue()->size() == 0);
 
     std::shared_ptr<UTestEvent> event = std::make_shared<UTestEvent>(100);
 
@@ -304,8 +306,8 @@ TEST(mp_data_bus_pub, publish)
 
 TEST(mp_data_bus_pub, publish_fail_to_send)
 {
-    CHECK_TRUE(mp_dbus->get_event_queue()->empty());
-    CHECK_TRUE(mp_dbus->get_event_queue()->count() == 0);
+    CHECK_TRUE(mp_dbus->get_event_queue()->is_empty());
+    CHECK_TRUE(mp_dbus->get_event_queue()->size() == 0);
 
     test_transport_send_result = false;
 

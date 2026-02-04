@@ -22,6 +22,7 @@ set (HELPERS_INCLUDES
     infractions.h
     json_stream.h
     literal_search.h
+    lockless_ring.h
     memcap_allocator.h
     ring2.h
     scratch_allocator.h

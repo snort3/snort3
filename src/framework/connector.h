@@ -37,7 +37,7 @@
 namespace snort
 {
 // this is the current version of the api
-#define CONNECTOR_API_VERSION ((BASE_API_VERSION << 16) | 3)
+#define CONNECTOR_API_VERSION ((BASE_API_VERSION << 16) | 4)
 
 //-------------------------------------------------------------------------
 // api for class
@@ -52,8 +52,8 @@ class ConnectorMsg
 public:
     ConnectorMsg() = default;
 
-    ConnectorMsg(const uint8_t* data, uint32_t length, bool pass_ownership = false) :
-        data(data), length(length), owns(pass_ownership)
+    ConnectorMsg(const uint8_t* data, uint32_t length, bool pass_ownership = false, uint32_t content_offset = 0) :
+        data(data), content(const_cast<uint8_t*>(data) + content_offset), length(length), owns(pass_ownership)
     { }
 
     ~ConnectorMsg()
@@ -63,7 +63,7 @@ public:
     ConnectorMsg& operator=(ConnectorMsg& other) = delete;
 
     ConnectorMsg(ConnectorMsg&& other) :
-        data(other.data), length(other.length), owns(other.owns)
+        data(other.data), content(other.content), length(other.length), owns(other.owns)
     { other.owns = false; }
 
     ConnectorMsg& operator=(ConnectorMsg&& other)
@@ -72,6 +72,7 @@ public:
             delete[] data;
 
         data = other.data;
+        content = other.content;
         length = other.length;
         owns = other.owns;
 
@@ -83,11 +84,18 @@ public:
     const uint8_t* get_data() const
     { return data; }
 
+    uint8_t* get_content() const
+    { return content; }
+
     uint32_t get_length() const
     { return length; }
 
+    uint32_t get_content_length() const
+    { return length - (content - data); }
+
 private:
     const uint8_t* data = nullptr;
+    uint8_t* content = nullptr;
     uint32_t length = 0;
     bool owns = false;
 };
@@ -110,6 +118,12 @@ public:
 
     virtual const ID get_id(const char*) const
     { return null; }
+
+    virtual ConnectorMsg allocate_connector_message(uint32_t length)
+    {
+        const uint8_t* data = new uint8_t[length];
+        return ConnectorMsg(data, length, true);
+    }
 
     virtual bool transmit_message(const ConnectorMsg&, const ID& = null) = 0;
     virtual bool transmit_message(const ConnectorMsg&&, const ID& = null) = 0;

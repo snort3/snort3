@@ -49,7 +49,7 @@ static const PegInfo mp_unix_transport_pegs[] =
     { CountType::SUM, "sent_bytes", "mp_transport events bytes sent count" },
     { CountType::SUM, "receive_events", "mp_transport events received count" },
     { CountType::SUM, "receive_bytes", "mp_transport events bytes received count" },
-    { CountType::SUM, "sent_errors", "mp_transport events errors count" },
+    { CountType::SUM, "send_errors", "mp_transport events errors count" },
     { CountType::SUM, "successful_connections", "successful mp_transport connections count" },
     { CountType::SUM, "closed_connections", "closed mp_transport connections count" },
     { CountType::SUM, "connection_retries", "mp_transport connection retries count" },

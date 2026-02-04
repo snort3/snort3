@@ -182,24 +182,24 @@ bool SideChannel::process(int max_messages)
         // get message if one is available.
         ConnectorMsg connector_msg = connector_receive->receive_message(false);
 
-        if ( connector_msg.get_length() > 0 and msg_format == ScMsgFormat::TEXT )
+        if ( connector_msg.get_content_length() > 0 and msg_format == ScMsgFormat::TEXT )
         {
-            connector_msg = from_text((const char*)connector_msg.get_data(), connector_msg.get_length());
+            connector_msg = from_text((const char*)connector_msg.get_content(), connector_msg.get_content_length());
         }
 
         // if none or invalid, we are complete
-        if ( connector_msg.get_length() == 0 )
+        if ( connector_msg.get_content_length() == 0 )
             break;
 
         if ( receive_handler )
         {
             SCMessage* msg = new SCMessage(this, connector_receive, std::move(connector_msg));
 
-            msg->content = const_cast<uint8_t*>(msg->cmsg.get_data());
-            msg->content_length = msg->cmsg.get_length();
+            msg->content = msg->cmsg.get_content();
+            msg->content_length = msg->cmsg.get_content_length();
 
             // if the message is longer than the header, assume we have a header
-            if ( msg->cmsg.get_length() > sizeof(SCMsgHdr) )
+            if ( msg->cmsg.get_content_length() > sizeof(SCMsgHdr) )
             {
                 msg->content += sizeof(SCMsgHdr);
                 msg->content_length -= sizeof( SCMsgHdr );
@@ -241,6 +241,9 @@ SCMsgHdr SideChannel::get_header()
 
 SCMessage* SideChannel::alloc_transmit_message(uint32_t content_length)
 {
+    if (!connector_transmit)
+        return nullptr;
+    
     SCMessage* msg = nullptr;
     const SCMsgHdr sc_hdr = get_header();
 
@@ -248,14 +251,11 @@ SCMessage* SideChannel::alloc_transmit_message(uint32_t content_length)
     {
     case ScMsgFormat::BINARY:
     {
-        uint8_t* msg_data = new uint8_t[sizeof(SCMsgHdr) + content_length];
+        ConnectorMsg connector_message = connector_transmit->allocate_connector_message(sizeof(SCMsgHdr) + content_length);
+        memcpy(connector_message.get_content(), &sc_hdr, sizeof(SCMsgHdr));
 
-        memcpy(msg_data, &sc_hdr, sizeof(SCMsgHdr));
-
-        ConnectorMsg bin_cmsg(msg_data, sizeof(SCMsgHdr) + content_length, true);
-
-        msg = new SCMessage(this, connector_transmit, std::move(bin_cmsg));
-        msg->content = msg_data + sizeof(SCMsgHdr);
+        msg = new SCMessage(this, connector_transmit, std::move(connector_message));
+        msg->content = msg->cmsg.get_content() + sizeof(SCMsgHdr);
         msg->content_length = content_length;
 
         break;
@@ -269,14 +269,12 @@ SCMessage* SideChannel::alloc_transmit_message(uint32_t content_length)
             break;
 
         const uint32_t msg_len = hdr_text.size() + (content_length * TXT_UNIT_LEN);
-        uint8_t* msg_data = new uint8_t[msg_len];
+        ConnectorMsg connector_message = connector_transmit->allocate_connector_message(msg_len);
 
-        memcpy(msg_data, hdr_text.c_str(), hdr_text.size());
+        memcpy(connector_message.get_content(), hdr_text.c_str(), hdr_text.size());
 
-        ConnectorMsg text_cmsg(msg_data, msg_len, true);
-
-        msg = new SCMessage(this, connector_transmit, std::move(text_cmsg));
-        msg->content = msg_data + hdr_text.size();
+        msg = new SCMessage(this, connector_transmit, std::move(connector_message));
+        msg->content = msg->cmsg.get_content() + hdr_text.size();
         msg->content_length = content_length;
 
         break;
