@@ -55,7 +55,7 @@ public:
     bool is_inspection_needed(const Inspector& g) const;
     const char* get_appid_detector_directory() const;
     void reset_appid_cpu_profiler_stats();
-    void update_shadow_traffic_status(bool status);
+    void update_shadow_traffic_status(bool status, const snort::SnortConfig* sc = nullptr);
     void set_ssl_certificate_key(const Flow& flow, const std::string& cert_key);
 
     bool is_service_http_type(AppId service_id) const

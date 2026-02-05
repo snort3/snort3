@@ -1333,7 +1333,6 @@ void AppIdSession::publish_shadow_traffic_event(const uint32_t& shadow_traffic_b
         return;
 
     const char* app_name;
-    unsigned shadow_traffic_pub_id = 0;
     std::string str_print;
     Packet* curr_packet = nullptr;
 
@@ -1365,10 +1364,8 @@ void AppIdSession::publish_shadow_traffic_event(const uint32_t& shadow_traffic_b
         }
     }
 
-    shadow_traffic_pub_id = DataBus::get_id(shadowtraffic_pub_key);
-
     ShadowTrafficEvent shadow_event(shadow_traffic_bits, "", "", app_name);
-    DataBus::publish(shadow_traffic_pub_id, ShadowTrafficEventIds::SHADOWTRAFFIC_FLOW_DETECTED, shadow_event, flow);
+    DataBus::publish(AppIdInspector::get_shadowtraffic_pub_id(), ShadowTrafficEventIds::SHADOWTRAFFIC_FLOW_DETECTED, shadow_event, flow);
 
     if (appidDebug and appidDebug->is_active())
         change_shadow_traffic_bits_to_string(shadow_traffic_bits, str_print);
