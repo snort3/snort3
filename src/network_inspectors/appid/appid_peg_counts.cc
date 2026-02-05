@@ -158,7 +158,15 @@ void AppIdPegCounts::add_app_peg_info(std::string app_name, AppId app_id)
     std::replace(app_name.begin(), app_name.end(), ' ', '_');
 
     assert(appid_peg_ids);
-    appid_peg_ids->emplace(app_id, std::make_pair(app_name, appid_peg_ids->size()));
+    uint32_t index = appid_peg_ids->size();
+    if (index >= SF_APPID_MAX)
+    {
+        APPID_LOG(nullptr, TRACE_WARNING_LEVEL,
+            "AppId peg count index %u exceeds SF_APPID_MAX (%u) for app %s (id %u). Skipping.\n",
+            index, SF_APPID_MAX, app_name.c_str(), app_id);
+        return;
+    }
+    appid_peg_ids->emplace(app_id, std::make_pair(app_name, index));
 }
 
 void AppIdPegCounts::sum_stats()
@@ -171,8 +179,16 @@ void AppIdPegCounts::sum_stats()
     for (auto& peg : appid_thread_pegs->peg_counts)
     {
         auto dyn_indx = appid_thread_pegs->peg_ids->at(peg.first).second;
-        for (unsigned j = 0; j < DetectorPegs::NUM_APPID_DETECTOR_PEGS; ++j)
-            appid_dynamic_sum[dyn_indx].stats[j] += peg.second.stats[j];
+        if (dyn_indx >= SF_APPID_MAX)
+        {
+            for (unsigned j = 0; j < DetectorPegs::NUM_APPID_DETECTOR_PEGS; ++j)
+                appid_dynamic_sum[SF_APPID_MAX].stats[j] += peg.second.stats[j];
+        }
+        else
+        {
+            for (unsigned j = 0; j < DetectorPegs::NUM_APPID_DETECTOR_PEGS; ++j)
+                appid_dynamic_sum[dyn_indx].stats[j] += peg.second.stats[j];
+        }
 
         peg.second.zero_out();
     }
@@ -270,7 +286,7 @@ void AppIdPegCounts::print()
         "Application", "Services", "Clients", "Users", "Payloads", "Misc", "Referred");
     LogText(buff);
 
-    for (uint32_t i = 0; i < app_num; i++)
+    for (uint32_t i = 0; i < app_num && i < SF_APPID_MAX; i++)
     {
         AppIdDynamicPeg* pegs = &appid_dynamic_sum[i];
         if (pegs->all_zeros())
