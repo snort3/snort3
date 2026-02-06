@@ -39,6 +39,10 @@
 #include "imap_module.h"
 #include "imap_paf.h"
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
 using namespace snort;
 
 // Indices in the buffer array exposed by InspectApi
@@ -494,6 +498,9 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
         {
             if (imap_ssn->body_len > imap_ssn->body_read)
             {
+                if (!imap_ssn->mime_ssn)
+                    return;
+
                 int len = imap_ssn->body_len - imap_ssn->body_read;
 
                 if ((end - ptr) < len)
@@ -593,15 +600,21 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
                 {
                     if ((body_start + 1) < eol)
                     {
-                        uint32_t len =
-                            (uint32_t)SnortStrtoul((const char*)(body_start + 1), &eptr, 10);
+                        const uint8_t* body_end = (const uint8_t*)memrchr(
+                            (const char*)(body_start + 1), '}', eol - (body_start + 1));
 
-                        if (*eptr != '}')
-                        {
+                        if (body_end == nullptr)
                             imap_ssn->state = STATE_UNKNOWN;
-                        }
                         else
-                            imap_ssn->body_len = len;
+                        {
+                            uint32_t len =
+                                (uint32_t)SnortStrtoul((const char*)(body_start + 1), &eptr, 10);
+
+                            if (eptr != (const char*)body_end)
+                                imap_ssn->state = STATE_UNKNOWN;
+                            else
+                                imap_ssn->body_len = len;
+                        }
                     }
                     else
                         imap_ssn->state = STATE_UNKNOWN;
@@ -981,4 +994,72 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 };
 #else
 const BaseApi* sin_imap = &imap_api.base;
+#endif
+
+#ifdef UNIT_TEST
+TEST_CASE("imap_body_len_not_terminated", "[imap]")
+{
+    IMAP_SearchInit();
+
+    InspectionPolicy ins_policy;
+    NetworkPolicy net_policy;
+    set_inspection_policy(&ins_policy);
+    set_network_policy(&net_policy);
+
+    uint8_t data[] = "* FETCH (BODY[TEXT]{12345}\r\n";
+    
+    Packet p;
+    Flow* flow = new Flow;
+    p.data = data;
+    p.dsize = 25;
+    p.flow = flow;
+    p.packet_flags = 0;
+    p.context = new IpsContext(1);
+
+    IMAPData imap_ssn = {};
+    imap_ssn.state = STATE_UNKNOWN;
+    imap_ssn.session_flags = IMAP_FLAG_ABANDON_EVT;
+    imap_ssn.mime_ssn = nullptr;
+    imap_ssn.jsn = nullptr;
+
+    IMAP_ProcessServerPacket(&p, &imap_ssn);
+
+    CHECK(imap_ssn.body_len == 0);
+
+    delete p.context;
+    delete flow;
+}
+
+TEST_CASE("imap_body_len_valid", "[imap]")
+{
+    IMAP_SearchInit();
+
+    InspectionPolicy ins_policy;
+    NetworkPolicy net_policy;
+    set_inspection_policy(&ins_policy);
+    set_network_policy(&net_policy);
+
+    uint8_t data[] = "* FETCH (BODY[TEXT]{12345}\r\n";
+    
+    Packet p;
+    Flow* flow = new Flow;
+    p.data = data;
+    p.dsize = sizeof(data) - 1;
+    p.flow = flow;
+    p.packet_flags = 0;
+    p.context = new IpsContext(1);
+
+    IMAPData imap_ssn = {};
+    imap_ssn.state = STATE_UNKNOWN;
+    imap_ssn.session_flags = IMAP_FLAG_ABANDON_EVT;
+    imap_ssn.mime_ssn = nullptr;
+    imap_ssn.jsn = nullptr;
+
+    IMAP_ProcessServerPacket(&p, &imap_ssn);
+
+    CHECK(imap_ssn.body_len == 12345);
+
+    delete p.context;
+    delete flow;
+}
 #endif
