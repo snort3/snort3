@@ -54,6 +54,10 @@ struct Packet;
 
 #define SLAM_MAX 4
 
+#define MAX_TCP_WINDOW_SCALED 0x40000000  // 1GB - max window with 14-bit scaling (65535 << 14)
+#define MAX_TCP_SEQ_DISTANCE  (0xFFFFFFFF - MAX_TCP_WINDOW_SCALED)  // ~3GB
+#define TCP_SEQ_MIDPOINT      0x80000000  // 2GB - midpoint of 32-bit TCP sequence space
+
 #define MAX_ZERO_WIN_PROBE_LEN 1
 #define MAX_KEEP_ALIVE_PROBE_LEN 1
 

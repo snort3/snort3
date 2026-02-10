@@ -59,6 +59,7 @@ const PegInfo tcp_pegs[] =
     { CountType::SUM, "setups", "session initializations" },
     { CountType::SUM, "restarts", "sessions restarted" },
     { CountType::SUM, "resyns", "SYN received on established session" },
+    { CountType::SUM, "bad_syn_seq", "SYN packets rejected due to mismatched sequence number" },
     { CountType::SUM, "discards", "tcp packets discarded" },
     { CountType::SUM, "discards_skipped", "tcp packet discards skipped due to normalization disabled" },
     { CountType::SUM, "invalid_seq_left", 

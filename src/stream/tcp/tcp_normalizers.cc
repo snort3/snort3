@@ -27,6 +27,7 @@
 
 #include "packet_io/packet_tracer.h"
 
+#include "tcp_defs.h"
 #include "tcp_module.h"
 #include "tcp_segment_descriptor.h"
 #include "tcp_session.h"
@@ -467,9 +468,28 @@ int TcpNormalizerProxy::handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescr
 { return ACTION_NOTHING; }
 
 TcpNormalizer::NormStatus TcpNormalizerMissed3whs::apply_normalizations(
-    TcpNormalizerState&, TcpSegmentDescriptor&, uint32_t, bool)
+    TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, uint32_t, bool)
 {
-    // when a flow is Midstream/Asymmetric, not all packet normalizations are possible
+    uint32_t seq = tsd.get_seq();
+    uint32_t r_win_base = tns.tracker->r_win_base;
+    uint32_t diff = seq - r_win_base;
+
+    if ( diff > MAX_TCP_WINDOW_SCALED && diff < MAX_TCP_SEQ_DISTANCE )
+    {
+        if ( diff < TCP_SEQ_MIDPOINT )
+            tcpStats.invalid_seq_right++;
+        else
+            tcpStats.invalid_seq_left++;
+
+        bool inline_mode = tsd.is_nap_policy_inline();
+        log_drop_reason(tns, tsd, inline_mode, "stream",
+            std::string("Normalizer: Missed3whs: Sequence ") + std::to_string(seq) +
+            " is too far from r_win_base " + std::to_string(r_win_base) +
+            " (diff=" + std::to_string(diff) + ")\n");
+        trim_win_payload(tns, tsd, 0, inline_mode);
+        return NORM_BAD_SEQ;
+    }
+
     return NORM_OK;
 }
 

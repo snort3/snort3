@@ -25,6 +25,8 @@
 
 #include "tcp_state_syn_recv.h"
 
+#include "packet_io/packet_tracer.h"
+
 #include "tcp_module.h"
 #include "tcp_normalizers.h"
 #include "tcp_session.h"
@@ -37,6 +39,17 @@ TcpStateSynRecv::TcpStateSynRecv(TcpStateMachine& tsm) :
 
 bool TcpStateSynRecv::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
+    if ( tsd.get_seq() != trk.get_iss() )
+    {
+        tcpStats.bad_syn_seq++;
+        if ( PacketTracer::is_active() )
+            PacketTracer::log("stream_tcp: Rejected SYN with seq %u, expected ISS %u\n",
+                tsd.get_seq(), trk.get_iss());
+        trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
+        trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
+        return false;
+    }
+
     trk.finish_server_init(tsd);
     trk.normalizer.ecn_tracker(tsd.get_tcph());
     trk.session->update_timestamp_tracking(tsd);
@@ -53,6 +66,17 @@ bool TcpStateSynRecv::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateSynRecv::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
+    if ( tsd.get_seq() != trk.get_irs() )
+    {
+        tcpStats.bad_syn_seq++;
+        if ( PacketTracer::is_active() )
+            PacketTracer::log("stream_tcp: Rejected SYN with seq %u, expected IRS %u\n",
+                tsd.get_seq(), trk.get_irs());
+        trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
+        trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
+        return false;
+    }
+
     if ( tsd.is_data_segment() )
         trk.session->handle_data_on_syn(tsd);
 
