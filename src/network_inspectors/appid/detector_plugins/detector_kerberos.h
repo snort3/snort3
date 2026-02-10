@@ -47,7 +47,12 @@ public:
         krb_service_detector = s;
     }
 
-    bool failed_login = false;
+    void set_failed_login(bool failed_login)
+    {
+        check_failed_login = failed_login;
+    }
+
+    bool check_failed_login = false;
 
 private:
     int krb_walk_client_packet(KRBState*, const uint8_t*, const uint8_t*,

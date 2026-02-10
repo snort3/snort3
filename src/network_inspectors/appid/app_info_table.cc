@@ -723,6 +723,10 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
             {
                 odp_ctxt.eve_http_client = atoi(conf_val) ? true : false;
             }
+            else if (!(strcasecmp(conf_key, "kerberos_check_failed_login")))
+            {
+                odp_ctxt.kerberos_check_failed_login = atoi(conf_val) ? true : false;
+            }
             else if (!(strcasecmp(conf_key, "appid_cpu_profiling")))
             {
                 if (!(strcasecmp(conf_val, "disabled")))

@@ -234,6 +234,7 @@ void OdpContext::dump_appid_config()
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: brute_force_inprocess_threshold          %" PRId8" \n", brute_force_inprocess_threshold);
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: failed_state_expiration_secs             %" PRId32" \n", failed_state_expiration_secs);
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: inspect_ooo_flows                        %s\n", inspect_ooo_flows ? "True" : "False");
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: kerberos_check_failed_login                    %s\n", kerberos_check_failed_login ? "True" : "False");
 }
 
 bool OdpContext::is_appid_cpu_profiler_running()
@@ -256,6 +257,8 @@ OdpContext::OdpContext(const AppIdConfig& config, SnortConfig* sc)
 
 void OdpContext::initialize(AppIdInspector& inspector)
 {
+    KerberosClientDetector* c_krb = (KerberosClientDetector*) client_disco_mgr.get_client_detector("kerberos");
+    c_krb->set_failed_login(kerberos_check_failed_login);
     service_pattern_detector->finalize_service_port_patterns(inspector);
     client_pattern_detector->finalize_client_port_patterns(inspector);
     service_disco_mgr.finalize_service_patterns();
@@ -272,6 +275,8 @@ void OdpContext::initialize(AppIdInspector& inspector)
 
 void OdpContext::reload()
 {
+    KerberosClientDetector* c_krb = (KerberosClientDetector*) client_disco_mgr.get_client_detector("kerberos");
+    c_krb->set_failed_login(kerberos_check_failed_login);
     assert(service_pattern_detector);
     service_pattern_detector->reload_service_port_patterns();
     assert(client_pattern_detector);

@@ -415,7 +415,7 @@ int KerberosServiceDetector::krb_walk_server_packet(KRBState* krbs, const uint8_
 
         if (krbs->flags & KRB_FLAG_AUTH_FAILED)
         {
-            if (krb_client_detector->failed_login
+            if (krb_client_detector->check_failed_login
                 && ((krbs->flags & KRB_FLAG_USER_DETECTED) || reqCname))
             {
                 this->add_user(asd, (krbs->flags & KRB_FLAG_USER_DETECTED) ? krbs->cname : reqCname,
@@ -640,7 +640,7 @@ int KerberosClientDetector::krb_walk_client_packet(KRBState* krbs, const uint8_t
             krbs->tag = *s;
             if (krbs->tag == 0xa4
                 && (krbs->msg_type == AS_REQ_MSG_TYPE || krbs->msg_type == TGS_REQ_MSG_TYPE)
-                && this->failed_login)
+                && this->check_failed_login)
             {
                 krbs->next_state = KRB_STATE_REQBODY_SEQ;
             }
