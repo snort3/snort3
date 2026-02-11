@@ -364,12 +364,15 @@ void HttpUri::normalize()
     }
 }
 
-Field* HttpUri::create_decoded_uri()
+Field* HttpUri::create_decoded_uri(Field*& decoded_path_out)
 {
     if ((uri_type != URI_ORIGIN && uri_type != URI_ABSOLUTE) ||
         !(*infractions & INF_URI_NEED_NORM_PATH) ||
         path.length() <= 0)
+    {
+        decoded_path_out = new Field(path_norm.length(), path_norm.start());
         return new Field(classic_norm.length(), classic_norm.start());
+    }
 
     // Create a new buffer containing the normalized URI by normalizing each individual piece.
     int total_length = path.length() + UriNormalizer::URI_NORM_EXPANSION;
@@ -380,11 +383,11 @@ Field* HttpUri::create_decoded_uri()
 
     HttpInfractions dummy_infractions;
     static HttpEventGen dummy_events(std::bitset<HttpEnums::EVENT__MAX_VALUE>().set());
-    Field decoded_path;
-
-    UriNormalizer::normalize(path, decoded_path, false, current, uri_param,
+    decoded_path_out = new Field();
+    
+    UriNormalizer::normalize(path, *decoded_path_out, false, current, uri_param,
         &dummy_infractions, &dummy_events);
-    current += decoded_path.length();
+    current += decoded_path_out->length();
     if (query_norm.length() >= 0)
     {
         memcpy(current, "?", 1);

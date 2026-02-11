@@ -41,6 +41,16 @@ path.
 The normalized URI pieces can be accessed via rules. For example: http_uri: path; content:
 “foo/bar”.
 
+The decoded URI (http_decoded_uri) provides an alternative that performs normalization without
+path simplification. This preserves directory traversal sequences like /../ and /./ in the path.
+http_decoded_uri supports the same six components (scheme, host, port, path, query, fragment).
+For all components except path, http_decoded_uri behaves identically to http_uri. For path,
+http_decoded_uri:path returns the decoded path with percent-encoding resolved but traversal
+segments preserved. This is useful for detecting path traversal evasion attacks.
+
+The decoded URI and decoded path are computed together and cached in tmp_buffers. The decoded
+path Field points into the same buffer as the full decoded URI to avoid memory duplication.
+
 Step 4: Stitch the normalized pieces back together into a complete normalized URI.
 
 This allows rules to be written against a normalized whole URI as is done in 2.X.

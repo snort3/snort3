@@ -284,6 +284,18 @@ static const IpsApi cookie_api =
 
 static const Parameter http_decoded_uri_params[] =
 {
+    { "scheme", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "match against scheme section of URI only" },
+    { "host", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "match against host section of URI only" },
+    { "port", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "match against port section of URI only" },
+    { "path", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "match against path section of URI only" },
+    { "query", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "match against query section of URI only" },
+    { "fragment", Parameter::PT_IMPLIED, nullptr, nullptr,
+        "match against fragment section of URI only" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 

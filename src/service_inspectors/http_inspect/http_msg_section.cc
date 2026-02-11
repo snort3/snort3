@@ -46,6 +46,7 @@ using namespace snort;
 
 static constexpr uint TMP_BUFFER_CNT = HTTP__TMP_BUFFER_MAX - HTTP__BUFFER_MAX;
 THREAD_LOCAL Field* tmp_buffers[TMP_BUFFER_CNT] = { nullptr };
+THREAD_LOCAL Field* decoded_path = nullptr;
 
 void HttpMsgSection::clear_tmp_buffers()
 {
@@ -54,6 +55,8 @@ void HttpMsgSection::clear_tmp_buffers()
         delete tmp_buffers[i];
         tmp_buffers[i] = nullptr;
     }
+    delete decoded_path;
+    decoded_path = nullptr;
 }
 
 static Field* tmp_field_from_data(const uint8_t* data, uint32_t len)
@@ -129,7 +132,7 @@ Field* HttpMsgSection::compute_http_decoded_uri(const HttpBufferInfo&)
     {
         HttpUri* uri = request->get_http_uri();
         if (uri)
-            return uri->create_decoded_uri();
+            return uri->create_decoded_uri(decoded_path);
     }
     return new Field(STAT_NOT_PRESENT);
 }
@@ -430,7 +433,17 @@ const Field& HttpMsgSection::get_classic_buffer(const HttpBufferInfo& buf)
     }
     case HTTP_BUFFER_URI:
     case HTTP_BUFFER_RAW_URI:
-    {
+    case HTTP_BUFFER_DECODED_URI:
+    {   
+        if (buf.type == HTTP_BUFFER_DECODED_URI && (buf.sub_id == 0 || buf.sub_id == UC_PATH))
+        {
+            const Field& decoded_uri = get_tmp_buffer(buf);
+
+            if (buf.sub_id == 0)
+                return decoded_uri;
+
+            return decoded_path ? *decoded_path : Field::FIELD_NULL;
+        }
         const bool raw = (buf.type == HTTP_BUFFER_RAW_URI);
         if (request == nullptr)
             return Field::FIELD_NULL;

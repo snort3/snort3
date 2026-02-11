@@ -573,7 +573,13 @@ components are normalized. In these cases, http_uri represents the normalized
 path, query, and fragment (/path?query#fragment). If the uri is of type 
 authority (host and port), the host is normalized and http_uri represents the 
 normalized host with the port number. In all other cases http_uri is the same 
-as http_raw_uri. http_decoded_uri does not support those six options.
+as http_raw_uri. http_decoded_uri represents the decoded URI with normalization 
+but without path simplification. It supports the same six components (path, query,
+fragment, host, port, scheme) as http_uri. For host/port/query/fragment/scheme, 
+http_decoded_uri behaves like http_uri. For path, http_decoded_uri:path uses the 
+decoded path without removing path traversal segments (for example, 
+/safe/../../evil/secret.txt), while http_uri:path uses the normalized (simplified) 
+path (for example, /evil/secret.txt).
 
 Note: this section uses informal language to explain some things. Nothing
 here is intended to conflict with the technical language of the HTTP RFCs

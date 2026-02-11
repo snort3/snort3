@@ -42,7 +42,7 @@ public:
         uri(length, start), infractions(infractions_), events(events_), method_id(method_id_),
         uri_param(uri_param_)
         { normalize(); }
-    Field* create_decoded_uri();
+    Field* create_decoded_uri(Field*& decoded_path_out);
     const Field& get_uri() const { return uri; }
     HttpEnums::UriType get_uri_type() { return uri_type; }
     const Field& get_scheme() { return scheme; }
