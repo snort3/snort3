@@ -124,6 +124,18 @@ char* snort_strdup(const char* str)
     return p;
 }
 
+void* snort_memrchr(const void* s, int c, size_t n)
+{
+    const unsigned char* p = (const unsigned char*)s + n;
+    while (p != (const unsigned char*)s)
+    {
+        --p;
+        if (*p == (unsigned char)c)
+            return (void*)p;
+    }
+    return nullptr;
+}
+
 void ts_print(const struct timeval* tvp, char* timebuf, bool yyyymmdd)
 {
     struct timeval tv;

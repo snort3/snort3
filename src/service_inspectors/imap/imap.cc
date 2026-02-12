@@ -34,6 +34,7 @@
 #include "pub_sub/opportunistic_tls_event.h"
 #include "search_engines/search_tool.h"
 #include "stream/stream.h"
+#include "utils/util.h"
 #include "utils/util_cstring.h"
 
 #include "imap_module.h"
@@ -600,7 +601,7 @@ static void IMAP_ProcessServerPacket(Packet* p, IMAPData* imap_ssn)
                 {
                     if ((body_start + 1) < eol)
                     {
-                        const uint8_t* body_end = (const uint8_t*)memrchr(
+                        const uint8_t* body_end = (const uint8_t*)snort_memrchr(
                             (const char*)(body_start + 1), '}', eol - (body_start + 1));
 
                         if (body_end == nullptr)
