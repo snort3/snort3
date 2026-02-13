@@ -49,3 +49,7 @@ add_cpputest( pub_sub_detection_events_test
     SOURCES
         ../detection_events.cc
 )
+add_cpputest( pub_sub_file_events_test
+    SOURCES
+        ../file_events.cc
+)

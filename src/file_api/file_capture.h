@@ -78,7 +78,7 @@ public:
     void store_file();
 
     // Store file to disk asynchronously
-    void store_file_async();
+    std::string store_file_async();
 
     // Log file capture mempool usage
     static void print_mem_usage();

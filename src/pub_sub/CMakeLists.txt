@@ -49,6 +49,7 @@ add_library( pub_sub OBJECT
     detection_events.cc
     dns_events.cc
     eof_event.cc
+    file_events.cc
     http_body_event.cc
     http_events.cc
     http_form_data_event.cc

@@ -513,15 +513,15 @@ void FileCapture::store_file()
 }
 
 // Queue files to be stored to disk
-void FileCapture::store_file_async()
+std::string FileCapture::store_file_async()
 {
     // send data to the writer thread
     if (!file_info)
-        return;
+        return std::string();
 
     uint8_t* sha = file_info->get_file_sig_sha256();
     if (!sha)
-        return;
+        return std::string();
 
     std::string file_name = file_info->sha_to_string(sha);
 
@@ -532,6 +532,7 @@ void FileCapture::store_file_async()
     std::lock_guard<std::mutex> lk(capture_mutex);
     files_waiting.push(this);
     capture_cv.notify_one();
+    return file_full_name;
 }
 
 /*Log file capture mempool usage*/

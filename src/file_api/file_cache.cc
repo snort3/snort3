@@ -343,7 +343,7 @@ void FileCache::publish_file_cache_event(Flow* flow, FileInfo* file, int64_t tim
 
 
         std::shared_ptr<FileMPEvent> fe = std::make_shared<FileMPEvent>(hashkey, timeout, *file);
-        unsigned file_pub_id = MPDataBus::get_id(file_pub_key);
+        unsigned file_pub_id = MPDataBus::get_id(file_mp_pub_key);
         MPDataBus::publish(file_pub_id, FileMPEvents::FILE_SHARE_SYNC, fe);
 
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
@@ -458,6 +458,8 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
                     "apply_verdict:FILE_VERDICT_PENDING with action reset\n");
                 act->set_delayed_action(Active::ACT_RESET, true);
             }
+
+            file_ctx->set_timedout();
 
             if (resume)
                 policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);

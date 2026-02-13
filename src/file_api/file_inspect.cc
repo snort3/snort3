@@ -71,8 +71,8 @@ bool FileInspect::configure(SnortConfig* sc)
         MPSerializeFunc serialize_func = serialize_file_event;
         MPDeserializeFunc deserialize_func = deserialize_file_event;
 
-        MPDataBus::register_event_helpers(file_pub_key, FileMPEvents::FILE_SHARE_SYNC, serialize_func, deserialize_func);
-        MPDataBus::subscribe(file_pub_key, FileMPEvents::FILE_SHARE_SYNC, new FileCacheShare());
+        MPDataBus::register_event_helpers(file_mp_pub_key, FileMPEvents::FILE_SHARE_SYNC, serialize_func, deserialize_func);
+        MPDataBus::subscribe(file_mp_pub_key, FileMPEvents::FILE_SHARE_SYNC, new FileCacheShare());
     }
     return true;
 }

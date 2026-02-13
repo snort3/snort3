@@ -43,7 +43,9 @@
 #include "packet_io/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
+#include "pub_sub/file_events.h"
 #include "pub_sub/intrinsic_event_ids.h"
+#include "time/packet_time.h"
 #include "utils/util.h"
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -144,6 +146,8 @@ void FileInfo::copy(const FileInfo& other, bool clear_data)
     file_capture_enabled = other.file_capture_enabled;
     file_state = other.file_state;
     pending_expire_time = other.pending_expire_time;
+    extracted_cutoff = other.extracted_cutoff;
+    extracted_size = other.extracted_size;
     if (clear_data)
     {
         // only one copy of file capture
@@ -398,7 +402,7 @@ uint8_t* FileInfo::get_file_sig_sha256() const
     return (sha256);
 }
 
-std::string FileInfo::sha_to_string(const uint8_t* sha256)
+std::string FileInfo::sha_to_string(const uint8_t* sha256) const
 {
     uint8_t conv[] = "0123456789ABCDEF";
     const uint8_t* index;
@@ -464,9 +468,14 @@ FileCaptureState FileInfo::reserve_file(FileCapture*& dest)
         return FileCapture::error_capture(FILE_CAPTURE_FAIL);
 
     FileCaptureState state = file_capture->reserve_file(this);
+
+    if (state == FILE_CAPTURE_SUCCESS)
+        extracted_size = file_capture->get_file_capture_size();
+    
     config_file_capture(false);
     dest = file_capture;
     file_capture = nullptr;
+
     return state;
 }
 
@@ -491,7 +500,7 @@ UserFileDataBase* FileInfo::get_file_data() const
     return user_file_data;
 }
 
-FileContext::FileContext ()
+FileContext::FileContext () : start_time(SnortClock::now())
 {
     file_type_context = nullptr;
     file_signature_context = nullptr;
@@ -531,6 +540,23 @@ inline void FileContext::finalize_file_type()
     file_type_context = nullptr;
 }
 
+std::string FileContext::get_mime_type() const
+{
+    const FileConfig* conf = get_file_config();
+    if (SNORT_FILE_TYPE_UNKNOWN != file_type_id and SNORT_FILE_TYPE_CONTINUE != file_type_id and conf)
+    {
+        const FileMeta* info = conf->get_rule_from_id(file_type_id);
+        return info != nullptr ? info->type : std::string();
+    }
+
+    return std::string();
+}
+
+void FileContext::set_source(Flow *flow)
+{
+    source = (flow && flow->service ? std::string(flow->service) : std::string());
+}
+
 void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
 {
     // log file event either when filename is set or if it is a asymmetric flow
@@ -564,6 +590,33 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
             policy->log_file_action(flow, this, FILE_ACTION_DEFAULT);
 
         user_file_data_mutex.unlock();
+
+        if (policy and log_needed)
+        {
+            hr_time now = SnortClock::now();
+            duration = (TO_USECS(now - start_time)) / 1000000.0;  // Convert microseconds to seconds
+            set_source(flow);
+
+            FileEvent file_event(*this);
+            DataBus::publish(DataBus::get_id(file_adv_pub_key), FileEventIds::FILE_COMPLETE, file_event, flow);
+
+            std::string filename = file_event.get_filename();
+            size_t fname_len = filename.length();
+            FileCharEncoding encoding = get_character_encoding(filename.c_str(), fname_len);
+
+            FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
+                "File advance log: fuid-%s, source-%s, mime type-%s, file name-%s,"
+                " duration-%f, is orig-%d, seen bytes-%lu, total bytes-%lu,"
+                " timedout-%d, sha256-%s, extracted name-%s, extracted cutoff-%d,"
+                " extracted size-%lu\n", file_event.get_fuid().c_str(),
+                file_event.get_source().c_str(), file_event.get_mime_type().c_str(),
+                (encoding == SNORT_CHAR_ENCODING_UTF_16LE) ? "" : filename.c_str(), file_event.get_duration(),
+                file_event.get_is_orig(), file_event.get_seen_bytes(),
+                file_event.get_total_bytes(), file_event.get_timedout(),
+                file_event.get_sha256().c_str(), (encoding == SNORT_CHAR_ENCODING_UTF_16LE) ? "" : file_event.get_extracted_name().c_str(),
+                file_event.get_extracted_cutoff(), file_event.get_extracted_size());
+            start_time = SnortClock::now();
+        }
 
         if ( config->trace_type )
             print(std::cout);
@@ -689,6 +742,7 @@ void FileContext::reset()
     processing_complete = false;
     reset_sha();
     remove_segments();
+    start_time = SnortClock::now();
 }
 
 /*
@@ -1064,11 +1118,6 @@ void FileContext::update_file_size(int data_size, FilePosition position)
     {
         file_size = processed_bytes;
     }
-}
-
-uint64_t FileContext::get_processed_bytes()
-{
-    return processed_bytes;
 }
 
 void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int max_depth)

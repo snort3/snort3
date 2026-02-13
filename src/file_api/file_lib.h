@@ -29,6 +29,7 @@
 #include <string>
 
 #include "file_api/file_api.h"
+#include "time/clock_defs.h"
 #include "utils/util.h"
 
 #define SNORT_FILE_TYPE_UNKNOWN          UINT16_MAX
@@ -78,7 +79,7 @@ public:
     void set_file_direction(FileDirection dir);
     FileDirection get_file_direction() const;
     uint8_t* get_file_sig_sha256() const;
-    std::string sha_to_string(const uint8_t* sha256);
+    std::string sha_to_string(const uint8_t* sha256) const;
     void set_file_id(uint64_t index);
     uint64_t get_file_id() const;
 
@@ -100,6 +101,12 @@ public:
     // The file reserved will be returned and it will be detached from file context/session
     FileCaptureState reserve_file(FileCapture*& dest);
     int64_t get_max_file_capture_size();
+    int64_t get_extracted_size() const { return extracted_size; }
+    bool get_extracted_cutoff() const { return extracted_cutoff; }
+    const std::string& get_extracted_name() const { return extracted_file_name; }
+    void set_extracted_name(const std::string& name) { extracted_file_name = name; }
+    void set_extracted_size(int64_t size) { extracted_size = size; }
+    void set_extracted_cutoff(bool cutoff) { extracted_cutoff = cutoff; }
 
     FileState get_file_state() { return file_state; }
 
@@ -144,6 +151,9 @@ protected:
     bool re_eval = false;
     // Indicates that file transmission goes through 206 HTTP Partial Content
     bool is_partial = false;
+    bool extracted_cutoff = true;
+    uint64_t extracted_size = 0;
+    std::string extracted_file_name;
 };
 
 class SO_PUBLIC FileContext : public FileInfo
@@ -173,7 +183,7 @@ public:
     void set_signature_state(bool gen_sig);
 
     //File properties
-    uint64_t get_processed_bytes();
+    uint64_t get_processed_bytes() const { return processed_bytes; }
 
     void print_file_sha256(std::ostream&);
     void print_file_name(std::ostream&);
@@ -191,6 +201,14 @@ public:
     FileConfig* get_config() { return config; }
     void set_inspector(FileInspect* ins) { inspector = ins; }
     FileInspect* get_inspector() { return inspector; }
+    double get_duration() const { return duration; }  // Duration in seconds (fractional)
+    void set_duration(double d) { duration = d; }
+    std::string get_mime_type() const;
+    const std::string& get_source() const { return source; }
+    void set_source(Flow *flow);
+    bool get_timedout() const { return timedout; }
+    void set_timedout() { timedout = true; }
+
 private:
     uint64_t processed_bytes = 0;
     void* file_type_context;
@@ -199,6 +217,10 @@ private:
     FileInspect* inspector;
     FileConfig*  config;
     bool cacheable = true;
+    hr_time start_time = TIME_POINT_ZERO;
+    double duration = 0.0;  // File processing duration in seconds (fractional)
+    std::string source;
+    bool timedout = false;
 
     void finalize_file_type();
     void finish_signature_lookup(Packet*, bool, FilePolicyBase*);
