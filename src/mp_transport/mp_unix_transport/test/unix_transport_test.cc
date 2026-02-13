@@ -171,7 +171,7 @@ void UnixDomainConnector::process_receive()
 }
 snort::ConnectorMsg UnixDomainConnector::allocate_connector_message(uint32_t length)
 {
-    uint8_t* data = new uint8_t[length];
+    const uint8_t* data = new uint8_t[length];
     return snort::ConnectorMsg(data, length, true);
 }
 
@@ -330,6 +330,7 @@ TEST_GROUP(unix_transport_test_messaging)
 {
     void setup() override
     {
+        expect_update_change = true;
         test_snort_config.max_procs = 2;
 
         accept_cnt = 1;
@@ -372,6 +373,8 @@ TEST_GROUP(unix_transport_test_messaging)
         test_msg_call_data = nullptr;
         delete[] test_msg_answer_data;
         test_msg_answer_data = nullptr;
+        test_update_handler = nullptr;
+        expect_update_change = false;
     }
 };
 
@@ -528,6 +531,31 @@ TEST(unix_transport_test_messaging, send_to_transport_no_helpers)
     CHECK(received_1_msg_cnt == 0);
     CHECK(received_2_msg_cnt == 0);
     CHECK(test_send_calls == 0);
+}
+
+TEST(unix_transport_test_messaging, send_to_transport_no_connector)
+{
+    clear_test_calls();
+
+    test_transport_message_1->register_event_helpers(0, 0, mp_helper_functions_mock);
+
+    std::shared_ptr<TestDataEvent> event = std::make_shared<TestDataEvent>();
+
+    MPEventInfo event_info(event, 0, 0);
+
+    test_update_handler(nullptr, true);
+
+    auto res = test_transport_message_1->send_to_transport(event_info);
+    CHECK(res == true);
+    CHECK(test_serialize_calls == 1);
+    CHECK(test_deserialize_calls == 0);
+    CHECK(received_1_msg_cnt == 0);
+    CHECK(received_2_msg_cnt == 0);
+    CHECK(test_send_calls == 0);
+
+    static_cast<MPUnixDomainTransport*>(test_transport_message_1)->sum_stats();
+    auto stats = static_cast<MPUnixDomainTransport*>(test_transport_message_1)->get_stats_copy();
+    CHECK(stats.send_errors == 1);
 }
 
 int main(int argc, char** argv)
