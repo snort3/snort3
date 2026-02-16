@@ -26,10 +26,12 @@
 
 #define GID_SSL 137
 
-#define     SSL_INVALID_CLIENT_HELLO               1
-#define     SSL_INVALID_SERVER_HELLO               2
-#define     SSL_ALERT_HB_REQUEST                   3
-#define     SSL_ALERT_HB_RESPONSE                  4
+#define     SSL_INVALID_CLIENT_HELLO          1
+#define     SSL_INVALID_SERVER_HELLO          2
+#define     SSL_ALERT_HB_REQUEST              3
+#define     SSL_ALERT_HB_RESPONSE             4
+#define     SSL_ALERT_CHELLO_MULTI_RECORDS    5
+#define     SSL_ALERT_CERT_MULTI_RECORDS      6
 
 struct SSLData
 {

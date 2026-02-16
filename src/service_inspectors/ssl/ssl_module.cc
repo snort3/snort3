@@ -33,6 +33,8 @@ using namespace std;
 #define SSL_INVALID_SERVER_HELLO_STR "invalid server HELLO without client HELLO detected"
 #define SSL_HEARTBLEED_REQUEST_STR "heartbeat read overrun attempt detected"
 #define SSL_HEARTBLEED_RESPONSE_STR "large heartbeat response detected"
+#define SSL_CHELLO_MULTI_RECORDS_STR "multiple client HELLO host names detected in single packet"
+#define SSL_CERT_MULTI_RECORDS_STR "multiple server CERTIFICATE common names or organizational units detected in single packet"
 
 static const Parameter s_params[] =
 {
@@ -51,6 +53,8 @@ static const RuleMap ssl_rules[] =
     { SSL_INVALID_SERVER_HELLO, SSL_INVALID_SERVER_HELLO_STR },
     { SSL_ALERT_HB_REQUEST, SSL_HEARTBLEED_REQUEST_STR },
     { SSL_ALERT_HB_RESPONSE, SSL_HEARTBLEED_RESPONSE_STR },
+    { SSL_ALERT_CHELLO_MULTI_RECORDS, SSL_CHELLO_MULTI_RECORDS_STR },
+    { SSL_ALERT_CERT_MULTI_RECORDS, SSL_CERT_MULTI_RECORDS_STR },
 
     { 0, nullptr }
 };

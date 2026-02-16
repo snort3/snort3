@@ -375,12 +375,12 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
     uint8_t dir = (p->is_from_server()) ? 1 : 0;
     uint8_t index = (p->packet_flags & PKT_REBUILT_STREAM) ? 2 : 0;
 
-    uint8_t heartbleed_type = 0;
+    uint8_t alert_flags = 0;
     uint32_t info_flags = 0;
     SSLV3ClientHelloData client_hello_data;
     SSLV3ServerCertData server_cert;
     uint32_t new_flags = SSL_decode(p->data, (int)p->dsize, p->packet_flags, sd.ssn_flags,
-        &heartbleed_type, &(sd.partial_rec_len[dir+index]), config->max_heartbeat_len, &info_flags, &client_hello_data,
+        &alert_flags, &(sd.partial_rec_len[dir+index]), config->max_heartbeat_len, &info_flags, &client_hello_data,
         &server_cert, &fd->get_tls_connection_data().tls_params);
     sd.info_flags |= info_flags;
 
@@ -409,21 +409,31 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p)
         DataBus::publish(pub_id, SslEventIds::CHELLO_SERVER_NAME, event);
     }
 
+    if(alert_flags & SSL_ALERT_CHELLO_MULTIPLE_RECORDS)
+    {
+        DetectionEngine::queue_event(GID_SSL, SSL_ALERT_CHELLO_MULTI_RECORDS);
+    }
+
     if (server_cert.common_name != nullptr)
     {
         SslServerCommonNameEvent event(server_cert.common_name, p);
         DataBus::publish(pub_id, SslEventIds::SERVER_COMMON_NAME, event);
     }
 
-    if (heartbleed_type & SSL_HEARTBLEED_REQUEST)
+    if(alert_flags & SSL_ALERT_CERT_MULTIPLE_RECORDS)
+    {
+        DetectionEngine::queue_event(GID_SSL, SSL_ALERT_CERT_MULTI_RECORDS);
+    }
+
+    if (alert_flags & SSL_ALERT_HEARTBLEED_REQUEST)
     {
         DetectionEngine::queue_event(GID_SSL, SSL_ALERT_HB_REQUEST);
     }
-    else if (heartbleed_type & SSL_HEARTBLEED_RESPONSE)
+    else if (alert_flags & SSL_ALERT_HEARTBLEED_RESPONSE)
     {
         DetectionEngine::queue_event(GID_SSL, SSL_ALERT_HB_RESPONSE);
     }
-    else if (heartbleed_type & SSL_HEARTBLEED_UNKNOWN)
+    else if (alert_flags & SSL_ALERT_HEARTBLEED_UNKNOWN)
     {
         if (!dir)
         {

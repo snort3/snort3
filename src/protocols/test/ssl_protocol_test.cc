@@ -106,7 +106,7 @@ TEST(ssl_protocol_tests, cert_data_incomplete_len_2)
     test_data.certs_data = new uint8_t[2] { 0x01, 0x02 }; // Incomplete length, should be at least 3 bytes
     test_data.certs_len = 2;
     auto result = parse_server_certificates(&test_data);
-    CHECK_EQUAL(true, result);
+    CHECK_EQUAL(static_cast<uint8_t>(snort::ParseResult::SUCCESS), static_cast<uint8_t>(result));
     POINTERS_EQUAL(nullptr, test_data.certs_data);
     CHECK_EQUAL(0, test_data.certs_len);
 }
@@ -172,7 +172,7 @@ TEST(ssl_protocol_tests, parse_server_hello_tls_1_3)
 
     TLSConnectionParams tls_params;
     auto result = parse_server_hello_data(test_data, sizeof(test_data), &tls_params);
-    CHECK_EQUAL(ParseHelloResult::SUCCESS, result);
+    CHECK_EQUAL(static_cast<uint8_t>(ParseResult::SUCCESS), static_cast<uint8_t>(result));
     CHECK_EQUAL(0x0304, tls_params.selected_tls_version);
     CHECK_EQUAL(0xc02b, tls_params.cipher);
 }
@@ -198,7 +198,7 @@ TEST(ssl_protocol_tests, parse_server_hello_invalid_packet_len)
 
     TLSConnectionParams tls_params;
     auto result = parse_server_hello_data(test_data, sizeof(test_data), &tls_params);
-    CHECK_EQUAL(ParseHelloResult::FRAGMENTED_PACKET, result);
+    CHECK_EQUAL(static_cast<uint8_t>(ParseResult::FRAGMENTED_PACKET), static_cast<uint8_t>(result));
 }
 
 
