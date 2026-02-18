@@ -215,11 +215,19 @@ void RnaLogger::log(uint16_t type, uint16_t subtype, const snort::Packet* p, Rna
 
 void RnaLogger::log(uint16_t type, uint16_t subtype, const snort::Packet* p, RnaTracker& ht,
     const struct in6_addr* src_ip, const uint8_t* src_mac, const FpFingerprint* fp,
-    const vector<const char*>* cpeos, time_t event_time)
+    const vector<const char*>* cpeos, time_t event_time, const char* hardware)
 {
     log(type, subtype, src_ip, src_mac, ht, p, event_time, 0, nullptr, nullptr, fp,
-        nullptr, nullptr, nullptr, APP_ID_NONE, nullptr, false, 0, 0, nullptr,
+        nullptr, nullptr, nullptr, APP_ID_NONE, hardware, false, 0, 0, nullptr,
         nullptr, cpeos);
+}
+
+void RnaLogger::log(uint16_t type, uint16_t subtype, const Packet* p, RnaTracker& ht,
+    const struct in6_addr* src_ip, const uint8_t* src_mac, const FpFingerprint* fp,
+    time_t event_time, const char* device_info, const char* nb_name)
+{
+    log(type, subtype, src_ip, src_mac, ht, p, event_time, 0, nullptr, nullptr,
+        fp, nullptr, nullptr, nullptr, APP_ID_NONE, device_info, false, 0U, 0U, nullptr, nb_name);
 }
 
 bool RnaLogger::log(uint16_t type, uint16_t subtype, const struct in6_addr* src_ip,

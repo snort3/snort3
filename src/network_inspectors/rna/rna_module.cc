@@ -46,6 +46,7 @@
 #include "rna_fingerprint_tcp.h"
 #include "rna_fingerprint_ua.h"
 #include "rna_fingerprint_udp.h"
+#include "rna_fingerprint_deviceinfo.h"
 #include "rna_mac_cache.h"
 #include "rna_pnd.h"
 
@@ -112,6 +113,7 @@ bool FpProcReloadTuner::tinit()
     set_ua_fp_processor(mod_conf.ua_processor);
     set_udp_fp_processor(mod_conf.udp_processor);
     set_smb_fp_processor(mod_conf.smb_processor);
+    set_deviceinfo_fp_processor(mod_conf.deviceinfo_processor);
     return false;  // no work to do after this
 }
 
@@ -339,6 +341,42 @@ static const Parameter rna_fp_params[] =
     { "flags", Parameter::PT_INT, "0:max32", nullptr,
       "smb flags" },
 
+    { "protocol_type", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo protocol type" },
+
+    { "manufacturer_pattern", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo manufacturer pattern" },
+
+    { "manufacturer", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo manufacturer value" },
+
+    { "model_pattern", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo model pattern" },
+
+    { "model", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo model value" },
+
+    { "devicename_pattern", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo devicename pattern" },
+
+    { "devicename", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo devicename value" },
+
+    { "os_pattern", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo os pattern" },
+
+    { "os_value", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo os value" },
+
+    { "mac_addr", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo mac address" },
+
+    { "os_prefix", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo os prefix" },
+
+    { "os_postfix", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo os postfix" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -368,6 +406,9 @@ static const Parameter rna_params[] =
     { "smb_fingerprints", Parameter::PT_LIST, rna_fp_params, nullptr,
       "list of smb fingerprints" },
 
+    { "deviceinfo_fingerprints", Parameter::PT_LIST, rna_fp_params, nullptr,
+      "list of deviceinfo fingerprints" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -390,6 +431,7 @@ static const PegInfo rna_pegs[] =
     { CountType::SUM, "dhcp_info", "count of new DHCP lease events received" },
     { CountType::SUM, "smb", "count of new SMB events received" },
     { CountType::SUM, "netflow_record", "count of netflow record events received" },
+    { CountType::SUM, "deviceinfo", "count of deviceinfo events received" },
     { CountType::SUM, "total_events_in_interval", "count of RNA events generated" },
     { CountType::SUM, "total_packets_in_interval", "count of packets processed" },
     { CountType::SUM, "total_bytes_in_interval", "count of bytes processed" },
@@ -446,6 +488,26 @@ bool RnaModule::begin(const char* fqn, int, SnortConfig*)
         if (!mod_conf->smb_processor)
             mod_conf->smb_processor = new SmbFpProcessor;
     }
+    else if (!strcmp(fqn, "rna.deviceinfo_fingerprints"))
+    {
+        deviceinfo_fingerprint.fpid = 0;
+        deviceinfo_fingerprint.fp_type = 0;
+        deviceinfo_fingerprint.fpuuid.clear();
+        deviceinfo_fingerprint.protocol_type.clear();
+        deviceinfo_fingerprint.manufacturer_pattern.clear();
+        deviceinfo_fingerprint.manufacturer.clear();
+        deviceinfo_fingerprint.model_pattern.clear();
+        deviceinfo_fingerprint.model.clear();
+        deviceinfo_fingerprint.devicename_pattern.clear();
+        deviceinfo_fingerprint.devicename.clear();
+        deviceinfo_fingerprint.os_pattern.clear();
+        deviceinfo_fingerprint.os_value.clear();
+        deviceinfo_fingerprint.mac_addr.clear();
+        deviceinfo_fingerprint.os_prefix.clear();
+        deviceinfo_fingerprint.os_postfix.clear();
+        if (!mod_conf->deviceinfo_processor)
+            mod_conf->deviceinfo_processor = new DeviceInfoFpProcessor;
+    }
 
     return true;
 }
@@ -473,14 +535,26 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
     }
     else if ( fqn and ( strstr(fqn, "rna.tcp_fingerprints") or
         strstr(fqn, "rna.ua_fingerprints") or strstr(fqn, "rna.udp_fingerprints")
-        or strstr(fqn, "rna.smb_fingerprints") ) )
+        or strstr(fqn, "rna.smb_fingerprints") or strstr(fqn, "rna.deviceinfo_fingerprints") ) )
     {
         if (v.is("fpid"))
+        {
             fingerprint.fpid = v.get_uint32();
+            if (strstr(fqn, "rna.deviceinfo_fingerprints"))
+                deviceinfo_fingerprint.fpid = v.get_uint32();
+        }
         else if (v.is("type"))
+        {
             fingerprint.fp_type = v.get_uint32();
+            if (strstr(fqn, "rna.deviceinfo_fingerprints"))
+                deviceinfo_fingerprint.fp_type = v.get_uint32();
+        }
         else if (v.is("uuid"))
+        {
             fingerprint.fpuuid = v.get_string();
+            if (strstr(fqn, "rna.deviceinfo_fingerprints"))
+                deviceinfo_fingerprint.fpuuid = v.get_string();
+        }
         else if (v.is("ttl"))
             fingerprint.ttl = v.get_uint8();
         else if (v.is("tcp_window"))
@@ -520,6 +594,30 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
             fingerprint.smb_minor = v.get_uint32();
         else if (v.is("flags"))
             fingerprint.smb_flags = v.get_uint32();
+        else if (v.is("protocol_type"))
+            deviceinfo_fingerprint.protocol_type = v.get_string();
+        else if (v.is("manufacturer_pattern"))
+            deviceinfo_fingerprint.manufacturer_pattern = v.get_string();
+        else if (v.is("manufacturer"))
+            deviceinfo_fingerprint.manufacturer = v.get_string();
+        else if (v.is("model_pattern"))
+            deviceinfo_fingerprint.model_pattern = v.get_string();
+        else if (v.is("model"))
+            deviceinfo_fingerprint.model = v.get_string();
+        else if (v.is("devicename_pattern"))
+            deviceinfo_fingerprint.devicename_pattern = v.get_string();
+        else if (v.is("devicename"))
+            deviceinfo_fingerprint.devicename = v.get_string();
+        else if (v.is("os_pattern"))
+            deviceinfo_fingerprint.os_pattern = v.get_string();
+        else if (v.is("os_value"))
+            deviceinfo_fingerprint.os_value = v.get_string();
+        else if (v.is("mac_addr"))
+            deviceinfo_fingerprint.mac_addr = v.get_string();
+        else if (v.is("os_prefix"))
+            deviceinfo_fingerprint.os_prefix = v.get_string();
+        else if (v.is("os_postfix"))
+            deviceinfo_fingerprint.os_postfix = v.get_string();
         else
             return false;
     }
@@ -569,6 +667,10 @@ bool RnaModule::end(const char* fqn, int index, SnortConfig* sc)
     {
         mod_conf->smb_processor->push(fingerprint);
         fingerprint.clear();
+    }
+    else if ( index > 0 and mod_conf->deviceinfo_processor and !strcmp(fqn, "rna.deviceinfo_fingerprints") )
+    {
+        mod_conf->deviceinfo_processor->push(deviceinfo_fingerprint);
     }
 
     return true;
@@ -651,7 +753,8 @@ bool RnaModule::is_valid_fqn(const char* fqn) const
 {
     return !strcmp(fqn, RNA_NAME) or !strcmp(fqn, "rna.tcp_fingerprints") or
         !strcmp(fqn, "rna.ua_fingerprints") or !strcmp(fqn, "rna.ua_fingerprints.user_agent") or
-        !strcmp(fqn, "rna.udp_fingerprints") or !strcmp(fqn, "rna.smb_fingerprints");
+        !strcmp(fqn, "rna.udp_fingerprints") or !strcmp(fqn, "rna.smb_fingerprints") or
+        !strcmp(fqn, "rna.deviceinfo_fingerprints");
 }
 
 

@@ -64,6 +64,8 @@ void UaFpProcessor::push(RawFingerprint const&) { }
 
 void UdpFpProcessor::push(RawFingerprint const&) { }
 
+void DeviceInfoFpProcessor::push(const DeviceInfoRawFingerprint& raw_fp) { }
+
 SmbFingerprint::SmbFingerprint(const RawFingerprint&) { }
 bool SmbFingerprint::operator==(const SmbFingerprint&) const { return true; }
 bool SmbFpProcessor::push(SmbFingerprint const&) { return true; }

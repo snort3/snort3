@@ -33,6 +33,7 @@
 #include "pub_sub/dhcp_events.h"
 #include "pub_sub/netflow_event.h"
 #include "pub_sub/smb_events.h"
+
 #include "sfip/sf_ip.h"
 
 #include "rna_config.h"
@@ -135,6 +136,7 @@ public:
     bool analyze_netflow(snort::DataEvent&);
     void analyze_netflow_host(snort::NetFlowEvent*);
     void analyze_netflow_service(snort::NetFlowEvent*);
+    void analyze_deviceinfo(snort::DataEvent&);
 
     // generate change event for all hosts in the ip cache
     void generate_change_host_update();

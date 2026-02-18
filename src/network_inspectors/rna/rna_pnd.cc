@@ -35,10 +35,12 @@
 #include "protocols/icmp4.h"
 #include "protocols/icmp6.h"
 #include "protocols/protocol_ids.h"
+#include "pub_sub/deviceinfo_events.h"
 #include "pub_sub/rna_events.h"
 
 #include "rna_app_discovery.h"
 #include "rna_cpe_os.h"
+#include "rna_fingerprint_deviceinfo.h"
 #include "rna_fingerprint_smb.h"
 #include "rna_fingerprint_tcp.h"
 #include "rna_fingerprint_udp.h"
@@ -170,7 +172,7 @@ bool RnaPnd::analyze_cpe_os_info(snort::DataEvent& event)
     FpFingerprint fp = FpFingerprint();
     fp.fp_type = FpFingerprint::FpType::FP_TYPE_CPE;
     logger.log(RNA_EVENT_NEW, NEW_OS, p, rt, src_ip_ptr, src_mac, &fp,
-        cpeos_event.get_os_names(), packet_time());
+        cpeos_event.get_os_names(), packet_time(), nullptr);
 
     return true;
 }
@@ -1118,6 +1120,12 @@ int RnaPnd::discover_host_types_icmpv6_ndp(RnaTracker& ht, const Packet* p, uint
     }
 
     return 1;
+}
+
+void RnaPnd::analyze_deviceinfo(DataEvent& event) 
+{
+    const DeviceInfoEvent* deviceinfo_event = static_cast<const DeviceInfoEvent*>(&event);
+    RnaDeviceDiscovery::process(deviceinfo_event, logger, filter);
 }
 
 #ifdef UNIT_TEST

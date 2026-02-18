@@ -38,12 +38,12 @@ struct RnaLoggerEvent : public Event
         const snort::HostMac* hmp, uint16_t pr, void* cv, const snort::HostApplication* hap,
         const snort::FpFingerprint* fpr, const snort::HostClient* hcp, const char* u,
         int32_t app, const char* di, bool jb, uint32_t ls, uint32_t nm,
-        const struct in6_addr* rtr, const snort::Packet* p, const char* nb_name,
+        const struct in6_addr* rtr, const snort::Packet* p, const char* dev_name,
         const std::vector<const char*>* cpe) :
 
         type(t), subtype(st), mac(mc), ht(rt), hm(hmp), proto(pr), cond_var(cv), ha(hap),
         fp(fpr), hc(hcp), user(u), appid(app), device_info(di), jail_broken(jb), lease(ls),
-        netmask(nm), router(rtr), pkt(p), netbios_name(nb_name), cpe_os(cpe) { }
+        netmask(nm), router(rtr), pkt(p), device_name(dev_name), cpe_os(cpe) { }
 
     uint32_t event_time = 0;
     uint16_t type;
@@ -65,7 +65,7 @@ struct RnaLoggerEvent : public Event
     uint32_t netmask;
     const struct in6_addr* router;
     const snort::Packet* pkt;
-    const char* netbios_name = nullptr;
+    const char* device_name = nullptr;
     const std::vector<const char*>* cpe_os = nullptr;
 };
 

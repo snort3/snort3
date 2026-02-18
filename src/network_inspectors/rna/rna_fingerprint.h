@@ -58,7 +58,8 @@ public:
         FP_TYPE_DHCP6 = 12,
         FP_TYPE_USERAGENT = 13,
         FP_TYPE_CPE = 14,
-        MAX_FP_TYPES = 15
+        FP_TYPE_DEVICEINFO = 15,
+        MAX_FP_TYPES = 16
     };
 
     uint32_t fpid = 0;

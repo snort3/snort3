@@ -798,12 +798,12 @@ bool HostTracker::add_udp_fingerprint(uint32_t fpid)
     return result.second;
 }
 
-bool HostTracker::set_netbios_name(const char* nb_name)
+bool HostTracker::set_device_name(const char* name)
 {
     std::lock_guard<std::mutex> lck(host_tracker_lock);
-    if ( nb_name && netbios_name != nb_name )
+    if ( name && device_name != name )
     {
-        netbios_name = nb_name;
+        device_name = name;
         return true;
     }
     else
@@ -815,6 +815,36 @@ bool HostTracker::add_smb_fingerprint(uint32_t fpid)
     lock_guard<mutex> lck(host_tracker_lock);
     auto result = smb_fpids.emplace(fpid);
     return result.second;
+}
+
+bool HostTracker::add_deviceinfo_fingerprint(uint32_t fpid)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    auto result = deviceinfo_fpids.emplace(fpid);
+    return result.second;
+}
+
+std::string HostTracker::get_deviceinfo_hardware()
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    return hardware;
+}
+
+bool HostTracker::set_deviceinfo_hardware(const std::string& device, bool priority)
+{
+    lock_guard<mutex> lck(host_tracker_lock);
+    if (priority)
+    {
+        hardware = device;
+        priority_hardware = true;
+        return true;
+    }
+    if (not priority_hardware)
+    {
+        hardware = device;
+        return true;
+    }
+    return false;
 }
 
 bool HostTracker::add_cpe_os_hash(uint32_t hash)
@@ -866,8 +896,9 @@ bool HostTracker::set_visibility(bool v)
         ua_fps.clear();
         udp_fpids.clear();
         smb_fpids.clear();
-        netbios_name.clear();
+        device_name.clear();
         cpe_fpids.clear();
+        deviceinfo_fpids.clear();
         host_type = HostType::HOST_TYPE_HOST;
     }
 
@@ -1138,6 +1169,7 @@ void HostTracker::update_cache_interface(uint8_t idx)
     update_set_allocator(udp_fpids, cache_interface);
     update_set_allocator(smb_fpids, cache_interface);
     update_set_allocator(cpe_fpids, cache_interface);
+    update_set_allocator(deviceinfo_fpids, cache_interface);
 }
 
 HostApplicationInfo::HostApplicationInfo(const char *ver, const char *ven)
@@ -1336,6 +1368,17 @@ void HostTracker::stringify(string& str)
             str += to_string(fpid) + (--total ? ", " : "");
     }
 
-    if ( !netbios_name.empty() )
-        str += "\nnetbios name: " + netbios_name;
+    total = deviceinfo_fpids.size();
+    if ( total )
+    {
+        str += "\ndeviceinfo fingerprint: ";
+        for ( const auto& fpid : deviceinfo_fpids )
+            str += to_string(fpid) + (--total ? ", " : "");
+    }
+
+    if ( !device_name.empty() )
+        str += "\ndevice name: " + device_name;
+
+    if ( !hardware.empty() )
+        str += "\nhardware: " + hardware;
 }

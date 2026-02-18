@@ -1,6 +1,7 @@
 set (RNA_INCLUDES
     rna_cpe_os.h
     rna_fingerprint.h
+    rna_fingerprint_deviceinfo.h
     rna_fingerprint_smb.h
     rna_fingerprint_tcp.h
     rna_fingerprint_ua.h
@@ -21,6 +22,7 @@ set ( RNA_SOURCES
     rna_event_handler.h
     rna_fingerprint.cc
     rna_fingerprint_smb.cc
+    rna_fingerprint_deviceinfo.cc
     rna_fingerprint_tcp.cc
     rna_fingerprint_ua.cc
     rna_fingerprint_udp.cc

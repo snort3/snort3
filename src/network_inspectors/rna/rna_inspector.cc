@@ -35,6 +35,7 @@
 #include "pub_sub/appid_event_ids.h"
 #include "pub_sub/dhcp_events.h"
 #include "pub_sub/intrinsic_event_ids.h"
+#include "pub_sub/deviceinfo_events.h"
 #include "pub_sub/rna_events.h"
 #include "pub_sub/smb_events.h"
 #include "pub_sub/stream_event_ids.h"
@@ -45,6 +46,7 @@
 #include "rna_fingerprint_tcp.h"
 #include "rna_fingerprint_ua.h"
 #include "rna_fingerprint_udp.h"
+#include "rna_fingerprint_deviceinfo.h"
 #include "rna_flow.h"
 #include "rna_mac_cache.h"
 #include "rna_module.h"
@@ -88,6 +90,7 @@ RnaInspector::~RnaInspector()
         delete mod_conf->ua_processor;
         delete mod_conf->udp_processor;
         delete mod_conf->smb_processor;
+        delete mod_conf->deviceinfo_processor;
         delete mod_conf;
     }
 }
@@ -117,12 +120,16 @@ bool RnaInspector::configure(SnortConfig*)
 
     DataBus::subscribe_network( external_pub_key, ExternalEventIds::CPE_OS_INFO, new RnaCPEOSInfoEventHandler(*pnd) );
     DataBus::subscribe_network( netflow_pub_key, NetFlowEventIds::DATA, new RnaNetFlowEventHandler(*pnd) );
+    DataBus::subscribe_network( deviceinfo_pub_key, DeviceInfoEventIds::DEVICEINFO, new RnaDeviceInfoEventHandler(*pnd) );
 
     if (rna_conf && rna_conf->log_when_idle)
         DataBus::subscribe_network(intrinsic_pub_key, IntrinsicEventIds::THREAD_IDLE, new RnaIdleEventHandler(*pnd) );
 
     if ( mod_conf->ua_processor )
         mod_conf->ua_processor->make_mpse();
+
+    if ( mod_conf->deviceinfo_processor )
+        mod_conf->deviceinfo_processor->make_mpse();
 
     return true;
 }
@@ -169,6 +176,7 @@ void RnaInspector::tinit()
     // thread local initialization
     set_tcp_fp_processor(mod_conf->tcp_processor);
     set_ua_fp_processor(mod_conf->ua_processor);
+    set_deviceinfo_fp_processor(mod_conf->deviceinfo_processor);
     set_udp_fp_processor(mod_conf->udp_processor);
     set_smb_fp_processor(mod_conf->smb_processor);
     set_host_cache_mac(host_cache_mac_ptr);
@@ -233,7 +241,7 @@ void RnaInspector::load_rna_conf()
 }
 
 void RnaInspector::get_or_create_fp_processor(TcpFpProcessor*& tfp, UaFpProcessor*& uafp,
-    UdpFpProcessor*& udpfp, SmbFpProcessor*& smbfp)
+    UdpFpProcessor*& udpfp, SmbFpProcessor*& smbfp, DeviceInfoFpProcessor*& deviceinfofp)
 {
     if ( !mod_conf )
         return;
@@ -246,15 +254,18 @@ void RnaInspector::get_or_create_fp_processor(TcpFpProcessor*& tfp, UaFpProcesso
         mod_conf->udp_processor = new UdpFpProcessor;
     if ( !mod_conf->smb_processor )
         mod_conf->smb_processor = new SmbFpProcessor;
+    if ( !mod_conf->deviceinfo_processor )
+        mod_conf->deviceinfo_processor = new DeviceInfoFpProcessor;
 
     tfp = mod_conf->tcp_processor;
     uafp = mod_conf->ua_processor;
     udpfp = mod_conf->udp_processor;
     smbfp = mod_conf->smb_processor;
+    deviceinfofp = mod_conf->deviceinfo_processor;
 }
 
 void RnaInspector::set_fp_processor(TcpFpProcessor* tfp, UaFpProcessor* uafp, UdpFpProcessor* udpfp,
-    SmbFpProcessor* smbfp)
+    SmbFpProcessor* smbfp, DeviceInfoFpProcessor* deviceinfofp)
 {
     if ( !mod_conf )
         return;
@@ -270,6 +281,9 @@ void RnaInspector::set_fp_processor(TcpFpProcessor* tfp, UaFpProcessor* uafp, Ud
 
     delete mod_conf->smb_processor;
     mod_conf->smb_processor = smbfp;
+
+    delete mod_conf->deviceinfo_processor;
+    mod_conf->deviceinfo_processor = deviceinfofp;
 }
 
 //-------------------------------------------------------------------------
@@ -359,12 +373,14 @@ TEST_CASE("RNA inspector", "[rna_inspector]")
         UaFpProcessor* uafp = nullptr;
         UdpFpProcessor* udpfp = nullptr;
         SmbFpProcessor* smbfp = nullptr;
-        ins.set_fp_processor(tfp, uafp, udpfp, smbfp);
-        ins.get_or_create_fp_processor(tfp, uafp, udpfp, smbfp);
+        DeviceInfoFpProcessor* deviceinfofp = nullptr;
+        ins.set_fp_processor(tfp, uafp, udpfp, smbfp, deviceinfofp);
+        ins.get_or_create_fp_processor(tfp, uafp, udpfp, smbfp, deviceinfofp);
         CHECK(tfp != nullptr);
         CHECK(uafp != nullptr);
         CHECK(udpfp != nullptr);
         CHECK(smbfp != nullptr);
+        CHECK(deviceinfofp != nullptr);
     }
 }
 #endif

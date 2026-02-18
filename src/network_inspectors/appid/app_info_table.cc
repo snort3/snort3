@@ -408,6 +408,10 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 {
                     odp_ctxt.mdns_deviceinfo = true;
                 }
+                else if (!(strcasecmp(conf_val, "disabled")))
+                {
+                    odp_ctxt.mdns_deviceinfo = false;
+                }
             }
             else if (!(strcasecmp(conf_key, "bittorrent_aggressiveness")))
             {

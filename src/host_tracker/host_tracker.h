@@ -331,8 +331,12 @@ public:
         const char* device_info, uint8_t max_devices);
     bool add_udp_fingerprint(uint32_t fpid);
     bool add_smb_fingerprint(uint32_t fpid);
+    bool add_deviceinfo_fingerprint(uint32_t fpid);
 
     bool add_cpe_os_hash(uint32_t hash);
+
+    std::string get_deviceinfo_hardware();
+    bool set_deviceinfo_hardware(const std::string& hardware, bool priority);
 
     //  This should be updated whenever HostTracker data members are changed
     void stringify(std::string& str);
@@ -396,7 +400,7 @@ public:
         return cache_idx;
     }
 
-    bool set_netbios_name(const char*);
+    bool set_device_name(const char*);
 
     bool set_visibility(bool v = true);
     size_t get_visibility() const {return visibility;}
@@ -452,8 +456,11 @@ private:
     std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> udp_fpids;
     std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> smb_fpids;
     std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> cpe_fpids;
+    std::set<uint32_t, std::less<uint32_t>, HostCacheAllocIp<uint32_t>> deviceinfo_fpids;
     std::vector<DeviceFingerprint, HostDeviceFpAllocator> ua_fps;
-    std::string netbios_name;
+    std::string device_name;
+    std::string hardware;
+    bool priority_hardware = false;
 
     // flows that we belong to
     std::unordered_set<RNAFlow*> flows;
