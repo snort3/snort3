@@ -25,12 +25,41 @@
 
 #include "service_dcerpc.h"
 
-#include "dcerpc.h"
+#include <arpa/inet.h>
 
 #define DCERPC_THRESHOLD    3
 #define DCERPC_PORT 135
 
 #define min(x,y) ((x)<(y) ? (x) : (y))
+
+static int dcerpc_validate(const uint8_t* data, int size)
+{
+    const DCERPCHeader* hdr;
+    uint16_t len;
+
+    if (size < (int)sizeof(DCERPCHeader))
+        return -1;
+    hdr = (const DCERPCHeader*)data;
+    if (hdr->version != 5)
+        return -1;
+    if (hdr->minor_version > 1)
+        return -1;
+    if (hdr->type > 19)
+        return -1;
+    if (hdr->drep[0] & DCERPC_LE_FLAG)
+    {
+        len = hdr->frag_length;
+    }
+    else
+    {
+        len = ntohs(hdr->frag_length);
+    }
+    if (len < sizeof(DCERPCHeader))
+        return -1;
+    if (size < len)
+        return -1;
+    return (int)len;
+}
 
 class ServiceDCERPCData : public AppIdFlowData
 {

@@ -33,7 +33,6 @@
 
 #include "app_info_table.h"
 #include "appid_inspector.h"
-#include "dcerpc.h"
 
 using namespace snort;
 

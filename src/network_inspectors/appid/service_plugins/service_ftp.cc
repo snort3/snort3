@@ -893,7 +893,6 @@ static int ftp_validate_eprt(const uint8_t* data, uint16_t size, SfIp* address, 
     }
     tmp_str[index] = '\0'; // make the copied portion be nul terminated.
 
-    // FIXIT-L recode logic above and this call to call sfip_pton instead...
     if (address->pton(addrFamilySupported, tmp_str) != SFIP_SUCCESS)
         return -1;
 

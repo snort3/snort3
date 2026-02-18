@@ -19,279 +19,222 @@
 // service_rsync_test.cc author Steve Chew <stechew@cisco.com>
 // unit test for service_rsync
 
-// FIXIT-RC - unit tests disabled until mocking support can be figured out
+#define RSYNC_UNIT_TEST
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#if 0
-#include "appid_api.h"
-#include "application_ids.h"
-
-#include "service_plugin_mocks.h"
-#include "network_inspectors/appid/service_plugins/service_rsync.cc"
-#include "service_plugin_mocks.cc"
+#include "../service_rsync.h"
+#include "../service_rsync.cc"
+#include "service_plugin_mock.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
-ServiceRSYNCData* fake_rsync_data = nullptr;
+AppIdModule::AppIdModule() : Module("a", "b") { }
+AppIdModule::~AppIdModule() = default;
+
+static AppIdConfig test_config;
+static ServiceDiscovery mock_sd;
+static RsyncServiceDetector detector(&mock_sd);
+static snort::Packet mock_pkt(false);
+static snort::SfIp mock_ip;
+static AppIdModule mock_module;
+
+AppIdInspector::AppIdInspector(AppIdModule&) : config(&test_config), ctxt(test_config) { }
+
+static AppIdInspector test_inspector(mock_module);
+static OdpContext test_odp(test_config, nullptr);
+static AppIdSession test_asd(IpProtocol::TCP, &mock_ip, 873, test_inspector, test_odp, 0, 0);
+
+static ServiceRSYNCData* mock_rsync_data = nullptr;
+
+AppIdFlowData* AppIdDetector::data_get(const AppIdSession&)
+{
+    return mock_rsync_data;
+}
+
+int AppIdDetector::data_add(AppIdSession&, AppIdFlowData* data)
+{
+    mock_rsync_data = static_cast<ServiceRSYNCData*>(data);
+    return 0;
+}
+
+#define RSYNC_BANNER "@RSYNCD: "
+#define RSYNC_BANNER_VALID       RSYNC_BANNER "26\n"
+#define RSYNC_BANNER_NO_LINEFEED RSYNC_BANNER "26"
+#define RSYNC_BANNER_BAD_VERSION RSYNC_BANNER "26a\n"
+#define RSYNC_BANNER_INVALID     "INVALID: 26\n"
+#define RSYNC_MOTD               "motd\n"
+#define RSYNC_MOTD_NO_LINEFEED   "motd"
+#define RSYNC_MOTD_INVALID_STR   "mo\x08td\n"
 
 TEST_GROUP(service_rsync)
 {
-    void setup()
+    void setup() override
     {
-        fake_rsync_data = nullptr;
+        mock_rsync_data = nullptr;
     }
-
-    void teardown()
+    void teardown() override
     {
-        snort_free(fake_rsync_data);
-        mock().clear();
+        delete mock_rsync_data;
+        mock_rsync_data = nullptr;
     }
 };
 
 TEST(service_rsync, rsync_validate_zero_size)
 {
-    AppIdDiscoveryArgs args;
-    args.size = 0;
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args(nullptr, 0, APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits);
 
-    mock().expectOneCall("service_inprocess");
-    LONGS_EQUAL(APPID_INPROCESS, rsync_validate(&args));
-    mock().checkExpectations();
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_INPROCESS, ret);
 }
 
 TEST(service_rsync, rsync_validate_skip_data_from_client)
 {
-    AppIdDiscoveryArgs args;
-    args.size = 1;
-    args.dir  = APP_ID_FROM_INITIATOR;
-    rsync_service_mod.api = &fake_serviceapi;
+    uint8_t pkt[] = { 0x01 };
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args(pkt, sizeof(pkt), APP_ID_FROM_INITIATOR,
+        test_asd, &mock_pkt, change_bits);
 
-    mock().expectOneCall("service_inprocess");
-    LONGS_EQUAL(APPID_INPROCESS, rsync_validate(&args));
-    mock().checkExpectations();
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_INPROCESS, ret);
 }
 
-TEST(service_rsync, rsync_validate_no_rsync_data_size_too_small)
+TEST(service_rsync, rsync_validate_banner_size_too_small)
 {
-    AppIdDiscoveryArgs args;
-    args.size = 1;
-    args.dir  = APP_ID_FROM_RESPONDER;
-    rsync_service_mod.api = &fake_serviceapi;
+    const char* data = "@RSYNC";
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args((const uint8_t*)data, strlen(data), APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits);
 
-    mock().strictOrder();
-    mock().expectOneCall("data_get");
-    mock().expectOneCall("data_add");
-    mock().expectOneCall("fail_service");
-
-    LONGS_EQUAL(APPID_NOMATCH, rsync_validate(&args));
-
-    mock().checkExpectations();
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_NOMATCH, ret);
 }
-
-#define RSYNC_BANNER_VALID       RSYNC_BANNER "26\n"
-#define RSYNC_BANNER_NO_LINEFEED RSYNC_BANNER "26"
-#define RSYNC_BANNER_BAD_VERSION RSYNC_BANNER "26a\n"
-#define RSYNC_BANNER_INVALID     "INVALID: 26\n"
-#define RSYNC_MOTD             "motd\n"
-#define RSYNC_MOTD_NO_LINEFEED "motd"
-#define RSYNC_MOTD_INVALID_STR "mo\btd\n"
 
 TEST(service_rsync, rsync_validate_banner_missing_linefeed)
 {
-    AppIdDiscoveryArgs args;
-    args.dir  = APP_ID_FROM_RESPONDER;
-    args.data = (const uint8_t*)RSYNC_BANNER_NO_LINEFEED;
-    args.size = strlen((const char*)args.data);
-    rsync_service_mod.api = &fake_serviceapi;
+    const char* data = RSYNC_BANNER_NO_LINEFEED;
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args((const uint8_t*)data, strlen(data), APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits);
 
-    mock().strictOrder();
-    mock().expectOneCall("data_get");
-    mock().expectOneCall("data_add");
-    mock().expectOneCall("fail_service");
-
-    LONGS_EQUAL(APPID_NOMATCH, rsync_validate(&args));
-
-    mock().checkExpectations();
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_NOMATCH, ret);
 }
 
 TEST(service_rsync, rsync_validate_banner_bad_version)
 {
-    AppIdDiscoveryArgs args;
-    args.dir  = APP_ID_FROM_RESPONDER;
-    args.data = (const uint8_t*)RSYNC_BANNER_BAD_VERSION;
-    args.size = strlen((const char*)args.data);
-    rsync_service_mod.api = &fake_serviceapi;
+    const char* data = RSYNC_BANNER_BAD_VERSION;
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args((const uint8_t*)data, strlen(data), APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits);
 
-    mock().strictOrder();
-    mock().expectOneCall("data_get");
-    mock().expectOneCall("data_add");
-    mock().expectOneCall("fail_service");
-
-    LONGS_EQUAL(APPID_NOMATCH, rsync_validate(&args));
-
-    mock().checkExpectations();
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_NOMATCH, ret);
 }
 
 TEST(service_rsync, rsync_validate_banner_invalid_text)
 {
-    AppIdDiscoveryArgs args;
-    args.dir  = APP_ID_FROM_RESPONDER;
-    args.data = (const uint8_t*)RSYNC_BANNER_INVALID;
-    args.size = strlen((const char*)args.data);
-    rsync_service_mod.api = &fake_serviceapi;
+    const char* data = RSYNC_BANNER_INVALID;
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args((const uint8_t*)data, strlen(data), APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits);
 
-    mock().strictOrder();
-    mock().expectOneCall("data_get");
-    mock().expectOneCall("data_add");
-    mock().expectOneCall("fail_service");
-
-    LONGS_EQUAL(APPID_NOMATCH, rsync_validate(&args));
-
-    mock().checkExpectations();
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_NOMATCH, ret);
 }
 
 TEST(service_rsync, rsync_validate_banner_valid)
 {
-    AppIdDiscoveryArgs args;
-    args.dir  = APP_ID_FROM_RESPONDER;
-    args.data = (const uint8_t*)RSYNC_BANNER_VALID;
-    args.size = strlen((const char*)args.data);
-    rsync_service_mod.api = &fake_serviceapi;
+    const char* data = RSYNC_BANNER_VALID;
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args((const uint8_t*)data, strlen(data), APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits);
 
-    mock().strictOrder();
-    mock().expectOneCall("data_get");
-    mock().expectOneCall("data_add");
-    mock().expectOneCall("service_inprocess");
-
-    LONGS_EQUAL(APPID_INPROCESS, rsync_validate(&args));
-    LONGS_EQUAL(RSYNC_STATE_MOTD, fake_rsync_data->state);
-
-    mock().checkExpectations();
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_INPROCESS, ret);
+    CHECK(mock_rsync_data != nullptr);
+    CHECK_EQUAL(RSYNC_STATE_MOTD, mock_rsync_data->state);
 }
 
 TEST(service_rsync, rsync_validate_motd_no_linefeed)
 {
-    AppIdDiscoveryArgs args;
-    args.dir  = APP_ID_FROM_RESPONDER;
-    args.data = (const uint8_t*)RSYNC_MOTD_NO_LINEFEED;
-    args.size = strlen((const char*)args.data);
-    rsync_service_mod.api = &fake_serviceapi;
+    mock_rsync_data = new ServiceRSYNCData;
+    mock_rsync_data->state = RSYNC_STATE_MOTD;
 
-    fake_rsync_data = (ServiceRSYNCData*)snort_calloc(sizeof(ServiceRSYNCData));
-    fake_rsync_data->state = RSYNC_STATE_MOTD;
+    const char* data = RSYNC_MOTD_NO_LINEFEED;
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args((const uint8_t*)data, strlen(data), APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits);
 
-    mock().strictOrder();
-    mock().expectOneCall("data_get");
-    mock().expectOneCall("fail_service");
-
-    LONGS_EQUAL(APPID_NOMATCH, rsync_validate(&args));
-    LONGS_EQUAL(RSYNC_STATE_MOTD, fake_rsync_data->state);
-
-    mock().checkExpectations();
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_NOMATCH, ret);
+    CHECK_EQUAL(RSYNC_STATE_MOTD, mock_rsync_data->state);
 }
 
 TEST(service_rsync, rsync_validate_motd_invalid_str)
 {
-    AppIdDiscoveryArgs args;
-    args.dir  = APP_ID_FROM_RESPONDER;
-    args.data = (const uint8_t*)RSYNC_MOTD_INVALID_STR;
-    args.size = strlen((const char*)args.data);
-    rsync_service_mod.api = &fake_serviceapi;
+    mock_rsync_data = new ServiceRSYNCData;
+    mock_rsync_data->state = RSYNC_STATE_MOTD;
 
-    fake_rsync_data = (ServiceRSYNCData*)snort_calloc(sizeof(ServiceRSYNCData));
-    fake_rsync_data->state = RSYNC_STATE_MOTD;
+    const char* data = RSYNC_MOTD_INVALID_STR;
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args((const uint8_t*)data, strlen(data), APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits);
 
-    mock().strictOrder();
-    mock().expectOneCall("data_get");
-    mock().expectOneCall("fail_service");
-
-    LONGS_EQUAL(APPID_NOMATCH, rsync_validate(&args));
-    LONGS_EQUAL(RSYNC_STATE_MOTD, fake_rsync_data->state);
-
-    mock().checkExpectations();
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_NOMATCH, ret);
+    CHECK_EQUAL(RSYNC_STATE_MOTD, mock_rsync_data->state);
 }
 
 TEST(service_rsync, rsync_validate_motd_valid)
 {
-    AppIdDiscoveryArgs args;
-    args.dir  = APP_ID_FROM_RESPONDER;
-    args.data = (const uint8_t*)RSYNC_MOTD;
-    args.size = strlen((const char*)args.data);
-    rsync_service_mod.api = &fake_serviceapi;
+    mock_rsync_data = new ServiceRSYNCData;
+    mock_rsync_data->state = RSYNC_STATE_MOTD;
 
-    fake_rsync_data = (ServiceRSYNCData*)snort_calloc(sizeof(ServiceRSYNCData));
-    fake_rsync_data->state = RSYNC_STATE_MOTD;
+    const char* data = RSYNC_MOTD;
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args((const uint8_t*)data, strlen(data), APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits);
 
-    mock().strictOrder();
-    mock().expectOneCall("data_get");
-    mock().expectOneCall("add_service");
-
-    LONGS_EQUAL(APPID_SUCCESS, rsync_validate(&args));
-    LONGS_EQUAL(RSYNC_STATE_DONE, fake_rsync_data->state);
-
-    mock().checkExpectations();
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_SUCCESS, ret);
+    CHECK_EQUAL(RSYNC_STATE_DONE, mock_rsync_data->state);
 }
 
-//  It's an error to get another call to rsync_validate if we've
-//  already reached the DONE state.
+// It's an error to get another call to rsync_validate if we've
+// already reached the DONE state.
 TEST(service_rsync, rsync_validate_should_not_called_after_done)
 {
-    AppIdDiscoveryArgs args;
-    args.dir  = APP_ID_FROM_RESPONDER;
-    args.data = (const uint8_t*)RSYNC_MOTD;
-    args.size = strlen((const char*)args.data);
-    rsync_service_mod.api = &fake_serviceapi;
+    // Start in MOTD state (like after successful banner)
+    mock_rsync_data = new ServiceRSYNCData;
+    mock_rsync_data->state = RSYNC_STATE_MOTD;
 
-    fake_rsync_data = (ServiceRSYNCData*)snort_calloc(sizeof(ServiceRSYNCData));
-    fake_rsync_data->state = RSYNC_STATE_MOTD;
+    const char* data = RSYNC_MOTD;
+    AppidChangeBits change_bits;
+    AppIdDiscoveryArgs args((const uint8_t*)data, strlen(data), APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits);
 
-    mock().strictOrder();
-    mock().expectOneCall("data_get");
-    mock().expectOneCall("add_service");
-    mock().expectOneCall("data_get");
-    mock().expectOneCall("fail_service");
+    // First call should succeed and move to DONE state
+    int ret = detector.validate(args);
+    CHECK_EQUAL(APPID_SUCCESS, ret);
+    CHECK_EQUAL(RSYNC_STATE_DONE, mock_rsync_data->state);
 
-    LONGS_EQUAL(APPID_SUCCESS, rsync_validate(&args));
-    LONGS_EQUAL(RSYNC_STATE_DONE, fake_rsync_data->state);
+    // Second call should fail because we're in DONE state
+    AppidChangeBits change_bits2;
+    AppIdDiscoveryArgs args2((const uint8_t*)data, strlen(data), APP_ID_FROM_RESPONDER,
+        test_asd, &mock_pkt, change_bits2);
 
-    LONGS_EQUAL(APPID_NOMATCH, rsync_validate(&args));
-    mock().checkExpectations();
-}
-
-TEST(service_rsync, rsync_validate_count_rsync_flow_on_success)
-{
-    AppIdDiscoveryArgs args;
-    args.dir  = APP_ID_FROM_RESPONDER;
-    args.data = (const uint8_t*)RSYNC_MOTD;
-    args.size = strlen((const char*)args.data);
-    rsync_service_mod.api = &fake_serviceapi;
-
-    fake_rsync_data = (ServiceRSYNCData*)snort_calloc(sizeof(ServiceRSYNCData));
-    fake_rsync_data->state = RSYNC_STATE_MOTD;
-
-    mock().strictOrder();
-    mock().expectOneCall("data_get");
-    mock().expectOneCall("add_service");
-
-    LONGS_EQUAL(APPID_SUCCESS, rsync_validate(&args));
-    LONGS_EQUAL(RSYNC_STATE_DONE, fake_rsync_data->state);
-    LONGS_EQUAL(1, appid_stats.rsync_flows);
-
-    mock().checkExpectations();
+    ret = detector.validate(args2);
+    CHECK_EQUAL(APPID_NOMATCH, ret);
 }
 
 int main(int argc, char** argv)
 {
-    int return_value = CommandLineTestRunner::RunAllTests(argc, argv);
-    return return_value;
-}
-#endif
-
-int main(int, char**)
-{
-
+    return CommandLineTestRunner::RunAllTests(argc, argv);
 }

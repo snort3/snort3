@@ -23,6 +23,24 @@
 #define SERVICE_DCERPC_H
 #include "service_detector.h"
 
+#define DCERPC_LE_FLAG  0x10
+
+#pragma pack(1)
+
+struct DCERPCHeader
+{
+    uint8_t version;
+    uint8_t minor_version;
+    uint8_t type;
+    uint8_t flags;
+    uint8_t drep[4];
+    uint16_t frag_length;
+    uint16_t auth_length;
+    uint32_t id;
+};
+
+#pragma pack()
+
 class AppIdSession;
 class ServiceDiscovery;
 class ServiceRPCData;
