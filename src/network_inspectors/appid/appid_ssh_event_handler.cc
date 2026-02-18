@@ -141,7 +141,7 @@ static void handle_success(SshEventFlowData& data, const SshEvent& event,
     APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "SSH event handler service detected\n");
 }
 
-unsigned int SshEventHandler::id;
+unsigned int SshEventFlowData::id = 0;
 
 void SshEventHandler::handle(DataEvent& event, Flow* flow)
 {
@@ -163,7 +163,7 @@ void SshEventHandler::handle(DataEvent& event, Flow* flow)
     if (is_appid_cpu_profiling_running)
         per_appid_event_cpu_timer.start();
     
-    SshEventFlowData* data = (SshEventFlowData* )asd->get_flow_data(id);
+    SshEventFlowData* data = (SshEventFlowData* )asd->get_flow_data(SshEventFlowData::get_id());
     Packet* p = DetectionEngine::get_current_packet();
 
     if (data and data->failed)
@@ -175,7 +175,7 @@ void SshEventHandler::handle(DataEvent& event, Flow* flow)
     if (!data)
     {
         data = new SshEventFlowData;
-        asd->add_flow_data(data, id);
+        asd->add_flow_data(data, SshEventFlowData::get_id());
     }
 
     SshEvent& ssh_event = (SshEvent&)event;

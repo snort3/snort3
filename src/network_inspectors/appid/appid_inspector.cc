@@ -286,6 +286,7 @@ static void mod_dtor(Module* m)
 static void appid_inspector_pinit()
 {
     AppIdSession::init();
+    SshEventFlowData::init();
     TPLibHandler::get();
     AppIdPegCounts::init_peg_info();
 }

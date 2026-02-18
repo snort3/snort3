@@ -29,12 +29,9 @@ class SshEventHandler : public snort::DataHandler
 {
 public:
     SshEventHandler() : snort::DataHandler(MOD_NAME)
-    { id = snort::FlowData::create_flow_data_id(); }
+    { }
 
     void handle(snort::DataEvent &, snort::Flow *) override;
-
-private:
-    static unsigned int id;
 };
 
 struct SshAppIdInfo
@@ -51,6 +48,15 @@ public:
     SshAppIdInfo service_info;
     SshAppIdInfo client_info;
     bool failed = false;
+
+    static void init()
+    { id = snort::FlowData::create_flow_data_id(); }
+
+    static unsigned int get_id()
+    { return id; }
+
+private:
+    static unsigned int id;
 };
 
 #endif
