@@ -37,6 +37,8 @@ static const unsigned IMAP_USER_NAME_MAX_LEN = 32;
 static const unsigned IMAP_TAG_MAX_LEN = 6;
 static const unsigned MIN_CMDS = 3;
 
+#define SSL_WAIT_PACKETS 8
+
 static const char NO_LOGIN[] = " Login failed.";
 
 static const uint8_t CAPA[] = "CAPABILITY\x00d\x00a";
@@ -135,6 +137,7 @@ struct ImapClientData
     int detected;
     int got_user;
     int auth;
+    int decryption_countdown;
     char username[IMAP_USER_NAME_MAX_LEN+1];
     char imapCmdTag[IMAP_TAG_MAX_LEN+1];
 };
@@ -431,11 +434,7 @@ static int imap_server_validate(ImapDetectorData* dd, const uint8_t* data, uint1
     if (dd->client.state == IMAP_CLIENT_STATE_STARTTLS_CMD)
     {
         if (id->flags & IMAP_FLAG_RESULT_OK)
-        {
-            // FIXIT-L - this may be called from server side
-            detector->add_app(asd, APP_ID_IMAPS, APP_ID_IMAPS, nullptr, change_bits);
             asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
-        }
         else
             dd->client.state = IMAP_CLIENT_STATE_NON_AUTH;
     }
@@ -587,6 +586,23 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
 
     ImapDetectorData* dd = get_common_data(args.asd);
     ImapClientData* fd = &dd->client;
+
+    // encrypted session without decryption - use countdown fallback (matches SMTP)
+    if (args.asd.get_session_flags(APPID_SESSION_ENCRYPTED | APPID_SESSION_DECRYPTED) == APPID_SESSION_ENCRYPTED)
+    {
+        if (fd->decryption_countdown > 0)
+        {
+            fd->decryption_countdown--;
+            if (!fd->decryption_countdown)
+            {
+                add_app(args.asd, APP_ID_IMAPS, APP_ID_IMAPS, nullptr, args.change_bits);
+                dd->need_continue = 0;
+                args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+                return APPID_SUCCESS;
+            }
+        }
+        return APPID_INPROCESS;
+    }
 
     if (args.dir == APP_ID_FROM_RESPONDER)
     {
@@ -897,7 +913,16 @@ int ImapServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
         if ((id->flags & IMAP_FLAG_RESULT_OK) &&
             dd->client.state == IMAP_CLIENT_STATE_STARTTLS_CMD)
+        {
+            if (args.asd.get_session_flags(APPID_SESSION_OPPORTUNISTIC_TLS))
+                dd->client.decryption_countdown = SSL_WAIT_PACKETS;
+            else
+                dd->client.decryption_countdown = 1;
+
+            args.asd.set_session_flags(APPID_SESSION_ENCRYPTED);
+
             return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_IMAPS);
+        }
 
         if (id->count >= IMAP_COUNT_THRESHOLD && !args.asd.is_service_detected())
             return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_IMAP);

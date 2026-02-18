@@ -190,7 +190,6 @@ SmtpClientDetector::SmtpClientDetector(ClientDiscovery* cdm)
  *    prefix_len - The number of characters that are the prefix to the version,
  *              including the NUL terminating character.
  */
-// FIXIT-M - refactor this to reduce the number of function parameters
 int SmtpClientDetector::extract_version_and_add_client_app(
     AppId clientId, const int prefix_len, const uint8_t* product, const uint8_t* product_end,
     ClientSMTPData* const client_data, AppIdSession& asd, AppId appId,
