@@ -30,6 +30,7 @@
 #include "flow/flow_stash.h"
 #include "flow/stream_flow.h"
 #include "main/snort_config.h"
+#include "packet_io/packet_tracer.h"
 #include "managers/inspector_manager.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
@@ -1364,10 +1365,18 @@ void AppIdSession::publish_shadow_traffic_event(const uint32_t& shadow_traffic_b
         }
     }
 
-    ShadowTrafficEvent shadow_event(shadow_traffic_bits, "", "", app_name);
+    ShadowTrafficEvent shadow_event(shadow_traffic_bits, "", "", app_name, ShadowTrafficDetectionSource::APPID);
     DataBus::publish(AppIdInspector::get_shadowtraffic_pub_id(), ShadowTrafficEventIds::SHADOWTRAFFIC_FLOW_DETECTED, shadow_event, flow);
 
-    if (appidDebug and appidDebug->is_active())
+    if (PacketTracer::is_active())
+    {
+        change_shadow_traffic_bits_to_string(shadow_traffic_bits, str_print);
+        PacketTracer::log("ShadowTraffic: AppID published shadow traffic event, tag_type=0x%x (%s), "
+            "application_name=%s\n",
+            shadow_traffic_bits, str_print.c_str(), app_name);
+    }
+
+    if (appidDebug and appidDebug->is_active() and str_print.empty())
         change_shadow_traffic_bits_to_string(shadow_traffic_bits, str_print);
 
     APPID_LOG(curr_packet, TRACE_DEBUG_LEVEL,

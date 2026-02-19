@@ -47,23 +47,36 @@ struct ShadowTrafficEventIds
 
 const snort::PubKey shadowtraffic_pub_key { "shadowtraffic", ShadowTrafficEventIds::num_ids };
 
+// Tracks which module detected the shadow traffic.
+// Used in events (APPID/EVE) and stash state machine (NONE -> APPID/EVE -> BOTH).
+enum class ShadowTrafficDetectionSource : uint8_t
+{
+    NONE  = 0,
+    APPID = 1,
+    EVE   = 2,
+    BOTH  = 3
+};
+
 class SO_PUBLIC ShadowTrafficEvent : public snort::DataEvent {
     public:
         ShadowTrafficEvent( const uint32_t shadowtraffic_type, const std::string& server_name, 
-            const std::string& process_name, const std::string& application_name) : 
+            const std::string& process_name, const std::string& application_name,
+            ShadowTrafficDetectionSource src = ShadowTrafficDetectionSource::APPID) : 
                 shadowtraffictype(shadowtraffic_type), server_name(server_name), 
-                    process_name(process_name), application_name(application_name) {}
+                    process_name(process_name), application_name(application_name), source(src) {}
 
         uint32_t get_shadowtraffic_type() { return shadowtraffictype; }
         std::string& get_server_name () { return server_name; }
         std::string& get_process_name () { return process_name; } 
         std::string& get_application_name () { return application_name; }
+        ShadowTrafficDetectionSource get_detection_source() const { return source; }
         
     private:
         uint32_t      shadowtraffictype;
         std::string   server_name;
         std::string   process_name;
-        std::string   application_name; 
+        std::string   application_name;
+        ShadowTrafficDetectionSource source;
 };
 
 }

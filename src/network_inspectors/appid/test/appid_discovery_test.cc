@@ -250,7 +250,7 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
 
 void AppIdSession::publish_shadow_traffic_event(const uint32_t &shadow_traffic_bits, snort::Flow *)
 {
-    ShadowTrafficEvent shadow_event(shadow_traffic_bits, "", "", nullptr);
+    ShadowTrafficEvent shadow_event(shadow_traffic_bits, "", "", nullptr, ShadowTrafficDetectionSource::APPID);
     DataBus::publish(0, ShadowTrafficEventIds::SHADOWTRAFFIC_FLOW_DETECTED, shadow_event, flow); 
 }
 
