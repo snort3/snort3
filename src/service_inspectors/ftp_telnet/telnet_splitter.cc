@@ -68,28 +68,34 @@ StreamSplitter::Status TelnetSplitter::scan(
         {
             case TELNET_NONE:
             {
-                const uint8_t* cr = static_cast<const uint8_t*>(memchr(read_ptr, '\r', end - read_ptr));
-                const uint8_t* lf = static_cast<const uint8_t*>(memchr(read_ptr, '\n', end - read_ptr));
-                const uint8_t* ptr = nullptr;
-                if ( cr && !lf )
-                    ptr = cr;
-                else if ( !cr && lf )
-                    ptr = lf;
-                else if ( cr && lf )
-                    ptr = ( cr > lf ) ? cr : lf;
+                const uint8_t* ptr = nullptr;      // last CR or LF found
+                const uint8_t* iac_ptr = nullptr;  // first IAC found
 
-                const uint8_t* iac_ptr = static_cast<const uint8_t*>(memchr( read_ptr, TNC_IAC, end - read_ptr));
-                if ( (ptr && iac_ptr && ptr < iac_ptr) || (ptr && !iac_ptr) )
+                for ( const uint8_t* scan = read_ptr; scan < end; ++scan )
                 {
-                    fp_ptr = ptr;
-                    read_ptr = fp_ptr;
+                    uint8_t c = *scan;
+                    if ( c == '\r' || c == '\n' )
+                        ptr = scan;
+
+                    else if ( c == TNC_IAC )
+                    {
+                        iac_ptr = scan;
+                        break;
+                    }
                 }
+
+                if ( (ptr && iac_ptr && ptr < iac_ptr) || (ptr && !iac_ptr) )
+                    fp_ptr = ptr;
 
                 if ( iac_ptr )
                 {
                     state = TELNET_IAC;
                     read_ptr = iac_ptr;
                 }
+                else if ( ptr )
+                    read_ptr = ptr;
+                else
+                    read_ptr = end;
                 break;
             }
             case TELNET_IAC:
