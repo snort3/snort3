@@ -268,7 +268,7 @@ static void CopyField(
     char* buf, const char* tok, int max, const char* end, char delim
     )
 {
-    int len = end - tok + 1;
+    int len = end - tok;
     char* s;
 
     if ( len >= max )
@@ -1052,6 +1052,15 @@ int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode)
     }
     else
         return FTPP_INVALID_ARG;
+
+    req->cmd_line = nullptr;
+    req->cmd_line_size = 0;
+    req->cmd_begin = nullptr;
+    req->cmd_end = nullptr;
+    req->cmd_size = 0;
+    req->param_begin = nullptr;
+    req->param_end = nullptr;
+    req->param_size = 0;
 
     /* Set the beginning of the pipeline to the start of the
      * (normalized) buffer */
