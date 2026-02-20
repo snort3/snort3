@@ -43,12 +43,13 @@ struct SSLData
 namespace snort
 {
     class Flow;
+    class Inspector;
 }
 
 class SO_PUBLIC SslBaseFlowData : public snort::FlowData
 {
 public:
-    SslBaseFlowData() : snort::FlowData(inspector_id) {}
+    SslBaseFlowData(snort::Inspector* handler = nullptr) : snort::FlowData(inspector_id, handler) {}
 
     virtual SSLData& get_session() = 0;
 
@@ -57,7 +58,11 @@ public:
     static unsigned get_ssl_inspector_id() { return inspector_id; }
 
 protected:
-    static void assign_ssl_inspector_id(unsigned u) { inspector_id = u; }
+    static void assign_ssl_inspector_id(unsigned u)
+    {
+        if (!inspector_id)
+            inspector_id = u;
+    }
 
 private:
     static unsigned inspector_id;

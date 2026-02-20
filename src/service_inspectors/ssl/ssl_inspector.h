@@ -52,7 +52,7 @@ private:
 class SslFlowData : public SslBaseFlowData
 {
 public:
-    SslFlowData(const snort::Flow* flow);
+    SslFlowData(const snort::Flow* flow, snort::Inspector*, const SSLData* = nullptr);
     ~SslFlowData() override;
 
     static void init()
