@@ -427,6 +427,12 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
         // can't block session inside a session
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
             "apply_verdict:FILE_VERDICT_BLOCK with action block\n");
+
+        if (PacketTracer::is_active())
+        {
+            PacketTracer::log("File: FILE_VERDICT_BLOCK with action block\n");
+        }
+
         act->set_delayed_action(Active::ACT_BLOCK, true);
         act->set_drop_reason("file");
         break;
@@ -435,6 +441,12 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
         // can't reset session inside a session
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
             "apply_verdict:FILE_VERDICT_REJECT with action reset\n");
+
+        if (PacketTracer::is_active())
+        {
+            PacketTracer::log("File: FILE_VERDICT_REJECT with action reset\n");
+        }
+
         act->set_delayed_action(Active::ACT_RESET, true);
         act->set_drop_reason("file");
         break;
@@ -456,6 +468,12 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
             {
                 FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
                     "apply_verdict:FILE_VERDICT_PENDING with action reset\n");
+
+                if (PacketTracer::is_active())
+                {
+                    PacketTracer::log("File: FILE_VERDICT_PENDING with action reset due to timeout\n");
+                }
+
                 act->set_delayed_action(Active::ACT_RESET, true);
             }
 
