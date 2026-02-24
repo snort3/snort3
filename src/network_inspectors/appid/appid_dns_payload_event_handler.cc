@@ -94,8 +94,9 @@ void AppIdDnsPayloadEventHandler::handle(DataEvent& event, Flow* flow)
                 }
                 else
                 {
-                    assert(false);
-                    return; // we should not reach here
+                    // Stream ID not yet assigned, defer DNS payload processing
+                    APPID_LOG(p, TRACE_DEBUG_LEVEL, "Stream ID not assigned yet for HTTP/2 or HTTP/3 flow\n");
+                    return;
                 }
             }
         }
@@ -109,7 +110,6 @@ void AppIdDnsPayloadEventHandler::handle(DataEvent& event, Flow* flow)
             asd->set_ss_application_ids_payload(APP_ID_DNS, change_bits);
         }
         AppIdDnsSession* dsession = asd->get_dns_session();
-        assert(dsession);
         if (!dsession)
             return;
         dsession->set_doh(true);
