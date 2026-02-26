@@ -1097,6 +1097,9 @@ int TcpSession::process(Packet* p)
         init_tcp_packet_analysis(ma_tsd);
         process_tcp_packet(ma_tsd, p);
         tcpStats.meta_acks++;
+
+        pkt_action_mask = ACTION_NOTHING;
+        tel.clear_tcp_events();
     }
 
     if ( p->context->conf->is_address_anomaly_check_enabled() )
