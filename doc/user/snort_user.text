@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.11.0.0 2026-01-22 13:06:30 EST TST
+Revision 3.11.1.0 2026-02-26 21:55:44 EST TST
 
 ---------------------------------------------------------------------
 
@@ -419,7 +419,7 @@ to load the external rules file named rules.txt. You can only specify
 one file this way but rules files can include other rules files with
 the include statement. In addition you can load rules like:
 
-$ sort -c snort.lua -R rules.txt
+$ snort -c snort.lua -R rules.txt
 
 You can use both approaches together.
 
@@ -4493,11 +4493,12 @@ headers or more and 200 headers or less:
 alert tcp any any -> any any ( msg:"between [100,200] headers";
 http_num_headers: 100<=>200; sid:95; rev:1; )
 
-5.10.5.1. http_uri and http_raw_uri
+5.10.5.1. http_uri, http_decoded_uri and http_raw_uri
 
 These provide the URI of the request message. The raw form is exactly
 as it appeared in the message and the normalized form is determined
-by the URI normalization options you selected. In addition to
+by the URI normalization options you selected. The decoded form
+provides normalization without path simplification. In addition to
 searching the entire URI there are six components that can be
 searched individually:
 
@@ -4550,7 +4551,14 @@ http_uri represents the normalized path, query, and fragment (/path?
 query#fragment). If the uri is of type authority (host and port), the
 host is normalized and http_uri represents the normalized host with
 the port number. In all other cases http_uri is the same as
-http_raw_uri.
+http_raw_uri. http_decoded_uri represents the decoded URI with
+normalization but without path simplification. It supports the same
+six components (path, query, fragment, host, port, scheme) as
+http_uri. For host/port/query/fragment/scheme, http_decoded_uri
+behaves like http_uri. For path, http_decoded_uri:path uses the
+decoded path without removing path traversal segments (for example, /
+safe/../../evil/secret.txt), while http_uri:path uses the normalized
+(simplified) path (for example, /evil/secret.txt).
 
 Note: this section uses informal language to explain some things.
 Nothing here is intended to conflict with the technical language of

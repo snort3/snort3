@@ -1,3 +1,54 @@
+2026-02-26: 3.11.1.0
+
+* appid: address FIXIT comments in detector plugins
+* appid: address FIXIT comments in service plugins
+* appid: detect ssl service during midstream
+* appid: inspect server port and client port during midstream; add support for NFSv4.1
+* appid: refine ssh event id handling
+* appid: remove assertion while processing dns pkt
+* dce_rpc: fix DCE/RPC context id list parsing out-of-bounds read
+* dns: clear insert flag for DoH/DoQ
+* dns: fix heap-buffer-overflow in DNS NSEC resource record decoder
+* doc: fix typo. Thanks to Nils Rennebarth for reporting the issue
+* file_api: add data about buffers to perf-monitor output
+* file_api: add packet tracer logs
+* file_api: support fields for extractor
+* flow: save the flow_id from the DAQ header struct of a Packet in the Flow object when it is allocated for a new flow
+* ftp_telnet: clear stale pointers in FTP_CLIENT_REQ to prevent UAF
+* ftp_telnet: fix 1-byte heap-buffer-overflow in telnet normalization
+* ftp_telnet: fix off-by-one OOB read in CopyField
+* ftp_telnet: fix out-of-bounds read vulnerabilities in normalize_telnet function
+* ftp_telnet: improve performance in TelnetSplitter
+* http_inspect: add decoded URI buffer with shared decoded path
+* http_inspect: add http_decoded_uri ips option
+* imap: fix out-of-bounds read in body length parsing
+* imap: replace memrchr with cross-platform snort_memrchr
+* kerberos: add config to set failed_login flag in kerberos client detector
+* mms: fix session spdu params OOB read
+* mms: guard against case where p->flow is null and dereference causes a crash
+* mp_dbus: lockless event ring
+* mp_unix_transport: verify connector message allocation
+* output: add coverity annotations for thread-safe startup/shutdown functions
+* perf_mon: coverity fixes
+* pub_sub: add get_content_length method to HttpEvent
+* rna: support for deviceinfo fingerprint and events processing
+* shadowtraffic: enhance logging to system support trace
+* shadowtraffic: Fix shadow traffic detection failing after config reload and crash during deploy
+* socks: socks inspector
+* src: fix copyright
+* ssl: alert on multiple chello certificate records
+* ssl: populate inspector in flow data
+* ssl: prevent caching zero size ssl data
+* stream: include the flow_id flow data output of the dump_flows command
+* stream: skip check for held packet retransmit if current packet is not a wire packet
+* stream_tcp: clear packet action flags after meta ACK processing to ensure parent packet processing is not affected
+* stream_tcp: default to overwrite upon zwp mismatch instead of session block
+* stream_tcp: reject SYNs with different sequence numbers than first seen SYN
+* test: fix comparison for pointers in check tests
+* wizard: additional coverage of unit tests
+* wizard: improve MMS curse against fragmented traffic
+* wizard: improve MMS presentation context search logic
+
 2026-01-22: 3.11.0.0
 
 * trace: implemented multi-logging feature to support new lua configuration
