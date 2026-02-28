@@ -56,6 +56,7 @@ struct TextLog
     size_t size;
     size_t maxFile;
     time_t last;
+    bool defer_rollover;
 
 /* buffer attributes: */
     unsigned int pos;
@@ -137,6 +138,7 @@ TextLog* TextLog_Init(
     txt->size = TextLog_Size(txt->file);
     txt->last = time(nullptr);
     txt->maxFile = maxFile;
+    txt->defer_rollover = false;
 
     txt->maxBuf = maxBuf;
     TextLog_Reset(txt);
@@ -193,7 +195,7 @@ bool TextLog_Flush(TextLog* const txt)
     if ( !txt->pos )
         return false;
 
-    if ( txt->maxFile and txt->size + txt->pos > txt->maxFile )
+    if ( !txt->defer_rollover and txt->maxFile and txt->size + txt->pos > txt->maxFile )
         TextLog_Roll(txt);
 
     ok = fwrite(txt->buf, txt->pos, 1, txt->file);
@@ -318,5 +320,10 @@ bool TextLog_Quote(TextLog* const txt, const char* qs)
     TextLog_Putc(txt, '"');
 
     return true;
+}
+
+void TextLog_DeferRollover(TextLog* const txt, bool defer)
+{
+    txt->defer_rollover = defer;
 }
 } // namespace snort
