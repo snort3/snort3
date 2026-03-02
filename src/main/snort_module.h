@@ -24,23 +24,67 @@
 // the snort module is for handling command line args,
 // shell commands, and basic application stats
 
+#include <set>
+#include <string>
+
+#include "framework/module.h"
 #include "main/snort_types.h"
 
 namespace snort
 {
-class Module;
 class Trace;
 }
 
 extern THREAD_LOCAL const snort::Trace* snort_trace;
-
-snort::Module* get_snort_module();
 
 enum
 {
     TRACE_INSPECTOR_MANAGER = 0,
     TRACE_MAIN,
     TRACE_MIME,
+};
+
+class SnortModule : public snort::Module
+{
+public:
+    SnortModule();
+
+#ifdef SHELL
+    const snort::Command* get_commands() const override;
+#endif
+
+    bool begin(const char*, int, snort::SnortConfig*) override;
+    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
+    bool end(const char*, int, snort::SnortConfig*) override;
+
+    const PegInfo* get_pegs() const override;
+    PegCount* get_counts() const override;
+
+    bool global_stats() const override
+    { return true; }
+
+    void sum_stats(bool dump_stats) override
+    { Module::sum_stats(dump_stats); }
+
+    void reset_stats() override;
+
+    snort::ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
+
+    Usage get_usage() const override
+    { return GLOBAL; }
+
+    void set_trace(const snort::Trace*) const override;
+    const snort::TraceOption* get_trace_options() const override;
+
+private:
+    inline bool is(const snort::Value& v, const char* opt);
+
+    struct SFDAQModuleConfig* module_config = nullptr;
+    bool no_warn_flowbits = false;
+    bool no_warn_rules = false;
+    std::string stub_opts;
+    std::set<std::string> cli_opts;
+    bool cli_mode = true;
 };
 
 #endif

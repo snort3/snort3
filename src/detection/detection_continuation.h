@@ -54,7 +54,7 @@ public:
 
 private:
     Continuation(unsigned max_cnt) : states_cnt(0), states_cnt_max(max_cnt),
-        reload_id(snort::SnortConfig::get_thread_reload_id())
+        reload_id(snort::SnortConfig::get_reload_id())
     { }
 
     template <bool opt_parent>
@@ -162,7 +162,7 @@ void Continuation::recall(dot_node_state_t& nst,
 
 bool Continuation::is_reloaded() const
 {
-    return snort::SnortConfig::get_thread_reload_id() != reload_id;
+    return snort::SnortConfig::get_reload_id() != reload_id;
 }
 
 void Continuation::eval(snort::Packet& p)

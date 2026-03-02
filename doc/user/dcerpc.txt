@@ -142,7 +142,7 @@ SMB inspector supports file inspection. A typical configuration looks like this:
         smb_file_depth = 0,
      }
 
-    file_id =
+    file_inspect =
     {
         enable_type = true,
         enable_signature = true,

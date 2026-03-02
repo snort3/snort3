@@ -6,6 +6,8 @@
 #include "framework/mp_transport.h"
 #include "framework/module.h"
 #include "main/thread_config.h"
+#include "managers/plug_interface.h"
+#include "managers/plugin_manager.h"
 
 #include "../mp_transport_manager.h"
 
@@ -34,9 +36,11 @@ class MockTransport : public MPTransport
     { }
     virtual ~MockTransport() override
     { }
+// LCOV_EXCL_START
     virtual bool send_to_transport(MPEventInfo& event) override
     { return true; }
-    virtual void register_event_helpers(const unsigned& pub_id, const unsigned& event_id, MPHelperFunctions& helper) override
+    virtual void register_event_helpers(
+        const unsigned& pub_id, const unsigned& event_id, MPHelperFunctions& helper) override
     { }
     virtual void init_connection() override
     { }
@@ -61,17 +65,22 @@ class MockTransport : public MPTransport
         size = 0;
         return nullptr;
     }
+// LCOV_EXCL_STOP
 };
 
+// LCOV_EXCL_START
 unsigned get_instance_id() { return 0; }
 unsigned ThreadConfig::get_instance_max() { return 1; }
+// LCOV_EXCL_STOP
 };
 
 
 using namespace snort;
 
+// LCOV_EXCL_START
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
+// LCOV_EXCL_STOP
 
 static void mock_transport_tinit(MPTransport* t)
 {
@@ -136,65 +145,72 @@ static struct MPTransportApi mock_transport_api =
     mock_transport_dtor
 };
 
+static PlugInterface* pin = nullptr;
+
+PlugInterface* PluginManager::get_interface(const char* name)
+{ return !strcmp(name, MODULE_NAME) ? pin : nullptr; }
+
+unsigned PluginManager::for_each(PlugType pt, PlugFunc pf, void* pv)
+{
+    if ( !pin )
+        return 0;
+
+    pf(pin, pv);
+    return 1;
+}
+
 TEST_GROUP(mp_transport_manager_test_group)
 {
     void setup() override
     {
         clear_test_calls();
+        pin = MPTransportManager::get_interface(&mock_transport_api);
+        pin->instantiate(nullptr, nullptr, nullptr);
     }
 
     void teardown() override
     {
         MPTransportManager::term();
+        delete pin;
     }
 };
 
 TEST(mp_transport_manager_test_group, instantiate_transport_object)
 {
-    MPTransportManager::instantiate(&mock_transport_api, nullptr, nullptr);
     CHECK(test_transport_ctor_calls == 1);
 }
 
 TEST(mp_transport_manager_test_group, get_transport_object)
 {
-    MPTransportManager::instantiate(&mock_transport_api, nullptr, nullptr);
     MPTransport* transport = MPTransportManager::get_transport(MODULE_NAME);
     CHECK(transport != nullptr);
 
     transport = MPTransportManager::get_transport("non_existent_transport");
     CHECK(transport == nullptr);
-
-    MPTransportManager::term();
-
-    transport = MPTransportManager::get_transport(MODULE_NAME);
-    CHECK(transport == nullptr);
 }
 
 TEST(mp_transport_manager_test_group, add_plugin)
 {
-    MPTransportManager::instantiate(&mock_transport_api, nullptr, nullptr);
-    MPTransportManager::add_plugin(&mock_transport_api);
+    pin->global_init();
     CHECK(test_transport_pinit_calls == 1);
-    
-    MPTransportManager::term();
+
+    pin->global_term();
     CHECK(test_transport_pterm_calls == 1);
 }
 
 TEST(mp_transport_manager_test_group, thread_init_term)
 {
-    MPTransportManager::instantiate(&mock_transport_api, nullptr, nullptr);
-    MPTransportManager::thread_init();
+    pin->thread_init();
     CHECK(test_transport_tinit_calls == 1);
 
-    MPTransportManager::thread_term();
+    pin->thread_term();
     CHECK(test_transport_tterm_calls == 1);
 }
 
 int main(int argc, char** argv)
 {
-    // Allocate object in internal MPTransportManager unordered_map to prevent false-positive memory leak detection ( buckets allocation at first insert )
-    MPTransportManager::instantiate(&mock_transport_api, nullptr, nullptr);
-    MPTransportManager::term();
+    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     int return_value = CommandLineTestRunner::RunAllTests(argc, argv);
     return return_value;
 }
+

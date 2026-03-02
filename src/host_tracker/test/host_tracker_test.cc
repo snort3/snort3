@@ -51,6 +51,8 @@ void FatalError(const char* fmt, ...) { (void)fmt; exit(1); }
 HostCacheIp default_host_cache(LRU_CACHE_INITIAL_SIZE);
 HostCacheSegmentedIp host_cache(4,1024);
 
+void host_cache_module_dump() { }
+
 TEST_GROUP(host_tracker)
 {
 };

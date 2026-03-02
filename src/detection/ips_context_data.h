@@ -33,8 +33,6 @@ public:
     virtual ~IpsContextData() = default;
 
     static unsigned get_ips_id();
-    // Only unit tests can call this function to clear the id
-    static void clear_ips_id();
 
     template<typename T>
     static T* get(unsigned ips_id)
@@ -54,6 +52,13 @@ protected:
 
 private:
     static unsigned ips_id;
+
+#ifdef UNIT_TEST
+public:
+#endif
+    static void clear_ips_id();
+
+    friend class Snort;
 };
 }
 #endif

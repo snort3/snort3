@@ -33,8 +33,12 @@
 namespace snort
 {
 unsigned FlowData::flow_data_id = 0;
+unsigned FlowData::create_flow_data_id()
+{ return ++flow_data_id; }
+
 void LogLabel(const char*, FILE*) {}
 void LogText(const char*, FILE*) {}
+
 char* snort_strdup(const char* str)
 {
     assert(str);

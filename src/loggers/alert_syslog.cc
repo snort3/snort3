@@ -299,6 +299,7 @@ class SyslogLogger : public Logger
 {
 public:
     SyslogLogger(SyslogModule*);
+    ~SyslogLogger() override;
 
     void alert(Packet*, const char* msg, const Event&) override;
 
@@ -306,15 +307,16 @@ private:
     int priority;
 };
 
-// we open here since this is only one per process
-// if used for messages (-M), no harm done
 SyslogLogger::SyslogLogger(SyslogModule* m)
 {
     priority = m->facility | m->level;
-    openlog("snort", m->options, m->facility);
+    PigPen::open_syslog();
 }
 
-// do not closelog() here since it has other uses
+SyslogLogger::~SyslogLogger()
+{
+    PigPen::close_syslog();
+}
 
 void SyslogLogger::alert(Packet* p, const char* msg, const Event& event)
 {

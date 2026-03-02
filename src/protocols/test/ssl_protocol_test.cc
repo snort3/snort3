@@ -48,6 +48,7 @@ X509_NAME *X509_get_subject_name(const X509 *a)
 { return g_test_asn1_data ? (X509_NAME*)g_mock_mem : nullptr; }
 X509_NAME *X509_get_issuer_name(const X509 *a) { return nullptr; }
 void X509_free(X509* a) { }
+
 #if OPENSSL_VERSION_NUMBER < 0x30000000L
 int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos)
 #else
@@ -62,6 +63,7 @@ const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x)
 { return g_test_asn1_data; }
 X509* d2i_X509(X509 **a, const unsigned char **in, long len) 
 { return g_test_asn1_data ? (X509*)(g_mock_mem + 48) : nullptr; }
+
 int X509_NAME_print_ex(BIO *out, const X509_NAME *nm, int indent, unsigned long flags) { return 0; }
 BIO *BIO_new(const BIO_METHOD *type) { return nullptr; }
 int BIO_free(BIO *a) { return 0; }
@@ -282,3 +284,4 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
+

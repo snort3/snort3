@@ -685,7 +685,7 @@ bool PcreModule::begin(const char* name, int v, SnortConfig* sc)
     if ( sc->pcre_to_regex )
     {
         if ( !mod_regex )
-            mod_regex = ModuleManager::get_module(mod_regex_name);
+            mod_regex = PigPen::get_module(mod_regex_name);
 
         if( mod_regex )
             mod_regex = mod_regex->begin(name, v, sc) ? mod_regex : nullptr;
@@ -771,7 +771,7 @@ static const IpsApi pcre_api =
         sizeof(IpsApi),
         IPSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         s_name,
         s_help,

@@ -26,6 +26,7 @@
 
 #include <syslog.h>
 
+#include <atomic>
 #include <cassert>
 #include <cstring>
 
@@ -40,9 +41,9 @@ using namespace snort;
 
 static int already_fatal = 0;
 
-static unsigned parse_errors = 0;
-static unsigned parse_warnings = 0;
-static unsigned reload_errors = 0;
+static std::atomic<unsigned> parse_errors = 0;
+static std::atomic<unsigned> parse_warnings = 0;
+static std::atomic<unsigned> reload_errors = 0;
 
 static std::string reload_errors_description;
 

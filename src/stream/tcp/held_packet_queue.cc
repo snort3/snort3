@@ -31,6 +31,10 @@
 
 using namespace snort;
 
+//--------------------------------------------------------------------------
+// packet foo
+//--------------------------------------------------------------------------
+
 void HeldPacket::adjust_expiration(const timeval& delta, bool up)
 {
     timeval new_expiration;
@@ -45,8 +49,11 @@ HeldPacket::HeldPacket(DAQ_Msg_h msg, uint32_t seq, const timeval& exp, TcpStrea
     : daq_msg(msg), seq_num(seq), expiration(exp), tracker(trk), expired(false)
 { }
 
-const HeldPacketQueue::iter_t HeldPacketQueue::append(DAQ_Msg_h msg, uint32_t seq,
-    TcpStreamTracker& trk)
+//--------------------------------------------------------------------------
+// queue foo
+//--------------------------------------------------------------------------
+
+const HeldPacketQueue::iter_t HeldPacketQueue::append(DAQ_Msg_h msg, uint32_t seq, TcpStreamTracker& trk)
 {
     timeval now, expiration;
     packet_gettimeofday(&now);
@@ -109,3 +116,26 @@ bool HeldPacketQueue::adjust_expiration(uint32_t new_timeout, const timeval& now
 
     return q.front().has_expired(now);
 }
+
+//--------------------------------------------------------------------------
+// tuner foo
+//--------------------------------------------------------------------------
+
+static THREAD_LOCAL timeval reload_time { };
+
+bool HPQReloadTuner::tinit()
+{
+    packet_gettimeofday(&reload_time);
+    return TcpStreamTracker::adjust_expiration(held_packet_timeout, reload_time);
+}
+
+bool HPQReloadTuner::tune_packet_context()
+{
+    return !TcpStreamTracker::release_held_packets(reload_time, max_work);
+}
+
+bool HPQReloadTuner::tune_idle_context()
+{
+    return !TcpStreamTracker::release_held_packets(reload_time, max_work_idle);
+}
+

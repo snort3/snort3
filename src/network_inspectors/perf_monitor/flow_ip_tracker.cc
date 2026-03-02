@@ -116,7 +116,7 @@ bool FlowIPTracker::initialize(size_t new_memcap)
     return need_pruning;
 }
 
-FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME),
+FlowIPTracker::FlowIPTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME, PERF_FLOWIP),
     perf_flags(perf->perf_flags), perf_conf(perf)
 {
     formatter->register_section("flow_ip");

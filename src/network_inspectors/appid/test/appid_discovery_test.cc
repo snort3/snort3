@@ -206,7 +206,7 @@ bool AppIdInspector::configure(SnortConfig*) { return true; }
 void AppIdInspector::show(const SnortConfig*) const { }
 void AppIdInspector::tinit() { }
 void AppIdInspector::tterm() { }
-void AppIdInspector::tear_down(SnortConfig*) { }
+void AppIdInspector::tear_down(SnortConfig*, bool) { }
 bool DiscoveryFilter::is_app_monitored(const snort::Packet*, uint8_t*){return true;}
 
 // Stubs for AppInfoManager
@@ -281,6 +281,9 @@ static ServiceDiscovery* s_discovery_manager = nullptr;
 
 HostCacheIp default_host_cache(LRU_CACHE_INITIAL_SIZE);
 HostCacheSegmentedIp host_cache(1,50);
+
+void host_cache_module_dump() { }
+
 AppId HostTracker::get_appid(Port, IpProtocol, bool, bool)
 {
     return APP_ID_NONE;

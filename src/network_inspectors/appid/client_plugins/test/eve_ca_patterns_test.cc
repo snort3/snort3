@@ -43,7 +43,7 @@ int SearchTool::find_all(const char* pattern, unsigned, MpseMatch, bool, void* d
 }
 }
 
-Inspector* InspectorManager::get_inspector(char const*, bool, const snort::SnortConfig*)
+Inspector* InspectorManager::get_inspector(char const*, Module::Usage)
 {
     return nullptr;
 }

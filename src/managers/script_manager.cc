@@ -24,7 +24,6 @@
 #include "script_manager.h"
 
 #include <algorithm>
-
 #include <sys/stat.h>
 
 #include "framework/ips_option.h"
@@ -34,6 +33,9 @@
 #include "log/messages.h"
 #include "lua/lua.h"
 #include "lua/lua_script.h"
+
+#include "plugin_manager.h"
+#include "plug_interface.h"
 
 using namespace snort;
 using namespace std;
@@ -47,13 +49,6 @@ using namespace std;
 // keep just one copy of rule option + args
 
 #define script_pattern "*.lua"
-
-//-------------------------------------------------------------------------
-// lua api stuff
-//-------------------------------------------------------------------------
-
-static vector<const BaseApi*> base_api;
-static vector<LuaApi*> lua_api;
 
 //-------------------------------------------------------------------------
 // ips option stuff
@@ -215,17 +210,20 @@ static void load_script(const char* f)
         return;
     }
 
+    LuaApi* luapi;
+
     if ( type == IpsLuaApi::type )
-        lua_api.emplace_back(new IpsLuaApi(name, chunk, ver));
+        luapi = new IpsLuaApi(name, chunk, ver);
 
     else if ( type == LogLuaApi::type )
-        lua_api.emplace_back(new LogLuaApi(name, chunk, ver));
+        luapi = new LogLuaApi(name, chunk, ver);
 
     else
     {
         ParseError("unknown plugin type in %s = '%s'", f, type.c_str());
         return;
     }
+    PluginManager::load_plugin(luapi->get_base(), luapi, f);
 }
 
 //-------------------------------------------------------------------------
@@ -272,35 +270,9 @@ void ScriptManager::load_scripts(const std::vector<std::string>& paths)
     }
 }
 
-const BaseApi** ScriptManager::get_plugins()
-{
-    base_api.clear();
-    base_api.reserve(lua_api.size() + 1);
-
-    transform(lua_api.cbegin(), lua_api.cend(), back_inserter(base_api),
-        [](const LuaApi* p){ return p->get_base(); });
-
-    base_api.emplace_back(nullptr);
-
-    return (const BaseApi**)&base_api[0];
-}
-
-void ScriptManager::release_scripts()
-{
-    for ( auto p : lua_api )
-        if ( p )
-            delete p;
-
-    lua_api.clear();
-    base_api.clear();
-}
-
 string* ScriptManager::get_chunk(const char* key)
 {
-    auto it = find_if(lua_api.cbegin(), lua_api.cend(), [key](const LuaApi* p){ return p->name == key; });
-    if (it != lua_api.cend())
-        return &(*it)->chunk;
-
-    return nullptr;
+    auto p = PluginManager::get_plugin(key);
+    return p ? &p->luapi->chunk : nullptr;
 }
 

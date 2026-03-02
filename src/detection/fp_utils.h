@@ -55,6 +55,7 @@ void validate_services(struct snort::SnortConfig*, OptTreeNode*);
 unsigned fp_serialize(const struct snort::SnortConfig*, const std::string& dir);
 unsigned fp_deserialize(const struct snort::SnortConfig*, const std::string& dir);
 
+void clear_buffer_map();
 void update_buffer_map(const char** bufs, const char* svc);
 void add_default_services(struct snort::SnortConfig*, const std::string&, OptTreeNode*);
 

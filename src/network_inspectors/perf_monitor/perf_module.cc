@@ -31,7 +31,7 @@
 #include "log/messages.h"
 #include "main/analyzer_command.h"
 #include "main/snort_config.h"
-#include "managers/module_manager.h"
+#include "managers/plugin_manager.h"
 #include "latency/packet_latency.h"
 #include "latency/rule_latency.h"
 
@@ -166,7 +166,7 @@ bool PerfMonFlowIPDebug::execute(Analyzer&, void**)
 static int enable_flow_ip_profiling(lua_State* L)
 {
     PerfMonitor* perf_monitor =
-        (PerfMonitor*)PigPen::get_inspector(PERF_NAME, true);
+        (PerfMonitor*)PigPen::get_inspector(PERF_NAME, Module::GLOBAL);
 
     if (!perf_monitor)
     {
@@ -191,7 +191,7 @@ static int enable_flow_ip_profiling(lua_State* L)
 static int disable_flow_ip_profiling(lua_State* L)
 {
     PerfMonitor* perf_monitor =
-        (PerfMonitor*)PigPen::get_inspector(PERF_NAME, true);
+        (PerfMonitor*)PigPen::get_inspector(PERF_NAME, Module::GLOBAL);
 
     if (!perf_monitor)
     {
@@ -222,7 +222,7 @@ static int show_flow_ip_profiling(lua_State* L)
     bool status = false;
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
 
-    PerfMonitor* perf_monitor = (PerfMonitor*)PigPen::get_inspector(PERF_NAME, true);
+    PerfMonitor* perf_monitor = (PerfMonitor*)PigPen::get_inspector(PERF_NAME, Module::GLOBAL);
 
     if (perf_monitor)
         status = perf_monitor->is_flow_ip_enabled();
@@ -417,7 +417,7 @@ bool ModuleConfig::confirm_parse()
 }
 bool ModuleConfig::resolve()
 {
-    ptr = ModuleManager::get_module(name.c_str());
+    ptr = PluginManager::get_module(name.c_str());
     if ( ptr == nullptr )
     {
         ParseError("Perf monitor is unable to find the %s module.\n", name.c_str());
@@ -463,7 +463,7 @@ bool PerfConfig::resolve()
 {
     if ( modules.empty() )
     {
-        auto all_modules = ModuleManager::get_all_modules();
+        auto all_modules = PluginManager::get_all_modules();
         for ( auto& mod : all_modules )
         {
             ModuleConfig cfg;

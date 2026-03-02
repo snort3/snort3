@@ -26,10 +26,8 @@
 
 #include "framework/tracer.h"
 
-namespace snort
-{
-class Module;
-struct SnortConfig;
+class PlugInterface;
+class TraceConfig;
 
 //--------------------------------------------------------------------------
 // TraceLoggerManager - Central manager for trace logger plugins
@@ -38,18 +36,10 @@ struct SnortConfig;
 class TraceLoggerManager
 {
 public:
-    static void add_plugin(const snort::TraceLogApi*);
-    static void dump_plugins();
-    static void release_plugins();
-
-    static void instantiate(const snort::TraceLogApi*, snort::Module*, const std::string& name);
-    static bool is_instantiated(const std::string& name);
-
-    static void thread_init();
-    static void thread_term();
-
+    static class PlugInterface* get_interface(const snort::TraceLogApi*);
     static snort::TraceLoggerPlug* get_logger(const std::string& name);
-    static std::unordered_map<std::string, std::vector<snort::TraceLoggerPlug*>> get_all_loggers();
+    static snort::TraceLoggerPlug* set_logger(const std::string& name);
+    static void instantiate_default_loggers(TraceConfig*);
 
 private:
     TraceLoggerManager() = delete;
@@ -57,5 +47,5 @@ private:
     TraceLoggerManager(const TraceLoggerManager&) = delete;
     TraceLoggerManager& operator=(const TraceLoggerManager&) = delete;
 };
-}
+
 #endif

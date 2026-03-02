@@ -29,7 +29,7 @@
 namespace snort
 {
 
-#define MP_TRANSPORT_API_VERSION ((BASE_API_VERSION << 16) | 1)
+#define MP_TRANSPORT_API_VERSION ((BASE_API_VERSION << 16) | 2)
 
 struct SnortConfig;
 struct MPEventInfo;

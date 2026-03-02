@@ -58,6 +58,8 @@ SO_PUBLIC inline bool is_packet_thread()
 // get a packet thread specific path.  name should be the module name or
 // derived therefrom.
 SO_PUBLIC const char* get_instance_file(std::string&, const char* name);
+// call this instead for the main thread
+SO_PUBLIC const char* get_main_file(std::string&, const char* name);
 }
 
 #endif

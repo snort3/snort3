@@ -488,7 +488,7 @@ static const CodecApi ipv6_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_ICMP6_NAME,
         CD_ICMP6_HELP,

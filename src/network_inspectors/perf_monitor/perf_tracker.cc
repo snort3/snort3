@@ -42,7 +42,7 @@
 using namespace snort;
 using namespace std;
 
-PerfTracker::PerfTracker(PerfConfig* config, const char* tracker_name)
+PerfTracker::PerfTracker(PerfConfig* config, const char* tracker_name, unsigned pf)
 {
     max_file_size = config->max_file_size;
 
@@ -67,6 +67,7 @@ PerfTracker::PerfTracker(PerfConfig* config, const char* tracker_name)
     }
 
     this->tracker_name = tracker_name;
+    perf_flag = pf;
 }
 
 PerfTracker::~PerfTracker()

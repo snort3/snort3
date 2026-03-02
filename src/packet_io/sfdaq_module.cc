@@ -89,6 +89,12 @@ SFDAQModule::SFDAQModule() : Module("daq", sfdaq_help, s_params)
     module_config = nullptr;
 }
 
+SFDAQModule::~SFDAQModule()
+{
+    delete config;
+    delete module_config;
+}
+
 bool SFDAQModule::begin(const char* fqn, int idx, SnortConfig*)
 {
     if (!strcmp(fqn, "daq"))

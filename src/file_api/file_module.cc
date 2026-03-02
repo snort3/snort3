@@ -139,8 +139,8 @@ const PegInfo* FileIdModule::get_pegs() const
 
 PegCount* FileIdModule::get_counts() const
 {
-  file_counts_update_buffers();
-  return (PegCount*)&file_counts;
+    file_counts_update_buffers();
+    return (PegCount*)&file_counts;
 }
 
 static const RuleMap file_id_rules[] =
@@ -158,6 +158,7 @@ void FileIdModule::sum_stats(bool dump_stats)
 {
     file_stats_sum();
     Module::sum_stats(dump_stats);
+    file_counts_update_buffers();
 }
 
 bool FileIdModule::set(const char*, Value& v, SnortConfig*)
@@ -224,7 +225,7 @@ bool FileIdModule::set(const char*, Value& v, SnortConfig*)
 
 bool FileIdModule::end(const char*, int, SnortConfig*)
 {
-    const char* inc = ModuleManager::get_includer("file_id");
+    const char* inc = ModuleManager::get_includer(get_name());
     parser_append_rules_special(magic_file.c_str(), inc);
     return true;
 }

@@ -46,6 +46,7 @@ public:
     void tinit() override;
     void tterm() override;
 
+    void update_trackers();
     void rotate();
 
     void swap_constraints(PerfConstraints*);

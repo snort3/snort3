@@ -21,7 +21,6 @@
 #include "config.h"
 #endif
 
-#include "actions/actions_module.h"
 #include "detection/detection_engine.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
@@ -131,13 +130,12 @@ class ReplaceActionModule : public Module
 {
 public:
     ReplaceActionModule() : Module(module_name, module_help)
-    { ActionsModule::add_action(module_name, replace_pegs); }
+    { register_action_pegs(module_name, replace_pegs); }
 
     bool stats_are_aggregated() const override
     { return true; }
 
-    void show_stats() override
-    { /* These stats are shown by ActionsModule. */ }
+    void show_stats() override { }
 
     const PegInfo* get_pegs() const override
     { return replace_pegs; }

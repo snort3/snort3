@@ -809,7 +809,7 @@ static const CodecApi tcp_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_TCP_NAME,
         CD_TCP_HELP,

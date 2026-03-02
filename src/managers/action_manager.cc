@@ -25,24 +25,52 @@
 
 #include <vector>
 
-#include "log/messages.h"
 #include "main/snort_config.h"
-#include "managers/module_manager.h"
-#include "managers/plugin_manager.h"
 #include "packet_io/active.h"
 #include "parser/parser.h"
+
+#include "module_manager.h"
+#include "plugin_manager.h"
+#include "plug_interface.h"
 
 using namespace snort;
 using namespace std;
 
-struct ActionClass
+class ActionClass : public PlugInterface
 {
+public:
     const ActionApi* api;
-    bool initialized = false;   // In the context of the main thread, this means that api.pinit()
-                                // has been called.  In the packet thread, it means that api.tinit()
-                                // has been called.
 
     ActionClass(const ActionApi* p) : api(p) { }
+
+    void global_init() override
+    {
+        if ( api->pinit )
+            api->pinit();
+    }
+
+    void global_term() override
+    {
+        if ( api->pterm )
+            api->pterm();
+    }
+
+    void thread_init() override
+    {
+        if ( api->tinit )
+            api->tinit();
+    }
+
+    void thread_term() override
+    {
+        if ( api->tterm )
+            api->tterm();
+    }
+
+    void instantiate(Module* mod, SnortConfig* sc, const char*) override
+    {
+        ActionManager::instantiate(api, mod, sc);
+    }
 };
 
 struct ActionInst
@@ -58,27 +86,23 @@ struct IpsActionsConfig
     vector<ActionInst> clist;
 };
 
-using ACList = vector<ActionClass>;
 using ACTypeList = unordered_map<string, IpsAction::Type>;
 using ACPriorityList = map<IpsAction::IpsActionPriority, string, std::greater<int>>;
 
-static ACList s_actors;
 static ACTypeList s_act_types;
 static ACPriorityList s_act_priorities;
 static IpsAction::Type s_act_index = 0;
-
-static THREAD_LOCAL ACList* s_tl_actors = nullptr;
 
 //-------------------------------------------------------------------------
 // Main thread operations
 //-------------------------------------------------------------------------
 
 // Plugin/Class operations
-void ActionManager::add_plugin(const ActionApi* api)
+PlugInterface* ActionManager::get_interface(const ActionApi* api)
 {
-    s_actors.emplace_back(api);
     s_act_types.emplace(api->base.name, s_act_index++);
     s_act_priorities.emplace(api->priority, api->base.name);
+    return new ActionClass(api);
 }
 
 std::string ActionManager::get_action_string(IpsAction::Type action)
@@ -139,46 +163,15 @@ std::string ActionManager::get_action_priorities(bool alert_before_pass)
     return priorities;
 }
 
-void ActionManager::dump_plugins()
-{
-    Dumper d("IPS Actions");
-
-    for ( const auto& p : s_actors )
-        d.dump(p.api->base.name, p.api->base.version);
-}
-
-void ActionManager::release_plugins()
-{
-    for ( auto& p : s_actors )
-    {
-        if ( p.api->pterm )
-            p.api->pterm();
-    }
-    s_actors.clear();
-}
-
 static ActionClass* get_action_class(const ActionApi* api, IpsActionsConfig* iac)
 {
     auto it = std::find_if(iac->clist.cbegin(), iac->clist.cend(),
         [api](const ActionInst &ai){ return ai.cls.api == api; });
+
     if ( it != iac->clist.cend() )
         return &(*it).cls;
 
-    auto it2 = std::find_if(s_actors.begin(), s_actors.end(),
-        [api](const ActionClass& ac){ return ac.api == api; });
-    if ( it2 != s_actors.end() )
-    {
-        ActionClass& ac = *it2;
-        if ( !ac.initialized )
-        {
-            if ( ac.api->pinit )
-                ac.api->pinit();
-            ac.initialized = true;
-        }
-        return &ac;
-    }
-
-    return nullptr;
+    return (ActionClass*)PluginManager::get_interface(api->base.name);
 }
 
 // Config operations
@@ -203,23 +196,22 @@ void ActionManager::delete_config(SnortConfig* sc)
 void ActionManager::instantiate(const ActionApi* api, Module* mod, SnortConfig* sc, IpsPolicy* ips)
 {
     ActionClass* cls = get_action_class(api, sc->ips_actions_config);
-
     assert(cls != nullptr);
 
     IpsAction* act = cls->api->ctor(mod);
 
     if ( act )
     {
-
         RuleListNode* rln = CreateRuleType(sc, api->base.name, get_action_type(api->base.name));
 
         // The plugin actions (e.g. reject, react, etc.) are per policy, per mode.
         // At logging time, they have to be retrieved the way we store them here.
-        if ( !ips )
+        if (!ips)
             ips = get_ips_policy();
 
         IpsAction::Type idx = rln->mode;
-        if (ips->action[idx] == nullptr)
+
+        if (!ips->action[idx])
         {
             ips->action[idx] = act;
             // Add this instance to the list of those created for this config
@@ -236,70 +228,21 @@ void ActionManager::initialize_policies(SnortConfig* sc)
 {
     for (unsigned i = 0; i < sc->policy_map->ips_policy_count(); i++)
     {
-        auto policy = sc->policy_map->get_ips_policy(i);
+        static IpsPolicy* policy;
+        policy = sc->policy_map->get_ips_policy(i);
 
         if ( !policy )
             continue;
 
-        for ( const auto& actor : s_actors )
-            ActionManager::instantiate(actor.api, nullptr, sc, policy);
-    }
-}
-
-//-------------------------------------------------------------------------
-// Packet thread operations
-//-------------------------------------------------------------------------
-static ActionClass& get_thread_local_action_class(const ActionApi* api)
-{
-    auto it = std::find_if(s_tl_actors->begin(), s_tl_actors->end(),
-        [api](const ActionClass& p){ return p.api == api; });
-    if ( it != s_tl_actors->end() )
-        return *it;
-    s_tl_actors->emplace_back(api);
-    return s_tl_actors->back();
-}
-
-void ActionManager::thread_init(const SnortConfig* sc)
-{
-    // Initial build out of this thread's configured plugin registry
-    s_tl_actors = new ACList;
-    for ( const auto& p : sc->ips_actions_config->clist )
-    {
-        ActionClass& tlac = get_thread_local_action_class(p.cls.api);
-        if ( tlac.api->tinit )
-            tlac.api->tinit();
-        tlac.initialized = true;
-    }
-}
-
-void ActionManager::thread_reinit(const SnortConfig* sc)
-{
-    // Update this thread's configured plugin registry with any newly configured inspectors
-    for ( const auto& p : sc->ips_actions_config->clist )
-    {
-        ActionClass& tlac = get_thread_local_action_class(p.cls.api);
-        if (!tlac.initialized)
+        auto create = [](PlugInterface* pin, void* pv)
         {
-            if ( tlac.api->tinit )
-                tlac.api->tinit();
-            tlac.initialized = true;
-        }
-    }
-    Active::thread_init(sc);
-}
+            ActionClass* ac = (ActionClass*)pin;
+            SnortConfig* conf = (SnortConfig*)pv;
+            ActionManager::instantiate(ac->api, nullptr, conf, policy);
+            PluginManager::set_instantiated(ac->api->base.name);
+        };
 
-void ActionManager::thread_term()
-{
-    if (s_tl_actors)
-    {
-        // Call tterm for every IPS action plugin ever configured during the lifetime of this thread
-        for ( auto& p : *s_tl_actors )
-        {
-            if ( p.api->tterm )
-                p.api->tterm();
-        }
-        delete s_tl_actors;
-        s_tl_actors = nullptr;
+        PluginManager::for_each(PT_IPS_ACTION, create, sc);
     }
 }
 

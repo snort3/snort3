@@ -35,6 +35,7 @@
 #include "time/packet_time.h"
 
 class HostAttributesDescriptor;
+class HeldPacketQueue;
 typedef std::shared_ptr<HostAttributesDescriptor> HostAttributesEntry;
 
 namespace snort
@@ -92,6 +93,8 @@ typedef void (* LogExtraData)(Flow*, void* config, LogFunction* funcs,
 class SO_PUBLIC Stream
 {
 public:
+    static bool is_active();
+
     // for shutdown only
     static void purge_flows();
 
@@ -264,8 +267,15 @@ public:
 
     static bool get_held_pkt_seq(Flow*, uint32_t&);
 
+    // stream base methods
+    static uint32_t get_hold_time();
+
     static void set_pub_id();
     static unsigned get_pub_id();
+
+    static void set_held_packet_queue(uint32_t);
+    static void delete_held_packet_queue();
+    static HeldPacketQueue* get_held_packet_queue();
 
 private:
     static void set_ip_protocol(Flow*);

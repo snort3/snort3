@@ -61,6 +61,12 @@ static bool s_rec_return_zero = false;
 static int s_send_ret_header = sizeof(UnixDomainConnectorMsgHdr);
 static int s_send_ret_other = 0;
 
+std::vector<PlugInterface*> PluginManager::get_interfaces(PlugType)
+{
+    std::vector<PlugInterface*> piv;
+    return piv;
+}
+
 UnixDomainConnectorConfig connector_config;
 
 Module* mod;

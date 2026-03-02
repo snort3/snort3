@@ -39,8 +39,8 @@
 #define DEFAULT_MAX_FILES_CACHED            65536
 #define DEFAULT_MAX_FILES_PER_FLOW          128
 
-#define FILE_ID_NAME "file_id"
-#define FILE_ID_HELP "configure file identification"
+#define FILE_ID_NAME "file_inspect"
+#define FILE_ID_HELP "configure file inspection"
 
 class FileConfig
 {

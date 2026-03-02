@@ -21,8 +21,8 @@
 #define TRACE_MODULE_H
 
 #include "framework/module.h"
-static std::string DEFAULT_OUTPUT_TRACE = "stdout_trace";
 
+class TraceConfig;
 class TraceParser;
 
 class TraceModule : public snort::Module
@@ -30,6 +30,10 @@ class TraceModule : public snort::Module
 public:
     TraceModule();
     ~TraceModule() override;
+
+    void init();
+    void reset();
+    void capture_outputs(TraceConfig*);
 
     const snort::Command* get_commands() const override;
     bool begin(const char*, int, snort::SnortConfig*) override;
@@ -48,7 +52,8 @@ private:
     std::vector<std::string> modules_help;
 
     TraceParser* trace_parser = nullptr;
+    std::string outputs;
 };
 
-#endif  // TRACE_MODULE_H
+#endif
 

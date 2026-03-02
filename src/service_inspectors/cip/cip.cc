@@ -342,7 +342,7 @@ const InspectApi cip_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CIP_NAME,
         CIP_HELP,

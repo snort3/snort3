@@ -31,11 +31,13 @@
 //    based on configuration.
 //-------------------------------------------------------------------------
 
-#include <map>
+#include <list>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "framework/base_api.h"
+#include "managers/plugin.h"
 
 namespace snort
 {
@@ -43,50 +45,72 @@ class Module;
 struct SnortConfig;
 }
 
+class PlugContext;
+class PlugInterface;
+struct PlugSet;
+
 class PluginManager
 {
 public:
-    // plugin methods
-    static void load_plugins(const snort::BaseApi**);
-    static void load_plugins(const std::string& lib_paths);
+    // construct the working set of plugins
+    static void init();
 
-    static void list_plugins();
-    static void show_plugins();
+    static void load_plugins(const std::string& lib_paths);
+    static void load_plugins(const snort::BaseApi**);
+    static void load_plugin(const snort::BaseApi*, class LuaApi*, const char* src);
+
+    static void reload_plugins(const char*, bool allow_mising_so_rules);
+    static void unload_plugins();
+
+    static void capture_plugins(snort::SnortConfig*);
+    static void revert_plugins(snort::SnortConfig*);
+
+    static void thread_init();
+    static void thread_reinit(const snort::SnortConfig*);
+    static void thread_term(bool trace);
+
+    static void set_plugins(PlugSet*);
+    static void clear_plugins();
+    static void set_close_all_plugins(bool);
+
+    static const char* get_current_plugin();
+    static const char* get_available_plugins(PlugType, const char* prefix = nullptr);
+
+    static void add_module(snort::Module*);
+    static snort::Module* get_module(const char*);
+    static snort::Module* get_module(const char*, const snort::BaseApi*&);
+    static std::list<snort::Module*> get_all_modules(const snort::SnortConfig* = nullptr);
+
+    // use the working set of plugins
+    static void list_plugins(const char* type = nullptr);
+    static void show_plugins(const char* type);
     static void dump_plugins();
+
     static void release_plugins();
+    static void release_plugins(struct PlugSet*);
+
+    static PluginPtr get_plugin(const char* name);
 
     static PlugType get_type(const char*);
     static const char* get_type_name(PlugType);
 
-    static const snort::BaseApi* get_api(PlugType, const char* name);
-    static const char* get_current_plugin();
+    static const snort::BaseApi* get_api(const char* name);
+    static PlugContext* get_context(const char* name);
 
-    static void instantiate(const snort::BaseApi*, snort::Module*, snort::SnortConfig*);
-    static void instantiate(const snort::BaseApi*, snort::Module*, snort::SnortConfig*,
-        const char* name);
+    static PlugInterface* get_interface(const char* name);
+    static std::vector<PlugInterface*> get_interfaces(PlugType);
 
-    static const char* get_available_plugins(PlugType);
-    static void load_so_plugins(snort::SnortConfig*, bool is_reload = false);
-    static void reload_so_plugins(const char*, snort::SnortConfig*);
-    static void reload_so_plugins_cleanup(snort::SnortConfig*);
+    static void instantiate(snort::Module*, snort::SnortConfig*, const char* name);
+    static void set_instantiated(const char* name);
+
+    typedef void (*BaseFunc)(const snort::BaseApi*, void* user);
+    static unsigned for_each(PlugType, BaseFunc, void* user = nullptr);  // returns loop count
+
+    typedef void (*PlugFunc)(PlugInterface*, void* user);
+    static unsigned for_each(PlugType, PlugFunc, void* user = nullptr);  // returns loop count
+
+    static void empty_trash();
 };
-
-struct Plugin;
-struct Plugins
-{
-    std::map<std::string, Plugin> plug_map;
-    ~Plugins();
-};
-
-struct SoHandle
-{
-    void* handle;
-
-    SoHandle(void* h) : handle(h) { }
-    ~SoHandle();
-};
-
-using SoHandlePtr = std::shared_ptr<SoHandle>;
 
 #endif
 

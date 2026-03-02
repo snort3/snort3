@@ -38,11 +38,8 @@ struct SnortConfig;
 class MpseManager
 {
 public:
-    static void add_plugin(const snort::MpseApi*);
-    static void release_plugins();
-    static void dump_plugins();
+    static class PlugInterface* get_interface(const snort::MpseApi*);
 
-    static void instantiate(const snort::MpseApi*, snort::Module*, snort::SnortConfig*);
     static const snort::MpseApi* get_search_api(const char* type);
     static void delete_search_engine(snort::Mpse*);
 

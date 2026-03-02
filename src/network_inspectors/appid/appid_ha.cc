@@ -71,7 +71,7 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
         return false;
 
     AppIdInspector* inspector =
-        static_cast<AppIdInspector*>(InspectorManager::get_inspector(MOD_NAME, MOD_USAGE, appid_inspector_api.type));
+        static_cast<AppIdInspector*>(InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
 
     if (!inspector or !pkt_thread_odp_ctxt)
         return false;
@@ -232,7 +232,7 @@ bool AppIdHAHttpClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
         return false;
 
     AppIdInspector* inspector =
-        static_cast<AppIdInspector*>(InspectorManager::get_inspector(MOD_NAME, MOD_USAGE, appid_inspector_api.type));
+        static_cast<AppIdInspector*>(InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
 
     if (!inspector or !pkt_thread_odp_ctxt)
         return false;
@@ -320,7 +320,7 @@ bool AppIdHATlsHostClient::consume(Flow*& flow, const FlowKey* key, HAMessage& m
         return false;
 
     AppIdInspector* inspector =
-        static_cast<AppIdInspector*>(InspectorManager::get_inspector(MOD_NAME, MOD_USAGE, appid_inspector_api.type));
+        static_cast<AppIdInspector*>(InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
 
     if (!inspector or !pkt_thread_odp_ctxt)
         return false;

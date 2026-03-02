@@ -23,7 +23,7 @@
 
 namespace snort
 {
-Module* ModuleManager::get_module(const char*)
+Module* PigPen::get_module(const char*)
 { return nullptr; }
 
 char* snort_strdup(const char* s)
@@ -42,7 +42,7 @@ void LogMessage(const char*,...) {}
 void WarningMessage(const char*,...) {}
 DataBus::DataBus() = default;
 DataBus::~DataBus() = default;
-SnortConfig::SnortConfig(const SnortConfig* const, const char*) {}
+SnortConfig::SnortConfig(const char*) {}
 SnortConfig::~SnortConfig() = default;
 time_t packet_time() { return 0; }
 
@@ -83,7 +83,12 @@ bool DataPurgeAC::execute(Analyzer&, void**) { return true;}
 
 void set_host_cache_mac(HostCacheMac*) { }
 
-Inspector* PigPen::get_inspector(const char*, bool, const SnortConfig*)
+Inspector* PigPen::get_inspector(const char*, Module::Usage)
+{ return nullptr; }
+
+void PigPen::add_shutdown_hook(void (*)()) { }
+
+Module* PluginManager::get_module(const char*)
 { return nullptr; }
 
 void HostTracker::remove_flows() { }

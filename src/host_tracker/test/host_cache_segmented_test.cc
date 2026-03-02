@@ -42,8 +42,9 @@ char* snort_strdup(const char* s)
 { return strdup(s); }
 time_t packet_time() { return 0; }
 void FatalError(const char* fmt, ...) { (void)fmt; exit(1); }
-
 }
+
+void host_cache_module_dump() { }
 
 TEST_GROUP(host_cache_segmented)
 {

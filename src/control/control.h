@@ -29,6 +29,7 @@
 #include <string>
 #include <vector>
 
+#include "log/messages.h"
 #include "main/snort_types.h"
 
 struct lua_State;

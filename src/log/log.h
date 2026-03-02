@@ -34,9 +34,6 @@ namespace snort
     struct Packet;
 }
 
-FILE* OpenAlertFile(const char*, bool is_critical=true);
-int RollAlertFile(const char*);
-
 void OpenLogger();
 void CloseLogger();
 void LogIPPkt(snort::Packet*);

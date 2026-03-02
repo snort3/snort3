@@ -36,7 +36,7 @@ void DceExpSsnManager::create_expected_session(const SfIp* ept_ip,
     uint16_t ept_port, const char* mod_name)
 {
     Packet* pkt = DetectionEngine::get_current_packet();
-    Dce2Tcp* inspector = (Dce2Tcp*)PigPen::get_inspector(mod_name, true);
+    Dce2Tcp* inspector = (Dce2Tcp*)PigPen::get_inspector(mod_name, Module::INSPECT);
     DceExpSsnManager& esm = inspector->get_esm();
 
     const SfIp* src_ip = pkt->ptrs.ip_api.get_dst();

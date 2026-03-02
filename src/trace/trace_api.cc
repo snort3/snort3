@@ -29,12 +29,15 @@
 #include "main/snort.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
+#include "managers/module_manager.h"
 #include "managers/trace_logger_manager.h"
+#include "managers/plugin_manager.h"
 #include "packet_io/packet_constraints.h"
 #include "protocols/packet.h"
 #include "utils/safec.h"
 
 #include "trace_config.h"
+#include "trace_module.h"
 
 using namespace snort;
 
@@ -57,17 +60,26 @@ static void update_constraints(PacketConstraints* new_cs)
     g_packet_constraints = new_cs;
 }
 
-
-
-void TraceApi::resolve_multi_trace_for_config(TraceConfig& config)
+void TraceApi::global_init()
 {
-    for (const auto& tracer_name : get_enabled_tracers())
-    {
-        if (std::find(config.output_traces.begin(), config.output_traces.end(), tracer_name) == config.output_traces.end())
-        {
-            config.output_traces.push_back(tracer_name);
-        }
-    }
+    TraceModule* tm = (TraceModule*)PluginManager::get_module("trace");
+    assert(tm);
+    tm->init();
+}
+
+void TraceApi::reset()
+{
+    TraceModule* tm = (TraceModule*)PluginManager::get_module("trace");
+    assert(tm);
+    tm->reset();
+}
+
+void TraceApi::capture_outputs(SnortConfig* sc)
+{
+    TraceModule* tm = (TraceModule*)PluginManager::get_module("trace");
+    assert(tm);
+    tm->capture_outputs(sc->trace_config);
+    TraceLoggerManager::instantiate_default_loggers(sc->trace_config);
 }
 
 void TraceApi::thread_init(const TraceConfig* trace_config)
@@ -77,8 +89,6 @@ void TraceApi::thread_init(const TraceConfig* trace_config)
     
     g_trace_initialized = true;
     
-    const_cast<TraceConfig*>(trace_config)->resolve_multi_trace();
-    
     if (!g_trace_logger_plug)
         g_trace_logger_plug = new std::vector<snort::TraceLoggerPlug*>();
     
@@ -86,6 +96,7 @@ void TraceApi::thread_init(const TraceConfig* trace_config)
     for (const auto& tracer_name : trace_config->output_traces)
     {
         auto tracer_plugin = TraceLoggerManager::get_logger(tracer_name);
+
         if (tracer_plugin)
         {
             tracer_plugin->set_timestamp(trace_config->timestamp);
@@ -95,7 +106,6 @@ void TraceApi::thread_init(const TraceConfig* trace_config)
             g_trace_logger_plug->push_back(tracer_plugin);
         }
     }
-
 
     update_constraints(trace_config->constraints);
     trace_config->setup_module_trace();
@@ -113,17 +123,34 @@ void TraceApi::thread_term()
     g_trace_initialized = false;
 }
 
+void TraceApi::clear_all_traces()
+{
+    auto mods = PluginManager::get_all_modules();
+
+    for ( auto* m : mods )
+        m->set_trace(nullptr);
+}
+
 void TraceApi::thread_reinit(const TraceConfig* trace_config)
 {
-    const_cast<TraceConfig*>(trace_config)->resolve_multi_trace();
-    
+    if (g_trace_logger_plug)
+        g_trace_logger_plug->clear();
+
+    if (!trace_config->is_configured())
+    {
+        clear_all_traces();
+        return;
+    }
     if (!g_trace_logger_plug)
         g_trace_logger_plug = new std::vector<snort::TraceLoggerPlug*>();
 
-    g_trace_logger_plug->clear();
     for (const auto& tracer_name : trace_config->output_traces)
     {
         auto tracer_plugin = TraceLoggerManager::get_logger(tracer_name);
+
+        if (!tracer_plugin)
+            tracer_plugin = TraceLoggerManager::set_logger(tracer_name);
+
         if (tracer_plugin)
         {
             tracer_plugin->set_timestamp(trace_config->timestamp);
@@ -137,8 +164,6 @@ void TraceApi::thread_reinit(const TraceConfig* trace_config)
     trace_config->setup_module_trace();
 }
 
-
-
 void TraceApi::log(const char* log_msg, const char* name,
     uint8_t log_level, const char* trace_option, const Packet* p)
 {
@@ -146,7 +171,7 @@ void TraceApi::log(const char* log_msg, const char* name,
     {
         for (const auto& tracer_plugin : *g_trace_logger_plug)
         {
-            if (tracer_plugin && tracer_plugin->get_enabled())
+            if (tracer_plugin)
             {
                 tracer_plugin->log(log_msg, name, log_level, trace_option, p);
             }
@@ -180,12 +205,6 @@ void TraceApi::filter(const Packet& p)
 uint8_t TraceApi::get_constraints_generation()
 {
     return g_constraints_generation;
-}
-
-std::unordered_set<std::string>& TraceApi::get_enabled_tracers()
-{
-    static std::unordered_set<std::string> enabled_tracers;
-    return enabled_tracers;
 }
 
 #define BUF_SIZE_MIN (1 << 10) // guaranteed size, this one will be allocated on stack
@@ -365,23 +384,23 @@ TEST_CASE("debug_log, debug_logf", "[trace]")
 
     TraceOption test_trace_options(nullptr, 0, nullptr);
     TraceTestModule trace_test_module("test_module", &test_trace_options);
-    Trace test_trace(trace_test_module);
+    Trace test_trace(&trace_test_module);
 
     TraceTestModule trace_test_module_opt("test_opt_module", test_trace_values);
-    Trace test_opt_trace(trace_test_module_opt);
+    Trace test_opt_trace(&trace_test_module_opt);
 
-    test_trace.set("all", 0);
+    test_trace.set("all", 0, &trace_test_module);
 
     testing_dump[0] = '\0';
     debug_log(&test_trace, nullptr, "my message");
     CHECK( testing_dump[0] == '\0' );
 
-    test_trace.set("all", 1);
-    test_opt_trace.set("option1", 1);
-    test_opt_trace.set("option2", 2);
-    test_opt_trace.set("option3", 3);
-    test_opt_trace.set("option4", 2);
-    test_opt_trace.set("option5", 2);
+    test_trace.set("all", 1, &trace_test_module);
+    test_opt_trace.set("option1", 1, &trace_test_module_opt);
+    test_opt_trace.set("option2", 2, &trace_test_module_opt);
+    test_opt_trace.set("option3", 3, &trace_test_module_opt);
+    test_opt_trace.set("option4", 2, &trace_test_module_opt);
+    test_opt_trace.set("option5", 2, &trace_test_module_opt);
 
     char message[BUF_SIZE_MIN + 1];
     for( int i = 0; i < BUF_SIZE_MIN; i++ )
@@ -449,7 +468,7 @@ TEST_CASE("trace big message", "[trace]")
 {
     TraceOption test_trace_options(nullptr, 0, nullptr);
     TraceTestModule trace_test_module("test_module", &test_trace_options);
-    Trace test_trace(trace_test_module);
+    Trace test_trace(&trace_test_module);
 
     const int hdr_size = strlen("test_module:all:1: ");
     const char exp_1[] = "test_module:all:1: 1111111111111111111111111111";
@@ -463,7 +482,7 @@ TEST_CASE("trace big message", "[trace]")
     char msg_3[BUF_SIZE_MAX * 1];
     char msg_4[BUF_SIZE_MAX * 2];
 
-    test_trace.set("all", 1);
+    test_trace.set("all", 1, &trace_test_module);
 
     memset(msg_1, '1', sizeof(msg_1));
     memset(msg_2, '2', sizeof(msg_2));

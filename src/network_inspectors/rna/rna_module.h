@@ -113,6 +113,8 @@ public:
     void set_trace(const snort::Trace*) const override;
     const snort::TraceOption* get_trace_options() const override;
 
+    static void shutdown();
+
 private:
     RnaModuleConfig* mod_conf = nullptr;
     const char* dump_file = nullptr;
@@ -121,6 +123,7 @@ private:
     snort::DeviceInfoRawFingerprint deviceinfo_fingerprint;
 
     bool is_valid_fqn(const char* fqn) const;
+    void dump();
 };
 
 #endif

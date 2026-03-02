@@ -178,7 +178,7 @@ bool MpseRegexOffload::get(Packet*& p)
 ThreadRegexOffload::ThreadRegexOffload(unsigned max) : RegexOffload(max)
 {
     unsigned i = ThreadConfig::get_instance_max();
-    const SnortConfig* sc = SnortConfig::get_conf();
+    SnortConfig* sc = SnortConfig::get_main_conf();
 
     for ( auto* req : idle )
     {
@@ -268,7 +268,7 @@ bool ThreadRegexOffload::get(Packet*& p)
 }
 
 void ThreadRegexOffload::worker(
-    RegexRequest* req, const SnortConfig* initial_config, unsigned id)
+    RegexRequest* req, SnortConfig* initial_config, unsigned id)
 {
     set_instance_id(id);
     SnortConfig::set_conf(initial_config);
@@ -291,7 +291,7 @@ void ThreadRegexOffload::worker(
         assert(req->packet->is_offloaded());
         assert(req->packet->context->searches.items.size() > 0);
 
-        SnortConfig::set_conf(req->packet->context->conf);
+        SnortConfig::set_conf(const_cast<SnortConfig*>(req->packet->context->conf));
         IpsContext* c = req->packet->context;
         Mpse::MpseRespType resp_ret;
 

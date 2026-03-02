@@ -153,9 +153,9 @@ int GtpInspect::get_message_type(int version, const char* name)
     return -1;
 }
 
-int get_message_type(int version, const char* name, snort::SnortConfig* sc)
+int get_message_type(int version, const char* name, snort::SnortConfig*)
 {
-    GtpInspect* ins = (GtpInspect*)PigPen::get_inspector(GTP_NAME, false, sc);
+    GtpInspect* ins = (GtpInspect*)PigPen::get_inspector(GTP_NAME, GTP_USE);
 
     if ( !ins )
         return -1;
@@ -175,9 +175,9 @@ int GtpInspect::get_info_type(int version, const char* name)
     return -1;
 }
 
-int get_info_type(int version, const char* name, SnortConfig* sc)
+int get_info_type(int version, const char* name, SnortConfig*)
 {
-    GtpInspect* ins = (GtpInspect*)PigPen::get_inspector(GTP_NAME, false, sc);
+    GtpInspect* ins = (GtpInspect*)PigPen::get_inspector(GTP_NAME, GTP_USE);
 
     if ( !ins )
         return -1;
@@ -233,7 +233,7 @@ static const InspectApi gtp_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         GTP_NAME,
         GTP_HELP,

@@ -148,7 +148,7 @@ static const InspectApi file_inspect_api =
         mod_ctor,
         mod_dtor
     },
-    IT_FILE,
+    IT_PASSIVE,
     PROTO_BIT__NONE,
     nullptr,
     "file",

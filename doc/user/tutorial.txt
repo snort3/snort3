@@ -327,7 +327,7 @@ The following parameters can't be changed during reload, and require a restart:
 * attribute_table.max_hosts
 * attribute_table.max_services_per_host
 * daq.snaplen
-* file_id.max_files_cached
+* file_inspect.max_files_cached
 * process.chroot
 * process.daemon
 * process.set_gid
@@ -339,9 +339,9 @@ The following parameters can't be changed during reload, and require a restart:
 In addition, the following scenarios require a restart:
 
 * Enabling file capture for the first time
-* Changing file_id.capture_memcap if file capture was previously or currently
+* Changing file_inspect.capture_memcap if file capture was previously or currently
   enabled
-* Changing file_id.capture_block_size if file capture was previously or
+* Changing file_inspect.capture_block_size if file capture was previously or
   currently enabled
 * Adding/removing stream_* inspectors if stream was already configured
 

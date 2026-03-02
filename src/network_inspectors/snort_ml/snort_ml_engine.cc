@@ -378,7 +378,7 @@ static const InspectApi snort_ml_engine_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         SNORT_ML_ENGINE_NAME,
         SNORT_ML_ENGINE_HELP,

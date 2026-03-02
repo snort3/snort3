@@ -20,8 +20,8 @@
 #ifndef STDOUT_TRACE_LOGGER_H
 #define STDOUT_TRACE_LOGGER_H
 
-#include "framework/tracer.h"
 #include "framework/module.h"
+#include "framework/tracer.h"
 
 #define S_NAME "stdout_trace"
 #define S_HELP "trace logger that prints to stdout"
@@ -29,24 +29,16 @@
 namespace snort
 {
 
-struct StdoutTraceConfig
-{
-    bool enable = false;
-};
-
 class StdoutTrace : public TraceLoggerPlug
 {
 public:
-    explicit StdoutTrace(const StdoutTraceConfig& cfg);
+    explicit StdoutTrace();
     ~StdoutTrace() override;
 
     void log(const char* log_msg, const char* name, uint8_t log_level, 
              const char* trace_option, const Packet* p) override;
 
-    void update_config(const StdoutTraceConfig& new_config);
-
 private:
-    StdoutTraceConfig config;
     FILE* file;
 };
 
@@ -55,19 +47,9 @@ class StdoutTraceModule : public Module
 public:
     StdoutTraceModule();
     ~StdoutTraceModule() override;
-
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
-
-    const StdoutTraceConfig& get_config() const;
-    void register_instance(StdoutTrace* instance);
-
-private:
-    StdoutTraceConfig config;
-    StdoutTrace* trace_logger_instance = nullptr;
 };
 
-} // namespace snort
+}
 
-#endif // STD_OUT_TRACE_LOGGER_H
+#endif
+

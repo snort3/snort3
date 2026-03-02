@@ -33,6 +33,9 @@ struct Packet;
 
 struct SO_PUBLIC PigPen
 {
+    // module foo
+    static Module* get_module(const char*);
+
     // inspector foo
     static Inspector* get_binder();
 
@@ -42,17 +45,21 @@ struct SO_PUBLIC PigPen
     static Inspector* get_service_inspector(const SnortProtocolId);
     static Inspector* get_service_inspector(const char*);
 
-    // This assumes that, in a multi-tenant scenario, this is called with the correct network and inspection
-    // policies are set correctly
-    static Inspector* get_inspector(const char* key, bool dflt_only = false, const SnortConfig* = nullptr);
+    // uses currently active policies only
+    static Inspector* get_inspector(const char* key, Module::Usage);
 
-    // This cannot be called in or before the inspector configure phase for a new snort config during reload
-    static Inspector* get_inspector(const char* key, Module::Usage, InspectorType);
+    // only valid during swap (eg inspector dtor gets new instance)
+    static Inspector* get_new_inspector(const char* key);
+
+    // only valid during configure (eg inspector configure gets old instance)
+    static Inspector* get_old_inspector(const char* key, Module::Usage);
 
     static void release(Inspector*);
 
     // process foo
     static bool snort_is_reloading();
+    static void open_syslog();
+    static void close_syslog();
 
     static void install_oops_handler();
     static void remove_oops_handler();
@@ -66,6 +73,9 @@ struct SO_PUBLIC PigPen
 
     // log foo
     static const char* get_protocol_name(uint8_t ip_proto);
+
+    // shutdown foo
+    static void add_shutdown_hook(void (*func)());
 };
 
 }

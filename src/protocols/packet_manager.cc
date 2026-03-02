@@ -50,7 +50,7 @@ THREAD_LOCAL ProfileStats decodePerfStats;
 uint8_t PacketManager::max_layers = DEFAULT_LAYERMAX;
 
 ProtocolIndex PacketManager::proto_idx(ProtocolId prot_id)
-{ return CodecManager::s_proto_map[to_utype(prot_id)]; }
+{ return CodecManager::get_instance()->s_proto_map[to_utype(prot_id)]; }
 
 // Decoding statistics
 
@@ -113,12 +113,14 @@ inline bool PacketManager::push_layer(Packet* p, CodecData& codec_data, Protocol
 inline Codec* PacketManager::get_layer_codec(const Layer& lyr, int idx)
 {
     ProtocolIndex mapped_prot;
+    CodecManager* cm = CodecManager::get_instance();
+
     // prot_id == ProtocolId::FINISHED_DECODE is a special case for root codecs not registering a protocol ID
-    if (idx == 0 && (lyr.prot_id == CodecManager::grinder_id || lyr.prot_id == ProtocolId::FINISHED_DECODE))
-        mapped_prot = CodecManager::grinder;
+    if (idx == 0 && (lyr.prot_id == cm->grinder_id || lyr.prot_id == ProtocolId::FINISHED_DECODE))
+        mapped_prot = cm->grinder;
     else
-        mapped_prot = CodecManager::s_proto_map[to_utype(lyr.prot_id)];
-    return CodecManager::s_protocols[mapped_prot];
+        mapped_prot = cm->s_proto_map[to_utype(lyr.prot_id)];
+    return cm->get_codec(mapped_prot);
 }
 
 void PacketManager::pop_teredo(Packet* p, RawData& raw)
@@ -127,7 +129,7 @@ void PacketManager::pop_teredo(Packet* p, RawData& raw)
     if ( p->context->conf->tunnel_bypass_enabled(TUNNEL_TEREDO) )
         p->active->clear_tunnel_bypass();
 
-    const ProtocolIndex mapped_prot = CodecManager::s_proto_map[to_utype(ProtocolId::TEREDO)];
+    const ProtocolIndex mapped_prot = CodecManager::get_instance()->s_proto_map[to_utype(ProtocolId::TEREDO)];
     s_stats[mapped_prot + stat_offset]--;
     p->num_layers--;
 
@@ -171,7 +173,7 @@ void PacketManager::handle_decode_failure(Packet* p, RawData& raw, const CodecDa
     }
 
     // if the codec exists, it failed
-    if (CodecManager::s_proto_map[to_utype(prev_prot_id)])
+    if (CodecManager::get_instance()->s_proto_map[to_utype(prev_prot_id)])
     {
         PacketTracer::log_msg_only("Packet %" PRIu64": unable to decode as %s%s\n",
             p->context->packet_number,
@@ -223,9 +225,10 @@ void PacketManager::decode(
     Profile profile(decodePerfStats);
 
     DecodeData unsure_encap_ptrs;
+    CodecManager* cm = CodecManager::get_instance();
 
-    ProtocolIndex mapped_prot = CodecManager::grinder;
-    ProtocolId prev_prot_id = CodecManager::grinder_id;
+    ProtocolIndex mapped_prot = cm->grinder;
+    ProtocolId prev_prot_id = cm->grinder_id;
 
     RawData raw(p->daq_msg, pkt, pktlen);
     CodecData codec_data(p->context->conf, ProtocolId::FINISHED_DECODE);
@@ -245,11 +248,11 @@ void PacketManager::decode(
     s_stats[total_processed]++;
 
     // loop until the protocol id is no longer valid
-    while (CodecManager::s_protocols[mapped_prot]->decode(raw, codec_data, p->ptrs))
+    while (cm->get_codec(mapped_prot)->decode(raw, codec_data, p->ptrs))
     {
         debug_logf(decode_trace, nullptr,
             "Codec %s (0x%0*hx) starts at %u, length is %hu\n",
-            CodecManager::s_protocols[mapped_prot]->get_name(),
+            cm->get_codec(mapped_prot)->get_name(),
             (static_cast<uint16_t>(prev_prot_id) < 0xFF) ? 2 : 4,
             static_cast<uint16_t>(prev_prot_id),
             pktlen - raw.len, codec_data.lyr_len);
@@ -346,7 +349,7 @@ void PacketManager::decode(
 
         // internal statistics and record keeping
         s_stats[mapped_prot + stat_offset]++; // add correct decode for previous layer
-        mapped_prot = CodecManager::s_proto_map[to_utype(codec_data.next_prot_id)];
+        mapped_prot = cm->s_proto_map[to_utype(codec_data.next_prot_id)];
         prev_prot_id = codec_data.next_prot_id;
 
         // Shrink the buffer of undecoded data
@@ -877,8 +880,9 @@ void PacketManager::encode_update(Packet* p)
     for (int i = outer_layer; i >= 0; --i)
     {
         const Layer& l = lyr[i];
-        ProtocolIndex mapped_prot = CodecManager::s_proto_map[to_utype(l.prot_id)];
-        CodecManager::s_protocols[mapped_prot]->update(
+        CodecManager* cm = CodecManager::get_instance();
+        ProtocolIndex mapped_prot = cm->s_proto_map[to_utype(l.prot_id)];
+        cm->get_codec(mapped_prot)->update(
             tmp_api, flags, const_cast<uint8_t*>(l.start), l.length, len);
     }
 
@@ -910,16 +914,17 @@ uint16_t PacketManager::encode_get_max_payload(const Packet* p)
 void PacketManager::dump_stats()
 {
     std::vector<const char*> pkt_names;
+    CodecManager* cm = CodecManager::get_instance();
 
     // zero out the default codecs
     g_stats[stat_offset] = 0;
-    g_stats[CodecManager::s_proto_map[to_utype(ProtocolId::FINISHED_DECODE)] + stat_offset] = 0;
+    g_stats[cm->s_proto_map[to_utype(ProtocolId::FINISHED_DECODE)] + stat_offset] = 0;
 
     for (unsigned int i = 0; i < stat_names.size(); i++)
         pkt_names.emplace_back(stat_names[i]);
 
-    for (int i = 0; CodecManager::s_protocols[i] != nullptr; i++)
-        pkt_names.emplace_back(CodecManager::s_protocols[i]->get_name());
+    for (int i = 0; cm->get_codec(i) != nullptr; i++)
+        pkt_names.emplace_back(cm->get_codec(i)->get_name());
 
     show_percent_stats((PegCount*)&g_stats, &pkt_names[0],
         (unsigned int)pkt_names.size(), "codec");
@@ -942,24 +947,31 @@ void PacketManager::accumulate()
 }
 
 const char* PacketManager::get_proto_name(ProtocolId protocol)
-{ return CodecManager::s_protocols[CodecManager::s_proto_map[to_utype(protocol)]]->get_name(); }
+{
+    CodecManager* cm = CodecManager::get_instance();
+    return cm->get_codec(cm->s_proto_map[to_utype(protocol)])->get_name();
+}
 
 const char* PacketManager::get_proto_name(IpProtocol protocol)
-{ return CodecManager::s_protocols[CodecManager::s_proto_map[to_utype(protocol)]]->get_name(); }
+{
+    CodecManager* cm = CodecManager::get_instance();
+    return cm->get_codec(cm->s_proto_map[to_utype(protocol)])->get_name();
+}
 
 void PacketManager::log_protocols(TextLog* const text_log,
     const Packet* const p)
 {
     uint8_t num_layers = p->num_layers;
     const Layer* const lyr = p->layers;
+    CodecManager* cm = CodecManager::get_instance();
 
     if (num_layers != 0)
     {
         int i = 0;
         // Special case for root codecs not registering a protocol ID
-        if (lyr[0].prot_id == CodecManager::grinder_id || lyr[0].prot_id == ProtocolId::FINISHED_DECODE)
+        if (lyr[0].prot_id == cm->grinder_id || lyr[0].prot_id == ProtocolId::FINISHED_DECODE)
         {
-            Codec* cd = CodecManager::s_protocols[CodecManager::grinder];
+            Codec* cd = cm->get_codec(cm->grinder);
             TextLog_Print(text_log, "%s(DLT):  ", cd->get_name());
             cd->log(text_log, lyr[0].start, lyr[0].length);
             i++;
@@ -968,8 +980,8 @@ void PacketManager::log_protocols(TextLog* const text_log,
         for (; i < num_layers; i++)
         {
             const auto protocol = to_utype(lyr[i].prot_id);
-            const uint8_t codec_offset =  CodecManager::s_proto_map[protocol];
-            Codec* cd = CodecManager::s_protocols[codec_offset];
+            const uint8_t codec_offset =  cm->s_proto_map[protocol];
+            Codec* cd = cm->get_codec(codec_offset);
 
             TextLog_NewLine(text_log);
             TextLog_Print(text_log, "%s", cd->get_name());

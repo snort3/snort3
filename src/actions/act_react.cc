@@ -48,7 +48,6 @@
 #include <fstream>
 #include <string>
 
-#include "actions/actions_module.h"
 #include "framework/ips_action.h"
 #include "framework/module.h"
 #include "log/messages.h"
@@ -255,7 +254,7 @@ class ReactModule : public Module
 {
 public:
     ReactModule() : Module(module_name, module_help, module_params)
-    { ActionsModule::add_action(module_name, react_pegs); }
+    { register_action_pegs(module_name, react_pegs); }
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
@@ -284,8 +283,7 @@ public:
     bool stats_are_aggregated() const override
     { return true; }
 
-    void show_stats() override
-    { /* These stats are shown by ActionsModule. */ }
+    void show_stats() override { }
 
     const PegInfo* get_pegs() const override
     { return react_pegs; }

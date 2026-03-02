@@ -38,7 +38,7 @@
 #include "log/messages.h"
 #include "lua/lua.h"
 #include "main/snort_config.h"
-#include "managers/module_manager.h"
+#include "managers/plugin_manager.h"
 #include "utils/util.h"
 
 #include "data_purge_cmd.h"
@@ -67,8 +67,8 @@ THREAD_LOCAL const Trace* rna_trace = nullptr;
 //-------------------------------------------------------------------------
 static int dump_mac_cache(lua_State* L)
 {
-    RnaModule* mod = (RnaModule*) ModuleManager::get_module(RNA_NAME);
-    Inspector* rna = PigPen::get_inspector(RNA_NAME, true);
+    RnaModule* mod = (RnaModule*)PigPen::get_module(RNA_NAME);
+    Inspector* rna = PigPen::get_inspector(RNA_NAME, RNA_USE);
     if ( rna && mod )
         mod->log_mac_cache( luaL_optstring(L, 1, nullptr) );
     return 0;
@@ -91,7 +91,7 @@ static inline string format_dump_mac(const uint8_t mac[MAC_SIZE])
 
 static int purge_data(lua_State* L)
 {
-    Inspector* rna = PigPen::get_inspector(RNA_NAME, true);
+    Inspector* rna = PigPen::get_inspector(RNA_NAME, RNA_USE);
     if ( rna )
     {
         HostCacheMac* mac_cache = new HostCacheMac(MAC_CACHE_INITIAL_SIZE);
@@ -167,7 +167,7 @@ static bool get_mac_from_args(lua_State* L, uint8_t* mac_addr)
 
 static int delete_mac_host(lua_State* L)
 {
-    Inspector* rna = PigPen::get_inspector(RNA_NAME, true);
+    Inspector* rna = PigPen::get_inspector(RNA_NAME, RNA_USE);
     if ( rna )
     {
         uint8_t mac[MAC_SIZE] = {0};
@@ -203,7 +203,7 @@ static int delete_mac_host(lua_State* L)
 
 static int delete_mac_host_proto(lua_State* L)
 {
-    Inspector* rna = PigPen::get_inspector(RNA_NAME, true);
+    Inspector* rna = PigPen::get_inspector(RNA_NAME, RNA_USE);
     if ( rna )
     {
         uint8_t mac[MAC_SIZE] = {0};
@@ -443,15 +443,26 @@ static const PegInfo rna_pegs[] =
 //-------------------------------------------------------------------------
 
 RnaModule::RnaModule() : Module(RNA_NAME, RNA_HELP, rna_params)
-{ }
+{ PigPen::add_shutdown_hook(shutdown); }
+
+void RnaModule::shutdown()
+{
+    RnaModule* rna = (RnaModule*)PluginManager::get_module("rna");
+
+    if ( rna )
+        rna->dump();
+}
+
+void RnaModule::dump()
+{
+    if ( dump_file )
+        log_mac_cache(dump_file);
+}
 
 RnaModule::~RnaModule()
 {
     if ( dump_file )
-    {
-        log_mac_cache(dump_file);
         snort_free((void*)dump_file);
-    }
 
     delete mod_conf;
 }
@@ -712,6 +723,9 @@ const TraceOption* RnaModule::get_trace_options() const
 
 bool RnaModule::log_mac_cache(const char* outfile)
 {
+    if ( !outfile )
+        outfile = dump_file;
+
     if ( !outfile )
     {
         LogMessage("File name is needed!\n");

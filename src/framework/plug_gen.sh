@@ -17,5 +17,5 @@ $cxx -MM $plugs $dirs | \
     sed -e "s/ /\n/g" | \
     grep ".*.h$" | grep -v "$plugs" | \
     sed -e "s/^/#include \"/" -e "s/$/\"/" -e 's/.*api_options.h.*/#include "framework\/api_options.h"/' | \
-    sort
+    LC_ALL=C sort
 

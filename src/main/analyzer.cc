@@ -51,14 +51,11 @@
 #include "log/messages.h"
 #include "main/swapper.h"
 #include "main.h"
-#include "managers/action_manager.h"
-#include "managers/connector_manager.h"
 #include "managers/codec_manager.h"
 #include "managers/inspector_manager.h"
-#include "managers/ips_manager.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"
-#include "managers/trace_logger_manager.h"
+#include "managers/plugin_manager.h"
 #include "memory/memory_cap.h"
 #include "packet_io/active.h"
 #include "packet_io/packet_tracer.h"
@@ -457,6 +454,7 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
     // We must ensure that a context is available when one is needed.
     Stream::handle_timeouts(false);
     HighAvailabilityManager::process_receive();
+    PluginManager::empty_trash();
 }
 
 void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)
@@ -636,12 +634,7 @@ void Analyzer::init_unprivileged()
 
     const SnortConfig* sc = SnortConfig::get_conf();
 
-    // This should be called as soon as possible
-    // to handle all trace log messages
-    TraceLoggerManager::thread_init();
-    TraceApi::thread_init(sc->trace_config);
-
-    CodecManager::thread_init();
+    get_default_network_policy(sc)->cd_mgr->thread_init();
 
     // this depends on instantiated daq capabilities
     // so it is done here instead of init()
@@ -653,14 +646,17 @@ void Analyzer::init_unprivileged()
     populate_instance_maps();
 
     memory::MemoryCap::thread_init();
-    EventManager::open_outputs();
-    IpsManager::setup_options(sc);
-    ActionManager::thread_init(sc);
-    FileService::thread_init();
-    ConnectorManager::thread_init();
+    PluginManager::thread_init();
+
+    // This should be called as soon as possible
+    // to handle all trace log messages
+    TraceApi::thread_init(sc->trace_config);
+
     SideChannelManager::thread_init();
-    HighAvailabilityManager::thread_init(); // must be before InspectorManager::thread_init();
-    InspectorManager::thread_init(sc);
+    HighAvailabilityManager::thread_init();
+    EventManager::open_outputs();
+    FileService::thread_init();
+    InspectorManager::thread_init();
     PacketTracer::thread_init();
     HostAttributesManager::initialize();
     RuleContext::set_enabled(sc->profiler->rule.show);
@@ -679,16 +675,9 @@ void Analyzer::init_unprivileged()
 
 void Analyzer::reinit(const SnortConfig* sc)
 {
-    InspectorManager::thread_reinit(sc);
-    ActionManager::thread_reinit(sc);
+    PluginManager::thread_reinit(sc);
+    Active::thread_init(sc);
     TraceApi::thread_reinit(sc->trace_config);
-    EventManager::reload_outputs();
-    ConnectorManager::thread_reinit();
-}
-
-void Analyzer::stop_removed(const SnortConfig* sc)
-{
-    InspectorManager::thread_stop_removed(sc);
 }
 
 void Analyzer::term()
@@ -712,18 +701,16 @@ void Analyzer::term()
     invalidate_instance_maps();
 
     DetectionEngine::idle();
-    InspectorManager::thread_stop(sc);
     InspectorManager::thread_term();
+    PluginManager::thread_term(false);
     memory::MemoryCap::thread_term();
-    ModuleManager::accumulate();
-    ActionManager::thread_term();
+    ModuleManager::accumulate(sc);
 
-    IpsManager::clear_options(sc);
     EventManager::close_outputs();
-    CodecManager::thread_term();
     HighAvailabilityManager::thread_term();
     SideChannelManager::thread_term();
-    ConnectorManager::thread_term();
+
+    get_default_network_policy(sc)->cd_mgr->thread_term();
 
     oops_handler->set_current_message(nullptr, nullptr);
 
@@ -746,8 +733,8 @@ void Analyzer::term()
     delete switcher;
 
     sfthreshold_free();
+    PluginManager::thread_term(true);
     TraceApi::thread_term();
-    TraceLoggerManager::thread_term();
 }
 
 Analyzer::Analyzer(SFDAQInstance* instance, unsigned i, const char* s, uint64_t msg_cnt, const uint32_t retry_timeout) :
@@ -766,6 +753,15 @@ Analyzer::~Analyzer()
     delete daq_instance;
     delete oops_handler;
     delete retry_queue;
+
+    std::list<UncompletedAnalyzerCommand*>::iterator it = uncompleted_work_queue.begin();
+
+    while (it != uncompleted_work_queue.end() )
+    {
+        delete *it;
+        ++it;
+    }
+
 }
 
 void Analyzer::operator()(Swapper* ps, uint16_t run_num)
@@ -837,8 +833,6 @@ bool Analyzer::handle_command()
         return false;
 
     void* ac_state = nullptr;
-    if ( ac->need_update_reload_id() )
-        SnortConfig::update_thread_reload_id();
 
     if ( ac->execute(*this, &ac_state) )
         add_command_to_completed_queue(ac);
@@ -857,9 +851,14 @@ void Analyzer::add_command_to_uncompleted_queue(AnalyzerCommand* aci, void* acs)
 
 void Analyzer::add_command_to_completed_queue(AnalyzerCommand* ac)
 {
-        completed_work_queue_mutex.lock();
-        completed_work_queue.push(ac);
-        completed_work_queue_mutex.unlock();
+#ifdef REG_TEST
+    if ( wait_for_reload and (SnortConfig::get_reload_id() > 2) and !strcmp(ac->stringify(), "SWAP") )
+        stop();
+#endif
+
+    completed_work_queue_mutex.lock();
+    completed_work_queue.push(ac);
+    completed_work_queue_mutex.unlock();
 }
 
 void Analyzer::handle_commands()
@@ -892,8 +891,10 @@ DAQ_RecvStatus Analyzer::process_messages()
     // Max receive becomes the minimum of the configured batch size, the remaining exit_after
     // count (if requested), and the remaining pause_after count (if requested).
     unsigned max_recv = daq_instance->get_batch_size();
+
     if (exit_after_cnt && exit_after_cnt < max_recv)
         max_recv = exit_after_cnt;
+
     if (pause_after_cnt && pause_after_cnt < max_recv)
         max_recv = pause_after_cnt;
 
@@ -933,6 +934,7 @@ DAQ_RecvStatus Analyzer::process_messages()
 
     if (exit_after_cnt && (exit_after_cnt -= num_recv) == 0)
         stop();
+
     if (pause_after_cnt && (pause_after_cnt -= num_recv) == 0)
         pause();
     return rstat;

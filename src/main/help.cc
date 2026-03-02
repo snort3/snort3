@@ -36,6 +36,7 @@
 #include "managers/so_manager.h"
 #include "managers/mp_transport_manager.h"
 #include "packet_io/sfdaq.h"
+#include "trace/trace_api.h"
 #include "utils/util.h"
 
 #include "snort_config.h"
@@ -43,6 +44,11 @@
 
 using namespace snort;
 using namespace std;
+
+void config_markup(SnortConfig*, const char*)
+{
+    Markup::enable();
+}
 
 static constexpr const char* snort_help =
     "\n"
@@ -80,9 +86,8 @@ static constexpr const char* snort_help =
 
 //-------------------------------------------------------------------------
 
-void help_args(const char* pfx)
+static void help_args(Module* m, const char* pfx)
 {
-    Module* m = get_snort_module();
     const Parameter* p = m->get_parameters();
     size_t n = pfx ? strlen(pfx) : 0;
 
@@ -133,9 +138,9 @@ void help_args(const char* pfx)
     exit(0);
 }
 
-[[noreturn]] void help_options(SnortConfig*, const char* val)
+[[noreturn]] void help_options(SnortConfig*, const char* val, Module* m)
 {
-    help_args(val);
+    help_args(m, val);
     exit(0);
 }
 
@@ -145,9 +150,51 @@ void help_args(const char* pfx)
     exit(0);
 }
 
+[[noreturn]] void help_limits(SnortConfig*, const char*)
+{
+    fprintf(stdout, "limits:\n");
+    fprintf(stdout, "max31 = 2147483647\n");
+    fprintf(stdout, "max32 = 4294967295\n");
+    fprintf(stdout, "max53 = 9007199254740992\n");
+    fprintf(stdout, "maxSZ = %lu\n", (sizeof(size_t) == 4) ? 4294967295LU : 9007199254740992LU);
+    exit(0);
+}
+
+[[noreturn]] void help_version(SnortConfig*)
+{
+    DisplayBanner();
+    exit(0);
+}
+
+[[noreturn]] void list_daqs(SnortConfig* sc)
+{
+    SFDAQ::load(sc->daq_config);
+    SFDAQ::print_types(cout);
+    SFDAQ::unload();
+    exit(0);
+}
+
+[[noreturn]] void dump_rule_hex(SnortConfig*, const char* val)
+{
+    SoManager::rule_to_hex(val);
+    exit(0);
+}
+
+[[noreturn]] void dump_rule_text(SnortConfig*, const char* val)
+{
+    SoManager::rule_to_text(val);
+    exit(0);
+}
+
+[[noreturn]] void dump_version(SnortConfig*)
+{
+    cout << VERSION << endl;
+    exit(0);
+}
+
 enum HelpType
 {
-    HT_BUF, HT_CFG, HT_CMD, HT_DBR, HT_DDR,
+    HT_BUF, HT_CFG, HT_CMD, HT_DBR, HT_DDR, HT_DMO,
     HT_GID, HT_HMO, HT_HMO_JSON, HT_HPL, HT_DFL,
     HT_IPS, HT_LST, HT_MOD, HT_PEG, HT_PLG
 };
@@ -155,11 +202,11 @@ enum HelpType
 [[noreturn]] static void show_help(
     SnortConfig* sc, const char* val, HelpType ht, const char* opts = nullptr)
 {
-    SnortConfig::set_conf(new SnortConfig);
-    ScriptManager::load_scripts(sc->script_paths);
+    SnortConfig* conf = new SnortConfig;
+    SnortConfig::set_conf(conf);
     PluginManager::load_plugins(sc->plugin_path);
-    PluginManager::load_so_plugins(sc);
-    ModuleManager::init();
+    ScriptManager::load_scripts(sc->script_paths);
+    TraceApi::global_init();
 
     switch ( ht )
     {
@@ -176,7 +223,11 @@ enum HelpType
         ModuleManager::dump_rules(val, opts);
         break;
     case HT_DDR:
-        SoManager::dump_rule_stubs(val, sc);
+        SoManager::dump_rule_stubs();
+        break;
+    case HT_DMO:
+        ModuleManager::dump_modules();
+        PluginManager::dump_plugins();
         break;
     case HT_DFL:
         ModuleManager::dump_defaults(val);
@@ -191,7 +242,7 @@ enum HelpType
         ModuleManager::show_modules_json();
         break;
     case HT_HPL:
-        PluginManager::show_plugins();
+        PluginManager::show_plugins(val);
         break;
     case HT_IPS:
         ModuleManager::show_rules(val);
@@ -206,14 +257,13 @@ enum HelpType
         ModuleManager::show_pegs(val);
         break;
     case HT_PLG:
-        PluginManager::list_plugins();
+        PluginManager::list_plugins(val);
         break;
     }
     MPTransportManager::term();
-    ModuleManager::term();
+    PluginManager::revert_plugins(conf);
+    delete conf;
     PluginManager::release_plugins();
-    ScriptManager::release_scripts();
-    delete SnortConfig::get_conf();
     exit(0);
 }
 
@@ -225,11 +275,6 @@ enum HelpType
 [[noreturn]] void help_commands(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_CMD);
-}
-
-void config_markup(SnortConfig*, const char*)
-{
-    Markup::enable();
 }
 
 [[noreturn]] void help_gids(SnortConfig* sc, const char* val)
@@ -252,18 +297,6 @@ void config_markup(SnortConfig*, const char*)
     show_help(sc, val, HT_PEG);
 }
 
-[[noreturn]] void help_limits(SnortConfig*, const char*)
-{
-    fprintf(stdout, "limits:\n");
-    fprintf(stdout, "max31 = 2147483647\n");
-    fprintf(stdout, "max32 = 4294967295\n");
-    fprintf(stdout, "max53 = 9007199254740992\n");
-    fprintf(stdout, "max63 = 9223372036854775807\n");
-    fprintf(stdout, "max64 = 18446744073709551615\n");
-    fprintf(stdout, "maxSZ = %lu\n", (sizeof(size_t) == 4) ? 4294967295LU : 9007199254740992LU);
-    exit(0);
-}
-
 [[noreturn]] void help_module(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_MOD);
@@ -282,20 +315,6 @@ void config_markup(SnortConfig*, const char*)
 [[noreturn]] void help_plugins(SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_HPL);
-}
-
-[[noreturn]] void help_version(SnortConfig*)
-{
-    DisplayBanner();
-    exit(0);
-}
-
-[[noreturn]] void list_daqs(SnortConfig* sc)
-{
-    SFDAQ::load(sc->daq_config);
-    SFDAQ::print_types(cout);
-    SFDAQ::unload();
-    exit(0);
 }
 
 [[noreturn]] void list_modules(SnortConfig* sc, const char* val)
@@ -323,21 +342,8 @@ void config_markup(SnortConfig*, const char*)
     show_help(sc, val, HT_DDR);
 }
 
-[[noreturn]] void dump_rule_hex(SnortConfig*, const char* val)
+[[noreturn]] void dump_modules(SnortConfig* sc)
 {
-    SoManager::rule_to_hex(val);
-    exit(0);
-}
-
-[[noreturn]] void dump_rule_text(SnortConfig*, const char* val)
-{
-    SoManager::rule_to_text(val);
-    exit(0);
-}
-
-[[noreturn]] void dump_version(SnortConfig*)
-{
-    cout << VERSION << endl;
-    exit(0);
+    show_help(sc, "", HT_DMO);
 }
 

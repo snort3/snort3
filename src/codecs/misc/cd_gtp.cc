@@ -264,7 +264,7 @@ static const CodecApi gtp_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_GTP_NAME,
         CD_GTP_HELP,

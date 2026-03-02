@@ -24,15 +24,35 @@
 #include "plugin_manager.h"
 
 #include <dlfcn.h>
-#include <iostream>
-#include <sstream>
 #include <sys/stat.h>
 
+#include <atomic>
+#include <iostream>
+#include <mutex>
+#include <sstream>
+
+#include "actions/ips_actions.h"
+#include "catch/unit_test.h"
+#include "codecs/codec_api.h"
+#include "connectors/connectors.h"
 #include "framework/plugins.h"
+#include "framework/lua_api.h"
 #include "helpers/directory.h"
 #include "helpers/markup.h"
+#include "ips_options/ips_options.h"
 #include "log/messages.h"
+#include "loggers/loggers.h"
+#include "main/modules.h"
+#include "main/snort.h"
 #include "main/snort_config.h"
+#include "main/thread.h"
+#include "mp_transport/mp_transports.h"
+#include "network_inspectors/network_inspectors.h"
+#include "policy_selectors/policy_selectors.h"
+#include "search_engines/search_engines.h"
+#include "service_inspectors/service_inspectors.h"
+#include "stream/stream_inspectors.h"
+#include "tracer/trace_loader.h"
 
 #include "action_manager.h"
 #include "codec_manager.h"
@@ -43,6 +63,7 @@
 #include "module_manager.h"
 #include "mpse_manager.h"
 #include "mp_transport_manager.h"
+#include "plug_interface.h"
 #include "policy_selector_manager.h"
 #include "script_manager.h"
 #include "so_manager.h"
@@ -51,16 +72,13 @@
 using namespace snort;
 using namespace std;
 
-#define lib_pattern "*.so"
-
 struct Symbol
 {
-    const char* name;
+    const char* type;
     unsigned version;
     unsigned size;
 };
 
-#if 1
 // sequence must match PlugType definition
 // compiler catches too many but not too few
 static Symbol symbols[PT_MAX] =
@@ -77,79 +95,104 @@ static Symbol symbols[PT_MAX] =
     { "mp_transport", MP_TRANSPORT_API_VERSION, sizeof(MPTransportApi) },
     { "trace", TRACE_LOGAPI_VERSION, sizeof(TraceLogApi) }
 };
-#else
-// this gets around the sequence issue with some compilers
-// but does not fail if we are missing an entry :(
-#define stringify(name) # name
-static Symbol symbols[PT_MAX] =
+
+struct CompStr
 {
-    [PT_CODEC] = { stringify(PT_CODEC), CDAPI_VERSION, sizeof(CodecApi) },
-    [PT_INSPECTOR] = { stringify(PT_INSPECTOR), INSAPI_VERSION, sizeof(InspectApi) },
-    [PT_IPS_ACTION] = { stringify(PT_IPS_ACTION), ACTAPI_VERSION, sizeof(ActionApi) },
-    [PT_IPS_OPTION] = { stringify(PT_IPS_OPTION), IPSAPI_VERSION, sizeof(IpsApi) },
-    [PT_SEARCH_ENGINE] = { stringify(PT_SEARCH_ENGINE), SEAPI_VERSION, sizeof(MpseApi) },
-    [PT_SO_RULE] = { stringify(PT_SO_RULE), SOAPI_VERSION, sizeof(SoApi) },
-    [PT_LOGGER] = { stringify(PT_LOGGER), LOGAPI_VERSION, sizeof(LogApi) },
-    [PT_CONNECTOR] = { stringify(PT_CONNECTOR), CONNECTOR_API_VERSION, sizeof(ConnectorApi) },
-    [PT_POLICY_SELECTOR] = { stringify(PT_POLICY_SELECTOR), POLICY_SELECTOR_API_VERSION,
-        sizeof(PolicySelectorApi) },
-    [PT_MP_TRANSPORT] = { stringify(PT_MP_TRANSPORT), MP_TRANSPORT_API_VERSION,
-        sizeof(MPTransportApi) }
-    [PT_TRACE] = { stringify(PT_TRACE), TRACE_LOGAPI_VERSION, sizeof(TraceLogApi) },
+   bool operator()(char const* a, char const* b) const
+   { return std::strcmp(a, b) < 0; }
 };
-#endif
 
-PlugType PluginManager::get_type(const char* s)
+struct PlugContextWrapper
 {
-    for ( int i = 0; i < PT_MAX; i++ )
-        if ( !strcmp(s, symbols[i].name) )
-            return (PlugType)i;
+    PlugContext* context;
 
-    return PT_MAX;
-}
+    ~PlugContextWrapper()
+    { delete context; }
+};
 
-const char* PluginManager::get_type_name(PlugType pt)
+using PlugContextPtr = std::shared_ptr<PlugContextWrapper>;
+
+using PluginMap = std::map<const char*, PluginPtr, CompStr>;
+using ContextMap = std::map<const char*, PlugContextPtr, CompStr>;
+
+struct PlugSet
 {
-    if ( pt >= PT_MAX )
-        return "error";
+    PluginMap plug_map;
+    ContextMap user_map;
+};
 
-    return symbols[pt].name;
-}
+// load_set is only set in the main thread which enables reverting in the
+// main thread to support delete of prior conf w/o affecting other threads.
+static THREAD_LOCAL PlugSet* load_set = nullptr;
+
+static std::atomic<unsigned> load_id = 1;
+
+static std::mutex trash_mutex;
+static std::vector<void*> trash;
 
 static const char* current_plugin = nullptr;
+static bool close_all_libs = false;
 
-const char* PluginManager::get_current_plugin()
-{ return current_plugin; }
+void PluginManager::set_close_all_plugins(bool b)
+{ close_all_libs = b; }
 
-struct Plugin
+static bool do_dlclose()
 {
-    string source;
-    string key;
-    const BaseApi* api = nullptr;
-    SoHandlePtr handle;
-};
-
-Plugins::~Plugins()
-{
-    plug_map.clear();
+    return !Snort::is_exiting() or close_all_libs;
 }
 
-SoHandle::~SoHandle()
+void Plugin::setup(const char* t, const char* s, void* h, const BaseApi* b)
 {
-#ifndef REG_TEST
-    if ( handle )
-        dlclose(handle);
+    type = t;
+    source = s;
+    handle = h;
+    api = b;
+}
+
+Plugin::~Plugin()
+{
+    if ( !api )
+        delete mod;
+
+    else
+    {
+        if ( api->mod_dtor )
+            api->mod_dtor(mod);
+    }
+
+#if defined(UNIT_TEST) || defined(BENCHMARK_TEST)
+    if ( !catch_enabled() )
 #endif
+    {
+        if ( pin )
+            pin->global_term();
+    }
+
+    delete pin;
+    delete luapi;
+
+    if ( !handle )
+        return;
+
+    else if ( in_main_thread() and do_dlclose() )
+        dlclose(handle);
+
+    else
+    {
+        std::lock_guard<std::mutex> lock(trash_mutex);
+        trash.push_back(handle);
+    }
 }
 
-static Plugins s_plugins;
+const char* Plugin::get_name()
+{ return mod ? mod->get_name() : api->name; }
 
-static void set_key(string& key, const Symbol* sym, const char* name)
-{
-    key = sym->name;
-    key += "::";
-    key += name;
-}
+const char* Plugin::get_help()
+{ return mod ? mod->get_help() : api->help; }
+
+//-------------------------------------------------------------------------
+// internal methods
+//-------------------------------------------------------------------------
 
 // plugins are linked when loaded (RTLD_NOW) so missing symbols
 // don't make it this far.  we therefore only need to check
@@ -173,12 +216,15 @@ static bool plugin_is_reloadable(const BaseApi* api)
 {
     if ( api->type == PT_SO_RULE )
         return true;
-    else
-        return false;
+
+    if ( api->features & PLUGIN_SO_RELOAD )
+        return true;
+
+    return false;
 }
 
 static bool register_plugin(
-    const BaseApi* api, SoHandlePtr handle, const char* file, SnortConfig* sc)
+    const BaseApi* api, void* handle, const char* file, bool reload)
 {
     if ( api->type >= PT_MAX )
     {
@@ -208,51 +254,53 @@ static bool register_plugin(
         return false;
     }
 
-    if ( sc and !plugin_is_reloadable(api) )
+    if ( reload and !plugin_is_reloadable(api) )
         return false;
 
-    string key;
-    set_key(key, sym, api->name);
+    PluginPtr p = nullptr;
+    auto it = load_set->plug_map.find(api->name);
 
-    Plugin& p = ( sc ? sc->plugins->plug_map[key] : s_plugins.plug_map[key] );
-    if ( p.api )
+    if ( it != load_set->plug_map.end() )
+        p = it->second;
+
+    if ( p )
     {
-        if ( p.api->version > api->version )
+        if ( p->api->version > api->version )
             return false;  // keep the old one
     }
 
-    p.key = std::move(key);
-    p.api = api;
-    p.handle = std::move(handle);
-    p.source = file;
+    if ( !p )
+    {
+        p = std::make_shared<Plugin>();
+        (load_set->plug_map)[api->name] = p;
+    }
+
+    p->setup(sym->type, file, handle, api);
 
     return true;
 }
 
-static void load_list(
-    const BaseApi** api, void* handle = nullptr, const char* file = "static", SnortConfig* sc = nullptr)
+static void load_apis(
+    const BaseApi** api, void* handle = nullptr, const char* file = "static", bool reload = false)
 {
-    SoHandlePtr so_file;
-    if ( handle and sc )
-    {   // for reload, if the so lib file was previously opened, reuse the shared_ptr
-        auto it = std::find_if(s_plugins.plug_map.cbegin(), s_plugins.plug_map.cend(),
-            [api, handle](const std::pair<const std::string, Plugin>& i)
-            { return i.second.api == *api and i.second.handle.get()->handle == handle; });
-
-        if (it != s_plugins.plug_map.cend())
-            so_file = (*it).second.handle;
-    }
-    if ( !so_file.get() )
-        so_file = std::make_shared<SoHandle>(handle);
+    unsigned c = 0;
 
     while ( *api )
     {
-        register_plugin(*api, so_file, file, sc);
+        register_plugin(*api, handle, file, reload);
         ++api;
+
+        if ( handle and ++c > 1 )
+        {
+            // assure we can dlclose on each plugin independently
+            // dlclose won't actually close until all plugins in lib are closed
+            // coverity[resource_leak]
+            dlopen(file, RTLD_NOW|RTLD_LOCAL);
+        }
     }
 }
 
-static bool load_lib(const char* file, SnortConfig* sc)
+static bool load_lib(const char* file, bool reload)
 {
     void* handle;
 
@@ -272,78 +320,77 @@ static bool load_lib(const char* file, SnortConfig* sc)
         dlclose(handle);
         return false;
     }
-    load_list(api, handle, file, sc);
+    load_apis(api, handle, file, reload);
     return true;
 }
 
-static void add_plugin(Plugin& p)
+static void add_plugin(PluginPtr& p)
 {
-    Module* m = nullptr;
-    if ( p.api->mod_ctor )
-    {
-        current_plugin = p.api->name;
-        m = p.api->mod_ctor();
-        ModuleManager::add_module(m, p.api);
-    }
+    if ( !p->api )
+        return;
 
-    switch ( p.api->type )
+    switch ( p->api->type )
     {
+    case PT_IPS_ACTION:
+        p->pin = ActionManager::get_interface((const ActionApi*)p->api);
+        break;
+
+    case PT_IPS_OPTION:
+        p->pin = IpsManager::get_interface((const IpsApi*)p->api);
+        break;
+
+    case PT_SEARCH_ENGINE:
+        p->pin = MpseManager::get_interface((const MpseApi*)p->api);
+        break;
+
+    case PT_LOGGER:
+        p->pin = EventManager::get_interface((const LogApi*)p->api);
+        break;
+
+    case PT_CONNECTOR:
+        p->pin = ConnectorManager::get_interface((const ConnectorApi*)p->api);
+        break;
+
+    case PT_POLICY_SELECTOR:
+        p->pin = PolicySelectorManager::get_interface((const PolicySelectorApi*)p->api);
+        break;
+
     case PT_CODEC:
-        CodecManager::add_plugin((const CodecApi*)p.api);
+        p->pin = CodecManager::get_interface((const CodecApi*)p->api);
+        break;
+
+    case PT_SO_RULE:
+        p->pin = SoManager::get_interface((const SoApi*)p->api);
         break;
 
     case PT_INSPECTOR:
         // probes must always be global. they run regardless of selected policy.
-        assert( (m && ((const InspectApi*)p.api)->type == IT_PROBE) ?
-                m->get_usage() == Module::GLOBAL :
-                true );
+        assert( (p->mod && ((const InspectApi*)p->api)->type == IT_PROBE) ?
+                p->mod->get_usage() == Module::GLOBAL : true );
 
-        InspectorManager::add_plugin((const InspectApi*)p.api);
-        break;
-
-    case PT_IPS_ACTION:
-        ActionManager::add_plugin((const ActionApi*)p.api);
-        break;
-
-    case PT_IPS_OPTION:
-        IpsManager::add_plugin((const IpsApi*)p.api);
-        break;
-
-    case PT_SEARCH_ENGINE:
-        MpseManager::add_plugin((const MpseApi*)p.api);
-        break;
-
-    case PT_SO_RULE:
-        // SO rules are added later
-        break;
-
-    case PT_LOGGER:
-        EventManager::add_plugin((const LogApi*)p.api);
-        break;
-
-    case PT_CONNECTOR:
-        ConnectorManager::add_plugin((const ConnectorApi*)p.api);
-        break;
-
-    case PT_POLICY_SELECTOR:
-        PolicySelectorManager::add_plugin((const PolicySelectorApi*)p.api);
+        p->pin = InspectorManager::get_interface((const InspectApi*)p->api);
         break;
     
     case PT_MP_TRANSPORT:
-        MPTransportManager::add_plugin((const MPTransportApi*)p.api);
+        p->pin = MPTransportManager::get_interface((const MPTransportApi*)p->api);
         break;
     
     case PT_TRACE:
-        TraceLoggerManager::add_plugin((const TraceLogApi*)p.api);
+        p->pin = TraceLoggerManager::get_interface((const TraceLogApi*)p->api);
         break;
 
-    default:
+    // LCOV_EXCL_START
+    case PT_MAX:
         assert(false);
-        break;
+    // LCOV_EXCL_STOP
     }
+#if defined(UNIT_TEST) || defined(BENCHMARK_TEST)
+    if ( !catch_enabled() )
+#endif
+        p->pin->global_init();
 }
 
-static void load_plugins(const std::string& paths, SnortConfig* sc = nullptr)
+static void load_libraries(const std::string& paths, bool reload = false)
 {
     struct stat sb;
     stringstream paths_stream(paths);
@@ -363,243 +410,445 @@ static void load_plugins(const std::string& paths, SnortConfig* sc = nullptr)
         }
         if ( sb.st_mode & S_IFDIR )
         {
-            Directory d(path.c_str(), lib_pattern);
+            Directory d(path.c_str(), "*.so");
 
             while ( const char* f = d.next() )
-                load_lib(f, sc);
+                load_lib(f, reload);
         }
         else if ( sb.st_mode & S_IFREG )
         {
             if ( path.find("/") == string::npos )
                 path = "./" + path;
 
-            load_lib(path.c_str(), sc);
+            load_lib(path.c_str(), reload);
         }
         else
             ParseWarning(WARN_PLUGINS, "%s: not a directory or regular file", path.c_str());
     }
 }
 
-static void add_plugins()
+static void set_module(PluginPtr& p)
 {
-    for ( auto it = s_plugins.plug_map.begin(); it != s_plugins.plug_map.end(); ++it )
-        add_plugin(it->second);
-}
-
-static void unload_plugins()
-{
-    s_plugins.plug_map.clear();
-}
-
-//-------------------------------------------------------------------------
-// framework methods
-//-------------------------------------------------------------------------
-
-void PluginManager::load_plugins(const BaseApi** lp)
-{
-    // builtins
-    load_list(lp);
-}
-
-void PluginManager::load_plugins(const std::string& paths)
-{
-    SoManager::load_so_proxy();
-
-    // dynamic plugins
-    if ( !paths.empty() )
-        ::load_plugins(paths);
-
-    // script plugins
-    // FIXIT-L need path to script for --list-plugins
-    load_list(ScriptManager::get_plugins());
-
-    add_plugins();
-}
-
-void PluginManager::reload_so_plugins(const char* paths, SnortConfig* sc)
-{
-    sc->plugins = new Plugins;
-    sc->plugins->plug_map = s_plugins.plug_map;
-    if ( paths )
-    {
-        // once plugin_path is provided for reload, old so_rules will be dropped
-        for( auto i = sc->plugins->plug_map.begin(); i != sc->plugins->plug_map.end(); )
-        {
-            if ( plugin_is_reloadable(i->second.api) )
-                i = sc->plugins->plug_map.erase(i);
-            else
-                ++i;
-        }
-        ::load_plugins(paths, sc);
-    }
-    load_so_plugins(sc, true);
-}
-
-void PluginManager::reload_so_plugins_cleanup(SnortConfig* sc)
-{
-    if ( !sc->plugins )
+    if ( p->mod )
         return;
 
-    // set the new plugins to current
-    s_plugins.plug_map.clear();
-    s_plugins.plug_map = sc->plugins->plug_map;
-    sc->plugins->plug_map.clear();
-}
+    if ( !p->api or !p->api->mod_ctor )
+        return;
 
-void PluginManager::load_so_plugins(SnortConfig* sc, bool is_reload)
-{
-    auto p = is_reload ? sc->plugins->plug_map : s_plugins.plug_map;
-    for ( auto it = p.begin(); it != p.end(); ++it )
-        if ( it->second.api->type == PT_SO_RULE )
-            SoManager::add_plugin((const SoApi*)it->second.api, sc, it->second.handle);
-}
+    p->mod = p->api->mod_ctor();
 
-void PluginManager::list_plugins()
-{
-    for ( auto it = s_plugins.plug_map.begin(); it != s_plugins.plug_map.end(); ++it )
+    if ( strcmp(p->api->name, p->mod->get_name()) )
     {
-        const Plugin& p = it->second;
-        cout << Markup::item();
-        cout << p.key;
-        cout << " v" << p.api->version;
-        cout << " " << p.source;
-        cout << endl;
+        ParseWarning(WARN_PLUGINS, "plugin name %s differs from module name %s, undefined behavior",
+            p->api->name, p->mod->get_name());
+    }
+    else
+        ModuleManager::add_module(p->mod);
+}
+
+static void add_plugin_modules()
+{
+    for ( auto& it : load_set->plug_map )
+    {
+        if ( !it.second->pin )
+            continue;
+
+        set_module(it.second);
     }
 }
 
-void PluginManager::show_plugins()
+static void init_contexts()
 {
-    for ( auto it = s_plugins.plug_map.begin(); it != s_plugins.plug_map.end(); ++it )
+    for ( auto& it : load_set->plug_map )
     {
-        const Plugin& p = it->second;
+        bool set_context = false;
 
-        cout << Markup::item();
-        cout << Markup::emphasis(p.key);
-        cout << ": " << p.api->help << endl;
+        if ( !it.second->pin )
+        {
+            add_plugin(it.second);
+            set_context = true;
+        }
+
+        if ( !it.second->pin or !set_context )
+            continue;
+
+        if ( auto* c = it.second->pin->get_context() )
+        {
+            PlugContextPtr p = std::make_shared<PlugContextWrapper>();
+            p->context = c;
+            load_set->user_map.emplace(it.second->get_name(), p);
+        }
     }
+}
+
+//-------------------------------------------------------------------------
+// non-map methods
+//-------------------------------------------------------------------------
+
+void PluginManager::empty_trash()
+{
+    if ( !do_dlclose() )
+        return;
+
+    std::lock_guard<std::mutex> lock(trash_mutex);
+
+    if ( trash.empty() )
+        return;
+
+    else
+    {
+        for ( auto h : trash )
+            dlclose(h);
+    }
+    trash.clear();
+}
+
+const char* PluginManager::get_current_plugin()
+{ return current_plugin; }
+
+PlugType PluginManager::get_type(const char* s)
+{
+    for ( int i = 0; i < PT_MAX; i++ )
+        if ( !strcmp(s, symbols[i].type) )
+            return (PlugType)i;
+
+    return PT_MAX;
+}
+
+const char* PluginManager::get_type_name(PlugType pt)
+{
+    assert(pt < PT_MAX);
+    return symbols[pt].type;
+}
+
+static void dump(const char* label, PlugType pt)
+{
+    auto dump1 = [](const BaseApi* api, void* pv)
+    {
+        Dumper* d = (Dumper*)pv;
+        d->dump(api->name, api->version);
+    };
+    Dumper d(label);
+    PluginManager::for_each(pt, dump1, (void*)&d);
 }
 
 void PluginManager::dump_plugins()
 {
-    CodecManager::dump_plugins();
-    InspectorManager::dump_plugins();
-    MpseManager::dump_plugins();
-    IpsManager::dump_plugins();
-    SoManager::dump_plugins();
-    ActionManager::dump_plugins();
-    EventManager::dump_plugins();
-    ConnectorManager::dump_plugins();
-    PolicySelectorManager::dump_plugins();
-    TraceLoggerManager::dump_plugins();
+    dump("Codecs", PT_CODEC);
+    dump("Inspectors", PT_INSPECTOR);
+    dump("Search Engines", PT_SEARCH_ENGINE);
+    dump("IPS Options", PT_IPS_OPTION);
+    dump("SO Rules", PT_SO_RULE);
+    dump("IPS Actions", PT_IPS_ACTION);
+    dump("Loggers", PT_LOGGER);
+    dump("Connectors", PT_CONNECTOR);
+    dump("Selectors", PT_POLICY_SELECTOR);
+    dump("MP Transports", PT_MP_TRANSPORT);
+    dump("Tracers", PT_TRACE);
 }
 
 void PluginManager::release_plugins()
 {
     EventManager::release_plugins();
-    ActionManager::release_plugins();
     InspectorManager::release_plugins();
-    IpsManager::release_plugins();
-    MpseManager::release_plugins();
-    CodecManager::release_plugins();
-    ConnectorManager::release_plugins();
-    PolicySelectorManager::release_plugins();
-    TraceLoggerManager::release_plugins();
 
-    unload_plugins();
+    delete load_set;
+    empty_trash();
 }
 
-const BaseApi* PluginManager::get_api(PlugType type, const char* name)
+void PluginManager::release_plugins(PlugSet* ps)
 {
-    if ( type >= PT_MAX )
-        return nullptr;
-
-    string key;
-    set_key(key, symbols+type, name);
-
-    auto it = s_plugins.plug_map.find(key);
-
-    if ( it != s_plugins.plug_map.end() )
-        return it->second.api;
-
-    return nullptr;
+    delete ps;
 }
 
-void PluginManager::instantiate(
-    const BaseApi* api, Module* mod, SnortConfig* sc)
+void PluginManager::instantiate(Module* mod, SnortConfig* sc, const char* name)
 {
-    switch ( api->type )
+    PlugInterface* pin = get_interface(mod->get_name());
+
+    if ( pin )
     {
-    case PT_CODEC:
-        CodecManager::instantiate((const CodecApi*)api, mod);
-        break;
+        pin->instantiate(mod, sc, name);
 
-    case PT_INSPECTOR:
-        InspectorManager::instantiate((const InspectApi*)api, mod, sc);
-        break;
-
-    case PT_IPS_ACTION:
-        ActionManager::instantiate((const ActionApi*)api, mod, sc);
-        break;
-
-    case PT_IPS_OPTION:
-        // do not instantiate here; done later
-        //IpsManager::instantiate((IpsApi*)api, mod, sc);
-        break;
-
-    case PT_SEARCH_ENGINE:
-        MpseManager::instantiate((const MpseApi*)api, mod, sc);
-        break;
-
-    case PT_CONNECTOR:
-        ConnectorManager::instantiate((const ConnectorApi*)api, mod, sc);
-        break;
-
-    case PT_POLICY_SELECTOR:
-        PolicySelectorManager::instantiate((const PolicySelectorApi*)api, mod, sc);
-        break;
-
-    case PT_SO_RULE:
-        // do not instantiate here; done later
-        //IpsManager::instantiate((SoApi*)api, mod, sc);
-        break;
-
-    case PT_MP_TRANSPORT:
-        MPTransportManager::instantiate((const MPTransportApi*)api, mod, sc);
-        break;
-
-    case PT_LOGGER:
-        EventManager::instantiate((const LogApi*)api, mod, sc);
-        break;
-
-    case PT_TRACE:
-        TraceLoggerManager::instantiate((const TraceLogApi*)api, mod, api->name);
-        break;
-
-    default:
-        assert(false);
-        break;
+        if ( !pin->instantiated )
+            pin->instantiated = load_id;
     }
 }
 
-void PluginManager::instantiate(
-    const BaseApi* api, Module* mod, SnortConfig* sc, const char* name)
+void PluginManager::set_instantiated(const char* name)
 {
-    if ( api->type == PT_INSPECTOR )
-        InspectorManager::instantiate((const InspectApi*)api, mod, sc, name);
+    PlugInterface* pin = get_interface(name);
 
-    else
-        assert(false);
+    if ( pin and !pin->instantiated )
+        pin->instantiated = load_id;
 }
 
-const char* PluginManager::get_available_plugins(PlugType t)
+//-------------------------------------------------------------------------
+// 
+//-------------------------------------------------------------------------
+
+void PluginManager::init()
+{
+    assert(!load_set);
+    load_set = new PlugSet;
+    add_independent_modules();
+}
+
+void PluginManager::load_plugins(const BaseApi** lp)
+{
+    // builtins
+    load_apis(lp);
+}
+
+void PluginManager::load_plugins(const std::string& paths)
+{
+    // static plugins
+    load_actions();
+    load_codecs();
+    load_connectors();
+    load_ips_options();
+    load_loggers();
+    load_mp_transports();
+    load_search_engines();
+    load_policy_selectors();
+    load_stream_inspectors();
+    load_network_inspectors();
+    load_service_inspectors();
+    load_trace_loggers();
+
+    // dynamic plugins
+    if ( !paths.empty() )
+        load_libraries(paths);
+
+    init_contexts();
+    add_plugin_modules();
+    add_dependent_modules();
+}
+
+void PluginManager::load_plugin(const snort::BaseApi* api, LuaApi* luapi, const char* file)
+{
+    if ( !register_plugin(api, nullptr, file, false) )
+        return;
+
+    auto it = load_set->plug_map.find(api->name);
+    assert(it != load_set->plug_map.end());
+
+    it->second->luapi = luapi;
+    add_plugin(it->second);
+
+    current_plugin = api->name;
+    set_module(it->second);
+    current_plugin = nullptr;
+}
+
+void PluginManager::set_plugins(PlugSet* ps)
+{
+    assert(!load_set);
+    load_set = ps;
+}
+
+void PluginManager::clear_plugins()
+{
+    assert(load_set);
+    load_set = nullptr;
+}
+
+static PlugSet* get_plug_set()
+{
+    PlugSet* ps = (load_set ? load_set : SnortConfig::get_conf()->plug_set);
+    assert(ps);
+    return ps;
+}
+
+static PluginMap& get_plug_map(const snort::SnortConfig* sc = nullptr)
+{
+    if ( sc )
+        return sc->plug_set->plug_map;
+
+    if ( load_set )
+        return load_set->plug_map;
+
+    if ( SnortConfig::get_conf() )
+        return SnortConfig::get_conf()->plug_set->plug_map;
+
+    static PlugSet dummy;  // required for empty / local SnortConfig
+    return dummy.plug_map;
+}
+
+void PluginManager::reload_plugins(const char* paths, bool)
+{
+    assert(!load_set);
+    InspectorManager::update_map();
+    const PlugSet* curr = get_plug_set();
+
+    ++load_id;
+    load_set = new PlugSet;
+    load_set->plug_map = curr->plug_map;
+
+    if ( !paths )
+    {
+        load_set->user_map = curr->user_map;
+        return;
+    }
+
+    InspectorManager::clear();
+
+    for ( auto it = load_set->plug_map.begin(); it != load_set->plug_map.end(); )
+    {
+        if ( it->second->handle and plugin_is_reloadable(it->second->api) )
+            it = load_set->plug_map.erase(it);
+
+        else
+        {
+            const char* name = it->second->get_name();
+            auto ic = curr->user_map.find(name);
+
+            if ( ic != curr->user_map.end() )
+                load_set->user_map[name] = ic->second;
+
+            ++it;
+        }
+    }
+
+    std::string spath = paths;
+    load_libraries(spath, true);
+
+    init_contexts();
+    add_plugin_modules();
+}
+
+void PluginManager::unload_plugins()
+{
+    delete load_set;
+    load_set = nullptr;
+}
+
+void PluginManager::capture_plugins(SnortConfig* sc)
+{
+    sc->plug_set = load_set;
+    load_set = nullptr;
+}
+
+void PluginManager::revert_plugins(SnortConfig* sc)
+{
+    if ( !sc->plug_set )
+        return;
+
+    assert(!load_set);
+    load_set = sc->plug_set;
+    sc->plug_set = nullptr;
+}
+
+void PluginManager::thread_init()
+{
+    const PluginMap& plug_map = get_plug_map();
+
+    for ( const auto& it : plug_map )
+    {
+        if ( it.second->pin and it.second->pin->instantiated == load_id )
+            it.second->pin->thread_init();
+    }
+}
+
+void PluginManager::thread_reinit(const SnortConfig* sc)
+{
+    thread_init();
+    get_default_network_policy(sc)->cd_mgr->thread_reinit();
+
+    ConnectorManager::thread_reinit();
+    EventManager::reload_outputs();
+    InspectorManager::thread_reinit(sc);
+}
+
+void PluginManager::thread_term(bool trace)
+{
+    const PluginMap& plug_map = get_plug_map();
+
+    for ( const auto& it : plug_map )
+    {
+        if ( it.second->pin and it.second->pin->instantiated > 0 )
+        {
+            if ( (trace and it.second->api->type != PT_TRACE) or
+                (!trace and it.second->api->type == PT_TRACE) )
+            {
+                continue;
+            }
+            it.second->pin->thread_term();
+        }
+    }
+}
+
+using PlugList = std::vector<PluginPtr>;
+
+static PlugList get_plug_list()
+{
+    const PluginMap& plug_map = get_plug_map();
+    PlugList pl;
+
+    for ( const auto& it : plug_map )
+    {
+        if ( it.second->api )
+            pl.push_back(it.second);
+    }
+    std::sort(pl.begin(), pl.end(),
+        [] (const PluginPtr& a, const PluginPtr& b)
+        { return !strcmp(a->type, b->type) ? strcmp(a->api->name, b->api->name) < 0 : strcmp(a->type, b->type) < 0; });
+
+    return pl;
+}
+
+void PluginManager::list_plugins(const char* s)
+{
+    PlugList pl = get_plug_list();
+
+    for ( const auto& p : pl )
+    {
+        if ( s and *s and strcmp(s, p->type) )
+            continue;
+
+        cout << Markup::item();
+        cout << p->type << "::" << p->api->name;
+        cout << " v" << p->api->version;
+        cout << " " << p->source;
+        cout << endl;
+    }
+}
+
+void PluginManager::show_plugins(const char* s)
+{
+    PlugList pl = get_plug_list();
+
+    for ( const auto& p : pl )
+    {
+        if ( s and *s and strcmp(s, p->type) )
+            continue;
+
+        cout << Markup::item();
+        cout << Markup::emphasis_on();
+        cout << p->type << "::" << p->get_name();
+        cout << Markup::emphasis_off();
+        cout << ": " << p->get_help() << endl;
+    }
+}
+
+//-------------------------------------------------------------------------
+// 
+//-------------------------------------------------------------------------
+
+const char* PluginManager::get_available_plugins(PlugType type, const char* prefix)
 {
     static std::string s;
     s.clear();
-    for ( auto it = s_plugins.plug_map.begin(); it != s_plugins.plug_map.end(); ++it )
-    {
-        const auto* api = it->second.api;
 
-        if ( t != api->type )
+    if ( prefix )
+        s = prefix;
+
+    const PluginMap& plug_map = get_plug_map();
+
+    for ( const auto& it : plug_map )
+    {
+        const auto* api = it.second->api;
+
+        if ( !api or type != api->type )
             continue;
 
         if ( !s.empty() )
@@ -609,3 +858,139 @@ const char* PluginManager::get_available_plugins(PlugType t)
     }
     return s.c_str();
 }
+
+PluginPtr PluginManager::get_plugin(const char* name)
+{
+    const PluginMap& plug_map = get_plug_map();
+    auto it = plug_map.find(name);
+
+    return (it == plug_map.end()) ? nullptr : it->second;
+}
+
+const BaseApi* PluginManager::get_api(const char* name)
+{
+    PluginPtr p = get_plugin(name);
+    return p ? p->api : nullptr;
+}
+
+PlugContext* PluginManager::get_context(const char* name)
+{
+    PlugSet* ps = get_plug_set();
+    auto it = ps->user_map.find(name);
+
+    return (it == ps->user_map.end()) ? nullptr : it->second->context;
+}
+
+PlugInterface* PluginManager::get_interface(const char* name)
+{
+    PluginPtr p = get_plugin(name);
+    return p ? p->pin : nullptr;
+}
+
+std::vector<PlugInterface*> PluginManager::get_interfaces(PlugType pt)
+{
+    std::vector<PlugInterface*> piv;
+    const PluginMap& plug_map = get_plug_map();
+
+    for ( const auto& it : plug_map )
+    {
+        if ( !it.second->api )
+            continue;
+
+        if ( it.second->api->type == pt )
+            piv.push_back(it.second->pin);
+    }
+    return piv;
+}
+
+unsigned PluginManager::for_each(PlugType pt, BaseFunc pf, void* pv)
+{
+    const PluginMap& plug_map = get_plug_map();
+    unsigned c = 0;
+
+    for ( const auto& it : plug_map )
+    {
+        if ( !it.second->api )
+            continue;
+
+        if ( it.second->api->type == pt )
+        {
+            pf(it.second->api, pv);
+            c++;
+        }
+    }
+    return c;
+}
+
+unsigned PluginManager::for_each(PlugType pt, PlugFunc pf, void* pv)
+{
+    const PluginMap& plug_map = get_plug_map();
+    unsigned c = 0;
+
+    for ( const auto& it : plug_map )
+    {
+        if ( !it.second->api )
+            continue;
+
+        if ( it.second->api->type == pt )
+        {
+            pf(it.second->pin, pv);
+            c++;
+        }
+    }
+    return c;
+}
+
+//-------------------------------------------------------------------------
+// module only methods
+//-------------------------------------------------------------------------
+
+void PluginManager::add_module(Module* m)
+{
+#ifdef REG_TEST
+    PlugSet* ps = get_plug_set();
+#else
+    PlugSet* ps = load_set;
+#endif
+    assert(ps);
+    assert(ps->plug_map.find(m->get_name()) == ps->plug_map.end());
+
+    PluginPtr p = std::make_shared<Plugin>();
+    (ps->plug_map)[m->get_name()] = p;
+
+    p->type = "basic";
+    p->mod = m;
+
+    ModuleManager::add_module(m);
+}
+
+Module* PluginManager::get_module(const char* s, const snort::BaseApi*& a)
+{
+    PluginPtr p = get_plugin(s);
+
+    if ( !p )
+        return nullptr;
+
+    a = p->api;
+    return p->mod;
+}
+
+Module* PluginManager::get_module(const char* s)
+{
+    const BaseApi* api;
+    return get_module(s, api);
+}
+
+std::list<Module*> PluginManager::get_all_modules(const snort::SnortConfig* sc)
+{
+    const PluginMap& plug_map = get_plug_map(sc);
+    std::list<Module*> mods;
+
+    for ( const auto& it : plug_map )
+    {
+        if ( it.second->mod )
+            mods.push_back(it.second->mod);
+    }
+    return mods;
+}
+

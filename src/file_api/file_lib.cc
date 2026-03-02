@@ -506,16 +506,13 @@ FileContext::FileContext () : start_time(SnortClock::now())
     file_signature_context = nullptr;
     file_capture = nullptr;
     file_segments = nullptr;
-    if (SnortConfig::get_conf())
-    {
-        inspector = (FileInspect*)InspectorManager::acquire_file_inspector();
+
+    inspector = (FileInspect*)InspectorManager::acquire_file_inspector();
+
+    if (inspector and SnortConfig::get_conf())
         config = inspector->config;
-    }
     else
-    {
-        inspector = nullptr;
         config = nullptr;
-    }
 }
 
 FileContext::~FileContext ()

@@ -48,7 +48,7 @@ namespace snort
 {
 // Stubs whose sole purpose is to make the test code link
 unsigned FlowData::flow_data_id = 0;
-FlowData::FlowData(unsigned, Inspector*) : handler(nullptr), id(0)
+FlowData::FlowData(unsigned) : id(0)
 {}
 FlowData::~FlowData() = default;
 FlowDataStore::~FlowDataStore() = default;

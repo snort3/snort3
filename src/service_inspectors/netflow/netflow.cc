@@ -31,6 +31,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "framework/pig_pen.h"
 #include "log/messages.h"
 #include "managers/module_manager.h"
 #include "main/reload_tuner.h"
@@ -981,7 +982,7 @@ NetFlowInspector::NetFlowInspector(const NetFlowConfig* pc)
             dump_cache = new DumpCache;
     }
 
-    NetFlowModule* mod = (NetFlowModule*) ModuleManager::get_module(NETFLOW_NAME);
+    NetFlowModule* mod = (NetFlowModule*)PigPen::get_module(NETFLOW_NAME);
 
     if (mod)
     {
@@ -1094,7 +1095,7 @@ static const InspectApi netflow_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         NETFLOW_NAME,
         NETFLOW_HELP,

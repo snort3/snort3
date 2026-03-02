@@ -871,7 +871,7 @@ static const IpsApi content_api =
         sizeof(IpsApi),
         IPSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_DEFAULT,
         API_OPTIONS,
         s_name,
         s_help,

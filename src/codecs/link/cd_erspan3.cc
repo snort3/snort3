@@ -120,7 +120,7 @@ static const CodecApi erspan3_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_ERSPAN3_NAME,
         CD_ERSPAN3_HELP,

@@ -206,6 +206,7 @@ private:
     Http2Stream* get_hi_stream();
     Http2Stream* find_stream(const uint32_t key);
     void delete_processing_stream();
+    class snort::Inspector* handler;
 };
 
 class Http2FlowStreamIntf : public snort::StreamFlowIntf

@@ -38,10 +38,6 @@ output = { }
 packets = { }
 process = { }
 search_engine = { }
-so_proxy = { }
-stdout_trace = { }
-syslog_trace = { }
-trace = { }
 
 -- exceptions:
 
@@ -51,7 +47,7 @@ classifications = { }    -- pure list
 detection = { }          -- policy specific
 event_filter = { }       -- pure list
 event_queue = { }        -- pure list
-file_id = { }            -- opt in
+file_inspect = { }       -- opt in
 high_availability = { }  -- opt in
 inspection = { }         -- policy specific
 ips = { }                -- policy specific

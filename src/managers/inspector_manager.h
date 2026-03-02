@@ -28,13 +28,12 @@
 #include "framework/inspector.h"
 #include "framework/module.h"
 
-class Binder;
-class SingleInstanceInspectorPolicy;
-struct InspectorList;
-struct InspectionPolicy;
-struct NetworkPolicy;
-struct PHInstance;
-struct GlobalInspectorPolicy;
+class PlugInterface;
+
+struct GlobalPig;
+struct InspectorVector;
+struct ServicePig;
+struct TrafficPig;
 
 namespace snort
 {
@@ -46,50 +45,52 @@ struct SnortConfig;
 class InspectorManager
 {
 public:
-    static void add_plugin(const InspectApi* api);
-    static void dump_plugins();
+    static PlugInterface* get_interface(const InspectApi*);
+
+    static void clear();
+    static void new_map();
+    static void abort_map();
+    static void update_map();
+    static void revert_map();
+    static void restore_map();
+    static void prepare_map();
+    static void reconcile_map(SnortConfig*);
+
+    static InspectorVector* get_map();
+    static void set_map(InspectorVector*);
+
+    static void tear_down(SnortConfig*);
+    static void cleanup();
+
     static void dump_buffers();
     static void release_plugins();
 
-    static void global_init();
+#ifdef SHELL
+    static void dump_inspector_map();
+#endif
 
     static std::vector<const InspectApi*> get_apis();
     static const char* get_inspector_type(const char* name);
 
-    static void new_policy(NetworkPolicy*, NetworkPolicy*);
-    static void delete_policy(NetworkPolicy*, bool cloned);
+    static TrafficPig* create_traffic_group();
+    static void delete_group(TrafficPig*);
 
-    static void new_policy(InspectionPolicy*, InspectionPolicy*);
-    static void delete_policy(InspectionPolicy*, bool cloned);
+    static ServicePig* create_service_group();
+    static void delete_group(ServicePig*);
 
-    static void update_policy(SnortConfig* sc);
+    static GlobalPig* create_global_group();
+    static void delete_group(GlobalPig*);
 
-    static void new_config(SnortConfig*);
-    static void delete_config(SnortConfig*);
+    static InspectSsnFunc get_session(const char* name, uint16_t proto);
 
-    static void instantiate(
-        const InspectApi*, Module*, SnortConfig*, const char* name = nullptr);
-
-    static bool delete_inspector(SnortConfig*, const char* iname);
-    static void free_inspector(Inspector*);
-    static SingleInstanceInspectorPolicy* create_single_instance_inspector_policy();
-    static void destroy_single_instance_inspector(SingleInstanceInspectorPolicy*);
-    static GlobalInspectorPolicy* create_global_inspector_policy(GlobalInspectorPolicy* = nullptr);
-    static void destroy_global_inspector_policy(GlobalInspectorPolicy*, bool cloned);
-    static InspectSsnFunc get_session(uint16_t proto);
-
-    static bool configure(SnortConfig*, bool cloned = false);
+    static bool configure(SnortConfig*);
     static void prepare_inspectors(SnortConfig*);
-    static void prepare_controls(SnortConfig*);
-    static std::string generate_inspector_label(const PHInstance*);
     static void print_config(SnortConfig*);
 
-    static void thread_init(const SnortConfig*);
-    static void thread_reinit(const SnortConfig*);
-    static void thread_stop_removed(const SnortConfig*);
-
-    static void thread_stop(const SnortConfig*);
+    static void thread_init();
     static void thread_term();
+    static void thread_term_removed();
+    static void thread_reinit(const SnortConfig*);
 
     static void execute(Packet*);
     static void probe(Packet*);
@@ -97,8 +98,6 @@ public:
 
     static void clear(Packet*);
     static void empty_trash();
-    static void reconcile_inspectors(const SnortConfig*, SnortConfig*, bool cloned = false);
-    static void clear_removed_inspectors(SnortConfig*);
 
     static Inspector* get_binder();
 
@@ -108,21 +107,26 @@ public:
     static Inspector* get_service_inspector(const SnortProtocolId);
     static Inspector* get_service_inspector(const char*);
 
-    // This assumes that, in a multi-tenant scenario, this is called with the correct network and inspection
-    // policies are set correctly
-    static Inspector* get_inspector(const char* key, bool dflt_only = false, const SnortConfig* = nullptr);
+    // uses the currently active policies only
+    static Inspector* get_inspector(const char* key, Module::Usage);
 
-    // This cannot be called in or before the inspector configure phase for a new snort config during reload
-    static Inspector* get_inspector(const char* key, Module::Usage, InspectorType);
+    // only valid during swap (eg inspector dtor gets new instance)
+    static Inspector* get_new_inspector(const char* key);
+
+    // only valid during configure
+    static Inspector* get_old_inspector(const char* key, Module::Usage);
 
     static void release(Inspector*);
 
+#ifdef REG_TEST
+    static void instantiate(const InspectApi*, Module*, SnortConfig*, const char*);
+#endif
+
 private:
     static void bumble(Packet*);
+
     template<bool T> static void full_inspection(Packet*);
     template<bool T> static void internal_execute(Packet*);
-    static void sort_inspector_list(const InspectorList* il,
-        std::map<const std::string, const PHInstance*>& sorted_ilist);
 };
 }
 #endif

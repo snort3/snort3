@@ -23,5 +23,6 @@
 
 #define RNA_NAME "rna"
 #define RNA_HELP "Real-time network awareness and OS fingerprinting (experimental)"
+#define RNA_USE  Module::CONTEXT
 
 #endif

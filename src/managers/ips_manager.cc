@@ -34,22 +34,44 @@
 
 #include "module_manager.h"
 #include "plugin_manager.h"
+#include "plug_interface.h"
 
 using namespace snort;
 using namespace std;
 
-struct Option
+class Option : public PlugInterface
 {
+public:
+    Option(const IpsApi* api) : api(api) { }
+
+    void global_init() override
+    {
+        if ( api->pinit )
+            api->pinit();
+    }
+
+    void global_term() override
+    {
+        if ( api->pterm )
+            api->pterm();
+    }
+
+    void thread_init() override
+    {
+        if ( api->tinit )
+            api->tinit();
+    }
+
+    void thread_term() override
+    {
+        if ( api->tterm )
+            api->tterm();
+    }
+
     const IpsApi* api;
-    bool init;
-    unsigned count;
-
-    Option(const IpsApi* p)
-    { api = p; init = false; count = 0; }
+    unsigned count = 0;
+    uint64_t curr_id = 0;
 };
-
-typedef map<std::string, Option*> OptionMap;
-static OptionMap s_options;
 
 static std::string current_keyword = std::string();
 static Module* current_module = nullptr;
@@ -59,27 +81,8 @@ static const Parameter* current_params = nullptr;
 // plugins
 //-------------------------------------------------------------------------
 
-void IpsManager::add_plugin(const IpsApi* api)
-{
-    assert(s_options.find(api->base.name) == s_options.end());
-    s_options[api->base.name] = new Option(api);
-}
-
-void IpsManager::release_plugins()
-{
-    for ( const auto& p : s_options )
-        delete p.second;
-
-    s_options.clear();
-}
-
-void IpsManager::dump_plugins()
-{
-    Dumper d("IPS Options");
-
-    for ( auto& p : s_options )
-        d.dump(p.second->api->base.name, p.second->api->base.version);
-}
+PlugInterface* IpsManager::get_interface(const IpsApi* api)
+{ return new Option(api); }
 
 //-------------------------------------------------------------------------
 // ips options
@@ -88,7 +91,7 @@ void IpsManager::dump_plugins()
 void IpsManager::delete_option(IpsOption* ips)
 {
     const IpsApi* api = (const IpsApi*)
-        PluginManager::get_api(PT_IPS_OPTION, ips->get_name());
+        PluginManager::get_api(ips->get_name());
 
     if ( api )
         api->dtor(ips);
@@ -163,15 +166,6 @@ static bool set_arg(
 
 //-------------------------------------------------------------------------
 
-static Option* get_opt(const char* keyword)
-{
-    auto opt = s_options.find(keyword);
-    if ( opt != s_options.end() )
-        return opt->second;
-
-    return nullptr;
-}
-
 const char* IpsManager::get_option_keyword()
 {
     return current_keyword.c_str();
@@ -179,17 +173,13 @@ const char* IpsManager::get_option_keyword()
 
 const IpsApi* IpsManager::get_option_api(const char* keyword)
 {
-    Option* opt = get_opt(keyword);
-    if ( opt )
-        return opt->api;
-    else
-        return nullptr;
+    return (const IpsApi*)PluginManager::get_api(keyword);
 }
 
 bool IpsManager::option_begin(
-    SnortConfig* sc, const char* key, SnortProtocolId)
+    SnortConfig* sc, const char* key, SnortProtocolId, uint64_t id)
 {
-    Option* opt = get_opt(key);
+    Option* opt = (Option*)PluginManager::get_interface(key);
 
     if ( !opt )
     {
@@ -197,11 +187,10 @@ bool IpsManager::option_begin(
         return false;
     }
 
-    if ( !opt->init )
+    if ( opt->curr_id != id )
     {
-        if ( opt->api->pinit )
-            opt->api->pinit(sc);
-        opt->init = true;
+        opt->curr_id = id;
+        opt->count = 0;
     }
 
     unsigned max = std::abs(opt->api->max_per_rule);
@@ -226,7 +215,7 @@ bool IpsManager::option_begin(
     //    return false;
     //}
 
-    current_module = ModuleManager::get_module(key);
+    current_module = PluginManager::get_module(key);
 
     if ( current_module && !current_module->begin(key, 0, sc) )
     {
@@ -292,7 +281,7 @@ IpsOption* IpsManager::option_end(
     current_module = nullptr;
     current_params = nullptr;
 
-    Option* opt = get_opt(key);
+    Option* opt = (Option*)PluginManager::get_interface(key);
     assert(opt);
 
     if ( !mod and opt->api->base.mod_ctor )
@@ -322,6 +311,7 @@ IpsOption* IpsManager::option_end(
         delete ips;
         ips = (IpsOption*)prev;
     }
+    PluginManager::set_instantiated(opt->api->base.name);
 
     OptFpList* fpl = AddOptFuncToList(fp_eval_option, otn);
     fpl->ips_opt = ips;
@@ -341,46 +331,14 @@ IpsOption* IpsManager::option_end(
 
 //-------------------------------------------------------------------------
 
-void IpsManager::global_init(const SnortConfig*)
-{
-}
-
-void IpsManager::global_term(const SnortConfig* sc)
-{
-    for ( const auto& p : s_options )
-        if ( p.second->init && p.second->api->pterm )
-        {
-            p.second->api->pterm(sc);
-            p.second->init = false;
-        }
-}
-
-void IpsManager::reset_options()
-{
-    for ( const auto& p : s_options )
-        p.second->count = 0;
-}
-
-void IpsManager::setup_options(const SnortConfig* sc)
-{
-    for ( const auto& p : s_options )
-        if ( p.second->init && p.second->api->tinit )
-            p.second->api->tinit(sc);
-}
-
-void IpsManager::clear_options(const SnortConfig* sc)
-{
-    for ( const auto& p : s_options )
-        if ( p.second->init && p.second->api->tterm )
-            p.second->api->tterm(sc);
-}
-
 bool IpsManager::verify(SnortConfig* sc)
 {
-    for ( const auto& p : s_options )
-        if ( p.second->init && p.second->api->verify )
-            p.second->api->verify(sc);
-
+    auto verify = [](const BaseApi* pb, void* pv)
+    {
+        const IpsApi* api = (const IpsApi*)pb;
+        if ( api->verify ) api->verify((SnortConfig*)pv);
+    };
+    PluginManager::for_each(PT_IPS_OPTION, verify, sc);
     return true;
 }
 

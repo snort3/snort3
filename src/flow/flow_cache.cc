@@ -32,6 +32,7 @@
 #include "hash/hash_defs.h"
 #include "hash/zhash.h"
 #include "helpers/flag_context.h"
+#include "helpers/policy_switcher.h"
 #include "log/messages.h"
 #ifdef REG_TEST
 #include "main/analyzer.h"
@@ -228,6 +229,8 @@ void FlowCache::remove(Flow* flow)
 
 bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
 {
+    PolicySwitcher psw(flow);
+
     if ( !flow->was_blocked() )
     {
         flow->flush(do_cleanup);
@@ -250,6 +253,7 @@ bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
 
 void FlowCache::retire(Flow* flow)
 {
+    PolicySwitcher psw(flow);
     flow->reset(true);
     prune_stats.update(PruneReason::NONE, flow->key->pkt_type);
     remove(flow);

@@ -49,7 +49,7 @@ using namespace snort;
 
 Inspector::Inspector()
 {
-    unsigned max = ThreadConfig::get_instance_max();
+    unsigned max = 1 + ThreadConfig::get_instance_max();
     ref_count = new std::atomic_uint[max];
     for ( unsigned i = 0; i < max; ++i )
         ref_count[i] = 0;
@@ -57,16 +57,15 @@ Inspector::Inspector()
 
 Inspector::~Inspector()
 {
-    for (unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
+    for (unsigned i = 0; i < 1 + ThreadConfig::get_instance_max(); ++i )
         assert(0 == ref_count[i]);
 
     delete[] ref_count;
-    delete[] alias_name;
 }
 
 bool Inspector::is_inactive()
 {
-    for (unsigned i = 0; i < ThreadConfig::get_instance_max(); ++i )
+    for (unsigned i = 0; i < 1 + ThreadConfig::get_instance_max(); ++i )
         if ( ref_count[i] )
             return false;
 
@@ -120,10 +119,10 @@ bool Inspector::likes(Packet* p)
 }
 
 void Inspector::add_ref()
-{ ++ref_count[get_instance_id()]; }
+{ ++ref_count[1+get_instance_id()]; }
 
 void Inspector::rem_ref()
-{ --ref_count[get_instance_id()]; }
+{ --ref_count[1+get_instance_id()]; }
 
 void Inspector::add_global_ref()
 { ++ref_count[0]; }
@@ -150,24 +149,15 @@ void Inspector::set_thread_specific_data(void* tsd)
 void* Inspector::get_thread_specific_data() const
 { return thread_specific_data->data[get_instance_id()]; }
 
-void Inspector::set_alias_name(const char* name)
-{
-    delete[] alias_name;
-    alias_name = snort_strdup(name);
-}
-
 static const char* InspectorTypeNames[IT_MAX] =
 {
     "passive",
-    "wizard",
     "packet",
     "stream",
-    "first",
     "network",
     "service",
     "control",
     "probe",
-    "file",
     "probe_first",
 };
 

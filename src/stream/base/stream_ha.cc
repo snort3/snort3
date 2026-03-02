@@ -273,16 +273,12 @@ THREAD_LOCAL StreamHAClient* StreamHAManager::ha_client = nullptr;
 
 void StreamHAManager::tinit()
 {
-    if ( HighAvailabilityManager::active() )
+    if ( HighAvailabilityManager::configured() )
         ha_client = new StreamHAClient();
 }
 
 void StreamHAManager::tterm()
 {
-    if ( ha_client )
-    {
-        delete ha_client;
-        ha_client = nullptr;
-    }
+    delete ha_client;
 }
 

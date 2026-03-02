@@ -27,7 +27,6 @@
 #include <grp.h>
 #include <mutex>
 #include <pwd.h>
-#include <syslog.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <unordered_map>
@@ -55,6 +54,7 @@
 #include "main/policy.h"
 #include "main/process.h"
 #include "managers/action_manager.h"
+#include "managers/codec_manager.h"
 #include "managers/connector_manager.h"
 #include "managers/event_manager.h"
 #include "managers/inspector_manager.h"
@@ -73,6 +73,7 @@
 #include "payload_injector/payload_injector_config.h"
 #include "ports/rule_port_tables.h"
 #include "profiler/profiler.h"
+#include "profiler/profiler_impl.h"
 #include "protocols/packet.h"
 #include "sfip/sf_ip.h"
 #include "main/snort.h"
@@ -103,12 +104,7 @@ using namespace snort;
 #define OUTPUT_U2   "unified2"
 #define OUTPUT_FAST "alert_fast"
 
-struct ThreadSnortConfig
-{
-    const SnortConfig* snort_conf;
-    unsigned reload_id;
-};
-static THREAD_LOCAL ThreadSnortConfig thread_snort_config = {};
+static THREAD_LOCAL SnortConfig* snort_conf = nullptr;
 
 uint32_t SnortConfig::warning_flags = 0;
 uint32_t SnortConfig::logging_flags = 0;
@@ -173,44 +169,38 @@ static void init_policies(SnortConfig* sc)
 
 }
 
-void SnortConfig::init(const SnortConfig* const other_conf, ProtocolReference* protocol_reference,
-    const char* exclude_name)
+void SnortConfig::init(ProtocolReference* protocol_reference, const char*)
 {
     homenet.clear();
     obfuscation_net.clear();
 
-    if ( !other_conf )
-    {
-        num_layers = DEFAULT_LAYERMAX;
+    num_layers = DEFAULT_LAYERMAX;
 
-        max_attribute_hosts = DEFAULT_MAX_ATTRIBUTE_HOSTS;
-        max_attribute_services_per_host = DEFAULT_MAX_ATTRIBUTE_SERVICES_PER_HOST;
+    max_attribute_hosts = DEFAULT_MAX_ATTRIBUTE_HOSTS;
+    max_attribute_services_per_host = DEFAULT_MAX_ATTRIBUTE_SERVICES_PER_HOST;
 
-        max_metadata_services = DEFAULT_MAX_METADATA_SERVICES;
+    max_metadata_services = DEFAULT_MAX_METADATA_SERVICES;
 
-        daq_config = new SFDAQConfig();
-        ActionManager::new_config(this);
-        InspectorManager::new_config(this);
+    daq_config = new SFDAQConfig();
+    ActionManager::new_config(this);
 
-        num_slots = 0;
-        state = nullptr;
+    num_slots = 0;
+    state = nullptr;
 
-        profiler = new ProfilerConfig;
-        latency = new LatencyConfig();
-        memory = new MemoryConfig();
-        policy_map = new PolicyMap;
-        thread_config = new ThreadConfig();
-        global_dbus = new DataBus();
+    profiler = new ProfilerConfig;
+    latency = new LatencyConfig();
+    memory = new MemoryConfig();
+    policy_map = new PolicyMap;
+    thread_config = new ThreadConfig();
+    global_dbus = new DataBus();
 
-        proto_ref = new ProtocolReference(protocol_reference);
-        so_rules = new SoRules;
-        trace_config = new TraceConfig;
-    }
-    else
-    {
-        clone(other_conf);
-        policy_map = new PolicyMap(other_conf->policy_map, exclude_name);
-    }
+    if (max_procs > 1)
+        mp_dbus = new MPDataBus();
+
+    proto_ref = new ProtocolReference(protocol_reference);
+    trace_config = new TraceConfig;
+
+    update_reload_id();
 }
 
 static const int threads_max = 16;
@@ -248,29 +238,19 @@ static void generate_config_dump(std::list<ConfigData*> *config_data, time_t tim
  * but the goal is to minimize config checks at run time when running in
  * IDS mode so we keep things simple and enforce that the only difference
  * among run_modes is how we handle packets via the log_func. */
-SnortConfig::SnortConfig(const SnortConfig* const other_conf, const char* exclude_name)
+SnortConfig::SnortConfig(const char* exclude_name)
 {
-    init(other_conf, nullptr, exclude_name);
+    init(nullptr, exclude_name);
 }
 
 //  Copy the ProtocolReference data into the new SnortConfig.
 SnortConfig::SnortConfig(ProtocolReference* protocol_reference)
 {
-    init(nullptr, protocol_reference, nullptr);
+    init(protocol_reference, nullptr);
 }
 
 SnortConfig::~SnortConfig()
 {
-    if ( cloned )
-    {
-        delete global_dbus;
-        if (mp_dbus)
-            delete mp_dbus;
-        policy_map->set_cloned(true);
-        delete policy_map;
-        return;
-    }
-
     for ( const auto & ct : classifications )
         delete ct.second;
 
@@ -298,10 +278,8 @@ SnortConfig::~SnortConfig()
     if (eth_dst )
         snort_free(eth_dst);
 
-    if ( fast_pattern_config &&
-        (!thread_snort_config.snort_conf || this == thread_snort_config.snort_conf ||
-        (fast_pattern_config->get_search_api() !=
-        get_conf()->fast_pattern_config->get_search_api())) )
+    if ( fast_pattern_config && (fast_pattern_config->get_search_api() !=
+        get_conf()->fast_pattern_config->get_search_api()) )
     {
         if ( fast_pattern_config->get_search_api() )
             MpseManager::stop_search_engine(fast_pattern_config->get_search_api());
@@ -310,7 +288,6 @@ SnortConfig::~SnortConfig()
 
     delete policy_map;
     policy_map = nullptr;
-    InspectorManager::delete_config(this);
     ActionManager::delete_config(this);
 
     if (config_dumper)
@@ -321,8 +298,6 @@ SnortConfig::~SnortConfig()
 
     delete[] state;
     delete thread_config;
-    delete trace_config;
-    delete overlay_trace_config;
     delete ha_config;
     delete global_dbus;
     if (mp_dbus)
@@ -334,11 +309,15 @@ SnortConfig::~SnortConfig()
     delete daq_config;
     delete proto_ref;
     delete[] evalOrder;
-    delete so_rules;
-    if ( plugins )
-        delete plugins;
     delete payload_injector_config;
+    delete trace_config;
+    delete overlay_trace_config;
     clear_reload_resource_tuner_list();
+
+    Profiler::clear(this);
+
+    if ( plug_set )
+        PluginManager::release_plugins(plug_set);
 
     trim_heap();
 }
@@ -390,20 +369,6 @@ void SnortConfig::post_setup()
 void SnortConfig::update_scratch(ControlConn* ctrlcon)
 {
     main_broadcast_command(new ACScratchUpdate(this, scratch_handlers, ctrlcon), ctrlcon);
-}
-
-void SnortConfig::clone(const SnortConfig* const conf)
-{
-    *this = *conf;
-    global_dbus = new DataBus();
-    if (max_procs > 1)
-        mp_dbus = new MPDataBus();
-    
-    if (conf->homenet.get_family() != 0)
-        memcpy(&homenet, &conf->homenet, sizeof(homenet));
-
-    if (conf->obfuscation_net.get_family() != 0)
-        memcpy(&obfuscation_net, &conf->obfuscation_net, sizeof(obfuscation_net));
 }
 
 // merge in everything from the command line config
@@ -990,19 +955,6 @@ void SnortConfig::set_log_mode(const char* val)
     }
 }
 
-void SnortConfig::enable_syslog()
-{
-    static bool syslog_configured = false;
-
-    if (syslog_configured)
-        return;
-
-    openlog("snort", LOG_PID | LOG_CONS, LOG_DAEMON);
-
-    enable_log_syslog();
-    syslog_configured = true;
-}
-
 bool SnortConfig::get_default_rule_state() const
 {
     switch ( get_ips_policy()->default_rule_state )
@@ -1062,25 +1014,14 @@ void SnortConfig::release_scratch(int id)
 }
 
 SnortConfig* SnortConfig::get_main_conf()
-{ return const_cast<SnortConfig*>(thread_snort_config.snort_conf); }
+{ return const_cast<SnortConfig*>(snort_conf); }
 
 const SnortConfig* SnortConfig::get_conf()
-{ return thread_snort_config.snort_conf; }
+{ return snort_conf; }
 
-unsigned SnortConfig::get_thread_reload_id()
-{ return thread_snort_config.reload_id; }
-
-std::mutex SnortConfig::reload_id_mutex;
-
-void SnortConfig::update_thread_reload_id()
+void SnortConfig::set_conf(SnortConfig* sc)
 {
-    std::lock_guard<std::mutex> reload_id_lock(reload_id_mutex);
-    thread_snort_config.reload_id = thread_snort_config.snort_conf->reload_id;
-}
-
-void SnortConfig::set_conf(const SnortConfig* sc)
-{
-    thread_snort_config.snort_conf = sc;
+    snort_conf = sc;
 
     if ( sc )
     {
@@ -1089,6 +1030,9 @@ void SnortConfig::set_conf(const SnortConfig* sc)
             set_policies(sc, sh);
     }
 }
+
+unsigned SnortConfig::get_reload_id()
+{ return get_conf()->reload_id; }
 
 void SnortConfig::register_reload_handler(ReloadResourceTuner* rrt)
 {
@@ -1107,7 +1051,6 @@ void SnortConfig::clear_reload_resource_tuner_list()
 
 void SnortConfig::update_reload_id()
 {
-    std::lock_guard<std::mutex> reload_id_lock(reload_id_mutex);
     static unsigned reload_id_tracker = 0;
     reload_id = ++reload_id_tracker;
 }
@@ -1117,7 +1060,7 @@ void SnortConfig::generate_dump(std::list<ConfigData*> *config_data_to_dump)
     if (threads_cnt < threads_max)
     {
         config_dumper = new std::thread(generate_config_dump, config_data_to_dump,
-            time(nullptr), SnortConfig::get_conf()->get_reload_id(), dump_config_file);
+            time(nullptr), SnortConfig::get_reload_id(), dump_config_file);
     }
     else
     {
@@ -1133,16 +1076,13 @@ void SnortConfig::cleanup_fatal_error()
 
 #ifdef REG_TEST
     const SnortConfig* sc = SnortConfig::get_conf();
+
     if ( sc && !sc->dirty_pig )
     {
         MPTransportManager::term();
-        ModuleManager::term();
-        EventManager::release_plugins();
-        IpsManager::release_plugins();
-        InspectorManager::release_plugins();
-        ConnectorManager::release_plugins();
-        TraceLoggerManager::release_plugins();
         host_cache.term();
+        PluginManager::release_plugins(sc->plug_set);
+        PluginManager::release_plugins();
     }
 #endif
 }

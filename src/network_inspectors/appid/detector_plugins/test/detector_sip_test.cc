@@ -79,7 +79,6 @@ unsigned get_instance_id()
 unsigned ThreadConfig::get_instance_max() { return 1; }
 }
 
-
 void AppIdContext::create_odp_ctxt()
 {
     odp_ctxt = new OdpContext(s_config, nullptr);

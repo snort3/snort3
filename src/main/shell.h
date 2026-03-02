@@ -38,6 +38,7 @@ class ConfigOutput;
 
 namespace snort
 {
+struct Command;
 struct SnortConfig;
 class Value;
 }
@@ -55,7 +56,7 @@ public:
     void set_overrides(Shell*);
 
     bool configure(snort::SnortConfig*, bool is_root = false, std::list<ConfigData*>* = nullptr);
-    void install(const char*, const struct luaL_Reg*);
+    void install(const char* name, const snort::Command*);
     void execute(const char*, std::string&);
 
     const char* get_file() const
@@ -71,6 +72,8 @@ public:
     { return lua; }
 
     void set_user_network_policy();
+    void set_policy_indices(PolicyId /*net*/, PolicyId /*nap*/, PolicyId /*ips*/);
+    void get_policy_indices(PolicyId& /*net*/, PolicyId& /*nap*/, PolicyId& /*ips*/) const;
 
 public:
     static bool is_trusted(const std::string& key);
@@ -134,8 +137,6 @@ private:
     static bool dump_enabled();
 
 private:
-    bool loaded;
-    bool bootstrapped = false;
     lua_State* lua;
     std::string file;
     std::string parse_from;
@@ -144,7 +145,12 @@ private:
     Allowlist internal_allowlist;
     Allowlist allowlist_prefixes;
     ConfigData* config_data;
+
     uint64_t network_user_policy_id = UNDEFINED_NETWORK_USER_POLICY_ID;
+    PolicyId pid_network = 0, pid_inspect = 0, pid_detect = 0;
+
+    bool loaded;
+    bool bootstrapped = false;
     bool load_defaults;
 };
 

@@ -25,6 +25,7 @@
 
 #include <sys/types.h>
 
+#include <atomic>
 #include <list>
 #include <mutex>
 #include <thread>
@@ -79,6 +80,9 @@ enum RunFlag
     RUN_FLAG__SHELL               = 0x02000000,
 #endif
     RUN_FLAG__DROP_STALE_PACKETS  = 0x04000000,
+#ifdef REG_TEST
+    RUN_FLAG__EXIT_AFTER_RELOAD   = 0x08000000,
+#endif
 };
 
 enum OutputFlag
@@ -108,7 +112,6 @@ enum LoggingFlag
     LOGGING_FLAG__VERBOSE         = 0x00000001,
     LOGGING_FLAG__QUIET           = 0x00000002,
     LOGGING_FLAG__SYSLOG          = 0x00000004,
-    LOGGING_FLAG__SHOW_PLUGINS    = 0x00000008,
 };
 
 enum TunnelFlags
@@ -133,12 +136,13 @@ enum DumpConfigType
     DUMP_CONFIG_TEXT
 };
 
+class ConfigData;
 class ConfigOutput;
 class ControlConn;
 class FastPatternConfig;
+class ProfilerNodeMap;
 class RuleStateMap;
 class TraceConfig;
-class ConfigData;
 
 struct srmm_table_t;
 struct sopg_table_t;
@@ -151,14 +155,13 @@ struct IpsActionsConfig;
 struct LatencyConfig;
 struct MemoryConfig;
 struct PayloadInjectorConfig;
-struct Plugins;
+struct PlugSet;
 struct PORT_RULE_MAP;
 struct RateFilterConfig;
 struct ReferenceSystem;
 struct RuleListNode;
 struct RulePortTables;
 struct SFDAQConfig;
-struct SoRules;
 struct ThresholdConfig;
 
 namespace snort
@@ -173,10 +176,10 @@ struct ProfilerConfig;
 struct SnortConfig
 {
 private:
-    void init(const SnortConfig* const, ProtocolReference*, const char* exclude_name);
+    void init(ProtocolReference*, const char* exclude_name);
 
 public:
-    SnortConfig(const SnortConfig* const other_conf = nullptr, const char* exclude_name = nullptr);
+    SnortConfig(const char* exclude_name = nullptr);
     SnortConfig(ProtocolReference* protocol_reference);
     ~SnortConfig();
 
@@ -188,13 +191,14 @@ public:
     bool verify() const;
 
     void merge(const SnortConfig*);
-    void clone(const SnortConfig* const);
 
 private:
     static uint32_t logging_flags;
 
 public:
     static uint32_t warning_flags;
+
+    PlugSet* plug_set = nullptr;
 
     //------------------------------------------------------
     // alert module stuff
@@ -217,7 +221,7 @@ public:
 
     //------------------------------------------------------
     // daq stuff
-    SFDAQConfig* daq_config;
+    SFDAQConfig* daq_config = nullptr;
 
     //------------------------------------------------------
     // detection module stuff
@@ -396,6 +400,7 @@ public:
 
     //------------------------------------------------------
     ProfilerConfig* profiler = nullptr;
+    ProfilerNodeMap* prof_map = nullptr;
     LatencyConfig* latency = nullptr;
 
     unsigned remote_control_port = 0;
@@ -408,7 +413,7 @@ public:
     std::vector<void *>* state = nullptr;
     unsigned num_slots = 0;
 
-    ThreadConfig* thread_config;
+    ThreadConfig* thread_config = nullptr;
     HighAvailabilityConfig* ha_config = nullptr;
     TraceConfig* trace_config = nullptr;
 
@@ -416,20 +421,16 @@ public:
     TraceConfig* overlay_trace_config = nullptr;
 
     //------------------------------------------------------
-    //Reload inspector related
-
-    bool cloned = false;
-    Plugins* plugins = nullptr;
-    SoRules* so_rules = nullptr;
+    // reload inspector related
 
     DumpConfigType dump_config_type = DUMP_CONFIG_NONE;
     uint32_t retry_timeout = 200;   // Milliseconds to hold packet on retry queue.
     std::string dump_config_file;
     std::thread* config_dumper = nullptr;
+
 private:
     std::list<ReloadResourceTuner*> reload_tuners;
-    static std::mutex reload_id_mutex;
-    unsigned reload_id = 0;
+    std::atomic<unsigned> reload_id;
     static std::mutex static_names_mutex;
     static std::unordered_map<std::string, std::string> static_names;
 
@@ -452,7 +453,6 @@ public:
 
     void add_plugin_path(const char*);
     void add_script_path(const char*);
-    void enable_syslog();
     void set_alert_before_pass(bool);
     void set_alert_mode(const char*);
     void set_chroot_dir(const char*);
@@ -484,7 +484,6 @@ public:
     void set_utc(bool);
     void set_watchdog(uint16_t);
     void set_watchdog_min_thread_count(uint16_t);
-    SO_PUBLIC bool set_packet_latency() const;
 
     //------------------------------------------------------
     // accessor methods
@@ -525,6 +524,11 @@ public:
 
     bool daemon_mode() const
     { return run_flags & RUN_FLAG__DAEMON; }
+
+#ifdef REG_TEST
+    bool exit_after_reload() const
+    { return run_flags & RUN_FLAG__EXIT_AFTER_RELOAD; }
+#endif
 
     bool read_mode() const
     { return run_flags & RUN_FLAG__READ; }
@@ -696,39 +700,15 @@ public:
 
     void update_reload_id();
 
-    unsigned get_reload_id() const
-    { return reload_id; }
-
     void generate_dump(std::list<ConfigData*>*);
 
     bool get_default_rule_state() const;
 
     ConfigOutput* create_config_output() const;
 
-    SO_PUBLIC bool tunnel_bypass_enabled(uint16_t proto) const;
-
     // FIXIT-L snort_conf needed for static hash before initialized
     static bool static_hash()
     { return get_conf() && get_conf()->run_flags & RUN_FLAG__STATIC_HASH; }
-
-    // This requests an entry in the scratch space vector and calls setup /
-    // cleanup as appropriate
-    SO_PUBLIC static int request_scratch(ScratchAllocator*);
-    SO_PUBLIC static void release_scratch(int);
-
-    // runtime access to const config - especially for packet threads
-    // prefer access via packet->context->conf
-    SO_PUBLIC static const SnortConfig* get_conf();
-    // Thread local copy of the reload_id needed for commands that cause reevaluation
-    SO_PUBLIC static unsigned get_thread_reload_id();
-    SO_PUBLIC static void update_thread_reload_id();
-
-    // runtime access to mutable config - main thread only, and only special cases
-    SO_PUBLIC static SnortConfig* get_main_conf();
-
-    static void set_conf(const SnortConfig*);
-
-    SO_PUBLIC void register_reload_handler(ReloadResourceTuner*);
 
     static void cleanup_fatal_error();
 
@@ -756,11 +736,27 @@ public:
     static bool log_verbose()
     { return logging_flags & LOGGING_FLAG__VERBOSE; }
 
-    static void enable_log_show_plugins()
-    { logging_flags |= LOGGING_FLAG__SHOW_PLUGINS; }
+    static void set_conf(SnortConfig*);
 
-    static bool log_show_plugins()
-    { return logging_flags & LOGGING_FLAG__SHOW_PLUGINS; }
+    SO_PUBLIC bool set_packet_latency() const;
+
+    SO_PUBLIC static unsigned get_reload_id();
+
+    SO_PUBLIC bool tunnel_bypass_enabled(uint16_t proto) const;
+
+    // This requests an entry in the scratch space vector and calls setup /
+    // cleanup as appropriate
+    SO_PUBLIC static int request_scratch(ScratchAllocator*);
+    SO_PUBLIC static void release_scratch(int);
+
+    // runtime access to const config - especially for packet threads
+    // prefer access via packet->context->conf
+    SO_PUBLIC static const SnortConfig* get_conf();
+
+    // runtime access to mutable config - main thread only, and only special cases
+    SO_PUBLIC static SnortConfig* get_main_conf();
+
+    SO_PUBLIC void register_reload_handler(ReloadResourceTuner*);
 
     SO_PUBLIC static const char* get_static_name(const char* name);
     SO_PUBLIC static int get_classification_id(const char* name);

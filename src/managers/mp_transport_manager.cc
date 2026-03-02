@@ -25,81 +25,71 @@
 
 #include <unordered_map>
 
+#include "plugin_manager.h"
+#include "plug_interface.h"
+
 using namespace snort;
 
-struct MPTransportHandler
+class MPTPlugInterface : public PlugInterface
 {
-    MPTransportHandler(MPTransport* transport, const MPTransportApi* api)
-        : transport(transport), api(api) {}
-    MPTransport* transport;
+public:
+    MPTPlugInterface(const MPTransportApi* api) : api(api) { }
+
+    void global_init() override
+    {
+        if (api->pinit)
+            api->pinit();
+    }
+
+    void global_term() override
+    {
+        if (api->pterm)
+            api->pterm();
+    }
+
+    void thread_init() override
+    {
+        if (api->tinit)
+            api->tinit(transport);
+    }
+
+    void thread_term() override
+    {
+        if (api->tterm)
+            api->tterm(transport);
+    }
+
+    void instantiate(Module* mod, SnortConfig*, const char*) override
+    {
+        transport = api->ctor(mod);
+    }
+
+public:
+    MPTransport* transport = nullptr;
     const MPTransportApi* api;
 };
 
-static std::unordered_map<std::string, MPTransportHandler*> transports_map;
-
-void MPTransportManager::instantiate(const MPTransportApi *api, Module *mod, SnortConfig*)
-{
-    if(transports_map.find(api->base.name) != transports_map.end())
-    {
-        return;
-    }
-
-    transports_map.insert(std::make_pair(api->base.name, new MPTransportHandler(api->ctor(mod), api)));
-}
+PlugInterface* MPTransportManager::get_interface(const MPTransportApi * api)
+{ return new MPTPlugInterface(api); }
 
 MPTransport *MPTransportManager::get_transport(const std::string &name)
 {
-    auto it = transports_map.find(name);
-    if (it != transports_map.end())
+    if (auto* p = PluginManager::get_interface(name.c_str()))
     {
-        return it->second->transport;
+        MPTPlugInterface* mp = (MPTPlugInterface*)p;
+        return mp->transport;
     }
+
     return nullptr;
-}
-
-void MPTransportManager::add_plugin(const MPTransportApi *api)
-{
-    if (api->pinit)
-    {
-        api->pinit();
-    }
-}
-
-void MPTransportManager::thread_init()
-{
-    for (auto &transport : transports_map)
-    {
-        if (transport.second->api->tinit)
-        {
-            transport.second->api->tinit(transport.second->transport);
-        }
-    }
-}
-
-void MPTransportManager::thread_term()
-{
-    for (auto &transport : transports_map)
-    {
-        if (transport.second->api->tterm)
-        {
-            transport.second->api->tterm(transport.second->transport);
-        }
-    }
 }
 
 void MPTransportManager::term()
 {
-    for (auto &transport : transports_map)
+    auto dtor = [](PlugInterface* pin, void*)
     {
-        if (transport.second->api->dtor)
-        {
-            transport.second->api->dtor(transport.second->transport);
-        }
-        if (transport.second->api->pterm)
-        {
-            transport.second->api->pterm();
-        }
-        delete transport.second;
-    }
-    transports_map.clear();
+        MPTPlugInterface* mp = (MPTPlugInterface*)pin;
+        mp->api->dtor(mp->transport);
+    };
+    PluginManager::for_each(PT_MP_TRANSPORT, dtor);
 }
+

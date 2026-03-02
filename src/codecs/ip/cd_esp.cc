@@ -200,7 +200,7 @@ static const CodecApi esp_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_ESP_NAME,
         CD_ESP_HELP,

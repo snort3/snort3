@@ -50,10 +50,11 @@
 #include "packet_io/sfdaq_config.h"
 #include "packet_io/sfdaq_instance.h"
 #include "packet_io/trough.h"
+#include "parser/config_file.h"
+#include "profiler/profiler_impl.h"
 #include "target_based/host_attributes.h"
 #include "time/periodic.h"
 #include "trace/trace_api.h"
-#include "trace/trace_config.h"
 #include "utils/safec.h"
 #include "utils/stats.h"
 #include "utils/util.h"
@@ -92,7 +93,7 @@ static const std::map<std::string, clear_counter_type_t> counter_name_to_id =
 	{"daq", clear_counter_type_t::TYPE_DAQ},
 	{"module", clear_counter_type_t::TYPE_MODULE},
 	{"appid", clear_counter_type_t::TYPE_APPID},
-	{"file_id", clear_counter_type_t::TYPE_FILE_ID},
+	{"file_inspect", clear_counter_type_t::TYPE_FILE_ID},
 	{"snort", clear_counter_type_t::TYPE_SNORT},
 	{"ha", clear_counter_type_t::TYPE_HA},
     {"messaging", clear_counter_type_t::TYPE_MESSAGING},
@@ -181,8 +182,11 @@ bool Pig::prep(const char* source)
     requires_privileged_start = instance->can_start_unprivileged();
     analyzer = new Analyzer(instance, idx, source, sc->pkt_cnt, sc->retry_timeout);
     analyzer->set_skip_cnt(sc->pkt_skip);
-#ifdef REG_TEST
+#if defined(REG_TEST)
     analyzer->set_pause_after_cnt(sc->pkt_pause_cnt);
+
+    if (sc->exit_after_reload())
+        analyzer->exit_after_reload();
 #endif
     return true;
 }
@@ -336,8 +340,6 @@ void snort::main_broadcast_command(AnalyzerCommand* ac, ControlConn* ctrlcon)
 
     ac = get_command(ac, ctrlcon);
     debug_logf(snort_trace, TRACE_MAIN, nullptr, "Broadcasting %s command\n", ac->stringify());
-    if (ac->need_update_reload_id())
-        SnortConfig::get_main_conf()->update_reload_id();
 
     for (unsigned idx = 0; idx < max_pigs; ++idx)
     {
@@ -349,7 +351,7 @@ void snort::main_broadcast_command(AnalyzerCommand* ac, ControlConn* ctrlcon)
         orphan_commands.push(ac);
 }
 
-#ifdef REG_TEST
+#if defined(REG_TEST)
 void snort::main_unicast_command(AnalyzerCommand* ac, unsigned target,  ControlConn* ctrlcon)
 {
     assert(target < max_pigs);
@@ -425,7 +427,7 @@ int main_reset_stats(lua_State* L)
     if ((type = convert_counter_type(command)) != clear_counter_type_t::TYPE_INVALID)
     	main_broadcast_command(new ACResetStats(static_cast<clear_counter_type_t>(type)), ctrlcon);
     else
-    	LogRespond(ctrlcon, "Available options to use: all, daq, module, appid, file_id, snort, ha\n");
+    	LogRespond(ctrlcon, "Available options to use: all, daq, module, appid, file_inspect, snort, ha\n");
     return 0;
 }
 
@@ -484,14 +486,14 @@ int main_rotate_stats(lua_State* L)
 int main_show_config_generation(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    LogRespond(ctrlcon, "== configuration id: %u\n", SnortConfig::get_conf()->get_reload_id());
+    LogRespond(ctrlcon, "== configuration id: %u\n", SnortConfig::get_reload_id());
     return 0;
 }
 
 int main_reload_config(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    const char* fname =  nullptr;
+    const char* fname =  get_snort_conf();
     const char* plugin_path =  nullptr;
 
     if ( L )
@@ -509,6 +511,12 @@ int main_reload_config(lua_State* L)
         }
     }
 
+    if ( !fname or !*fname )
+    {
+        send_response(ctrlcon, "== reload failed; filename required\n");
+        return 0;
+    }
+
     if ( !ReloadTracker::start(ctrlcon) )
     {
         send_response(ctrlcon, "== reload pending; retry\n");
@@ -516,18 +524,26 @@ int main_reload_config(lua_State* L)
     }
     send_response(ctrlcon, ".. reloading configuration\n");
     ReloadTracker::update(ctrlcon,"start loading ...");
+
     const SnortConfig* old = SnortConfig::get_conf();
+    assert(old);
 
-    if (plugin_path != nullptr)
-        LogMessage("SO rules plugins will be reloaded from %s\n", plugin_path);
+    if ( plugin_path )
+    {
+        LogMessage("Plugin libraries will be reloaded from %s\n", plugin_path);
+        Snort::prepare_reload();
+    }
     else
-        LogMessage("SO rules plugins will not be reloaded\n");
+        LogMessage("Plugin libraries will not be reloaded\n");
 
-    SnortConfig* sc = Snort::get_reload_config(fname, plugin_path, old);
+    TraceApi::reset();
+    PluginManager::reload_plugins(plugin_path, old->allow_missing_so_rules);
+
+    SnortConfig* sc = Snort::get_reload_config(fname);
 
     if ( !sc )
     {
-        if (get_reload_errors())
+        if ( get_reload_errors() )
         {
             std::string response_message = "== reload failed - restart required - ";
             response_message += get_reload_errors_description() + "\n";
@@ -543,8 +559,11 @@ int main_reload_config(lua_State* L)
 
 
         HostAttributesManager::load_failure_cleanup();
+        PluginManager::unload_plugins();
         return 0;
     }
+    PluginManager::capture_plugins(sc);
+    Profiler::setup(sc);
 
     int32_t num_hosts = HostAttributesManager::get_num_host_entries();
     if ( num_hosts >= 0 )
@@ -552,21 +571,12 @@ int main_reload_config(lua_State* L)
     else
         LogMessage("No host attribute table loaded\n");
 
-    if ( !old or !old->trace_config or !old->trace_config->initialized )
-    {
-        LogMessage("== WARNING: Trace module was not configured during "
-            "initial startup. Ignoring the new trace configuration.\n");
-        sc->trace_config->clear();
-    }
-
-    PluginManager::reload_so_plugins_cleanup(sc);
     SnortConfig::set_conf(sc);
-    TraceApi::thread_reinit(sc->trace_config);
     proc_stats.conf_reloads++;
 
-    if(sc->max_procs > 1)
+    if ( sc->max_procs > 1 )
     {
-        if (old and old->mp_dbus != nullptr)
+        if ( old->mp_dbus )
         {
             sc->mp_dbus = old->mp_dbus;
         }
@@ -579,51 +589,6 @@ int main_reload_config(lua_State* L)
 
     ReloadTracker::update(ctrlcon, "start swapping configuration ...");
     send_response(ctrlcon, ".. swapping configuration\n");
-    main_broadcast_command(new ACSwap(new Swapper(old, sc), ctrlcon), ctrlcon);
-
-    return 0;
-}
-
-int main_reload_policy(lua_State* L)
-{
-    const char* fname =  nullptr;
-
-    if ( L )
-    {
-        Lua::ManageStack(L, 1);
-        if (lua_gettop(L) >= 1)
-            fname = luaL_checkstring(L, 1);
-    }
-
-    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if ( !fname or *fname == '\0' )
-    {
-        send_response(ctrlcon, "== filename required\n");
-        return 0;
-    }
-
-    if ( !ReloadTracker::start(ctrlcon) )
-    {
-        send_response(ctrlcon, "== reload pending; retry\n");
-        return 0;
-    }
-
-    send_response(ctrlcon, ".. reloading policy\n");
-
-    SnortConfig* old = SnortConfig::get_main_conf();
-    SnortConfig* sc = Snort::get_updated_policy(old, fname, nullptr);
-
-    if ( !sc )
-    {
-        ReloadTracker::failed(ctrlcon, "failed to update policy");
-        send_response(ctrlcon, "== reload failed\n");
-        return 0;
-    }
-    SnortConfig::set_conf(sc);
-    proc_stats.policy_reloads++;
-
-    ReloadTracker::update(ctrlcon, "start swapping configuration ...");
-    send_response(ctrlcon, ".. swapping policy\n");
     main_broadcast_command(new ACSwap(new Swapper(old, sc), ctrlcon), ctrlcon);
 
     return 0;
@@ -689,51 +654,6 @@ int main_reload_hosts(lua_State* L)
     return 0;
 }
 
-int main_delete_inspector(lua_State* L)
-{
-    const char* iname =  nullptr;
-
-    if ( L )
-    {
-        Lua::ManageStack(L, 1);
-        if (lua_gettop(L) >= 1)
-            iname = luaL_checkstring(L, 1);
-    }
-
-    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    if ( !iname or *iname == '\0' )
-    {
-        send_response(ctrlcon, "== inspector name required\n");
-        return 0;
-    }
-
-    if ( !ReloadTracker::start(ctrlcon) )
-    {
-        send_response(ctrlcon, "== delete pending; retry\n");
-        return 0;
-    }
-
-    send_response(ctrlcon, ".. deleting inspector\n");
-
-    SnortConfig* old = SnortConfig::get_main_conf();
-    SnortConfig* sc = Snort::get_updated_policy(old, nullptr, iname);
-
-    if ( !sc )
-    {
-        ReloadTracker::failed(ctrlcon, "failed to update policy");
-        send_response(ctrlcon, "== reload failed\n");
-        return 0;
-    }
-    SnortConfig::set_conf(sc);
-    proc_stats.inspector_deletions++;
-
-    ReloadTracker::update(ctrlcon, "start swapping configuration ...");
-    send_response(ctrlcon, ".. deleted inspector\n");
-    main_broadcast_command(new ACSwap(new Swapper(old, sc), ctrlcon), ctrlcon);
-
-    return 0;
-}
-
 int main_process(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -762,7 +682,7 @@ int main_resume(lua_State* L)
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     uint64_t pkt_num = 0;
 
-    #ifdef REG_TEST
+    #if defined(REG_TEST)
     int target = -1;
     #endif
 
@@ -777,7 +697,7 @@ int main_resume(lua_State* L)
                 send_response(ctrlcon, "Invalid usage of resume(n), n should be a number > 0\n");
                 return 0;
             }
-            #ifdef REG_TEST
+            #if defined(REG_TEST)
             if (num_of_args > 1)
             {
                 target = lua_tointeger(L, 2);
@@ -793,7 +713,7 @@ int main_resume(lua_State* L)
     }
     send_response(ctrlcon, "== resuming\n");
 
-    #ifdef REG_TEST
+    #if defined(REG_TEST)
     if (target >= 0)
         main_unicast_command(new ACResume(pkt_num), target, ctrlcon);
     else
@@ -815,7 +735,19 @@ int main_detach(lua_State* L)
     return 0;
 }
 
-int main_dump_plugins(lua_State*)
+int main_dump_inspector_map(lua_State*)
+{
+    InspectorManager::dump_inspector_map();
+    return 0;
+}
+
+int main_list_plugins(lua_State*)
+{
+    PluginManager::list_plugins();
+    return 0;
+}
+
+int main_show_plugins(lua_State*)
 {
     ModuleManager::dump_modules();
     PluginManager::dump_plugins();
@@ -831,15 +763,15 @@ int main_quit(lua_State* L)
     if (sc)
         sc->set_watchdog(0);
     send_response(ctrlcon, "== stopping\n");
-    main_broadcast_command(new ACStop(), ctrlcon);
     exit_requested = true;
+    main_broadcast_command(new ACStop(), ctrlcon);
     return 0;
 }
 
 int main_help(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    std::list<Module*> modules = ModuleManager::get_all_modules();
+    std::list<Module*> modules = PluginManager::get_all_modules();
     std::set<std::string> no_prefix_cmds;
     std::set<std::string> prefix_cmds;
 
@@ -1222,7 +1154,7 @@ static void main_loop()
 
             if (pthreads_started)
             {
-#ifdef REG_TEST
+#if defined(REG_TEST)
                 LogMessage("All pthreads started\n");
 #endif
 

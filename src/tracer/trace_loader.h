@@ -20,14 +20,7 @@
 #ifndef TRACE_LOADER_H
 #define TRACE_LOADER_H
 
-#include "protocols/packet.h"
-#include "utils/util.h"
-#include <string>
-
-void load_trace();
-std::string g_timestamp(bool timestamp);
-std::string g_ntuple(bool ntuple, const snort::Packet* p);
-char get_current_thread_type();
+void load_trace_loggers();
 
 #endif
 

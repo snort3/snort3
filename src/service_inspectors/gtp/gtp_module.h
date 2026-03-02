@@ -32,6 +32,7 @@
 
 #define GTP_NAME "gtp_inspect"
 #define GTP_HELP "gtp control channel inspection"
+#define GTP_USE  Module::INSPECT
 
 namespace snort
 {
@@ -70,7 +71,7 @@ public:
     { return &gtp_inspect_prof; }
 
     Usage get_usage() const override
-    { return INSPECT; }
+    { return GTP_USE; }
 
     bool is_bindable() const override
     { return true; }

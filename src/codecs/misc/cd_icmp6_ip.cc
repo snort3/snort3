@@ -135,7 +135,7 @@ static const CodecApi icmp6_ip_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         ICMP6_IP_NAME,
         ICMP6_IP_HELP,

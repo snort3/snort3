@@ -27,6 +27,7 @@ namespace snort
 {
 class Module;
 struct ProfileStats;
+struct SnortConfig;
 }
 
 class ProfilerNodeMap;
@@ -34,8 +35,8 @@ class ProfilerNodeMap;
 class Profiler
 {
 public:
-    static void register_module(snort::Module*);
-    static void register_module(const char*, const char*, snort::Module*);
+    static void setup(snort::SnortConfig*);
+    static void clear(snort::SnortConfig*);
 
     static void start();
     static void stop(uint64_t);
@@ -52,6 +53,10 @@ public:
 
     static snort::ProfileStats* get_total_perf_stats();
     static snort::ProfileStats* get_other_perf_stats();
+
+private:
+    static void register_module(ProfilerNodeMap&, snort::Module*);
+    static void register_module(ProfilerNodeMap&, const char*, const char*, snort::Module*);
 };
 
 #endif

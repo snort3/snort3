@@ -26,9 +26,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "framework/inspector.h"
-#include "main/snort_config.h"
-#include "managers/so_manager.h"
+#include "managers/plugin_manager.h"
 
 using namespace snort;
 
@@ -127,33 +125,26 @@ void FlowDataStore::call_handlers(Packet* p, FlowDataHandlerType handler_type) c
     }
 }
 
-FlowData::FlowData(unsigned u, Inspector* ph)
+unsigned FlowData::create_flow_data_id()
+{ return ++flow_data_id; }
+
+void FlowData::init(unsigned u)
 {
     assert(u > 0);
     id = u;
-    handler = ph;
-    if ( handler )
-        handler->add_ref();
+}
+
+FlowData::FlowData(unsigned u)
+{
+    init(u);
+}
+
+FlowData::FlowData(unsigned u, const char* name)
+{
+    init(u);
+    plugin = PluginManager::get_plugin(name);
 }
 
 FlowData::~FlowData()
-{
-    if ( handler )
-        handler->rem_ref();
-}
-
-void FlowData::set_handler(Inspector* h)
-{
-    if (handler != h)
-    {
-        if (handler)
-            handler->rem_ref();
-        handler = h;
-        if (handler)
-            handler->add_ref();
-    }
-}
-
-RuleFlowData::RuleFlowData(unsigned u) :
-    FlowData(u, SnortConfig::get_conf()->so_rules->proxy)
 { }
+

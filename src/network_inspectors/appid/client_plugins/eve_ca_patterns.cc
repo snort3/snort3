@@ -116,7 +116,7 @@ void EveCaPatternMatchers::finalize_patterns()
 
         #ifdef REG_TEST
         AppIdInspector* inspector =
-            (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true);
+            (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
         if (inspector and inspector->get_ctxt().config.log_eve_process_client_mappings)
             APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Adding EVE Client App pattern %d %s %d\n",
                 p->app_id, p->pattern.c_str(), p->confidence);

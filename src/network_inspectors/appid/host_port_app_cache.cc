@@ -120,14 +120,14 @@ HostPortVal* HostPortCache::find(const SfIp* ip, uint16_t port, IpProtocol proto
         return nullptr;
 }
 
-bool HostPortCache::add(const SnortConfig* sc, const SfIp* ip, uint16_t port, IpProtocol proto,
+bool HostPortCache::add(const SnortConfig*, const SfIp* ip, uint16_t port, IpProtocol proto,
     unsigned type, AppId appId)
 {
     HostPortKey hk;
     HostPortVal hv;
 
     hk.ip = *ip;
-    AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true, sc);
+    AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
     assert(inspector);
 
     const AppIdContext& ctxt = inspector->get_ctxt();
@@ -173,7 +173,7 @@ const HostAppIdsVal* HostPortCache::find_on_first_pkt(const SfIp* ip, uint16_t p
     return nullptr;
 }
 
-bool HostPortCache::add_host(const SnortConfig* sc, const SfIp* ip, uint32_t* netmask, uint16_t port, IpProtocol proto,
+bool HostPortCache::add_host(const SnortConfig*, const SfIp* ip, uint32_t* netmask, uint16_t port, IpProtocol proto,
     AppId protocol_appId, AppId client_appId, AppId web_appId, unsigned reinspect)
 {
     if (!netmask)
@@ -182,7 +182,7 @@ bool HostPortCache::add_host(const SnortConfig* sc, const SfIp* ip, uint32_t* ne
         HostAppIdsVal hv;
 
         hk.ip = *ip;
-        AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true, sc);
+        AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
         assert(inspector);
 
         const AppIdContext& ctxt = inspector->get_ctxt();
@@ -208,7 +208,7 @@ bool HostPortCache::add_host(const SnortConfig* sc, const SfIp* ip, uint32_t* ne
 
         memcpy(&hk.netmask[0], netmask, 16);
 
-        AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true, sc);
+        AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
         assert(inspector);
 
         const AppIdContext& ctxt = inspector->get_ctxt();

@@ -588,29 +588,6 @@ bool TcpReassemblerBase::asymmetric_flow_flushed(uint32_t flushed, snort::Packet
     return asymmetric;
 }
 
-// Allocate an instance of the ignore reassembler for the client side trackers
-// and the server side trackers for each packet thread. The ignore reassemblers
-// do not maintain any state so are shared by all TCP sessions of a packet thread.
-// The server and client instances are created during thread initialization and
-// deleted at thread termination.
-static THREAD_LOCAL TcpReassemblerIgnore* ignore_reassembler_server = nullptr;
-static THREAD_LOCAL TcpReassemblerIgnore* ignore_reassembler_client = nullptr;
-
-void TcpReassembler::tinit()
-{
-    ignore_reassembler_server = new TcpReassemblerIgnore(true);
-    ignore_reassembler_client = new TcpReassemblerIgnore(false);
-}
-
-void TcpReassembler::tterm()
-{
-    delete ignore_reassembler_server;
-    ignore_reassembler_server = nullptr;
-
-    delete ignore_reassembler_client;
-    ignore_reassembler_client = nullptr;
-}
-
 TcpReassemblerIgnore::TcpReassemblerIgnore(bool server)
 {
     server_side = server;
@@ -623,13 +600,4 @@ uint32_t TcpReassemblerIgnore::perform_partial_flush(snort::Flow* flow, snort::P
     p = get_packet(flow, packet_dir, server_side);
     return 0;
 }
-
-TcpReassemblerIgnore* TcpReassemblerIgnore::get_instance(bool server_tracker)
-{
-    if ( server_tracker )
-        return ignore_reassembler_server;
-    else
-        return ignore_reassembler_client;
-}
-
 

@@ -26,17 +26,19 @@
 #include <algorithm>
 #include <unordered_map>
 
+#include "framework/module.h"
+#include "framework/pig_pen.h"
+#include "helpers/ring.h"
+#include "log/log_stats.h"
+#include "log/messages.h"
+#include "main/snort.h"
 #include "main/snort_config.h"
+#include "main/snort_types.h"
+#include "managers/mp_transport_manager.h"
+#include "managers/plugin_manager.h"
 #include "protocols/packet.h"
 #include "pub_sub/intrinsic_event_ids.h"
 #include "utils/stats.h"
-#include "main/snort_types.h"
-#include "log/messages.h"
-#include "log/log_stats.h"
-#include "managers/mp_transport_manager.h"
-#include "managers/module_manager.h"
-#include "main/snort.h"
-#include "framework/module.h"
 #include "utils/util.h"
 
 using namespace snort;
@@ -89,16 +91,8 @@ MPDataBus::~MPDataBus()
     for (auto& [_, sublist] : mp_pub_sub)
     {
         for (auto* handler : sublist)
-        {
-            if (handler->cloned)
-            {
-                handler->cloned = false;
-            }
-            else
-            {
-                delete handler; 
-            }
-        }
+            delete handler;
+
         sublist.clear();
     }
     mp_pub_sub.clear();
@@ -126,25 +120,6 @@ unsigned MPDataBus::init(int max_procs)
     transport_layer->init_connection();
 
     return 0;
-}
-
-void MPDataBus::clone(MPDataBus& from, const char* exclude_name)
-{
-    from.stop_worker_thread();
-    for (const auto& [key, sublist] : from.mp_pub_sub)
-    {
-        unsigned pid = key.first; 
-        unsigned eid = key.second;
-
-        for (auto* h : sublist)
-        {
-            if (!exclude_name || strcmp(exclude_name, h->module_name) != 0)
-            {
-                h->cloned = true;
-                _subscribe(pid, eid, h);
-            }
-        }
-    }
 }
 
 unsigned MPDataBus::get_id(const PubKey& key)
@@ -425,11 +400,8 @@ void MPDataBus::reset_stats()
         mp_global_stats.total_messages_delivered = 0;
     }
 
-    auto transport_module = ModuleManager::get_module(transport.c_str());
-    if (transport_module)
-    {
+    if (auto transport_module = PigPen::get_module(transport.c_str()))
         transport_module->reset_stats();
-    }
 }
 
 void MPDataBus::dump_stats(ControlConn *ctrlconn, const char *module_name)
@@ -454,8 +426,7 @@ void MPDataBus::dump_stats(ControlConn *ctrlconn, const char *module_name)
         
         show_stats(reinterpret_cast<PegCount*>(&mp_global_stats), mp_databus_pegs, array_size(mp_databus_pegs)-1);
 
-        auto transport_module = ModuleManager::get_module(transport.c_str());
-        if(transport_module)
+        if (auto transport_module = PigPen::get_module(transport.c_str()))
         {
             auto transport_pegs = transport_module->get_pegs();
             if(transport_pegs)

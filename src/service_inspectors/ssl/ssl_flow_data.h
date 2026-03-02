@@ -49,7 +49,11 @@ namespace snort
 class SO_PUBLIC SslBaseFlowData : public snort::FlowData
 {
 public:
-    SslBaseFlowData(snort::Inspector* handler = nullptr) : snort::FlowData(inspector_id, handler) {}
+    SslBaseFlowData(snort::Inspector* h = nullptr) : snort::FlowData(inspector_id)
+    { handler = h; }
+
+    snort::Inspector* get_handler()
+    { return handler; }
 
     virtual SSLData& get_session() = 0;
 
@@ -66,6 +70,7 @@ protected:
 
 private:
     static unsigned inspector_id;
+    snort::Inspector* handler;
 };
 
 #endif

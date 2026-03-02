@@ -52,7 +52,7 @@ THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
-SnortConfig::SnortConfig(const SnortConfig* const, const char*)
+SnortConfig::SnortConfig(const char*)
     : daq_config(nullptr), fast_pattern_config(new FastPatternConfig()), state(&s_state), num_slots(1),
     thread_config(nullptr)
 { }

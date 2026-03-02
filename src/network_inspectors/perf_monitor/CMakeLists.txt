@@ -25,15 +25,7 @@ set ( FILE_LIST
     text_formatter.h
 )
 
-if (STATIC_INSPECTORS)
-    add_library(perf_monitor OBJECT
-        ${FILE_LIST}
-    )
-
-else (STATIC_INSPECTORS)
-    add_dynamic_module(perf_monitor inspectors ${FILE_LIST})
-
-endif (STATIC_INSPECTORS)
+add_library(perf_monitor OBJECT ${FILE_LIST})
 
 add_catch_test( csv_formatter_test
     NO_TEST_SOURCE

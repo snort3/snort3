@@ -171,13 +171,10 @@ const char* IpsOption::get_soid(const IpsInfo& info)
 { return info.otn->soid; }
 
 IpsOption::SoEvalFunc IpsOption::get_so_eval(IpsInfo& info, const char* name, void*& data)
-{ return SoManager::get_so_eval(info.otn->soid, name, &data, info.sc); }
+{ return SoManager::get_so_eval(info.otn->soid, name, &data); }
 
 SnortProtocolId IpsOption::get_protocol_id(const IpsInfo& info)
 { return info.otn->snort_protocol_id; }
-
-SoRules* IpsOption::get_so_rules(const IpsInfo& info)
-{ return info.sc->so_rules; }
 
 } // snort
 

@@ -276,7 +276,6 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
     REQUIRE( reassembler != nullptr );
 
     TcpNormalizerFactory::initialize();
-    TcpReassembler::tinit();
 
     Flow* flow = new Flow;
     Packet* pkt = get_syn_packet(flow);
@@ -314,7 +313,6 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
     delete flow;
     ips_stream_reassemble->mod_dtor(reassembler);
     TcpNormalizerFactory::term();
-    TcpReassembler::tterm();
 }
 
 #endif

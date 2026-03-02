@@ -20,24 +20,22 @@
 #ifndef FILE_TRACE_LOGGER_H
 #define FILE_TRACE_LOGGER_H
 
-#include "framework/module.h"
-#include "framework/tracer.h"
-#include "trace_loader.h"
 #include <string>
 #include <cstdio>
-#include <mutex>
 
-namespace snort
-{
+#include "framework/module.h"
+#include "framework/tracer.h"
+#include "log/text_log.h"
 
 #define S_NAME "file_trace"
 #define S_HELP "file trace logger"
 
+namespace snort
+{
+
 struct FileTraceConfig
 {
-    bool enable = false;
-    std::string filename = "trace_output.log";
-    size_t max_file_size = 10 * 1024 * 1024;  // Default 10 MB
+    size_t max_file_size = 0;
 };
 
 class FileTrace;
@@ -49,15 +47,12 @@ public:
     ~FileTraceModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
 
-    const FileTraceConfig& get_config() const;
-    void register_instance(FileTrace* instance);
+    const FileTraceConfig& get_config() const
+    { return config; }
 
 private:
     FileTraceConfig config;
-    FileTrace* trace_logger_instance = nullptr;
 };
 
 class FileTrace : public TraceLoggerPlug
@@ -69,24 +64,9 @@ public:
     void log(const char* log_msg, const char* name, uint8_t log_level, 
              const char* trace_option, const Packet* p) override;
              
-    void update_config(const FileTraceConfig& new_config);
-    bool is_file_opened() const
-    { 
-        std::lock_guard<std::mutex> lock(file_mutex);
-        return file_opened; 
-    }
-
-
 private:
-    bool open_file();
-    void rotate_file();
-    std::string get_full_path() const;
-
+    TextLog* text_log;
     FileTraceConfig config;
-    FILE* file = nullptr;
-    bool file_opened = false;
-    size_t current_file_size = 0;
-    mutable std::mutex file_mutex;
 };
 
 }
@@ -94,3 +74,4 @@ private:
 extern const snort::BaseApi* file_trace_logger[];
 
 #endif
+

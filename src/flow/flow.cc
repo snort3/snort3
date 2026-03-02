@@ -27,11 +27,11 @@
 #include "detection/detection_continuation.h"
 #include "detection/detection_engine.h"
 #include "flow/flow_control.h"
-#include "flow/flow_key.h"
 #include "flow/ha.h"
 #include "flow/session.h"
 #include "framework/data_bus.h"
 #include "helpers/bitop.h"
+#include "helpers/policy_switcher.h"
 #include "main/analyzer.h"
 #include "packet_io/packet_tracer.h"
 #include "protocols/packet.h"
@@ -48,6 +48,7 @@ extern THREAD_LOCAL class FlowControl* flow_con;
 
 Flow::~Flow()
 {
+    PolicySwitcher ps(this);
     EofEvent eof_event(this);
     DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_END, eof_event, this);
   
@@ -220,51 +221,8 @@ uint64_t Flow::fetch_add_inspection_duration()
 
 void Flow::free_flow_data()
 {
-    if ( flow_data.empty() )
-    {
-        stash.reset();
-        return;
-    }
-    const SnortConfig* sc = SnortConfig::get_conf();
-    PolicySelector* ps = sc->policy_map->get_policy_selector();
-    NetworkPolicy* np = nullptr;
-    InspectionPolicy* ip = nullptr;
-    IpsPolicy* ipsp = nullptr;
-    if (ps)
-    {
-        np = get_network_policy();
-        ip = get_inspection_policy();
-        ipsp = get_ips_policy();
-
-        unsigned t_reload_id = SnortConfig::get_thread_reload_id();
-        if (reload_id == t_reload_id)
-        {
-            ::set_network_policy(network_policy_id);
-            ::set_inspection_policy(inspection_policy_id);
-            ::set_ips_policy(sc, ips_policy_id);
-        }
-        else
-        {
-            _daq_pkt_hdr pkthdr = {};
-            pkthdr.address_space_id = key->addressSpaceId;
-#ifndef DISABLE_TENANT_ID
-            pkthdr.tenant_id = key->tenant_id;
-#else
-            pkthdr.tenant_id = 0;
-#endif
-            select_default_policy(pkthdr, sc);
-        }
-    }
-
     flow_data.clear();
     stash.reset();
-
-    if (ps)
-    {
-        set_network_policy(np);
-        set_inspection_policy(ip);
-        set_ips_policy(ipsp);
-    }
 }
 
 void Flow::markup_packet_flags(Packet* p)

@@ -47,8 +47,14 @@ StreamIcmpConfig::StreamIcmpConfig()
 class StreamIcmp : public Inspector
 {
 public:
-    StreamIcmp(StreamIcmpConfig*);
-    ~StreamIcmp() override;
+    StreamIcmp(StreamIcmpConfig* c)
+    { config = c; }
+
+    ~StreamIcmp() override
+    { delete config; }
+
+    bool configure(SnortConfig*) override
+    { return Stream::is_active(); }
 
     void show(const SnortConfig*) const override;
     NORETURN_ASSERT void eval(Packet*) override;
@@ -56,16 +62,6 @@ public:
 public:
     StreamIcmpConfig* config;
 };
-
-StreamIcmp::StreamIcmp (StreamIcmpConfig* c)
-{
-    config = c;
-}
-
-StreamIcmp::~StreamIcmp()
-{
-    delete config;
-}
 
 void StreamIcmp::show(const SnortConfig*) const
 {

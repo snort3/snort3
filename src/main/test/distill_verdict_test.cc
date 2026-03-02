@@ -28,6 +28,7 @@
 #include "framework/data_bus.h"
 #include "main/analyzer.h"
 #include "main/thread_config.h"
+#include "managers/plugin_manager.h"
 #include "memory/memory_cap.h"
 #include "packet_io/sfdaq_instance.h"
 #include "packet_io/sfdaq.h"
@@ -75,12 +76,8 @@ void LogMessage(const char* format,...)
 }
 }
 
-const FlowCacheConfig& FlowControl::get_flow_cache_config() const
-{
-    static FlowCacheConfig cfg;
-    cfg.allowlist_cache = true;
-    return cfg;
-}
+PluginPtr PluginManager::get_plugin(const char*) { return nullptr; }
+void PluginManager::empty_trash() { }
 
 using namespace snort;
 

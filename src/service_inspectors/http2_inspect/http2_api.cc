@@ -55,7 +55,7 @@ const InspectApi Http2Api::http2_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         Http2Api::http2_my_name,
         Http2Api::http2_help,

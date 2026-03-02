@@ -24,9 +24,7 @@
 // this is for builtin module initialization.
 // ideally, modules.cc would be refactored into several files.
 
-#include "framework/counts.h"
-
-void module_init();
-const char* get_lua_defaults();
+void add_independent_modules();
+void add_dependent_modules();
 
 #endif

@@ -118,9 +118,14 @@ void HostCacheSegmented<Key, Value>::init()
     init_done = true;
 }
 
+// avoid circular include dependency
+extern void host_cache_module_dump();
+
 template<typename Key, typename Value>
 void HostCacheSegmented<Key, Value>::term()
 {
+    host_cache_module_dump();
+
     for (auto cache : seg_list)
     {
         if (cache)

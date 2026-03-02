@@ -91,11 +91,15 @@ namespace snort
         static bool filter(const Packet&);
     };
     
-    uint32_t FlowData::flow_data_id = 1;
-    FlowData::FlowData(uint32_t, Inspector*) {}
+    FlowData::FlowData(uint32_t) {}
     FlowData::~FlowData() {}
+
     FlowData* FlowDataStore::get(uint32_t) const { return nullptr; }
     
+    uint32_t FlowData::flow_data_id = 1;
+    unsigned FlowData::create_flow_data_id()
+    { return ++flow_data_id; }
+
     void trace_vprintf(const char*, uint8_t, const char*, const Packet*, const char*, va_list) {}
     
     const StreamBuffer StreamSplitter::reassemble(Flow*, unsigned, unsigned,

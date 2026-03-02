@@ -625,7 +625,7 @@ const InspectApi reputation_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         REPUTATION_NAME,
         REPUTATION_HELP,

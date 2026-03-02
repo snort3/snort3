@@ -116,7 +116,7 @@ static const CodecApi mobility_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_MOBILE_NAME,
         CD_MOBILE_HELP,

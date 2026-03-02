@@ -33,6 +33,7 @@
 #include "flow/flow_cache.h"
 #include "flow/ha.h"
 #include "flow/session.h"
+#include "helpers/policy_switcher.h"
 #include "main/analyzer.h"
 #include "main/thread_config.h"
 #include "managers/inspector_manager.h"
@@ -73,6 +74,7 @@ DetectionEngine::~DetectionEngine() = default;
 void DetectionEngine::disable_all(Packet*) { }
 
 const SnortConfig* SnortConfig::get_conf() { return nullptr; }
+unsigned SnortConfig::get_reload_id() { return 0; }
 
 Flow* HighAvailabilityManager::import(Packet&, FlowKey&) { return nullptr; }
 bool HighAvailabilityManager::in_standby(Flow*) { return false; }
@@ -103,6 +105,9 @@ class TcpStreamTracker;
 const char* stream_tcp_state_to_str(const TcpStreamTracker&) { return "error"; }
 
 void LogMessage(const char*, ...) { }
+
+PolicySwitcher::PolicySwitcher(snort::Flow*) { }
+PolicySwitcher::~PolicySwitcher() { }
 
 namespace snort
 {

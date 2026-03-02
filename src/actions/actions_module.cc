@@ -29,20 +29,15 @@
 
 #include "log/messages.h"
 #include "managers/action_manager.h"
-#include "managers/module_manager.h"
+#include "managers/plugin_manager.h"
 
 const PegInfo end_peg[] =
 {
     { CountType::END, nullptr, nullptr }
 };
 
-std::map<std::string, std::vector<PegInfo>> ActionsModule::module_peg_info_map { };
-
-std::array<PegInfo, ACTIONS_ARRAY_SIZE> ActionsModule::peg_info_array { {end_peg[0]} };
-
 THREAD_LOCAL std::array<PegCount, ACTIONS_ARRAY_SIZE> ActionsModule::peg_count_array {{0}};
 THREAD_LOCAL std::array<PegCount, ACTIONS_ARRAY_SIZE> ActionsModule::prev_peg_count_array {{0}};
-
 
 void ActionsModule::add_action(std::string module_name, const PegInfo* pegs)
 {
@@ -82,7 +77,7 @@ void ActionsModule::prep_counts(bool dump_stats)
     int peg_count = 0;
     for (auto& kv : module_peg_info_map)
     {
-        Module* mod = snort::ModuleManager::get_module(kv.first.c_str());
+        Module* mod = PluginManager::get_module(kv.first.c_str());
         const PegInfo* pegs = mod->get_pegs();
         const PegCount* counts = mod->get_counts();
 
@@ -124,7 +119,7 @@ PegCount* ActionsModule::get_counts() const
 
 const PegInfo* ActionsModule::get_pegs() const
 {
-    return (PegInfo*)&peg_info_array[0];
+    return (const PegInfo*)&peg_info_array[0];
 }
 
 void ActionsModule::reset_stats()

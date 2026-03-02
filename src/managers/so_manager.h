@@ -22,43 +22,25 @@
 
 // Factory for shared object rules.
 // Runtime is same as for text rules.
-#include <list>
 #include "framework/so_rule.h"
 #include "managers/plugin_manager.h"
 
-namespace snort
-{
-struct SnortConfig;
-class Inspector;
-}
-
 //-------------------------------------------------------------------------
-struct SoRules
-{
-    std::list<const SoApi*> api;
-    std::list<SoHandlePtr> handles;
-    snort::Inspector* proxy = nullptr;
-    ~SoRules();
-};
 
 class SoManager
 {
 public:
-    static void add_plugin(const SoApi*, snort::SnortConfig*, SoHandlePtr);
-    static void dump_plugins();
+    static class PlugInterface* get_interface(const SoApi*);
 
-    static void instantiate(const SoApi*);
+    static void dump_rule_stubs();
 
     // soid is arg to soid option, so is arg to so option
-    static const char* get_so_rule(const char* soid, snort::SnortConfig* sc = nullptr);
-    static SoEvalFunc get_so_eval(const char* soid, const char* so,
-        void** data, snort::SnortConfig* sc = nullptr);
-    static void delete_so_data(const char* soid, void*, SoRules*);
+    static const char* get_so_rule(const char* soid);
+    static SoEvalFunc get_so_eval(const char* soid, const char* so, void** data);
+    static void delete_so_data(PluginPtr, void*);
 
     static void rule_to_hex(const char* file);
     static void rule_to_text(const char* file);
-    static void dump_rule_stubs(const char*, snort::SnortConfig*);
-    static void load_so_proxy();
 };
 
 #endif

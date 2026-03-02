@@ -489,7 +489,7 @@ static const InspectApi sp_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         PS_NAME,
         PS_HELP,

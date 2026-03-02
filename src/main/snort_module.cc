@@ -31,9 +31,11 @@
 #include "detection/fp_detect.h"
 #include "framework/module.h"
 #include "framework/parameter.h"
+#include "framework/pig_pen.h"
 #include "log/messages.h"
 #include "main.h"
 #include "managers/codec_manager.h"
+#include "managers/plugin_manager.h"
 #include "packet_io/sfdaq_config.h"
 #include "packet_io/trough.h"
 #include "parser/config_file.h"
@@ -78,22 +80,6 @@ static const Parameter s_reload_w_path[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-static const Parameter s_delete[] =
-{
-    { "inspector", Parameter::PT_STRING, nullptr, nullptr,
-      "name of inspector to delete" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
-static const Parameter s_module[] =
-{
-    { "module", Parameter::PT_STRING, nullptr, nullptr,
-      "name of the module to reload" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
-};
-
 static const Parameter s_pktnum[] =
 {
     { "pkt_num", Parameter::PT_INT, "1:max53", nullptr,
@@ -121,14 +107,14 @@ static const Parameter main_log_command_param[] =
 
 static const Parameter reset_stat_param[] =
 {
-	{ "type", Parameter::PT_STRING, nullptr, nullptr, "possible type can be: daq|module|appid|file_id|snort|ha|all." },
-	{ nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+    { "type", Parameter::PT_STRING, nullptr, nullptr,
+      "possible type can be: daq|module|appid|file_inspect|snort|ha|all." },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 static const Parameter s_heap_params[] =
 {
-    { "enable", Parameter::PT_BOOL, nullptr, nullptr,
-      "enable/disable jemalloc tracking" },
+    { "enable", Parameter::PT_BOOL, nullptr, nullptr, "enable/disable jemalloc tracking" },
     { "sample_rate", Parameter::PT_INT, "0:max32", nullptr,
       "average interval(log base 2) between memory profile dumps, as measured in bytes of allocation activity" },
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
@@ -136,40 +122,38 @@ static const Parameter s_heap_params[] =
 
 static const Command snort_cmds[] =
 {
-    { "set_watchdog_params", main_set_watchdog_params, s_watchdog, "set watchdog parameters" },
-    { "show_plugins", main_dump_plugins, nullptr, "show available plugins" },
-
-    { "delete_inspector", main_delete_inspector, s_delete,
-      "delete an inspector from the default policy" },
-
-    { "dump_stats", main_dump_stats, nullptr, "show summary statistics" },
-    { "dump_heap_stats", main_dump_heap_stats, nullptr, "show heap statistics" },
-    { "heap_profile", main_heap_profile, s_heap_params, "jemalloc memory tracking configuration"},
+    { "detach", main_detach, nullptr, "detach from control shell (without shutting down)", true },
     { "dump_heap_profile", main_dump_heap_profile, nullptr, "dump jemalloc memory profile"},
-    { "show_heap_profile", main_show_heap_profile, nullptr, "show jemalloc memory profiling configuration"},
-    { "reset_stats", main_reset_stats, reset_stat_param, "clear summary statistics. "
-      "Type can be: daq|module|appid|file_id|snort|ha|all. reset_stats() without a parameter clears all statistics."},
-    { "rotate_stats", main_rotate_stats, nullptr, "roll perfmonitor log files" },
-    { "reload_config", main_reload_config, s_reload_w_path, "load new configuration" },
-    { "reload_policy", main_reload_policy, s_reload, "reload part or all of the default policy" },
-    { "reload_daq", main_reload_daq, nullptr, "reload daq module" },
-    { "reload_hosts", main_reload_hosts, s_reload, "load a new hosts table" },
+    { "dump_heap_stats", main_dump_heap_stats, nullptr, "show heap statistics" },
+    { "dump_inspector_map", main_dump_inspector_map, nullptr, "show inspectors to policy ID mapping" },
+    { "dump_stats", main_dump_stats, nullptr, "show summary statistics" },
+    { "heap_profile", main_heap_profile, s_heap_params, "jemalloc memory tracking configuration"},
+    { "help", main_help, nullptr, "this output", true },
+    { "list_plugins", main_list_plugins, nullptr, "list loaded plugins" },
     { "log_command", main_log_command,main_log_command_param, "enable or disable command logging"},
-    { "show_config_generation", main_show_config_generation, nullptr, "show loaded configuration ID"},
-    { "show_snort_cpu", show_snort_cpu, nullptr, "show snort cpu usage"},
-    { "show_snort_packet_latency", show_snort_packet_latency, nullptr, "show snort packet latency data"},
+    { "pause", main_pause, nullptr, "suspend packet processing", true },
 
     // FIXIT-M rewrite trough to permit updates on the fly
     //{ "process", main_process, nullptr, "process given pcap" },
 
-    { "pause", main_pause, nullptr, "suspend packet processing", true },
-
+    { "quit", main_quit, nullptr, "shutdown and dump-stats", true },
+    { "reload_config", main_reload_config, s_reload_w_path, "load new configuration" },
+    { "reload_daq", main_reload_daq, nullptr, "reload daq module" },
+    { "reload_hosts", main_reload_hosts, s_reload, "load a new hosts table" },
+    { "reset_stats", main_reset_stats, reset_stat_param, "clear summary statistics. "
+      "Type can be: daq|module|appid|file_inspect|snort|ha|all. reset_stats() without a parameter clears all "
+      "statistics."},
     { "resume", main_resume, s_pktnum, "continue packet processing. "
       "If number of packets is specified, will resume for n packets and pause", true },
 
-    { "detach", main_detach, nullptr, "detach from control shell (without shutting down)", true },
-    { "quit", main_quit, nullptr, "shutdown and dump-stats", true },
-    { "help", main_help, nullptr, "this output", true },
+    { "rotate_stats", main_rotate_stats, nullptr, "roll perfmonitor log files" },
+    { "set_watchdog_params", main_set_watchdog_params, s_watchdog, "set watchdog parameters" },
+    { "show_heap_profile", main_show_heap_profile, nullptr, "show jemalloc memory profiling configuration"},
+    { "show_plugins", main_show_plugins, nullptr, "show loaded plugins" },
+    { "show_config_generation", main_show_config_generation, nullptr, "show loaded configuration ID"},
+    { "show_snort_cpu", show_snort_cpu, nullptr, "show snort cpu usage"},
+    { "show_snort_packet_latency", show_snort_packet_latency, nullptr, "show snort packet latency data"},
+
 
     { nullptr, nullptr, nullptr, nullptr }
 };
@@ -364,6 +348,9 @@ static const Parameter s_params[] =
     { "--c2x", Parameter::PT_STRING, nullptr, nullptr,
       "output hex for given char (see also --x2c)" },
 
+    { "--close-all-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "Snort will not dlclose plugin libraries at shutdown unless this is set" },
+
 #ifdef SHELL
     { "--control-socket", Parameter::PT_STRING, nullptr, nullptr,
       "<file> to create unix socket" },
@@ -436,6 +423,11 @@ static const Parameter s_params[] =
     { "--enable-test-features", Parameter::PT_IMPLIED, nullptr, nullptr,
       "enable features used in testing" },
 
+#ifdef REG_TEST
+    { "--exit-after-reload", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "use with --daq pcap --daq-var 'rewind=true' to run only as long as it takes to reload" },
+#endif
+
     { "--gen-dump-config", Parameter::PT_STRING, nullptr, nullptr,
       "<file> dump configuration to a file during startup and configuration reload" },
 
@@ -469,7 +461,7 @@ static const Parameter s_params[] =
     { "--help-options", Parameter::PT_STRING, "(optional)", nullptr,
       "[<option prefix>] output matching command line option quick help (same as -?)" },
 
-    { "--help-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
+    { "--help-plugins", Parameter::PT_STRING, "(optional)", nullptr,
       "list all available plugins with brief help" },
 
     { "--help-signals", Parameter::PT_IMPLIED, nullptr, nullptr,
@@ -500,7 +492,7 @@ static const Parameter s_params[] =
     { "--list-modules", Parameter::PT_STRING, "(optional)", nullptr,
       "[<module type>] list all known modules of given type" },
 
-    { "--list-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
+    { "--list-plugins", Parameter::PT_STRING, "(optional)", nullptr,
       "list all known plugins" },
 
     { "--lua", Parameter::PT_STRING, nullptr, nullptr,
@@ -539,7 +531,7 @@ static const Parameter s_params[] =
     { "--pause", Parameter::PT_IMPLIED, nullptr, nullptr,
       "wait for resume/quit command before processing packets/terminating", },
 
-#ifdef REG_TEST
+#if defined(REG_TEST)
     { "--pause-after-n", Parameter::PT_INT, "1:max53", nullptr,
       "<count> pause after count packets", },
 #endif
@@ -605,8 +597,8 @@ static const Parameter s_params[] =
       "indicate how files are located: A=absolute and W, F, C which are relative "
       "to the working directory, including file, and config file respectively" },
 
-    { "--show-plugins", Parameter::PT_IMPLIED, nullptr, nullptr,
-      "list module and plugin versions", },
+    { "--show-modules", Parameter::PT_IMPLIED, nullptr, nullptr,
+      "list builtin and plugin modules and versions", },
 
     { "--skip", Parameter::PT_INT, "0:max53", nullptr,
       "<n> skip 1st n packets", },
@@ -688,59 +680,25 @@ static const Parameter s_params[] =
 
 THREAD_LOCAL const Trace* snort_trace = nullptr;
 
-class SnortModule : public Module
-{
-public:
-    SnortModule() : Module(s_name, s_help, s_params)
-    { }
+SnortModule::SnortModule() : Module(s_name, s_help, s_params)
+{ }
 
 #ifdef SHELL
-    const Command* get_commands() const override
-    { return snort_cmds; }
+const snort::Command* SnortModule::get_commands() const
+{ return snort_cmds; }
 #endif
 
-    bool begin(const char*, int, SnortConfig*) override;
-    bool set(const char*, Value&, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
+const PegInfo* SnortModule::get_pegs() const
+{ return proc_names; }
 
-    const PegInfo* get_pegs() const override
-    { return proc_names; }
+PegCount* SnortModule::get_counts() const
+{ return (PegCount*)&proc_stats; }
 
-    PegCount* get_counts() const override
-    { return (PegCount*)&proc_stats; }
-
-    bool global_stats() const override
-    { return true; }
-
-    void sum_stats(bool dump_stats) override
-    { 
-      Module::sum_stats(dump_stats);
-    }
-
-    void reset_stats() override
-    {
-        if (snort::in_main_thread())
-            Module::reset_stats();
-    }
-
-    ProfileStats* get_profile(unsigned, const char*&, const char*&) const override;
-
-    Usage get_usage() const override
-    { return GLOBAL; }
-
-    void set_trace(const Trace*) const override;
-    const TraceOption* get_trace_options() const override;
-
-private:
-    inline bool is(const Value& v, const char* opt);
-
-    SFDAQModuleConfig* module_config = nullptr;
-    bool no_warn_flowbits = false;
-    bool no_warn_rules = false;
-    std::string stub_opts;
-    std::set<string> cli_opts;
-    bool cli_mode = true;
-};
+void SnortModule::reset_stats()
+{
+    if (snort::in_main_thread())
+        Module::reset_stats();
+}
 
 void SnortModule::set_trace(const Trace* trace) const
 { snort_trace = trace; }
@@ -773,7 +731,7 @@ bool SnortModule::is(const Value& v, const char* opt)
 bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 {
     if ( is(v, "-?") )
-        help_options(sc, v.get_string());
+        help_options(sc, v.get_string(), this);
 
     else if ( is(v, "-A") )
         sc->set_alert_mode(v.get_string());
@@ -832,8 +790,10 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->set_log_dir(v.get_string());
 
     else if ( is(v, "-M") )
-        sc->enable_syslog();
-
+    {
+        PigPen::open_syslog();
+        SnortConfig::enable_log_syslog();
+    }
     else if ( is(v, "-m") )
         sc->set_umask(v.get_uint32());
 
@@ -902,6 +862,9 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
 
     else if ( is(v, "--c2x") )
         c2x(v.get_string());
+
+    else if ( is(v, "--close-all-plugins") )
+        PluginManager::set_close_all_plugins(true);
 
 #ifdef SHELL
     else if ( is(v, "--control-socket") )
@@ -1022,6 +985,10 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         sc->run_flags |= RUN_FLAG__TEST_FEATURES;
         SfIp::test_features = true;
     }
+#ifdef REG_TEST
+    else if ( is(v, "--exit-after-reload") )
+        sc->run_flags |= RUN_FLAG__EXIT_AFTER_RELOAD;
+#endif
     else if ( is(v, "--gen-dump-config") )
     {
         sc->run_flags |= RUN_FLAG__GEN_DUMP_CONFIG;
@@ -1058,7 +1025,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
         help_modules_json(sc, v.get_string());
 
     else if ( is(v, "--help-options") )
-        help_options(sc, v.get_string());
+        help_options(sc, v.get_string(), this);
 
     else if ( is(v, "--help-plugins") )
         help_plugins(sc, v.get_string());
@@ -1123,7 +1090,7 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( is(v, "--pause") )
         sc->run_flags |= RUN_FLAG__PAUSE;
 
-#ifdef REG_TEST
+#if defined(REG_TEST)
     else if ( is(v, "--pause-after-n") )
         sc->pkt_pause_cnt = v.get_uint64();
 #endif
@@ -1185,8 +1152,8 @@ bool SnortModule::set(const char*, Value& v, SnortConfig* sc)
     else if ( is(v, "--show-file-codes") )
         sc->run_flags |= RUN_FLAG__SHOW_FILE_CODES;
 
-    else if ( is(v, "--show-plugins") )
-        SnortConfig::enable_log_show_plugins();
+    else if ( is(v, "--show-modules") )
+        dump_modules(sc);
 
     else if ( is(v, "--skip") )
         sc->pkt_skip = v.get_uint64();
@@ -1302,19 +1269,5 @@ ProfileStats* SnortModule::get_profile(
         return &eventqPerfStats;
     }
     return nullptr;
-}
-
-//-------------------------------------------------------------------------
-// singleton
-//-------------------------------------------------------------------------
-
-static SnortModule* snort_module = nullptr;
-
-Module* get_snort_module()
-{
-    if ( !snort_module )
-        snort_module = new SnortModule;
-
-    return snort_module;
 }
 

@@ -59,31 +59,38 @@ HyperSearch::HyperSearch(LiteralSearch::Handle* h, const uint8_t* pattern, unsig
     pattern_len = len;
 
     hs_compile_error_t* err = nullptr;
+    hs_error_t result;
 
     unsigned flags = HS_FLAG_SINGLEMATCH;
     if ( no_case )
         flags |= HS_FLAG_CASELESS;
 
-#ifndef HAVE_HS_COMPILE_LIT
-    std::string hex_pat;
-
-    for ( unsigned i = 0; i < len; ++i )
+#ifdef HAVE_HS_COMPILE_LIT
+    if ( !memchr(pattern, 0, pattern_len) )
     {
-        char hex[5];
-        snprintf(hex, sizeof(hex), "\\x%02X", pattern[i]);
-        hex_pat += hex;
+        result = hs_compile_lit((const char*)pattern, flags, pattern_len,
+            HS_MODE_BLOCK, nullptr, (hs_database_t**)&db, &err);
     }
-
-    if ( hs_compile((const char*)hex_pat.c_str(), flags,
-        HS_MODE_BLOCK, nullptr, (hs_database_t**)&db, &err) != HS_SUCCESS )
-#else
-    if ( hs_compile_lit((const char*)pattern, flags, pattern_len,
-        HS_MODE_BLOCK, nullptr, (hs_database_t**)&db, &err) != HS_SUCCESS )
+    else
 #endif
+    {
+        std::string hex_pat;
+
+        for ( unsigned i = 0; i < len; ++i )
+        {
+            char hex[5];
+            snprintf(hex, sizeof(hex), "\\x%02X", pattern[i]);
+            hex_pat += hex;
+        }
+
+        result = hs_compile((const char*)hex_pat.c_str(), flags,
+            HS_MODE_BLOCK, nullptr, (hs_database_t**)&db, &err);
+    }
+    if ( result != HS_SUCCESS )
     {
         std::string print_str;
         uint8_to_printable_str(pattern, len, print_str);
-        ParseError("can't compile content '%s'", print_str.c_str());
+        ParseError("can't compile content '%s' (%s / %d)", print_str.c_str(), err->message, err->expression);
         hs_free_compile_error(err);
         return;
     }

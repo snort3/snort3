@@ -28,30 +28,98 @@
 #include "packet_io/sfdaq.h"
 #include "protocols/packet_manager.h"
 
+#include "plugin_manager.h"
+#include "plug_interface.h"
+
 using namespace snort;
 
-struct CodecManager::CodecApiWrapper
+#define DEFAULT_CODEC "unknown"
+
+CodecManager* CodecManager::get_instance()
 {
+    NetworkPolicy* np = get_network_policy();
+    assert(np);
+    return np->cd_mgr;
+}
+
+class CodecManager::CodecApiWrapper : public PlugInterface
+{
+public:
+    CodecApiWrapper(const CodecApi* a)
+    { api = a; }
+
+    ~CodecApiWrapper() override
+    { }
+
+    void global_init() override
+    {
+        if ( api->pinit )
+            api->pinit();
+    }
+
+    void global_term() override
+    {
+        if ( api->pterm )
+            api->pterm();
+    }
+
+    void thread_init() override
+    {
+        if ( api->tinit )
+            api->tinit();
+    }
+
+    void thread_term() override
+    {
+        if ( api->tterm )
+            api->tterm();
+    }
+
+    void instantiate(Module* m, SnortConfig*, const char*) override
+    {
+        get_instance()->instantiate(*this, m);
+    }
+
+public:
     const CodecApi* api;
-    bool init;
 };
 
 //  CodecManager Private Data
-
-// the zero initialization is not required but quiets the compiler
-std::vector<CodecManager::CodecApiWrapper> CodecManager::s_codecs;
-std::array<uint8_t, num_protocol_ids> CodecManager::s_proto_map {
-    { 0 }
-};
-std::array<Codec*, UINT8_MAX> CodecManager::s_protocols {
-    { nullptr }
-};
-
 THREAD_LOCAL ProtocolId CodecManager::grinder_id = ProtocolId::ETHERTYPE_NOT_SET;
 THREAD_LOCAL uint8_t CodecManager::grinder = 0;
 
-// This is hardcoded into Snort++
-extern const CodecApi* default_codec;
+CodecManager::CodecManager()
+{
+    CodecManager::instantiate();
+}
+
+CodecManager::~CodecManager()
+{
+    for ( auto* cd : s_protocols )
+    {
+        if (!cd or cd == s_protocols[0])
+            continue;
+
+        CodecApiWrapper* wrap = (CodecApiWrapper*)PluginManager::get_interface(cd->get_name());
+        wrap->api->dtor(cd);
+    }
+    if (s_protocols[0])
+    {
+        CodecApiWrapper* wrap = (CodecApiWrapper*)PluginManager::get_interface(s_protocols[0]->get_name());
+        wrap->api->dtor(s_protocols[0]);
+    }
+}
+
+PlugInterface* CodecManager::get_interface(const CodecApi* api)
+{
+    if (!api->ctor)
+        ParseError("CodecApi ctor() for Codec %s: ctor() must be implemented", api->base.name);
+
+    if (!api->dtor)
+        ParseError("CodecApi dtor() for Codec %s: dtor() must be implemented", api->base.name);
+
+    return new CodecApiWrapper(api);
+}
 
 /*
  * Begin search from index 1.  0 is a special case in that it is the default
@@ -62,142 +130,97 @@ extern const CodecApi* default_codec;
  */
 uint8_t CodecManager::get_codec(const char* const keyword)
 {
-    // starting at 1 since 0 is default
     for ( uint8_t i = 1; i < s_protocols.size(); i++)
     {
         if (s_protocols[i])
         {
             const char* name = s_protocols[i]->get_name();
-            if ( !strncasecmp(name, keyword, strlen(name)) )
+            if ( !strcmp(name, keyword) )
                 return i;
         }
     }
     return 0;
 }
 
-CodecManager::CodecApiWrapper& CodecManager::get_api_wrapper(const CodecApi* cd_api)
+void CodecManager::uninstall(CodecApiWrapper& wrap, std::size_t cd_id)
 {
-    auto it = std::find_if(s_codecs.begin(), s_codecs.end(),
-        [cd_api](const CodecApiWrapper& caw){ return caw.api == cd_api; });
-    if (it != s_codecs.end())
-        return *it;
+    Codec* cd = s_protocols[cd_id];
+    s_protocols[cd_id] = nullptr;
 
-    ParseAbort("Attempting to instantiate Codec '%s', "
-        "but codec has not been added", cd_api->base.name);
+    std::vector<ProtocolId> ids;
+    cd->get_protocol_ids(ids);
+
+    for (auto id : ids)
+        s_proto_map[to_utype(id)] = 0;
+
+    wrap.api->dtor(cd);
 }
 
-void CodecManager::add_plugin(const CodecApi* api)
-{
-    if (!api->ctor)
-        ParseError("CodecApi ctor() for Codec %s: ctor() must be implemented", api->base.name);
-
-    if (!api->dtor)
-        ParseError("CodecApi ctor() for Codec %s: ctor() must be implemented", api->base.name);
-
-    CodecApiWrapper wrap;
-    wrap.api = api;
-    wrap.init = false;
-
-    s_codecs.emplace_back(wrap);
-}
-
-void CodecManager::release_plugins()
-{
-    for ( CodecApiWrapper& wrap : s_codecs )
-    {
-        if (wrap.api->pterm)
-        {
-            wrap.api->pterm();
-            wrap.init = false; // Future proofing this function.
-        }
-
-        uint8_t index = get_codec(wrap.api->base.name);
-        if ( index != 0)
-        {
-            wrap.api->dtor(s_protocols[index]);
-            s_protocols[index] = nullptr;
-        }
-    }
-
-    // The default codec is NOT part of the plugin list
-    if (default_codec->pterm)
-        default_codec->pterm();
-
-    if (s_protocols[0])
-    {
-        default_codec->dtor(s_protocols[0]);
-        s_protocols[0] = nullptr;
-    }
-
-    s_codecs.clear();
-    s_proto_map.fill(0);
-}
-
+// we install all codecs first so that each CodecManager instance has
+// the same mapping because there is only one (thread local) grinder
+// so it must point to the same codec in each instance. the alternative
+// is to make the grinder a slotted member (members can't have thread
+// local storage class).
+//
+// when codecs are later instantiated by Lua, we must find the default
+// instance, unmap it and remove it, and then map and install the new
+// instance since it could be configured with different IDs like
+// vlan.extra_tpid_ether_types.
 void CodecManager::instantiate(CodecApiWrapper& wrap, Module* m)
 {
-    if (!wrap.init)
+    if (codec_id >= s_protocols.size())
     {
-        std::vector<ProtocolId> ids;
-        const CodecApi* const cd_api = wrap.api;
-        static std::size_t codec_id = 1;
-
-        if (codec_id >= s_protocols.size())
-        {
-            ParseError("A maximum of 256 codecs can be registered");
-            return;
-        }
-
-        if (cd_api->pinit)
-            cd_api->pinit();
-
-        Codec* cd = cd_api->ctor(m);
-        cd->get_protocol_ids(ids);
-
-        for (auto id : ids)
-        {
-            if (s_proto_map[to_utype(id)] != 0)
-                ParseError("The Codecs %s and %s have both been registered "
-                    "for protocol_id %d. Codec %s will be used\n",
-                    s_protocols[s_proto_map[to_utype(id)]]->get_name(), cd->get_name(),
-                    static_cast<uint16_t>(id), cd->get_name());
-
-            // future proofing
-            s_proto_map[to_utype(id)] = (decltype(s_proto_map[to_utype(id)]))codec_id;
-        }
-
-        wrap.init = true;
-        s_protocols[codec_id++] = cd;
+        ParseError("A maximum of 256 codecs can be registered");
+        return;
     }
-}
 
-void CodecManager::instantiate(const CodecApi* cd_api, Module* m)
-{
-    CodecApiWrapper& wrap = get_api_wrapper(cd_api);
-    instantiate(wrap, m);
+    Codec* cd = wrap.api->ctor(m);
+    std::size_t cd_id = get_codec(cd->get_name());
+
+    if ( cd_id )
+        uninstall(wrap, cd_id);
+    else
+        cd_id = codec_id++;
+
+    std::vector<ProtocolId> ids;
+    cd->get_protocol_ids(ids);
+
+    for (auto id : ids)
+    {
+        auto a = to_utype(id);
+        auto b = (decltype(s_proto_map[a]))cd_id;
+
+        if (s_proto_map[a] != 0)
+            ParseError("The codecs %s and %s have both been registered "
+                "for protocol_id 0x%X. Codec %s will be used\n",
+                s_protocols[s_proto_map[to_utype(id)]]->get_name(), cd->get_name(),
+                static_cast<uint16_t>(id), cd->get_name());
+
+        s_proto_map[a] = b;
+    }
+
+    s_protocols[cd_id] = cd;
 }
 
 void CodecManager::instantiate()
 {
-    CodecApiWrapper tmp_wrap;
-    tmp_wrap.api = default_codec;
-    tmp_wrap.init = false;
-    instantiate(tmp_wrap, nullptr);
+    auto create = [](PlugInterface* pin, void* pv)
+    {
+        CodecApiWrapper* wrap = (CodecApiWrapper*)pin;
+        ((CodecManager*)pv)->instantiate(*wrap, nullptr);
+        PluginManager::set_instantiated(wrap->api->base.name);
+    };
 
-    // default codec is the api ... I want the codec.
-    s_protocols[0] = s_protocols[get_codec(default_codec->base.name)];
+    PluginManager::for_each(PT_CODEC, create, this);
 
-    // and instantiate every codec which does not have a module
-    for (CodecApiWrapper& wrap : s_codecs)
-        instantiate(wrap, nullptr);
+    if ( auto id = get_codec(DEFAULT_CODEC) )
+        s_protocols[0] = s_protocols[id];
 }
 
 void CodecManager::thread_init()
 {
-    for ( CodecApiWrapper& wrap : s_codecs )
-        if (wrap.api->tinit)
-            wrap.api->tinit();
-
     int daq_dlt = SFDAQ::get_base_protocol();
+
     for (int i = 0; s_protocols[i] != nullptr; i++)
     {
         Codec* cd = s_protocols[i];
@@ -210,9 +233,9 @@ void CodecManager::thread_init()
             {
                 if (grinder != 0)
                     WarningMessage("The Codecs %s and %s have both been registered "
-                        "as the raw decoder. Codec %s will be used\n",
+                        "as the DLT(%i) decoder. Codec %s will be used\n",
                         s_protocols[grinder]->get_name(), cd->get_name(),
-                        cd->get_name());
+                        curr_dlt, cd->get_name());
 
                 std::vector<ProtocolId> ids;
                 s_protocols[i]->get_protocol_ids(ids);
@@ -227,23 +250,16 @@ void CodecManager::thread_init()
         ErrorMessage("No codec found for data link type %d\n", daq_dlt);
 }
 
+void CodecManager::thread_reinit()
+{
+    grinder_id = ProtocolId::ETHERTYPE_NOT_SET;
+    grinder = 0;
+    thread_init();
+}
+
 void CodecManager::thread_term()
 {
     PacketManager::accumulate(); // statistics
-
-    for ( CodecApiWrapper& wrap : s_codecs )
-    {
-        if (wrap.api->tterm)
-            wrap.api->tterm();
-    }
-}
-
-void CodecManager::dump_plugins()
-{
-    Dumper d("Codecs");
-
-    for ( const CodecApiWrapper& wrap : s_codecs )
-        d.dump(wrap.api->base.name, wrap.api->base.version);
 }
 
 uint8_t CodecManager::get_grinder()

@@ -28,10 +28,10 @@ template <typename T>
 class Ring
 {
 public:
-    Ring<T>(int size);
-    ~Ring<T>();
+    Ring(int size);
+    ~Ring();
 
-    Ring<T>(const Ring<T>&) = delete;
+    Ring(const Ring<T>&) = delete;
     Ring<T>& operator=(const Ring<T>&) = delete;
 
     T* read();

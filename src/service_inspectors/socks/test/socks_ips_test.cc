@@ -45,7 +45,10 @@ namespace snort
 {
 unsigned FlowData::flow_data_id = 0;
 
-FlowData::FlowData(unsigned u, Inspector* i) : handler(i), id(u) {}
+unsigned FlowData::create_flow_data_id()
+{ return ++flow_data_id; }
+
+FlowData::FlowData(unsigned u) : id(u) {}
 FlowData::~FlowData() = default;
 
 FlowDataStore::~FlowDataStore() = default;

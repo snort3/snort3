@@ -143,7 +143,6 @@ public:
     static MPTransport * transport_layer;
     static MPDataBusStats mp_global_stats;
     unsigned init(int);
-    void clone(MPDataBus& from, const char* exclude_name = nullptr);
 
     static unsigned get_id(const PubKey& key);
     static const char* get_name_from_id(unsigned id);

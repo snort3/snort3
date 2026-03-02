@@ -77,10 +77,6 @@ public:
     virtual void reinitialize_paf(uint32_t seq) = 0;
     virtual uint32_t get_paf_position() const = 0;
 
-    // static methods for TcpReassembler per thread initialization and termination
-    static void tinit();
-    static void tterm();
-
 protected:
     uint8_t packet_dir = 0;
     bool server_side = true;
@@ -143,8 +139,6 @@ public:
 
     FlushPolicy get_flush_policy() const override
     { return STREAM_FLPOLICY_IGNORE; }
-
-    static TcpReassemblerIgnore* get_instance(bool server_side);
 };
 
 class  TcpReassemblerBase : public TcpReassembler

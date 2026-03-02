@@ -58,7 +58,7 @@ struct PortTable;
 struct vartable_t;
 struct sfip_var_t;
 
-#define UNDEFINED_NETWORK_USER_POLICY_ID UINT64_MAX
+#define UNDEFINED_NETWORK_USER_POLICY_ID 0
 
 typedef unsigned int PolicyId;
 typedef snort::GHash PortVarTable;
@@ -152,17 +152,13 @@ public:
 public:
     PolicyId policy_id = 0;
     PolicyMode policy_mode = POLICY_MODE__MAX;
-    uint64_t user_policy_id = 0;
+    uint64_t user_policy_id = 1;
     uuid_t uuid{};
 
-    struct FrameworkPolicy* framework_policy;
+    struct ServicePig* service_group = nullptr;
     snort::DataBus dbus;
-    bool cloned;
 
     JSNormConfig* jsn_config = nullptr;
-
-private:
-    void init(InspectionPolicy* old_inspection_policy);
 };
 
 //-------------------------------------------------------------------------
@@ -177,7 +173,7 @@ struct NetworkPolicy
 {
 public:
     NetworkPolicy(PolicyId = 0, PolicyId default_ips_id = 0);
-    NetworkPolicy(NetworkPolicy*, const char*);
+    NetworkPolicy(const char*);
     ~NetworkPolicy();
 
     InspectionPolicy* get_inspection_policy(unsigned i = 0)
@@ -215,14 +211,15 @@ protected:
     FilePolicy* file_policy;
 
 public:
-    struct TrafficPolicy* traffic_policy;
+    class CodecManager* cd_mgr = nullptr;
+    struct TrafficPig* traffic_group = nullptr;
     snort::DataBus dbus;
 
     std::vector<InspectionPolicy*> inspection_policy;
     std::unordered_map<uint64_t, InspectionPolicy*> user_inspection;
 
     PolicyId policy_id = 0;
-    uint64_t user_policy_id = 0;
+    uint64_t user_policy_id = 1;
     PolicyId default_ips_policy_id = 0;
 
     // minimum possible (allows all but errors to pass by default)
@@ -234,10 +231,9 @@ public:
     uint32_t normal_mask = 0;
 
     int hs_timeout = -1;
-    bool cloned = false;
 
 private:
-    void init(NetworkPolicy*, const char*);
+    void init(const char*);
 };
 
 //-------------------------------------------------------------------------
@@ -251,6 +247,8 @@ public:
 
     IpsPolicy(PolicyId = 0);
     ~IpsPolicy();
+
+    void update_user_policy_id();
 
 public:
     PolicyId policy_id;
@@ -305,13 +303,12 @@ struct PolicyTuple
     { }
 };
 
-struct GlobalInspectorPolicy;
-class SingleInstanceInspectorPolicy;
+struct GlobalPig;
 
 class PolicyMap
 {
 public:
-    PolicyMap(PolicyMap* old_map = nullptr, const char* exclude_name = nullptr);
+    PolicyMap();
     ~PolicyMap();
 
     InspectionPolicy* add_inspection_shell(Shell*);
@@ -350,23 +347,14 @@ public:
     unsigned shells_count()
     { return shells.size(); }
 
-    void set_cloned(bool state)
-    { cloned = state; }
-
     snort::PolicySelector* get_policy_selector() const
     { return selector; }
 
     void set_policy_selector(snort::PolicySelector* new_selector)
     { selector = new_selector; }
 
-    SingleInstanceInspectorPolicy* get_file_id()
-    { return file_id; }
-
-    SingleInstanceInspectorPolicy* get_flow_tracking()
-    { return flow_tracking; }
-
-    GlobalInspectorPolicy* get_global_inspector_policy()
-    { return global_inspector_policy; }
+    GlobalPig* get_global_group()
+    { return global_group; }
 
     const Shell* get_shell_by_policy(unsigned id) const
     {
@@ -376,14 +364,9 @@ public:
         return (it == std::end(shell_map)) ? nullptr : it->first;
     }
 
-    bool get_inspector_tinit_complete(unsigned instance_id) const
-    { return inspector_tinit_complete[instance_id]; }
-
-    void set_inspector_tinit_complete(unsigned instance_id, bool val)
-    { inspector_tinit_complete[instance_id] = val; }
+    const Shell* get_shell_by_file(const std::string&) const;
 
 private:
-    void clone(PolicyMap *old_map, const char* exclude_name);
     bool set_user_network(NetworkPolicy* p);
 
     std::vector<Shell*> shells;
@@ -396,12 +379,7 @@ private:
     std::unordered_map<uint64_t, IpsPolicy*> user_ips;
 
     snort::PolicySelector* selector = nullptr;
-    SingleInstanceInspectorPolicy* file_id;
-    SingleInstanceInspectorPolicy* flow_tracking;
-    GlobalInspectorPolicy* global_inspector_policy;
-
-    bool* inspector_tinit_complete;
-    bool cloned = false;
+    GlobalPig* global_group;
 };
 
 #endif

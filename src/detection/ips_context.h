@@ -142,18 +142,18 @@ public:
 public:
     std::vector<Replacement> rpl;
 
-    Packet* packet;
+    Packet* packet = nullptr;
     Packet* wire_packet = nullptr;
-    Packet* encode_packet;
-    DAQ_PktHdr_t* pkth;
-    uint8_t* buf;
+    Packet* encode_packet = nullptr;
+    DAQ_PktHdr_t* pkth = nullptr;
+    uint8_t* buf = nullptr;
 
     const SnortConfig* conf = nullptr;
-    MpseBatch searches;
-    MpseStash* stash;
-    OtnxMatchData* otnx;
+    MpseBatch searches {};
+    MpseStash* stash = nullptr;
+    OtnxMatchData* otnx = nullptr;
     std::list<RegexRequest*>::iterator regex_req_it;
-    SF_EVENTQ* equeue;
+    SF_EVENTQ* equeue = nullptr;
 
     DataPointer file_data = DataPointer(nullptr, 0);
     uint64_t file_data_id = 0;
@@ -163,12 +163,12 @@ public:
     unsigned file_pos = 0;
     bool file_type_process = false;
 
-    uint64_t context_num;
+    uint64_t context_num = 0;
     uint64_t packet_number = 0;
-    ActiveRules active_rules;
-    State state;
-    bool check_tags;
-    bool clear_inspectors;
+    ActiveRules active_rules = NONE;
+    State state = IDLE;
+    bool check_tags = false;
+    bool clear_inspectors = false;
 
     static const unsigned buf_size = Codec::PKT_MAX;
 
@@ -183,8 +183,8 @@ private:
     std::vector<IpsContextData*> data;
     std::vector<unsigned> ids_in_use;  // for indirection; FIXIT-P evaluate alternatives
     std::vector<Callback> post_callbacks;
-    IpsContext* depends_on;
-    IpsContext* next_to_process;
+    IpsContext* depends_on = nullptr;
+    IpsContext* next_to_process = nullptr;
     bool remove_gadget = false;
 };
 }

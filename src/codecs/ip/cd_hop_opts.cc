@@ -112,7 +112,7 @@ static const CodecApi ipv6_hopopts_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_HOPOPTS_NAME,
         CD_HOPOPTS_HELP,

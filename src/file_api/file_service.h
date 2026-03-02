@@ -66,6 +66,9 @@ public:
     static DecodeConfig decode_conf;
 
 private:
+    static void reset();
+
+private:
     static std::atomic<bool> file_type_id_enabled;
     static bool file_signature_enabled;
     static bool file_capture_enabled;

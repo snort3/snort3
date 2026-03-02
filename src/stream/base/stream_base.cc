@@ -39,6 +39,7 @@
 #include "pub_sub/stream_event_ids.h"
 #include "stream/flush_bucket.h"
 #include "stream/stream.h"
+#include "stream/tcp/held_packet_queue.h"
 #include "stream/tcp/tcp_stream_tracker.h"
 
 #include "stream_ha.h"
@@ -57,7 +58,6 @@ std::vector<FlowControl *> crash_dump_flow_control;
 static std::mutex crash_dump_flow_control_mutex;
 
 THREAD_LOCAL BaseStats stream_base_stats;
-
 
 // FIXIT-L dependency on stats define in another file
 const PegInfo base_pegs[] =
@@ -232,7 +232,7 @@ public:
     bool configure(SnortConfig*) override;
     void show(const SnortConfig*) const override;
 
-    void tear_down(SnortConfig*) override;
+    void tear_down(SnortConfig*, bool) override;
 
     void tinit() override;
     void tterm() override;
@@ -252,12 +252,22 @@ bool StreamBase::configure(SnortConfig*)
     return true;
 }
 
-void StreamBase::tear_down(SnortConfig* sc)
-{ sc->register_reload_handler(new StreamUnloadReloadResourceManager); }
+void StreamBase::tear_down(SnortConfig* sc, bool shutdown)
+{
+    if ( !shutdown )
+        sc->register_reload_handler(new StreamUnloadReloadResourceManager);
+}
+
+static THREAD_LOCAL bool keep_tld = false;
 
 void StreamBase::tinit()
 {
-    assert(!flow_con && config.flow_cache_cfg.max_flows);
+    if ( flow_con )
+    {
+        keep_tld = true;
+        return;
+    }
+    assert(config.flow_cache_cfg.max_flows);
 
     // this is temp added to suppress the compiler error only
     flow_con = new FlowControl(config.flow_cache_cfg);
@@ -271,38 +281,43 @@ void StreamBase::tinit()
 
     StreamHAManager::tinit();
 
-    if ( (f = InspectorManager::get_session(PROTO_BIT__IP)) )
+    if ( (f = InspectorManager::get_session("stream_ip", PROTO_BIT__IP)) )
         flow_con->init_proto(PktType::IP, f);
 
-    if ( (f = InspectorManager::get_session(PROTO_BIT__ICMP)) )
+    if ( (f = InspectorManager::get_session("stream_icmp", PROTO_BIT__ICMP)) )
         flow_con->init_proto(PktType::ICMP, f);
 
-    if ( (f = InspectorManager::get_session(PROTO_BIT__TCP)) )
+    if ( (f = InspectorManager::get_session("stream_tcp", PROTO_BIT__TCP)) )
         flow_con->init_proto(PktType::TCP, f);
 
-    if ( (f = InspectorManager::get_session(PROTO_BIT__UDP)) )
+    if ( (f = InspectorManager::get_session("stream_udp", PROTO_BIT__UDP)) )
         flow_con->init_proto(PktType::UDP, f);
 
-    if ( (f = InspectorManager::get_session(PROTO_BIT__USER)) )
+    if ( (f = InspectorManager::get_session("stream_user", PROTO_BIT__USER)) )
         flow_con->init_proto(PktType::USER, f);
 
-    if ( (f = InspectorManager::get_session(PROTO_BIT__FILE)) )
+    if ( (f = InspectorManager::get_session("stream_file", PROTO_BIT__FILE)) )
         flow_con->init_proto(PktType::FILE, f);
 
     if ( config.flow_cache_cfg.max_flows > 0 )
         flow_con->init_exp(config.flow_cache_cfg.max_flows);
-
-    TcpStreamTracker::set_held_packet_timeout(config.held_packet_timeout);
 
 #ifdef REG_TEST
     FlushBucket::set(config.footprint);
 #else
     FlushBucket::set();
 #endif
+    Stream::set_held_packet_queue(config.hold_time);
 }
 
 void StreamBase::tterm()
 {
+    if ( keep_tld )
+    {
+        keep_tld = false;
+        return;
+    }
+    Stream::delete_held_packet_queue();
     StreamHAManager::tterm();
     FlushBucket::clear();
     base_prep();
@@ -406,18 +421,6 @@ static void base_dtor(Inspector* p)
     delete p;
 }
 
-static void base_tinit()
-{
-    TcpStreamTracker::thread_init();
-}
-
-static void base_tterm()
-{
-    StreamHAManager::tterm();
-    FlushBucket::clear();
-    TcpStreamTracker::thread_term();
-}
-
 static const InspectApi base_api =
 {
     {
@@ -436,10 +439,10 @@ static const InspectApi base_api =
     PROTO_BIT__ANY_SSN,
     nullptr, // buffers
     nullptr, // service
-    nullptr, // init
-    nullptr, // term
-    base_tinit,
-    base_tterm,
+    nullptr, // pinit
+    nullptr, // pterm
+    nullptr, // tinit
+    nullptr, // tterm
     base_ctor,
     base_dtor,
     nullptr, // ssn
@@ -447,3 +450,4 @@ static const InspectApi base_api =
 };
 
 const BaseApi* nin_stream_base = &base_api.base;
+

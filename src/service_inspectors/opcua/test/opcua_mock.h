@@ -34,7 +34,7 @@ unsigned OpcuaFlowData::inspector_id = 0;
 
 namespace snort
 {
-FlowData::FlowData(unsigned, Inspector*) : handler(nullptr), id(0) 
+FlowData::FlowData(unsigned) : id(0) 
 { }
 FlowData::~FlowData() = default;
 
@@ -60,9 +60,8 @@ class StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
 // LCOV_EXCL_STOP
 }
 
-
 OpcuaFlowData::OpcuaFlowData() : 
-    snort::FlowData(OpcuaFlowData::inspector_id, nullptr) { }
+    snort::FlowData(OpcuaFlowData::inspector_id) { }
 
 OpcuaFlowData::~OpcuaFlowData()
 {
@@ -73,4 +72,5 @@ OpcuaFlowData::~OpcuaFlowData()
 
 void OpcuaFlowData::init() { }
 
-#endif // OPCUA_MOCK_H
+#endif
+

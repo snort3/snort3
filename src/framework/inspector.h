@@ -43,7 +43,7 @@ struct SnortConfig;
 struct Packet;
 
 // this is the current version of the api
-#define INSAPI_VERSION ((BASE_API_VERSION << 16) | 3)
+#define INSAPI_VERSION ((BASE_API_VERSION << 16) | 4)
 
 struct InspectionBuffer
 {
@@ -84,20 +84,17 @@ public:
     virtual bool configure(SnortConfig*) { return true; }
 
     // cleanup for inspector instance removal from the running configuration
-    // this is only called for inspectors in the default inspection policy that
-    // were present in the prior snort configuration and were removed in the snort
-    // configuration that is being loaded during a reload_config command
-    virtual void tear_down(SnortConfig*) { }
+    // when shutdown is true, called for all previously configured inspectors
+    // otherwise this is only called for inspectors that were present in the
+    // prior snort configuration and were removed in the snort configuration
+    // that is being loaded during a reload_config command
+    virtual void tear_down(SnortConfig*, bool /*shutdown*/) { }
 
     // called on controls after everything is configured
     // return true if there is nothing to do ever based on config
     virtual bool disable(SnortConfig*) { return false; }
 
     virtual void show(const SnortConfig*) const { }
-
-    // Specific to Binders to notify them of an inspector being removed from the policy
-    // FIXIT-L Probably shouldn't be part of the base Inspector class
-    virtual void remove_inspector_binding(SnortConfig*, const char*) { }
 
     // packet thread functions
     // tinit, tterm called on default policy instance only
@@ -160,21 +157,17 @@ public:
 
     const char* get_name() const;
 
-    void set_alias_name(const char*);
+    void set_alias_name(const char* name)
+    { alias_name = name; }
+
     const char* get_alias_name() const
-    { return alias_name; }
+    { return alias_name.c_str(); }
 
     void set_network_policy_user_id(uint64_t user_id)
-    {
-        network_policy_user_id = user_id;
-        network_policy_user_id_set = true;
-    }
+    { network_policy_user_id = user_id; }
 
     bool get_network_policy_user_id(uint64_t& user_id) const
-    {
-        user_id = network_policy_user_id;
-        return network_policy_user_id_set;
-    }
+    { return (user_id = network_policy_user_id) != 0; }
 
     virtual bool is_control_channel() const
     { return false; }
@@ -211,9 +204,8 @@ private:
     std::shared_ptr<ThreadSpecificData> thread_specific_data;
     std::atomic_uint* ref_count;
     SnortProtocolId snort_protocol_id = 0;
-    const char* alias_name = nullptr;
+    std::string alias_name;
     uint64_t network_policy_user_id = 0;
-    bool network_policy_user_id_set = false;
 };
 
 // at present there is no sequencing among like types except that appid
@@ -222,15 +214,12 @@ private:
 enum InspectorType
 {
     IT_PASSIVE,  // config only, or data consumer (eg file_log, binder, ftp_client)
-    IT_WIZARD,   // guesses service inspector
     IT_PACKET,   // processes raw packets only (eg normalize, capture)
     IT_STREAM,   // flow tracking and reassembly (eg ip, tcp, udp)
-    IT_FIRST,    // analyze 1st pkt of new flow and 1st pkt after reload of ongoing flow (eg rep)
     IT_NETWORK,  // process packets w/o service (eg arp, bo)
     IT_SERVICE,  // extract and analyze service PDUs (eg dce, http, ssl)
     IT_CONTROL,  // process all packets before detection (eg appid)
     IT_PROBE,    // process all packets after detection (eg perf_monitor, port_scan)
-    IT_FILE,     // file identification inspector
     IT_PROBE_FIRST, // process all packets before detection (eg packet_capture)
     IT_MAX
 };

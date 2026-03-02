@@ -68,6 +68,7 @@ struct rule_count_t
     int both;
 };
 
+static uint64_t parse_count = 0;    // never reset to assure uniqueness
 static int rule_count = 0;
 static int prev_rule_count = 0;
 static int skip_count = 0;
@@ -964,7 +965,7 @@ void parse_rule_opt_begin(SnortConfig* sc, const char* key)
         s_body += key;
         s_body += ":";
     }
-    IpsManager::option_begin(sc, key, rule_proto);
+    IpsManager::option_begin(sc, key, rule_proto, parse_count);
 }
 
 void parse_rule_opt_set(
@@ -1051,6 +1052,8 @@ void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
 
 OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
 {
+    ++parse_count;
+
     if ( s_ignore )
         return nullptr;
 
@@ -1070,8 +1073,6 @@ OptTreeNode* parse_rule_open(SnortConfig* sc, RuleTreeNode& rtn, bool stub)
 
     if ( sc->get_default_rule_state() or rule_is_stateless() )
         rtn.set_enabled();
-
-    IpsManager::reset_options();
 
     s_capture = sc->dump_rule_meta();
     s_body = "(";
@@ -1155,8 +1156,7 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
         // keep the stub's rtn to allow user tuning of nets and ports
         // if already entered, don't recurse again
 
-        const char* rule = SoManager::get_so_rule(otn->soid, sc);
-        IpsManager::reset_options();
+        const char* rule = SoManager::get_so_rule(otn->soid);
 
         if ( !rule )
         {
@@ -1280,11 +1280,9 @@ void parse_rule_close(SnortConfig* sc, RuleTreeNode& rtn, OptTreeNode* otn)
         std::string service = sc->proto_ref->get_name(otn->snort_protocol_id);
         add_service_to_otn(sc, otn, service.c_str());
     }
+
     if (!otn->sigInfo.services.size() and action_file_id)
-    {
         add_service_to_otn(sc, otn, "file_id");
-        action_file_id = false;
-    }
 
     validate_services(sc, otn);
     OtnLookupAdd(sc->otn_map, otn);

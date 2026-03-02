@@ -29,6 +29,7 @@ class NetworkModule : public snort::Module
 public:
     NetworkModule();
     ~NetworkModule() override = default;
+
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
 
     const snort::Command* get_commands() const override;

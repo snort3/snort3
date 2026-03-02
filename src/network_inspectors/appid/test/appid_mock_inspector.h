@@ -72,7 +72,7 @@ bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
 void AppIdInspector::show(const snort::SnortConfig*) const { }
 void AppIdInspector::tinit() { }
 void AppIdInspector::tterm() { }
-void AppIdInspector::tear_down(snort::SnortConfig*) { }
+void AppIdInspector::tear_down(snort::SnortConfig*, bool) { }
 
 AppIdModule appid_mod;
 AppIdInspector dummy_appid_inspector( appid_mod );

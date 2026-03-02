@@ -176,7 +176,7 @@ static const InspectApi iec104_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         IEC104_NAME,
         IEC104_HELP,

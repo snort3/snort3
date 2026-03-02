@@ -32,19 +32,18 @@ extern const BaseApi* nin_reputation;
 
 extern const BaseApi* nin_appid[];
 extern const BaseApi* nin_extractor[];
+extern const BaseApi* nin_perf_monitor[];
+extern const BaseApi* nin_port_scan[];
+extern const BaseApi* nin_rna[];
 
 #if defined(HAVE_LIBML) || defined(USE_LIBML_MOCK)
 extern const BaseApi* nin_snort_ml_engine[];
 extern const BaseApi* nin_snort_ml[];
 #endif
 
-extern const BaseApi* nin_port_scan[];
-extern const BaseApi* nin_rna[];
-
 #ifdef STATIC_INSPECTORS
 extern const BaseApi* nin_arp_spoof[];
 extern const BaseApi* nin_packet_capture[];
-extern const BaseApi* nin_perf_monitor[];
 #endif
 
 static const BaseApi* network_inspectors[] =
@@ -58,21 +57,21 @@ static const BaseApi* network_inspectors[] =
 void load_network_inspectors()
 {
     PluginManager::load_plugins(network_inspectors);
+
     PluginManager::load_plugins(nin_appid);
     PluginManager::load_plugins(nin_extractor);
+    PluginManager::load_plugins(nin_perf_monitor);
+    PluginManager::load_plugins(nin_port_scan);
+    PluginManager::load_plugins(nin_rna);
 
 #if defined(HAVE_LIBML) || defined(USE_LIBML_MOCK)
     PluginManager::load_plugins(nin_snort_ml_engine);
     PluginManager::load_plugins(nin_snort_ml);
 #endif
 
-    PluginManager::load_plugins(nin_port_scan);
-    PluginManager::load_plugins(nin_rna);
-
 #ifdef STATIC_INSPECTORS
     PluginManager::load_plugins(nin_arp_spoof);
     PluginManager::load_plugins(nin_packet_capture);
-    PluginManager::load_plugins(nin_perf_monitor);
 #endif
 }
 

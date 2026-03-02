@@ -84,15 +84,22 @@ public:
     std::string get_host_cache_stats();
     std::string get_host_cache_segment_stats(int seg_idx);
 
+    const char* get_dump_file() const
+    { return dump_file.c_str(); }
+
     void set_trace(const snort::Trace*) const override;
     const snort::TraceOption* get_trace_options() const override;
+
+    static void dump();
 
 private:
     std::string dump_file;
     size_t memcap = 0;
     uint8_t segments = 1;
 };
+
 extern THREAD_LOCAL const snort::Trace* host_cache_trace;
+void host_cache_module_dump();
 
 #endif
 

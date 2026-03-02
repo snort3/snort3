@@ -431,3 +431,4 @@ void StreamTcpModule::reset_stats()
     TcpNormalizer::reset_stats();
     Module::reset_stats();
 }
+

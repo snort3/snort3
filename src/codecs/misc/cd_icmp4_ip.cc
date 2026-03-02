@@ -318,7 +318,7 @@ static const CodecApi icmp4_ip_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         ICMP4_IP_NAME,
         ICMP4_IP_HELP,

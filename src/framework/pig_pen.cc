@@ -23,15 +23,27 @@
 
 #include "pig_pen.h"
 
+#include <syslog.h>
+#include <cassert>
+
 #include "detection/detection_engine.h"
 #include "log/log.h"
 #include "main/process.h"
 #include "main/snort.h"
+#include "main/snort_config.h"
 #include "managers/inspector_manager.h"
+#include "managers/plugin_manager.h"
 #include "profiler/profiler_impl.h"
 #include "utils/stats.h"
 
 using namespace snort;
+
+//--------------------------------------------------------------------------
+// inspector foo
+//--------------------------------------------------------------------------
+
+Module* PigPen::get_module(const char* s)
+{ return PluginManager::get_module(s); }
 
 //--------------------------------------------------------------------------
 // inspector foo
@@ -52,11 +64,14 @@ Inspector* PigPen::get_service_inspector(const SnortProtocolId id)
 Inspector* PigPen::get_service_inspector(const char* svc)
 { return InspectorManager::get_service_inspector(svc); }
 
-Inspector* PigPen::get_inspector(const char* key, bool dflt_only, const SnortConfig* sc)
-{ return InspectorManager::get_inspector(key, dflt_only, sc); }
+Inspector* PigPen::get_inspector(const char* key, Module::Usage use)
+{ return InspectorManager::get_inspector(key, use); }
 
-Inspector* PigPen::get_inspector(const char* key, Module::Usage use, InspectorType type)
-{ return InspectorManager::get_inspector(key, use, type); }
+Inspector* PigPen::get_new_inspector(const char* key)
+{ return InspectorManager::get_new_inspector(key); }
+
+Inspector* PigPen::get_old_inspector(const char* key, Module::Usage use)
+{ return InspectorManager::get_old_inspector(key, use); }
 
 void PigPen::release(Inspector* pi)
 { InspectorManager::release(pi); }
@@ -73,6 +88,22 @@ void PigPen::install_oops_handler()
 
 void PigPen::remove_oops_handler()
 { ::remove_oops_handler(); }
+
+static unsigned s_opens = 0;
+
+void PigPen::open_syslog()
+{
+    if ( ++s_opens == 1 )
+        openlog("snort", LOG_PID | LOG_CONS, LOG_DAEMON);
+}
+
+void PigPen::close_syslog()
+{
+    assert(s_opens > 0);
+
+    if ( --s_opens == 0 )
+        closelog();
+}
 
 //--------------------------------------------------------------------------
 // detection foo
@@ -100,4 +131,11 @@ void PigPen::show_runtime_memory_stats()
 
 const char* PigPen::get_protocol_name(uint8_t ip_proto)
 { return ::get_protocol_name(ip_proto); }
+
+//--------------------------------------------------------------------------
+// log foo
+//--------------------------------------------------------------------------
+
+void PigPen::add_shutdown_hook(void (*f)())
+{ Snort::add_shutdown_hook(f); }
 

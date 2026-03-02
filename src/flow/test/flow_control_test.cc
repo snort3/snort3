@@ -74,7 +74,7 @@ size_t FlowCache::uni_flows_size() const { return 0; }
 size_t FlowCache::uni_ip_flows_size() const { return 0; }
 size_t FlowCache::flows_size() const { return 0; }
 void Flow::init(PktType) { }
-const SnortConfig* SnortConfig::get_conf() { return nullptr; }
+unsigned SnortConfig::get_reload_id() { return 0; }
 void FlowCache::unlink_uni(Flow*) { }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }

@@ -60,12 +60,12 @@ SO_PUBLIC bool TextLog_Print(TextLog* const, const char* format, ...) __attribut
 SO_PUBLIC bool TextLog_Flush(TextLog* const);
 SO_PUBLIC int TextLog_Avail(TextLog* const);
 SO_PUBLIC void TextLog_Reset(TextLog* const);
-} // namespace snort
+}
 
-/*-------------------------------------------------------------------
-  * helper functions
-  *-------------------------------------------------------------------
-  */
+//--------------------------------------------------------------------------
+// helper functions
+//--------------------------------------------------------------------------
+
 inline bool TextLog_NewLine(TextLog* const txt)
 {
     return snort::TextLog_Putc(txt, '\n');

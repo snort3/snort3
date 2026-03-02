@@ -54,7 +54,7 @@ static const TraceOption stream_trace_options[] =
 #endif
 
 THREAD_LOCAL const Trace* stream_trace = nullptr;
-static THREAD_LOCAL timeval reload_time { };
+static uint32_t hold_time = 0;
 
 //-------------------------------------------------------------------------
 // stream module
@@ -319,8 +319,9 @@ static int validate_cmd_parameters(ControlConn* ctrlcon, lua_State* L, std::vect
 static int dump_flows_worker(lua_State* L, bool enable_binary)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    
-    if ( !InspectorManager::get_inspector("stream", Module::GLOBAL, IT_STREAM) )
+    Inspector* inspector = InspectorManager::get_inspector("stream", Module::GLOBAL);
+
+    if (!inspector)
     {
         LogRespond(ctrlcon, "Dump flows requires stream to be configured\n");
         return -1;
@@ -367,8 +368,9 @@ static int dump_flows_binary(lua_State* L)
 static int dump_flows_summary(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    Inspector* inspector = InspectorManager::get_inspector("stream", Module::GLOBAL);
 
-    if ( !InspectorManager::get_inspector("stream", Module::GLOBAL, IT_STREAM) )
+    if (!inspector)
     {
         LogRespond(ctrlcon, "Dump flows requires stream to be configured\n");
         return -1;
@@ -414,7 +416,13 @@ const RuleMap* StreamModule::get_rules() const
 { return stream_rules; }
 
 const StreamModuleConfig* StreamModule::get_data()
-{ return &config; }
+{
+    hold_time = config.hold_time;
+    return &config;
+}
+
+uint32_t StreamModule::get_hold_time()
+{ return hold_time; }
 
 bool StreamModule::begin(const char* fqn, int, SnortConfig*)
 {
@@ -433,7 +441,7 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
 #endif
 
     if ( v.is("held_packet_timeout") )
-        config.held_packet_timeout = v.get_uint32();
+        config.hold_time = v.get_int32();
 
     else if ( v.is("ip_frags_only") )
     {
@@ -503,8 +511,6 @@ bool StreamModule::end(const char* fqn, int, SnortConfig* sc)
             sc->register_reload_handler(reload_resource_manager);
         else
             delete reload_resource_manager;
-
-        sc->register_reload_handler(new HPQReloadTuner(config.held_packet_timeout));
     }
 
     return true;
@@ -651,7 +657,8 @@ void StreamModuleConfig::show() const
     ConfigLogger::log_value("prune_flows", flow_cache_cfg.prune_flows);
     ConfigLogger::log_limit("require_3whs", hs_timeout, -1, hs_timeout < 0 ? hs_timeout : -1);
     ConfigLogger::log_value("drop_stale_packets", drop_stale_packets ? "enabled" : "disabled");
-    
+    ConfigLogger::log_value("held_packet_timeout", hold_time);
+
     for (int i = to_utype(PktType::IP); i < to_utype(PktType::PDU); ++i)
     {
         std::string tmp;
@@ -669,18 +676,3 @@ void StreamModuleConfig::show() const
     }
 }
 
-bool HPQReloadTuner::tinit()
-{
-    packet_gettimeofday(&reload_time);
-    return TcpStreamTracker::adjust_expiration(held_packet_timeout, reload_time);
-}
-
-bool HPQReloadTuner::tune_packet_context()
-{
-    return !TcpStreamTracker::release_held_packets(reload_time, max_work);
-}
-
-bool HPQReloadTuner::tune_idle_context()
-{
-    return !TcpStreamTracker::release_held_packets(reload_time, max_work_idle);
-}

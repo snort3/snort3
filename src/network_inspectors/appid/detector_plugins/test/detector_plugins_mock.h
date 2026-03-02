@@ -45,8 +45,7 @@ void ParseWarning(WarningGroup, const char*, ...) { }
 // LCOV_EXCL_STOP
 
 // Stubs for appid sessions
-FlowData::FlowData(unsigned, Inspector*) : handler(nullptr), id(0)
-{ }
+FlowData::FlowData(unsigned) : id(0) { }
 FlowData::~FlowData() = default;
 FlowDataStore::~FlowDataStore() = default;
 
@@ -156,7 +155,8 @@ AppIdSession::AppIdSession(IpProtocol, const snort::SfIp* ip, uint16_t, AppIdIns
 #ifndef DISABLE_TENANT_ID
     ,uint32_t
 #endif
-    ) : snort::FlowData(inspector_id, (snort::Inspector*)&inspector),
+    ) : snort::FlowData(inspector_id),
+        inspector(inspector),
         config(stub_config), api(*(new snort::AppIdSessionApi(this, *ip))), odp_ctxt(odpctxt)
 {
     
@@ -295,7 +295,7 @@ void AppIdInspector::eval(snort::Packet*) { }
 void AppIdInspector::show(const snort::SnortConfig*) const { }
 void AppIdInspector::tinit() { }
 void AppIdInspector::tterm() { }
-void AppIdInspector::tear_down(snort::SnortConfig*) { }
+void AppIdInspector::tear_down(snort::SnortConfig*, bool) { }
 
 ClientDetector::ClientDetector() { }
 

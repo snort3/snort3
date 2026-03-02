@@ -21,183 +21,130 @@
 #include "config.h"
 #endif
 
-#include "managers/trace_logger_manager.h"
+#include "trace_logger_manager.h"
 
 #include <iostream>
 #include <map>
 #include <unordered_map>
 #include <vector>
 
+#include "framework/module.h"
+#include "main/snort_config.h"
 #include "main/thread.h"
 #include "main/thread_config.h"
+#include "trace/trace_config.h"
+
+#include "plugin_manager.h"
+#include "plug_interface.h"
 
 using namespace snort;
 
 //--------------------------------------------------------------------------
-// TraceLoggerManager Private Data
+// plugin interface foo
 //--------------------------------------------------------------------------
 
-struct TraceLoggerElem
+class TracePlugIntf : public PlugInterface
 {
-    // Default constructor for STL compatibility
-    TraceLoggerElem() : name(), api(nullptr), module(nullptr), thread_loggers() { }
+public:
+    TracePlugIntf(const TraceLogApi* api) : api(api) { }
 
-    TraceLoggerElem(const std::string& name, const TraceLogApi* api, Module* mod)
-        : name(name), api(api), module(mod), thread_loggers(ThreadConfig::get_instance_max(), nullptr)
-    { }
+    ~TracePlugIntf() override
+    {
+        for (unsigned i = 0; i < thread_loggers.size(); ++i)
+            term_logger(i);
+    }
 
-    std::string name;
+    void thread_init() override;
+    void thread_term() override;
+
+    void instantiate(snort::Module*, snort::SnortConfig*, const char*) override;
+
+    void init_logger(unsigned, Module*);
+    void term_logger(unsigned);
+
+public:
     const TraceLogApi* api;
-    Module* module;
     std::vector<TraceLoggerPlug*> thread_loggers;
 };
 
-typedef std::map<std::string, TraceLoggerElem> LoggerMap;
-static LoggerMap s_loggers;
-static std::map<std::string, const TraceLogApi*> s_trace_plugins;
+class PlugInterface* TraceLoggerManager::get_interface(const snort::TraceLogApi* api)
+{ return new TracePlugIntf(api); }
+
+void TracePlugIntf::init_logger(unsigned idx, Module* mod)
+{
+    assert(thread_loggers.size() > idx);
+    assert(!thread_loggers[idx]);
+    TraceLoggerPlug* logger = api->ctor(mod, mod->get_name());
+    logger->set_api(api);
+    thread_loggers[idx] = logger;
+}
+
+void TracePlugIntf::term_logger(unsigned idx)
+{
+    assert(thread_loggers.size() > idx);
+
+    if (thread_loggers[idx])
+    {
+        api->dtor(thread_loggers[idx]);
+        thread_loggers[idx] = nullptr;
+    }
+}
+
+// only instantiate for the main thread here
+void TracePlugIntf::instantiate(Module* mod, SnortConfig*, const char*)
+{
+    thread_loggers.resize(ThreadConfig::get_instance_max()+1, nullptr);
+    init_logger(0, mod);
+}
+
+// create logger instance for this thread
+void TracePlugIntf::thread_init()
+{
+    unsigned idx = get_instance_id() + 1;
+    Module* mod = PluginManager::get_module(api->base.name);
+    init_logger(idx, mod);
+}
+
+// delete main thread logger or packet thread specific logger
+void TracePlugIntf::thread_term()
+{
+    unsigned idx = get_instance_id() +1;
+    assert(thread_loggers.size() > idx);
+    term_logger(idx);
+}
 
 //--------------------------------------------------------------------------
-// TraceLoggerManager Implementation
+// public methods
 //--------------------------------------------------------------------------
-
-void TraceLoggerManager::add_plugin(const TraceLogApi* api)
-{
-    if (api && api->base.name)
-        s_trace_plugins[api->base.name] = api;
-}
-
-void TraceLoggerManager::dump_plugins()
-{
-    std::cout << "Registered TraceLogger plugins:\n";
-    for (const auto& kv : s_trace_plugins)
-        std::cout << "  " << kv.first << "\n";
-}
-
-void TraceLoggerManager::release_plugins()
-{
-    for (auto& kv : s_loggers)
-    {
-        TraceLoggerElem& elem = kv.second;
-        if (elem.api && elem.api->dtor)
-        {
-            for (auto* logger : elem.thread_loggers)
-            {
-                if (logger)
-                    elem.api->dtor(logger);
-            }
-        }
-    }
-    s_loggers.clear();
-    s_trace_plugins.clear();
-}
-
-void TraceLoggerManager::instantiate(const TraceLogApi* api, Module* mod, const std::string& name)
-{
-    if (!api || !api->ctor)
-        return;
-        
-    if (s_loggers.find(name) != s_loggers.end())
-        return; // already instantiated
-
-    TraceLoggerElem elem(name, api, mod);
-    
-    // Only instantiate for the main thread here; thread_init will handle others
-    TraceLoggerPlug* logger = api->ctor(mod, name);
-    if (logger)
-    {
-        logger->set_api(api);
-        elem.thread_loggers.resize(ThreadConfig::get_instance_max(), nullptr);
-        elem.thread_loggers[0] = logger;
-        s_loggers[name] = std::move(elem);
-    }
-}
-
-bool TraceLoggerManager::is_instantiated(const std::string& name)
-{
-    return s_loggers.find(name) != s_loggers.end();
-}
-
-void TraceLoggerManager::thread_init()
-{
-    unsigned instance = get_instance_id();
-
-    for (auto& kv : s_loggers)
-    {
-        TraceLoggerElem& elem = kv.second;
-        
-        if (elem.thread_loggers.size() <= instance)
-            elem.thread_loggers.resize(instance + 1, nullptr);
-
-        if (!elem.thread_loggers[instance] && elem.api && elem.api->ctor)
-        {
-            // Create logger instance for this thread
-            TraceLoggerPlug* logger = elem.api->ctor(elem.module, elem.name);
-            if (logger)
-            {
-                logger->set_api(elem.api);
-                elem.thread_loggers[instance] = logger;
-            }
-        }
-    }
-}
-
-void TraceLoggerManager::thread_term()
-{
-    unsigned instance = get_instance_id();
-
-    // Main thread (instance 0) should not destroy its loggers here
-    // as they may still be needed during shutdown operations like reap_command().
-    // Main thread loggers will be cleaned up in release_plugins() during manager termination.
-    if (instance == 0)
-        return;
-
-    for (auto& kv : s_loggers)
-    {
-        TraceLoggerElem& elem = kv.second;
-        
-        if (elem.api && elem.api->dtor && 
-            elem.thread_loggers.size() > instance && 
-            elem.thread_loggers[instance])
-        {
-            elem.api->dtor(elem.thread_loggers[instance]);
-            elem.thread_loggers[instance] = nullptr;
-        }
-    }
-}
 
 TraceLoggerPlug* TraceLoggerManager::get_logger(const std::string& name)
 {
-    unsigned instance = get_instance_id();
-
-    auto it = s_loggers.find(name);
-    if (it != s_loggers.end())
-    {
-        TraceLoggerElem& elem = it->second;
-        if (elem.thread_loggers.size() > instance && elem.thread_loggers[instance])
-            return elem.thread_loggers[instance];
-    }
-    
-    return nullptr;
+    unsigned instance = in_main_thread() ? 0 : get_instance_id() + 1;
+    TracePlugIntf* intf = (TracePlugIntf*)PluginManager::get_interface(name.c_str());
+    return (intf and intf->thread_loggers.size() > instance) ? intf->thread_loggers[instance] : nullptr;
 }
 
-std::unordered_map<std::string, std::vector<TraceLoggerPlug*>> 
-TraceLoggerManager::get_all_loggers()
+TraceLoggerPlug* TraceLoggerManager::set_logger(const std::string& name)
 {
-    std::unordered_map<std::string, std::vector<TraceLoggerPlug*>> all_loggers;
-
-    for (const auto& [name, elem] : s_loggers)
-    {
-        std::vector<TraceLoggerPlug*> instances;
-
-        for (size_t i = 0; i < elem.thread_loggers.size(); ++i)
-        {
-            if (elem.thread_loggers[i])
-                instances.push_back(elem.thread_loggers[i]);
-        }
-
-        if (!instances.empty())
-            all_loggers[name] = std::move(instances);
-    }
-
-    return all_loggers;
+    unsigned instance = in_main_thread() ? 0 : get_instance_id() + 1;
+    TracePlugIntf* intf = (TracePlugIntf*)PluginManager::get_interface(name.c_str());
+    Module* mod = PluginManager::get_module(name.c_str());
+    assert(intf and mod);
+    intf->init_logger(instance, mod);
+    return (intf->thread_loggers.size() > instance) ? intf->thread_loggers[instance] : nullptr;
 }
+
+void TraceLoggerManager::instantiate_default_loggers(TraceConfig* tc)
+{
+    for ( auto& s : tc->output_traces )
+    {
+        if ( get_logger(s) )
+            continue;
+
+        Module* mod = PluginManager::get_module(s.c_str());
+        assert(mod);
+
+        PluginManager::instantiate(mod, nullptr, nullptr);
+    }
+}
+

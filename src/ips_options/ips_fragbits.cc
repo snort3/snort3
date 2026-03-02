@@ -419,7 +419,7 @@ static const IpsApi fragbits_api =
         sizeof(IpsApi), //uint32_t size
         IPSAPI_VERSION, //uint32_t api_version
         0,              //uint32_t version
-        API_RESERVED,   //uint32_t reserved
+        PLUGIN_SO_RELOAD,   //uint32_t reserved
         API_OPTIONS,    //const char* options
         s_name,         //const char* name
         s_help,         //const char* help

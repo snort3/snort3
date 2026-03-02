@@ -46,7 +46,7 @@ uint64_t Http2FlowData::instance_count = 0;
 #endif
 
 Http2FlowData::Http2FlowData(Flow* flow_) :
-    FlowData(inspector_id,(Inspector*)(flow_->assistant_gadget)),
+    FlowData(inspector_id),
     flow(flow_),
     hi((HttpInspect*)(flow->assistant_gadget)),
     hpack_decoder { Http2HpackDecoder(this, SRC_CLIENT, events[SRC_CLIENT],
@@ -77,6 +77,10 @@ Http2FlowData::Http2FlowData(Flow* flow_) :
         Http2Module::increment_peg_counts(PEG_MAX_CONCURRENT_SESSIONS);
 
     flow->stream_intf = &h2_stream;
+
+    // this is unfortunate but the assistant is cleared before our dtor is called
+    handler = flow->assistant_gadget;
+    handler->add_ref();
 }
 
 Http2FlowData::~Http2FlowData()
@@ -101,6 +105,7 @@ Http2FlowData::~Http2FlowData()
     }
 
     flow->stream_intf = nullptr;
+    handler->rem_ref();
 }
 
 HttpFlowData* Http2FlowData::get_hi_flow_data()

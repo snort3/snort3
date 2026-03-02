@@ -101,7 +101,7 @@ static const CodecApi arp_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_ARP_NAME,
         CD_ARP_HELP,

@@ -46,8 +46,6 @@
 
 using namespace snort;
 
-THREAD_LOCAL HeldPacketQueue* hpq = nullptr;
-
 const char* tcp_state_names[] =
 {
     "TCP_LISTEN", "TCP_SYN_SENT", "TCP_SYN_RECV",
@@ -73,14 +71,14 @@ TcpStreamTracker::TcpStreamTracker(bool client) :
 { 
     flush_policy = STREAM_FLPOLICY_IGNORE;
     update_flush_policy(nullptr);
-    if (hpq)
+
+    if (auto* hpq = Stream::get_held_packet_queue())
         held_packet = hpq->end();
 }
 
 TcpStreamTracker::~TcpStreamTracker()
 {
-    if ( reassembler and (reassembler->get_flush_policy() != STREAM_FLPOLICY_IGNORE) )
-    	delete reassembler;
+    delete reassembler;
 
     if( oaitw_reassembler )
     {
@@ -292,7 +290,8 @@ void TcpStreamTracker::init_tcp_state(TcpSession* s)
     fin_seq_set = false;
     rst_pkt_sent = false;
     order = TcpStreamTracker::IN_SEQUENCE;
-    if (hpq)
+
+    if (auto* hpq = Stream::get_held_packet_queue())
         held_packet = hpq->end();
     else
         held_packet = {};
@@ -361,7 +360,7 @@ void TcpStreamTracker::update_flush_policy(StreamSplitter* splitter)
         oaitw_reassembler = nullptr;
     }
 
-   if ( reassembler and flush_policy == reassembler->get_flush_policy() )
+    if ( reassembler and flush_policy == reassembler->get_flush_policy() )
     {
         reassembler->init(!client_tracker, splitter);
         return;
@@ -375,13 +374,13 @@ void TcpStreamTracker::update_flush_policy(StreamSplitter* splitter)
             seglist.purge_segment_list();
             oaitw_reassembler = reassembler;
         }
-
-        reassembler = TcpReassemblerIgnore::get_instance(!client_tracker);
+        reassembler = new TcpReassemblerIgnore(is_server_tracker());
     }
     else if ( flush_policy == STREAM_FLPOLICY_ON_DATA )
     {
         // update from IDS -> IPS is not supported
         assert( !reassembler or reassembler->get_flush_policy() != STREAM_FLPOLICY_ON_ACK );
+        delete reassembler;
 
         reassembler = new TcpReassemblerIps(*this, seglist);
         reassembler->init(!client_tracker, splitter);
@@ -390,6 +389,7 @@ void TcpStreamTracker::update_flush_policy(StreamSplitter* splitter)
     {
         // update from IPS -> IDS is not supported
         assert( !reassembler or reassembler->get_flush_policy() != STREAM_FLPOLICY_ON_DATA );
+        delete reassembler;
 
         reassembler = new TcpReassemblerIds(*this, seglist);
         reassembler->init(!client_tracker, splitter);
@@ -862,6 +862,7 @@ ValidSeqStatus TcpStreamTracker::is_segment_seq_valid(TcpSegmentDescriptor& tsd)
 
 bool TcpStreamTracker::is_holding_packet() const
 {
+    HeldPacketQueue* hpq = Stream::get_held_packet_queue();
     assert(hpq);
     return held_packet != hpq->end();
 }
@@ -871,6 +872,8 @@ bool TcpStreamTracker::set_held_packet(Packet* p)
     if ( is_holding_packet() )
         return false;
 
+    HeldPacketQueue* hpq = Stream::get_held_packet_queue();
+    assert(hpq);
     held_packet = hpq->append(p->daq_msg, p->ptrs.tcph->seq(), *this);
     held_pkt_seq = p->ptrs.tcph->seq();
 
@@ -994,6 +997,8 @@ void TcpStreamTracker::finalize_held_packet(Packet* cp)
             tcp_session->held_packet_dir = SSN_DIR_NONE;
         }
 
+        HeldPacketQueue* hpq = Stream::get_held_packet_queue();
+        assert(hpq);
         hpq->erase(held_packet);
         held_packet = hpq->end();
         tcpStats.current_packets_held--;
@@ -1024,6 +1029,8 @@ void TcpStreamTracker::finalize_held_packet(Flow* flow)
             tcpStats.held_packets_passed++;
         }
 
+        HeldPacketQueue* hpq = Stream::get_held_packet_queue();
+        assert(hpq);
         hpq->erase(held_packet);
         held_packet = hpq->end();
         tcpStats.current_packets_held--;
@@ -1032,37 +1039,16 @@ void TcpStreamTracker::finalize_held_packet(Flow* flow)
 
 bool TcpStreamTracker::release_held_packets(const timeval& cur_time, int max_remove)
 {
-    bool is_front_expired = false;
-    if ( hpq )
-        is_front_expired = hpq->execute(cur_time, max_remove);
-    return is_front_expired;
-}
+    if (auto* hpq = Stream::get_held_packet_queue())
+        return hpq->execute(cur_time, max_remove);
 
-void TcpStreamTracker::set_held_packet_timeout(const uint32_t ms)
-{
-    assert(hpq);
-    hpq->set_timeout(ms);
+    return false;
 }
 
 bool TcpStreamTracker::adjust_expiration(uint32_t new_timeout_ms, const timeval& now)
 {
+    HeldPacketQueue* hpq = Stream::get_held_packet_queue();
     assert(hpq);
     return hpq->adjust_expiration(new_timeout_ms, now);
 }
 
-void TcpStreamTracker::thread_init()
-{
-    assert(!hpq);
-    hpq = new HeldPacketQueue();
-
-    TcpReassembler::tinit();
-}
-
-void TcpStreamTracker::thread_term()
-{
-    assert(hpq->empty());
-    delete hpq;
-    hpq = nullptr;
-
-    TcpReassembler::tterm();
-}

@@ -26,6 +26,7 @@
 #include <algorithm>
 
 #include "framework/module.h"
+#include "managers/plugin_manager.h"
 
 using namespace snort;
 
@@ -36,35 +37,25 @@ static const TraceOption s_default_trace_options[] =
     { nullptr, 0, nullptr }
 };
 
-Trace::Trace(const Module& m) : module(m)
+Trace::Trace(const Module* mod) : mod_name(mod->get_name())
 {
-    mod_name = module.get_name();
-    const snort::TraceOption* trace_options = module.get_trace_options();
-    options = ( trace_options->name ) ? trace_options : s_default_trace_options;
-
+    const TraceOption* options =  get_trace_options(mod);
     size_t options_size = 0;
-    trace_options = options;
-    while ( trace_options->name )
+
+    while ( options->name )
     {
+        option_names.emplace_back(options->name);
         ++options_size;
-        ++trace_options;
+        ++options;
     }
     option_levels.resize(options_size, 0);
 }
 
-Trace& Trace::operator=(const Trace& other)
+bool Trace::set(const std::string& trace_option_name, uint8_t trace_level, const Module* mod)
 {
-    if ( this != &other )
-    {
-        option_levels = other.option_levels;
-        options = other.options;
-    }
-    return *this;
-}
-
-bool Trace::set(const std::string& trace_option_name, uint8_t trace_level)
-{
+    const TraceOption* options = get_trace_options(mod);
     size_t size = option_levels.size();
+
     for ( size_t index = 0; index < size; ++index )
     {
         if ( trace_option_name == option_name(index) )
@@ -78,9 +69,17 @@ bool Trace::set(const std::string& trace_option_name, uint8_t trace_level)
     return false;
 }
 
+const snort::TraceOption* Trace::get_trace_options(const Module* mod) const
+{
+    const snort::TraceOption* options = mod->get_trace_options();
+    return ( options and options->name ) ? options : s_default_trace_options;
+}
+
 void Trace::set_module_trace() const
 {
-    module.set_trace(this);
+    const Module* mod = PluginManager::get_module(mod_name.c_str());
+    assert(mod);
+    mod->set_trace(this);
 }
 
 void Trace::clear()
@@ -91,16 +90,27 @@ void Trace::clear()
 #include "catch/catch.hpp"
 
 Module::Module(const char* s, const char* h) : name(s), help(h), params(nullptr), list(false)
-{}
+{ }
+
+// LCOV_EXCL_START
+// required to link but not hit
 Module::Module(const char* s, const char* h, const Parameter* p, bool l) : name(s), help(h), params(p), list(l)
-{}
-PegCount Module::get_global_count(char const*) const { return 0; }
-void Module::show_interval_stats(std::vector<unsigned int, std::allocator<unsigned int> >&, FILE*) {}
-void Module::show_stats(){}
-void Module::init_stats(bool){}
-void Module::sum_stats(bool){}
-void Module::main_accumulate_stats(){}
-void Module::reset_stats() {}
+{ }
+
+PegCount Module::get_global_count(char const*) const
+{ return 0; }
+
+void Module::show_interval_stats(std::vector<unsigned int, std::allocator<unsigned int> >&, FILE*) { }
+
+void Module::init_stats(bool) { }
+void Module::sum_stats(bool) { }
+void Module::show_stats() { }
+void Module::reset_stats() { }
+void Module::main_accumulate_stats() { }
+
+Module* PluginManager::get_module(char const*)
+{ return nullptr; }
+// LCOV_EXCL_STOP
 
 class TraceTestModule : public Module
 {
@@ -120,9 +130,9 @@ TEST_CASE("default option", "[Trace]")
 {
     TraceOption test_trace_options(nullptr, 0, nullptr);
     TraceTestModule trace_test_module("test_trace_module", &test_trace_options);
-    Trace trace(trace_test_module);
+    Trace trace(&trace_test_module);
 
-    bool result = trace.set(DEFAULT_TRACE_OPTION_NAME, DEFAULT_TRACE_LOG_LEVEL);
+    bool result = trace.set(DEFAULT_TRACE_OPTION_NAME, DEFAULT_TRACE_LOG_LEVEL, &trace_test_module);
     CHECK(result == true);
     CHECK(true == trace.enabled(DEFAULT_TRACE_OPTION_ID));
 }
@@ -147,24 +157,24 @@ TEST_CASE("multiple options", "[Trace]")
     };
 
     TraceTestModule trace_test_module("test_trace_module", trace_values);
-    Trace trace(trace_test_module);
+    Trace trace(&trace_test_module);
 
-    bool result = trace.set("option1", DEFAULT_TRACE_LOG_LEVEL);
+    bool result = trace.set("option1", DEFAULT_TRACE_LOG_LEVEL, &trace_test_module);
     CHECK(result == true);
     CHECK(true == trace.enabled(TEST_TRACE_OPTION1));
 
-    result = trace.set("option2", DEFAULT_TRACE_LOG_LEVEL);
+    result = trace.set("option2", DEFAULT_TRACE_LOG_LEVEL, &trace_test_module);
     CHECK(result == true);
     CHECK(true == trace.enabled(TEST_TRACE_OPTION1));
     CHECK(true == trace.enabled(TEST_TRACE_OPTION2));
 
-    result = trace.set("option3", DEFAULT_TRACE_LOG_LEVEL);
+    result = trace.set("option3", DEFAULT_TRACE_LOG_LEVEL, &trace_test_module);
     CHECK(result == true);
     CHECK(true == trace.enabled(TEST_TRACE_OPTION1));
     CHECK(true == trace.enabled(TEST_TRACE_OPTION2));
     CHECK(true == trace.enabled(TEST_TRACE_OPTION3));
 
-    result = trace.set("option4", DEFAULT_TRACE_LOG_LEVEL);
+    result = trace.set("option4", DEFAULT_TRACE_LOG_LEVEL, &trace_test_module);
     CHECK(result == true);
     CHECK(true == trace.enabled(TEST_TRACE_OPTION1));
     CHECK(true == trace.enabled(TEST_TRACE_OPTION2));
@@ -176,9 +186,9 @@ TEST_CASE("invalid option", "[Trace]")
 {
     TraceOption test_trace_options(nullptr, 0, nullptr);
     TraceTestModule trace_test_module("test_trace_module", &test_trace_options);
-    Trace trace(trace_test_module);
+    Trace trace(&trace_test_module);
 
-    bool result = trace.set("invalid_option", DEFAULT_TRACE_LOG_LEVEL);
+    bool result = trace.set("invalid_option", DEFAULT_TRACE_LOG_LEVEL, &trace_test_module);
     CHECK(result == false);
 }
 

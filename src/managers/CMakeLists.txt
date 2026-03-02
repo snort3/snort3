@@ -32,6 +32,7 @@ add_library( managers OBJECT
     mp_transport_manager.h
     mpse_manager.cc
     mpse_manager.h
+    plugin.h
     plugin_manager.cc
     plugin_manager.h
     policy_selector_manager.cc

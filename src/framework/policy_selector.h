@@ -37,7 +37,7 @@ struct _daq_pkt_hdr;
 
 namespace snort
 {
-#define POLICY_SELECTOR_API_VERSION ((BASE_API_VERSION << 16) | 1)
+#define POLICY_SELECTOR_API_VERSION ((BASE_API_VERSION << 16) | 2)
 
 struct Packet;
 class PolicySelector;

@@ -32,6 +32,7 @@
 #include "js_norm/js_config.h"
 #include "log/messages.h"
 #include "main/thread_config.h"
+#include "managers/codec_manager.h"
 #include "managers/inspector_manager.h"
 #include "parser/parse_conf.h"
 #include "parser/vars.h"
@@ -50,69 +51,22 @@ using namespace snort;
 
 NetworkPolicy::NetworkPolicy(PolicyId id, PolicyId default_ips_id)
     : policy_id(id), default_ips_policy_id(default_ips_id)
-{ init(nullptr, nullptr); }
-
-NetworkPolicy::NetworkPolicy(NetworkPolicy* other_network_policy, const char* exclude_name)
-{ init(other_network_policy, exclude_name); }
+{
+    file_policy = new FilePolicy;
+    traffic_group = InspectorManager::create_traffic_group();
+    cd_mgr = new CodecManager;
+}
 
 NetworkPolicy::~NetworkPolicy()
 {
     FilePolicyBase::delete_file_policy(file_policy);
-    if (cloned)
-    {
-        if ( !inspection_policy.empty() )
-        {
-            InspectionPolicy* default_policy = inspection_policy[0];
-            default_policy->cloned = true;
-            delete default_policy;
-        }
-    }
-    else
-    {
-        for ( auto p : inspection_policy )
-            delete p;
-    }
+    delete cd_mgr;
 
-    InspectorManager::delete_policy(this, cloned);
+    for ( auto p : inspection_policy )
+        delete p;
 
+    InspectorManager::delete_group(traffic_group);
     inspection_policy.clear();
-}
-
-void NetworkPolicy::init(NetworkPolicy* other_network_policy, const char* exclude_name)
-{
-    file_policy = new FilePolicy;
-    if (other_network_policy)
-    {
-        for ( unsigned i = 0; i < (other_network_policy->inspection_policy.size()); i++)
-        {
-            if ( i == 0 )
-                inspection_policy.emplace_back(
-                    new InspectionPolicy(other_network_policy->inspection_policy[i]));
-            else
-                inspection_policy.emplace_back(other_network_policy->inspection_policy[i]);
-        }
-        user_inspection = other_network_policy->user_inspection;
-        // Fix references to inspection_policy[0]
-        for (  const auto& p : other_network_policy->user_inspection )
-        {
-            if ( p.second == other_network_policy->inspection_policy[0] )
-                user_inspection[p.first] = inspection_policy[0];
-        }
-
-
-        dbus.clone(other_network_policy->dbus, exclude_name);
-        policy_id = other_network_policy->policy_id;
-        user_policy_id = other_network_policy->user_policy_id;
-        default_ips_policy_id = other_network_policy->default_ips_policy_id;
-
-        min_ttl = other_network_policy->min_ttl;
-        new_ttl = other_network_policy->new_ttl;
-
-        checksum_eval = other_network_policy->checksum_eval;
-        checksum_drop = other_network_policy->checksum_drop;
-        normal_mask = other_network_policy->normal_mask;
-    }
-    InspectorManager::new_policy(this, other_network_policy);
 }
 
 FilePolicyBase* NetworkPolicy::get_base_file_policy() const
@@ -151,31 +105,12 @@ public:
 InspectionPolicy::InspectionPolicy(PolicyId id)
 {
     policy_id = id;
-    init(nullptr);
-}
-
-InspectionPolicy::InspectionPolicy(InspectionPolicy* other_inspection_policy)
-{ init(other_inspection_policy); }
-
-void InspectionPolicy::init(InspectionPolicy* other_inspection_policy)
-{
-    framework_policy = nullptr;
-    cloned = false;
-    if (other_inspection_policy)
-    {
-        policy_id = other_inspection_policy->policy_id;
-        policy_mode = other_inspection_policy->policy_mode;
-        user_policy_id = other_inspection_policy->user_policy_id;
-#ifdef HAVE_UUID
-        uuid_copy(uuid, other_inspection_policy->uuid);
-#endif
-    }
-    InspectorManager::new_policy(this, other_inspection_policy);
+    service_group = InspectorManager::create_service_group();
 }
 
 InspectionPolicy::~InspectionPolicy()
 {
-    InspectorManager::delete_policy(this, cloned);
+    InspectorManager::delete_group(service_group);
     delete jsn_config;
 }
 
@@ -219,25 +154,22 @@ IpsPolicy::~IpsPolicy()
         PortTableFree(nonamePortVarTable);
 }
 
+void IpsPolicy::update_user_policy_id()
+{
+    if ( !user_policy_id )
+        user_policy_id = 1;
+}
+
 //-------------------------------------------------------------------------
 // policy map
 //-------------------------------------------------------------------------
 
-PolicyMap::PolicyMap(PolicyMap* other_map, const char* exclude_name)
+PolicyMap::PolicyMap()
 {
-    unsigned max = ThreadConfig::get_instance_max();
-    inspector_tinit_complete = new bool[max]{};
-    if ( other_map )
-        clone(other_map, exclude_name);
-    else
-    {
-        file_id = InspectorManager::create_single_instance_inspector_policy();
-        flow_tracking = InspectorManager::create_single_instance_inspector_policy();
-        global_inspector_policy = InspectorManager::create_global_inspector_policy();
-        add_shell(new Shell(nullptr, true), nullptr);
-        empty_ips_policy = new IpsPolicy(ips_policy.size());
-        ips_policy.push_back(empty_ips_policy);
-    }
+    global_group = InspectorManager::create_global_group();
+    add_shell(new Shell(nullptr, true), nullptr);
+    empty_ips_policy = new IpsPolicy(ips_policy.size());
+    ips_policy.push_back(empty_ips_policy);
 
     set_network_policy(network_policy[0]);
     set_network_parse_policy(network_policy[0]);
@@ -247,80 +179,28 @@ PolicyMap::PolicyMap(PolicyMap* other_map, const char* exclude_name)
 
 PolicyMap::~PolicyMap()
 {
-    if ( cloned )
-    {
-        for (auto np: network_policy)
-        {
-            np->cloned = true;
-            delete np;
-        }
-    }
-    else
-    {
-        for ( auto p : shells )
-            delete p;
+    for ( auto p : shells )
+        delete p;
 
-        for ( auto p : ips_policy )
-            delete p;
+    for ( auto p : ips_policy )
+        delete p;
 
-        for ( auto p : network_policy )
-            delete p;
-
-        InspectorManager::destroy_single_instance_inspector(flow_tracking);
-        InspectorManager::destroy_single_instance_inspector(file_id);
-    }
+    for ( auto p : network_policy )
+        delete p;
 
     PolicySelector::free_policy_selector(selector);
-    InspectorManager::destroy_global_inspector_policy(global_inspector_policy, cloned);
+    InspectorManager::delete_group(global_group);
 
     shells.clear();
     ips_policy.clear();
     network_policy.clear();
     shell_map.clear();
-    delete[] inspector_tinit_complete;
 }
 
 bool PolicyMap::setup_network_policies()
 {
     return std::none_of(network_policy.begin(), network_policy.end(),
         [this](NetworkPolicy* np){ return !set_user_network(np); });
-}
-
-void PolicyMap::clone(PolicyMap *other_map, const char* exclude_name)
-{
-    global_inspector_policy =
-        InspectorManager::create_global_inspector_policy(other_map->global_inspector_policy);
-    file_id = other_map->file_id;
-    flow_tracking = other_map->flow_tracking;
-    shells = other_map->shells;
-    ips_policy = other_map->ips_policy;
-    empty_ips_policy = other_map->empty_ips_policy;
-
-    for ( unsigned i = 0; i < other_map->network_policy.size(); i++)
-        network_policy.emplace_back(new NetworkPolicy(other_map->network_policy[i],
-            i ? nullptr : exclude_name));
-
-    shell_map = other_map->shell_map;
-    // Fix references to network_policy[0] and inspection_policy[0]
-    for ( auto& p : other_map->shell_map )
-    {
-        for ( unsigned idx = 0; idx < other_map->network_policy.size(); ++idx)
-        {
-            if ( p.second->network == other_map->network_policy[idx] )
-            {
-                shell_map[p.first]->network = network_policy[idx];
-                shell_map[p.first]->network_parse = network_policy[idx];
-            }
-            if ( p.second->inspection == other_map->network_policy[idx]->inspection_policy[0] )
-                shell_map[p.first] =
-                    std::make_shared<PolicyTuple>(
-                        other_map->network_policy[idx]->inspection_policy[0], p.second->ips,
-                        p.second->network, p.second->network);
-        }
-    }
-
-    //user_network = other_map->user_network;
-    user_ips = other_map->user_ips;
 }
 
 InspectionPolicy* PolicyMap::add_inspection_shell(Shell* sh)
@@ -395,6 +275,15 @@ bool PolicyMap::set_user_network(NetworkPolicy* p)
     return true;
 }
 
+const Shell* PolicyMap::get_shell_by_file(const std::string& fn) const
+{
+    for ( const auto* sh : shells )
+    {
+        if ( fn == sh->get_file() )
+            return sh;
+    }
+    return nullptr;
+}
 
 //-------------------------------------------------------------------------
 // policy nav

@@ -323,7 +323,7 @@ static const InspectApi rna_inspector_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         RNA_NAME,
         RNA_HELP,

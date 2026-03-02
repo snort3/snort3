@@ -178,7 +178,7 @@ static const CodecApi llc_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         LLC_NAME,
         LLC_HELP,

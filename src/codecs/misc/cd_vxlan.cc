@@ -106,7 +106,7 @@ static const CodecApi vxlan_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_VXLAN_NAME,
         CD_VXLAN_HELP,

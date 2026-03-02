@@ -39,7 +39,7 @@ using namespace snort;
 
 #define MAX_PKT_LEN  9000
 
-FlowTracker::FlowTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME),
+FlowTracker::FlowTracker(PerfConfig* perf) : PerfTracker(perf, TRACKER_NAME, PERF_FLOW),
     flow_max_port_to_track(perf->flow_max_port_to_track)
 {
     pkt_len_cnt.resize( MAX_PKT_LEN + 1 );

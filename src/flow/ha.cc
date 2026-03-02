@@ -550,7 +550,7 @@ HighAvailability::HighAvailability(PortBitSet* ports, bool daq_channel)
     // If side channel ports were configured, find the first matching side channel to associate with
     if (ports != nullptr)
     {
-        for (SCPort port = 0; port < ports->size(); port++)
+        for (unsigned port = 0; port < ports->size(); port++)
         {
             if (!ports->test(port))
                 continue;
@@ -722,7 +722,6 @@ void HighAvailabilityManager::term()
     reset_config();
 }
 
-// Called within the main thread after the initial configuration has been read
 void HighAvailabilityManager::configure(HighAvailabilityConfig* config)
 {
     if (!config)
@@ -744,14 +743,10 @@ void HighAvailabilityManager::configure(HighAvailabilityConfig* config)
     use_daq_channel = config->daq_channel;
 }
 
-// Called within the packet thread prior to packet processing
 void HighAvailabilityManager::thread_init()
 {
-    // create a a thread local instance iff we are configured to operate.
-    if (ports || use_daq_channel)
+    if ( configured() )
         ha = new HighAvailability(ports, use_daq_channel);
-    else
-        ha = nullptr;
 }
 
 void HighAvailabilityManager::thread_term_beginning()
@@ -760,7 +755,6 @@ void HighAvailabilityManager::thread_term_beginning()
         ha->shutting_down = true;
 }
 
-// Called in the packet thread at run-down
 void HighAvailabilityManager::thread_term()
 {
     if (ha)
@@ -789,10 +783,14 @@ void HighAvailabilityManager::process_receive()
         ha->process_receive();
 }
 
-// Called in the packet threads to determine whether or not HA is active
 bool HighAvailabilityManager::active()
 {
     return (ha != nullptr);
+}
+
+bool HighAvailabilityManager::configured()
+{
+    return (ports or use_daq_channel);
 }
 
 void HighAvailabilityManager::set_modified(Flow* flow)

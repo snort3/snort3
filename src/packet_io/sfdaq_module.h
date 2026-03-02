@@ -36,6 +36,7 @@ class SFDAQModule : public snort::Module
 {
 public:
     SFDAQModule();
+    ~SFDAQModule() override;
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool begin(const char*, int, snort::SnortConfig*) override;

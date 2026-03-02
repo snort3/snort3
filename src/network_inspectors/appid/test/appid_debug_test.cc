@@ -45,7 +45,7 @@ unsigned get_relative_instance_number() { return 3; }
 
 Packet::Packet(bool) {}
 Packet::~Packet() = default;
-FlowData::FlowData(unsigned, Inspector*) { }
+FlowData::FlowData(unsigned) { }
 FlowData::~FlowData() = default;
 AppIdSessionApi::AppIdSessionApi(const AppIdSession* asd, const SfIp& ip) : asd(asd), initiator_ip(ip) { }
 // Stubs for logs
@@ -85,12 +85,12 @@ OdpContext::OdpContext(const AppIdConfig&, snort::SnortConfig*) { }
 AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
 OdpContext stub_odp_ctxt(stub_config, nullptr);
-AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector&,
+AppIdSession::AppIdSession(IpProtocol, const SfIp* ip, uint16_t, AppIdInspector& inspector,
     OdpContext&, uint32_t
 #ifndef DISABLE_TENANT_ID
     ,uint32_t
 #endif
-    ) : FlowData(0), config(stub_config),
+    ) : FlowData(0), inspector(inspector), config(stub_config),
     api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(stub_odp_ctxt) { }
 AppIdSession::~AppIdSession() = default;
 

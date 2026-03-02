@@ -26,6 +26,8 @@
 #include <ctime>
 #include <list>
 
+#include "main/reload_tuner.h"
+
 class TcpStreamTracker;
 
 class HeldPacket
@@ -59,6 +61,8 @@ private:
 class HeldPacketQueue
 {
 public:
+    HeldPacketQueue(uint32_t ht)
+    { set_timeout(ht); }
 
     using list_t = std::list<HeldPacket>;
     using iter_t = list_t::const_iterator;
@@ -91,6 +95,22 @@ public:
 private:
     timeval timeout = {1, 0};
     list_t q;
+};
+
+class HPQReloadTuner : public snort::ReloadResourceTuner
+{
+public:
+    explicit HPQReloadTuner(uint32_t timeout) : held_packet_timeout(timeout) { }
+    ~HPQReloadTuner() override = default;
+
+    const char* name() const override
+    { return "HPQReloadTuner"; }
+    bool tinit() override;
+    bool tune_packet_context() override;
+    bool tune_idle_context() override;
+
+private:
+    uint32_t held_packet_timeout;
 };
 
 #endif

@@ -139,6 +139,11 @@ bool AppIdContext::init_appid(SnortConfig* sc, AppIdInspector& inspector)
         odp_ctxt->get_service_disco_mgr().initialize(inspector);
         odp_ctxt->set_client_and_service_detectors();
 
+        if (inspector.shadow_traffic_was_requested())
+        {
+            odp_ctxt->set_appid_shadow_traffic_status(true);
+            inspector.request_shadow_traffic(false);
+        }
         if (!appidDebug)
         {
             appidDebug = new AppIdDebug();

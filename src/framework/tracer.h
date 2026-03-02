@@ -21,6 +21,7 @@
 #define TRACER_H
 
 #include <string>
+
 #include "framework/base_api.h"
 #include "main/snort_types.h"
 #include "main/thread.h"
@@ -29,10 +30,9 @@ namespace snort
 {
 struct Packet;
 
-#define TRACE_LOGAPI_VERSION ((BASE_API_VERSION << 16) | 1)
+#define TRACE_LOGAPI_VERSION ((BASE_API_VERSION << 16) | 2)
 
-#define TRACE_OUTPUT_TYPE_FLAG__NONE   0x0
-#define TRACE_OUTPUT_TYPE_FLAG__TRACE  0x1
+#define TRACER_FLAG__RESERVED 0x0
 
 //-------------------------------------------------------------------------
 // API for PT_TRACE Logger
@@ -62,12 +62,6 @@ public:
 
     void set_timestamp(bool flag)
     { timestamp = flag; }
-
-    void set_enabled(bool flag)
-    { enable = flag; }
-
-    bool get_enabled() const
-    { return enable; }
 
     bool get_ntuple() const
     { return ntuple; }
@@ -99,13 +93,15 @@ public:
     void set_instance_id(unsigned id)
     { instance_id = id; }
 
+    std::string print_ntuple(const Packet*);
+    std::string print_timestamp();
+
 protected:
     TraceLoggerPlug() = default;
     const TraceLogApi* api = nullptr;
 
 private:
     std::string plugin_name;
-    bool enable = false;    
     bool timestamp = false;
     bool ntuple = false;
     char thread_type = 'O';

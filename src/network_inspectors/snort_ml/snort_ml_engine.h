@@ -36,6 +36,7 @@
 
 #define SNORT_ML_ENGINE_NAME "snort_ml_engine"
 #define SNORT_ML_ENGINE_HELP "configure machine learning engine settings"
+#define SNORT_ML_ENGINE_USE  Module::GLOBAL
 
 // Mock BinaryClassifierSet for tests if LibML is absent
 #ifndef HAVE_LIBML

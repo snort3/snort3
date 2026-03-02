@@ -38,9 +38,13 @@
 // depends on includes installed in framework/snort_api.h
 // see framework/plugins.h
 
-#define BASE_API_VERSION 23
+#define BASE_API_VERSION 24
 
-// set the reserved field to this to be future proof
+#define PLUGIN_DEFAULT    0x0
+#define PLUGIN_SO_RELOAD  0x1  // assumed for PT_SO_RULE
+
+// the reserved field is now called features
+// new code should use PLUGIN_* instead of the following
 #define API_RESERVED 0
 
 enum PlugType
@@ -73,13 +77,14 @@ struct BaseApi
     uint32_t size;          // sizeof(plugin-api)
     uint32_t api_version;   // (BASE_API_VERSION << 16) | plugin-api-version)
     uint32_t version;       // version of plugin
-    uint64_t reserved;      // zero
+    uint64_t features;      // any PLUGIN_*
     const char* options;    // API_OPTIONS
     const char* name;       // plugin name
     const char* help;       // short help text
     ModNewFunc mod_ctor;
     ModDelFunc mod_dtor;
 };
+
 }
 #endif
 

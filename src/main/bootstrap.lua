@@ -119,8 +119,8 @@ function include(file)
             ips = sandbox_env.ips
         end
 
-        if ( sandbox_env.file_id ) then
-            file_id = sandbox_env.file_id
+        if ( sandbox_env.file_inspect ) then
+            file_inspect = sandbox_env.file_inspect
         end
     else
         dofile(fname)
@@ -130,8 +130,8 @@ function include(file)
         ips.includer = fname
     end
 
-    if ( file_id ~= nil and file_id.includer == nil ) then
-        file_id.includer = fname
+    if ( file_inspect ~= nil and file_inspect.includer == nil ) then
+        file_inspect.includer = fname
     end
 
     path_pop()

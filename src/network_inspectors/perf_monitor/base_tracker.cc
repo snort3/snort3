@@ -34,7 +34,7 @@
 using namespace snort;
 using namespace std;
 
-BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf, PERF_NAME "_base"),
+BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf, PERF_NAME "_base", PERF_BASE),
     modules(perf->modules), mods_to_prep(perf->mods_to_prep)
 {
     for ( ModuleConfig& mod : modules )

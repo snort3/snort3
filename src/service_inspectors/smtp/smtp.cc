@@ -237,7 +237,7 @@ static SMTPData* get_session_data(Flow* flow)
 
 static inline PDFJSNorm* acquire_js_ctx(SMTPData& smtp_ssn, const void* data, size_t len)
 {
-    auto reload_id = SnortConfig::get_conf()->get_reload_id();
+    auto reload_id = SnortConfig::get_reload_id();
 
     if (smtp_ssn.jsn and smtp_ssn.jsn->get_generation_id() == reload_id)
         return smtp_ssn.jsn;
@@ -363,8 +363,8 @@ static void SMTP_ResponseSearchInit()
 
 static void SMTP_SearchFree()
 {
-    if (smtp_resp_search_mpse != nullptr)
-        delete smtp_resp_search_mpse;
+    delete smtp_resp_search_mpse;
+    smtp_resp_search_mpse = nullptr;
 }
 
 static int AddCmd(SmtpProtoConf* config, const char* name, SMTPCmdTypeEnum type)
@@ -1767,7 +1767,7 @@ const InspectApi smtp_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         SMTP_NAME,
         SMTP_HELP,
@@ -1804,7 +1804,7 @@ TEST_CASE("handle_header_line", "[smtp]")
     // Setup
     MailLogConfig log_config;
     DecodeConfig decode_conf;
-    const SnortConfig* sc = SnortConfig::get_conf();
+    SnortConfig* sc = SnortConfig::get_main_conf();
     SnortConfig::set_conf(sc);
     log_config.log_email_hdrs = false;
     Packet p;
@@ -1834,7 +1834,7 @@ TEST_CASE("normalize_data", "[smtp]")
     // Setup
     MailLogConfig log_config;
     DecodeConfig decode_conf;
-    const SnortConfig* sc = SnortConfig::get_conf();
+    SnortConfig* sc = SnortConfig::get_main_conf();
     SnortConfig::set_conf(sc);
     Packet p;
     Flow flow;

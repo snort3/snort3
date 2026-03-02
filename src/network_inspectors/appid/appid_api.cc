@@ -28,6 +28,8 @@
 #include "detection/detection_engine.h"
 #include "framework/inspector.h"
 #include "managers/inspector_manager.h"
+#include "pub_sub/shadowtraffic_aggregator.h"
+#include "service_plugins/service_ssl.h"
 #include "utils/util.h"
 
 #include "appid_inspector.h"
@@ -35,8 +37,6 @@
 #include "appid_session.h"
 #include "appid_session_api.h"
 #include "app_info_table.h"
-#include "service_plugins/service_ssl.h"
-#include "pub_sub/shadowtraffic_aggregator.h"
 #include "tp_appid_session_api.h"
 
 using namespace snort;
@@ -236,7 +236,7 @@ const AppIdSessionApi* AppIdApi::get_appid_session_api(const Flow& flow) const
 
 bool AppIdApi::is_inspection_needed(const Inspector& inspector) const
 {
-    AppIdInspector* appid_inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true);
+    AppIdInspector* appid_inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
 
     if (!appid_inspector)
         return false;
@@ -252,7 +252,7 @@ bool AppIdApi::is_inspection_needed(const Inspector& inspector) const
 
 const char* AppIdApi::get_appid_detector_directory() const
 {
-    AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, true);
+    AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
     if (!inspector)
         return "";
 
@@ -261,7 +261,7 @@ const char* AppIdApi::get_appid_detector_directory() const
 
 void AppIdApi::reset_appid_cpu_profiler_stats()
 {
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME);
+    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
     if (!inspector)
         return;
     const AppIdContext& ctxt = inspector->get_ctxt();
@@ -269,14 +269,22 @@ void AppIdApi::reset_appid_cpu_profiler_stats()
     odp_ctxt.get_appid_cpu_profiler_mgr().cleanup_appid_cpu_profiler_table();
 }
 
-void AppIdApi::update_shadow_traffic_status(bool status, const SnortConfig* sc)
+void AppIdApi::update_shadow_traffic_status(bool status, const SnortConfig*)
 {
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, true, sc);
+    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
+
     if (!inspector)
         return;
+
     const AppIdContext& ctxt = inspector->get_ctxt();
-    OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
-    odp_ctxt.set_appid_shadow_traffic_status(status);
+
+    if (!ctxt.odp_ctxt_ready())
+        inspector->request_shadow_traffic(status);
+    else
+    {
+        OdpContext& odp_ctxt = ctxt.get_odp_ctxt();
+        odp_ctxt.set_appid_shadow_traffic_status(status);
+    }
 }
 
 void AppIdApi::set_ssl_certificate_key(const Flow& flow, const std::string& cert_key)

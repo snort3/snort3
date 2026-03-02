@@ -29,11 +29,6 @@ using namespace snort;
 
 namespace
 {
-enum class PppoepktType
-{
-    DISCOVERY,
-    SESSION,
-};
 
 /* PPPoEHdr Header; eth::EtherHdr plus the PPPoE Header */
 struct PPPoEHdr
@@ -50,70 +45,45 @@ struct PPPoEHdr
 
 //-------------------------------------------------------------------------
 // General PPPoEpkt module.
-//
-//      ***** NOTE: THE CODEC HAS A DIFFERENT NAME!
-//          * Additionally, this module is used for generating a rule stub ONLY!
-//          * If you want to create a module for configuration, you must change the
-//          * names of the correct PPPoEpkt codec
 //-------------------------------------------------------------------------
-#define CD_PPPOE_NAME "pppoe"
-static const RuleMap pppoe_rules[] =
+
+static const RuleMap pppoe_disc_rules[] =
 {
-    { DECODE_BAD_PPPOE, "bad PPPOE frame detected" },
+    { DECODE_BAD_PPPOE_DISC, "bad PPPOE discovery frame detected" },
     { 0, nullptr }
 };
 
-#define pppoe_help \
-    "support for point-to-point protocol over ethernet"
+static const RuleMap pppoe_sess_rules[] =
+{
+    { DECODE_BAD_PPPOE_SESS, "bad PPPOE session frame detected" },
+    { 0, nullptr }
+};
 
 class PPPoEModule : public BaseCodecModule
 {
 public:
-    PPPoEModule() : BaseCodecModule(CD_PPPOE_NAME, pppoe_help) { }
+    PPPoEModule(const char* name, const char* help, const RuleMap* rm) : BaseCodecModule(name, help)
+    { rules = rm; }
 
     const RuleMap* get_rules() const override
-    { return pppoe_rules; }
+    { return rules; }
+
+private:
+    const RuleMap* rules;
 };
 
 class PPPoECodec : public Codec
 {
 public:
-    bool decode(const RawData&, CodecData&, DecodeData&) final;
     bool encode(const uint8_t* const raw_in, const uint16_t raw_len,
         EncState&, Buffer&, Flow*) final;
 
 protected:
-    PPPoECodec(const char* s, PppoepktType type) :
-        Codec(s),
-        ppp_type(type)
-    { }
-
-private:
-    PppoepktType ppp_type;
+    PPPoECodec(const char* s) : Codec(s) { }
 };
 } // namespace
 
 constexpr uint16_t PPPOE_HEADER_LEN = 6;
-
-bool PPPoECodec::decode(const RawData& raw,
-    CodecData& codec,
-    DecodeData&)
-{
-    if (raw.len < PPPOE_HEADER_LEN)
-    {
-        codec_event(codec, DECODE_BAD_PPPOE);
-        return false;
-    }
-
-    if (ppp_type == PppoepktType::DISCOVERY)
-    {
-        return true;
-    }
-
-    codec.lyr_len = PPPOE_HEADER_LEN;
-    codec.next_prot_id = ProtocolId::ETHERTYPE_PPP;
-    return true;
-}
 
 /******************************************************************
  ******************** E N C O D E R  ******************************
@@ -145,39 +115,64 @@ namespace
 #define CD_PPPOEPKT_DISC_NAME "pppoe_disc"
 #define CD_PPPOEPKT_DISC_HELP "support for point-to-point discovery"
 
-#define CD_PPPOEPKT_SESS_NAME "pppoe_sess"
-#define CD_PPPOEPKT_SESS_HELP "support for point-to-point session"
-
-/*  'decode' and 'encode' functions are in the PPPoECodec */
 class PPPoEDiscCodec : public PPPoECodec
 {
 public:
-    PPPoEDiscCodec() : PPPoECodec(CD_PPPOEPKT_DISC_NAME, PppoepktType::DISCOVERY) { }
+    PPPoEDiscCodec() : PPPoECodec(CD_PPPOEPKT_DISC_NAME) { }
+    bool decode(const RawData&, CodecData&, DecodeData&) final;
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override
     { v.emplace_back(ProtocolId::ETHERTYPE_PPPOE_DISC); }
 };
 
+bool PPPoEDiscCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
+{
+    if (raw.len < PPPOE_HEADER_LEN)
+    {
+        codec_event(codec, DECODE_BAD_PPPOE_DISC);
+        return false;
+    }
+
+    return true;
+}
+
+#define CD_PPPOEPKT_SESS_NAME "pppoe_sess"
+#define CD_PPPOEPKT_SESS_HELP "support for point-to-point session"
+
 class PPPoESessCodec : public PPPoECodec
 {
 public:
-    PPPoESessCodec() : PPPoECodec(CD_PPPOEPKT_SESS_NAME, PppoepktType::SESSION) { }
+    PPPoESessCodec() : PPPoECodec(CD_PPPOEPKT_SESS_NAME) { }
+    bool decode(const RawData&, CodecData&, DecodeData&) final;
 
     void get_protocol_ids(std::vector<ProtocolId>& v) override
     { v.emplace_back(ProtocolId::ETHERTYPE_PPPOE_SESS); }
 };
+
+bool PPPoESessCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
+{
+    if (raw.len < PPPOE_HEADER_LEN)
+    {
+        codec_event(codec, DECODE_BAD_PPPOE_SESS);
+        return false;
+    }
+
+    codec.lyr_len = PPPOE_HEADER_LEN;
+    codec.next_prot_id = ProtocolId::ETHERTYPE_PPP;
+    return true;
+}
+
 } // namespace
 
 //-------------------------------------------------------------------------
 // api
 //-------------------------------------------------------------------------
 
-// ***  NOTE: THE CODEC AND MODULE HAVE A DIFFERENT NAME!
-// since the module is only creating a rule stub and is NOT
-// used for configuration, it doesn't matter. However, if you want to use the module
-// for configuration, ensure the names are identical before continuing!
-static Module* mod_ctor()
-{ return new PPPoEModule; }
+static Module* disc_mod_ctor()
+{ return new PPPoEModule(CD_PPPOEPKT_DISC_NAME, CD_PPPOEPKT_DISC_HELP, pppoe_disc_rules); }
+
+static Module* sess_mod_ctor()
+{ return new PPPoEModule(CD_PPPOEPKT_SESS_NAME, CD_PPPOEPKT_SESS_HELP, pppoe_sess_rules); }
 
 static void mod_dtor(Module* m)
 { delete m; }
@@ -198,11 +193,11 @@ static const CodecApi pppoepkt_disc_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_PPPOEPKT_DISC_NAME,
         CD_PPPOEPKT_DISC_HELP,
-        mod_ctor,
+        disc_mod_ctor,
         mod_dtor,
     },
     nullptr,
@@ -220,12 +215,12 @@ static const CodecApi pppoepkt_sess_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_PPPOEPKT_SESS_NAME,
         CD_PPPOEPKT_SESS_HELP,
-        nullptr,
-        nullptr,
+        sess_mod_ctor,
+        mod_dtor,
     },
     nullptr,
     nullptr,

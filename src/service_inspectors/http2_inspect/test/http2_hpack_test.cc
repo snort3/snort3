@@ -52,7 +52,7 @@ long HttpTestManager::print_amount {};
 bool HttpTestManager::print_hex {};
 
 snort::FlowData::~FlowData() = default;
-snort::FlowData::FlowData(unsigned int, snort::Inspector*) { }
+snort::FlowData::FlowData(unsigned int) { }
 THREAD_LOCAL PegCount Http2Module::peg_counts[Http2Enums::PEG_COUNT__MAX] = { };
 uint32_t Http2ConnectionSettings::get_param(uint16_t) { return 42; }
 Http2DataCutter::Http2DataCutter(Http2FlowData* _session_data, HttpCommon::SourceId src_id)
@@ -60,9 +60,8 @@ Http2DataCutter::Http2DataCutter(Http2FlowData* _session_data, HttpCommon::Sourc
 Http2Stream::~Http2Stream() = default;
 
 Http2FlowData::Http2FlowData(snort::Flow* flow_)
-    : snort::FlowData(0, nullptr) , flow(flow_) , hi(nullptr)
-    , hpack_decoder
-    {
+    : snort::FlowData(0) , flow(flow_) , hi(nullptr)
+    , hpack_decoder {
         Http2HpackDecoder(this, HttpCommon::SRC_CLIENT, events[HttpCommon::SRC_CLIENT], infractions[HttpCommon::SRC_CLIENT]),
         Http2HpackDecoder(this, HttpCommon::SRC_SERVER, events[HttpCommon::SRC_SERVER], infractions[HttpCommon::SRC_SERVER])
     }

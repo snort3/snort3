@@ -81,7 +81,6 @@ public:
 
     virtual void handle(DataEvent&, Flow*) { }
     const char* module_name;
-    bool cloned;
 
     // order is desired position in the call sequence of handlers: 1 = first, 0 = last
     // the sequence among subscribers with the same order is not specified
@@ -89,7 +88,7 @@ public:
 
 protected:
     DataHandler(std::nullptr_t) = delete;
-    DataHandler(const char* mod_name) : module_name(mod_name), cloned(false) { }
+    DataHandler(const char* mod_name) : module_name(mod_name) { }
 };
 
 class SO_PUBLIC DataBus
@@ -100,7 +99,6 @@ public:
 
     // configure time methods - main thread only
     static unsigned init();
-    void clone(DataBus& from, const char* exclude_name = nullptr);
 
     // publishers must register their key and use given id to publish
     static unsigned get_id(const PubKey&);

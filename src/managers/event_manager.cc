@@ -31,24 +31,30 @@
 #include "main/snort_config.h"
 
 #include "module_manager.h"
+#include "plugin_manager.h"
+#include "plug_interface.h"
 
 using namespace snort;
 using namespace std;
 
-struct Output
+class Output : public PlugInterface
 {
+public:
     const LogApi* api;
     Logger* handler;
 
     Output(const LogApi* p)
     { api = p; handler = nullptr; }
 
-    ~Output()
+    ~Output() override
     { api->dtor(handler); }
-};
 
-typedef list<Output*> OutputList;
-static OutputList s_outputs;
+    void instantiate(Module* mod, SnortConfig* sc, const char*) override
+    {
+        if ( !handler )
+            EventManager::instantiate(this, mod, sc);
+    }
+};
 
 typedef list<Logger*> EHList;
 
@@ -66,41 +72,22 @@ bool EventManager::log_enabled = true;
 // output plugins
 //-------------------------------------------------------------------------
 
-void EventManager::add_plugin(const LogApi* api)
+PlugInterface* EventManager::get_interface(const LogApi* api)
 {
     assert(api->flags & (OUTPUT_TYPE_FLAG__ALERT | OUTPUT_TYPE_FLAG__LOG));
-    s_outputs.emplace_back(new Output(api));
+    return new Output(api);
 }
 
 void EventManager::release_plugins()
 {
     s_loggers.outputs.clear();
-
-    for ( const auto* p : s_outputs )
-        delete p;
-
-    s_outputs.clear();
-}
-
-void EventManager::dump_plugins()
-{
-    Dumper d("Loggers");
-
-    for ( auto* p : s_outputs )
-        d.dump(p->api->base.name, p->api->base.version);
 }
 
 //-------------------------------------------------------------------------
 // lookups
 
 static Output* get_out(const char* key)
-{
-    for ( auto* p : s_outputs )
-        if ( !strcasecmp(p->api->base.name, key) )
-            return p;
-
-    return nullptr;
-}
+{ return (Output*)PluginManager::get_interface(key); }
 
 static Output* get_out(const char* key, const char* pfx)
 {
@@ -118,16 +105,6 @@ static Output* get_out(const char* key, const char* pfx)
     p = get_out(s.c_str());
 
     return p;
-}
-
-unsigned EventManager::get_output_type_flags(char* key)
-{
-    Output* p = get_out(key);
-
-    if ( p )
-        return p->api->flags;
-
-    return OUTPUT_TYPE_FLAG__NONE;
 }
 
 //-------------------------------------------------------------------------
@@ -177,8 +154,7 @@ void EventManager::instantiate(
 }
 
 // command line outputs
-void EventManager::instantiate(
-    const char* name, SnortConfig* sc)
+void EventManager::instantiate(const char* name, SnortConfig* sc)
 {
     // override prior outputs
     // (last cmdline option wins)
@@ -201,19 +177,10 @@ void EventManager::instantiate(
         s_loggers.outputs.emplace_back(p->handler);
         return;
     }
-    Module* mod = ModuleManager::get_default_module(name, sc);
+    Module* mod = PluginManager::get_module(name);
+    ModuleManager::set_defaults(mod, sc);
     instantiate(p, mod, sc);
-}
-
-// conf outputs
-void EventManager::instantiate(
-    const LogApi* api, Module* mod, SnortConfig* sc)
-{
-    // FIXIT-L instantiate each logger from conf at most once
-    Output* p = get_out(api->base.name);
-
-    if ( p && !p->handler )
-        instantiate(p, mod, sc);
+    PluginManager::set_instantiated(name);
 }
 
 //-------------------------------------------------------------------------

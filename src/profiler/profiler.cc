@@ -30,6 +30,7 @@
 #include "framework/module.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
+#include "managers/plugin_manager.h"
 #include "time/stopwatch.h"
 #include "utils/stats.h"
 
@@ -53,8 +54,6 @@ THREAD_LOCAL Stopwatch<SnortClock>* run_timer = nullptr;
 THREAD_LOCAL uint64_t first_pkt_num = 0;
 THREAD_LOCAL bool consolidated_once = false;
 
-static ProfilerNodeMap s_profiler_nodes;
-
 #ifndef _WIN64
 THREAD_LOCAL TimeContext* ProfileContext::curr_time = nullptr;
 #else
@@ -73,10 +72,22 @@ ProfileStats* Profiler::get_total_perf_stats()
 ProfileStats* Profiler::get_other_perf_stats()
 { return &otherPerfStats; }
 
-void Profiler::register_module(Module* m)
+void Profiler::setup(SnortConfig* sc)
+{
+    sc->prof_map = new ProfilerNodeMap;
+    auto mods = PluginManager::get_all_modules(sc);
+
+    for ( auto* mod : mods )
+        Profiler::register_module(*sc->prof_map, mod);
+}
+
+void Profiler::clear(SnortConfig* sc)
+{ delete sc->prof_map; }
+
+void Profiler::register_module(ProfilerNodeMap& map, Module* m)
 {
     if ( m->get_profile() )
-        register_module(m->get_name(), nullptr, m);
+        register_module(map, m->get_name(), nullptr, m);
 
     else
     {
@@ -84,14 +95,14 @@ void Profiler::register_module(Module* m)
         const char* n, * pn;
 
         while ( m->get_profile(i++, n, pn) )
-            register_module(n, pn, m);
+            register_module(map, n, pn, m);
     }
 }
 
-void Profiler::register_module(const char* n, const char* pn, Module* m)
+void Profiler::register_module(ProfilerNodeMap& map, const char* n, const char* pn, Module* m)
 {
     assert(n);
-    s_profiler_nodes.register_node(n, pn, m);
+    map.register_node(n, pn, m);
 }
 
 void Profiler::start()
@@ -117,20 +128,22 @@ void Profiler::stop(uint64_t checks)
 
 void Profiler::consolidate_stats(snort::ProfilerType type)
 {
+    ProfilerNodeMap& map = get_profiler_nodes();
+
     if ( !consolidated_once and type == snort::PROFILER_TYPE_TIME )
     {
-        s_profiler_nodes.accumulate_nodes(snort::PROFILER_TYPE_TIME);
+        map.accumulate_nodes(snort::PROFILER_TYPE_TIME);
         consolidated_once = true;
     }
     else if ( !consolidated_once and type == snort::PROFILER_TYPE_BOTH )
     {
-        s_profiler_nodes.accumulate_nodes();
+        map.accumulate_nodes();
     }
 
     if ( consolidated_once and type == snort::PROFILER_TYPE_BOTH )
     {
 #ifdef ENABLE_MEMORY_PROFILER
-        s_profiler_nodes.accumulate_nodes(PROFILER_TYPE_MEMORY);
+        map.accumulate_nodes(PROFILER_TYPE_MEMORY);
         MemoryProfiler::consolidate_fallthrough_stats();
 #endif
     }
@@ -149,18 +162,21 @@ void Profiler::reset_stats(snort::ProfilerType type)
         otherPerfStats.reset();
     }
 
-    s_profiler_nodes.reset_nodes(type);
+    ProfilerNodeMap& map = get_profiler_nodes();
+    map.reset_nodes(type);
+
     appid_api.reset_appid_cpu_profiler_stats();
 }
 
 void Profiler::prepare_stats()
 {
-    const ProfilerNode& root = s_profiler_nodes.get_root();
+    ProfilerNodeMap& map = get_profiler_nodes();
+    const ProfilerNode& root = map.get_root();
     auto children = root.get_children();
 
     hr_duration runtime = root.get_stats().time.elapsed;
 
-    s_profiler_nodes.clear_flex();
+    map.clear_flex();
 
     hr_duration sum = std::accumulate(children.cbegin(), children.cend(), 0_ticks,
         [](const hr_duration& s, const ProfilerNode* pn){ return s + pn->get_stats().time.elapsed; });
@@ -168,12 +184,12 @@ void Profiler::prepare_stats()
     otherPerfStats.time.checks = root.get_stats().time.checks;
     otherPerfStats.time.elapsed = (runtime > sum) ?  (runtime - sum) : 0_ticks;
 
-    s_profiler_nodes.accumulate_flex();
+    map.accumulate_flex();
 }
 
 ProfilerNodeMap& Profiler::get_profiler_nodes()
 {
-    return s_profiler_nodes;
+    return *SnortConfig::get_conf()->prof_map;
 }
 
 void Profiler::show_stats()
@@ -182,16 +198,19 @@ void Profiler::show_stats()
     const auto* config = SnortConfig::get_conf()->get_profiler();
     assert(config);
 
-    show_time_profiler_stats(s_profiler_nodes, config->time);
+    ProfilerNodeMap& map = get_profiler_nodes();
+
+    show_time_profiler_stats(map, config->time);
 #ifdef ENABLE_MEMORY_PROFILER
-    show_memory_profiler_stats(s_profiler_nodes, config->memory);
+    show_memory_profiler_stats(map, config->memory);
 #endif
     show_rule_profiler_stats(config->rule);
 }
 
 void Profiler::show_runtime_memory_stats()
 {
-    s_profiler_nodes.print_runtime_memory_stats();
+    ProfilerNodeMap& map = get_profiler_nodes();
+    map.print_runtime_memory_stats();
 }
 
 #ifdef UNIT_TEST

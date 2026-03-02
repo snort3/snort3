@@ -36,6 +36,7 @@
 #include "main/snort_config.h"
 #include "memory/memory_cap.h"
 #include "managers/module_manager.h"
+#include "managers/plugin_manager.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/trough.h"
@@ -106,7 +107,7 @@ static void timing_stats()
     LogMessage("%25.25s: %lu.%06lu\n", "seconds",
         (unsigned long)difftime.tv_sec, (unsigned long)difftime.tv_usec);
 
-    Module* daq = ModuleManager::get_module("daq");
+    Module* daq = PluginManager::get_module("daq");
     assert(daq);
 
     uint64_t num_pkts = (uint64_t)daq->get_global_count("analyzed");
@@ -185,7 +186,7 @@ void DropStats(ControlConn* ctrlcon)
 
     ModuleManager::accumulate_dump_stats();
     LogLabel("Packet Statistics");
-    ModuleManager::get_module("daq")->show_stats();
+    PluginManager::get_module("daq")->show_stats();
     PacketManager::dump_stats();
 
     LogLabel("Module Statistics");
@@ -195,7 +196,7 @@ void DropStats(ControlConn* ctrlcon)
 
     LogLabel("Summary Statistics");
     show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names)-1, "process");
-    ModuleManager::get_module("memory")->show_stats();
+    PluginManager::get_module("memory")->show_stats();
     memory::MemoryCap::print(SnortConfig::log_verbose());
 
     set_log_conn(nullptr);

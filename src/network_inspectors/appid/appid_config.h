@@ -411,6 +411,9 @@ public:
             delete discovery_filter;
     }
 
+    bool odp_ctxt_ready() const
+    { return odp_ctxt != nullptr; }
+
     OdpContext& get_odp_ctxt() const
     {
         assert(odp_ctxt);

@@ -216,10 +216,10 @@ void SnortML::show(const SnortConfig*) const
     ConfigLogger::log_value("http_param_threshold", conf.http_param_threshold);
 }
 
-bool SnortML::configure(SnortConfig* sc)
+bool SnortML::configure(SnortConfig*)
 {
     auto engine = reinterpret_cast<const SnortMLEngine*>(
-        InspectorManager::get_inspector(SNORT_ML_ENGINE_NAME, true, sc));
+        InspectorManager::get_inspector(SNORT_ML_ENGINE_NAME, SNORT_ML_ENGINE_USE));
 
     if (!engine)
     {
@@ -276,7 +276,7 @@ static const InspectApi snort_ml_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         SNORT_ML_NAME,
         SNORT_ML_HELP,

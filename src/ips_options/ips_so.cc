@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <string>
+
 #include "framework/ips_option.h"
 #include "framework/module.h"
 #include "framework/so_rule.h"
@@ -40,7 +42,7 @@ static THREAD_LOCAL ProfileStats soPerfStats;
 class SoOption : public IpsOption
 {
 public:
-    SoOption(const char*, const char*, bool, SoEvalFunc f, void* v, SoRules*);
+    SoOption(const char*, const char*, bool, SoEvalFunc f, void* v);
     ~SoOption() override;
 
     uint32_t hash() const override;
@@ -55,35 +57,35 @@ public:
     { return CAT_READ; }
 
 private:
-    const char* soid;
+    std::string soid;
+    PluginPtr plug;
     const char* so;
-    bool relative_flag;
-    SoEvalFunc func;
     void* data;
-    SoRules* so_rules;
+    SoEvalFunc func;
+    bool relative_flag;
 };
 
 SoOption::SoOption(
-    const char* id, const char* s, bool r, SoEvalFunc f, void* v, SoRules* sos)
-    : IpsOption(s_name)
+    const char* id, const char* s, bool r, SoEvalFunc f, void* v ) :
+    IpsOption(s_name),
+    soid(id),
+    plug(PluginManager::get_plugin(id))
 {
-    soid = id;
     so = s;
     relative_flag = r;
     func = f;
     data = v;
-    so_rules = sos;
 }
 
 SoOption::~SoOption()
 {
-    SoManager::delete_so_data(soid, data, so_rules);
+    SoManager::delete_so_data(plug, data);
 }
 
 uint32_t SoOption::hash() const
 {
     uint32_t a = relative_flag, b = IpsOption::hash(), c = 0;
-    mix_str(a,b,c,soid);
+    mix_str(a,b,c,soid.c_str());
     mix_str(a,b,c,so);
     finalize(a,b,c);
     return c;
@@ -96,7 +98,7 @@ bool SoOption::operator==(const IpsOption& ips) const
 
     const SoOption& rhs = (const SoOption&)ips;
 
-    if ( strcmp(soid, rhs.soid) )
+    if ( soid != rhs.soid )
         return false;
 
     if ( strcmp(so, rhs.so) )
@@ -204,9 +206,8 @@ static IpsOption* so_ctor(Module* p, IpsInfo& info)
         ParseError("can't link so:%s", name);
         return nullptr;
     }
-    SoRules* sos = IpsOption::get_so_rules(info);
 
-    return new SoOption(soid, name, relative_flag, func, data, sos);
+    return new SoOption(soid, name, relative_flag, func, data);
 }
 
 static void so_dtor(IpsOption* p)

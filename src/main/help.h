@@ -25,40 +25,40 @@
 
 namespace snort
 {
+class Module;
 struct SnortConfig;
 }
 
 void config_markup(snort::SnortConfig*, const char*);
 
-void help_args(const char* pfx);
-
 [[noreturn]] void help_basic(snort::SnortConfig*, const char*);
-[[noreturn]] void help_buffers(snort::SnortConfig* sc, const char*);
-[[noreturn]] void help_builtin(snort::SnortConfig* sc, const char*);
-[[noreturn]] void help_commands(snort::SnortConfig* sc, const char*);
-[[noreturn]] void help_config(snort::SnortConfig* sc, const char*);
-[[noreturn]] void help_counts(snort::SnortConfig* sc, const char*);
-[[noreturn]] void help_gids(snort::SnortConfig* sc, const char*);
-[[noreturn]] void help_limits(snort::SnortConfig* sc, const char*);
-[[noreturn]] void help_module(snort::SnortConfig* sc, const char*);
-[[noreturn]] void help_modules(snort::SnortConfig* sc, const char*);
-[[noreturn]] void help_modules_json(snort::SnortConfig* sc, const char*);
-[[noreturn]] void help_options(snort::SnortConfig*, const char*);
-[[noreturn]] void help_plugins(snort::SnortConfig* sc, const char*);
+[[noreturn]] void help_buffers(snort::SnortConfig*, const char*);
+[[noreturn]] void help_builtin(snort::SnortConfig*, const char*);
+[[noreturn]] void help_commands(snort::SnortConfig*, const char*);
+[[noreturn]] void help_config(snort::SnortConfig*, const char*);
+[[noreturn]] void help_counts(snort::SnortConfig*, const char*);
+[[noreturn]] void help_gids(snort::SnortConfig*, const char*);
+[[noreturn]] void help_limits(snort::SnortConfig*, const char*);
+[[noreturn]] void help_module(snort::SnortConfig*, const char*);
+[[noreturn]] void help_modules(snort::SnortConfig*, const char*);
+[[noreturn]] void help_modules_json(snort::SnortConfig*, const char*);
+[[noreturn]] void help_options(snort::SnortConfig*, const char*, snort::Module*);
+[[noreturn]] void help_plugins(snort::SnortConfig*, const char*);
 [[noreturn]] void help_signals(snort::SnortConfig*, const char*);
 [[noreturn]] void help_usage(snort::SnortConfig*, const char*);
 [[noreturn]] void help_version(snort::SnortConfig*);
 
-[[noreturn]] void list_daqs(snort::SnortConfig* sc);
-[[noreturn]] void list_modules(snort::SnortConfig* sc, const char*);
-[[noreturn]] void list_plugins(snort::SnortConfig* sc, const char*);
+[[noreturn]] void list_daqs(snort::SnortConfig*);
+[[noreturn]] void list_modules(snort::SnortConfig*, const char*);
+[[noreturn]] void list_plugins(snort::SnortConfig*, const char*);
 
-[[noreturn]] void dump_builtin_rules(snort::SnortConfig* sc, const char*, const char*);
-[[noreturn]] void dump_defaults(snort::SnortConfig* sc, const char*);
-[[noreturn]] void dump_dynamic_rules(snort::SnortConfig* sc, const char*);
-[[noreturn]] void dump_rule_hex(snort::SnortConfig* sc, const char*);
-[[noreturn]] void dump_rule_text(snort::SnortConfig* sc, const char*);
-[[noreturn]] void dump_version(snort::SnortConfig* sc);
+[[noreturn]] void dump_builtin_rules(snort::SnortConfig*, const char*, const char*);
+[[noreturn]] void dump_defaults(snort::SnortConfig*, const char*);
+[[noreturn]] void dump_dynamic_rules(snort::SnortConfig*, const char*);
+[[noreturn]] void dump_modules(snort::SnortConfig*);
+[[noreturn]] void dump_rule_hex(snort::SnortConfig*, const char*);
+[[noreturn]] void dump_rule_text(snort::SnortConfig*, const char*);
+[[noreturn]] void dump_version(snort::SnortConfig*);
 
 #endif
 

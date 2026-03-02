@@ -32,7 +32,7 @@ A typical file configuration looks like this:
         {  when = { sha256 = "F74DC976BC8387E7D4FC0716A069017A0C7ED13F309A523CC41A8739CCB7D4B6" }, use = { verdict = 'block'} },
     }
 
-    file_id =
+    file_inspect =
     {
         enable_type = true,
         enable_signature = true,
@@ -63,7 +63,7 @@ A set of file magic rules is packaged with Snort. They can be located at
 pre-packaged rules are used; doing so requires that you include
 the file in your Snort configuration as such (already in snort.lua):
 
-    file_id = { rules_file = 'file_magic.rules' }
+    file_inspect = { rules_file = 'file_magic.rules' }
 
 Example:
 
@@ -85,7 +85,7 @@ for each file_id rule.
 ==== File Policy
 
 You can enabled file type, file signature, or file capture by configuring
-file_id. In addition, you can enable trace to see file stream data, file
+file_inspect. In addition, you can enable trace to see file stream data, file
 type, and file signature information.
 
 Most importantly, you can configure a file policy that can block/alert

@@ -21,6 +21,7 @@
 #include "config.h"
 #endif
 
+#include <set>
 
 #include "appid/appid_session_api.h"
 #include "detection/detection_engine.h"
@@ -306,7 +307,12 @@ static std::string to_string(const BindUse& bu)
         use += " type = " + ((bu.type.at(0) == '.') ? bu.type.substr(1) : bu.type) + ",";
 
     if (!bu.name.empty() and (bu.type != bu.name))
-        use += " name = " + bu.name + ",";
+    {
+        use += " name = " + bu.name;
+        if (bu.same_file)
+            use += " (reuse)";
+        use += ",";
+    }
 
     if (use.length() > 1)
         use.pop_back();
@@ -482,8 +488,6 @@ public:
     Binder(std::vector<Binding>&&, std::vector<Binding>&&);
     ~Binder() override;
 
-    void remove_inspector_binding(SnortConfig*, const char*) override;
-
     bool configure(SnortConfig*) override;
     void show(const SnortConfig*) const override;
 
@@ -495,6 +499,7 @@ public:
     void handle_appid_service_change(DataEvent&,Flow&);
 
 private:
+    void check_user_ids(const SnortConfig*) const;
     void get_policy_bindings(Flow&, const char* service);
     void get_policy_bindings(Packet*);
     void get_bindings(Flow&, Stuff&, const char* service = nullptr);
@@ -609,8 +614,9 @@ public:
     }
 };
 
-Binder::Binder(std::vector<Binding>&& bv, std::vector<Binding>&& pbv)
-    : bindings(std::move(bv)),  policy_bindings(std::move(pbv))
+Binder::Binder(std::vector<Binding>&& bv, std::vector<Binding>&& pbv) :
+    bindings(std::move(bv)),
+    policy_bindings(std::move(pbv))
 { }
 
 Binder::~Binder()
@@ -622,8 +628,45 @@ Binder::~Binder()
         b.clear();
 }
 
+static void check_id(std::set<uint64_t>& ids, uint64_t id, const char* s)
+{
+    auto ret = ids.insert(id);
+
+    if (!ret.second)
+        ParseError("%s.id = " STDu64 " is not unique", s, id);
+}
+
+void Binder::check_user_ids(const SnortConfig* sc) const
+{
+    std::set<uint64_t> ins_ids;
+    std::set<uint64_t> ips_ids;
+
+    for (const Binding& b : policy_bindings)
+    {
+        if (b.use.same_file)
+            continue;
+
+        if (b.use.ips_index)
+        {
+            IpsPolicy* dp = sc->policy_map->get_ips_policy(b.use.ips_index);
+            assert(dp);
+            check_id(ips_ids, dp->user_policy_id, "ips");
+        }
+        if (b.use.inspection_index)
+        {
+            NetworkPolicy* np = sc->policy_map->get_network_policy(b.use.network_index);
+            assert(np);
+            InspectionPolicy* ip = np->get_inspection_policy(b.use.inspection_index);
+            assert(ip);
+            check_id(ins_ids, ip->user_policy_id, "inspection");
+        }
+    }
+}
+
 bool Binder::configure(SnortConfig* sc)
 {
+    check_user_ids(sc);
+
     for (Binding& b : bindings)
         b.configure(sc);
 
@@ -640,12 +683,12 @@ bool Binder::configure(SnortConfig* sc)
             case PktType::TCP:  name = "stream_tcp"; break;
             case PktType::UDP:  name = "stream_udp"; break;
             case PktType::ICMP: name = "stream_icmp"; break;
-            case PktType::USER:  name = "stream_user"; break;
+            case PktType::USER: name = "stream_user"; break;
             case PktType::FILE: name = "stream_file"; break;
             default:            name = nullptr; break;
         }
         if (name)
-            default_ssn_inspectors[proto] = InspectorManager::get_inspector(name, false, sc);
+            default_ssn_inspectors[proto] = InspectorManager::get_inspector(name, Module::INSPECT);
     }
 
     DataBus::subscribe(intrinsic_pub_key, IntrinsicEventIds::PKT_WITHOUT_FLOW, new NonFlowPacketHandler());
@@ -690,24 +733,6 @@ void Binder::show(const SnortConfig*) const
         auto bind_use = "use = " + to_string(b.use) + " }";
         ConfigLogger::log_list("", bind_when.c_str(), "   ");
         ConfigLogger::log_list("", bind_use.c_str(), "   ", true);
-    }
-}
-
-void Binder::remove_inspector_binding(SnortConfig*, const char* name)
-{
-    for (auto it = bindings.begin(); it != bindings.end(); ++it)
-    {
-        const char* key;
-        const Binding &b = *it;
-        if (b.use.svc.empty())
-            key = b.use.name.c_str();
-        else
-            key = b.use.svc.c_str();
-        if (!strcmp(key, name))
-        {
-            bindings.erase(it);
-            return;
-        }
     }
 }
 

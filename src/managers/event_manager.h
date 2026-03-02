@@ -45,14 +45,10 @@ struct OutputSet;
 class EventManager
 {
 public:
-    static void add_plugin(const snort::LogApi*);
-    static void dump_plugins();
+    static class PlugInterface* get_interface(const snort::LogApi*);
     static void release_plugins();
 
     static void instantiate(const char*, snort::SnortConfig*);
-    static void instantiate(const snort::LogApi*, snort::Module*, snort::SnortConfig*);
-
-    static unsigned get_output_type_flags(char*);
 
     static void add_output(OutputSet**, snort::Logger*);
     static void copy_outputs(OutputSet* dst, const OutputSet* src);
@@ -69,7 +65,8 @@ public:
     static void enable_logs(bool b) { log_enabled = b; }
 
 private:
-    static void instantiate(struct Output*, snort::Module*, snort::SnortConfig*);
+    friend class Output;
+    static void instantiate(class Output*, snort::Module*, snort::SnortConfig*);
 
     static bool alert_enabled;
     static bool log_enabled;

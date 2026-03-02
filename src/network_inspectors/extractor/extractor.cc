@@ -314,7 +314,7 @@ static InspectApi extractor_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         S_NAME,
         s_help,

@@ -65,7 +65,7 @@ IpsContext::IpsContext(unsigned int) { }
 IpsContext::~IpsContext() = default;
 DataBus::DataBus() = default;
 DataBus::~DataBus() = default;
-SnortConfig::SnortConfig(snort::SnortConfig const*, const char*) { }
+SnortConfig::SnortConfig(const char*) { }
 SnortConfig::~SnortConfig() = default;
 unsigned get_instance_id()
 { return 0; }
@@ -88,7 +88,7 @@ static void set_configured() { conf.payload_injector_config = &pi_conf; }
 Packet::~Packet() = default;
 int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
 FlowData::~FlowData() = default;
-FlowData::FlowData(unsigned int, snort::Inspector*) { }
+FlowData::FlowData(unsigned int) { }
 FlowDataStore::~FlowDataStore() = default;
 
 // Inspector mocks, used by MockInspector class

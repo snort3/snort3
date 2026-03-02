@@ -23,17 +23,16 @@
 
 #include "snort.h"
 
-#include <cmath>
 #include <daq.h>
 #include <openssl/crypto.h>
 #include <sys/stat.h>
-#include <syslog.h>
 
-#include "actions/ips_actions.h"
-#include "codecs/codec_api.h"
-#include "connectors/connectors.h"
+#include <cmath>
+#include <forward_list>
+
 #include "detection/detection_engine.h"
 #include "detection/fp_config.h"
+#include "detection/ips_context_data.h"
 #include "file_api/file_service.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
@@ -44,11 +43,10 @@
 #include "host_tracker/host_cache.h"
 #include "host_tracker/host_cache_segmented.h"
 #include "host_tracker/host_tracker_module.h"
-#include "ips_options/ips_options.h"
 #include "log/log.h"
 #include "log/log_errors.h"
-#include "loggers/loggers.h"
 #include "main.h"
+#include "main/modules.h"
 #include "main/process.h"
 #include "main/shell.h"
 #include "managers/codec_manager.h"
@@ -56,24 +54,22 @@
 #include "managers/ips_manager.h"
 #include "managers/event_manager.h"
 #include "managers/module_manager.h"
+#include "managers/mp_transport_manager.h"
 #include "managers/mpse_manager.h"
 #include "managers/plugin_manager.h"
 #include "managers/policy_selector_manager.h"
 #include "managers/script_manager.h"
-#include "managers/mp_transport_manager.h"
+#include "managers/so_manager.h"
 #include "memory/memory_cap.h"
-#include "network_inspectors/network_inspectors.h"
 #include "packet_io/active.h"
 #include "packet_io/sfdaq.h"
 #include "packet_io/trough.h"
 #include "parser/cmd_line.h"
+#include "parser/config_file.h"
 #include "parser/parser.h"
-#include "policy_selectors/policy_selectors.h"
 #include "profiler/profiler.h"
-#include "search_engines/search_engines.h"
-#include "service_inspectors/service_inspectors.h"
+#include "profiler/profiler_impl.h"
 #include "side_channel/side_channel.h"
-#include "stream/stream_inspectors.h"
 #include "stream/stream.h"
 #include "target_based/host_attributes.h"
 #include "time/periodic.h"
@@ -119,23 +115,10 @@ void Snort::init(int argc, char** argv)
 
     InitProtoNames();
     DataBus::init();
-
+    PluginManager::init();
     DetectionEngine::init();
 
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, nullptr);
-
-    load_actions();
-    load_codecs();
-    load_connectors();
-    load_ips_options();
-    load_loggers();
-    load_search_engines();
-    load_policy_selectors();
-    load_stream_inspectors();
-    load_network_inspectors();
-    load_service_inspectors();
-    load_mp_transports();
-    load_trace();
 
     snort_cmd_line_conf = parse_cmd_line(argc, argv);
     SnortConfig::set_conf(snort_cmd_line_conf);
@@ -152,24 +135,26 @@ void Snort::init(int argc, char** argv)
 
     SideChannelManager::pre_config_init();
 
-    ScriptManager::load_scripts(snort_cmd_line_conf->script_paths);
     PluginManager::load_plugins(snort_cmd_line_conf->plugin_path);
+    ScriptManager::load_scripts(snort_cmd_line_conf->script_paths);
 
-    /* load_plugins() must be called before init() so that
-    TraceModule can properly generate its Parameter table */
-    ModuleManager::init();
+    InspectorManager::new_map();
     ModuleManager::load_params();
+    TraceApi::global_init();
 
     FileService::init();
 
     parser_init();
-    SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf);
+    SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf, get_snort_conf());
 
     /* Set the global snort_conf that will be used during run time */
     SnortConfig::set_conf(sc);
+    TraceApi::capture_outputs(sc);
 
     if (!sc->policy_map->setup_network_policies())
         ParseError("Network policy user ids must be unique\n");
+
+    InspectorManager::prepare_map();
 
     // This call must be immediately after "SnortConfig::set_conf(sc)"
     // since the first trace call may happen somewhere after this point
@@ -179,14 +164,8 @@ void Snort::init(int argc, char** argv)
         sc->mp_dbus = new MPDataBus();
     }
 
-    PluginManager::load_so_plugins(sc);
-
-    if ( SnortConfig::log_show_plugins() )
-    {
-        ModuleManager::dump_modules();
-        PluginManager::dump_plugins();
-    }
-    CodecManager::instantiate();
+    PluginManager::capture_plugins(sc);
+    Profiler::setup(sc);
 
     if ( !sc->output.empty() )
         EventManager::instantiate(sc->output.c_str(), sc);
@@ -217,15 +196,12 @@ void Snort::init(int argc, char** argv)
     if ( SnortConfig::log_verbose() )
         PolicySelectorManager::print_config(sc);
 
-    // Must be after CodecManager::instantiate()
     if ( !InspectorManager::configure(sc) )
         ParseError("can't initialize inspectors");
     else if ( SnortConfig::log_verbose() )
         InspectorManager::print_config(sc);
 
-    InspectorManager::global_init();
     InspectorManager::prepare_inspectors(sc);
-    InspectorManager::prepare_controls(sc);
 
     // Must be after InspectorManager::configure()
     FileService::post_init();
@@ -236,11 +212,9 @@ void Snort::init(int argc, char** argv)
         umask(077);    /* set default to be sane */
 
     /* Need to do this after dynamic detection stuff is initialized, too */
-    IpsManager::global_init(sc);
     PacketManager::global_init(sc->num_layers);
 
     sc->post_setup();
-    sc->update_reload_id();
 
     detection_filter_init(sc->detection_filter_config);
 
@@ -343,13 +317,13 @@ void Snort::term()
     const SnortConfig* sc = SnortConfig::get_conf();
 
     MPTransportManager::term();
-    IpsManager::global_term(sc);
+    call_shutdown_hooks();
+
     HostAttributesManager::term();
 
     Trough::cleanup();
     ClosePidFile();
 
-    /* remove pid file */
     if ( !sc->pid_filename.empty() )
     {
         int ret = unlink(sc->pid_filename.c_str());
@@ -361,34 +335,35 @@ void Snort::term()
         }
     }
 
-    //MpseManager::print_search_engine_stats();
-
     Periodic::unregister_all();
 
     LogMessage("%s  Snort exiting\n", get_prompt());
 
-    // This call must be before SnortConfig cleanup
-    // since the "TraceApi::thread_term()" uses SnortConfig
     TraceApi::thread_term();
+    HighAvailabilityManager::term();
+    SideChannelManager::term();
+    host_cache.term();
+    detection_filter_term();
+    CleanupProtoNames();
+
+    // this will actually cause leaks so don't do it
+    //OPENSSL_cleanup();
+
+    if (sc != snort_cmd_line_conf)
+    {
+        PluginManager::revert_plugins(SnortConfig::get_main_conf());
+        InspectorManager::tear_down(SnortConfig::get_main_conf());
+        delete sc;
+    }
 
     SnortConfig::set_conf(nullptr);
-
-    /* free allocated memory */
-    if (sc != snort_cmd_line_conf)
-        delete sc;
 
     delete snort_cmd_line_conf;
     snort_cmd_line_conf = nullptr;
 
-    CleanupProtoNames();
-    HighAvailabilityManager::term();
-    SideChannelManager::term();
-    ModuleManager::term();
-    host_cache.term();
-    PluginManager::release_plugins();
-    ScriptManager::release_scripts();
+    InspectorManager::cleanup();
     memory::MemoryCap::term();
-    detection_filter_term();
+    PluginManager::release_plugins();
 
     term_signals();
 }
@@ -396,7 +371,19 @@ void Snort::term()
 void Snort::clean_exit(int)
 {
     term();
-    closelog();
+}
+
+static std::forward_list<void (*)()> shutdown_hooks;
+
+void Snort::add_shutdown_hook(void (*f)())
+{ shutdown_hooks.push_front(f); }
+
+void Snort::call_shutdown_hooks()
+{
+    for (auto f: shutdown_hooks)
+        f();
+
+    shutdown_hooks.clear();
 }
 
 //-------------------------------------------------------------------------
@@ -406,6 +393,9 @@ void Snort::clean_exit(int)
 bool Snort::reloading = false;
 bool Snort::privileges_dropped = false;
 bool Snort::already_exiting = false;
+
+bool Snort::exit_requested()
+{ return ::exit_requested; }
 
 bool Snort::is_reloading()
 { return reloading; }
@@ -451,7 +441,7 @@ void Snort::setup(int argc, char* argv[])
     memory::MemoryCap::print(SnortConfig::log_verbose(), true);
 
     host_cache.init();
-    ((HostTrackerModule*)ModuleManager::get_module(HOST_TRACKER_NAME))->init_data();
+    ((HostTrackerModule*)PluginManager::get_module(HOST_TRACKER_NAME))->init_data();
     host_cache.print_config();
 
 #ifdef USE_TSC_CLOCK
@@ -484,19 +474,32 @@ void Snort::reload_failure_cleanup(SnortConfig* sc)
     delete sc;
     set_default_policy(SnortConfig::get_conf());
     reloading = false;
+    InspectorManager::abort_map();
+}
+
+void Snort::prepare_reload()
+{
+    IpsContextData::clear_ips_id();
 }
 
 // FIXIT-M refactor this so startup and reload call the same core function to
 // instantiate things that can be reloaded
-SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path,
-    const SnortConfig* old)
+SnortConfig* Snort::get_reload_config(const char* fname)
 {
     reloading = true;
+
+    InspectorManager::new_map();
+    ModuleManager::load_params();
+    TraceApi::global_init();
+
     ModuleManager::reset_errors();
     reset_parse_errors();
     trim_heap();
-
     parser_init();
+
+    if ( !fname )
+        fname = get_snort_conf();
+
     SnortConfig* sc = ParseSnortConf(snort_cmd_line_conf, fname);
 
     if ( get_parse_errors() || ModuleManager::get_errors() || !sc->verify() )
@@ -505,7 +508,8 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
         return nullptr;
     }
 
-    PluginManager::reload_so_plugins(plugin_path, sc);
+    InspectorManager::prepare_map();
+    TraceApi::capture_outputs(sc);
     sc->setup();
 
 #ifdef SHELL
@@ -518,9 +522,8 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
         return nullptr;
     }
 
-    InspectorManager::reconcile_inspectors(old, sc);
+    InspectorManager::reconcile_map(sc);
     InspectorManager::prepare_inspectors(sc);
-    InspectorManager::prepare_controls(sc);
 
     FileService::verify_reload(sc);
     if ( get_reload_errors() )
@@ -528,6 +531,8 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
         reload_failure_cleanup(sc);
         return nullptr;
     }
+
+    TraceApi::thread_reinit(sc->trace_config);
 
     if ( SnortConfig::log_verbose() )
     {
@@ -567,8 +572,6 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
         MpseManager::activate_search_engine(sc->fast_pattern_config->get_search_api(), sc);
     }
 
-    InspectorManager::update_policy(sc);
-
     if ( !sc->attribute_hosts_file.empty() )
     {
         if ( !HostAttributesManager::load_hosts_file(sc, sc->attribute_hosts_file.c_str()) )
@@ -579,77 +582,6 @@ SnortConfig* Snort::get_reload_config(const char* fname, const char* plugin_path
     reloading = false;
     parser_term(sc);
 
-    return sc;
-}
-
-SnortConfig* Snort::get_updated_policy(
-    SnortConfig* other_conf, const char* fname, const char* iname)
-{
-    reloading = true;
-    reset_parse_errors();
-
-    SnortConfig* sc = new SnortConfig(other_conf, iname);
-    sc->global_dbus->clone(*other_conf->global_dbus, iname);
-
-    if (other_conf->mp_dbus != nullptr)
-        sc->mp_dbus->clone(*other_conf->mp_dbus, iname);
-
-    if ( fname )
-    {
-        bool uninitialized_trace = !other_conf->trace_config or
-            !other_conf->trace_config->initialized;
-
-        Shell sh = Shell(fname);
-        sh.configure(sc, true);
-
-        if ( uninitialized_trace )
-        {
-            LogMessage("== WARNING: Trace module was not configured during "
-                "initial startup. Ignoring the new trace configuration.\n");
-            sc->trace_config->clear();
-        }
-
-        if ( ModuleManager::get_errors() || !sc->verify() )
-        {
-            sc->cloned = true;
-            InspectorManager::update_policy(other_conf);
-            delete sc;
-            set_default_policy(other_conf);
-            reloading = false;
-            return nullptr;
-        }
-    }
-
-    if ( iname )
-    {
-        if ( !InspectorManager::delete_inspector(sc, iname) )
-        {
-            sc->cloned = true;
-            InspectorManager::update_policy(other_conf);
-            delete sc;
-            set_default_policy(other_conf);
-            reloading = false;
-            return nullptr;
-        }
-    }
-
-    if ( !InspectorManager::configure(sc, true) )
-    {
-        sc->cloned = true;
-        InspectorManager::update_policy(other_conf);
-        delete sc;
-        set_default_policy(other_conf);
-        reloading = false;
-        return nullptr;
-    }
-
-    InspectorManager::reconcile_inspectors(other_conf, sc, true);
-    InspectorManager::prepare_inspectors(sc);
-    InspectorManager::prepare_controls(sc);
-
-    other_conf->cloned = true;
-    InspectorManager::update_policy(sc);
-    reloading = false;
     return sc;
 }
 

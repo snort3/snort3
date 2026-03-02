@@ -41,7 +41,7 @@ static Flow flow;
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 void AppIdModule::reset_stats() {}
 
-Inspector* InspectorManager::get_inspector(char const*, bool, const snort::SnortConfig*)
+Inspector* InspectorManager::get_inspector(char const*, Module::Usage)
 {
     return nullptr;
 }

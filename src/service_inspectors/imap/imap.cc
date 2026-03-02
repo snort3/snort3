@@ -198,7 +198,7 @@ static IMAPData* get_session_data(Flow* flow)
 
 static inline PDFJSNorm* acquire_js_ctx(IMAPData& imap_ssn, const void* data, size_t len)
 {
-    auto reload_id = SnortConfig::get_conf()->get_reload_id();
+    auto reload_id = SnortConfig::get_reload_id();
 
     if (imap_ssn.jsn and imap_ssn.jsn->get_generation_id() == reload_id)
         return imap_ssn.jsn;
@@ -273,11 +273,11 @@ static void IMAP_SearchInit()
 
 static void IMAP_SearchFree()
 {
-    if (imap_cmd_search_mpse != nullptr)
-        delete imap_cmd_search_mpse;
+    delete imap_cmd_search_mpse;
+    delete imap_resp_search_mpse;
 
-    if (imap_resp_search_mpse != nullptr)
-        delete imap_resp_search_mpse;
+    imap_cmd_search_mpse = nullptr;
+    imap_resp_search_mpse = nullptr;
 }
 
 static void IMAP_ResetState(Flow* ssn)
@@ -966,7 +966,7 @@ const InspectApi imap_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         IMAP_NAME,
         IMAP_HELP,

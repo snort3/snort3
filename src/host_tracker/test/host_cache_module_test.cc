@@ -32,7 +32,7 @@
 #include "host_tracker/host_cache_segmented.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
-#include "managers/module_manager.h"
+#include "managers/plugin_manager.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
@@ -59,6 +59,9 @@ void ControlConn::log_command(const std::string& , bool ) { }
 ControlConn* ControlConn::query_from_lua(const lua_State*) { return &ctrlcon; }
 bool ControlConn::respond(const char*, ...) { return true; }
 
+Module* PluginManager::get_module(const char*)
+{ return nullptr; }
+
 namespace snort
 {
 void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) { }
@@ -70,9 +73,6 @@ const SnortConfig* SnortConfig::get_conf()
 
 char* snort_strdup(const char* s)
 { return strdup(s); }
-
-Module* ModuleManager::get_module(const char*)
-{ return nullptr; }
 
 void LogMessage(const char* format,...)
 {

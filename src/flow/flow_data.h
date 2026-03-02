@@ -25,11 +25,15 @@
 // FlowData is how inspectors maintain flow state
 // use Flow::set/get_flow_data() to attach to a flow
 
+#include <memory>
+
+#include "framework/base_api.h"
 #include "main/snort_types.h"
+
+struct Plugin;
 
 namespace snort
 {
-class Inspector;
 struct Packet;
 
 class SO_PUBLIC FlowData
@@ -40,13 +44,7 @@ public:
     unsigned get_id() const
     { return id; }
 
-    static unsigned create_flow_data_id()
-    { return ++flow_data_id; }
-
-    Inspector* get_handler() const
-    { return handler; }
-
-    void set_handler(Inspector*);
+    static unsigned create_flow_data_id();
 
     virtual void handle_expected(Packet*)
     { }
@@ -56,22 +54,15 @@ public:
     { }
 
 protected:
-    FlowData(unsigned u, Inspector* = nullptr);
+    FlowData(unsigned id);
+    FlowData(unsigned id, const char* mod_name);
 
 private:
-    static unsigned flow_data_id;
-    Inspector* handler;
-    unsigned id;
-};
+    void init(unsigned);
 
-// The flow data created from SO rules must use RuleFlowData
-// to support reload
-class SO_PUBLIC RuleFlowData : public FlowData
-{
-protected:
-    RuleFlowData(unsigned u);
-public:
-    ~RuleFlowData() override = default;
+    std::shared_ptr<Plugin> plugin = nullptr;
+    static unsigned flow_data_id;
+    unsigned id;
 };
 
 class SO_PUBLIC FlowDataStore

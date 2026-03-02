@@ -176,13 +176,13 @@ int FTPCheckConfigs(SnortConfig* sc, void* pData)
         return rval;
 
     //  Verify that FTP client and FTP data inspectors are initialized.
-    if(!PigPen::get_inspector(FTP_CLIENT_NAME, false, sc))
+    if(!PigPen::get_inspector(FTP_CLIENT_NAME, Module::INSPECT))
     {
         ParseError("ftp_server requires that %s also be configured.", FTP_CLIENT_NAME);
         return -1;
     }
 
-    if(!PigPen::get_inspector(FTP_DATA_NAME, false, sc))
+    if(!PigPen::get_inspector(FTP_DATA_NAME, Module::INSPECT))
     {
         ParseError("ftp_server requires that %s also be configured.", FTP_DATA_NAME);
         return -1;

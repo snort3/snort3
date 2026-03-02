@@ -49,6 +49,8 @@ unsigned get_instance_id()
 unsigned ThreadConfig::get_instance_max() { return 1; }
 }
 
+void host_cache_module_dump() { }
+
 //  Fake show_stats to avoid bringing in a ton of dependencies.
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }

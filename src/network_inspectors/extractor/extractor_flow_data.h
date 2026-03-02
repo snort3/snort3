@@ -44,8 +44,7 @@ public:
     }
 
 protected:
-    ExtractorFlowData(ServiceType type, snort::Inspector& insp)
-        : FlowData(data_id, &insp), type(type) {}
+    ExtractorFlowData(ServiceType type) : FlowData(data_id), type(type) {}
 
 private:
     const ServiceType type;

@@ -40,23 +40,26 @@ struct SnortConfig;
 
 class SFDAQInstance;
 
-class AnalyzerCommand
+class SO_PUBLIC AnalyzerCommand
 {
 public:
-    AnalyzerCommand() : AnalyzerCommand(nullptr)
-    { }
-    explicit AnalyzerCommand(ControlConn* conn) : ctrlcon(conn)
-    { }
+    AnalyzerCommand() : AnalyzerCommand(nullptr) { }
+    explicit AnalyzerCommand(ControlConn* conn) : ctrlcon(conn) { }
     virtual ~AnalyzerCommand() = default;
+
     virtual bool execute(Analyzer&, void**) = 0;
+
     virtual bool need_update_reload_id() const
     { return false; }
+
     virtual const char* stringify() = 0;
+
     unsigned get() { return ++ref_count; }
     unsigned put() { return --ref_count; }
-    SO_PUBLIC void log_message(const char* format, ...) __attribute__((format (printf, 2, 3)));
-    SO_PUBLIC static void log_message(ControlConn*, const char* format, ...) __attribute__((format (printf, 2, 3)));
-    SO_PUBLIC static snort::SFDAQInstance* get_daq_instance(Analyzer& analyzer);
+
+    void log_message(const char* format, ...) __attribute__((format (printf, 2, 3)));
+    static void log_message(ControlConn*, const char* format, ...) __attribute__((format (printf, 2, 3)));
+    static snort::SFDAQInstance* get_daq_instance(Analyzer& analyzer);
 
     ControlConn* ctrlcon;
 
@@ -97,7 +100,7 @@ static std::vector<const char*> clear_counter_type_string_map
     "daq",
     "module",
     "appid",
-    "file_id",
+    "file_inspect",
     "snort",
     "high_availability",
     "mp_data_bus"
@@ -166,15 +169,14 @@ class ACSwap : public snort::AnalyzerCommand
 {
 public:
     ACSwap() = delete;
-    ACSwap(Swapper* ps, ControlConn* conn) : AnalyzerCommand(conn), ps(ps)
-    { }
-    bool execute(Analyzer&, void**) override;
-    bool need_update_reload_id() const override
-    { return true; }
-    const char* stringify() override { return "SWAP"; }
+    ACSwap(Swapper* ps, ControlConn* conn) : AnalyzerCommand(conn), ps(ps) { }
     ~ACSwap() override;
+
+    bool execute(Analyzer&, void**) override;
+
+    const char* stringify() override { return "SWAP"; }
 private:
-    Swapper *ps;
+    Swapper* ps;
 };
 
 class ACHostAttributesSwap : public snort::AnalyzerCommand
@@ -245,7 +247,7 @@ private:
 namespace snort
 {
 // from main.cc
-#ifdef REG_TEST
+#if defined(REG_TEST)
 void main_unicast_command(AnalyzerCommand*, unsigned target, ControlConn* = nullptr);
 #endif
 SO_PUBLIC void main_broadcast_command(snort::AnalyzerCommand*, ControlConn* = nullptr);

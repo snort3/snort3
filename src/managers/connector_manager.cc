@@ -33,6 +33,9 @@
 #include "main/thread_config.h"
 #include "utils/util.h"
 
+#include "plugin_manager.h"
+#include "plug_interface.h"
+
 using namespace snort;
 
 //  ConnectorManager Private Data
@@ -48,64 +51,102 @@ struct ConnectorElem
     std::vector<Connector*> thread_connectors;
 };
 
-// One ConnectorCommonElem created for each ConnectorCommon configured
-struct ConnectorCommonElem
+class ConnectorCommonElem : public PlugInterface
 {
+public:
     const ConnectorApi* api;
-    ConnectorCommon* connector_common;
+    ConnectorCommon* connector_common = nullptr;
     std::map<std::string, ConnectorElem> connectors;
 
     ConnectorCommonElem(const ConnectorApi* p)
+    { api = p; }
+
+    ~ConnectorCommonElem() override
+    { connectors.clear(); }
+
+    void global_init() override
     {
-        api = p;
-        connector_common = nullptr;
+        if ( api->pinit )
+            api->pinit();
+    }
+
+    void global_term() override
+    {
+        if ( api->dtor )
+            api->dtor(connector_common);
+
+        if ( api->pterm )
+            api->pterm();
+    }
+
+    void thread_init() override
+    {
+        if ( !api->tinit )
+            return;
+
+        unsigned instance = get_instance_id();
+
+        for ( auto& conn : connectors )
+        {
+            assert(!conn.second.thread_connectors[instance]);
+            Connector* connector = api->tinit(conn.second.config);
+            conn.second.thread_connectors[instance] = std::move(connector);
+        }
+    }
+
+    void thread_term() override
+    {
+        if ( !api->tterm )
+            return;
+
+        unsigned instance = get_instance_id();
+
+        for ( auto& conn : connectors )
+        {
+            if ( conn.second.thread_connectors[instance] )
+            {
+                api->tterm(conn.second.thread_connectors[instance]);
+                conn.second.thread_connectors[instance] = nullptr;
+            }
+        }
+    }
+    void instantiate(Module* mod, SnortConfig*, const char*) override
+    {
+        assert(mod);
+
+        ConnectorCommon* con_com = api->ctor(mod);
+        assert(con_com);
+
+        for ( auto& cfg : con_com->config_set )
+        {
+            if ( ConnectorManager::is_instantiated(cfg->connector_name) != Connector::CONN_UNDEFINED )
+            {
+                ParseError("redefinition of \"%s\" connector", cfg->connector_name.c_str());
+                continue;
+            }
+            ConnectorElem connector_elem(*cfg);
+            connectors.emplace(cfg->connector_name, std::move(connector_elem));
+        }
+        connector_common = con_com;
     }
 };
 
-typedef std::list<ConnectorCommonElem> CList;
-static CList s_connector_commons;
-
 //-------------------------------------------------------------------------
 
-void ConnectorManager::add_plugin(const ConnectorApi* api)
-{
-    if ( api->pinit )
-        api->pinit();
-}
-
-void ConnectorManager::dump_plugins()
-{
-    Dumper d("Connectors");
-
-    for ( const auto& sc : s_connector_commons )
-        d.dump(sc.api->base.name, sc.api->base.version);
-}
-
-void ConnectorManager::release_plugins()
-{
-    for ( auto& sc : s_connector_commons )
-    {
-        if ( sc.api->dtor )
-            sc.api->dtor(sc.connector_common);
-
-        sc.connectors.clear();
-
-        if ( sc.api->pterm )
-            sc.api->pterm();
-    }
-
-    s_connector_commons.clear();
-}
+PlugInterface* ConnectorManager::get_interface(const ConnectorApi* api)
+{ return new ConnectorCommonElem(api); }
 
 Connector* ConnectorManager::get_connector(const std::string& connector_name)
 {
     unsigned instance = get_instance_id();
+    std::vector<PlugInterface*> piv = PluginManager::get_interfaces(PT_CONNECTOR);
 
-    for ( auto& sc : s_connector_commons )
+    for ( auto& sc : piv )
     {
-        auto connector_ptr = sc.connectors.find(connector_name);
+        ConnectorCommonElem* c = (ConnectorCommonElem*)sc;
+        auto connector_ptr = c->connectors.find(connector_name);
 
-        if ( connector_ptr != sc.connectors.end() )
+        if ( connector_ptr != c->connectors.end() )
         {
             if ( connector_ptr->second.thread_connectors[instance] )
                 return ( connector_ptr->second.thread_connectors[instance] );
@@ -114,17 +155,21 @@ Connector* ConnectorManager::get_connector(const std::string& connector_name)
     return ( nullptr );
 }
 
-void ConnectorManager::update_thread_connector(const std::string& connector_name, int instance_id, snort::Connector* connector)
+void ConnectorManager::update_thread_connector(
+    const std::string& connector_name, int instance_id, snort::Connector* connector)
 {
-    for (auto& sc : s_connector_commons)
-    {
-        auto connector_ptr = sc.connectors.find(connector_name);
+    std::vector<PlugInterface*> piv = PluginManager::get_interfaces(PT_CONNECTOR);
 
-        if (connector_ptr != sc.connectors.end())
+    for ( auto& sc : piv )
+    {
+        ConnectorCommonElem* c = (ConnectorCommonElem*)sc;
+        auto connector_ptr = c->connectors.find(connector_name);
+
+        if (connector_ptr != c->connectors.end())
         {
             if (connector_ptr->second.thread_connectors[instance_id]) {
                 if (connector != connector_ptr->second.thread_connectors[instance_id])
-                    sc.api->tterm(connector_ptr->second.thread_connectors[instance_id]);
+                    c->api->tterm(connector_ptr->second.thread_connectors[instance_id]);
             }
 
             connector_ptr->second.thread_connectors[instance_id] = connector;
@@ -133,32 +178,16 @@ void ConnectorManager::update_thread_connector(const std::string& connector_name
     }
 }
 
-void ConnectorManager::thread_init()
-{
-    unsigned instance = get_instance_id();
-
-    for ( auto& sc : s_connector_commons )
-    {
-        if ( sc.api->tinit )
-        {
-            for ( auto& conn : sc.connectors )
-            {
-                assert(!conn.second.thread_connectors[instance]);
-
-                Connector* connector = sc.api->tinit(conn.second.config);
-                conn.second.thread_connectors[instance] = std::move(connector);
-            }
-        }
-    }
-}
-
 void ConnectorManager::thread_reinit()
 {
     unsigned instance = get_instance_id();
+    std::vector<PlugInterface*> piv = PluginManager::get_interfaces(PT_CONNECTOR);
 
-    for ( auto& sc : s_connector_commons )
+    for ( auto& sc : piv )
     {
-        for ( auto& conn : sc.connectors )
+        ConnectorCommonElem* c = (ConnectorCommonElem*)sc;
+
+        for ( auto& conn : c->connectors )
         {
             if (conn.second.thread_connectors[instance])
                 conn.second.thread_connectors[instance]->reinit();
@@ -166,61 +195,23 @@ void ConnectorManager::thread_reinit()
     }
 }
 
-void ConnectorManager::thread_term()
-{
-    unsigned instance = get_instance_id();
-
-    for ( auto& sc : s_connector_commons )
-    {
-        if ( sc.api->tterm )
-        {
-            for ( auto& conn : sc.connectors )
-            {
-                if ( conn.second.thread_connectors[instance] )
-                {
-                    sc.api->tterm(conn.second.thread_connectors[instance]);
-                    conn.second.thread_connectors[instance] = nullptr;
-                }
-            }
-        }
-    }
-}
-
-void ConnectorManager::instantiate(const ConnectorApi* api, Module* mod, SnortConfig*)
-{
-    assert(mod);
-    ConnectorCommonElem c(api);
-
-    ConnectorCommon* connector_common = api->ctor(mod);
-    assert(connector_common);
-
-    c.connector_common = connector_common;
-
-    // iterate through the config_set and create the connector entries
-    for ( auto& cfg : connector_common->config_set )
-    {
-        if ( is_instantiated(cfg->connector_name) != Connector::CONN_UNDEFINED )
-        {
-            ParseError("redefinition of \"%s\" connector", cfg->connector_name.c_str());
-            continue;
-        }
-
-        ConnectorElem connector_elem(*cfg);
-        c.connectors.emplace(cfg->connector_name, std::move(connector_elem));
-    }
-
-    s_connector_commons.emplace_back(c);
-}
-
 Connector::Direction ConnectorManager::is_instantiated(const std::string& name)
 {
-    for ( auto& conn : s_connector_commons )
-    {
-        auto connector_ptr = conn.connectors.find(name);
+    std::vector<PlugInterface*> piv = PluginManager::get_interfaces(PT_CONNECTOR);
 
-        if ( connector_ptr != conn.connectors.end() )
+    for ( auto& sc : piv )
+    {
+        ConnectorCommonElem* c = (ConnectorCommonElem*)sc;
+
+        if ( !c->connector_common )
+            continue;
+
+        auto connector_ptr = c->connectors.find(name);
+
+        if ( connector_ptr != c->connectors.end() )
             return connector_ptr->second.config.direction;
     }
 
     return Connector::CONN_UNDEFINED;
 }
+

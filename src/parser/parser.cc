@@ -336,12 +336,6 @@ SnortConfig* ParseSnortConf(const SnortConfig* cmd_line_conf, const char* fname)
     sc->pid_filename = cmd_line_conf->pid_filename;
     sc->max_procs = cmd_line_conf->max_procs;
 
-    if ( !fname )
-        fname = get_snort_conf();
-
-    if ( !fname )
-        fname = "";
-
     sc->port_tables = PortTablesNew();
 
     OtnInit(sc);
@@ -458,7 +452,7 @@ void ParseRules(SnortConfig* sc)
 
         if (!idx and !s_special_rules.empty())
         {
-            push_parse_location("W", "./", "file_id.rules_file");
+            push_parse_location("W", "./", "file_inspect.rules_file");
             parse_rules_string(sc, s_special_rules.c_str(), false);
             pop_parse_location();
             s_special_rules.clear();
@@ -506,6 +500,9 @@ void ParseRules(SnortConfig* sc)
 
         p->rules_loaded = get_policy_loaded_rule_count();
         p->rules_shared = get_policy_shared_rule_count();
+
+        if ( p->rules_loaded > 0 )
+            p->update_user_policy_id();
     }
 }
 

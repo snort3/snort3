@@ -89,7 +89,7 @@ static const CodecApi no_next_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_NO_NEXT_NAME,
         CD_NO_NEXT_HELP,

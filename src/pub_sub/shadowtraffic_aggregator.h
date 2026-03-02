@@ -80,4 +80,5 @@ class SO_PUBLIC ShadowTrafficEvent : public snort::DataEvent {
 };
 
 }
-#endif // SHADOWTRAFFIC_AGGREGATOR_H
+#endif
+

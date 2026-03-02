@@ -218,8 +218,7 @@ void AppIdInspector::tinit()
         third_party_tinit();
     if (config->log_all_sessions)
         appidDebug->set_enabled(true);
-     if ( snort::HighAvailabilityManager::active() )
-        AppIdHAManager::tinit();
+    AppIdHAManager::tinit();
     ServiceDiscovery::set_thread_local_ftp_service();
 }
 
@@ -233,19 +232,23 @@ void AppIdInspector::tterm()
 {
     AppIdStatistics::cleanup();
     AppIdDiscovery::tterm();
-    assert(odp_thread_local_ctxt);
+
     delete odp_thread_local_ctxt;
     odp_thread_local_ctxt = nullptr;
+
     if (pkt_thread_tp_appid_ctxt)
         third_party_tfini();
+
     if ( snort::HighAvailabilityManager::active() )
         AppIdHAManager::tterm();
+
     ServiceDiscovery::reset_thread_local_ftp_service();
 }
 
-void AppIdInspector::tear_down(SnortConfig*)
+void AppIdInspector::tear_down(SnortConfig*, bool shutdown)
 {
-    main_broadcast_command(new ACThirdPartyAppIdCleanup());
+    if ( !shutdown )
+        main_broadcast_command(new ACThirdPartyAppIdCleanup());
 }
 
 void AppIdInspector::eval(Packet* p)
@@ -333,7 +336,7 @@ const InspectApi appid_inspector_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         MOD_NAME,
         MOD_HELP,

@@ -148,13 +148,10 @@ public:
     static void thread_term();
     static void term();
 
-    // true if we are configured and able to process
+    static bool configured();
     static bool active();
 
-    // Within packet processing, analyze the packet and flow for potential update messages
     static void process_update(snort::Flow*, snort::Packet*);
-
-    // Anytime a flow is deleted, potentially generate a deletion message
     static void process_deletion(snort::Flow&);
 
     // Look for and dispatch receive messages.

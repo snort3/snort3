@@ -30,22 +30,24 @@ struct SnortConfig;
 }
 
 class Analyzer;
+struct InspectorVector;
 
 class Swapper
 {
 public:
     Swapper(snort::SnortConfig*);
     Swapper(const snort::SnortConfig* sold, snort::SnortConfig* snew);
-    Swapper();
+
     ~Swapper();
 
     void apply(Analyzer&);
-    void finish(Analyzer&);
+    void finish();
     snort::SnortConfig* get_new_conf() { return new_conf; }
 
 private:
-    const snort::SnortConfig* old_conf;
-    snort::SnortConfig* new_conf;
+    const snort::SnortConfig* old_conf = nullptr;
+    snort::SnortConfig* new_conf = nullptr;
+    InspectorVector* new_iv = nullptr;
 };
 
 #endif

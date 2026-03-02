@@ -111,12 +111,6 @@ static bool str2num(const char* r, T& t)
     else if ( !strncmp(r, "max53", n) )
         t = 9007199254740992;
 
-    else if ( !strncmp(r, "max63", n) )
-        t = 9223372036854775807;
-
-    else if ( !strncmp(r, "max64", n) )
-        t = std::is_same_v<T, int64_t> ? -1 : 18446744073709551615ULL;
-
     else
         res = false;
 
@@ -588,6 +582,8 @@ bool Parameter::validate(Value& v) const
         return valid_enum(v, (const char*)range);
     case PT_DYNAMIC:
         return valid_select(v, (*((const RangeQuery*)range))());
+    case PT_DYNAMICS:
+        return valid_multi(v, (*((const RangeQuery*)range))());
 
     // address values
     case PT_MAC:
@@ -627,7 +623,7 @@ static const char* const pt2str[Parameter::PT_MAX] =
     "string", "select", "multi", "enum",
     "mac", "ip4", "addr",
     "bit_list", "int_list", "addr_list", "implied",
-    "str_list"
+    "str_list", "dynamics"
 };
 
 const char* Parameter::get_type() const
@@ -645,6 +641,7 @@ const char* Parameter::get_range() const
         return nullptr;
 
     case PT_DYNAMIC:
+    case PT_DYNAMICS:
         return (*((const RangeQuery*)range))();
 
     default:
@@ -798,19 +795,6 @@ str_num_tests[] =
 {
 // __STRDUMP_DISABLE__
     { true, valid_int, "5", "-53:53" },
-    { true, valid_int, "-9223372036854775808", "-9223372036854775808:9223372036854775807" },
-    { true, valid_int, "0x7fffffffffffffff", "-9223372036854775808:9223372036854775807" },
-    { true, valid_int, "9223372036854775806", "-9223372036854775808:9223372036854775807" },
-    { true, valid_int, "0", "-9223372036854775808:9223372036854775807" },
-    { false, valid_int, "9223372036854775807", "-9223372036854775808:9223372036854775806" },
-    { false, valid_int, "-9223372036854775808", "-9223372036854775807:9223372036854775806" },
-    { true, valid_int, "0", "0:18446744073709551615" },
-    { true, valid_int, "0", "0:18446744073709551614" },
-    { true, valid_int, "1024", "0:18446744073709551614" },
-    { true, valid_int, "18446744073709551614", "0:18446744073709551614" },
-    { false, valid_int, "18446744073709551615", "0:18446744073709551614" },
-    { true, valid_int, "18446744073709551615", "18446744073709551615" },
-    { true, valid_int, "18446744073709551615", "max64" },
     { true, valid_int, "4294967295", "max32" },
     { false, valid_int, "4294967296", "max32" },
     { true, valid_int, "2147483647", "max31" },
@@ -822,7 +806,6 @@ str_num_tests[] =
     { false, valid_int, "-51", "-50:-50" },
     { true, valid_int, "-53", ":-53" },
     { true, valid_int, "-54", ":-53" },
-    { true, valid_int, "-9223372036854775808", ":-53" },
     { false, valid_int, "-52", ":-53" },
     { false, valid_int, "2", ":-53" },
 
@@ -854,8 +837,6 @@ str_num_tests[] =
     { true, valid_int, "max31", "" },
     { true, valid_int, "max32", "" },
     { true, valid_int, "max53", "" },
-    { true, valid_int, "max63", "" },
-    { true, valid_int, "max64", "" },
     { true, valid_int, "max31", "max31" },
     { false, valid_int, "max32", "max31" },
 
@@ -1010,8 +991,6 @@ TEST_CASE("max", "[Parameter]")
     CHECK(Parameter::get_int("max31") == 2147483647);
     CHECK(Parameter::get_int("max32") == 4294967295);
     CHECK(Parameter::get_int("max53") == 9007199254740992);
-    CHECK(Parameter::get_int("max63") == 9223372036854775807);
-    CHECK(Parameter::get_int("max64") == -1);
 
     if ( sizeof(size_t) == 4 )
         CHECK(Parameter::get_int("maxSZ") == 4294967295);
@@ -1021,8 +1000,6 @@ TEST_CASE("max", "[Parameter]")
     CHECK(Parameter::get_uint("max31") == 2147483647);
     CHECK(Parameter::get_uint("max32") == 4294967295);
     CHECK(Parameter::get_uint("max53") == 9007199254740992);
-    CHECK(Parameter::get_uint("max63") == 9223372036854775807);
-    CHECK(Parameter::get_uint("max64") == 18446744073709551615ULL);
 
     if ( sizeof(size_t) == 4 )
         CHECK(Parameter::get_uint("maxSZ") == 4294967295);

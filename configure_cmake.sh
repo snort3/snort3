@@ -42,6 +42,8 @@ Optional Features:
     --disable-static-search-engines
                             do not include search engines in binary
     --disable-static-codecs do not include codecs in binary
+    --disable-static-tracers
+                            do not include tracers in binary
     --enable-shell          enable command line shell support
     --enable-large-pcap     enable support for pcaps larger than 2 GB
     --enable-stdlog         use file descriptor 3 instead of stdout for alerts
@@ -249,6 +251,12 @@ while [ $# -ne 0 ]; do
             ;;
         --enable-static-codecs)
             append_cache_entry STATIC_CODECS            BOOL true
+            ;;
+        --disable-static-tracers)
+            append_cache_entry STATIC_TRACERS           BOOL false
+            ;;
+        --enable-static-tracers)
+            append_cache_entry STATIC_TRACERS           BOOL true
             ;;
         --enable-shell)
             append_cache_entry ENABLE_SHELL             BOOL true

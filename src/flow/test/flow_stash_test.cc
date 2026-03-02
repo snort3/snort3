@@ -49,7 +49,7 @@ static SnortConfig snort_conf;
 
 namespace snort
 {
-SnortConfig::SnortConfig(const SnortConfig* const, const char*)
+SnortConfig::SnortConfig(const char*)
 {
     daq_config = nullptr;
     thread_config = nullptr;

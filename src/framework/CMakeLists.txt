@@ -47,6 +47,7 @@ add_library ( framework OBJECT
     mpse.cc
     mpse_batch.cc
     range.cc
+    tracer.cc
     value.cc
 )
 

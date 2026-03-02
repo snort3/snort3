@@ -21,9 +21,8 @@
 #ifndef APPID_MOCK_FLOW_H
 #define APPID_MOCK_FLOW_H
 
-FlowData::FlowData(unsigned, Inspector*)
+FlowData::FlowData(unsigned)
 {
-    handler = nullptr;
     id = 222;
 }
 

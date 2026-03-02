@@ -60,7 +60,7 @@ bool mock_inspector_exist = true;
 namespace snort
 {
 
-class Inspector* InspectorManager::get_inspector(const char*, bool, const SnortConfig*)
+class Inspector* InspectorManager::get_inspector(const char*, Module::Usage)
 { return mock_inspector_exist ? &dummy_appid_inspector : nullptr; }
 
 Packet::Packet(bool) { }

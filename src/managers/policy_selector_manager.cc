@@ -33,43 +33,32 @@
 #include "log/messages.h"
 #include "utils/util.h"
 
-using namespace snort;
+#include "plug_interface.h"
 
-static std::unordered_map<std::string, const PolicySelectorApi*> s_selectors;
+using namespace snort;
 
 //-------------------------------------------------------------------------
 
-void PolicySelectorManager::add_plugin(const PolicySelectorApi* api)
+class PsPlugIntf : public PlugInterface
 {
-    assert(s_selectors.find(api->base.name) == s_selectors.end());
+public:
+    const PolicySelectorApi* api;
 
-    s_selectors[api->base.name] = api;
-}
+    PsPlugIntf(const PolicySelectorApi* api) : api(api) { }
 
-void PolicySelectorManager::dump_plugins()
-{
-    Dumper d("Selectors");
-
-    for (auto& sc : s_selectors)
-        d.dump(sc.second->base.name, sc.second->base.version);
-}
-
-void PolicySelectorManager::release_plugins()
-{
-    s_selectors.clear();
-}
-
-void PolicySelectorManager::instantiate(const PolicySelectorApi* api, Module* mod, SnortConfig* sc)
-{
-    assert(sc);
-    if (sc->policy_map->get_policy_selector())
+    void instantiate(Module* mod, SnortConfig* sc, const char*) override
     {
-        ParseError("Only one selector may be instantiated\n");
-        return;
+        if (sc->policy_map->get_policy_selector())
+        {
+            ParseError("Only one selector may be instantiated\n");
+            return;
+        }
+        sc->policy_map->set_policy_selector(api->ctor(mod));
     }
-    assert(api);
-    sc->policy_map->set_policy_selector(api->ctor(mod));
-}
+};
+
+PlugInterface* PolicySelectorManager::get_interface(const PolicySelectorApi* api)
+{ return new PsPlugIntf(api); }
 
 void PolicySelectorManager::print_config(const SnortConfig* sc)
 {

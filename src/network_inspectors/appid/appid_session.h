@@ -260,6 +260,7 @@ public:
         bool swap_app_direction=false, bool bidirectional=false, bool expect_persist=false);
     void initialize_future_session(AppIdSession&, uint64_t);
 
+    AppIdInspector& inspector;
     snort::Flow* flow = nullptr;
     AppIdConfig& config;
     std::unordered_map<unsigned, AppIdFlowData*> flow_data;

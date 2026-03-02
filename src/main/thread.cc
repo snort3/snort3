@@ -169,4 +169,25 @@ const char* get_instance_file(std::string& file, const char* name)
 
     return file.c_str();
 }
+
+const char* get_main_file(std::string& file, const char* name)
+{
+    const SnortConfig* sc = SnortConfig::get_conf();
+    file = !sc->log_dir.empty() ?  sc->log_dir : "./";
+
+    if ( file.back() != '/' )
+        file += '/';
+
+    if ( !sc->run_prefix.empty() )
+    {
+        file += sc->run_prefix;
+        file += '/';
+    }
+
+    if ( !sc->id_zero )
+        file += "main_";
+
+    file += name;
+    return file.c_str();
+}
 }

@@ -38,10 +38,12 @@ public:
     void setup_module_trace() const;
     bool set_trace(const std::string& module_name,
         const std::string& trace_option_name, uint8_t trace_level);
-    void resolve_multi_trace();
 
-    void clear();
+    void load_traces();
     void clear_traces();
+
+    bool is_configured() const
+    { return !traces.empty(); }
 
 public:
     snort::PacketConstraints* constraints = nullptr;
@@ -49,7 +51,6 @@ public:
     bool ntuple = false;
     bool timestamp = false;
     bool initialized = false;
-    bool has_multi_trace = false;
     
     std::vector<std::string> output_traces;
 
@@ -57,5 +58,5 @@ private:
     Traces traces;
 };
 
-#endif // TRACE_CONFIG_H
+#endif
 

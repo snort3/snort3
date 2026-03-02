@@ -117,7 +117,7 @@ static void destroy_message_pool(HextContext* hc)
 static int create_message_pool(HextContext* hc, unsigned size)
 {
     HextMsgPool* pool = &hc->pool;
-    pool->pool = calloc(sizeof(HextMsgDesc), size);
+    pool->pool = calloc(size, sizeof(HextMsgDesc));
     if (!pool->pool)
     {
         SET_ERROR(hc->modinst, "%s: Could not allocate %zu bytes for a packet descriptor pool!",

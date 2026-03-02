@@ -310,7 +310,7 @@ const InspectApi dnp3_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         DNP3_NAME,
         DNP3_HELP,

@@ -178,7 +178,7 @@ static const InspectApi modbus_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         MODBUS_NAME,
         MODBUS_HELP,

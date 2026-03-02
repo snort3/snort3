@@ -348,8 +348,8 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     {
         if (to_utype(iph->proto()) >= to_utype(ProtocolId::MIN_UNASSIGNED_IP_PROTO))
             codec_event(codec, DECODE_IP_UNASSIGNED_PROTO);
-        else
-            codec.next_prot_id = (ProtocolId)iph->proto();
+
+        codec.next_prot_id = (ProtocolId)iph->proto();
     }
 
     return true;
@@ -763,7 +763,7 @@ static const CodecApi ipv4_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_IPV4_NAME,
         CD_IPV4_HELP,

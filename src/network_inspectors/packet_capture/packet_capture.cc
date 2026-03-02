@@ -360,7 +360,7 @@ static const InspectApi pc_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CAPTURE_NAME,
         CAPTURE_HELP,

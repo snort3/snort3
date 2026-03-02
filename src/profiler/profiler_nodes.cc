@@ -34,6 +34,7 @@
 #include "framework/module.h"
 
 #include "main/snort_config.h"
+#include "managers/plugin_manager.h"
 #include "memory_profiler_active_context.h"
 #include "profiler_defs.h"
 #include "log/messages.h"
@@ -67,24 +68,43 @@ struct GetProfileFunctor
 struct GetProfileFromModule : public GetProfileFunctor
 {
     GetProfileFromModule(const std::string& pn, Module* m) :
-        GetProfileFunctor(pn), m(m) { }
+        GetProfileFunctor(pn), mod_name(m->get_name())
+    {
+#ifdef UNIT_TEST
+        test_mod = m;
+#endif
+    }
 
     ProfileStats* operator()() override
     {
-        // const auto *ps = m->get_profiler_stats();
-        auto *ps = m->get_profile();
+        Module* mod = PluginManager::get_module(mod_name.c_str());
+
+#ifdef UNIT_TEST
+        if ( !mod )
+            mod = test_mod;
+#endif
+
+        if ( !mod )
+            return nullptr;
+
+        auto* ps = mod->get_profile();
+
         if ( ps )
             return ps;
 
         unsigned i = 0;
         const char* n, * pn;
-        // while ( (ps = m->get_profiler_stats(i++, n, pn)) && name != n );
-        while ( (ps = m->get_profile(i++, n, pn)) && name != n );
+
+        while ( (ps = mod->get_profile(i++, n, pn)) && name != n );
 
         return ps;
     }
 
-    Module* m;
+
+#ifdef UNIT_TEST
+    Module* test_mod = nullptr;
+#endif
+    std::string mod_name;
 };
 
 struct GetProfileFromFunction : public GetProfileFunctor
@@ -105,7 +125,9 @@ struct GetProfileFromFunction : public GetProfileFunctor
 template<typename Getter>
 static void setup_node(ProfilerNode& child, ProfilerNode& parent, Getter g)
 {
-    assert(!child.is_set());
+    if ( child.is_set() )
+        return;
+
     child.set(g);
 
     // don't link parent->parent
@@ -213,7 +235,7 @@ bool ProfilerNodeMap::open(std::string& fname, uint64_t max_file_size, bool appe
 
         tracker_fd = fopen(file_name, "r");
         if (tracker_fd)
-        { 
+        {
             // Check file before change permission
             if (fstat(fileno(tracker_fd), &pt) == 0)
 
@@ -293,7 +315,7 @@ static bool rotate_file(const char* old_file, FILE* old_fd,
     // Fetching the first timestamp from the file and renaming it by appending the time
     int line = 0;
     int holder;
-    
+
     while((holder=fgetc(old_fd)) != EOF)
     {
         if (holder == '\n')
@@ -527,7 +549,7 @@ void ProfilerNodeMap::auto_rotate(std::string& fname, uint64_t max_file_size)
 
             fclose(fd);
         }
-        
+
         create_new_file(fname, max_file_size);
     }
 

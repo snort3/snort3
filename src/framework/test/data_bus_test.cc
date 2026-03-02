@@ -34,7 +34,7 @@ using namespace snort;
 //--------------------------------------------------------------------------
 // mocks
 //--------------------------------------------------------------------------
-InspectionPolicy::InspectionPolicy(unsigned int) : framework_policy(nullptr), cloned(false) {}
+InspectionPolicy::InspectionPolicy(unsigned int) : service_group(nullptr) {}
 InspectionPolicy::~InspectionPolicy() = default;
 NetworkPolicy::NetworkPolicy(unsigned int, unsigned int) {}
 NetworkPolicy::~NetworkPolicy() = default;
@@ -48,7 +48,7 @@ THREAD_LOCAL SnortConfig* snort_conf = &s_conf;
 const SnortConfig* SnortConfig::get_conf()
 { return snort_conf; }
 
-SnortConfig::SnortConfig(const SnortConfig* const, const char*)
+SnortConfig::SnortConfig(const char*)
 { global_dbus = new DataBus(); }
 
 SnortConfig::~SnortConfig()

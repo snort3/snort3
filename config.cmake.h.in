@@ -43,7 +43,7 @@
 /* enable command shell */
 #cmakedefine SHELL 1
 
-/* include internal decoders in binary */
+/* include internal codecs in binary */
 #cmakedefine STATIC_CODECS 1
 
 /* include internal inspectors in binary */
@@ -58,8 +58,11 @@
 /* include internal loggers in binary */
 #cmakedefine STATIC_LOGGERS 1
 
-/* include internal inspectors in binary */
+/* include internal search engines in binary */
 #cmakedefine STATIC_SEARCH_ENGINES 1
+
+/* include internal tracers in binary */
+#cmakedefine STATIC_TRACERS 1
 
 /* enable unit tests */
 #cmakedefine UNIT_TEST 1

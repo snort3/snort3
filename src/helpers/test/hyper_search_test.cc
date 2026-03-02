@@ -53,7 +53,7 @@ static unsigned s_parse_errors = 0;
 DataBus::DataBus() = default;
 DataBus::~DataBus() = default;
 
-SnortConfig::SnortConfig(const SnortConfig* const, const char*)
+SnortConfig::SnortConfig(const char*)
 {
     state = &s_state;
     num_slots = 1;

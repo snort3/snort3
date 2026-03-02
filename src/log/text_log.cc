@@ -35,13 +35,20 @@
 #include <time.h>
 
 #include <algorithm>
+#include <cassert>
 #include <cstdarg>
 
+#include "main/thread.h"
 #include "utils/util.h"
+#include "utils/util_cstring.h"
 
 #include "log.h"
+#include "messages.h"
 
 using namespace snort;
+
+static FILE* open_log_file(const char*, bool is_critical=true);
+static int roll_log_file(const char*);
 
 /* a reasonable minimum */
 #define MIN_BUF  (4* K_BYTES)
@@ -69,7 +76,7 @@ struct TextLog
  */
 static FILE* TextLog_Open(const char* name, bool is_critical=true)
 {
-    if ( name && !strcasecmp(name, "stdout") )
+    if ( !strcasecmp(name, "stdout") )
     {
 #ifdef USE_STDLOG
         FILE* stdlog = fdopen(STDLOG_FILENO, "w");
@@ -79,7 +86,7 @@ static FILE* TextLog_Open(const char* name, bool is_critical=true)
 #endif
     }
 
-    return OpenAlertFile(name, is_critical);
+    return open_log_file(name, is_critical);
 }
 
 static void TextLog_Close(FILE* file)
@@ -118,22 +125,31 @@ void TextLog_Reset(TextLog* const txt)
 TextLog* TextLog_Init(
     const char* name, unsigned int maxBuf, size_t maxFile, bool is_critical)
 {
+    assert(name);
     TextLog* txt;
 
     if ( maxBuf < MIN_BUF )
         maxBuf = MIN_BUF;
 
     txt = (TextLog*)snort_alloc(sizeof(TextLog)+maxBuf);
+    std::string fname;
 
-    txt->name = name ? snort_strdup(name) : nullptr;
-    txt->file = TextLog_Open(txt->name, is_critical);
+    if ( strcasecmp(name, "stdout") )
+    {
+       if ( in_main_thread() )
+           name  = get_main_file(fname, name);
+       else
+           name  = get_instance_file(fname, name);
+    }
+
+    txt->file = TextLog_Open(name, is_critical);
+
     if (!txt->file)
     {
-        if ( txt->name )
-            snort_free(txt->name);
         snort_free(txt);
         return nullptr;
     }
+    txt->name = snort_strdup(name);
     txt->size = TextLog_Size(txt->file);
     txt->last = time(nullptr);
     txt->maxFile = maxFile;
@@ -156,8 +172,7 @@ void TextLog_Term(TextLog* const txt)
     TextLog_Flush(txt);
     TextLog_Close(txt->file);
 
-    if ( txt->name )
-        snort_free(txt->name);
+    snort_free(txt->name);
     snort_free(txt);
 }
 
@@ -175,7 +190,7 @@ static void TextLog_Roll(TextLog* const txt)
         return;
 
     TextLog_Close(txt->file);
-    RollAlertFile(txt->name);
+    roll_log_file(txt->name);
     txt->file = TextLog_Open(txt->name);
 
     txt->last = time(nullptr);
@@ -320,3 +335,34 @@ bool TextLog_Quote(TextLog* const txt, const char* qs)
     return true;
 }
 } // namespace snort
+
+static FILE* open_log_file(const char* filename, bool is_critical)
+{
+    FILE* file;
+
+    if ((file = fopen(filename, "a")) == nullptr)
+    {
+        if (is_critical)
+            FatalError("can't open log file %s: %s\n", filename, get_error(errno));
+        else
+            ErrorMessage("can't open log file %s: %s\n", filename, get_error(errno));
+    }
+    else
+        setvbuf(file, (char*)nullptr, _IOLBF, (size_t)0);
+
+    return file;
+}
+
+static int roll_log_file(const char* oldname)
+{
+    char newname[STD_BUF+1];
+    time_t now = time(nullptr);
+
+    SnortSnprintf(newname, sizeof(newname)-1, "%s.%lu", oldname, (unsigned long)now);
+
+    if ( rename(oldname, newname) )
+        ErrorMessage("can't rename(%s, %s) = %s\n", oldname, newname, get_error(errno));
+
+    return errno;
+}
+

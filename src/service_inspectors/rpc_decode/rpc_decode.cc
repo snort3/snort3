@@ -859,7 +859,7 @@ static const InspectApi rd_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         mod_name,
         mod_help,

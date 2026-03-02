@@ -118,7 +118,7 @@ static const CodecApi teredo_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_TEREDO_NAME,
         CD_TEREDO_HELP,

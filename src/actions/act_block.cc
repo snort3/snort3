@@ -26,8 +26,6 @@
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 
-#include "actions_module.h"
-
 using namespace snort;
 
 #define action_name "block"
@@ -73,13 +71,12 @@ class BlockActionModule : public Module
 {
 public:
     BlockActionModule() : Module(module_name, module_help)
-    { ActionsModule::add_action(module_name, block_pegs); }
+    { register_action_pegs(module_name, block_pegs); }
 
     bool stats_are_aggregated() const override
     { return true; }
 
-    void show_stats() override
-    { /* These stats are shown by ActionsModule. */ }
+    void show_stats() override { }
 
     const PegInfo* get_pegs() const override
     { return block_pegs; }

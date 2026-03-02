@@ -65,9 +65,12 @@ namespace snort
 {
     unsigned FlowData::flow_data_id = 0;
     
-    FlowData::FlowData(unsigned u, Inspector* i) : handler(i), id(u) {}
+    FlowData::FlowData(unsigned u) : id(u) {}
     FlowData::~FlowData() = default;
     
+    unsigned FlowData::create_flow_data_id()
+    { return ++flow_data_id; }
+
     char* snort_strdup(const char* s)
     {
         if (!s)
@@ -143,11 +146,8 @@ namespace snort
     StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
     
     // Mock Config Logger
-    namespace ConfigLogger
-    {
-        void log_flag(const char*, bool, bool) {}
-    }
-    
+    bool ConfigLogger::log_flag(const char*, bool, bool) { return false; }
+
     // Mock StreamSplitter pure virtual methods
     const StreamBuffer StreamSplitter::reassemble(Flow*, unsigned, unsigned, const uint8_t*, unsigned, uint32_t, unsigned&)
     {

@@ -39,26 +39,30 @@ struct SnortConfig;
 class Snort
 {
 public:
-    static SnortConfig* get_reload_config(const char* fname, const char* plugin_path,
-        const SnortConfig* old);
-    static SnortConfig* get_updated_policy(SnortConfig*, const char* fname, const char* iname);
     static void setup(int argc, char* argv[]);
     static bool drop_privileges();
     static void do_pidfile();
     static void cleanup();
 
     static bool has_dropped_privileges();
+    static bool exit_requested();
     static bool is_exiting() { return already_exiting; }
     static bool is_reloading();
 
     static void init_process_id();
     SO_PUBLIC static unsigned get_process_id();
 
+    static void add_shutdown_hook(void (*func)());
+
+    static void prepare_reload();
+    static SnortConfig* get_reload_config(const char* fname);
+
 private:
     static void init(int, char**);
     static void term();
     static void clean_exit(int);
     static void reload_failure_cleanup(SnortConfig*);
+    static void call_shutdown_hooks();
 
 private:
     static bool initializing;

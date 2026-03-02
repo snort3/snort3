@@ -2,22 +2,19 @@
 #include "config.h"
 #endif
 
-#include "framework/mp_transport.h"
+#include <vector>
+
 #include "../mp_unix_transport.h"
+#include "connectors/unixdomain_connector/unixdomain_connector.h"
 #include "framework/counts.h"
 #include "framework/mp_data_bus.h"
+#include "framework/mp_transport.h"
 #include "main/snort.h"
-#include "main/thread_config.h"
 #include "main/snort_config.h"
-#include "connectors/unixdomain_connector/unixdomain_connector.h"
+#include "main/thread_config.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
-
-#include <mutex>
-#include <condition_variable>
-#include <vector>
-#include <iostream>
 
 static int snort_instance_id = 0;
 
@@ -40,7 +37,7 @@ int accept (int, struct sockaddr*, socklen_t*)
 }
 
 int close (int)
-{ 
+{
     test_close_calls++;
     return 0;
 }
@@ -60,36 +57,36 @@ void clear_test_calls()
 
 namespace snort
 {
+    SnortConfig::SnortConfig(const char*)
+    { max_procs = 2; }
+
+    SnortConfig::~SnortConfig()
+    { }
+
+    unsigned Snort::get_process_id()
+    { return snort_instance_id; }
+
+// LCOV_EXCL_START
     void ErrorMessage(const char*,...) { }
     void WarningMessage(const char*,...) { }
     void LogMessage(const char* s, ...) { }
-    void LogText(const char*, FILE*) {}
+    void LogText(const char*, FILE*) { }
     void ParseError(const char*, ...) { }
 
     unsigned ThreadConfig::get_instance_max()
-    {
-        return 2; // Mock value for testing
-    }
-
-    SnortConfig::SnortConfig(snort::SnortConfig const*, char const*)
-    {
-        max_procs = 2;
-    }
-    SnortConfig::~SnortConfig()
-    {
-
-    }
-    
-    unsigned Snort::get_process_id()
-    {
-        return snort_instance_id;
-    }
+    { return 0; }
 
     unsigned get_instance_id()
-    {
-        return snort_instance_id;
-    }
+    { return snort_instance_id; }
+// LCOV_EXCL_STOP
 };
+
+std::vector<PlugInterface*> PluginManager::get_interfaces(PlugType)
+{
+    std::vector<PlugInterface*> dummy;
+    return dummy;
+}
+
 static int test_send_calls = 0;
 UnixDomainConnector* listen_connector = nullptr;
 UnixDomainConnector* call_connector = nullptr;
@@ -140,7 +137,7 @@ void UnixDomainConnectorListener::start_accepting_connections(UnixDomainConnecto
 bool UnixDomainConnector::transmit_message(const snort::ConnectorMsg& m, const ID&)
 {
     test_send_calls++;
-    
+
     if (cfg.setup == UnixDomainConnectorConfig::Setup::CALL)
     {
         test_msg_call_data = new uint8_t[m.get_length()];
@@ -159,7 +156,7 @@ bool UnixDomainConnector::transmit_message(const snort::ConnectorMsg& m, const I
             listen_connector = this;
         call_connector->process_receive();
     }
-    
+
     return true;
 }
 void UnixDomainConnector::process_receive()
@@ -266,11 +263,6 @@ int connect (int, const struct sockaddr*, socklen_t) { test_connect_calls++; ret
 int fcntl (int __fd, int __cmd, ...) { return 0;}
 ssize_t send (int, const void*, size_t n, int) { return n; }
 
-
-std::mutex accept_mutex;
-std::condition_variable accept_cond;
-
-
 class TestDataEvent : public DataEvent
 {
 public:
@@ -300,7 +292,7 @@ static MPUnixDomainTransportConfig test_config;
 static MPUnixTransportStats test_stats;
 static MPUnixDomainTransport* test_transport = nullptr;
 
-static SnortConfig test_snort_config(nullptr, nullptr);
+static SnortConfig test_snort_config((const char*)nullptr);
 
 TEST_GROUP(unix_transport_test_connectivity_group)
 {
@@ -350,7 +342,7 @@ TEST_GROUP(unix_transport_test_messaging)
         {
             received_1_msg_cnt++;
         });
-        
+
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         test_transport_message_2 = new MPUnixDomainTransport(&test_config_message, test_stats);
@@ -405,7 +397,7 @@ TEST(unix_transport_test_connectivity_group, init_connection_single_snort_instan
     test_config.max_processes = 1;
 
     test_transport->init_connection();
-    
+
     CHECK(test_socket_calls == 0);
     CHECK(test_bind_calls == 0);
     CHECK(test_listen_calls == 0);
@@ -442,7 +434,7 @@ TEST(unix_transport_test_connectivity_group, init_connection_second_snort_instan
     test_config.max_processes = 2;
 
     test_transport->init_connection();
-    
+
     CHECK(test_bind_calls == 0);
     CHECK(test_listen_calls == 0);
     CHECK(test_accept_calls == 0);
@@ -456,7 +448,7 @@ TEST(unix_transport_test_connectivity_group, init_connection_second_snort_instan
 TEST(unix_transport_test_connectivity_group, connector_update_handler_call)
 {
     clear_test_calls();
-    
+
     test_config.unix_domain_socket_path = ".";
     test_config.max_processes = 2;
 
@@ -490,13 +482,12 @@ TEST(unix_transport_test_messaging, send_to_transport_biderectional)
 
     MPEventInfo event_info(event, 0, 0);
     auto res = test_transport_message_1->send_to_transport(event_info);
-    
 
     CHECK(res == true);
     CHECK(test_serialize_calls == 1);
 
     res = test_transport_message_2->send_to_transport(event_info);
-    
+
     CHECK(res == true);
     CHECK(test_serialize_calls == 2);
 
@@ -560,6 +551,7 @@ TEST(unix_transport_test_messaging, send_to_transport_no_connector)
 
 int main(int argc, char** argv)
 {
-    int return_value = CommandLineTestRunner::RunAllTests(argc, argv);
-    return return_value;
+    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
+    return CommandLineTestRunner::RunAllTests(argc, argv);
 }
+

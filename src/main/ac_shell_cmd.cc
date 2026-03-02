@@ -26,6 +26,7 @@
 #include <cassert>
 
 #include "control/control.h"
+#include "main/snort_config.h"
 
 ACShellCmd::ACShellCmd(ControlConn* conn, AnalyzerCommand* ac) : AnalyzerCommand(conn), ac(ac)
 {
@@ -44,6 +45,9 @@ bool ACShellCmd::execute(Analyzer& analyzer, void** state)
 
 ACShellCmd::~ACShellCmd()
 {
+    if (ac->need_update_reload_id())
+        snort::SnortConfig::get_main_conf()->update_reload_id();
+
     delete ac;
     ControlConn::decrement_pending_cmds_count();
 

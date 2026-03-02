@@ -38,7 +38,7 @@
 namespace snort
 {
 // this is the current version of the api
-#define SEAPI_VERSION ((BASE_API_VERSION << 16) | 2)
+#define SEAPI_VERSION ((BASE_API_VERSION << 16) | 3)
 
 struct SnortConfig;
 struct MpseApi;

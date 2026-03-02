@@ -49,6 +49,10 @@ bool PolicyId::convert(std::istringstream& data_stream)
         cv.get_table_api().open_table("network");
         cv.get_table_api().add_option("id", policy_id);
         cv.get_table_api().close_table();
+
+        cv.get_table_api().open_table("inspection");
+        cv.get_table_api().add_option("id", policy_id);
+        cv.get_table_api().close_table();
     }
     else
     {

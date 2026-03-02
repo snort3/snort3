@@ -160,7 +160,7 @@ static const CodecApi fabricpath_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_FABRICPATH_NAME,
         CD_FABRICPATH_HELP,

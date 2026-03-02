@@ -87,7 +87,7 @@ class AppIdHAManager
 public:
     static void tinit()
     {
-        if ( snort::HighAvailabilityManager::active() )
+        if ( snort::HighAvailabilityManager::configured() )
         {
             ha_apps_client = new AppIdHAAppsClient;
             ha_http_client = new AppIdHAHttpClient;
@@ -96,12 +96,9 @@ public:
     }
     static void tterm()
     {
-        if ( snort::HighAvailabilityManager::active() )
-        {
-            delete ha_apps_client;
-            delete ha_http_client;
-            delete ha_tls_host_client;
-        }
+        delete ha_apps_client;
+        delete ha_http_client;
+        delete ha_tls_host_client;
     }
 
     static THREAD_LOCAL AppIdHAAppsClient* ha_apps_client;

@@ -28,59 +28,24 @@
 
 #include "detection/fp_config.h"
 #include "framework/mpse.h"
-#include "log/messages.h"
 #include "main/snort_config.h"
 
-#include "module_manager.h"
+#include "plugin_manager.h"
+#include "plug_interface.h"
 
 using namespace snort;
 using namespace std;
-
-typedef list<const MpseApi*> EngineList;
-static EngineList s_engines;
 
 //-------------------------------------------------------------------------
 // engine plugins
 //-------------------------------------------------------------------------
 
-void MpseManager::add_plugin(const MpseApi* api)
-{
-    s_engines.emplace_back(api);
-}
-
-void MpseManager::release_plugins()
-{
-    s_engines.clear();
-}
-
-void MpseManager::dump_plugins()
-{
-    Dumper d("Search Engines");
-
-    for ( auto* p : s_engines )
-        d.dump(p->base.name, p->base.version);
-}
-
-//-------------------------------------------------------------------------
-
-void MpseManager::instantiate(const MpseApi*, Module*, SnortConfig*)
-{
-    // nothing to do here
-    // see
-}
-
-static const MpseApi* get_api(const char* keyword)
-{
-    for ( auto* p : s_engines )
-        if ( !strcasecmp(p->base.name, keyword) )
-            return p;
-
-    return nullptr;
-}
+PlugInterface* MpseManager::get_interface(const MpseApi*)
+{ return new PlugInterface; }
 
 const MpseApi* MpseManager::get_search_api(const char* name)
 {
-    const MpseApi* api = ::get_api(name);
+    const MpseApi* api = (const MpseApi*)PluginManager::get_api(name);
 
     if ( api and api->init )
         api->init();
@@ -91,7 +56,7 @@ const MpseApi* MpseManager::get_search_api(const char* name)
 Mpse* MpseManager::get_search_engine(
     const SnortConfig* sc, const MpseApi* api, const MpseAgent* agent)
 {
-    Module* mod = ModuleManager::get_module(api->base.name);
+    Module* mod = PluginManager::get_module(api->base.name);
     Mpse* eng = api->ctor(sc, mod, agent);
     eng->set_api(api);
     return eng;

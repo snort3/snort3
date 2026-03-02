@@ -80,15 +80,8 @@ DataBus::~DataBus()
 {
     for ( const auto& p : pub_sub )
     {
-        for ( auto* h : p )
-        {
-            // If the object is cloned, pass the ownership to the next config.
-            // When the object is no further cloned (e.g., the last config), delete it.
-            if ( h->cloned )
-                h->cloned = false;
-            else
-                delete h;
-        }
+        for ( const auto* h : p )
+            delete h;
     }
 }
 
@@ -97,21 +90,6 @@ unsigned DataBus::init()
     unsigned id = get_id(intrinsic_pub_key);
     assert(id == 1);
     return id;
-}
-
-void DataBus::clone(DataBus& from, const char* exclude_name)
-{
-    for ( unsigned i = 0; i < from.pub_sub.size(); ++i )
-    {
-        for ( auto* h : from.pub_sub[i] )
-        {
-            if ( !exclude_name || strcmp(exclude_name, h->module_name) )
-            {
-                h->cloned = true;
-                _subscribe(i, 0, h);
-            }
-        }
-    }
 }
 
 unsigned DataBus::get_id(const PubKey& key)

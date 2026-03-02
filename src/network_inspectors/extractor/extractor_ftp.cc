@@ -294,7 +294,7 @@ public:
     static constexpr ServiceType type_id = ServiceType::FTP;
 
     FtpExtractorFlowData(FtpExtractor& owner)
-        : ExtractorFlowData(type_id, owner.get_inspector()), owner(owner) {}
+        : ExtractorFlowData(type_id), owner(owner) {}
 
     ~FtpExtractorFlowData() override
     {

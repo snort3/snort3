@@ -94,7 +94,7 @@ StreamIp::~StreamIp()
 bool StreamIp::configure(SnortConfig* sc)
 {
     defrag->configure(sc);
-    return true;
+    return Stream::is_active();
 }
 
 void StreamIp::show(const SnortConfig*) const

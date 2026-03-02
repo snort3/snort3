@@ -90,7 +90,7 @@ http_inspect = { }
 http2_inspect = { }
 
 -- see file_magic.rules for file id rules
-file_id = { rules_file = 'file_magic.rules' }
+file_inspect = { rules_file = 'file_magic.rules' }
 file_policy = { }
 
 js_norm = default_js_norm

@@ -41,15 +41,11 @@ struct IpsPolicy;
 class ActionManager
 {
 public:
-    static void add_plugin(const snort::ActionApi*);
-    static void release_plugins();
-    static void dump_plugins();
+    static class PlugInterface* get_interface(const snort::ActionApi*);
 
     static void new_config(snort::SnortConfig*);
     static void delete_config(snort::SnortConfig*);
 
-    static void instantiate(const snort::ActionApi*, snort::Module*,
-            snort::SnortConfig*, IpsPolicy* ips = nullptr );
     static void initialize_policies(snort::SnortConfig*);
 
     static std::string get_action_string(snort::IpsAction::Type);
@@ -57,9 +53,9 @@ public:
     static snort::IpsAction::Type get_max_action_types();
     static std::string get_action_priorities(bool);
 
-    static void thread_init(const snort::SnortConfig*);
-    static void thread_reinit(const snort::SnortConfig*);
-    static void thread_term();
+private:
+    friend class ActionClass;
+    static void instantiate(const snort::ActionApi*, snort::Module*, snort::SnortConfig*, IpsPolicy* = nullptr);
 };
 
 #endif

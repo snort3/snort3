@@ -108,9 +108,7 @@ void RuleLatency::tterm() { }
 void rule_latency::set_force_enable(bool) { }
 void PacketLatency::tterm() { }
 void packet_latency::set_force_enable(bool) { }
-void ConnectorManager::thread_init() { }
 void ConnectorManager::thread_reinit() { }
-void ConnectorManager::thread_term() { }
 void SideChannelManager::thread_init() { }
 void SideChannelManager::thread_term() { }
 void CodecManager::thread_init() { }
@@ -118,11 +116,6 @@ void CodecManager::thread_term() { }
 void EventManager::open_outputs() { }
 void EventManager::close_outputs() { }
 void EventManager::reload_outputs() { }
-void IpsManager::setup_options(const snort::SnortConfig*) { }
-void IpsManager::clear_options(const snort::SnortConfig*) { }
-void ActionManager::thread_init(const snort::SnortConfig*) { }
-void ActionManager::thread_term() { }
-void ActionManager::thread_reinit(const snort::SnortConfig*) { }
 int SFRF_Alloc(unsigned int) { return -1; }
 void packet_time_update(const struct timeval*) { }
 void main_poke(unsigned) { }
@@ -188,7 +181,6 @@ void DetectionEngine::clear_replacement() { }
 void DetectionEngine::disable_all(Packet*) { }
 unsigned get_instance_id() { return 0; }
 const SnortConfig* SnortConfig::get_conf() { return nullptr; }
-void SnortConfig::update_thread_reload_id() { }
 void PacketTracer::thread_init() { }
 void PacketTracer::thread_term() { }
 void PacketTracer::dump(Packet*) { }
@@ -213,12 +205,10 @@ void HighAvailabilityManager::process_receive() { }
 void HighAvailabilityManager::thread_term() { }
 void HighAvailabilityManager::thread_term_beginning() { }
 void HighAvailabilityManager::process_update(Flow*, Packet*) { }
-void InspectorManager::thread_init(const SnortConfig*) { }
+void InspectorManager::thread_init() { }
 void InspectorManager::thread_term() { }
-void InspectorManager::thread_stop(const SnortConfig*) { }
 void InspectorManager::thread_reinit(const SnortConfig*) { }
-void InspectorManager::thread_stop_removed(const SnortConfig*) { }
-void ModuleManager::accumulate(const char*) { }
+void ModuleManager::accumulate(const SnortConfig*, const char*) { }
 void ModuleManager::accumulate_module(const char*) { }
 void Stream::handle_timeouts(bool) { }
 void Stream::purge_flows() { }

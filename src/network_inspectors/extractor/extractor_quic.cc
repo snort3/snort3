@@ -46,7 +46,7 @@ public:
     static constexpr ServiceType type_id = ServiceType::QUIC;
 
     QuicExtractorFlowData(QuicExtractor& owner)
-        : ExtractorFlowData(type_id, owner.get_inspector()), owner(owner) {}
+        : ExtractorFlowData(type_id), owner(owner) { }
     
     ~QuicExtractorFlowData() override
     {

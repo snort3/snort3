@@ -22,8 +22,10 @@
 
 #include "stream_tcp.h"
 
+#include "main/snort.h"
 #include "main/snort_config.h"
 
+#include "held_packet_queue.h"
 #include "tcp_ha.h"
 #include "tcp_module.h"
 #include "tcp_overlap_resolver.h"
@@ -39,11 +41,15 @@ using namespace snort;
 class StreamTcp : public Inspector
 {
 public:
-    StreamTcp(TcpStreamConfig*);
-    ~StreamTcp() override;
+    StreamTcp(TcpStreamConfig* c) : config(c)
+    { }
+
+    ~StreamTcp() override
+    { delete config; }
 
     void show(const SnortConfig*) const override;
     bool configure(SnortConfig*) override;
+
     void tinit() override;
     void tterm() override;
 
@@ -52,13 +58,6 @@ public:
 public:
     TcpStreamConfig* const config;
 };
-
-StreamTcp::StreamTcp (TcpStreamConfig* c)
-    : config(c)
-{ }
-
-StreamTcp::~StreamTcp()
-{ delete config; }
 
 void StreamTcp::show(const SnortConfig*) const
 {
@@ -69,14 +68,32 @@ void StreamTcp::show(const SnortConfig*) const
 bool StreamTcp::configure(SnortConfig* sc)
 {
     sc->max_pdu = config->paf_max;
-    return true;
+
+    if ( Snort::is_reloading() )
+        sc->register_reload_handler(new HPQReloadTuner(Stream::get_hold_time()));
+
+    return Stream::is_active();
 }
 
+static THREAD_LOCAL bool tstate = false;
+
 void StreamTcp::tinit()
-{ TcpHAManager::tinit(); }
+{
+    if ( tstate )
+        return;
+
+    tstate = true;
+    TcpHAManager::tinit();
+}
 
 void StreamTcp::tterm()
-{ TcpHAManager::tterm(); }
+{
+    if ( !tstate )
+        return;
+
+    tstate = false;
+    TcpHAManager::tterm();
+}
 
 NORETURN_ASSERT void StreamTcp::eval(Packet*)
 {

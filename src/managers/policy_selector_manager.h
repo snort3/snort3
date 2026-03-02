@@ -27,7 +27,6 @@
 namespace snort
 {
 struct PolicySelectorApi;
-class Module;
 struct SnortConfig;
 }
 
@@ -36,11 +35,8 @@ struct SnortConfig;
 class PolicySelectorManager
 {
 public:
-    static void add_plugin(const snort::PolicySelectorApi* api);
-    static void dump_plugins();
-    static void release_plugins();
+    static class PlugInterface* get_interface(const snort::PolicySelectorApi*);
 
-    static void instantiate(const snort::PolicySelectorApi*, snort::Module*, snort::SnortConfig*);
     static void print_config(const snort::SnortConfig*);
 };
 

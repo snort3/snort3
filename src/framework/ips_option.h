@@ -53,7 +53,7 @@ struct SnortConfig;
 class Module;
 
 // this is the current version of the api
-#define IPSAPI_VERSION ((BASE_API_VERSION << 16) | 3)
+#define IPSAPI_VERSION ((BASE_API_VERSION << 16) | 4)
 
 enum CursorActionType
 {
@@ -170,6 +170,7 @@ enum RuleOptType
     OPT_TYPE_MAX
 };
 
+typedef void (* IpsApiFunc)();
 typedef void (* IpsOptFunc)(const SnortConfig*);
 
 typedef IpsOption* (* IpsNewFunc)(Module*, IpsInfo&);
@@ -183,10 +184,10 @@ struct IpsApi
     int max_per_rule;   // max instances of this keyword per IPS rule, 0 - no limits, negative - generate a warning
     unsigned protos;    // bitmask of PROTO_BIT_* from decode_data.h
 
-    IpsOptFunc pinit;
-    IpsOptFunc pterm;
-    IpsOptFunc tinit;
-    IpsOptFunc tterm;
+    IpsApiFunc pinit;
+    IpsApiFunc pterm;
+    IpsApiFunc tinit;
+    IpsApiFunc tterm;
     IpsNewFunc ctor;
     IpsDelFunc dtor;
     IpsOptFunc verify;

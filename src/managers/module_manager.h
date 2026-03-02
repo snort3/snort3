@@ -31,7 +31,6 @@
 
 #include "framework/counts.h"
 #include "main/analyzer_command.h"
-#include "main/snort_types.h"
 
 //-------------------------------------------------------------------------
 
@@ -46,13 +45,8 @@ struct SnortConfig;
 class ModuleManager
 {
 public:
-    static void init();
-    static void term();
-
-    static void add_module(Module*, const BaseApi* = nullptr);
-    SO_PUBLIC static Module* get_module(const char*);
-    static Module* get_default_module(const char*, SnortConfig*);
-    SO_PUBLIC static std::list<Module*> get_all_modules();
+    static void add_module(const Module*);
+    static void set_defaults(Module*, SnortConfig*);
 
     static const char* get_lua_coreinit();
     static const char* get_includer(const char* module);
@@ -91,7 +85,7 @@ public:
     static void init_stats();
     static void add_thread_stats_entry(const char* name);
 
-    static void accumulate(const char* except = "snort");
+    static void accumulate(const SnortConfig*, const char* except = "snort");
     static void accumulate_module(const char* name);
 
     static void reset_stats(SnortConfig*);
@@ -99,12 +93,10 @@ public:
 
     static void clear_global_active_counters();
     static bool is_parallel_cmd(std::string control_cmd);
-    static std::string remove_whitespace(std::string& control_cmd);
-
 
     static std::set<uint32_t> gids;
-    SO_PUBLIC static std::mutex stats_mutex;
-    SO_PUBLIC static const char* dynamic_stats_modules;
+    static std::mutex stats_mutex;
+    static const char* dynamic_stats_modules;
 };
 }
 

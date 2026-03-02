@@ -33,11 +33,14 @@ class ACShellCmd : public snort::AnalyzerCommand
 public:
     ACShellCmd() = delete;
     ACShellCmd(ControlConn*, snort::AnalyzerCommand*);
+    ~ACShellCmd() override;
+
     bool execute(Analyzer&, void**) override;
+
     bool need_update_reload_id() const override
     { return ac->need_update_reload_id(); }
+
     const char* stringify() override { return ac->stringify(); }
-    ~ACShellCmd() override;
 
 private:
     snort::AnalyzerCommand* ac;

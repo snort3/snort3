@@ -76,7 +76,7 @@ bool ReputationReload::execute(Analyzer&, void**)
 static int reload(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    Reputation* ins = static_cast<Reputation*>(PigPen::get_inspector(REPUTATION_NAME));
+    Reputation* ins = static_cast<Reputation*>(PigPen::get_inspector(REPUTATION_NAME, Module::CONTEXT));
 
     if (ins)
         main_broadcast_command(new ReputationReload(ctrlcon, *ins), ctrlcon);

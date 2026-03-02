@@ -100,11 +100,13 @@ struct BindUse
     std::string name;
 
     Action action;
+    unsigned network_index;
     unsigned inspection_index;
     unsigned ips_index;
     What what;
     snort::Inspector* inspector;
     bool global_type;
+    bool same_file;
 };
 
 struct Binding

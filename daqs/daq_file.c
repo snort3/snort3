@@ -104,7 +104,7 @@ static void destroy_message_pool(FileContext* fc)
 static int create_message_pool(FileContext* fc, unsigned size)
 {
     FileMsgPool* pool = &fc->pool;
-    pool->pool = calloc(sizeof(FileMsgDesc), size);
+    pool->pool = calloc(size, sizeof(FileMsgDesc));
     if (!pool->pool)
     {
         SET_ERROR(fc->modinst, "%s: Could not allocate %zu bytes for a packet descriptor pool!",

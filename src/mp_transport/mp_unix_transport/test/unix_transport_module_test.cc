@@ -18,81 +18,73 @@ static int destroy_cnt = 0;
 
 namespace snort
 {
-    void WarningMessage(const char*,...) { warning_cnt++; }
+    SnortConfig::SnortConfig(const char*)
+    { max_procs = 2; }
 
-    SnortConfig::SnortConfig(snort::SnortConfig const*, char const*)
-    {
-        max_procs = 2;
-    }
     SnortConfig::~SnortConfig()
-    {
-
-    }
-
-    unsigned ThreadConfig::get_instance_max()
-    {
-        return 1;
-    }
-    unsigned Snort::get_process_id()
-    {
-        return 1;
-    }
-    unsigned get_instance_id()
-    {
-        return 1;
-    }
+    { }
 
     MPUnixDomainTransport::MPUnixDomainTransport(MPUnixDomainTransportConfig* config, MPUnixTransportStats& stats) :
         MPTransport(), config(config), transport_stats(stats)
     { }
+
     MPUnixDomainTransport::~MPUnixDomainTransport()
     { destroy_cnt++; }
+
+    void WarningMessage(const char*,...) { warning_cnt++; }
+
+// LCOV_EXCL_START
+    unsigned ThreadConfig::get_instance_max()
+    { return 1; }
+
+    unsigned Snort::get_process_id()
+    { return 1; }
+
+    unsigned get_instance_id()
+    { return 1; }
+
     void MPUnixDomainTransport::thread_init()
-    {}
+    { }
     void MPUnixDomainTransport::thread_term()
-    {}
+    { }
     void MPUnixDomainTransport::init_connection()
-    {}
+    { }
     void MPUnixDomainTransport::cleanup()
-    {}
+    { }
     void MPUnixDomainTransport::register_event_helpers(const unsigned&, const unsigned&, MPHelperFunctions&)
-    {}
+    { }
     bool MPUnixDomainTransport::send_to_transport(MPEventInfo&)
     { return true; }
     void MPUnixDomainTransport::unregister_receive_handler()
     { }
     void MPUnixDomainTransport::register_receive_handler(const TransportReceiveEventHandler&)
-    {}
+    { }
     bool MPUnixDomainTransport::configure(const SnortConfig*)
     { return true; }
     bool MPUnixDomainTransport::is_logging_enabled()
     { return false; }
     void MPUnixDomainTransport::enable_logging()
-    {}
+    { }
     void MPUnixDomainTransport::disable_logging()
-    {}
+    { }
     MPUnixTransportStats MPUnixDomainTransport::get_stats_copy()
-    {
-        return {};
-    }
+    { return { }; }
+
     MPTransportChannelStatusHandle* MPUnixDomainTransport::get_channel_status(unsigned int& size)
     {
         size = 0;
         return nullptr;
     }
+
     void MPUnixDomainTransport::reset_stats()
-    {
-        transport_stats = MPUnixTransportStats();
-    }
+    { transport_stats = MPUnixTransportStats(); }
+
     void MPUnixDomainTransport::sum_stats()
-    {
-        
-    }
+    { }
 
     char* snort_strdup(const char*)
-    {
-        return nullptr;
-    }
+    { return nullptr; }
+// LCOV_EXCL_STOP
 };
 
 void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }

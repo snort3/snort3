@@ -37,7 +37,7 @@
 namespace snort
 {
 // this is the current version of the api
-#define CONNECTOR_API_VERSION ((BASE_API_VERSION << 16) | 4)
+#define CONNECTOR_API_VERSION ((BASE_API_VERSION << 16) | 5)
 
 //-------------------------------------------------------------------------
 // api for class

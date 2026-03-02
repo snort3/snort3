@@ -159,7 +159,7 @@ bool ACGetStats::execute(Analyzer&, void**)
     // could be reimplemented to optimize for large thread counts by
     // retrieving stats in the command and accumulating in the main thread.
     PacketManager::accumulate();
-    ModuleManager::accumulate();
+    ModuleManager::accumulate(SnortConfig::get_conf());
     return true;
 }
 
@@ -236,7 +236,7 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
             {
                 LogMessage("ReloadResourceTuner[%d] complete\n", get_instance_id());
                 delete reload_tuners;
-                ps->finish(analyzer);
+                ps->finish();
                 return true;
             }
 
@@ -257,7 +257,6 @@ ACSwap::~ACSwap()
     }
     delete ps;
     HostAttributesManager::swap_cleanup();
-
     ReloadTracker::end(ctrlcon);
     log_message("== reload complete\n");
 }

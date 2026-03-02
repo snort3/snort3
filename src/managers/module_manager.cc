@@ -57,23 +57,10 @@
 using namespace snort;
 using namespace std;
 
-struct ModHook
-{
-    Module* mod;
-    const BaseApi* api;
-    luaL_Reg* reg;
-
-    ModHook(Module*, const BaseApi*);
-    ~ModHook();
-
-    void init();
-};
-
-static std::unordered_map<std::string, ModHook*> s_modules;
 static std::unordered_map<std::string, const Parameter*> s_pmap;
 
 static unsigned s_errors = 0;
-const char* ModuleManager::dynamic_stats_modules = "file_id appid";
+const char* ModuleManager::dynamic_stats_modules = "file_inspect appid";
 
 set<uint32_t> ModuleManager::gids;
 mutex ModuleManager::stats_mutex;
@@ -82,8 +69,7 @@ static string s_current;
 static string s_aliased_name;
 static string s_aliased_type;
 static string s_ips_includer;
-static string s_file_id_includer;
-static std::unordered_set<string> s_parallel_cmds;
+static string s_file_inspect_includer;
 
 // for callbacks from Lua
 static SnortConfig* s_config = nullptr;
@@ -119,63 +105,6 @@ const char* ModuleManager::get_lua_coreinit()
 { return lua_coreinit; }
 
 //-------------------------------------------------------------------------
-// ModHook foo
-//-------------------------------------------------------------------------
-
-ModHook::ModHook(Module* m, const BaseApi* b)
-{
-    mod = m;
-    api = b;
-    reg = nullptr;
-    init();
-}
-
-ModHook::~ModHook()
-{
-    if ( reg )
-        delete[] reg;
-
-    if ( api && api->mod_dtor )
-        api->mod_dtor(mod);
-    else
-        delete mod;
-}
-
-void ModHook::init()
-{
-    const Command* c = mod->get_commands();
-
-    if ( !c )
-        return;
-
-    unsigned n = 0;
-    while ( c[n].name )
-        n++;
-
-    // constructing reg here may seem like overkill
-    // ... why not just typedef Command to luaL_Reg?
-    // because the help would not be supplied or it
-    // would be out of date, out of sync, etc. QED
-    reg = new luaL_Reg[++n];
-    unsigned k = 0;
-    std::string cmd_name;
-    const char* dot = ".";
-    while ( k < n )
-    {
-        reg[k].name = c[k].name;
-        reg[k].func = c[k].func;
-        if (c[k].can_run_in_parallel)
-        {
-            cmd_name = mod->get_name();
-            cmd_name = cmd_name + dot + c[k].name;
-            s_parallel_cmds.insert(cmd_name);
-        }
-
-        k++;
-    }
-}
-
-//-------------------------------------------------------------------------
 // helper functions
 //-------------------------------------------------------------------------
 static std::string get_sub_table(const std::string& fqn)
@@ -206,15 +135,6 @@ static void set_top(string& fqn)
 
     if ( pos != fqn.npos )
         fqn.erase(pos);
-}
-
-static ModHook* get_hook(const char* s)
-{
-    auto mh = s_modules.find(s);
-    if ( mh != s_modules.end() )
-        return mh->second;
-
-    return nullptr;
 }
 
 //-------------------------------------------------------------------------
@@ -310,7 +230,7 @@ static void dump_field_lua(const string& key, const Parameter* p, bool table = f
 
     else if ( p->is_quoted() )
     {
-        const char* s = p->deflt ? p->deflt : " ";
+        const char* s = p->deflt;
         cout << key << " = '" << s << "'";
     }
     else
@@ -462,7 +382,7 @@ static bool set_value(const char* fqn, Value& v)
     string key = t;
     set_top(key);
 
-    Module* mod = ModuleManager::get_module(key.c_str());
+    Module* mod = PluginManager::get_module(key.c_str());
 
     if ( !mod )
     {
@@ -654,9 +574,10 @@ static bool end(Module* m, const Parameter* p, const char* s, int idx)
     return true;
 }
 
-static bool interested(Module* m)
+static bool interested(const Module* m)
 {
-    NetworkPolicy* np = get_network_policy();
+    const NetworkPolicy* np = get_network_policy();
+
     if ( m->get_usage() == Module::GLOBAL && (!np || np->policy_id) )
         return false;
 
@@ -688,7 +609,7 @@ SO_PUBLIC bool set_alias(const char* from, const char* to)
     if ( !from or !to )
         return false;
 
-    const Module* m = ModuleManager::get_module(to);
+    const Module* m = PluginManager::get_module(to);
 
     if ( !m or !m->is_bindable() )
         return false;
@@ -699,7 +620,7 @@ SO_PUBLIC bool set_alias(const char* from, const char* to)
         return false;
     }
 
-    if (  ModuleManager::get_module(from) )
+    if (  PluginManager::get_module(from) )
     {
         ParseError("alias name can't be an existing module '%s'", from);
         return false;
@@ -741,8 +662,8 @@ SO_PUBLIC bool set_includer(const char* fqn, const char* s)
         s_ips_includer = s;
     else
     {
-        assert(!strcmp(fqn, "file_id.includer"));
-        s_file_id_includer = s;
+        assert(!strcmp(fqn, "file_inspect.includer"));
+        s_file_inspect_includer = s;
     }
     return true;
 }
@@ -751,18 +672,18 @@ SO_PUBLIC int get_module_version(const char* name, const char* type)
 {
     // not all modules are plugins
     // not all plugins have modules
-    ModHook* h = get_hook(name);
+    const BaseApi* api;
+    const Module* mod = PluginManager::get_module(name, api);
 
-    if ( !h )
+    if ( !mod )
     {
         if ( !type )
             return -1;
 
-        PlugType pt = PluginManager::get_type(type);
-        return PluginManager::get_api(pt, name) ? 0 : -1;
+        return PluginManager::get_api(name) ? 0 : -1;
     }
 
-    return h->api ? (int)h->api->version : 0;
+    return api ? (int)api->version : 0;
 }
 
 //-------------------------------------------------------------------------
@@ -782,24 +703,31 @@ SO_PUBLIC bool open_table(const char* s, int idx)
     // ips option parameters only used in rules which
     // are non-lua; may be possible to allow a subtable
     // for lua config of ips option globals
-    ModHook* h = get_hook(key.c_str());
+    const BaseApi* api;
+    Module* m = PluginManager::get_module(key.c_str(), api);
 
-    if ( !h || (h->api && h->api->type == PT_IPS_OPTION) )
+    if ( !m or (api and api->type == PT_IPS_OPTION) )
     {
         if ( !Shell::is_trusted(key) )
             ParseWarning(WARN_CONF_STRICT, "unknown table %s", key.c_str());
         return false;
     }
 
-    // FIXIT-M only basic modules, inspectors, trace and ips actions can be reloaded at present
-    if ( ( Snort::is_reloading() ) and h->api
-        and h->api->type != PT_INSPECTOR and h->api->type != PT_IPS_ACTION
-        and h->api->type != PT_POLICY_SELECTOR and h->api->type != PT_TRACE )
+    // config reload is limited to builtin modules and the following plugins:
+    if ( Snort::is_reloading() and api )
     {
-        return false;
+        switch ( api->type )
+        {
+        case PT_CODEC:
+        case PT_INSPECTOR:
+        case PT_IPS_ACTION:
+        case PT_POLICY_SELECTOR:
+            break;
+        default:
+            return false;
+        }
     }
 
-    Module* m = h->mod;
     const Parameter* p = nullptr;
 
     if ( !interested(m) )
@@ -866,17 +794,15 @@ SO_PUBLIC void close_table(const char* s, int idx)
 
     const bool top = !idx && key == s;
 
-    if ( ModHook* h = get_hook(key.c_str()) )
+    if ( Module* mod = PluginManager::get_module(key.c_str()) )
     {
-        if ( !end(h->mod, nullptr, s, idx) )
-            ParseError("can't close %s", h->mod->get_name());
+        if ( !end(mod, nullptr, s, idx) )
+            ParseError("can't close %s", mod->get_name());
 
-        else if (h->api && top)
+        else if (top)
         {
-            if ( !s_aliased_name.empty() )
-                PluginManager::instantiate(h->api, h->mod, s_config, s_aliased_name.c_str());
-            else
-                PluginManager::instantiate(h->api, h->mod, s_config);
+            const char* name = !s_aliased_name.empty() ? s_aliased_name.c_str() : nullptr;
+            PluginManager::instantiate(mod, s_config, name);
         }
     }
 
@@ -905,20 +831,15 @@ SO_PUBLIC bool set_string(const char* fqn, const char* s)
 // private methods
 //-------------------------------------------------------------------------
 
-static bool comp_mods(const ModHook* l, const ModHook* r)
+static bool comp_mods(const Module* lm, const Module* rm)
 {
-    const Module* lm = l->mod;
-    const Module* rm = r->mod;
     return strcmp(lm->get_name(), rm->get_name()) < 0;
 }
 
-static bool comp_gids(const ModHook* l, const ModHook* r)
+static bool comp_gids(const Module* lm, const Module* rm)
 {
-    const Module* lm = l->mod;
-    const Module* rm = r->mod;
-
     if ( lm->get_gid() == rm->get_gid() )
-        return comp_mods(l, r);
+        return comp_mods(lm, rm);
 
     return ( lm->get_gid() < rm->get_gid() );
 }
@@ -927,72 +848,18 @@ static bool comp_gids(const ModHook* l, const ModHook* r)
 // public methods
 //-------------------------------------------------------------------------
 
-void ModuleManager::init()
+void ModuleManager::add_module(const Module* m)
 {
-    module_init();
-}
-
-void ModuleManager::term()
-{
-    for ( const auto& mh : s_modules )
-        delete mh.second;
-
-    s_modules.clear();
-}
-
-void ModuleManager::add_module(Module* m, const BaseApi* b)
-{
-    ModHook* mh = new ModHook(m, b);
-
-    assert(s_modules.find(mh->mod->get_name()) == s_modules.end());
-
-    s_modules[mh->mod->get_name()] = mh;
-
-    Profiler::register_module(m);
-
     if ( m->get_gid() )
         gids.emplace(m->get_gid());
 }
 
-Module* ModuleManager::get_module(const char* s)
+void ModuleManager::set_defaults(Module* mod, SnortConfig* sc)
 {
-    auto mh = s_modules.find(s);
-    if ( mh != s_modules.end() )
-        return mh->second->mod;
-
-    return nullptr;
-}
-
-Module* ModuleManager::get_default_module(const char* s, SnortConfig* sc)
-{
-    Module* mod = get_module(s);
-
-    if ( mod )
-    {
-        mod->verified_begin(s, 0, sc);
-        mod->verified_end(s, 0, sc);
-    }
-    return mod;
-}
-
-list<Module*> ModuleManager::get_all_modules()
-{
-    list<Module*> ret;
-
-    std::transform(s_modules.cbegin(), s_modules.cend(), std::back_inserter(ret),
-        [](const std::pair<const std::string, ModHook*>& mh){ return mh.second->mod; });
-
-    return ret;
-}
-
-static list<ModHook*> get_all_modhooks()
-{
-    list<ModHook*> ret;
-
-    std::transform(s_modules.cbegin(), s_modules.cend(), std::back_inserter(ret),
-        [](const std::pair<const std::string, ModHook*>& mh){ return mh.second; });
-
-    return ret;
+    assert(mod);
+    const char* s = mod->get_name();
+    mod->verified_begin(s, 0, sc);
+    mod->verified_end(s, 0, sc);
 }
 
 void ModuleManager::set_config(SnortConfig* sc)
@@ -1002,7 +869,7 @@ void ModuleManager::set_config(SnortConfig* sc)
     s_aliased_name.clear();
     s_aliased_type.clear();
     s_ips_includer.clear();
-    s_file_id_includer.clear();
+    s_file_inspect_includer.clear();
 }
 
 void ModuleManager::reset_errors()
@@ -1013,30 +880,33 @@ unsigned ModuleManager::get_errors()
 
 const char* ModuleManager::get_includer(const char* mod)
 {
-    assert(!strcmp(mod, "ips") or !strcmp(mod, "file_id"));
+    assert(!strcmp(mod, "ips") or !strcmp(mod, "file_inspect"));
 
     if ( !strcmp(mod, "ips") )
         return s_ips_includer.c_str();
 
-    return s_file_id_includer.c_str();
+    return s_file_inspect_includer.c_str();
+}
+
+static const BaseApi* get_api(const char* s)
+{
+    return PluginManager::get_api(s);
 }
 
 void ModuleManager::list_modules(const char* s)
 {
     PlugType pt = s ? PluginManager::get_type(s) : PT_MAX;
-    auto mod_hooks = get_all_modhooks();
-    mod_hooks.sort(comp_mods);
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(comp_mods);
     unsigned c = 0;
 
-    for ( auto* mh : mod_hooks )
+    for ( auto* mod : mods )
     {
-        if (
-            !s || !*s ||
-            (mh->api && mh->api->type == pt) ||
-            (!mh->api && !strcmp(s, "basic"))
-            )
+        const BaseApi* api = get_api(mod->get_name());
+
+        if ( !s || !*s || (api && api->type == pt) || (!api && !strcmp(s, "basic")) )
         {
-            LogMessage("%s\n", mh->mod->get_name());
+            LogMessage("%s\n", mod->get_name());
             c++;
         }
     }
@@ -1046,30 +916,35 @@ void ModuleManager::list_modules(const char* s)
 
 void ModuleManager::show_modules()
 {
-    auto mod_hooks = get_all_modhooks();
-    mod_hooks.sort(comp_mods);
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(comp_mods);
 
-    for ( auto* mh : mod_hooks )
+    for ( auto* mod : mods )
     {
-        const char* t = mh->api ? PluginManager::get_type_name(mh->api->type) : "basic";
+        const BaseApi* api = get_api(mod->get_name());
+        const char* t = api ? PluginManager::get_type_name(api->type) : "basic";
 
         cout << Markup::item();
-        cout << Markup::emphasis(mh->mod->get_name());
+        cout << Markup::emphasis(mod->get_name());
         cout << " (" << t;
-        cout << "): " << mh->mod->get_help();
+        cout << "): " << mod->get_help();
         cout << endl;
     }
 }
 
 void ModuleManager::dump_modules()
 {
-    auto mod_hooks = get_all_modhooks();
-    mod_hooks.sort(comp_mods);
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(comp_mods);
     Dumper d("Modules");
 
-    for ( auto* mh : mod_hooks )
-        if ( !mh->api )
-            d.dump(mh->mod->get_name());
+    for ( auto* mod : mods )
+    {
+        const char* s = mod->get_name();
+
+        if ( !get_api(s) )
+            d.dump(s);
+    }
 }
 
 static std::string mod_type(const BaseApi* api)
@@ -1121,15 +996,12 @@ void ModuleManager::show_module(const char* name)
         cerr << "module name required" << endl;
         return;
     }
-    auto mod_hooks = get_all_modhooks();
-    mod_hooks.sort(comp_gids);
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(comp_gids);
     unsigned c = 0;
 
-    for ( auto* mh : mod_hooks )
+    for ( const auto* m : mods )
     {
-        const Module* m = mh->mod;
-        assert(m);
-
         if ( strcmp(m->get_name(), name) )
             continue;
 
@@ -1138,10 +1010,12 @@ void ModuleManager::show_module(const char* name)
         if ( const char* h = m->get_help() )
             cout << endl << "Help: " << h << endl;
 
-        cout << endl << "Type: "  << mod_type(mh->api) << endl;
+        const BaseApi* api = get_api(m->get_name());
+
+        cout << endl << "Type: "  << mod_type(api) << endl;
         cout << endl << "Usage: "  << mod_use(m->get_usage()) << endl;
 
-        if ( mh->api and mh->api->type == PT_INSPECTOR )
+        if ( api and api->type == PT_INSPECTOR )
             cout << endl << "Instance Type: " << mod_bind(m) << endl;
 
         const Parameter* params = m->get_parameters();
@@ -1190,13 +1064,12 @@ static bool selected(const Module* m, const char* pfx, bool exact)
 
 void ModuleManager::show_configs(const char* pfx, bool exact)
 {
-    auto mod_hooks = get_all_modhooks();
-    mod_hooks.sort(comp_mods);
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(comp_mods);
     unsigned c = 0;
 
-    for ( auto* mh : mod_hooks )
+    for ( auto* m : mods )
     {
-        Module* m = mh->mod;
         string s;
 
         if ( !selected(m, pfx, exact) )
@@ -1238,14 +1111,12 @@ void ModuleManager::dump_defaults(const char* pfx)
 
 void ModuleManager::show_commands(const char* pfx, bool exact)
 {
-    auto mod_hooks = get_all_modhooks();
-    mod_hooks.sort(comp_mods);
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(comp_mods);
     unsigned n = 0;
 
-    for ( auto* mh : mod_hooks )
+    for ( const auto* m : mods )
     {
-        const Module* m = mh->mod;
-
         if ( !selected(m, pfx, exact) )
             continue;
 
@@ -1258,7 +1129,7 @@ void ModuleManager::show_commands(const char* pfx, bool exact)
         {
             cout << Markup::item();
             cout << Markup::emphasis_on();
-            cout << mh->mod->get_name();
+            cout << m->get_name();
             cout << "." << c->name;
             cout << Markup::emphasis_off();
             cout << c->get_arg_list();
@@ -1279,15 +1150,12 @@ bool ModuleManager::gid_in_use(uint32_t gid)
 
 void ModuleManager::show_gids(const char* pfx, bool exact)
 {
-    auto mod_hooks = get_all_modhooks();
-    mod_hooks.sort(comp_gids);
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(comp_gids);
     unsigned c = 0;
 
-    for ( auto* mh : mod_hooks )
+    for ( const auto* m : mods )
     {
-        const Module* m = mh->mod;
-        assert(m);
-
         if ( !selected(m, pfx, exact) )
             continue;
 
@@ -1323,13 +1191,12 @@ static const char* peg_op(CountType ct)
 
 void ModuleManager::show_pegs(const char* pfx, bool exact)
 {
-    auto mod_hooks = get_all_modhooks();
-    mod_hooks.sort(comp_gids);
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(comp_gids);
     unsigned c = 0;
 
-    for ( auto* mh : mod_hooks )
+    for ( const auto* m : mods )
     {
-        const Module* m = mh->mod;
         assert(m);
 
         if ( !selected(m, pfx, exact) || m->stats_are_aggregated())
@@ -1344,7 +1211,7 @@ void ModuleManager::show_pegs(const char* pfx, bool exact)
         {
             cout << Markup::item();
             cout << Markup::emphasis_on();
-            cout << mh->mod->get_name();
+            cout << m->get_name();
             cout << "." << pegs->name;
             cout << Markup::emphasis_off();
             cout << ": " << pegs->help;
@@ -1362,13 +1229,13 @@ void ModuleManager::load_commands(Shell* sh)
 {
     // FIXIT-L ideally only install commands from configured modules
     // FIXIT-L install commands into working shell
-    auto mod_hooks = get_all_modhooks();
-    mod_hooks.sort(comp_mods);
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(comp_mods);
 
-    for ( auto* mh : mod_hooks )
+    for ( auto* m : mods )
     {
-        if ( mh->reg )
-            sh->install(mh->mod->get_name(), mh->reg);
+        if ( auto* c = m->get_commands() )
+            sh->install(m->get_name(), c);
     }
 }
 
@@ -1398,12 +1265,11 @@ static void make_rule(ostream& os, const Module* m, const RuleMap* r, const char
 // (we don't want to suppress it because it could mean something is broken)
 void ModuleManager::load_rules(SnortConfig* sc)
 {
-    auto mod_hooks = get_all_modhooks();
-    mod_hooks.sort(comp_gids);
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(comp_gids);
 
-    for ( auto* mh : mod_hooks )
+    for ( const auto* m : mods )
     {
-        const Module* m = mh->mod;
         const RuleMap* r = m->get_rules();
 
         if ( !r )
@@ -1429,141 +1295,141 @@ void ModuleManager::load_rules(SnortConfig* sc)
 PegCount* ModuleManager::get_stats(const char* name)
 {
     PegCount* pc = nullptr;
-    ModHook* mh = get_hook(name);
+    Module* mod = PluginManager::get_module(name);
 
-    if ( mh )
-        pc = &mh->mod->dump_stats_counts[0][0];
+    if ( mod )
+        pc = &mod->dump_stats_counts[0][0];
 
     return pc;
 }
 
 void ModuleManager::accumulate_dump_stats()
 {
-    auto mod_hooks = get_all_modhooks();
-    for ( auto* mh : mod_hooks )
-    {
-        mh->mod->main_accumulate_stats();
-    }
+    auto mods = PluginManager::get_all_modules();
+
+    for ( auto* mod : mods )
+        mod->main_accumulate_stats();
 }
 
 void ModuleManager::init_stats()
 {
-    auto mod_hooks = get_all_modhooks();
-    for ( auto* mh : mod_hooks )
-    {
-        mh->mod->init_stats();
-    }
+    auto mods = PluginManager::get_all_modules();
+
+    for ( auto* mod : mods )
+        mod->init_stats();
 }
 
 void ModuleManager::add_thread_stats_entry(const char* name)
 {
-    ModHook* mh = get_hook(name);
-    if ( mh )
-        mh->mod->init_stats(true);
+    Module* mod = PluginManager::get_module(name);
+
+    if ( mod )
+        mod->init_stats(true);
 }
 
 void ModuleManager::dump_stats(const char* skip, bool dynamic)
 {
-    auto mod_hooks = get_all_modhooks();
-    mod_hooks.sort(comp_mods);
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(comp_mods);
 
-    for ( auto* mh : mod_hooks )
+    for ( auto* mod : mods )
     {
-        if ( !skip || !strstr(skip, mh->mod->get_name()) )
+        if ( !skip || !strstr(skip, mod->get_name()) )
         {
-            if (strstr(dynamic_stats_modules, mh->mod->get_name()) || mh->mod->global_stats())
+            if (strstr(dynamic_stats_modules, mod->get_name()) || mod->global_stats())
             {
                 lock_guard<mutex> lock(stats_mutex);
                 if ( dynamic )
-                    mh->mod->show_dynamic_stats();
+                    mod->show_dynamic_stats();
                 else
-                    mh->mod->show_stats();
+                    mod->show_stats();
             }
             else
             {
                 if ( dynamic )
-                    mh->mod->show_dynamic_stats();
+                    mod->show_dynamic_stats();
                 else
-                    mh->mod->show_stats();
+                    mod->show_stats();
             }
         }
     }
 }
 
-void ModuleManager::accumulate(const char* except)
+void ModuleManager::accumulate(const SnortConfig* sc, const char* except)
 {
-    auto mod_hooks = get_all_modhooks();
+    auto mods = PluginManager::get_all_modules(sc);
 
-    for ( auto* mh : mod_hooks )
+    for ( auto* mod : mods )
     {
-        if ( except and !strcmp(mh->mod->name, except) )
+        if ( except and !strcmp(mod->name, except) )
             continue;
 
-        if (strstr(dynamic_stats_modules, mh->mod->get_name()) || mh->mod->global_stats())
+        if (strstr(dynamic_stats_modules, mod->get_name()) || mod->global_stats())
         {
             lock_guard<mutex> lock(stats_mutex);
-            mh->mod->prep_counts(true);
-            mh->mod->sum_stats(true);
+            mod->prep_counts(true);
+            mod->sum_stats(true);
         }
         else
         {
-            mh->mod->prep_counts(true);
-            mh->mod->sum_stats(true);
+            mod->prep_counts(true);
+            mod->sum_stats(true);
         }
     }
 }
 
 void ModuleManager::accumulate_module(const char* name)
 {
-    ModHook* mh = get_hook(name);
-    if ( mh )
+    Module* mod = PluginManager::get_module(name);
+
+    if ( !mod )
+        return;
+
+    if (strstr(dynamic_stats_modules, mod->get_name()) || mod->global_stats())
     {
-        if (strstr(dynamic_stats_modules, mh->mod->get_name()) || mh->mod->global_stats())
-        {
-            lock_guard<mutex> lock(stats_mutex);
-            mh->mod->prep_counts(true);
-            mh->mod->sum_stats(true);
-        }
-        else
-        {
-            mh->mod->prep_counts(true);
-            mh->mod->sum_stats(true);
-        }
+        lock_guard<mutex> lock(stats_mutex);
+        mod->prep_counts(true);
+        mod->sum_stats(true);
+    }
+    else
+    {
+        mod->prep_counts(true);
+        mod->sum_stats(true);
     }
 }
 
 void ModuleManager::reset_stats(SnortConfig*)
 {
-    auto mod_hooks = get_all_modhooks();
+    auto mods = PluginManager::get_all_modules();
 
-    for ( auto* mh : mod_hooks )
+    for ( auto* mod : mods )
     {
-        if (strstr(dynamic_stats_modules, mh->mod->get_name()) || mh->mod->global_stats())
+        if (strstr(dynamic_stats_modules, mod->get_name()) || mod->global_stats())
         {
             lock_guard<mutex> lock(stats_mutex);
-            mh->mod->reset_stats();
+            mod->reset_stats();
         }
         else
         {
-            mh->mod->reset_stats();
+            mod->reset_stats();
         }
     }
 }
 
 void ModuleManager::clear_global_active_counters()
 {
-    auto mod_hooks = get_all_modhooks();
+    auto mods = PluginManager::get_all_modules();
 
-    for ( auto* mh : mod_hooks )
+    for ( auto* mod : mods )
     {
-        if (strstr(dynamic_stats_modules, mh->mod->get_name()) || mh->mod->global_stats())
+        if (strstr(dynamic_stats_modules, mod->get_name()) || mod->global_stats())
         {
             lock_guard<mutex> lock(stats_mutex);
-            mh->mod->clear_global_active_counters();
+            mod->clear_global_active_counters();
         }
         else
         {
-            mh->mod->clear_global_active_counters();
+            mod->clear_global_active_counters();
         }
     }
 }
@@ -1572,24 +1438,26 @@ void ModuleManager::reset_stats(clear_counter_type_t type)
 {
     if ( type != TYPE_MODULE and type != TYPE_ALL )
     {
-        ModHook* mh = get_hook(clear_counter_type_string_map[type]);
-        if ( mh and mh->mod )
+        Module* mod = PluginManager::get_module(clear_counter_type_string_map[type]);
+
+        if ( mod )
         {
-            if (strstr(dynamic_stats_modules, mh->mod->get_name()) || mh->mod->global_stats())
+            if (strstr(dynamic_stats_modules, mod->get_name()) || mod->global_stats())
             {
                 lock_guard<mutex> lock(stats_mutex);
-                mh->mod->reset_stats();
+                mod->reset_stats();
             }
             else
             {
-                mh->mod->reset_stats();
+                mod->reset_stats();
             }
         }
     }
     else
     {
-        auto mod_hooks = get_all_modhooks();
-        for ( auto* mh : mod_hooks )
+        auto mods = PluginManager::get_all_modules();
+
+        for ( auto* mod : mods )
         {
             bool ignore = false;
 
@@ -1597,7 +1465,7 @@ void ModuleManager::reset_stats(clear_counter_type_t type)
             //  granular form of clearing module stats.
             for ( int i = 0; i < static_cast<int>(clear_counter_type_string_map.size()); i++ )
             {
-                if ( !strcmp(mh->mod->get_name(), clear_counter_type_string_map[i]) )
+                if ( !strcmp(mod->get_name(), clear_counter_type_string_map[i]) )
                 {
                     ignore = true;
                     break;
@@ -1606,14 +1474,14 @@ void ModuleManager::reset_stats(clear_counter_type_t type)
 
             if ( type == TYPE_ALL or !ignore )
             {
-                if (strstr(dynamic_stats_modules, mh->mod->get_name()) || mh->mod->global_stats())
+                if (strstr(dynamic_stats_modules, mod->get_name()) || mod->global_stats())
                 {
                     lock_guard<mutex> lock(stats_mutex);
-                    mh->mod->reset_stats();
+                    mod->reset_stats();
                 }
                 else
                 {
-                    mh->mod->reset_stats();
+                    mod->reset_stats();
                 }
             }
         }
@@ -1661,12 +1529,13 @@ static void load_table(string& key, const Parameter* p)
 
 void ModuleManager::load_params()
 {
-    auto mod_hooks = get_all_modhooks();
-    mod_hooks.sort(comp_mods);
+    s_pmap.clear();
 
-    for ( auto* mh : mod_hooks )
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(comp_mods);
+
+    for ( auto* m : mods )
     {
-        Module* m = mh->mod;
         string s;
 
         if ( m->is_list() )
@@ -1726,13 +1595,11 @@ struct RulePtr
 
 static std::vector<RulePtr> get_rules(const char* pfx, bool exact = false)
 {
-    auto mod_hooks = get_all_modhooks();
+    auto mods = PluginManager::get_all_modules();
     std::vector<RulePtr> rule_set;
 
-    for ( auto* mh : mod_hooks )
+    for ( const auto* m : mods )
     {
-        const Module* m = mh->mod;
-
         if ( !selected(m, pfx, exact) )
             continue;
 
@@ -1763,7 +1630,7 @@ void ModuleManager::show_rules(const char* pfx, bool exact)
 {
     std::vector<RulePtr> rule_set = get_rules(pfx, exact);
 
-    for ( auto& rp : rule_set )
+    for ( const auto& rp : rule_set )
     {
         cout << Markup::item();
         cout << Markup::emphasis_on();
@@ -1973,16 +1840,14 @@ static void dump_pegs_json(JsonStream& json, const Module* mod)
 
 void ModuleManager::show_modules_json()
 {
-    auto mod_hooks = get_all_modhooks();
-    mod_hooks.sort(comp_mods);
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(comp_mods);
+
     JsonStream json(std::cout);
-
     json.open_array();
-    for ( const auto* mh : mod_hooks )
-    {
-        const Module* mod = mh->mod;
-        assert(mod);
 
+    for ( const auto* mod : mods )
+    {
         std::string name = "";
         if ( const char* n = mod->get_name() )
             name = n;
@@ -1993,7 +1858,8 @@ void ModuleManager::show_modules_json()
         if ( const char* h = mod->get_help() )
             help = h;
 
-        std::string type = mod_type(mh->api);
+        const BaseApi* api = get_api(mod->get_name());
+        std::string type = mod_type(api);
         const char* usage = mod_use(mod->get_usage());
 
         json.open();
@@ -2001,7 +1867,8 @@ void ModuleManager::show_modules_json()
         json.put("help", help);
         json.put("type", type);
         json.put("usage", usage);
-        if ( mh->api and mh->api->type == PT_INSPECTOR )
+
+        if ( api and api->type == PT_INSPECTOR )
             json.put("instance_type", mod_bind(mod));
 
         dump_configs_json(json, mod);
@@ -2013,33 +1880,184 @@ void ModuleManager::show_modules_json()
     json.close_array();
 }
 
-bool ModuleManager::is_parallel_cmd(std::string control_cmd)
+static void parse_command(std::string& cmd, std::string& mod)
 {
-    control_cmd = remove_whitespace(control_cmd);
+    cmd.erase(std::remove_if(cmd.begin(), cmd.end(), ::isspace), cmd.end());
 
-    std::string mod_cmd;
+    size_t dot = cmd.find('.');
 
-    size_t dotPos = control_cmd.find('.');
-    size_t openParenthesisPos = control_cmd.find("(");
+    if ( dot == std::string::npos )
+        mod = "snort";
+    else
+    {
+        mod = cmd.substr(0, dot);
+        cmd.erase(0, dot+1);
+    }
 
-    if (dotPos == std::string::npos)
-        mod_cmd = "snort.";
+    size_t open = cmd.find("(");
 
-    if (openParenthesisPos != std::string::npos)
-        mod_cmd = mod_cmd + control_cmd.substr(0,openParenthesisPos);
-
-    return 1 == s_parallel_cmds.count(mod_cmd);
+    if ( open != std::string::npos )
+        cmd.erase(open, std::string::npos);
 }
 
-std::string ModuleManager::remove_whitespace(std::string& control_cmd)
+bool ModuleManager::is_parallel_cmd(std::string cmd)
 {
-    control_cmd.erase(std::remove_if(control_cmd.begin(), control_cmd.end(), ::isspace), control_cmd.end());
-    return control_cmd;
+    std::string mod;
+    parse_command(cmd, mod);
+
+    const Module* m = PluginManager::get_module(mod.c_str());
+
+    if ( !m )
+        return false;
+
+    const Command* c = m->get_commands();
+
+    if ( !c )
+        return false;
+
+    while ( c->name and cmd != c->name )
+        c++;
+
+    return c->name ? c->can_run_in_parallel : false;
 }
 
 #ifdef UNIT_TEST
 
 #include <catch/snort_catch.h>
+
+TEST_CASE("parse command", "[ModuleManager]")
+{
+    // valid command formats
+    SECTION("help()")
+    {
+        std::string cmd = "help()";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "snort");
+        CHECK(cmd == "help");
+    }
+    SECTION("snort.help()")
+    {
+        std::string cmd = "snort.help()";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "snort");
+        CHECK(cmd == "help");
+    }
+    SECTION("pig.fly()")
+    {
+        std::string cmd = "pig.fly()";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "pig");
+        CHECK(cmd == "fly");
+    }
+    SECTION("a.b(c)")
+    {
+        std::string cmd = "a.b(c)";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "a");
+        CHECK(cmd == "b");
+    }
+    // invalid command formats
+    SECTION("a.b.c(d)")
+    {
+        std::string cmd = "a.b.c(d)";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "a");
+        CHECK(cmd == "b.c");
+    }
+    SECTION("foo")
+    {
+        std::string cmd = "foo";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "snort");
+        CHECK(cmd == "foo");
+    }
+    SECTION(".foo")
+    {
+        std::string cmd = ".foo";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "");
+        CHECK(cmd == "foo");
+    }
+    SECTION("foo.")
+    {
+        std::string cmd = "foo.";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "foo");
+        CHECK(cmd == "");
+    }
+    SECTION(".foo()")
+    {
+        std::string cmd = ".foo()";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "");
+        CHECK(cmd == "foo");
+    }
+    SECTION("foo.()")
+    {
+        std::string cmd = "foo.()";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "foo");
+        CHECK(cmd == "");
+    }
+    SECTION("()foo.")
+    {
+        std::string cmd = "()foo.";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "()foo");
+        CHECK(cmd == "");
+    }
+    SECTION(".")
+    {
+        std::string cmd = ".";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "");
+        CHECK(cmd == "");
+    }
+    SECTION("()")
+    {
+        std::string cmd = "()";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "snort");
+        CHECK(cmd == "");
+    }
+    SECTION(".()")
+    {
+        std::string cmd = ".()";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "");
+        CHECK(cmd == "");
+    }
+    SECTION("(.)")
+    {
+        std::string cmd = "(.)";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "(");
+        CHECK(cmd == ")");
+    }
+    SECTION("().")
+    {
+        std::string cmd = "().";
+        std::string mod;
+        parse_command(cmd, mod);
+        CHECK(mod == "()");
+        CHECK(cmd == "");
+    }
+}
 
 TEST_CASE("param range JSON dumper", "[ModuleManager]")
 {
@@ -2119,23 +2137,6 @@ TEST_CASE("param range JSON dumper", "[ModuleManager]")
         x = R"-(, "range": "2147483647:4294967295")-";
         CHECK(ss.str() == x);
         ss.str("");
-
-        const Parameter p_s_int_max("s_int_max", Parameter::PT_INT, "-2:max63", nullptr, "help");
-        dump_param_range_json(json, &p_s_int_max);
-        x = R"-(, "range": "-2:9223372036854775807")-";
-        CHECK(ss.str() == x);
-        ss.str("");
-
-        const Parameter p_s_uint_max("s_uint_max", Parameter::PT_INT, "-5:max64", nullptr, "help");
-        dump_param_range_json(json, &p_s_uint_max);
-        x = R"-(, "range": "-5:-1")-";
-        CHECK(ss.str() == x);
-        ss.str("");
-
-        const Parameter p_max("uint_max", Parameter::PT_INT, ":max64", nullptr, "help");
-        dump_param_range_json(json, &p_max);
-        x = R"-(, "range": ":18446744073709551615")-";
-        CHECK(ss.str() == x);
     }
 }
 

@@ -141,8 +141,10 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
 #ifndef DISABLE_TENANT_ID
     ,uint32_t tenant_id
 #endif
-    )
-    : FlowData(inspector_id, &inspector), config(inspector.get_ctxt().config),
+    ) :
+        FlowData(inspector_id),
+        inspector(inspector),
+        config(inspector.get_ctxt().config),
         initiator_port(port),
 #ifndef DISABLE_TENANT_ID
         tenant_id(tenant_id),
@@ -152,6 +154,7 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
         odp_ctxt_version(odp_ctxt.get_version()),
         tp_appid_ctxt(pkt_thread_tp_appid_ctxt)
 {
+    inspector.add_ref();
     appid_stats.total_sessions++;
 }
 
@@ -216,6 +219,8 @@ AppIdSession::~AppIdSession()
         delete &api;
     else
         api.asd = nullptr;
+
+    inspector.rem_ref();
 }
 
 // FIXIT-RC X Move this to somewhere more generally available/appropriate (decode_data.h).
@@ -254,9 +259,8 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     char src_ip[INET6_ADDRSTRLEN];
     char dst_ip[INET6_ADDRSTRLEN];
 
-    AppIdInspector* inspector =
-        static_cast<AppIdInspector*>(
-            InspectorManager::get_inspector(MOD_NAME, MOD_USAGE, appid_inspector_api.type));
+    AppIdInspector* inspector = static_cast<AppIdInspector*>
+        (InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
     assert(inspector);
 
     // FIXIT-RC - port parameter passed in as 0 since we may not know client port, verify

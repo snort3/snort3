@@ -42,51 +42,49 @@ struct ProfileStats;
 
 extern THREAD_LOCAL snort::ProfileStats decodePerfStats;
 
-/*
- *  CodecManager class
- */
 class CodecManager
 {
 public:
+    CodecManager();
+    ~CodecManager();
+
     friend class snort::PacketManager;
 
-    // global plugin initializer
-    static void add_plugin(const struct snort::CodecApi*);
-    // instantiate a specific codec with a codec specific Module
-    static void instantiate(const snort::CodecApi*, snort::Module*);
-    // instantiate any codec for which a module has not been provided.
-    static void instantiate();
-    // destroy all global codec related information
-    static void release_plugins();
-    // initialize the current threads DLT and Packet struct
-    static void thread_init();
-    // destroy thread_local data
-    static void thread_term();
+    static class PlugInterface* get_interface(const snort::CodecApi*);
+    static CodecManager* get_instance();
+
+    void instantiate();
+
+    void thread_init();
+    void thread_reinit();
+    void thread_term();
+
     // print all of the codec plugins
     static void dump_plugins();
     // get the current grinder
     static uint8_t get_grinder();
 
 private:
-    struct CodecApiWrapper;
+    class CodecApiWrapper;
+    std::size_t codec_id = 1;
 
-    static std::vector<CodecApiWrapper> s_codecs;
-    static std::array<ProtocolIndex, num_protocol_ids> s_proto_map;
-    static std::array<snort::Codec*, num_protocol_idx> s_protocols;
+    std::array<ProtocolIndex, num_protocol_ids> s_proto_map { 0 };
+    std::array<snort::Codec*, num_protocol_idx> s_protocols { { nullptr } };
 
     static THREAD_LOCAL ProtocolId grinder_id;
     static THREAD_LOCAL ProtocolIndex grinder;
 
-    /*
-     * Private helper functions.  These are all declared here
-     * because they need access to private variables.
-     */
+    void instantiate(CodecApiWrapper&, snort::Module*);
+    void uninstall(CodecApiWrapper&, std::size_t);
 
-    // Private struct defined in an anonymous namespace.
-    static void instantiate(CodecApiWrapper&, snort::Module*);
-    static CodecApiWrapper& get_api_wrapper(const snort::CodecApi* cd_api);
-    static uint8_t get_codec(const char* const keyword);
+    uint8_t get_codec(const char* const keyword);
+    snort::Codec* get_codec(ProtocolIndex);
 };
+
+#ifndef CODEC_TEST
+inline snort::Codec* CodecManager::get_codec(ProtocolIndex idx)
+{ return s_protocols[idx]; }
+#endif
 
 #endif
 

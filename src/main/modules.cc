@@ -49,6 +49,7 @@
 #include "log/batched_logger.h"
 #include "log/messages.h"
 #include "lua/lua.h"
+#include "main/snort_module.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "memory/memory_module.h"
@@ -1075,7 +1076,7 @@ bool AttributeTableModule::set(const char*, Value& v, SnortConfig* sc)
 
 static const Parameter inspection_params[] =
 {
-    { "id", Parameter::PT_INT, "0:max64", "0",
+    { "id", Parameter::PT_INT, "1:max53", "1",
       "correlate policy and events with other items in configuration" },
 
 #ifdef HAVE_UUID
@@ -1083,7 +1084,8 @@ static const Parameter inspection_params[] =
       "correlate events by uuid" },
 #endif
 
-    { "mode", Parameter::PT_ENUM, "inline | inline-test", "inline-test",
+    // no default - see ips.mode
+    { "mode", Parameter::PT_ENUM, "inline | inline-test", nullptr,
       "set policy mode" },
 
     { "max_aux_ip", Parameter::PT_INT, "-1:127", "16",
@@ -1203,13 +1205,15 @@ static const Parameter ips_params[] =
     { "enable_builtin_rules", Parameter::PT_BOOL, nullptr, "false",
       "enable events from builtin rules w/o stubs" },
 
-    { "id", Parameter::PT_INT, "0:max64", "0",
+    { "id", Parameter::PT_INT, "1:max53", "1",
       "correlate unified2 events with configuration" },
 
     { "include", Parameter::PT_STRING, nullptr, nullptr,
       "snort rules and includes" },
 
-    // FIXIT-L no default; it breaks initialization by -Q
+    // no default here; default behavior controlled by -Q; set this to override -Q for policy
+    // inline default causes a warning w/o -Q (but works correctly)
+    // inline-test default can't be overridden by -Q (also correct but usually undesirable)
     { "mode", Parameter::PT_ENUM, "tap | inline | inline-test", nullptr,
       "set policy mode" },
 
@@ -2099,7 +2103,7 @@ bool FilePolicyModule::begin(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
-bool FilePolicyModule::set(const char*, Value& v, SnortConfig*)
+bool FilePolicyModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     FilePolicy* fp = get_network_policy()->get_file_policy();
     if ( v.is("file_type_id") )
@@ -2123,7 +2127,7 @@ bool FilePolicyModule::set(const char*, Value& v, SnortConfig*)
         if (file_rule.use.capture_enabled && Snort::is_reloading()
             && !FileService::is_file_capture_enabled())
         {
-            ReloadError("Changing file_id.enable_file_capture requires a restart.\n");
+            ReloadError("Changing %s requires a restart.\n", fqn);
             return false;
         }
     }
@@ -2138,7 +2142,7 @@ bool FilePolicyModule::set(const char*, Value& v, SnortConfig*)
     {
         if (v.get_bool() and Snort::is_reloading() and !FileService::is_file_capture_enabled())
         {
-            ReloadError("Changing file_id.enable_capture requires a restart.\n");
+            ReloadError("Changing %s requires a restart.\n", fqn);
             return false;
         }
         fp->set_file_capture(v.get_bool());
@@ -2164,61 +2168,63 @@ bool FilePolicyModule::end(const char* fqn, int idx, SnortConfig*)
 // module manager stuff - move to framework/module_manager.cc
 //-------------------------------------------------------------------------
 
-void module_init()
+void add_independent_modules()
 {
     // parameters must be settable regardless of sequence
     // since Lua calls this by table hash key traversal
     // (which is effectively random)
     // so module interdependencies must come after this phase
-    ModuleManager::add_module(get_snort_module());
+    PluginManager::add_module(new SnortModule);
 
     // these modules are not policy specific
-    ModuleManager::add_module(new ClassificationsModule);
-    ModuleManager::add_module(new CodecModule);
-    ModuleManager::add_module(new DetectionModule);
-    ModuleManager::add_module(new MemoryModule);
-    ModuleManager::add_module(new MPDataBusModule);
-    ModuleManager::add_module(new PacketTracerModule);
-    ModuleManager::add_module(new PacketsModule);
-    ModuleManager::add_module(new ProcessModule);
-    ModuleManager::add_module(new ProfilerModule);
-    ModuleManager::add_module(new ReferencesModule);
-    ModuleManager::add_module(new SearchEngineModule);
-    ModuleManager::add_module(new SFDAQModule);
-    ModuleManager::add_module(new PayloadInjectorModule);
-    ModuleManager::add_module(new ActionsModule);
+    PluginManager::add_module(new ClassificationsModule);
+    PluginManager::add_module(new CodecModule);
+    PluginManager::add_module(new DetectionModule);
+    PluginManager::add_module(new MemoryModule);
+    PluginManager::add_module(new MPDataBusModule);
+    PluginManager::add_module(new PacketTracerModule);
+    PluginManager::add_module(new PacketsModule);
+    PluginManager::add_module(new ProcessModule);
+    PluginManager::add_module(new ProfilerModule);
+    PluginManager::add_module(new ReferencesModule);
+    PluginManager::add_module(new SearchEngineModule);
+    PluginManager::add_module(new SFDAQModule);
+    PluginManager::add_module(new PayloadInjectorModule);
+    PluginManager::add_module(new ActionsModule);
 
     // these could but probably shouldn't be policy specific
     // or should be broken into policy and non-policy parts
-    ModuleManager::add_module(new AlertsModule);
-    ModuleManager::add_module(new EventQueueModule);
-    ModuleManager::add_module(new OutputModule);
+    PluginManager::add_module(new AlertsModule);
+    PluginManager::add_module(new EventQueueModule);
+    PluginManager::add_module(new OutputModule);
 
     // these modules could be in traffic policy
-    ModuleManager::add_module(new ActiveModule);
-
-    ModuleManager::add_module(new LatencyModule);
-
-    ModuleManager::add_module(new SideChannelModule);
-    ModuleManager::add_module(new HighAvailabilityModule);
+    PluginManager::add_module(new ActiveModule);
+    PluginManager::add_module(new LatencyModule);
+    PluginManager::add_module(new SideChannelModule);
+    PluginManager::add_module(new HighAvailabilityModule);
 
     // these modules should be in ips policy
-    ModuleManager::add_module(new EventFilterModule);
-    ModuleManager::add_module(new JSNormModule);
-    ModuleManager::add_module(new RateFilterModule);
-    ModuleManager::add_module(new SuppressModule);
+    PluginManager::add_module(new EventFilterModule);
+    PluginManager::add_module(new JSNormModule);
+    PluginManager::add_module(new RateFilterModule);
+    PluginManager::add_module(new SuppressModule);
 
     // these are preliminary policies
-    ModuleManager::add_module(new NetworkModule);
-    ModuleManager::add_module(new InspectionModule);
-    ModuleManager::add_module(new IpsModule);
-    ModuleManager::add_module(new FilePolicyModule);
+    PluginManager::add_module(new NetworkModule);
+    PluginManager::add_module(new InspectionModule);
+    PluginManager::add_module(new IpsModule);
+    PluginManager::add_module(new FilePolicyModule);
 
     // these modules replace config and hosts.xml
-    ModuleManager::add_module(new AttributeTableModule);
-    ModuleManager::add_module(new HostsModule);
-    ModuleManager::add_module(new HostTrackerModule);
-    ModuleManager::add_module(new HostCacheModule);
-    // The TraceModule must be added last so that it can properly generate its Parameter table
-    ModuleManager::add_module(new TraceModule);
+    PluginManager::add_module(new AttributeTableModule);
+    PluginManager::add_module(new HostsModule);
+    PluginManager::add_module(new HostTrackerModule);
+    PluginManager::add_module(new HostCacheModule);
 }
+
+void add_dependent_modules()
+{
+    PluginManager::add_module(new TraceModule);
+}
+

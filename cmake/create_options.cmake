@@ -12,6 +12,7 @@ option ( STATIC_LOGGERS "include loggers in binary" ON )
 option ( STATIC_IPS_ACTIONS "include ips actions in binary" ON )
 option ( STATIC_IPS_OPTIONS "include ips options in binary" ON )
 option ( STATIC_SEARCH_ENGINES "include search engines in binary" ON )
+option ( STATIC_TRACERS "include tracers in binary" ON )
 option ( ENABLE_STATIC_DAQ "link static DAQ modules" ON )
 
 # features

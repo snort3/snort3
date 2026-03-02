@@ -37,9 +37,12 @@ using namespace snort;
 // Stubs for linking
 namespace snort
 {
-FlowData::FlowData(unsigned u, Inspector* h) : handler(h), id(u) {}
-unsigned FlowData::flow_data_id = 0;
+FlowData::FlowData(unsigned u) : id(u) {}
 FlowData::~FlowData() = default;
+
+unsigned FlowData::flow_data_id = 0;
+unsigned FlowData::create_flow_data_id()
+{ return ++flow_data_id; }
 
 } // namespace snort
 

@@ -62,6 +62,7 @@ struct SO_PUBLIC Parameter
         PT_ADDR_LIST,  // Snort 2 ip list in [ ]
         PT_IMPLIED,    // rule option args w/o values eg relative
         PT_STR_LIST,   // string that contains strings
+        PT_DYNAMICS,   // multiple from range which is RangeQuery*
         PT_MAX
     };
     const char* name;

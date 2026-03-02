@@ -179,7 +179,7 @@ static int rule_profiling_start(lua_State* L)
     main_broadcast_command(new ProfilerControl(ProfilerControl::CommandType::ENABLE), ctrlcon);
     main_broadcast_command(new ProfilerRuleReset(), ctrlcon);
     LogRespond(ctrlcon, "Rule profiler started\n");
-    LogRespond(ctrlcon, "Configuration reload id: %u\n", SnortConfig::get_conf()->get_reload_id());
+    LogRespond(ctrlcon, "Configuration reload id: %u\n", SnortConfig::get_reload_id());
 
     return 0;
 }

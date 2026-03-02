@@ -50,6 +50,7 @@ extern "C" {
 }
 
 #include "dump_config/config_output.h"
+#include "framework/module.h"
 #include "log/messages.h"
 #include "lua/lua.h"
 #include "main/policy.h"
@@ -586,8 +587,8 @@ bool Shell::configure(SnortConfig* sc, bool is_root, std::list<ConfigData*> *con
     assert(file.size());
     ModuleManager::set_config(sc);
 
-    //set_*_policy can set to null. this is used
-    //to tell which pieces to pick from sub policy
+    // set_*_policy can set to null. this is used
+    // to tell which pieces to pick from sub policy
     auto pt = sc->policy_map->get_policies(this);
     if ( pt.get() == nullptr )
         set_default_policy(sc);
@@ -678,16 +679,49 @@ bool Shell::configure(SnortConfig* sc, bool is_root, std::list<ConfigData*> *con
     return true;
 }
 
-void Shell::install(const char* name, const luaL_Reg* reg)
+void Shell::install(const char* name, const Command* c)
 {
+    unsigned n = 0, k = 0;
+
+    while ( c[n].name )
+        n++;
+
+    if ( !n )
+        return;
+
+    std::vector<luaL_Reg> cmds(n+1);
+
+    while ( k < n )
+    {
+        cmds[k].name = c[k].name;
+        cmds[k].func = c[k].func;
+        k++;
+    }
+    cmds[k].name = nullptr;
+    cmds[k].func = nullptr;
+
     if ( !strcmp(name, "snort") )
     {
-        luaL_register(lua, "_G", reg);
+        luaL_register(lua, "_G", &cmds[0]);
         lua_pop(lua, 1);
     }
 
-    luaL_register(lua, name, reg);
+    luaL_register(lua, name, &cmds[0]);
     lua_pop(lua, 1);
+}
+
+void Shell::set_policy_indices(PolicyId net, PolicyId nap, PolicyId ips)
+{
+    pid_network = net;
+    pid_inspect = nap;
+    pid_detect = ips;
+}
+
+void Shell::get_policy_indices(PolicyId& net, PolicyId& nap, PolicyId& ips) const
+{
+    net = pid_network;
+    nap = pid_inspect;
+    ips = pid_detect;
 }
 
 void Shell::set_network_policy_user_id(lua_State* L, uint64_t user_id)
@@ -700,7 +734,7 @@ void Shell::set_network_policy_user_id(lua_State* L, uint64_t user_id)
 
 void Shell::set_user_network_policy()
 {
-    if (UNDEFINED_NETWORK_USER_POLICY_ID > network_user_policy_id)
+    if (network_user_policy_id)
     {
         NetworkPolicy* np =
             SnortConfig::get_conf()->policy_map->get_user_network(network_user_policy_id);
@@ -807,7 +841,8 @@ TEST_CASE("lua stack size on commands install", "[Shell]")
 {
     Shell sh;
     int init_stack_size = lua_gettop(sh.get_lua());
-    luaL_Reg reg[2];
+
+    Command reg[2];
     reg[0].name = "test_closure";
     reg[0].func = test_closure;
     reg[1].name = nullptr;

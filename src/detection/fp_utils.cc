@@ -112,6 +112,7 @@ static std::unordered_map<std::string, SvcList> buffer_map;
 
 static const char* get_service(const char* buf)
 {
+    assert(in_main_thread());
     auto it = buffer_map.find(buf);
 
     if ( it == buffer_map.end() )
@@ -122,6 +123,7 @@ static const char* get_service(const char* buf)
 
 static unsigned get_num_services(const char* buf)
 {
+    assert(in_main_thread());
     auto it = buffer_map.find(buf);
 
     if ( it == buffer_map.end() )
@@ -130,8 +132,16 @@ static unsigned get_num_services(const char* buf)
     return it->second.size();
 }
 
+void clear_buffer_map()
+{
+    assert(in_main_thread());
+    buffer_map.clear();
+}
+
 void update_buffer_map(const char** bufs, const char* svc)
 {
+    assert(in_main_thread());
+
     if ( !bufs )
         return;
 
@@ -147,6 +157,7 @@ void update_buffer_map(const char** bufs, const char* svc)
 
 void add_default_services(SnortConfig* sc, const std::string& buf, OptTreeNode* otn)
 {
+    assert(in_main_thread());
     SvcList& list = buffer_map[buf];
 
     for ( auto& svc : list )

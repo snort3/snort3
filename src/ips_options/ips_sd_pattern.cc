@@ -504,7 +504,7 @@ static const IpsApi sd_pattern_api =
         sizeof(IpsApi),
         IPSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_DEFAULT,
         API_OPTIONS,
         s_name,
         s_help,
@@ -531,3 +531,4 @@ const BaseApi* ips_sd_pattern[] =
     &sd_pattern_api.base,
     nullptr
 };
+

@@ -570,7 +570,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
     p->disable_inspect = flow->is_inspection_disabled();
 
     if ( p->disable_inspect and p->type() == PktType::ICMP
-         and flow->reload_id and SnortConfig::get_thread_reload_id() != flow->reload_id )
+         and flow->reload_id and SnortConfig::get_reload_id() != flow->reload_id )
         restart_inspection(flow, p);
 
     last_pkt_type = p->type();
@@ -599,7 +599,9 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
     {
         if ( new_ha_flow )
             DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_STATE_SETUP, p);
-        unsigned reload_id = SnortConfig::get_thread_reload_id();
+
+        unsigned reload_id = SnortConfig::get_reload_id();
+
         if ( flow->reload_id != reload_id )
             flow->network_policy_id = get_network_policy()->policy_id;
         else
@@ -607,8 +609,10 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
             set_inspection_policy(flow->inspection_policy_id);
             set_ips_policy(p->context->conf, flow->ips_policy_id);
         }
+
         p->filtering_state = flow->filtering_state;
         update_stats(flow, p);
+
         if ( p->is_retry() or (flow->flags.retry_queued and ( !p->is_cooked() or p->is_defrag())) )
         {
             RetryPacketEvent retry_event(p);

@@ -173,7 +173,7 @@ static const InspectApi s7commplus_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         S7COMMPLUS_NAME,
         S7COMMPLUS_HELP,

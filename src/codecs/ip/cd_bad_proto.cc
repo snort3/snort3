@@ -71,7 +71,7 @@ static const CodecApi bad_proto_api =
         sizeof(CodecApi),
         CDAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         CD_BAD_PROTO_NAME,
         CD_BAD_PROTO_HELP,

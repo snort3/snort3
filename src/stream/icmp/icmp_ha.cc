@@ -53,15 +53,12 @@ void IcmpHAManager::process_deletion(Flow& flow)
 
 void IcmpHAManager::tinit()
 {
-    if ( HighAvailabilityManager::active() )
+    if ( HighAvailabilityManager::configured() )
         icmp_ha = new IcmpHA();
-    else
-        icmp_ha = nullptr;
 }
 
 void IcmpHAManager::tterm()
 {
-    if ( icmp_ha != nullptr )
-        delete icmp_ha;
+    delete icmp_ha;
 }
 

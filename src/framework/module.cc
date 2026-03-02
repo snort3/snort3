@@ -126,10 +126,7 @@ void Module::main_accumulate_stats()
 void Module::sum_stats(bool dump_stats)
 {
     if ( num_counts < 0 )
-    {
         init_stats();
-        reset_stats();
-    }
 
     PegCount* p = get_counts();
     const PegInfo* q = get_pegs();
@@ -180,6 +177,8 @@ void Module::sum_stats(bool dump_stats)
 
             case CountType::MAX:
                 set_max_peg_count(i, p[i], dump_stats);
+                if (!dump_stats)
+                    p[i] = 0;
                 break;
             }
         }

@@ -27,8 +27,6 @@
 #include "framework/module.h"
 #include "protocols/packet.h"
 
-#include "actions_module.h"
-
 using namespace snort;
 
 #define action_name "log"
@@ -74,13 +72,12 @@ class LogActionModule : public Module
 {
 public:
     LogActionModule() : Module(module_name, module_help)
-    { ActionsModule::add_action(module_name, log_pegs); }
+    { register_action_pegs(module_name, log_pegs); }
 
     bool stats_are_aggregated() const override
     { return true; }
 
-    void show_stats() override
-    { /* These stats are shown by ActionsModule. */ }
+    void show_stats() override { }
 
     const PegInfo* get_pegs() const override
     { return log_pegs; }

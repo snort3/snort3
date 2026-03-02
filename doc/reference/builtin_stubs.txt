@@ -1050,7 +1050,7 @@ An HTTP server response was seen before a corresponding client request.
 119:229
 
 The decompressed size of the PDF/SWF/ZIP file contained in the HTTP message body exceeded the
-configured limit. The decompression limit can be configured with file_id.decompress_buffer_size.
+configured limit. The decompression limit can be configured with file_inspect.decompress_buffer_size.
 
 119:230
 
@@ -2481,7 +2481,7 @@ function codes: Requests (0 to 33) and Responses (129 to 131)
 
 150:1
 
-(file_id) file not processed due to per flow limit
+(file_inspect) file not processed due to per flow limit
 
 151:1
 

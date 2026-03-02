@@ -375,7 +375,7 @@ private:
 //-------------------------------------------------------------------------
 
 // this is the current version of the api
-#define CDAPI_VERSION ((BASE_API_VERSION << 16) | 2)
+#define CDAPI_VERSION ((BASE_API_VERSION << 16) | 3)
 
 typedef Codec* (* CdNewFunc)(Module*);
 typedef void (* CdDelFunc)(Codec*);

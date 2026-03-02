@@ -302,7 +302,7 @@ FTP_CLIENT_PROTO_CONF* get_ftp_client(Packet* p)
     FtpClient* client = (FtpClient*)p->flow->data;
     if ( !client )
     {
-        client = (FtpClient*)PigPen::get_inspector(FTP_CLIENT_NAME);
+        client = (FtpClient*)PigPen::get_inspector(FTP_CLIENT_NAME, Module::INSPECT);
         assert(client);
         p->flow->set_data(client);
     }
@@ -354,7 +354,7 @@ static const InspectApi fc_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         FTP_CLIENT_NAME,
         client_help,
@@ -405,7 +405,7 @@ static const InspectApi fs_api =
         sizeof(InspectApi),
         INSAPI_VERSION,
         0,
-        API_RESERVED,
+        PLUGIN_SO_RELOAD,
         API_OPTIONS,
         FTP_SERVER_NAME,
         server_help,

@@ -40,8 +40,8 @@ public:
     ProfilerNode(const std::string& key) :
         name { key } { }
 
-    void set(snort::Module* m);
-    void set(snort::get_profile_stats_fn fn);
+    void set(snort::Module*);
+    void set(snort::get_profile_stats_fn);
 
     bool is_set() const
     { return bool(getter); }

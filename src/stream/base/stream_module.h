@@ -65,6 +65,7 @@ enum
 
 #define MOD_NAME "stream"
 #define MOD_HELP "common flow tracking"
+#define MOD_USE Module::GLOBAL
 
 struct BaseStats
 {
@@ -144,8 +145,8 @@ struct StreamModuleConfig
 #ifdef REG_TEST
     unsigned footprint = 0;
 #endif
-    uint32_t held_packet_timeout = 1000;  // in milliseconds
     int hs_timeout = -1;
+    uint32_t hold_time = 1000;
     bool drop_stale_packets = false;
     
     void show() const;
@@ -171,22 +172,6 @@ private:
 
 private:
     StreamModuleConfig config;
-};
-
-class HPQReloadTuner : public snort::ReloadResourceTuner
-{
-public:
-    explicit HPQReloadTuner(uint32_t packet_timeout) : held_packet_timeout(packet_timeout) { }
-    ~HPQReloadTuner() override = default;
-
-    const char* name() const override
-    { return "HPQReloadTuner"; }
-    bool tinit() override;
-    bool tune_packet_context() override;
-    bool tune_idle_context() override;
-
-private:
-    uint32_t held_packet_timeout;
 };
 
 class StreamUnloadReloadResourceManager : public snort::ReloadResourceTuner
@@ -231,10 +216,12 @@ public:
     { return true; }
 
     Usage get_usage() const override
-    { return GLOBAL; }
+    { return MOD_USE; }
 
     void set_trace(const snort::Trace*) const override;
     const snort::TraceOption* get_trace_options() const override;
+
+    static uint32_t get_hold_time();
 
 private:
     StreamModuleConfig config;

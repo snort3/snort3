@@ -26,18 +26,28 @@ struct Command;
 struct Parameter;
 }
 
+class TraceParser;
+
+struct lua_State;
+
 class TraceSwapParams
 {
 public:
-    static void set_params(const snort::Parameter* params);
-
-    static const snort::Command* get_commands();
+    static void set_params(const snort::Parameter*);
     static const snort::Parameter* get_params();
 
+    static int set(lua_State*);
+    static int clear(lua_State*);
+
 private:
-    static const snort::Command* s_commands;
+    static bool set_ntuple(lua_State*, TraceParser&, const snort::Parameter*);
+    static bool set_timestamp(lua_State*, TraceParser&, const snort::Parameter*);
+    static bool set_output(lua_State*, TraceParser&, const snort::Parameter*);
+    static bool set_modules(lua_State*, TraceParser&, const snort::Parameter*);
+    static bool set_constraints(lua_State*, TraceParser&, const snort::Parameter*);
+
     static const snort::Parameter* s_params;
 };
 
-#endif // TRACE_SWAP_H
+#endif
 

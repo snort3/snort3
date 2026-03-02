@@ -206,6 +206,8 @@ NormalizeModule::~NormalizeModule()
 {
     for ( auto s : test_text )
         delete s;
+
+    test_pegs.clear();
 }
 
 ProfileStats* NormalizeModule::get_profile() const

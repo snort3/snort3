@@ -29,6 +29,7 @@
 #include "main/help.h"
 #include "main/snort_config.h"
 #include "main/snort_module.h"
+#include "managers/plugin_manager.h"
 #include "packet_io/trough.h"
 
 #include "arg_list.h"
@@ -107,7 +108,7 @@ static bool is_special(const char* key)
 }
 
 static void set(
-    const char* key, const char* val, SnortConfig* sc, bool all)
+    Module* sm, const char* key, const char* val, SnortConfig* sc, bool all)
 {
     if ( !all == !is_special(key) )
         return;
@@ -118,13 +119,12 @@ static void set(
     k += key;
     key = k.c_str();
 
-    Module* m = get_snort_module();
-    const Parameter* p = Parameter::find(m->get_parameters(), key);
+    const Parameter* p = Parameter::find(sm->get_parameters(), key);
 
     if ( !p )
         ParseError("unknown option %s %s", key, val);
 
-    else if ( !set_arg(m, p, k.c_str(), val, sc) )
+    else if ( !set_arg(sm, p, k.c_str(), val, sc) )
     {
         ParseError("can't set %s %s", key, val);
         ParseError("usage: %s %s", key, p->help);
@@ -136,7 +136,7 @@ static void set(
 SnortConfig* parse_cmd_line(int argc, char* argv[])
 {
     SnortConfig* sc = new SnortConfig;
-    Module* sm = get_snort_module();
+    Module* sm = PluginManager::get_module("snort");
 
     ArgList al(argc, argv);
     const char* key, * val;
@@ -147,7 +147,7 @@ SnortConfig* parse_cmd_line(int argc, char* argv[])
     // get special options first
     while ( al.get_arg(key, val) )
     {
-        ::set(key, val, sc, false);
+        ::set(sm, key, val, sc, false);
         c++;
     }
 
@@ -156,7 +156,7 @@ SnortConfig* parse_cmd_line(int argc, char* argv[])
 
     while ( al.get_arg(key, val) )
     {
-        ::set(key, val, sc, true);
+        ::set(sm, key, val, sc, true);
         c++;
     }
 

@@ -45,8 +45,7 @@ using namespace HttpEnums;
 namespace snort
 {
 unsigned FlowData::flow_data_id = 0;
-FlowData::FlowData(unsigned, Inspector*) : handler(nullptr), id(0)
-{ }
+FlowData::FlowData(unsigned) : id(0) { }
 FlowData::~FlowData() = default;
 FlowData* FlowDataStore::get(uint32_t) const { return nullptr; }
 void FlowDataStore::set(FlowData*) { }

@@ -25,21 +25,20 @@
 #include <string>
 #include "framework/mp_transport.h"
 
+class PlugInterface;
+
 namespace snort
 {
 class Module;
 struct SnortConfig;
-
 
 //-------------------------------------------------------------------------
 
 class MPTransportManager
 {
 public:
-    static void instantiate(const MPTransportApi* api, Module* mod, SnortConfig*);
     static MPTransport* get_transport(const std::string& name);
-
-    static void add_plugin(const MPTransportApi* api);
+    static PlugInterface* get_interface(const MPTransportApi*);
 
     static void thread_init();
     static void thread_term();

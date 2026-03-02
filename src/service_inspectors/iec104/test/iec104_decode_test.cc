@@ -34,7 +34,7 @@ namespace snort
     Packet::Packet(bool) { memset(this, 0, sizeof(*this)); }
     Packet::~Packet() = default;
 
-    FlowData::FlowData(unsigned u, Inspector*) : id(u), handler(nullptr) { }
+    FlowData::FlowData(unsigned u) : id(u) { }
     FlowData::~FlowData() = default;
 }
 

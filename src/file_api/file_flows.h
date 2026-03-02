@@ -53,7 +53,7 @@ class SO_PUBLIC FileFlows : public FlowData
 {
 public:
 
-    FileFlows(Flow* f, FileInspect* fi) : FlowData(file_flow_data_id, (Inspector*)fi), flow(f) { }
+    FileFlows(Flow* f) : FlowData(file_flow_data_id), flow(f) { }
     ~FileFlows() override;
     std::mutex file_flow_context_mutex;
     static void init()

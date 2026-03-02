@@ -22,8 +22,6 @@
 
 #include "framework/module.h"
 #include "framework/tracer.h"
-#include "trace_loader.h"
-#include <syslog.h>
 
 namespace snort
 {
@@ -33,8 +31,7 @@ namespace snort
 
 struct SyslogTraceConfig
 {
-    bool enable = false;
-    int priority = LOG_INFO;
+    int priority;
 };
 
 class SyslogTrace;
@@ -46,15 +43,11 @@ public:
     ~SyslogTraceModule() override;
 
     bool set(const char*, Value&, SnortConfig*) override;
-    bool begin(const char*, int, SnortConfig*) override;
-    bool end(const char*, int, SnortConfig*) override;
 
     const SyslogTraceConfig& get_config() const;
-    void register_instance(SyslogTrace* instance);
 
 private:
     SyslogTraceConfig config;
-    SyslogTrace* trace_logger_instance = nullptr;
 };
 
 class SyslogTrace : public TraceLoggerPlug
@@ -70,9 +63,9 @@ public:
 
 private:
     SyslogTraceConfig config;
-    bool syslog_opened;
 };
 
 }
 
 #endif
+

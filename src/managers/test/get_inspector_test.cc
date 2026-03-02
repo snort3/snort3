@@ -21,13 +21,18 @@
 #include "config.h"
 #endif
 
-#include <unordered_map>
+#include <string>
+#include <vector>
+
+#include "main/policy.h"
+#include "managers/plug_interface.h"
 
 #include "packet_io/packet_tracer.h"
 #include "stream/base/stream_module.h"
 #include "get_inspector_stubs.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
+#include "CppUTest/MemoryLeakDetectorNewMacros.h"
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
@@ -38,303 +43,354 @@ THREAD_LOCAL BaseStats stream_base_stats = {};
 bool PacketTracer::is_active() { return false; }
 void PacketTracer::log(const char*, ...) {}
 
-NetworkPolicy* snort::get_network_policy()
-{ return (NetworkPolicy*)mock().getData("network_policy").getObjectPointer(); }
-NetworkPolicy* PolicyMap::get_user_network(uint64_t) const
-{ return (NetworkPolicy*)mock().getData("network_policy").getObjectPointer(); }
-InspectionPolicy* snort::get_inspection_policy()
-{ return (InspectionPolicy*)mock().getData("inspection_policy").getObjectPointer(); }
-InspectionPolicy* NetworkPolicy::get_user_inspection_policy(uint64_t) const
-{ return (InspectionPolicy*)mock().getData("inspection_policy").getObjectPointer(); }
+//--------------------------------------------------------------------------
+// mocks
+//--------------------------------------------------------------------------
 
-InspectionPolicy::InspectionPolicy(PolicyId)
-{ InspectorManager::new_policy(this, nullptr); }
-InspectionPolicy::~InspectionPolicy()
-{ InspectorManager::delete_policy(this, false); }
 NetworkPolicy::NetworkPolicy(PolicyId, PolicyId)
-{ InspectorManager::new_policy(this, nullptr); }
+{
+    file_policy = nullptr;
+    traffic_group = InspectorManager::create_traffic_group();
+}
+
 NetworkPolicy::~NetworkPolicy()
 {
     for ( auto p : inspection_policy )
         delete p;
 
-    InspectorManager::delete_policy(this, false);
     inspection_policy.clear();
+    InspectorManager::delete_group(traffic_group);
 }
-PolicyMap::PolicyMap(PolicyMap*, const char*)
+
+InspectionPolicy* NetworkPolicy::get_user_inspection_policy(uint64_t user_id) const
+{
+    auto it = user_inspection.find(user_id);
+    return it == user_inspection.end() ? nullptr : it->second;
+}
+
+InspectionPolicy::InspectionPolicy(PolicyId)
+{ service_group = InspectorManager::create_service_group(); }
+
+InspectionPolicy::~InspectionPolicy()
+{ InspectorManager::delete_group(service_group); }
+
+static NetworkPolicy* make_network_policy(uint64_t nid, uint64_t uid)
+{
+    NetworkPolicy* np = new NetworkPolicy(nid, 0);
+    np->user_policy_id = uid;
+
+    for ( unsigned i = 1; i < 3; ++i )
+    {
+        InspectionPolicy* ip = new InspectionPolicy();
+        np->inspection_policy.push_back(ip);
+        ip->user_policy_id = uid + i;
+        np->set_user_inspection(ip);
+    }
+    return np;
+}
+
+PolicyMap::PolicyMap()
 {
     empty_ips_policy = nullptr;
-    inspector_tinit_complete = nullptr;
-    file_id = InspectorManager::create_single_instance_inspector_policy();
-    flow_tracking = InspectorManager::create_single_instance_inspector_policy();
-    global_inspector_policy = InspectorManager::create_global_inspector_policy();
-    NetworkPolicy* np = new NetworkPolicy(network_policy.size(), 0);
-    network_policy.push_back(np);
-    InspectionPolicy* ip = new InspectionPolicy();
-    np->inspection_policy.push_back(ip);
+    global_group = InspectorManager::create_global_group();
+
+    for ( unsigned i = 1; i < 3; ++i )
+    {
+        NetworkPolicy* np = make_network_policy(network_policy.size(), i*10);
+        network_policy.push_back(np);
+        user_network[np->user_policy_id] = np;
+    }
 }
+
 PolicyMap::~PolicyMap()
 {
-    InspectorManager::destroy_single_instance_inspector(file_id);
-    InspectorManager::destroy_single_instance_inspector(flow_tracking);
-    InspectorManager::destroy_global_inspector_policy(global_inspector_policy, false);
+    InspectorManager::delete_group(global_group);
     for ( auto p : network_policy )
         delete p;
 }
-SnortConfig::SnortConfig(const SnortConfig* const, const char*)
+
+NetworkPolicy* PolicyMap::get_user_network(uint64_t user_id) const
+{
+    auto it = user_network.find(user_id);
+    NetworkPolicy* np = (it == user_network.end()) ? nullptr : it->second;
+    return np;
+}
+
+void clear_buffer_map() { }
+
+SnortConfig::SnortConfig(const char*)
 {
     policy_map = new PolicyMap();
-    InspectorManager::new_config(this);
+    mock().setDataObject("snort_config", "const SnortConfig", this);
 }
+
 SnortConfig::~SnortConfig()
 {
-    InspectorManager::delete_config(this);
     delete policy_map;
 }
+
 const SnortConfig* SnortConfig::get_conf()
 { return (const SnortConfig*)mock().getData("snort_config").getObjectPointer(); }
 
-Module::Module(const char* name, const char*) : name(name), help(nullptr), params(nullptr), list(false)
-{ }
+unsigned SnortConfig::get_reload_id() { return 0; }
 
-void Inspector::set_alias_name(const char* n)
-{ alias_name = n; }
+PlugContext* PluginManager::get_context(char const* s)
+{ return (PlugContext*)mock().getData(s).getObjectPointer(); }
 
-class TestInspector : public Inspector
+namespace snort
 {
-public:
-    TestInspector() = default;
-    ~TestInspector() override = default;
-};
+void set_network_policy(NetworkPolicy* np)
+{ mock().setDataObject("network_policy", "NetworkPolicy", np); }
+
+NetworkPolicy* get_network_policy()
+{ return (NetworkPolicy*)mock().getData("network_policy").getObjectPointer(); }
+
+void set_inspection_policy(InspectionPolicy* ip)
+{ mock().setDataObject("inspect_policy", "InspectionPolicy", ip); }
+
+InspectionPolicy* get_inspection_policy()
+{ return (InspectionPolicy*)mock().getData("inspect_policy").getObjectPointer(); }
+}
+
+//--------------------------------------------------------------------------
+// test implementation
+//--------------------------------------------------------------------------
 
 class TestModule : public Module
 {
 public:
-    TestModule(const char* name, Module::Usage usage) : Module(name, ""), usage(usage)
-    { }
+    TestModule(const char* s, Module::Usage u) : Module(s, "help")
+    { usage = u; }
+
     ~TestModule() override = default;
+
     Usage get_usage() const override
     { return usage; }
+
+    static Module* ctor() { return nullptr; }
+    static void dtor(Module*) { }
 
 protected:
     Usage usage;
 };
 
-
-static Inspector* test_ctor(Module* mod)
+class TestInspector : public Inspector
 {
-    std::unordered_map<Module*, Inspector*>* mod_to_ins =
-        (std::unordered_map<Module*, Inspector*>*)mock().getData("mod_to_ins").getObjectPointer();
-    auto it = mod_to_ins->find(mod);
-    return it == mod_to_ins->end() ? nullptr : it->second;
+public:
+    TestInspector()
+    { }
+};
+
+static Inspector* ins_ctor(Module*)
+{ return new TestInspector; }
+
+static void ins_dtor(Inspector* pin)
+{ delete pin; }
+
+static const InspectApi test_api =
+{
+    {
+        PT_INSPECTOR,
+        sizeof(InspectApi),
+        INSAPI_VERSION,
+        0,    // plug version
+        PLUGIN_DEFAULT,
+        API_OPTIONS,
+        "name",
+        "help",
+        TestModule::ctor,
+        TestModule::dtor,
+    },
+    IT_PASSIVE,
+    PROTO_BIT__NONE,
+    nullptr,  // buffers
+    nullptr,  // service
+    nullptr,  // pinit
+    nullptr,  // pterm
+    nullptr,  // tinit
+    nullptr,  // tterm
+    ins_ctor,
+    ins_dtor,
+    nullptr,  // ssn
+    nullptr   // reset
+};
+
+struct TestApi
+{
+    InspectApi* api;
+
+    TestApi(const char* name, InspectorType it, const char* svc)
+    {
+        api = new InspectApi(test_api);
+        api->base.name = name;
+        api->type = it;
+        api->service = svc;
+    }
+    ~TestApi()
+    { delete api; }
+};
+
+//--------------------------------------------------------------------------
+// test data
+//--------------------------------------------------------------------------
+
+struct TestData
+{
+    const char* name;
+    Module::Usage use;
+    InspectorType type;
+
+    uint64_t npid = 0;
+    uint64_t ipid = 0;
+
+    const char* service = nullptr;
+    const char* alias = nullptr;
+
+    TestModule* mod = nullptr;
+    TestApi* api = nullptr;
+
+    PlugInterface* plug = nullptr;
+    PlugContext* context = nullptr;
+};
+
+static std::vector<TestData> tests =
+{
+    { "appid", Module::GLOBAL, IT_CONTROL },
+    { "file_inspect", Module::GLOBAL, IT_PASSIVE },
+    { "perf_monitor", Module::GLOBAL, IT_PROBE },
+    { "stream", Module::GLOBAL, IT_STREAM },
+
+    { "normalizer", Module::CONTEXT, IT_PACKET, 10 },
+    { "reputation", Module::CONTEXT, IT_PASSIVE, 10 },
+    { "rna", Module::CONTEXT, IT_CONTROL, 20 },
+
+    { "http_inspect", Module::INSPECT, IT_SERVICE, 10, 11, "http" },
+    // aliased inspectors must be after the unaliased instance
+    { "http_inspect", Module::INSPECT, IT_SERVICE, 10, 11, "http", "http_inspect1011" },
+    { "http_inspect", Module::INSPECT, IT_SERVICE, 10, 12, "http", "http_inspect1012" },
+    { "http_inspect", Module::INSPECT, IT_SERVICE, 20, 21, "http", "http_inspect2021" },
+    { "http_inspect", Module::INSPECT, IT_SERVICE, 20, 22, "http", "http_inspect2022" },
+
+    { "back_orifice", Module::INSPECT, IT_NETWORK, 10, 12 },
+    { "binder", Module::INSPECT, IT_PASSIVE, 10, 12 },
+
+    { "stream_tcp", Module::INSPECT, IT_STREAM, 20, 21 },
+    { "wizard", Module::INSPECT, IT_SERVICE, 20, 22 },
+};
+
+static void setup_test_data()
+{
+    const char* prior = "";
+
+    for ( auto& td : tests )
+    {
+        if ( !strcmp(td.name, prior) )
+            continue;
+
+        td.mod = new TestModule(td.name, td.use);
+        td.api = new TestApi(td.name, td.type, td.service);
+
+        td.plug = InspectorManager::get_interface(td.api->api);
+        td.context = td.plug->get_context();
+        mock().setDataObject(td.name, "PlugContext", td.context);
+
+        prior = td.name;
+    }
 }
 
-static void test_dtor(Inspector*)
-{ }
-
-#define DECLARE_ENTRY(NAME, USAGE) \
-    static TestModule NAME##_mod(#NAME, USAGE); \
-    static InspectApi NAME##_api; \
-    static TestInspector NAME##_ins
-
-DECLARE_ENTRY(binder, Module::Usage::INSPECT);
-
-DECLARE_ENTRY(file, Module::Usage::GLOBAL);
-DECLARE_ENTRY(stream, Module::Usage::GLOBAL);
-
-DECLARE_ENTRY(global_passive, Module::Usage::GLOBAL);
-DECLARE_ENTRY(global_probe, Module::Usage::GLOBAL);
-DECLARE_ENTRY(global_control, Module::Usage::GLOBAL);
-
-DECLARE_ENTRY(context_passive, Module::Usage::CONTEXT);
-DECLARE_ENTRY(context_packet, Module::Usage::CONTEXT);
-DECLARE_ENTRY(context_first, Module::Usage::CONTEXT);
-DECLARE_ENTRY(context_control, Module::Usage::CONTEXT);
-
-DECLARE_ENTRY(inspect_passive, Module::Usage::INSPECT);
-DECLARE_ENTRY(inspect_packet, Module::Usage::INSPECT);
-DECLARE_ENTRY(inspect_network, Module::Usage::INSPECT);
-DECLARE_ENTRY(inspect_service, Module::Usage::INSPECT);
-DECLARE_ENTRY(inspect_stream, Module::Usage::INSPECT);
-DECLARE_ENTRY(inspect_wizard, Module::Usage::INSPECT);
-
-#define ADD_ENTRY(NAME, TYPE) \
-    do { \
-        NAME##_api = {}; \
-        NAME##_api.base.name = NAME##_mod.get_name(); \
-        NAME##_api.type = TYPE; \
-        NAME##_api.ctor = test_ctor; \
-        NAME##_api.dtor = test_dtor; \
-        NAME##_ins.set_api(&NAME##_api); \
-        InspectorManager::add_plugin(&NAME##_api); \
-    } while (0)
-
-#define INSTANTIATE(NAME) \
-    do { \
-        mod_to_ins[&NAME##_mod] = &NAME##_ins; \
-        InspectorManager::instantiate(&NAME##_api, &NAME##_mod, sc, NAME##_mod.get_name()); \
-    } while (0)
-
-void setup_test_globals()
+static void clear_test_data()
 {
-    ADD_ENTRY(binder, IT_PASSIVE);
-
-    ADD_ENTRY(file, IT_FILE);
-    ADD_ENTRY(stream, IT_STREAM);
-
-    ADD_ENTRY(global_passive, IT_PASSIVE);
-    ADD_ENTRY(global_probe, IT_PROBE);
-    ADD_ENTRY(global_control, IT_CONTROL);
-
-    ADD_ENTRY(context_passive, IT_PASSIVE);
-    ADD_ENTRY(context_packet, IT_PACKET);
-    ADD_ENTRY(context_first, IT_FIRST);
-    ADD_ENTRY(context_control, IT_CONTROL);
-
-    ADD_ENTRY(inspect_passive, IT_PASSIVE);
-    ADD_ENTRY(inspect_packet, IT_PACKET);
-    ADD_ENTRY(inspect_network, IT_NETWORK);
-    ADD_ENTRY(inspect_service, IT_SERVICE);
-    ADD_ENTRY(inspect_stream, IT_STREAM);
-    ADD_ENTRY(inspect_wizard, IT_WIZARD);
+    for ( const auto& td : tests )
+    {
+        delete td.context;
+        delete td.plug;
+        delete td.api;
+        delete td.mod;
+    }
 }
+
+static void set_policies(const SnortConfig* sc, const TestData& td)
+{
+    if ( auto* np = sc->policy_map->get_user_network(td.npid) )
+    {
+        set_network_policy(np);
+
+        if ( auto* ip = np->get_user_inspection_policy(td.ipid) )
+            set_inspection_policy(ip);
+    }
+}
+
+static TestData* get_data(const char* s)
+{
+    for ( auto& td : tests )
+    {
+        if ( !strcmp(td.name, s) )
+            return &td;
+    }
+    assert(false);
+    return nullptr;
+}
+
+static void instantiate(SnortConfig* sc)
+{
+    for ( auto& td : tests )
+    {
+        set_policies(sc, td);
+        TestData* otd = td.alias ? get_data(td.name) : &td;
+        otd->plug->instantiate(otd->mod, sc, td.alias);
+    }
+}
+
+static void validate(const SnortConfig* sc)
+{
+    for ( const auto& td : tests )
+    {
+        set_policies(sc, td);
+        const char* key = td.alias ? td.alias : td.name;
+        Inspector* pin = InspectorManager::get_inspector(key, td.use);
+        CHECK(pin);
+        CHECK(!strcmp(pin->get_alias_name(), key));
+    }
+}
+
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
 
 TEST_GROUP(get_inspector_tests)
 {
-    SnortConfig* sc;
-    std::unordered_map<Module*, Inspector*> mod_to_ins;
+    SnortConfig* sc = nullptr;
 
     void setup() override
     {
+        InspectorManager::new_map();
+        // cppcheck-suppress unreadVariable
         sc = new SnortConfig;
-        mock().setDataObject("snort_config", "const SnortConfig", sc);
-        mock().setDataObject("mod_to_ins", "std::unordered_map<Module*, Inspector*>", &mod_to_ins);
-        NetworkPolicy* np = sc->policy_map->get_network_policy();
-        mock().setDataObject("network_policy", "NetworkPolicy", np);
-        InspectionPolicy* ip = np->get_inspection_policy();
-        mock().setDataObject("inspection_policy", "InspectionPolicy", ip);
-
-        INSTANTIATE(binder);
-
-        INSTANTIATE(file);
-        INSTANTIATE(stream);
-
-        INSTANTIATE(global_passive);
-        INSTANTIATE(global_probe);
-        INSTANTIATE(global_control);
-
-        INSTANTIATE(context_passive);
-        INSTANTIATE(context_packet);
-        INSTANTIATE(context_first);
-        INSTANTIATE(context_control);
-
-        INSTANTIATE(inspect_passive);
-        INSTANTIATE(inspect_packet);
-        INSTANTIATE(inspect_network);
-        INSTANTIATE(inspect_service);
-        INSTANTIATE(inspect_stream);
-        INSTANTIATE(inspect_wizard);
-
-        InspectorManager::configure(sc, false);
     }
 
     void teardown() override
     {
         delete sc;
         InspectorManager::empty_trash();
-        mod_to_ins.clear();
-        mock().clear();
+        InspectorManager::cleanup();
     }
 };
 
-#define THE_TEST(NAME, USAGE, TYPE) \
-    do { \
-        Inspector* ins = InspectorManager::get_inspector(NAME##_mod.get_name(), USAGE, TYPE); \
-        CHECK_TEXT(&NAME##_ins == ins, "Did not find the " #NAME " inspector"); \
-        STRCMP_EQUAL_TEXT(ins->get_name(), NAME##_mod.get_name(), "Inspector name is not " #NAME); \
-        ins = InspectorManager::get_inspector("not_" #NAME, USAGE, TYPE); \
-        CHECK_TEXT(nullptr == ins, "Found the not_" #NAME " inspector"); \
-    } while (0)
-
-TEST(get_inspector_tests, file)
+TEST(get_inspector_tests, basic)
 {
-    THE_TEST(file, Module::Usage::GLOBAL, IT_FILE);
-}
+    instantiate(sc);
 
-TEST(get_inspector_tests, stream)
-{
-    THE_TEST(stream, Module::Usage::GLOBAL, IT_STREAM);
-}
+    InspectorManager::prepare_map();
+    InspectorManager::configure(sc);
 
-TEST(get_inspector_tests, global_passive)
-{
-    THE_TEST(global_passive, Module::Usage::GLOBAL, IT_PASSIVE);
-}
-
-TEST(get_inspector_tests, global_probe)
-{
-    THE_TEST(global_probe, Module::Usage::GLOBAL, IT_PROBE);
-}
-
-TEST(get_inspector_tests, global_control)
-{
-    THE_TEST(global_control, Module::Usage::GLOBAL, IT_CONTROL);
-}
-
-TEST(get_inspector_tests, context_passive)
-{
-    THE_TEST(context_passive, Module::Usage::CONTEXT, IT_PASSIVE);
-}
-
-TEST(get_inspector_tests, context_packet)
-{
-    THE_TEST(context_packet, Module::Usage::CONTEXT, IT_PACKET);
-}
-
-TEST(get_inspector_tests, context_first)
-{
-    THE_TEST(context_first, Module::Usage::CONTEXT, IT_FIRST);
-}
-
-TEST(get_inspector_tests, context_control)
-{
-    THE_TEST(context_control, Module::Usage::CONTEXT, IT_CONTROL);
-}
-
-TEST(get_inspector_tests, inspect_passive)
-{
-    THE_TEST(inspect_passive, Module::Usage::INSPECT, IT_PASSIVE);
-}
-
-TEST(get_inspector_tests, inspect_packet)
-{
-    THE_TEST(inspect_packet, Module::Usage::INSPECT, IT_PACKET);
-}
-
-TEST(get_inspector_tests, inspect_network)
-{
-    THE_TEST(inspect_network, Module::Usage::INSPECT, IT_NETWORK);
-}
-
-TEST(get_inspector_tests, inspect_service)
-{
-    THE_TEST(inspect_service, Module::Usage::INSPECT, IT_SERVICE);
-}
-
-TEST(get_inspector_tests, inspect_stream)
-{
-    THE_TEST(inspect_stream, Module::Usage::INSPECT, IT_STREAM);
-}
-
-TEST(get_inspector_tests, inspect_wizard)
-{
-    THE_TEST(inspect_wizard, Module::Usage::INSPECT, IT_WIZARD);
+    validate(sc);
 }
 
 int main(int argc, char** argv)
 {
-    setup_test_globals();
+    MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
+    setup_test_data();
     int r = CommandLineTestRunner::RunAllTests(argc, argv);
-    InspectorManager::release_plugins();
+    clear_test_data();
     return r;
 }
