@@ -32,6 +32,10 @@ static const uint32_t NO_STREAM_ID = 0xFFFFFFFF;
 // Perform memory allocation and deallocation tracking for Http2Stream objects in increments of 25
 static const uint32_t STREAM_MEMORY_TRACKING_INCREMENT = 25;
 
+// Maximum number of distinct stream IDs tracked per scan for injection status.
+// If exceeded, injection is blocked to avoid expensive stream lookups.
+static const uint32_t MAX_STREAM_INJECTION_STATUS = 20;
+
 static const uint32_t HTTP2_GID = 121;
 
 // Frame type codes (fourth octet of frame header)
@@ -193,6 +197,8 @@ enum SettingsFrameIds
 };
 
 enum ScanState { SCAN_FRAME_HEADER, SCAN_PADDING_LENGTH, SCAN_DATA, SCAN_EMPTY_DATA };
+
+enum InjectionStatus { INJECTION_BLOCKED = 0, INJECTION_ALLOWED = 1 };
 } // end namespace Http2Enums
 
 #endif

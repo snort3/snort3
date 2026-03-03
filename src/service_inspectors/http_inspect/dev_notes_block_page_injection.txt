@@ -1,0 +1,7 @@
+During scan(), HI determines whether block page injection is possible for the current packet and
+sets PKT_HTTP_INJECT_ALLOWED or PKT_HTTP_INJECT_BLOCKED on the packet flags. This check is
+performed once per packet when no injection permission has been set yet.
+
+PKT_HTTP_INJECT_ALLOWED is set when the server side is expecting a fresh response, i.e.,
+type_expected is SEC_STATUS and no response cutter has been created yet. In all other cases
+PKT_HTTP_INJECT_BLOCKED is set.

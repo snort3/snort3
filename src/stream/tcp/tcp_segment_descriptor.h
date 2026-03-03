@@ -128,10 +128,10 @@ public:
         pkt->dsize -= offset;
     }
 
-    void set_packet_flags(uint32_t flags) const
+    void set_packet_flags(uint64_t flags) const
     { pkt->packet_flags |= flags; }
 
-    bool are_packet_flags_set(uint32_t flags) const
+    bool are_packet_flags_set(uint64_t flags) const
     { return (pkt->packet_flags & flags) == flags; }
 
     uint32_t get_packet_timestamp() const

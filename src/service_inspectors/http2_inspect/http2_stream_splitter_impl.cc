@@ -23,6 +23,8 @@
 
 #include "http2_stream_splitter.h"
 
+#include <algorithm>
+#include <array>
 #include <cassert>
 
 #include "service_inspectors/http_inspect/http_common.h"
@@ -38,6 +40,11 @@
 using namespace snort;
 using namespace HttpCommon;
 using namespace Http2Enums;
+
+static THREAD_LOCAL std::array<std::pair<uint32_t, Http2Enums::InjectionStatus>,
+    Http2Enums::MAX_STREAM_INJECTION_STATUS> stream_injection_status;
+static THREAD_LOCAL uint32_t stream_injection_status_count = 0;
+static THREAD_LOCAL bool global_injection_block = false;
 
 enum ValidationResult { V_GOOD, V_BAD, V_TBD };
 
@@ -61,6 +68,59 @@ static ValidationResult validate_preface(const uint8_t* data, const uint32_t len
         return V_TBD;
 
     return V_GOOD;
+}
+
+Http2Enums::InjectionStatus Http2StreamSplitter::determine_injection_status(Http2FlowData* session_data,
+    uint8_t frame_type, uint32_t stream_id)
+{
+    if (frame_type != FT_HEADERS)
+        return Http2Enums::INJECTION_BLOCKED;
+
+    const Http2Stream* const stream = session_data->find_stream(stream_id);
+
+    if (!stream)
+    {
+        // Check if we have some unflushed data from client
+        const uint32_t client_stream_id = session_data->current_stream[SRC_CLIENT];
+        return (client_stream_id == stream_id) ?
+            Http2Enums::INJECTION_ALLOWED : Http2Enums::INJECTION_BLOCKED;
+    }
+
+    return (stream->get_state(SRC_SERVER) == STREAM_EXPECT_HEADERS) ?
+        Http2Enums::INJECTION_ALLOWED : Http2Enums::INJECTION_BLOCKED;
+}
+
+void Http2StreamSplitter::update_injection_status(Http2FlowData* session_data, Packet* pkt,
+    uint8_t frame_type)
+{
+    pkt->packet_flags &= ~(PKT_HTTP_INJECT_ALLOWED | PKT_HTTP_INJECT_BLOCKED);
+
+    if (stream_injection_status_count >= MAX_STREAM_INJECTION_STATUS)
+    {
+        pkt->packet_flags |= PKT_HTTP_INJECT_BLOCKED;
+        return;
+    }
+
+    const uint32_t current_stream_id = session_data->current_stream[SRC_SERVER];
+    const auto begin = stream_injection_status.begin();
+    const auto end = begin + stream_injection_status_count;
+    auto it = std::find_if(begin, end,
+        [current_stream_id](const std::pair<uint32_t, Http2Enums::InjectionStatus>& entry)
+        { return entry.first == current_stream_id; });
+
+    Http2Enums::InjectionStatus verdict;
+    if (it != end)
+    {
+        verdict = it->second;
+    }
+    else
+    {
+        verdict = determine_injection_status(session_data, frame_type, current_stream_id);
+        stream_injection_status[stream_injection_status_count++] = { current_stream_id, verdict };
+    }
+
+    pkt->packet_flags |= (verdict == Http2Enums::INJECTION_ALLOWED) ?
+        PKT_HTTP_INJECT_ALLOWED : PKT_HTTP_INJECT_BLOCKED;
 }
 
 void Http2StreamSplitter::data_frame_header_checks(Http2FlowData* session_data,
@@ -135,7 +195,7 @@ bool Http2StreamSplitter::read_frame_hdr(Http2FlowData* session_data, const uint
 }
 
 StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* session_data,
-    const uint8_t* data, uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id)
+    const uint8_t* data, uint32_t length, uint32_t* flush_offset, HttpCommon::SourceId source_id, Packet* pkt)
 {
     if (session_data->preface[source_id])
     {
@@ -166,6 +226,12 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
     *flush_offset = 0;
     uint32_t data_offset = 0;
 
+    if (source_id == SRC_SERVER and pkt->is_http_inject_permission_unset())
+    {
+        stream_injection_status_count = 0;
+        global_injection_block = false;
+    }
+
     // Need to process multiple frames in a single scan() if a single TCP segment has multiple
     // header and continuation frames
     while ((status == StreamSplitter::SEARCH) &&
@@ -186,6 +252,11 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                     session_data->scan_remaining_frame_octets[source_id] -= avail;
                     session_data->payload_discard[source_id] = true;
                     *flush_offset = avail;
+                    if (source_id == SRC_SERVER and pkt->is_http_inject_permission_unset())
+                    {
+                        pkt->packet_flags |= PKT_HTTP_INJECT_BLOCKED;
+                        global_injection_block = true;
+                    }
                     return StreamSplitter::FLUSH;
                 }
 
@@ -197,6 +268,9 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                 const uint32_t old_stream_id = session_data->current_stream[source_id];
                 session_data->current_stream[source_id] =
                     get_stream_id_from_header(session_data->scan_frame_header[source_id]);
+
+                if (source_id == SRC_SERVER and !global_injection_block)
+                    update_injection_status(session_data, pkt, type);
 
                 if (session_data->continuation_expected[source_id] &&
                     ((type != FT_CONTINUATION) ||
@@ -284,6 +358,12 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                 break;
             }
             case SCAN_PADDING_LENGTH:
+                if (source_id == SRC_SERVER and pkt->is_http_inject_permission_unset())
+                {
+                    pkt->packet_flags |= PKT_HTTP_INJECT_BLOCKED;
+                    global_injection_block = true;
+                }
+
                 assert(session_data->scan_remaining_frame_octets[source_id] > 0);
                 session_data->padding_length[source_id] = *(data + data_offset);
                 if (session_data->frame_type[source_id] == FT_DATA)
@@ -314,6 +394,12 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
             case SCAN_DATA:
             case SCAN_EMPTY_DATA:
             {
+                if (source_id == SRC_SERVER and pkt->is_http_inject_permission_unset())
+                {
+                    pkt->packet_flags |= PKT_HTTP_INJECT_BLOCKED;
+                    global_injection_block = true;
+                }
+
                 const uint8_t type = get_frame_type(session_data->scan_frame_header[source_id]);
                 const uint8_t frame_flags = get_frame_flags(session_data->
                     scan_frame_header[source_id]);

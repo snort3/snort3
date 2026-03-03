@@ -27,8 +27,20 @@ struct PayloadInjectorCounts
 {
     PegCount http_injects;
     PegCount http2_injects;
+    PegCount failed_injects;
     PegCount http2_translate_err;
     PegCount http2_mid_frame;
+    PegCount err_unidentified_protocol;
+    PegCount err_stream_not_established;
+    PegCount err_injector_not_configured;
+    PegCount err_conflicting_s2c_traffic;
+    PegCount err_http2_even_stream;
+    PegCount err_http2_stream_id_0;
+    PegCount err_session_not_tcp;
+    PegCount err_stale_s2c_data;
+    PegCount err_s2c_http_proto;
+    PegCount err_c2s_http_proto;
+    PegCount err_s2c_http2_proto;
 };
 
 extern THREAD_LOCAL PayloadInjectorCounts payload_injector_stats;

@@ -65,3 +65,7 @@ include::dev_notes_mime_inspection.txt[]
 ==== HI test tool usage
 
 include::dev_notes_test_tool.txt[]
+
+==== HTTP/1 Block Page Injection
+
+include::dev_notes_block_page_injection.txt[]

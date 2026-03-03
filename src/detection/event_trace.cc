@@ -92,7 +92,7 @@ void EventTrace_Log(const Packet* p, const OptTreeNode* otn, IpsAction::Type act
         p->pkth->pktlen, p->pktlen);
 
     TextLog_Print(tlog,
-        "Pkt Bits: Flags=0x%X, Proto=0x%X, Err=0x%X\n",
+        "Pkt Bits: Flags=0x" STDx64 ", Proto=0x%X, Err=0x%X\n",
         p->packet_flags, (unsigned)p->proto_bits, (unsigned)p->ptrs.decode_flags);
 
     TextLog_Print(tlog,
@@ -134,4 +134,3 @@ void EventTrace_Term()
         TextLog_Term(tlog);
     }
 }
-

@@ -180,7 +180,7 @@ void ReactActiveAction::send(Packet* p)
     if (p->flow && p->flow->gadget &&
         (strcmp(p->flow->gadget->get_name(), "http2_inspect") == 0))
     {
-        Http2FlowData* const session_data =
+        const Http2FlowData* const session_data =
             (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
         assert(session_data != nullptr);
         const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
@@ -226,6 +226,9 @@ void ReactAction::exec(Packet* p, const ActInfo& ai)
 {
     p->active->drop_packet(p);
     p->active->set_drop_reason("ips");
+
+    if ( p->flow )
+        p->flow->disable_inspection();
 
     if ( p->context->wire_packet and
          !p->active->is_reset_candidate(p->context->wire_packet) )

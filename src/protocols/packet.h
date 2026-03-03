@@ -90,6 +90,13 @@ class SFDAQInstance;
 
 #define PKT_TCP_PSEUDO_EST        0x80000000 // A one-sided or bidirectional without LWS TCP session was detected
 
+#define PKT_TCP_INJECT_BLOCKED    0x0000000100000000ULL  // cannot be injected on react due to tcp packet creates a hole,
+                                             // fills a hole, has overlaps or is retransmission
+
+// used by payload_injector
+#define PKT_HTTP_INJECT_ALLOWED  0x0000000200000000ULL
+#define PKT_HTTP_INJECT_BLOCKED  0x0000000400000000ULL
+
 #define TS_PKT_OFFLOADED          0x01
 #define TS_PKT_INJECT             0x02
 
@@ -125,7 +132,7 @@ struct SO_PUBLIC Packet
     Endianness* endianness = nullptr;
     Obfuscator* obfuscator = nullptr;
 
-    uint32_t packet_flags;      /* special flags for the packet */
+    uint64_t packet_flags;      /* special flags for the packet */
     uint32_t xtradata_mask;
     uint32_t proto_bits;        /* protocols contained within this packet */
 
@@ -339,6 +346,12 @@ struct SO_PUBLIC Packet
 
     bool was_set() const
     { return (packet_flags & PKT_WAS_SET) != 0; }
+
+    bool is_http_inject_permission_unset() const
+    {
+        return !(packet_flags & PKT_HTTP_INJECT_BLOCKED) and
+            !(packet_flags & PKT_HTTP_INJECT_ALLOWED);
+    }
 
     bool is_detection_enabled(bool to_server);
 

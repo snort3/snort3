@@ -38,7 +38,7 @@
 // depends on includes installed in framework/snort_api.h
 // see framework/plugins.h
 
-#define BASE_API_VERSION 24
+#define BASE_API_VERSION 25
 
 #define PLUGIN_DEFAULT    0x0
 #define PLUGIN_SO_RELOAD  0x1  // assumed for PT_SO_RULE

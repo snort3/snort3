@@ -133,7 +133,7 @@ StreamSplitter::Status HttpStreamSplitter::status_value(StreamSplitter::Status r
 StreamSplitter::Status HttpStreamSplitter::scan(Packet* pkt, const uint8_t* data, uint32_t length,
     uint32_t, uint32_t* flush_offset)
 {
-    return scan(pkt->flow, data, length, flush_offset);
+    return scan(pkt->flow, data, length, flush_offset, pkt);
 }
 
 StreamSplitter::Status HttpStreamSplitter::handle_zero_nine(Flow* flow, HttpFlowData* session_data, const uint8_t* data, uint32_t length,
@@ -302,7 +302,7 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
 }
 
 StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data, uint32_t length,
-    uint32_t* flush_offset)
+    uint32_t* flush_offset, Packet* pkt)
 {
     Profile profile(HttpModule::get_profile_stats()); // cppcheck-suppress unreadVariable
 
@@ -393,6 +393,15 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
     }
 
     HttpModule::increment_peg_counts(PEG_SCAN);
+
+    if (pkt and pkt->is_http_inject_permission_unset())
+    {
+        if (session_data->type_expected[SRC_SERVER] == SEC_STATUS
+            and session_data->cutter[SRC_SERVER] == nullptr)
+            pkt->packet_flags |= PKT_HTTP_INJECT_ALLOWED;
+        else
+            pkt->packet_flags |= PKT_HTTP_INJECT_BLOCKED;
+    }
 
     return call_cutter(flow, session_data, data, length, flush_offset, type);
 }

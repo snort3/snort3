@@ -28,6 +28,7 @@
 
 #include "detection/detection_engine.h"
 #include "flow/flow.h"
+#include "flow/session.h"
 #include "main/snort_config.h"
 #include "main/thread_config.h"
 #include "packet_io/active.h"
@@ -119,6 +120,18 @@ public:
     bool configure(snort::SnortConfig*) override { return true; }
 };
 
+class MockSession : public Session
+{
+public:
+    explicit MockSession(snort::Flow* f, bool has_queued) : Session(f), queued(has_queued) { }
+
+    void clear() override { }
+    bool are_client_segments_queued() const override { return queued; }
+
+private:
+    bool queued;
+};
+
 // Mocks for PayloadInjectorModule::get_http2_payload
 
 static InjectionReturnStatus translation_status = INJECTION_SUCCESS;
@@ -171,12 +184,26 @@ TEST_GROUP(payload_injector_test)
     {
         counts->http_injects = 0;
         counts->http2_injects = 0;
+        counts->failed_injects = 0;
         counts->http2_translate_err = 0;
         counts->http2_mid_frame = 0;
+        counts->err_unidentified_protocol = 0;
+        counts->err_stream_not_established = 0;
+        counts->err_injector_not_configured = 0;
+        counts->err_conflicting_s2c_traffic = 0;
+        counts->err_http2_even_stream = 0;
+        counts->err_http2_stream_id_0 = 0;
+        counts->err_session_not_tcp = 0;
+        counts->err_stale_s2c_data = 0;
+        counts->err_s2c_http_proto = 0;
+        counts->err_c2s_http_proto = 0;
+        counts->err_s2c_http2_proto = 0;
         control.http_page = (const uint8_t*)"test";
         control.http_page_len = 4;
+        control.stream_id = 0;
         flow.set_state(Flow::FlowState::INSPECT);
         flow.set_session_flags(SSNFLAG_ESTABLISHED);
+        flow.pkt_type = PktType::TCP;
         translation_status = INJECTION_SUCCESS;
         http2_flow_data.set_mid_frame(false);
     }
@@ -189,10 +216,11 @@ TEST(payload_injector_test, not_configured_stream_not_established)
     p.flow = &flow;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http_injects == 0);
+    CHECK(counts->err_injector_not_configured == 1);
     CHECK(status == ERR_INJECTOR_NOT_CONFIGURED);
     CHECK(flow.flow_state == Flow::FlowState::BLOCK);
     const char* err_string = PayloadInjector::get_err_string(status);
-    CHECK(strcmp(err_string, "Payload injector is not configured") == 0);
+    STRCMP_EQUAL("Payload injector is not configured", err_string);
 }
 
 TEST(payload_injector_test, not_configured_stream_established)
@@ -202,6 +230,8 @@ TEST(payload_injector_test, not_configured_stream_established)
     p.flow = &flow;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http_injects == 0);
+    CHECK(counts->failed_injects == 1);
+    CHECK(counts->err_injector_not_configured == 1);
     CHECK(status == ERR_INJECTOR_NOT_CONFIGURED);
     CHECK(flow.flow_state == Flow::FlowState::BLOCK);
 }
@@ -214,9 +244,11 @@ TEST(payload_injector_test, configured_stream_not_established)
     flow.update_session_flags(0);
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http_injects == 0);
+    CHECK(counts->failed_injects == 1);
+    CHECK(counts->err_stream_not_established == 1);
     CHECK(status == ERR_STREAM_NOT_ESTABLISHED);
     const char* err_string = PayloadInjector::get_err_string(status);
-    CHECK(strcmp(err_string, "TCP stream not established") == 0);
+    STRCMP_EQUAL("TCP stream not established", err_string);
     CHECK(flow.flow_state == Flow::FlowState::BLOCK);
 }
 
@@ -244,10 +276,12 @@ TEST(payload_injector_test, http2_stream0)
     p.flow = &flow;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http2_injects == 0);
+    CHECK(counts->failed_injects == 1);
+    CHECK(counts->err_http2_stream_id_0 == 1);
     CHECK(status == ERR_HTTP2_STREAM_ID_0);
     CHECK(flow.flow_state == Flow::FlowState::BLOCK);
     const char* err_string = PayloadInjector::get_err_string(status);
-    CHECK(strcmp(err_string, "HTTP/2 - injection to stream 0") == 0);
+    STRCMP_EQUAL("HTTP/2 - injection to stream 0", err_string);
     delete flow.gadget;
 }
 
@@ -261,10 +295,12 @@ TEST(payload_injector_test, http2_even_stream_id)
     control.stream_id = 2;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http2_injects == 0);
+    CHECK(counts->failed_injects == 1);
+    CHECK(counts->err_http2_even_stream == 1);
     CHECK(status == ERR_HTTP2_EVEN_STREAM_ID);
     CHECK(flow.flow_state == Flow::FlowState::BLOCK);
     const char* err_string = PayloadInjector::get_err_string(status);
-    CHECK(strcmp(err_string, "HTTP/2 - injection to server initiated stream") == 0);
+    STRCMP_EQUAL("HTTP/2 - injection to server initiated stream", err_string);
     delete flow.gadget;
 }
 
@@ -304,6 +340,9 @@ TEST(payload_injector_test, unidentified_gadget_name)
     flow.gadget = new MockInspector();
     p.flow = &flow;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
+    CHECK(counts->http_injects == 0);
+    CHECK(counts->failed_injects == 1);
+    CHECK(counts->err_unidentified_protocol == 1);
     CHECK(status == ERR_UNIDENTIFIED_PROTOCOL);
     CHECK(flow.flow_state == Flow::FlowState::BLOCK);
     delete flow.gadget;
@@ -319,40 +358,29 @@ TEST(payload_injector_test, http2_mid_frame)
     control.stream_id = 1;
     http2_flow_data.set_mid_frame(true);
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
+    CHECK(counts->http2_injects == 0);
+    CHECK(counts->failed_injects == 1);
     CHECK(counts->http2_mid_frame == 1);
     CHECK(status == ERR_HTTP2_MID_FRAME);
     CHECK(flow.flow_state == Flow::FlowState::BLOCK);
     const char* err_string = PayloadInjector::get_err_string(status);
-    CHECK(strcmp(err_string, "HTTP/2 - attempt to inject mid frame. Currently not supported.")
-        == 0);
+    STRCMP_EQUAL("HTTP/2 - attempt to inject mid frame. Currently not supported.",
+        err_string);
     delete flow.gadget;
 }
 
-TEST(payload_injector_test, http2_continuation_expected)
+TEST(payload_injector_test, http_pkt_from_srvr)
 {
     Packet p(false);
     set_configured();
-    mock_api.base.name = "http2_inspect";
-    flow.gadget = new MockInspector();
-    p.flow = &flow;
-    control.stream_id = 1;
-    http2_flow_data.set_mid_frame(true);
-    InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
-    CHECK(counts->http2_mid_frame == 1);
-    CHECK(status == ERR_HTTP2_MID_FRAME);
-    CHECK(flow.flow_state == Flow::FlowState::BLOCK);
-    delete flow.gadget;
-}
-
-TEST(payload_injector_test, http2_pkt_from_srvr)
-{
-    Packet p(false);
-    set_configured();
+    mock_api.base.name = "http_inspect";
     p.packet_flags = PKT_FROM_SERVER;
     flow.gadget = new MockInspector();
     p.flow = &flow;
+    p.active = &active;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
-    CHECK(status == ERR_PKT_FROM_SERVER);
+    CHECK(counts->http_injects == 1);
+    CHECK(status == INJECTION_SUCCESS);
     CHECK(flow.flow_state == Flow::FlowState::BLOCK);
     delete flow.gadget;
 }
@@ -363,9 +391,147 @@ TEST(payload_injector_test, flow_is_null)
     set_configured();
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http_injects == 0);
+    CHECK(counts->failed_injects == 1);
+    CHECK(counts->err_unidentified_protocol == 1);
     CHECK(status == ERR_UNIDENTIFIED_PROTOCOL);
     const char* err_string = PayloadInjector::get_err_string(status);
-    CHECK(strcmp(err_string, "Unidentified protocol") == 0);
+    STRCMP_EQUAL("Unidentified protocol", err_string);
+}
+
+TEST(payload_injector_test, session_not_tcp)
+{
+    Packet p(false);
+    set_configured();
+    p.flow = &flow;
+    p.active = &active;
+    flow.pkt_type = PktType::UDP;
+    InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
+    CHECK(counts->http_injects == 0);
+    CHECK(counts->failed_injects == 1);
+    CHECK(counts->err_session_not_tcp == 1);
+    CHECK(status == ERR_SESSION_NOT_TCP);
+    CHECK(flow.flow_state == Flow::FlowState::BLOCK);
+    const char* err_string = PayloadInjector::get_err_string(status);
+    STRCMP_EQUAL("not a TCP stream", err_string);
+}
+
+TEST(payload_injector_test, stale_s2c_data)
+{
+    Packet p(false);
+    set_configured();
+    p.flow = &flow;
+    p.active = &active;
+    p.packet_flags = PKT_FROM_SERVER | PKT_TCP_INJECT_BLOCKED;
+    InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
+    CHECK(counts->http_injects == 0);
+    CHECK(counts->failed_injects == 1);
+    CHECK(counts->err_stale_s2c_data == 1);
+    CHECK(status == ERR_STALE_S2C_DATA);
+    CHECK(flow.flow_state == Flow::FlowState::BLOCK);
+    const char* err_string = PayloadInjector::get_err_string(status);
+    STRCMP_EQUAL("S2C injection blocked: packet fills hole with pending out-of-order, "
+        "retransmitted, or overlapping segments", err_string);
+}
+
+TEST(payload_injector_test, http_conflicting_s2c_traffic)
+{
+    Packet p(false);
+    set_configured();
+    p.flow = &flow;
+    p.active = &active;
+    p.packet_flags = PKT_FROM_CLIENT;
+    MockSession session(&flow, true);
+    flow.session = &session;
+    InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
+    CHECK(counts->http_injects == 0);
+    CHECK(counts->failed_injects == 1);
+    CHECK(counts->err_conflicting_s2c_traffic == 1);
+    CHECK(status == ERR_CONFLICTING_S2C_TRAFFIC);
+    CHECK(flow.flow_state == Flow::FlowState::BLOCK);
+    const char* err_string = PayloadInjector::get_err_string(status);
+    STRCMP_EQUAL("Conflicting S2C HTTP traffic in progress", err_string);
+    flow.session = nullptr;
+}
+
+TEST(payload_injector_test, http_s2c_proto_blocked)
+{
+    Packet p(false);
+    set_configured();
+    p.flow = &flow;
+    p.active = &active;
+    p.packet_flags = PKT_FROM_SERVER | PKT_HTTP_INJECT_BLOCKED;
+    InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
+    CHECK(counts->http_injects == 0);
+    CHECK(counts->failed_injects == 1);
+    CHECK(counts->err_s2c_http_proto == 1);
+    CHECK(status == ERR_S2C_HTTP_PROTO);
+    CHECK(flow.flow_state == Flow::FlowState::BLOCK);
+    const char* err_string = PayloadInjector::get_err_string(status);
+    STRCMP_EQUAL("HTTP/1 injection blocked on server response due to protocol state conflict",
+        err_string);
+}
+
+TEST(payload_injector_test, http_c2s_proto_blocked)
+{
+    Packet p(false);
+    set_configured();
+    p.flow = &flow;
+    p.active = &active;
+    p.packet_flags = PKT_HTTP_INJECT_BLOCKED;
+    InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
+    CHECK(counts->http_injects == 0);
+    CHECK(counts->failed_injects == 1);
+    CHECK(counts->err_c2s_http_proto == 1);
+    CHECK(status == ERR_C2S_HTTP_PROTO);
+    CHECK(flow.flow_state == Flow::FlowState::BLOCK);
+    const char* err_string = PayloadInjector::get_err_string(status);
+    STRCMP_EQUAL("HTTP/1 injection blocked on client request due to protocol state conflict",
+        err_string);
+}
+
+TEST(payload_injector_test, http2_conflicting_s2c_traffic)
+{
+    Packet p(false);
+    set_configured();
+    mock_api.base.name = "http2_inspect";
+    flow.gadget = new MockInspector();
+    p.flow = &flow;
+    p.active = &active;
+    p.packet_flags = PKT_FROM_CLIENT;
+    control.stream_id = 1;
+    MockSession session(&flow, true);
+    flow.session = &session;
+    InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
+    CHECK(counts->http_injects == 0);
+    CHECK(counts->failed_injects == 1);
+    CHECK(counts->err_conflicting_s2c_traffic == 1);
+    CHECK(status == ERR_CONFLICTING_S2C_TRAFFIC);
+    CHECK(flow.flow_state == Flow::FlowState::BLOCK);
+    const char* err_string = PayloadInjector::get_err_string(status);
+    STRCMP_EQUAL("Conflicting S2C HTTP traffic in progress", err_string);
+    delete flow.gadget;
+    flow.session = nullptr;
+}
+
+TEST(payload_injector_test, http2_s2c_proto_blocked)
+{
+    Packet p(false);
+    set_configured();
+    mock_api.base.name = "http2_inspect";
+    flow.gadget = new MockInspector();
+    p.flow = &flow;
+    p.active = &active;
+    p.packet_flags = PKT_FROM_SERVER | PKT_HTTP_INJECT_BLOCKED;
+    control.stream_id = 1;
+    InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
+    CHECK(counts->http_injects == 0);
+    CHECK(counts->failed_injects == 1);
+    CHECK(counts->err_s2c_http2_proto == 1);
+    CHECK(status == ERR_S2C_HTTP2_PROTO);
+    const char* err_string = PayloadInjector::get_err_string(status);
+    STRCMP_EQUAL("HTTP/2 injection blocked on server response due to protocol state conflict",
+        err_string);
+    delete flow.gadget;
 }
 
 TEST_GROUP(payload_injector_translate_err_test)
@@ -386,6 +552,7 @@ TEST_GROUP(payload_injector_translate_err_test)
         control.http_page_len = 4;
         flow.set_state(Flow::FlowState::INSPECT);
         flow.set_session_flags(SSNFLAG_ESTABLISHED);
+        flow.pkt_type = PktType::TCP;
         http2_flow_data.set_mid_frame(false);
         mock_api.base.name = "http2_inspect";
         flow.gadget = new MockInspector();
@@ -409,8 +576,8 @@ TEST(payload_injector_translate_err_test, http2_page_translation_err)
     translation_status = ERR_PAGE_TRANSLATION;
     status = PayloadInjector::inject_http_payload(&p, control);
     const char* err_string = PayloadInjector::get_err_string(status);
-    CHECK(strcmp(err_string, "Error in translating HTTP block page to HTTP/2. "
-        "Unsupported or bad format.") == 0);
+    STRCMP_EQUAL("Error in translating HTTP block page to HTTP/2. "
+        "Unsupported or bad format.", err_string);
 }
 
 TEST(payload_injector_translate_err_test, http2_hdrs_size)
@@ -421,23 +588,11 @@ TEST(payload_injector_translate_err_test, http2_hdrs_size)
     translation_status = ERR_TRANSLATED_HDRS_SIZE;
     status = PayloadInjector::inject_http_payload(&p, control);
     const char* err_string = PayloadInjector::get_err_string(status);
-    CHECK(strcmp(err_string,
-        "HTTP/2 translated header size is bigger than expected. Update max size.") == 0);
+    STRCMP_EQUAL("HTTP/2 translated header size is bigger than expected. Update max size.",
+        err_string);
 }
 
-TEST(payload_injector_translate_err_test, conflicting_s2c_traffic)
-{
-    Packet p(false);
-    set_configured();
-    p.flow = &flow;
-    translation_status = ERR_CONFLICTING_S2C_TRAFFIC;
-    status = PayloadInjector::inject_http_payload(&p, control);
-    const char* err_string = PayloadInjector::get_err_string(status);
-    CHECK(strcmp(err_string,
-        "Conflicting S2C HTTP traffic in progress") == 0);
-}
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

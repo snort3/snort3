@@ -97,7 +97,7 @@ bool HttpInspect::get_buf(snort::InspectionBuffer::Type, snort::Packet*, snort::
 const uint8_t* HttpInspect::adjust_log_packet(snort::Packet*, uint16_t&) { return nullptr; }
 StreamSplitter::Status HttpStreamSplitter::scan(snort::Packet*, const uint8_t*, uint32_t, uint32_t, uint32_t*)
 { return StreamSplitter::FLUSH; }
-StreamSplitter::Status HttpStreamSplitter::scan(snort::Flow*, const uint8_t*, uint32_t, uint32_t*)
+StreamSplitter::Status HttpStreamSplitter::scan(snort::Flow*, const uint8_t*, uint32_t, uint32_t*, snort::Packet*)
 { return StreamSplitter::FLUSH; }
 const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow*, unsigned, unsigned, const
     uint8_t*, unsigned, uint32_t, unsigned&)

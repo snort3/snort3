@@ -122,7 +122,7 @@ translate the page to HTTP/2 format.
 
 Limitations for HTTP/2:
 
-* Packet will be injected against the last received stream id.
+* Packet will be injected against the last processed stream id.
 
 * Injection triggered while server-to-client flow of traffic is in a middle
 of a frame is not supported. The traffic will be blocked, but the page will

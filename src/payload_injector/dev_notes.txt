@@ -9,6 +9,17 @@ injection triggered while server-to-client flow of traffic is in a middle of a
 frame is not supported. The traffic will be blocked, but the page will not be
 injected/displayed.
 
+There are other cases when payload_injector doesn't inject a block page:
+* payload_injector is not configured
+* packet doesn't have a flow or the flow's session is not established
+* packet is not TCP or stream_tcp marked the packet as one for which a block page
+  cannot be injected
+* there is conflicting s2c traffic such as queued client segments
+* http_inspect or http2_inspect marked the packet as one for which a block page
+  cannot be injected
+* the service inspector for the flow is neither http_inspect nor http2_inspect
+* for HTTP/2, the target stream ID is zero or even (server-initiated)
+
 get_http2_payload supports translation of HTTP block/redirect page to HTTP2.
 Current implementation is limited, the constraints are specified in
 payload_injector_translate_page.cc.

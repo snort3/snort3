@@ -30,7 +30,8 @@ public:
 
     virtual void prep_partial_flush(snort::Flow* flow, uint32_t num_flush) = 0;
 
-    virtual Status scan(snort::Flow* flow, const uint8_t* data, uint32_t length, uint32_t* flush_offset) = 0;
+    virtual Status scan(snort::Flow* flow, const uint8_t* data, uint32_t length, uint32_t* flush_offset,
+        snort::Packet* pkt = nullptr) = 0;
 protected:
     HttpStreamSplitterBase(bool c2s) : StreamSplitter(c2s) { }
 private:

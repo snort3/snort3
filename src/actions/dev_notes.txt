@@ -15,7 +15,11 @@ TCP resets (TCP connections) or ICMP unreachable packets.
 
 React sends an HTML page to the client, a RST to the server and blocks the flow.
 It is using payload_injector utility. payload_injector should be configured when
-react is used.
+react is used. In some cases, block page injection is not possible. For example,
+if the client is expecting a response body rather than a status line, injecting
+a block page would be invalid. For more details look at implementation of
+payload_injector. In either case, even when injection of the block page is
+not supported, react blocks the flow.
 
 Rewrite enables overwrite packet contents based on "replace" option in the
 rules. Note that using "rewrite" action without "replace" option will raise

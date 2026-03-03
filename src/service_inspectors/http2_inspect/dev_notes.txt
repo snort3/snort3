@@ -102,3 +102,40 @@ Dynamically allocated objects related to http_inspect are considered separate an
 included. Temporary objects (frame_data and frame_header) are ignored. The remaining dynamically
 allocated are Http2Infractions (8 bytes * 2) and Http2EventsGen(24 bytes * 2)
 Therefore, the memory required by http2 per flow: sizeof(Http2FlowData) + 1645 + 16 + 48 
+
+*** HTTP/2 Block Page Injection ***
+During server-to-client scan(), H2I determines whether block page injection is structurally
+possible for the current packet and sets PKT_HTTP_INJECT_BLOCKED or PKT_HTTP_INJECT_ALLOWED on the
+packet flags. The injection status is tracked per stream in a thread-local cache that is reset at
+the start of each scan call when no injection permission has been set yet (i.e., the first time
+scan() is called for this packet). A global_injection_block flag short-circuits further checks
+once the scan enters a state where injection is structurally impossible.
+
+PKT_HTTP_INJECT_BLOCKED is set in the following cases:
+
+Per-stream injection status (set via update_injection_status). Only the first frame for
+each stream ID in a packet is checked:
+1. Too many streams tracked - the per-thread injection status cache has reached
+   MAX_STREAM_INJECTION_STATUS entries. Further streams are blocked to cap resource usage.
+   This is a sanity check; usually one packet will have only 1-3 different HTTP/2 streams.
+2. Frame type is not HEADERS - injection is only allowed when the server-to-client frame for the
+   stream is a HEADERS frame. Data, settings, window update, and other frame types block injection
+   because the client won't be able to interpret the block page.
+3. Server stream state is not STREAM_EXPECT_HEADERS - even if the frame is HEADERS, the server
+   direction of the stream must be expecting headers (i.e., no prior server frames on this stream).
+   If the server has already sent headers or data (e.g., when processing trailers), injection is
+   blocked.
+4. Stream not found and no matching client stream - if the stream object does not exist and there
+   is no unflushed client data for this stream ID, injection is blocked.
+
+Structural injection block (global_injection_block is set to true, skipping all further
+per-stream checks for the remainder of the scan call):
+
+5. Packet starts with trailing frame padding - the scan is discarding padding that trails a
+   previous frame.
+6. Packet starts with padding length byte - the scan is reading the padding length field of a
+   padded frame.
+7. Packet starts with data frame body - the scan is processing frame data
+
+Cases 5-7 all indicate that the server-to-client flow is in the middle of a frame, making
+injection structurally impossible.

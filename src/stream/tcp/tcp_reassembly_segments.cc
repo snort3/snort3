@@ -194,6 +194,9 @@ void TcpReassemblySegments::insert_segment_in_seglist(TcpSegmentDescriptor& tsd)
         return;
     }
 
+    // Packet is problematic, may have overlaps/retransmission, fill the hole, create a hole
+    tsd.set_packet_flags(PKT_TCP_INJECT_BLOCKED);
+
     tos->init(tsd);
     overlap_resolver->eval_left(*tos);
     overlap_resolver->eval_right(*tos);
