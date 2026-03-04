@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.11.1.0 2026-02-26 21:55:26 EST TST
+Revision 3.12.0.0 2026-03-03 21:22:32 EST TST
 
 ---------------------------------------------------------------------
 
@@ -76,12 +76,13 @@ Table of Contents
     3.19. mpls
     3.20. pbb
     3.21. pgm
-    3.22. pppoe
-    3.23. tcp
-    3.24. token_ring
-    3.25. udp
-    3.26. vlan
-    3.27. wlan
+    3.22. pppoe_disc
+    3.23. pppoe_sess
+    3.24. tcp
+    3.25. token_ring
+    3.26. udp
+    3.27. vlan
+    3.28. wlan
 
 4. Connector Modules
 
@@ -110,7 +111,7 @@ Table of Contents
     5.16. domain_filter
     5.17. dpx
     5.18. extractor
-    5.19. file_id
+    5.19. file_inspect
     5.20. file_log
     5.21. ftp_client
     5.22. ftp_data
@@ -138,27 +139,26 @@ Table of Contents
     5.44. smtp
     5.45. snort_ml
     5.46. snort_ml_engine
-    5.47. so_proxy
-    5.48. socks
-    5.49. ssh
-    5.50. ssl
-    5.51. stream
-    5.52. stream_file
-    5.53. stream_icmp
-    5.54. stream_ip
-    5.55. stream_tcp
-    5.56. stream_udp
-    5.57. stream_user
-    5.58. telnet
-    5.59. tlv_pdu
-    5.60. wizard
+    5.47. socks
+    5.48. ssh
+    5.49. ssl
+    5.50. stream
+    5.51. stream_file
+    5.52. stream_icmp
+    5.53. stream_ip
+    5.54. stream_tcp
+    5.55. stream_udp
+    5.56. stream_user
+    5.57. telnet
+    5.58. tlv_pdu
+    5.59. wizard
 
 6. IPS Action Modules
 
     6.1. alert
     6.2. block
     6.3. drop
-    6.4. file_id_action
+    6.4. file_id
     6.5. log
     6.6. pass
     6.7. react
@@ -957,11 +957,10 @@ Usage: inspect
 
 Configuration:
 
-  * int inspection.id = 0: correlate policy and events with other
-    items in configuration { 0:max64 }
+  * int inspection.id = 1: correlate policy and events with other
+    items in configuration { 1:max53 }
   * string inspection.uuid: correlate events by uuid
-  * enum inspection.mode = inline-test: set policy mode { inline | 
-    inline-test }
+  * enum inspection.mode: set policy mode { inline | inline-test }
   * int inspection.max_aux_ip = 16: maximum number of auxiliary IPs
     per flow to detect and save (-1 = disable, 0 = detect but don’t
     save, 1+ = save in FIFO manner) { -1:127 }
@@ -987,8 +986,8 @@ Configuration:
     rules { no | yes | inherit }
   * bool ips.enable_builtin_rules = false: enable events from builtin
     rules w/o stubs
-  * int ips.id = 0: correlate unified2 events with configuration {
-    0:max64 }
+  * int ips.id = 1: correlate unified2 events with configuration {
+    1:max53 }
   * string ips.include: snort rules and includes
   * enum ips.mode: set policy mode { tap | inline | inline-test }
   * bool ips.obfuscate_pii = true: mask all but the last 4 characters
@@ -1236,8 +1235,8 @@ Configuration:
     | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
   * multi network.checksum_eval = all: checksums to verify { all | ip
     | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
-  * int network.id = 0: correlate unified2 events with configuration
-    { 0:18446744073709551614 }
+  * int network.id = 1: correlate unified2 events with configuration
+    { 1:max53 }
   * int network.min_ttl = 1: alert / normalize packets with lower TTL
     / hop limit (you must enable rules and / or normalization also) {
     1:255 }
@@ -1360,14 +1359,38 @@ Usage: global
 
 Peg counts:
 
-  * payload_injector.http_injects: total number of http injections
+  * payload_injector.http_injects: total number of HTTP injections
     (sum)
-  * payload_injector.http2_injects: total number of http2 injections
+  * payload_injector.http2_injects: total number of HTTP/2 injections
     (sum)
-  * payload_injector.http2_translate_err: total number of http2 page
+  * payload_injector.failed_injects: total number of failed HTTP and
+    HTTP/2 injections (sum)
+  * payload_injector.http2_translate_err: total number of HTTP/2 page
     translation errors (sum)
   * payload_injector.http2_mid_frame: total number of attempts to
     inject mid-frame (sum)
+  * payload_injector.err_unidentified_protocol: total number of
+    unidentified-protocol errors (sum)
+  * payload_injector.err_stream_not_established: total number of
+    stream-not-established errors (sum)
+  * payload_injector.err_injector_not_configured: total number of
+    injector-not-configured errors (sum)
+  * payload_injector.err_conflicting_s2c_traffic: total number of
+    conflicting s2c traffic errors (sum)
+  * payload_injector.err_http2_even_stream: total number of HTTP/2
+    even-numbered stream errors (sum)
+  * payload_injector.err_http2_stream_id_0: total number of HTTP/2
+    stream ID 0 errors (sum)
+  * payload_injector.err_session_not_tcp: total number of
+    session-not-tcp errors (sum)
+  * payload_injector.err_stale_s2c_data: total number of stale s2c
+    data errors (sum)
+  * payload_injector.err_s2c_http_proto: total number of s2c HTTP
+    protocol errors (sum)
+  * payload_injector.err_c2s_http_proto: total number of c2s HTTP
+    protocol errors (sum)
+  * payload_injector.err_s2c_http2_proto: total number of s2c HTTP2
+    protocol errors (sum)
 
 
 2.27. process
@@ -1657,6 +1680,8 @@ Configuration:
   * string snort.--bpf: <filter options> are standard BPF options, as
     seen in TCPDump
   * string snort.--c2x: output hex for given char (see also --x2c)
+  * implied snort.--close-all-plugins: Snort will not dlclose plugin
+    libraries at shutdown unless this is set
   * string snort.--control-socket: <file> to create unix socket
   * implied snort.--create-instance-file: create instance mappings
     file for this Snort process at startup
@@ -1721,8 +1746,8 @@ Configuration:
     available modules in JSON format
   * string snort.--help-options: [<option prefix>] output matching
     command line option quick help (same as -?) { (optional) }
-  * implied snort.--help-plugins: list all available plugins with
-    brief help
+  * string snort.--help-plugins: list all available plugins with
+    brief help { (optional) }
   * implied snort.--help-signals: dump available control signals
   * int snort.--id-offset = 0: offset to add to instance IDs when
     logging to files { 0:65535 }
@@ -1739,7 +1764,8 @@ Configuration:
     generators { (optional) }
   * string snort.--list-modules: [<module type>] list all known
     modules of given type { (optional) }
-  * implied snort.--list-plugins: list all known plugins
+  * string snort.--list-plugins: list all known plugins { (optional)
+    }
   * string snort.--lua: <chunk> extend/override conf with chunk; may
     be repeated
   * string snort.--lua-sandbox: <file> file that contains the lua
@@ -1797,7 +1823,8 @@ Configuration:
   * implied snort.--show-file-codes: indicate how files are located:
     A=absolute and W, F, C which are relative to the working
     directory, including file, and config file respectively
-  * implied snort.--show-plugins: list module and plugin versions
+  * implied snort.--show-modules: list builtin and plugin modules and
+    versions
   * int snort.--skip: <n> skip 1st n packets { 0:max53 }
   * int snort.--snaplen: <snap> set snaplen of packet (same as -s) {
     0:65535 }
@@ -1833,38 +1860,36 @@ Configuration:
 
 Commands:
 
-  * snort.set_watchdog_params(timer, min_thread_count): set watchdog
-    parameters
-  * snort.show_plugins(): show available plugins
-  * snort.delete_inspector(inspector): delete an inspector from the
-    default policy
-  * snort.dump_stats(): show summary statistics
+  * snort.detach(): detach from control shell (without shutting down)
+  * snort.dump_heap_profile(): dump jemalloc memory profile
   * snort.dump_heap_stats(): show heap statistics
+  * snort.dump_inspector_map(): show inspectors to policy ID mapping
+  * snort.dump_stats(): show summary statistics
   * snort.heap_profile(enable, sample_rate): jemalloc memory tracking
     configuration
-  * snort.dump_heap_profile(): dump jemalloc memory profile
-  * snort.show_heap_profile(): show jemalloc memory profiling
-    configuration
-  * snort.reset_stats(type): clear summary statistics. Type can be:
-    daq|module|appid|file_id|snort|ha|all. reset_stats() without a
-    parameter clears all statistics.
-  * snort.rotate_stats(): roll perfmonitor log files
-  * snort.reload_config(filename): load new configuration
-  * snort.reload_policy(filename): reload part or all of the default
-    policy
-  * snort.reload_daq(): reload daq module
-  * snort.reload_hosts(filename): load a new hosts table
+  * snort.help(): this output
+  * snort.list_plugins(): list loaded plugins
   * snort.log_command(command, logging): enable or disable command
     logging
+  * snort.pause(): suspend packet processing
+  * snort.quit(): shutdown and dump-stats
+  * snort.reload_config(filename): load new configuration
+  * snort.reload_daq(): reload daq module
+  * snort.reload_hosts(filename): load a new hosts table
+  * snort.reset_stats(type): clear summary statistics. Type can be:
+    daq|module|appid|file_inspect|snort|ha|all. reset_stats() without
+    a parameter clears all statistics.
+  * snort.resume(pkt_num): continue packet processing. If number of
+    packets is specified, will resume for n packets and pause
+  * snort.rotate_stats(): roll perfmonitor log files
+  * snort.set_watchdog_params(timer, min_thread_count): set watchdog
+    parameters
+  * snort.show_heap_profile(): show jemalloc memory profiling
+    configuration
+  * snort.show_plugins(): show loaded plugins
   * snort.show_config_generation(): show loaded configuration ID
   * snort.show_snort_cpu(): show snort cpu usage
   * snort.show_snort_packet_latency(): show snort packet latency data
-  * snort.pause(): suspend packet processing
-  * snort.resume(pkt_num): continue packet processing. If number of
-    packets is specified, will resume for n packets and pause
-  * snort.detach(): detach from control shell (without shutting down)
-  * snort.quit(): shutdown and dump-stats
-  * snort.help(): this output
 
 Peg counts:
 
@@ -1919,6 +1944,23 @@ Usage: global
 
 Configuration:
 
+  * dynamics trace.output = stdout_trace: output method(s) for trace
+    log messages { none | | file_trace | null_trace_logger |
+    stdout_trace | syslog_trace }
+  * bool trace.ntuple = false: print packet n-tuple info with trace
+    messages
+  * bool trace.timestamp = false: print message timestamps with trace
+    messages
+  * int trace.constraints.ip_proto: numerical IP protocol ID filter {
+    0:255 }
+  * string trace.constraints.src_ip: source IP address filter
+  * int trace.constraints.src_port: source port filter { 0:65535 }
+  * string trace.constraints.dst_ip: destination IP address filter
+  * int trace.constraints.dst_port: destination port filter { 0:65535
+    }
+  * bool trace.constraints.match = true: use constraints to filter
+    traces
+  * string trace.constraints.tenants: tenants filter
   * int trace.modules.all: enable trace for all modules { 0:255 }
   * int trace.modules.appid.all: enable all trace options { 0:255 }
   * int trace.modules.dce_smb.all: enable all trace options { 0:255 }
@@ -1929,7 +1971,8 @@ Configuration:
   * int trace.modules.detection.fp_info: enable fast pattern info
     logging { 0:255 }
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
-  * int trace.modules.file_id.all: enable all trace options { 0:255 }
+  * int trace.modules.file_inspect.all: enable all trace options {
+    0:255 }
   * int trace.modules.js_norm.all: enable all trace options { 0:255 }
   * int trace.modules.js_norm.proc: enable processing logging { 0:255
     }
@@ -1947,27 +1990,12 @@ Configuration:
   * int trace.modules.vba_data.all: enable all trace options { 0:255
     }
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
-  * int trace.constraints.ip_proto: numerical IP protocol ID filter {
-    0:255 }
-  * string trace.constraints.src_ip: source IP address filter
-  * int trace.constraints.src_port: source port filter { 0:65535 }
-  * string trace.constraints.dst_ip: destination IP address filter
-  * int trace.constraints.dst_port: destination port filter { 0:65535
-    }
-  * bool trace.constraints.match = true: use constraints to filter
-    traces
-  * string trace.constraints.tenants: tenants filter
-  * string trace.output: output method for trace log messages
-  * bool trace.ntuple = false: print packet n-tuple info with trace
-    messages
-  * bool trace.timestamp = false: print message timestamps with trace
-    messages
 
 Commands:
 
-  * trace.set(modules, constraints, ntuple, timestamp): set modules
-    traces, constraints, ntuple and timestamp options
-  * trace.clear(): clear modules traces and constraints
+  * trace.set(output, ntuple, timestamp, constraints, modules): set
+    trace configuration
+  * trace.clear(): clear trace configuration
 
 
 ---------------------------------------------------------------------
@@ -2443,7 +2471,7 @@ Rules:
 
 --------------
 
-Help: support for 802.1ah protocol
+Help: support for 802.1ah provider backbone bridging protocol
 
 Type: codec
 
@@ -2469,11 +2497,11 @@ Rules:
   * 116:454 (pgm) PGM nak list overflow attempt
 
 
-3.22. pppoe
+3.22. pppoe_disc
 
 --------------
 
-Help: support for point-to-point protocol over ethernet
+Help: support for point-to-point discovery
 
 Type: codec
 
@@ -2481,10 +2509,25 @@ Usage: context
 
 Rules:
 
-  * 116:120 (pppoe) bad PPPOE frame detected
+  * 116:120 (pppoe_disc) bad PPPOE discovery frame detected
 
 
-3.23. tcp
+3.23. pppoe_sess
+
+--------------
+
+Help: support for point-to-point session
+
+Type: codec
+
+Usage: context
+
+Rules:
+
+  * 116:479 (pppoe_sess) bad PPPOE session frame detected
+
+
+3.24. tcp
 
 --------------
 
@@ -2525,7 +2568,7 @@ Peg counts:
   * tcp.checksum_bypassed: checksum calculations bypassed (sum)
 
 
-3.24. token_ring
+3.25. token_ring
 
 --------------
 
@@ -2543,7 +2586,7 @@ Rules:
   * 116:143 (token_ring) bad Token Ring MR header
 
 
-3.25. udp
+3.26. udp
 
 --------------
 
@@ -2578,7 +2621,7 @@ Peg counts:
   * udp.checksum_bypassed: checksum calculations bypassed (sum)
 
 
-3.26. vlan
+3.27. vlan
 
 --------------
 
@@ -2598,7 +2641,7 @@ Rules:
   * 116:130 (vlan) bad VLAN frame
 
 
-3.27. wlan
+3.28. wlan
 
 --------------
 
@@ -3715,13 +3758,13 @@ Peg counts:
   * extractor.total_events: total events processed by extractor (sum)
 
 
-5.19. file_id
+5.19. file_inspect
 
 --------------
 
-Help: configure file identification
+Help: configure file inspection
 
-Type: inspector (file)
+Type: inspector (passive)
 
 Usage: global
 
@@ -3729,58 +3772,60 @@ Instance Type: global
 
 Configuration:
 
-  * int file_id.type_depth = 1460: stop type ID at this point {
+  * int file_inspect.type_depth = 1460: stop type ID at this point {
     0:max53 }
-  * int file_id.signature_depth = 10485760: stop signature at this
-    point { 0:max53 }
-  * int file_id.block_timeout = 86400: stop blocking after this many
-    seconds { 0:max31 }
-  * int file_id.lookup_timeout = 2: give up on lookup after this many
-    seconds { 0:max31 }
-  * bool file_id.block_timeout_lookup = false: block if lookup times
-    out
-  * int file_id.capture_memcap = 100: memcap for file capture in
-    megabytes { 0:max53 }
-  * int file_id.capture_max_size = 1048576: stop file capture beyond
+  * int file_inspect.signature_depth = 10485760: stop signature at
     this point { 0:max53 }
-  * int file_id.capture_min_size = 0: stop file capture if file size
-    less than this { 0:max53 }
-  * int file_id.capture_block_size = 32768: file capture block size
-    in bytes { 8:max53 }
-  * int file_id.max_files_cached = 65536: maximal number of files
-    cached in memory { 8:max53 }
-  * int file_id.max_files_per_flow = 128: maximal number of files
-    able to be concurrently processed per flow { 1:max53 }
-  * int file_id.show_data_depth = 100: print this many octets {
+  * int file_inspect.block_timeout = 86400: stop blocking after this
+    many seconds { 0:max31 }
+  * int file_inspect.lookup_timeout = 2: give up on lookup after this
+    many seconds { 0:max31 }
+  * bool file_inspect.block_timeout_lookup = false: block if lookup
+    times out
+  * int file_inspect.capture_memcap = 100: memcap for file capture in
+    megabytes { 0:max53 }
+  * int file_inspect.capture_max_size = 1048576: stop file capture
+    beyond this point { 0:max53 }
+  * int file_inspect.capture_min_size = 0: stop file capture if file
+    size less than this { 0:max53 }
+  * int file_inspect.capture_block_size = 32768: file capture block
+    size in bytes { 8:max53 }
+  * int file_inspect.max_files_cached = 65536: maximal number of
+    files cached in memory { 8:max53 }
+  * int file_inspect.max_files_per_flow = 128: maximal number of
+    files able to be concurrently processed per flow { 1:max53 }
+  * int file_inspect.show_data_depth = 100: print this many octets {
     0:max53 }
-  * string file_id.rules_file: name of file with IPS rules for file
-    identification
-  * bool file_id.trace_type = false: enable runtime dump of type info
-  * bool file_id.trace_signature = false: enable runtime dump of
+  * string file_inspect.rules_file: name of file with IPS rules for
+    file identification
+  * bool file_inspect.trace_type = false: enable runtime dump of type
+    info
+  * bool file_inspect.trace_signature = false: enable runtime dump of
     signature info
-  * bool file_id.trace_stream = false: enable runtime dump of file
-    data
-  * int file_id.decompress_buffer_size = 100000: file decompression
-    buffer size { 1024:max31 }
+  * bool file_inspect.trace_stream = false: enable runtime dump of
+    file data
+  * int file_inspect.decompress_buffer_size = 100000: file
+    decompression buffer size { 1024:max31 }
 
 Rules:
 
-  * 150:1 (file_id) file not processed due to per flow limit
+  * 150:1 (file_inspect) file not processed due to per flow limit
 
 Peg counts:
 
-  * file_id.total_files: number of files processed (sum)
-  * file_id.total_file_data: number of file data bytes processed
+  * file_inspect.total_files: number of files processed (sum)
+  * file_inspect.total_file_data: number of file data bytes processed
     (sum)
-  * file_id.cache_failures: number of file cache add failures (sum)
-  * file_id.files_not_processed: number of files not processed due to
-    per-flow limit (sum)
-  * file_id.max_concurrent_files: maximum files processed
+  * file_inspect.cache_failures: number of file cache add failures
+    (sum)
+  * file_inspect.files_not_processed: number of files not processed
+    due to per-flow limit (sum)
+  * file_inspect.max_concurrent_files: maximum files processed
     concurrently on a flow (max)
-  * file_id.buffers_max: maximum number of file buffers that can be
-    allocated (max)
-  * file_id.buffers_in_use: number of file buffers currently in use
-    (now)
+  * file_inspect.buffers_max: maximum number of file buffers that can
+    be allocated (max)
+  * file_inspect.buffers_in_use: number of file buffers currently in
+    use (now)
 
 
 5.20. file_log
@@ -6007,21 +6052,7 @@ Peg counts:
   * snort_ml_engine.libml_calls: total libml calls (sum)
 
 
-5.47. so_proxy
-
---------------
-
-Help: a proxy inspector to track flow data from SO rules (internal
-use only)
-
-Type: inspector (passive)
-
-Usage: global
-
-Instance Type: global
-
-
-5.48. socks
+5.47. socks
 
 --------------
 
@@ -6069,7 +6100,7 @@ Peg counts:
     (sum)
 
 
-5.49. ssh
+5.48. ssh
 
 --------------
 
@@ -6110,7 +6141,7 @@ Peg counts:
   * ssh.aborted_sessions: total session aborted (sum)
 
 
-5.50. ssl
+5.49. ssl
 
 --------------
 
@@ -6165,7 +6196,7 @@ Peg counts:
     (max)
 
 
-5.51. stream
+5.50. stream
 
 --------------
 
@@ -6330,7 +6361,7 @@ Peg counts:
   * stream.uni_ip_flows: number of uni ip flows in cache (now)
 
 
-5.52. stream_file
+5.51. stream_file
 
 --------------
 
@@ -6347,7 +6378,7 @@ Configuration:
   * bool stream_file.upload = false: indicate file transfer direction
 
 
-5.53. stream_icmp
+5.52. stream_icmp
 
 --------------
 
@@ -6375,7 +6406,7 @@ Peg counts:
   * stream_icmp.stale_packets: icmp stale packets (sum)
 
 
-5.54. stream_ip
+5.53. stream_ip
 
 --------------
 
@@ -6448,7 +6479,7 @@ Peg counts:
   * stream_ip.fragmented_bytes: total fragmented bytes (sum)
 
 
-5.55. stream_tcp
+5.54. stream_tcp
 
 --------------
 
@@ -6669,7 +6700,7 @@ Peg counts:
     exceeded due to a hole (sum)
 
 
-5.56. stream_udp
+5.55. stream_udp
 
 --------------
 
@@ -6699,7 +6730,7 @@ Peg counts:
   * stream_udp.ignored: udp packets ignored (sum)
 
 
-5.57. stream_user
+5.56. stream_user
 
 --------------
 
@@ -6717,7 +6748,7 @@ Configuration:
     1:max31 }
 
 
-5.58. telnet
+5.57. telnet
 
 --------------
 
@@ -6753,7 +6784,7 @@ Peg counts:
     sessions (max)
 
 
-5.59. tlv_pdu
+5.58. tlv_pdu
 
 --------------
 
@@ -6782,14 +6813,14 @@ Peg counts:
   * tlv_pdu.aborts: total unrecoverable scan errors (sum)
 
 
-5.60. wizard
+5.59. wizard
 
 --------------
 
 Help: inspector that implements port-independent protocol
 identification
 
-Type: inspector (wizard)
+Type: inspector (service)
 
 Usage: inspect
 
@@ -6890,7 +6921,7 @@ Peg counts:
 no match
 
 
-6.4. file_id_action
+6.4. file_id
 
 --------------
 
@@ -9905,6 +9936,8 @@ libraries see the Getting Started section of the manual.
   * --bpf <filter options> are standard BPF options, as seen in
     TCPDump
   * --c2x output hex for given char (see also --x2c)
+  * --close-all-plugins Snort will not dlclose plugin libraries at
+    shutdown unless this is set
   * --control-socket <file> to create unix socket
   * --create-instance-file create instance mappings file for this
     Snort process at startup
@@ -9960,6 +9993,7 @@ libraries see the Getting Started section of the manual.
   * --help-options [<option prefix>] output matching command line
     option quick help (same as -?) (optional)
   * --help-plugins list all available plugins with brief help
+    (optional)
   * --help-signals dump available control signals
   * --id-offset offset to add to instance IDs when logging to files
     (0:65535)
@@ -9976,7 +10010,7 @@ libraries see the Getting Started section of the manual.
     (optional)
   * --list-modules [<module type>] list all known modules of given
     type (optional)
-  * --list-plugins list all known plugins
+  * --list-plugins list all known plugins (optional)
   * --lua <chunk> extend/override conf with chunk; may be repeated
   * --lua-sandbox <file> file that contains the lua sandbox
     environment in which config will be loaded
@@ -10029,7 +10063,7 @@ libraries see the Getting Started section of the manual.
   * --show-file-codes indicate how files are located: A=absolute and
     W, F, C which are relative to the working directory, including
     file, and config file respectively
-  * --show-plugins list module and plugin versions
+  * --show-modules list builtin and plugin modules and versions
   * --skip <n> skip 1st n packets (0:max53)
   * --snaplen <snap> set snaplen of packet (same as -s) (0:65535)
   * --stdin-rules read rules from stdin until EOF or a line starting
@@ -10522,38 +10556,39 @@ libraries see the Getting Started section of the manual.
   * string file_connector[].name: channel name
   * bool file_connector[].text_format = false: skip header and add
     newline at the end of the message
-  * int file_id.block_timeout = 86400: stop blocking after this many
-    seconds { 0:max31 }
-  * bool file_id.block_timeout_lookup = false: block if lookup times
-    out
-  * int file_id.capture_block_size = 32768: file capture block size
-    in bytes { 8:max53 }
-  * int file_id.capture_max_size = 1048576: stop file capture beyond
-    this point { 0:max53 }
-  * int file_id.capture_memcap = 100: memcap for file capture in
+  * int file_inspect.block_timeout = 86400: stop blocking after this
+    many seconds { 0:max31 }
+  * bool file_inspect.block_timeout_lookup = false: block if lookup
+    times out
+  * int file_inspect.capture_block_size = 32768: file capture block
+    size in bytes { 8:max53 }
+  * int file_inspect.capture_max_size = 1048576: stop file capture
+    beyond this point { 0:max53 }
+  * int file_inspect.capture_memcap = 100: memcap for file capture in
     megabytes { 0:max53 }
-  * int file_id.capture_min_size = 0: stop file capture if file size
-    less than this { 0:max53 }
-  * int file_id.decompress_buffer_size = 100000: file decompression
-    buffer size { 1024:max31 }
-  * int file_id.lookup_timeout = 2: give up on lookup after this many
-    seconds { 0:max31 }
-  * int file_id.max_files_cached = 65536: maximal number of files
-    cached in memory { 8:max53 }
-  * int file_id.max_files_per_flow = 128: maximal number of files
-    able to be concurrently processed per flow { 1:max53 }
-  * string file_id.rules_file: name of file with IPS rules for file
-    identification
-  * int file_id.show_data_depth = 100: print this many octets {
+  * int file_inspect.capture_min_size = 0: stop file capture if file
+    size less than this { 0:max53 }
+  * int file_inspect.decompress_buffer_size = 100000: file
+    decompression buffer size { 1024:max31 }
+  * int file_inspect.lookup_timeout = 2: give up on lookup after this
+    many seconds { 0:max31 }
+  * int file_inspect.max_files_cached = 65536: maximal number of
+    files cached in memory { 8:max53 }
+  * int file_inspect.max_files_per_flow = 128: maximal number of
+    files able to be concurrently processed per flow { 1:max53 }
+  * string file_inspect.rules_file: name of file with IPS rules for
+    file identification
+  * int file_inspect.show_data_depth = 100: print this many octets {
     0:max53 }
-  * int file_id.signature_depth = 10485760: stop signature at this
-    point { 0:max53 }
-  * bool file_id.trace_signature = false: enable runtime dump of
+  * int file_inspect.signature_depth = 10485760: stop signature at
+    this point { 0:max53 }
+  * bool file_inspect.trace_signature = false: enable runtime dump of
     signature info
-  * bool file_id.trace_stream = false: enable runtime dump of file
-    data
-  * bool file_id.trace_type = false: enable runtime dump of type info
-  * int file_id.type_depth = 1460: stop type ID at this point {
+  * bool file_inspect.trace_stream = false: enable runtime dump of
+    file data
+  * bool file_inspect.trace_type = false: enable runtime dump of type
+    info
+  * int file_inspect.type_depth = 1460: stop type ID at this point {
     0:max53 }
   * bool file_log.log_pkt_time = true: log the packet time when event
     generated
@@ -10582,10 +10617,8 @@ libraries see the Getting Started section of the manual.
   * string file_policy.rules[].when.sha256: SHA 256
   * int file_policy.verdict_delay = 0: number of queries to return
     final verdict { 0:max53 }
-  * bool file_trace.enable: enable file trace logger
-  * string file_trace.filename = trace_output.log: output filename
-  * int file_trace.max_file_size = 10485760: maximum file size in
-    bytes (default 10MB, 0=unlimited) { 0: }
+  * int file_trace.max_file_size = 0: maximum file size in bytes (0=
+    unlimited) { 0: }
   * string file_type.~: list of file type IDs to match
   * string flags.~mask_flags: these flags are don’t cares
   * string flags.~test_flags: these flags are tested
@@ -11008,13 +11041,12 @@ libraries see the Getting Started section of the manual.
     (-1 no limit) { -1:65535 }
   * int imap.uu_decode_depth = -1: Unix-to-Unix decoding depth (-1 no
     limit) { -1:65535 }
-  * int inspection.id = 0: correlate policy and events with other
-    items in configuration { 0:max64 }
+  * int inspection.id = 1: correlate policy and events with other
+    items in configuration { 1:max53 }
   * int inspection.max_aux_ip = 16: maximum number of auxiliary IPs
     per flow to detect and save (-1 = disable, 0 = detect but don’t
     save, 1+ = save in FIFO manner) { -1:127 }
-  * enum inspection.mode = inline-test: set policy mode { inline | 
-    inline-test }
+  * enum inspection.mode: set policy mode { inline | inline-test }
   * string inspection.uuid: correlate events by uuid
   * select ipopts.~opt: output format { rr|eol|nop|ts|sec|esec|lsrr|
     lsrre|ssrr|satid|any }
@@ -11027,8 +11059,8 @@ libraries see the Getting Started section of the manual.
     rules { no | yes | inherit }
   * bool ips.enable_builtin_rules = false: enable events from builtin
     rules w/o stubs
-  * int ips.id = 0: correlate unified2 events with configuration {
-    0:max64 }
+  * int ips.id = 1: correlate unified2 events with configuration {
+    1:max53 }
   * string ips.include: snort rules and includes
   * enum ips.mode: set policy mode { tap | inline | inline-test }
   * bool ips.obfuscate_pii = true: mask all but the last 4 characters
@@ -11149,8 +11181,8 @@ libraries see the Getting Started section of the manual.
     | ip | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
   * multi network.checksum_eval = all: checksums to verify { all | ip
     | noip | tcp | notcp | udp | noudp | icmp | noicmp | none }
-  * int network.id = 0: correlate unified2 events with configuration
-    { 0:18446744073709551614 }
+  * int network.id = 1: correlate unified2 events with configuration
+    { 1:max53 }
   * int network.layers = 40: the maximum number of protocols that
     Snort can correctly decode { 3:255 }
   * int network.max_ip6_extensions = 0: the maximum number of IP6
@@ -11203,7 +11235,6 @@ libraries see the Getting Started section of the manual.
   * bool normalizer.tcp.trim_win = false: trim data to window
   * bool normalizer.tcp.urp = false: adjust urgent pointer if beyond
     segment length
-  * bool null_trace_logger.enable: enable null trace logger
   * string opcua_msg_service.~: message service to match
   * string opcua_msg_type.~: message type to match
   * string opcua_node_id.~: message node id to match
@@ -11893,6 +11924,8 @@ libraries see the Getting Started section of the manual.
     seen in TCPDump
   * string snort.--c2x: output hex for given char (see also --x2c)
   * string snort.-c: <conf> use this configuration
+  * implied snort.--close-all-plugins: Snort will not dlclose plugin
+    libraries at shutdown unless this is set
   * string snort.--control-socket: <file> to create unix socket
   * implied snort.-C: print out payloads with character data only (no
     hex)
@@ -11963,8 +11996,8 @@ libraries see the Getting Started section of the manual.
     brief help
   * string snort.--help-options: [<option prefix>] output matching
     command line option quick help (same as -?) { (optional) }
-  * implied snort.--help-plugins: list all available plugins with
-    brief help
+  * string snort.--help-plugins: list all available plugins with
+    brief help { (optional) }
   * implied snort.--help: show help overview
   * implied snort.--help-signals: dump available control signals
   * implied snort.-H: make hash tables deterministic
@@ -11988,7 +12021,8 @@ libraries see the Getting Started section of the manual.
     generators { (optional) }
   * string snort.--list-modules: [<module type>] list all known
     modules of given type { (optional) }
-  * implied snort.--list-plugins: list all known plugins
+  * string snort.--list-plugins: list all known plugins { (optional)
+    }
   * string snort.-l: <logdir> log to this directory instead of
     current directory
   * string snort.-L: <mode> logging mode (none, dump, pcap, or log_*)
@@ -12076,7 +12110,8 @@ libraries see the Getting Started section of the manual.
   * implied snort.--show-file-codes: indicate how files are located:
     A=absolute and W, F, C which are relative to the working
     directory, including file, and config file respectively
-  * implied snort.--show-plugins: list module and plugin versions
+  * implied snort.--show-modules: list builtin and plugin modules and
+    versions
   * int snort.--skip: <n> skip 1st n packets { 0:max53 }
   * int snort.--snaplen: <snap> set snaplen of packet (same as -s) {
     0:65535 }
@@ -12192,7 +12227,6 @@ libraries see the Getting Started section of the manual.
     duplex }
   * string std_connector[].redirect: output file name where printout
     is redirected
-  * bool stdout_trace.enable: enable stdout trace logger
   * bool stream.allowlist_cache.enable = false: enable allowlist
     cache
   * bool stream.allowlist_cache.move_on_excess = false: move flows to
@@ -12300,7 +12334,6 @@ libraries see the Getting Started section of the manual.
   * int suppress[].sid = 0: rule signature ID { 0:max32 }
   * enum suppress[].track: suppress only matching source or
     destination addresses { by_src | by_dst }
-  * bool syslog_trace.enable: enable syslog trace logger
   * enum syslog_trace.priority = info: select syslog priority { emerg
     | alert | crit | err | warning | notice | info | debug }
   * int tag.bytes: tag for this many bytes { 1:max32 }
@@ -12351,7 +12384,8 @@ libraries see the Getting Started section of the manual.
   * int trace.modules.detection.opt_tree: enable tree option trace
     logging { 0:255 }
   * int trace.modules.dpx.all: enable all trace options { 0:255 }
-  * int trace.modules.file_id.all: enable all trace options { 0:255 }
+  * int trace.modules.file_inspect.all: enable all trace options {
+    0:255 }
   * int trace.modules.js_norm.all: enable all trace options { 0:255 }
   * int trace.modules.js_norm.dump: enable data logging { 0:255 }
   * int trace.modules.js_norm.proc: enable processing logging { 0:255
@@ -12371,7 +12405,9 @@ libraries see the Getting Started section of the manual.
   * int trace.modules.wizard.all: enable all trace options { 0:255 }
   * bool trace.ntuple = false: print packet n-tuple info with trace
     messages
-  * string trace.output: output method for trace log messages
+  * dynamics trace.output = stdout_trace: output method(s) for trace
+    log messages { none | | file_trace | null_trace_logger |
+    stdout_trace | syslog_trace }
   * bool trace.timestamp = false: print message timestamps with trace
     messages
   * interval ttl.~range: check if IP TTL is in the given range {
@@ -12918,18 +12954,19 @@ libraries see the Getting Started section of the manual.
     out of local memory (sum)
   * extractor.total_events: total events processed by extractor (sum)
   * file_connector.messages: total messages (sum)
-  * file_id.buffers_in_use: number of file buffers currently in use
-    (now)
-  * file_id.buffers_max: maximum number of file buffers that can be
-    allocated (max)
-  * file_id.cache_failures: number of file cache add failures (sum)
-  * file_id.files_not_processed: number of files not processed due to
-    per-flow limit (sum)
-  * file_id.max_concurrent_files: maximum files processed
-    concurrently on a flow (max)
-  * file_id.total_file_data: number of file data bytes processed
+  * file_inspect.buffers_in_use: number of file buffers currently in
+    use (now)
+  * file_inspect.buffers_max: maximum number of file buffers that can
+    be allocated (max)
+  * file_inspect.cache_failures: number of file cache add failures
     (sum)
-  * file_id.total_files: number of files processed (sum)
+  * file_inspect.files_not_processed: number of files not processed
+    due to per-flow limit (sum)
+  * file_inspect.max_concurrent_files: maximum files processed
+    concurrently on a flow (max)
+  * file_inspect.total_file_data: number of file data bytes processed
+    (sum)
+  * file_inspect.total_files: number of files processed (sum)
   * file_log.total_events: total file events (sum)
   * ftp_data.packets: total packets (sum)
   * ftp_server.concurrent_sessions: total concurrent FTP sessions
@@ -13320,13 +13357,37 @@ libraries see the Getting Started section of the manual.
   * packet_capture.captured: packets captured after matching filter
     (sum)
   * packet_capture.processed: packets processed against filter (sum)
-  * payload_injector.http2_injects: total number of http2 injections
+  * payload_injector.err_c2s_http_proto: total number of c2s HTTP
+    protocol errors (sum)
+  * payload_injector.err_conflicting_s2c_traffic: total number of
+    conflicting s2c traffic errors (sum)
+  * payload_injector.err_http2_even_stream: total number of HTTP/2
+    even-numbered stream errors (sum)
+  * payload_injector.err_http2_stream_id_0: total number of HTTP/2
+    stream ID 0 errors (sum)
+  * payload_injector.err_injector_not_configured: total number of
+    injector-not-configured errors (sum)
+  * payload_injector.err_s2c_http2_proto: total number of s2c HTTP2
+    protocol errors (sum)
+  * payload_injector.err_s2c_http_proto: total number of s2c HTTP
+    protocol errors (sum)
+  * payload_injector.err_session_not_tcp: total number of
+    session-not-tcp errors (sum)
+  * payload_injector.err_stale_s2c_data: total number of stale s2c
+    data errors (sum)
+  * payload_injector.err_stream_not_established: total number of
+    stream-not-established errors (sum)
+  * payload_injector.err_unidentified_protocol: total number of
+    unidentified-protocol errors (sum)
+  * payload_injector.failed_injects: total number of failed HTTP and
+    HTTP/2 injections (sum)
+  * payload_injector.http2_injects: total number of HTTP/2 injections
     (sum)
   * payload_injector.http2_mid_frame: total number of attempts to
     inject mid-frame (sum)
-  * payload_injector.http2_translate_err: total number of http2 page
+  * payload_injector.http2_translate_err: total number of HTTP/2 page
     translation errors (sum)
-  * payload_injector.http_injects: total number of http injections
+  * payload_injector.http_injects: total number of HTTP injections
     (sum)
   * pcre.pcre_error: total number of times pcre returns error (sum)
   * pcre.pcre_match_limit: total number of times pcre hit the match
@@ -13942,7 +14003,8 @@ libraries see the Getting Started section of the manual.
   * 116: mpls
   * 116: pbb
   * 116: pgm
-  * 116: pppoe
+  * 116: pppoe_disc
+  * 116: pppoe_sess
   * 116: tcp
   * 116: token_ring
   * 116: udp
@@ -13975,7 +14037,7 @@ libraries see the Getting Started section of the manual.
   * 145: dnp3
   * 148: cip
   * 149: s7commplus
-  * 150: file_id
+  * 150: file_inspect
   * 151: iec104
   * 152: mms
   * 153: opcua
@@ -14165,7 +14227,7 @@ bytes.
 
 (eapol) EAP header truncated
 
-116:120 (pppoe) bad PPPOE frame detected
+116:120 (pppoe_disc) bad PPPOE discovery frame detected
 
 A bad PPPOE frame has been detected. The frames length is less than
 the PPPOE frame minimum (6 bytes).
@@ -14565,12 +14627,12 @@ session.
 The TCP packet is invalid because it doesn’t have a SYN, ACK, or RST
 flag set.
 
-116:424 (eth) truncated ethernet header
+116:424 (pbb) truncated ethernet header
 
 The packet length is less than the minimum ethernet header size (14
 bytes)
 
-116:424 (eth) truncated ethernet header
+116:424 (pbb) truncated ethernet header
 
 A truncated ethernet header was detected.
 
@@ -15197,7 +15259,7 @@ too big
 
 The decompressed size of the PDF/SWF/ZIP file contained in the HTTP
 message body exceeded the configured limit. The decompression limit
-can be configured with file_id.decompress_buffer_size.
+can be configured with file_inspect.decompress_buffer_size.
 
 119:230 (http_inspect) nonprinting character in HTTP message header
 name
@@ -16897,9 +16959,9 @@ length needed for the given S7commplus function
 
 (s7commplus) reserved S7commplus function code in use
 
-150:1 (file_id) file not processed due to per flow limit
+150:1 (file_inspect) file not processed due to per flow limit
 
-(file_id) file not processed due to per flow limit
+(file_inspect) file not processed due to per flow limit
 
 151:1 (iec104) Length in IEC104 APCI header does not match the length
 needed for the given IEC104 ASDU type id
@@ -17349,44 +17411,42 @@ alert is raised by the enhanced JavaScript normalizer.
   * rna.delete_mac_host_proto(mac, proto): delete a protocol
     associated with a MAC host
   * rna.purge_data(): purge all host cache and mac cache data
-  * snort.set_watchdog_params(timer, min_thread_count): set watchdog
-    parameters
-  * snort.show_plugins(): show available plugins
-  * snort.delete_inspector(inspector): delete an inspector from the
-    default policy
-  * snort.dump_stats(): show summary statistics
+  * snort.detach(): detach from control shell (without shutting down)
+  * snort.dump_heap_profile(): dump jemalloc memory profile
   * snort.dump_heap_stats(): show heap statistics
+  * snort.dump_inspector_map(): show inspectors to policy ID mapping
+  * snort.dump_stats(): show summary statistics
   * snort.heap_profile(enable, sample_rate): jemalloc memory tracking
     configuration
-  * snort.dump_heap_profile(): dump jemalloc memory profile
-  * snort.show_heap_profile(): show jemalloc memory profiling
-    configuration
-  * snort.reset_stats(type): clear summary statistics. Type can be:
-    daq|module|appid|file_id|snort|ha|all. reset_stats() without a
-    parameter clears all statistics.
-  * snort.rotate_stats(): roll perfmonitor log files
-  * snort.reload_config(filename): load new configuration
-  * snort.reload_policy(filename): reload part or all of the default
-    policy
-  * snort.reload_daq(): reload daq module
-  * snort.reload_hosts(filename): load a new hosts table
+  * snort.help(): this output
+  * snort.list_plugins(): list loaded plugins
   * snort.log_command(command, logging): enable or disable command
     logging
+  * snort.pause(): suspend packet processing
+  * snort.quit(): shutdown and dump-stats
+  * snort.reload_config(filename): load new configuration
+  * snort.reload_daq(): reload daq module
+  * snort.reload_hosts(filename): load a new hosts table
+  * snort.reset_stats(type): clear summary statistics. Type can be:
+    daq|module|appid|file_inspect|snort|ha|all. reset_stats() without
+    a parameter clears all statistics.
+  * snort.resume(pkt_num): continue packet processing. If number of
+    packets is specified, will resume for n packets and pause
+  * snort.rotate_stats(): roll perfmonitor log files
+  * snort.set_watchdog_params(timer, min_thread_count): set watchdog
+    parameters
+  * snort.show_heap_profile(): show jemalloc memory profiling
+    configuration
+  * snort.show_plugins(): show loaded plugins
   * snort.show_config_generation(): show loaded configuration ID
   * snort.show_snort_cpu(): show snort cpu usage
   * snort.show_snort_packet_latency(): show snort packet latency data
-  * snort.pause(): suspend packet processing
-  * snort.resume(pkt_num): continue packet processing. If number of
-    packets is specified, will resume for n packets and pause
-  * snort.detach(): detach from control shell (without shutting down)
-  * snort.quit(): shutdown and dump-stats
-  * snort.help(): this output
   * stream.dump_flows(): dump the flow table in text format
   * stream.dump_flows_binary(): dump the flow table in binary format
   * stream.dump_flows_summary(): dump flow table summary
-  * trace.set(modules, constraints, ntuple, timestamp): set modules
-    traces, constraints, ntuple and timestamp options
-  * trace.clear(): clear modules traces and constraints
+  * trace.set(output, ntuple, timestamp, constraints, modules): set
+    trace configuration
+  * trace.clear(): clear trace configuration
 
 
 11.9. Signals
@@ -17530,9 +17590,8 @@ and are not applicable elsewhere.
   * file_connector (connector): implement the file based connector
   * file_data (ips_option): rule option to set detection cursor to
     file data
-  * file_id (inspector): configure file identification
-  * file_id_action (ips_action): manage the counters for the file_id
-    action
+  * file_id (ips_action): manage the counters for the file_id action
+  * file_inspect (inspector): configure file inspection
   * file_log (inspector): log file event to file.log
   * file_meta (ips_option): rule option to set file metadata (file
     type and id)
@@ -17704,7 +17763,8 @@ and are not applicable elsewhere.
   * packets (basic): configure basic packet handling
   * pass (ips_action): manage the counters for the pass action
   * payload_injector (basic): payload injection utility
-  * pbb (codec): support for 802.1ah protocol
+  * pbb (codec): support for 802.1ah provider backbone bridging
+    protocol
   * pcre (ips_option): rule option for matching payload data with
     pcre
   * perf_monitor (inspector): performance monitoring and flow
@@ -17716,7 +17776,8 @@ and are not applicable elsewhere.
   * pop (inspector): pop inspection
   * port_scan (inspector): detect various ip, icmp, tcp, and udp port
     or protocol scans
-  * pppoe (codec): support for point-to-point protocol over ethernet
+  * pppoe_disc (codec): support for point-to-point discovery
+  * pppoe_sess (codec): support for point-to-point session
   * priority (ips_option): rule option for prioritizing events
   * process (basic): configure basic process setup
   * profiler (basic): configure profiling of rules and/or modules
@@ -17775,8 +17836,6 @@ and are not applicable elsewhere.
   * snort_ml_engine (inspector): configure machine learning engine
     settings
   * so (ips_option): rule option to call custom eval function
-  * so_proxy (inspector): a proxy inspector to track flow data from
-    SO rules (internal use only)
   * socks (inspector): SOCKS protocol inspector
   * socks_address_type (ips_option): match SOCKS address type (1=
     IPv4, 3=Domain, 4=IPv6) - SOCKS5 only
@@ -17884,7 +17943,8 @@ and are not applicable elsewhere.
   * codec::llc: support for logical link control
   * codec::mpls: support for multiprotocol label switching
   * codec::null: support for null encapsulation (DLT 0)
-  * codec::pbb: support for 802.1ah protocol
+  * codec::pbb: support for 802.1ah provider backbone bridging
+    protocol
   * codec::pflog: support for OpenBSD PF log (DLT 117)
   * codec::pgm: support for pragmatic general multicast
   * codec::ppp: support for point-to-point encapsulation (DLT 9)
@@ -17898,6 +17958,7 @@ and are not applicable elsewhere.
   * codec::token_ring: support for token ring decoding
   * codec::trans_bridge: support for trans-bridging
   * codec::udp: support for user datagram protocol
+  * codec::unknown: support for unknown protocols
   * codec::user: support for user sessions (DLT 230)
   * codec::vlan: support for local area network
   * codec::vxlan: support for Virtual Extensible LAN
@@ -17931,14 +17992,16 @@ and are not applicable elsewhere.
   * inspector::domain_filter: alert on configured HTTP domains
   * inspector::dpx: dynamic inspector example
   * inspector::extractor: extracts protocol specific data
-  * inspector::file_id: configure file identification
+  * inspector::file_inspect: configure file inspection
   * inspector::file_log: log file event to file.log
-  * inspector::ftp_client: FTP inspector client module
+  * inspector::ftp_client: FTP client configuration module for use
+    with ftp_server
   * inspector::ftp_data: FTP data channel handler
-  * inspector::ftp_server: FTP inspector server module
+  * inspector::ftp_server: main FTP module; ftp_client should also be
+    configured
   * inspector::gtp_inspect: gtp control channel inspection
-  * inspector::http2_inspect: the HTTP/2 inspector
-  * inspector::http_inspect: the new HTTP inspector!
+  * inspector::http2_inspect: HTTP/2 inspector
+  * inspector::http_inspect: HTTP inspector
   * inspector::iec104: iec104 inspection
   * inspector::imap: imap inspection
   * inspector::mem_test: for testing memory management
@@ -17963,8 +18026,6 @@ and are not applicable elsewhere.
   * inspector::snort_ml: machine learning based exploit detector
   * inspector::snort_ml_engine: configure machine learning engine
     settings
-  * inspector::so_proxy: a proxy inspector to track flow data from SO
-    rules (internal use only)
   * inspector::socks: SOCKS protocol inspector
   * inspector::ssh: ssh inspection
   * inspector::ssl: ssl inspection
@@ -17984,18 +18045,17 @@ and are not applicable elsewhere.
     field
   * inspector::wizard: inspector that implements port-independent
     protocol identification
-  * ips_action::alert: generate alert on the current packet
-  * ips_action::block: block current packet and all the subsequent
-    packets in this flow
-  * ips_action::drop: drop the current packet
-  * ips_action::file_id: file_id file type id
-  * ips_action::log: log the current packet
-  * ips_action::pass: mark the current packet as passed
-  * ips_action::react: send response to client and terminate session
-  * ips_action::reject: terminate session with TCP reset or ICMP
-    unreachable
-  * ips_action::rewrite: overwrite packet contents with the "replace"
-    option content
+  * ips_action::alert: manage the counters for the alert action
+  * ips_action::block: manage the counters for the block action
+  * ips_action::drop: manage the counters for the drop action
+  * ips_action::file_id: manage the counters for the file_id action
+  * ips_action::log: manage the counters for the log action
+  * ips_action::pass: manage the counters for the pass action
+  * ips_action::react: manage the data and the counters for the react
+    action
+  * ips_action::reject: manage the data and the counters for the
+    reject action
+  * ips_action::rewrite: manage the counters for the rewrite action
   * ips_option::ack: rule option to match on TCP ack numbers
   * ips_option::appids: detection option for application ids
   * ips_option::base64_data: set detection cursor to decoded Base64

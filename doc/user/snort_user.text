@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.11.1.0 2026-02-26 21:55:44 EST TST
+Revision 3.12.0.0 2026-03-03 21:22:50 EST TST
 
 ---------------------------------------------------------------------
 
@@ -736,8 +736,6 @@ Parameter limits:
   * max32 = 4294967295
   * max53 = 9007199254740992
   * maxSZ = 9007199254740992
-  * max63 = 9223372036854775807
-  * max64 = 18446744073709551615
 
 
 2.4. Plugins
@@ -1422,7 +1420,7 @@ a restart:
   * attribute_table.max_hosts
   * attribute_table.max_services_per_host
   * daq.snaplen
-  * file_id.max_files_cached
+  * file_inspect.max_files_cached
   * process.chroot
   * process.daemon
   * process.set_gid
@@ -1434,9 +1432,9 @@ a restart:
 In addition, the following scenarios require a restart:
 
   * Enabling file capture for the first time
-  * Changing file_id.capture_memcap if file capture was previously or
-    currently enabled
-  * Changing file_id.capture_block_size if file capture was
+  * Changing file_inspect.capture_memcap if file capture was
+    previously or currently enabled
+  * Changing file_inspect.capture_block_size if file capture was
     previously or currently enabled
   * Adding/removing stream_* inspectors if stream was already
     configured
@@ -1905,7 +1903,7 @@ Snort will translate the page to HTTP/2 format.
 
 Limitations for HTTP/2:
 
-  * Packet will be injected against the last received stream id.
+  * Packet will be injected against the last processed stream id.
   * Injection triggered while server-to-client flow of traffic is in
     a middle of a frame is not supported. The traffic will be
     blocked, but the page will not be injected/displayed.
@@ -3212,7 +3210,7 @@ dce_smb =
     smb_file_depth = 0,
  }
 
-file_id =
+file_inspect =
 {
     enable_type = true,
     enable_signature = true,
@@ -3489,7 +3487,7 @@ my_file_policy =
     {  when = { sha256 = "F74DC976BC8387E7D4FC0716A069017A0C7ED13F309A523CC41A8739CCB7D4B6" }, use = { verdict = 'block'} },
 }
 
-file_id =
+file_inspect =
 {
     enable_type = true,
     enable_signature = true,
@@ -3522,7 +3520,7 @@ that these pre-packaged rules are used; doing so requires that you
 include the file in your Snort configuration as such (already in
 snort.lua):
 
-file_id = { rules_file = 'file_magic.rules' }
+file_inspect = { rules_file = 'file_magic.rules' }
 
 Example:
 
@@ -3544,8 +3542,8 @@ required for each file_id rule.
 5.7.4. File Policy
 
 You can enabled file type, file signature, or file capture by
-configuring file_id. In addition, you can enable trace to see file
-stream data, file type, and file signature information.
+configuring file_inspect. In addition, you can enable trace to see
+file stream data, file type, and file signature information.
 
 Most importantly, you can configure a file policy that can block/
 alert some file type or an individual file based on SHA. This allows
