@@ -286,6 +286,7 @@ SnortConfig::~SnortConfig()
     }
     delete fast_pattern_config;
 
+    clear_reload_resource_tuner_list();
     delete policy_map;
     policy_map = nullptr;
     ActionManager::delete_config(this);
@@ -312,7 +313,6 @@ SnortConfig::~SnortConfig()
     delete payload_injector_config;
     delete trace_config;
     delete overlay_trace_config;
-    clear_reload_resource_tuner_list();
 
     Profiler::clear(this);
 
