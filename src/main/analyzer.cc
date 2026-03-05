@@ -454,7 +454,6 @@ void Analyzer::process_daq_pkt_msg(DAQ_Msg_h msg, bool retry)
     // We must ensure that a context is available when one is needed.
     Stream::handle_timeouts(false);
     HighAvailabilityManager::process_receive();
-    PluginManager::empty_trash();
 }
 
 void Analyzer::process_daq_msg(DAQ_Msg_h msg, bool retry)

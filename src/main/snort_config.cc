@@ -1031,9 +1031,6 @@ void SnortConfig::set_conf(SnortConfig* sc)
     }
 }
 
-unsigned SnortConfig::get_reload_id()
-{ return get_conf()->reload_id; }
-
 void SnortConfig::register_reload_handler(ReloadResourceTuner* rrt)
 {
     if (Snort::is_reloading())
@@ -1049,10 +1046,13 @@ void SnortConfig::clear_reload_resource_tuner_list()
     reload_tuners.clear();
 }
 
+unsigned SnortConfig::get_reload_id()
+{ return get_conf()->reload_id.load(std::memory_order_relaxed); }
+
 void SnortConfig::update_reload_id()
 {
     static unsigned reload_id_tracker = 0;
-    reload_id = ++reload_id_tracker;
+    reload_id.store(++reload_id_tracker, std::memory_order_relaxed);
 }
 
 void SnortConfig::generate_dump(std::list<ConfigData*> *config_data_to_dump)

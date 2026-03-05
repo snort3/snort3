@@ -903,6 +903,7 @@ static bool house_keeping()
 
     Periodic::check();
 
+    PluginManager::empty_trash();
     InspectorManager::empty_trash();
 
     return false;

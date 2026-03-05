@@ -107,14 +107,14 @@ void FileService::verify_reload(const SnortConfig* sc)
         return;
 
     if (max_files_cached != conf->max_files_cached)
-        ReloadError("Changing file_id.max_files_cached requires a restart.\n");
+        ReloadError("Changing file_inspect.max_files_cached requires a restart.\n");
 
     if (file_capture_enabled)
     {
         if (capture_memcap != conf->capture_memcap)
-            ReloadError("Changing file_id.capture_memcap requires a restart.\n");
+            ReloadError("Changing file_inspect.capture_memcap requires a restart.\n");
         if (capture_block_size != conf->capture_block_size)
-            ReloadError("Changing file_id.capture_block_size requires a restart.\n");
+            ReloadError("Changing file_inspect.capture_block_size requires a restart.\n");
     }
 
     if (conf->snort_protocol_id == UNKNOWN_PROTOCOL_ID)
