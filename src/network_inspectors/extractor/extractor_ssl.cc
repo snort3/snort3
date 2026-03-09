@@ -576,15 +576,15 @@ static const char* get_module_identifier(const DataEvent* event, const Flow*)
     return ((const SslTlsMetadataBaseEvent*)event)->get_module_identifier().c_str();
 }
 
-static const char* get_server_name_identifier(const DataEvent* event, const Flow*)
+static const char* get_server_name(const DataEvent* event, const Flow*)
 {
-    return ((const SslTlsMetadataBaseEvent*)event)->get_server_name_identifier().c_str();
+    return ((const SslTlsMetadataBaseEvent*)event)->get_server_name().c_str();
 }
 
 static const map<string, ExtractorEvent::BufGetFn> buf_getters =
 {
     {"version", get_version},
-    {"server_name_identifier", get_server_name_identifier},
+    {"server_name", get_server_name},
     {"validation_status", get_validation_status},
     {"subject", get_subject},
     {"issuer", get_issuer},

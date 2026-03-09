@@ -122,7 +122,7 @@ Fields supported for FTP:
 Fields supported for SSL:
 
 * `version` - SSL/TLS version that the server chose
-* `server_name_identifier` - Server Name Identifier ( SNI ) extracted from Client Hello
+* `server_name` - Server Name Identifier ( SNI ) extracted from Client Hello
 * `validation_status` - result of certificate validation
 * `subject` - RFC2253 formatted certificate subject information
 * `issuer` - RFC2253 formatted certificate issuer information

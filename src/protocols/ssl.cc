@@ -91,7 +91,7 @@ void TLSConnectionData::process(const SSLV3ServerCertData &cert_data)
 
 void TLSConnectionData::process(const SSLV3ClientHelloData &client_hello_data)
 {
-    server_name_identifier = client_hello_data.host_name ? std::string(client_hello_data.host_name) : "";
+    server_name = client_hello_data.host_name ? std::string(client_hello_data.host_name) : "";
 }
 
 static uint32_t SSL_decode_version_v3(uint8_t major, uint8_t minor)

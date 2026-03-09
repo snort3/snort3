@@ -387,7 +387,7 @@ const ServiceBlueprint SslExtractorService::blueprint =
     // fields
     {
         "version",
-        "server_name_identifier",
+        "server_name",
         "curve",
         "cipher",
         "subject",

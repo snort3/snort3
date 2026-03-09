@@ -259,8 +259,8 @@ struct SO_PUBLIC TLSConnectionData
 {
     void process(const SSLV3ServerCertData& cert_data);
     void process(const SSLV3ClientHelloData& client_hello_data);
-    
-    std::string server_name_identifier;
+
+    std::string server_name;
     std::string subject_info;
     std::string issuer_info;
     TLSConnectionParams tls_params;
