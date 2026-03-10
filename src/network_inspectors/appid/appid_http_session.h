@@ -33,6 +33,8 @@
 #include "appid_types.h"
 #include "application_ids.h"
 
+#define HTTP_FIELD_LEN_LIMIT 2048
+
 class AppIdSession;
 class ChpMatchDescriptor;
 class HttpPatternMatchers;
@@ -170,13 +172,6 @@ protected:
 
     AppIdSession& asd;
 
-    // FIXIT-M the meta data buffers in this array are only set from
-    // third party (tp_appid_utils.cc) and from http inspect
-    // (appid_http_event_handler.cc). The set_field functions should
-    // only be accessible to those functions/classes, but the process
-    // functions in tp_appid_utils.cc are static. Thus the public
-    // set_field() functions in AppIdHttpSession. We do need set functions
-    // for this array, as old pointers need to be deleted upon set().
     const std::string* meta_data[NUM_METADATA_FIELDS] = { };
 
     bool is_webdav = false;

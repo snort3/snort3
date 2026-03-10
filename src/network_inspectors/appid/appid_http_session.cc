@@ -814,6 +814,9 @@ void AppIdHttpSession::set_field(HttpFieldIds id, const uint8_t* str, int32_t le
 {
     if (str and len)
     {
+        if (len > HTTP_FIELD_LEN_LIMIT)
+            len = HTTP_FIELD_LEN_LIMIT;
+
         delete meta_data[id];
         meta_data[id] = new std::string((const char*)str, len);
         set_http_change_bits(change_bits, id);
@@ -837,13 +840,13 @@ void AppIdHttpSession::set_req_body_field(HttpFieldIds id, const uint8_t* str, i
         }
 
         if (!meta_data[id])
-            meta_data[id] = new std::string((const char*)str, len);
-        else
+            meta_data[id] = new std::string((const char*)str,
+                len > HTTP_FIELD_LEN_LIMIT ? HTTP_FIELD_LEN_LIMIT : len);
+        else if (meta_data[id]->size() < HTTP_FIELD_LEN_LIMIT)
         {
-            std::string* req_body = new std::string(*meta_data[id]);
-            delete meta_data[id];
-            req_body->append((const char*)str, len);
-            meta_data[id] = req_body;
+            size_t remaining = HTTP_FIELD_LEN_LIMIT - meta_data[id]->size();
+            const_cast<std::string*>(meta_data[id])->append((const char*)str,
+                (size_t)len > remaining ? remaining : len);
         }
         set_http_change_bits(change_bits, id);
         set_scan_flags(id);
@@ -854,12 +857,16 @@ void AppIdHttpSession::set_req_body_field(HttpFieldIds id, const uint8_t* str, i
 
 void AppIdHttpSession::print_field(HttpFieldIds id, const std::string* field)
 {
-    string field_name;
+    const char* proto;
+    const char* field_name;
+
+    if (!appid_trace_enabled and !(appidDebug and appidDebug->is_active()))
+        return;
 
     if (asd.get_session_flags(APPID_SESSION_SPDY_SESSION))
-        field_name = "SPDY ";
+        proto = "SPDY";
     else if (asd.get_session_flags(APPID_SESSION_HTTP_SESSION))
-        field_name = "HTTP ";
+        proto = "HTTP";
     else
         // This could be RTMP session; not printing RTMP fields for now
         return;
@@ -867,51 +874,51 @@ void AppIdHttpSession::print_field(HttpFieldIds id, const std::string* field)
     switch (id)
     {
     case REQ_AGENT_FID:
-        field_name += "user agent";
+        field_name = "user agent";
         break;
 
     case REQ_HOST_FID:
-        field_name += "host";
+        field_name = "host";
         break;
 
     case REQ_REFERER_FID:
-        field_name += "referer";
+        field_name = "referer";
         break;
 
     case REQ_URI_FID:
-        field_name += "URI";
+        field_name = "URI";
         break;
 
     case REQ_COOKIE_FID:
-        field_name += "cookie";
+        field_name = "cookie";
         break;
 
     case REQ_BODY_FID:
-        field_name += "request body";
+        field_name = "request body";
         break;
 
     case RSP_CONTENT_TYPE_FID:
-        field_name += "content type";
+        field_name = "content type";
         break;
 
     case RSP_LOCATION_FID:
-        field_name += "location";
+        field_name = "location";
         break;
 
     case MISC_VIA_FID:
-        field_name += "via";
+        field_name = "via";
         break;
 
     case MISC_RESP_CODE_FID:
-        field_name += "response code";
+        field_name = "response code";
         break;
 
     case MISC_SERVER_FID:
-        field_name += "server";
+        field_name = "server";
         break;
 
     case MISC_XWW_FID:
-        field_name += "x-working-with";
+        field_name = "x-working-with";
         break;
 
     // don't print these fields
@@ -922,9 +929,9 @@ void AppIdHttpSession::print_field(HttpFieldIds id, const std::string* field)
     }
 
     if (httpx_stream_id >= 0)
-        APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "stream %" PRId64 ": %s is %s\n",
-            httpx_stream_id, field_name.c_str(), field->c_str());
-    else 
-        APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "%s is %s\n", field_name.c_str(), field->c_str());
+        APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "stream %" PRId64 ": %s %s is %s\n",
+            httpx_stream_id, proto, field_name, field->c_str());
+    else
+        APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "%s %s is %s\n", proto, field_name, field->c_str());
 }
 

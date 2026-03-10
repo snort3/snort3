@@ -148,10 +148,6 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         header_start = http_event->get_referer(header_length);
         hsession->set_field(REQ_REFERER_FID, header_start, header_length, change_bits);
         hsession->set_is_webdav(http_event->contains_webdav_method());
-
-        // FIXIT-M: Should we get request body (may be expensive to copy)?
-        //      It is not currently set in callback in 2.9.x, only via
-        //      third-party.
     }
     else    // Response headers.
     {
@@ -174,11 +170,6 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
             if ( ret < sizeof(tmpstr) )
                 hsession->set_field(MISC_RESP_CODE_FID, (const uint8_t*)tmpstr, ret, change_bits);
         }
-
-        // FIXIT-M: Get Location header data.
-        // FIXIT-M: Should we get response body (may be expensive to copy)?
-        //      It is not currently set in callback in 2.9.x, only via
-        //      third-party.
     }
 
     header_start = http_event->get_x_working_with(header_length);
