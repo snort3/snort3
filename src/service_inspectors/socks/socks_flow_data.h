@@ -369,7 +369,7 @@ public:
     bool is_session_counted() const { return session_counted; }
     void set_session_counted(bool counted) { session_counted = counted; }
 
-
+    uint8_t events_suppressed = 0;
 
     // SOCKS version tracking
     uint8_t get_socks_version() const { return socks_version; }

@@ -33,13 +33,17 @@
 
 enum SocksEvent : uint32_t
 {
+    SOCKS_EVENT_NONE = 0,
+
     // SOCKS protocol anomaly events (security-relevant only)
     SOCKS_EVENT_UNKNOWN_COMMAND = 1,
     SOCKS_EVENT_PROTOCOL_VIOLATION,
-    
+
     // SOCKS5-specific events
     SOCKS5_EVENT_UNKNOWN_ADDRESS_TYPE,
-    SOCKS5_EVENT_UDP_FRAGMENTATION
+    SOCKS5_EVENT_UDP_FRAGMENTATION,
+
+    SOCKS_EVENT_MAX
 };
 
 enum SocksPeg : uint32_t
@@ -58,8 +62,7 @@ enum SocksPeg : uint32_t
     SOCKS_PEG_UDP_ASSOCIATIONS_CREATED,
     SOCKS_PEG_UDP_EXPECTATIONS_CREATED,
     SOCKS_PEG_UDP_PACKETS,
-    SOCKS_PEG_UDP_FRAGS_DROPPED,
-    SOCKS_PEG_UDP_FRAGS_BLOCKED,
+    SOCKS_PEG_UDP_FRAGS,
     SOCKS_PEG_MAX
 };
 
@@ -81,32 +84,20 @@ struct SocksStats
     PegCount udp_associations_created;
     PegCount udp_expectations_created;
     PegCount udp_packets;
-    PegCount udp_frags_dropped;
-    PegCount udp_frags_blocked;
+    PegCount udp_frags;
 };
 
 extern THREAD_LOCAL SocksStats socks_stats;
 extern THREAD_LOCAL snort::ProfileStats socksPerfStats;
 
-struct SocksConfig
-{
-    bool block_udp_fragmentation = true;     // Block flow on UDP fragmentation (default: true)
-};
-
 class SocksModule : public snort::Module
 {
 public:
     SocksModule();
-    ~SocksModule() override;
-
     unsigned get_gid() const override
     { return GID_SOCKS; }
 
     const snort::RuleMap* get_rules() const override;
-
-    bool set(const char*, snort::Value&, snort::SnortConfig*) override;
-    bool begin(const char*, int, snort::SnortConfig*) override;
-    bool end(const char*, int, snort::SnortConfig*) override;
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
@@ -120,11 +111,6 @@ public:
     bool is_bindable() const override
     { return true; }
     
-    const SocksConfig* get_config() const
-    { return config; }
-
-private:
-    SocksConfig* config;
 };
 
 #endif

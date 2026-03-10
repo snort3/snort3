@@ -105,28 +105,26 @@ namespace snort
     bool TraceApi::filter(const Packet&) { return false; }
 }
 
-// Mock for socks_stats - must match real definition in socks_module.h
-using PegCount = uint64_t;
 struct SocksStats
 {
-    PegCount sessions = 0;
-    PegCount concurrent_sessions = 0;
-    PegCount max_concurrent_sessions = 0;
-    PegCount auth_requests = 0;
-    PegCount auth_successes = 0;
-    PegCount auth_failures = 0;
-    PegCount connect_requests = 0;
-    PegCount bind_requests = 0;
-    PegCount udp_associate_requests = 0;
-    PegCount successful_connections = 0;
-    PegCount failed_connections = 0;
-    PegCount udp_associations_created = 0;
-    PegCount udp_expectations_created = 0;
-    PegCount udp_packets = 0;
-    PegCount udp_frags_dropped = 0;
-    PegCount udp_frags_blocked = 0;
+    uint64_t sessions = 0;
+    uint64_t concurrent_sessions = 0;
+    uint64_t max_concurrent_sessions = 0;
+    uint64_t auth_requests = 0;
+    uint64_t auth_successes = 0;
+    uint64_t auth_failures = 0;
+    uint64_t connect_requests = 0;
+    uint64_t bind_requests = 0;
+    uint64_t udp_associate_requests = 0;
+    uint64_t successful_connections = 0;
+    uint64_t failed_connections = 0;
+    uint64_t udp_associations_created = 0;
+    uint64_t udp_expectations_created = 0;
+    uint64_t udp_packets = 0;
+    uint64_t udp_frags = 0;
 };
-THREAD_LOCAL SocksStats socks_stats;
+
+THREAD_LOCAL SocksStats socks_stats = {};
 
 class FlushBucket
 {

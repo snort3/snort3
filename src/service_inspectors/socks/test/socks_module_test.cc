@@ -155,8 +155,7 @@ TEST(socks5_module_test, all_stats_peg_mapping)
     socks_stats.udp_associations_created = 12;
     socks_stats.udp_expectations_created = 13;
     socks_stats.udp_packets = 14;
-    socks_stats.udp_frags_dropped = 15;
-    socks_stats.udp_frags_blocked = 16;
+    socks_stats.udp_frags = 15;
     
     // Verify all peg indices map correctly
     CHECK_EQUAL(1, counts[SOCKS_PEG_SESSIONS]);
@@ -173,8 +172,7 @@ TEST(socks5_module_test, all_stats_peg_mapping)
     CHECK_EQUAL(12, counts[SOCKS_PEG_UDP_ASSOCIATIONS_CREATED]);
     CHECK_EQUAL(13, counts[SOCKS_PEG_UDP_EXPECTATIONS_CREATED]);
     CHECK_EQUAL(14, counts[SOCKS_PEG_UDP_PACKETS]);
-    CHECK_EQUAL(15, counts[SOCKS_PEG_UDP_FRAGS_DROPPED]);
-    CHECK_EQUAL(16, counts[SOCKS_PEG_UDP_FRAGS_BLOCKED]);
+    CHECK_EQUAL(15, counts[SOCKS_PEG_UDP_FRAGS]);
 }
 
 TEST(socks5_module_test, basic_functionality)

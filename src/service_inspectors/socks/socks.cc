@@ -56,6 +56,16 @@ using namespace snort;
 THREAD_LOCAL ProfileStats socksPerfStats;
 THREAD_LOCAL SocksStats socks_stats;
 
+static void create_socks_event(SocksFlowData* fd, SocksEvent event)
+{
+    uint8_t bit = 1u << (static_cast<uint32_t>(event) - 1);
+    if ( !(fd->events_suppressed & bit) )
+    {
+        DetectionEngine::queue_event(GID_SOCKS, static_cast<uint32_t>(event));
+        fd->events_suppressed |= bit;
+    }
+}
+
 static unsigned socks_pub_id = 0;
 static SnortProtocolId socks_snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
@@ -77,12 +87,7 @@ bool SocksInspector::configure(SnortConfig* sc)
 }
 
 void SocksInspector::show(const SnortConfig*) const
-{
-    if ( !config or !config->get_config() )
-        return;
-
-    ConfigLogger::log_flag("block_udp_fragmentation", config->get_config()->block_udp_fragmentation);
-}
+{ }
 
 void SocksInspector::eval(Packet* p)
 {
@@ -91,9 +96,6 @@ void SocksInspector::eval(Packet* p)
 
     assert((p->is_udp() and p->dsize and p->data) or p->has_tcp_data() or p->has_paf_payload());
     assert(p->flow);
-
-    if ( !config or !config->get_config() )
-        return;
 
     Flow* flow = p->flow;
     SocksFlowData* flow_data = get_flow_data(flow);
@@ -184,9 +186,7 @@ bool SocksInspector::parse_socks4_request(const uint8_t* data, uint16_t len, Soc
 
     if ( !is_valid_socks4_version(req->version) )
     {
-        const Packet* p = DetectionEngine::get_current_packet();
-        if ( p )
-            DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_PROTOCOL_VIOLATION);
+        create_socks_event(flow_data, SOCKS_EVENT_PROTOCOL_VIOLATION);
         return false;
     }
 
@@ -194,9 +194,7 @@ bool SocksInspector::parse_socks4_request(const uint8_t* data, uint16_t len, Soc
 
     if ( !is_valid_command(req->command) )
     {
-        const Packet* p = DetectionEngine::get_current_packet();
-        if ( p )
-            DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_UNKNOWN_COMMAND);
+        create_socks_event(flow_data, SOCKS_EVENT_UNKNOWN_COMMAND);
         return false;
     }
 
@@ -227,18 +225,14 @@ bool SocksInspector::parse_socks4_request(const uint8_t* data, uint16_t len, Soc
 
     if ( !userid_end )
     {
-        const Packet* p = DetectionEngine::get_current_packet();
-        if ( p )
-            DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_PROTOCOL_VIOLATION);
+        create_socks_event(flow_data, SOCKS_EVENT_PROTOCOL_VIOLATION);
         return false;
     }
 
     size_t userid_len = userid_end - userid_start;
     if ( userid_len > MAX_USERNAME_LEN )
     {
-        const Packet* p = DetectionEngine::get_current_packet();
-        if ( p )
-            DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_PROTOCOL_VIOLATION);
+        create_socks_event(flow_data, SOCKS_EVENT_PROTOCOL_VIOLATION);
         return false;
     }
 
@@ -255,9 +249,7 @@ bool SocksInspector::parse_socks4_request(const uint8_t* data, uint16_t len, Soc
         std::string domain;
         if ( !parse_socks4a_domain(data, len, offset, domain) )
         {
-            const Packet* p = DetectionEngine::get_current_packet();
-            if ( p )
-                DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_PROTOCOL_VIOLATION);
+            create_socks_event(flow_data, SOCKS_EVENT_PROTOCOL_VIOLATION);
             return false;
         }
 
@@ -309,9 +301,7 @@ bool SocksInspector::parse_socks4_response(const uint8_t* data, uint16_t len, So
     // SOCKS4 response version is 0x00, not 0x04!
     if ( resp->version != 0x00 )
     {
-        const Packet* p = DetectionEngine::get_current_packet();
-        if ( p )
-            DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_PROTOCOL_VIOLATION);
+        create_socks_event(flow_data, SOCKS_EVENT_PROTOCOL_VIOLATION);
         return false;
     }
 
@@ -426,9 +416,7 @@ bool SocksInspector::parse_socks5_auth_negotiation(const uint8_t* data, uint16_t
 
     if ( auth_neg->num_methods == 0 or len < (SOCKS5_AUTH_RESPONSE_LEN + auth_neg->num_methods) )
     {
-        const Packet* p = DetectionEngine::get_current_packet();
-        if ( p )
-            DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_PROTOCOL_VIOLATION);
+        create_socks_event(flow_data, SOCKS_EVENT_PROTOCOL_VIOLATION);
         return false;
     }
 
@@ -496,33 +484,25 @@ bool SocksInspector::parse_socks5_auth_response(const uint8_t* data, uint16_t le
     return true;
 }
 
-bool SocksInspector::validate_socks5_request_header(const Socks5ConnectRequest* conn_req)
+bool SocksInspector::validate_socks5_request_header(const Socks5ConnectRequest* conn_req, SocksFlowData* flow_data)
 {
     if ( !conn_req or !is_valid_socks5_version(conn_req->version) )
         return false;
 
     if ( !is_valid_command(conn_req->command) )
     {
-        const Packet* p = DetectionEngine::get_current_packet();
-        if ( p )
-            DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_UNKNOWN_COMMAND);
+        create_socks_event(flow_data, SOCKS_EVENT_UNKNOWN_COMMAND);
         return false;
     }
 
     // RFC 1928: reserved byte should be 0x00, but warn instead of reject
     if ( conn_req->reserved != 0x00 )
-    {
-        const Packet* p = DetectionEngine::get_current_packet();
-        if ( p )
-            DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_PROTOCOL_VIOLATION);
-    }
+        create_socks_event(flow_data, SOCKS_EVENT_PROTOCOL_VIOLATION);
 
     // Built-in rule: Unknown address type
     if ( !is_valid_address_type(conn_req->address_type) )
     {
-        const Packet* p = DetectionEngine::get_current_packet();
-        if ( p )
-            DetectionEngine::queue_event(GID_SOCKS, SOCKS5_EVENT_UNKNOWN_ADDRESS_TYPE);
+        create_socks_event(flow_data, SOCKS5_EVENT_UNKNOWN_ADDRESS_TYPE);
         return false;
     }
 
@@ -537,7 +517,7 @@ bool SocksInspector::parse_socks5_command_request(const uint8_t* data, uint16_t 
 
     const Socks5ConnectRequest* conn_req = reinterpret_cast<const Socks5ConnectRequest*>(data);
 
-    if ( !validate_socks5_request_header(conn_req) )
+    if ( !validate_socks5_request_header(conn_req, flow_data) )
         return false;
 
     SocksCommand cmd = static_cast<SocksCommand>(conn_req->command);
@@ -558,9 +538,7 @@ bool SocksInspector::parse_socks5_command_request(const uint8_t* data, uint16_t 
 
     if ( !parse_socks5_address(data, len, offset, addr_type, address, port) )
     {
-        const Packet* p = DetectionEngine::get_current_packet();
-        if ( p )
-            DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_PROTOCOL_VIOLATION);
+        create_socks_event(flow_data, SOCKS_EVENT_PROTOCOL_VIOLATION);
         return false;
     }
 
@@ -842,7 +820,7 @@ void SocksInspector::process_udp_associate_data(Packet* p, SocksFlowData* flow_d
 
     if ( rsv != 0 )
     {
-        DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_PROTOCOL_VIOLATION);
+        create_socks_event(flow_data, SOCKS_EVENT_PROTOCOL_VIOLATION);
         return;
     }
 
@@ -1079,30 +1057,8 @@ void SocksInspector::process_udp_associate_data(Packet* p, SocksFlowData* flow_d
         // Fragmented packet (frag_pos 1-127)
         // RFC 1928 §7: Fragmentation is rarely used in practice
         // UDP reassembly not supported - generate alert and stop inspection on this flow
-        DetectionEngine::queue_event(GID_SOCKS, SOCKS5_EVENT_UDP_FRAGMENTATION);
-
-        p->flow->set_to_client_detection(false);
-        p->flow->set_to_server_detection(false);
-
-        if ( config->get_config()->block_udp_fragmentation )
-        {
-            if ( PacketTracer::is_active() )
-                PacketTracer::log("SOCKS: Blocking flow due to UDP fragmentation (FRAG > 0) (config enabled)\n");
-
-            ++socks_stats.udp_frags_blocked;
-            DetectionEngine::disable_all(p);
-            p->active->block_session(p, true);
-            p->active->set_drop_reason("socks_udp_frag");
-        }
-        else
-        {
-            if ( PacketTracer::is_active() )
-                PacketTracer::log("SOCKS: Dropping UDP fragment (FRAG > 0), Fragmentation not supported\n");
-
-            ++socks_stats.udp_frags_dropped;
-        }
-
-
+        create_socks_event(flow_data, SOCKS5_EVENT_UDP_FRAGMENTATION);
+        ++socks_stats.udp_frags;
         return;
     }
 }
@@ -1119,9 +1075,7 @@ bool SocksInspector::parse_socks5_username_password_auth(const uint8_t* data, ui
     uint8_t username_len = data[1];
     if ( username_len == 0 )
     {
-        const Packet* p = DetectionEngine::get_current_packet();
-        if ( p )
-            DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_PROTOCOL_VIOLATION);
+        create_socks_event(flow_data, SOCKS_EVENT_PROTOCOL_VIOLATION);
         return false;
     }
 
@@ -1145,9 +1099,7 @@ bool SocksInspector::parse_socks5_username_password_auth_resp(const uint8_t* dat
 
     if ( auth_resp->version != 0x01 ) // Subnegotiation version must be 0x01
     {
-        const Packet* p = DetectionEngine::get_current_packet();
-        if ( p )
-            DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_PROTOCOL_VIOLATION);
+        create_socks_event(flow_data, SOCKS_EVENT_PROTOCOL_VIOLATION);
         return false;
     }
 
@@ -1182,9 +1134,7 @@ bool SocksInspector::parse_socks5_command_response(const uint8_t* data, uint16_t
     // may not strictly follow this. Log warning but don't reject.
     if ( conn_resp->reserved != 0x00 )
     {
-        const Packet* p = DetectionEngine::get_current_packet();
-        if ( p )
-            DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_PROTOCOL_VIOLATION);
+        create_socks_event(flow_data, SOCKS_EVENT_PROTOCOL_VIOLATION);
         // Don't return false - continue processing
     }
 
@@ -1210,11 +1160,7 @@ bool SocksInspector::parse_socks5_command_response(const uint8_t* data, uint16_t
         // - bind: where proxy bound/connected (from response)
     }
     else
-    {
-        const Packet* p = DetectionEngine::get_current_packet();
-        if ( p )
-            DetectionEngine::queue_event(GID_SOCKS, SOCKS_EVENT_PROTOCOL_VIOLATION);
-    }
+        create_socks_event(flow_data, SOCKS_EVENT_PROTOCOL_VIOLATION);
 
     if ( conn_resp->reply_code == SOCKS5_REP_SUCCESS )
     {

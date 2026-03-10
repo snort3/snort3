@@ -139,10 +139,11 @@ Standalone packets (FRAG=0x00): Validated, SOCKS5-UDP header stripped, and
 inner payload sent to wizard via pseudo-packet for protocol detection (DNS,
 SIP, etc.).
 
-Fragmented packets (FRAG≠0x00): Detected, alerted (GID 155:4), and dropped.
-Flow inspection is disabled in both directions to avoid false positives. If
-block_udp_fragmentation is enabled, the entire flow is blocked via
-block_session(). UDP fragmentation reassembly is not supported.
+Fragmented packets (FRAG≠0x00): Detected and alerted (GID 155:4). The rule
+action in the IPS policy determines whether traffic is blocked (drop) or only
+alerted. The inspector does not enforce blocking directly — this ensures no
+silent drops when the rule is disabled or the policy does not include the rule.
+UDP fragmentation reassembly is not supported.
 
 ==== Unified2 Extra Data
 

@@ -61,14 +61,9 @@ inspector normalizes the traffic such that only complete SOCKS messages are
 presented. The inspector supports both TCP tunneling (CONNECT), reverse
 connections (BIND), and UDP relay (UDP ASSOCIATE).
 
-The SOCKS inspector supports the following configuration option:
-
-* `block_udp_fragmentation` (boolean, default: true) - Block entire flow when
-  SOCKS5 UDP fragmentation is detected (frag > 0). When disabled, only the
-  fragmented packets are dropped and an alert is generated. Strict blocking is
-  recommended for high-security environments as UDP fragmentation is rarely
-  used in legitimate traffic (RFC 1928 §7) and can indicate evasion attempts or
-  DoS attacks.
+The SOCKS inspector has no configuration options. All enforcement is controlled
+via IPS rule actions — set rule 155:4 to `drop` to block fragmented UDP flows,
+or `alert` to detect only.
 
 
 ==== Quick Guide
@@ -86,15 +81,6 @@ A typical SOCKS configuration looks like the following:
 
 In this example, the `socks` inspector is defined based on patterns known to
 be consistent with SOCKS messages.
-
-UDP fragmentation blocking is strict by default. To allow fragmented SOCKS5
-UDP packets (drop only the fragments and keep the flow alive), disable the
-flag explicitly:
-
-   socks =
-   {
-       block_udp_fragmentation = false
-   }
 
 
 ==== Rule Options
@@ -363,8 +349,8 @@ anomalies and potential security threats:
 * 155:4 - SOCKS5 UDP fragmentation detected
   Detects SOCKS5 UDP packets with fragmentation (frag > 0). UDP fragmentation
   is rarely used in legitimate traffic (RFC 1928 §7) and can indicate evasion
-  techniques or DoS attacks. When `block_udp_fragmentation` remains enabled
-  (default), this also triggers flow blocking.
+  techniques or DoS attacks. Set rule action to `drop` to block, `alert` to
+  detect only.
 
 
 ==== Events and Logging
@@ -404,10 +390,10 @@ protocols tunneled through SOCKS.
   supported. GSSAPI (0x01) and private methods (0x80-0xFE) skip the auth
   phase but still allow tunnel metadata extraction.
 
-* UDP Fragmentation: Standalone UDP packets (FRAG=0) are processed and sent
+* UDP Fragmentation: Standalone UDP packets (FRAG=0) are processed and handed
   to wizard for protocol detection. Fragmented packets (FRAG≠0) are not
-  reassembled and cause flow inspection to be disabled to prevent false
-  positives.
+  reassembled; rule 155:4 is queued and the rule action (drop/alert) determines
+  enforcement.
 
 * Encrypted SOCKS: SOCKS over TLS/SSL is not supported (wizard would detect
   SSL first, preventing SOCKS detection).

@@ -46,17 +46,8 @@ const PegInfo socks_pegs[] =
     { CountType::SUM, "udp_associations_created", "UDP ASSOCIATE completions" },
     { CountType::SUM, "udp_expectations_created", "UDP expectations created for dynamic ports" },
     { CountType::SUM, "udp_packets", "UDP packets processed" },
-    { CountType::SUM, "udp_frags_dropped", "UDP fragments dropped" },
-    { CountType::SUM, "udp_frags_blocked", "flows blocked due to UDP fragmentation" },
+    { CountType::SUM, "udp_frags", "UDP fragmented packets detected" },
     { CountType::END, nullptr, nullptr }
-};
-
-static const Parameter socks_params[] =
-{
-    { "block_udp_fragmentation", Parameter::PT_BOOL, nullptr, "true",
-      "block flow when SOCKS5 UDP fragmentation detected (frag > 0)" },
-
-    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
 static const RuleMap socks_rules[] =
@@ -72,40 +63,8 @@ static const RuleMap socks_rules[] =
     { 0, nullptr }
 };
 
-SocksModule::SocksModule() : Module(SOCKS_NAME, SOCKS_HELP, socks_params)
-{
-    config = nullptr;
-}
-
-SocksModule::~SocksModule()
-{
-    if ( config )
-        delete config;
-}
-
-bool SocksModule::set(const char*, Value& v, SnortConfig*)
-{
-    assert(config);
-
-    if ( v.is("block_udp_fragmentation") )
-        config->block_udp_fragmentation = v.get_bool();
-    else
-        return false;
-
-    return true;
-}
-
-bool SocksModule::begin(const char*, int, SnortConfig*)
-{
-    if ( !config )
-        config = new SocksConfig();
-    return true;
-}
-
-bool SocksModule::end(const char*, int, SnortConfig*)
-{
-    return true;
-}
+SocksModule::SocksModule() : Module(SOCKS_NAME, SOCKS_HELP)
+{ }
 
 const RuleMap* SocksModule::get_rules() const
 { return socks_rules; }

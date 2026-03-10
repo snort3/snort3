@@ -1567,18 +1567,24 @@ TEST_GROUP(ValidateSocks5RequestHeaderTests)
 {
     // cppcheck-suppress constVariablePointer ; false positive - reassigned in setup()
     SocksInspectorTestHelper* inspector = nullptr;
+    // cppcheck-suppress constVariablePointer ; false positive - reassigned in setup()
+    SocksFlowData* flow_data = nullptr;
     uint8_t data[256];
 
     void setup() override
     {
+        SocksFlowData::init();
         SocksModule module;
         // cppcheck-suppress unreadVariable ; false positive - used in tests
         inspector = new SocksInspectorTestHelper(&module);
+        // cppcheck-suppress unreadVariable ; false positive - used in tests
+        flow_data = new SocksFlowData();
         memset(data, 0, sizeof(data));
     }
 
     void teardown() override
     {
+        delete flow_data;
         delete inspector;
         clear_stored_flow_data();
     }
@@ -1592,7 +1598,7 @@ TEST(ValidateSocks5RequestHeaderTests, valid_request_returns_true)
     req.reserved = 0x00;
     req.address_type = 0x01;  // IPv4
     
-    bool result = inspector->validate_socks5_request_header(&req);
+    bool result = inspector->validate_socks5_request_header(&req, flow_data);
     CHECK_TRUE(result);
 }
 
@@ -1604,7 +1610,7 @@ TEST(ValidateSocks5RequestHeaderTests, invalid_version_returns_false)
     req.reserved = 0x00;
     req.address_type = 0x01;
     
-    bool result = inspector->validate_socks5_request_header(&req);
+    bool result = inspector->validate_socks5_request_header(&req, flow_data);
     CHECK_FALSE(result);
 }
 
@@ -1616,7 +1622,7 @@ TEST(ValidateSocks5RequestHeaderTests, invalid_command_returns_false)
     req.reserved = 0x00;
     req.address_type = 0x01;
     
-    bool result = inspector->validate_socks5_request_header(&req);
+    bool result = inspector->validate_socks5_request_header(&req, flow_data);
     CHECK_FALSE(result);
 }
 
@@ -1628,7 +1634,7 @@ TEST(ValidateSocks5RequestHeaderTests, nonzero_reserved_still_validates)
     req.reserved = 0x01;  // Non-zero reserved (protocol violation but not fatal)
     req.address_type = 0x01;
     
-    bool result = inspector->validate_socks5_request_header(&req);
+    bool result = inspector->validate_socks5_request_header(&req, flow_data);
     CHECK_TRUE(result);  // Should still return true (warning only)
 }
 
@@ -1640,7 +1646,7 @@ TEST(ValidateSocks5RequestHeaderTests, invalid_address_type_returns_false)
     req.reserved = 0x00;
     req.address_type = 0xFF;  // Invalid address type
     
-    bool result = inspector->validate_socks5_request_header(&req);
+    bool result = inspector->validate_socks5_request_header(&req, flow_data);
     CHECK_FALSE(result);
 }
 
@@ -1652,7 +1658,7 @@ TEST(ValidateSocks5RequestHeaderTests, valid_bind_command)
     req.reserved = 0x00;
     req.address_type = 0x01;
     
-    bool result = inspector->validate_socks5_request_header(&req);
+    bool result = inspector->validate_socks5_request_header(&req, flow_data);
     CHECK_TRUE(result);
 }
 
@@ -1664,7 +1670,7 @@ TEST(ValidateSocks5RequestHeaderTests, valid_udp_associate_command)
     req.reserved = 0x00;
     req.address_type = 0x01;
     
-    bool result = inspector->validate_socks5_request_header(&req);
+    bool result = inspector->validate_socks5_request_header(&req, flow_data);
     CHECK_TRUE(result);
 }
 
@@ -1676,7 +1682,7 @@ TEST(ValidateSocks5RequestHeaderTests, valid_domain_address_type)
     req.reserved = 0x00;
     req.address_type = 0x03;  // Domain name
     
-    bool result = inspector->validate_socks5_request_header(&req);
+    bool result = inspector->validate_socks5_request_header(&req, flow_data);
     CHECK_TRUE(result);
 }
 
@@ -1688,7 +1694,7 @@ TEST(ValidateSocks5RequestHeaderTests, valid_ipv6_address_type)
     req.reserved = 0x00;
     req.address_type = 0x04;  // IPv6
     
-    bool result = inspector->validate_socks5_request_header(&req);
+    bool result = inspector->validate_socks5_request_header(&req, flow_data);
     CHECK_TRUE(result);
 }
 

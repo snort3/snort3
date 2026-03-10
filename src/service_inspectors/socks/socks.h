@@ -96,7 +96,7 @@ protected:
     void set_next_state(SocksFlowData* flow_data, SocksState new_state);
 
     // Helper methods
-    [[nodiscard]] bool validate_socks5_request_header(const Socks5ConnectRequest* conn_req);
+    [[nodiscard]] bool validate_socks5_request_header(const Socks5ConnectRequest* conn_req, SocksFlowData* flow_data);
 };
 
 #endif
