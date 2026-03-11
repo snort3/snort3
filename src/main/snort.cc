@@ -317,6 +317,7 @@ void Snort::term()
     const SnortConfig* sc = SnortConfig::get_conf();
 
     MPTransportManager::term();
+    FileService::close();
     call_shutdown_hooks();
 
     HostAttributesManager::term();
@@ -457,7 +458,6 @@ void Snort::cleanup()
     TimeStop();
 
     SFDAQ::term();
-    FileService::close();
     memory::MemoryCap::stop();
 
     if ( !SnortConfig::get_conf()->test_mode() )  // FIXIT-M ideally the check is in one place
