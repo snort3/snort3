@@ -33,6 +33,7 @@
 #include "mime/file_mime_form_data.h"
 #include "search_engines/search_tool.h"
 #include "utils/util_cstring.h"
+#include <algorithm>
 
 using namespace snort;
 
@@ -192,35 +193,40 @@ const uint8_t* MimeSession::process_mime_header(Packet* p, const uint8_t* ptr,
         // Save partial header lines until we have the full line
         if (!found_end_marker)
         {
-            if (partial_header)
+            if (!partial_header.empty())
             {
                 // Single header line split into >2 sections, accumulate
-                // FIXIT-P: could allocate reasonable-size buf and only reallocate if needed
                 const uint32_t new_len = data_end_marker - ptr;
-                const uint32_t cum_len = partial_header_len + new_len;
-                uint8_t* tmp = new uint8_t[cum_len];
-                memcpy(tmp, partial_header, partial_header_len);
-                memcpy(tmp + partial_header_len, ptr, new_len);
-                delete[] partial_header;
-                partial_header_len = cum_len;
-                partial_header = tmp;
+                const uint32_t old_len = partial_header.size();
+                const uint32_t cum_len = old_len + new_len;
+                if (cum_len > MAX_MIME_HEADER_LEN)
+                {
+#ifdef REG_TEST
+                    LogMessage("partial header exceeds max size!");
+#endif
+                    partial_header.clear();
+                    partial_header.shrink_to_fit();
+                    return nullptr;
+                }
+                partial_header.resize(cum_len);
+                std::copy(ptr, data_end_marker, partial_header.begin() + old_len);
             }
             else
             {
-                partial_header_len = data_end_marker - ptr;
-                partial_header = new uint8_t[partial_header_len];
-                memcpy(partial_header, ptr, partial_header_len);
+                partial_header.resize(data_end_marker - ptr);
+                std::copy(ptr, data_end_marker, partial_header.begin());
             }
             return data_end_marker;
         }
-        if (partial_header)
+        if (!partial_header.empty())
         {
             const uint32_t remainder_header_len = eol - ptr;
-            const uint32_t full_header_len = partial_header_len + remainder_header_len;
-            const uint8_t* full_header = new uint8_t[full_header_len];
+            const uint32_t old_len = partial_header.size();
+            const uint32_t full_header_len = old_len + remainder_header_len;
+            partial_header.resize(full_header_len);
+            std::copy(ptr, ptr + remainder_header_len, partial_header.begin() + old_len);
+            const uint8_t* full_header = partial_header.data();
             const uint8_t* head_ptr = full_header;
-            memcpy((void*)full_header, partial_header, partial_header_len);
-            memcpy((void*)(full_header + partial_header_len), ptr, remainder_header_len);
             ptr = eol;
             // Update eol and eolm to point to full_header buffer. eol points to byte after end
             // marker and eolm points to start of the end marker - either \n or \r if CR precedes LF
@@ -232,10 +238,8 @@ const uint8_t* MimeSession::process_mime_header(Packet* p, const uint8_t* ptr,
 
             cont = process_header_line(head_ptr, eol, eolm, start_hdr, p);
 
-            delete[] partial_header;
-            partial_header = nullptr;
-            partial_header_len = 0;
-            delete[] full_header;
+            partial_header.clear();
+            partial_header.shrink_to_fit();
         }
         else
         {
@@ -725,10 +729,8 @@ void MimeSession::reset_part_state()
     state_flags = 0;
     attribute_state = ATTRIBUTE_NAME;
 
-    delete[] partial_header;
-    partial_header = nullptr;
-    partial_header_len = 0;
-
+    partial_header.clear();
+    partial_header.shrink_to_fit();
     delete[] partial_data;
     partial_data = nullptr;
     partial_data_len = 0;
@@ -974,7 +976,6 @@ MimeSession::MimeSession(Packet* p, const DecodeConfig* dconf, MailLogConfig* lc
 MimeSession::~MimeSession()
 {
     delete decode_state;
-    delete[] partial_header;
     delete[] partial_data;
     delete[] rebuilt_data;
 }

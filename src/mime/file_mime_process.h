@@ -23,7 +23,9 @@
 
 // Provides list of MIME processing functions. Encoded file data will be decoded
 // and file name will be extracted from MIME header
+#include <cstdint>
 #include <string>
+#include <vector>
 #include "file_api/file_api.h"
 #include "mime/file_mime_config.h"
 #include "mime/file_mime_decode.h"
@@ -48,6 +50,7 @@ namespace snort
 #define STATE_DATA_HEADER  1    /* Data header section of data state */
 #define STATE_DATA_BODY    2    /* Data body section of data state */
 #define STATE_MIME_HEADER  3    /* MIME header section within data section */
+#define MAX_MIME_HEADER_LEN 131072 /*Mime header cap to avoid endless header allocation*/
 
 enum AttributeState
 {
@@ -153,8 +156,7 @@ private:
     int extract_value(const char*& start, uint32_t length);
     int extract_attribute(const char*& start, int length, const char* attr);
 
-    uint8_t* partial_header = nullptr;      // single header line split into multiple sections
-    uint32_t partial_header_len = 0;
+    std::vector<uint8_t> partial_header;
     uint8_t* partial_data = nullptr;        // attachment's trailing bytes (suspected boundary)
     uint32_t partial_data_len = 0;
     uint8_t* rebuilt_data = nullptr;        // prepended attachment data for detection module
