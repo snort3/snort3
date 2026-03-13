@@ -724,7 +724,7 @@ ParseResult parse_client_hello_data(const uint8_t* pkt, uint16_t size, SSLV3Clie
                 return ParseResult::FAILURE;
 
             unsigned len = ntohs(ext->string_length);
-            if ((length - sizeof(ServiceSSLV3ExtensionServerName)) < len)
+            if (ext->length == 0 || len == 0 || (length - sizeof(ServiceSSLV3ExtensionServerName)) < len)
                 return ParseResult::FAILURE;
 
             const uint8_t* str = pkt + offsetof(ServiceSSLV3ExtensionServerName, string_length) +
@@ -922,13 +922,16 @@ ParseResult parse_server_certificates(SSLV3ServerCertData* server_cert_data)
                 ASN1_STRING* asn1_str = X509_NAME_ENTRY_get_data(e);
                 const unsigned char* str_data = ASN1_STRING_get0_data(asn1_str);
                 int length = ASN1_STRING_length(asn1_str);
+                
+                if (length >= 1)
+                {
+                    bool wildcard = false;
+                    if ((wildcard = (length > 2 and *str_data == '*' and *(str_data + 1) == '.')))
+                        length -= 2; // remove leading *.
 
-                bool wildcard = false;
-                if ((wildcard = (length > 2 and *str_data == '*' and *(str_data + 1) == '.')))
-                    length -= 2; // remove leading *.
-
-                common_name_len = length;
-                common_name = snort_strndup((const char*)(str_data + (wildcard ? 2 : 0)), common_name_len);
+                    common_name_len = length;
+                    common_name = snort_strndup((const char*)(str_data + (wildcard ? 2 : 0)), common_name_len);
+                }
             }
         }
 
@@ -942,7 +945,11 @@ ParseResult parse_server_certificates(SSLV3ServerCertData* server_cert_data)
                 ASN1_STRING* asn1_str = X509_NAME_ENTRY_get_data(e);
                 const unsigned char* str_data = ASN1_STRING_get0_data(asn1_str);
                 org_unit_len = ASN1_STRING_length(asn1_str);
-                org_unit = snort_strndup((const char*)(str_data), org_unit_len);
+                
+                if (org_unit_len >= 1)
+                {
+                    org_unit = snort_strndup((const char*)(str_data), org_unit_len);
+                }
             }
         }
 
