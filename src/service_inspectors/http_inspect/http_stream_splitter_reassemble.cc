@@ -25,6 +25,7 @@
 
 #include "protocols/packet.h"
 
+#include "http_compress_stream.h"
 #include "http_inspect.h"
 #include "http_module.h"
 #include "http_test_input.h"
@@ -98,12 +99,8 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
         case CHUNK_DATA:
           {
             const uint32_t skip_amount = (length-k <= expected) ? length-k : expected;
-            const bool at_start = (session_data->body_octets[source_id] == 0) &&
-                (session_data->section_offset[source_id] == 0);
-            decompress_copy(buffer, session_data->section_offset[source_id], data+k, skip_amount,
-                session_data->compression[source_id], session_data->compress_stream[source_id],
-                at_start, session_data->get_infractions(source_id),
-                session_data->events[source_id], session_data);
+            decompress_copy(data+k, skip_amount, buffer,
+                session_data->section_offset[source_id], session_data);
             if ((expected -= skip_amount) == 0)
                 curr_state = CHUNK_DCRLF1;
             k += skip_amount-1;
@@ -128,12 +125,8 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
         case CHUNK_BAD:
           {
             const uint32_t skip_amount = length-k;
-            const bool at_start = (session_data->body_octets[source_id] == 0) &&
-                (session_data->section_offset[source_id] == 0);
-            decompress_copy(buffer, session_data->section_offset[source_id], data+k, skip_amount,
-                session_data->compression[source_id], session_data->compress_stream[source_id],
-                at_start, session_data->get_infractions(source_id),
-                session_data->events[source_id], session_data);
+            decompress_copy(data+k, skip_amount, buffer,
+                session_data->section_offset[source_id], session_data);
             k += skip_amount-1;
             break;
           }
@@ -141,148 +134,14 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
     }
 }
 
-uint8_t* HttpStreamSplitter::process_gzip_header(const uint8_t* data,
-    uint32_t length, HttpFlowData* session_data) const
+void HttpStreamSplitter::decompress_copy(const uint8_t* src, uint32_t src_size,
+    uint8_t* dst, uint32_t& dst_size, HttpFlowData* const session_data) const
 {
-    uint32_t& header_bytes_processed = session_data->gzip_header_bytes_processed[source_id];
-    uint32_t input_bytes_processed = 0;
-    uint8_t* modified_data = nullptr;
-    if (session_data->gzip_state[source_id] == GZIP_TBD)
-    {
-        static const uint8_t gzip_magic[] = {0x1f, 0x8b, 0x08};
-        static const uint8_t magic_length = 3;
-        const uint32_t magic_cmp_len = (magic_length - header_bytes_processed) < length ?
-            (magic_length - header_bytes_processed) : length;
+    if ( session_data->compress[source_id] != nullptr and
+        is_body(session_data->section_type[source_id]) )
+        return;
 
-        if (memcmp(data, gzip_magic + header_bytes_processed, magic_cmp_len))
-            session_data->gzip_state[source_id] = GZIP_MAGIC_BAD;
-        else if (header_bytes_processed + length >= magic_length)
-            session_data->gzip_state[source_id] = GZIP_MAGIC_GOOD;
-        header_bytes_processed += magic_cmp_len;
-        input_bytes_processed += magic_cmp_len;
-    }
-    if (session_data->gzip_state[source_id] == GZIP_MAGIC_GOOD and length > input_bytes_processed)
-    {
-        const uint8_t gzip_flags = data[input_bytes_processed];
-        if (gzip_flags & GZIP_FLAG_FEXTRA)
-        {
-            *session_data->get_infractions(source_id) += INF_GZIP_FEXTRA;
-            session_data->events[source_id]->create_event(EVENT_GZIP_FEXTRA);
-        }
-        if (gzip_flags & GZIP_RESERVED_FLAGS)
-        {
-            *session_data->get_infractions(source_id) += INF_GZIP_RESERVED_FLAGS;
-            session_data->events[source_id]->create_event(EVENT_GZIP_RESERVED_FLAGS);
-            modified_data = new uint8_t[length];
-            memcpy(modified_data, data, length);
-            modified_data[input_bytes_processed] &= ~GZIP_RESERVED_FLAGS;
-        }
-        header_bytes_processed++;
-        session_data->gzip_state[source_id] = GZIP_FLAGS_PROCESSED;
-    }
-    return modified_data;
-}
-
-bool HttpStreamSplitter::gzip_header_check_done(HttpFlowData* session_data) const
-{
-    return session_data->gzip_state[source_id] == HttpEnums::GZIP_MAGIC_BAD or
-        session_data->gzip_state[source_id] == HttpEnums::GZIP_FLAGS_PROCESSED;
-}
-
-void HttpStreamSplitter::decompress_copy(uint8_t* buffer, uint32_t& offset, const uint8_t* data,
-    uint32_t length, HttpEnums::CompressId& compression, z_stream*& compress_stream,
-    bool at_start, HttpInfractions* infractions, HttpEventGen* events, HttpFlowData* session_data) const
-{
-    if ((compression == CMP_GZIP) || (compression == CMP_DEFLATE))
-    {
-        uint8_t* data_w_updated_hdr = nullptr;
-        if (compression == CMP_GZIP and !gzip_header_check_done(session_data))
-            data_w_updated_hdr = process_gzip_header(data, length, session_data);
-
-        if (data_w_updated_hdr != nullptr)
-            compress_stream->next_in = const_cast<Bytef*>(data_w_updated_hdr);
-        else 
-            compress_stream->next_in = const_cast<Bytef*>(data);
-        compress_stream->avail_in = length;
-        compress_stream->next_out = buffer + offset;
-        compress_stream->avail_out = MAX_OCTETS - offset;
-        int ret_val = inflate(compress_stream, Z_SYNC_FLUSH);
-
-        delete[] data_w_updated_hdr;
-        
-        if ((ret_val == Z_OK) || (ret_val == Z_STREAM_END))
-        {
-            offset = MAX_OCTETS - compress_stream->avail_out;
-            if (compress_stream->avail_in > 0)
-            {
-                // There are two ways not to consume all the input
-                if (ret_val == Z_STREAM_END)
-                {
-                    // The zipped data stream ended but there is more input data
-                    *infractions += INF_GZIP_EARLY_END;
-                    events->create_event(EVENT_GZIP_EARLY_END);
-                    const uInt num_copy =
-                        (compress_stream->avail_in <= compress_stream->avail_out) ?
-                        compress_stream->avail_in : compress_stream->avail_out;
-                    memcpy(buffer + offset, data + (length - compress_stream->avail_in), num_copy);
-                    offset += num_copy;
-                }
-                else
-                {
-                    assert(compress_stream->avail_out == 0);
-                    // The data expanded too much
-                    *infractions += INF_GZIP_OVERRUN;
-                    events->create_event(EVENT_GZIP_OVERRUN);
-                }
-                compression = CMP_NONE;
-                inflateEnd(compress_stream);
-                delete compress_stream;
-                compress_stream = nullptr;
-                // FIXIT-E - Will need to clear gzip header processing state here when we implement
-                // processing multiple gzip members in a message section
-            }
-            return;
-        }
-        else if ((compression == CMP_DEFLATE) && at_start && (ret_val == Z_DATA_ERROR))
-        {
-            // Some incorrect implementations of deflate don't use the expected header. Feed a
-            // dummy header to zlib and retry the inflate.
-            static constexpr uint8_t zlib_header[2] = { 0x78, 0x01 };
-
-            inflateReset(compress_stream);
-            compress_stream->next_in = const_cast<Bytef*>(zlib_header);
-            compress_stream->avail_in = sizeof(zlib_header);
-            int ret = inflate(compress_stream, Z_SYNC_FLUSH);
-            if ( ret == Z_OK or ret == Z_STREAM_END)
-            { 
-                // Start over at the beginning
-                decompress_copy(buffer, offset, data, length, compression, compress_stream, false,
-                    infractions, events, session_data);
-            }
-            return;
-        }
-        else
-        {
-            *infractions += INF_GZIP_FAILURE;
-            events->create_event(EVENT_GZIP_FAILURE);
-            compression = CMP_NONE;
-            inflateEnd(compress_stream);
-            delete compress_stream;
-            compress_stream = nullptr;
-            // Since we failed to uncompress the data, fall through
-        }
-    }
-
-    // The following precaution is necessary because mixed compressed and uncompressed data can
-    // cause the buffer to overrun even though we are not decompressing right now
-    if (length > MAX_OCTETS - offset)
-    {
-        length = MAX_OCTETS - offset;
-        *infractions += INF_GZIP_OVERRUN;
-        events->create_event(EVENT_GZIP_OVERRUN);
-    }
-    memcpy(buffer + offset, data, length);
-    offset += length;
+    HttpCompressStream::copy_raw(src, src_size, dst, dst_size);
 }
 
 const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
@@ -422,11 +281,22 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
     HttpModule::increment_peg_counts(PEG_REASSEMBLE);
 
     uint8_t*& buffer = session_data->section_buffer[source_id];
-    if (buffer == nullptr)
+    if ( buffer == nullptr )
     {
         // Body sections need extra space to accommodate unzipping
-        if (is_body(session_data->section_type[source_id]))
-            buffer = new uint8_t[MAX_OCTETS];
+        if ( is_body(session_data->section_type[source_id]) )
+            if ( session_data->compress[source_id] != nullptr and partial_buffer_length > 0 )
+            {
+                assert(partial_buffer != nullptr);
+
+                buffer = partial_buffer;
+                session_data->section_offset[source_id] = partial_buffer_length;
+
+                partial_buffer = nullptr;
+                partial_buffer_length = 0;
+            }
+            else
+                buffer = new uint8_t[MAX_OCTETS];
         else
         {
             uint32_t buffer_size = (total > 0) ? total : 1;
@@ -446,18 +316,9 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
     }
 
     if (session_data->section_type[source_id] != SEC_BODY_CHUNK)
-    {
-        const bool at_start = (session_data->body_octets[source_id] == 0) &&
-             (session_data->section_offset[source_id] == 0);
-        decompress_copy(buffer, session_data->section_offset[source_id], data, len,
-            session_data->compression[source_id], session_data->compress_stream[source_id],
-            at_start, session_data->get_infractions(source_id),
-            session_data->events[source_id], session_data);
-    }
+        decompress_copy(data, len, buffer, session_data->section_offset[source_id], session_data);
     else
-    {
         chunk_spray(session_data, buffer, data, len);
-    }
 
     StreamBuffer http_buf { nullptr, 0 };
 
@@ -481,7 +342,11 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
             if (session_data->section_offset[source_id] > 0)
             {
                 // Store the data from a partial flush for reuse
-                partial_buffer = new uint8_t[session_data->section_offset[source_id]];
+                if ( is_body(session_data->section_type[source_id]) )
+                    partial_buffer = new uint8_t[MAX_OCTETS];
+                else
+                    partial_buffer = new uint8_t[session_data->section_offset[source_id]];
+
                 memcpy(partial_buffer, buffer, session_data->section_offset[source_id]);
                 partial_buffer_length = session_data->section_offset[source_id];
             }

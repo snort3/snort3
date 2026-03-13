@@ -39,6 +39,7 @@
 
 #include "http_api.h"
 #include "http_common.h"
+#include "http_compress_stream.h"
 #include "http_enum.h"
 #include "http_inspect.h"
 #include "http_js_norm.h"
@@ -715,7 +716,7 @@ void HttpMsgHeader::setup_encoding_decompression()
     if (!params->unzip)
         return;
 
-    CompressId& compression = session_data->compression[source_id];
+    CompressId compression = CMP_NONE;
 
     // Search the Content-Encoding header to find the type of compression used. We detect and alert
     // on multiple layers of compression but we only decompress the outermost layer. Thus the last
@@ -743,6 +744,7 @@ void HttpMsgHeader::setup_encoding_decompression()
             compression = CMP_GZIP;
             break;
         case CONTENTCODE_DEFLATE:
+            HttpModule::increment_peg_counts(PEG_COMPRESSED_DEFLATE);
             compression = CMP_DEFLATE;
             break;
         case CONTENTCODE_IDENTITY:
@@ -769,22 +771,17 @@ void HttpMsgHeader::setup_encoding_decompression()
         }
     }
 
-    if (compression == CMP_NONE)
+    if ( compression == CMP_NONE )
         return;
 
-    session_data->compress_stream[source_id] = new z_stream;
-    session_data->compress_stream[source_id]->zalloc = Z_NULL;
-    session_data->compress_stream[source_id]->zfree = Z_NULL;
-    session_data->compress_stream[source_id]->next_in = Z_NULL;
-    session_data->compress_stream[source_id]->avail_in = 0;
-    const int window_bits = (compression == CMP_GZIP) ? GZIP_WINDOW_BITS : DEFLATE_WINDOW_BITS;
-    if (inflateInit2(session_data->compress_stream[source_id], window_bits) != Z_OK)
-    {
-        assert(false);
-        session_data->compression[source_id] = CMP_NONE;
-        delete session_data->compress_stream[source_id];
-        session_data->compress_stream[source_id] = nullptr;
-    }
+    session_data->compress[source_id] = new HttpCompressStream;
+
+    if ( session_data->compress[source_id]->setup(compression) )
+        return;
+
+    assert(false);
+    delete session_data->compress[source_id];
+    session_data->compress[source_id] = nullptr;
 }
 
 void HttpMsgHeader::setup_utf_decoding()

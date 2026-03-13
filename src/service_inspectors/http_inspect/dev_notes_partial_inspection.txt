@@ -40,7 +40,10 @@ Update: the previous sentence has been discovered to be incorrect. The memory re
 zlib are very large. It would save a lot of memory and some processing time for script detection
 to unzip one time in scan() and store the result for eventual use by reassemble(). The memory
 lost by storing partial message sections in HI while waiting for reassemble() would be more than
-compensated for by not having two instances of zlib.
+compensated for by not having two instances of zlib. Decompression now always happens
+once during scan() for all HTTP bodies, regardless of whether script detection is enabled.
+Doing decompression in scan() changes the order of events, so all decompression events are
+triggered after scan().
 
 For request bodies, when partial_depth_body parameter is set to a non zero value, a partial body
 will be subjected to partial inspection if its length is below partial_depth_body value. When

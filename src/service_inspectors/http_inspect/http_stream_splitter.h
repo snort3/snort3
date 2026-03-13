@@ -63,13 +63,8 @@ private:
     HttpCutter* get_cutter(HttpCommon::SectionType type, HttpFlowData* session) const;
     void chunk_spray(HttpFlowData* session_data, uint8_t* buffer, const uint8_t* data,
         unsigned length) const;
-    void decompress_copy(uint8_t* buffer, uint32_t& offset, const uint8_t* data,
-        uint32_t length, HttpEnums::CompressId& compression, z_stream*& compress_stream,
-        bool at_start, HttpInfractions* infractions, HttpEventGen* events,
-        HttpFlowData* session_data) const;
-    uint8_t* process_gzip_header(const uint8_t* data,
-        uint32_t length, HttpFlowData* session_data) const;
-    bool gzip_header_check_done(HttpFlowData* session_data) const;
+    void decompress_copy(const uint8_t* src, uint32_t src_size,
+        uint8_t* dst, uint32_t& dst_size, HttpFlowData* const session_data) const;
     StreamSplitter::Status handle_zero_nine(snort::Flow*, HttpFlowData*, const uint8_t* data,
         uint32_t length, uint32_t* flush_offset, HttpCommon::SectionType&, HttpCutter*&);
     StreamSplitter::Status call_cutter(snort::Flow*, HttpFlowData*, const uint8_t* data,

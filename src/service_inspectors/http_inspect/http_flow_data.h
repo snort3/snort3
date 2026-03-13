@@ -40,6 +40,7 @@ class HttpJSNorm;
 class HttpMsgSection;
 class HttpCutter;
 class HttpQueryParser;
+class HttpCompressStream;
 
 namespace snort
 {
@@ -111,9 +112,6 @@ private:
     uint32_t partial_raw_bytes[2] = { 0, 0 };
     uint8_t* partial_buffer[2] = { nullptr, nullptr };
     uint32_t partial_buffer_length[2] = { 0, 0 };
-    uint32_t gzip_header_bytes_processed[2] = { 0, 0 };
-    HttpEnums::GzipVerificationState gzip_state[2] = { HttpEnums::GZIP_TBD, HttpEnums::GZIP_TBD };
-    bool gzip_header_check_done();
 
     // *** StreamSplitter internal data - scan() => reassemble()
     uint32_t num_excess[2] = { 0, 0 };
@@ -131,6 +129,7 @@ private:
     bool partial_flush[2] = { false, false };
     uint64_t last_connect_trans_w_early_traffic = 0;
 
+    HttpCompressStream* compress[2] = { nullptr, nullptr };
     HttpInfractions* infractions[2] = { new HttpInfractions, new HttpInfractions };
     HttpEventGen* events[2] = { new HttpEventGen, new HttpEventGen };
 
@@ -146,12 +145,10 @@ private:
     bool last_request_was_connect = false;
     bool stretch_section_to_packet[2] = { false, false };
     bool accelerated_blocking[2] = { false, false };
-    z_stream* compress_stream[2] = { nullptr, nullptr };
     uint64_t zero_nine_expected = 0;
     // length of the data from Content-Length field
     int64_t data_length[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
     uint32_t section_size_target[2] = { 0, 0 };
-    HttpEnums::CompressId compression[2] = { HttpEnums::CMP_NONE, HttpEnums::CMP_NONE };
 
     // *** Inspector's internal data about the current message
     struct FdCallbackContext

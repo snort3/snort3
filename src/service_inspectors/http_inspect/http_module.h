@@ -30,12 +30,15 @@
 #include "mime/file_mime_config.h"
 #include "profiler/profiler.h"
 #include "search_engines/search_tool.h"
+#include "trace/trace_api.h"
 
 #include "http_enum.h"
 #include "http_str_to_code.h"
 
 #define HTTP_NAME "http_inspect"
 #define HTTP_HELP "HTTP inspector"
+
+extern THREAD_LOCAL const snort::Trace* http_trace;
 
 namespace snort
 {
@@ -186,6 +189,12 @@ public:
 
     static snort::ProfileStats& get_profile_stats()
     { return http_profile; }
+
+    void set_trace(const snort::Trace*) const override;
+
+#ifdef DEBUG_MSGS
+    const snort::TraceOption* get_trace_options() const override;
+#endif
 
     Usage get_usage() const override
     { return INSPECT; }

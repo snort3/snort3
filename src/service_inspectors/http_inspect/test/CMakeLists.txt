@@ -1,3 +1,14 @@
+add_cpputest( http_decompression_test
+    SOURCES
+        ../http_compress_stream.cc
+        ../http_cutter.cc
+        ../http_flow_data.cc
+        ../http_tables.cc
+        ../http_test_input.cc
+        ../http_test_manager.cc
+    LIBS ${ZLIB_LIBRARIES}
+)
+
 add_cpputest( http_module_test
     SOURCES
         ../http_module.cc
@@ -27,6 +38,7 @@ add_cpputest( http_transaction_test
         ../http_flow_data.cc
         ../http_test_manager.cc
         ../http_test_input.cc
+        ../http_compress_stream.cc
     LIBS ${ZLIB_LIBRARIES}
 )
 

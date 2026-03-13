@@ -59,6 +59,8 @@ set (FILE_LIST
     http_module.h
     http_test_input.cc
     http_test_input.h
+    http_compress_stream.cc
+    http_compress_stream.h
     http_flow_data.cc
     http_flow_data.h
     http_context_data.cc

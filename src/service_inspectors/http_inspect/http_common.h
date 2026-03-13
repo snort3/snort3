@@ -49,6 +49,11 @@ inline bool is_body(SectionType st)
 enum HXBodyState { HX_BODY_NOT_COMPLETE, HX_BODY_LAST_SEG, HX_BODY_COMPLETE,
     HX_BODY_COMPLETE_EXPECT_TRAILERS, HX_BODY_NO_BODY };
 
+enum
+{
+    TRACE_COMPRESS,
+};
+
 } // end namespace HttpCommon
 
 #endif

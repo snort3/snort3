@@ -27,6 +27,7 @@
 
 #include "http_context_data.h"
 #include "http_common.h"
+#include "http_compress_stream.h"
 #include "http_enum.h"
 #include "http_module.h"
 #include "http_msg_body.h"
@@ -288,8 +289,11 @@ void HttpMsgSection::update_depth() const
     const int64_t& detect_depth_remaining = session_data->detect_depth_remaining[source_id];
     const int32_t& publish_depth_remaining = session_data->publish_depth_remaining[source_id];
 
-    const unsigned target_size = (session_data->compression[source_id] == CMP_NONE) ?
-        SnortConfig::get_conf()->max_pdu : GZIP_BLOCK_SIZE;
+    unsigned target_size = SnortConfig::get_conf()->max_pdu;
+
+    if ( session_data->compress[source_id] != nullptr and
+        session_data->compress[source_id]->get_compression_id() != CMP_NONE )
+        target_size = GZIP_BLOCK_SIZE;
 
     if (detect_depth_remaining <= 0)
     {

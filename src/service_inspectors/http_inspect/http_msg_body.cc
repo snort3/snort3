@@ -63,7 +63,6 @@ static void init_decode_infs()
     decode_infs += INF_STACKED_ENCODINGS;
     decode_infs += INF_CONTENT_ENCODING_CHUNKED;
     decode_infs += INF_GZIP_FAILURE;
-    decode_infs += INF_GZIP_OVERRUN;
 }
 
 static int _init_decode_infs __attribute__((unused)) = (static_cast<void>(init_decode_infs()), 0);

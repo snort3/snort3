@@ -289,7 +289,6 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_BROKEN_CHUNK,               "HTTP chunk misformatted" },
     { EVENT_CHUNK_WHITESPACE,           "white space adjacent to chunk length" },
     { EVENT_HEAD_NAME_WHITESPACE,       "white space within header name" },
-    { EVENT_GZIP_OVERRUN,               "excessive gzip compression" },
     { EVENT_GZIP_FAILURE,               "gzip decompression failed" },
     { EVENT_ZERO_NINE_CONTINUE,         "HTTP 0.9 requested followed by another request" },
     { EVENT_ZERO_NINE_NOT_FIRST,        "HTTP 0.9 request following a normal request" },
@@ -358,6 +357,8 @@ const RuleMap HttpModule::http_events[] =
                                         "disallowed methods list" },
     { EVENT_GZIP_RESERVED_FLAGS,        "HTTP gzip body with reserved flag set" },
     { EVENT_MAX_PARTIAL_FLUSH,          "Too many partial flushes" },
+    { EVENT_DEFLATE_EARLY_END,          "deflate compressed data followed by unexpected non-deflate data" },
+    { EVENT_DEFLATE_FAILURE,            "deflate decompression failed" },
     { 0, nullptr }
 };
 
@@ -399,6 +400,10 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "js_pdf_scripts", "total number of PDF files processed" },
     { CountType::SUM, "skip_mime_attach", "total number of HTTP requests with too many MIME attachments to inspect" },
     { CountType::SUM, "compressed_gzip", "total number of HTTP bodies compressed with GZIP" },
+    { CountType::SUM, "compressed_gzip_failed", "total number of HTTP bodies with failed GZIP decompression" },
+    { CountType::SUM, "compressed_deflate", "total number of HTTP bodies compressed with Deflate" },
+    { CountType::SUM, "incorrect_deflate_header", "total number of HTTP bodies compressed with Deflate that had incorrect header" },
+    { CountType::SUM, "compressed_deflate_failed", "total number of HTTP bodies with failed Deflate decompression" },
     { CountType::SUM, "compressed_not_supported", "total number of HTTP bodies compressed with known but not supported methods" },
     { CountType::SUM, "compressed_unknown", "total number of HTTP bodies compressed with unknown methods" },
     { CountType::SUM, "max_publish_depth_hits", "total number of times the maximum publish depth was exceeded" },

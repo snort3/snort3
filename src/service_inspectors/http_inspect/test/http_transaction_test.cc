@@ -74,7 +74,12 @@ const StreamBuffer StreamSplitter::reassemble(snort::Flow*, unsigned int, unsign
     return buf;
 }
 unsigned StreamSplitter::max(snort::Flow*) { return 0; }
+uint8_t TraceApi::get_constraints_generation() { return 0; }
+void TraceApi::filter(const Packet&) { }
+void trace_vprintf(const char*, TraceLevel, const char*, const snort::Packet*, const char*, va_list) { }
 }
+
+THREAD_LOCAL const snort::Trace* http_trace = nullptr;
 
 HttpParaList::UriParam::UriParam() {}
 HttpParaList::JsNormParam::~JsNormParam() {}

@@ -27,6 +27,7 @@
 #include "protocols/packet.h"
 
 #include "http_common.h"
+#include "http_compress_stream.h"
 #include "http_context_data.h"
 #include "http_cutter.h"
 #include "http_enum.h"
@@ -51,6 +52,14 @@ void HttpStreamSplitter::prepare_flush(HttpFlowData* session_data, uint32_t* flu
     session_data->num_good_chunks[source_id] = num_good_chunks;
     session_data->octets_expected[source_id] = octets_seen + num_flushed;
 
+    if ( session_data->compress[source_id] != nullptr and section_type == SEC_DISCARD )
+    {
+        delete[] session_data->partial_buffer[source_id];
+
+        session_data->partial_buffer[source_id] = nullptr;
+        session_data->partial_buffer_length[source_id] = 0;
+    }
+
     if (flush_offset != nullptr)
     {
 #ifdef REG_TEST
@@ -70,38 +79,32 @@ HttpCutter* HttpStreamSplitter::get_cutter(SectionType type,
     switch (type)
     {
     case SEC_REQUEST:
-        return (HttpCutter*)new HttpRequestCutter;
+        return new HttpRequestCutter;
     case SEC_STATUS:
         if (session_data->expected_trans_num[SRC_SERVER] == session_data->zero_nine_expected)
-            return (HttpCutter*)new HttpZeroNineCutter;
+            return new HttpZeroNineCutter;
 
-        return (HttpCutter*)new HttpStatusCutter;
+        return new HttpStatusCutter;
     case SEC_HEADER:
     case SEC_TRAILER:
-        return (HttpCutter*)new HttpHeaderCutter;
+        return new HttpHeaderCutter;
     case SEC_BODY_CL:
-        return (HttpCutter*)new HttpBodyClCutter(
-            session_data->data_length[source_id],
+        return new HttpBodyClCutter(session_data->data_length[source_id],
             session_data->accelerated_blocking[source_id],
             my_inspector->script_finder,
-            session_data->compression[source_id]);
+            session_data, source_id);
     case SEC_BODY_CHUNK:
-        return (HttpCutter*)new HttpBodyChunkCutter(
-            my_inspector->params->maximum_chunk_length,
+        return new HttpBodyChunkCutter(my_inspector->params->maximum_chunk_length,
             session_data->accelerated_blocking[source_id],
             my_inspector->script_finder,
-            session_data->compression[source_id]);
+            session_data, source_id);
     case SEC_BODY_OLD:
-        return (HttpCutter*)new HttpBodyOldCutter(
-            session_data->accelerated_blocking[source_id],
-            my_inspector->script_finder,
-            session_data->compression[source_id]);
+        return new HttpBodyOldCutter(session_data->accelerated_blocking[source_id],
+            my_inspector->script_finder, session_data, source_id);
     case SEC_BODY_HX:
-        return (HttpCutter*)new HttpBodyHXCutter(
-            session_data->data_length[source_id],
+        return new HttpBodyHXCutter(session_data->data_length[source_id],
             session_data->accelerated_blocking[source_id],
-            my_inspector->script_finder,
-            session_data->compression[source_id]);
+            my_inspector->script_finder, session_data, source_id);
     default:
         assert(false);
         return nullptr;
