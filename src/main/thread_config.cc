@@ -109,20 +109,56 @@ unsigned ThreadConfig::get_instance_max()
 CpuSet* ThreadConfig::validate_cpuset_string(const char* cpuset_str)
 {
     hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
-    if (hwloc_bitmap_list_sscanf(cpuset, cpuset_str) ||
-            !hwloc_bitmap_isincluded(cpuset, process_cpuset))
+    if (hwloc_bitmap_list_sscanf(cpuset, cpuset_str))
     {
-        char* allowed_s = nullptr;
-        hwloc_bitmap_list_asprintf(&allowed_s, process_cpuset);
-        ParseError("Invalid CPU set '%s'. Allowed process CPU set: %s\n",
-            cpuset_str ? cpuset_str : "(null)", allowed_s ? allowed_s : "(null)");
-
-        if (allowed_s)
-            free(allowed_s);
-
+        ParseError("Invalid CPU set string '%s'\n",
+            cpuset_str ? cpuset_str : "(null)");
         hwloc_bitmap_free(cpuset);
         return nullptr;
     }
+
+    if (!hwloc_bitmap_isincluded(cpuset, process_cpuset))
+    {
+        char* requested_s = nullptr;
+        char* allowed_s = nullptr;
+        hwloc_bitmap_list_asprintf(&requested_s, cpuset);
+        hwloc_bitmap_list_asprintf(&allowed_s, process_cpuset);
+
+        hwloc_bitmap_t effective = hwloc_bitmap_alloc();
+        hwloc_bitmap_and(effective, cpuset, process_cpuset);
+
+        if (hwloc_bitmap_iszero(effective))
+        {
+            ErrorMessage("Requested CPU set '%s' has no overlap with allowed "
+                "process CPU set '%s'. Falling back to process CPU set. "
+                "This thread will share cores with other threads. "
+                "This may indicate a process affinity mismatch.\n",
+                requested_s ? requested_s : "(null)",
+                allowed_s ? allowed_s : "(null)");
+            hwloc_bitmap_free(effective);
+            if (requested_s) free(requested_s);
+            if (allowed_s) free(allowed_s);
+            hwloc_bitmap_free(cpuset);
+            return new CpuSet(hwloc_bitmap_dup(process_cpuset));
+        }
+
+        char* effective_s = nullptr;
+        hwloc_bitmap_list_asprintf(&effective_s, effective);
+        WarningMessage("Requested CPU set '%s' is not fully available in process "
+            "CPU set '%s'. Proceeding with available subset '%s'. This may indicate a "
+            "process affinity mismatch.\n",
+            requested_s ? requested_s : "(null)",
+            allowed_s ? allowed_s : "(null)",
+            effective_s ? effective_s : "(null)");
+
+        if (requested_s) free(requested_s);
+        if (allowed_s) free(allowed_s);
+        if (effective_s) free(effective_s);
+
+        hwloc_bitmap_free(cpuset);
+        return new CpuSet(effective);
+    }
+
     return new CpuSet(cpuset);
 }
 
@@ -285,7 +321,28 @@ bool ThreadConfig::implement_thread_mempolicy(SThreadType type, unsigned id)
     auto iter = thread_affinity.find(key);
     if (iter != thread_affinity.end())
     {
-        int node_index = get_numa_node(topology, iter->second->cpuset);
+        // Use the actual current cpubind rather than the configured cpuset.
+        // After a CPU affinity fallback, the thread may be bound to different
+        // cores than originally configured, and the NUMA memory policy must
+        // match the actual CPU placement to avoid cross-node access penalties.
+        auto actual_cpuset = hwloc_bitmap_alloc();
+        hwloc_get_cpubind(topology, actual_cpuset, HWLOC_CPUBIND_THREAD);
+
+        int configured_node = get_numa_node(topology, iter->second->cpuset);
+        int actual_node = get_numa_node(topology, actual_cpuset);
+
+        if (configured_node >= 0 && actual_node >= 0 && configured_node != actual_node)
+        {
+            WarningMessage("%s NUMA node mismatch: configured cpuset maps to node %d, "
+                "but thread is actually bound to node %d. Setting memory policy for "
+                "actual node %d.\n",
+                stringify_thread(type, id).c_str(), configured_node,
+                actual_node, actual_node);
+        }
+
+        int node_index = (actual_node >= 0) ? actual_node : configured_node;
+        hwloc_bitmap_free(actual_cpuset);
+
         if(apply_numa_mempolicy(node_index))
             LogMessage( "%s memory policy set to %s for node %d\n", 
                 stringify_numa_mempolicy(numa_mempolicy).c_str(),
@@ -302,6 +359,26 @@ bool ThreadConfig::implement_thread_mempolicy(SThreadType type, unsigned id)
 }
 
 #endif
+
+static void fallback_to_process_cpuset(const char* thread_desc, const char* requested_cpuset_s)
+{
+    if (hwloc_set_cpubind(topology, process_cpuset, HWLOC_CPUBIND_THREAD))
+    {
+        WarningMessage("Fallback binding to process CPU set also failed "
+            "for %s: %s (%d). Thread will use inherited affinity.\n",
+            thread_desc, get_error(errno), errno);
+    }
+    else
+    {
+        char* fallback_s = nullptr;
+        hwloc_bitmap_list_asprintf(&fallback_s, process_cpuset);
+        WarningMessage("%s bound to fallback process CPU set '%s' "
+            "instead of requested '%s'.\n",
+            thread_desc, fallback_s ? fallback_s : "(null)", 
+            requested_cpuset_s ? requested_cpuset_s : "(null)");
+        if (fallback_s) free(fallback_s);
+    }
+}
 
 void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
 {
@@ -358,8 +435,21 @@ void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
 
     if (hwloc_set_cpubind(topology, desired_cpuset, HWLOC_CPUBIND_THREAD))
     {
-        FatalError("Failed to pin %s to CPU %s: %s (%d)\n",
+        WarningMessage("Failed to pin %s to CPU %s: %s (%d). "
+            "Falling back to process CPU set. This may indicate a process "
+            "affinity mismatch.\n",
             stringify_thread(type, id).c_str(), s, get_error(errno), errno);
+        fallback_to_process_cpuset(stringify_thread(type, id).c_str(), s);
+
+        if (type != STHREAD_TYPE_MAIN)
+        {
+            char* fallback_s = nullptr;
+            hwloc_bitmap_list_asprintf(&fallback_s, process_cpuset);
+            thread_name = "snort.core-";
+            thread_name.append(fallback_s ? fallback_s : "?");
+            SET_THREAD_NAME(pthread_self(), thread_name.c_str());
+            if (fallback_s) free(fallback_s);
+        }
     }
 
     free(s);
@@ -386,8 +476,11 @@ void ThreadConfig::implement_named_thread_affinity(const string& name)
 
         if (hwloc_set_cpubind(topology, desired_cpuset, HWLOC_CPUBIND_THREAD))
         {
-            FatalError("Failed to pin thread %s to %s: %s (%d)\n",
+            WarningMessage("Failed to pin thread %s to %s: %s (%d). "
+                "Falling back to process CPU set. This may indicate a process "
+                "affinity mismatch.\n",
                 name.c_str(), s, get_error(errno), errno);
+            fallback_to_process_cpuset(name.c_str(), s);
         }
 
         free(s);
@@ -612,6 +705,87 @@ TEST_CASE("Named thread affinity with type configured", "[ThreadConfig]")
         hwloc_get_cpubind(topology, thread_cpuset, HWLOC_CPUBIND_THREAD);
         CHECK(hwloc_bitmap_isequal(thread_cpuset, type_cpuset->cpuset));
 
+        hwloc_bitmap_free(thread_cpuset);
+    }
+}
+
+TEST_CASE("Validate cpuset with partial overlap returns intersection", "[ThreadConfig]")
+{
+    // Narrow process_cpuset to a single CPU, then request a cpuset that partially overlaps.
+    hwloc_cpuset_t original = hwloc_bitmap_dup(process_cpuset);
+    int first_cpu = hwloc_bitmap_first(process_cpuset);
+    int bogus_cpu = first_cpu + 100;
+
+    hwloc_bitmap_t restricted = hwloc_bitmap_alloc();
+    hwloc_bitmap_set(restricted, first_cpu);
+    hwloc_bitmap_free(process_cpuset);
+    process_cpuset = restricted;
+
+    // Request both the valid CPU and an unavailable one.
+    char partial_str[64];
+    snprintf(partial_str, sizeof(partial_str), "%d,%d", first_cpu, bogus_cpu);
+    CpuSet* result = ThreadConfig::validate_cpuset_string(partial_str);
+
+    // Should succeed with only the intersecting CPU.
+    CHECK(result != nullptr);
+    CHECK(hwloc_bitmap_weight(result->cpuset) == 1);
+    CHECK(hwloc_bitmap_isset(result->cpuset, first_cpu));
+    CHECK(!hwloc_bitmap_isset(result->cpuset, bogus_cpu));
+    ThreadConfig::destroy_cpuset(result);
+
+    // Restore original process_cpuset.
+    hwloc_bitmap_free(process_cpuset);
+    process_cpuset = original;
+}
+
+TEST_CASE("Validate cpuset with zero overlap falls back to process cpuset", "[ThreadConfig]")
+{
+    // Narrow process_cpuset to a single CPU, then request a completely disjoint cpuset.
+    hwloc_cpuset_t original = hwloc_bitmap_dup(process_cpuset);
+    int first_cpu = hwloc_bitmap_first(process_cpuset);
+    int bogus_cpu = first_cpu + 100;
+
+    hwloc_bitmap_t restricted = hwloc_bitmap_alloc();
+    hwloc_bitmap_set(restricted, first_cpu);
+    hwloc_bitmap_free(process_cpuset);
+    process_cpuset = restricted;
+
+    // Request only a CPU that is not in the restricted process_cpuset.
+    char zero_str[64];
+    snprintf(zero_str, sizeof(zero_str), "%d", bogus_cpu);
+    CpuSet* result = ThreadConfig::validate_cpuset_string(zero_str);
+
+    // Should succeed with process_cpuset as fallback (not nullptr).
+    CHECK(result != nullptr);
+    CHECK(hwloc_bitmap_isequal(result->cpuset, process_cpuset));
+    ThreadConfig::destroy_cpuset(result);
+
+    // Restore original process_cpuset.
+    hwloc_bitmap_free(process_cpuset);
+    process_cpuset = original;
+}
+
+TEST_CASE("Implement thread affinity graceful fallback on unbindable CPU", "[ThreadConfig]")
+{
+    if (topology_support->cpubind->set_thisthread_cpubind)
+    {
+        // Create a cpuset with a very high CPU number that almost certainly doesn't exist.
+        // The old code would FatalError here; the new code should warn and fall back.
+        hwloc_cpuset_t bogus = hwloc_bitmap_alloc();
+        hwloc_bitmap_set(bogus, 9999);
+        CpuSet* cpuset = new CpuSet(bogus);
+
+        ThreadConfig tc;
+        tc.set_thread_affinity(STHREAD_TYPE_PACKET, 0, cpuset);
+
+        // This should NOT call FatalError. If we return from this call, the test passes.
+        tc.implement_thread_affinity(STHREAD_TYPE_PACKET, 0);
+
+        // Verify the thread is still bound to something valid (process_cpuset fallback
+        // or inherited affinity).
+        hwloc_cpuset_t thread_cpuset = hwloc_bitmap_alloc();
+        hwloc_get_cpubind(topology, thread_cpuset, HWLOC_CPUBIND_THREAD);
+        CHECK(!hwloc_bitmap_iszero(thread_cpuset));
         hwloc_bitmap_free(thread_cpuset);
     }
 }
