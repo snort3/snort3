@@ -53,10 +53,63 @@ const uint8_t* HttpEvent::get_all_raw_headers(int32_t& length)
     return get_header(HttpEnums::HTTP_BUFFER_RAW_HEADER, 0, length);
 }
 
-const uint8_t* HttpEvent::get_content_length(int32_t& length)
+// Parse a decimal Content-Length value per RFC 7230 (Content-Length = 1*DIGIT).
+// Comma-separated duplicate values (e.g. "42,42") may arrive from the normalizer when multiple Content-Length headers
+// are present. The first value before the comma is used, consistent with norm_decimal_integer behavior.
+ContentLengthStatus HttpEvent::parse_content_length_value(const char* str, int32_t len, int64_t& value)
 {
-    return get_header(HttpEnums::HTTP_BUFFER_HEADER,
-        HttpEnums::HEAD_CONTENT_LENGTH, length);
+    // 18 significant digits fit in int64_t without overflow (max 999999999999999999)
+    constexpr int max_significant_digits = 18;
+    const char* p = str;
+    const char* const end = str + len;
+
+    // Skip leading zeros separately so the hot digit loop below stays branch-minimal
+    while (p < end and *p == '0')
+        ++p;
+
+    if (p == end or *p == ',')
+    {
+        // No digits consumed at all (e.g. ",42") — reject as malformed
+        if (p == str)
+            return ContentLengthStatus::MALFORMED;
+        value = 0;
+        return ContentLengthStatus::OK;
+    }
+
+    // Pre-compute the scan boundary so the overflow guard is a pointer compare already needed for bounds checking, 
+    // rather than a per-iteration counter
+    const char* const scan_end = (end - p > max_significant_digits) ? p + max_significant_digits : end;
+    int64_t total = 0;
+
+    // Hot loop: unsigned cast turns two-sided range check into a single comparison
+    do
+    {
+        unsigned d = static_cast<unsigned>(*p - '0');
+        if (d > 9u)
+            return ContentLengthStatus::MALFORMED;
+        total = total * 10 + d;
+    }
+    while (++p < scan_end and *p != ',');
+
+    // If we stopped at scan_end with more non-comma chars remaining, too many digits
+    if (p < end and *p != ',')
+        return ContentLengthStatus::MALFORMED;
+
+    value = total;
+    return ContentLengthStatus::OK;
+}
+
+ContentLengthStatus HttpEvent::get_content_length(int64_t& value)
+{
+    value = 0;
+    int32_t hdr_len = 0;
+
+    const char* hdr_value_str = (const char*)get_header(HttpEnums::HTTP_BUFFER_HEADER,
+        HttpEnums::HEAD_CONTENT_LENGTH, hdr_len);
+    if (not hdr_value_str)
+        return ContentLengthStatus::NOT_FOUND;
+
+    return parse_content_length_value(hdr_value_str, hdr_len, value);
 }
 
 const uint8_t* HttpEvent::get_content_type(int32_t& length)
