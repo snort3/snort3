@@ -124,12 +124,12 @@ bool DecodeConfig::is_decompress_vba() const
 
 void DecodeConfig::set_decompress_buffer_size(uint32_t size)
 {
-    decompress_buffer_size = size;
+    decompress_buffer_size.store(size, std::memory_order_relaxed);
 }
 
 uint32_t DecodeConfig::get_decompress_buffer_size() const
 {
-    return decompress_buffer_size;
+    return decompress_buffer_size.load(std::memory_order_relaxed);
 }
 
 int64_t DecodeConfig::get_file_depth() const
@@ -186,6 +186,6 @@ void DecodeConfig::show(bool full) const
     ConfigLogger::log_flag("decompress_swf", decompress_swf);
     ConfigLogger::log_flag("decompress_zip", decompress_zip);
     ConfigLogger::log_flag("decompress_vba", decompress_vba);
-    ConfigLogger::log_value("decompress_buffer_size", decompress_buffer_size);
+    ConfigLogger::log_value("decompress_buffer_size", decompress_buffer_size.load(std::memory_order_relaxed));
 }
 

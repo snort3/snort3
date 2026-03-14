@@ -22,6 +22,8 @@
 #define FILE_MIME_CONFIG_H
 
 // List of MIME decode and log configuration functions
+#include <atomic>
+
 #include "main/snort_types.h"
 #include "main/snort_config.h"
 
@@ -86,7 +88,7 @@ private:
     bool decompress_swf = false;
     bool decompress_zip = false;
     bool decompress_vba = false;
-    uint32_t decompress_buffer_size = DEFAULT_DECOMP;
+    std::atomic<uint32_t> decompress_buffer_size{DEFAULT_DECOMP};
     int64_t file_depth = MIN_DEPTH;
     bool decode_enabled = true;
 };
