@@ -24,6 +24,7 @@
 
 #include "file_decomp.h"
 
+#include <atomic>
 #include <cassert>
 
 #include "utils/util.h"
@@ -53,22 +54,22 @@ static struct sig_map_s
 {
     const char* Sig;
     size_t Sig_Length;
-    bool Enabled;
+    std::atomic<bool> Enabled;
     file_type_t File_Type;
     file_compression_type_t File_Compression_Type;
 } Signature_Map[] =
 {
     // none: compression type is embedded in PDF dictionaries
-    { PDF_Sig, sizeof(PDF_Sig), false, FILE_TYPE_PDF, FILE_COMPRESSION_TYPE_NONE },
+    { PDF_Sig, sizeof(PDF_Sig), {false}, FILE_TYPE_PDF, FILE_COMPRESSION_TYPE_NONE },
 
-    { SWF_ZLIB_Sig, sizeof(SWF_ZLIB_Sig), false, FILE_TYPE_SWF, FILE_COMPRESSION_TYPE_ZLIB },
+    { SWF_ZLIB_Sig, sizeof(SWF_ZLIB_Sig), {false}, FILE_TYPE_SWF, FILE_COMPRESSION_TYPE_ZLIB },
 #ifdef HAVE_LZMA
-    { SWF_LZMA_Sig, sizeof(SWF_LZMA_Sig), false, FILE_TYPE_SWF, FILE_COMPRESSION_TYPE_LZMA },
+    { SWF_LZMA_Sig, sizeof(SWF_LZMA_Sig), {false}, FILE_TYPE_SWF, FILE_COMPRESSION_TYPE_LZMA },
 #endif
 
-    { ZIP_Sig, sizeof(ZIP_Sig), false, FILE_TYPE_ZIP, FILE_COMPRESSION_TYPE_NONE },
+    { ZIP_Sig, sizeof(ZIP_Sig), {false}, FILE_TYPE_ZIP, FILE_COMPRESSION_TYPE_NONE },
 
-    { nullptr, 0, false, FILE_TYPE_NONE, FILE_COMPRESSION_TYPE_NONE }
+    { nullptr, 0, {false}, FILE_TYPE_NONE, FILE_COMPRESSION_TYPE_NONE }
 };
 
 /* Define the elements of the Sig_State value (packed for storage efficiency */
@@ -128,7 +129,7 @@ static fd_status_t Locate_Sig_Here(fd_session_t* SessionPtr)
             return( File_Decomp_NoSig );
 
         /* Get next char and see if it matches next char in sig */
-        if ( (Signature_Map[Sig_Index].Enabled) &&
+        if ( (Signature_Map[Sig_Index].Enabled.load(std::memory_order_relaxed)) &&
             (*(SessionPtr->Next_In+Char_Index) == *(Signature_Map[Sig_Index].Sig+Char_Index)) )
         {
             /* Check to see if we are at the end of the sig string. */
@@ -264,23 +265,23 @@ fd_status_t File_Decomp_Init(fd_session_t* SessionPtr)
     {
         if ( (Signature_Map[Sig].File_Type == FILE_TYPE_PDF ) &&
             ((SessionPtr->Modes & FILE_PDF_ANY) != 0) )
-            Signature_Map[Sig].Enabled = true;
+            Signature_Map[Sig].Enabled.store(true, std::memory_order_relaxed);
 
         if ( (Signature_Map[Sig].File_Type == FILE_TYPE_SWF ) &&
             (Signature_Map[Sig].File_Compression_Type == FILE_COMPRESSION_TYPE_ZLIB) &&
             ((SessionPtr->Modes & FILE_SWF_ZLIB_BIT) != 0) )
-            Signature_Map[Sig].Enabled = true;
+            Signature_Map[Sig].Enabled.store(true, std::memory_order_relaxed);
 
 #ifdef HAVE_LZMA
         if ( (Signature_Map[Sig].File_Type == FILE_TYPE_SWF ) &&
             (Signature_Map[Sig].File_Compression_Type == FILE_COMPRESSION_TYPE_LZMA) &&
             ((SessionPtr->Modes & FILE_SWF_LZMA_BIT) != 0) )
-            Signature_Map[Sig].Enabled = true;
+            Signature_Map[Sig].Enabled.store(true, std::memory_order_relaxed);
 #endif
 
         if ( (Signature_Map[Sig].File_Type == FILE_TYPE_ZIP ) &&
             ((SessionPtr->Modes & FILE_ZIP_DEFL_BIT) != 0) )
-            Signature_Map[Sig].Enabled = true;
+            Signature_Map[Sig].Enabled.store(true, std::memory_order_relaxed);
     }
 
     return( File_Decomp_OK );
