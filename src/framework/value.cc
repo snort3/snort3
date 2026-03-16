@@ -271,6 +271,10 @@ std::string Value::get_origin_string() const
         value += token;
         value += " ";
     }
+
+    if ( value.empty() )
+        return origin_str;
+
     value.erase(value.size() - 1);
 
     return value;
