@@ -47,7 +47,7 @@ public:
 
     QuicExtractorFlowData(QuicExtractor& owner)
         : ExtractorFlowData(type_id), owner(owner) { }
-    
+
     ~QuicExtractorFlowData() override
     {
         if (has_data)
@@ -199,7 +199,7 @@ void QuicExtractor::dump(const QuicExtractorFlowData& fd)
         logger->add_field(f.name, (uint64_t)0);
 
     log(fd_str_fields, &fd, logger->is_strict());
-    
+
     logger->close_record(*log_id);
 }
 

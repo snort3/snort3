@@ -54,7 +54,9 @@ uint64_t FileInfo::get_file_id() const { return file_id; }
 
 const std::string& FileInfo::get_file_name() const { return file_name; }
 
-std::string FileContext::get_mime_type() const { return std::string(); }
+const char* FileContext::get_mime_type() const { return ""; }
+
+char* FileContext::get_UTF8_fname(size_t*) { return nullptr; }
 
 FileDirection FileInfo::get_file_direction() const { return direction; }
 
@@ -97,7 +99,7 @@ TEST(pub_sub_file_events_test, file_event)
 
     FileEvent event(file_ctx);
 
-    CHECK(event.get_fuid() == std::to_string(fuid));
+    CHECK(event.get_fuid() == fuid);
     CHECK(event.get_source() == std::string());
     CHECK(event.get_mime_type() == std::string());
     CHECK(event.get_filename() == std::string(filename));
@@ -108,7 +110,7 @@ TEST(pub_sub_file_events_test, file_event)
     CHECK(event.get_timedout() == false);
     CHECK(event.get_sha256() == std::string());
     CHECK(event.get_extracted_name() == std::string());
-    CHECK(event.get_extracted_cutoff() == true);
+    CHECK(event.get_extracted_cutoff() == false);
     CHECK(event.get_extracted_size() == 0);
 }
 

@@ -65,6 +65,8 @@ Services and their events:
   ** `response`
 * connection (conn)
   ** `eof` (end of flow)
+* file
+  ** `eof` (end of file)
 * internal built-in checks which failed (weird)
   ** 'builtin' (internally-detected infraction is queued for further processing)
 * triggered IPS rule, whether built-in or text or SO (notice)
@@ -208,6 +210,23 @@ Each letter appears only once for each direction, regardless of how many times t
 UDP Events: d: Packet with payload.
 
 TCP Events: s: SYN, h: SYN-ACK, a: Pure ACK or PUSH, d: Packet with payload, f: FIN, r: Reset.
+
+Fields supported for file:
+
+* `filename` - filename from headers in network protocols
+* `fuid` - unique file identifier
+* `source` - a protocol associated with the file
+* `inspector` - inspector associated with the file analysis
+* `mime_type` - mime attachment type (or file type identified by file magic)
+* `is_orig` - if sender was originator of the file transfer
+* `seen_bytes` - number of bytes processed for analysis
+* `total_bytes` - total file size in bytes
+* 'duration' - duration the file was analyzed for, in seconds
+* `timeout` - if file analysis timed out
+* `sha256` - SHA256 digest of the file contents
+* `extracted`- name of captured file
+* `extracted_size` - number of bytes captured
+* `extracted_cutoff` - true if the file being captured was cut off so the whole file was not logged
 
 Fields supported for 'weird' and 'notice' logs:
 

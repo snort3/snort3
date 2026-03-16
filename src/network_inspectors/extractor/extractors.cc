@@ -53,6 +53,9 @@ vector<const char*> ExtractorEvent::get_field_names() const
     for (auto& f : str_fields)
         res.push_back(f.name);
 
+    for (auto& f : dbl_fields)
+        res.push_back(f.name);
+
     return res;
 }
 

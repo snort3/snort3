@@ -26,19 +26,70 @@
 
 #include "file_events.h"
 
+#include <optional>
+
+#include "file_api/file_lib.h"
+#include "utils/util.h"
+
 using namespace snort;
 
-std::string FileEvent::get_fuid() const
-{ return std::to_string(file_ctx.get_file_id()); }
+uint64_t FileEvent::get_fuid() const
+{ return file_ctx.get_file_id(); }
 
 const std::string& FileEvent::get_source() const
 { return file_ctx.get_source(); }
 
-const std::string FileEvent::get_mime_type() const
-{ return file_ctx.get_mime_type(); }
+const char* FileEvent::get_mime_type() const
+{
+    return file_ctx.get_mime_type();
+}
 
 const std::string& FileEvent::get_filename() const
-{ return file_ctx.get_file_name(); }
+{
+    if (!filename.has_value())
+    {
+        size_t fname_len = file_ctx.get_file_name().length();
+        filename = std::string();
+
+        if (fname_len)
+        {
+            char* outbuf = const_cast<FileContext&>(file_ctx).get_UTF8_fname(&fname_len);
+            const char* fname = (outbuf != nullptr) ? outbuf : file_ctx.get_file_name().c_str();
+
+            size_t pos = 0;
+            while (pos < fname_len)
+            {
+                if (isprint((int)fname[pos]))
+                {
+                    (*filename) += fname[pos++];
+                }
+                else
+                {
+                    (*filename) += '|';
+                    bool add_space = false;
+                    while ((pos < fname_len) && !isprint((int)fname[pos]))
+                    {
+                        if (add_space)
+                            (*filename) += ' ';
+                        else
+                            add_space = true;
+
+                        int ch = 0xff & fname[pos];
+                        char buf[3];
+                        snprintf(buf, sizeof(buf), "%02X", ch);
+                        (*filename) += buf;
+                        pos++;
+                    }
+                    (*filename) += '|';
+                }
+            }
+
+            snort_free(outbuf);
+        }
+    }
+
+    return *filename;
+}
 
 double FileEvent::get_duration() const
 { return file_ctx.get_duration(); }
@@ -60,10 +111,16 @@ uint64_t FileEvent::get_total_bytes() const
 bool FileEvent::get_timedout() const
 { return file_ctx.get_timedout(); }
 
-const std::string FileEvent::get_sha256() const
-{ return (file_ctx.get_file_sig_sha256() ? file_ctx.sha_to_string(file_ctx.get_file_sig_sha256()) : std::string()); }
+const std::string& FileEvent::get_sha256() const
+{
+    if (!sha256.has_value())
+        sha256 = file_ctx.get_file_sig_sha256() ?
+            file_ctx.sha_to_string(file_ctx.get_file_sig_sha256()) : std::string();
 
-const std::string FileEvent::get_extracted_name() const
+    return *sha256;
+}
+
+const std::string& FileEvent::get_extracted_name() const
 { return file_ctx.get_extracted_name(); }
 
 bool FileEvent::get_extracted_cutoff() const

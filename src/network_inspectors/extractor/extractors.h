@@ -60,6 +60,8 @@ public:
     using SipField = DataField<const SfIp&, const DataEvent*, const Flow*>;
     using NumGetFn = uint64_t (*) (const DataEvent*, const Flow*);
     using NumField = DataField<uint64_t, const DataEvent*, const Flow*>;
+    using DblGetFn = double (*) (const DataEvent*, const Flow*);
+    using DblField = DataField<double, const DataEvent*, const Flow*>;
     using NtsGetFn = struct timeval (*) (const DataEvent*, const Flow*);
     using NtsField = DataField<struct timeval, const DataEvent*, const Flow*>;
     using StrGetFn = std::pair<const char*, uint16_t> (*) (const DataEvent*, const Flow*);
@@ -184,6 +186,7 @@ protected:
     std::vector<NtsField> nts_fields;
     std::vector<SipField> sip_fields;
     std::vector<NumField> num_fields;
+    std::vector<DblField> dbl_fields;
     std::vector<BufField> buf_fields;
     std::vector<StrField> str_fields;
 

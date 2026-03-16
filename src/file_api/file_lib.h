@@ -151,7 +151,7 @@ protected:
     bool re_eval = false;
     // Indicates that file transmission goes through 206 HTTP Partial Content
     bool is_partial = false;
-    bool extracted_cutoff = true;
+    bool extracted_cutoff = false;
     uint64_t extracted_size = 0;
     std::string extracted_file_name;
 };
@@ -203,7 +203,7 @@ public:
     FileInspect* get_inspector() { return inspector; }
     double get_duration() const { return duration; }  // Duration in seconds (fractional)
     void set_duration(double d) { duration = d; }
-    std::string get_mime_type() const;
+    const char* get_mime_type() const;
     const std::string& get_source() const { return source; }
     void set_source(Flow *flow);
     bool get_timedout() const { return timedout; }

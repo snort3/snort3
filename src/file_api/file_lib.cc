@@ -537,16 +537,16 @@ inline void FileContext::finalize_file_type()
     file_type_context = nullptr;
 }
 
-std::string FileContext::get_mime_type() const
+const char* FileContext::get_mime_type() const
 {
     const FileConfig* conf = get_file_config();
     if (SNORT_FILE_TYPE_UNKNOWN != file_type_id and SNORT_FILE_TYPE_CONTINUE != file_type_id and conf)
     {
         const FileMeta* info = conf->get_rule_from_id(file_type_id);
-        return info != nullptr ? info->type : std::string();
+        return info != nullptr ? info->type.c_str() : "";
     }
 
-    return std::string();
+    return "";
 }
 
 void FileContext::set_source(Flow *flow)
@@ -588,7 +588,7 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
 
         user_file_data_mutex.unlock();
 
-        if (policy and log_needed)
+        if (processing_complete or log_needed)
         {
             hr_time now = SnortClock::now();
             duration = (TO_USECS(now - start_time)) / 1000000.0;  // Convert microseconds to seconds
@@ -602,11 +602,11 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
             FileCharEncoding encoding = get_character_encoding(filename.c_str(), fname_len);
 
             FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
-                "File advance log: fuid-%s, source-%s, mime type-%s, file name-%s,"
-                " duration-%f, is orig-%d, seen bytes-%lu, total bytes-%lu,"
+                "File advance log: fuid-%" PRIu64 ", source-%s, mime type-%s, file name-%s,"
+                " duration-%f, is orig-%d, seen bytes-%" PRIu64 ", total bytes-%" PRIu64 ","
                 " timedout-%d, sha256-%s, extracted name-%s, extracted cutoff-%d,"
-                " extracted size-%lu\n", file_event.get_fuid().c_str(),
-                file_event.get_source().c_str(), file_event.get_mime_type().c_str(),
+                " extracted size-%" PRIu64 "\n", file_event.get_fuid(),
+                file_event.get_source().c_str(), file_event.get_mime_type(),
                 (encoding == SNORT_CHAR_ENCODING_UTF_16LE) ? "" : filename.c_str(), file_event.get_duration(),
                 file_event.get_is_orig(), file_event.get_seen_bytes(),
                 file_event.get_total_bytes(), file_event.get_timedout(),
@@ -1101,9 +1101,8 @@ void FileContext::update_file_size(int data_size, FilePosition position)
 {
     processed_bytes += data_size;
 
-    FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
-        GET_CURRENT_PACKET,
-        "Updating file size of file_id %lu at position %d with processed_bytes %lu\n",
+    FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
+        "Updating file size of file_id %" PRIu64 " at position %d with processed_bytes %" PRIu64 "\n",
         file_id, position, processed_bytes);
     if ((position == SNORT_FILE_END)or (position == SNORT_FILE_FULL))
     {

@@ -51,6 +51,7 @@ public:
     virtual void add_field(const char*, const char*) {}
     virtual void add_field(const char*, const char*, size_t) {}
     virtual void add_field(const char*, uint64_t) {}
+    virtual void add_field(const char*, double) {}
     virtual void add_field(const char*, struct timeval) {}
     virtual void add_field(const char*, const snort::SfIp&) {}
     virtual void add_field(const char*, bool) {}

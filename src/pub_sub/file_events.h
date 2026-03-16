@@ -23,6 +23,8 @@
 #ifndef FILE_EVENTS_H
 #define FILE_EVENTS_H
 
+#include <optional>
+
 #include "file_api/file_cache.h"
 #include "file_events_ids.h"
 #include "framework/mp_data_bus.h"
@@ -128,22 +130,24 @@ class SO_PUBLIC FileEvent : public DataEvent
 public:
     FileEvent(const FileContext& data) : file_ctx(data) { }
 
-    std::string get_fuid() const;
+    uint64_t get_fuid() const;
     const std::string& get_source() const;
-    const std::string get_mime_type() const;
+    const char* get_mime_type() const;
     const std::string& get_filename() const;
     double get_duration() const;  // Returns duration in seconds (fractional)
     bool get_is_orig() const;
     uint64_t get_seen_bytes() const;
     uint64_t get_total_bytes() const;
     bool get_timedout() const;
-    const std::string get_sha256() const;
-    const std::string get_extracted_name() const;
+    const std::string& get_sha256() const;
+    const std::string& get_extracted_name() const;
     bool get_extracted_cutoff() const;
     uint64_t get_extracted_size() const;
 
 private:
     const FileContext& file_ctx;
+    mutable std::optional<std::string> sha256;
+    mutable std::optional<std::string> filename;
 };
 
 }

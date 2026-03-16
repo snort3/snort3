@@ -34,6 +34,7 @@ public:
     void add_field(const char*, const char*) override;
     void add_field(const char*, const char*, size_t) override;
     void add_field(const char*, uint64_t) override;
+    void add_field(const char*, double) override;
     void add_field(const char*, struct timeval) override;
     void add_field(const char*, const snort::SfIp&) override;
     void add_field(const char*, bool) override;

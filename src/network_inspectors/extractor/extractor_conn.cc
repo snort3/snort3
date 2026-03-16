@@ -88,7 +88,7 @@ static uint64_t get_resp_bytes(const DataEvent*, const Flow* f)
 {
     if (f->session == nullptr)
         return 0;
-    
+
     if (f->pkt_type == PktType::TCP)
         return get_resp_bytes_tcp((const TcpSession*)f->session);
     else if (f->pkt_type == PktType::UDP)

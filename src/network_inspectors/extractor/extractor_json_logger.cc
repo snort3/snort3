@@ -117,6 +117,18 @@ void JsonExtractorLogger::add_field(const char* f, uint64_t v)
     out_buffer += std::to_string(v);
 }
 
+void JsonExtractorLogger::add_field(const char* f, double v)
+{
+    const unsigned precision = 6;
+
+    // 20 digits for integer part + '.' + precision digits + '\0'
+    char buf[20 + 1 + precision + 1];
+    std::snprintf(buf, sizeof(buf), "%.*f", (int)precision, v);
+
+    write_key(f);
+    out_buffer += buf;
+}
+
 void JsonExtractorLogger::add_field(const char* f, const snort::SfIp& v)
 {
     snort::SfIpString buf;
