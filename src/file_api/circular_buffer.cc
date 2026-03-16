@@ -36,15 +36,17 @@
 
 #include "circular_buffer.h"
 
+#include <atomic>
+
 #include "utils/util.h"
 
 /* Circular buffer object */
 struct _CircularBuffer
 {
-    uint64_t size;     /* maximum number of elements           */
-    uint64_t start;    /* index of oldest element, reader update only */
-    uint64_t end;      /* index to write new element, writer update only*/
-    ElemType* elems;    /* vector of elements                   */
+    uint64_t size;                  /* maximum number of elements           */
+    std::atomic<uint64_t> start;   /* index of oldest element, reader update only */
+    std::atomic<uint64_t> end;     /* index to write new element, writer update only*/
+    ElemType* elems;                /* vector of elements                   */
 };
 
 /* This approach adds one byte to end and start pointers */
@@ -54,6 +56,8 @@ CircularBuffer* cbuffer_init(uint64_t size)
     CircularBuffer* cb = (CircularBuffer*)snort_calloc(sizeof(*cb));
 
     cb->size  = size + 1;
+    cb->start.store(0, std::memory_order_relaxed);
+    cb->end.store(0, std::memory_order_relaxed);
     cb->elems = (ElemType*)snort_calloc(cb->size, sizeof(ElemType));
 
     if (!cb->elems)
@@ -78,32 +82,30 @@ void cbuffer_free(CircularBuffer* cb)
 
 int cbuffer_is_full(CircularBuffer* cb)
 {
-    uint64_t next = cb->end + 1;
+    uint64_t next = cb->end.load(std::memory_order_relaxed) + 1;
 
     if ( next == cb->size )
         next = 0;
 
-    return (next == cb->start);
+    return (next == cb->start.load(std::memory_order_acquire));
 }
 
 
 int cbuffer_is_empty(CircularBuffer* cb)
 {
-    return (cb->end == cb->start);
+    return (cb->end.load(std::memory_order_acquire) == cb->start.load(std::memory_order_relaxed));
 }
 
 /* Returns number of elements in use*/
 uint64_t cbuffer_used(CircularBuffer* cb)
 {
-    /* cb->end < cb->start means passing the end of buffer */
-    if (cb->end < cb->start)
-    {
-        return (cb->size + cb->end - cb->start);
-    }
+    uint64_t end = cb->end.load(std::memory_order_acquire);
+    uint64_t start = cb->start.load(std::memory_order_acquire);
+
+    if (end < start)
+        return (cb->size + end - start);
     else
-    {
-        return (cb->end - cb->start);
-    }
+        return (end - start);
 }
 
 /* Returns total number of elements*/
@@ -124,7 +126,7 @@ uint64_t cbuffer_size(CircularBuffer* cb)
  */
 int cbuffer_write(CircularBuffer* cb, const ElemType elem)
 {
-    uint64_t w = cb->end;
+    uint64_t w = cb->end.load(std::memory_order_relaxed);
 
     if ( cbuffer_is_full (cb))  /* full, return error */
     {
@@ -135,7 +137,7 @@ int cbuffer_write(CircularBuffer* cb, const ElemType elem)
     if ( w == cb->size )
         w = 0;
 
-    cb->end = w;
+    cb->end.store(w, std::memory_order_release);
 
     return CB_SUCCESS;
 }
@@ -152,7 +154,7 @@ int cbuffer_write(CircularBuffer* cb, const ElemType elem)
  */
 int cbuffer_read(CircularBuffer* cb, ElemType* elem)
 {
-    uint64_t r = cb->start;
+    uint64_t r = cb->start.load(std::memory_order_relaxed);
 
     if (cbuffer_is_empty(cb)) /* Empty, return error */
     {
@@ -163,7 +165,7 @@ int cbuffer_read(CircularBuffer* cb, ElemType* elem)
     if ( r == cb->size )
         r = 0;
 
-    cb->start = r;
+    cb->start.store(r, std::memory_order_release);
 
     return CB_SUCCESS;
 }

@@ -31,8 +31,6 @@
 
 using namespace snort;
 
-static FileRule emptyRule;
-
 void FileRule::clear()
 {
     when.type_id = 0;
@@ -124,10 +122,9 @@ void FilePolicy::load()
     if (capture_enabled)
         FileService::enable_file_capture();
 
-    // Use default global setting
-    emptyRule.use.type_enabled = type_enabled;
-    emptyRule.use.signature_enabled = signature_enabled;
-    emptyRule.use.capture_enabled = capture_enabled;
+    default_rule.use.type_enabled = type_enabled;
+    default_rule.use.signature_enabled = signature_enabled;
+    default_rule.use.capture_enabled = capture_enabled;
 }
 
 FileRule& FilePolicy::match_file_rule(Flow*, FileInfo* file)
@@ -142,7 +139,7 @@ FileRule& FilePolicy::match_file_rule(Flow*, FileInfo* file)
             return file_rules[i];
     }
 
-    return emptyRule;
+    return default_rule;
 }
 
 FileVerdict FilePolicy::match_file_signature(Flow*, FileInfo* file)

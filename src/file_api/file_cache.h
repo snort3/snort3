@@ -78,9 +78,9 @@ private:
 
     /* The hash table of expected files */
     ExpectedFileCache* fileHash = nullptr;
-    int64_t block_timeout = DEFAULT_FILE_BLOCK_TIMEOUT;
+    std::atomic<int64_t> block_timeout{DEFAULT_FILE_BLOCK_TIMEOUT};
+    std::atomic<int64_t> lookup_timeout{DEFAULT_FILE_LOOKUP_TIMEOUT};
     int64_t max_files = DEFAULT_MAX_FILES_CACHED;
-    std::atomic<int64_t> lookup_timeout = DEFAULT_FILE_LOOKUP_TIMEOUT;
     std::mutex cache_mutex;
 };
 

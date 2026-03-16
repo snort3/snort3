@@ -84,6 +84,7 @@ private:
     FileVerdict match_file_signature(snort::Flow*, snort::FileInfo*);
     std::vector<FileRule> file_rules;
     std::map<std::string, FileVerdict> file_shas;
+    FileRule default_rule;
     bool type_enabled = false;
     bool signature_enabled = false;
     bool capture_enabled = false;
