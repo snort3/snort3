@@ -39,7 +39,7 @@ TcpStateSynRecv::TcpStateSynRecv(TcpStateMachine& tsm) :
 
 bool TcpStateSynRecv::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( tsd.get_seq() != trk.get_iss() )
+    if ( trk.get_iss() and tsd.get_seq() != trk.get_iss() )
     {
         tcpStats.bad_syn_seq++;
         if ( PacketTracer::is_active() )
@@ -210,4 +210,3 @@ bool TcpStateSynRecv::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpSt
 
     return true;
 }
-
