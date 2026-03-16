@@ -193,9 +193,12 @@ int32_t HttpMsgHeadShared::find_next_header(const uint8_t* buffer, int32_t lengt
         if (is_cr_lf[buffer[k]])
         {
             // Check for wrapping
-            if (((buffer[k] == '\r') && (buffer[k+1] == '\n') && !is_sp_tab[buffer[k+2]]) ||
-                ((buffer[k] == '\n') && !is_sp_tab[buffer[k+1]]) ||
-                ((buffer[k] == '\r') && !is_sp_tab_lf[buffer[k+1]]))
+            if ((k + 2 < length && buffer[k] == '\r' && buffer[k + 1] == '\n' &&
+                    !is_sp_tab[buffer[k + 2]]) ||
+                (k + 1 < length && buffer[k] == '\n' &&
+                    !is_sp_tab[buffer[k + 1]]) ||
+                (k + 1 < length && buffer[k] == '\r' &&
+                    !is_sp_tab_lf[buffer[k + 1]]))
             {
                 return k - num_seps;
             }

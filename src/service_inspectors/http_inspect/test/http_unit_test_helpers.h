@@ -47,6 +47,13 @@ public:
     }
     static HttpInfractions* get_infractions(HttpFlowData* flow_data, HttpCommon::SourceId source_id)
         { assert(flow_data!=nullptr); return flow_data->infractions[source_id]; }
+    static void set_partial_flush(HttpFlowData* flow_data, HttpCommon::SourceId source_id,
+        bool partial_flush, uint32_t num_excess)
+    {
+        assert(flow_data!=nullptr);
+        flow_data->partial_flush[source_id] = partial_flush;
+        flow_data->num_excess[source_id] = num_excess;
+    }
 };
 
 #endif

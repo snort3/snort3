@@ -87,6 +87,10 @@ protected:
     void print_headers(FILE* output);
 #endif
 
+#ifdef UNIT_TEST
+    friend class HttpMsgHeadSharedTestPeer;
+#endif
+
 private:
     static const int MAX = HttpEnums::HEAD__MAX_VALUE + HttpEnums::MAX_CUSTOM_HEADERS;
 
