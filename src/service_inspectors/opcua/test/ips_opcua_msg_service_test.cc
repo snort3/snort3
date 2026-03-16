@@ -53,7 +53,7 @@ TEST_GROUP(IpsOpcuaTest)
 // of message type, namespace index, and node ID matching.
 TEST(IpsOpcuaTest, msg_service_detection_test)
 {
-    OpcuaMsgServiceOption opcua_ips(OPCUA_MSG_SERVICE_TEST_UNION);
+    OpcuaMsgServiceOption opcua_ips(OPCUA_MSG_SERVICE_GET_ENDPOINTS_REQUEST);
     Cursor c; Packet p(true); 
 
     // Test case 1: Packet with no flow context should not match
@@ -89,7 +89,7 @@ TEST(IpsOpcuaTest, msg_service_detection_test)
 
     // Test case 7: Valid client packet with all correct attributes should match
     // Complete MSG PDU with default namespace and matching service node ID
-    ofd->client_ssn_data.node_id = OPCUA_MSG_SERVICE_TEST_UNION;
+    ofd->client_ssn_data.node_id = OPCUA_MSG_SERVICE_GET_ENDPOINTS_REQUEST;
     CHECK_EQUAL(IpsOption::MATCH, opcua_ips.eval(c, &p));
 
     // Test case 8: Server packet validation follows same logic as client
@@ -107,7 +107,7 @@ TEST(IpsOpcuaTest, msg_service_detection_test)
     CHECK_EQUAL(IpsOption::NO_MATCH, opcua_ips.eval(c, &p));
 
     // Test case 11: Valid server packet with matching service node ID should match
-    ofd->server_ssn_data.node_id = OPCUA_MSG_SERVICE_TEST_UNION;
+    ofd->server_ssn_data.node_id = OPCUA_MSG_SERVICE_GET_ENDPOINTS_REQUEST;
     CHECK_EQUAL(IpsOption::MATCH, opcua_ips.eval(c, &p));
 
     // Test case 12: No flow data should result in no match

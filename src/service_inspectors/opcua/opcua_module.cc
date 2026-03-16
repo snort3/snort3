@@ -68,7 +68,7 @@ PegCount* OpcuaModule::get_counts() const
 #define OPCUA_BAD_MSG_SIZE_STR \
     "invalid OPC UA MessageSize value detected"
 #define OPCUA_ABNORMAL_MSG_SIZE_STR \
-    "abnormal OPC UA MessageSize value detected"
+    "large OPC UA MessageSize value detected"
 #define OPCUA_BAD_MSG_TYPE_STR \
     "invalid OPC UA MsgType value detected"
 #define OPCUA_BAD_ISFINAL_STR \

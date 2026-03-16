@@ -64,29 +64,43 @@ static const std::unordered_map<uint32_t, OpcuaMsgParseFunc> opcua_msg_parsers =
 
 static bool append_message_chunk(Packet* p, OpcuaSessionData* ssn_data)
 {
-
+    // reject undersized messages
     if ( p->dsize <= OPCUA_MSG_HDR_LEN )
     {
         DetectionEngine::queue_event(GID_OPCUA, OPCUA_BAD_MSG_SIZE);
         return false;
     }
 
-    const uint32_t current_chunk_data_len = p->dsize - OPCUA_MSG_HDR_LEN;
-    const uint32_t new_chunk_data_len = ssn_data->chunk_data_len + current_chunk_data_len;
+    // reject impossibly large messages
+    if ( p->dsize > OPCUA_CHUNK_DATA_BUF_SIZE )
+    {
+        DetectionEngine::queue_event(GID_OPCUA, OPCUA_BAD_MSG_SIZE);
+        return false;
+    }
 
-    if ( new_chunk_data_len >= OPCUA_CHUNK_DATA_BUF_SIZE )
+    // reject new chunks when the chunk data buffer is already full
+    const uint32_t current_chunk_buf_used = ssn_data->chunk_data_len;
+    if ( current_chunk_buf_used >= OPCUA_CHUNK_DATA_BUF_SIZE )
     {
         DetectionEngine::queue_event(GID_OPCUA, OPCUA_LARGE_CHUNKED_MSG);
         return false;
     }
-    else
-    {
-        void* dst = ssn_data->chunk_data + ssn_data->chunk_data_len;
-        const void* src = p->data + OPCUA_MSG_HDR_LEN;
-        memcpy(dst, src, current_chunk_data_len);
 
-        ssn_data->chunk_data_len = new_chunk_data_len;
+    // reject instances where adding in the new chunk data would be too large to process
+    const uint32_t current_chunk_len = p->dsize - OPCUA_MSG_HDR_LEN;
+    const uint32_t available_space = OPCUA_CHUNK_DATA_BUF_SIZE - current_chunk_buf_used;
+    if ( current_chunk_len >= available_space )
+    {
+        DetectionEngine::queue_event(GID_OPCUA, OPCUA_LARGE_CHUNKED_MSG);
+        return false;
     }
+
+    // append new chunk data to the message chunk buffer
+    void* dst = ssn_data->chunk_data + current_chunk_buf_used;
+    const void* src = p->data + OPCUA_MSG_HDR_LEN;
+    memcpy(dst, src, current_chunk_len);
+    ssn_data->chunk_data_len = current_chunk_buf_used + current_chunk_len;
+
     return true;
 }
 
@@ -471,6 +485,7 @@ static bool parse_msg_msg(Packet* p, OpcuaSessionData* ssn_data)
         }
 
         ssn_data->is_chunked = false;
+        ssn_data->reset_chunk_data();
     }
     ssn_data->is_complete_msg = false;
 

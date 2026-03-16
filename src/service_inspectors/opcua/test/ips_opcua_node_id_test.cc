@@ -54,7 +54,7 @@ TEST_GROUP(IpsOpcuaNodeIdTest)
 // node IDs are specific to OPC UA service calls, not protocol control messages.
 TEST(IpsOpcuaNodeIdTest, node_id_detection_comprehensive_test)
 {
-    OpcuaNodeIdOption opcua_node_id(OPCUA_MSG_SERVICE_DATA_TYPE_DEFINITION);
+    OpcuaNodeIdOption opcua_node_id(OPCUA_MSG_SERVICE_GET_ENDPOINTS_REQUEST);
     Cursor c; Packet p(true);
 
     // Test case 1: Packet with no flow context should not match
@@ -82,12 +82,12 @@ TEST(IpsOpcuaNodeIdTest, node_id_detection_comprehensive_test)
     // Test case 5: MSG packet with non-matching node ID should not match
     // Testing with different node ID value than expected
     ofd->client_ssn_data.msg_type = OPCUA_MSG_MSG;
-    ofd->client_ssn_data.node_id = OPCUA_MSG_SERVICE_NODE;
+    ofd->client_ssn_data.node_id = OPCUA_MSG_SERVICE_REGISTER_SERVER_REQUEST;
     CHECK_EQUAL(IpsOption::NO_MATCH, opcua_node_id.eval(c, &p));
 
     // Test case 6: MSG packet with matching node ID should match
     // Valid MSG PDU with correct node ID should trigger detection
-    ofd->client_ssn_data.node_id = OPCUA_MSG_SERVICE_DATA_TYPE_DEFINITION;
+    ofd->client_ssn_data.node_id = OPCUA_MSG_SERVICE_GET_ENDPOINTS_REQUEST;
     CHECK_EQUAL(IpsOption::MATCH, opcua_node_id.eval(c, &p));
 
     // Test case 7: Server packet with matching conditions should match
@@ -95,7 +95,7 @@ TEST(IpsOpcuaNodeIdTest, node_id_detection_comprehensive_test)
     p.packet_flags &= ~PKT_FROM_CLIENT;
     p.packet_flags |= PKT_FROM_SERVER;
     ofd->server_ssn_data.msg_type = OPCUA_MSG_MSG;
-    ofd->server_ssn_data.node_id = OPCUA_MSG_SERVICE_DATA_TYPE_DEFINITION;
+    ofd->server_ssn_data.node_id = OPCUA_MSG_SERVICE_GET_ENDPOINTS_REQUEST;
     CHECK_EQUAL(IpsOption::MATCH, opcua_node_id.eval(c, &p));
 
     // Test case 8: No flow data should result in no match

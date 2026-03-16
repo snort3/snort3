@@ -37,15 +37,13 @@
 using namespace snort;
 
 static const std::unordered_set<uint32_t> opcua_known_msg_types = {
-    make_opcua_msg_key('H','E','L','F'),
-    make_opcua_msg_key('A','C','K','F'),
-    make_opcua_msg_key('E','R','R','F'),
-    make_opcua_msg_key('R','H','E','F'),
-    make_opcua_msg_key('O','P','N','F'),
-    make_opcua_msg_key('M','S','G','C'),
-    make_opcua_msg_key('M','S','G','F'),
-    make_opcua_msg_key('M','S','G','A'),
-    make_opcua_msg_key('C','L','O','F')
+    make_opcua_msg_key('H','E','L'),
+    make_opcua_msg_key('A','C','K'),
+    make_opcua_msg_key('E','R','R'),
+    make_opcua_msg_key('R','H','E'),
+    make_opcua_msg_key('O','P','N'),
+    make_opcua_msg_key('M','S','G'),
+    make_opcua_msg_key('C','L','O')
 };
 
 static StreamSplitter::Status abort_search(OpcuaSplitterPduData*);
@@ -58,7 +56,7 @@ static bool verify_known_message(OpcuaSplitterPduData* cur_pdu_data)
     }
 
     uint32_t msg_key = make_opcua_msg_key(cur_pdu_data->msg_type[0], cur_pdu_data->msg_type[1], 
-        cur_pdu_data->msg_type[2], cur_pdu_data->is_final);
+        cur_pdu_data->msg_type[2]);
     if ( opcua_known_msg_types.count(msg_key) )
     {
         return true;

@@ -167,21 +167,21 @@ TEST(OpcuaSplitterTest, scan_invalid_messages)
     result = splitter->scan(&packet, test_data, msg_size, 0, &fp);
     CHECK_EQUAL(snort::StreamSplitter::ABORT, result);
 
-    // Test case 4: Invalid is final field ("O")
-    // Non-standard OPC UA is final field should abort processing and trigger bad message type event
+    // Test case 5: Invalid is final field ("O")
+    // Non-standard OPC UA is final fields are considered abnormal but do not affect parsing in most cases
+    // Should flush but trigger a bad IsFinal event for security monitoring in the decoder
     reset();
     create_opcua_message("HELO", test_data, msg_size);
     result = splitter->scan(&server_packet, test_data, msg_size, 0, &fp);
-    CHECK_EQUAL(snort::StreamSplitter::ABORT, result);
-    CHECK_EQUAL(OPCUA_BAD_MSG_TYPE, event_sid);
+    CHECK_EQUAL(snort::StreamSplitter::FLUSH, result);
 }
 
 TEST(OpcuaSplitterTest, scan_size_issues)
 {
-    // Test case 1: Message with abnormally large size (4097 bytes)
-    // OPC UA messages over 4096 bytes are considered abnormal and may indicate attacks
+    // Test case 1: Message with abnormally large size (16384 bytes)
+    // OPC UA messages over 16383 bytes are considered abnormal and may indicate attacks
     // Should flush but trigger abnormal message size event for security monitoring
-    uint32_t msg_size = 4097;
+    uint32_t msg_size = 16384;
     create_opcua_message("HELF", test_data, msg_size);
     snort::StreamSplitter::Status result = splitter->scan(&client_packet, test_data, msg_size, 0, &fp);
     CHECK_EQUAL(snort::StreamSplitter::FLUSH, result);

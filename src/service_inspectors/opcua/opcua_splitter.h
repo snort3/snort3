@@ -25,7 +25,7 @@
 
 #include "opcua_session.h"
 
-#define OPCUA_LARGE_MSG_SIZE 4096
+#define OPCUA_LARGE_MSG_SIZE 16383
 
 enum opcua_splitter_state_t
 {
