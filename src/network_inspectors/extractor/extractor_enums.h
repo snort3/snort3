@@ -28,6 +28,7 @@ public:
     enum Value : uint8_t
     {
         HTTP,
+        SSH,
         FTP,
         SSL,
         CONN,
@@ -53,6 +54,8 @@ public:
         {
         case HTTP:
             return "http";
+        case SSH:
+            return "ssh";
         case FTP:
             return "ftp";
         case SSL:

@@ -55,6 +55,9 @@ Services and their events:
 
 * HTTP, HTTP2
   ** `eot` (request-response pair)
+* SSH
+  ** `algorithm` (key exchange with details)
+  ** `exchange` (key exchange complete)
 * FTP
   ** `request`
   ** `response`
@@ -107,6 +110,34 @@ Fields supported for HTTP:
 * `resp_filenames` - list with the names of the files sent by server
 * `orig_mime_types` - list with the content types of the files sent by client
 * `resp_mime_types` - list with the content types of the files sent by server
+
+Fields supported for SSH:
+
+* `version` - major version
+* `direction` - direction of the connection (LAN/WAN outbound/inbound)
+* `client.version` - the client's version string
+* `client.kex_alg` - key exchange algorithms listed by client
+* `client.host_key_alg` - server host key algorithms listed by client
+* `client.cipher_c2s_alg` - symmetric encryption algorithms (client-to-server direction) listed by client
+* `client.cipher_s2c_alg` - symmetric encryption algorithms (server-to-client direction) listed by client
+* `client.mac_c2s_alg` - MAC algorithms (client-to-server direction) listed by client
+* `client.mac_s2c_alg` - MAC algorithms (server-to-client direction) listed by client
+* `client.compression_c2s_alg` - compression algorithms (client-to-server direction) listed by client
+* `client.compression_s2c_alg` - compression algorithms (server-to-client direction) listed by client
+* `server.version` - the server's version string
+* `server.kex_alg` - key exchange algorithms listed by server
+* `server.host_key_alg` - server host key algorithms listed by server
+* `server.cipher_c2s_alg` - symmetric encryption algorithms (client-to-server direction) listed by server
+* `server.cipher_s2c_alg` - symmetric encryption algorithms (server-to-client direction) listed by server
+* `server.mac_c2s_alg` - MAC algorithms (client-to-server direction) listed by server
+* `server.mac_s2c_alg` - MAC algorithms (server-to-client direction) listed by server
+* `server.compression_c2s_alg` - compression algorithms (client-to-server direction) listed by server
+* `server.compression_s2c_alg` - compression algorithms (server-to-client direction) listed by server
+* `kex_alg` - key exchange algorithms in use (separated by comma if not the same: c2s, s2c)
+* `host_key_alg` - server host key algorithms in use (separated by comma if not the same: c2s, s2c)
+* `cipher_alg` - symmetric encryption algorithms in use (separated by comma if not the same: c2s, s2c)
+* `mac_alg` - MAC algorithms in use (separated by comma if not the same: c2s, s2c)
+* `compression_alg` - compression algorithms in use (separated by comma if not the same: c2s, s2c)
 
 Fields supported for FTP:
 

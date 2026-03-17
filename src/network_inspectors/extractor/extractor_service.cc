@@ -25,7 +25,6 @@
 
 #include "log/messages.h"
 
-#include "extractor.h"
 #include "extractor_conn.h"
 #include "extractor_detection.h"
 #include "extractor_dns.h"
@@ -33,7 +32,9 @@
 #include "extractor_ftp.h"
 #include "extractor_http.h"
 #include "extractor_quic.h"
+#include "extractor_ssh.h"
 #include "extractor_ssl.h"
+#include "extractor.h"
 
 using namespace snort;
 
@@ -119,6 +120,10 @@ ExtractorService* ExtractorService::make_service(Extractor& ins, const ServiceCo
     {
     case ServiceType::HTTP:
         srv = new HttpExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, ins);
+        break;
+
+    case ServiceType::SSH:
+        srv = new SshExtractorService(cfg.tenant_id, cfg.fields, cfg.on_events, cfg.service, ins);
         break;
 
     case ServiceType::FTP:
@@ -235,6 +240,11 @@ void ExtractorService::validate(const ServiceConfig& cfg)
         validate_fields(HttpExtractorService::blueprint, cfg.fields);
         break;
 
+    case ServiceType::SSH:
+        validate_events(SshExtractorService::blueprint, cfg.on_events);
+        validate_fields(SshExtractorService::blueprint, cfg.fields);
+        break;
+
     case ServiceType::FTP:
         validate_events(FtpExtractorService::blueprint, cfg.on_events);
         validate_fields(FtpExtractorService::blueprint, cfg.fields);
@@ -332,6 +342,68 @@ const snort::Connector::ID& HttpExtractorService::internal_tinit()
 { return log_id = logger->get_id(type.c_str()); }
 
 const snort::Connector::ID& HttpExtractorService::get_log_id()
+{ return log_id; }
+
+//-------------------------------------------------------------------------
+//  SshExtractorService
+//-------------------------------------------------------------------------
+
+const ServiceBlueprint SshExtractorService::blueprint =
+{
+    // events
+    {
+        "algorithm",
+        "exchange"
+    },
+    // fields
+    {
+        "version",
+        "direction",
+        "client.version",
+        "client.kex_alg",
+        "client.host_key_alg",
+        "client.cipher_c2s_alg",
+        "client.cipher_s2c_alg",
+        "client.mac_c2s_alg",
+        "client.mac_s2c_alg",
+        "client.compression_c2s_alg",
+        "client.compression_s2c_alg",
+        "server.version",
+        "server.kex_alg",
+        "server.host_key_alg",
+        "server.cipher_c2s_alg",
+        "server.cipher_s2c_alg",
+        "server.mac_c2s_alg",
+        "server.mac_s2c_alg",
+        "server.compression_c2s_alg",
+        "server.compression_s2c_alg",
+        "kex_alg",
+        "host_key_alg",
+        "cipher_alg",
+        "mac_alg",
+        "compression_alg"
+    },
+};
+
+THREAD_LOCAL Connector::ID SshExtractorService::log_id;
+
+SshExtractorService::SshExtractorService(uint32_t tenant, const std::vector<std::string>& srv_fields,
+    const std::vector<std::string>& srv_events, ServiceType s_type, Extractor& ins)
+    : ExtractorService(tenant, srv_fields, srv_events, blueprint, s_type, ins)
+{
+    for (const auto& event : get_events())
+    {
+        if (!strcmp("exchange", event.c_str()))
+            handlers.push_back(new SshExtractor(ins, tenant_id, get_fields(), false));
+        else if (!strcmp("algorithm", event.c_str()))
+            handlers.push_back(new SshExtractor(ins, tenant_id, get_fields(), true));
+    }
+}
+
+const snort::Connector::ID& SshExtractorService::internal_tinit()
+{ return log_id = logger->get_id(type.c_str()); }
+
+const snort::Connector::ID& SshExtractorService::get_log_id()
 { return log_id; }
 
 //-------------------------------------------------------------------------
@@ -709,6 +781,7 @@ TEST_CASE("Service Type", "[extractor]")
     SECTION("to string")
     {
         ServiceType http = ServiceType::HTTP;
+        ServiceType ssh = ServiceType::SSH;
         ServiceType ftp = ServiceType::FTP;
         ServiceType ssl = ServiceType::SSL;
         ServiceType conn = ServiceType::CONN;
@@ -721,6 +794,7 @@ TEST_CASE("Service Type", "[extractor]")
         ServiceType max = ServiceType::MAX;
 
         CHECK_FALSE(strcmp("http", http.c_str()));
+        CHECK_FALSE(strcmp("ssh", ssh.c_str()));
         CHECK_FALSE(strcmp("ftp", ftp.c_str()));
         CHECK_FALSE(strcmp("ssl", ssl.c_str()));
         CHECK_FALSE(strcmp("conn", conn.c_str()));
