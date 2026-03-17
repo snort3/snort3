@@ -198,6 +198,9 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     else
         asd->set_application_ids_service(asd->get_service_id(), change_bits);
 
+    if (change_bits.test(APPID_SERVICE_BIT))
+        asd->sync_with_snort_protocol_id(asd->pick_service_app_id(), p, change_bits);
+
     asd->publish_appid_event(change_bits, *p, http_event->get_is_httpx(),
         asd->get_api().get_hsessions_size() - 1);
 
