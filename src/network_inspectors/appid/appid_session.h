@@ -135,6 +135,7 @@ public:
     void process_sni_mismatch()
     {
         tls_host_mismatch = true;
+        tls_data_finished = false;
     }
 
     bool is_tls_host_mismatched() const { return tls_host_mismatch; }
