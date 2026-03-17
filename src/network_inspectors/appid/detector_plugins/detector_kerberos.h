@@ -22,6 +22,8 @@
 #ifndef DETECTOR_KERBEROS_H
 #define DETECTOR_KERBEROS_H
 
+#include <atomic>
+
 #include "protocols/packet.h"
 #include "client_plugins/client_detector.h"
 #include "service_plugins/service_detector.h"
@@ -52,7 +54,7 @@ public:
         check_failed_login = failed_login;
     }
 
-    bool check_failed_login = false;
+    std::atomic<bool> check_failed_login { false };
 
 private:
     int krb_walk_client_packet(KRBState*, const uint8_t*, const uint8_t*,
