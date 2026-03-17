@@ -27,6 +27,11 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+namespace snort
+{
+void WarningMessage(const char*, ...) { }
+}
+
 TEST_GROUP(lru_cache_local)
 {
 };
@@ -78,6 +83,29 @@ TEST(lru_cache_local, basic)
     CHECK(vec.size() == 2);
     CHECK(vec[0].first == 4 and vec[0].second == 4000);
     CHECK(vec[1].first == 3 and vec[1].second == 300);
+}
+
+// Check that max_size smaller than entry_size is safely clamped to entry_size
+TEST(lru_cache_local, max_size_less_than_entry_size)
+{
+    LruCacheLocalStats stats;
+    // max_size < entry_size; constructor clamps to entry_size so the cache holds one entry
+    LruCacheLocal<uint64_t, float, std::hash<uint64_t>> lru_cache(10, stats);
+
+    bool is_new = false;
+
+    for (int i = 0; i < 10; i++)
+    {
+        auto& entry = lru_cache.find_else_create(i, &is_new);
+        entry = float(i) * 1.5f;
+    }
+
+    // only the most recently inserted entry should remain; earlier entries were pruned
+    std::vector<std::pair<uint64_t, float>> vec;
+    lru_cache.get_all_values(vec);
+    CHECK(vec.size() == 1);          // cache holds exactly one entry
+    CHECK(lru_cache.count(9) == 1);  // last inserted key (9) is present
+    CHECK(lru_cache.count(5) == 0);  // earlier key (1,2,..5...8) was evicted by prune
 }
 
 int main(int argc, char** argv)
