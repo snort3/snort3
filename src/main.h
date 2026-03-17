@@ -24,6 +24,7 @@
 struct lua_State;
 extern bool exit_requested;
 const char* get_prompt();
+bool main_snort_started();
 
 // commands provided by the snort module
 int main_delete_inspector(lua_State* = nullptr);

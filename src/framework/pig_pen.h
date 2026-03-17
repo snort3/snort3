@@ -57,6 +57,7 @@ struct SO_PUBLIC PigPen
     static void release(Inspector*);
 
     // process foo
+    static bool snort_started();
     static bool snort_is_reloading();
     static void open_syslog();
     static void close_syslog();

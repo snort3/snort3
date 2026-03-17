@@ -28,6 +28,7 @@
 
 #include "detection/detection_engine.h"
 #include "log/log.h"
+#include "main.h"
 #include "main/process.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -79,6 +80,9 @@ void PigPen::release(Inspector* pi)
 //--------------------------------------------------------------------------
 // process foo
 //--------------------------------------------------------------------------
+
+bool PigPen::snort_started()
+{ return main_snort_started(); }
 
 bool PigPen::snort_is_reloading()
 { return Snort::is_reloading(); }

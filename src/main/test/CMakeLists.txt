@@ -1,3 +1,8 @@
+add_cpputest(thread_test
+    SOURCES
+        ../thread.cc
+)
+
 if ( ENABLE_SHELL )
     add_cpputest(distill_verdict_test
         SOURCES

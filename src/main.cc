@@ -112,6 +112,9 @@ static bool use_shell(const SnortConfig* sc)
 #endif
 }
 
+bool main_snort_started()
+{ return pthreads_started; }
+
 // FIXIT-L X Replace main_poke()/main_read() usage with command objects
 void main_poke(unsigned id)
 {

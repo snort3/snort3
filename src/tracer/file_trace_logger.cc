@@ -23,6 +23,7 @@
 
 #include "file_trace_logger.h"
 
+#include "framework/pig_pen.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
@@ -65,7 +66,8 @@ FileTrace::FileTrace(const FileTraceConfig& cfg) :
     TraceLoggerPlug("file_trace"),
     config(cfg)
 {
-    text_log = TextLog_Init(TRACE_FILE_NAME, BUFFER_SIZE, config.max_file_size);
+    bool crit = !PigPen::snort_started();
+    text_log = TextLog_Init(TRACE_FILE_NAME, BUFFER_SIZE, config.max_file_size, crit);
 }
 
 FileTrace::~FileTrace()

@@ -179,10 +179,7 @@ const char* get_main_file(std::string& file, const char* name)
         file += '/';
 
     if ( !sc->run_prefix.empty() )
-    {
         file += sc->run_prefix;
-        file += '/';
-    }
 
     if ( !sc->id_zero )
         file += "main_";
