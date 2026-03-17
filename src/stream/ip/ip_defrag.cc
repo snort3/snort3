@@ -572,7 +572,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
     size_t offset = 0;
 
     Packet* dpkt = DetectionEngine::set_next_packet(p);
-    PacketManager::encode_format(ENC_FLAG_DEF|ENC_FLAG_FWD, p, dpkt, PSEUDO_PKT_IP);
+    PacketManager::encode_format(ENC_FLAG_DEF|ENC_FLAG_FWD, p, dpkt, PSEUDO_PKT_IP, nullptr, p->pkth->opaque);
 
     // the encoder ensures enough space for a maximum datagram
     uint8_t* rebuild_ptr = const_cast<uint8_t*>(dpkt->data);
