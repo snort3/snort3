@@ -228,19 +228,7 @@ static void save_ssl_cache(ServiceSSLData* ss, uint16_t size, const uint8_t* dat
 
 int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    if (!args.size)
-    {
-        service_inprocess(args.asd, args.pkt, args.dir);
-        return APPID_INPROCESS;
-    }
-
-    ServiceSSLData* ss = (ServiceSSLData*)data_get(args.asd);
-    if (!ss)
-    {
-        ss = new ServiceSSLData;
-        data_add(args.asd, ss);
-    }
-
+    ServiceSSLData* ss = nullptr;
     const ServiceSSLPCTHdr* pct;
     const ServiceSSLV2Hdr* hdr2;
     const ServiceSSLV3Hdr* hdr3;
@@ -257,11 +245,8 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
     ss = (ServiceSSLData*)data_get(args.asd);
     if (!ss)
     {
-        ss = (ServiceSSLData*)snort_calloc(sizeof(ServiceSSLData));
+        ss = new ServiceSSLData;
         data_add(args.asd, ss);
-        ss->state = SSL_STATE_INITIATE;
-        ss->cached_data = nullptr;
-        ss->cached_len = 0;
     }
 
     if ( args.asd.get_session_flags(APPID_SESSION_OOO)
