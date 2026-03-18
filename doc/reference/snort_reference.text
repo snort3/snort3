@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.12.0.0 2026-03-03 21:22:32 EST TST
+Revision 3.12.1.0 2026-03-17 18:01:08 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -3747,7 +3747,8 @@ Configuration:
   * enum extractor.default_filter = pick: default action for protocol
     with no filter provided { pick | skip }
   * enum extractor.protocols[].service: service to extract from { 
-    http | ftp | ssl | conn | dns | quic | weird | notice }
+    http | ssh | ftp | ssl | conn | dns | quic | file | weird | 
+    notice }
   * int extractor.protocols[].tenant_id = 0: tenant_id of target
     tenant { 0:max32 }
   * string extractor.protocols[].on_events: specify events to log
@@ -4316,7 +4317,6 @@ Rules:
   * 119:213 (http_inspect) HTTP chunk misformatted
   * 119:214 (http_inspect) white space adjacent to chunk length
   * 119:215 (http_inspect) white space within header name
-  * 119:216 (http_inspect) excessive gzip compression
   * 119:217 (http_inspect) gzip decompression failed
   * 119:218 (http_inspect) HTTP 0.9 requested followed by another
     request
@@ -4417,6 +4417,9 @@ Rules:
     methods list or is on disallowed methods list
   * 119:288 (http_inspect) HTTP gzip body with reserved flag set
   * 119:289 (http_inspect) Too many partial flushes
+  * 119:290 (http_inspect) deflate compressed data followed by
+    unexpected non-deflate data
+  * 119:291 (http_inspect) deflate decompression failed
 
 Peg counts:
 
@@ -4476,6 +4479,14 @@ Peg counts:
     too many MIME attachments to inspect (sum)
   * http_inspect.compressed_gzip: total number of HTTP bodies
     compressed with GZIP (sum)
+  * http_inspect.compressed_gzip_failed: total number of HTTP bodies
+    with failed GZIP decompression (sum)
+  * http_inspect.compressed_deflate: total number of HTTP bodies
+    compressed with Deflate (sum)
+  * http_inspect.incorrect_deflate_header: total number of HTTP
+    bodies compressed with Deflate that had incorrect header (sum)
+  * http_inspect.compressed_deflate_failed: total number of HTTP
+    bodies with failed Deflate decompression (sum)
   * http_inspect.compressed_not_supported: total number of HTTP
     bodies compressed with known but not supported methods (sum)
   * http_inspect.compressed_unknown: total number of HTTP bodies
@@ -4971,7 +4982,7 @@ Instance Type: multiton
 Rules:
 
   * 153:1 (opcua) invalid OPC UA MessageSize value detected
-  * 153:2 (opcua) abnormal OPC UA MessageSize value detected
+  * 153:2 (opcua) large OPC UA MessageSize value detected
   * 153:3 (opcua) invalid OPC UA MsgType value detected
   * 153:4 (opcua) invalid OPC UA IsFinal value detected
   * 153:5 (opcua) OPC UA message split across multiple packets
@@ -6064,11 +6075,6 @@ Usage: inspect
 
 Instance Type: multiton
 
-Configuration:
-
-  * bool socks.block_udp_fragmentation = true: block flow when SOCKS5
-    UDP fragmentation detected (frag > 0)
-
 Rules:
 
   * 155:1 (socks) SOCKS unknown command
@@ -6095,9 +6101,7 @@ Peg counts:
   * socks.udp_expectations_created: UDP expectations created for
     dynamic ports (sum)
   * socks.udp_packets: UDP packets processed (sum)
-  * socks.udp_frags_dropped: UDP fragments dropped (sum)
-  * socks.udp_frags_blocked: flows blocked due to UDP fragmentation
-    (sum)
+  * socks.udp_frags: UDP fragmented packets detected (sum)
 
 
 5.48. ssh
@@ -10545,7 +10549,8 @@ libraries see the Getting Started section of the manual.
   * string extractor.protocols[].fields: specify fields to log
   * string extractor.protocols[].on_events: specify events to log
   * enum extractor.protocols[].service: service to extract from { 
-    http | ftp | ssl | conn | dns | quic | weird | notice }
+    http | ssh | ftp | ssl | conn | dns | quic | file | weird | 
+    notice }
   * int extractor.protocols[].tenant_id = 0: tenant_id of target
     tenant { 0:max32 }
   * enum extractor.time = unix: output format for timestamp values { 
@@ -12165,8 +12170,6 @@ libraries see the Getting Started section of the manual.
     the system; default is 1 { 0:max32 }
   * int socks_address_type.~type: address type (1=IPv4, 3=Domain, 4=
     IPv6) { 1:4 }
-  * bool socks.block_udp_fragmentation = true: block flow when SOCKS5
-    UDP fragmentation detected (frag > 0)
   * int socks_command.~command: SOCKS command (1=CONNECT, 2=BIND, 3=
     UDP_ASSOCIATE) { 1:3 }
   * string socks_remote_address.~: address to match (substring)
@@ -13060,6 +13063,12 @@ libraries see the Getting Started section of the manual.
   * http2_inspect.total_bytes: total HTTP/2 data bytes inspected
     (sum)
   * http_inspect.chunked: chunked message bodies (sum)
+  * http_inspect.compressed_deflate_failed: total number of HTTP
+    bodies with failed Deflate decompression (sum)
+  * http_inspect.compressed_deflate: total number of HTTP bodies
+    compressed with Deflate (sum)
+  * http_inspect.compressed_gzip_failed: total number of HTTP bodies
+    with failed GZIP decompression (sum)
   * http_inspect.compressed_gzip: total number of HTTP bodies
     compressed with GZIP (sum)
   * http_inspect.compressed_not_supported: total number of HTTP
@@ -13077,6 +13086,8 @@ libraries see the Getting Started section of the manual.
   * http_inspect.flows: HTTP connections inspected (sum)
   * http_inspect.get_requests: GET requests inspected (sum)
   * http_inspect.head_requests: HEAD requests inspected (sum)
+  * http_inspect.incorrect_deflate_header: total number of HTTP
+    bodies compressed with Deflate that had incorrect header (sum)
   * http_inspect.inspections: total message sections inspected (sum)
   * http_inspect.js_external_scripts: total number of external
     JavaScripts processed (sum)
@@ -13616,9 +13627,7 @@ libraries see the Getting Started section of the manual.
   * socks.udp_associations_created: UDP ASSOCIATE completions (sum)
   * socks.udp_expectations_created: UDP expectations created for
     dynamic ports (sum)
-  * socks.udp_frags_blocked: flows blocked due to UDP fragmentation
-    (sum)
-  * socks.udp_frags_dropped: UDP fragments dropped (sum)
+  * socks.udp_frags: UDP fragmented packets detected (sum)
   * socks.udp_packets: UDP packets processed (sum)
   * ssh.aborted_sessions: total session aborted (sum)
   * ssh.concurrent_sessions: total concurrent ssh sessions (now)
@@ -15182,7 +15191,7 @@ and trailing whitespace.
 
 An HTTP header name contains whitespace.
 
-119:216 (http_inspect) excessive gzip compression
+119:216
 
 A gzip-encoded HTTP message body was found to have an excessive
 compression ratio during decompression.

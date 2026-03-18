@@ -1,3 +1,44 @@
+2026-03-17: 3.12.1.0
+
+* appid: address FIXIT comments related to http inspector
+* appid: add unit test to cover DNS payload handler null dsession
+* appid: fix app detection when sni is spoofed
+* appid: removing dead code in service ssl
+* appid: sync host attributes on http event service detection
+* decompress: fix tsan data race
+* decompress: fix tsan data race in decompress_buffer_size
+* dns: prevent unbounded TCP session vector growth
+* extractor: add FILE logging
+* extractor: add more details in SSH
+* extractor: add SSH direction field
+* extractor: add SSH version field
+* extractor: compute shared (selected) algorithm in SSH
+* extractor: log SSH events
+* extractor: move details under 'algorithm' event
+* extractor: refine code
+* extractor: rename ssl.server_name_identifier
+* file_api: change file_service termination order after MPDatabus
+* file_api: fix tsan datarace in circular buffer, file cache and file policy
+* file_inspect: fix reload error messages
+* file names: add unit tests for get_main_file and get_instance_file
+* framework: return original string if list is empty
+* hash: clamp max_size to entry_size minimum
+* http_inspect: decompress optimization
+* http_inspect: fix Out-Of-Bounds read in find_next_header
+* kerberos: fix race condition when reloading and setting failed_login
+* logs: do not add / to run prefix for main thread logs
+* main: fallback to specified process affinity if we can't satisfy process.lua
+* mime: partial header memory optimization using vectors to preallocate memory rather than allocating for every new chunk of header appended
+* opcua: buf size increase and service modifications
+* plugins: move trash pickup from analyzers to main
+* pub_sub: add content-length validation
+* snort: relax memory order for reload_id updates
+* snort: tweak config dtor so that tuners are released before their inspector
+* socks: remove block_udp_fragmentation configuration option
+* ssl: adding additional parser data fields checks
+* stream: pass opaque during IP fragment reassembly in FragRebuild
+* stream_tcp: make sure to check for bad seq only when ISS is initialized
+
 2026-03-03: 3.12.0.0
 
 * alert_syslog, snort, syslog_trace: refactor syslog calls
