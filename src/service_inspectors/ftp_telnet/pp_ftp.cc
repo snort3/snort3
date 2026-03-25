@@ -400,7 +400,7 @@ static int getFTPip(
  * Returns: int => return code indicating error or success
  *
  */
-static int validate_date_format(FTP_DATE_FMT* ThisFmt, const char** this_param)
+static int validate_date_format(FTP_DATE_FMT* ThisFmt, const char** this_param, const char* end)
 {
     int valid_string = 0;
     int checked_something_else = 0;
@@ -420,6 +420,9 @@ static int validate_date_format(FTP_DATE_FMT* ThisFmt, const char** this_param)
 
         do
         {
+            if (curr_ch >= end)
+                return FTPP_INVALID_DATE;
+
             switch (*format_char)
             {
             case 'n':
@@ -452,40 +455,40 @@ static int validate_date_format(FTP_DATE_FMT* ThisFmt, const char** this_param)
             }
             valid_string = 1;
         }
-        while ((*format_char != '\0') && !isspace((int)(*curr_ch)));
+        while ((*format_char != '\0') && (curr_ch < end) && !isspace((int)(*curr_ch)));
 
-        if ((*format_char != '\0') && isspace((int)(*curr_ch)))
+        if ((*format_char != '\0') && (curr_ch < end) && isspace((int)(*curr_ch)))
         {
             /* Didn't have enough chars to complete this format */
             return FTPP_INVALID_DATE;
         }
     }
 
-    if ((ThisFmt->optional) && !isspace((int)(*curr_ch)))
+    if ((ThisFmt->optional) && (curr_ch < end) && !isspace((int)(*curr_ch)))
     {
         const char* tmp_ch = curr_ch;
-        iRet = validate_date_format(ThisFmt->optional, &tmp_ch);
+        iRet = validate_date_format(ThisFmt->optional, &tmp_ch, end);
         if (iRet == FTPP_SUCCESS)
             curr_ch = tmp_ch;
     }
-    if ((ThisFmt->next_a) && !isspace((int)(*curr_ch)))
+    if ((ThisFmt->next_a) && (curr_ch < end) && !isspace((int)(*curr_ch)))
     {
         const char* tmp_ch = curr_ch;
         checked_something_else = 1;
-        iRet = validate_date_format(ThisFmt->next_a, &tmp_ch);
+        iRet = validate_date_format(ThisFmt->next_a, &tmp_ch, end);
         if (iRet == FTPP_SUCCESS)
         {
             curr_ch = tmp_ch;
         }
         else if (ThisFmt->next_b)
         {
-            iRet = validate_date_format(ThisFmt->next_b, &tmp_ch);
+            iRet = validate_date_format(ThisFmt->next_b, &tmp_ch, end);
             if (iRet == FTPP_SUCCESS)
                 curr_ch = tmp_ch;
         }
         if (ThisFmt->next)
         {
-            iRet = validate_date_format(ThisFmt->next, &tmp_ch);
+            iRet = validate_date_format(ThisFmt->next, &tmp_ch, end);
             if (iRet == FTPP_SUCCESS)
             {
                 curr_ch = tmp_ch;
@@ -502,7 +505,7 @@ static int validate_date_format(FTP_DATE_FMT* ThisFmt, const char** this_param)
     {
         const char* tmp_ch = curr_ch;
         checked_something_else = 1;
-        iRet = validate_date_format(ThisFmt->next, &tmp_ch);
+        iRet = validate_date_format(ThisFmt->next, &tmp_ch, end);
         if (iRet == FTPP_SUCCESS)
         {
             curr_ch = tmp_ch;
@@ -510,13 +513,13 @@ static int validate_date_format(FTP_DATE_FMT* ThisFmt, const char** this_param)
         }
     }
 
-    if ((isspace((int)(*curr_ch))) && ((!ThisFmt->next) || checked_next))
+    if ((curr_ch < end) && (isspace((int)(*curr_ch))) && ((!ThisFmt->next) || checked_next))
     {
         *this_param = curr_ch;
         return FTPP_SUCCESS;
     }
 
-    if (valid_string)
+    if (valid_string && (curr_ch < end))
     {
         int all_okay = 0;
         if (checked_something_else)
@@ -676,7 +679,7 @@ static int validate_param(Packet* p,
         /* check that this_param conforms to date specified */
     {
         const char* tmp_ch = this_param;
-        iRet = validate_date_format(ThisFmt->format.date_fmt, &tmp_ch);
+        iRet = validate_date_format(ThisFmt->format.date_fmt, &tmp_ch, end);
         if (iRet != FTPP_SUCCESS)
         {
             /* Alert invalid date */
