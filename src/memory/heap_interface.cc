@@ -85,7 +85,7 @@ static void log_jem_stats(void *,const char *buf)
 
 void JemallocInterface::main_init()
 {
-    mallctlnametomib("stats.mapped", stats_mib, &mib_len);
+    mallctlnametomib("stats.allocated", stats_mib, &mib_len);
 }
 
 void JemallocInterface::thread_init()
