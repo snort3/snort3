@@ -583,12 +583,12 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
 
         user_file_data_mutex.lock();
 
-        if (policy and log_needed and user_file_data)
+        if (policy and log_needed and user_file_data and !force_adv_log)
             policy->log_file_action(flow, this, FILE_ACTION_DEFAULT);
 
         user_file_data_mutex.unlock();
 
-        if (processing_complete or log_needed)
+        if (processing_complete or force_adv_log or log_needed)
         {
             hr_time now = SnortClock::now();
             duration = (TO_USECS(now - start_time)) / 1000000.0;  // Convert microseconds to seconds
@@ -615,7 +615,7 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
             start_time = SnortClock::now();
         }
 
-        if ( config->trace_type )
+        if ( config->trace_type and !force_adv_log )
             print(std::cout);
     }
 }
@@ -662,6 +662,12 @@ void FileContext::finish_signature_lookup(Packet* p, bool final_lookup, FilePoli
         }
         else
         {
+            if ( processing_complete and (verdict == FILE_VERDICT_UNKNOWN ))
+            {
+                force_adv_log = true;
+                log_file_event(flow, policy);
+                force_adv_log = false;
+            }
             snort_free(sha256);
             sha256 = nullptr;
         }
@@ -740,6 +746,7 @@ void FileContext::reset()
     reset_sha();
     remove_segments();
     start_time = SnortClock::now();
+    force_adv_log = false;
 }
 
 /*
@@ -811,11 +818,14 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
                     file_type_name(get_file_type()).c_str());
             config_file_type(false);
 
-            if (PacketTracer::is_active() and (!(is_file_signature_enabled())))
+            if (!(is_file_signature_enabled()))
             {
                 FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, p,
                    "File: signature config is disabled\n");
-                PacketTracer::log("File: signature config is disabled\n");
+                if (PacketTracer::is_active())
+                {
+                    PacketTracer::log("File: signature config is disabled\n");
+                }
             }
 
             file_stats->files_processed[get_file_type()][get_file_direction()]++;
@@ -886,6 +896,10 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
                     "File: Sig depth exceeded\n");
                 if (PacketTracer::is_active())
                     PacketTracer::log("File: Sig depth exceeded\n");
+
+                force_adv_log = true;
+                log_file_event(flow, policy);
+                force_adv_log = false;
                 return false;
             }
         }

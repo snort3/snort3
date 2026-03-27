@@ -221,6 +221,7 @@ private:
     double duration = 0.0;  // File processing duration in seconds (fractional)
     std::string source;
     bool timedout = false;
+    bool force_adv_log = false;
 
     void finalize_file_type();
     void finish_signature_lookup(Packet*, bool, FilePolicyBase*);
