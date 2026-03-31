@@ -1792,7 +1792,7 @@ static const Parameter rate_filter_params[] =
     { "timeout", Parameter::PT_INT, "0:max32", "1",
       "count interval" },
 
-    { "apply_to", Parameter::PT_STRING, nullptr, nullptr,
+    { "apply_to", Parameter::PT_ADDR_LIST, nullptr, nullptr,
       "restrict filter to these addresses according to track" },
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
