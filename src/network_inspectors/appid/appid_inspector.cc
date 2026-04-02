@@ -216,7 +216,7 @@ void AppIdInspector::tinit()
     pkt_thread_tp_appid_ctxt = ctxt.get_tp_appid_ctxt();
     if (pkt_thread_tp_appid_ctxt)
         third_party_tinit();
-    if (config->log_all_sessions)
+    if (appidDebug and config->log_all_sessions)
         appidDebug->set_enabled(true);
     AppIdHAManager::tinit();
     ServiceDiscovery::set_thread_local_ftp_service();

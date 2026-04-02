@@ -79,7 +79,7 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
     AppIdSession* asd = (AppIdSession*)(flow->get_flow_data(AppIdSession::inspector_id));
     const AppIdSessionHAApps* appHA = (const AppIdSessionHAApps*)msg.cursor;
 
-    if (appidDebug->is_enabled())
+    if (appidDebug and appidDebug->is_enabled())
         appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
 
     Packet* p = CURRENT_PACKET;
@@ -239,7 +239,7 @@ bool AppIdHAHttpClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
 
     AppIdSession* asd = appid_api.get_appid_session(*flow);
     AppIdSessionHAHttp* appHA = (AppIdSessionHAHttp*)msg.cursor;
-    if (appidDebug->is_enabled())
+    if (appidDebug and appidDebug->is_enabled())
         appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
 
     APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Consuming HTTP data - URL %s, host %s\n",
@@ -327,7 +327,7 @@ bool AppIdHATlsHostClient::consume(Flow*& flow, const FlowKey* key, HAMessage& m
 
     AppIdSession* asd = appid_api.get_appid_session(*flow);
     AppIdSessionHATlsHost* appHA = (AppIdSessionHATlsHost*)msg.cursor;
-    if (appidDebug->is_enabled())
+    if (appidDebug and appidDebug->is_enabled())
         appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
 
     APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "high-avail - Consuming TLS host - %s\n", appHA->tls_host);

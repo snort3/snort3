@@ -60,7 +60,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         // The event is received before appid has seen any packet, e.g., data on SYN
         asd = AppIdSession::allocate_session( p, p->get_ip_proto_next(), direction,
             inspector, *pkt_thread_odp_ctxt );
-        if ( appidDebug->is_enabled() )
+        if ( appidDebug and appidDebug->is_enabled() )
         {
             appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
             is_debug_active = true;
@@ -90,7 +90,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     if (is_appid_cpu_profiling_running)
         per_appid_event_cpu_timer.start();
     
-    if (appidDebug->is_enabled() and !is_debug_active)
+    if (appidDebug and appidDebug->is_enabled() and !is_debug_active)
         appidDebug->activate(flow, asd, config.log_all_sessions);
 
     APPID_LOG(p, TRACE_DEBUG_LEVEL, "Processing HTTP metadata from HTTP Inspector for stream %" PRId64 "\n",

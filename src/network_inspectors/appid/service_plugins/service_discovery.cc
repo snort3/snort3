@@ -475,7 +475,7 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
         {
             if ( asd.get_session_flags(APPID_SESSION_WAIT_FOR_EXTERNAL) )
             {
-                if ( appidDebug->is_active() )
+                if ( appidDebug and appidDebug->is_active() )
                     LogMessage("AppIdDbg %s No service match, waiting for external detection\n", appidDebug->get_debug_session());
                 return APPID_INPROCESS;
             }

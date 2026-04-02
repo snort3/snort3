@@ -186,6 +186,8 @@ void AppIdPegCounts::sum_stats()
 
 void AppIdPegCounts::inc_service_count(AppId id)
 {
+    if (!appid_thread_pegs)
+        return;
     auto peg = appid_thread_pegs->peg_counts.find(id);
     if (peg != appid_thread_pegs->peg_counts.end())
         peg->second.stats[DetectorPegs::SERVICE_DETECTS]++;

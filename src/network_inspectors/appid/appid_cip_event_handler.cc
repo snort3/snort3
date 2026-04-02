@@ -99,7 +99,7 @@ void CipEventHandler::handle(DataEvent& event, Flow* flow)
 
     if (change_bits[APPID_PAYLOAD_BIT])
     {
-        if (appidDebug->is_enabled())
+        if (appidDebug and appidDebug->is_enabled())
             appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
 
         const char* app_name_service = asd->get_odp_ctxt().get_app_info_mgr().get_app_name(APP_ID_CIP);

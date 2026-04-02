@@ -48,7 +48,7 @@ void DataDecryptEventHandler::handle(snort::DataEvent& event, snort::Flow* flow)
         auto direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         asd = AppIdSession::allocate_session( p, p->get_ip_proto_next(), direction,
                 inspector, *pkt_thread_odp_ctxt );
-        if (appidDebug->is_enabled())
+        if (appidDebug and appidDebug->is_enabled())
         {
             appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
             if (appidDebug->is_active())

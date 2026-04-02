@@ -50,12 +50,12 @@ void AppIdEveProcessEventHandler::handle(DataEvent& event, Flow* flow)
 
         asd = AppIdSession::allocate_session(p, p->get_ip_proto_next(), dir,
             inspector, *pkt_thread_odp_ctxt);
-        if (appidDebug->is_enabled())
+        if (appidDebug and appidDebug->is_enabled())
             appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
 
         APPID_LOG(p, TRACE_DEBUG_LEVEL, "New AppId session at mercury event\n");
     }
-    else if (appidDebug->is_enabled())
+    else if (appidDebug and appidDebug->is_enabled())
         appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
 
     if (!asd->get_session_flags(APPID_SESSION_DISCOVER_APP | APPID_SESSION_SPECIAL_MONITORED))
