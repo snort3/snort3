@@ -470,6 +470,9 @@ int TcpNormalizerProxy::handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescr
 TcpNormalizer::NormStatus TcpNormalizerMissed3whs::apply_normalizations(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, uint32_t, bool)
 {
+    if ( !tns.session->flow->two_way_traffic() )
+        return NORM_OK;
+
     uint32_t seq = tsd.get_seq();
     uint32_t r_win_base = tns.tracker->r_win_base;
     uint32_t diff = seq - r_win_base;
