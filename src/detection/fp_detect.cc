@@ -1195,6 +1195,9 @@ static void fpEvalPacketUdp(Packet* p, FPTask task)
 
     const udp::UDPHdr* udph = layer::get_outer_udp_lyr(p);
 
+    if (!udph)
+        return; // no outer layer found, the inner layer evaluates later
+
     p->ptrs.udph = udph;
     p->ptrs.sp = ntohs(udph->uh_sport);
     p->ptrs.dp = ntohs(udph->uh_dport);

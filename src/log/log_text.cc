@@ -415,11 +415,11 @@ static void LogOuterIPHeader(TextLog* log, Packet* p)
         uint16_t save_dp = p->ptrs.dp;
 
         const udp::UDPHdr* udph = layer::get_outer_udp_lyr(p);
+        assert(udph);
+
         p->ptrs.sp = ntohs(udph->uh_sport);
         p->ptrs.dp = ntohs(udph->uh_dport);
-
         LogIPHeader(log, p);
-
         p->ptrs.sp = save_sp;
         p->ptrs.dp = save_dp;
     }
