@@ -46,7 +46,7 @@ public:
         const std::string& item, bool override_existing = false);
     const char* get_user_data_value_str(const std::string& table, const std::string& key);
 
-    void set_configuration_completed(bool completed);
+    static void set_configuration_completed(bool completed);
 private:
     UserDataMaps user_data_maps;
 };

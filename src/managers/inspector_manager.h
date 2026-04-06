@@ -47,7 +47,6 @@ class InspectorManager
 public:
     static PlugInterface* get_interface(const InspectApi*);
 
-    static void clear();
     static void new_map();
     static void abort_map();
     static void update_map();
@@ -62,6 +61,7 @@ public:
     static void tear_down(SnortConfig*);
     static void cleanup();
 
+    static void load_buffer_map();
     static void dump_buffers();
     static void release_plugins();
 

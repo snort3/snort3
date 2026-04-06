@@ -798,13 +798,21 @@ const char* InspectorManager::get_inspector_type(const char* name)
     return api ? api->get_type(api->type) : "";
 }
 
-void InspectorManager::clear()
-{ clear_buffer_map(); }
-
 PlugInterface* InspectorManager::get_interface(const InspectApi* api)
 {
-    update_buffer_map(api->buffers, api->service);
     return new PlugInspect(api);
+}
+
+void InspectorManager::load_buffer_map()
+{
+    clear_buffer_map();
+
+    auto load = [](const BaseApi* pb, void*)
+    {
+        const InspectApi* api = (const InspectApi*)pb;
+        update_buffer_map(api->buffers, api->service);
+    };
+    PluginManager::for_each(PT_INSPECTOR, load);
 }
 
 void InspectorManager::dump_buffers()

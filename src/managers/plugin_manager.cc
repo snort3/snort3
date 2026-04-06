@@ -680,23 +680,22 @@ void PluginManager::reload_plugins(const char* paths, bool)
     InspectorManager::update_map();
     const PlugSet* curr = get_plug_set();
 
-    ++load_id;
     load_set = new PlugSet;
     load_set->plug_map = curr->plug_map;
 
     if ( !paths )
     {
         load_set->user_map = curr->user_map;
+        ++load_id;
         return;
     }
-
-    InspectorManager::clear();
 
     for ( auto it = load_set->plug_map.begin(); it != load_set->plug_map.end(); )
     {
         if ( it->second->handle and plugin_is_reloadable(it->second->api) )
+        {
             it = load_set->plug_map.erase(it);
-
+        }
         else
         {
             const char* name = it->second->get_name();
@@ -711,6 +710,8 @@ void PluginManager::reload_plugins(const char* paths, bool)
 
     std::string spath = paths;
     load_libraries(spath, true);
+
+    ++load_id;
 
     init_contexts();
     add_plugin_modules();
@@ -744,14 +745,21 @@ void PluginManager::thread_init()
 
     for ( const auto& it : plug_map )
     {
-        if ( it.second->pin and it.second->pin->instantiated == load_id )
+        if ( it.second->pin and it.second->pin->instantiated > 0 )
             it.second->pin->thread_init();
     }
 }
 
 void PluginManager::thread_reinit(const SnortConfig* sc)
 {
-    thread_init();
+    const PluginMap& plug_map = get_plug_map();
+
+    for ( const auto& it : plug_map )
+    {
+        if ( it.second->pin and it.second->pin->instantiated == load_id )
+            it.second->pin->thread_init();
+    }
+
     get_default_network_policy(sc)->cd_mgr->thread_reinit();
 
     ConnectorManager::thread_reinit();

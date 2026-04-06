@@ -138,6 +138,7 @@ void Snort::init(int argc, char** argv)
     PluginManager::load_plugins(snort_cmd_line_conf->plugin_path);
     ScriptManager::load_scripts(snort_cmd_line_conf->script_paths);
 
+    InspectorManager::load_buffer_map();
     InspectorManager::new_map();
     ModuleManager::load_params();
     TraceApi::global_init();

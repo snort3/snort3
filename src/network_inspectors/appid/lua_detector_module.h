@@ -86,6 +86,8 @@ public:
     ~PacketLuaDetectorManager() override
     { free_detector_flow(); }
 
+    void initialize(const snort::SnortConfig*) override;
+
     void set_detector_flow(DetectorFlow* df)
     { detector_flow = df; }
 

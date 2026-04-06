@@ -55,6 +55,7 @@ using namespace std;
 #define OPEN_DETECTOR_PACKAGE_VERSION "VERSION="
 
 vector<shared_ptr<PacketLuaDetectorManager>> ControlLuaDetectorManager::lua_detector_mgr_list;
+static bool s_list_lua_detectors = false;
 
 bool get_lua_field(lua_State* L, int table, const char* field, string& out)
 {
@@ -245,12 +246,14 @@ void LuaDetectorManager::initialize(const SnortConfig* sc)
 {
     ctxt.get_odp_ctxt().get_user_data_map().set_configuration_completed(false);
     activate_lua_detectors(sc);
-    
+    ctxt.get_odp_ctxt().get_user_data_map().set_configuration_completed(true);
+
+    s_list_lua_detectors = ctxt.config.list_odp_detectors or SnortConfig::log_verbose();
+
     if (SnortConfig::log_verbose())
         scan_and_print_odp_version(ctxt.config.app_detector_dir);
 
-
-    if (ctxt.config.list_odp_detectors or SnortConfig::log_verbose())
+    if (s_list_lua_detectors)
         list_lua_detectors();
 }
 
@@ -555,7 +558,6 @@ void LuaDetectorManager::activate_lua_detectors(const SnortConfig* sc)
         lua_settop(L, 0);
         ++lo;
     }
-    ctxt.get_odp_ctxt().get_user_data_map().set_configuration_completed(true);
 }
 void ControlLuaDetectorManager::process_detector_file(char* detector_file_path, bool is_custom)
 {
@@ -732,6 +734,16 @@ std::shared_ptr<LuaDetectorManager> ControlLuaDetectorManager::get_packet_lua_de
     unsigned instance_id = get_instance_id();
     std::shared_ptr<PacketLuaDetectorManager> mgr = lua_detector_mgr_list[instance_id];
     return static_cast<std::shared_ptr<LuaDetectorManager>>(mgr);
+}
+
+void PacketLuaDetectorManager::initialize(const SnortConfig* sc)
+{
+    UserDataMap::set_configuration_completed(false);
+    activate_lua_detectors(sc);
+    UserDataMap::set_configuration_completed(true);
+
+    if (s_list_lua_detectors)
+        list_lua_detectors();
 }
 
 void PacketLuaDetectorManager::list_lua_detectors()

@@ -541,6 +541,7 @@ int main_reload_config(lua_State* L)
 
     TraceApi::reset();
     PluginManager::reload_plugins(plugin_path, old->allow_missing_so_rules);
+    InspectorManager::load_buffer_map();
 
     SnortConfig* sc = Snort::get_reload_config(fname);
 
