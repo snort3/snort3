@@ -314,8 +314,10 @@ static int getIP2428(
 
     while ( tok && tok < last_char && field < 4 )
     {
-        int check = (*++tok != delim) ? field : 0;
+        if ( ++tok >= last_char )
+            break;
 
+        int check = (*tok != delim) ? field : 0;
         switch ( check )
         {
         case 0:      /* empty */
@@ -349,7 +351,7 @@ static int getIP2428(
             break;
         }
         /* advance to next field */
-        tok = strchr(tok, delim);
+        tok = (const char*)memchr(tok, delim, last_char - tok);
         field++;
     }
 
