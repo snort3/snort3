@@ -100,10 +100,10 @@ struct IP4Hdr
 
     /* booleans */
     inline bool is_src_broadcast() const
-    { return ip_src == IP4_BROADCAST; }
+    { return get_src() == IP4_BROADCAST; }
 
     inline bool is_dst_broadcast() const
-    { return ip_dst == IP4_BROADCAST; }
+    { return get_dst() == IP4_BROADCAST; }
 
     inline bool has_options() const
     { return hlen() > 20; }
@@ -121,11 +121,22 @@ struct IP4Hdr
     inline uint16_t raw_csum() const
     { return ip_csum; }
 
+#if defined(__arm__) && !defined(__aarch64__)
+    // ARM32: ip_src/ip_dst may be 2-byte aligned after the 14-byte Ethernet
+    // header on a 4-byte-aligned libpcap buffer. Use __builtin_memcpy so the
+    // compiler emits byte-safe loads instead of a faulting LDR instruction.
+    inline uint32_t get_src() const
+    { uint32_t v; __builtin_memcpy(&v, &ip_src, 4); return v; }
+
+    inline uint32_t get_dst() const
+    { uint32_t v; __builtin_memcpy(&v, &ip_dst, 4); return v; }
+#else
     inline uint32_t get_src() const
     { return ip_src; }
 
     inline uint32_t get_dst() const
     { return ip_dst; }
+#endif
 
     /*  setters  */
     inline void set_hlen(uint8_t value)

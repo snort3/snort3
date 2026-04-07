@@ -266,7 +266,7 @@ bool HostPatternMatchers::scan_url(const uint8_t*, size_t, AppId&, AppId&, bool*
 void AppIdModule::reset_stats() {}
 bool AppIdInspector::configure(snort::SnortConfig*) { return true; }
 void appid_log(const snort::Packet*, unsigned char, char const*, ...) { }
-void HostPatternMatchers::add_host_pattern(unsigned char const*, unsigned long, unsigned char, int, int, HostPatternType, bool, bool) {}
+void HostPatternMatchers::add_host_pattern(const uint8_t*, size_t, uint8_t, AppId, AppId, HostPatternType, bool, bool) {}
 
 #ifndef SIP_UNIT_TEST
 snort::SearchTool::SearchTool(bool, const char*) { }

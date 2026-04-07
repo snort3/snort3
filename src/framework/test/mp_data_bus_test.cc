@@ -84,7 +84,7 @@ void show_stats(PegCount*, const PegInfo*, unsigned, const char*)
     mock().actualCall("show_stats");
 }
 void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
-void show_stats(unsigned long*, PegInfo const*, char const*) {}
+void show_stats(PegCount*, const PegInfo*, const char*) {}
 
 bool ControlConn::respond(const char*, ...) { return true; }
 

@@ -314,7 +314,7 @@ SfIpRet SfIp::set(const void* src, int fam)
     {
         ip32[0] = ip32[1] = ip16[4] = 0;
         ip16[5] = 0xffff;
-        ip32[3] = *(const uint32_t*)src;
+        memcpy(&ip32[3], src, sizeof(ip32[3]));
     }
     else if (family == AF_INET6)
         memcpy(ip8, src, 16);
