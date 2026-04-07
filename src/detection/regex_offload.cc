@@ -41,6 +41,7 @@
 #include "main/thread_config.h"
 #include "managers/module_manager.h"
 #include "utils/stats.h"
+#include "utils/util.h"
 
 using namespace snort;
 
@@ -185,6 +186,7 @@ ThreadRegexOffload::ThreadRegexOffload(unsigned max) : RegexOffload(max)
         ModuleManager::add_thread_stats_entry("search_engine");
         ModuleManager::add_thread_stats_entry("detection");
         req->thread = new std::thread(worker, req, sc, i++);
+        SET_THREAD_NAME(req->thread->native_handle(), "snort3.regex");
     }
 }
 

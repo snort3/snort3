@@ -407,25 +407,25 @@ void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
     if (!hwloc_bitmap_isequal(current_cpuset, desired_cpuset))
     {
         LogMessage("Binding %s to CPU %s.\n", stringify_thread(type, id).c_str(), s);
-        thread_name_suffix = ".core-";
+        // "cX" = thread bound to core X
+        thread_name_suffix = "-c";
         thread_name_suffix.append(s);
     }
     else
     {
-        thread_name_suffix = ".ins-";
+        // "iX" = unbound instance number X
+        thread_name_suffix = "-i";
         thread_name_suffix.append(std::to_string(id));
     }
 
-    // Thread name is snort.ins-X for unpinned threads, and snort.core-X
-    // for threads pinned to CPU x
     if (type == STHREAD_TYPE_MAIN)
     {
-        thread_name = "snort3";
+        thread_name = "snort3.main";
         thread_name_suffix = "";
     }
     else
     {
-        thread_name = "snort";
+        thread_name = "s3.pkt";
     }
 
     thread_name.append(thread_name_suffix);
@@ -445,7 +445,8 @@ void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
         {
             char* fallback_s = nullptr;
             hwloc_bitmap_list_asprintf(&fallback_s, process_cpuset);
-            thread_name = "snort.core-";
+            // "cX" = thread bound to core X (fallback cpuset)
+            thread_name = "s3.pkt-c";
             thread_name.append(fallback_s ? fallback_s : "?");
             SET_THREAD_NAME(pthread_self(), thread_name.c_str());
             if (fallback_s) free(fallback_s);

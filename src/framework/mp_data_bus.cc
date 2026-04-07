@@ -308,6 +308,7 @@ void MPDataBus::start_worker_thread()
 {
     run_thread.store(true);
     worker_thread = std::make_unique<std::thread>(&MPDataBus::worker_thread_func, this);
+    SET_THREAD_NAME(worker_thread->native_handle(), "snort3.mp_dbus");
 }
 
 void MPDataBus::stop_worker_thread()

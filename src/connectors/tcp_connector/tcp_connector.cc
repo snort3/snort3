@@ -31,6 +31,7 @@
 
 #include "log/messages.h"
 #include "profiler/profiler_defs.h"
+#include "utils/util.h"
 
 #include "tcp_connector_module.h"
 
@@ -177,6 +178,7 @@ void TcpConnector::start_receive_thread()
 {
     run_thread.store(true, std::memory_order_relaxed);
     receive_thread = new std::thread(&TcpConnector::receive_processing_thread, this);
+    SET_THREAD_NAME(receive_thread->native_handle(), "snort3.tcp_rx");
 }
 
 void TcpConnector::stop_receive_thread()

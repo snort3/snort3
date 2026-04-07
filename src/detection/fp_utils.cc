@@ -727,7 +727,11 @@ unsigned compile_mpses(struct SnortConfig* sc, bool parallel)
     }
 
     for ( unsigned i = 0; i < max; ++i )
-        workers.push_back(new std::thread(compile_mpse, sc, i, &count));
+    {
+        auto* w = new std::thread(compile_mpse, sc, i, &count);
+        SET_THREAD_NAME(w->native_handle(), "snort3.compile");
+        workers.push_back(w);
+    }
 
     for ( auto* w : workers )
     {

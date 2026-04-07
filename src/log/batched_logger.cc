@@ -392,7 +392,7 @@ void BatchedLogManager::init()
     snort::ThreadConfig* thread_config = snort::SnortConfig::get_conf()->thread_config;
     thread_config->implement_named_thread_affinity("BatchedLoggerWriter");
     writer_thread = std::thread(writer_thread_func);
-    SET_THREAD_NAME(writer_thread.native_handle(), "snort.logger");
+    SET_THREAD_NAME(writer_thread.native_handle(), "snort3.logger");
     thread_config->implement_thread_affinity(STHREAD_TYPE_MAIN, snort::ThreadConfig::DEFAULT_THREAD_ID);
 
     std::atexit(BatchedLogManager::shutdown);

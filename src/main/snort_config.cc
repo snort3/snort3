@@ -1061,6 +1061,7 @@ void SnortConfig::generate_dump(std::list<ConfigData*> *config_data_to_dump)
     {
         config_dumper = new std::thread(generate_config_dump, config_data_to_dump,
             time(nullptr), SnortConfig::get_reload_id(), dump_config_file);
+        SET_THREAD_NAME(config_dumper->native_handle(), "snort3.cfgdump");
     }
     else
     {

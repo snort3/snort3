@@ -36,6 +36,7 @@
 
 #include "log/messages.h"
 #include "profiler/profiler_defs.h"
+#include "utils/util.h"
 
 #include "unixdomain_connector_module.h"
 
@@ -201,6 +202,7 @@ static void connection_retry_handler(const UnixDomainConnectorConfig& cfg, size_
 
 static void start_retry_thread(const UnixDomainConnectorConfig& cfg, size_t idx, UnixDomainConnectorUpdateHandler update_handler = nullptr) {
     std::thread retry_thread(connection_retry_handler, cfg, idx, update_handler, nullptr);
+    SET_THREAD_NAME(retry_thread.native_handle(), "snort3.ud_retry");
     retry_thread.detach();
 }
 
@@ -387,6 +389,7 @@ void UnixDomainConnector::receive_processing_thread() {
 void UnixDomainConnector::start_receive_thread() {
     run_thread.store(true, std::memory_order_relaxed);
     receive_thread = new std::thread(&UnixDomainConnector::receive_processing_thread, this);
+    SET_THREAD_NAME(receive_thread->native_handle(), "snort3.ud_recv");
 }
 
 void UnixDomainConnector::stop_receive_thread() {
@@ -637,6 +640,7 @@ void UnixDomainConnectorListener::start_accepting_connections(UnixDomainConnecto
     should_accept = true;
     accept_thread = new std::thread([this, handler = std::move(handler), config]()
     {
+        SET_THREAD_NAME(pthread_self(), "snort3.ud_acpt");
         sock_fd = socket(AF_UNIX, SOCK_STREAM, 0);
         if (sock_fd == -1) {
             ErrorMessage("UnixDomainC: socket error: %s \n", strerror(errno));
@@ -727,6 +731,7 @@ void UnixDomainConnectorReconnectHelper::connect(const char* path, size_t idx)
         if (cfg.conn_retries) {
             
             connection_thread = new std::thread(connection_retry_handler, cfg, idx, update_handler, this);
+            SET_THREAD_NAME(connection_thread->native_handle(), "snort3.ud_conn");
             return; 
         } else {
             close(sfd);
@@ -762,6 +767,7 @@ void UnixDomainConnectorReconnectHelper::reconnect(size_t idx)
     }
     
     connection_thread = new std::thread(connection_retry_handler, cfg, idx, update_handler, this);
+    SET_THREAD_NAME(connection_thread->native_handle(), "snort3.ud_conn");
 }
 
 void UnixDomainConnectorReconnectHelper::set_reconnect_enabled(bool enabled)

@@ -37,6 +37,7 @@
 #include "log/messages.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
+#include "utils/util.h"
 
 static std::mutex _receive_mutex;
 static std::shared_mutex _connection_update_mutex;
@@ -466,6 +467,7 @@ void MPUnixDomainTransport::init_side_channels()
 
     assert(!this->consume_thread);
     this->consume_thread = new std::thread(&MPUnixDomainTransport::process_messages_from_side_channels, this);
+    SET_THREAD_NAME(this->consume_thread->native_handle(), "snort3.mp_recv");
 }
 
 void MPUnixDomainTransport::cleanup_side_channels()
