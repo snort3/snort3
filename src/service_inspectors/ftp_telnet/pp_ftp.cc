@@ -190,12 +190,17 @@ static int getIP1639(
         char* endPtr;
         unsigned long val = strtoul(tok, &endPtr, 10);
 
-        if (
-            val > 255 || endPtr == tok ||
-            ( *endPtr && *endPtr != ',' && endPtr != last_char )
-            )
+        if ( val > 255 || endPtr == tok )
         {
             return FTPP_INVALID_ARG;
+        }
+	
+        if ( endPtr != last_char )
+        {
+            if ( *endPtr && *endPtr != ',' )
+            {
+                 return FTPP_INVALID_ARG;
+            }
         }
         bytes[nBytes++] = (uint8_t)val;
         tok = (endPtr < last_char) ? endPtr + 1 : endPtr;
