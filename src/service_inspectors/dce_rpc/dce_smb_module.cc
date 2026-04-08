@@ -105,6 +105,8 @@ static const PegInfo dce2_smb_pegs[] =
       "total number of SMBv2 create request packets ignored as share type is IPC" },
     { CountType::SUM, "v2_crt_tree_trkr_misng",
       "total number of SMBv2 create response packets ignored due to missing tree tracker" },
+    { CountType::SUM, "v2_crt_rtrkr_ins_fail",
+      "total number of SMBv2 create request packets failed due to request tracker insert failure" },
     { CountType::SUM, "v2_wrt", "total number of SMBv2 write packets seen" },
     { CountType::SUM, "v2_wrt_err_resp", "total number of SMBv2 write error response packets seen" },
     { CountType::SUM, "v2_wrt_ignored",

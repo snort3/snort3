@@ -376,7 +376,16 @@ static void DCE2_Smb2CreateRequest(DCE2_Smb2SsnData* ssd,
             auto rtracker = new DCE2_Smb2RequestTracker(file_name, name_len);
             rtracker->set_session_id(str->session_id);
             rtracker->set_tree_id(ttr->get_tid());
-            ssd->insertRtracker(mid, rtracker);
+            if (!ssd->insertRtracker(mid, rtracker))
+            {
+                dce2_smb_stats.v2_crt_rtrkr_ins_fail++;
+                SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+                    DetectionEngine::get_current_packet(),
+                    "%s_REQ: insert req tracker failed for mid %" PRIx64 "\n",
+                    smb2_command_string[SMB2_COM_CREATE], mid);
+                delete rtracker;
+                return;
+            }
             uint64_t file_id = 0;
             if (DCE2_IsSmb2DurableReconnect(smb_create_hdr, end, file_id))
             {

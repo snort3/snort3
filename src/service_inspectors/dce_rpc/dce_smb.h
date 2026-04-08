@@ -201,6 +201,7 @@ struct dce2SmbStats : public LruCacheLocalStats
     PegCount v2_crt_rtrkr_misng;
     PegCount v2_crt_req_ipc;
     PegCount v2_crt_tree_trkr_misng;
+    PegCount v2_crt_rtrkr_ins_fail;
     PegCount v2_wrt;
     PegCount v2_wrt_err_resp;
     PegCount v2_wrt_ignored;
