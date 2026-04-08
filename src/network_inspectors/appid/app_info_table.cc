@@ -402,15 +402,15 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                     odp_ctxt.recheck_for_portservice_appid = true;
                 }
             }
-            else if (!(strcasecmp(conf_key, "mdns_deviceinfo")))
+            else if (!(strcasecmp(conf_key, "detector_deviceinfo")))
             {
                 if (!(strcasecmp(conf_val, "enabled")))
                 {
-                    odp_ctxt.mdns_deviceinfo = true;
+                    odp_ctxt.detector_deviceinfo = true;
                 }
                 else if (!(strcasecmp(conf_val, "disabled")))
                 {
-                    odp_ctxt.mdns_deviceinfo = false;
+                    odp_ctxt.detector_deviceinfo = false;
                 }
             }
             else if (!(strcasecmp(conf_key, "bittorrent_aggressiveness")))

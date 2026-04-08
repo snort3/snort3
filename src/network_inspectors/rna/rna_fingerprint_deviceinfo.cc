@@ -81,24 +81,24 @@ void DeviceInfoRowFingerprint::set_mac(const std::string& mac)
 
 DeviceInfoFpProcessor::~DeviceInfoFpProcessor()
 {
-    delete protocol_type_mpse;
+    delete service_type_mpse;
 }
 
 void DeviceInfoFpProcessor::make_mpse(bool priority)
 {
     if (priority)
     {
-        delete protocol_type_mpse;
-        protocol_type_mpse = nullptr;
+        delete service_type_mpse;
+        service_type_mpse = nullptr;
     }
 
-    if (protocol_type_mpse or protocol_type_fps.empty())
+    if (service_type_mpse or service_type_fps.empty())
         return;
 
-    protocol_type_mpse = new SearchTool;
-    for (std::pair<const std::string, DeviceInfoProtoFingerprint>& kv : protocol_type_fps)
-        protocol_type_mpse->add(kv.second.protocol_type.c_str(), kv.second.protocol_type.size(), &kv.second);
-    protocol_type_mpse->prep();
+    service_type_mpse = new SearchTool;
+    for (std::pair<const std::string, DeviceInfoProtoFingerprint>& kv : service_type_fps)
+        service_type_mpse->add(kv.second.service_type.c_str(), kv.second.service_type.size(), &kv.second);
+    service_type_mpse->prep();
 }
 
 static int collect_rows(void* id, void*, int, void* data, void*)
@@ -110,19 +110,19 @@ static int collect_rows(void* id, void*, int, void* data, void*)
     return 0;
 }
 
-void DeviceInfoFpProcessor::get_rows(const char* protocol, 
+void DeviceInfoFpProcessor::get_rows(const char* service, 
     std::vector<const DeviceInfoRowFingerprint*>& rows)
 {
     rows.clear();
-    if (!protocol_type_mpse)
+    if (!service_type_mpse)
         return;
-    protocol_type_mpse->find_all(protocol, strlen(protocol), collect_rows, false, &rows);
+    service_type_mpse->find_all(service, strlen(service), collect_rows, false, &rows);
 }
 
 void DeviceInfoFpProcessor::push(const DeviceInfoRawFingerprint& raw_fp)
 {
-    DeviceInfoProtoFingerprint& proto_fp = protocol_type_fps[raw_fp.protocol_type];
-    proto_fp.protocol_type = raw_fp.protocol_type;
+    DeviceInfoProtoFingerprint& proto_fp = service_type_fps[raw_fp.service_type];
+    proto_fp.service_type = raw_fp.service_type;
 
     DeviceInfoRowFingerprint row;
     row.fpid = raw_fp.fpid;
@@ -232,26 +232,41 @@ void RnaDeviceDiscovery::process(const snort::DeviceInfoEvent* event, RnaLogger&
 
     for (const std::pair<const std::pair<std::string, std::string>, std::vector<std::pair<std::string, std::string>>>& entry : device_info_map)
     {
-        const std::string& protocol_type = entry.first.first;
+        const std::string& service_type = entry.first.first;
         const std::string& device_name = entry.first.second;
         const std::vector<std::pair<std::string, std::string>>& txt_kv_pairs = entry.second;
 
-        if (device_name.empty() || protocol_type.empty())
+        if (device_name.empty() || service_type.empty())
             continue;
         
         if (!is_printable_string(device_name.c_str()))
             continue;
 
+        std::string clean_device_name = clean_field_value(device_name);
+        if (is_printable_string(clean_device_name.c_str()))
+        {
+            if (rt->set_device_name(clean_device_name.c_str()))
+            {
+                debug_logf(rna_trace, pkt, "DeviceInfo: logging CHANGE_DEVICE_NAME event, name='%s'\n",
+                    clean_device_name.c_str());
+                logger.log(RNA_EVENT_CHANGE, CHANGE_DEVICE_NAME, pkt, rt,
+                    reinterpret_cast<const struct in6_addr*>(pkt->flow->client_ip.get_ip6_ptr()),
+                    rt->get_last_seen_mac(mac_addr), nullptr, packet_time(),
+                    nullptr, clean_device_name.c_str());
+            }
+        }
+
         std::vector<const DeviceInfoRowFingerprint*> rows;
-        processor->get_rows(protocol_type.c_str(), rows);
+        processor->get_rows(service_type.c_str(), rows);
 
         if (rows.empty())
         {
-            debug_logf(rna_trace, pkt, "DeviceInfo: no fingerprint rows found for protocol %s\n", protocol_type.c_str());
+            debug_logf(rna_trace, pkt, "DeviceInfo: no fingerprint rows found for service %s\n", service_type.c_str());
             continue;
         }
 
-        std::string global_hardware_info;
+        std::vector<MatchedRowInfo> matched_rows;
+        const MatchedRowInfo* best_hardware_row = nullptr;
 
         for (const DeviceInfoRowFingerprint* row : rows)
         {
@@ -263,63 +278,74 @@ void RnaDeviceDiscovery::process(const snort::DeviceInfoEvent* event, RnaLogger&
             if (!rt->add_deviceinfo_fingerprint(row->fpid))
                 continue;
 
-            std::string field_values[DEVICEINFO_FIELD_MAX];
+            MatchedRowInfo info;
+            info.row = row;
             for (uint8_t i = 0; i < DEVICEINFO_FIELD_MAX; i++)
-                field_values[i] = clean_field_value(extracted_values[i]);
-            
-            field_values[DEVICEINFO_FIELD_DEVICENAME] = clean_field_value(device_name);
+                info.field_values[i] = clean_field_value(extracted_values[i]);
+            info.field_values[DEVICEINFO_FIELD_DEVICENAME] = clean_field_value(device_name);
 
-            uint8_t mask = row->field_mask;
-            std::string hardware_info = field_values[DEVICEINFO_FIELD_MANUFACTURER] + 
-                (field_values[DEVICEINFO_FIELD_MANUFACTURER].empty() || field_values[DEVICEINFO_FIELD_MODEL].empty() ? "" : " ") + 
-                field_values[DEVICEINFO_FIELD_MODEL];
+            info.hardware_info = info.field_values[DEVICEINFO_FIELD_MANUFACTURER] + 
+                (info.field_values[DEVICEINFO_FIELD_MANUFACTURER].empty() || info.field_values[DEVICEINFO_FIELD_MODEL].empty() ? "" : " ") + 
+                info.field_values[DEVICEINFO_FIELD_MODEL];
 
-            if (global_hardware_info.empty() && !hardware_info.empty())
-                global_hardware_info = hardware_info;
+            info.has_predefined_model = (row->field_mask & DEVICEINFO_MASK_MODEL) && !row->values[DEVICEINFO_FIELD_MODEL].empty();
+            info.has_hardware = (row->field_mask & (DEVICEINFO_MASK_MODEL | DEVICEINFO_MASK_MANUFACTURER)) && 
+                !info.hardware_info.empty() && is_printable_string(info.hardware_info.c_str());
 
-            if (is_printable_string(field_values[DEVICEINFO_FIELD_DEVICENAME].c_str()))
+            if (row->field_mask & DEVICEINFO_MASK_OS)
+                info.os_cpe = row->os_prefix + info.field_values[DEVICEINFO_FIELD_OS] + row->os_postfix;
+
+            matched_rows.push_back(std::move(info));
+        }
+
+        if (matched_rows.empty())
+            continue;
+
+        for (const MatchedRowInfo& info : matched_rows)
+        {
+            if (!info.has_hardware)
+                continue;
+            if (!best_hardware_row)
+                best_hardware_row = &info;
+            else if (info.has_predefined_model && !best_hardware_row->has_predefined_model)
+                best_hardware_row = &info;
+        }
+
+        const std::string& preferred_hardware_info = best_hardware_row ? best_hardware_row->hardware_info : "";
+
+        bool os_logged = false;
+        for (const MatchedRowInfo& info : matched_rows)
+        {
+            if (!os_logged && (info.row->field_mask & DEVICEINFO_MASK_OS) && !info.os_cpe.empty())
             {
-                debug_logf(rna_trace, pkt, "DeviceInfo: logging CHANGE_DEVICE_NAME event for fingerprint %u, name='%s'\n",
-                    row->fpid, field_values[DEVICEINFO_FIELD_DEVICENAME].c_str());
-                logger.log(RNA_EVENT_CHANGE, CHANGE_DEVICE_NAME, pkt, rt,
-                    reinterpret_cast<const struct in6_addr*>(pkt->flow->client_ip.get_ip6_ptr()),
-                    rt->get_last_seen_mac(mac_addr), row, packet_time(),
-                    hardware_info.c_str(), field_values[DEVICEINFO_FIELD_DEVICENAME].c_str());
-                
-                rt->set_device_name(field_values[DEVICEINFO_FIELD_DEVICENAME].c_str());
-            }
-
-            const std::string& hw_for_os = hardware_info.empty() ? global_hardware_info : hardware_info;
-            if ((mask & DEVICEINFO_MASK_OS) && is_printable_string(hw_for_os.c_str()))
-            {
-                std::string os_cpe = row->os_prefix + field_values[DEVICEINFO_FIELD_OS] + row->os_postfix;
-                debug_logf(rna_trace, pkt, "DeviceInfo: logging NEW_OS event for fingerprint %u, os_cpe='%s'\n",
-                    row->fpid, os_cpe.c_str());
-                std::vector<const char*> cpes;
-                cpes.push_back(os_cpe.c_str());
-                FpFingerprint fp;
-                fp.fpid = row->fpid;
-                fp.fpuuid = row->fpuuid;
-                fp.fp_type = FpFingerprint::FpType::FP_TYPE_DEVICEINFO;
-
-                logger.log(RNA_EVENT_NEW, NEW_OS, pkt, rt, 
-                    reinterpret_cast<const struct in6_addr*>(pkt->flow->client_ip.get_ip6_ptr()),
-                    rt->get_last_seen_mac(mac_addr), &fp, &cpes, packet_time(), hw_for_os.c_str());
-            }
-
-            if ((mask & (DEVICEINFO_MASK_MODEL | DEVICEINFO_MASK_MANUFACTURER)) && is_printable_string(hardware_info.c_str()))
-            {
-                bool is_high_priority = (mask & DEVICEINFO_MASK_MODEL) && !row->values[DEVICEINFO_FIELD_MODEL].empty();
-                if (rt->set_deviceinfo_hardware(hardware_info, is_high_priority))
+                const std::string& hw_for_os = info.hardware_info.empty() ? preferred_hardware_info : info.hardware_info;
+                if (is_printable_string(hw_for_os.c_str()))
                 {
-                    debug_logf(rna_trace, pkt, "DeviceInfo: logging NEW_OS hardware event for fingerprint %u, hardware='%s'\n",
-                        row->fpid, hardware_info.c_str());
+                    debug_logf(rna_trace, pkt, "DeviceInfo: logging NEW_OS event for fingerprint %u, os_cpe='%s'\n",
+                        info.row->fpid, info.os_cpe.c_str());
+                    std::vector<const char*> cpes;
+                    cpes.push_back(info.os_cpe.c_str());
+                    FpFingerprint fp;
+                    fp.fpid = info.row->fpid;
+                    fp.fpuuid = info.row->fpuuid;
+                    fp.fp_type = FpFingerprint::FpType::FP_TYPE_DEVICEINFO;
+
                     logger.log(RNA_EVENT_NEW, NEW_OS, pkt, rt, 
                         reinterpret_cast<const struct in6_addr*>(pkt->flow->client_ip.get_ip6_ptr()),
-                        rt->get_last_seen_mac(mac_addr), row, packet_time(),
-                        hardware_info.c_str(), nullptr);
+                        rt->get_last_seen_mac(mac_addr), &fp, &cpes, packet_time(), hw_for_os.c_str());
+                    os_logged = true;
                 }
             }
+        }
+
+        if (best_hardware_row && rt->set_deviceinfo_hardware(best_hardware_row->hardware_info, best_hardware_row->has_predefined_model))
+        {
+            debug_logf(rna_trace, pkt, "DeviceInfo: logging NEW_OS hardware event for fingerprint %u, hardware='%s'\n",
+                best_hardware_row->row->fpid, best_hardware_row->hardware_info.c_str());
+            logger.log(RNA_EVENT_NEW, NEW_OS, pkt, rt, 
+                reinterpret_cast<const struct in6_addr*>(pkt->flow->client_ip.get_ip6_ptr()),
+                rt->get_last_seen_mac(mac_addr), best_hardware_row->row, packet_time(),
+                best_hardware_row->hardware_info.c_str(), nullptr);
         }
     }
 }
@@ -337,7 +363,7 @@ TEST_CASE("get_rows_basic", "[rna_fingerprint_deviceinfo]")
     rawfp.fpid = 100606;
     rawfp.fp_type = 15;
     rawfp.fpuuid = "680f888c-8f20-4fed-ad9b-c9875d206fcb";
-    rawfp.protocol_type = "_airplay._tcp.local";
+    rawfp.service_type = "_airplay._tcp.local";
     rawfp.manufacturer_pattern = "manufacturer=";
     rawfp.model_pattern = "model=";
     processor->push(rawfp);
@@ -361,7 +387,7 @@ TEST_CASE("get_rows_with_values", "[rna_fingerprint_deviceinfo]")
     rawfp.fpid = 100604;
     rawfp.fp_type = 15;
     rawfp.fpuuid = "6a23f14f-e02a-46bd-95d3-e18853083dc3";
-    rawfp.protocol_type = "_printer._tcp.local";
+    rawfp.service_type = "_printer._tcp.local";
     rawfp.manufacturer_pattern = "usb_MFG=";
     rawfp.manufacturer = "HP";
     rawfp.model_pattern = "usb_MDL=";
@@ -385,7 +411,7 @@ TEST_CASE("get_rows_multiple_same_protocol", "[rna_fingerprint_deviceinfo]")
     fp1.fpid = 100601;
     fp1.fp_type = 15;
     fp1.fpuuid = "ecd3e238-44e1-4cb3-8383-49d83f4f8d5b";
-    fp1.protocol_type = "_mediaremotetv._tcp.local";
+    fp1.service_type = "_mediaremotetv._tcp.local";
     fp1.model_pattern = "model=";
     processor.push(fp1);
 
@@ -393,7 +419,7 @@ TEST_CASE("get_rows_multiple_same_protocol", "[rna_fingerprint_deviceinfo]")
     fp2.fpid = 100602;
     fp2.fp_type = 15;
     fp2.fpuuid = "cefa3bb2-eb5f-447e-aa7d-64bda5a49ae5";
-    fp2.protocol_type = "_mediaremotetv._tcp.local";
+    fp2.service_type = "_mediaremotetv._tcp.local";
     fp2.model_pattern = "model=";
     fp2.manufacturer_pattern = "mfg=";
     processor.push(fp2);
@@ -427,7 +453,7 @@ TEST_CASE("get_rows_with_predefined_values", "[rna_fingerprint_deviceinfo]")
     rawfp.fpid = 100611;
     rawfp.fp_type = 15;
     rawfp.fpuuid = "google-cast-uuid";
-    rawfp.protocol_type = "_googlecast._tcp.local";
+    rawfp.service_type = "_googlecast._tcp.local";
     rawfp.model_pattern = "md=";
     rawfp.model = "Chromecast";
     rawfp.manufacturer_pattern = "fn=";
@@ -453,7 +479,7 @@ TEST_CASE("get_rows_mac_address", "[rna_fingerprint_deviceinfo]")
     rawfp.fpid = 100600;
     rawfp.fp_type = 15;
     rawfp.fpuuid = "d827d911-e50e-404f-9f5d-5aa56b580b35";
-    rawfp.protocol_type = "_hap._tcp.local";
+    rawfp.service_type = "_hap._tcp.local";
     rawfp.manufacturer_pattern = "md=";
     rawfp.manufacturer = "Apple";
     rawfp.mac_addr = "A4:83:E7";
@@ -477,7 +503,7 @@ TEST_CASE("get_rows_field_mask", "[rna_fingerprint_deviceinfo]")
     rawfp.fpid = 100700;
     rawfp.fp_type = 15;
     rawfp.fpuuid = "field-mask-test-uuid";
-    rawfp.protocol_type = "_test._tcp.local";
+    rawfp.service_type = "_test._tcp.local";
     rawfp.manufacturer_pattern = "mfg=";
     rawfp.model_pattern = "mdl=";
     rawfp.os_pattern = "os=";

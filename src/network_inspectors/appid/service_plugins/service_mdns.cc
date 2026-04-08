@@ -49,7 +49,6 @@ using namespace snort;
 #define MDNS_PATTERN1 "\x00\x00\x84\x00\x00\x00"
 #define MDNS_PATTERN2 "\x00\x00\x08\x00\x00\x00"
 #define MDNS_PATTERN3 "\x00\x00\x04\x00\x00\x00"
-#define MDNS_PATTERN4 "\x00\x00\x00\x00"
 #define SRV_RECORD "\x00\x21"
 #define SRV_RECORD_OFFSET  6
 #define LENGTH_OFFSET 8
@@ -98,6 +97,50 @@ struct MatchedPatterns
     MatchedPatterns* next;
 };
 
+struct MdnsKeyNormEntry
+{
+    const char* raw_key;
+    unsigned raw_key_len;
+    const char* normalized;
+};
+
+static MdnsKeyNormEntry key_norm_entries[] =
+{
+    { "md", 2, "model" },
+    { "mdl", 3, "model" },
+    { "MDL", 3, "model" },
+    { "usb_MDL", 7, "model" },
+    { "ModelName", 9, "model" },
+    { "modelid", 7, "model" },
+    { "mn", 2, "model" },
+    { "am", 2, "model" },
+    { "rpMd", 4, "model" },
+    { "mfg", 3, "manufacturer" },
+    { "MFG", 3, "manufacturer" },
+    { "usb_MFG", 7, "manufacturer" },
+    { "integrator", 10, "manufacturer" },
+    { "osxvers", 7, "osxvers" },
+    { "osvers", 6, "osxvers" },
+};
+
+struct KeyNormResult
+{
+    const char* normalized;
+    unsigned key_len;
+};
+
+static int key_norm_match(void* id, void*, int match_end_pos, void* data, void*)
+{
+    MdnsKeyNormEntry* entry = (MdnsKeyNormEntry*)id;
+    KeyNormResult* result = (KeyNormResult*)data;
+    if ((unsigned)(match_end_pos - entry->raw_key_len) == 0 && (unsigned)match_end_pos == result->key_len)
+    {
+        result->normalized = entry->normalized;
+        return 1;
+    }
+    return 0;
+}
+
 static MdnsPattern patterns[] =
 {
     { (const uint8_t*)PATTERN_STR_LOCAL_1, sizeof(PATTERN_STR_LOCAL_1) - 1 },
@@ -127,12 +170,17 @@ MdnsServiceDetector::MdnsServiceDetector(ServiceDiscovery* sd)
         matcher.add((const char*)patterns[i].pattern, patterns[i].length, &patterns[i]);
     matcher.prep();
 
+    for (unsigned i = 0; i < sizeof(key_norm_entries) / sizeof(*key_norm_entries); i++)
+        key_normalizer.add((const uint8_t*)key_norm_entries[i].raw_key, key_norm_entries[i].raw_key_len, &key_norm_entries[i], false);
+    key_normalizer.prep();
+
     handler->register_detector(name, this, proto);
 }
 
 void MdnsServiceDetector::do_custom_reload()
 {
     matcher.reload();
+    key_normalizer.reload();
 }
 
 int MdnsServiceDetector::validate(AppIdDiscoveryArgs& args)
@@ -187,8 +235,6 @@ int MdnsServiceDetector::validate_reply(const uint8_t* data, uint16_t size)
     else if (memcmp(data, MDNS_PATTERN2,  sizeof(MDNS_PATTERN2)-1) == 0)
         ret_val = 1;
     else if (memcmp(data,MDNS_PATTERN3, sizeof(MDNS_PATTERN3)-1) == 0)
-        ret_val = 1;
-    else if (memcmp(data,MDNS_PATTERN4, sizeof(MDNS_PATTERN4)-1) == 0)
         ret_val = 1;
     else
         ret_val = 0;
@@ -312,7 +358,7 @@ static std::string clean_mdns_string(const std::string& str)
 
 void MdnsServiceDetector::process_txt_record(const snort::Packet* pkt, const char* srv_original, 
     const char* rdata_start, uint16_t data_len, const char* packet_end, 
-    std::string& protocol_type, std::string& device_name,
+    std::string& service_type, std::string& device_name,
     std::vector<std::pair<std::string, std::string>>& kv_pairs)
 {
     const char* dns_name_start = srv_original;
@@ -371,7 +417,7 @@ void MdnsServiceDetector::process_txt_record(const snort::Packet* pkt, const cha
                 size_t dot_pos = device_name.find('.');
                 if (dot_pos != std::string::npos and dot_pos > 0)
                 {
-                    protocol_type = device_name.substr(dot_pos + DNS_LABEL_LENGTH_SKIP);
+                    service_type = device_name.substr(dot_pos + DNS_LABEL_LENGTH_SKIP);
                     device_name = device_name.substr(0, dot_pos);
                 }
 
@@ -388,9 +434,9 @@ void MdnsServiceDetector::process_txt_record(const snort::Packet* pkt, const cha
             }
             else
             {
-                if (!protocol_type.empty())
-                    protocol_type += ".";
-                protocol_type += label;
+                if (!service_type.empty())
+                    service_type += ".";
+                service_type += label;
             }
             
             name_parser += label_len;
@@ -429,7 +475,12 @@ void MdnsServiceDetector::process_txt_record(const snort::Packet* pkt, const cha
             {
                 key = clean_mdns_string(key);
                 value = clean_mdns_string(value);
-                kv_pairs.emplace_back(key, value);
+                KeyNormResult result = { nullptr, (unsigned)key.size() };
+                key_normalizer.find_all(key.c_str(), key.size(), key_norm_match, false, &result);
+                if (result.normalized)
+                    kv_pairs.emplace_back(result.normalized, value);
+                else
+                    kv_pairs.emplace_back(key, value);
             }
         }
         else
@@ -534,16 +585,16 @@ int MdnsServiceDetector::analyze_user(AppIdSession& asd, const Packet* pkt, uint
                 if (rdata_start + data_len > packet_end)
                     return -1;
 
-                if (record_type == TXT_RECORD_TYPE and data_len > 0 and asd.get_odp_ctxt().mdns_deviceinfo)
+                if (record_type == TXT_RECORD_TYPE and data_len > 0 and asd.get_odp_ctxt().detector_deviceinfo)
                 {
-                    std::string protocol_type, device_name;
+                    std::string service_type, device_name;
                     std::vector<std::pair<std::string, std::string>> kv_pairs;
                     const char* dns_name_ptr = srv_original;
                     process_txt_record(pkt, dns_name_ptr, rdata_start, data_len, packet_end,
-                                     protocol_type, device_name, kv_pairs);
-                    if (!protocol_type.empty() || !device_name.empty())
+                                     service_type, device_name, kv_pairs);
+                    if (!service_type.empty() || !device_name.empty())
                     {
-                        auto device_key = std::make_pair(protocol_type, device_name);
+                        auto device_key = std::make_pair(service_type, device_name);
                         device_info_map[device_key] = std::move(kv_pairs);
                     }
                 }
@@ -616,7 +667,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession& asd, const Packet* pkt, uint
     else
         return 0;
 
-    if (!device_info_map.empty() and asd.get_odp_ctxt().mdns_deviceinfo)
+    if (!device_info_map.empty() and asd.get_odp_ctxt().detector_deviceinfo)
     {
         DeviceInfoEvent event(pkt, device_info_map);
         DataBus::publish(DataBus::get_id(deviceinfo_pub_key), DeviceInfoEventIds::DEVICEINFO, event);

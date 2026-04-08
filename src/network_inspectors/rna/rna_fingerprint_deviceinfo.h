@@ -76,14 +76,14 @@ public:
 class SO_PUBLIC DeviceInfoProtoFingerprint
 {
 public:
-    std::string protocol_type;
+    std::string service_type;
     std::vector<DeviceInfoRowFingerprint> rows;
 };
 
 class SO_PUBLIC DeviceInfoRawFingerprint : public FpFingerprint
 {
 public:
-    std::string protocol_type;
+    std::string service_type;
     std::string manufacturer_pattern;
     std::string manufacturer;
     std::string model_pattern;
@@ -104,16 +104,26 @@ public:
 
     void make_mpse(bool priority = false);
     void push(const DeviceInfoRawFingerprint&);
-    void get_rows(const char* protocol, std::vector<const DeviceInfoRowFingerprint*>& rows);
+    void get_rows(const char* service, std::vector<const DeviceInfoRowFingerprint*>& rows);
 
-    bool has_pattern() const { return protocol_type_mpse != nullptr; }
+    bool has_pattern() const { return service_type_mpse != nullptr; }
 
 private:
-    std::unordered_map<std::string, DeviceInfoProtoFingerprint> protocol_type_fps;
-    snort::SearchTool* protocol_type_mpse = nullptr;
+    std::unordered_map<std::string, DeviceInfoProtoFingerprint> service_type_fps;
+    snort::SearchTool* service_type_mpse = nullptr;
 };
 
 }
+
+struct MatchedRowInfo
+{
+    const snort::DeviceInfoRowFingerprint* row = nullptr;
+    std::string field_values[snort::DEVICEINFO_FIELD_MAX];
+    std::string hardware_info;
+    std::string os_cpe;
+    bool has_predefined_model = false;
+    bool has_hardware = false;
+};
 
 class RnaDeviceDiscovery
 {

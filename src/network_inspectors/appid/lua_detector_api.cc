@@ -57,6 +57,8 @@
 #include "service_plugins/service_discovery.h"
 #include "service_plugins/service_ssl.h"
 
+#include "pub_sub/deviceinfo_events.h"
+
 using namespace snort;
 using namespace std;
 
@@ -3395,6 +3397,60 @@ int lua_remove_registry_table_test(lua_State* L)
 }
 #endif
 
+static int detector_publish_device_info(lua_State* L)
+{
+    auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
+    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
+    if (!lsd)
+        return 0;
+    if (!lua_istable(L, 2))
+        return 0;
+    if (!ud->get_odp_ctxt().detector_deviceinfo)
+        return 0;
+
+    DeviceInfoEvent::KeyValueVector kv_pairs;
+    std::string service_type = DEVINFO_SERVICE_NULL;
+    std::string device_name;
+
+    lua_pushnil(L);
+    while (lua_next(L, 2) != 0)
+    {
+        if (lua_type(L, -2) != LUA_TSTRING)
+        {
+            lua_pop(L, 1);
+            continue;
+        }
+        const char* key = lua_tostring(L, -2);
+        const char* value = (lua_type(L, -1) == LUA_TSTRING) ? lua_tostring(L, -1) : nullptr;
+        if (!key || !value)
+        {
+            lua_pop(L, 1);
+            continue;
+        }
+        if (strcmp(key, DEVINFO_META_SERVICE_TYPE) == 0)
+            service_type = value;
+        else
+        {
+            kv_pairs.emplace_back(key, value);
+            if (strcmp(key, DEVINFO_KEY_DEVICENAME) == 0)
+                device_name = value;
+        }
+        lua_pop(L, 1);
+    }
+
+    if (kv_pairs.empty())
+        return 0;
+
+    const Packet* pkt = lsd->ldp.pkt;
+    if (!pkt)
+        return 0;
+
+    DeviceInfoEvent event(pkt, service_type, device_name, kv_pairs);
+    DataBus::publish(DataBus::get_id(deviceinfo_pub_key), DeviceInfoEventIds::DEVICEINFO, event);
+
+    return 0;
+}
+
 static const luaL_Reg detector_methods[] =
 {
     /* Obsolete API names.  No longer use these!  They are here for backward
@@ -3526,6 +3582,8 @@ static const luaL_Reg detector_methods[] =
     {"addCipExtendedSymbolService", detector_add_cip_extended_symbol_service},
     {"addCipService",            detector_add_cip_service},
     {"addEnipCommand",           detector_add_enip_command},
+
+    {"publishDeviceInfo",        detector_publish_device_info},
 
 #ifdef REG_TEST
     {"luaRemoveRegistryTableTest", lua_remove_registry_table_test},

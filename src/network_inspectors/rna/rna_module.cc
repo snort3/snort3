@@ -341,8 +341,8 @@ static const Parameter rna_fp_params[] =
     { "flags", Parameter::PT_INT, "0:max32", nullptr,
       "smb flags" },
 
-    { "protocol_type", Parameter::PT_STRING, nullptr, nullptr,
-      "deviceinfo protocol type" },
+    { "service_type", Parameter::PT_STRING, nullptr, nullptr,
+      "deviceinfo service type" },
 
     { "manufacturer_pattern", Parameter::PT_STRING, nullptr, nullptr,
       "deviceinfo manufacturer pattern" },
@@ -504,7 +504,7 @@ bool RnaModule::begin(const char* fqn, int, SnortConfig*)
         deviceinfo_fingerprint.fpid = 0;
         deviceinfo_fingerprint.fp_type = 0;
         deviceinfo_fingerprint.fpuuid.clear();
-        deviceinfo_fingerprint.protocol_type.clear();
+        deviceinfo_fingerprint.service_type.clear();
         deviceinfo_fingerprint.manufacturer_pattern.clear();
         deviceinfo_fingerprint.manufacturer.clear();
         deviceinfo_fingerprint.model_pattern.clear();
@@ -605,8 +605,8 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
             fingerprint.smb_minor = v.get_uint32();
         else if (v.is("flags"))
             fingerprint.smb_flags = v.get_uint32();
-        else if (v.is("protocol_type"))
-            deviceinfo_fingerprint.protocol_type = v.get_string();
+        else if (v.is("service_type"))
+            deviceinfo_fingerprint.service_type = v.get_string();
         else if (v.is("manufacturer_pattern"))
             deviceinfo_fingerprint.manufacturer_pattern = v.get_string();
         else if (v.is("manufacturer"))

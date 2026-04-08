@@ -50,9 +50,10 @@ private:
     int reference_pointer(const char* start_ptr, const char* end_pkt, const char** resp_endptr, int* start_index,
         uint16_t data_size, uint8_t* user_name_len, unsigned size, MatchedPatterns*& pattern_list);
     void process_txt_record(const snort::Packet* pkt, const char* srv_original, const char* rdata_start, 
-        uint16_t data_len, const char* packet_end, std::string& protocol_type, std::string& device_name,
+        uint16_t data_len, const char* packet_end, std::string& service_type, std::string& device_name,
         std::vector<std::pair<std::string, std::string>>& kv_pairs);
 
     snort::SearchTool matcher;
+    snort::SearchTool key_normalizer;
 };
 #endif

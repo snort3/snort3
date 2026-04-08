@@ -41,12 +41,17 @@ struct DeviceInfoEventIds { enum : unsigned { DEVICEINFO, num_ids }; };
 
 const PubKey deviceinfo_pub_key { "deviceinfo", DeviceInfoEventIds::num_ids };
 
+constexpr const char* DEVINFO_SERVICE_NULL = "*";
+constexpr const char* DEVINFO_META_SERVICE_TYPE = "service_type";
+constexpr const char* DEVINFO_KEY_DEVICENAME = "devicename";
+
 // DataEvent that contains device identification data including protocol type, device name, and attributes
 class DeviceInfoEvent : public DataEvent
 {
 public:
     // Composite key for unique device identification consisting of protocol type and device name
-    // The protocol type identifies the network protocol (e.g., "_airplay._tcp.local", "_http._tcp.local")
+    // The service type identifies the service advertised in service discovery protocols ( e.g. mDNS/DNS-SD service )
+    // wherever applicable or it should be a wildcard
     // The device name identifies the specific device instance (e.g., "John's iPhone", "Office Printer")
     using DeviceKey = std::pair<std::string, std::string>;
 
@@ -57,7 +62,7 @@ public:
 
     // Maps device identifiers to their corresponding attribute collections
     // Allows multiple devices to be tracked within a single event, each with their own attributes
-    // Key: (protocol_type, device_name), Value: vector of device attribute key-value pairs
+    // Key: (service_type, device_name), Value: vector of device attribute key-value pairs
     using DeviceInfoMap = std::map<DeviceKey, KeyValueVector>;
 
     // Constructor for creating an event containing multiple devices with their attributes
@@ -68,12 +73,12 @@ public:
 
     // Constructor for creating an event containing a single device with its attributes
     // Used when network protocol analysis identifies a specific device and its characteristics
-    // The device is uniquely identified by protocol type and device name combination
-    DeviceInfoEvent(const snort::Packet* p, const std::string& protocol_type,
+    // The device is uniquely identified by service type and device name combination
+    DeviceInfoEvent(const snort::Packet* p, const std::string& service_type,
                    const std::string& device_name, const KeyValueVector& kv_pairs)
         : pkt(p)
     {
-        device_info_map[std::make_pair(protocol_type, device_name)] = kv_pairs;
+        device_info_map[std::make_pair(service_type, device_name)] = kv_pairs;
     }
 
     const Packet* get_packet() const override
@@ -82,13 +87,13 @@ public:
     const DeviceInfoMap& get_device_info_map() const
     { return device_info_map; }
 
-    // Retrieve device attributes for a specific device identified by protocol type and device name
+    // Retrieve device attributes for a specific device identified by service type and device name
     // Returns nullptr if the specified device is not found in this event
     // Used by subscribers to extract specific device information from the event
-    const KeyValueVector* get_key_value_pairs(const std::string& protocol_type,
+    const KeyValueVector* get_key_value_pairs(const std::string& service_type,
                                              const std::string& device_name) const
     {
-        auto it = device_info_map.find(std::make_pair(protocol_type, device_name));
+        auto it = device_info_map.find(std::make_pair(service_type, device_name));
         return (it != device_info_map.end()) ? &it->second : nullptr;
     }
 
