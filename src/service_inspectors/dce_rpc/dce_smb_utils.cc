@@ -732,6 +732,12 @@ DCE2_SmbFileTracker* DCE2_SmbDequeueTmpFileTracker(DCE2_SmbSsnData* ssd,
         return nullptr;
     }
 
+    if (rtracker->ftracker == ftracker)
+        rtracker->ftracker = nullptr;
+
+    if (ssd->fb_ftracker == ftracker)
+        ssd->fb_ftracker = nullptr;
+
     if (ssd->ftracker.fid_v1 == DCE2_SENTINEL)
     {
         memcpy(&ssd->ftracker, ftracker, sizeof(DCE2_SmbFileTracker));
