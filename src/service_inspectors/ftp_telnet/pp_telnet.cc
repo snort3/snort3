@@ -70,6 +70,7 @@ int normalize_telnet(
     int consec_8bit_chars = 0;
 
     const unsigned char* start = buf.data;
+    unsigned int max_buf = 0;
     buf.len = 0;
 
     /* Telnet commands are handled in here.
@@ -200,7 +201,7 @@ int normalize_telnet(
                         write_ptr--;
                         buf.len--;
 
-                        if ((*write_ptr == CR) &&
+                        if ((*write_ptr == CR) && (write_ptr + 1 < start + max_buf) &&
                             ((*(write_ptr+1) == NUL) || (*(write_ptr+1) == LF)) )
                         {
                             /* Okay, found the CR NUL or CR LF, move it
@@ -211,6 +212,7 @@ int normalize_telnet(
                             {
                                 write_ptr+=2;
                                 buf.len+=2;
+                                max_buf = (buf.len > max_buf) ? buf.len : max_buf;
                             }
                             break;
                         }
@@ -265,6 +267,7 @@ int normalize_telnet(
                 read_ptr++; /* skip past the first IAC */
                 *write_ptr++ = *read_ptr++;
                 buf.len++;
+                max_buf = (buf.len > max_buf) ? buf.len : max_buf;
                 break;
             case TNC_WILL:
             case TNC_WONT:
@@ -407,6 +410,7 @@ int normalize_telnet(
             default:
                 *write_ptr++ = *read_ptr++;
                 buf.len++;
+                max_buf = (buf.len > max_buf) ? buf.len : max_buf;
                 break;
             }
 
