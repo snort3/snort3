@@ -665,7 +665,15 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             auto rtracker = new DCE2_Smb2RequestTracker(fileId_persistent);
             rtracker->set_session_id(str->session_id);
             rtracker->set_tree_id(ttr->get_tid());
-            ssd->insertRtracker(mid, rtracker);
+            if (!ssd->insertRtracker(mid, rtracker))
+            {
+                dce2_smb_stats.v2_cls_rtrkr_ins_fail++;
+                SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
+                    DetectionEngine::get_current_packet(),
+                    "%s_REQ: insert req tracker failed for mid %" PRIx64 "\n",
+                    smb2_command_string[SMB2_COM_CLOSE], mid);
+                delete rtracker;
+            }
         }
 
         if (SMB2_SHARE_TYPE_DISK == ttr->get_share_type() and !ftracker->ignore

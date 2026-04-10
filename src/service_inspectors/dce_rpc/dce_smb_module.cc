@@ -147,6 +147,8 @@ static const PegInfo dce2_smb_pegs[] =
       "total number of SMBv2 close request packets ignored due to missing file tracker" },
     { CountType::SUM, "v2_cls_req_hdr_err",
       "total number of SMBv2 close request packets ignored due to corrupted header" },
+    { CountType::SUM, "v2_cls_rtrkr_ins_fail",
+      "total number of SMBv2 close request packets failed due to request tracker insert failure" },
     { CountType::SUM, "v2_tree_discn",
       "total number of SMBv2 tree disconnect packets seen" },
     { CountType::SUM, "v2_tree_discn_ignored",
