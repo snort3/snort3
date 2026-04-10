@@ -707,6 +707,9 @@ static int validate_param(Packet* p,
         const char* s = ThisFmt->format.literal;
         size_t n = strlen(s);
 
+        if ( (size_t)(end - this_param) < n )
+            return FTPP_INVALID_PARAM;
+
         if ( strncmp(this_param, s, n) )
         {
             /* Alert on non-char */
