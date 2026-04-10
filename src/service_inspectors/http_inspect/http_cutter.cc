@@ -28,6 +28,7 @@
 #include "http_enum.h"
 #include "http_flow_data.h"
 #include "http_module.h"
+#include "http_transaction.h"
 
 using namespace HttpEnums;
 using namespace HttpCommon;
@@ -327,6 +328,10 @@ HttpBodyCutter::DecompressOutput HttpBodyCutter::decompress(const uint8_t* src, 
 HttpBodyCutter::HttpBodyCutter(bool accelerated_blocking_, ScriptFinder* finder_,
     HttpFlowData* const session_data, SourceId source_id)
     : accelerated_blocking(accelerated_blocking_)
+    , sse_state(source_id == SRC_SERVER &&
+        session_data->transaction[source_id] &&
+        session_data->transaction[source_id]->should_publish_on_sse_event_boundary() ?
+        SSE_START : SSE_DISABLED)
     , finder(finder_)
     , session_data(session_data)
     , source_id(source_id)
@@ -374,7 +379,8 @@ ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length,
 
     if (octets_seen + length < flow_target)
     {
-        const auto [accelerate, consumed] = analyze_body(buffer, length, infractions, events);
+        const auto flush_ctx = analyze_body(buffer, length, infractions, events);
+        const auto consumed = flush_ctx.consumed;
 
         if ( consumed < length )
         {
@@ -384,14 +390,17 @@ ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length,
         }
 
         octets_seen += length;
-        return accelerate ? SCAN_NOT_FOUND_ACCELERATE : SCAN_NOT_FOUND;
+        if ( flush_ctx.is_none() )
+            return SCAN_NOT_FOUND;
+
+        return flush_ctx.is_publish() ? SCAN_NOT_FOUND_PARTIAL_PUBLISH : SCAN_NOT_FOUND_ACCELERATE;
     }
 
     if (!stretch)
     {
         assert(flow_target >= octets_seen);
         const uint32_t planned_flush = flow_target - octets_seen;
-        const auto [_, consumed] = analyze_body(buffer, planned_flush, infractions, events);
+        const auto consumed = analyze_body(buffer, planned_flush, infractions, events).consumed;
 
         num_flush = consumed;
         remaining -= octets_seen + num_flush;
@@ -409,7 +418,7 @@ ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length,
         else
             planned_flush = flow_target - octets_seen;
 
-        const auto [_, consumed] = analyze_body(buffer, planned_flush, infractions, events);
+        const auto consumed = analyze_body(buffer, planned_flush, infractions, events).consumed;
 
         num_flush = consumed;
         remaining -= octets_seen + num_flush;
@@ -456,7 +465,8 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t* buffer, uint32_t length,
 
     if (octets_seen + length < flow_target)
     {
-        const auto [accelerate, consumed] = analyze_body(buffer, length, infractions, events);
+        const auto flush_ctx = analyze_body(buffer, length, infractions, events);
+        const auto consumed = flush_ctx.consumed;
 
         if ( consumed < length )
         {
@@ -466,13 +476,16 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t* buffer, uint32_t length,
 
         // Not enough data yet to create a message section
         octets_seen += length;
-        return accelerate ? SCAN_NOT_FOUND_ACCELERATE : SCAN_NOT_FOUND;
+        if ( flush_ctx.is_none() )
+            return SCAN_NOT_FOUND;
+
+        return flush_ctx.is_publish() ? SCAN_NOT_FOUND_PARTIAL_PUBLISH : SCAN_NOT_FOUND_ACCELERATE;
     }
     else if (stretch && (octets_seen + length <= flow_target + MAX_SECTION_STRETCH))
     {
         // Cut the section at the end of this TCP segment to avoid splitting a packet
         const uint32_t planned_flush = length;
-        const auto [_, consumed] = analyze_body(buffer, planned_flush, infractions, events);
+        const auto consumed = analyze_body(buffer, planned_flush, infractions, events).consumed;
 
         num_flush = consumed;
 
@@ -483,7 +496,7 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t* buffer, uint32_t length,
         // Cut the section at the target length. Either stretching is not allowed or the end of
         // the segment is too far away.
         const uint32_t planned_flush = flow_target - octets_seen;
-        const auto [_, consumed] = analyze_body(buffer, planned_flush, infractions, events);
+        const auto consumed = analyze_body(buffer, planned_flush, infractions, events).consumed;
 
         num_flush = consumed;
 
@@ -508,6 +521,7 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
     const uint32_t adjusted_target = stretch ? MAX_SECTION_STRETCH + flow_target : flow_target;
 
     bool accelerate_this_packet = false;
+    bool partial_publish_this_packet = false;
 
     for (int32_t k=0; k < static_cast<int32_t>(length); k++)
     {
@@ -698,9 +712,12 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
 
             if ( accelerated_blocking or !discard_mode )
             {
-                const auto [accelerate, consumed] = analyze_body(buffer + k, skip_amount,
-                    infractions, events);
-                accelerate_this_packet = accelerate or accelerate_this_packet;
+                const auto flush_ctx = analyze_body(buffer + k, skip_amount, infractions, events);
+                const auto consumed = flush_ctx.consumed;
+                if ( flush_ctx.is_publish() )
+                    partial_publish_this_packet = true;
+                else if ( flush_ctx.is_accelerate() )
+                    accelerate_this_packet = true;
 
                 if ( consumed < skip_amount and !discard_mode )
                 {
@@ -788,9 +805,12 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
             skip_amount = (skip_amount <= adjusted_target-data_seen) ? skip_amount :
                 adjusted_target-data_seen;
 
-            const auto [accelerate, consumed] = analyze_body(buffer + k,
-                skip_amount, infractions, events);
-            accelerate_this_packet = accelerate or accelerate_this_packet;
+            const auto flush_ctx = analyze_body(buffer + k, skip_amount, infractions, events);
+            const auto consumed = flush_ctx.consumed;
+            if ( flush_ctx.is_publish() )
+                partial_publish_this_packet = true;
+            else if ( flush_ctx.is_accelerate() )
+                accelerate_this_packet = true;
 
             if ( consumed < skip_amount )
             {
@@ -827,10 +847,13 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
 
     octets_seen += length;
 
-    if (accelerate_this_packet || (zero_chunk && data_seen))
-        return SCAN_NOT_FOUND_ACCELERATE;
+    if ( zero_chunk && data_seen )
+        accelerate_this_packet = true;
 
-    return SCAN_NOT_FOUND;
+    if ( !accelerate_this_packet && !partial_publish_this_packet )
+        return SCAN_NOT_FOUND;
+
+    return accelerate_this_packet ? SCAN_NOT_FOUND_ACCELERATE : SCAN_NOT_FOUND_PARTIAL_PUBLISH;
 }
 
 ScanResult HttpBodyHXCutter::cut(const uint8_t* buffer, uint32_t length, HttpInfractions* infractions,
@@ -870,7 +893,8 @@ ScanResult HttpBodyHXCutter::cut(const uint8_t* buffer, uint32_t length, HttpInf
         if (octets_seen + length < flow_target)
         {
             // Not enough data yet to create a message section
-            const auto [accelerate, consumed] = analyze_body(buffer, length, infractions, events);
+            const auto flush_ctx = analyze_body(buffer, length, infractions, events);
+            const auto consumed = flush_ctx.consumed;
 
             if ( consumed < length )
             {
@@ -881,7 +905,10 @@ ScanResult HttpBodyHXCutter::cut(const uint8_t* buffer, uint32_t length, HttpInf
 
             octets_seen += length;
             total_octets_scanned += length;
-            return accelerate ? SCAN_NOT_FOUND_ACCELERATE : SCAN_NOT_FOUND;
+            if ( flush_ctx.is_none() )
+                return SCAN_NOT_FOUND;
+
+            return flush_ctx.is_publish() ? SCAN_NOT_FOUND_PARTIAL_PUBLISH : SCAN_NOT_FOUND_ACCELERATE;
         }
         else
         {
@@ -891,7 +918,7 @@ ScanResult HttpBodyHXCutter::cut(const uint8_t* buffer, uint32_t length, HttpInf
             else
                 planned_flush = flow_target - octets_seen;
 
-            const auto [_, consumed] = analyze_body(buffer, planned_flush, infractions, events);
+            const auto consumed = analyze_body(buffer, planned_flush, infractions, events).consumed;
 
             num_flush = consumed;
             total_octets_scanned += num_flush;
@@ -932,10 +959,10 @@ ScanResult HttpBodyHXCutter::cut(const uint8_t* buffer, uint32_t length, HttpInf
 // requires script detection. Exactly what we are looking for is encapsulated in dangerous().
 //
 // Return value FlushContext contains:
-//   accelerate: true indicates a match and enables the packet that completes the matching sequence
-//               to be sent for partial inspection.
 //   consumed: how many input bytes the decompressor actually processed. When less than the
 //             input length the decompressor buffer is full and the caller should flush early.
+//   decision: NONE when no early action is needed, ACCELERATE for detect-driven partial
+//             inspection, PUBLISH for publish-only partial inspection on SSE boundaries.
 //
 // Any attempt to optimize this code should be mindful that once you skip any part of the message
 // body, dangerous() loses the ability to unzip subsequent data.
@@ -947,16 +974,90 @@ HttpBodyCutter::FlushContext HttpBodyCutter::analyze_body(const uint8_t* data, u
     {
         const auto [_, consumed] = decompress(data, length, infractions, events);
         assert(consumed <= length);
-        return { false, consumed };
+
+        if ( (sse_state != SSE_DISABLED) &&
+            (session_data->compress[source_id] == nullptr) && has_sse_boundary(data, consumed) )
+        {
+            return { consumed, FlushContext::PUBLISH };
+        }
+
+        return { consumed, FlushContext::NONE };
     }
 
-    const auto result = dangerous(data, length, infractions, events);
+    auto result = dangerous(data, length, infractions, events);
     assert(result.consumed <= length);
 
-    if ( result.accelerate )
+    if ( result.is_accelerate() )
         HttpModule::increment_peg_counts(PEG_SCRIPT_DETECTION);
 
+    // FIXIT-E blank-line boundary detection currently inspects only the raw response body.
+    // That is sufficient for the current work in progress, but compressed response bodies need
+    // decompression-aware boundary accounting later.
+    if ( result.is_none() && (sse_state != SSE_DISABLED) &&
+        (session_data->compress[source_id] == nullptr) && has_sse_boundary(data, result.consumed) )
+    {
+        result.decision = FlushContext::PUBLISH;
+    }
+
     return result;
+}
+
+bool HttpBodyCutter::has_sse_boundary(const uint8_t* data, uint32_t length)
+{
+    for (uint32_t k = 0; k < length; k++)
+    {
+        switch (sse_state)
+        {
+        case SSE_DISABLED:
+        default:
+            break;
+
+        case SSE_START:
+            if ( (data[k] != '\n') && (data[k] != '\r') )
+                sse_state = SSE_DATA_LINE;
+            break;
+
+        case SSE_DATA_LINE:
+            if (data[k] == '\n')
+                sse_state = SSE_EMPTY_LINE;
+            else if (data[k] == '\r')
+                sse_state = SSE_CR_DATA_LINE;
+            break;
+
+        case SSE_CR_DATA_LINE:
+            if (data[k] == '\n')
+                sse_state = SSE_EMPTY_LINE;
+            else
+                sse_state = (data[k] == '\r') ? SSE_CR_EMPTY_LINE : SSE_DATA_LINE;
+            break;
+
+        case SSE_EMPTY_LINE:
+            if (data[k] == '\n')
+            {
+                sse_state = SSE_START;
+                return true;   // blank-line boundary recognized
+            }
+            if (data[k] == '\r')
+            {
+                sse_state = SSE_CR_EMPTY_LINE;
+                break;
+            }
+            sse_state = SSE_DATA_LINE;
+            break;
+
+        case SSE_CR_EMPTY_LINE:
+            if (data[k] == '\n')
+            {
+                sse_state = SSE_START;
+                return true;   // blank-line boundary recognized
+            }
+
+            sse_state = (data[k] == '\r') ? SSE_CR_EMPTY_LINE : SSE_DATA_LINE;
+            break;
+        }
+    }
+
+    return false;
 }
 
 bool HttpBodyCutter::find_partial(const uint8_t* input_buf, uint32_t input_length, bool end)
@@ -990,17 +1091,17 @@ HttpBodyCutter::FlushContext HttpBodyCutter::dangerous(const uint8_t* data, uint
     const auto [decompressed, consumed] = decompress(data, length, infractions, events);
 
     if ( !decompressed )
-        return { true, consumed };
+        return { consumed, FlushContext::ACCELERATE };
 
     auto [input_buf, input_length] = *decompressed;
 
     if ( input_length > string_length )
     {
         if ( partial_match and find_partial(input_buf, input_length, true) )
-            return { true, consumed };
+            return { consumed, FlushContext::ACCELERATE };
 
         if ( finder->search(input_buf, input_length) >= 0 )
-            return { true, consumed };
+            return { consumed, FlushContext::ACCELERATE };
 
         uint32_t delta = input_length - string_length + 1;
         input_buf += delta;
@@ -1008,9 +1109,9 @@ HttpBodyCutter::FlushContext HttpBodyCutter::dangerous(const uint8_t* data, uint
     }
 
     if ( find_partial(input_buf, input_length, false) )
-        return { true, consumed };
+        return { consumed, FlushContext::ACCELERATE };
 
-    return { false, consumed };
+    return { consumed, FlushContext::NONE };
 }
 
 uint8_t HttpZeroNineCutter::match[] = { 'H', 'T', 'T', 'P', '/' };

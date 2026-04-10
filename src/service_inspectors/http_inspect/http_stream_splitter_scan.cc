@@ -202,6 +202,7 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
     {
     case SCAN_NOT_FOUND:
     case SCAN_NOT_FOUND_ACCELERATE:
+    case SCAN_NOT_FOUND_PARTIAL_PUBLISH:
         if (cutter->get_octets_seen() == MAX_OCTETS)
         {
             *session_data->get_infractions(source_id) += INF_ENDLESS_HEADER;
@@ -246,9 +247,11 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
             }
         }
 
-        if (cut_result == SCAN_NOT_FOUND_ACCELERATE)
+        if (cut_result == SCAN_NOT_FOUND_ACCELERATE ||
+            cut_result == SCAN_NOT_FOUND_PARTIAL_PUBLISH)
         {
-            prep_partial_flush(flow, length, cutter->get_num_excess(), cutter->get_num_head_lines());
+            prep_partial_flush(flow, length, cutter->get_num_excess(), cutter->get_num_head_lines(),
+                (cut_result == SCAN_NOT_FOUND_ACCELERATE) ? PF_DETECT : PF_PUBLISH);
 #ifdef REG_TEST
             if (!HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
 #endif
@@ -336,7 +339,7 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
 #endif
 
     SectionType& type = session_data->type_expected[source_id];
-    session_data->partial_flush[source_id] = false;
+    session_data->partial_flush[source_id] = PF_NONE;
 
     if (type == SEC_ABORT)
         return status_value(StreamSplitter::ABORT);

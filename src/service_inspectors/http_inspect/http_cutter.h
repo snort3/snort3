@@ -128,8 +128,19 @@ public:
 private:
     struct FlushContext
     {
-        bool accelerate = false;
+        enum Decision : uint8_t
+        {
+            ACCELERATE,
+            PUBLISH,
+            NONE,
+        };
+
         uint32_t consumed = 0;
+        Decision decision = NONE;
+
+        bool is_none() const { return decision == NONE; }
+        bool is_publish() const { return decision == PUBLISH; }
+        bool is_accelerate() const { return decision == ACCELERATE; }
     };
 
     struct DecompressOutput
@@ -146,12 +157,24 @@ protected:
 
     const bool accelerated_blocking;
 private:
+    enum SseState : uint8_t
+    {
+        SSE_DISABLED,
+        SSE_START,
+        SSE_DATA_LINE,
+        SSE_CR_DATA_LINE,
+        SSE_EMPTY_LINE,
+        SSE_CR_EMPTY_LINE,
+    };
+
     FlushContext dangerous(const uint8_t* data, uint32_t length,
         HttpInfractions* infractions, HttpEventGen* events);
     bool find_partial(const uint8_t*, uint32_t, bool);
+    bool has_sse_boundary(const uint8_t* data, uint32_t length);
 
     uint8_t partial_match = 0;
     uint8_t string_length = 0;
+    SseState sse_state = SSE_DISABLED;
     ScriptFinder* const finder;
     const uint8_t* match_string = nullptr;
     const uint8_t* match_string_upper = nullptr;
@@ -233,4 +256,3 @@ private:
 };
 
 #endif
-

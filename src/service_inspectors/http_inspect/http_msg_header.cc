@@ -603,10 +603,17 @@ void HttpMsgHeader::prepare_body()
     int32_t new_depth = http_publish_length_event.get_publish_length();
 
     int32_t should_publish = (int32_t)http_publish_length_event.should_publish_body();
+    // FIXIT-E move STASH_PUBLISH_REQUEST_BODY / STASH_PUBLISH_RESPONSE_BODY to the
+    // transaction object as well; this body-publish setting is negotiated and consumed
+    // entirely within http_inspect and fits per-transaction state better than generic
+    // flow stash.
     if (is_request)
         flow->set_attr(STASH_PUBLISH_REQUEST_BODY, should_publish);
     else
         flow->set_attr(STASH_PUBLISH_RESPONSE_BODY, should_publish);
+
+    if (http_publish_length_event.should_publish_on_sse_event_boundary())
+        transaction->set_publish_on_sse_event_boundary();
 
     if (new_depth > session_data->publish_depth_remaining[source_id])
     {

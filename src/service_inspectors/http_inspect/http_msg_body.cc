@@ -416,7 +416,7 @@ void HttpMsgBody::analyze()
 
             delete[] partial_detect_buffer;
 
-            if (!session_data->partial_flush[source_id])
+            if (session_data->partial_flush[source_id] == PF_NONE)
             {
                 bookkeeping_regular_flush(partial_detect_length, partial_detect_buffer,
                     partial_js_detect_length, detect_length);
@@ -438,7 +438,7 @@ void HttpMsgBody::analyze()
         }
     }
     body_octets += msg_text.length();
-    if (!session_data->partial_flush[source_id])
+    if (session_data->partial_flush[source_id] == PF_NONE)
         transaction->add_body_len(source_id, detect_data.length());
     partial_inspected_octets = session_data->partial_flush[source_id] ? msg_text.length() : 0;
 }

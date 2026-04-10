@@ -388,6 +388,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent http sessions" },
     { CountType::SUM, "script_detections", "early inspections of scripts in HTTP responses" },
     { CountType::SUM, "partial_inspections", "early inspections done for script detection" },
+    { CountType::SUM, "partial_publishes", "publish-only partial flushes" },
     { CountType::SUM, "excess_parameters", "repeat parameters exceeding max" },
     { CountType::SUM, "parameters", "HTTP parameters inspected" },
     { CountType::SUM, "connect_tunnel_cutovers", "CONNECT tunnel flow cutovers to wizard" },

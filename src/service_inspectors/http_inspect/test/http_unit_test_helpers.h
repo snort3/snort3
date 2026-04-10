@@ -51,7 +51,8 @@ public:
         bool partial_flush, uint32_t num_excess)
     {
         assert(flow_data!=nullptr);
-        flow_data->partial_flush[source_id] = partial_flush;
+        flow_data->partial_flush[source_id] = partial_flush ? HttpEnums::PF_DETECT :
+            HttpEnums::PF_NONE;
         flow_data->num_excess[source_id] = num_excess;
     }
 };

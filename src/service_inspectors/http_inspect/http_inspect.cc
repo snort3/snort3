@@ -549,10 +549,22 @@ void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
     HttpMsgSection* current_section;
     HttpFlowData* session_data = http_get_flow_data(flow);
 
-    if (!session_data->partial_flush[source_id])
+    switch (session_data->partial_flush[source_id])
+    {
+    case PF_NONE:
         HttpModule::increment_peg_counts(PEG_INSPECT);
-    else
+        break;
+    case PF_DETECT:
         HttpModule::increment_peg_counts(PEG_PARTIAL_INSPECT);
+        break;
+    case PF_PUBLISH:
+        HttpModule::increment_peg_counts(PEG_PARTIAL_PUBLISH);
+        break;
+    default:
+        assert(false);
+        HttpModule::increment_peg_counts(PEG_INSPECT);
+        break;
+    }
 
     switch (session_data->section_type[source_id])
     {
@@ -599,7 +611,7 @@ void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
 
     current_section->analyze();
     current_section->gen_events();
-    if (!session_data->partial_flush[source_id])
+    if (session_data->partial_flush[source_id] == PF_NONE)
         current_section->update_flow();
     session_data->section_type[source_id] = SEC__NOT_COMPUTE;
 
@@ -624,7 +636,9 @@ void HttpInspect::process(const uint8_t* data, const uint16_t dsize, Flow* const
         p->set_pdu_section(pdu_section);
     }
 
-    if (current_section->run_detection(p))
+    const bool skip_detection = (session_data->partial_flush[source_id] == PF_PUBLISH);
+
+    if (!skip_detection && current_section->run_detection(p))
     {
 #ifdef REG_TEST
         if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))

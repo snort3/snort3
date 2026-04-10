@@ -20,10 +20,11 @@
 #ifndef HTTP_PUBLISH_LENGTH_EVENT_H
 #define HTTP_PUBLISH_LENGTH_EVENT_H
 
-// An event to dynamically update the publish length used by http_inspect
+// An event to dynamically update the publish length used by http_inspect.
 // Subscribers MUST retain the given publish length if it's larger than
 // the one they desire. That way all subscribers can work together to
-// set the publish length.
+// set the publish length. Subscribers can also request additional
+// publish behavior, such as publishing on SSE event boundaries.
 
 namespace snort
 {
@@ -54,10 +55,17 @@ public:
     bool should_publish_body() const
     { return publish_body; }
 
+    void set_publish_on_sse_event_boundary()
+    { publish_on_sse_event_boundary = true; }
+
+    bool should_publish_on_sse_event_boundary() const
+    { return publish_on_sse_event_boundary; }
+
 private:
     bool is_data_originates_from_client;
     int32_t publish_length;
     bool publish_body = false;
+    bool publish_on_sse_event_boundary = false;
 };
 
 }

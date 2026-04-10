@@ -126,7 +126,7 @@ private:
     int32_t octets_reassembled[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
     int32_t num_head_lines[2] = { HttpCommon::STAT_NOT_PRESENT, HttpCommon::STAT_NOT_PRESENT };
     bool tcp_close[2] = { false, false };
-    bool partial_flush[2] = { false, false };
+    HttpEnums::PartialFlushType partial_flush[2] = { HttpEnums::PF_NONE, HttpEnums::PF_NONE };
     uint64_t last_connect_trans_w_early_traffic = 0;
 
     HttpCompressStream* compress[2] = { nullptr, nullptr };

@@ -269,7 +269,7 @@ void HttpFlowData::finish_hx_body(HttpCommon::SourceId source_id, HttpCommon::HX
     assert((hx_body_state[source_id] == HX_BODY_NOT_COMPLETE) ||
         (hx_body_state[source_id] == HX_BODY_LAST_SEG));
     hx_body_state[source_id] = state;
-    partial_flush[source_id] = false;
+    partial_flush[source_id] = HttpEnums::PF_NONE;
     if (clear_partial_buffer)
     {
         // We've already sent all data through detection so no need to reinspect. Just need to
