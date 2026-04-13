@@ -26,6 +26,8 @@
 #ifndef FTP_SERVER_H
 #define FTP_SERVER_H
 
+#include <vector>
+
 /*
  * FTP Server Module
  *
@@ -47,6 +49,8 @@ typedef struct s_FTP_SERVER_RSP
     unsigned int msg_size;
 
     char* pipeline_req;
+    // Keep layout compatible with FTP_SERVER_RSP for shared parsing logic.
+    std::vector<char> param_buffer;
     int state;
 } FTP_SERVER_RSP;
 

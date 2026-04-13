@@ -1735,14 +1735,21 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
             }
             else if (space || ftpssn->server.response.state != 0)
             {
-                /* Now grab the command parameters/response message
-                 * read_ptr < end already checked */
-                req->param_begin = (const char*)read_ptr;
-                if ((read_ptr = (const unsigned char*)memchr(read_ptr, CR, end - read_ptr)) == nullptr)
-                    read_ptr = end;
-                req->param_end = (const char*)read_ptr;
-                req->param_size = req->param_end - req->param_begin;
-                read_ptr++;
+                const unsigned char* param_start = read_ptr;
+                const unsigned char* cr_pos = (const unsigned char*)memchr(read_ptr, CR, end - read_ptr);
+                const unsigned char* param_end = (cr_pos != nullptr) ? cr_pos : end;
+                size_t param_len = param_end - param_start;
+
+                req->param_buffer.resize(param_len + 1);
+                if (param_len > 0)
+                    memcpy(req->param_buffer.data(), param_start, param_len);
+                req->param_buffer[param_len] = '\0';
+
+                req->param_begin = req->param_buffer.data();
+                req->param_size = static_cast<unsigned int>(param_len);
+                req->param_end = req->param_buffer.data() + param_len;
+
+                read_ptr = param_end + 1;
 
                 if (read_ptr < end)
                 {

@@ -26,6 +26,8 @@
 #ifndef FTP_CLIENT_H
 #define FTP_CLIENT_H
 
+#include <vector>
+
 /*
  * FTP Client Module
  *
@@ -47,6 +49,8 @@ struct FTP_CLIENT_REQ
     unsigned int param_size;
 
     const char* pipeline_req;
+    // Keep layout compatible with FTP_CLIENT_REQ for shared parsing logic.
+    std::vector<char> param_buffer;
 };
 
 struct FTP_CLIENT
