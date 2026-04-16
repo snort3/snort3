@@ -241,6 +241,8 @@ struct InspectorVector
                 insd.pin->tterm();
             }
         }
+
+        set_network_policy(SnortConfig::get_conf()->policy_map->get_network_policy(0));
     }
 
     void tear_down(SnortConfig* sc)
