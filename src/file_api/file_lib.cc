@@ -595,7 +595,7 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
             set_source(flow);
 
             FileEvent file_event(*this);
-            DataBus::publish(DataBus::get_id(file_adv_pub_key), FileEventIds::FILE_COMPLETE, file_event, flow);
+            DataBus::publish(get_file_adv_pub_id(), FileEventIds::FILE_COMPLETE, file_event, flow);
 
             std::string filename = file_event.get_filename();
             size_t fname_len = filename.length();

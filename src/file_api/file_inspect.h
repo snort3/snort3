@@ -36,5 +36,7 @@ public:
     class FileConfig* config;
 };
 
+unsigned get_file_adv_pub_id();
+
 #endif
 

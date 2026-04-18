@@ -29,6 +29,8 @@
 
 #include "file_inspect.h"
 
+#include <atomic>
+
 #include "log/messages.h"
 
 #include "file_cache.h"
@@ -37,8 +39,11 @@
 #include "file_flows.h"
 #include "file_module.h"
 #include "file_service.h"
+#include "pub_sub/file_events_ids.h"
 
 using namespace snort;
+
+static std::atomic<unsigned> file_adv_pub_id{0};
 
 FileInspect::FileInspect(FileIdModule* fm)
 {
@@ -66,6 +71,8 @@ bool FileInspect::configure(SnortConfig* sc)
 
     FileService::set_max_file_depth(sc);
 
+    file_adv_pub_id = DataBus::get_id(file_adv_pub_key);
+
     if (sc->mp_dbus)
     {
         MPSerializeFunc serialize_func = serialize_file_event;
@@ -76,6 +83,9 @@ bool FileInspect::configure(SnortConfig* sc)
     }
     return true;
 }
+
+unsigned get_file_adv_pub_id()
+{ return file_adv_pub_id; }
 
 static void file_config_show(const FileConfig* fc)
 {
