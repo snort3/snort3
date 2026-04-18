@@ -69,6 +69,27 @@ function (add_cpputest testname)
 endfunction (add_cpputest)
 
 
+function (add_fuzzer name)
+    if ( ENABLE_FUZZERS )
+        set(multiValueArgs SOURCES LIBS)
+        cmake_parse_arguments(Fuzzer "" "" "${multiValueArgs}" ${ARGN})
+        add_executable(${name} EXCLUDE_FROM_ALL ${name}.cc ${Fuzzer_SOURCES})
+        target_link_libraries(${name} PRIVATE ${Fuzzer_LIBS} ${EXTERNAL_LIBRARIES})
+
+        if ( LIB_FUZZING_ENGINE )
+            target_link_libraries(${name} PRIVATE ${LIB_FUZZING_ENGINE})
+        elseif ( FUZZER_CXX_FLAGS )
+            target_compile_options(${name} PRIVATE ${FUZZER_CXX_FLAGS})
+            target_link_libraries(${name} PRIVATE ${FUZZER_LINKER_FLAGS})
+        endif()
+
+        set_property(TARGET ${name} PROPERTY RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/fuzz")
+
+        add_dependencies(fuzz ${name})
+    endif( ENABLE_FUZZERS )
+endfunction (add_fuzzer)
+
+
 function (add_catch_test testname)
     if ( ENABLE_UNIT_TESTS OR ENABLE_BENCHMARK_TESTS )
         set(options NO_TEST_SOURCE)

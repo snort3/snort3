@@ -63,6 +63,10 @@ if (ENABLE_UNIT_TESTS OR ENABLE_BENCHMARK_TESTS)
     add_custom_target (check COMMAND ${CMAKE_CTEST_COMMAND})
 endif (ENABLE_UNIT_TESTS OR ENABLE_BENCHMARK_TESTS)
 
+if (ENABLE_FUZZERS)
+    add_custom_target (fuzz)
+endif (ENABLE_FUZZERS)
+
 add_subdirectory (src)
 add_subdirectory (tools)
 add_subdirectory (lua)

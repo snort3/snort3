@@ -75,6 +75,13 @@ Optional Features:
     --enable-appid-third-party
                             enable third party appid
     --enable-unit-tests     build unit tests
+    --enable-fuzzers        build fuzzers
+    --disable-fuzzers       do not build fuzzers
+    --enable-fuzz-sanitizer build with libFuzzer sanitizer
+    --disable-fuzz-sanitizer
+                            do not build with libFuzzer sanitizer
+    --enable-fuzz-coverage  enable settings for collecting fuzzing code coverage
+    --disable-fuzz-coverage disable settings for collecting fuzzing code coverage
     --enable-ccache         enable ccache support
     --disable-static-daq    link static DAQ modules
     --disable-html-docs     don't create the HTML documentation
@@ -132,6 +139,8 @@ Optional Packages:
                             libnuma include directory
     --with-libnuma-libraries=DIR
                             libnuma library directory
+    --with-fuzzing-engine=FILE
+                            external fuzzing engine library (e.g. FuzzingEngine.a)
 
 Some influential variable definitions:
     SIGNAL_SNORT_RELOAD=<int>
@@ -371,6 +380,27 @@ while [ $# -ne 0 ]; do
             ;;
         --disable-unit-tests)
             append_cache_entry ENABLE_UNIT_TESTS        BOOL false
+            ;;
+        --enable-fuzzers)
+            append_cache_entry ENABLE_FUZZERS           BOOL true
+            ;;
+        --disable-fuzzers)
+            append_cache_entry ENABLE_FUZZERS           BOOL false
+            ;;
+        --with-fuzzing-engine=*)
+            append_cache_entry LIB_FUZZING_ENGINE FILEPATH $optarg
+            ;;
+        --enable-fuzz-sanitizer)
+            append_cache_entry ENABLE_FUZZ_SANITIZER    BOOL true
+            ;;
+        --disable-fuzz-sanitizer)
+            append_cache_entry ENABLE_FUZZ_SANITIZER    BOOL false
+            ;;
+        --enable-fuzz-coverage)
+            append_cache_entry ENABLE_FUZZ_COVERAGE     BOOL true
+            ;;
+        --disable-fuzz-coverage)
+            append_cache_entry ENABLE_FUZZ_COVERAGE     BOOL false
             ;;
         --enable-benchmark-tests)
             append_cache_entry ENABLE_BENCHMARK_TESTS   BOOL true

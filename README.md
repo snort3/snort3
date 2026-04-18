@@ -13,6 +13,7 @@ topics:
 * [Download](#download)
 * [Build Snort](#build-snort)
 * [Run Snort](#run-snort)
+* [Fuzz Testing](#fuzz-testing)
 * [Documentation](#documentation)
 * [Squeal](#squeal)
 
@@ -174,6 +175,77 @@ snort_defaults.lua.
     ```
 
 Additional examples are given in doc/usage.txt.
+
+# FUZZ TESTING
+
+Snort includes libFuzzer fuzz targets for testing various components. Building
+and running fuzzers requires Clang.
+
+* Build fuzzers with AddressSanitizer:
+
+    ```shell
+    CC=clang CXX=clang++ ./configure_cmake.sh --enable-fuzz-sanitizer --enable-fuzzers \
+        --enable-address-sanitizer
+    cd build
+    make fuzz -j $(nproc)
+    ```
+
+* If you need to specify DAQ include and library paths:
+
+    ```shell
+    CC=clang CXX=clang++ ./configure_cmake.sh --enable-fuzz-sanitizer --enable-fuzzers \
+        --enable-address-sanitizer --with-daq-includes=/path/to/daq/include --with-daq-libraries=/path/to/daq/lib
+    cd build
+    make fuzz -j $(nproc)
+    ```
+
+* Run a fuzz target by providing a corpus directory.  Each target is built
+  under `build/fuzz/`:
+
+    ```shell
+    mkdir file_olefile_fuzz_corpus
+    ./fuzz/file_olefile_fuzz ./file_olefile_fuzz_corpus
+    ```
+
+* If DAQ libraries are not on the default library path, set `LD_LIBRARY_PATH`:
+
+    ```shell
+    LD_LIBRARY_PATH=/path/to/daq/lib ./fuzz/file_olefile_fuzz ./file_olefile_fuzz_corpus
+    ```
+
+* Press Ctrl+C to stop the fuzzer.  List saved corpus files with:
+
+    ```shell
+    ls ./file_olefile_fuzz_corpus
+    ```
+
+* Build with coverage instrumentation instead of AddressSanitizer to measure
+  which code paths the fuzzer exercises:
+
+    ```shell
+    CC=clang CXX=clang++ ./configure_cmake.sh --enable-fuzz-sanitizer --enable-fuzzers \
+        --enable-fuzz-coverage
+    cd build
+    make fuzz -j $(nproc)
+    ```
+
+* Run the coverage build against an existing corpus (using `-runs=0` to replay
+  without generating new inputs):
+
+    ```shell
+    LLVM_PROFILE_FILE="file_olefile_fuzz.profraw" ./fuzz/file_olefile_fuzz \
+        file_olefile_fuzz_corpus -runs=0 -detect_leaks=0
+    ```
+
+* Generate an HTML coverage report:
+
+    ```shell
+    llvm-profdata merge -sparse file_olefile_fuzz.profraw -o file_olefile_fuzz.profdata
+    llvm-cov show -format=html -instr-profile=file_olefile_fuzz.profdata \
+        ./fuzz/file_olefile_fuzz -output-dir=file_olefile_fuzz_cov_html
+    ```
+
+  Open `file_olefile_fuzz_cov_html/index.html` in a browser to view the report.
 
 # DOCUMENTATION
 

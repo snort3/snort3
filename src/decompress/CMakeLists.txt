@@ -1,4 +1,8 @@
 
+if(ENABLE_FUZZERS)
+    add_subdirectory (fuzz)
+endif(ENABLE_FUZZERS)
+
 add_subdirectory (test)
 
 set( DECOMPRESS_INCLUDES

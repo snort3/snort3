@@ -165,6 +165,49 @@ if ( ENABLE_UB_SANITIZER )
     endif ()
 endif ( ENABLE_UB_SANITIZER )
 
+if ( ENABLE_FUZZ_SANITIZER )
+    set ( FUZZ_CXX_FLAGS "-fsanitize=fuzzer" )
+    set ( FUZZ_LINKER_FLAGS "-fsanitize=fuzzer" )
+
+    set(FUZZ_TEST_SOURCE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/fuzz_test.cc")
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp")
+    file(WRITE "${FUZZ_TEST_SOURCE}"
+        "extern \"C\" int LLVMFuzzerTestOneInput(const char *data, int size) { return 0; }\n")
+
+    try_compile(HAVE_FUZZ_SANITIZER
+        ${CMAKE_BINARY_DIR}
+        ${FUZZ_TEST_SOURCE}
+        COMPILE_DEFINITIONS "${FUZZ_CXX_FLAGS}"
+        LINK_OPTIONS "${FUZZ_LINKER_FLAGS}"
+        OUTPUT_VARIABLE FUZZ_TEST_OUTPUT
+    )
+
+    if ( HAVE_FUZZ_SANITIZER )
+        set ( FUZZER_CXX_FLAGS "${FUZZ_CXX_FLAGS}" )
+        set ( FUZZER_LINKER_FLAGS "${FUZZ_LINKER_FLAGS}" )
+        message(STATUS "Fuzzer sanitizer enabled")
+    else ()
+        message ( SEND_ERROR "Could not enable the fuzz sanitizer" )
+    endif (HAVE_FUZZ_SANITIZER)
+endif ( ENABLE_FUZZ_SANITIZER )
+
+if ( ENABLE_FUZZERS AND NOT LIB_FUZZING_ENGINE AND NOT ENABLE_FUZZ_SANITIZER )
+    message ( FATAL_ERROR "ENABLE_FUZZERS requires either LIB_FUZZING_ENGINE or ENABLE_FUZZ_SANITIZER to be set" )
+endif ()
+
+if ( ENABLE_FUZZ_COVERAGE )
+    set ( FUZZ_COVERAGE_CXX_FLAGS "-fprofile-instr-generate -fcoverage-mapping" )
+    set ( CMAKE_REQUIRED_FLAGS "${FUZZ_COVERAGE_CXX_FLAGS}" )
+    check_cxx_compiler_flag ( "${FUZZ_COVERAGE_CXX_FLAGS}" HAVE_FUZZ_COVERAGE )
+    unset ( CMAKE_REQUIRED_FLAGS )
+    if ( HAVE_FUZZ_COVERAGE )
+        set ( COVERAGE_COMPILER_FLAGS "${COVERAGE_COMPILER_FLAGS} ${FUZZ_COVERAGE_CXX_FLAGS}" )
+        set ( EXTRA_LINKER_FLAGS "${EXTRA_LINKER_FLAGS} ${FUZZ_COVERAGE_CXX_FLAGS}" )
+    else ()
+        message ( SEND_ERROR "Could not enable -fprofile-instr-generate and -fcoverage-mapping" )
+    endif (HAVE_FUZZ_COVERAGE)
+endif ( ENABLE_FUZZ_COVERAGE )
+
 if ( ENABLE_TCMALLOC )
     if ( ENABLE_ADDRESS_SANITIZER )
         message ( SEND_ERROR "TCMalloc cannot be used at the same time as address sanitizer!" )
