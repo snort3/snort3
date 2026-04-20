@@ -31,6 +31,7 @@
 #include "dce_smb_transaction_utils.h"
 
 #include "trace/trace_api.h"
+#include "utils/util.h"
 
 using namespace snort;
 
@@ -957,6 +958,13 @@ static DCE2_Ret DCE2_SmbTrans2Open2Req(DCE2_SmbSsnData* ssd,
 
     dce2_move(param_ptr, param_len, sizeof(SmbTrans2Open2ReqParams));
 
+    // tracker may be reused across piped requests with duplicate MIDs
+    if (ssd->cur_rtracker->file_name)
+    {
+        snort_free((void*)ssd->cur_rtracker->file_name);
+        ssd->cur_rtracker->file_name = nullptr;
+        ssd->cur_rtracker->file_name_size = 0;
+    }
     ssd->cur_rtracker->file_name =
         DCE2_SmbGetFileName(param_ptr, param_len, unicode, &ssd->cur_rtracker->file_name_size);
 
