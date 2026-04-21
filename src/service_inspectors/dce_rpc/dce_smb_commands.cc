@@ -352,7 +352,9 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
         if (dcnt < 2)
             return DCE2_RET__ERROR;
 
-        // From data size check above, nb_len >= dsize
+        if (nb_len < 2)
+            return DCE2_RET__ERROR;
+
         dcnt -= 2;
         dce2_move(nb_ptr, nb_len, 2);
     }
