@@ -503,6 +503,12 @@ static void DCE2_Smb2CreateResponse(DCE2_Smb2SsnData* ssd,
     }
     else
     {
+        if (ftracker->co_tracker)
+        {
+            DCE2_CoCleanTracker(ftracker->co_tracker);
+            snort_free((void*)ftracker->co_tracker);
+            ftracker->co_tracker = nullptr;
+        }
         ftracker->co_tracker = (DCE2_CoTracker*)snort_calloc(sizeof(DCE2_CoTracker));
         DCE2_CoInitTracker(ftracker->co_tracker);
     }
