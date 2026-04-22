@@ -420,7 +420,9 @@ void ThreadConfig::implement_thread_affinity(SThreadType type, unsigned id)
 
     if (type == STHREAD_TYPE_MAIN)
     {
-        thread_name = "snort3.main";
+        // Keep the main thread's name simply "snort3" since
+        // this is what is expected when attempting to find running Snort processes.
+        thread_name = "snort3";
         thread_name_suffix = "";
     }
     else
