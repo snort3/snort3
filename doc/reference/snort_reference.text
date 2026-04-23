@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.12.1.0 2026-03-17 18:01:08 EDT TST
+Revision 3.12.2.0 2026-04-22 20:06:05 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1501,8 +1501,8 @@ Configuration:
     future hits until timeout { alert | block | drop | file_id | log
     | pass | react | reject | rewrite }
   * int rate_filter[].timeout = 1: count interval { 0:max32 }
-  * string rate_filter[].apply_to: restrict filter to these addresses
-    according to track
+  * addr_list rate_filter[].apply_to: restrict filter to these
+    addresses according to track
 
 Peg counts:
 
@@ -3313,6 +3313,9 @@ Peg counts:
     packets ignored as share type is IPC (sum)
   * dce_smb.v2_crt_tree_trkr_misng: total number of SMBv2 create
     response packets ignored due to missing tree tracker (sum)
+  * dce_smb.v2_crt_rtrkr_ins_fail: total number of SMBv2 create
+    request packets failed due to request tracker insert failure
+    (sum)
   * dce_smb.v2_wrt: total number of SMBv2 write packets seen (sum)
   * dce_smb.v2_wrt_err_resp: total number of SMBv2 write error
     response packets seen (sum)
@@ -3358,6 +3361,9 @@ Peg counts:
     request packets ignored due to missing file tracker (sum)
   * dce_smb.v2_cls_req_hdr_err: total number of SMBv2 close request
     packets ignored due to corrupted header (sum)
+  * dce_smb.v2_cls_rtrkr_ins_fail: total number of SMBv2 close
+    request packets failed due to request tracker insert failure
+    (sum)
   * dce_smb.v2_tree_discn: total number of SMBv2 tree disconnect
     packets seen (sum)
   * dce_smb.v2_tree_discn_ignored: total number of SMBv2 tree
@@ -4457,6 +4463,8 @@ Peg counts:
     HTTP responses (sum)
   * http_inspect.partial_inspections: early inspections done for
     script detection (sum)
+  * http_inspect.partial_publishes: publish-only partial flushes
+    (sum)
   * http_inspect.excess_parameters: repeat parameters exceeding max
     (sum)
   * http_inspect.parameters: HTTP parameters inspected (sum)
@@ -5463,7 +5471,7 @@ Configuration:
   * int rna.tcp_fingerprints[].major: smb major version { 0:max31 }
   * int rna.tcp_fingerprints[].minor: smb minor version { 0:max31 }
   * int rna.tcp_fingerprints[].flags: smb flags { 0:max32 }
-  * string rna.tcp_fingerprints[].protocol_type: deviceinfo protocol
+  * string rna.tcp_fingerprints[].service_type: deviceinfo service
     type
   * string rna.tcp_fingerprints[].manufacturer_pattern: deviceinfo
     manufacturer pattern
@@ -5503,7 +5511,7 @@ Configuration:
   * int rna.ua_fingerprints[].major: smb major version { 0:max31 }
   * int rna.ua_fingerprints[].minor: smb minor version { 0:max31 }
   * int rna.ua_fingerprints[].flags: smb flags { 0:max32 }
-  * string rna.ua_fingerprints[].protocol_type: deviceinfo protocol
+  * string rna.ua_fingerprints[].service_type: deviceinfo service
     type
   * string rna.ua_fingerprints[].manufacturer_pattern: deviceinfo
     manufacturer pattern
@@ -5543,7 +5551,7 @@ Configuration:
   * int rna.udp_fingerprints[].major: smb major version { 0:max31 }
   * int rna.udp_fingerprints[].minor: smb minor version { 0:max31 }
   * int rna.udp_fingerprints[].flags: smb flags { 0:max32 }
-  * string rna.udp_fingerprints[].protocol_type: deviceinfo protocol
+  * string rna.udp_fingerprints[].service_type: deviceinfo service
     type
   * string rna.udp_fingerprints[].manufacturer_pattern: deviceinfo
     manufacturer pattern
@@ -5583,7 +5591,7 @@ Configuration:
   * int rna.smb_fingerprints[].major: smb major version { 0:max31 }
   * int rna.smb_fingerprints[].minor: smb minor version { 0:max31 }
   * int rna.smb_fingerprints[].flags: smb flags { 0:max32 }
-  * string rna.smb_fingerprints[].protocol_type: deviceinfo protocol
+  * string rna.smb_fingerprints[].service_type: deviceinfo service
     type
   * string rna.smb_fingerprints[].manufacturer_pattern: deviceinfo
     manufacturer pattern
@@ -5635,8 +5643,8 @@ Configuration:
   * int rna.deviceinfo_fingerprints[].minor: smb minor version {
     0:max31 }
   * int rna.deviceinfo_fingerprints[].flags: smb flags { 0:max32 }
-  * string rna.deviceinfo_fingerprints[].protocol_type: deviceinfo
-    protocol type
+  * string rna.deviceinfo_fingerprints[].service_type: deviceinfo
+    service type
   * string rna.deviceinfo_fingerprints[].manufacturer_pattern:
     deviceinfo manufacturer pattern
   * string rna.deviceinfo_fingerprints[].manufacturer: deviceinfo
@@ -6270,7 +6278,8 @@ Peg counts:
   * stream.ha_prunes: sessions pruned by high availability sync (sum)
   * stream.stale_prunes: sessions pruned due to stale connection
     (sum)
-  * stream.closed_prunes: sessions pruned due to stream closed (sum)
+  * stream.flows_closed: number of flows closed and removed from the
+    flow cache (sum)
   * stream.expected_flows: total expected flows created within snort
     (sum)
   * stream.expected_realized: number of expected flows realized (sum)
@@ -11502,8 +11511,8 @@ libraries see the Getting Started section of the manual.
   * enum profiler.rules.sort = total_time: sort by given field { none
     | checks | avg_check | total_time | matches | no_matches | 
     avg_match | avg_no_match }
-  * string rate_filter[].apply_to: restrict filter to these addresses
-    according to track
+  * addr_list rate_filter[].apply_to: restrict filter to these
+    addresses according to track
   * int rate_filter[].count = 1: number of events in interval before
     tripping { 0:max32 }
   * int rate_filter[].gid = 1: rule generator ID { 0:8129 }
@@ -11589,8 +11598,8 @@ libraries see the Getting Started section of the manual.
     prefix
   * string rna.deviceinfo_fingerprints[].os_value: deviceinfo os
     value
-  * string rna.deviceinfo_fingerprints[].protocol_type: deviceinfo
-    protocol type
+  * string rna.deviceinfo_fingerprints[].service_type: deviceinfo
+    service type
   * string rna.deviceinfo_fingerprints[].tcp_window: fingerprint tcp
     window
   * string rna.deviceinfo_fingerprints[].topts: fingerprint tcp
@@ -11642,7 +11651,7 @@ libraries see the Getting Started section of the manual.
   * string rna.smb_fingerprints[].os_postfix: deviceinfo os postfix
   * string rna.smb_fingerprints[].os_prefix: deviceinfo os prefix
   * string rna.smb_fingerprints[].os_value: deviceinfo os value
-  * string rna.smb_fingerprints[].protocol_type: deviceinfo protocol
+  * string rna.smb_fingerprints[].service_type: deviceinfo service
     type
   * string rna.smb_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.smb_fingerprints[].topts: fingerprint tcp options
@@ -11682,7 +11691,7 @@ libraries see the Getting Started section of the manual.
   * string rna.tcp_fingerprints[].os_postfix: deviceinfo os postfix
   * string rna.tcp_fingerprints[].os_prefix: deviceinfo os prefix
   * string rna.tcp_fingerprints[].os_value: deviceinfo os value
-  * string rna.tcp_fingerprints[].protocol_type: deviceinfo protocol
+  * string rna.tcp_fingerprints[].service_type: deviceinfo service
     type
   * string rna.tcp_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.tcp_fingerprints[].topts: fingerprint tcp options
@@ -11722,7 +11731,7 @@ libraries see the Getting Started section of the manual.
   * string rna.ua_fingerprints[].os_postfix: deviceinfo os postfix
   * string rna.ua_fingerprints[].os_prefix: deviceinfo os prefix
   * string rna.ua_fingerprints[].os_value: deviceinfo os value
-  * string rna.ua_fingerprints[].protocol_type: deviceinfo protocol
+  * string rna.ua_fingerprints[].service_type: deviceinfo service
     type
   * string rna.ua_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.ua_fingerprints[].topts: fingerprint tcp options
@@ -11762,7 +11771,7 @@ libraries see the Getting Started section of the manual.
   * string rna.udp_fingerprints[].os_postfix: deviceinfo os postfix
   * string rna.udp_fingerprints[].os_prefix: deviceinfo os prefix
   * string rna.udp_fingerprints[].os_value: deviceinfo os value
-  * string rna.udp_fingerprints[].protocol_type: deviceinfo protocol
+  * string rna.udp_fingerprints[].service_type: deviceinfo service
     type
   * string rna.udp_fingerprints[].tcp_window: fingerprint tcp window
   * string rna.udp_fingerprints[].topts: fingerprint tcp options
@@ -12677,6 +12686,9 @@ libraries see the Getting Started section of the manual.
     request packets ignored due to missing file tracker (sum)
   * dce_smb.v2_cls_req_hdr_err: total number of SMBv2 close request
     packets ignored due to corrupted header (sum)
+  * dce_smb.v2_cls_rtrkr_ins_fail: total number of SMBv2 close
+    request packets failed due to request tracker insert failure
+    (sum)
   * dce_smb.v2_cls: total number of SMBv2 close packets seen (sum)
   * dce_smb.v2_cmpnd_req_lt_crossed: total number of SMBv2 packets
     seen where compound requests exceed the smb_max_compound limit
@@ -12693,6 +12705,9 @@ libraries see the Getting Started section of the manual.
     packets ignored as share type is IPC (sum)
   * dce_smb.v2_crt_resp_hdr_err: total number of SMBv2 create
     response packets ignored due to corrupted header (sum)
+  * dce_smb.v2_crt_rtrkr_ins_fail: total number of SMBv2 create
+    request packets failed due to request tracker insert failure
+    (sum)
   * dce_smb.v2_crt_rtrkr_misng: total number of SMBv2 create response
     packets ignored due to missing create request tracker (sum)
   * dce_smb.v2_crt: total number of SMBv2 create packets seen (sum)
@@ -13105,6 +13120,8 @@ libraries see the Getting Started section of the manual.
   * http_inspect.parameters: HTTP parameters inspected (sum)
   * http_inspect.partial_inspections: early inspections done for
     script detection (sum)
+  * http_inspect.partial_publishes: publish-only partial flushes
+    (sum)
   * http_inspect.pipelined_flows: total HTTP connections containing
     pipelined requests (sum)
   * http_inspect.pipelined_requests: total requests placed in a
@@ -13668,7 +13685,6 @@ libraries see the Getting Started section of the manual.
     (now)
   * stream.allowlist_memcap_prunes: number of allowlist flows pruned
     due to memcap (sum)
-  * stream.closed_prunes: sessions pruned due to stream closed (sum)
   * stream.current_flows: current number of flows in cache (now)
   * stream.excess_prunes: sessions pruned due to excess (sum)
   * stream.excess_to_allowlist: number of flows moved to the
@@ -13685,6 +13701,8 @@ libraries see the Getting Started section of the manual.
     memcap (sum)
   * stream.file_timeout_prunes: number of FILE flows pruned due to
     timeout (sum)
+  * stream.flows_closed: number of flows closed and removed from the
+    flow cache (sum)
   * stream.flows: total sessions (sum)
   * stream.ha_prunes: sessions pruned by high availability sync (sum)
   * stream_icmp.created: icmp session trackers created (sum)

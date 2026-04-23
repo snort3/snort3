@@ -1,3 +1,41 @@
+2026-04-22: 3.12.2.0
+
+* appid: add nullchecks for appidDebug and appid_thread_pegs
+* appid: fix lua detector use-after-free during reload
+* appid: Lua API for publishing deviceinfo event
+* appid: two way ssl cache data
+* dce_rpc: cleanup tracker before setting new one
+* dce_rpc: clear stale file tracker references to prevent use-after-free
+* dce_rpc: close command memory leak fix
+* dce_rpc: create request memory leak fix
+* dce_rpc: fix memory leak in DCE2_SmbTrans2Open2Req
+* dce_rpc: underflow memory leak fix
+* dce_smb: prevent underflow in WriteAndX raw request
+* decompress: add initial decompression fuzzers and build support
+* detection: skip detection when UDP outer layer not found
+* extractor: print connection ID as UID whenever available
+* file_api: cache file_adv_pub_id for DataBus publish
+* file_api: generate advance log for unknown verdict
+* flow: add connection id field set by external module
+* flow: remove trailing spaces
+* framework: initialize Packet member variables
+* ftp_telnet: fix OOB read in e_literal param validation
+* ftp_telnet: fix OOB read in validate_date_format
+* ftp_telnet: fix out-of-bounds read in getIP1639 LPRT parser
+* ftp_telnet: fix out-of-bounds read in getIP2428 EPRT/EPSV parser
+* ftp_telnet: fix out-of-bounds read in TNC_EAL normalize loop
+* ftp_telnet: FTP Stale buffer pointer fix
+* http_inspect: publish on sse event boundaries
+* inspector_manager: reload buffer map on reload
+* log: ensure LogIPPkt won't call LogOuterIPHeader for missing layer
+* main: change main thread name back to just 'snort3'
+* main: cleanup thread names and exit without throwing core on FatalError
+* main: save and restore the old network policy on thread_term
+* packet_tracer: display icmp type and zero dst port
+* plugin_manager: fix load_id timing and thread_reinit for plugin reload
+* rate_filter: fix apply_to type
+* stream_tcp: skip r_win_base related validation for asymmetric Missed3whs
+
 2026-03-17: 3.12.1.0
 
 * appid: address FIXIT comments related to http inspector
