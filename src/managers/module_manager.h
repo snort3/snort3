@@ -82,11 +82,13 @@ public:
     static PegCount* get_stats(const char* name);
     static void dump_stats(const char* skip = nullptr, bool dynamic = false);
     static void accumulate_dump_stats();
+    static void collect_global_dump_stats(Module*);
     static void init_stats();
     static void add_thread_stats_entry(const char* name);
 
     static void accumulate(const SnortConfig*, const char* except = "snort");
     static void accumulate_module(const char* name);
+    static void get_accumulated_counts(Module*, unsigned instance_id, std::vector<PegCount>& out);
 
     static void reset_stats(SnortConfig*);
     static void reset_stats(clear_counter_type_t);
@@ -94,11 +96,15 @@ public:
     static void clear_global_active_counters();
     static bool is_parallel_cmd(std::string control_cmd);
 
+    static bool is_dynamic_stats_module(const Module*);
+    static bool is_dynamic_stats_module(const char* module_name);
+
     static std::set<uint32_t> gids;
     static std::mutex stats_mutex;
+    // Space-separated list of modules whose stats access shared (non-thread-local)
+    // accumulators and therefore must be protected by stats_mutex when shown/summed.
     static const char* dynamic_stats_modules;
 };
 }
 
 #endif
-

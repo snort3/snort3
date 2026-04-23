@@ -911,14 +911,16 @@ uint16_t PacketManager::encode_get_max_payload(const Packet* p)
     return ETHERNET_MTU - (l.start - p->layers[0].start) - l.length;
 }
 
-void PacketManager::dump_stats()
+void PacketManager::dump_stats(const Stats& stats)
 {
     std::vector<const char*> pkt_names;
     CodecManager* cm = CodecManager::get_instance();
 
+    Stats tmp = stats;
+
     // zero out the default codecs
-    g_stats[stat_offset] = 0;
-    g_stats[cm->s_proto_map[to_utype(ProtocolId::FINISHED_DECODE)] + stat_offset] = 0;
+    tmp[stat_offset] = 0;
+    tmp[cm->s_proto_map[to_utype(ProtocolId::FINISHED_DECODE)] + stat_offset] = 0;
 
     for (unsigned int i = 0; i < stat_names.size(); i++)
         pkt_names.emplace_back(stat_names[i]);
@@ -926,14 +928,29 @@ void PacketManager::dump_stats()
     for (int i = 0; cm->get_codec(i) != nullptr; i++)
         pkt_names.emplace_back(cm->get_codec(i)->get_name());
 
-    show_percent_stats((PegCount*)&g_stats, &pkt_names[0],
+    show_percent_stats(tmp.data(), &pkt_names[0],
         (unsigned int)pkt_names.size(), "codec");
+}
+
+void PacketManager::dump_stats()
+{
+    dump_stats(g_stats);
 }
 
 void PacketManager::reset_stats()
 {
     std::fill(std::begin(g_stats), std::end(g_stats), 0);
     std::fill(std::begin(s_stats), std::end(s_stats), 0);
+}
+
+void PacketManager::get_thread_stats(Stats& out)
+{
+    out = s_stats;
+}
+
+void PacketManager::get_global_stats(Stats& out)
+{
+    out = g_stats;
 }
 
 void PacketManager::accumulate()

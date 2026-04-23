@@ -59,6 +59,36 @@ static const Parameter s_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+namespace memory
+{
+constexpr int start_up_use_peg_idx = 0;
+constexpr int cur_in_use_peg_idx = 1;
+constexpr int max_in_use_peg_idx = 2;
+constexpr int epochs_peg_idx = 3;
+constexpr int app_all_peg_idx = 12;
+constexpr int active_peg_idx = 13;
+constexpr int resident_peg_idx = 14;
+constexpr int retained_peg_idx = 15;
+
+static bool is_process_heap_peg(int idx)
+{
+    switch ( idx )
+    {
+    case start_up_use_peg_idx:
+    case cur_in_use_peg_idx:
+    case max_in_use_peg_idx:
+    case epochs_peg_idx:
+    case app_all_peg_idx:
+    case active_peg_idx:
+    case resident_peg_idx:
+    case retained_peg_idx:
+        return true;
+    default:
+        return false;
+    }
+}
+}
+
 const PegInfo mem_pegs[] =
 {
     { CountType::NOW, "start_up_use", "memory used before packet processing" },
@@ -118,17 +148,42 @@ const PegInfo* MemoryModule::get_pegs() const
 PegCount* MemoryModule::get_counts() const
 { return (PegCount*)&memory::MemoryCap::get_mem_stats(); }
 
-void MemoryModule::sum_stats(bool dump_stats)
+void MemoryModule::prep_counts(bool dump_stats)
 {
-    if (mem_global_stats_mutex.try_lock())
-    {
-        memory::MemoryCap::update_global_stats();
-        mem_global_stats_mutex.unlock();
-    }
+    if ( get_instance_id() != 0 )
+        return;
 
-    mem_global_stats_mutex.lock_shared();
-    Module::sum_stats(dump_stats);
-    mem_global_stats_mutex.unlock();
+    memory::MemoryCap::update_global_stats(dump_stats);
+}
+
+void MemoryModule::show_stats()
+{
+    // Refresh process-wide heap pegs in dump_stats_results before printing.
+    // These values may have changed since accumulate() ran (e.g. the shutdown
+    // epoch bumped by stop()). Per-thread pegs (reap_*, allocated, deallocated)
+    // were correctly aggregated from all packet threads and are left unchanged.
+    prep_counts(true);
+    const PegCount* fresh = get_counts();
+    int n = get_num_counts();
+
+    if ( n > 0 and (int)dump_stats_results.size() >= n )
+    {
+        for ( int i = 0; i < n; i++ )
+        {
+            if ( memory::is_process_heap_peg(i) )
+                dump_stats_results[i] = fresh[i];
+        }
+    }
+    Module::show_stats();
+}
+
+void MemoryModule::reset_stats()
+{
+    // reset_thread_stats() only acts when called from the owning packet thread;
+    // it is a no-op on the main thread. Per-thread live counters (thread_mem_stats)
+    // are reset by each thread on its own tinit/reset cycle.
+    memory::MemoryCap::reset_thread_stats();
+    Module::reset_stats();
 }
 
 void MemoryModule::set_trace(const Trace* trace) const
@@ -140,4 +195,3 @@ const TraceOption* MemoryModule::get_trace_options() const
 
     return &memory_trace_options;
 }
-

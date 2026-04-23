@@ -105,10 +105,8 @@ void JemallocInterface::get_process_total(uint64_t& epoch, uint64_t& utotal, boo
 
     if (!bump_epoch)
     {
-        // Don't perform the mallctl as it'll bump the epoch, return 0 for epoch and the value for the total
+        // Don't bump the epoch -- use cached stats values
         epoch = 0;
-        mallctl("epoch", nullptr, nullptr, nullptr, 0);
-
     }
     else
     {

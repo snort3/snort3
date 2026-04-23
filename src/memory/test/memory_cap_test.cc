@@ -24,11 +24,14 @@
 
 #include "memory/memory_cap.h"
 
+#include <cstring>
+#include <string>
 #include <vector>
 
 #include "log/messages.h"
 #include "main/thread.h"
 #include "main/thread_config.h"
+#include "memory/memory_module.h"
 #include "profiler/profiler.h"
 #include "time/periodic.h"
 #include "trace/trace_api.h"
@@ -44,6 +47,19 @@ using namespace snort;
 
 using namespace memory;
 using IndexVec = std::vector<unsigned>;
+
+static std::vector<PegCount> shown_counts;
+static std::string shown_module;
+
+static int find_peg_idx(const PegInfo* pegs, const char* name)
+{
+    for ( int i = 0; pegs[i].name; ++i )
+    {
+        if ( strcmp(pegs[i].name, name) == 0 )
+            return i;
+    }
+    return -1;
+}
 
 //--------------------------------------------------------------------------
 // stubs
@@ -69,10 +85,12 @@ unsigned ThreadConfig::get_instance_max()
 
 }
 
-void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
+void show_stats(PegCount* counts, const PegInfo*, unsigned n, const char* module_name)
+{
+    shown_counts.assign(counts, counts + n);
+    shown_module = module_name ? module_name : "";
+}
 void show_stats(PegCount*, const PegInfo*, const IndexVec&, const char*, FILE*) { }
-
-THREAD_LOCAL const Trace* memory_trace = nullptr;
 
 #ifndef REG_TEST
 void Periodic::register_handler(PeriodicHook, void*, uint16_t, uint32_t) { }
@@ -215,6 +233,8 @@ TEST_GROUP(memory)
     void setup() override
     {
         fd = {0, 1};
+        shown_counts.clear();
+        shown_module.clear();
         mock().setDataObject("flows", "TestFlowData", &fd);
         MemoryCap::init(1);
         heap = new MockHeap;
@@ -261,7 +281,8 @@ TEST(memory, prune1)
 
     const MemoryCounts& mc = MemoryCap::get_mem_stats();
     MemoryCap::update_global_stats();
-    CHECK(mc.start_up_use == start);
+    const MemoryCounts& gmc = MemoryCap::get_global_stats();
+    CHECK(gmc.start_up_use == start);
 
     fd.flows = 3;
     free_space();
@@ -336,24 +357,22 @@ TEST(memory, prune1)
     UNSIGNED_LONGS_EQUAL(3, mc.reap_decrease);
     UNSIGNED_LONGS_EQUAL(6, mc.reap_increase);
 
-    UNSIGNED_LONGS_EQUAL(start, mc.start_up_use);
-    UNSIGNED_LONGS_EQUAL(cap + 1, mc.max_in_use);
-    UNSIGNED_LONGS_EQUAL(cap, mc.cur_in_use);
+    UNSIGNED_LONGS_EQUAL(start, gmc.start_up_use);
+    UNSIGNED_LONGS_EQUAL(cap + 1, gmc.max_in_use);
+    UNSIGNED_LONGS_EQUAL(cap, gmc.cur_in_use);
 
-    UNSIGNED_LONGS_EQUAL(heap->epoch, mc.epochs);
-    UNSIGNED_LONGS_EQUAL(heap->alloc, mc.allocated);
-    UNSIGNED_LONGS_EQUAL(heap->dealloc, mc.deallocated);
+    UNSIGNED_LONGS_EQUAL(heap->epoch, gmc.epochs);
 
-    UNSIGNED_LONGS_EQUAL(4, mc.reap_cycles);
-    UNSIGNED_LONGS_EQUAL(5, mc.reap_attempts);
-    UNSIGNED_LONGS_EQUAL(0, mc.reap_failures);
-    UNSIGNED_LONGS_EQUAL(3, mc.reap_aborts);
+    UNSIGNED_LONGS_EQUAL(4, gmc.reap_cycles);
+    UNSIGNED_LONGS_EQUAL(5, gmc.reap_attempts);
+    UNSIGNED_LONGS_EQUAL(0, gmc.reap_failures);
+    UNSIGNED_LONGS_EQUAL(3, gmc.reap_aborts);
 
     heap->total = start;
     MemoryCap::stop();
     memory::MemoryCap::update_global_stats();
-    CHECK(mc.epochs == heap->epoch);
-    CHECK(mc.cur_in_use == start);
+    CHECK(gmc.epochs == heap->epoch);
+    CHECK(gmc.cur_in_use == start);
 }
 
 TEST(memory, prune3)
@@ -537,6 +556,52 @@ TEST(memory, reap_freed_outside_of_pruning)
     MemoryCap::stop();
 }
 
+TEST(memory, module_show_stats_preserves_aggregated_thread_alloc_counts)
+{
+    heap->total = 50;
+
+    MemoryConfig config { 100, 100, 0, 1, true };
+    MemoryCap::start(config, pruner);
+
+    MemoryModule mod;
+    mod.init_stats();
+
+    const PegInfo* pegs = mod.get_pegs();
+    const int start_up_idx = find_peg_idx(pegs, "start_up_use");
+    const int cur_in_use_idx = find_peg_idx(pegs, "cur_in_use");
+    const int epochs_idx = find_peg_idx(pegs, "epochs");
+    const int allocated_idx = find_peg_idx(pegs, "allocated");
+    const int deallocated_idx = find_peg_idx(pegs, "deallocated");
+
+    CHECK(start_up_idx >= 0);
+    CHECK(cur_in_use_idx >= 0);
+    CHECK(epochs_idx >= 0);
+    CHECK(allocated_idx >= 0);
+    CHECK(deallocated_idx >= 0);
+
+    std::vector<PegCount> aggregated(mod.get_num_counts(), 0);
+    aggregated[start_up_idx] = 999;
+    aggregated[cur_in_use_idx] = 999;
+    aggregated[epochs_idx] = 999;
+    aggregated[allocated_idx] = 240;
+    aggregated[deallocated_idx] = 240;
+    mod.set_dump_stats_results(aggregated);
+
+    heap->total = 75;
+    periodic_check();
+
+    mod.show_stats();
+
+    STRCMP_EQUAL("memory", shown_module.c_str());
+    UNSIGNED_LONGS_EQUAL(50, shown_counts[start_up_idx]);
+    UNSIGNED_LONGS_EQUAL(75, shown_counts[cur_in_use_idx]);
+    UNSIGNED_LONGS_EQUAL(2, shown_counts[epochs_idx]);
+    UNSIGNED_LONGS_EQUAL(240, shown_counts[allocated_idx]);
+    UNSIGNED_LONGS_EQUAL(240, shown_counts[deallocated_idx]);
+
+    MemoryCap::stop();
+}
+
 //-------------------------------------------------------------------------
 // main
 //-------------------------------------------------------------------------
@@ -546,4 +611,3 @@ int main(int argc, char** argv)
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

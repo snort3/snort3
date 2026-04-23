@@ -185,6 +185,18 @@ public:
     virtual void main_accumulate_stats();
     virtual void show_dynamic_stats() {}
     void clear_global_active_counters();
+    SO_PUBLIC void collect_dump_stats_counts(std::vector<PegCount>& out);
+    SO_PUBLIC void set_dump_stats_results(const std::vector<PegCount>& results);
+    SO_PUBLIC static void aggregate_dump_stats_counts(
+        const PegInfo* pegs,
+        int num_counts,
+        const std::vector<std::vector<PegCount>>& per_thread_counts,
+        std::vector<PegCount>& out);
+    SO_PUBLIC static void aggregate_dump_stats_counts(
+        const PegInfo* pegs,
+        int num_counts,
+        const std::vector<const std::vector<PegCount>*>& per_thread_counts,
+        std::vector<PegCount>& out);
 
     // Wrappers to check that lists are not tables
     bool verified_begin(const char*, int, SnortConfig*);
@@ -259,4 +271,3 @@ private:
 };
 }
 #endif
-

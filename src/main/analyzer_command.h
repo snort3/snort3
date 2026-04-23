@@ -23,6 +23,7 @@
 #include <daq_common.h>
 
 #include <cstdarg>
+#include <memory>
 #include <vector>
 #include <mutex>
 
@@ -72,11 +73,14 @@ private:
 class ACGetStats : public snort::AnalyzerCommand
 {
 public:
-    ACGetStats(ControlConn* conn) : AnalyzerCommand(conn)
-    { }
+    explicit ACGetStats(ControlConn* conn);
     bool execute(Analyzer&, void**) override;
     const char* stringify() override { return "GET_STATS"; }
     ~ACGetStats() override;
+
+private:
+    struct State;
+    std::unique_ptr<State> state;
 };
 
 typedef enum clear_counter_type
@@ -254,4 +258,3 @@ SO_PUBLIC void main_broadcast_command(snort::AnalyzerCommand*, ControlConn* = nu
 }
 
 #endif
-

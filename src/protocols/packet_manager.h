@@ -57,6 +57,9 @@ enum class UnreachResponse
 class SO_PUBLIC PacketManager
 {
 public:
+    static constexpr uint8_t stat_offset = 4;
+    using Stats = std::array<PegCount, stat_offset + num_protocol_idx>;
+
     static void global_init(uint8_t max_layers);
 
     static void thread_init();
@@ -107,6 +110,7 @@ public:
 
     // print codec information.  MUST be called after thread_term.
     static void dump_stats();
+    static void dump_stats(const Stats&);
 
     static void reset_stats();
 
@@ -134,10 +138,11 @@ public:
 
     static void accumulate();
 
+    static void get_thread_stats(Stats& out);
+    static void get_global_stats(Stats& out);
+
     static uint8_t get_max_layers()
     { return max_layers; }
-
-    static constexpr uint8_t stat_offset = 4;
 
 private:
     static bool push_layer(Packet*, CodecData&, ProtocolId, const uint8_t* hdr_start, uint32_t len);
@@ -160,4 +165,3 @@ private:
 };
 }
 #endif
-

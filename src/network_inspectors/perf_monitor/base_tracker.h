@@ -21,6 +21,7 @@
 #ifndef BASE_TRACKER_H
 #define BASE_TRACKER_H
 
+#include "framework/counts.h"
 #include "perf_tracker.h"
 
 class BaseTracker : public PerfTracker
@@ -31,9 +32,20 @@ public:
     void process(bool) override;
 
 private:
+    struct GlobalProxy
+    {
+        snort::Module* mod = nullptr;
+        bool enabled = false;
+        std::vector<PegCount> values;
+        std::vector<PegCount> last_seen;
+    };
+
+    void update_global_proxies();
+
     std::vector<ModuleConfig> modules;
     std::vector<snort::Module*> mods_to_prep;
+    std::vector<GlobalProxy> global_proxies;
+    bool is_first_packet_thread = false;
 };
 
 #endif
-

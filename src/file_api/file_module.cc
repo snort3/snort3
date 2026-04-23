@@ -156,7 +156,8 @@ const RuleMap* FileIdModule::get_rules() const
 
 void FileIdModule::sum_stats(bool dump_stats)
 {
-    file_stats_sum();
+    if ( dump_stats )
+        file_stats_sum();
     Module::sum_stats(dump_stats);
     file_counts_update_buffers();
 }
@@ -246,4 +247,3 @@ void FileIdModule::reset_stats()
     file_stats_clear();
     Module::reset_stats();
 }
-

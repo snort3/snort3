@@ -29,7 +29,9 @@
 #include "control/control.h"
 #include "framework/module.h"
 #include "log/messages.h"
+#include "main/thread.h"
 #include "managers/module_manager.h"
+#include "managers/plugin_manager.h"
 #include "packet_io/sfdaq_instance.h"
 #include "protocols/packet_manager.h"
 #include "target_based/host_attributes.h"
@@ -153,22 +155,143 @@ bool ACRotate::execute(Analyzer& analyzer, void**)
     return true;
 }
 
+struct ACGetStats::State
+{
+    struct ThreadSnapshot
+    {
+        bool pkt_stats_valid = false;
+        PacketManager::Stats pkt_stats{};
+        std::vector<std::vector<PegCount>> module_dump_counts;
+    };
+
+    std::vector<Module*> modules;
+    std::vector<ThreadSnapshot> thread_snapshots;
+};
+
+ACGetStats::ACGetStats(ControlConn* conn) :
+    AnalyzerCommand(conn), state(std::make_unique<State>())
+{
+    auto mods = PluginManager::get_all_modules();
+    state->modules.assign(mods.begin(), mods.end());
+    state->thread_snapshots.resize(ThreadConfig::get_instance_max());
+}
+
 bool ACGetStats::execute(Analyzer&, void**)
 {
-    // FIXIT-P This incurs locking on all threads to retrieve stats.  It
-    // could be reimplemented to optimize for large thread counts by
-    // retrieving stats in the command and accumulating in the main thread.
-    PacketManager::accumulate();
-    ModuleManager::accumulate(SnortConfig::get_conf());
+    const unsigned id = snort::get_instance_id();
+    if ( !state || id >= state->thread_snapshots.size() )
+        return true;
+
+    auto& snapshot = state->thread_snapshots[id];
+
+    PacketManager::get_thread_stats(snapshot.pkt_stats);
+    snapshot.pkt_stats_valid = true;
+
+    snapshot.module_dump_counts.clear();
+    snapshot.module_dump_counts.resize(state->modules.size());
+
+    const bool is_first_packet_thread = (id == 0);
+
+    for ( size_t i = 0; i < state->modules.size(); i++ )
+    {
+        Module* mod = state->modules[i];
+        if ( !mod )
+            continue;
+
+        const bool is_dynamic_stats = ModuleManager::is_dynamic_stats_module(mod);
+        const bool is_global_stats = mod->global_stats();
+
+        if ( is_global_stats && !is_first_packet_thread )
+        {
+            continue;
+        }
+
+        const bool needs_lock =
+            is_global_stats || is_dynamic_stats;
+
+        if ( needs_lock )
+        {
+            std::lock_guard<std::mutex> lock(ModuleManager::stats_mutex);
+            mod->prep_counts(true);
+            if ( is_dynamic_stats )
+                mod->sum_stats(true);
+            mod->collect_dump_stats_counts(snapshot.module_dump_counts[i]);
+        }
+        else
+        {
+            mod->prep_counts(true);
+            mod->collect_dump_stats_counts(snapshot.module_dump_counts[i]);
+        }
+    }
     return true;
 }
 
 ACGetStats::~ACGetStats()
 {
+    if ( !state )
+        return;
+
+    for ( size_t i = 0; i < state->modules.size(); i++ )
+    {
+        Module* mod = state->modules[i];
+        if ( !mod || !mod->get_pegs() || mod->get_num_counts() <= 0 )
+            continue;
+
+        if ( mod->global_stats() )
+        {
+            ModuleManager::collect_global_dump_stats(mod);
+            continue;
+        }
+
+        const PegInfo* pegs = mod->get_pegs();
+        const int n = mod->get_num_counts();
+
+        std::vector<const std::vector<PegCount>*> per_thread_counts;
+        per_thread_counts.reserve(state->thread_snapshots.size());
+        std::vector<std::vector<PegCount>> accumulated_fallbacks(state->thread_snapshots.size());
+        for ( size_t thread_idx = 0; thread_idx < state->thread_snapshots.size(); thread_idx++ )
+        {
+            const auto& snapshot = state->thread_snapshots[thread_idx];
+            if ( i >= snapshot.module_dump_counts.size() )
+            {
+                ModuleManager::get_accumulated_counts(mod, thread_idx, accumulated_fallbacks[thread_idx]);
+                per_thread_counts.emplace_back(&accumulated_fallbacks[thread_idx]);
+            }
+            else
+                per_thread_counts.emplace_back(&snapshot.module_dump_counts[i]);
+        }
+
+        std::vector<PegCount> results;
+        Module::aggregate_dump_stats_counts(pegs, n, per_thread_counts, results);
+
+        mod->set_dump_stats_results(results);
+    }
+
+    PacketManager::Stats global_before{};
+    PacketManager::get_global_stats(global_before);
+
+    PacketManager::Stats thread_sum{};
+    thread_sum.fill(0);
+
+    for ( const auto& snapshot : state->thread_snapshots )
+    {
+        if ( !snapshot.pkt_stats_valid )
+            continue;
+
+        for ( size_t idx = 0; idx < thread_sum.size(); idx++ )
+            thread_sum[idx] += snapshot.pkt_stats[idx];
+    }
+
+    auto display_stats = std::make_shared<PacketManager::Stats>(global_before);
+    for ( size_t idx = 0; idx < display_stats->size(); idx++ )
+        (*display_stats)[idx] += thread_sum[idx];
 
     // FIXIT-L This should track the owner so it can dump stats to the
     // shell instead of the logs when initiated by a shell command
-    DropStats(ctrlcon);
+    DropStats(ctrlcon, true, [display_stats = std::move(display_stats)]()
+    {
+        PacketManager::dump_stats(*display_stats);
+    });
     LogRespond(ctrlcon, "==================================================\n"); // Marking End of stats
 
     ModuleManager::clear_global_active_counters();

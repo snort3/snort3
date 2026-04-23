@@ -24,6 +24,7 @@
 
 #include <daq_common.h>
 #include <cstdio>
+#include <functional>
 #include <vector>
 
 #include "framework/counts.h"
@@ -104,7 +105,10 @@ void show_percent_stats(PegCount*, const char*[], unsigned n, const char* module
 void sum_stats(SimpleStats* sums, SimpleStats* counts);
 void show_stats(SimpleStats*, const char* module_name);
 
-void DropStats(ControlConn* ctrlcon = nullptr);
+void DropStats(
+    ControlConn* ctrlcon = nullptr,
+    bool already_accumulated = false,
+    const std::function<void()>& dump_codec_stats = {});
 void PrintStatistics();
 void TimeStart();
 void TimeStop();

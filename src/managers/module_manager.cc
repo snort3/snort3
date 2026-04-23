@@ -28,6 +28,8 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cctype>
+#include <cstring>
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
@@ -42,6 +44,7 @@
 #include "main/shell.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
+#include "main/thread.h"
 #include "managers/inspector_manager.h"
 #include "parser/parse_conf.h"
 #include "parser/parser.h"
@@ -64,6 +67,45 @@ const char* ModuleManager::dynamic_stats_modules = "file_inspect appid";
 
 set<uint32_t> ModuleManager::gids;
 mutex ModuleManager::stats_mutex;
+
+bool ModuleManager::is_dynamic_stats_module(const Module* mod)
+{
+    if ( !mod )
+        return false;
+
+    return is_dynamic_stats_module(mod->get_name());
+}
+
+bool ModuleManager::is_dynamic_stats_module(const char* module_name)
+{
+    if ( !module_name || !dynamic_stats_modules )
+        return false;
+
+    const size_t name_len = strlen(module_name);
+    if ( name_len == 0 )
+        return false;
+
+    const char* p = dynamic_stats_modules;
+
+    while ( p && *p )
+    {
+        while ( *p && isspace(static_cast<unsigned char>(*p)) )
+            ++p;
+
+        if ( !*p )
+            break;
+
+        const char* start = p;
+        while ( *p && !isspace(static_cast<unsigned char>(*p)) )
+            ++p;
+
+        const size_t token_len = static_cast<size_t>(p - start);
+        if ( token_len == name_len && strncmp(start, module_name, name_len) == 0 )
+            return true;
+    }
+
+    return false;
+}
 
 static string s_current;
 static string s_aliased_name;
@@ -1308,7 +1350,27 @@ void ModuleManager::accumulate_dump_stats()
     auto mods = PluginManager::get_all_modules();
 
     for ( auto* mod : mods )
-        mod->main_accumulate_stats();
+    {
+        if ( mod->global_stats() )
+            collect_global_dump_stats(mod);
+        else
+            mod->main_accumulate_stats();
+    }
+}
+
+void ModuleManager::collect_global_dump_stats(Module* mod)
+{
+    if ( !mod || !mod->global_stats() )
+        return;
+
+    std::vector<PegCount> results;
+    {
+        lock_guard<mutex> lock(stats_mutex);
+        mod->prep_counts(true);
+        mod->collect_dump_stats_counts(results);
+    }
+
+    mod->set_dump_stats_results(results);
 }
 
 void ModuleManager::init_stats()
@@ -1327,6 +1389,38 @@ void ModuleManager::add_thread_stats_entry(const char* name)
         mod->init_stats(true);
 }
 
+void ModuleManager::get_accumulated_counts(Module* mod, unsigned instance_id, std::vector<PegCount>& out)
+{
+    if ( !mod )
+    {
+        out.clear();
+        return;
+    }
+
+    if ( mod->get_num_counts() < 0 )
+        mod->init_stats();
+
+    const int num_counts = mod->get_num_counts();
+    if ( num_counts <= 0 )
+    {
+        out.clear();
+        return;
+    }
+
+    out.assign(num_counts, 0);
+
+    if ( instance_id < mod->dump_stats_counts.size() )
+    {
+        out = mod->dump_stats_counts[instance_id];
+        return;
+    }
+
+    if ( instance_id >= mod->counts.size() )
+        return;
+
+    out = mod->counts[instance_id];
+}
+
 void ModuleManager::dump_stats(const char* skip, bool dynamic)
 {
     auto mods = PluginManager::get_all_modules();
@@ -1336,7 +1430,7 @@ void ModuleManager::dump_stats(const char* skip, bool dynamic)
     {
         if ( !skip || !strstr(skip, mod->get_name()) )
         {
-            if (strstr(dynamic_stats_modules, mod->get_name()) || mod->global_stats())
+            if (is_dynamic_stats_module(mod) || mod->global_stats())
             {
                 lock_guard<mutex> lock(stats_mutex);
                 if ( dynamic )
@@ -1364,7 +1458,17 @@ void ModuleManager::accumulate(const SnortConfig* sc, const char* except)
         if ( except and !strcmp(mod->name, except) )
             continue;
 
-        if (strstr(dynamic_stats_modules, mod->get_name()) || mod->global_stats())
+        if ( mod->global_stats() )
+        {
+            // Global stats are shared across threads; follow the thread_0-only guideline.
+            if ( get_instance_id() != 0 )
+                continue;
+
+            lock_guard<mutex> lock(stats_mutex);
+            mod->prep_counts(true);
+            mod->sum_stats(true);
+        }
+        else if (is_dynamic_stats_module(mod))
         {
             lock_guard<mutex> lock(stats_mutex);
             mod->prep_counts(true);
@@ -1385,7 +1489,16 @@ void ModuleManager::accumulate_module(const char* name)
     if ( !mod )
         return;
 
-    if (strstr(dynamic_stats_modules, mod->get_name()) || mod->global_stats())
+    if ( mod->global_stats() )
+    {
+        if ( get_instance_id() != 0 )
+            return;
+
+        lock_guard<mutex> lock(stats_mutex);
+        mod->prep_counts(true);
+        mod->sum_stats(true);
+    }
+    else if (is_dynamic_stats_module(mod))
     {
         lock_guard<mutex> lock(stats_mutex);
         mod->prep_counts(true);
@@ -1404,7 +1517,7 @@ void ModuleManager::reset_stats(SnortConfig*)
 
     for ( auto* mod : mods )
     {
-        if (strstr(dynamic_stats_modules, mod->get_name()) || mod->global_stats())
+        if (is_dynamic_stats_module(mod) || mod->global_stats())
         {
             lock_guard<mutex> lock(stats_mutex);
             mod->reset_stats();
@@ -1422,7 +1535,7 @@ void ModuleManager::clear_global_active_counters()
 
     for ( auto* mod : mods )
     {
-        if (strstr(dynamic_stats_modules, mod->get_name()) || mod->global_stats())
+        if (is_dynamic_stats_module(mod) || mod->global_stats())
         {
             lock_guard<mutex> lock(stats_mutex);
             mod->clear_global_active_counters();
@@ -1442,7 +1555,7 @@ void ModuleManager::reset_stats(clear_counter_type_t type)
 
         if ( mod )
         {
-            if (strstr(dynamic_stats_modules, mod->get_name()) || mod->global_stats())
+            if (is_dynamic_stats_module(mod) || mod->global_stats())
             {
                 lock_guard<mutex> lock(stats_mutex);
                 mod->reset_stats();
@@ -1474,7 +1587,7 @@ void ModuleManager::reset_stats(clear_counter_type_t type)
 
             if ( type == TYPE_ALL or !ignore )
             {
-                if (strstr(dynamic_stats_modules, mod->get_name()) || mod->global_stats())
+                if (is_dynamic_stats_module(mod) || mod->global_stats())
                 {
                     lock_guard<mutex> lock(stats_mutex);
                     mod->reset_stats();
@@ -2193,4 +2306,3 @@ TEST_CASE("param default JSON dumper", "[ModuleManager]")
 }
 
 #endif // UNIT_TEST
-

@@ -576,7 +576,10 @@ int main_reload_config(lua_State* L)
         LogMessage("No host attribute table loaded\n");
 
     SnortConfig::set_conf(sc);
-    proc_stats.conf_reloads++;
+    {
+        std::lock_guard<std::mutex> lock(ModuleManager::stats_mutex);
+        proc_stats.conf_reloads++;
+    }
 
     if ( sc->max_procs > 1 )
     {
@@ -603,7 +606,10 @@ int main_reload_daq(lua_State* L)
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
     send_response(ctrlcon, ".. reloading daq module\n");
     main_broadcast_command(new ACDAQSwap(), ctrlcon);
-    proc_stats.daq_reloads++;
+    {
+        std::lock_guard<std::mutex> lock(ModuleManager::stats_mutex);
+        proc_stats.daq_reloads++;
+    }
 
     return 0;
 }
@@ -646,7 +652,10 @@ int main_reload_hosts(lua_State* L)
         return 0;
     }
 
-    proc_stats.attribute_table_reloads++;
+    {
+        std::lock_guard<std::mutex> lock(ModuleManager::stats_mutex);
+        proc_stats.attribute_table_reloads++;
+    }
     int32_t num_hosts = HostAttributesManager::get_num_host_entries();
     assert( num_hosts >= 0 );
     LogMessage("Host attribute table: %d hosts loaded successfully.\n", num_hosts);
@@ -879,7 +888,10 @@ static int signal_check()
             LogMessage("** caught unknown signal - %u\n", s);
         return 0;
     }
-    proc_stats.signals++;
+    {
+        std::lock_guard<std::mutex> lock(ModuleManager::stats_mutex);
+        proc_stats.signals++;
+    }
     return 1;
 }
 

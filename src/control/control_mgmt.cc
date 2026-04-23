@@ -40,6 +40,7 @@
 #include "main/shell.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
+#include "managers/module_manager.h"
 #include "utils/stats.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
@@ -362,6 +363,7 @@ static int execute_control_commands(ControlConn *ctrlcon)
     executed = ctrlcon->execute_commands();
     if (executed > 0)
     {
+        std::lock_guard<std::mutex> lock(ModuleManager::stats_mutex);
         if (ctrlcon->is_local())
             proc_stats.local_commands += executed;
         else

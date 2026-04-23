@@ -100,23 +100,61 @@ void Module::main_accumulate_stats()
     if ( !q )
         return;
 
-    if (!global_stats())
+    if ( global_stats() )
+        return;
+
+    aggregate_dump_stats_counts(q, num_counts, dump_stats_counts, dump_stats_results);
+}
+
+void Module::aggregate_dump_stats_counts(
+    const PegInfo* pegs,
+    int num_counts,
+    const std::vector<std::vector<PegCount>>& per_thread_counts,
+    std::vector<PegCount>& out)
+{
+    if ( !pegs || num_counts <= 0 )
+        return;
+
+    std::vector<const std::vector<PegCount>*> ptrs;
+    ptrs.reserve(per_thread_counts.size());
+    for ( const auto& counts : per_thread_counts )
+        ptrs.emplace_back(&counts);
+
+    aggregate_dump_stats_counts(pegs, num_counts, ptrs, out);
+}
+
+void Module::aggregate_dump_stats_counts(
+    const PegInfo* pegs,
+    int num_counts,
+    const std::vector<const std::vector<PegCount>*>& per_thread_counts,
+    std::vector<PegCount>& out)
+{
+    if ( !pegs || num_counts <= 0 )
+        return;
+
+    out.assign(num_counts, 0);
+
+    for ( const auto* counts : per_thread_counts )
     {
-        //reset the results
-        std::fill(dump_stats_results.begin(), dump_stats_results.end(), 0);
-        for ( int i = 0; i < num_counts; i++ )
+        if ( !counts || (int)counts->size() != num_counts )
+            continue;
+
+        for ( int peg_idx = 0; peg_idx < num_counts; peg_idx++ )
         {
-            for ( unsigned thread_index = 0; thread_index < dump_stats_counts.size(); thread_index++)
+            switch ( pegs[peg_idx].type )
             {
-                if ( q[i].type == CountType::SUM || q[i].type == CountType::NOW)
-                {
-                    dump_stats_results[i] += dump_stats_counts[thread_index][i];
-                }
-                else if ( q[i].type == CountType::MAX)
-                {
-                    if (dump_stats_counts[thread_index][i] > dump_stats_results[i])
-                        dump_stats_results[i] = dump_stats_counts[thread_index][i];
-                }    
+            case CountType::END:
+                break;
+
+            case CountType::SUM:
+            case CountType::NOW:
+                out[peg_idx] += (*counts)[peg_idx];
+                break;
+
+            case CountType::MAX:
+                if ( (*counts)[peg_idx] > out[peg_idx] )
+                    out[peg_idx] = (*counts)[peg_idx];
+                break;
             }
         }
     }
@@ -183,6 +221,66 @@ void Module::sum_stats(bool dump_stats)
             }
         }
     }
+}
+
+void Module::collect_dump_stats_counts(std::vector<PegCount>& out)
+{
+    if ( num_counts < 0 )
+        init_stats();
+
+    PegCount* p = get_counts();
+    const PegInfo* q = get_pegs();
+
+    if ( !p || !q || num_counts <= 0 )
+    {
+        out.clear();
+        return;
+    }
+
+    out.assign(num_counts, 0);
+
+    if ( global_stats() )
+    {
+        for ( int i = 0; i < num_counts; i++ )
+            out[i] = p[i];
+        return;
+    }
+
+    const unsigned instance_id = get_instance_id();
+    if ( instance_id >= counts.size() )
+        return;
+
+    for ( int i = 0; i < num_counts; i++ )
+    {
+        switch ( q[i].type )
+        {
+        case CountType::END:
+            break;
+
+        case CountType::SUM:
+        case CountType::NOW:
+            out[i] = counts[instance_id][i] + p[i];
+            break;
+
+        case CountType::MAX:
+            out[i] = (p[i] > counts[instance_id][i]) ? p[i] : counts[instance_id][i];
+            break;
+        }
+    }
+}
+
+void Module::set_dump_stats_results(const std::vector<PegCount>& results)
+{
+    if ( num_counts < 0 )
+        init_stats();
+
+    if ( num_counts <= 0 )
+        return;
+
+    if ( (int)results.size() != num_counts )
+        return;
+
+    dump_stats_results = results;
 }
 
 void Module::show_interval_stats(std::vector<unsigned>& peg_idxs, FILE* fh)

@@ -25,6 +25,7 @@
 #include "base_tracker.h"  // FIXIT-W Returning null reference (from <vector>)
 
 #include "managers/module_manager.h"
+#include "main/thread.h"
 
 #ifdef UNIT_TEST
 #include "catch/snort_catch.h"
@@ -37,23 +38,110 @@ using namespace std;
 BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf, PERF_NAME "_base", PERF_BASE),
     modules(perf->modules), mods_to_prep(perf->mods_to_prep)
 {
-    for ( ModuleConfig& mod : modules )
+    is_first_packet_thread = (get_instance_id() == 0);
+    global_proxies.resize(modules.size());
+
+    for ( size_t mod_idx = 0; mod_idx < modules.size(); mod_idx++ )
     {
+        ModuleConfig& mod = modules[mod_idx];
         if (mod.ptr->stats_are_aggregated())
             continue;
 
         formatter->register_section(mod.ptr->get_name());
 
-        for ( auto const& idx : mod.pegs )
-            formatter->register_field(mod.ptr->get_pegs()[idx].name, &(mod.ptr->get_counts()[idx]));
+        const bool is_global_stats = mod.ptr->global_stats();
+
+        if ( is_global_stats )
+        {
+            if ( mod.ptr->get_num_counts() < 0 )
+                mod.ptr->init_stats();
+
+            const int n = mod.ptr->get_num_counts();
+            if ( n > 0 )
+            {
+                global_proxies[mod_idx].mod = mod.ptr;
+                global_proxies[mod_idx].enabled = true;
+                global_proxies[mod_idx].values.assign(n, 0);
+
+                PegCount* p = mod.ptr->get_counts();
+                if ( p )
+                    global_proxies[mod_idx].last_seen.assign(p, p + n);
+                else
+                    global_proxies[mod_idx].last_seen.assign(n, 0);
+
+                for ( auto const& idx : mod.pegs )
+                    formatter->register_field(mod.ptr->get_pegs()[idx].name, &(global_proxies[mod_idx].values[idx]));
+            }
+        }
+        else
+        {
+            for ( auto const& idx : mod.pegs )
+                formatter->register_field(mod.ptr->get_pegs()[idx].name, &(mod.ptr->get_counts()[idx]));
+        }
     }
     formatter->finalize_fields();
+}
+
+void BaseTracker::update_global_proxies()
+{
+    if ( !is_first_packet_thread )
+        return;
+
+    // Non-blocking: perf_monitor periodic path is best-effort sampling.
+    // Skip the entire global proxy update if stats_mutex is contested
+    // rather than stalling packet thread 0.
+    std::unique_lock<std::mutex> lock(ModuleManager::stats_mutex, std::try_to_lock);
+    if ( !lock.owns_lock() )
+        return;
+
+    for ( size_t mod_idx = 0; mod_idx < modules.size(); mod_idx++ )
+    {
+        GlobalProxy& proxy = global_proxies[mod_idx];
+        if ( proxy.enabled && proxy.mod )
+            proxy.mod->prep_counts(false);
+    }
+
+    for ( size_t mod_idx = 0; mod_idx < modules.size(); mod_idx++ )
+    {
+        GlobalProxy& proxy = global_proxies[mod_idx];
+        if ( !proxy.enabled || !proxy.mod )
+            continue;
+
+        Module* mod = proxy.mod;
+        PegCount* p = mod->get_counts();
+        const PegInfo* pegs = mod->get_pegs();
+        if ( !p || !pegs )
+            continue;
+
+        for ( const auto& peg_idx : modules[mod_idx].pegs )
+        {
+            const PegCount cur = p[peg_idx];
+
+            if ( pegs[peg_idx].type == CountType::SUM )
+            {
+                const PegCount prev = proxy.last_seen[peg_idx];
+                proxy.values[peg_idx] = (cur >= prev) ? (cur - prev) : cur;
+                proxy.last_seen[peg_idx] = cur;
+            }
+            else
+            {
+                proxy.values[peg_idx] = cur;
+            }
+        }
+    }
 }
 
 void BaseTracker::process(bool summary)
 {
     for ( Module* mod : mods_to_prep )
+    {
+        if ( !mod || mod->global_stats() )
+            continue;
+
         mod->prep_counts(false);
+    }
+
+    update_global_proxies();
 
     write();
 
@@ -64,15 +152,10 @@ void BaseTracker::process(bool summary)
             if (mod.ptr->is_aggregator())
                 continue;
 
-            if (strstr(ModuleManager::dynamic_stats_modules, mod.ptr->get_name()) || mod.ptr->global_stats())
-            {
-                lock_guard<mutex> lock(ModuleManager::stats_mutex);
-                mod.ptr->sum_stats(false);
-            }
-            else
-            {
-                mod.ptr->sum_stats(false);
-            }
+            if ( mod.ptr->global_stats() )
+                continue;
+
+            mod.ptr->sum_stats(false);
         }
     }
 }

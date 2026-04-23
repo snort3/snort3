@@ -180,14 +180,18 @@ const PegInfo proc_names[] =
 
 //-------------------------------------------------------------------------
 
-void DropStats(ControlConn* ctrlcon)
+void DropStats(ControlConn* ctrlcon, bool already_accumulated, const std::function<void()>& dump_codec_stats)
 {
     set_log_conn(ctrlcon);
 
-    ModuleManager::accumulate_dump_stats();
+    if ( !already_accumulated )
+        ModuleManager::accumulate_dump_stats();
     LogLabel("Packet Statistics");
     PluginManager::get_module("daq")->show_stats();
-    PacketManager::dump_stats();
+    if ( dump_codec_stats )
+        dump_codec_stats();
+    else
+        PacketManager::dump_stats();
 
     LogLabel("Module Statistics");
     const char* exclude = "daq snort memory";
@@ -195,7 +199,16 @@ void DropStats(ControlConn* ctrlcon)
     ModuleManager::dump_stats(exclude, true);
 
     LogLabel("Summary Statistics");
-    show_stats((PegCount*)&proc_stats, proc_names, array_size(proc_names)-1, "process");
+    {
+        // Snapshot proc_stats under the lock to avoid holding the mutex
+        // across the show_stats() logging call.
+        ProcessCount proc_snapshot;
+        {
+            std::lock_guard<std::mutex> lock(ModuleManager::stats_mutex);
+            proc_snapshot = proc_stats;
+        }
+        show_stats((PegCount*)&proc_snapshot, proc_names, array_size(proc_names)-1, "process");
+    }
     PluginManager::get_module("memory")->show_stats();
     memory::MemoryCap::print(SnortConfig::log_verbose());
 
@@ -206,9 +219,6 @@ void DropStats(ControlConn* ctrlcon)
 
 void PrintStatistics()
 {
-    if ( PegCount* pc = ModuleManager::get_stats("memory") )
-        memory::MemoryCap::update_pegs(pc);
-
     DropStats();
     timing_stats();
 

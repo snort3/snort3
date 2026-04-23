@@ -725,7 +725,9 @@ PegCount* AppIdModule::get_counts() const
 
 void AppIdModule::sum_stats(bool dump_stats)
 {
-    AppIdPegCounts::sum_stats();
+    if ( dump_stats )
+        AppIdPegCounts::sum_stats();
+
     Module::sum_stats(dump_stats);
 }
 

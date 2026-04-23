@@ -77,13 +77,12 @@ public:
     static void thread_init();
     static void thread_term();
     static void free_space();
+    static void reset_thread_stats();
 
     // main and packet threads
     static MemoryCounts& get_mem_stats();
-    static void update_global_stats();
-
-    // main thread - shutdown
-    static void update_pegs(PegCount*);
+    static MemoryCounts& get_global_stats();
+    static void update_global_stats(bool dump_stats = true);
 
     static void dump_mem_stats(ControlConn*);
     static void heap_profile_config(bool enable, uint64_t sample_rate);

@@ -23,8 +23,6 @@
 
 #include "framework/module.h"
 
-#include <shared_mutex>
-
 class MemoryModule : public snort::Module
 {
 public:
@@ -32,7 +30,10 @@ public:
 
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
-    void sum_stats(bool dump_stats) override;
+    void show_stats() override;
+    void reset_stats() override;
+    bool counts_need_prep() const override { return true; }
+    void prep_counts(bool) override;
 
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
@@ -42,11 +43,8 @@ public:
 
     void set_trace(const snort::Trace*) const override;
     const snort::TraceOption* get_trace_options() const override;
-
-    std::shared_mutex mem_global_stats_mutex;
 };
 
 extern THREAD_LOCAL const snort::Trace* memory_trace;
 
 #endif
-

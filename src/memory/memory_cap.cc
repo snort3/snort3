@@ -28,7 +28,6 @@
 
 #include <atomic>
 #include <cassert>
-#include <vector>
 
 #include "log/log_stats.h"
 #include "log/messages.h"
@@ -52,7 +51,7 @@ namespace memory
 // private
 // -----------------------------------------------------------------------------
 
-static std::vector<MemoryCounts> pkt_mem_stats;
+static THREAD_LOCAL MemoryCounts thread_mem_stats;
 
 static MemoryConfig config;
 static size_t limit = 0;
@@ -87,13 +86,13 @@ static void epoch_check(void*)
     else
         current_epoch = 0;
 
-    if ( !start_up_use )
-        start_up_use = total;
-
-    if ( total > max_in_use )
-        max_in_use = total;
-
     latest_epoch = epoch;
+
+    // Track max here so no peak is missed between stats reads.
+    uint64_t cur_max = max_in_use.load(std::memory_order_relaxed);
+    while ( total > cur_max &&
+            !max_in_use.compare_exchange_weak(cur_max, total, std::memory_order_relaxed) )
+        ;
 }
 
 // -----------------------------------------------------------------------------
@@ -137,19 +136,14 @@ void MemoryCap::test_main_check()
 // public
 // -----------------------------------------------------------------------------
 
-void MemoryCap::init(unsigned n)
+void MemoryCap::init(unsigned)
 {
     assert(in_main_thread());
-    pkt_mem_stats.resize(n);
-
-#ifdef UNIT_TEST
-    pkt_mem_stats[0] = { };
-#endif
+    thread_mem_stats = { };
 }
 
 void MemoryCap::term()
 {
-    pkt_mem_stats.resize(0);
     delete heap;
     heap = nullptr;
 }
@@ -186,10 +180,17 @@ void MemoryCap::start(const MemoryConfig& c, PruneHandler ph)
 #endif
 
     epoch_check(nullptr);
+
+    // Capture startup memory use now that the first epoch has been bumped.
+    // Done here rather than in epoch_check() to keep epoch_check() free of
+    // any peg-count side effects.
+    uint64_t epoch_unused, total;
+    heap->get_process_total(epoch_unused, total, false);
+    start_up_use = total;
 }
 
 void MemoryCap::stop()
-{ 
+{
     epoch_check(nullptr);
     update_global_stats();
 }
@@ -197,6 +198,7 @@ void MemoryCap::stop()
 void MemoryCap::thread_init()
 {
     heap->thread_init();
+    thread_mem_stats = { };
     start_dealloc = 0;
     start_epoch = 0;
 }
@@ -208,14 +210,11 @@ void MemoryCap::thread_term()
 }
 
 MemoryCounts& MemoryCap::get_mem_stats()
-{
-    // main thread stats overlap with packet thread 1
-    if ( in_main_thread() )
-        return pkt_mem_stats[0];
+{ return thread_mem_stats; }
 
-    auto id = get_instance_id();
-    return pkt_mem_stats[id];
-}
+MemoryCounts& MemoryCap::get_global_stats()
+{ return thread_mem_stats; }
+
 
 void MemoryCap::free_space()
 {
@@ -226,7 +225,12 @@ void MemoryCap::free_space()
 #endif
 
     MemoryCounts& mc = get_mem_stats();
-    heap->get_thread_allocs(mc.allocated, mc.deallocated);
+
+    // Thread-local; no cross-thread reads, so plain assignment is safe.
+    uint64_t a, d;
+    heap->get_thread_allocs(a, d);
+    mc.allocated = a;
+    mc.deallocated = d;
 
     // Not already pruning
     if ( !start_dealloc )
@@ -267,12 +271,14 @@ void MemoryCap::free_space()
         return;
     }
 
-    ++mc.reap_attempts;
+    mc.reap_attempts++;
 
     bool prune_success = pruner();
 
     // Updates values after pruning
-    heap->get_thread_allocs(mc.allocated, mc.deallocated);
+    heap->get_thread_allocs(a, d);
+    mc.allocated = a;
+    mc.deallocated = d;
     alloc = mc.allocated - start_alloc;
     dealloc = mc.deallocated - start_dealloc;
 
@@ -293,48 +299,50 @@ void MemoryCap::free_space()
         else
             mc.reap_increase += alloc - dealloc;
         start_dealloc = 0;
-        ++mc.reap_failures;
+        mc.reap_failures++;
     }
 }
 
-// required to capture any update in final epoch
-// which happens after packet threads have stopped
-void MemoryCap::update_pegs(PegCount* pc)
+void MemoryCap::reset_thread_stats()
 {
-    MemoryCounts* mp = (MemoryCounts*)pc;
-    const MemoryCounts& mc = get_mem_stats();
-
-    if ( config.enabled )
-    {
-        mp->epochs = mc.epochs;
-        mp->cur_in_use = mc.cur_in_use;
-    }
-    else
-    {
-        mp->allocated = 0;
-        mp->deallocated = 0;
-    }
-}
-
-void MemoryCap::update_global_stats()
-{
-    if ( !pkt_mem_stats.size() )
+    if ( !is_packet_thread() )
         return;
 
-    MemoryCounts& mc = pkt_mem_stats[0];
+    MemoryCounts& mc = get_mem_stats();
+    mc.reap_cycles = 0;
+    mc.reap_attempts = 0;
+    mc.reap_failures = 0;
+    mc.reap_aborts = 0;
+    mc.reap_decrease = 0;
+    mc.reap_increase = 0;
+
+    start_dealloc = 0;
+    start_alloc = mc.allocated;
+    start_epoch = 0;
+}
+
+
+void MemoryCap::update_global_stats(bool dump_stats)
+{
+    // Populate heap pegs into the calling thread's stats. For thread 0 these
+    // are included in the framework's per-thread aggregation during dump_stats;
+    // other threads have 0 for heap fields so the totals are correct.
+    MemoryCounts& mc = thread_mem_stats;
 
     uint64_t epoch, total;
     heap->get_process_total(epoch, total, false);
 
-    mc.max_in_use = max_in_use;
-
     mc.cur_in_use = total;
-
-    if ( epoch > latest_epoch )
-        latest_epoch = epoch;
-
-    mc.epochs = latest_epoch;
+    mc.max_in_use = max_in_use;
     mc.start_up_use = start_up_use;
+
+    // epochs is only meaningful for dump_stats; skip on the perfmon periodic path.
+    if ( dump_stats )
+    {
+        if ( epoch > latest_epoch )
+            latest_epoch = epoch;
+        mc.epochs = latest_epoch;
+    }
 
     // for reporting / tracking only
     uint64_t all, act, res, ret;
@@ -352,7 +360,8 @@ void MemoryCap::print(bool verbose, bool init)
     if ( !config.enabled )
         return;
 
-    MemoryCounts& mc = get_mem_stats();
+    update_global_stats();
+    MemoryCounts& mc = get_global_stats();
 
     if ( init and (verbose or mc.start_up_use) )
     {
@@ -393,4 +402,3 @@ void MemoryCap::show_heap_profile_config(ControlConn* ctrlcon)
 }
 
 } // namespace memory
-
