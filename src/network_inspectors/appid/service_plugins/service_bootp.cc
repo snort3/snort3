@@ -68,8 +68,14 @@ enum DHCP_OPTIONS
     DHCP_OPT_DOMAIN_NAME_SERVER = 6,
     DHCP_OPT_DOMAIN_NAME = 15,
     DHCP_OPT_IPADDR_LEASE_TIME = 51,
-    DHCP_OPT_DHCP_MESSAGE_TYPE =53
+    DHCP_OPT_OPTION_OVERLOAD = 52,   // RFC 2132 §9.3: sname/file used as option areas
+    DHCP_OPT_DHCP_MESSAGE_TYPE = 53
 };
+
+// RFC 2132 §9.3 overload values
+#define DHCP_OVERLOAD_FILE  1  // 'file' field holds options
+#define DHCP_OVERLOAD_SNAME 2  // 'sname' field holds options
+#define DHCP_OVERLOAD_BOTH  3  // both fields hold options
 
 struct ServiceDHCPOption
 {
@@ -80,6 +86,55 @@ struct ServiceDHCPOption
 #pragma pack()
 
 static const uint8_t zeromac[6] = { 0, 0, 0, 0, 0, 0 };
+
+// Parse a DHCP option area (standard options, or overloaded sname/file per RFC 2131 §4.1).
+// Updates option53, subnet, router, leaseTime from any options found.
+// Returns true when the end-of-options marker (0xff) is reached, false if the area is exhausted
+// without one (treated as a truncated/malformed field for overloaded areas).
+static bool parse_dhcp_options_area(const uint8_t* area, unsigned area_size,
+    int& option53, uint32_t& subnet, uint32_t& router, uint32_t& leaseTime)
+{
+    for (unsigned j = 0; j < area_size; )
+    {
+        if (area[j] == 0xff)
+            return true;
+        if (area[j] == 0x00)
+        {
+            j++;
+            continue;
+        }
+        if (j + sizeof(ServiceDHCPOption) > area_size)
+            return false;
+        const ServiceDHCPOption* op = (const ServiceDHCPOption*)(&area[j]);
+        j += sizeof(ServiceDHCPOption);
+        if (j + op->len > area_size)
+            return false;
+
+        switch (op->option)
+        {
+        case DHCP_OPT_DHCP_MESSAGE_TYPE:
+            if (op->len == 1 && area[j] == 5)
+                option53 = 1;
+            break;
+        case DHCP_OPT_SUBNET_MASK:
+            if (op->len == 4)
+                memcpy(&subnet, &area[j], sizeof(subnet));
+            break;
+        case DHCP_OPT_ROUTER:
+            if (op->len == 4)
+                memcpy(&router, &area[j], sizeof(router));
+            break;
+        case DHCP_OPT_IPADDR_LEASE_TIME:
+            if (op->len == 4)
+                memcpy(&leaseTime, &area[j], sizeof(leaseTime));
+            break;
+        default:
+            break;
+        }
+        j += op->len;
+    }
+    return false;
+}
 
 BootpServiceDetector::BootpServiceDetector(ServiceDiscovery* sd)
 {
@@ -219,6 +274,7 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
             uint32_t subnet = 0;
             uint32_t router = 0;
             uint32_t leaseTime = 0;
+            uint8_t overload = 0;
 
             for (i=sizeof(ServiceBOOTPHeader)+sizeof(uint32_t);
                 i<size;
@@ -226,6 +282,13 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
             {
                 if (data[i] == 0xff)
                 {
+                    if (overload == DHCP_OVERLOAD_SNAME || overload == DHCP_OVERLOAD_BOTH)
+                        parse_dhcp_options_area(bh->sname, sizeof(bh->sname),
+                            option53, subnet, router, leaseTime);
+                    if (overload == DHCP_OVERLOAD_FILE || overload == DHCP_OVERLOAD_BOTH)
+                        parse_dhcp_options_area(bh->file, sizeof(bh->file),
+                            option53, subnet, router, leaseTime);
+
                     const eth::EtherHdr* eh = layer::get_eth_layer(pkt);
                     if (!eh)
                         goto fail;
@@ -264,9 +327,18 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
                     }
                     break;
                 case DHCP_OPT_IPADDR_LEASE_TIME:
-                    if (op->len == 4 )
+                    if (op->len == 4)
                     {
                         memcpy(&leaseTime, &data[i], sizeof(leaseTime));
+                    }
+                    break;
+                case DHCP_OPT_OPTION_OVERLOAD:
+                    if (op->len == 1 &&
+                        (data[i] == DHCP_OVERLOAD_FILE ||
+                         data[i] == DHCP_OVERLOAD_SNAME ||
+                         data[i] == DHCP_OVERLOAD_BOTH))
+                    {
+                        overload = data[i];
                     }
                     break;
                 default:
