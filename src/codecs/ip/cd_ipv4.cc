@@ -361,7 +361,7 @@ void Ipv4Codec::IP4AddrTests(
     uint8_t msb_src, msb_dst;
 
     // check all 32 bits ...
-    if ( iph->ip_src == iph->ip_dst )
+    if ( iph->get_src() == iph->get_dst() )
     {
         codec_event(codec, DECODE_BAD_TRAFFIC_SAME_SRCDST);
     }
@@ -376,11 +376,11 @@ void Ipv4Codec::IP4AddrTests(
     /* Loopback traffic  - don't use htonl for speed reasons -
      * s_addr is always in network order */
 #ifdef WORDS_BIGENDIAN
-    msb_src = (uint8_t)(iph->ip_src >> 24);
-    msb_dst = (uint8_t)(iph->ip_dst >> 24);
+    msb_src = (uint8_t)(iph->get_src() >> 24);
+    msb_dst = (uint8_t)(iph->get_dst() >> 24);
 #else
-    msb_src = (uint8_t)(iph->ip_src & 0xff);
-    msb_dst = (uint8_t)(iph->ip_dst & 0xff);
+    msb_src = (uint8_t)(iph->get_src() & 0xff);
+    msb_dst = (uint8_t)(iph->get_dst() & 0xff);
 #endif
     // check the msb ...
     if ( (msb_src == ip::IP4_LOOPBACK) || (msb_dst == ip::IP4_LOOPBACK) )
