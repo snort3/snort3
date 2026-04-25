@@ -488,10 +488,12 @@ int TcpNormalizer::validate_paws_timestamp(
         && ( ( uint32_t )tsd.get_packet_timestamp() > tns.peer_tracker->get_ts_last_packet() +
         PAWS_24DAYS ) )
     {
-        /* this packet is from way too far into the future */
-        tns.session->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
-        packet_dropper(tns, tsd, NORM_TCP_OPT);
-        return ACTION_BAD_PKT;
+        /* Per RFC7323 Section 5.5: After 24 days of inactivity, TS.Recent should be
+         * invalidated to allow the connection to continue. Accept the packet and reset
+         * the timestamp rather than dropping it. */
+        tns.peer_tracker->set_ts_last(0);
+        tns.peer_tracker->set_ts_last_packet(0);
+        return ACTION_NOTHING;
     }
     else
         return ACTION_NOTHING;
