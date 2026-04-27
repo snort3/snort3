@@ -79,6 +79,7 @@ public:
     virtual ~ExtractorEvent() {}
 
     void tinit(ExtractorLogger*, const snort::Connector::ID*);
+    void tterm();
 
     Extractor& get_inspector() const { return inspector; }
 

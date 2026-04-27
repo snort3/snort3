@@ -46,12 +46,17 @@ public:
     static constexpr ServiceType type_id = ServiceType::QUIC;
 
     QuicExtractorFlowData(QuicExtractor& owner)
-        : ExtractorFlowData(type_id), owner(owner) { }
+        : ExtractorFlowData(type_id), owner(owner)
+    {
+        owner.get_inspector().add_ref();
+    }
 
     ~QuicExtractorFlowData() override
     {
         if (has_data)
             owner.dump(*this);
+
+        owner.get_inspector().rem_ref();
     }
 
     void reset()
@@ -188,6 +193,9 @@ void ExtractorEvent::log<vector<QuicExtractor::FdStrField>, const QuicExtractorF
 void QuicExtractor::dump(const QuicExtractorFlowData& fd)
 {
     Profile profile(extractor_perf_stats);
+
+    if (!logger)
+        return;
 
     logger->open_record();
 

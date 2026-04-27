@@ -34,6 +34,11 @@ void ExtractorEvent::tinit(ExtractorLogger* l, const snort::Connector::ID* servi
     internal_tinit(service_id);
 }
 
+void ExtractorEvent::tterm()
+{
+    logger = nullptr;
+}
+
 vector<const char*> ExtractorEvent::get_field_names() const
 {
     vector<const char*> res;

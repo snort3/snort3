@@ -294,12 +294,17 @@ public:
     static constexpr ServiceType type_id = ServiceType::FTP;
 
     FtpExtractorFlowData(FtpExtractor& owner)
-        : ExtractorFlowData(type_id), owner(owner) {}
+        : ExtractorFlowData(type_id), owner(owner)
+    {
+        owner.get_inspector().add_ref();
+    }
 
     ~FtpExtractorFlowData() override
     {
         if (has_data)
             owner.dump(*this);
+
+        owner.get_inspector().rem_ref();
     }
 
     void reset();
@@ -624,6 +629,9 @@ void FtpExtractor::dump(const FtpExtractorFlowData& fd)
 {
     // cppcheck-suppress unreadVariable
     Profile profile(extractor_perf_stats);
+
+    if (!logger)
+        return;
 
     logger->open_record();
 
