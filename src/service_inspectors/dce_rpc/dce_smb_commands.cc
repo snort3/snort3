@@ -567,6 +567,8 @@ DCE2_Ret DCE2_SmbOpen(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
 
         dce2_move(nb_ptr, nb_len, 1);
 
+        DCE2_SmbFreeRequestTrackerFileName(ssd->cur_rtracker);
+
         ssd->cur_rtracker->file_name =
             DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),
             &ssd->cur_rtracker->file_name_size);
@@ -624,6 +626,8 @@ DCE2_Ret DCE2_SmbCreate(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         }
 
         dce2_move(nb_ptr, nb_len, 1);
+
+        DCE2_SmbFreeRequestTrackerFileName(ssd->cur_rtracker);
 
         ssd->cur_rtracker->file_name =
             DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),
@@ -855,6 +859,8 @@ DCE2_Ret DCE2_SmbCreateNew(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         }
 
         dce2_move(nb_ptr, nb_len, 1);
+
+        DCE2_SmbFreeRequestTrackerFileName(ssd->cur_rtracker);
 
         ssd->cur_rtracker->file_name =
             DCE2_SmbGetFileName(nb_ptr, nb_len, SmbUnicode(smb_hdr),

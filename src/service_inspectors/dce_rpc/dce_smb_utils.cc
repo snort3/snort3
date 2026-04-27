@@ -640,6 +640,19 @@ void DCE2_SmbCleanTransactionTracker(DCE2_SmbTransactionTracker* ttracker)
     memset(ttracker, 0, sizeof(*ttracker));
 }
 
+void DCE2_SmbFreeRequestTrackerFileName(DCE2_SmbRequestTracker* rtracker)
+{
+    if (rtracker == nullptr)
+        return;
+
+    if (rtracker->file_name != nullptr)
+    {
+        snort_free((void*)rtracker->file_name);
+        rtracker->file_name = nullptr;
+        rtracker->file_name_size = 0;
+    }
+}
+
 void DCE2_SmbCleanRequestTracker(DCE2_SmbRequestTracker* rtracker)
 {
     if (rtracker == nullptr)
@@ -661,12 +674,7 @@ void DCE2_SmbCleanRequestTracker(DCE2_SmbRequestTracker* rtracker)
     DCE2_QueueDestroy(rtracker->ft_queue);
     rtracker->ft_queue = nullptr;
 
-    if (rtracker->file_name != nullptr)
-    {
-        snort_free((void*)rtracker->file_name);
-        rtracker->file_name = nullptr;
-        rtracker->file_name_size = 0;
-    }
+    DCE2_SmbFreeRequestTrackerFileName(rtracker);
 }
 
 void DCE2_SmbRemoveRequestTracker(DCE2_SmbSsnData* ssd,

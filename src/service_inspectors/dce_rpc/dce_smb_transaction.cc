@@ -290,6 +290,8 @@ static DCE2_Ret DCE2_SmbNtTransactCreateReq(DCE2_SmbSsnData* ssd,
 
     dce2_move(param_ptr, param_len, pad);
 
+    DCE2_SmbFreeRequestTrackerFileName(ssd->cur_rtracker);
+
     ssd->cur_rtracker->file_name =
         DCE2_SmbGetFileName(param_ptr, file_name_length, unicode, &ssd->cur_rtracker->file_name_size);
 
@@ -958,13 +960,8 @@ static DCE2_Ret DCE2_SmbTrans2Open2Req(DCE2_SmbSsnData* ssd,
 
     dce2_move(param_ptr, param_len, sizeof(SmbTrans2Open2ReqParams));
 
-    // tracker may be reused across piped requests with duplicate MIDs
-    if (ssd->cur_rtracker->file_name)
-    {
-        snort_free((void*)ssd->cur_rtracker->file_name);
-        ssd->cur_rtracker->file_name = nullptr;
-        ssd->cur_rtracker->file_name_size = 0;
-    }
+    DCE2_SmbFreeRequestTrackerFileName(ssd->cur_rtracker);
+
     ssd->cur_rtracker->file_name =
         DCE2_SmbGetFileName(param_ptr, param_len, unicode, &ssd->cur_rtracker->file_name_size);
 

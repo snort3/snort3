@@ -132,6 +132,7 @@ void DCE2_SmbInsertUid(DCE2_SmbSsnData*, const uint16_t);
 void DCE2_SmbRemoveUid(DCE2_SmbSsnData*, const uint16_t);
 DCE2_SmbRequestTracker* DCE2_SmbNewRequestTracker(DCE2_SmbSsnData*, const SmbNtHdr*);
 void DCE2_SmbCleanTransactionTracker(DCE2_SmbTransactionTracker*);
+void DCE2_SmbFreeRequestTrackerFileName(DCE2_SmbRequestTracker*);
 void DCE2_SmbCleanRequestTracker(DCE2_SmbRequestTracker*);
 void DCE2_SmbRemoveRequestTracker(DCE2_SmbSsnData*, DCE2_SmbRequestTracker*);
 DCE2_SmbFileTracker* DCE2_SmbGetFileTracker(DCE2_SmbSsnData*,
