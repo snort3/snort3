@@ -50,11 +50,13 @@ const struct SnortEvent* get_event();
 
 struct SnortPacket
 {
-    // FIXIT-L add ip addrs and other useful foo to lua packet
     const char* type;
     uint64_t num;
     unsigned sp;
     unsigned dp;
+    const char* ether_src;
+    const char* ether_dst;
+    const char* dst_addr;
 };
 
 extern "C"
