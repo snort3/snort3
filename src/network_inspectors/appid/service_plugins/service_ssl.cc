@@ -172,7 +172,8 @@ SslServiceDetector::SslServiceDetector(ServiceDiscovery* sd)
         { 995, IpProtocol::TCP, false },
         { 995, IpProtocol::UDP, false },
         { 3269, IpProtocol::TCP, false },
-        { 8305, IpProtocol::TCP, false }
+        { 8305, IpProtocol::TCP, false },
+        { 8910, IpProtocol::TCP, false }
     };
 
     handler->register_detector(name, this, proto);
@@ -638,6 +639,8 @@ AppId getSslServiceAppId(short srcPort)
         return APP_ID_MSFT_GC_SSL;
     case 8305:
         return APP_ID_SF_APPLIANCE_MGMT;
+    case 8910:
+        return APP_ID_PXGRID;
     default:
         return APP_ID_SSL;
     }
@@ -665,6 +668,7 @@ bool is_service_over_ssl(AppId appId)
     case APP_ID_SSL:
     case APP_ID_QUIC:
     case APP_ID_HTTP3:
+    case APP_ID_PXGRID:
         return true;
     }
 

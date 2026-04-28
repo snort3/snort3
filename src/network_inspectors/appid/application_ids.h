@@ -1012,6 +1012,7 @@ enum ApplicationIds : AppId
     APP_ID_FTP_PASSIVE                    = 4003,
     APP_ID_QUIC                           = 4023,
     APP_ID_PSIPHON                        = 4075,
+    APP_ID_DNS_OVER_TLS                   = 4615,
     APP_ID_SMB_VERSION_1                  = 4645,
     APP_ID_SMB_VERSION_2                  = 4646,
     APP_ID_SMB_VERSION_3                  = 4647,
@@ -1025,13 +1026,11 @@ enum ApplicationIds : AppId
     APP_ID_DNS_OVER_QUIC                  = 7504,
     APP_ID_DNS_OVER_HTTP3                 = 7505,
 #ifdef REG_TEST
-    APP_ID_DNS_OVER_TLS                   = 4615,
     APP_ID_REGTEST                        = 10000,
     APP_ID_REGTEST1                       = 10001,
-    APP_ID_REGTEST2                       = 10002
-#else
-    APP_ID_DNS_OVER_TLS                   = 4615
+    APP_ID_REGTEST2                       = 10002,
 #endif
+    APP_ID_PXGRID                         = 11086
 };
 
 enum AppIdType
