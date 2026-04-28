@@ -107,12 +107,6 @@ void ExtractorModule::commit_config()
     service_config.clear();
 }
 
-static inline void trim(std::string& str)
-{
-    str.erase(str.find_last_not_of(' ') + 1);
-    str.erase(0, str.find_first_not_of(' '));
-}
-
 void ExtractorModule::store(Value& val, std::vector<std::string>& dst)
 {
     dst.clear();
@@ -120,8 +114,12 @@ void ExtractorModule::store(Value& val, std::vector<std::string>& dst)
     std::string tok;
     while (val.get_next_csv_token(tok))
     {
-        trim(tok);
-        dst.push_back(tok);
+        Value helper(tok.c_str());
+        helper.set_first_token();
+        std::string refined;
+
+        while (helper.get_next_token(refined))
+            dst.push_back(refined);
     }
 }
 

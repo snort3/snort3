@@ -1377,6 +1377,100 @@ default_js_norm =
 }
 
 ---------------------------------------------------------------------------
+-- default advanced logging
+---------------------------------------------------------------------------
+
+default_extractor_common_fields =
+    'ts uid pkt_num tenant_id id.orig_h id.orig_p id.resp_h id.resp_p '
+
+default_extractor_conn_fields =
+    'proto service conn_state history duration orig_pkts resp_pkts orig_bytes resp_bytes'
+
+default_extractor_dns_fields =
+    'proto trans_id query qclass qclass_name qtype qtype_name rcode rcode_name ' ..
+    'AA TC RD RA Z rejected answers TTLs auth addl'
+
+default_extractor_file_fields =
+    'fuid source analyzers is_orig seen_bytes total_bytes duration timedout ' ..
+    'filename mime_type extracted extracted_cutoff extracted_size sha256'
+
+default_extractor_ftp_fields =
+    'command arg user reply_code reply_msg file_size ' ..
+    'data_channel.passive data_channel.orig_h data_channel.resp_h data_channel.resp_p'
+
+default_extractor_http_fields =
+    'method host uri user_agent referrer origin version status_code status_msg trans_depth ' ..
+    'request_body_len response_body_len info_code info_msg proxied ' ..
+    'orig_filenames resp_filenames orig_mime_types resp_mime_types'
+
+default_extractor_notice_fields =
+    'action gid sid rev msg refs proto source'
+
+default_extractor_quic_fields =
+    'version history server_name client_protocol client_initial_dcid client_scid server_scid'
+
+default_extractor_ssh_fields =
+    'version direction  kex_alg host_key_alg cipher_alg mac_alg compression_alg ' ..
+    'client.version client.kex_alg client.host_key_alg client.cipher_c2s_alg client.cipher_s2c_alg ' ..
+    'client.mac_c2s_alg client.mac_s2c_alg client.compression_c2s_alg client.compression_s2c_alg ' ..
+    'server.version server.kex_alg server.host_key_alg server.cipher_c2s_alg server.cipher_s2c_alg ' ..
+    'server.mac_c2s_alg server.mac_s2c_alg server.compression_c2s_alg server.compression_s2c_alg'
+
+default_extractor_ssl_fields =
+    'version server_name curve cipher subject issuer validation_status module_identifier'
+
+default_extractor_weird_fields =
+    'gid sid msg proto source'
+
+default_extractor =
+{
+    formatting = 'json',
+    connector = 'stdout', -- this requires `std_connector = { }`
+    time = 'snort',
+    default_filter = 'pick',
+
+    protocols =
+    {
+        {
+            service = 'conn', on_events = 'eof',
+            fields = default_extractor_common_fields .. default_extractor_conn_fields
+        },
+        {
+            service = 'dns', on_events = 'response',
+            fields = default_extractor_common_fields .. default_extractor_dns_fields
+        },
+        {
+            service = 'file', on_events = 'eof',
+            fields = default_extractor_common_fields .. default_extractor_file_fields
+        },
+        {
+            service = 'ftp', on_events = 'request response eot',
+            fields = default_extractor_common_fields .. default_extractor_ftp_fields
+        },
+        {
+            service = 'http', on_events = 'eot',
+            fields = default_extractor_common_fields .. default_extractor_http_fields
+        },
+        {
+            service = 'notice', on_events = 'ips_logging',
+            fields = default_extractor_common_fields .. default_extractor_notice_fields
+        },
+        {
+            service = 'ssh', on_events = 'algorithm',
+            fields = default_extractor_common_fields .. default_extractor_ssh_fields
+        },
+        {
+            service = 'ssl', on_events = 'tls_metadata_event',
+            fields = default_extractor_common_fields .. default_extractor_ssl_fields
+        },
+        {
+            service = 'weird', on_events = 'builtin',
+            fields = default_extractor_common_fields .. default_extractor_weird_fields
+        }
+    }
+}
+
+---------------------------------------------------------------------------
 -- default whitelist
 ---------------------------------------------------------------------------
 default_whitelist =
@@ -1396,6 +1490,7 @@ default_whitelist =
     default_hi_port_scan default_med_port_scan default_low_port_scan
     default_variables netflow_versions default_js_norm_ident_ignore
     default_js_norm_prop_ignore default_js_norm
+    default_extractor
 ]]
 
 snort_whitelist_append(default_whitelist)

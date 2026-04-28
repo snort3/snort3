@@ -270,6 +270,7 @@ rate_filter =
 -- additional logs
 --packet_capture = { }
 --file_log = { }
+--std_connector = { }; extractor = default_extractor
 
 ---------------------------------------------------------------------------
 -- 8. configure tweaks
