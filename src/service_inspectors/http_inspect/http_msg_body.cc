@@ -108,13 +108,7 @@ void HttpMsgBody::publish(unsigned pub_id)
         (pub_depth_remaining == 0);
 
     // Publish entire request/response body limited dynamically
-    int32_t should_publish_body = 0;
-    if (is_request)
-        flow->get_attr(STASH_PUBLISH_REQUEST_BODY, should_publish_body);
-    else
-        flow->get_attr(STASH_PUBLISH_RESPONSE_BODY, should_publish_body);
-
-    if (should_publish_body)
+    if (transaction->should_publish_body(source_id))
     {
         HttpBodyEvent http_body_event(msg_text_new.start(), publish_length, is_request,
             last_piece);
@@ -264,13 +258,7 @@ void HttpMsgBody::analyze()
         // max-publish-depth peg count.
         if (pub_depth_remaining == 0)
         {
-            const bool is_request = (source_id == SRC_CLIENT);
-            int32_t should_publish_body = 0;
-            if (is_request)
-                flow->get_attr(STASH_PUBLISH_REQUEST_BODY, should_publish_body);
-            else
-                flow->get_attr(STASH_PUBLISH_RESPONSE_BODY, should_publish_body);
-            if (should_publish_body)
+            if (transaction->should_publish_body(source_id))
             {
                 HttpModule::increment_peg_counts(PEG_MAX_PUBLISH_DEPTH_HITS);
             }

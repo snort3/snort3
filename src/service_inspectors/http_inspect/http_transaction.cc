@@ -108,7 +108,7 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
             // the current request has arrived before the previous response (pipelining). We need
             // to add this transaction to our pipeline where it will wait for the matching
             // response. But there are some special cases to check first.
-            if (session_data->transaction[SRC_CLIENT]->response_seen)
+            if (session_data->transaction[SRC_CLIENT]->has_flag(TransactionFlag::TF_RESPONSE_SEEN))
             {
                 // The response started before the request finished. When the response took the
                 // old request transaction it did not leave the usual nullptr because we still
@@ -154,9 +154,9 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
     // interim response. The two responses cannot coexist so we must clean up the interim response.
     else if ((session_data->section_type[source_id] == SEC_STATUS) &&
              (session_data->transaction[SRC_SERVER] != nullptr) &&
-              session_data->transaction[SRC_SERVER]->second_response_expected)
+              session_data->transaction[SRC_SERVER]->has_flag(TransactionFlag::TF_SECOND_RESPONSE_EXPECTED))
     {
-        session_data->transaction[SRC_SERVER]->second_response_expected = false;
+        session_data->transaction[SRC_SERVER]->clear_flag(TransactionFlag::TF_SECOND_RESPONSE_EXPECTED);
         session_data->transaction[SRC_SERVER]->archive_status(
             session_data->transaction[SRC_SERVER]->status);
         session_data->transaction[SRC_SERVER]->status = nullptr;
@@ -182,7 +182,7 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
             nullptr)
         {
             if ((session_data->transaction[SRC_CLIENT] == nullptr) ||
-                (session_data->transaction[SRC_CLIENT]->response_seen))
+                (session_data->transaction[SRC_CLIENT]->has_flag(TransactionFlag::TF_RESPONSE_SEEN)))
             {
                 // Either there is no request at all or there is a request but a previous response
                 // already took it. Either way we have more responses than requests.
@@ -202,11 +202,11 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
             {
                 // Response message is starting before the request message has finished. Request
                 // side is not finished with this transaction so two sides share it
-                session_data->transaction[SRC_CLIENT]->shared_ownership = true;
+                session_data->transaction[SRC_CLIENT]->set_flag(TransactionFlag::TF_SHARED_OWNERSHIP);
                 session_data->transaction[SRC_SERVER] = session_data->transaction[SRC_CLIENT];
             }
         }
-        session_data->transaction[SRC_SERVER]->response_seen = true;
+        session_data->transaction[SRC_SERVER]->set_flag(TransactionFlag::TF_RESPONSE_SEEN);
 
         // Move in server infractions now that the response is attached here
         session_data->transaction[SRC_SERVER]->infractions[SRC_SERVER] =
@@ -264,7 +264,7 @@ void HttpTransaction::delete_transaction(HttpTransaction* transaction, HttpFlowD
 {
     if (transaction != nullptr)
     {
-        if (!transaction->shared_ownership)
+        if (!transaction->has_flag(TransactionFlag::TF_SHARED_OWNERSHIP))
         {
             if ((transaction->active_sections > 0) && (session_data != nullptr))
             {
@@ -275,7 +275,7 @@ void HttpTransaction::delete_transaction(HttpTransaction* transaction, HttpFlowD
                 delete transaction;
         }
         else
-            transaction->shared_ownership = false;
+            transaction->clear_flag(TransactionFlag::TF_SHARED_OWNERSHIP);
     }
 }
 
@@ -306,14 +306,14 @@ HttpInfractions* HttpTransaction::get_infractions(SourceId source_id)
 
 void HttpTransaction::set_one_hundred_response()
 {
-    assert(response_seen);
-    if (one_hundred_response)
+    assert(has_flag(TransactionFlag::TF_RESPONSE_SEEN));
+    if (has_flag(TransactionFlag::TF_ONE_HUNDRED_RESPONSE))
     {
         *infractions[SRC_SERVER] += INF_MULTIPLE_100_RESPONSES;
         session_data->events[SRC_SERVER]->create_event(EVENT_MULTIPLE_100_RESPONSES);
     }
-    one_hundred_response = true;
-    second_response_expected = true;
+    set_flag(TransactionFlag::TF_ONE_HUNDRED_RESPONSE);
+    set_flag(TransactionFlag::TF_SECOND_RESPONSE_EXPECTED);
 }
 
 inline bool is_info_code(int32_t code) 

@@ -167,8 +167,7 @@ private:
         SSE_CR_EMPTY_LINE,
     };
 
-    FlushContext dangerous(const uint8_t* data, uint32_t length,
-        HttpInfractions* infractions, HttpEventGen* events);
+    FlushContext dangerous(const DecompressOutput& decompress_output);
     bool find_partial(const uint8_t*, uint32_t, bool);
     bool has_sse_boundary(const uint8_t* data, uint32_t length);
 

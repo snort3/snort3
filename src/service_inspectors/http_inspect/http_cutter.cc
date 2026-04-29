@@ -970,33 +970,21 @@ ScanResult HttpBodyHXCutter::cut(const uint8_t* buffer, uint32_t length, HttpInf
 HttpBodyCutter::FlushContext HttpBodyCutter::analyze_body(const uint8_t* data, uint32_t length,
     HttpInfractions* infractions, HttpEventGen* events)
 {
-    if ( !accelerated_blocking )
-    {
-        const auto [_, consumed] = decompress(data, length, infractions, events);
-        assert(consumed <= length);
+    const auto decompress_output = decompress(data, length, infractions, events);
+    assert(decompress_output.consumed <= length);
 
-        if ( (sse_state != SSE_DISABLED) &&
-            (session_data->compress[source_id] == nullptr) && has_sse_boundary(data, consumed) )
-        {
-            return { consumed, FlushContext::PUBLISH };
-        }
-
-        return { consumed, FlushContext::NONE };
-    }
-
-    auto result = dangerous(data, length, infractions, events);
-    assert(result.consumed <= length);
+    auto result = accelerated_blocking
+        ? dangerous(decompress_output)
+        : FlushContext{decompress_output.consumed, FlushContext::NONE};
 
     if ( result.is_accelerate() )
         HttpModule::increment_peg_counts(PEG_SCRIPT_DETECTION);
 
-    // FIXIT-E blank-line boundary detection currently inspects only the raw response body.
-    // That is sufficient for the current work in progress, but compressed response bodies need
-    // decompression-aware boundary accounting later.
-    if ( result.is_none() && (sse_state != SSE_DISABLED) &&
-        (session_data->compress[source_id] == nullptr) && has_sse_boundary(data, result.consumed) )
+    if ( result.is_none() && (sse_state != SSE_DISABLED) && decompress_output.decompressed )
     {
-        result.decision = FlushContext::PUBLISH;
+        const auto [decoded_data, decoded_length] = *decompress_output.decompressed;
+        if ( has_sse_boundary(decoded_data, decoded_length) )
+            result.decision = FlushContext::PUBLISH;
     }
 
     return result;
@@ -1085,10 +1073,10 @@ bool HttpBodyCutter::find_partial(const uint8_t* input_buf, uint32_t input_lengt
 }
 
 // Currently we do accelerated blocking when we see a javascript
-HttpBodyCutter::FlushContext HttpBodyCutter::dangerous(const uint8_t* data, uint32_t length,
-    HttpInfractions* infractions, HttpEventGen* events)
+HttpBodyCutter::FlushContext HttpBodyCutter::dangerous(const DecompressOutput& decompress_output)
 {
-    const auto [decompressed, consumed] = decompress(data, length, infractions, events);
+    const auto& decompressed = decompress_output.decompressed;
+    const auto consumed = decompress_output.consumed;
 
     if ( !decompressed )
         return { consumed, FlushContext::ACCELERATE };

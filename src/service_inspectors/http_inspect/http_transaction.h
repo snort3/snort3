@@ -59,11 +59,25 @@ public:
     HttpInfractions* get_infractions(HttpCommon::SourceId);
 
     void set_one_hundred_response();
-    bool final_response() const { return !second_response_expected; }
+    bool final_response() const
+    { return !has_flag(TransactionFlag::TF_SECOND_RESPONSE_EXPECTED); }
+
     bool should_publish_on_sse_event_boundary() const
-    { return publish_on_sse_event_boundary; }
+    { return has_flag(TransactionFlag::TF_PUBLISH_ON_SSE_EVENT_BOUNDARY); }
+
     void set_publish_on_sse_event_boundary()
-    { publish_on_sse_event_boundary = true; }
+    { set_flag(TransactionFlag::TF_PUBLISH_ON_SSE_EVENT_BOUNDARY); }
+
+    bool should_publish_body(HttpCommon::SourceId source_id) const
+    { return has_flag(get_publish_body_flag(source_id)); }
+
+    void set_should_publish_body(HttpCommon::SourceId source_id, bool should_publish)
+    {
+        if (should_publish)
+            set_flag(get_publish_body_flag(source_id));
+        else
+            clear_flag(get_publish_body_flag(source_id));
+    }
 
     void add_body_len(HttpCommon::SourceId source_id, uint64_t len)
     { body_len[source_id] += len; }
@@ -107,17 +121,42 @@ private:
     HttpMsgSection* archive_hdr_list = nullptr;
     HttpInfractions* infractions[2];
 
-    // FIXIT-E compact these flags into a bitset or packed field if more per-transaction
-    // flags are added; separate bool members are easy to add but waste space.
-    bool response_seen = false;
-    bool one_hundred_response = false;
-    bool second_response_expected = false;
+    enum class TransactionFlag : uint16_t
+    {
+        TF_RESPONSE_SEEN = 1 << 0,
+        TF_ONE_HUNDRED_RESPONSE = 1 << 1,
+        TF_SECOND_RESPONSE_EXPECTED = 1 << 2,
 
-    // This is a form of reference counting that prevents premature/double deletion of a
-    // transaction in the fairly rare case where the request and response are received in
-    // parallel.
-    bool shared_ownership = false;
-    bool publish_on_sse_event_boundary = false;
+        // This is a form of reference counting that prevents premature/double deletion of a
+        // transaction in the fairly rare case where the request and response are received in
+        // parallel.
+        TF_SHARED_OWNERSHIP = 1 << 3,
+        TF_PUBLISH_ON_SSE_EVENT_BOUNDARY = 1 << 4,
+
+        TF_PUBLISH_BODY_CLIENT = 1 << 5,
+        TF_PUBLISH_BODY_SERVER = 1 << 6,
+    };
+
+    static constexpr TransactionFlag get_publish_body_flag(HttpCommon::SourceId source_id)
+    {
+        return (source_id == HttpCommon::SRC_CLIENT) ?
+            TransactionFlag::TF_PUBLISH_BODY_CLIENT :
+            TransactionFlag::TF_PUBLISH_BODY_SERVER;
+    }
+
+    static constexpr uint16_t to_mask(TransactionFlag flag)
+    { return static_cast<uint16_t>(flag); }
+
+    bool has_flag(TransactionFlag flag) const
+    { return (flags & to_mask(flag)) != 0; }
+
+    void set_flag(TransactionFlag flag)
+    { flags |= to_mask(flag); }
+
+    void clear_flag(TransactionFlag flag)
+    { flags &= static_cast<uint16_t>(~to_mask(flag)); }
+
+    uint16_t flags = 0;
 
     unsigned pub_id;
     snort::Flow* const flow;

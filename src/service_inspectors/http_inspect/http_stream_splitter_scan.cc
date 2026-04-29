@@ -250,6 +250,8 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
         if (cut_result == SCAN_NOT_FOUND_ACCELERATE ||
             cut_result == SCAN_NOT_FOUND_PARTIAL_PUBLISH)
         {
+            // publish-only partial flush uses the full scanned segment length,
+            // not SSE boundary-aligned offset.
             prep_partial_flush(flow, length, cutter->get_num_excess(), cutter->get_num_head_lines(),
                 (cut_result == SCAN_NOT_FOUND_ACCELERATE) ? PF_DETECT : PF_PUBLISH);
 #ifdef REG_TEST
@@ -411,4 +413,3 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
 
     return call_cutter(flow, session_data, data, length, flush_offset, type);
 }
-

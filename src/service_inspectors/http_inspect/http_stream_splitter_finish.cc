@@ -36,6 +36,7 @@
 #include "http_msg_header.h"
 #include "http_msg_request.h"
 #include "http_test_input.h"
+#include "http_transaction.h"
 
 using namespace HttpCommon;
 using namespace HttpEnums;
@@ -199,13 +200,8 @@ bool HttpStreamSplitter::finish(Flow* flow)
         // If we were publishing a request or response body need to publish that body is complete
         if (session_data->publish_depth_remaining[source_id] > 0)
         {
-            int32_t should_publish_body = 0;
-            if (source_id == SRC_CLIENT)
-                flow->get_attr(STASH_PUBLISH_REQUEST_BODY, should_publish_body);
-            else
-                flow->get_attr(STASH_PUBLISH_RESPONSE_BODY, should_publish_body);
-
-            if (should_publish_body)
+            HttpTransaction* transaction = session_data->transaction[source_id];
+            if (transaction && transaction->should_publish_body(source_id))
             {
                 HttpBodyEvent http_body_event(nullptr, 0, (source_id == SRC_CLIENT), true);
                 DataBus::publish(my_inspector->get_pub_id(), HttpEventIds::BODY, http_body_event, flow);
