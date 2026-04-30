@@ -45,8 +45,8 @@ class QuicExtractorFlowData : public ExtractorFlowData
 public:
     static constexpr ServiceType type_id = ServiceType::QUIC;
 
-    QuicExtractorFlowData(QuicExtractor& owner)
-        : ExtractorFlowData(type_id), owner(owner)
+    QuicExtractorFlowData(QuicExtractor& owner, const Flow& origin)
+        : ExtractorFlowData(origin, type_id), owner(owner)
     {
         owner.get_inspector().add_ref();
     }
@@ -190,6 +190,13 @@ void ExtractorEvent::log<vector<QuicExtractor::FdStrField>, const QuicExtractorF
     }
 }
 
+template<typename T>
+void log(ExtractorLogger* logger, const T& fields, const QuicExtractorFlowData* fd)
+{
+    for (const auto& f : fields)
+        logger->add_field(f.name, f.get(nullptr, &fd->flow));
+}
+
 void QuicExtractor::dump(const QuicExtractorFlowData& fd)
 {
     Profile profile(extractor_perf_stats);
@@ -199,13 +206,9 @@ void QuicExtractor::dump(const QuicExtractorFlowData& fd)
 
     logger->open_record();
 
-    for (const auto& f : nts_fields)
-        logger->add_field(f.name, fd.ts);
-    for (const auto& f : sip_fields)
-        logger->add_field(f.name, "");
-    for (const auto& f : num_fields)
-        logger->add_field(f.name, (uint64_t)0);
-
+    ::log(logger, nts_fields, &fd);
+    ::log(logger, sip_fields, &fd);
+    ::log(logger, num_fields, &fd);
     log(fd_str_fields, &fd, logger->is_strict());
 
     logger->close_record(*log_id);
@@ -222,7 +225,7 @@ void QuicExtractor::ClientHello::handle(DataEvent& event, Flow* flow)
     auto fd = ExtractorFlowData::get<QuicExtractorFlowData>(flow);
 
     if (!fd)
-        flow->set_flow_data(fd = new QuicExtractorFlowData(owner));
+        flow->set_flow_data(fd = new QuicExtractorFlowData(owner, *flow));
     else if (fd->has_data)
     {
         // log existing flow data
@@ -264,7 +267,7 @@ void QuicExtractor::HandshakeComplete::handle(DataEvent& event, Flow* flow)
     auto fd = ExtractorFlowData::get<QuicExtractorFlowData>(flow);
 
     if (!fd)
-        flow->set_flow_data(fd = new QuicExtractorFlowData(owner));
+        flow->set_flow_data(fd = new QuicExtractorFlowData(owner, *flow));
 
     const auto& quic_event = static_cast<const QuicHandshakeCompleteEvent&>(event);
 

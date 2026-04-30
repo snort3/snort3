@@ -43,8 +43,11 @@ public:
         return nullptr;
     }
 
+    const snort::Flow& flow;
+
 protected:
-    ExtractorFlowData(ServiceType type) : FlowData(data_id), type(type) {}
+    ExtractorFlowData(const snort::Flow& flow, ServiceType type)
+        : FlowData(data_id), flow(flow), type(type) {}
 
 private:
     const ServiceType type;

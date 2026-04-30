@@ -173,8 +173,8 @@ class SshExtractorFlowData : public ExtractorFlowData
 public:
     static constexpr ServiceType type_id = ServiceType::SSH;
 
-    SshExtractorFlowData(SshExtractor& owner)
-        : ExtractorFlowData(type_id), owner(owner)
+    SshExtractorFlowData(SshExtractor& owner, const Flow& origin)
+        : ExtractorFlowData(origin, type_id), owner(owner)
     {
         owner.get_inspector().add_ref();
     }
@@ -412,6 +412,13 @@ void ExtractorEvent::log<vector<SshExtractor::FdBufField>, const SshExtractorFlo
     }
 }
 
+template<typename T>
+void log(ExtractorLogger* logger, const T& fields, const SshExtractorFlowData* fd)
+{
+    for (const auto& f : fields)
+        logger->add_field(f.name, f.get(nullptr, &fd->flow));
+}
+
 void SshExtractor::Version::handle(DataEvent& event, Flow* flow)
 {
     // cppcheck-suppress unreadVariable
@@ -430,7 +437,7 @@ void SshExtractor::Version::handle(DataEvent& event, Flow* flow)
     auto fd = ExtractorFlowData::get<SshExtractorFlowData>(flow);
 
     if (!fd)
-        flow->set_flow_data(fd = new SshExtractorFlowData(owner));
+        flow->set_flow_data(fd = new SshExtractorFlowData(owner, *flow));
 
     auto direction = ssh_event.get_direction();
     bool c2s = PKT_FROM_CLIENT == direction;
@@ -478,7 +485,7 @@ void SshExtractor::Validation::handle(DataEvent& event, Flow* flow)
     auto fd = ExtractorFlowData::get<SshExtractorFlowData>(flow);
 
     if (!fd)
-        flow->set_flow_data(fd = new SshExtractorFlowData(owner));
+        flow->set_flow_data(fd = new SshExtractorFlowData(owner, *flow));
 
     // log existing flow data
     if (more)
@@ -538,15 +545,10 @@ void SshExtractor::dump(const SshExtractorFlowData& fd)
 
     logger->open_record();
 
-    for (const auto& f : nts_fields)
-        logger->add_field(f.name, fd.ts);
-    for (const auto& f : sip_fields)
-        logger->add_field(f.name, "");
-    for (const auto& f : num_fields)
-        logger->add_field(f.name, (uint64_t)0);
-    for (const auto& f : buf_fields)
-        logger->add_field(f.name, "");
-
+    ::log(logger, nts_fields, &fd);
+    ::log(logger, sip_fields, &fd);
+    ::log(logger, num_fields, &fd);
+    // ::log(logger, buf_fields, &fd); excluded as it needs an event
     log(fd_num_fields, &fd);
     log(fd_buf_fields, &fd);
 

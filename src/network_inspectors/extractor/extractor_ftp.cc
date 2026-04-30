@@ -293,8 +293,8 @@ class FtpExtractorFlowData : public ExtractorFlowData
 public:
     static constexpr ServiceType type_id = ServiceType::FTP;
 
-    FtpExtractorFlowData(FtpExtractor& owner)
-        : ExtractorFlowData(type_id), owner(owner)
+    FtpExtractorFlowData(FtpExtractor& owner, const Flow& origin)
+        : ExtractorFlowData(origin, type_id), owner(owner)
     {
         owner.get_inspector().add_ref();
     }
@@ -521,6 +521,13 @@ void ExtractorEvent::log<vector<FtpExtractor::FdSubField>, const FtpExtractorFlo
     }
 }
 
+template<typename T>
+void log(ExtractorLogger* logger, const T& fields, const FtpExtractorFlowData* fd)
+{
+    for (const auto& f : fields)
+        logger->add_field(f.name, f.get(nullptr, &fd->flow));
+}
+
 static const string commands_to_log = "RETR, STOR, PASV, PORT, DELE, APPE, EPRT, EPSV, STOU, ACCT";
 
 void FtpExtractor::Req::handle(DataEvent& event, Flow* flow)
@@ -536,7 +543,7 @@ void FtpExtractor::Req::handle(DataEvent& event, Flow* flow)
     auto fd = ExtractorFlowData::get<FtpExtractorFlowData>(flow);
 
     if (!fd)
-        flow->set_flow_data(fd = new FtpExtractorFlowData(owner));
+        flow->set_flow_data(fd = new FtpExtractorFlowData(owner, *flow));
     else if (!fd->cmd.empty())
     {
         // log existing flow data
@@ -635,13 +642,9 @@ void FtpExtractor::dump(const FtpExtractorFlowData& fd)
 
     logger->open_record();
 
-    for (const auto& f : nts_fields)
-        logger->add_field(f.name, fd.ts);
-    for (const auto& f : sip_fields)
-        logger->add_field(f.name, "");
-    for (const auto& f : num_fields)
-        logger->add_field(f.name, (uint64_t)0);
-
+    ::log(logger, nts_fields, &fd);
+    ::log(logger, sip_fields, &fd);
+    ::log(logger, num_fields, &fd);
     log(fd_buf_fields, &fd);
     log(fd_sip_fields, &fd);
     log(fd_num_fields, &fd);
