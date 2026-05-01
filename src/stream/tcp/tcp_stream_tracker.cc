@@ -613,6 +613,25 @@ void TcpStreamTracker::init_on_data_seg_recv(const TcpSegmentDescriptor& tsd)
     tcp_state = TcpStreamTracker::TCP_MID_STREAM_RECV;
 }
 
+void TcpStreamTracker::init_on_late_synack(TcpSegmentDescriptor& tsd)
+{
+    iss = tsd.get_seq();
+    snd_wnd = tsd.get_wnd();
+    snd_nxt = tsd.get_end_seq();
+    assert(!SEQ_LT(snd_nxt, snd_una));
+
+    tf_flags |= normalizer.get_tcp_timestamp(tsd, false);
+    ts_last = tsd.get_timestamp();
+    if ( ts_last != 0 )
+        ts_last_packet = tsd.get_packet_timestamp();
+    else
+        tf_flags |= TF_TSTAMP_ZERO;
+
+    tf_flags |= ( tsd.init_mss(&mss) | tsd.init_wscale(&wscale) );
+
+    cache_mac_address(tsd, FROM_SERVER);
+}
+
 void TcpStreamTracker::finish_server_init(TcpSegmentDescriptor& tsd)
 {
     iss = tsd.get_seq();
@@ -1051,4 +1070,3 @@ bool TcpStreamTracker::adjust_expiration(uint32_t new_timeout_ms, const timeval&
     assert(hpq);
     return hpq->adjust_expiration(new_timeout_ms, now);
 }
-

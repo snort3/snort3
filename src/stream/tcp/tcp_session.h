@@ -120,6 +120,7 @@ public:
     void mark_packet_for_drop(TcpSegmentDescriptor&);
     void handle_data_segment(TcpSegmentDescriptor&, bool flush = true);
     bool validate_packet_established_session(TcpSegmentDescriptor&);
+    void handle_late_synack(TcpSegmentDescriptor&);
 
     void count_stale_packet() override
     { tcpStats.stale_packets++; }
@@ -170,7 +171,6 @@ private:
     void update_session_on_server_packet(TcpSegmentDescriptor&);
     void update_session_on_client_packet(TcpSegmentDescriptor&);
     bool is_hole_present(TcpStreamTracker*, snort::Packet*);
-
     TcpStateMachine* tsm;
     bool splitter_init = false;
     bool no_ack = false;

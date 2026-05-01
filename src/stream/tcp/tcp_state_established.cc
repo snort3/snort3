@@ -49,11 +49,6 @@ bool TcpStateEstablished::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateEstablished::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    // FIXIT-M there may be an issue when syn/ack from server is seen
-    // after ack from client which causes some tracker state variables to
-    // not be initialized... update_tracker_ack_sent may fix that but needs
-    // more testing
-    //trk.update_tracker_ack_sent( tsd );
     Flow* flow = tsd.get_flow();
     if ( !(flow->session_state & STREAM_STATE_ESTABLISHED) )
     {
@@ -63,7 +58,10 @@ bool TcpStateEstablished::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTrack
     }
 
     if ( trk.is_server_tracker() )
+    {
         trk.normalizer.ecn_tracker(tsd.get_tcph());
+        trk.session->handle_late_synack(tsd);
+    }
 
     return true;
 }

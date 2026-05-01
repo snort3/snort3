@@ -283,6 +283,7 @@ public:
     void init_on_synack_recv(const TcpSegmentDescriptor&);
     void init_on_data_seg_sent(TcpSegmentDescriptor&);
     void init_on_data_seg_recv(const TcpSegmentDescriptor&);
+    void init_on_late_synack(TcpSegmentDescriptor&);
     void finish_server_init(TcpSegmentDescriptor&);
     void finish_client_init(const TcpSegmentDescriptor&);
 

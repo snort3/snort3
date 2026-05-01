@@ -132,6 +132,7 @@ struct TcpStats
     PegCount asymmetric_flows;
     PegCount max_bytes_exceeded_hole;
     PegCount max_segs_exceeded_hole;
+    PegCount ooo_3whs_late_synack;
 };
 
 extern THREAD_LOCAL struct TcpStats tcpStats;

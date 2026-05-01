@@ -134,6 +134,7 @@ const PegInfo tcp_pegs[] =
     { CountType::SUM, "asymmetric_flows", "number of completed flows having one-way traffic only" },
     { CountType::SUM, "max_bytes_exceeded_hole", "number of times max bytes were exceeded due to a hole" },
     { CountType::SUM, "max_segs_exceeded_hole", "number of times max segs were exceeded due to a hole" },
+    { CountType::SUM, "ooo_3whs_late_synack", "late SYN-ACK hydrated server tracker; wscale/snd_wnd repaired if negotiated" },
     { CountType::END, nullptr, nullptr }
 };
 
