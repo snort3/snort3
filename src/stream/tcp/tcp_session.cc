@@ -1049,34 +1049,34 @@ void TcpSession::init_tcp_packet_analysis(TcpSegmentDescriptor& tsd)
     set_window_scale(tsd);
 }
 
-// Out-of-order 3WHS: SYN → ACK → SYN-ACK.
-// Hydrate the server tracker with options it missed (wscale, mss, timestamps).
+// Out-of-order 3WHS: SYN -> ACK -> SYN-ACK.
+// Repair server-side stream state with options it missed (wscale, mss, timestamps).
 // When both sides negotiated window scaling, repair snd_wnd on both sides.
 //
-// Safety guards (any failure → no repair):
-//   • only fires once: server.iss is 0 until init_on_late_synack() sets it  (FIXIT-L zero ISN)
-//   • no server-to-client data has already been queued
-//   • SYN-ACK must ack exactly client ISS+1 (acks the SYN)
-//   • client ACK seq == client ISS+1 (the 3WHS ACK, not a keepalive)
-//   • server.snd_una == SYN-ACK seq+1 (the 3WHS ACK was for this SYN-ACK)
+// Safety guards (any failure -> no repair):
+//   - only fires once: server.iss is 0 until init_on_late_synack() sets it  (FIXIT-L zero ISN)
+//   - no server-to-client data has already been queued
+//   - SYN-ACK must ack exactly client ISS+1 (acks the SYN)
+//   - client ACK seq == client ISS+1 (the 3WHS ACK, not a keepalive)
+//   - server.snd_una == SYN-ACK seq+1 (the 3WHS ACK was for this SYN-ACK)
 // If the SYN-ACK carries data, it is queued after repair but before listener-side
 // handshake finalization advances rcv_nxt past the SYN payload.
 void TcpSession::handle_late_synack(TcpSegmentDescriptor& tsd)
 {
-    if ( server.get_iss() )  // FIXIT-L zero ISN edge case — consistent with existing code
+    if ( server.get_iss() )  // FIXIT-L zero ISN edge case - consistent with existing code
         return;
 
     if ( client.seglist.data_was_queued() )
     {
         if ( PacketTracer::is_active() )
-            PacketTracer::log("stream_tcp: OOO 3WHS: skipped – server data already queued.\n");
+            PacketTracer::log("stream_tcp: OOO 3WHS: skipped - server data already queued.\n");
         return;
     }
 
     if ( !SEQ_EQ(tsd.get_ack(), client.get_iss() + 1) )
     {
         if ( PacketTracer::is_active() )
-            PacketTracer::log("stream_tcp: OOO 3WHS: skipped – SYN-ACK ack != client ISS+1.\n");
+            PacketTracer::log("stream_tcp: OOO 3WHS: skipped - SYN-ACK ack != client ISS+1.\n");
         return;
     }
 
@@ -1085,7 +1085,7 @@ void TcpSession::handle_late_synack(TcpSegmentDescriptor& tsd)
     if ( !SEQ_EQ(server.r_win_base, client.get_iss() + 1) )
     {
         if ( PacketTracer::is_active() )
-            PacketTracer::log("stream_tcp: OOO 3WHS: skipped – server r_win_base already advanced.\n");
+            PacketTracer::log("stream_tcp: OOO 3WHS: skipped - server r_win_base already advanced.\n");
         return;
     }
 
@@ -1094,7 +1094,7 @@ void TcpSession::handle_late_synack(TcpSegmentDescriptor& tsd)
     if ( !SEQ_EQ(server.get_snd_una(), tsd.get_seq() + 1) )
     {
         if ( PacketTracer::is_active() )
-            PacketTracer::log("stream_tcp: OOO 3WHS: skipped – SYN-ACK seq mismatch.\n");
+            PacketTracer::log("stream_tcp: OOO 3WHS: skipped - SYN-ACK seq mismatch.\n");
         return;
     }
 
@@ -1110,9 +1110,7 @@ void TcpSession::handle_late_synack(TcpSegmentDescriptor& tsd)
     tcpStats.ooo_3whs_late_synack++;
 
     if ( PacketTracer::is_active() )
-        PacketTracer::log("stream_tcp: OOO 3WHS: late SYN-ACK hydrated server tracker%s.\n",
-            ((client.get_tf_flags() & TF_WSCALE) and (server.get_tf_flags() & TF_WSCALE))
-                ? "; wscale and snd_wnd repaired" : "");
+        PacketTracer::log("stream_tcp: OOO 3WHS: repaired server-side stream state from late SYN-ACK.\n");
 
     if ( tsd.is_data_segment() )
     {
