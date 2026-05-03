@@ -28,6 +28,7 @@
 #include "sf_ip.h"
 
 #include <cmath> // For ceil
+#include <cstring>
 
 #include "utils/util.h"
 #include "utils/util_net.h"
@@ -314,7 +315,7 @@ SfIpRet SfIp::set(const void* src, int fam)
     {
         ip32[0] = ip32[1] = ip16[4] = 0;
         ip16[5] = 0xffff;
-        ip32[3] = *(const uint32_t*)src;
+        memcpy(&ip32[3], src, sizeof(ip32[3]));
     }
     else if (family == AF_INET6)
         memcpy(ip8, src, 16);
@@ -327,11 +328,21 @@ SfIpRet SfIp::set(const void* src, int fam)
 SfIpRet SfIp::set(const void* src)
 {
     assert(src);
-    if ( ((const uint32_t*)src)[0] == 0 &&
-         ((const uint32_t*)src)[1] == 0 &&
-         ((const uint16_t*)src)[4] == 0 &&
-         ((const uint16_t*)src)[5] == 0xffff )
-        return set(&((const uint32_t*)src)[3], AF_INET);
+
+    const uint8_t* bytes = static_cast<const uint8_t*>(src);
+    uint32_t word0;
+    uint32_t word1;
+    uint16_t word4;
+    uint16_t word5;
+
+    memcpy(&word0, bytes, sizeof(word0));
+    memcpy(&word1, bytes + sizeof(word0), sizeof(word1));
+    memcpy(&word4, bytes + 4 * sizeof(uint16_t), sizeof(word4));
+    memcpy(&word5, bytes + 5 * sizeof(uint16_t), sizeof(word5));
+
+    if ( word0 == 0 && word1 == 0 && word4 == 0 && word5 == 0xffff )
+        return set(bytes + 3 * sizeof(uint32_t), AF_INET);
+
     return set(src, AF_INET6);
 }
 

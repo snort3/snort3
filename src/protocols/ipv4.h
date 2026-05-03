@@ -21,6 +21,7 @@
 #define PROTOCOLS_IPV4_H
 
 #include <arpa/inet.h>
+#include <cstring>
 
 #include "protocols/protocol_ids.h" // include ipv4 protocol numbers
 
@@ -100,10 +101,10 @@ struct IP4Hdr
 
     /* booleans */
     inline bool is_src_broadcast() const
-    { return ip_src == IP4_BROADCAST; }
+    { return get_src() == IP4_BROADCAST; }
 
     inline bool is_dst_broadcast() const
-    { return ip_dst == IP4_BROADCAST; }
+    { return get_dst() == IP4_BROADCAST; }
 
     inline bool has_options() const
     { return hlen() > 20; }
@@ -122,10 +123,18 @@ struct IP4Hdr
     { return ip_csum; }
 
     inline uint32_t get_src() const
-    { return ip_src; }
+    {
+        uint32_t value;
+        memcpy(&value, &ip_src, sizeof(value));
+        return value;
+    }
 
     inline uint32_t get_dst() const
-    { return ip_dst; }
+    {
+        uint32_t value;
+        memcpy(&value, &ip_dst, sizeof(value));
+        return value;
+    }
 
     /*  setters  */
     inline void set_hlen(uint8_t value)
@@ -158,4 +167,3 @@ inline bool isPrivateIP(uint32_t addr)
 } // namespace snort
 /* tcpdump shows us the way to cross platform compatibility */
 #endif
-
