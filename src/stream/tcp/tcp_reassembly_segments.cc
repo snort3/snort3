@@ -293,7 +293,7 @@ void TcpReassemblySegments::dup_reassembly_segment(TcpSegmentNode* left, TcpSegm
 
     // twiddle the values for overlaps
     tsn->cursor = left->cursor;
-    tsn->seq = left->seq;
+    tsn->seq = left->start_seq();
     insert_segment_data(left, tsn);
 
     *retSeg = tsn;

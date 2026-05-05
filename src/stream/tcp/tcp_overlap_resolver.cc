@@ -286,14 +286,36 @@ void TcpOverlapResolver::left_overlap_keep_last(TcpOverlapState& tos)
             tos.seglist.dup_reassembly_segment(tos.left, &tos.right);
 
             tos.left->length -= tos.overlap;
-            uint16_t delta = tos.seq_end - tos.left->start_seq();
-            tos.right->length -= delta;
-            tos.right->offset += delta;
+
+            // The slide invariant (tos.seq >= r_win_base >= start_seq + cursor)
+            // guarantees cursor <= new length, but clamp defensively.
+            if ( tos.left->cursor > tos.left->length )
+                tos.left->cursor = tos.left->length;
+
+            uint32_t delta = tos.seq_end - tos.left->start_seq();
+            tos.right->length -= (uint16_t)delta;
+            tos.right->offset += (uint16_t)delta;
+
+            // Rebase cursor: it was relative to the pre-split left's offset,
+            // but the right's offset has shifted by delta.  Clamp so it cannot
+            // exceed the right's new length.
+            if ( tos.right->cursor > (uint16_t)delta )
+                tos.right->cursor -= (uint16_t)delta;
+            else
+                tos.right->cursor = 0;
+
+            if ( tos.right->cursor > tos.right->length )
+                tos.right->cursor = tos.right->length;
+
             tos.seglist.seg_bytes_logical -= tos.len;
         }
         else
         {
             tos.left->length -= (int16_t)tos.overlap;
+
+            if ( tos.left->cursor > tos.left->length )
+                tos.left->cursor = tos.left->length;
+
             tos.seglist.seg_bytes_logical -= tos.overlap;
         }
     }
