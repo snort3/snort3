@@ -226,7 +226,9 @@ struct InspectorVector
     {
         for ( auto& insd : iv )
         {
-            if ( insd.pin and (insd.needs_tinit or all) )
+            // Put all first so full init short-circuits and avoids a race
+            // on needs_tinit during reload.
+            if ( insd.pin and (all or insd.needs_tinit) )
                 insd.pin->tinit();
         }
     }
@@ -235,7 +237,9 @@ struct InspectorVector
     {
         for ( auto& insd : iv )
         {
-            if ( insd.pin and (insd.needs_tterm or all) )
+            // Put all first so full term short-circuits and avoids reading
+            // needs_tterm when terminating every inspector.
+            if ( insd.pin and (all or insd.needs_tterm) )
             {
                 set_network_policy(insd.np);
                 insd.pin->tterm();
@@ -1536,4 +1540,3 @@ void InspectorManager::release(Inspector* pi)
     assert(pi);
     pi->rem_global_ref();
 }
-
