@@ -66,6 +66,7 @@ int sf_unfold_header(const uint8_t* inbuf, uint32_t inbuf_size, uint8_t* outbuf,
             {
                 /* Spaces are valid except after CRs */
                 *outbuf_ptr++ = *cursor;
+                n++;
             }
         }
         else if ((*cursor == '\n') && (httpheaderfolding != 1))
@@ -191,4 +192,44 @@ int sf_strip_LWS(const uint8_t* inbuf, uint32_t inbuf_size, uint8_t* outbuf,
 }
 
 }
+
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+TEST_CASE("sf_unfold_header input size limit", "[util]")
+{
+    const uint8_t input[8] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
+    const uint32_t input_size = sizeof(input);
+
+    uint8_t output[1024];
+    const uint32_t output_size = sizeof(output);
+    uint32_t output_len = 0;
+    int is_folded = -1;
+
+    int ret = snort::sf_unfold_header(input, input_size, output, output_size, &output_len, 0, &is_folded);
+
+    CHECK(ret == 0);
+    CHECK(output_len == input_size);
+    CHECK(is_folded == 0);
+}
+
+TEST_CASE("sf_unfold_header output size limit", "[util]")
+{
+    const uint8_t input[8] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
+    const uint32_t input_size = sizeof(input);
+
+    uint8_t output[8];
+    const uint32_t output_size = sizeof(output) / 2;
+    uint32_t output_len = 0;
+    int is_folded = -1;
+
+    int ret = snort::sf_unfold_header(input, input_size, output, output_size, &output_len, 0, &is_folded);
+
+    CHECK(ret == 0);
+    CHECK(output_len == output_size);
+    CHECK(is_folded == 0);
+}
+
+#endif
 
