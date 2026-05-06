@@ -168,7 +168,12 @@ void ReactActiveAction::delayed_exec(Packet* p)
     // cppcheck-suppress unreadVariable
     Profile profile(reactPerfStats);
 
-    if ( p->active->is_reset_candidate(p) )
+    if ( !p->active->is_reset_candidate(p) )
+        return;
+
+    if (p->active->packet_would_be_dropped())
+        p->active->block_session(p);
+    else
         send(p);
 }
 

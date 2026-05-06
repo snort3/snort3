@@ -113,6 +113,9 @@ void RejectActiveAction::delayed_exec(Packet* p)
 
     Profile profile(rejPerfStats);
 
+    if ( act->packet_would_be_dropped() )
+        return;
+
     switch ( p->type() )
     {
     case PktType::TCP:

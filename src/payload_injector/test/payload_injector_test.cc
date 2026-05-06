@@ -214,6 +214,7 @@ TEST(payload_injector_test, not_configured_stream_not_established)
     Packet p(false);
     set_not_configured();
     p.flow = &flow;
+    p.active = &active;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http_injects == 0);
     CHECK(counts->err_injector_not_configured == 1);
@@ -228,6 +229,7 @@ TEST(payload_injector_test, not_configured_stream_established)
     Packet p(false);
     set_not_configured();
     p.flow = &flow;
+    p.active = &active;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http_injects == 0);
     CHECK(counts->failed_injects == 1);
@@ -241,6 +243,7 @@ TEST(payload_injector_test, configured_stream_not_established)
     Packet p(false);
     set_configured();
     p.flow = &flow;
+    p.active = &active;
     flow.update_session_flags(0);
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http_injects == 0);
@@ -274,6 +277,7 @@ TEST(payload_injector_test, http2_stream0)
     mock_api.base.name = "http2_inspect";
     flow.gadget = new MockInspector();
     p.flow = &flow;
+    p.active = &active;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http2_injects == 0);
     CHECK(counts->failed_injects == 1);
@@ -292,6 +296,7 @@ TEST(payload_injector_test, http2_even_stream_id)
     mock_api.base.name = "http2_inspect";
     flow.gadget = new MockInspector();
     p.flow = &flow;
+    p.active = &active;
     control.stream_id = 2;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http2_injects == 0);
@@ -339,6 +344,7 @@ TEST(payload_injector_test, unidentified_gadget_name)
     mock_api.base.name = "inspector";
     flow.gadget = new MockInspector();
     p.flow = &flow;
+    p.active = &active;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http_injects == 0);
     CHECK(counts->failed_injects == 1);
@@ -355,6 +361,7 @@ TEST(payload_injector_test, http2_mid_frame)
     mock_api.base.name = "http2_inspect";
     flow.gadget = new MockInspector();
     p.flow = &flow;
+    p.active = &active;
     control.stream_id = 1;
     http2_flow_data.set_mid_frame(true);
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
@@ -389,6 +396,7 @@ TEST(payload_injector_test, flow_is_null)
 {
     Packet p(false);
     set_configured();
+    p.active = &active;
     InjectionReturnStatus status = PayloadInjector::inject_http_payload(&p, control);
     CHECK(counts->http_injects == 0);
     CHECK(counts->failed_injects == 1);
@@ -540,6 +548,7 @@ TEST_GROUP(payload_injector_translate_err_test)
     InjectionControl control;
     PayloadInjectorCounts* counts = (PayloadInjectorCounts*)mod.get_counts();
     Flow flow;
+    Active active;
     InjectionReturnStatus status = INJECTION_SUCCESS;
 
     void setup() override
@@ -573,6 +582,7 @@ TEST(payload_injector_translate_err_test, http2_page_translation_err)
     Packet p(false);
     set_configured();
     p.flow = &flow;
+    p.active = &active;
     translation_status = ERR_PAGE_TRANSLATION;
     status = PayloadInjector::inject_http_payload(&p, control);
     const char* err_string = PayloadInjector::get_err_string(status);
@@ -585,6 +595,7 @@ TEST(payload_injector_translate_err_test, http2_hdrs_size)
     Packet p(false);
     set_configured();
     p.flow = &flow;
+    p.active = &active;
     translation_status = ERR_TRANSLATED_HDRS_SIZE;
     status = PayloadInjector::inject_http_payload(&p, control);
     const char* err_string = PayloadInjector::get_err_string(status);
