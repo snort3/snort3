@@ -156,6 +156,8 @@ public:
             snort_free(tls_sni);
         if (!new_tls_sni or *new_tls_sni == '\0')
         {
+            if (!len and new_tls_sni)
+                snort_free(const_cast<char*>(new_tls_sni));
             tls_sni = nullptr;
             return;
         }
@@ -169,6 +171,8 @@ public:
             snort_free(tls_first_alt_name);
         if (!new_tls_first_alt_name or *new_tls_first_alt_name == '\0')
         {
+            if (!len and new_tls_first_alt_name)
+                snort_free(const_cast<char*>(new_tls_first_alt_name));
             tls_first_alt_name = nullptr;
             return;
         }
@@ -182,6 +186,8 @@ public:
             snort_free(tls_cname);
         if (!new_tls_cname or *new_tls_cname == '\0')
         {
+            if (!len and new_tls_cname)
+                snort_free(const_cast<char*>(new_tls_cname));
             tls_cname = nullptr;
             return;
         }
@@ -195,6 +201,8 @@ public:
             snort_free(tls_org_unit);
         if (!new_tls_org_unit or *new_tls_org_unit == '\0')
         {
+            if (!len and new_tls_org_unit)
+                snort_free(const_cast<char*>(new_tls_org_unit));
             tls_org_unit = nullptr;
             return;
         }
