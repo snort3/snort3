@@ -30,6 +30,8 @@
 #include "protocols/layer.h"
 #include "protocols/packet.h"
 #include "stream/stream.h"
+#include "stream/stream_log.h"
+#include "trace/trace.h"
 
 namespace snort
 {
@@ -52,6 +54,7 @@ THREAD_LOCAL PacketTracer* PacketTracer::s_pkt_trace = nullptr;
 
 PacketTracer::~PacketTracer() = default;
 void PacketTracer::log(const char*, ...) { }
+void PacketTracer::daq_log(const char*, ...) { }
 void PacketTracer::open_file() { }
 void PacketTracer::dump_to_daq(Packet*) { }
 void PacketTracer::reset(bool) { }
@@ -59,7 +62,23 @@ void PacketTracer::pause() { }
 void PacketTracer::unpause() { }
 bool PacketTracer::is_paused() { return true; }
 bool PacketTracer::is_active() { return false; }
+bool PacketTracer::is_daq_activated() { return false; }
+uint64_t PacketTracer::get_time() { return 0; }
 
+THREAD_LOCAL const snort::Trace* stream_tcp_trace = nullptr;
+THREAD_LOCAL bool stream_tcp_trace_enabled = false;
+} // namespace snort
+
+void stream_daq_log_start() { }
+void stream_daq_log_end(snort::Packet*) { }
+void stream_log(const snort::Packet*, const char*, ...) { }
+void flow_log(const char*, ...) { }
+void StreamLog::add_ip_header_info(const snort::Packet&, bool) { }
+void StreamLog::add_eth_header_info(const snort::Packet&) { }
+void StreamLog::add_packet_type_info(const snort::Packet&) { }
+
+namespace snort
+{
 namespace layer
 {
 const vlan::VlanTagHdr* get_vlan_layer(const Packet* const) { return nullptr; }

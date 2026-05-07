@@ -26,9 +26,8 @@
 #include "tcp_normalizer.h"
 
 #include "detection/detection_engine.h"
-#include "packet_io/packet_tracer.h"
 #include "stream/stream.h"
-#include "trace/trace.h"
+#include "stream/stream_log.h"
 #include "trace/trace_api.h"
 
 #include "tcp_session.h"
@@ -62,9 +61,8 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
         default:
             break;
         }
-        if (PacketTracer::is_active())
-            PacketTracer::log("Current TCP window : [ %u - %u ]\n",
-                tns.tracker->r_win_base, tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
+        stream_log(tsd.get_pkt(), "Current TCP window : [ %u - %u ]\n",
+            tns.tracker->r_win_base, tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
         tns.tracker->seglist.print_stream_state(tsd.get_talker());
         trim_win_payload(tns, tsd, 0, inline_mode);
         return NORM_BAD_SEQ;
@@ -89,9 +87,8 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
             if ( !data_inside_window(tns, tsd) )
             {
                 log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Data is outside the TCP Window\n");
-                if (PacketTracer::is_active())
-                    PacketTracer::log("Current TCP window : [ %u - %u ]\n"
-                    , tns.tracker->r_win_base, tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
+                stream_log(tsd.get_pkt(), "Current TCP window : [ %u - %u ]\n",
+                    tns.tracker->r_win_base, tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
                 tns.tracker->seglist.print_stream_state(tsd.get_talker());
                 trim_win_payload(tns, tsd, 0, inline_mode);
                 return NORM_TRIMMED;
@@ -197,8 +194,8 @@ bool TcpNormalizer::trim_syn_payload(
     
     if (len > max)
     {
-        if ( PacketTracer::is_active() && (NormMode)tns.trim_syn == NORM_MODE_ON )
-            PacketTracer::log("stream_tcp: TCP normalizer - Trimming payload of SYN packet "
+        if ( (NormMode)tns.trim_syn == NORM_MODE_ON )
+            stream_log(tsd.get_pkt(), "stream_tcp: TCP normalizer - Trimming payload of SYN packet "
                 "with length (%u) to a maximum value of %u\n", len, max);
 
         return trim_payload(tns, tsd, max, (NormMode)tns.trim_syn, PC_TCP_TRIM_SYN);
@@ -213,8 +210,8 @@ void TcpNormalizer::trim_rst_payload(
 
     if (len > max)
     {
-        if ( PacketTracer::is_active() && (NormMode)tns.trim_rst == NORM_MODE_ON )
-            PacketTracer::log("stream_tcp: TCP normalizer - Trimming payload of RST packet "
+        if ( (NormMode)tns.trim_rst == NORM_MODE_ON )
+            stream_log(tsd.get_pkt(), "stream_tcp: TCP normalizer - Trimming payload of RST packet "
                 "with length (%u) to a maximum value of %u\n", len, max);
 
         trim_payload(tns, tsd, max, (NormMode)tns.trim_rst, PC_TCP_TRIM_RST);
@@ -228,8 +225,8 @@ void TcpNormalizer::trim_win_payload(
 
     if (len > max)
     {
-        if ( PacketTracer::is_active() && (force || (NormMode)tns.trim_win == NORM_MODE_ON) )
-            PacketTracer::log("stream_tcp: TCP normalizer - Trimming payload with length (%u) "
+        if ( force || (NormMode)tns.trim_win == NORM_MODE_ON )
+            stream_log(tsd.get_pkt(), "stream_tcp: TCP normalizer - Trimming payload with length (%u) "
                 "to a maximum value of %u\n", len, max);
 
         trim_payload(tns, tsd, max, (NormMode)tns.trim_win, PC_TCP_TRIM_WIN, force);
@@ -243,8 +240,8 @@ void TcpNormalizer::trim_mss_payload(
 
     if (len > max)
     {
-        if ( PacketTracer::is_active() && (NormMode)tns.trim_mss == NORM_MODE_ON )
-            PacketTracer::log("stream_tcp: TCP normalizer - Trimming payload with length (%u) "
+        if ( (NormMode)tns.trim_mss == NORM_MODE_ON )
+            stream_log(tsd.get_pkt(), "stream_tcp: TCP normalizer - Trimming payload with length (%u) "
                 "to fit MSS size (%u)\n", len, max);
 
         trim_payload(tns, tsd, max, (NormMode)tns.trim_mss, PC_TCP_TRIM_MSS);
@@ -349,17 +346,15 @@ TcpNormalizer::RstStatus TcpNormalizer::validate_rst_seq_os_hpux11(
     // FIXIT-M check for rcv_nxt == 0 is hack for uninitialized rcv_nxt
     if ( ( tns.tracker->rcv_nxt == 0 ) || SEQ_GEQ(tsd.get_seq(), tns.tracker->rcv_nxt) )
     {
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("stream_tcp: RST is valid for OS HPUX 11, seq %u >= rcv_nxt %u.\n",
-                tsd.get_seq(), tns.tracker->rcv_nxt);
+        stream_log(tsd.get_pkt(), "stream_tcp: RST is valid for OS HPUX 11, seq %u >= rcv_nxt %u.\n",
+            tsd.get_seq(), tns.tracker->rcv_nxt);
 
         tcpStats.rsts_ok_rfc793++;
         return RST_OK;
     }
 
-    if ( PacketTracer::is_active() )
-        PacketTracer::log("stream_tcp: RST is NOT valid for OS HPUX 11, seq %u <rcv_nxt %u.\n",
-            tsd.get_seq(), tns.tracker->rcv_nxt);
+    stream_log(tsd.get_pkt(), "stream_tcp: RST is NOT valid for OS HPUX 11, seq %u <rcv_nxt %u.\n",
+        tsd.get_seq(), tns.tracker->rcv_nxt);
 
     tcpStats.rsts_bad_seq++;
     return RST_BAD_SEQ;
@@ -375,29 +370,26 @@ TcpNormalizer::RstStatus TcpNormalizer::is_rst_seq_valid_rfc793(
     {
         if ( SEQ_LEQ(rst_seq, tns.tracker->r_win_base + window) )
         {
-            if ( PacketTracer::is_active() )
-                PacketTracer::log("stream_tcp: RST is valid, seq %u is in window. Current TCP window : [ %u - %u ]\n",
-                    rst_seq, tns.tracker->r_win_base, 
-                    tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
-        
+            stream_log(tsd.get_pkt(), "stream_tcp: RST is valid, seq %u is in window. Current TCP window : [ %u - %u ]\n",
+                rst_seq, tns.tracker->r_win_base,
+                tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
+
             tcpStats.rsts_ok_rfc793++;
             return RST_OK;
         }
         else if ( window == 0 )
         {
-            if ( PacketTracer::is_active() )
-                PacketTracer::log("stream_tcp: RST is valid, the window is closed, seq %u is >= base of window: %u\n",
-                    rst_seq, tns.tracker->r_win_base);
-        
+            stream_log(tsd.get_pkt(), "stream_tcp: RST is valid, the window is closed, seq %u is >= base of window: %u\n",
+                rst_seq, tns.tracker->r_win_base);
+
             tcpStats.rsts_ok_rfc793++;
             return RST_OK;
         }
     }
-    
-    if ( PacketTracer::is_active() )
-        PacketTracer::log("stream_tcp: RST is invalid, seq %u not in window. Current TCP window : [ %u - %u ]\n",
-            rst_seq, tns.tracker->r_win_base, 
-            tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
+
+    stream_log(tsd.get_pkt(), "stream_tcp: RST is invalid, seq %u not in window. Current TCP window : [ %u - %u ]\n",
+        rst_seq, tns.tracker->r_win_base,
+        tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
         
     tcpStats.rsts_bad_seq++;
     return RST_BAD_SEQ;
@@ -413,9 +405,8 @@ TcpNormalizer::RstStatus TcpNormalizer::is_rst_seq_valid_rfc5961(
 
     if ( SEQ_EQ(rst_seq, my_rcv_nxt) )
     {
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("stream_tcp: RST is valid, seq %u matches rcv_nxt %u.\n",
-                rst_seq, my_rcv_nxt);
+        stream_log(tsd.get_pkt(), "stream_tcp: RST is valid, seq %u matches rcv_nxt %u.\n",
+            rst_seq, my_rcv_nxt);
 
         tcpStats.rsts_ok_rfc5961++;
         return RST_OK;
@@ -424,29 +415,26 @@ TcpNormalizer::RstStatus TcpNormalizer::is_rst_seq_valid_rfc5961(
     {
         if ( SEQ_LEQ(rst_seq, tns.tracker->r_win_base + window) )
         {
-            if ( PacketTracer::is_active() )
-                PacketTracer::log("stream_tcp: RST is valid, seq %u is in window. Current TCP window : [ %u - %u ]\n",
-                    rst_seq, tns.tracker->r_win_base, 
-                    tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
-        
+            stream_log(tsd.get_pkt(), "stream_tcp: RST is valid, seq %u is in window. Current TCP window : [ %u - %u ]\n",
+                rst_seq, tns.tracker->r_win_base,
+                tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
+
             tcpStats.rsts_in_window++;
             return RST_IN_WINDOW;
         }
         else if ( window == 0 )
         {
-            if ( PacketTracer::is_active() )
-                PacketTracer::log("stream_tcp: RST is valid, the window is closed, seq %u is >= base of window: %u\n",
-                    rst_seq, tns.tracker->r_win_base);
-        
+            stream_log(tsd.get_pkt(), "stream_tcp: RST is valid, the window is closed, seq %u is >= base of window: %u\n",
+                rst_seq, tns.tracker->r_win_base);
+
             tcpStats.rsts_ok_rfc5961++;
             return RST_OK;
         }
     }
 
-    if ( PacketTracer::is_active() )
-        PacketTracer::log("stream_tcp: RST is invalid, seq %u is left of window base. Current TCP window : [ %u - %u ]\n",
-            rst_seq, tns.tracker->r_win_base, 
-            tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
+    stream_log(tsd.get_pkt(), "stream_tcp: RST is invalid, seq %u is left of window base. Current TCP window : [ %u - %u ]\n",
+        rst_seq, tns.tracker->r_win_base,
+        tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
 
     tcpStats.rsts_bad_seq++;
     return RST_BAD_SEQ;
@@ -606,10 +594,7 @@ void TcpNormalizer::log_drop_reason(TcpNormalizerState& tns, const TcpSegmentDes
     if ( force || (NormMode)tns.trim_win == NORM_MODE_ON )
     {
         tsd.get_pkt()->active->set_drop_reason(issuer);
-        if (PacketTracer::is_active())
-            PacketTracer::log("stream_tcp: %s", log.c_str());
-        if (stream_tcp_trace_enabled)
-            trace_logf(TRACE_WARNING_LEVEL, stream_tcp_trace, DEFAULT_TRACE_OPTION_ID, tsd.get_pkt(), "%s", log.c_str());
+        stream_log(tsd.get_pkt(), "stream_tcp: %s", log.c_str());
     }
 }
 

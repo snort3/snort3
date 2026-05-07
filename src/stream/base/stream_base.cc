@@ -34,6 +34,7 @@
 #include "managers/inspector_manager.h"
 #include "packet_io/packet_tracer.h"
 #include "profiler/profiler_defs.h"
+#include "stream/stream_log.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "pub_sub/stream_event_ids.h"
@@ -336,6 +337,9 @@ void StreamBase::eval(Packet* p)
 {
     Profile profile(s5PerfStats);
 
+    if ( PacketTracer::is_daq_activated() )
+        PacketTracer::restart_timer();
+
     if ( !is_eligible(p) )
         return;
 
@@ -343,8 +347,7 @@ void StreamBase::eval(Packet* p)
     {
     case PktType::NONE:
         stream_base_stats.no_flow_pkt_type_none++;
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("Flow: packet without flow - packet type is NONE\n");
+        stream_log(p, "Flow: packet without flow - packet type is NONE\n");
         break;
 
     case PktType::IP:
@@ -450,4 +453,3 @@ static const InspectApi base_api =
 };
 
 const BaseApi* nin_stream_base = &base_api.base;
-

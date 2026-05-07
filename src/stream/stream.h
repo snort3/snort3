@@ -277,6 +277,9 @@ public:
     static void delete_held_packet_queue();
     static HeldPacketQueue* get_held_packet_queue();
 
+    static void daq_log_start();
+    static void daq_log_end(Packet*);
+
 private:
     static void set_ip_protocol(Flow*);
 };

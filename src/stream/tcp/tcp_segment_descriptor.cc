@@ -26,8 +26,8 @@
 #include "tcp_segment_descriptor.h"
 
 #include "detection/rules.h"
-#include "packet_io/packet_tracer.h"
 #include "protocols/tcp_options.h"
+#include "stream/stream_log.h"
 
 #include "tcp_defs.h"
 #include "tcp_event_logger.h"
@@ -170,11 +170,8 @@ uint32_t TcpSegmentDescriptor::init_wscale(uint16_t* value)
 
 void TcpSegmentDescriptor::set_retransmit_flag()
 {
-    if ( PacketTracer::is_active() )
-    {
-        PacketTracer::log("stream_tcp: Packet was retransmitted and %s from the retry queue.\n",
-            pkt->is_retry() ? "is" : "is not");
-    }
+    stream_log(pkt, "stream_tcp: Packet was retransmitted and %s from the retry queue.\n",
+        pkt->is_retry() ? "is" : "is not");
 
     // Mark the packet as being a re-transmit if it's not from the retry
     // queue. That way we can avoid adding re-transmitted packets to
@@ -182,5 +179,4 @@ void TcpSegmentDescriptor::set_retransmit_flag()
     if ( !pkt->is_retry() )
         pkt->packet_flags |= PKT_RETRANSMIT;
 }
-
 

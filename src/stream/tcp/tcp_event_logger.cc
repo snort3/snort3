@@ -29,7 +29,7 @@
 #include "detection/rules.h"
 #include "filters/sfrf.h"
 #include "main/snort_config.h"
-#include "packet_io/packet_tracer.h"
+#include "stream/stream_log.h"
 
 #include "tcp_module.h"
 
@@ -88,13 +88,11 @@ void TcpEventLogger::log_tcp_events()
         if ( idx )
         {
             DetectionEngine::queue_event(GID_STREAM_TCP, tcp_event_sids[idx].sid);
-            if ( PacketTracer::is_active() )
-                PacketTracer::log("stream_tcp: TCP raised %u:%u %s\n",
-                    GID_STREAM_TCP, tcp_event_sids[idx].sid,
-                    tcp_event_sids[idx].event_description);
+            stream_log(DetectionEngine::get_current_packet(), "stream_tcp: TCP raised %u:%u %s\n",
+                GID_STREAM_TCP, tcp_event_sids[idx].sid,
+                tcp_event_sids[idx].event_description);
             tcp_events ^= tcp_event_sids[idx].event_id;
             tcpStats.events++;
         }
     }
 }
-

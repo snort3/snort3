@@ -199,6 +199,7 @@ static bool process_packet(Packet* p)
 
     daq_stats.rx_bytes += p->pktlen;
 
+    Stream::daq_log_start();
     PacketTracer::activate(*p);
 
     p->user_inspection_policy_id = get_inspection_policy()->user_policy_id;
@@ -379,7 +380,10 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
             packet_trace_dump(p, verdict, msg_was_held);
 
         if (PacketTracer::is_daq_activated())
+        {
+            Stream::daq_log_end(p);
             PacketTracer::daq_dump(p);
+        }
 
         if (verdict == DAQ_VERDICT_BLOCK or verdict == DAQ_VERDICT_BLACKLIST)
             p->active->send_reason_to_daq(*p);
@@ -399,7 +403,10 @@ void Analyzer::post_process_daq_pkt_msg(Packet* p)
             packet_trace_dump(p, verdict, msg_was_held);
 
         if (PacketTracer::is_daq_activated())
+        {
+            Stream::daq_log_end(p);
             PacketTracer::daq_dump(p);
+        }
     }
 }
 

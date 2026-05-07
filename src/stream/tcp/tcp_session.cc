@@ -52,12 +52,12 @@
 #include "detection/rules.h"
 #include "framework/data_bus.h"
 #include "log/log.h"
-#include "packet_io/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "protocols/eth.h"
 #include "pub_sub/intrinsic_event_ids.h"
 #include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
+#include "stream/stream_log.h"
 
 #include "stream_tcp.h"
 #include "tcp_ha.h"
@@ -976,8 +976,8 @@ bool TcpSession::cleanup_session_if_expired(Packet* p)
     // the packet...Insert a packet, or handle state change SYN, FIN, RST, etc.
     if ( Stream::expired_flow(flow, p) )
     {
-        if ( PacketTracer::is_active() and p and p->ptrs.tcph )
-            PacketTracer::log("Stream TCP session expired with session flags 0x%x, flow state %hhu, and seq %u\n",
+        if ( p and p->ptrs.tcph )
+            stream_log(p, "Stream TCP session expired with session flags 0x%x, flow state %hhu, and seq %u\n",
                 flow->get_session_flags(), static_cast<uint8_t>(flow->flow_state), p->ptrs.tcph->seq());
         /* Session is timed out, if also reset then restart, otherwise clear */
         if ( flow->get_session_flags() & SSNFLAG_RESET )
@@ -1068,15 +1068,13 @@ void TcpSession::handle_late_synack(TcpSegmentDescriptor& tsd)
 
     if ( client.seglist.data_was_queued() )
     {
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("stream_tcp: OOO 3WHS: skipped - server data already queued.\n");
+        stream_log(tsd.get_pkt(), "stream_tcp: OOO 3WHS: skipped - server data already queued.\n");
         return;
     }
 
     if ( !SEQ_EQ(tsd.get_ack(), client.get_iss() + 1) )
     {
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("stream_tcp: OOO 3WHS: skipped - SYN-ACK ack != client ISS+1.\n");
+        stream_log(tsd.get_pkt(), "stream_tcp: OOO 3WHS: skipped - SYN-ACK ack != client ISS+1.\n");
         return;
     }
 
@@ -1084,8 +1082,7 @@ void TcpSession::handle_late_synack(TcpSegmentDescriptor& tsd)
     // session is no longer in the clean pre-data state required for safe repair.
     if ( !SEQ_EQ(server.r_win_base, client.get_iss() + 1) )
     {
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("stream_tcp: OOO 3WHS: skipped - server r_win_base already advanced.\n");
+        stream_log(tsd.get_pkt(), "stream_tcp: OOO 3WHS: skipped - server r_win_base already advanced.\n");
         return;
     }
 
@@ -1093,8 +1090,7 @@ void TcpSession::handle_late_synack(TcpSegmentDescriptor& tsd)
     // the ACK was for exactly this SYN-ACK.
     if ( !SEQ_EQ(server.get_snd_una(), tsd.get_seq() + 1) )
     {
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("stream_tcp: OOO 3WHS: skipped - SYN-ACK seq mismatch.\n");
+        stream_log(tsd.get_pkt(), "stream_tcp: OOO 3WHS: skipped - SYN-ACK seq mismatch.\n");
         return;
     }
 
@@ -1109,8 +1105,7 @@ void TcpSession::handle_late_synack(TcpSegmentDescriptor& tsd)
 
     tcpStats.ooo_3whs_late_synack++;
 
-    if ( PacketTracer::is_active() )
-        PacketTracer::log("stream_tcp: OOO 3WHS: repaired server-side stream state from late SYN-ACK.\n");
+    stream_log(tsd.get_pkt(), "stream_tcp: OOO 3WHS: repaired server-side stream state from late SYN-ACK.\n");
 
     if ( tsd.is_data_segment() )
     {
@@ -1142,7 +1137,7 @@ int TcpSession::process_tcp_packet(TcpSegmentDescriptor& tsd, const Packet* p)
     tsm->eval(tsd);
     check_events_and_actions(tsd);
 
-    if ( stream_tcp_trace_enabled )
+    if ( stream_tcp_trace_enabled_debug )
         S5TraceTCP(tsd, p);
 
     return ACTION_NOTHING;
@@ -1558,13 +1553,8 @@ bool TcpSession::is_hole_present(TcpStreamTracker* listener, snort::Packet* pkt)
     {
         if ( hole_size )
         {
-            if ( PacketTracer::is_active() )
-                PacketTracer::log("stream_tcp: Hole detected at seq %u of size %u bytes\n", \
-                                  leftmost_hole, hole_size);
-
-            if ( stream_tcp_trace_enabled && pkt )
-                trace_logf(TRACE_WARNING_LEVEL, stream_tcp_trace, DEFAULT_TRACE_OPTION_ID, pkt, \
-                          "stream_tcp: Hole detected at seq %u of size %u bytes\n", leftmost_hole, hole_size);
+            stream_log(pkt, "stream_tcp: Hole detected at seq %u of size %u bytes\n",
+                leftmost_hole, hole_size);
             return true;
         }
         return false;

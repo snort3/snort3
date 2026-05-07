@@ -38,8 +38,8 @@
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
 #include "packet_io/active.h"
-#include "packet_io/packet_tracer.h"
 #include "protocols/vlan.h"
+#include "stream_log.h"
 #include "pub_sub/stream_event_ids.h"
 #include "stream/base/stream_module.h"
 #include "target_based/host_attributes.h"
@@ -184,10 +184,9 @@ bool Stream::midstream_allowed(const Packet* p, bool alert)
     {
         DetectionEngine::queue_event(GID_STREAM_TCP, STREAM_TCP_NO_3WHS);
         
-        if ( PacketTracer::is_active() )
         {
             time_t elapsed = p->pkth->ts.tv_sec - packet_first_time();
-            PacketTracer::log("Stream: midstream pickup disabled - require_3whs timeout exceeded "
+            stream_log(p, "Stream: midstream pickup disabled - require_3whs timeout exceeded "
                 "(hs_timeout=%d sec, elapsed=%ld sec since startup)\n", t, elapsed);
         }
     }
@@ -233,8 +232,7 @@ void Stream::check_flow_closed(Packet* p)
             drop_traffic(p, SSN_DIR_BOTH);
             if (p->active)
                 p->active->set_drop_reason("stream");
-            if (PacketTracer::is_active())
-                PacketTracer::log("Stream: pending block, drop\n");
+            stream_log(p, "Stream: pending block, drop\n");
         }
         flow->clear_session_state(STREAM_STATE_BLOCK_PENDING);
     }
@@ -351,8 +349,7 @@ void Stream::drop_flow(const Packet* p)
         drop_traffic(p, SSN_DIR_BOTH);
 
     p->active->set_drop_reason("stream");
-    if (PacketTracer::is_active())
-        PacketTracer::log("Stream: session has been dropped\n");
+    stream_log(p, "Stream: session has been dropped\n");
 }
 
 //-------------------------------------------------------------------------
@@ -640,8 +637,7 @@ bool Stream::blocked_flow(Packet* p)
         p->active->drop_packet(p);
         active_response(p, flow);
         p->active->set_drop_reason("stream");
-        if (PacketTracer::is_active())
-            PacketTracer::log("Stream: session was already blocked\n");
+        stream_log(p, "Stream: session was already blocked\n");
         return true;
     }
     return false;
@@ -904,6 +900,12 @@ void Stream::delete_held_packet_queue()
     hpq = nullptr;
 }
 
+void Stream::daq_log_start()
+{ stream_daq_log_start(); }
+
+void Stream::daq_log_end(Packet* p)
+{ stream_daq_log_end(p); }
+
 //-------------------------------------------------------------------------
 // pub sub foo
 //-------------------------------------------------------------------------
@@ -1048,4 +1050,3 @@ TEST_CASE("Stream API", "[stream_api][stream]")
 }
 
 #endif
-

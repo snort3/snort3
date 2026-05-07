@@ -31,9 +31,9 @@
 #include "log/log.h"
 #include "main/analyzer.h"
 #include "packet_io/active.h"
-#include "packet_io/packet_tracer.h"
 #include "profiler/profiler.h"
 #include "protocols/packet_manager.h"
+#include "stream/stream_log.h"
 #include "time/packet_time.h"
 
 #include "tcp_module.h"
@@ -161,11 +161,11 @@ void TcpReassemblerIds::skip_seglist_hole()
         tracker.bytes_missing += hole_size;
         tracker.holes_detected++;
 
-        if (PacketTracer::is_active())
-            PacketTracer::log("stream_tcp: IDS mode - skipping hole from %u to %u, size: %u"
-                " total holes: %u, total bytes skipped: %lu total bytes missing: %lu\n", 
-                old_seglist_base_seq, seglist.seglist_base_seq,
-                hole_size, tracker.holes_detected, tracker.bytes_skipped, tracker.bytes_missing);
+        stream_log(DetectionEngine::get_current_packet(),
+            "stream_tcp: IDS mode - skipping hole from %u to %u, size: %u"
+            " total holes: %u, total bytes skipped: %lu total bytes missing: %lu\n",
+            old_seglist_base_seq, seglist.seglist_base_seq,
+            hole_size, tracker.holes_detected, tracker.bytes_skipped, tracker.bytes_missing);
 
         if ( is_splitter_paf() )
             tracker.fallback();
@@ -175,8 +175,8 @@ void TcpReassemblerIds::skip_seglist_hole()
             paf.paf_reset();
             tcpStats.splitter_restarts++;
             
-            if (PacketTracer::is_active())
-                PacketTracer::log("stream_tcp: IDS mode - splitter restarted due to seglist hole\n");
+            stream_log(DetectionEngine::get_current_packet(),
+                "stream_tcp: IDS mode - splitter restarted due to seglist hole\n");
         }
             
         seglist.cur_rseg = seglist.head;
@@ -257,8 +257,7 @@ int TcpReassemblerIds::eval_asymmetric_flush(snort::Packet* p)
     uint32_t flushed = eval_flush_policy_on_ack(p);
     if ( flushed )
     {
-        if (PacketTracer::is_active())
-            PacketTracer::log("stream_tcp: IDS mode - %u bytes flushed on asymmetric flow\n", flushed);
+        stream_log(p, "stream_tcp: IDS mode - %u bytes flushed on asymmetric flow\n", flushed);
         tcpStats.flush_on_asymmetric_flow++;
     }
 
@@ -282,4 +281,3 @@ int TcpReassemblerIds::flush_stream(Packet* p, uint32_t dir, bool final_flush)
 
     return 0;
 }
-

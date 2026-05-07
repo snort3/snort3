@@ -25,11 +25,12 @@
 
 #include <sstream>
 
+#include "detection/detection_engine.h"
 #include "tcp_reassembly_segments.h"
 
 #include "log/messages.h"
-#include "packet_io/packet_tracer.h"
 #include "protocols/tcp.h"
+#include "stream/stream_log.h"
 
 #include "tcp_module.h"
 #include "tcp_overlap_resolver.h"
@@ -122,7 +123,8 @@ bool TcpReassemblySegments::segment_within_seglist_window(TcpSegmentDescriptor& 
 
 void TcpReassemblySegments::print_stream_state(TcpStreamTracker* talker)
 {
-    if ( !PacketTracer::is_active() )
+    if ( !snort::PacketTracer::is_active() and !snort::PacketTracer::is_daq_activated()
+        and !stream_tcp_trace_enabled )
         return;
 
     std::stringstream ss;
@@ -138,7 +140,7 @@ void TcpReassemblySegments::print_stream_state(TcpStreamTracker* talker)
     if( cur_rseg )
         ss << ", cur_rseg: " << cur_rseg->start_seq();
     ss << "\n";
-    PacketTracer::log("%s", ss.str().c_str());
+    stream_log(DetectionEngine::get_current_packet(), "%s", ss.str().c_str());
 }
 
 void TcpReassemblySegments::queue_reassembly_segment(TcpSegmentDescriptor& tsd)
@@ -395,8 +397,8 @@ void TcpReassemblySegments::purge_segments_left_of_hole(const TcpSegmentNode* en
 
     tracker->set_order(TcpStreamTracker::OUT_OF_SEQUENCE);
 
-    if ( PacketTracer::is_active() )
-        PacketTracer::log("stream_tcp: Skipped %u packets before seglist hole\n", packets_skipped);
+    stream_log(DetectionEngine::get_current_packet(),
+        "stream_tcp: Skipped %u packets before seglist hole\n", packets_skipped);
 }
 
 void TcpReassemblySegments::advance_rcv_nxt(TcpSegmentNode *tsn)
@@ -422,8 +424,8 @@ bool TcpReassemblySegments::skip_hole_at_beginning(TcpSegmentNode *tsn)
     if ( SEQ_GT(tsn->seq, seglist_base_seq) )
     {
         uint32_t hole_size = tsn->seq - seglist_base_seq;
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("stream_tcp: Seglist hole %u-->%u skipped at beginning of the seglist,"
+        stream_log(DetectionEngine::get_current_packet(),
+            "stream_tcp: Seglist hole %u-->%u skipped at beginning of the seglist,"
             " bytes missing: %u\n", seglist_base_seq, tsn->seq, hole_size);
 
         tracker->bytes_missing += hole_size;
@@ -457,11 +459,11 @@ void TcpReassemblySegments::skip_holes()
         {
             ++num_holes;
             uint32_t hole_size = tsn->next->start_seq() - tsn->next_seq();
-            if ( PacketTracer::is_active() )
-                PacketTracer::log("stream_tcp: Seglist hole[%u]: %u-->%u segments purged: %u, bytes purged: %u,"
-                    " bytes missing: %u\n",
-                    num_holes, tsn->next_seq(), tsn->next->start_seq(), num_segs,
-                    tsn->next_seq() - seglist_base_seq, hole_size);
+            stream_log(DetectionEngine::get_current_packet(),
+                "stream_tcp: Seglist hole[%u]: %u-->%u segments purged: %u, bytes purged: %u,"
+                " bytes missing: %u\n",
+                num_holes, tsn->next_seq(), tsn->next->start_seq(), num_segs,
+                tsn->next_seq() - seglist_base_seq, hole_size);
             
             tracker->bytes_skipped += tsn->next_seq() - seglist_base_seq;
             tracker->bytes_missing += hole_size;

@@ -29,7 +29,7 @@
 #include "detection/detection_engine.h"
 #include "main/snort_config.h"
 #include "packet_io/active.h"
-#include "packet_io/packet_tracer.h"
+#include "stream/stream_log.h"
 #include "protocols/icmp4.h"
 #include "protocols/tcp.h"
 #include "protocols/udp.h"
@@ -161,8 +161,7 @@ Flow* FlowControl::stale_flow_cleanup(FlowCache* cache, Flow* flow, Packet* p)
 {
     if ( p->pkth->flags & DAQ_PKT_FLAG_NEW_FLOW )
     {
-        if (PacketTracer::is_active())
-            PacketTracer::log("Session: deleting snort session, reason: stale and not cleaned \n");
+        flow_log("Session: deleting snort session, reason: stale and not cleaned \n");
 
         ActiveSuspendContext act_susp(Active::ASP_TIMEOUT);
 
@@ -382,8 +381,7 @@ static bool want_flow(PktType type, Packet* p, bool count_stats = true)
         p->disable_inspect = true;
         if ( count_stats )
         {
-            if ( PacketTracer::is_active() )
-                PacketTracer::log("Flow: packet without flow - retry packets cannot initiate new flows\n");
+            flow_log("Flow: packet without flow - retry packets cannot initiate new flows\n");
             stream_base_stats.no_flow_retry_packet++;
         }
         return false;
@@ -394,8 +392,7 @@ static bool want_flow(PktType type, Packet* p, bool count_stats = true)
         // guessing direction based on ports is misleading
         if ( count_stats )
         {
-            if ( PacketTracer::is_active() )
-                PacketTracer::log("Flow: packet without flow - TCP RST packets cannot initiate new flows\n");
+            flow_log("Flow: packet without flow - TCP RST packets cannot initiate new flows\n");
             stream_base_stats.no_flow_tcp_rst++;
         }
         return false;
@@ -418,9 +415,8 @@ static bool want_flow(PktType type, Packet* p, bool count_stats = true)
         bool allowed = Stream::midstream_allowed(p, true);
         if ( !allowed && count_stats )
         {
-            if ( PacketTracer::is_active() )
-                PacketTracer::log("Flow: packet without flow - midstream pickup rejected: SYN_ACK=%d, dsize=%u, require_3whs timeout exceeded\n",
-                    p->ptrs.tcph->is_syn_ack(), p->dsize);
+            flow_log("Flow: packet without flow - midstream pickup rejected: SYN_ACK=%d, dsize=%u, require_3whs timeout exceeded\n",
+                p->ptrs.tcph->is_syn_ack(), p->dsize);
             stream_base_stats.no_flow_midstream_reject++;
         }
         return allowed;
@@ -430,9 +426,8 @@ static bool want_flow(PktType type, Packet* p, bool count_stats = true)
 
     if ( count_stats )
     {
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("Flow: packet without flow - TCP packet without SYN options/SYN-ACK/data, require_3whs=%d\n",
-                Stream::require_3whs());
+        flow_log("Flow: packet without flow - TCP packet without SYN options/SYN-ACK/data, require_3whs=%d\n",
+            Stream::require_3whs());
         stream_base_stats.no_flow_unwanted++;
     }
 
@@ -447,11 +442,11 @@ static void log_stale_packet(snort::Packet *p, snort::Flow *flow, bool drop_pack
     ts_print((const struct timeval *)&flow->prev_packet_time, ts_flow);
 
     if ( drop_packet )
-        PacketTracer::log("Flow: Dropping stale packet. current packet ts: %s < previous packet ts: %s.\n",
-                          ts_pkt, ts_flow);
+        flow_log("Flow: Dropping stale packet. current packet ts: %s < previous packet ts: %s.\n",
+            ts_pkt, ts_flow);
     else
-        PacketTracer::log("Flow: Detected stale packet, dropping disabled. current packet ts: %s < previous packet ts: %s.\n",
-                          ts_pkt, ts_flow);
+        flow_log("Flow: Detected stale packet, dropping disabled. current packet ts: %s < previous packet ts: %s.\n",
+            ts_pkt, ts_flow);
 }
 
 static inline bool is_packet_stale(const Flow* flow, const Packet* p)
@@ -473,8 +468,7 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
 {
     if ( !get_proto_session[to_utype(type)] )
     {
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("Flow: packet without flow - no protocol handler registered for PktType=%u\n", to_utype(type));
+        flow_log("Flow: packet without flow - no protocol handler registered for PktType=%u\n", to_utype(type));
         stream_base_stats.no_flow_no_proto_handler++;
         return false;
     }
@@ -624,8 +618,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
     else
     {
         flow->network_policy_id = get_network_policy()->policy_id;
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("Session: new snort session\n");
+        flow_log("Session: new snort session\n");
 
         init_roles(p, flow);
 
@@ -676,8 +669,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
 
         p->active->set_drop_reason("session");
         DetectionEngine::disable_all(p);
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("Session: session has been blocked, drop\n");
+        flow_log("Session: session has been blocked, drop\n");
         break;
 
     case Flow::FlowState::RESET:
@@ -689,8 +681,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
         Stream::blocked_flow(p);
         p->active->set_drop_reason("session");
         DetectionEngine::disable_all(p);
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("Session: session has been reset\n");
+        flow_log("Session: session has been reset\n");
         break;
     }
 

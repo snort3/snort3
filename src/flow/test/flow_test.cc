@@ -47,7 +47,15 @@
 
 #include "flow_stubs.h"
 
+#include "trace/trace.h"
+
 using namespace snort;
+
+namespace snort
+{
+void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
+}
+
 THREAD_LOCAL class FlowControl* flow_con;
 
 const FlowCacheConfig& FlowControl::get_flow_cache_config() const

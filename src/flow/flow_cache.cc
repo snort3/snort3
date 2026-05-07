@@ -39,8 +39,8 @@
 #endif
 #include "main/thread_config.h"
 #include "packet_io/active.h"
-#include "packet_io/packet_tracer.h"
 #include "stream/base/stream_module.h"
+#include "stream/stream_log.h"
 #include "stream/tcp/tcp_session.h"
 #include "stream/tcp/tcp_trace.h"
 #include "time/packet_time.h"
@@ -177,11 +177,8 @@ Flow* FlowCache::allocate(const FlowKey* key)
     time_t timestamp = packet_time();
     if ( hash_table->get_num_nodes() >= config.max_flows )
     {
-        if ( PacketTracer::is_active() )
-        {
-            PacketTracer::log("Flow: at max_flows limit (%u/%u), attempting to prune for new allocation\n",
-                hash_table->get_num_nodes(), config.max_flows);
-        }
+        flow_log("Flow: at max_flows limit (%u/%u), attempting to prune for new allocation\n",
+            hash_table->get_num_nodes(), config.max_flows);
 
         unsigned pruned_idle = prune_idle(timestamp, nullptr);
         if ( !pruned_idle )
@@ -190,10 +187,10 @@ Flow* FlowCache::allocate(const FlowKey* key)
             if ( !pruned_uni )
             {
                 unsigned pruned_excess = prune_excess(nullptr);
-                if ( PacketTracer::is_active() && !pruned_excess )
+                if ( !pruned_excess )
                 {
                     // CRITICAL: All pruning strategies failed
-                    PacketTracer::log("Flow: CRITICAL - allocation at max capacity, no flows could be pruned "
+                    flow_log("Flow: CRITICAL - allocation at max capacity, no flows could be pruned "
                         "(idle=0, uni=0, excess=0), current=%u, max=%u\n",
                         hash_table->get_num_nodes(), config.max_flows);
                 }
@@ -241,7 +238,7 @@ bool FlowCache::release(Flow* flow, PruneReason reason, bool do_cleanup)
         }
     }
 
-    if ( UNLIKELY(PacketTracer::is_active()) )
+    if ( UNLIKELY(snort::PacketTracer::is_active() or snort::PacketTracer::is_daq_activated()) )
         log_flow_release(flow, reason);
 
     uint8_t in_allowlist = flow->flags.in_allowlist;
@@ -306,8 +303,8 @@ unsigned FlowCache::prune_idle(time_t thetime, const Flow* save_me)
         }
     }
 
-    if ( PacketTracer::is_active() and pruned )
-        PacketTracer::log("Flow: Pruned idle %u flows\n", pruned);
+    if ( pruned )
+        flow_log("Flow: Pruned idle %u flows\n", pruned);
 
     return pruned;
 }
@@ -344,8 +341,8 @@ unsigned FlowCache::prune_unis(PktType pkt_type)
         }
     }
 
-    if ( PacketTracer::is_active() and pruned )
-        PacketTracer::log("Flow: Pruned uni %u flows\n", pruned);
+    if ( pruned )
+        flow_log("Flow: Pruned uni %u flows\n", pruned);
 
     return pruned;
 }
@@ -442,13 +439,10 @@ unsigned FlowCache::prune_excess(const Flow* save_me)
         }
     }
 
-    if ( PacketTracer::is_active() )
-    {
-        if ( allowed )
-            PacketTracer::log("Flow: Moved %u flows to allowlist\n", allowed);
-        else if ( pruned )
-            PacketTracer::log("Flow: Pruned excess %u flows\n", pruned);
-    }
+    if ( allowed )
+        flow_log("Flow: Moved %u flows to allowlist\n", allowed);
+    else if ( pruned )
+        flow_log("Flow: Pruned excess %u flows\n", pruned);
     return pruned;
 }
 
@@ -511,8 +505,8 @@ unsigned FlowCache::prune_multiple(PruneReason reason, bool do_cleanup)
             lru_idx = 0;
     }
 
-    if ( PacketTracer::is_active() and pruned )
-        PacketTracer::log("Flow: Pruned memcap %u flows\n", pruned);
+    if ( pruned )
+        flow_log("Flow: Pruned memcap %u flows\n", pruned);
 
     return pruned;
 }
@@ -535,8 +529,8 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
                 allowlist_timeout_count++;
             flow = static_cast<Flow*>(hash_table->lru_next(allowlist_lru_index));
         }
-        if ( PacketTracer::is_active() and allowlist_timeout_count )
-            PacketTracer::log("Flow: %lu allowlist flow(s) timed out but not pruned \n", allowlist_timeout_count);
+        if ( allowlist_timeout_count )
+            flow_log("Flow: %lu allowlist flow(s) timed out but not pruned \n", allowlist_timeout_count);
     }
 #endif
 
@@ -595,8 +589,8 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
         }
     }
 
-    if ( PacketTracer::is_active() and retired )
-        PacketTracer::log("Flow: Timed out %u flows\n", retired);
+    if ( retired )
+        flow_log("Flow: Timed out %u flows\n", retired);
 
     return retired;
 }
@@ -674,8 +668,8 @@ unsigned FlowCache::delete_flows(unsigned num_to_delete)
             num_to_delete = delete_active_flows(mode, num_to_delete, deleted);
     }
 
-    if ( PacketTracer::is_active() and deleted )
-        PacketTracer::log("Flow: Deleted %u flows\n", deleted);
+    if ( deleted )
+        flow_log("Flow: Deleted %u flows\n", deleted);
 
     return deleted;
 }
@@ -716,8 +710,8 @@ bool FlowCache::allowlist_on_excess(snort::Flow *f)
             return true;
         }
     }
-    else if ( PacketTracer::is_active() and config.move_to_allowlist_on_excess and !config.allowlist_cache )
-        PacketTracer::log("Flow: Warning! move_to_allowlist_on_excess is enabled with no allowlist cache\n");
+    else if ( config.move_to_allowlist_on_excess and !config.allowlist_cache )
+        flow_log("Flow: Warning! move_to_allowlist_on_excess is enabled with no allowlist cache\n");
     return false;
 }
 
@@ -901,5 +895,5 @@ inline void FlowCache::log_flow_release(const snort::Flow* flow, PruneReason rea
     output_flow(temp_stream, *flow, now);
     std::string flow_info = temp_stream.str();
 
-    PacketTracer::log("Flow: Releasing flow due to %s: %s", prune_reason_to_string(reason), flow_info.c_str());
+    flow_log("Flow: Releasing flow due to %s: %s", prune_reason_to_string(reason), flow_info.c_str());
 }

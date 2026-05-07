@@ -137,7 +137,7 @@ struct TcpStats
 
 extern THREAD_LOCAL struct TcpStats tcpStats;
 extern THREAD_LOCAL bool stream_tcp_trace_enabled;
-
+extern THREAD_LOCAL bool stream_tcp_trace_enabled_debug;
 //-------------------------------------------------------------------------
 // stream_tcp module
 //-------------------------------------------------------------------------

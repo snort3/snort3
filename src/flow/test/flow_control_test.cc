@@ -49,7 +49,15 @@
 
 #include "flow_stubs.h"
 
+#include "trace/trace.h"
+
 using namespace snort;
+
+namespace snort
+{
+void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
+}
+
 
 void Active::drop_packet(snort::Packet const*, bool) { }
 void Active::suspend(ActiveSuspendReason) { }

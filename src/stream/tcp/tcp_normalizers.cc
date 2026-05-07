@@ -25,7 +25,8 @@
 
 #include "tcp_normalizers.h"
 
-#include "packet_io/packet_tracer.h"
+#include "detection/detection_engine.h"
+#include "stream/stream_log.h"
 
 #include "tcp_defs.h"
 #include "tcp_module.h"
@@ -549,18 +550,18 @@ void TcpNormalizerPolicy::init(Normalizer::Policy os, TcpSession* ssn, TcpStream
     norm = TcpNormalizerFactory::get_instance(os);
     norm->init(tns);
 
-    if ( PacketTracer::is_active() )
-    {
-        if ( os == Normalizer::Policy::MISSED_3WHS )
-            PacketTracer::log("stream_tcp: %s tracker normalization policy set to %s. Some normalizations are disabled.\n",
-                trk->client_tracker ? "client" : "server", norm->get_name().c_str());
-        else if ( os == Normalizer::Policy::PROXY )
-            PacketTracer::log("stream_tcp: %s tracker normalization policy set to %s. Normalizations are disabled.\n",
-                trk->client_tracker ? "client" : "server", norm->get_name().c_str());
-        else
-            PacketTracer::log("stream_tcp: %s tracker normalization policy set to %s\n",
-                trk->client_tracker ? "client" : "server", norm->get_name().c_str());
-    }
+    if ( os == Normalizer::Policy::MISSED_3WHS )
+        stream_log(DetectionEngine::get_current_packet(),
+            "stream_tcp: %s tracker normalization policy set to %s. Some normalizations are disabled.\n",
+            trk->client_tracker ? "client" : "server", norm->get_name().c_str());
+    else if ( os == Normalizer::Policy::PROXY )
+        stream_log(DetectionEngine::get_current_packet(),
+            "stream_tcp: %s tracker normalization policy set to %s. Normalizations are disabled.\n",
+            trk->client_tracker ? "client" : "server", norm->get_name().c_str());
+    else
+        stream_log(DetectionEngine::get_current_packet(),
+            "stream_tcp: %s tracker normalization policy set to %s\n",
+            trk->client_tracker ? "client" : "server", norm->get_name().c_str());
 
 }
 

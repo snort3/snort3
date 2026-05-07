@@ -27,14 +27,15 @@
 
 #include <daq.h>
 
+#include "detection/detection_engine.h"
 #include "main/analyzer.h"
 #include "main/snort.h"
 #include "packet_io/active.h"
-#include "packet_io/packet_tracer.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/eth.h"
 #include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
+#include "stream/stream_log.h"
 
 #include "held_packet_queue.h"
 #include "tcp_overlap_resolver.h"
@@ -460,9 +461,9 @@ void TcpStreamTracker::fallback()
     //assert(server_side == to_server && server_side == !tracker.client_tracker);
 #endif
 
-    if (PacketTracer::is_active())
-        PacketTracer::log("stream_tcp: %s tracker fallback to the Atom splitter.\n",
-            client_tracker ? "client" : "server");
+    stream_log(DetectionEngine::get_current_packet(),
+        "stream_tcp: %s tracker fallback to the Atom splitter.\n",
+        client_tracker ? "client" : "server");
 
     set_splitter(new AtomSplitter(!client_tracker));
     tcpStats.partial_fallbacks++;
@@ -766,17 +767,15 @@ TcpNormalizer::RstStatus TcpStreamTracker::is_rst_valid_syn_sent(TcpSegmentDescr
         TcpNormalizer::RST_OK : TcpNormalizer::RST_BAD_ACK;
     if ( rst_status == TcpNormalizer::RST_OK )
     {
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("stream_tcp: RST is valid in SYN-SENT state, ack %u == snd_nxt %u.\n",
-                tsd.get_ack(), snd_nxt);
-                
-         tcpStats.rsts_ack_ok++;
+        stream_log(tsd.get_pkt(), "stream_tcp: RST is valid in SYN-SENT state, ack %u == snd_nxt %u.\n",
+            tsd.get_ack(), snd_nxt);
+
+        tcpStats.rsts_ack_ok++;
     }
     else
     {
-        if ( PacketTracer::is_active() )
-            PacketTracer::log("stream_tcp: RST is NOT valid in SYN-SENT state, ack %u != snd_nxt %u.\n",
-                tsd.get_ack(), snd_nxt);
+        stream_log(tsd.get_pkt(), "stream_tcp: RST is NOT valid in SYN-SENT state, ack %u != snd_nxt %u.\n",
+            tsd.get_ack(), snd_nxt);
         tcpStats.rsts_ack_bad++;
         update_on_bad_rst(tsd);
     }
@@ -919,15 +918,13 @@ int32_t TcpStreamTracker::kickstart_asymmetric_flow(const TcpSegmentDescriptor& 
     if ( get_tcp_state() == TcpStreamTracker::TCP_MID_STREAM_RECV )
     {
         set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
-        if (PacketTracer::is_active())
-            PacketTracer::log("stream_tcp: Kickstart of midstream asymmetric flow! Seglist queue space: %u\n",
-                space_left );
+        stream_log(tsd.get_pkt(), "stream_tcp: Kickstart of midstream asymmetric flow! Seglist queue space: %u\n",
+            space_left);
     }
     else
     {
-        if (PacketTracer::is_active())
-            PacketTracer::log("stream_tcp: Kickstart of asymmetric flow! Seglist queue space: %u\n",
-                space_left );
+        stream_log(tsd.get_pkt(), "stream_tcp: Kickstart of asymmetric flow! Seglist queue space: %u\n",
+            space_left);
     }
 
     return space_left;

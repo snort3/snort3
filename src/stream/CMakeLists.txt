@@ -13,6 +13,7 @@ set (STREAM_INCLUDES
     paf.h
     pafng.h
     stream.h
+    stream_log.h
     stream_splitter.h
 )
 
@@ -20,6 +21,7 @@ add_library( stream OBJECT
     stream.cc
     stream_inspectors.cc
     stream_inspectors.h
+    stream_log.cc
     stream_splitter.cc
 )
 

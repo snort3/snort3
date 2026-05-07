@@ -38,6 +38,13 @@ namespace snort
 {
 struct Packet;
 
+}
+
+class StreamLog;
+
+namespace snort
+{
+
 class PacketTracer
 {
 public:
@@ -113,9 +120,6 @@ protected:
     // non-static functions
     void log_va(const char*, va_list, bool, bool msg_only = false);
     void populate_buf(const char*, va_list, char*, uint32_t&);
-    void add_ip_header_info(const snort::Packet&);
-    void add_eth_header_info(const snort::Packet&);
-    void add_packet_type_info(const snort::Packet&);
     void update_constraints(const PacketConstraints* constraints);
     const char *get_debug_session() { return debugstr.c_str(); }
 
@@ -123,6 +127,8 @@ protected:
     virtual void dump_to_daq(Packet*);
     void reset(bool);
 private:
+    friend class ::StreamLog;
+
     std::string dbg_str;
 };
 

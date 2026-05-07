@@ -41,4 +41,3 @@ void S5TraceTCP(const TcpSegmentDescriptor&, const snort::Packet*);
 const char* stream_tcp_state_to_str(const TcpStreamTracker&);
 
 #endif
-

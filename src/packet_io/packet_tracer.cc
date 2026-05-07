@@ -34,12 +34,8 @@
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "main/thread.h"
-#include "protocols/eth.h"
-#include "protocols/icmp4.h"
-#include "protocols/ip.h"
 #include "protocols/packet.h"
-#include "protocols/tcp.h"
-#include "protocols/tcp_options.h"
+#include "stream/stream_log.h"
 #include "utils/util.h"
 
 #include "active.h"
@@ -85,37 +81,6 @@ bool PacketTracer::is_active()
 
 bool PacketTracer::is_daq_activated()
 { return s_pkt_trace ? s_pkt_trace->daq_activated : false; }
-
-static std::string stringify_tcp_options(const Packet* const pkt)
-{
-    std::ostringstream oss;
-    tcp::TcpOptIterator iter(pkt->ptrs.tcph, pkt);
-
-    for (const tcp::TcpOption& opt : iter)
-    {
-        switch (opt.code)
-        {
-        case tcp::TcpOptCode::WSCALE:
-            oss << "ws " << (uint16_t)opt.data[0] << ", ";
-            break;
-        case tcp::TcpOptCode::MAXSEG:
-            oss << "mss " << ntohs(*((const uint16_t*)(opt.data)) ) << ", ";
-            break;
-        case tcp::TcpOptCode::SACKOK:
-            oss << "sack OK, ";
-            break;
-        default:
-            break;
-        }
-    }
-    std::string opts = oss.str();
-    if (!opts.empty())
-    {
-        opts.insert(0, "options [");
-        opts.replace(opts.size() - 2, 2, "] ");
-    }
-    return opts;
-}
 
 void PacketTracer::set_log_file(const std::string& file)
 { log_file = file; }
@@ -310,7 +275,10 @@ void PacketTracer::activate(const Packet& p)
         return;
 
     if ( p.pkth->flags &  DAQ_PKT_FLAG_TRACE_ENABLED )
+    {
         s_pkt_trace->daq_activated = true;
+        restart_timer();
+    }
     else
         s_pkt_trace->daq_activated = false;
 
@@ -325,14 +293,26 @@ void PacketTracer::activate(const Packet& p)
 
         if (!p.ptrs.ip_api.is_ip())
         {
-            s_pkt_trace->add_eth_header_info(p);
-            s_pkt_trace->add_packet_type_info(p);
+            StreamLog::add_eth_header_info(p);
+            StreamLog::add_packet_type_info(p);
         }
         else
         {
             s_pkt_trace->active = true;
-            s_pkt_trace->add_ip_header_info(p);
+            StreamLog::add_ip_header_info(p);
         }
+    }
+    else if (s_pkt_trace->daq_activated or StreamLog::stream_is_cbd_enabled())
+    {
+        s_pkt_trace->active = false;
+
+        if (!p.ptrs.ip_api.is_ip())
+        {
+            StreamLog::add_eth_header_info(p);
+            StreamLog::add_packet_type_info(p);
+        }
+        else
+            StreamLog::add_ip_header_info(p, false);
     }
     else
         s_pkt_trace->active = false;
@@ -411,167 +391,6 @@ void PacketTracer::log_va(const char* format, va_list ap, bool daq_log, bool msg
         s_pkt_trace->populate_buf(format, ap, daq_buffer, daq_buff_len);
     else
         s_pkt_trace->populate_buf(format, ap, buffer, buff_len);
-}
-
-void PacketTracer::add_ip_header_info(const Packet& p)
-{
-    SfIpString sipstr;
-    SfIpString dipstr;
-    std::ostringstream oss;
-
-    uint16_t sport = p.ptrs.sp;
-    uint16_t dport = p.ptrs.dp;
-
-    if (p.type() == PktType::ICMP)
-    {
-        assert(p.ptrs.icmph);
-        sport = p.ptrs.icmph ? p.ptrs.icmph->type : 0;
-        dport = 0;
-    }
-
-    const SfIp* actual_sip = p.ptrs.ip_api.get_src();
-    const SfIp* actual_dip = p.ptrs.ip_api.get_dst();
-
-    IpProtocol proto = p.get_ip_proto_next();
-
-    actual_sip->ntop(sipstr, sizeof(sipstr));
-    actual_dip->ntop(dipstr, sizeof(dipstr));
-
-    if (shell_enabled)
-    {
-        PacketTracer::log("\n");
-        oss << sipstr << " " << sport << " -> "
-            << dipstr << " " << dport << " "
-            << std::to_string(to_utype(proto))
-            << " AS=" << p.pkth->address_space_id
-            << " ID=" << get_relative_instance_number();
-
-            if (p.is_inter_group_flow())
-            {
-                oss << " GR="
-                    << p.pkth->ingress_group
-                    << "-"
-                    << p.pkth->egress_group;
-            }
-
-            if (p.pkth->tenant_id)
-                oss << " TN=" << p.pkth->tenant_id;
-
-        oss << " ";
-        debugstr = oss.str();
-    }
-    else
-    {
-        add_eth_header_info(p);
-
-        oss << sipstr << ":" << sport << " -> "
-            << dipstr << ":" << dport << " "
-            << "proto " << std::to_string(to_utype(proto))
-            << " AS=" << p.pkth->address_space_id
-            << " ID=" << get_relative_instance_number();
-
-            if (p.is_inter_group_flow())
-            {
-                oss << " GR="
-                    << p.pkth->ingress_group
-                    << "-"
-                    << p.pkth->egress_group;
-            }
-
-            if (p.pkth->tenant_id)
-                oss << " TN=" << p.pkth->tenant_id;
-
-        oss << "\n";
-        PacketTracer::log("%s", oss.str().c_str());
-    }
-    add_packet_type_info(p);
-}
-
-void PacketTracer::add_packet_type_info(const Packet& p)
-{
-    bool is_v6 = p.ptrs.ip_api.is_ip6();
-    char timestamp[TIMEBUF_SIZE];
-    ts_print((const struct timeval*)&p.pkth->ts, timestamp);
-
-    switch (p.type())
-    {
-        case PktType::TCP:
-        {
-            char tcpFlags[10];
-            p.ptrs.tcph->stringify_flags(tcpFlags);
-
-            std::string opts;
-            if (p.ptrs.tcph->th_flags & TH_SYN)
-                opts = stringify_tcp_options(&p);
-
-            if (p.ptrs.tcph->th_flags & TH_ACK)
-                PacketTracer::log("Packet %" PRIu64 ": TCP %s, %s, seq %u, ack %u, win %u, %sdsize %u%s\n",
-                    p.context->packet_number, tcpFlags, timestamp,
-                    p.ptrs.tcph->seq(), p.ptrs.tcph->ack(), p.ptrs.tcph->win(), opts.c_str(), p.dsize,
-                    p.is_retry() ? ", retry pkt" : "");
-            else
-                PacketTracer::log("Packet %" PRIu64 ": TCP %s, %s, seq %u, win %u, %sdsize %u%s\n",
-                    p.context->packet_number, tcpFlags, timestamp, p.ptrs.tcph->seq(),
-                    p.ptrs.tcph->win(), opts.c_str(), p.dsize,
-                    p.is_retry() ? ", retry pkt" : "");
-            DAQ_PktTcpAckData_t* tcp_mack = (DAQ_PktTcpAckData_t*)p.daq_msg->meta[DAQ_PKT_META_TCP_ACK_DATA];
-            if ( tcp_mack )
-                PacketTracer::log("Meta_ack: ack %u, win %u\n",
-                    ntohl(tcp_mack->tcp_ack_seq_num), ntohs(tcp_mack->tcp_window_size));
-            break;
-        }
-
-        case PktType::ICMP:
-        {
-            const char* icmp_str = is_v6 ? "ICMPv6" : "ICMP";
-
-            PacketTracer::log("Packet %" PRIu64 ": %s, %s, Type: %u  Code: %u \n",
-                p.context->packet_number, icmp_str, timestamp,
-                p.ptrs.icmph->type, p.ptrs.icmph->code);
-            break;
-        }
-
-        default:
-            PacketTracer::log("Packet %" PRIu64 ": %s, %s\n",
-                p.context->packet_number, p.get_type(), timestamp);
-            break;
-    }
-}
-
-void PacketTracer::add_eth_header_info(const Packet& p)
-{
-    auto eh = layer::get_eth_layer(&p);
-    if (eh)
-    {
-        if (shell_enabled)
-        {
-            PacketTracer::log("\n");
-            std::ostringstream oss;
-            oss << eh->to_string()
-                << " AS=" << p.pkth->address_space_id
-                << " ID=" << get_relative_instance_number();
-
-            if (p.is_inter_group_flow())
-            {
-                oss << " GR="
-                    << p.pkth->ingress_group
-                    << "-"
-                    << p.pkth->egress_group;
-            }
-
-            if (p.pkth->tenant_id)
-                oss << " TN=" << p.pkth->tenant_id;
-
-            oss << " ";  // Include a space before the remaining data.
-            debugstr = oss.str();
-            s_pkt_trace->active = true;
-        }
-        else
-        {
-            // MAC layer
-            PacketTracer::log("%s\n", eh->to_string().c_str());
-        }
-    }
 }
 
 void PacketTracer::update_constraints(const PacketConstraints* cs)

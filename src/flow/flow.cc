@@ -33,8 +33,8 @@
 #include "helpers/bitop.h"
 #include "helpers/policy_switcher.h"
 #include "main/analyzer.h"
-#include "packet_io/packet_tracer.h"
 #include "protocols/packet.h"
+#include "stream/stream_log.h"
 #include "protocols/tcp.h"
 #include "pub_sub/eof_event.h"
 #include "pub_sub/intrinsic_event_ids.h"
@@ -441,8 +441,7 @@ bool Flow::handle_allowlist()
     {
         if ( flow_con->move_to_allowlist(this) )
         {
-            if ( PacketTracer::is_active() )
-                PacketTracer::log("Flow: flow has been moved to allowlist cache\n");
+            flow_log("Flow: flow has been moved to allowlist cache\n");
             return true;
         }
     }

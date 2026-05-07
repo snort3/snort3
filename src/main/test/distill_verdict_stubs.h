@@ -227,6 +227,8 @@ bool Stream::set_packet_action_to_hold(Packet*) { return false; }
 void Stream::init_active_response(const Packet*, Flow*) { }
 void Stream::drop_flow(const Packet* ) { }
 void Stream::block_flow(const Packet*) { }
+void Stream::daq_log_start() { }
+void Stream::daq_log_end(Packet*) { }
 IpsContext::IpsContext(unsigned) { }
 NetworkPolicy* get_default_network_policy(const snort::SnortConfig*) { return nullptr; }
 NetworkPolicy* get_network_policy() { return nullptr; }

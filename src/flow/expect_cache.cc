@@ -28,8 +28,8 @@
 
 #include "detection/ips_context.h"
 #include "hash/zhash.h"
-#include "packet_io/packet_tracer.h"
 #include "packet_io/sfdaq_instance.h"
+#include "stream/stream_log.h"
 #include "protocols/packet.h"
 #include "protocols/vlan.h"
 #include "pub_sub/expect_events.h"
@@ -402,14 +402,14 @@ int ExpectCache::add_flow(const Packet *ctrlPkt, PktType type, IpProtocol ip_pro
         // indicates the flow is closing and it is too late to add an expected flow.
         if ((ip_proto == IpProtocol::TCP || ip_proto == IpProtocol::UDP) && ctrlPkt->daq_msg)
         {
-            if (PacketTracer::is_active())
+            if ( PacketTracer::is_active() or PacketTracer::is_daq_activated() )
             {
                 SfIpString sipstr;
                 SfIpString dipstr;
                 cliIP->ntop(sipstr, sizeof(sipstr));
                 srvIP->ntop(dipstr, sizeof(dipstr));
-                PacketTracer::log("Create expected channel request sent with %s -> %s %hu %hhu\n",
-                        dipstr, sipstr, srvPort, static_cast<uint8_t>(ip_proto));
+                flow_log("Create expected channel request sent with %s -> %s %hu %hhu\n",
+                    dipstr, sipstr, srvPort, static_cast<uint8_t>(ip_proto));
             }
             unsigned flag = 0;
             if (expect_multi)

@@ -43,12 +43,12 @@ THREAD_LOCAL ProfileStats s5TcpPerfStats;
 
 THREAD_LOCAL const Trace* stream_tcp_trace = nullptr;
 THREAD_LOCAL bool stream_tcp_trace_enabled = false;
+THREAD_LOCAL bool stream_tcp_trace_enabled_debug = false;
 
 static const TraceOption stream_tcp_trace_options[] =
 {
     { "segments", TRACE_SEGMENTS, "enable stream TCP segments trace logging" },
     { "state",    TRACE_STATE,    "enable stream TCP state trace logging" },
-
     { nullptr, 0, nullptr }
 };
 
@@ -294,8 +294,9 @@ StreamTcpModule::StreamTcpModule() :
 void StreamTcpModule::set_trace(const Trace* trace) const
 {
     stream_tcp_trace = trace;
-    stream_tcp_trace_enabled = trace_enabled(stream_tcp_trace, TRACE_SEGMENTS) ||
-                                   trace_enabled(stream_tcp_trace, TRACE_STATE);
+    stream_tcp_trace_enabled_debug = trace_enabled(stream_tcp_trace, TRACE_SEGMENTS, TRACE_DEBUG_LEVEL) ||
+                                   trace_enabled(stream_tcp_trace, TRACE_STATE, TRACE_DEBUG_LEVEL);
+    stream_tcp_trace_enabled = trace_enabled(stream_tcp_trace, TRACE_STATE, TRACE_INFO_LEVEL);
 }
 
 const TraceOption* StreamTcpModule::get_trace_options() const
@@ -432,4 +433,3 @@ void StreamTcpModule::reset_stats()
     TcpNormalizer::reset_stats();
     Module::reset_stats();
 }
-
