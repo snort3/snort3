@@ -608,17 +608,6 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits, bool parti
                 tsession->set_tls_host_published(false);
             tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_CNAME);
         }
-        else if (odp_ctxt.get_host_matchers().scan_hostname((const uint8_t*)tls_str, size,
-            client_id, payload_id))
-        {
-            if (api.client.get_id() == APP_ID_NONE or api.client.get_id() == APP_ID_SSL_CLIENT)
-                set_client_appid_data(client_id, change_bits);
-            set_payload_appid_data(payload_id);
-            match_found = true;
-            if (api.get_tls_host() and (strcmp(api.get_tls_host(), tls_str) != 0))
-                tsession->set_tls_host_published(false);
-            tsession->set_matched_tls_type(MatchedTlsType::MATCHED_TLS_CNAME);
-        }
         scan_flags &= ~SCAN_SSL_CERTIFICATE_FLAG;
     }
 
