@@ -48,13 +48,17 @@ public:
     }
 
 private:
-    Status ssh2_key_exchange_scan(const uint8_t* data, uint32_t len,
-        uint32_t* fp, uint32_t& remain_bytes);
+    Status ssh2_key_exchange_scan(SSHData* sessp, const uint8_t* data, uint32_t len,
+        uint32_t* fp, uint32_t& remain_bytes, uint8_t* header_buf, uint8_t& header_buf_len);
     Status ssh2_scan(SSHData* sessp, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp);
 
     SshPafState state = SSH_PAF_VER_EXCHANGE;
     uint32_t client_remain_bytes = 0;
     uint32_t server_remain_bytes = 0;
+    uint8_t client_header_buf[sizeof(SSH2Packet)] = {};
+    uint8_t client_header_buf_len = 0;
+    uint8_t server_header_buf[sizeof(SSH2Packet)] = {};
+    uint8_t server_header_buf_len = 0;
 };
 #endif

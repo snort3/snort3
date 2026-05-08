@@ -38,6 +38,7 @@ struct SshStats
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
     PegCount aborted_sessions;
+    PegCount invalid_packet_length;
 };
 
 #endif

@@ -25,29 +25,62 @@
 #include "ssh_splitter.h"
 #include "ssh_module.h"
 
+#include <cstring>
+
 using namespace snort;
 
 StreamSplitter::Status SshSplitter::ssh2_key_exchange_scan(
-    const uint8_t* data, uint32_t len, uint32_t* fp,
-    uint32_t& remain_bytes)
+    SSHData* sessp, const uint8_t* data, uint32_t len, uint32_t* fp,
+    uint32_t& remain_bytes, uint8_t* header_buf, uint8_t& header_buf_len)
 {
     if (remain_bytes < len)
     {
         if (remain_bytes != 0)
         {
             *fp = remain_bytes;
+            remain_bytes = 0;
             return StreamSplitter::FLUSH;
         }
-        const SSH2Packet* sshp = (const SSH2Packet*)data;
-        uint32_t ssh_len = ntohl(sshp->packet_length) + SSH2_PACKET_LEN;
-        if (ssh_len > len)
+
+        uint8_t need = sizeof(SSH2Packet) - header_buf_len;
+        if (len < need)
         {
-            remain_bytes = ssh_len - len;
+            memcpy(header_buf + header_buf_len, data, len);
+            header_buf_len += len;
+            return StreamSplitter::SEARCH;
+        }
+
+        const SSH2Packet* sshp;
+        uint32_t buffered = header_buf_len;
+        if (header_buf_len > 0)
+        {
+            memcpy(header_buf + header_buf_len, data, need);
+            header_buf_len = 0;
+            sshp = (const SSH2Packet*)header_buf;
+        }
+        else
+        {
+            sshp = (const SSH2Packet*)data;
+        }
+
+        uint32_t ssh_len = ntohl(sshp->packet_length) + SSH2_PACKET_LEN;
+        if (ssh_len < sizeof(SSH2Packet) or ssh_len > SSH2_PACKET_MAX_SIZE)
+        {
+            sshstats.invalid_packet_length++;
+            sessp->ssh_aborted = true;
+            *fp = len;
+            return StreamSplitter::FLUSH;
+        }
+
+        uint32_t total_available = buffered + len;
+        if (ssh_len > total_available)
+        {
+            remain_bytes = ssh_len - total_available;
             return StreamSplitter::SEARCH;
         }
         else
         {
-            *fp = ssh_len;
+            *fp = ssh_len - buffered;
             return StreamSplitter::FLUSH;
         }
     }
@@ -77,11 +110,13 @@ StreamSplitter::Status SshSplitter::ssh2_scan(SSHData* sessp,
             return SEARCH;
         }
 
-        return ssh2_key_exchange_scan(data, len, fp, server_remain_bytes);
+        return ssh2_key_exchange_scan(sessp, data, len, fp, server_remain_bytes,
+            server_header_buf, server_header_buf_len);
     }
     else
     {
-        return ssh2_key_exchange_scan(data, len, fp, client_remain_bytes);
+        return ssh2_key_exchange_scan(sessp, data, len, fp, client_remain_bytes,
+            client_header_buf, client_header_buf_len);
     }
 }
 
