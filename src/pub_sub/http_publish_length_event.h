@@ -45,11 +45,18 @@ public:
 
     void set_publish_length(int32_t new_length)
     {
-        if (new_length > 0)
-        {
+        // A subscriber asking for any positive length means two independent things:
+        //   1) "publish the body" -- sticky, OR-merged across subscribers.
+        //   2) "make sure we publish at least N bytes" -- max-merged across subscribers.
+        // We need both updates to be independent so a subscriber asking for a smaller
+        // length than what's already requested still registers its interest in the body.
+        if (new_length <= 0)
+            return;
+
+        publish_body = true;
+
+        if (new_length > publish_length)
             publish_length = new_length;
-            publish_body = true;
-        }
     }
 
     bool should_publish_body() const
