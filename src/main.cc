@@ -769,6 +769,17 @@ int main_quit(lua_State* L)
     send_response(ctrlcon, "== stopping\n");
     exit_requested = true;
     main_broadcast_command(new ACStop(), ctrlcon);
+
+    for (unsigned i = 0; i < max_pigs; ++i)
+    {
+        if (pigs[i].analyzer)
+        {
+            SFDAQInstance* daq = pigs[i].analyzer->get_daq_instance();
+            if (daq)
+                daq->interrupt();
+        }
+    }
+
     return 0;
 }
 
