@@ -981,6 +981,7 @@ void Analyzer::analyze()
                 // If the status reports INTERRUPTED because of an interrupt() call, exit_requested should
                 // be set for the next pass through the main loop.  Use this as a hint to check for analyzer
                 // commands.
+                ThreadConfig::kick_watchdog();
                 handle_commands();
             }
             else
