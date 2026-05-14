@@ -442,7 +442,7 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
         length = ntohs(flowset->field_length);
 
         // invalid NetFlow length
-        if( data + length > end )
+        if ( length < sizeof(*flowset) || data + length > end )
             return false;
 
         flowset_end = data + length;
@@ -458,27 +458,36 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
         {
             auto& tf = template_cache->find_else_create(ti_key);
 
-            while( data < flowset_end && records )
-            {
+            size_t rec_len = 0;
+            for ( const auto& t_field : tf )
+                rec_len += t_field.field_length;
 
+            // A data template with zero record size is not usable
+            if ( rec_len == 0 )
+                return false;
+
+            // Only parse complete records; leave remainder for padding/truncated record handling
+            while ( records && data <= flowset_end && (size_t)(flowset_end - data) >= rec_len )
+            {
                 NetFlowSessionRecord record = {};
                 RecordStatus record_status;
                 bool bad_field = false;
+                const uint8_t *rec_end = data + rec_len;
 
                 for ( auto t_field = tf.begin(); t_field != tf.end(); ++t_field )
                 {
-                    // invalid field length
-                    if ( data + t_field->field_length > flowset_end )
-                        bad_field = true;
-
-                    if ( !bad_field )
+                    // invalid field length within this record
+                    if ( data + t_field->field_length > rec_end )
                     {
-                        bool status = version_9_record_update(data, header.unix_secs, header.sys_uptime,
-                            t_field->field_type, t_field->field_length, record, record_status);
-
-                        if ( !status )
-                            bad_field = true;
+                        bad_field = true;
+                        break;
                     }
+
+                    bool status = version_9_record_update(data, header.unix_secs, header.sys_uptime,
+                        t_field->field_type, t_field->field_length, record, record_status);
+
+                    if ( !status )
+                        bad_field = true;
 
                     data += t_field->field_length;
                 }
@@ -491,7 +500,8 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
                 }
 
                 // filter based on configuration
-                std::vector<const NetFlowRule*> match_vec = filter_record(p_rules, zone, &record.initiator_ip, &record.responder_ip);
+                std::vector<const NetFlowRule*> match_vec = filter_record(p_rules,
+                    zone, &record.initiator_ip, &record.responder_ip);
                 if ( !match_vec.size() )
                 {
                     records--;
@@ -533,6 +543,18 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
 
                 records--;
             }
+
+            // Real bounds failure should still be fatal
+            if ( data > flowset_end )
+                return false;
+
+            // 0-3 trailing bytes are valid NetFlow padding.
+            // More than that is treated as a truncated/invalid record for compatibility,
+            // but not as a fatal packet decode error.
+            if ( flowset_end - data > 3 )
+                ++netflow_stats.invalid_netflow_record;
+
+            data = flowset_end;
         }
         // template flowset
         else if ( f_id == 0 )
@@ -545,11 +567,11 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
                 const NetFlow9TemplateField* field;
                 std::vector<NetFlow9TemplateField> tf;
 
-                t_template = (const NetFlow9Template *)data;
-                field_count = ntohs(t_template->template_field_count);
-
                 if ( data + sizeof(*t_template) > flowset_end )
                     return false;
+
+                t_template = (const NetFlow9Template *)data;
+                field_count = ntohs(t_template->template_field_count);
 
                 data += sizeof(*t_template);
 
@@ -576,8 +598,20 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
                     // don't count template as record
                     netflow_stats.records--;
                 }
+
                 records--;
             }
+
+            if ( data > flowset_end )
+                return false;
+
+            if ( length % 4 != 0 )
+                return false;
+
+            if ( flowset_end - data > 3 )
+                return false;
+
+            data = flowset_end;
         }
 
         // It's an option template flowset
@@ -587,6 +621,10 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
 
             // don't count option template as record
             netflow_stats.records--;
+            records--;
+
+            // Skip options, we don't use them currently
+            data = flowset_end;
         }
 
         // its data and no templates are defined yet
@@ -595,19 +633,6 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
             // Skip options, we don't use them currently
             data = flowset_end;
             ++netflow_stats.v9_missing_template;
-        }
-
-        if ( flowset_end != data )
-        {
-            // Invalid flowset Length
-            if ( length != (length >> 2 ) << 2 )
-                return false;
-
-            // Data is not at flowset_end
-            if ( flowset_end - data > 3 )
-                return false;
-
-            data = flowset_end;
         }
     }
     return true;
