@@ -130,6 +130,9 @@ private:
         else
             tail = ss->prev;
 
+        ss->prev = nullptr;
+        ss->next = nullptr;
+
         seg_count--;
     }
 

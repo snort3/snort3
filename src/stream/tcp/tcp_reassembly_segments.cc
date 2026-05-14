@@ -306,7 +306,6 @@ int TcpReassemblySegments::delete_reassembly_segment(TcpSegmentNode* tsn)
     int ret;
     assert(tsn);
 
-    remove(tsn);
     seg_bytes_total -= tsn->size;
     seg_bytes_logical -= tsn->length;
     ret = tsn->length;
@@ -323,6 +322,7 @@ int TcpReassemblySegments::delete_reassembly_segment(TcpSegmentNode* tsn)
     if ( cur_rseg == tsn )
         update_next(tsn);
 
+    remove(tsn);
     tsn->term();
 
     return ret;
