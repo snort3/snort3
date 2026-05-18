@@ -54,6 +54,8 @@ public:
 private:
     int32_t scan_data_post_ack(uint32_t* flags, snort::Packet*);
     void skip_seglist_hole();
+    bool prepare_ack_flush_cursor();
+    bool ack_flush_in_window(uint32_t) const;
 };
 
 #endif

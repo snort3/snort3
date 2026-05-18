@@ -36,6 +36,7 @@
 #include "stream/stream_log.h"
 #include "time/packet_time.h"
 
+#include "tcp_defs.h"
 #include "tcp_module.h"
 #include "tcp_normalizers.h"
 #include "tcp_segment_node.h"
@@ -43,6 +44,12 @@
 #include "tcp_stream_tracker.h"
 
 using namespace snort;
+
+static inline bool ack_far_beyond_tail(uint32_t ack, uint32_t tail_seq)
+{
+    const uint32_t diff = ack - tail_seq;
+    return diff > MAX_TCP_WINDOW_SCALED && diff < MAX_TCP_SEQ_DISTANCE;
+}
 
 // iterate over seglist and scan all new acked bytes
 // - new means not yet scanned
@@ -116,8 +123,10 @@ int32_t TcpReassemblerIds::scan_data_post_ack(uint32_t* flags, Packet* p)
             return flush_pt;
         else if ( !tsn->next_no_gap() )
         {
-            // if ack is past the hole flush what we have... 
-            if ( tsn->next && SEQ_LEQ(tsn->next->start_seq(), tracker.r_win_base))
+            // If ack is past a confirmed hole, or exceptionally far beyond
+            // the tail in IDS mode, flush what we have.
+            if ( (tsn->next && SEQ_LEQ(tsn->next->start_seq(), tracker.r_win_base))
+                || (!tsn->next && ack_far_beyond_tail(tracker.r_win_base, tsn->next_seq())) )
             {
                 paf.state = StreamSplitter::SKIP;
                 flush_pt = total;
@@ -180,8 +189,51 @@ void TcpReassemblerIds::skip_seglist_hole()
         }
             
         seglist.cur_rseg = seglist.head;
+        seglist.cur_sseg = seglist.head;
         tracker.set_order(TcpStreamTracker::OUT_OF_SEQUENCE);
     }
+}
+
+bool TcpReassemblerIds::prepare_ack_flush_cursor()
+{
+    if ( !seglist.head || SEQ_GEQ(seglist.seglist_base_seq, tracker.r_win_base) )
+        return false;
+
+    if ( !seglist.cur_rseg )
+        seglist.cur_rseg = seglist.head;
+
+    if ( !seglist.cur_rseg->unscanned() )
+        return false;
+
+    const uint32_t scan_seq = seglist.cur_rseg->scan_seq();
+    if ( seglist.seglist_base_seq == scan_seq )
+    {
+        // cur_sseg may legitimately be ahead of cur_rseg after scanning;
+        // only reset it here when the scan cursor is missing.
+        if ( !seglist.cur_sseg )
+            seglist.cur_sseg = seglist.cur_rseg;
+
+        return true;
+    }
+
+    // Only repair local drift within the current segment.  Wider deltas
+    // mean the cursors may be describing different sequence islands.
+    if ( SEQ_GT(seglist.seglist_base_seq, scan_seq) )
+        return false;
+
+    const uint32_t drift = scan_seq - seglist.seglist_base_seq;
+    if ( drift > seglist.cur_rseg->cursor )
+        return false;
+
+    seglist.seglist_base_seq = scan_seq;
+    seglist.cur_sseg = seglist.cur_rseg;
+
+    return SEQ_LT(seglist.seglist_base_seq, tracker.r_win_base);
+}
+
+bool TcpReassemblerIds::ack_flush_in_window(uint32_t flush_amt) const
+{
+    return !SEQ_GT(seglist.seglist_base_seq + flush_amt, tracker.r_win_base);
 }
 
 int TcpReassemblerIds::eval_flush_policy_on_ack(Packet* p)
@@ -192,12 +244,15 @@ int TcpReassemblerIds::eval_flush_policy_on_ack(Packet* p)
 
     last_pdu = nullptr;
     uint32_t flushed = 0;
-    int32_t flush_amt;
+    int32_t flush_amt = FINAL_FLUSH_HOLD;
     uint32_t flags;
     
     do
     {
         skip_seglist_hole();
+
+        if ( !prepare_ack_flush_cursor() )
+            break;
 
         flags = packet_dir;
         flush_amt = scan_data_post_ack(&flags, p);
@@ -210,6 +265,9 @@ int TcpReassemblerIds::eval_flush_policy_on_ack(Packet* p)
             tracker.fallback();
             continue;
         }
+
+        if ( !ack_flush_in_window(static_cast<uint32_t>(flush_amt)) )
+            break;
  
         flushed += flush_to_seq(flush_amt, p, flags);
         if ( seglist.head )
