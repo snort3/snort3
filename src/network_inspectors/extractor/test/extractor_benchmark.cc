@@ -35,7 +35,7 @@
 namespace snort
 {
 void ErrorMessage(const char*, ...) {}
-SnortConfig::SnortConfig(snort::SnortConfig const*, char const*) { thiszone = 0; }
+SnortConfig::SnortConfig(char const*) { thiszone = 0; }
 SnortConfig::~SnortConfig() { }
 const SnortConfig* SnortConfig::get_conf() { static SnortConfig s_config; return &s_config; }
 }
