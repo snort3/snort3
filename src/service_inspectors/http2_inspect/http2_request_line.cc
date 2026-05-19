@@ -116,15 +116,15 @@ bool Http2RequestLine::generate_start_line(Field& start_line, bool pseudo_header
     if (method.length() == connect_length and memcmp(method.start(),
         method_connect, method.length()) == 0)
     {
-        if (authority.length() <= 0 and pseudo_headers_complete)
-        {
-            *infractions += INF_CONNECT_WITHOUT_AUTHORITY;
-            events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
-        }
-        else
+        if (authority.length() > 0)
         {
             use_authority = true;
             uri_len = authority.length();
+        }
+        else if (pseudo_headers_complete)
+        {
+            *infractions += INF_CONNECT_WITHOUT_AUTHORITY;
+            events->create_event(EVENT_REQUEST_WITHOUT_REQUIRED_FIELD);
         }
 
         if ( scheme.length() > 0 or path.length() > 0)
