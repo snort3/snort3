@@ -33,35 +33,73 @@ using namespace std;
 //  History
 //-------------------------------------------------------------------------
 
-static void one_side_history(const TcpSession* ssn, string& history, bool client)
+static void add(TcpStreamTracker::TcpEvent event, string& history)
 {
-    const auto& events = client ? ssn->tcp_ssn_stats.client_events : ssn->tcp_ssn_stats.server_events;
-    if (events.test(TcpStreamTracker::TcpEvent::TCP_SYN_SENT_EVENT))
-        history += client ? "S" : "s";
-    if (events.test(TcpStreamTracker::TcpEvent::TCP_SYN_ACK_SENT_EVENT))
-        history += client ? "H" : "h";
-    if (events.test(TcpStreamTracker::TcpEvent::TCP_ACK_SENT_EVENT))
-        history += client ? "A" : "a";
-    if (events.test(TcpStreamTracker::TcpEvent::TCP_DATA_SEG_SENT_EVENT))
-        history += client ? "D" : "d";
-    if (events.test(TcpStreamTracker::TcpEvent::TCP_FIN_SENT_EVENT))
-        history += client ? "F" : "f";
-    if (events.test(TcpStreamTracker::TcpEvent::TCP_RST_SENT_EVENT))
-        history += client ? "R" : "r";
+    switch (event)
+    {
+    case TcpStreamTracker::TcpEvent::TCP_SYN_SENT_EVENT:
+        history += 'S';
+        break;
+    case TcpStreamTracker::TcpEvent::TCP_SYN_ACK_SENT_EVENT:
+        history += 'H';
+        break;
+    case TcpStreamTracker::TcpEvent::TCP_ACK_SENT_EVENT:
+        history += 'A';
+        break;
+    case TcpStreamTracker::TcpEvent::TCP_DATA_SEG_SENT_EVENT:
+        history += 'D';
+        break;
+    case TcpStreamTracker::TcpEvent::TCP_FIN_SENT_EVENT:
+        history += 'F';
+        break;
+    case TcpStreamTracker::TcpEvent::TCP_RST_SENT_EVENT:
+        history += 'R';
+        break;
+    case TcpStreamTracker::TcpEvent::TCP_NO_FLAGS_EVENT:
+        history += '-';
+        break;
+    case TcpStreamTracker::TcpEvent::TCP_SYN_RECV_EVENT:
+        history += 's';
+        break;
+    case TcpStreamTracker::TcpEvent::TCP_SYN_ACK_RECV_EVENT:
+        history += 'h';
+        break;
+    case TcpStreamTracker::TcpEvent::TCP_ACK_RECV_EVENT:
+        history += 'a';
+        break;
+    case TcpStreamTracker::TcpEvent::TCP_DATA_SEG_RECV_EVENT:
+        history += 'd';
+        break;
+    case TcpStreamTracker::TcpEvent::TCP_FIN_RECV_EVENT:
+        history += 'f';
+        break;
+    case TcpStreamTracker::TcpEvent::TCP_RST_RECV_EVENT:
+        history += 'r';
+        break;
+    default:
+        // other events are not mapped
+        break;
+    }
 }
 
 static void get_tcp_history(const TcpSession* ssn, string& history)
 {
-    one_side_history(ssn, history, true);
-    one_side_history(ssn, history, false);
+    const auto& events = ssn->tcp_ssn_stats.events;
+    auto max_idx = ssn->tcp_ssn_stats.events_idx;
+
+    for (decltype(max_idx) i = 0; i < max_idx; ++i)
+        add(events[i], history);
+
+    if (max_idx >= ssn->tcp_ssn_stats.events_max)
+        history += 'x';
 }
 
 static void get_udp_history(const UdpSession* ssn, string& history)
 {
     if (ssn->payload_bytes_seen_client)
-        history += "D";
+        history += 'D';
     if (ssn->payload_bytes_seen_server)
-        history += "d";
+        history += 'd';
 }
 
 const string& EofEvent::get_history() const

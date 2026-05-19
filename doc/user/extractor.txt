@@ -236,11 +236,25 @@ The OTH state is used for all non-UDP and non-TCP traffic, as well as for error 
 
 * `history` - a string that tracks the connection's history. It uses letters to represent events, with
 uppercase letters denoting client-side events and lowercase letters for server-side events.
-Each letter appears only once for each direction, regardless of how many times the event occurs.
 
-UDP Events: d: Packet with payload.
+[options="header"]
+|===============================================================================
+| Letter | UDP Event                | Notes
+| d      | packet with payload      |
+|===============================================================================
 
-TCP Events: s: SYN, h: SYN-ACK, a: Pure ACK or PUSH, d: Packet with payload, f: FIN, r: Reset.
+[options="header"]
+|===============================================================================
+| Letter | TCP Event                | Notes
+| s      | SYN                      | the very first SYN packet followed by peer's SYN-ACK displayed as 'h' only
+| h      | SYN_ACK                  |
+| a      | pure ACK or PUSH         |
+| d      | packet with payload      | appear once after: s, r, f
+| f      | FIN                      |
+| r      | RST                      |
+| -      | packet with no flags set |
+| x      |                          | history incomplete
+|===============================================================================
 
 Fields supported for file:
 
