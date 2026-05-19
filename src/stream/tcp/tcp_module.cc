@@ -129,6 +129,7 @@ const PegInfo tcp_pegs[] =
     { CountType::SUM, "zero_win_probes", "number of tcp zero window probes" },
     { CountType::SUM, "keep_alive_probes", "number of tcp keep-alive probes" },
     { CountType::SUM, "proxy_mode_flows", "number of flows set to proxy normalization policy" },
+    { CountType::SUM, "proxy_cutover_ooo_drops", "number of OOO data packets dropped before proxy mode cutover" },
     { CountType::SUM, "full_retransmits", "number of fully retransmitted segments" },
     { CountType::SUM, "flush_on_asymmetric_flow", "number of flushes on asymmetric flows" },
     { CountType::SUM, "asymmetric_flows", "number of completed flows having one-way traffic only" },
@@ -248,6 +249,9 @@ static const Parameter s_params[] =
 
     { "track_only", Parameter::PT_BOOL, nullptr, "false",
       "disable reassembly if true" },
+
+    { "proxy_mode_ooo_drop", Parameter::PT_BOOL, nullptr, "false",
+      "drop out-of-order data packets before proxy mode cutover; TCP retransmission recovers" },
 
     { "embryonic_timeout", Parameter::PT_INT, "1:max31", "30",
       "Non-established connection timeout" },
@@ -403,6 +407,9 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
         else
             config->flags &= ~STREAM_CONFIG_NO_REASSEMBLY;
     }
+
+    else if ( v.is("proxy_mode_ooo_drop") )
+        config->proxy_mode_ooo_drop = v.get_bool();
 
     return true;
 }

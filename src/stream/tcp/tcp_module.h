@@ -127,6 +127,7 @@ struct TcpStats
     PegCount zero_win_probes;
     PegCount keep_alive_probes;
     PegCount proxy_mode_flows;
+    PegCount proxy_cutover_ooo_drops;
     PegCount full_retransmits;
     PegCount flush_on_asymmetric_flow;
     PegCount asymmetric_flows;

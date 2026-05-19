@@ -94,6 +94,7 @@ public:
     virtual void log_drop_reason(State&, const TcpSegmentDescriptor&, bool inline_mode,
         const char *issuer, const std::string& log);
     virtual bool is_keep_alive_probe(State&, const TcpSegmentDescriptor&);
+    virtual bool validate_established_ack(State&, TcpSegmentDescriptor&);
 
     static void reset_stats();
 

@@ -139,6 +139,7 @@ public:
     uint32_t daq_flags = 0;
     uint32_t address_space_id = 0;
     bool cleaning = false;
+    bool proxy_cutover_ooo_drop = false;
     uint8_t held_packet_dir = SSN_DIR_NONE;
     uint8_t ecn = 0;
 

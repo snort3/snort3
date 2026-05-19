@@ -222,6 +222,8 @@ public:
     TcpNormalizer::RstStatus validate_rst(TcpNormalizerState&, TcpSegmentDescriptor&) override;
     int handle_paws(TcpNormalizerState&, TcpSegmentDescriptor&) override;
     int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
+    bool validate_established_ack(TcpNormalizerState&, TcpSegmentDescriptor&) override
+    { return true; }
 };
 
 // Normalizations applied or excluded for midstream and one-way asymmetric flows are common

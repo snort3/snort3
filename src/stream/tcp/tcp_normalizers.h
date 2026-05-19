@@ -103,6 +103,9 @@ public:
     bool is_keep_alive_probe(const TcpSegmentDescriptor& tsd)
     { return norm->is_keep_alive_probe(tns, tsd); }
 
+    bool validate_established_ack(TcpSegmentDescriptor& tsd)
+    { return norm->validate_established_ack(tns, tsd); }
+
     uint16_t set_urg_offset(const snort::tcp::TCPHdr* tcph, uint16_t dsize)
     { return norm->set_urg_offset(tns, tcph, dsize); }
 

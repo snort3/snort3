@@ -629,6 +629,18 @@ uint16_t TcpNormalizer::set_urg_offset(
     return urg_offset;
 }
 
+bool TcpNormalizer::validate_established_ack(TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
+{
+    if ( tsd.is_nap_policy_inline() )
+        if ( tsd.get_tcph()->is_ack() && !tns.tracker->is_ack_valid(tsd.get_ack()) )
+        {
+            packet_dropper(tns, tsd, NORM_TCP_BLOCK);
+            return false;
+        }
+
+    return true;
+}
+
 void TcpNormalizer::reset_stats()
 {
     for (int i = TCP_PEGS_START; i < PC_MAX; i++)

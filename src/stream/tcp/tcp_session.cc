@@ -58,6 +58,7 @@
 #include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
 #include "stream/stream_log.h"
+#include "utils/util.h"
 
 #include "stream_tcp.h"
 #include "tcp_ha.h"
@@ -110,6 +111,7 @@ bool TcpSession::setup(Packet*)
     daq_flags = address_space_id = 0;
 
     tcp_config = get_tcp_cfg(flow->ssn_server);
+    proxy_cutover_ooo_drop = tcp_config->proxy_mode_ooo_drop;
     flow->set_default_session_timeout(tcp_config->session_timeout, false);
     flow->set_idle_timeout(tcp_config->embryonic_timeout);
     set_os_policy();
@@ -776,15 +778,33 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd, bool flush)
             break;
 
         case TcpNormalizer::NORM_TRIMMED:
+            proxy_cutover_ooo_drop = false;
             break;
 
         case TcpNormalizer::NORM_BAD_SEQ:
+            proxy_cutover_ooo_drop = false;
             return;
 
         default:
             assert(false);
             break;
         }
+    }
+
+    if ( proxy_cutover_ooo_drop && talker->client_tracker )
+    {
+        if ( !tsd.is_packet_inorder() && tsd.is_nap_policy_inline() )
+        {
+            tsd.drop_packet();
+            ++tcpStats.proxy_cutover_ooo_drops;
+            proxy_cutover_ooo_drop = false;
+            stream_log(tsd.get_pkt(), "stream_tcp: proxy cutover: dropping OOO client data"
+                " (seq %u, len %u), expecting retransmit\n",
+                tsd.get_seq(), tsd.get_len());
+            return;
+        }
+        else if ( listener->seglist.total_segs_queued >= 2 )
+            proxy_cutover_ooo_drop = false;
     }
 
     if ( flush )
@@ -1119,12 +1139,8 @@ bool TcpSession::validate_packet_established_session(TcpSegmentDescriptor& tsd)
 {
     TcpStreamTracker* listener = tsd.get_listener();
 
-    if ( tsd.is_nap_policy_inline() )
-       if ( tsd.get_tcph()->is_ack() && !listener->is_ack_valid(tsd.get_ack()) )
-       {
-           listener->normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
-           set_pkt_action_flag(ACTION_BAD_PKT);
-       }
+    if ( !listener->normalizer.validate_established_ack(tsd) )
+        set_pkt_action_flag(ACTION_BAD_PKT);
 
     if ( !tsd.is_meta_ack_packet() )
         set_pkt_action_flag(listener->normalizer.handle_paws(tsd));
@@ -1194,6 +1210,9 @@ void TcpSession::init_new_tcp_session(const TcpSegmentDescriptor& tsd)
     flow->set_expire(p, flow->default_session_timeout);
 
     update_perf_base_state(TcpStreamTracker::TCP_SYN_SENT);
+
+    if ( Stream::is_midstream(flow) )
+        proxy_cutover_ooo_drop = false;
 
     tcp_init = true;
 }
@@ -1472,6 +1491,7 @@ void TcpSession::start_proxy()
 {
     client.normalizer.init(Normalizer::Policy::PROXY, this, &client, &server);
     server.normalizer.init(Normalizer::Policy::PROXY, this, &server, &client);
+    proxy_cutover_ooo_drop = false;
     ++tcpStats.proxy_mode_flows;
 }
 
