@@ -46,6 +46,7 @@ enum ConfigType
     MaxBracketDepth,
     MaxScopeDepth,
     MaxTokenBufSize,
+    MaxDealiasBufSize,
     CheckMixedEncoding,
     CheckUnescapeNesting,
     UseExpectedForLastPDU,
@@ -114,6 +115,7 @@ public:
     Field<int> max_bracket_depth;
     Field<int> max_scope_depth;
     Field<int> max_token_buf_size;
+    Field<int> max_dealias_buf_size;
     Field<bool> check_mixed_encoding;
     Field<bool> check_unescape_nesting;
 
@@ -141,6 +143,7 @@ Config max_template_nesting(int val);
 Config max_bracket_depth(int val);
 Config max_scope_depth(int val);
 Config max_token_buf_size(int val);
+Config max_dealias_buf_size(int val);
 Config check_mixed_encoding(bool val);
 Config check_unescape_nesting(bool val);
 

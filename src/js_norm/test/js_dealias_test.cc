@@ -430,6 +430,105 @@ TEST_CASE("De-aliasing - basic", "[JSNormalizer]")
             "a = \\u0065\\u{0076}\\u0061\\u{006C}; a(); a.foo();",
             "var_0000=eval;eval();eval.foo();"
         );
+
+    SECTION("dealias_identifier exact boundary initial assignment")
+    {
+        test_normalization(
+            "a = console.name; b = a.a; b;",
+            "var_0000=console.name;var_0001=console.name.a;console.name.a;",
+            {max_dealias_buf_size(14)}
+        );
+    }
+
+    SECTION("dealias_identifier exact boundary with space-separated identifiers")
+    {
+        test_normalization(
+            "a = eval; b = a a; b;",
+            "var_0000=eval;var_0001=eval eval;evaleval;",
+            {max_dealias_buf_size(8)}
+        );
+    }
+
+    SECTION("dealias_append exact boundary with bracket accessor")
+    {
+        test_normalization(
+            "a = console['ab']; a;",
+            "var_0000=console['ab'];console['ab'];",
+            {max_dealias_buf_size(13)}
+        );
+    }
+
+    SECTION("dealias_identifier resets alias tracking")
+    {
+        test_normalization(
+            "a = console.name; b = a.a; b;",
+            "var_0000=console.name;var_0001=console.name.a;var_0001;",
+            {max_dealias_buf_size(13)}
+        );
+    }
+
+    SECTION("dealias_identifier resets alias with space-separated identifiers")
+    {
+        test_normalization(
+            "a = eval; b = a a; b;",
+            "var_0000=eval;var_0001=eval eval;var_0001;",
+            {max_dealias_buf_size(7)}
+        );
+    }
+
+    SECTION("dealias_append resets alias tracking")
+    {
+        test_normalization(
+            "a = console.name; b = a.a; b;",
+            "var_0000=console.name;var_0001=console.name.a;var_0001;",
+            {max_dealias_buf_size(12)}
+        );
+    }
+
+    SECTION("dealias_append resets with bracket accessor string")
+    {
+        test_normalization(
+            "a = console['abcd']; a;",
+            "var_0000=console['abcd'];var_0000;",
+            {max_dealias_buf_size(10)}
+        );
+    }
+
+    SECTION("multiple aliases both within cap")
+    {
+        test_normalization(
+            "a = eval; b = console; a; b;",
+            "var_0000=eval;var_0001=console;eval;console;",
+            {max_dealias_buf_size(7)}
+        );
+    }
+
+    SECTION("first alias overflows cap, second alias fits")
+    {
+        test_normalization(
+            "a = console.name; b = eval; a; b;",
+            "var_0000=console.name;var_0001=eval;var_0000;eval;",
+            {max_dealias_buf_size(11)}
+        );
+    }
+
+    SECTION("first alias fits cap, second alias overflows")
+    {
+        test_normalization(
+            "a = eval; b = console.name; a; b;",
+            "var_0000=eval;var_0001=console.name;eval;var_0001;",
+            {max_dealias_buf_size(11)}
+        );
+    }
+
+    SECTION("chained alias overflows cap without affecting first alias")
+    {
+        test_normalization(
+            "a = console; b = a.name; a; b;",
+            "var_0000=console;var_0001=console.name;console;var_0001;",
+            {max_dealias_buf_size(10)}
+        );
+    }
 }
 
 TEST_CASE("De-aliasing - split", "[JSNormalizer]")

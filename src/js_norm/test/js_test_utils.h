@@ -122,6 +122,7 @@ static const JSTestConfig default_config({
     max_bracket_depth(256),
     max_scope_depth(256),
     max_token_buf_size(256),
+    max_dealias_buf_size(1024),
     ignored_ids_list({
         "console", "eval", "document", "unescape", "decodeURI", "decodeURIComponent", "String",
         "name", "u"}),

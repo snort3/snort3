@@ -38,7 +38,8 @@ class JSNormalizer
 public:
     JSNormalizer(JSIdentifier& js_ident_ctx, size_t depth,
         uint8_t max_template_nesting, uint32_t max_bracket_depth,
-        int tmp_cap_size = JSTOKENIZER_BUF_MAX_SIZE);
+        int tmp_cap_size = JSTOKENIZER_BUF_MAX_SIZE,
+        int dealias_cap_size = JSTOKENIZER_DEALIAS_BUF_MAX_SIZE);
     ~JSNormalizer();
 
     JSTokenizer::JSRet normalize(const char* src, size_t src_len,

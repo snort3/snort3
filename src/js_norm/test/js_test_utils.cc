@@ -39,7 +39,8 @@ JSTokenizerTester::JSTokenizerTester(const JSTestConfig& conf) :
         conf.norm_depth,
         conf.max_template_nesting,
         conf.max_bracket_depth,
-        conf.max_token_buf_size
+        conf.max_token_buf_size,
+        conf.max_dealias_buf_size
     ),
     config(conf)
 { }

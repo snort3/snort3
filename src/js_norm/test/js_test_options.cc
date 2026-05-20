@@ -51,6 +51,7 @@ Config::Config(const Config& other) : type(other.type)
         case MaxBracketDepth:
         case MaxScopeDepth:
         case MaxTokenBufSize:
+        case MaxDealiasBufSize:
         case ExpectedCursorPos:
             val_int = other.val_int;
             break;
@@ -126,6 +127,9 @@ void ConfigSet::set_overrides(const Overrides& values)
             case MaxTokenBufSize:
                 max_token_buf_size = conf.val_int;
                 break;
+            case MaxDealiasBufSize:
+                max_dealias_buf_size = conf.val_int;
+                break;
             case ExpectedCursorPos:
                 expected_cursor_pos = conf.val_int;
                 break;
@@ -176,6 +180,9 @@ Config max_scope_depth(int val)
 
 Config max_token_buf_size(int val)
 { return {ConfigType::MaxTokenBufSize, val}; }
+
+Config max_dealias_buf_size(int val)
+{ return {ConfigType::MaxDealiasBufSize, val}; }
 
 Config check_mixed_encoding(bool val)
 { return {ConfigType::CheckMixedEncoding, val}; }

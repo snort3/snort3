@@ -34,6 +34,9 @@
 // To hold potentially long identifiers
 #define JSTOKENIZER_BUF_MAX_SIZE 256
 
+// Dedicated cap for dealiasing buffer
+#define JSTOKENIZER_DEALIAS_BUF_MAX_SIZE 1024
+
 namespace jsn
 {
 
@@ -165,7 +168,8 @@ public:
     JSTokenizer() = delete;
     explicit JSTokenizer(std::istream& in, std::ostream& out, JSIdentifier& ident_ctx,
         uint8_t max_template_nesting, uint32_t max_bracket_depth, char*& buf, size_t& buf_size,
-        int cap_size = JSTOKENIZER_BUF_MAX_SIZE);
+        int cap_size = JSTOKENIZER_BUF_MAX_SIZE,
+        int dealias_cap_size = JSTOKENIZER_DEALIAS_BUF_MAX_SIZE);
     ~JSTokenizer() override;
 
     JSRet process(size_t& bytes_in, bool external_script = false);
@@ -360,6 +364,7 @@ private:
     char*& tmp_buf;
     size_t& tmp_buf_size;
     const int tmp_cap_size;
+    const int dealias_cap_size;
 
     bool newline_found = false;
     bool adjusted_data = false;              // flag for resetting the continuation in case of adjusting js_data

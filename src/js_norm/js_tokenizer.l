@@ -1383,7 +1383,7 @@ const char* JSTokenizer::p_scope_codes[] =
 
 JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out,
     JSIdentifier& mapper, uint8_t max_template_nesting,
-    uint32_t max_bracket_depth, char*& buf, size_t& buf_size, int cap_size)
+    uint32_t max_bracket_depth, char*& buf, size_t& buf_size, int cap_size, int dealias_cap)
     : yyFlexLexer(in, out),
       max_template_nesting(max_template_nesting),
       ident_ctx(mapper),
@@ -1392,6 +1392,7 @@ JSTokenizer::JSTokenizer(std::istream& in, std::ostream& out,
       tmp_buf(buf),
       tmp_buf_size(buf_size),
       tmp_cap_size(cap_size),
+      dealias_cap_size(dealias_cap),
       ignored_id_pos(-1),
       max_bracket_depth(max_bracket_depth)
 {
@@ -2198,11 +2199,26 @@ void JSTokenizer::dealias_identifier(bool id_part, bool assignment_start)
     case ALIAS_VALUE:
     {
         auto dealias = ident_ctx.alias_lookup(lexeme);
+
+        bool use_raw = false;
+        size_t append_len = 0;
         if ((!ident_norm() && id_part) ||
             (!id_part && ident_ctx.is_ignored(ident_ctx.substitute(lexeme, false))))
-            aliased << YYText();
+        {
+            append_len = strlen(lexeme);
+            use_raw = true;
+        }
         else if (dealias)
-            aliased << dealias;
+            append_len = strlen(dealias);
+
+        if (append_len && aliased.tellp() + (std::streamoff)append_len > dealias_cap_size)
+        {
+            dealias_reset();
+            break;
+        }
+
+        if (append_len)
+            aliased << (use_raw ? YYText() : dealias);
         else
             dealias_reset();
         break;
@@ -2260,7 +2276,12 @@ void JSTokenizer::dealias_prefix_reset()
 void JSTokenizer::dealias_append()
 {
     if (alias_state == ALIAS_VALUE)
-        aliased << YYText();
+    {
+        if (aliased.tellp() + (std::streamoff)yyleng > dealias_cap_size)
+            dealias_reset();
+        else
+            aliased << YYText();
+    }
     else
         dealias_reset();
 }
@@ -2744,7 +2765,7 @@ JSTokenizer::JSRet JSTokenizer::keyword_function()
 {
     if (token == DOT)
         return general_identifier();
-    
+
     EXEC(do_semicolon_insertion(ASI_GROUP_10))
     set_ident_norm(true);
     EXEC(do_spacing(KEYWORD_FUNCTION))
@@ -2759,7 +2780,7 @@ JSTokenizer::JSRet JSTokenizer::keyword_catch()
 {
     if (token == DOT or in_object())
         return general_identifier();
-    
+
     EXEC(do_semicolon_insertion(ASI_GROUP_10))
     set_ident_norm(true);
     EXEC(do_spacing(KEYWORD_BLOCK))
@@ -2778,7 +2799,7 @@ JSTokenizer::JSRet JSTokenizer::keyword_while()
 {
     if (token == DOT or in_object())
         return general_identifier();
-    
+
     EXEC(do_semicolon_insertion(ASI_GROUP_10))
     set_ident_norm(true);
     EXEC(do_spacing(KEYWORD_BLOCK))
@@ -2813,7 +2834,7 @@ JSTokenizer::JSRet JSTokenizer::keyword_new()
 {
     if (token == DOT or in_object())
         return general_identifier();
-    
+
     EXEC(do_semicolon_insertion(ASI_GROUP_10))
     set_ident_norm(true);
     EXEC(do_spacing(KEYWORD))
@@ -2860,7 +2881,7 @@ JSTokenizer::JSRet JSTokenizer::keyword_do()
 {
     if (token == DOT or in_object())
         return general_identifier();
-    
+
     EXEC(do_semicolon_insertion(ASI_GROUP_10))
     set_ident_norm(true);
     EXEC(do_spacing(KEYWORD_BLOCK))
@@ -2876,7 +2897,7 @@ JSTokenizer::JSRet JSTokenizer::keyword_do()
 }
 
 JSTokenizer::JSRet JSTokenizer::keyword_class()
-{ 
+{
     if (token == DOT or in_object())
         return general_identifier();
 

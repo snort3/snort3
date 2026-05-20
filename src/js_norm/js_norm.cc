@@ -117,7 +117,8 @@ void JSNorm::normalize(const void* in_data, size_t in_len, const void*& data, si
                 config->max_scope_depth, config->ignored_ids, config->ignored_props);
         if (jsn_ctx == nullptr)
             jsn_ctx = new JSNormalizer(*idn_ctx, config->bytes_depth,
-                config->max_template_nesting, config->max_bracket_depth);
+                config->max_template_nesting, config->max_bracket_depth,
+                JSTOKENIZER_BUF_MAX_SIZE, JSTOKENIZER_DEALIAS_BUF_MAX_SIZE);
         trace_logf(3, js_trace, TRACE_DUMP, packet,
             "original[%zu]: %.*s\n", src_end - src_ptr, (int)(src_end - src_ptr), src_ptr);
 
