@@ -44,7 +44,18 @@ public:
     static void process_deletion(snort::Flow& flow);
     static void tinit();
     static void tterm();
+    static void tswap();
     static THREAD_LOCAL IcmpHA* icmp_ha;
+};
+
+class IcmpHAReloadSwapper : public snort::ReloadSwapper
+{
+public:
+    const char* name() const override { return "IcmpHAReloadSwapper"; }
+    void tswap() override
+    {
+        IcmpHAManager::tswap();
+    }
 };
 #endif
 

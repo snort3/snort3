@@ -29,8 +29,14 @@
 #include "flow/flow_key.h"
 #include "pub_sub/stream_event_ids.h"
 #include "stream/stream.h"
+#include "stream_module.h"
 
 using namespace snort;
+
+StreamHAClient::StreamHAClient()
+    : FlowHAClient(sizeof(SessionHAContent), MOD_NAME)
+{
+}
 
 // HA Session flags helper macros
 #define HA_IGNORED_SESSION_FLAGS \
@@ -45,7 +51,8 @@ static THREAD_LOCAL ProtocolMap* proto_map = nullptr;
 
 static ProtocolHA* get_protocol_ha(PktType pkt_type)
 {
-    assert( proto_map );
+    if ( !proto_map )
+        return nullptr;
 
     auto search = proto_map->find((int)pkt_type);
     if( search == proto_map->end() )
@@ -129,6 +136,12 @@ bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, ui
     flow->ssn_state = hac->ssn_state;
     flow->ssn_state.session_flags &= ~SSNFLAG_ESTABLISHED;  // clear flag for tcp established event to be generated
     flow->flow_state = hac->flow_state;
+
+    // Flows created before HA became active have a null ha_state (see
+    // Flow::init).  Allocate on demand so the standby bookkeeping below
+    // is safe.
+    if ( !flow->ha_state )
+        flow->ha_state = new FlowHAState;
 
     if ( !flow->ha_state->check_any(FlowHAState::STANDBY) )
     {
@@ -261,7 +274,10 @@ ProtocolHA::~ProtocolHA()
         proto_map->erase((*it).first);
 
     if ( proto_map->empty() )
+    {
         delete proto_map;
+        proto_map = nullptr;
+    }
 }
 
 void ProtocolHA::process_deletion(Flow& flow)
@@ -273,12 +289,21 @@ THREAD_LOCAL StreamHAClient* StreamHAManager::ha_client = nullptr;
 
 void StreamHAManager::tinit()
 {
-    if ( HighAvailabilityManager::configured() )
+    if ( !ha_client && HighAvailabilityManager::configured() )
         ha_client = new StreamHAClient();
 }
 
 void StreamHAManager::tterm()
 {
     delete ha_client;
+    ha_client = nullptr;
+}
+
+void StreamHAManager::tswap()
+{
+    delete ha_client;
+    ha_client = nullptr;
+    if ( HighAvailabilityManager::configured() )
+        ha_client = new StreamHAClient();
 }
 

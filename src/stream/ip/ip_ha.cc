@@ -55,12 +55,21 @@ void IpHAManager::process_deletion(Flow& flow)
 
 void IpHAManager::tinit()
 {
-    if ( HighAvailabilityManager::configured() )
+    if ( !ip_ha && HighAvailabilityManager::configured() )
         ip_ha = new IpHA();
 }
 
 void IpHAManager::tterm()
 {
     delete ip_ha;
+    ip_ha = nullptr;
+}
+
+void IpHAManager::tswap()
+{
+    delete ip_ha;
+    ip_ha = nullptr;
+    if ( HighAvailabilityManager::configured() )
+        ip_ha = new IpHA();
 }
 

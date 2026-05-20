@@ -70,7 +70,10 @@ bool StreamTcp::configure(SnortConfig* sc)
     sc->max_pdu = config->paf_max;
 
     if ( Snort::is_reloading() )
+    {
         sc->register_reload_handler(new HPQReloadTuner(Stream::get_hold_time()));
+        sc->register_reload_handler(new TcpHAReloadSwapper());
+    }
 
     return Stream::is_active();
 }

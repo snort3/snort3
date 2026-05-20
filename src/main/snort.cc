@@ -39,6 +39,7 @@
 #include "filters/sfrf.h"
 #include "filters/sfthreshold.h"
 #include "flow/ha.h"
+#include "flow/ha_module.h"
 #include "framework/mpse.h"
 #include "host_tracker/host_cache.h"
 #include "host_tracker/host_cache_segmented.h"
@@ -201,6 +202,9 @@ void Snort::init(int argc, char** argv)
         ParseError("can't initialize inspectors");
     else if ( SnortConfig::log_verbose() )
         InspectorManager::print_config(sc);
+
+    if ( HighAvailabilityManager::configured() )
+        HighAvailabilityManager::finalize_ha_client_indices();
 
     InspectorManager::prepare_inspectors(sc);
 
@@ -517,11 +521,20 @@ SnortConfig* Snort::get_reload_config(const char* fname)
     ControlMgmt::reconfigure_controls();
 #endif
 
+    // HA reload: see flow/dev_notes.txt. Tuner registered here (before inspector
+    // configure()) so it runs first at tswap; configure() runs on the main thread
+    // and is called unconditionally to keep the client-name registry fresh.
+    HighAvailabilityManager::configure(sc->ha_config);
+    sc->register_reload_handler(new HAReloadTuner());
+
     if ( get_parse_errors() or !InspectorManager::configure(sc) )
     {
         reload_failure_cleanup(sc);
         return nullptr;
     }
+
+    if ( HighAvailabilityManager::configured() )
+        HighAvailabilityManager::finalize_ha_client_indices();
 
     InspectorManager::reconcile_map(sc);
     InspectorManager::prepare_inspectors(sc);

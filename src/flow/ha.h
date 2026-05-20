@@ -124,7 +124,7 @@ public:
 class SO_PUBLIC FlowHAClient
 {
 public:
-    virtual ~FlowHAClient() = default;
+    virtual ~FlowHAClient();
     virtual bool consume(snort::Flow*&, const snort::FlowKey*, snort::HAMessage&, uint8_t size) = 0;
     virtual bool produce(snort::Flow&, snort::HAMessage&) = 0;
     virtual bool is_update_required(snort::Flow*) { return false; }
@@ -135,7 +135,7 @@ public:
     uint8_t max_length;
 
 protected:
-    FlowHAClient(uint8_t length, bool session_client);
+    FlowHAClient(uint8_t length, const char* mod_name, const char* suffix = nullptr);
 };
 
 // Top level management of HighAvailability components.
@@ -144,9 +144,23 @@ class SO_PUBLIC HighAvailabilityManager
 public:
     static void configure(HighAvailabilityConfig*);
     static void thread_init();
+    static void thread_reinit();
     static void thread_term_beginning(); // thread is about to be terminated
     static void thread_term();
     static void term();
+
+    // Name-based HA client registration. See dev_notes.txt ("HA Reload").
+    // The on-wire name is mod_name, or mod_name + "_" + suffix if suffix is set.
+    // is_session=true marks this client as the session client whose consume()
+    // creates the flow; exactly one registered client must set this true.
+    static void register_ha_client(const char* mod_name, const char* suffix = nullptr,
+        bool is_session = false);
+    static void finalize_ha_client_indices();
+    static constexpr uint8_t HA_INDEX_UNASSIGNED = 0xFF;
+#ifdef UNIT_TEST
+    // Test-only lookup; returns HA_INDEX_UNASSIGNED on failure.
+    static uint8_t get_ha_client_index(const char* mod_name, const char* suffix = nullptr);
+#endif
 
     static bool configured();
     static bool active();

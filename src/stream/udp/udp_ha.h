@@ -44,7 +44,18 @@ public:
     static void process_deletion(snort::Flow& flow);
     static void tinit();
     static void tterm();
+    static void tswap();
     static THREAD_LOCAL UdpHA* udp_ha;
+};
+
+class UdpHAReloadSwapper : public snort::ReloadSwapper
+{
+public:
+    const char* name() const override { return "UdpHAReloadSwapper"; }
+    void tswap() override
+    {
+        UdpHAManager::tswap();
+    }
 };
 #endif
 

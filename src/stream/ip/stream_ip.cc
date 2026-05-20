@@ -24,6 +24,8 @@
 #include "stream_ip.h"
 
 #include "log/messages.h"
+#include "main/snort.h"
+#include "main/snort_config.h"
 
 #include "ip_defrag.h"
 #include "ip_ha.h"
@@ -94,6 +96,8 @@ StreamIp::~StreamIp()
 bool StreamIp::configure(SnortConfig* sc)
 {
     defrag->configure(sc);
+    if ( snort::Snort::is_reloading() )
+        sc->register_reload_handler(new IpHAReloadSwapper());
     return Stream::is_active();
 }
 

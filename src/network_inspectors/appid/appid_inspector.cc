@@ -121,6 +121,11 @@ unsigned AppIdInspector::get_shadowtraffic_pub_id()
 
 bool AppIdInspector::configure(SnortConfig* sc)
 {
+    HighAvailabilityManager::register_ha_client(MOD_NAME, APPID_HA_SUFFIX_APPS);
+    HighAvailabilityManager::register_ha_client(MOD_NAME, APPID_HA_SUFFIX_HTTP);
+    HighAvailabilityManager::register_ha_client(MOD_NAME, APPID_HA_SUFFIX_TLS);
+    sc->register_reload_handler(new AppIdHAReloadSwapper());
+
     // cppcheck-suppress unreadVariable
     Profile profile(appid_perf_stats);
     struct rusage ru;

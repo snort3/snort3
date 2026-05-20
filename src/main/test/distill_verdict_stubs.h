@@ -212,6 +212,7 @@ void ErrorMessage(const char*,...) { }
 [[noreturn]] void FatalError(const char*,...) { exit(-1); }
 void ParseWarning(WarningGroup, const char*, ...) { }
 void HighAvailabilityManager::thread_init() { }
+void HighAvailabilityManager::thread_reinit() { }
 void HighAvailabilityManager::process_receive() { }
 void HighAvailabilityManager::thread_term() { }
 void HighAvailabilityManager::thread_term_beginning() { }

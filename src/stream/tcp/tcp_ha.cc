@@ -69,12 +69,21 @@ void TcpHAManager::process_deletion(Flow& flow)
 
 void TcpHAManager::tinit()
 {
-    if ( HighAvailabilityManager::configured() )
+    if ( !tcp_ha && HighAvailabilityManager::configured() )
         tcp_ha = new TcpHA();
 }
 
 void TcpHAManager::tterm()
 {
     delete tcp_ha;
+    tcp_ha = nullptr;
+}
+
+void TcpHAManager::tswap()
+{
+    delete tcp_ha;
+    tcp_ha = nullptr;
+    if ( HighAvailabilityManager::configured() )
+        tcp_ha = new TcpHA();
 }
 

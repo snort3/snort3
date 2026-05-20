@@ -97,17 +97,21 @@ static struct __attribute__((__packed__)) TestUpdateMessage {
     },
     s_test_key,
     {
-        0,
+        1,  // stream client index (alphabetical: "other"=0, "stream"=1)
         10
     },
     { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }
 };
 
+// The session HA client wire name is internal to ha.cc; tests reference it
+// by literal here so they exercise the same registration path real callers do.
+static constexpr const char* HA_CLIENT_NAME_STREAM = "stream";
+
 
 class StreamHAClient : public FlowHAClient
 {
 public:
-    StreamHAClient() : FlowHAClient(10, true) { }
+    StreamHAClient() : FlowHAClient(10, HA_CLIENT_NAME_STREAM) { }
     ~StreamHAClient() override = default;
     bool consume(Flow*&, const FlowKey*, HAMessage& msg, uint8_t size) override
     {
@@ -144,7 +148,7 @@ public:
 class OtherHAClient : public FlowHAClient
 {
 public:
-    OtherHAClient() : FlowHAClient(5, false) { }
+    OtherHAClient() : FlowHAClient(5, "other") { }
     ~OtherHAClient() override = default;
     bool consume(Flow*&, const FlowKey*, HAMessage& msg, uint8_t size) override
     {
@@ -440,6 +444,10 @@ TEST_GROUP(high_availability_test)
         hac.min_sync_interval = { 0, 500000 };
 
         HighAvailabilityManager::configure(&hac);
+        HighAvailabilityManager::register_ha_client(HA_CLIENT_NAME_STREAM, nullptr, /*is_session=*/true);
+        HighAvailabilityManager::register_ha_client("other");
+        HighAvailabilityManager::register_ha_client("temp");
+        HighAvailabilityManager::finalize_ha_client_indices();
         HighAvailabilityManager::thread_init();
         s_ha_client = new StreamHAClient;
         s_other_ha_client = new OtherHAClient;
@@ -584,7 +592,7 @@ TEST(high_availability_test, consume_error_client_consume)
 {
     struct __attribute__((__packed__))
     {
-        HAClientHeader chdr = { 0, 10 };
+        HAClientHeader chdr = { 1, 10 };  // stream client (index 1)
         uint8_t cmsg[0x42 / 2] = { };
     } input;
     HAMessage msg((uint8_t*) &input, sizeof(input));
@@ -652,6 +660,651 @@ TEST(high_availability_test, produce_error_client_produce)
     HAMessage msg(buffer, sizeof(buffer));
     write_update_msg_client(s_ha_client, s_flow, msg);
     CHECK(msg.cursor == msg.buffer);
+}
+
+//-------------------------------------------------------------------------
+// test client used only in ha_reload_test group (index 2 — unused by stream/other)
+//-------------------------------------------------------------------------
+
+class TempHAClient : public FlowHAClient
+{
+public:
+    TempHAClient() : FlowHAClient(5, "temp") { }
+    ~TempHAClient() override = default;
+    bool consume(Flow*&, const FlowKey*, HAMessage&, uint8_t) override { return true; }
+    bool produce(Flow&, HAMessage&) override { return true; }
+};
+
+//-------------------------------------------------------------------------
+// tests for thread_reinit and FlowHAClient lifecycle
+//-------------------------------------------------------------------------
+
+TEST_GROUP(ha_reload_test)
+{
+    struct timeval s_packet_time;
+
+    void setup() override
+    {
+        s_packet_time = {};
+        mock().setDataObject("packet_tv", "struct timeval", &s_packet_time);
+        memset(&ha_stats, 0, sizeof(ha_stats));
+    }
+
+    void teardown() override
+    {
+        HighAvailabilityManager::thread_term();
+        HighAvailabilityManager::term();
+        mock().clear();
+    }
+};
+
+// thread_reinit() must recreate the HA object and leave ha active when still configured
+TEST(ha_reload_test, thread_reinit_preserves_ha_when_configured)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
+    HighAvailabilityManager::thread_init();
+    CHECK(HighAvailabilityManager::active() == true);
+
+    HighAvailabilityManager::thread_reinit();
+
+    CHECK(HighAvailabilityManager::active() == true);
+}
+
+// thread_reinit() after configure(nullptr) must leave ha=null
+TEST(ha_reload_test, thread_reinit_disables_ha_when_unconfigured)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
+    HighAvailabilityManager::thread_init();
+    CHECK(HighAvailabilityManager::active() == true);
+
+    HighAvailabilityManager::configure(nullptr);
+    HighAvailabilityManager::thread_reinit();
+
+    CHECK(HighAvailabilityManager::active() == false);
+}
+
+// thread_reinit() disabled→enabled: ha starts null, configure enabled, reinit → ha active
+TEST(ha_reload_test, thread_reinit_enables_ha_from_disabled)
+{
+    // Start with no config (ha stays null after thread_init)
+    HighAvailabilityConfig hac_off = { };
+    HighAvailabilityManager::configure(&hac_off);
+    HighAvailabilityManager::thread_init();
+    CHECK(HighAvailabilityManager::active() == false);
+
+    HighAvailabilityConfig hac_on;
+    hac_on.enabled = true;
+    hac_on.daq_channel = false;
+    hac_on.ports = new PortBitSet;
+    hac_on.ports->set(1);
+    hac_on.min_session_lifetime = { 1, 0 };
+    hac_on.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac_on);
+    HighAvailabilityManager::thread_reinit();
+
+    CHECK(HighAvailabilityManager::active() == true);
+    CHECK(HighAvailabilityManager::configured() == true);
+}
+
+// thread_reinit() enabled→enabled: new ha object created, active stays true
+TEST(ha_reload_test, thread_reinit_enabled_to_enabled)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
+    HighAvailabilityManager::thread_init();
+    CHECK(HighAvailabilityManager::active() == true);
+
+    // Reconfigure with different port
+    HighAvailabilityConfig hac2;
+    hac2.enabled = true;
+    hac2.daq_channel = false;
+    hac2.ports = new PortBitSet;
+    hac2.ports->set(2);
+    hac2.min_session_lifetime = { 2, 0 };
+    hac2.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac2);
+    HighAvailabilityManager::thread_reinit();
+
+    CHECK(HighAvailabilityManager::active() == true);
+    CHECK(ha != nullptr);
+}
+
+// thread_reinit() disabled→disabled: ha stays null, no crash
+TEST(ha_reload_test, thread_reinit_disabled_to_disabled)
+{
+    HighAvailabilityConfig hac_off = { };
+    HighAvailabilityManager::configure(&hac_off);
+    HighAvailabilityManager::thread_init();
+    CHECK(HighAvailabilityManager::active() == false);
+
+    HighAvailabilityManager::configure(nullptr);
+    HighAvailabilityManager::thread_reinit();
+
+    CHECK(HighAvailabilityManager::active() == false);
+    CHECK(HighAvailabilityManager::configured() == false);
+}
+
+// thread_reinit() called twice in a row must not crash and preserve active state
+TEST(ha_reload_test, thread_reinit_idempotent)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
+    HighAvailabilityManager::thread_init();
+
+    HighAvailabilityManager::thread_reinit();
+    CHECK(HighAvailabilityManager::active() == true);
+
+    HighAvailabilityManager::thread_reinit();
+    CHECK(HighAvailabilityManager::active() == true);
+}
+
+// Bug 5: configure(nullptr) must clear use_daq_channel so configured() returns false
+TEST(ha_reload_test, reset_config_clears_daq_channel)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = true;
+    // no ports — relies solely on daq_channel for configured()
+    HighAvailabilityManager::configure(&hac);
+    CHECK(HighAvailabilityManager::configured() == true);
+
+    HighAvailabilityManager::configure(nullptr);
+    CHECK(HighAvailabilityManager::configured() == false);
+}
+
+// HAReloadTuner::tswap() delegates entirely to thread_reinit();
+// the HAReloadTuner class itself is tested at the integration level.
+// Here we verify thread_reinit() leaves ha active after a same-config cycle.
+TEST(ha_reload_test, thread_reinit_same_as_tswap_effect)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
+    HighAvailabilityManager::thread_init();
+    CHECK(HighAvailabilityManager::active() == true);
+
+    // Simulate what HAReloadTuner::tswap() does
+    HighAvailabilityManager::thread_reinit();
+    CHECK(HighAvailabilityManager::active() == true);
+}
+
+// Session client destructor nulls its client_map slot and session_client pointer
+TEST(ha_reload_test, session_client_dtor_nulls_slot)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
+    HighAvailabilityManager::register_ha_client(HA_CLIENT_NAME_STREAM, nullptr, /*is_session=*/true);
+    HighAvailabilityManager::finalize_ha_client_indices();
+    HighAvailabilityManager::thread_init();
+
+    uint8_t idx = HighAvailabilityManager::get_ha_client_index(HA_CLIENT_NAME_STREAM);
+    StreamHAClient* sc = new StreamHAClient();
+    CHECK(ha->client_map[idx] == sc);
+    CHECK(ha->session_client == sc);
+    delete sc;
+    CHECK(ha->client_map[idx] == nullptr);
+    CHECK(ha->session_client == nullptr);
+}
+
+// Client registration survives a reinit cycle: clients re-register at same indices
+TEST(ha_reload_test, clients_reregister_after_reinit)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
+    HighAvailabilityManager::register_ha_client(HA_CLIENT_NAME_STREAM, nullptr, /*is_session=*/true);
+    HighAvailabilityManager::finalize_ha_client_indices();
+    HighAvailabilityManager::thread_init();
+
+    uint8_t idx = HighAvailabilityManager::get_ha_client_index(HA_CLIENT_NAME_STREAM);
+    StreamHAClient* sc = new StreamHAClient();
+    CHECK(sc->index == idx);
+    CHECK(ha->client_map[idx] == sc);
+    delete sc;
+
+    // Simulate reinit: destroy and recreate ha via public API
+    HighAvailabilityManager::thread_reinit();
+    CHECK(HighAvailabilityManager::active() == true);
+    CHECK(ha->client_map[idx] == nullptr);
+
+    // Re-register — must land at same index (name map survives reinit)
+    StreamHAClient* sc2 = new StreamHAClient();
+    CHECK(sc2->index == idx);
+    CHECK(ha->client_map[idx] == sc2);
+    delete sc2;
+}
+
+//-------------------------------------------------------------------------
+// tests for Bug 18: canonical indices and FlowHAClient destructor
+//-------------------------------------------------------------------------
+
+// Sorted name-based indices must be applied correctly at construction time
+TEST(high_availability_test, canonical_client_indices)
+{
+    // Alphabetical: "other"=0, "stream"=1, "temp"=2
+    CHECK(s_ha_client->index == 1);
+    CHECK(s_other_ha_client->index == 0);
+    CHECK(ha->client_map[1] == s_ha_client);
+    CHECK(ha->client_map[0] == s_other_ha_client);
+    CHECK(ha->session_client == s_ha_client);
+}
+
+// FlowHAClient destructor must null out its client_map slot
+TEST(high_availability_test, client_dtor_nulls_map)
+{
+    TempHAClient* temp = new TempHAClient();
+    CHECK(ha->client_map[2] == temp);
+    delete temp;
+    CHECK(ha->client_map[2] == nullptr);
+}
+
+// Produce loops must skip null slots in a sparse client_map (Bug 18)
+TEST(high_availability_test, produce_skips_null_client_map_slots)
+{
+    // Slots 0 and 1 are registered (stream + other). Slot 2 is empty.
+    // Registering a client at slot 3 creates a gap at slot 2.
+    TempHAClient* temp = new TempHAClient();   // index 2
+    delete temp;                                // leaves slot 2 null, handle_counter unchanged
+    // Produce should not crash even though slot 2 is null
+    mock().setData("stream_update_required", (int)true);
+    mock().expectNCalls(1, "transmit_message");
+    HighAvailabilityManager::process_update(&s_flow, &s_pkt);
+    mock().checkExpectations();
+}
+
+//-------------------------------------------------------------------------
+// Coverage tests: FlowHAClient construction, configure(), multi-client
+// produce/consume, null/empty guards
+//-------------------------------------------------------------------------
+
+// FlowHAClient ctor takes early return when ha is null — no registration, no crash
+TEST(ha_reload_test, flow_ha_client_no_ha)
+{
+    // ha is null — setup does not call configure()/thread_init()
+    // OtherHAClient ctor calls FlowHAClient(5, "other") which early-returns when ha==null
+    OtherHAClient* oc = new OtherHAClient();
+    CHECK(oc->handle == 0);  // not registered (would be 1 if registered)
+    CHECK(oc->index == 0);   // not registered (would be 1 if registered)
+    delete oc;               // ~FlowHAClient sees ha==null, no-op
+}
+
+// Sorted-name finalize is order-independent: registering the same set of names
+// in different orders must produce the identical name->index map. This locks
+// in the cross-peer wire-format contract.
+TEST(ha_reload_test, finalize_sorted_deterministic)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    // Order A: stream, alpha, beta
+    HighAvailabilityManager::configure(&hac);
+    HighAvailabilityManager::register_ha_client(HA_CLIENT_NAME_STREAM, nullptr, /*is_session=*/true);
+    HighAvailabilityManager::register_ha_client("alpha");
+    HighAvailabilityManager::register_ha_client("beta");
+    HighAvailabilityManager::finalize_ha_client_indices();
+    uint8_t a_alpha  = HighAvailabilityManager::get_ha_client_index("alpha");
+    uint8_t a_beta   = HighAvailabilityManager::get_ha_client_index("beta");
+    uint8_t a_stream = HighAvailabilityManager::get_ha_client_index(HA_CLIENT_NAME_STREAM);
+
+    // Order B: beta, stream, alpha (registry is cleared by configure())
+    HighAvailabilityConfig hac2;
+    hac2.enabled = true;
+    hac2.daq_channel = false;
+    hac2.ports = new PortBitSet;
+    hac2.ports->set(1);
+    hac2.min_session_lifetime = { 1, 0 };
+    hac2.min_sync_interval = { 0, 500000 };
+    HighAvailabilityManager::configure(&hac2);
+    HighAvailabilityManager::register_ha_client("beta");
+    HighAvailabilityManager::register_ha_client(HA_CLIENT_NAME_STREAM, nullptr, /*is_session=*/true);
+    HighAvailabilityManager::register_ha_client("alpha");
+    HighAvailabilityManager::finalize_ha_client_indices();
+    uint8_t b_alpha  = HighAvailabilityManager::get_ha_client_index("alpha");
+    uint8_t b_beta   = HighAvailabilityManager::get_ha_client_index("beta");
+    uint8_t b_stream = HighAvailabilityManager::get_ha_client_index(HA_CLIENT_NAME_STREAM);
+
+    CHECK_EQUAL(a_alpha,  b_alpha);
+    CHECK_EQUAL(a_beta,   b_beta);
+    CHECK_EQUAL(a_stream, b_stream);
+
+    // Sanity: alphabetical order: alpha=0, beta=1, stream=2
+    CHECK_EQUAL(0, a_alpha);
+    CHECK_EQUAL(1, a_beta);
+    CHECK_EQUAL(2, a_stream);
+}
+
+// FlowHAClient ctor with an unregistered name must not crash and must not
+// install the client into the client_map.
+TEST(ha_reload_test, flow_ha_client_unregistered_name)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
+    HighAvailabilityManager::register_ha_client(HA_CLIENT_NAME_STREAM, nullptr, /*is_session=*/true);
+    HighAvailabilityManager::finalize_ha_client_indices();
+    HighAvailabilityManager::thread_init();
+
+    // "other" was never registered — ctor should ErrorMessage and leave handle/index at 0.
+    OtherHAClient* oc = new OtherHAClient();
+    CHECK(oc->handle == 0);
+    CHECK(oc->index == 0);
+    // No slot in client_map should now point to oc.
+    for (uint8_t i = 0; i < MAX_CLIENTS; i++)
+        CHECK(ha->client_map[i] != oc);
+    delete oc;
+}
+
+// Bug 11: configure() must delete old ports when reconfigured with null ports
+TEST(ha_reload_test, configure_removes_ports)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
+    CHECK(HighAvailabilityManager::configured() == true);
+
+    // Reconfigure with null ports, no daq_channel — old ports must be freed
+    HighAvailabilityConfig hac2 = { };
+    HighAvailabilityManager::configure(&hac2);
+    CHECK(HighAvailabilityManager::configured() == false);
+}
+
+// process_update() produces when only a non-session client has pending
+// (stream not required, NEW cleared)
+TEST(high_availability_test, process_update_other_client_produce)
+{
+    mock().setData("stream_update_required", (int)false);
+    // Clear NEW so the guard doesn't return early; set pending on other client
+    s_flow.ha_state->set(FlowHAState::MODIFIED);
+    s_flow.ha_state->set_pending(s_other_ha_client->handle);
+
+    mock().expectNCalls(1, "transmit_message");
+    HighAvailabilityManager::process_update(&s_flow, &s_pkt);
+    mock().checkExpectations();
+}
+
+// Both session and non-session clients' consume() are called for a multi-client message
+TEST(high_availability_test, receive_update_both_clients)
+{
+    struct __attribute__((__packed__)) {
+        HAMessageHeader mhdr;
+        FlowKey key;
+        HAClientHeader schdr;
+        uint8_t scmsg[10];
+        HAClientHeader ochdr;
+        uint8_t ocmsg[5];
+    } msg_data = {
+        { HA_UPDATE_EVENT, HA_MESSAGE_VERSION, 0, KEY_TYPE_IP6 },
+        s_test_key,
+        { 1, 10 },  // stream client (index 1)
+        { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+        { 0, 5 },   // other client (index 0)
+        { 0, 1, 2, 3, 4 }
+    };
+    msg_data.mhdr.total_length = sizeof(msg_data);
+
+    s_sc_message.content = (uint8_t*)&msg_data;
+    s_sc_message.content_length = sizeof(msg_data);
+
+    mock().expectNCalls(1, "get_flow");
+    mock().expectNCalls(1, "consume");
+    mock().expectNCalls(1, "other_consume");
+    HighAvailabilityManager::process_receive();
+    mock().checkExpectations();
+    CHECK(mock().getData("stream_consume_size").getIntValue() == 10);
+    CHECK(mock().getData("other_consume_size").getIntValue() == 5);
+}
+
+// write_update_msg_client correctly produces header + content for a non-session client
+TEST(high_availability_test, other_ha_client_is_update_required)
+{
+    uint8_t buffer[MSG_SIZE];
+    HAMessage msg(buffer, sizeof(buffer));
+    write_update_msg_client(s_other_ha_client, s_flow, msg);
+
+    // Verify client header was written correctly
+    HAClientHeader* hdr = reinterpret_cast<HAClientHeader*>(buffer);
+    CHECK(hdr->client == 0);   // other client index (alphabetical: "other"=0)
+    CHECK(hdr->length == 5);   // 5 bytes of content
+
+    // Verify content: OtherHAClient::produce writes bytes 0-4
+    uint8_t* content = buffer + sizeof(HAClientHeader);
+    for (uint8_t i = 0; i < 5; i++)
+        CHECK(content[i] == i);
+}
+
+// process_receive with a 0-length message — handler not invoked, no crash
+TEST(high_availability_test, process_receive_empty_message)
+{
+    s_sc_message.content_length = 0;
+    // SideChannel::process() stub returns false when content_length==0
+    // No handler invoked, no consume, no crash
+    HighAvailabilityManager::process_receive();
+    CHECK(ha_stats.msgs_recv == 0);
+}
+
+// process_update with null flow takes early return — no crash, no transmit
+TEST(high_availability_test, process_update_null_flow)
+{
+    mock().setData("stream_update_required", (int)true);
+    HighAvailabilityManager::process_update(nullptr, &s_pkt);
+    CHECK(ha_stats.daq_stores == 0);
+}
+
+// consume_ha_message with a truncated key discards the message safely
+TEST(high_availability_test, consume_message_bad_key)
+{
+    struct __attribute__((__packed__)) {
+        HAMessageHeader mhdr;
+        uint8_t partial_key[2];
+    } msg_data = {
+        { HA_UPDATE_EVENT, HA_MESSAGE_VERSION, 0, KEY_TYPE_IP6 },
+        { 0xAA, 0xBB }
+    };
+    msg_data.mhdr.total_length = sizeof(msg_data);
+
+    HAMessage msg((uint8_t*)&msg_data, sizeof(msg_data));
+    FlowKey* key = nullptr;
+    CHECK(consume_ha_message(msg, key, nullptr) == nullptr);
+    CHECK(ha_stats.truncated_msgs == 1);
+}
+
+//-------------------------------------------------------------------------
+// Review-driven tests: registry edge cases and null ha_state guards
+//-------------------------------------------------------------------------
+
+// register_ha_client after finalize_ha_client_indices() must be rejected so
+// the sorted index space cannot shift out from under packet threads.
+TEST(ha_reload_test, register_after_finalize_rejected)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
+    HighAvailabilityManager::register_ha_client(HA_CLIENT_NAME_STREAM, nullptr, /*is_session=*/true);
+    HighAvailabilityManager::register_ha_client("alpha");
+    HighAvailabilityManager::finalize_ha_client_indices();
+
+    const size_t before = ha_client_name_map.size();
+    HighAvailabilityManager::register_ha_client("late");
+    CHECK_EQUAL(before, ha_client_name_map.size());
+    // "late" must not have been inserted
+    CHECK(ha_client_name_map.find("late") == ha_client_name_map.end());
+}
+
+// finalize_ha_client_indices() with no session client registered must refuse
+// to set ha_indices_finalized; later FlowHAClient ctors will then early-return
+// instead of being installed at colliding indices.
+TEST(ha_reload_test, finalize_without_session_client_rejected)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
+    // Intentionally omit HA_CLIENT_NAME_STREAM
+    HighAvailabilityManager::register_ha_client("alpha");
+    HighAvailabilityManager::register_ha_client("beta");
+    HighAvailabilityManager::finalize_ha_client_indices();
+
+    CHECK(ha_indices_finalized == false);
+}
+
+// finalize_ha_client_indices() with more than MAX_CLIENTS (16) total clients
+// must reject (the FlowHAClientHandle pending mask is 16 bits wide).
+TEST(ha_reload_test, finalize_too_many_non_session_clients_rejected)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
+    HighAvailabilityManager::register_ha_client(HA_CLIENT_NAME_STREAM, nullptr, /*is_session=*/true);
+    // stream + 17 others = 18 total, over MAX_CLIENTS=16
+    char name[8];
+    for (int i = 0; i < 17; i++)
+    {
+        snprintf(name, sizeof(name), "c%02d", i);
+        HighAvailabilityManager::register_ha_client(name);
+    }
+    HighAvailabilityManager::finalize_ha_client_indices();
+
+    CHECK(ha_indices_finalized == false);
+}
+
+// process_update() must early-return when flow->ha_state is null (a flow
+// created before HA was enabled by reload). No transmit, no crash.
+TEST(ha_reload_test, process_update_null_ha_state)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
+    HighAvailabilityManager::register_ha_client(HA_CLIENT_NAME_STREAM, nullptr, /*is_session=*/true);
+    HighAvailabilityManager::finalize_ha_client_indices();
+    HighAvailabilityManager::thread_init();
+
+    Flow flow;
+    FlowKey key = {};
+    flow.key = &key;
+    flow.ha_state = nullptr;  // pre-existing-flow scenario
+    Active active{};
+    Packet pkt;
+    pkt.active = &active;
+
+    // No transmit_message expectation set; mock would fail if one were issued
+    HighAvailabilityManager::process_update(&flow, &pkt);
+    mock().checkExpectations();
+}
+
+// process_deletion() must early-return when flow.ha_state is null.
+TEST(ha_reload_test, process_deletion_null_ha_state)
+{
+    HighAvailabilityConfig hac;
+    hac.enabled = true;
+    hac.daq_channel = false;
+    hac.ports = new PortBitSet;
+    hac.ports->set(1);
+    hac.min_session_lifetime = { 1, 0 };
+    hac.min_sync_interval = { 0, 500000 };
+
+    HighAvailabilityManager::configure(&hac);
+    HighAvailabilityManager::register_ha_client(HA_CLIENT_NAME_STREAM, nullptr, /*is_session=*/true);
+    HighAvailabilityManager::finalize_ha_client_indices();
+    HighAvailabilityManager::thread_init();
+
+    Flow flow;
+    FlowKey key = {};
+    flow.key = &key;
+    flow.ha_state = nullptr;
+
+    HighAvailabilityManager::process_deletion(flow);
+    mock().checkExpectations();
 }
 
 int main(int argc, char** argv)

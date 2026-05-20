@@ -23,6 +23,8 @@
 #include "stream_udp.h"
 
 #include "log/messages.h"
+#include "main/snort.h"
+#include "main/snort_config.h"
 
 #include "udp_ha.h"
 #include "udp_module.h"
@@ -52,8 +54,12 @@ public:
     ~StreamUdp() override
     { delete config; }
 
-    bool configure(SnortConfig*) override
-    { return Stream::is_active(); }
+    bool configure(SnortConfig* sc) override
+    {
+        if ( snort::Snort::is_reloading() )
+            sc->register_reload_handler(new UdpHAReloadSwapper());
+        return Stream::is_active();
+    }
 
     void show(const SnortConfig*) const override;
     NORETURN_ASSERT void eval(Packet*) override;

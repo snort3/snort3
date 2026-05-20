@@ -45,7 +45,18 @@ public:
     static void process_deletion(snort::Flow& flow);
     static void tinit();
     static void tterm();
+    static void tswap();
     static THREAD_LOCAL TcpHA* tcp_ha;
+};
+
+class TcpHAReloadSwapper : public snort::ReloadSwapper
+{
+public:
+    const char* name() const override { return "TcpHAReloadSwapper"; }
+    void tswap() override
+    {
+        TcpHAManager::tswap();
+    }
 };
 #endif
 

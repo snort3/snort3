@@ -20,6 +20,8 @@
 #ifndef FLOW_STUBS_H
 #define FLOW_STUBS_H
 
+#include <cstdlib>
+
 #include "framework/data_bus.h"
 #include "log/messages.h"
 #include "main/policy.h"
@@ -37,6 +39,7 @@ namespace snort
 {
 void ErrorMessage(const char*,...) { }
 void LogMessage(const char*,...) { }
+[[noreturn]] void FatalError(const char*, ...) { std::abort(); }
 
 void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }
 void DataBus::publish(unsigned, unsigned, const uint8_t*, unsigned, Flow*) { }

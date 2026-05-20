@@ -24,6 +24,8 @@
 #include "stream_icmp.h"
 
 #include "log/messages.h"
+#include "main/snort.h"
+#include "main/snort_config.h"
 
 #include "icmp_ha.h"
 #include "icmp_module.h"
@@ -53,8 +55,12 @@ public:
     ~StreamIcmp() override
     { delete config; }
 
-    bool configure(SnortConfig*) override
-    { return Stream::is_active(); }
+    bool configure(SnortConfig* sc) override
+    {
+        if ( snort::Snort::is_reloading() )
+            sc->register_reload_handler(new IcmpHAReloadSwapper());
+        return Stream::is_active();
+    }
 
     void show(const SnortConfig*) const override;
     NORETURN_ASSERT void eval(Packet*) override;

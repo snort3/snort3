@@ -24,19 +24,34 @@
 #include <sys/time.h>
 
 #include "framework/module.h"
+#include "main/reload_tuner.h"
 
 #define HA_NAME "high_availability"
 #define HA_HELP "implement flow tracking high availability"
+
+struct HighAvailabilityConfig;
+
+class HAReloadTuner : public snort::ReloadSwapper
+{
+public:
+    HAReloadTuner() = default;
+    ~HAReloadTuner() override = default;
+
+    const char* name() const override
+    { return "HAReloadTuner"; }
+
+    void tswap() override;
+};
 
 struct HighAvailabilityConfig
 {
     ~HighAvailabilityConfig() { delete ports; }
 
-    bool enabled;
-    bool daq_channel;
+    bool enabled = false;
+    bool daq_channel = false;
     PortBitSet* ports = nullptr;
-    struct timeval min_session_lifetime;
-    struct timeval min_sync_interval;
+    struct timeval min_session_lifetime = { 0, 0 };
+    struct timeval min_sync_interval = { 0, 0 };
 };
 
 class HighAvailabilityModule : public snort::Module

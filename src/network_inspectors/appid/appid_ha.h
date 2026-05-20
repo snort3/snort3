@@ -23,9 +23,15 @@
 
 #include "flow/flow.h"
 #include "flow/ha.h"
+#include "main/reload_tuner.h"
 #include "appid_inspector.h"
 
 #define APPID_HA_MAX_FIELD_LEN 32
+
+// Stable wire-name suffixes; the mod_name part comes from MOD_NAME.
+#define APPID_HA_SUFFIX_APPS  "apps"
+#define APPID_HA_SUFFIX_HTTP  "http"
+#define APPID_HA_SUFFIX_TLS   "tls"
 
 enum AppIdHAAppType
 {
@@ -61,7 +67,7 @@ struct AppIdSessionHATlsHost
 class AppIdHAAppsClient : public snort::FlowHAClient
 {
 public:
-    AppIdHAAppsClient() : FlowHAClient(sizeof(AppIdSessionHAApps), false) { }
+    AppIdHAAppsClient() : FlowHAClient(sizeof(AppIdSessionHAApps), MOD_NAME, APPID_HA_SUFFIX_APPS) { }
     bool consume(snort::Flow*&, const snort::FlowKey*, snort::HAMessage&, uint8_t size) override;
     bool produce(snort::Flow&, snort::HAMessage&) override;
 };
@@ -69,7 +75,7 @@ public:
 class AppIdHAHttpClient : public snort::FlowHAClient
 {
 public:
-    AppIdHAHttpClient() : FlowHAClient(sizeof(AppIdSessionHAHttp), false) { }
+    AppIdHAHttpClient() : FlowHAClient(sizeof(AppIdSessionHAHttp), MOD_NAME, APPID_HA_SUFFIX_HTTP) { }
     bool consume(snort::Flow*&, const snort::FlowKey*, snort::HAMessage&, uint8_t size) override;
     bool produce(snort::Flow&, snort::HAMessage&) override;
 };
@@ -77,7 +83,7 @@ public:
 class AppIdHATlsHostClient : public snort::FlowHAClient
 {
 public:
-    AppIdHATlsHostClient() : FlowHAClient(sizeof(AppIdSessionHATlsHost), false) { }
+    AppIdHATlsHostClient() : FlowHAClient(sizeof(AppIdSessionHATlsHost), MOD_NAME, APPID_HA_SUFFIX_TLS) { }
     bool consume(snort::Flow*&, const snort::FlowKey*, snort::HAMessage&, uint8_t size) override;
     bool produce(snort::Flow&, snort::HAMessage&) override;
 };
@@ -87,6 +93,8 @@ class AppIdHAManager
 public:
     static void tinit()
     {
+        if ( ha_apps_client || ha_http_client || ha_tls_host_client )
+            return;
         if ( snort::HighAvailabilityManager::configured() )
         {
             ha_apps_client = new AppIdHAAppsClient;
@@ -97,13 +105,42 @@ public:
     static void tterm()
     {
         delete ha_apps_client;
+        ha_apps_client = nullptr;
         delete ha_http_client;
+        ha_http_client = nullptr;
         delete ha_tls_host_client;
+        ha_tls_host_client = nullptr;
     }
+    static void tswap()
+    {
+        delete ha_apps_client;
+        ha_apps_client = nullptr;
+        delete ha_http_client;
+        ha_http_client = nullptr;
+        delete ha_tls_host_client;
+        ha_tls_host_client = nullptr;
+        if ( snort::HighAvailabilityManager::configured() )
+        {
+            ha_apps_client = new AppIdHAAppsClient;
+            ha_http_client = new AppIdHAHttpClient;
+            ha_tls_host_client = new AppIdHATlsHostClient;
+        }
+    }
+
 
     static THREAD_LOCAL AppIdHAAppsClient* ha_apps_client;
     static THREAD_LOCAL AppIdHAHttpClient* ha_http_client;
     static THREAD_LOCAL AppIdHATlsHostClient* ha_tls_host_client;
+};
+
+class AppIdHAReloadSwapper : public snort::ReloadSwapper
+{
+public:
+    const char* name() const override { return "AppIdHAReloadSwapper"; }
+    void tswap() override
+    {
+        AppIdHAManager::tswap();
+    }
 };
 
 #endif

@@ -23,6 +23,10 @@
 
 #include "ha.h"
 
+#include <cstring>
+#include <map>
+#include <string>
+
 #include "framework/counts.h"
 #include "log/messages.h"
 #include "packet_io/active.h"
@@ -59,10 +63,10 @@ struct __attribute__((__packed__)) HAClientHeader
     uint8_t length;
 };
 
-// One client for each mask bit plus one 'automatic' session client
-//   client handle = (1<<(client_index-1)
-//   session client has handle of 0 and index of 0
-static constexpr uint8_t MAX_CLIENTS = 17;
+// Maximum number of HA clients.  Each client occupies one bit in the 16-bit
+// pending mask.  The session client is identified by HAClientInfo::is_session,
+// not by a reserved handle value.
+static constexpr uint8_t MAX_CLIENTS = 16;
 
 // HighAvailability is the thread-local state/configuration instantiated for each packet thread.
 typedef std::array<FlowHAClient*, MAX_CLIENTS> ClientMap;
@@ -78,10 +82,9 @@ public:
 
     Flow* process_daq_import(Packet&, FlowKey&);
 
-    // The [0] entry contains the stream client (always present)
-    // Entries [1] to [MAX_CLIENTS-1] contain the optional clients
     ClientMap client_map = { };
-    uint8_t handle_counter = 1; // stream client (index == 0) always exists
+    FlowHAClient* session_client = nullptr;
+    uint8_t handle_counter = 0;
     bool shutting_down = false;
 
 private:
@@ -92,9 +95,9 @@ private:
 
 // Ensure to increment both versions simultaneously to maintain consistency
 #ifndef DISABLE_TENANT_ID
-static constexpr uint8_t HA_MESSAGE_VERSION = 4;
-#else
 static constexpr uint8_t HA_MESSAGE_VERSION = 5;
+#else
+static constexpr uint8_t HA_MESSAGE_VERSION = 6;
 #endif
 
 // define message size and content constants.
@@ -108,8 +111,26 @@ enum
     KEY_TYPE_IP4 = 2
 };
 
-static constexpr FlowHAClientHandle SESSION_HA_CLIENT = 0x0000;
-static constexpr uint8_t SESSION_HA_CLIENT_INDEX = 0;
+static std::string make_ha_client_name(const char* mod_name, const char* suffix)
+{
+    if (!suffix || !*suffix)
+        return mod_name;
+    return std::string(mod_name) + "_" + suffix;
+}
+
+// Process-global name-to-index registry.  std::map keeps keys sorted.
+// Reload mutates this on the main thread; readers (FlowHAClient ctor) only run
+// during thread_reinit which the reload driver sequences after the writer phase
+// completes, so no concurrent access is possible.
+static constexpr uint8_t HA_INDEX_UNASSIGNED = 0xFF;
+struct HAClientInfo
+{
+    uint8_t index = HA_INDEX_UNASSIGNED;
+    FlowHAClientHandle handle = 0;
+    bool is_session = false;
+};
+static std::map<std::string, HAClientInfo> ha_client_name_map;
+static bool ha_indices_finalized = false;
 
 PortBitSet* HighAvailabilityManager::ports = nullptr;
 bool HighAvailabilityManager::use_daq_channel = false;
@@ -202,34 +223,47 @@ void FlowHAState::reset()
     init_next_update();
 }
 
-FlowHAClient::FlowHAClient(uint8_t length, bool session_client) : max_length(length)
+FlowHAClient::FlowHAClient(uint8_t length, const char* mod_name, const char* suffix)
+    : max_length(length)
 {
     if (!ha)
         return;
 
-    if (session_client)
+    const std::string client_name = make_ha_client_name(mod_name, suffix);
+
+    if (!ha_indices_finalized)
     {
-        index = SESSION_HA_CLIENT_INDEX;
-        handle = SESSION_HA_CLIENT;
-        ha->client_map[0] = this;
+        ErrorMessage("FlowHAClient: '%s' constructed before "
+            "finalize_ha_client_indices()\n", client_name.c_str());
+        return;
     }
-    else
+    auto it = ha_client_name_map.find(client_name);
+    if (it == ha_client_name_map.end())
     {
-        if (ha->handle_counter >= MAX_CLIENTS)
-        {
-            ErrorMessage("Attempting to register too many FlowHAClients\n");
-            return;
-        }
+        ErrorMessage("FlowHAClient: '%s' not registered in HA client registry\n",
+            client_name.c_str());
+        return;
+    }
 
-        index = ha->handle_counter;
-        
-        // Guard against null index which could cause a shift by a negative amount
-        if (!index)
-            return;
+    index = it->second.index;
+    handle = it->second.handle;
+    ha->client_map[index] = this;
 
-        handle = (1 << (index - 1));
-        ha->client_map[index] = this;
-        ha->handle_counter++;
+    if (it->second.is_session)
+        ha->session_client = this;
+
+    // upper bound for produce/consume iteration; tinit() order may differ from index order.
+    if (index >= ha->handle_counter)
+        ha->handle_counter = index + 1;
+}
+
+FlowHAClient::~FlowHAClient()
+{
+    if (ha and ha->client_map[index] == this)
+    {
+        ha->client_map[index] = nullptr;
+        if (ha->session_client == this)
+            ha->session_client = nullptr;
     }
 }
 
@@ -315,21 +349,21 @@ static uint16_t calculate_msg_header_length(Flow& flow)
 }
 
 // Calculate the UPDATE message content length based on the
-// set of active clients.  The Session client is always present.
+// set of active clients.  The session client is always present.
 static uint16_t calculate_update_msg_content_length(Flow& flow, bool full)
 {
-    assert(ha->client_map[0]);
+    if (!ha->session_client)
+        return 0;
 
     uint16_t length = 0;
 
     for (int i = 0; i < ha->handle_counter; i++)
     {
-        // Don't check 'i' against SESSION_HA_CLIENT_INDEX (==0), as this creates a false positive with cppcheck
-        if ((i == 0) || full || flow.ha_state->check_pending(1 << (i - 1)))
-        {
-            assert(ha->client_map[i]);
-            length += (ha->client_map[i]->get_message_size(flow) + sizeof(HAClientHeader));
-        }
+        FlowHAClient* client = ha->client_map[i];
+        if (!client)
+            continue;
+        if (client == ha->session_client or full or flow.ha_state->check_pending(client->handle))
+            length += (client->get_message_size(flow) + sizeof(HAClientHeader));
     }
 
     return length;
@@ -357,7 +391,6 @@ static uint16_t update_msg_header_length(const HAMessage& msg)
 static void write_update_msg_client(FlowHAClient* client, Flow& flow, HAMessage& msg)
 {
     assert(client);
-
     if (!msg.fits(sizeof(HAClientHeader)))
         return;
 
@@ -378,11 +411,17 @@ static void write_update_msg_client(FlowHAClient* client, Flow& flow, HAMessage&
 
 static void write_update_msg_content(Flow& flow, HAMessage& msg, bool full)
 {
+    // Session client must be first in the message so the consumer can create the flow
+    if (ha->session_client)
+        write_update_msg_client(ha->session_client, flow, msg);
+
     for (int i = 0; i < ha->handle_counter; i++)
     {
-        // Don't check 'i' against SESSION_HA_CLIENT_INDEX (==0), as this creates a false positive with cppcheck
-        if ((i == 0) || full || flow.ha_state->check_pending(1 << (i - 1)))
-            write_update_msg_client(ha->client_map[i], flow, msg);
+        FlowHAClient* client = ha->client_map[i];
+        if (!client or client == ha->session_client)
+            continue;
+        if (full or flow.ha_state->check_pending(client->handle))
+            write_update_msg_client(client, flow, msg);
     }
 }
 
@@ -418,7 +457,6 @@ static Flow* consume_ha_update_message(HAMessage& msg, const FlowKey& key, Packe
         HAClientHeader* header = reinterpret_cast<HAClientHeader*>(msg.cursor);
         if ((header->client >= ha->handle_counter) || (ha->client_map[header->client] == nullptr))
         {
-            ErrorMessage("Consuming HA Update message - invalid client index\n");
             ha_stats.unknown_client_idx++;
             break;
         }
@@ -438,7 +476,6 @@ static Flow* consume_ha_update_message(HAMessage& msg, const FlowKey& key, Packe
         // flow can in turn be used by subsequent FlowHAClient's.
         if (!ha->client_map[header->client]->consume(flow, &key, msg, header->length))
         {
-            ErrorMessage("Consuming HA Update message - error from client consume()\n");
             ha_stats.client_consume_errors++;
             break;
         }
@@ -621,11 +658,16 @@ void HighAvailability::process_update(Flow* flow, Packet* p)
     if (!flow)
         return;
 
-    // We must have the map array and the session client
-    assert(client_map[0]);
+    // Flow may have been created before HA was enabled (e.g. HA enabled via reload)
+    if (!flow->ha_state)
+        return;
 
-    if ( !client_map[0]->is_update_required(flow) &&
-        ( !flow->ha_state->check_pending(ALL_CLIENTS) ||
+    // We must have the session client
+    if (!session_client)
+        return;
+
+    if ( !session_client->is_update_required(flow) and
+        ( !flow->ha_state->check_pending(ALL_CLIENTS) or
             flow->ha_state->check_any(FlowHAState::NEW) ) )
         return;
 
@@ -658,6 +700,10 @@ static void send_sc_deletion_message(Flow& flow, SideChannel& sc)
 
 void HighAvailability::process_deletion(Flow& flow)
 {
+    // Flow may have been created before HA was enabled (e.g. HA enabled via reload)
+    if (!flow.ha_state)
+        return;
+
     // No need to send message if we already have, we are in standby, or
     // we have just been created and haven't yet sent an update
     if (flow.ha_state->check_any(FlowHAState::NEW | FlowHAState::DELETED | FlowHAState::STANDBY))
@@ -708,6 +754,71 @@ Flow* HighAvailability::process_daq_import(Packet& p, FlowKey& key)
     return flow;
 }
 
+void HighAvailabilityManager::register_ha_client(const char* mod_name, const char* suffix,
+    bool is_session)
+{
+    if (ha_indices_finalized)
+        return;
+    const std::string name = make_ha_client_name(mod_name, suffix);
+    auto [it, inserted] = ha_client_name_map.emplace(name, HAClientInfo{});
+    if (!inserted)
+    {
+        ErrorMessage("HighAvailabilityManager::register_ha_client: "
+            "duplicate HA client name '%s' (two inspectors using the same "
+            "mod_name/suffix pair); ignoring second registration\n", name.c_str());
+        return;
+    }
+    it->second.is_session = is_session;
+}
+
+void HighAvailabilityManager::finalize_ha_client_indices()
+{
+    // 16 bits in FlowHAClientHandle pending mask, one bit per client.
+    if (ha_client_name_map.size() > MAX_CLIENTS)
+    {
+        ErrorMessage("HighAvailabilityManager::finalize_ha_client_indices: "
+            "too many HA clients registered (%zu > MAX_CLIENTS=%u)\n",
+            ha_client_name_map.size(), MAX_CLIENTS);
+        return;
+    }
+    // Exactly one client must be the session client (creates the flow on consume).
+    unsigned session_count = 0;
+    for (const auto& [name, info] : ha_client_name_map)
+        if (info.is_session)
+            ++session_count;
+    if (session_count != 1)
+    {
+        ErrorMessage("HighAvailabilityManager::finalize_ha_client_indices: "
+            "expected exactly one session HA client, found %u\n", session_count);
+        return;
+    }
+
+    uint8_t next_index = 0;
+    uint8_t next_bit = 0;
+    // std::map iterates in sorted key order, giving deterministic index assignment
+    for (auto& [name, info] : ha_client_name_map)
+    {
+        info.index = next_index++;
+        info.handle = static_cast<FlowHAClientHandle>(1u << next_bit++);
+    }
+    ha_indices_finalized = true;
+}
+
+#ifdef UNIT_TEST
+uint8_t HighAvailabilityManager::get_ha_client_index(const char* mod_name, const char* suffix)
+{
+    const std::string name = make_ha_client_name(mod_name, suffix);
+    auto it = ha_client_name_map.find(name);
+    if (it == ha_client_name_map.end())
+    {
+        ErrorMessage("HighAvailabilityManager::get_ha_client_index: "
+            "'%s' not registered\n", name.c_str());
+        return HA_INDEX_UNASSIGNED;
+    }
+    return it->second.index;
+}
+#endif
+
 void HighAvailabilityManager::reset_config()
 {
     if (ports)
@@ -715,15 +826,21 @@ void HighAvailabilityManager::reset_config()
         delete ports;
         ports = nullptr;
     }
+    use_daq_channel = false;
 }
 
 void HighAvailabilityManager::term()
 {
     reset_config();
+    ha_client_name_map.clear();
+    ha_indices_finalized = false;
 }
 
 void HighAvailabilityManager::configure(HighAvailabilityConfig* config)
 {
+    // Reset registry for this configuration cycle
+    ha_client_name_map.clear();
+    ha_indices_finalized = false;
     if (!config)
     {
         reset_config();
@@ -731,7 +848,10 @@ void HighAvailabilityManager::configure(HighAvailabilityConfig* config)
     }
 
     if (config->ports)
+    {
+        delete ports;
         ports = new PortBitSet(*config->ports);
+    }
     else if (ports)
     {
         delete ports;
@@ -747,6 +867,22 @@ void HighAvailabilityManager::thread_init()
 {
     if ( configured() )
         ha = new HighAvailability(ports, use_daq_channel);
+}
+
+void HighAvailabilityManager::thread_reinit()
+{
+    // Per-plugin FlowHAClient instances are torn down/recreated by each plugin's
+    // own ReloadSwapper, which runs after this one in FIFO order.
+    if (ha)
+    {
+        delete ha;
+        ha = nullptr;
+    }
+
+    if (configured())
+    {
+        ha = new HighAvailability(ports, use_daq_channel);
+    }
 }
 
 void HighAvailabilityManager::thread_term_beginning()
@@ -766,7 +902,12 @@ void HighAvailabilityManager::thread_term()
 
 void HighAvailabilityManager::process_update(Flow* flow, Packet* p)
 {
-    if (ha && flow && !p->active->get_tunnel_bypass())
+    // Gate on the per-thread `ha` only; configured() reads process-global state
+    // that the main thread can mutate mid-reload, before tswap.
+    if (!ha or !flow or !p or !p->active)
+        return;
+
+    if (!p->active->get_tunnel_bypass())
         ha->process_update(flow, p);
 }
 

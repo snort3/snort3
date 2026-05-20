@@ -114,3 +114,65 @@ a new bigger bucket array and rehashing all of the elements in the hash. So, a m
 load factor of 5.0 was chosen. This means that the average depth for all buckets in
 the hash would need to be 5 or more before a rebalance would happen. This is very
 unlikely to happen.
+
+05/06/2026
+==== HA Reload
+
+HighAvailabilityManager supports config reload. Two pieces cooperate:
+
+  - HAReloadTuner (a ReloadSwapper registered from snort.cc::get_reload_config())
+    runs first at tswap on each packet thread.  Its job is to delete and recreate
+    the THREAD_LOCAL HighAvailability object so it matches the new config.
+
+  - Each HA-using inspector (stream + stream_tcp/udp/icmp/ip and appid)
+    registers its own ReloadSwapper from its configure().  These run after
+    HAReloadTuner in FIFO order; each one calls its plugin's tterm()+tinit() to
+    rebuild the plugin's FlowHAClient instances against the freshly created
+    HighAvailability object.
+
+During reload, InspectorManager::thread_reinit() calls each inspector's
+tinit() before any ReloadSwapper::tswap() runs (see Analyzer::reinit() and
+Swapper::apply()).  The plugin's per-thread HA client pointer therefore still
+references the prior cycle's instance at the time tinit() fires, and the new
+HighAvailability object hasn't been built yet.  Plugin tinit() must guard
+against re-entry (typically: skip the new() when the pointer is non-null);
+the per-plugin ReloadSwapper will tterm()+tinit() once HAReloadTuner::tswap()
+has installed the new HighAvailability.  Without this guard, the prior
+FlowHAClient leaks and FlowHAClient's ctor logs a spurious
+"already-occupied index" error.
+
+HighAvailabilityManager::configure() runs on the main thread and is called
+unconditionally on every reload so the client-name registry is reset every
+cycle. Data-path entrypoints gate only on the per-thread ha pointer, so a
+reload aborted after configure() but before tswap is harmless.
+
+FlowHAClient indices are assigned by sorting the registered names in
+finalize_ha_client_indices(), called once per Snort::init() and once per
+get_reload_config() (only when HA is configured).  Both peers in an HA pair
+must register the same set of names so the sorted order, and therefore the
+on-wire client indices, are identical.  Names are constructed by the API
+(register_ha_client / FlowHAClient ctor) from the inspector's module name
+plus an optional suffix; this guarantees uniqueness across plugins without
+relying on convention.  Every client (including the session/stream client)
+gets a regular index and handle = 1 << bit; the session client is identified
+by HAClientInfo::is_session, not by any reserved handle value.  The
+pending-update mask is 16 bits, so a maximum of 16 clients total are allowed.
+
+When peers register divergent name sets the standby will hit unknown_client_idx
+or client_consume_errors counters.
+
+SideChannel reload limitation
+-----------------------------
+SideChannelManager is configured once at process startup (snort.cc calls
+SideChannelManager::pre_config_init() and the per-thread set is built by
+SideChannelManager::thread_init() during Analyzer startup); it does not
+participate in reload.  HighAvailability::HighAvailability() looks up its
+SideChannel via SideChannelManager::get_side_channel(port) against that
+startup-time set.
+
+Consequence: enabling HA on a reload, disabling it, or changing the HA
+ports/min_session_lifetime/min_sync_interval/daq_channel settings is fully
+supported, but adding, removing, or repointing a side_channel{} configuration
+is not honored at reload time -- the new SideChannel definition will be
+ignored and HA will continue to use (or fail to find) the startup-time
+channel.  Changes to side_channel{} require a process restart.

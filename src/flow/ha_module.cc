@@ -26,6 +26,7 @@
 
 #include <cmath>
 
+#include "ha.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "profiler/profiler_defs.h"
@@ -158,5 +159,10 @@ bool HighAvailabilityModule::end(const char*, int, SnortConfig* sc)
     config = nullptr;
 
     return true;
+}
+
+void HAReloadTuner::tswap()
+{
+    HighAvailabilityManager::thread_reinit();
 }
 

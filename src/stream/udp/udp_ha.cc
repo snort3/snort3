@@ -54,12 +54,21 @@ void UdpHAManager::process_deletion(Flow& flow)
 
 void UdpHAManager::tinit()
 {
-    if ( HighAvailabilityManager::configured() )
+    if ( !udp_ha && HighAvailabilityManager::configured() )
         udp_ha = new UdpHA();
 }
 
 void UdpHAManager::tterm()
 {
     delete udp_ha;
+    udp_ha = nullptr;
+}
+
+void UdpHAManager::tswap()
+{
+    delete udp_ha;
+    udp_ha = nullptr;
+    if ( HighAvailabilityManager::configured() )
+        udp_ha = new UdpHA();
 }
 

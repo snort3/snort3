@@ -247,9 +247,11 @@ public:
 StreamBase::StreamBase(const StreamModuleConfig* c) : config(*c)
 { }
 
-bool StreamBase::configure(SnortConfig*)
+bool StreamBase::configure(SnortConfig* sc)
 {
     Stream::set_pub_id();
+    HighAvailabilityManager::register_ha_client(MOD_NAME, nullptr, /*is_session=*/true);
+    sc->register_reload_handler(new StreamHAReloadSwapper());
     return true;
 }
 
