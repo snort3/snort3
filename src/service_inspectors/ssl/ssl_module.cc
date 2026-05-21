@@ -35,6 +35,8 @@ using namespace std;
 #define SSL_HEARTBLEED_RESPONSE_STR "large heartbeat response detected"
 #define SSL_CHELLO_MULTI_RECORDS_STR "multiple client HELLO host names detected in single packet"
 #define SSL_CERT_MULTI_RECORDS_STR "multiple server CERTIFICATE common names or organizational units detected in single packet"
+#define SSL_CHELLO_EMBEDDED_NULL_STR "embedded null character detected in client HELLO"
+#define SSL_CERT_EMBEDDED_NULL_STR "embedded null character detected in server CERTIFICATE"
 
 static const Parameter s_params[] =
 {
@@ -55,6 +57,8 @@ static const RuleMap ssl_rules[] =
     { SSL_ALERT_HB_RESPONSE, SSL_HEARTBLEED_RESPONSE_STR },
     { SSL_ALERT_CHELLO_MULTI_RECORDS, SSL_CHELLO_MULTI_RECORDS_STR },
     { SSL_ALERT_CERT_MULTI_RECORDS, SSL_CERT_MULTI_RECORDS_STR },
+    { SSL_ALERT_CHELLO_EMBEDDED_NULL, SSL_CHELLO_EMBEDDED_NULL_STR },
+    { SSL_ALERT_CERT_EMBEDDED_NULL, SSL_CERT_EMBEDDED_NULL_STR },
 
     { 0, nullptr }
 };

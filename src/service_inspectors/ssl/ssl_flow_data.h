@@ -32,6 +32,8 @@
 #define     SSL_ALERT_HB_RESPONSE             4
 #define     SSL_ALERT_CHELLO_MULTI_RECORDS    5
 #define     SSL_ALERT_CERT_MULTI_RECORDS      6
+#define     SSL_ALERT_CHELLO_EMBEDDED_NULL    7
+#define     SSL_ALERT_CERT_EMBEDDED_NULL      8
 
 struct SSLData
 {

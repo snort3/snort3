@@ -440,6 +440,16 @@ static void snort_ssl(SSL_PROTO_CONF* config, Packet* p, Ssl* inspector)
         DetectionEngine::queue_event(GID_SSL, SSL_ALERT_CERT_MULTI_RECORDS);
     }
 
+    if (alert_flags & SSL_ALERT_CHELLO_EMBEDDED_NULL_FIELD)
+    {
+        DetectionEngine::queue_event(GID_SSL, SSL_ALERT_CHELLO_EMBEDDED_NULL);
+    }
+
+    if (alert_flags & SSL_ALERT_CERT_EMBEDDED_NULL_FIELD)
+    {
+        DetectionEngine::queue_event(GID_SSL, SSL_ALERT_CERT_EMBEDDED_NULL);
+    }
+
     if (alert_flags & SSL_ALERT_HEARTBLEED_REQUEST)
     {
         DetectionEngine::queue_event(GID_SSL, SSL_ALERT_HB_REQUEST);

@@ -358,6 +358,8 @@ struct ServiceSSLV3ExtensionSupportedVersion
 #define SSL_ALERT_HEARTBLEED_UNKNOWN          0x04
 #define SSL_ALERT_CHELLO_MULTIPLE_RECORDS     0x08
 #define SSL_ALERT_CERT_MULTIPLE_RECORDS       0x10
+#define SSL_ALERT_CHELLO_EMBEDDED_NULL_FIELD  0x20
+#define SSL_ALERT_CERT_EMBEDDED_NULL_FIELD    0x40
 
 namespace snort
 {
@@ -367,7 +369,8 @@ enum ParseResult : uint8_t
     SUCCESS = 0,
     FRAGMENTED_PACKET = 1,
     MULTIPLE_RECORDS = 2,
-    FAILURE = 3
+    EMBEDDED_NULL_FIELD = 3,
+    FAILURE = 4
 };
 
 

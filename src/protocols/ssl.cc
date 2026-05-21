@@ -94,6 +94,24 @@ void TLSConnectionData::process(const SSLV3ClientHelloData &client_hello_data)
     server_name = client_hello_data.host_name ? std::string(client_hello_data.host_name) : "";
 }
 
+static char* ssl_strdup_strip_nulls(const char* src, size_t n, bool& found_null)
+{
+    char* dst = (char*)snort_alloc(n + 1);
+    found_null = false;
+    for (size_t i = 0; i < n; i++)
+    {
+        if (src[i] == '\0')
+        {
+            dst[i] = ' ';
+            found_null = true;
+        }
+        else
+            dst[i] = src[i];
+    }
+    dst[n] = '\0';
+    return dst;
+}
+
 static uint32_t SSL_decode_version_v3(uint8_t major, uint8_t minor)
 {
     /* Should only be called internally and by functions which have previously
@@ -128,6 +146,7 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
 {
     const SSL_handshake_hello_t* hello;
     const ServiceSSLV3CertsRecord* certs_rec;
+    snort::ParseResult result;
     uint32_t retval = 0;
 
     while (size > 0)
@@ -169,10 +188,15 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
 
             hello = (const SSL_handshake_hello_t*)handshake;
             retval |= SSL_decode_version_v3(hello->major, hello->minor);
+            result = snort::parse_client_hello_data((const uint8_t*)handshake, size + SSL_HS_PAYLOAD_OFFSET, client_hello_data);
 
-            if (snort::parse_client_hello_data((const uint8_t*)handshake, size + SSL_HS_PAYLOAD_OFFSET, 
-                    client_hello_data) == snort::ParseResult::MULTIPLE_RECORDS && alert_flags)
-                *alert_flags |= SSL_ALERT_CHELLO_MULTIPLE_RECORDS;
+            if (alert_flags)
+            {
+                if (result == snort::ParseResult::MULTIPLE_RECORDS)
+                    *alert_flags |= SSL_ALERT_CHELLO_MULTIPLE_RECORDS;
+                else if (result == snort::ParseResult::EMBEDDED_NULL_FIELD)
+                    *alert_flags |= SSL_ALERT_CHELLO_EMBEDDED_NULL_FIELD;
+            }
 
             break;
 
@@ -241,9 +265,15 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
 
                 server_cert_data->certs_data = (uint8_t*)snort_alloc(server_cert_data->certs_len);
                 memcpy(server_cert_data->certs_data, pkt + SSL_CERTS_LEN_SIZE, server_cert_data->certs_len);
+                result = snort::parse_server_certificates(server_cert_data);
 
-                if(snort::parse_server_certificates(server_cert_data) == snort::ParseResult::MULTIPLE_RECORDS && alert_flags)
-                    *alert_flags |= SSL_ALERT_CERT_MULTIPLE_RECORDS;
+                if(alert_flags)
+                {
+                    if (result == snort::ParseResult::MULTIPLE_RECORDS)
+                        *alert_flags |= SSL_ALERT_CERT_MULTIPLE_RECORDS;
+                    else if (result == snort::ParseResult::EMBEDDED_NULL_FIELD)
+                        *alert_flags |= SSL_ALERT_CERT_EMBEDDED_NULL_FIELD;
+                }
             }
 
             retval |= SSL_CERTIFICATE_FLAG;
@@ -733,7 +763,10 @@ ParseResult parse_client_hello_data(const uint8_t* pkt, uint16_t size, SSLV3Clie
             if(client_hello_data->host_name)
                 return ParseResult::MULTIPLE_RECORDS;
 
-            client_hello_data->host_name = snort_strndup((const char*)str, len);
+            bool found_null;
+            client_hello_data->host_name = ssl_strdup_strip_nulls((const char*)str, len, found_null);
+            if (found_null)
+                return ParseResult::EMBEDDED_NULL_FIELD;
             return ParseResult::SUCCESS;
         }
 
@@ -857,6 +890,10 @@ ParseResult parse_server_certificates(SSLV3ServerCertData* server_cert_data)
     char* org_unit = nullptr;
     int org_unit_len = 0;
 
+    bool found_null;
+
+    ParseResult result = ParseResult::SUCCESS;
+
     while (len > 2 and !(common_name and org_unit))
     {
         X509* cert = nullptr;
@@ -892,8 +929,10 @@ ParseResult parse_server_certificates(SSLV3ServerCertData* server_cert_data)
             {
                 BUF_MEM* bptr = nullptr;
                 BIO_get_mem_ptr(issuer_bio, &bptr);
-                server_cert_data->issuer_info = snort_strndup(bptr->data, bptr->length);
                 server_cert_data->issuer_info_strlen = bptr->length;
+                server_cert_data->issuer_info = ssl_strdup_strip_nulls(bptr->data, bptr->length, found_null);
+                if (found_null)
+                    result = ParseResult::EMBEDDED_NULL_FIELD;
             }
             BIO_free(issuer_bio);
         }
@@ -906,8 +945,10 @@ ParseResult parse_server_certificates(SSLV3ServerCertData* server_cert_data)
             {
                 BUF_MEM* bptr = nullptr;
                 BIO_get_mem_ptr(subject_bio, &bptr);
-                server_cert_data->subject_info = snort_strndup(bptr->data, bptr->length);
                 server_cert_data->subject_info_strlen = bptr->length;
+                server_cert_data->subject_info = ssl_strdup_strip_nulls(bptr->data, bptr->length, found_null);
+                if (found_null)
+                    result = ParseResult::EMBEDDED_NULL_FIELD;
             }
             BIO_free(subject_bio);
         }
@@ -930,7 +971,9 @@ ParseResult parse_server_certificates(SSLV3ServerCertData* server_cert_data)
                         length -= 2; // remove leading *.
 
                     common_name_len = length;
-                    common_name = snort_strndup((const char*)(str_data + (wildcard ? 2 : 0)), common_name_len);
+                    common_name = ssl_strdup_strip_nulls((const char*)(str_data + (wildcard ? 2 : 0)), length, found_null);
+                    if (found_null)
+                        result = ParseResult::EMBEDDED_NULL_FIELD;
                 }
             }
         }
@@ -948,15 +991,15 @@ ParseResult parse_server_certificates(SSLV3ServerCertData* server_cert_data)
                 
                 if (org_unit_len >= 1)
                 {
-                    org_unit = snort_strndup((const char*)(str_data), org_unit_len);
+                    org_unit = ssl_strdup_strip_nulls((const char*)(str_data), org_unit_len, found_null);
+                    if (found_null)
+                        result = ParseResult::EMBEDDED_NULL_FIELD;
                 }
             }
         }
 
         X509_free(cert);
     }
-
-    ParseResult result = ParseResult::SUCCESS;
 
     if (common_name)
     {
