@@ -1404,7 +1404,7 @@ default_extractor_http_fields =
     'orig_filenames resp_filenames orig_mime_types resp_mime_types'
 
 default_extractor_notice_fields =
-    'action gid sid rev msg refs proto source'
+    'action ips_action ids_reason gid sid rev msg refs proto source'
 
 default_extractor_quic_fields =
     'version history server_name client_protocol client_initial_dcid client_scid server_scid'
