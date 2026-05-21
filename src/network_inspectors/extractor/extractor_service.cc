@@ -702,6 +702,8 @@ const ServiceBlueprint IpsUserExtractorService::blueprint =
     // fields
     {
         "action",
+        "ips_action",
+        "ids_reason",
         "sid",
         "gid",
         "rev",

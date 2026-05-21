@@ -283,7 +283,9 @@ Fields supported for 'weird' and 'notice' logs:
 
 'notice' events for text rules also get the following fields:
 
-* `action` - action of triggered event
+* `action` - action on a packet
+* `ips_action` - action of IPS rule
+* `ids_reason` - IDS mode origin
 * `refs` - references mentioned in a rule
 * `rev` - particular revision number of the rule
 

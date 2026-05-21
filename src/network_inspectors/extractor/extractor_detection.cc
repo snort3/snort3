@@ -23,6 +23,7 @@
 
 #include "extractor_detection.h"
 
+#include "packet_io/active.h"
 #include "profiler/profiler.h"
 #include "pub_sub/detection_events.h"
 
@@ -130,9 +131,57 @@ static const char* get_msg(const DataEvent* event, const Flow*)
     return ((const IpsRuleEvent*)event)->get_stripped_msg().c_str();
 }
 
-static const char* get_action(const DataEvent* event, const Flow*)
+static const char* get_action(const DataEvent*, const Flow*)
 {
+    const Packet* p = ExtractorEvent::get_packet();
+
+    return !p or !p->active
+        ? ""
+        : p->active->get_action() > p->active->get_delayed_action()
+        ? p->active->get_action_string()
+        : p->active->get_delayed_action_string();
+}
+
+static const char* get_ips_action(const DataEvent* event, const Flow*)
+ {
     return ((const IpsRuleEvent*)event)->get_action();
+ }
+
+static const char* whd_to_text(Active::ActiveWouldReason reason)
+{
+    switch (reason)
+    {
+    case Active::WHD_NONE:
+        return "";
+    case Active::WHD_INTERFACE_IDS:
+        return "interface in passive/tap mode";
+    case Active::WHD_IPS_INLINE_TEST:
+        return "ips policy in detection mode";
+    case Active::WHD_NAP_INLINE_TEST:
+        return "inspection policy in detection mode";
+    case Active::WHD_TIMEOUT:
+        return "connection timed out";
+    case Active::WHD_PRUNE:
+        return "connection closed: pruned";
+    case Active::WHD_RELOAD:
+        return "connection closed: reload";
+    case Active::WHD_EXIT:
+        return "connection closed: exit";
+    default:
+        return "unknown reason";
+    }
+}
+
+static const char* get_ids_reason(const DataEvent*, const Flow*)
+{
+    const Packet* p = ExtractorEvent::get_packet();
+    Active::ActiveWouldReason reason = !p or !p->active
+        ? Active::WHD_NONE
+        : Active::WHD_NONE != p->active->get_would_be_dropped_reason()
+        ? p->active->get_would_be_dropped_reason()
+        : p->active->get_whd_reason_from_suspend_reason();
+
+    return whd_to_text(reason);
 }
 
 static const vector<const char*>& get_refs(const DataEvent* event, const Flow*)
@@ -177,6 +226,8 @@ static const map<string, ExtractorEvent::BufGetFn> sub_buf_getters =
 {
     {"msg", get_msg},
     {"action", get_action},
+    {"ips_action", get_ips_action},
+    {"ids_reason", get_ids_reason},
     {"source", get_source},
     {"proto", get_proto},
 };
@@ -251,3 +302,25 @@ vector<const char*> IpsUserExtractor::get_field_names() const
     return res;
 }
 
+
+#ifdef UNIT_TEST
+
+#include "catch/snort_catch.h"
+
+#define CMP(x, y) !strcmp(whd_to_text(x), (y))
+
+TEST_CASE("WHD reasons", "[extractor]")
+{
+    using namespace ips;
+
+    CHECK(CMP(Active::WHD_NONE, ""));
+    CHECK(CMP(Active::WHD_INTERFACE_IDS, "interface in passive/tap mode"));
+    CHECK(CMP(Active::WHD_NAP_INLINE_TEST, "inspection policy in detection mode"));
+    CHECK(CMP(Active::WHD_TIMEOUT, "connection timed out"));
+    CHECK(CMP(Active::WHD_PRUNE, "connection closed: pruned"));
+    CHECK(CMP(Active::WHD_RELOAD, "connection closed: reload"));
+    CHECK(CMP(Active::WHD_EXIT, "connection closed: exit"));
+    CHECK(CMP((Active::ActiveWouldReason)128, "unknown reason"));
+}
+
+#endif
