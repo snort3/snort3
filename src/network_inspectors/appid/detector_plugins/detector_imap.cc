@@ -434,7 +434,10 @@ static int imap_server_validate(ImapDetectorData* dd, const uint8_t* data, uint1
     if (dd->client.state == IMAP_CLIENT_STATE_STARTTLS_CMD)
     {
         if (id->flags & IMAP_FLAG_RESULT_OK)
+        {
+            detector->add_app(asd, APP_ID_IMAPS, APP_ID_IMAPS, nullptr, change_bits);
             asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
+        }
         else
             dd->client.state = IMAP_CLIENT_STATE_NON_AUTH;
     }
