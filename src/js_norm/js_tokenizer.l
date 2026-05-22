@@ -921,13 +921,13 @@ LINE_TERMINATORS    {LF}|{CR}|{LS}|{PS}
 LINE_COMMENT_START   "//"
 LINE_COMMENT_END1    [^<\xA\xD]*\xA
 LINE_COMMENT_END2    [^<\xA\xD]*\xD
-LINE_COMMENT_END3    [^<\xA\xD]*"<"+(?i:script)
-LINE_COMMENT_END4    [^<\xA\xD]*"<"+(?i:\/script>)
+LINE_COMMENT_END3    [^<\xA\xD]*"<"(?i:script)
+LINE_COMMENT_END4    [^<\xA\xD]*"<"(?i:\/script>)
 LINE_COMMENT_SKIP    [^<\xA\xD]*"<"?
 BLOCK_COMMENT_START  "/*"
-BLOCK_COMMENT_END1   [^<*\xA\xD]*"*"+"/"
-BLOCK_COMMENT_END2   [^<*\xA\xD]*"<"+(?i:script)
-BLOCK_COMMENT_END3   [^<*\xA\xD]*"<"+(?i:\/script>)
+BLOCK_COMMENT_END1   [^<*\xA\xD]*"*/"
+BLOCK_COMMENT_END2   [^<*\xA\xD]*"<"(?i:script)
+BLOCK_COMMENT_END3   [^<*\xA\xD]*"<"(?i:\/script>)
 BLOCK_COMMENT_LINE1  [^<*\xA\xD]*\xA
 BLOCK_COMMENT_LINE2  [^<*\xA\xD]*\xD
 BLOCK_COMMENT_SKIP   [^<*\xA\xD]*[<*]?
@@ -1016,7 +1016,7 @@ LITERAL_SQ_STRING_TEXT        [^\\%<\xA\xD\xE2']{1,32}|.
 LITERAL_TEMPLATE_START        \`
 LITERAL_TEMPLATE_END          \`
 LITERAL_TEMPLATE_SUBST_START  \$\{
-LITERAL_TEMPLATE_TEXT         [^\\%<$`]{1,32}|.
+LITERAL_TEMPLATE_TEXT         [^\\%<$`]{1,32}|(\\\\){1,16}|.
 
 LITERAL_REGEX_START           \/[^*\/]
 LITERAL_REGEX_END             \/[gimsuy]*
@@ -1031,9 +1031,9 @@ LITERAL_INFINITY              Infinity|\xE2\x88\x9E
 LITERAL_NAN                   NaN
 LITERAL                       {LITERAL_NULL}|{LITERAL_THIS}|{LITERAL_BOOLEAN}|{LITERAL_DECIMAL}|{LITERAL_BIN_INTEGER}|{LITERAL_OCT_INTEGER}|{LITERAL_HEX_INTEGER}|{LITERAL_BIG_INTEGER}|{LITERAL_UNDEFINED}|{LITERAL_INFINITY}|{LITERAL_NAN}
 
-HTML_COMMENT_OPEN         "<"+"!--"
-HTML_TAG_SCRIPT_OPEN      "<"+(?i:script)[\x9\xA\xC\x20\x2f\x3e]
-HTML_TAG_SCRIPT_CLOSE     "<"+(?i:\/script>)
+HTML_COMMENT_OPEN         "<!--"
+HTML_TAG_SCRIPT_OPEN      "<"(?i:script)[\x9\xA\xC\x20\x2f\x3e]
+HTML_TAG_SCRIPT_CLOSE     "<"(?i:\/script>)
 
 /* from 0x000 to 0x10FFFD to match undefined tokens */
 /* UTF-8 ranges generated with https://lists.gnu.org/archive/html/help-flex/2005-01/msg00043.html */
@@ -1160,8 +1160,8 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <sqstr,unesc_sqstr>{LITERAL_SQ_STRING_TEXT}   { dealias_append(); ECHO; }
 
     {LITERAL_TEMPLATE_START}                                 { EXEC(literal_template_start()) }
-<tmpll,unesc_tmpll>(\\\\)*{LITERAL_TEMPLATE_END}             { dealias_append(); ECHO; BEGIN(divop); }
-<tmpll,unesc_tmpll>(\\\\)*{LITERAL_TEMPLATE_SUBST_START}     { EXEC(process_subst_open()) dealias_reset(); }
+<tmpll,unesc_tmpll>(\\\\){0,16}{LITERAL_TEMPLATE_END}             { dealias_append(); ECHO; BEGIN(divop); }
+<tmpll,unesc_tmpll>(\\\\){0,16}{LITERAL_TEMPLATE_SUBST_START}     { EXEC(process_subst_open()) dealias_reset(); }
 <tmpll,unesc_tmpll>{HTML_TAG_SCRIPT_OPEN}                    { if (!ext_script) { opening_tag_seen = true; } ECHO; }
 <tmpll,unesc_tmpll>{HTML_TAG_SCRIPT_CLOSE}                   { if (!ext_script) { BEGIN(regst); RETURN(CLOSING_TAG) } else { ECHO; } }
 <tmpll,unesc_tmpll><<EOF>>                                   { RETURN(SCRIPT_CONTINUE) }
@@ -1174,8 +1174,8 @@ ALL_UNICODE    [\0-\x7F]|[\xC2-\xDF][\x80-\xBF]|(\xE0[\xA0-\xBF]|[\xE1-\xEF][\x8
 <unesc_tmpll>{BYTE_ESCAPE_SEQUENCE}                          { set_encoding(IS_UBACKSLASH_1); escaped_unicode_latin_1(); }
 <unesc_tmpll>{PERCENT_ESCAPE_SEQUENCE}                       { set_encoding(IS_UPERCENT); escaped_unicode_utf_8(); }
 <unesc_tmpll>{URL_ESCAPE_SEQUENCE}                           { set_encoding(IS_PERCENT); escaped_url_sequence_latin_1(); }
-<tmpll,unesc_tmpll>(\\\\)*\\{LITERAL_TEMPLATE_SUBST_START}   | /* escaped template substitution */
-<tmpll,unesc_tmpll>(\\\\)*\\{LITERAL_TEMPLATE_END}           | /* escaped backtick */
+<tmpll,unesc_tmpll>(\\\\){0,16}\\{LITERAL_TEMPLATE_SUBST_START}   | /* escaped template substitution */
+<tmpll,unesc_tmpll>(\\\\){0,16}\\{LITERAL_TEMPLATE_END}           | /* escaped backtick */
 <tmpll,unesc_tmpll>{LITERAL_TEMPLATE_TEXT}                   { dealias_append(); ECHO; }
 
 <regst>{LITERAL_REGEX_START}        { EXEC(literal_regex_start()) }
