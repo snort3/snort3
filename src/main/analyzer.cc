@@ -49,6 +49,7 @@
 #include "latency/rule_latency.h"
 #include "latency/latency_config.h"
 #include "log/messages.h"
+#include "main/snort_module.h"
 #include "main/swapper.h"
 #include "main.h"
 #include "managers/codec_manager.h"
@@ -743,6 +744,41 @@ void Analyzer::term()
     TraceApi::thread_term();
 }
 
+void Analyzer::reap_command(AnalyzerCommand* ac)
+{
+    unsigned ac_ref_count = ac->put();
+    if (ac_ref_count == 0)
+    {
+        debug_logf(snort_trace, TRACE_MAIN, nullptr, "[%u] Destroying completed command %s\n",
+            id, ac->stringify());
+        delete ac;
+    }
+#ifdef DEBUG_MSGS
+    else
+        debug_logf(snort_trace, TRACE_MAIN, nullptr, "[%u] Reaped ongoing command %s (refcount %u)\n",
+            id, ac->stringify(), ac_ref_count);
+#endif
+}
+
+void Analyzer::reap_commands()
+{
+    size_t commands_to_reap;
+    do
+    {
+        AnalyzerCommand* ac = nullptr;
+        completed_work_queue_mutex.lock();
+        commands_to_reap = completed_work_queue.size();
+        if (commands_to_reap)
+        {
+            ac = completed_work_queue.front();
+            completed_work_queue.pop();
+        }
+        completed_work_queue_mutex.unlock();
+        if (ac)
+            reap_command(ac);
+    } while (commands_to_reap > 1);
+}
+
 Analyzer::Analyzer(SFDAQInstance* instance, unsigned i, const char* s, uint64_t msg_cnt, const uint32_t retry_timeout) :
     id(i),
     exit_after_cnt(msg_cnt),
@@ -760,14 +796,24 @@ Analyzer::~Analyzer()
     delete oops_handler;
     delete retry_queue;
 
-    std::list<UncompletedAnalyzerCommand*>::iterator it = uncompleted_work_queue.begin();
-
-    while (it != uncompleted_work_queue.end() )
+    // Reap all analyzer commands, completed or not.
+    // FIXIT-L X Add concept of finalizing commands differently based on whether they were
+    //  completed or not when we have commands that care about that.
+    while (!completed_work_queue.empty())
     {
-        delete *it;
-        ++it;
+        reap_command(completed_work_queue.front());
+        completed_work_queue.pop();
     }
-
+    while (!pending_work_queue.empty())
+    {
+        reap_command(pending_work_queue.front());
+        pending_work_queue.pop();
+    }
+    for (auto* cac : uncompleted_work_queue)
+    {
+        reap_command(cac->command);
+        delete cac;
+    }
 }
 
 void Analyzer::operator()(Swapper* ps, uint16_t run_num)
@@ -838,21 +884,17 @@ bool Analyzer::handle_command()
     if (!ac)
         return false;
 
-    void* ac_state = nullptr;
-
-    if ( ac->execute(*this, &ac_state) )
+    if ( ac->execute(*this) )
         add_command_to_completed_queue(ac);
     else
-        add_command_to_uncompleted_queue(ac, ac_state);
+        add_command_to_uncompleted_queue(ac);
 
     return true;
 }
 
-void Analyzer::add_command_to_uncompleted_queue(AnalyzerCommand* aci, void* acs)
+void Analyzer::add_command_to_uncompleted_queue(AnalyzerCommand* aci)
 {
-    UncompletedAnalyzerCommand* cac = new UncompletedAnalyzerCommand(aci, acs);
-
-    uncompleted_work_queue.push_back(cac);
+    uncompleted_work_queue.push_back(new UncompletedAnalyzerCommand(aci));
 }
 
 void Analyzer::add_command_to_completed_queue(AnalyzerCommand* ac)
@@ -880,7 +922,7 @@ void Analyzer::handle_uncompleted_commands()
     {
         UncompletedAnalyzerCommand* cac = *it;
 
-        if (cac->command->execute(*this, &cac->state) )
+        if (cac->command->execute(*this) )
         {
             add_command_to_completed_queue(cac->command);
             it = uncompleted_work_queue.erase(it);

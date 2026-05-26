@@ -23,9 +23,9 @@
 #include <daq_common.h>
 
 #include <cstdarg>
+#include <list>
 #include <memory>
 #include <vector>
-#include <mutex>
 
 #include "main/snort_types.h"
 #include "main/thread_config.h"
@@ -48,7 +48,7 @@ public:
     explicit AnalyzerCommand(ControlConn* conn) : ctrlcon(conn) { }
     virtual ~AnalyzerCommand() = default;
 
-    virtual bool execute(Analyzer&, void**) = 0;
+    virtual bool execute(Analyzer&) = 0;
 
     virtual bool need_update_reload_id() const
     { return false; }
@@ -74,7 +74,7 @@ class ACGetStats : public snort::AnalyzerCommand
 {
 public:
     explicit ACGetStats(ControlConn* conn);
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "GET_STATS"; }
     ~ACGetStats() override;
 
@@ -114,7 +114,7 @@ class ACResetStats : public snort::AnalyzerCommand
 {
 public:
     explicit ACResetStats(clear_counter_type_t requested_type);
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "RESET_STATS"; }
 private:
     clear_counter_type_t requested_type;
@@ -123,7 +123,7 @@ private:
 class ACPause : public snort::AnalyzerCommand
 {
 public:
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "PAUSE"; }
 };
 
@@ -131,7 +131,7 @@ class ACResume : public snort::AnalyzerCommand
 {
 public:
     ACResume(uint64_t msg_cnt): msg_cnt(msg_cnt) { }
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "RESUME"; }
 private:
     uint64_t msg_cnt;
@@ -140,7 +140,7 @@ private:
 class ACRotate : public snort::AnalyzerCommand
 {
 public:
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "ROTATE"; }
 };
 
@@ -149,7 +149,7 @@ class ACRun : public snort::AnalyzerCommand
 public:
     ACRun() = delete;
     ACRun(bool is_paused = false ) { paused = is_paused; }
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "RUN"; }
 private:
     bool paused = false;
@@ -158,29 +158,34 @@ private:
 class ACStart : public snort::AnalyzerCommand
 {
 public:
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "START"; }
 };
 
 class ACStop : public snort::AnalyzerCommand
 {
 public:
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "STOP"; }
 };
+
+namespace snort { class ReloadResourceTuner; }
 
 class ACSwap : public snort::AnalyzerCommand
 {
 public:
     ACSwap() = delete;
-    ACSwap(Swapper* ps, ControlConn* conn) : AnalyzerCommand(conn), ps(ps) { }
+    ACSwap(Swapper* ps, ControlConn* conn)
+        : AnalyzerCommand(conn), ps(ps),
+          reload_tuners_by_thread(snort::ThreadConfig::get_instance_max(), nullptr) { }
     ~ACSwap() override;
 
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
 
     const char* stringify() override { return "SWAP"; }
 private:
     Swapper* ps;
+    std::vector<std::list<snort::ReloadResourceTuner*>*> reload_tuners_by_thread;
 };
 
 class ACHostAttributesSwap : public snort::AnalyzerCommand
@@ -188,7 +193,7 @@ class ACHostAttributesSwap : public snort::AnalyzerCommand
 public:
     ACHostAttributesSwap(ControlConn* conn) : AnalyzerCommand(conn)
     { }
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "HOST_ATTRIBUTES_SWAP"; }
     ~ACHostAttributesSwap() override;
 };
@@ -196,7 +201,7 @@ public:
 class ACDAQSwap : public snort::AnalyzerCommand
 {
 public:
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "DAQ_SWAP"; }
     ~ACDAQSwap() override;
 };
@@ -207,7 +212,7 @@ public:
     ACScratchUpdate(snort::SnortConfig* sc, std::vector<snort::ScratchAllocator*>& handlers,
         ControlConn* conn) : AnalyzerCommand(conn), sc(sc), handlers(handlers)
     { }
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "SCRATCH_UPDATE"; }
     ~ACScratchUpdate() override;
 private:
@@ -218,10 +223,10 @@ private:
 class ACShowSnortCPU : public snort::AnalyzerCommand
 {
 public:
-    explicit ACShowSnortCPU(ControlConn* conn) 
+    explicit ACShowSnortCPU(ControlConn* conn)
         : AnalyzerCommand(conn), cpu_usage(snort::ThreadConfig::get_instance_max())
     { }
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "SHOW_SNORT_CPU"; }
     ~ACShowSnortCPU() override;
 
@@ -239,9 +244,9 @@ class ACShowSnortPacketLatencyData : public snort::AnalyzerCommand
 {
 public:
     explicit ACShowSnortPacketLatencyData(ControlConn* conn)
-         : AnalyzerCommand(conn), latency_data(snort::ThreadConfig::get_instance_max()) 
+         : AnalyzerCommand(conn), latency_data(snort::ThreadConfig::get_instance_max())
     { }
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "SHOW_SNORT_PACKET_LATENCY_DATA"; }
     ~ACShowSnortPacketLatencyData() override;
 private:

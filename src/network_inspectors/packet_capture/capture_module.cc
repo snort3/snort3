@@ -115,7 +115,7 @@ class PacketCaptureDebug : public AnalyzerCommand
 public:
     PacketCaptureDebug(const char* f, const int16_t g, const char* t, const bool ci, 
                        const char* p, const unsigned max);
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "PACKET_CAPTURE_DEBUG"; }
 private:
     bool enable = false;
@@ -186,7 +186,7 @@ PacketCaptureDebug::PacketCaptureDebug(const char* f, const int16_t g, const cha
     }
 }
 
-bool PacketCaptureDebug::execute(Analyzer&, void**)
+bool PacketCaptureDebug::execute(Analyzer&)
 {
     if (enable)
         packet_capture_enable(filter, group, tenants, check_inner_pkt, capture_path, max_packet_count);

@@ -39,7 +39,7 @@ DataPurgeAC::~DataPurgeAC()
     set_host_cache_mac(mac_cache);
 }
 
-bool DataPurgeAC::execute(Analyzer&, void**)
+bool DataPurgeAC::execute(Analyzer&)
 {
     set_host_cache_mac(mac_cache);
     return true;

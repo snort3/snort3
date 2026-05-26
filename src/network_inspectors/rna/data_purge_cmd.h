@@ -33,7 +33,7 @@ public:
 
     ~DataPurgeAC() override;
 
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
 
     const char* stringify() override { return "DATA_PURGE"; }
 

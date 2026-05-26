@@ -111,7 +111,7 @@ public:
     ~PerfMonFlowIPDebug() override
     { perf_monitor->swap_constraints(constraints); }
 
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "FLOW_IP_PROFILING"; }
 
 private:
@@ -136,7 +136,7 @@ static const Parameter flow_ip_profiling_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
-bool PerfMonFlowIPDebug::execute(Analyzer&, void**)
+bool PerfMonFlowIPDebug::execute(Analyzer&)
 {
     if (enable)
     {

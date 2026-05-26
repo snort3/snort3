@@ -55,7 +55,7 @@ public:
 
     ~TraceSwap() override;
 
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
 
     const char* stringify() override
     { return "TRACE_SWAP"; }
@@ -72,7 +72,7 @@ TraceSwap::~TraceSwap()
     log_message("== trace.%s complete\n", (trace_config->initialized ? "set" : "clear"));
 }
 
-bool TraceSwap::execute(Analyzer&, void**)
+bool TraceSwap::execute(Analyzer&)
 {
     // Update configuration for packet threads
     TraceApi::thread_reinit(trace_config);

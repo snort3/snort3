@@ -118,38 +118,38 @@ void AnalyzerCommand::log_message(const char* format, ...)
     va_end(args);
 }
 
-bool ACStart::execute(Analyzer& analyzer, void**)
+bool ACStart::execute(Analyzer& analyzer)
 {
     analyzer.start();
     return true;
 }
 
-bool ACRun::execute(Analyzer& analyzer, void**)
+bool ACRun::execute(Analyzer& analyzer)
 {
     analyzer.run(paused);
     paused = false;
     return true;
 }
 
-bool ACStop::execute(Analyzer& analyzer, void**)
+bool ACStop::execute(Analyzer& analyzer)
 {
     analyzer.stop();
     return true;
 }
 
-bool ACPause::execute(Analyzer& analyzer, void**)
+bool ACPause::execute(Analyzer& analyzer)
 {
     analyzer.pause();
     return true;
 }
 
-bool ACResume::execute(Analyzer& analyzer, void**)
+bool ACResume::execute(Analyzer& analyzer)
 {
     analyzer.resume(msg_cnt);
     return true;
 }
 
-bool ACRotate::execute(Analyzer& analyzer, void**)
+bool ACRotate::execute(Analyzer& analyzer)
 {
     analyzer.rotate();
     return true;
@@ -176,7 +176,7 @@ ACGetStats::ACGetStats(ControlConn* conn) :
     state->thread_snapshots.resize(ThreadConfig::get_instance_max());
 }
 
-bool ACGetStats::execute(Analyzer&, void**)
+bool ACGetStats::execute(Analyzer&)
 {
     const unsigned id = snort::get_instance_id();
     if ( !state || id >= state->thread_snapshots.size() )
@@ -297,7 +297,7 @@ ACGetStats::~ACGetStats()
     ModuleManager::clear_global_active_counters();
 }
 
-bool ACResetStats::execute(Analyzer&, void**)
+bool ACResetStats::execute(Analyzer&)
 {
     ModuleManager::reset_stats(requested_type);
     return true;
@@ -306,7 +306,7 @@ bool ACResetStats::execute(Analyzer&, void**)
 ACResetStats::ACResetStats(clear_counter_type_t requested_type_l) : requested_type(
         requested_type_l) { }
 
-bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
+bool ACSwap::execute(Analyzer& analyzer)
 {
     if (analyzer.get_state() != Analyzer::State::PAUSED and
         analyzer.get_state() != Analyzer::State::RUNNING)
@@ -319,11 +319,12 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
         const SnortConfig* sc = ps->get_new_conf();
         if ( sc )
         {
-            std::list<ReloadResourceTuner*>* reload_tuners;
+            const unsigned id = get_instance_id();
+            std::list<ReloadResourceTuner*>*& reload_tuners = reload_tuners_by_thread[id];
 
-            if ( !*ac_state )
+            if ( !reload_tuners )
             {
-                LogMessage("ReloadResourceTuner[%u] start\n", get_instance_id());
+                LogMessage("ReloadResourceTuner[%u] start\n", id);
                 reload_tuners = new std::list<ReloadResourceTuner*>(sc->get_reload_resource_tuners());
                 std::list<ReloadResourceTuner*>::iterator rtt = reload_tuners->begin();
                 while ( rtt != reload_tuners->end() )
@@ -333,12 +334,9 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
                     else
                         rtt = reload_tuners->erase(rtt);
                 }
-                *ac_state = reload_tuners;
                 if (!reload_tuners->empty())
                     tuner_next(reload_tuners->front());
             }
-            else
-                reload_tuners = (std::list<ReloadResourceTuner*>*)*ac_state;
 
             if ( !reload_tuners->empty() )
             {
@@ -357,8 +355,9 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
             // check for empty again and free list instance if we are done
             if ( reload_tuners->empty() )
             {
-                LogMessage("ReloadResourceTuner[%d] complete\n", get_instance_id());
+                LogMessage("ReloadResourceTuner[%u] complete\n", id);
                 delete reload_tuners;
+                reload_tuners = nullptr;
                 ps->finish();
                 return true;
             }
@@ -372,6 +371,9 @@ bool ACSwap::execute(Analyzer& analyzer, void** ac_state)
 
 ACSwap::~ACSwap()
 {
+    for (auto* tuners : reload_tuners_by_thread)
+        delete tuners;
+    reload_tuners_by_thread.clear();
     if (ps)
     {
         SnortConfig* sc = ps->get_new_conf();
@@ -384,7 +386,7 @@ ACSwap::~ACSwap()
     log_message("== reload complete\n");
 }
 
-bool ACHostAttributesSwap::execute(Analyzer&, void**)
+bool ACHostAttributesSwap::execute(Analyzer&)
 {
     HostAttributesManager::initialize();
     return true;
@@ -397,7 +399,7 @@ ACHostAttributesSwap::~ACHostAttributesSwap()
     log_message("== reload host attributes complete\n");
 }
 
-bool ACDAQSwap::execute(Analyzer& analyzer, void**)
+bool ACDAQSwap::execute(Analyzer& analyzer)
 {
     analyzer.reload_daq();
     return true;
@@ -408,7 +410,7 @@ ACDAQSwap::~ACDAQSwap()
     LogMessage("== daq module reload complete\n");
 }
 
-bool ACScratchUpdate::execute(Analyzer&, void**)
+bool ACScratchUpdate::execute(Analyzer&)
 {
     for ( auto* s : handlers )
     {
@@ -436,7 +438,7 @@ ACShowSnortCPU::~ACShowSnortCPU()
     double cpu_usage_300s = 0.0;
     int instance = 0;
 
-    for (const auto& cu : cpu_usage) 
+    for (const auto& cu : cpu_usage)
     {
         LogRespond(ctrlcon, "%-3d \t%-6d \t%.1f%% \t%.1f%% \t%.1f%%\n",
             instance, ThreadConfig::get_instance_tid(instance), cu.cpu_usage_30s,
@@ -454,14 +456,14 @@ ACShowSnortCPU::~ACShowSnortCPU()
             cpu_usage_300s/instance);
 }
 
-bool ACShowSnortCPU::execute(Analyzer& analyzer, void**)
+bool ACShowSnortCPU::execute(Analyzer& analyzer)
 {
     DIOCTL_GetCpuProfileData get_data = {};
 
     SFDAQInstance* instance = get_daq_instance(analyzer);
     if (!instance)
         return true;
-    
+
     int instance_id = get_instance_id();
 
     int status = instance->ioctl((DAQ_IoctlCmd)DIOCTL_GET_CPU_PROFILE_DATA,
@@ -470,14 +472,14 @@ bool ACShowSnortCPU::execute(Analyzer& analyzer, void**)
     if (DAQ_SUCCESS != status)
     {
         LogRespond(ctrlcon, "Fetching profile data failed from DAQ instance %d\n", instance_id);
-        return true; 
+        return true;
     }
 
     auto& stat = cpu_usage[instance_id];
     stat.cpu_usage_30s = static_cast<double>(get_data.cpu_usage_percent_30s);
     stat.cpu_usage_120s = static_cast<double>(get_data.cpu_usage_percent_120s);
-    stat.cpu_usage_300s = static_cast<double>(get_data.cpu_usage_percent_300s); 
- 
+    stat.cpu_usage_300s = static_cast<double>(get_data.cpu_usage_percent_300s);
+
     return true;
 }
 
@@ -493,7 +495,7 @@ ACShowSnortPacketLatencyData::~ACShowSnortPacketLatencyData()
         for (size_t i = 0; i < protocol_names.size(); i++)
         {
             auto& latency_data_proto = ld.snort_latency_data[i];
-            double average_pkt_time = latency_data_proto.pkt_count > 0 ? 
+            double average_pkt_time = latency_data_proto.pkt_count > 0 ?
             (latency_data_proto.sum_time*1.0 / latency_data_proto.pkt_count / 1000.0) : 0.0;
 
             char max_pkt_src_ip[INET6_ADDRSTRLEN], max_pkt_dst_ip[INET6_ADDRSTRLEN];
@@ -544,7 +546,7 @@ ACShowSnortPacketLatencyData::~ACShowSnortPacketLatencyData()
     }
 }
 
-bool ACShowSnortPacketLatencyData::execute(Analyzer& analyzer, void**)
+bool ACShowSnortPacketLatencyData::execute(Analyzer& analyzer)
 {
     DIOCTL_GetSnortLatencyData latency_data_array = {};
 

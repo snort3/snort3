@@ -79,7 +79,7 @@ bool ControlConn::respond(const char*, ...) { return true; }
 HostCacheMac* get_host_cache_mac() { return nullptr; }
 
 DataPurgeAC::~DataPurgeAC() = default;
-bool DataPurgeAC::execute(Analyzer&, void**) { return true;}
+bool DataPurgeAC::execute(Analyzer&) { return true;}
 
 void set_host_cache_mac(HostCacheMac*) { }
 

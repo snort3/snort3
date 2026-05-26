@@ -72,6 +72,7 @@ THREAD_LOCAL bool RuleContext::enabled = false;
 THREAD_LOCAL bool snort::TimeProfilerStats::enabled;
 THREAD_LOCAL snort::PacketTracer* snort::PacketTracer::s_pkt_trace;
 THREAD_LOCAL class FlowControl* flow_con;
+THREAD_LOCAL const snort::Trace* snort_trace = nullptr;
 
 void Profiler::start() { }
 void Profiler::stop(uint64_t) { }
@@ -193,6 +194,8 @@ void PacketTracer::daq_dump(Packet*) { }
 void PacketTracer::activate(const Packet&) { }
 bool PacketTracer::is_active() { return false; }
 bool PacketTracer::is_daq_activated() { return false; }
+void TraceApi::filter(const Packet&) { }
+uint8_t TraceApi::get_constraints_generation() { return 0; }
 void TraceApi::thread_init(const TraceConfig*) { }
 void TraceApi::thread_term() { }
 void TraceApi::thread_reinit(const TraceConfig*) { }
@@ -243,6 +246,7 @@ void ThreadConfig::apply_thread_policy(SThreadType , unsigned ) { }
 void ThreadConfig::set_instance_tid(int) { }
 void populate_instance_maps() { }
 void invalidate_instance_maps() { }
+void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) { }
 }
 
 bool FlowControl::move_to_allowlist(snort::Flow*) { return true; }

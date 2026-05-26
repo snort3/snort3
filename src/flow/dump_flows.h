@@ -77,7 +77,7 @@ public:
     ~DumpFlows() override = default;
 
     bool open_file(DumpFlowsControl& dfc);
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override
     { return "DumpFlows"; }
 
@@ -104,7 +104,7 @@ public:
     DumpFlowsSummary(ControlConn*, DumpFlowsFilter*);
     ~DumpFlowsSummary() override;
 
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override
     { return "DumpFlowsSummary"; }
 

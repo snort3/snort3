@@ -706,7 +706,7 @@ bool ControlMgmt::service_users()
 
 class ACExample : public AnalyzerCommand
 {
-    bool execute(Analyzer &, void **) override { return true; }
+    bool execute(Analyzer &) override { return true; }
     const char * stringify() override { return "ACExample"; }
     ~ACExample() override {}
 };

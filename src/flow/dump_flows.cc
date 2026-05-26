@@ -92,7 +92,7 @@ bool DumpFlows::open_file(DumpFlowsControl& dfc)
     return true;
 }
 
-bool DumpFlows::execute(Analyzer&, void**)
+bool DumpFlows::execute(Analyzer&)
 {
     if ( !flow_con )
         return true;
@@ -250,7 +250,7 @@ DumpFlowsSummary::~DumpFlowsSummary()
     LogRespond(ctrlcon, "Pending: %u\n", pending);
 }
 
-bool DumpFlowsSummary::execute(Analyzer &, void **)
+bool DumpFlowsSummary::execute(Analyzer &)
 {
     if ( !flow_con )
         return true;

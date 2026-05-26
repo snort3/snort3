@@ -113,7 +113,7 @@ private:
 class ACThirdPartyAppIdCleanup : public snort::AnalyzerCommand
 {
 public:
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "THIRD_PARTY_APPID_CLEANUP"; }
 };
 

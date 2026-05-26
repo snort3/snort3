@@ -40,7 +40,7 @@ public:
     ReputationReload(ControlConn*, Reputation&);
     ~ReputationReload() override;
 
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     bool need_update_reload_id() const override
     { return true; }
 
@@ -67,7 +67,7 @@ ReputationReload::~ReputationReload()
     ins.rem_global_ref();
 }
 
-bool ReputationReload::execute(Analyzer&, void**)
+bool ReputationReload::execute(Analyzer&)
 {
     ins.swap_thread_data(data);
     return true;

@@ -37,10 +37,10 @@ ACShellCmd::ACShellCmd(ControlConn* conn, AnalyzerCommand* ac) : AnalyzerCommand
     ControlConn::increment_pending_cmds_count();
 }
 
-bool ACShellCmd::execute(Analyzer& analyzer, void** state)
+bool ACShellCmd::execute(Analyzer& analyzer)
 {
     ctrlcon->set_user_network_policy();
-    return ac->execute(analyzer, state);
+    return ac->execute(analyzer);
 }
 
 ACShellCmd::~ACShellCmd()

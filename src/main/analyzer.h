@@ -55,11 +55,9 @@ typedef bool (* MainHook_f)(snort::Packet*);
 class UncompletedAnalyzerCommand
 {
 public:
-    UncompletedAnalyzerCommand(snort::AnalyzerCommand* ac, void* acs) : command(ac), state(acs)
-    { }
+    UncompletedAnalyzerCommand(snort::AnalyzerCommand* ac) : command(ac) { }
 
     snort::AnalyzerCommand* command;
-    void* state;
 };
 
 class Analyzer
@@ -113,6 +111,7 @@ public:
     void reinit(const snort::SnortConfig*);
     void rotate();
     snort::SFDAQInstance* get_daq_instance() { return daq_instance; }
+    void reap_commands();
 
     bool is_idling() const
     { return idling; }
@@ -133,15 +132,12 @@ private:
     void init_unprivileged();
     void term();
     void show_source();
-    void add_command_to_uncompleted_queue(snort::AnalyzerCommand*, void*);
+    void add_command_to_uncompleted_queue(snort::AnalyzerCommand*);
     void add_command_to_completed_queue(snort::AnalyzerCommand*);
 
-public:
-    std::queue<snort::AnalyzerCommand*> completed_work_queue;
-    std::mutex completed_work_queue_mutex;
-    std::queue<snort::AnalyzerCommand*> pending_work_queue;
-
 private:
+    void reap_command(snort::AnalyzerCommand* ac);
+
     std::atomic<State> state;
     unsigned id;
     bool exit_requested = false;
@@ -158,7 +154,10 @@ private:
     OopsHandler* oops_handler;
     ContextSwitcher* switcher = nullptr;
     std::mutex pending_work_queue_mutex;
+    std::queue<snort::AnalyzerCommand*> pending_work_queue;
     std::list<UncompletedAnalyzerCommand*> uncompleted_work_queue;
+    std::queue<snort::AnalyzerCommand*> completed_work_queue;
+    std::mutex completed_work_queue_mutex;
 };
 
 extern THREAD_LOCAL snort::ProfileStats daqPerfStats;

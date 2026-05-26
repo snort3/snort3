@@ -55,7 +55,7 @@ public:
     BatchedLoggerPeriodicFlush(ControlConn* ctrl = nullptr)
         : AnalyzerCommand(ctrl) {}
 
-    bool execute(Analyzer&, void**) override
+    bool execute(Analyzer&) override
     {
         BatchedLogManager::flush_thread_buffers();
         return true;

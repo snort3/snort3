@@ -77,7 +77,7 @@ class PacketTracerDebug : public AnalyzerCommand
 {
   public:
     PacketTracerDebug(const PacketConstraints* cs);
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char *stringify() override { return "PACKET_TRACER_DEBUG"; }
 
   private:
@@ -94,7 +94,7 @@ PacketTracerDebug::PacketTracerDebug(const PacketConstraints* cs)
     }
 }
 
-bool PacketTracerDebug::execute(Analyzer&, void**)
+bool PacketTracerDebug::execute(Analyzer&)
 {
     if (enable)
         PacketTracer::set_constraints(&constraints);

@@ -116,7 +116,7 @@ class AcAppIdDebug : public AnalyzerCommand
 {
 public:
     AcAppIdDebug(const AppIdDebugSessionConstraints* cs);
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     const char* stringify() override { return "APPID_DEBUG"; }
 
 private:
@@ -133,7 +133,7 @@ AcAppIdDebug::AcAppIdDebug(const AppIdDebugSessionConstraints* cs)
     }
 }
 
-bool AcAppIdDebug::execute(Analyzer&, void**)
+bool AcAppIdDebug::execute(Analyzer&)
 {
     if (appidDebug)
     {
@@ -147,7 +147,7 @@ bool AcAppIdDebug::execute(Analyzer&, void**)
     return true;
 }
 
-bool ACThirdPartyAppIdCleanup::execute(Analyzer& a, void**)
+bool ACThirdPartyAppIdCleanup::execute(Analyzer& a)
 {
     if (!pkt_thread_tp_appid_ctxt)
         return true;
@@ -162,7 +162,7 @@ bool ACThirdPartyAppIdCleanup::execute(Analyzer& a, void**)
 class ACThirdPartyAppIdContextSwap : public AnalyzerCommand
 {
 public:
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     ACThirdPartyAppIdContextSwap(AppIdInspector& inspector, ControlConn* conn)
         : AnalyzerCommand(conn), inspector(inspector)
     {
@@ -175,7 +175,7 @@ private:
     AppIdInspector& inspector;
 };
 
-bool ACThirdPartyAppIdContextSwap::execute(Analyzer&, void**)
+bool ACThirdPartyAppIdContextSwap::execute(Analyzer&)
 {
     if (!pkt_thread_tp_appid_ctxt) 
         pkt_thread_tp_appid_ctxt = inspector.get_ctxt().get_tp_appid_ctxt();
@@ -202,7 +202,7 @@ ACThirdPartyAppIdContextSwap::~ACThirdPartyAppIdContextSwap()
 class ACThirdPartyAppIdContextUnload : public AnalyzerCommand
 {
 public:
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     ACThirdPartyAppIdContextUnload(AppIdInspector& inspector, ThirdPartyAppIdContext* tp_ctxt,
         ControlConn* conn): AnalyzerCommand(conn), inspector(inspector), tp_ctxt(tp_ctxt)
     { }
@@ -213,7 +213,7 @@ private:
     ThirdPartyAppIdContext* tp_ctxt =  nullptr;
 };
 
-bool ACThirdPartyAppIdContextUnload::execute(Analyzer& ac, void**)
+bool ACThirdPartyAppIdContextUnload::execute(Analyzer& ac)
 {
     assert(pkt_thread_tp_appid_ctxt);
     ThirdPartyAppIdContext::set_tp_reload_in_progress(true);
@@ -248,7 +248,7 @@ ACThirdPartyAppIdContextUnload::~ACThirdPartyAppIdContextUnload()
 class ACOdpContextSwap : public AnalyzerCommand
 {
 public:
-    bool execute(Analyzer&, void**) override;
+    bool execute(Analyzer&) override;
     ACOdpContextSwap(AppIdInspector& inspector, OdpContext& odp_ctxt, ControlConn* conn) :
         AnalyzerCommand(conn), inspector(inspector), odp_ctxt(odp_ctxt)
     { }
@@ -259,7 +259,7 @@ private:
     OdpContext& odp_ctxt;
 };
 
-bool ACOdpContextSwap::execute(Analyzer&, void**)
+bool ACOdpContextSwap::execute(Analyzer&)
 {
     HostAttributesManager::clear_appid_services();
     AppIdServiceState::clean();

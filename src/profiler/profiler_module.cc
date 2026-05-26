@@ -66,7 +66,7 @@ public:
         : action(action)
     {}
 
-    bool execute(Analyzer&, void**) override
+    bool execute(Analyzer&) override
     {
         switch (action)
         {
@@ -117,7 +117,7 @@ public:
         print_rule_profiler_stats(config->rule, stats, ctrlcon, out_type);
     }
 
-    bool execute(Analyzer&, void**) override
+    bool execute(Analyzer&) override
     {
         prepare_rule_profiler_stats(nodes, stats, get_instance_id());
 
@@ -151,7 +151,7 @@ public:
         }
     }
 
-    bool execute(Analyzer&, void**) override
+    bool execute(Analyzer&) override
     {
         reset_thread_rule_profiler_stats(nodes, get_instance_id());
 
@@ -278,7 +278,7 @@ class ProfilerTimeCmd : public AnalyzerCommand
 {
 public:
     ProfilerTimeCmd(bool en) : enable(en) { }
-    bool execute(Analyzer&, void**) override
+    bool execute(Analyzer&) override
     {
         if ( enable )
             time_profiling_start_cmd();
