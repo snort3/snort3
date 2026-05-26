@@ -153,7 +153,7 @@ public:
         inline void add(TcpStreamTracker::TcpEvent);
     };
 
-    TcpSessionStats tcp_ssn_stats;
+    TcpSessionStats tcp_ssn_stats{};
 
 private:
     int process_tcp_packet(TcpSegmentDescriptor&, const snort::Packet*);
