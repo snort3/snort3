@@ -226,7 +226,7 @@ void DCE2_Smb2SsnData::set_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
     NbssHdr* nb_hdr = (NbssHdr*)nb_ptr;
     SmbNtHdr* smb_hdr = (SmbNtHdr*)((uint8_t*)nb_hdr + sizeof(NbssHdr));
 
-    uint32_t tid = (ftracker_tcp) ? ftracker_tcp->ttr->get_tid() : 0;
+    uint32_t tid = (ftracker_tcp and ftracker_tcp->ttr) ? ftracker_tcp->ttr->get_tid() : 0;
     smb_hdr->smb_tid = alignedNtohl((const uint32_t*)&tid);
 
     if (DetectionEngine::get_current_packet()->is_from_client())
@@ -263,7 +263,7 @@ void DCE2_Smb2SsnData::set_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
 }
 
 static inline bool DCE2_Smb2FindSidTid(DCE2_Smb2SsnData* ssd, const uint64_t sid,
-    const uint32_t tid, const uint32_t mid, DCE2_Smb2SessionTracker** str, DCE2_Smb2TreeTracker** ttr, bool
+    const uint32_t tid, const uint64_t mid, DCE2_Smb2SessionTracker** str, DCE2_Smb2TreeTracker** ttr, bool
     lookup_cache = false)
 {
     *str = DCE2_Smb2FindSidInSsd(ssd, sid).get();
@@ -276,7 +276,7 @@ static inline bool DCE2_Smb2FindSidTid(DCE2_Smb2SsnData* ssd, const uint64_t sid
         return false;
 
     if (!tid)
-        *ttr = ssd->GetTreeTrackerFromMessage(mid);
+        *ttr = (*str)->GetTreeTrackerFromMessage(ssd->flow_key, mid);
     else
         *ttr = (*str)->findTtracker(tid);
 
@@ -328,9 +328,13 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         if (!tid)
         {
             //Check request tracker for tid in Async case.
-            auto rtracker = ssd->findRtracker(mid);
-            if (rtracker)
-                tid = rtracker->get_tree_id();
+            auto sess = ssd->find_session_tracker(sid);
+            if (sess)
+            {
+                auto rtracker = sess->findRtracker(ssd->flow_key, mid);
+                if (rtracker)
+                    tid = rtracker->get_tree_id();
+            }
         }
         dce2_smb_stats.v2_crt++;
         DCE2_Smb2Create(ssd, smb_hdr, smb_data, end, mid, sid, tid);
@@ -339,9 +343,13 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         if (!tid)
         {
             //Check request tracker for tid in Async case.
-            auto rtracker = ssd->findRtracker(mid);
-            if (rtracker)
-                tid = rtracker->get_tree_id();
+            auto sess = ssd->find_session_tracker(sid);
+            if (sess)
+            {
+                auto rtracker = sess->findRtracker(ssd->flow_key, mid);
+                if (rtracker)
+                    tid = rtracker->get_tree_id();
+            }
         }
         dce2_smb_stats.v2_read++;
         if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr, true))
@@ -356,9 +364,13 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         if (!tid)
         {
             //Check request tracker for tid in Async case.
-            auto rtracker = ssd->findRtracker(mid);
-            if (rtracker)
-                tid = rtracker->get_tree_id();
+            auto sess = ssd->find_session_tracker(sid);
+            if (sess)
+            {
+                auto rtracker = sess->findRtracker(ssd->flow_key, mid);
+                if (rtracker)
+                    tid = rtracker->get_tree_id();
+            }
         }
         dce2_smb_stats.v2_wrt++;
         if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr, true))
@@ -373,9 +385,13 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         if (!tid)
         {
             //Check request tracker for tid in Async case.
-            auto rtracker = ssd->findRtracker(mid);
-            if (rtracker)
-                tid = rtracker->get_tree_id();
+            auto sess = ssd->find_session_tracker(sid);
+            if (sess)
+            {
+                auto rtracker = sess->findRtracker(ssd->flow_key, mid);
+                if (rtracker)
+                    tid = rtracker->get_tree_id();
+            }
         }
         dce2_smb_stats.v2_setinfo++;
         if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr))
@@ -390,9 +406,13 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         if (!tid)
         {
             //Check request tracker for tid in Async case.
-            auto rtracker = ssd->findRtracker(mid);
-            if (rtracker)
-                tid = rtracker->get_tree_id();
+            auto sess = ssd->find_session_tracker(sid);
+            if (sess)
+            {
+                auto rtracker = sess->findRtracker(ssd->flow_key, mid);
+                if (rtracker)
+                    tid = rtracker->get_tree_id();
+            }
         }
         dce2_smb_stats.v2_cls++;
         if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr))
@@ -433,9 +453,13 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         if (!tid)
         {
             //Check request tracker for tid in Async case.
-            auto rtracker = ssd->findRtracker(mid);
-            if (rtracker)
-                tid = rtracker->get_tree_id();
+            auto sess = ssd->find_session_tracker(sid);
+            if (sess)
+            {
+                auto rtracker = sess->findRtracker(ssd->flow_key, mid);
+                if (rtracker)
+                    tid = rtracker->get_tree_id();
+            }
         }
         if (!DCE2_Smb2FindSidTid(ssd, sid, tid, mid, &str, &ttr))
         {

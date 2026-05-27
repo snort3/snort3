@@ -423,8 +423,59 @@ public:
 
     bool get_encryption_flag() { return static_cast<bool>(encryption_flag); }
 
+    // Compute a per-connection unique key for request tracking.
+    // message_id is unique per TCP connection, not per SMB session, so we mix
+    // in the connection's flow_key to avoid collisions across channels.
+    static uint64_t make_rtracker_key(uint32_t conn_flow_key, uint64_t mid)
+    {
+        return mid ^ (static_cast<uint64_t>(conn_flow_key) * 0x9e3779b97f4a7c15ULL);
+    }
+
+    // Request Tracker
+    DCE2_Smb2RequestTracker* findRtracker(uint32_t conn_flow_key, uint64_t mid)
+    {
+        return req_trackers.Find(make_rtracker_key(conn_flow_key, mid));
+    }
+
+    bool insertRtracker(uint32_t conn_flow_key, uint64_t message_id, DCE2_Smb2RequestTracker* rtracker)
+    {
+        auto key = make_rtracker_key(conn_flow_key, message_id);
+        if (req_trackers.Insert(key, rtracker))
+        {
+            update_cache_size(sizeof(DCE2_Smb2RequestTracker));
+            return true;
+        }
+        return false;
+    }
+
+    void removeRtracker(uint32_t conn_flow_key, uint64_t message_id)
+    {
+        auto key = make_rtracker_key(conn_flow_key, message_id);
+        if (req_trackers.Find(key))
+        {
+            req_trackers.Remove(key);
+            update_cache_size(-(int)sizeof(DCE2_Smb2RequestTracker));
+        }
+    }
+
+    int getTotalRequestsPending()
+    {
+        return req_trackers.GetSize();
+    }
+
+    DCE2_Smb2TreeTracker* GetTreeTrackerFromMessage(uint32_t conn_flow_key, uint64_t mid)
+    {
+        DCE2_Smb2RequestTracker* request_tracker = findRtracker(conn_flow_key, mid);
+        if (request_tracker)
+        {
+            return findTtracker(request_tracker->get_tree_id());
+        }
+        return nullptr;
+    }
+
     DCE2_DbMapConntracker conn_trackers;
     DCE2_DbMapTtracker tree_trackers;
+    DCE2_DbMapRtracker req_trackers;
     uint64_t session_id = 0;
     uint8_t encryption_flag = 0;
 };
@@ -440,7 +491,6 @@ struct DCE2_Smb2SsnData
     std::unordered_map<uint64_t, std::weak_ptr<DCE2_Smb2SessionTracker>, std::hash<uint64_t> > session_trackers;
     DCE2_Smb2FileTracker* ftracker_tcp; //To keep tab of current file being transferred over TCP
     std::unique_ptr<DCE2_Smb2LocalFileTracker> ftracker_local;
-    DCE2_DbMapRtracker req_trackers;
     uint32_t flow_key;
     snort::Flow* flow = nullptr;
     DCE2_Smb2SsnData();
@@ -467,39 +517,16 @@ struct DCE2_Smb2SsnData
         return session_trackers.insert(std::make_pair(session_id, sptr)).second;
     }
 
-    // Request Tracker
-    DCE2_Smb2RequestTracker* findRtracker(uint64_t mid)
-    {
-        return req_trackers.Find(mid);
-    }
-
-    bool insertRtracker(uint64_t message_id, DCE2_Smb2RequestTracker* rtracker)
-    {
-        return req_trackers.Insert(message_id, rtracker);
-    }
-
-    void removeRtracker(uint64_t message_id)
-    {
-        req_trackers.Remove(message_id);
-    }
-
     int getTotalRequestsPending()
     {
-        return req_trackers.GetSize();
-    }
-
-    DCE2_Smb2TreeTracker* GetTreeTrackerFromMessage(uint64_t mid)
-    {
-        DCE2_Smb2RequestTracker* request_tracker = findRtracker(mid);
-        if (request_tracker)
+        int total = 0;
+        for (auto& it : session_trackers)
         {
-            auto session_tracker = find_session_tracker(request_tracker->get_session_id());
-            if (session_tracker)
-            {
-                return session_tracker->findTtracker(request_tracker->get_tree_id());
-            }
+            auto sptr = it.second.lock();
+            if (sptr)
+                total += sptr->getTotalRequestsPending();
         }
-        return nullptr;
+        return total;
     }
 };
 

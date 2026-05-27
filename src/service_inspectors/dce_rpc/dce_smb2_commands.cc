@@ -50,15 +50,19 @@ using namespace snort;
 inline FileFlows* DCE2_Smb2GetFileFlow(DCE2_Smb2FileTracker* ftracker)
 {
     Packet* p = DetectionEngine::get_current_packet();
-    if (p->flow != ftracker->parent_flow)
-        ftracker->multi_channel_file = true;
-    if (!ftracker->parent_flow)
+    snort::Flow* pflow = ftracker->parent_flow;
+    if (!pflow)
     {
         //Parent flow is deleted, upgrade the current flow as parent flow
         ftracker->parent_flow = p->flow;
+        pflow = p->flow;
         dce2_smb_stats.v2_updated_file_flows++;
     }
-    return FileFlows::get_file_flows(ftracker->parent_flow);
+    else if (p->flow != pflow)
+    {
+        ftracker->multi_channel_file = true;
+    }
+    return FileFlows::get_file_flows(pflow);
 }
 
 inline FileFlows* DCE2_Smb2GetCurrentFileFlow()
@@ -152,7 +156,11 @@ bool DCE2_Smb2ProcessFileData(DCE2_Smb2SsnData* ssd, const uint8_t* file_data,
                 p, "No file flow \n");
 
             DCE2_Smb2TreeTracker* ttr = ssd->ftracker_tcp->ttr;
-            ttr->removeFtracker(ssd->ftracker_tcp->file_id);
+            uint64_t fid = ssd->ftracker_tcp->file_id;
+            ssd->ftracker_tcp = nullptr;
+            ssd->ftracker_local = nullptr;
+            if (ttr)
+                ttr->removeFtracker(fid);
             return false;
         }
 
@@ -376,7 +384,7 @@ static void DCE2_Smb2CreateRequest(DCE2_Smb2SsnData* ssd,
             auto rtracker = new DCE2_Smb2RequestTracker(file_name, name_len);
             rtracker->set_session_id(str->session_id);
             rtracker->set_tree_id(ttr->get_tid());
-            if (!ssd->insertRtracker(mid, rtracker))
+            if (!str->insertRtracker(ssd->flow_key, mid, rtracker))
             {
                 dce2_smb_stats.v2_crt_rtrkr_ins_fail++;
                 SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
@@ -534,7 +542,7 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             (alignedNtohl(&(smb_hdr->status)) == SMB2_STATUS_PENDING))
             return;
 
-        ssd->removeRtracker(mid);
+        str->removeRtracker(ssd->flow_key, mid);
 
         dce2_smb_stats.v2_crt_err_resp++;
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
@@ -588,7 +596,7 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             return;
         }
 
-        DCE2_Smb2RequestTracker* rtr = ssd->findRtracker(mid);
+        DCE2_Smb2RequestTracker* rtr = str->findRtracker(ssd->flow_key, mid);
         if (!rtr)
         {
             SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
@@ -609,13 +617,13 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
                 DetectionEngine::get_current_packet(),
                 "%s_RESP: not processing for directory\n",
                 smb2_command_string[SMB2_COM_CREATE]);
-            ssd->removeRtracker(mid);
+            str->removeRtracker(ssd->flow_key, mid);
             return;
         }
 
         DCE2_Smb2CreateResponse(ssd, (const Smb2CreateResponseHdr*)smb_data, rtr, ttr,
             str, fileId_persistent);
-        ssd->removeRtracker(mid);
+        str->removeRtracker(ssd->flow_key, mid);
     }
     else
     {
@@ -671,7 +679,7 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             auto rtracker = new DCE2_Smb2RequestTracker(fileId_persistent);
             rtracker->set_session_id(str->session_id);
             rtracker->set_tree_id(ttr->get_tid());
-            if (!ssd->insertRtracker(mid, rtracker))
+            if (!str->insertRtracker(ssd->flow_key, mid, rtracker))
             {
                 dce2_smb_stats.v2_cls_rtrkr_ins_fail++;
                 SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
@@ -704,7 +712,7 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     }
     else if (structure_size == SMB2_CLOSE_RESPONSE_STRUC_SIZE)
     {
-        DCE2_Smb2RequestTracker* rtr = ssd->findRtracker(mid);
+        DCE2_Smb2RequestTracker* rtr = str->findRtracker(ssd->flow_key, mid);
         if (!rtr)
         {
             SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
@@ -714,8 +722,14 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             return;
         }
         auto fileId_persistent = rtr->get_file_id();
+        DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(fileId_persistent);
+        if (ftracker and ssd->ftracker_tcp == ftracker)
+        {
+            ssd->ftracker_tcp = nullptr;
+            ssd->ftracker_local = nullptr;
+        }
         ttr->removeFtracker(fileId_persistent);
-        ssd->removeRtracker(mid);
+        str->removeRtracker(ssd->flow_key, mid);
     }
     else
     {
@@ -723,12 +737,18 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             DetectionEngine::get_current_packet(), "%s: invalid struct size\n",
             smb2_command_string[SMB2_COM_CLOSE]);
         dce2_smb_stats.v2_cls_inv_str_sz++;
-        DCE2_Smb2RequestTracker* rtr = ssd->findRtracker(mid);
+        DCE2_Smb2RequestTracker* rtr = str->findRtracker(ssd->flow_key, mid);
         if (rtr)
         {
             auto fileId_persistent = rtr->get_file_id();
+            DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(fileId_persistent);
+            if (ftracker and ssd->ftracker_tcp == ftracker)
+            {
+                ssd->ftracker_tcp = nullptr;
+                ssd->ftracker_local = nullptr;
+            }
             ttr->removeFtracker(fileId_persistent);
-            ssd->removeRtracker(mid);
+            str->removeRtracker(ssd->flow_key, mid);
         }
     }
 }
@@ -833,13 +853,13 @@ static void DCE2_Smb2ReadRequest(DCE2_Smb2SsnData* ssd,
 
     if (ssd->max_outstanding_requests > ssd->getTotalRequestsPending())
     {
-        DCE2_Smb2RequestTracker* readtracker = ssd->findRtracker(message_id);
+        DCE2_Smb2RequestTracker* readtracker = str->findRtracker(ssd->flow_key, message_id);
         if (!readtracker)
             readtracker = new DCE2_Smb2RequestTracker(fileId_persistent, offset);
         readtracker->set_session_id(str->session_id);
         readtracker->set_tree_id(ttr->get_tid());
         readtracker->set_file_id(fileId_persistent);
-        ssd->insertRtracker(message_id, readtracker);
+        str->insertRtracker(ssd->flow_key, message_id, readtracker);
     }
     else
     {
@@ -883,13 +903,13 @@ static void DCE2_Smb2ReadRequest(DCE2_Smb2SsnData* ssd,
 // trackers is cleaned after updating file offset in file tracker
 //-------------------------------------------------------------------------
 static void DCE2_Smb2ReadResponse(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
-    const Smb2ReadResponseHdr* smb_read_hdr, const uint8_t* end, DCE2_Smb2TreeTracker* ttr,
-    uint64_t message_id)
+    const Smb2ReadResponseHdr* smb_read_hdr, const uint8_t* end, DCE2_Smb2SessionTracker* str,
+    DCE2_Smb2TreeTracker* ttr, uint64_t message_id)
 {
     const uint8_t* file_data =  (const uint8_t*)smb_read_hdr + SMB2_READ_RESPONSE_STRUC_SIZE - 1;
     int data_size = end - file_data;
     uint16_t data_offset;
-    DCE2_Smb2RequestTracker* request = ssd->findRtracker(message_id);
+    DCE2_Smb2RequestTracker* request = str->findRtracker(ssd->flow_key, message_id);
 
     if (!request)
     {
@@ -923,7 +943,7 @@ static void DCE2_Smb2ReadResponse(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         }
         if (!DCE2_Smb2ProcessFileData(ssd, file_data, data_size))
         {
-            ssd->removeRtracker(message_id);
+            str->removeRtracker(ssd->flow_key, message_id);
             return;
         }
 
@@ -934,7 +954,7 @@ static void DCE2_Smb2ReadResponse(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             ssd->ftracker_local->smb2_pdu_state = DCE2_SMB_PDU_STATE__RAW_DATA;
         }
     }
-    ssd->removeRtracker(message_id);
+    str->removeRtracker(ssd->flow_key, message_id);
 }
 
 //-------------------------------------------------------------------------
@@ -952,16 +972,21 @@ void DCE2_Smb2Read(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             (alignedNtohl(&(smb_hdr->status)) == SMB2_STATUS_PENDING))
             return;
 
-        DCE2_Smb2RequestTracker* rtr = ssd->findRtracker(mid);
+        DCE2_Smb2RequestTracker* rtr = str->findRtracker(ssd->flow_key, mid);
         if (rtr and rtr->get_file_id())
         {
             DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(rtr->get_file_id());
             if (ftracker)
             {
+                if (ssd->ftracker_tcp == ftracker)
+                {
+                    ssd->ftracker_tcp = nullptr;
+                    ssd->ftracker_local = nullptr;
+                }
                 ttr->removeFtracker(rtr->get_file_id());
             }
         }
-        ssd->removeRtracker(mid);
+        str->removeRtracker(ssd->flow_key, mid);
         dce2_smb_stats.v2_read_err_resp++;
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
             DetectionEngine::get_current_packet(), "%s_RESP: error\n",
@@ -981,7 +1006,7 @@ void DCE2_Smb2Read(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             smb_data, end, SMB2_READ_RESPONSE_STRUC_SIZE - 1,
             dce2_smb_stats.v2_read_resp_hdr_err, SMB2_COM_READ)
 
-        DCE2_Smb2ReadResponse(ssd, smb_hdr, (const Smb2ReadResponseHdr*)smb_data, end, ttr, mid);
+        DCE2_Smb2ReadResponse(ssd, smb_hdr, (const Smb2ReadResponseHdr*)smb_data, end, str, ttr, mid);
     }
     else
     {
@@ -1009,13 +1034,13 @@ static void DCE2_Smb2WriteRequest(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
 
     if (ssd->max_outstanding_requests > ssd->getTotalRequestsPending())
     {
-        DCE2_Smb2RequestTracker* writetracker = ssd->findRtracker(mid);
+        DCE2_Smb2RequestTracker* writetracker = str->findRtracker(ssd->flow_key, mid);
         if (!writetracker)
             writetracker = new DCE2_Smb2RequestTracker(fileId_persistent);
         writetracker->set_session_id(str->session_id);
         writetracker->set_tree_id(ttr->get_tid());
         writetracker->set_file_id(fileId_persistent);
-        ssd->insertRtracker(mid, writetracker);
+        str->insertRtracker(ssd->flow_key, mid, writetracker);
     }
     else
     {
@@ -1105,16 +1130,21 @@ void DCE2_Smb2Write(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             (alignedNtohl(&(smb_hdr->status)) == SMB2_STATUS_PENDING))
             return;
 
-        DCE2_Smb2RequestTracker* wtr = ssd->findRtracker(mid);
+        DCE2_Smb2RequestTracker* wtr = str->findRtracker(ssd->flow_key, mid);
         if (wtr and wtr->get_file_id())
         {
             DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(wtr->get_file_id());
             if (ftracker)
             {
+                if (ssd->ftracker_tcp == ftracker)
+                {
+                    ssd->ftracker_tcp = nullptr;
+                    ssd->ftracker_local = nullptr;
+                }
                 ttr->removeFtracker(wtr->get_file_id());
             }
         }
-        ssd->removeRtracker(mid);
+        str->removeRtracker(ssd->flow_key, mid);
         dce2_smb_stats.v2_wrt_err_resp++;
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
             DetectionEngine::get_current_packet(), "%s_RESP: error\n",
@@ -1131,7 +1161,7 @@ void DCE2_Smb2Write(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     }
     else if (structure_size == SMB2_WRITE_RESPONSE_STRUC_SIZE)
     {
-        ssd->removeRtracker(mid);
+        str->removeRtracker(ssd->flow_key, mid);
     }
     else
     {
@@ -1187,7 +1217,7 @@ void DCE2_Smb2IoctlCommand(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             return;
 
         dce2_smb_stats.v2_ioctl_err_resp++;
-        ssd->removeRtracker(mid);
+        str->removeRtracker(ssd->flow_key, mid);
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
             p, "%s_RESP: error\n",
             smb2_command_string[SMB2_COM_IOCTL]);
@@ -1204,13 +1234,13 @@ void DCE2_Smb2IoctlCommand(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         fileId_persistent = ioctl_request->fileId_persistent;
         if (ssd->max_outstanding_requests > ssd->getTotalRequestsPending())
         {
-            DCE2_Smb2RequestTracker* readtracker = ssd->findRtracker(mid);
+            DCE2_Smb2RequestTracker* readtracker = str->findRtracker(ssd->flow_key, mid);
             if (!readtracker)
                 readtracker = new DCE2_Smb2RequestTracker(fileId_persistent, 0);
             readtracker->set_session_id(str->session_id);
             readtracker->set_tree_id(ttr->get_tid());
             readtracker->set_file_id(fileId_persistent);
-            ssd->insertRtracker(mid, readtracker);
+            str->insertRtracker(ssd->flow_key, mid, readtracker);
         }
         else
         {
@@ -1231,7 +1261,7 @@ void DCE2_Smb2IoctlCommand(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             return;
         }
         fileId_persistent = ioctl_response->fileId_persistent;
-        ssd->removeRtracker(mid);
+        str->removeRtracker(ssd->flow_key, mid);
     }
     else
     {
