@@ -374,7 +374,7 @@ static inline void process_ssl(AppIdSession& asd,
         return;
 
     if ( asd.tsession->get_tls_sni() == nullptr and
-        (field = attribute_data.tls_host(false)) != nullptr)
+        (field = attribute_data.tls_host(false)) != nullptr and !field->empty())
     {
         asd.tsession->set_tls_sni(field->c_str(), field->size());
         if (reinspect_ssl_appid)
@@ -382,7 +382,7 @@ static inline void process_ssl(AppIdSession& asd,
     }
 
     if ( asd.tsession->get_tls_cname() == nullptr and
-        (field = attribute_data.tls_cname()) != nullptr)
+        (field = attribute_data.tls_cname()) != nullptr and !field->empty())
     {
         asd.tsession->set_tls_cname(field->c_str(), field->size());
         if (reinspect_ssl_appid)
@@ -394,7 +394,7 @@ static inline void process_ssl(AppIdSession& asd,
     if (reinspect_ssl_appid)
     {
         if ( asd.tsession->get_tls_org_unit() == nullptr and
-            (field = attribute_data.tls_org_unit()) != nullptr)
+            (field = attribute_data.tls_org_unit()) != nullptr and !field->empty())
         {
             asd.tsession->set_tls_org_unit(field->c_str(), field->size());
             asd.tsession->set_tls_handshake_done();
@@ -426,7 +426,8 @@ static inline void process_quic(AppIdSession& asd,
     if ( !asd.tsession )
         asd.tsession = new TlsSession();
 
-    if ( !asd.tsession->get_tls_sni() and (field=attribute_data.quic_sni()) != nullptr )
+    if ( !asd.tsession->get_tls_sni() and (field=attribute_data.quic_sni()) != nullptr
+        and !field->empty() )
     {
         APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Flow is QUIC\n");
         asd.tsession->set_tls_sni(field->c_str(), field->size());
