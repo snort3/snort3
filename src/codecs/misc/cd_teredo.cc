@@ -26,6 +26,8 @@
 #include "main/snort_config.h"
 #include "protocols/teredo.h"
 
+#include <cstring>
+
 using namespace snort;
 
 #define CD_TEREDO_NAME "teredo"
@@ -51,12 +53,19 @@ void TeredoCodec::get_protocol_ids(std::vector<ProtocolId>& v)
 bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 {
     const uint8_t* raw_pkt = raw.data;
+    uint32_t consumed = 0;
+    auto get_indicator = [](const uint8_t* p)
+    {
+        uint16_t value;
+        std::memcpy(&value, p, sizeof(value));
+        return ntohs(value);
+    };
 
     if ( raw.len < teredo::MIN_HDR_LEN )
         return false;
 
     /* Decode indicators. If both are present, Auth always comes before Origin. */
-    if ( ntohs(*(const uint16_t*)raw_pkt) == teredo::INDICATOR_AUTH )
+    if ( get_indicator(raw_pkt) == teredo::INDICATOR_AUTH )
     {
         if ( raw.len < teredo::INDICATOR_AUTH_MIN_LEN )
             return false;
@@ -64,22 +73,29 @@ bool TeredoCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort
         uint8_t client_id_length = *(raw_pkt + 2);
         uint8_t auth_data_length = *(raw_pkt + 3);
 
-        if (raw.len < (uint32_t)(teredo::INDICATOR_AUTH_MIN_LEN + client_id_length +
-            auth_data_length))
+        if (raw.len < (uint32_t)(teredo::INDICATOR_AUTH_MIN_LEN + client_id_length + auth_data_length))
             return false;
 
-        raw_pkt += (teredo::INDICATOR_AUTH_MIN_LEN + client_id_length + auth_data_length);
-        codec.lyr_len = (teredo::INDICATOR_AUTH_MIN_LEN + client_id_length + auth_data_length);
+        consumed = (teredo::INDICATOR_AUTH_MIN_LEN + client_id_length + auth_data_length);
+        raw_pkt += consumed;
+        codec.lyr_len = consumed;
     }
 
-    if ( ntohs(*(const uint16_t*)raw_pkt) == teredo::INDICATOR_ORIGIN )
+    if ( raw.len < consumed + teredo::INDICATOR_LEN )
+        return false;
+
+    if ( get_indicator(raw_pkt) == teredo::INDICATOR_ORIGIN )
     {
-        if ( raw.len < teredo::INDICATOR_ORIGIN_LEN )
+        if ( raw.len < consumed + teredo::INDICATOR_ORIGIN_LEN )
             return false;
 
         raw_pkt += teredo::INDICATOR_ORIGIN_LEN;
+        consumed += teredo::INDICATOR_ORIGIN_LEN;
         codec.lyr_len += teredo::INDICATOR_ORIGIN_LEN;
     }
+
+    if (raw.len < consumed + teredo::IPV6_VERSION_FIELD_LEN)
+        return false;
 
     /* If this is an IPv6 datagram, the first 4 bits will be the number 6. */
     if ( ((*raw_pkt & 0xF0) >> 4) == 6 )

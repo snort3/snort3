@@ -32,6 +32,8 @@ constexpr uint16_t INDICATOR_ORIGIN_LEN = 8;
 constexpr uint16_t INDICATOR_AUTH = 0x01;
 constexpr uint16_t INDICATOR_AUTH_MIN_LEN = 13;
 constexpr uint16_t MIN_HDR_LEN = 2;
+constexpr uint16_t INDICATOR_LEN = MIN_HDR_LEN;
+constexpr uint16_t IPV6_VERSION_FIELD_LEN = 1;
 
 inline bool is_teredo_port(uint16_t port)
 { return port == TEREDO_PORT; }
