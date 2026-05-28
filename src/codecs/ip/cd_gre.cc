@@ -172,7 +172,7 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
      */
 
     const gre::GREHdr* const greh = reinterpret_cast<const gre::GREHdr*>(raw.data);
-    uint16_t len = GRE_HEADER_LEN;
+    uint32_t len = GRE_HEADER_LEN;
 
     switch (greh->get_version())
     {
@@ -272,7 +272,7 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
     if (codec.conf->tunnel_bypass_enabled(TUNNEL_GRE))
         codec.tunnel_bypass = true;
 
-    codec.lyr_len = len;
+    codec.lyr_len = static_cast<uint16_t>(len);
     codec.next_prot_id = greh->proto();
     codec.codec_flags |= CODEC_NON_IP_TUNNEL | CODEC_ETHER_NEXT;
     return true;
