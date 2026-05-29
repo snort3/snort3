@@ -39,7 +39,7 @@ const char* Http2StatusLine::STATUS_NAME = ":status";
 void Http2StatusLine::process_pseudo_header(const Field& name, const Field& value)
 {
     if ((name.length() == STATUS_NAME_LENGTH) and
-        (memcmp(name.start(), STATUS_NAME, name.length()) == 0) and (status.length() <= 0))
+        (memcmp(name.start(), STATUS_NAME, name.length()) == 0) and (status.length() < 0))
     {
         uint8_t* value_str = new uint8_t[value.length()];
         memcpy(value_str, value.start(), value.length());
