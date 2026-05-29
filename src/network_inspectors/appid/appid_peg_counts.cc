@@ -158,6 +158,10 @@ void AppIdPegCounts::add_app_peg_info(std::string app_name, AppId app_id)
     std::replace(app_name.begin(), app_name.end(), ' ', '_');
 
     assert(appid_peg_ids);
+
+    if (appid_peg_ids->find(app_id) == appid_peg_ids->end() and appid_peg_ids->size() >= SF_APPID_MAX)
+        return;
+
     appid_peg_ids->emplace(app_id, std::make_pair(app_name, appid_peg_ids->size()));
 }
 
