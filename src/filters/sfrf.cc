@@ -203,6 +203,9 @@ int SFRF_ConfigAdd(SnortConfig*, RateFilterConfig* rf_config, tSFRFConfigNode* c
     if ( cfgNode->count < 1 )
         return -1;
 
+    if ( !cfgNode->seconds && cfgNode->timeout && !EventIsInternal(cfgNode->gid) )
+        return -1;
+
     if ( cfgNode->timeout == 0 )
     {
         if ( rf_config->noRevertCount >= SFRF_NO_REVERT_LIMIT )
