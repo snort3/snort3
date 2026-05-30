@@ -201,29 +201,29 @@ static void AlertSyslog(
     char event_string[STD_BUF];
     event_string[0] = '\0';
 
+    uint32_t gid, sid, rev;
+    event.get_sig_ids(gid, sid, rev);
+    SnortSnprintfAppend(event_string, sizeof(event_string), "[%u:%u:%u] ", gid, sid, rev);
+
+    if (msg != nullptr)
+        SnortSnprintfAppend(event_string, sizeof(event_string), "%s ", msg);
+    else
+        SnortSnprintfAppend(event_string, sizeof(event_string), "ALERT ");
+
+    if ( auto cls = event.get_class_type() )
+    {
+        SnortSnprintfAppend(event_string, sizeof(event_string),
+            "[Classification: %s] ", cls);
+    }
+
+    if (event.get_priority() != 0)
+    {
+        SnortSnprintfAppend(event_string, sizeof(event_string),
+            "[Priority: %u] ", event.get_priority());
+    }
+
     if ((p != nullptr) && p->ptrs.ip_api.is_valid())
     {
-        uint32_t gid, sid, rev;
-        event.get_sig_ids(gid, sid, rev);
-        SnortSnprintfAppend(event_string, sizeof(event_string), "[%u:%u:%u] ", gid, sid, rev);
-
-        if (msg != nullptr)
-            SnortSnprintfAppend(event_string, sizeof(event_string), "%s ", msg);
-        else
-            SnortSnprintfAppend(event_string, sizeof(event_string), "ALERT ");
-
-        if ( auto cls = event.get_class_type() )
-        {
-            SnortSnprintfAppend(event_string, sizeof(event_string),
-                "[Classification: %s] ", cls);
-        }
-
-        if (event.get_priority() != 0)
-        {
-            SnortSnprintfAppend(event_string, sizeof(event_string),
-                "[Priority: %u] ", event.get_priority());
-        }
-
         if (p->context->conf->alert_interface())
         {
             SnortSnprintfAppend(event_string, sizeof(event_string),
@@ -283,12 +283,9 @@ static void AlertSyslog(
             }
         }
 
-        syslog(priority, "%s", event_string);
     }
-    else if (msg != nullptr)
-    {
-        syslog(priority, "%s", msg);
-    }
+
+    syslog(priority, "%s", event_string);
 }
 
 //-------------------------------------------------------------------------
