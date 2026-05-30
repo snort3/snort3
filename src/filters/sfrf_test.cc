@@ -23,6 +23,7 @@
 #endif
 
 #include "catch/snort_catch.h"
+#include "detection/rules.h"
 #include "main/snort_config.h"
 #include "parser/parse_ip.h"
 #include "sfip/sf_ip.h"
@@ -106,6 +107,10 @@ static RateData rfData[] =
     ,{ 100, 1000, TRK_SRC,  0,  0,  0, IP_ANY, -1, 0 }
     ,{ 100, 2000, TRK_DST,  0,  0,  0, IP_ANY, -1, 0 }
     ,{ 100, 3000, TRK_RUL,  0,  0,  0, IP_ANY, -1, 0 }
+
+    // total count with revert timeout applies only to internal session events
+    ,{ 100, 4110, TRK_SRC,  1,  0,  1, IP_ANY, -1, 0 }
+    ,{ GID_SESSION, SESSION_EVENT_SETUP, TRK_SRC,  1,  0,  1, IP_ANY,  0, 0 }
 
     // rate tests w/o apply ...
     ,{ 200, 1110, TRK_SRC,  1,  1,  0, IP_ANY,  0, 0 }
