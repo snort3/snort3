@@ -6,3 +6,5 @@ add_library(snort_ml OBJECT
     snort_ml_module.cc
     snort_ml_module.h
 )
+
+add_subdirectory(test)
