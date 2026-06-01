@@ -759,6 +759,7 @@ bool TcpStreamTracker::update_on_3whs_ack(TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::update_on_bad_rst(TcpSegmentDescriptor& tsd)
 {
+    stream_log(tsd.get_pkt(), "stream_tcp: bad rst, invalid sequence\n");
     session->tel.set_tcp_event(EVENT_BAD_RST);
     normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
     session->set_pkt_action_flag(ACTION_BAD_PKT);

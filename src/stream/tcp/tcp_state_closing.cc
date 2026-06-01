@@ -25,6 +25,8 @@
 
 #include "tcp_state_closing.h"
 
+#include "stream/stream_log.h"
+
 #include "tcp_normalizers.h"
 #include "tcp_session.h"
 
@@ -89,6 +91,8 @@ bool TcpStateClosing::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     trk.update_tracker_ack_recv(tsd);
     if ( SEQ_GT(tsd.get_seq(), trk.get_fin_final_seq() ) )
     {
+        stream_log(tsd.get_pkt(), "stream_tcp: bad fin seq %u, fin_final_seq %u\n",
+            tsd.get_seq(), trk.get_fin_final_seq());
         trk.session->tel.set_tcp_event(EVENT_BAD_FIN);
         trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
@@ -135,4 +139,3 @@ bool TcpStateClosing::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpSt
 
     return true;
 }
-

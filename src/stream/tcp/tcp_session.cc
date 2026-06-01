@@ -587,6 +587,8 @@ bool TcpSession::check_for_window_slam(TcpSegmentDescriptor& tsd)
     if ( tcp_config->max_window && (tsd.get_wnd() > tcp_config->max_window) )
     {
         /* got a window too large, alert! */
+        stream_log(tsd.get_pkt(), "stream_tcp: wnd %u exceeds max %u\n",
+            tsd.get_wnd(), tcp_config->max_window);
         tel.set_tcp_event(EVENT_WINDOW_TOO_LARGE);
         listener->normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         set_pkt_action_flag(ACTION_BAD_PKT);
@@ -597,6 +599,7 @@ bool TcpSession::check_for_window_slam(TcpSegmentDescriptor& tsd)
         && !(tsd.get_tcph()->is_fin() || tsd.get_tcph()->is_rst()) )
     {
         /* got a window slam alert! */
+        stream_log(tsd.get_pkt(), "stream_tcp: window slam, wnd=%u\n", tsd.get_wnd());
         tel.set_tcp_event(EVENT_WINDOW_SLAM);
         listener->normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         set_pkt_action_flag(ACTION_BAD_PKT);
@@ -832,6 +835,8 @@ void TcpSession::check_for_repeated_syn(TcpSegmentDescriptor& tsd)
     if ( !SEQ_EQ(tsd.get_seq(), talker->get_iss()) and
         listener->normalizer.packet_dropper(tsd, NORM_TCP_BLOCK) )
     {
+        stream_log(tsd.get_pkt(), "stream_tcp: Repeated SYN with bad seq %u, expected %u\n",
+            tsd.get_seq(), talker->get_iss());
         set_pkt_action_flag(ACTION_BAD_PKT);
     }
     else if ( talker->get_tcp_state() >= TcpStreamTracker::TCP_ESTABLISHED and

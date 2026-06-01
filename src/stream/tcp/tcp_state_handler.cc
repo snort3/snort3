@@ -27,6 +27,8 @@
 
 #include <iostream>
 
+#include "stream/stream_log.h"
+
 #include "tcp_state_machine.h"
 
 using namespace std;
@@ -81,6 +83,7 @@ bool TcpStateHandler::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
         return rst_recv(tsd, tracker);
 
     case TcpStreamTracker::TCP_NO_FLAGS_EVENT:
+        stream_log(tsd.get_pkt(), "stream_tcp: packet with no TCP flags set\n");
         return no_flags(tsd, tracker);
 
     default:
@@ -90,4 +93,3 @@ bool TcpStateHandler::eval(TcpSegmentDescriptor& tsd, TcpStreamTracker& tracker)
     assert(false);
     return false;
 }
-

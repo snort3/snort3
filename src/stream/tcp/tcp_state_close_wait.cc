@@ -25,6 +25,8 @@
 
 #include "tcp_state_close_wait.h"
 
+#include "stream/stream_log.h"
+
 #include "tcp_normalizers.h"
 #include "tcp_session.h"
 
@@ -66,6 +68,8 @@ bool TcpStateCloseWait::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracke
 {
     if ( SEQ_GT(tsd.get_seq(), trk.get_fin_final_seq() ) )
     {
+        stream_log(tsd.get_pkt(), "stream_tcp: data seq %u beyond fin_seq %u\n",
+            tsd.get_seq(), trk.get_fin_final_seq());
         trk.session->tel.set_tcp_event(EVENT_DATA_ON_CLOSED);
         trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
@@ -95,6 +99,8 @@ bool TcpStateCloseWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
 
     if ( SEQ_GT(tsd.get_seq(), trk.get_fin_final_seq() ) )
     {
+        stream_log(tsd.get_pkt(), "stream_tcp: bad fin seq %u, fin_final_seq %u\n",
+            tsd.get_seq(), trk.get_fin_final_seq());
         trk.session->tel.set_tcp_event(EVENT_BAD_FIN);
         trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
@@ -129,4 +135,3 @@ bool TcpStateCloseWait::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, Tcp
 
     return true;
 }
-

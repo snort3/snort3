@@ -25,6 +25,8 @@
 
 #include "tcp_state_fin_wait2.h"
 
+#include "stream/stream_log.h"
+
 #include "tcp_normalizers.h"
 #include "tcp_session.h"
 
@@ -65,6 +67,8 @@ bool TcpStateFinWait2::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 {
     if ( SEQ_GT(tsd.get_ack(), trk.get_snd_nxt() ) )
     {
+        stream_log(tsd.get_pkt(), "stream_tcp: bad ack %u, snd_nxt %u\n",
+            tsd.get_ack(), trk.get_snd_nxt());
         trk.session->tel.set_tcp_event(EVENT_BAD_ACK);
         trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
@@ -79,6 +83,7 @@ bool TcpStateFinWait2::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker
 {
     trk.update_tracker_ack_sent(tsd);
     // data on a segment when we shouldn't be sending data any more alert!
+    stream_log(tsd.get_pkt(), "stream_tcp: data sent in FIN_WAIT2\n");
     trk.session->tel.set_tcp_event(EVENT_DATA_ON_CLOSED);
     trk.session->mark_packet_for_drop(tsd);
     return true;
@@ -88,6 +93,8 @@ bool TcpStateFinWait2::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker
 {
     if ( SEQ_GT(tsd.get_ack(), trk.get_snd_nxt() ) )
     {
+        stream_log(tsd.get_pkt(), "stream_tcp: bad ack %u, snd_nxt %u\n",
+            tsd.get_ack(), trk.get_snd_nxt());
         trk.session->tel.set_tcp_event(EVENT_BAD_ACK);
         trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
@@ -139,4 +146,3 @@ bool TcpStateFinWait2::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpS
     trk.session->check_for_window_slam(tsd);
     return true;
 }
-

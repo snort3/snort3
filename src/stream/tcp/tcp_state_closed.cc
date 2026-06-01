@@ -25,6 +25,8 @@
 
 #include "tcp_state_closed.h"
 
+#include "stream/stream_log.h"
+
 #include "tcp_session.h"
 
 using namespace snort;
@@ -67,12 +69,21 @@ bool TcpStateClosed::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
     if ( flow->get_session_flags() & SSNFLAG_RESET )
     {
         if ( trk.is_rst_pkt_sent() )
+        {
+            stream_log(tsd.get_pkt(), "stream_tcp: data after reset sent\n");
             trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RESET);
+        }
         else
+        {
+            stream_log(tsd.get_pkt(), "stream_tcp: data after reset received\n");
             trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
+        }
     }
     else
+    {
+        stream_log(tsd.get_pkt(), "stream_tcp: data sent in CLOSED state\n");
         trk.session->tel.set_tcp_event(EVENT_DATA_ON_CLOSED);
+    }
 
     trk.session->mark_packet_for_drop(tsd);
     return true;
@@ -139,4 +150,3 @@ bool TcpStateClosed::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpStr
 
     return true;
 }
-

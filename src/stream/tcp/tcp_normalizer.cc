@@ -467,6 +467,8 @@ int TcpNormalizer::validate_paws_timestamp(
         else
         {
             /* bail, we've got a packet outside the PAWS window! */
+            stream_log(tsd.get_pkt(), "stream_tcp: bad timestamp %u, last %u (PAWS)\n",
+                tsd.get_timestamp(), peer_ts_last);
             tns.session->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
             packet_dropper(tns, tsd, NORM_TCP_OPT);
             return ACTION_BAD_PKT;
@@ -477,6 +479,7 @@ int TcpNormalizer::validate_paws_timestamp(
         PAWS_24DAYS ) )
     {
         /* this packet is from way too far into the future */
+        stream_log(tsd.get_pkt(), "stream_tcp: timestamp too far in future (PAWS 24-day)\n");
         tns.session->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
         packet_dropper(tns, tsd, NORM_TCP_OPT);
         return ACTION_BAD_PKT;
@@ -540,6 +543,7 @@ int TcpNormalizer::handle_paws_no_timestamps(
         if ( ( tns.paws_drop_zero_ts && ( tsd.get_timestamp() == 0 ) ) &&
             ( tns.tracker->get_tf_flags() & TF_TSTAMP ) )
         {
+            stream_log(tsd.get_pkt(), "stream_tcp: zero timestamp when nonzero timestamp expected\n");
             tns.session->tel.set_tcp_event(EVENT_BAD_TIMESTAMP);
             packet_dropper(tns, tsd, NORM_TCP_BLOCK);
             return ACTION_BAD_PKT;
@@ -634,6 +638,8 @@ bool TcpNormalizer::validate_established_ack(TcpNormalizerState& tns, TcpSegment
     if ( tsd.is_nap_policy_inline() )
         if ( tsd.get_tcph()->is_ack() && !tns.tracker->is_ack_valid(tsd.get_ack()) )
         {
+            stream_log(tsd.get_pkt(), "stream_tcp: Invalid ACK %u exceeds snd_nxt %u\n",
+                tsd.get_ack(), tns.tracker->get_snd_nxt());
             packet_dropper(tns, tsd, NORM_TCP_BLOCK);
             return false;
         }

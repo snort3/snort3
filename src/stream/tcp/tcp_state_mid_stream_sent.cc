@@ -25,6 +25,8 @@
 
 #include "tcp_state_mid_stream_sent.h"
 
+#include "stream/stream_log.h"
+
 #include "tcp_normalizers.h"
 #include "tcp_session.h"
 
@@ -154,6 +156,7 @@ bool TcpStateMidStreamSent::check_for_window_slam(TcpSegmentDescriptor& tsd, Tcp
         if ( (trk.normalizer.get_norm_policy() == Normalizer::Policy::OS_WINDOWS)
             && (tsd.get_wnd() == 0))
         {
+            stream_log(tsd.get_pkt(), "stream_tcp: window slam, wnd=0 in MID_STREAM_SENT\n");
             trk.session->tel.set_tcp_event(EVENT_WINDOW_SLAM);
             trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
             trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
@@ -166,4 +169,3 @@ bool TcpStateMidStreamSent::check_for_window_slam(TcpSegmentDescriptor& tsd, Tcp
 
     return true;
 }
-
