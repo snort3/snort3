@@ -118,6 +118,20 @@ TEST_CASE("basic", "[json_stream]")
         CHECK(ss.str() == "");
     }
 
+    SECTION("empty c-string")
+    {
+        js.put("s", "");
+        CHECK(ss.str() == "");
+    }
+
+    SECTION("explicit empty string")
+    {
+        std::string mt;
+        js.put_string("s", mt);
+        const char* x = R"-("s": "")-";
+        CHECK(ss.str() == x);
+    }
+
     SECTION("null item")
     {
         js.put(nullptr);
@@ -378,4 +392,3 @@ TEST_CASE("basic", "[json_stream]")
         CHECK(ss.str() == x);
     }
 }
-

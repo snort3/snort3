@@ -65,6 +65,8 @@ public:
     Usage get_usage() const override
     { return GLOBAL; }
 
+    bool has_dynamic_stats() const override
+    { return true; }
     void show_dynamic_stats() override;
 
     unsigned get_gid() const override
@@ -81,4 +83,3 @@ private:
 };
 
 #endif
-

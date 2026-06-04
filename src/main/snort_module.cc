@@ -112,6 +112,13 @@ static const Parameter reset_stat_param[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const Parameter dump_stats_param[] =
+{
+    { "format", Parameter::PT_SELECT, "text | json", "text",
+      "output format for dump_stats" },
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Parameter s_heap_params[] =
 {
     { "enable", Parameter::PT_BOOL, nullptr, nullptr, "enable/disable jemalloc tracking" },
@@ -126,7 +133,7 @@ static const Command snort_cmds[] =
     { "dump_heap_profile", main_dump_heap_profile, nullptr, "dump jemalloc memory profile"},
     { "dump_heap_stats", main_dump_heap_stats, nullptr, "show heap statistics" },
     { "dump_inspector_map", main_dump_inspector_map, nullptr, "show inspectors to policy ID mapping" },
-    { "dump_stats", main_dump_stats, nullptr, "show summary statistics" },
+    { "dump_stats", main_dump_stats, dump_stats_param, "show summary statistics" },
     { "heap_profile", main_heap_profile, s_heap_params, "jemalloc memory tracking configuration"},
     { "help", main_help, nullptr, "this output", true },
     { "list_plugins", main_list_plugins, nullptr, "list loaded plugins" },
@@ -1270,4 +1277,3 @@ ProfileStats* SnortModule::get_profile(
     }
     return nullptr;
 }
-

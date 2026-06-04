@@ -6,6 +6,7 @@ set (INCLUDES
     reload_tuner.h
     snort_config.h
     snort_types.h
+    stats_output_format.h
     thread.h
     thread_config.h
     snort.h
@@ -77,4 +78,3 @@ include_directories (${CMAKE_CURRENT_BINARY_DIR})
 install (FILES ${INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/main"
 )
-

@@ -156,9 +156,9 @@ void MemoryModule::prep_counts(bool dump_stats)
     memory::MemoryCap::update_global_stats(dump_stats);
 }
 
-void MemoryModule::show_stats()
+void MemoryModule::refresh_process_heap_stats()
 {
-    // Refresh process-wide heap pegs in dump_stats_results before printing.
+    // Refresh process-wide heap pegs in dump_stats_results before rendering.
     // These values may have changed since accumulate() ran (e.g. the shutdown
     // epoch bumped by stop()). Per-thread pegs (reap_*, allocated, deallocated)
     // were correctly aggregated from all packet threads and are left unchanged.
@@ -174,6 +174,11 @@ void MemoryModule::show_stats()
                 dump_stats_results[i] = fresh[i];
         }
     }
+}
+
+void MemoryModule::show_stats()
+{
+    refresh_process_heap_stats();
     Module::show_stats();
 }
 

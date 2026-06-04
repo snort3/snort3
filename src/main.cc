@@ -23,6 +23,7 @@
 
 #include "main.h"
 
+#include <cstring>
 #include <thread>
 
 #include "control/control.h"
@@ -323,12 +324,34 @@ void snort::main_unicast_command(AnalyzerCommand* ac, unsigned target,  ControlC
 int main_dump_stats(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    send_response(ctrlcon, "== dumping stats\n");
-    main_broadcast_command(new ACGetStats(ctrlcon), ctrlcon);
+    if ( L && lua_gettop(L) > 0 && lua_type(L, 1) != LUA_TSTRING )
+    {
+        send_response(ctrlcon, "invalid dump_stats format; expected 'text' or 'json'\n");
+        return 0;
+    }
+
+    const char* format_arg = L ? luaL_optstring(L, 1, "text") : "text";
+    StatsOutputFormat format = StatsOutputFormat::Text;
+
+    if ( !strcmp(format_arg, "text") )
+        format = StatsOutputFormat::Text;
+    else if ( !strcmp(format_arg, "json") )
+        format = StatsOutputFormat::Json;
+    else
+    {
+        send_response(ctrlcon, "invalid dump_stats format; expected 'text' or 'json'\n");
+        return 0;
+    }
+
+    if ( format == StatsOutputFormat::Text )
+        send_response(ctrlcon, "== dumping stats\n");
+
+    main_broadcast_command(new ACGetStats(ctrlcon, format), ctrlcon);
     return 0;
 }
 
 
+// cppcheck-suppress constParameterPointer ; callback signature must match LuaCFunction
 int main_dump_heap_stats(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -350,6 +373,7 @@ int main_heap_profile(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; callback signature must match LuaCFunction
 int main_dump_heap_profile(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -357,6 +381,7 @@ int main_dump_heap_profile(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; callback signature must match LuaCFunction
 int main_show_heap_profile(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -434,6 +459,7 @@ int main_log_command(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; callback signature must match LuaCFunction
 int main_rotate_stats(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -442,6 +468,7 @@ int main_rotate_stats(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; callback signature must match LuaCFunction
 int main_show_config_generation(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -557,6 +584,7 @@ int main_reload_config(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; callback signature must match LuaCFunction
 int main_reload_daq(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -637,6 +665,7 @@ int main_process(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; callback signature must match LuaCFunction
 int main_pause(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -695,6 +724,7 @@ int main_resume(lua_State* L)
 }
 
 #ifdef SHELL
+// cppcheck-suppress constParameterPointer ; callback signature must match LuaCFunction
 int main_detach(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -724,6 +754,7 @@ int main_show_plugins(lua_State*)
 }
 #endif
 
+// cppcheck-suppress constParameterPointer ; callback signature must match LuaCFunction
 int main_quit(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -737,6 +768,7 @@ int main_quit(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; callback signature must match LuaCFunction
 int main_help(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -782,6 +814,7 @@ int main_help(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; callback signature must match LuaCFunction
 int show_snort_cpu(lua_State* L)
 {
     ControlConn* ctrlconn = ControlConn::query_from_lua(L);
@@ -790,6 +823,7 @@ int show_snort_cpu(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; callback signature must match LuaCFunction
 int show_snort_packet_latency(lua_State* L)
 {
     ControlConn* ctrlconn = ControlConn::query_from_lua(L);

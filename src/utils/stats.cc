@@ -25,13 +25,18 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstring>
+#include <ostream>
+#include <utility>
 
+#include "control/control.h"
 #include "detection/detection_engine.h"
 #include "file_api/file_stats.h"
 #include "filters/sfthreshold.h"
 #include "framework/module.h"
 #include "log/log_stats.h"
 #include "log/messages.h"
+#include "memory/memory_module.h"
 #include "main/process.h"
 #include "main/snort_config.h"
 #include "memory/memory_cap.h"
@@ -44,6 +49,10 @@
 #include "protocols/packet_manager.h"
 #include "time/timersub.h"
 
+#include "stats/output_json.h"
+#include "stats/output_text.h"
+#include "stats/response_buf.h"
+#include "stats/snapshot.h"
 #include "util.h"
 
 #define USECS_PER_SEC 1000000.0
@@ -180,43 +189,213 @@ const PegInfo proc_names[] =
 
 //-------------------------------------------------------------------------
 
-void DropStats(ControlConn* ctrlcon, bool already_accumulated, const std::function<void()>& dump_codec_stats)
+static bool module_less(const Module* lhs, const Module* rhs)
 {
-    set_log_conn(ctrlcon);
+    return strcmp(lhs->get_name(), rhs->get_name()) < 0;
+}
 
-    if ( !already_accumulated )
-        ModuleManager::accumulate_dump_stats();
-    LogLabel("Packet Statistics");
-    PluginManager::get_module("daq")->show_stats();
-    if ( dump_codec_stats )
-        dump_codec_stats();
-    else
-        PacketManager::dump_stats();
+static bool module_is_skipped(const char* skip, const Module* mod)
+{
+    return skip && strstr(skip, mod->get_name());
+}
 
-    LogLabel("Module Statistics");
-    const char* exclude = "daq snort memory";
-    ModuleManager::dump_stats(exclude, false);
-    ModuleManager::dump_stats(exclude, true);
+static void add_peg_counters(stats::Group& group, const PegInfo* pegs,
+    const std::vector<PegCount>& counts, int num_counts)
+{
+    if ( !pegs || num_counts <= 0 || (int)counts.size() < num_counts )
+        return;
 
-    LogLabel("Summary Statistics");
+    group.counters.reserve(group.counters.size() + num_counts);
+    for ( int i = 0; i < num_counts; ++i )
     {
-        // Snapshot proc_stats under the lock to avoid holding the mutex
-        // across the show_stats() logging call.
-        ProcessCount proc_snapshot;
+        if ( pegs[i].type == CountType::END || !pegs[i].name )
+            continue;
+
+        stats::Counter counter;
+        counter.set_name(pegs[i].name);
+        counter.value = static_cast<uint64_t>(counts[i]);
+        counter.type = pegs[i].type;
+        group.counters.emplace_back(std::move(counter));
+    }
+}
+
+static stats::Group collect_module_group(Module* mod)
+{
+    stats::Group group;
+
+    if ( !mod || !mod->get_pegs() )
+        return group;
+
+    if ( mod->get_num_counts() < 0 )
+        mod->init_stats();
+
+    const int num_counts = mod->get_num_counts();
+    if ( num_counts <= 0 )
+        return group;
+
+    group.name = mod->get_name();
+    add_peg_counters(group, mod->get_pegs(), mod->get_dump_stats_results(), num_counts);
+    return group;
+}
+
+static void add_packet_section(stats::Snapshot& snapshot, const PacketManager::Stats* packet_stats)
+{
+    stats::Section section;
+    section.name = "Packet Statistics";
+    section.groups.reserve(2);
+
+    section.groups.emplace_back(collect_module_group(PluginManager::get_module("daq")));
+
+    PacketManager::Stats stats{};
+    if ( packet_stats )
+        stats = *packet_stats;
+    else
+        PacketManager::get_global_stats(stats);
+
+    std::vector<PacketManager::DisplayStat> display_stats;
+    PacketManager::get_display_stats(stats, display_stats);
+
+    stats::Group codec_group;
+    codec_group.name = "codec";
+    const PegCount total = display_stats.empty() ? 0 : display_stats[0].count;
+    codec_group.counters.reserve(display_stats.size());
+    for ( const auto& display_stat : display_stats )
+    {
+        stats::Counter counter;
+        counter.set_name(display_stat.name);
+        counter.value = static_cast<uint64_t>(display_stat.count);
+        counter.total = total;
+        counter.percent = total ? (100.0 * display_stat.count / total) :
+            (100.0 * display_stat.count);
+        codec_group.counters.emplace_back(std::move(counter));
+    }
+    section.groups.emplace_back(std::move(codec_group));
+
+    snapshot.sections.emplace_back(std::move(section));
+}
+
+static void add_module_section(stats::Snapshot& snapshot)
+{
+    stats::Section section;
+    section.name = "Module Statistics";
+    const char* exclude = "daq snort memory";
+
+    auto mods = PluginManager::get_all_modules();
+    mods.sort(module_less);
+    section.groups.reserve(mods.size());
+
+    for ( auto* mod : mods )
+    {
+        if ( !mod || module_is_skipped(exclude, mod) || mod->stats_are_aggregated() )
+            continue;
+
+        if ( ModuleManager::is_dynamic_stats_module(mod) || mod->global_stats() )
         {
             std::lock_guard<std::mutex> lock(ModuleManager::stats_mutex);
-            proc_snapshot = proc_stats;
+            section.groups.emplace_back(collect_module_group(mod));
         }
-        show_stats((PegCount*)&proc_snapshot, proc_names, array_size(proc_names)-1, "process");
+        else
+            section.groups.emplace_back(collect_module_group(mod));
     }
-    PluginManager::get_module("memory")->show_stats();
-    memory::MemoryCap::print(SnortConfig::log_verbose());
 
-    set_log_conn(nullptr);
+    snapshot.sections.emplace_back(std::move(section));
+}
+
+static void refresh_memory_stats()
+{
+    auto* memory_module = PluginManager::get_module("memory");
+    if ( memory_module )
+        static_cast<MemoryModule*>(memory_module)->refresh_process_heap_stats();
+}
+
+static void add_summary_section(stats::Snapshot& snapshot)
+{
+    stats::Section section;
+    section.name = "Summary Statistics";
+    section.groups.reserve(2);
+
+    ProcessCount proc_snapshot;
+    {
+        std::lock_guard<std::mutex> lock(ModuleManager::stats_mutex);
+        proc_snapshot = proc_stats;
+    }
+
+    stats::Group process_group;
+    process_group.name = "process";
+    std::vector<PegCount> process_counts(array_size(proc_names) - 1);
+    const auto* process_values = reinterpret_cast<const PegCount*>(&proc_snapshot);
+    for ( size_t i = 0; i < process_counts.size(); ++i )
+        process_counts[i] = process_values[i];
+    add_peg_counters(process_group, proc_names, process_counts, static_cast<int>(process_counts.size()));
+    section.groups.emplace_back(std::move(process_group));
+
+    refresh_memory_stats();
+    section.groups.emplace_back(collect_module_group(PluginManager::get_module("memory")));
+
+    snapshot.sections.emplace_back(std::move(section));
+}
+
+static stats::Snapshot collect_stats_snapshot(const PacketManager::Stats* packet_stats)
+{
+    stats::Snapshot snapshot;
+    snapshot.sections.reserve(3);
+
+    add_packet_section(snapshot, packet_stats);
+    add_module_section(snapshot);
+
+    // FIXIT-H: integrate dynamic stats into structured collection so JSON can render them.
+
+    add_summary_section(snapshot);
+
+    return snapshot;
+}
+
+static void render_text_snapshot(ControlConn* ctrlcon, const stats::Snapshot& snapshot)
+{
+    // FIXIT-H: remove this text-only hook after dynamic stats are collected in the shared model.
+    stats::render_text(ctrlcon, snapshot, {}, [] {
+        ModuleManager::dump_stats("daq snort memory", true);
+    });
+}
+
+static void render_json_snapshot(ControlConn* ctrlcon, const stats::Snapshot& snapshot)
+{
+    StatsResponseBuf buffer(ctrlcon);
+    std::ostream out(&buffer);
+    stats::render_json(out, snapshot);
+}
+
+static void clear_dump_stats_state()
+{
+    auto mods = PluginManager::get_all_modules();
+
+    for ( auto* mod : mods )
+    {
+        if ( mod )
+            mod->clear_dump_stats_state();
+    }
+}
+
+void DropStats(ControlConn* ctrlcon, bool already_accumulated,
+    const PacketManager::Stats* packet_stats, StatsOutputFormat format)
+{
+    if ( !already_accumulated )
+        ModuleManager::accumulate_dump_stats();
+
+    auto snapshot = collect_stats_snapshot(packet_stats);
+
+    if ( format == StatsOutputFormat::Json )
+        render_json_snapshot(ctrlcon, snapshot);
+    else
+        render_text_snapshot(ctrlcon, snapshot);
+
+    clear_dump_stats_state();
 }
 
 //-------------------------------------------------------------------------
 
+// Here, we print out exit stats. They contain the usual stats dump, plus some
+// extra timing stats. They always use text format for output.
 void PrintStatistics()
 {
     DropStats();
@@ -263,14 +442,6 @@ static bool show_stat(
     return head;
 }
 
-void show_stats(PegCount* pegs, const PegInfo* info, const char* module_name)
-{
-    bool head = false;
-
-    for ( unsigned i = 0; info->name[i]; ++i )
-        head = show_stat(head, pegs[i], info[i].name, module_name);
-}
-
 void show_stats(
     PegCount* pegs, const PegInfo* info, unsigned n, const char* module_name)
 {
@@ -288,27 +459,4 @@ void show_stats(
 
     for ( const auto& i : peg_idxs)
         head = show_stat(head, pegs[i], info[i].name, module_name, fh);
-}
-
-void show_percent_stats(
-    PegCount* pegs, const char* names[], unsigned n, const char* module_name)
-{
-    bool head = false;
-
-    for ( unsigned i = 0; i < n; ++i )
-    {
-        PegCount c = pegs[i];
-        const char* s = names[i];
-
-        if ( !c )
-            continue;
-
-        if ( module_name && !head )
-        {
-            LogLabel(module_name);
-            head = true;
-        }
-
-        LogStat(s, c, pegs[0], stdout);
-    }
 }

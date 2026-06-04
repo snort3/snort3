@@ -47,6 +47,7 @@ public:
     void uput(const char* key, uint64_t val);
     void put(const char* key, const char* val);
     void put(const char* key, const std::string& val);
+    void put_string(const char* key, const std::string& val);
     void put(const char* key, double val, int precision);
 
     void put_true(const char* key);
@@ -65,4 +66,3 @@ private:
 };
 }
 #endif
-

@@ -63,48 +63,13 @@ using namespace std;
 static std::unordered_map<std::string, const Parameter*> s_pmap;
 
 static unsigned s_errors = 0;
-const char* ModuleManager::dynamic_stats_modules = "file_inspect appid";
 
 set<uint32_t> ModuleManager::gids;
 mutex ModuleManager::stats_mutex;
 
 bool ModuleManager::is_dynamic_stats_module(const Module* mod)
 {
-    if ( !mod )
-        return false;
-
-    return is_dynamic_stats_module(mod->get_name());
-}
-
-bool ModuleManager::is_dynamic_stats_module(const char* module_name)
-{
-    if ( !module_name || !dynamic_stats_modules )
-        return false;
-
-    const size_t name_len = strlen(module_name);
-    if ( name_len == 0 )
-        return false;
-
-    const char* p = dynamic_stats_modules;
-
-    while ( p && *p )
-    {
-        while ( *p && isspace(static_cast<unsigned char>(*p)) )
-            ++p;
-
-        if ( !*p )
-            break;
-
-        const char* start = p;
-        while ( *p && !isspace(static_cast<unsigned char>(*p)) )
-            ++p;
-
-        const size_t token_len = static_cast<size_t>(p - start);
-        if ( token_len == name_len && strncmp(start, module_name, name_len) == 0 )
-            return true;
-    }
-
-    return false;
+    return mod && mod->has_dynamic_stats();
 }
 
 static string s_current;

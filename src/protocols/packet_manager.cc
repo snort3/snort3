@@ -911,9 +911,8 @@ uint16_t PacketManager::encode_get_max_payload(const Packet* p)
     return ETHERNET_MTU - (l.start - p->layers[0].start) - l.length;
 }
 
-void PacketManager::dump_stats(const Stats& stats)
+void PacketManager::get_display_stats(const Stats& stats, std::vector<DisplayStat>& out)
 {
-    std::vector<const char*> pkt_names;
     CodecManager* cm = CodecManager::get_instance();
 
     Stats tmp = stats;
@@ -922,19 +921,14 @@ void PacketManager::dump_stats(const Stats& stats)
     tmp[stat_offset] = 0;
     tmp[cm->s_proto_map[to_utype(ProtocolId::FINISHED_DECODE)] + stat_offset] = 0;
 
+    out.clear();
+    out.reserve(stat_names.size() + num_protocol_idx);
+
     for (unsigned int i = 0; i < stat_names.size(); i++)
-        pkt_names.emplace_back(stat_names[i]);
+        out.emplace_back(DisplayStat{stat_names[i], tmp[i]});
 
     for (int i = 0; cm->get_codec(i) != nullptr; i++)
-        pkt_names.emplace_back(cm->get_codec(i)->get_name());
-
-    show_percent_stats(tmp.data(), &pkt_names[0],
-        (unsigned int)pkt_names.size(), "codec");
-}
-
-void PacketManager::dump_stats()
-{
-    dump_stats(g_stats);
+        out.emplace_back(DisplayStat{cm->get_codec(i)->get_name(), tmp[i + stat_offset]});
 }
 
 void PacketManager::reset_stats()

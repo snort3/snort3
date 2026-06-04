@@ -28,6 +28,7 @@
 #include <vector>
 
 #include "main/snort_types.h"
+#include "main/stats_output_format.h"
 #include "main/thread_config.h"
 
 class Analyzer;
@@ -73,7 +74,7 @@ private:
 class ACGetStats : public snort::AnalyzerCommand
 {
 public:
-    explicit ACGetStats(ControlConn* conn);
+    explicit ACGetStats(ControlConn* conn, StatsOutputFormat output_format = StatsOutputFormat::Text);
     bool execute(Analyzer&) override;
     const char* stringify() override { return "GET_STATS"; }
     ~ACGetStats() override;
@@ -81,6 +82,7 @@ public:
 private:
     struct State;
     std::unique_ptr<State> state;
+    StatsOutputFormat format;
 };
 
 typedef enum clear_counter_type

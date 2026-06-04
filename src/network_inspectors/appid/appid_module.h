@@ -101,6 +101,8 @@ public:
     Usage get_usage() const override
     { return MOD_USAGE; }
     void sum_stats(bool) override;
+    bool has_dynamic_stats() const override
+    { return true; }
     void show_dynamic_stats() override;
 
     void set_trace(const snort::Trace*) const override;

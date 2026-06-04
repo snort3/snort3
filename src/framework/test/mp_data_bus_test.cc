@@ -84,7 +84,6 @@ void show_stats(PegCount*, const PegInfo*, unsigned, const char*)
     mock().actualCall("show_stats");
 }
 void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
-void show_stats(unsigned long*, PegInfo const*, char const*) {}
 
 bool ControlConn::respond(const char*, ...) { return true; }
 
@@ -236,20 +235,14 @@ public:
 
 void UTestHandler1::handle(DataEvent& event, Flow*)
 {
-    UTestEvent* evt = static_cast<UTestEvent*>(&event);
-    if (evt)
-    {
-        evt_msg = evt->get_message();
-    }
+    const auto& evt = static_cast<const UTestEvent&>(event);
+    evt_msg = evt.get_message();
 }
 
 void UTestHandler2::handle(DataEvent& event, Flow*)
 {
-    UTestEvent* evt = static_cast<UTestEvent*>(&event);
-    if (evt)
-    {
-        evt_msg = evt->get_message();
-    }
+    const auto& evt = static_cast<const UTestEvent&>(event);
+    evt_msg = evt.get_message();
 }
 //--------------------------------------------------------------------------
 

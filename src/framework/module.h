@@ -183,10 +183,14 @@ public:
     virtual void reset_stats();
     virtual void init_stats(bool new_thread=false);
     virtual void main_accumulate_stats();
+    virtual bool has_dynamic_stats() const
+    { return false; }
     virtual void show_dynamic_stats() {}
     void clear_global_active_counters();
     SO_PUBLIC void collect_dump_stats_counts(std::vector<PegCount>& out);
+    SO_PUBLIC const std::vector<PegCount>& get_dump_stats_results() const;
     SO_PUBLIC void set_dump_stats_results(const std::vector<PegCount>& results);
+    SO_PUBLIC void clear_dump_stats_state();
     SO_PUBLIC static void aggregate_dump_stats_counts(
         const PegInfo* pegs,
         int num_counts,

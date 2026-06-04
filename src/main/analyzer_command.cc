@@ -168,12 +168,15 @@ struct ACGetStats::State
     std::vector<ThreadSnapshot> thread_snapshots;
 };
 
-ACGetStats::ACGetStats(ControlConn* conn) :
-    AnalyzerCommand(conn), state(std::make_unique<State>())
+ACGetStats::ACGetStats(ControlConn* conn, StatsOutputFormat output_format) :
+    AnalyzerCommand(conn), state(std::make_unique<State>()), format(output_format)
 {
     auto mods = PluginManager::get_all_modules();
     state->modules.assign(mods.begin(), mods.end());
     state->thread_snapshots.resize(ThreadConfig::get_instance_max());
+
+    for ( auto& snapshot : state->thread_snapshots )
+        snapshot.module_dump_counts.reserve(state->modules.size());
 }
 
 bool ACGetStats::execute(Analyzer&)
@@ -208,6 +211,9 @@ bool ACGetStats::execute(Analyzer&)
 
         const bool needs_lock =
             is_global_stats || is_dynamic_stats;
+
+        if ( needs_lock && mod->get_num_counts() > 0 )
+            snapshot.module_dump_counts[i].reserve(mod->get_num_counts());
 
         if ( needs_lock )
         {
@@ -282,17 +288,13 @@ ACGetStats::~ACGetStats()
             thread_sum[idx] += snapshot.pkt_stats[idx];
     }
 
-    auto display_stats = std::make_shared<PacketManager::Stats>(global_before);
-    for ( size_t idx = 0; idx < display_stats->size(); idx++ )
-        (*display_stats)[idx] += thread_sum[idx];
+    PacketManager::Stats display_stats = global_before;
+    for ( size_t idx = 0; idx < display_stats.size(); idx++ )
+        display_stats[idx] += thread_sum[idx];
 
-    // FIXIT-L This should track the owner so it can dump stats to the
-    // shell instead of the logs when initiated by a shell command
-    DropStats(ctrlcon, true, [display_stats = std::move(display_stats)]()
-    {
-        PacketManager::dump_stats(*display_stats);
-    });
-    LogRespond(ctrlcon, "==================================================\n"); // Marking End of stats
+    DropStats(ctrlcon, true, &display_stats, format);
+    if ( format == StatsOutputFormat::Text )
+        LogRespond(ctrlcon, "==================================================\n"); // Marking End of stats
 
     ModuleManager::clear_global_active_counters();
 }

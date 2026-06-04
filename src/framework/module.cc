@@ -283,6 +283,17 @@ void Module::set_dump_stats_results(const std::vector<PegCount>& results)
     dump_stats_results = results;
 }
 
+const std::vector<PegCount>& Module::get_dump_stats_results() const
+{
+    return dump_stats_results;
+}
+
+void Module::clear_dump_stats_state()
+{
+    if ( num_counts > 0 )
+        dump_stats_initialized.assign(dump_stats_initialized.size(), 0);
+}
+
 void Module::show_interval_stats(std::vector<unsigned>& peg_idxs, FILE* fh)
 {
     if ( num_counts > 0 )
@@ -294,7 +305,7 @@ void Module::show_stats()
     if ( num_counts > 0 )
     {
         ::show_stats(&dump_stats_results[0], get_pegs(), num_counts, get_name());
-        dump_stats_initialized.assign(dump_stats_initialized.size(), 0);
+        clear_dump_stats_state();
     }
 }
 

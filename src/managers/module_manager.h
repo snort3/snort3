@@ -97,13 +97,9 @@ public:
     static bool is_parallel_cmd(std::string control_cmd);
 
     static bool is_dynamic_stats_module(const Module*);
-    static bool is_dynamic_stats_module(const char* module_name);
 
     static std::set<uint32_t> gids;
     static std::mutex stats_mutex;
-    // Space-separated list of modules whose stats access shared (non-thread-local)
-    // accumulators and therefore must be protected by stats_mutex when shown/summed.
-    static const char* dynamic_stats_modules;
 };
 }
 

@@ -24,11 +24,12 @@
 
 #include <daq_common.h>
 #include <cstdio>
-#include <functional>
 #include <vector>
 
 #include "framework/counts.h"
 #include "main/snort_types.h"
+#include "main/stats_output_format.h"
+#include "protocols/packet_manager.h"
 
 class ControlConn;
 
@@ -97,18 +98,14 @@ extern THREAD_LOCAL PacketCount pc;
 }
 
 void sum_stats(PegCount* sums, PegCount* counts, unsigned n, bool dump_stats = false);
-void show_stats(PegCount*, const PegInfo*, const char* module_name = nullptr);
 void show_stats(PegCount*, const PegInfo*, unsigned n, const char* module_name = nullptr);
 void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char* module_name, FILE*);
-void show_percent_stats(PegCount*, const char*[], unsigned n, const char* module_name = nullptr);
-
-void sum_stats(SimpleStats* sums, SimpleStats* counts);
-void show_stats(SimpleStats*, const char* module_name);
 
 void DropStats(
     ControlConn* ctrlcon = nullptr,
     bool already_accumulated = false,
-    const std::function<void()>& dump_codec_stats = {});
+    const snort::PacketManager::Stats* packet_stats = nullptr,
+    StatsOutputFormat format = StatsOutputFormat::Text);
 void PrintStatistics();
 void TimeStart();
 void TimeStop();

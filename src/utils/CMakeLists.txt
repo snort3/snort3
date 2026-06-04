@@ -19,6 +19,14 @@ add_library ( utils OBJECT
     sflsq.h
     snort_bounds.h
     snort_pcre.h
+    stats/output_json.cc
+    stats/output_json.h
+    stats/output_text.cc
+    stats/output_text.h
+    stats/response_buf.cc
+    stats/response_buf.h
+    stats/snapshot.cc
+    stats/snapshot.h
     stats.cc
     stats.h
     util.cc
@@ -35,3 +43,4 @@ install (FILES ${UTIL_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/utils"
 )
 
+add_subdirectory(stats/test)

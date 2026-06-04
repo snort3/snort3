@@ -202,6 +202,11 @@ void JsonStream::put(const char* key, const std::string& val)
     if ( val.empty() )
         return;
 
+    put_string(key, val);
+}
+
+void JsonStream::put_string(const char* key, const std::string& val)
+{
     split();
 
     if ( key )
@@ -350,4 +355,3 @@ TEST_CASE_METHOD(JsonStreamTest, "escape: no escaping", "[Json_Stream]")
 }
 
 #endif
-
