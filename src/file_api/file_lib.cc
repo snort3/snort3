@@ -783,11 +783,14 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
     if (cacheable and (FileService::get_file_cache()->cached_verdict_lookup(p, this, policy, file_data, data_size) !=
         FILE_VERDICT_UNKNOWN))
     {
+        file_counts.file_cache_hits++;
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
             p, "file process completed in file context process\n");
         processing_complete = true;
         return true;
     }
+    else if (cacheable)
+        file_counts.file_cache_misses++;
 
     /*file type id*/
     if (is_file_type_enabled())
@@ -989,6 +992,7 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int da
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, GET_CURRENT_PACKET,
             "process_file_signature_sha256:FILE_SIG_DEPTH_FAIL\n");
         file_state.sig_state = FILE_SIG_DEPTH_FAIL;
+        file_counts.file_sig_depth_exceeded++;
         return;
     }
 

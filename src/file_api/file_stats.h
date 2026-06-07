@@ -54,6 +54,15 @@ struct FileCounts
     PegCount file_buffers_released_total;
     PegCount file_buffers_free_errors;
     PegCount file_buffers_release_errors;
+    PegCount file_sig_depth_exceeded;
+    PegCount file_lookup_timeouts;
+    PegCount file_cache_hits;
+    PegCount file_cache_misses;
+    PegCount file_cache_entries;
+    PegCount file_cache_total_entries;
+    PegCount file_cache_full;
+    PegCount file_cache_failures;
+    PegCount file_cache_max_entries;
 };
 
 struct FileStats

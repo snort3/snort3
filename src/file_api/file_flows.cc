@@ -387,6 +387,7 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
             file_policy, file_data, data_size);
         if (verdict != FILE_VERDICT_UNKNOWN and verdict != FILE_VERDICT_PENDING)
         {
+            file_counts.file_cache_hits++;
             context->processing_complete = true;
             remove_processed_file_context(multi_file_processing_id);
             if (PacketTracer::is_daq_activated())

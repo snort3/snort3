@@ -126,6 +126,12 @@ void FileCache::set_max_files(int64_t max)
     fileHash->set_max_nodes(max_files);
 }
 
+int64_t FileCache::get_num_entries()
+{
+    std::lock_guard<std::mutex> lock(cache_mutex);
+    return fileHash ? fileHash->get_num_nodes() : 0;
+}
+
 FileContext* FileCache::find_add(const FileHashKey& hashKey, int64_t timeout)
 {
     if ( !fileHash->get_num_nodes() )
@@ -196,6 +202,11 @@ FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout, bool &c
                 if (PacketTracer::is_active())
                     PacketTracer::log("add:Insert failed in file cache, returning\n");
                 cache_full = true;
+                file_counts.file_cache_full++;
+            }
+            else
+            {
+                file_counts.file_cache_failures++;
             }
 
             if (!cache_sync)
@@ -206,6 +217,10 @@ FileContext* FileCache::add(const FileHashKey& hashKey, int64_t timeout, bool &c
             return nullptr;
         }
 
+        file_counts.file_cache_total_entries++;
+        int64_t num_entries = fileHash->get_num_nodes();
+        if (num_entries > (int64_t)file_counts.file_cache_max_entries)
+            file_counts.file_cache_max_entries = num_entries;
         return new_node.file;
     }
     else
@@ -479,6 +494,7 @@ bool FileCache::apply_verdict(Packet* p, FileContext* file_ctx, FileVerdict verd
             }
 
             file_ctx->set_timedout();
+            file_counts.file_lookup_timeouts++;
 
             if (resume)
                 policy->log_file_action(flow, file_ctx, FILE_RESUME_BLOCK);

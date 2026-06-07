@@ -36,6 +36,7 @@
 #include "utils/util.h"
 
 #include "file_capture.h"
+#include "file_cache.h"
 #include "file_service.h"
 
 using namespace snort;
@@ -59,6 +60,11 @@ void file_counts_update_buffers()
 {
     file_counts.file_buffers_max = FileCapture::get_buffers_max();
     file_counts.file_buffers_in_use = FileCapture::get_buffers_in_use();
+    FileCache* file_cache = FileService::get_file_cache();
+    if (file_cache)
+        file_counts.file_cache_entries = file_cache->get_num_entries();
+    else
+        file_counts.file_cache_entries = 0;
 }
 
 void file_stats_sum()
