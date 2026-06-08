@@ -87,7 +87,7 @@ bool Http2DataCutter::check_http_state(Http2Stream* const stream)
 }
 
 StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t length,
-    uint32_t* flush_offset, uint32_t& data_offset, uint8_t frame_flags)
+    uint32_t* flush_offset, uint32_t& data_offset, uint8_t frame_flags, Packet* pkt)
 {
     Http2Stream* const stream = session_data->find_stream(session_data->current_stream[source_id]);
 
@@ -137,7 +137,7 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
             hi_flow->set_hx_body_state(source_id, HX_BODY_LAST_SEG);
         }
         scan_result = session_data->hi_ss[source_id]->scan(session_data->flow, data + cur_data_offset, cur_data,
-            &http_flush_offset);
+            &http_flush_offset, pkt);
         session_data->stream_in_hi = NO_STREAM_ID;
         switch (scan_result)
         {

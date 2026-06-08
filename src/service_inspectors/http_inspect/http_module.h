@@ -106,11 +106,20 @@ public:
         bool simplify_path = true;
         std::bitset<256> bad_characters;
         std::bitset<256> unreserved_char;
-        HttpEnums::CharAction uri_char[256];
+        HttpEnums::CharAction uri_char[256] = {};
 
         static const std::bitset<256> default_unreserved_char;
     };
     UriParam uri_param;
+
+    struct DecompressionParam
+    {
+        int32_t max_expansion_ratio = -1;
+#ifdef HAVE_BROTLI
+        bool decompress_brotli = false;
+#endif
+    };
+    DecompressionParam decompression_param;
 
     // This will store list of custom xff headers. These are stored in the
     // order of the header preference. The default header preference only

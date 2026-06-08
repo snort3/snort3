@@ -411,7 +411,7 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                 else
                 {
                     status = session_data->data_cutter[source_id].scan(data, length, flush_offset,
-                            data_offset, frame_flags);
+                            data_offset, frame_flags, pkt);
                 }
                 assert(status != StreamSplitter::SEARCH or
                     session_data->scan_state[source_id] != SCAN_EMPTY_DATA);

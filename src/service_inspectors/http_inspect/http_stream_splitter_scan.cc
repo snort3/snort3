@@ -23,6 +23,8 @@
 
 #include "http_stream_splitter.h"
 
+#include "detection/detection_engine.h"
+#include "main/thread_config.h"
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 
@@ -39,6 +41,8 @@
 using namespace snort;
 using namespace HttpCommon;
 using namespace HttpEnums;
+
+static const unsigned WDT_MASK = 7; // kick watchdog once for every 8 scan iterations
 
 // Convenience function. All housekeeping that must be done before we can return FLUSH to stream.
 void HttpStreamSplitter::prepare_flush(HttpFlowData* session_data, uint32_t* flush_offset,
@@ -285,6 +289,7 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
         return status_value(StreamSplitter::FLUSH);
     case SCAN_FOUND:
     case SCAN_FOUND_PIECE:
+    case SCAN_FOUND_PENDING:
       {
         session_data->partial_flush_counter = 0;
         const uint32_t flush_octets = cutter->get_num_flush();
@@ -296,7 +301,7 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
             delete cutter;
             cutter = nullptr;
         }
-        else
+        else if (cut_result == SCAN_FOUND_PIECE)
             cutter->soft_reset();
         return status_value(StreamSplitter::FLUSH);
       }
@@ -325,6 +330,71 @@ StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data,
         HttpModule::increment_peg_counts(PEG_FLOW);
     }
 
+    auto status = implement_scan(flow, data, length, flush_offset, pkt, session_data);
+
+    const auto saved_section_size_target = session_data->section_size_target[source_id];
+    const auto saved_stretch = session_data->stretch_section_to_packet[source_id];
+    unsigned iterations = 0;
+
+    while ( status == StreamSplitter::FLUSH and flush_offset != nullptr and *flush_offset == 0 )
+    {
+        if ( !is_body(session_data->section_type[source_id]) or pkt == nullptr or
+            session_data->cutter[source_id] == nullptr )
+            break;
+
+        unsigned copied = 0;
+        const uint32_t saved_partial_raw = session_data->partial_raw_bytes[source_id];
+        const uint32_t total = session_data->octets_expected[source_id] - session_data->partial_raw_bytes[source_id];
+        session_data->running_total[source_id] = total;
+        const auto pdu = reassemble(flow, total, 0, data, 0, PKT_PDU_TAIL, copied);
+        session_data->partial_raw_bytes[source_id] = saved_partial_raw;
+
+        if ( pdu.data == nullptr )
+        {
+            assert(false);
+            session_data->type_expected[source_id] = SEC_ABORT;
+            delete session_data->cutter[source_id];
+            session_data->cutter[source_id] = nullptr;
+            return status_value(StreamSplitter::ABORT);
+        }
+
+        {
+            Packet* inner = DetectionEngine::set_next_packet(pkt, pkt->flow);
+            inner->flow = pkt->flow;
+            inner->ptrs = pkt->ptrs;
+            inner->proto_bits = pkt->proto_bits;
+            inner->packet_flags |= pkt->packet_flags & (PKT_FROM_CLIENT | PKT_FROM_SERVER);
+            inner->pkth = pkt->pkth;
+            inner->ip_proto_next = static_cast<IpProtocol>(pkt->flow->ip_proto);
+            memcpy(inner->layers, pkt->layers, pkt->num_layers * sizeof(Layer));
+            inner->num_layers = pkt->num_layers;
+            inner->data = pdu.data;
+            inner->dsize = pdu.length;
+
+            DetectionEngine de;
+            DetectionEngine::enable_content(inner);
+            my_inspector->eval(inner, source_id, pdu.data, pdu.length);
+            my_inspector->clear(inner);
+        }
+
+        if ( session_data->section_size_target[source_id] > 0 )
+        {
+            session_data->section_size_target[source_id] = saved_section_size_target;
+            session_data->stretch_section_to_packet[source_id] = saved_stretch;
+        }
+
+        if ( (iterations++ & WDT_MASK) == 0 )
+            ThreadConfig::preemptive_kick();
+
+        status = implement_scan(flow, data, length, flush_offset, pkt, session_data);
+    }
+
+    return status;
+}
+
+StreamSplitter::Status HttpStreamSplitter::implement_scan(Flow* flow, const uint8_t* data,
+    uint32_t length, uint32_t* flush_offset, Packet* pkt, HttpFlowData* session_data)
+{
 #ifdef REG_TEST
     if (HttpTestManager::use_test_input(HttpTestManager::IN_HTTP))
     {

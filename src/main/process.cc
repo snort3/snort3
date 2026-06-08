@@ -59,6 +59,10 @@
 #include <malloc.h>
 #endif
 
+#ifdef HAVE_BROTLI
+#include <brotli/decode.h>
+#endif
+
 extern "C" {
 #include <daq.h>
 }
@@ -702,6 +706,11 @@ int DisplayBanner()
     LogMessage("           Copyright (C) 2014-2026 Cisco and/or its affiliates."
                            " All rights reserved.\n");
     LogMessage("           Copyright (C) 1998-2013 Sourcefire, Inc., et al.\n");
+#ifdef HAVE_BROTLI
+    const auto brotli_version = BrotliDecoderVersion();
+    LogMessage("           Using Brotli version %d.%d.%d\n", brotli_version >> 24,
+        (brotli_version >> 12) & 0xFFF, brotli_version & 0xFFF);
+#endif
     LogMessage("           Using DAQ version %s\n", daq_version_string());
 #ifdef HAVE_HYPERSCAN
     LogMessage("           Using Hyperscan version %s\n", hs_version());

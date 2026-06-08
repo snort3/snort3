@@ -359,6 +359,12 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_MAX_PARTIAL_FLUSH,          "Too many partial flushes" },
     { EVENT_DEFLATE_EARLY_END,          "deflate compressed data followed by unexpected non-deflate data" },
     { EVENT_DEFLATE_FAILURE,            "deflate decompression failed" },
+    { EVENT_BROTLI_EARLY_END,           "brotli compressed data followed by unexpected non-brotli data" },
+    { EVENT_BROTLI_FAILURE,             "brotli decompression failed" },
+    { EVENT_GZIP_HIGH_EXPANSION,        "gzip decompression produced excessive output relative to consumed input" },
+    { EVENT_DEFLATE_HIGH_EXPANSION,     "deflate decompression produced excessive output relative to consumed input" },
+    { EVENT_BROTLI_HIGH_EXPANSION,      "brotli decompression produced excessive output relative to consumed input" },
+    { EVENT_BROTLI_DISABLED,            "brotli compressed traffic detected while decompression is disabled" },
     { 0, nullptr }
 };
 
@@ -405,6 +411,8 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "compressed_deflate", "total number of HTTP bodies compressed with Deflate" },
     { CountType::SUM, "incorrect_deflate_header", "total number of HTTP bodies compressed with Deflate that had incorrect header" },
     { CountType::SUM, "compressed_deflate_failed", "total number of HTTP bodies with failed Deflate decompression" },
+    { CountType::SUM, "compressed_brotli", "total number of HTTP bodies compressed with Brotli" },
+    { CountType::SUM, "compressed_brotli_failed", "total number of HTTP bodies with failed Brotli decompression" },
     { CountType::SUM, "compressed_not_supported", "total number of HTTP bodies compressed with known but not supported methods" },
     { CountType::SUM, "compressed_unknown", "total number of HTTP bodies compressed with unknown methods" },
     { CountType::SUM, "max_publish_depth_hits", "total number of times the maximum publish depth was exceeded" },

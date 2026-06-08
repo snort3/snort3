@@ -1,0 +1,32 @@
+set(PC_BROTLI "libbrotlidec" "libbrotlicommon")
+
+find_package(PkgConfig QUIET)
+pkg_check_modules(PC_BROTLI_HINT QUIET ${PC_BROTLI})
+
+if(NOT BROTLI_FOUND)
+    find_path(BROTLI_INCLUDE_DIR "brotli/decode.h"
+        HINTS ${BROTLI_INCLUDE_DIR_HINT} ${PC_BROTLI_HINT_INCLUDEDIR} ${PC_BROTLI_HINT_INCLUDE_DIRS})
+
+    find_library(BROTLICOMMON_LIBRARY NAMES "brotlicommon"
+        HINTS ${BROTLI_LIBRARIES_DIR_HINT} ${PC_BROTLI_HINT_LIBDIR} ${PC_BROTLI_HINT_LIBRARY_DIRS})
+    find_library(BROTLIDEC_LIBRARY NAMES "brotlidec"
+        HINTS ${BROTLI_LIBRARIES_DIR_HINT} ${PC_BROTLI_HINT_LIBDIR} ${PC_BROTLI_HINT_LIBRARY_DIRS})
+
+    include(FindPackageHandleStandardArgs)
+
+    find_package_handle_standard_args(Brotli
+        REQUIRED_VARS
+        BROTLI_INCLUDE_DIR
+        BROTLIDEC_LIBRARY
+        BROTLICOMMON_LIBRARY
+    )
+
+    if(BROTLI_FOUND)
+        set(BROTLI_INCLUDE_DIRS ${BROTLI_INCLUDE_DIR})
+        set(BROTLI_LIBRARIES ${BROTLIDEC_LIBRARY} ${BROTLICOMMON_LIBRARY})
+    endif()
+
+    mark_as_advanced(BROTLI_INCLUDE_DIR BROTLIDEC_LIBRARY BROTLICOMMON_LIBRARY)
+endif()
+
+set(HAVE_BROTLI ${BROTLI_FOUND})

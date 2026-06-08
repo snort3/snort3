@@ -168,6 +168,14 @@ const Parameter HttpModule::http_params[] =
     { "disallowed_methods", Parameter::PT_STRING, nullptr, nullptr,
       "list of disallowed methods" },
 
+    { "max_expansion_ratio", Parameter::PT_INT, "-1:65535", "100",
+      "maximum allowed output/input ratio per single decompress (-1 no limit)" },
+
+#ifdef HAVE_BROTLI
+    { "decompress_brotli", Parameter::PT_BOOL, nullptr, "false",
+      "enable brotli decompression" },
+#endif
+
 #ifdef REG_TEST
     { "test_input", Parameter::PT_BOOL, nullptr, "false",
       "read HTTP messages from text file" },
@@ -398,6 +406,17 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
         store_tokens(val, params->allowed_methods);
     else if (val.is("disallowed_methods"))
         store_tokens(val, params->disallowed_methods);
+    else if (val.is("max_expansion_ratio"))
+    {
+        params->decompression_param.max_expansion_ratio = val.get_int32();
+    }
+
+#ifdef HAVE_BROTLI
+    else if (val.is("decompress_brotli"))
+    {
+        params->decompression_param.decompress_brotli = val.get_bool();
+    }
+#endif
 
 #ifdef REG_TEST
     else if (val.is("test_input"))

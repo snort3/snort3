@@ -162,6 +162,9 @@
 /* don't worry about libml and mock the inspector */
 #cmakedefine USE_LIBML_MOCK 1
 
+/* brotli available */
+#cmakedefine HAVE_BROTLI 1
+
 /*  Availability of specific library functions */
 
 /* Define to 1 if you have the `malloc_trim' function. */

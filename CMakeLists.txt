@@ -219,4 +219,12 @@ else ()
     LibML:          OFF")
 endif ()
 
+if (HAVE_BROTLI)
+    message("\
+    Brotli:         ON")
+else ()
+    message("\
+    Brotli:         OFF")
+endif ()
+
 message("-------------------------------------------------------\n")

@@ -116,6 +116,10 @@ Optional Packages:
                             libhs include directory
     --with-hyperscan-libraries=DIR
                             libhs library directory
+    --with-brotli-includes=DIR
+                            libbrotli include directory
+    --with-brotli-libraries=DIR
+                            libbrotli library directory
     --with-atomic-libraries=DIR
                             atomic library directory
     --with-flex-prefix=DIR
@@ -495,6 +499,12 @@ while [ $# -ne 0 ]; do
             ;;
         --with-hyperscan-libraries=*)
             append_cache_entry HS_LIBRARIES_DIR PATH $optarg
+            ;;
+        --with-brotli-includes=*)
+            append_cache_entry BROTLI_INCLUDE_DIR_HINT PATH $optarg
+            ;;
+        --with-brotli-libraries=*)
+            append_cache_entry BROTLI_LIBRARIES_DIR_HINT PATH $optarg
             ;;
         --with-atomic-libraries=*)
             append_cache_entry ATOMIC_LIBRARIES_DIR_HINT PATH $optarg

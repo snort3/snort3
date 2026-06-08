@@ -25,6 +25,9 @@
 #include "service_inspectors/http_inspect/http_compress_stream.h"
 #include "service_inspectors/http_inspect/http_event.h"
 #include "service_inspectors/http_inspect/http_flow_data.h"
+#include "service_inspectors/http_inspect/http_inspect.h"
+
+#include <CppUTest/TestHarness.h>
 
 class HttpUnitTestSetup
 {
@@ -54,6 +57,29 @@ public:
         flow_data->partial_flush[source_id] = partial_flush ? HttpEnums::PF_DETECT :
             HttpEnums::PF_NONE;
         flow_data->num_excess[source_id] = num_excess;
+    }
+};
+
+class HttpDecompressionFixture : public Utest
+{
+public:
+    snort::Flow* const flow = new snort::Flow;
+    HttpParaList params;
+    HttpFlowData* session_data = nullptr;
+
+    void setup() override
+    {
+        flow->gadget = new HttpInspect(&params);
+        session_data = new HttpFlowData(flow, &params);
+    }
+
+    void teardown() override
+    {
+        delete session_data;
+        session_data = nullptr;
+        delete flow->gadget;
+        flow->gadget = nullptr;
+        delete flow;
     }
 };
 

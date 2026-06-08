@@ -384,6 +384,12 @@ ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length,
 
         if ( consumed < length )
         {
+            if ( consumed == 0 )
+            {
+                num_flush = 0;
+                return SCAN_FOUND_PENDING;
+            }
+
             num_flush = consumed;
             remaining -= octets_seen + num_flush;
             return SCAN_FOUND_PIECE;
@@ -401,6 +407,12 @@ ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length,
         assert(flow_target >= octets_seen);
         const uint32_t planned_flush = flow_target - octets_seen;
         const auto consumed = analyze_body(buffer, planned_flush, infractions, events).consumed;
+
+        if ( consumed == 0 and planned_flush > 0 )
+        {
+            num_flush = 0;
+            return SCAN_FOUND_PENDING;
+        }
 
         num_flush = consumed;
         remaining -= octets_seen + num_flush;
@@ -420,6 +432,12 @@ ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length,
 
         const auto consumed = analyze_body(buffer, planned_flush, infractions, events).consumed;
 
+        if ( consumed == 0 and planned_flush > 0 )
+        {
+            num_flush = 0;
+            return SCAN_FOUND_PENDING;
+        }
+
         num_flush = consumed;
         remaining -= octets_seen + num_flush;
 
@@ -432,6 +450,12 @@ ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length,
         const uint32_t planned_flush = remaining - octets_seen;
         const auto [_, consumed] = decompress(buffer, planned_flush, infractions, events);
 
+        if ( consumed == 0 and planned_flush > 0 )
+        {
+            num_flush = 0;
+            return SCAN_FOUND_PENDING;
+        }
+
         num_flush = consumed;
         remaining -= octets_seen + num_flush;
 
@@ -441,6 +465,12 @@ ScanResult HttpBodyClCutter::cut(const uint8_t* buffer, uint32_t length,
     // Cannot stretch to the end of the message body. Cut at the original target.
     const uint32_t planned_flush = flow_target - octets_seen;
     const auto [_, consumed] = decompress(buffer, planned_flush, infractions, events);
+
+    if ( consumed == 0 and planned_flush > 0 )
+    {
+        num_flush = 0;
+        return SCAN_FOUND_PENDING;
+    }
 
     num_flush = consumed;
     remaining -= octets_seen + num_flush;
@@ -470,6 +500,12 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t* buffer, uint32_t length,
 
         if ( consumed < length )
         {
+            if ( consumed == 0 )
+            {
+                num_flush = 0;
+                return SCAN_FOUND_PENDING;
+            }
+
             num_flush = consumed;
             return SCAN_FOUND_PIECE;
         }
@@ -487,6 +523,12 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t* buffer, uint32_t length,
         const uint32_t planned_flush = length;
         const auto consumed = analyze_body(buffer, planned_flush, infractions, events).consumed;
 
+        if ( consumed == 0 and planned_flush > 0 )
+        {
+            num_flush = 0;
+            return SCAN_FOUND_PENDING;
+        }
+
         num_flush = consumed;
 
         return SCAN_FOUND_PIECE;
@@ -497,6 +539,12 @@ ScanResult HttpBodyOldCutter::cut(const uint8_t* buffer, uint32_t length,
         // the segment is too far away.
         const uint32_t planned_flush = flow_target - octets_seen;
         const auto consumed = analyze_body(buffer, planned_flush, infractions, events).consumed;
+
+        if ( consumed == 0 and planned_flush > 0 )
+        {
+            num_flush = 0;
+            return SCAN_FOUND_PENDING;
+        }
 
         num_flush = consumed;
 
@@ -721,6 +769,12 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
 
                 if ( consumed < skip_amount and !discard_mode )
                 {
+                    if ( consumed == 0 and k == 0 )
+                    {
+                        num_flush = 0;
+                        return SCAN_FOUND_PENDING;
+                    }
+
                     expected -= consumed;
 
                     assert(expected != 0);
@@ -814,6 +868,12 @@ ScanResult HttpBodyChunkCutter::cut(const uint8_t* buffer, uint32_t length,
 
             if ( consumed < skip_amount )
             {
+                if ( consumed == 0 and k == 0 )
+                {
+                    num_flush = 0;
+                    return SCAN_FOUND_PENDING;
+                }
+
                 num_flush = k + consumed;
                 data_seen = 0;
                 return SCAN_FOUND_PIECE;
@@ -898,6 +958,12 @@ ScanResult HttpBodyHXCutter::cut(const uint8_t* buffer, uint32_t length, HttpInf
 
             if ( consumed < length )
             {
+                if ( consumed == 0 )
+                {
+                    num_flush = 0;
+                    return SCAN_FOUND_PENDING;
+                }
+
                 num_flush = consumed;
                 total_octets_scanned += num_flush;
                 return SCAN_FOUND_PIECE;
@@ -920,6 +986,12 @@ ScanResult HttpBodyHXCutter::cut(const uint8_t* buffer, uint32_t length, HttpInf
 
             const auto consumed = analyze_body(buffer, planned_flush, infractions, events).consumed;
 
+            if ( consumed == 0 and planned_flush > 0 )
+            {
+                num_flush = 0;
+                return SCAN_FOUND_PENDING;
+            }
+
             num_flush = consumed;
             total_octets_scanned += num_flush;
 
@@ -936,6 +1008,12 @@ ScanResult HttpBodyHXCutter::cut(const uint8_t* buffer, uint32_t length, HttpInf
             planned_flush = flow_target - octets_seen;
 
         const auto [_, consumed] = decompress(buffer, planned_flush, infractions, events);
+
+        if ( consumed == 0 and planned_flush > 0 )
+        {
+            num_flush = 0;
+            return SCAN_FOUND_PENDING;
+        }
 
         num_flush = consumed;
         total_octets_scanned += num_flush;

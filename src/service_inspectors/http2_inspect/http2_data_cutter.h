@@ -25,6 +25,11 @@
 
 #include "http2_enum.h"
 
+namespace snort
+{
+    struct Packet;
+}
+
 class Http2FlowData;
 class Http2Stream;
 
@@ -33,7 +38,8 @@ class Http2DataCutter
 public:
     Http2DataCutter(Http2FlowData* flow_data, HttpCommon::SourceId src_id);
     snort::StreamSplitter::Status scan(const uint8_t* data, uint32_t length,
-        uint32_t* flush_offset, uint32_t& data_offset, uint8_t frame_flags);
+        uint32_t* flush_offset, uint32_t& data_offset, uint8_t frame_flags,
+        snort::Packet* pkt);
     void reassemble(const uint8_t* data, unsigned len);
     void discarded_frame_cleanup(Http2Stream* const stream);
 

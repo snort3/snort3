@@ -257,6 +257,7 @@ const StreamBuffer HttpStreamSplitter::reassemble(Flow* flow, unsigned total,
             assert(session_data->running_total[source_id] == total);
             session_data->running_total[source_id] = 0;
             session_data->section_type[source_id] = SEC__NOT_COMPUTE;
+            partial_raw_bytes = 0;
 
             // When we are skipping through a message body beyond flow depth this is the end of
             // the line. Here we do the message section's normal job of updating the flow for the

@@ -1,12 +1,28 @@
-add_cpputest( http_decompression_test
+set(HTTP_DECOMPRESSION_TEST_SOURCES
+    ../http_compress_stream.cc
+    ../http_cutter.cc
+    ../http_flow_data.cc
+    ../http_tables.cc
+    ../http_test_input.cc
+    ../http_test_manager.cc
+)
+
+set(HTTP_COMPRESSION_LIBS ${ZLIB_LIBRARIES})
+
+if ( HAVE_BROTLI )
+    list(APPEND HTTP_COMPRESSION_LIBS ${BROTLI_LIBRARIES})
+
+    add_cpputest( http_brotli_decompression_test
+        SOURCES
+            ${HTTP_DECOMPRESSION_TEST_SOURCES}
+        LIBS ${HTTP_COMPRESSION_LIBS}
+    )
+endif()
+
+add_cpputest( http_cutter_decompression_test
     SOURCES
-        ../http_compress_stream.cc
-        ../http_cutter.cc
-        ../http_flow_data.cc
-        ../http_tables.cc
-        ../http_test_input.cc
-        ../http_test_manager.cc
-    LIBS ${ZLIB_LIBRARIES}
+        ${HTTP_DECOMPRESSION_TEST_SOURCES}
+    LIBS ${HTTP_COMPRESSION_LIBS}
 )
 
 add_cpputest( http_module_test
@@ -48,7 +64,7 @@ add_cpputest( http_transaction_test
         ../http_test_manager.cc
         ../http_test_input.cc
         ../http_compress_stream.cc
-    LIBS ${ZLIB_LIBRARIES}
+    LIBS ${HTTP_COMPRESSION_LIBS}
 )
 
 add_cpputest( http_uri_norm_test

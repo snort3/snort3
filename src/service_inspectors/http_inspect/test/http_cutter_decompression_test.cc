@@ -15,7 +15,7 @@
 // with this program; if not, write to the Free Software Foundation, Inc.,
 // 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 //--------------------------------------------------------------------------
-// http_decompression_test.cc author Oleksandr Fedorych <ofedoryc@cisco.com>
+// http_cutter_decompression_test.cc author Oleksandr Fedorych <ofedoryc@cisco.com>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -23,8 +23,8 @@
 
 #include <cstring>
 
-#include "pub_sub/http_transaction_end_event.h"
 #include "pub_sub/http_form_data_event.h"
+#include "pub_sub/http_transaction_end_event.h"
 #include "service_inspectors/http_inspect/http_common.h"
 #include "service_inspectors/http_inspect/http_compress_stream.h"
 #include "service_inspectors/http_inspect/http_cutter.h"
@@ -149,38 +149,17 @@ HttpInfractions* HttpTransaction::get_infractions(HttpCommon::SourceId) { return
 THREAD_LOCAL PegCount HttpModule::peg_counts[PEG_COUNT_MAX] = { };
 const Field Field::FIELD_NULL { STAT_NO_SOURCE };
 
-struct HttpDecompressionFixture : public Utest
-{
-    Flow* const flow = new Flow;
-    HttpParaList params;
-    // cppcheck-suppress constVariablePointer
-    HttpFlowData* session_data = nullptr;
-
-    void setup() override
-    {
-        flow->gadget = new HttpInspect(&params);
-        // cppcheck-suppress unreadVariable
-        session_data = new HttpFlowData(flow, &params);
-    }
-
-    void teardown() override
-    {
-        delete session_data;
-        session_data = nullptr;
-        delete flow->gadget;
-        flow->gadget = nullptr;
-        delete flow;
-    }
-};
-
 TEST_GROUP_BASE(cl_cutter_decompression_test, HttpDecompressionFixture)
 {
 };
 
 TEST(cl_cutter_decompression_test, long_body_deflate_overrun)
 {
-    auto* compress_stream = new HttpCompressStream;
-    compress_stream->setup(CMP_DEFLATE);
+    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
+    HttpEventGen events;
+
+    auto* compress_stream = HttpCompressStream::create(CMP_DEFLATE, params.decompression_param,
+        infractions, &events);
     HttpUnitTestSetup::set_compress_stream(session_data, SRC_SERVER, compress_stream);
 
     const uint32_t pre_filled_len = MAX_OCTETS - 5;
@@ -195,9 +174,6 @@ TEST(cl_cutter_decompression_test, long_body_deflate_overrun)
 
     HttpBodyClCutter cutter(static_cast<int64_t>(remaining), false, nullptr, session_data, SRC_SERVER);
 
-    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
-    HttpEventGen events;
-
     const auto result = cutter.cut(scan_buf, scan_buf_size, infractions, &events,
         flow_target, true, HX_BODY_NOT_COMPLETE);
     // num_flush is reduced because decompress ran out of space
@@ -210,8 +186,11 @@ TEST(cl_cutter_decompression_test, long_body_deflate_overrun)
 
 TEST(cl_cutter_decompression_test, long_body_gzip_overrun)
 {
-    auto* compress_stream = new HttpCompressStream;
-    compress_stream->setup(CMP_GZIP);
+    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
+    HttpEventGen events;
+
+    auto* compress_stream = HttpCompressStream::create(CMP_GZIP, params.decompression_param,
+        infractions, &events);
     HttpUnitTestSetup::set_compress_stream(session_data, SRC_SERVER, compress_stream);
 
     const uint32_t pre_filled_size = MAX_OCTETS - 5;
@@ -226,9 +205,6 @@ TEST(cl_cutter_decompression_test, long_body_gzip_overrun)
 
     HttpBodyClCutter cutter(static_cast<int64_t>(remaining), false, nullptr, session_data, SRC_SERVER);
 
-    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
-    HttpEventGen events;
-
     const auto result = cutter.cut(scan_buf, scan_buf_size, infractions, &events,
         flow_target, true, HX_BODY_NOT_COMPLETE);
     // num_flush is reduced because decompress ran out of space
@@ -240,8 +216,11 @@ TEST(cl_cutter_decompression_test, long_body_gzip_overrun)
 
 TEST(cl_cutter_decompression_test, octets_seen_long_section_overrun)
 {
-    auto* compress_stream = new HttpCompressStream;
-    compress_stream->setup(CMP_DEFLATE);
+    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
+    HttpEventGen events;
+
+    auto* compress_stream = HttpCompressStream::create(CMP_DEFLATE, params.decompression_param,
+        infractions, &events);
     HttpUnitTestSetup::set_compress_stream(session_data, SRC_SERVER, compress_stream);
 
     const uint32_t pre_filled_len = MAX_OCTETS - 5;
@@ -254,9 +233,6 @@ TEST(cl_cutter_decompression_test, octets_seen_long_section_overrun)
     memcpy(scan_buf, deflate_compressed, deflate_compressed_size);
 
     HttpBodyClCutter cutter(10, false, nullptr, session_data, SRC_SERVER);
-
-    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
-    HttpEventGen events;
 
     auto result = cutter.cut(scan_buf, 1, infractions, &events, flow_target, true, HX_BODY_NOT_COMPLETE);
     CHECK_EQUAL(SCAN_NOT_FOUND, result);
@@ -282,8 +258,11 @@ TEST(cl_cutter_decompression_test, octets_seen_long_section_overrun)
 
 TEST(cl_cutter_decompression_test, octets_seen_no_stretch_overrun)
 {
-    auto* compress_stream = new HttpCompressStream;
-    compress_stream->setup(CMP_GZIP);
+    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
+    HttpEventGen events;
+
+    auto* compress_stream = HttpCompressStream::create(CMP_GZIP, params.decompression_param,
+        infractions, &events);
     HttpUnitTestSetup::set_compress_stream(session_data, SRC_SERVER, compress_stream);
 
     const uint32_t pre_filled_size = MAX_OCTETS - 5;
@@ -297,9 +276,6 @@ TEST(cl_cutter_decompression_test, octets_seen_no_stretch_overrun)
     memcpy(scan_buf, gzip_compressed, gzip_compressed_size);
 
     HttpBodyClCutter cutter(static_cast<int64_t>(remaining), false, nullptr, session_data, SRC_SERVER);
-
-    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
-    HttpEventGen events;
 
     auto result = cutter.cut(scan_buf, 1, infractions, &events, flow_target, true, HX_BODY_NOT_COMPLETE);
     CHECK_EQUAL(SCAN_NOT_FOUND, result);
@@ -327,8 +303,11 @@ TEST(cl_cutter_decompression_test, octets_seen_no_stretch_overrun)
 
 TEST(cl_cutter_decompression_test, octets_seen_mid_segment_stretch_overrun)
 {
-    auto* compress_stream = new HttpCompressStream;
-    compress_stream->setup(CMP_DEFLATE);
+    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
+    HttpEventGen events;
+
+    auto* compress_stream = HttpCompressStream::create(CMP_DEFLATE, params.decompression_param,
+        infractions, &events);
     HttpUnitTestSetup::set_compress_stream(session_data, SRC_SERVER, compress_stream);
 
     const uint32_t pre_filled_len = MAX_OCTETS - 5;
@@ -341,9 +320,6 @@ TEST(cl_cutter_decompression_test, octets_seen_mid_segment_stretch_overrun)
     memcpy(scan_buf, deflate_compressed, deflate_compressed_size);
 
     HttpBodyClCutter cutter(1800, false, nullptr, session_data, SRC_SERVER);
-
-    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
-    HttpEventGen events;
 
     auto result = cutter.cut(scan_buf, 1, infractions, &events, flow_target, true, HX_BODY_NOT_COMPLETE);
     CHECK_EQUAL(SCAN_NOT_FOUND, result);
@@ -370,8 +346,11 @@ TEST(cl_cutter_decompression_test, octets_seen_mid_segment_stretch_overrun)
 
 TEST(cl_cutter_decompression_test, octets_seen_last_segment_overrun)
 {
-    auto* compress_stream = new HttpCompressStream;
-    compress_stream->setup(CMP_DEFLATE);
+    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
+    HttpEventGen events;
+
+    auto* compress_stream = HttpCompressStream::create(CMP_DEFLATE, params.decompression_param,
+        infractions, &events);
     HttpUnitTestSetup::set_compress_stream(session_data, SRC_SERVER, compress_stream);
 
     const uint32_t pre_filled_len = MAX_OCTETS - 5;
@@ -384,9 +363,6 @@ TEST(cl_cutter_decompression_test, octets_seen_last_segment_overrun)
     memcpy(scan_buf, deflate_compressed, deflate_compressed_size);
 
     HttpBodyClCutter cutter(10, false, nullptr, session_data, SRC_SERVER);
-
-    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
-    HttpEventGen events;
 
     auto result = cutter.cut(scan_buf, 1, infractions, &events, flow_target, true, HX_BODY_NOT_COMPLETE);
     CHECK_EQUAL(SCAN_NOT_FOUND, result);
@@ -415,8 +391,11 @@ TEST_GROUP_BASE(old_cutter_decompression_test, HttpDecompressionFixture)
 
 TEST(old_cutter_decompression_test, no_stretch_overrun)
 {
-    auto* compress_stream = new HttpCompressStream;
-    compress_stream->setup(CMP_DEFLATE);
+    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
+    HttpEventGen events;
+
+    auto* compress_stream = HttpCompressStream::create(CMP_DEFLATE, params.decompression_param,
+        infractions, &events);
     HttpUnitTestSetup::set_compress_stream(session_data, SRC_SERVER, compress_stream);
 
     const uint32_t pre_filled_len = MAX_OCTETS - 5;
@@ -429,9 +408,6 @@ TEST(old_cutter_decompression_test, no_stretch_overrun)
     memcpy(scan_buf, deflate_compressed, deflate_compressed_size);
 
     HttpBodyOldCutter cutter(false, nullptr, session_data, SRC_SERVER);
-
-    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
-    HttpEventGen events;
 
     auto result = cutter.cut(scan_buf, 1, infractions, &events, flow_target, true, HX_BODY_NOT_COMPLETE);
     CHECK_EQUAL(SCAN_NOT_FOUND, result);
@@ -447,8 +423,11 @@ TEST(old_cutter_decompression_test, no_stretch_overrun)
 
 TEST(old_cutter_decompression_test, large_body_deflate_overrun)
 {
-    auto* compress_stream = new HttpCompressStream;
-    compress_stream->setup(CMP_DEFLATE);
+    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
+    HttpEventGen events;
+
+    auto* compress_stream = HttpCompressStream::create(CMP_DEFLATE, params.decompression_param,
+        infractions, &events);
     HttpUnitTestSetup::set_compress_stream(session_data, SRC_SERVER, compress_stream);
 
     const uint32_t pre_filled_size = MAX_OCTETS - 5;
@@ -463,9 +442,6 @@ TEST(old_cutter_decompression_test, large_body_deflate_overrun)
 
     HttpBodyOldCutter cutter(false, nullptr, session_data, SRC_SERVER);
 
-    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
-    HttpEventGen events;
-
     const auto result = cutter.cut(scan_buf, scan_buf_size, infractions, &events,
         flow_target, false, HX_BODY_NOT_COMPLETE);
     // num_flush is reduced because decompress ran out of space
@@ -477,8 +453,11 @@ TEST(old_cutter_decompression_test, large_body_deflate_overrun)
 
 TEST(old_cutter_decompression_test, large_body_gzip_overrun)
 {
-    auto* compress_stream = new HttpCompressStream;
-    compress_stream->setup(CMP_GZIP);
+    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
+    HttpEventGen events;
+
+    auto* compress_stream = HttpCompressStream::create(CMP_GZIP, params.decompression_param,
+        infractions, &events);
     HttpUnitTestSetup::set_compress_stream(session_data, SRC_SERVER, compress_stream);
 
     const uint32_t pre_filled_size = MAX_OCTETS - 5;
@@ -491,9 +470,6 @@ TEST(old_cutter_decompression_test, large_body_gzip_overrun)
     memcpy(scan_buf, gzip_compressed, gzip_compressed_size);
 
     HttpBodyOldCutter cutter(false, nullptr, session_data, SRC_SERVER);
-
-    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
-    HttpEventGen events;
 
     const auto result = cutter.cut(scan_buf, scan_buf_size, infractions, &events,
         flow_target, false, HX_BODY_NOT_COMPLETE);
@@ -510,8 +486,11 @@ TEST_GROUP_BASE(hx_cutter_decompression_test, HttpDecompressionFixture)
 
 TEST(hx_cutter_decompression_test, octets_seen_section_not_complete_overrun)
 {
-    auto* compress_stream = new HttpCompressStream;
-    compress_stream->setup(CMP_DEFLATE);
+    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
+    HttpEventGen events;
+
+    auto* compress_stream = HttpCompressStream::create(CMP_DEFLATE, params.decompression_param,
+        infractions, &events);
     HttpUnitTestSetup::set_compress_stream(session_data, SRC_SERVER, compress_stream);
 
     const uint32_t pre_filled_len = MAX_OCTETS - 5;
@@ -524,9 +503,6 @@ TEST(hx_cutter_decompression_test, octets_seen_section_not_complete_overrun)
     memcpy(scan_buf, deflate_compressed, deflate_compressed_size);
 
     HttpBodyHXCutter cutter(20, false, nullptr, session_data, SRC_SERVER);
-
-    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
-    HttpEventGen events;
 
     auto result = cutter.cut(scan_buf, 1, infractions, &events, flow_target, true, HX_BODY_NOT_COMPLETE);
     CHECK_EQUAL(SCAN_NOT_FOUND, result);
@@ -542,8 +518,11 @@ TEST(hx_cutter_decompression_test, octets_seen_section_not_complete_overrun)
 
 TEST(hx_cutter_decompression_test, octets_seen_last_segment_overrun)
 {
-    auto* compress_stream = new HttpCompressStream;
-    compress_stream->setup(CMP_DEFLATE);
+    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
+    HttpEventGen events;
+
+    auto* compress_stream = HttpCompressStream::create(CMP_DEFLATE, params.decompression_param,
+        infractions, &events);
     HttpUnitTestSetup::set_compress_stream(session_data, SRC_SERVER, compress_stream);
 
     const uint32_t pre_filled_len = MAX_OCTETS - 5;
@@ -557,9 +536,6 @@ TEST(hx_cutter_decompression_test, octets_seen_last_segment_overrun)
 
     HttpBodyHXCutter cutter(20, false, nullptr, session_data, SRC_SERVER);
 
-    auto* infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
-    HttpEventGen events;
-
     auto result = cutter.cut(scan_buf, 1, infractions, &events, flow_target, true, HX_BODY_NOT_COMPLETE);
     CHECK_EQUAL(SCAN_NOT_FOUND, result);
     CHECK_EQUAL(1, cutter.get_octets_seen());
@@ -571,6 +547,171 @@ TEST(hx_cutter_decompression_test, octets_seen_last_segment_overrun)
     CHECK_EQUAL(1, cutter.get_octets_seen());
     CHECK_EQUAL(6, cutter.get_num_flush());
 }
+
+#ifdef HAVE_BROTLI
+
+namespace
+{
+
+constexpr uint8_t bomb[] = {
+    0x5b, 0xff, 0x70, 0x82, 0x7f, 0x02, 0x20, 0x1e, 0x0b, 0x04, 0x72, 0xd1,
+    0x04, 0x00
+};
+
+}
+
+class HttpBrotliCutterFixture : public HttpDecompressionFixture
+{
+public:
+    uint8_t scan_buf[scan_buf_size] = { };
+    HttpInfractions* infractions = nullptr;
+    HttpEventGen events;
+
+    void setup() override
+    {
+        HttpDecompressionFixture::setup();
+
+        params.decompression_param.decompress_brotli = true;
+        infractions = HttpUnitTestSetup::get_infractions(session_data, SRC_SERVER);
+
+        auto* compress_stream = HttpCompressStream::create(CMP_BROTLI, params.decompression_param,
+            infractions, &events);
+        HttpUnitTestSetup::set_compress_stream(session_data, SRC_SERVER, compress_stream);
+
+        memcpy(scan_buf, bomb, std::size(bomb));
+    }
+
+    static void check(const HttpCutter& cutter, ScanResult result)
+    {
+        CHECK_EQUAL(SCAN_FOUND_PENDING, result);
+        CHECK_EQUAL(0, cutter.get_num_flush());
+        CHECK_EQUAL(0, cutter.get_octets_seen());
+    }
+};
+
+TEST_GROUP_BASE(cl_cutter_brotli_decompression_test, HttpBrotliCutterFixture)
+{
+};
+
+TEST(cl_cutter_brotli_decompression_test, scan_found_pending_short_body)
+{
+    HttpBodyClCutter cutter(200, false, nullptr, session_data, SRC_SERVER);
+
+    const auto result = cutter.cut(scan_buf, std::size(bomb), infractions, &events,
+        100, true, HX_BODY_NOT_COMPLETE);
+
+    check(cutter, result);
+}
+
+TEST(cl_cutter_brotli_decompression_test, scan_found_pending_no_stretch)
+{
+    HttpBodyClCutter cutter(20, false, nullptr, session_data, SRC_SERVER);
+
+    const auto result = cutter.cut(scan_buf, std::size(bomb), infractions, &events,
+        std::size(bomb), false, HX_BODY_NOT_COMPLETE);
+
+    check(cutter, result);
+}
+
+TEST(cl_cutter_brotli_decompression_test, scan_found_pending_stretch_mid_segment)
+{
+    HttpBodyClCutter cutter(1000, false, nullptr, session_data, SRC_SERVER);
+
+    const auto result = cutter.cut(scan_buf, std::size(bomb), infractions, &events,
+        10, true, HX_BODY_NOT_COMPLETE);
+
+    check(cutter, result);
+}
+
+TEST(cl_cutter_brotli_decompression_test, scan_found_pending_stretch_finish)
+{
+    HttpBodyClCutter cutter(std::size(bomb), false, nullptr, session_data, SRC_SERVER);
+
+    const auto result = cutter.cut(scan_buf, std::size(bomb), infractions, &events,
+        5, true, HX_BODY_NOT_COMPLETE);
+
+    check(cutter, result);
+}
+
+TEST(cl_cutter_brotli_decompression_test, scan_found_pending_stretch_cut)
+{
+    HttpBodyClCutter cutter(1500, false, nullptr, session_data, SRC_SERVER);
+
+    const auto result = cutter.cut(scan_buf, 1500, infractions, &events,
+        std::size(bomb), true, HX_BODY_NOT_COMPLETE);
+
+    check(cutter, result);
+}
+
+TEST_GROUP_BASE(old_cutter_brotli_decompression_test, HttpBrotliCutterFixture)
+{
+};
+
+TEST(old_cutter_brotli_decompression_test, scan_found_pending_short_body)
+{
+    HttpBodyOldCutter cutter(false, nullptr, session_data, SRC_SERVER);
+
+    const auto result = cutter.cut(scan_buf, std::size(bomb), infractions, &events,
+        100, true, HX_BODY_NOT_COMPLETE);
+
+    check(cutter, result);
+}
+
+TEST(old_cutter_brotli_decompression_test, scan_found_pending_stretch)
+{
+    HttpBodyOldCutter cutter(false, nullptr, session_data, SRC_SERVER);
+
+    const auto result = cutter.cut(scan_buf, std::size(bomb), infractions, &events,
+        10, true, HX_BODY_NOT_COMPLETE);
+
+    check(cutter, result);
+}
+
+TEST(old_cutter_brotli_decompression_test, scan_found_pending_no_stretch)
+{
+    HttpBodyOldCutter cutter(false, nullptr, session_data, SRC_SERVER);
+
+    const auto result = cutter.cut(scan_buf, std::size(bomb), infractions, &events,
+        std::size(bomb), false, HX_BODY_NOT_COMPLETE);
+
+    check(cutter, result);
+}
+
+TEST_GROUP_BASE(hx_cutter_brotli_decompression_test, HttpBrotliCutterFixture)
+{
+};
+
+TEST(hx_cutter_brotli_decompression_test, scan_found_pending_not_complete_short)
+{
+    HttpBodyHXCutter cutter(STAT_NOT_COMPUTE, false, nullptr, session_data, SRC_SERVER);
+
+    const auto result = cutter.cut(scan_buf, std::size(bomb), infractions, &events,
+        100, true, HX_BODY_NOT_COMPLETE);
+
+    check(cutter, result);
+}
+
+TEST(hx_cutter_brotli_decompression_test, scan_found_pending_not_complete_at_target)
+{
+    HttpBodyHXCutter cutter(STAT_NOT_COMPUTE, false, nullptr, session_data, SRC_SERVER);
+
+    const auto result = cutter.cut(scan_buf, std::size(bomb), infractions, &events,
+        std::size(bomb), false, HX_BODY_NOT_COMPLETE);
+
+    check(cutter, result);
+}
+
+TEST(hx_cutter_brotli_decompression_test, scan_found_pending_last_seg)
+{
+    HttpBodyHXCutter cutter(STAT_NOT_COMPUTE, false, nullptr, session_data, SRC_SERVER);
+
+    const auto result = cutter.cut(scan_buf, std::size(bomb), infractions, &events,
+        100, false, HX_BODY_LAST_SEG);
+
+    check(cutter, result);
+}
+
+#endif
 
 int main(int argc, char** argv)
 {

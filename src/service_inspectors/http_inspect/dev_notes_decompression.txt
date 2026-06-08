@@ -1,0 +1,54 @@
+HTTP body decompression decodes request and response bodies so that
+detection can inspect the original content. When a Content-Encoding
+header with a known encoding is seen during header processing, a
+decompression stream for that encoding is built and attached to the
+flow, one per direction.
+
+==== HttpCompressStream
+
+HttpCompressStream has the following implementations:
+
+* ZlibStream -- handles gzip and raw deflate. For gzip it checks the
+  magic bytes and flags field before handing data to the library, and
+  it can split that check across fragments. For deflate, if the
+  library rejects the first bytes it retries once with a synthetic
+  header, because some senders omit it. Zlib never produces more
+  output than the caller's buffer can hold. When the buffer fills,
+  zlib leaves the unused input alone and the cutter flushes what was
+  consumed. The leftover compressed bytes come back on the next scan.
+* BrotliStream -- handles brotli via libbrotli. It is only compiled
+  in when brotli support is available, and only activated when the
+  brotli decompression option is enabled. Unlike zlib, brotli
+  may buffer decompressed output internally, so a single compressed
+  TCP segment can produce more output than fits in one PDU buffer.
+  If brotli is disabled at runtime, EVENT_BROTLI_DISABLED
+  and INF_BROTLI_DISABLED are raised.
+
+==== Internal inspection loop for compressed bodies
+
+This mechanism is specific to BrotliStream. ZlibStream does not need
+it because zlib never produces more output than the caller's buffer.
+
+When brotli decompresses input that expands beyond one PDU buffer,
+BrotliStream tracks a pending count -- the compressed input
+bytes already consumed by the library whose decompressed output has
+not yet been delivered. It hides that consumption from the cutter by
+reporting the full input size as "remaining", so the cutter sees zero
+progress and emits a zero-length flush.
+
+The splitter's scan() wraps the inner scan in a loop. On each
+zero-length flush for a body section the loop:
+
+* reassembles the filled PDU buffer (zero new input, tail flag),
+* creates a PDU packet over the reassembled data,
+* runs inspection on the created PDU packet,
+* re-enters the inner scan to drain the remaining data left in brotli's internal buffer.
+
+The loop breaks when the section type is no longer a body, the cutter
+has been released, or the packet pointer is null. A null reassembly
+result triggers an abort.
+
+On the final drain the library has no more buffered output, so the
+pending count is released back to the cutter as real consumption. The
+cutter emits a nonzero flush and the last section follows the normal
+reassembly path.

@@ -186,6 +186,11 @@ void HttpInspect::show(const SnortConfig*) const
     ConfigLogger::log_flag("simplify_path", params->uri_param.simplify_path);
     ConfigLogger::log_value("xff_headers", xff_headers.c_str());
     ConfigLogger::log_flag("request_body_app_detection", params->publish_request_body);
+    ConfigLogger::log_limit("max_expansion_ratio",
+        params->decompression_param.max_expansion_ratio, -1);
+#ifdef HAVE_BROTLI
+    ConfigLogger::log_flag("decompress_brotli", params->decompression_param.decompress_brotli);
+#endif
 }
 
 PduSection HttpInspect::get_latest_is(const Packet* p)
@@ -470,7 +475,6 @@ void HttpInspect::eval(Packet* p)
 {
     const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
     eval(p, source_id, p->data, p->dsize);
-    return;
 }
 
 void HttpInspect::eval(Packet* p, SourceId source_id, const uint8_t* data, uint16_t dsize)

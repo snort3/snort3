@@ -69,6 +69,8 @@ private:
         uint32_t length, uint32_t* flush_offset, HttpCommon::SectionType&, HttpCutter*&);
     StreamSplitter::Status call_cutter(snort::Flow*, HttpFlowData*, const uint8_t* data,
         uint32_t length, uint32_t* flush_offset, HttpCommon::SectionType&);
+    StreamSplitter::Status implement_scan(snort::Flow* flow, const uint8_t* data, uint32_t length,
+        uint32_t* flush_offset, snort::Packet* pkt, HttpFlowData* session_data);
 
     HttpInspect* const my_inspector;
     const HttpCommon::SourceId source_id;

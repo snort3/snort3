@@ -38,6 +38,9 @@ Optional:
 * asciidoc from http://www.methods.co.nz/asciidoc/ to build the HTML
   manual
 
+* brotli from https://github.com/google/brotli.git for decompression
+  (>= 1.2.0 recommended)
+
 * cpputest from http://cpputest.github.io to run additional unit tests with
   make check
 

@@ -45,6 +45,10 @@
 #include <libml.h>
 #endif
 
+#ifdef HAVE_BROTLI
+#include <brotli/decode.h>
+#endif
+
 extern "C" {
 #include <daq.h>
 }
@@ -99,6 +103,9 @@ static const char* dep_versions[] = {
 #endif
 #ifdef HAVE_LIBML
     "LIBML",
+#endif
+#ifdef HAVE_BROTLI
+    "BROTLI",
 #endif
     nullptr
 };
@@ -173,6 +180,15 @@ static void install_dependencies_strings(Shell* sh, lua_State* L)
 #endif
 #ifdef HAVE_LIBML
     vs.push_back(libml::version());
+#endif
+#ifdef HAVE_BROTLI
+    char brotli_version_str[16];
+    const auto brotli_version = BrotliDecoderVersion();
+
+    std::snprintf(brotli_version_str, sizeof(brotli_version_str), "%d.%d.%d", brotli_version >> 24,
+        (brotli_version >> 12) & 0xFFF, brotli_version & 0xFFF);
+
+    vs.push_back(brotli_version_str);
 #endif
 
     lua_createtable(L, 0, vs.size());

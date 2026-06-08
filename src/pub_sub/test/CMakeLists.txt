@@ -4,6 +4,12 @@ if ( ENABLE_UNIT_TESTS )
     )
 endif ( ENABLE_UNIT_TESTS )
 
+set(HTTP_COMPRESSION_LIBS ${ZLIB_LIBRARIES})
+
+if ( HAVE_BROTLI )
+    list(APPEND HTTP_COMPRESSION_LIBS ${BROTLI_LIBRARIES})
+endif()
+
 add_cpputest( pub_sub_http_event_test
     SOURCES
         ../http_events.cc
@@ -39,7 +45,7 @@ add_cpputest( pub_sub_http_transaction_end_event_test
         ../../service_inspectors/http_inspect/http_test_input.cc
         ../../service_inspectors/http_inspect/http_field.cc
         ../../service_inspectors/http_inspect/http_compress_stream.cc
-    LIBS ${ZLIB_LIBRARIES}
+    LIBS ${HTTP_COMPRESSION_LIBS}
 )
 add_cpputest( pub_sub_ftp_events_test
     SOURCES

@@ -181,6 +181,19 @@ but at a very high price. It is unlikely that any meaningful inspection of
 message bodies will be possible. Effectively HTTP processing would be
 limited to the headers.
 
+===== max_expansion_ratio
+
+max_expansion_ratio limits the ratio of decompressed output to compressed
+input per single TCP segment that http_inspect will produce during
+decompression of gzip, deflate, and brotli compressed request and response
+bodies. This guards against decompression bomb attacks where a small
+compressed payload expands into a large amount of data.
+
+The default value is 100, meaning decompressed output may be at most 100
+times larger than the compressed input in a single TCP segment. Set to -1
+to allow unlimited expansion. When the ratio is exceeded, http_inspect
+stops decompressing HTTP request and response bodies.
+
 ===== normalize_utf
 
 http_inspect will decode utf-8, utf-7, utf-16le, utf-16be, utf-32le, and
@@ -218,6 +231,13 @@ files encountered in a message body. The MS office files are PKZIP compressed wh
 locate the OLE (Object Linking and Embedding) file embedded with the files 
 containing RLE compressed vba macro data. The decompressed vba macro data is
 then made available through the vba_data ips rule option.
+
+===== decompress_brotli
+
+decompress_brotli = true will enable decompression of brotli compressed bodies
+in HTTP requests and responses. This format is vulnerable to decompression
+bombs which have a high compression ratio for repetitive data and can
+significantly slow down the system.
 
 ===== max_mime_attach
 
@@ -687,8 +707,8 @@ http_stat_msg.
 ===== file_data
 
 The file_data contains the normalized message body. This is the normalization
-described above under gzip, normalize_utf, decompress_pdf, decompress_swf, and
-normalize_javascript.
+described above under gzip, normalize_utf, decompress_pdf, decompress_swf,
+decompress_brotli, and normalize_javascript.
 
 ===== js_data
 

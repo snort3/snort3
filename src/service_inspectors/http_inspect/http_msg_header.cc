@@ -747,6 +747,12 @@ void HttpMsgHeader::setup_encoding_decompression()
             HttpModule::increment_peg_counts(PEG_COMPRESSED_DEFLATE);
             compression = CMP_DEFLATE;
             break;
+#ifdef HAVE_BROTLI
+        case CONTENTCODE_BR:
+            HttpModule::increment_peg_counts(PEG_COMPRESSED_BROTLI);
+            compression = CMP_BROTLI;
+            break;
+#endif
         case CONTENTCODE_IDENTITY:
             break;
         case CONTENTCODE_CHUNKED:
@@ -774,14 +780,8 @@ void HttpMsgHeader::setup_encoding_decompression()
     if ( compression == CMP_NONE )
         return;
 
-    session_data->compress[source_id] = new HttpCompressStream;
-
-    if ( session_data->compress[source_id]->setup(compression) )
-        return;
-
-    assert(false);
-    delete session_data->compress[source_id];
-    session_data->compress[source_id] = nullptr;
+    session_data->compress[source_id] = HttpCompressStream::create(compression,
+        params->decompression_param, transaction->get_infractions(source_id), session_data->events[source_id]);
 }
 
 void HttpMsgHeader::setup_utf_decoding()
