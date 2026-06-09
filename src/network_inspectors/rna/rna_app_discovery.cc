@@ -72,6 +72,8 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter, 
     bool is_client = false;
     uint16_t port = p->flow->server_port;
 
+    bool is_decrypted = appid_session_api.get_appid_session_attribute(APPID_SESSION_DECRYPTED);
+
     if ( appid_change_bits[APPID_SERVICE_BIT] or appid_change_bits[APPID_CLIENT_BIT] or
         appid_change_bits[APPID_PAYLOAD_BIT] )
     {
@@ -79,7 +81,8 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter, 
         appid_session_api.get_app_id(nullptr, &client, &payload, nullptr, nullptr);
         bool is_future_flow = appid_session_api.get_appid_session_attribute(APPID_SESSION_FUTURE_FLOW);
 
-        if ( appid_change_bits[APPID_SERVICE_BIT] and service > APP_ID_NONE and !is_future_flow)
+        if ( appid_change_bits[APPID_SERVICE_BIT] and service > APP_ID_NONE and !is_future_flow
+            and !is_decrypted )
         {
             if ( service == APP_ID_DHCP )
             {
@@ -106,28 +109,31 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter, 
         }
     }
 
-    if ( appid_change_bits[APPID_SERVICE_INFO_BIT] )
+    if ( !is_decrypted )
     {
-        const char* vendor;
-        const char* version;
-        const AppIdServiceSubtype* subtype;
-        appid_session_api.get_service_info(vendor, version, subtype);
-        update_service_info(p, filter, rna_flow, proto, port, vendor, version, logger, conf,
-            service, is_client);
-    }
-    else if ( newservice and appid_change_bits[APPID_SERVICE_BIT]
-        and service > APP_ID_NONE )
-    {
-        update_service_info(p, filter, rna_flow, proto, port, nullptr, nullptr, logger, conf,
-            service, is_client);
-    }
+        if ( appid_change_bits[APPID_SERVICE_INFO_BIT] )
+        {
+            const char* vendor;
+            const char* version;
+            const AppIdServiceSubtype* subtype;
+            appid_session_api.get_service_info(vendor, version, subtype);
+            update_service_info(p, filter, rna_flow, proto, port, vendor, version, logger, conf,
+                service, is_client);
+        }
+        else if ( newservice and appid_change_bits[APPID_SERVICE_BIT]
+            and service > APP_ID_NONE )
+        {
+            update_service_info(p, filter, rna_flow, proto, port, nullptr, nullptr, logger, conf,
+                service, is_client);
+        }
 
-    if ( conf->enable_banner_grab and p->is_from_server() and
-        (appid_change_bits[APPID_RESPONSE_BIT] or
-        appid_change_bits[APPID_SERVICE_INFO_BIT] or
-        appid_change_bits[APPID_SERVICE_BIT]) )
-    {
-        discover_banner(p, filter, rna_flow, proto, logger, service);
+        if ( conf->enable_banner_grab and p->is_from_server() and
+            (appid_change_bits[APPID_RESPONSE_BIT] or
+            appid_change_bits[APPID_SERVICE_INFO_BIT] or
+            appid_change_bits[APPID_SERVICE_BIT]) )
+        {
+            discover_banner(p, filter, rna_flow, proto, logger, service);
+        }
     }
 
     // Appid supports login success/failure events, but not logoff event.

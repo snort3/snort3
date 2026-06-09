@@ -750,6 +750,13 @@ void Binder::handle_packet(const Packet* pkt)
     bstats.verdicts[stuff.action]++;
 }
 
+static bool is_ssl_transport_service(const char* svc)
+{
+    static const std::set<std::string> ssl_transport_services =
+        { "https", "smtps", "imaps", "pop3s", "ftps", "telnets", "nntps", "ldaps" };
+    return ssl_transport_services.count(svc) != 0;
+}
+
 void Binder::handle_flow_setup(Flow& flow, bool standby)
 {
     Profile profile(bindPerfStats);
@@ -781,7 +788,14 @@ void Binder::handle_flow_setup(Flow& flow, bool standby)
         if (flow.ssn_state.snort_protocol_id != UNKNOWN_PROTOCOL_ID)
         {
             const SnortConfig* sc = SnortConfig::get_conf();
-            flow.set_service(nullptr, sc->proto_ref->get_name(flow.ssn_state.snort_protocol_id));
+            const char* svc = sc->proto_ref->get_name(flow.ssn_state.snort_protocol_id);
+            if (svc and !InspectorManager::get_service_inspector(svc)
+                and InspectorManager::get_service_inspector("ssl")
+                and is_ssl_transport_service(svc))
+            {
+                svc = "ssl";
+            }
+            flow.set_service(nullptr, svc);
         }
     }
 
@@ -805,7 +819,6 @@ void Binder::handle_appid_service_change(DataEvent& event, Flow& flow)
         Stuff stuff;
         const SnortConfig* sc = SnortConfig::get_conf();
         const char* service = sc->proto_ref->get_name(flow.ssn_state.snort_protocol_id);
-        
         get_bindings(flow, stuff, service);
 
         if(stuff.action == BindUse::BA_ALLOW)

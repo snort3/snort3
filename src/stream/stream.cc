@@ -487,7 +487,7 @@ SnortProtocolId Stream::set_snort_protocol_id(Flow* flow, SnortProtocolId id, bo
     if (!flow->ssn_state.ipprotocol)
         set_ip_protocol(flow);
 
-    if ( !flow->is_proxied() and !flow->flags.snort_proto_id_set_by_ha )
+    if ( !flow->is_proxied() and !flow->flags.snort_proto_id_set_by_ha and !flow->flags.data_decrypted )
     {
         HostAttributesManager::update_service
             (flow->server_ip, flow->server_port, flow->ssn_state.ipprotocol, id, is_appid_service);
