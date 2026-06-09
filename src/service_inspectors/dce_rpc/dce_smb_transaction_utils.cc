@@ -25,7 +25,13 @@
 #include "config.h"
 #endif
 
+#include "detection/detection_engine.h"
+
+#include "dce_smb_module.h"
 #include "dce_smb_transaction_utils.h"
+
+// Absolute cap for SMB1 transaction Total{Parameter,Data}Count.
+#define DCE2_SMB_TRANS_MAX_TOTAL_COUNT (256u * 1024u)
 
 #define TRANS_NM_PIPE_0       (0)
 #define TRANS_NM_PIPE_1       (TRANS_NM_PIPE_0+7)
@@ -131,7 +137,7 @@ static DCE2_Ret DCE2_SmbCheckTransDataParams(
     const uint8_t* poffset = smb_hdr_ptr + poff;
     const uint8_t* nb_end = nb_ptr + nb_len;
 
-    if (bcc < ((uint64_t)dcnt + pcnt))
+    if (bcc < (static_cast<uint64_t>(dcnt) + pcnt))
         dce_alert(GID_DCE2, DCE2_SMB_BCC_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
             ssd->sd);
 
@@ -212,6 +218,18 @@ DCE2_Ret DCE2_SmbCheckTotalCount(DCE2_SmbSsnData* ssd, const uint32_t tcnt, cons
 {
     DCE2_Ret ret = DCE2_RET__SUCCESS;
 
+    if (tcnt > DCE2_SMB_TRANS_MAX_TOTAL_COUNT)
+    {
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
+            snort::DetectionEngine::get_current_packet(),
+            "Rejecting SMB transaction before allocation: total_count=%u count=%u "
+            "displacement=%u cap=%u\n",
+            tcnt, cnt, disp, DCE2_SMB_TRANS_MAX_TOTAL_COUNT);
+        dce_alert(GID_DCE2, DCE2_SMB_INVALID_DSIZE,
+            reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
+        return DCE2_RET__ERROR;
+    }
+
     if (cnt > tcnt)
     {
         dce_alert(GID_DCE2, DCE2_SMB_TDCNT_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
@@ -219,7 +237,7 @@ DCE2_Ret DCE2_SmbCheckTotalCount(DCE2_SmbSsnData* ssd, const uint32_t tcnt, cons
         ret = DCE2_RET__ERROR;
     }
 
-    if (((uint64_t)disp + cnt) > tcnt)
+    if ((static_cast<uint64_t>(disp) + cnt) > tcnt)
     {
         dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, (dce2CommonStats*)&dce2_smb_stats,
             ssd->sd);
@@ -402,4 +420,3 @@ DCE2_Ret DCE2_SmbBufferTransactionParameters(DCE2_SmbTransactionTracker* ttracke
 
     return DCE2_RET__SUCCESS;
 }
-
