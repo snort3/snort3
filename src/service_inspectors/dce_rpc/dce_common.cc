@@ -281,6 +281,7 @@ static void dce2_fill_rpkt_info(Packet* rpkt, Packet* p)
         memcpy(rpkt->layers, p->layers, p->num_layers * sizeof(Layer));
         rpkt->num_layers = p->num_layers;
         rpkt->vlan_idx = p->vlan_idx;
+        rpkt->vlan_idx_outer = p->vlan_idx_outer;
     }
 
     rpkt->packet_flags = p->packet_flags;

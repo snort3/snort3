@@ -171,6 +171,14 @@ static void extradata_dump(u2record* record)
     char ip6buf[INET6_ADDRSTRLEN+1];
     struct in6_addr ipAddr;
 
+    if (record->length < sizeof(Unified2ExtraDataHdr) + sizeof(SerialUnified2ExtraData))
+    {
+        printf("\n(ExtraData) ERROR: record length %u too short (need %zu), skipping\n",
+            record->length,
+            sizeof(Unified2ExtraDataHdr) + sizeof(SerialUnified2ExtraData));
+        return;
+    }
+
     memcpy(&eventHdr, record->data, sizeof(Unified2ExtraDataHdr));
 
     memcpy(&event, record->data + sizeof(Unified2ExtraDataHdr), sizeof(SerialUnified2ExtraData));
@@ -321,6 +329,14 @@ static void print_addr_port(
 static void event3_dump(u2record* record)
 {
     Unified2Event event;
+
+    if (record->length < sizeof(event))
+    {
+        printf("\n(Event) ERROR: record length %u too short (need %zu), skipping\n",
+            record->length, sizeof(event));
+        return;
+    }
+
     memcpy(&event, record->data, sizeof(event));
 
     printf("%s", "\n(Event)\n");
@@ -340,9 +356,9 @@ static void event3_dump(u2record* record)
         htonl(event.rule_class), htonl(event.rule_priority));
 
     printf(
-        "\tMPLS Label: %u\tVLAN ID: %hu\tIP Version: 0x%hhX\tIP Proto: %hhu\n",
+        "\tMPLS Label: %u\tVLAN ID: %hu\tVLAN Outer ID: %hu\tIP Version: 0x%hhX\tIP Proto: %hhu\n",
         htonl(event.pkt_mpls_label), htons(event.pkt_vlan_id),
-        event.pkt_ip_ver, event.pkt_ip_proto);
+        htons(event.pkt_vlan_id_outer), event.pkt_ip_ver, event.pkt_ip_proto);
 
     print_addr_port("Src", event.pkt_ip_ver >> 4, event.pkt_src_ip, event.pkt_src_port_itype);
     print_addr_port("Dst", event.pkt_ip_ver & 0xF, event.pkt_dst_ip, event.pkt_dst_port_icode);
@@ -376,6 +392,13 @@ static void event2_dump(u2record* record)
 
     Unified2IDSEvent event;
 
+    if (record->length < sizeof(event))
+    {
+        printf("\n(Event2) ERROR: record length %u too short (need %zu), skipping\n",
+            record->length, sizeof(event));
+        return;
+    }
+
     memcpy(&event, record->data, sizeof(event));
 
     /* network to host ordering
@@ -395,7 +418,7 @@ static void event2_dump(u2record* record)
     *(uint32_t*)field = ntohl(*(uint32_t*)field); /* mpls_label */
     field += 4;
     /* policy_id and vlanid */
-    for (i=0; i<2; i++, field+=2)
+    for (i=0; i<3; i++, field+=2)
     {
         *(uint16_t*)field = ntohs(*(uint16_t*)field);
     }
@@ -406,7 +429,7 @@ static void event2_dump(u2record* record)
         "\tsig id: %u\tgen id: %u\trevision: %u\t classification: %u\n"
         "\tpriority: %u\tip source: %u.%u.%u.%u\tip destination: %u.%u.%u.%u\n"
         "\tsrc port: %hu\tdest port: %hu\tip_proto: %hhu\timpact_flag: %hhu\tblocked: %hhu\n"
-        "\tmpls label: %u\tvlan id: %hu\tpolicy id: %hu\tappid: %s\n",
+        "\tmpls label: %u\tvlan id: %hu\tvlan id outer: %hu\tpolicy id: %hu\tappid: %s\n",
         event.sensor_id, event.event_id,
         event.event_second, event.event_microsecond,
         event.signature_id, event.generator_id,
@@ -415,7 +438,7 @@ static void event2_dump(u2record* record)
         TO_IP(event.ip_destination), event.sport_itype,
         event.dport_icode, to_utype(event.ip_proto),
         event.impact_flag, event.blocked,
-        event.mpls_label, event.vlanId, event.pad2, event.app_name);
+        event.mpls_label, event.vlanId, event.vlanIdOuter, event.pad2, event.app_name);
 }
 
 static void event2_6_dump(u2record* record)
@@ -424,6 +447,13 @@ static void event2_6_dump(u2record* record)
     int i;
     char ip6buf[INET6_ADDRSTRLEN+1];
     Unified2IDSEventIPv6 event;
+
+    if (record->length < sizeof(event))
+    {
+        printf("\n(IPv6 Event) ERROR: record length %u too short (need %zu), skipping\n",
+            record->length, sizeof(event));
+        return;
+    }
 
     memcpy(&event, record->data, sizeof(event));
 
@@ -446,7 +476,7 @@ static void event2_6_dump(u2record* record)
     *(uint32_t*)field = ntohl(*(uint32_t*)field); /* mpls_label */
     field += 4;
     /* policy_id and vlanid */
-    for (i=0; i<2; i++, field+=2)
+    for (i=0; i<3; i++, field+=2)
     {
         *(uint16_t*)field = ntohs(*(uint16_t*)field);
     }
@@ -467,11 +497,11 @@ static void event2_6_dump(u2record* record)
     inet_ntop(AF_INET6, &event.ip_destination, ip6buf, INET6_ADDRSTRLEN);
     printf("ip destination: %s\n"
         "\tsrc port: %hu\tdest port: %hu\tip_proto: %hhu\timpact_flag: %hhu\tblocked: %hhu\n"
-        "\tmpls label: %u\tvlan id: %hu\tpolicy id: %hu\tappid: %s\n",
+        "\tmpls label: %u\tvlan id: %hu\tvlan id outer: %hu\tpolicy id: %hu\tappid: %s\n",
         ip6buf, event.sport_itype,
         event.dport_icode, to_utype(event.ip_proto),
         event.impact_flag, event.blocked,
-        event.mpls_label, event.vlanId, event.pad2, event.app_name);
+        event.mpls_label, event.vlanId, event.vlanIdOuter, event.pad2, event.app_name);
 }
 
 #define LOG_CHARS 16
@@ -586,12 +616,14 @@ static int u2dump(char* file)
             extradata_dump(&record);
         }
         // deprecated
-        else if ( record.type == UNIFIED2_IDS_EVENT_VLAN and
+        else if ( (record.type == UNIFIED2_IDS_EVENT_VLAN or
+            record.type == UNIFIED2_IDS_EVENT_VLAN_V2) and
             record.length == sizeof(Unified2IDSEvent) )
         {
             event2_dump(&record);
         }
-        else if ( record.type == UNIFIED2_IDS_EVENT_IPV6_VLAN and
+        else if ( (record.type == UNIFIED2_IDS_EVENT_IPV6_VLAN or
+            record.type == UNIFIED2_IDS_EVENT_IPV6_VLAN_V2) and
             record.length == sizeof(Unified2IDSEventIPv6) )
         {
             event2_6_dump(&record);

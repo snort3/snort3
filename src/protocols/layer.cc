@@ -152,6 +152,15 @@ const vlan::VlanTagHdr* get_vlan_layer(const Packet* const p)
     return reinterpret_cast<const vlan::VlanTagHdr*>(lyr->start);
 }
 
+const vlan::VlanTagHdr* get_outer_vlan_layer(const Packet* const p)
+{
+    if ( !p->vlan_idx_outer )
+        return nullptr;
+    assert( p->vlan_idx_outer < p->num_layers );
+    const Layer* lyr = p->layers + p->vlan_idx_outer;
+    return reinterpret_cast<const vlan::VlanTagHdr*>(lyr->start);
+}
+
 const cisco_meta_data::CiscoMetaDataHdr* get_cisco_meta_data_layer(const Packet* const p)
 {
     assert( p->proto_bits & PROTO_BIT__CISCO_META_DATA );

@@ -176,6 +176,7 @@ struct SO_PUBLIC Packet
     uint64_t inspection_started_timestamp = 0;
 
     uint8_t vlan_idx = 0;
+    uint8_t vlan_idx_outer = 0;
     uint8_t ts_packet_flags = 0; // FIXIT-M packet flags should always be thread safe
 
     // IP_MAXPACKET is the minimum allowable max_dsize
@@ -371,6 +372,7 @@ struct SO_PUBLIC Packet
     }
 
     uint16_t get_flow_vlan_id() const;
+    uint16_t get_flow_vlan_id_outer() const;
     uint32_t get_flow_geneve_vni() const;
     std::vector<snort::geneve::GeneveOptData> get_geneve_options(bool inner) const;
 

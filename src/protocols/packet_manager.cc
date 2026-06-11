@@ -278,8 +278,17 @@ void PacketManager::decode(
                     continue;
 
                 // Cache the index of the vlan layer for quick access.
+                // For Q-in-Q: vlan_idx_outer holds the first (outer) VLAN,
+                // vlan_idx always holds the last (inner) VLAN.
                 if (clyr->proto_bits == PROTO_BIT__VLAN)
+                {
+                    if (p->vlan_idx)
+                    {
+                        if (!p->vlan_idx_outer)
+                            p->vlan_idx_outer = p->vlan_idx;
+                    }
                     p->vlan_idx = p->num_layers - 1;
+                }
             }
             codec_data.codec_flags &= ~CODEC_COMPOUND;
         }
@@ -311,8 +320,17 @@ void PacketManager::decode(
             if (push_layer(p, codec_data, prev_prot_id, raw.data, codec_data.lyr_len))
             {
                 // Cache the index of the vlan layer for quick access.
+                // For Q-in-Q: vlan_idx_outer holds the first (outer) VLAN,
+                // vlan_idx always holds the last (inner) VLAN.
                 if (codec_data.proto_bits == PROTO_BIT__VLAN)
+                {
+                    if (p->vlan_idx)
+                    {
+                        if (!p->vlan_idx_outer)
+                            p->vlan_idx_outer = p->vlan_idx;
+                    }
                     p->vlan_idx = p->num_layers - 1;
+                }
             }
         }
 

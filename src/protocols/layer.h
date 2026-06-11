@@ -113,6 +113,7 @@ SO_PUBLIC const eth::EtherHdr* get_eth_layer(const Packet*);
 SO_PUBLIC const geneve::GeneveLyr* get_geneve_layer(const Packet*, bool inner);
 SO_PUBLIC const gre::GREHdr* get_gre_layer(const Packet*);
 SO_PUBLIC const vlan::VlanTagHdr* get_vlan_layer(const Packet*);
+SO_PUBLIC const vlan::VlanTagHdr* get_outer_vlan_layer(const Packet*);
 SO_PUBLIC const wlan::WifiHdr* get_wifi_layer(const Packet*);
 
 /* return a pointer to the outermost UDP layer */

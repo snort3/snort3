@@ -681,6 +681,13 @@ static bool ff_vlan(const Args& a)
     return true;
 }
 
+static bool ff_vlan_outer(const Args& a)
+{
+    print_label(a, "vlan_outer");
+    TextLog_Print(json_log, "%hu", a.pkt->get_flow_vlan_id_outer());
+    return true;
+}
+
 //-------------------------------------------------------------------------
 // module stuff
 //-------------------------------------------------------------------------
@@ -696,7 +703,7 @@ static const JsonFunc json_func[] =
     ff_pkt_num, ff_priority, ff_proto, ff_rev, ff_rule, ff_seconds, ff_server_bytes,
     ff_server_pkts, ff_service, ff_sgt, ff_sid, ff_src_addr, ff_src_ap, ff_src_port,
     ff_target, ff_tcp_ack, ff_tcp_flags,ff_tcp_len, ff_tcp_seq, ff_tcp_win, ff_timestamp,
-    ff_tos, ff_ttl, ff_udp_len, ff_vlan
+    ff_tos, ff_ttl, ff_udp_len, ff_vlan, ff_vlan_outer
 };
 
 #define json_range \
@@ -707,7 +714,7 @@ static const JsonFunc json_func[] =
     "pkt_num | priority | proto | rev | rule | seconds | server_bytes | " \
     "server_pkts | service | sgt| sid | src_addr | src_ap | src_port | " \
     "target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | " \
-    "tos | ttl | udp_len | vlan"
+    "tos | ttl | udp_len | vlan | vlan_outer"
 
 #define json_deflt \
     "timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action"

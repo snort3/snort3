@@ -219,7 +219,10 @@ static void alert_event(Packet* p, const char*, Unified2Config* config, const Ev
             u2_event.pkt_mpls_label = htonl(p->ptrs.mplsHdr.label);
 
         if ( p->proto_bits & PROTO_BIT__VLAN )
+        {
             u2_event.pkt_vlan_id = htons(p->get_flow_vlan_id());
+            u2_event.pkt_vlan_id_outer = htons(p->get_flow_vlan_id_outer());
+        }
 
         u2_event.pkt_ip_proto = (uint8_t)p->get_ip_proto_next();
 
@@ -739,7 +742,10 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, const E
             alertdata.mpls_label = htonl(p->ptrs.mplsHdr.label);
 
         if (p->proto_bits & PROTO_BIT__VLAN)
+        {
             alertdata.vlanId = htons(p->get_flow_vlan_id());
+            alertdata.vlanIdOuter = htons(p->get_flow_vlan_id_outer());
+        }
 
         alertdata.pad2 = htons((uint16_t)p->user_ips_policy_id);
 
@@ -755,7 +761,7 @@ static void _AlertIP4_v2(Packet* p, const char*, Unified2Config* config, const E
         Unified2RotateFile(config);
 
     hdr.length = htonl(sizeof(alertdata));
-    hdr.type = htonl(UNIFIED2_IDS_EVENT_VLAN);
+    hdr.type = htonl(UNIFIED2_IDS_EVENT_VLAN_V2);
 
     memcpy_s(write_pkt_buffer, u2_buf_sz, &hdr, sizeof(hdr));
 
@@ -836,7 +842,10 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, const E
             alertdata.mpls_label = htonl(p->ptrs.mplsHdr.label);
 
         if (p->proto_bits & PROTO_BIT__VLAN)
+        {
             alertdata.vlanId = htons(p->get_flow_vlan_id());
+            alertdata.vlanIdOuter = htons(p->get_flow_vlan_id_outer());
+        }
 
         alertdata.pad2 = htons((uint16_t)p->user_ips_policy_id);
 
@@ -852,7 +861,7 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, const E
         Unified2RotateFile(config);
 
     hdr.length = htonl(sizeof(Unified2IDSEventIPv6));
-    hdr.type = htonl(UNIFIED2_IDS_EVENT_IPV6_VLAN);
+    hdr.type = htonl(UNIFIED2_IDS_EVENT_IPV6_VLAN_V2);
 
     memcpy_s(write_pkt_buffer, u2_buf_sz, &hdr, sizeof(hdr));
 

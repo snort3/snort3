@@ -38,8 +38,10 @@
 // CURRENT
 #define UNIFIED2_PACKET                2
 #define UNIFIED2_BUFFER                3  // !legacy_events
-#define UNIFIED2_IDS_EVENT_VLAN      104  // legacy_events
-#define UNIFIED2_IDS_EVENT_IPV6_VLAN 105  // legacy_events
+#define UNIFIED2_IDS_EVENT_VLAN      104  // legacy_events (original layout without outer VLAN)
+#define UNIFIED2_IDS_EVENT_IPV6_VLAN 105  // legacy_events (original layout without outer VLAN)
+#define UNIFIED2_IDS_EVENT_VLAN_V2   106  // legacy_events extended with vlanIdOuter
+#define UNIFIED2_IDS_EVENT_IPV6_VLAN_V2 107  // legacy_events extended with vlanIdOuter
 #define UNIFIED2_EXTRA_DATA          110
 #define UNIFIED2_EVENT3              114
 
@@ -86,7 +88,11 @@ struct Unified2Event
     uint16_t pkt_src_port_itype;
     uint16_t pkt_dst_port_icode;
     uint16_t pkt_vlan_id;
-    uint16_t unused;
+    union
+    {
+        uint16_t pkt_vlan_id_outer;
+        uint16_t unused;
+    };
 
     uint8_t pkt_ip_ver;  // 0x4 or 0x6, high nybble is src, low is dst
     uint8_t pkt_ip_proto;
@@ -128,6 +134,7 @@ struct Unified2IDSEvent
     uint8_t blocked;
     uint32_t mpls_label;
     uint16_t vlanId;
+    uint16_t vlanIdOuter;
     uint16_t pad2; // Policy ID
     char app_name[MAX_EVENT_APPNAME_LEN];
 };
@@ -154,6 +161,7 @@ struct Unified2IDSEventIPv6
     uint8_t blocked;
     uint32_t mpls_label;
     uint16_t vlanId;
+    uint16_t vlanIdOuter;
     uint16_t pad2; /*could be IPS Policy local id to support local sensor alerts*/
     char app_name[MAX_EVENT_APPNAME_LEN];
 };

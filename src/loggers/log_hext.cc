@@ -80,6 +80,7 @@ void DaqMessageEventHandler::handle(DataEvent& event, Flow*)
     dst.ntop(dhost, sizeof(dhost));
 
     uint16_t vlan_tag = (fs->vlan_tag == 0xfff) ?  0 : fs->vlan_tag;
+    uint16_t outer_vlan_tag = (fs->outer_vlan_tag == 0xfff) ? 0 : fs->outer_vlan_tag;
 
     TextLog_Print(hext_log,
         "\n$%s "        // type (sof or eof)
@@ -104,6 +105,7 @@ void DaqMessageEventHandler::handle(DataEvent& event, Flow*)
         "%u "           // address_space_id
         "%u "           // tenant_id
         "%hu "          // vlan_tag
+        "%hu "          // outer_vlan_tag
         "%hhu "         // protocol
         "%hhu"          // flags
         "\n",
@@ -127,6 +129,7 @@ void DaqMessageEventHandler::handle(DataEvent& event, Flow*)
         fs->address_space_id,
         fs->tenant_id,
         vlan_tag,
+        outer_vlan_tag,
         fs->protocol,
         fs->flags);
 }

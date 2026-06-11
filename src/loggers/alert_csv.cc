@@ -471,6 +471,11 @@ static void ff_vlan(const Args& a)
     TextLog_Print(csv_log, "%hu", a.pkt->get_flow_vlan_id());
 }
 
+static void ff_vlan_outer(const Args& a)
+{
+    TextLog_Print(csv_log, "%hu", a.pkt->get_flow_vlan_id_outer());
+}
+
 //-------------------------------------------------------------------------
 // module stuff
 //-------------------------------------------------------------------------
@@ -486,7 +491,7 @@ static const CsvFunc csv_func[] =
     ff_pkt_num, ff_priority, ff_proto, ff_rev, ff_rule, ff_seconds, ff_server_bytes,
     ff_server_pkts, ff_service, ff_sgt, ff_sid, ff_src_addr, ff_src_ap, ff_src_port,
     ff_target, ff_tcp_ack, ff_tcp_flags,ff_tcp_len, ff_tcp_seq, ff_tcp_win, ff_timestamp,
-    ff_tos, ff_ttl, ff_udp_len, ff_vlan
+    ff_tos, ff_ttl, ff_udp_len, ff_vlan, ff_vlan_outer
 };
 
 #define csv_range \
@@ -497,7 +502,7 @@ static const CsvFunc csv_func[] =
     "pkt_num | priority | proto | rev | rule | seconds | server_bytes | " \
     "server_pkts | service | sgt| sid | src_addr | src_ap | src_port | " \
     "target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win | timestamp | " \
-    "tos | ttl | udp_len | vlan"
+    "tos | ttl | udp_len | vlan | vlan_outer"
 
 #define csv_deflt \
     "timestamp pkt_num proto pkt_gen pkt_len dir src_ap dst_ap rule action"

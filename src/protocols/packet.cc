@@ -94,6 +94,7 @@ void Packet::reset()
     user_ips_policy_id = 0;
     user_network_policy_id = 0;
     vlan_idx = 0;
+    vlan_idx_outer = 0;
     filtering_state.clear();
     sect = PS_NONE;
     inspection_started_timestamp = 0;
@@ -267,6 +268,17 @@ uint16_t Packet::get_flow_vlan_id() const
         vid = layer::get_vlan_layer(this)->vid();
 
     return vid;
+}
+
+uint16_t Packet::get_flow_vlan_id_outer() const
+{
+    if ( !context->conf->get_vlan_agnostic() and vlan_idx_outer and (proto_bits & PROTO_BIT__VLAN) )
+    {
+        const vlan::VlanTagHdr* outer = layer::get_outer_vlan_layer(this);
+        if ( outer )
+            return outer->vid();
+    }
+    return 0;
 }
 
 uint32_t Packet::get_flow_geneve_vni() const

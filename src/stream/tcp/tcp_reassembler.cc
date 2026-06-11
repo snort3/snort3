@@ -261,6 +261,7 @@ Packet* TcpReassemblerBase::initialize_pdu(Packet* p, uint32_t pkt_flags, struct
     {
         pdu->proto_bits |= PROTO_BIT__VLAN;
         pdu->vlan_idx = p->vlan_idx;
+        pdu->vlan_idx_outer = p->vlan_idx_outer;
     }
 
     return pdu;
