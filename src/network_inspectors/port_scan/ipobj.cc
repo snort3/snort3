@@ -229,7 +229,8 @@ static char* check_delimiter(char* ipstr)
         prev += string(",");
         token = strtok_r(nullptr, ",", &saveptr);
     }
-    prev.pop_back();
+    if (!prev.empty())
+        prev.pop_back();
     char *tmp_ipstr = new char[prev.length() + 1];
     strcpy(tmp_ipstr, prev.c_str());
     return tmp_ipstr;
