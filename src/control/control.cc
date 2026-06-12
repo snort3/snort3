@@ -125,7 +125,7 @@ int ControlConn::read_commands()
         char* nl;
         while ((nl = strchr(p, '\n')) != nullptr)
         {
-            next_command.append(buf, nl - p);
+            next_command.append(p, nl - p);
             if (loggable(next_command))
                 LogMessage("Control: received command, %s\n", next_command.c_str());
             pending_commands.push(std::move(next_command));

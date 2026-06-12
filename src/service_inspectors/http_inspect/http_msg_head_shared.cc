@@ -121,7 +121,8 @@ void HttpMsgHeadShared::parse_header_block()
     int32_t num_seps;
 
     // The number of header lines in a message may be zero
-    header_line = new Field[session_data->num_head_lines[source_id]];
+    const int32_t nlines = session_data->num_head_lines[source_id];
+    header_line = new Field[nlines > 0 ? (size_t)nlines : 0u];
 
     // session_data->num_head_lines is computed by HttpStreamSplitter without consideration of
     // wrapping and may occasionally overstate the actual number of headers. That was OK for
@@ -217,9 +218,10 @@ int32_t HttpMsgHeadShared::find_next_header(const uint8_t* buffer, int32_t lengt
 // Divide header field lines into field name and field value
 void HttpMsgHeadShared::parse_header_lines()
 {
-    header_name = new Field[num_headers];
-    header_value = new Field[num_headers];
-    header_name_id = new HeaderId[num_headers];
+    const size_t nh = num_headers > 0 ? (size_t)num_headers : 0u;
+    header_name = new Field[nh];
+    header_value = new Field[nh];
+    header_name_id = new HeaderId[nh];
 
     for (int k=0; k < num_headers; k++)
     {

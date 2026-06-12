@@ -35,31 +35,25 @@
 #define FAILURE (-1)
 #define SUCCESS 0
 
-#define PCAP_MAGIC_NUMBER 0xa1b2c3d4
-#define PCAP_TIMEZONE 0
-#define PCAP_SIGFIGS 0
 #define PCAP_SNAPLEN 65535
 #define ETHERNET 1
 #define PCAP_LINKTYPE ETHERNET
 #define MAX_U2RECORD_DATA_LENGTH 65536
 
 static int GetRecord(FILE* input, u2record* rec);
-static int PcapInitOutput(FILE* output);
-static int PcapConversion(u2record* rec, FILE* output);
+static int PcapConversion(u2record* rec, pcap_dumper_t* dumper);
 
-static int ConvertLog(FILE* input, FILE* output, const char* format)
+static int ConvertLog(FILE* input, pcap_dumper_t* dumper, const char* format)
 {
     u2record tmp_record;
 
     /* Determine conversion function */
-    int (* ConvertRecord)(u2record*, FILE*) = nullptr;
+    int (* ConvertRecord)(u2record*, pcap_dumper_t*) = nullptr;
 
     /* This will become an if/else series once more formats are supported.
      * Callbacks are used so that this comparison only needs to happen once. */
     if (strncasecmp(format, "pcap", 4) == 0)
-    {
         ConvertRecord = PcapConversion;
-    }
 
     if (ConvertRecord == nullptr)
     {
@@ -76,16 +70,13 @@ static int ConvertLog(FILE* input, FILE* output, const char* format)
     }
 
     /* Run through input file and convert records */
-    while ( !(feof(input) || ferror(input) || ferror(output)) )
+    FILE* dump_file = pcap_dump_file(dumper);
+    while ( !(feof(input) || ferror(input) || ferror(dump_file)) )
     {
         if (GetRecord(input, &tmp_record) == FAILURE)
-        {
             break;
-        }
-        if (ConvertRecord(&tmp_record, output) == FAILURE)
-        {
+        if (ConvertRecord(&tmp_record, dumper) == FAILURE)
             break;
-        }
     }
     if (tmp_record.data != nullptr)
     {
@@ -97,62 +88,26 @@ static int ConvertLog(FILE* input, FILE* output, const char* format)
         fprintf(stderr, "Error reading input file, aborting...\n");
         return FAILURE;
     }
-    if (ferror(output))
+    if (ferror(dump_file))
     {
-        fprintf(stderr, "Error reading output file, aborting...\n");
+        fprintf(stderr, "Error writing output file, aborting...\n");
         return FAILURE;
     }
 
-    return SUCCESS;
-}
-
-/* Create and write the pcap file's global header */
-static int PcapInitOutput(FILE* output)
-{
-    size_t ret;
-    struct pcap_file_header hdr;
-
-    hdr.magic = PCAP_MAGIC_NUMBER;
-    hdr.version_major = PCAP_VERSION_MAJOR;
-    hdr.version_minor = PCAP_VERSION_MINOR;
-    hdr.thiszone = PCAP_TIMEZONE;
-    hdr.sigfigs = PCAP_SIGFIGS;
-    hdr.snaplen = PCAP_SNAPLEN;
-    hdr.linktype = PCAP_LINKTYPE;
-
-    ret = fwrite( (void*)&hdr, sizeof(struct pcap_file_header), 1, output);
-    if (ret < 1)
-    {
-        fprintf(stderr, "Error: Unable to write pcap file header\n");
-        return FAILURE;
-    }
     return SUCCESS;
 }
 
 /* Convert a unified2 packet record to pcap format, then dump */
-static int PcapConversion(u2record* rec, FILE* output)
+static int PcapConversion(u2record* rec, pcap_dumper_t* dumper)
 {
     Serial_Unified2Packet packet;
     struct pcap_pkthdr pcap_hdr;
     uint32_t* field;
     uint8_t* pcap_data;
-    static int packet_found = 0;
 
     /* Ignore IDS Events. We are only interested in Packets. */
     if (rec->type != UNIFIED2_PACKET)
-    {
         return SUCCESS;
-    }
-
-    /* Initialize the pcap file if this is the first packet */
-    if (!packet_found)
-    {
-        if (PcapInitOutput(output) == FAILURE)
-        {
-            return FAILURE;
-        }
-        packet_found = 1;
-    }
 
     /* Fill out the Serial_Unified2Packet */
     memcpy(&packet, rec->data, sizeof(Serial_Unified2Packet));
@@ -174,7 +129,7 @@ static int PcapConversion(u2record* rec, FILE* output)
 
     /* Write to the pcap file */
     pcap_data = rec->data + sizeof(Serial_Unified2Packet) - 4;
-    pcap_dump( (uint8_t*)output, &pcap_hdr, (uint8_t*)pcap_data);
+    pcap_dump((u_char*)dumper, &pcap_hdr, pcap_data);
 
     return SUCCESS;
 }
@@ -242,7 +197,8 @@ int main(int argc, char* argv[])
     const char* output_type = nullptr;
 
     FILE* input_file = nullptr;
-    FILE* output_file = nullptr;
+    pcap_t* pcap = nullptr;
+    pcap_dumper_t* dumper = nullptr;
 
     int c, errnum;
     opterr = 0;
@@ -299,31 +255,39 @@ int main(int argc, char* argv[])
         return FAILURE;
     }
 
-    /* Open the files */
+    /* Open the input file */
     if ((input_file = fopen(input_filename, "r")) == nullptr)
     {
         fprintf(stderr, "Unable to open file: %s\n", input_filename);
         return FAILURE;
     }
-    if ((output_file = fopen(output_filename, "w")) == nullptr)
+
+    /* Open the pcap output file */
+    pcap = pcap_open_dead(PCAP_LINKTYPE, PCAP_SNAPLEN);
+    if (pcap == nullptr)
     {
         fclose(input_file);
+        fprintf(stderr, "Unable to create pcap handle\n");
+        return FAILURE;
+    }
+    dumper = pcap_dump_open(pcap, output_filename);
+    if (dumper == nullptr)
+    {
+        fclose(input_file);
+        pcap_close(pcap);
         fprintf(stderr, "Unable to open/create file: %s\n", output_filename);
         return FAILURE;
     }
 
-    ConvertLog(input_file, output_file, output_type);
+    ConvertLog(input_file, dumper, output_type);
 
     if (fclose(input_file) != 0)
     {
         errnum = errno;
         fprintf(stderr, "Error closing input: %s\n", strerror(errnum));
     }
-    if (fclose(output_file) != 0)
-    {
-        errnum = errno;
-        fprintf(stderr, "Error closing output: %s\n", strerror(errnum));
-    }
+    pcap_dump_close(dumper);
+    pcap_close(pcap);
 
     return 0;
 }

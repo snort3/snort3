@@ -126,6 +126,7 @@ struct PlugSet
 static THREAD_LOCAL PlugSet* load_set = nullptr;
 
 static std::atomic<unsigned> load_id = 1;
+static THREAD_LOCAL unsigned thread_load_id = 0;
 
 static std::mutex trash_mutex;
 static std::vector<void*> trash;
@@ -748,16 +749,22 @@ void PluginManager::thread_init()
         if ( it.second->pin and it.second->pin->instantiated > 0 )
             it.second->pin->thread_init();
     }
+    thread_load_id = load_id;
 }
 
 void PluginManager::thread_reinit(const SnortConfig* sc)
 {
-    const PluginMap& plug_map = get_plug_map();
-
-    for ( const auto& it : plug_map )
+    unsigned cur = load_id;
+    if ( cur > thread_load_id )
     {
-        if ( it.second->pin and it.second->pin->instantiated == load_id )
-            it.second->pin->thread_init();
+        const PluginMap& plug_map = get_plug_map();
+
+        for ( const auto& it : plug_map )
+        {
+            if ( it.second->pin and it.second->pin->instantiated == cur )
+                it.second->pin->thread_init();
+        }
+        thread_load_id = cur;
     }
 
     get_default_network_policy(sc)->cd_mgr->thread_reinit();

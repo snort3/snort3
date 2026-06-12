@@ -57,7 +57,7 @@ TEST_GROUP(OpcuaCurse)
         tracker.opcua.raw_msg_type[0] = '_';
         tracker.opcua.raw_msg_type[1] = '_';
         tracker.opcua.raw_msg_type[2] = '_';
-        tracker.opcua.msg_type = OPCUA_MSG__UNDEFINED;
+        tracker.opcua.msg_type = OPCUA_MSG_UNDEFINED;
     }
 
     void create_opcua_message(const char* msg, uint8_t* data, uint32_t msg_size)

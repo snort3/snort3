@@ -23,6 +23,8 @@
 // OPC-UA curse provides the ability to determine if the traffic being processed
 // conforms to the OPC Unified Architecture protocol traffic
 
+#include "service_inspectors/opcua/opcua_decode.h"
+
 enum OPCUA_State
 {
     OPCUA_STATE__MSG_TYPE_1,
@@ -49,18 +51,6 @@ enum OPCUA_State
     OPCUA_STATE__NOT_FOUND,
 };
 
-enum OpcuaMsgType
-{
-    OPCUA_MSG__UNDEFINED,
-    OPCUA_MSG__HEL,
-    OPCUA_MSG__ACK,
-    OPCUA_MSG__ERR,
-    OPCUA_MSG__RHE,
-    OPCUA_MSG__OPN,
-    OPCUA_MSG__MSG,
-    OPCUA_MSG__CLO,
-};
-
 // Protocol message minimum size constants
 #define CONN_PROTO_HEL_MIN_SIZE 24
 #define CONN_PROTO_ACK_MIN_SIZE 20
@@ -82,7 +72,7 @@ public:
     OPCUA_State last_state = OPCUA_State::OPCUA_STATE__MSG_TYPE_1;
     char raw_msg_type[3] = {'_', '_', '_'};
     char is_final = '_';
-    OpcuaMsgType msg_type = OPCUA_MSG__UNDEFINED;
+    OpcuaMsgType msg_type = OPCUA_MSG_UNDEFINED;
 };
 
 #endif

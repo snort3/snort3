@@ -203,7 +203,7 @@ struct RPCProgram
     char* name;
 };
 
-static THREAD_LOCAL RPCProgram* rpc_programs;
+static RPCProgram* rpc_programs;
 
 static uint8_t rpc_reply_accepted_pattern[8] = { 0,0,0,1,0,0,0,0 };
 static uint8_t rpc_reply_denied_pattern[8] = { 0,0,0,1,0,0,0,1 };
@@ -224,7 +224,6 @@ RpcServiceDetector::RpcServiceDetector(ServiceDiscovery* sd)
         {
             if (rpc->r_name)
             {
-                // FIXIT-RC - the memory allocated here may not be freed...
                 prog = (RPCProgram*)snort_calloc(sizeof(RPCProgram));
                 prog->program = rpc->r_number;
                 prog->next = rpc_programs;

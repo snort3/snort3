@@ -261,15 +261,9 @@ void StreamBase::tear_down(SnortConfig* sc, bool shutdown)
         sc->register_reload_handler(new StreamUnloadReloadResourceManager);
 }
 
-static THREAD_LOCAL bool keep_tld = false;
-
 void StreamBase::tinit()
 {
-    if ( flow_con )
-    {
-        keep_tld = true;
-        return;
-    }
+    assert(!flow_con);
     assert(config.flow_cache_cfg.max_flows);
 
     // this is temp added to suppress the compiler error only
@@ -315,11 +309,6 @@ void StreamBase::tinit()
 
 void StreamBase::tterm()
 {
-    if ( keep_tld )
-    {
-        keep_tld = false;
-        return;
-    }
     Stream::delete_held_packet_queue();
     StreamHAManager::tterm();
     FlushBucket::clear();

@@ -324,6 +324,9 @@ void MemoryCap::reset_thread_stats()
 
 void MemoryCap::update_global_stats(bool dump_stats)
 {
+    if ( !heap )
+        return;
+
     // Populate heap pegs into the calling thread's stats. For thread 0 these
     // are included in the framework's per-thread aggregation during dump_stats;
     // other threads have 0 for heap fields so the totals are correct.
