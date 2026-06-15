@@ -291,5 +291,5 @@ void AppIdApi::set_ssl_certificate_key(const Flow& flow, const std::string& cert
 {
     AppIdSession* asd = get_appid_session(flow);
     if (asd != nullptr and asd->get_odp_ctxt().get_appid_shadow_traffic_status() and !cert_key.empty())
-        asd->set_cert_key(cert_key);
+        asd->set_cert_key(cert_key.c_str());
 }

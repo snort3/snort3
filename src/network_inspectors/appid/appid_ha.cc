@@ -156,7 +156,7 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
         asd->set_payload_id(appHA->appId[APPID_HA_APP_PAYLOAD]);
         asd->misc_app_id = appHA->appId[APPID_HA_APP_MISC];
     }
-    asd->client_inferred_service_id = appHA->appId[APPID_HA_APP_CLIENT_INFERRED_SERVICE];
+    asd->set_client_inferred_service_id(appHA->appId[APPID_HA_APP_CLIENT_INFERRED_SERVICE]);
     asd->set_port_service_id(appHA->appId[APPID_HA_APP_PORT_SERVICE]);
     asd->set_tp_app_id(appHA->appId[APPID_HA_APP_TP]);
     asd->set_tp_payload_app_id(appHA->appId[APPID_HA_APP_TP_PAYLOAD]);
@@ -204,7 +204,7 @@ bool AppIdHAAppsClient::produce(Flow& flow, HAMessage& msg)
         appHA->appId[APPID_HA_APP_MISC] = asd->misc_app_id;
         appHA->appId[APPID_HA_APP_REFERRED] = APP_ID_NONE;
     }
-    appHA->appId[APPID_HA_APP_CLIENT_INFERRED_SERVICE] = asd->client_inferred_service_id;
+    appHA->appId[APPID_HA_APP_CLIENT_INFERRED_SERVICE] = asd->get_client_inferred_service_id();
     appHA->appId[APPID_HA_APP_PORT_SERVICE] = asd->get_port_service_id();
     appHA->appId[APPID_HA_APP_TP] = asd->get_tp_app_id();
     appHA->appId[APPID_HA_APP_TP_PAYLOAD] = asd->get_tp_payload_app_id();

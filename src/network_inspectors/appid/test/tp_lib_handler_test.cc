@@ -32,6 +32,7 @@
 #include "profiler/profiler.h"
 
 #include "appid_config.h"
+#include "appid_peg_counts.h"
 #include "log_message_mock.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
@@ -44,6 +45,7 @@ static TPLibHandler* tph = nullptr;
 static AppIdConfig config;
 static AppIdContext ctxt(config);
 static OdpContext stub_odp_ctxt(config, nullptr);
+THREAD_LOCAL AppIdStats appid_stats;
 OdpContext* AppIdContext::odp_ctxt = &stub_odp_ctxt;
 ThirdPartyAppIdContext* AppIdContext::tp_appid_ctxt = nullptr;
 

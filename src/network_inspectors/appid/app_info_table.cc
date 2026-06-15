@@ -759,6 +759,22 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                 const std::string user_value(token2);
                 odp_ctxt.get_user_data_map().add_user_data(user_table, user_key, user_value, false);
             }
+            else if (!(strcasecmp(conf_key, "tp_memory_allocation_stats")))
+            {
+                if (!(strcasecmp(conf_val, "disabled")))
+                {
+                    odp_ctxt.tp_memory_allocation_stats = false;
+                }
+                else if (!(strcasecmp(conf_val, "enabled")))
+                {
+                    odp_ctxt.tp_memory_allocation_stats = true;
+                }
+                else
+                {
+                    ParseWarning(WARN_CONF, "appid: invalid value for tp_memory_allocation_stats at line %s:%u\n",
+                        path, line);
+                }
+            }
             else
                 ParseWarning(WARN_CONF, "appid: unsupported configuration: %s\n", conf_key);
         }

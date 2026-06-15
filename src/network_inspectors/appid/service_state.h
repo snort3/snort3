@@ -42,7 +42,7 @@ class ServiceDiscoveryState;
 typedef std::map<AppIdServiceStateKey, ServiceDiscoveryState*> Map_t;
 typedef std::list<Map_t::iterator> Queue_t;
 
-enum ServiceState
+enum ServiceState : uint8_t
 {
     SEARCHING_PORT_PATTERN = 0,
     SEARCHING_BRUTE_FORCE,
@@ -132,39 +132,35 @@ public:
         reset_time = resetTime;
     }
 
-    void next_brute_force(IpProtocol proto)
+    void next_brute_force()
     {
-        if ( tcp_brute_force_mgr and (proto == IpProtocol::TCP) )
-            tcp_brute_force_mgr->next();
-        else if  ( udp_brute_force_mgr and (proto == IpProtocol::UDP) )
-            udp_brute_force_mgr->next();
+        if ( brute_force_mgr )
+            brute_force_mgr->next();
         brute_force_inprocess_count = 0;
     }
 
     Queue_t::iterator qptr; // Our place in service_state_queue
 
-private:
     void reset();
-
-    ServiceState state;
+    
+private:
+    time_t reset_time;
     ServiceDetector* service = nullptr;
-    AppIdDetectorList* tcp_brute_force_mgr = nullptr;
-    AppIdDetectorList* udp_brute_force_mgr = nullptr;
-    unsigned valid_count = 0;
-    unsigned detract_count = 0;
-    snort::SfIp last_detract;
-
-    // consecutive incompatible flows - incompatible means client packet did not match.
-    unsigned invalid_client_count = 0;
-
+    AppIdDetectorList* brute_force_mgr = nullptr;
+    
     /**IP address of client in last flow that was declared incompatible. If client IP address is
      * different every time, then consecutive incompatible status indicate that flow is not using
      * specific service.
      */
-    snort::SfIp last_invalid_client;
-    time_t reset_time;
-    SnortClock::time_point failed_timestamp;
+    snort::SfIp last_failed_client;
+
+    ServiceState state;
+    uint8_t valid_count = 0;
+    uint8_t detract_count = 0;
+    // consecutive incompatible flows - incompatible means client packet did not match.
+    uint8_t invalid_client_count = 0;
     uint8_t brute_force_inprocess_count;
+    SnortClock::time_point failed_timestamp;
 };
 
 class AppIdServiceState
@@ -232,17 +228,28 @@ public:
 
         if ( sit.second )
         {
-            // emplace succeeded
-            ss = it->second = new ServiceDiscoveryState;
-            q.emplace_back(it);
-            mem_used += sz;
-            ss->qptr = --q.end(); // remember our place in the queue
-            appid_stats.service_cache_adds++;
-            appid_stats.bytes_in_use = mem_used;
-            appid_stats.items_in_use = m.size();
-
-            if ( mem_used > memcap )
-                remove( q.front() );
+            if ( mem_used + sz > memcap )
+            {
+                auto oldest_entry = q.front();  // reuse the ServiceDiscoveryState of the oldest item
+                it->second = oldest_entry->second;
+                ss = it->second;
+                ss->reset();
+                q.erase(oldest_entry->second->qptr);
+                m.erase(oldest_entry);
+                q.emplace_back(it);
+                ss->qptr = --q.end(); // remember our place in the queue
+            }
+            else
+            {
+                // emplace succeeded
+                ss = it->second = new ServiceDiscoveryState;
+                q.emplace_back(it);
+                mem_used += sz;
+                ss->qptr = --q.end(); // remember our place in the queue
+                appid_stats.service_cache_adds++;
+                appid_stats.bytes_in_use = mem_used;
+                appid_stats.items_in_use = m.size();
+            }
         }
         else
         {

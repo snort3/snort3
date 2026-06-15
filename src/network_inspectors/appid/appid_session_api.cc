@@ -43,9 +43,18 @@ using namespace snort;
 static THREAD_LOCAL uint32_t appid_flow_data_id = 0;
 
 AppIdSessionApi::AppIdSessionApi(const AppIdSession* asd, const SfIp& ip) :
-    asd(asd), initiator_ip(ip),
-    session_id(std::to_string(get_instance_id()) + "." + std::to_string(++appid_flow_data_id))
+    asd(asd), initiator_ip(ip)
 { }
+
+const char* AppIdSessionApi::get_session_id()
+{
+    if (session_id == nullptr)
+    {
+        auto tmp = std::to_string(get_instance_id()) + "." + std::to_string(++appid_flow_data_id);
+        session_id = snort_strdup(tmp.c_str());
+    }
+    return session_id;
+}
 
 AppId AppIdSessionApi::get_service_app_id() const
 {

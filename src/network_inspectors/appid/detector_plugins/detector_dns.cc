@@ -130,7 +130,7 @@ struct DNSAnswerData
 
 #pragma pack()
 
-enum DNSState
+enum DNSState : uint8_t
 {
     DNS_STATE_QUERY,
     DNS_STATE_RESPONSE,

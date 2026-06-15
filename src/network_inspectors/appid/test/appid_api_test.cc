@@ -314,7 +314,7 @@ TEST(appid_api, set_ssl_certificate_key)
     );
     string cert_key = "valid_certificate_key";
     appid_api.set_ssl_certificate_key(*flow, cert_key);
-    asd.set_cert_key(cert_key);
+    asd.set_cert_key(cert_key.c_str());
     CHECK_EQUAL(asd.get_cert_key(), cert_key);
     delete &asd.get_api();
 }

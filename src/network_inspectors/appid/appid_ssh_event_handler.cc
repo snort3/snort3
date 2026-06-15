@@ -101,7 +101,7 @@ static void client_success(const SshAppIdInfo& fd, AppIdSession& asd, AppidChang
     asd.set_ss_application_ids(client_id, APP_ID_NONE, change_bits);
     asd.set_client_version(fd.version.c_str(), change_bits);
     asd.set_client_detected();
-    asd.client_inferred_service_id = APP_ID_SSH;
+    asd.set_client_inferred_service_id(APP_ID_SSH);
 }
 
 static void service_success(SshAppIdInfo& fd, const Packet& p, AppIdSession& asd,

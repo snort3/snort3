@@ -107,7 +107,8 @@ TEST_GROUP(detector_dns_doq_tests)
     }
 
     void teardown() override
-    {   
+    {
+        static_dns_session.reset();
         delete test_detector;
         const_cast<DnsTcpServiceDetector*&>(test_detector) = nullptr;
         dns_data.free_dns_cache();

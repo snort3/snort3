@@ -35,9 +35,9 @@ enum class DomainFrontingStatus
 class SO_PUBLIC TLSDomainFrontCheckEvent : public snort::DataEvent 
 {
 public: 
-     TLSDomainFrontCheckEvent(const std::string& certificate_id, 
-          const std::string& hostname)
-     : cert_id(certificate_id), hostname(hostname) {}
+     TLSDomainFrontCheckEvent(const char* certificate_id, 
+          const char* hostname)
+     : cert_id(certificate_id ? certificate_id : ""), hostname(hostname ? hostname : "") {}
 
      const std::string& get_cert_id() { return cert_id; }
      const std::string& get_hostname () { return hostname; }
@@ -45,8 +45,8 @@ public:
      DomainFrontingStatus get_cert_lookup_verdict() const { return df_status; }
 
 private:
-     const std::string &cert_id;
-     const std::string &hostname;
+     const std::string cert_id;
+     const std::string hostname;
      DomainFrontingStatus df_status = DomainFrontingStatus::UNDEFINED;
 };
 

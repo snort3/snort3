@@ -47,8 +47,7 @@ const size_t MapList::sz = sizeof(ServiceDiscoveryState) +
 ServiceDiscoveryState::ServiceDiscoveryState()
 {
     state = ServiceState::SEARCHING_PORT_PATTERN;
-    last_detract.clear();
-    last_invalid_client.clear();
+    last_failed_client.clear();
     reset_time = 0;
     failed_timestamp = TIME_POINT_ZERO;
     brute_force_inprocess_count = 0;
@@ -56,8 +55,7 @@ ServiceDiscoveryState::ServiceDiscoveryState()
 
 ServiceDiscoveryState::~ServiceDiscoveryState()
 {
-    delete tcp_brute_force_mgr;
-    delete udp_brute_force_mgr;
+    delete brute_force_mgr;
 }
 
 ServiceDetector* ServiceDiscoveryState::select_detector_by_brute_force(IpProtocol proto,
@@ -65,34 +63,34 @@ ServiceDetector* ServiceDiscoveryState::select_detector_by_brute_force(IpProtoco
 {
     if (proto == IpProtocol::TCP)
     {
-        if ( !tcp_brute_force_mgr )
-            tcp_brute_force_mgr = new AppIdDetectorList(IpProtocol::TCP, sd);
+        if ( !brute_force_mgr )
+            brute_force_mgr = new AppIdDetectorList(IpProtocol::TCP, sd);
 
         if ( ++brute_force_inprocess_count >= brute_force_inprocess_threshold )
         {
-            service = tcp_brute_force_mgr->next();
+            service = brute_force_mgr->next();
             brute_force_inprocess_count = 0;
         }
         else
         {
-            service = tcp_brute_force_mgr->current();
+            service = brute_force_mgr->current();
         }
 
         APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Brute-force state %s\n", service? "" : "failed - no more TCP detectors");
     }
     else if (proto == IpProtocol::UDP)
     {
-        if ( !udp_brute_force_mgr )
-            udp_brute_force_mgr = new AppIdDetectorList(IpProtocol::UDP, sd);
+        if ( !brute_force_mgr )
+            brute_force_mgr = new AppIdDetectorList(IpProtocol::UDP, sd);
         
         if ( ++brute_force_inprocess_count > brute_force_inprocess_threshold )
         {
-            service = udp_brute_force_mgr->next();
+            service = brute_force_mgr->next();
             brute_force_inprocess_count = 0;
         }
         else
         {
-            service = udp_brute_force_mgr->current();
+            service = brute_force_mgr->current();
         }
 
         APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Brute-force state %s\n", service? "" : "failed - no more UDP detectors");
@@ -122,9 +120,8 @@ void ServiceDiscoveryState::set_service_id_valid(ServiceDetector* sd)
     {
         valid_count = 1;
         detract_count = 0;
-        last_detract.clear();
+        last_failed_client.clear();
         invalid_client_count = 0;
-        last_invalid_client.clear();
     }
     else if ( valid_count < STATE_ID_MAX_VALID_COUNT)
         valid_count++;
@@ -152,25 +149,24 @@ void ServiceDiscoveryState::set_service_id_failed(AppIdSession& asd, const SfIp*
             {
                 state = ServiceState::SEARCHING_PORT_PATTERN;
                 invalid_client_count = 0;
-                last_invalid_client.clear();
                 valid_count = 0;
                 detract_count = 0;
-                last_detract.clear();
+                last_failed_client.clear();
             }
             else
             {
                 valid_count--;
-                last_invalid_client = *client_ip;
+                last_failed_client = *client_ip;
                 invalid_client_count = 0;
             }
         }
         else if ( invalid_client_count == 0 )
         {
             // Just a plain old fail.  If too many of these happen, start search process over.
-            if (last_detract.fast_eq6(*client_ip))
+            if (last_failed_client.fast_eq6(*client_ip))
                 detract_count++;
             else
-                last_detract = *client_ip;
+                last_failed_client = *client_ip;
 
             if (detract_count >= STATE_ID_NEEDED_DUPE_DETRACT_COUNT)
             {
@@ -178,10 +174,9 @@ void ServiceDiscoveryState::set_service_id_failed(AppIdSession& asd, const SfIp*
                 {
                     state = ServiceState::SEARCHING_PORT_PATTERN;
                     invalid_client_count = 0;
-                    last_invalid_client.clear();
+                    last_failed_client.clear();
                     valid_count = 0;
                     detract_count = 0;
-                    last_detract.clear();
                 }
                 else
                     valid_count--;
@@ -206,12 +201,12 @@ void ServiceDiscoveryState::update_service_incompatible(const SfIp* ip)
 {
     if ( invalid_client_count < STATE_ID_INVALID_CLIENT_THRESHOLD )
     {
-        if ( last_invalid_client.fast_equals_raw(*ip) )
+        if ( last_failed_client.fast_equals_raw(*ip) )
             invalid_client_count++;
         else
         {
             invalid_client_count += 3;
-            last_invalid_client = *ip;
+            last_failed_client = *ip;
         }
     }
 }
@@ -233,8 +228,7 @@ bool ServiceDiscoveryState::check_and_expire_failed_state()
 void ServiceDiscoveryState::reset()
 {
     state = ServiceState::SEARCHING_PORT_PATTERN;
-    last_detract.clear();
-    last_invalid_client.clear();
+    last_failed_client.clear();
     reset_time = 0;
     failed_timestamp = TIME_POINT_ZERO;
     invalid_client_count = 0;
@@ -243,13 +237,10 @@ void ServiceDiscoveryState::reset()
     service = nullptr;
     brute_force_inprocess_count = 0;
 
-    if ( tcp_brute_force_mgr )
-        delete tcp_brute_force_mgr;
-    if ( udp_brute_force_mgr )
-        delete udp_brute_force_mgr;
+    if ( brute_force_mgr )
+        delete brute_force_mgr;
 
-    tcp_brute_force_mgr = nullptr;
-    udp_brute_force_mgr = nullptr;
+    brute_force_mgr = nullptr;
 }
 
 bool AppIdServiceState::initialize(size_t memcap)

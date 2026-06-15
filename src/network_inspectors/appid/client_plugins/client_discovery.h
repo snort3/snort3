@@ -36,6 +36,7 @@ struct ClientAppMatch
     struct ClientAppMatch* next;
     unsigned count;
     const ClientDetector* detector = nullptr;
+    unsigned short pattern_len;
 };
 
 class ClientDiscovery : public AppIdDiscovery

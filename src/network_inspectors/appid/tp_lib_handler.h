@@ -73,6 +73,6 @@ private:
     bool load_callback(const char* path);
 };
 
-TPAppidProfilerFunctions get_tp_appid_profiler_functions();
+TPAppidProfilerFunctions get_tp_appid_profiler_functions(bool is_profiling_enabled);
 
 #endif

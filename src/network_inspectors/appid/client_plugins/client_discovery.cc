@@ -131,13 +131,16 @@ static int pattern_match(void* id, void* /*unused_tree*/, int match_end_pos, voi
                 break;
 
         if (cam)
+        {
             cam->count++;
+        }
         else
         {
             cam = (ClientAppMatch*)snort_alloc(sizeof(ClientAppMatch));
 
             cam->count = 1;
             cam->detector =  static_cast<const ClientDetector*>(pd->service);
+            cam->pattern_len = pd->size;
             cam->next = *matches;
             *matches = cam;
         }
@@ -217,7 +220,29 @@ ClientAppMatch* ClientDiscovery::find_detector_candidates(const Packet* pkt, con
     if ( patterns )
         patterns->find_all((const char*)pkt->data, pkt->dsize, &pattern_match, false, (void*)&match_list);
 
-    return match_list;
+    // Sort found patterns by matched pattern length in descending order
+    ClientAppMatch* sorted = nullptr;
+    while(match_list)
+    {
+        ClientAppMatch* current = match_list;
+        match_list = match_list->next;
+
+        if (!sorted || current->pattern_len >= sorted->pattern_len)
+        {
+            current->next = sorted;
+            sorted = current;
+        }
+        else
+        {
+            ClientAppMatch* pos = sorted;
+            while(pos->next && current->pattern_len < pos->next->pattern_len)
+                pos = pos->next;
+            current->next = pos->next;
+            pos->next = current;
+        }
+    }
+
+    return sorted;
 }
 
 void ClientDiscovery::create_detector_candidates_list(AppIdSession& asd, Packet* p)
@@ -234,8 +259,8 @@ void ClientDiscovery::create_detector_candidates_list(AppIdSession& asd, Packet*
         if (!cd)
             break;
 
-        if ( asd.client_candidates.find(cd->get_name()) == asd.client_candidates.end() )
-            asd.client_candidates[cd->get_name()] = cd;
+        if ( std::find(asd.client_candidates.begin(), asd.client_candidates.end(), cd) == asd.client_candidates.end() )
+            asd.client_candidates.push_back(cd);
     }
 
     free_matched_list(&match_list);
@@ -277,14 +302,14 @@ void ClientDiscovery::exec_client_detectors(AppIdSession& asd, Packet* p,
         for ( auto kv = asd.client_candidates.begin(); kv != asd.client_candidates.end(); )
         {
             AppIdDiscoveryArgs disco_args(p->data, p->dsize, direction, asd, p, change_bits);
-            int result = kv->second->validate(disco_args);
+            int result = (*kv)->validate(disco_args);
             APPID_LOG(p, TRACE_DEBUG_LEVEL, "%s client candidate returned %s (%d)\n",
-                kv->second->get_log_name().c_str(),
-                kv->second->get_code_string((APPID_STATUS_CODE)result), result);
+                (*kv)->get_log_name().c_str(),
+                (*kv)->get_code_string((APPID_STATUS_CODE)result), result);
 
             if (result == APPID_SUCCESS)
             {
-                asd.client_detector = kv->second;
+                asd.client_detector = *kv;
                 asd.client_candidates.clear();
                 break;
             }

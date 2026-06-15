@@ -31,6 +31,17 @@
 
 using namespace snort;
 
+namespace snort
+{
+    char* snort_strdup(const char* str)
+    {
+        size_t n = strlen(str) + 1;
+        char* p = (char*)snort_alloc(n);
+        memcpy(p, str, n);
+        return p;
+    }
+}
+
 TEST_GROUP(appid_dns_session)
 {
 };
@@ -40,7 +51,7 @@ TEST(appid_dns_session, set_host)
     AppIdDnsSession dns_session;
     AppidChangeBits change_bits;
 
-    char* host1 = "first host";
+    const char* host1 = "first host";
     dns_session.set_host(host1, change_bits, true);
     STRCMP_EQUAL_TEXT(host1, dns_session.get_host(), "DNS session host mismatch");
     CHECK_TEXT(change_bits.test(APPID_DNS_REQUEST_HOST_BIT), "Change bits should have DNS request bit set");
@@ -48,7 +59,7 @@ TEST(appid_dns_session, set_host)
     std::string str;
     change_bits_to_string(change_bits, str);
     STRCMP_EQUAL_TEXT("dns-host", str.c_str(), "Change bits string mismatch");
-    char* host2 = "second host";
+    const char* host2 = "second host";
     dns_session.set_host(host2, change_bits, false);
     STRCMP_EQUAL_TEXT(host2, dns_session.get_host(), "DNS session host mismatch");
     CHECK_TEXT(!change_bits.test(APPID_DNS_REQUEST_HOST_BIT), "Change bits should not have DNS request bit set");

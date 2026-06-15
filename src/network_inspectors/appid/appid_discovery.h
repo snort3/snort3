@@ -64,7 +64,7 @@ struct Packet;
 #define SCAN_SSL_ORG_UNIT_FLAG      (1<<13)
 #define SCAN_SSL_ALT_NAME           (1<<14)
 
-enum FirstPktAppIdDiscovered
+enum FirstPktAppIdDiscovered : uint8_t
 {
     NO_APPID_FOUND = 0,
     FIRST_CLIENT_APPID_FOUND,

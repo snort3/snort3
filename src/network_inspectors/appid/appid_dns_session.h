@@ -23,7 +23,7 @@
 #define APPID_DNS_SESSION_H
 
 #include <string>
-
+#include "utils/util.h"
 #include "pub_sub/appid_events.h"
 
 #define DNS_GOT_QUERY    0x01
@@ -33,11 +33,22 @@ class AppIdDnsSession
 {
 public:
     AppIdDnsSession() { }
-    ~AppIdDnsSession() { }
+    ~AppIdDnsSession()
+    {
+        if (host)
+        {
+            snort_free(host);
+            host = nullptr;
+        }
+    }
 
     void reset()
     {
-        host.clear();
+        if (host)
+        {
+            snort_free(host);
+            host = nullptr;
+        }
         state = 0;
         response_type = 0;
         id = 0;
@@ -79,11 +90,15 @@ public:
     { response_type = responseType; }
 
     const char* get_host() const
-    { return host.c_str(); }
+    { return host; }
 
     void set_host(const char* host, AppidChangeBits& change_bits, bool request)
     {
-        this->host = host;
+        if (this->host)
+        {
+            snort_free(this->host);
+        }
+        this->host = snort::snort_strdup(host);
         if (request)
         {
             change_bits.reset(APPID_DNS_RESPONSE_HOST_BIT);
@@ -97,7 +112,7 @@ public:
     }
 
     uint32_t get_host_len() const
-    { return host.size(); }
+    { return host ? strlen(host) : 0; }
 
     uint16_t get_host_offset() const
     { return host_offset; }
@@ -123,7 +138,7 @@ protected:
     uint16_t id = 0;
     uint16_t record_type = 0;
     uint32_t ttl = 0;
-    std::string host;
+    char* host = nullptr;
     uint16_t host_offset = 0;
     uint16_t options_offset = 0;
     bool doh = false;

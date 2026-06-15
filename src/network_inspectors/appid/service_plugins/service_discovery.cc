@@ -588,7 +588,7 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
             sds = AppIdServiceState::add(ip, proto, port, group, asd.asid, asd.is_decrypted(), true);
 
         if ( sds->get_state() == ServiceState::SEARCHING_BRUTE_FORCE )
-            sds->next_brute_force(proto);
+            sds->next_brute_force();
     }
 
     /* Failed all candidates, or no detector identified after seeing bidirectional exchange */

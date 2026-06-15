@@ -587,6 +587,9 @@ static const PegInfo appid_pegs[] =
     { CountType::SUM, "tp_reload_ignored_pkts", "count of packets ignored after third-party module is reloaded" },
     { CountType::NOW, "bytes_in_use", "number of bytes in use in the cache" },
     { CountType::NOW, "items_in_use", "items in use in the cache" },
+    { CountType::SUM, "tp_mem_allocations", "number of memory allocations in third-party module" },
+    { CountType::SUM, "tp_mem_frees", "number of memory frees in third-party module" },
+    { CountType::NOW, "tp_mem_bytes_in_use", "number of bytes in use in third-party module" },
     { CountType::END, nullptr, nullptr },
 };
 

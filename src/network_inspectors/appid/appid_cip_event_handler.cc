@@ -32,7 +32,7 @@ void CipEventHandler::client_handler(AppIdSession& asd)
 {
     asd.set_client_id(APP_ID_CIP);
     asd.set_client_detected();
-    asd.client_inferred_service_id = APP_ID_CIP;
+    asd.set_client_inferred_service_id(APP_ID_CIP);
 }
 
 void CipEventHandler::service_handler(const Packet& p, AppIdSession& asd)

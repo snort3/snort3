@@ -145,14 +145,15 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t port,
         FlowData(inspector_id),
         inspector(inspector),
         config(inspector.get_ctxt().config),
-        initiator_port(port),
 #ifndef DISABLE_TENANT_ID
         tenant_id(tenant_id),
 #endif
-        asid(asid), protocol(proto),
+        asid(asid),
+        protocol(proto),
+        initiator_port(port),
         api(*(new AppIdSessionApi(this, *ip))), odp_ctxt(odp_ctxt),
-        odp_ctxt_version(odp_ctxt.get_version()),
-        tp_appid_ctxt(pkt_thread_tp_appid_ctxt)
+        tp_appid_ctxt(pkt_thread_tp_appid_ctxt),
+        odp_ctxt_version(odp_ctxt.get_version())
 {
     inspector.add_ref();
     appid_stats.total_sessions++;
@@ -1504,7 +1505,7 @@ void AppIdSession::process_shadow_traffic_appids()
 
 void AppIdSession::check_domain_fronting_status(const std::string& host)
 {
-    TLSDomainFrontCheckEvent domain_front_event(api.asd->get_cert_key(), host);
+    TLSDomainFrontCheckEvent domain_front_event(api.asd->get_cert_key(), host.c_str());
     DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::DOMAIN_FRONTING, domain_front_event);
     if (DomainFrontingStatus::MISMATCH == domain_front_event.get_cert_lookup_verdict())
     {

@@ -52,6 +52,9 @@ struct AppIdStats
     PegCount tp_reload_ignored_pkts;
     PegCount bytes_in_use;
     PegCount items_in_use;
+    PegCount tp_mem_allocations;
+    PegCount tp_mem_frees;
+    PegCount tp_mem_bytes_in_use;
 };
 
 class AppIdPegCounts

@@ -70,14 +70,14 @@ const uint8_t* service_strstr(const uint8_t* haystack, unsigned haystack_len,
 #define APPID_SESSION_DATA_CLIENT_MODSTATE_BIT   0x40000000
 #define APPID_SESSION_DATA_DETECTOR_MODSTATE_BIT 0x80000000
 
-enum APPID_DISCOVERY_STATE
+enum APPID_DISCOVERY_STATE : uint8_t
 {
     APPID_DISCO_STATE_NONE = 0,
     APPID_DISCO_STATE_STATEFUL,
     APPID_DISCO_STATE_FINISHED
 };
 
-enum MatchedTlsType
+enum MatchedTlsType : uint8_t
 {
     MATCHED_TLS_NONE = 0,
     MATCHED_TLS_SNI,
@@ -102,6 +102,8 @@ public:
             snort_free(tls_cname);
         if (tls_org_unit)
             snort_free(tls_org_unit);
+        if (tls_cert_key)
+            snort_free(tls_cert_key);
     }
 
     const char* get_tls_host() const
@@ -238,11 +240,24 @@ public:
 
     bool is_tls_data_finished() const { return tls_data_finished; }
 
+    const char* get_cert_key() const
+    { return tls_cert_key; }
+
+    void set_cert_key(const char* key)
+    {
+        if (tls_cert_key)
+        {
+            snort_free(tls_cert_key);
+        }
+        tls_cert_key = snort::snort_strdup(key);
+    }
+
 private:
     char* tls_sni = nullptr;
     char* tls_first_alt_name = nullptr;
     char* tls_cname = nullptr;
     char* tls_org_unit = nullptr;
+    char* tls_cert_key = nullptr;
     bool tls_handshake_done = false;
     bool tls_host_published = false;
     bool tls_host_mismatch = false;
@@ -274,7 +289,6 @@ public:
     AppIdConfig& config;
     std::unordered_map<unsigned, AppIdFlowData*> flow_data;
     uint64_t flags = 0;
-    uint16_t initiator_port = 0;
 #ifndef DISABLE_TENANT_ID
     uint32_t tenant_id = 0;
 #endif
@@ -282,8 +296,16 @@ public:
 
     uint16_t session_packet_count = 0;
     uint16_t init_pkts_without_reply = 0;
+    bool tp_reinspect_by_initiator = false;
+    bool tried_reverse_service = false;
+    bool in_expected_cache = false;
+
+    // AppId matching client side
+    APPID_DISCOVERY_STATE client_disco_state = APPID_DISCO_STATE_NONE;
+    
     uint64_t init_bytes_without_reply = 0;
     uint16_t srv_midstream_packet_inspected = 0;
+    uint16_t scan_flags = 0;
     AppId first_pkt_service_id = 0;
     AppId first_pkt_payload_id = 0;
     AppId first_pkt_client_id = 0;
@@ -306,23 +328,19 @@ public:
     // Following field stores AppID detection of which is delegated to external module.
     AppId expected_external_app_id = APP_ID_NONE;
 
-    // AppId matching client side
-    APPID_DISCOVERY_STATE client_disco_state = APPID_DISCO_STATE_NONE;
-    AppId client_inferred_service_id = APP_ID_NONE;
     ClientDetector* client_detector = nullptr;
-    std::map<std::string, ClientDetector*> client_candidates;
-    bool tried_reverse_service = false;
+    std::vector<ClientDetector*> client_candidates;
 
     TlsSession* tsession = nullptr;
-    unsigned scan_flags = 0;
     ThirdPartyAppIdSession* tpsession = nullptr;
     uint16_t init_tpPackets = 0;
     uint16_t resp_tpPackets = 0;
-    bool tp_reinspect_by_initiator = false;
     SnortProtocolId snort_protocol_id = UNKNOWN_PROTOCOL_ID;
 
     /* Length-based detectors. */
     LengthKey length_sequence;
+
+    uint16_t initiator_port = 0;
 
     struct
     {
@@ -346,7 +364,6 @@ public:
         AppId referred_id;
     } encrypted = { APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE, APP_ID_NONE };
 
-    bool in_expected_cache = false;
     static unsigned inspector_id;
     static std::mutex inferred_svcs_lock;
 
@@ -530,6 +547,16 @@ public:
     void add_service_subtype(AppIdServiceSubtype& subtype, AppidChangeBits& change_bits)
     {
         api.service.add_subtype(subtype, change_bits);
+    }
+
+    void set_client_inferred_service_id(AppId id)
+    {
+        client_inferred_service_id = id;
+    }
+
+    AppId get_client_inferred_service_id() const
+    {
+        return client_inferred_service_id;
     }
 
     AppId get_client_id() const
@@ -786,14 +813,16 @@ public:
         str.append(tempStr);
     }
 
-    void set_cert_key (const std::string& key)
+    void set_cert_key(const char* key)
     {
-        ssl_cert_key = key;
+        if (!tsession)
+            tsession = new TlsSession();
+        tsession->set_cert_key(key);
     }
 
-    const std::string& get_cert_key() const
+    const char* get_cert_key() const
     {
-        return ssl_cert_key;
+        return tsession ? tsession->get_cert_key() : nullptr;
     }
 
     void set_previous_shadow_traffic_bits(uint32_t lv_bits)
@@ -804,6 +833,11 @@ public:
     uint32_t get_previous_shadow_traffic_bits()
     {
         return appid_previous_shadow_traffic_bits;
+    }
+
+    const char* get_api_session_id() const
+    {
+        return api.get_session_id();
     }
 
 private:
@@ -820,19 +854,21 @@ private:
     AppId tp_payload_app_id = APP_ID_NONE;
 
     uint16_t my_inferred_svcs_ver = 0;
+
     snort::AppIdSessionApi& api;
     static uint16_t inferred_svcs_ver;
     OdpContext& odp_ctxt;
-    uint32_t odp_ctxt_version;
     ThirdPartyAppIdContext* tp_appid_ctxt = nullptr;
     bool consumed_ha_data = false;
     bool no_service_candidate = false;
     bool no_service_inspector = false;
     bool client_info_unpublished = false;
-    string ssl_cert_key;
     uint32_t appid_shadow_traffic_bits = 0;
     uint32_t appid_previous_shadow_traffic_bits = 0;
     AppId shadow_traffic_appid = APP_ID_NONE;
+    // AppId matching client side
+    AppId client_inferred_service_id = APP_ID_NONE;
+    uint32_t odp_ctxt_version;
 };
 
 #endif

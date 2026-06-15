@@ -47,7 +47,37 @@ static void tp_appid_profiler_free(void* p)
         operator delete(p);
 }
 
-TPAppidProfilerFunctions get_tp_appid_profiler_functions()
+static constexpr size_t ALLOCATION_TRACKER_HEADER_SIZE = alignof(std::max_align_t);
+
+static void* tp_appid_profiler_malloc_with_stats(size_t size)
 {
-    return {tp_appid_profiler_malloc,tp_appid_profiler_free};
+    // cppcheck-suppress unreadVariable
+    snort::Profile profile(tp_appid_perf_stats);
+    auto ptr = operator new(size+ALLOCATION_TRACKER_HEADER_SIZE);
+    *(uint32_t*)ptr = size;
+    appid_stats.tp_mem_bytes_in_use += size;
+    appid_stats.tp_mem_allocations++;
+    return static_cast<uint8_t*>(ptr) + ALLOCATION_TRACKER_HEADER_SIZE;
+}
+
+static void tp_appid_profiler_free_with_stats(void* p)
+{
+    // cppcheck-suppress unreadVariable
+    snort::Profile profile(tp_appid_perf_stats);
+    if (p)
+    {
+        auto ptr = static_cast<uint8_t*>(p) - ALLOCATION_TRACKER_HEADER_SIZE;
+        uint32_t size = *(uint32_t*)ptr;
+        appid_stats.tp_mem_bytes_in_use -= size;
+        appid_stats.tp_mem_frees++;
+        operator delete(ptr);
+    }
+}
+
+static TPAppidProfilerFunctions tp_appid_profiler_functions = {tp_appid_profiler_malloc, tp_appid_profiler_free};
+static TPAppidProfilerFunctions tp_appid_profiler_stats_functions = {tp_appid_profiler_malloc_with_stats, tp_appid_profiler_free_with_stats};
+
+TPAppidProfilerFunctions get_tp_appid_profiler_functions(bool is_profiling_enabled)
+{
+    return is_profiling_enabled ? tp_appid_profiler_stats_functions : tp_appid_profiler_functions;
 }

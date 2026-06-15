@@ -152,10 +152,7 @@ public:
         return hsessions.size();
     }
 
-    const std::string& get_session_id() const
-    {
-        return session_id;
-    }
+    const char* get_session_id();
 
     void set_user_logged_in() { flags.user_logged_in = true; }
 
@@ -186,7 +183,7 @@ private:
     char* tls_sni = nullptr;
     char* netbios_name = nullptr;
     char* netbios_domain = nullptr;
-    std::string session_id;
+    char* session_id = nullptr;
 
     // Following two fields are used only for non-http sessions. For HTTP traffic,
     // these fields are maintained inside AppIdHttpSession.
@@ -221,6 +218,8 @@ private:
         dsessions.clear();
         delete dsession;
         dsession = nullptr;
+        snort_free(session_id);
+        session_id = nullptr;
     }
 
     void delete_all_http_sessions()

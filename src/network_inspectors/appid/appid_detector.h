@@ -127,7 +127,7 @@ public:
             asd.set_client_version(version, change_bits);
 
         asd.set_client_detected();
-        asd.client_inferred_service_id = service_id;
+        asd.set_client_inferred_service_id(service_id);
         asd.set_client_id(client_id);
     }
     void add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId, const char*, AppidChangeBits&);

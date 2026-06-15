@@ -92,7 +92,7 @@ void AppIdDetector::add_app(const Packet& p, AppIdSession& asd, AppidSessionDire
         asd.set_client_version(version, change_bits);
 
     asd.set_client_detected();
-    asd.client_inferred_service_id = service_id;
+    asd.set_client_inferred_service_id(service_id);
     asd.set_client_id(p, dir, client_id, change_bits);
 }
 
