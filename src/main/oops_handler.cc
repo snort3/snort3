@@ -29,10 +29,12 @@
 #include <cstring>
 
 #include "helpers/sigsafe.h"
+#include "alt_signal_stack.h"
 
 #include "thread.h"
 
 static THREAD_LOCAL OopsHandler* local_oops_handler = nullptr;
+static THREAD_LOCAL uint8_t* oops_alt_signal_stack = nullptr;
 
 void OopsHandler::handle_crash(int fd)
 {
@@ -44,11 +46,13 @@ void OopsHandler::tinit()
 {
     assert(local_oops_handler == nullptr);
     local_oops_handler = this;
+    oops_alt_signal_stack = create_alt_signal_stack();
 }
 
 void OopsHandler::tterm()
 {
     local_oops_handler = nullptr;
+    term_alt_signal_stack(oops_alt_signal_stack);
 }
 
 void OopsHandler::set_current_message(DAQ_Msg_h cur_msg, snort::SFDAQInstance* daq_instance)

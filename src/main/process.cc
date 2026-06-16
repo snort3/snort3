@@ -85,6 +85,7 @@ extern "C" {
 #include "main.h"
 #include "oops_handler.h"
 #include "snort_config.h"
+#include "alt_signal_stack.h"
 
 using namespace snort;
 
@@ -117,6 +118,7 @@ static const char* const pig_sig_names[PIG_SIG_MAX] =
 static Ring<PigSignal> sig_ring(4);
 static volatile sig_atomic_t child_ready_signal = 0;
 static THREAD_LOCAL bool is_main_thread = false;
+static THREAD_LOCAL uint8_t* process_alt_signal_stack = nullptr;
 
 // Backup copies of the original fatal signal actions.  Kept here because they must
 //  be trivially accessible to signal handlers.
@@ -152,7 +154,7 @@ original_sighandlers[] =
 };
 #endif
 
-static bool add_signal(int sig, sig_t);
+static bool add_signal(int sig, sig_t, int flags = SA_RESTART);
 static bool restore_signal(int sig, bool silent = false);
 
 static bool exit_pronto = true;
@@ -385,14 +387,14 @@ const char* get_signal_name(PigSignal s)
 // signal management
 //-------------------------------------------------------------------------
 
-static bool add_signal(int sig, sig_t signal_handler)
+static bool add_signal(int sig, sig_t signal_handler, int flags)
 {
 #ifdef HAVE_SIGACTION
     struct sigaction action;
     // Mask all other signals while in the signal handler
     sigfillset(&action.sa_mask);
     // Make compatible system calls restartable across signals
-    action.sa_flags = SA_RESTART;
+    action.sa_flags = flags;
     action.sa_handler = signal_handler;
 
     struct sigaction* old_action = nullptr;
@@ -485,11 +487,15 @@ static bool restore_signal(int sig, bool silent)
 
 void install_oops_handler()
 {
-    add_signal(SIGILL, oops_handler);
-    add_signal(SIGABRT, oops_handler);
-    add_signal(SIGBUS, oops_handler);
-    add_signal(SIGFPE, oops_handler);
-    add_signal(SIGSEGV, oops_handler);
+    process_alt_signal_stack = create_alt_signal_stack();
+
+    int flag = SA_RESTART | (process_alt_signal_stack ? SA_ONSTACK : 0);
+
+    add_signal(SIGILL, oops_handler, flag);
+    add_signal(SIGABRT, oops_handler, flag);
+    add_signal(SIGBUS, oops_handler, flag);
+    add_signal(SIGFPE, oops_handler, flag);
+    add_signal(SIGSEGV, oops_handler, flag);
 }
 
 void init_signals()
@@ -528,6 +534,8 @@ void remove_oops_handler()
     restore_signal(SIGBUS);
     restore_signal(SIGFPE);
     restore_signal(SIGSEGV);
+
+    term_alt_signal_stack(process_alt_signal_stack);
 }
 
 void term_signals()

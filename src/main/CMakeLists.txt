@@ -28,6 +28,7 @@ if ( HAVE_NUMA )
 endif( HAVE_NUMA )
 
 add_library (main OBJECT
+    alt_signal_stack.h
     analyzer.cc
     analyzer.h
     analyzer_command.cc
