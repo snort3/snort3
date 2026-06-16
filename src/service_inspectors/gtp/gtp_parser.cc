@@ -315,10 +315,10 @@ static int gtp_parse_v1(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
         /*Check extension headers*/
         while (next_hdr_type)
         {
-            uint16_t ext_header_len;
+            uint32_t ext_header_len;
 
             /*check length before reading data, at lease 4 bytes per extension header*/
-            if (gtp_len < msg->header_len + 4)
+            if (gtp_len < (uint32_t)msg->header_len + 4)
             {
                 alert(GTP_EVENT_BAD_MSG_LEN);
                 return false;
@@ -333,14 +333,15 @@ static int gtp_parse_v1(GTPMsg* msg, const uint8_t* buff, uint16_t gtp_len)
             }
 
             /*Extension header length is a unit of 4 octets*/
-            msg->header_len += ext_header_len*4;
+            uint32_t new_header_len = msg->header_len + ext_header_len*4;
 
             /*check length before reading data*/
-            if (gtp_len < msg->header_len)
+            if (gtp_len < new_header_len)
             {
                 alert(GTP_EVENT_BAD_MSG_LEN);
                 return false;
             }
+            msg->header_len = (uint16_t)new_header_len;
             next_hdr_type = *(buff + msg->header_len - 1);
         }
     }
