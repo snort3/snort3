@@ -29,6 +29,7 @@
 
 #include "file_service.h"
 
+#include "log/log_stats.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
 #include "managers/inspector_manager.h"
@@ -68,6 +69,12 @@ void FileService::reset()
     file_type_id_enabled.store(false, std::memory_order_relaxed);
     file_signature_enabled = false;
     file_capture_enabled = false;
+}
+
+void FileService::print_cache_usage()
+{
+    if (file_cache)
+        LogCount("File cache entries", file_cache->get_num_entries());
 }
 
 void FileService::post_init()
