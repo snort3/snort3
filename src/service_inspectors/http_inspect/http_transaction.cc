@@ -69,6 +69,9 @@ void HttpTransaction::publish_end_of_transaction()
     DataBus::publish(pub_id, HttpEventIds::END_OF_TRANSACTION, http_event, flow);
 }
 
+bool HttpTransaction::is_for_httpx() const
+{ return session_data->is_for_httpx(); }
+
 HttpTransaction::~HttpTransaction()
 {
     publish_end_of_transaction();

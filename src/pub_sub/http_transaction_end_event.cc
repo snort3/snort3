@@ -29,6 +29,7 @@
 #include "service_inspectors/http_inspect/http_msg_section.h"
 #include "service_inspectors/http_inspect/http_msg_status.h"
 #include "service_inspectors/http_inspect/http_transaction.h"
+#include "service_inspectors/http_inspect/http_uri.h"
 
 using namespace snort;
 using namespace HttpEnums;
@@ -47,7 +48,21 @@ const Field& HttpTransactionEndEvent::get_client_header(uint64_t sub_id) const
 
 const Field& HttpTransactionEndEvent::get_host_hdr() const
 {
-    return get_client_header(HttpEnums::HEAD_HOST);
+    if (!transaction->is_for_httpx())
+        return get_client_header(HttpEnums::HEAD_HOST);
+
+    // RFC 7540 §8.1.2.3 (HTTP/2) and RFC 9114 §4.3.1 (HTTP/3): host is in :authority pseudo-header.
+    HttpMsgRequest* const req = transaction->get_request();
+    if (req == nullptr)
+        return Field::FIELD_NULL;
+
+    HttpUri* const uri = req->get_http_uri();
+    if (uri == nullptr)
+        return Field::FIELD_NULL;
+
+    const Field& authority = uri->get_authority();
+
+    return authority;
 }
 
 const Field& HttpTransactionEndEvent::get_user_agent() const

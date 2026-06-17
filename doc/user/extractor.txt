@@ -92,7 +92,7 @@ Common fields available for every service:
 Fields supported for HTTP:
 
 * `method` - verb used in HTTP request
-* `host` - Host header
+* `host` - Host header or :authority pseudo-header for HTTP/2 and HTTP/3
 * `uri` - URI from request
 * `user_agent` - User-Agent header from client
 * `referrer` - Referrer header
