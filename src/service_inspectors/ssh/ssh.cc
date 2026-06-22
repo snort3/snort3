@@ -416,7 +416,7 @@ static bool process_ssh2_kexinit(SSHData *sessionp, Packet *p, uint8_t direction
         DetectionEngine::queue_event(GID_SSH, SSH_EVENT_PAYLOAD_SIZE);
         return false;
     }
-    const SSH2KeyExchange* ssh_pkt = (const SSH2KeyExchange*)p->data;
+    const SSH2KeyExchange* ssh_pkt = reinterpret_cast<const SSH2KeyExchange*>(p->data);
     ssh_length = ntohl(ssh_pkt->msg.len) + sizeof(uint32_t);
     if (ssh_length != dsize)
     {
@@ -437,7 +437,7 @@ static bool process_ssh2_kexinit(SSHData *sessionp, Packet *p, uint8_t direction
         return false;
     }
 
-    SshAlgoEvent::Algorithms algos;
+    SshAlgoEvent::Algorithms algos {};
     
     uint16_t total_length = sizeof(SSH2KeyExchange);
     const uint8_t *data = p->data + sizeof(SSH2KeyExchange);
@@ -452,8 +452,7 @@ static bool process_ssh2_kexinit(SSHData *sessionp, Packet *p, uint8_t direction
             return false;
         }
 
-        if (list_length)
-            algos.unnamed[i] = (const char*)(data + sizeof(uint32_t));
+        algos.unnamed[i] = list_length ? reinterpret_cast<const char*>(data + sizeof(uint32_t)) : "";
 
         total_length += total_list_length;
         data += total_list_length;
@@ -464,7 +463,7 @@ static bool process_ssh2_kexinit(SSHData *sessionp, Packet *p, uint8_t direction
         DetectionEngine::queue_event(GID_SSH, SSH_EVENT_PAYLOAD_SIZE);
         return false;
     }
-    const SSHKeyExchangeFinal* final = (const SSHKeyExchangeFinal*)data;
+    const SSHKeyExchangeFinal* final = reinterpret_cast<const SSHKeyExchangeFinal*>(data);
     if (final->future)
     {
         // using an unsupported future version

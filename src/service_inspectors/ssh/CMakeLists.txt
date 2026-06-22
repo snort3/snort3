@@ -22,6 +22,10 @@ else (STATIC_INSPECTORS)
 
 endif (STATIC_INSPECTORS)
 
+if (ENABLE_UNIT_TESTS)
+    add_subdirectory(test)
+endif (ENABLE_UNIT_TESTS)
+
 install(FILES ${SSH_INCLUDES}
     DESTINATION "${INCLUDE_INSTALL_PATH}/service_inspectors/ssh/"
 )
