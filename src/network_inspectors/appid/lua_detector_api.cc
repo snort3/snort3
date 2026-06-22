@@ -26,6 +26,7 @@
 #include "lua_detector_api.h"
 #include <lua.hpp>
 #include <unordered_map>
+#include <limits>
 
 #include "detection/fp_config.h"
 #include "framework/mpse.h"
@@ -73,6 +74,48 @@ enum LuaLogLevels
     LUA_LOG_INFO = 4,
     LUA_LOG_TRACE = 5,
 };
+
+/** Validates whether number from the stack isn't negative and can be fit in T type
+ * and writes in value_out if validation is successful
+ *
+ * @return true if validation succeeded, otherwise false
+ */
+template <typename T>
+static bool lua_touinteger_check(lua_State* L, int index, T& value_out)
+{
+    if (!lua_isnumber(L, index))
+        return false;
+
+    auto num = lua_tointeger(L, index);
+    if (num < 0)
+        return false;
+    if constexpr (static_cast<unsigned long long>(std::numeric_limits<T>::max()) < static_cast<unsigned long long>(std::numeric_limits<lua_Integer>::max()))
+    {
+        if (static_cast<unsigned long long>(num) > static_cast<unsigned long long>(std::numeric_limits<T>::max()))
+            return false;
+    }
+
+    value_out = static_cast<T>(num);
+    return true;
+}
+
+/** Validates whether number from the stack isn't negative and can be fit in var.
+ * If validation succeeded writes number in var, otherwise logs the issue,
+ * pushes -1 onto the stack
+ * and returns ret_val
+ */
+#define LUA_GET_UINTEGER_OR_RETURN(var, L, lua_index, ret_val)             \
+    do                                                                     \
+    {                                                                      \
+        if (!lua_touinteger_check((L), (lua_index), (var)))                \
+        {                                                                  \
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL,                          \
+                "appid: %s() - invalid unsigned integer for %s.\n",        \
+                __func__, #var);                                           \
+            lua_pushnumber((L), -1);                                       \
+            return (ret_val);                                              \
+        }                                                                  \
+    } while (0)
 
 static CHPGlossary* CHP_glossary = nullptr; // tracks http multipatterns
 static CHPGlossary* old_CHP_glossary = nullptr;
@@ -236,8 +279,6 @@ static int service_register_pattern(lua_State* L)
 
     int index = 1;
 
-    // FIXIT-M  none of these params check for signedness casting issues
-
     IpProtocol protocol;
     if (toipprotocol(L, ++index, protocol))
     {
@@ -246,8 +287,12 @@ static int service_register_pattern(lua_State* L)
     }
 
     const char* pattern = lua_tostring(L, ++index);
-    size_t size = lua_tonumber(L, ++index);
-    unsigned int position = lua_tonumber(L, ++index);
+    size_t size;
+    ++index;
+    LUA_GET_UINTEGER_OR_RETURN(size, L, index, 1);
+    unsigned int position;
+    ++index;
+    LUA_GET_UINTEGER_OR_RETURN(position, L, index, 1);
 
     if (protocol == IpProtocol::TCP)
         ud->get_odp_ctxt().get_service_disco_mgr().register_tcp_pattern(ud->sd, (const uint8_t*)pattern,
@@ -458,7 +503,7 @@ static int service_add_ports(lua_State* L)
         return 1;
     }
 
-    pp.port = lua_tonumber(L, 3);
+    LUA_GET_UINTEGER_OR_RETURN(pp.port, L, 3, 1);
     pp.reversed_validation = lua_tonumber(L, 5);
 
     if (((pp.proto != IpProtocol::UDP) and (pp.proto != IpProtocol::TCP)) or !pp.port)
@@ -911,7 +956,6 @@ static int detector_get_protocol_type(lua_State* L)
         return 1;
     }
 
-    // FIXIT-M is this conversion to double valid?
     lua_pushnumber(L, (double)lsd->ldp.pkt->get_ip_proto_next());
     return 1;
 }
@@ -1020,8 +1064,12 @@ static int client_register_pattern(lua_State* L)
     }
 
     const char* pattern = lua_tostring(L, ++index);
-    size_t size = lua_tonumber(L, ++index);
-    unsigned int position = lua_tonumber(L, ++index);
+    size_t size;
+    ++index;
+    LUA_GET_UINTEGER_OR_RETURN(size, L, index, 1);
+    unsigned int position;
+    ++index;
+    LUA_GET_UINTEGER_OR_RETURN(position, L, index, 1);
 
     /*Note: we can not give callback into lua directly so we have to
       give a local callback function, which will do demuxing and
@@ -2259,7 +2307,9 @@ static int detector_add_length_app_cache(lua_State* L)
         return 1;
     }
 
-    uint8_t sequence_cnt = lua_tonumber(L, ++index);
+    uint8_t sequence_cnt;
+    ++index;
+    LUA_GET_UINTEGER_OR_RETURN(sequence_cnt, L, index, 1);
     const char* sequence_str = lua_tostring(L, ++index);
 
     if (((proto != IpProtocol::TCP) and (proto != IpProtocol::UDP))
@@ -2859,15 +2909,16 @@ static int add_url_pattern(lua_State* L)
     return 0;
 }
 
-/* Add a port and pattern based detection for client application. Both port and pattern criteria
- * must be met before client application is deemed detected.
+/* Add general pattern based detection for client application.
+ * Despite the function's name, client pattern detection is not restricted by port.
+ * The client detector doesn't match port value, using only
+ * general protocol-specific pattern matcher.
+ * Port is set to 0 only to populate port field in PortPatternNode struct.
  *
  * @param lua_State* - Lua state variable.
  * @param proto/stack        - Protocol (IPPROTO_TCP/DC.ipproto.tcp (6) or
  *                             IPPROTO_UDP/DC.ipproto.udp (17)).
- * @param port/stack - port number to register.
  * @param pattern/stack - pattern to be matched.
- * @param patternLength/stack - length of pattern
  * @param offset/stack - offset into packet payload where matching should start.
  * @param appId/stack        - App ID to use for this detector.
  * @return int - Number of elements on stack, which is always 0.
@@ -2887,7 +2938,8 @@ static int add_port_pattern_client(lua_State* L)
     if (toipprotocol(L, ++index, protocol))
         return 0;
 
-    uint16_t port = 0;      // port = lua_tonumber(L, ++index);  FIXIT-RC - why commented out?
+    uint16_t port = 0;
+
     const char* pattern = lua_tolstring(L, ++index, &pattern_size);
     unsigned position = lua_tonumber(L, ++index);
     AppId appid = lua_tointeger(L, ++index);
@@ -2924,7 +2976,6 @@ static int add_port_pattern_client(lua_State* L)
  *                             IPPROTO_UDP/DC.ipproto.udp (17)).
  * @param port/stack - port number to register.
  * @param pattern/stack - pattern to be matched.
- * @param patternLength/stack - length of pattern
  * @param offset/stack - offset into packet payload where matching should start.
  * @param appId/stack        - App ID to use for this detector.
  * @return int - Number of elements on stack, which is always 0.
@@ -3784,9 +3835,6 @@ LuaServiceObject::LuaServiceObject(AppIdDiscovery* sdm, const std::string& detec
 
     lua_pushvalue(L, -1);
 
-    // FIXIT-E: The control and thread states have the same initialization
-    // sequence, the stack index shouldn't change between the states, maybe
-    // use a common index for a detector between all the states
     std::string name = detector_name + "_";
     lua_setglobal(L, name.c_str());
 }
@@ -3800,7 +3848,7 @@ int LuaServiceDetector::validate(AppIdDiscoveryArgs& args)
 
     std::string name = this->name + "_";
     lua_getglobal(my_lua_state, name.c_str());
-    auto& ud = *UserData<LuaServiceObject>::check(my_lua_state, DETECTOR, 1);
+    auto& ud = *UserData<LuaServiceObject>::check(my_lua_state, DETECTOR, -1);
     return ud->lsd.lua_validate(args);
 }
 
@@ -3853,9 +3901,6 @@ LuaClientObject::LuaClientObject(const std::string& detector_name,
 
     lua_pushvalue(L, -1);
 
-    // FIXIT-E: The control and thread states have the same initialization
-    // sequence, the stack index shouldn't change between the states, maybe
-    // use a common index for a detector between all the states
     std::string name = detector_name + "_";
     lua_setglobal(L, name.c_str());
 }
@@ -3876,6 +3921,6 @@ int LuaClientDetector::validate(AppIdDiscoveryArgs& args)
 
     std::string name = this->name + "_";
     lua_getglobal(my_lua_state, name.c_str());
-    auto& ud = *UserData<LuaClientObject>::check(my_lua_state, DETECTOR, 1);
+    auto& ud = *UserData<LuaClientObject>::check(my_lua_state, DETECTOR, -1);
     return ud->lsd.lua_validate(args);
 }
