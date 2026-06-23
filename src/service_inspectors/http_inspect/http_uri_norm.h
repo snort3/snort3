@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 
+#include "http_cache_data.h"
 #include "http_enum.h"
 #include "http_field.h"
 #include "http_module.h"

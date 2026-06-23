@@ -64,6 +64,21 @@ void HttpMsgRequest::parse_start_line()
     if (session_data->partial_flush[source_id])
         return;
 
+    if (has_raw_control_character(start_line))
+    {
+        if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
+            get_cache_data().request.reason_code_detail_300 = NON_RFC_CHAR;
+        create_event(EVENT_REQUEST_LINE_NOT_VALID);
+    }
+
+    if (start_line.length() > 0 and
+        is_sp_tab[start_line.start()[start_line.length() - 1]])
+    {
+        if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
+            get_cache_data().request.reason_code_detail_300 = BAD_REQUEST_TERMINATION;
+        create_event(EVENT_REQUEST_LINE_NOT_VALID);
+    }
+
     // Version field
     if ((start_line.length() < 10) || !is_sp_tab[start_line.start()[start_line.length()-9]] ||
         memcmp(start_line.start() + start_line.length() - 8, "HTTP/", 5))
@@ -73,17 +88,25 @@ void HttpMsgRequest::parse_start_line()
             http_name_nocase_ok(start_line.start() + start_line.length() - 8))
         {
             add_infraction(INF_VERSION_NOT_UPPERCASE);
+            if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
+                get_cache_data().request.reason_code_detail_300 = VERSION_NOT_UPPERCASE;
+
+            create_event(EVENT_REQUEST_LINE_NOT_VALID);
             create_event(EVENT_VERSION_NOT_UPPERCASE);
         }
         // Check for version 0.9 request.
         else if (handle_zero_nine())
         {
+            create_event(EVENT_REQUEST_LINE_NOT_VALID);
             return;
         }
         // Just a plain old bad request
         else
         {
+            if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
+                get_cache_data().request.reason_code_detail_300 = VERSION_MALFORMED;
             add_infraction(INF_BAD_REQ_LINE);
+            session_data->events[source_id]->create_event(HttpEnums::EVENT_REQUEST_LINE_NOT_VALID);
             session_data->events[source_id]->create_event(HttpEnums::EVENT_BAD_REQ_LINE);
             session_data->events[source_id]->create_event(HttpEnums::EVENT_LOSS_OF_SYNC);
             return;
@@ -110,7 +133,16 @@ void HttpMsgRequest::parse_start_line()
         last_begin--);
     last_begin++;
 
+    // checking method validity
     method.set(first_space, start_line.start());
+
+    if (method.length() > 0 and !is_all_uppercase(method.start(), method.length()))
+    {
+        if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
+            get_cache_data().request.reason_code_detail_300 = METHOD_NOT_UPPERCASE;
+        session_data->events[source_id]->create_event(HttpEnums::EVENT_REQUEST_LINE_NOT_VALID);
+    }
+
     method_id = (MethodId)str_to_code(method.start(), method.length(), method_list);
 
     switch (method_id)
@@ -135,8 +167,36 @@ void HttpMsgRequest::parse_start_line()
     else
     {
         add_infraction(INF_NO_URI);
+        if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
+            get_cache_data().request.reason_code_detail_300 = URI_MISSING;
+        create_event(EVENT_REQUEST_LINE_NOT_VALID);
         create_event(EVENT_URI_MISSING);
     }
+}
+
+bool HttpMsgRequest::is_all_uppercase(const uint8_t* start, int32_t length)
+{
+    for (int32_t i = 0; i < length; i++)
+    {
+        const unsigned char c = static_cast<unsigned char>(start[i]);
+        if (std::isalpha(c) && !std::isupper(c))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool HttpMsgRequest::has_raw_control_character(const Field& line)
+{
+    for (int32_t i = 0; i < line.length(); i++)
+    {
+        const uint8_t octet = line.start()[i];
+        if (iscntrl(static_cast<unsigned char>(octet)))
+            return true;
+    }
+
+    return false;
 }
 
 bool HttpMsgRequest::http_name_nocase_ok(const uint8_t* start)
@@ -150,8 +210,6 @@ bool HttpMsgRequest::http_name_nocase_ok(const uint8_t* start)
 
 bool HttpMsgRequest::handle_zero_nine()
 {
-    // FIXIT-M The following test seems too permissive about what constitutes HTTP/0.9. Consider
-    // not accepting "URIs" with internal whitespace or nonprinting characters.
     // 0.9 request line is supposed to be "GET <URI>\r\n"
     if ((start_line.length() >= 3) &&
         !memcmp(start_line.start(), "GET", 3) &&
@@ -163,25 +221,43 @@ bool HttpMsgRequest::handle_zero_nine()
         method_id = METH_GET;
         version_id = VERS_0_9;
 
-        // Eliminate the clump of whitespace following GET and possible clump of whitespace at the
-        // end and whatever is left is assumed to be the URI
+        // Parse "GET <URI>" with optional trailing whitespace and reject extra tokens.
         int32_t uri_begin;
         for (uri_begin = 4; (uri_begin < start_line.length()) &&
             is_sp_tab[start_line.start()[uri_begin]]; uri_begin++);
+
         if (uri_begin < start_line.length())
         {
             int32_t uri_end;
-            for (uri_end = start_line.length() - 1; is_sp_tab[start_line.start()[uri_end]];
-                uri_end--);
-            uri = new HttpUri(start_line.start() + uri_begin, uri_end - uri_begin + 1, method_id,
+            for (uri_end = uri_begin; (uri_end < start_line.length()) and
+                !is_sp_tab[start_line.start()[uri_end]]; uri_end++);
+
+            int32_t trailing_begin;
+            for (trailing_begin = uri_end; (trailing_begin < start_line.length()) and
+                is_sp_tab[start_line.start()[trailing_begin]]; trailing_begin++);
+
+            uri = new HttpUri(start_line.start() + uri_begin, uri_end - uri_begin, method_id,
                 params->uri_param, transaction->get_infractions(source_id),
                 session_data->events[source_id]);
+
+            if (trailing_begin < start_line.length())
+            {
+                // in case is simple request with white spaces, assume is malformed version
+                if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE ||
+                    get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::SIMPLE_REQUEST)
+                    get_cache_data().request.reason_code_detail_300 = VERSION_MALFORMED;
+                return true;
+            }
         }
         else
         {
             add_infraction(INF_NO_URI);
             create_event(EVENT_URI_MISSING);
         }
+
+        if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
+            get_cache_data().request.reason_code_detail_300 = SIMPLE_REQUEST;
+
         return true;
     }
     return false;
@@ -237,8 +313,12 @@ void HttpMsgRequest::gen_events()
 
     const bool zero_nine = *transaction->get_infractions(source_id) & INF_ZERO_NINE_REQ;
 
+    if (zero_nine and
+        get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::VERSION_MALFORMED)
+        return;
+
     if ((start_line.start()[method.length()] == '\t') ||
-        (!zero_nine && (start_line.start()[start_line.length() - 9] == '\t')))
+       (!zero_nine && (start_line.start()[start_line.length() - 9] == '\t')))
     {
         add_infraction(INF_REQUEST_TAB);
         create_event(EVENT_APACHE_WS);
@@ -258,6 +338,9 @@ void HttpMsgRequest::gen_events()
                 if (start_line.start()[k] == ' ')
                 {
                     add_infraction(INF_URI_SPACE);
+                    if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
+                        get_cache_data().request.reason_code_detail_300 = UNESCAPED_SPACE_URI;
+                    create_event(EVENT_REQUEST_LINE_NOT_VALID);
                     create_event(EVENT_UNESCAPED_SPACE_URI);
                 }
             }
@@ -265,6 +348,9 @@ void HttpMsgRequest::gen_events()
             {
                 // extra white space before or after the URI
                 add_infraction(INF_REQUEST_WS);
+                if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
+                    get_cache_data().request.reason_code_detail_300 = IMPROPER_WS;
+                create_event(EVENT_REQUEST_LINE_NOT_VALID);
                 create_event(EVENT_IMPROPER_WS);
                 if (start_line.start()[k] == '\t')
                 {
@@ -306,7 +392,12 @@ void HttpMsgRequest::gen_events()
     }
 
     if (method_id == METH__OTHER && !known_method)
+    {
+        if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
+            get_cache_data().request.reason_code_detail_300 = UNKNOWN_METHOD;
+        create_event(EVENT_REQUEST_LINE_NOT_VALID);
         create_event(EVENT_UNKNOWN_METHOD);
+    }
 
     if (uri && uri->get_scheme().length() > LONG_SCHEME_LENGTH)
     {
@@ -468,4 +559,3 @@ void HttpMsgRequest::print_section(FILE* output)
 }
 
 #endif
-

@@ -34,9 +34,12 @@
 #include "pub_sub/http_event_ids.h"
 #include "stream/stream.h"
 
+#include "http_cache_data.h"
 #include "http_common.h"
 #include "http_context_data.h"
+#include "http_cutter.h"
 #include "http_enum.h"
+#include "http_field_buffer.h"
 #include "http_js_norm.h"
 #include "http_msg_body.h"
 #include "http_msg_body_chunk.h"
@@ -191,6 +194,24 @@ void HttpInspect::show(const SnortConfig*) const
 #ifdef HAVE_BROTLI
     ConfigLogger::log_flag("decompress_brotli", params->decompression_param.decompress_brotli);
 #endif
+    ConfigLogger::log_limit("max_request_size", params->max_request_size, -1, 0);
+    ConfigLogger::log_limit("max_request_line_length", params->max_request_line_length, -1, 0);
+
+    if (!params->allowed_methods.empty())
+    {
+        std::string methods;
+        for (const auto& m : params->allowed_methods)
+            methods += (methods.empty() ? "" : " ") + m;
+        ConfigLogger::log_value("allowed_methods", methods.c_str());
+    }
+
+    if (!params->disallowed_methods.empty())
+    {
+        std::string methods;
+        for (const auto& m : params->disallowed_methods)
+            methods += (methods.empty() ? "" : " ") + m;
+        ConfigLogger::log_value("disallowed_methods", methods.c_str());
+    }
 }
 
 PduSection HttpInspect::get_latest_is(const Packet* p)
@@ -266,8 +287,29 @@ const Field& HttpInspect::http_get_buf(Packet* p, const HttpBufferInfo& buffer_i
 {
     HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
 
+    // No section is attached (pre-assembly or post-clear); serve cache-backed buffers directly.
     if (current_section == nullptr)
-        return Field::FIELD_NULL;
+    {
+        HttpFlowData* const session_data = http_get_flow_data(p->flow);
+        if ((session_data != nullptr) && (session_data->transaction[SRC_CLIENT] != nullptr))
+        {
+            HttpMsgRequest* const request = session_data->transaction[SRC_CLIENT]->get_request();
+            if (request != nullptr)
+                return request->get_classic_buffer(buffer_info);
+        }
+
+        const bool request_size_or_detail =
+            (buffer_info.type == HTTP_BUFFER_REQUEST_SIZE) ||
+            (buffer_info.type == HTTP_BUFFER_REQUEST_LINE_LENGTH) ||
+            (buffer_info.type == DETAIL_119_298) ||
+            (buffer_info.type == DETAIL_119_299) ||
+            (buffer_info.type == DETAIL_119_300);
+
+        if (!request_size_or_detail)
+            return Field::FIELD_NULL;
+
+        return HttpTmpFieldBuffer::get_buffer_data(buffer_info.type);
+    }
 
     return current_section->get_classic_buffer(buffer_info);
 }
@@ -680,6 +722,7 @@ void HttpInspect::clear(Packet* p)
 
     if ( current_section == nullptr )
     {
+        clear_tmp_fields();
         //assert(false); //FIXIT-M This happens with stream_user
         return;
     }

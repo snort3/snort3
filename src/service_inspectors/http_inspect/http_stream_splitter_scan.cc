@@ -28,6 +28,7 @@
 #include "packet_io/active.h"
 #include "protocols/packet.h"
 
+#include "http_cache_data.h"
 #include "http_common.h"
 #include "http_compress_stream.h"
 #include "http_context_data.h"
@@ -35,6 +36,7 @@
 #include "http_enum.h"
 #include "http_inspect.h"
 #include "http_module.h"
+#include "http_msg_request.h"
 #include "http_msg_section.h"
 #include "http_test_input.h"
 
@@ -193,6 +195,9 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
     HttpCutter*& cutter = session_data->cutter[source_id];
     if (cutter == nullptr)
     {
+        if (source_id == SRC_CLIENT and type == SEC_REQUEST and !session_data->for_httpx)
+            reset_cache_data();
+
         cutter = get_cutter(type, session_data);
     }
 
@@ -202,6 +207,34 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
         session_data->section_size_target[source_id],
         session_data->stretch_section_to_packet[source_id],
         session_data->hx_body_state[source_id]);
+
+    if (source_id == SRC_CLIENT)
+    {
+        if (type == SEC_REQUEST)
+        {
+            update_request_line_length(cut_result, cutter, session_data);
+            if (my_inspector->params->max_request_line_length > 0 and
+                get_cache_data().request.request_line_length > static_cast<uint32_t>(my_inspector->params->max_request_line_length))
+            {
+                session_data->events[SRC_CLIENT]->create_event(HttpEnums::EVENT_REQUEST_LINE_LENGTH_TOO_LONG);
+            }
+        }
+
+        uint32_t current_size = cutter->get_octets_seen();
+        if (cut_result == SCAN_FOUND or cut_result == SCAN_FOUND_PIECE)
+            current_size += cutter->get_num_flush();
+
+        if (!is_body(type))
+        {
+            update_request_size(session_data, type, current_size);
+            if (my_inspector->params->max_request_size > 0 and
+                get_cache_data().request.request_size > static_cast<uint32_t>(my_inspector->params->max_request_size))
+            {
+                session_data->events[SRC_CLIENT]->create_event(HttpEnums::EVENT_REQUEST_SIZE_TOO_LONG);
+            }
+        }
+    }
+
     switch (cut_result)
     {
     case SCAN_NOT_FOUND:
@@ -312,6 +345,48 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
         cutter = nullptr;
         return status_value(StreamSplitter::ABORT);
     }
+}
+
+void HttpStreamSplitter::update_request_line_length(ScanResult& cut_result, const HttpCutter* const& cutter, const HttpFlowData* session_data) const
+{
+    uint32_t request_line_size;
+
+    if (session_data->for_httpx)
+    {
+        request_line_size = get_cache_data().request.hx_request_line_length;
+    }
+    else
+    {
+        request_line_size = cutter->get_octets_seen();
+        assert(request_line_size <= MAX_OCTETS);
+        if (cut_result == SCAN_FOUND or cut_result == SCAN_FOUND_PIECE)
+        {
+            request_line_size += cutter->get_num_flush();
+            if (cutter->get_num_excess() > request_line_size)
+                request_line_size = 0; 
+            else
+                request_line_size -= cutter->get_num_excess();
+        }
+    }
+
+    get_cache_data().request.request_line_length = request_line_size;
+}
+
+void HttpStreamSplitter::update_request_size(HttpFlowData* session_data, SectionType& type,
+    uint32_t current_size) const
+{
+    uint64_t base_size = 0;
+
+    if (type != SEC_REQUEST)
+    {
+        const HttpTransaction* const txn = session_data->transaction[SRC_CLIENT];
+        if (txn != nullptr)
+            base_size = txn->get_message_length(static_cast<HttpMsgSection*>(txn->get_request()), SRC_CLIENT, false);
+    }
+
+    const uint64_t total_size = current_size + base_size;
+    get_cache_data().request.request_size = static_cast<uint32_t>(
+        total_size > UINT32_MAX ? UINT32_MAX : total_size);
 }
 
 StreamSplitter::Status HttpStreamSplitter::scan(Flow* flow, const uint8_t* data, uint32_t length,

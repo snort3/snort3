@@ -82,7 +82,6 @@ public:
 
     int32_t get_status_code_num() const { return status_code_num; }
 
-    static void clear_tmp_buffers();
     virtual void clear();
     bool is_clear() { return cleared; }
 
@@ -96,6 +95,8 @@ public:
     { return (sec != nullptr) ? sec->get_length() : 0; }
     virtual uint32_t get_length() const
     { return (msg_text.length() > 0) ? msg_text.length() : 0; }
+
+    HttpFlowData* get_session_data() const { return session_data; }
 
     HttpMsgSection* next = nullptr;
 
@@ -145,15 +146,6 @@ protected:
 
 private:
     const Field& get_tmp_buffer(const HttpBufferInfo& buf);
-    Field* compute_http_decoded_uri(const HttpBufferInfo& buf);
-    Field* compute_http_method_str(const HttpBufferInfo& buf);
-    Field* compute_http_request_size(const HttpBufferInfo& buf);
-    Field* compute_http_response_size(const HttpBufferInfo& buf);
-    Field* compute_http_version_str(const HttpBufferInfo& buf);
-    Field* compute_http_user_agent_str(const HttpBufferInfo& buf);
-    Field* compute_http_referer_str(const HttpBufferInfo& buf);
-    Field* compute_detail_119_20(const HttpBufferInfo& buf);
-    Field* compute_detail_119_287(const HttpBufferInfo& buf);
 };
 
 #endif

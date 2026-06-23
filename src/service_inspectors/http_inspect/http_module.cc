@@ -175,6 +175,11 @@ const Parameter HttpModule::http_params[] =
     { "decompress_brotli", Parameter::PT_BOOL, nullptr, "false",
       "enable brotli decompression" },
 #endif
+    { "max_request_size", Parameter::PT_INT, "-1:65536", "0",
+      "maximum size of a http request (0 disabled, -1 no limit)" },
+
+    { "max_request_line_length", Parameter::PT_INT, "-1:49152", "0",
+      "maximum length of a http request line (0 disabled, -1 no limit)" },
 
 #ifdef REG_TEST
     { "test_input", Parameter::PT_BOOL, nullptr, "false",
@@ -402,6 +407,10 @@ bool HttpModule::set(const char*, Value& val, SnortConfig*)
     {
         params->publish_request_body = val.get_bool();
     }
+    else if (val.is("max_request_size"))
+        params->max_request_size = val.get_int32();
+    else if (val.is("max_request_line_length"))
+        params->max_request_line_length = val.get_int32();
     else if (val.is("allowed_methods"))
         store_tokens(val, params->allowed_methods);
     else if (val.is("disallowed_methods"))

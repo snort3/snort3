@@ -394,3 +394,13 @@ void HttpTransaction::add_filename(HttpCommon::SourceId source_id, const std::st
     filename[source_id].append(fname);
     content_type[source_id].append(ftype);
 }
+
+uint64_t HttpTransaction::get_message_length(const HttpMsgSection* start, HttpCommon::SourceId source_id, bool include_body) const
+{
+    uint64_t length = HttpMsgSection::get_section_len(start)
+        + HttpMsgSection::get_section_len(header[source_id])
+        + HttpMsgSection::get_section_len(trailer[source_id]);
+    if (include_body)
+        length += body_len[source_id];
+    return length;
+}

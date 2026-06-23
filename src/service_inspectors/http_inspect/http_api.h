@@ -51,12 +51,16 @@
     "http_decoded_uri",           \
     "http_method_str",            \
     "http_request_size",          \
+    "http_request_line_length",   \
     "http_response_size",         \
     "http_version_str",           \
     "http_user_agent_str",        \
     "http_referer_str",           \
     "detail_119_20",              \
-    "detail_119_287"
+    "detail_119_287",             \
+    "detail_119_298",             \
+    "detail_119_299",             \
+    "detail_119_300"
 
 class HttpApi
 {

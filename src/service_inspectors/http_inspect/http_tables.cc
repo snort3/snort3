@@ -353,8 +353,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_PARTIAL_START,              "partial start line" },
     { EVENT_REQ_TOO_LONG,               "HTTP message request line longer than 63780 bytes" },
     { EVENT_UNEXPECTED_H2_PREFACE,      "HTTP/2 preface received instead of an HTTP/1 method" },
-    { EVENT_DISALLOWED_METHOD,          "HTTP request method is not on allowed methods list or is on "
-                                        "disallowed methods list" },
+    { EVENT_DISALLOWED_METHOD,          "HTTP method is not allowed" },
     { EVENT_GZIP_RESERVED_FLAGS,        "HTTP gzip body with reserved flag set" },
     { EVENT_MAX_PARTIAL_FLUSH,          "Too many partial flushes" },
     { EVENT_DEFLATE_EARLY_END,          "deflate compressed data followed by unexpected non-deflate data" },
@@ -365,6 +364,9 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_DEFLATE_HIGH_EXPANSION,     "deflate decompression produced excessive output relative to consumed input" },
     { EVENT_BROTLI_HIGH_EXPANSION,      "brotli decompression produced excessive output relative to consumed input" },
     { EVENT_BROTLI_DISABLED,            "brotli compressed traffic detected while decompression is disabled" },
+    { EVENT_REQUEST_SIZE_TOO_LONG,      "maximum request size exceeded" },
+    { EVENT_REQUEST_LINE_LENGTH_TOO_LONG, "maximum request line length exceeded" },
+    { EVENT_REQUEST_LINE_NOT_VALID,     "invalid HTTP request line format" },
     { 0, nullptr }
 };
 

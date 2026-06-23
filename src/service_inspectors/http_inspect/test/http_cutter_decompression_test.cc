@@ -140,14 +140,12 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow*, unsigned,
 bool HttpStreamSplitter::finish(snort::Flow*) { return false; }
 void HttpStreamSplitter::prep_partial_flush(snort::Flow*, uint32_t, uint32_t, uint32_t,
     HttpEnums::PartialFlushType) { }
-void HttpMsgSection::clear_tmp_buffers() { }
 
 HttpTransaction::~HttpTransaction() = default;
 void HttpTransaction::delete_transaction(HttpTransaction*, HttpFlowData*) { }
 HttpInfractions* HttpTransaction::get_infractions(HttpCommon::SourceId) { return nullptr; }
 
 THREAD_LOCAL PegCount HttpModule::peg_counts[PEG_COUNT_MAX] = { };
-const Field Field::FIELD_NULL { STAT_NO_SOURCE };
 
 TEST_GROUP_BASE(cl_cutter_decompression_test, HttpDecompressionFixture)
 {

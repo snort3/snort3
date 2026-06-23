@@ -31,6 +31,7 @@
 #include "http_common.h"
 #include "http_compress_stream.h"
 #include "http_enum.h"
+#include "http_field_buffer.h"
 #include "http_js_norm.h"
 #include "http_module.h"
 #include "http_msg_header.h"
@@ -123,7 +124,7 @@ HttpFlowData::~HttpFlowData()
         delete tmp;
     }
 
-    HttpMsgSection::clear_tmp_buffers();
+    reset_cache_data();
 }
 
 void HttpFlowData::half_reset(SourceId source_id)

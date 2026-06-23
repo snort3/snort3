@@ -148,7 +148,6 @@ HttpMsgSection::HttpMsgSection(const uint8_t* buffer, const uint16_t buf_size,
     tcp_close(false)
 {}
 void HttpMsgSection::clear(){}
-void HttpMsgSection::clear_tmp_buffers() { }
 bool HttpMsgSection::run_detection(snort::Packet*) { return false; }
 void HttpMsgHeadShared::analyze() {}
 

@@ -20,6 +20,7 @@
 #ifndef HTTP_MSG_START_H
 #define HTTP_MSG_START_H
 
+#include "http_cache_data.h"
 #include "http_common.h"
 #include "http_field.h"
 #include "http_msg_section.h"

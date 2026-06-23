@@ -60,8 +60,8 @@ class HttpStartCutter : public HttpCutter
 {
 public:
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
-        HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, HttpCommon::HXBodyState)
-        override;
+        HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, HttpCommon::HXBodyState) override;
+    virtual bool is_request_cutter() const { return false; }
 
 protected:
     enum ValidationResult { V_GOOD, V_BAD, V_TBD };
@@ -76,6 +76,8 @@ private:
 
 class HttpRequestCutter : public HttpStartCutter
 {
+public:
+    bool is_request_cutter() const override { return true; }
 private:
     uint32_t octets_checked = 0;
     bool check_h2 = true;
@@ -106,8 +108,7 @@ class HttpHeaderCutter : public HttpCutter
 {
 public:
     HttpEnums::ScanResult cut(const uint8_t* buffer, uint32_t length,
-        HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, HttpCommon::HXBodyState)
-        override;
+        HttpInfractions* infractions, HttpEventGen* events, uint32_t, bool, HttpCommon::HXBodyState) override;
     uint32_t get_num_head_lines() const override { return num_head_lines; }
 
 private:

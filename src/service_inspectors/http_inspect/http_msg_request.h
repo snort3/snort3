@@ -76,6 +76,8 @@ private:
 
     void parse_start_line() override;
     bool http_name_nocase_ok(const uint8_t* start);
+    static bool is_all_uppercase(const uint8_t* start, int32_t length);
+    static bool has_raw_control_character(const Field& line);
     bool handle_zero_nine();
 
     Field method;

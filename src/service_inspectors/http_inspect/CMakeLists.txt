@@ -2,6 +2,7 @@
 set(HTTP_INCLUDES
     http_field.h
     http_common.h
+    http_field_buffer.h
     http_inspect_base.h
     http_stream_splitter_base.h
     http_test_manager.h
@@ -13,6 +14,8 @@ set (FILE_LIST
     http_api.h
     http_buffer_info.cc
     http_buffer_info.h
+    http_cache_data.cc
+    http_cache_data.h
     http_compress_stream.cc
     http_compress_stream.h
     http_context_data.cc
@@ -22,7 +25,11 @@ set (FILE_LIST
     http_cutter.h
     http_enum.h
     http_event.h
+    http_event_reason.cc
+    http_event_reason.h
     http_field.cc
+    http_field_buffer.cc
+    http_field_buffer.h
     http_flow_data.cc
     http_flow_data.h
     http_inspect.cc

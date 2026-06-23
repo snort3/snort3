@@ -79,6 +79,8 @@ public:
             clear_flag(get_publish_body_flag(source_id));
     }
 
+    uint64_t get_message_length(const HttpMsgSection* start, HttpCommon::SourceId source_id, bool include_body = true) const;
+
     void add_body_len(HttpCommon::SourceId source_id, uint64_t len)
     { body_len[source_id] += len; }
     uint64_t get_body_len(HttpCommon::SourceId source_id) const
