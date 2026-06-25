@@ -211,6 +211,9 @@ bool HttpMsgRequest::http_name_nocase_ok(const uint8_t* start)
 bool HttpMsgRequest::handle_zero_nine()
 {
     // 0.9 request line is supposed to be "GET <URI>\r\n"
+    // Stripping internal whitespace or extra tokens from the URI is not feasible because
+    // content-based detection rules match against http_uri and rely on the full line content
+    // being present in that buffer.
     if ((start_line.length() >= 3) &&
         !memcmp(start_line.start(), "GET", 3) &&
         ((start_line.length() == 3) || is_sp_tab[start_line.start()[3]]))
@@ -221,33 +224,19 @@ bool HttpMsgRequest::handle_zero_nine()
         method_id = METH_GET;
         version_id = VERS_0_9;
 
-        // Parse "GET <URI>" with optional trailing whitespace and reject extra tokens.
+        // Eliminate the clump of whitespace following GET and possible clump of whitespace at the
+        // end and whatever is left is assumed to be the URI
         int32_t uri_begin;
         for (uri_begin = 4; (uri_begin < start_line.length()) &&
             is_sp_tab[start_line.start()[uri_begin]]; uri_begin++);
-
         if (uri_begin < start_line.length())
         {
             int32_t uri_end;
-            for (uri_end = uri_begin; (uri_end < start_line.length()) and
-                !is_sp_tab[start_line.start()[uri_end]]; uri_end++);
-
-            int32_t trailing_begin;
-            for (trailing_begin = uri_end; (trailing_begin < start_line.length()) and
-                is_sp_tab[start_line.start()[trailing_begin]]; trailing_begin++);
-
-            uri = new HttpUri(start_line.start() + uri_begin, uri_end - uri_begin, method_id,
+            for (uri_end = start_line.length() - 1; is_sp_tab[start_line.start()[uri_end]];
+                uri_end--);
+            uri = new HttpUri(start_line.start() + uri_begin, uri_end - uri_begin + 1, method_id,
                 params->uri_param, transaction->get_infractions(source_id),
                 session_data->events[source_id]);
-
-            if (trailing_begin < start_line.length())
-            {
-                // in case is simple request with white spaces, assume is malformed version
-                if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE ||
-                    get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::SIMPLE_REQUEST)
-                    get_cache_data().request.reason_code_detail_300 = VERSION_MALFORMED;
-                return true;
-            }
         }
         else
         {
@@ -312,10 +301,6 @@ void HttpMsgRequest::gen_events()
         return;
 
     const bool zero_nine = *transaction->get_infractions(source_id) & INF_ZERO_NINE_REQ;
-
-    if (zero_nine and
-        get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::VERSION_MALFORMED)
-        return;
 
     if ((start_line.start()[method.length()] == '\t') ||
        (!zero_nine && (start_line.start()[start_line.length() - 9] == '\t')))
