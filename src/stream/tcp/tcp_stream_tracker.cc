@@ -172,12 +172,8 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescr
             tcp_event = TCP_NO_FLAGS_EVENT;
         }
 
-        assert(tcp_event < TCP_DELIMITER);
-
-        if (client_tracker)
-            session->tcp_ssn_stats.add(tcp_event);
-        else
-            session->tcp_ssn_stats.add(TcpStreamTracker::TcpEvent(tcp_event + TCP_DELIMITER));
+        if ( client_tracker )
+            session->log_tcp_event(tcp_event);
     }
     else
     {
@@ -213,6 +209,10 @@ TcpStreamTracker::TcpEvent TcpStreamTracker::set_tcp_event(const TcpSegmentDescr
         {
             tcp_event = TCP_NO_FLAGS_EVENT;
         }
+
+        if ( client_tracker )
+            session->log_tcp_event(tcp_event);
+
     }
 
     return tcp_event;

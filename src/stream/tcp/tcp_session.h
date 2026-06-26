@@ -20,6 +20,9 @@
 #ifndef TCP_SESSION_H
 #define TCP_SESSION_H
 
+#include <bitset>
+#include <cstdint>
+
 #include "flow/flow.h"
 #include "flow/session.h"
 #include "protocols/packet.h"
@@ -41,6 +44,7 @@ class TcpSegmentDescriptor;
 class TcpSession : public Session
 {
 public:
+    static constexpr int MAX_SESSION_TCP_EVENTS = 15;
     TcpSession(snort::Flow*);
     ~TcpSession() override;
 
@@ -125,6 +129,9 @@ public:
     void count_stale_packet() override
     { tcpStats.stale_packets++; }
 
+    void log_tcp_event(TcpStreamTracker::TcpEvent);
+    const char* get_tcp_event_history() const;
+
     TcpStreamTracker client;
     TcpStreamTracker server;
     TcpStreamConfig* tcp_config = nullptr;
@@ -142,18 +149,6 @@ public:
     bool proxy_cutover_ooo_drop = false;
     uint8_t held_packet_dir = SSN_DIR_NONE;
     uint8_t ecn = 0;
-
-    struct TcpSessionStats
-    {
-        static constexpr int events_max = 15;
-        TcpStreamTracker::TcpEvent events[events_max];
-        uint8_t events_idx = 0;
-        std::bitset<TcpStreamTracker::TcpEvent::TCP_MAX_EVENTS> events_seen;
-
-        inline void add(TcpStreamTracker::TcpEvent);
-    };
-
-    TcpSessionStats tcp_ssn_stats{};
 
 private:
     int process_tcp_packet(TcpSegmentDescriptor&, const snort::Packet*);
@@ -179,39 +174,13 @@ private:
     TcpStateMachine* tsm;
     bool splitter_init = false;
     bool no_ack = false;
+
+    // TCP event logging - used to display sequence of the connection tcp events
+    static constexpr int TCP_EVENT_HISTORY_BYTES = MAX_SESSION_TCP_EVENTS + 3;  // events + 'x' overflow + '\0' + 1 spare
+    mutable char tcp_event_history[TCP_EVENT_HISTORY_BYTES] = {};
+    uint8_t event_count = 0;
+    std::bitset<TcpStreamTracker::TcpEvent::TCP_MAX_EVENTS> tcp_events_seen;
 };
-
-void TcpSession::TcpSessionStats::add(TcpStreamTracker::TcpEvent event)
-{
-    if (events_seen[event])
-        return;
-
-    switch (event)
-    {
-    case TcpStreamTracker::TcpEvent::TCP_ACK_SENT_EVENT:
-    case TcpStreamTracker::TcpEvent::TCP_DATA_SEG_SENT_EVENT:
-    case TcpStreamTracker::TcpEvent::TCP_ACK_RECV_EVENT:
-    case TcpStreamTracker::TcpEvent::TCP_DATA_SEG_RECV_EVENT:
-    case TcpStreamTracker::TcpEvent::TCP_NO_FLAGS_EVENT:
-        events_seen[event] = true;
-        break;
-    case TcpStreamTracker::TcpEvent::TCP_SYN_SENT_EVENT:
-    case TcpStreamTracker::TcpEvent::TCP_SYN_RECV_EVENT:
-    case TcpStreamTracker::TcpEvent::TCP_RST_SENT_EVENT:
-    case TcpStreamTracker::TcpEvent::TCP_RST_RECV_EVENT:
-    case TcpStreamTracker::TcpEvent::TCP_FIN_SENT_EVENT:
-    case TcpStreamTracker::TcpEvent::TCP_FIN_RECV_EVENT:
-        events_seen.reset();
-        break;
-    default:
-        break;
-    }
-
-    events[events_idx++] = event;
-
-    if (events_idx >= events_max)
-        events_seen.set();
-}
 
 #endif
 

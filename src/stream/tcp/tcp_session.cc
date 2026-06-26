@@ -1601,3 +1601,64 @@ bool TcpSession::is_hole_present(TcpStreamTracker* listener, snort::Packet* pkt)
     }
     return false;
 }
+
+void TcpSession::log_tcp_event(TcpStreamTracker::TcpEvent event)
+{
+    static constexpr char tcp_event_chars[TcpStreamTracker::TcpEvent::TCP_MAX_EVENTS] = {
+        'S',  // TCP_SYN_SENT_EVENT
+        'H',  // TCP_SYN_ACK_SENT_EVENT
+        'A',  // TCP_ACK_SENT_EVENT
+        'D',  // TCP_DATA_SEG_SENT_EVENT
+        'F',  // TCP_FIN_SENT_EVENT
+        'R',  // TCP_RST_SENT_EVENT
+        '-',  // TCP_NO_FLAGS_EVENT
+        's',  // TCP_SYN_RECV_EVENT
+        'h',  // TCP_SYN_ACK_RECV_EVENT
+        'a',  // TCP_ACK_RECV_EVENT
+        'd',  // TCP_DATA_SEG_RECV_EVENT
+        'f',  // TCP_FIN_RECV_EVENT
+        'r',  // TCP_RST_RECV_EVENT
+    };
+
+    if ( tcp_events_seen[event] )
+        return;
+
+    switch ( event )
+    {
+    case TcpStreamTracker::TcpEvent::TCP_ACK_SENT_EVENT:
+    case TcpStreamTracker::TcpEvent::TCP_DATA_SEG_SENT_EVENT:
+    case TcpStreamTracker::TcpEvent::TCP_ACK_RECV_EVENT:
+    case TcpStreamTracker::TcpEvent::TCP_DATA_SEG_RECV_EVENT:
+    case TcpStreamTracker::TcpEvent::TCP_NO_FLAGS_EVENT:
+        tcp_events_seen[event] = true;
+        break;
+
+    case TcpStreamTracker::TcpEvent::TCP_SYN_SENT_EVENT:
+    case TcpStreamTracker::TcpEvent::TCP_SYN_RECV_EVENT:
+    case TcpStreamTracker::TcpEvent::TCP_RST_SENT_EVENT:
+    case TcpStreamTracker::TcpEvent::TCP_RST_RECV_EVENT:
+    case TcpStreamTracker::TcpEvent::TCP_FIN_SENT_EVENT:
+    case TcpStreamTracker::TcpEvent::TCP_FIN_RECV_EVENT:
+        tcp_events_seen.reset();
+        break;
+
+    default:
+        break;
+    }
+
+    if ( event < TcpStreamTracker::TcpEvent::TCP_MAX_EVENTS && event_count < MAX_SESSION_TCP_EVENTS )
+    {
+        tcp_event_history[event_count++] = tcp_event_chars[event];
+        if ( event_count >= MAX_SESSION_TCP_EVENTS )
+            tcp_events_seen.set();
+    }
+}
+
+const char* TcpSession::get_tcp_event_history() const
+{
+    uint8_t len = event_count;
+    if ( event_count >= MAX_SESSION_TCP_EVENTS )
+        tcp_event_history[len++] = 'x';
+    tcp_event_history[len] = '\0';
+    return tcp_event_history;
+}

@@ -33,65 +33,9 @@ using namespace std;
 //  History
 //-------------------------------------------------------------------------
 
-static void add(TcpStreamTracker::TcpEvent event, string& history)
-{
-    switch (event)
-    {
-    case TcpStreamTracker::TcpEvent::TCP_SYN_SENT_EVENT:
-        history += 'S';
-        break;
-    case TcpStreamTracker::TcpEvent::TCP_SYN_ACK_SENT_EVENT:
-        history += 'H';
-        break;
-    case TcpStreamTracker::TcpEvent::TCP_ACK_SENT_EVENT:
-        history += 'A';
-        break;
-    case TcpStreamTracker::TcpEvent::TCP_DATA_SEG_SENT_EVENT:
-        history += 'D';
-        break;
-    case TcpStreamTracker::TcpEvent::TCP_FIN_SENT_EVENT:
-        history += 'F';
-        break;
-    case TcpStreamTracker::TcpEvent::TCP_RST_SENT_EVENT:
-        history += 'R';
-        break;
-    case TcpStreamTracker::TcpEvent::TCP_NO_FLAGS_EVENT:
-        history += '-';
-        break;
-    case TcpStreamTracker::TcpEvent::TCP_SYN_RECV_EVENT:
-        history += 's';
-        break;
-    case TcpStreamTracker::TcpEvent::TCP_SYN_ACK_RECV_EVENT:
-        history += 'h';
-        break;
-    case TcpStreamTracker::TcpEvent::TCP_ACK_RECV_EVENT:
-        history += 'a';
-        break;
-    case TcpStreamTracker::TcpEvent::TCP_DATA_SEG_RECV_EVENT:
-        history += 'd';
-        break;
-    case TcpStreamTracker::TcpEvent::TCP_FIN_RECV_EVENT:
-        history += 'f';
-        break;
-    case TcpStreamTracker::TcpEvent::TCP_RST_RECV_EVENT:
-        history += 'r';
-        break;
-    default:
-        // other events are not mapped
-        break;
-    }
-}
-
 static void get_tcp_history(const TcpSession* ssn, string& history)
 {
-    const auto& events = ssn->tcp_ssn_stats.events;
-    auto max_idx = ssn->tcp_ssn_stats.events_idx;
-
-    for (decltype(max_idx) i = 0; i < max_idx; ++i)
-        add(events[i], history);
-
-    if (max_idx >= ssn->tcp_ssn_stats.events_max)
-        history += 'x';
+    history = ssn->get_tcp_event_history();
 }
 
 static void get_udp_history(const UdpSession* ssn, string& history)
@@ -110,7 +54,7 @@ const string& EofEvent::get_history() const
         return history;
 
     if (f->pkt_type == PktType::TCP)
-        get_tcp_history((const TcpSession*)f->session, history);
+        get_tcp_history(static_cast<const TcpSession*>(f->session), history);
     else if (f->pkt_type == PktType::UDP)
         get_udp_history((const UdpSession*)f->session, history);
 
