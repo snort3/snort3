@@ -201,6 +201,114 @@ struct IdComp
     }
 };
 
+enum class PendingTtermState
+{
+    WaitingForTterm,
+    TtermCalled,
+    TtermCalledWaitingForRemovedMap
+};
+
+struct PendingTterm
+{
+    snort::Inspector* pin = nullptr;
+    PendingTtermState state = PendingTtermState::WaitingForTterm;
+};
+
+// Pending tterm entries keep removed inspectors alive until deferred thread cleanup runs.
+static THREAD_LOCAL std::list<PendingTterm>* pending_tterm = nullptr;
+
+static bool pending_tterm_called(const PendingTterm& pending)
+{ return pending.state != PendingTtermState::WaitingForTterm; }
+
+static bool pending_tterm_waits_for_removed_map(const PendingTterm& pending)
+{ return pending.state == PendingTtermState::TtermCalledWaitingForRemovedMap; }
+
+static PendingTterm* find_pending_tterm(const snort::Inspector* pin)
+{
+    if ( !pending_tterm )
+        return nullptr;
+
+    for ( auto& pending : *pending_tterm )
+        if ( pending.pin == pin )
+            return &pending;
+
+    return nullptr;
+}
+
+static void call_pending_tterm(PendingTterm& pending)
+{
+    if ( !pending_tterm_called(pending) )
+    {
+        pending.pin->tterm();
+        pending.state = PendingTtermState::TtermCalled;
+    }
+}
+
+static PendingTterm* defer_tterm(snort::Inspector* pin)
+{
+    assert(pin);
+
+    if ( !pending_tterm )
+        pending_tterm = new std::list<PendingTterm>;
+
+    for ( auto& pending : *pending_tterm )
+        if ( pending.pin == pin )
+            return &pending;
+
+    pin->add_ref();              // self-hold
+    pending_tterm->push_back({ pin, PendingTtermState::WaitingForTterm });
+    return &pending_tterm->back();
+}
+
+static std::list<PendingTterm>::iterator finish_pending_tterm(std::list<PendingTterm>::iterator it)
+{
+    call_pending_tterm(*it);
+
+    it->pin->rem_ref();
+    return pending_tterm->erase(it);
+}
+
+static bool is_pending_tterm(const snort::Inspector* pin)
+{
+    if ( !pending_tterm )
+        return false;
+
+    for ( const auto& pending : *pending_tterm )
+        if ( pending.pin == pin )
+            return true;
+
+    return false;
+}
+
+static bool is_pending_tterm_called(const snort::Inspector* pin)
+{
+    const PendingTterm* pending = find_pending_tterm(pin);
+    return pending and pending_tterm_called(*pending);
+}
+
+static bool acknowledge_pending_tterm_called(const snort::Inspector* pin)
+{
+    PendingTterm* pending = find_pending_tterm(pin);
+
+    if ( !pending or !pending_tterm_called(*pending) )
+        return false;
+
+    if ( pending_tterm_waits_for_removed_map(*pending) )
+        pending->state = PendingTtermState::TtermCalled;
+
+    return true;
+}
+
+static void mark_pending_tterm_called(const snort::Inspector* pin)
+{
+    PendingTterm* pending = find_pending_tterm(pin);
+
+    if ( pending and !pending_tterm_called(*pending) )
+        pending->state = PendingTtermState::TtermCalled;
+}
+
+static void thread_term_removed_same_api(const InspectorData&);
+
 struct InspectorVector
 {
     std::vector<InspectorData> iv;
@@ -228,8 +336,37 @@ struct InspectorVector
         {
             // Put all first so full init short-circuits and avoids a race
             // on needs_tinit during reload.
-            if ( insd.pin and (all or insd.needs_tinit) )
-                insd.pin->tinit();
+            if ( !insd.pin or !(all or insd.needs_tinit) )
+                continue;
+
+            const InspectApi* incoming_api = insd.pin->get_api();
+
+            if ( !all )
+                thread_term_removed_same_api(insd);
+
+            // Flush pending same-API tterm before tinit() to avoid overlapping
+            // per-thread inspector state.
+            if ( pending_tterm and !pending_tterm->empty() )
+            {
+                const unsigned slot = 1 + get_instance_id();
+
+                for ( auto it = pending_tterm->begin(); it != pending_tterm->end(); )
+                {
+                    if ( it->pin->get_api() == incoming_api )
+                    {
+                        if ( !pending_tterm_waits_for_removed_map(*it) and it->pin->get_ref(slot) <= 1 )
+                            it = finish_pending_tterm(it);
+                        else
+                        {
+                            call_pending_tterm(*it);
+                            ++it;
+                        }
+                    }
+                    else
+                        ++it;
+                }
+            }
+            insd.pin->tinit();
         }
     }
 
@@ -241,8 +378,23 @@ struct InspectorVector
             // needs_tterm when terminating every inspector.
             if ( insd.pin and (all or insd.needs_tterm) )
             {
+                if ( !all and acknowledge_pending_tterm_called(insd.pin) )
+                    continue;
+
+                // Defer service tterm() while this thread still holds refs to
+                // the removed inspector.
+                // Only applies to the per-policy reload path (all == false);
+                // full shutdown still proceeds immediately.
+                if ( !all and insd.pin->get_api()->type == IT_SERVICE and
+                    insd.pin->get_ref(1 + get_instance_id()) )
+                {
+                    defer_tterm(insd.pin);
+                    continue;
+                }
+
                 set_network_policy(insd.np);
                 insd.pin->tterm();
+                mark_pending_tterm_called(insd.pin);
             }
         }
 
@@ -280,6 +432,35 @@ struct InspectorVector
 
 static THREAD_LOCAL InspectorVector* curr_iv = nullptr;
 static InspectorVector* prev_iv = nullptr;
+
+static void thread_term_removed_same_api(const InspectorData& incoming)
+{
+    if ( !prev_iv )
+        return;
+
+    const InspectApi* incoming_api = incoming.pin->get_api();
+    bool did_tterm = false;
+    const unsigned slot = 1 + get_instance_id();
+
+    for ( auto& insd : prev_iv->iv )
+    {
+        if ( !insd.pin or !insd.needs_tterm or insd.pin->get_api() != incoming_api )
+            continue;
+
+        if ( insd.pin->get_ref(slot) and insd.name != incoming.name )
+            continue;
+
+        PendingTterm* pending = defer_tterm(insd.pin);
+
+        set_network_policy(insd.np);
+        call_pending_tterm(*pending);
+        pending->state = PendingTtermState::TtermCalledWaitingForRemovedMap;
+        did_tterm = true;
+    }
+
+    if ( did_tterm )
+        set_network_policy(SnortConfig::get_conf()->policy_map->get_network_policy(0));
+}
 
 void InspectorManager::new_map()
 {
@@ -928,16 +1109,52 @@ void InspectorManager::thread_init()
 void InspectorManager::thread_term()
 {
     curr_iv->thread_term(true);
+
+    if ( pending_tterm )
+    {
+        for ( auto it = pending_tterm->begin(); it != pending_tterm->end(); )
+            it = finish_pending_tterm(it);
+
+        delete pending_tterm;
+        pending_tterm = nullptr;
+    }
 }
 
 void InspectorManager::thread_term_removed()
 {
     assert(prev_iv);
     prev_iv->thread_term();
+    thread_drain_pending_tterm();
+}
+
+void InspectorManager::thread_drain_pending_tterm()
+{
+    if ( !pending_tterm or pending_tterm->empty() )
+        return;
+
+    const unsigned slot = 1 + get_instance_id();
+
+    for ( auto it = pending_tterm->begin(); it != pending_tterm->end(); )
+    {
+        if ( !pending_tterm_waits_for_removed_map(*it) and
+            it->pin->get_ref(slot) <= 1 )   // only our self-hold remains
+            it = finish_pending_tterm(it);
+        else
+            ++it;
+    }
+}
+
+void InspectorManager::thread_drain_pending_tterm_if_pending(const Inspector* pin)
+{
+    if ( !pin or !is_pending_tterm(pin) )
+        return;
+
+    thread_drain_pending_tterm();
 }
 
 void InspectorManager::thread_reinit(const SnortConfig*)
 {
+    thread_drain_pending_tterm();
     curr_iv->thread_init();
 }
 
@@ -1271,6 +1488,25 @@ void InspectorManager::bumble(Packet* p)
         flow->session->restart(p);
 }
 
+static void clear_stale_service_inspector(Packet* p)
+{
+    Flow* flow = p->flow;
+
+    if ( !flow->gadget or !is_pending_tterm_called(flow->gadget) )
+        return;
+
+    flow->clear_gadget();
+    InspectorManager::thread_drain_pending_tterm();
+
+    flow->set_service(p, nullptr);
+
+    if ( !flow->gadget and !flow->flags.svc_event_generated )
+    {
+        DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_NO_SERVICE, p);
+        flow->flags.svc_event_generated = true;
+    }
+}
+
 template<bool T>
 void inline InspectorManager::full_inspection(Packet* p)
 {
@@ -1285,7 +1521,7 @@ void inline InspectorManager::full_inspection(Packet* p)
     if ( (p->is_cooked() and !p->data) or (!p->is_cooked() and !p->dsize) )
         DetectionEngine::disable_content(p);
 
-    else if ( flow->gadget && flow->gadget->likes(p) )
+    else if ( flow->gadget and !is_pending_tterm_called(flow->gadget) and flow->gadget->likes(p) )
     {
         if ( !T )
             flow->gadget->eval(p);
@@ -1395,6 +1631,8 @@ inline void InspectorManager::internal_execute(Packet* p)
     }
     else
     {
+        clear_stale_service_inspector(p);
+
         if ( !p->has_paf_payload() and p->flow->flow_state == Flow::FlowState::INSPECT )
         {
             Flow& flow = *p->flow;
@@ -1483,8 +1721,18 @@ void InspectorManager::clear(Packet* p)
     if ( !p->context->clear_inspectors )
         return;
 
-    if ( p->flow and p->flow->gadget )
-        p->flow->gadget->clear(p);
+    if ( p->flow and p->flow->gadget and !is_pending_tterm_called(p->flow->gadget) )
+    {
+        Inspector* gadget = p->flow->gadget;
+        const bool was_pending = is_pending_tterm(gadget);
+        // Hold a temporary ref because clear() can drop the flow's gadget ref.
+        gadget->add_ref();
+        gadget->clear(p);
+        gadget->rem_ref();
+
+        if ( was_pending )
+            InspectorManager::thread_drain_pending_tterm();
+    }
 
     p->context->clear_inspectors = false;
 }

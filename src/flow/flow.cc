@@ -32,6 +32,7 @@
 #include "framework/data_bus.h"
 #include "helpers/bitop.h"
 #include "helpers/policy_switcher.h"
+#include "managers/inspector_manager.h"
 #include "main/analyzer.h"
 #include "protocols/packet.h"
 #include "stream/stream_log.h"
@@ -51,7 +52,7 @@ Flow::~Flow()
     PolicySwitcher ps(this);
     EofEvent eof_event(this);
     DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_END, eof_event, this);
-  
+
     free_flow_data();
     delete session;
 
@@ -69,7 +70,7 @@ Flow::~Flow()
         clouseau->rem_ref();
 
     if ( gadget )
-        gadget->rem_ref();
+        release_gadget();
 
     if (assistant_gadget)
         assistant_gadget->rem_ref();
@@ -79,6 +80,18 @@ Flow::~Flow()
 
     delete ha_state;
     delete ips_cont;
+}
+
+void Flow::release_gadget()
+{
+    Inspector* old_gadget = gadget;
+
+    if ( !old_gadget )
+        return;
+
+    gadget = nullptr;
+    old_gadget->rem_ref();
+    InspectorManager::thread_drain_pending_tterm_if_pending(old_gadget);
 }
 
 void Flow::init(PktType type)

@@ -28,6 +28,7 @@
 #include "main/snort_config.h"
 #include "main/thread_config.h"
 #include "managers/plugin_manager.h"
+#include "managers/inspector_manager.h"
 #include "packet_io/packet_tracer.h"
 #include "protocols/layer.h"
 #include "protocols/packet.h"
@@ -44,6 +45,8 @@ void LogMessage(const char*,...) { }
 void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }
 void DataBus::publish(unsigned, unsigned, const uint8_t*, unsigned, Flow*) { }
 void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
+
+void InspectorManager::thread_drain_pending_tterm_if_pending(const Inspector*) { }
 
 Packet::Packet(bool)
 {

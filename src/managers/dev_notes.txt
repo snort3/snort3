@@ -5,11 +5,36 @@ one for modules, plugins, scripts, and packets.
 The only plugin that is reloadable is Inspector.  It has reference counts
 so that it won't be freed while an active flow is using it.
 
+When reload removes an inspector, packet threads normally call tterm() on
+the old inspector while terminating the removed map.  If the inspector still
+has references on that packet thread, for example through flow->gadget,
+InspectorManager defers tterm() instead.  The pending entry is thread local
+and stores only the Inspector*.  It also takes a self-reference so the
+inspector object cannot be deleted before the pending tterm() is drained.
+
+The pending entry intentionally does not store NetworkPolicy or
+InspectionPolicy pointers because the old SnortConfig can be reaped before
+the deferred tterm() runs.  Pending tterm() entries are drained during
+thread reinitialization, thread termination, or when a flow releases the
+pending service gadget reference once the thread's refcount has dropped
+to the self-reference.
+
+During reload, InspectorManager does not blindly rebind stale flow gadgets.
+If a pending tterm() has already run, packet processing clears the old
+gadget and resets flow->service to nullptr so binder and wizard can
+rediscover the service.
+
+If reload initializes a same-API inspector while an old same-API inspector
+is removed, the old inspector's tterm() may run before the new tinit() to
+avoid colliding thread-local state.  Other referenced removed inspectors
+stay on the deferred cleanup path.
+
 Only the action, codec, and inspector managers have thread local state:
 
 * action manager has an action function
 * codec manager has the grinder and related stats
-* inspector manager has a flag to control calling the clear method
+* inspector manager has the current InspectorVector pointer and pending
+  deferred tterm() entries
 
 Some Lua files are here as they are coupled closely with C++ code in this
 directory (module_manager.cc):

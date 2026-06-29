@@ -155,6 +155,17 @@ namespace snort
     }
     unsigned StreamSplitter::max(Flow*) { return 0; }
     
+    void Flow::release_gadget()
+    {
+        Inspector* old_gadget = gadget;
+
+        if ( !old_gadget )
+            return;
+
+        gadget = nullptr;
+        old_gadget->rem_ref();
+    }
+
     // Mock Flow destructor
     Flow::~Flow() = default;
     

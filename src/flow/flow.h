@@ -336,15 +336,15 @@ public:
     void set_gadget(Inspector* ins)
     {
         if (gadget)
-            gadget->rem_ref();
+            release_gadget();
         gadget = ins;
-        gadget->add_ref();
+        if (gadget)
+            gadget->add_ref();
     }
 
     void clear_gadget()
     {
-        gadget->rem_ref();
-        gadget = nullptr;
+        release_gadget();
         if (assistant_gadget != nullptr)
             clear_assistant_gadget();
     }
@@ -569,6 +569,7 @@ public:  // FIXIT-M privatize if possible
 
 private:
     void clean();
+    void release_gadget();
     std::atomic_ullong inspection_duration{0};
     uint16_t inspected_packet_count{0};
 

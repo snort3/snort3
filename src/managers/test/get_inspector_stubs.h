@@ -22,6 +22,7 @@
 
 #include "detection/detection_engine.h"
 #include "flow/expect_flow.h"
+#include "flow/flow.h"
 #include "main/policy.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -61,17 +62,52 @@ DataBus::~DataBus() { }
 void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
 unsigned DataBus::get_id(const PubKey&) { return 0; }
 
+void Flow::set_service(Packet*, const char* new_service)
+{ service = new_service; }
+
+Flow::~Flow() = default;
+FlowDataStore::~FlowDataStore() = default;
+
+void Flow::release_gadget()
+{
+    Inspector* old_gadget = gadget;
+
+    if ( !old_gadget )
+        return;
+
+    gadget = nullptr;
+    old_gadget->rem_ref();
+    InspectorManager::thread_drain_pending_tterm_if_pending(old_gadget);
+}
+
 void DetectionEngine::disable_content(Packet*) { }
 
-Inspector::Inspector() { ref_count = nullptr; }
-Inspector::~Inspector() { }
+Inspector::Inspector()
+{
+    const unsigned max = 1 + ThreadConfig::get_instance_max();
+    ref_count = new std::atomic_uint[max];
+
+    for ( unsigned slot = 0; slot < max; ++slot )
+        ref_count[slot] = 0;
+}
+
+Inspector::~Inspector()
+{ delete[] ref_count; }
 bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return false; }
 StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
-bool Inspector::is_inactive() { return true; }
+bool Inspector::is_inactive()
+{
+    for ( unsigned slot = 0; slot < 1 + ThreadConfig::get_instance_max(); ++slot )
+        if ( ref_count[slot] )
+            return false;
+
+    return true;
+}
 bool Inspector::likes(Packet*) { return false; }
-void Inspector::add_global_ref() { }
-void Inspector::rem_ref() { }
-void Inspector::rem_global_ref() { }
+void Inspector::add_global_ref() { ++ref_count[0]; }
+void Inspector::add_ref() { ++ref_count[1 + get_instance_id()]; }
+void Inspector::rem_ref() { --ref_count[1 + get_instance_id()]; }
+void Inspector::rem_global_ref() { --ref_count[0]; }
 void Inspector::allocate_thread_storage() { }
 void Inspector::copy_thread_storage(snort::Inspector*) { }
 const char* InspectApi::get_type(InspectorType) { return ""; }

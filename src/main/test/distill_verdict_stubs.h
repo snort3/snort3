@@ -151,6 +151,7 @@ int Packet::inject() { return 0; }
 void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
 void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }
 void DataBus::publish_to_all_network_policies(unsigned int, unsigned int) { }
+void InspectorManager::thread_drain_pending_tterm() { }
 SFDAQInstance::SFDAQInstance(const char*, unsigned, const SFDAQConfig*) { }
 SFDAQInstance::~SFDAQInstance() = default;
 void SFDAQInstance::reload() { }
