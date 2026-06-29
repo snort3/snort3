@@ -87,6 +87,7 @@ void FileCapture::writer_thread()
 
         file->store_file();
         delete file;
+        // coverity[double_unlock] : ~unique_lock is a no-op after explicit lk.unlock() above
     }
 }
 
