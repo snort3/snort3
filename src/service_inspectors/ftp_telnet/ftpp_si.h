@@ -223,7 +223,27 @@ struct FTP_DATA_SESSION
     unsigned char packet_flags;
     bool direction;
     bool mss_changed;
+    FTP_SESSION* ftp_ctrl_ssn; // back-ref to control session owning datassn
 };
+
+// Link control and data sessions, clearing any stale link first.
+inline void ftp_link_datassn(FTP_SESSION* ctrl, FTP_DATA_SESSION* ds)
+{
+    if (ctrl->datassn && ctrl->datassn != ds)
+        static_cast<FTP_DATA_SESSION*>(ctrl->datassn)->ftp_ctrl_ssn = nullptr;
+    ctrl->datassn = ds;
+    ds->ftp_ctrl_ssn = ctrl;
+}
+
+// Unlink control from data session, clearing both sides.
+inline void ftp_unlink_datassn(FTP_SESSION* ctrl)
+{
+    if (ctrl->datassn)
+    {
+        static_cast<FTP_DATA_SESSION*>(ctrl->datassn)->ftp_ctrl_ssn = nullptr;
+        ctrl->datassn = nullptr;
+    }
+}
 
 class FtpDataFlowData : public snort::FlowData
 {

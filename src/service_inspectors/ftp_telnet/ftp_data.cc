@@ -220,6 +220,10 @@ FtpDataFlowData::FtpDataFlowData(Packet* p) : FlowData(inspector_id)
 
 FtpDataFlowData::~FtpDataFlowData()
 {
+    // Clear control session's datassn if it still points to us.
+    if (session.ftp_ctrl_ssn && session.ftp_ctrl_ssn->datassn == &session)
+        session.ftp_ctrl_ssn->datassn = nullptr;
+
     if (session.filename)
         snort_free(session.filename);
 }

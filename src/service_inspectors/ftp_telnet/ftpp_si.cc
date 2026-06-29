@@ -337,6 +337,9 @@ static int FTPInitConf(
  */
 void FTPFreesession(FTP_SESSION* ssn)
 {
+    // Clear data session back-ref before control session is freed.
+    ftp_unlink_datassn(ssn);
+
     if (ssn->filename)
         snort_free(ssn->filename);
 }

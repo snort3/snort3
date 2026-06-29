@@ -831,7 +831,7 @@ static int validate_param(Packet* p,
                 session->mode = FTPP_XFER_ACTIVE;
                 ftpdata->data_chan = session->server_conf->data_chan;
                 if (session->flags & FTP_FLG_MALWARE)
-                    session->datassn = ftpdata;
+                    ftp_link_datassn(session, ftpdata);
 
                 if (p->flow->flags.data_decrypted and
                     (session->flags & FTP_PROTP_CMD_ACCEPT))
@@ -846,6 +846,8 @@ static int validate_param(Packet* p,
 
                 if (result < 0)
                 {
+                    // ~FtpDataFlowData already cleared the back-link; just drop
+                    // our raw pointer.
                     delete fd;
                     session->datassn = nullptr;
                 }
@@ -1193,7 +1195,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                 session->mode = FTPP_XFER_PASSIVE;
                                 ftpdata->data_chan = session->server_conf->data_chan;
                                 if (session->flags & FTP_FLG_MALWARE)
-                                    session->datassn = ftpdata;
+                                    ftp_link_datassn(session, ftpdata);
 
                                 if (p->flow->flags.data_decrypted and
                                     (session->flags & FTP_PROTP_CMD_ACCEPT))
@@ -1208,6 +1210,8 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
 
                                 if (result < 0)
                                 {
+                                    // ~FtpDataFlowData already cleared the
+                                    // back-link; just drop our raw pointer.
                                     delete fd;
                                     session->datassn = nullptr;
                                 }
@@ -1233,7 +1237,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                     if (result < 0)
                                     {
                                         delete fd1;
-                                        session->datassn = nullptr;
+                                        ftp_unlink_datassn(session);
                                     }
                                 }
                             }
@@ -1298,7 +1302,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                     if ((session->flags & FTP_FLG_MALWARE) && ftpdata)
                     {
                         ftpdata->packet_flags |= FTPDATA_FLG_REST;
-                        session->datassn = nullptr;
+                        ftp_unlink_datassn(session);
                     }
                 }
                 session->data_chan_index = 0;
@@ -1322,7 +1326,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                 session->serverIP.clear();
                 session->clientIP.clear();
                 session->serverPort = session->clientPort = 0;
-                session->datassn = nullptr;
+                ftp_unlink_datassn(session);
 
                 session->data_chan_state = NO_STATE;
             }
