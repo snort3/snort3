@@ -380,7 +380,7 @@ void TcpSession::update_timestamp_tracking(TcpSegmentDescriptor& tsd)
 
     talker->set_tf_flags(listener->normalizer.get_timestamp_flags());
     if ( listener->normalizer.handling_timestamps()
-        && SEQ_EQ(listener->rcv_nxt, tsd.get_seq()) )
+        && SEQ_EQ(listener->get_rcv_nxt(), tsd.get_seq()) )
     {
         talker->set_ts_last_packet(tsd.get_packet_timestamp());
         talker->set_ts_last(tsd.get_timestamp());
@@ -719,7 +719,7 @@ bool TcpSession::filter_packet_for_reassembly(TcpSegmentDescriptor& tsd, TcpStre
 
         if ( tsd.is_packet_inorder() )
             listener->set_rcv_nxt(tsd.get_end_seq());
-        else if ( SEQ_GT(listener->r_win_base, listener->rcv_nxt) )
+        else if ( SEQ_GT(listener->r_win_base, listener->get_rcv_nxt()) )
             listener->set_rcv_nxt(listener->r_win_base); 
 
         return false;
@@ -753,7 +753,7 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd, bool flush)
         else
             server.set_tcp_options_len(tcp_options_len);
 
-        tsd.set_packet_inorder(tsd.get_seq() == listener->rcv_nxt );
+        tsd.set_packet_inorder(tsd.get_seq() == listener->get_rcv_nxt() );
 
         int rc =  listener->normalizer.apply_normalizations(tsd, tsd.get_seq(), tsd.is_packet_inorder());
         switch ( rc )
@@ -940,16 +940,6 @@ void TcpSession::set_extra_data(Packet* p, uint32_t xid)
     st.tcp_alerts.set_xtradata_mask(st.tcp_alerts.get_xtradata_mask() | BIT(xid));
 }
 
-static inline void set_window_scale(TcpSegmentDescriptor& tsd)
-{
-    // scale the window.  Only if BOTH client and server specified wscale option as part
-    // of 3-way handshake.  This is per RFC 1323.
-    if ( (tsd.get_talker()->get_tf_flags() & TF_WSCALE)
-         && (tsd.get_listener()->get_tf_flags() & TF_WSCALE) )
-    {
-        tsd.scale_wnd(tsd.get_talker()->get_wscale());
-    }
-}
 
 void TcpSession::check_events_and_actions(const TcpSegmentDescriptor& tsd)
 {
@@ -1071,7 +1061,7 @@ void TcpSession::init_tcp_packet_analysis(TcpSegmentDescriptor& tsd)
     }
 
     update_ignored_session(tsd);
-    set_window_scale(tsd);
+    tsd.set_window_scale();
 }
 
 // Out-of-order 3WHS: SYN -> ACK -> SYN-ACK.
@@ -1079,7 +1069,7 @@ void TcpSession::init_tcp_packet_analysis(TcpSegmentDescriptor& tsd)
 // When both sides negotiated window scaling, repair snd_wnd on both sides.
 //
 // Safety guards (any failure -> no repair):
-//   - only fires once: server.iss is 0 until init_on_late_synack() sets it  (FIXIT-L zero ISN)
+//   - only fires once: server.iss is 0 until init_on_late_synack() sets it
 //   - no server-to-client data has already been queued
 //   - SYN-ACK must ack exactly client ISS+1 (acks the SYN)
 //   - client ACK seq == client ISS+1 (the 3WHS ACK, not a keepalive)
@@ -1088,7 +1078,7 @@ void TcpSession::init_tcp_packet_analysis(TcpSegmentDescriptor& tsd)
 // handshake finalization advances rcv_nxt past the SYN payload.
 void TcpSession::handle_late_synack(TcpSegmentDescriptor& tsd)
 {
-    if ( server.get_iss() )  // FIXIT-L zero ISN edge case - consistent with existing code
+    if ( server.get_iss() ) 
         return;
 
     if ( client.seglist.data_was_queued() )
@@ -1121,11 +1111,15 @@ void TcpSession::handle_late_synack(TcpSegmentDescriptor& tsd)
 
     server.init_on_late_synack(tsd);
 
-    // snd_wnd was stored unscaled; apply wscale now that both sides have negotiated it.
+    // server.rcv_wnd was stored pre-scaled by init_on_late_synack (tsd.set_window_scale()
+    // was called there after TF_WSCALE was set on both sides). client.rcv_wnd was stored
+    // unscaled during SYN processing (server TF_WSCALE was not yet set then), so it needs
+    // the explicit shift here. snd_wnd mirrors the peer's rcv_wnd post-scaling.
     if ( (client.get_tf_flags() & TF_WSCALE) and (server.get_tf_flags() & TF_WSCALE) )
     {
-        server.set_snd_wnd(server.get_snd_wnd() << server.get_wscale());
-        client.set_snd_wnd(client.get_snd_wnd() << client.get_wscale());
+        client.set_rcv_wnd(client.get_rcv_wnd() << client.get_wscale());
+        server.set_snd_wnd(client.get_rcv_wnd());
+        client.set_snd_wnd(server.get_rcv_wnd());
     }
 
     tcpStats.ooo_3whs_late_synack++;
@@ -1586,10 +1580,10 @@ bool TcpSession::is_hole_present(TcpStreamTracker* listener, snort::Packet* pkt)
     };
 
     // Check for hole at the beginning of seglist
-    if ( SEQ_LT(listener->rcv_nxt, listener->seglist.head->start_seq()) )
+    if ( SEQ_LT(listener->get_rcv_nxt(), listener->seglist.head->start_seq()) )
     {
-        auto hole_size = listener->seglist.head->start_seq() - listener->rcv_nxt;
-        return log_hole_detection(listener->rcv_nxt, hole_size);
+        auto hole_size = listener->seglist.head->start_seq() - listener->get_rcv_nxt();
+        return log_hole_detection(listener->get_rcv_nxt(), hole_size);
     }
 
     if ( listener->seglist.cur_sseg && listener->seglist.cur_sseg->next )

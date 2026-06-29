@@ -58,6 +58,14 @@ bool TcpStateTimeWait::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
     return true;
 }
 
+bool TcpStateTimeWait::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
+{
+    if ( trk.normalizer.validate_rcvd_ack_seq(tsd) )
+        trk.update_tracker_ack_recv(tsd);
+
+    return true;
+}
+
 bool TcpStateTimeWait::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     // data on a segment when we shouldn't be sending data any more alert!

@@ -286,6 +286,7 @@ public:
     void finish_server_init(TcpSegmentDescriptor&);
     void finish_client_init(const TcpSegmentDescriptor&);
 
+    bool validate_sent_seq(TcpSegmentDescriptor&);
     void update_tracker_ack_recv(TcpSegmentDescriptor&);
     void update_tracker_ack_sent(TcpSegmentDescriptor&);
     void update_tracker_no_ack_recv(const TcpSegmentDescriptor&);
@@ -312,9 +313,6 @@ public:
     // Return whether there are more packets that need to be released.
     static bool release_held_packets(const timeval& cur_time, int max_remove);
     static bool adjust_expiration(uint32_t new_timeout_ms, const timeval& now);
-
-    uint32_t rcv_nxt = 0;          // RCV.NXT - receive next
-    uint32_t rcv_wnd = 0;          // RCV.WND - receive window
 
     uint32_t held_pkt_seq = 0;
 
@@ -364,6 +362,8 @@ private:
     uint32_t hole_left_edge = 0;   // First left hole
     uint32_t hole_right_edge = 0;
 
+    uint32_t rcv_nxt = 0;          // RCV.NXT - receive next
+    uint32_t rcv_wnd = 0;          // RCV.WND - receive window
     uint32_t snd_una = 0;          // SND.UNA - send unacknowledged
     uint32_t snd_nxt = 0;          // SND.NXT - send next
     uint32_t snd_wnd = 0;          // SND.WND - send window

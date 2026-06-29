@@ -78,9 +78,6 @@ public:
     uint32_t get_stream_window(TcpSegmentDescriptor& tsd)
     { return norm->get_stream_window(tns, tsd); }
 
-    uint32_t data_inside_window(TcpSegmentDescriptor& tsd)
-    { return norm->data_inside_window(tns, tsd);  }
-
     uint32_t get_tcp_timestamp(TcpSegmentDescriptor& tsd, bool strip)
     { return norm->get_tcp_timestamp(tns, tsd, strip); }
 
@@ -105,6 +102,9 @@ public:
 
     bool validate_established_ack(TcpSegmentDescriptor& tsd)
     { return norm->validate_established_ack(tns, tsd); }
+
+    bool validate_rcvd_ack_seq(TcpSegmentDescriptor& tsd)
+    { return norm->validate_rcvd_ack_seq(tns, tsd); }
 
     uint16_t set_urg_offset(const snort::tcp::TCPHdr* tcph, uint16_t dsize)
     { return norm->set_urg_offset(tns, tcph, dsize); }

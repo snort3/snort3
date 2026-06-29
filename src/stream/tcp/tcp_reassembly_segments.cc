@@ -347,7 +347,7 @@ void TcpReassemblySegments::purge_flushed_segments(uint32_t flush_seq)
         delete_reassembly_segment(dump_me);
     }
 
-    if ( tsn and SEQ_LT(tracker->rcv_nxt, tsn->next_seq()) )
+    if ( tsn and SEQ_LT(tracker->get_rcv_nxt(), tsn->next_seq()) )
         advance_rcv_nxt(tsn);
 
     /* Update the "last" time stamp seen from the other side

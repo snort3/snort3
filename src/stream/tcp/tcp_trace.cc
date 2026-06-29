@@ -129,8 +129,8 @@ inline void TraceState(const TcpStreamTracker& a, const TcpStreamTracker& b, con
 
     trace_logf(TRACE_DEBUG_LEVEL, stream_tcp_trace, TRACE_STATE, p,
         "      %s ST=%s      UA=%-4u NS=%-4u LW=%-5u RN=%-4u RW=%-4u ISS=%-4u IRS=%-4u\n",
-        s, stream_tcp_state_to_str(a), ua, ns, a.get_snd_wnd( ),
-        RMT(a, rcv_nxt, b), RMT(a, r_win_base, b), a.get_iss(), a.get_irs());
+        s, stream_tcp_state_to_str(a), ua, ns, a.get_rcv_wnd(),
+        RMT(a, get_rcv_nxt(), b), RMT(a, r_win_base, b), a.get_iss(), a.get_irs());
 
     unsigned paf = a.reassembler->is_splitter_paf() ? 2 : 0;
     unsigned fpt = a.get_flush_policy() ? 192 : 0;

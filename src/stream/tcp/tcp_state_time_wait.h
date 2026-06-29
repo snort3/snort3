@@ -32,6 +32,7 @@ public:
     bool syn_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool syn_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool ack_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
+    bool ack_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool data_seg_sent(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool fin_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;
     bool rst_recv(TcpSegmentDescriptor&, TcpStreamTracker&) override;

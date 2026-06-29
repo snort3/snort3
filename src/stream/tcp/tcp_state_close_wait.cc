@@ -48,13 +48,17 @@ bool TcpStateCloseWait::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
 
 bool TcpStateCloseWait::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_sent(tsd);
+    if ( trk.validate_sent_seq(tsd) )
+        trk.update_tracker_ack_sent(tsd);
+
     return true;
 }
 
 bool TcpStateCloseWait::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_recv(tsd);
+    if ( trk.normalizer.validate_rcvd_ack_seq(tsd) )
+        trk.update_tracker_ack_recv(tsd);
+
     return true;
 }
 
@@ -119,7 +123,7 @@ bool TcpStateCloseWait::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
 {
      if ( trk.handle_rst_packet(tsd, true) == TcpNormalizer::RST_OK )
         tsd.get_flow()->session_state |= STREAM_STATE_CLOSED;
-        
+
     return true;
 }
 

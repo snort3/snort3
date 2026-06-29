@@ -73,12 +73,15 @@ bool TcpStateMidStreamRecv::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker
 
     trk.update_tracker_ack_sent(tsd);
     trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
+
     return true;
 }
 
 bool TcpStateMidStreamRecv::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_recv(tsd);
+    if ( trk.normalizer.validate_rcvd_ack_seq(tsd) )
+        trk.update_tracker_ack_recv(tsd);
+
     return true;
 }
 
@@ -146,7 +149,7 @@ bool TcpStateMidStreamRecv::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker
         trk.session->tel.set_tcp_event(EVENT_DATA_AFTER_RST_RCVD);
 
     trk.handle_rst_packet(tsd, false);
-    
+
     return true;
 }
 

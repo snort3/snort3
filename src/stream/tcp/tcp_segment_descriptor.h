@@ -53,6 +53,7 @@ public:
 
     uint32_t init_mss(uint16_t* value);
     uint32_t init_wscale(uint16_t* value);
+    void set_window_scale();
     void set_retransmit_flag();
 
     snort::Flow* get_flow() const

@@ -310,7 +310,7 @@ int TcpReassemblerIds::eval_flush_policy_on_data(Packet* p)
 int TcpReassemblerIds::eval_asymmetric_flush(snort::Packet* p)
 {
     // asymmetric flush in IDS mode.. advance r_win_base to end of in-order data
-    tracker.r_win_base = tracker.rcv_nxt;
+    tracker.r_win_base = tracker.get_rcv_nxt();
 
     uint32_t flushed = eval_flush_policy_on_ack(p);
     if ( flushed )

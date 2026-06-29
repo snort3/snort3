@@ -64,15 +64,20 @@ bool TcpStateMidStreamSent::syn_ack_recv(TcpSegmentDescriptor&, TcpStreamTracker
 
 bool TcpStateMidStreamSent::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_sent(tsd);
+    if ( trk.validate_sent_seq(tsd) )
+        trk.update_tracker_ack_sent(tsd);
+
     return true;
 }
 
 bool TcpStateMidStreamSent::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_recv(tsd);
+    if ( trk.normalizer.validate_rcvd_ack_seq(tsd) )
+        trk.update_tracker_ack_recv(tsd);
+
     trk.session->set_established(tsd);
     trk.set_tcp_state(TcpStreamTracker::TCP_ESTABLISHED);
+
     return true;
 }
 

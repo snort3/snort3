@@ -58,6 +58,8 @@ struct Packet;
 #define MAX_TCP_SEQ_DISTANCE  (0xFFFFFFFF - MAX_TCP_WINDOW_SCALED)  // ~3GB
 #define TCP_SEQ_MIDPOINT      0x80000000  // 2GB - midpoint of 32-bit TCP sequence space
 
+#define TCP_MAX_WSCALE   14     // max window scale exponent per RFC 7323
+
 #define MAX_ZERO_WIN_PROBE_LEN 1
 #define MAX_KEEP_ALIVE_PROBE_LEN 1
 

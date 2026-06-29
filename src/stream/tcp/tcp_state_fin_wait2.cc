@@ -59,22 +59,28 @@ bool TcpStateFinWait2::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker&
 
 bool TcpStateFinWait2::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_sent(tsd);
+    if ( trk.validate_sent_seq(tsd) )
+        trk.update_tracker_ack_sent(tsd);
+
     return true;
 }
 
 bool TcpStateFinWait2::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( SEQ_GT(tsd.get_ack(), trk.get_snd_nxt() ) )
+    // Out-of-window SEQ suppresses bad-ack: a real stack discards the segment before inspecting ACK.
+    if ( trk.normalizer.validate_rcvd_ack_seq(tsd) )
     {
-        stream_log(tsd.get_pkt(), "stream_tcp: bad ack %u, snd_nxt %u\n",
-            tsd.get_ack(), trk.get_snd_nxt());
-        trk.session->tel.set_tcp_event(EVENT_BAD_ACK);
-        trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
-        trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
+        if ( SEQ_GT(tsd.get_ack(), trk.get_snd_nxt() ) )
+        {
+            stream_log(tsd.get_pkt(), "stream_tcp: bad ack %u, snd_nxt %u\n",
+                tsd.get_ack(), trk.get_snd_nxt());
+            trk.session->tel.set_tcp_event(EVENT_BAD_ACK);
+            trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
+            trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
+        }
+        else
+            trk.update_tracker_ack_recv(tsd);
     }
-    else
-        trk.update_tracker_ack_recv(tsd);
 
     return true;
 }

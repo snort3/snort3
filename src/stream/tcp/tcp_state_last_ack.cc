@@ -50,15 +50,20 @@ bool TcpStateLastAck::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateLastAck::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_sent(tsd);
+    if ( trk.validate_sent_seq(tsd) )
+        trk.update_tracker_ack_sent(tsd);
+
     return true;
 }
 
 bool TcpStateLastAck::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_recv(tsd);
+    if ( trk.normalizer.validate_rcvd_ack_seq(tsd) )
+        trk.update_tracker_ack_recv(tsd);
+
     if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt() ) )
         trk.set_tcp_state(TcpStreamTracker::TCP_CLOSED);
+
     return true;
 }
 

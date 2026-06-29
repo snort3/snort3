@@ -60,14 +60,20 @@ bool TcpStateFinWait1::syn_ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker&
 
 bool TcpStateFinWait1::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_sent(tsd);
+    if ( trk.validate_sent_seq(tsd) )
+        trk.update_tracker_ack_sent(tsd);
+
     return true;
 }
 
 bool TcpStateFinWait1::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_recv(tsd);
-    check_for_window_slam(tsd, trk);
+    if ( trk.normalizer.validate_rcvd_ack_seq(tsd) )
+    {
+        trk.update_tracker_ack_recv(tsd);
+        check_for_window_slam(tsd, trk);
+    }
+
     return true;
 }
 

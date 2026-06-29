@@ -62,7 +62,7 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
             break;
         }
         stream_log(tsd.get_pkt(), "Current TCP window : [ %u - %u ]\n",
-            tns.tracker->r_win_base, tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
+            tns.tracker->r_win_base, tns.tracker->r_win_base + get_stream_window(tns, tsd));
         tns.tracker->seglist.print_stream_state(tsd.get_talker());
         trim_win_payload(tns, tsd, 0, inline_mode);
         return NORM_BAD_SEQ;
@@ -71,7 +71,7 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
     // trim to fit in listener's window and mss
     log_drop_reason(tns, tsd, false, "stream", "Normalizer: Trimming payload to fit window size\n");
     trim_win_payload(tns, tsd,
-        (tns.tracker->r_win_base + tns.tracker->get_snd_wnd() - tns.tracker->rcv_nxt));
+        (tns.tracker->r_win_base + get_stream_window(tns, tsd) - seq));
 
     if ( tns.tracker->get_mss() )
         trim_mss_payload(tns, tsd, tns.tracker->get_mss());
@@ -84,11 +84,11 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
 
         if ( get_stream_window(tns, tsd) == 0 )
         {
-            if ( !data_inside_window(tns, tsd) )
+            if ( SEQ_LEQ(tsd.get_end_seq(), tns.tracker->r_win_base) )
             {
                 log_drop_reason(tns, tsd, inline_mode, "stream", "Normalizer: Data is outside the TCP Window\n");
                 stream_log(tsd.get_pkt(), "Current TCP window : [ %u - %u ]\n",
-                    tns.tracker->r_win_base, tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
+                    tns.tracker->r_win_base, tns.tracker->r_win_base + get_stream_window(tns, tsd));
                 tns.tracker->seglist.print_stream_state(tsd.get_talker());
                 trim_win_payload(tns, tsd, 0, inline_mode);
                 return NORM_TRIMMED;
@@ -119,7 +119,7 @@ TcpNormalizer::NormStatus TcpNormalizer::apply_normalizations(
 
         log_drop_reason(tns, tsd, inline_mode, "stream",
             "Normalizer: Received seq during a Zero Window that is not a Zero Window Probe ("
-                + std::to_string(tns.tracker->rcv_nxt) + ")\n");
+                + std::to_string(tns.tracker->get_rcv_nxt()) + ")\n");
         tns.tracker->seglist.print_stream_state(tsd.get_talker());
         trim_win_payload(tns, tsd, 0, inline_mode);
         return NORM_TRIMMED;
@@ -280,33 +280,38 @@ uint32_t TcpNormalizer::get_zwp_seq(
     return tns.zwp_seq;
 }
 
-// don't use the window if we may have missed scaling
-// one way zero window is uninitialized
-// two way zero window is actually closed (regardless of scaling)
+// rcv_wnd stores the scaled window value (set_window_scale applied scaling before
+// update_tracker_ack_sent stored it). Zero means intentional zero-window advertisement.
+// One-way and midstream flows have no reliably negotiated window; return the maximum permissible value.
 uint32_t TcpNormalizer::get_stream_window(
-    TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
+    TcpNormalizerState& tns, TcpSegmentDescriptor&)
 {
-    if ( tns.tracker->get_snd_wnd() )
+    if ( !tns.session->flow->two_way_traffic()
+        || Stream::is_midstream(tns.session->flow) )
+        return MAX_TCP_WINDOW_SCALED;
+
+    return tns.tracker->get_rcv_wnd();
+}
+
+// Validate a bare ACK's seq against the listener's receive window; returns false if invalid.
+// KA probes (seq = rcv_nxt - 1) are counted separately from left-invalid segments.
+bool TcpNormalizer::validate_rcvd_ack_seq(TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
+{
+    ValidSeqStatus status = tns.tracker->is_segment_seq_valid(tsd);
+    if ( status == ValidSeqStatus::VALID )
+        return true;
+
+    if ( status == ValidSeqStatus::LEFT_INVALID )
     {
-        if ( !Stream::is_midstream(tns.session->flow) )
-            return tns.tracker->get_snd_wnd();
+        if ( !is_keep_alive_probe(tns, tsd) )
+            tcpStats.invalid_seq_left++;
     }
-    else if ( tns.session->flow->two_way_traffic() )
-        return tns.tracker->get_snd_wnd();
+    else
+        tcpStats.invalid_seq_right++;
 
-    // ensure the data is in the window
-    return data_inside_window(tns, tsd);
+    return false;
 }
 
-uint32_t TcpNormalizer::data_inside_window(
-    TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
-{
-    int32_t window = tsd.get_end_seq() - tns.tracker->r_win_base;
-    if ( window < 0 )
-        return 0;
-
-    return (uint32_t) window;
-}
 
 uint32_t TcpNormalizer::get_tcp_timestamp(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, bool strip)
@@ -344,17 +349,17 @@ TcpNormalizer::RstStatus TcpNormalizer::validate_rst_seq_os_hpux11(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
     // FIXIT-M check for rcv_nxt == 0 is hack for uninitialized rcv_nxt
-    if ( ( tns.tracker->rcv_nxt == 0 ) || SEQ_GEQ(tsd.get_seq(), tns.tracker->rcv_nxt) )
+    if ( ( tns.tracker->get_rcv_nxt() == 0 ) || SEQ_GEQ(tsd.get_seq(), tns.tracker->get_rcv_nxt()) )
     {
         stream_log(tsd.get_pkt(), "stream_tcp: RST is valid for OS HPUX 11, seq %u >= rcv_nxt %u.\n",
-            tsd.get_seq(), tns.tracker->rcv_nxt);
+            tsd.get_seq(), tns.tracker->get_rcv_nxt());
 
         tcpStats.rsts_ok_rfc793++;
         return RST_OK;
     }
 
     stream_log(tsd.get_pkt(), "stream_tcp: RST is NOT valid for OS HPUX 11, seq %u <rcv_nxt %u.\n",
-        tsd.get_seq(), tns.tracker->rcv_nxt);
+        tsd.get_seq(), tns.tracker->get_rcv_nxt());
 
     tcpStats.rsts_bad_seq++;
     return RST_BAD_SEQ;
@@ -372,7 +377,7 @@ TcpNormalizer::RstStatus TcpNormalizer::is_rst_seq_valid_rfc793(
         {
             stream_log(tsd.get_pkt(), "stream_tcp: RST is valid, seq %u is in window. Current TCP window : [ %u - %u ]\n",
                 rst_seq, tns.tracker->r_win_base,
-                tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
+                tns.tracker->r_win_base + tns.tracker->get_rcv_wnd());
 
             tcpStats.rsts_ok_rfc793++;
             return RST_OK;
@@ -389,7 +394,7 @@ TcpNormalizer::RstStatus TcpNormalizer::is_rst_seq_valid_rfc793(
 
     stream_log(tsd.get_pkt(), "stream_tcp: RST is invalid, seq %u not in window. Current TCP window : [ %u - %u ]\n",
         rst_seq, tns.tracker->r_win_base,
-        tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
+        tns.tracker->r_win_base + tns.tracker->get_rcv_wnd());
         
     tcpStats.rsts_bad_seq++;
     return RST_BAD_SEQ;
@@ -401,7 +406,7 @@ TcpNormalizer::RstStatus TcpNormalizer::is_rst_seq_valid_rfc5961(
 {
     uint32_t rst_seq = tsd.get_seq();
     uint32_t window = get_stream_window(tns, tsd);
-    uint32_t my_rcv_nxt = tns.tracker->rcv_nxt + tns.tracker->get_fin_seq_adjust();
+    uint32_t my_rcv_nxt = tns.tracker->get_rcv_nxt() + tns.tracker->get_fin_seq_adjust();
 
     if ( SEQ_EQ(rst_seq, my_rcv_nxt) )
     {
@@ -417,7 +422,7 @@ TcpNormalizer::RstStatus TcpNormalizer::is_rst_seq_valid_rfc5961(
         {
             stream_log(tsd.get_pkt(), "stream_tcp: RST is valid, seq %u is in window. Current TCP window : [ %u - %u ]\n",
                 rst_seq, tns.tracker->r_win_base,
-                tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
+                tns.tracker->r_win_base + tns.tracker->get_rcv_wnd());
 
             tcpStats.rsts_in_window++;
             return RST_IN_WINDOW;
@@ -434,7 +439,7 @@ TcpNormalizer::RstStatus TcpNormalizer::is_rst_seq_valid_rfc5961(
 
     stream_log(tsd.get_pkt(), "stream_tcp: RST is invalid, seq %u is left of window base. Current TCP window : [ %u - %u ]\n",
         rst_seq, tns.tracker->r_win_base,
-        tns.tracker->r_win_base + tns.tracker->get_snd_wnd());
+        tns.tracker->r_win_base + tns.tracker->get_rcv_wnd());
 
     tcpStats.rsts_bad_seq++;
     return RST_BAD_SEQ;
@@ -604,6 +609,7 @@ void TcpNormalizer::log_drop_reason(TcpNormalizerState& tns, const TcpSegmentDes
 
 bool TcpNormalizer::is_keep_alive_probe(TcpNormalizerState& tns, const TcpSegmentDescriptor& tsd)
 {
+    // FIXIT-L: should use rcv_nxt (RFC), not r_win_base; diverge during OOO reassembly.
     if ( (tns.tracker->r_win_base - tsd.get_seq()) == MAX_KEEP_ALIVE_PROBE_LEN
         and tsd.get_len() <= MAX_KEEP_ALIVE_PROBE_LEN and 
         !(tsd.get_tcph()->th_flags & (TH_SYN|TH_FIN|TH_RST)) )

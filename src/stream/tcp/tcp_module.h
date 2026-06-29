@@ -68,6 +68,7 @@ struct TcpStats
     PegCount discards_skipped;
     PegCount invalid_seq_left;
     PegCount invalid_seq_right;
+    PegCount invalid_sent_seq;
     PegCount invalid_ack;
     PegCount no_flags_set;
     PegCount events;
