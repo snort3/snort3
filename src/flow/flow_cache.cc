@@ -697,7 +697,9 @@ unsigned FlowCache::purge()
 
 bool FlowCache::allowlist_on_excess(snort::Flow *f)
 {
-    if ( is_allowlist_on_excess() )
+    // Only TCP is parked in the allowlist (see FlowControl::move_to_allowlist);
+    // non-TCP falls through to normal excess pruning so it still times out.
+    if ( is_allowlist_on_excess() and f->key->pkt_type == PktType::TCP )
     {
         Stream::disable_reassembly(f);
         f->free_flow_data();

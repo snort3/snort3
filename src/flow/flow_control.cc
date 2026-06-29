@@ -124,9 +124,10 @@ void FlowControl::release_flow(const FlowKey* key)
 
 bool FlowControl::move_to_allowlist(Flow* f)
 {
-    // Preserve the flow only if it is a TCP or UDP flow,
-    // as only these flow types contain appid-related info needed at the EOF event.
-    if ( f->key->pkt_type != PktType::TCP and f->key->pkt_type != PktType::UDP )
+    // Only TCP is retained, since it ends on close. UDP has no close, so its idle
+    // timeout is its only EOF trigger and the allowlist LRU skips idle
+    // pruning, which would combine flows with shared 5-tuples into one event.
+    if ( f->key->pkt_type != PktType::TCP )
         return false;
     return cache->move_to_allowlist(f);
 }

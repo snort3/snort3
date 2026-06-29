@@ -178,6 +178,36 @@ TEST(stale_flow, stale_flow)
     delete cache;
 }
 
+TEST_GROUP(move_to_allowlist) { };
+
+static bool try_move_to_allowlist(FlowControl* flow_control, PktType type)
+{
+    Flow* flow = new Flow;
+    FlowKey key = { };
+    key.pkt_type = type;
+    flow->key = &key;
+
+    bool moved = flow_control->move_to_allowlist(flow);
+
+    flow->key = nullptr;
+    delete flow;
+    return moved;
+}
+
+// Only TCP flows are admitted to the allowlist LRU. UDP (and other protocols)
+// are rejected so they keep honoring the idle timeout
+TEST(move_to_allowlist, tcp_admitted_udp_rejected)
+{
+    FlowCacheConfig fcg;
+    FlowControl* flow_control = new FlowControl(fcg);
+
+    CHECK(try_move_to_allowlist(flow_control, PktType::TCP) == true);
+    CHECK(try_move_to_allowlist(flow_control, PktType::UDP) == false);
+    CHECK(try_move_to_allowlist(flow_control, PktType::ICMP) == false);
+
+    delete flow_control;
+}
+
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);

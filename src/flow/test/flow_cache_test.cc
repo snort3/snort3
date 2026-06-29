@@ -1327,6 +1327,35 @@ TEST(flow_cache_allowlist_pruning, allowlist_on_excess_true)
     delete cache;
 }
 
+// Only TCP is admitted to the allowlist on excess; UDP flows are pruned
+// normally so they keep honoring the idle timeout
+TEST(flow_cache_allowlist_pruning, allowlist_on_excess_udp_not_admitted)
+{
+    FlowCacheConfig fcg;
+    fcg.max_flows = 3;
+    fcg.allowlist_cache = true;
+    fcg.move_to_allowlist_on_excess = true;
+
+    FlowCache* cache = new FlowCache(fcg);
+
+    // Add UDP flows until we trigger excess pruning
+    for (int i = 0; i < 4; i++) {
+        FlowKey flow_key;
+        flow_key.port_l = 1000 + i;
+        flow_key.pkt_type = PktType::UDP;
+        Flow* flow = cache->allocate(&flow_key);
+        cache->unlink_uni(flow);
+    }
+
+    // UDP flows are not parked in the allowlist; excess pruning releases them
+    CHECK_EQUAL(3, cache->get_count());
+    CHECK_EQUAL(0, cache->get_lru_flow_count(allowlist_lru_index));
+    CHECK_EQUAL(0, cache->get_excess_to_allowlist_count());
+
+    cache->purge();
+    delete cache;
+}
+
 TEST(flow_cache_allowlist_pruning, allowlist_on_excess_false_no_allowlist)
 {
     FlowCacheConfig fcg;
