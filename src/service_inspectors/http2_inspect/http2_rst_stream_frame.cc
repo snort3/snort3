@@ -33,13 +33,21 @@ using namespace Http2Enums;
 
 Http2RstStreamFrame::Http2RstStreamFrame(const uint8_t* header_buffer, const uint32_t header_len,
     const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
-    HttpCommon::SourceId src_id, Http2Stream* stream_) : Http2Frame(header_buffer, header_len,
-    data_buffer, data_len, ssn_data, src_id, stream_)
+    HttpCommon::SourceId src_id, Http2Stream* stream_, const Http2ParaList* params) :
+    Http2Frame(header_buffer, header_len, data_buffer, data_len, ssn_data, src_id, stream_)
 {
+    session_data->rst_stream_count[source_id]++;
+
     if ((get_stream_id() == 0) or (data.length() != 4))
     {
         session_data->events[source_id]->create_event(EVENT_INVALID_RST_STREAM_FRAME);
         *session_data->infractions[source_id] += INF_INVALID_RST_STREAM_FRAME;
+    }
+
+    if (session_data->rst_stream_count[source_id] == params->rst_stream_limit + 1)
+    {
+        *session_data->infractions[source_id] += INF_EXCESSIVE_RST_STREAM;
+        session_data->events[source_id]->create_event(EVENT_EXCESSIVE_RST_STREAM);
     }
 }
 

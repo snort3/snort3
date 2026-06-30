@@ -208,6 +208,7 @@ void Http2Inspect::show(const SnortConfig*) const
 {
     assert(params);
     ConfigLogger::log_value("concurrent_streams_limit", params->concurrent_streams_limit);
+    ConfigLogger::log_value("rst_stream_limit", params->rst_stream_limit);
     ConfigLogger::log_value("settings_max_frame_size", params->settings_max_frame_size);
 }
 

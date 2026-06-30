@@ -30,6 +30,8 @@ const Parameter Http2Module::http2_params[] =
 {
     { "concurrent_streams_limit", Parameter::PT_INT, "100:1000", "100",
       "Maximum number of concurrent streams allowed in a single HTTP/2 flow" },
+    { "rst_stream_limit", Parameter::PT_INT, "10:1000", "100",
+      "Maximum number of RST_STREAM frames allowed per flow before alerting" },
     { "settings_max_frame_size", Parameter::PT_INT, "16384:16777215", "16777215",
       "Maximum allowed value for settings frame SETTINGS_MAX_FRAME_SIZE" },
 #ifdef REG_TEST
@@ -62,6 +64,10 @@ bool Http2Module::set(const char*, Value& val, SnortConfig*)
     if (val.is("concurrent_streams_limit"))
     {
         params->concurrent_streams_limit = val.get_uint32();
+    }
+    else if (val.is("rst_stream_limit"))
+    {
+        params->rst_stream_limit = val.get_uint32();
     }
     else if (val.is("settings_max_frame_size"))
     {

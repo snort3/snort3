@@ -40,7 +40,7 @@ public:
 private:
     Http2RstStreamFrame(const uint8_t* header_buffer, const uint32_t header_len,
         const uint8_t* data_buffer, const uint32_t data_len, Http2FlowData* ssn_data,
-        HttpCommon::SourceId src_id, Http2Stream* stream);
+        HttpCommon::SourceId src_id, Http2Stream* stream, const Http2ParaList* params);
 };
 
 #endif

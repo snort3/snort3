@@ -97,7 +97,7 @@ Http2Frame* Http2Frame::new_frame(const uint8_t* header, const uint32_t header_l
             break;
         case FT_RST_STREAM:
             frame = new Http2RstStreamFrame(header, header_len, data, data_len, session_data,
-                source_id, stream);
+                source_id, stream, params);
             break;
         case FT_WINDOW_UPDATE:
             frame = new Http2WindowUpdateFrame(header, header_len, data, data_len, session_data,

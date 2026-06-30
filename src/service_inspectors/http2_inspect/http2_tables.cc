@@ -78,6 +78,7 @@ const RuleMap Http2Module::http2_events[] =
     { EVENT_SETTINGS_QUEUE_OVERFLOW, "too many unacknowledged settings" },
     { EVENT_SETTINGS_QUEUE_UNDERFLOW, "setting acknowledgment without actual settings" },
     { EVENT_ABOVE_SETTINGS_MAX_FRAME_SIZE, "settings frame size greater than settings_max_frame_size"},
+    { EVENT_EXCESSIVE_RST_STREAM, "excessive RST_STREAM frames indicating possible rapid reset attack" },
     { 0, nullptr }
 };
 

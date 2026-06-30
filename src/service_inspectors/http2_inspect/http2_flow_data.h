@@ -154,6 +154,7 @@ protected:
     std::list<Http2Stream> streams;
     uint32_t concurrent_files = 0;
     uint32_t concurrent_streams = 0;
+    uint16_t rst_stream_count[2] = { 0, 0 };
     uint32_t stream_memory_allocations_tracked = Http2Enums::STREAM_MEMORY_TRACKING_INCREMENT;
     uint32_t max_stream_id[2] = {0, 0};
     bool frame_in_detection = false;
