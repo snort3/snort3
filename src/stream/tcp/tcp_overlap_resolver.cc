@@ -133,7 +133,25 @@ bool TcpOverlapResolver::is_segment_retransmit(TcpOverlapState& tos, bool* full_
 void TcpOverlapResolver::eval_left(TcpOverlapState& tos)
 {
     if ( tos.left )
+    {
         insert_left_overlap(tos);
+
+        if ( tos.slide > 0 )
+        {
+            if ( tos.rsize > tos.slide )
+            {
+                tos.rdata += tos.slide;
+                tos.rsize -= tos.slide;
+                tos.rseq  += tos.slide;
+            }
+            else
+            {
+                tos.rdata += tos.rsize;
+                tos.rseq  += tos.rsize;
+                tos.rsize = 0;
+            }
+        }
+    }
 }
 
 void TcpOverlapResolver::eval_right(TcpOverlapState& tos)

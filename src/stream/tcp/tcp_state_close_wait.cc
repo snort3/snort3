@@ -56,7 +56,7 @@ bool TcpStateCloseWait::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
 
 bool TcpStateCloseWait::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.normalizer.validate_rcvd_ack_seq(tsd) )
+    if ( trk.normalizer.validate_rcvd_seq(tsd) )
         trk.update_tracker_ack_recv(tsd);
 
     return true;
@@ -89,32 +89,35 @@ bool TcpStateCloseWait::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracke
 
 bool TcpStateCloseWait::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_on_fin_sent(tsd);
-    trk.set_tcp_state(TcpStreamTracker::TCP_LAST_ACK);
+    if ( trk.validate_sent_seq(tsd) )
+    {
+        trk.update_on_fin_sent(tsd);
+        trk.set_tcp_state(TcpStreamTracker::TCP_LAST_ACK);
+    }
     return true;
 }
 
 bool TcpStateCloseWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    Flow* flow = tsd.get_flow();
+    if ( !trk.normalizer.validate_rcvd_seq(tsd) )
+        return true;
 
-    trk.set_fin_seq_status_seen(tsd);
-    trk.update_tracker_ack_recv(tsd);
-
-    if ( SEQ_GT(tsd.get_seq(), trk.get_fin_final_seq() ) )
+    if ( SEQ_GT(tsd.get_seq(), trk.get_fin_final_seq()) )
     {
         stream_log(tsd.get_pkt(), "stream_tcp: bad fin seq %u, fin_final_seq %u\n",
             tsd.get_seq(), trk.get_fin_final_seq());
         trk.session->tel.set_tcp_event(EVENT_BAD_FIN);
         trk.normalizer.packet_dropper(tsd, NORM_TCP_BLOCK);
         trk.session->set_pkt_action_flag(ACTION_BAD_PKT);
+        return true;
     }
-    else
-    {
-        if ( !flow->two_way_traffic() )
-            trk.set_tf_flags(TF_FORCE_FLUSH);
-        trk.perform_fin_recv_flush(tsd);
-    }
+
+    Flow* flow = tsd.get_flow();
+    trk.update_tracker_ack_recv(tsd);
+
+    if ( !flow->two_way_traffic() )
+        trk.set_tf_flags(TF_FORCE_FLUSH);
+    trk.perform_fin_recv_flush(tsd);
 
     return true;
 }

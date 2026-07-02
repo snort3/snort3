@@ -142,7 +142,7 @@ public:
     { return irs; }
 
     void set_irs(uint32_t irs)
-    { this->irs = irs; }
+    { this->irs = irs; snd_wl1 = irs; snd_wl2 = 0; }
 
     uint32_t get_snd_una() const
     { return snd_una; }

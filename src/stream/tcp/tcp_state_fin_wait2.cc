@@ -68,7 +68,7 @@ bool TcpStateFinWait2::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 bool TcpStateFinWait2::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
     // Out-of-window SEQ suppresses bad-ack: a real stack discards the segment before inspecting ACK.
-    if ( trk.normalizer.validate_rcvd_ack_seq(tsd) )
+    if ( trk.normalizer.validate_rcvd_seq(tsd) )
     {
         if ( SEQ_GT(tsd.get_ack(), trk.get_snd_nxt() ) )
         {
@@ -116,6 +116,9 @@ bool TcpStateFinWait2::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker
 
 bool TcpStateFinWait2::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
+    if ( !trk.normalizer.validate_rcvd_seq(tsd) )
+        return true;
+
     Flow* flow = tsd.get_flow();
 
     trk.set_fin_seq_status_seen(tsd);

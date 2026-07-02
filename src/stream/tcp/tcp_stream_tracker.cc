@@ -519,6 +519,8 @@ void TcpStreamTracker::init_on_syn_sent(TcpSegmentDescriptor& tsd)
 void TcpStreamTracker::init_on_syn_recv(const TcpSegmentDescriptor& tsd)
 {
     irs = tsd.get_seq();
+    snd_wl1 = irs;
+    snd_wl2 = 0;
 
     rcv_nxt = tsd.get_seq() + 1;
     r_win_base = tsd.get_seq() + 1;
@@ -536,6 +538,8 @@ void TcpStreamTracker::init_on_synack_sent(TcpSegmentDescriptor& tsd)
 
     iss = tsd.get_seq();
     irs = tsd.get_ack() - 1;
+    snd_wl1 = irs;
+    snd_wl2 = 0;
     snd_una = tsd.get_seq();
     snd_nxt = tsd.get_end_seq();
     rcv_wnd = tsd.get_wnd();
@@ -561,6 +565,8 @@ void TcpStreamTracker::init_on_synack_recv(const TcpSegmentDescriptor& tsd)
 {
     iss = tsd.get_ack() - 1;
     irs = tsd.get_seq();
+    snd_wl1 = irs;
+    snd_wl2 = tsd.get_ack();
     snd_una = tsd.get_ack();
     snd_nxt = snd_una;
 
@@ -580,6 +586,8 @@ void TcpStreamTracker::init_on_data_seg_sent(TcpSegmentDescriptor& tsd)
 {
     iss = tsd.get_seq() - 1;
     irs = tsd.get_ack() - 1;
+    snd_wl1 = irs;
+    snd_wl2 = 0;
     snd_una = tsd.get_seq();
     snd_nxt = snd_una + tsd.get_len();
     rcv_wnd = tsd.get_wnd();
@@ -603,6 +611,8 @@ void TcpStreamTracker::init_on_data_seg_recv(const TcpSegmentDescriptor& tsd)
 {
     iss = tsd.get_ack() - 1;
     irs = tsd.get_seq() - 1;
+    snd_wl1 = irs;
+    snd_wl2 = tsd.get_ack();
     snd_una = tsd.get_ack();
     snd_nxt = snd_una;
     rcv_wnd = 0;
@@ -688,7 +698,7 @@ void TcpStreamTracker::finish_client_init(const TcpSegmentDescriptor& tsd)
 
 void TcpStreamTracker::update_tracker_ack_recv(TcpSegmentDescriptor& tsd)
 {
-    // Midstream flows bypass validate_rcvd_ack_seq(), so LEFT_INVALID bare probes reach here.
+    // Midstream flows bypass validate_rcvd_seq(), so LEFT_INVALID bare probes reach here.
     if ( !tsd.is_data_segment() and SEQ_LT(tsd.get_seq(), r_win_base) )
     {
         if ( rcv_wnd == 0 )
@@ -706,11 +716,19 @@ void TcpStreamTracker::update_tracker_ack_recv(TcpSegmentDescriptor& tsd)
             if ( SEQ_LT(snd_nxt, snd_una) )
                 snd_nxt = snd_una;
         }
-        snd_wnd = tsd.get_wnd();
+        // RFC 9293 §3.7.1: only update snd_wnd when this segment carries newer sequence ordering
+        // to prevent a reordered older segment from shrinking the tracked send window.
+        if ( SEQ_LT(snd_wl1, tsd.get_seq()) ||
+             (SEQ_EQ(snd_wl1, tsd.get_seq()) && SEQ_LEQ(snd_wl2, tsd.get_ack())) )
+        {
+            snd_wnd = tsd.get_wnd();
+            snd_wl1 = tsd.get_seq();
+            snd_wl2 = tsd.get_ack();
+        }
     }
 }
 
-// Validate a bare ACK's seq against the talker's send window; returns false if invalid.
+// Validate a sent segment's seq against the talker's send window; returns false if invalid.
 bool TcpStreamTracker::validate_sent_seq(TcpSegmentDescriptor& tsd)
 {
     // One-way and midstream flows have no reliable send history; skip validation.
@@ -730,7 +748,7 @@ bool TcpStreamTracker::validate_sent_seq(TcpSegmentDescriptor& tsd)
     tcpStats.invalid_sent_seq++;
 
     if ( PacketTracer::is_active() )
-        PacketTracer::log("stream_tcp: ack_sent seq %u outside send window [%u, %u]\n",
+        PacketTracer::log("stream_tcp: talker seq %u outside send window [%u, %u]\n",
             seq, snd_lo, snd_hi);
 
     return false;
@@ -781,7 +799,11 @@ bool TcpStreamTracker::update_on_3whs_ack(TcpSegmentDescriptor& tsd)
     if ( good_ack )
     {
         if (!irs)  // FIXIT-L zero is a valid seq# so this kind of check is incorrect
+        {
             irs = tsd.get_seq();
+            snd_wl1 = irs;
+            snd_wl2 = 0;
+        }
         finish_client_init(tsd);
         update_tracker_ack_recv(tsd);
         TcpStreamTracker::TcpState talker_state = tsd.get_talker()->get_tcp_state();

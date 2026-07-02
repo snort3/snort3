@@ -57,7 +57,7 @@ bool TcpStateClosed::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateClosed::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.normalizer.validate_rcvd_ack_seq(tsd) )
+    if ( trk.normalizer.validate_rcvd_seq(tsd) )
         trk.update_tracker_ack_recv(tsd);
 
     return true;
@@ -100,7 +100,8 @@ bool TcpStateClosed::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateClosed::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_sent(tsd);
+    if ( trk.validate_sent_seq(tsd) )
+        trk.update_tracker_ack_sent(tsd);
     return true;
 }
 

@@ -293,9 +293,13 @@ uint32_t TcpNormalizer::get_stream_window(
     return tns.tracker->get_rcv_wnd();
 }
 
-// Validate a bare ACK's seq against the listener's receive window; returns false if invalid.
+// Validate a received packet's seq against the listener's receive window;
+// returns false if invalid.
 // KA probes (seq = rcv_nxt - 1) are counted separately from left-invalid segments.
-bool TcpNormalizer::validate_rcvd_ack_seq(TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
+// LEFT_INVALID FIN+data packets are allowed through: the data is trimmed by
+// apply_normalizations (via perform_fin_recv_flush), and update_on_fin_recv
+// guards state transitions via SEQ_GEQ(end_seq, r_win_base).
+bool TcpNormalizer::validate_rcvd_seq(TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
 {
     ValidSeqStatus status = tns.tracker->is_segment_seq_valid(tsd);
     if ( status == ValidSeqStatus::VALID )
@@ -303,6 +307,9 @@ bool TcpNormalizer::validate_rcvd_ack_seq(TcpNormalizerState& tns, TcpSegmentDes
 
     if ( status == ValidSeqStatus::LEFT_INVALID )
     {
+        if ( tsd.get_tcph()->is_fin() && tsd.is_data_segment() )
+            return true;
+
         if ( !is_keep_alive_probe(tns, tsd) )
             tcpStats.invalid_seq_left++;
     }
@@ -311,7 +318,6 @@ bool TcpNormalizer::validate_rcvd_ack_seq(TcpNormalizerState& tns, TcpSegmentDes
 
     return false;
 }
-
 
 uint32_t TcpNormalizer::get_tcp_timestamp(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, bool strip)

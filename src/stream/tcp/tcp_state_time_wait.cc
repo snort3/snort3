@@ -54,13 +54,14 @@ bool TcpStateTimeWait::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 
 bool TcpStateTimeWait::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_sent(tsd);
+    if ( trk.validate_sent_seq(tsd) )
+        trk.update_tracker_ack_sent(tsd);
     return true;
 }
 
 bool TcpStateTimeWait::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.normalizer.validate_rcvd_ack_seq(tsd) )
+    if ( trk.normalizer.validate_rcvd_seq(tsd) )
         trk.update_tracker_ack_recv(tsd);
 
     return true;
@@ -77,6 +78,9 @@ bool TcpStateTimeWait::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker
 
 bool TcpStateTimeWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
+    if ( !trk.normalizer.validate_rcvd_seq(tsd) )
+        return true;
+
     trk.set_fin_seq_status_seen(tsd);
     trk.update_tracker_ack_recv(tsd);
     if ( SEQ_GT(tsd.get_seq(), trk.get_fin_final_seq() ) )

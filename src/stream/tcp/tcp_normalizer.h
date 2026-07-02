@@ -94,7 +94,7 @@ public:
         const char *issuer, const std::string& log);
     virtual bool is_keep_alive_probe(State&, const TcpSegmentDescriptor&);
     virtual bool validate_established_ack(State&, TcpSegmentDescriptor&);
-    virtual bool validate_rcvd_ack_seq(State&, TcpSegmentDescriptor&);
+    virtual bool validate_rcvd_seq(State&, TcpSegmentDescriptor&);
 
     static void reset_stats();
 

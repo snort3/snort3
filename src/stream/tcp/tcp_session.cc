@@ -1111,7 +1111,7 @@ void TcpSession::handle_late_synack(TcpSegmentDescriptor& tsd)
 
     server.init_on_late_synack(tsd);
 
-    // server.rcv_wnd was stored pre-scaled by init_on_late_synack (tsd.set_window_scale()
+    // server.rcv_wnd was already scaled by init_on_late_synack (tsd.set_window_scale()
     // was called there after TF_WSCALE was set on both sides). client.rcv_wnd was stored
     // unscaled during SYN processing (server TF_WSCALE was not yet set then), so it needs
     // the explicit shift here. snd_wnd mirrors the peer's rcv_wnd post-scaling.

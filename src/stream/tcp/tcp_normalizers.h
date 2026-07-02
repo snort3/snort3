@@ -103,8 +103,8 @@ public:
     bool validate_established_ack(TcpSegmentDescriptor& tsd)
     { return norm->validate_established_ack(tns, tsd); }
 
-    bool validate_rcvd_ack_seq(TcpSegmentDescriptor& tsd)
-    { return norm->validate_rcvd_ack_seq(tns, tsd); }
+    bool validate_rcvd_seq(TcpSegmentDescriptor& tsd)
+    { return norm->validate_rcvd_seq(tns, tsd); }
 
     uint16_t set_urg_offset(const snort::tcp::TCPHdr* tcph, uint16_t dsize)
     { return norm->set_urg_offset(tns, tcph, dsize); }

@@ -58,12 +58,12 @@ bool TcpStateLastAck::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateLastAck::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.normalizer.validate_rcvd_ack_seq(tsd) )
+    if ( trk.normalizer.validate_rcvd_seq(tsd) )
+    {
+        if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt()) )
+            trk.set_tcp_state(TcpStreamTracker::TCP_CLOSED);
         trk.update_tracker_ack_recv(tsd);
-
-    if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt() ) )
-        trk.set_tcp_state(TcpStreamTracker::TCP_CLOSED);
-
+    }
     return true;
 }
 
@@ -75,24 +75,34 @@ bool TcpStateLastAck::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker&
 
 bool TcpStateLastAck::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_recv(tsd);
-    if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt() ) )
-        trk.set_tcp_state(TcpStreamTracker::TCP_CLOSED);
+    if ( trk.normalizer.validate_rcvd_seq(tsd) )
+    {
+        if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt()) )
+            trk.set_tcp_state(TcpStreamTracker::TCP_CLOSED);
+        trk.update_tracker_ack_recv(tsd);
+    }
     return true;
 }
 
 bool TcpStateLastAck::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_sent(tsd);
+    // Retransmitted FIN has same seq (seq+1 == SND.NXT); bad FINs are handled by listener fin_recv.
+    if ( trk.validate_sent_seq(tsd) && SEQ_EQ(tsd.get_seq() + 1, trk.get_snd_nxt()) )
+        trk.update_tracker_ack_sent(tsd);
     return true;
 }
 
 bool TcpStateLastAck::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
+    if ( !trk.normalizer.validate_rcvd_seq(tsd) )
+        return true;
+
     Flow* flow = tsd.get_flow();
 
+    bool fin_acked = SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt());
     trk.update_tracker_ack_recv(tsd);
-    if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt() ) )
+
+    if ( fin_acked )
         trk.set_tcp_state(TcpStreamTracker::TCP_CLOSED);
 
     if ( !flow->two_way_traffic() )

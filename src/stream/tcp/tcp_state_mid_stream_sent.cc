@@ -72,7 +72,7 @@ bool TcpStateMidStreamSent::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker
 
 bool TcpStateMidStreamSent::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.normalizer.validate_rcvd_ack_seq(tsd) )
+    if ( trk.normalizer.validate_rcvd_seq(tsd) )
         trk.update_tracker_ack_recv(tsd);
 
     trk.session->set_established(tsd);
@@ -99,19 +99,35 @@ bool TcpStateMidStreamSent::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTr
 
 bool TcpStateMidStreamSent::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_on_fin_sent(tsd);
+    if ( trk.validate_sent_seq(tsd) )
+    {
+        trk.update_on_fin_sent(tsd);
+        trk.session->flow->call_handlers(tsd.get_pkt(), FlowDataStore::HANDLER_EOF);
+
+        TcpStreamTracker::TcpState listener_state = tsd.get_listener()->get_tcp_state();
+        if ( TcpStreamTracker::TCP_FIN_WAIT1 == listener_state )
+            trk.set_tcp_state(TcpStreamTracker::TCP_LAST_ACK);
+        else
+            trk.set_tcp_state(TcpStreamTracker::TCP_FIN_WAIT1);
+    }
+
     return true;
 }
 
 bool TcpStateMidStreamSent::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
+    if ( !trk.normalizer.validate_rcvd_seq(tsd) )
+        return true;
+
     TcpStreamTracker::TcpState talker_state = tsd.get_talker()->get_tcp_state();
     if ( TcpStreamTracker::TCP_LAST_ACK == talker_state )
     {
         trk.set_fin_seq_status_seen(tsd);
-        trk.update_tracker_ack_recv(tsd);
         bool is_ack_valid = false;
-        if ( SEQ_GEQ(tsd.get_end_seq(), trk.r_win_base) and check_for_window_slam(tsd, trk, is_ack_valid) )
+        bool seq_in_window = SEQ_GEQ(tsd.get_end_seq(), trk.r_win_base);
+        bool slam_ok = seq_in_window and check_for_window_slam(tsd, trk, is_ack_valid);
+        trk.update_tracker_ack_recv(tsd);
+        if ( slam_ok )
         {
             trk.perform_fin_recv_flush(tsd);
             trk.update_on_fin_recv(tsd);
@@ -156,6 +172,7 @@ bool TcpStateMidStreamSent::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd,
 
 bool TcpStateMidStreamSent::check_for_window_slam(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk, bool& is_ack_valid)
 {
+    // Transition to FIN_WAIT2 when ACK exactly acknowledges our FIN; drop Windows zero-window slam (RFC 9293 s3.10.7.4).
     if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt() ) )
     {
         if ( (trk.normalizer.get_norm_policy() == Normalizer::Policy::OS_WINDOWS)

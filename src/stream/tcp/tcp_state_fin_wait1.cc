@@ -68,10 +68,10 @@ bool TcpStateFinWait1::ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 
 bool TcpStateFinWait1::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    if ( trk.normalizer.validate_rcvd_ack_seq(tsd) )
+    if ( trk.normalizer.validate_rcvd_seq(tsd) )
     {
-        trk.update_tracker_ack_recv(tsd);
         check_for_window_slam(tsd, trk);
+        trk.update_tracker_ack_recv(tsd);
     }
 
     return true;
@@ -85,27 +85,34 @@ bool TcpStateFinWait1::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker
 
 bool TcpStateFinWait1::data_seg_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
+    bool can_handle = check_for_window_slam(tsd, trk);
     trk.update_tracker_ack_recv(tsd);
-    if ( check_for_window_slam(tsd, trk) )
+    if ( can_handle )
         trk.session->handle_data_segment(tsd);
     return true;
 }
 
 bool TcpStateFinWait1::fin_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    trk.update_tracker_ack_sent(tsd);
+    // Retransmitted FIN has same seq (seq+1 == SND.NXT); bad FINs are handled by listener fin_recv.
+    if ( trk.validate_sent_seq(tsd) && SEQ_EQ(tsd.get_seq() + 1, trk.get_snd_nxt()) )
+        trk.update_tracker_ack_sent(tsd);
     return true;
 }
 
 bool TcpStateFinWait1::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
+    if ( !trk.normalizer.validate_rcvd_seq(tsd) )
+        return true;
+
     Flow* flow = tsd.get_flow();
     bool is_ack_valid = false;
 
     trk.set_fin_seq_status_seen(tsd);
+    bool seq_in_window = SEQ_GEQ(tsd.get_end_seq(), trk.r_win_base);
+    bool slam_ok = seq_in_window and check_for_window_slam(tsd, trk, &is_ack_valid);
     trk.update_tracker_ack_recv(tsd);
-    if ( SEQ_GEQ(tsd.get_end_seq(), trk.r_win_base) and
-         check_for_window_slam(tsd, trk, &is_ack_valid) )
+    if ( slam_ok )
     {
         trk.perform_fin_recv_flush(tsd);
         trk.update_on_fin_recv(tsd);
@@ -134,6 +141,7 @@ bool TcpStateFinWait1::rst_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
 
 bool TcpStateFinWait1::check_for_window_slam(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk, bool* is_ack_valid)
 {
+    // Transition to FIN_WAIT2 when ACK exactly acknowledges our FIN; drop Windows zero-window slam (RFC 9293 s3.10.7.4).
     if ( SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt() ) )
     {
         if ( (trk.normalizer.get_norm_policy() == Normalizer::Policy::OS_WINDOWS)
