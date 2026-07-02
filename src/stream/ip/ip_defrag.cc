@@ -571,6 +571,13 @@ static void FragRebuild(FragTracker* ft, Packet* p)
 {
     size_t offset = 0;
 
+    /* This checks that our recursion depth is bounded at a single level */
+    if (p->packet_flags & PKT_PSEUDO)
+    {
+        ft->frag_flags |= FRAG_REBUILT;
+        return;
+    }
+
     Packet* dpkt = DetectionEngine::set_next_packet(p);
     PacketManager::encode_format(ENC_FLAG_DEF|ENC_FLAG_FWD, p, dpkt, PSEUDO_PKT_IP, nullptr, p->pkth->opaque);
 
