@@ -115,6 +115,7 @@ public:
             entry.clear();
         }
 
+        entry.reserve(tf.size());
         for ( auto& elem : tf )
             entry.emplace_back(elem.field_type, elem.field_length);
 

@@ -104,7 +104,7 @@ void LruCacheLocal<Key, Value, Hash>::prune()
     if ( !max_size )
         return;
 
-    while ( current_size > max_size and !list.empty() )
+    while ( current_size > max_size and list.size() > 1 )
     {
         auto it = --list.end();
         map.erase(it->first);
