@@ -102,7 +102,7 @@ TEST(Olefile_ole, get_file_offset)
 
 TEST(Olefile_ole, decompression_empty_data)
 {
-    uint8_t* ole_data = nullptr;
+    const uint8_t* ole_data = nullptr;
     uint8_t* buf = nullptr;
     uint32_t len = 0;
     uint32_t buf_len;
@@ -114,7 +114,7 @@ TEST(Olefile_ole, decompression_empty_data)
 
 TEST(Olefile_ole, decompression_short_data)
 {
-    uint8_t ole_data[VBA_COMPRESSION_HEADER_LEN] = { SIG_COMP_CONTAINER, 0x00, 0x30 };
+    const uint8_t ole_data[VBA_COMPRESSION_HEADER_LEN] = { SIG_COMP_CONTAINER, 0x00, 0x30 };
     uint8_t buf[MAX_VBA_BUFFER_LEN + 1] = { 0 };
     uint8_t* vba_buf = buf;
     uint32_t len = VBA_COMPRESSION_HEADER_LEN - 1;
@@ -130,7 +130,7 @@ TEST(Olefile_ole, decompression_short_data)
 
 TEST(Olefile_ole, decompression_invalid_data_1)
 {
-    uint8_t ole_data[10] = { 0 };
+    const uint8_t ole_data[10] = { 0 };
     uint8_t* buf = nullptr;
     uint32_t len = 10;
     uint32_t buf_len;
