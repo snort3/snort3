@@ -640,7 +640,7 @@ void OleFile :: decompression(const uint8_t* data, uint32_t& data_len, uint8_t*&
     if (!data)
         return;
 
-    if (*data!= SIG_COMP_CONTAINER)
+    if (data_len < VBA_COMPRESSION_HEADER_LEN or *data != SIG_COMP_CONTAINER)
     {
         VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, CURRENT_PACKET,
             "Invalid Compressed flag.\n");
@@ -657,13 +657,31 @@ void OleFile :: decompression(const uint8_t* data, uint32_t& data_len, uint8_t*&
             "Invalid Chunk signature.\n");
     }
 
-    data += 3;
-    data_len -= 3;
+    data += VBA_COMPRESSION_HEADER_LEN;
+    data_len -= VBA_COMPRESSION_HEADER_LEN;
 
     unsigned char buffer[VBA_COMPRESSION_WINDOW]={ };
+    auto copy_to_vba_buffer = [&local_vba_buffer, &vba_buffer_offset](const uint8_t* src, uint32_t src_len)
+    {
+        if (!local_vba_buffer or vba_buffer_offset >= MAX_VBA_BUFFER_LEN or src_len == 0)
+            return;
+
+        uint32_t available_len = MAX_VBA_BUFFER_LEN - vba_buffer_offset;
+        if (src_len > available_len)
+            src_len = available_len;
+
+        memcpy(local_vba_buffer + vba_buffer_offset, src, src_len);
+        vba_buffer_offset += src_len;
+    };
+
     if (flagCompressed == 0)
     {
-        memcpy(&buffer, data, data_len);
+        uint32_t copy_len = data_len;
+        if (copy_len > VBA_COMPRESSION_WINDOW)
+            copy_len = VBA_COMPRESSION_WINDOW;
+
+        memcpy(buffer, data, copy_len);
+        copy_to_vba_buffer(buffer, copy_len);
         return;
     }
 
@@ -725,14 +743,8 @@ void OleFile :: decompression(const uint8_t* data, uint32_t& data_len, uint8_t*&
         }
     }
 
-    int32_t decomp_len = strlen((char*)buffer);
-
-    if ((vba_buffer_offset + decomp_len) > MAX_VBA_BUFFER_LEN)
-    {
-        decomp_len =  MAX_VBA_BUFFER_LEN - vba_buffer_offset;
-    }
-    memcpy((local_vba_buffer + vba_buffer_offset), buffer, decomp_len);
-    vba_buffer_offset += decomp_len;
+    uint32_t decomp_len = strnlen((char*)buffer, VBA_COMPRESSION_WINDOW);
+    copy_to_vba_buffer(buffer, decomp_len);
 }
 
 // Function to extract the VBA data and send it for RLE decompression.

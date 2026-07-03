@@ -41,6 +41,7 @@
 #define ROOT_ENTRY             "Root Entry"
 
 #define SIG_COMP_CONTAINER        0x01
+#define VBA_COMPRESSION_HEADER_LEN  3
 #define VBA_COMPRESSION_WINDOW    4096
 #define MAX_VBA_BUFFER_LEN       16384
 

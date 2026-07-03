@@ -33,6 +33,8 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+#include <vector>
+
 THREAD_LOCAL const snort::Trace* vba_data_trace = nullptr;
 
 snort::LiteralSearch::Handle* search_handle = nullptr;
@@ -110,6 +112,22 @@ TEST(Olefile_ole, decompression_empty_data)
     delete olefile;
 }
 
+TEST(Olefile_ole, decompression_short_data)
+{
+    uint8_t ole_data[VBA_COMPRESSION_HEADER_LEN] = { SIG_COMP_CONTAINER, 0x00, 0x30 };
+    uint8_t buf[MAX_VBA_BUFFER_LEN + 1] = { 0 };
+    uint8_t* vba_buf = buf;
+    uint32_t len = VBA_COMPRESSION_HEADER_LEN - 1;
+    uint32_t buf_len = 7;
+    buf[0] = 0x5a;
+
+    OleFile* olefile = new OleFile(nullptr, 0);
+    olefile->decompression(ole_data, len, vba_buf, buf_len);
+    CHECK_EQUAL(7, buf_len);
+    CHECK_EQUAL(0x5a, vba_buf[0]);
+    delete olefile;
+}
+
 TEST(Olefile_ole, decompression_invalid_data_1)
 {
     uint8_t ole_data[10] = { 0 };
@@ -146,6 +164,51 @@ TEST(Olefile_ole, decompression_flag_0)
     olefile->decompression(ole_data, len, buf, buf_len);
     CHECK(buf == nullptr);
     delete olefile;
+}
+
+TEST(Olefile_ole, decompression_flag_0_large_data)
+{
+    constexpr uint32_t payload_len = VBA_COMPRESSION_WINDOW * 2;
+    constexpr uint32_t input_len = payload_len + VBA_COMPRESSION_HEADER_LEN;
+    std::vector<uint8_t> ole_data(input_len, 0x41);
+    std::vector<uint8_t> buf(MAX_VBA_BUFFER_LEN + 1);
+    uint8_t* vba_buf = buf.data();
+    uint32_t len = input_len;
+    uint32_t buf_len = 0;
+
+    ole_data[0] = SIG_COMP_CONTAINER;
+    ole_data[1] = 0x00;
+    ole_data[2] = 0x30;
+
+    OleFile olefile(nullptr, 0);
+    olefile.decompression(ole_data.data(), len, vba_buf, buf_len);
+    CHECK_EQUAL(VBA_COMPRESSION_WINDOW, buf_len);
+    MEMCMP_EQUAL(ole_data.data() + VBA_COMPRESSION_HEADER_LEN, buf.data(), VBA_COMPRESSION_WINDOW);
+}
+
+TEST(Olefile_ole, decompression_compressed_data_without_null)
+{
+    constexpr uint32_t literal_groups = VBA_COMPRESSION_WINDOW / 8;
+    constexpr uint32_t input_len = VBA_COMPRESSION_HEADER_LEN + literal_groups * 9;
+    std::vector<uint8_t> ole_data(input_len, 0x41);
+    std::vector<uint8_t> buf(MAX_VBA_BUFFER_LEN + 1);
+    uint8_t* vba_buf = buf.data();
+    uint32_t len = input_len;
+    uint32_t buf_len = 0;
+
+    ole_data[0] = SIG_COMP_CONTAINER;
+    ole_data[1] = 0x00;
+    ole_data[2] = 0xB0;
+
+    for (uint32_t pos = VBA_COMPRESSION_HEADER_LEN; pos < input_len; pos += 9)
+        ole_data[pos] = 0x00;
+
+    OleFile olefile(nullptr, 0);
+    olefile.decompression(ole_data.data(), len, vba_buf, buf_len);
+    CHECK_EQUAL(VBA_COMPRESSION_WINDOW, buf_len);
+
+    std::vector<uint8_t> expected(VBA_COMPRESSION_WINDOW, 0x41);
+    MEMCMP_EQUAL(expected.data(), buf.data(), VBA_COMPRESSION_WINDOW);
 }
 
 TEST(Olefile_ole, get_next_fat_sector_failure)
