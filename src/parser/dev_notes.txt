@@ -52,3 +52,64 @@ Each IPS policy has a table which maps variable name to a specific value.
     ips.variables.ports.STATIC_NAT_PORT = '8080, 40000:'
 
 RTN gets expanded values when the rule state is applied.
+
+==== Action Variables
+
+An IPS policy can define action variables for configured react pages:
+
+    ips =
+    {
+        variables =
+        {
+            actions =
+            {
+                BLOCK_PAGE_1 = { react = { page = "block_page_1.html" } },
+                BLOCK_PAGE_2 = { react = { page = "block_page_2.html" } },
+            }
+        }
+    }
+
+Rules use the variable name as the rule action:
+
+    $BLOCK_PAGE_1 http ( sid:1; )
+    $BLOCK_PAGE_2 http ( sid:2; )
+
+Rule states can also use the action variable, which is the common path for
+built-in or externally supplied rules:
+
+    ips.states =
+    [[
+        $BLOCK_PAGE_1 ( gid:119; sid:19; enable:yes; )
+        $BLOCK_PAGE_2 ( gid:119; sid:20; enable:yes; )
+    ]]
+
+During rule parsing, an action token beginning with '$' is resolved against the
+current IPS policy action variable table. The RTN stores both the underlying
+action type, such as react, and an action selector. The action selector is part
+of RTN comparison and hashing so rules with the same header but different
+configured react pages do not share the same RTN.
+
+ips.action_override is applied before this lookup. Therefore an override value
+such as "$BLOCK_PAGE_1" is resolved through the same action variable path as a
+rule action token.
+
+Action selectors are policy-local indexes into an IPS policy's configured
+action instances. RuleState therefore keeps the original "$NAME" action token
+when a state uses an action variable. When detection.global_rule_state applies
+that state to another IPS policy, the variable name is resolved again against
+the target policy before the RTN is installed. This lets policies use the same
+variable name for different react pages and avoids copying a selector from one
+policy into another.
+
+If a global rule state references an action variable that is missing from a
+target IPS policy, configuration fails with an unknown IPS action variable
+error for that policy.
+
+Action variables currently support configured react.page instances only. They
+are not general action aliases, and the parser does not support these forms:
+
+    actions =
+    {
+        MISCONFIGURED_ALERT = "alert",
+        MISCONFIGURED_REACT = "react",
+    }

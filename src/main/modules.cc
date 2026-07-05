@@ -50,6 +50,7 @@
 #include "log/messages.h"
 #include "lua/lua.h"
 #include "main/snort_module.h"
+#include "managers/action_manager.h"
 #include "managers/module_manager.h"
 #include "managers/plugin_manager.h"
 #include "memory/memory_module.h"
@@ -1158,6 +1159,22 @@ static const char* get_var_name(const char* fqn)
     return ptr + 1;
 }
 
+static bool is_action_var_placeholder(const char* fqn)
+{
+    const char* prefix = "ips.variables.actions.";
+    const char* name = strstr(fqn, prefix);
+
+    if ( !name )
+        return false;
+
+    name += strlen(prefix);
+    const char* name_end = strchr(name, '.');
+
+    const size_t name_len = name_end ? name_end - name : 0;
+
+    return name_len == strlen("$var") and !strncmp(name, "$var", name_len);
+}
+
 static const Parameter var_params[] =
 {
     { "$var" , Parameter::PT_STRING, nullptr, nullptr,
@@ -1166,8 +1183,35 @@ static const Parameter var_params[] =
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
+static const Parameter action_var_react_params[] =
+{
+    { "page" , Parameter::PT_STRING, nullptr, nullptr,
+      "react page file" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter action_var_params[] =
+{
+    { "react" , Parameter::PT_TABLE, action_var_react_params, nullptr,
+      "react action variable" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
+static const Parameter action_vars_params[] =
+{
+    { "$var" , Parameter::PT_TABLE, action_var_params, nullptr,
+      "IPS action variable" },
+
+    { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
+};
+
 static const Parameter variable_params[] =
 {
+    { "actions" , Parameter::PT_TABLE, action_vars_params, nullptr,
+      "action variables" },
+
     { "nets" , Parameter::PT_TABLE, var_params, nullptr,
       "net variables" },
 
@@ -1254,6 +1298,8 @@ public:
 private:
     std::string replace;
     std::string with;
+    std::string action_var;
+    std::string action_var_page;
 };
 
 bool IpsModule::matches(const char*, std::string&)
@@ -1314,6 +1360,23 @@ bool IpsModule::set(const char* fqn, Value& v, SnortConfig*)
     else if ( strstr(fqn, "variables.ports.") )
         ParsePortVar(get_var_name(fqn), v.get_string());
 
+    else if ( strstr(fqn, "variables.actions.") and v.is("page") )
+    {
+        const char* prefix = "variables.actions.";
+        const char* name = strstr(fqn, prefix);
+        name += strlen(prefix);
+
+        const char* name_end = strchr(name, '.');
+        if ( !name_end )
+        {
+            ParseError("invalid IPS action variable '%s'", fqn);
+            return false;
+        }
+
+        action_var.assign(name, name_end - name);
+        action_var_page = v.get_string();
+    }
+
     else if ( v.is("with") )
         with = v.get_string();
 
@@ -1346,6 +1409,40 @@ bool IpsModule::end(const char* fqn, int idx, SnortConfig* sc)
         resolve_nets();
     else if (!idx and !strcmp(fqn, "ips.variables.ports"))
         resolve_ports();
+    else if (!idx and strstr(fqn, "ips.variables.actions.") and strstr(fqn, ".react"))
+    {
+        if ( action_var.empty() or action_var_page.empty() )
+        {
+            if ( is_action_var_placeholder(fqn) )
+                return true;
+
+            ParseError("%s - must set react.page", fqn);
+            return false;
+        }
+
+        IpsPolicy* policy = get_ips_policy();
+        if ( !policy->has_action_variable_capacity() )
+        {
+            ParseError("too many IPS action variables");
+            return false;
+        }
+
+        if ( policy->has_action_variable(action_var) )
+        {
+            ParseError("duplicate IPS action variable '%s'", action_var.c_str());
+            return false;
+        }
+
+        IpsAction* action = ActionManager::instantiate_action_with_param("react", "page",
+            action_var_page.c_str(), sc);
+        if ( !action )
+            return false;
+
+        policy->commit_action_variable(action_var, "react", action);
+
+        action_var.clear();
+        action_var_page.clear();
+    }
 
     return true;
 }
@@ -2228,3 +2325,70 @@ void add_dependent_modules()
     PluginManager::add_module(new TraceModule);
 }
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#include "log/log_errors.h"
+
+TEST_CASE("IPS action variable placeholder detection", "[IpsModule]")
+{
+    const bool placeholder = is_action_var_placeholder("ips.variables.actions.$var.react");
+    const bool action_var = is_action_var_placeholder("ips.variables.actions.REACT_CUSTOM.react");
+    const bool missing_child = is_action_var_placeholder("ips.variables.actions.$var");
+    const bool net_var = is_action_var_placeholder("ips.variables.nets.$var.react");
+
+    CHECK(placeholder);
+    CHECK(!action_var);
+    CHECK(!missing_child);
+    CHECK(!net_var);
+}
+
+TEST_CASE("IPS action variable page rejects missing action variable name", "[IpsModule]")
+{
+    reset_parse_errors();
+
+    IpsModule module;
+    Value page("../custom_page.html");
+    page.set(&action_var_react_params[0]);
+
+    const bool accepted = module.set("ips.variables.actions.page", page, nullptr);
+    CHECK(!accepted);
+    CHECK(get_parse_errors() == 1);
+}
+
+TEST_CASE("IPS action variable end validates react page", "[IpsModule]")
+{
+    IpsModule module;
+
+    const bool placeholder_accepted = module.end("ips.variables.actions.$var.react", 0, nullptr);
+    CHECK(placeholder_accepted);
+
+    reset_parse_errors();
+
+    const bool accepted = module.end("ips.variables.actions.REACT_CUSTOM.react", 0, nullptr);
+    CHECK(!accepted);
+    CHECK(get_parse_errors() == 1);
+}
+
+TEST_CASE("IPS action variable end rejects duplicate action variable", "[IpsModule]")
+{
+    reset_parse_errors();
+
+    IpsPolicy policy;
+    policy.commit_action_variable("REACT_DUPLICATE", "react", nullptr);
+    set_ips_policy(&policy);
+
+    IpsModule module;
+    Value page("../custom_page.html");
+    page.set(&action_var_react_params[0]);
+
+    const bool set_accepted =
+        module.set("ips.variables.actions.REACT_DUPLICATE.react.page", page, nullptr);
+    CHECK(set_accepted);
+
+    const bool end_accepted = module.end("ips.variables.actions.REACT_DUPLICATE.react", 0, nullptr);
+    CHECK(!end_accepted);
+    CHECK(get_parse_errors() == 1);
+
+    set_ips_policy(static_cast<IpsPolicy*>(nullptr));
+}
+#endif

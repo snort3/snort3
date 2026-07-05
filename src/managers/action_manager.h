@@ -47,6 +47,9 @@ public:
     static void delete_config(snort::SnortConfig*);
 
     static void initialize_policies(snort::SnortConfig*);
+    // The action ctor must own or copy module data before this helper destroys the module.
+    static snort::IpsAction* instantiate_action_with_param(
+        const char* action_name, const char* param, const char* value, snort::SnortConfig*);
 
     static std::string get_action_string(snort::IpsAction::Type);
     static snort::IpsAction::Type get_action_type(const char*);
@@ -59,4 +62,3 @@ private:
 };
 
 #endif
-

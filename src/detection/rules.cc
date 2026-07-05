@@ -25,6 +25,8 @@
 #include "rules.h"
 
 #include <cassert>
+#include <cinttypes>
+#include <utility>
 
 #include "log/messages.h"
 #include "hash/xhash.h"
@@ -88,20 +90,25 @@ void RuleStateMap::apply(SnortConfig* sc)
 void RuleStateMap::apply(
     SnortConfig* sc, OptTreeNode* otn, unsigned ips_num, const RuleState& s)
 {
-    IpsPolicy* policy = nullptr;
+    IpsPolicy* target_policy = sc->policy_map->get_ips_policy(ips_num);
+    IpsPolicy* clone_policy = nullptr;
     RuleTreeNode* b_rtn = getRtnFromOtn(otn, ips_num);
 
     if ( !b_rtn and ips_num and (b_rtn = getRtnFromOtn(otn, 0)) )
-        policy = sc->policy_map->get_ips_policy(ips_num);
+        clone_policy = target_policy;
 
     if ( !b_rtn )
         return;
 
-    if ( policy )
-        policy->rules_shared++;
+    RuleTreeNode* t_rtn = dup_rtn(b_rtn, clone_policy);
+    if ( !update_rtn(sc, target_policy, t_rtn, s) )
+    {
+        DestroyRuleTreeNode(t_rtn);
+        return;
+    }
 
-    RuleTreeNode* t_rtn = dup_rtn(b_rtn, policy);
-    update_rtn(sc, t_rtn, s);
+    if ( clone_policy )
+        clone_policy->rules_shared++;
 
     addRtnToOtn(sc, otn, t_rtn, ips_num);
 }
@@ -109,6 +116,8 @@ void RuleStateMap::apply(
 RuleTreeNode* RuleStateMap::dup_rtn(RuleTreeNode* rtn, IpsPolicy* policy)
 {
     RuleTreeNode* ret = new RuleTreeNode(*rtn);
+    if ( ret->header )
+        ret->header = new RuleHeader(*ret->header);
 
     auto ipvt = policy ? policy->ip_vartable : nullptr;
     auto povt = policy ? policy->portVarTable : nullptr;
@@ -162,8 +171,33 @@ RuleTreeNode* RuleStateMap::dup_rtn(RuleTreeNode* rtn, IpsPolicy* policy)
     return ret;
 }
 
-void RuleStateMap::update_rtn(SnortConfig* sc, RuleTreeNode* rtn, const RuleState& s)
+bool RuleStateMap::update_rtn(SnortConfig* sc, IpsPolicy* policy, RuleTreeNode* rtn,
+    const RuleState& s)
 {
+    std::string rule_action = s.rule_action;
+    uint8_t action = s.action;
+    IpsPolicy::ActionSelector action_selector = s.action_selector;
+
+    if ( !rule_action.empty() and rule_action[0] == '$' )
+    {
+        if ( !policy )
+        {
+            ParseError("unknown IPS action variable '%s'", rule_action.c_str());
+            return false;
+        }
+
+        const std::string* action_name = nullptr;
+        if ( !policy->get_action_variable(rule_action.c_str() + 1,
+            action_name, action, action_selector) )
+        {
+            ParseError("unknown IPS action variable '%s' in IPS policy %" PRIu64,
+                rule_action.c_str(), policy->user_policy_id);
+            return false;
+        }
+
+        rule_action = *action_name;
+    }
+
     switch ( s.enable )
     {
     case IpsPolicy::DISABLED: rtn->clear_enabled(); break;
@@ -171,17 +205,128 @@ void RuleStateMap::update_rtn(SnortConfig* sc, RuleTreeNode* rtn, const RuleStat
     case IpsPolicy::INHERIT_ENABLE: break;
     }
 
-    ListHead* new_listhead = get_rule_list(sc, s.rule_action.c_str());
+    ListHead* new_listhead = get_rule_list(sc, rule_action.c_str());
 
     if ( new_listhead and ( rtn->listhead != new_listhead ) )
         rtn->listhead = new_listhead;
 
-    rtn->action = s.action;
+    rtn->action = action;
+    rtn->action_selector = action_selector;
 
     if ( rtn->header )
-    {
-        rtn->header = new RuleHeader(*rtn->header);
-        rtn->header->action = s.rule_action;
-    }
+        rtn->header->action = std::move(rule_action);
+
+    return true;
 }
 
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+#include <memory>
+
+#include "catch/snort_catch.h"
+#include "log/log_errors.h"
+
+struct RuleTreeNodeTestCleanup
+{
+    explicit RuleTreeNodeTestCleanup(RuleTreeNode& node) : rtn(node) { }
+    ~RuleTreeNodeTestCleanup() { FreeRuleTreeNode(&rtn); }
+
+    RuleTreeNodeTestCleanup(const RuleTreeNodeTestCleanup&) = delete;
+    RuleTreeNodeTestCleanup& operator=(const RuleTreeNodeTestCleanup&) = delete;
+
+    RuleTreeNode& rtn;
+};
+
+struct RuleTreeNodeTestDeleter
+{
+    void operator()(RuleTreeNode* rtn) const
+    {
+        if ( rtn )
+            DestroyRuleTreeNode(rtn);
+    }
+};
+
+struct RuleStateMapTestAccess
+{
+    static RuleTreeNode* dup_rtn(RuleStateMap& states, RuleTreeNode* rtn, IpsPolicy* policy)
+    { return states.dup_rtn(rtn, policy); }
+
+    static bool update_rtn(RuleStateMap& states, SnortConfig* sc, IpsPolicy* policy,
+        RuleTreeNode* rtn, const RuleState& state)
+    { return states.update_rtn(sc, policy, rtn, state); }
+};
+
+TEST_CASE("RuleStateMap update_rtn rejects action variable without policy", "[RuleStateMap]")
+{
+    reset_parse_errors();
+
+    RuleStateMap states;
+    RuleTreeNode rtn;
+    RuleState state =
+    {
+        "$REACT_RULE_PAGE",
+        0,
+        0,
+        IpsPolicy::ENABLED
+    };
+
+    const bool updated = RuleStateMapTestAccess::update_rtn(states, nullptr, nullptr, &rtn, state);
+    CHECK(!updated);
+    CHECK(get_parse_errors() == 1);
+}
+
+TEST_CASE("RuleStateMap failed update cleanup keeps source RTN header", "[RuleStateMap]")
+{
+    reset_parse_errors();
+
+    std::unique_ptr<vartable_t, decltype(&sfvt_free_table)> table(
+        sfvt_alloc_table(), sfvt_free_table);
+    REQUIRE(table);
+
+    sfip_var_t* var = nullptr;
+    REQUIRE(sfvt_add_str(table.get(), "test_net [any]", &var) == SFIP_SUCCESS);
+
+    RuleTreeNode source;
+    RuleTreeNodeTestCleanup source_cleanup(source);
+    source.sip = sfvar_deep_copy(var);
+    source.dip = sfvar_deep_copy(var);
+    source.header = new RuleHeader("alert");
+    REQUIRE(source.sip);
+    REQUIRE(source.dip);
+
+    RuleStateMap states;
+    RuleTreeNode* clone = RuleStateMapTestAccess::dup_rtn(states, &source, nullptr);
+    REQUIRE(clone);
+
+    const bool clone_owns_header = clone->header != source.header;
+    CHECK(clone_owns_header);
+    if ( !clone_owns_header )
+    {
+        clone->header = nullptr;
+        DestroyRuleTreeNode(clone);
+        return;
+    }
+
+    std::unique_ptr<RuleTreeNode, RuleTreeNodeTestDeleter> clone_cleanup(clone);
+
+    RuleState state =
+    {
+        "$REACT_RULE_PAGE",
+        0,
+        0,
+        IpsPolicy::ENABLED
+    };
+
+    const bool updated = RuleStateMapTestAccess::update_rtn(states, nullptr, nullptr, clone, state);
+    CHECK(!updated);
+    CHECK(get_parse_errors() == 1);
+
+    clone_cleanup.reset();
+    CHECK(source.header->action == "alert");
+}
+
+#endif

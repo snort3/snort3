@@ -128,7 +128,7 @@ static inline void init_match_info(const IpsContext* c)
 // called by fpLogEvent(), which does the filtering etc.
 // this handles the non-rule-actions (responses).
 static inline void fpLogOther(
-    Packet* p, const RuleTreeNode* rtn, const OptTreeNode* otn, IpsAction::Type action)
+    Packet* p, const OptTreeNode* otn, IpsAction::Type action, IpsPolicy::ActionSelector action_selector)
 {
     if ( EventTrace_IsEnabled(p->context->conf) )
         EventTrace_Log(p, otn, action);
@@ -154,10 +154,13 @@ static inline void fpLogOther(
     // rule option actions are queued here (eg replace)
     otn_trigger_actions(otn, p);
 
-    IpsAction* act = get_ips_policy()->action[rtn->action];
+    IpsAction* act = get_ips_policy()->get_action(action, action_selector);
+    if ( !act )
+        return;
+
     ActiveAction* active_act = act->get_active_action();
     if ( active_act )
-        Active::queue(act->get_active_action(), p);
+        Active::queue(active_act, p);
 }
 
 /*
@@ -196,6 +199,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         return 1;
     }
     action = (rateAction < 0) ? (int)rtn->action : rateAction;
+    const IpsPolicy::ActionSelector action_selector = (rateAction < 0) ? rtn->action_selector : 0;
 
     // When rate filters kick in, event filters are still processed.
     // perform event filtering tests - impacts logging
@@ -222,7 +226,10 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
         **  If InlineMode is on, then we still want to drop packets
         **  that are drop rules.  We just don't want to see the alert.
         */
-        IpsAction * act = get_ips_policy()->action[action];
+        IpsAction * act = get_ips_policy()->get_action(action, action_selector);
+        if ( !act )
+            return 1;
+
         ActInfo ai(otn, false);
         act->exec(p, ai);
 
@@ -235,7 +242,7 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
             else
                 p->flow->flags.ips_block_event_suppressed = true;
         }
-        fpLogOther(p, rtn, otn, action);
+        fpLogOther(p, otn, action, action_selector);
         pc.event_limit++;
         return 1;
     }
@@ -249,18 +256,21 @@ int fpLogEvent(const RuleTreeNode* rtn, const OptTreeNode* otn, Packet* p)
     if ( (p->packet_flags & PKT_PASS_RULE) &&
         (sc->get_eval_index(rtn->action) > sc->get_eval_index(IpsAction::get_type("pass"))) )
     {
-        fpLogOther(p, rtn, otn, rtn->action);
+        fpLogOther(p, otn, rtn->action, rtn->action_selector);
         return 1;
     }
 
     otn->state[get_instance_id()].alerts++;
     uint16_t eseq = Event::get_next_seq_num();
-    IpsAction* act = get_ips_policy()->action[action];
+    IpsAction* act = get_ips_policy()->get_action(action, action_selector);
+    if ( !act )
+        return 1;
+
     ActInfo ai(otn);
 
     act->exec(p, ai);
     SetTags(p, otn, eseq);
-    fpLogOther(p, rtn, otn, action);
+    fpLogOther(p, otn, action, action_selector);
 
     return 0;
 }
@@ -1399,7 +1409,10 @@ static inline int fp_do_actions(OtnxMatchData* omd, Packet* p)
                 sizeof(void*), sortOrderByContentLength);
             const OptTreeNode* otn = omd->matchInfo[i].MatchArray[0];
             RuleTreeNode* rtn = getRtnFromOtn(otn);
-            IpsAction* act = get_ips_policy()->action[rtn->action];
+            IpsAction* act = get_ips_policy()->get_action(rtn->action, rtn->action_selector);
+            if ( !act )
+                continue;
+
             ActInfo ai(otn);
             act->exec(p, ai);
         }

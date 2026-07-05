@@ -91,7 +91,7 @@ static bool s_ignore = false;  // for skipping drop rules when not inline, etc.
 static bool s_capture = false;
 static bool buf_is_set = false;
 
-static std::string s_type;
+static std::string s_rule_action;
 static std::string s_body;
 
 static std::list<const char*> buffer_setters;
@@ -419,6 +419,9 @@ bool same_headers(RuleTreeNode* rule, RuleTreeNode* rtn)
     if (rule->action != rtn->action)
         return false;
 
+    if (rule->action_selector != rtn->action_selector)
+        return false;
+
     if (rule->snort_protocol_id != rtn->snort_protocol_id)
         return false;
 
@@ -459,6 +462,7 @@ static void XferHeader(RuleTreeNode* from, RuleTreeNode* to)
 {
     to->flags = from->flags;
     to->action = from->action;
+    to->action_selector = from->action_selector;
     to->sip = from->sip;
     to->dip = from->dip;
 
@@ -772,16 +776,48 @@ void parse_rule_print(unsigned fb_total, unsigned fb_unchk, unsigned fb_unset)
 void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 {
     IpsPolicy* p = get_ips_policy();
+    IpsPolicy::ActionSelector action_selector = 0;
+    IpsAction::Type action_type = 0;
+    bool action_variable = false;
+    const char* action_token = nullptr;
+
+    if ( !p )
+    {
+        s_ignore = true;
+        ParseError("no active IPS policy for rule action '%s'", s ? s : "");
+        return;
+    }
 
     if ( !p->action_override.empty() )
         s = p->action_override.c_str();
 
-    auto it = p->action_map.find(s);
+    if ( s and (*s == '$') )
+    {
+        action_token = s;
+        const std::string* action_name = nullptr;
+        if ( !p->get_action_variable(s + 1, action_name, action_type, action_selector) )
+        {
+            s_ignore = true;
+            ParseError("unknown IPS action variable '%s'", s);
+            return;
+        }
 
-    if ( it != p->action_map.end() )
+        s = action_name->c_str();
+        action_variable = true;
+    }
+
+    if ( !s )
+    {
+        s_ignore = true;
+        ParseError("missing rule action");
+        return;
+    }
+
+    auto it = p->action_map.find(s);
+    if ( !action_variable and (it != p->action_map.end()) )
         s = it->second.c_str();
 
-    s_type = s;
+    s_rule_action = action_variable ? action_token : s;
     rtn = RuleTreeNode();
 
     if ( s_so_rule )
@@ -789,7 +825,8 @@ void parse_rule_type(SnortConfig* sc, const char* s, RuleTreeNode& rtn)
 
     assert(s);
 
-    rtn.action = IpsAction::get_type(s);
+    rtn.action = action_variable ? action_type : IpsAction::get_type(s);
+    rtn.action_selector = action_selector;
 
     if ( !IpsAction::is_valid_action(rtn.action) )
     {
@@ -1098,8 +1135,9 @@ static void parse_rule_state(SnortConfig* sc, const RuleTreeNode& rtn, OptTreeNo
     };
     RuleState state =
     {
-        s_type,
+        s_rule_action,
         rtn.action,
+        rtn.action_selector,
         otn->enable
     };
     sc->rule_states->add(key, state);
@@ -1525,3 +1563,113 @@ void parse_rule_dec_head_count()
 {
     head_count--;
 }
+
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#include "log/log_errors.h"
+
+static void reset_parse_rule_ignore()
+{ s_ignore = false; }
+
+static void cleanup_parse_rule_test_rtn(RuleTreeNode& rtn)
+{
+    delete rtn.header;
+    rtn.header = nullptr;
+}
+
+TEST_CASE("parse rule type rejects missing IPS policy", "[ParseRule]")
+{
+    reset_parse_errors();
+
+    SnortConfig* sc = SnortConfig::get_main_conf();
+    REQUIRE(sc != nullptr);
+    if ( !sc )
+        return;
+
+    snort::set_ips_policy(static_cast<IpsPolicy*>(nullptr));
+
+    RuleTreeNode alert_rtn;
+
+    parse_rule_type(sc, "alert", alert_rtn);
+    CHECK(get_parse_errors() == 1);
+    cleanup_parse_rule_test_rtn(alert_rtn);
+    reset_parse_rule_ignore();
+
+    reset_parse_errors();
+
+    RuleTreeNode missing_rtn;
+
+    parse_rule_type(sc, nullptr, missing_rtn);
+    CHECK(get_parse_errors() == 1);
+    cleanup_parse_rule_test_rtn(missing_rtn);
+    reset_parse_rule_ignore();
+
+    snort::set_ips_policy(static_cast<IpsPolicy*>(nullptr));
+}
+
+TEST_CASE("parse rule type rejects unknown IPS action variable", "[ParseRule]")
+{
+    reset_parse_errors();
+
+    SnortConfig* sc = SnortConfig::get_main_conf();
+    REQUIRE(sc != nullptr);
+    if ( !sc )
+        return;
+
+    IpsPolicy policy;
+    set_ips_policy(&policy);
+
+    RuleTreeNode rtn;
+
+    parse_rule_type(sc, "$REACT_MISSING", rtn);
+    CHECK(get_parse_errors() == 1);
+    cleanup_parse_rule_test_rtn(rtn);
+    reset_parse_rule_ignore();
+
+    snort::set_ips_policy(static_cast<IpsPolicy*>(nullptr));
+}
+
+TEST_CASE("parse rule type rejects missing action", "[ParseRule]")
+{
+    reset_parse_errors();
+
+    SnortConfig* sc = SnortConfig::get_main_conf();
+    REQUIRE(sc != nullptr);
+    if ( !sc )
+        return;
+
+    IpsPolicy policy;
+    set_ips_policy(&policy);
+
+    RuleTreeNode rtn;
+
+    parse_rule_type(sc, nullptr, rtn);
+    CHECK(get_parse_errors() == 1);
+    cleanup_parse_rule_test_rtn(rtn);
+    reset_parse_rule_ignore();
+
+    snort::set_ips_policy(static_cast<IpsPolicy*>(nullptr));
+}
+
+TEST_CASE("parse rule type rejects unknown action", "[ParseRule]")
+{
+    reset_parse_errors();
+
+    SnortConfig* sc = SnortConfig::get_main_conf();
+    REQUIRE(sc != nullptr);
+    if ( !sc )
+        return;
+
+    IpsPolicy policy;
+    set_ips_policy(&policy);
+
+    RuleTreeNode rtn;
+
+    parse_rule_type(sc, "not_an_action", rtn);
+    CHECK(get_parse_errors() == 1);
+    cleanup_parse_rule_test_rtn(rtn);
+    reset_parse_rule_ignore();
+
+    snort::set_ips_policy(static_cast<IpsPolicy*>(nullptr));
+}
+#endif

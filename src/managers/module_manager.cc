@@ -503,6 +503,12 @@ static bool begin(Module* m, const Parameter* p, const char* s, int idx, int dep
 
     while ( p->name )
     {
+        if ( *p->name == '$' )
+        {
+            ++p;
+            continue;
+        }
+
         string fqn = s;
         fqn += '.';
         fqn += p->name;

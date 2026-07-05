@@ -137,6 +137,7 @@ struct RuleTreeNode
     unsigned int otnRefCount = 0; // FIXIT-L shared_ptr?
 
     snort::IpsAction::Type action = 0;
+    IpsPolicy::ActionSelector action_selector = 0;
 
     uint8_t flags = 0;
 
@@ -290,4 +291,3 @@ bool otn_set_agent(OptTreeNode*, snort::IpsOption*);
 void otn_trigger_actions(const OptTreeNode*, snort::Packet*);
 
 #endif
-

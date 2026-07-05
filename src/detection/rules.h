@@ -80,6 +80,7 @@ struct RuleState
 {
     std::string rule_action;
     uint8_t action;
+    IpsPolicy::ActionSelector action_selector = 0;
     IpsPolicy::Enable enable;
 };
 
@@ -91,9 +92,13 @@ public:
 
     void apply(snort::SnortConfig*);
 
+#ifdef UNIT_TEST
+    friend struct RuleStateMapTestAccess;
+#endif
+
 private:
     RuleTreeNode* dup_rtn(RuleTreeNode*, IpsPolicy*);
-    void update_rtn(snort::SnortConfig*, RuleTreeNode*, const RuleState&);
+    bool update_rtn(snort::SnortConfig*, IpsPolicy*, RuleTreeNode*, const RuleState&);
     void apply(snort::SnortConfig*, struct OptTreeNode*, unsigned ips_num, const RuleState&);
 
 private:
@@ -101,4 +106,3 @@ private:
 };
 
 #endif
-

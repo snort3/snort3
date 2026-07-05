@@ -30,6 +30,7 @@
 #include "parser/parser.h"
 
 #include "module_manager.h"
+#include "framework/parameter.h"
 #include "plugin_manager.h"
 #include "plug_interface.h"
 
@@ -171,7 +172,7 @@ static ActionClass* get_action_class(const ActionApi* api, IpsActionsConfig* iac
     if ( it != iac->clist.cend() )
         return &(*it).cls;
 
-    return (ActionClass*)PluginManager::get_interface(api->base.name);
+    return static_cast<ActionClass*>(PluginManager::get_interface(api->base.name));
 }
 
 // Config operations
@@ -224,6 +225,61 @@ void ActionManager::instantiate(const ActionApi* api, Module* mod, SnortConfig* 
     }
 }
 
+IpsAction* ActionManager::instantiate_action_with_param(const char* action_name, const char* param,
+    const char* value, SnortConfig* sc)
+{
+    ActionClass* cls = static_cast<ActionClass*>(PluginManager::get_interface(action_name));
+    if ( !cls )
+    {
+        ParseError("unknown IPS action '%s'", action_name);
+        return nullptr;
+    }
+
+    const BaseApi& base = cls->api->base;
+    Module* mod = base.mod_ctor ? base.mod_ctor() : nullptr;
+    if ( !mod )
+    {
+        ParseError("IPS action '%s' does not support configuration", action_name);
+        return nullptr;
+    }
+
+    bool ok = mod->verified_begin(action_name, 0, sc);
+    const Parameter* p = Parameter::find(mod->get_parameters(), param);
+
+    if ( ok and !p )
+    {
+        ParseError("IPS action '%s' has no '%s' parameter", action_name, param);
+        ok = false;
+    }
+
+    if ( ok )
+    {
+        Value v(value);
+        v.set(p);
+        ok = mod->verified_set((std::string(action_name) + "." + param).c_str(), v, sc);
+    }
+
+    if ( ok )
+        ok = mod->verified_end(action_name, 0, sc);
+
+    IpsAction* act = nullptr;
+    if ( ok )
+        act = cls->api->ctor(mod);
+
+    if ( base.mod_dtor )
+        base.mod_dtor(mod);
+    else
+        delete mod;
+
+    if ( act )
+    {
+        sc->ips_actions_config->clist.emplace_back(*cls, act);
+        PluginManager::set_instantiated(action_name);
+    }
+
+    return act;
+}
+
 void ActionManager::initialize_policies(SnortConfig* sc)
 {
     for (unsigned i = 0; i < sc->policy_map->ips_policy_count(); i++)
@@ -236,8 +292,8 @@ void ActionManager::initialize_policies(SnortConfig* sc)
 
         auto create = [](PlugInterface* pin, void* pv)
         {
-            ActionClass* ac = (ActionClass*)pin;
-            SnortConfig* conf = (SnortConfig*)pv;
+            ActionClass* ac = static_cast<ActionClass*>(pin);
+            SnortConfig* conf = static_cast<SnortConfig*>(pv);
             ActionManager::instantiate(ac->api, nullptr, conf, policy);
             PluginManager::set_instantiated(ac->api->base.name);
         };
@@ -245,4 +301,3 @@ void ActionManager::initialize_policies(SnortConfig* sc)
         PluginManager::for_each(PT_IPS_ACTION, create, sc);
     }
 }
-

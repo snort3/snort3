@@ -43,6 +43,8 @@
 #include "shell.h"
 #include "snort_config.h"
 
+#include <utility>
+
 using namespace snort;
 
 //-------------------------------------------------------------------------
@@ -123,7 +125,9 @@ void InspectionPolicy::configure()
 // detection policy
 //-------------------------------------------------------------------------
 
-IpsPolicy::IpsPolicy(PolicyId id) : action(IpsAction::get_max_types(), nullptr)
+IpsPolicy::IpsPolicy(PolicyId id) :
+    action(IpsAction::get_max_types(), nullptr),
+    configured_action(1, nullptr)
 {
     policy_id = id;
     policy_mode = POLICY_MODE__MAX;
@@ -152,6 +156,35 @@ IpsPolicy::~IpsPolicy()
 
     if ( nonamePortVarTable )
         PortTableFree(nonamePortVarTable);
+}
+
+bool IpsPolicy::has_action_variable_capacity() const
+{ return configured_action.size() <= UINT8_MAX; }
+
+bool IpsPolicy::has_action_variable(const std::string& name) const
+{ return action_vars.find(name) != action_vars.end(); }
+
+void IpsPolicy::commit_action_variable(const std::string& name,
+    const std::string& action_name, IpsAction* act)
+{
+    const auto selector = (ActionSelector)configured_action.size();
+    const auto action_type = IpsAction::get_type(action_name.c_str());
+
+    action_vars.emplace(name, std::make_tuple(action_name, action_type, selector));
+    configured_action.push_back(act);
+}
+
+bool IpsPolicy::get_action_variable(const std::string& name, const std::string*& action_name,
+    IpsAction::Type& action, ActionSelector& selector) const
+{
+    const auto it = action_vars.find(name);
+    if ( it == action_vars.end() )
+        return false;
+
+    action_name = &std::get<0>(it->second);
+    action = std::get<1>(it->second);
+    selector = std::get<2>(it->second);
+    return true;
 }
 
 void IpsPolicy::update_user_policy_id()
@@ -419,3 +452,42 @@ bool only_inspection_policy()
 bool only_ips_policy()
 { return get_ips_policy() && !get_inspection_policy() && !get_network_policy(); }
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+
+TEST_CASE("IPS policy reports action variable capacity", "[IpsPolicy]")
+{
+    IpsPolicy policy;
+
+    policy.configured_action.resize(UINT8_MAX);
+    const bool has_initial_capacity = policy.has_action_variable_capacity();
+    CHECK(has_initial_capacity);
+
+    policy.configured_action.resize(static_cast<size_t>(UINT8_MAX) + 1);
+    const bool has_overflow_capacity = policy.has_action_variable_capacity();
+    CHECK(!has_overflow_capacity);
+}
+
+TEST_CASE("IPS policy reports existing action variable", "[IpsPolicy]")
+{
+    IpsPolicy policy;
+
+    const bool has_initial_action_variable = policy.has_action_variable("REACT_DEFINED");
+    CHECK(!has_initial_action_variable);
+
+    policy.commit_action_variable("REACT_DEFINED", "react", nullptr);
+    const bool has_committed_action_variable = policy.has_action_variable("REACT_DEFINED");
+    CHECK(has_committed_action_variable);
+}
+
+TEST_CASE("IPS policy reports missing action variable", "[IpsPolicy]")
+{
+    IpsPolicy policy;
+    const std::string* action_name = nullptr;
+    IpsAction::Type action = 0;
+    IpsPolicy::ActionSelector selector = 0;
+
+    const bool found = policy.get_action_variable("REACT_MISSING", action_name, action, selector);
+    CHECK(!found);
+}
+#endif

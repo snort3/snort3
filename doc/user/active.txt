@@ -120,6 +120,89 @@ Note that the file contains the message body only. The headers will be added
 with an updated value for Content-Length. For HTTP/2 traffic Snort will
 translate the page to HTTP/2 format.
 
+Multiple response pages can be configured per IPS policy with action variables:
+
+    ips =
+    {
+        variables =
+        {
+            actions =
+            {
+                BLOCK_PAGE_1 =
+                {
+                    react = { page = "block_page_1.html" }
+                },
+                BLOCK_PAGE_2 =
+                {
+                    react = { page = "block_page_2.html" }
+                }
+            }
+        },
+
+        rules = local_rules,
+    }
+
+Rules and rule states select one of those configured react actions by using the
+action variable as the rule action:
+
+    $BLOCK_PAGE_1 http ( msg:"Page one"; flow:established, to_server;
+        http_method; content:"GET"; sid:1; )
+
+    $BLOCK_PAGE_2 http ( msg:"Page two"; flow:established, to_server;
+        http_method; content:"POST"; sid:2; )
+
+For built-in rules, or when a base rule is supplied separately, select the page
+from ips.states:
+
+    ips.states =
+    [[
+        $BLOCK_PAGE_1 ( gid:119; sid:19; enable:yes; )
+        $BLOCK_PAGE_2 ( gid:119; sid:20; enable:yes; )
+    ]]
+
+Each action variable creates a separate react action instance with its own page.
+Action variables are policy-specific, so the same variable name can select a
+different page in another IPS policy.
+
+The IPS action override can also select a configured react action variable:
+
+    ips =
+    {
+        action_override = "$BLOCK_PAGE_1",
+        variables =
+        {
+            actions =
+            {
+                BLOCK_PAGE_1 = { react = { page = "block_page_1.html" } }
+            }
+        },
+        rules = local_rules,
+    }
+
+When detection.global_rule_state is enabled, a rule state that uses an action
+variable is applied by name to each target IPS policy. Each target IPS policy
+must define the referenced action variable. The variable is resolved in the
+target policy, so the same rule state can select different pages in different
+IPS policies:
+
+    detection = { global_rule_state = true }
+
+    ips.states =
+    [[
+        $BLOCK_PAGE_1 ( gid:119; sid:20; enable:yes; )
+    ]]
+
+    -- Each IPS policy that receives this state must define BLOCK_PAGE_1.
+
+Action variables currently support configured react pages only. They do not
+support aliases to built-in actions or unconfigured react actions, such as:
+
+    ips.variables.actions =
+    {
+        MISCONFIGURED_ALERT = "alert",
+        MISCONFIGURED_REACT = "react",
+    }
+
 Limitations for HTTP/2:
 
 * Packet will be injected against the last processed stream id.

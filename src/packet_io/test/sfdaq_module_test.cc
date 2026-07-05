@@ -33,9 +33,20 @@
 
 using namespace snort;
 
+class SnortConfigRestore
+{
+public:
+    SnortConfigRestore() : saved(SnortConfig::get_main_conf()) { }
+    ~SnortConfigRestore()
+    { SnortConfig::set_conf(saved); }
+
+private:
+    SnortConfig* saved;
+};
 
 TEST_CASE("parse sfdaq config", "[SFDAQModule]")
 {
+    SnortConfigRestore restore;
     SnortConfig sc;
     SFDAQModule sfdm;
 

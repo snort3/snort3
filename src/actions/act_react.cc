@@ -351,7 +351,7 @@ static IpsAction* react_ctor(Module* p)
     std::string react_page;
     if ( p )
     {
-        ReactModule* m = (ReactModule*)p;
+        ReactModule* m = static_cast<ReactModule*>(p);
         react_page = m->get_data();
     }
 

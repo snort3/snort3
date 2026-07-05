@@ -33,12 +33,16 @@ typedef unsigned char uuid_t[16];
 #endif
 
 #include <algorithm>
+#include <cassert>
 #include <climits>
 #include <map>
 #include <memory>
+#include <string>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 
+#include "framework/ips_action.h"
 #include "framework/data_bus.h"
 #include "framework/mp_data_bus.h"
 
@@ -244,11 +248,18 @@ struct IpsPolicy
 {
 public:
     enum Enable : uint8_t { DISABLED, ENABLED, INHERIT_ENABLE };
+    using ActionSelector = uint8_t;
 
     IpsPolicy(PolicyId = 0);
     ~IpsPolicy();
 
     void update_user_policy_id();
+    bool has_action_variable_capacity() const;
+    bool has_action_variable(const std::string&) const;
+    void commit_action_variable(const std::string&, const std::string&, snort::IpsAction*);
+    bool get_action_variable(const std::string&, const std::string*&,
+        snort::IpsAction::Type&, ActionSelector&) const;
+    snort::IpsAction* get_action(snort::IpsAction::Type, ActionSelector) const;
 
 public:
     PolicyId policy_id;
@@ -281,10 +292,23 @@ public:
 
     std::string action_override;
     std::map<std::string, std::string> action_map;
+    // variable name -> action name, action type, configured action selector
+    std::map<std::string, std::tuple<std::string, snort::IpsAction::Type, ActionSelector>>
+        action_vars;
 
     // Holds all plugin actions associated with this policy
     std::vector<snort::IpsAction*> action;
+    std::vector<snort::IpsAction*> configured_action;
 };
+
+inline snort::IpsAction* IpsPolicy::get_action(
+    snort::IpsAction::Type type, ActionSelector selector) const
+{
+    if ( !selector )
+        return (type < action.size()) ? action[type] : nullptr;
+
+    return (selector < configured_action.size()) ? configured_action[selector] : nullptr;
+}
 
 //-------------------------------------------------------------------------
 // binding stuff
@@ -383,4 +407,3 @@ private:
 };
 
 #endif
-

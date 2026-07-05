@@ -17,3 +17,13 @@ add_cpputest(mp_transport_manager_test
         ../mp_transport_manager.cc
         ../../framework/module.cc
 )
+
+add_cpputest(action_manager_test
+    SOURCES
+        ../action_manager.cc
+        ../../framework/module.cc
+        ../../framework/parameter.cc
+        ../../framework/value.cc
+        ../../sfip/sf_ip.cc
+        $<TARGET_OBJECTS:catch_tests>
+)

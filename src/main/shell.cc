@@ -294,7 +294,12 @@ void Shell::config_open_table(bool is_root_node, bool is_list, int idx,
         }
 
         if ( node_type == Parameter::PT_TABLE )
-            update_current_config_node(table_name);
+        {
+            if ( s_current_node and !table_name.empty() and !s_current_node->get_node(table_name) )
+                add_config_child_node(table_name, node_type, false);
+            else
+                update_current_config_node(table_name);
+        }
         else
         {
             if ( idx )

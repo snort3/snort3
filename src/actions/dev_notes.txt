@@ -21,6 +21,65 @@ a block page would be invalid. For more details look at implementation of
 payload_injector. In either case, even when injection of the block page is
 not supported, react blocks the flow.
 
+An IPS policy can define multiple named react action variables, each with its
+own page:
+
+    ips =
+    {
+        variables =
+        {
+            actions =
+            {
+                BLOCK_PAGE_1 = { react = { page = "block_page_1.html" } },
+                BLOCK_PAGE_2 = { react = { page = "block_page_2.html" } },
+            }
+        }
+    }
+
+Rules use those variables as actions:
+
+    $BLOCK_PAGE_1 http ( sid:1; )
+    $BLOCK_PAGE_2 http ( sid:2; )
+
+A common use is to keep the base rule action generic and select the configured
+react page from ips.states:
+
+    ips.states =
+    [[
+        $BLOCK_PAGE_1 ( gid:119; sid:19; enable:yes; )
+        $BLOCK_PAGE_2 ( gid:119; sid:20; enable:yes; )
+    ]]
+
+The parser resolves the variable to the underlying react action type and stores
+an action selector in the RTN. The selector is used at event time to retrieve
+the configured react action instance for that variable. A selector of 0 uses the
+normal policy action instance, preserving the standard action path for rules
+that do not use action variables.
+
+The selector is policy-local. When a rule state action is stored as an action
+variable, keep the original "$NAME" token and resolve it against the target IPS
+policy when the state is applied. This matters for detection.global_rule_state:
+different IPS policies can declare the same action variable name in different
+orders, or point it at different react pages. Carrying a selector parsed under
+one policy into another policy would select the wrong configured action.
+
+Every target policy that receives a global rule state using an action variable
+must define that variable name. Missing variables are configuration errors.
+
+ips.action_override is applied before action variable resolution, so an override
+value such as "$BLOCK_PAGE_1" selects that configured react page for rules in
+the policy.
+
+Action variables are currently scoped to configured react pages. They are not
+general aliases for built-in actions or unconfigured action instances. These
+forms are not supported:
+
+    actions =
+    {
+        MISCONFIGURED_ALERT = "alert",
+        MISCONFIGURED_REACT = "react",
+    }
+
 Rewrite enables overwrite packet contents based on "replace" option in the
 rules. Note that using "rewrite" action without "replace" option will raise
 the appropriate rule alert but will not overwrite the packet payload.
