@@ -34,6 +34,7 @@ public:
     static void add_ip_header_info(const snort::Packet&, bool add_eth = true);
     static void add_eth_header_info(const snort::Packet&);
     static void add_packet_type_info(const snort::Packet&);
+    static void add_tunnel_info(const snort::Packet&);
     static bool stream_is_cbd_enabled();
 };
 

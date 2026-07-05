@@ -3,6 +3,12 @@ add_cpputest( get_geneve_opt_test
         ../packet.cc
 )
 
+add_cpputest( encap_layer_test
+    SOURCES
+        ../layer.cc
+        ../packet.cc
+)
+
 add_cpputest( ssl_protocol_test )
 add_cpputest( ssl_parse_test
     LIBS

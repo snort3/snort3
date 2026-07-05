@@ -37,6 +37,7 @@
 #include "protocols/eth.h"
 #include "protocols/icmp4.h"
 #include "protocols/ip.h"
+#include "protocols/layer.h"
 #include "protocols/packet.h"
 #include "protocols/tcp.h"
 #include "protocols/tcp_options.h"
@@ -358,6 +359,42 @@ void StreamLog::add_eth_header_info(const Packet& p)
     }
     else
         stream_log(&p, "%s\n", eh->to_string().c_str());
+}
+
+void StreamLog::add_tunnel_info(const Packet& p)
+{
+    if ( !PacketTracer::is_active() and !PacketTracer::is_daq_activated() and !stream_is_cbd_enabled() )
+        return;
+
+    std::vector<TunnelInfo> tunnels = layer::get_encapsulation_layers(&p);
+    if ( tunnels.empty() )
+        return;
+
+    for ( const auto& tunnel : tunnels )
+    {
+        SfIpString src_str;
+        SfIpString dst_str;
+        tunnel.src_ip.ntop(src_str, sizeof(src_str));
+        tunnel.dst_ip.ntop(dst_str, sizeof(dst_str));
+
+        const char* tunnel_name = layer::get_tunnel_type_name(tunnel.tunnel_type);
+
+        if ( tunnel.has_ports )
+        {
+            stream_log(&p, "Tunnel=%s %s:%u -> %s:%u proto %u\n",
+                tunnel_name,
+                src_str, static_cast<unsigned>(tunnel.src_port),
+                dst_str, static_cast<unsigned>(tunnel.dst_port),
+                static_cast<unsigned>(tunnel.ip_proto));
+        }
+        else
+        {
+            stream_log(&p, "Tunnel=%s %s -> %s ports=n/a proto %u\n",
+                tunnel_name,
+                src_str, dst_str,
+                static_cast<unsigned>(tunnel.ip_proto));
+        }
+    }
 }
 
 bool StreamLog::stream_is_cbd_enabled(void)

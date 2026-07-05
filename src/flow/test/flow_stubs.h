@@ -82,6 +82,7 @@ void flow_log(const char*, ...) { }
 void StreamLog::add_ip_header_info(const snort::Packet&, bool) { }
 void StreamLog::add_eth_header_info(const snort::Packet&) { }
 void StreamLog::add_packet_type_info(const snort::Packet&) { }
+void StreamLog::add_tunnel_info(const snort::Packet&) { }
 
 namespace snort
 {

@@ -606,6 +606,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
         }
 
         p->filtering_state = flow->filtering_state;
+        StreamLog::add_tunnel_info(*p);
         update_stats(flow, p);
 
         if ( p->is_retry() or (flow->flags.retry_queued and ( !p->is_cooked() or p->is_defrag())) )
@@ -619,6 +620,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
     else
     {
         flow->network_policy_id = get_network_policy()->policy_id;
+        StreamLog::add_tunnel_info(*p);
         flow_log("Session: new snort session\n");
 
         init_roles(p, flow);

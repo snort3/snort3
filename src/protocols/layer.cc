@@ -24,6 +24,8 @@
 #include "layer.h"
 
 #include "packet.h"
+#include "protocols/protocol_ids.h"
+#include "protocols/udp.h"
 
 namespace snort
 {
@@ -463,5 +465,141 @@ const udp::UDPHdr* get_udp_embed_icmp(const ip::IpApi& api)
 
 const icmp::ICMPHdr* get_icmp_embed_icmp(const ip::IpApi& api)
 { return reinterpret_cast<const icmp::ICMPHdr*>(api.ip_data()); }
+
+const char* get_tunnel_type_name(ProtocolId prot_id)
+{
+    switch (prot_id)
+    {
+    case ProtocolId::VXLAN:
+        return "vxlan";
+    case ProtocolId::GENEVE:
+        return "geneve";
+    case ProtocolId::GRE:
+        return "gre";
+    case ProtocolId::GTP:
+        return "gtp";
+    case ProtocolId::TEREDO:
+        return "teredo";
+    default:
+        return "unknown";
+    }
+}
+
+static inline bool is_tunnel_protocol(ProtocolId prot_id)
+{
+    switch (prot_id)
+    {
+    case ProtocolId::VXLAN:
+    case ProtocolId::GENEVE:
+    case ProtocolId::GRE:
+    case ProtocolId::GTP:
+    case ProtocolId::TEREDO:
+        return true;
+    default:
+        return false;
+    }
+}
+
+static inline bool tunnel_has_ports(ProtocolId prot_id)
+{
+    switch (prot_id)
+    {
+    case ProtocolId::VXLAN:
+    case ProtocolId::GENEVE:
+    case ProtocolId::GTP:
+    case ProtocolId::TEREDO:
+        return true;
+    case ProtocolId::GRE:
+    default:
+        return false;
+    }
+}
+
+static bool find_tunnel_outer_info(const Packet* p, int start_idx, TunnelInfo& info,
+    const udp::UDPHdr*& pending_udp)
+{
+    ip::IpApi outer_ip_api;
+
+    for (int j = start_idx; j >= 0; j--)
+    {
+        const Layer& lyr = p->layers[j];
+
+        switch (lyr.prot_id)
+        {
+        case ProtocolId::ETHERTYPE_IPV4:
+        case ProtocolId::IPIP:
+        {
+            const ip::IP4Hdr* ip4h = reinterpret_cast<const ip::IP4Hdr*>(lyr.start);
+            outer_ip_api.set(ip4h);
+            info.src_ip = *outer_ip_api.get_src();
+            info.dst_ip = *outer_ip_api.get_dst();
+            info.ip_proto = outer_ip_api.proto();
+            return true;
+        }
+        case ProtocolId::ETHERTYPE_IPV6:
+        case ProtocolId::IPV6:
+        {
+            const ip::IP6Hdr* ip6h = reinterpret_cast<const ip::IP6Hdr*>(lyr.start);
+            outer_ip_api.set(ip6h);
+            info.src_ip = *outer_ip_api.get_src();
+            info.dst_ip = *outer_ip_api.get_dst();
+            info.ip_proto = outer_ip_api.proto();
+            return true;
+        }
+        case ProtocolId::UDP:
+            pending_udp = reinterpret_cast<const udp::UDPHdr*>(lyr.start);
+            break;
+        default:
+            break;
+        }
+    }
+    return false;
+}
+
+std::vector<TunnelInfo> get_encapsulation_layers(const Packet* const p)
+{
+    std::vector<TunnelInfo> tunnels;
+
+    if (!p || p->num_layers < 2)
+        return tunnels;
+
+    const int inner_ip_idx = get_inner_ip_lyr_index(p);
+    if (inner_ip_idx < 0)
+        return tunnels;
+
+    const udp::UDPHdr* pending_udp = nullptr;
+
+    for (int i = inner_ip_idx - 1; i >= 0; i--)
+    {
+        const Layer& lyr = p->layers[i];
+
+        if (is_tunnel_protocol(lyr.prot_id))
+        {
+            TunnelInfo info;
+            info.tunnel_type = lyr.prot_id;
+
+            if (!find_tunnel_outer_info(p, i - 1, info, pending_udp))
+            {
+                // No outer IP found (truncated/partial decode) - skip this tunnel
+                pending_udp = nullptr;
+                continue;
+            }
+
+            info.has_ports = tunnel_has_ports(lyr.prot_id) && pending_udp;
+
+            if (info.has_ports)
+            {
+                info.src_port = pending_udp->src_port();
+                info.dst_port = pending_udp->dst_port();
+            }
+
+            tunnels.push_back(info);
+            pending_udp = nullptr;
+        }
+    }
+
+    return tunnels;
+}
+
 } // namespace layer
 } // namespace snort
