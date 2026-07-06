@@ -842,7 +842,8 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         {
             if (hsession->get_tun_dest())
                 hsession->free_tun_dest();
-            hsession->set_tun_dest();
+            if (hsession->get_field(REQ_URI_FID))
+                hsession->set_tun_dest();
             asd.scan_flags &= ~SCAN_HTTP_URI_FLAG;
         }
 
