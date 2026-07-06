@@ -1577,6 +1577,18 @@ static void cleanup_parse_rule_test_rtn(RuleTreeNode& rtn)
     rtn.header = nullptr;
 }
 
+TEST_CASE("same headers rejects different action selectors", "[ParseRule]")
+{
+    RuleTreeNode rule;
+    RuleTreeNode rtn;
+
+    rule.action_selector = 1;
+    rtn.action_selector = 2;
+
+    const bool headers_match = same_headers(&rule, &rtn);
+    CHECK(!headers_match);
+}
+
 TEST_CASE("parse rule type rejects missing IPS policy", "[ParseRule]")
 {
     reset_parse_errors();
