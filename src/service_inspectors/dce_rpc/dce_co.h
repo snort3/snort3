@@ -22,6 +22,9 @@
 #ifndef DCE_CO_H
 #define DCE_CO_H
 
+#include <cstdint>
+#include <unordered_map>
+
 #include "dce_common.h"
 #include "dce_list.h"
 
@@ -208,9 +211,13 @@ struct DCE2_CoSeg
     uint16_t frag_len;
 };
 
+struct DCE2_CoCtxIdNode;
+
+typedef std::unordered_map<uint16_t, DCE2_CoCtxIdNode*> DCE2_CoCtxIdMap;
+
 struct DCE2_CoTracker
 {
-    DCE2_List* ctx_ids;  /* splayed list so most recently used goes to front of list */
+    DCE2_CoCtxIdMap* ctx_ids;
     int got_bind;        /* got an accepted bind */
 
     /* Queue of pending client bind or alter context request context items

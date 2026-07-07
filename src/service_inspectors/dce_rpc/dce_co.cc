@@ -286,6 +286,61 @@ static inline void DCE2_CoResetTracker(DCE2_CoTracker* cot)
 }
 
 /********************************************************************
+ * Function: DCE2_CoCtxFind()
+ *
+ * Looks up a context id node in the context id map.
+ *
+ ********************************************************************/
+static inline DCE2_CoCtxIdNode* DCE2_CoCtxFind(DCE2_CoCtxIdMap* ctx_ids, uint16_t ctx_id)
+{
+    if (ctx_ids == nullptr)
+        return nullptr;
+
+    auto it = ctx_ids->find(ctx_id);
+    return (it != ctx_ids->end()) ? it->second : nullptr;
+}
+
+/********************************************************************
+ * Function: DCE2_CoCtxMapIsEmpty()
+ *
+ * Returns whether the context id map is null or empty.
+ *
+ ********************************************************************/
+static inline bool DCE2_CoCtxMapIsEmpty(DCE2_CoCtxIdMap* ctx_ids)
+{
+    return (ctx_ids == nullptr) || ctx_ids->empty();
+}
+
+/********************************************************************
+ * Function: DCE2_CoCtxMapEmpty()
+ *
+ * Frees all context id nodes in the map and clears the map.
+ *
+ ********************************************************************/
+static inline void DCE2_CoCtxMapEmpty(DCE2_CoCtxIdMap* ctx_ids)
+{
+    if (ctx_ids == nullptr)
+        return;
+
+    for (auto& entry : *ctx_ids)
+        snort_free(entry.second);
+
+    ctx_ids->clear();
+}
+
+/********************************************************************
+ * Function: DCE2_CoCtxMapDestroy()
+ *
+ * Frees all context id nodes in the map and destroys the map.
+ *
+ ********************************************************************/
+static inline void DCE2_CoCtxMapDestroy(DCE2_CoCtxIdMap* ctx_ids)
+{
+    DCE2_CoCtxMapEmpty(ctx_ids);
+    delete ctx_ids;
+}
+
+/********************************************************************
  * Function: DCE2_CoCleanTracker()
  *
  * Destroys all dynamically allocated data associated with
@@ -309,7 +364,7 @@ void DCE2_CoCleanTracker(DCE2_CoTracker* cot)
     DCE2_BufferDestroy(cot->srv_seg.buf);
     cot->srv_seg.buf = nullptr;
 
-    DCE2_ListDestroy(cot->ctx_ids);
+    DCE2_CoCtxMapDestroy(cot->ctx_ids);
     cot->ctx_ids = nullptr;
 
     DCE2_QueueDestroy(cot->pending_ctx_ids);
@@ -412,8 +467,7 @@ static DCE2_Ret DCE2_CoSetIface(DCE2_SsnData* sd, DCE2_CoTracker* cot, uint16_t 
     if (cot->ctx_ids == nullptr)
         return DCE2_RET__ERROR;
 
-    DCE2_CoCtxIdNode* ctx_id_node =
-        (DCE2_CoCtxIdNode*)DCE2_ListFind(cot->ctx_ids, (void*)(uintptr_t)ctx_id);
+    DCE2_CoCtxIdNode* ctx_id_node = DCE2_CoCtxFind(cot->ctx_ids, ctx_id);
 
     if (ctx_id_node == nullptr)  /* context id not found in list */
     {
@@ -596,30 +650,10 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
 }
 
 /********************************************************************
- * Function: DCE2_CoCtxCompare()
- *
- * Callback to context id list for finding the right interface
- * UUID node.  Values passed in are context ids which are used as
- * the keys for the list.
- *
- ********************************************************************/
-static int DCE2_CoCtxCompare(const void* a, const void* b)
-{
-    int x = (int)(uintptr_t)a;
-    int y = (int)(uintptr_t)b;
-
-    if (x == y)
-        return 0;
-
-    /* Only care about equality for finding */
-    return -1;
-}
-
-/********************************************************************
  * Function: DCE2_CoCtxFree()
  *
  * Callback to context id list for freeing context id nodes in
- * the list.
+ * the list.  Still used by the pending context id queue.
  *
  ********************************************************************/
 static void DCE2_CoCtxFree(void* data)
@@ -645,10 +679,7 @@ static inline DCE2_Ret DCE2_CoInitCtxStorage(DCE2_CoTracker* cot)
 
     if (cot->ctx_ids == nullptr)
     {
-        cot->ctx_ids = DCE2_ListNew(DCE2_LIST_TYPE__SPLAYED, DCE2_CoCtxCompare, DCE2_CoCtxFree,
-            nullptr, DCE2_LIST_FLAG__NO_DUPS);
-        if (cot->ctx_ids == nullptr)
-            return DCE2_RET__ERROR;
+        cot->ctx_ids = new DCE2_CoCtxIdMap;
     }
 
     if (cot->pending_ctx_ids == nullptr)
@@ -656,7 +687,7 @@ static inline DCE2_Ret DCE2_CoInitCtxStorage(DCE2_CoTracker* cot)
         cot->pending_ctx_ids = DCE2_QueueNew(DCE2_CoCtxFree);
         if (cot->pending_ctx_ids == nullptr)
         {
-            DCE2_ListDestroy(cot->ctx_ids);
+            DCE2_CoCtxMapDestroy(cot->ctx_ids);
             cot->ctx_ids = nullptr;
             return DCE2_RET__ERROR;
         }
@@ -683,7 +714,7 @@ static inline void DCE2_CoEraseCtxIds(DCE2_CoTracker* cot)
         return;
 
     DCE2_QueueEmpty(cot->pending_ctx_ids);
-    DCE2_ListEmpty(cot->ctx_ids);
+    DCE2_CoCtxMapEmpty(cot->ctx_ids);
 }
 
 static DCE2_CoCtxIdNode* dce_co_process_ctx_id(DCE2_SsnData* sd,DCE2_CoTracker* cot,
@@ -741,7 +772,7 @@ static DCE2_CoCtxIdNode* dce_co_process_ctx_id(DCE2_SsnData* sd,DCE2_CoTracker* 
      * with this ctx, just return */
     if (policy == DCE2_POLICY__SAMBA_3_0_20)
     {
-        ctx_node = (DCE2_CoCtxIdNode*)DCE2_ListFind(cot->ctx_ids, (void*)(uintptr_t)ctx_id);
+        ctx_node = DCE2_CoCtxFind(cot->ctx_ids, ctx_id);
         if ((ctx_node != nullptr) && (ctx_node->state != DCE2_CO_CTX_STATE__REJECTED))
         {
             return nullptr;
@@ -851,8 +882,7 @@ static void dce_co_process_ctx_result(DCE2_SsnData*, DCE2_CoTracker* cot,
         cot->got_bind = 0;
     }
 
-    existing_ctx_node =
-        (DCE2_CoCtxIdNode*)DCE2_ListFind(cot->ctx_ids, (void*)(uintptr_t)ctx_node->ctx_id);
+    existing_ctx_node = DCE2_CoCtxFind(cot->ctx_ids, ctx_node->ctx_id);
 
     if (existing_ctx_node != nullptr)
     {
@@ -902,8 +932,14 @@ static void dce_co_process_ctx_result(DCE2_SsnData*, DCE2_CoTracker* cot,
     }
     else
     {
-        DCE2_Ret status = DCE2_ListInsert(cot->ctx_ids, (void*)(uintptr_t)ctx_node->ctx_id, (void*)ctx_node);
-        if (status != DCE2_RET__SUCCESS)
+        if (cot->ctx_ids == nullptr)
+        {
+            snort_free((void*)ctx_node);
+            return;
+        }
+
+        auto insert_result = cot->ctx_ids->emplace(ctx_node->ctx_id, ctx_node);
+        if (!insert_result.second)
         {
             snort_free((void*)ctx_node);
             return;
@@ -1044,7 +1080,7 @@ static void DCE2_CoBind(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     case DCE2_POLICY__WIN2008:
     case DCE2_POLICY__WIN7:
         /* Windows will not accept more than one bind */
-        if (!DCE2_ListIsEmpty(cot->ctx_ids))
+        if (!DCE2_CoCtxMapIsEmpty(cot->ctx_ids))
         {
             /* Delete context id list if anything there */
             DCE2_CoEraseCtxIds(cot);
@@ -1111,7 +1147,7 @@ static void DCE2_CoAlterCtx(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     case DCE2_POLICY__WIN7:
         /* Windows will not accept an alter context before
          * bind and will bind_nak it */
-        if (DCE2_ListIsEmpty(cot->ctx_ids))
+        if (DCE2_CoCtxMapIsEmpty(cot->ctx_ids))
             return;
 
         if (cot->data_byte_order != (int)DceRpcCoByteOrder(co_hdr))
@@ -1846,7 +1882,6 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
      * others as pending */
     while (!DCE2_QueueIsEmpty(cot->pending_ctx_ids))
     {
-        DCE2_Ret status;
         DCE2_CoCtxIdNode* ctx_node = (DCE2_CoCtxIdNode*)DCE2_QueueDequeue(cot->pending_ctx_ids);
 
         if (ctx_node == nullptr)
@@ -1857,9 +1892,14 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         if (ctx_node->ctx_id == ctx_id)
             ctx_node->state = DCE2_CO_CTX_STATE__ACCEPTED;
 
-        status = DCE2_ListInsert(cot->ctx_ids, (void*)(uintptr_t)ctx_node->ctx_id,
-            (void*)ctx_node);
-        if (status != DCE2_RET__SUCCESS)
+        if (cot->ctx_ids == nullptr)
+        {
+            snort_free((void*)ctx_node);
+            return;
+        }
+
+        auto insert_result = cot->ctx_ids->emplace(ctx_node->ctx_id, ctx_node);
+        if (!insert_result.second)
         {
             /* Might be a duplicate in there already.  If there is we would have used it
              * anyway before looking at the pending queue.  Just get rid of it */
@@ -1936,8 +1976,7 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         if (cot->opnum == DCE2_CO_EPT_MAP)
         {
             DCE2_CoCtxIdNode* ctx_node;
-            ctx_node = (DCE2_CoCtxIdNode*)DCE2_ListFind(cot->ctx_ids,
-                (void*)(uintptr_t)cot->ctx_id);
+            ctx_node = DCE2_CoCtxFind(cot->ctx_ids, (uint16_t)cot->ctx_id);
 
             if (ctx_node and !DCE2_UuidCompare(&ctx_node->iface, &uuid_epm))
             {
@@ -2000,7 +2039,7 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
         case DCERPC_PDU_TYPE__REQUEST:
             dce_common_stats->co_request++;
 
-            if (DCE2_ListIsEmpty(cot->ctx_ids) &&
+            if (DCE2_CoCtxMapIsEmpty(cot->ctx_ids) &&
                 DCE2_QueueIsEmpty(cot->pending_ctx_ids))
             {
                 return;
