@@ -294,21 +294,21 @@ void* add_detection_option_tree(SnortConfig* sc, detection_option_tree_node_t* o
 static inline bool was_evaluated(const detection_option_tree_node_t* node,
     const dot_node_state_t& state, uint64_t cur_eval_context_num, const Packet* p)
 {
+    // FIXIT-L: once good order is determined, move to dot_node_state_t::operator==
+    auto last_check = state.last_check;
+
+    if ( last_check.context_num != cur_eval_context_num )
+        return false;
+
+    if ( last_check.ts.tv_usec != p->pkth->ts.tv_usec or
+         last_check.ts.tv_sec != p->pkth->ts.tv_sec )
+        return false;
+
     // FIXIT-P: re-order for non-pcap traffic + add attributes
     if ( node->is_relative )
         return false;
 
-    // FIXIT-L: once good order is determined, move to dot_node_state_t::operator==
-    auto last_check = state.last_check;
-
-    if ( last_check.ts.tv_sec != p->pkth->ts.tv_sec or
-        last_check.ts.tv_usec != p->pkth->ts.tv_usec )
-        return false;
-
     if ( last_check.run_num != get_run_num() )
-        return false;
-
-    if ( last_check.context_num != cur_eval_context_num )
         return false;
 
     if ( last_check.rebuild_flag != (p->packet_flags & PKT_REBUILT_STREAM) )

@@ -57,7 +57,7 @@ struct OptFpList
     option_type_t type;
 };
 
-struct OtnState
+struct alignas(64) OtnState
 {
     // profiling
     // FIXIT-L factor the profiling stuff out
@@ -120,6 +120,11 @@ struct RuleTreeNode
     static constexpr Flag USER_MODE     = 0x80;
 
     RuleFpList* rule_func = nullptr; /* match functions.. (Bidirectional etc.. ) */
+    uint8_t flags = 0;
+    snort::IpsAction::Type action = 0;
+    SnortProtocolId snort_protocol_id = 0;
+
+    struct ListHead* listhead = nullptr;
     RuleHeader* header = nullptr;
 
     sfip_var_t* sip = nullptr;
@@ -128,18 +133,11 @@ struct RuleTreeNode
     PortObject* src_portobject = nullptr;
     PortObject* dst_portobject = nullptr;
 
-    struct ListHead* listhead = nullptr;
-
-    SnortProtocolId snort_protocol_id = 0;
-
     // reference count from otn.
     // Multiple OTNs can reference this RTN with the same policy.
     unsigned int otnRefCount = 0; // FIXIT-L shared_ptr?
 
-    snort::IpsAction::Type action = 0;
     IpsPolicy::ActionSelector action_selector = 0;
-
-    uint8_t flags = 0;
 
     void set_enabled()
     { flags |= ENABLED; }
