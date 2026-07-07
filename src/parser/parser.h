@@ -81,6 +81,7 @@ inline RuleTreeNode* getRtnFromOtn(const OptTreeNode* otn, PolicyId policyId)
 
 inline RuleTreeNode* getRtnFromOtn(const OptTreeNode* otn)
 {
+    // cppcheck-suppress nullPointer
     return getRtnFromOtn(otn, snort::get_ips_policy()->policy_id);
 }
 
