@@ -38,6 +38,8 @@ using namespace snort;
 using namespace HttpCommon;
 using namespace HttpEnums;
 
+THREAD_LOCAL PegCount HttpModule::peg_counts[PEG_COUNT_MAX] = { };
+
 // Stubs required for linking
 long HttpTestManager::print_amount {};
 bool HttpTestManager::print_hex {};

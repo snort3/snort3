@@ -253,7 +253,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_LARGE_CHUNK,                "chunk length exceeds configured maximum_chunk_length" },
     { EVENT_WEBROOT_DIR,                "URI path includes /../ that goes above the root directory" },
     { EVENT_LONG_HDR,                   "HTTP header line exceeds maximum_header_length option bytes" },
-    { EVENT_MAX_HEADERS,                "HTTP message has more than maximum_headers option header fields" },
+    { EVENT_MAX_HEADERS,                "HTTP header count exceeds limit" },
     { EVENT_MULTIPLE_CONTLEN,           "HTTP message has more than one Content-Length header value" },
     { EVENT_MULTIPLE_HOST_HDRS,         "Host header field appears more than once or has multiple values" },
     { EVENT_LONG_HOSTNAME,              "length of HTTP Host header field value exceeds maximum_host_length option" },
@@ -418,6 +418,7 @@ const PegInfo HttpModule::peg_names[PEG_COUNT_MAX+1] =
     { CountType::SUM, "compressed_not_supported", "total number of HTTP bodies compressed with known but not supported methods" },
     { CountType::SUM, "compressed_unknown", "total number of HTTP bodies compressed with unknown methods" },
     { CountType::SUM, "max_publish_depth_hits", "total number of times the maximum publish depth was exceeded" },
+    { CountType::SUM, "header_count_exceeded", "total number of HTTP messages with header count exceeding the configured maximum" },
     { CountType::END, nullptr, nullptr }
 };
 

@@ -825,7 +825,7 @@ Header line length includes both header field name and value.
 
 119:20
 
-HTTP message has more than maximum_headers option header fields.
+HTTP header count exceeds limit.
 
 119:21
 

@@ -153,6 +153,7 @@ void HttpMsgHeadShared::parse_header_block()
     {
         add_infraction(INF_TOO_MANY_HEADERS);
         create_event(EVENT_MAX_HEADERS);
+        HttpModule::increment_peg_counts(PEG_HEADER_COUNT_EXCEEDED);
     }
 }
 
