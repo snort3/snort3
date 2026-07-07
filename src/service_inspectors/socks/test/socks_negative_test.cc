@@ -57,6 +57,7 @@ public:
     using SocksInspector::process_server_data;
     using SocksInspector::process_reverse_client_data;
     using SocksInspector::process_reverse_server_data;
+    using SocksInspector::process_udp_associate_data;
     using SocksInspector::detect_protocol_initiator;
 };
 
@@ -189,6 +190,35 @@ const BaseApi* ips_socks_remote_address = nullptr;
 const BaseApi* ips_socks_remote_port = nullptr;
 
 // Note: socks_stats is defined in socks_module.cc which is linked
+
+TEST_GROUP(ProcessUdpAssociateDataTests)
+{
+    void setup()
+    {
+        SocksFlowData::init();
+    }
+};
+
+TEST(ProcessUdpAssociateDataTests, high_bit_frag_is_not_standalone)
+{
+    SocksModule module;
+    SocksInspectorTestHelper inspector(&module);
+    SocksFlowData flow_data;
+    Packet packet;
+    uint8_t data[SOCKS5_UDP_IPV4_HEADER] = {};
+
+    data[SOCKS5_UDP_RSV_LEN] = 0x80;
+    data[SOCKS5_UDP_RSV_LEN + SOCKS5_UDP_FRAG_LEN] = SOCKS_ATYP_IPV4;
+    packet.data = data;
+    packet.dsize = sizeof(data);
+
+    const PegCount udp_packets = socks_stats.udp_packets;
+    const PegCount udp_frags = socks_stats.udp_frags;
+    inspector.process_udp_associate_data(&packet, &flow_data);
+
+    CHECK_EQUAL(udp_packets + 1, socks_stats.udp_packets);
+    CHECK_EQUAL(udp_frags + 1, socks_stats.udp_frags);
+}
 
 //=============================================================================
 // Test Group: SOCKS Flow Data Boundary Conditions

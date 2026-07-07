@@ -55,6 +55,23 @@ using namespace snort;
 
 THREAD_LOCAL ProfileStats socksPerfStats;
 THREAD_LOCAL SocksStats socks_stats;
+static THREAD_LOCAL unsigned socks_udp_rebuild_depth = 0;
+
+class ScopedSocksUdpRebuild
+{
+public:
+    ScopedSocksUdpRebuild()
+    { ++socks_udp_rebuild_depth; }
+
+    ~ScopedSocksUdpRebuild()
+    {
+        assert(socks_udp_rebuild_depth);
+        --socks_udp_rebuild_depth;
+    }
+
+    ScopedSocksUdpRebuild(const ScopedSocksUdpRebuild&) = delete;
+    ScopedSocksUdpRebuild& operator=(const ScopedSocksUdpRebuild&) = delete;
+};
 
 static void create_socks_event(SocksFlowData* fd, SocksEvent event)
 {
@@ -801,6 +818,9 @@ void SocksInspector::process_tunneled_data(Packet* p, SocksFlowData* flow_data)
 
 void SocksInspector::process_udp_associate_data(Packet* p, SocksFlowData* flow_data)
 {
+    if ( socks_udp_rebuild_depth )
+        return;
+
     // Parse SOCKS5-UDP header (RFC 1928 Section 7)
     // +----+------+------+----------+----------+----------+
     // |RSV | FRAG | ATYP | DST.ADDR | DST.PORT |   DATA   |
@@ -824,11 +844,7 @@ void SocksInspector::process_udp_associate_data(Packet* p, SocksFlowData* flow_d
         return;
     }
 
-    // RFC 1928 §7: Parse FRAG field
-    // Low 7 bits (0x7F) = fragment position (0 = standalone, 1-127 = fragment position)
-    uint8_t frag_pos = frag_byte & 0x7F;
-
-    socks_stats.udp_packets++;
+    ++socks_stats.udp_packets;
 
     // Validate ATYP field for minimum required length
     if ( atyp == SOCKS_ATYP_IPV6 )
@@ -845,11 +861,13 @@ void SocksInspector::process_udp_associate_data(Packet* p, SocksFlowData* flow_d
     else if ( atyp != SOCKS_ATYP_IPV4 )
         return;
     // IPv4 already validated by initial p->dsize < 10 check
-    // RFC 1928 §7: Handle fragmentation
-    // frag_pos=0: Standalone packet (no fragmentation)
+    // RFC 1928 §7: only FRAG=0x00 is standalone. Since SOCKS UDP fragmentation
+    // is not supported, reject every non-zero value, including 0x80.
 
-    if ( frag_pos == 0 )
+    if ( frag_byte == 0 )
     {
+        ScopedSocksUdpRebuild rebuild_guard;
+
         // Standalone packet (no fragmentation) - create pseudo packet for inner protocol inspection
         uint16_t header_len = SOCKS5_UDP_HEADER_BASE;  // RSV(2) + FRAG(1) + ATYP(1)
 
@@ -1054,7 +1072,7 @@ void SocksInspector::process_udp_associate_data(Packet* p, SocksFlowData* flow_d
     }
     else
     {
-        // Fragmented packet (frag_pos 1-127)
+        // Fragmented packet (FRAG is non-zero)
         // RFC 1928 §7: Fragmentation is rarely used in practice
         // UDP reassembly not supported - generate alert and stop inspection on this flow
         create_socks_event(flow_data, SOCKS5_EVENT_UDP_FRAGMENTATION);
