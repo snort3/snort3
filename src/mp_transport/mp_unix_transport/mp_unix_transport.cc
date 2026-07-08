@@ -154,9 +154,15 @@ bool MPUnixDomainTransport::send_to_transport(MPEventInfo &event)
     transport_message.header.type = EVENT_MESSAGE;
     transport_message.header.pub_id = event.pub_id;
     transport_message.header.event_id = event.type;
-    
+    transport_message.data = nullptr;
 
-    (serialize_func)(event.event.get(), transport_message.data, &transport_message.header.data_length);
+    if (!(serialize_func)(event.event.get(), transport_message.data, &transport_message.header.data_length))
+    {
+        dynamic_transport_stats.send_errors++;
+        delete[] transport_message.data;
+        return false;
+    }
+
     {
         std::shared_lock<std::shared_mutex> guard(_connection_update_mutex);
 

@@ -23,6 +23,7 @@
 #ifndef FILE_EVENTS_H
 #define FILE_EVENTS_H
 
+#include <limits>
 #include <optional>
 
 #include "file_api/file_cache.h"
@@ -39,10 +40,16 @@ public:
 
     FileMPEvent(const FileHashKey& key, int64_t tm, FileInfo& file) : timeout(tm), hashkey(key), file_ctx(file)
     { 
-        len = sizeof(timeout) + sizeof(hashkey.sip) + sizeof(hashkey.sgroup)
+        const size_t fixed_len = sizeof(timeout) + sizeof(hashkey.sip) + sizeof(hashkey.sgroup)
             + sizeof(hashkey.dip) + sizeof(hashkey.dgroup)
-            + sizeof(hashkey.file_id) + sizeof(hashkey.asid) + sizeof(hashkey.padding)
-            + sizeof(file) + SHA256_HASH_SIZE;
+            + sizeof(hashkey.file_id) + sizeof(hashkey.asid) + sizeof(hashkey.padding);
+        const size_t file_size = file_ctx.get_serialized_size();
+        const size_t max_len = std::numeric_limits<uint16_t>::max();
+
+        if (file_size > max_len - fixed_len)
+            len = 0;
+        else
+            len = static_cast<uint16_t>(fixed_len + file_size);
     }
 
     FileMPEvent() : hashkey()

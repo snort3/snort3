@@ -122,6 +122,7 @@ public:
     void set_partial_flag(bool partial);
     bool is_partial_download() const;
 
+    size_t get_serialized_size() const;
     void serialize(char* buffer, uint16_t buffer_len);
     void deserialize(const char* buffer, uint16_t buffer_len);
 
