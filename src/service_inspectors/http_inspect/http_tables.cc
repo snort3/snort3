@@ -367,6 +367,7 @@ const RuleMap HttpModule::http_events[] =
     { EVENT_REQUEST_SIZE_TOO_LONG,      "maximum request size exceeded" },
     { EVENT_REQUEST_LINE_LENGTH_TOO_LONG, "maximum request line length exceeded" },
     { EVENT_REQUEST_LINE_NOT_VALID,     "invalid HTTP request line format" },
+    { EVENT_HEADER_INVALID_CL_OR_TE,    "invalid Content-Length or Transfer-Encoding header" },
     { 0, nullptr }
 };
 

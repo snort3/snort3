@@ -24,6 +24,7 @@
 #include "http_msg_header.h"
 
 #include <cassert>
+#include <cctype>
 
 #include "decompress/file_decomp.h"
 #include "file_api/file_flows.h"
@@ -262,11 +263,50 @@ std::string HttpMsgHeader::get_host_header_field() const
 
 void HttpMsgHeader::gen_events()
 {
-    if ((get_header_count(HEAD_CONTENT_LENGTH) > 0) &&
-        (get_header_count(HEAD_TRANSFER_ENCODING) > 0) && !session_data->for_httpx)
+    auto raise_cl_or_te = [this] (Detail301ReasonCode code)
     {
-        add_infraction(INF_BOTH_CL_AND_TE);
-        create_event(EVENT_BOTH_CL_AND_TE);
+        auto& reason = get_cache_data().reason_code_detail_301[source_id];
+
+        if ( reason != DETAIL_301_NONE )
+            return;
+
+        reason = code;
+
+        create_event(EVENT_HEADER_INVALID_CL_OR_TE);
+    };
+
+    if ( session_data->for_httpx and get_header_count(HEAD_TRANSFER_ENCODING) > 0 )
+        raise_cl_or_te(DETAIL_301_HTTPX_HAS_TE);
+
+    if ( get_header_count(HEAD_CONTENT_LENGTH) > 0 )
+    {
+        if ( get_header_count(HEAD_TRANSFER_ENCODING) > 0 and !session_data->for_httpx )
+        {
+            add_infraction(INF_BOTH_CL_AND_TE);
+            create_event(EVENT_BOTH_CL_AND_TE);
+
+            raise_cl_or_te(DETAIL_301_CL_AND_TE_PRESENT);
+        }
+        else
+        {
+            const auto& cl = get_header_value_norm(HEAD_CONTENT_LENGTH);
+
+            for ( int negative = 0, pos = 1; pos < cl.length(); ++pos )
+            {
+                if ( cl.start()[pos - 1] == ',' )
+                    negative = 0;
+
+                if ( cl.start()[pos - 1] == '-' )
+                    ++negative;
+
+                if ( negative == 1 and std::isdigit(static_cast<unsigned char>(cl.start()[pos])) and
+                    norm_decimal_integer(Field(cl.length() - pos, cl.start() + pos)) > 0 )
+                {
+                    raise_cl_or_te(DETAIL_301_NEGATIVE_CL);
+                    break;
+                }
+            }
+        }
     }
 
     // Force inspection of the Host field

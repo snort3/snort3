@@ -65,6 +65,8 @@ public:
     HttpCacheData& operator=(const HttpCacheData&) = delete;
 
     HttpRequestScratch request;
+    HttpEnums::Detail301ReasonCode reason_code_detail_301[2] = { HttpEnums::DETAIL_301_NONE,
+        HttpEnums::DETAIL_301_NONE };
     std::array<HttpTmpBuffer, HTTP_TMP_BUFFER_CNT> tmp_bufs;
 
     // Sidecar for decoded URI path (paired with HTTP_BUFFER_DECODED_URI slot).

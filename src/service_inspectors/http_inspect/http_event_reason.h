@@ -24,5 +24,6 @@
 #include "http_enum.h"
 
 const char* get_http_event_reason_msg(HttpEnums::GenericEventReasonCode event);
+const char* get_detail_301_reason(HttpEnums::Detail301ReasonCode code);
 
 #endif

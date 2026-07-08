@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <cassert>
+
 #include "http_event_reason.h"
 
 const char* get_http_event_reason_msg(HttpEnums::GenericEventReasonCode event)
@@ -58,4 +60,22 @@ const char* get_http_event_reason_msg(HttpEnums::GenericEventReasonCode event)
     default:
         return "Unknown reason";
     }
+}
+
+const char* get_detail_301_reason(HttpEnums::Detail301ReasonCode code)
+{
+    switch (code)
+    {
+    case HttpEnums::DETAIL_301_NONE:
+        return "No detail available";
+    case HttpEnums::DETAIL_301_CL_AND_TE_PRESENT:
+        return "Content-Length and Transfer-Encoding are both present";
+    case HttpEnums::DETAIL_301_HTTPX_HAS_TE:
+        return "HTTP/2 or HTTP/3 has Transfer-Encoding";
+    case HttpEnums::DETAIL_301_NEGATIVE_CL:
+        return "Content-Length has a negative value";
+    }
+
+    assert(false);
+    return "Unknown reason";
 }

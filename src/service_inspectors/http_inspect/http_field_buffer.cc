@@ -50,6 +50,18 @@ static void fill_slot_from_field(HttpTmpBuffer& slot, const Field& f)
         reinterpret_cast<const uint8_t*>(slot.text.c_str()));
 }
 
+static void append_header_value(std::string& out, const char* label,
+    HttpMsgSection* section, HeaderId id)
+{
+    out.append(label);
+    const auto& value = section->get_classic_buffer(HTTP_BUFFER_HEADER, id, 0);
+
+    if ( value.length() > 0 )
+        HttpCacheData::append_escaped(out, value.start(), value.length(), value.length() * 4);
+    else
+        out.append("<no value>");
+}
+
 // For HTTP/2: strips the trailing " HTTP/1.1" suffix appended by http2_inspect.
 static const uint8_t* get_raw_request_start(const Field& raw_req, int32_t& out_len,
     bool for_httpx)
@@ -287,6 +299,35 @@ static void compute_detail_119_300(const HttpCacheData& cache, HttpTmpBuffer& sl
         reinterpret_cast<const uint8_t*>(slot.text.c_str()));
 }
 
+static void compute_detail_119_301(const HttpCacheData& cache, HttpTmpBuffer& slot,
+    const HttpBufferInfo&, HttpMsgSection* section)
+{
+    // EVENT_HEADER_INVALID_CL_OR_TE
+    // <reason>[, Content-Length: XXX][, Transfer-Encoding: YYY]
+    const auto code = cache.reason_code_detail_301[section->get_source_id()];
+
+    slot.text = get_detail_301_reason(code);
+
+    switch ( code )
+    {
+    case DETAIL_301_NONE:
+        break;
+    case DETAIL_301_CL_AND_TE_PRESENT:
+        append_header_value(slot.text, ", Content-Length: ", section, HEAD_CONTENT_LENGTH);
+        append_header_value(slot.text, ", Transfer-Encoding: ", section, HEAD_TRANSFER_ENCODING);
+        break;
+    case DETAIL_301_NEGATIVE_CL:
+        append_header_value(slot.text, ", Content-Length: ", section, HEAD_CONTENT_LENGTH);
+        break;
+    case DETAIL_301_HTTPX_HAS_TE:
+        append_header_value(slot.text, ", Transfer-Encoding: ", section, HEAD_TRANSFER_ENCODING);
+        break;
+    }
+
+    slot.field.set(static_cast<int32_t>(slot.text.length()),
+        reinterpret_cast<const uint8_t*>(slot.text.c_str()));
+}
+
 // ---------------------------------------------------------------------------
 // Descriptor table and shared materializer
 // ---------------------------------------------------------------------------
@@ -315,6 +356,7 @@ static const TmpBufferDescriptor tmp_buffer_desc[HTTP_TMP_BUFFER_CNT] =
     { compute_detail_119_298,       false }, // DETAIL_119_298
     { compute_detail_119_299,       false }, // DETAIL_119_299
     { compute_detail_119_300,       false }, // DETAIL_119_300
+    { compute_detail_119_301,       true  }, // DETAIL_119_301
 };
 
 const Field& get_http_tmp_buffer(HttpCacheData& cache, const HttpBufferInfo& buf,
