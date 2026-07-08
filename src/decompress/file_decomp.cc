@@ -138,6 +138,9 @@ static fd_status_t Locate_Sig_Here(fd_session_t* SessionPtr)
                 const uint8_t* Sig = (const uint8_t*)Signature_Map[Sig_Index].Sig;
                 uint16_t Len = (uint16_t)Signature_Map[Sig_Index].Sig_Length;
 
+                if ( SessionPtr->Avail_In < Len )
+                    return( File_Decomp_BlockIn );
+
                 SessionPtr->File_Type = Signature_Map[Sig_Index].File_Type;
                 SessionPtr->Decomp_Type = Signature_Map[Sig_Index].File_Compression_Type;
 
@@ -157,7 +160,7 @@ static fd_status_t Locate_Sig_Here(fd_session_t* SessionPtr)
             }
 
             /* check for more available input bytes */
-            if ( Char_Index < SessionPtr->Avail_In )
+            if ( (Char_Index + 1) < SessionPtr->Avail_In )
             {
                 /* Set to the next char and keep checking this matching sig */
                 Char_Index += 1;
@@ -492,6 +495,123 @@ TEST_CASE("Process_Decompression-not_active", "[file_decomp]")
 
     REQUIRE(p_s != nullptr);
     REQUIRE((Process_Decompression(p_s) == File_Decomp_Error));
+    File_Decomp_Free(p_s);
+}
+
+TEST_CASE("File_Decomp-sig_avail_in_shorter_than_sig", "[file_decomp]")
+{
+    // Test: Avail_In shorter than ZIP signature (4 bytes) - should not match
+    fd_session_t* p_s = File_Decomp_New();
+    REQUIRE(p_s != nullptr);
+
+    // Enable ZIP decompression
+    p_s->Modes = FILE_ZIP_DEFL_BIT;
+    REQUIRE((File_Decomp_Init(p_s) == File_Decomp_OK));
+
+    // Provide only 3 bytes of ZIP signature (PK\x03) - one byte short
+    uint8_t input[3] = { 'P', 'K', 0x03 };
+    uint8_t output[100];
+
+    p_s->Next_In = input;
+    p_s->Avail_In = 3;  // Shorter than ZIP sig length (4)
+    p_s->Next_Out = output;
+    p_s->Avail_Out = sizeof(output);
+
+    fd_status_t status = File_Decomp(p_s);
+
+    // Should return BlockIn (waiting for more data), not match signature
+    REQUIRE(status == File_Decomp_BlockIn);
+    // Avail_In should be unchanged (no underflow)
+    REQUIRE(p_s->Avail_In == 3);
+    // File_Type should not be set
+    REQUIRE(p_s->File_Type == FILE_TYPE_NONE);
+
+    File_Decomp_Free(p_s);
+}
+
+TEST_CASE("File_Decomp-sig_avail_in_equals_sig_length", "[file_decomp]")
+{
+    // Test: Avail_In exactly equals ZIP signature length - should match
+    fd_session_t* p_s = File_Decomp_New();
+    REQUIRE(p_s != nullptr);
+
+    // Enable ZIP decompression
+    p_s->Modes = FILE_ZIP_DEFL_BIT;
+    REQUIRE((File_Decomp_Init(p_s) == File_Decomp_OK));
+
+    // Provide exact ZIP signature (4 bytes)
+    uint8_t input[4] = { 'P', 'K', 0x03, 0x04 };
+    uint8_t output[100];
+
+    p_s->Next_In = input;
+    p_s->Avail_In = 4;  // Exactly ZIP sig length
+    p_s->Next_Out = output;
+    p_s->Avail_Out = sizeof(output);
+
+    fd_status_t status = File_Decomp(p_s);
+
+    // Should match ZIP signature and then block waiting for more ZIP data
+    REQUIRE(status == File_Decomp_BlockIn);
+    REQUIRE(p_s->File_Type == FILE_TYPE_ZIP);
+    // Avail_In should be 0 after consuming signature (no underflow)
+    REQUIRE(p_s->Avail_In == 0);
+
+    File_Decomp_Free(p_s);
+}
+
+TEST_CASE("File_Decomp-sig_partial_match_no_oob", "[file_decomp]")
+{
+    // Test: Partial signature match with short buffer - no OOB read
+    fd_session_t* p_s = File_Decomp_New();
+    REQUIRE(p_s != nullptr);
+
+    // Enable PDF decompression (PDF sig is 5 bytes: %PDF-)
+    p_s->Modes = FILE_PDF_DEFL_BIT;
+    REQUIRE((File_Decomp_Init(p_s) == File_Decomp_OK));
+
+    // Provide only 2 bytes of PDF signature
+    uint8_t input[2] = { '%', 'P' };
+    uint8_t output[100];
+
+    p_s->Next_In = input;
+    p_s->Avail_In = 2;
+    p_s->Next_Out = output;
+    p_s->Avail_Out = sizeof(output);
+
+    fd_status_t status = File_Decomp(p_s);
+
+    // Should return BlockIn, not read beyond buffer
+    REQUIRE(status == File_Decomp_BlockIn);
+    REQUIRE(p_s->Avail_In == 2);
+    REQUIRE(p_s->File_Type == FILE_TYPE_NONE);
+
+    File_Decomp_Free(p_s);
+}
+
+TEST_CASE("File_Decomp-no_sig_match", "[file_decomp]")
+{
+    // Test: Input doesn't match any signature
+    fd_session_t* p_s = File_Decomp_New();
+    REQUIRE(p_s != nullptr);
+
+    p_s->Modes = FILE_ZIP_DEFL_BIT | FILE_PDF_DEFL_BIT;
+    REQUIRE((File_Decomp_Init(p_s) == File_Decomp_OK));
+
+    // Random data that doesn't match any signature
+    uint8_t input[10] = { 'X', 'Y', 'Z', '1', '2', '3', '4', '5', '6', '7' };
+    uint8_t output[100];
+
+    p_s->Next_In = input;
+    p_s->Avail_In = 10;
+    p_s->Next_Out = output;
+    p_s->Avail_Out = sizeof(output);
+
+    fd_status_t status = File_Decomp(p_s);
+
+    // Should return NoSig
+    REQUIRE(status == File_Decomp_NoSig);
+    REQUIRE(p_s->File_Type == FILE_TYPE_NONE);
+
     File_Decomp_Free(p_s);
 }
 #endif
