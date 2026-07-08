@@ -100,6 +100,8 @@ char* DCE2_SmbGetFileName(const uint8_t* data, uint32_t data_len, bool unicode,
     uint16_t* file_name_len)
 {
     const uint8_t inc = unicode ? 2 : 1;
+    *file_name_len = 0;
+
     if (data_len < inc)
         return nullptr;
 
@@ -649,8 +651,9 @@ void DCE2_SmbFreeRequestTrackerFileName(DCE2_SmbRequestTracker* rtracker)
     {
         snort_free((void*)rtracker->file_name);
         rtracker->file_name = nullptr;
-        rtracker->file_name_size = 0;
     }
+
+    rtracker->file_name_size = 0;
 }
 
 void DCE2_SmbCleanRequestTracker(DCE2_SmbRequestTracker* rtracker)
@@ -1899,10 +1902,9 @@ void DCE2_Update_Ftracker_from_ReqTracker(DCE2_SmbFileTracker* ftracker,
     DCE2_SmbRequestTracker* cur_rtracker)
 {
     ftracker->file_name = cur_rtracker->file_name;
-    ftracker->file_name_size = cur_rtracker->file_name_size;
-    ftracker->file_name_hash = str_to_hash(
-        (const uint8_t*)cur_rtracker->file_name, cur_rtracker->file_name_size);
+    ftracker->file_name_size = ftracker->file_name ? cur_rtracker->file_name_size : 0;
+    ftracker->file_name_hash = ftracker->file_name_size ?
+        str_to_hash((const uint8_t*)ftracker->file_name, ftracker->file_name_size) : 0;
     cur_rtracker->file_name = nullptr;
     cur_rtracker->file_name_size = 0;
 }
-
