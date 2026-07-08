@@ -249,12 +249,25 @@ int32_t OleFile :: get_mini_fat_offset(int32_t sec_id)
         mini_sec_position = sec_id;
     }
 
+    // This alone bounds the loop to O(fat_list_len)
+    // when the FAT chain has no sentinel; the visited-set below then guarantees
+    // termination even against a poisoned/cyclic FAT.
+    if (sec_position < 0 || sec_position > fat_list_len)
+        return -1;
+
     count = 0;
 
     current_sector = dir_list->get_mini_stream_sector();
 
+    std::unordered_set<int32_t> visited_fat_sectors;
     while (count < sec_position)
     {
+        if (visited_fat_sectors.count(current_sector)) {
+            VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, CURRENT_PACKET,
+                "Potential loop in Mini-FAT walk at FAT sector %d. Aborting get_mini_fat_offset.\n", current_sector);
+            return -1;
+        }
+        visited_fat_sectors.insert(current_sector);
         int32_t next_sector = get_next_fat_sector(current_sector);
         if (next_sector <= INVALID_SECTOR)
             return -1;
