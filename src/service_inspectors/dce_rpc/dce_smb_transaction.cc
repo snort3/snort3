@@ -226,7 +226,8 @@ static DCE2_Ret DCE2_SmbTransactionReq(DCE2_SmbSsnData* ssd,
                 ttracker->pipe_byte_mode = true;
 
             // Won't get a response
-            if (DCE2_SsnIsWindowsPolicy(&ssd->sd) && ttracker->one_way)
+            if (DCE2_SsnIsWindowsPolicy(&ssd->sd) && ttracker->one_way
+                && (ssd->cur_rtracker->ftracker != nullptr))
             {
                 ssd->cur_rtracker->ftracker->fp_byte_mode = ttracker->pipe_byte_mode;
             }
@@ -1172,7 +1173,8 @@ DCE2_Ret DCE2_SmbTransaction(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             break;
 
         case TRANS_SET_NMPIPE_STATE:
-            ssd->cur_rtracker->ftracker->fp_byte_mode = ttracker->pipe_byte_mode;
+            if (ssd->cur_rtracker->ftracker != nullptr)
+                ssd->cur_rtracker->ftracker->fp_byte_mode = ttracker->pipe_byte_mode;
             break;
 
         case TRANS_WRITE_NMPIPE:
