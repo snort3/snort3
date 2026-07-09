@@ -80,6 +80,7 @@
 #define DCE2_SMB_EVASIVE_FILE_ATTRS 57
 #define DCE2_SMB_INVALID_FILE_OFFSET 58
 #define DCE2_SMB_BAD_NEXT_COMMAND_OFFSET 59
+#define DCE2_SMB_EXCESSIVE_FILE_CHUNKS 60
 
 #define DCE2_SMB_BAD_NBSS_TYPE_STR "SMB - bad NetBIOS session service session type"
 #define DCE2_SMB_BAD_TYPE_STR  "SMB - bad SMB message type"
@@ -133,6 +134,8 @@
     "SMB - file offset provided is greater than file size specified"
 #define DCE2_SMB_BAD_NEXT_COMMAND_OFFSET_STR \
     "SMB - next command specified in SMB2 header is beyond payload boundary"
+#define DCE2_SMB_EXCESSIVE_FILE_CHUNKS_STR \
+    "SMB - excessive out-of-order file chunks causing potential DoS"
 
 struct dce2SmbStats : public LruCacheLocalStats
 {

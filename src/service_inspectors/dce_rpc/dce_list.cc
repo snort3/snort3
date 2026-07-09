@@ -295,6 +295,125 @@ DCE2_Ret DCE2_ListInsert(DCE2_List* list, void* key, void* data)
 }
 
 /********************************************************************
+ * Function: DCE2_ListInsertSorted()
+ *
+ * Sorted insert with O(1) head/tail fast paths and bidirectional
+ * middle walk.  The distance callback returns the signed numeric
+ * difference between two keys so the walk can start from whichever
+ * end is closer.
+ *
+ * After the walk, 'last' is either:
+ *   nullptr  => key is larger than every node  => InsertTail
+ *   node ptr => key belongs before this node   => InsertBefore
+ *
+ ********************************************************************/
+DCE2_Ret DCE2_ListInsertSorted(DCE2_List* list, void* key, void* data,
+    DCE2_ListKeyDistance distance)
+{
+    if (list == nullptr)
+        return DCE2_RET__ERROR;
+
+    DCE2_ListNode* last = nullptr;
+
+    /* Case 0: empty list -- just insert */
+    if (list->head == nullptr)
+    {
+        DCE2_ListNode* n = (DCE2_ListNode*)snort_calloc(sizeof(DCE2_ListNode));
+        n->key = key;
+        n->data = data;
+        DCE2_ListInsertTail(list, n);
+        return DCE2_RET__SUCCESS;
+    }
+
+    /* Compare key against tail (largest node) */
+    int tail_comp = list->compare(key, list->tail->key);
+
+    /* Case 1: key > tail -- append at end */
+    if (tail_comp > 0)
+    {
+        last = nullptr;
+    }
+    /* Case 2: key == tail -- duplicate */
+    else if (tail_comp == 0)
+    {
+        return DCE2_RET__DUPLICATE;
+    }
+    /* Case 3: key < tail -- need to check head and possibly walk */
+    else
+    {
+        /* Compare key against head (smallest node) */
+        int head_comp = list->compare(key, list->head->key);
+
+        /* Case 3a: key == head -- duplicate */
+        if (head_comp == 0)
+        {
+            return DCE2_RET__DUPLICATE;
+        }
+        /* Case 3b: key < head -- insert before head */
+        else if (head_comp < 0)
+        {
+            last = list->head;
+        }
+        /* Case 3c: head < key < tail -- walk from the closer end */
+        else
+        {
+            int64_t head_dist = distance(key, list->head->key);
+            if (head_dist < 0)
+                head_dist = -head_dist;
+
+            int64_t tail_dist = distance(key, list->tail->key);
+            if (tail_dist < 0)
+                tail_dist = -tail_dist;
+
+            if (tail_dist < head_dist)
+            {
+                /* Closer to tail: walk backward from tail->prev.
+                 * Stop at the first node whose key is less than ours
+                 * (comp > 0), then insert before that node's next. */
+                DCE2_ListNode* bwd;
+                for (bwd = list->tail->prev; bwd != nullptr; bwd = bwd->prev)
+                {
+                    int comp = list->compare(key, bwd->key);
+                    if (comp == 0)
+                        return DCE2_RET__DUPLICATE;
+                    if (comp > 0)
+                    {
+                        last = bwd->next;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                /* Closer to head: walk forward from head->next.
+                 * Stop at the first node whose key is greater than ours
+                 * (comp < 0), then insert before that node. */
+                for (last = list->head->next; last != nullptr; last = last->next)
+                {
+                    int comp = list->compare(key, last->key);
+                    if (comp == 0)
+                        return DCE2_RET__DUPLICATE;
+                    if (comp < 0)
+                        break;
+                }
+            }
+        }
+    }
+
+    /* Allocate and insert the new node */
+    DCE2_ListNode* n = (DCE2_ListNode*)snort_calloc(sizeof(DCE2_ListNode));
+    n->key = key;
+    n->data = data;
+
+    if (last == nullptr)
+        DCE2_ListInsertTail(list, n);
+    else
+        DCE2_ListInsertBefore(list, n, last);
+
+    return DCE2_RET__SUCCESS;
+}
+
+/********************************************************************
  * Function: DCE2_ListFirst()
  *
  * Returns a pointer to the data of the first node in the list.

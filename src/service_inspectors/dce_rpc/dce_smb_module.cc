@@ -240,6 +240,9 @@ static const Parameter s_params[] =
     { "memcap", Parameter::PT_INT, "512:maxSZ", "8388608",
       "Memory utilization limit on SMBv2 cache" },
 
+    { "smb_max_file_chunks", Parameter::PT_INT, "1:65535", "1024",
+      "maximum out-of-order file data chunks buffered per tracker" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -286,6 +289,7 @@ static const RuleMap dce2_smb_rules[] =
     { DCE2_SMB_EVASIVE_FILE_ATTRS, DCE2_SMB_EVASIVE_FILE_ATTRS_STR },
     { DCE2_SMB_INVALID_FILE_OFFSET, DCE2_SMB_INVALID_FILE_OFFSET_STR },
     { DCE2_SMB_BAD_NEXT_COMMAND_OFFSET, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET_STR },
+    { DCE2_SMB_EXCESSIVE_FILE_CHUNKS, DCE2_SMB_EXCESSIVE_FILE_CHUNKS_STR },
     { 0, nullptr }
 };
 
@@ -513,6 +517,9 @@ bool Dce2SmbModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("smb_max_credit") )
         config.smb_max_credit = v.get_uint16();
 
+    else if ( v.is("smb_max_file_chunks") )
+        config.smb_max_file_chunks = v.get_uint16();
+
     else if ( v.is("memcap") )
         config.memcap = v.get_size();
 
@@ -540,5 +547,6 @@ void print_dce2_smb_conf(const dce2SmbProtoConf& config)
         get_shares(config.smb_invalid_shares).c_str());
     ConfigLogger::log_flag("smb_legacy_mode", config.legacy_mode);
     ConfigLogger::log_limit("smb_max_credit", config.smb_max_credit, 0, 1);
+    ConfigLogger::log_limit("smb_max_file_chunks", config.smb_max_file_chunks, 0, 1);
 }
 

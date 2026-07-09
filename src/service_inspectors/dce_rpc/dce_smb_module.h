@@ -64,6 +64,7 @@ struct dce2SmbProtoConf
     bool legacy_mode;
     uint16_t smb_max_credit;
     size_t memcap;
+    uint16_t smb_max_file_chunks;
 };
 
 class Dce2SmbModule : public snort::Module

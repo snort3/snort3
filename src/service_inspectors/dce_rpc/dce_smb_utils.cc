@@ -41,6 +41,7 @@ using namespace snort;
 
 static uint8_t dce2_smb_delete_pdu[65535];
 
+
 /********************************************************************
  * Private function prototypes
  ********************************************************************/
@@ -1619,6 +1620,17 @@ static int DCE2_SmbFileOffsetCompare(const void* a, const void* b)
     return 0;
 }
 
+static int64_t DCE2_SmbFileOffsetDistance(const void* a, const void* b)
+{
+    uint64_t oa = ((const DCE2_SmbFileChunk*)a)->offset;
+    uint64_t ob = ((const DCE2_SmbFileChunk*)b)->offset;
+
+    if (oa >= ob)
+        return (int64_t)(oa - ob);
+
+    return -(int64_t)(ob - oa);
+}
+
 static void DCE2_SmbFileChunkFree(void* data)
 {
     DCE2_SmbFileChunk* fc = (DCE2_SmbFileChunk*)data;
@@ -1695,6 +1707,17 @@ static DCE2_Ret DCE2_SmbHandleOutOfOrderFileData(DCE2_SmbSsnData* ssd,
                 return DCE2_RET__ERROR;
         }
 
+        if (ftracker->ff_file_chunks->num_nodes >= ((dce2SmbProtoConf*)ssd->sd.config)->smb_max_file_chunks)
+        {
+            dce_alert(GID_DCE2, DCE2_SMB_EXCESSIVE_FILE_CHUNKS,
+                (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+
+            Packet* p = DetectionEngine::get_current_packet();
+            p->active->block_session(p, true);
+
+            return DCE2_RET__ERROR;
+        }
+
         DCE2_SmbFileChunk* file_chunk = (DCE2_SmbFileChunk*)snort_calloc(
             sizeof(DCE2_SmbFileChunk));
         file_chunk->data = (uint8_t*)snort_calloc(data_len);
@@ -1705,11 +1728,13 @@ static DCE2_Ret DCE2_SmbHandleOutOfOrderFileData(DCE2_SmbSsnData* ssd,
         ftracker->ff_bytes_queued += data_len;
 
         DCE2_Ret ret;
-        if ((ret = DCE2_ListInsert(ftracker->ff_file_chunks,
-            (void*)file_chunk, (void*)file_chunk)) != DCE2_RET__SUCCESS)
+        if ((ret = DCE2_ListInsertSorted(ftracker->ff_file_chunks,
+            (void*)file_chunk, (void*)file_chunk,
+            DCE2_SmbFileOffsetDistance)) != DCE2_RET__SUCCESS)
         {
             snort_free((void*)file_chunk->data);
             snort_free((void*)file_chunk);
+            ftracker->ff_bytes_queued -= data_len;
 
             if (ret != DCE2_RET__DUPLICATE)
                 return DCE2_RET__ERROR;

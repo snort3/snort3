@@ -55,6 +55,7 @@ enum DCE2_ListFlags
 typedef void (* DCE2_ListDataFree)(void*);
 typedef void (* DCE2_ListKeyFree)(void*);
 typedef int (* DCE2_ListKeyCompare)(const void*, const void*);
+typedef int64_t (* DCE2_ListKeyDistance)(const void*, const void*);
 
 /********************************************************************
  * Structures
@@ -108,6 +109,7 @@ struct DCE2_Queue
 DCE2_List* DCE2_ListNew(DCE2_ListType, DCE2_ListKeyCompare, DCE2_ListDataFree,
     DCE2_ListKeyFree, int);
 DCE2_Ret DCE2_ListInsert(DCE2_List*, void*, void*);
+DCE2_Ret DCE2_ListInsertSorted(DCE2_List*, void*, void*, DCE2_ListKeyDistance);
 void* DCE2_ListFirst(DCE2_List*);
 void* DCE2_ListNext(DCE2_List*);
 inline bool DCE2_ListIsEmpty(DCE2_List*);
