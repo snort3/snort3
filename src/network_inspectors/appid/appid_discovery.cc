@@ -277,6 +277,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
     if (direction == APP_ID_FROM_INITIATOR)
     {
         asd->stats.initiator_bytes += p->pkth->pktlen;
+        asd->set_session_flags(APPID_SESSION_INITIATOR_SEEN);
         if (p->dsize)
         {
             asd->init_pkts_without_reply++;
@@ -290,6 +291,8 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
         {
             asd->init_pkts_without_reply = 0;
             asd->init_bytes_without_reply = 0;
+            if (!asd->get_session_flags(APPID_SESSION_INITIATOR_SEEN))
+                asd->resp_pkts_before_init++;
         }
     }
 

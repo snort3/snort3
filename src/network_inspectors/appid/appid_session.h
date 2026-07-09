@@ -296,6 +296,7 @@ public:
 
     uint16_t session_packet_count = 0;
     uint16_t init_pkts_without_reply = 0;
+    uint16_t resp_pkts_before_init = 0;
     bool tp_reinspect_by_initiator = false;
     bool tried_reverse_service = false;
     bool in_expected_cache = false;
@@ -379,6 +380,7 @@ public:
     bool is_client_detected() const { return ((flags & APPID_SESSION_CLIENT_DETECTED) == 0) ?
         false : true; }
     bool is_decrypted() const { return ((flags & APPID_SESSION_DECRYPTED) == 0) ? false : true; }
+    bool is_svc_server_only() const;
     bool is_svc_taking_too_much_time() const;
     bool is_midstream_svc_taking_too_much_time() const;
 

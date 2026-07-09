@@ -594,6 +594,21 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                     odp_ctxt.max_packet_before_service_fail = max_packet_before_service_fail;
                 }
             }
+            else if (!(strcasecmp(conf_key, "max_packet_before_server_only")))
+            {
+                uint16_t max_packet_before_server_only = atoi(conf_val);
+                if (max_packet_before_server_only < MIN_MAX_PKTS_BEFORE_SERVER_ONLY)
+                {
+                    APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "appid: invalid "
+                        "max_packet_before_server_only %" PRIu16 ", must be greater than %u.\n",
+                        max_packet_before_server_only, MIN_MAX_PKTS_BEFORE_SERVER_ONLY);
+                }
+                else
+                {
+                    odp_ctxt.max_packet_before_server_only =
+                        max_packet_before_server_only;
+                }
+            }
             else if (!(strcasecmp(conf_key, "max_packet_service_fail_ignore_bytes")))
             {
                 uint16_t max_packet_service_fail_ignore_bytes = atoi(conf_val);

@@ -433,6 +433,18 @@ void ServiceDiscovery::get_next_service(const Packet* p, const AppidSessionDirec
     }
 }
 
+static bool waiting_on_snort_service(const AppIdSession& asd, const Packet* p)
+{
+    const Flow* f = p ? p->flow : nullptr;
+    if (!f)
+        return false;
+
+    if (f->gadget or !asd.get_session_flags(APPID_SESSION_OOO) or !asd.is_svc_server_only())
+        return true;
+
+    return false;
+}
+
 int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
     AppidSessionDirection dir, AppidChangeBits& change_bits)
 {
@@ -569,10 +581,7 @@ int ServiceDiscovery::identify_service(AppIdSession& asd, Packet* p,
         if ( asd.service_candidates.empty() and ret != APPID_SUCCESS and
              ( asd.service_search_state == SESSION_SERVICE_SEARCH_STATE::PENDING ) )
         {
-            // FIXIT-E: For now, wait for snort service inspection only for TCP. In the future,
-            // if AppId rolls any of its UDP detectors into service inspectors, the UDP condition
-            // below needs to be removed.
-            if (asd.has_no_service_inspector() or (proto == IpProtocol::UDP))
+            if (asd.has_no_service_inspector() or (proto == IpProtocol::UDP) or !waiting_on_snort_service(asd, p))
                 got_fail_service = true;
             else if (!asd.service_detector and !asd.has_no_service_candidate())
                 APPID_LOG(p, TRACE_DEBUG_LEVEL, "No service candidate, wait for snort service inspection\n");

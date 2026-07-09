@@ -782,6 +782,11 @@ void AppIdSession::set_service_appid_data(AppId id, AppidChangeBits& change_bits
         change_bits.set(APPID_SERVICE_INFO_BIT);
 }
 
+bool AppIdSession::is_svc_server_only() const
+{
+    return resp_pkts_before_init > odp_ctxt.max_packet_before_server_only;
+}
+
 bool AppIdSession::is_svc_taking_too_much_time() const
 {
     return (init_pkts_without_reply > odp_ctxt.max_packet_service_fail_ignore_bytes or

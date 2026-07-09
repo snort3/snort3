@@ -231,6 +231,7 @@ void OdpContext::dump_appid_config()
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: recheck_for_portservice_appid            %s\n", (recheck_for_portservice_appid ? "True" : "False"));
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_bytes_before_service_fail            %" PRIu64" \n", max_bytes_before_service_fail);
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_packet_before_service_fail           %" PRIu16" \n", max_packet_before_service_fail);
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_packet_before_server_only            %" PRIu16" \n", max_packet_before_server_only);
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_packet_service_fail_ignore_bytes     %" PRIu16" \n", max_packet_service_fail_ignore_bytes);
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_midstream_packet_before_service_fail %d\n", max_midstream_packet_before_service_fail);
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: eve_http_client                          %s\n", (eve_http_client ? "True" : "False"));
