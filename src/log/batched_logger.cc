@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <memory>
+#include <mutex>
 #include <pthread.h>
 #include <sched.h>
 
@@ -156,6 +157,7 @@ struct FilterData
     pcre2_code* re = nullptr;
     pcre2_match_data* match_data = nullptr;
     bool stop_trace = false;
+    int max_matches = 1;
     uint64_t revision = 0;
 
     void clear()
@@ -166,6 +168,7 @@ struct FilterData
         match_data = nullptr;
         re = nullptr;
         stop_trace = false;
+        max_matches = 1;
         revision++;
     }
 };
@@ -179,10 +182,53 @@ static void update_filter(const std::string& pattern_s)
     if (pattern_s.empty())
         return;
 
+    std::string pattern;
     if (pattern_s[0] == 'Y')
+    {
         s_filter.stop_trace = true;
 
-    std::string pattern = pattern_s.substr(1);
+        // Parse format: "Y:<count>:<regex>" or "Y<regex>" (legacy)
+        size_t first_colon = pattern_s.find(':', 1);
+        if (first_colon != std::string::npos)
+        {
+            size_t second_colon = pattern_s.find(':', first_colon + 1);
+            if (second_colon != std::string::npos)
+            {
+                std::string count_str = pattern_s.substr(first_colon + 1, second_colon - first_colon - 1);
+
+                // Parse match count defensively (control-plane input); default to 1 on any error.
+                 char* end = nullptr;
+                 long parsed = std::strtol(count_str.c_str(), &end, 10);
+                 if (end == count_str.c_str() || *end != '\0' || parsed < 1)
+                     s_filter.max_matches = 1;
+                 else if (parsed > 20) // max match limit to 20
+                     s_filter.max_matches = 20;
+                 else
+                     s_filter.max_matches = static_cast<int>(parsed);
+
+                pattern = pattern_s.substr(second_colon + 1);
+            }
+            else
+            {
+                // Old format "Y<regex>" - default to 1 match
+                s_filter.max_matches = 1;
+                pattern = pattern_s.substr(1);
+            }
+        }
+        else
+        {
+            // Old format "Y<regex>" - default to 1 match
+            s_filter.max_matches = 1;
+            pattern = pattern_s.substr(1);
+        }
+    }
+    else
+    {
+        s_filter.stop_trace = false;
+        s_filter.max_matches = 1;
+        pattern = pattern_s.substr(1);
+    }
+
     int error_code;
     PCRE2_SIZE error_offset;
 
@@ -304,12 +350,14 @@ void BatchedLogManager::print_batch(const LogBatch& batch)
 {
     static bool stop_trace = false;
     static uint64_t revision = 0;
+    static int match_count = 0;
 
     // reset condition if filter was changed by user
     if (s_filter.revision != revision)
     {
         revision = s_filter.revision;
         stop_trace = false;
+        match_count = 0;
     }
     if (stop_trace)
         return;
@@ -323,7 +371,14 @@ void BatchedLogManager::print_batch(const LogBatch& batch)
 
         if (rc < 0)
             return; // Skip printing if no match
-        stop_trace = s_filter.stop_trace;
+
+        if (s_filter.stop_trace)
+        {
+            match_count++;
+            if (match_count >= s_filter.max_matches)
+                stop_trace = true;
+        }
+
         revision = s_filter.revision;
     }
 
@@ -395,7 +450,8 @@ void BatchedLogManager::init()
     SET_THREAD_NAME(writer_thread.native_handle(), "snort3.logger");
     thread_config->implement_thread_affinity(STHREAD_TYPE_MAIN, snort::ThreadConfig::DEFAULT_THREAD_ID);
 
-    std::atexit(BatchedLogManager::shutdown);
+    static std::once_flag atexit_flag;
+    std::call_once(atexit_flag, []() { std::atexit(BatchedLogManager::shutdown); });
 
     sched_param sch_params;
     sch_params.sched_priority = 1;

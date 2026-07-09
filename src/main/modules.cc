@@ -791,6 +791,37 @@ static const RuleMap output_rules[] =
     { 0, nullptr }
 };
 
+static int enable_log_buffered(lua_State*)
+{
+    SnortConfig* sc = const_cast<SnortConfig*>(SnortConfig::get_conf());
+    if (!(sc->output_flags & OUTPUT_FLAG__LOG_BUFFERED))
+    {
+        BatchedLogger::BatchedLogManager::init();
+        sc->output_flags |= OUTPUT_FLAG__LOG_BUFFERED;
+        LogMessage("Buffered logging enabled\n");
+    }
+    return 0;
+}
+
+static int disable_log_buffered(lua_State*)
+{
+    SnortConfig* sc = const_cast<SnortConfig*>(SnortConfig::get_conf());
+    if (sc->output_flags & OUTPUT_FLAG__LOG_BUFFERED)
+    {
+        sc->output_flags &= ~OUTPUT_FLAG__LOG_BUFFERED;
+        BatchedLogger::BatchedLogManager::shutdown();
+        LogMessage("Buffered logging disabled\n");
+    }
+    return 0;
+}
+
+static const Command output_cmds[] =
+{
+    {"enable_log_buffered", enable_log_buffered, nullptr, "enable buffered logging dynamically"},
+    {"disable_log_buffered", disable_log_buffered, nullptr, "disable buffered logging dynamically"},
+    {nullptr, nullptr, nullptr, nullptr}
+};
+
 class OutputModule : public Module
 {
 public:
@@ -805,6 +836,9 @@ public:
 
     const RuleMap* get_rules() const override
     { return output_rules; }
+
+    const Command* get_commands() const override
+    { return output_cmds; }
 };
 
 bool OutputModule::set(const char*, Value& v, SnortConfig* sc)

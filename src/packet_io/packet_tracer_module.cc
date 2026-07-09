@@ -63,6 +63,7 @@ static const Parameter enable_packet_tracer_params[] =
     {"tenants", Parameter::PT_STRING, nullptr, nullptr, "tenants filter"},
     {"regex", Parameter::PT_STRING, nullptr, nullptr, "regex filter"},
     {"stop_after_match", Parameter::PT_BOOL, nullptr, nullptr, "stop trace after match is found"},
+    {"match_count", Parameter::PT_INT, "1:max32", "1", "number of matches before stopping (when stop_after_match is true)"},
     {nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr}
 };
 
@@ -115,6 +116,7 @@ static int enable(lua_State* L)
     const char *tenantsstr = luaL_optstring(L, 6, nullptr);
     const char *regexstr = luaL_optstring(L, 7, nullptr);
     bool stop_after_match = luaL_opt(L,lua_toboolean, 8, false);
+    int match_count = luaL_optint(L, 9, 1);
 
     SfIp sip, dip;
     sip.clear();
@@ -177,7 +179,24 @@ static int enable(lua_State* L)
             filter_str.clear();
         }
         else
-            filter_str = (stop_after_match ? "Y" : "N") + filter_str;
+        {
+            if (stop_after_match)
+            {
+                if (match_count < 1)
+                {
+                    LogMessage("WARNING: Invalid match_count (%d). Must be a number between 1 and 20. Using default of 1.\n", match_count);
+                    match_count = 1;
+                }
+                else if (match_count > 20)
+                {
+                    LogMessage("WARNING: Invalid match_count (%d). Must be a number between 1 and 20. Using max limit of 20.\n", match_count);
+                    match_count = 20;
+                }
+                filter_str = "Y:" + std::to_string(match_count) + ":" + filter_str;
+            }
+            else
+                filter_str = "N" + filter_str;
+        }
     }
 
     BatchedLogger::BatchedLogManager::set_filter(filter_str);
