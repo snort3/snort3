@@ -593,7 +593,11 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
     if ( flow->flow_state != Flow::FlowState::SETUP )
     {
         if ( new_ha_flow )
+        {
             DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_STATE_SETUP, p);
+            if ( flow->flowstats.start_time.tv_sec == 0 )
+                flow->flowstats.start_time = p->pkth->ts;
+        }
 
         unsigned reload_id = SnortConfig::get_reload_id();
 
