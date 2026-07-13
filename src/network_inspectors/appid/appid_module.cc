@@ -70,7 +70,6 @@ THREAD_LOCAL bool ThirdPartyAppIdContext::tp_reload_in_progress = false;
 
 static const Parameter s_params[] =
 {
-    // FIXIT-L: DECRYPT_DEBUG - Move this to ssl-module
 #ifdef REG_TEST
     { "first_decrypted_packet_debug", Parameter::PT_INT, "0:max32", "0",
       "the first packet of an already decrypted SSL flow (debug single session only)" },
@@ -142,7 +141,8 @@ bool AcAppIdDebug::execute(Analyzer&)
         else
             appidDebug->set_constraints("appid", nullptr);
     }
-    // FIXIT-L Add a warning if command was called without appid configured?
+    else
+        APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "appid: debug command called but appid is not configured\n");
 
     return true;
 }
@@ -643,7 +643,6 @@ AppIdConfig* AppIdModule::get_data()
 
 bool AppIdModule::set(const char*, Value& v, SnortConfig*)
 {
-    // FIXIT-L: DECRYPT_DEBUG - Move this to ssl-module
 #ifdef REG_TEST
     if ( v.is("first_decrypted_packet_debug") )
         config->first_decrypted_packet_debug = v.get_uint32();

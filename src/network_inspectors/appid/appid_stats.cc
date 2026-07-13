@@ -25,6 +25,8 @@
 
 #include "appid_stats.h"
 
+#include <cinttypes>
+
 #include "log/text_log.h"
 #include "log/unified2.h"
 #include "time/packet_time.h"
@@ -120,9 +122,9 @@ void AppIdStatistics::dump_statistics()
             {
                 struct AppIdStatRecord& record = it.second;
 
-                // FIXIT-M %lu won't do time_t on 32-bit systems
-                TextLog_Print(log, "%lu,%s," STDu64 "," STDu64 "\n",
-                    packet_time(), record.app_name.c_str(), record.initiator_bytes, record.responder_bytes);
+                TextLog_Print(log, "%" PRIdMAX ",%s," STDu64 "," STDu64 "\n",
+                    (intmax_t)packet_time(), record.app_name.c_str(),
+                    record.initiator_bytes, record.responder_bytes);
             }
         }
         delete bucket;

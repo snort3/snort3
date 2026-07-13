@@ -96,11 +96,18 @@ void AppIdDiscovery::tterm()
 
 void AppIdDiscovery::register_detector(const std::string& name, AppIdDetector* cd, IpProtocol proto)
 {
-    // FIXIT-L - check for dup name?
     if (proto == IpProtocol::TCP)
-        tcp_detectors[name] = cd;
+    {
+        if (!tcp_detectors.emplace(name, cd).second)
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL,
+                "Duplicate TCP detector registration for %s; ignoring\n", name.c_str());
+    }
     else if (proto == IpProtocol::UDP)
-        udp_detectors[name] = cd;
+    {
+        if (!udp_detectors.emplace(name, cd).second)
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL,
+                "Duplicate UDP detector registration for %s; ignoring\n", name.c_str());
+    }
     else
         APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "Detector %s has unsupported protocol %u\n", name.c_str(), (unsigned)proto);
 }
@@ -389,8 +396,6 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
         }
     }
 
-    // FIXIT-L: DECRYPT_DEBUG - Move set_proxied and first_decrypted_packet_debug to ssl-module
-    // after ssl-module's decryption capability is implemented
 #ifdef REG_TEST
     uint32_t fdpd = config.first_decrypted_packet_debug;
     if (fdpd and (fdpd == asd->session_packet_count))

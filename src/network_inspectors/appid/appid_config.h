@@ -108,7 +108,6 @@ public:
 
     void map_app_names_to_snort_ids(snort::SnortConfig&);
 
-    // FIXIT-L: DECRYPT_DEBUG - Move this to ssl-module
 #ifdef REG_TEST
     // To manually restart appid detection for an SSL-decrypted flow (single session only),
     // indicate the first packet from where the flow is decrypted (usually immediately

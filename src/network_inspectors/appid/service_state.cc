@@ -314,8 +314,6 @@ void AppIdServiceState::check_reset(AppIdSession& asd, const SfIp* ip, uint16_t 
         {
             AppIdServiceState::remove(ip, IpProtocol::TCP, port, group,
                 asid, asd.is_decrypted());
-            // FIXIT-RC - Remove if this flag not used anywhere
-            asd.set_session_flags(APPID_SESSION_SERVICE_DELETED);
         }
     }
 }

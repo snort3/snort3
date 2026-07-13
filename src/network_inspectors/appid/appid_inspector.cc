@@ -269,7 +269,7 @@ void AppIdInspector::eval(Packet* p)
             PacketTracer::restart_timer();
 
         AppIdDiscovery::do_application_discovery(p, *this, *pkt_thread_odp_ctxt, pkt_thread_tp_appid_ctxt);
-        // FIXIT-L tag verdict reason as appid for daq
+
         if (PacketTracer::is_active())
             add_appid_to_packet_trace(*p->flow, *pkt_thread_odp_ctxt);
     }
