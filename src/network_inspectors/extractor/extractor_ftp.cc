@@ -119,22 +119,29 @@ void FtpRequestExtractor::handle(DataEvent& event, Flow* flow)
 
 static uint64_t parse_last_num(const char *str, uint16_t size)
 {
-    constexpr uint8_t max_digits = 20;
-    char num_str[max_digits + 1] = {};
-    uint8_t pos = max_digits;
+    if (!str or !size)
+        return 0;
 
-    for (size_t i = size; i > 0; --i)
-    {
-        char c = str[i - 1];
-        if (isdigit(c))
-        {
-            num_str[--pos] = c;
-        }
-        else if (pos < max_digits)
-            break;
-    }
+    int i = size - 1;
 
-    return (pos < max_digits) ? stoull(&num_str[pos]) : 0;
+    while (i >= 0 and !isdigit((unsigned char)str[i]))
+        i--;
+
+    if  (i < 0)
+        return  0;
+
+    while  (i >= 0 and isdigit((unsigned char)str[i]))
+        i--;
+
+    const char *start = str + i + 1;
+    char *end;
+    errno  = 0;
+    uint64_t num = strtoull(start, &end, 10);
+
+    if  (errno == ERANGE or start == end)
+        return 0;
+
+    return  num;
 }
 
 namespace resp
@@ -667,6 +674,74 @@ TEST_CASE("Parse file size", "[extractor]")
     CHECK(4096 == parse_last_num(resp_msg1 ,58));
     CHECK(0 == parse_last_num(resp_msg2, 52));
     CHECK(218850 == parse_last_num(resp_msg3, 73));
+}
+
+TEST_CASE("Parse last num - edge cases", "[extractor]")
+{
+    SECTION("missing string")
+    {
+        CHECK(0 == parse_last_num(nullptr, 0));
+    }
+
+    SECTION("empty string")
+    {
+        const char* msg = "";
+        CHECK(0 == parse_last_num(msg, 0));
+    }
+
+    SECTION("no digits")
+    {
+        const char* msg = "This message has no numbers!";
+        CHECK(0 == parse_last_num(msg, 28));
+    }
+
+    SECTION("only digits")
+    {
+        const char* msg = "12345";
+        CHECK(12345 == parse_last_num(msg, 5));
+    }
+
+    SECTION("number at beginning")
+    {
+        const char* msg = "123 bytes of data";
+        CHECK(123 == parse_last_num(msg, 17));
+    }
+
+    SECTION("number at end")
+    {
+        const char* msg = "Transfer complete: 987654321";
+        CHECK(987654321 == parse_last_num(msg, 28));
+    }
+
+    SECTION("multiple numbers")
+    {
+        const char* msg = "File 1 of 10, size 5000 bytes";
+        CHECK(5000 == parse_last_num(msg, 29));
+    }
+
+    SECTION("single digit")
+    {
+        const char* msg = "size 5";
+        CHECK(5 == parse_last_num(msg, 6));
+    }
+
+    SECTION("number with trailing non-digits")
+    {
+        const char* msg = "42!!!";
+        CHECK(42 == parse_last_num(msg, 5));
+    }
+
+    SECTION("very large number")
+    {
+        const char* msg = "Size: 18446744073709551615";
+        CHECK(18446744073709551615ULL == parse_last_num(msg, 26));
+    }
+
+    SECTION("number overflow - returns 0")
+    {
+        const char* msg = "Size: 99999999999999999999999999999";
+        CHECK(0 == parse_last_num(msg, 35));
+    }
 }
 
 #endif
