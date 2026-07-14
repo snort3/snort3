@@ -265,24 +265,14 @@ DCE2_SmbRequestTracker* DCE2_SmbNewRequestTracker(DCE2_SmbSsnData* ssd,
             ssd->sd);
     }
 
-    // Check for outstanding requests with the same MID
-    DCE2_SmbRequestTracker* tmp_rtracker = &ssd->rtracker;
-    while ((tmp_rtracker != nullptr) && (tmp_rtracker->mid != DCE2_SENTINEL))
+    // A client must not reuse an outstanding MID. A duplicate is anomalous but
+    // not fatal: alert and still track it (mirrors the legacy queue behavior)
+    // so the request is inspected instead of silently dropped.
+    if (((ssd->rtracker.mid != DCE2_SENTINEL) && (ssd->rtracker.mid == (int)mid))
+        || (ssd->rtrackers_map.find(mid) != ssd->rtrackers_map.end()))
     {
-        if (tmp_rtracker->mid == (int)mid)
-        {
-            // Have yet to see an MID repeatedly used so shouldn't
-            // be any outstanding requests with the same MID.
-            dce_alert(GID_DCE2, DCE2_SMB_REQS_SAME_MID, (dce2CommonStats*)&dce2_smb_stats,
-                ssd->sd);
-            break;
-        }
-
-        // Look at the next request in the queue
-        if (tmp_rtracker == &ssd->rtracker)
-            tmp_rtracker = (DCE2_SmbRequestTracker*)DCE2_QueueFirst(ssd->rtrackers);
-        else
-            tmp_rtracker = (DCE2_SmbRequestTracker*)DCE2_QueueNext(ssd->rtrackers);
+        dce_alert(GID_DCE2, DCE2_SMB_REQS_SAME_MID, (dce2CommonStats*)&dce2_smb_stats,
+            ssd->sd);
     }
 
     DCE2_SmbRequestTracker* rtracker = nullptr;
@@ -292,26 +282,8 @@ DCE2_SmbRequestTracker* DCE2_SmbNewRequestTracker(DCE2_SmbSsnData* ssd,
     }
     else
     {
-        if (ssd->rtrackers == nullptr)
-        {
-            ssd->rtrackers = DCE2_QueueNew(DCE2_SmbRequestTrackerDataFree);
-            if (ssd->rtrackers == nullptr)
-            {
-                return nullptr;
-            }
-        }
-
         rtracker = (DCE2_SmbRequestTracker*)snort_calloc(sizeof(DCE2_SmbRequestTracker));
-        if (rtracker == nullptr)
-        {
-            return nullptr;
-        }
-
-        if (DCE2_QueueEnqueue(ssd->rtrackers, (void*)rtracker) != DCE2_RET__SUCCESS)
-        {
-            snort_free((void*)rtracker);
-            return nullptr;
-        }
+        ssd->rtrackers_map.insert({mid, rtracker});
     }
 
     rtracker->smb_com = SmbCom(smb_hdr);
@@ -319,6 +291,7 @@ DCE2_SmbRequestTracker* DCE2_SmbNewRequestTracker(DCE2_SmbSsnData* ssd,
     rtracker->tid = tid;
     rtracker->pid = pid;
     rtracker->mid = (int)mid;
+    rtracker->seq = ssd->next_rtracker_seq++;
     memset(&rtracker->ttracker, 0, sizeof(rtracker->ttracker));
     rtracker->ftracker = nullptr;
     rtracker->sequential_only = false;
@@ -696,16 +669,17 @@ void DCE2_SmbRemoveRequestTracker(DCE2_SmbSsnData* ssd,
         return;
     }
 
-    DCE2_SmbRequestTracker* tmp_node;
-    for (tmp_node = (DCE2_SmbRequestTracker*)DCE2_QueueFirst(ssd->rtrackers);
-        tmp_node != nullptr;
-        tmp_node = (DCE2_SmbRequestTracker*)DCE2_QueueNext(ssd->rtrackers))
+    // Duplicate MIDs may coexist, so match the exact tracker among equal keys
+    // before erasing to avoid freeing a different request's tracker.
+    auto range = ssd->rtrackers_map.equal_range((uint16_t)rtracker->mid);
+    for (auto it = range.first; it != range.second; ++it)
     {
-        if (tmp_node == (void*)rtracker)
+        if (it->second == rtracker)
         {
-            DCE2_QueueRemoveCurrent(ssd->rtrackers);
+            DCE2_SmbRequestTrackerDataFree(rtracker);
+            ssd->rtrackers_map.erase(it);
             ssd->outstanding_requests--;
-            return;
+            break;
         }
     }
 }
@@ -724,13 +698,10 @@ void DCE2_SmbRemoveFileTrackerFromRequestTrackers(DCE2_SmbSsnData* ssd,
     if ((ssd->cur_rtracker != nullptr) && (ssd->cur_rtracker->ftracker == ftracker))
         ssd->cur_rtracker->ftracker = nullptr;
 
-    DCE2_SmbRequestTracker* rtracker;
-    for (rtracker = (DCE2_SmbRequestTracker*)DCE2_QueueFirst(ssd->rtrackers);
-        rtracker != nullptr;
-        rtracker = (DCE2_SmbRequestTracker*)DCE2_QueueNext(ssd->rtrackers))
+    for (auto& entry : ssd->rtrackers_map)
     {
-        if (rtracker->ftracker == ftracker)
-            rtracker->ftracker = nullptr;
+        if (entry.second->ftracker == ftracker)
+            entry.second->ftracker = nullptr;
     }
 }
 

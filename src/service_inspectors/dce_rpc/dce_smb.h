@@ -22,6 +22,8 @@
 #ifndef DCE_SMB_H
 #define DCE_SMB_H
 
+#include <unordered_map>
+
 #include "dce_co.h"
 #include "hash/lru_cache_local.h"
 #include "protocols/packet.h"
@@ -423,6 +425,10 @@ struct DCE2_SmbRequestTracker
     uint16_t tid;
     uint16_t pid;
 
+    // Monotonic insertion stamp used to restore deterministic oldest-first
+    // (FIFO) selection now that trackers live in an unordered_multimap.
+    uint64_t seq;
+
     // For WriteRaw
     bool writeraw_writethrough;
     uint32_t writeraw_remaining;
@@ -473,7 +479,9 @@ struct DCE2_SmbSsnData
 
     // For tracking requests / responses
     DCE2_SmbRequestTracker rtracker;
-    DCE2_Queue* rtrackers;
+    std::unordered_multimap<uint16_t, DCE2_SmbRequestTracker*> rtrackers_map;
+    // Per-session monotonic counter assigning DCE2_SmbRequestTracker::seq.
+    uint64_t next_rtracker_seq;
     uint16_t max_outstanding_requests;
     uint16_t outstanding_requests;
 

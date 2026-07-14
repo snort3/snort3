@@ -438,6 +438,92 @@ static inline uint16_t DCE2_SmbGetMinByteCount(uint8_t com, uint8_t resp)
     return smb_bccs[com][resp][0];
 }
 
+// Evaluate a single candidate request tracker against the response identifiers.
+// Returns an exact match if found (caller should return it immediately);
+// otherwise returns nullptr after updating the policy-fallback accumulators
+// (win_rtracker, first_mid_rtracker, first_rtracker). Shared by the inline
+// slot-0 check and the map iteration so the matching rules live in one place.
+static DCE2_SmbRequestTracker* DCE2_SmbMatchRequestTracker(DCE2_SmbSsnData* ssd,
+    DCE2_SmbRequestTracker* rtracker, int smb_com, uint16_t mid, uint16_t pid,
+    uint16_t uid, uint16_t tid, DCE2_SmbRequestTracker*& win_rtracker,
+    DCE2_SmbRequestTracker*& first_mid_rtracker, DCE2_SmbRequestTracker*& first_rtracker)
+{
+    if ((rtracker->mid == (int)mid) && (rtracker->smb_com == smb_com))
+    {
+        // This is the normal case except for SessionSetupAndX and
+        // TreeConnect/TreeConnectAndX which will fall into the
+        // default case below.
+        DCE2_SmbRequestTracker* ret_rtracker = nullptr;
+        if ((rtracker->pid == pid) && (rtracker->uid == uid)
+            && (rtracker->tid == tid))
+        {
+            ret_rtracker = rtracker;
+        }
+        else
+        {
+            switch (smb_com)
+            {
+            case SMB_COM_TRANSACTION:
+            case SMB_COM_TRANSACTION2:
+            case SMB_COM_NT_TRANSACT:
+            case SMB_COM_TRANSACTION_SECONDARY:
+            case SMB_COM_TRANSACTION2_SECONDARY:
+            case SMB_COM_NT_TRANSACT_SECONDARY:
+                // These should conform to above
+                break;
+            default:
+                if (rtracker->pid == pid)
+                    ret_rtracker = rtracker;
+                break;
+            }
+        }
+
+        if (ret_rtracker != nullptr)
+            return ret_rtracker;
+
+        // Take the oldest one (by insertion sequence) where the PIDs also
+        // match, in the case of the Transacts above. The inline slot keeps
+        // priority: it is evaluated before the map and the guard prevents any
+        // later map entry from overriding an inline match.
+        if (rtracker->pid == pid)
+        {
+            if (win_rtracker == nullptr)
+                win_rtracker = rtracker;
+            else if ((win_rtracker != &ssd->rtracker)
+                && (rtracker->seq < win_rtracker->seq))
+                win_rtracker = rtracker;
+        }
+
+        // Set this to the oldest matching request (by insertion sequence) where
+        // the Mid matches, with the same inline-slot priority as above.  Don't
+        // set for Windows if from client since PID/MID are necessary
+        if ((DCE2_SmbType() == SMB_TYPE__RESPONSE)
+            || !DCE2_SsnIsWindowsPolicy(&ssd->sd))
+        {
+            if (first_mid_rtracker == nullptr)
+                first_mid_rtracker = rtracker;
+            else if ((first_mid_rtracker != &ssd->rtracker)
+                && (rtracker->seq < first_mid_rtracker->seq))
+                first_mid_rtracker = rtracker;
+        }
+    }
+
+    // Restore FIFO for early Samba versions: pick the oldest matching
+    // request by insertion sequence. The inline slot keeps priority (it is
+    // evaluated before the map, and the guard below prevents any later map
+    // entry from overriding an inline match).
+    if ((rtracker->mid != DCE2_SENTINEL) && (rtracker->smb_com == smb_com))
+    {
+        if (first_rtracker == nullptr)
+            first_rtracker = rtracker;
+        else if ((first_rtracker != &ssd->rtracker)
+            && (rtracker->seq < first_rtracker->seq))
+            first_rtracker = rtracker;
+    }
+
+    return nullptr;
+}
+
 static DCE2_SmbRequestTracker* DCE2_SmbFindRequestTracker(DCE2_SmbSsnData* ssd,
     const SmbNtHdr* smb_hdr)
 {
@@ -470,68 +556,20 @@ static DCE2_SmbRequestTracker* DCE2_SmbFindRequestTracker(DCE2_SmbSsnData* ssd,
     DCE2_SmbRequestTracker* win_rtracker = nullptr;
     DCE2_SmbRequestTracker* first_mid_rtracker = nullptr;
     DCE2_SmbRequestTracker* ret_rtracker = nullptr;
-    while (tmp_rtracker != nullptr)
+
+    // Phase 1: Check inline slot-0
+    ret_rtracker = DCE2_SmbMatchRequestTracker(ssd, tmp_rtracker, smb_com, mid, pid,
+        uid, tid, win_rtracker, first_mid_rtracker, first_rtracker);
+    if (ret_rtracker != nullptr)
+        return ret_rtracker;
+
+    // Phase 2: Iterate map entries
+    for (auto& entry : ssd->rtrackers_map)
     {
-        if ((tmp_rtracker->mid == (int)mid) && (tmp_rtracker->smb_com == smb_com))
-        {
-            // This is the normal case except for SessionSetupAndX and
-            // TreeConnect/TreeConnectAndX which will fall into the
-            // default case below.
-            if ((tmp_rtracker->pid == pid) && (tmp_rtracker->uid == uid)
-                && (tmp_rtracker->tid == tid))
-            {
-                ret_rtracker = tmp_rtracker;
-            }
-            else
-            {
-                switch (smb_com)
-                {
-                case SMB_COM_TRANSACTION:
-                case SMB_COM_TRANSACTION2:
-                case SMB_COM_NT_TRANSACT:
-                case SMB_COM_TRANSACTION_SECONDARY:
-                case SMB_COM_TRANSACTION2_SECONDARY:
-                case SMB_COM_NT_TRANSACT_SECONDARY:
-                    // These should conform to above
-                    break;
-                default:
-                    if (tmp_rtracker->pid == pid)
-                        ret_rtracker = tmp_rtracker;
-                    break;
-                }
-            }
-
-            if (ret_rtracker != nullptr)
-            {
-                return ret_rtracker;
-            }
-
-            // Take the first one where the PIDs also match
-            // in the case of the Transacts above
-            if ((tmp_rtracker->pid == pid) && (win_rtracker == nullptr))
-                win_rtracker = tmp_rtracker;
-
-            // Set this to the first matching request in the queue
-            // where the Mid matches.  Don't set for Windows if from
-            // client since PID/MID are necessary
-            if (((DCE2_SmbType() == SMB_TYPE__RESPONSE)
-                || !DCE2_SsnIsWindowsPolicy(&ssd->sd))
-                && first_mid_rtracker == nullptr)
-            {
-                first_mid_rtracker = tmp_rtracker;
-            }
-        }
-
-        // Set the first one we see for early Samba versions
-        if ((first_rtracker == nullptr) && (tmp_rtracker->mid != DCE2_SENTINEL)
-            && (tmp_rtracker->smb_com == smb_com))
-            first_rtracker = tmp_rtracker;
-
-        // Look at the next request in the queue
-        if (tmp_rtracker == &ssd->rtracker)
-            tmp_rtracker = (DCE2_SmbRequestTracker*)DCE2_QueueFirst(ssd->rtrackers);
-        else
-            tmp_rtracker = (DCE2_SmbRequestTracker*)DCE2_QueueNext(ssd->rtrackers);
+        ret_rtracker = DCE2_SmbMatchRequestTracker(ssd, entry.second, smb_com, mid, pid,
+            uid, tid, win_rtracker, first_mid_rtracker, first_rtracker);
+        if (ret_rtracker != nullptr)
+            return ret_rtracker;
     }
 
     DCE2_Policy policy = DCE2_SsnGetPolicy(&ssd->sd);
@@ -1278,11 +1316,11 @@ void DCE2_SmbDataFree(DCE2_SmbSsnData* ssd)
     }
 
     DCE2_SmbCleanRequestTracker(&ssd->rtracker);
-    if (ssd->rtrackers != nullptr)
+    for (auto& entry : ssd->rtrackers_map)
     {
-        DCE2_QueueDestroy(ssd->rtrackers);
-        ssd->rtrackers = nullptr;
+        DCE2_SmbRequestTrackerDataFree(entry.second);
     }
+    ssd->rtrackers_map.clear();
 
     if (ssd->cli_seg != nullptr)
     {
