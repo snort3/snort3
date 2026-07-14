@@ -221,7 +221,7 @@ void StreamLog::add_ip_header_info(const Packet& p, bool add_eth)
 
     if ( shell_format )
     {
-        stream_log(&p, "\n");
+        PacketTracer::log("\n");
         oss << sipstr << " " << sport << " -> "
             << dipstr << " " << dport << " "
             << std::to_string(to_utype(proto))
@@ -336,7 +336,7 @@ void StreamLog::add_eth_header_info(const Packet& p)
 
     if ( shell_format )
     {
-        stream_log(&p, "\n");
+        PacketTracer::log("\n");
         std::ostringstream oss;
         oss << eh->to_string()
             << " AS=" << p.pkth->address_space_id
