@@ -39,6 +39,7 @@ FileSegment::~FileSegment ()
 FileSegments::FileSegments (FileContext* ctx)
 {
     head = nullptr;
+    tail = nullptr;
     current_offset = 0;
     context =  ctx;
 }
@@ -60,6 +61,7 @@ void FileSegments::clear()
     }
 
     head = nullptr;
+    tail = nullptr;
     current_offset = 0;
 }
 
@@ -75,10 +77,10 @@ void FileSegments::add(const uint8_t* file_data, int64_t data_size, uint64_t off
             GET_CURRENT_PACKET , "Adding segment, offset : %u data_size : %lu\n",
             new_segment->offset, data_size);
         head = new_segment;
+        tail = new_segment;
         return;
     }
 
-    FileSegment* current_segment = head;
     uint64_t start = offset;
     uint64_t end = offset + data_size;
     // left points to segment that "next" pointer needs to be updated
@@ -86,18 +88,55 @@ void FileSegments::add(const uint8_t* file_data, int64_t data_size, uint64_t off
     FileSegment* previous = nullptr;
     bool find_left = false;
 
-    // Find left boundary, left points to segment that needs update
-    while (current_segment)
+    // Find left boundary, left points to segment that needs update.
+    // The list is sorted by offset, so instead of always walking from the
+    // head we use head/tail fast paths and, for a middle insertion, walk
+    // from whichever end is closer to the target offset. This keeps
+    // in-order (ascending or descending) inserts O(1). tail has the maximum
+    // offset, so a node greater than start exists iff tail->offset > start.
+    if (tail->offset > start)
     {
-        if (current_segment->offset > start)
-        {
-            find_left = true;
-            left = previous;
-            break;
-        }
+        find_left = true;
 
-        previous = current_segment;
-        current_segment = current_segment->next;
+        if (head->offset > start)
+        {
+            // start is before every segment: insert before head
+            left = nullptr;
+        }
+        else
+        {
+            // head->offset <= start < tail->offset: find the last segment
+            // whose offset is <= start (same node the head walk would stop
+            // just after) by walking from the closer end.
+            uint64_t head_dist = start - head->offset;
+            uint64_t tail_dist = tail->offset - start;
+            FileSegment* le = head;
+
+            if (tail_dist < head_dist)
+            {
+                for (FileSegment* n = tail->prev; n; n = n->prev)
+                {
+                    if (n->offset <= start)
+                    {
+                        le = n;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                while (le->next and (le->next->offset <= start))
+                    le = le->next;
+            }
+
+            left = le;
+        }
+    }
+    else
+    {
+        // start >= tail->offset: new segment belongs at the end of the list
+        find_left = false;
+        previous = tail;
     }
 
     // New segment should be at the end of link list
@@ -167,16 +206,30 @@ void FileSegments::insert_segment(const uint8_t* file_data, int64_t data_size, u
         data_size);
     if (!*left)
     {
+        // Insert before head
         new_segment->next = head;
+        if (head)
+            head->prev = new_segment;
+        else
+            tail = new_segment;
         head = new_segment;
     }
     else if (!find_left)
     {
+        // Append after left (left is the tail)
+        new_segment->prev = *left;
         (*left)->next = new_segment;
+        tail = new_segment;
     }
     else
     {
+        // Insert after left, before left->next
         new_segment->next = (*left)->next;
+        new_segment->prev = *left;
+        if ((*left)->next)
+            (*left)->next->prev = new_segment;
+        else
+            tail = new_segment;
         (*left)->next = new_segment;
         *left = (*left)->next;
     }
@@ -228,6 +281,10 @@ int FileSegments::process_all(Packet* p, FilePolicyBase* policy)
 
         current_offset += current_segment->data->size();
         head = current_segment->next;
+        if (head)
+            head->prev = nullptr;
+        else
+            tail = nullptr;
         delete(current_segment);
         current_segment = head;
     }

@@ -38,8 +38,10 @@ public:
     FileSegment() = default;
     ~FileSegment();
 
-    // Use single list for simplicity
+    // Doubly linked list so the insertion point can be reached by walking
+    // from whichever end (head or tail) is closer to the target offset.
     FileSegment* next = nullptr;
+    FileSegment* prev = nullptr;
     uint32_t offset = 0;
     std::string* data = nullptr;
 };
@@ -59,6 +61,7 @@ public:
 
 private:
     FileSegment* head = nullptr;
+    FileSegment* tail = nullptr;
     uint64_t current_offset;
     snort::FileContext* context = nullptr;
 
