@@ -1710,7 +1710,7 @@ static DCE2_Ret DCE2_SmbHandleOutOfOrderFileData(DCE2_SmbSsnData* ssd,
         if (ftracker->ff_file_chunks->num_nodes >= ((dce2SmbProtoConf*)ssd->sd.config)->smb_max_file_chunks)
         {
             dce_alert(GID_DCE2, DCE2_SMB_EXCESSIVE_FILE_CHUNKS,
-                (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+                reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
 
             Packet* p = DetectionEngine::get_current_packet();
             p->active->block_session(p, true);
