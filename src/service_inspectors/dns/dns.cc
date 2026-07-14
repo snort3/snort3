@@ -62,7 +62,7 @@ const PegInfo dns_peg_names[] =
     { CountType::NOW, "concurrent_sessions", "total concurrent dns sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent dns sessions" },
     { CountType::SUM, "aborted_sessions", "total dns sessions aborted" },
-
+    { CountType::SUM, "malformed_name_dropped", "packets dropped due to domain name exceeding 255-octet limit" },
 
     { CountType::END, nullptr, nullptr }
 };

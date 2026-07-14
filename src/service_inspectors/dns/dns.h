@@ -236,7 +236,7 @@ struct DNSData
     bool has_events() const;
     bool valid_dns(const DNSHdr&) const;
 
-    void decode_rdata(const snort::Packet* p, const uint8_t* rr, const uint8_t* rdata, uint16_t rdlength,
+    bool decode_rdata(const snort::Packet* p, const uint8_t* rr, const uint8_t* rdata, uint16_t rdlength,
         uint16_t type, std::string& rdata_str) const;
     void get_rr_data(const snort::Packet *p, const std::vector<uint16_t>& tabs,
         std::string& rrs, std::string* ttls = nullptr) const;

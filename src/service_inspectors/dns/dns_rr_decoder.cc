@@ -28,6 +28,7 @@
 #include <sstream>
 #include <string>
 #include "sfip/sf_ip.h"
+#include "packet_io/active.h"
 
 using namespace snort;
 
@@ -184,11 +185,13 @@ static void decode_txt(const uint8_t* rdata, uint16_t rdlength, std::string& rda
     }
 }
 
-static void decode_domain_name(const uint8_t* rdata, uint16_t rdlength,
+static bool decode_domain_name(const uint8_t* rdata, uint16_t rdlength,
     std::string& rdata_str, const Packet* p = nullptr)
 {
     static const int MAX_LINKS = 10;
+    static const unsigned MAX_NAME_LEN = 255;  // RFC 1035 section 3.1
     int link_count = 0;
+    unsigned name_len = 0;
 
     bool first_label = true;
     while (rdlength)
@@ -224,12 +227,24 @@ static void decode_domain_name(const uint8_t* rdata, uint16_t rdlength,
 
         uint8_t actual_len = rdlength > label_len ? label_len : rdlength;
         if (!first_label)
+        {
             rdata_str.append(".");
+            name_len++;
+        }
         first_label = false;
+
+        if (name_len + actual_len > MAX_NAME_LEN)
+            actual_len = MAX_NAME_LEN - name_len;
+
         rdata_str.append((const char*)rdata, actual_len);
+        name_len += actual_len;
         rdata += actual_len;
         rdlength -= actual_len;
+
+        if (name_len >= MAX_NAME_LEN)
+            return false;  // RFC 1035 limit exceeded — malformed packet, drop
     }
+    return true;
 }
 
 static void decode_bind9_signing(std::string& rdata_str)
@@ -286,32 +301,35 @@ static void decode_loc(const uint8_t* rdata, uint16_t rdlength, std::string& rda
     rdata_str.append(std::to_string(rdata[VERT_PRE_OFFSET]));
 }
 
-static void decode_mx(const uint8_t* rdata, uint16_t rdlength, std::string& rdata_str, const Packet* p)
+static bool decode_mx(const uint8_t* rdata, uint16_t rdlength, std::string& rdata_str, const Packet* p)
 {
     static const unsigned EXCHANGE_OFFSET = 2;
     if (rdlength <= EXCHANGE_OFFSET)
-        return; // incomplete MX record
+        return true;
 
     rdata += EXCHANGE_OFFSET;
     rdlength -= EXCHANGE_OFFSET;
-    decode_domain_name(rdata, rdlength, rdata_str, p);
+    return decode_domain_name(rdata, rdlength, rdata_str, p);
 }
 
-static void decode_nsec(const uint8_t* rdata, uint16_t rdlength, std::string& rdata_str,
+static bool decode_nsec(const uint8_t* rdata, uint16_t rdlength, std::string& rdata_str,
     const Packet* p, const uint8_t* rr_domain_name)
 {
     static const std::string nsec_prefix = "NSEC" + part_sep;
     static const unsigned RDATA_OFFSET = 10;
     const uint8_t* rr_domain_name_end = rdata - RDATA_OFFSET;
     if (rr_domain_name == nullptr or rr_domain_name > rr_domain_name_end)
-       return;
+       return true;
 
     uint16_t rr_domain_name_len = rr_domain_name_end - rr_domain_name;
 
     rdata_str.append(nsec_prefix);
-    decode_domain_name(rr_domain_name, rr_domain_name_len, rdata_str, p);
+    if (!decode_domain_name(rr_domain_name, rr_domain_name_len, rdata_str, p))
+        return false;
     rdata_str.append(part_sep);
-    decode_domain_name(rdata, rdlength, rdata_str);
+    if (!decode_domain_name(rdata, rdlength, rdata_str))
+        return false;
+    return true;
 }
 
 static void decode_opt(const uint8_t* rdata, std::string& rdata_str)
@@ -368,16 +386,16 @@ static void decode_spf(const uint8_t* rdata, uint16_t rdlength, std::string& rda
     rdata_str.append((const char*)rdata, actual_len);
 }
 
-static void decode_srv(const uint8_t* rdata, uint16_t rdlength, std::string& rdata_str, const Packet* p)
+static bool decode_srv(const uint8_t* rdata, uint16_t rdlength, std::string& rdata_str, const Packet* p)
 {
     static const unsigned TARGET_OFFSET = 6;
 
     if (rdlength <= TARGET_OFFSET)
-        return; // incomplete SRV record
+        return true;
 
     rdata += TARGET_OFFSET;
     rdlength -= TARGET_OFFSET;
-    decode_domain_name(rdata, rdlength, rdata_str, p);
+    return decode_domain_name(rdata, rdlength, rdata_str, p);
 }
 
 static void decode_sshfp(const uint8_t* rdata, uint16_t rdlength, std::string& rdata_str)
@@ -412,7 +430,7 @@ static void decode_default_rr(std::string& rdata_str, uint16_t type)
     }
 }
 
-void DNSData::decode_rdata(const Packet* p, const uint8_t* rr_domain_name, const uint8_t* rdata,
+bool DNSData::decode_rdata(const Packet* p, const uint8_t* rr_domain_name, const uint8_t* rdata,
     uint16_t rdlength, uint16_t type, std::string& rdata_str) const
 {
     assert(rdata <= p->data + p->dsize);
@@ -440,7 +458,8 @@ void DNSData::decode_rdata(const Packet* p, const uint8_t* rr_domain_name, const
     case DNS_RR_TYPE_NS:
     case DNS_RR_TYPE_PTR:
     case DNS_RR_TYPE_SOA:
-        decode_domain_name(rdata, rdlength, rdata_str, p);
+        if (!decode_domain_name(rdata, rdlength, rdata_str, p))
+            return false;
         break;
 
     case DNS_RR_TYPE_DNSKEY:
@@ -456,11 +475,13 @@ void DNSData::decode_rdata(const Packet* p, const uint8_t* rr_domain_name, const
         break;
 
     case DNS_RR_TYPE_MX:
-        decode_mx(rdata, rdlength, rdata_str, p);
+        if (!decode_mx(rdata, rdlength, rdata_str, p))
+            return false;
         break;
 
     case DNS_RR_TYPE_NSEC:
-        decode_nsec(rdata, rdlength, rdata_str, p, rr_domain_name);
+        if (!decode_nsec(rdata, rdlength, rdata_str, p, rr_domain_name))
+            return false;
         break;
 
     case DNS_RR_TYPE_OPT:
@@ -476,7 +497,8 @@ void DNSData::decode_rdata(const Packet* p, const uint8_t* rr_domain_name, const
         break;
 
     case DNS_RR_TYPE_SRV:
-        decode_srv(rdata, rdlength, rdata_str, p);
+        if (!decode_srv(rdata, rdlength, rdata_str, p))
+            return false;
         break;
 
     case DNS_RR_TYPE_SSHFP:
@@ -499,6 +521,7 @@ void DNSData::decode_rdata(const Packet* p, const uint8_t* rr_domain_name, const
         decode_default_rr(rdata_str, type);
         break;
     }
+    return true;
 }
 
 void DNSData::get_rr_data(const Packet *p, const std::vector<uint16_t>& tabs,
@@ -509,10 +532,17 @@ void DNSData::get_rr_data(const Packet *p, const std::vector<uint16_t>& tabs,
 
     static const std::string item_sep = " ";    // list item separator
     static const unsigned RDATA_OFFSET = 10;
+    // Defense-in-depth cap on the rendered section. A DNS message is at most
+    // 65535 octets, so this comfortably fits any RFC-compliant section while
+    // bounding output for an answer section with many records.
+    static const size_t MAX_RRS_LEN = 65535;
     const uint8_t* rr_domain_name = nullptr;
 
     for (auto tab : tabs)
     {
+        if (rrs.size() >= MAX_RRS_LEN || (ttls && ttls->size() >= MAX_RRS_LEN))
+            break;  // section output limit reached
+
         if (tab + RDATA_OFFSET > p->dsize)
             continue;
 
@@ -529,7 +559,15 @@ void DNSData::get_rr_data(const Packet *p, const std::vector<uint16_t>& tabs,
 
         auto rdata = rr_type + RDATA_OFFSET;
         std::string rdata_str;
-        decode_rdata(p, rr_domain_name, rdata, rdlength, type, rdata_str);
+        if (!decode_rdata(p, rr_domain_name, rdata, rdlength, type, rdata_str))
+        {
+            rrs.clear();
+            if (ttls) ttls->clear();
+            dnsstats.malformed_name_dropped++;
+            if (p->active)
+                p->active->drop_packet(p);
+            return;
+        }
         rr_domain_name = rdata + rdlength;
 
         if (rdata_str.empty())
