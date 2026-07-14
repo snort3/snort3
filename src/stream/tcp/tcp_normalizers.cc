@@ -475,12 +475,28 @@ int TcpNormalizerProxy::handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescr
 TcpNormalizer::NormStatus TcpNormalizerMissed3whs::apply_normalizations(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, uint32_t, bool)
 {
-    if ( !tns.session->flow->two_way_traffic() )
-        return NORM_OK;
+    const bool asymmetric = !tns.session->flow->two_way_traffic();
+    const uint32_t seq = tsd.get_seq();
+    uint32_t anchor = 0;
+    const char* anchor_name = nullptr;
 
-    uint32_t seq = tsd.get_seq();
-    uint32_t r_win_base = tns.tracker->r_win_base;
-    uint32_t diff = seq - r_win_base;
+    if ( !asymmetric )
+    {
+        anchor = tns.tracker->r_win_base;
+        anchor_name = "r_win_base";
+    }
+    else if ( tns.tcp_ips_enabled )
+    {
+        anchor = tns.tracker->get_rcv_nxt();
+        anchor_name = "rcv_nxt";
+    }
+    else
+    {
+        anchor = tns.tracker->seglist.get_seglist_base_seq();
+        anchor_name = "seglist_base_seq";
+    }
+
+    const uint32_t diff = seq - anchor;
 
     if ( diff > MAX_TCP_WINDOW_SCALED && diff < MAX_TCP_SEQ_DISTANCE )
     {
@@ -492,7 +508,7 @@ TcpNormalizer::NormStatus TcpNormalizerMissed3whs::apply_normalizations(
         bool inline_mode = tsd.is_nap_policy_inline();
         log_drop_reason(tns, tsd, inline_mode, "stream",
             std::string("Normalizer: Missed3whs: Sequence ") + std::to_string(seq) +
-            " is too far from r_win_base " + std::to_string(r_win_base) +
+            " is too far from " + anchor_name + " " + std::to_string(anchor) +
             " (diff=" + std::to_string(diff) + ")\n");
         trim_win_payload(tns, tsd, 0, inline_mode);
         return NORM_BAD_SEQ;
