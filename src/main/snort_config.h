@@ -194,6 +194,7 @@ public:
 
 private:
     static uint32_t logging_flags;
+    static THREAD_LOCAL bool log_quiet_bypassed;
 
 public:
     static uint32_t warning_flags;
@@ -728,7 +729,23 @@ public:
     }
 
     static bool log_quiet()
-    { return logging_flags & LOGGING_FLAG__QUIET; }
+    { return !log_quiet_bypassed && (logging_flags & LOGGING_FLAG__QUIET); }
+
+    class ScopedLogQuietBypass
+    {
+    public:
+        ScopedLogQuietBypass() : was_bypassed(log_quiet_bypassed)
+        { log_quiet_bypassed = true; }
+
+        ~ScopedLogQuietBypass()
+        { log_quiet_bypassed = was_bypassed; }
+
+        ScopedLogQuietBypass(const ScopedLogQuietBypass&) = delete;
+        ScopedLogQuietBypass& operator=(const ScopedLogQuietBypass&) = delete;
+
+    private:
+        bool was_bypassed;
+    };
 
     static void enable_log_verbose()
     { logging_flags |= LOGGING_FLAG__VERBOSE; }

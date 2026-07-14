@@ -401,15 +401,10 @@ void PrintStatistics()
     DropStats();
     timing_stats();
 
-    // FIXIT-L can do flag saving with RAII (much cleaner)
-    bool origin_log_quiet = SnortConfig::log_quiet();
-    SnortConfig::set_log_quiet(false);
-
-    // once more for the main thread
+    // Print exit statistics under -q without changing logging in other threads.
+    SnortConfig::ScopedLogQuietBypass quiet_bypass;
     Profiler::consolidate_stats();
     Profiler::show_stats();
-
-    SnortConfig::set_log_quiet(origin_log_quiet);
 }
 
 //-------------------------------------------------------------------------
