@@ -99,5 +99,13 @@ JSTokenizer::JSRet JSNormalizer::normalize(const char* src, size_t src_len, bool
     rem_bytes -= r_bytes;
     src_next = src + r_bytes;
 
+    if (src_next == src)
+    {
+        debug_log(4, js_trace, TRACE_PROC, nullptr,
+            "normalizer has made no progress (zero bytes consumed)\n");
+
+        return max(ret, JSTokenizer::BAD_TOKEN);
+    }
+
     return rem_bytes ? ret : JSTokenizer::EOS;
 }
