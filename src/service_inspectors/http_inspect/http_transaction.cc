@@ -198,6 +198,13 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
                 // This is the normal case where the requests and responses are alternating (no
                 // pipelining). Processing of the response is complete so the request just takes
                 // it.
+                if (session_data->infractions[SRC_CLIENT] == nullptr)
+                {
+                    session_data->infractions[SRC_CLIENT] =
+                        session_data->transaction[SRC_CLIENT]->infractions[SRC_CLIENT];
+                    session_data->transaction[SRC_CLIENT]->infractions[SRC_CLIENT] = nullptr;
+                }
+
                 session_data->transaction[SRC_SERVER] = session_data->transaction[SRC_CLIENT];
                 session_data->transaction[SRC_CLIENT] = nullptr;
             }
