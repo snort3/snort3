@@ -41,6 +41,7 @@
 #include "log/messages.h"
 #include "main/analyzer_command.h"
 #include "main/snort_config.h"
+#include "managers/module_manager.h"
 #include "profiler/profiler.h"
 #include "protocols/packet.h"
 #include "pub_sub/intrinsic_event_ids.h"
@@ -236,7 +237,40 @@ bool PerfMonitor::configure(SnortConfig* sc)
     new PerfRotateHandler(*this, *sc);
     new FlowIPDataHandler(*this, *sc);
 
-    return config->resolve();
+    if ( !config->resolve() )
+        return false;
+
+    snapshot_global_stats();
+    return true;
+}
+
+void PerfMonitor::snapshot_global_stats()
+{
+    if ( !(config->perf_flags & PERF_BASE) )
+        return;
+
+    std::lock_guard<std::mutex> lock(ModuleManager::stats_mutex);
+
+    for ( auto& mod : config->modules )
+    {
+        if ( mod.ptr->stats_are_aggregated() || !mod.ptr->global_stats() )
+            continue;
+
+        mod.global_stats_snapshot.clear();
+
+        if ( mod.ptr->get_num_counts() < 0 )
+            mod.ptr->init_stats();
+
+        const int count = mod.ptr->get_num_counts();
+        if ( count <= 0 )
+            continue;
+
+        PegCount* counts = mod.ptr->get_counts();
+        if ( counts )
+            mod.global_stats_snapshot.assign(counts, counts + count);
+        else
+            mod.global_stats_snapshot.assign(count, 0);
+    }
 }
 
 void PerfMonitor::tinit()

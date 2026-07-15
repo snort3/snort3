@@ -62,6 +62,7 @@ struct ModuleConfig
     // can't be determined until all modules have loaded (PerfMonitor::configure)
     snort::Module* ptr = nullptr;
     std::vector<unsigned> pegs;
+    std::vector<PegCount> global_stats_snapshot;
 
     void set_name(const std::string& name);
     void set_peg_names(snort::Value& peg_names);
@@ -139,4 +140,3 @@ extern THREAD_LOCAL snort::ProfileStats perfmonStats;
 extern THREAD_LOCAL PerfConstraints* t_constraints;
 
 #endif
-

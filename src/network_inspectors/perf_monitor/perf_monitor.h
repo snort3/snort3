@@ -66,7 +66,7 @@ public:
 private:
     PerfConfig* const config;
     void disable_tracker(size_t);
+    void snapshot_global_stats();
 };
 
 #endif
-

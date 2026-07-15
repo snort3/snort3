@@ -53,21 +53,13 @@ BaseTracker::BaseTracker(PerfConfig* perf) : PerfTracker(perf, PERF_NAME "_base"
 
         if ( is_global_stats )
         {
-            if ( mod.ptr->get_num_counts() < 0 )
-                mod.ptr->init_stats();
-
-            const int n = mod.ptr->get_num_counts();
-            if ( n > 0 )
+            const auto& snapshot = mod.global_stats_snapshot;
+            if ( !snapshot.empty() )
             {
                 global_proxies[mod_idx].mod = mod.ptr;
                 global_proxies[mod_idx].enabled = true;
-                global_proxies[mod_idx].values.assign(n, 0);
-
-                PegCount* p = mod.ptr->get_counts();
-                if ( p )
-                    global_proxies[mod_idx].last_seen.assign(p, p + n);
-                else
-                    global_proxies[mod_idx].last_seen.assign(n, 0);
+                global_proxies[mod_idx].values.assign(snapshot.size(), 0);
+                global_proxies[mod_idx].last_seen = snapshot;
 
                 for ( auto const& idx : mod.pegs )
                     formatter->register_field(mod.ptr->get_pegs()[idx].name, &(global_proxies[mod_idx].values[idx]));
@@ -165,7 +157,8 @@ void BaseTracker::process(bool summary)
 class MockModule : public Module
 {
 public:
-    MockModule() : Module("mockery", "mockery")
+    MockModule(bool global_stats = false) : Module("mockery", "mockery"),
+        global_stats_enabled(global_stats)
     {
         mock_counts = (PegCount*)snort_alloc(5 * sizeof(PegCount));
 
@@ -179,17 +172,26 @@ public:
 
     PegCount* get_counts() const override { return mock_counts; }
 
+    bool global_stats() const override { return global_stats_enabled; }
+
     void sum_stats(bool) override {}
 
     void init_stats(bool) override {Module::init_stats();}
 
     void real_sum_stats() { Module::sum_stats(false); }
 
+    void increment_counts()
+    {
+        for ( unsigned i = 0; i < 5; ++i )
+            ++mock_counts[i];
+    }
+
     Usage get_usage() const override
     { return INSPECT; }
 
 private:
     PegCount* mock_counts;
+    bool global_stats_enabled;
 
     PegInfo pegs[6] =
     {
@@ -243,5 +245,31 @@ TEST_CASE("module stats", "[BaseTracker]")
     CHECK(*formatter->public_values["mockery.two"].pc == expected[pass][1]);
     CHECK(*formatter->public_values["mockery.four"].pc == expected[pass++][2]);
     mod.real_sum_stats();
+}
+
+TEST_CASE("global module stats", "[BaseTracker]")
+{
+    PerfConfig config;
+    config.format = PerfFormat::MOCK;
+
+    MockModule mod(true);
+    mod.init_stats(false);
+    ModuleConfig mod_cfg;
+    mod_cfg.ptr = &mod;
+    mod_cfg.pegs = {0, 2, 4};
+    mod_cfg.global_stats_snapshot.assign(mod.get_counts(), mod.get_counts() + mod.get_num_counts());
+    config.modules.emplace_back(mod_cfg);
+
+    // The snapshot predates tracker construction, while live global counters continue advancing.
+    mod.increment_counts();
+
+    MockBaseTracker tracker(&config);
+    MockFormatter* formatter = (MockFormatter*)tracker.output;
+
+    tracker.reset();
+    tracker.process(false);
+    CHECK(*formatter->public_values["mockery.zero"].pc == 1);
+    CHECK(*formatter->public_values["mockery.two"].pc == 1);
+    CHECK(*formatter->public_values["mockery.four"].pc == 1);
 }
 #endif
