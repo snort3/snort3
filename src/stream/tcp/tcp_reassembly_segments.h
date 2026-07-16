@@ -28,6 +28,8 @@
 
 #include "tcp_segment_node.h"
 
+namespace snort { struct Packet; }
+
 class TcpOverlapResolver;
 class TcpOverlapState;
 class TcpSegmentDescriptor;
@@ -52,7 +54,7 @@ public:
     int delete_reassembly_segment(TcpSegmentNode*);
     void advance_rcv_nxt(TcpSegmentNode *tsn = nullptr);
     void purge_flushed_segments(uint32_t flush_seq);
-    void skip_holes();
+    bool skip_holes(snort::Packet* p);
     void skip_midstream_pickup_seglist_hole(TcpSegmentDescriptor&);
     bool skip_hole_at_beginning(TcpSegmentNode*);
     void purge_segment_list();
@@ -90,6 +92,7 @@ public:
 private:
     void insert_segment_data(TcpSegmentNode* prev, TcpSegmentNode*);
     void purge_segments_left_of_hole(const TcpSegmentNode*);
+    void flush_before_purge(snort::Packet* p);
 
     void insert(TcpSegmentNode* prev, TcpSegmentNode* ss)
     {

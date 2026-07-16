@@ -44,6 +44,7 @@ THREAD_LOCAL ProfileStats s5TcpPerfStats;
 THREAD_LOCAL const Trace* stream_tcp_trace = nullptr;
 THREAD_LOCAL bool stream_tcp_trace_enabled = false;
 THREAD_LOCAL bool stream_tcp_trace_enabled_debug = false;
+THREAD_LOCAL bool stream_tcp_trace_seq_relative = false;
 
 static const TraceOption stream_tcp_trace_options[] =
 {
@@ -255,6 +256,9 @@ static const Parameter s_params[] =
     { "proxy_mode_ooo_drop", Parameter::PT_BOOL, nullptr, "false",
       "drop out-of-order data packets before proxy mode cutover; TCP retransmission recovers" },
 
+    { "trace_seq_relative", Parameter::PT_BOOL, nullptr, "false",
+      "if true show relative seq/ack numbers in trace output, if false show absolute" },
+
     { "embryonic_timeout", Parameter::PT_INT, "1:max31", "30",
       "Non-established connection timeout" },
 
@@ -303,6 +307,7 @@ void StreamTcpModule::set_trace(const Trace* trace) const
     stream_tcp_trace_enabled_debug = trace_enabled(stream_tcp_trace, TRACE_SEGMENTS, TRACE_DEBUG_LEVEL) ||
                                    trace_enabled(stream_tcp_trace, TRACE_STATE, TRACE_DEBUG_LEVEL);
     stream_tcp_trace_enabled = trace_enabled(stream_tcp_trace, TRACE_STATE, TRACE_INFO_LEVEL);
+    stream_tcp_trace_seq_relative = config and config->trace_seq_relative;
 }
 
 const TraceOption* StreamTcpModule::get_trace_options() const
@@ -412,6 +417,9 @@ bool StreamTcpModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("proxy_mode_ooo_drop") )
         config->proxy_mode_ooo_drop = v.get_bool();
+
+    else if ( v.is("trace_seq_relative") )
+        config->trace_seq_relative = v.get_bool();
 
     return true;
 }

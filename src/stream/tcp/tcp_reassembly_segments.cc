@@ -440,7 +440,20 @@ bool TcpReassemblySegments::skip_hole_at_beginning(TcpSegmentNode *tsn)
     return hole_skipped;
 }
 
-void TcpReassemblySegments::skip_holes()
+void TcpReassemblySegments::flush_before_purge(Packet* p)
+{
+    if ( !head )
+        return;
+
+    cur_rseg = head;
+    seglist_base_seq = head->scan_seq();
+    while ( tracker->reassembler->flush_queued_sequenced(p) > 0 )
+    {
+        // loop to flush all sequenced bytes to detection before purge
+    }
+}
+
+bool TcpReassemblySegments::skip_holes(Packet* p)
 {
     assert( head );
 
@@ -470,6 +483,7 @@ void TcpReassemblySegments::skip_holes()
             tracker->holes_detected++;
 
             tsn = tsn->next;
+            flush_before_purge(p);
             purge_segments_left_of_hole(tsn);
             seglist_base_seq = head->start_seq();
             num_segs = 0;
@@ -480,6 +494,7 @@ void TcpReassemblySegments::skip_holes()
 
     advance_rcv_nxt();
     tracker->set_order(TcpStreamTracker::OUT_OF_SEQUENCE);
+    return num_holes > 0;
 }
 
 void TcpReassemblySegments::skip_midstream_pickup_seglist_hole(TcpSegmentDescriptor& tsd)

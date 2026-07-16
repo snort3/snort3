@@ -307,6 +307,14 @@ int TcpReassemblerIds::eval_flush_policy_on_data(Packet* p)
     return flushed;
 }
 
+int TcpReassemblerIds::flush_queued_sequenced(Packet* p)
+{
+    uint32_t bytes = get_q_sequenced();
+    if ( bytes )
+        return flush_to_seq(bytes, p, packet_dir);
+    return 0;
+}
+
 int TcpReassemblerIds::eval_asymmetric_flush(snort::Packet* p)
 {
     // asymmetric flush in IDS mode.. advance r_win_base to end of in-order data

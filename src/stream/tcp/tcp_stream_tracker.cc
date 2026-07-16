@@ -975,7 +975,7 @@ bool TcpStreamTracker::set_held_packet(Packet* p)
 
 int32_t TcpStreamTracker::kickstart_asymmetric_flow(const TcpSegmentDescriptor& tsd, uint32_t max_queued_bytes)
 {
-    seglist.skip_holes();
+    seglist.skip_holes(tsd.get_pkt());
 
     if ( reassembler->is_splitter_paf() )
         fallback();

@@ -171,6 +171,14 @@ int TcpReassemblerIps::eval_asymmetric_flush(snort::Packet* p)
     return eval_flush_policy_on_data(p);
 }
 
+int TcpReassemblerIps::flush_queued_sequenced(Packet* p)
+{
+    uint32_t bytes = get_q_sequenced();
+    if ( bytes )
+        return flush_to_seq(bytes, p, packet_dir);
+    return 0;
+}
+
 int TcpReassemblerIps::flush_stream(Packet* p, uint32_t dir, bool final_flush)
 {
     if ( seglist.session->flow->two_way_traffic()

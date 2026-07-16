@@ -62,6 +62,7 @@ public:
     virtual int eval_flush_policy_on_ack(snort::Packet*) = 0;
     virtual int eval_flush_policy_on_data(snort::Packet*) = 0;
     virtual int eval_asymmetric_flush(snort::Packet*) = 0;
+    virtual int flush_queued_sequenced(snort::Packet*) = 0;
     virtual int flush_stream(snort::Packet*, uint32_t dir, bool final_flush = false) = 0;
     virtual void flush_queued_segments(snort::Flow* flow, bool clear, snort::Packet* = nullptr) = 0;
     virtual void finish_and_final_flush(snort::Flow* flow, bool clear, snort::Packet*) = 0;
@@ -97,6 +98,9 @@ public:
     { return 0; }
 
     int eval_asymmetric_flush(snort::Packet*) override
+    { return 0; }
+
+    int flush_queued_sequenced(snort::Packet*) override
     { return 0; }
 
     int flush_stream(snort::Packet*, uint32_t, bool) override

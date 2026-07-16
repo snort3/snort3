@@ -63,7 +63,7 @@ inline void TraceEvent(const TcpSegmentDescriptor& tsd, uint32_t txd, uint32_t r
             flags[i] = '-';
 
     // force relative ack to zero if not conveyed
-    if ( flags[1] != 'A' )
+    if ( !h->is_ack() )
         rxd = tsd.get_ack();   // FIXIT-L SYN's seen with ack > 0 and ACK flag not set...
 
     if ( tsd.are_packet_flags_set(PKT_STREAM_ORDER_OK) )
@@ -71,20 +71,17 @@ inline void TraceEvent(const TcpSegmentDescriptor& tsd, uint32_t txd, uint32_t r
     else if ( tsd.are_packet_flags_set(PKT_STREAM_ORDER_BAD) )
         order = " (oos)";
 
-    uint32_t rseq = txd ? tsd.get_seq() - txd : tsd.get_seq();
-    uint32_t rack = rxd ? tsd.get_ack() - rxd : tsd.get_ack();
+    uint32_t rseq = stream_tcp_trace_seq_relative ? tsd.get_seq() - txd : tsd.get_seq();
+    uint32_t rack = stream_tcp_trace_seq_relative ? tsd.get_ack() - rxd : tsd.get_ack();
+    const snort::Flow* flow = tsd.get_flow();
 
     trace_logf(TRACE_DEBUG_LEVEL, stream_tcp_trace, TRACE_STATE, p,
-        FMTu64("-3") " %s %s=0x%02x Seq=%-4u Ack=%-4u Win=%-4u Len=%-4hu%s\n",
-        tsd.get_packet_number(), meta_ack_marker, flags, h->th_flags, rseq, rack, tsd.get_wnd(),
-        tsd.get_len(), order);
-}
-
-inline void TraceSession(const snort::Flow* flow, const snort::Packet* p)
-{
-    trace_logf(TRACE_DEBUG_LEVEL, stream_tcp_trace, TRACE_STATE, p,
-        "      LWS: ST=0x%x SF=0x%x CP=%hu SP=%hu\n", (unsigned)flow->session_state,
-        flow->ssn_state.session_flags, flow->client_port, flow->server_port);
+        FMTu64("-3") " %s %s{%s} Seq=%-6u Ack=%-6u Win=%-6u Len=%-4hu%s CP=%hu SP=%hu ST=0x%04x SF=0x%08x\n",
+        tsd.get_packet_number(), meta_ack_marker,
+        flags, std::bitset<6>(h->th_flags).to_string().c_str(),
+        rseq, rack, tsd.get_wnd(), tsd.get_len(), order,
+        flow->client_port, flow->server_port,
+        (unsigned)flow->session_state, flow->ssn_state.session_flags);
 }
 
 inline void TraceSegments(const TcpReassemblySegments& seglist, const snort::Packet* p)
@@ -124,23 +121,38 @@ inline void TraceSegments(const TcpReassemblySegments& seglist, const snort::Pac
 inline void TraceState(const TcpStreamTracker& a, const TcpStreamTracker& b, const char* s,
     const snort::Packet* p)
 {
-    uint32_t ua = a.get_snd_una() ? LCL(a, get_snd_una) : 0;
-    uint32_t ns = a.get_snd_nxt() ? LCL(a, get_snd_nxt) : 0;
+    uint32_t ua, ns, rn, rw, bs;
+
+    if ( stream_tcp_trace_seq_relative )
+    {
+        ua = a.get_snd_una() ? LCL(a, get_snd_una) : 0;
+        ns = a.get_snd_nxt() ? LCL(a, get_snd_nxt) : 0;
+        rn = a.get_rcv_nxt() - b.get_iss();
+        rw = RMT(a, r_win_base, b);
+        bs = a.seglist.get_seglist_base_seq() - b.get_iss();
+    }
+    else
+    {
+        ua = a.get_snd_una();
+        ns = a.get_snd_nxt();
+        rn = a.get_rcv_nxt();
+        rw = a.r_win_base;
+        bs = a.seglist.get_seglist_base_seq();
+    }
 
     trace_logf(TRACE_DEBUG_LEVEL, stream_tcp_trace, TRACE_STATE, p,
-        "      %s ST=%s      UA=%-4u NS=%-4u LW=%-5u RN=%-4u RW=%-4u ISS=%-4u IRS=%-4u\n",
+        "      %s ST=%s      UA=%-10u NS=%-10u LW=%-10u RN=%-10u RW=%-10u ISS=%-10u IRS=%-10u\n",
         s, stream_tcp_state_to_str(a), ua, ns, a.get_rcv_wnd(),
-        RMT(a, get_rcv_nxt(), b), RMT(a, r_win_base, b), a.get_iss(), a.get_irs());
+        rn, rw, a.get_iss(), a.get_irs());
 
     unsigned paf = a.reassembler->is_splitter_paf() ? 2 : 0;
     unsigned fpt = a.get_flush_policy() ? 192 : 0;
 
     trace_logf(TRACE_DEBUG_LEVEL, stream_tcp_trace, TRACE_STATE, p,
-        "           FP=%s:%-4u SC=%-4u FL=%-4u SL=%-5u BS=%-4u\n",
+        "           FP=%s:%-4u SC=%-10u FL=%-10u SL=%-10u BS=%-10u\n",
         flushxt[a.get_flush_policy() + paf], fpt,
         a.seglist.get_seg_count(), a.seglist.get_flush_count(),
-        a.seglist.get_seg_bytes_logical(),
-        a.seglist.get_seglist_base_seq() - b.get_iss());
+        a.seglist.get_seg_bytes_logical(), bs);
 
     TraceSegments(a.seglist, p);
 }
@@ -173,10 +185,6 @@ void S5TraceTCP(const TcpSegmentDescriptor& tsd, const snort::Packet* p)
     }
 
     TraceEvent(tsd, txd, rxd, p);
-
-    if ( ssn->tcp_init )
-        TraceSession(tsd.get_flow(), p);
-
     TraceState(cli, srv, cdir, p);
     TraceState(srv, cli, sdir, p);
 }
