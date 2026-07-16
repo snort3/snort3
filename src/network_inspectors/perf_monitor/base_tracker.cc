@@ -231,7 +231,7 @@ TEST_CASE("module stats", "[BaseTracker]")
     config.modules.emplace_back(mod_cfg);
 
     MockBaseTracker tracker(&config);
-    MockFormatter *formatter = (MockFormatter*)tracker.output;
+    MockFormatter *formatter = reinterpret_cast<MockFormatter*>(tracker.output);
 
     tracker.reset();
     tracker.process(false);
@@ -264,7 +264,7 @@ TEST_CASE("global module stats", "[BaseTracker]")
     mod.increment_counts();
 
     MockBaseTracker tracker(&config);
-    MockFormatter* formatter = (MockFormatter*)tracker.output;
+    MockFormatter* formatter = reinterpret_cast<MockFormatter*>(tracker.output);
 
     tracker.reset();
     tracker.process(false);
