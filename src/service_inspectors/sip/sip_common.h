@@ -93,6 +93,7 @@ struct SIP_MediaSession
     int savedFlag;      // whether this data has been saved by a dialog,
                         // if savedFlag = 1, this session will be deleted after sip message is
                         // processed.
+    uint32_t numMediaData;         // number of SIP_MediaData (m=) nodes added so far
     snort::SfIp maddress_default;  // Default media IP
     SIP_MediaDataList medias; // Media list in the session
     SIP_MediaSession* nextS; // Next media session

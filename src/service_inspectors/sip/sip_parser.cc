@@ -1118,6 +1118,15 @@ static int sip_parse_sdp_m(SIPMsg* msg, const char* start, const char* end)
 
     if (nullptr == msg->mediaSession)
         return SIP_PARSE_ERROR;
+
+    // RFC 8866 s5.14 allows zero or more m= lines, but legitimate SDP
+    // never carries this many; enforce the cap before allocating.
+    if (msg->mediaSession->numMediaData >= msg->maxMediaData)
+    {
+        sip_stats.mediaDataCapHits++;
+        return SIP_PARSE_ERROR;
+    }
+
     length = end - start;
 
     spaceIndex = (const char*)memchr(start, ' ', length);  // first space
@@ -1163,6 +1172,7 @@ static int sip_parse_sdp_m(SIPMsg* msg, const char* start, const char* end)
     mdata->nextM = msg->mediaSession->medias;
     mdata->maddress = msg->mediaSession->maddress_default;
     msg->mediaSession->medias = mdata;
+    msg->mediaSession->numMediaData++;
 
     snort_free(buf);
     return SIP_PARSE_SUCCESS;
@@ -1190,6 +1200,7 @@ bool sip_parse(SIPMsg* msg, const char* buff, const char* end, SIP_PROTO_CONF* c
     /*Initialize key values*/
     msg->methodFlag = SIP_METHOD_NULL;
     msg->status_code = 0;
+    msg->maxMediaData = config->maxMediaDataPerSession;
 
     /*Parse the start line*/
     start = buff;

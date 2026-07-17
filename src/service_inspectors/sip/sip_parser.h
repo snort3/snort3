@@ -63,6 +63,7 @@ struct SIPMsg
     uint16_t userAgentLen;
     uint16_t serverLen;
     bool mediaUpdated;
+    uint32_t maxMediaData;  // cap on m= lines per session, set from config
 
     // nothing after this point is zeroed ...  Input parameters
     unsigned char isTcp;

@@ -263,6 +263,7 @@ void Sip::show(const SnortConfig*) const
     ConfigLogger::log_value("max_content_len", config->maxContentLen);
     ConfigLogger::log_value("max_dialogs", config->maxNumDialogsInSession);
     ConfigLogger::log_value("max_from_len", config->maxFromLen);
+    ConfigLogger::log_value("max_media_data", config->maxMediaDataPerSession);
     ConfigLogger::log_value("max_request_name_len", config->maxRequestNameLen);
     ConfigLogger::log_value("max_to_len", config->maxToLen);
     ConfigLogger::log_value("max_uri_len", config->maxUriLen);

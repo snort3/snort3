@@ -48,6 +48,7 @@
 #define SIP_DEFAULT_MAX_VIA_LEN             1024
 #define SIP_DEFAULT_MAX_CONTACT_LEN         256
 #define SIP_DEFAULT_MAX_CONTENT_LEN         1024
+#define SIP_MAX_MEDIA_SESSIONS_PER_DIALOG    8
 #define NUM_OF_RESPONSE_TYPES  10
 #define NUM_OF_REQUEST_TYPES  SIP_METHOD_USER_DEFINE
 
@@ -62,6 +63,8 @@ struct SipStats
     PegCount dialogs;
     PegCount ignoreChannels;
     PegCount ignoreSessions;
+    PegCount mediaSessionCapHits;
+    PegCount mediaDataCapHits;
     PegCount requests[NUM_OF_REQUEST_TYPES];
     PegCount responses[NUM_OF_RESPONSE_TYPES];
 };
@@ -103,6 +106,7 @@ struct SIP_PROTO_CONF
     uint16_t maxViaLen;      // Maximum Via field size
     uint16_t maxContactLen;  // Maximum Contact field size
     uint16_t maxContentLen;  // Maximum Content length
+    uint32_t maxMediaDataPerSession;  // Maximum m= lines per SDP session
     uint64_t sip_timeout;
     uint64_t sip_media_timeout;
     uint64_t sip_invite_timeout;

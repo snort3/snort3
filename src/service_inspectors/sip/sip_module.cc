@@ -80,6 +80,9 @@ static const Parameter s_params[] =
     { "max_from_len", Parameter::PT_INT, "0:65535", "256",
       "maximum from field size" },
 
+    { "max_media_data", Parameter::PT_INT, "1:65535", "128",
+      "maximum number of media data lines (m=) per SDP session" },
+
     { "max_request_name_len", Parameter::PT_INT, "0:65535", "20",
       "maximum request name field size" },
 
@@ -155,6 +158,8 @@ static const PegInfo sip_pegs[] =
     { CountType::SUM, "dialogs", "total dialogs" },
     { CountType::SUM, "ignored_channels", "total channels ignored" },
     { CountType::SUM, "ignored_sessions", "total sessions ignored" },
+    { CountType::SUM, "media_session_cap_hits", "media sessions evicted due to cap" },
+    { CountType::SUM, "media_data_cap_hits", "m= lines dropped due to cap" },
     { CountType::SUM, "total_requests", "total requests" },
     { CountType::SUM, "invite", "invite" },
     { CountType::SUM, "cancel", "cancel" },
@@ -233,6 +238,9 @@ bool SipModule::set(const char*, Value& v, SnortConfig*)
 
     else if ( v.is("max_from_len") )
         conf->maxFromLen = v.get_uint16();
+
+    else if ( v.is("max_media_data") )
+        conf->maxMediaDataPerSession = v.get_uint32();
 
     else if ( v.is("max_request_name_len") )
         conf->maxRequestNameLen = v.get_uint16();

@@ -41,7 +41,7 @@ using namespace snort;
 static void SIP_updateMedias(SIP_MediaSession*, SIP_MediaList&);
 static int SIP_compareMedias(const SIP_MediaDataList, const SIP_MediaDataList);
 static bool SIP_checkMediaChange(const SIPMsg&, const SIP_DialogData*);
-static int SIP_processInvite(const SIPMsg&, SIP_DialogData*, SIP_DialogList*);
+static int SIP_processInvite(const SIPMsg&, SIP_DialogData*, SIP_DialogList*, SIP_PROTO_CONF*);
 static int SIP_processACK(SIPMsg&, SIP_DialogData*, SIP_DialogList*, Packet*, SIP_PROTO_CONF*);
 static int SIP_ignoreChannels(const SIP_DialogData&, Packet* p, SIP_PROTO_CONF*);
 static SIP_DialogData* SIP_addDialog(const SIPMsg&, SIP_DialogData*, SIP_DialogList*);
@@ -85,7 +85,7 @@ static int SIP_processRequest(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_Dialog
     {
     case SIP_METHOD_INVITE:
     {
-        ret = SIP_processInvite(sipMsg, dialog, dList);
+        ret = SIP_processInvite(sipMsg, dialog, dList, config);
 
         if (ret and (config->sip_invite_timeout))
         {
@@ -145,7 +145,8 @@ static int SIP_processRequest(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_Dialog
  *  true:
  *  false:
  ********************************************************************/
-static int SIP_processInvite(const SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_DialogList* dList)
+static int SIP_processInvite(const SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_DialogList* dList,
+    SIP_PROTO_CONF* config)
 {
     bool ret = true;
 
@@ -162,6 +163,14 @@ static int SIP_processInvite(const SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_D
     if (SIP_DLG_ESTABLISHED == dialog->state)
     {
         /* this is the case of re-INVITE*/
+        // The max_dialogs check in SIP_updateDialog only fires when no
+        // existing dialog matched. Duplicate it here so re-INVITEs cannot
+        // grow num_dialogs past the configured cap by bypassing that path.
+        if (dList->num_dialogs >= config->maxNumDialogsInSession)
+        {
+            DetectionEngine::queue_event(GID_SIP, SIP_EVENT_MAX_DIALOGS_IN_A_SESSION);
+            return false;
+        }
         // create a temporary new dialog before the current dialog
         dialog = SIP_addDialog(sipMsg, dialog, dList);
         dialog->state =  SIP_DLG_REINVITING;
@@ -475,17 +484,34 @@ static void SIP_updateMedias(SIP_MediaSession* mSession, SIP_MediaList& dList)
     // Find out the media session based on session id
     SIP_MediaSession* currSession = dList;
     SIP_MediaSession* preSession = nullptr;
+    SIP_MediaSession* tail = nullptr;
+    SIP_MediaSession* preTail = nullptr;
+    unsigned count = 0;
     while (nullptr != currSession)
     {
         if (currSession->sessionID == mSession->sessionID)
             break;
 
+        count++;
+        preTail = preSession;
+        tail = currSession;
         preSession = currSession;
         currSession = currSession->nextS;
     }
     // if this is a new session data, add to the list head
     if (nullptr == currSession)
     {
+        // Bound the list: if at the cap, free the oldest (tail) entry
+        // before inserting the new head.
+        if (count >= SIP_MAX_MEDIA_SESSIONS_PER_DIALOG && tail)
+        {
+            // preTail is always non-null here: count >= 8 requires at least
+            // 8 loop iterations, and preTail becomes non-null after iteration 2.
+            preTail->nextS = nullptr;
+            tail->nextS = nullptr;
+            sip_freeMediaSession(tail);
+            sip_stats.mediaSessionCapHits++;
+        }
         mSession->nextS = dList;
         dList = mSession;
     }
