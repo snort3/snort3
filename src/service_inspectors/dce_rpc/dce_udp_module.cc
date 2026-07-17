@@ -45,6 +45,12 @@ static const Parameter s_params[] =
     { "max_frag_len", Parameter::PT_INT, "1514:65535", "65535",
       "maximum fragment size for defragmentation" },
 
+    { "max_activity_trackers", Parameter::PT_INT, "1:max32", "16",
+      "maximum connection-less activity trackers per flow" },
+
+    { "max_frag_tracker_nodes", Parameter::PT_INT, "1:max32", "1024",
+      "maximum connection-less fragment tracker nodes per activity" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -54,6 +60,8 @@ static const RuleMap dce2_udp_rules[] =
     { DCE2_CL_BAD_PDU_TYPE, DCE2_CL_BAD_PDU_TYPE_STR },
     { DCE2_CL_DATA_LT_HDR, DCE2_CL_DATA_LT_HDR_STR },
     { DCE2_CL_BAD_SEQ_NUM, DCE2_CL_BAD_SEQ_NUM_STR },
+    { DCE2_CL_EXCESSIVE_ACTIVITY_TRACKERS, DCE2_CL_EXCESSIVE_ACTIVITY_TRACKERS_STR },
+    { DCE2_CL_EXCESSIVE_FRAGMENTS, DCE2_CL_EXCESSIVE_FRAGMENTS_STR },
     { 0, nullptr }
 };
 
@@ -123,7 +131,19 @@ ProfileStats* Dce2UdpModule::get_profile() const
 
 bool Dce2UdpModule::set(const char*, Value& v, SnortConfig*)
 {
-    return dce2_set_common_config(v,config.common);
+    if ( dce2_set_common_config(v, config.common) )
+        return true;
+
+    if ( v.is("max_activity_trackers") )
+        config.max_activity_trackers = v.get_uint32();
+
+    else if ( v.is("max_frag_tracker_nodes") )
+        config.max_frag_tracker_nodes = v.get_uint32();
+
+    else
+        return false;
+
+    return true;
 }
 
 void Dce2UdpModule::get_data(dce2UdpProtoConf& dce2_udp_config)
@@ -134,5 +154,8 @@ void Dce2UdpModule::get_data(dce2UdpProtoConf& dce2_udp_config)
 void print_dce2_udp_conf(const dce2UdpProtoConf& config)
 {
     print_dce2_common_config(config.common);
+    ConfigLogger::log_limit("max_activity_trackers",
+        static_cast<unsigned int>(config.max_activity_trackers), 0U, 1U);
+    ConfigLogger::log_limit("max_frag_tracker_nodes",
+        static_cast<unsigned int>(config.max_frag_tracker_nodes), 0U, 1U);
 }
-

@@ -32,6 +32,7 @@
 #include "dce_udp.h"
 
 #include "flow/session.h"
+#include "packet_io/active.h"
 #include "trace/trace_api.h"
 #include "utils/safec.h"
 #include "utils/util.h"
@@ -82,7 +83,8 @@ struct DCE2_ClActTracker
  * Private function prototypes
  ********************************************************************/
 static DCE2_Ret DCE2_ClHdrChecks(DCE2_SsnData*, const DceRpcClHdr*);
-static DCE2_ClActTracker* DCE2_ClGetActTracker(DCE2_ClTracker*, const DceRpcClHdr*);
+static DCE2_ClActTracker* DCE2_ClGetActTracker(DCE2_SsnData*, DCE2_ClTracker*,
+    const DceRpcClHdr*);
 static DCE2_ClActTracker* DCE2_ClInsertActTracker(DCE2_ClTracker*, const DceRpcClHdr*);
 static void DCE2_ClRequest(DCE2_SsnData*, DCE2_ClActTracker*, const DceRpcClHdr*,
     const uint8_t*, uint16_t);
@@ -97,6 +99,13 @@ static void DCE2_ClActDataFree(void*);
 static void DCE2_ClActKeyFree(void*);
 static int DCE2_ClFragCompare(const void*, const void*);
 static void DCE2_ClFragDataFree(void*);
+
+static void DCE2_ClBlockSession()
+{
+    Packet* p = DetectionEngine::get_current_packet();
+    p->active->block_session(p, true);
+    p->active->set_drop_reason("dce_udp");
+}
 
 // Main entry point for connectionless DCE/RPC processing.  Gets
 // the activity tracker associated with this session and passes
@@ -122,7 +131,7 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
     if (DCE2_ClHdrChecks(sd, cl_hdr) != DCE2_RET__SUCCESS)
         return;
 
-    at = DCE2_ClGetActTracker(clt, cl_hdr);
+    at = DCE2_ClGetActTracker(sd, clt, cl_hdr);
     if (at == nullptr)
         return;
 
@@ -238,7 +247,8 @@ static DCE2_Ret DCE2_ClHdrChecks(DCE2_SsnData* sd, const DceRpcClHdr* cl_hdr)
 
 // Searches for activity tracker in list using activity UUID in
 // packet.
-static DCE2_ClActTracker* DCE2_ClGetActTracker(DCE2_ClTracker* clt, const DceRpcClHdr* cl_hdr)
+static DCE2_ClActTracker* DCE2_ClGetActTracker(DCE2_SsnData* sd, DCE2_ClTracker* clt,
+    const DceRpcClHdr* cl_hdr)
 {
     DCE2_ClActTracker* at = nullptr;
 
@@ -263,6 +273,15 @@ static DCE2_ClActTracker* DCE2_ClGetActTracker(DCE2_ClTracker* clt, const DceRpc
     /* Didn't find a currently active activity tracker */
     if (at == nullptr)
     {
+        if (clt->act_trackers->num_nodes >=
+            ((dce2UdpProtoConf*)sd->config)->max_activity_trackers)
+        {
+            dce_alert(GID_DCE2, DCE2_CL_EXCESSIVE_ACTIVITY_TRACKERS,
+                (dce2CommonStats*)&dce2_udp_stats, *sd);
+            DCE2_ClBlockSession();
+            return nullptr;
+        }
+
         /* Insert a new activity tracker */
         at = DCE2_ClInsertActTracker(clt, cl_hdr);
     }
@@ -426,6 +445,14 @@ static void DCE2_ClHandleFrag(DCE2_SsnData* sd, DCE2_ClActTracker* at, const Dce
         {
             return;
         }
+    }
+
+    if (ft->frags->num_nodes >= ((dce2UdpProtoConf*)sd->config)->max_frag_tracker_nodes)
+    {
+        dce_alert(GID_DCE2, DCE2_CL_EXCESSIVE_FRAGMENTS,
+            (dce2CommonStats*)&dce2_udp_stats, *sd);
+        DCE2_ClBlockSession();
+        return;
     }
 
     /* Create a new frag node to insert into the list */
@@ -652,4 +679,3 @@ static void DCE2_ClSetRdata(DCE2_ClActTracker* at, const DceRpcClHdr* pkt_cl_hdr
     cl_hdr->if_vers = DceRpcHtonl(&ft->iface_vers, DCERPC_BO_FLAG__LITTLE_ENDIAN);
     cl_hdr->opnum = DceRpcHtons(&opnum, DCERPC_BO_FLAG__LITTLE_ENDIAN);
 }
-

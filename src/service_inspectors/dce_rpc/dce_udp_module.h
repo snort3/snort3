@@ -36,15 +36,26 @@ extern THREAD_LOCAL const snort::Trace* dce_udp_trace;
 #define DCE2_CL_BAD_PDU_TYPE      41
 #define DCE2_CL_DATA_LT_HDR       42
 #define DCE2_CL_BAD_SEQ_NUM       43
+#define DCE2_CL_EXCESSIVE_ACTIVITY_TRACKERS 61
+#define DCE2_CL_EXCESSIVE_FRAGMENTS 62
 
 #define DCE2_CL_BAD_MAJOR_VERSION_STR "connection-less DCE/RPC - invalid major version"
 #define DCE2_CL_BAD_PDU_TYPE_STR "connection-less DCE/RPC - invalid PDU type"
 #define DCE2_CL_DATA_LT_HDR_STR  "connection-less DCE/RPC - data length less than header size"
 #define DCE2_CL_BAD_SEQ_NUM_STR  "connection-less DCE/RPC - bad sequence number"
+#define DCE2_CL_EXCESSIVE_ACTIVITY_TRACKERS_STR \
+    "connection-less DCE/RPC - excessive activity trackers causing potential DoS"
+#define DCE2_CL_EXCESSIVE_FRAGMENTS_STR \
+    "connection-less DCE/RPC - excessive fragments causing potential DoS"
+
+static constexpr uint32_t DCE2_CL_DEFAULT_MAX_ACTIVITY_TRACKERS = 16;
+static constexpr uint32_t DCE2_CL_DEFAULT_MAX_FRAG_TRACKER_NODES = 1024;
 
 struct dce2UdpProtoConf
 {
     dce2CommonProtoConf common = {};
+    uint32_t max_activity_trackers = DCE2_CL_DEFAULT_MAX_ACTIVITY_TRACKERS;
+    uint32_t max_frag_tracker_nodes = DCE2_CL_DEFAULT_MAX_FRAG_TRACKER_NODES;
 };
 
 class Dce2UdpModule : public snort::Module
