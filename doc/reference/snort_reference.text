@@ -8,7 +8,7 @@ Snort 3 Reference Manual
 The Snort Team
 
 Revision History
-Revision 3.12.2.0 2026-04-22 20:06:05 EDT TST
+Revision 3.12.2.0 2026-07-20 12:07:10 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -998,6 +998,7 @@ Configuration:
     rules too)
   * string ips.uuid = 00000000-0000-0000-0000-000000000000: IPS
     policy uuid
+  * string ips.variables.actions.$var.react.page: react page file
   * string ips.variables.nets.$var: IPS policy variable
   * string ips.variables.paths.$var: IPS policy variable
   * string ips.variables.ports.$var: IPS policy variable
@@ -1292,6 +1293,12 @@ Configuration:
   * bool output.wide_hex_dump = false: output 20 bytes per lines
     instead of 16 when dumping buffers
 
+Commands:
+
+  * output.enable_log_buffered(): enable buffered logging dynamically
+  * output.disable_log_buffered(): disable buffered logging
+    dynamically
+
 Rules:
 
   * 2:1 (output) tagged packet
@@ -1317,7 +1324,8 @@ Configuration:
 Commands:
 
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port,
-    tenants, regex, stop_after_match): enable packet tracer debugging
+    tenants, regex, stop_after_match, match_count): enable packet
+    tracer debugging
   * packet_tracer.disable(): disable packet tracer
 
 
@@ -1864,7 +1872,7 @@ Commands:
   * snort.dump_heap_profile(): dump jemalloc memory profile
   * snort.dump_heap_stats(): show heap statistics
   * snort.dump_inspector_map(): show inspectors to policy ID mapping
-  * snort.dump_stats(): show summary statistics
+  * snort.dump_stats(format): show summary statistics
   * snort.heap_profile(enable, sample_rate): jemalloc memory tracking
     configuration
   * snort.help(): this output
@@ -2853,6 +2861,12 @@ Peg counts:
     third-party module is reloaded (sum)
   * appid.bytes_in_use: number of bytes in use in the cache (now)
   * appid.items_in_use: items in use in the cache (now)
+  * appid.tp_mem_allocations: number of memory allocations in
+    third-party module (sum)
+  * appid.tp_mem_frees: number of memory frees in third-party module
+    (sum)
+  * appid.tp_mem_bytes_in_use: number of bytes in use in third-party
+    module (now)
 
 
 5.2. appid_listener
@@ -3152,6 +3166,8 @@ Configuration:
     request { 1:65535 }
   * int dce_smb.memcap = 8388608: Memory utilization limit on SMBv2
     cache { 512:maxSZ }
+  * int dce_smb.smb_max_file_chunks = 1024: maximum out-of-order file
+    data chunks buffered per tracker { 1:65535 }
 
 Rules:
 
@@ -3213,6 +3229,8 @@ Rules:
     size specified
   * 133:59 (dce_smb) SMB - next command specified in SMB2 header is
     beyond payload boundary
+  * 133:60 (dce_smb) SMB - excessive out-of-order file chunks causing
+    potential DoS
 
 Peg counts:
 
@@ -3553,6 +3571,10 @@ Configuration:
     defragmentation
   * int dce_udp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
+  * int dce_udp.max_activity_trackers = 16: maximum connection-less
+    activity trackers per flow { 1:max32 }
+  * int dce_udp.max_frag_tracker_nodes = 1024: maximum
+    connection-less fragment tracker nodes per activity { 1:max32 }
 
 Rules:
 
@@ -3561,6 +3583,10 @@ Rules:
   * 133:42 (dce_udp) connection-less DCE/RPC - data length less than
     header size
   * 133:43 (dce_udp) connection-less DCE/RPC - bad sequence number
+  * 133:61 (dce_udp) connection-less DCE/RPC - excessive activity
+    trackers causing potential DoS
+  * 133:62 (dce_udp) connection-less DCE/RPC - excessive fragments
+    causing potential DoS
 
 Peg counts:
 
@@ -3674,6 +3700,8 @@ Peg counts:
   * dns.max_concurrent_sessions: maximum concurrent dns sessions
     (max)
   * dns.aborted_sessions: total dns sessions aborted (sum)
+  * dns.malformed_name_dropped: packets dropped due to domain name
+    exceeding 255-octet limit (sum)
 
 
 5.16. domain_filter
@@ -3833,6 +3861,52 @@ Peg counts:
     be allocated (max)
   * file_inspect.buffers_in_use: number of file buffers currently in
     use (now)
+  * file_inspect.files_buffered_total: number of files that entered
+    multi-packet buffering (sum)
+  * file_inspect.files_released_total: reserved files released back
+    to pool (cross-thread) (sum)
+  * file_inspect.files_freed_total: unreserved files freed back to
+    pool (same-thread) (sum)
+  * file_inspect.files_captured_total: files successfully reserved
+    for external use (sum)
+  * file_inspect.file_memcap_failures_total: alloc failed - file
+    mempool exhausted (sum)
+  * file_inspect.file_reserve_failures: any file reserve failure
+    (sum)
+  * file_inspect.size_below_min: files rejected below minimum capture
+    size (sum)
+  * file_inspect.size_above_limit: files rejected above the capture
+    size limit (sum)
+  * file_inspect.single_packet_files: files fitting in a single
+    packet (sum)
+  * file_inspect.buffers_used_max: peak simultaneous buffer usage
+    (max)
+  * file_inspect.buffers_allocated: total blocks allocated from file
+    mempool (sum)
+  * file_inspect.buffers_freed_total: total blocks freed to pool
+    (same-thread) (sum)
+  * file_inspect.buffers_released_total: total blocks released to
+    pool (cross-thread) (sum)
+  * file_inspect.buffers_free_errors: block free operation failures
+    (sum)
+  * file_inspect.buffers_release_errors: block release operation
+    failures (sum)
+  * file_inspect.sig_depth_exceeded: files bypassing inspection due
+    to signature depth limit (sum)
+  * file_inspect.file_lookup_timeouts: files where DM never responded
+    within timeout (sum)
+  * file_inspect.file_cache_hits: file cache lookups that found a
+    known verdict (sum)
+  * file_inspect.file_cache_misses: file cache lookups that did not
+    find a verdict (sum)
+  * file_inspect.file_cache_total_entries: total files ever inserted
+    into the file cache (sum)
+  * file_inspect.file_cache_full: file cache at the configured entry
+    limit - no room for new entry (sum)
+  * file_inspect.file_cache_failures: file cache add failed for
+    reasons other than being full (e.g., duplicate key) (sum)
+  * file_inspect.file_cache_max_entries: peak number of entries ever
+    in the file cache (max)
 
 
 5.20. file_log
@@ -4053,6 +4127,8 @@ Configuration:
   * int http2_inspect.concurrent_streams_limit = 100: Maximum number
     of concurrent streams allowed in a single HTTP/2 flow { 100:1000
     }
+  * int http2_inspect.rst_stream_limit = 100: Maximum number of
+    RST_STREAM frames allowed per flow before alerting { 10:1000 }
   * int http2_inspect.settings_max_frame_size = 16777215: Maximum
     allowed value for settings frame SETTINGS_MAX_FRAME_SIZE {
     16384:16777215 }
@@ -4123,6 +4199,8 @@ Rules:
     settings
   * 121:44 (http2_inspect) settings frame size greater than
     settings_max_frame_size
+  * 121:45 (http2_inspect) excessive RST_STREAM frames indicating
+    possible rapid reset attack
 
 Peg counts:
 
@@ -4235,6 +4313,13 @@ Configuration:
   * string http_inspect.allowed_methods: list of allowed methods
   * string http_inspect.disallowed_methods: list of disallowed
     methods
+  * int http_inspect.max_expansion_ratio = 100: maximum allowed
+    output/input ratio per single decompress (-1 no limit) { -1:65535
+    }
+  * int http_inspect.max_request_size = 0: maximum size of a http
+    request (0 disabled, -1 no limit) { -1:65536 }
+  * int http_inspect.max_request_line_length = 0: maximum length of a
+    http request line (0 disabled, -1 no limit) { -1:49152 }
 
 Rules:
 
@@ -4270,8 +4355,7 @@ Rules:
     root directory
   * 119:19 (http_inspect) HTTP header line exceeds
     maximum_header_length option bytes
-  * 119:20 (http_inspect) HTTP message has more than maximum_headers
-    option header fields
+  * 119:20 (http_inspect) HTTP header count exceeds limit
   * 119:21 (http_inspect) HTTP message has more than one
     Content-Length header value
   * 119:24 (http_inspect) Host header field appears more than once or
@@ -4419,13 +4503,28 @@ Rules:
     63780 bytes
   * 119:286 (http_inspect) HTTP/2 preface received instead of an HTTP
     /1 method
-  * 119:287 (http_inspect) HTTP request method is not on allowed
-    methods list or is on disallowed methods list
+  * 119:287 (http_inspect) HTTP method is not allowed
   * 119:288 (http_inspect) HTTP gzip body with reserved flag set
   * 119:289 (http_inspect) Too many partial flushes
   * 119:290 (http_inspect) deflate compressed data followed by
     unexpected non-deflate data
   * 119:291 (http_inspect) deflate decompression failed
+  * 119:292 (http_inspect) brotli compressed data followed by
+    unexpected non-brotli data
+  * 119:293 (http_inspect) brotli decompression failed
+  * 119:294 (http_inspect) gzip decompression produced excessive
+    output relative to consumed input
+  * 119:295 (http_inspect) deflate decompression produced excessive
+    output relative to consumed input
+  * 119:296 (http_inspect) brotli decompression produced excessive
+    output relative to consumed input
+  * 119:297 (http_inspect) brotli compressed traffic detected while
+    decompression is disabled
+  * 119:298 (http_inspect) maximum request size exceeded
+  * 119:299 (http_inspect) maximum request line length exceeded
+  * 119:300 (http_inspect) invalid HTTP request line format
+  * 119:301 (http_inspect) invalid Content-Length or
+    Transfer-Encoding header
 
 Peg counts:
 
@@ -4495,12 +4594,18 @@ Peg counts:
     bodies compressed with Deflate that had incorrect header (sum)
   * http_inspect.compressed_deflate_failed: total number of HTTP
     bodies with failed Deflate decompression (sum)
+  * http_inspect.compressed_brotli: total number of HTTP bodies
+    compressed with Brotli (sum)
+  * http_inspect.compressed_brotli_failed: total number of HTTP
+    bodies with failed Brotli decompression (sum)
   * http_inspect.compressed_not_supported: total number of HTTP
     bodies compressed with known but not supported methods (sum)
   * http_inspect.compressed_unknown: total number of HTTP bodies
     compressed with unknown methods (sum)
   * http_inspect.max_publish_depth_hits: total number of times the
     maximum publish depth was exceeded (sum)
+  * http_inspect.header_count_exceeded: total number of HTTP messages
+    with header count exceeding the configured maximum (sum)
 
 
 5.27. iec104
@@ -5788,6 +5893,8 @@ Configuration:
   * int sip.max_dialogs = 4: maximum number of dialogs within one
     stream session { 1:max32 }
   * int sip.max_from_len = 256: maximum from field size { 0:65535 }
+  * int sip.max_media_data = 128: maximum number of media data lines
+    (m=) per SDP session { 1:65535 }
   * int sip.max_request_name_len = 20: maximum request name field
     size { 0:65535 }
   * int sip.max_to_len = 256: maximum to field size { 0:65535 }
@@ -5846,6 +5953,9 @@ Peg counts:
   * sip.dialogs: total dialogs (sum)
   * sip.ignored_channels: total channels ignored (sum)
   * sip.ignored_sessions: total sessions ignored (sum)
+  * sip.media_session_cap_hits: media sessions evicted due to cap
+    (sum)
+  * sip.media_data_cap_hits: m= lines dropped due to cap (sum)
   * sip.total_requests: total requests (sum)
   * sip.invite: invite (sum)
   * sip.cancel: cancel (sum)
@@ -6151,6 +6261,8 @@ Peg counts:
   * ssh.max_concurrent_sessions: maximum concurrent ssh sessions
     (max)
   * ssh.aborted_sessions: total session aborted (sum)
+  * ssh.invalid_packet_length: total packets with invalid ssh packet
+    length (sum)
 
 
 5.49. ssl
@@ -6182,6 +6294,9 @@ Rules:
     packet
   * 137:6 (ssl) multiple server CERTIFICATE common names or
     organizational units detected in single packet
+  * 137:7 (ssl) embedded null character detected in client HELLO
+  * 137:8 (ssl) embedded null character detected in server
+    CERTIFICATE
 
 Peg counts:
 
@@ -6545,6 +6660,11 @@ Configuration:
   * int stream_tcp.session_timeout = 180: session tracking timeout {
     1:max31 }
   * bool stream_tcp.track_only = false: disable reassembly if true
+  * bool stream_tcp.proxy_mode_ooo_drop = false: drop out-of-order
+    data packets before proxy mode cutover; TCP retransmission
+    recovers
+  * bool stream_tcp.trace_seq_relative = false: if true show relative
+    seq/ack numbers in trace output, if false show absolute
   * int stream_tcp.embryonic_timeout = 30: Non-established connection
     timeout { 1:max31 }
   * int stream_tcp.idle_timeout = 3600: session deletion on idle {
@@ -6603,6 +6723,8 @@ Peg counts:
     the left of the current TCP window (spurious retransmits) (sum)
   * stream_tcp.invalid_seq_right: tcp packets received that fall to
     the right of the current TCP window (sum)
+  * stream_tcp.invalid_sent_seq: bare ACKs sent with seq outside the
+    locally-tracked send window (sum)
   * stream_tcp.invalid_ack: tcp packets received with an invalid ack
     number (sum)
   * stream_tcp.no_flags_set: tcp packets received with no TCP flags
@@ -6701,6 +6823,8 @@ Peg counts:
     (sum)
   * stream_tcp.proxy_mode_flows: number of flows set to proxy
     normalization policy (sum)
+  * stream_tcp.proxy_cutover_ooo_drops: number of OOO data packets
+    dropped before proxy mode cutover (sum)
   * stream_tcp.full_retransmits: number of fully retransmitted
     segments (sum)
   * stream_tcp.flush_on_asymmetric_flow: number of flushes on
@@ -6711,6 +6835,9 @@ Peg counts:
     were exceeded due to a hole (sum)
   * stream_tcp.max_segs_exceeded_hole: number of times max segs were
     exceeded due to a hole (sum)
+  * stream_tcp.ooo_3whs_late_synack: server-side stream state
+    repaired from late SYN-ACK; wscale/snd_wnd repaired if negotiated
+    (sum)
 
 
 5.55. stream_udp
@@ -9619,7 +9746,7 @@ Configuration:
     | priority | proto | rev | rule | seconds | server_bytes |
     server_pkts | service | sgt| sid | src_addr | src_ap | src_port |
     target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win |
-    timestamp | tos | ttl | udp_len | vlan }
+    timestamp | tos | ttl | udp_len | vlan | vlan_outer }
   * int alert_csv.limit = 0: set maximum size in MB before rollover
     (0 is unlimited) { 0:maxSZ }
   * string alert_csv.separator = ', ': separate fields with this
@@ -9707,7 +9834,7 @@ Configuration:
     | priority | proto | rev | rule | seconds | server_bytes |
     server_pkts | service | sgt| sid | src_addr | src_ap | src_port |
     target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win |
-    timestamp | tos | ttl | udp_len | vlan }
+    timestamp | tos | ttl | udp_len | vlan | vlan_outer }
   * int alert_json.limit = 0: set maximum size in MB before rollover
     (0 is unlimited) { 0:maxSZ }
   * string alert_json.separator = ', ': separate fields with this
@@ -10133,7 +10260,7 @@ libraries see the Getting Started section of the manual.
     | priority | proto | rev | rule | seconds | server_bytes |
     server_pkts | service | sgt| sid | src_addr | src_ap | src_port |
     target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win |
-    timestamp | tos | ttl | udp_len | vlan }
+    timestamp | tos | ttl | udp_len | vlan | vlan_outer }
   * bool alert_csv.file = false: output to alert_csv.txt instead of
     stdout
   * int alert_csv.limit = 0: set maximum size in MB before rollover
@@ -10165,7 +10292,7 @@ libraries see the Getting Started section of the manual.
     | priority | proto | rev | rule | seconds | server_bytes |
     server_pkts | service | sgt| sid | src_addr | src_ap | src_port |
     target | tcp_ack | tcp_flags | tcp_len | tcp_seq | tcp_win |
-    timestamp | tos | ttl | udp_len | vlan }
+    timestamp | tos | ttl | udp_len | vlan | vlan_outer }
   * bool alert_json.file = false: output to alert_json.txt instead of
     stdout
   * int alert_json.limit = 0: set maximum size in MB before rollover
@@ -10450,6 +10577,8 @@ libraries see the Getting Started section of the manual.
   * int dce_smb.smb_max_compound = 3: SMB max compound size { 0:255 }
   * int dce_smb.smb_max_credit = 8192: Maximum number of outstanding
     request { 1:65535 }
+  * int dce_smb.smb_max_file_chunks = 1024: maximum out-of-order file
+    data chunks buffered per tracker { 1:65535 }
   * multi dce_smb.valid_smb_versions = all: valid SMB versions { v1 |
     v2 | all }
   * bool dce_tcp.disable_defrag = false: disable DCE/RPC
@@ -10467,8 +10596,12 @@ libraries see the Getting Started section of the manual.
     defragmentation
   * bool dce_udp.limit_alerts = true: limit DCE alert to at most one
     per signature per flow
+  * int dce_udp.max_activity_trackers = 16: maximum connection-less
+    activity trackers per flow { 1:max32 }
   * int dce_udp.max_frag_len = 65535: maximum fragment size for
     defragmentation { 1514:65535 }
+  * int dce_udp.max_frag_tracker_nodes = 1024: maximum
+    connection-less fragment tracker nodes per activity { 1:max32 }
   * bool detection.allow_missing_so_rules = false: warn (true) or
     error (false) when an SO rule stub refers to an SO rule that
     isn’t loaded
@@ -10749,6 +10882,8 @@ libraries see the Getting Started section of the manual.
   * int http2_inspect.concurrent_streams_limit = 100: Maximum number
     of concurrent streams allowed in a single HTTP/2 flow { 100:1000
     }
+  * int http2_inspect.rst_stream_limit = 100: Maximum number of
+    RST_STREAM frames allowed per flow before alerting { 10:1000 }
   * int http2_inspect.settings_max_frame_size = 16777215: Maximum
     allowed value for settings frame SETTINGS_MAX_FRAME_SIZE {
     16384:16777215 }
@@ -10823,6 +10958,9 @@ libraries see the Getting Started section of the manual.
     mapping to normalize characters
   * string http_inspect.iis_unicode_map_file: file containing code
     points for IIS unicode. { (optional) }
+  * int http_inspect.max_expansion_ratio = 100: maximum allowed
+    output/input ratio per single decompress (-1 no limit) { -1:65535
+    }
   * int http_inspect.maximum_chunk_length = 4294967295: maximum
     allowed length for a message body chunk { 0:4294967295 }
   * int http_inspect.maximum_header_length = 4096: alert when the
@@ -10839,6 +10977,10 @@ libraries see the Getting Started section of the manual.
   * int http_inspect.max_mime_attach = 5: maximum number of mime
     attachments that will be inspected in a section of a request
     message { 1:65535 }
+  * int http_inspect.max_request_line_length = 0: maximum length of a
+    http request line (0 disabled, -1 no limit) { -1:49152 }
+  * int http_inspect.max_request_size = 0: maximum size of a http
+    request (0 disabled, -1 no limit) { -1:65536 }
   * bool http_inspect.normalize_javascript = false: use legacy
     normalizer to normalize JavaScript in response bodies
   * bool http_inspect.normalize_utf = true: normalize charset utf
@@ -11085,6 +11227,7 @@ libraries see the Getting Started section of the manual.
     rules too)
   * string ips.uuid = 00000000-0000-0000-0000-000000000000: IPS
     policy uuid
+  * string ips.variables.actions.$var.react.page: react page file
   * string ips.variables.nets.$var: IPS policy variable
   * string ips.variables.paths.$var: IPS policy variable
   * string ips.variables.ports.$var: IPS policy variable
@@ -11856,6 +11999,8 @@ libraries see the Getting Started section of the manual.
   * int sip.max_dialogs = 4: maximum number of dialogs within one
     stream session { 1:max32 }
   * int sip.max_from_len = 256: maximum from field size { 0:65535 }
+  * int sip.max_media_data = 128: maximum number of media data lines
+    (m=) per SDP session { 1:65535 }
   * int sip.max_request_name_len = 20: maximum request name field
     size { 0:65535 }
   * int sip.max_to_len = 256: maximum to field size { 0:65535 }
@@ -12309,6 +12454,9 @@ libraries see the Getting Started section of the manual.
     characteristics like reassembly { first | last | linux | 
     old_linux | bsd | macos | solaris | irix | hpux11 | hpux10 | 
     windows | win_2003 | vista }
+  * bool stream_tcp.proxy_mode_ooo_drop = false: drop out-of-order
+    data packets before proxy mode cutover; TCP retransmission
+    recovers
   * int stream_tcp.queue_limit.asymmetric_ids_flush_threshold =
     3145728: max bytes queued on asymmetric flow before flush in IDS
     mode { 1:max31 }
@@ -12331,6 +12479,8 @@ libraries see the Getting Started section of the manual.
     excessive (129:12) { 0:2048 }
   * int stream_tcp.small_segments.maximum_size = 0: minimum bytes for
     a TCP segment not to be considered small (129:12) { 0:2048 }
+  * bool stream_tcp.trace_seq_relative = false: if true show relative
+    seq/ack numbers in trace output, if false show absolute
   * bool stream_tcp.track_only = false: disable reassembly if true
   * int stream.udp_cache.idle_timeout = 180: maximum inactive time
     before retiring session tracker { 1:max32 }
@@ -12528,6 +12678,12 @@ libraries see the Getting Started section of the manual.
   * appid.service_cache_removes: number of times an item was removed
     from the service cache (sum)
   * appid.total_sessions: count of sessions created (sum)
+  * appid.tp_mem_allocations: number of memory allocations in
+    third-party module (sum)
+  * appid.tp_mem_bytes_in_use: number of bytes in use in third-party
+    module (now)
+  * appid.tp_mem_frees: number of memory frees in third-party module
+    (sum)
   * appid.tp_reload_ignored_pkts: count of packets ignored after
     third-party module is reloaded (sum)
   * arp_spoof.packets: total packets (sum)
@@ -12958,6 +13114,8 @@ libraries see the Getting Started section of the manual.
   * dns.dns_over_quic: total dns packets over quic (sum)
   * dns.dns_over_tcp: total dns packets over tcp (sum)
   * dns.dns_over_udp: total dns packets over udp (sum)
+  * dns.malformed_name_dropped: packets dropped due to domain name
+    exceeding 255-octet limit (sum)
   * dns.max_concurrent_sessions: maximum concurrent dns sessions
     (max)
   * dns.packets: total packets processed (sum)
@@ -12972,16 +13130,62 @@ libraries see the Getting Started section of the manual.
     out of local memory (sum)
   * extractor.total_events: total events processed by extractor (sum)
   * file_connector.messages: total messages (sum)
+  * file_inspect.buffers_allocated: total blocks allocated from file
+    mempool (sum)
+  * file_inspect.buffers_freed_total: total blocks freed to pool
+    (same-thread) (sum)
+  * file_inspect.buffers_free_errors: block free operation failures
+    (sum)
   * file_inspect.buffers_in_use: number of file buffers currently in
     use (now)
   * file_inspect.buffers_max: maximum number of file buffers that can
     be allocated (max)
+  * file_inspect.buffers_released_total: total blocks released to
+    pool (cross-thread) (sum)
+  * file_inspect.buffers_release_errors: block release operation
+    failures (sum)
+  * file_inspect.buffers_used_max: peak simultaneous buffer usage
+    (max)
   * file_inspect.cache_failures: number of file cache add failures
     (sum)
+  * file_inspect.file_cache_failures: file cache add failed for
+    reasons other than being full (e.g., duplicate key) (sum)
+  * file_inspect.file_cache_full: file cache at the configured entry
+    limit - no room for new entry (sum)
+  * file_inspect.file_cache_hits: file cache lookups that found a
+    known verdict (sum)
+  * file_inspect.file_cache_max_entries: peak number of entries ever
+    in the file cache (max)
+  * file_inspect.file_cache_misses: file cache lookups that did not
+    find a verdict (sum)
+  * file_inspect.file_cache_total_entries: total files ever inserted
+    into the file cache (sum)
+  * file_inspect.file_lookup_timeouts: files where DM never responded
+    within timeout (sum)
+  * file_inspect.file_memcap_failures_total: alloc failed - file
+    mempool exhausted (sum)
+  * file_inspect.file_reserve_failures: any file reserve failure
+    (sum)
+  * file_inspect.files_buffered_total: number of files that entered
+    multi-packet buffering (sum)
+  * file_inspect.files_captured_total: files successfully reserved
+    for external use (sum)
+  * file_inspect.files_freed_total: unreserved files freed back to
+    pool (same-thread) (sum)
   * file_inspect.files_not_processed: number of files not processed
     due to per-flow limit (sum)
+  * file_inspect.files_released_total: reserved files released back
+    to pool (cross-thread) (sum)
   * file_inspect.max_concurrent_files: maximum files processed
     concurrently on a flow (max)
+  * file_inspect.sig_depth_exceeded: files bypassing inspection due
+    to signature depth limit (sum)
+  * file_inspect.single_packet_files: files fitting in a single
+    packet (sum)
+  * file_inspect.size_above_limit: files rejected above the capture
+    size limit (sum)
+  * file_inspect.size_below_min: files rejected below minimum capture
+    size (sum)
   * file_inspect.total_file_data: number of file data bytes processed
     (sum)
   * file_inspect.total_files: number of files processed (sum)
@@ -13078,6 +13282,10 @@ libraries see the Getting Started section of the manual.
   * http2_inspect.total_bytes: total HTTP/2 data bytes inspected
     (sum)
   * http_inspect.chunked: chunked message bodies (sum)
+  * http_inspect.compressed_brotli_failed: total number of HTTP
+    bodies with failed Brotli decompression (sum)
+  * http_inspect.compressed_brotli: total number of HTTP bodies
+    compressed with Brotli (sum)
   * http_inspect.compressed_deflate_failed: total number of HTTP
     bodies with failed Deflate decompression (sum)
   * http_inspect.compressed_deflate: total number of HTTP bodies
@@ -13100,6 +13308,8 @@ libraries see the Getting Started section of the manual.
     (sum)
   * http_inspect.flows: HTTP connections inspected (sum)
   * http_inspect.get_requests: GET requests inspected (sum)
+  * http_inspect.header_count_exceeded: total number of HTTP messages
+    with header count exceeding the configured maximum (sum)
   * http_inspect.head_requests: HEAD requests inspected (sum)
   * http_inspect.incorrect_deflate_header: total number of HTTP
     bodies compressed with Deflate that had incorrect header (sum)
@@ -13550,6 +13760,9 @@ libraries see the Getting Started section of the manual.
   * sip.join: join (sum)
   * sip.max_concurrent_sessions: maximum concurrent SIP sessions
     (max)
+  * sip.media_data_cap_hits: m= lines dropped due to cap (sum)
+  * sip.media_session_cap_hits: media sessions evicted due to cap
+    (sum)
   * sip.message: message (sum)
   * sip.notify: notify (sum)
   * sip.options: options (sum)
@@ -13648,6 +13861,8 @@ libraries see the Getting Started section of the manual.
   * socks.udp_packets: UDP packets processed (sum)
   * ssh.aborted_sessions: total session aborted (sum)
   * ssh.concurrent_sessions: total concurrent ssh sessions (now)
+  * ssh.invalid_packet_length: total packets with invalid ssh packet
+    length (sum)
   * ssh.max_concurrent_sessions: maximum concurrent ssh sessions
     (max)
   * ssh.packets: total packets (sum)
@@ -13847,6 +14062,8 @@ libraries see the Getting Started section of the manual.
   * stream_tcp.internal_events: 135:X events generated (sum)
   * stream_tcp.invalid_ack: tcp packets received with an invalid ack
     number (sum)
+  * stream_tcp.invalid_sent_seq: bare ACKs sent with seq outside the
+    locally-tracked send window (sum)
   * stream_tcp.invalid_seq_left: tcp packets received that fall to
     the left of the current TCP window (spurious retransmits) (sum)
   * stream_tcp.invalid_seq_right: tcp packets received that fall to
@@ -13870,6 +14087,9 @@ libraries see the Getting Started section of the manual.
   * stream_tcp.meta_acks: number of meta acks processed (sum)
   * stream_tcp.no_flags_set: tcp packets received with no TCP flags
     set (sum)
+  * stream_tcp.ooo_3whs_late_synack: server-side stream state
+    repaired from late SYN-ACK; wscale/snd_wnd repaired if negotiated
+    (sum)
   * stream_tcp.overlaps: overlapping segments queued (sum)
   * stream_tcp.packets_held: number of packets held (sum)
   * stream_tcp.partial_fallbacks: count of fallbacks from assigned
@@ -13879,6 +14099,8 @@ libraries see the Getting Started section of the manual.
     (sum)
   * stream_tcp.payload_fully_trimmed: segments with no data after
     trimming (sum)
+  * stream_tcp.proxy_cutover_ooo_drops: number of OOO data packets
+    dropped before proxy mode cutover (sum)
   * stream_tcp.proxy_mode_flows: number of flows set to proxy
     normalization policy (sum)
   * stream_tcp.prunes: tcp session prunes (sum)
@@ -14654,12 +14876,12 @@ session.
 The TCP packet is invalid because it doesn’t have a SYN, ACK, or RST
 flag set.
 
-116:424 (pbb) truncated ethernet header
+116:424 (eth) truncated ethernet header
 
 The packet length is less than the minimum ethernet header size (14
 bytes)
 
-116:424 (pbb) truncated ethernet header
+116:424 (eth) truncated ethernet header
 
 A truncated ethernet header was detected.
 
@@ -15011,10 +15233,9 @@ HTTP header line exceeds maximum_header_length option bytes. This
 does not apply to the start line. Header line length includes both
 header field name and value.
 
-119:20 (http_inspect) HTTP message has more than maximum_headers
-option header fields
+119:20 (http_inspect) HTTP header count exceeds limit
 
-HTTP message has more than maximum_headers option header fields.
+HTTP header count exceeds limit.
 
 119:21 (http_inspect) HTTP message has more than one Content-Length
 header value
@@ -15576,8 +15797,7 @@ method
 
 HTTP/2 preface received instead of an HTTP/1 method
 
-119:287 (http_inspect) HTTP request method is not on allowed methods
-list or is on disallowed methods list
+119:287 (http_inspect) HTTP method is not allowed
 
 HTTP request method is not on allowed methods list or is on
 disallowed methods list.
@@ -17411,11 +17631,15 @@ alert is raised by the enhanced JavaScript normalizer.
     channel status
   * network.set_policy(id): set the network policy for commands given
     the user policy id
+  * output.enable_log_buffered(): enable buffered logging dynamically
+  * output.disable_log_buffered(): disable buffered logging
+    dynamically
   * packet_capture.enable(filter, group, tenants, check_inner_pkt,
     capture_path, max_packet_count): capture raw packets
   * packet_capture.disable(): stop packet capturing
   * packet_tracer.enable(proto, src_ip, src_port, dst_ip, dst_port,
-    tenants, regex, stop_after_match): enable packet tracer debugging
+    tenants, regex, stop_after_match, match_count): enable packet
+    tracer debugging
   * packet_tracer.disable(): disable packet tracer
   * perf_monitor.enable_flow_ip_profiling(seconds, packets,
     flow_ip_all): enable all statistics on host pairs
@@ -17442,7 +17666,7 @@ alert is raised by the enhanced JavaScript normalizer.
   * snort.dump_heap_profile(): dump jemalloc memory profile
   * snort.dump_heap_stats(): show heap statistics
   * snort.dump_inspector_map(): show inspectors to policy ID mapping
-  * snort.dump_stats(): show summary statistics
+  * snort.dump_stats(format): show summary statistics
   * snort.heap_profile(enable, sample_rate): jemalloc memory tracking
     configuration
   * snort.help(): this output

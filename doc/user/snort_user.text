@@ -8,7 +8,7 @@ Snort 3 User Manual
 The Snort Team
 
 Revision History
-Revision 3.12.2.0 2026-04-22 20:06:23 EDT TST
+Revision 3.12.2.0 2026-07-20 12:07:24 EDT TST
 
 ---------------------------------------------------------------------
 
@@ -1088,13 +1088,15 @@ Required:
     matching
   * pkgconfig from https://www.freedesktop.org/wiki/Software/
     pkg-config/ to locate build dependencies
-  * zlib from http://www.zlib.net for decompression (>= 1.2.8
+  * zlib from http://www.zlib.net for decompression (>= 1.2.12
     recommended)
 
 Optional:
 
   * asciidoc from http://www.methods.co.nz/asciidoc/ to build the
     HTML manual
+  * brotli from https://github.com/google/brotli.git for
+    decompression (>= 1.2.0 recommended)
   * cpputest from http://cpputest.github.io to run additional unit
     tests with make check
   * dblatex from http://dblatex.sourceforge.net to build the pdf
@@ -1900,6 +1902,92 @@ or else the default is used:
 Note that the file contains the message body only. The headers will
 be added with an updated value for Content-Length. For HTTP/2 traffic
 Snort will translate the page to HTTP/2 format.
+
+Multiple response pages can be configured per IPS policy with action
+variables:
+
+ips =
+{
+    variables =
+    {
+        actions =
+        {
+            BLOCK_PAGE_1 =
+            {
+                react = { page = "block_page_1.html" }
+            },
+            BLOCK_PAGE_2 =
+            {
+                react = { page = "block_page_2.html" }
+            }
+        }
+    },
+
+    rules = local_rules,
+}
+
+Rules and rule states select one of those configured react actions by
+using the action variable as the rule action:
+
+$BLOCK_PAGE_1 http ( msg:"Page one"; flow:established, to_server;
+    http_method; content:"GET"; sid:1; )
+
+$BLOCK_PAGE_2 http ( msg:"Page two"; flow:established, to_server;
+    http_method; content:"POST"; sid:2; )
+
+For built-in rules, or when a base rule is supplied separately,
+select the page from ips.states:
+
+ips.states =
+[[
+    $BLOCK_PAGE_1 ( gid:119; sid:19; enable:yes; )
+    $BLOCK_PAGE_2 ( gid:119; sid:20; enable:yes; )
+]]
+
+Each action variable creates a separate react action instance with
+its own page. Action variables are policy-specific, so the same
+variable name can select a different page in another IPS policy.
+
+The IPS action override can also select a configured react action
+variable:
+
+ips =
+{
+    action_override = "$BLOCK_PAGE_1",
+    variables =
+    {
+        actions =
+        {
+            BLOCK_PAGE_1 = { react = { page = "block_page_1.html" } }
+        }
+    },
+    rules = local_rules,
+}
+
+When detection.global_rule_state is enabled, a rule state that uses
+an action variable is applied by name to each target IPS policy. Each
+target IPS policy must define the referenced action variable. The
+variable is resolved in the target policy, so the same rule state can
+select different pages in different IPS policies:
+
+detection = { global_rule_state = true }
+
+ips.states =
+[[
+    $BLOCK_PAGE_1 ( gid:119; sid:20; enable:yes; )
+]]
+
+-- Each IPS policy that receives this state must define BLOCK_PAGE_1.
+
+Action variables currently support configured react pages only. They
+do not support aliases to built-in actions or unconfigured react
+actions, such as:
+
+ips.variables.actions =
+{
+    MISCONFIGURED_ALERT = "alert",
+    MISCONFIGURED_REACT = "react",
+}
 
 Limitations for HTTP/2:
 
@@ -4127,14 +4215,28 @@ improvement but at a very high price. It is unlikely that any
 meaningful inspection of message bodies will be possible. Effectively
 HTTP processing would be limited to the headers.
 
-5.10.3.6. normalize_utf
+5.10.3.6. max_expansion_ratio
+
+max_expansion_ratio limits the ratio of decompressed output to
+compressed input per single TCP segment that http_inspect will
+produce during decompression of gzip, deflate, and brotli compressed
+request and response bodies. This guards against decompression bomb
+attacks where a small compressed payload expands into a large amount
+of data.
+
+The default value is 100, meaning decompressed output may be at most
+100 times larger than the compressed input in a single TCP segment.
+Set to -1 to allow unlimited expansion. When the ratio is exceeded,
+http_inspect stops decompressing HTTP request and response bodies.
+
+5.10.3.7. normalize_utf
 
 http_inspect will decode utf-8, utf-7, utf-16le, utf-16be, utf-32le,
 and utf-32be in response message bodies based on the Content-Type
 header. This feature is on by default: normalize_utf = false will
 deactivate it.
 
-5.10.3.7. decompress_pdf
+5.10.3.8. decompress_pdf
 
 decompress_pdf = true will enable decompression of compressed
 portions of PDF files encountered in a message body. http_inspect
@@ -4143,7 +4245,7 @@ locate PDF streams with a single /FlateDecode filter. The compressed
 content is decompressed and made available through the file data rule
 option.
 
-5.10.3.8. decompress_swf
+5.10.3.9. decompress_swf
 
 decompress_swf = true will enable decompression of compressed SWF
 (Adobe Flash content) files encountered in a message body. The
@@ -4153,13 +4255,13 @@ LZMA. The compressed content is decompressed and made available
 through the file data rule option. The compressed SWF file signature
 is converted to FWS to indicate an uncompressed file.
 
-5.10.3.9. decompress_zip
+5.10.3.10. decompress_zip
 
 decompress_zip = true will enable decompression of compressed zip
 archives encountered in a message body. The compressed content is
 decompressed and made available through the file_data rule option.
 
-5.10.3.10. decompress_vba
+5.10.3.11. decompress_vba
 
 decompress_vba = true will enable decompression of RLE (Run Length
 Encoding) compressed vba (Visual Basic for Applications) macro data
@@ -4169,7 +4271,14 @@ Linking and Embedding) file embedded with the files containing RLE
 compressed vba macro data. The decompressed vba macro data is then
 made available through the vba_data ips rule option.
 
-5.10.3.11. max_mime_attach
+5.10.3.12. decompress_brotli
+
+decompress_brotli = true will enable decompression of brotli
+compressed bodies in HTTP requests and responses. This format is
+vulnerable to decompression bombs which have a high compression ratio
+for repetitive data and can significantly slow down the system.
+
+5.10.3.13. max_mime_attach
 
 HTTP request message bodies may be in MIME format. Each file
 attachment is separately incorporated in the file_data rule option.
@@ -4178,7 +4287,7 @@ may consume a lot of processing power. This parameter limits the
 number of files from one message that are inspected. The default
 value is 5.
 
-5.10.3.12. normalize_javascript
+5.10.3.14. normalize_javascript
 
 normalize_javascript = true will enable legacy normalizer of
 JavaScript within the HTTP response body. http_inspect looks for
@@ -4191,7 +4300,7 @@ http_inspect also replaces consecutive whitespaces with a single
 space and normalizes the plus by concatenating the strings. Such
 normalizations refer to basic JavaScript normalization.
 
-5.10.3.13. xff_headers
+5.10.3.15. xff_headers
 
 This configuration supports defining custom x-forwarded-for type
 headers. In a multi-vendor world, it is quite possible that the
@@ -4206,7 +4315,7 @@ they are defined, e.g "x-forwarded-for" will be preferred than
 "true-client-ip" if both headers are present in the stream. The
 header names should be delimited by a space.
 
-5.10.3.14. maximum_host_length
+5.10.3.16. maximum_host_length
 
 Setting maximum_host_length causes http_inspect to generate 119:25 if
 the Host header value including optional white space exceeds the
@@ -4214,7 +4323,7 @@ specified length. In the abnormal case of multiple Host headers, the
 total length of the combined values is used. The default value is -1,
 meaning do not perform this check.
 
-5.10.3.15. maximum_chunk_length
+5.10.3.17. maximum_chunk_length
 
 http_inspect strictly limits individual chunks within a chunked
 message body to be less than four gigabytes.
@@ -4222,17 +4331,17 @@ message body to be less than four gigabytes.
 A lower limit may be configured by setting maximum_chunk_length. Any
 chunk longer than maximum chunk length will generate a 119:16 alert.
 
-5.10.3.16. maximum_header_length
+5.10.3.18. maximum_header_length
 
 http_inspect generates 119:19 when the length of a header exceeds
 maximum_header_length = N {0 : 65535} (default 4096).
 
-5.10.3.17. maximum_headers
+5.10.3.19. maximum_headers
 
 http_inspect generates 119:20 when the number of headers exceeds
 maximum_headers = N {0 : 65535} (default 200).
 
-5.10.3.18. maximum_pipelined_requests
+5.10.3.20. maximum_pipelined_requests
 
 http_inspect generates 119:34 when the number of pipelined requests
 exceeds maximum_pipelined_requests = N {0 : 99} (default 99). This
@@ -4242,7 +4351,7 @@ the case of an alternating sequence of requests and responses. It
 will trigger the alert once the client issue a request before getting
 the response to a previous request.
 
-5.10.3.19. URI processing
+5.10.3.21. URI processing
 
 Normalization and inspection of the URI in the HTTP request message
 is a key aspect of what http_inspect does. The best way to normalize
@@ -4670,7 +4779,8 @@ http_version, http_stat_code, and http_stat_msg.
 
 The file_data contains the normalized message body. This is the
 normalization described above under gzip, normalize_utf,
-decompress_pdf, decompress_swf, and normalize_javascript.
+decompress_pdf, decompress_swf, decompress_brotli, and
+normalize_javascript.
 
 5.10.5.14. js_data
 
@@ -5973,7 +6083,8 @@ Common fields available for every service:
 Fields supported for HTTP:
 
   * method - verb used in HTTP request
-  * host - Host header
+  * host - Host header or :authority pseudo-header for HTTP/2 and
+    HTTP/3
   * uri - URI from request
   * user_agent - User-Agent header from client
   * referrer - Referrer header
@@ -6164,13 +6275,35 @@ for error cases.
   * history - a string that tracks the connection’s history. It uses
     letters to represent events, with uppercase letters denoting
     client-side events and lowercase letters for server-side events.
-    Each letter appears only once for each direction, regardless of
-    how many times the event occurs.
 
-UDP Events: d: Packet with payload.
-
-TCP Events: s: SYN, h: SYN-ACK, a: Pure ACK or PUSH, d: Packet with
-payload, f: FIN, r: Reset.
++--------------------------------+
+|Letter|UDP Event          |Notes|
+|------+-------------------+-----|
+|d     |packet with payload|     |
++--------------------------------+
++-------------------------------------------------------------------+
+|Letter|TCP Event      |Notes                                       |
+|------+---------------+--------------------------------------------|
+|s     |SYN            |the very first SYN packet followed by peer’s|
+|      |               |SYN-ACK displayed as h only                 |
+|------+---------------+--------------------------------------------|
+|h     |SYN_ACK        |                                            |
+|------+---------------+--------------------------------------------|
+|a     |pure ACK or    |                                            |
+|      |PUSH           |                                            |
+|------+---------------+--------------------------------------------|
+|d     |packet with    |appear once after: s, r, f                  |
+|      |payload        |                                            |
+|------+---------------+--------------------------------------------|
+|f     |FIN            |                                            |
+|------+---------------+--------------------------------------------|
+|r     |RST            |                                            |
+|------+---------------+--------------------------------------------|
+|-     |packet with no |                                            |
+|      |flags set      |                                            |
+|------+---------------+--------------------------------------------|
+|x     |               |history incomplete                          |
++-------------------------------------------------------------------+
 
 Fields supported for file:
 
@@ -6201,7 +6334,9 @@ Fields supported for weird and notice logs:
 
 notice events for text rules also get the following fields:
 
-  * action - action of triggered event
+  * action - action on a packet
+  * ips_action - action of IPS rule
+  * ids_reason - IDS mode origin
   * refs - references mentioned in a rule
   * rev - particular revision number of the rule
 

@@ -1,3 +1,158 @@
+2026-07-20: 3.12.3.0
+
+* actions: fix reject and react in IDS mode
+* actions: skip reset action for reject in IDS mode
+* appid: add pxGrid ssl port detection
+* appid: address FIXITs in lua_detector_api.cc
+* appid: cleanup FIXITs
+* appid: code cleanup and fixes
+* appid: fix memory leak in TLS null byte string handling
+* appid: fix TLS decryption bypass when adaptive profiles is enabled
+* appid: guard HTTP tunnel destination update
+* appid: guard TLS field setters against empty strings from third party
+* appid: harden rpc service detector portmap parsing
+* appid: remove hostname match pass using cn
+* appid: restructure appid types
+* appid: stop service inspection immediately if service candidates are exhausted and the flow is out-of-order
+* codecs: align locals
+* codecs: update Teredo parsing logic
+* codecs: widen length accumulator
+* control: fix read_commands parsing when multiple commands arrive in same read
+* dce_rpc: cap smb1 transaction total counts to prevent OOM
+* dce_rpc: fix filetracker null pointer dereference
+* dce_rpc: memory leak fix for DCE2_SmbGetFileName
+* dce_rpc: migrate rtracker to unordered_map
+* dce_rpc: move smb2 request tracking to sessions
+* dce_rpc: replace C-style cast with reinterpret_cast for cppcheck
+* dce_smb: fix list insertion and traversal based on the shortest distance from head/tail
+* dce_smb: fix stale request filename size crash
+* dce_tcp: migrate DCE2_List to unordered_map
+* dce_udp: bound connectionless tracker retention
+* decompress: fix cppcheck
+* decompress: fix sector revisit and snort crash
+* decompress: fix unbounded VBA uncompressed chunk copy
+* decompress: prevent off-by-one read and unsigned underflow
+* detection: align cache-line for OtnState
+* detection: pack RuleTreeNode hot fields on first cache line
+* detection: re-order checks
+* detection: remove redundant checks
+* detection: skip redundant final event duplicate scan
+* detection: switch to std::sort in final event selection
+* detection: tweak code for performance
+* dns: fix bound decoded name
+* dns: fix unbounded RR tab vector growth in TCP sessions
+* doc: refine documentation
+* doc: update recommended version for zlib. Thanks to Philipp Jeitner, Samaresh Singh, Bharat Deva for reporting the issue and proposing a fix.
+* extractor: allow space-separated items in configuration list
+* extractor: drop loggers when extractor is removed from configuration
+* extractor: enhance CONN history for TCP
+* extractor: fix benchmark test build
+* extractor: provide default configuration items in installed files
+* extractor: refactor FTP number parsing
+* extractor: report action, rule action, and reason in NOTICE log
+* extractor: resolve missing host header for HTTP/2
+* extractor: update default extractor NOTICE fields
+* extractor: use flow's information on dumping flow data
+* file_api: add peg counters in file for extended observability
+* file_api: convert file segment to doubly linked list to optimize traversal and insertion
+* file_api: fix FileMPEvent serialization
+* flow: add reload support for high availability
+* flow: don't add UDP flows to the allowlist LRU
+* flow: set flow start time on HA flow import
+* ftp_telnet: fix use-after-free on cached datassn via bidirectional back-reference
+* gtp: fix uint16_t wrap in gtp inspector
+* hash: don't prune the last element of a LRU
+* http2_inspect: add configurable RST_STREAM rate threshold
+* http2_inspect: fix memory leak in HTTP/2 duplicate pseudo-header handling
+* http2_inspect: update connection without authority
+* http_inspect: add peg counter for max header count
+* http_inspect: add request line enforcement settings
+* http_inspect: alert on invalid CL or TE
+* http_inspect: brotli support
+* http_inspect: clarify body/length merge contract in set_publish_length
+* http_inspect: compact bool flags into a bitset
+* http_inspect: enforce take-max in set_publish_length
+* http_inspect: fix body reassemble for compressed bodies
+* http_inspect: fix LTO -Walloc-size-larger-than warnings in parse_header_block
+* http_inspect: make SSE publish boundary decompression-aware
+* http_inspect: move infractions into HttpFlowData on incomplete request
+* http_inspect: move STASH_PUBLISH_REQUEST_BODY / STASH_PUBLISH_RESPONSE_BODY to the transaction
+* http_inspect: revert to original HTTP/0.9 behavior
+* imap: add client app when imap server responds OK to starttls
+* inspector_manager: avoid init flag reads during full thread init
+* inspector_manager: keep live removed gadgets until refs drain
+* js_norm: check whether normalization makes progress
+* js_norm: harden identifier dealiasing
+* js_norm: optimize literal patterns
+* logger: add dynamic enable/disable commands for buffered logging with configurable stop_after_match
+* lua: provide default values for extractor module
+* main: add alternate signal stack
+* main: add watchdog kicking for the DAQ_RSTAT_INTERRUPTED state
+* main: avoid global log quiet changes during stats
+* main: move the execute state parameter into the ACSwap command
+* main: QinQ outer vlan tag addition
+* main: reap uncompleted commands on exit
+* memory: skip update_global_stats in sum_stats when module is not configured
+* netflow: decode_v9 logic update
+* netflow: flowset_len check
+* opcua: fix OpcuaMsgType ODR violation between wizard and opcua inspector
+* parser: cppcheck-suppress nullPointer on get_ips_policy
+* parser: extend unit test for actions
+* payload_injector: skip sending data for react in IDS mode
+* perf_monitor: snapshot global stats cppcheck fix
+* perf_monitor: snapshot global stats for tracker reload
+* plugin_manager: skip thread_reinit plugin loop on config-only reload
+* port_scan: guard pop_back against empty ipstr in check_delimiter
+* protocols: add tunnel encapsulation visibility to packet tracer
+* react: support configurable response pages per action variable
+* sip: prevent unbounded memory exhaustion
+* socks: prevent recursive UDP pseudo-packet rebuilds
+* ssh: add kexinit unit tests
+* ssh: fix KEXINIT handling for empty MAC algorithm list
+* ssh: fix ssh splitter
+* ssh: fix unnamed algorithm handling in kexinit
+* ssh: gate kexinit test publish mock on event id
+* ssh: initialize algorithms variable in process_ssh2_kexinit function
+* ssl: strip embedded null characters in certificate strings and alert
+* stats: add support for dumping stats in JSON format
+* stats: fix dump_stats/perfmon TSAN races and isolate dynamic stats
+* stream, appid: fix thread-local misuse
+* stream: add additional checks in ip defragmentation logic
+* stream: add stream_log and flow_log helpers for multi-destination PacketTracer output
+* stream: do small optimization for events log
+* stream: extend TCP historical bytes to full range
+* stream: fix empty CBD trace entries in shell format mode
+* stream: initialize session stats
+* stream: inline hot function
+* stream: record TCP events once
+* stream: track TCP bytes history
+* stream_tcp: account for out-of-order SYNACK in TCP 3whs like SYN-ACK-SYNACK
+* stream_tcp: add asymmetric specific sequence span normalization checks
+* stream_tcp: add logs to cover areas that could silently ignore adding to seglist
+* stream_tcp: add null check defensively to prev and next
+* stream_tcp: add trace_seq_relative option; default is absolute seq numbers
+* stream_tcp: add validate_rcvd_seq guard to MID_STREAM_SENT::fin_recv
+* stream_tcp: advance rdata/rseq when slide consumes entire segment
+* stream_tcp: clarify late SYN-ACK repair trace
+* stream_tcp: drop OOO packets during post-cutover proxy transition
+* stream_tcp: enforce RFC 9293 SND.WND update ordering
+* stream_tcp: fix CLOSING to TIME_WAIT transition condition
+* stream_tcp: fix connection teardown correctness and reject out-of-window FINs
+* stream_tcp: fix MID_STREAM_SENT tracker stuck on fin_sent
+* stream_tcp: fix rcv_wnd tracking and add bare ACK sequence validation
+* stream_tcp: fix spurious state transitions from injected/malformed FINs
+* stream_tcp: fix stale cursor OOB read in dup_reassembly_segment under last overlap policy
+* stream_tcp: flush segments to detection before hole-skip purge
+* stream_tcp: gate TIME_WAIT ack_sent on validate_sent_seq
+* stream_tcp: guard against bad stream_tcp reassembly state due to dynamic asymmetric traffic
+* stream_tcp: handle ips option stream_size correctly with sequence number wrap around
+* stream_tcp: loop flush_before_purge to inspect all pre-hole segments
+* stream_tcp: overhaul TCP trace event format
+* stream_tcp: replace TcpSessionStats with fixed-size event history buffer
+* stream_tcp: synchronize retransmit pointers after eval_left slide
+* u2boat: use pcap_dumper_t for pcap output
+* utils: increase test coverage
+
 2026-04-22: 3.12.2.0
 
 * appid: add nullchecks for appidDebug and appid_thread_pegs
@@ -6347,4 +6502,3 @@
 2014-12-11: build 130
 
 * alpha 1 release
-
