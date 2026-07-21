@@ -540,6 +540,7 @@ public:  // FIXIT-M privatize if possible
         bool in_allowlist : 1; // Set if the flow is in the allowlist
         bool allowed_on_excess : 1; // Set if the flow is allowed on excess
         bool do_not_decrypt :1; //set when decided to not to decrypt
+        bool udp_tunneled : 1; // Set if the flow was created from a udp tunnel
     } flags = {};
 
     int32_t client_intf = 0;

@@ -181,6 +181,37 @@ TEST(distill_verdict_tests, ignore_both_whitelist)
     CHECK_TEXT(!flow.flags.disable_inspect, "Disable inspection should not have been called");
 }
 
+TEST(distill_verdict_tests, sticky_whitelist_tunnel_bypass_demoted)
+{
+    // A tunnel packet attaching to a flow with WHITELIST set must be demoted to PASS
+    // instead of inheriting the verdict
+    pkt.flow = &flow;
+    pkt.packet_flags = PKT_FROM_CLIENT;
+    flow.last_verdict = DAQ_VERDICT_WHITELIST;
+    act.reset();
+    act.set_tunnel_bypass();
+    PegCount before = daq_stats.internal_whitelist;
+    mock().expectNCalls(1, "finalize_message").onObject(di).withParameter("verdict", DAQ_VERDICT_PASS);
+    analyzer->post_process_packet(&pkt);
+    mock().checkExpectations();
+    CHECK(daq_stats.internal_whitelist == before + 1);
+    flow.last_verdict = MAX_DAQ_VERDICT;
+}
+
+TEST(distill_verdict_tests, sticky_whitelist_inherited_without_bypass)
+{
+    // Without tunnel however, a flow's sticky WHITELIST is expected to be inherited
+    // (in contrast to sticky_whitelist_tunnel_bypass_demoted)
+    pkt.flow = &flow;
+    pkt.packet_flags = PKT_FROM_CLIENT;
+    flow.last_verdict = DAQ_VERDICT_WHITELIST;
+    act.reset();
+    mock().expectNCalls(1, "finalize_message").onObject(di).withParameter("verdict", DAQ_VERDICT_WHITELIST);
+    analyzer->post_process_packet(&pkt);
+    mock().checkExpectations();
+    flow.last_verdict = MAX_DAQ_VERDICT;
+}
+
 TEST(distill_verdict_tests, deferred_trust_prevent_whitelist)
 {
     // Deferred trust prevent whitelist

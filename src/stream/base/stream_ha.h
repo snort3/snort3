@@ -32,6 +32,7 @@ public:
     uint8_t flags;
     static constexpr uint8_t FLAG_LOW = 0x01; // client address / port is low in key
     static constexpr uint8_t FLAG_IP6 = 0x02; // key addresses are ip6
+    static constexpr uint8_t FLAG_UDP_TUNNELED = 0x04; // flow decoded from a UDP tunnel
 };
 
 class StreamHAClient : public snort::FlowHAClient

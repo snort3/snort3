@@ -160,7 +160,9 @@ void FlowControl::timeout_flows(unsigned max, time_t cur_time)
 
 Flow* FlowControl::stale_flow_cleanup(FlowCache* cache, Flow* flow, Packet* p)
 {
-    if ( p->pkth->flags & DAQ_PKT_FLAG_NEW_FLOW )
+    // treat a tunnel traffic / bare packet mismatch as stale
+    if ( (p->pkth->flags & DAQ_PKT_FLAG_NEW_FLOW)
+         or (flow->flags.udp_tunneled != p->is_udp_tunneled()) )
     {
         flow_log("Session: deleting snort session, reason: stale and not cleaned \n");
 
@@ -520,6 +522,7 @@ bool FlowControl::process(PktType type, Packet* p, bool* new_flow)
             }
 
             flow->flow_id = p->pkth->flow_id;
+            flow->flags.udp_tunneled = p->is_udp_tunneled();
             if ( p->is_tcp() and p->ptrs.tcph->is_syn_ack() )
                 flow->flags.key_is_reversed = !reversed;
             else

@@ -178,6 +178,50 @@ TEST(stale_flow, stale_flow)
     delete cache;
 }
 
+// A UDP tunnel packet must not attach to a Flow
+// created by bare traffic on the same inner tuple, and vice versa
+//
+// The mismatch causes it to be treated as stale and the flow is released.
+TEST(stale_flow, tunnel_bare_mismatch)
+{
+    Packet* p = new Packet(false);
+    Flow* flow = new Flow;
+    FlowCacheConfig fcg;
+    FlowCache* cache = new FlowCache(fcg);
+    FlowControl* flow_control = new FlowControl(fcg);
+    DAQ_PktHdr_t dh = { };
+
+    dh.flags = 0;
+    p->pkth = &dh;
+
+    // Bare flow, tunneled packet -> stale
+    snort::udp::UDPHdr udph = { };
+    p->ptrs.udph = &udph;
+    p->proto_bits = PROTO_BIT__UDP_TUNNELED;
+    flow->flags.udp_tunneled = false;
+    CHECK(flow_control->stale_flow_cleanup(cache, flow, p) == nullptr);
+
+    // Tunneled flow, bare packet -> stale
+    p->flow = nullptr;
+    p->proto_bits = 0;
+    p->ptrs.udph = nullptr;
+    flow->flags.udp_tunneled = true;
+    CHECK(flow_control->stale_flow_cleanup(cache, flow, p) == nullptr);
+
+    // Tunneled flow, tunneled packet -> attach
+    p->proto_bits = PROTO_BIT__UDP_TUNNELED;
+    p->ptrs.udph = &udph;
+    flow->flags.udp_tunneled = true;
+    CHECK(flow_control->stale_flow_cleanup(cache, flow, p) == flow);
+
+    p->pkth = nullptr;
+    p->ptrs.udph = nullptr;
+    delete flow;
+    delete p;
+    delete flow_control;
+    delete cache;
+}
+
 TEST_GROUP(move_to_allowlist) { };
 
 static bool try_move_to_allowlist(FlowControl* flow_control, PktType type)

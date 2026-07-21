@@ -228,7 +228,16 @@ static inline bool is_sticky_verdict(const DAQ_Verdict verdict)
 static DAQ_Verdict distill_verdict(Packet* p)
 {
     if ( p->flow and is_sticky_verdict(p->flow->last_verdict) )
+    {
+        // do not inherit a sticky whitelist on a tunnel-bypass packet
+        if ( p->active->get_tunnel_bypass()
+            and p->flow->last_verdict == DAQ_VERDICT_WHITELIST )
+        {
+            daq_stats.internal_whitelist++;
+            return DAQ_VERDICT_PASS;
+        }
         return p->flow->last_verdict;
+    }
 
     DAQ_Verdict verdict = DAQ_VERDICT_PASS;
     Active* act = p->active;
