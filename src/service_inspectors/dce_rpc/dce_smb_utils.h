@@ -126,7 +126,6 @@ inline bool DCE2_ComInfoCanProcessCommand(const DCE2_SmbComInfo* com_info)
  ********************************************************************/
 bool DCE2_SmbIsTidIPC(DCE2_SmbSsnData*, const uint16_t);
 char* DCE2_SmbGetFileName(const uint8_t* data, uint32_t data_len, bool unicode, uint16_t* file_name_len);
-int DCE2_SmbUidTidFidCompare(const void*, const void*);
 DCE2_Ret DCE2_SmbFindUid(DCE2_SmbSsnData*, const uint16_t);
 void DCE2_SmbInsertUid(DCE2_SmbSsnData*, const uint16_t);
 void DCE2_SmbRemoveUid(DCE2_SmbSsnData*, const uint16_t);

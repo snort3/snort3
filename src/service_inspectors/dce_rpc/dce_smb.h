@@ -342,6 +342,10 @@ struct DCE2_SmbFileTracker
     uint16_t file_name_size;
     uint64_t file_name_hash;
 
+    // Monotonic recency stamp for deterministic MRU-first fapi selection
+    // now that trackers live in an unordered_map.
+    uint64_t seq;
+
     union
     {
         struct
@@ -470,12 +474,14 @@ struct DCE2_SmbSsnData
 
     int uid;   // A signed integer so it can be set to sentinel
     int tid;   // A signed integer so it can be set to sentinel
-    DCE2_List* uids;
-    DCE2_List* tids;
+    std::unordered_map<uint16_t, uint16_t> uids;  // value = uid (mirrors master data)
+    std::unordered_map<uint16_t, int> tids;  // value = tid | (ipc_bit << 16)
 
     // For tracking files and named pipes
     DCE2_SmbFileTracker ftracker;
-    DCE2_List* ftrackers;  // List of DCE2_SmbFileTracker
+    std::unordered_map<uint16_t, DCE2_SmbFileTracker*> ftrackers;
+    // Per-session monotonic counter assigning and refreshing DCE2_SmbFileTracker::seq.
+    uint64_t next_ftracker_seq;
 
     // For tracking requests / responses
     DCE2_SmbRequestTracker rtracker;

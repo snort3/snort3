@@ -87,7 +87,10 @@ bool DCE2_SmbIsTidIPC(DCE2_SmbSsnData* ssd, const uint16_t tid)
     }
     else
     {
-        int check_tid = (int)(uintptr_t)DCE2_ListFind(ssd->tids, (void*)(uintptr_t)tid);
+        // Preserve master behavior: DCE2_ListFind returned nullptr (-> 0) when the
+        // tid was absent, so an unknown tid == 0 is reported as IPC.
+        auto it = ssd->tids.find(tid);
+        int check_tid = (it != ssd->tids.end()) ? it->second : 0;
         if (((check_tid & 0x0000ffff) == (int)tid) && ((check_tid >> 16) == 0))
             return true;
     }
@@ -138,28 +141,12 @@ char* DCE2_SmbGetFileName(const uint8_t* data, uint32_t data_len, bool unicode,
     return fname;
 }
 
-int DCE2_SmbUidTidFidCompare(const void* a, const void* b)
-{
-    int x = (int)(uintptr_t)a;
-    int y = (int)(uintptr_t)b;
-
-    if (x == y)
-        return 0;
-
-    /* Only care about equality for finding */
-    return -1;
-}
-
 DCE2_Ret DCE2_SmbFindUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
 {
-    DCE2_Ret status;
-
     if ((ssd->uid != DCE2_SENTINEL) && (ssd->uid == (int)uid))
-        status = DCE2_RET__SUCCESS;
-    else
-        status = DCE2_ListFindKey(ssd->uids, (void*)(uintptr_t)uid);
+        return DCE2_RET__SUCCESS;
 
-    return status;
+    return ssd->uids.count(uid) ? DCE2_RET__SUCCESS : DCE2_RET__ERROR;
 }
 
 void DCE2_SmbInsertUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
@@ -170,18 +157,7 @@ void DCE2_SmbInsertUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
     }
     else
     {
-        if (ssd->uids == nullptr)
-        {
-            ssd->uids = DCE2_ListNew(DCE2_LIST_TYPE__SPLAYED, DCE2_SmbUidTidFidCompare,
-                nullptr, nullptr, DCE2_LIST_FLAG__NO_DUPS);
-
-            if (ssd->uids == nullptr)
-            {
-                return;
-            }
-        }
-
-        (void)DCE2_ListInsert(ssd->uids, (void*)(uintptr_t)uid, (void*)(uintptr_t)uid);
+        ssd->uids.emplace(uid, uid);
     }
 }
 
@@ -192,7 +168,7 @@ void DCE2_SmbRemoveUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
     if ((ssd->uid != DCE2_SENTINEL) && (ssd->uid == (int)uid))
         ssd->uid = DCE2_SENTINEL;
     else
-        DCE2_ListRemove(ssd->uids, (void*)(uintptr_t)uid);
+        ssd->uids.erase(uid);
 
     switch (policy)
     {
@@ -204,32 +180,32 @@ void DCE2_SmbRemoveUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
     case DCE2_POLICY__WIN7:
     case DCE2_POLICY__SAMBA:
     case DCE2_POLICY__SAMBA_3_0_37:
-        // Removing uid invalidates any fid that was created with it */
+        // Removing uid invalidates any fid that was created with it
         if ((ssd->ftracker.fid_v1 != DCE2_SENTINEL) &&
             (ssd->ftracker.uid_v1 == uid))
         {
             DCE2_SmbRemoveFileTracker(ssd, &ssd->ftracker);
         }
 
-        if (ssd->ftrackers != nullptr)
+        for (auto it = ssd->ftrackers.begin(); it != ssd->ftrackers.end(); )
         {
-            DCE2_SmbFileTracker* ftracker;
-
-            for (ftracker = (DCE2_SmbFileTracker*)DCE2_ListFirst(ssd->ftrackers);
-                ftracker != nullptr;
-                ftracker = (DCE2_SmbFileTracker*)DCE2_ListNext(ssd->ftrackers))
+            DCE2_SmbFileTracker* ftracker = it->second;
+            if (ftracker->uid_v1 == uid)
             {
-                if (ftracker->uid_v1 == uid)
-                {
-                    if (ssd->fapi_ftracker == ftracker)
-                        DCE2_SmbFinishFileAPI(ssd);
+                if (ssd->fapi_ftracker == ftracker)
+                    DCE2_SmbFinishFileAPI(ssd);
 
-                    if (ssd->fb_ftracker == ftracker)
-                        DCE2_SmbFinishFileBlockVerdict(ssd);
+                if (ssd->fb_ftracker == ftracker)
+                    DCE2_SmbFinishFileBlockVerdict(ssd);
 
-                    DCE2_ListRemoveCurrent(ssd->ftrackers);
-                    DCE2_SmbRemoveFileTrackerFromRequestTrackers(ssd, ftracker);
-                }
+                DCE2_SmbRemoveFileTrackerFromRequestTrackers(ssd, ftracker);
+                DCE2_SmbCleanFileTracker(ftracker);
+                snort_free((void*)ftracker);
+                it = ssd->ftrackers.erase(it);
+            }
+            else
+            {
+                ++it;
             }
         }
 
@@ -341,25 +317,13 @@ DCE2_SmbFileTracker* DCE2_SmbNewFileTracker(DCE2_SmbSsnData* ssd,
             return nullptr;
         }
 
-        if (ssd->ftrackers == nullptr)
-        {
-            ssd->ftrackers = DCE2_ListNew(DCE2_LIST_TYPE__SPLAYED,
-                DCE2_SmbUidTidFidCompare, DCE2_SmbFileTrackerDataFree, nullptr,
-                DCE2_LIST_FLAG__NO_DUPS);
-
-            if (ssd->ftrackers == nullptr)
-            {
-                DCE2_SmbCleanSessionFileTracker(ssd, ftracker);
-                return nullptr;
-            }
-        }
-
-        if (DCE2_ListInsert(ssd->ftrackers, (void*)(uintptr_t)fid,
-            (void*)ftracker) != DCE2_RET__SUCCESS)
+        if (!ssd->ftrackers.emplace(fid, ftracker).second)
         {
             DCE2_SmbCleanSessionFileTracker(ssd, ftracker);
             return nullptr;
         }
+
+        ftracker->seq = ssd->next_ftracker_seq++;
     }
 
     return ftracker;
@@ -418,8 +382,10 @@ DCE2_SmbFileTracker* DCE2_SmbFindFileTracker(DCE2_SmbSsnData* ssd,
     }
     else
     {
-        ftracker = (DCE2_SmbFileTracker*)
-            DCE2_ListFind(ssd->ftrackers, (void*)(uintptr_t)fid);
+        auto it = ssd->ftrackers.find(fid);
+        ftracker = (it != ssd->ftrackers.end()) ? it->second : nullptr;
+        if (ftracker != nullptr)
+            ftracker->seq = ssd->next_ftracker_seq++;
     }
 
     if (ftracker == nullptr)
@@ -519,12 +485,25 @@ void DCE2_SmbRemoveFileTracker(DCE2_SmbSsnData* ssd, DCE2_SmbFileTracker* ftrack
     if (ssd->fb_ftracker == ftracker)
         DCE2_SmbFinishFileBlockVerdict(ssd);
 
-    if (ftracker == &ssd->ftracker)
-        DCE2_SmbCleanFileTracker(&ssd->ftracker);
-    else if (ssd->ftrackers != nullptr)
-        DCE2_ListRemove(ssd->ftrackers, (void*)(uintptr_t)ftracker->fid_v1);
-
     DCE2_SmbRemoveFileTrackerFromRequestTrackers(ssd, ftracker);
+
+    if (ftracker == &ssd->ftracker)
+    {
+        DCE2_SmbCleanFileTracker(&ssd->ftracker);
+    }
+    else
+    {
+        // Only free when the map actually owns this exact tracker. A tracker
+        // resolved via DCE2_SmbGetTmpFileTracker is owned by rtracker->ft_queue
+        // (not the map); freeing it here would double-free at queue teardown.
+        auto it = ssd->ftrackers.find((uint16_t)ftracker->fid_v1);
+        if (it != ssd->ftrackers.end() && it->second == ftracker)
+        {
+            ssd->ftrackers.erase(it);
+            DCE2_SmbCleanFileTracker(ftracker);
+            snort_free((void*)ftracker);
+        }
+    }
 }
 
 void DCE2_SmbCleanFileTracker(DCE2_SmbFileTracker* ftracker)
@@ -731,25 +710,13 @@ DCE2_SmbFileTracker* DCE2_SmbDequeueTmpFileTracker(DCE2_SmbSsnData* ssd,
     }
     else
     {
-        if (ssd->ftrackers == nullptr)
-        {
-            ssd->ftrackers = DCE2_ListNew(DCE2_LIST_TYPE__SPLAYED,
-                DCE2_SmbUidTidFidCompare, DCE2_SmbFileTrackerDataFree, nullptr,
-                DCE2_LIST_FLAG__NO_DUPS);
-
-            if (ssd->ftrackers == nullptr)
-            {
-                DCE2_SmbCleanSessionFileTracker(ssd, ftracker);
-                return nullptr;
-            }
-        }
-
-        if (DCE2_ListInsert(ssd->ftrackers, (void*)(uintptr_t)fid,
-            (void*)ftracker) != DCE2_RET__SUCCESS)
+        if (!ssd->ftrackers.emplace(fid, ftracker).second)
         {
             DCE2_SmbCleanSessionFileTracker(ssd, ftracker);
             return nullptr;
         }
+
+        ftracker->seq = ssd->next_ftracker_seq++;
     }
 
     // Other values were initialized when queuing.
@@ -771,14 +738,10 @@ void DCE2_SmbRequestTrackerDataFree(void* data)
 
 DCE2_Ret DCE2_SmbFindTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
 {
-    DCE2_Ret status;
-
     if ((ssd->tid != DCE2_SENTINEL) && ((ssd->tid & 0x0000ffff) == (int)tid))
-        status = DCE2_RET__SUCCESS;
-    else
-        status = DCE2_ListFindKey(ssd->tids, (void*)(uintptr_t)tid);
+        return DCE2_RET__SUCCESS;
 
-    return status;
+    return ssd->tids.count(tid) ? DCE2_RET__SUCCESS : DCE2_RET__ERROR;
 }
 
 void DCE2_SmbRemoveTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
@@ -786,7 +749,7 @@ void DCE2_SmbRemoveTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
     if ((ssd->tid != DCE2_SENTINEL) && ((ssd->tid & 0x0000ffff) == (int)tid))
         ssd->tid = DCE2_SENTINEL;
     else
-        DCE2_ListRemove(ssd->tids, (void*)(uintptr_t)tid);
+        ssd->tids.erase(tid);
 
     // Removing Tid invalidates files created with it
     if ((ssd->ftracker.fid_v1 != DCE2_SENTINEL)
@@ -795,25 +758,25 @@ void DCE2_SmbRemoveTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
         DCE2_SmbRemoveFileTracker(ssd, &ssd->ftracker);
     }
 
-    if (ssd->ftrackers != nullptr)
+    for (auto it = ssd->ftrackers.begin(); it != ssd->ftrackers.end(); )
     {
-        DCE2_SmbFileTracker* ftracker;
-
-        for (ftracker = (DCE2_SmbFileTracker*)DCE2_ListFirst(ssd->ftrackers);
-            ftracker != nullptr;
-            ftracker = (DCE2_SmbFileTracker*)DCE2_ListNext(ssd->ftrackers))
+        DCE2_SmbFileTracker* ftracker = it->second;
+        if (ftracker->tid_v1 == (int)tid)
         {
-            if (ftracker->tid_v1 == (int)tid)
-            {
-                if (ssd->fapi_ftracker == ftracker)
-                    DCE2_SmbFinishFileAPI(ssd);
+            if (ssd->fapi_ftracker == ftracker)
+                DCE2_SmbFinishFileAPI(ssd);
 
-                if (ssd->fb_ftracker == ftracker)
-                    DCE2_SmbFinishFileBlockVerdict(ssd);
+            if (ssd->fb_ftracker == ftracker)
+                DCE2_SmbFinishFileBlockVerdict(ssd);
 
-                DCE2_ListRemoveCurrent(ssd->ftrackers);
-                DCE2_SmbRemoveFileTrackerFromRequestTrackers(ssd, ftracker);
-            }
+            DCE2_SmbRemoveFileTrackerFromRequestTrackers(ssd, ftracker);
+            DCE2_SmbCleanFileTracker(ftracker);
+            snort_free((void*)ftracker);
+            it = ssd->ftrackers.erase(it);
+        }
+        else
+        {
+            ++it;
         }
     }
 }
@@ -841,18 +804,7 @@ void DCE2_SmbInsertTid(DCE2_SmbSsnData* ssd,
     }
     else
     {
-        if (ssd->tids == nullptr)
-        {
-            ssd->tids = DCE2_ListNew(DCE2_LIST_TYPE__SPLAYED, DCE2_SmbUidTidFidCompare,
-                nullptr, nullptr, DCE2_LIST_FLAG__NO_DUPS);
-
-            if (ssd->tids == nullptr)
-            {
-                return;
-            }
-        }
-
-        (void)DCE2_ListInsert(ssd->tids, (void*)(uintptr_t)tid, (void*)(uintptr_t)insert_tid);
+        ssd->tids.emplace(tid, insert_tid);
     }
 }
 
@@ -1875,23 +1827,32 @@ void DCE2_FileDetect()
 static void DCE2_SmbSetNewFileAPIFileTracker(DCE2_SmbSsnData* ssd)
 {
     assert(ssd);
+
     DCE2_SmbFileTracker* ftracker = &ssd->ftracker;
-
-    while (ftracker != nullptr)
+    if ((ftracker != ssd->fapi_ftracker) && (ftracker->fid_v1 != DCE2_SENTINEL)
+        && !ftracker->is_ipc && ftracker->ff_sequential_only
+        && (ftracker->ff_bytes_processed == 0))
     {
-        if ((ftracker != ssd->fapi_ftracker) && (ftracker->fid_v1 != DCE2_SENTINEL)
-            && !ftracker->is_ipc && ftracker->ff_sequential_only
-            && (ftracker->ff_bytes_processed == 0))
-        {
-            break;
-        }
-
-        if (ftracker == &ssd->ftracker)
-            ftracker = (DCE2_SmbFileTracker*)DCE2_ListFirst(ssd->ftrackers);
-        else
-            ftracker = (DCE2_SmbFileTracker*)DCE2_ListNext(ssd->ftrackers);
+        ssd->fapi_ftracker = ftracker;
+        return;
     }
-    ssd->fapi_ftracker = ftracker;
+
+    // Master walked a splayed list and took the first eligible tracker. Since
+    // insertions and successful finds moved a tracker to the head, reproduce
+    // that MRU order by selecting the eligible tracker with the largest stamp.
+    DCE2_SmbFileTracker* best = nullptr;
+    for (auto& [fid, ft] : ssd->ftrackers)
+    {
+        if ((ft != ssd->fapi_ftracker) && (ft->fid_v1 != DCE2_SENTINEL)
+            && !ft->is_ipc && ft->ff_sequential_only
+            && (ft->ff_bytes_processed == 0))
+        {
+            if ((best == nullptr) || (ft->seq > best->seq))
+                best = ft;
+        }
+    }
+
+    ssd->fapi_ftracker = best;
 }
 
 void DCE2_Update_Ftracker_from_ReqTracker(DCE2_SmbFileTracker* ftracker,

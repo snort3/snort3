@@ -1296,24 +1296,17 @@ void DCE2_SmbDataFree(DCE2_SmbSsnData* ssd)
     // released it's resources.
     //DCE2_SmbFinishFileAPI(ssd);
 
-    if (ssd->uids != nullptr)
-    {
-        DCE2_ListDestroy(ssd->uids);
-        ssd->uids = nullptr;
-    }
-
-    if (ssd->tids != nullptr)
-    {
-        DCE2_ListDestroy(ssd->tids);
-        ssd->tids = nullptr;
-    }
+    ssd->uids.clear();
+    ssd->tids.clear();
 
     DCE2_SmbCleanFileTracker(&ssd->ftracker);
-    if (ssd->ftrackers != nullptr)
+
+    for (auto& [fid, ftracker] : ssd->ftrackers)
     {
-        DCE2_ListDestroy(ssd->ftrackers);
-        ssd->ftrackers = nullptr;
+        DCE2_SmbCleanFileTracker(ftracker);
+        snort_free((void*)ftracker);
     }
+    ssd->ftrackers.clear();
 
     DCE2_SmbCleanRequestTracker(&ssd->rtracker);
     for (auto& entry : ssd->rtrackers_map)
