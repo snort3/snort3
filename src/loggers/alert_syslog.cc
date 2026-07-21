@@ -195,100 +195,80 @@ bool SyslogModule::end(const char*, int, SnortConfig* sc)
 //-------------------------------------------------------------------------
 
 // FIXIT-M can't message be put in Event?
-static void AlertSyslog(
-    int priority, Packet* p, const char* msg, const Event& event)
+static void AlertSyslog(int priority, Packet* p, const char* msg, const Event& event)
 {
     char event_string[STD_BUF];
     event_string[0] = '\0';
 
-    if ((p != nullptr) && p->ptrs.ip_api.is_valid())
+    uint32_t gid, sid, rev;
+    event.get_sig_ids(gid, sid, rev);
+    SnortSnprintfAppend(event_string, sizeof(event_string), "[%u:%u:%u]", gid, sid, rev);
+
+    if (msg != nullptr)
+        SnortSnprintfAppend(event_string, sizeof(event_string), " %s", msg);
+    else
+        SnortSnprintfAppend(event_string, sizeof(event_string), " ALERT");
+
+    if (auto cls = event.get_class_type())
+        SnortSnprintfAppend(event_string, sizeof(event_string), " [Classification: %s]", cls);
+
+    if (event.get_priority() != 0)
+        SnortSnprintfAppend(event_string, sizeof(event_string), " [Priority: %u]", event.get_priority());
+
+    if (!p or !p->ptrs.ip_api.is_valid())
     {
-        uint32_t gid, sid, rev;
-        event.get_sig_ids(gid, sid, rev);
-        SnortSnprintfAppend(event_string, sizeof(event_string), "[%u:%u:%u] ", gid, sid, rev);
-
-        if (msg != nullptr)
-            SnortSnprintfAppend(event_string, sizeof(event_string), "%s ", msg);
-        else
-            SnortSnprintfAppend(event_string, sizeof(event_string), "ALERT ");
-
-        if ( auto cls = event.get_class_type() )
-        {
-            SnortSnprintfAppend(event_string, sizeof(event_string),
-                "[Classification: %s] ", cls);
-        }
-
-        if (event.get_priority() != 0)
-        {
-            SnortSnprintfAppend(event_string, sizeof(event_string),
-                "[Priority: %u] ", event.get_priority());
-        }
-
-        if (p->context->conf->alert_interface())
-        {
-            SnortSnprintfAppend(event_string, sizeof(event_string),
-                "<%s> ", SFDAQ::get_input_spec());
-        }
-
-	    IpProtocol ip_proto = p->get_ip_proto_next();
-
-        const char* proto = PigPen::get_protocol_name(to_utype(ip_proto));
-        SnortSnprintfAppend(event_string, sizeof(event_string), "{%s} ", proto);
-
-        if ((p->ptrs.decode_flags & DECODE_FRAG)
-            || ((ip_proto != IpProtocol::TCP)
-            && (ip_proto != IpProtocol::UDP)))
-        {
-            const char* ip_fmt = "%s -> %s";
-            InetBuf src, dst;
-
-            if (p->context->conf->obfuscate())
-            {
-                ObfuscateIpToText(p->ptrs.ip_api.get_src(), p->context->conf->get_conf()->homenet,
-                    p->context->conf->get_conf()->obfuscation_net, src);
-
-                ObfuscateIpToText(p->ptrs.ip_api.get_dst(), p->context->conf->get_conf()->homenet,
-                    p->context->conf->get_conf()->obfuscation_net, dst);
-
-                SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt, src, dst);
-            }
-            else
-            {
-                SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                    sfip_ntop(p->ptrs.ip_api.get_src(), src, sizeof(src)),
-                    sfip_ntop(p->ptrs.ip_api.get_dst(), dst, sizeof(dst)));
-            }
-        }
-        else
-        {
-            const char* ip_fmt = "%s:%d -> %s:%d";
-            InetBuf src, dst;
-
-            if (p->context->conf->obfuscate())
-            {
-                ObfuscateIpToText(p->ptrs.ip_api.get_src(), p->context->conf->get_conf()->homenet,
-                    p->context->conf->get_conf()->obfuscation_net, src);
-
-                ObfuscateIpToText(p->ptrs.ip_api.get_dst(), p->context->conf->get_conf()->homenet,
-                    p->context->conf->get_conf()->obfuscation_net, dst);
-
-                SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                    src, p->ptrs.sp, dst, p->ptrs.dp);
-            }
-            else
-            {
-                SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
-                    sfip_ntop(p->ptrs.ip_api.get_src(), src, sizeof(src)), p->ptrs.sp,
-                    sfip_ntop(p->ptrs.ip_api.get_dst(), dst, sizeof(dst)), p->ptrs.dp);
-            }
-        }
-
         syslog(priority, "%s", event_string);
+        return;
     }
-    else if (msg != nullptr)
+
+    auto& ptrs = p->ptrs;
+    auto& ip = ptrs.ip_api;
+    auto& conf = p->context->conf;
+
+    if (conf->alert_interface())
+        SnortSnprintfAppend(event_string, sizeof(event_string), " <%s>", SFDAQ::get_input_spec());
+
+    IpProtocol ip_proto = p->get_ip_proto_next();
+    const char* proto = PigPen::get_protocol_name(to_utype(ip_proto));
+
+    SnortSnprintfAppend(event_string, sizeof(event_string), " {%s}", proto);
+
+    if (ptrs.decode_flags & DECODE_FRAG or (ip_proto != IpProtocol::TCP and ip_proto != IpProtocol::UDP))
     {
-        syslog(priority, "%s", msg);
+        const char* ip_fmt = " %s -> %s";
+        InetBuf src, dst;
+
+        if (conf->obfuscate())
+        {
+            ObfuscateIpToText(ip.get_src(), conf->get_conf()->homenet, conf->get_conf()->obfuscation_net, src);
+            ObfuscateIpToText(ip.get_dst(), conf->get_conf()->homenet, conf->get_conf()->obfuscation_net, dst);
+            SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt, src, dst);
+        }
+        else
+        {
+            SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
+                sfip_ntop(ip.get_src(), src, sizeof(src)), sfip_ntop(ip.get_dst(), dst, sizeof(dst)));
+        }
     }
+    else
+    {
+        const char* ip_fmt = " %s:%d -> %s:%d";
+        InetBuf src, dst;
+
+        if (conf->obfuscate())
+        {
+            ObfuscateIpToText(ip.get_src(), conf->get_conf()->homenet, conf->get_conf()->obfuscation_net, src);
+            ObfuscateIpToText(ip.get_dst(), conf->get_conf()->homenet, conf->get_conf()->obfuscation_net, dst);
+            SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt, src, ptrs.sp, dst, ptrs.dp);
+        }
+        else
+        {
+            SnortSnprintfAppend(event_string, sizeof(event_string), ip_fmt,
+                sfip_ntop(ip.get_src(), src, sizeof(src)), ptrs.sp, sfip_ntop(ip.get_dst(), dst, sizeof(dst)), ptrs.dp);
+        }
+    }
+
+    syslog(priority, "%s", event_string);
 }
 
 //-------------------------------------------------------------------------
@@ -367,4 +347,3 @@ const BaseApi* alert_syslog[] =
     &syslog_api.base,
     nullptr
 };
-
