@@ -41,9 +41,9 @@ using namespace snort;
 static void SIP_updateMedias(SIP_MediaSession*, SIP_MediaList&);
 static int SIP_compareMedias(const SIP_MediaDataList, const SIP_MediaDataList);
 static bool SIP_checkMediaChange(const SIPMsg&, const SIP_DialogData*);
-static int SIP_processInvite(const SIPMsg&, SIP_DialogData*, SIP_DialogList*, SIP_PROTO_CONF*);
+static int SIP_processInvite(const SIPMsg&, SIP_DialogData*, SIP_DialogList*, const SIP_PROTO_CONF*);
 static int SIP_processACK(SIPMsg&, SIP_DialogData*, SIP_DialogList*, Packet*, SIP_PROTO_CONF*);
-static int SIP_ignoreChannels(const SIP_DialogData&, Packet* p, SIP_PROTO_CONF*);
+static int SIP_ignoreChannels(const SIP_DialogData&, Packet* p, const SIP_PROTO_CONF*);
 static SIP_DialogData* SIP_addDialog(const SIPMsg&, SIP_DialogData*, SIP_DialogList*);
 static int SIP_deleteDialog(SIP_DialogData*, SIP_DialogList*);
 
@@ -146,7 +146,7 @@ static int SIP_processRequest(SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_Dialog
  *  false:
  ********************************************************************/
 static int SIP_processInvite(const SIPMsg& sipMsg, SIP_DialogData* dialog, SIP_DialogList* dList,
-    SIP_PROTO_CONF* config)
+    const SIP_PROTO_CONF* config)
 {
     bool ret = true;
 
@@ -381,7 +381,7 @@ static bool SIP_checkMediaChange(const SIPMsg& sipMsg, const SIP_DialogData* dia
  *   false: the channel has not been ignored
  *
  ********************************************************************/
-static int SIP_ignoreChannels(const SIP_DialogData& dialog, Packet* p, SIP_PROTO_CONF* config)
+static int SIP_ignoreChannels(const SIP_DialogData& dialog, Packet* p, const SIP_PROTO_CONF* config)
 {
     if (0 == config->ignoreChannel)
         return false;
