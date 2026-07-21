@@ -271,6 +271,14 @@ void QuicExtractor::HandshakeComplete::handle(DataEvent& event, Flow* flow)
 
     const auto& quic_event = static_cast<const QuicHandshakeCompleteEvent&>(event);
 
+    if (quic_event.supersede() || !fd->has_data)
+    {
+        fd->version = quic_event.get_version();
+        fd->client_initial_dcid = quic_event.get_client_initial_dcid();
+        fd->client_scid = quic_event.get_client_scid();
+        fd->server_name = quic_event.get_server_name();
+        fd->client_protocol = quic_event.get_client_protocol();
+    }
     fd->server_scid = quic_event.get_server_scid();
     fd->history = quic_event.get_history();
 

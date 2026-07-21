@@ -51,6 +51,15 @@ class QuicHandshakeCompleteEvent : public snort::DataEvent
 public:
     ~QuicHandshakeCompleteEvent() override = default;
 
+    // Returns true if this event's data should override fields already populated
+    // by a preceding QuicClientHelloEvent on the same flow.
+    virtual bool supersede() const { return false; }
+
+    virtual const std::string& get_version() const = 0;
+    virtual const std::string& get_client_initial_dcid() const = 0;
+    virtual const std::string& get_client_scid() const = 0;
+    virtual const std::string& get_server_name() const = 0;
+    virtual const std::string& get_client_protocol() const = 0;
     virtual const std::string& get_server_scid() const = 0;
     virtual const std::string& get_history() const = 0;
 };
