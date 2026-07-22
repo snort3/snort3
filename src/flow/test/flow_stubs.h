@@ -95,12 +95,26 @@ void Stream::drop_traffic(const Packet*, char) { }
 bool Stream::blocked_flow(Packet*) { return true; }
 void Stream::stop_inspection(Flow*, Packet*, char, int32_t, int) { }
 
-NetworkPolicy* get_network_policy() { return nullptr; }
-InspectionPolicy* get_inspection_policy() { return nullptr; }
-IpsPolicy* get_ips_policy() { return nullptr; }
-void set_network_policy(NetworkPolicy*) { }
-void set_inspection_policy(InspectionPolicy*) { }
-void set_ips_policy(IpsPolicy*) { }
+static NetworkPolicy* test_network_policy = nullptr;
+static InspectionPolicy* test_inspection_policy = nullptr;
+static IpsPolicy* test_ips_policy = nullptr;
+static unsigned test_get_inspection_policy_calls = 0;
+static unsigned test_get_ips_policy_calls = 0;
+
+NetworkPolicy* get_network_policy() { return test_network_policy; }
+InspectionPolicy* get_inspection_policy()
+{
+    ++test_get_inspection_policy_calls;
+    return test_inspection_policy;
+}
+IpsPolicy* get_ips_policy()
+{
+    ++test_get_ips_policy_calls;
+    return test_ips_policy;
+}
+void set_network_policy(NetworkPolicy* p) { test_network_policy = p; }
+void set_inspection_policy(InspectionPolicy* p) { test_inspection_policy = p; }
+void set_ips_policy(IpsPolicy* p) { test_ips_policy = p; }
 }
 
 void set_network_policy(unsigned) { }

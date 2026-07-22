@@ -605,7 +605,11 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
         unsigned reload_id = SnortConfig::get_reload_id();
 
         if ( flow->reload_id != reload_id )
+        {
             flow->network_policy_id = get_network_policy()->policy_id;
+            flow->inspection_policy_id = get_inspection_policy()->policy_id;
+            flow->ips_policy_id = get_ips_policy()->policy_id;
+        }
         else
         {
             set_inspection_policy(flow->inspection_policy_id);
@@ -627,6 +631,15 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
     else
     {
         flow->network_policy_id = get_network_policy()->policy_id;
+
+        // Root policy IDs match Flow initialization.  Policy selectors install complete tuples
+        // with nonzero network IDs, so persist their inspection and IPS IDs here.  Standalone
+        // Binder policies are applied and persisted by the FLOW_STATE_SETUP event below.
+        if ( flow->network_policy_id )
+        {
+            flow->inspection_policy_id = get_inspection_policy()->policy_id;
+            flow->ips_policy_id = get_ips_policy()->policy_id;
+        }
         StreamLog::add_tunnel_info(*p);
         flow_log("Session: new snort session\n");
 
@@ -753,4 +766,3 @@ int FlowControl::add_expected( const Packet* ctrlPkt, PktType type, IpProtocol i
     return exp_cache->add_flow( ctrlPkt, type, ip_proto, srcIP, srcPort, dstIP, dstPort,
         SSN_DIR_BOTH, fd, snort_protocol_id, swap_app_direction, expect_multi, bidirectional, expect_persist);
 }
-

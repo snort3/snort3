@@ -24,7 +24,20 @@
 
 #include <daq_common.h>
 
+// Preload FlowControl dependencies before redefining private below.
+#include <cstdint>
+#include <fstream>
+#include <vector>
+
+#include "flow/flow_config.h"
+#include "flow/flow_cache.h"
+#include "framework/counts.h"
+#include "framework/decode_data.h"
+#include "framework/inspector.h"
+
+#define private public
 #include "flow/flow_control.h"
+#undef private
 
 #include "detection/detection_engine.h"
 #include "main/policy.h"
@@ -40,7 +53,6 @@
 #include "stream/stream.h"
 #include "utils/util.h"
 #include "flow/expect_cache.h"
-#include "flow/flow_cache.h"
 #include "flow/ha.h"
 #include "flow/session.h"
 
@@ -56,7 +68,26 @@ using namespace snort;
 namespace snort
 {
 void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
+DataBus::DataBus() = default;
+DataBus::~DataBus() = default;
 }
+
+NetworkPolicy::NetworkPolicy(PolicyId id, PolicyId default_ips_id)
+    : file_policy(nullptr), policy_id(id), default_ips_policy_id(default_ips_id)
+{ }
+
+NetworkPolicy::~NetworkPolicy() = default;
+
+InspectionPolicy::InspectionPolicy(PolicyId id) : policy_id(id) { }
+InspectionPolicy::~InspectionPolicy() = default;
+
+IpsPolicy::IpsPolicy(PolicyId id)
+    : policy_id(id), policy_mode(POLICY_MODE__MAX), enable_builtin_rules(false), var_id(0),
+      var_table(nullptr), ip_vartable(nullptr), portVarTable(nullptr), nonamePortVarTable(nullptr),
+      obfuscate_pii(false)
+{ }
+
+IpsPolicy::~IpsPolicy() = default;
 
 
 void Active::drop_packet(snort::Packet const*, bool) { }
@@ -152,6 +183,96 @@ int ExpectCache::add_flow(const Packet*,
 }
 
 bool FlowCache::release(Flow*, PruneReason, bool) { return true; }
+
+TEST_GROUP(policy_persistence)
+{
+    FlowControl* flow_control = nullptr;
+    NetworkPolicy* network_policy = nullptr;
+    InspectionPolicy* inspection_policy = nullptr;
+    IpsPolicy* ips_policy = nullptr;
+
+    void setup() override
+    {
+        FlowCacheConfig fcg;
+        flow_control = new FlowControl(fcg);
+        flow_control->init_exp(1);
+
+        network_policy = new NetworkPolicy(3);
+        inspection_policy = new InspectionPolicy(5);
+        ips_policy = new IpsPolicy(7);
+
+        snort::test_network_policy = network_policy;
+        snort::test_inspection_policy = inspection_policy;
+        snort::test_ips_policy = ips_policy;
+        snort::test_get_inspection_policy_calls = 0;
+        snort::test_get_ips_policy_calls = 0;
+    }
+
+    void teardown() override
+    {
+        snort::test_network_policy = nullptr;
+        snort::test_inspection_policy = nullptr;
+        snort::test_ips_policy = nullptr;
+
+        delete ips_policy;
+        delete inspection_policy;
+        delete network_policy;
+        delete flow_control;
+    }
+};
+
+TEST(policy_persistence, new_flow_saves_selected_policy_ids)
+{
+    Flow flow;
+    Packet packet(false);
+    DAQ_PktHdr_t pkth = { };
+    packet.pkth = &pkth;
+
+    UNSIGNED_LONGS_EQUAL(1, flow_control->process(&flow, &packet, false));
+    UNSIGNED_LONGS_EQUAL(network_policy->policy_id, flow.network_policy_id);
+    UNSIGNED_LONGS_EQUAL(inspection_policy->policy_id, flow.inspection_policy_id);
+    UNSIGNED_LONGS_EQUAL(ips_policy->policy_id, flow.ips_policy_id);
+    UNSIGNED_LONGS_EQUAL(1, snort::test_get_inspection_policy_calls);
+    UNSIGNED_LONGS_EQUAL(1, snort::test_get_ips_policy_calls);
+}
+
+TEST(policy_persistence, new_default_flow_skips_redundant_policy_persistence)
+{
+    network_policy->policy_id = 0;
+
+    Flow flow;
+    Packet packet(false);
+    DAQ_PktHdr_t pkth = { };
+    packet.pkth = &pkth;
+
+    UNSIGNED_LONGS_EQUAL(1, flow_control->process(&flow, &packet, false));
+    UNSIGNED_LONGS_EQUAL(0, flow.network_policy_id);
+    UNSIGNED_LONGS_EQUAL(0, flow.inspection_policy_id);
+    UNSIGNED_LONGS_EQUAL(0, flow.ips_policy_id);
+    UNSIGNED_LONGS_EQUAL(0, snort::test_get_inspection_policy_calls);
+    UNSIGNED_LONGS_EQUAL(0, snort::test_get_ips_policy_calls);
+}
+
+TEST(policy_persistence, reload_refreshes_selected_policy_ids)
+{
+    Flow flow;
+    flow.flow_state = Flow::FlowState::ALLOW;
+    flow.reload_id = 1;
+    flow.network_policy_id = 11;
+    flow.inspection_policy_id = 13;
+    flow.ips_policy_id = 17;
+
+    Packet packet(false);
+    DAQ_PktHdr_t pkth = { };
+    packet.pkth = &pkth;
+
+    UNSIGNED_LONGS_EQUAL(0, flow_control->process(&flow, &packet, false));
+    UNSIGNED_LONGS_EQUAL(network_policy->policy_id, flow.network_policy_id);
+    UNSIGNED_LONGS_EQUAL(inspection_policy->policy_id, flow.inspection_policy_id);
+    UNSIGNED_LONGS_EQUAL(ips_policy->policy_id, flow.ips_policy_id);
+    UNSIGNED_LONGS_EQUAL(1, snort::test_get_inspection_policy_calls);
+    UNSIGNED_LONGS_EQUAL(1, snort::test_get_ips_policy_calls);
+}
 
 TEST_GROUP(stale_flow) { };
 
