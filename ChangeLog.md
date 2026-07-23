@@ -1,3 +1,12 @@
+2026-07-22: 3.12.4.0
+
+* dce_rpc: fix uid, tid, fid quadratic search for splayed list
+* extractor: read ClientHello fields from HandshakeComplete event
+* flow: improve handling of sticky whitelist verdict with tunnel traffic
+* flow: preserve selected policies on new flows
+* loggers: keep metadata in alert_syslog. Thanks to BharatDeva for addressing the issue.
+* sip: fix cppcheck constParameterPointer warning
+
 2026-07-20: 3.12.3.0
 
 * actions: fix reject and react in IDS mode
