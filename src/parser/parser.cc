@@ -85,7 +85,7 @@ public:
     unsigned do_hash(const unsigned char* k, int) override
     {
         uint32_t a,b,c;
-        const RuleTreeNodeKey* rtnk = (const RuleTreeNodeKey*)k;
+        const RuleTreeNodeKey* rtnk = reinterpret_cast<const RuleTreeNodeKey*>(k);
         RuleTreeNode* rtn = rtnk->rtn;
 
         a = rtn->action;

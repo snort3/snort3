@@ -206,7 +206,7 @@ static ParseResult parse_client_initiation(const uint8_t* data, uint16_t size, S
     /* Sanity check header stuff. */
     if (size < sizeof(ServiceSSLV3Hdr))
         return ParseResult::FAILURE;
-    hdr3 = (const ServiceSSLV3Hdr*)data;
+    hdr3 = reinterpret_cast<const ServiceSSLV3Hdr*>(data);
     ver = ntohs(hdr3->version);
     if (hdr3->type != SSL_HANDSHAKE || (ver != 0x0300 && ver != 0x0301 && ver != 0x0302 &&
         ver != 0x0303))
@@ -225,7 +225,7 @@ static void save_ssl_cached_data(uint8_t*& cached_data, uint16_t& cached_data_le
     if (size == 0)
         return;
 
-    cached_data = (uint8_t*)snort_calloc(size, sizeof(uint8_t));
+    cached_data = static_cast<uint8_t*>(snort_calloc(size, sizeof(uint8_t)));
     memcpy(cached_data, data, size);
     cached_data_len = size;
 }
@@ -246,7 +246,7 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (!size)
         goto inprocess;
 
-    ss = (ServiceSSLData*)data_get(args.asd);
+    ss = static_cast<ServiceSSLData*>(data_get(args.asd));
     if (!ss)
     {
         ss = new ServiceSSLData;
@@ -260,7 +260,8 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
         if (ss->cached_client_data)
         {
-            reallocated_data = (uint8_t*)snort_calloc(ss->cached_client_data_len + size, sizeof(uint8_t));
+            reallocated_data = static_cast<uint8_t*>(
+                snort_calloc(ss->cached_client_data_len + size, sizeof(uint8_t)));
             if (reallocated_data == nullptr)
                 goto inprocess;
             memcpy(reallocated_data, args.data, args.size);
@@ -282,7 +283,8 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
 
         if (cached_data)
         {
-            reallocated_data = (uint8_t*)snort_calloc(cached_data_len + size, sizeof(uint8_t));
+            reallocated_data = static_cast<uint8_t*>(
+                snort_calloc(cached_data_len + size, sizeof(uint8_t)));
             if (reallocated_data == nullptr)
                 goto inprocess;
             memcpy(reallocated_data, cached_data, cached_data_len);
@@ -322,9 +324,9 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
     switch (ss->state)
     {
     case SSL_STATE_CONNECTION:
-        pct = (const ServiceSSLPCTHdr*)data;
-        hdr2 = (const ServiceSSLV2Hdr*)data;
-        hdr3 = (const ServiceSSLV3Hdr*)data;
+        pct = reinterpret_cast<const ServiceSSLPCTHdr*>(data);
+        hdr2 = reinterpret_cast<const ServiceSSLV2Hdr*>(data);
+        hdr3 = reinterpret_cast<const ServiceSSLV3Hdr*>(data);
 
         /* SSL PCT header? */
         if (size >= sizeof(ServiceSSLPCTHdr) && pct->len >= 0x80 &&
@@ -368,7 +370,7 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
         }
         data += sizeof(ServiceSSLV3Hdr);
         size -= sizeof(ServiceSSLV3Hdr);
-        rec = (const ServiceSSLV3Record*)data;
+        rec = reinterpret_cast<const ServiceSSLV3Record*>(data);
         if (size < sizeof(ServiceSSLV3Record) || rec->type != SSLV3RecordType::SERVER_HELLO ||
             (ntohs(rec->version) != 0x0300 && ntohs(rec->version) != 0x0301 &&
             ntohs(rec->version) != 0x0302 && ntohs(rec->version) != 0x0303) ||
@@ -404,7 +406,7 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
                         goto inprocess;
                     }
 
-                    hdr3 = (const ServiceSSLV3Hdr*)data;
+                    hdr3 = reinterpret_cast<const ServiceSSLV3Hdr*>(data);
                     ver = ntohs(hdr3->version);
                     if ((hdr3->type != SSL_HANDSHAKE &&
                         hdr3->type != SSL_CHANGE_CIPHER && hdr3->type != SSL_APPLICATION_DATA) ||
@@ -429,7 +431,7 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
                     goto inprocess;
                 }
 
-                rec = (const ServiceSSLV3Record*)data;
+                rec = reinterpret_cast<const ServiceSSLV3Record*>(data);
                 if (rec->type != SSLV3RecordType::SERVER_HELLO_DONE and rec->length_msb)
                 {
                     goto fail;
@@ -443,9 +445,10 @@ int SslServiceDetector::validate(AppIdDiscoveryArgs& args)
                         if (size < sizeof(ServiceSSLV3CertsRecord))
                             goto fail;
 
-                        certs_rec = (const ServiceSSLV3CertsRecord*)data;
+                        certs_rec = reinterpret_cast<const ServiceSSLV3CertsRecord*>(data);
                         ss->server_cert.certs_len = ntoh3(certs_rec->certs_len);
-                        ss->server_cert.certs_data = (uint8_t*)snort_alloc(ss->server_cert.certs_len);
+                        ss->server_cert.certs_data = static_cast<uint8_t*>(
+                            snort_alloc(ss->server_cert.certs_len));
                         if ((size - sizeof(ServiceSSLV3CertsRecord)) < ss->server_cert.certs_len)
                         {
                             /* Will have to get more next time around. */
@@ -674,4 +677,3 @@ bool is_service_over_ssl(AppId appId)
 
     return false;
 }
-

@@ -134,7 +134,7 @@ public:
     { return lru_cache_shared_peg_names; }
 
     const PegCount* get_counts() const
-    { return (const PegCount*)&stats; }
+    { return reinterpret_cast<const PegCount*>(&stats); }
 
     void lock()
     { cache_mutex.lock(); }

@@ -28,6 +28,7 @@
 
 #include <cctype>
 #include <cerrno>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 
@@ -36,6 +37,22 @@
 static long s_pos = 0, s_off = 0;
 
 #define TO_IP(x) x >> 24, ((x) >> 16)& 0xff, ((x) >> 8)& 0xff, (x)& 0xff
+
+static void ntohl_in_place(uint8_t* field)
+{
+    uint32_t value;
+    memcpy(&value, field, sizeof(value));
+    value = ntohl(value);
+    memcpy(field, &value, sizeof(value));
+}
+
+static void ntohs_in_place(uint8_t* field)
+{
+    uint16_t value;
+    memcpy(&value, field, sizeof(value));
+    value = ntohs(value);
+    memcpy(field, &value, sizeof(value));
+}
 
 static u2iterator* new_iterator(char* filename)
 {
@@ -149,9 +166,15 @@ static bool get_record(u2iterator* it, u2record* record)
         puts("ERROR: Failed to read all record data.");
         printf("\tRead %u of %u bytes\n", bytes_read, record->length);
 
-        if ( record->type != UNIFIED2_PACKET ||
-            bytes_read < ntohl(((Serial_Unified2Packet*)record->data)->packet_length)
-            )
+        constexpr size_t packet_length_offset = offsetof(Serial_Unified2Packet, packet_length);
+        constexpr size_t packet_data_offset = offsetof(Serial_Unified2Packet, packet_data);
+        uint32_t packet_length;
+        if (record->type != UNIFIED2_PACKET or
+            bytes_read < packet_data_offset)
+            return false;
+
+        memcpy(&packet_length, record->data + packet_length_offset, sizeof(packet_length));
+        if (ntohl(packet_length) > bytes_read - packet_data_offset)
             return false;
 
         clearerr(it->file);
@@ -184,16 +207,16 @@ static void extradata_dump(u2record* record)
     memcpy(&event, record->data + sizeof(Unified2ExtraDataHdr), sizeof(SerialUnified2ExtraData));
 
     /* network to host ordering */
-    field = (uint8_t*)&eventHdr;
+    field = reinterpret_cast<uint8_t*>(&eventHdr);
     for (i=0; i<2; i++, field+=4)
     {
-        *(uint32_t*)field = ntohl(*(uint32_t*)field);
+        ntohl_in_place(field);
     }
 
-    field = (uint8_t*)&event;
+    field = reinterpret_cast<uint8_t*>(&event);
     for (i=0; i<6; i++, field+=4)
     {
-        *(uint32_t*)field = ntohl(*(uint32_t*)field);
+        ntohl_in_place(field);
     }
 
     printf("\n(ExtraDataHdr)\n"
@@ -404,23 +427,23 @@ static void event2_dump(u2record* record)
     /* network to host ordering
        In the event structure, only the last 40 bits are not 32 bit fields
        The first 11 fields need to be converted */
-    field = (uint8_t*)&event;
+    field = reinterpret_cast<uint8_t*>(&event);
     for (i=0; i<11; i++, field+=4)
     {
-        *(uint32_t*)field = ntohl(*(uint32_t*)field);
+        ntohl_in_place(field);
     }
 
     /* last 3 fields, with the exception of the last most since it's just one byte */
-    *(uint16_t*)field = ntohs(*(uint16_t*)field); /* sport_itype */
+    ntohs_in_place(field); /* sport_itype */
     field += 2;
-    *(uint16_t*)field = ntohs(*(uint16_t*)field); /* dport_icode */
+    ntohs_in_place(field); /* dport_icode */
     field +=6;
-    *(uint32_t*)field = ntohl(*(uint32_t*)field); /* mpls_label */
+    ntohl_in_place(field); /* mpls_label */
     field += 4;
     /* policy_id and vlanid */
     for (i=0; i<3; i++, field+=2)
     {
-        *(uint16_t*)field = ntohs(*(uint16_t*)field);
+        ntohs_in_place(field);
     }
     /* done changing the network ordering */
 
@@ -460,25 +483,25 @@ static void event2_6_dump(u2record* record)
     /* network to host ordering
        In the event structure, only the last 40 bits are not 32 bit fields
        The first fields need to be converted */
-    field = (uint8_t*)&event;
+    field = reinterpret_cast<uint8_t*>(&event);
     for (i=0; i<9; i++, field+=4)
     {
-        *(uint32_t*)field = ntohl(*(uint32_t*)field);
+        ntohl_in_place(field);
     }
 
     field = field + 2*sizeof(struct in6_addr);
 
     /* last 3 fields, with the exception of the last most since it's just one byte */
-    *(uint16_t*)field = ntohs(*(uint16_t*)field); /* sport_itype */
+    ntohs_in_place(field); /* sport_itype */
     field += 2;
-    *(uint16_t*)field = ntohs(*(uint16_t*)field); /* dport_icode */
+    ntohs_in_place(field); /* dport_icode */
     field +=6;
-    *(uint32_t*)field = ntohl(*(uint32_t*)field); /* mpls_label */
+    ntohl_in_place(field); /* mpls_label */
     field += 4;
     /* policy_id and vlanid */
     for (i=0; i<3; i++, field+=2)
     {
-        *(uint16_t*)field = ntohs(*(uint16_t*)field);
+        ntohs_in_place(field);
     }
     /* done changing the network ordering */
 
@@ -538,18 +561,24 @@ static void packet_dump(u2record* record)
     uint32_t counter;
     uint8_t* field;
 
-    unsigned offset = sizeof(Serial_Unified2Packet)-4;
+    constexpr size_t offset = offsetof(Serial_Unified2Packet, packet_data);
+    if (record->length < offset)
+    {
+        printf("ERROR: packet record is only %u of %zu header bytes\n",
+            record->length, offset);
+        return;
+    }
     unsigned reclen = record->length - offset;
 
-    Serial_Unified2Packet packet;
+    Serial_Unified2Packet packet = {};
     memcpy(&packet, record->data, offset);
 
     /* network to host ordering
        The first 7 fields need to be converted */
-    field = (uint8_t*)&packet;
+    field = reinterpret_cast<uint8_t*>(&packet);
     for (counter=0; counter<7; counter++, field+=4)
     {
-        *(uint32_t*)field = ntohl(*(uint32_t*)field);
+        ntohl_in_place(field);
     }
     /* done changing from network ordering */
 
@@ -569,12 +598,12 @@ static void packet_dump(u2record* record)
             packet.sensor_id, packet.event_id, packet.event_second,
             packet.packet_second, packet.packet_microsecond, packet.packet_length);
 
-    if ( record->length <= offset )
+    if (reclen == 0)
         return;
 
     if ( packet.packet_length != reclen )
     {
-        printf("ERROR: logged %u but packet_length = %u\n",
+        printf("ERROR: logged %zu but packet_length = %u\n",
             record->length-offset, packet.packet_length);
 
         if ( packet.packet_length < reclen )
@@ -653,4 +682,3 @@ int main(int argc, char** argv)
 
     return u2dump(argv[1]);
 }
-

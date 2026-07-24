@@ -82,7 +82,7 @@ bool SslStateOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const SslStateOption& rhs = (const SslStateOption&)ips;
+    const SslStateOption& rhs = static_cast<const SslStateOption&>(ips);
 
     if ( (ssod.flags == rhs.ssod.flags) &&
         (ssod.mask == rhs.ssod.mask) )
@@ -237,7 +237,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ssl_state_ctor(Module* p, IpsInfo&)
 {
-    SslStateModule* m = (SslStateModule*)p;
+    SslStateModule* m = static_cast<SslStateModule*>(p);
     return new SslStateOption(m->ssod);
 }
 
@@ -272,4 +272,3 @@ static const IpsApi ssl_state_api =
 };
 
 const BaseApi* ips_ssl_state = &ssl_state_api.base;
-

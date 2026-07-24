@@ -145,7 +145,7 @@ void ts_print(const struct timeval* tvp, char* timebuf, bool yyyymmdd)
     if (!tvp)
     {
         // manual page (for linux) says tz is never used, so..
-        memset((char*)&tz, 0, sizeof(tz));
+        memset(&tz, 0, sizeof(tz));
         gettimeofday(&tv, &tz);
         tvp = &tv;
     }

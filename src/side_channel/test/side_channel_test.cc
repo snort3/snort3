@@ -29,6 +29,8 @@
 #include "log/messages.h"
 #include "managers/connector_manager.h"
 
+#include <cstring>
+
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
@@ -301,7 +303,9 @@ TEST(side_channel, test_connector_alloc_transmit_binary)
     CHECK(msg->cmsg.get_length() == 30 + sizeof(SCMsgHdr));
     CHECK(msg->cmsg.get_data() != nullptr);
 
-    CHECK(((SCMsgHdr*)msg->cmsg.get_data())->port == 2);
+    SCMsgHdr header;
+    memcpy(&header, msg->cmsg.get_data(), sizeof(header));
+    CHECK(header.port == 2);
 ;
     CHECK(sc->transmit_message(msg) == true);
 }
@@ -391,4 +395,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

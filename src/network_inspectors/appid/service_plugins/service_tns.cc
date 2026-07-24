@@ -96,7 +96,7 @@ TnsServiceDetector::TnsServiceDetector(ServiceDiscovery* sd)
 
     tcp_patterns =
     {
-        { (const uint8_t*)TNS_BANNER, TNS_BANNER_LEN, 2, 0, 0 },
+        { reinterpret_cast<const uint8_t*>(TNS_BANNER), TNS_BANNER_LEN, 2, 0, 0 },
     };
 
     appid_registry =
@@ -121,7 +121,7 @@ int TnsServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    ServiceTNSData* ss = (ServiceTNSData*)data_get(args.asd);
+    ServiceTNSData* ss = static_cast<ServiceTNSData*>(data_get(args.asd));
     if (!ss)
     {
         ss = new ServiceTNSData();
@@ -280,4 +280,3 @@ fail:
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
-

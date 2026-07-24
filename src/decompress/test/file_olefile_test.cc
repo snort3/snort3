@@ -413,8 +413,8 @@ TEST(OLECycleDetection, FatSectorCycle)
     ole_buf[76] = 0x00; ole_buf[77] = 0x00; ole_buf[78] = 0x00; ole_buf[79] = 0x00;
     ole_buf[44] = 0x03; ole_buf[45] = 0x00; ole_buf[46] = 0x00; ole_buf[47] = 0x00;
     ole_buf[48] = 0x01; ole_buf[49] = 0x00; ole_buf[50] = 0x00; ole_buf[51] = 0x00;
-    int32_t* fat = (int32_t*)(ole_buf + OLE_HEADER_LEN);
-    fat[0] = 1; fat[1] = 2; fat[2] = 1;
+    const int32_t fat[] = { 1, 2, 1 };
+    memcpy(ole_buf + OLE_HEADER_LEN, fat, sizeof(fat));
     int dir_offset = OLE_HEADER_LEN + 512; 
     ole_buf[dir_offset + 66] = 0x02; 
     ole_buf[dir_offset + 116] = 0x00; 
@@ -436,8 +436,8 @@ TEST(OLECycleDetection, DirectorySectorCycle)
     ole_buf[48] = 0x00; ole_buf[49] = 0x00; ole_buf[50] = 0x00; ole_buf[51] = 0x00;
     ole_buf[44] = 0x03; ole_buf[45] = 0x00; ole_buf[46] = 0x00; ole_buf[47] = 0x00;
     ole_buf[76] = 0x01; ole_buf[77] = 0x00; ole_buf[78] = 0x00; ole_buf[79] = 0x00;
-    int32_t* fat = (int32_t*)(ole_buf + OLE_HEADER_LEN);
-    fat[0] = 1; fat[1] = 2; fat[2] = 1;
+    const int32_t fat[] = { 1, 2, 1 };
+    memcpy(ole_buf + OLE_HEADER_LEN, fat, sizeof(fat));
     OleFile olefile(ole_buf, sizeof(ole_buf));
     olefile.parse_ole_header();
     olefile.populate_fat_list();
@@ -456,8 +456,8 @@ TEST(OLECycleDetection, MiniFatSectorCycle)
     ole_buf[64] = 0x03; ole_buf[65] = 0x00; ole_buf[66] = 0x00; ole_buf[67] = 0x00;
     ole_buf[44] = 0x03; ole_buf[45] = 0x00; ole_buf[46] = 0x00; ole_buf[47] = 0x00;
     ole_buf[76] = 0x01; ole_buf[77] = 0x00; ole_buf[78] = 0x00; ole_buf[79] = 0x00;
-    int32_t* fat = (int32_t*)(ole_buf + OLE_HEADER_LEN);
-    fat[0] = 1; fat[1] = 2; fat[2] = 1;
+    const int32_t fat[] = { 1, 2, 1 };
+    memcpy(ole_buf + OLE_HEADER_LEN, fat, sizeof(fat));
     OleFile olefile(ole_buf, sizeof(ole_buf));
     olefile.parse_ole_header();
     olefile.populate_fat_list();

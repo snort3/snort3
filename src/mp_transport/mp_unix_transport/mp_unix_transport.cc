@@ -26,6 +26,7 @@
 #include <cstring>
 #include <fcntl.h>
 #include <iostream>
+#include <memory>
 #include <poll.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -72,38 +73,54 @@ struct MPTransportMessage
 
 void MPUnixDomainTransport::side_channel_receive_handler(SCMessage* msg)
 {
+    // cppcheck-suppress unreadVariable ; RAII owner deletes the message on scope exit
+    std::unique_ptr<SCMessage> msg_owner(msg);
+
     if (transport_receive_handler and msg)
     {
-        if (msg->content_length < sizeof(MPTransportMessage))
+        if (not msg->content or msg->content_length < sizeof(MPTransportMessageHeader))
         {
             MPTransportLog("Incomplete message received\n");
             return;
         }
 
-        MPTransportMessageHeader* transport_message_header = (MPTransportMessageHeader*)msg->content;
+        MPTransportMessageHeader transport_message_header;
+        memcpy(&transport_message_header, msg->content, sizeof(transport_message_header));
+
+        if (transport_message_header.data_length >
+            msg->content_length - sizeof(MPTransportMessageHeader))
+        {
+            MPTransportLog("Incomplete message payload received\n");
+            return;
+        }
         
-        if (transport_message_header->type >= MAX_TYPE)
+        if (transport_message_header.type >= MAX_TYPE)
         {
             MPTransportLog("Invalid message type received\n");
             return;
         }
 
-        auto deserialize_func = get_event_deserialization_function(transport_message_header->pub_id, transport_message_header->event_id);
+        auto deserialize_func = get_event_deserialization_function(
+            transport_message_header.pub_id, transport_message_header.event_id);
         if (!deserialize_func)
         {
-            MPTransportLog("No deserialization function found for event: type %d, id %d\n", transport_message_header->type, transport_message_header->event_id);
+            MPTransportLog("No deserialization function found for event: type %d, id %d\n",
+                transport_message_header.type, transport_message_header.event_id);
             return;
         }
 
         DataEvent* internal_event = nullptr;
-        (deserialize_func)((const char*)(msg->content + sizeof(MPTransportMessageHeader)), transport_message_header->data_length, internal_event);
-        MPEventInfo event(std::shared_ptr<DataEvent> (internal_event), transport_message_header->event_id, transport_message_header->pub_id);
+        (deserialize_func)(reinterpret_cast<const char*>(
+            msg->content + sizeof(MPTransportMessageHeader)),
+            transport_message_header.data_length, internal_event);
+        MPEventInfo event(std::shared_ptr<DataEvent>(internal_event),
+            transport_message_header.event_id, transport_message_header.pub_id);
 
         (transport_receive_handler)(event);
         dynamic_transport_stats.received_events++;
-        dynamic_transport_stats.received_bytes += sizeof(MPTransportMessageHeader) + transport_message_header->data_length;
+        dynamic_transport_stats.received_bytes +=
+            sizeof(MPTransportMessageHeader) + transport_message_header.data_length;
     }
-    delete msg;
 }
 
 void MPUnixDomainTransport::handle_new_connection(UnixDomainConnector *connector, UnixDomainConnectorConfig* cfg, const unsigned short& channel_id)

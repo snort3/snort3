@@ -1160,7 +1160,7 @@ static void fpEvalPacketUdp(Packet* p, FPTask task)
     p->ptrs.udph = udph;
     p->ptrs.sp = ntohs(udph->uh_sport);
     p->ptrs.dp = ntohs(udph->uh_dport);
-    p->data = (const uint8_t*)udph + udp::UDP_HEADER_LEN;
+    p->data = reinterpret_cast<const uint8_t*>(udph) + udp::UDP_HEADER_LEN;
 
     ip::IpApi tmp_api;
     int8_t curr_layer = 0;

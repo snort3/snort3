@@ -270,6 +270,25 @@ public:
     ~TestDataEvent() override {}
 };
 
+namespace snort
+{
+struct MPUnixDomainTransportTestAccess
+{
+    static void receive(MPUnixDomainTransport& transport, SCMessage* msg)
+    { transport.side_channel_receive_handler(msg); }
+};
+}
+
+#pragma pack(push, 1)
+struct TestMPTransportMessageHeader
+{
+    uint32_t type = 0;
+    int32_t pub_id = 0;
+    int32_t event_id = 0;
+    uint16_t data_length = 0;
+};
+#pragma pack(pop)
+
 bool serialize_mock(DataEvent* event, char*& buffer, uint16_t* length)
 {
     test_serialize_calls++;
@@ -372,7 +391,7 @@ TEST_GROUP(unix_transport_test_messaging)
 
 TEST(unix_transport_test_connectivity_group, get_config)
 {
-    auto unix_transport = (MPUnixDomainTransport*)test_transport;
+    auto unix_transport = static_cast<MPUnixDomainTransport*>(test_transport);
     CHECK(unix_transport->get_config() == &test_config);
 };
 
@@ -469,6 +488,30 @@ TEST(unix_transport_test_connectivity_group, connector_update_handler_call)
     test_update_handler = nullptr;
 };
 
+TEST(unix_transport_test_connectivity_group, reject_incomplete_message_payload)
+{
+    clear_test_calls();
+    int receive_count = 0;
+    test_transport->register_receive_handler(
+        [&receive_count](const snort::MPEventInfo&) { ++receive_count; });
+
+    TestMPTransportMessageHeader header;
+    header.data_length = 1;
+
+    auto* data = new uint8_t[sizeof(header)];
+    memcpy(data, &header, sizeof(header));
+    ConnectorMsg connector_msg(data, sizeof(header), true);
+    auto* msg = new SCMessage(nullptr, nullptr, std::move(connector_msg));
+    msg->content = msg->cmsg.get_content();
+    msg->content_length = msg->cmsg.get_content_length();
+
+    MPUnixDomainTransportTestAccess::receive(*test_transport, msg);
+
+    CHECK_EQUAL(0, receive_count);
+    CHECK_EQUAL(0, test_deserialize_calls);
+    CHECK_EQUAL(0, test_transport->get_stats_copy().received_events);
+}
+
 static TestDataEvent test_event;
 
 TEST(unix_transport_test_messaging, send_to_transport_biderectional)
@@ -554,4 +597,3 @@ int main(int argc, char** argv)
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

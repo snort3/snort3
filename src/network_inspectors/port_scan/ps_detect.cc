@@ -195,7 +195,7 @@ bool PortScan::ps_filter_ignore(PS_PKT* ps_pkt)
     int reverse_pkt = 0;
     const SfIp* scanner, * scanned;
 
-    p = (Packet*)ps_pkt->pkt;
+    p = ps_pkt->pkt;
 
     if(!p->ptrs.ip_api.is_ip())
         return true;
@@ -329,7 +329,7 @@ bool PortScan::ps_tracker_lookup(
     PS_PKT* ps_pkt, PS_TRACKER** scanner, PS_TRACKER** scanned)
 {
     PS_HASH_KEY key;
-    Packet* p = (Packet*)ps_pkt->pkt;
+    Packet* p = ps_pkt->pkt;
 
     if (ps_get_proto(ps_pkt, &key.protocol) == -1)
         return false;
@@ -396,7 +396,7 @@ int PortScan::ps_get_proto(PS_PKT* ps_pkt, int* proto)
     if (!ps_pkt || !ps_pkt->pkt || !proto)
         return -1;
 
-    p = (Packet*)ps_pkt->pkt;
+    p = ps_pkt->pkt;
     *proto = 0;
 
     if ( config->detect_scans & PS_PROTO_TCP )
@@ -603,7 +603,7 @@ static int ps_update_open_ports(PS_PROTO* proto, unsigned short port)
 void PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     PS_TRACKER* scanned)
 {
-    Packet* p = (Packet*)ps_pkt->pkt;
+    Packet* p = ps_pkt->pkt;
     unsigned win = config->tcp_window;
 
     SfIp cleared;
@@ -769,7 +769,7 @@ void PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
 void PortScan::ps_tracker_update_ip(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     PS_TRACKER* scanned)
 {
-    Packet* p = (Packet*)ps_pkt->pkt;
+    Packet* p = ps_pkt->pkt;
 
     if ( !p->ptrs.ip_api.is_ip() )
         return;
@@ -801,7 +801,7 @@ void PortScan::ps_tracker_update_ip(PS_PKT* ps_pkt, PS_TRACKER* scanner,
         if (scanned)
         {
             ps_proto_update(&scanned->proto, 1, 0, win, p->ptrs.ip_api.get_src(),
-                (unsigned short)p->get_ip_proto_next(), packet_time());
+                static_cast<unsigned short>(p->get_ip_proto_next()), packet_time());
         }
         if (scanner)
         {
@@ -814,7 +814,7 @@ void PortScan::ps_tracker_update_ip(PS_PKT* ps_pkt, PS_TRACKER* scanner,
 void PortScan::ps_tracker_update_udp(
     PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER* scanned)
 {
-    Packet* p = (Packet*)ps_pkt->pkt;
+    Packet* p = ps_pkt->pkt;
     unsigned win = config->udp_window;
 
     SfIp cleared;
@@ -869,7 +869,7 @@ void PortScan::ps_tracker_update_udp(
 void PortScan::ps_tracker_update_icmp(
     PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER*)
 {
-    Packet* p = (Packet*)ps_pkt->pkt;
+    Packet* p = ps_pkt->pkt;
     unsigned win = config->icmp_window;
 
     if (p->ptrs.icmph)
@@ -1271,7 +1271,7 @@ int PortScan::ps_detect(PS_PKT* ps_pkt)
     if (ps_filter_ignore(ps_pkt))
         return 0;
 
-    Packet* p = (Packet*)ps_pkt->pkt;
+    Packet* p = ps_pkt->pkt;
 
     do
     {
@@ -1305,4 +1305,3 @@ int PortScan::ps_detect(PS_PKT* ps_pkt)
 
     return 1;
 }
-

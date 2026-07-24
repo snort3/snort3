@@ -132,7 +132,7 @@ public:
 
     const PegCount* get_counts()
     {
-        PegCount* pcs = (PegCount*)&counts;
+        PegCount* pcs = reinterpret_cast<PegCount*>(&counts);
         const PegInfo* pegs = get_pegs();
 
         for ( int i = 0; pegs[i].type != CountType::END; i++ )
@@ -144,7 +144,7 @@ public:
             }
             pcs[i] = c;
         }
-        return (const PegCount*)&counts;
+        return reinterpret_cast<const PegCount*>(&counts);
     }
 
     size_t size() const

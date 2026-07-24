@@ -133,7 +133,7 @@ void MPUnixDomainTransportModule::sum_stats(bool dump_stats)
 
         for (int i = 0; i < get_num_counts(); i++)
         {
-            set_peg_count(i, ((PegCount*)&stats)[i], dump_stats);
+            set_peg_count(i, reinterpret_cast<PegCount*>(&stats)[i], dump_stats);
         }
     }
 }

@@ -91,7 +91,7 @@ FileConfig* get_file_config(const SnortConfig* sc)
     if ( !sc )
         sc = SnortConfig::get_conf();
 
-    FileInspect* fi = (FileInspect*)InspectorManager::get_file_inspector(sc);
+    FileInspect* fi = static_cast<FileInspect*>(InspectorManager::get_file_inspector(sc));
 
     if (fi)
         return (fi->config);
@@ -122,4 +122,3 @@ void set_rule_id_from_type(SnortConfig* sc, uint64_t id, std::string type,
     }
 }
 }
-

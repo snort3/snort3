@@ -17,6 +17,8 @@
 //--------------------------------------------------------------------------
 // distill_verdict_stubs.h author Ron Dempster <rdempste@cisco.com>
 
+#include <cstring>
+
 #include "detection/context_switcher.h"
 #include "detection/detection_buf.h"
 #include "detection/detection_engine.h"
@@ -142,7 +144,7 @@ MemoryContext::MemoryContext(MemoryTracker&) : saved(nullptr) { }
 MemoryContext::~MemoryContext() = default;
 Packet::Packet(bool)
 {
-    memset((char*) this , 0, sizeof(*this));
+    std::memset(this, 0, sizeof(*this));
     ip_proto_next = IpProtocol::PROTO_NOT_SET;
     packet_flags = PKT_FROM_CLIENT;
 }
@@ -235,4 +237,3 @@ bool FlowControl::move_to_allowlist(snort::Flow*) { return true; }
 void memory::MemoryCap::thread_init() { }
 void memory::MemoryCap::thread_term() { }
 void memory::MemoryCap::free_space() { }
-

@@ -239,7 +239,7 @@ static char* duplicate_string(const uint8_t** data_inout, uint16_t* size_inout)
 
     if (size < field_len)
         return nullptr;
-    str = (char*)snort_alloc(field_len + 1);
+    str = static_cast<char*>(snort_alloc(field_len + 1));
     memcpy(str, data, field_len);
     str[field_len] = '\0';
     data += field_len;
@@ -319,7 +319,7 @@ static int parse_rtmp_message(const uint8_t** data_inout, uint16_t* size_inout,
     if (msg_type != RTMP_AMF0_COMMAND_MESSAGE_ID)
         goto parse_rtmp_message_fail;
 
-    body = (uint8_t*)snort_alloc(msg_len);
+    body = static_cast<uint8_t*>(snort_alloc(msg_len));
     if (!unchunk_rtmp_message_body(&data, &size, id, msg_len, body))
         goto parse_rtmp_message_fail;
     *data_inout = data;
@@ -338,7 +338,7 @@ static int parse_rtmp_message(const uint8_t** data_inout, uint16_t* size_inout,
         goto parse_rtmp_message_fail;
     ADVANCE_DATA(1 + 2);
     CHECK_SIZE(field_len);
-    if (strncmp((const char*)data, RTMP_COMMAND_TYPE_CONNECT, field_len) != 0)
+    if (strncmp(reinterpret_cast<const char*>(data), RTMP_COMMAND_TYPE_CONNECT, field_len) != 0)
         goto parse_rtmp_message_fail;
     ADVANCE_DATA(field_len);
 
@@ -374,7 +374,7 @@ static int parse_rtmp_message(const uint8_t** data_inout, uint16_t* size_inout,
         CHECK_SIZE(field_len);
         if (    (ss->swfUrl == nullptr)
             && (field_len == RTMP_PROPERTY_KEY_SWFURL_LEN)
-            && (strncmp((const char*)data, RTMP_PROPERTY_KEY_SWFURL,
+            && (strncmp(reinterpret_cast<const char*>(data), RTMP_PROPERTY_KEY_SWFURL,
             RTMP_PROPERTY_KEY_SWFURL_LEN) == 0) )
         {
             /* swfUrl */
@@ -385,7 +385,7 @@ static int parse_rtmp_message(const uint8_t** data_inout, uint16_t* size_inout,
         }
         else if (    (ss->pageUrl == nullptr)
             && (field_len == RTMP_PROPERTY_KEY_PAGEURL_LEN)
-            && (strncmp((const char*)data, RTMP_PROPERTY_KEY_PAGEURL,
+            && (strncmp(reinterpret_cast<const char*>(data), RTMP_PROPERTY_KEY_PAGEURL,
             RTMP_PROPERTY_KEY_PAGEURL_LEN) == 0) )
         {
             /* pageUrl */
@@ -421,7 +421,7 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    ServiceRTMPData* ss = (ServiceRTMPData*)data_get(args.asd);
+    ServiceRTMPData* ss = static_cast<ServiceRTMPData*>(data_get(args.asd));
     if (!ss)
     {
         ss = new ServiceRTMPData;
@@ -632,6 +632,8 @@ fail:
 
 success:
     AppIdHttpSession* hsession = args.asd.get_http_session();
+    // The production session may already own an HTTP session; service test mocks do not.
+    // cppcheck-suppress knownConditionTrueFalse
     if (!hsession)
         hsession = args.asd.create_http_session();
 
@@ -659,4 +661,3 @@ success:
 
     return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_RTMP);
 }
-

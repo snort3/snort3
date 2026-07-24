@@ -65,7 +65,7 @@ const PegInfo* PayloadInjectorModule::get_pegs() const
 { return payload_injector_pegs; }
 
 PegCount* PayloadInjectorModule::get_counts() const
-{ return (PegCount*)&payload_injector_stats; }
+{ return reinterpret_cast<PegCount*>(&payload_injector_stats); }
 
 bool PayloadInjectorModule::end(const char*, int, SnortConfig* sc)
 {

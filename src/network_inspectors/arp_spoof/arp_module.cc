@@ -129,5 +129,4 @@ const PegInfo* ArpSpoofModule::get_pegs() const
 { return simple_pegs; }
 
 PegCount* ArpSpoofModule::get_counts() const
-{ return (PegCount*)&asstats; }
-
+{ return reinterpret_cast<PegCount*>(&asstats); }

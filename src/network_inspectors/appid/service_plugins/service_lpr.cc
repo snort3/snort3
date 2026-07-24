@@ -91,7 +91,7 @@ int LprServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    ServiceLPRData* ld = (ServiceLPRData*)data_get(args.asd);
+    ServiceLPRData* ld = static_cast<ServiceLPRData*>(data_get(args.asd));
     if (!ld)
     {
         ld = new ServiceLPRData;
@@ -225,4 +225,3 @@ bail:
     incompatible_data(args.asd, args.pkt, args.dir);
     return APPID_NOT_COMPATIBLE;
 }
-

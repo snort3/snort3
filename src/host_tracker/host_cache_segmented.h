@@ -244,7 +244,7 @@ template<typename Key, typename Value>
 void HostCacheSegmented<Key, Value>::update_counts()
 {
     std::lock_guard<std::mutex> guard(stats_lock);
-    PegCount* pcs = (PegCount*)&counts;
+    PegCount* pcs = reinterpret_cast<PegCount*>(&counts);
     const PegInfo* pegs = get_pegs();
 
     for (int i = 0; pegs[i].type != CountType::END; i++)
@@ -313,7 +313,7 @@ PegCount* HostCacheSegmented<Key, Value>::get_counts()
     if( init_done )
         update_counts();
 
-    return (PegCount*)&host_cache_counts;
+    return reinterpret_cast<PegCount*>(&host_cache_counts);
 }
 
 template<typename Key, typename Value>
@@ -405,4 +405,3 @@ typedef HostCacheSegmented<snort::SfIp, snort::HostTracker> HostCacheSegmentedIp
 extern SO_PUBLIC HostCacheSegmentedIp host_cache;
 
 #endif // HOST_CACHE_SEGMENTED_H
-

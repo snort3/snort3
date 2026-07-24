@@ -447,7 +447,7 @@ void Snort::setup(int argc, char* argv[])
     memory::MemoryCap::print(SnortConfig::log_verbose(), true);
 
     host_cache.init();
-    ((HostTrackerModule*)PluginManager::get_module(HOST_TRACKER_NAME))->init_data();
+    static_cast<HostTrackerModule*>(PluginManager::get_module(HOST_TRACKER_NAME))->init_data();
     host_cache.print_config();
 
 #ifdef USE_TSC_CLOCK
@@ -640,4 +640,3 @@ TEST_CASE("Check process ID handling", "[snort_process_id]")
 }
 
 #endif
-

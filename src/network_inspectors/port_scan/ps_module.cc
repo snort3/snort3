@@ -207,7 +207,7 @@ const PegInfo* PortScanModule::get_pegs() const
 PegCount* PortScanModule::get_counts() const
 {
     ps_update_memusage_peg();
-    return (PegCount*)&spstats;
+    return reinterpret_cast<PegCount*>(&spstats);
 }
 
 const RuleMap* PortScanModule::get_rules() const

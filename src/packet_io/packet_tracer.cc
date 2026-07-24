@@ -467,40 +467,40 @@ public:
     { PacketTracer::_thread_init<TestPacketTracer>(); }
 
     static char* get_buff()
-    { return ((TestPacketTracer*)s_pkt_trace)->buffer; }
+    { return static_cast<TestPacketTracer*>(s_pkt_trace)->buffer; }
 
     static unsigned int get_buff_len()
-    { return ((TestPacketTracer*)s_pkt_trace)->buff_len; }
+    { return static_cast<TestPacketTracer*>(s_pkt_trace)->buff_len; }
 
     static char* get_daq_buff()
-    { return ((TestPacketTracer*)s_pkt_trace)->daq_buffer; }
+    { return static_cast<TestPacketTracer*>(s_pkt_trace)->daq_buffer; }
 
     static unsigned int get_daq_buff_len()
-    { return ((TestPacketTracer*)s_pkt_trace)->daq_buff_len; }
+    { return static_cast<TestPacketTracer*>(s_pkt_trace)->daq_buff_len; }
 
     static void set_user_enable(bool status)
-    { ((TestPacketTracer*)s_pkt_trace)->user_enabled = status; }
+    { static_cast<TestPacketTracer*>(s_pkt_trace)->user_enabled = status; }
 
     static bool is_user_enabled()
-    { return ((TestPacketTracer*)s_pkt_trace)->user_enabled; }
+    { return static_cast<TestPacketTracer*>(s_pkt_trace)->user_enabled; }
 
     static void set_daq_enable(bool status)
-    { ((TestPacketTracer*)s_pkt_trace)->daq_activated = status; }
+    { static_cast<TestPacketTracer*>(s_pkt_trace)->daq_activated = status; }
 
     static bool is_daq_enabled()
-    { return ((TestPacketTracer*)s_pkt_trace)->daq_activated; }
+    { return static_cast<TestPacketTracer*>(s_pkt_trace)->daq_activated; }
 
     static bool is_paused()
-    { return ((TestPacketTracer*)s_pkt_trace)->pause_count; }
+    { return static_cast<TestPacketTracer*>(s_pkt_trace)->pause_count; }
 
     void dump_to_daq(Packet*) override
     { }
 
     static std::vector<bool> get_mutes()
-    { return ((TestPacketTracer*)s_pkt_trace)->mutes; }
+    { return static_cast<TestPacketTracer*>(s_pkt_trace)->mutes; }
 
     static FILE* get_log_fh()
-    { return ((TestPacketTracer*)s_pkt_trace)->log_fh; }
+    { return static_cast<TestPacketTracer*>(s_pkt_trace)->log_fh; }
 };
 
 TEST_CASE("basic log", "[PacketTracer]")

@@ -98,7 +98,7 @@ TEST_GROUP(MPUnixDomainTransportModuleTests)
 {
     void setup() override
     {
-        mod = (MPUnixDomainTransportModule*)mod_ctor();
+        mod = static_cast<MPUnixDomainTransportModule*>(mod_ctor());
     }
 
     void teardown() override

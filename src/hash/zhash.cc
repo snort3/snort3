@@ -87,8 +87,8 @@ void* ZHash::remove(uint8_t type)
 
 void* ZHash::push(void* p)
 {
-    auto node = (HashNode*)mem_allocator->allocate();
-    node->key = (char*)node + sizeof(HashNode);
+    auto node = static_cast<HashNode*>(mem_allocator->allocate());
+    node->key = reinterpret_cast<char*>(node) + sizeof(HashNode);
     node->data = p;
     save_free_node(node);
     return node->key;

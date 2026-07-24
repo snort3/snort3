@@ -584,7 +584,7 @@ void MPDataBusModule::sum_stats(bool dump_stats)
         auto stats = SnortConfig::get_conf()->mp_dbus->get_stats_copy();
         for (int i = 0; i < get_num_counts(); i++)
         {
-            set_peg_count(i, ((PegCount*)&stats)[i], dump_stats);
+            set_peg_count(i, reinterpret_cast<PegCount*>(&stats)[i], dump_stats);
         }
     }
 }
@@ -1839,7 +1839,7 @@ public:
 
     PegCount* get_counts() const override
     {
-        return (PegCount*)&event_filter_stats;
+        return reinterpret_cast<PegCount*>(&event_filter_stats);
     }
 
     Usage get_usage() const override
@@ -1958,7 +1958,7 @@ public:
 
     PegCount* get_counts() const override
     {
-        return (PegCount*)&rate_filter_stats;
+        return reinterpret_cast<PegCount*>(&rate_filter_stats);
     }
 
     Usage get_usage() const override

@@ -135,8 +135,8 @@ unsigned DataBus::get_id(const PubKey&)
 
 void DataBus::publish(unsigned, unsigned, DataEvent& event, Flow*)
 {
-    AppidEvent* appid_event = (AppidEvent*)&event;
-    char* test_log = (char*)mock().getData("test_log").getObjectPointer();
+    AppidEvent* appid_event = static_cast<AppidEvent*>(&event);
+    char* test_log = static_cast<char*>(mock().getData("test_log").getObjectPointer());
     snprintf(test_log, 256, "Published change_bits == %s",
         appid_event->get_change_bitset().to_string().c_str());
     mock().actualCall("publish");

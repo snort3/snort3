@@ -416,7 +416,7 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset, uint16_t si
             if (size - offset < (int)sizeof(ServiceFTPCode))
                 return -1;
 
-            code_hdr = (const ServiceFTPCode*)(data + offset);
+            code_hdr = reinterpret_cast<const ServiceFTPCode*>(data + offset);
 
             fd.code = 0;
             ret_code = check_ret_digit_code(code_hdr->code, 3, 1, fd.code, fd);
@@ -518,7 +518,7 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset, uint16_t si
             }
             else
             {
-                code_hdr = (const ServiceFTPCode*)(data + offset);
+                code_hdr = reinterpret_cast<const ServiceFTPCode*>(data + offset);
                 tmp = 0;
 
                 if (check_ret_digit_code(code_hdr->code, 3, 1, tmp, fd) and (code_hdr->sp == ' '
@@ -588,7 +588,7 @@ static int ftp_validate_reply(const uint8_t* data, uint16_t& offset, uint16_t si
                 }
                 else
                 {
-                    code_hdr = (const ServiceFTPCode*)(data + offset);
+                    code_hdr = reinterpret_cast<const ServiceFTPCode*>(data + offset);
                     tmp = 0;
 
                     if (check_ret_digit_code(code_hdr->code, 3,1, tmp, fd) and tmp == fd.code)
@@ -960,7 +960,7 @@ int FtpServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    ServiceFTPData* fd = (ServiceFTPData*)data_get(args.asd);
+    ServiceFTPData* fd = static_cast<ServiceFTPData*>(data_get(args.asd));
     if (!fd)
     {
         fd = new ServiceFTPData;
@@ -1356,4 +1356,3 @@ fail:
         return APPID_NOMATCH;
     }
 }
-

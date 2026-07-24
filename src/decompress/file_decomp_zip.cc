@@ -33,7 +33,7 @@ static fd_status_t Inflate_Init(fd_session_t* SessionPtr)
 {
     z_stream* z_s = &(SessionPtr->ZIP->Stream);
 
-    memset((char*)z_s, 0, sizeof(z_stream));
+    memset(z_s, 0, sizeof(z_stream));
 
     z_s->zalloc = (alloc_func)nullptr;
     z_s->zfree = (free_func)nullptr;
@@ -559,4 +559,3 @@ fd_status_t File_Decomp_ZIP(fd_session_t* SessionPtr)
 
     return output_blocked ? File_Decomp_BlockOut : File_Decomp_BlockIn;
 }
-

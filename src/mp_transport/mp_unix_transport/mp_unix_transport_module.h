@@ -67,7 +67,7 @@ static void mod_dtor(Module* m)
 
 static MPTransport* mp_unixdomain_transport_ctor(Module* m)
 {
-    auto unix_tr_mod = (MPUnixDomainTransportModule*)m;
+    auto unix_tr_mod = static_cast<MPUnixDomainTransportModule*>(m);
     unix_tr_mod->transport_handle = new MPUnixDomainTransport(unix_tr_mod->config, unix_tr_mod->unix_transport_stats);
     return unix_tr_mod->transport_handle;
 }

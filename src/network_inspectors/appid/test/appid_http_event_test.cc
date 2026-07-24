@@ -382,7 +382,8 @@ static void run_event_handler(TestData test_data, TestData* expect_data = nullpt
 
     mock().strictOrder();
     mock().expectOneCall("get_appid_session");
-    MockAppIdHttpSession* hsession = (MockAppIdHttpSession*)mock_session->get_http_session();
+    MockAppIdHttpSession* hsession =
+        static_cast<MockAppIdHttpSession*>(mock_session->get_http_session());
     hsession->reset();
     event_handler.handle(event, flow);
     LONGS_EQUAL(expect_data->scan_flags, mock_session->scan_flags);
@@ -593,4 +594,3 @@ int main(int argc, char** argv)
     mock_cleanup_appid_pegs();
     return rc;
 }
-

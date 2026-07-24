@@ -25,6 +25,8 @@
 
 #include "service_radius.h"
 
+#include <cstring>
+
 #include "app_info_table.h"
 
 #define RADIUS_CODE_ACCESS_REQUEST       1
@@ -96,22 +98,23 @@ int RadiusServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_NOMATCH;
     }
 
-    ServiceRADIUSData* rd = (ServiceRADIUSData*)data_get(args.asd);
+    ServiceRADIUSData* rd = static_cast<ServiceRADIUSData*>(data_get(args.asd));
     if (!rd)
     {
         rd = new ServiceRADIUSData;
         data_add(args.asd, rd);
     }
 
-    const RADIUSHeader* hdr = (const RADIUSHeader*)args.data;
+    RADIUSHeader hdr;
+    std::memcpy(&hdr, args.data, sizeof(hdr));
     uint16_t len;
     int new_dir = args.dir;
 
     if (rd->state == RADIUS_STATE_REQUEST)
     {
-        if (hdr->code == RADIUS_CODE_ACCESS_ACCEPT ||
-            hdr->code == RADIUS_CODE_ACCESS_REJECT ||
-            hdr->code == RADIUS_CODE_ACCESS_CHALLENGE)
+        if (hdr.code == RADIUS_CODE_ACCESS_ACCEPT ||
+            hdr.code == RADIUS_CODE_ACCESS_REJECT ||
+            hdr.code == RADIUS_CODE_ACCESS_CHALLENGE)
         {
             args.asd.set_session_flags(APPID_SESSION_UDP_REVERSED);
             rd->state = RADIUS_STATE_RESPONSE;
@@ -128,11 +131,11 @@ int RadiusServiceDetector::validate(AppIdDiscoveryArgs& args)
     case RADIUS_STATE_REQUEST:
         if (new_dir != APP_ID_FROM_INITIATOR)
             goto inprocess;
-        if (hdr->code != RADIUS_CODE_ACCESS_REQUEST)
+        if (hdr.code != RADIUS_CODE_ACCESS_REQUEST)
         {
             goto not_compatible;
         }
-        len = ntohs(hdr->length);
+        len = ntohs(hdr.length);
         if (len > args.size)
         {
             goto not_compatible;
@@ -142,25 +145,25 @@ int RadiusServiceDetector::validate(AppIdDiscoveryArgs& args)
         {
             goto not_compatible;
         }
-        rd->id = hdr->id;
+        rd->id = hdr.id;
         rd->state = RADIUS_STATE_RESPONSE;
         break;
     case RADIUS_STATE_RESPONSE:
         if (new_dir != APP_ID_FROM_RESPONDER)
             goto inprocess;
-        if (hdr->code != RADIUS_CODE_ACCESS_ACCEPT &&
-            hdr->code != RADIUS_CODE_ACCESS_REJECT &&
-            hdr->code != RADIUS_CODE_ACCESS_CHALLENGE)
+        if (hdr.code != RADIUS_CODE_ACCESS_ACCEPT &&
+            hdr.code != RADIUS_CODE_ACCESS_REJECT &&
+            hdr.code != RADIUS_CODE_ACCESS_CHALLENGE)
         {
             goto fail;
         }
-        len = ntohs(hdr->length);
+        len = ntohs(hdr.length);
         if (len > args.size)
             goto fail;
         /* Must contain a username attribute */
         if (len < sizeof(RADIUSHeader))
             goto fail;
-        if (hdr->id != rd->id)
+        if (hdr.id != rd->id)
         {
             rd->state = RADIUS_STATE_REQUEST;
             goto inprocess;
@@ -220,19 +223,20 @@ int RadiusAcctServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_NOMATCH;
     }
 
-    ServiceRADIUSData* rd = (ServiceRADIUSData*)data_get(args.asd);
+    ServiceRADIUSData* rd = static_cast<ServiceRADIUSData*>(data_get(args.asd));
     if (!rd)
     {
         rd = new ServiceRADIUSData;
         data_add(args.asd, rd);
     }
 
-    const RADIUSHeader* hdr = (const RADIUSHeader*)args.data;
+    RADIUSHeader hdr;
+    std::memcpy(&hdr, args.data, sizeof(hdr));
     uint16_t len;
     int new_dir = args.dir;
     if (rd->state == RADIUS_STATE_REQUEST)
     {
-        if (hdr->code == RADIUS_CODE_ACCOUNTING_RESPONSE)
+        if (hdr.code == RADIUS_CODE_ACCOUNTING_RESPONSE)
         {
             args.asd.set_session_flags(APPID_SESSION_UDP_REVERSED);
             rd->state = RADIUS_STATE_RESPONSE;
@@ -249,11 +253,11 @@ int RadiusAcctServiceDetector::validate(AppIdDiscoveryArgs& args)
     case RADIUS_STATE_REQUEST:
         if (new_dir != APP_ID_FROM_INITIATOR)
             goto inprocess;
-        if (hdr->code != RADIUS_CODE_ACCOUNTING_REQUEST)
+        if (hdr.code != RADIUS_CODE_ACCOUNTING_REQUEST)
         {
             goto not_compatible;
         }
-        len = ntohs(hdr->length);
+        len = ntohs(hdr.length);
         if (len > args.size)
         {
             goto not_compatible;
@@ -263,21 +267,21 @@ int RadiusAcctServiceDetector::validate(AppIdDiscoveryArgs& args)
         {
             goto not_compatible;
         }
-        rd->id = hdr->id;
+        rd->id = hdr.id;
         rd->state = RADIUS_STATE_RESPONSE;
         break;
     case RADIUS_STATE_RESPONSE:
         if (new_dir != APP_ID_FROM_RESPONDER)
             goto inprocess;
-        if (hdr->code != RADIUS_CODE_ACCOUNTING_RESPONSE)
+        if (hdr.code != RADIUS_CODE_ACCOUNTING_RESPONSE)
             goto fail;
-        len = ntohs(hdr->length);
+        len = ntohs(hdr.length);
         if (len > args.size)
             goto fail;
         /* Must contain a NAS-IP-Address or NAS-Identifier attribute */
         if (len < sizeof(RADIUSHeader))
             goto fail;
-        if (hdr->id != rd->id)
+        if (hdr.id != rd->id)
         {
             rd->state = RADIUS_STATE_REQUEST;
             goto inprocess;
@@ -301,4 +305,3 @@ fail:
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
-

@@ -27,6 +27,7 @@ unsigned SslBaseFlowData::inspector_id = 0;
 
 SSLData* SslBaseFlowData::get_ssl_session_data(snort::Flow* flow)
 {
-    SslBaseFlowData* fd = (SslBaseFlowData*)flow->get_flow_data(SslBaseFlowData::inspector_id);
+    SslBaseFlowData* fd = static_cast<SslBaseFlowData*>(
+        flow->get_flow_data(SslBaseFlowData::inspector_id));
     return fd ? &fd->get_session() : nullptr;
 }

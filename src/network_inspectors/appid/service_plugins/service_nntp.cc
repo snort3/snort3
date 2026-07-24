@@ -115,7 +115,7 @@ static int nntp_validate_reply(const uint8_t* data, uint16_t* offset, uint16_t s
         return 0;
     }
 
-    code_hdr = (const ServiceNNTPCode*)(data + *offset);
+    code_hdr = reinterpret_cast<const ServiceNNTPCode*>(data + *offset);
 
     if (code_hdr->sp != ' ')
         return -1;
@@ -276,7 +276,7 @@ int NntpServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    ServiceNNTPData* nd = (ServiceNNTPData*)data_get(args.asd);
+    ServiceNNTPData* nd = static_cast<ServiceNNTPData*>(data_get(args.asd));
     if (!nd)
     {
         nd = new ServiceNNTPData();
@@ -356,4 +356,3 @@ fail:
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
-

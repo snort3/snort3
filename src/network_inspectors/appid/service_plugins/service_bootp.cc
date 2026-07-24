@@ -121,7 +121,7 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (size < sizeof(ServiceBOOTPHeader))
         goto fail;
 
-    bh = (const ServiceBOOTPHeader*)data;
+    bh = reinterpret_cast<const ServiceBOOTPHeader*>(data);
 
     if (bh->htype != 0x01)
         goto fail;
@@ -148,8 +148,9 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
     {
         if (size > sizeof(ServiceBOOTPHeader) + 4)
         {
-            if (ntohl(*((const uint32_t*)(data + sizeof(ServiceBOOTPHeader)))) ==
-                DHCP_MAGIC_COOKIE)
+            uint32_t magic_cookie;
+            memcpy(&magic_cookie, data + sizeof(ServiceBOOTPHeader), sizeof(magic_cookie));
+            if (ntohl(magic_cookie) == DHCP_MAGIC_COOKIE)
             {
                 int option53 = 0;
                 for (i=sizeof(ServiceBOOTPHeader)+sizeof(uint32_t); i<size; )
@@ -168,7 +169,7 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
                     }
                     if (i + sizeof(ServiceDHCPOption) > size)
                         goto not_compatible;
-                    op = (const ServiceDHCPOption*)(&data[i]);
+                    op = reinterpret_cast<const ServiceDHCPOption*>(&data[i]);
                     i += sizeof(ServiceDHCPOption);
                     if (i + op->len > size)
                         goto not_compatible;
@@ -212,8 +213,9 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
 
     if (size > sizeof(ServiceBOOTPHeader) + 4)
     {
-        if (ntohl(*((const uint32_t*)(data + sizeof(ServiceBOOTPHeader)))) ==
-            DHCP_MAGIC_COOKIE)
+        uint32_t magic_cookie;
+        memcpy(&magic_cookie, data + sizeof(ServiceBOOTPHeader), sizeof(magic_cookie));
+        if (ntohl(magic_cookie) == DHCP_MAGIC_COOKIE)
         {
             int option53 = 0;
             uint32_t subnet = 0;
@@ -238,7 +240,7 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
                 }
                 if (i + sizeof(ServiceDHCPOption) > size)
                     goto fail;
-                op = (const ServiceDHCPOption*)(&data[i]);
+                op = reinterpret_cast<const ServiceDHCPOption*>(&data[i]);
                 i += sizeof(ServiceDHCPOption);
                 if (i + op->len > size)
                     goto fail;
@@ -340,4 +342,3 @@ void BootpServiceDetector::add_new_dhcp_lease(AppIdSession& asd, const uint8_t* 
     DHCPInfoEvent event(p, ip, mac, subnetmask, leaseSecs, router);
     DataBus::publish(AppIdInspector::get_pub_id(), AppIdEventIds::DHCP_INFO, event, p->flow);
 }
-

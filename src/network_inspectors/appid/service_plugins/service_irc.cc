@@ -95,7 +95,7 @@ int IrcServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    ServiceIRCData* id = (ServiceIRCData*)data_get(args.asd);
+    ServiceIRCData* id = static_cast<ServiceIRCData*>(data_get(args.asd));
     if (!id)
     {
         id = new ServiceIRCData;
@@ -298,4 +298,3 @@ fail:
     }
     return APPID_NOMATCH;
 }
-

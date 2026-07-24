@@ -100,7 +100,7 @@ int BitClientDetector::validate(AppIdDiscoveryArgs& args)
     if (args.dir != APP_ID_FROM_INITIATOR)
         return APPID_INPROCESS;
 
-    fd = (ClientBITData*)data_get(args.asd);
+    fd = static_cast<ClientBITData*>(data_get(args.asd));
     if (!fd)
     {
         fd = new ClientBITData;

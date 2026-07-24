@@ -23,6 +23,8 @@
 
 #include "port_object2.h"
 
+#include <cstring>
+
 #include "hash/ghash.h"
 #include "hash/hash_defs.h"
 #include "hash/hash_key_operations.h"
@@ -87,7 +89,8 @@ public:
     unsigned do_hash(const unsigned char* k, int len) override
     {
         unsigned char* key;
-        int ikey = *(const int*)k;
+        int ikey;
+        memcpy(&ikey, k, sizeof(ikey));
 
         /* Since the input is really an int, put the bytes into a normalized
          * order so that the hash function returns consistent results across
@@ -95,7 +98,7 @@ public:
         SWAP_BYTES(ikey);
 
         /* Set a pointer to the key to pass to the hashing function */
-        key = (unsigned char*)&ikey;
+        key = reinterpret_cast<unsigned char*>(&ikey);
 
         return HashKeyOperations::do_hash(key, len);
     }
@@ -190,10 +193,10 @@ PortObject2* PortObject2Dup(PortObject& po)
 
         for (poi = (PortObjectItem*)sflist_first(po.item_list, &lpos);
              poi != nullptr;
-             poi = (PortObjectItem*)sflist_next(&lpos) )
+             poi = static_cast<PortObjectItem*>(sflist_next(&lpos)) )
         {
             PortObjectItem* poinew = PortObjectItemDup(poi);
-            PortObjectAddItem( (PortObject*)ponew, poinew, nullptr);
+            PortObjectAddItem(reinterpret_cast<PortObject*>(ponew), poinew, nullptr);
         }
     }
 
@@ -276,7 +279,7 @@ PortObject2* PortObject2AppendPortObject2(PortObject2* poa, PortObject2* pob)
 PortObject2* PortObjectAppendEx2(PortObject2* poa, PortObject* pob)
 {
     // LogMessage("PortObjectAppendEx: appending ports\n");
-    if ( !PortObjectAppend((PortObject*)poa, pob) )
+    if ( !PortObjectAppend(reinterpret_cast<PortObject*>(poa), pob) )
         return nullptr;
 
     //  LogMessage("PortObjectAppendEx: appending rules\n");
@@ -301,7 +304,7 @@ void PortObject2PrintPorts(PortObject2* po)
         " Id:%d  Ports:%u Rules:%u\n {\n Ports [",
         po->id, po->item_list->count, po->rule_hash->get_count());
 
-    if ( PortObjectHasAny( (PortObject*)po) )
+    if ( PortObjectHasAny(reinterpret_cast<PortObject*>(po)) )
     {
         SnortSnprintfAppend(po_print_buf, bufsize, "any");
     }
@@ -341,7 +344,7 @@ void PortObject2PrintEx(PortObject2* po,
 
     SnortSnprintfAppend(po_print_buf, bufsize, "  Ports [\n  ");
 
-    if ( PortObjectHasAny( (PortObject*)po) )
+    if ( PortObjectHasAny(reinterpret_cast<PortObject*>(po)) )
     {
         SnortSnprintfAppend(po_print_buf, bufsize, "any");
     }
@@ -390,4 +393,3 @@ void PortObject2Print(PortObject2* po)
 {
     PortObject2PrintEx(po, rule_index_map_print_index);
 }
-

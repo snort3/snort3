@@ -563,7 +563,7 @@ static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 
 ImapDetectorData* ImapClientDetector::get_common_data(AppIdSession& asd)
 {
-    ImapDetectorData* dd = (ImapDetectorData*)data_get(asd);
+    ImapDetectorData* dd = static_cast<ImapDetectorData*>(data_get(asd));
     if (!dd)
     {
         dd = new ImapDetectorData;
@@ -945,4 +945,3 @@ inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 }
-

@@ -3828,7 +3828,7 @@ LuaServiceObject::LuaServiceObject(AppIdDiscovery* sdm, const std::string& detec
             if (detector != appid_detectors->end())
                 ad = detector->second;
         }
-        sd = (ServiceDetector*)ad;
+        sd = static_cast<ServiceDetector*>(ad);
     }
 
     UserData<LuaServiceObject>::push(L, DETECTOR, this);
@@ -3894,7 +3894,7 @@ LuaClientObject::LuaClientObject(const std::string& detector_name,
             if (detector != appid_detectors->end())
                 ad = detector->second;
         }
-        cd = (ClientDetector*)ad;
+        cd = static_cast<ClientDetector*>(ad);
     }
 
     UserData<LuaClientObject>::push(L, DETECTOR, this);

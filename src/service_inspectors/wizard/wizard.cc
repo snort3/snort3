@@ -396,7 +396,7 @@ static void mod_dtor(Module* m)
 
 static Inspector* wiz_ctor(Module* m)
 {
-    WizardModule* mod = (WizardModule*)m;
+    WizardModule* mod = static_cast<WizardModule*>(m);
     assert(mod);
     return new Wizard(mod);
 }
@@ -443,4 +443,3 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* sin_wizard = &wiz_api.base;
 #endif
-

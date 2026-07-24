@@ -101,7 +101,7 @@ const PegInfo* SshModule::get_pegs() const
 { return ssh_pegs; }
 
 PegCount* SshModule::get_counts() const
-{ return (PegCount*)&sshstats; }
+{ return reinterpret_cast<PegCount*>(&sshstats); }
 
 ProfileStats* SshModule::get_profile() const
 { return &sshPerfStats; }
@@ -133,4 +133,3 @@ bool SshModule::begin(const char*, int, SnortConfig*)
     conf = new SSH_PROTO_CONF;
     return true;
 }
-

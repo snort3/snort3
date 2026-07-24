@@ -356,7 +356,7 @@ SMTPDetectorData::~SMTPDetectorData()
 
 SMTPDetectorData* SmtpClientDetector::get_common_data(AppIdSession& asd)
 {
-    SMTPDetectorData* dd = (SMTPDetectorData*)data_get(asd);
+    SMTPDetectorData* dd = static_cast<SMTPDetectorData*>(data_get(asd));
     if (!dd)
     {
         dd = new SMTPDetectorData;
@@ -678,7 +678,8 @@ static inline int smtp_validate_reply(const uint8_t* data, uint16_t* offset, uin
         return 0;
     }
 
-    const ServiceSMTPCode* code_hdr = (const ServiceSMTPCode* )(data + *offset);
+    const ServiceSMTPCode* code_hdr =
+        reinterpret_cast<const ServiceSMTPCode*>(data + *offset);
 
     if (code_hdr->code[0] < '1' || code_hdr->code[0] > '5')
         return -1;
@@ -725,7 +726,7 @@ static inline int smtp_validate_reply(const uint8_t* data, uint16_t* offset, uin
                 if (size - (*offset + 1) < (int)sizeof(ServiceSMTPCode))
                     return -1;
 
-                code_hdr = (const ServiceSMTPCode*)(data + *offset + 1);
+                code_hdr = reinterpret_cast<const ServiceSMTPCode*>(data + *offset + 1);
 
                 if (code_hdr->code[0] < '1' || code_hdr->code[0] > '5')
                     return -1;
@@ -887,4 +888,3 @@ fail:
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
-

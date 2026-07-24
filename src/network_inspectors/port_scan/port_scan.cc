@@ -474,7 +474,7 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static Inspector* sp_ctor(Module* m)
-{ return new PortScan((PortScanModule*)m); }
+{ return new PortScan(static_cast<PortScanModule*>(m)); }
 
 static void sp_dtor(Inspector* p)
 { delete p; }
@@ -519,4 +519,3 @@ const BaseApi* nin_port_scan[] =
     &sp_api.base,
     nullptr
 };
-

@@ -225,7 +225,7 @@ const PegInfo* SFDAQModule::get_pegs() const
 
 PegCount* SFDAQModule::get_counts() const
 {
-    return (PegCount*) &daq_stats;
+    return reinterpret_cast<PegCount*>(&daq_stats);
 }
 
 static DAQ_Stats_t operator-(const DAQ_Stats_t& left, const DAQ_Stats_t& right)

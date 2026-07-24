@@ -148,5 +148,4 @@ const PegInfo* AddressSpaceSelectorModule::get_pegs() const
 { return select_pegs; }
 
 PegCount* AddressSpaceSelectorModule::get_counts() const
-{ return (PegCount*)&address_space_select_stats; }
-
+{ return reinterpret_cast<PegCount*>(&address_space_select_stats); }

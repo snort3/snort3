@@ -25,6 +25,10 @@
 
 #include "tp_appid_module_api.h"
 
+#include <cstring>
+#include <limits>
+#include <new>
+
 #include "managers/module_manager.h"
 #include "profiler/profiler.h"
 
@@ -48,13 +52,16 @@ static void tp_appid_profiler_free(void* p)
 }
 
 static constexpr size_t ALLOCATION_TRACKER_HEADER_SIZE = alignof(std::max_align_t);
+static_assert(sizeof(size_t) <= ALLOCATION_TRACKER_HEADER_SIZE);
 
 static void* tp_appid_profiler_malloc_with_stats(size_t size)
 {
     // cppcheck-suppress unreadVariable
     snort::Profile profile(tp_appid_perf_stats);
-    auto ptr = operator new(size+ALLOCATION_TRACKER_HEADER_SIZE);
-    *(uint32_t*)ptr = size;
+    if (size > std::numeric_limits<size_t>::max() - ALLOCATION_TRACKER_HEADER_SIZE)
+        throw std::bad_alloc();
+    auto ptr = operator new(size + ALLOCATION_TRACKER_HEADER_SIZE);
+    std::memcpy(ptr, &size, sizeof(size));
     appid_stats.tp_mem_bytes_in_use += size;
     appid_stats.tp_mem_allocations++;
     return static_cast<uint8_t*>(ptr) + ALLOCATION_TRACKER_HEADER_SIZE;
@@ -67,7 +74,8 @@ static void tp_appid_profiler_free_with_stats(void* p)
     if (p)
     {
         auto ptr = static_cast<uint8_t*>(p) - ALLOCATION_TRACKER_HEADER_SIZE;
-        uint32_t size = *(uint32_t*)ptr;
+        size_t size;
+        std::memcpy(&size, ptr, sizeof(size));
         appid_stats.tp_mem_bytes_in_use -= size;
         appid_stats.tp_mem_frees++;
         operator delete(ptr);

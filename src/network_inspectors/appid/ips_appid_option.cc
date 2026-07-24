@@ -86,7 +86,7 @@ bool AppIdIpsOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    return ( appid_table == ((const AppIdIpsOption&)ips).appid_table );
+    return appid_table == static_cast<const AppIdIpsOption&>(ips).appid_table;
 }
 
 bool AppIdIpsOption::match_id_against_rule(OdpContext& odp_ctxt, int32_t id)
@@ -239,7 +239,7 @@ static void appid_option_mod_dtor(Module* m)
 
 static IpsOption* appid_option_ips_ctor(Module* p, IpsInfo&)
 {
-    AppIdOptionModule* m = (AppIdOptionModule*)p;
+    AppIdOptionModule* m = static_cast<AppIdOptionModule*>(p);
     return new AppIdIpsOption(m->appid_table);
 }
 
@@ -279,4 +279,3 @@ static const IpsApi appid_option_api =
 
 // added to snort_plugins in appid_inspector.cc
 const BaseApi* ips_appid = &appid_option_api.base;
-

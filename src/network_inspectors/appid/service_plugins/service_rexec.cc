@@ -118,7 +118,7 @@ void RexecServiceDetector::rexec_bail(ServiceREXECData* rd)
 
 int RexecServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceREXECData* rd = (ServiceREXECData*)data_get(args.asd);
+    ServiceREXECData* rd = static_cast<ServiceREXECData*>(data_get(args.asd));
     if (!rd)
     {
         if (!args.size)
@@ -320,4 +320,3 @@ fail:
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
-

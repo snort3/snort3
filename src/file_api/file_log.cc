@@ -248,7 +248,7 @@ public:
     { return fl_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&fl_stats; }
+    { return reinterpret_cast<PegCount*>(&fl_stats); }
 
     bool set(const char*, Value& v, SnortConfig*) override;
 
@@ -282,7 +282,7 @@ static void mod_dtor(Module* m)
 
 static Inspector* fl_ctor(Module* m)
 {
-    FileLogModule* fl_module = (FileLogModule*)m;
+    FileLogModule* fl_module = static_cast<FileLogModule*>(m);
     return new FileLog(fl_module->config);
 }
 
@@ -327,4 +327,3 @@ const BaseApi* sin_file[] =
     sin_file_flow,
     nullptr
 };
-

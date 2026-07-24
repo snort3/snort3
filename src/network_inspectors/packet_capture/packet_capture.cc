@@ -333,7 +333,7 @@ void PacketCapture::write_packet(Packet* p)
     pcaphdr.ts = p->pkth->ts;
     pcaphdr.caplen = p->pktlen;
     pcaphdr.len = p->pkth->pktlen;
-    pcap_dump((unsigned char*)dumper, &pcaphdr, p->pkt);
+    pcap_dump(reinterpret_cast<unsigned char*>(dumper), &pcaphdr, p->pkt);
     pcap_dump_flush(dumper);
 }
 
@@ -348,7 +348,7 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static Inspector* pc_ctor(Module* m)
-{ return new PacketCapture((CaptureModule*)m); }
+{ return new PacketCapture(static_cast<CaptureModule*>(m)); }
 
 static void pc_dtor(Inspector* p)
 { delete p; }
@@ -502,8 +502,8 @@ TEST_CASE("lazy init", "[PacketCapture]")
 {
     auto null_packet = init_null_packet();
 
-    auto mod = (CaptureModule*)mod_ctor();
-    auto real_cap = (PacketCapture*)pc_ctor(mod);
+    auto mod = static_cast<CaptureModule*>(mod_ctor());
+    auto real_cap = static_cast<PacketCapture*>(pc_ctor(mod));
 
     CHECK ( (capture_initialized() == false) );
 
@@ -530,8 +530,8 @@ TEST_CASE("lazy init", "[PacketCapture]")
 
 TEST_CASE("filter tenants", "[PacketCapture]")
 {
-    auto mod = (CaptureModule*)mod_ctor();
-    auto real_cap = (PacketCapture*)pc_ctor(mod);
+    auto mod = static_cast<CaptureModule*>(mod_ctor());
+    auto real_cap = static_cast<PacketCapture*>(pc_ctor(mod));
 
     CHECK ( (capture_initialized() == false) );
 

@@ -158,6 +158,10 @@ class MPUnixDomainTransport : public MPTransport
 
     private:
 
+#ifdef UNIT_TEST
+    friend struct MPUnixDomainTransportTestAccess;
+#endif
+
     void init_side_channels();
     void cleanup_side_channels();
     void side_channel_receive_handler(SCMessage* msg);

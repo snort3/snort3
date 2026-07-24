@@ -27,6 +27,8 @@
 #include "config.h"
 #endif
 
+#include <cstring>
+
 #include "ssh.h"
 
 #include "detection/detection_engine.h"
@@ -80,7 +82,7 @@ SSHData* SetNewSSHData(Packet* p)
 
 SSHData* get_session_data(const Flow* flow)
 {
-    SshFlowData* fd = (SshFlowData*)flow->get_flow_data(SshFlowData::inspector_id);
+    SshFlowData* fd = static_cast<SshFlowData*>(flow->get_flow_data(SshFlowData::inspector_id));
     return fd ? &fd->session : nullptr;
 }
 
@@ -363,17 +365,18 @@ static bool process_ssh1_key_exchange(SSHData *sessionp, Packet *p, uint8_t dire
         DetectionEngine::queue_event(GID_SSH, SSH_EVENT_PAYLOAD_SIZE);
         return false;
     }
-    uint32_t payload_length = ntohl(*(const uint32_t *)(p->data));
+    uint32_t payload_length;
+    std::memcpy(&payload_length, p->data, sizeof(payload_length));
+    payload_length = ntohl(payload_length);
     uint8_t padding = 8 - (payload_length % 8);
-    uint8_t code = p->data[sizeof(uint32_t) + padding];
+    const uint32_t header_length = sizeof(uint32_t) + padding;
 
-
-    if (p->dsize != sizeof(uint32_t) + padding + payload_length
-        or p->dsize > SSH_PACKET_MAX_SIZE)
+    if (p->dsize > SSH_PACKET_MAX_SIZE or payload_length != p->dsize - header_length)
     {
         DetectionEngine::queue_event(GID_SSH, SSH_EVENT_PAYLOAD_SIZE);
         return false;
     }
+    uint8_t code = p->data[header_length];
 
     switch (code)
     {
@@ -443,14 +446,22 @@ static bool process_ssh2_kexinit(SSHData *sessionp, Packet *p, uint8_t direction
     const uint8_t *data = p->data + sizeof(SSH2KeyExchange);
     for (int i = 0; i < NUM_KEXINIT_LISTS; i++)
     {
-        uint32_t list_length = ntohl(*((const uint32_t*)data));
-        uint32_t total_list_length = list_length + sizeof(uint32_t);
-
-        if (total_list_length > ssh_length or total_length + total_list_length > ssh_length)
+        if (total_length + sizeof(uint32_t) > ssh_length)
         {
             DetectionEngine::queue_event(GID_SSH, SSH_EVENT_PAYLOAD_SIZE);
             return false;
         }
+
+        uint32_t list_length;
+        std::memcpy(&list_length, data, sizeof(list_length));
+        list_length = ntohl(list_length);
+
+        if (list_length > ssh_length - total_length - sizeof(uint32_t))
+        {
+            DetectionEngine::queue_event(GID_SSH, SSH_EVENT_PAYLOAD_SIZE);
+            return false;
+        }
+        uint32_t total_list_length = list_length + sizeof(uint32_t);
 
         algos.unnamed[i] = list_length ? reinterpret_cast<const char*>(data + sizeof(uint32_t)) : "";
 
@@ -490,7 +501,7 @@ static bool process_ssh2_key_exchange(SSHData *sessionp, Packet *p, uint8_t dire
         return false;
     }
 
-    const SSH2Packet *ssh2p = (const SSH2Packet *)data;
+    const SSH2Packet* ssh2p = reinterpret_cast<const SSH2Packet*>(data);
     unsigned ssh_length = ntohl(ssh2p->packet_length) + sizeof(uint32_t);
 
     if (ssh_length < sizeof(SSH2Packet)
@@ -676,7 +687,7 @@ static void ssh_init()
 
 static Inspector* ssh_ctor(Module* m)
 {
-    SshModule* mod = (SshModule*)m;
+    SshModule* mod = static_cast<SshModule*>(m);
     return new Ssh(mod->get_data());
 }
 
@@ -722,4 +733,3 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* sin_ssh = &ssh_api.base;
 #endif
-

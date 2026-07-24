@@ -76,7 +76,7 @@ int RloginServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    ServiceRLOGINData* rd = (ServiceRLOGINData*)data_get(args.asd);
+    ServiceRLOGINData* rd = static_cast<ServiceRLOGINData*>(data_get(args.asd));
     if (!rd)
     {
         rd = new ServiceRLOGINData;
@@ -136,4 +136,3 @@ fail:
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
-

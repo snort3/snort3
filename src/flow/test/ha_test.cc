@@ -466,7 +466,7 @@ TEST_GROUP(high_availability_test)
 
 TEST(high_availability_test, receive_deletion)
 {
-    s_sc_message.content = (uint8_t*) &s_delete_message;
+    s_sc_message.content = reinterpret_cast<uint8_t*>(&s_delete_message);
     s_sc_message.content_length = sizeof(s_delete_message);
     mock().expectNCalls(1, "delete_flow");
     HighAvailabilityManager::process_receive();
@@ -476,7 +476,7 @@ TEST(high_availability_test, receive_deletion)
 
 TEST(high_availability_test, receive_update_stream_only)
 {
-    s_sc_message.content = (uint8_t*) &s_update_stream_message;
+    s_sc_message.content = reinterpret_cast<uint8_t*>(&s_update_stream_message);
     s_sc_message.content_length = sizeof(s_update_stream_message);
     mock().expectNCalls(1, "get_flow");
     mock().expectNCalls(1, "consume");
@@ -521,7 +521,8 @@ TEST(high_availability_test, transmit_update_both_update)
 TEST(high_availability_test, read_flow_key_error_v4)
 {
     HAMessageHeader hdr = { 0, 0, 0, KEY_TYPE_IP4 };
-    HAMessage msg((uint8_t*) &s_test_key, KEY_SIZE_IP4 / 2);
+    FlowKey test_key = s_test_key;
+    HAMessage msg(reinterpret_cast<uint8_t*>(&test_key), KEY_SIZE_IP4 / 2);
     FlowKey key{};
 
     CHECK(read_flow_key(msg, &hdr, key) == 0);
@@ -531,7 +532,8 @@ TEST(high_availability_test, read_flow_key_error_v4)
 TEST(high_availability_test, read_flow_key_error_v6)
 {
     HAMessageHeader hdr = { 0, 0, 0, KEY_TYPE_IP6 };
-    HAMessage msg((uint8_t*) &s_test_key, KEY_SIZE_IP6 / 2);
+    FlowKey test_key = s_test_key;
+    HAMessage msg(reinterpret_cast<uint8_t*>(&test_key), KEY_SIZE_IP6 / 2);
     FlowKey key{};
 
     CHECK(read_flow_key(msg, &hdr, key) == 0);
@@ -541,7 +543,8 @@ TEST(high_availability_test, read_flow_key_error_v6)
 TEST(high_availability_test, read_flow_key_error_unknown)
 {
     HAMessageHeader hdr = { 0, 0, 0, 0x42 };
-    HAMessage msg((uint8_t*) &s_test_key, sizeof(s_test_key));
+    FlowKey test_key = s_test_key;
+    HAMessage msg(reinterpret_cast<uint8_t*>(&test_key), sizeof(test_key));
     FlowKey key{};
 
     CHECK(read_flow_key(msg, &hdr, key) == 0);
@@ -551,7 +554,7 @@ TEST(high_availability_test, read_flow_key_error_unknown)
 TEST(high_availability_test, consume_error_truncated_client_hdr)
 {
     HAClientHeader chdr = { 0, 0 };
-    HAMessage msg((uint8_t*) &chdr, sizeof(chdr) / 2);
+    HAMessage msg(reinterpret_cast<uint8_t*>(&chdr), sizeof(chdr) / 2);
     FlowKey key{};
 
     mock().expectNCalls(1, "get_flow");
@@ -563,7 +566,7 @@ TEST(high_availability_test, consume_error_truncated_client_hdr)
 TEST(high_availability_test, consume_error_invalid_client_idx)
 {
     HAClientHeader chdr = { 0x42, 0 };
-    HAMessage msg((uint8_t*) &chdr, sizeof(chdr));
+    HAMessage msg(reinterpret_cast<uint8_t*>(&chdr), sizeof(chdr));
     FlowKey key{};
 
     mock().expectNCalls(1, "get_flow");
@@ -579,7 +582,7 @@ TEST(high_availability_test, consume_error_truncated_client_msg)
         HAClientHeader chdr = { 0, 0x42 };
         uint8_t cmsg[0x42 / 2] = { };
     } input;
-    HAMessage msg((uint8_t*) &input, sizeof(input));
+    HAMessage msg(reinterpret_cast<uint8_t*>(&input), sizeof(input));
     FlowKey key{};
 
     mock().expectNCalls(1, "get_flow");
@@ -595,7 +598,7 @@ TEST(high_availability_test, consume_error_client_consume)
         HAClientHeader chdr = { 1, 10 };  // stream client (index 1)
         uint8_t cmsg[0x42 / 2] = { };
     } input;
-    HAMessage msg((uint8_t*) &input, sizeof(input));
+    HAMessage msg(reinterpret_cast<uint8_t*>(&input), sizeof(input));
     FlowKey key{};
 
     mock().expectNCalls(1, "get_flow");
@@ -608,7 +611,7 @@ TEST(high_availability_test, consume_error_client_consume)
 TEST(high_availability_test, consume_error_key_mismatch)
 {
     HAMessageHeader hdr[10] = { 0, HA_MESSAGE_VERSION, 0x32, KEY_TYPE_IP4 };
-    HAMessage msg((uint8_t*) &hdr, sizeof(hdr));
+    HAMessage msg(reinterpret_cast<uint8_t*>(&hdr), sizeof(hdr));
 
     FlowKey packet_key{};
     FlowKey* key = &packet_key;
@@ -619,7 +622,7 @@ TEST(high_availability_test, consume_error_key_mismatch)
 TEST(high_availability_test, consume_error_truncated_msg_hdr)
 {
     HAMessageHeader hdr = { };
-    HAMessage msg((uint8_t*) &hdr, sizeof(hdr) / 2);
+    HAMessage msg(reinterpret_cast<uint8_t*>(&hdr), sizeof(hdr) / 2);
 
     FlowKey* key = nullptr;
     CHECK(consume_ha_message(msg, key, &s_pkt) == nullptr);
@@ -629,7 +632,7 @@ TEST(high_availability_test, consume_error_truncated_msg_hdr)
 TEST(high_availability_test, consume_error_version_mismatch)
 {
     HAMessageHeader hdr = { 0, HA_MESSAGE_VERSION + 1, 0, 0 };
-    HAMessage msg((uint8_t*) &hdr, sizeof(hdr));
+    HAMessage msg(reinterpret_cast<uint8_t*>(&hdr), sizeof(hdr));
 
     FlowKey* key = nullptr;
     CHECK(consume_ha_message(msg, key, &s_pkt) == nullptr);
@@ -639,7 +642,7 @@ TEST(high_availability_test, consume_error_version_mismatch)
 TEST(high_availability_test, consume_error_length_mismatch)
 {
     HAMessageHeader hdr = { 0, HA_MESSAGE_VERSION, 0x42, 0 };
-    HAMessage msg((uint8_t*) &hdr, sizeof(hdr));
+    HAMessage msg(reinterpret_cast<uint8_t*>(&hdr), sizeof(hdr));
 
     FlowKey* key = nullptr;
     CHECK(consume_ha_message(msg, key, &s_pkt) == nullptr);
@@ -1110,7 +1113,7 @@ TEST(high_availability_test, receive_update_both_clients)
     };
     msg_data.mhdr.total_length = sizeof(msg_data);
 
-    s_sc_message.content = (uint8_t*)&msg_data;
+    s_sc_message.content = reinterpret_cast<uint8_t*>(&msg_data);
     s_sc_message.content_length = sizeof(msg_data);
 
     mock().expectNCalls(1, "get_flow");
@@ -1170,7 +1173,7 @@ TEST(high_availability_test, consume_message_bad_key)
     };
     msg_data.mhdr.total_length = sizeof(msg_data);
 
-    HAMessage msg((uint8_t*)&msg_data, sizeof(msg_data));
+    HAMessage msg(reinterpret_cast<uint8_t*>(&msg_data), sizeof(msg_data));
     FlowKey* key = nullptr;
     CHECK(consume_ha_message(msg, key, nullptr) == nullptr);
     CHECK(ha_stats.truncated_msgs == 1);
@@ -1311,4 +1314,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

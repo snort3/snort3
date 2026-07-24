@@ -157,7 +157,7 @@ static void* mlmpMatchPatternCustom(tMlmpTree* rootNode, tMlmpPattern* inputPatt
     rootNode->patternTree->find_all((const char*)pattern->pattern, pattern->patternSize,
         patternMatcherCallback, false, (void*)&mp);
 
-    primaryNode = (tPatternPrimaryNode*)callback(mp, pattern->pattern);
+    primaryNode = reinterpret_cast<tPatternPrimaryNode*>(callback(mp, pattern->pattern));
 
     while (mp)
     {
@@ -561,4 +561,3 @@ static int addPatternRecursively(tMlmpTree* rootNode, const tMlmpPattern* inputP
 
     return 0;
 }
-

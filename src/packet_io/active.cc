@@ -88,7 +88,7 @@ static int default_drop_reason_id = -1;
 static std::unordered_map<std::string, uint8_t> drop_reason_id_map;
 
 PegCount* get_active_counts()
-{ return (PegCount*)&active_counts; }
+{ return reinterpret_cast<PegCount*>(&active_counts); }
 
 //--------------------------------------------------------------------
 // helpers

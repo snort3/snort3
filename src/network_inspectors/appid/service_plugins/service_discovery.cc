@@ -222,7 +222,7 @@ static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
         ServiceMatch* sm;
 
         for (sm = *matches; sm; sm = sm->next)
-            if (sm->service == (ServiceDetector*)pd->service)
+            if (sm->service == static_cast<ServiceDetector*>(pd->service))
                 break;
 
         if (sm)
@@ -943,4 +943,3 @@ int ServiceDiscovery::fail_service(AppIdSession& asd, const Packet* pkt, AppidSe
 
     return APPID_SUCCESS;
 }
-

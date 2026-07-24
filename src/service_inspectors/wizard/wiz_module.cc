@@ -326,5 +326,4 @@ const PegInfo* WizardModule::get_pegs() const
 { return wiz_pegs; }
 
 PegCount* WizardModule::get_counts() const
-{ return (PegCount*)&tstats; }
-
+{ return reinterpret_cast<PegCount*>(&tstats); }

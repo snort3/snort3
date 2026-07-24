@@ -303,7 +303,7 @@ static void mod_dtor(Module* m)
 
 static Inspector* no_ctor(Module* m)
 {
-    NormalizeModule* mod = (NormalizeModule*)m;
+    NormalizeModule* mod = static_cast<NormalizeModule*>(m);
     return new Normalizer(*mod->get_config());
 }
 
@@ -350,4 +350,3 @@ static const InspectApi no_api =
 };
 
 const BaseApi* nin_normalize = &no_api.base;
-

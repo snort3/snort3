@@ -288,11 +288,11 @@ PegCount* HostAttributesManager::get_peg_counts()
 {
     if ( active_cache )
     {
-        const LruCacheSharedStats* cache_stats = (const LruCacheSharedStats*) active_cache->get_counts();
+        const LruCacheSharedStats* cache_stats =
+            reinterpret_cast<const LruCacheSharedStats*>(active_cache->get_counts());
         host_attribute_stats.hosts_pruned = cache_stats->alloc_prunes;
         host_attribute_stats.total_hosts = active_cache->size();
     }
 
-    return (PegCount*)&host_attribute_stats;
+    return reinterpret_cast<PegCount*>(&host_attribute_stats);
 }
-

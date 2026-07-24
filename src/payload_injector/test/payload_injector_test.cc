@@ -176,7 +176,7 @@ TEST_GROUP(payload_injector_test)
 {
     PayloadInjectorModule mod;
     InjectionControl control;
-    PayloadInjectorCounts* counts = (PayloadInjectorCounts*)mod.get_counts();
+    PayloadInjectorCounts* counts = reinterpret_cast<PayloadInjectorCounts*>(mod.get_counts());
     Flow flow;
     Active active;
 
@@ -546,7 +546,7 @@ TEST_GROUP(payload_injector_translate_err_test)
 {
     PayloadInjectorModule mod;
     InjectionControl control;
-    PayloadInjectorCounts* counts = (PayloadInjectorCounts*)mod.get_counts();
+    PayloadInjectorCounts* counts = reinterpret_cast<PayloadInjectorCounts*>(mod.get_counts());
     Flow flow;
     Active active;
     InjectionReturnStatus status = INJECTION_SUCCESS;

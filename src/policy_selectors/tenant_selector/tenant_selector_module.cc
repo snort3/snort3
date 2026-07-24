@@ -133,5 +133,4 @@ const PegInfo* TenantSelectorModule::get_pegs() const
 { return select_pegs; }
 
 PegCount* TenantSelectorModule::get_counts() const
-{ return (PegCount*)&tenant_select_stats; }
-
+{ return reinterpret_cast<PegCount*>(&tenant_select_stats); }

@@ -274,7 +274,7 @@ static void mod_dtor(Module* m)
 
 static Inspector* as_ctor(Module* m)
 {
-    return new ArpSpoof((ArpSpoofModule*)m);
+    return new ArpSpoof(static_cast<ArpSpoofModule*>(m));
 }
 
 static void as_dtor(Inspector* p)

@@ -245,7 +245,7 @@ inline FileCaptureState FileCapture::save_to_file_buffer(const uint8_t* file_dat
         const uint8_t* file_end = file_data + data_size;
 
         /*can't hold all, use current block first*/
-        memcpy((uint8_t*)lastBlock + lastBlock->length + sizeof (*lastBlock),
+        memcpy(reinterpret_cast<uint8_t*>(lastBlock) + lastBlock->length + sizeof(*lastBlock),
             file_current, available_bytes);
 
         lastBlock->length = capture_block_size;
@@ -255,7 +255,7 @@ inline FileCaptureState FileCapture::save_to_file_buffer(const uint8_t* file_dat
         while (true)
         {
             /*get another block*/
-            new_block = (FileCaptureBlock*)create_file_buffer();
+            new_block = static_cast<FileCaptureBlock*>(create_file_buffer());
 
             if (new_block == nullptr)
             {
@@ -269,14 +269,14 @@ inline FileCaptureState FileCapture::save_to_file_buffer(const uint8_t* file_dat
             /*Save data to the new block*/
             if (file_current + capture_block_size < file_end)
             {
-                memcpy((uint8_t*)last + sizeof(*new_block),
+                memcpy(reinterpret_cast<uint8_t*>(last) + sizeof(*new_block),
                     file_current,  capture_block_size);
                 new_block->length =  capture_block_size;
                 file_current += capture_block_size;
             }
             else
             {
-                memcpy((uint8_t*)last + sizeof(*new_block),
+                memcpy(reinterpret_cast<uint8_t*>(last) + sizeof(*new_block),
                     file_current,  file_end - file_current);
 
                 new_block->length = file_end - file_current;
@@ -286,7 +286,7 @@ inline FileCaptureState FileCapture::save_to_file_buffer(const uint8_t* file_dat
     }
     else
     {
-        memcpy((uint8_t*)lastBlock + lastBlock->length + sizeof(*lastBlock),
+        memcpy(reinterpret_cast<uint8_t*>(lastBlock) + lastBlock->length + sizeof(*lastBlock),
             file_data, data_size);
 
         lastBlock->length += data_size;
@@ -432,7 +432,7 @@ FileCaptureBlock* FileCapture::get_file_data(uint8_t** buff, int* size)
         return nullptr;
     }
 
-    *buff = (uint8_t*)current_block + sizeof(*current_block);
+    *buff = reinterpret_cast<uint8_t*>(current_block) + sizeof(*current_block);
     *size = current_block->length;
 
     current_block = current_block->next;

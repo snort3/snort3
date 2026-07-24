@@ -218,7 +218,7 @@ int RtpClientDetector::validate(AppIdDiscoveryArgs& args)
     if (!args.size)
         return APPID_INPROCESS;
 
-    ClientRTPData* fd = (ClientRTPData*)data_get(args.asd);
+    ClientRTPData* fd = static_cast<ClientRTPData*>(data_get(args.asd));
     if (!fd)
     {
         fd = new ClientRTPData;
@@ -231,7 +231,7 @@ int RtpClientDetector::validate(AppIdDiscoveryArgs& args)
     case RTP_STATE_CONNECTION:
         if (args.size < sizeof(ClientRTPMsg))
             return APPID_EINVALID;
-        hdr = (const ClientRTPMsg*)args.data;
+        hdr = reinterpret_cast<const ClientRTPMsg*>(args.data);
         if (hdr->vers > 2 || hdr->payloadtype > 34)
             return APPID_EINVALID;
         if (args.dir == APP_ID_FROM_INITIATOR)
@@ -254,7 +254,7 @@ int RtpClientDetector::validate(AppIdDiscoveryArgs& args)
     case RTP_STATE_CONTINUE:
         if (args.size < sizeof(ClientRTPMsg))
             return APPID_EINVALID;
-        hdr = (const ClientRTPMsg*)args.data;
+        hdr = reinterpret_cast<const ClientRTPMsg*>(args.data);
         if (hdr->vers > 2)
             return APPID_EINVALID;
         if (hdr->payloadtype > 34)
@@ -288,4 +288,3 @@ int RtpClientDetector::validate(AppIdDiscoveryArgs& args)
     add_app(args.asd, APP_ID_RTP, APP_ID_RTP, nullptr, args.change_bits);
     return APPID_SUCCESS;
 }
-

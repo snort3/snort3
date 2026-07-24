@@ -100,10 +100,9 @@ void IpsAction::alert(Packet* p, const ActInfo& ai)
 
 void register_action_pegs(const char* s, const PegInfo* p)
 {
-    ActionsModule* am = (ActionsModule*)PluginManager::get_module("ips_actions");
+    ActionsModule* am = static_cast<ActionsModule*>(PluginManager::get_module("ips_actions"));
     assert(am);
     am->add_action(s, p);
 }
 
 } // snort
-

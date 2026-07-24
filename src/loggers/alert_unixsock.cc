@@ -122,7 +122,7 @@ static void get_alert_pkt(
     Packet* p, const char* msg, const Event& event)
 {
     // FIXIT-L minimize or eliminate memset
-    memset((char*)&us.alert,0,sizeof(us.alert));
+    memset(&us.alert, 0, sizeof(us.alert));
 
     event.get_sig_ids(us.alert.gid, us.alert.sid, us.alert.rev);
 
@@ -160,32 +160,38 @@ static void get_alert_pkt(
             if (p->proto_bits & PROTO_BIT__ETH)
             {
                 const eth::EtherHdr* eh = layer::get_eth_layer(p);
-                us.alert.dlthdr=(const char*)eh-(const char*)p->pkt;
+                us.alert.dlthdr = reinterpret_cast<const char*>(eh) -
+                    reinterpret_cast<const char*>(p->pkt);
             }
 
             /* we don't log any headers besides eth yet */
             if (p->ptrs.ip_api.is_ip() && p->pkt)
             {
                 if (p->ptrs.ip_api.is_ip4())
-                    us.alert.nethdr=(const char*)p->ptrs.ip_api.get_ip4h()-(const char*)p->pkt;
+                    us.alert.nethdr = reinterpret_cast<const char*>(p->ptrs.ip_api.get_ip4h()) -
+                        reinterpret_cast<const char*>(p->pkt);
                 else
-                    us.alert.nethdr=(const char*)p->ptrs.ip_api.get_ip6h()-(const char*)p->pkt;
+                    us.alert.nethdr = reinterpret_cast<const char*>(p->ptrs.ip_api.get_ip6h()) -
+                        reinterpret_cast<const char*>(p->pkt);
 
                 switch (p->type())
                 {
                 case PktType::TCP:
                     if (p->ptrs.tcph)
-                        us.alert.transhdr=(const char*)p->ptrs.tcph-(const char*)p->pkt;
+                        us.alert.transhdr = reinterpret_cast<const char*>(p->ptrs.tcph) -
+                            reinterpret_cast<const char*>(p->pkt);
                     break;
 
                 case PktType::UDP:
                     if (p->ptrs.udph)
-                        us.alert.transhdr=(const char*)p->ptrs.udph-(const char*)p->pkt;
+                        us.alert.transhdr = reinterpret_cast<const char*>(p->ptrs.udph) -
+                            reinterpret_cast<const char*>(p->pkt);
                     break;
 
                 case PktType::ICMP:
                     if (p->ptrs.icmph)
-                        us.alert.transhdr=(const char*)p->ptrs.icmph-(const char*)p->pkt;
+                        us.alert.transhdr = reinterpret_cast<const char*>(p->ptrs.icmph) -
+                            reinterpret_cast<const char*>(p->pkt);
                     break;
 
                 default:
@@ -211,7 +217,7 @@ static void OpenAlertSock()
     if ( access(name.c_str(), W_OK) )
         ErrorMessage("%s file doesn't exist or isn't writable\n", name.c_str());
 
-    memset((char*)&us.addr, 0, sizeof(us.addr));
+    memset(&us.addr, 0, sizeof(us.addr));
     us.addr.sun_family = AF_UNIX;
 
     /* copy path over and preserve a null byte at the end */
@@ -223,7 +229,8 @@ static void OpenAlertSock()
 #ifdef __FreeBSD__
     int buflen=sizeof(us.alert);
 
-    if ( setsockopt(us.socket, SOL_SOCKET, SO_SNDBUF, (char*)&buflen, sizeof(int)) < 0 )
+    if ( setsockopt(us.socket, SOL_SOCKET, SO_SNDBUF,
+        reinterpret_cast<char*>(&buflen), sizeof(int)) < 0 )
         FatalError("setsockopt() call failed: %s", get_error(errno));
 #endif
 }
@@ -259,7 +266,7 @@ void UnixSockLogger::alert(Packet* p, const char* msg, const Event& event)
     get_alert_pkt(p, msg, event);
 
     if (sendto(us.socket,(const void*)&us.alert,sizeof(us.alert),
-        0,(struct sockaddr*)&us.addr,sizeof(us.addr))==-1)
+        0, reinterpret_cast<struct sockaddr*>(&us.addr), sizeof(us.addr)) == -1)
     {
         /* whatever we do to sign that some alerts could be missed */
     }
@@ -307,4 +314,3 @@ const BaseApi* alert_unixsock[] =
     &unix_sock_api.base,
     nullptr
 };
-

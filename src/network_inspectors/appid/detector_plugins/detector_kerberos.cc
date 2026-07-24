@@ -865,7 +865,7 @@ int KerberosClientDetector::krb_walk_client_packet(KRBState* krbs, const uint8_t
 
 KerberosDetectorData* KerberosClientDetector::get_common_data(AppIdSession& asd)
 {
-    KerberosDetectorData* dd = (KerberosDetectorData*)data_get(asd);
+    KerberosDetectorData* dd = static_cast<KerberosDetectorData*>(data_get(asd));
     if (!dd)
     {
         dd = new KerberosDetectorData;
@@ -922,4 +922,3 @@ int KerberosClientDetector::validate(AppIdDiscoveryArgs& args)
     }
     return APPID_INPROCESS;
 }
-

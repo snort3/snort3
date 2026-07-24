@@ -335,13 +335,13 @@ APPID_STATUS_CODE DnsValidator::dns_validate_label(const uint8_t* data, uint16_t
 
     while ((size > offset) and (size - offset) >= (int)offsetof(DNSLabel, name))
     {
-        const DNSLabel* lbl = (const DNSLabel*)(data + offset);
+        const DNSLabel* lbl = reinterpret_cast<const DNSLabel*>(data + offset);
 
         switch (lbl->len & DNS_LENGTH_FLAGS)
         {
         case 0xC0:
             len_valid = false;
-            lbl_ptr = (const DNSLabelPtr*)lbl;
+            lbl_ptr = reinterpret_cast<const DNSLabelPtr*>(lbl);
             offset += offsetof(DNSLabelPtr, data);
             if (offset > size)
                 return APPID_NOMATCH;
@@ -372,7 +372,7 @@ APPID_STATUS_CODE DnsValidator::dns_validate_label(const uint8_t* data, uint16_t
             offset += offsetof(DNSLabelBitfield, data);
             if (offset >= size)
                 return APPID_NOMATCH;
-            lbl_bit = (const DNSLabelBitfield*)lbl;
+            lbl_bit = reinterpret_cast<const DNSLabelBitfield*>(lbl);
             if (lbl_bit->len)
             {
                 offset += ((lbl_bit->len - 1) / 8) + 1;
@@ -406,7 +406,7 @@ int DnsValidator::dns_validate_query(const uint8_t* data, uint16_t* offset, uint
         if ((*offset > size) || ((size - *offset) < (uint16_t)sizeof(DNSQueryFixed)))
             return APPID_NOMATCH;
 
-        const DNSQueryFixed* query = (const DNSQueryFixed*)(data + *offset);
+        const DNSQueryFixed* query = reinterpret_cast<const DNSQueryFixed*>(data + *offset);
 
         *offset += sizeof(DNSQueryFixed);
 
@@ -452,7 +452,7 @@ int DnsValidator::dns_validate_answer(const uint8_t* data, uint16_t* offset, uin
     ret = dns_validate_label(data, *offset, size, host_len, host_len_valid);
     if (ret == APPID_SUCCESS)
     {
-        const DNSAnswerData* ad = (const DNSAnswerData*)(data + (*offset));
+        const DNSAnswerData* ad = reinterpret_cast<const DNSAnswerData*>(data + *offset);
         *offset += sizeof(DNSAnswerData);
         if (*offset > size)
             return APPID_NOMATCH;
@@ -534,7 +534,7 @@ int DnsValidator::validate_packet(const uint8_t* data, uint16_t size, const int,
 {
     uint16_t i;
     uint16_t count;
-    const DNSHeader* hdr = (const DNSHeader*)data;
+    const DNSHeader* hdr = reinterpret_cast<const DNSHeader*>(data);
     uint16_t offset;
 
     if (hdr->TC && size == 512)
@@ -616,7 +616,7 @@ int DnsUdpServiceDetector::validate_doh(AppIdDiscoveryArgs& args)
     if (args.size < sizeof(DNSHeader))
         return APPID_NOMATCH;
 
-    if ((rval = dns_validate_header(args.dir, (const DNSHeader*)args.data,
+    if ((rval = dns_validate_header(args.dir, reinterpret_cast<const DNSHeader*>(args.data),
         args.asd.get_odp_ctxt().dns_host_reporting, args.asd)) != APPID_SUCCESS)
         return rval;
 
@@ -639,7 +639,7 @@ int DnsUdpServiceDetector::validate(AppIdDiscoveryArgs& args)
         rval = (args.dir == APP_ID_FROM_INITIATOR) ? APPID_INVALID_CLIENT : APPID_NOMATCH;
         goto udp_done;
     }
-    if ((rval = dns_validate_header(args.dir, (const DNSHeader*)args.data,
+    if ((rval = dns_validate_header(args.dir, reinterpret_cast<const DNSHeader*>(args.data),
         args.asd.get_odp_ctxt().dns_host_reporting, args.asd)) != APPID_SUCCESS)
     {
         if (rval == APPID_REVERSED)
@@ -764,7 +764,7 @@ int DnsTcpServiceDetector::validate_doq(AppIdDiscoveryArgs& args)
             data = reallocated_data;
         }
 
-        const DNSTCPHeader* hdr = (const DNSTCPHeader*)data;
+        const DNSTCPHeader* hdr = reinterpret_cast<const DNSTCPHeader*>(data);
         data = data + sizeof(DNSTCPHeader);
         size = size - sizeof(DNSTCPHeader);
         uint16_t tmp = ntohs(hdr->length);
@@ -777,7 +777,8 @@ int DnsTcpServiceDetector::validate_doq(AppIdDiscoveryArgs& args)
             goto not_compatible;
         }
 
-        if (tmp < sizeof(DNSHeader) || dns_validate_header(args.dir, (const DNSHeader*)data,
+        if (tmp < sizeof(DNSHeader) || dns_validate_header(
+            args.dir, reinterpret_cast<const DNSHeader*>(data),
             args.asd.get_odp_ctxt().dns_host_reporting, args.asd))
         {
             if (args.dir == APP_ID_FROM_INITIATOR)
@@ -797,14 +798,15 @@ int DnsTcpServiceDetector::validate_doq(AppIdDiscoveryArgs& args)
         {
             if (args.dir != APP_ID_FROM_INITIATOR)
                 goto fail;
-            dd->id = ((const DNSHeader*)data)->id;
+            dd->id = reinterpret_cast<const DNSHeader*>(data)->id;
             DNSState current_state = dd->state;
             dd->state = DNS_STATE_RESPONSE;
             if (current_state == DNS_STATE_QUERY)
                 goto inprocess;
             goto success;
         }
-        else if (args.dir == APP_ID_FROM_RESPONDER && dd->id == ((const DNSHeader*)data)->id)
+        else if (args.dir == APP_ID_FROM_RESPONDER &&
+            dd->id == reinterpret_cast<const DNSHeader*>(data)->id)
             dd->state = DNS_STATE_MULTI_QUERY;
         else
             goto fail;
@@ -885,7 +887,7 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
             data = reallocated_data;
         }
 
-        const DNSTCPHeader* hdr = (const DNSTCPHeader*)data;
+        const DNSTCPHeader* hdr = reinterpret_cast<const DNSTCPHeader*>(data);
         data = data + sizeof(DNSTCPHeader);
         size = size - sizeof(DNSTCPHeader);
         uint16_t tmp = ntohs(hdr->length);
@@ -898,7 +900,8 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto not_compatible;
         }
 
-        if (tmp < sizeof(DNSHeader) || dns_validate_header(args.dir, (const DNSHeader*)data,
+        if (tmp < sizeof(DNSHeader) || dns_validate_header(
+            args.dir, reinterpret_cast<const DNSHeader*>(data),
             args.asd.get_odp_ctxt().dns_host_reporting, args.asd))
         {
             if (args.dir == APP_ID_FROM_INITIATOR)
@@ -918,14 +921,15 @@ int DnsTcpServiceDetector::validate(AppIdDiscoveryArgs& args)
         {
             if (args.dir != APP_ID_FROM_INITIATOR)
                 goto fail;
-            dd->id = ((const DNSHeader*)data)->id;
+            dd->id = reinterpret_cast<const DNSHeader*>(data)->id;
             DNSState current_state = dd->state;
             dd->state = DNS_STATE_RESPONSE;
             if (current_state == DNS_STATE_QUERY)
                 goto inprocess;
             goto success;
         }
-        else if (args.dir == APP_ID_FROM_RESPONDER && dd->id == ((const DNSHeader*)data)->id)
+        else if (args.dir == APP_ID_FROM_RESPONDER &&
+            dd->id == reinterpret_cast<const DNSHeader*>(data)->id)
             dd->state = DNS_STATE_MULTI_QUERY;
         else
             goto fail;

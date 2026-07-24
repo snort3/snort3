@@ -135,7 +135,7 @@ static void file_init()
 
 static Inspector* file_ctor(Module* m)
 {
-    FileIdModule* mod = (FileIdModule*)m;
+    FileIdModule* mod = static_cast<FileIdModule*>(m);
     return new FileInspect(mod);
 }
 
@@ -173,4 +173,3 @@ static const InspectApi file_inspect_api =
 };
 
 const BaseApi* sin_file_flow = &file_inspect_api.base;
-

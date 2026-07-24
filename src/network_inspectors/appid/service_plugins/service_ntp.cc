@@ -89,7 +89,7 @@ int NtpServiceDetector::validate(AppIdDiscoveryArgs& args)
     if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;
 
-    nh = (const ServiceNTPHeader*)args.data;
+    nh = reinterpret_cast<const ServiceNTPHeader*>(args.data);
     mode = nh->LVM & 0x07;
     if (mode == 0 || mode == 7 || mode == 3)
         goto fail;
@@ -136,4 +136,3 @@ fail:
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
-

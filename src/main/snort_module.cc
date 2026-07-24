@@ -699,7 +699,7 @@ const PegInfo* SnortModule::get_pegs() const
 { return proc_names; }
 
 PegCount* SnortModule::get_counts() const
-{ return (PegCount*)&proc_stats; }
+{ return reinterpret_cast<PegCount*>(&proc_stats); }
 
 void SnortModule::reset_stats()
 {

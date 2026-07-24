@@ -44,7 +44,8 @@ THREAD_LOCAL const Trace* host_cache_trace = nullptr;
 //-------------------------------------------------------------------------
 static int host_cache_dump(lua_State* L)
 {
-    HostCacheModule* mod = (HostCacheModule*) PluginManager::get_module(HOST_CACHE_NAME);
+    HostCacheModule* mod =
+        static_cast<HostCacheModule*>(PluginManager::get_module(HOST_CACHE_NAME));
     assert(mod);
 
     mod->log_host_cache( luaL_optstring(L, 1, nullptr), true );
@@ -53,7 +54,8 @@ static int host_cache_dump(lua_State* L)
 
 static int host_cache_get_stats(lua_State* L)
 {
-    HostCacheModule* mod = (HostCacheModule*) PluginManager::get_module(HOST_CACHE_NAME);
+    HostCacheModule* mod =
+        static_cast<HostCacheModule*>(PluginManager::get_module(HOST_CACHE_NAME));
     assert(mod);
 
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -65,7 +67,8 @@ static int host_cache_get_stats(lua_State* L)
 
 static int host_cache_get_segment_stats(lua_State* L)
 {
-    HostCacheModule* mod = (HostCacheModule*) PluginManager::get_module(HOST_CACHE_NAME);
+    HostCacheModule* mod =
+        static_cast<HostCacheModule*>(PluginManager::get_module(HOST_CACHE_NAME));
     assert(mod);
 
     int seg_idx = luaL_optint(L, 1, -1);
@@ -411,7 +414,8 @@ void host_cache_module_dump()
 
 void HostCacheModule::dump()
 {
-    HostCacheModule* hcm = (HostCacheModule*)PluginManager::get_module(HOST_CACHE_NAME);
+    HostCacheModule* hcm =
+        static_cast<HostCacheModule*>(PluginManager::get_module(HOST_CACHE_NAME));
     const char* df = hcm ? hcm->get_dump_file() : nullptr;
 
     if ( df and *df )

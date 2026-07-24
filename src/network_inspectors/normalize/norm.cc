@@ -123,7 +123,8 @@ static inline NormMode get_norm_mode(const Packet * const p)
 static int Norm_IP4(
     NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
 {
-    ip::IP4Hdr* h = (ip::IP4Hdr*)const_cast<uint8_t*>(p->layers[layer].start);
+    ip::IP4Hdr* h =
+        reinterpret_cast<ip::IP4Hdr*>(const_cast<uint8_t*>(p->layers[layer].start));
     uint16_t fragbits = ntohs(h->ip_off);
     uint16_t origbits = fragbits;
     const NormMode mode = get_norm_mode(p);
@@ -590,4 +591,3 @@ int Norm_SetConfig(NormalizerConfig* nc)
     }
     return 0;
 }
-

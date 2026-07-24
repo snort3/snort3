@@ -163,7 +163,7 @@ const PegInfo* FileIdModule::get_pegs() const
 PegCount* FileIdModule::get_counts() const
 {
     file_counts_update_buffers();
-    return (PegCount*)&file_counts;
+    return reinterpret_cast<PegCount*>(&file_counts);
 }
 
 static const RuleMap file_id_rules[] =

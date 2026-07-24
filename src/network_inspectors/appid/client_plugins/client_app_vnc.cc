@@ -79,7 +79,7 @@ int VncClientDetector::validate(AppIdDiscoveryArgs& args)
     if (args.dir != APP_ID_FROM_INITIATOR)
         return APPID_INPROCESS;
 
-    ClientVNCData* fd = (ClientVNCData*)data_get(args.asd);
+    ClientVNCData* fd = static_cast<ClientVNCData*>(data_get(args.asd));
     if (!fd)
     {
         fd = new ClientVNCData;
@@ -129,4 +129,3 @@ done:
     add_app(args.asd, APP_ID_VNC_RFB, APP_ID_VNC, (const char*)fd->version, args.change_bits);
     return APPID_SUCCESS;
 }
-

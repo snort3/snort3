@@ -23,6 +23,7 @@
 #include <atomic>
 #include <cassert>
 #include <cstring>
+#include <limits>
 
 // Ring buffer implementation with the following requirements:
 //     - stored objects are contiguous in memory
@@ -169,12 +170,17 @@ inline bool Ring2::Writer::write(const void* const data, const size_t data_len)
     if (data_len == 0)
         return false;
 
+    if (data_len > std::numeric_limits<LEN_TYPE>::max())
+        return false;
+
     // a guarding byte, writer should never move to the very end
     // (but reader can, which will empty the store)
-    if (ptr + LEN_SIZE + data_len < end)
+    const auto available = static_cast<size_t>(end - ptr);
+    if (available > LEN_SIZE and data_len < available - LEN_SIZE)
     {
         // normal case
-        *(LEN_TYPE*)ptr = data_len;
+        const LEN_TYPE record_len = static_cast<LEN_TYPE>(data_len);
+        memcpy(ptr, &record_len, sizeof(record_len));
         memcpy(ptr + LEN_SIZE, data, data_len);
         ptr += LEN_SIZE + data_len;
         return true;
@@ -186,7 +192,7 @@ inline bool Ring2::Writer::write(const void* const data, const size_t data_len)
     }
 
     // wrapping case
-    const auto zero_record = (ptr + LEN_SIZE <= end);
+    const auto zero_record = available >= LEN_SIZE;
     const auto ptr_orig = ptr;
     const auto end_orig = end;
 
@@ -199,7 +205,10 @@ inline bool Ring2::Writer::write(const void* const data, const size_t data_len)
     if (res)
     {
         if (zero_record)
-            *(LEN_TYPE*)ptr_orig = 0;
+        {
+            const LEN_TYPE zero = 0;
+            memcpy(ptr_orig, &zero, LEN_SIZE);
+        }
     }
     else
     {
@@ -237,7 +246,11 @@ inline void* Ring2::Reader::read(size_t& data_len)
 
     // next record size
     if (ptr + LEN_SIZE <= end)
-        data_len = *(LEN_TYPE*)ptr;
+    {
+        LEN_TYPE record_len;
+        memcpy(&record_len, ptr, sizeof(record_len));
+        data_len = record_len;
+    }
 
     if (data_len != 0 and ptr + LEN_SIZE + data_len <= end)
     {

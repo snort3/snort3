@@ -314,7 +314,7 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static Logger* syslog_ctor(Module* mod)
-{ return new SyslogLogger((SyslogModule*)mod); }
+{ return new SyslogLogger(static_cast<SyslogModule*>(mod)); }
 
 static void syslog_dtor(Logger* p)
 { delete p; }

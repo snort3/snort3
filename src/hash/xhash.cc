@@ -191,11 +191,11 @@ void XHash::initialize_node(HashNode *hnode, const void *key, void *data, int in
 {
     assert(type < num_lru_caches);
 
-    hnode->key = (char*) (hnode) + sizeof(HashNode);
+    hnode->key = reinterpret_cast<char*>(hnode) + sizeof(HashNode);
     memcpy(hnode->key, key, keysize);
     if ( datasize )
     {
-        hnode->data = (char*) (hnode) + sizeof(HashNode) + keysize;
+        hnode->data = reinterpret_cast<char*>(hnode) + sizeof(HashNode) + keysize;
         if ( data )
             memcpy (hnode->data, data, datasize);
     }

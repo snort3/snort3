@@ -42,7 +42,7 @@ void FileCacheShare::handle(DataEvent& de, Flow*)
         FileContext* file_got = file_cache->add(key, timeout, cache_full, cache_expire, true);
         if (file_got)
         {    
-            *((FileInfo*)(file_got)) = file;
+            *static_cast<FileInfo*>(file_got) = file;
         }
     }
 }

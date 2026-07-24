@@ -249,7 +249,7 @@ const PegInfo* CaptureModule::get_pegs() const
 { return cap_names; }
 
 PegCount* CaptureModule::get_counts() const
-{ return (PegCount*)&cap_count_stats; }
+{ return reinterpret_cast<PegCount*>(&cap_count_stats); }
 
 bool is_path_valid(const std::string& path)
 {

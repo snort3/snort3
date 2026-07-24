@@ -454,7 +454,7 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static Logger* fast_ctor(Module* mod)
-{ return new FastLogger((FastModule*)mod); }
+{ return new FastLogger(static_cast<FastModule*>(mod)); }
 
 static void fast_dtor(Logger* p)
 { delete p; }
@@ -487,4 +487,3 @@ const BaseApi* alert_fast[] =
     &fast_api.base,
     nullptr
 };
-

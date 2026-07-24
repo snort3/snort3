@@ -131,7 +131,7 @@ int TnsClientDetector::validate(AppIdDiscoveryArgs& args)
     if (args.dir != APP_ID_FROM_INITIATOR)
         return APPID_INPROCESS;
 
-    ClientTNSData* fd = (ClientTNSData*)data_get(args.asd);
+    ClientTNSData* fd = static_cast<ClientTNSData*>(data_get(args.asd));
     if (!fd)
     {
         fd = new ClientTNSData;

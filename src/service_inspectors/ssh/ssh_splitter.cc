@@ -56,11 +56,11 @@ StreamSplitter::Status SshSplitter::ssh2_key_exchange_scan(
         {
             memcpy(header_buf + header_buf_len, data, need);
             header_buf_len = 0;
-            sshp = (const SSH2Packet*)header_buf;
+            sshp = reinterpret_cast<const SSH2Packet*>(header_buf);
         }
         else
         {
-            sshp = (const SSH2Packet*)data;
+            sshp = reinterpret_cast<const SSH2Packet*>(data);
         }
 
         uint32_t ssh_len = ntohl(sshp->packet_length) + SSH2_PACKET_LEN;
@@ -186,4 +186,3 @@ StreamSplitter::Status SshSplitter::scan(
     }
     }
 }
-

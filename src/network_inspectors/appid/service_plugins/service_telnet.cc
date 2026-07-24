@@ -104,7 +104,7 @@ int TelnetServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    ServiceTelnetData* td = (ServiceTelnetData*)data_get(args.asd);
+    ServiceTelnetData* td = static_cast<ServiceTelnetData*>(data_get(args.asd));
     if (!td)
     {
         td = new ServiceTelnetData;
@@ -152,4 +152,3 @@ fail:
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
-

@@ -179,7 +179,7 @@ TEST_CASE("process and output", "[cpu_tracker]")
     PerfConfig config;
     config.format = PerfFormat::MOCK;
     TestCPUTracker tracker(&config);
-    MockFormatter *formatter = (MockFormatter*)tracker.output;
+    MockFormatter* formatter = static_cast<MockFormatter*>(tracker.output);
 
     tracker.reset();
     tracker.user.tv_sec = 2;

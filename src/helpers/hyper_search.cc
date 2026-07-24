@@ -68,8 +68,8 @@ HyperSearch::HyperSearch(LiteralSearch::Handle* h, const uint8_t* pattern, unsig
 #ifdef HAVE_HS_COMPILE_LIT
     if ( !memchr(pattern, 0, pattern_len) )
     {
-        result = hs_compile_lit((const char*)pattern, flags, pattern_len,
-            HS_MODE_BLOCK, nullptr, (hs_database_t**)&db, &err);
+        result = hs_compile_lit(reinterpret_cast<const char*>(pattern), flags, pattern_len,
+            HS_MODE_BLOCK, nullptr, &db, &err);
     }
     else
 #endif
@@ -83,8 +83,8 @@ HyperSearch::HyperSearch(LiteralSearch::Handle* h, const uint8_t* pattern, unsig
             hex_pat += hex;
         }
 
-        result = hs_compile((const char*)hex_pat.c_str(), flags,
-            HS_MODE_BLOCK, nullptr, (hs_database_t**)&db, &err);
+        result = hs_compile(hex_pat.c_str(), flags,
+            HS_MODE_BLOCK, nullptr, &db, &err);
     }
     if ( result != HS_SUCCESS )
     {
@@ -139,4 +139,3 @@ int HyperSearch::search(LiteralSearch::Handle* h, const uint8_t* buffer, unsigne
 }
 
 }
-

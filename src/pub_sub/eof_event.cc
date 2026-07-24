@@ -56,7 +56,7 @@ const string& EofEvent::get_history() const
     if (f->pkt_type == PktType::TCP)
         get_tcp_history(static_cast<const TcpSession*>(f->session), history);
     else if (f->pkt_type == PktType::UDP)
-        get_udp_history((const UdpSession*)f->session, history);
+        get_udp_history(static_cast<const UdpSession*>(f->session), history);
 
     return history;
 }
@@ -81,7 +81,7 @@ static void get_udp_state(const Flow* f, string& state)
 
 static void get_tcp_state(const Flow* f, string& state)
 {
-    const TcpSession* ssn = (TcpSession*) f->session;
+    const TcpSession* ssn = static_cast<const TcpSession*>(f->session);
     if (ssn == nullptr)
         return;
 
@@ -154,4 +154,3 @@ TEST_CASE("coverage", "[eof_event]")
 }
 
 #endif
-

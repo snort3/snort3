@@ -170,7 +170,7 @@ TEST_CASE("no protocol", "[FlowTracker]")
     config.flow_max_port_to_track = 1024;
 
     MockFlowTracker tracker(&config);
-    MockFormatter *f = (MockFormatter*)tracker.output;
+    MockFormatter* f = static_cast<MockFormatter*>(tracker.output);
 
     tracker.reset();
 
@@ -216,7 +216,7 @@ TEST_CASE("icmp", "[FlowTracker]")
     config.flow_max_port_to_track = 1024;
 
     MockFlowTracker tracker(&config);
-    MockFormatter *f = (MockFormatter*)tracker.output;
+    MockFormatter* f = static_cast<MockFormatter*>(tracker.output);
 
     tracker.reset();
 
@@ -260,7 +260,7 @@ TEST_CASE("tcp", "[FlowTracker]")
     config.flow_max_port_to_track = 1024;
 
     MockFlowTracker tracker(&config);
-    MockFormatter *f = (MockFormatter*)tracker.output;
+    MockFormatter* f = static_cast<MockFormatter*>(tracker.output);
 
     p.packet_flags = 0;
     p.ptrs.tcph = &tcp;
@@ -314,7 +314,7 @@ TEST_CASE("udp", "[FlowTracker]")
     config.flow_max_port_to_track = 1024;
 
     MockFlowTracker tracker(&config);
-    MockFormatter *f = (MockFormatter*)tracker.output;
+    MockFormatter* f = static_cast<MockFormatter*>(tracker.output);
 
     p.packet_flags = 0;
     p.ptrs.tcph = nullptr;

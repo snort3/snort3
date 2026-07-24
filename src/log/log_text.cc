@@ -26,6 +26,8 @@
 
 #include "log_text.h"
 
+#include <cstring>
+
 #include <daq_dlt.h>
 
 #include "detection/detection_engine.h"
@@ -440,10 +442,18 @@ static void LogOuterIPHeader(TextLog* log, Packet* p)
  *-------------------------------------------------------------------
  */
 inline uint16_t extract_16_bits(const uint8_t* const buf)
-{ return ntohs(*((const uint16_t*)(buf)) ); }
+{
+    uint16_t value;
+    std::memcpy(&value, buf, sizeof(value));
+    return ntohs(value);
+}
 
 inline uint32_t extract_32_bits(const uint8_t* const buf)
-{ return ntohl(*((const uint32_t*)(buf)) ); }
+{
+    uint32_t value;
+    std::memcpy(&value, buf, sizeof(value));
+    return ntohl(value);
+}
 
 static void LogTcpOptions(TextLog* log, const tcp::TcpOptIterator& opt_iter)
 {
@@ -1356,4 +1366,3 @@ void LogPayload(TextLog* log, Packet* p)
     }
 }
 } // namespace snort
-

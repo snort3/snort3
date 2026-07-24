@@ -53,7 +53,7 @@ void DaqMessageEventHandler::handle(DataEvent& event, Flow*)
     if (!hext_log)
         return;
 
-    DaqMessageEvent* dme = (DaqMessageEvent*) &event;
+    DaqMessageEvent* dme = static_cast<DaqMessageEvent*>(&event);
 
     const char* cmd;
     switch (dme->get_type()) {
@@ -323,7 +323,7 @@ static void mod_dtor(Module* m)
 
 static Logger* hext_ctor(Module* mod)
 {
-    return new HextLogger((HextModule*)mod);
+    return new HextLogger(static_cast<HextModule*>(mod));
 }
 
 static void hext_dtor(Logger* p)
@@ -357,4 +357,3 @@ const BaseApi* log_hext[] =
     &hext_api.base,
     nullptr
 };
-

@@ -170,7 +170,7 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static Logger* codec_log_ctor(Module* mod)
-{ return new CodecLogger((LogCodecModule*)mod); }
+{ return new CodecLogger(static_cast<LogCodecModule*>(mod)); }
 
 static void codec_log_dtor(Logger* p)
 { delete p; }
@@ -199,4 +199,3 @@ const BaseApi* log_codecs[] =
     &log_codecs_api.base,
     nullptr
 };
-

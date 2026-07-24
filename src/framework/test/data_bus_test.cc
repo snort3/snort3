@@ -104,7 +104,7 @@ static unsigned s_next = 0;
 
 void UTestHandler::handle(DataEvent& event, Flow*)
 {
-    UTestEvent* evt = (UTestEvent*)&event;
+    UTestEvent* evt = static_cast<UTestEvent*>(&event);
     evt_msg = evt->get_message();
     seq = ++s_next;
 }
@@ -232,4 +232,3 @@ int main(int argc, char** argv)
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

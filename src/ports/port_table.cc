@@ -23,6 +23,7 @@
 
 #include "port_table.h"
 
+#include <cstring>
 #include <memory>
 
 #include "hash/ghash.h"
@@ -101,7 +102,8 @@ public:
     unsigned do_hash(const unsigned char* k, int) override
     {
         unsigned hash = seed;
-        const plx_t* plx = *(plx_t* const*)k;
+        const plx_t* plx;
+        memcpy(&plx, k, sizeof(plx));
 
         for ( int i = 0; i < plx->n; i++ )
         {
@@ -149,7 +151,8 @@ public:
 
     unsigned do_hash(const unsigned char* k, int) override
     {
-        const PortObject* po = *(PortObject* const*)k;
+        const PortObject* po;
+        memcpy(&po, k, sizeof(po));
         return PortObjectHash(po, seed, scale, hardener);
     }
 
@@ -213,9 +216,9 @@ static PortObject2* _merge_N_pol(
     if ( pol_cnt > 1 )
     {
         for ( int i = 1; i < pol_cnt; i++ )
-            PortObjectAppendEx2(ponew, (PortObject*)pol[i]);
+            PortObjectAppendEx2(ponew, reinterpret_cast<PortObject*>(pol[i]));
 
-        PortObjectNormalize((PortObject*)ponew);
+        PortObjectNormalize(reinterpret_cast<PortObject*>(ponew));
     }
 
     // Add the Merged PortObject2 to the PortObject2 hash table keyed by ports.
@@ -337,7 +340,8 @@ static PortObject2* PortTableCompileMergePortObjectList2(
             PortObject2AppendPortObject2(ponew, posnew);
 
             /* Remove Ports in ponew from posnew */
-            PortObjectRemovePorts( (PortObject*)posnew, (PortObject*)ponew);
+            PortObjectRemovePorts(reinterpret_cast<PortObject*>(posnew),
+                reinterpret_cast<PortObject*>(ponew));
         }
 
     }
@@ -571,7 +575,7 @@ static void PortTableConsistencyCheck(PortTable* p)
 
         for ( int i = 0; i < SFPO_MAX_PORTS; i++ )
         {
-            if ( PortObjectHasPort( (PortObject*)po, i) )
+            if ( PortObjectHasPort(reinterpret_cast<PortObject*>(po), i) )
             {
                 assert(!parray[i]);
                 parray[i] = 1;

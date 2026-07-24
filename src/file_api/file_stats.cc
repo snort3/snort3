@@ -68,8 +68,8 @@ void file_stats_sum()
 
     unsigned num = sizeof(file_totals) / sizeof(PegCount);
 
-    PegCount* t = (PegCount*)&file_totals;
-    PegCount* s = (PegCount*)file_stats;
+    PegCount* t = reinterpret_cast<PegCount*>(&file_totals);
+    PegCount* s = reinterpret_cast<PegCount*>(file_stats);
 
     for (unsigned i = 0; i < num; ++i)
         t[i] += s[i];
@@ -307,4 +307,3 @@ void file_stats_print()
     FileCapture::print_mem_usage();
     FileService::print_cache_usage();
 }
-

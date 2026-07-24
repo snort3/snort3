@@ -207,7 +207,7 @@ void FileInfo::serialize(char* buffer, uint16_t buffer_len)
 
     if (is_sha256_set && sha256 && offset < buffer_len)
     {
-        memcpy(buffer + offset,(uint16_t *) sha256, SHA256_HASH_SIZE);
+        memcpy(buffer + offset, sha256, SHA256_HASH_SIZE);
         offset += SHA256_HASH_SIZE;
     }
 
@@ -529,7 +529,7 @@ FileContext::FileContext () : start_time(SnortClock::now())
     file_capture = nullptr;
     file_segments = nullptr;
 
-    inspector = (FileInspect*)InspectorManager::acquire_file_inspector();
+    inspector = static_cast<FileInspect*>(InspectorManager::acquire_file_inspector());
 
     if (inspector and SnortConfig::get_conf())
         config = inspector->config;
@@ -1444,4 +1444,3 @@ TEST_CASE ("serialize_deserialize_roundtrip", "[file_info]")
     delete[] buffer;
 }
 #endif
-

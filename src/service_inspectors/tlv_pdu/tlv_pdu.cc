@@ -82,7 +82,7 @@ public:
     { return pdu_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&pdu_counts; }
+    { return reinterpret_cast<PegCount*>(&pdu_counts); }
 
     snort::ProfileStats* get_profile() const override
     { return &pdu_prof; }
@@ -147,7 +147,7 @@ static void mod_dtor(Module* m)
 
 static Inspector* pdu_ctor(Module* m)
 {
-    TlvPduModule* tpm = (TlvPduModule*)m;
+    TlvPduModule* tpm = static_cast<TlvPduModule*>(m);
     return new TlvPdu(tpm->get_config());
 }
 
@@ -193,4 +193,3 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* sin_tlv_pdu = &pdu_api.base;
 #endif
-

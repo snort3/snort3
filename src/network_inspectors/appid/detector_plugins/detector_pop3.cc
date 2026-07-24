@@ -547,7 +547,7 @@ ven_ver_done:;
 
 POP3DetectorData* Pop3ClientDetector::get_common_data(AppIdSession& asd)
 {
-    POP3DetectorData* dd = (POP3DetectorData*)data_get(asd);
+    POP3DetectorData* dd = static_cast<POP3DetectorData*>(data_get(asd));
     if (!dd)
     {
         dd = new POP3DetectorData;
@@ -825,4 +825,3 @@ inprocess:
     service_inprocess(args.asd, args.pkt, args.dir);
     return APPID_INPROCESS;
 }
-

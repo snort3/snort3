@@ -113,7 +113,7 @@ SipUdpClientDetector::SipUdpClientDetector(ClientDiscovery* cdm)
 
 int SipUdpClientDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ClientSIPData* fd = (ClientSIPData*)data_get(args.asd);
+    ClientSIPData* fd = static_cast<ClientSIPData*>(data_get(args.asd));
     if ( !fd )
     {
         fd = new ClientSIPData(this);
@@ -156,7 +156,7 @@ SipTcpClientDetector::SipTcpClientDetector(ClientDiscovery* cdm)
 
 int SipTcpClientDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ClientSIPData* fd = (ClientSIPData*)data_get(args.asd);
+    ClientSIPData* fd = static_cast<ClientSIPData*>(data_get(args.asd));
     if ( !fd )
     {
         fd = new ClientSIPData(this);
@@ -271,7 +271,7 @@ SipServiceDetector::SipServiceDetector(ServiceDiscovery* sd)
 
 int SipServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceSIPData* ss = (ServiceSIPData*)data_get(args.asd);
+    ServiceSIPData* ss = static_cast<ServiceSIPData*>(data_get(args.asd));
     if (!ss)
     {
         ss = new ServiceSIPData;
@@ -310,7 +310,7 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
         (asd->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version())))
         return;
 
-    SipEvent& sip_event = (SipEvent&)event;
+    SipEvent& sip_event = static_cast<SipEvent&>(event);
     const Packet* p = sip_event.get_packet();
     assert(p);
 
@@ -340,7 +340,7 @@ void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession& asd,
     if (!client)
         return;
 
-    ClientSIPData* fd = (ClientSIPData*)client->data_get(asd);
+    ClientSIPData* fd = static_cast<ClientSIPData*>(client->data_get(asd));
     if ( !fd )
     {
         fd = new ClientSIPData(client);
@@ -400,7 +400,7 @@ void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession& asd,
     if (!service)
         return;
 
-    ServiceSIPData* ss = (ServiceSIPData*)service->data_get(asd);
+    ServiceSIPData* ss = static_cast<ServiceSIPData*>(service->data_get(asd));
     if (!ss)
     {
         ss = new ServiceSIPData;
@@ -445,4 +445,3 @@ void SipEventHandler::service_handler(SipEvent& sip_event, AppIdSession& asd,
     }
 }
 #endif
-

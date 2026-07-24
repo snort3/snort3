@@ -101,7 +101,7 @@ int BitTrackerClientDetector::validate(AppIdDiscoveryArgs& args)
     if (args.size < (UDP_BIT_FIRST_LEN + UDP_BIT_END_LEN + 3))
         return APPID_EINVALID;
 
-    ClientBITData* fd = (ClientBITData*)data_get(args.asd);
+    ClientBITData* fd = static_cast<ClientBITData*>(data_get(args.asd));
     if (!fd)
     {
         fd = new ClientBITData;
@@ -205,4 +205,3 @@ done:
     add_app(args.asd, APP_ID_BITTORRENT, APP_ID_BITTRACKER_CLIENT, nullptr, args.change_bits);
     return APPID_SUCCESS;
 }
-

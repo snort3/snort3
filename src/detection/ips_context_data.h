@@ -37,7 +37,7 @@ public:
     template<typename T>
     static T* get(unsigned ips_id)
     {
-        T* data = (T*)DetectionEngine::get_data(ips_id);
+        T* data = static_cast<T*>(DetectionEngine::get_data(ips_id));
         if ( ! data )
         {
             data = new T;
@@ -62,4 +62,3 @@ public:
 };
 }
 #endif
-

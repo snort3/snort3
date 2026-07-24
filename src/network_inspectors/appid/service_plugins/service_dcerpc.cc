@@ -39,7 +39,7 @@ static int dcerpc_validate(const uint8_t* data, int size)
 
     if (size < (int)sizeof(DCERPCHeader))
         return -1;
-    hdr = (const DCERPCHeader*)data;
+    hdr = reinterpret_cast<const DCERPCHeader*>(data);
     if (hdr->version != 5)
         return -1;
     if (hdr->minor_version > 1)
@@ -108,7 +108,7 @@ int DceRpcServiceDetector::tcp_validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    ServiceDCERPCData* dd = (ServiceDCERPCData*)data_get(args.asd);
+    ServiceDCERPCData* dd = static_cast<ServiceDCERPCData*>(data_get(args.asd));
     if (!dd)
     {
         dd = new ServiceDCERPCData;
@@ -150,7 +150,7 @@ int DceRpcServiceDetector::udp_validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    ServiceDCERPCData* dd = (ServiceDCERPCData*)data_get(args.asd);
+    ServiceDCERPCData* dd = static_cast<ServiceDCERPCData*>(data_get(args.asd));
     if (!dd)
     {
         dd = new ServiceDCERPCData;
@@ -183,4 +183,3 @@ fail:
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
-

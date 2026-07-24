@@ -135,7 +135,7 @@ int BgpServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_NOMATCH;
     }
 
-    ServiceBGPData* bd = (ServiceBGPData*)data_get(args.asd);
+    ServiceBGPData* bd = static_cast<ServiceBGPData*>(data_get(args.asd));
     if (!bd)
     {
         bd = new ServiceBGPData;
@@ -143,7 +143,7 @@ int BgpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     const uint8_t* data = args.data;
-    const ServiceBGPHeader* bh = (const ServiceBGPHeader*)data;
+    const ServiceBGPHeader* bh = reinterpret_cast<const ServiceBGPHeader*>(data);
     switch (bd->state)
     {
     case BGP_STATE_CONNECTION:
@@ -154,7 +154,8 @@ int BgpServiceDetector::validate(AppIdDiscoveryArgs& args)
             uint16_t len = ntohs(bh->v1.len);
             if (len > 1024)
                 goto fail;
-            const ServiceBGPV1Open* open = (const ServiceBGPV1Open*)(data + sizeof(bh->v1));
+            const ServiceBGPV1Open* open =
+                reinterpret_cast<const ServiceBGPV1Open*>(data + sizeof(bh->v1));
             if (open->link > BGP_OPEN_LINK_MAX)
                 goto fail;
             bd->v1 = true;
@@ -169,7 +170,8 @@ int BgpServiceDetector::validate(AppIdDiscoveryArgs& args)
             uint16_t len = ntohs(bh->v.len);
             if (len > 4096)
                 goto fail;
-            const ServiceBGPOpen* open = (const ServiceBGPOpen*)(data + sizeof(bh->v));
+            const ServiceBGPOpen* open =
+                reinterpret_cast<const ServiceBGPOpen*>(data + sizeof(bh->v));
             if (open->version > BGP_VERSION_MAX ||
                 open->version < BGP_VERSION_MIN)
             {
@@ -219,4 +221,3 @@ fail:
 success:
     return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_BGP);
 }
-

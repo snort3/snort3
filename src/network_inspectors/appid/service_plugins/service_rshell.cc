@@ -113,7 +113,7 @@ void RshellServiceDetector::rshell_bail(ServiceRSHELLData* rd)
 
 int RshellServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
-    ServiceRSHELLData* rd = (ServiceRSHELLData*)data_get(args.asd);
+    ServiceRSHELLData* rd = static_cast<ServiceRSHELLData*>(data_get(args.asd));
     if (!rd)
     {
         if (!args.size)
@@ -325,4 +325,3 @@ fail:
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
-

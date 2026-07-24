@@ -69,7 +69,7 @@ MySqlServiceDetector::MySqlServiceDetector(ServiceDiscovery* sd)
 int MySqlServiceDetector::validate(AppIdDiscoveryArgs& args)
 {
     const uint8_t* data = args.data;
-    const ServiceMYSQLHdr* hdr = (const ServiceMYSQLHdr*)data;
+    const ServiceMYSQLHdr* hdr = reinterpret_cast<const ServiceMYSQLHdr*>(data);
     uint32_t len;
     const uint8_t* end;
     const uint8_t* p = nullptr;
@@ -126,4 +126,3 @@ fail:
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
-

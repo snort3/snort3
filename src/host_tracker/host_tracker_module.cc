@@ -125,4 +125,4 @@ const PegInfo* HostTrackerModule::get_pegs() const
 { return host_tracker_pegs; }
 
 PegCount* HostTrackerModule::get_counts() const
-{ return (PegCount*)&host_tracker_stats; }
+{ return reinterpret_cast<PegCount*>(&host_tracker_stats); }

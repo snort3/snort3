@@ -219,11 +219,11 @@ static int netbios_validate_name_and_decode(const uint8_t** data,
 
     if (end - *data < (int)sizeof(NBNSLabelLength))
         return -1;
-    lbl_len = (const NBNSLabelLength*)(*data);
+    lbl_len = reinterpret_cast<const NBNSLabelLength*>(*data);
     switch (lbl_len->len & NBNS_LENGTH_FLAGS)
     {
     case 0x00:
-        lbl_data = (const NBNSLabelData*)(*data);
+        lbl_data = reinterpret_cast<const NBNSLabelData*>(*data);
         if (end - *data < (int)sizeof(NBNSLabelData))
             return -1;
         *data += sizeof(NBNSLabelData);
@@ -231,11 +231,11 @@ static int netbios_validate_name_and_decode(const uint8_t** data,
     case 0xC0:
         if (end - *data < (int)sizeof(NBNSLabelPtr))
             return -1;
-        lbl_ptr = (const NBNSLabelPtr*)(*data);
+        lbl_ptr = reinterpret_cast<const NBNSLabelPtr*>(*data);
         *data += sizeof(NBNSLabelPtr);
         if (begin + lbl_ptr->position + sizeof(NBNSLabelData) > end)
             return -1;
-        lbl_data = (const NBNSLabelData*)(begin + lbl_ptr->position);
+        lbl_data = reinterpret_cast<const NBNSLabelData*>(begin + lbl_ptr->position);
         break;
     default:
         return -1;
@@ -277,11 +277,11 @@ static int netbios_validate_name(const uint8_t** data,
 
     if (end - *data < (int)sizeof(NBNSLabelLength))
         return -1;
-    lbl_len = (const NBNSLabelLength*)(*data);
+    lbl_len = reinterpret_cast<const NBNSLabelLength*>(*data);
     switch (lbl_len->len & NBNS_LENGTH_FLAGS)
     {
     case 0x00:
-        lbl_data = (const NBNSLabelData*)(*data);
+        lbl_data = reinterpret_cast<const NBNSLabelData*>(*data);
         if (end - *data < (int)sizeof(NBNSLabelData))
             return -1;
         *data += sizeof(NBNSLabelData);
@@ -289,11 +289,11 @@ static int netbios_validate_name(const uint8_t** data,
     case 0xC0:
         if (end - *data < (int)sizeof(NBNSLabelPtr))
             return -1;
-        lbl_ptr = (const NBNSLabelPtr*)(*data);
+        lbl_ptr = reinterpret_cast<const NBNSLabelPtr*>(*data);
         *data += sizeof(NBNSLabelPtr);
         if (begin + lbl_ptr->position + sizeof(NBNSLabelData) > end)
             return -1;
-        lbl_data = (const NBNSLabelData*)(begin + lbl_ptr->position);
+        lbl_data = reinterpret_cast<const NBNSLabelData*>(begin + lbl_ptr->position);
         break;
     default:
         return -1;
@@ -316,7 +316,7 @@ static int netbios_validate_label(const uint8_t** data,
 
     if (end - *data < (int)sizeof(NBNSLabel))
         return -1;
-    lbl = (const NBNSLabel*)(*data);
+    lbl = reinterpret_cast<const NBNSLabel*>(*data);
     *data += sizeof(NBNSLabel);
     tmp = ntohs(lbl->type);
     if (tmp != NBNS_NB and tmp != NBNS_NBSTAT)
@@ -348,7 +348,7 @@ static int nbns_validate_answer(const uint8_t** data, const uint8_t* const begin
     ret = netbios_validate_label(data, end);
     if (!ret)
     {
-        const NBNSAnswerData* ad = (const NBNSAnswerData*)(*data);
+        const NBNSAnswerData* ad = reinterpret_cast<const NBNSAnswerData*>(*data);
         if (end - *data < (int)sizeof(NBNSAnswerData))
             return -1;
 
@@ -399,7 +399,7 @@ int NbnsServiceDetector::validate(AppIdDiscoveryArgs& args)
         goto inprocess;
     if (size < sizeof(NBNSHeader))
         goto fail;
-    hdr = (const NBNSHeader*)data;
+    hdr = reinterpret_cast<const NBNSHeader*>(data);
     if ((hdr->Opcode > NBNS_OPCODE_QUERY and
         hdr->Opcode < NBNS_OPCODE_REGISTRATION) or
         (hdr->Opcode > NBNS_OPCODE_REFRESHALT and
@@ -551,7 +551,7 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
     source_name[0] = 0;
     end = data + size;
 
-    hdr = (const NBDgmHeader*)data;
+    hdr = reinterpret_cast<const NBDgmHeader*>(data);
     data += sizeof(NBDgmHeader);
     if (hdr->zero)
         goto fail;
@@ -591,13 +591,13 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
             data += sizeof(NB_SMB_BANNER);
             if (end-data < (int)sizeof(ServiceSMBHeader))
                 goto not_mailslot;
-            smb = (const ServiceSMBHeader*)data;
+            smb = reinterpret_cast<const ServiceSMBHeader*>(data);
             data += sizeof(ServiceSMBHeader);
             if (smb->command != SERVICE_SMB_TRANSACTION_COMMAND)
                 goto not_mailslot;
             if (end-data < (int)sizeof(ServiceSMBTransactionHeader))
                 goto not_mailslot;
-            trans = (const ServiceSMBTransactionHeader*)data;
+            trans = reinterpret_cast<const ServiceSMBTransactionHeader*>(data);
             data += sizeof(ServiceSMBTransactionHeader);
             if (trans->wc == SERVICE_SMB_NOT_TRANSACTION_WC)
                 goto not_mailslot;
@@ -605,31 +605,36 @@ int NbdgmServiceDetector::validate(AppIdDiscoveryArgs& args)
                 sizeof(ServiceSMBBrowserHeader))
                 goto not_mailslot;
             data += (trans->sc*2);
-            len = *((const uint16_t*)data);
+            memcpy(&len, data, sizeof(len));
             data += sizeof(uint16_t);
             if (end-data < len)
                 goto not_mailslot;
             if (memcmp(data, mailslot, sizeof(mailslot)))
                 goto not_mailslot;
             data += sizeof(mailslot);
-            browser = (const ServiceSMBBrowserHeader*)data;
+            browser = reinterpret_cast<const ServiceSMBBrowserHeader*>(data);
             if (browser->command != SERVICE_SMB_MAILSLOT_HOST and
                 browser->command != SERVICE_SMB_MAILSLOT_LOCAL_MASTER)
             {
                 goto not_mailslot;
             }
-            server_type = LETOHL_UNALIGNED(&browser->server_type);
+            const auto* server_type_data =
+                reinterpret_cast<const uint8_t*>(&browser->server_type);
+            server_type = static_cast<uint32_t>(server_type_data[0]) |
+                (static_cast<uint32_t>(server_type_data[1]) << 8) |
+                (static_cast<uint32_t>(server_type_data[2]) << 16) |
+                (static_cast<uint32_t>(server_type_data[3]) << 24);
             add_smb_info(args.asd, browser->major, browser->minor, server_type);
         }
 not_mailslot:
         if (source_name[0])
-            args.asd.set_netbios_name(args.change_bits, (const char*)source_name);
+            args.asd.set_netbios_name(args.change_bits, source_name);
         args.asd.set_session_flags(APPID_SESSION_CONTINUE);
         goto success;
     case NBDGM_TYPE_ERROR:
         if (end-data < (int)sizeof(NBDgmError))
             goto fail;
-        err = (const NBDgmError*)data;
+        err = reinterpret_cast<const NBDgmError*>(data);
         data += sizeof(NBDgmError);
         if (end != data)
             goto fail;

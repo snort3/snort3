@@ -146,7 +146,7 @@ const PegInfo* MemoryModule::get_pegs() const
 { return mem_pegs; }
 
 PegCount* MemoryModule::get_counts() const
-{ return (PegCount*)&memory::MemoryCap::get_mem_stats(); }
+{ return reinterpret_cast<PegCount*>(&memory::MemoryCap::get_mem_stats()); }
 
 void MemoryModule::prep_counts(bool dump_stats)
 {

@@ -98,7 +98,7 @@ int TimbuktuClientDetector::validate(AppIdDiscoveryArgs& args)
     if (args.dir != APP_ID_FROM_INITIATOR)
         return APPID_INPROCESS;
 
-    ClientTIMBUKTUData* fd = (ClientTIMBUKTUData*)data_get(args.asd);
+    ClientTIMBUKTUData* fd = static_cast<ClientTIMBUKTUData*>(data_get(args.asd));
     if (!fd)
     {
         fd = new ClientTIMBUKTUData;
@@ -174,4 +174,3 @@ done:
     add_app(args.asd, APP_ID_TIMBUKTU, APP_ID_TIMBUKTU, nullptr, args.change_bits);
     return APPID_SUCCESS;
 }
-

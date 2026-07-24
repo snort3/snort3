@@ -72,7 +72,8 @@ TimbuktuServiceDetector::TimbuktuServiceDetector(ServiceDiscovery* sd)
 
     tcp_patterns =
     {
-        { (const uint8_t*)TIMBUKTU_BANNER, sizeof(TIMBUKTU_BANNER) - 1, 0, 0, 0 }
+        { reinterpret_cast<const uint8_t*>(TIMBUKTU_BANNER),
+            sizeof(TIMBUKTU_BANNER) - 1, 0, 0, 0 }
     };
 
     appid_registry =
@@ -97,7 +98,7 @@ int TimbuktuServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    ServiceTIMBUKTUData* ss = (ServiceTIMBUKTUData*)data_get(args.asd);
+    ServiceTIMBUKTUData* ss = static_cast<ServiceTIMBUKTUData*>(data_get(args.asd));
     if (!ss)
     {
         ss = new ServiceTIMBUKTUData;
@@ -162,4 +163,3 @@ fail:
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
-

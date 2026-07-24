@@ -905,7 +905,7 @@ static fd_status_t Init_Stream(fd_session_t* SessionPtr)
 
         z_stream* z_s = &(StPtr->PDF_Decomp_State.Deflate.StreamDeflate);
 
-        memset( (char*)z_s, 0, sizeof(z_stream));
+        memset(z_s, 0, sizeof(z_stream));
 
         z_s->zalloc = (alloc_func)nullptr;
         z_s->zfree = (free_func)nullptr;
@@ -1192,4 +1192,3 @@ TEST_CASE("File_Decomp_End_PDF-bad_type-error", "[file_decomp_pdf]")
     File_Decomp_Free(p_s);
 }
 #endif
-

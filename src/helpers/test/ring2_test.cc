@@ -828,3 +828,17 @@ TEST_CASE("Empty buffer", "[Ring2]")
         CHECK(true == buffer.empty());
     }
 }
+
+// cppcheck-suppress unusedFunction ; Catch2 registers the generated test function
+TEST_CASE("Oversized record", "[Ring2]")
+{
+    if constexpr (sizeof(size_t) > sizeof(uint32_t))
+    {
+        Ring2 buffer(16);
+        auto writer = buffer.writer();
+        const auto oversized = static_cast<size_t>(numeric_limits<uint32_t>::max()) + 1;
+        const bool accepted = writer.write("x", oversized);
+
+        CHECK_FALSE(accepted);
+    }
+}

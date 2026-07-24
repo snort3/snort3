@@ -80,8 +80,8 @@ ConnectorMsg from_text(const char* str_ptr, uint32_t size)
     if ( hdr_len < sizeof("1:1.1") - 1 )
         return ConnectorMsg();
 
-    uint8_t* new_data = new uint8_t[sizeof(SCMsgHdr) + (uint32_t)ceil((double)(size - hdr_len) / TXT_UNIT_LEN)];
-    SCMsgHdr* sc_hdr = (SCMsgHdr*)new_data;
+    uint8_t* new_data = new uint8_t[sizeof(SCMsgHdr) + (uint32_t)ceil((double)(size - hdr_len) / TXT_UNIT_LEN)]();
+    SCMsgHdr sc_hdr;
 
     uint16_t port;
     uint64_t time_seconds;
@@ -93,10 +93,11 @@ ConnectorMsg from_text(const char* str_ptr, uint32_t size)
         return ConnectorMsg();
     }
 
-    sc_hdr->port = port;
-    sc_hdr->time_seconds = time_seconds;
-    sc_hdr->time_u_seconds = time_u_seconds;
-    sc_hdr->sequence = 0;
+    sc_hdr.port = port;
+    sc_hdr.time_seconds = time_seconds;
+    sc_hdr.time_u_seconds = time_u_seconds;
+    sc_hdr.sequence = 0;
+    memcpy(new_data, &sc_hdr, sizeof(sc_hdr));
 
     uint32_t data_pos = sizeof(SCMsgHdr);
     const char* txt_data_end = str_ptr + size;

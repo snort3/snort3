@@ -60,7 +60,7 @@ namespace snort
     FilePosition get_file_position(Packet* pkt)
     {
         FilePosition position = SNORT_FILE_POSITION_UNKNOWN;
-        Packet* p = (Packet*)pkt;
+        Packet* p = static_cast<Packet*>(pkt);
 
         if (p->is_full_pdu())
             position = SNORT_FILE_FULL;
@@ -143,7 +143,7 @@ void FileFlows::handle_retransmit(Packet* p)
 
 FileFlows* FileFlows::get_file_flows(Flow* flow, bool to_create)
 {
-    FileFlows* fd = (FileFlows*)flow->get_flow_data(FileFlows::file_flow_data_id);
+    FileFlows* fd = static_cast<FileFlows*>(flow->get_flow_data(FileFlows::file_flow_data_id));
 
     if (!to_create or fd)
         return fd;
@@ -160,7 +160,7 @@ FileFlows* FileFlows::get_file_flows(Flow* flow, bool to_create)
 
 FilePolicyBase* FileFlows::get_file_policy(Flow* flow)
 {
-    FileFlows* fd = (FileFlows*)flow->get_flow_data(FileFlows::file_flow_data_id);
+    FileFlows* fd = static_cast<FileFlows*>(flow->get_flow_data(FileFlows::file_flow_data_id));
 
     if (fd)
         return fd->get_file_policy();
@@ -563,7 +563,6 @@ void FileFlows::add_pending_file(uint64_t file_id)
 {
     current_file_id = pending_file_id = file_id;
 }
-
 //--------------------------------------------------------------------------
 // unit tests
 //--------------------------------------------------------------------------
@@ -757,4 +756,3 @@ TEST_CASE ("swap/restore does not engage deferred-delete",
 }
 
 #endif // UNIT_TEST
-

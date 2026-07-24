@@ -85,7 +85,7 @@ const PegInfo* SslModule::get_pegs() const
 { return ssl_peg_names; }
 
 PegCount* SslModule::get_counts() const
-{ return (PegCount*)&sslstats; }
+{ return reinterpret_cast<PegCount*>(&sslstats); }
 
 ProfileStats* SslModule::get_profile() const
 { return &sslPerfStats; }
@@ -114,4 +114,3 @@ bool SslModule::begin(const char*, int, SnortConfig*)
     conf = new SSL_PROTO_CONF;
     return true;
 }
-

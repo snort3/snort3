@@ -163,8 +163,9 @@ void SshEventHandler::handle(DataEvent& event, Flow* flow)
     if (is_appid_cpu_profiling_running)
         per_appid_event_cpu_timer.start();
     
-    SshEventFlowData* data = (SshEventFlowData* )asd->get_flow_data(SshEventFlowData::get_id());
-    Packet* p = DetectionEngine::get_current_packet();
+    SshEventFlowData* data = static_cast<SshEventFlowData*>(
+        asd->get_flow_data(SshEventFlowData::get_id()));
+    const Packet* p = DetectionEngine::get_current_packet();
 
     if (data and data->failed)
     {
@@ -178,7 +179,8 @@ void SshEventHandler::handle(DataEvent& event, Flow* flow)
         asd->add_flow_data(data, SshEventFlowData::get_id());
     }
 
-    SshEvent& ssh_event = (SshEvent&)event;
+    // cppcheck-suppress constVariableReference ; protocol handling updates event parse state
+    SshEvent& ssh_event = static_cast<SshEvent&>(event);
     SshAppIdInfo* fd;
     if (ssh_event.get_direction() == PKT_FROM_SERVER)
         fd = &data->service_info;

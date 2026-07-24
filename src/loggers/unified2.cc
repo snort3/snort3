@@ -806,21 +806,25 @@ static void _AlertIP6_v2(Packet* p, const char*, Unified2Config* config, const E
         {
             const SfIp* ip;
             ip = p->ptrs.ip_api.get_src();
-            alertdata.ip_source = *(const struct in6_addr*)ip->get_ip6_ptr();
+            memcpy(&alertdata.ip_source, ip->get_ip6_ptr(), sizeof(alertdata.ip_source));
             ip = p->ptrs.ip_api.get_dst();
-            alertdata.ip_destination = *(const struct in6_addr*)ip->get_ip6_ptr();
+            memcpy(&alertdata.ip_destination, ip->get_ip6_ptr(), sizeof(alertdata.ip_destination));
         }
         else if (p->flow)
         {
             if (p->is_from_application_client())
             {
-                alertdata.ip_source = *(const struct in6_addr*)p->flow->client_ip.get_ip6_ptr();
-                alertdata.ip_destination = *(const struct in6_addr*)p->flow->server_ip.get_ip6_ptr();
+                memcpy(&alertdata.ip_source, p->flow->client_ip.get_ip6_ptr(),
+                    sizeof(alertdata.ip_source));
+                memcpy(&alertdata.ip_destination, p->flow->server_ip.get_ip6_ptr(),
+                    sizeof(alertdata.ip_destination));
             }
             else
             {
-                alertdata.ip_source = *(const struct in6_addr*)p->flow->server_ip.get_ip6_ptr();
-                alertdata.ip_destination = *(const struct in6_addr*)p->flow->client_ip.get_ip6_ptr();
+                memcpy(&alertdata.ip_source, p->flow->server_ip.get_ip6_ptr(),
+                    sizeof(alertdata.ip_source));
+                memcpy(&alertdata.ip_destination, p->flow->client_ip.get_ip6_ptr(),
+                    sizeof(alertdata.ip_destination));
             }
         }
 
@@ -1012,11 +1016,13 @@ void U2Logger::alert_legacy(Packet* p, const char* msg, const Event& event)
 
             const SfIp* ip = p->ptrs.ip_api.get_src();
             _WriteExtraData(&config, p->obfuscator, event.get_event_id(), tenant_id, sec,
-                (const uint8_t*) ip->get_ip6_ptr(), sizeof(struct in6_addr), EVENT_INFO_IPV6_SRC);
+                reinterpret_cast<const uint8_t*>(ip->get_ip6_ptr()),
+                sizeof(struct in6_addr), EVENT_INFO_IPV6_SRC);
 
             ip = p->ptrs.ip_api.get_dst();
             _WriteExtraData(&config, p->obfuscator, event.get_event_id(), tenant_id, sec,
-                (const uint8_t*) ip->get_ip6_ptr(), sizeof(struct in6_addr), EVENT_INFO_IPV6_DST);
+                reinterpret_cast<const uint8_t*>(ip->get_ip6_ptr()),
+                sizeof(struct in6_addr), EVENT_INFO_IPV6_DST);
         }
     }
     else // ip4 or data
@@ -1098,7 +1104,7 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static Logger* u2_ctor(Module* mod)
-{ return new U2Logger((U2Module*)mod); }
+{ return new U2Logger(static_cast<U2Module*>(mod)); }
 
 static void u2_dtor(Logger* p)
 { delete p; }
@@ -1131,4 +1137,3 @@ const BaseApi* eh_unified2[] =
     &u2_api.base,
     nullptr
 };
-

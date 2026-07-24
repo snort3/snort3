@@ -106,7 +106,7 @@ const PegInfo* HighAvailabilityModule::get_pegs() const
 
 PegCount* HighAvailabilityModule::get_counts() const
 {
-    return (PegCount*) &ha_stats;
+    return reinterpret_cast<PegCount*>(&ha_stats);
 }
 
 ProfileStats* HighAvailabilityModule::get_profile() const
@@ -165,4 +165,3 @@ void HAReloadTuner::tswap()
 {
     HighAvailabilityManager::thread_reinit();
 }
-

@@ -26,6 +26,7 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+#include <cstring>
 #include <vector>
 
 THREAD_LOCAL bool TimeProfilerStats::enabled = false;
@@ -35,7 +36,7 @@ namespace snort
 {
 Packet::Packet(bool)
 {
-    memset((char*) this , 0, sizeof(*this));
+    std::memset(this, 0, sizeof(*this));
     ip_proto_next = IpProtocol::PROTO_NOT_SET;
     packet_flags = PKT_FROM_CLIENT;
 }

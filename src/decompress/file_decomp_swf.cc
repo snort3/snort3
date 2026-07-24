@@ -63,7 +63,8 @@ static fd_status_t File_Decomp_Process_LZMA_Header(fd_session_t* SessionPtr)
     }
 
     /* Set to -1 and let liblzma calculate the size automatically */
-    *((uint64_t*)(LZMA_Header + LZMA_UCL_OFFSET)) = (uint64_t)(-1);
+    const uint64_t unpacked_size = UINT64_MAX;
+    memcpy(LZMA_Header + LZMA_UCL_OFFSET, &unpacked_size, sizeof(unpacked_size));
 
     /* Move the LZMA Properties */
     for ( idx=0; idx<SWF_LZMA_PRP_LEN; idx++ )
@@ -217,7 +218,7 @@ fd_status_t File_Decomp_Init_SWF(fd_session_t* SessionPtr)
 
         z_s = &(SessionPtr->SWF->StreamZLIB);
 
-        memset( (char*)z_s, 0, sizeof(z_stream));
+        memset(z_s, 0, sizeof(z_stream));
 
         z_s->zalloc = (alloc_func)nullptr;
         z_s->zfree = (free_func)nullptr;
@@ -244,7 +245,7 @@ fd_status_t File_Decomp_Init_SWF(fd_session_t* SessionPtr)
 
         l_s = &(SessionPtr->SWF->StreamLZMA);
 
-        memset( (char*)l_s, 0, sizeof(lzma_stream));
+        memset(l_s, 0, sizeof(lzma_stream));
 
         SYNC_IN(l_s)
 
@@ -400,4 +401,3 @@ TEST_CASE("File_Decomp_End_SWF-bad_type-error", "[file_decomp_swf]")
     File_Decomp_Free(p_s);
 }
 #endif
-

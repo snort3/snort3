@@ -108,7 +108,7 @@ int BitServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    ServiceBITData* ss = (ServiceBITData*)data_get(args.asd);
+    ServiceBITData* ss = static_cast<ServiceBITData*>(data_get(args.asd));
     if (!ss)
     {
         ss = new ServiceBITData;
@@ -177,4 +177,3 @@ fail:
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
-

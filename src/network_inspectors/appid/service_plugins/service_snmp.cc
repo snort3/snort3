@@ -399,7 +399,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_INPROCESS;
     }
 
-    ServiceSNMPData* sd = (ServiceSNMPData*)data_get(args.asd);
+    ServiceSNMPData* sd = static_cast<ServiceSNMPData*>(data_get(args.asd));
     if (!sd)
     {
         sd = new ServiceSNMPData(SNMP_STATE_CONNECTION);
@@ -571,4 +571,3 @@ fail:
     fail_service(args.asd, args.pkt, args.dir);
     return APPID_NOMATCH;
 }
-

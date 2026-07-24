@@ -79,7 +79,8 @@ public:
 
     unsigned do_hash(const unsigned char* k, int) override
     {
-        const detection_option_key_t* key = (const detection_option_key_t*)k;
+        const detection_option_key_t* key =
+            reinterpret_cast<const detection_option_key_t*>(k);
 
         if ( key->option_type != RULE_OPTION_TYPE_LEAF_NODE )
         {
@@ -202,7 +203,8 @@ public:
     unsigned do_hash(const unsigned char* k, int) override
     {
         assert(k);
-        const detection_option_key_t* key = (const detection_option_key_t*)k;
+        const detection_option_key_t* key =
+            reinterpret_cast<const detection_option_key_t*>(k);
         if ( !key->option_data )
             return 0;
 

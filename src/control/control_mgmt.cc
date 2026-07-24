@@ -272,7 +272,7 @@ static int setup_socket_family(const SnortConfig* sc)
         in_addr.sin_family = AF_INET;
         in_addr.sin_addr.s_addr = htonl(0x7F000001);
         in_addr.sin_port = htons(sc->remote_control_port);
-        sock_addr = (struct sockaddr*)&in_addr;
+        sock_addr = reinterpret_cast<struct sockaddr*>(&in_addr);
         sock_addr_size = sizeof(in_addr);
         family = AF_INET;
     }
@@ -288,7 +288,7 @@ static int setup_socket_family(const SnortConfig* sc)
         memset(&unix_addr, 0, sizeof(unix_addr));
         unix_addr.sun_family = AF_UNIX;
         SnortStrncpy(unix_addr.sun_path, fullpath.c_str(), sizeof(unix_addr.sun_path));
-        sock_addr = (struct sockaddr*)&unix_addr;
+        sock_addr = reinterpret_cast<struct sockaddr*>(&unix_addr);
         sock_addr_size = sizeof(unix_addr);
         unlink(fullpath.c_str());
         family = AF_UNIX;

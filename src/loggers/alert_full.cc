@@ -226,7 +226,7 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static Logger* full_ctor(Module* mod)
-{ return new FullLogger((FullModule*)mod); }
+{ return new FullLogger(static_cast<FullModule*>(mod)); }
 
 static void full_dtor(Logger* p)
 { delete p; }
@@ -259,4 +259,3 @@ const BaseApi* alert_full[] =
     &full_api.base,
     nullptr
 };
-

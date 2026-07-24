@@ -82,7 +82,7 @@ bool SslVersionOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const SslVersionOption& rhs = (const SslVersionOption&)ips;
+    const SslVersionOption& rhs = static_cast<const SslVersionOption&>(ips);
 
     if ( (svod.flags == rhs.svod.flags) &&
         (svod.mask == rhs.svod.mask) )
@@ -238,7 +238,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ssl_version_ctor(Module* p, IpsInfo&)
 {
-    SslVersionModule* m = (SslVersionModule*)p;
+    SslVersionModule* m = static_cast<SslVersionModule*>(p);
     return new SslVersionOption(m->svod);
 }
 
@@ -273,4 +273,3 @@ static const IpsApi ssl_version_api =
 };
 
 const BaseApi* ips_ssl_version = &ssl_version_api.base;
-
