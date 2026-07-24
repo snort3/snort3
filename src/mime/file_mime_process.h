@@ -158,7 +158,7 @@ private:
 
     std::vector<uint8_t> partial_header;
     uint8_t* partial_data = nullptr;        // attachment's trailing bytes (suspected boundary)
-    uint32_t partial_data_len = 0;
+    size_t partial_data_len = 0;
     uint8_t* rebuilt_data = nullptr;        // prepended attachment data for detection module
 };
 
