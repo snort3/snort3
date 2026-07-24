@@ -363,11 +363,10 @@ int normalize_telnet(
 
             if (sb_start)
             {
-                /* Didn't find the IAC SE.  Normalize out the IAC SB
-                 * and restart from there. Presumption is this is
-                 * just someone trying to fool us, since we usually
-                 * see the entire IAC SB ... IAC SE in one packet. */
-                read_ptr = sb_start+2;
+                /* Didn't find the IAC SE.  read_ptr == end, so alert and
+                 * stop; rewinding to sb_start+2 and re-entering the outer
+                 * loop would rescan to end for every unterminated IAC SB
+                 * in the payload (O(N^2) on adversarial input). */
                 if (!tnssn)
                 {
                     /* Its an FTP session */
@@ -380,7 +379,7 @@ int normalize_telnet(
                     ret = FTPP_ALERT;
                 }
 
-                continue;
+                break;
             }
 
             /* Okay, found the IAC SE -- move past it */
