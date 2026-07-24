@@ -83,6 +83,7 @@
 #define DCE2_SMB_INVALID_FILE_OFFSET 58
 #define DCE2_SMB_BAD_NEXT_COMMAND_OFFSET 59
 #define DCE2_SMB_EXCESSIVE_FILE_CHUNKS 60
+#define DCE2_SMB_EXCESSIVE_WRITEX_RAW 64
 
 #define DCE2_SMB_BAD_NBSS_TYPE_STR "SMB - bad NetBIOS session service session type"
 #define DCE2_SMB_BAD_TYPE_STR  "SMB - bad SMB message type"
@@ -138,6 +139,8 @@
     "SMB - next command specified in SMB2 header is beyond payload boundary"
 #define DCE2_SMB_EXCESSIVE_FILE_CHUNKS_STR \
     "SMB - excessive out-of-order file chunks causing potential DoS"
+#define DCE2_SMB_EXCESSIVE_WRITEX_RAW_STR \
+    "SMB - excessive raw WriteAndX reassembly memory causing potential DoS"
 
 struct dce2SmbStats : public LruCacheLocalStats
 {
@@ -307,10 +310,16 @@ enum SmbAndXCom
     SMB_ANDX_COM__MAX
 };
 
+// Per-flow cap on retained WriteAndX-raw reassembly memory (sum of all FIDs'
+// buffers). Exceeding it signals a probable memory-exhaustion DoS; we alert and
+// fail the request but never block the session.
+#define DCE2_SMB_WRITEX_MEMCAP (10u * 1024u * 1024u)
+
 struct DCE2_SmbWriteAndXRaw
 {
     int remaining;  // A signed integer so it can be negative
     DCE2_Buffer* buf;
+    uint32_t* retained_writex_owner;  // -> DCE2_SmbSsnData::retained_writex_bytes
 };
 
 struct DCE2_SmbFileChunk
@@ -482,6 +491,10 @@ struct DCE2_SmbSsnData
     std::unordered_map<uint16_t, DCE2_SmbFileTracker*> ftrackers;
     // Per-session monotonic counter assigning and refreshing DCE2_SmbFileTracker::seq.
     uint64_t next_ftracker_seq;
+
+    // Sum of all fp_writex_raw->buf sizes across this flow's FIDs; capped by
+    // DCE2_SMB_WRITEX_MEMCAP (WriteAndX-raw memory-exhaustion guard).
+    uint32_t retained_writex_bytes;
 
     // For tracking requests / responses
     DCE2_SmbRequestTracker rtracker;

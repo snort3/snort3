@@ -235,6 +235,16 @@ DCE2_Ret DCE2_BufferAddData(DCE2_Buffer* buf, const uint8_t* data,
         if (((new_size - buf->size) < buf->min_add_size) && (mflag ==
             DCE2_BUFFER_MIN_ADD_FLAG__USE))
             new_size = buf->size + buf->min_add_size;
+        else if (mflag == DCE2_BUFFER_MIN_ADD_FLAG__GEOMETRIC)
+        {
+            // Grow capacity to 1.5x of the CURRENT size (never a fixed constant
+            // and never an attacker-claimed total), so reassembling many small
+            // fragments stays ~log(n) reallocs while capacity stays <= 1.5x the
+            // bytes actually received.
+            uint32_t geo_size = buf->size + (buf->size / 2);
+            if (new_size < geo_size)
+                new_size = geo_size;
+        }
 
         tmp = (uint8_t*)DCE2_ReAlloc(buf->data, buf->size, new_size);
         if (tmp == nullptr)

@@ -381,6 +381,8 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
                     return DCE2_RET__ERROR;
 
                 ftracker->fp_writex_raw->remaining = (int)remaining;
+                ftracker->fp_writex_raw->retained_writex_owner =
+                    &ssd->retained_writex_bytes;
             }
         }
 
@@ -392,32 +394,63 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
             return DCE2_RET__ERROR;
         }
 
+        // WriteAndX-raw memcap: if this flow's retained raw-write buffers have
+        // already reached the cap, a memory-exhaustion DoS is likely under way.
+        // Alert and fail just this request -- do not block the session or free
+        // existing buffers (they drain as their FIDs close).
+        if (ssd->retained_writex_bytes >= DCE2_SMB_WRITEX_MEMCAP)
+        {
+            dce_alert(GID_DCE2, DCE2_SMB_EXCESSIVE_WRITEX_RAW,
+                reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
+            return DCE2_RET__ERROR;
+        }
+
         // If the "raw" write isn't finished in the first request
         // and haven't allocated a buffer yet.
         if (start_write_raw && (ftracker->fp_writex_raw->remaining != 0)
             && (ftracker->fp_writex_raw->buf == nullptr))
         {
-            ftracker->fp_writex_raw->buf =
-                DCE2_BufferNew(remaining, 0);
+            // Size the reassembly buffer to the data actually present in this
+            // request (dcnt), not the client-claimed total (remaining). The
+            // buffer grows on demand via DCE2_BufferAddData as later raw-write
+            // fragments arrive, so sizing to the claim only let a client force
+            // a ~64KB per-FID allocation from a tiny packet (CSCwv40315,
+            // CWE-770/CWE-789). dcnt ? dcnt : 1 avoids a zero-size allocation.
+            // Branch 1 (front-loaded: dcnt >= 3/4 of the claim): the client has
+            // already delivered most of the write, so pre-allocating the full
+            // claim caps amplification at <=1.33x and needs no reallocs. Branch 2
+            // (dcnt < 3/4 of the claim): size to the data actually present and
+            // grow geometrically (DCE2_BUFFER_MIN_ADD_FLAG__GEOMETRIC below) so a
+            // tiny fragment can never force a large allocation. Cross-multiply
+            // (dcnt*4 >= remaining*3) avoids the integer round-down of 3/4.
+            if ((uint32_t)dcnt * 4 >= (uint32_t)remaining * 3)
+                ftracker->fp_writex_raw->buf = DCE2_BufferNew(remaining, 0);
+            else
+                ftracker->fp_writex_raw->buf = DCE2_BufferNew(dcnt ? dcnt : 1, 0);
             if (ftracker->fp_writex_raw->buf == nullptr)
             {
                 ftracker->fp_writex_raw->remaining = 0;
                 return DCE2_RET__ERROR;
             }
+            ssd->retained_writex_bytes +=
+                DCE2_BufferSize(ftracker->fp_writex_raw->buf);
         }
 
         // If data has to be added to buffer, i.e. not a start raw
         // or a start raw and more raw requests to come.
         if (!start_write_raw || (ftracker->fp_writex_raw->remaining != 0))
         {
+            uint32_t writex_before_sz = DCE2_BufferSize(ftracker->fp_writex_raw->buf);
             if (DCE2_BufferAddData(ftracker->fp_writex_raw->buf, nb_ptr,
                 dcnt, DCE2_BufferLength(ftracker->fp_writex_raw->buf),
-                DCE2_BUFFER_MIN_ADD_FLAG__IGNORE) != DCE2_RET__SUCCESS)
+                DCE2_BUFFER_MIN_ADD_FLAG__GEOMETRIC) != DCE2_RET__SUCCESS)
             {
                 ftracker->fp_writex_raw->remaining = 0;
                 DCE2_BufferEmpty(ftracker->fp_writex_raw->buf);
                 return DCE2_RET__ERROR;
             }
+            ssd->retained_writex_bytes +=
+                DCE2_BufferSize(ftracker->fp_writex_raw->buf) - writex_before_sz;
 
             if (ftracker->fp_writex_raw->remaining == 0)
             {

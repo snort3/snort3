@@ -203,7 +203,7 @@ struct DCE2_SsnData
     DCE2_Policy server_policy;
     DCE2_Policy client_policy;
     int flags;
-    uint64_t alert_mask;
+    uint64_t alert_mask[2];
     DCE2_Roptions ropts;
     void* config;
 
@@ -388,10 +388,10 @@ inline void dce_alert(uint32_t gid, uint32_t sid, dce2CommonStats* stats, DCE2_S
 {
     if ( ((dce2CommonProtoConf*)sd.config)->limit_alerts )
     {
-        // Assuming the maximum sid for dce is less than 64
-        if ( sd.alert_mask & ((uint64_t)1 << sid) )
+        // Assuming the maximum sid for dce is less than 128
+        if ( sd.alert_mask[sid >> 6] & ((uint64_t)1 << (sid & 63)) )
             return;
-        sd.alert_mask |= ((uint64_t)1 << sid);
+        sd.alert_mask[sid >> 6] |= ((uint64_t)1 << (sid & 63));
     }
     snort::DetectionEngine::queue_event(gid,sid);
     stats->events++;

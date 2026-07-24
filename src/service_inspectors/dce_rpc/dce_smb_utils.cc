@@ -527,6 +527,9 @@ void DCE2_SmbCleanFileTracker(DCE2_SmbFileTracker* ftracker)
 
         if (ftracker->fp_writex_raw != nullptr)
         {
+            if (ftracker->fp_writex_raw->retained_writex_owner != nullptr)
+                *ftracker->fp_writex_raw->retained_writex_owner -=
+                    DCE2_BufferSize(ftracker->fp_writex_raw->buf);
             DCE2_BufferDestroy(ftracker->fp_writex_raw->buf);
             snort_free((void*)ftracker->fp_writex_raw);
             ftracker->fp_writex_raw = nullptr;

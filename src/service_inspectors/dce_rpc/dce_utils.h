@@ -85,7 +85,8 @@ enum DCE2_BufType
 enum DCE2_BufferMinAddFlag
 {
     DCE2_BUFFER_MIN_ADD_FLAG__USE,
-    DCE2_BUFFER_MIN_ADD_FLAG__IGNORE
+    DCE2_BUFFER_MIN_ADD_FLAG__IGNORE,
+    DCE2_BUFFER_MIN_ADD_FLAG__GEOMETRIC
 };
 
 /********************************************************************
