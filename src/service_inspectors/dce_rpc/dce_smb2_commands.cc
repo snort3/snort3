@@ -395,7 +395,8 @@ static void DCE2_Smb2CreateRequest(DCE2_Smb2SsnData* ssd,
                 return;
             }
             uint64_t file_id = 0;
-            if (DCE2_IsSmb2DurableReconnect(smb_create_hdr, end, file_id))
+            if (DCE2_IsSmb2DurableReconnect(smb_create_hdr, end, file_id) and
+                !ttr->findFtracker(file_id))
             {
                 //Create a ftracker here to handle compound write case
                 auto ftracker = new DCE2_Smb2FileTracker(file_id, ttr, str,
