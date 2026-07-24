@@ -292,6 +292,19 @@ void DCE2_CoInitTracker(DCE2_CoTracker* cot)
     cot->cli_seg.frag_len = 0;
     cot->srv_seg.buf = nullptr;
     cot->srv_seg.frag_len = 0;
+    cot->retained_seg_owner = nullptr;
+    cot->retained_seg_limit = DCE2_CO_SEGMENTATION_RETAIN_LIMIT;
+    cot->tracked_seg_bytes = 0;
+}
+
+void DCE2_CoConfigureTracker(DCE2_CoTracker* cot, uint32_t* retained_seg_owner,
+    uint32_t retained_seg_limit)
+{
+    if (cot == nullptr)
+        return;
+
+    cot->retained_seg_owner = retained_seg_owner;
+    cot->retained_seg_limit = retained_seg_limit;
 }
 
 /********************************************************************
@@ -390,6 +403,45 @@ static inline void DCE2_CoCtxMapDestroy(DCE2_CoCtxIdMap* ctx_ids)
     delete ctx_ids;
 }
 
+static inline uint32_t DCE2_CoSegAllocated(const DCE2_CoSeg* seg)
+{
+    if ((seg == nullptr) || (seg->buf == nullptr))
+        return 0;
+
+    return seg->buf->size;
+}
+
+static inline void DCE2_CoRefreshTrackedSegBytes(DCE2_CoTracker* cot)
+{
+    if (cot == nullptr)
+        return;
+
+    uint32_t current = DCE2_CoSegAllocated(&cot->cli_seg) + DCE2_CoSegAllocated(&cot->srv_seg);
+
+    if (cot->retained_seg_owner != nullptr)
+    {
+        if (current >= cot->tracked_seg_bytes)
+            *cot->retained_seg_owner += current - cot->tracked_seg_bytes;
+        else if (*cot->retained_seg_owner >= (cot->tracked_seg_bytes - current))
+            *cot->retained_seg_owner -= cot->tracked_seg_bytes - current;
+        else
+            *cot->retained_seg_owner = 0;
+    }
+
+    cot->tracked_seg_bytes = current;
+}
+
+static inline void DCE2_CoReleaseSegmentationBuffer(DCE2_CoTracker* cot, DCE2_CoSeg* seg)
+{
+    if (seg == nullptr)
+        return;
+
+    DCE2_BufferDestroy(seg->buf);
+    seg->buf = nullptr;
+    seg->frag_len = 0;
+    DCE2_CoRefreshTrackedSegBytes(cot);
+}
+
 /********************************************************************
  * Function: DCE2_CoCleanTracker()
  *
@@ -408,18 +460,18 @@ void DCE2_CoCleanTracker(DCE2_CoTracker* cot)
     DCE2_BufferDestroy(cot->frag_tracker.srv_stub_buf);
     cot->frag_tracker.srv_stub_buf = nullptr;
 
-    DCE2_BufferDestroy(cot->cli_seg.buf);
-    cot->cli_seg.buf = nullptr;
+    DCE2_CoReleaseSegmentationBuffer(cot, &cot->cli_seg);
 
-    DCE2_BufferDestroy(cot->srv_seg.buf);
-    cot->srv_seg.buf = nullptr;
+    DCE2_CoReleaseSegmentationBuffer(cot, &cot->srv_seg);
 
     DCE2_CoCtxMapDestroy(cot->ctx_ids);
     cot->ctx_ids = nullptr;
 
     DCE2_QueueDestroy(cot->pending_ctx_ids);
     cot->pending_ctx_ids = nullptr;
-
+    cot->retained_seg_owner = nullptr;
+    cot->retained_seg_limit = DCE2_CO_SEGMENTATION_RETAIN_LIMIT;
+    cot->tracked_seg_bytes = 0;
     DCE2_CoInitTracker(cot);
 }
 
@@ -616,6 +668,44 @@ static inline uint16_t DCE2_GcReassembleThreshold(DCE2_SsnData* sd)
         }
     }
     return UINT16_MAX;
+}
+
+static inline bool DCE2_CoWouldExceedRetainedSegLimit(DCE2_CoTracker* cot, DCE2_CoSeg* seg,
+    uint16_t data_len, uint16_t need_len)
+{
+    if ((cot == nullptr) || (seg == nullptr) || (cot->retained_seg_owner == nullptr))
+        return false;
+
+    if (cot->retained_seg_limit == 0)
+        return false;
+
+    uint32_t projected_size = DCE2_CoSegAllocated(seg);
+    uint32_t seg_len = (seg->buf != nullptr) ? DCE2_BufferLength(seg->buf) : 0;
+
+    if ((seg->buf == nullptr) && (data_len != 0))
+    {
+        projected_size = (data_len < need_len) ? data_len : need_len;
+    }
+    else if ((seg->buf != nullptr) && (seg_len < need_len) && (data_len != 0))
+    {
+        uint32_t copy_len = need_len - seg_len;
+        if (copy_len > data_len)
+            copy_len = data_len;
+
+        uint32_t required = seg_len + copy_len;
+        if (required > projected_size)
+        {
+            projected_size = required;
+            if (((projected_size - seg->buf->size) < seg->buf->min_add_size))
+                projected_size = seg->buf->size + seg->buf->min_add_size;
+        }
+    }
+
+    uint32_t current_owner = *cot->retained_seg_owner;
+    uint32_t current_seg = DCE2_CoSegAllocated(seg);
+    uint32_t projected_owner = (current_owner >= current_seg) ?
+        (current_owner - current_seg + projected_size) : projected_size;
+    return projected_owner > cot->retained_seg_limit;
 }
 
 /********************************************************************
@@ -2182,7 +2272,7 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
 
             /* Clear out the client side */
             DCE2_QueueEmpty(cot->pending_ctx_ids);
-            DCE2_BufferEmpty(cot->cli_seg.buf);
+            DCE2_CoReleaseSegmentationBuffer(cot, &cot->cli_seg);
             DCE2_BufferEmpty(cot->frag_tracker.cli_stub_buf);
 
             DCE2_CoResetTracker(cot);
@@ -2400,15 +2490,23 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
 
     Packet* rpkt = DCE2_CoGetSegRpkt(sd, DCE2_BufferData(seg->buf), DCE2_BufferLength(seg->buf));
 
-    // FIXIT-M don't toss data until success response to
-    // allow for retransmission of last segment of pdu. if
-    // we don't do it here 2 things break:
-    // (a) we can't alert on this packet; and
-    // (b) subsequent pdus aren't desegmented correctly.
-    DCE2_BufferEmpty(seg->buf);
-
     if (rpkt == nullptr)
+    {
+        // Building the reassembly packet failed (e.g. rpkt pool exhaustion). Drop the
+        // completed segmentation buffer instead of leaving it pinned: this stops its
+        // bytes counting against the retained-seg cap and lets the flow recover on the
+        // next PDU rather than retrying this undecodable one indefinitely.
+        DCE2_CoReleaseSegmentationBuffer(cot, seg);
         return;
+    }
+
+    // FIXIT-M don't toss data until success response to
+    // allow for retransmission of last segment of pdu.
+    // Clear the buffered payload before decode so chained SMB processing sees
+    // the original post-reassembly state. The buffer object itself is kept
+    // alive until after detect completes, then released below.
+    DCE2_BufferEmpty(seg->buf);
+    seg->frag_len = 0;
 
     /* Set the start of the connection oriented pdu to where it
      * is in the reassembled packet */
@@ -2437,6 +2535,11 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
      * detection engine hasn't seen yet */
     if (!co_reassembled)
         DCE2_Detect(sd);
+
+    // Keep the segmentation buffer available through decode/detect for the
+    // current packet, then drop it so completed PDUs do not consume retained
+    // segmentation budget.
+    DCE2_CoReleaseSegmentationBuffer(cot, seg);
 }
 
 static DCE2_Ret DCE2_HandleSegmentation(DCE2_Buffer* seg_buf, const uint8_t* data_ptr,
@@ -2493,24 +2596,41 @@ static DCE2_Ret DCE2_HandleSegmentation(DCE2_Buffer* seg_buf, const uint8_t* dat
  * buffer object if necessary.
  *
  ********************************************************************/
-static DCE2_Ret DCE2_CoHandleSegmentation(DCE2_SsnData*, DCE2_CoSeg* seg,
+static DCE2_Ret DCE2_CoHandleSegmentation(DCE2_CoTracker* cot, DCE2_CoSeg* seg,
     const uint8_t* data_ptr, uint16_t data_len, uint16_t need_len, uint16_t* data_used)
 {
-    if (seg == nullptr)
+    if ((cot == nullptr) || (seg == nullptr))
     {
+        return DCE2_RET__ERROR;
+    }
+
+    if (DCE2_CoWouldExceedRetainedSegLimit(cot, seg, data_len, need_len))
+    {
+        // Retained CO segmentation for this session has reached its memory cap.
+        // Drop only this in-progress segmentation buffer (which frees its bytes
+        // and lowers the shared retained total) and fail just this PDU. Inspection
+        // of subsequent PDUs on this tracker resumes automatically once the retained
+        // total falls back below the limit -- the cap must never permanently disable
+        // DCE/RPC inspection on the flow.
+        DCE2_CoReleaseSegmentationBuffer(cot, seg);
         return DCE2_RET__ERROR;
     }
 
     if (seg->buf == nullptr)
     {
-        seg->buf = DCE2_BufferNew(need_len, DCE2_CO__MIN_ALLOC_SIZE);
+        // Avoid claiming the full advertised fragment size before it arrives.
+        // BufferAddData will expand incrementally if additional bytes are needed.
+        uint32_t initial_size = (data_len < need_len) ? data_len : need_len;
+        seg->buf = DCE2_BufferNew(initial_size, DCE2_CO__MIN_ALLOC_SIZE);
         if (seg->buf == nullptr)
         {
             return DCE2_RET__ERROR;
         }
     }
 
-    return DCE2_HandleSegmentation(seg->buf, data_ptr, data_len, need_len, data_used);
+    DCE2_Ret ret = DCE2_HandleSegmentation(seg->buf, data_ptr, data_len, need_len, data_used);
+    DCE2_CoRefreshTrackedSegBytes(cot);
+    return ret;
 }
 
 /********************************************************************
@@ -2551,8 +2671,11 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             /* Not enough data left for a header.  Buffer it and return */
             if (data_len < sizeof(DceRpcCoHdr))
             {
-                DCE2_CoHandleSegmentation(sd, seg, data_ptr, data_len, sizeof(DceRpcCoHdr),
-                    &data_used);
+                if (DCE2_CoHandleSegmentation(cot, seg, data_ptr, data_len,
+                    sizeof(DceRpcCoHdr), &data_used) != DCE2_RET__SUCCESS)
+                {
+                    goto dce2_coprocess_exit;
+                }
 
                 /* Just break out of loop in case early detect is enabled */
                 break;
@@ -2569,7 +2692,10 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                 /* Set frag length so we don't have to check it again in seg code */
                 seg->frag_len = frag_len;
 
-                DCE2_CoHandleSegmentation(sd, seg, data_ptr, data_len, frag_len, &data_used);
+                // Return value intentionally ignored: we exit after this call whether or
+                // not the fragment was buffered. On the retained-seg cap path
+                // DCE2_CoHandleSegmentation already drops its own in-progress buffer.
+                DCE2_CoHandleSegmentation(cot, seg, data_ptr, data_len, frag_len, &data_used);
                 goto dce2_coprocess_exit;
             }
 
@@ -2597,7 +2723,7 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             // Need more data to get header
             if (DCE2_BufferLength(seg->buf) < sizeof(DceRpcCoHdr))
             {
-                DCE2_Ret status = DCE2_CoHandleSegmentation(sd, seg, data_ptr, data_len,
+                DCE2_Ret status = DCE2_CoHandleSegmentation(cot, seg, data_ptr, data_len,
                     sizeof(DceRpcCoHdr), &data_used);
 
                 /* Still not enough for header */
@@ -2611,7 +2737,7 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
                     DCE2_RET__SUCCESS)
                 {
                     int data_back;
-                    DCE2_BufferEmpty(seg->buf);
+                    DCE2_CoReleaseSegmentationBuffer(cot, seg);
                     /* Move back to original packet header */
                     data_back = -data_used;
                     dce2_move(data_ptr, data_len, data_back);
@@ -2633,7 +2759,7 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             /* Need more data for full pdu */
             if (DCE2_BufferLength(seg->buf) < seg->frag_len)
             {
-                DCE2_Ret status = DCE2_CoHandleSegmentation(sd, seg, data_ptr, data_len,
+                DCE2_Ret status = DCE2_CoHandleSegmentation(cot, seg, data_ptr, data_len,
                     seg->frag_len, &data_used);
 
                 /* Still not enough */

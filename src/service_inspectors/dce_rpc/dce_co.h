@@ -112,6 +112,8 @@ struct DceRpcCoHdr
     uint32_t call_id;
 };
 
+static constexpr uint32_t DCE2_CO_SEGMENTATION_RETAIN_LIMIT = 1024 * 1024;
+
 /* Bind */
 struct DceRpcCoBind
 {
@@ -240,6 +242,16 @@ struct DCE2_CoTracker
     /* For transport segmentation */
     DCE2_CoSeg cli_seg;
     DCE2_CoSeg srv_seg;
+
+    // Aggregate retained segmented-CO buffer accounting. For SMB named pipes
+    // this points at the per-SMB-session total (owned by the SMB session
+    // tracker, whose lifetime covers this co_tracker); for dce_tcp it is per-flow.
+    // No in-class initializers: this struct must stay trivially constructible so
+    // it can be zeroed via calloc/memset (e.g. embedded in DCE2_TcpSsnData);
+    // DCE2_CoInitTracker() sets these fields on every creation path.
+    uint32_t* retained_seg_owner;
+    uint32_t retained_seg_limit;
+    uint32_t tracked_seg_bytes;
 };
 
 /*
@@ -506,6 +518,7 @@ inline int DCE2_GetNdrUint3264(const uint8_t* data_ptr, uint64_t& data,
 }
 
 void DCE2_CoInitTracker(DCE2_CoTracker*);
+void DCE2_CoConfigureTracker(DCE2_CoTracker*, uint32_t*, uint32_t);
 void DCE2_CoProcess(DCE2_SsnData*, DCE2_CoTracker*,
     const uint8_t*, uint16_t);
 void DCE2_CoInitRdata(uint8_t*, int);

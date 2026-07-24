@@ -86,6 +86,8 @@ static DCE2_TcpSsnData* dce2_create_new_tcp_session(Packet* p, dce2TcpProtoConf*
     if ( dce2_tcp_sess )
     {
         DCE2_CoInitTracker(&dce2_tcp_sess->co_tracker);
+        DCE2_CoConfigureTracker(&dce2_tcp_sess->co_tracker, &dce2_tcp_sess->retained_co_seg_bytes,
+            DCE2_CO_SEGMENTATION_RETAIN_LIMIT);
         DCE2_ResetRopts(&dce2_tcp_sess->sd, p);
 
         dce2_tcp_stats.tcp_sessions++;

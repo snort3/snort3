@@ -428,6 +428,10 @@ static void DCE2_Smb2CreateRequest(DCE2_Smb2SsnData* ssd,
                 {
                     ftracker->co_tracker = (DCE2_CoTracker*)snort_calloc(sizeof(DCE2_CoTracker));
                     DCE2_CoInitTracker(ftracker->co_tracker);
+                    // Anchor the retained-seg counter in the session tracker (owns this
+                    // co_tracker), not the per-flow ssd, which may be freed first (CSCwv40271).
+                    DCE2_CoConfigureTracker(ftracker->co_tracker, &str->retained_co_seg_bytes,
+                        DCE2_CO_SEGMENTATION_RETAIN_LIMIT);
                 }
             }
         }
@@ -520,6 +524,10 @@ static void DCE2_Smb2CreateResponse(DCE2_Smb2SsnData* ssd,
         }
         ftracker->co_tracker = (DCE2_CoTracker*)snort_calloc(sizeof(DCE2_CoTracker));
         DCE2_CoInitTracker(ftracker->co_tracker);
+        // Anchor the retained-seg counter in the session tracker (owns this
+        // co_tracker), not the per-flow ssd, which may be freed first (CSCwv40271).
+        DCE2_CoConfigureTracker(ftracker->co_tracker, &str->retained_co_seg_bytes,
+            DCE2_CO_SEGMENTATION_RETAIN_LIMIT);
     }
 }
 

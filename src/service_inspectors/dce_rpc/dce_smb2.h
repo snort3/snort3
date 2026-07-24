@@ -478,6 +478,11 @@ public:
     DCE2_DbMapRtracker req_trackers;
     uint64_t session_id = 0;
     uint8_t encryption_flag = 0;
+    // Session-wide retained connection-oriented segmentation bytes for this SMB
+    // session's named-pipe co_trackers. Anchored here (not in the per-flow
+    // DCE2_Smb2SsnData) because file/co trackers are owned by this cached session
+    // tracker and can outlive any single flow's DCE2_Smb2SsnData (CSCwv40271).
+    uint32_t retained_co_seg_bytes = 0;
 };
 struct DCE2_Smb2SsnData
 {

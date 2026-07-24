@@ -521,6 +521,7 @@ struct DCE2_SmbSsnData
 
     DCE2_SmbFileTracker* fb_ftracker;
     bool block_pdus;
+    uint32_t retained_co_seg_bytes = 0;
 
     // Maximum file depth as returned from file API
     int64_t max_file_depth;
@@ -558,4 +559,3 @@ DCE2_SsnData* get_dce2_session_data(snort::Flow*);
 
 const char* get_smb_com_string(uint8_t);
 #endif
-

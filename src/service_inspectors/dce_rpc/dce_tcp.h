@@ -108,6 +108,9 @@ struct DCE2_TcpSsnData
 {
     DCE2_SsnData sd;  // This member must be first
     DCE2_CoTracker co_tracker;
+    // No initializer: DCE2_TcpSsnData is zeroed via memset on every creation path
+    // (dce_tcp.cc, dce_expected_session.cc), so it must remain a trivial type.
+    uint32_t retained_co_seg_bytes;
 };
 
 enum DCE2_TcpFlowState

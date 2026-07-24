@@ -68,6 +68,8 @@ int DceTcpExpSsnManager::create_expected_session_impl(Packet* pkt,
     fd->state = DCE2_TCP_FLOW__EXPECTED;
     memset(&fd->dce2_tcp_session, 0, sizeof(DCE2_TcpSsnData));
     DCE2_CoInitTracker(&fd->dce2_tcp_session.co_tracker);
+    DCE2_CoConfigureTracker(&fd->dce2_tcp_session.co_tracker,
+        &fd->dce2_tcp_session.retained_co_seg_bytes, DCE2_CO_SEGMENTATION_RETAIN_LIMIT);
     DCE2_ResetRopts(&fd->dce2_tcp_session.sd, pkt);
 
     fd->dce2_tcp_session.sd.trans = DCE2_TRANS_TYPE__TCP;

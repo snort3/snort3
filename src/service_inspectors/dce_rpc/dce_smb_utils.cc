@@ -350,6 +350,8 @@ DCE2_Ret DCE2_SmbInitFileTracker(DCE2_SmbSsnData* ssd,
         if (co_tracker == nullptr)
             return DCE2_RET__ERROR;
         DCE2_CoInitTracker(co_tracker);
+        DCE2_CoConfigureTracker(co_tracker, &ssd->retained_co_seg_bytes,
+            DCE2_CO_SEGMENTATION_RETAIN_LIMIT);
         ftracker->fp_co_tracker = co_tracker;
         ftracker->fp_byte_mode = false;
         ftracker->fp_used = false;
