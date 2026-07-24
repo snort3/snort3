@@ -84,6 +84,7 @@ struct DNSNameState
     uint8_t txt_bytes_seen = 0;
     uint8_t name_state = 0;
     uint8_t alerted = 0;
+    bool name_len_capped = false;
     uint16_t offset = 0;
     uint8_t relative = 0;
     std::string dns_name;

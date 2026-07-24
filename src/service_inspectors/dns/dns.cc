@@ -62,8 +62,8 @@ const PegInfo dns_peg_names[] =
     { CountType::NOW, "concurrent_sessions", "total concurrent dns sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent dns sessions" },
     { CountType::SUM, "aborted_sessions", "total dns sessions aborted" },
+    { CountType::SUM, "name_len_exceeded", "total dns names truncated at limit" },
     { CountType::SUM, "malformed_name_dropped", "packets dropped due to domain name exceeding 255-octet limit" },
-
     { CountType::END, nullptr, nullptr }
 };
 
@@ -411,12 +411,27 @@ static uint16_t ParseDNSName(
                     }
                 }
 
-                if (parse_dns_name)
+                if (parse_dns_name && !dnsSessionData->curr_txt.name_len_capped)
                 {
-                    if (!dnsSessionData->curr_txt.dns_name.empty())
-                        dnsSessionData->curr_txt.dns_name += ".";
+                    // RFC 1035 §2.3.4: label <= 63 octets, name <= 255 wire octets.
+                    // The maximum dotted-text representation of a wire-valid name is 253 chars.
+                    // txt_len (full label size from wire) is used for the per-label check so that
+                    // labels split across TCP segments are correctly detected when overlong.
+                    // Once the cap fires, all further appends for this name are skipped.
+                    const size_t dot_len = dnsSessionData->curr_txt.dns_name.empty() ? 0 : 1;
+                    if (dnsSessionData->curr_txt.txt_len <= 63 &&
+                        dnsSessionData->curr_txt.dns_name.size() + dot_len + bytes_required <= 253)
+                    {
+                        if (dot_len)
+                            dnsSessionData->curr_txt.dns_name += ".";
 
-                    dnsSessionData->curr_txt.dns_name.append(reinterpret_cast<const char*>(data), bytes_required);
+                        dnsSessionData->curr_txt.dns_name.append(reinterpret_cast<const char*>(data), bytes_required);
+                    }
+                    else
+                    {
+                        dnsstats.name_len_exceeded++;
+                        dnsSessionData->curr_txt.name_len_capped = true;
+                    }
                 }
 
                 data += bytes_required;

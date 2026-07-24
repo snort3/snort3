@@ -55,6 +55,7 @@ struct DnsStats
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
     PegCount aborted_sessions;
+    PegCount name_len_exceeded;
     PegCount malformed_name_dropped;
 };
 
