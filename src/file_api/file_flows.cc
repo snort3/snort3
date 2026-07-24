@@ -46,6 +46,10 @@
 #include "file_stats.h"
 #include <thread>
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
 using namespace snort;
 
 unsigned FileFlows::file_flow_data_id = 0;
@@ -166,27 +170,30 @@ FilePolicyBase* FileFlows::get_file_policy(Flow* flow)
 
 void FileFlows::set_current_file_context(FileContext* ctx)
 {
-    // If we finished processing a file context object last time, delete it
-    if (current_context_delete_pending and (current_context != ctx))
-    {
-        int64_t file_id  = current_context->get_file_id();
-        delete current_context;
-        current_context = nullptr;
-        current_context_delete_pending = false;
-        FileCache* file_cache = FileService::get_file_cache();
-        assert(file_cache);
-        FileContext* file_got = file_cache->get_file(flow, file_id, false, false);
-        if (file_got and file_got->verdict == FILE_VERDICT_PENDING)
-        {
-            file_got->user_file_data_mutex.lock();
-            delete(file_got->get_file_data());
-            file_got->set_file_data(nullptr);
-            file_got->user_file_data_mutex.unlock();
-        }
-    }
+    // Free the previous file's deferred context. Skip if the caller is
+    // installing it back as current -- freeing would dangle current_context.
+    if (deferred_delete_context and (deferred_delete_context != ctx))
+        retire_victim(deferred_delete_context);
+
     current_context = ctx;
-    // Not using current_file_id so clear it
+    // Explicit install overrides any file_id-based lookup.
     current_file_id = 0;
+}
+
+FileFlows::CurrentContextSlot
+FileFlows::swap_current_file_context_no_delete(FileContext* new_ctx)
+{
+    CurrentContextSlot saved { current_context, current_file_id };
+    current_context = new_ctx;
+    current_file_id = 0;
+    return saved;
+}
+
+void
+FileFlows::restore_current_file_context_no_delete(const CurrentContextSlot& saved)
+{
+    current_context = saved.ctx;
+    current_file_id = saved.id;
 }
 
 FileContext* FileFlows::get_current_file_context()
@@ -207,17 +214,33 @@ uint64_t FileFlows::get_new_file_instance()
 
 FileFlows::~FileFlows()
 {
-    delete(main_context);
-    if (current_context_delete_pending)
-        delete(current_context);
+    // Ownership: main_context, partially_processed_contexts entries, and
+    // deferred_delete_context are owning slots (mutually disjoint at
+    // observable points). current_context and current_file_id are aliases.
+    // Drop aliases before walking owners so retire_victim() does no work
+    // re-nulling them for each owning slot.
+    current_context = nullptr;
+    current_file_id = 0;
 
-    // Delete any remaining FileContexts stored on the flow
-    for (auto const& elem : partially_processed_contexts)
-    {
-        delete elem.second;
-    }
+    // Route owning slots through retire_victim() to keep the single
+    // free-and-null protocol used by the setter and remove paths.
+    FileContext* dc = deferred_delete_context;
+    deferred_delete_context = nullptr;
+    retire_victim(dc);
+
+    FileContext* mc = main_context;
+    main_context = nullptr;
+    retire_victim(mc);
+
+    // Move-out before the loop so retire_victim() never sees a
+    // partially-cleared partially_processed_contexts.
+    auto ppc = std::move(partially_processed_contexts);
+    partially_processed_contexts.clear();
+    for (auto const& elem : ppc)
+        retire_victim(elem.second);
 
     FilePolicyBase::delete_file_policy(file_policy);
+    file_policy = nullptr;
 }
 
 FileContext* FileFlows::find_main_file_context(FilePosition pos, FileDirection dir, size_t index)
@@ -305,15 +328,35 @@ FileContext* FileFlows::get_file_context(
     return context;
 }
 
-// Remove a file context from the flow's partially processed store. Don't delete the context
-// yet because detection needs access; pointer is stored in current_context. The file context will
-// be deleted when the next file is processed
+void FileFlows::retire_victim(FileContext* victim)
+{
+    if (!victim)
+        return;
+
+    if (current_context == victim)
+        current_context = nullptr;
+    if (deferred_delete_context == victim)
+        deferred_delete_context = nullptr;
+
+    delete victim;
+}
+
+// Retired context is ALWAYS deferred: file_process callers may dereference
+// `context` after this returns (populate_trace_data when tracing is active),
+// so a synchronous delete here would be a use-after-free. Drainage happens
+// at the next set_current_file_context(other), the next
+// remove_processed_file_context() for a different id, or ~FileFlows.
 void FileFlows::remove_processed_file_context(uint64_t file_id)
 {
-    FileContext *context = get_partially_processed_context(file_id);
+    FileContext* context = get_partially_processed_context(file_id);
     partially_processed_contexts.erase(file_id);
-    if (context)
-        current_context_delete_pending = true;
+    if (!context)
+        return;
+
+    if (deferred_delete_context and deferred_delete_context != context)
+        retire_victim(deferred_delete_context);
+
+    deferred_delete_context = context;
 }
 
 /* This function is used to process file that is sent in pieces
@@ -520,4 +563,198 @@ void FileFlows::add_pending_file(uint64_t file_id)
 {
     current_file_id = pending_file_id = file_id;
 }
+
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+
+namespace snort
+{
+// Mirrors the FI_TEST pattern in file_lib.cc.
+class FF_TEST_CONTEXT : public FileContext
+{
+public:
+    explicit FF_TEST_CONTEXT(uint64_t id) { set_file_id(id); }
+};
+
+struct FFTestAccessor
+{
+    static auto& ppc(FileFlows& ff) { return ff.partially_processed_contexts; }
+    static FileContext*& current_context(FileFlows& ff) { return ff.current_context; }
+    static uint64_t& current_file_id(FileFlows& ff) { return ff.current_file_id; }
+    static FileContext*& deferred(FileFlows& ff) { return ff.deferred_delete_context; }
+    static FileContext*& main_context(FileFlows& ff) { return ff.main_context; }
+};
+} // namespace snort
+
+TEST_CASE ("retire defers delete, dtor drains it", "[file_flows][lifecycle]")
+{
+    // cppcheck-suppress unreadVariable
+    auto* ff = new FileFlows(nullptr);
+    auto* a  = new FF_TEST_CONTEXT(1);
+    FFTestAccessor::ppc(*ff)[1] = a;
+
+    ff->remove_processed_file_context(1);
+    CHECK(FFTestAccessor::deferred(*ff) == a);
+    CHECK(FFTestAccessor::ppc(*ff).empty());
+
+    delete ff;
+}
+
+TEST_CASE ("retire then set drops deferred via retire_victim",
+           "[file_flows][lifecycle]")
+{
+    // cppcheck-suppress unreadVariable
+    auto* ff = new FileFlows(nullptr);
+    auto* a  = new FF_TEST_CONTEXT(1);
+    auto* b  = new FF_TEST_CONTEXT(2);
+
+    FFTestAccessor::ppc(*ff)[1] = a;
+    FFTestAccessor::current_context(*ff) = a;
+
+    ff->remove_processed_file_context(1);
+    CHECK(FFTestAccessor::deferred(*ff) == a);
+
+    ff->set_current_file_context(b);
+    CHECK(FFTestAccessor::deferred(*ff) == nullptr);
+    CHECK(FFTestAccessor::current_context(*ff) == b);
+
+    delete b;
+    FFTestAccessor::current_context(*ff) = nullptr;
+    delete ff;
+}
+
+TEST_CASE ("CSCwt96192 regression: retire non-current then set other",
+           "[file_flows][lifecycle]")
+{
+    // cppcheck-suppress unreadVariable
+    auto* ff = new FileFlows(nullptr);
+    auto* a  = new FF_TEST_CONTEXT(1);
+    auto* b  = new FF_TEST_CONTEXT(2);
+    auto* c  = new FF_TEST_CONTEXT(3);
+
+    FFTestAccessor::ppc(*ff)[1] = a;
+    FFTestAccessor::ppc(*ff)[2] = b;
+    FFTestAccessor::current_context(*ff) = a;
+
+    ff->remove_processed_file_context(2);
+    CHECK(FFTestAccessor::deferred(*ff) == b);
+    CHECK(FFTestAccessor::ppc(*ff).count(1) == 1);
+
+    ff->set_current_file_context(c);
+    CHECK(FFTestAccessor::deferred(*ff) == nullptr);
+    CHECK(FFTestAccessor::current_context(*ff) == c);
+    CHECK(FFTestAccessor::ppc(*ff).count(1) == 1);
+
+    delete c;
+    FFTestAccessor::current_context(*ff) = nullptr;
+    delete ff;
+}
+
+TEST_CASE ("ISS-1 regression: caller deref after remove is safe",
+           "[file_flows][lifecycle]")
+{
+    // cppcheck-suppress unreadVariable
+    auto* ff = new FileFlows(nullptr);
+    auto* x  = new FF_TEST_CONTEXT(42);
+    FFTestAccessor::ppc(*ff)[42] = x;
+
+    ff->remove_processed_file_context(42);
+    CHECK(x->get_file_id() == 42);
+
+    delete ff;
+}
+
+TEST_CASE ("nested retire drains prior via retire_victim",
+           "[file_flows][lifecycle]")
+{
+    // cppcheck-suppress unreadVariable
+    auto* ff = new FileFlows(nullptr);
+    auto* a  = new FF_TEST_CONTEXT(1);
+    auto* b  = new FF_TEST_CONTEXT(2);
+
+    FFTestAccessor::ppc(*ff)[1] = a;
+    FFTestAccessor::ppc(*ff)[2] = b;
+
+    ff->remove_processed_file_context(1);
+    CHECK(FFTestAccessor::deferred(*ff) == a);
+
+    ff->remove_processed_file_context(2);
+    CHECK(FFTestAccessor::deferred(*ff) == b);
+    CHECK(FFTestAccessor::ppc(*ff).empty());
+
+    delete ff;
+}
+
+TEST_CASE ("dtor drains main + partially_processed_contexts + deferred (original crash shape)",
+           "[file_flows][lifecycle]")
+{
+    auto* ff = new FileFlows(nullptr);
+    auto* m  = new FF_TEST_CONTEXT(10);
+    auto* a  = new FF_TEST_CONTEXT(1);
+    auto* b  = new FF_TEST_CONTEXT(2);
+
+    FFTestAccessor::main_context(*ff) = m;
+    FFTestAccessor::ppc(*ff)[1] = a;
+    FFTestAccessor::ppc(*ff)[2] = b;
+    FFTestAccessor::current_context(*ff) = a;
+
+    // Mimic remove_processed_file_context's erase-then-park sequence.
+    FFTestAccessor::ppc(*ff).erase(1);
+    FFTestAccessor::deferred(*ff) = a;
+
+    delete ff;
+}
+
+TEST_CASE ("swap/restore preserves both current_context and current_file_id",
+           "[file_flows][swap]")
+{
+    auto* ff   = new FileFlows(nullptr);
+    auto* prev = new FF_TEST_CONTEXT(7);
+    auto* temp = new FF_TEST_CONTEXT(99);
+
+    FFTestAccessor::current_context(*ff) = prev;
+    FFTestAccessor::current_file_id(*ff) = 77;
+
+    auto saved = ff->swap_current_file_context_no_delete(temp);
+
+    CHECK(saved.ctx == prev);
+    CHECK(saved.id  == 77);
+    CHECK(FFTestAccessor::current_context(*ff) == temp);
+    CHECK(FFTestAccessor::current_file_id(*ff) == 0);
+
+    ff->restore_current_file_context_no_delete(saved);
+
+    CHECK(FFTestAccessor::current_context(*ff) == prev);
+    CHECK(FFTestAccessor::current_file_id(*ff) == 77);
+
+    delete prev;
+    delete temp;
+    FFTestAccessor::current_context(*ff) = nullptr;
+    delete ff;
+}
+
+TEST_CASE ("swap/restore does not engage deferred-delete",
+           "[file_flows][swap]")
+{
+    auto* ff    = new FileFlows(nullptr);
+    auto* armed = new FF_TEST_CONTEXT(1);
+    auto* temp  = new FF_TEST_CONTEXT(2);
+
+    FFTestAccessor::deferred(*ff) = armed;
+
+    auto saved = ff->swap_current_file_context_no_delete(temp);
+    CHECK(FFTestAccessor::deferred(*ff) == armed);   // unchanged
+
+    ff->restore_current_file_context_no_delete(saved);
+    CHECK(FFTestAccessor::deferred(*ff) == armed);   // unchanged
+
+    delete temp;
+    // dtor will drain `armed` via the deferred slot.
+    delete ff;
+}
+
+#endif // UNIT_TEST
 

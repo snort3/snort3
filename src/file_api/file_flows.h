@@ -69,6 +69,19 @@ public:
 
     void set_current_file_context(FileContext*);
 
+    // The active context is the pair (current_context, current_file_id);
+    // see get_current_file_context(). Save/restore must round-trip both.
+    struct CurrentContextSlot
+    {
+        FileContext* ctx = nullptr;
+        uint64_t     id  = 0;
+    };
+
+    // Like set_current_file_context() but does NOT free the previous context;
+    // returns a snapshot to pass to restore_current_file_context_no_delete().
+    CurrentContextSlot swap_current_file_context_no_delete(FileContext* new_ctx);
+    void restore_current_file_context_no_delete(const CurrentContextSlot& saved);
+
     // Get file context based on file id, create it if does not exist
     FileContext* get_file_context(uint64_t file_id, bool to_create,
         bool& is_new_context, uint64_t multi_file_processing_id=0);
@@ -111,8 +124,13 @@ public:
     FilePolicyBase* get_file_policy() { return file_policy; }
 
 private:
+#ifdef UNIT_TEST
+    friend struct FFTestAccessor;
+#endif
     void init_file_context(FileDirection, FileContext*);
     FileContext* find_main_file_context(FilePosition, FileDirection, size_t id = 0);
+    // Free a retired FileContext and null any alias slots that referenced it.
+    void retire_victim(FileContext* victim);
     FileContext* main_context = nullptr;
     FileContext* current_context = nullptr;
     uint64_t current_file_id = 0;
@@ -122,7 +140,9 @@ private:
     FilePolicyBase* file_policy = nullptr;
 
     std::unordered_map<uint64_t, FileContext*> partially_processed_contexts;
-    bool current_context_delete_pending = false;
+    // Exact FileContext pointer scheduled for delayed deletion. May or may
+    // not alias current_context.
+    FileContext* deferred_delete_context = nullptr;
     FileEventGen events;
 };
 }

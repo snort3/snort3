@@ -979,23 +979,33 @@ void FileContext::find_file_type_from_ips(Packet* pkt, const uint8_t* file_data,
     p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
     p->proto_bits |= PROTO_BIT__PDU;
 
-    bool set_file_context = false;
+    // The regular set_current_file_context() cannot be used here: it engages
+    // deferred-delete (would free a context still owned via
+    // partially_processed_contexts) and clears current_file_id (would break
+    // the matched restore).
     FileFlows* files = FileFlows::get_file_flows(p->flow, false);
+    FileFlows::CurrentContextSlot saved;
+    bool did_swap = false;
     if (files)
     {
         FileContext* context = files->get_current_file_context();
         if (!context or context != this)
         {
-            files->set_current_file_context(this);
-            set_file_context = true;
+            saved = files->swap_current_file_context_no_delete(this);
+            did_swap = true;
         }
     }
     fp_eval_service_group(p, conf->snort_protocol_id);
     /* Check whether file transfer is done or type depth is reached */
     if ((position == SNORT_FILE_END) || (position == SNORT_FILE_FULL) || depth_exhausted)
         finalize_file_type();
-    if (set_file_context)
-        files->set_current_file_context(nullptr);
+    if (did_swap)
+    {
+        // Re-entrant fp_eval_service_group may have replaced current_context;
+        // don't overwrite whatever it installed with a possibly-stale saved.ctx.
+        if (files->get_current_file_context() == this)
+            files->restore_current_file_context_no_delete(saved);
+    }
 }
 
 void FileContext::process_file_type(Packet* pkt,const uint8_t* file_data, int data_size,
