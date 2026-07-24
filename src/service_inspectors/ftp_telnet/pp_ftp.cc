@@ -856,11 +856,14 @@ static int validate_param(Packet* p,
             {
                  /* Call into Streams to mark data channel as something
                   * to ignore. */
-                  Stream::ignore_flow(
+                  FtpDataFlowData* fd = new FtpDataFlowData(p);
+                  int result = Stream::ignore_flow(
                       p, PktType::TCP, IpProtocol::TCP,
                       &session->serverIP, session->serverPort,
                       &session->clientIP, session->clientPort,
-                      SSN_DIR_BOTH, (new FtpDataFlowData(p)));
+                      SSN_DIR_BOTH, fd);
+                  if (result < 0)
+                      delete fd;
             }
         }
     }
@@ -1996,3 +1999,4 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
 
     return iRet;
 }
+
