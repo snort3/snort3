@@ -37,6 +37,56 @@ using namespace snort;
 
 static THREAD_LOCAL int co_reassembled = 0;
 
+namespace
+{
+
+class ScopedPacketPayload
+{
+public:
+    ScopedPacketPayload(Packet* p, const uint8_t* data, uint16_t dsize)
+        : p(p),
+          old_data(p ? p->data : nullptr),
+          old_dsize(p ? p->dsize : 0),
+          old_alt_dsize(p ? p->alt_dsize : 0),
+          old_detect_limited(p ? (p->packet_flags & PKT_DETECT_LIMIT) != 0 : false)
+    {
+        if (!p)
+            return;
+
+        p->data = data;
+        p->dsize = dsize;
+        p->alt_dsize = 0;
+        p->packet_flags &= ~PKT_DETECT_LIMIT;
+    }
+
+    ~ScopedPacketPayload()
+    {
+        if (!p)
+            return;
+
+        p->data = old_data;
+        p->dsize = old_dsize;
+        p->alt_dsize = old_alt_dsize;
+
+        if (old_detect_limited)
+            p->packet_flags |= PKT_DETECT_LIMIT;
+        else
+            p->packet_flags &= ~PKT_DETECT_LIMIT;
+    }
+
+    ScopedPacketPayload(const ScopedPacketPayload&) = delete;
+    ScopedPacketPayload& operator=(const ScopedPacketPayload&) = delete;
+
+private:
+    Packet* p;
+    const uint8_t* old_data;
+    uint16_t old_dsize;
+    uint16_t old_alt_dsize;
+    bool old_detect_limited;
+};
+
+}
+
 /* [MS-RPCE] 2.2.5 - 64-Bit Network Data Representation */
 static const Uuid uuid_ndr64 = { 0x71710533, 0xbeba, 0x4937, 0x83, 0x19,
                                  { 0xb5, 0xdb, 0xef, 0x9c, 0xcc, 0x36 }
@@ -2526,6 +2576,8 @@ void DCE2_CoProcess(DCE2_SsnData* sd, DCE2_CoTracker* cot,
             dce2_move(data_ptr, data_len, frag_len);
 
             /* Got a full DCE/RPC pdu */
+            Packet* p = DetectionEngine::get_current_packet();
+            ScopedPacketPayload pdu_payload(p, frag_ptr, frag_len);
             DCE2_CoDecode(sd, cot, frag_ptr, frag_len);
 
             /* If we're configured to do defragmentation only detect on first frag

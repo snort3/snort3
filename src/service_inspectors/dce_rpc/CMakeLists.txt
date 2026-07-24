@@ -82,3 +82,10 @@ add_catch_test( dce_http_server_splitter_test
     SOURCES
         dce_http_server_splitter.cc
 )
+
+add_catch_test( dce_co_test
+    NO_TEST_SOURCE
+    SOURCES
+        test/dce_co_test.cc
+        dce_co.cc
+)
