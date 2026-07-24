@@ -99,7 +99,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* reference_ctor(Module* p, IpsInfo& info)
 {
-    ReferenceModule* m = (ReferenceModule*)p;
+    ReferenceModule* m = static_cast<ReferenceModule*>(p);
     IpsOption::add_reference(info, m->scheme.c_str(), m->id.c_str());
     return nullptr;
 }

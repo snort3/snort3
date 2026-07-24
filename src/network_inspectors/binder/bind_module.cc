@@ -542,5 +542,4 @@ const PegInfo* BinderModule::get_pegs() const
 { return bind_pegs; }
 
 PegCount* BinderModule::get_counts() const
-{ return (PegCount*)&bstats; }
-
+{ return reinterpret_cast<PegCount*>(&bstats); }

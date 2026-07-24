@@ -82,7 +82,7 @@ public:
     { return block_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&block_stats; }
+    { return reinterpret_cast<PegCount*>(&block_stats); }
 };
 
 //-------------------------------------------------------------------------
@@ -130,4 +130,3 @@ const BaseApi* act_block[] =
     &block_api.base,
     nullptr
 };
-

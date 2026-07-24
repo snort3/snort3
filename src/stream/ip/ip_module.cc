@@ -200,5 +200,4 @@ const PegInfo* StreamIpModule::get_pegs() const
 { return ip_pegs; }
 
 PegCount* StreamIpModule::get_counts() const
-{ return (PegCount*)&ip_stats; }
-
+{ return reinterpret_cast<PegCount*>(&ip_stats); }

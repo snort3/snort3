@@ -68,7 +68,8 @@ uint32_t SipStatCodeOption::hash() const
     unsigned n = 0;
     while ( n < SIP_NUM_STAT_CODE_MAX and ssod.stat_codes[n] ) ++n;
 
-    mix_str(a, b, c, (const char*)ssod.stat_codes, n*sizeof(ssod.stat_codes[0]));
+    mix_str(a, b, c, reinterpret_cast<const char*>(ssod.stat_codes),
+        n*sizeof(ssod.stat_codes[0]));
     finalize(a, b, c);
 
     return c;
@@ -79,7 +80,7 @@ bool SipStatCodeOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const SipStatCodeOption& rhs = (const SipStatCodeOption&)ips;
+    const SipStatCodeOption& rhs = static_cast<const SipStatCodeOption&>(ips);
 
     if ( !memcmp(ssod.stat_codes, rhs.ssod.stat_codes, sizeof(ssod.stat_codes)) )
         return true;
@@ -195,7 +196,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* sip_stat_code_ctor(Module* p, IpsInfo&)
 {
-    SipStatCodeModule* m = (SipStatCodeModule*)p;
+    SipStatCodeModule* m = static_cast<SipStatCodeModule*>(p);
     return new SipStatCodeOption(m->ssod);
 }
 
@@ -235,4 +236,3 @@ static const IpsApi sip_stat_code_api =
 
 // added to snort_plugins in sip.cc
 const BaseApi* ips_sip_stat_code = &sip_stat_code_api.base;
-

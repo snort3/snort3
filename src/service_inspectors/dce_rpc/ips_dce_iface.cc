@@ -513,7 +513,7 @@ static void dce2_iface_mod_dtor(Module* m)
 
 static IpsOption* dce2_iface_ctor(Module* p, IpsInfo&)
 {
-    Dce2IfaceModule* m = (Dce2IfaceModule*)p;
+    Dce2IfaceModule* m = static_cast<Dce2IfaceModule*>(p);
     return new Dce2IfaceOption(m->version, m->any_frag, m->uuid);
 }
 
@@ -553,4 +553,3 @@ static const IpsApi dce2_iface_api =
 
 // added to snort_plugins in dce2.cc
 const BaseApi* ips_dce_iface = &dce2_iface_api.base;
-

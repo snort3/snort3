@@ -59,13 +59,13 @@ void DceHttpProxy::clear(Packet* p)
     {
         if ( !p->test_session_flags(SSNFLAG_ABORT_CLIENT | SSNFLAG_ABORT_SERVER) )
         {
-            TcpSession* tcp_session = (TcpSession*)flow->session;
+            TcpSession* tcp_session = static_cast<TcpSession*>(flow->session);
 
             DceHttpProxySplitter* c2s_splitter =
-                (DceHttpProxySplitter*)(tcp_session->get_splitter(true));
+                static_cast<DceHttpProxySplitter*>(tcp_session->get_splitter(true));
 
             DceHttpProxySplitter* s2c_splitter =
-                (DceHttpProxySplitter*)(tcp_session->get_splitter(false));
+                static_cast<DceHttpProxySplitter*>(tcp_session->get_splitter(false));
 
             if ( c2s_splitter->cutover_inspector() && s2c_splitter->cutover_inspector() )
             {
@@ -131,4 +131,3 @@ const InspectApi dce_http_proxy_api =
     nullptr, // ssn
     nullptr  // reset
 };
-

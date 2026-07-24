@@ -85,7 +85,7 @@ NORETURN_ASSERT void StreamUdp::eval(Packet*)
 StreamUdpConfig* get_udp_cfg(Inspector* ins)
 {
     assert(ins);
-    return ((StreamUdp*)ins)->config;
+    return static_cast<StreamUdp*>(ins)->config;
 }
 
 //-------------------------------------------------------------------------
@@ -115,7 +115,7 @@ static void udp_tterm()
 
 static Inspector* udp_ctor(Module* m)
 {
-    StreamUdpModule* mod = (StreamUdpModule*)m;
+    StreamUdpModule* mod = static_cast<StreamUdpModule*>(m);
     return new StreamUdp(mod->get_data());
 }
 
@@ -153,4 +153,3 @@ static const InspectApi udp_api =
 };
 
 const BaseApi* nin_stream_udp = &udp_api.base;
-

@@ -119,13 +119,13 @@ NORETURN_ASSERT void StreamIp::eval(Packet*)
 StreamIpConfig* get_ip_cfg(Inspector* ins)
 {
     assert(ins);
-    return ((StreamIp*)ins)->config;
+    return static_cast<StreamIp*>(ins)->config;
 }
 
 Defrag* get_defrag(Inspector* ins)
 {
     assert(ins);
-    return ((StreamIp*)ins)->defrag;
+    return static_cast<StreamIp*>(ins)->defrag;
 }
 
 //-------------------------------------------------------------------------
@@ -150,7 +150,7 @@ static void ip_tterm()
 
 static Inspector* ip_ctor(Module* m)
 {
-    StreamIpModule* mod = (StreamIpModule*)m;
+    StreamIpModule* mod = static_cast<StreamIpModule*>(m);
     return new StreamIp(mod->get_data());
 }
 
@@ -193,4 +193,3 @@ static const InspectApi ip_api =
 };
 
 const BaseApi* nin_stream_ip = &ip_api.base;
-

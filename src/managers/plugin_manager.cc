@@ -333,51 +333,56 @@ static void add_plugin(PluginPtr& p)
     switch ( p->api->type )
     {
     case PT_IPS_ACTION:
-        p->pin = ActionManager::get_interface((const ActionApi*)p->api);
+        p->pin = ActionManager::get_interface(reinterpret_cast<const ActionApi*>(p->api));
         break;
 
     case PT_IPS_OPTION:
-        p->pin = IpsManager::get_interface((const IpsApi*)p->api);
+        p->pin = IpsManager::get_interface(reinterpret_cast<const IpsApi*>(p->api));
         break;
 
     case PT_SEARCH_ENGINE:
-        p->pin = MpseManager::get_interface((const MpseApi*)p->api);
+        p->pin = MpseManager::get_interface(reinterpret_cast<const MpseApi*>(p->api));
         break;
 
     case PT_LOGGER:
-        p->pin = EventManager::get_interface((const LogApi*)p->api);
+        p->pin = EventManager::get_interface(reinterpret_cast<const LogApi*>(p->api));
         break;
 
     case PT_CONNECTOR:
-        p->pin = ConnectorManager::get_interface((const ConnectorApi*)p->api);
+        p->pin = ConnectorManager::get_interface(
+            reinterpret_cast<const ConnectorApi*>(p->api));
         break;
 
     case PT_POLICY_SELECTOR:
-        p->pin = PolicySelectorManager::get_interface((const PolicySelectorApi*)p->api);
+        p->pin = PolicySelectorManager::get_interface(
+            reinterpret_cast<const PolicySelectorApi*>(p->api));
         break;
 
     case PT_CODEC:
-        p->pin = CodecManager::get_interface((const CodecApi*)p->api);
+        p->pin = CodecManager::get_interface(reinterpret_cast<const CodecApi*>(p->api));
         break;
 
     case PT_SO_RULE:
-        p->pin = SoManager::get_interface((const SoApi*)p->api);
+        p->pin = SoManager::get_interface(reinterpret_cast<const SoApi*>(p->api));
         break;
 
     case PT_INSPECTOR:
         // probes must always be global. they run regardless of selected policy.
-        assert( (p->mod && ((const InspectApi*)p->api)->type == IT_PROBE) ?
+        assert( (p->mod && reinterpret_cast<const InspectApi*>(p->api)->type == IT_PROBE) ?
                 p->mod->get_usage() == Module::GLOBAL : true );
 
-        p->pin = InspectorManager::get_interface((const InspectApi*)p->api);
+        p->pin = InspectorManager::get_interface(
+            reinterpret_cast<const InspectApi*>(p->api));
         break;
     
     case PT_MP_TRANSPORT:
-        p->pin = MPTransportManager::get_interface((const MPTransportApi*)p->api);
+        p->pin = MPTransportManager::get_interface(
+            reinterpret_cast<const MPTransportApi*>(p->api));
         break;
     
     case PT_TRACE:
-        p->pin = TraceLoggerManager::get_interface((const TraceLogApi*)p->api);
+        p->pin = TraceLoggerManager::get_interface(
+            reinterpret_cast<const TraceLogApi*>(p->api));
         break;
 
     // LCOV_EXCL_START
@@ -1008,4 +1013,3 @@ std::list<Module*> PluginManager::get_all_modules(const snort::SnortConfig* sc)
     }
     return mods;
 }
-

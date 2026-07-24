@@ -92,7 +92,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* metadata_ctor(Module* p, IpsInfo& info)
 {
-    MetadataModule* m = (MetadataModule*)p;
+    MetadataModule* m = static_cast<MetadataModule*>(p);
 
     if ( m->match )
         IpsOption::set_metadata_match(info);

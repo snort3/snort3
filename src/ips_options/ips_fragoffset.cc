@@ -69,7 +69,7 @@ bool FragOffsetOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const FragOffsetOption& rhs = (const FragOffsetOption&)ips;
+    const FragOffsetOption& rhs = static_cast<const FragOffsetOption&>(ips);
     return config == rhs.config;
 }
 
@@ -151,7 +151,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* fragoffset_ctor(Module* p, IpsInfo&)
 {
-    FragOffsetModule* m = (FragOffsetModule*)p;
+    FragOffsetModule* m = static_cast<FragOffsetModule*>(p);
     return new FragOffsetOption(m->data);
 }
 

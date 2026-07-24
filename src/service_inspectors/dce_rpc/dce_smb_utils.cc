@@ -237,7 +237,7 @@ DCE2_SmbRequestTracker* DCE2_SmbNewRequestTracker(DCE2_SmbSsnData* ssd,
 
     if (ssd->outstanding_requests >= ssd->max_outstanding_requests)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats,
+        dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
             ssd->sd);
     }
 
@@ -247,7 +247,7 @@ DCE2_SmbRequestTracker* DCE2_SmbNewRequestTracker(DCE2_SmbSsnData* ssd,
     if (((ssd->rtracker.mid != DCE2_SENTINEL) && (ssd->rtracker.mid == (int)mid))
         || (ssd->rtrackers_map.find(mid) != ssd->rtrackers_map.end()))
     {
-        dce_alert(GID_DCE2, DCE2_SMB_REQS_SAME_MID, (dce2CommonStats*)&dce2_smb_stats,
+        dce_alert(GID_DCE2, DCE2_SMB_REQS_SAME_MID, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
             ssd->sd);
     }
 
@@ -869,7 +869,7 @@ void DCE2_SmbInvalidShareCheck(DCE2_SmbSsnData* ssd,
         if (i == share_str_len)
         {
             /* Should only match one share since no duplicate shares in list */
-            dce_alert(GID_DCE2, DCE2_SMB_INVALID_SHARE, (dce2CommonStats*)&dce2_smb_stats,
+            dce_alert(GID_DCE2, DCE2_SMB_INVALID_SHARE, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
             break;
         }
@@ -998,8 +998,8 @@ static inline uint16_t SmbHtons(const uint16_t* ptr)
  ********************************************************************/
 void DCE2_SmbInitRdata(uint8_t* nb_ptr, int dir)
 {
-    NbssHdr* nb_hdr = (NbssHdr*)nb_ptr;
-    SmbNtHdr* smb_hdr = (SmbNtHdr*)((uint8_t*)nb_hdr + sizeof(NbssHdr));
+    NbssHdr* nb_hdr = reinterpret_cast<NbssHdr*>(nb_ptr);
+    SmbNtHdr* smb_hdr = reinterpret_cast<SmbNtHdr*>(reinterpret_cast<uint8_t*>(nb_hdr) + sizeof(NbssHdr));
 
     nb_hdr->type = NBSS_SESSION_TYPE__MESSAGE;
     memcpy((void*)smb_hdr->smb_idf, (void*)"\xffSMB", sizeof(smb_hdr->smb_idf));
@@ -1007,7 +1007,7 @@ void DCE2_SmbInitRdata(uint8_t* nb_ptr, int dir)
     if (dir == PKT_FROM_CLIENT)
     {
         SmbWriteAndXReq* writex =
-            (SmbWriteAndXReq*)((uint8_t*)smb_hdr + sizeof(SmbNtHdr));
+            reinterpret_cast<SmbWriteAndXReq*>(reinterpret_cast<uint8_t*>(smb_hdr) + sizeof(SmbNtHdr));
         uint16_t offset = sizeof(SmbNtHdr) + sizeof(SmbWriteAndXReq);
 
         smb_hdr->smb_com = SMB_COM_WRITE_ANDX;
@@ -1020,7 +1020,7 @@ void DCE2_SmbInitRdata(uint8_t* nb_ptr, int dir)
     else
     {
         SmbReadAndXResp* readx =
-            (SmbReadAndXResp*)((uint8_t*)smb_hdr + sizeof(SmbNtHdr));
+            reinterpret_cast<SmbReadAndXResp*>(reinterpret_cast<uint8_t*>(smb_hdr) + sizeof(SmbNtHdr));
         uint16_t offset = sizeof(SmbNtHdr) + sizeof(SmbReadAndXResp);
 
         smb_hdr->smb_com = SMB_COM_READ_ANDX;
@@ -1051,8 +1051,8 @@ void DCE2_SmbInitRdata(uint8_t* nb_ptr, int dir)
  ********************************************************************/
 void DCE2_SmbSetRdata(DCE2_SmbSsnData* ssd, uint8_t* nb_ptr, uint16_t co_len)
 {
-    NbssHdr* nb_hdr = (NbssHdr*)nb_ptr;
-    SmbNtHdr* smb_hdr = (SmbNtHdr*)((uint8_t*)nb_hdr + sizeof(NbssHdr));
+    NbssHdr* nb_hdr = reinterpret_cast<NbssHdr*>(nb_ptr);
+    SmbNtHdr* smb_hdr = reinterpret_cast<SmbNtHdr*>(reinterpret_cast<uint8_t*>(nb_hdr) + sizeof(NbssHdr));
     uint16_t uid = (ssd->cur_rtracker == nullptr) ? 0 : ssd->cur_rtracker->uid;
     uint16_t tid = (ssd->cur_rtracker == nullptr) ? 0 : ssd->cur_rtracker->tid;
     DCE2_SmbFileTracker* ftracker = (ssd->cur_rtracker == nullptr) ? nullptr :
@@ -1064,7 +1064,7 @@ void DCE2_SmbSetRdata(DCE2_SmbSsnData* ssd, uint8_t* nb_ptr, uint16_t co_len)
     if ( DetectionEngine::get_current_packet()->is_from_client() )
     {
         SmbWriteAndXReq* writex =
-            (SmbWriteAndXReq*)((uint8_t*)smb_hdr + sizeof(SmbNtHdr));
+            reinterpret_cast<SmbWriteAndXReq*>(reinterpret_cast<uint8_t*>(smb_hdr) + sizeof(SmbNtHdr));
         uint32_t nb_len = sizeof(SmbNtHdr) + sizeof(SmbWriteAndXReq) + co_len;
 
         /* The data will get truncated anyway since we can only fit
@@ -1091,7 +1091,7 @@ void DCE2_SmbSetRdata(DCE2_SmbSsnData* ssd, uint8_t* nb_ptr, uint16_t co_len)
     else
     {
         SmbReadAndXResp* readx =
-            (SmbReadAndXResp*)((uint8_t*)smb_hdr + sizeof(SmbNtHdr));
+            reinterpret_cast<SmbReadAndXResp*>(reinterpret_cast<uint8_t*>(smb_hdr) + sizeof(SmbNtHdr));
         uint32_t nb_len = sizeof(SmbNtHdr) + sizeof(SmbReadAndXResp) + co_len;
 
         /* The data will get truncated anyway since we can only fit
@@ -1261,7 +1261,7 @@ void DCE2_SmbSegAlert(DCE2_SmbSsnData* ssd, uint32_t rule_id)
     if (rpkt == nullptr)
         return;
 
-    dce_alert(GID_DCE2, rule_id, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+    dce_alert(GID_DCE2, rule_id, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
 }
 
 static void DCE2_SmbResetFileChunks(DCE2_SmbFileTracker* ftracker)
@@ -1299,10 +1299,10 @@ FileVerdict DCE2_get_file_verdict()
 
 void DCE2_SmbInitDeletePdu()
 {
-    NbssHdr* nb_hdr = (NbssHdr*)dce2_smb_delete_pdu;
-    SmbNtHdr* smb_hdr = (SmbNtHdr*)((uint8_t*)nb_hdr + sizeof(*nb_hdr));
-    SmbDeleteReq* del_req = (SmbDeleteReq*)((uint8_t*)smb_hdr + sizeof(*smb_hdr));
-    uint8_t* del_req_fmt = (uint8_t*)del_req + sizeof(*del_req);
+    NbssHdr* nb_hdr = reinterpret_cast<NbssHdr*>(dce2_smb_delete_pdu);
+    SmbNtHdr* smb_hdr = reinterpret_cast<SmbNtHdr*>(reinterpret_cast<uint8_t*>(nb_hdr) + sizeof(*nb_hdr));
+    SmbDeleteReq* del_req = reinterpret_cast<SmbDeleteReq*>(reinterpret_cast<uint8_t*>(smb_hdr) + sizeof(*smb_hdr));
+    uint8_t* del_req_fmt = reinterpret_cast<uint8_t*>(del_req) + sizeof(*del_req);
     uint16_t smb_flg2 = 0x4001;
     uint16_t search_attrs = 0x0006;
 
@@ -1335,10 +1335,10 @@ static void DCE2_SmbInjectDeletePdu(DCE2_SmbFileTracker* ftracker)
     if ( !inject_pkt || inject_pkt->flow != p->flow )
         return;
 
-    NbssHdr* nb_hdr = (NbssHdr*)dce2_smb_delete_pdu;
-    SmbNtHdr* smb_hdr = (SmbNtHdr*)((uint8_t*)nb_hdr + sizeof(*nb_hdr));
-    SmbDeleteReq* del_req = (SmbDeleteReq*)((uint8_t*)smb_hdr + sizeof(*smb_hdr));
-    char* del_filename = (char*)((uint8_t*)del_req + sizeof(*del_req) + 1);
+    NbssHdr* nb_hdr = reinterpret_cast<NbssHdr*>(dce2_smb_delete_pdu);
+    SmbNtHdr* smb_hdr = reinterpret_cast<SmbNtHdr*>(reinterpret_cast<uint8_t*>(nb_hdr) + sizeof(*nb_hdr));
+    SmbDeleteReq* del_req = reinterpret_cast<SmbDeleteReq*>(reinterpret_cast<uint8_t*>(smb_hdr) + sizeof(*smb_hdr));
+    char* del_filename = reinterpret_cast<char*>(reinterpret_cast<uint8_t*>(del_req) + sizeof(*del_req) + 1);
     FileCharEncoding encoding = get_character_encoding(ftracker->file_name,
         ftracker->file_name_size);
     uint16_t file_name_len;
@@ -1361,7 +1361,7 @@ static void DCE2_SmbInjectDeletePdu(DCE2_SmbFileTracker* ftracker)
     del_req->smb_bcc = 1 + file_name_len;
     memcpy(del_filename, ftracker->file_name + UTF_16_LE_BOM_LEN, file_name_len);
 
-    p->active->inject_data(inject_pkt, 0, (uint8_t*)nb_hdr, len);
+    p->active->inject_data(inject_pkt, 0, reinterpret_cast<uint8_t*>(nb_hdr), len);
 }
 
 static FileVerdict DCE2_SmbLookupFileVerdict()

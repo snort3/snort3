@@ -94,7 +94,7 @@ const PegInfo* ImapModule::get_pegs() const
 { return imap_peg_names; }
 
 PegCount* ImapModule::get_counts() const
-{ return (PegCount*)&imapstats; }
+{ return reinterpret_cast<PegCount*>(&imapstats); }
 
 ProfileStats* ImapModule::get_profile() const
 { return &imapPerfStats; }
@@ -149,4 +149,3 @@ bool ImapModule::end(const char*, int, SnortConfig*)
 {
     return true;
 }
-

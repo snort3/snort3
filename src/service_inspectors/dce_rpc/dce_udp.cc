@@ -68,7 +68,8 @@ unsigned Dce2UdpFlowData::inspector_id = 0;
 
 DCE2_UdpSsnData* get_dce2_udp_session_data(Flow* flow)
 {
-    Dce2UdpFlowData* fd = (Dce2UdpFlowData*)flow->get_flow_data(Dce2UdpFlowData::inspector_id);
+    Dce2UdpFlowData* fd = static_cast<Dce2UdpFlowData*>(
+        flow->get_flow_data(Dce2UdpFlowData::inspector_id));
     return fd ? &fd->dce2_udp_session : nullptr;
 }
 
@@ -180,7 +181,7 @@ static void mod_dtor(Module* m)
 
 static Inspector* dce2_udp_ctor(Module* m)
 {
-    Dce2UdpModule* mod = (Dce2UdpModule*)m;
+    Dce2UdpModule* mod = static_cast<Dce2UdpModule*>(m);
     dce2UdpProtoConf config;
     mod->get_data(config);
     return new Dce2Udp(config);
@@ -232,4 +233,3 @@ const InspectApi dce2_udp_api =
     nullptr, // ssn
     nullptr  // reset
 };
-

@@ -610,7 +610,8 @@ public:
 
 PHInstance::PHInstance(SnortConfig* sc, Module* mod, const char* alias, NetworkPolicy* np, InspectionPolicy* ip)
 {
-    InspectorContext* icon = (InspectorContext*)PluginManager::get_context(mod->get_name());
+    InspectorContext* icon = static_cast<InspectorContext*>(
+        PluginManager::get_context(mod->get_name()));
     assert(icon);
 
     icon->once = (mod->get_usage() == Module::INSPECT);
@@ -971,8 +972,8 @@ std::vector<const InspectApi*> InspectorManager::get_apis()
 
     auto get = [](const BaseApi* pb, void* pv)
     {
-        const InspectApi* api = (const InspectApi*)pb;
-        ((Ivec*)pv)->push_back(api);
+        const InspectApi* api = reinterpret_cast<const InspectApi*>(pb);
+        static_cast<Ivec*>(pv)->push_back(api);
     };
     PluginManager::for_each(PT_INSPECTOR, get, &v);
 
@@ -981,7 +982,7 @@ std::vector<const InspectApi*> InspectorManager::get_apis()
 
 const char* InspectorManager::get_inspector_type(const char* name)
 {
-    const InspectApi* api = (const InspectApi*)PluginManager::get_api(name);
+    const InspectApi* api = reinterpret_cast<const InspectApi*>(PluginManager::get_api(name));
     return api ? api->get_type(api->type) : "";
 }
 
@@ -996,7 +997,7 @@ void InspectorManager::load_buffer_map()
 
     auto load = [](const BaseApi* pb, void*)
     {
-        const InspectApi* api = (const InspectApi*)pb;
+        const InspectApi* api = reinterpret_cast<const InspectApi*>(pb);
         update_buffer_map(api->buffers, api->service);
     };
     PluginManager::for_each(PT_INSPECTOR, load);
@@ -1008,12 +1009,12 @@ void InspectorManager::dump_buffers()
 
     auto dump = [](const BaseApi* pb, void* pv)
     {
-        const InspectApi* api = (const InspectApi*)pb;
+        const InspectApi* api = reinterpret_cast<const InspectApi*>(pb);
         const char** b = api->buffers;
 
         while ( b && *b )
         {
-            ((Dumper*)pv)->dump(api->base.name, *b);
+            static_cast<Dumper*>(pv)->dump(api->base.name, *b);
             ++b;
         }
     };
@@ -1088,7 +1089,7 @@ Inspector* InspectorManager::get_service_inspector(const SnortProtocolId protoco
 
 InspectSsnFunc InspectorManager::get_session(const char* name, uint16_t proto)
 {
-    InspectorContext* icon = (InspectorContext*)PluginManager::get_context(name);
+    InspectorContext* icon = static_cast<InspectorContext*>(PluginManager::get_context(name));
 
     if ( icon->in_play and icon->api->type == IT_STREAM and icon->api->proto_bits == proto )
         return icon->api->ssn;
@@ -1172,7 +1173,8 @@ static void instantiate(const InspectApi* api, Module* mod, SnortConfig* sc, con
 {
     assert(mod);
     const char* keyword = api->base.name;
-    InspectorContext* icon = (InspectorContext*)PluginManager::get_context(keyword);
+    InspectorContext* icon = static_cast<InspectorContext*>(
+        PluginManager::get_context(keyword));
 
     if ( !icon )
     {
@@ -1232,7 +1234,7 @@ static void instantiate(const InspectApi* api, Module* mod, SnortConfig* sc, con
 // create default binding for wizard and configured services
 static void instantiate_default_binder(SnortConfig* sc, ServicePig* fp)
 {
-    BinderModule* m = (BinderModule*)PluginManager::get_module(bind_id);
+    BinderModule* m = static_cast<BinderModule*>(PluginManager::get_module(bind_id));
 
     if ( !m )
         return;
@@ -1260,7 +1262,7 @@ static void instantiate_default_binder(SnortConfig* sc, ServicePig* fp)
     if ( tcp or udp or pdu )
         m->add(PROTO_BIT__USER, wiz_id);
 
-    const InspectApi* api = (const InspectApi*)PluginManager::get_api(bind_id);
+    const InspectApi* api = reinterpret_cast<const InspectApi*>(PluginManager::get_api(bind_id));
     ::instantiate(api, m, sc, bind_id);
 
     PHInstance* instance = get_instance(fp, bind_id);

@@ -89,7 +89,7 @@ bool GtpInfoOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const GtpInfoOption& rhs = (const GtpInfoOption&)ips;
+    const GtpInfoOption& rhs = static_cast<const GtpInfoOption&>(ips);
 
     for ( int v = 0; v <= MAX_GTP_VERSION_CODE; ++v )
         if ( types[v] != rhs.types[v] )
@@ -106,7 +106,8 @@ IpsOption::EvalStatus GtpInfoOption::eval(Cursor& c, Packet* p)
     if ( !p or !p->flow )
         return NO_MATCH;
 
-    GtpFlowData* gfd = (GtpFlowData*)p->flow->get_flow_data(GtpFlowData::inspector_id);
+    GtpFlowData* gfd = static_cast<GtpFlowData*>(
+        p->flow->get_flow_data(GtpFlowData::inspector_id));
 
     if ( !gfd or !gfd->ropts.gtp_infoElements )
         return NO_MATCH;
@@ -219,7 +220,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    GtpInfoModule* mod = (GtpInfoModule*)m;
+    GtpInfoModule* mod = static_cast<GtpInfoModule*>(m);
     return new GtpInfoOption(mod->types);
 }
 
@@ -254,4 +255,3 @@ static const IpsApi ips_api =
 };
 
 const BaseApi* ips_gtp_info = &ips_api.base;
-

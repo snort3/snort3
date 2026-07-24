@@ -145,7 +145,8 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     IpProtocol protocol = IpProtocol::PROTO_NOT_SET;
     IpProtocol outer_protocol = IpProtocol::PROTO_NOT_SET;
     AppidSessionDirection direction = APP_ID_FROM_INITIATOR;
-    AppIdSession* asd = (AppIdSession*)p->flow->get_flow_data(AppIdSession::inspector_id);
+    AppIdSession* asd = static_cast<AppIdSession*>(
+        p->flow->get_flow_data(AppIdSession::inspector_id));
 
     if (!do_pre_discovery(p, asd, inspector, protocol, outer_protocol, direction, odp_ctxt))
         return;

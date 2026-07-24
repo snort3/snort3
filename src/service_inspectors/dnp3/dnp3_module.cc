@@ -76,7 +76,7 @@ const PegInfo* Dnp3Module::get_pegs() const
 
 PegCount* Dnp3Module::get_counts() const
 {
-    return (PegCount*)&dnp3_stats;
+    return reinterpret_cast<PegCount*>(&dnp3_stats);
 }
 
 ProfileStats* Dnp3Module::get_profile() const

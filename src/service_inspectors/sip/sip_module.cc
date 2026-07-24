@@ -212,7 +212,7 @@ const PegInfo* SipModule::get_pegs() const
 { return sip_pegs; }
 
 PegCount* SipModule::get_counts() const
-{ return (PegCount*)&sip_stats; }
+{ return reinterpret_cast<PegCount*>(&sip_stats); }
 
 ProfileStats* SipModule::get_profile() const
 { return &sipPerfStats; }
@@ -302,4 +302,3 @@ bool SipModule::end(const char*, int, SnortConfig*)
     }
     return true;
 }
-

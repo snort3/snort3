@@ -70,7 +70,7 @@ bool IcodeOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const IcodeOption& rhs = (const IcodeOption&)ips;
+    const IcodeOption& rhs = static_cast<const IcodeOption&>(ips);
     return ( config == rhs.config );
 }
 
@@ -152,7 +152,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* icode_ctor(Module* p, IpsInfo&)
 {
-    IcodeModule* m = (IcodeModule*)p;
+    IcodeModule* m = static_cast<IcodeModule*>(p);
     return new IcodeOption(m->data);
 }
 

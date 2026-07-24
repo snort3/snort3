@@ -77,7 +77,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 
     const uint8_t* header_start;
     int32_t header_length;
-    HttpEvent* http_event = (HttpEvent*)&event;
+    HttpEvent* http_event = static_cast<HttpEvent*>(&event);
     AppidChangeBits change_bits;
 
     if ((asd->get_tp_appid_ctxt() or ThirdPartyAppIdContext::get_tp_reload_in_progress()) and

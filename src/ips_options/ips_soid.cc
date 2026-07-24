@@ -81,7 +81,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* soid_ctor(Module* p, IpsInfo& info)
 {
-    SoidModule* m = (SoidModule*)p;
+    SoidModule* m = static_cast<SoidModule*>(p);
     IpsOption::set_soid(info, m->soid.c_str());
     return nullptr;
 }

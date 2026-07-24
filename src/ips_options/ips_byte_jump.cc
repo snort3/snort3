@@ -164,7 +164,7 @@ bool ByteJumpOption::operator==(const IpsOption& ips) const
     if (!IpsOption::operator==(ips))
         return false;
 
-    const ByteJumpOption& rhs = (const ByteJumpOption&)ips;
+    const ByteJumpOption& rhs = static_cast<const ByteJumpOption&>(ips);
     const ByteJumpData* left = &config;
     const ByteJumpData* right = &rhs.config;
 
@@ -500,7 +500,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* byte_jump_ctor(Module* p, IpsInfo&)
 {
-    ByteJumpModule* m = (ByteJumpModule*)p;
+    ByteJumpModule* m = static_cast<ByteJumpModule*>(p);
     return new ByteJumpOption(m->data);
 }
 

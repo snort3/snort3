@@ -102,7 +102,7 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet* p)
 {
     FTPP_SI_INPUT SiInput;
     int iInspectMode = FTPP_SI_NO_MODE;
-    FTP_TELNET_SESSION* ft_ssn = nullptr;
+    TELNET_SESSION* telnet_ssn = nullptr;
 
     /*
      * Set up the FTPP_SI_INPUT pointer.  This is what the session_inspection()
@@ -113,16 +113,16 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet* p)
 
     if (p->flow)
     {
-        TelnetFlowData* fd = (TelnetFlowData*)
-            p->flow->get_flow_data(TelnetFlowData::inspector_id);
+        TelnetFlowData* fd = static_cast<TelnetFlowData*>(
+            p->flow->get_flow_data(TelnetFlowData::inspector_id));
 
-        ft_ssn = fd ? &fd->session.ft_ssn : nullptr;
+        telnet_ssn = fd ? &fd->session : nullptr;
 
-        if (ft_ssn != nullptr)
+        if (telnet_ssn != nullptr)
         {
-            SiInput.pproto = ft_ssn->proto;
+            SiInput.pproto = telnet_ssn->ft_ssn.proto;
 
-            if (ft_ssn->proto == FTPP_SI_PROTO_TELNET)
+            if (telnet_ssn->ft_ssn.proto == FTPP_SI_PROTO_TELNET)
             {
                 if (SiInput.pdir != FTPP_SI_NO_MODE)
                 {
@@ -152,23 +152,23 @@ static int snort_telnet(TELNET_PROTO_CONF* GlobalConf, Packet* p)
     if (GlobalConf == nullptr)
         return 0;
 
-    if (ft_ssn == nullptr)
+    if (telnet_ssn == nullptr)
     {
         SiInput.pproto = FTPP_SI_PROTO_UNKNOWN;
         iInspectMode = FTPP_SI_NO_MODE;
 
-        TelnetsessionInspection(p, GlobalConf, (TELNET_SESSION**)&ft_ssn, &SiInput, &iInspectMode);
+        TelnetsessionInspection(p, GlobalConf, &telnet_ssn, &SiInput, &iInspectMode);
 
         if ( SiInput.pproto != FTPP_SI_PROTO_TELNET )
             return FTPP_INVALID_PROTO;
     }
 
-    if (ft_ssn != nullptr)
+    if (telnet_ssn != nullptr)
     {
         switch (SiInput.pproto)
         {
         case FTPP_SI_PROTO_TELNET:
-            return SnortTelnet(GlobalConf, (TELNET_SESSION*)ft_ssn, p, iInspectMode);
+            return SnortTelnet(GlobalConf, telnet_ssn, p, iInspectMode);
         }
     }
 
@@ -257,7 +257,7 @@ static void tn_init()
 
 static Inspector* tn_ctor(Module* m)
 {
-    TelnetModule* mod = (TelnetModule*)m;
+    TelnetModule* mod = static_cast<TelnetModule*>(m);
     return new Telnet(mod->get_data());
 }
 
@@ -294,4 +294,3 @@ const InspectApi tn_api =
     nullptr, // ssn
     nullptr  // reset
 };
-

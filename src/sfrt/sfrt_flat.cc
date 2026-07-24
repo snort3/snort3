@@ -44,8 +44,8 @@ void RtTable::sfrt_flat_new(char table_flat_type, char ip_type,  long data_size,
 
     table_ptr = segment_snort_alloc(sizeof(table_flat_t));
 
-    base = (uint8_t*)segment_basePtr();
-    table = (table_flat_t*)(&base[table_ptr]);
+    base = static_cast<uint8_t*>(segment_basePtr());
+    table = reinterpret_cast<table_flat_t*>(&base[table_ptr]);
 
     /* If this limit is exceeded, there will be no way to distinguish
      * between pointers and indices into the data table.  Only
@@ -191,10 +191,10 @@ GENERIC RtTable::sfrt_flat_lookup(const SfIp* ip)
     {
         return nullptr;
     }
-    base = (uint8_t*)segment_basePtr();
-    data = (INFO*)(&base[table->data]);
+    base = static_cast<uint8_t*>(segment_basePtr());
+    data = reinterpret_cast<INFO*>(&base[table->data]);
     if (data[tuple.index])
-        return (GENERIC)&base[data[tuple.index]];
+        return &base[data[tuple.index]];
     else
         return nullptr;
 }
@@ -245,8 +245,8 @@ return_codes RtTable::sfrt_flat_insert(SfCidr* cidr, unsigned char len, INFO ptr
 
     tuple_flat_t tuple = sfrt_dir_flat_lookup(addr, numAddrDwords, table->rt);
 
-    uint8_t* base = (uint8_t*)segment_basePtr();
-    INFO* data = (INFO*)(&base[table->data]);
+    uint8_t* base = static_cast<uint8_t*>(segment_basePtr());
+    INFO* data = reinterpret_cast<INFO*>(&base[table->data]);
 
     int index;
     if (tuple.length != len)
@@ -275,7 +275,7 @@ return_codes RtTable::sfrt_flat_insert(SfCidr* cidr, unsigned char len, INFO ptr
         return MEM_ALLOC_FAILURE;
     }
 
-    table->allocated += (uint32_t)bytesAllocated;
+    table->allocated += static_cast<uint32_t>(bytesAllocated);
 
     /* The actual value that is looked-up is an index
      * into the data table. */
@@ -338,79 +338,79 @@ GENERIC sfrt_flat_dir8x_lookup(const SfIp* ip, table_flat_t* table)
 {
     dir_sub_table_flat_t* subtable;
     DIR_Entry* entry;
-    uint8_t* base = (uint8_t*)table;
+    uint8_t* base = reinterpret_cast<uint8_t*>(table);
     int i;
     dir_table_flat_t* rt = nullptr;
     int index;
-    INFO* data = (INFO*)(&base[table->data]);
+    INFO* data = reinterpret_cast<INFO*>(&base[table->data]);
 
     if (ip->is_ip4())
     {
-        rt = (dir_table_flat_t*)(&base[table->rt]);
-        subtable = (dir_sub_table_flat_t*)(&base[rt->sub_table]);
+        rt = reinterpret_cast<dir_table_flat_t*>(&base[table->rt]);
+        subtable = reinterpret_cast<dir_sub_table_flat_t*>(&base[rt->sub_table]);
         /* 16 bits*/
-        index = ntohs(((const uint16_t*) ip->get_ip4_ptr())[0]);
-        entry = (DIR_Entry*)(&base[subtable->entries]);
+        index = ntohs(reinterpret_cast<const uint16_t*>(ip->get_ip4_ptr())[0]);
+        entry = reinterpret_cast<DIR_Entry*>(&base[subtable->entries]);
         if ( !entry[index].value || entry[index].length)
         {
             if (data[entry[index].value])
-                return (GENERIC)&base[data[entry[index].value]];
+                return &base[data[entry[index].value]];
             else
                 return nullptr;
         }
-        subtable = (dir_sub_table_flat_t*)(&base[entry[index].value]);
+        subtable = reinterpret_cast<dir_sub_table_flat_t*>(&base[entry[index].value]);
 
         /* 8 bits*/
-        index = ((const uint8_t*) ip->get_ip4_ptr())[2];
-        entry = (DIR_Entry*)(&base[subtable->entries]);
+        index = reinterpret_cast<const uint8_t*>(ip->get_ip4_ptr())[2];
+        entry = reinterpret_cast<DIR_Entry*>(&base[subtable->entries]);
         if ( !entry[index].value || entry[index].length)
         {
             if (data[entry[index].value])
-                return (GENERIC)&base[data[entry[index].value]];
+                return &base[data[entry[index].value]];
             else
                 return nullptr;
         }
-        subtable = (dir_sub_table_flat_t*)(&base[entry[index].value]);
+        subtable = reinterpret_cast<dir_sub_table_flat_t*>(&base[entry[index].value]);
 
         /* 4 bits */
-        index = ((const uint8_t*) ip->get_ip4_ptr())[3] >> 4;
-        entry = (DIR_Entry*)(&base[subtable->entries]);
+        index = reinterpret_cast<const uint8_t*>(ip->get_ip4_ptr())[3] >> 4;
+        entry = reinterpret_cast<DIR_Entry*>(&base[subtable->entries]);
         if ( !entry[index].value || entry[index].length)
         {
             if (data[entry[index].value])
-                return (GENERIC)&base[data[entry[index].value]];
+                return &base[data[entry[index].value]];
             else
                 return nullptr;
         }
-        subtable = (dir_sub_table_flat_t*)(&base[entry[index].value]);
+        subtable = reinterpret_cast<dir_sub_table_flat_t*>(&base[entry[index].value]);
 
         /* 4 bits */
-        index = ((const uint8_t*) ip->get_ip4_ptr())[3] & 0xF;
-        entry = (DIR_Entry*)(&base[subtable->entries]);
+        index = reinterpret_cast<const uint8_t*>(ip->get_ip4_ptr())[3] & 0xF;
+        entry = reinterpret_cast<DIR_Entry*>(&base[subtable->entries]);
         if ( !entry[index].value || entry[index].length)
         {
             if (data[entry[index].value])
-                return (GENERIC)&base[data[entry[index].value]];
+                return &base[data[entry[index].value]];
             else
                 return nullptr;
         }
     }
     else if (ip->is_ip6())
     {
-        rt = (dir_table_flat_t*)(&base[table->rt6]);
-        subtable = (dir_sub_table_flat_t*)(&base[rt->sub_table]);
+        rt = reinterpret_cast<dir_table_flat_t*>(&base[table->rt6]);
+        subtable = reinterpret_cast<dir_sub_table_flat_t*>(&base[rt->sub_table]);
         for (i = 0; i < 16; i++)
         {
-            index = ((const uint8_t*) ip->get_ip6_ptr())[i];
-            entry = (DIR_Entry*)(&base[subtable->entries]);
+            index = reinterpret_cast<const uint8_t*>(ip->get_ip6_ptr())[i];
+            entry = reinterpret_cast<DIR_Entry*>(&base[subtable->entries]);
             if ( !entry[index].value || entry[index].length)
             {
                 if (data[entry[index].value])
-                    return (GENERIC)&base[data[entry[index].value]];
+                    return &base[data[entry[index].value]];
                 else
                     return nullptr;
             }
-            subtable = (dir_sub_table_flat_t*)(&base[entry[index].value]);
+            subtable = reinterpret_cast<dir_sub_table_flat_t*>(&base[entry[index].value]);
         }
     }
     return nullptr;
@@ -459,8 +459,7 @@ MEM_OFFSET RtTable::segment_snort_calloc(size_t num, size_t size)
     total = num * size;
     current_ptr = segment_snort_alloc(total);
     if (0 != current_ptr)
-        memset((uint8_t*)base_ptr + current_ptr, 0, total);
+        memset(static_cast<uint8_t*>(base_ptr) + current_ptr, 0, total);
 
     return current_ptr;
 }
-

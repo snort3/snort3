@@ -87,7 +87,7 @@ bool IpProtoOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const IpProtoOption& rhs = (const IpProtoOption&)ips;
+    const IpProtoOption& rhs = static_cast<const IpProtoOption&>(ips);
     const IpProtoData* left = &config;
     const IpProtoData* right = &rhs.config;
 
@@ -261,7 +261,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ip_proto_ctor(Module* p, IpsInfo&)
 {
-    IpProtoModule* m = (IpProtoModule*)p;
+    IpProtoModule* m = static_cast<IpProtoModule*>(p);
     return new IpProtoOption(m->data);
 }
 

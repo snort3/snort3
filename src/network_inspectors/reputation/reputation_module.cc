@@ -118,7 +118,7 @@ const PegInfo* ReputationModule::get_pegs() const
 { return reputation_peg_names; }
 
 PegCount* ReputationModule::get_counts() const
-{ return (PegCount*)&reputationstats; }
+{ return reinterpret_cast<PegCount*>(&reputationstats); }
 
 ProfileStats* ReputationModule::get_profile() const
 { return &reputation_perf_stats; }
@@ -183,4 +183,3 @@ bool ReputationModule::end(const char*, int, SnortConfig*)
 
 void ReputationReloadSwapper::tswap()
 { inspector.set_thread_specific_data(&inspector.get_data()); }
-

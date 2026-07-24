@@ -95,7 +95,7 @@ bool TcpFlagOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const TcpFlagOption& rhs = (const TcpFlagOption&)ips;
+    const TcpFlagOption& rhs = static_cast<const TcpFlagOption&>(ips);
     const TcpFlagCheckData* left = &config;
     const TcpFlagCheckData* right = &rhs.config;
 
@@ -389,7 +389,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* flags_ctor(Module* p, IpsInfo&)
 {
-    FlagsModule* m = (FlagsModule*)p;
+    FlagsModule* m = static_cast<FlagsModule*>(p);
     return new TcpFlagOption(m->data);
 }
 

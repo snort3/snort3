@@ -49,7 +49,8 @@ struct HostPortKey
 
     bool operator<(const HostPortKey& right) const
     {
-        return memcmp((const uint8_t*) this, (const uint8_t*) &right, sizeof(*this)) < 0;
+        return memcmp(reinterpret_cast<const uint8_t*>(this),
+            reinterpret_cast<const uint8_t*>(&right), sizeof(*this)) < 0;
     }
 
     snort::SfIp ip;
@@ -129,4 +130,3 @@ private:
 };
 
 #endif
-

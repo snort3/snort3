@@ -45,7 +45,7 @@ static char g_mock_mem[64];
 
 typedef struct X509_name_entry_st X509_NAME_ENTRY;
 X509_NAME *X509_get_subject_name(const X509 *a) 
-{ return g_test_asn1_data ? (X509_NAME*)g_mock_mem : nullptr; }
+{ return g_test_asn1_data ? reinterpret_cast<X509_NAME*>(g_mock_mem) : nullptr; }
 X509_NAME *X509_get_issuer_name(const X509 *a) { return nullptr; }
 void X509_free(X509* a) { }
 
@@ -56,13 +56,13 @@ int X509_NAME_get_index_by_NID(const X509_NAME *name, int nid, int lastpos)
 #endif
 { return g_test_asn1_data ? 0 : -1; }
 X509_NAME_ENTRY *X509_NAME_get_entry(const X509_NAME *name, int loc) 
-{ return g_test_asn1_data ? (X509_NAME_ENTRY*)(g_mock_mem + 16) : nullptr; }
+{ return g_test_asn1_data ? reinterpret_cast<X509_NAME_ENTRY*>(g_mock_mem + 16) : nullptr; }
 ASN1_STRING *X509_NAME_ENTRY_get_data(const X509_NAME_ENTRY *ne) 
-{ return g_test_asn1_data ? (ASN1_STRING*)(g_mock_mem + 32) : nullptr; }
+{ return g_test_asn1_data ? reinterpret_cast<ASN1_STRING*>(g_mock_mem + 32) : nullptr; }
 const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x) 
 { return g_test_asn1_data; }
 X509* d2i_X509(X509 **a, const unsigned char **in, long len) 
-{ return g_test_asn1_data ? (X509*)(g_mock_mem + 48) : nullptr; }
+{ return g_test_asn1_data ? reinterpret_cast<X509*>(g_mock_mem + 48) : nullptr; }
 
 int X509_NAME_print_ex(BIO *out, const X509_NAME *nm, int indent, unsigned long flags) { return 0; }
 BIO *BIO_new(const BIO_METHOD *type) { return nullptr; }
@@ -284,4 +284,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

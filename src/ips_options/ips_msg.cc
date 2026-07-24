@@ -81,7 +81,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* msg_ctor(Module* p, IpsInfo& info)
 {
-    MsgModule* m = (MsgModule*)p;
+    MsgModule* m = static_cast<MsgModule*>(p);
     IpsOption::set_message(info, m->msg.c_str());
     return nullptr;
 }

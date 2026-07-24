@@ -249,7 +249,7 @@ bool ContentOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const ContentOption& rhs = (const ContentOption&)ips;
+    const ContentOption& rhs = static_cast<const ContentOption&>(ips);
     const ContentData& left = *config;
     const ContentData& right = *rhs.config;
 
@@ -854,7 +854,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* content_ctor(Module* p, IpsInfo&)
 {
-    ContentModule* m = (ContentModule*)p;
+    ContentModule* m = static_cast<ContentModule*>(p);
     ContentData* cd = m->get_data();
     return new ContentOption(cd);
 }

@@ -94,7 +94,7 @@ static inline bool is_eligible_udp(const snort::Packet* p)
         const snort::SfIp* dst = p->ptrs.ip_api.get_dst();
         // FIXIT-M this code checking the v6 address unconditionally is almost certainly wrong,
         //          especially since it's looking for an IPv4-specific protocol
-        if ( !src->is_set() and ((const uint8_t *) dst->get_ip6_ptr())[0] == 0XFF and
+        if ( !src->is_set() and reinterpret_cast<const uint8_t*>(dst->get_ip6_ptr())[0] == 0XFF and
             p->ptrs.sp == 68 and p->ptrs.dp == 67 )
             return false; // skip BOOTP
     }

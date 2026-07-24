@@ -90,8 +90,8 @@ PlugInterface* IpsManager::get_interface(const IpsApi* api)
 
 void IpsManager::delete_option(IpsOption* ips)
 {
-    const IpsApi* api = (const IpsApi*)
-        PluginManager::get_api(ips->get_name());
+    const IpsApi* api = reinterpret_cast<const IpsApi*>(
+        PluginManager::get_api(ips->get_name()));
 
     if ( api )
         api->dtor(ips);
@@ -173,13 +173,13 @@ const char* IpsManager::get_option_keyword()
 
 const IpsApi* IpsManager::get_option_api(const char* keyword)
 {
-    return (const IpsApi*)PluginManager::get_api(keyword);
+    return reinterpret_cast<const IpsApi*>(PluginManager::get_api(keyword));
 }
 
 bool IpsManager::option_begin(
     SnortConfig* sc, const char* key, SnortProtocolId, uint64_t id)
 {
-    Option* opt = (Option*)PluginManager::get_interface(key);
+    Option* opt = static_cast<Option*>(PluginManager::get_interface(key));
 
     if ( !opt )
     {
@@ -281,7 +281,7 @@ IpsOption* IpsManager::option_end(
     current_module = nullptr;
     current_params = nullptr;
 
-    Option* opt = (Option*)PluginManager::get_interface(key);
+    Option* opt = static_cast<Option*>(PluginManager::get_interface(key));
     assert(opt);
 
     if ( !mod and opt->api->base.mod_ctor )
@@ -335,10 +335,9 @@ bool IpsManager::verify(SnortConfig* sc)
 {
     auto verify = [](const BaseApi* pb, void* pv)
     {
-        const IpsApi* api = (const IpsApi*)pb;
-        if ( api->verify ) api->verify((SnortConfig*)pv);
+        const IpsApi* api = reinterpret_cast<const IpsApi*>(pb);
+        if ( api->verify ) api->verify(static_cast<SnortConfig*>(pv));
     };
     PluginManager::for_each(PT_IPS_OPTION, verify, sc);
     return true;
 }
-

@@ -83,7 +83,7 @@ inline bool DCE2_TcpAutodetect(snort::Packet* p)
 {
     if (p->dsize >= sizeof(DceRpcCoHdr))
     {
-        const DceRpcCoHdr* co_hdr = (const DceRpcCoHdr*)p->data;
+        const DceRpcCoHdr* co_hdr = reinterpret_cast<const DceRpcCoHdr*>(p->data);
 
         if ((DceRpcCoVersMaj(co_hdr) == DCERPC_PROTO_MAJOR_VERS__5)
             && (DceRpcCoVersMin(co_hdr) == DCERPC_PROTO_MINOR_VERS__0)
@@ -161,4 +161,3 @@ private:
 DCE2_TcpSsnData* get_dce2_tcp_session_data(snort::Flow*);
 
 #endif
-

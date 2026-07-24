@@ -36,7 +36,7 @@ static inline ImapPafData* get_state(Flow* flow, bool c2s)
     if ( !flow )
         return nullptr;
 
-    ImapSplitter* s = (ImapSplitter*)Stream::get_splitter(flow, c2s);
+    ImapSplitter* s = static_cast<ImapSplitter*>(Stream::get_splitter(flow, c2s));
     return (s and s->is_paf()) ? &s->state : nullptr;
 }
 
@@ -762,4 +762,3 @@ bool imap_is_data_end(Flow* ssn)
     ImapPafData* s = get_state(ssn, true);
     return s ? s->end_of_data : false;
 }
-

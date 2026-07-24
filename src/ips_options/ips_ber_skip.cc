@@ -75,7 +75,7 @@ bool BerSkipOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const BerSkipOption& rhs = (const BerSkipOption&)ips;
+    const BerSkipOption& rhs = static_cast<const BerSkipOption&>(ips);
 
     if ( type != rhs.type )
         return false;
@@ -184,7 +184,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ber_skip_ctor(Module* p, IpsInfo&)
 {
-    BerSkipModule* m = (BerSkipModule*)p;
+    BerSkipModule* m = static_cast<BerSkipModule*>(p);
     return new BerSkipOption(m->type, m->optional);
 }
 

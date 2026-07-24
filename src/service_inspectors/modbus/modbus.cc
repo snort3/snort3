@@ -106,8 +106,8 @@ void Modbus::eval(Packet* p)
     // preconditions - what we registered for
     assert(p->has_tcp_data());
 
-    ModbusFlowData* mfd =
-        (ModbusFlowData*)p->flow->get_flow_data(ModbusFlowData::inspector_id);
+    ModbusFlowData* mfd = static_cast<ModbusFlowData*>(
+        p->flow->get_flow_data(ModbusFlowData::inspector_id));
 
     if ( !p->is_full_pdu() )
     {
@@ -215,4 +215,3 @@ const BaseApi* sin_modbus[] =
     ips_modbus_unit,
     nullptr
 };
-

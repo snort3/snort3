@@ -60,7 +60,7 @@ void StreamFile::show(const SnortConfig*) const
 StreamFileConfig* get_file_cfg(Inspector* ins)
 {
     assert(ins);
-    return &((StreamFile*)ins)->config;
+    return &static_cast<StreamFile*>(ins)->config;
 }
 
 //-------------------------------------------------------------------------
@@ -75,7 +75,7 @@ static void mod_dtor(Module* m)
 
 static Inspector* file_ctor(Module* m)
 {
-    StreamFileModule* mod = (StreamFileModule*)m;
+    StreamFileModule* mod = static_cast<StreamFileModule*>(m);
     return new StreamFile(mod->upload);
 }
 
@@ -118,4 +118,3 @@ static const InspectApi sfile_api =
 };
 
 const BaseApi* nin_stream_file = &sfile_api.base;
-

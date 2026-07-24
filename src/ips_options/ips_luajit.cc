@@ -160,7 +160,7 @@ bool LuaJitOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const LuaJitOption& rhs = (const LuaJitOption&)ips;
+    const LuaJitOption& rhs = static_cast<const LuaJitOption&>(ips);
 
     if ( config != rhs.config )
         return false;
@@ -219,7 +219,7 @@ static IpsOption* opt_ctor(Module* m, struct IpsInfo&)
     if ( !chunk )
         return nullptr;
 
-    LuaJitModule* mod = (LuaJitModule*)m;
+    LuaJitModule* mod = static_cast<LuaJitModule*>(m);
     return new LuaJitOption(key, *chunk, mod);
 }
 

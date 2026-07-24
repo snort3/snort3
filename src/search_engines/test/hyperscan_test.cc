@@ -61,22 +61,22 @@ TEST_GROUP(mpse_hs_base)
 {
     void setup() override
     {
-        CHECK(se_hyperscan);
+        CHECK(se_hyperscan[0]);
     }
 };
 
 TEST(mpse_hs_base, base)
 {
-    CHECK(se_hyperscan->type == PT_SEARCH_ENGINE);
-    CHECK(se_hyperscan->name);
-    CHECK(se_hyperscan->help);
+    CHECK(se_hyperscan[0]->type == PT_SEARCH_ENGINE);
+    CHECK(se_hyperscan[0]->name);
+    CHECK(se_hyperscan[0]->help);
 
-    CHECK(!strcmp(se_hyperscan->name, "hyperscan"));
+    CHECK(!strcmp(se_hyperscan[0]->name, "hyperscan"));
 }
 
 TEST(mpse_hs_base, mpse)
 {
-    const MpseApi* mpse_api = (const MpseApi*)se_hyperscan;
+    const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_hyperscan[0]);
     CHECK(mpse_api->flags == (MPSE_REGEX | MPSE_MTBLD));
 
     CHECK(mpse_api->ctor);
@@ -101,11 +101,11 @@ TEST_GROUP(mpse_hs_match)
 {
     Module* mod = nullptr;
     Mpse* hs = nullptr;
-    const MpseApi* mpse_api = (const MpseApi*)se_hyperscan;
+    const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_hyperscan[0]);
 
     void setup() override
     {
-        CHECK(se_hyperscan);
+        CHECK(se_hyperscan[0]);
         mod = mpse_api->base.mod_ctor();    // cppcheck-suppress unreadVariable
         hs = mpse_api->ctor(snort_conf, nullptr, &s_agent);
         CHECK(hs);
@@ -247,11 +247,11 @@ TEST_GROUP(mpse_hs_multi)
     Module* mod = nullptr;
     Mpse* hs1 = nullptr;
     Mpse* hs2 = nullptr;
-    const MpseApi* mpse_api = (const MpseApi*)se_hyperscan;
+    const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_hyperscan[0]);
 
     void setup() override
     {
-        CHECK(se_hyperscan);
+        CHECK(se_hyperscan[0]);
 
         mod = mpse_api->base.mod_ctor();    // cppcheck-suppress unreadVariable
 
@@ -308,11 +308,11 @@ TEST_GROUP(mpse_hs_scratch)
     Module* mod = nullptr;
     Mpse* hs1 = nullptr;
     Mpse* hs2 = nullptr;
-    const MpseApi* mpse_api = (const MpseApi*)se_hyperscan;
+    const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_hyperscan[0]);
 
     void setup() override
     {
-        CHECK(se_hyperscan);
+        CHECK(se_hyperscan[0]);
         mod = mpse_api->base.mod_ctor();    // cppcheck-suppress unreadVariable
         hs1 = mpse_api->ctor(snort_conf, nullptr, nullptr);
         hs2 = mpse_api->ctor(snort_conf, nullptr, nullptr);
@@ -363,4 +363,3 @@ int main(int argc, char** argv)
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

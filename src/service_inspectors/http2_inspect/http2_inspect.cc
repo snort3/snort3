@@ -68,8 +68,8 @@ bool Http2Inspect::get_buf(InspectionBuffer::Type /*ibt*/, Packet* /*p*/, Inspec
 
 bool Http2Inspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
 {
-    Http2FlowData* const session_data =
-        (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* const session_data = static_cast<Http2FlowData*>(
+        p->flow->get_flow_data(Http2FlowData::inspector_id));
 
     if (session_data == nullptr)
         return false;
@@ -97,8 +97,8 @@ bool Http2Inspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionB
 {
     // All current HTTP/2 fast pattern buffers are inherited from http_inspect. Just pass the
     // request on.
-    Http2FlowData* const session_data =
-        (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* const session_data = static_cast<Http2FlowData*>(
+        p->flow->get_flow_data(Http2FlowData::inspector_id));
 
     if ((session_data == nullptr) || (session_data->hi == nullptr))
         return false;
@@ -113,8 +113,8 @@ void Http2Inspect::eval(Packet* p)
 
     const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
 
-    Http2FlowData* const session_data =
-        (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* const session_data = static_cast<Http2FlowData*>(
+        p->flow->get_flow_data(Http2FlowData::inspector_id));
 
     if (!session_data)
     {
@@ -176,8 +176,8 @@ void Http2Inspect::eval(Packet* p)
 
 void Http2Inspect::clear(Packet* p)
 {
-    Http2FlowData* const session_data =
-        (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* const session_data = static_cast<Http2FlowData*>(
+        p->flow->get_flow_data(Http2FlowData::inspector_id));
 
     if (session_data == nullptr)
     {
@@ -223,7 +223,8 @@ static void print_flow_issues(FILE* output, Http2Infractions* const infractions,
 
 static const uint8_t* get_frame_pdu(Packet* p, uint16_t& length)
 {
-    auto* const session_data = (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+    auto* const session_data = static_cast<Http2FlowData*>(
+        p->flow->get_flow_data(Http2FlowData::inspector_id));
     if (!session_data)
         return nullptr;
 

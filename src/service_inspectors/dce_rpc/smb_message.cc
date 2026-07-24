@@ -100,7 +100,7 @@ static inline DCE2_Ret DCE2_SmbCheckAndXOffset(DCE2_SmbSsnData* ssd, const uint8
     if ((off_ptr < start_bound) ||
         (off_ptr > (start_bound + length)))
     {
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
 
         return DCE2_RET__ERROR;
     }
@@ -341,8 +341,8 @@ static uint32_t DCE2_IgnoreJunkData(const uint8_t* data_ptr, uint16_t data_len,
 
     while ((tmp_ptr + sizeof(uint32_t)) <= (data_ptr + data_len))
     {
-        if ((SmbId((const SmbNtHdr*)tmp_ptr) == DCE2_SMB_ID)
-            || (SmbId((const SmbNtHdr*)tmp_ptr) == DCE2_SMB2_ID))
+         if ((SmbId(reinterpret_cast<const SmbNtHdr*>(tmp_ptr)) == DCE2_SMB_ID)
+             || (SmbId(reinterpret_cast<const SmbNtHdr*>(tmp_ptr)) == DCE2_SMB2_ID))
         {
             break;
         }
@@ -388,7 +388,7 @@ static uint32_t DCE2_IgnoreJunkData(const uint8_t* data_ptr, uint16_t data_len,
 static DCE2_Ret DCE2_SmbHdrChecks(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr)
 {
     Packet* p = DetectionEngine::get_current_packet();
-    bool is_seg_buf = DCE2_SmbIsSegBuffer(ssd, (const uint8_t*)smb_hdr);
+    bool is_seg_buf = DCE2_SmbIsSegBuffer(ssd, reinterpret_cast<const uint8_t*>(smb_hdr));
 
     if ((p->is_from_server() && (SmbType(smb_hdr) == SMB_TYPE__REQUEST)) ||
         (p->is_from_client() && (SmbType(smb_hdr) == SMB_TYPE__RESPONSE)))
@@ -396,7 +396,7 @@ static DCE2_Ret DCE2_SmbHdrChecks(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr)
         if (is_seg_buf)
             DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_TYPE);
         else
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_TYPE, (dce2CommonStats*)&dce2_smb_stats,
+             dce_alert(GID_DCE2, DCE2_SMB_BAD_TYPE, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
 
         // Continue looking at traffic.  Neither Windows nor Samba seem
@@ -409,7 +409,7 @@ static DCE2_Ret DCE2_SmbHdrChecks(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr)
         if (is_seg_buf)
             DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_ID);
         else
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_ID, (dce2CommonStats*)&dce2_smb_stats,
+             dce_alert(GID_DCE2, DCE2_SMB_BAD_ID, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
 
         return DCE2_RET__IGNORE;
@@ -627,12 +627,12 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     // Check for server error response
     if (com_info.smb_type == SMB_TYPE__RESPONSE)
     {
-        const SmbEmptyCom* ec = (const SmbEmptyCom*)nb_ptr;
+         const SmbEmptyCom* ec = reinterpret_cast<const SmbEmptyCom*>(nb_ptr);
 
         // Verify there is enough data to do checks
         if (nb_len < sizeof(SmbEmptyCom))
         {
-            dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats,
+             dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
             com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
             return;
@@ -667,13 +667,13 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     // Verify there is enough data to do checks
     if (nb_len < (uint32_t)chk_com_size)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats,
+         dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
             ssd->sd);
         com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
         return;
     }
 
-    const SmbCommon* sc = (const SmbCommon*)nb_ptr;
+     const SmbCommon* sc = reinterpret_cast<const SmbCommon*>(nb_ptr);
     com_info.word_count = SmbWct(sc);
 
     // Make sure the word count is a valid one for the command.  If not
@@ -681,7 +681,7 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     // won't lie on data correctly and out of bounds data accesses are possible.
     if (!DCE2_SmbIsValidWordCount(smb_com, (uint8_t)com_info.smb_type, com_info.word_count))
     {
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_WCT, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+         dce_alert(GID_DCE2, DCE2_SMB_BAD_WCT, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
         com_info.cmd_error |= DCE2_SMB_COM_ERROR__INVALID_WORD_COUNT;
         return;
     }
@@ -691,7 +691,7 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     com_info.cmd_size = (uint16_t)SMB_COM_SIZE(com_info.word_count);
     if (nb_len < com_info.cmd_size)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, (dce2CommonStats*)&dce2_smb_stats,
+         dce_alert(GID_DCE2, DCE2_SMB_NB_LT_COM, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
             ssd->sd);
         com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
         return;
@@ -719,7 +719,7 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
         {
             if (smb_bcc != 0)
             {
-                dce_alert(GID_DCE2, DCE2_SMB_BAD_BCC, (dce2CommonStats*)&dce2_smb_stats,
+                 dce_alert(GID_DCE2, DCE2_SMB_BAD_BCC, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                     ssd->sd);
                 com_info.cmd_error |= DCE2_SMB_COM_ERROR__INVALID_BYTE_COUNT;
             }
@@ -729,7 +729,7 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     default:
         if (!DCE2_SmbIsValidByteCount(smb_com, (uint8_t)com_info.smb_type, smb_bcc))
         {
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_BCC, (dce2CommonStats*)&dce2_smb_stats,
+             dce_alert(GID_DCE2, DCE2_SMB_BAD_BCC, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
             com_info.cmd_error |= DCE2_SMB_COM_ERROR__INVALID_BYTE_COUNT;
         }
@@ -742,7 +742,7 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     // Validate that there is enough data to be able to process the command
     if (nb_len < DCE2_SmbGetMinByteCount(smb_com, (uint8_t)com_info.smb_type))
     {
-        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_BCC, (dce2CommonStats*)&dce2_smb_stats,
+         dce_alert(GID_DCE2, DCE2_SMB_NB_LT_BCC, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
             ssd->sd);
         com_info.cmd_error |= DCE2_SMB_COM_ERROR__BAD_LENGTH;
     }
@@ -753,7 +753,7 @@ static void DCE2_SmbCheckCommand(DCE2_SmbSsnData* ssd,
     // !!!WARNING!!! the byte count should probably never be used.
     if (smb_bcc > nb_len)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_BCC, (dce2CommonStats*)&dce2_smb_stats,
+         dce_alert(GID_DCE2, DCE2_SMB_NB_LT_BCC, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
             ssd->sd);
         // Large byte count doesn't seem to matter for early Samba
         switch (DCE2_SsnGetPolicy(&ssd->sd))
@@ -826,13 +826,13 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
 
         if (smb_deprecated_coms[smb_com])
         {
-            dce_alert(GID_DCE2, DCE2_SMB_DEPR_COMMAND_USED, (dce2CommonStats*)&dce2_smb_stats,
+             dce_alert(GID_DCE2, DCE2_SMB_DEPR_COMMAND_USED, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
         }
 
         if (smb_unusual_coms[smb_com])
         {
-            dce_alert(GID_DCE2, DCE2_SMB_UNUSUAL_COMMAND_USED, (dce2CommonStats*)&dce2_smb_stats,
+             dce_alert(GID_DCE2, DCE2_SMB_UNUSUAL_COMMAND_USED, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
         }
 
@@ -865,7 +865,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         /**********************************************************
          * AndX Chaining
          **********************************************************/
-        const SmbAndXCommon* andx_ptr = (const SmbAndXCommon*)nb_ptr;
+         const SmbAndXCommon* andx_ptr = reinterpret_cast<const SmbAndXCommon*>(nb_ptr);
         uint8_t smb_com2 = SmbAndXCom2(andx_ptr);
         if (smb_com2 == SMB_COM_NO_ANDX_COMMAND)
             break;
@@ -878,7 +878,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         if (DCE2_ScSmbMaxChain((dce2SmbProtoConf*)ssd->sd.config) &&
             (num_chained >= DCE2_ScSmbMaxChain((dce2SmbProtoConf*)ssd->sd.config)))
         {
-            dce_alert(GID_DCE2, DCE2_SMB_EXCESSIVE_CHAINING, (dce2CommonStats*)&dce2_smb_stats,
+             dce_alert(GID_DCE2, DCE2_SMB_EXCESSIVE_CHAINING, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
         }
 
@@ -891,7 +891,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         if ((smb_com2 == SMB_COM_SESSION_SETUP_ANDX) && sess_chain)
         {
             // There is only one place to return a uid.
-            dce_alert(GID_DCE2, DCE2_SMB_MULT_CHAIN_SS, (dce2CommonStats*)&dce2_smb_stats,
+             dce_alert(GID_DCE2, DCE2_SMB_MULT_CHAIN_SS, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
             // FIXIT-L Should we continue processing?
             break;
@@ -902,7 +902,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         {
             // This essentially deletes the uid created by the login
             // and doesn't make any sense.
-            dce_alert(GID_DCE2, DCE2_SMB_CHAIN_SS_LOGOFF, (dce2CommonStats*)&dce2_smb_stats,
+             dce_alert(GID_DCE2, DCE2_SMB_CHAIN_SS_LOGOFF, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
         }
 
@@ -914,7 +914,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
             || (smb_com2 == SMB_COM_TREE_CONNECT)) && tree_chain)
         {
             // There is only one place to return a tid.
-            dce_alert(GID_DCE2, DCE2_SMB_MULT_CHAIN_TC, (dce2CommonStats*)&dce2_smb_stats,
+             dce_alert(GID_DCE2, DCE2_SMB_MULT_CHAIN_TC, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
             // FIXIT-L Should we continue processing?
             break;
@@ -925,7 +925,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         {
             // This essentially deletes the tid created by the tree connect
             // and doesn't make any sense.
-            dce_alert(GID_DCE2, DCE2_SMB_CHAIN_TC_TDIS, (dce2CommonStats*)&dce2_smb_stats,
+             dce_alert(GID_DCE2, DCE2_SMB_CHAIN_TC_TDIS, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
         }
 
@@ -937,7 +937,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         {
             // This essentially deletes the fid created by the open command
             // and doesn't make any sense.
-            dce_alert(GID_DCE2, DCE2_SMB_CHAIN_OPEN_CLOSE, (dce2CommonStats*)&dce2_smb_stats,
+             dce_alert(GID_DCE2, DCE2_SMB_CHAIN_OPEN_CLOSE, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
         }
 
@@ -949,7 +949,7 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
         dce2_move(nb_ptr, nb_len, DCE2_ComInfoCommandSize(&com_info));
 
         // FIXIT-L Need to test out of order chaining
-        const uint8_t* off2_ptr = (const uint8_t*)smb_hdr + SmbAndXOff2(andx_ptr);
+         const uint8_t* off2_ptr = reinterpret_cast<const uint8_t*>(smb_hdr) + SmbAndXOff2(andx_ptr);
         if (DCE2_SmbCheckAndXOffset(ssd, off2_ptr, nb_ptr, nb_len) != DCE2_RET__SUCCESS)
             break;
 
@@ -1093,7 +1093,7 @@ static DCE2_SmbRequestTracker* DCE2_SmbInspect(DCE2_SmbSsnData* ssd, const SmbNt
             if (ssd->ssn_state_flags & DCE2_SMB_SSN_STATE__NEGOTIATED)
             {
                 dce_alert(GID_DCE2, DCE2_SMB_MULTIPLE_NEGOTIATIONS,
-                    (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+                    reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
                 return nullptr;
             }
             break;
@@ -1236,7 +1236,7 @@ static void DCE2_SmbProcessRawData(DCE2_SmbSsnData* ssd, const uint8_t* nb_ptr, 
     {
         if (nb_len > ssd->cur_rtracker->writeraw_remaining)
         {
-            dce_alert(GID_DCE2, DCE2_SMB_TDCNT_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+            dce_alert(GID_DCE2, DCE2_SMB_TDCNT_LT_DSIZE, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
 
             // If this happens, Windows never responds regardless of
@@ -1421,7 +1421,7 @@ DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf* config
 static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
 {
     Packet* p = DetectionEngine::get_current_packet();
-    bool is_seg_buf = DCE2_SmbIsSegBuffer(ssd, (const uint8_t*)nb_hdr);
+    bool is_seg_buf = DCE2_SmbIsSegBuffer(ssd, reinterpret_cast<const uint8_t*>(nb_hdr));
 
     switch (NbssType(nb_hdr))
     {
@@ -1439,7 +1439,7 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
                 if (is_seg_buf)
                     DCE2_SmbSegAlert(ssd, DCE2_SMB_NB_LT_SMBHDR);
                 else
-                    dce_alert(GID_DCE2, DCE2_SMB_NB_LT_SMBHDR, (dce2CommonStats*)&dce2_smb_stats,
+                    dce_alert(GID_DCE2, DCE2_SMB_NB_LT_SMBHDR, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                         ssd->sd);
 
                 return DCE2_RET__IGNORE;
@@ -1454,7 +1454,7 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
             if (is_seg_buf)
                 DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_NBSS_TYPE);
             else
-                dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats,
+                dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                     ssd->sd);
         }
 
@@ -1468,7 +1468,7 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
             if (is_seg_buf)
                 DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_NBSS_TYPE);
             else
-                dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats,
+                dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                     ssd->sd);
         }
 
@@ -1481,7 +1481,7 @@ static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
         if (is_seg_buf)
             DCE2_SmbSegAlert(ssd, DCE2_SMB_BAD_NBSS_TYPE);
         else
-            dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, (dce2CommonStats*)&dce2_smb_stats,
+            dce_alert(GID_DCE2, DCE2_SMB_BAD_NBSS_TYPE, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
 
         return DCE2_RET__ERROR;
@@ -1551,7 +1551,7 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             const NbssHdr* nb_hdr;
             if (DCE2_BufferIsEmpty(*seg_buf))
             {
-                nb_hdr = (const NbssHdr*)data_ptr;
+                nb_hdr = reinterpret_cast<const NbssHdr*>(data_ptr);
             }
             else
             {
@@ -1564,7 +1564,7 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                     return;
                 }
 
-                nb_hdr = (const NbssHdr*)DCE2_BufferData(*seg_buf);
+                nb_hdr = reinterpret_cast<const NbssHdr*>(DCE2_BufferData(*seg_buf));
             }
 
             uint32_t nb_len = NbssLen(nb_hdr);
@@ -1633,7 +1633,7 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             const SmbNtHdr* smb_hdr;
             if (DCE2_BufferIsEmpty(*seg_buf))
             {
-                smb_hdr = (const SmbNtHdr*)(data_ptr + sizeof(NbssHdr));
+                smb_hdr = reinterpret_cast<const SmbNtHdr*>(data_ptr + sizeof(NbssHdr));
             }
             else
             {
@@ -1645,7 +1645,7 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                     return;
                 }
 
-                smb_hdr = (const SmbNtHdr*)(DCE2_BufferData(*seg_buf) + sizeof(NbssHdr));
+                smb_hdr = reinterpret_cast<const SmbNtHdr*>(DCE2_BufferData(*seg_buf) + sizeof(NbssHdr));
             }
 
             if (SmbId(smb_hdr) == DCE2_SMB2_ID)
@@ -1655,8 +1655,8 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                     // Upgrade connection to SMBv2
                     debug_log(dce_smb_trace, p, "upgrading to smb2 session\n");
                     dce2SmbProtoConf* config = (dce2SmbProtoConf*)ssd->sd.config;
-                    Dce2SmbFlowData* fd = (Dce2SmbFlowData*)p->flow->get_flow_data(
-                        Dce2SmbFlowData::inspector_id);
+                    Dce2SmbFlowData* fd = static_cast<Dce2SmbFlowData*>(p->flow->get_flow_data(
+                        Dce2SmbFlowData::inspector_id));
                     p->flow->free_flow_data(fd);
                     DCE2_Smb2SsnData* dce2_smb2_sess = dce2_create_new_smb2_session(p, config, true);
                     DCE2_Smb2Process(dce2_smb2_sess);
@@ -1676,11 +1676,11 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
 
                 if (DCE2_BufferIsEmpty(*seg_buf))
                 {
-                    *ignore_bytes = sizeof(NbssHdr) + NbssLen((const NbssHdr*)data_ptr);
+                    *ignore_bytes = sizeof(NbssHdr) + NbssLen(reinterpret_cast<const NbssHdr*>(data_ptr));
                 }
                 else
                 {
-                    *ignore_bytes = (NbssLen((NbssHdr*)DCE2_BufferData(*seg_buf))
+                    *ignore_bytes = (NbssLen(reinterpret_cast<NbssHdr*>(DCE2_BufferData(*seg_buf)))
                         - sizeof(SmbNtHdr)) + data_need;
                     DCE2_BufferEmpty(*seg_buf);
                 }
@@ -1695,11 +1695,11 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             {
                 if (DCE2_BufferIsEmpty(*seg_buf))
                 {
-                    *ignore_bytes = sizeof(NbssHdr) + NbssLen((const NbssHdr*)data_ptr);
+                    *ignore_bytes = sizeof(NbssHdr) + NbssLen(reinterpret_cast<const NbssHdr*>(data_ptr));
                 }
                 else
                 {
-                    *ignore_bytes = (NbssLen((NbssHdr*)DCE2_BufferData(*seg_buf))
+                    *ignore_bytes = (NbssLen(reinterpret_cast<NbssHdr*>(DCE2_BufferData(*seg_buf)))
                         - sizeof(SmbNtHdr)) + data_need;
                     DCE2_BufferEmpty(*seg_buf);
                 }
@@ -1727,12 +1727,12 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
 
             if (DCE2_BufferIsEmpty(*seg_buf))
             {
-                nb_len = NbssLen((const NbssHdr*)data_ptr);
+                nb_len = NbssLen(reinterpret_cast<const NbssHdr*>(data_ptr));
                 data_need = sizeof(NbssHdr) + nb_len;
             }
             else
             {
-                nb_len = NbssLen((NbssHdr*)DCE2_BufferData(*seg_buf));
+                nb_len = NbssLen(reinterpret_cast<NbssHdr*>(DCE2_BufferData(*seg_buf)));
                 data_need = (sizeof(NbssHdr) + nb_len) - DCE2_BufferLength(*seg_buf);
             }
 
@@ -1798,7 +1798,7 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             {
             case DCE2_SMB_PDU_STATE__COMMAND:
             {
-                const SmbNtHdr* smb_hdr = (const SmbNtHdr*)(nb_ptr + sizeof(NbssHdr));
+                const SmbNtHdr* smb_hdr = reinterpret_cast<const SmbNtHdr*>(nb_ptr + sizeof(NbssHdr));
                 dce2_move(nb_ptr, nb_len, (sizeof(NbssHdr) + sizeof(SmbNtHdr)));
                 ssd->cur_rtracker = (rtracker != nullptr)
                     ? rtracker : DCE2_SmbFindRequestTracker(ssd, smb_hdr);
@@ -2628,7 +2628,7 @@ DCE2_Smb2SsnData* dce2_create_new_smb2_session(Packet* p, dce2SmbProtoConf* conf
 
 DCE2_SsnData* get_dce2_session_data(snort::Flow* flow)
 {
-    Dce2SmbFlowData* fd = (Dce2SmbFlowData*)flow->get_flow_data(Dce2SmbFlowData::inspector_id);
+    Dce2SmbFlowData* fd = static_cast<Dce2SmbFlowData*>(flow->get_flow_data(Dce2SmbFlowData::inspector_id));
     if (fd and fd->dce2_smb_session_data)
         return (fd->smb_version == DCE2_SMB_VERSION_1) ?
                (DCE2_SsnData*)(&((DCE2_SmbSsnData*)fd->dce2_smb_session_data)->sd) :
@@ -2642,12 +2642,11 @@ void set_smb_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
     snort::Flow* flow = DetectionEngine::get_current_packet()->flow;
     if (flow)
     {
-        Dce2SmbFlowData* fd = (Dce2SmbFlowData*)flow->get_flow_data(
-            Dce2SmbFlowData::inspector_id);
+        Dce2SmbFlowData* fd = static_cast<Dce2SmbFlowData*>(flow->get_flow_data(
+            Dce2SmbFlowData::inspector_id));
         if (fd and fd->dce2_smb_session_data)
             return (fd->smb_version == DCE2_SMB_VERSION_1) ?
                    DCE2_SmbSetRdata((DCE2_SmbSsnData*)fd->dce2_smb_session_data, nb_ptr, co_len):
                    (((DCE2_Smb2SsnData*)fd->dce2_smb_session_data)->set_reassembled_data(nb_ptr, co_len));
     }
 }
-

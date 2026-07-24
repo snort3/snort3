@@ -50,7 +50,7 @@ const PegInfo* ModbusModule::get_pegs() const
 { return peg_names; }
 
 PegCount* ModbusModule::get_counts() const
-{ return (PegCount*)&modbus_stats; }
+{ return reinterpret_cast<PegCount*>(&modbus_stats); }
 
 //-------------------------------------------------------------------------
 // rules
@@ -81,4 +81,3 @@ const RuleMap* ModbusModule::get_rules() const
 ModbusModule::ModbusModule() :
     Module(MODBUS_NAME, MODBUS_HELP)
 { }
-

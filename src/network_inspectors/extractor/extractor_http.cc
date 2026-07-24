@@ -39,37 +39,37 @@ using namespace std;
 
 static const Field& get_method(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_method();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_method();
 }
 
 static const Field& get_host(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_host_hdr();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_host_hdr();
 }
 
 static const Field& get_user_agent(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_user_agent();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_user_agent();
 }
 
 static const Field& get_uri(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_uri();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_uri();
 }
 
 static const Field& get_referrer(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_referer_hdr();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_referer_hdr();
 }
 
 static const Field& get_origin(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_origin_hdr();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_origin_hdr();
 }
 
 static const char* get_version(const DataEvent* event, const Flow*)
 {
-    HttpEnums::VersionId version = ((const HttpTransactionEndEvent*)event)->get_version();
+    HttpEnums::VersionId version = static_cast<const HttpTransactionEndEvent*>(event)->get_version();
     const auto& iter = HttpEnums::VersionEnumToStr.find(version);
 
     return iter != HttpEnums::VersionEnumToStr.end() ? iter->second : "";
@@ -77,62 +77,62 @@ static const char* get_version(const DataEvent* event, const Flow*)
 
 static const Field& get_stat_code(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_stat_code();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_stat_code();
 }
 
 static const Field& get_stat_msg(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_stat_msg();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_stat_msg();
 }
 
 static uint64_t get_trans_depth(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_trans_depth();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_trans_depth();
 }
 
 static uint64_t get_request_body_len(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_request_body_len();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_request_body_len();
 }
 
 static uint64_t get_response_body_len(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_response_body_len();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_response_body_len();
 }
 
 static uint64_t get_info_code(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_info_code();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_info_code();
 }
 
 static const Field& get_info_msg(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_info_msg();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_info_msg();
 }
 
 static const char* get_proxied(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_proxied().c_str();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_proxied().c_str();
 }
 
 static const char* get_orig_filenames(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_filename(HttpCommon::SRC_CLIENT).c_str();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_filename(HttpCommon::SRC_CLIENT).c_str();
 }
 
 static const char* get_resp_filenames(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_filename(HttpCommon::SRC_SERVER).c_str();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_filename(HttpCommon::SRC_SERVER).c_str();
 }
 
 static const char* get_orig_mime_types(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_content_type(HttpCommon::SRC_CLIENT).c_str();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_content_type(HttpCommon::SRC_CLIENT).c_str();
 }
 
 static const char* get_resp_mime_types(const DataEvent* event, const Flow*)
 {
-    return ((const HttpTransactionEndEvent*)event)->get_content_type(HttpCommon::SRC_SERVER).c_str();
+    return static_cast<const HttpTransactionEndEvent*>(event)->get_content_type(HttpCommon::SRC_SERVER).c_str();
 }
 
 static const map<string, ExtractorEvent::BufGetFn> sub_buf_getters =

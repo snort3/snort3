@@ -160,5 +160,4 @@ const PegInfo* UnixDomainConnectorModule::get_pegs() const
 { return unixdomain_connector_pegs; }
 
 PegCount* UnixDomainConnectorModule::get_counts() const
-{ return (PegCount*)&unixdomain_connector_stats; }
-
+{ return reinterpret_cast<PegCount*>(&unixdomain_connector_stats); }

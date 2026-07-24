@@ -142,7 +142,7 @@ bool ReplaceOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const ReplaceOption& rhs = (const ReplaceOption&)ips;
+    const ReplaceOption& rhs = static_cast<const ReplaceOption&>(ips);
 
     if ( repl != rhs.repl )
         return false;
@@ -241,7 +241,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* replace_ctor(Module* p, IpsInfo&)
 {
-    ReplModule* m = (ReplModule*)p;
+    ReplModule* m = static_cast<ReplModule*>(p);
     return new ReplaceOption(m->data);
 }
 

@@ -25,6 +25,8 @@
 
 #include <cstdint>
 
+#include "utils/endian.h"
+
 #define SMB_MAX_NUM_COMS   256
 
 #define SMB_FILE_TYPE_DISK               0x0000
@@ -432,7 +434,7 @@ inline uint16_t SmbBcc(const uint8_t* ptr, uint16_t com_size)
     if (com_size < sizeof(SmbEmptyCom))
         return 0;
 
-    return snort::alignedNtohs((const uint16_t*)(ptr + com_size - sizeof(uint16_t)));
+    return LETOHS(ptr + com_size - sizeof(uint16_t));
 }
 
 inline uint16_t SmbEmptyComBcc(const SmbEmptyCom* ec)
@@ -487,4 +489,3 @@ inline bool SmbFmtAscii(const uint8_t fmt)
 #pragma pack()
 
 #endif
-

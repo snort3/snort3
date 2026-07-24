@@ -48,7 +48,7 @@ AppIdApi appid_api;
 
 AppIdSession* AppIdApi::get_appid_session(const Flow& flow)
 {
-    AppIdSession* asd = (AppIdSession*)flow.get_flow_data(AppIdSession::inspector_id);
+    AppIdSession* asd = static_cast<AppIdSession*>(flow.get_flow_data(AppIdSession::inspector_id));
 
     return asd;
 }
@@ -236,7 +236,8 @@ const AppIdSessionApi* AppIdApi::get_appid_session_api(const Flow& flow) const
 
 bool AppIdApi::is_inspection_needed(const Inspector& inspector) const
 {
-    AppIdInspector* appid_inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
+    AppIdInspector* appid_inspector = static_cast<AppIdInspector*>(
+        InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
 
     if (!appid_inspector)
         return false;
@@ -252,7 +253,8 @@ bool AppIdApi::is_inspection_needed(const Inspector& inspector) const
 
 const char* AppIdApi::get_appid_detector_directory() const
 {
-    AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
+    AppIdInspector* inspector = static_cast<AppIdInspector*>(
+        InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
     if (!inspector)
         return "";
 
@@ -261,7 +263,8 @@ const char* AppIdApi::get_appid_detector_directory() const
 
 void AppIdApi::reset_appid_cpu_profiler_stats()
 {
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
+    AppIdInspector* inspector = static_cast<AppIdInspector*>(
+        InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
     if (!inspector)
         return;
     const AppIdContext& ctxt = inspector->get_ctxt();
@@ -271,7 +274,8 @@ void AppIdApi::reset_appid_cpu_profiler_stats()
 
 void AppIdApi::update_shadow_traffic_status(bool status, const SnortConfig*)
 {
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
+    AppIdInspector* inspector = static_cast<AppIdInspector*>(
+        InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
 
     if (!inspector)
         return;

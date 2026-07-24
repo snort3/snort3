@@ -106,8 +106,12 @@ std::string stringify_tcp_options(const Packet* const pkt)
             oss << "ws " << (uint16_t)opt.data[0] << ", ";
             break;
         case tcp::TcpOptCode::MAXSEG:
-            oss << "mss " << ntohs(*((const uint16_t*)(opt.data))) << ", ";
+        {
+            uint16_t mss;
+            memcpy(&mss, opt.data, sizeof(mss));
+            oss << "mss " << ntohs(mss) << ", ";
             break;
+        }
         case tcp::TcpOptCode::SACKOK:
             oss << "sack OK, ";
             break;

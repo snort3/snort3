@@ -99,7 +99,7 @@ bool Base64DecodeOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const Base64DecodeOption& rhs = (const Base64DecodeOption&)ips;
+    const Base64DecodeOption& rhs = static_cast<const Base64DecodeOption&>(ips);
     const Base64DecodeData* left = &config;
     const Base64DecodeData* right = &rhs.config;
 
@@ -238,7 +238,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* base64_decode_ctor(Module* p, IpsInfo&)
 {
-    B64DecodeModule* m = (B64DecodeModule*)p;
+    B64DecodeModule* m = static_cast<B64DecodeModule*>(p);
     return new Base64DecodeOption(m->data);
 }
 

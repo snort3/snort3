@@ -84,7 +84,7 @@ NORETURN_ASSERT void StreamUser::eval(Packet*)
 StreamUserConfig* get_user_cfg(Inspector* ins)
 {
     assert(ins);
-    return ((StreamUser*)ins)->config;
+    return static_cast<StreamUser*>(ins)->config;
 }
 
 //-------------------------------------------------------------------------
@@ -99,7 +99,7 @@ static void mod_dtor(Module* m)
 
 static Inspector* user_ctor(Module* m)
 {
-    StreamUserModule* mod = (StreamUserModule*)m;
+    StreamUserModule* mod = static_cast<StreamUserModule*>(m);
     return new StreamUser(mod->get_data());
 }
 
@@ -142,4 +142,3 @@ static const InspectApi user_api =
 };
 
 const BaseApi* nin_stream_user = &user_api.base;
-

@@ -51,7 +51,7 @@ const PegInfo* S7commplusModule::get_pegs() const
 { return peg_names; }
 
 PegCount* S7commplusModule::get_counts() const
-{ return (PegCount*)&s7commplus_stats; }
+{ return reinterpret_cast<PegCount*>(&s7commplus_stats); }
 
 //-------------------------------------------------------------------------
 // rules
@@ -82,4 +82,3 @@ const RuleMap* S7commplusModule::get_rules() const
 S7commplusModule::S7commplusModule() :
     Module(S7COMMPLUS_NAME, S7COMMPLUS_HELP)
 { }
-

@@ -42,6 +42,5 @@ const PegInfo* DceHttpServerModule::get_pegs() const
 
 PegCount* DceHttpServerModule::get_counts() const
 {
-    return (PegCount*)&dce_http_server_stats;
+    return reinterpret_cast<PegCount*>(&dce_http_server_stats);
 }
-

@@ -49,7 +49,8 @@ bool get_buf_dnp3_data(snort::Packet* p, snort::InspectionBuffer& b)
     if ((p->has_tcp_data() && !p->is_full_pdu()) || !p->flow || !p->dsize)
         return false;
 
-    Dnp3FlowData* fd = (Dnp3FlowData*)p->flow->get_flow_data(Dnp3FlowData::inspector_id);
+    Dnp3FlowData* fd = static_cast<Dnp3FlowData*>(
+        p->flow->get_flow_data(Dnp3FlowData::inspector_id));
     if (!fd)
         return false;
 
@@ -83,7 +84,8 @@ unsigned Dnp3FlowData::inspector_id = 0;
 
 static dnp3_session_data_t* get_session_data(Flow* flow)
 {
-    Dnp3FlowData* fd = (Dnp3FlowData*)flow->get_flow_data(Dnp3FlowData::inspector_id);
+    Dnp3FlowData* fd = static_cast<Dnp3FlowData*>(
+        flow->get_flow_data(Dnp3FlowData::inspector_id));
     return fd ? &fd->dnp3_session : nullptr;
 }
 
@@ -126,7 +128,7 @@ static bool dnp3_process_udp(const dnp3ProtoConf& config, dnp3_session_data_t* d
         const dnp3_link_header_t* link;
 
         pdu_start = (const uint8_t*)(p->data + bytes_processed);
-        link = (const dnp3_link_header_t*)pdu_start;
+        link = reinterpret_cast<const dnp3_link_header_t*>(pdu_start);
 
         /*Stop if the start bytes are not 0x0564 */
         if ((p->dsize < bytes_processed + 2)
@@ -286,7 +288,7 @@ static void dnp3_init()
 
 static Inspector* dnp3_ctor(Module* m)
 {
-    Dnp3Module* mod = (Dnp3Module*)m;
+    Dnp3Module* mod = static_cast<Dnp3Module*>(m);
     dnp3ProtoConf config;
     mod->get_data(config);
     return new Dnp3(config);
@@ -349,4 +351,3 @@ const BaseApi* sin_dnp3[] =
     ips_dnp3_data,
     nullptr
 };
-

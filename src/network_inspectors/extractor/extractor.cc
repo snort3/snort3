@@ -300,7 +300,7 @@ static void mod_dtor(Module* m)
 { delete m; }
 
 static Inspector* extractor_ctor(Module* mod)
-{ return new Extractor((ExtractorModule*)mod); }
+{ return new Extractor(static_cast<ExtractorModule*>(mod)); }
 
 static void extractor_dtor(Inspector* p)
 { delete p; }

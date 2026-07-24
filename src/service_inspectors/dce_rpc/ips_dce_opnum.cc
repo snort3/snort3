@@ -380,7 +380,7 @@ bool Dce2OpnumOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const Dce2OpnumOption& rhs = (const Dce2OpnumOption&)ips;
+    const Dce2OpnumOption& rhs = static_cast<const Dce2OpnumOption&>(ips);
 
     if ((opnum.mask_size != rhs.opnum.mask_size) ||
         (opnum.opnum_lo != rhs.opnum.opnum_lo) ||
@@ -526,7 +526,7 @@ static void dce2_opnum_mod_dtor(Module* m)
 
 static IpsOption* dce2_opnum_ctor(Module* p, IpsInfo&)
 {
-    Dce2OpnumModule* m = (Dce2OpnumModule*)p;
+    Dce2OpnumModule* m = static_cast<Dce2OpnumModule*>(p);
     DCE2_Opnum opnum = m->opnum;
     m->opnum.mask = nullptr;
     return new Dce2OpnumOption(opnum);
@@ -568,4 +568,3 @@ static const IpsApi dce2_opnum_api =
 
 // added to snort_plugins in dce2.cc
 const BaseApi* ips_dce_opnum = &dce2_opnum_api.base;
-

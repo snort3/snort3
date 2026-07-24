@@ -231,7 +231,8 @@ unsigned SmtpFlowData::inspector_id = 0;
 
 static SMTPData* get_session_data(Flow* flow)
 {
-    SmtpFlowData* fd = (SmtpFlowData*)flow->get_flow_data(SmtpFlowData::inspector_id);
+    SmtpFlowData* fd = static_cast<SmtpFlowData*>(
+        flow->get_flow_data(SmtpFlowData::inspector_id));
     return fd ? &fd->session : nullptr;
 }
 
@@ -1732,7 +1733,7 @@ static void smtp_term()
 
 static Inspector* smtp_ctor(Module* m)
 {
-    SmtpModule* mod = (SmtpModule*)m;
+    SmtpModule* mod = static_cast<SmtpModule*>(m);
     SmtpProtoConf* conf = mod->get_data();
     Smtp* smtp = new Smtp(conf);
 

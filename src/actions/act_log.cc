@@ -83,7 +83,7 @@ public:
     { return log_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&log_stats; }
+    { return reinterpret_cast<PegCount*>(&log_stats); }
 };
 
 //-------------------------------------------------------------------------
@@ -131,4 +131,3 @@ const BaseApi* act_log[] =
     &log_api.base,
     nullptr
 };
-

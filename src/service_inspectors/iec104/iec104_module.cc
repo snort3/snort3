@@ -68,7 +68,7 @@ const PegInfo* Iec104Module::get_pegs() const
 
 PegCount* Iec104Module::get_counts() const
 {
-    return (PegCount*) &iec104_stats;
+    return reinterpret_cast<PegCount*>(&iec104_stats);
 }
 
 //-------------------------------------------------------------------------

@@ -83,7 +83,7 @@ static inline SmtpPafData* get_state(Flow* flow, bool c2s)
     if ( !flow )
         return nullptr;
 
-    SmtpSplitter* s = (SmtpSplitter*)Stream::get_splitter(flow, c2s);
+    SmtpSplitter* s = static_cast<SmtpSplitter*>(Stream::get_splitter(flow, c2s));
     return (s and s->is_paf()) ? &s->state : nullptr;
 }
 
@@ -501,4 +501,3 @@ bool smtp_is_data_end(Flow* ssn)
     SmtpPafData* s = get_state(ssn, true);
     return s ? s->end_of_data : false;
 }
-

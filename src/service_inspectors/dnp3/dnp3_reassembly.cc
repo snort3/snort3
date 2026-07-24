@@ -121,7 +121,7 @@ static bool dnp3_reassemble_transport(dnp3_reassembly_data_t* rdata, char* buf, 
     }
 
     /* Take the first byte as a transport header, cut it off of the buffer. */
-    trans_header = (dnp3_transport_header_t*)buf;
+    trans_header = reinterpret_cast<dnp3_transport_header_t*>(buf);
     buf += sizeof(dnp3_transport_header_t);
     buflen -= sizeof(dnp3_transport_header_t);
 
@@ -230,7 +230,7 @@ static bool dnp3_process_application(dnp3_session_data_t* session)
         if (rdata->buflen < sizeof(dnp3_app_request_header_t))
             return false;
 
-        request = (dnp3_app_request_header_t*)(rdata->buffer);
+        request = reinterpret_cast<dnp3_app_request_header_t*>(rdata->buffer);
 
         session->func = request->function;
     }
@@ -242,7 +242,7 @@ static bool dnp3_process_application(dnp3_session_data_t* session)
         if (rdata->buflen < sizeof(dnp3_app_response_header_t))
             return false;
 
-        response = (dnp3_app_response_header_t*)(rdata->buffer);
+        response = reinterpret_cast<dnp3_app_response_header_t*>(rdata->buffer);
 
         session->func = response->function;
         session->indications = ntohs(response->indications);
@@ -371,7 +371,7 @@ bool dnp3_full_reassembly(const dnp3ProtoConf& config, dnp3_session_data_t* sess
     ++dnp3_stats.dnp3_link_layer_frames;
 
     /* Step 1: Decode header and skip to data */
-    link = (const dnp3_link_header_t*)pdu_start;
+    link = reinterpret_cast<const dnp3_link_header_t*>(pdu_start);
 
     if (link->len < DNP3_MIN_TRANSPORT_LEN)
     {
@@ -422,4 +422,3 @@ bool dnp3_full_reassembly(const dnp3ProtoConf& config, dnp3_session_data_t* sess
 
     return true;
 }
-

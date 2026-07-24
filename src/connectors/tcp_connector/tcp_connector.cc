@@ -97,7 +97,7 @@ ConnectorMsg* TcpConnector::read_message()
     TcpConnectorMsgHdr hdr;
     ReadDataOutcome outcome;
 
-    outcome = read_message_data(sock_fd, sizeof(hdr), (uint8_t*)&hdr);
+    outcome = read_message_data(sock_fd, sizeof(hdr), reinterpret_cast<uint8_t*>(&hdr));
     if (outcome != SUCCESS)
     {
         if (outcome == CLOSED)
@@ -219,7 +219,7 @@ bool TcpConnector::internal_transmit_message(const ConnectorMsg& msg)
 
     TcpConnectorMsgHdr tcpc_hdr(msg.get_length());
 
-    if ( send( sock_fd, (const char*)&tcpc_hdr, sizeof(tcpc_hdr), 0 ) != sizeof(tcpc_hdr) )
+    if ( send( sock_fd, reinterpret_cast<const char*>(&tcpc_hdr), sizeof(tcpc_hdr), 0 ) != sizeof(tcpc_hdr) )
     {
         ErrorMessage("TcpConnector: failed to transmit header\n");
         return false;
@@ -411,14 +411,14 @@ static Connector* tcp_connector_tinit(const ConnectorConfig& config)
 
 static void tcp_connector_tterm(Connector* connector)
 {
-    TcpConnector* tcp_conn = (TcpConnector*)connector;
+    TcpConnector* tcp_conn = static_cast<TcpConnector*>(connector);
 
     delete tcp_conn;
 }
 
 static ConnectorCommon* tcp_connector_ctor(Module* m)
 {
-    TcpConnectorModule* mod = (TcpConnectorModule*)m;
+    TcpConnectorModule* mod = static_cast<TcpConnectorModule*>(m);
     ConnectorCommon* tcp_connector_common = new ConnectorCommon(mod->get_and_clear_config());
 
     return tcp_connector_common;
@@ -461,4 +461,3 @@ const BaseApi* tcp_connector[] =
     &tcp_connector_api.base,
     nullptr
 };
-

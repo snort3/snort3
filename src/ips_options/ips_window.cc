@@ -70,7 +70,7 @@ bool TcpWinOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const TcpWinOption& rhs = (const TcpWinOption&)ips;
+    const TcpWinOption& rhs = static_cast<const TcpWinOption&>(ips);
     return ( config == rhs.config );
 }
 
@@ -151,7 +151,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* window_ctor(Module* p, IpsInfo&)
 {
-    WindowModule* m = (WindowModule*)p;
+    WindowModule* m = static_cast<WindowModule*>(p);
     return new TcpWinOption(m->data);
 }
 

@@ -180,13 +180,13 @@ void ReactActiveAction::delayed_exec(Packet* p)
 void ReactActiveAction::send(Packet* p)
 {
     InjectionControl control;
-    control.http_page = (const uint8_t*)config->get_resp_buf();
+    control.http_page = reinterpret_cast<const uint8_t*>(config->get_resp_buf());
     control.http_page_len = config->get_buf_len();
     if (p->flow && p->flow->gadget &&
         (strcmp(p->flow->gadget->get_name(), "http2_inspect") == 0))
     {
         const Http2FlowData* const session_data =
-            (Http2FlowData*)p->flow->get_flow_data(Http2FlowData::inspector_id);
+            static_cast<Http2FlowData*>(p->flow->get_flow_data(Http2FlowData::inspector_id));
         assert(session_data != nullptr);
         const SourceId source_id = p->is_from_client() ? SRC_CLIENT : SRC_SERVER;
         if (session_data != nullptr)
@@ -297,7 +297,7 @@ public:
     { return react_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&react_stats; }
+    { return reinterpret_cast<PegCount*>(&react_stats); }
 
 private:
     std::string page;
@@ -393,4 +393,3 @@ const BaseApi* act_react[] =
     &react_api.base,
     nullptr
 };
-

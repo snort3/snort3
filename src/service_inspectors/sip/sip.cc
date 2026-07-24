@@ -95,13 +95,14 @@ static SIPData* SetNewSIPData(Packet* p)
 
 SIPData* get_sip_session_data(const Flow* flow)
 {
-    SipFlowData* fd = (SipFlowData*)flow->get_flow_data(SipFlowData::inspector_id);
+    SipFlowData* fd = static_cast<SipFlowData*>(
+        flow->get_flow_data(SipFlowData::inspector_id));
     return fd ? &fd->session : nullptr;
 }
 
 static void FreeSipData(void* data)
 {
-    SIPData* ssn = (SIPData*)data;
+    SIPData* ssn = static_cast<SIPData*>(data);
 
     /*Free all the dialog data*/
     sip_freeDialogs(&ssn->dialogs);
@@ -302,7 +303,7 @@ static void sip_init()
 
 static Inspector* sip_ctor(Module* m)
 {
-    SipModule* mod = (SipModule*)m;
+    SipModule* mod = static_cast<SipModule*>(m);
     return new Sip(mod->get_data());
 }
 
@@ -364,4 +365,3 @@ const BaseApi* sin_sip[] =
     ips_sip_stat_code,
     nullptr
 };
-

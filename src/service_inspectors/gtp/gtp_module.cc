@@ -62,7 +62,7 @@ const PegInfo* GtpInspectModule::get_pegs() const
 { return peg_names; }
 
 PegCount* GtpInspectModule::get_counts() const
-{ return (PegCount*)&gtp_stats; }
+{ return reinterpret_cast<PegCount*>(&gtp_stats); }
 
 //-------------------------------------------------------------------------
 // rules

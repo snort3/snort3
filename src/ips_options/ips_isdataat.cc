@@ -110,7 +110,7 @@ bool IsDataAtOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const IsDataAtOption& rhs = (const IsDataAtOption&)ips;
+    const IsDataAtOption& rhs = static_cast<const IsDataAtOption&>(ips);
     const IsDataAtData* left = &config;
     const IsDataAtData* right = &rhs.config;
 
@@ -281,7 +281,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* isdataat_ctor(Module* p, IpsInfo&)
 {
-    IsDataAtModule* m = (IsDataAtModule*)p;
+    IsDataAtModule* m = static_cast<IsDataAtModule*>(p);
     return new IsDataAtOption(m->data);
 }
 

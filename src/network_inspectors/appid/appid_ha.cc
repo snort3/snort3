@@ -76,8 +76,8 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
     if (!inspector or !pkt_thread_odp_ctxt)
         return false;
 
-    AppIdSession* asd = (AppIdSession*)(flow->get_flow_data(AppIdSession::inspector_id));
-    const AppIdSessionHAApps* appHA = (const AppIdSessionHAApps*)msg.cursor;
+    AppIdSession* asd = static_cast<AppIdSession*>(flow->get_flow_data(AppIdSession::inspector_id));
+    const AppIdSessionHAApps* appHA = reinterpret_cast<const AppIdSessionHAApps*>(msg.cursor);
 
     if (appidDebug and appidDebug->is_enabled())
         appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
@@ -173,11 +173,11 @@ bool AppIdHAAppsClient::produce(Flow& flow, HAMessage& msg)
         return false;
     assert(msg.cursor);
 
-    AppIdSession* asd = (AppIdSession*)flow.get_flow_data(AppIdSession::inspector_id);
+    AppIdSession* asd = static_cast<AppIdSession*>(flow.get_flow_data(AppIdSession::inspector_id));
     if (!asd)
         return false;
 
-    AppIdSessionHAApps* appHA = (AppIdSessionHAApps*)(msg.cursor);
+    AppIdSessionHAApps* appHA = reinterpret_cast<AppIdSessionHAApps*>(msg.cursor);
     if (asd->is_tp_appid_available())
         appHA->flags |= APPID_HA_FLAGS_TP_DONE;
     if (asd->is_service_detected())
@@ -238,7 +238,7 @@ bool AppIdHAHttpClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
         return false;
 
     AppIdSession* asd = appid_api.get_appid_session(*flow);
-    AppIdSessionHAHttp* appHA = (AppIdSessionHAHttp*)msg.cursor;
+    AppIdSessionHAHttp* appHA = reinterpret_cast<AppIdSessionHAHttp*>(msg.cursor);
     if (appidDebug and appidDebug->is_enabled())
         appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
 
@@ -281,7 +281,7 @@ bool AppIdHAHttpClient::produce(Flow& flow, HAMessage& msg)
     if (!url and !host)
         return false;
 
-    AppIdSessionHAHttp* appHA = (AppIdSessionHAHttp*)msg.cursor;
+    AppIdSessionHAHttp* appHA = reinterpret_cast<AppIdSessionHAHttp*>(msg.cursor);
 
     if (url)
     {
@@ -326,7 +326,7 @@ bool AppIdHATlsHostClient::consume(Flow*& flow, const FlowKey* key, HAMessage& m
         return false;
 
     AppIdSession* asd = appid_api.get_appid_session(*flow);
-    AppIdSessionHATlsHost* appHA = (AppIdSessionHATlsHost*)msg.cursor;
+    AppIdSessionHATlsHost* appHA = reinterpret_cast<AppIdSessionHATlsHost*>(msg.cursor);
     if (appidDebug and appidDebug->is_enabled())
         appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
 
@@ -353,7 +353,7 @@ bool AppIdHATlsHostClient::produce(Flow& flow, HAMessage& msg)
     if (!asd or !asd->get_api().get_tls_host())
         return false;
 
-    AppIdSessionHATlsHost* appHA = (AppIdSessionHATlsHost*)msg.cursor;
+    AppIdSessionHATlsHost* appHA = reinterpret_cast<AppIdSessionHATlsHost*>(msg.cursor);
     const char* tls_host = asd->get_api().get_tls_host();
     auto length = strlen(tls_host);
     if (length >= APPID_HA_MAX_FIELD_LEN)

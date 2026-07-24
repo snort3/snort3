@@ -1063,7 +1063,7 @@ int initialize_ftp(FTP_SESSION* session, Packet* p, int iMode)
     else if (iMode == FTPP_SI_SERVER_MODE)
     {
         FTP_SERVER_RSP* rsp = &session->server.response;
-        req = (FTP_CLIENT_REQ*)rsp;
+        req = reinterpret_cast<FTP_CLIENT_REQ*>(rsp);
     }
     else
         return FTPP_INVALID_ARG;
@@ -1429,7 +1429,7 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
     else if (iMode == FTPP_SI_SERVER_MODE)
     {
         FTP_SERVER_RSP* rsp = &ftpssn->server.response;
-        req = (FTP_CLIENT_REQ*)rsp;
+        req = reinterpret_cast<FTP_CLIENT_REQ*>(rsp);
     }
     else
         return FTPP_INVALID_ARG;
@@ -1996,4 +1996,3 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
 
     return iRet;
 }
-

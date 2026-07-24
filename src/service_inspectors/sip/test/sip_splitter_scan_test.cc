@@ -34,10 +34,7 @@
 
 using namespace snort;
 
-Packet::Packet(bool)
-{
-      memset((char*) this , 0, sizeof(*this));
-}
+Packet::Packet(bool) { }
 
 Packet::~Packet()  = default;
 

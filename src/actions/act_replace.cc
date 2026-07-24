@@ -141,7 +141,7 @@ public:
     { return replace_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&replace_stats; }
+    { return reinterpret_cast<PegCount*>(&replace_stats); }
 };
 
 //-------------------------------------------------------------------------
@@ -189,4 +189,3 @@ const BaseApi* act_replace[] =
     &rep_api.base,
     nullptr
 };
-

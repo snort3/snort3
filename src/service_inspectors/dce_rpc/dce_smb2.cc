@@ -223,15 +223,15 @@ DCE2_Smb2SsnData::~DCE2_Smb2SsnData()
 
 void DCE2_Smb2SsnData::set_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
 {
-    NbssHdr* nb_hdr = (NbssHdr*)nb_ptr;
-    SmbNtHdr* smb_hdr = (SmbNtHdr*)((uint8_t*)nb_hdr + sizeof(NbssHdr));
+    NbssHdr* nb_hdr = reinterpret_cast<NbssHdr*>(nb_ptr);
+    SmbNtHdr* smb_hdr = reinterpret_cast<SmbNtHdr*>(reinterpret_cast<uint8_t*>(nb_hdr) + sizeof(NbssHdr));
 
     uint32_t tid = (ftracker_tcp and ftracker_tcp->ttr) ? ftracker_tcp->ttr->get_tid() : 0;
     smb_hdr->smb_tid = alignedNtohl((const uint32_t*)&tid);
 
     if (DetectionEngine::get_current_packet()->is_from_client())
     {
-        Smb2WriteRequestHdr* write = (Smb2WriteRequestHdr*)((uint8_t*)smb_hdr + sizeof(SmbNtHdr));
+        Smb2WriteRequestHdr* write = reinterpret_cast<Smb2WriteRequestHdr*>(reinterpret_cast<uint8_t*>(smb_hdr) + sizeof(SmbNtHdr));
         uint32_t nb_len = sizeof(SmbNtHdr) + sizeof(Smb2WriteRequestHdr) + co_len;
 
         if (nb_len > UINT16_MAX)
@@ -250,7 +250,7 @@ void DCE2_Smb2SsnData::set_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
     }
     else
     {
-        Smb2ReadResponseHdr* read = (Smb2ReadResponseHdr*)((uint8_t*)smb_hdr + sizeof(SmbNtHdr));
+        Smb2ReadResponseHdr* read = reinterpret_cast<Smb2ReadResponseHdr*>(reinterpret_cast<uint8_t*>(smb_hdr) + sizeof(SmbNtHdr));
         uint32_t nb_len = sizeof(SmbNtHdr) + sizeof(Smb2ReadResponseHdr) + co_len;
 
         if (nb_len > UINT16_MAX)
@@ -292,9 +292,9 @@ static inline bool DCE2_Smb2FindSidTid(DCE2_Smb2SsnData* ssd, const uint64_t sid
 static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     const uint8_t* end)
 {
-    const uint8_t* smb_data = (const uint8_t*)smb_hdr + SMB2_HEADER_LENGTH;
+    const uint8_t* smb_data = reinterpret_cast<const uint8_t*>(smb_hdr) + SMB2_HEADER_LENGTH;
     uint16_t command = alignedNtohs(&(smb_hdr->command));
-    int16_t structure_size = alignedNtohs((const uint16_t*)smb_data);
+    int16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
     DCE2_Smb2SessionTracker* str = nullptr;
     DCE2_Smb2TreeTracker* ttr = nullptr;
     uint32_t tid = 0;
@@ -315,8 +315,7 @@ static void DCE2_Smb2Inspect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     case SMB2_COM_NEGOTIATE:
         if (structure_size == SMB2_NEGOTIATE_RESPONSE_STRUC_SIZE)
         {
-            const Smb2NegotiateResponseHdr* neg_resp_hdr = (const
-                Smb2NegotiateResponseHdr*)smb_data;
+            const Smb2NegotiateResponseHdr* neg_resp_hdr = reinterpret_cast<const Smb2NegotiateResponseHdr*>(smb_data);
             if (neg_resp_hdr->capabilities & SMB2_GLOBAL_CAP_MULTI_CHANNEL)
             {
                 //total multichannel sessions
@@ -500,8 +499,8 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
                 "Header error with data length %d\n",data_len);
             return;
         }
-        const Smb2Hdr* smb_hdr = (const Smb2Hdr*)(data_ptr + sizeof(NbssHdr));
-        const Smb2TransformHdr* smb_trans_hdr = (const Smb2TransformHdr*)(data_ptr +
+        const Smb2Hdr* smb_hdr = reinterpret_cast<const Smb2Hdr*>(data_ptr + sizeof(NbssHdr));
+        const Smb2TransformHdr* smb_trans_hdr = reinterpret_cast<const Smb2TransformHdr*>(data_ptr +
             sizeof(NbssHdr));
         uint32_t smb_proto_id = SmbTransformId(smb_trans_hdr);
         uint64_t sid = smb_trans_hdr->session_id;
@@ -530,10 +529,10 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
             DCE2_Smb2Inspect(ssd, smb_hdr, data_ptr +  data_len);
             // In case of message compounding, find the offset of the next smb command
             next_command_offset = alignedNtohl(&(smb_hdr->next_command));
-            if (next_command_offset + (const uint8_t*)smb_hdr > (data_ptr + data_len))
+            if (next_command_offset + reinterpret_cast<const uint8_t*>(smb_hdr) > (data_ptr + data_len))
             {
                 dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
-                    (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+                    reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
                 SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
                     p, "bad next command offset\n");
                 dce2_smb_stats.v2_bad_next_cmd_offset++;
@@ -542,16 +541,16 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd)
             if (next_command_offset)
             {
                 // Check if adding next_command_offset would cause integer overflow
-                if (next_command_offset > SIZE_MAX - (uintptr_t)((const uint8_t*)smb_hdr))
+                if (next_command_offset > SIZE_MAX - reinterpret_cast<uintptr_t>(smb_hdr))
                 {
                     dce_alert(GID_DCE2, DCE2_SMB_BAD_NEXT_COMMAND_OFFSET,
-                        (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+                        reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
                     SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
                         p, "integer overflow in next command offset\n");
                     dce2_smb_stats.v2_bad_next_cmd_offset++;
                     return;
                 }
-                smb_hdr = (const Smb2Hdr*)((const uint8_t*)smb_hdr + next_command_offset);
+                smb_hdr = reinterpret_cast<const Smb2Hdr*>(reinterpret_cast<const uint8_t*>(smb_hdr) + next_command_offset);
                 compound_request_index++;
             }
 
@@ -586,8 +585,8 @@ DCE2_SmbVersion DCE2_Smb2Version(const Packet* p)
     if ( p->has_paf_payload() and
         (p->dsize > sizeof(NbssHdr) + DCE2_SMB_ID_SIZE) )     // DCE2_SMB_ID is u32
     {
-        const Smb2Hdr* smb_hdr = (const Smb2Hdr*)(p->data + sizeof(NbssHdr));
-        uint32_t smb_version_id = SmbId((const SmbNtHdr*)smb_hdr);
+        const Smb2Hdr* smb_hdr = reinterpret_cast<const Smb2Hdr*>(p->data + sizeof(NbssHdr));
+        uint32_t smb_version_id = SmbId(reinterpret_cast<const SmbNtHdr*>(smb_hdr));
 
         if (smb_version_id == DCE2_SMB_ID)
             return DCE2_SMB_VERSION_1;

@@ -98,7 +98,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* service_ctor(Module* p, IpsInfo& info)
 {
-    ServiceModule* m = (ServiceModule*)p;
+    ServiceModule* m = static_cast<ServiceModule*>(p);
 
     for ( const auto& service : m->services )
         IpsOption::add_service(info, service.c_str());

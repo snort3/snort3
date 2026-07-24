@@ -95,7 +95,7 @@ public:
     { return file_id_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&file_id_stats; }
+    { return reinterpret_cast<PegCount*>(&file_id_stats); }
 };
 
 //-------------------------------------------------------------------------
@@ -143,4 +143,3 @@ const BaseApi* act_file_id[] =
     &file_id_api.base,
     nullptr
 };
-

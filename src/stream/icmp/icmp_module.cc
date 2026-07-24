@@ -81,5 +81,4 @@ const PegInfo* StreamIcmpModule::get_pegs() const
 { return icmp_pegs; }
 
 PegCount* StreamIcmpModule::get_counts() const
-{ return (PegCount*)&icmpStats; }
-
+{ return reinterpret_cast<PegCount*>(&icmpStats); }

@@ -469,7 +469,7 @@ inline int DCE2_GetNdrUint32(const uint8_t* data_ptr, uint32_t& data,
         align_offset = 4 - (offset % 4);
     }
 
-    ptr = (const uint32_t*)(data_ptr + align_offset);
+    ptr = reinterpret_cast<const uint32_t*>(data_ptr + align_offset);
     data = DceRpcNtohl(ptr, bo_flag);
 
     return align_offset + 4;
@@ -487,7 +487,7 @@ inline int DCE2_GetNdrUint64(const uint8_t* data_ptr, uint64_t& data,
         align_offset = 8 - (offset % 8);
     }
 
-    ptr = (const uint64_t*)(data_ptr + align_offset);
+    ptr = reinterpret_cast<const uint64_t*>(data_ptr + align_offset);
     data = DceRpcNtohl64(ptr, bo_flag);
 
     return align_offset + 8;
@@ -512,4 +512,3 @@ void DCE2_CoInitRdata(uint8_t*, int);
 void DCE2_CoCleanTracker(DCE2_CoTracker*);
 
 #endif
-

@@ -404,7 +404,7 @@ const PegInfo* StreamModule::get_pegs() const
 { return base_pegs; }
 
 PegCount* StreamModule::get_counts() const
-{ return (PegCount*)&stream_base_stats; }
+{ return reinterpret_cast<PegCount*>(&stream_base_stats); }
 
 ProfileStats* StreamModule::get_profile() const
 { return &s5PerfStats; }
@@ -675,4 +675,3 @@ void StreamModuleConfig::show() const
         ConfigLogger::log_value("allowlist_cache", tmp.c_str());
     }
 }
-

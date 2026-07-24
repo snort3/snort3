@@ -68,7 +68,7 @@ public:
     { return full_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&full_counts; }
+    { return reinterpret_cast<PegCount*>(&full_counts); }
 
     Usage get_usage() const override
     { return GLOBAL; }
@@ -197,4 +197,3 @@ const BaseApi* se_ac_full[] =
     &acf_api.base,
     nullptr
 };
-

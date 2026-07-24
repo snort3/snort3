@@ -134,8 +134,7 @@ static inline int pgm_nak_detect(const RawData& raw)
         /* checksum is expensive... do that only if the length is bad */
         if (header->checksum != 0)
         {
-            const uint16_t checksum =
-                checksum::cksum_add((const uint16_t*)raw.data, raw.len);
+            const uint16_t checksum = checksum::cksum_add(raw.data, raw.len);
 
             if (checksum != 0)
                 return PGM_NAK_ERR;

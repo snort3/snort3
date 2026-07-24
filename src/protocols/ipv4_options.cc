@@ -37,7 +37,7 @@ const IpOptions& IpOptionIteratorIter::operator*() const
 
 IpOptionIterator::IpOptionIterator(const IP4Hdr* const ip4_header, const Packet* const p)
 {
-    const uint8_t* const hdr = (const uint8_t*)ip4_header;
+    const uint8_t* const hdr = reinterpret_cast<const uint8_t*>(ip4_header);
     start_ptr = hdr + IP4_HEADER_LEN;
     end_ptr = start_ptr;
 
@@ -46,7 +46,7 @@ IpOptionIterator::IpOptionIterator(const IP4Hdr* const ip4_header, const Packet*
 
     for (int i = p->num_layers-1; i >= 0; --i)
     {
-        if (p->layers[i].start == (const uint8_t*)ip4_header)
+        if (p->layers[i].start == reinterpret_cast<const uint8_t*>(ip4_header))
         {
             // the Options do not necessarily include
             // the entire header
@@ -60,7 +60,7 @@ IpOptionIterator::IpOptionIterator(const IP4Hdr* const ip4_header, const Packet*
 
 IpOptionIterator::IpOptionIterator(const IP4Hdr* const ip4_header, const uint8_t valid_hdr_len)
 {
-    const uint8_t* const hdr = (const uint8_t*)ip4_header;
+    const uint8_t* const hdr = reinterpret_cast<const uint8_t*>(ip4_header);
     start_ptr = hdr + IP4_HEADER_LEN;
 
     if (valid_hdr_len < IP4_HEADER_LEN)
@@ -80,4 +80,3 @@ IpOptionIteratorIter IpOptionIterator::end() const
 }
 } // namespace ip
 } // namespace snort
-

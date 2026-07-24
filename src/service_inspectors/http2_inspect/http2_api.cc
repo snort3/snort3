@@ -33,7 +33,7 @@ const char* Http2Api::http2_help = "the HTTP/2 inspector";
 
 Inspector* Http2Api::http2_ctor(Module* mod)
 {
-    Http2Module* const http2_mod = (Http2Module*)mod;
+    Http2Module* const http2_mod = static_cast<Http2Module*>(mod);
     return new Http2Inspect(http2_mod->get_once_params());
 }
 
@@ -96,4 +96,3 @@ const BaseApi* sin_http2[] =
 #endif
     nullptr
 };
-

@@ -120,11 +120,12 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
 
     if (data_len < sizeof(DceRpcClHdr))
     {
-        dce_alert(GID_DCE2,  DCE2_CL_DATA_LT_HDR, (dce2CommonStats*)&dce2_udp_stats, *sd);
+        dce_alert(GID_DCE2,  DCE2_CL_DATA_LT_HDR,
+            reinterpret_cast<dce2CommonStats*>(&dce2_udp_stats), *sd);
         return;
     }
 
-    cl_hdr = (const DceRpcClHdr*)data_ptr;
+    cl_hdr = reinterpret_cast<const DceRpcClHdr*>(data_ptr);
 
     dce2_move(data_ptr, data_len, sizeof(DceRpcClHdr));
 
@@ -232,13 +233,15 @@ static DCE2_Ret DCE2_ClHdrChecks(DCE2_SsnData* sd, const DceRpcClHdr* cl_hdr)
 {
     if (DceRpcClRpcVers(cl_hdr) != DCERPC_PROTO_MAJOR_VERS__4)
     {
-        dce_alert(GID_DCE2, DCE2_CL_BAD_MAJOR_VERSION, (dce2CommonStats*)&dce2_udp_stats, *sd);
+        dce_alert(GID_DCE2, DCE2_CL_BAD_MAJOR_VERSION,
+            reinterpret_cast<dce2CommonStats*>(&dce2_udp_stats), *sd);
         return DCE2_RET__ERROR;
     }
 
     if (DceRpcClPduType(cl_hdr) >= DCERPC_PDU_TYPE__MAX)
     {
-        dce_alert(GID_DCE2, DCE2_CL_BAD_PDU_TYPE, (dce2CommonStats*)&dce2_udp_stats, *sd);
+        dce_alert(GID_DCE2, DCE2_CL_BAD_PDU_TYPE,
+            reinterpret_cast<dce2CommonStats*>(&dce2_udp_stats), *sd);
         return DCE2_RET__ERROR;
     }
 
@@ -277,7 +280,7 @@ static DCE2_ClActTracker* DCE2_ClGetActTracker(DCE2_SsnData* sd, DCE2_ClTracker*
             ((dce2UdpProtoConf*)sd->config)->max_activity_trackers)
         {
             dce_alert(GID_DCE2, DCE2_CL_EXCESSIVE_ACTIVITY_TRACKERS,
-                (dce2CommonStats*)&dce2_udp_stats, *sd);
+                reinterpret_cast<dce2CommonStats*>(&dce2_udp_stats), *sd);
             DCE2_ClBlockSession();
             return nullptr;
         }
@@ -367,8 +370,9 @@ static void DCE2_ClRequest(DCE2_SsnData* sd, DCE2_ClActTracker* at, const DceRpc
     DCE2_CopyUuid(&sd->ropts.iface, DceRpcClIface(cl_hdr), DceRpcClByteOrder(cl_hdr));
     sd->ropts.iface_vers = DceRpcClIfaceVers(cl_hdr);
     sd->ropts.opnum = DceRpcClOpnum(cl_hdr);
-    sd->ropts.stub_data = (const uint8_t*)cl_hdr + sizeof(DceRpcClHdr);
-    DceEndianness* endianness = (DceEndianness*)DetectionEngine::get_current_packet()->endianness;
+    sd->ropts.stub_data = reinterpret_cast<const uint8_t*>(cl_hdr) + sizeof(DceRpcClHdr);
+    DceEndianness* endianness = reinterpret_cast<DceEndianness*>(
+        DetectionEngine::get_current_packet()->endianness);
     endianness->hdr_byte_order = DceRpcClByteOrder(cl_hdr);
     endianness->data_byte_order = DceRpcClByteOrder(cl_hdr);
     DCE2_Detect(sd);
@@ -450,7 +454,7 @@ static void DCE2_ClHandleFrag(DCE2_SsnData* sd, DCE2_ClActTracker* at, const Dce
     if (ft->frags->num_nodes >= ((dce2UdpProtoConf*)sd->config)->max_frag_tracker_nodes)
     {
         dce_alert(GID_DCE2, DCE2_CL_EXCESSIVE_FRAGMENTS,
-            (dce2CommonStats*)&dce2_udp_stats, *sd);
+            reinterpret_cast<dce2CommonStats*>(&dce2_udp_stats), *sd);
         DCE2_ClBlockSession();
         return;
     }
@@ -511,7 +515,8 @@ static void DCE2_ClHandleFrag(DCE2_SsnData* sd, DCE2_ClActTracker* at, const Dce
     sd->ropts.first_frag = DceRpcClFirstFrag(cl_hdr);
     DCE2_CopyUuid(&sd->ropts.iface, &ft->iface, DCERPC_BO_FLAG__NONE);
     sd->ropts.iface_vers = ft->iface_vers;
-    DceEndianness* endianness = (DceEndianness*)DetectionEngine::get_current_packet()->endianness;
+    DceEndianness* endianness = reinterpret_cast<DceEndianness*>(
+        DetectionEngine::get_current_packet()->endianness);
     endianness->hdr_byte_order = DceRpcClByteOrder(cl_hdr);
 
     if (ft->data_byte_order != DCE2_SENTINEL)
@@ -524,7 +529,7 @@ static void DCE2_ClHandleFrag(DCE2_SsnData* sd, DCE2_ClActTracker* at, const Dce
     else
         sd->ropts.opnum = DceRpcClOpnum(cl_hdr);
 
-    sd->ropts.stub_data = (const uint8_t*)cl_hdr + sizeof(DceRpcClHdr);
+    sd->ropts.stub_data = reinterpret_cast<const uint8_t*>(cl_hdr) + sizeof(DceRpcClHdr);
 
     DCE2_Detect(sd);
 }
@@ -600,7 +605,8 @@ static void DCE2_ClFragReassemble(
     sd->ropts.first_frag = 1;
     DCE2_CopyUuid(&sd->ropts.iface, &ft->iface, DCERPC_BO_FLAG__NONE);
     sd->ropts.iface_vers = ft->iface_vers;
-    DceEndianness* endianness = (DceEndianness*)DetectionEngine::get_current_packet()->endianness;
+    DceEndianness* endianness = reinterpret_cast<DceEndianness*>(
+        DetectionEngine::get_current_packet()->endianness);
     endianness->hdr_byte_order = DceRpcClByteOrder(cl_hdr);
 
     if (ft->data_byte_order != DCE2_SENTINEL)
@@ -655,7 +661,7 @@ static void DCE2_ClResetFragTracker(DCE2_ClFragTracker* ft)
 
 void DCE2_ClInitRdata(uint8_t* buf)
 {
-    DceRpcClHdr* cl_hdr = (DceRpcClHdr*)buf;
+    DceRpcClHdr* cl_hdr = reinterpret_cast<DceRpcClHdr*>(buf);
 
     /* Set some relevant fields.  These should never get reset */
     cl_hdr->rpc_vers = DCERPC_PROTO_MAJOR_VERS__4;
@@ -668,7 +674,7 @@ static void DCE2_ClSetRdata(DCE2_ClActTracker* at, const DceRpcClHdr* pkt_cl_hdr
     uint8_t* cl_ptr, uint16_t stub_len)
 {
     DCE2_ClFragTracker* ft = &at->frag_tracker;
-    DceRpcClHdr* cl_hdr = (DceRpcClHdr*)cl_ptr;
+    DceRpcClHdr* cl_hdr = reinterpret_cast<DceRpcClHdr*>(cl_ptr);
     const uint16_t opnum = (ft->opnum != DCE2_SENTINEL) ? (uint16_t)ft->opnum : DceRpcClOpnum(
         pkt_cl_hdr);
 

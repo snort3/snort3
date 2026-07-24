@@ -84,7 +84,7 @@ public:
     { return pass_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&pass_stats; }
+    { return reinterpret_cast<PegCount*>(&pass_stats); }
 };
 
 //-------------------------------------------------------------------------
@@ -132,4 +132,3 @@ const BaseApi* act_pass[] =
     &pass_api.base,
     nullptr
 };
-

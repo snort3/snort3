@@ -102,7 +102,7 @@ public:
     { return pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&stats; }
+    { return reinterpret_cast<PegCount*>(&stats); }
 };
 
 class Icmp4Codec : public Codec
@@ -158,7 +158,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
 
     if (snort::get_network_policy()->icmp_checksums() && !valid_checksum_from_daq(raw))
     {
-        uint16_t csum = checksum::cksum_add((const uint16_t*)icmph, raw.len);
+        uint16_t csum = checksum::cksum_add(icmph, raw.len);
 
         if (csum && !codec.is_cooked())
         {
@@ -584,7 +584,7 @@ void Icmp4Codec::update(const ip::IpApi&, const EncodeFlags flags,
     if ( !(flags & UPD_COOKED) || (flags & UPD_REBUILT_FRAG) )
     {
         h->cksum = 0;
-        h->cksum = checksum::icmp_cksum((uint16_t*)h, updated_len);
+        h->cksum = checksum::icmp_cksum(h, updated_len);
     }
 }
 
@@ -642,4 +642,3 @@ const BaseApi* cd_icmp4[] =
     &icmp4_api.base,
     nullptr
 };
-

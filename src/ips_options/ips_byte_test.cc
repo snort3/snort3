@@ -243,7 +243,7 @@ bool ByteTestOption::operator==(const IpsOption& ips) const
     if (!IpsOption::operator==(ips))
         return false;
 
-    const ByteTestOption& rhs = (const ByteTestOption&)ips;
+    const ByteTestOption& rhs = static_cast<const ByteTestOption&>(ips);
     const ByteTestData* left = &config;
     const ByteTestData* right = &rhs.config;
 
@@ -565,7 +565,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* byte_test_ctor(Module* p, IpsInfo&)
 {
-    ByteTestModule* m = (ByteTestModule*)p;
+    ByteTestModule* m = static_cast<ByteTestModule*>(p);
     return new ByteTestOption(m->data);
 }
 

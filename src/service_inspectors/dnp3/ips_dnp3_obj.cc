@@ -99,7 +99,7 @@ bool Dnp3ObjOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const Dnp3ObjOption& rhs = (const Dnp3ObjOption&)ips;
+    const Dnp3ObjOption& rhs = static_cast<const Dnp3ObjOption&>(ips);
 
     return ((group == rhs.group) &&
            (var == rhs.var));
@@ -115,7 +115,8 @@ IpsOption::EvalStatus Dnp3ObjOption::eval(Cursor&, Packet* p)
     if ((p->has_tcp_data() && !p->is_full_pdu()) || !p->flow || !p->dsize)
         return NO_MATCH;
 
-    Dnp3FlowData* fd = (Dnp3FlowData*)p->flow->get_flow_data(Dnp3FlowData::inspector_id);
+    Dnp3FlowData* fd = static_cast<Dnp3FlowData*>(
+        p->flow->get_flow_data(Dnp3FlowData::inspector_id));
 
     if (!fd)
         return NO_MATCH;
@@ -220,7 +221,7 @@ static void dnp3_obj_mod_dtor(Module* m)
 
 static IpsOption* dnp3_obj_ctor(Module* p, IpsInfo&)
 {
-    Dnp3ObjModule* m = (Dnp3ObjModule*)p;
+    Dnp3ObjModule* m = static_cast<Dnp3ObjModule*>(p);
     return new Dnp3ObjOption(m->group, m->var);
 }
 
@@ -260,4 +261,3 @@ static const IpsApi dnp3_obj_api =
 
 // added to snort_plugins in dnp3.cc
 const BaseApi* ips_dnp3_obj = &dnp3_obj_api.base;
-

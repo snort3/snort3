@@ -86,12 +86,12 @@ static void FTPDataProcess(
 
     status = file_flows->file_process(p, file_data, data_length,
         data_ssn->position, data_ssn->direction, data_ssn->path_hash,
-        (uint8_t*)data_ssn->filename, data_ssn->file_xfer_info);
+        reinterpret_cast<uint8_t*>(data_ssn->filename), data_ssn->file_xfer_info);
 
     if (p->active->packet_force_dropped())
     {
-        FtpFlowData* fd = (FtpFlowData*)Stream::get_flow_data(
-                            &data_ssn->ftp_key, FtpFlowData::inspector_id);
+        FtpFlowData* fd = static_cast<FtpFlowData*>(Stream::get_flow_data(
+                            &data_ssn->ftp_key, FtpFlowData::inspector_id));
 
         FTP_SESSION* ftp_ssn = fd ? &fd->session : nullptr;
 
@@ -102,7 +102,8 @@ static void FTPDataProcess(
     /* Filename needs to be set AFTER the first call to file_process( ) */
     if (data_ssn->filename && !(data_ssn->packet_flags & FTPDATA_FLG_FILENAME_SET))
     {
-        file_flows->set_file_name((uint8_t*)data_ssn->filename, data_ssn->file_xfer_info);
+        file_flows->set_file_name(reinterpret_cast<uint8_t*>(data_ssn->filename),
+            data_ssn->file_xfer_info);
         data_ssn->packet_flags |= FTPDATA_FLG_FILENAME_SET;
     }
 
@@ -126,8 +127,8 @@ static int SnortFTPData(Packet* p)
     if (!p->flow)
         return -1;
 
-    FtpDataFlowData* fdfd = (FtpDataFlowData*)
-        p->flow->get_flow_data(FtpDataFlowData::inspector_id);
+    FtpDataFlowData* fdfd = static_cast<FtpDataFlowData*>(
+        p->flow->get_flow_data(FtpDataFlowData::inspector_id));
 
     FTP_DATA_SESSION* data_ssn = fdfd ? &fdfd->session : nullptr;
 
@@ -145,8 +146,8 @@ static int SnortFTPData(Packet* p)
         /* FTP-Data session is in limbo, we need to lookup the control session
          * to figure out what to do. */
 
-        FtpFlowData* ffd = (FtpFlowData*)Stream::get_flow_data(
-            &data_ssn->ftp_key, FtpFlowData::inspector_id);
+        FtpFlowData* ffd = static_cast<FtpFlowData*>(Stream::get_flow_data(
+            &data_ssn->ftp_key, FtpFlowData::inspector_id));
 
         FTP_SESSION* ftp_ssn = ffd ? &ffd->session : nullptr;
 
@@ -234,8 +235,8 @@ void FtpDataFlowData::handle_expected(Packet* p)
     {
         p->flow->set_service(p, fd_svc_name);
 
-        FtpDataFlowData* fd =
-            (FtpDataFlowData*)p->flow->get_flow_data(FtpDataFlowData::inspector_id);
+        FtpDataFlowData* fd = static_cast<FtpDataFlowData*>(
+            p->flow->get_flow_data(FtpDataFlowData::inspector_id));
         if (fd and fd->in_tls)
         {
             OpportunisticTlsEvent evt(p, fd_svc_name);
@@ -265,7 +266,7 @@ const PegInfo* FtpDataModule::get_pegs() const
 { return simple_pegs; }
 
 PegCount* FtpDataModule::get_counts() const
-{ return (PegCount*)&fdstats; }
+{ return reinterpret_cast<PegCount*>(&fdstats); }
 
 ProfileStats* FtpDataModule::get_profile() const
 { return &ftpdataPerfStats; }
@@ -346,4 +347,3 @@ const InspectApi fd_api =
     nullptr, // ssn
     nullptr  // reset
 };
-

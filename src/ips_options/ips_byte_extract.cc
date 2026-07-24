@@ -117,7 +117,7 @@ bool ByteExtractOption::operator==(const IpsOption& ips) const
     if (!IpsOption::operator==(ips))
         return false;
 
-    const ByteExtractOption& rhs = (const ByteExtractOption&)ips;
+    const ByteExtractOption& rhs = static_cast<const ByteExtractOption&>(ips);
     const ByteExtractData* left = &config;
     const ByteExtractData* right = &rhs.config;
 
@@ -389,7 +389,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* byte_extract_ctor(Module* p, IpsInfo&)
 {
-    ExtractModule* m = (ExtractModule*)p;
+    ExtractModule* m = static_cast<ExtractModule*>(p);
     ByteExtractData& data = m->data;
 
     data.var_number = AddVarNameToList(data.name);

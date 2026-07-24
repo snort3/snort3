@@ -38,6 +38,8 @@
 #include "config.h"
 #endif
 
+#include <cstring>
+
 #include "detection/detection_buf.h"
 #include "detection/detection_engine.h"
 #include "framework/data_bus.h"
@@ -57,7 +59,13 @@ using namespace std;
 
 #define RPC_MAX_BUF_SIZE   256
 #define RPC_FRAG_HDR_SIZE  sizeof(uint32_t)
-#define RPC_FRAG_LEN(ptr)  (ntohl(*((const uint32_t*)(ptr))) & 0x7FFFFFFF)
+
+static uint32_t rpc_frag_len(const uint8_t* data)
+{
+    uint32_t value;
+    std::memcpy(&value, data, sizeof(value));
+    return ntohl(value) & 0x7FFFFFFF;
+}
 
 struct RpcBuffer
 {
@@ -209,7 +217,7 @@ static RpcStatus RpcStatefulInspection(RpcSsnData* rsdata, Packet* p)
                 break;
             }
 
-            rsdata->frag_len = RPC_FRAG_LEN(data);
+            rsdata->frag_len = rpc_frag_len(data);
             if (dsize < (RPC_FRAG_HDR_SIZE + rsdata->frag_len))
             {
                 RpcPreprocEvent(rsdata, RPC_INCOMPLETE_SEGMENT);
@@ -266,7 +274,7 @@ static RpcStatus RpcStatefulInspection(RpcSsnData* rsdata, Packet* p)
                 data += need;
                 dsize -= need;
 
-                rsdata->frag_len = RPC_FRAG_LEN(RpcBufData(&rsdata->seg));
+                rsdata->frag_len = rpc_frag_len(RpcBufData(&rsdata->seg));
             }
 
             need = rsdata->frag_len - (RpcBufLen(&rsdata->seg) - RPC_FRAG_HDR_SIZE);
@@ -347,10 +355,7 @@ static RpcStatus RpcPrepFrag(RpcSsnData* rsdata, Packet* p)
     DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
     uint32_t fraghdr = htonl(RpcBufLen(&rsdata->frag));
 
-    buf.data[0] = *((uint8_t*)&fraghdr);
-    buf.data[1] = *(((uint8_t*)&fraghdr) + 1);
-    buf.data[2] = *(((uint8_t*)&fraghdr) + 2);
-    buf.data[3] = *(((uint8_t*)&fraghdr) + 3);
+    std::memcpy(buf.data, &fraghdr, sizeof(fraghdr));
 
     buf.data[0] |= 0x80;
 
@@ -397,7 +402,7 @@ static RpcStatus RpcPrepSeg(RpcSsnData* rsdata, Packet* p)
 static RpcStatus RpcHandleFrag(RpcSsnData* rsdata, const uint8_t* fragment)
 {
     int last_frag = fragment[0] & 0x80;
-    uint32_t frag_len = RPC_FRAG_LEN(fragment);
+    uint32_t frag_len = rpc_frag_len(fragment);
 
     if (frag_len == 0)
         RpcPreprocEvent(rsdata, RPC_ZERO_LENGTH_FRAGMENT);
@@ -613,11 +618,7 @@ static int ConvertRPC(RpcSsnData* rsdata, Packet* p)
 
     /* on match, normalize the data */
 
-    /* cheesy alignment safe fraghdr = *(uint32_t *) data*/
-    *((uint8_t*)&fraghdr)      = data[0];
-    *(((uint8_t*)&fraghdr) + 1) = data[1];
-    *(((uint8_t*)&fraghdr) + 2) = data[2];
-    *(((uint8_t*)&fraghdr) + 3) = data[3];
+    std::memcpy(&fraghdr, data, sizeof(fraghdr));
 
     /* The fragment header is 4 bytes in network byte order */
     fraghdr = ntohl(fraghdr);
@@ -668,10 +669,7 @@ static int ConvertRPC(RpcSsnData* rsdata, Packet* p)
         /* get the fragment length (31 bits) and move the pointer to
            the start of the actual data */
 
-        *((uint8_t*)&fraghdr)       = data_index[0];
-        *(((uint8_t*)&fraghdr) + 1) = data_index[1];
-        *(((uint8_t*)&fraghdr) + 2) = data_index[2];
-        *(((uint8_t*)&fraghdr) + 3) = data_index[3];
+        std::memcpy(&fraghdr, data_index, sizeof(fraghdr));
 
         fraghdr = ntohl(fraghdr);
         length = fraghdr & 0x7FFFFFFF;
@@ -732,10 +730,7 @@ static int ConvertRPC(RpcSsnData* rsdata, Packet* p)
 
     fraghdr = ntohl(decoded_len); /* size */
 
-    buf.data[0] = *((uint8_t*)&fraghdr);
-    buf.data[1] = *(((uint8_t*)&fraghdr) + 1);
-    buf.data[2] = *(((uint8_t*)&fraghdr) + 2);
-    buf.data[3] = *(((uint8_t*)&fraghdr) + 3);
+    std::memcpy(buf.data, &fraghdr, sizeof(fraghdr));
 
     buf.data[0] |=  0x80;             /* Mark as unfragmented */
 
@@ -796,7 +791,8 @@ void RpcDecode::eval(Packet* p)
 
     if ( p->flow )
     {
-        RpcFlowData* fd = (RpcFlowData*)p->flow->get_flow_data(RpcFlowData::inspector_id);
+        RpcFlowData* fd = static_cast<RpcFlowData*>(
+            p->flow->get_flow_data(RpcFlowData::inspector_id));
 
         if ( fd )
             rsdata = &fd->session;
@@ -844,7 +840,7 @@ static void rd_init()
 
 static Inspector* rd_ctor(Module* m)
 {
-    return new RpcDecode((RpcDecodeModule*)m);
+    return new RpcDecode(static_cast<RpcDecodeModule*>(m));
 }
 
 static void rd_dtor(Inspector* p)
@@ -889,4 +885,3 @@ SO_PUBLIC const BaseApi* snort_plugins[] =
 #else
 const BaseApi* sin_rpc_decode = &rd_api.base;
 #endif
-

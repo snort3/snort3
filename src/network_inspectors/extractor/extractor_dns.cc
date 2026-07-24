@@ -35,27 +35,27 @@ using namespace std;
 
 static uint64_t get_trans_id(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_trans_id();
+    return static_cast<const DnsResponseEvent*>(event)->get_trans_id();
 }
 
 static uint64_t get_qclass(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_query_class();
+    return static_cast<const DnsResponseEvent*>(event)->get_query_class();
 }
 
 static uint64_t get_qtype(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_query_type();
+    return static_cast<const DnsResponseEvent*>(event)->get_query_type();
 }
 
 static uint64_t get_rcode(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_rcode();
+    return static_cast<const DnsResponseEvent*>(event)->get_rcode();
 }
 
 static uint64_t get_Z(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_Z();
+    return static_cast<const DnsResponseEvent*>(event)->get_Z();
 }
 
 static const map<string, ExtractorEvent::NumGetFn> sub_num_getters =
@@ -81,67 +81,67 @@ static const char* get_proto(const DataEvent*, const Flow* f)
 
 static const char* get_query(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_query().c_str();
+    return static_cast<const DnsResponseEvent*>(event)->get_query().c_str();
 }
 
 static const char* get_qclass_name(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_query_class_name().c_str();
+    return static_cast<const DnsResponseEvent*>(event)->get_query_class_name().c_str();
 }
 
 static const char* get_qtype_name(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_query_type_name().c_str();
+    return static_cast<const DnsResponseEvent*>(event)->get_query_type_name().c_str();
 }
 
 static const char* get_rcode_name(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_rcode_name().c_str();
+    return static_cast<const DnsResponseEvent*>(event)->get_rcode_name().c_str();
 }
 
 static const char* get_AA(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_AA() ? "T" : "F";
+    return static_cast<const DnsResponseEvent*>(event)->get_AA() ? "T" : "F";
 }
 
 static const char* get_TC(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_TC() ? "T" : "F";
+    return static_cast<const DnsResponseEvent*>(event)->get_TC() ? "T" : "F";
 }
 
 static const char* get_RD(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_RD() ? "T" : "F";
+    return static_cast<const DnsResponseEvent*>(event)->get_RD() ? "T" : "F";
 }
 
 static const char* get_RA(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_RA() ? "T" : "F";
+    return static_cast<const DnsResponseEvent*>(event)->get_RA() ? "T" : "F";
 }
 
 static const char* get_answers(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_answers().c_str();
+    return static_cast<const DnsResponseEvent*>(event)->get_answers().c_str();
 }
 
 static const char* get_TTLs(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_TTLs().c_str();
+    return static_cast<const DnsResponseEvent*>(event)->get_TTLs().c_str();
 }
 
 static const char* get_rejected(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_rejected() ? "T" : "F";
+    return static_cast<const DnsResponseEvent*>(event)->get_rejected() ? "T" : "F";
 }
 
 static const char* get_auth(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_auth().c_str();
+    return static_cast<const DnsResponseEvent*>(event)->get_auth().c_str();
 }
 
 static const char* get_addl(const DataEvent* event, const Flow*)
 {
-    return ((const DnsResponseEvent*)event)->get_addl().c_str();
+    return static_cast<const DnsResponseEvent*>(event)->get_addl().c_str();
 }
 
 static const map<string, ExtractorEvent::BufGetFn> sub_buf_getters =

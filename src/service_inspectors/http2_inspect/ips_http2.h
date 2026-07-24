@@ -74,7 +74,7 @@ public:
     uint32_t hash() const override;
     bool operator==(const snort::IpsOption& ips) const override;
     static snort::IpsOption* opt_ctor(snort::Module* m, IpsInfo&)
-        { return new Http2IpsOption((Http2CursorModule*)m); }
+        { return new Http2IpsOption(static_cast<Http2CursorModule*>(m)); }
     static void opt_dtor(IpsOption* p) { delete p; }
 private:
     const char* const key;
@@ -84,4 +84,3 @@ private:
 };
 
 #endif
-

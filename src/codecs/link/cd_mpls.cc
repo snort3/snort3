@@ -205,7 +205,7 @@ bool MplsCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     if (codec.conf->tunnel_bypass_enabled(TUNNEL_MPLS))
         codec.tunnel_bypass = true;
 
-    codec.lyr_len = (const uint8_t*) mpls_entry - raw.data;
+    codec.lyr_len = reinterpret_cast<const uint8_t*>(mpls_entry) - raw.data;
 
     uint8_t dplt = config.payload_type;
     if (snort.mplsHdr.label == 0)
@@ -348,7 +348,7 @@ static Codec* ctor(Module* m)
 {
     if (m)
     {
-        MplsModule* mod = (MplsModule*) m;
+        MplsModule* mod = static_cast<MplsModule*>(m);
         return new MplsCodec(mod->get_data());
     }
     return new MplsCodec();
@@ -388,4 +388,3 @@ const BaseApi* cd_mpls[] =
     &mpls_api.base,
     nullptr
 };
-

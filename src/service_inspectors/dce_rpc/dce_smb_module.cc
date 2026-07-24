@@ -350,7 +350,7 @@ const PegInfo* Dce2SmbModule::get_pegs() const
 
 PegCount* Dce2SmbModule::get_counts() const
 {
-    return (PegCount*)&dce2_smb_stats;
+    return reinterpret_cast<PegCount*>(&dce2_smb_stats);
 }
 
 ProfileStats* Dce2SmbModule::get_profile() const
@@ -549,4 +549,3 @@ void print_dce2_smb_conf(const dce2SmbProtoConf& config)
     ConfigLogger::log_limit("smb_max_credit", config.smb_max_credit, 0, 1);
     ConfigLogger::log_limit("smb_max_file_chunks", config.smb_max_file_chunks, 0, 1);
 }
-

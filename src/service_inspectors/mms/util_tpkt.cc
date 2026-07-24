@@ -89,7 +89,7 @@ TpktEncapLayerSearchStateType is_tpkt(Cursor* c, TpktFlowData* tpktfd, bool is_f
     }
 
     // overlay the TPKT header at the cursor start
-    const TpktHdr* hdr = (const TpktHdr*)c->start();
+    const TpktHdr* hdr = reinterpret_cast<const TpktHdr*>(c->start());
 
     // check for the static parts of the expected header
     if (hdr->version == 0x03 and hdr->reserved == 0x00)
@@ -140,7 +140,7 @@ static bool is_cotp(Cursor* c)
     if (c->length() >= sizeof(CotpHdr))
     {
         // overlay the struct
-        const CotpHdr* hdr = (const CotpHdr*)c->start();
+        const CotpHdr* hdr = reinterpret_cast<const CotpHdr*>(c->start());
 
         if (hdr->length == 0x02 and hdr->pdu_type == COTP_PDU_TYPE_DT_DATA and
             hdr->last_data_unit == 0x01)
@@ -162,7 +162,7 @@ static bool is_osi_session(Cursor* c)
     if (c->length() >= sizeof(OsiSessionHdr))
     {
         // overlay the struct
-        const OsiSessionHdr* hdr = (const OsiSessionHdr*)c->start();
+        const OsiSessionHdr* hdr = reinterpret_cast<const OsiSessionHdr*>(c->start());
 
         // check #1
         // look for Give Tokens (GT) followed by Data Transfer (DT)
@@ -312,7 +312,8 @@ static bool is_mms(Cursor* c)
 TpktEncapLayerType get_next_tpkt_encap_layer(Packet* p, Cursor* c)
 {
     // create TPKT flow data and add it to the packet
-    TpktFlowData* tpktfd = (TpktFlowData*)p->flow->get_flow_data(TpktFlowData::inspector_id);
+    TpktFlowData* tpktfd = static_cast<TpktFlowData*>(
+        p->flow->get_flow_data(TpktFlowData::inspector_id));
 
     if (!tpktfd)
     {
@@ -415,4 +416,3 @@ TpktAppliSearchStateType tpkt_search_from_osi_acse_layer(Cursor* c)
 {
     return tpkt_internal_search_from_osi_acse_layer(c);
 }
-

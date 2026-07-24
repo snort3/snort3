@@ -72,14 +72,8 @@ struct EthLlcOther
 
     ProtocolId proto() const
     {
-#ifdef __GNUC__
-        // fixing the type_punned pointer problem
-        const uint8_t* tmp1 = &proto_id[0];
-        const uint16_t* const tmp2 = reinterpret_cast<const uint16_t*>(tmp1);
-        return (ProtocolId)ntohs(*tmp2);
-#else
-        return (ProtocolId)ntohs(*((uint16_t*)(&proto_id[0])));
-#endif
+        return static_cast<ProtocolId>(
+            (static_cast<uint16_t>(proto_id[0]) << 8) | proto_id[1]);
     }
 };
 
@@ -202,4 +196,3 @@ const BaseApi* cd_llc[] =
     &llc_api.base,
     nullptr
 };
-

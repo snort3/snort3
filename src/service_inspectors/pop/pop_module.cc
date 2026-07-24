@@ -93,7 +93,7 @@ const PegInfo* PopModule::get_pegs() const
 { return pop_peg_names; }
 
 PegCount* PopModule::get_counts() const
-{ return (PegCount*)&popstats; }
+{ return reinterpret_cast<PegCount*>(&popstats); }
 
 ProfileStats* PopModule::get_profile() const
 { return &popPerfStats; }
@@ -148,4 +148,3 @@ bool PopModule::end(const char*, int, SnortConfig*)
 {
     return true;
 }
-

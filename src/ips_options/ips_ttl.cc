@@ -70,7 +70,7 @@ bool TtlOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const TtlOption& rhs = (const TtlOption&)ips;
+    const TtlOption& rhs = static_cast<const TtlOption&>(ips);
     return ( config == rhs.config );
 }
 
@@ -151,7 +151,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ttl_ctor(Module* p, IpsInfo&)
 {
-    TtlModule* m = (TtlModule*)p;
+    TtlModule* m = static_cast<TtlModule*>(p);
     return new TtlOption(m->data);
 }
 

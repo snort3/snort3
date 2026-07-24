@@ -74,7 +74,7 @@ bool BerDataOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const BerDataOption& rhs = (const BerDataOption&)ips;
+    const BerDataOption& rhs = static_cast<const BerDataOption&>(ips);
 
     if ( type != rhs.type )
         return false;
@@ -167,7 +167,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ber_data_ctor(Module* p, IpsInfo&)
 {
-    BerDataModule* m = (BerDataModule*)p;
+    BerDataModule* m = static_cast<BerDataModule*>(p);
     return new BerDataOption(m->type);
 }
 

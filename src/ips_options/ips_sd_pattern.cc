@@ -131,7 +131,7 @@ static int validate_us_ssn_nodashes(const uint8_t* buf, unsigned long long len)
     if (len != sizeof(ssn_no_dashes))
         return false;
 
-    const ssn_no_dashes* ssn = (const ssn_no_dashes*)buf;
+    const ssn_no_dashes* ssn = reinterpret_cast<const ssn_no_dashes*>(buf);
 
     return strncmp(ssn->area, "000", 3)
         and strncmp(ssn->area, "666", 3)
@@ -144,7 +144,7 @@ static int validate_us_ssn(const uint8_t* buf, unsigned long long len)
     if (len != sizeof(ssn_with_dashes))
         return false;
 
-    const ssn_with_dashes* ssn = (const ssn_with_dashes*)buf;
+    const ssn_with_dashes* ssn = reinterpret_cast<const ssn_with_dashes*>(buf);
 
     return strncmp(ssn->area, "000", 3)
         and strncmp(ssn->area, "666", 3)
@@ -385,7 +385,7 @@ public:
     { return sd_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&s_stats; }
+    { return reinterpret_cast<PegCount*>(&s_stats); }
 
     ProfileStats* get_profile() const override
     { return &sd_pattern_perf_stats; }
@@ -486,7 +486,7 @@ static void mod_dtor(Module* p)
 
 static IpsOption* sd_pattern_ctor(Module* m, IpsInfo&)
 {
-    SdPatternModule* mod = (SdPatternModule*)m;
+    SdPatternModule* mod = static_cast<SdPatternModule*>(m);
     SdPatternConfig c;
     mod->get_data(c);
     return new SdPatternOption(c);

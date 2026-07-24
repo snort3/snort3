@@ -25,6 +25,8 @@
 
 #include "modbus_decode.h"
 
+#include <cstring>
+
 #include "detection/detection_engine.h"
 #include "protocols/packet.h"
 
@@ -297,7 +299,7 @@ static void ModbusCheckResponseLengths(modbus_session_data_t* session, Packet* p
             uint16_t byte_count_16;
 
             /* This function uses a 2-byte byte count!! */
-            byte_count_16 = *(const uint16_t*)(p->data + MODBUS_MIN_LEN);
+            std::memcpy(&byte_count_16, p->data + MODBUS_MIN_LEN, sizeof(byte_count_16));
             byte_count_16 = ntohs(byte_count_16);
             if (modbus_payload_len == MODBUS_DOUBLE_BYTE_COUNT_SIZE + byte_count_16)
                 check_passed = true;
@@ -380,7 +382,7 @@ static void ModbusCheckReservedFuncs(const modbus_header_t* header, Packet* p)
         if (p->dsize < MODBUS_MIN_LEN+2)
             break;
 
-        sub_func = *((const uint16_t*)(p->data + MODBUS_MIN_LEN));
+        std::memcpy(&sub_func, p->data + MODBUS_MIN_LEN, sizeof(sub_func));
         sub_func = ntohs(sub_func);
 
         if ((sub_func == 19) || (sub_func >= 21))
@@ -413,7 +415,7 @@ bool ModbusDecode(Packet* p, ModbusFlowData* mfd)
         return false;
 
     /* Lay the header struct over the payload */
-    header = (const modbus_header_t*)p->data;
+    header = reinterpret_cast<const modbus_header_t*>(p->data);
 
     /* The protocol ID field should read 0x0000 for Modbus. It allows for
        multiplexing with some other protocols over serial line. */
@@ -440,4 +442,3 @@ bool ModbusDecode(Packet* p, ModbusFlowData* mfd)
 
     return true;
 }
-

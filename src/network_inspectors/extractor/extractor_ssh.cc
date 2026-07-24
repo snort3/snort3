@@ -43,56 +43,56 @@ static void trim(string& str)
 template<uint8_t T>
 static const char* get_c2s_cipher(const DataEvent* event, const Flow*)
 {
-    auto e = (const SshAlgoEvent*)event;
+    auto e = static_cast<const SshAlgoEvent*>(event);
     return T == e->get_direction() ? e->get_encryption_algorithms_client_to_server() : "";
 }
 
 template<uint8_t T>
 static const char* get_s2c_cipher(const DataEvent* event, const Flow*)
 {
-    auto e = (const SshAlgoEvent*)event;
+    auto e = static_cast<const SshAlgoEvent*>(event);
     return T == e->get_direction() ? e->get_encryption_algorithms_server_to_client() : "";
 }
 
 template<uint8_t T>
 static const char* get_c2s_mac(const DataEvent* event, const Flow*)
 {
-    auto e = (const SshAlgoEvent*)event;
+    auto e = static_cast<const SshAlgoEvent*>(event);
     return T == e->get_direction() ? e->get_mac_algorithms_client_to_server() : "";
 }
 
 template<uint8_t T>
 static const char* get_s2c_mac(const DataEvent* event, const Flow*)
 {
-    auto e = (const SshAlgoEvent*)event;
+    auto e = static_cast<const SshAlgoEvent*>(event);
     return T == e->get_direction() ? e->get_mac_algorithms_server_to_client() : "";
 }
 
 template<uint8_t T>
 static const char* get_c2s_compression(const DataEvent* event, const Flow*)
 {
-    auto e = (const SshAlgoEvent*)event;
+    auto e = static_cast<const SshAlgoEvent*>(event);
     return T == e->get_direction() ? e->get_compression_algorithms_client_to_server() : "";
 }
 
 template<uint8_t T>
 static const char* get_s2c_compression(const DataEvent* event, const Flow*)
 {
-    auto e = (const SshAlgoEvent*)event;
+    auto e = static_cast<const SshAlgoEvent*>(event);
     return T == e->get_direction() ? e->get_compression_algorithms_server_to_client() : "";
 }
 
 template<uint8_t T>
 static const char* get_kex(const DataEvent* event, const Flow*)
 {
-    auto e = (const SshAlgoEvent*)event;
+    auto e = static_cast<const SshAlgoEvent*>(event);
     return T == e->get_direction() ? e->get_kex_algorithms() : "";
 }
 
 template<uint8_t T>
 static const char* get_host_key(const DataEvent* event, const Flow*)
 {
-    auto e = (const SshAlgoEvent*)event;
+    auto e = static_cast<const SshAlgoEvent*>(event);
     return T == e->get_direction() ? e->get_server_host_key_algorithms() : "";
 }
 

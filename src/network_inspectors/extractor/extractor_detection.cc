@@ -36,7 +36,7 @@ namespace builtin
 {
 static const char* get_msg(const DataEvent* event, const Flow*)
 {
-    return ((const IpsQueuingEvent*)event)->get_stripped_msg().c_str();
+    return static_cast<const IpsQueuingEvent*>(event)->get_stripped_msg().c_str();
 }
 
 static const char* get_proto(const DataEvent*, const Flow*)
@@ -59,12 +59,12 @@ static const char* get_source(const DataEvent*, const Flow* flow)
 
 static uint64_t get_sid(const DataEvent* event, const Flow*)
 {
-    return (uint64_t)((const IpsQueuingEvent*)event)->get_sid();
+    return static_cast<uint64_t>(static_cast<const IpsQueuingEvent*>(event)->get_sid());
 }
 
 static uint64_t get_gid(const DataEvent* event, const Flow*)
 {
-    return (uint64_t)((const IpsQueuingEvent*)event)->get_gid();
+    return static_cast<uint64_t>(static_cast<const IpsQueuingEvent*>(event)->get_gid());
 }
 
 static const map<string, ExtractorEvent::BufGetFn> sub_buf_getters =
@@ -128,7 +128,7 @@ namespace ips
 {
 static const char* get_msg(const DataEvent* event, const Flow*)
 {
-    return ((const IpsRuleEvent*)event)->get_stripped_msg().c_str();
+    return static_cast<const IpsRuleEvent*>(event)->get_stripped_msg().c_str();
 }
 
 static const char* get_action(const DataEvent*, const Flow*)
@@ -144,7 +144,7 @@ static const char* get_action(const DataEvent*, const Flow*)
 
 static const char* get_ips_action(const DataEvent* event, const Flow*)
  {
-    return ((const IpsRuleEvent*)event)->get_action();
+    return static_cast<const IpsRuleEvent*>(event)->get_action();
  }
 
 static const char* whd_to_text(Active::ActiveWouldReason reason)
@@ -186,7 +186,7 @@ static const char* get_ids_reason(const DataEvent*, const Flow*)
 
 static const vector<const char*>& get_refs(const DataEvent* event, const Flow*)
 {
-    return ((const IpsRuleEvent*)event)->get_references();
+    return static_cast<const IpsRuleEvent*>(event)->get_references();
 }
 
 static const char* get_proto(const DataEvent*, const Flow*)
@@ -209,17 +209,17 @@ static const char* get_source(const DataEvent*, const Flow* flow)
 
 static uint64_t get_sid(const DataEvent* event, const Flow*)
 {
-    return (uint64_t)((const IpsRuleEvent*)event)->get_sid();
+    return static_cast<uint64_t>(static_cast<const IpsRuleEvent*>(event)->get_sid());
 }
 
 static uint64_t get_gid(const DataEvent* event, const Flow*)
 {
-    return (uint64_t)((const IpsRuleEvent*)event)->get_gid();
+    return static_cast<uint64_t>(static_cast<const IpsRuleEvent*>(event)->get_gid());
 }
 
 static uint64_t get_rev(const DataEvent* event, const Flow*)
 {
-    return (uint64_t)((const IpsRuleEvent*)event)->get_rev();
+    return static_cast<uint64_t>(static_cast<const IpsRuleEvent*>(event)->get_rev());
 }
 
 static const map<string, ExtractorEvent::BufGetFn> sub_buf_getters =

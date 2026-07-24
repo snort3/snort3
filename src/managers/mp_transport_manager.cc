@@ -76,7 +76,7 @@ MPTransport *MPTransportManager::get_transport(const std::string &name)
 {
     if (auto* p = PluginManager::get_interface(name.c_str()))
     {
-        MPTPlugInterface* mp = (MPTPlugInterface*)p;
+        MPTPlugInterface* mp = static_cast<MPTPlugInterface*>(p);
         return mp->transport;
     }
 
@@ -87,9 +87,8 @@ void MPTransportManager::term()
 {
     auto dtor = [](PlugInterface* pin, void*)
     {
-        MPTPlugInterface* mp = (MPTPlugInterface*)pin;
+        MPTPlugInterface* mp = static_cast<MPTPlugInterface*>(pin);
         mp->api->dtor(mp->transport);
     };
     PluginManager::for_each(PT_MP_TRANSPORT, dtor);
 }
-

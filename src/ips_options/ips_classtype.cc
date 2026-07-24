@@ -83,7 +83,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* classtype_ctor(Module* p, IpsInfo& info)
 {
-    ClassTypeModule* m = (ClassTypeModule*)p;
+    ClassTypeModule* m = static_cast<ClassTypeModule*>(p);
     IpsOption::set_classtype(info, m->classtype.c_str());
     return nullptr;
 }

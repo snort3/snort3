@@ -326,7 +326,7 @@ static void appid_inspector_tterm()
 static Inspector* appid_inspector_ctor(Module* m)
 {
     assert(m);
-    return new AppIdInspector((AppIdModule&)*m);
+    return new AppIdInspector(static_cast<AppIdModule&>(*m));
 }
 
 static void appid_inspector_dtor(Inspector* p)
@@ -374,4 +374,3 @@ const BaseApi* nin_appid[] =
     ips_appid,
     nullptr
 };
-

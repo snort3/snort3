@@ -510,7 +510,7 @@ const std::unordered_map<uint16_t, const char*> ssl_cipher_map =
 
 static const char* get_cipher(const DataEvent* event, const Flow*)
 {
-    auto tls_event = (const SslTlsMetadataBaseEvent*)event;
+    auto tls_event = static_cast<const SslTlsMetadataBaseEvent*>(event);
 
     if (tls_event->get_cipher() < 0)
         return "";
@@ -532,7 +532,7 @@ static const char* get_cipher(const DataEvent* event, const Flow*)
 
 static const char* get_curve(const DataEvent* event, const Flow*)
 {
-    auto tls_event = (const SslTlsMetadataBaseEvent*)event;
+    auto tls_event = static_cast<const SslTlsMetadataBaseEvent*>(event);
 
     if (tls_event->get_curve() < 0)
         return "";
@@ -553,32 +553,32 @@ static const char* get_curve(const DataEvent* event, const Flow*)
 
 static const char* get_version(const DataEvent* event, const Flow*)
 {
-    return get_ssl_string_version(((const SslTlsMetadataBaseEvent*)event)->get_version());
+    return get_ssl_string_version(static_cast<const SslTlsMetadataBaseEvent*>(event)->get_version());
 }
 
 static const char* get_validation_status(const DataEvent* event, const Flow*)
 {
-    return ((const SslTlsMetadataBaseEvent*)event)->get_validation_status().c_str();
+    return static_cast<const SslTlsMetadataBaseEvent*>(event)->get_validation_status().c_str();
 }
 
 static const char* get_subject(const DataEvent* event, const Flow*)
 {
-    return ((const SslTlsMetadataBaseEvent*)event)->get_subject().c_str();
+    return static_cast<const SslTlsMetadataBaseEvent*>(event)->get_subject().c_str();
 }
 
 static const char* get_issuer(const DataEvent* event, const Flow*)
 {
-    return ((const SslTlsMetadataBaseEvent*)event)->get_issuer().c_str();
+    return static_cast<const SslTlsMetadataBaseEvent*>(event)->get_issuer().c_str();
 }
 
 static const char* get_module_identifier(const DataEvent* event, const Flow*)
 {
-    return ((const SslTlsMetadataBaseEvent*)event)->get_module_identifier().c_str();
+    return static_cast<const SslTlsMetadataBaseEvent*>(event)->get_module_identifier().c_str();
 }
 
 static const char* get_server_name(const DataEvent* event, const Flow*)
 {
-    return ((const SslTlsMetadataBaseEvent*)event)->get_server_name().c_str();
+    return static_cast<const SslTlsMetadataBaseEvent*>(event)->get_server_name().c_str();
 }
 
 static const map<string, ExtractorEvent::BufGetFn> buf_getters =

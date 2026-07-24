@@ -105,7 +105,7 @@ bool S7commplusOpcodeOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const S7commplusOpcodeOption& rhs = (const S7commplusOpcodeOption&)ips;
+    const S7commplusOpcodeOption& rhs = static_cast<const S7commplusOpcodeOption&>(ips);
     return ( opcode == rhs.opcode );
 }
 
@@ -119,8 +119,8 @@ IpsOption::EvalStatus S7commplusOpcodeOption::eval(Cursor&, Packet* p)
     if ( !p->is_full_pdu() )
         return NO_MATCH;
 
-    S7commplusFlowData* mfd =
-        (S7commplusFlowData*)p->flow->get_flow_data(S7commplusFlowData::inspector_id);
+    S7commplusFlowData* mfd = static_cast<S7commplusFlowData*>(
+        p->flow->get_flow_data(S7commplusFlowData::inspector_id));
 
     if ( mfd and opcode == mfd->ssn_data.s7commplus_opcode)
         return MATCH;
@@ -190,7 +190,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    S7commplusOpcodeModule* mod = (S7commplusOpcodeModule*)m;
+    S7commplusOpcodeModule* mod = static_cast<S7commplusOpcodeModule*>(m);
     return new S7commplusOpcodeOption(mod->opcode);
 }
 
@@ -225,4 +225,3 @@ static const IpsApi ips_api =
 };
 
 const BaseApi* ips_s7commplus_opcode = &ips_api.base;
-

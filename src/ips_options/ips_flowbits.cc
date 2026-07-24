@@ -213,7 +213,7 @@ bool FlowBitsOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const FlowBitsOption& rhs = (const FlowBitsOption&)ips;
+    const FlowBitsOption& rhs = static_cast<const FlowBitsOption&>(ips);
 
     if ( (config->ids.size() != rhs.config->ids.size()) or
             (config->or_bits != rhs.config->or_bits) or
@@ -503,13 +503,13 @@ static Module* mod_ctor()
 
 static void mod_dtor(Module* m)
 {
-    FlowbitsModule* fb = (FlowbitsModule*)m;
+    FlowbitsModule* fb = static_cast<FlowbitsModule*>(m);
     delete fb;
 }
 
 static IpsOption* flowbits_ctor(Module* p, IpsInfo& info)
 {
-    FlowbitsModule* m = (FlowbitsModule*)p;
+    FlowbitsModule* m = static_cast<FlowbitsModule*>(p);
     FlowBitCheck* fbc = m->get_data();
     FlowBitsOption* opt = new FlowBitsOption(fbc);
 

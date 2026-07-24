@@ -45,7 +45,8 @@ StreamSplitter::Status TelnetSplitter::scan(
     {
         FTP_TELNET_SESSION* ft_ssn = nullptr;
         
-        FtpFlowData* fd = (FtpFlowData*)p->flow->get_flow_data(FtpFlowData::inspector_id);
+        FtpFlowData* fd = static_cast<FtpFlowData*>(
+            p->flow->get_flow_data(FtpFlowData::inspector_id));
         ft_ssn = fd ? &fd->session.ft_ssn : nullptr;
 
         if (ft_ssn && ft_ssn->fallback)
@@ -147,4 +148,3 @@ StreamSplitter::Status TelnetSplitter::scan(
     }
     return SEARCH;
 }
-

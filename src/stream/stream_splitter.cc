@@ -128,7 +128,8 @@ StreamSplitter::Status StopAndWaitSplitter::scan(Packet* pkt, const uint8_t*, ui
     uint32_t, uint32_t*)
 {
     assert(pkt);
-    StopAndWaitSplitter* peer = (StopAndWaitSplitter*)Stream::get_splitter(pkt->flow, !to_server());
+    StopAndWaitSplitter* peer =
+        static_cast<StopAndWaitSplitter*>(Stream::get_splitter(pkt->flow, !to_server()));
 
     if ( peer and peer->saw_data() )
     {

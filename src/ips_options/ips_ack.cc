@@ -73,7 +73,7 @@ bool TcpAckOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const TcpAckOption& rhs = (const TcpAckOption&)ips;
+    const TcpAckOption& rhs = static_cast<const TcpAckOption&>(ips);
     return ( config == rhs.config );
 }
 
@@ -150,7 +150,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ack_ctor(Module* p, IpsInfo&)
 {
-    AckModule* m = (AckModule*)p;
+    AckModule* m = static_cast<AckModule*>(p);
     return new TcpAckOption(m->data);
 }
 

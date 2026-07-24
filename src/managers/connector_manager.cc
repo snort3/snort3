@@ -143,7 +143,7 @@ Connector* ConnectorManager::get_connector(const std::string& connector_name)
 
     for ( auto& sc : piv )
     {
-        ConnectorCommonElem* c = (ConnectorCommonElem*)sc;
+        ConnectorCommonElem* c = static_cast<ConnectorCommonElem*>(sc);
         auto connector_ptr = c->connectors.find(connector_name);
 
         if ( connector_ptr != c->connectors.end() )
@@ -162,7 +162,7 @@ void ConnectorManager::update_thread_connector(
 
     for ( auto& sc : piv )
     {
-        ConnectorCommonElem* c = (ConnectorCommonElem*)sc;
+        ConnectorCommonElem* c = static_cast<ConnectorCommonElem*>(sc);
         auto connector_ptr = c->connectors.find(connector_name);
 
         if (connector_ptr != c->connectors.end())
@@ -185,7 +185,7 @@ void ConnectorManager::thread_reinit()
 
     for ( auto& sc : piv )
     {
-        ConnectorCommonElem* c = (ConnectorCommonElem*)sc;
+        ConnectorCommonElem* c = static_cast<ConnectorCommonElem*>(sc);
 
         for ( auto& conn : c->connectors )
         {
@@ -201,7 +201,7 @@ Connector::Direction ConnectorManager::is_instantiated(const std::string& name)
 
     for ( auto& sc : piv )
     {
-        ConnectorCommonElem* c = (ConnectorCommonElem*)sc;
+        ConnectorCommonElem* c = static_cast<ConnectorCommonElem*>(sc);
 
         if ( !c->connector_common )
             continue;
@@ -214,4 +214,3 @@ Connector::Direction ConnectorManager::is_instantiated(const std::string& name)
 
     return Connector::CONN_UNDEFINED;
 }
-

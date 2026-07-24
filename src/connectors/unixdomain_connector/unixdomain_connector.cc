@@ -57,8 +57,9 @@ static void increase_socket_send_buffer_size(int& sock_handle, uint8_t size_mult
     auto get_opts = getsockopt(sock_handle, SOL_SOCKET, SO_SNDBUF, buf, &buf_len);
     if (get_opts == 0 and buf_len <= 4)
     {
-        LogMessage("UnixDomainC: Socket default send buffer size: %d ; Attempting to increase\n", *(int*)buf);
-        uint32_t socket_size = *(int*)buf * size_mult;
+        LogMessage("UnixDomainC: Socket default send buffer size: %d ; Attempting to increase\n",
+            *reinterpret_cast<int*>(buf));
+        uint32_t socket_size = *reinterpret_cast<int*>(buf) * size_mult;
 
         auto set_opt_res = setsockopt(sock_handle, SOL_SOCKET, SO_SNDBUF, (void*)&socket_size, sizeof(socket_size));
 
@@ -70,7 +71,8 @@ static void increase_socket_send_buffer_size(int& sock_handle, uint8_t size_mult
         {
             get_opts = getsockopt(sock_handle, SOL_SOCKET, SO_SNDBUF, buf, &buf_len);
             if (get_opts == 0)
-                LogMessage("UnixDomainC: Updated Socket send buffer size: %d \n", *(int*)buf);
+                LogMessage("UnixDomainC: Updated Socket send buffer size: %d \n",
+                    *reinterpret_cast<int*>(buf));
         }
     }
     else
@@ -108,7 +110,7 @@ static bool attempt_connection(int& sfd, const char* path, unsigned long timeout
     addr.sun_family = AF_UNIX;
     strncpy(addr.sun_path, path, sizeof(addr.sun_path) - 1);
 
-    if (connect(sfd, (struct sockaddr*)&addr, sizeof(struct sockaddr_un)) == -1) {
+    if (connect(sfd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(struct sockaddr_un)) == -1) {
         if (errno == EINPROGRESS) {
             // Wait for the socket to be writable (connection established or failed)
             fd_set writefds;
@@ -282,7 +284,7 @@ ConnectorMsg* UnixDomainConnector::read_message()
     UnixDomainConnectorMsgHdr hdr;
     ReadDataOutcome outcome;
 
-    outcome = read_message_data(sock_fd, sizeof(hdr), (uint8_t*)&hdr);
+    outcome = read_message_data(sock_fd, sizeof(hdr), reinterpret_cast<uint8_t*>(&hdr));
     if (outcome != SUCCESS)
     {
         if (outcome == CLOSED)
@@ -501,7 +503,7 @@ static UnixDomainConnector* unixdomain_connector_tinit_answer(const UnixDomainCo
 
     unlink(path);
 
-    if (bind(sfd, (struct sockaddr*)&addr, sizeof(struct sockaddr_un)) == -1) {
+    if (bind(sfd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(struct sockaddr_un)) == -1) {
         ErrorMessage("UnixDomainC: bind error: %s \n", strerror(errno));
         close(sfd);
         return nullptr;
@@ -569,12 +571,12 @@ static Connector* unixdomain_connector_tinit(const ConnectorConfig& config) {
 }
 
 static void unixdomain_connector_tterm(Connector* connector) {
-    UnixDomainConnector* unix_conn = (UnixDomainConnector*)connector;
+    UnixDomainConnector* unix_conn = static_cast<UnixDomainConnector*>(connector);
     delete unix_conn;
 }
 
 static ConnectorCommon* unixdomain_connector_ctor(Module* m) {
-    UnixDomainConnectorModule* mod = (UnixDomainConnectorModule*)m;
+    UnixDomainConnectorModule* mod = static_cast<UnixDomainConnectorModule*>(m);
     ConnectorCommon* unix_connector_common = new ConnectorCommon(mod->get_and_clear_config());
     return unix_connector_common;
 }
@@ -654,7 +656,7 @@ void UnixDomainConnectorListener::start_accepting_connections(UnixDomainConnecto
 
         unlink(sock_path);
 
-        if (bind(sock_fd, (struct sockaddr*)&addr, sizeof(struct sockaddr_un)) == -1) {
+        if (bind(sock_fd, reinterpret_cast<struct sockaddr*>(&addr), sizeof(struct sockaddr_un)) == -1) {
             ErrorMessage("UnixDomainC: bind error: %s \n", strerror(errno));
             close(sock_fd);
             return;

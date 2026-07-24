@@ -100,7 +100,8 @@ HttpInspect const* HttpIpsOption::eval_helper(Packet* p)
     const HttpFlowData* const hi_flow_data = HttpInspect::http_get_flow_data(p->flow);
 
     const HttpInspect* const hi = (hi_flow_data->is_for_httpx()) ?
-        (HttpInspect*)(p->flow->assistant_gadget) : (HttpInspect*)(p->flow->gadget);
+        static_cast<HttpInspect*>(p->flow->assistant_gadget) :
+        static_cast<HttpInspect*>(p->flow->gadget);
 
     return hi;
 }

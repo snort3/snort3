@@ -80,7 +80,7 @@ bool IpOptOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const IpOptOption& rhs = (const IpOptOption&)ips;
+    const IpOptOption& rhs = static_cast<const IpOptOption&>(ips);
     const IpOptionData* left = &config;
     const IpOptionData* right = &rhs.config;
 
@@ -238,7 +238,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ipopts_ctor(Module* p, IpsInfo&)
 {
-    IpOptModule* m = (IpOptModule*)p;
+    IpOptModule* m = static_cast<IpOptModule*>(p);
     return new IpOptOption(m->data);
 }
 

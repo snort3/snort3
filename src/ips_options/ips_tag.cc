@@ -155,7 +155,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* tag_ctor(Module* p, IpsInfo& info)
 {
-    TagModule* m = (TagModule*)p;
+    TagModule* m = static_cast<TagModule*>(p);
     IpsOption::set_tag(info, m->get_data());
     return nullptr;
 }

@@ -65,7 +65,8 @@ StreamSplitter::Status FtpDataSplitter::scan(Packet* pkt, const uint8_t*, uint32
         bytes += len;
         if ( len != expected_seg_size )
         {
-            fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::inspector_id);
+            fdfd = static_cast<FtpDataFlowData*>(
+                flow->get_flow_data(FtpDataFlowData::inspector_id));
             if (!fdfd)
                 return SEARCH;
 
@@ -84,7 +85,8 @@ StreamSplitter::Status FtpDataSplitter::scan(Packet* pkt, const uint8_t*, uint32
 
         if (flow->assistant_gadget && (flags & FTPDATA_FLG_FLUSH))
         {
-            fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::inspector_id);
+            fdfd = static_cast<FtpDataFlowData*>(
+                flow->get_flow_data(FtpDataFlowData::inspector_id));
             if (!fdfd)
                 return SEARCH;
 
@@ -96,7 +98,8 @@ StreamSplitter::Status FtpDataSplitter::scan(Packet* pkt, const uint8_t*, uint32
 
     if ((segs >= 2 and bytes >= min) or (pkt->ptrs.tcph and pkt->ptrs.tcph->is_fin()))
     {
-        fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::inspector_id);
+        fdfd = static_cast<FtpDataFlowData*>(
+            flow->get_flow_data(FtpDataFlowData::inspector_id));
         if (!fdfd)
             return SEARCH;
 
@@ -119,7 +122,8 @@ bool FtpDataSplitter::finish(Flow* flow)
     {
         status = false;
 
-        FtpDataFlowData* fdfd = (FtpDataFlowData*)flow->get_flow_data(FtpDataFlowData::inspector_id);
+        FtpDataFlowData* fdfd = static_cast<FtpDataFlowData*>(
+            flow->get_flow_data(FtpDataFlowData::inspector_id));
         if ( fdfd )
         {
             if ( !fdfd->eof_handled )
@@ -139,4 +143,3 @@ bool FtpDataSplitter::finish(Flow* flow)
 
     return status;
 }
-

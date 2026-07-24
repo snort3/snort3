@@ -192,7 +192,8 @@ unsigned ImapFlowData::inspector_id = 0;
 
 static IMAPData* get_session_data(Flow* flow)
 {
-    ImapFlowData* fd = (ImapFlowData*)flow->get_flow_data(ImapFlowData::inspector_id);
+    ImapFlowData* fd = static_cast<ImapFlowData*>(
+        flow->get_flow_data(ImapFlowData::inspector_id));
     return fd ? &fd->session : nullptr;
 }
 
@@ -942,7 +943,7 @@ static void imap_term()
 
 static Inspector* imap_ctor(Module* m)
 {
-    ImapModule* mod = (ImapModule*)m;
+    ImapModule* mod = static_cast<ImapModule*>(m);
     return new Imap(mod->get_data());
 }
 

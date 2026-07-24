@@ -59,7 +59,7 @@ public:
     bool operator==(const snort::IpsOption& ips) const override;
 
     static IpsOption* opt_ctor(snort::Module* m, IpsInfo&)
-    { return new HttpVersionIpsOption((HttpVersionRuleOptModule*)m); }
+    { return new HttpVersionIpsOption(static_cast<HttpVersionRuleOptModule*>(m)); }
 
     static void opt_dtor(snort::IpsOption* p) { delete p; }
 

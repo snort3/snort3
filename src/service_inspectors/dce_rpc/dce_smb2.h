@@ -278,12 +278,12 @@ struct SmbKeyHash
 {
     size_t operator()(const Smb2SidHashKey& key) const
     {
-        return do_hash((const uint32_t*)&key);
+        return do_hash(reinterpret_cast<const uint32_t*>(&key));
     }
 
     size_t operator()(const snort::FlowKey& key) const
     {
-        return do_hash_flow_key((const uint32_t*)&key);
+        return do_hash_flow_key(reinterpret_cast<const uint32_t*>(&key));
     }
 
 private:
@@ -822,4 +822,3 @@ void DCE2_Smb2Process(DCE2_Smb2SsnData* ssd);
 DCE2_SmbVersion DCE2_Smb2Version(const snort::Packet* p);
 
 #endif  /* _DCE_SMB2_H_ */
-

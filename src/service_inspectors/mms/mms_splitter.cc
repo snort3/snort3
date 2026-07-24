@@ -153,7 +153,8 @@ StreamSplitter::Status MmsSplitter::scan(Packet* p, const uint8_t* data, uint32_
         return StreamSplitter::ABORT;
 
     // create TPKT flow data and add it to the packet
-    TpktFlowData* tpktfd = (TpktFlowData*)p->flow->get_flow_data(TpktFlowData::inspector_id);
+    TpktFlowData* tpktfd = static_cast<TpktFlowData*>(
+        p->flow->get_flow_data(TpktFlowData::inspector_id));
 
     if (!tpktfd)
     {
@@ -280,7 +281,8 @@ StreamSplitter::Status MmsSplitter::scan(Packet* p, const uint8_t* data, uint32_
     }
 
     // save the MMS offset
-    MmsFlowData* mmsfd = (MmsFlowData*)p->flow->get_flow_data(MmsFlowData::inspector_id);
+    MmsFlowData* mmsfd = static_cast<MmsFlowData*>(
+        p->flow->get_flow_data(MmsFlowData::inspector_id));
     if (!mmsfd)
     {
         mmsfd = new MmsFlowData;
@@ -360,4 +362,3 @@ StreamSplitter::Status MmsSplitter::scan(Packet* p, const uint8_t* data, uint32_
     tpktfd->reset();
     return StreamSplitter::ABORT;
 }
-

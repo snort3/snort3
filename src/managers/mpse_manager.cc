@@ -45,7 +45,7 @@ PlugInterface* MpseManager::get_interface(const MpseApi*)
 
 const MpseApi* MpseManager::get_search_api(const char* name)
 {
-    const MpseApi* api = (const MpseApi*)PluginManager::get_api(name);
+    const MpseApi* api = reinterpret_cast<const MpseApi*>(PluginManager::get_api(name));
 
     if ( api and api->init )
         api->init();
@@ -129,4 +129,3 @@ bool MpseManager::parallel_compiles(const MpseApi* api)
     assert(api);
     return (api->flags & MPSE_MTBLD) != 0;
 }
-

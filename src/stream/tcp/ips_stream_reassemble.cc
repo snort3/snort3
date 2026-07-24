@@ -91,7 +91,7 @@ bool ReassembleOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const ReassembleOption& rhs = (const ReassembleOption&)ips;
+    const ReassembleOption& rhs = static_cast<const ReassembleOption&>(ips);
 
     if ( (srod.enable == rhs.srod.enable) &&
         (srod.direction == rhs.srod.direction) &&
@@ -108,7 +108,7 @@ IpsOption::EvalStatus ReassembleOption::eval(Cursor&, Packet* pkt)
     if (!pkt->flow || !pkt->ptrs.tcph)
         return NO_MATCH;
 
-    Flow* flow = (Flow*)pkt->flow;
+    Flow* flow = pkt->flow;
 
     if ( !srod.enable ) /* Turn it off */
     {
@@ -225,7 +225,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* reassemble_ctor(Module* p, IpsInfo&)
 {
-    ReassembleModule* m = (ReassembleModule*)p;
+    ReassembleModule* m = static_cast<ReassembleModule*>(p);
     return new ReassembleOption(m->srod);
 }
 
@@ -272,7 +272,8 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
 {
     // initialization code here
     REQUIRE( ( strcmp(ips_stream_reassemble->name, s_name) == 0 ) );
-    ReassembleModule* reassembler = ( ReassembleModule* )ips_stream_reassemble->mod_ctor();
+    ReassembleModule* reassembler =
+        static_cast<ReassembleModule*>(ips_stream_reassemble->mod_ctor());
     REQUIRE( reassembler != nullptr );
 
     TcpNormalizerFactory::initialize();
@@ -316,4 +317,3 @@ TEST_CASE("IPS Stream Reassemble", "[ips_stream_reassemble][stream_tcp]")
 }
 
 #endif
-

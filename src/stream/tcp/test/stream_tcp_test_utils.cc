@@ -33,17 +33,21 @@
 
 using namespace snort;
 
+static constexpr unsigned packet_pad = 2;
+static constexpr unsigned tcp_header_offset = packet_pad + 34;
+static_assert(tcp_header_offset % alignof(tcp::TCPHdr) == 0);
+
 // SYN PACKET
 // IP 192.168.0.89.9012 > p3nlh044.shr.prod.phx3.secureserver.net.http: Flags [S], seq 9050, win
 // 8192, length 0
-static const uint8_t cooked_syn[] =
-    "\x00\x21\x91\x01\xb2\x48\xaa\x00\x04\x00\x0a\x04\x08\x00\x45\x00\x00\x28\x00\x01\x00\x00\x40\x06\x88\x96\xc0\xa8\x00\x59\x48\xa7\xe8\x90\x23\x34\x00\x50\x00\x00\x23\x5a\x00\x00\x00\x00\x50\x02\x20\x00\x56\xcb\x00\x00";
+alignas(tcp::TCPHdr) static const uint8_t cooked_syn[] =
+    "\x00\x00\x00\x21\x91\x01\xb2\x48\xaa\x00\x04\x00\x0a\x04\x08\x00\x45\x00\x00\x28\x00\x01\x00\x00\x40\x06\x88\x96\xc0\xa8\x00\x59\x48\xa7\xe8\x90\x23\x34\x00\x50\x00\x00\x23\x5a\x00\x00\x00\x00\x50\x02\x20\x00\x56\xcb\x00\x00";
 
 // SYN-ACK PACKET
 // IP p3nlh044.shr.prod.phx3.secureserver.net.http > 192.168.0.89.9012: Flags [S.], seq 9025, ack
 // 9051, win 8192, length 0
-static const uint8_t cooked_syn_ack[] =
-    "\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x08\x00\x45\x00\x00\x28\x00\x01\x00\x00\x40\x06\x88\x96\x48\xa7\xe8\x90\xc0\xa8\x00\x59\x00\x50\x23\x34\x00\x00\x23\x41\x00\x00\x23\x5b\x50\x12\x20\x00\x33\x79\x00\x00";
+alignas(tcp::TCPHdr) static const uint8_t cooked_syn_ack[] =
+    "\x00\x00\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x08\x00\x45\x00\x00\x28\x00\x01\x00\x00\x40\x06\x88\x96\x48\xa7\xe8\x90\xc0\xa8\x00\x59\x00\x50\x23\x34\x00\x00\x23\x41\x00\x00\x23\x5b\x50\x12\x20\x00\x33\x79\x00\x00";
 
 DAQ_PktHdr_t daqHdr;
 
@@ -79,8 +83,8 @@ Packet* get_syn_packet(Flow* flow)
 {
     Packet* pkt = init_packet(flow, PKT_FROM_CLIENT);
 
-    pkt->pkt = cooked_syn;
-    pkt->ptrs.tcph = ( const tcp::TCPHdr* )( cooked_syn + 34 );
+    pkt->pkt = cooked_syn + packet_pad;
+    pkt->ptrs.tcph = reinterpret_cast<const tcp::TCPHdr*>(cooked_syn + tcp_header_offset);
 
     return pkt;
 }
@@ -89,9 +93,8 @@ Packet* get_syn_ack_packet(Flow* flow)
 {
     Packet* pkt = init_packet(flow, PKT_FROM_SERVER);
 
-    pkt->pkt = cooked_syn_ack;
-    pkt->ptrs.tcph = ( const tcp::TCPHdr* )( cooked_syn_ack + 34 );
+    pkt->pkt = cooked_syn_ack + packet_pad;
+    pkt->ptrs.tcph = reinterpret_cast<const tcp::TCPHdr*>(cooked_syn_ack + tcp_header_offset);
 
     return pkt;
 }
-

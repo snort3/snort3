@@ -48,7 +48,7 @@ using namespace snort;
 static uint32_t getApciType(const Packet* p)
 {
     // overlay a generic apci struct over the first three bytes of the stream
-    const Iec104GenericApci* apci = (const Iec104GenericApci*) p->data;
+    const Iec104GenericApci* apci = reinterpret_cast<const Iec104GenericApci*>(p->data);
 
     // default apci type to a non-used value
     // if this somehow makes it through it errors out in the apci type switch
@@ -102,7 +102,7 @@ bool Iec104Decode(Packet* p, Iec104FlowData* iec104fd)
         case IEC104_APCI_TYPE_U:
         {
             // build up the APCI
-            const Iec104ApciU* apci = (const Iec104ApciU*) p->data;
+            const Iec104ApciU* apci = reinterpret_cast<const Iec104ApciU*>(p->data);
 
             // set the apci type
             iec104fd->ssn_data.iec104_apci_type = apciType;
@@ -120,7 +120,7 @@ bool Iec104Decode(Packet* p, Iec104FlowData* iec104fd)
         case IEC104_APCI_TYPE_S:
         {
             // build up the APCI
-            const Iec104ApciS* apci = (const Iec104ApciS*) p->data;
+            const Iec104ApciS* apci = reinterpret_cast<const Iec104ApciS*>(p->data);
 
             // set the apci type
             iec104fd->ssn_data.iec104_apci_type = apciType;
@@ -143,7 +143,7 @@ bool Iec104Decode(Packet* p, Iec104FlowData* iec104fd)
             }
 
             // build up the APCI
-            const Iec104ApciI* apci = (const Iec104ApciI*) p->data;
+            const Iec104ApciI* apci = reinterpret_cast<const Iec104ApciI*>(p->data);
 
             // set the apci type
             iec104fd->ssn_data.iec104_apci_type = apciType;
@@ -162,4 +162,3 @@ bool Iec104Decode(Packet* p, Iec104FlowData* iec104fd)
 
     return true;
 }
-

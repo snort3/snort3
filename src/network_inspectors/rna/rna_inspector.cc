@@ -311,7 +311,7 @@ static void rna_inspector_pterm()
 }
 
 static Inspector* rna_inspector_ctor(Module* m)
-{ return new RnaInspector((RnaModule*)m); }
+{ return new RnaInspector(static_cast<RnaModule*>(m)); }
 
 static void rna_inspector_dtor(Inspector* p)
 { delete p; }

@@ -55,7 +55,7 @@ const PegInfo* MmsModule::get_pegs() const
 
 PegCount* MmsModule::get_counts() const
 {
-    return (PegCount*)&mms_stats;
+    return reinterpret_cast<PegCount*>(&mms_stats);
 }
 
 //-------------------------------------------------------------------------
@@ -80,4 +80,3 @@ MmsModule::MmsModule() :
     Module(MMS_NAME, MMS_HELP)
 {
 }
-

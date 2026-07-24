@@ -89,7 +89,7 @@ const PegInfo* DnsModule::get_pegs() const
 { return dns_peg_names; }
 
 PegCount* DnsModule::get_counts() const
-{ return (PegCount*)&dnsstats; }
+{ return reinterpret_cast<PegCount*>(&dnsstats); }
 
 ProfileStats* DnsModule::get_profile() const
 { return &dnsPerfStats; }
@@ -100,4 +100,3 @@ const DnsConfig* DnsModule::get_config()
     config = nullptr;
     return tmp;
 }
-

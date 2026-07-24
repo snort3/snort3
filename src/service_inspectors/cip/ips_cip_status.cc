@@ -88,7 +88,8 @@ IpsOption::EvalStatus CipStatusOption::eval(Cursor&, Packet* p)
     if ( !p->flow || !p->is_full_pdu() )
         return NO_MATCH;
 
-    CipFlowData* fd = (CipFlowData*)p->flow->get_flow_data(CipFlowData::inspector_id);
+    CipFlowData* fd = static_cast<CipFlowData*>(
+        p->flow->get_flow_data(CipFlowData::inspector_id));
 
     if (!fd)
         return NO_MATCH;
@@ -207,4 +208,3 @@ static const IpsApi ips_api =
 };
 
 const BaseApi* ips_cip_status = &ips_api.base;
-

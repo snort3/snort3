@@ -75,7 +75,7 @@ bool OpcuaNodeIdOption::operator==(const IpsOption& ips) const
         return false;
     }
 
-    const OpcuaNodeIdOption& rhs = (const OpcuaNodeIdOption&) ips;
+    const OpcuaNodeIdOption& rhs = static_cast<const OpcuaNodeIdOption&>(ips);
     return (node_id == rhs.node_id);
 }
 
@@ -89,7 +89,8 @@ IpsOption::EvalStatus OpcuaNodeIdOption::eval(Cursor&, Packet* p)
         return NO_MATCH;
     }
 
-    OpcuaFlowData* opcuafd = (OpcuaFlowData*) p->flow->get_flow_data(OpcuaFlowData::inspector_id);
+    OpcuaFlowData* opcuafd = static_cast<OpcuaFlowData*>(
+        p->flow->get_flow_data(OpcuaFlowData::inspector_id));
     if ( !opcuafd )
     {
         return NO_MATCH;
@@ -191,7 +192,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    const OpcuaNodeIdModule* mod = (const OpcuaNodeIdModule*) m;
+    const OpcuaNodeIdModule* mod = static_cast<const OpcuaNodeIdModule*>(m);
     return new OpcuaNodeIdOption(mod->node_id);
 }
 
@@ -227,4 +228,3 @@ static const IpsApi ips_api =
 };
 
 const BaseApi* ips_opcua_node_id = &ips_api.base;
-

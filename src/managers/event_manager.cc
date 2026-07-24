@@ -87,7 +87,7 @@ void EventManager::release_plugins()
 // lookups
 
 static Output* get_out(const char* key)
-{ return (Output*)PluginManager::get_interface(key); }
+{ return static_cast<Output*>(PluginManager::get_interface(key)); }
 
 static Output* get_out(const char* key, const char* pfx)
 {
@@ -230,4 +230,3 @@ void EventManager::call_loggers(
     for ( auto p : s_loggers.outputs )
         p->log(pkt, message, event);
 }
-

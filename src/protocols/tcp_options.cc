@@ -50,7 +50,7 @@ const TcpOptIteratorIter& TcpOptIteratorIter::operator++()
 
 TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const Packet* const p)
 {
-    const uint8_t* const hdr = (const uint8_t*)tcp_header;
+    const uint8_t* const hdr = reinterpret_cast<const uint8_t*>(tcp_header);
     start_ptr = hdr + TCP_MIN_HEADER_LEN;
     end_ptr = start_ptr; // == begin()
 
@@ -59,7 +59,7 @@ TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const Packet* con
 
     for (int i = p->num_layers-1; i >= 0; --i)
     {
-        if (p->layers[i].start == (const uint8_t*)tcp_header)
+        if (p->layers[i].start == reinterpret_cast<const uint8_t*>(tcp_header))
         {
             // Can't use the tph_header->hlen() because the entire may
             // be an EOF or invalid options. However, this layers length
@@ -74,7 +74,7 @@ TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const Packet* con
 
 TcpOptIterator::TcpOptIterator(const TCPHdr* const tcp_header, const uint32_t valid_hdr_len)
 {
-    const uint8_t* const hdr = (const uint8_t*)tcp_header;
+    const uint8_t* const hdr = reinterpret_cast<const uint8_t*>(tcp_header);
     start_ptr = hdr + TCP_MIN_HEADER_LEN;
 
     if (valid_hdr_len < TCP_MIN_HEADER_LEN)
@@ -94,4 +94,3 @@ TcpOptIteratorIter TcpOptIterator::end() const
 }
 } // namespace ip
 } // namespace snort
-

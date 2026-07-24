@@ -108,7 +108,7 @@ public:
     { return pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&stats; }
+    { return reinterpret_cast<PegCount*>(&stats); }
 };
 
 class TcpCodec : public Codec
@@ -180,7 +180,7 @@ bool TcpCodec::valid_checksum4(const RawData& raw, DecodeData& snort)
     ph.hdr.protocol = IpProtocol::TCP;
     ph.hdr.len = htons((uint16_t) raw.len);
 
-    return (checksum::tcp_cksum((const uint16_t*) raw.data, raw.len, ph) == 0);
+    return (checksum::tcp_cksum(raw.data, raw.len, ph) == 0);
 }
 
 bool TcpCodec::valid_checksum6(const RawData& raw, const CodecData& codec, DecodeData& snort)
@@ -194,7 +194,7 @@ bool TcpCodec::valid_checksum6(const RawData& raw, const CodecData& codec, Decod
     ph6.hdr.protocol = codec.ip6_csum_proto;
     ph6.hdr.len = htons((uint16_t) raw.len);
 
-    return (checksum::tcp_cksum((const uint16_t*) raw.data, raw.len, ph6) == 0);
+    return (checksum::tcp_cksum(raw.data, raw.len, ph6) == 0);
 }
 
 bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
@@ -696,7 +696,7 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         ps.hdr.zero = 0;
         ps.hdr.protocol = IpProtocol::TCP;
         ps.hdr.len = htons((uint16_t)len);
-        tcph_out->th_sum = checksum::tcp_cksum((uint16_t*)tcph_out, len, ps);
+        tcph_out->th_sum = checksum::tcp_cksum(tcph_out, len, ps);
     }
     else if (ip_api.is_ip6())
     {
@@ -709,7 +709,7 @@ bool TcpCodec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
         ps6.hdr.zero = 0;
         ps6.hdr.protocol = IpProtocol::TCP;
         ps6.hdr.len = htons((uint16_t)len);
-        tcph_out->th_sum = checksum::tcp_cksum((uint16_t*)tcph_out, len, ps6);
+        tcph_out->th_sum = checksum::tcp_cksum(tcph_out, len, ps6);
     }
 
     return true;
@@ -735,7 +735,7 @@ void TcpCodec::update(const ip::IpApi& api, const EncodeFlags flags, uint8_t* ra
             ps.hdr.zero = 0;
             ps.hdr.protocol = IpProtocol::TCP;
             ps.hdr.len = htons((uint16_t)updated_len);
-            h->th_sum = checksum::tcp_cksum((uint16_t*)h, updated_len, ps);
+            h->th_sum = checksum::tcp_cksum(h, updated_len, ps);
         }
         else
         {
@@ -746,7 +746,7 @@ void TcpCodec::update(const ip::IpApi& api, const EncodeFlags flags, uint8_t* ra
             ps6.hdr.zero = 0;
             ps6.hdr.protocol = IpProtocol::TCP;
             ps6.hdr.len = htons((uint16_t)updated_len);
-            h->th_sum = checksum::tcp_cksum((uint16_t*)h, updated_len, ps6);
+            h->th_sum = checksum::tcp_cksum(h, updated_len, ps6);
         }
     }
 }
@@ -833,4 +833,3 @@ const BaseApi* cd_tcp[] =
     &tcp_api.base,
     nullptr
 };
-

@@ -135,5 +135,4 @@ const PegInfo* TelnetModule::get_pegs() const
 { return telnet_pegs; }
 
 PegCount* TelnetModule::get_counts() const
-{ return (PegCount*)&tnstats; }
-
+{ return reinterpret_cast<PegCount*>(&tnstats); }

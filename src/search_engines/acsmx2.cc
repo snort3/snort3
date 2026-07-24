@@ -480,7 +480,7 @@ static int List_FreeTransTable(ACSM_STRUCT2* acsm)
 
 // Converts row of states from list to a full vector format
 
-static inline int List_ConvToFull(ACSM_STRUCT2* acsm, acstate_t state, acstate_t* full)
+static inline int List_ConvToFull(ACSM_STRUCT2* acsm, acstate_t state, uint8_t* full)
 {
     int tcnt = 0;
     trans_node_t* t = acsm->acsmTransTable[state];
@@ -493,13 +493,17 @@ static inline int List_ConvToFull(ACSM_STRUCT2* acsm, acstate_t state, acstate_t
         switch (acsm->sizeofstate)
         {
         case 1:
-            *((uint8_t*)full + t->key) = (uint8_t)t->next_state;
+            full[t->key] = static_cast<uint8_t>(t->next_state);
             break;
         case 2:
-            *((uint16_t*)full + t->key) = (uint16_t)t->next_state;
+        {
+            const uint16_t next_state = static_cast<uint16_t>(t->next_state);
+            memcpy(full + (t->key * sizeof(next_state)), &next_state, sizeof(next_state));
             break;
+        }
         default:
-            full[t->key] = t->next_state;
+            memcpy(full + (t->key * sizeof(t->next_state)),
+                &t->next_state, sizeof(t->next_state));
             break;
         }
 
@@ -733,25 +737,30 @@ static int Conv_List_To_Full(ACSM_STRUCT2* acsm)
 
     for (k = 0; k < (acstate_t)acsm->acsmNumStates; k++)
     {
-        p = (acstate_t*)AC_MALLOC_DFA(acsm->sizeofstate * (acsm->acsmAlphabetSize + 2),
-            acsm->sizeofstate);
+        p = static_cast<acstate_t*>(AC_MALLOC_DFA(
+            acsm->sizeofstate * (acsm->acsmAlphabetSize + 2),
+            acsm->sizeofstate));
         if (p == nullptr)
             return -1;
 
         switch (acsm->sizeofstate)
         {
         case 1:
-            List_ConvToFull(acsm, k, (acstate_t*)((uint8_t*)p + 2));
-            *((uint8_t*)p) = 0;
-            *((uint8_t*)p + 1) = 0;
+        {
+            auto* row = reinterpret_cast<uint8_t*>(p);
+            List_ConvToFull(acsm, k, row + 2);
+            memset(row, 0, 2);
             break;
+        }
         case 2:
-            List_ConvToFull(acsm, k, (acstate_t*)((uint16_t*)p + 2));
-            *((uint16_t*)p) = 0;
-            *((uint16_t*)p + 1) = 0;
+        {
+            auto* row = reinterpret_cast<uint8_t*>(p);
+            List_ConvToFull(acsm, k, row + (2 * sizeof(uint16_t)));
+            memset(row, 0, 2 * sizeof(uint16_t));
             break;
+        }
         default:
-            List_ConvToFull(acsm, k, (p + 2));
+            List_ConvToFull(acsm, k, reinterpret_cast<uint8_t*>(p + 2));
             p[0] = 0;
             p[1] = 0; /* no matches yet */
             break;
@@ -825,10 +834,10 @@ static void acsmUpdateMatchStates(ACSM_STRUCT2* acsm)
             switch (acsm->sizeofstate)
             {
             case 1:
-                *((uint8_t*)p + 1) = 1;
+                *(reinterpret_cast<uint8_t*>(p) + 1) = 1;
                 break;
             case 2:
-                *((uint16_t*)p + 1) = 1;
+                *(reinterpret_cast<uint16_t*>(p) + 1) = 1;
                 break;
             default:
                 p[1] = 1;
@@ -1030,14 +1039,14 @@ int acsm_search_dfa_full(
     case 1:
     {
         uint8_t* ps;
-        uint8_t** NextState = (uint8_t**)acsm->acsmNextState;
+        uint8_t** NextState = reinterpret_cast<uint8_t**>(acsm->acsmNextState);
         AC_SEARCH
     }
     break;
     case 2:
     {
         uint16_t* ps;
-        uint16_t** NextState = (uint16_t**)acsm->acsmNextState;
+        uint16_t** NextState = reinterpret_cast<uint16_t**>(acsm->acsmNextState);
         AC_SEARCH
     }
     break;
@@ -1130,14 +1139,14 @@ int acsm_search_dfa_full_all(
     case 1:
     {
         uint8_t* ps;
-        uint8_t** NextState = (uint8_t**)acsm->acsmNextState;
+        uint8_t** NextState = reinterpret_cast<uint8_t**>(acsm->acsmNextState);
         AC_SEARCH_ALL
     }
     break;
     case 2:
     {
         uint16_t* ps;
-        uint16_t** NextState = (uint16_t**)acsm->acsmNextState;
+        uint16_t** NextState = reinterpret_cast<uint16_t**>(acsm->acsmNextState);
         AC_SEARCH_ALL
     }
     break;
@@ -1350,4 +1359,3 @@ int acsmPrintSummaryInfo2()
 
     return 0;
 }
-

@@ -118,5 +118,4 @@ const PegInfo* FileConnectorModule::get_pegs() const
 { return file_connector_pegs; }
 
 PegCount* FileConnectorModule::get_counts() const
-{ return (PegCount*)&file_connector_stats; }
-
+{ return reinterpret_cast<PegCount*>(&file_connector_stats); }

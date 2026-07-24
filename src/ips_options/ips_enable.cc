@@ -88,7 +88,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* enable_ctor(Module* p, IpsInfo& info)
 {
-    EnableModule* m = (EnableModule*)p;
+    EnableModule* m = static_cast<EnableModule*>(p);
     IpsOption::set_enabled(info, m->enable);
     return nullptr;
 }

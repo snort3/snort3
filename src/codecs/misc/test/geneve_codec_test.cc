@@ -119,7 +119,7 @@ TEST(geneve_codec_tests, decode)
 
 TEST(geneve_codec_tests, geneve_lyr)
 {
-    geneve::GeneveLyr* glyr = (geneve::GeneveLyr*)geneve_pkt_data;
+    geneve::GeneveLyr* glyr = reinterpret_cast<geneve::GeneveLyr*>(geneve_pkt_data);
 
     std::vector<geneve::GeneveOptData> opt_data = glyr->get_opt_data();
 
@@ -148,7 +148,7 @@ TEST(geneve_codec_tests, geneve_lyr)
 
 TEST(geneve_codec_tests, geneve_lyr_no_options)
 {
-    geneve::GeneveLyr* glyr = (geneve::GeneveLyr*)geneve_pkt_data_no_options;
+    geneve::GeneveLyr* glyr = reinterpret_cast<geneve::GeneveLyr*>(geneve_pkt_data_no_options);
     std::vector<geneve::GeneveOptData> opt_data = glyr->get_opt_data();
     CHECK( opt_data.empty() );
 }
@@ -160,4 +160,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

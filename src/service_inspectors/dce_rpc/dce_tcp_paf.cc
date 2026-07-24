@@ -53,7 +53,7 @@ StreamSplitter::Status Dce2TcpSplitter::scan(
 {
     DCE2_TcpSsnData* sd = get_dce2_tcp_session_data(pkt->flow);
 
-    if (dce2_paf_abort((DCE2_SsnData*)sd))
+    if (dce2_paf_abort(sd ? &sd->sd : nullptr))
         return StreamSplitter::ABORT;
 
     uint32_t n = 0;
@@ -108,8 +108,9 @@ StreamSplitter::Status Dce2TcpSplitter::scan(
             if (state.frag_len < sizeof(DceRpcCoHdr))
             {
                 if (sd)
-                    dce_alert(GID_DCE2, DCE2_CO_FRAG_LEN_LT_HDR, (dce2CommonStats*)&dce2_tcp_stats,
-                        *(DCE2_SsnData*)sd);
+                    dce_alert(GID_DCE2, DCE2_CO_FRAG_LEN_LT_HDR,
+                        reinterpret_cast<dce2CommonStats*>(&dce2_tcp_stats),
+                        sd->sd);
                 return StreamSplitter::ABORT;
             }
 
@@ -143,4 +144,3 @@ StreamSplitter::Status Dce2TcpSplitter::scan(
 
     return StreamSplitter::SEARCH;
 }
-

@@ -86,7 +86,7 @@ DceContextData* DceContextData::get_current_data(const Packet* p)
     if ( !ips_id )
         return nullptr;
 
-    DceContextData* dcd = (DceContextData*)DetectionEngine::get_data(ips_id, p->context);
+    DceContextData* dcd = static_cast<DceContextData*>(DetectionEngine::get_data(ips_id, p->context));
 
     if ( !dcd )
         return nullptr;
@@ -139,7 +139,7 @@ void DceContextData::clear_current_ropts(IpsContext* context, DCE2_TransType tra
     if ( !ips_id )
         return;
 
-    DceContextData* dcd = (DceContextData*)DetectionEngine::get_data(ips_id, context);
+    DceContextData* dcd = static_cast<DceContextData*>(DetectionEngine::get_data(ips_id, context));
 
     if ( dcd )
     {
@@ -160,4 +160,3 @@ void DceContextData::clear()
     current_ropts = nullptr;
     no_inspect = false;
 }
-

@@ -25,6 +25,7 @@
 
 #include "netflow.h"
 
+#include <cstring>
 #include <fstream>
 #include <mutex>
 #include <sys/stat.h>
@@ -47,6 +48,14 @@
 using namespace snort;
 
 static unsigned pub_id = 0;
+
+template<typename T>
+static T read_unaligned(const uint8_t* data)
+{
+    T value;
+    std::memcpy(&value, data, sizeof(value));
+    return value;
+}
 
 // -----------------------------------------------------------------------------
 // static functions
@@ -170,7 +179,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
             if( field_length != sizeof(record.initiator_port) )
                 return false;
 
-            record.initiator_port = ntohs(*(const uint16_t*) data);
+            record.initiator_port = ntohs(read_unaligned<uint16_t>(data));
             break;
 
         case NETFLOW_SRC_IP:
@@ -180,7 +189,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
                 return false;
 
             // Invalid source IP address provided
-            if ( record.initiator_ip.set((const uint32_t *)data, AF_INET) != SFIP_SUCCESS )
+            if ( record.initiator_ip.set(data, AF_INET) != SFIP_SUCCESS )
                 return false;
 
             record_status.src = true;
@@ -189,7 +198,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_SRC_IPV6:
 
             // Invalid source IP address provided
-            if ( record.initiator_ip.set((const uint32_t *)data, AF_INET6) != SFIP_SUCCESS )
+            if ( record.initiator_ip.set(data, AF_INET6) != SFIP_SUCCESS )
                 return false;
 
             record_status.src = true;
@@ -201,7 +210,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
             if( field_length != sizeof(record.responder_port) )
                 return false;
 
-            record.responder_port = ntohs(*(const uint16_t*) data);
+            record.responder_port = ntohs(read_unaligned<uint16_t>(data));
             break;
 
         case NETFLOW_DST_IP:
@@ -211,7 +220,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
                 return false;
 
             // Invalid destination IP address
-            if ( record.responder_ip.set((const uint32_t *)data, AF_INET) != SFIP_SUCCESS )
+            if ( record.responder_ip.set(data, AF_INET) != SFIP_SUCCESS )
                 return false;
 
             record_status.dst = true;
@@ -220,7 +229,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_DST_IPV6:
 
             // Invalid destination IP address
-            if ( record.responder_ip.set((const uint32_t *)data, AF_INET6) != SFIP_SUCCESS )
+            if ( record.responder_ip.set(data, AF_INET6) != SFIP_SUCCESS )
                 return false;
 
             record_status.dst = true;
@@ -233,7 +242,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
                 return false;
 
             // Invalid next-hop IP address
-            if ( record.next_hop_ip.set((const uint32_t *)data, AF_INET) != SFIP_SUCCESS )
+            if ( record.next_hop_ip.set(data, AF_INET) != SFIP_SUCCESS )
                 return false;
             break;
 
@@ -242,7 +251,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
             if (field_length != sizeof(uint32_t))
                 return false;
 
-            last_pkt_time = ntohl(*(const uint32_t*)data)/1000;
+            last_pkt_time = ntohl(read_unaligned<uint32_t>(data))/1000;
             // last_pkt_time (LAST_SWITCHED) is defined as the system uptime
             // at which the flow was seen. If this is >= to the current uptime
             // something has gone wrong - use the NetFlow header unix time instead.
@@ -263,7 +272,7 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
             if (field_length != sizeof(uint32_t))
                 return false;
 
-            first_pkt_time = ntohl(*(const uint32_t*)data)/1000;
+            first_pkt_time = ntohl(read_unaligned<uint32_t>(data))/1000;
             if (first_pkt_time >= sys_uptime)
                 record.first_pkt_second = unix_secs;
             else
@@ -279,11 +288,13 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_IN_BYTES:
 
             if ( field_length == sizeof(uint64_t) )
-                record.initiator_bytes = ntohll(*(const uint64_t*)data);
+                record.initiator_bytes = ntohll(read_unaligned<uint64_t>(data));
             else if ( field_length == sizeof(uint32_t) )
-                record.initiator_bytes = (uint64_t)ntohl(*(const uint32_t*)data);
+                record.initiator_bytes = static_cast<uint64_t>(
+                    ntohl(read_unaligned<uint32_t>(data)));
             else if ( field_length == sizeof(uint16_t) )
-                record.initiator_bytes = (uint64_t)ntohs(*(const uint16_t*) data);
+                record.initiator_bytes = static_cast<uint64_t>(
+                    ntohs(read_unaligned<uint16_t>(data)));
             else
                 return false;
 
@@ -293,11 +304,13 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_IN_PKTS:
 
             if ( field_length == sizeof(uint64_t) )
-                record.initiator_pkts = ntohll(*(const uint64_t*)data);
+                record.initiator_pkts = ntohll(read_unaligned<uint64_t>(data));
             else if ( field_length == sizeof(uint32_t) )
-                record.initiator_pkts = (uint64_t)ntohl(*(const uint32_t*)data);
+                record.initiator_pkts = static_cast<uint64_t>(
+                    ntohl(read_unaligned<uint32_t>(data)));
             else if ( field_length == sizeof(uint16_t) )
-                record.initiator_pkts = (uint64_t)ntohs(*(const uint16_t*) data);
+                record.initiator_pkts = static_cast<uint64_t>(
+                    ntohs(read_unaligned<uint16_t>(data)));
             else
                 return false;
 
@@ -325,9 +338,10 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_SNMP_IN:
 
             if ( field_length == sizeof(uint32_t) )
-                record.nf_snmp_in = ntohl(*(const uint32_t*)data);
+                record.nf_snmp_in = ntohl(read_unaligned<uint32_t>(data));
             else if ( field_length == sizeof(uint16_t) )
-                record.nf_snmp_in = (uint32_t)ntohs(*(const uint16_t*) data);
+                record.nf_snmp_in = static_cast<uint32_t>(
+                    ntohs(read_unaligned<uint16_t>(data)));
             else
                 return false;
 
@@ -336,9 +350,10 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_SNMP_OUT:
 
             if ( field_length == sizeof(uint32_t) )
-                record.nf_snmp_out = ntohl(*(const uint32_t*)data);
+                record.nf_snmp_out = ntohl(read_unaligned<uint32_t>(data));
             else if ( field_length == sizeof(uint16_t) )
-                record.nf_snmp_out = (uint32_t)ntohs(*(const uint16_t*) data);
+                record.nf_snmp_out = static_cast<uint32_t>(
+                    ntohs(read_unaligned<uint16_t>(data)));
             else
                 return false;
 
@@ -347,9 +362,10 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_SRC_AS:
 
             if( field_length == sizeof(uint16_t) )
-                record.nf_src_as = (uint32_t)ntohs(*(const uint16_t*) data);
+                record.nf_src_as = static_cast<uint32_t>(
+                    ntohs(read_unaligned<uint16_t>(data)));
             else if( field_length == sizeof(uint32_t) )
-                record.nf_src_as = ntohl(*(const uint32_t*)data);
+                record.nf_src_as = ntohl(read_unaligned<uint32_t>(data));
             else
                 return false;
             break;
@@ -357,9 +373,10 @@ static bool version_9_record_update(const unsigned char* data, uint32_t unix_sec
         case NETFLOW_DST_AS:
 
             if( field_length == sizeof(uint16_t) )
-                record.nf_dst_as = (uint32_t)ntohs(*(const uint16_t*) data);
+                record.nf_dst_as = static_cast<uint32_t>(
+                    ntohs(read_unaligned<uint16_t>(data)));
             else if( field_length == sizeof(uint32_t) )
-                record.nf_dst_as = ntohl(*(const uint32_t*)data);
+                record.nf_dst_as = ntohl(read_unaligned<uint32_t>(data));
             else
                 return false;
             break;
@@ -408,7 +425,7 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
 
     end = data + size;
 
-    pheader = (const NetFlow9Hdr *)data;
+    pheader = reinterpret_cast<const NetFlow9Hdr*>(data);
     header.flow_count = ntohs(pheader->flow_count);
 
     // invalid header flow count
@@ -436,7 +453,7 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
         if ( data + sizeof(*flowset) > end )
             return false;
 
-        flowset = (const NetFlow9FlowSet *)data;
+        flowset = reinterpret_cast<const NetFlow9FlowSet*>(data);
 
         // length includes the flowset_id and length fields
         length = ntohs(flowset->field_length);
@@ -570,7 +587,7 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
                 if ( data + sizeof(*t_template) > flowset_end )
                     return false;
 
-                t_template = (const NetFlow9Template *)data;
+                t_template = reinterpret_cast<const NetFlow9Template*>(data);
                 field_count = ntohs(t_template->template_field_count);
 
                 data += sizeof(*t_template);
@@ -585,7 +602,7 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
                     if ( data + sizeof(*field) > flowset_end )
                         return false;
 
-                    field = (const NetFlow9TemplateField *)data;
+                    field = reinterpret_cast<const NetFlow9TemplateField*>(data);
                     tf.emplace_back(ntohs(field->field_type), ntohs(field->field_length));
                     data += sizeof(*field);
                 }
@@ -649,9 +666,9 @@ static bool decode_netflow_v5(const unsigned char* data, uint16_t size,
     const NetFlow5RecordHdr *precord;
     const NetFlow5RecordHdr *end;
 
-    end = (const NetFlow5RecordHdr *)(data + size);
+    end = reinterpret_cast<const NetFlow5RecordHdr*>(data + size);
 
-    pheader = (const NetFlow5Hdr *)data;
+    pheader = reinterpret_cast<const NetFlow5Hdr*>(data);
     header.flow_count  = ntohs(pheader->flow_count);
 
     // invalid header flow count
@@ -661,7 +678,7 @@ static bool decode_netflow_v5(const unsigned char* data, uint16_t size,
     const int zone = p->pkth->ingress_index;
 
     data += sizeof(NetFlow5Hdr);
-    precord = (const NetFlow5RecordHdr *)data;
+    precord = reinterpret_cast<const NetFlow5RecordHdr*>(data);
 
     // Invalid flow count
     if ( (precord + header.flow_count) > end )
@@ -760,7 +777,7 @@ static bool validate_netflow(const Packet* p, const NetFlowRules* p_rules)
     if( size < sizeof(NetFlow5Hdr))
         return false;
 
-    version = ntohs(*((const uint16_t *)data));
+    version = ntohs(read_unaligned<uint16_t>(data));
 
     if( version == 5 )
     {
@@ -1007,7 +1024,7 @@ NetFlowInspector::NetFlowInspector(const NetFlowConfig* pc)
             dump_cache = new DumpCache;
     }
 
-    NetFlowModule* mod = (NetFlowModule*)PigPen::get_module(NETFLOW_NAME);
+    NetFlowModule* mod = static_cast<NetFlowModule*>(PigPen::get_module(NETFLOW_NAME));
 
     if (mod)
     {
@@ -1101,7 +1118,7 @@ static void netflow_mod_dtor(Module* m)
 
 static Inspector* netflow_ctor(Module* m)
 {
-    NetFlowModule *mod = (NetFlowModule*)m;
+    NetFlowModule* mod = static_cast<NetFlowModule*>(m);
     return new NetFlowInspector(mod->get_data());
 }
 

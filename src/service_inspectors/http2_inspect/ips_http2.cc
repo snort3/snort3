@@ -74,7 +74,8 @@ IpsOption::EvalStatus Http2IpsOption::eval(Cursor& c, Packet* p)
 
     InspectionBuffer hb;
 
-    if (! ((Http2Inspect*)(p->flow->gadget))->get_buf((unsigned)buffer_index, p, hb))
+    if (!static_cast<Http2Inspect*>(p->flow->gadget)->get_buf(
+        static_cast<unsigned>(buffer_index), p, hb))
         return NO_MATCH;
 
     c.set(key, hb.data, hb.len);
@@ -212,4 +213,3 @@ const BaseApi* ips_http2_frame_header = &frame_header_api.base;
 #ifdef REG_TEST
 const BaseApi* ips_http2_decoded_header = &decoded_header_api.base;
 #endif
-

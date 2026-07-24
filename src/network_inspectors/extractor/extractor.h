@@ -81,7 +81,7 @@ public:
     { return extractor_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&extractor_stats; }
+    { return reinterpret_cast<PegCount*>(&extractor_stats); }
 
     snort::ProfileStats* get_profile() const override
     { return &extractor_perf_stats; }

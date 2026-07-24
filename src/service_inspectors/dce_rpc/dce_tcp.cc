@@ -57,7 +57,8 @@ unsigned Dce2Tcp::pub_id = 0;
 
 DCE2_TcpSsnData* get_dce2_tcp_session_data(Flow* flow)
 {
-    Dce2TcpFlowData* fd = (Dce2TcpFlowData*)flow->get_flow_data(Dce2TcpFlowData::inspector_id);
+    Dce2TcpFlowData* fd = static_cast<Dce2TcpFlowData*>(
+        flow->get_flow_data(Dce2TcpFlowData::inspector_id));
 
     // check whether this session was expected and mark it as realized
     if (fd && fd->state == DCE2_TCP_FLOW__EXPECTED)
@@ -190,7 +191,7 @@ static void mod_dtor(Module* m)
 
 static Inspector* dce2_tcp_ctor(Module* m)
 {
-    Dce2TcpModule* mod = (Dce2TcpModule*)m;
+    Dce2TcpModule* mod = static_cast<Dce2TcpModule*>(m);
     dce2TcpProtoConf config;
     mod->get_data(config);
     return new Dce2Tcp(config);
@@ -242,4 +243,3 @@ const InspectApi dce2_tcp_api =
     nullptr, // ssn
     nullptr  // reset
 };
-

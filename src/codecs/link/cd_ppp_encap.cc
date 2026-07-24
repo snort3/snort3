@@ -68,7 +68,8 @@ bool PppEncap::decode(const RawData& raw, CodecData& codec, DecodeData&)
     }
     else
     {
-        protocol = ntohs(*((const uint16_t*)raw.data));
+        protocol = static_cast<uint16_t>((static_cast<uint16_t>(raw.data[0]) << 8) |
+            raw.data[1]);
         codec.lyr_len = 2;
     }
 
@@ -171,4 +172,3 @@ const BaseApi* cd_pppencap[] =
     &pppencap_api.base,
     nullptr
 };
-

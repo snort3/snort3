@@ -63,8 +63,8 @@ void HttpMsgStart::derive_version_id()
     {
         if (session_data->for_httpx)
         {
-            const Http2FlowData* const h2i_flow_data =
-                (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+            const Http2FlowData* const h2i_flow_data = static_cast<Http2FlowData*>(
+                flow->get_flow_data(Http2FlowData::inspector_id));
 
             version_id = (h2i_flow_data) ? VERS_2_0 : VERS_3_0;
         }
@@ -129,4 +129,3 @@ void HttpMsgStart::derive_version_id()
         create_event(EVENT_VERSION_0);
     }
 }
-

@@ -36,7 +36,7 @@ unsigned HttpCursorData::id = 0;
 
 Inspector* HttpApi::http_ctor(Module* mod)
 {
-    HttpModule* const http_mod = (HttpModule*)mod;
+    HttpModule* const http_mod = static_cast<HttpModule*>(mod);
     return new HttpInspect(http_mod->get_once_params());
 }
 
@@ -145,4 +145,3 @@ const BaseApi* sin_http[] =
     ips_http_version_match,
     nullptr
 };
-

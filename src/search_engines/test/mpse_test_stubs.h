@@ -51,9 +51,9 @@ extern void* s_list;
 
 extern MpseAgent s_agent;
 
-extern const snort::BaseApi* se_ac_bnfa;
-extern const snort::BaseApi* se_ac_full;
-extern const snort::BaseApi* se_hyperscan;
+extern const snort::BaseApi* se_ac_bnfa[];
+extern const snort::BaseApi* se_ac_full[];
+extern const snort::BaseApi* se_hyperscan[];
 
 struct ExpectedMatch
 {
@@ -68,4 +68,3 @@ int check_mpse_match(
     void* pid, void* /*tree*/, int index, void* /*context*/, void* /*neg_list*/);
 
 #endif
-

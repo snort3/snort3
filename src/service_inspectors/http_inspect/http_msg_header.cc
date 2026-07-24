@@ -223,9 +223,10 @@ const Field& HttpMsgHeader::get_true_ip_addr()
     else
     {
         const size_t addr_length = (tmp_sfip.is_ip6() ? 4 : 1);
-        uint32_t* const addr_buf = new uint32_t[addr_length];
-        memcpy(addr_buf, tmp_sfip.get_ptr(), addr_length * sizeof(uint32_t));
-        true_ip_addr.set(addr_length * sizeof(uint32_t), (uint8_t*)addr_buf, true);
+        const size_t addr_size = addr_length * sizeof(uint32_t);
+        uint8_t* const addr_buf = new uint8_t[addr_size];
+        memcpy(addr_buf, tmp_sfip.get_ptr(), addr_size);
+        true_ip_addr.set(addr_size, addr_buf, true);
     }
     return true_ip_addr;
 }

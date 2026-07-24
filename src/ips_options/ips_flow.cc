@@ -93,7 +93,7 @@ bool FlowCheckOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const FlowCheckOption& rhs = (const FlowCheckOption&)ips;
+    const FlowCheckOption& rhs = static_cast<const FlowCheckOption&>(ips);
     const FlowCheckData* left = &config;
     const FlowCheckData* right = &rhs.config;
 
@@ -377,7 +377,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* flow_ctor(Module* p, IpsInfo& info)
 {
-    FlowModule* m = (FlowModule*)p;
+    FlowModule* m = static_cast<FlowModule*>(p);
 
     if ( m->data.stateless )
         IpsOption::set_stateless(info);

@@ -73,7 +73,7 @@ bool FileTypeOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    return types == ((const FileTypeOption&) ips).types;
+    return types == (static_cast<const FileTypeOption&>(ips)).types;
 }
 
 IpsOption::EvalStatus FileTypeOption::eval(Cursor&, Packet* pkt)
@@ -239,7 +239,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* file_type_ctor(Module* m, IpsInfo&)
 {
-    FileTypeModule* mod = (FileTypeModule*)m;
+    FileTypeModule* mod = static_cast<FileTypeModule*>(m);
     return new FileTypeOption(mod->types);
 }
 

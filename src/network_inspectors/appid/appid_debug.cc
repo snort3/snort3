@@ -126,8 +126,8 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
 
     if (!session)
     {
-        sip = (const ip::snort_in6_addr*)ip1;
-        dip = (const ip::snort_in6_addr*)ip2;
+        sip = reinterpret_cast<const ip::snort_in6_addr*>(ip1);
+        dip = reinterpret_cast<const ip::snort_in6_addr*>(ip2);
         sport = port1;
         dport = port2;
         sgroup = group1;
@@ -137,8 +137,8 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
     {
         if (session->initiator_port == port1)
         {
-            sip = (const ip::snort_in6_addr*)ip1;
-            dip = (const ip::snort_in6_addr*)ip2;
+            sip = reinterpret_cast<const ip::snort_in6_addr*>(ip1);
+            dip = reinterpret_cast<const ip::snort_in6_addr*>(ip2);
             sport = port1;
             dport = port2;
             sgroup = group1;
@@ -146,8 +146,8 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
         }
         else
         {
-            sip = (const ip::snort_in6_addr*)ip2;
-            dip = (const ip::snort_in6_addr*)ip1;
+            sip = reinterpret_cast<const ip::snort_in6_addr*>(ip2);
+            dip = reinterpret_cast<const ip::snort_in6_addr*>(ip1);
             sport = port2;
             dport = port1;
             sgroup = group2;
@@ -157,8 +157,8 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
     else if (memcmp(session->get_initiator_ip().get_ip6_ptr(),
                 ip1, sizeof(ip::snort_in6_addr)) == 0)
     {
-        sip = (const ip::snort_in6_addr*)ip1;
-        dip = (const ip::snort_in6_addr*)ip2;
+        sip = reinterpret_cast<const ip::snort_in6_addr*>(ip1);
+        dip = reinterpret_cast<const ip::snort_in6_addr*>(ip2);
         sport = port1;
         dport = port2;
         sgroup = group1;
@@ -166,8 +166,8 @@ void AppIdDebug::activate(const uint32_t* ip1, const uint32_t* ip2, uint16_t por
     }
     else
     {
-        sip = (const ip::snort_in6_addr*)ip2;
-        dip = (const ip::snort_in6_addr*)ip1;
+        sip = reinterpret_cast<const ip::snort_in6_addr*>(ip2);
+        dip = reinterpret_cast<const ip::snort_in6_addr*>(ip1);
         sport = port2;
         dport = port1;
         sgroup = group2;

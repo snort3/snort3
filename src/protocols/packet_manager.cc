@@ -622,7 +622,7 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
             icmph->code = icmp::IcmpCode::PORT_UNREACH;
         }
 
-        icmph->csum = checksum::icmp_cksum((uint16_t*)buf.data(), buf.size());
+        icmph->csum = checksum::icmp_cksum(buf.data(), buf.size());
 
         if (encode(p, flags, inner_ip_index, IpProtocol::ICMPV4, buf))
         {
@@ -686,7 +686,7 @@ const uint8_t* PacketManager::encode_reject(UnreachResponse type,
         ps6.hdr.protocol = IpProtocol::ICMPV6;
         ps6.hdr.len = htons((uint16_t)(ip_len));
 
-        icmph->csum = checksum::icmp_cksum((uint16_t*)buf.data(), ip_len, ps6);
+        icmph->csum = checksum::icmp_cksum(buf.data(), ip_len, ps6);
 
         if (encode(p, flags, inner_ip_index, IpProtocol::ICMPV6, buf))
         {

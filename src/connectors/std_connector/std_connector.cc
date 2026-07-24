@@ -154,7 +154,7 @@ const PegInfo* StdConnectorModule::get_pegs() const
 { return std_connector_pegs; }
 
 PegCount* StdConnectorModule::get_counts() const
-{ return (PegCount*)&std_connector_stats; }
+{ return reinterpret_cast<PegCount*>(&std_connector_stats); }
 
 //-------------------------------------------------------------------------
 // connector stuff
@@ -267,7 +267,7 @@ static void mod_dtor(Module* m)
 
 static Connector* std_connector_tinit(const ConnectorConfig& config)
 {
-    const StdConnectorConfig& conf = (const StdConnectorConfig&)config;
+    const StdConnectorConfig& conf = static_cast<const StdConnectorConfig&>(config);
 
     return new StdConnector(conf);
 }
@@ -277,7 +277,7 @@ static void std_connector_tterm(Connector* connector)
 
 static ConnectorCommon* std_connector_ctor(Module* m)
 {
-    StdConnectorModule* mod = (StdConnectorModule*)m;
+    StdConnectorModule* mod = static_cast<StdConnectorModule*>(m);
     ConnectorCommon* std_connector_common = new StdConnectorCommon(mod->get_and_clear_config());
 
     return std_connector_common;
@@ -318,4 +318,3 @@ const BaseApi* std_connector[] =
     &std_connector_api.base,
     nullptr
 };
-

@@ -32,7 +32,7 @@ TpktAppliSearchStateType tpkt_internal_search_from_cotp_layer(Cursor* tpkt_cur)
     if (tpkt_cur->length() >= sizeof(CotpHdr))
     {
         // overlay the struct
-        const CotpHdr* hdr = (const CotpHdr*)tpkt_cur->start();
+        const CotpHdr* hdr = reinterpret_cast<const CotpHdr*>(tpkt_cur->start());
 
         if (hdr->pdu_type == COTP_PDU_TYPE_DT_DATA)
         {
@@ -70,4 +70,3 @@ TpktAppliSearchStateType tpkt_internal_search_from_cotp_layer(Cursor* tpkt_cur)
     // unsupported COTP
     return TPKT_APPLI_SEARCH_STATE__EXIT;
 }
-

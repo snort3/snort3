@@ -131,7 +131,8 @@ unsigned PopFlowData::inspector_id = 0;
 
 static POPData* get_session_data(Flow* flow)
 {
-    PopFlowData* fd = (PopFlowData*)flow->get_flow_data(PopFlowData::inspector_id);
+    PopFlowData* fd = static_cast<PopFlowData*>(
+        flow->get_flow_data(PopFlowData::inspector_id));
     return fd ? &fd->session : nullptr;
 }
 
@@ -842,7 +843,7 @@ static void pop_term()
 
 static Inspector* pop_ctor(Module* m)
 {
-    PopModule* mod = (PopModule*)m;
+    PopModule* mod = static_cast<PopModule*>(m);
     return new Pop(mod->get_data());
 }
 

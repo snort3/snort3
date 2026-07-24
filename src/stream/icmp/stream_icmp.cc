@@ -86,7 +86,7 @@ NORETURN_ASSERT void StreamIcmp::eval(Packet*)
 StreamIcmpConfig* get_icmp_cfg(Inspector* ins)
 {
     assert(ins);
-    return ((StreamIcmp*)ins)->config;
+    return static_cast<StreamIcmp*>(ins)->config;
 }
 
 //-------------------------------------------------------------------------
@@ -104,7 +104,7 @@ static Session* icmp_ssn(Flow* lws)
 
 static Inspector* icmp_ctor(Module* m)
 {
-    StreamIcmpModule* mod = (StreamIcmpModule*)m;
+    StreamIcmpModule* mod = static_cast<StreamIcmpModule*>(m);
     return new StreamIcmp(mod->get_data());
 }
 
@@ -152,4 +152,3 @@ static const InspectApi icmp_api =
 };
 
 const BaseApi* nin_stream_icmp = &icmp_api.base;
-

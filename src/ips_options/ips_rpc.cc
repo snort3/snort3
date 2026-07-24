@@ -99,7 +99,7 @@ bool RpcOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const RpcOption& rhs = (const RpcOption&)ips;
+    const RpcOption& rhs = static_cast<const RpcOption&>(ips);
     const RpcCheckData* left = &config;
     const RpcCheckData* right = &rhs.config;
 
@@ -312,7 +312,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* rpc_ctor(Module* p, IpsInfo&)
 {
-    RpcModule* m = (RpcModule*)p;
+    RpcModule* m = static_cast<RpcModule*>(p);
     return new RpcOption(m->data);
 }
 

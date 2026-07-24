@@ -93,7 +93,7 @@ bool SipMethodOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const SipMethodOption& rhs = (const SipMethodOption&)ips;
+    const SipMethodOption& rhs = static_cast<const SipMethodOption&>(ips);
 
     return methods == rhs.methods;
 }
@@ -212,7 +212,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* sip_method_ctor(Module* p, IpsInfo&)
 {
-    SipMethodModule* m = (SipMethodModule*)p;
+    SipMethodModule* m = static_cast<SipMethodModule*>(p);
     return new SipMethodOption(m->methods);
 }
 
@@ -252,4 +252,3 @@ static const IpsApi sip_method_api =
 
 // added to snort_plugins in sip.cc
 const BaseApi* ips_sip_method = &sip_method_api.base;
-

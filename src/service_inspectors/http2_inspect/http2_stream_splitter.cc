@@ -51,8 +51,8 @@ StreamSplitter::Status Http2StreamSplitter::scan(Packet* pkt, const uint8_t* dat
     // This is the session state information we share with Http2Inspect and store with stream. A
     // session is defined by a TCP connection. Since scan() is the first to see a new TCP
     // connection the new flow data object is created here.
-    Http2FlowData* session_data =
-        (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* session_data = static_cast<Http2FlowData*>(
+        flow->get_flow_data(Http2FlowData::inspector_id));
 
     if (session_data == nullptr)
     {
@@ -134,7 +134,8 @@ const StreamBuffer Http2StreamSplitter::reassemble(Flow* flow, unsigned total, u
     copied = len;
     StreamBuffer frame_buf { nullptr, 0 };
 
-    Http2FlowData* session_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* session_data = static_cast<Http2FlowData*>(
+        flow->get_flow_data(Http2FlowData::inspector_id));
     if (session_data == nullptr)
     {
         assert(false);
@@ -212,7 +213,8 @@ bool Http2StreamSplitter::finish(Flow* flow)
 {
     Profile profile(Http2Module::get_profile_stats());
 
-    Http2FlowData* session_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* session_data = static_cast<Http2FlowData*>(
+        flow->get_flow_data(Http2FlowData::inspector_id));
     if (!session_data)
     {
         // assert(false); // FIXIT-M this should not be possible but currently it may be
@@ -292,4 +294,3 @@ bool Http2StreamSplitter::finish(Flow* flow)
 
     return need_reassemble;
 }
-

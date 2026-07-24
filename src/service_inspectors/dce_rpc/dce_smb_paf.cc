@@ -86,9 +86,9 @@ static inline bool DCE2_PafSmbIsValidNetbiosHdr(uint32_t nb_hdr, bool junk, cons
     nbs_hdr = htonl(nb_hdr);
 
     if (smb_id == DCE2_SMB2_ID)
-        *nb_len = NbssLen2((const NbssHdr*)&nbs_hdr);
+        *nb_len = NbssLen2(reinterpret_cast<const NbssHdr*>(&nbs_hdr));
     else
-        *nb_len = NbssLen((const NbssHdr*)&nbs_hdr);
+        *nb_len = NbssLen(reinterpret_cast<const NbssHdr*>(&nbs_hdr));
 
     return true;
 }
@@ -136,7 +136,7 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
             //(data + n + 1) points to the SMB header protocol identifier
             //(0xFF,'SMB' or 0xFE,'SMB'), which follows the NetBIOS header
             if (len >= DCE2_SMB_ID_SIZE + n + 1) // NetBIOS header and 4 bytes SMB header
-                nt_hdr = (const SmbNtHdr*)(data + n + 1);
+                nt_hdr = reinterpret_cast<const SmbNtHdr*>(data + n + 1);
             if (DCE2_PafSmbIsValidNetbiosHdr((uint32_t)ss->nb_hdr, false, nt_hdr, &nb_len))
             {
                 *fp = (nb_len + sizeof(NbssHdr) + n) - ss->paf_state;
@@ -151,7 +151,7 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
 
             //(data + n - sizeof(DCE2_SMB_ID) + 1) points to the smb_idf field
             //in SmbNtHdr (0xFF,'SMB' or 0xFE,'SMB'), which follows the NetBIOS header
-            nt_hdr = (const SmbNtHdr*)(data + n - DCE2_SMB_ID_SIZE + 1);
+            nt_hdr = reinterpret_cast<const SmbNtHdr*>(data + n - DCE2_SMB_ID_SIZE + 1);
             //ss->nb_hdr is the value to 4 bytes of NetBIOS header + 4 bytes of
             //SMB header protocol identifier . Right shift by 32 bits to get the value of NetBIOS
             // header
@@ -197,4 +197,3 @@ StreamSplitter::Status Dce2SmbSplitter::scan(
         "Dce2SmbSplitter scan with length %u, status %d and fp %u\n", len, ps, *fp);
     return ps;
 }
-

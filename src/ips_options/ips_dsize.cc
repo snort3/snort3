@@ -70,7 +70,7 @@ bool DsizeOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const DsizeOption& rhs = (const DsizeOption&)ips;
+    const DsizeOption& rhs = static_cast<const DsizeOption&>(ips);
     return config == rhs.config;
 }
 
@@ -154,7 +154,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* dsize_ctor(Module* p, IpsInfo&)
 {
-    DsizeModule* m = (DsizeModule*)p;
+    DsizeModule* m = static_cast<DsizeModule*>(p);
     return new DsizeOption(m->data);
 }
 

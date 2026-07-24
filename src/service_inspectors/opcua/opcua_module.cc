@@ -59,7 +59,7 @@ const PegInfo* OpcuaModule::get_pegs() const
 
 PegCount* OpcuaModule::get_counts() const
 {
-    return (PegCount*)&opcua_stats;
+    return reinterpret_cast<PegCount*>(&opcua_stats);
 }
 
 //-------------------------------------------------------------------------
@@ -121,4 +121,3 @@ OpcuaModule::OpcuaModule() :
     Module(OPCUA_NAME, OPCUA_HELP)
 {
 }
-

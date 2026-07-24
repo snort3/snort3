@@ -77,7 +77,7 @@ bool SizeOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const SizeOption& rhs = (const SizeOption&)ips;
+    const SizeOption& rhs = static_cast<const SizeOption&>(ips);
 
     if ( (direction == rhs.direction) && (ssod == rhs.ssod) )
         return true;
@@ -92,7 +92,7 @@ IpsOption::EvalStatus SizeOption::eval(Cursor&, Packet* pkt)
     if ( !pkt->flow || pkt->flow->pkt_type != PktType::TCP )
         return NO_MATCH;
 
-    TcpSession* tcpssn = (TcpSession*)pkt->flow->session;
+    TcpSession* tcpssn = static_cast<TcpSession*>(pkt->flow->session);
 
     uint32_t client_size = tcpssn->client.get_snd_nxt() - tcpssn->client.get_iss();
     uint32_t server_size = tcpssn->server.get_snd_nxt() - tcpssn->server.get_iss();
@@ -193,7 +193,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* size_ctor(Module* p, IpsInfo&)
 {
-    SizeModule* m = (SizeModule*)p;
+    SizeModule* m = static_cast<SizeModule*>(p);
     return new SizeOption(m->ssod, m->direction);
 }
 
@@ -226,4 +226,3 @@ static const IpsApi size_api =
 };
 
 const BaseApi* ips_stream_size = &size_api.base;
-

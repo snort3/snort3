@@ -94,7 +94,7 @@ public:
     { return pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&stats; }
+    { return reinterpret_cast<PegCount*>(&stats); }
 };
 
 class Icmp6Codec : public Codec
@@ -161,7 +161,8 @@ void Icmp6Codec::validate_ndp_option(CodecData &codec, const NDPType* const icmp
         if (field_incomplete)
             return;     // FIXIT-L good candidate for new builtin rule
 
-        const icmp::NDPOptionFormatBasic* curr_option = (const icmp::NDPOptionFormatBasic*)curr_option_ptr;
+        const icmp::NDPOptionFormatBasic* curr_option =
+            reinterpret_cast<const icmp::NDPOptionFormatBasic*>(curr_option_ptr);
 
         // Right now, only option types explicitly specified in RFC4861 are supported
         if (curr_option->type == 0 || curr_option->type > 5)
@@ -203,7 +204,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
         ph6.hdr.protocol = codec.ip6_csum_proto;
         ph6.hdr.len = htons((uint16_t)raw.len);
 
-        uint16_t csum = checksum::icmp_cksum((const uint16_t*)(icmp6h), raw.len, ph6);
+        uint16_t csum = checksum::icmp_cksum(icmp6h, raw.len, ph6);
 
         if (csum && !codec.is_cooked())
         {
@@ -237,7 +238,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     case icmp::Icmp6Types::PACKET_TOO_BIG:
         if (dsize >= sizeof(icmp::ICMP6TooBig))
         {
-            const icmp::ICMP6TooBig* too_big = (const icmp::ICMP6TooBig*)raw.data;
+            const icmp::ICMP6TooBig* too_big = reinterpret_cast<const icmp::ICMP6TooBig*>(raw.data);
 
             if (ntohl(too_big->mtu) < 1280)
                 codec_event(codec, DECODE_ICMPV6_TOO_BIG_BAD_MTU);
@@ -278,7 +279,8 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     case icmp::Icmp6Types::ROUTER_SOLICITATION:
         if (dsize >= (ICMPv6_RS_MIN_LEN - icmp::ICMP6_HEADER_MIN_LEN))
         {
-            const icmp::ICMP6RouterSolicitation* rs = (const icmp::ICMP6RouterSolicitation*)raw.data;
+            const icmp::ICMP6RouterSolicitation* rs =
+                reinterpret_cast<const icmp::ICMP6RouterSolicitation*>(raw.data);
 
             if (rs->code != 0)
                 codec_event(codec, DECODE_ICMPV6_SOLICITATION_BAD_CODE);
@@ -298,7 +300,8 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     case icmp::Icmp6Types::ROUTER_ADVERTISEMENT:
         if (dsize >= (ICMPv6_RA_MIN_LEN - icmp::ICMP6_HEADER_MIN_LEN))
         {
-            const icmp::ICMP6RouterAdvertisement* ra = (const icmp::ICMP6RouterAdvertisement*)raw.data;
+            const icmp::ICMP6RouterAdvertisement* ra =
+                reinterpret_cast<const icmp::ICMP6RouterAdvertisement*>(raw.data);
 
             if (icmp6h->code != icmp::Icmp6Code::ADVERTISEMENT)
                 codec_event(codec, DECODE_ICMPV6_ADVERT_BAD_CODE);
@@ -318,7 +321,8 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     case icmp::Icmp6Types::NEIGHBOR_SOLICITATION:
         if (dsize >= (ICMPv6_NS_MIN_LEN - icmp::ICMP6_HEADER_MIN_LEN))
         {
-            const icmp::ICMP6NeighborSolicitation* ns = (const icmp::ICMP6NeighborSolicitation*)raw.data;
+            const icmp::ICMP6NeighborSolicitation* ns =
+                reinterpret_cast<const icmp::ICMP6NeighborSolicitation*>(raw.data);
 
             validate_ndp_option(codec, ns, ICMPv6_NS_MIN_LEN, dsize);
         }
@@ -332,7 +336,8 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     case icmp::Icmp6Types::NEIGHBOR_ADVERTISEMENT:
         if (dsize >= (ICMPv6_NA_MIN_LEN - icmp::ICMP6_HEADER_MIN_LEN))
         {
-            const icmp::ICMP6NeighborAdvertisement* na = (const icmp::ICMP6NeighborAdvertisement*)raw.data;
+            const icmp::ICMP6NeighborAdvertisement* na =
+                reinterpret_cast<const icmp::ICMP6NeighborAdvertisement*>(raw.data);
 
             validate_ndp_option(codec, na, ICMPv6_NA_MIN_LEN, dsize);
         }
@@ -346,7 +351,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     case icmp::Icmp6Types::REDIRECT6:
         if (dsize >= (ICMPv6_RD_MIN_LEN - icmp::ICMP6_HEADER_MIN_LEN))
         {
-            const icmp::ICMP6Redirect* rd = (const icmp::ICMP6Redirect*)raw.data;
+            const icmp::ICMP6Redirect* rd = reinterpret_cast<const icmp::ICMP6Redirect*>(raw.data);
 
             validate_ndp_option(codec, rd, ICMPv6_RD_MIN_LEN, dsize);
         }
@@ -361,7 +366,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     case icmp::Icmp6Types::NODE_INFORMATION_RESPONSE:
         if (dsize >= (sizeof(icmp::ICMP6NodeInfo) - icmp::ICMP6_HEADER_MIN_LEN))
         {
-            const icmp::ICMP6NodeInfo* ni = (const icmp::ICMP6NodeInfo*)raw.data;
+            const icmp::ICMP6NodeInfo* ni = reinterpret_cast<const icmp::ICMP6NodeInfo*>(raw.data);
             if (ni->code > 2)
                 codec_event(codec, DECODE_ICMPV6_NODE_INFO_BAD_CODE);
 
@@ -455,7 +460,7 @@ void Icmp6Codec::update(const ip::IpApi& api, const EncodeFlags flags,
         ps6.hdr.zero = 0;
         ps6.hdr.protocol = IpProtocol::ICMPV6;
         ps6.hdr.len = htons((uint16_t)updated_len);
-        h->cksum = checksum::icmp_cksum((uint16_t*)h, updated_len, ps6);
+        h->cksum = checksum::icmp_cksum(h, updated_len, ps6);
     }
 }
 
@@ -512,4 +517,3 @@ const BaseApi* cd_icmp6[] =
     &ipv6_api.base,
     nullptr
 };
-

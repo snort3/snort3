@@ -377,7 +377,7 @@ const Field& HttpMsgSection::get_param_buffer(Cursor& c, const HttpParam& param)
         return Field::FIELD_NULL;
 
     // get data stored on the cursor
-    HttpCursorData* cd = (HttpCursorData*)c.get_data(HttpCursorData::id);
+    HttpCursorData* cd = static_cast<HttpCursorData*>(c.get_data(HttpCursorData::id));
 
     if (!cd)
     {

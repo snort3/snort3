@@ -75,7 +75,8 @@ bool OpcuaNodeNamespaceIndexOption::operator==(const IpsOption& ips) const
         return false;
     }
 
-    const OpcuaNodeNamespaceIndexOption& rhs = (const OpcuaNodeNamespaceIndexOption&) ips;
+    const OpcuaNodeNamespaceIndexOption& rhs =
+        static_cast<const OpcuaNodeNamespaceIndexOption&>(ips);
     return (node_namespace_index == rhs.node_namespace_index);
 }
 
@@ -89,7 +90,8 @@ IpsOption::EvalStatus OpcuaNodeNamespaceIndexOption::eval(Cursor&, Packet* p)
         return NO_MATCH;
     }
 
-    OpcuaFlowData* opcuafd = (OpcuaFlowData*) p->flow->get_flow_data(OpcuaFlowData::inspector_id);
+    OpcuaFlowData* opcuafd = static_cast<OpcuaFlowData*>(
+        p->flow->get_flow_data(OpcuaFlowData::inspector_id));
     if ( !opcuafd )
     {
         return NO_MATCH;
@@ -191,7 +193,8 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    const OpcuaNodeNamespaceIndexModule* mod = (const OpcuaNodeNamespaceIndexModule*) m;
+    const OpcuaNodeNamespaceIndexModule* mod =
+        static_cast<const OpcuaNodeNamespaceIndexModule*>(m);
     return new OpcuaNodeNamespaceIndexOption(mod->node_namespace_index);
 }
 
@@ -227,4 +230,3 @@ static const IpsApi ips_api =
 };
 
 const BaseApi* ips_opcua_node_namespace_index = &ips_api.base;
-

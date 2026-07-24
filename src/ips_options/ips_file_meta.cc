@@ -146,7 +146,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* file_meta_ctor(Module* p, IpsInfo& info)
 {
-    FileMetaModule* m = (FileMetaModule*)p;
+    FileMetaModule* m = static_cast<FileMetaModule*>(p);
     IpsOption::set_file_id(info, m->fmc.file_id);
     return nullptr;
 }

@@ -193,7 +193,7 @@ TEST_GROUP(tcp_connector)
 {
     void setup() override
     {
-        tcpc_api = (const ConnectorApi*) tcp_connector;
+        tcpc_api = reinterpret_cast<const ConnectorApi*>(tcp_connector);
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "tcp";
         connector_config.address = "127.0.0.1";
@@ -229,7 +229,7 @@ TEST_GROUP(tcp_connector_call_error)
 {
     void setup() override
     {
-        tcpc_api = (const ConnectorApi*) tcp_connector;
+        tcpc_api = reinterpret_cast<const ConnectorApi*>(tcp_connector);
         set_normal_status();
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "tcp";
@@ -264,7 +264,7 @@ TEST_GROUP(tcp_connector_answer_error)
 {
     void setup() override
     {
-        tcpc_api = (const ConnectorApi*) tcp_connector;
+        tcpc_api = reinterpret_cast<const ConnectorApi*>(tcp_connector);
         set_normal_status();
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "tcp-a";
@@ -320,7 +320,7 @@ TEST(tcp_connector_answer_error, bad_accept)
 
 TEST(tcp_connector_call_other, bad_setup)
 {
-    tcpc_api = (const ConnectorApi*) tcp_connector;
+    tcpc_api = reinterpret_cast<const ConnectorApi*>(tcp_connector);
     s_instance = 0;
     set_normal_status();
     connector_config.direction = Connector::CONN_DUPLEX;
@@ -344,7 +344,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_thread_call)
 {
     void setup() override
     {
-        tcpc_api = (const ConnectorApi*) tcp_connector;
+        tcpc_api = reinterpret_cast<const ConnectorApi*>(tcp_connector);
         s_instance = 0;
         set_normal_status();
         connector_config.direction = Connector::CONN_DUPLEX;
@@ -376,7 +376,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_call)
 {
     void setup() override
     {
-        tcpc_api = (const ConnectorApi*) tcp_connector;
+        tcpc_api = reinterpret_cast<const ConnectorApi*>(tcp_connector);
         s_instance = 0;
         set_normal_status();
         connector_config.direction = Connector::CONN_DUPLEX;
@@ -408,7 +408,7 @@ TEST_GROUP(tcp_connector_no_tinit_tterm_call)
 {
     void setup() override
     {
-        tcpc_api = (const ConnectorApi*) tcp_connector;
+        tcpc_api = reinterpret_cast<const ConnectorApi*>(tcp_connector);
         s_instance = 0;
         set_normal_status();
         connector_config.direction = Connector::CONN_DUPLEX;
@@ -442,12 +442,12 @@ TEST(tcp_connector_no_tinit_tterm_call, poll_undesirable)
     uint8_t* message = new uint8_t[size];
     for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
-    TcpConnectorMsgHdr* hdr = (TcpConnectorMsgHdr*)message;
+    TcpConnectorMsgHdr* hdr = reinterpret_cast<TcpConnectorMsgHdr*>(message);
     hdr->version = TCP_FORMAT_VERSION;
     hdr->connector_msg_length = 10;
     s_rec_message = message;
     s_rec_message_size = size; // also trigger the read action
-    TcpConnector* tcpc = (TcpConnector*)connector;
+    TcpConnector* tcpc = static_cast<TcpConnector*>(connector);
     tcpc->process_receive();
     tcpc->process_receive();
     tcpc->process_receive();
@@ -468,12 +468,12 @@ TEST(tcp_connector_no_tinit_tterm_call, poll_error)
     uint8_t* message = new uint8_t[size];
     for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
-    TcpConnectorMsgHdr* hdr = (TcpConnectorMsgHdr*)message;
+    TcpConnectorMsgHdr* hdr = reinterpret_cast<TcpConnectorMsgHdr*>(message);
     hdr->version = TCP_FORMAT_VERSION;
     hdr->connector_msg_length = 10;
     s_rec_message = message;
     s_rec_message_size = size; // also trigger the read action
-    TcpConnector* tcpc = (TcpConnector*)connector;
+    TcpConnector* tcpc = static_cast<TcpConnector*>(connector);
     tcpc->process_receive();
     tcpc->process_receive();
     tcpc->process_receive();
@@ -491,7 +491,7 @@ TEST_GROUP(tcp_connector_tinit_tterm_answer)
     {
         s_instance = 0;
         set_normal_status();
-        tcpc_api = (const ConnectorApi*) tcp_connector;
+        tcpc_api = reinterpret_cast<const ConnectorApi*>(tcp_connector);
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "tcp-a";
         connector_config.ports.push_back("20000");
@@ -520,7 +520,7 @@ TEST(tcp_connector_tinit_tterm_call, alloc_transmit)
 {
     const uint32_t len = 40;
     const uint8_t* data = new uint8_t[len];
-    TcpConnector* tcpc = (TcpConnector*)connector;
+    TcpConnector* tcpc = static_cast<TcpConnector*>(connector);
     set_normal_status();
 
     ConnectorMsg msg(data, len, true);
@@ -537,7 +537,7 @@ TEST(tcp_connector_tinit_tterm_call, alloc_transmit_header_fail)
 {
     const uint32_t len = 40;
     const uint8_t* data = new uint8_t[len];
-    TcpConnector* tcpc = (TcpConnector*)connector;
+    TcpConnector* tcpc = static_cast<TcpConnector*>(connector);
     set_normal_status();
 
     ConnectorMsg msg(data, len, true);
@@ -555,7 +555,7 @@ TEST(tcp_connector_tinit_tterm_call, alloc_transmit_body_fail)
 {
     const uint32_t len = 40;
     const uint8_t* data = new uint8_t[len];
-    TcpConnector* tcpc = (TcpConnector*)connector;
+    TcpConnector* tcpc = static_cast<TcpConnector*>(connector);
     set_normal_status();
 
     ConnectorMsg msg(data, len, true);
@@ -572,7 +572,7 @@ TEST(tcp_connector_tinit_tterm_call, alloc_transmit_no_sock)
 {
     const uint32_t len = 40;
     const uint8_t* data = new uint8_t[len];
-    TcpConnector* tcpc = (TcpConnector*)connector;
+    TcpConnector* tcpc = static_cast<TcpConnector*>(connector);
 
     ConnectorMsg msg(data, len, true);
 
@@ -586,7 +586,7 @@ TEST(tcp_connector_tinit_tterm_call, alloc_transmit_no_sock)
 
 TEST(tcp_connector_tinit_tterm_call, receive_no_sock)
 {
-    TcpConnector* tcpc = (TcpConnector*)connector;
+    TcpConnector* tcpc = static_cast<TcpConnector*>(connector);
     tcpc->sock_fd = -1;
     const ConnectorMsg msg = tcpc->receive_message(false);
     CHECK(msg.get_data() == nullptr);
@@ -596,14 +596,14 @@ TEST(tcp_connector_tinit_tterm_call, receive_no_sock)
 TEST(tcp_connector_tinit_tterm_call, receive)
 {
     const uint32_t cmsg_len = 10;
-    TcpConnector* tcpc = (TcpConnector*)connector;
+    TcpConnector* tcpc = static_cast<TcpConnector*>(connector);
     size_t size = sizeof(TcpConnectorMsgHdr) + cmsg_len;
     uint8_t* message = new uint8_t[size];
 
     for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
 
-    TcpConnectorMsgHdr* hdr = (TcpConnectorMsgHdr*)message;
+    TcpConnectorMsgHdr* hdr = reinterpret_cast<TcpConnectorMsgHdr*>(message);
     hdr->version = TCP_FORMAT_VERSION;
     hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
@@ -634,7 +634,7 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_wrong_version)
     for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
 
-    TcpConnectorMsgHdr* hdr = (TcpConnectorMsgHdr*)message;
+    TcpConnectorMsgHdr* hdr = reinterpret_cast<TcpConnectorMsgHdr*>(message);
     hdr->version = TCP_FORMAT_VERSION+1;
     hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
@@ -642,7 +642,7 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_wrong_version)
     s_poll_data_available = true;
     connector = tcpc_api->tinit(connector_config);
     CHECK(connector != nullptr);
-    TcpConnector* tcpc = (TcpConnector*)connector;
+    TcpConnector* tcpc = static_cast<TcpConnector*>(connector);
 
     tcpc->process_receive();
     tcpc->process_receive();
@@ -663,7 +663,7 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_recv_error_EAGAIN)
     for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
 
-    TcpConnectorMsgHdr* hdr = (TcpConnectorMsgHdr*)message;
+    TcpConnectorMsgHdr* hdr = reinterpret_cast<TcpConnectorMsgHdr*>(message);
     hdr->version = TCP_FORMAT_VERSION;
     hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
@@ -673,7 +673,7 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_recv_error_EAGAIN)
 
     connector = tcpc_api->tinit(connector_config);
     CHECK(connector != nullptr);
-    TcpConnector* tcpc = (TcpConnector*)connector;
+    TcpConnector* tcpc = static_cast<TcpConnector*>(connector);
 
     tcpc->process_receive();
     const ConnectorMsg conn_msg = tcpc->receive_message(false);
@@ -693,7 +693,7 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_recv_error_EBADF)
     for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
 
-    TcpConnectorMsgHdr* hdr = (TcpConnectorMsgHdr*)message;
+    TcpConnectorMsgHdr* hdr = reinterpret_cast<TcpConnectorMsgHdr*>(message);
     hdr->version = TCP_FORMAT_VERSION;
     hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
@@ -703,7 +703,7 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_recv_error_EBADF)
 
     connector = tcpc_api->tinit(connector_config);
     CHECK(connector != nullptr);
-    TcpConnector* tcpc = (TcpConnector*)connector;
+    TcpConnector* tcpc = static_cast<TcpConnector*>(connector);
 
     tcpc->process_receive();
     tcpc->process_receive();
@@ -725,7 +725,7 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_recv_closed)
     for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
 
-    TcpConnectorMsgHdr* hdr = (TcpConnectorMsgHdr*)message;
+    TcpConnectorMsgHdr* hdr = reinterpret_cast<TcpConnectorMsgHdr*>(message);
     hdr->version = TCP_FORMAT_VERSION;
     hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
@@ -735,7 +735,7 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_recv_closed)
 
     connector = tcpc_api->tinit(connector_config);
     CHECK(connector != nullptr);
-    TcpConnector* tcpc = (TcpConnector*)connector;
+    TcpConnector* tcpc = static_cast<TcpConnector*>(connector);
 
     tcpc->process_receive();
     tcpc->process_receive();
@@ -757,7 +757,7 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_recv_body_closed)
     for (int i = sizeof(TcpConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
 
-    TcpConnectorMsgHdr* hdr = (TcpConnectorMsgHdr*)message;
+    TcpConnectorMsgHdr* hdr = reinterpret_cast<TcpConnectorMsgHdr*>(message);
     hdr->version = TCP_FORMAT_VERSION;
     hdr->connector_msg_length = cmsg_len;
     s_rec_error_size = cmsg_len;  // only indicate the error on the cmsg_len byte recv()
@@ -768,7 +768,7 @@ TEST(tcp_connector_no_tinit_tterm_call, receive_recv_body_closed)
 
     connector = tcpc_api->tinit(connector_config);
     CHECK(connector != nullptr);
-    TcpConnector* tcpc = (TcpConnector*)connector;
+    TcpConnector* tcpc = static_cast<TcpConnector*>(connector);
 
     tcpc->process_receive();
     tcpc->process_receive();

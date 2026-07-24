@@ -136,7 +136,7 @@ static int snort_ftp(Packet* p)
 {
     FTPP_SI_INPUT SiInput;
     int iInspectMode = FTPP_SI_NO_MODE;
-    FTP_TELNET_SESSION* ft_ssn = nullptr;
+    FTP_SESSION* ftp_ssn = nullptr;
 
     /*
      * Set up the FTPP_SI_INPUT pointer.  This is what the session_inspection()
@@ -148,14 +148,15 @@ static int snort_ftp(Packet* p)
     ftstats.total_bytes += p->dsize;
     if (p->flow)
     {
-        FtpFlowData* fd = (FtpFlowData*)p->flow->get_flow_data(FtpFlowData::inspector_id);
-        ft_ssn = fd ? &fd->session.ft_ssn : nullptr;
+        FtpFlowData* fd = static_cast<FtpFlowData*>(
+            p->flow->get_flow_data(FtpFlowData::inspector_id));
+        ftp_ssn = fd ? &fd->session : nullptr;
 
-        if (ft_ssn != nullptr)
+        if (ftp_ssn != nullptr)
         {
-            SiInput.pproto = ft_ssn->proto;
+            SiInput.pproto = ftp_ssn->ft_ssn.proto;
 
-            if (ft_ssn->proto == FTPP_SI_PROTO_FTP)
+            if (ftp_ssn->ft_ssn.proto == FTPP_SI_PROTO_FTP)
             {
                 if (SiInput.pdir != FTPP_SI_NO_MODE)
                 {
@@ -187,23 +188,23 @@ static int snort_ftp(Packet* p)
         }
     }
 
-    if (ft_ssn == nullptr)
+    if (ftp_ssn == nullptr)
     {
         SiInput.pproto = FTPP_SI_PROTO_UNKNOWN;
         iInspectMode = FTPP_SI_NO_MODE;
 
-        FTPsessionInspection(p, (FTP_SESSION**)&ft_ssn, &SiInput, &iInspectMode);
+        FTPsessionInspection(p, &ftp_ssn, &SiInput, &iInspectMode);
 
         if ( SiInput.pproto != FTPP_SI_PROTO_FTP )
             return FTPP_INVALID_PROTO;
     }
 
-    if (ft_ssn != nullptr)
+    if (ftp_ssn != nullptr)
     {
         switch (SiInput.pproto)
         {
         case FTPP_SI_PROTO_FTP:
-            return SnortFTP((FTP_SESSION*)ft_ssn, p, iInspectMode);
+            return SnortFTP(ftp_ssn, p, iInspectMode);
         }
     }
 
@@ -299,10 +300,11 @@ void FtpServer::eval(Packet* p)
 
 FTP_CLIENT_PROTO_CONF* get_ftp_client(Packet* p)
 {
-    FtpClient* client = (FtpClient*)p->flow->data;
+    FtpClient* client = static_cast<FtpClient*>(p->flow->data);
     if ( !client )
     {
-        client = (FtpClient*)PigPen::get_inspector(FTP_CLIENT_NAME, Module::INSPECT);
+        client = static_cast<FtpClient*>(
+            PigPen::get_inspector(FTP_CLIENT_NAME, Module::INSPECT));
         assert(client);
         p->flow->set_data(client);
     }
@@ -311,7 +313,7 @@ FTP_CLIENT_PROTO_CONF* get_ftp_client(Packet* p)
 
 FTP_SERVER_PROTO_CONF* get_ftp_server(Packet* p)
 {
-    FtpServer* server = (FtpServer*)p->flow->gadget;
+    FtpServer* server = static_cast<FtpServer*>(p->flow->gadget);
     assert(server);
     return server->ftp_server;
 }
@@ -332,14 +334,15 @@ static void mod_dtor(Module* m)
 
 static Inspector* fc_ctor(Module* m)
 {
-    FtpClientModule* mod = (FtpClientModule*)m;
+    FtpClientModule* mod = static_cast<FtpClientModule*>(m);
     FTP_CLIENT_PROTO_CONF* gc = mod->get_data();
     unsigned i = 0;
 
     while ( const BounceTo* bt = mod->get_bounce(i++) )
     {
         ProcessFTPAllowBounce(
-            gc, (const uint8_t*)bt->address.c_str(), bt->address.size(), bt->low, bt->high);
+            gc, reinterpret_cast<const uint8_t*>(bt->address.c_str()),
+            bt->address.size(), bt->low, bt->high);
     }
     return new FtpClient(gc);
 }
@@ -387,7 +390,7 @@ static void fs_init()
 
 static Inspector* fs_ctor(Module* mod)
 {
-    FtpServerModule* fsm = (FtpServerModule*)mod;
+    FtpServerModule* fsm = static_cast<FtpServerModule*>(mod);
     FTP_SERVER_PROTO_CONF* conf = fsm->get_data();
 
     return new FtpServer(conf);
@@ -441,4 +444,3 @@ const BaseApi* sin_ftp_client = &fc_api.base;
 const BaseApi* sin_ftp_server = &fs_api.base;
 const BaseApi* sin_ftp_data = &fd_api.base;
 #endif
-

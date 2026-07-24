@@ -80,4 +80,4 @@ const PegInfo* StreamUdpModule::get_pegs() const
 { return udp_pegs; }
 
 PegCount* StreamUdpModule::get_counts() const
-{ return (PegCount*)&udpStats; }
+{ return reinterpret_cast<PegCount*>(&udpStats); }

@@ -67,7 +67,7 @@ THREAD_LOCAL const Trace* rna_trace = nullptr;
 //-------------------------------------------------------------------------
 static int dump_mac_cache(lua_State* L)
 {
-    RnaModule* mod = (RnaModule*)PigPen::get_module(RNA_NAME);
+    RnaModule* mod = static_cast<RnaModule*>(PigPen::get_module(RNA_NAME));
     Inspector* rna = PigPen::get_inspector(RNA_NAME, RNA_USE);
     if ( rna && mod )
         mod->log_mac_cache( luaL_optstring(L, 1, nullptr) );
@@ -188,7 +188,7 @@ static int delete_mac_host(lua_State* L)
         HostCacheMac* mac_cache = get_host_cache_mac();
         assert(mac_cache);
 
-        bool success = mac_cache->remove((const uint8_t*) &search_mk);
+        bool success = mac_cache->remove(reinterpret_cast<const uint8_t*>(&search_mk));
 
         if (!success)
         {
@@ -224,7 +224,7 @@ static int delete_mac_host_proto(lua_State* L)
         HostCacheMac* mac_cache = get_host_cache_mac();
         assert(mac_cache);
 
-        auto htm = mac_cache->find((const uint8_t*) &search_mk);
+        auto htm = mac_cache->find(reinterpret_cast<const uint8_t*>(&search_mk));
 
         if (!htm)
         {
@@ -447,7 +447,7 @@ RnaModule::RnaModule() : Module(RNA_NAME, RNA_HELP, rna_params)
 
 void RnaModule::shutdown()
 {
-    RnaModule* rna = (RnaModule*)PluginManager::get_module("rna");
+    RnaModule* rna = static_cast<RnaModule*>(PluginManager::get_module("rna"));
 
     if ( rna )
         rna->dump();
@@ -700,7 +700,7 @@ RnaModuleConfig* RnaModule::get_config()
 }
 
 PegCount* RnaModule::get_counts() const
-{ return (PegCount*)&rna_stats; }
+{ return reinterpret_cast<PegCount*>(&rna_stats); }
 
 const PegInfo* RnaModule::get_pegs() const
 { return rna_pegs; }
@@ -837,4 +837,3 @@ TEST_CASE("Fingerprint processors tuner name", "[rna_module]")
 }
 
 #endif
-

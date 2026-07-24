@@ -192,7 +192,7 @@ bool DCE2_Smb2ProcessFileData(DCE2_Smb2SsnData* ssd, const uint8_t* file_data,
 void DCE2_Smb2Setup(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr, const uint64_t sid,
     const uint8_t* smb_data, const uint8_t* end)
 {
-    uint16_t structure_size = alignedNtohs((const uint16_t*)smb_data);
+    uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
 
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
@@ -227,7 +227,7 @@ void DCE2_Smb2Setup(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr, const uint64_
 void DCE2_Smb2TreeConnect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     const uint8_t* smb_data, const uint8_t* end, DCE2_Smb2SessionTracker* str, uint32_t tid)
 {
-    uint16_t structure_size = alignedNtohs((const uint16_t*)smb_data);
+    uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
 
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
@@ -244,7 +244,7 @@ void DCE2_Smb2TreeConnect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             dce2_smb_stats.v2_tree_cnct_resp_hdr_err, SMB2_COM_TREE_CONNECT)
 
         if (!DCE2_Smb2InsertTid(ssd, tid,
-            ((const Smb2TreeConnectResponseHdr*)smb_data)->share_type, str))
+            (reinterpret_cast<const Smb2TreeConnectResponseHdr*>(smb_data))->share_type, str))
         {
             SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
                 DetectionEngine::get_current_packet(), "%s: ignored %d\n",
@@ -268,7 +268,7 @@ void DCE2_Smb2TreeConnect(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
 void DCE2_Smb2TreeDisconnect(DCE2_Smb2SsnData*, const uint8_t* smb_data,
     const uint8_t* end)
 {
-    if (SMB2_TREE_DISCONNECT_REQUEST_STRUC_SIZE == alignedNtohs((const uint16_t*)smb_data))
+    if (SMB2_TREE_DISCONNECT_REQUEST_STRUC_SIZE == alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data)))
     {
         SMB2_CHECK_HDR_ERROR(
             smb_data, end, SMB2_TREE_DISCONNECT_REQUEST_STRUC_SIZE,
@@ -287,7 +287,7 @@ bool DCE2_IsSmb2DurableReconnect(const Smb2CreateRequestHdr* smb_create_hdr, con
 {
     if (!smb_create_hdr || !end)
         return false;
-    const uint8_t* start = (const uint8_t*)smb_create_hdr - SMB2_HEADER_LENGTH;
+    const uint8_t* start = reinterpret_cast<const uint8_t*>(smb_create_hdr) - SMB2_HEADER_LENGTH;
 
     if (end <= start)
         return false;
@@ -306,7 +306,7 @@ bool DCE2_IsSmb2DurableReconnect(const Smb2CreateRequestHdr* smb_create_hdr, con
     
     while (remaining > sizeof(Smb2CreateRequestHdr) && data < end)
     {
-        const Smb2CreateContextHdr* context = (const Smb2CreateContextHdr*)data;
+        const Smb2CreateContextHdr* context = reinterpret_cast<const Smb2CreateContextHdr*>(data);
         uint32_t next = alignedNtohl(&context->next);
         uint16_t name_offset = alignedNtohs(&context->name_offset);
         uint16_t name_length = alignedNtohs(&context->name_length);
@@ -327,10 +327,10 @@ bool DCE2_IsSmb2DurableReconnect(const Smb2CreateRequestHdr* smb_create_hdr, con
             return false;
         }
 
-        if ((strncmp((const char*)context+name_offset, SMB2_CREATE_DURABLE_RECONNECT_V2, name_length) == 0) or
-            (strncmp((const char*)context+name_offset, SMB2_CREATE_DURABLE_RECONNECT, name_length) == 0))
+        if ((strncmp(reinterpret_cast<const char*>(context)+name_offset, SMB2_CREATE_DURABLE_RECONNECT_V2, name_length) == 0) or
+            (strncmp(reinterpret_cast<const char*>(context)+name_offset, SMB2_CREATE_DURABLE_RECONNECT, name_length) == 0))
         {
-            file_id = alignedNtohq((const uint64_t*)(((const uint8_t*)context) + data_offset));
+            file_id = alignedNtohq(reinterpret_cast<const uint64_t*>(reinterpret_cast<const uint8_t*>(context) + data_offset));
             return true;
         }
 
@@ -356,7 +356,7 @@ static void DCE2_Smb2CreateRequest(DCE2_Smb2SsnData* ssd,
     {
         uint16_t name_len  = 0;
 
-        const uint8_t* file_data =  (const uint8_t*)smb_create_hdr + smb_create_hdr->name_offset -
+    const uint8_t* file_data =  reinterpret_cast<const uint8_t*>(smb_create_hdr) + smb_create_hdr->name_offset -
             SMB2_HEADER_LENGTH;
         if (file_data >= end)
         {
@@ -435,7 +435,7 @@ static void DCE2_Smb2CreateRequest(DCE2_Smb2SsnData* ssd,
             SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
                 DetectionEngine::get_current_packet(), "%s_REQ: max req exceeded\n",
                 smb2_command_string[SMB2_COM_CREATE]);
-            dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats,
+            dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
         }
     }
@@ -534,7 +534,7 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     DCE2_Smb2TreeTracker* ttr = nullptr;
     if (tid)
         ttr = str->findTtracker(tid);
-    uint16_t structure_size = alignedNtohs((const uint16_t*)smb_data);
+    uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
 
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
@@ -579,7 +579,7 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
                 "%s_REQ: processed for ipc share\n",
                 smb2_command_string[SMB2_COM_CREATE]);
         }
-        DCE2_Smb2CreateRequest(ssd, (const Smb2CreateRequestHdr*)smb_data, end, str, ttr, mid);
+        DCE2_Smb2CreateRequest(ssd, reinterpret_cast<const Smb2CreateRequestHdr*>(smb_data), end, str, ttr, mid);
     }
     else if (structure_size == SMB2_CREATE_RESPONSE_STRUC_SIZE)
     {
@@ -608,9 +608,9 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         }
 
         uint64_t fileId_persistent = alignedNtohq((const uint64_t*)(
-                &(((const Smb2CreateResponseHdr*)smb_data)->fileId_persistent)));
+                &(reinterpret_cast<const Smb2CreateResponseHdr*>(smb_data)->fileId_persistent)));
 
-        if (((const Smb2CreateResponseHdr*)smb_data)->file_attributes &
+        if ((reinterpret_cast<const Smb2CreateResponseHdr*>(smb_data))->file_attributes &
             SMB2_CREATE_RESPONSE_DIRECTORY)
         {
             SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
@@ -621,7 +621,7 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             return;
         }
 
-        DCE2_Smb2CreateResponse(ssd, (const Smb2CreateResponseHdr*)smb_data, rtr, ttr,
+        DCE2_Smb2CreateResponse(ssd, reinterpret_cast<const Smb2CreateResponseHdr*>(smb_data), rtr, ttr,
             str, fileId_persistent);
         str->removeRtracker(ssd->flow_key, mid);
     }
@@ -642,7 +642,7 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     const uint8_t* smb_data, const uint8_t* end, DCE2_Smb2TreeTracker* ttr,
     DCE2_Smb2SessionTracker* str, uint64_t mid)
 {
-    uint16_t structure_size = alignedNtohs((const uint16_t*)smb_data);
+    uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
 
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
@@ -662,8 +662,8 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             smb_data, end, SMB2_CLOSE_REQUEST_STRUC_SIZE,
             dce2_smb_stats.v2_cls_req_hdr_err, SMB2_COM_CLOSE)
 
-        uint64_t fileId_persistent = alignedNtohq(&(((const
-            Smb2CloseRequestHdr*)smb_data)->fileId_persistent));
+        uint64_t fileId_persistent = alignedNtohq(
+            &(reinterpret_cast<const Smb2CloseRequestHdr*>(smb_data)->fileId_persistent));
         DCE2_Smb2FileTracker* ftracker =  ttr->findFtracker(fileId_persistent);
         if (!ftracker)
         {
@@ -759,7 +759,7 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
 void DCE2_Smb2SetInfo(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     const uint8_t* smb_data, const uint8_t* end, DCE2_Smb2TreeTracker* ttr)
 {
-    uint16_t structure_size = alignedNtohs((const uint16_t*)smb_data);
+    uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
 
     // Using structure size to decide whether it is response or request
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
@@ -779,14 +779,14 @@ void DCE2_Smb2SetInfo(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             smb_data, end, SMB2_SET_INFO_REQUEST_STRUC_SIZE,
             dce2_smb_stats.v2_stinf_req_hdr_err, SMB2_COM_SET_INFO)
 
-        const Smb2SetInfoRequestHdr* smb_set_info_hdr = (const Smb2SetInfoRequestHdr*)smb_data;
-        const uint8_t* file_data = (const uint8_t*)smb_set_info_hdr +
+        const Smb2SetInfoRequestHdr* smb_set_info_hdr = reinterpret_cast<const Smb2SetInfoRequestHdr*>(smb_data);
+        const uint8_t* file_data = reinterpret_cast<const uint8_t*>(smb_set_info_hdr) +
             SMB2_SET_INFO_REQUEST_STRUC_SIZE - 1;
 
         if (smb_set_info_hdr->file_info_class == SMB2_FILE_ENDOFFILE_INFO or
             smb_set_info_hdr->file_info_class == SMB2_FILE_ALLOCATION_INFO)
         {
-            uint64_t file_size = alignedNtohq((const uint64_t*)file_data);
+            uint64_t file_size = alignedNtohq(reinterpret_cast<const uint64_t*>(file_data));
             uint64_t fileId_persistent = alignedNtohq(&(smb_set_info_hdr->fileId_persistent));
             DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(fileId_persistent);
             if (ftracker and !ftracker->ignore)
@@ -866,7 +866,7 @@ static void DCE2_Smb2ReadRequest(DCE2_Smb2SsnData* ssd,
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
             DetectionEngine::get_current_packet(), "%s_REQ: max req exceeded\n",
             smb2_command_string[SMB2_COM_READ]);
-        dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats,
+        dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
             ssd->sd);
         return;
     }
@@ -893,7 +893,7 @@ static void DCE2_Smb2ReadRequest(DCE2_Smb2SsnData* ssd,
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
             DetectionEngine::get_current_packet(),
             "%s_REQ: invalid file offset\n", smb2_command_string[SMB2_COM_READ]);
-        dce_alert(GID_DCE2, DCE2_SMB_INVALID_FILE_OFFSET, (dce2CommonStats*)&dce2_smb_stats,
+        dce_alert(GID_DCE2, DCE2_SMB_INVALID_FILE_OFFSET, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
             ssd->sd);
     }
 }
@@ -906,7 +906,7 @@ static void DCE2_Smb2ReadResponse(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     const Smb2ReadResponseHdr* smb_read_hdr, const uint8_t* end, DCE2_Smb2SessionTracker* str,
     DCE2_Smb2TreeTracker* ttr, uint64_t message_id)
 {
-    const uint8_t* file_data =  (const uint8_t*)smb_read_hdr + SMB2_READ_RESPONSE_STRUC_SIZE - 1;
+    const uint8_t* file_data =  reinterpret_cast<const uint8_t*>(smb_read_hdr) + SMB2_READ_RESPONSE_STRUC_SIZE - 1;
     int data_size = end - file_data;
     uint16_t data_offset;
     DCE2_Smb2RequestTracker* request = str->findRtracker(ssd->flow_key, message_id);
@@ -919,13 +919,13 @@ static void DCE2_Smb2ReadResponse(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         dce2_smb_stats.v2_read_rtrkr_misng++;
         return;
     }
-    data_offset = alignedNtohs((const uint16_t*)(&(smb_read_hdr->data_offset)));
-    if (data_offset + (const uint8_t*)smb_hdr > end)
+    data_offset = alignedNtohs(reinterpret_cast<const uint16_t*>(&(smb_read_hdr->data_offset)));
+    if (data_offset + reinterpret_cast<const uint8_t*>(smb_hdr) > end)
     {
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
             DetectionEngine::get_current_packet(), "%s_RESP: bad offset\n",
             smb2_command_string[SMB2_COM_READ]);
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
     }
 
     DCE2_Smb2FileTracker* ftracker =  ttr->findFtracker(request->get_file_id());
@@ -964,7 +964,7 @@ void DCE2_Smb2Read(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     const uint8_t* smb_data, const uint8_t* end, DCE2_Smb2SessionTracker* str,
     DCE2_Smb2TreeTracker* ttr, uint64_t mid)
 {
-    uint16_t structure_size = alignedNtohs((const uint16_t*)smb_data);
+    uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
 
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
@@ -998,7 +998,7 @@ void DCE2_Smb2Read(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         SMB2_CHECK_HDR_ERROR(
             smb_data, end, SMB2_READ_REQUEST_STRUC_SIZE - 1,
             dce2_smb_stats.v2_read_req_hdr_err, SMB2_COM_READ)
-        DCE2_Smb2ReadRequest(ssd, (const Smb2ReadRequestHdr*)smb_data, end, str, ttr, mid);
+        DCE2_Smb2ReadRequest(ssd, reinterpret_cast<const Smb2ReadRequestHdr*>(smb_data), end, str, ttr, mid);
     }
     else if (structure_size == SMB2_READ_RESPONSE_STRUC_SIZE)
     {
@@ -1006,7 +1006,7 @@ void DCE2_Smb2Read(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             smb_data, end, SMB2_READ_RESPONSE_STRUC_SIZE - 1,
             dce2_smb_stats.v2_read_resp_hdr_err, SMB2_COM_READ)
 
-        DCE2_Smb2ReadResponse(ssd, smb_hdr, (const Smb2ReadResponseHdr*)smb_data, end, str, ttr, mid);
+        DCE2_Smb2ReadResponse(ssd, smb_hdr, reinterpret_cast<const Smb2ReadResponseHdr*>(smb_data), end, str, ttr, mid);
     }
     else
     {
@@ -1025,7 +1025,7 @@ static void DCE2_Smb2WriteRequest(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     const Smb2WriteRequestHdr* smb_write_hdr, const uint8_t* end, DCE2_Smb2SessionTracker* str,
     DCE2_Smb2TreeTracker* ttr, uint64_t mid)
 {
-    const uint8_t* file_data =  (const uint8_t*)smb_write_hdr + SMB2_WRITE_REQUEST_STRUC_SIZE - 1;
+    const uint8_t* file_data =  reinterpret_cast<const uint8_t*>(smb_write_hdr) + SMB2_WRITE_REQUEST_STRUC_SIZE - 1;
     int data_size = end - file_data;
     uint64_t fileId_persistent, offset;
     uint16_t data_offset;
@@ -1047,18 +1047,18 @@ static void DCE2_Smb2WriteRequest(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
             DetectionEngine::get_current_packet(), "%s_REQ: max req exceeded\n",
             smb2_command_string[SMB2_COM_WRITE]);
-        dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats,
+        dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
             ssd->sd);
         return;
     }
 
     data_offset = alignedNtohs((const uint16_t*)(&(smb_write_hdr->data_offset)));
-    if (data_offset + (const uint8_t*)smb_hdr > end)
+    if (data_offset + reinterpret_cast<const uint8_t*>(smb_hdr) > end)
     {
         SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
             DetectionEngine::get_current_packet(), "%s_REQ: bad offset\n",
             smb2_command_string[SMB2_COM_WRITE]);
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
     }
 
     offset = alignedNtohq((const uint64_t*)(&(smb_write_hdr->offset)));
@@ -1083,7 +1083,7 @@ static void DCE2_Smb2WriteRequest(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     {
         if (ftracker->file_size and (offset > ftracker->file_size))
         {
-            dce_alert(GID_DCE2, DCE2_SMB_INVALID_FILE_OFFSET, (dce2CommonStats*)&dce2_smb_stats,
+            dce_alert(GID_DCE2, DCE2_SMB_INVALID_FILE_OFFSET, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
         }
 
@@ -1122,7 +1122,7 @@ void DCE2_Smb2Write(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     const uint8_t* smb_data, const uint8_t* end, DCE2_Smb2SessionTracker* str,
     DCE2_Smb2TreeTracker* ttr, uint64_t mid)
 {
-    uint16_t structure_size = alignedNtohs((const uint16_t*)smb_data);
+    uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
 
     if (structure_size == SMB2_ERROR_RESPONSE_STRUC_SIZE and Smb2Error(smb_hdr))
     {
@@ -1156,7 +1156,7 @@ void DCE2_Smb2Write(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         SMB2_CHECK_HDR_ERROR(
             smb_data, end, SMB2_WRITE_REQUEST_STRUC_SIZE - 1,
             dce2_smb_stats.v2_wrt_req_hdr_err, SMB2_COM_WRITE)
-        DCE2_Smb2WriteRequest(ssd, smb_hdr, (const Smb2WriteRequestHdr*)smb_data, end, str, ttr,
+        DCE2_Smb2WriteRequest(ssd, smb_hdr, reinterpret_cast<const Smb2WriteRequestHdr*>(smb_data), end, str, ttr,
             mid);
     }
     else if (structure_size == SMB2_WRITE_RESPONSE_STRUC_SIZE)
@@ -1179,7 +1179,7 @@ void DCE2_Smb2Write(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
 void DCE2_Smb2Logoff(DCE2_Smb2SsnData* ssd, const uint8_t* smb_data,
     const uint64_t sid)
 {
-    if (alignedNtohs((const uint16_t*)smb_data) == SMB2_LOGOFF_REQUEST_STRUC_SIZE)
+    if (alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data)) == SMB2_LOGOFF_REQUEST_STRUC_SIZE)
     {
         auto str = DCE2_Smb2FindSidInSsd(ssd, sid);
         if (str)
@@ -1201,7 +1201,7 @@ void DCE2_Smb2IoctlCommand(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     const uint8_t* smb_data, const uint8_t* end, DCE2_Smb2SessionTracker* str,
     DCE2_Smb2TreeTracker* ttr, uint64_t mid)
 {
-    uint16_t structure_size = alignedNtohs((const uint16_t*)smb_data);
+    uint16_t structure_size = alignedNtohs(reinterpret_cast<const uint16_t*>(smb_data));
     const uint8_t* file_data = (const uint8_t*)smb_data + structure_size - 1;
     int data_size = end - file_data;
     uint64_t fileId_persistent = 0;
@@ -1225,7 +1225,7 @@ void DCE2_Smb2IoctlCommand(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     // Using structure size to decide whether it is response or request
     else if (structure_size == SMB2_IOCTL_REQUEST_STRUC_SIZE)
     {
-        const Smb2IoctlRequestHdr* ioctl_request = (const Smb2IoctlRequestHdr*)smb_data;
+        const Smb2IoctlRequestHdr* ioctl_request = reinterpret_cast<const Smb2IoctlRequestHdr*>(smb_data);
         if ((ioctl_request->ctl_code != FSCTL_PIPE_PEEK) and (ioctl_request->ctl_code !=
             FSCTL_PIPE_WAIT) and (ioctl_request->ctl_code != FSCTL_PIPE_TRANSCEIVE))
         {
@@ -1247,14 +1247,14 @@ void DCE2_Smb2IoctlCommand(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
                 DetectionEngine::get_current_packet(), "%s_REQ: max req exceeded\n",
                 smb2_command_string[SMB2_COM_READ]);
-            dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, (dce2CommonStats*)&dce2_smb_stats,
+            dce_alert(GID_DCE2, DCE2_SMB_MAX_REQS_EXCEEDED, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
             return;
         }
     }
     else if (structure_size == SMB2_IOCTL_RESPONSE_STRUC_SIZE)
     {
-        const Smb2IoctlResponseHdr* ioctl_response = (const Smb2IoctlResponseHdr*)smb_data;
+        const Smb2IoctlResponseHdr* ioctl_response = reinterpret_cast<const Smb2IoctlResponseHdr*>(smb_data);
         if ((ioctl_response->ctl_code != FSCTL_PIPE_PEEK) and (ioctl_response->ctl_code !=
             FSCTL_PIPE_WAIT) and (ioctl_response->ctl_code != FSCTL_PIPE_TRANSCEIVE))
         {
@@ -1277,4 +1277,3 @@ void DCE2_Smb2IoctlCommand(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         DCE2_CoProcess(&ssd->sd, ftracker->co_tracker, file_data, data_size);
     }
 }
-

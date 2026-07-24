@@ -232,7 +232,7 @@ TEST_GROUP(unixdomain_connector)
 {
     void setup() override
     {
-        unixdomainc_api = (const ConnectorApi*) unixdomain_connector;
+        unixdomainc_api = reinterpret_cast<const ConnectorApi*>(unixdomain_connector);
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "unixdomain";
         connector_config.paths.push_back("/tmp/pub_sub1");
@@ -267,7 +267,7 @@ TEST_GROUP(unixdomain_connector_call_error)
 {
     void setup() override
     {
-        unixdomainc_api = (const ConnectorApi*) unixdomain_connector;
+        unixdomainc_api = reinterpret_cast<const ConnectorApi*>(unixdomain_connector);
         set_normal_status();
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "unixdomain";
@@ -301,7 +301,7 @@ TEST_GROUP(unixdomain_connector_answer_error)
 {
     void setup() override
     {
-        unixdomainc_api = (const ConnectorApi*) unixdomain_connector;
+        unixdomainc_api = reinterpret_cast<const ConnectorApi*>(unixdomain_connector);
         set_normal_status();
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "unixdomain-a";
@@ -357,7 +357,7 @@ TEST(unixdomain_connector_answer_error, bad_accept)
 
 TEST(unixdomain_connector_call_other, bad_setup)
 {
-    unixdomainc_api = (const ConnectorApi*) unixdomain_connector;
+    unixdomainc_api = reinterpret_cast<const ConnectorApi*>(unixdomain_connector);
     s_instance = 0;
     set_normal_status();
     connector_config.direction = Connector::CONN_DUPLEX;
@@ -380,7 +380,7 @@ TEST_GROUP(unixdomain_connector_tinit_tterm_thread_call)
 {
     void setup() override
     {
-        unixdomainc_api = (const ConnectorApi*) unixdomain_connector;
+        unixdomainc_api = reinterpret_cast<const ConnectorApi*>(unixdomain_connector);
         s_instance = 0;
         set_normal_status();
         connector_config.direction = Connector::CONN_DUPLEX;
@@ -411,7 +411,7 @@ TEST_GROUP(unixdomain_connector_tinit_tterm_call)
 {
     void setup() override
     {
-        unixdomainc_api = (const ConnectorApi*) unixdomain_connector;
+        unixdomainc_api = reinterpret_cast<const ConnectorApi*>(unixdomain_connector);
         s_instance = 0;
         set_normal_status();
         connector_config.direction = Connector::CONN_DUPLEX;
@@ -442,7 +442,7 @@ TEST_GROUP(unixdomain_connector_no_tinit_tterm_call)
 {
     void setup() override
     {
-        unixdomainc_api = (const ConnectorApi*) unixdomain_connector;
+        unixdomainc_api = reinterpret_cast<const ConnectorApi*>(unixdomain_connector);
         s_instance = 0;
         set_normal_status();
         connector_config.direction = Connector::CONN_DUPLEX;
@@ -475,12 +475,12 @@ TEST(unixdomain_connector_no_tinit_tterm_call, poll_error)
     uint8_t* message = new uint8_t[size];
     for (int i = sizeof(UnixDomainConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
-    UnixDomainConnectorMsgHdr* hdr = (UnixDomainConnectorMsgHdr*)message;
+    UnixDomainConnectorMsgHdr* hdr = reinterpret_cast<UnixDomainConnectorMsgHdr*>(message);
     hdr->version = UNIXDOMAIN_FORMAT_VERSION;
     hdr->connector_msg_length = 10;
     s_rec_message = message;
     s_rec_message_size = size; // also trigger the read action
-    UnixDomainConnector* unixdomainc = (UnixDomainConnector*)connector;
+    UnixDomainConnector* unixdomainc = static_cast<UnixDomainConnector*>(connector);
 
     unixdomainc->process_receive();
     unixdomainc->process_receive();
@@ -499,7 +499,7 @@ TEST_GROUP(unixdomain_connector_tinit_tterm_answer)
     {
         s_instance = 0;
         set_normal_status();
-        unixdomainc_api = (const ConnectorApi*) unixdomain_connector;
+        unixdomainc_api = reinterpret_cast<const ConnectorApi*>(unixdomain_connector);
         connector_config.direction = Connector::CONN_DUPLEX;
         connector_config.connector_name = "unixdomain-a";
         connector_config.paths.push_back("/tmp/pub_sub2");
@@ -528,7 +528,7 @@ TEST(unixdomain_connector_tinit_tterm_call, alloc_transmit)
 {
     const uint32_t len = 40;
     const uint8_t* data = new uint8_t[len];
-    UnixDomainConnector* unixdomainc = (UnixDomainConnector*)connector;
+    UnixDomainConnector* unixdomainc = static_cast<UnixDomainConnector*>(connector);
     set_normal_status();
 
     ConnectorMsg msg(data, len, true);
@@ -545,7 +545,7 @@ TEST(unixdomain_connector_tinit_tterm_call, alloc_transmit_body_fail)
 {
     const uint32_t len = 40;
     const uint8_t* data = new uint8_t[len];
-    UnixDomainConnector* unixdomainc = (UnixDomainConnector*)connector;
+    UnixDomainConnector* unixdomainc = static_cast<UnixDomainConnector*>(connector);
     set_normal_status();
 
     ConnectorMsg msg(data, len, true);
@@ -562,7 +562,7 @@ TEST(unixdomain_connector_tinit_tterm_call, alloc_transmit_no_sock)
 {
     const uint32_t len = 40;
     const uint8_t* data = new uint8_t[len];
-    UnixDomainConnector* unixdomainc = (UnixDomainConnector*)connector;
+    UnixDomainConnector* unixdomainc = static_cast<UnixDomainConnector*>(connector);
 
     ConnectorMsg msg(data, len, true);
 
@@ -576,7 +576,7 @@ TEST(unixdomain_connector_tinit_tterm_call, alloc_transmit_no_sock)
 
 TEST(unixdomain_connector_tinit_tterm_call, receive_no_sock)
 {
-    UnixDomainConnector* unixdomainc = (UnixDomainConnector*)connector;
+    UnixDomainConnector* unixdomainc = static_cast<UnixDomainConnector*>(connector);
     unixdomainc->sock_fd = -1;
     const ConnectorMsg msg = unixdomainc->receive_message(false);
     CHECK(msg.get_data() == nullptr);
@@ -586,14 +586,14 @@ TEST(unixdomain_connector_tinit_tterm_call, receive_no_sock)
 TEST(unixdomain_connector_tinit_tterm_call, receive)
 {
     const uint32_t cmsg_len = 10;
-    UnixDomainConnector* unixdomainc = (UnixDomainConnector*)connector;
+    UnixDomainConnector* unixdomainc = static_cast<UnixDomainConnector*>(connector);
     size_t size = sizeof(UnixDomainConnectorMsgHdr) + cmsg_len;
     uint8_t* message = new uint8_t[size];
 
     for (int i = sizeof(UnixDomainConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
 
-    UnixDomainConnectorMsgHdr* hdr = (UnixDomainConnectorMsgHdr*)message;
+    UnixDomainConnectorMsgHdr* hdr = reinterpret_cast<UnixDomainConnectorMsgHdr*>(message);
     hdr->version = UNIXDOMAIN_FORMAT_VERSION;
     hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
@@ -624,7 +624,7 @@ TEST(unixdomain_connector_no_tinit_tterm_call, receive_wrong_version)
     for (int i = sizeof(UnixDomainConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
 
-    UnixDomainConnectorMsgHdr* hdr = (UnixDomainConnectorMsgHdr*)message;
+    UnixDomainConnectorMsgHdr* hdr = reinterpret_cast<UnixDomainConnectorMsgHdr*>(message);
     hdr->version = UNIXDOMAIN_FORMAT_VERSION+1;
     hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
@@ -632,7 +632,7 @@ TEST(unixdomain_connector_no_tinit_tterm_call, receive_wrong_version)
     s_poll_data_available = true;
     connector = unixdomainc_api->tinit(connector_config);
     CHECK(connector != nullptr);
-    UnixDomainConnector* unixdomainc = (UnixDomainConnector*)connector;
+    UnixDomainConnector* unixdomainc = static_cast<UnixDomainConnector*>(connector);
 
     unixdomainc->process_receive();
     unixdomainc->process_receive();
@@ -653,7 +653,7 @@ TEST(unixdomain_connector_no_tinit_tterm_call, receive_recv_error_EAGAIN)
     for (int i = sizeof(UnixDomainConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
 
-    UnixDomainConnectorMsgHdr* hdr = (UnixDomainConnectorMsgHdr*)message;
+    UnixDomainConnectorMsgHdr* hdr = reinterpret_cast<UnixDomainConnectorMsgHdr*>(message);
     hdr->version = UNIXDOMAIN_FORMAT_VERSION;
     hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
@@ -663,7 +663,7 @@ TEST(unixdomain_connector_no_tinit_tterm_call, receive_recv_error_EAGAIN)
 
     connector = unixdomainc_api->tinit(connector_config);
     CHECK(connector != nullptr);
-    UnixDomainConnector* unixdomainc = (UnixDomainConnector*)connector;
+    UnixDomainConnector* unixdomainc = static_cast<UnixDomainConnector*>(connector);
 
     unixdomainc->process_receive();
     const ConnectorMsg conn_msg = unixdomainc->receive_message(false);
@@ -683,7 +683,7 @@ TEST(unixdomain_connector_no_tinit_tterm_call, receive_recv_error_EBADF)
     for (int i = sizeof(UnixDomainConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
 
-    UnixDomainConnectorMsgHdr* hdr = (UnixDomainConnectorMsgHdr*)message;
+    UnixDomainConnectorMsgHdr* hdr = reinterpret_cast<UnixDomainConnectorMsgHdr*>(message);
     hdr->version = UNIXDOMAIN_FORMAT_VERSION;
     hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
@@ -693,7 +693,7 @@ TEST(unixdomain_connector_no_tinit_tterm_call, receive_recv_error_EBADF)
 
     connector = unixdomainc_api->tinit(connector_config);
     CHECK(connector != nullptr);
-    UnixDomainConnector* unixdomainc = (UnixDomainConnector*)connector;
+    UnixDomainConnector* unixdomainc = static_cast<UnixDomainConnector*>(connector);
 
     unixdomainc->process_receive();
     unixdomainc->process_receive();
@@ -715,7 +715,7 @@ TEST(unixdomain_connector_no_tinit_tterm_call, receive_recv_closed)
     for (int i = sizeof(UnixDomainConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
 
-    UnixDomainConnectorMsgHdr* hdr = (UnixDomainConnectorMsgHdr*)message;
+    UnixDomainConnectorMsgHdr* hdr = reinterpret_cast<UnixDomainConnectorMsgHdr*>(message);
     hdr->version = UNIXDOMAIN_FORMAT_VERSION;
     hdr->connector_msg_length = cmsg_len;
     s_rec_message = message;
@@ -725,7 +725,7 @@ TEST(unixdomain_connector_no_tinit_tterm_call, receive_recv_closed)
 
     connector = unixdomainc_api->tinit(connector_config);
     CHECK(connector != nullptr);
-    UnixDomainConnector* unixdomainc = (UnixDomainConnector*)connector;
+    UnixDomainConnector* unixdomainc = static_cast<UnixDomainConnector*>(connector);
 
     unixdomainc->process_receive();
     unixdomainc->process_receive();
@@ -747,7 +747,7 @@ TEST(unixdomain_connector_no_tinit_tterm_call, receive_recv_body_closed)
     for (int i = sizeof(UnixDomainConnectorMsgHdr); i < (int)size; i++ )
         message[i] = i;
 
-    UnixDomainConnectorMsgHdr* hdr = (UnixDomainConnectorMsgHdr*)message;
+    UnixDomainConnectorMsgHdr* hdr = reinterpret_cast<UnixDomainConnectorMsgHdr*>(message);
     hdr->version = UNIXDOMAIN_FORMAT_VERSION;
     hdr->connector_msg_length = cmsg_len;
     s_rec_error_size = cmsg_len;  // only indicate the error on the cmsg_len byte recv()
@@ -758,7 +758,7 @@ TEST(unixdomain_connector_no_tinit_tterm_call, receive_recv_body_closed)
 
     connector = unixdomainc_api->tinit(connector_config);
     CHECK(connector != nullptr);
-    UnixDomainConnector* unixdomainc = (UnixDomainConnector*)connector;
+    UnixDomainConnector* unixdomainc = static_cast<UnixDomainConnector*>(connector);
 
     unixdomainc->process_receive();
     unixdomainc->process_receive();

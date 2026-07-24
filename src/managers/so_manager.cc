@@ -109,7 +109,7 @@ static const char* expand(const uint8_t* data, unsigned len)
     stream.next_in = const_cast<Bytef*>(data);
     stream.avail_in = (uInt)len;
 
-    stream.next_out = (Bytef*)so_buf;
+    stream.next_out = reinterpret_cast<Bytef*>(so_buf);
     stream.avail_out = (uInt)(max_rule - 1);
 
     int ret = inflate(&stream, Z_FINISH);
@@ -165,7 +165,7 @@ static const char* revert(const uint8_t* data, unsigned len)
     for ( unsigned i = 0; i < len; i++ )
         s[i] ^= key;
 
-    return expand((const uint8_t*)s.c_str(), s.size());
+    return expand(reinterpret_cast<const uint8_t*>(s.c_str()), s.size());
 }
 
 //-------------------------------------------------------------------------
@@ -173,7 +173,7 @@ static const char* revert(const uint8_t* data, unsigned len)
 static const SoApi* get_so_api(const char* soid)
 {
     const BaseApi* pb = PluginManager::get_api(soid);
-    return pb ? (const SoApi*)pb : nullptr;
+    return pb ? reinterpret_cast<const SoApi*>(pb) : nullptr;
 }
 
 const char* SoManager::get_so_rule(const char* soid)
@@ -204,7 +204,7 @@ void SoManager::delete_so_data(PluginPtr plug, void* pv)
     if ( !pv )
         return;
 
-    const SoApi* api = (const SoApi*)plug->api;
+    const SoApi* api = reinterpret_cast<const SoApi*>(plug->api);
 
     if ( api && api->dtor )
         api->dtor(pv);
@@ -251,7 +251,7 @@ PlugInterface* SoManager::get_interface(const SoApi* api)
 
 static void dump_stub(const BaseApi* pb, void*)
 {
-    const SoApi* api = (const SoApi*)pb;
+    const SoApi* api = reinterpret_cast<const SoApi*>(pb);
     const char* rule = revert(api->rule, api->length);
     std::string stub;
 
@@ -353,4 +353,3 @@ void SoManager::rule_to_text(const char* delim)
     cout << endl;
     cout << "static const unsigned rule_" << var << "_len = 0;" << endl;
 }
-

@@ -92,7 +92,7 @@ const PegInfo* CipModule::get_pegs() const
 { return cip_pegs; }
 
 PegCount* CipModule::get_counts() const
-{ return (PegCount*)&cip_stats; }
+{ return reinterpret_cast<PegCount*>(&cip_stats); }
 
 ProfileStats* CipModule::get_profile() const
 { return &cip_perf_stats; }
@@ -151,4 +151,3 @@ bool CipModule::end(const char*, int, SnortConfig*)
 
     return true;
 }
-

@@ -48,7 +48,7 @@ uint64_t Http2FlowData::instance_count = 0;
 Http2FlowData::Http2FlowData(Flow* flow_) :
     FlowData(inspector_id),
     flow(flow_),
-    hi((HttpInspect*)(flow->assistant_gadget)),
+    hi(static_cast<HttpInspect*>(flow->assistant_gadget)),
     hpack_decoder { Http2HpackDecoder(this, SRC_CLIENT, events[SRC_CLIENT],
                         infractions[SRC_CLIENT]),
                     Http2HpackDecoder(this, SRC_SERVER, events[SRC_SERVER],
@@ -258,24 +258,36 @@ bool Http2FlowData::is_mid_frame() const
 
 FlowData* Http2FlowStreamIntf::get_stream_flow_data(const Flow* flow)
 {
-    Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* h2i_flow_data = static_cast<Http2FlowData*>(
+        flow->get_flow_data(Http2FlowData::inspector_id));
     assert(h2i_flow_data);
+    if (!h2i_flow_data)
+        return nullptr;
 
     return h2i_flow_data->get_hi_flow_data();
 }
 
 void Http2FlowStreamIntf::set_stream_flow_data(Flow* flow, FlowData* flow_data)
 {
-    Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* h2i_flow_data = static_cast<Http2FlowData*>(
+        flow->get_flow_data(Http2FlowData::inspector_id));
     assert(h2i_flow_data);
+    if (!h2i_flow_data)
+        return;
 
-    h2i_flow_data->set_hi_flow_data((HttpFlowData*)flow_data);
+    h2i_flow_data->set_hi_flow_data(static_cast<HttpFlowData*>(flow_data));
 }
 
 void Http2FlowStreamIntf::get_stream_id(const Flow* flow, int64_t& stream_id)
 {
-    Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* h2i_flow_data = static_cast<Http2FlowData*>(
+        flow->get_flow_data(Http2FlowData::inspector_id));
     assert(h2i_flow_data);
+    if (!h2i_flow_data)
+    {
+        stream_id = -1;
+        return;
+    }
 
     stream_id = h2i_flow_data->get_processing_stream_id();
 }
@@ -285,7 +297,8 @@ AppId Http2FlowStreamIntf::get_appid_from_stream(const Flow* flow)
 #ifdef NDEBUG
     UNUSED(flow);
 #else
-    Http2FlowData* h2i_flow_data = (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* h2i_flow_data = static_cast<Http2FlowData*>(
+        flow->get_flow_data(Http2FlowData::inspector_id));
     assert(h2i_flow_data);
 #endif
 
@@ -294,8 +307,8 @@ AppId Http2FlowStreamIntf::get_appid_from_stream(const Flow* flow)
 
 void* Http2FlowStreamIntf::get_hi_msg_section(const Flow* flow)
 {
-    const Http2FlowData* const h2i_flow_data =
-        (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    const Http2FlowData* const h2i_flow_data = static_cast<Http2FlowData*>(
+        flow->get_flow_data(Http2FlowData::inspector_id));
     HttpMsgSection* current_section = nullptr;
     if (h2i_flow_data)
         current_section = h2i_flow_data->get_hi_msg_section();
@@ -304,9 +317,9 @@ void* Http2FlowStreamIntf::get_hi_msg_section(const Flow* flow)
 
 void Http2FlowStreamIntf::set_hi_msg_section(Flow* flow, void* section)
 {
-    Http2FlowData* h2i_flow_data =
-        (Http2FlowData*)flow->get_flow_data(Http2FlowData::inspector_id);
+    Http2FlowData* h2i_flow_data = static_cast<Http2FlowData*>(
+        flow->get_flow_data(Http2FlowData::inspector_id));
     if (h2i_flow_data)
-        h2i_flow_data->set_hi_msg_section((HttpMsgSection*)section);
+        h2i_flow_data->set_hi_msg_section(static_cast<HttpMsgSection*>(section));
 
 }

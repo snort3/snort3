@@ -25,6 +25,7 @@
 // payload data only, no headers.
 
 #include <daq_common.h>
+#include <cstring>
 
 #include "flow/flow.h"
 #include "framework/decode_data.h"
@@ -416,13 +417,19 @@ private:
 inline void SetExtraData(Packet* p, const uint32_t xid) { p->xtradata_mask |= BIT(xid); }
 
 inline uint16_t extract_16bits(const uint8_t* const p)
-{ return ntohs(*(const uint16_t*)(p)); }
+{
+    uint16_t value;
+    std::memcpy(&value, p, sizeof(value));
+    return ntohs(value);
+}
 
 inline uint32_t extract_32bits(const uint8_t* p)
 {
     assert(p);
 
-    return ntohl(*(const uint32_t*)p);
+    uint32_t value;
+    std::memcpy(&value, p, sizeof(value));
+    return ntohl(value);
 }
 
 inline uint16_t alignedNtohs(const uint16_t* ptr)

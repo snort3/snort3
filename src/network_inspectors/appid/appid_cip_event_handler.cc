@@ -81,7 +81,7 @@ void CipEventHandler::handle(DataEvent& event, Flow* flow)
     if (is_appid_cpu_profiling_running)
         per_appid_event_cpu_timer.start();
 
-    CipEvent& cip_event = (CipEvent&)event;
+    CipEvent& cip_event = static_cast<CipEvent&>(event);
     const CipEventData* event_data = cip_event.get_event_data();
 
     if (!event_data)

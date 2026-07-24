@@ -209,7 +209,7 @@ static void bnfa_free(void* p, int n, int* m)
     }
 }
 
-#define BNFA_MALLOC(n,memory) (bnfa_state_t*)bnfa_alloc(n,&(memory))
+#define BNFA_MALLOC(n,memory) static_cast<bnfa_state_t*>(bnfa_alloc(n, &(memory)))
 #define BNFA_FREE(p,n,memory) bnfa_free(p,n,&(memory))
 
 /*
@@ -219,7 +219,7 @@ static int _bnfa_list_get_next_state(bnfa_struct_t* bnfa, int state, int input)
 {
     if ( state == 0 )   /* Full set of states  always */
     {
-        bnfa_state_t* p = (bnfa_state_t*)bnfa->bnfaTransTable[0];
+        bnfa_state_t* p = reinterpret_cast<bnfa_state_t*>(bnfa->bnfaTransTable[0]);
         if (!p)
         {
             return 0;
@@ -260,17 +260,17 @@ static int _bnfa_list_put_next_state(bnfa_struct_t* bnfa, int state, int input, 
     {
         bnfa_state_t* p;
 
-        p = (bnfa_state_t*)bnfa->bnfaTransTable[0];
+        p = reinterpret_cast<bnfa_state_t*>(bnfa->bnfaTransTable[0]);
         if ( !p )
         {
-            p = (bnfa_state_t*)BNFA_MALLOC(sizeof(bnfa_state_t)*bnfa->bnfaAlphabetSize,
+            p = BNFA_MALLOC(sizeof(bnfa_state_t)*bnfa->bnfaAlphabetSize,
                 bnfa->list_memory);
             if ( !p )
             {
                 return -1;
             }
 
-            bnfa->bnfaTransTable[0] = (bnfa_trans_node_t*)p;
+            bnfa->bnfaTransTable[0] = reinterpret_cast<bnfa_trans_node_t*>(p);
         }
         if ( p[input] )
         {
@@ -288,7 +288,7 @@ static int _bnfa_list_put_next_state(bnfa_struct_t* bnfa, int state, int input, 
         p = bnfa->bnfaTransTable[state];
         while ( p )
         {
-            if ( p->key == (unsigned)input )   /* transition already exists- reset the next state
+            if ( p->key == static_cast<unsigned>(input) )   /* transition already exists- reset the next state
                                                  */
             {
                 p->next_state = next_state;
@@ -298,7 +298,8 @@ static int _bnfa_list_put_next_state(bnfa_struct_t* bnfa, int state, int input, 
         }
 
         /* Definitely not an existing transition - add it */
-        tnew = (bnfa_trans_node_t*)BNFA_MALLOC(sizeof(bnfa_trans_node_t),bnfa->list_memory);
+        tnew = reinterpret_cast<bnfa_trans_node_t*>(
+            BNFA_MALLOC(sizeof(bnfa_trans_node_t), bnfa->list_memory));
         if ( !tnew )
         {
             return -1;
@@ -413,7 +414,7 @@ static int _bnfa_list_print_table(bnfa_struct_t* bnfa)
         if ( i == 0 )
         {
             int k;
-            bnfa_state_t* p = (bnfa_state_t*)bnfa->bnfaTransTable[0];
+            bnfa_state_t* p = reinterpret_cast<bnfa_state_t*>(bnfa->bnfaTransTable[0]);
             if (!p)
                 continue;
 
@@ -554,7 +555,8 @@ static int _bnfa_add_pattern_states(bnfa_struct_t* bnfa, bnfa_pattern_t* p)
     }
 
     /*  Add a pattern to the list of patterns terminated at this state */
-    pmn = (bnfa_match_node_t*)BNFA_MALLOC(sizeof(bnfa_match_node_t),bnfa->matchlist_memory);
+    pmn = reinterpret_cast<bnfa_match_node_t*>(
+        BNFA_MALLOC(sizeof(bnfa_match_node_t), bnfa->matchlist_memory));
     if ( !pmn )
     {
         return -1;
@@ -573,7 +575,7 @@ int _bnfa_list_get_next_state(bnfa_struct_t* bnfa, int state, int input)
 {
     if ( state == 0 )   /* Full set of states  always */
     {
-        bnfa_state_t* p = (bnfa_state_t*)bnfa->bnfaTransTable[0];
+        bnfa_state_t* p = reinterpret_cast<bnfa_state_t*>(bnfa->bnfaTransTable[0]);
         if (!p)
         {
             return 0;
@@ -763,8 +765,8 @@ static int _bnfa_build_nfa(bnfa_struct_t* bnfa)
             for ( mlist = MatchList[next]; mlist; mlist = mlist->next)
             {
                 /* Dup the node, don't copy the data */
-                px = (bnfa_match_node_t*)BNFA_MALLOC(sizeof(bnfa_match_node_t),
-                    bnfa->matchlist_memory);
+                px = reinterpret_cast<bnfa_match_node_t*>(
+                    BNFA_MALLOC(sizeof(bnfa_match_node_t), bnfa->matchlist_memory));
                 if ( !px )
                 {
                     return 0;
@@ -1185,7 +1187,8 @@ void bnfaPrint(bnfa_struct_t* bnfa)
 bnfa_struct_t* bnfaNew(const MpseAgent* agent)
 {
     int bnfa_memory=0;
-    bnfa_struct_t* p = (bnfa_struct_t*)BNFA_MALLOC(sizeof(bnfa_struct_t),bnfa_memory);
+    bnfa_struct_t* p = reinterpret_cast<bnfa_struct_t*>(
+        BNFA_MALLOC(sizeof(bnfa_struct_t), bnfa_memory));
 
     if ( p )
     {
@@ -1281,11 +1284,12 @@ int bnfaAddPattern(
 {
     bnfa_pattern_t* plist;
 
-    plist = (bnfa_pattern_t*)BNFA_MALLOC(sizeof(bnfa_pattern_t),p->pat_memory);
+    plist = reinterpret_cast<bnfa_pattern_t*>(
+        BNFA_MALLOC(sizeof(bnfa_pattern_t), p->pat_memory));
     if (!plist)
         return -1;
 
-    plist->casepatrn = (uint8_t*)BNFA_MALLOC(n,p->pat_memory);
+    plist->casepatrn = reinterpret_cast<uint8_t*>(BNFA_MALLOC(n, p->pat_memory));
     if (!plist->casepatrn)
     {
         BNFA_FREE(plist,sizeof(bnfa_pattern_t),p->pat_memory);
@@ -1325,16 +1329,17 @@ static inline int _bnfaCompile(bnfa_struct_t* bnfa)
     bnfa->bnfaMaxStates++; /* one extra */
 
     /* Alloc a List based State Transition table */
-    bnfa->bnfaTransTable =(bnfa_trans_node_t**)BNFA_MALLOC(sizeof(bnfa_trans_node_t*) *
-        bnfa->bnfaMaxStates,bnfa->list_memory);
+    bnfa->bnfaTransTable = reinterpret_cast<bnfa_trans_node_t**>(
+        BNFA_MALLOC(sizeof(bnfa_trans_node_t*) * bnfa->bnfaMaxStates,
+        bnfa->list_memory));
     if (!bnfa->bnfaTransTable)
     {
         return -1;
     }
 
     /* Alloc a MatchList table - this has a list of pattern matches for each state */
-    bnfa->bnfaMatchList=(bnfa_match_node_t**)BNFA_MALLOC(sizeof(void*)*bnfa->bnfaMaxStates,
-        bnfa->matchlist_memory);
+    bnfa->bnfaMatchList = reinterpret_cast<bnfa_match_node_t**>(
+        BNFA_MALLOC(sizeof(void*)*bnfa->bnfaMaxStates, bnfa->matchlist_memory));
     if (!bnfa->bnfaMatchList)
     {
         return -1;
@@ -1356,8 +1361,8 @@ static inline int _bnfaCompile(bnfa_struct_t* bnfa)
     /* ReAlloc a smaller MatchList table -  only need NumStates  */
     tmpMatchList=bnfa->bnfaMatchList;
 
-    bnfa->bnfaMatchList=(bnfa_match_node_t**)BNFA_MALLOC(sizeof(void*) * bnfa->bnfaNumStates,
-        bnfa->matchlist_memory);
+    bnfa->bnfaMatchList = reinterpret_cast<bnfa_match_node_t**>(
+        BNFA_MALLOC(sizeof(void*) * bnfa->bnfaNumStates, bnfa->matchlist_memory));
     if (!bnfa->bnfaMatchList)
     {
         return -1;
@@ -1699,4 +1704,3 @@ void bnfaAccumInfo(bnfa_struct_t* p)
     px->nextstate_memory += p->nextstate_memory;
     px->failstate_memory += p->failstate_memory;
 }
-

@@ -361,7 +361,8 @@ static int reload_third_party(lua_State* L)
         return 0;
     }
 
-    AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
+    AppIdInspector* inspector = static_cast<AppIdInspector*>(
+        InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
 
     if (!inspector)
     {
@@ -387,7 +388,8 @@ static int reload_third_party(lua_State* L)
 static int print_appid_config(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
+    AppIdInspector* inspector = static_cast<AppIdInspector*>(
+        InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
     if (!inspector)
     {
         ctrlcon->respond("== printing appid config failed - appid not enabled\n");
@@ -415,7 +417,8 @@ static int show_cpu_profiler_stats(lua_State* L)
     int display_rows_limit = luaL_optint(L, 2, APPID_CPU_PROFILER_DEFAULT_DISPLAY_ROWS);
 
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
+    AppIdInspector* inspector = static_cast<AppIdInspector*>(
+        InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
     if (!inspector)
     {
         ctrlcon->respond("== displaying appid cpu profiler failed - appid not enabled\n");
@@ -458,7 +461,8 @@ static int show_cpu_profiler_stats(lua_State* L)
 static int show_cpu_profiler_status(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    AppIdInspector* inspector = (AppIdInspector*) InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
+    AppIdInspector* inspector = static_cast<AppIdInspector*>(
+        InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
     if (!inspector)
     {
         ctrlcon->respond("== appid cpu profiler status check failed- appid not enabled\n");
@@ -479,7 +483,8 @@ static int reload_detectors(lua_State* L)
         ctrlcon->respond("== reload pending; retry\n");
         return 0;
     }
-    AppIdInspector* inspector = (AppIdInspector*)InspectorManager::get_inspector(MOD_NAME, MOD_USAGE);
+    AppIdInspector* inspector = static_cast<AppIdInspector*>(
+        InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
 
     if (!inspector)
     {
@@ -722,7 +727,7 @@ const PegInfo* AppIdModule::get_pegs() const
 
 PegCount* AppIdModule::get_counts() const
 {
-    return (PegCount*)&appid_stats;
+    return reinterpret_cast<PegCount*>(&appid_stats);
 }
 
 void AppIdModule::sum_stats(bool dump_stats)

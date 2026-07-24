@@ -145,5 +145,4 @@ const PegInfo* TcpConnectorModule::get_pegs() const
 { return tcp_connector_pegs; }
 
 PegCount* TcpConnectorModule::get_counts() const
-{ return (PegCount*)&tcp_connector_stats; }
-
+{ return reinterpret_cast<PegCount*>(&tcp_connector_stats); }

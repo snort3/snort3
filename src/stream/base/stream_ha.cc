@@ -24,6 +24,7 @@
 #include "stream_ha.h"
 
 #include <algorithm>
+#include <cstring>
 #include <unordered_map>
 
 #include "flow/flow_key.h"
@@ -102,7 +103,8 @@ bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, ui
     if (size != sizeof(SessionHAContent))
         return false;
 
-    SessionHAContent* hac = (SessionHAContent*) msg.cursor;
+    SessionHAContent hac{};
+    std::memcpy(&hac, msg.cursor, sizeof(hac));
 
     // If flow is missing, we need to create a new one.
     if ( flow == nullptr )
@@ -117,7 +119,7 @@ bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, ui
 
         flow->ha_state->clear(FlowHAState::NEW);
         flow->ha_state->add(FlowHAState::STANDBY);
-        if ( hac->flags & SessionHAContent::FLAG_LOW )
+        if ( hac.flags & SessionHAContent::FLAG_LOW )
         {
             flow->server_ip.set(flow->key->ip_l);
             flow->client_ip.set(flow->key->ip_h);
@@ -133,10 +135,10 @@ bool StreamHAClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg, ui
         }
     }
 
-    flow->ssn_state = hac->ssn_state;
+    flow->ssn_state = hac.ssn_state;
     flow->ssn_state.session_flags &= ~SSNFLAG_ESTABLISHED;  // clear flag for tcp established event to be generated
-    flow->flow_state = hac->flow_state;
-    flow->flags.udp_tunneled = hac->flags & SessionHAContent::FLAG_UDP_TUNNELED;
+    flow->flow_state = hac.flow_state;
+    flow->flags.udp_tunneled = hac.flags & SessionHAContent::FLAG_UDP_TUNNELED;
 
     // Flows created before HA became active have a null ha_state (see
     // Flow::init).  Allocate on demand so the standby bookkeeping below
@@ -160,21 +162,22 @@ bool StreamHAClient::produce(Flow& flow, HAMessage& msg)
     if (!msg.fits(sizeof(SessionHAContent)))
         return false;
 
-    SessionHAContent* hac = (SessionHAContent*) msg.cursor;
+    SessionHAContent hac{};
 
-    hac->ssn_state = flow.ssn_state;
-    hac->ssn_state.session_flags &= ~HA_IGNORED_SESSION_FLAGS;
+    hac.ssn_state = flow.ssn_state;
+    hac.ssn_state.session_flags &= ~HA_IGNORED_SESSION_FLAGS;
 
-    hac->flow_state = flow.flow_state;
-    hac->flags = 0;
+    hac.flow_state = flow.flow_state;
     if (!is_client_lower(flow))
-        hac->flags |= SessionHAContent::FLAG_LOW;
+        hac.flags |= SessionHAContent::FLAG_LOW;
 
     if (flow.client_ip.get_family() == AF_INET6)
-        hac->flags |= SessionHAContent::FLAG_IP6;
+        hac.flags |= SessionHAContent::FLAG_IP6;
 
     if (flow.flags.udp_tunneled)
-        hac->flags |= SessionHAContent::FLAG_UDP_TUNNELED;
+        hac.flags |= SessionHAContent::FLAG_UDP_TUNNELED;
+
+    std::memcpy(msg.cursor, &hac, sizeof(hac));
 
     msg.advance_cursor(sizeof(SessionHAContent));
 
@@ -310,4 +313,3 @@ void StreamHAManager::tswap()
     if ( HighAvailabilityManager::configured() )
         ha_client = new StreamHAClient();
 }
-

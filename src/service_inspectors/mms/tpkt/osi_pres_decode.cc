@@ -169,8 +169,8 @@ static TpktAppliSearchStateType decode_osi_pres_context_list_item(BerReader* ber
                 uint8_t id;
             };
 
-            const OsiPresContextListPresContextId* param = (const
-                OsiPresContextListPresContextId*)e.data;
+            const OsiPresContextListPresContextId* param =
+                reinterpret_cast<const OsiPresContextListPresContextId*>(e.data);
 
             switch (param->id)
             {
@@ -472,7 +472,8 @@ TpktAppliSearchStateType tpkt_internal_search_from_osi_pres_layer(Cursor* tpkt_c
     if (!p || !p->flow)
         return TPKT_APPLI_SEARCH_STATE__EXIT;
 
-    TpktFlowData* tpktfd = (TpktFlowData*)p->flow->get_flow_data(TpktFlowData::inspector_id);
+    TpktFlowData* tpktfd = static_cast<TpktFlowData*>(
+        p->flow->get_flow_data(TpktFlowData::inspector_id));
 
     // if flow data cannot be found something went wrong and we should just
     // exit. the flow data should not be initialized at this point
@@ -540,4 +541,3 @@ TpktAppliSearchStateType tpkt_internal_search_from_osi_pres_layer(Cursor* tpkt_c
 
     return TPKT_APPLI_SEARCH_STATE__EXIT;
 }
-

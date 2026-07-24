@@ -235,7 +235,7 @@ public:
     { return reject_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&reject_stats; }
+    { return reinterpret_cast<PegCount*>(&reject_stats); }
 
 private:
     uint32_t flags = 0;
@@ -305,7 +305,7 @@ static IpsAction* rej_ctor(Module* p)
 {
     if ( p )
     {
-        RejectModule* m = (RejectModule*)p;
+        RejectModule* m = static_cast<RejectModule*>(p);
         return new RejectAction(m->get_data());
     }
     else
@@ -349,4 +349,3 @@ const BaseApi* act_reject[] =
     &rej_api.base,
     nullptr
 };
-

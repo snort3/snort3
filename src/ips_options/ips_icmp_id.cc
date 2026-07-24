@@ -93,7 +93,7 @@ bool IcmpIdOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const IcmpIdOption& rhs = (const IcmpIdOption&)ips;
+    const IcmpIdOption& rhs = static_cast<const IcmpIdOption&>(ips);
     return ( config == rhs.config );
 }
 
@@ -180,7 +180,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* icmp_id_ctor(Module* p, IpsInfo&)
 {
-    IcmpIdModule* m = (IcmpIdModule*)p;
+    IcmpIdModule* m = static_cast<IcmpIdModule*>(p);
     return new IcmpIdOption(m->data);
 }
 

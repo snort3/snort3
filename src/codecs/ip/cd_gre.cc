@@ -117,8 +117,10 @@ void GreCodec::update(const ip::IpApi& api, const EncodeFlags /*flags*/, uint8_t
     {
         assert(lyr_len >= 6);
         // Checksum field is zero for computing checksum
-        *(uint16_t*)(raw_pkt + 4) = 0;
-        *(uint16_t*)(raw_pkt + 4) = checksum::cksum_add((uint16_t*)raw_pkt, updated_len);
+        const uint16_t zero = 0;
+        memcpy(raw_pkt + 4, &zero, sizeof(zero));
+        const uint16_t value = checksum::cksum_add(raw_pkt, updated_len);
+        memcpy(raw_pkt + 4, &value, sizeof(value));
     }
 }
 
@@ -143,16 +145,20 @@ bool GreCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
         if (GRE_KEY(greh_out))
             len += 4;
 
-        *(uint32_t*)(buf.data() + len) += ntohl(1);
+        uint32_t sequence;
+        memcpy(&sequence, buf.data() + len, sizeof(sequence));
+        sequence = htonl(ntohl(sequence) + 1);
+        memcpy(buf.data() + len, &sequence, sizeof(sequence));
     }
 
     if (GRE_CHKSUM(greh_out))
     {
         assert(raw_len >= 6);
         // Checksum field is zero for computing checksum
-        *(uint16_t*)(buf.data() + 4) = 0;
-        *(uint16_t*)(buf.data() + 4) = checksum::cksum_add((uint16_t*)buf.data(),
-            buf.size());
+        const uint16_t zero = 0;
+        memcpy(buf.data() + 4, &zero, sizeof(zero));
+        const uint16_t value = checksum::cksum_add(buf.data(), buf.size());
+        memcpy(buf.data() + 4, &value, sizeof(value));
     }
 
     return true;
@@ -206,7 +212,9 @@ bool GreCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
                 if (len > raw.len)
                     break;
 
-                uint16_t sre_addrfamily = ntohs(*((const uint16_t*)sre_ptr));
+                uint16_t sre_addrfamily;
+                memcpy(&sre_addrfamily, sre_ptr, sizeof(sre_addrfamily));
+                sre_addrfamily = ntohs(sre_addrfamily);
 
                 sre_ptr += sizeof(sre_addrfamily);
                 sre_ptr += sizeof(uint8_t);  // sre_offset

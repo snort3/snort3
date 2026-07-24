@@ -59,7 +59,8 @@ HttpTransaction::HttpTransaction(HttpFlowData* session_data_, snort::Flow* const
     infractions[0] = nullptr;
     infractions[1] = nullptr;
     HttpInspect* const hi = (session_data->is_for_httpx()) ?
-        (HttpInspect*)(flow->assistant_gadget) : (HttpInspect*)(flow->gadget);
+        static_cast<HttpInspect*>(flow->assistant_gadget) :
+        static_cast<HttpInspect*>(flow->gadget);
     pub_id = hi->get_pub_id();
 }
 
@@ -340,13 +341,13 @@ uint8_t HttpTransaction::get_info_code() const
              return code;
      }
 
-     const HttpMsgStatus* arch_status = (HttpMsgStatus*) archive_status_list;
+     const HttpMsgStatus* arch_status = static_cast<HttpMsgStatus*>(archive_status_list);
      while (arch_status)
      {
          const int32_t code = arch_status->get_status_code_num();
          if (is_info_code(code))
              return code;
-         arch_status = (HttpMsgStatus*)(arch_status->next);
+         arch_status = static_cast<HttpMsgStatus*>(arch_status->next);
      }
 
      return 0;
@@ -361,13 +362,13 @@ const Field& HttpTransaction::get_info_msg() const
              return status->get_reason_phrase();
      }
 
-     const HttpMsgStatus* arch_status = (HttpMsgStatus*) archive_status_list;
+     const HttpMsgStatus* arch_status = static_cast<HttpMsgStatus*>(archive_status_list);
      while (arch_status)
      {
          const int32_t code = arch_status->get_status_code_num();
          if (is_info_code(code))
              return arch_status->get_reason_phrase();
-         arch_status = (HttpMsgStatus*)(arch_status->next);
+         arch_status = static_cast<HttpMsgStatus*>(arch_status->next);
      }
 
      return Field::FIELD_NULL;

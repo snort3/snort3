@@ -59,9 +59,9 @@ void DceHttpServer::clear(Packet* p)
     {
         if ( !p->test_session_flags(SSNFLAG_ABORT_SERVER) )
         {
-            TcpSession* tcp_session = (TcpSession*)flow->session;
+            TcpSession* tcp_session = static_cast<TcpSession*>(flow->session);
             DceHttpServerSplitter* splitter =
-                (DceHttpServerSplitter*)(tcp_session->get_splitter(false));
+                static_cast<DceHttpServerSplitter*>(tcp_session->get_splitter(false));
 
             if ( splitter->cutover_inspector())
             {
@@ -127,4 +127,3 @@ const InspectApi dce_http_server_api =
     nullptr, // ssn
     nullptr  // reset
 };
-

@@ -80,7 +80,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* sid_ctor(Module* p, IpsInfo& info)
 {
-    SidModule* m = (SidModule*)p;
+    SidModule* m = static_cast<SidModule*>(p);
     IpsOption::set_sid(info, m->sid);
     return nullptr;
 }

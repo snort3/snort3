@@ -161,9 +161,11 @@ StreamSplitter::Status HttpStreamSplitter::handle_zero_nine(Flow* flow, HttpFlow
     session_data->status_code_num = 200;
     HttpModule::increment_peg_counts(PEG_RESPONSE);
     prepare_flush(session_data, nullptr, SEC_HEADER, 0, 0, 0, false, 0, 0);
-    my_inspector->process((const uint8_t*)"", 0, flow, SRC_SERVER, false, nullptr);
+    my_inspector->process(reinterpret_cast<const uint8_t*>(""), 0, flow, SRC_SERVER,
+        false, nullptr);
     session_data->transaction[SRC_SERVER]->clear_section();
-    HttpContextData* hcd = (HttpContextData*)DetectionEngine::get_data(HttpContextData::ips_id);
+    HttpContextData* hcd = static_cast<HttpContextData*>(
+        DetectionEngine::get_data(HttpContextData::ips_id));
     assert(hcd != nullptr);
     if (hcd == nullptr)
     {

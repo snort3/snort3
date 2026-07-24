@@ -75,7 +75,7 @@ public:
     EvalStatus eval(Cursor&, snort::Packet*) override;
 
     static IpsOption* opt_ctor(snort::Module* m, IpsInfo&)
-    { return new HttpBufferIpsOption((HttpBufferRuleOptModule*)m); }
+    { return new HttpBufferIpsOption(static_cast<HttpBufferRuleOptModule*>(m)); }
 
     static void opt_dtor(snort::IpsOption* p) { delete p; }
 

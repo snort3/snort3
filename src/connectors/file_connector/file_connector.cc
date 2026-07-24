@@ -50,7 +50,7 @@ bool FileConnector::internal_transmit_message(const ConnectorMsg& msg)
     {
         FileConnectorMsgHdr fc_hdr(msg.get_length());
 
-        file.write((const char*)&fc_hdr, sizeof(fc_hdr) );
+        file.write(reinterpret_cast<const char*>(&fc_hdr), sizeof(fc_hdr) );
         file.write((const char*)msg.get_data(), msg.get_length());
     }
 
@@ -67,7 +67,7 @@ ConnectorMsg FileConnector::receive_message_binary()
 {
     uint8_t* fc_hdr_buf = new uint8_t[sizeof(FileConnectorMsgHdr)];
 
-    FileConnectorMsgHdr* fc_hdr = (FileConnectorMsgHdr*)fc_hdr_buf;
+    FileConnectorMsgHdr* fc_hdr = reinterpret_cast<FileConnectorMsgHdr*>(fc_hdr_buf);
     file.read((char*)fc_hdr_buf, sizeof(FileConnectorMsgHdr));
 
     if ( (unsigned)file.gcount() < sizeof(FileConnectorMsgHdr) or
@@ -176,7 +176,7 @@ static Connector* file_connector_tinit(const ConnectorConfig& config)
 
 static void file_connector_tterm(Connector* connector)
 {
-    FileConnector* file_conn = (FileConnector*)connector;
+    FileConnector* file_conn = static_cast<FileConnector*>(connector);
 
     file_conn->file.close();
     delete file_conn;
@@ -184,7 +184,7 @@ static void file_connector_tterm(Connector* connector)
 
 static ConnectorCommon* file_connector_ctor(Module* m)
 {
-    FileConnectorModule* mod = (FileConnectorModule*)m;
+    FileConnectorModule* mod = static_cast<FileConnectorModule*>(m);
 
     return new ConnectorCommon(mod->get_and_clear_config());
 }
@@ -226,4 +226,3 @@ const BaseApi* file_connector[] =
     &file_connector_api.base,
     nullptr
 };
-

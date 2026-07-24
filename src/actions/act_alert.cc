@@ -77,7 +77,7 @@ public:
     { return alert_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&alert_stats; }
+    { return reinterpret_cast<PegCount*>(&alert_stats); }
 };
 
 //-------------------------------------------------------------------------
@@ -125,4 +125,3 @@ const BaseApi* act_alert[] =
     &alert_api.base,
     nullptr
 };
-

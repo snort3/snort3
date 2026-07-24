@@ -43,11 +43,11 @@ HttpMsgSection* HttpContextData::get_snapshot(const Flow* flow, IpsContext* cont
 
     if (flow->stream_intf)
     {
-        return (HttpMsgSection*)flow->stream_intf->get_hi_msg_section(flow);
+        return static_cast<HttpMsgSection*>(flow->stream_intf->get_hi_msg_section(flow));
     }
 
-    HttpContextData* hcd = (HttpContextData*)DetectionEngine::get_data(HttpContextData::ips_id,
-        context);
+    HttpContextData* hcd = static_cast<HttpContextData*>(
+        DetectionEngine::get_data(HttpContextData::ips_id, context));
 
     if ( !hcd )
         return nullptr;
@@ -65,8 +65,8 @@ void HttpContextData::save_snapshot(HttpMsgSection* section)
 HttpMsgSection* HttpContextData::clear_snapshot(IpsContext* context)
 {
     HttpMsgSection* section = nullptr;
-    HttpContextData* hcd = (HttpContextData*)DetectionEngine::get_data(HttpContextData::ips_id,
-            context);
+    HttpContextData* hcd = static_cast<HttpContextData*>(
+        DetectionEngine::get_data(HttpContextData::ips_id, context));
 
     if ( hcd )
     {

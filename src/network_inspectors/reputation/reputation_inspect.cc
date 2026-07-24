@@ -79,7 +79,7 @@ static inline IPdecision get_reputation(const ReputationConfig& config, Reputati
     IPdecision decision = DECISION_NULL;
 
     /*Walk through the IPrepInfo lists*/
-    uint8_t* base = (uint8_t*)data.ip_list;
+    uint8_t* base = reinterpret_cast<uint8_t*>(data.ip_list);
     ListFiles& list_info = data.list_files;
 
     while (rep_info)
@@ -112,7 +112,7 @@ static inline IPdecision get_reputation(const ReputationConfig& config, Reputati
 
         if (!rep_info->next)
             break;
-        rep_info = (IPrepInfo*)(&base[rep_info->next]);
+        rep_info = reinterpret_cast<IPrepInfo*>(&base[rep_info->next]);
     }
 
     return decision;
@@ -608,7 +608,7 @@ static void mod_dtor(Module* m)
 
 static Inspector* reputation_ctor(Module* m)
 {
-    ReputationModule* mod = (ReputationModule*)m;
+    ReputationModule* mod = static_cast<ReputationModule*>(m);
     ReputationConfig* conf = mod->get_data();
     return conf ? new Reputation(conf) : nullptr;
 }

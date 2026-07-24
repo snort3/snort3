@@ -81,7 +81,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* priority_ctor(Module* p, IpsInfo& info)
 {
-    PriorityModule* m = (PriorityModule*)p;
+    PriorityModule* m = static_cast<PriorityModule*>(p);
     IpsOption::set_priority(info, m->priority);
     return nullptr;
 }

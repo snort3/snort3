@@ -77,7 +77,7 @@ public:
     { return bnfa_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&bnfa_counts; }
+    { return reinterpret_cast<PegCount*>(&bnfa_counts); }
 
     Usage get_usage() const override
     { return GLOBAL; }
@@ -205,4 +205,3 @@ const BaseApi* se_ac_bnfa[] =
     &bnfa_api.base,
     nullptr
 };
-

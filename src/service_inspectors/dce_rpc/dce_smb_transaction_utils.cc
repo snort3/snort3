@@ -138,14 +138,14 @@ static DCE2_Ret DCE2_SmbCheckTransDataParams(
     const uint8_t* nb_end = nb_ptr + nb_len;
 
     if (bcc < (static_cast<uint64_t>(dcnt) + pcnt))
-        dce_alert(GID_DCE2, DCE2_SMB_BCC_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+        dce_alert(GID_DCE2, DCE2_SMB_BCC_LT_DSIZE, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
             ssd->sd);
 
     // Check data offset out of bounds
     if ((doffset > nb_end) || (doffset < smb_hdr_ptr))
     {
         // Beyond data left or wrap
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
         return DCE2_RET__ERROR;
     }
 
@@ -155,12 +155,12 @@ static DCE2_Ret DCE2_SmbCheckTransDataParams(
     {
         // Not necessarily and error if the offset puts the data
         // before or in the command structure.
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
     }
 
     if (dcnt > (nb_end - doffset))            // beyond data left
     {
-        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
             ssd->sd);
         return DCE2_RET__ERROR;
     }
@@ -169,7 +169,7 @@ static DCE2_Ret DCE2_SmbCheckTransDataParams(
     if ((poffset > nb_end) || (poffset < smb_hdr_ptr))
     {
         // Beyond data left or wrap
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
         return DCE2_RET__ERROR;
     }
 
@@ -179,12 +179,12 @@ static DCE2_Ret DCE2_SmbCheckTransDataParams(
     {
         // Not necessarily and error if the offset puts the data
         // before or in the command structure.
-        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, (dce2CommonStats*)&dce2_smb_stats, ssd->sd);
+        dce_alert(GID_DCE2, DCE2_SMB_BAD_OFF, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
     }
 
     if (pcnt > (nb_end - poffset))            // beyond data left
     {
-        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+        dce_alert(GID_DCE2, DCE2_SMB_NB_LT_DSIZE, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
             ssd->sd);
         return DCE2_RET__ERROR;
     }
@@ -232,14 +232,14 @@ DCE2_Ret DCE2_SmbCheckTotalCount(DCE2_SmbSsnData* ssd, const uint32_t tcnt, cons
 
     if (cnt > tcnt)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_TDCNT_LT_DSIZE, (dce2CommonStats*)&dce2_smb_stats,
+        dce_alert(GID_DCE2, DCE2_SMB_TDCNT_LT_DSIZE, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
             ssd->sd);
         ret = DCE2_RET__ERROR;
     }
 
     if ((static_cast<uint64_t>(disp) + cnt) > tcnt)
     {
-        dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, (dce2CommonStats*)&dce2_smb_stats,
+        dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
             ssd->sd);
         ret = DCE2_RET__ERROR;
     }
@@ -318,13 +318,13 @@ DCE2_Ret DCE2_SmbValidateTransactionSent(
     {
         if ((dsent + dcnt) > tdcnt)
         {
-            dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, (dce2CommonStats*)&dce2_smb_stats,
+            dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
         }
 
         if ((psent + pcnt) > tpcnt)
         {
-            dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, (dce2CommonStats*)&dce2_smb_stats,
+            dce_alert(GID_DCE2, DCE2_SMB_DSENT_GT_TDCNT, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),
                 ssd->sd);
         }
 

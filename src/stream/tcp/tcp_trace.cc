@@ -159,7 +159,7 @@ inline void TraceState(const TcpStreamTracker& a, const TcpStreamTracker& b, con
 
 void S5TraceTCP(const TcpSegmentDescriptor& tsd, const snort::Packet* p)
 {
-    TcpSession* ssn = (TcpSession*)tsd.get_flow()->session;
+    TcpSession* ssn = static_cast<TcpSession*>(tsd.get_flow()->session);
     assert(ssn);
     const TcpStreamTracker& srv = ssn->server;
     const TcpStreamTracker& cli = ssn->client;
@@ -188,5 +188,4 @@ void S5TraceTCP(const TcpSegmentDescriptor& tsd, const snort::Packet* p)
     TraceState(cli, srv, cdir, p);
     TraceState(srv, cli, sdir, p);
 }
-
 

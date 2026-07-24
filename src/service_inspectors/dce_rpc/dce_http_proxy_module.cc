@@ -42,6 +42,5 @@ const PegInfo* DceHttpProxyModule::get_pegs() const
 
 PegCount* DceHttpProxyModule::get_counts() const
 {
-    return (PegCount*)&dce_http_proxy_stats;
+    return reinterpret_cast<PegCount*>(&dce_http_proxy_stats);
 }
-

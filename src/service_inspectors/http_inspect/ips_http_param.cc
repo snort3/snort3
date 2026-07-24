@@ -98,7 +98,8 @@ bool HttpParamIpsOption::operator==(const IpsOption& ips) const
 
 bool HttpParamIpsOption::retry(Cursor& current_cursor)
 {
-    HttpCursorData* cd = (HttpCursorData*)current_cursor.get_data(HttpCursorData::id);
+    HttpCursorData* cd = static_cast<HttpCursorData*>(
+        current_cursor.get_data(HttpCursorData::id));
 
     if (cd)
         return cd->retry();

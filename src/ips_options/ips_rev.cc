@@ -80,7 +80,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* rev_ctor(Module* p, IpsInfo& info)
 {
-    RevModule* m = (RevModule*)p;
+    RevModule* m = static_cast<RevModule*>(p);
     IpsOption::set_rev(info, m->rev);
     return nullptr;
 }

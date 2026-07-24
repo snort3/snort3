@@ -42,39 +42,35 @@
 # define ntohll(a) ( 1 == ntohl(1) ? (a) : bswap_64(a) )
 #endif
 
-#if defined(WORDS_BIGENDIAN)
-#define LETOHS(p)   bswap_16(*((const uint16_t*)(p)))
-#define LETOHL(p)   bswap_32(*((const uint32_t*)(p)))
-#else
-#define LETOHS(p)   (*((const uint16_t*)(p)))
-#define LETOHL(p)   (*((const uint32_t*)(p)))
-#endif
+#define LETOHS(p) LETOHS_UNALIGNED(p)
+#define LETOHL(p) LETOHL_UNALIGNED(p)
 
 #define LETOHS_UNALIGNED(p) \
-    ((uint16_t)(*((const uint8_t*)(p) + 1) << 8) | \
-     (uint16_t)(*((const uint8_t*)(p))))
+    ((static_cast<uint16_t>(*(reinterpret_cast<const uint8_t*>(p) + 1)) << 8) | \
+     static_cast<uint16_t>(*(reinterpret_cast<const uint8_t*>(p))))
 
 #define LETOHL_UNALIGNED(p) \
-    ((uint32_t)(*((const uint8_t*)(p) + 3) << 24) | \
-     (uint32_t)(*((const uint8_t*)(p) + 2) << 16) | \
-     (uint32_t)(*((const uint8_t*)(p) + 1) <<  8) | \
-     (uint32_t)(*((const uint8_t*)(p))))
+    ((static_cast<uint32_t>(*(reinterpret_cast<const uint8_t*>(p) + 3)) << 24) | \
+     (static_cast<uint32_t>(*(reinterpret_cast<const uint8_t*>(p) + 2)) << 16) | \
+     (static_cast<uint32_t>(*(reinterpret_cast<const uint8_t*>(p) + 1)) <<  8) | \
+     static_cast<uint32_t>(*(reinterpret_cast<const uint8_t*>(p))))
 
 #define LETOHLL_UNALIGNED(p) \
-    (((uint64_t)(LETOHL_UNALIGNED(p + 4)) << 32) | ((uint64_t)(LETOHL_UNALIGNED(p))))
+    ((static_cast<uint64_t>(LETOHL_UNALIGNED((p) + 4)) << 32) | \
+     static_cast<uint64_t>(LETOHL_UNALIGNED(p)))
 
 #define BETOHS_UNALIGNED(p) \
-    ((uint16_t)(*((const uint8_t*)(p)) << 8) | \
-     (uint16_t)(*((const uint8_t*)(p) + 1)))
+    ((static_cast<uint16_t>(*(reinterpret_cast<const uint8_t*>(p))) << 8) | \
+     static_cast<uint16_t>(*(reinterpret_cast<const uint8_t*>(p) + 1)))
 
 #define BETOHL_UNALIGNED(p) \
-    ((uint32_t)(*((const uint8_t*)(p)) << 24) | \
-     (uint32_t)(*((const uint8_t*)(p) + 1) << 16) | \
-     (uint32_t)(*((const uint8_t*)(p) + 2) <<  8) | \
-     (uint32_t)(*((const uint8_t*)(p) + 3)))
+    ((static_cast<uint32_t>(*(reinterpret_cast<const uint8_t*>(p))) << 24) | \
+     (static_cast<uint32_t>(*(reinterpret_cast<const uint8_t*>(p) + 1)) << 16) | \
+     (static_cast<uint32_t>(*(reinterpret_cast<const uint8_t*>(p) + 2)) <<  8) | \
+     static_cast<uint32_t>(*(reinterpret_cast<const uint8_t*>(p) + 3)))
 
 #define BETOHLL_UNALIGNED(p) \
-    (((uint64_t)(BETOHL_UNALIGNED(p)) << 32) | ((uint64_t)(BETOHL_UNALIGNED(p + 4))))
+    ((static_cast<uint64_t>(BETOHL_UNALIGNED(p)) << 32) | \
+     static_cast<uint64_t>(BETOHL_UNALIGNED((p) + 4)))
 
 #endif
-

@@ -121,7 +121,7 @@ const PegInfo* Dce2UdpModule::get_pegs() const
 
 PegCount* Dce2UdpModule::get_counts() const
 {
-    return (PegCount*)&dce2_udp_stats;
+    return reinterpret_cast<PegCount*>(&dce2_udp_stats);
 }
 
 ProfileStats* Dce2UdpModule::get_profile() const

@@ -369,7 +369,7 @@ static int get_tcp_option(const Packet* p, tcp::TcpOptCode opt_code, int& pos)
             switch (opt.code)
             {
             case tcp::TcpOptCode::MAXSEG:
-                return ntohs(*((const uint16_t*)(opt.data)));
+                return extract_16bits(opt.data);
 
             case tcp::TcpOptCode::NOP:
                 return 1;
@@ -381,7 +381,8 @@ static int get_tcp_option(const Packet* p, tcp::TcpOptCode opt_code, int& pos)
                 return opt.data[0] & 0xff;
 
             case tcp::TcpOptCode::TIMESTAMP:
-                return ntohs(*((const uint32_t*)(opt.data)));
+                // Fingerprint matching only distinguishes zero from nonzero TSval.
+                return extract_32bits(opt.data) != 0;
 
             default:
                 break;
@@ -826,7 +827,7 @@ TEST_CASE("get_tcp_option", "[rna_fingerprint_tcp]")
         "\x34\x00\x50\x00\x00\x23\x5a\x00\x00\x00\x00\x50\x02\x20\x00\x56\xcb\x00\x00\x00";
     Packet p(false);
     p.pkt = cooked_pkt;
-    p.ptrs.tcph = ( const tcp::TCPHdr* )( cooked_pkt + 34 );
+    p.ptrs.tcph = reinterpret_cast<const tcp::TCPHdr*>(cooked_pkt + 34);
     p.num_layers = 1;
     Layer cooked_layer;
     cooked_layer.start = cooked_pkt + 34;
@@ -856,7 +857,7 @@ TEST_CASE("get_tcp_option_NOP", "[rna_fingerprint_tcp]")
                        "\x01\x01\x01\x01"; // TCP Options: NOPs (0x01)
     Packet p(false);
     p.pkt = cooked_pkt;
-    p.ptrs.tcph = ( const tcp::TCPHdr* )( cooked_pkt + 34 );
+    p.ptrs.tcph = reinterpret_cast<const tcp::TCPHdr*>(cooked_pkt + 34);
     p.num_layers = 1;
     Layer cooked_layer;
     cooked_layer.start = cooked_pkt + 34;
@@ -886,7 +887,7 @@ TEST_CASE("get_tcp_option_bad_layers", "[rna_fingerprint_tcp]")
                        "\x05\x00\x0e\x07";
     Packet p(false);
     p.pkt = cooked_pkt;
-    p.ptrs.tcph = (const tcp::TCPHdr*)(cooked_pkt + 34);
+    p.ptrs.tcph = reinterpret_cast<const tcp::TCPHdr*>(cooked_pkt + 34);
     p.num_layers = 1;
     Layer cooked_layer;
     cooked_layer.start = cooked_pkt + 34;
@@ -916,7 +917,7 @@ TEST_CASE("get_tcp_option_malformed", "[rna_fingerprint_tcp]")
                        "\x04\x00\x0e\x07"; // malformed SACKOK option, length 0
     Packet p(false);
     p.pkt = cooked_pkt;
-    p.ptrs.tcph = (const tcp::TCPHdr*)(cooked_pkt + 34);
+    p.ptrs.tcph = reinterpret_cast<const tcp::TCPHdr*>(cooked_pkt + 34);
     p.num_layers = 1;
     Layer cooked_layer;
     cooked_layer.start = cooked_pkt + 34;

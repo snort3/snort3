@@ -40,7 +40,7 @@ StreamSplitter::Status DnsSplitter::scan(
     assert(len > 0);
 
     DnsFlowData* fd;
-    fd = (DnsFlowData*)((p->flow)->get_flow_data(DnsFlowData::inspector_id));
+    fd = static_cast<DnsFlowData*>(p->flow->get_flow_data(DnsFlowData::inspector_id));
     if (fd && (fd->session.flags & DNS_FLAG_NOT_DNS))
     {
         dnsstats.aborted_sessions++;
@@ -64,4 +64,3 @@ StreamSplitter::Status DnsSplitter::scan(
     *fp = (*data << 8) + data[1] + 2;
     return FLUSH;
 }
-

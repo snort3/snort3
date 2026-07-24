@@ -209,7 +209,7 @@ public:
     { return hyper_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&hyper_counts; }
+    { return reinterpret_cast<PegCount*>(&hyper_counts); }
 
     Usage get_usage() const override
     { return GLOBAL; }
@@ -561,4 +561,3 @@ const BaseApi* se_hyperscan[] =
     &hs_api.base,
     nullptr
 };
-

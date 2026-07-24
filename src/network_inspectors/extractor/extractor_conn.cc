@@ -69,9 +69,9 @@ static uint64_t get_orig_bytes(const DataEvent*, const Flow* f)
     if (f->session == nullptr)
         return 0;
     if (f->pkt_type == PktType::TCP)
-        return get_orig_bytes_tcp((const TcpSession*)f->session);
+        return get_orig_bytes_tcp(static_cast<const TcpSession*>(f->session));
     else if (f->pkt_type == PktType::UDP)
-        return ((UdpSession*)(f->session))->payload_bytes_seen_client;
+        return static_cast<UdpSession*>(f->session)->payload_bytes_seen_client;
 
     return 0;
 }
@@ -90,9 +90,9 @@ static uint64_t get_resp_bytes(const DataEvent*, const Flow* f)
         return 0;
 
     if (f->pkt_type == PktType::TCP)
-        return get_resp_bytes_tcp((const TcpSession*)f->session);
+        return get_resp_bytes_tcp(static_cast<const TcpSession*>(f->session));
     else if (f->pkt_type == PktType::UDP)
-        return ((UdpSession*)(f->session))->payload_bytes_seen_server;
+        return static_cast<UdpSession*>(f->session)->payload_bytes_seen_server;
 
     return 0;
 }
@@ -128,12 +128,12 @@ static const char* get_proto(const DataEvent*, const Flow* f)
 
 static const char* get_history(const DataEvent* event, const Flow*)
 {
-    return ((const EofEvent*)event)->get_history().c_str();
+    return static_cast<const EofEvent*>(event)->get_history().c_str();
 }
 
 static const char* get_state(const DataEvent* event, const Flow*)
 {
-    return ((const EofEvent*)event)->get_state().c_str();
+    return static_cast<const EofEvent*>(event)->get_state().c_str();
 }
 
 static const map<string, ExtractorEvent::BufGetFn> sub_buf_getters =

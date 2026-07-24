@@ -366,7 +366,7 @@ void Dce2SmbInspector::eval(Packet* p)
 
     reset_using_rpkt();
 
-    Dce2SmbFlowData* smb_flowdata = (Dce2SmbFlowData*)p->flow->get_flow_data(Dce2SmbFlowData::inspector_id);
+    Dce2SmbFlowData* smb_flowdata = static_cast<Dce2SmbFlowData*>(p->flow->get_flow_data(Dce2SmbFlowData::inspector_id));
     if (smb_flowdata and smb_flowdata->dce2_smb_session_data)
     {
         smb_version = smb_flowdata->smb_version;
@@ -471,7 +471,7 @@ static void dce2_smb_tterm()
 
 static Inspector* dce2_smb_ctor(Module* m)
 {
-    Dce2SmbModule* mod = (Dce2SmbModule*)m;
+    Dce2SmbModule* mod = static_cast<Dce2SmbModule*>(m);
     dce2SmbProtoConf config;
     mod->get_data(config);
     smb_memcap = DCE2_ScSmbMemcap(&config);
@@ -518,4 +518,3 @@ const InspectApi dce2_smb_api =
     nullptr, // ssn
     nullptr  // reset
 };
-

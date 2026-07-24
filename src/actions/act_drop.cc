@@ -82,7 +82,7 @@ public:
     { return drop_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&drop_stats; }
+    { return reinterpret_cast<PegCount*>(&drop_stats); }
 };
 
 //-------------------------------------------------------------------------
@@ -131,4 +131,3 @@ const BaseApi* act_drop[] =
     &drop_api.base,
     nullptr
 };
-

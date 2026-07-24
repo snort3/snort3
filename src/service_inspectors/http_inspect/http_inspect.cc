@@ -500,9 +500,9 @@ void HttpInspect::disable_detection(Packet* p)
 HttpFlowData* HttpInspect::http_get_flow_data(const Flow* flow)
 {
     if (flow->stream_intf)
-        return (HttpFlowData*)flow->stream_intf->get_stream_flow_data(flow);
+        return static_cast<HttpFlowData*>(flow->stream_intf->get_stream_flow_data(flow));
     else
-        return (HttpFlowData*)flow->get_flow_data(HttpFlowData::inspector_id);
+        return static_cast<HttpFlowData*>(flow->get_flow_data(HttpFlowData::inspector_id));
 }
 
 void HttpInspect::http_set_flow_data(Flow* flow, HttpFlowData* flow_data)
@@ -713,7 +713,8 @@ void HttpInspect::clear(Packet* p)
     HttpMsgSection* current_section = nullptr;
     if(p->flow->stream_intf)
     {
-        current_section = (HttpMsgSection*)p->flow->stream_intf->get_hi_msg_section(p->flow);
+        current_section = static_cast<HttpMsgSection*>(
+            p->flow->stream_intf->get_hi_msg_section(p->flow));
         assert(current_section != nullptr);
         p->flow->stream_intf->set_hi_msg_section(p->flow, nullptr);
     }
@@ -750,12 +751,12 @@ const uint8_t* HttpInspect::adjust_log_packet(Packet* p, uint16_t& length)
 
     HttpMsgSection* other_section = nullptr;
     unsigned id;
-    if ((HttpMsgHeader*)current_section == current_section->get_header(SRC_CLIENT))
+    if (current_section == current_section->get_header(SRC_CLIENT))
     {
         other_section = current_section->get_request();
         id = HTTP_BUFFER_RAW_REQUEST;
     }
-    else if ((HttpMsgHeader*)current_section == current_section->get_header(SRC_SERVER))
+    else if (current_section == current_section->get_header(SRC_SERVER))
     {
         other_section = current_section->get_status();
         id = HTTP_BUFFER_RAW_STATUS;

@@ -199,7 +199,7 @@ bool MmsFuncOption::operator==(const IpsOption& ips) const
         return false;
     }
 
-    const MmsFuncOption& rhs = (const MmsFuncOption&)ips;
+    const MmsFuncOption& rhs = static_cast<const MmsFuncOption&>(ips);
     return(func == rhs.func);
 }
 
@@ -213,7 +213,8 @@ IpsOption::EvalStatus MmsFuncOption::eval(Cursor&, Packet* p)
     }
 
     // check if the packet function matches the rule option function
-    MmsFlowData* mmsfd = (MmsFlowData*)p->flow->get_flow_data(MmsFlowData::inspector_id);
+    MmsFlowData* mmsfd = static_cast<MmsFlowData*>(
+        p->flow->get_flow_data(MmsFlowData::inspector_id));
     if (!mmsfd)
     {
         return NO_MATCH;
@@ -395,7 +396,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    MmsFuncModule* mod = (MmsFuncModule*)m;
+    MmsFuncModule* mod = static_cast<MmsFuncModule*>(m);
 
     return new MmsFuncOption(mod->func);
 }
@@ -432,4 +433,3 @@ static const IpsApi ips_api =
 };
 
 const BaseApi* ips_mms_func = &ips_api.base;
-

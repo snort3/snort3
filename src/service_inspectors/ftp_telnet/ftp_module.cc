@@ -610,5 +610,4 @@ const PegInfo* FtpServerModule::get_pegs() const
 { return ftp_pegs; }
 
 PegCount* FtpServerModule::get_counts() const
-{ return (PegCount*)&ftstats; }
-
+{ return reinterpret_cast<PegCount*>(&ftstats); }

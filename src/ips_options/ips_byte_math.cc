@@ -131,7 +131,7 @@ bool ByteMathOption::operator==(const IpsOption& ips) const
     if (!IpsOption::operator==(ips))
         return false;
 
-    const ByteMathOption& rhs = (const ByteMathOption&)ips;
+    const ByteMathOption& rhs = static_cast<const ByteMathOption&>(ips);
     const ByteMathData* left = &config;
     const ByteMathData* right = &rhs.config;
 

@@ -69,7 +69,7 @@ bool IpTosOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const IpTosOption& rhs = (const IpTosOption&)ips;
+    const IpTosOption& rhs = static_cast<const IpTosOption&>(ips);
     return ( config == rhs.config );
 }
 
@@ -154,7 +154,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* tos_ctor(Module* p, IpsInfo&)
 {
-    TosModule* m = (TosModule*)p;
+    TosModule* m = static_cast<TosModule*>(p);
     return new IpTosOption(m->data);
 }
 

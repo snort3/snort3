@@ -49,7 +49,7 @@ using namespace snort;
 //-------------------------------------------------------------------------
 
 const MpseApi* get_test_api()
-{ return (const MpseApi*) se_hyperscan; }
+{ return reinterpret_cast<const MpseApi*>(se_hyperscan[0]); }
 
 //-------------------------------------------------------------------------
 // hyperscan tests
@@ -59,7 +59,7 @@ TEST_GROUP(search_tool_full)
 {
     Module* mod = nullptr;
     SearchTool* stool;  // cppcheck-suppress variableScope
-    const MpseApi* mpse_api = (const MpseApi*)se_hyperscan;
+    const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_hyperscan[0]);
 
     void setup() override
     {
@@ -154,10 +154,9 @@ TEST(search_tool_full, search_all)
 
 int main(int argc, char** argv)
 {
-    ((MpseApi*)se_hyperscan)->init();
+    reinterpret_cast<const MpseApi*>(se_hyperscan[0])->init();
     // FIXIT-L There is currently no external way to fully release the memory from the static
     //   s_scratch vector in hyperscan.cc
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

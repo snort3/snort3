@@ -104,7 +104,7 @@ public:
     { return pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*)&stats; }
+    { return reinterpret_cast<PegCount*>(&stats); }
 };
 
 class Ipv4Codec : public Codec
@@ -260,7 +260,8 @@ bool Ipv4Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
     if (snort::get_network_policy()->ip_checksums() && !valid_checksum_from_daq(raw))
     {
         // routers drop packets with bad IP checksums, we don't really need to check them...
-        int16_t csum = checksum::ip_cksum((const uint16_t*)iph, hlen);
+        int16_t csum = checksum::ip_cksum(iph, hlen);
+        // cppcheck-suppress knownConditionTrueFalse ; checksum result depends on packet contents
         if (csum && !codec.is_cooked())
         {
             if ( !(codec.codec_flags & CODEC_UNSURE_ENCAP) )
@@ -672,7 +673,7 @@ bool Ipv4Codec::encode(const uint8_t* const raw_in, const uint16_t /*raw_len*/,
 
     /* IPv4 encoded header is hardcoded 20 bytes, we save some
      * cycles and use the literal header size for checksum */
-    ip4h_out->ip_csum = checksum::ip_cksum((uint16_t*)ip4h_out, ip::IP4_HEADER_LEN);
+    ip4h_out->ip_csum = checksum::ip_cksum(ip4h_out, ip::IP4_HEADER_LEN);
 
     enc.next_proto = IpProtocol::IPIP;
     enc.next_ethertype = ProtocolId::ETHERTYPE_IPV4;
@@ -691,7 +692,7 @@ void Ipv4Codec::update(const ip::IpApi&, const EncodeFlags flags,
     if ( !(flags & UPD_COOKED) || (flags & UPD_REBUILT_FRAG) )
     {
         h->ip_csum = 0;
-        h->ip_csum = checksum::ip_cksum((uint16_t*)h, hlen);
+        h->ip_csum = checksum::ip_cksum(h, hlen);
     }
 }
 
@@ -787,4 +788,3 @@ const BaseApi* cd_ipv4[] =
     &ipv4_api.base,
     nullptr
 };
-

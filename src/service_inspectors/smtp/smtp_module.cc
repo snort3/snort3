@@ -198,7 +198,7 @@ const PegInfo* SmtpModule::get_pegs() const
 { return smtp_peg_names; }
 
 PegCount* SmtpModule::get_counts() const
-{ return (PegCount*)&smtpstats; }
+{ return reinterpret_cast<PegCount*>(&smtpstats); }
 
 ProfileStats* SmtpModule::get_profile() const
 { return &smtpPerfStats; }
@@ -375,4 +375,3 @@ bool SmtpModule::end(const char* fqn, int idx, SnortConfig*)
 
     return true;
 }
-

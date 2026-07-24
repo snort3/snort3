@@ -43,7 +43,8 @@ public:
         // Skip sessions using old odp context after reload detectors
         if (pkt_thread_odp_ctxt->get_version() != asd->get_odp_ctxt_version())
             return;
-        snort::HttpRequestBodyEvent* http_req_body = (snort::HttpRequestBodyEvent*)&event;
+        snort::HttpRequestBodyEvent* http_req_body =
+            static_cast<snort::HttpRequestBodyEvent*>(&event);
         AppIdHttpSession* hsession = asd->get_matching_http_session(
             http_req_body->get_httpx_stream_id());
 
@@ -70,4 +71,3 @@ public:
     }
 };
 #endif
-

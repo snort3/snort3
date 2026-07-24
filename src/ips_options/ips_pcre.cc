@@ -549,7 +549,7 @@ bool PcreOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const PcreOption& rhs = (const PcreOption&)ips;
+    const PcreOption& rhs = static_cast<const PcreOption&>(ips);
     PcreData* left = config;
     PcreData* right = rhs.config;
 
@@ -677,7 +677,7 @@ const PegInfo* PcreModule::get_pegs() const
 { return pcre_pegs; }
 
 PegCount* PcreModule::get_counts() const
-{ return (PegCount*)&pcre_stats; }
+{ return reinterpret_cast<PegCount*>(&pcre_stats); }
 
 #ifdef HAVE_HYPERSCAN
 bool PcreModule::begin(const char* name, int v, SnortConfig* sc)
@@ -740,7 +740,7 @@ static void mod_dtor(Module* m)
 static IpsOption* pcre_ctor(Module* p, IpsInfo& info)
 {
     pcre_counts.pcre_rules++;
-    PcreModule* m = (PcreModule*)p;
+    PcreModule* m = static_cast<PcreModule*>(p);
 
 #ifdef HAVE_HYPERSCAN
     Module* mod_regex = m->get_mod_regex();

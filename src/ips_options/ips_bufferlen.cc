@@ -79,7 +79,7 @@ bool LenOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const LenOption& rhs = (const LenOption&)ips;
+    const LenOption& rhs = static_cast<const LenOption&>(ips);
     return ( range == rhs.range and relative == rhs.relative );
 }
 
@@ -166,7 +166,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* len_ctor(Module* p, IpsInfo&)
 {
-    LenModule* m = (LenModule*)p;
+    LenModule* m = static_cast<LenModule*>(p);
     return new LenOption(m->data, m->relative);
 }
 

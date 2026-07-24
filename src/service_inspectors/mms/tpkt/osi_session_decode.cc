@@ -48,8 +48,8 @@ uint32_t get_max_pos(uint32_t idx, uint32_t length)
 // indication that the desired protocol is in use
 static TpktAppliSearchStateType resolve_spdu_parameter(Cursor* tpkt_cur, const OsiSessionHdr* hdr)
 {
-    const OsiSessionSpduParameterHdr* generic_hdr = (const
-        OsiSessionSpduParameterHdr*)tpkt_cur->start();
+    const OsiSessionSpduParameterHdr* generic_hdr =
+        reinterpret_cast<const OsiSessionSpduParameterHdr*>(tpkt_cur->start());
 
     switch (generic_hdr->type)
     {
@@ -61,8 +61,8 @@ static TpktAppliSearchStateType resolve_spdu_parameter(Cursor* tpkt_cur, const O
         };
 
         // overlay the appropriate struct
-        const OsiSessionSpduConnectAcceptItem* param = (const
-            OsiSessionSpduConnectAcceptItem*)tpkt_cur->start();
+        const OsiSessionSpduConnectAcceptItem* param =
+            reinterpret_cast<const OsiSessionSpduConnectAcceptItem*>(tpkt_cur->start());
 
         // param length is expected to be 0x06
 
@@ -84,8 +84,8 @@ static TpktAppliSearchStateType resolve_spdu_parameter(Cursor* tpkt_cur, const O
         };
 
         // overlay the appropriate struct
-        const OsiSessionSpduSessionRequirement* param = (const
-            OsiSessionSpduSessionRequirement*)tpkt_cur->start();
+        const OsiSessionSpduSessionRequirement* param =
+            reinterpret_cast<const OsiSessionSpduSessionRequirement*>(tpkt_cur->start());
 
         bool checks_pass = false;
 
@@ -118,8 +118,8 @@ static TpktAppliSearchStateType resolve_spdu_parameter(Cursor* tpkt_cur, const O
         };
 
         // overlay the appropriate struct
-        const OsiSessionSpduCallingSessionSelector* param = (const
-            OsiSessionSpduCallingSessionSelector*)tpkt_cur->start();
+        const OsiSessionSpduCallingSessionSelector* param =
+            reinterpret_cast<const OsiSessionSpduCallingSessionSelector*>(tpkt_cur->start());
 
         // param length is expected to be 0x02
 
@@ -147,8 +147,8 @@ static TpktAppliSearchStateType resolve_spdu_parameter(Cursor* tpkt_cur, const O
         };
 
         // overlay the appropriate struct
-        const OsiSessionSpduCalledSessionSelector* param = (const
-            OsiSessionSpduCalledSessionSelector*)tpkt_cur->start();
+        const OsiSessionSpduCalledSessionSelector* param =
+            reinterpret_cast<const OsiSessionSpduCalledSessionSelector*>(tpkt_cur->start());
 
         // param length is expected to be 0x02
 
@@ -175,8 +175,8 @@ static TpktAppliSearchStateType resolve_spdu_parameter(Cursor* tpkt_cur, const O
         };
 
         // overlay the appropriate struct
-        const OsiSessionSpduSessionUserData* param = (const
-            OsiSessionSpduSessionUserData*)tpkt_cur->start();
+        const OsiSessionSpduSessionUserData* param =
+            reinterpret_cast<const OsiSessionSpduSessionUserData*>(tpkt_cur->start());
 
         // param length must be less than the reported session layer length
         if (param->param_hdr.length >= hdr->length)
@@ -206,14 +206,15 @@ TpktAppliSearchStateType tpkt_internal_search_from_osi_session_layer(Cursor* tpk
     process_as_data_transfer)
 {
     // overlay the session header
-    const OsiSessionHdr* hdr = (const OsiSessionHdr*)tpkt_cur->start();
+    const OsiSessionHdr* hdr = reinterpret_cast<const OsiSessionHdr*>(tpkt_cur->start());
 
     // get the flow data
     const Packet* p = DetectionEngine::get_current_packet();
     if (!p || !p->flow)
         return TPKT_APPLI_SEARCH_STATE__EXIT;
 
-    TpktFlowData* tpktfd = (TpktFlowData*)p->flow->get_flow_data(TpktFlowData::inspector_id);
+    TpktFlowData* tpktfd = static_cast<TpktFlowData*>(
+        p->flow->get_flow_data(TpktFlowData::inspector_id));
 
     bool checks_pass = false;
 
@@ -367,4 +368,3 @@ TpktAppliSearchStateType tpkt_internal_search_from_osi_session_layer(Cursor* tpk
 
     return TPKT_APPLI_SEARCH_STATE__SEARCH;
 }
-

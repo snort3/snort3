@@ -106,7 +106,7 @@ IpsOption::EvalStatus Dce2StubDataOption::eval(Cursor& c, Packet* p)
         {
             // Out of bounds for regular packets - create a reassembly packet.
             auto dce2_tcp_rbuf = std::make_unique<uint8_t[]>(IP_MAXPACKET);
-            DceEndianness* endianness = (DceEndianness*)p->endianness;
+            DceEndianness* endianness = reinterpret_cast<DceEndianness*>(p->endianness);
             uint16_t stub_len = 0;
 
             if (endianness && endianness->stub_data_offset != DCE2_SENTINEL) 
@@ -212,4 +212,3 @@ static const IpsApi ips_api =
 };
 
 const BaseApi* ips_dce_stub_data = &ips_api.base;
-

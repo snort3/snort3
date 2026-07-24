@@ -48,7 +48,7 @@ using namespace snort;
 //-------------------------------------------------------------------------
 
 const MpseApi* get_test_api()
-{ return (const MpseApi*) se_ac_full; }
+{ return reinterpret_cast<const MpseApi*>(se_ac_full[0]); }
 
 //-------------------------------------------------------------------------
 // ac_full tests
@@ -147,7 +147,6 @@ TEST(search_tool_full, search_all)
 
 int main(int argc, char** argv)
 {
-    ((MpseApi*)se_ac_full)->init();
+    reinterpret_cast<const MpseApi*>(se_ac_full[0])->init();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

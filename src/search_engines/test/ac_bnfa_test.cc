@@ -60,12 +60,12 @@ static int match(
 
 TEST_GROUP(mpse_bnfa_match)
 {
-    const MpseApi* mpse_api = (const MpseApi*)se_ac_bnfa;
+    const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_ac_bnfa[0]);
     Mpse* bnfa = nullptr;
 
     void setup() override
     {
-        CHECK(se_ac_bnfa);
+        CHECK(se_ac_bnfa[0]);
         bnfa = mpse_api->ctor(snort_conf, nullptr, &s_agent);
         CHECK(bnfa);
         hits = 0;
@@ -157,13 +157,13 @@ TEST(mpse_bnfa_match, multi)
 
 TEST_GROUP(mpse_bnfa_multi)
 {
-    const MpseApi* mpse_api = (const MpseApi*)se_ac_bnfa;
+    const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_ac_bnfa[0]);
     Mpse* bnfa1 = nullptr;
     Mpse* bnfa2 = nullptr;
 
     void setup() override
     {
-        CHECK(se_ac_bnfa);
+        CHECK(se_ac_bnfa[0]);
 
         bnfa1 = mpse_api->ctor(snort_conf, nullptr, &s_agent);
         CHECK(bnfa1);
@@ -211,10 +211,9 @@ TEST(mpse_bnfa_multi, single)
 
 int main(int argc, char** argv)
 {
-    ((MpseApi*)se_ac_bnfa)->init();
+    reinterpret_cast<const MpseApi*>(se_ac_bnfa[0])->init();
     // FIXIT-L There is currently no external way to fully release the memory from the static
     //   s_scratch vector in hyperscan.cc
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

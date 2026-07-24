@@ -82,7 +82,7 @@ TEST_GROUP(file_connector)
 {
     void setup() override
     {
-        fc_api = (const ConnectorApi*) file_connector;
+        fc_api = reinterpret_cast<const ConnectorApi*>(file_connector);
         connector_tx_text_config.direction = Connector::CONN_TRANSMIT;
         connector_tx_text_config.connector_name = "tx_t";
         connector_tx_text_config.name = "tx_t";
@@ -125,7 +125,7 @@ TEST_GROUP(file_connector_tinit_tterm)
 {
     void setup() override
     {
-        fc_api = (const ConnectorApi*) file_connector;
+        fc_api = reinterpret_cast<const ConnectorApi*>(file_connector);
         connector_tx_text_config.direction = Connector::CONN_TRANSMIT;
         connector_tx_text_config.connector_name = "tx_t";
         connector_tx_text_config.name = "tx_t";
@@ -172,7 +172,7 @@ TEST_GROUP(file_connector_text)
 {
     void setup() override
     {
-        fc_api = (const ConnectorApi*) file_connector;
+        fc_api = reinterpret_cast<const ConnectorApi*>(file_connector);
         connector_tx_text_config.direction = Connector::CONN_TRANSMIT;
         connector_tx_text_config.connector_name = "tx_t";
         connector_tx_text_config.name = "tx_t";
@@ -196,7 +196,7 @@ TEST(file_connector_text, transmit_rename_receive)
         CHECK(connector_common != nullptr);
         connector_tt = fc_api->tinit(connector_tx_text_config);
         CHECK(connector_tt != nullptr);
-        FileConnector* fc_tt = (FileConnector*)connector_tt;
+        FileConnector* fc_tt = static_cast<FileConnector*>(connector_tt);
 
         uint8_t* data = new uint8_t[len];
         memcpy(data, "foobar", len);
@@ -229,7 +229,7 @@ TEST(file_connector_text, transmit_rename_receive)
         CHECK(connector_common != nullptr);
         connector_rt = fc_api->tinit(connector_rx_text_config);
         CHECK(connector_rt != nullptr);
-        FileConnector* fc_rt = (FileConnector*)connector_rt;
+        FileConnector* fc_rt = static_cast<FileConnector*>(connector_rt);
 
         ConnectorMsg t_msg = fc_rt->receive_message(true);
 
@@ -246,7 +246,7 @@ TEST_GROUP(file_connector_binary)
 {
     void setup() override
     {
-        fc_api = (const ConnectorApi*) file_connector;
+        fc_api = reinterpret_cast<const ConnectorApi*>(file_connector);
         connector_tx_binary_config.direction = Connector::CONN_TRANSMIT;
         connector_tx_binary_config.connector_name = "tx_b";
         connector_tx_binary_config.name = "tx_b";
@@ -269,7 +269,7 @@ TEST(file_connector_binary, transmit_rename_receive)
         CHECK(connector_common != nullptr);
         connector_tb = fc_api->tinit(connector_tx_binary_config);
         CHECK(connector_tb != nullptr);
-        FileConnector* fc_tb = (FileConnector*)connector_tb;
+        FileConnector* fc_tb = static_cast<FileConnector*>(connector_tb);
 
         uint8_t* data = new uint8_t[len];
         memcpy(data, "foobar", len);
@@ -302,7 +302,7 @@ TEST(file_connector_binary, transmit_rename_receive)
         CHECK(connector_common != nullptr);
         connector_rb = fc_api->tinit(connector_rx_binary_config);
         CHECK(connector_rb != nullptr);
-        FileConnector* fc_rt = (FileConnector*)connector_rb;
+        FileConnector* fc_rt = static_cast<FileConnector*>(connector_rb);
 
         ConnectorMsg t_msg = fc_rt->receive_message(true);
         CHECK(t_msg.get_length() == len);
@@ -323,4 +323,3 @@ int main(int argc, char** argv)
     std::remove("file_connector_tx_t_transmit");
     return return_value;
 }
-

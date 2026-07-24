@@ -82,7 +82,8 @@ static GTP_Roptions* GTPGetNewSession(Packet* packetp)
 void GTPmain(const GTPConfig& config, Packet* packetp)
 {
     /* Attempt to get a previously allocated GTP block. */
-    GtpFlowData* gfd = (GtpFlowData*)packetp->flow->get_flow_data(GtpFlowData::inspector_id);
+    GtpFlowData* gfd = static_cast<GtpFlowData*>(
+        packetp->flow->get_flow_data(GtpFlowData::inspector_id));
     GTP_Roptions* pRopts = gfd ? &gfd->ropts : nullptr;
 
     if ( !pRopts )
@@ -95,4 +96,3 @@ void GTPmain(const GTPConfig& config, Packet* packetp)
 
     GTP_Process(config, packetp, pRopts);
 }
-

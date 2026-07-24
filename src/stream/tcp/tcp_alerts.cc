@@ -35,7 +35,7 @@ using namespace snort;
 
 static void purge_alerts_callback_ackd(IpsContext *c)
 {
-    TcpSession *session = (TcpSession*) c->packet->flow->session;
+    TcpSession *session = static_cast<TcpSession*>(c->packet->flow->session);
 
     if (c->packet->is_from_server())
         session->client.tcp_alerts.purge_alerts(c->packet->flow);
@@ -45,7 +45,7 @@ static void purge_alerts_callback_ackd(IpsContext *c)
 
 static void purge_alerts_callback_ips(IpsContext *c)
 {
-    TcpSession *session = (TcpSession*) c->packet->flow->session;
+    TcpSession *session = static_cast<TcpSession*>(c->packet->flow->session);
 
     if (c->packet->is_from_server())
         session->server.tcp_alerts.purge_alerts(c->packet->flow);
@@ -105,4 +105,3 @@ void TcpAlerts::purge_alerts(Packet& last_pdu, bool ips_enabled)
     else
         last_pdu.context->register_post_callback(purge_alerts_callback_ackd);
 }
-

@@ -106,7 +106,7 @@ static bool append_message_chunk(Packet* p, OpcuaSessionData* ssn_data)
 
 static bool inspect_is_final_field(Packet* p, OpcuaSessionData* ssn_data)
 {
-    const OpcuaHeader* hdr = (const OpcuaHeader*) p->data;
+    const OpcuaHeader* hdr = reinterpret_cast<const OpcuaHeader*>(p->data);
 
     if ( ssn_data->msg_type == OPCUA_MSG_MSG )
     {
@@ -176,7 +176,7 @@ static bool inspect_is_final_field(Packet* p, OpcuaSessionData* ssn_data)
 
 static bool inspect_msg_size_field(Packet* p, uint32_t min_size)
 {
-    const OpcuaHeader* hdr = (const OpcuaHeader*) p->data;
+    const OpcuaHeader* hdr = reinterpret_cast<const OpcuaHeader*>(p->data);
     if ( hdr->msg_size < min_size || p->dsize < min_size )
     {
         DetectionEngine::queue_event(GID_OPCUA, OPCUA_BAD_MSG_SIZE);
@@ -226,7 +226,7 @@ static bool parse_msg_hel(Packet* p, OpcuaSessionData* ssn_data)
         return false;
     }
 
-    const OpcuaMsgTypeHel* hel = (const OpcuaMsgTypeHel*) p->data;
+    const OpcuaMsgTypeHel* hel = reinterpret_cast<const OpcuaMsgTypeHel*>(p->data);
 
     if ( hel->protocol_version != OPCUA_PROTOCOL_VERSION_STANDARD )
     {
@@ -282,7 +282,7 @@ static bool parse_msg_err(Packet* p, OpcuaSessionData* ssn_data)
         return false;
     }
 
-    const OpcuaMsgTypeErr* err = (const OpcuaMsgTypeErr*) p->data;
+    const OpcuaMsgTypeErr* err = reinterpret_cast<const OpcuaMsgTypeErr*>(p->data);
 
     uint32_t reason_size = err->raw_reason_size;
     const uint32_t opcua_err_reason_offset = sizeof(OpcuaMsgTypeErr);
@@ -310,7 +310,7 @@ static bool parse_msg_rhe(Packet* p, OpcuaSessionData* ssn_data)
         return false;
     }
 
-    const OpcuaMsgTypeRhe* rhe = (const OpcuaMsgTypeRhe*) p->data;
+    const OpcuaMsgTypeRhe* rhe = reinterpret_cast<const OpcuaMsgTypeRhe*>(p->data);
 
     uint32_t rhe_server_uri_size = rhe->raw_server_uri_size;
     const uint32_t opcua_rhe_server_uri_offset = sizeof(OpcuaMsgTypeRhe);
@@ -366,7 +366,7 @@ static bool parse_msg_opn(Packet* p, OpcuaSessionData* ssn_data)
         return false;
     }
 
-    const OpcuaMsgTypeOpn* opn = (const OpcuaMsgTypeOpn*) p->data;
+    const OpcuaMsgTypeOpn* opn = reinterpret_cast<const OpcuaMsgTypeOpn*>(p->data);
 
     uint32_t opn_sec_policy_uri_size = opn->raw_sec_policy_uri_size;
     const uint32_t opn_sec_policy_uri_offset = sizeof(OpcuaMsgTypeOpn);
@@ -533,7 +533,7 @@ bool opcua_decode(Packet* p, OpcuaFlowData* opcuafd)
         return false;
     }
 
-    const OpcuaHeader* hdr = (const OpcuaHeader*) p->data;
+    const OpcuaHeader* hdr = reinterpret_cast<const OpcuaHeader*>(p->data);
 
     bool parse_result = false;
 
@@ -557,4 +557,3 @@ bool opcua_decode(Packet* p, OpcuaFlowData* opcuafd)
 
     return parse_result;
 }
-

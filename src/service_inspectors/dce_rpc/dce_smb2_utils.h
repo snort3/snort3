@@ -22,9 +22,12 @@
 #ifndef DCE_SMB2_UTILS_H
 #define DCE_SMB2_UTILS_H
 
+#include <cstddef>
+
 #include "dce_smb.h"
 #include "dce_smb2.h"
 #include "file_api/file_flows.h"
+#include "utils/endian.h"
 
 Smb2SidHashKey get_key(uint64_t sid);
 
@@ -100,17 +103,20 @@ inline bool DCE2_SmbSessionCacheRemove(const Smb2SidHashKey& key)
 // SMB2 functions for fetching sid, tid, request type and so on.
 inline uint64_t Smb2Sid(const Smb2Hdr* hdr)
 {
-    return snort::alignedNtohq(&(((const Smb2SyncHdr*)hdr)->session_id));
+    const auto* bytes = reinterpret_cast<const uint8_t*>(hdr);
+    return LETOHLL_UNALIGNED(bytes + offsetof(Smb2SyncHdr, session_id));
 }
 
 inline uint32_t Smb2Tid(const Smb2Hdr* hdr)
 {
-    return snort::alignedNtohl(&(((const Smb2SyncHdr*)hdr)->tree_id));
+    const auto* bytes = reinterpret_cast<const uint8_t*>(hdr);
+    return LETOHL(bytes + offsetof(Smb2SyncHdr, tree_id));
 }
 
 inline uint64_t Smb2Mid(const Smb2Hdr* hdr)
 {
-    return snort::alignedNtohq(&(((const Smb2SyncHdr*)hdr)->message_id));
+    const auto* bytes = reinterpret_cast<const uint8_t*>(hdr);
+    return LETOHLL_UNALIGNED(bytes + offsetof(Smb2SyncHdr, message_id));
 }
 
 inline bool Smb2Error(const Smb2Hdr* hdr)
@@ -147,4 +153,3 @@ DCE2_Smb2SessionTracker* DCE2_Smb2FindElseCreateSid(DCE2_Smb2SsnData*, const uin
     force_cache_update = true);
 
 #endif
-

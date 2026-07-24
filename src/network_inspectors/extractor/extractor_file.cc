@@ -35,47 +35,47 @@ using namespace std;
 
 static uint64_t get_seen_bytes(const DataEvent* event, const Flow*)
 {
-    return ((const FileEvent*)event)->get_seen_bytes();
+    return static_cast<const FileEvent*>(event)->get_seen_bytes();
 }
 
 static uint64_t get_total_bytes(const DataEvent* event, const Flow*)
 {
-    return ((const FileEvent*)event)->get_total_bytes();
+    return static_cast<const FileEvent*>(event)->get_total_bytes();
 }
 
 static uint64_t get_extracted_size(const DataEvent* event, const Flow*)
 {
-    return ((const FileEvent*)event)->get_extracted_size();
+    return static_cast<const FileEvent*>(event)->get_extracted_size();
 }
 
 static double get_duration(const DataEvent* event, const Flow*)
 {
-    return ((const FileEvent*)event)->get_duration();
+    return static_cast<const FileEvent*>(event)->get_duration();
 }
 
 static bool get_timedout(const DataEvent* event, const Flow*)
 {
-    return ((const FileEvent*)event)->get_timedout();
+    return static_cast<const FileEvent*>(event)->get_timedout();
 }
 
 static bool get_is_orig(const DataEvent* event, const Flow*)
 {
-    return ((const FileEvent*)event)->get_is_orig();
+    return static_cast<const FileEvent*>(event)->get_is_orig();
 }
 
 static bool get_is_extracted_cutoff(const DataEvent* event, const Flow*)
 {
-    return ((const FileEvent*)event)->get_extracted_cutoff();
+    return static_cast<const FileEvent*>(event)->get_extracted_cutoff();
 }
 
 static const char* get_extracted_name(const DataEvent* event, const Flow*)
 {
-    return ((const FileEvent*)event)->get_extracted_name().c_str();
+    return static_cast<const FileEvent*>(event)->get_extracted_name().c_str();
 }
 
 static uint64_t get_fuid(const DataEvent* event, const Flow*)
 {
-    return ((const FileEvent*)event)->get_fuid();
+    return static_cast<const FileEvent*>(event)->get_fuid();
 }
 
 static const char* get_analyzer(const DataEvent*, const Flow* flow)
@@ -88,22 +88,22 @@ static const char* get_analyzer(const DataEvent*, const Flow* flow)
 
 static const char* get_source(const DataEvent* event, const Flow*)
 {
-    return ((const FileEvent*)event)->get_source().c_str();
+    return static_cast<const FileEvent*>(event)->get_source().c_str();
 }
 
 static const char* get_mime_type(const DataEvent* event, const Flow*)
 {
-    return ((const FileEvent*)event)->get_mime_type();
+    return static_cast<const FileEvent*>(event)->get_mime_type();
 }
 
 static const char* get_filename(const DataEvent* event, const Flow*)
 {
-    return ((const FileEvent*)event)->get_filename().c_str();
+    return static_cast<const FileEvent*>(event)->get_filename().c_str();
 }
 
 static const char* get_sha256(const DataEvent* event, const Flow*)
 {
-    return ((const FileEvent*)event)->get_sha256().c_str();
+    return static_cast<const FileEvent*>(event)->get_sha256().c_str();
 }
 
 static const map<string, ExtractorEvent::NumGetFn> sub_num_getters =

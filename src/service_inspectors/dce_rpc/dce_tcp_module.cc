@@ -125,7 +125,7 @@ const PegInfo* Dce2TcpModule::get_pegs() const
 
 PegCount* Dce2TcpModule::get_counts() const
 {
-    return (PegCount*)&dce2_tcp_stats;
+    return reinterpret_cast<PegCount*>(&dce2_tcp_stats);
 }
 
 ProfileStats* Dce2TcpModule::get_profile() const
@@ -147,4 +147,3 @@ void print_dce2_tcp_conf(const dce2TcpProtoConf& config)
 {
     print_dce2_co_config(config.common);
 }
-

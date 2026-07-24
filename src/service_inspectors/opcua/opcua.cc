@@ -100,7 +100,8 @@ void Opcua::eval(Packet* p)
 
     assert(p->has_tcp_data());
 
-    OpcuaFlowData* opcuafd = (OpcuaFlowData*)p->flow->get_flow_data(OpcuaFlowData::inspector_id);
+    OpcuaFlowData* opcuafd = static_cast<OpcuaFlowData*>(
+        p->flow->get_flow_data(OpcuaFlowData::inspector_id));
 
     // not including any checks for a full PDU as we're not guaranteed to
     // have one with the available pipelining options to get to OPC UA
@@ -209,4 +210,3 @@ const BaseApi * sin_opcua[] =
     ips_opcua_node_namespace_index,
     nullptr
 };
-

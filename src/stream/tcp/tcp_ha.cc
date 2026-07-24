@@ -50,7 +50,7 @@ void TcpHA::deactivate_session(Flow* flow)
     if ( flow->session )
     {
         flow->flush(true);
-        ((TcpSession*)(flow->session))->clear_session(true, false, false);
+        static_cast<TcpSession*>(flow->session)->clear_session(true, false, false);
     }
 
     flow->clear_session_state(STREAM_STATE_ESTABLISHED);
@@ -86,4 +86,3 @@ void TcpHAManager::tswap()
     if ( HighAvailabilityManager::configured() )
         tcp_ha = new TcpHA();
 }
-

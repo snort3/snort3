@@ -142,7 +142,8 @@ protected:
     static uint64_t get_uid(const DataEvent*, const Flow* flow)
     {
         return flow->connection_id ? flow->connection_id
-            : ExtractorEvent::get_hash().do_hash((const unsigned char*)flow->key, 0);
+            : ExtractorEvent::get_hash().do_hash(
+                reinterpret_cast<const unsigned char*>(flow->key), 0);
     }
 
     template<typename T, class... Context>

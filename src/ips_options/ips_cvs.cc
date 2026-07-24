@@ -127,7 +127,7 @@ bool CvsOption::operator==(const IpsOption& ips) const
     if ( !IpsOption::operator==(ips) )
         return false;
 
-    const CvsOption& rhs = (const CvsOption&)ips;
+    const CvsOption& rhs = static_cast<const CvsOption&>(ips);
     const CvsRuleOption* left = &config;
     const CvsRuleOption* right = &rhs.config;
 
@@ -411,7 +411,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* cvs_ctor(Module* p, IpsInfo&)
 {
-    CvsModule* m = (CvsModule*)p;
+    CvsModule* m = static_cast<CvsModule*>(p);
     return new CvsOption(m->data);
 }
 

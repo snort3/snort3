@@ -76,7 +76,7 @@ public:
     { return ciscometadata_pegs; }
 
     PegCount* get_counts() const override
-    { return (PegCount*) &ciscometadata_stats; }
+    { return reinterpret_cast<PegCount*>(&ciscometadata_stats); }
 };
 
 class CiscoMetaDataCodec : public Codec
@@ -234,4 +234,3 @@ const BaseApi* cd_ciscometadata[] =
     &ciscometadata_api.base,
     nullptr
 };
-

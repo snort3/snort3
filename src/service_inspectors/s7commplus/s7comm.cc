@@ -101,8 +101,8 @@ void S7commplus::eval(Packet* p)
     // preconditions - what we registered for
     assert(p->has_tcp_data());
 
-    S7commplusFlowData* mfd =
-        (S7commplusFlowData*)p->flow->get_flow_data(S7commplusFlowData::inspector_id);
+    S7commplusFlowData* mfd = static_cast<S7commplusFlowData*>(
+        p->flow->get_flow_data(S7commplusFlowData::inspector_id));
 
     if ( !p->is_full_pdu() )
     {
@@ -210,4 +210,3 @@ const BaseApi* sin_s7commplus[] =
     ips_s7commplus_content,
     nullptr
 };
-

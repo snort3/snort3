@@ -127,7 +127,8 @@ void RnaPnd::analyze_flow_tcp(const Packet* p, TcpPacketType type)
         if ( type == TcpPacketType::SYN and
             filter.is_host_monitored(p, nullptr, p->ptrs.ip_api.get_dst()) )
         {
-            RNAFlow* rna_flow = (RNAFlow*) p->flow->get_flow_data(RNAFlow::inspector_id);
+            RNAFlow* rna_flow = static_cast<RNAFlow*>(
+                p->flow->get_flow_data(RNAFlow::inspector_id));
             if ( !rna_flow )
             {
                 rna_flow = new RNAFlow();
@@ -153,7 +154,7 @@ bool RnaPnd::analyze_cpe_os_info(snort::DataEvent& event)
     if ( !p or !p->flow )
         return false;
 
-    RNAFlow* rna_flow = (RNAFlow*) p->flow->get_flow_data(RNAFlow::inspector_id);
+    RNAFlow* rna_flow = static_cast<RNAFlow*>(p->flow->get_flow_data(RNAFlow::inspector_id));
     if ( !rna_flow )
         return false;
 
@@ -166,7 +167,7 @@ bool RnaPnd::analyze_cpe_os_info(snort::DataEvent& event)
         return false;
 
     const auto& src_ip = p->ptrs.ip_api.get_src();
-    const auto& src_ip_ptr = (const struct in6_addr*) src_ip->get_ip6_ptr();
+    const auto& src_ip_ptr = reinterpret_cast<const struct in6_addr*>(src_ip->get_ip6_ptr());
     const auto& src_mac = layer::get_eth_layer(p)->ether_src;
     rt->update_last_seen();
     FpFingerprint fp = FpFingerprint();
@@ -201,7 +202,7 @@ void RnaPnd::analyze_netflow_host(NetFlowEvent* nfe)
 
     bool new_host = false;
     const auto& src_ip = nfe->get_record()->initiator_ip;
-    const auto& src_ip_ptr = (const struct in6_addr*) src_ip.get_ip6_ptr();
+    const auto& src_ip_ptr = reinterpret_cast<const struct in6_addr*>(src_ip.get_ip6_ptr());
 
     // This case must be handled first before adding the host to the
     // host cache. Otherwise, new rules evals with create_host = true
@@ -279,10 +280,10 @@ void RnaPnd::analyze_netflow_service(NetFlowEvent* nfe)
     {
         if ( proto == IpProtocol::TCP )
             logger.log(RNA_EVENT_NEW, NEW_TCP_SERVICE, p, ht,
-                (const struct in6_addr*) src_ip.get_ip6_ptr(), mac_addr, &ha);
+                reinterpret_cast<const struct in6_addr*>(src_ip.get_ip6_ptr()), mac_addr, &ha);
         else if ( proto == IpProtocol::UDP )
             logger.log(RNA_EVENT_NEW, NEW_UDP_SERVICE, p, ht,
-                (const struct in6_addr*) src_ip.get_ip6_ptr(), mac_addr, &ha);
+                reinterpret_cast<const struct in6_addr*>(src_ip.get_ip6_ptr()), mac_addr, &ha);
 
         ha.hits = 0;
         ht->update_service(ha);
@@ -314,7 +315,7 @@ void RnaPnd::discover_network_udp(const Packet* p)
 {
     const auto& ip_api = p->ptrs.ip_api;
     // FIXIT-L this used to be IN6_IS_ADDR_MULTICAST(), SfIp should implement something comparable
-    if ( ((const uint8_t *) ip_api.get_dst()->get_ip6_ptr())[0] == 0XFF )
+    if ( reinterpret_cast<const uint8_t*>(ip_api.get_dst()->get_ip6_ptr())[0] == 0XFF )
         discover_network(p, 0);
     else
         discover_network(p, ip_api.ttl());
@@ -325,7 +326,7 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
     bool new_host = false;
     bool new_mac = false;
     const auto& src_ip = p->ptrs.ip_api.get_src();
-    const auto& src_ip_ptr = (const struct in6_addr*) src_ip->get_ip6_ptr();
+    const auto& src_ip_ptr = reinterpret_cast<const struct in6_addr*>(src_ip->get_ip6_ptr());
 
     auto ht = find_or_create_host_tracker(*src_ip, new_host);
 
@@ -340,7 +341,7 @@ void RnaPnd::discover_network(const Packet* p, uint8_t ttl)
     RNAFlow* rna_flow = nullptr;
     if ( p->is_tcp() || p->is_udp() )
     {
-        rna_flow = (RNAFlow*) p->flow->get_flow_data(RNAFlow::inspector_id);
+        rna_flow = static_cast<RNAFlow*>(p->flow->get_flow_data(RNAFlow::inspector_id));
         if ( !rna_flow )
         {
             rna_flow = new RNAFlow();
@@ -447,7 +448,7 @@ void RnaPnd::analyze_dhcp_fingerprint(DataEvent& event)
     const DHCPFingerprint* dhcp_fp = processor->match_dhcp_fingerprint(key);
     if (dhcp_fp and ht->add_udp_fingerprint(dhcp_fp->fpid))
     {
-        const auto& src_ip_ptr = (const struct in6_addr*) src_ip->get_ip6_ptr();
+        const auto& src_ip_ptr = reinterpret_cast<const struct in6_addr*>(src_ip->get_ip6_ptr());
         logger.log(RNA_EVENT_NEW, NEW_OS, p, ht, src_ip_ptr, src_mac, dhcp_fp, packet_time());
     }
 }
@@ -487,8 +488,8 @@ void RnaPnd::add_dhcp_info(DataEvent& event)
         hm_ptr->update_last_seen(p->pkth->ts.tv_sec);
 
     logger.log(RNA_EVENT_CHANGE, CHANGE_FULL_DHCP_INFO, p, ht,
-        (const struct in6_addr*) leased_ip.get_ip6_ptr(), src_mac,
-        lease, net_mask, (const struct in6_addr*) router_ip.get_ip6_ptr());
+        reinterpret_cast<const struct in6_addr*>(leased_ip.get_ip6_ptr()), src_mac,
+        lease, net_mask, reinterpret_cast<const struct in6_addr*>(router_ip.get_ip6_ptr()));
 }
 
 void RnaPnd::analyze_smb_fingerprint(DataEvent& event)
@@ -498,7 +499,7 @@ void RnaPnd::analyze_smb_fingerprint(DataEvent& event)
         return;
 
     const Packet* p = event.get_packet();
-    RNAFlow* rna_flow = (RNAFlow*) p->flow->get_flow_data(RNAFlow::inspector_id);
+    RNAFlow* rna_flow = static_cast<RNAFlow*>(p->flow->get_flow_data(RNAFlow::inspector_id));
     if ( !rna_flow )
         return;
 
@@ -516,7 +517,7 @@ void RnaPnd::analyze_smb_fingerprint(DataEvent& event)
     if ( fp && rt->add_smb_fingerprint(fp->fpid) )
     {
         const auto& src_ip = p->ptrs.ip_api.get_src();
-        const auto& src_ip_ptr = (const struct in6_addr*) src_ip->get_ip6_ptr();
+        const auto& src_ip_ptr = reinterpret_cast<const struct in6_addr*>(src_ip->get_ip6_ptr());
         const auto& src_mac = layer::get_eth_layer(p)->ether_src;
 
         logger.log(RNA_EVENT_NEW, NEW_OS, p, rt, src_ip_ptr, src_mac, fp, packet_time());
@@ -569,7 +570,7 @@ void RnaPnd::generate_change_vlan_update(RnaTracker& rt, const Packet* p,
     {
         rt->update_vlan(vh->vth_pri_cfi_vlan, vh->vth_proto);
         logger.log(RNA_EVENT_CHANGE, CHANGE_VLAN_TAG, p, rt,
-            (const struct in6_addr*) src_ip->get_ip6_ptr(), src_mac, packet_time());
+            reinterpret_cast<const struct in6_addr*>(src_ip->get_ip6_ptr()), src_mac, packet_time());
     }
 }
 
@@ -584,7 +585,8 @@ void RnaPnd::generate_change_host_update(RnaTracker& ht, const Packet* p,
     time_t timestamp = sec - update_timeout;
     if ( last_seen > last_event and (time_t) last_event + update_timeout <= sec )
         logger.log(RNA_EVENT_CHANGE, CHANGE_HOST_UPDATE, p, src_mac,
-            (const struct in6_addr*) src_ip->get_ip6_ptr(), ht, last_seen, (void*) &timestamp);
+            reinterpret_cast<const struct in6_addr*>(src_ip->get_ip6_ptr()), ht, last_seen,
+            static_cast<void*>(&timestamp));
     // FIXIT-M: deal with host service hits.
 }
 
@@ -682,7 +684,7 @@ void RnaPnd::generate_new_host_mac(const Packet* p, RnaTracker ht, bool discover
             const Layer& lyr = p->layers[p->num_layers-1];
             if ( lyr.prot_id == ProtocolId::ETHERNET_LLC )
             {
-                ntype = ((const RNA_LLC*) lyr.start)->s.proto;
+                ntype = reinterpret_cast<const RNA_LLC*>(lyr.start)->s.proto;
                 if ( hm_ptr->add_network_proto(ntype) )
                 {
                     logger.log(RNA_EVENT_NEW, NEW_NET_PROTOCOL, p, ht, ntype, mk.mac_addr);
@@ -721,7 +723,7 @@ void RnaPnd::discover_network_ethernet(const Packet* p)
                 return;
             }
 
-            const RNA_LLC* llc = (const RNA_LLC*) lyr.start;
+            const RNA_LLC* llc = reinterpret_cast<const RNA_LLC*>(lyr.start);
 
             if ( llc->s.s.DSAP != llc->s.s.SSAP )
             {
@@ -732,11 +734,13 @@ void RnaPnd::discover_network_ethernet(const Packet* p)
             switch ( llc->s.s.DSAP )
             {
             case BPDU_ID:
-                retval = discover_network_bpdu(p, ((const uint8_t*)llc + sizeof(RNA_LLC)), rt);
+                retval = discover_network_bpdu(
+                    p, reinterpret_cast<const uint8_t*>(llc) + sizeof(RNA_LLC), rt);
                 break;
 
             case SNAP_ID:
-                retval = discover_network_cdp(p, (const uint8_t*)llc + sizeof(RNA_LLC),
+                retval = discover_network_cdp(p,
+                    reinterpret_cast<const uint8_t*>(llc) + sizeof(RNA_LLC),
                     p->dsize - sizeof(RNA_LLC), rt);
                 break;
 
@@ -794,7 +798,7 @@ int RnaPnd::discover_network_arp(const Packet* p, RnaTracker& ht_ref)
         ht->update_hops(255);
         ht->add_mac(src_mac, 0, 0);
         logger.log(RNA_EVENT_NEW, NEW_HOST, p, ht,
-            (const struct in6_addr*) spa.get_ip6_ptr(), src_mac);
+            reinterpret_cast<const struct in6_addr*>(spa.get_ip6_ptr()), src_mac);
         hm_ptr->update_last_event(p->pkth->ts.tv_sec);
     }
 
@@ -806,14 +810,14 @@ int RnaPnd::discover_network_arp(const Packet* p, RnaTracker& ht_ref)
             phm = &hm;
 
         logger.log(RNA_EVENT_CHANGE, CHANGE_MAC_ADD, p, ht_ref,
-            (const struct in6_addr*) spa.get_ip6_ptr(), src_mac, phm);
+            reinterpret_cast<const struct in6_addr*>(spa.get_ip6_ptr()), src_mac, phm);
         hm_ptr->update_last_event(p->pkth->ts.tv_sec);
     }
     else if ( ht->make_primary(src_mac) )
     {
         HostMac hm;
         logger.log(RNA_EVENT_CHANGE, CHANGE_MAC_INFO, p, ht_ref,
-            (const struct in6_addr*) spa.get_ip6_ptr(), src_mac,
+            reinterpret_cast<const struct in6_addr*>(spa.get_ip6_ptr()), src_mac,
             ht->get_hostmac(src_mac, hm) ? &hm : nullptr);
         hm_ptr->update_last_event(p->pkth->ts.tv_sec);
     }
@@ -833,7 +837,8 @@ int RnaPnd::discover_network_arp(const Packet* p, RnaTracker& ht_ref)
 
         ht->update_hops(0);
         logger.log(RNA_EVENT_CHANGE, CHANGE_HOPS, p, ht_ref,
-            (const struct in6_addr*) spa.get_ip6_ptr(), src_mac, ht->get_hostmac(src_mac, hm) ? &hm : nullptr);
+            reinterpret_cast<const struct in6_addr*>(spa.get_ip6_ptr()), src_mac,
+            ht->get_hostmac(src_mac, hm) ? &hm : nullptr);
         hm_ptr->update_last_event(p->pkth->ts.tv_sec);
     }
 
@@ -928,7 +933,7 @@ int RnaPnd::discover_network_cdp(const Packet* p, const uint8_t* data, uint16_t 
     if ( !is_cdp(layer::get_eth_layer(p)->ether_dst) or rlen < sizeof(RNA_CDP) )
         return 1;
 
-    if ( ntohs(((const RNA_CDP *)data)->pid) != CDP_HDLC_PROTOCOL_TYPE )
+    if ( ntohs(reinterpret_cast<const RNA_CDP*>(data)->pid) != CDP_HDLC_PROTOCOL_TYPE )
         return 1;
 
     generate_new_host_mac(p, rt, true);
@@ -943,7 +948,7 @@ int RnaPnd::discover_network_cdp(const Packet* p, const uint8_t* data, uint16_t 
         uint16_t type;
         const RNA_CDP_DATA* tlv;
 
-        tlv = (const RNA_CDP_DATA *)data;
+        tlv = reinterpret_cast<const RNA_CDP_DATA*>(data);
         len = ntohs(tlv->length);
         if ( len < sizeof(RNA_CDP_DATA) or data + len > end )
             return 1;
@@ -955,7 +960,7 @@ int RnaPnd::discover_network_cdp(const Packet* p, const uint8_t* data, uint16_t 
             uint32_t num_addrs;
 
             data += sizeof(RNA_CDP_DATA);
-            num_addrs = ntohl(*((const uint32_t *)data));
+            num_addrs = ntohl(*reinterpret_cast<const uint32_t*>(data));
             data += sizeof(uint32_t);
             addr_len -= sizeof(uint32_t);
             for (unsigned i = 0; i < num_addrs; i++)
@@ -980,7 +985,7 @@ int RnaPnd::discover_network_cdp(const Packet* p, const uint8_t* data, uint16_t 
                 if ( addr_len < 2 )
                     return 1;
 
-                tmp_len = ntohs(*((const uint16_t *)data));
+                tmp_len = ntohs(*reinterpret_cast<const uint16_t*>(data));
                 data += sizeof(uint16_t);
                 addr_len -= sizeof(uint16_t);
 
@@ -988,7 +993,7 @@ int RnaPnd::discover_network_cdp(const Packet* p, const uint8_t* data, uint16_t 
                     return 1;
 
                 if (ip and tmp_len == 0x0004)
-                    ip_address.push_back(*((const uint32_t *)data));
+                    ip_address.push_back(*reinterpret_cast<const uint32_t*>(data));
 
                 data += tmp_len;
                 addr_len -= tmp_len;
@@ -1002,7 +1007,7 @@ int RnaPnd::discover_network_cdp(const Packet* p, const uint8_t* data, uint16_t 
             data += sizeof(RNA_CDP_DATA);
             if ( len != 8 )
                 return 1;
-            cap = ntohl(*((const uint32_t *)data));
+            cap = ntohl(*reinterpret_cast<const uint32_t*>(data));
             data += sizeof(uint32_t);
         }
         else
@@ -1025,7 +1030,8 @@ int RnaPnd::discover_network_cdp(const Packet* p, const uint8_t* data, uint16_t 
                 ht->set_host_type(HOST_TYPE_BRIDGE);
 
             logger.log(RNA_EVENT_CHANGE, CHANGE_HOST_TYPE, p, ht,
-                (const struct in6_addr*)cdp_ip.get_ip6_ptr(), layer::get_eth_layer(p)->ether_src);
+                reinterpret_cast<const struct in6_addr*>(cdp_ip.get_ip6_ptr()),
+                layer::get_eth_layer(p)->ether_src);
         }
     }
 
@@ -1041,10 +1047,10 @@ int RnaPnd::discover_host_types_icmpv6_ndp(RnaTracker& ht, const Packet* p, uint
     if ( !p->is_icmp() or !p->is_ip6() )
         return 1;
 
-    const uint8_t* data = (const uint8_t*)p->ptrs.icmph;
+    const uint8_t* data = reinterpret_cast<const uint8_t*>(p->ptrs.icmph);
     int32_t data_len = std::min((int)p->ptrs.ip_api.pay_len(), (int)(p->pkt + p->pktlen - data));
 
-    switch ( ((const icmp::Icmp6Hdr*)p->ptrs.icmph)->type )
+    switch ( reinterpret_cast<const icmp::Icmp6Hdr*>(p->ptrs.icmph)->type )
     {
         case snort::icmp::NEIGHBOR_ADVERTISEMENT:
             if ( (p->ptrs.icmph->code) or (data_len <= ICMPv6_NA_MIN_LEN) )
@@ -1137,7 +1143,7 @@ TEST_CASE("RNA pnd", "[non-ip]")
         eth::EtherHdr eh;
         memcpy(eh.ether_src, zero_mac, MAC_SIZE);
         p.num_layers = 1;
-        p.layers[0].start = (const uint8_t*) &eh;
+        p.layers[0].start = reinterpret_cast<const uint8_t*>(&eh);
         CHECK(is_eligible_packet(&p) == false);
 
         ip::IP4Hdr h4;
@@ -1173,7 +1179,7 @@ TEST_CASE("RNA pnd cpe os", "[cpe-os]")
         memcpy(eh.ether_src, mac, MAC_SIZE);
         p.packet_flags = PKT_FROM_CLIENT;
         p.num_layers = 1;
-        p.layers[0].start = (const uint8_t*) &eh;
+        p.layers[0].start = reinterpret_cast<const uint8_t*>(&eh);
 
         // Setup host tracker and attach it to rna flow as client
         auto* src_ip = p.ptrs.ip_api.get_src();
