@@ -116,8 +116,6 @@ inline bool DCE2_ListIsEmpty(DCE2_List*);
 void DCE2_ListEmpty(DCE2_List*);
 void DCE2_ListDestroy(DCE2_List*);
 void* DCE2_ListFind(DCE2_List*, void*);
-DCE2_Ret DCE2_ListFindKey(DCE2_List*, void*);
-DCE2_Ret DCE2_ListRemove(DCE2_List*, void*);
 void DCE2_ListRemoveCurrent(DCE2_List*);
 
 DCE2_Queue* DCE2_QueueNew(DCE2_QueueDataFree);
