@@ -919,6 +919,18 @@ void Defrag::process(Packet* p, FragTracker* ft)
     ip_stats.total++;
     ip_stats.fragmented_bytes += p->pktlen + 4; /* 4 for the CRC */
 
+    if (p->dsize > INT16_MAX)
+    {
+        debug_log(stream_ip_trace, p, "[..] Oversize frag!\n");
+        EventAnomBadsizeLg(fe);
+
+        if (ft->engine)
+            ft->frag_flags |= FRAG_BAD;
+
+        ip_stats.discards++;
+        return;
+    }
+
     if (!ft->engine )
     {
         new_tracker(p, ft);
