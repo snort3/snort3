@@ -12,3 +12,7 @@ else (STATIC_INSPECTORS)
     add_dynamic_module(rpc_decode inspectors ${FILE_LIST})
 
 endif (STATIC_INSPECTORS)
+
+if (ENABLE_UNIT_TESTS)
+    add_subdirectory(test)
+endif (ENABLE_UNIT_TESTS)

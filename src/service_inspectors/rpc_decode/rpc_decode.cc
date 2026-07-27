@@ -127,7 +127,7 @@ static int ConvertRPC(RpcSsnData*, Packet*);
 static RpcSsnData* RpcSsnDataNew(Packet*);
 static inline void RpcSsnClean(RpcSsnData*);
 static inline void RpcSsnSetInactive(RpcSsnData*, Packet*);
-static inline int RpcSsnIsActive(RpcSsnData*);
+static inline int RpcSsnIsActive(const RpcSsnData*);
 
 static RpcStatus RpcStatefulInspection(RpcSsnData*, Packet*);
 static inline void RpcPreprocEvent(RpcSsnData*, int);
@@ -176,6 +176,26 @@ static inline void RpcPreprocEvent(RpcSsnData* rsdata, int event)
     default:
         break;
     }
+}
+
+// Publish one nested ALT_PACKET detection pass for a logical SunRPC record.
+// Empty records have no payload to publish. For non-empty records, use the
+// logical record as the packet view for the duration of the synchronous publish.
+static void RpcPublishAltPacket(Packet* p, const uint8_t* record, uint32_t record_len)
+{
+    if (!record || record_len <= RPC_FRAG_HDR_SIZE || record_len > Packet::max_dsize)
+        return;
+
+    const uint8_t* saved_data = p->data;
+    const uint16_t saved_dsize = p->dsize;
+
+    p->data = record;
+    p->dsize = (uint16_t)record_len;
+
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::ALT_PACKET, p);
+
+    p->data = saved_data;
+    p->dsize = saved_dsize;
 }
 
 static RpcStatus RpcStatefulInspection(RpcSsnData* rsdata, Packet* p)
@@ -244,7 +264,7 @@ static RpcStatus RpcStatefulInspection(RpcSsnData* rsdata, Packet* p)
                     if (RpcPrepRaw(data, rsdata->frag_len, p) != RPC_STATUS__SUCCESS)
                         return RPC_STATUS__ERROR;
 
-                    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::ALT_PACKET, p);
+                    RpcPublishAltPacket(p, data, RPC_FRAG_HDR_SIZE + rsdata->frag_len);
                 }
 
                 if ( (dsize > 0) )
@@ -301,7 +321,11 @@ static RpcStatus RpcStatefulInspection(RpcSsnData* rsdata, Packet* p)
 
             if (status == RPC_STATUS__DEFRAG)
             {
-                if (RpcBufLen(&rsdata->frag) != 0)
+                const uint32_t buf_len = RpcBufLen(&rsdata->frag);
+                const uint32_t record_len = buf_len != 0 ?
+                    RPC_FRAG_HDR_SIZE + buf_len : RpcBufLen(&rsdata->seg);
+
+                if (buf_len != 0)
                 {
                     if (RpcPrepFrag(rsdata, p) != RPC_STATUS__SUCCESS)
                         return RPC_STATUS__ERROR;
@@ -315,7 +339,8 @@ static RpcStatus RpcStatefulInspection(RpcSsnData* rsdata, Packet* p)
                 if ( (dsize > 0) )
                     RpcPreprocEvent(rsdata, RPC_MULTIPLE_RECORD);
 
-                DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::ALT_PACKET, p);
+                const DataPointer alt_buf = DetectionEngine::get_alt_buffer(p);
+                RpcPublishAltPacket(p, alt_buf.data, record_len);
                 RpcBufClean(&rsdata->frag);
             }
 
@@ -350,30 +375,37 @@ static RpcStatus RpcPrepRaw(const uint8_t* data, uint32_t fraglen, Packet* p)
     return RPC_STATUS__SUCCESS;
 }
 
-static RpcStatus RpcPrepFrag(RpcSsnData* rsdata, Packet* p)
+static RpcStatus RpcPrepFragBuffer(RpcSsnData* rsdata, DataBuffer& buf)
 {
-    DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
-    uint32_t fraghdr = htonl(RpcBufLen(&rsdata->frag));
+    const uint32_t frag_len = RpcBufLen(&rsdata->frag);
+    uint32_t fraghdr = htonl(frag_len);
 
     std::memcpy(buf.data, &fraghdr, sizeof(fraghdr));
 
     buf.data[0] |= 0x80;
 
-    if (RpcBufLen(&rsdata->frag) > buf.decode_blen - 4)
+    if (frag_len > buf.decode_blen - RPC_FRAG_HDR_SIZE)
     {
         RpcBufClean(&rsdata->frag);
         return RPC_STATUS__ERROR;
     }
 
-    memcpy_s(buf.data + 4, buf.decode_blen - 4,
-        RpcBufData(&rsdata->frag), RpcBufLen(&rsdata->frag));
+    memcpy_s(buf.data + RPC_FRAG_HDR_SIZE, buf.decode_blen - RPC_FRAG_HDR_SIZE,
+        RpcBufData(&rsdata->frag), frag_len);
 
-    if (RpcBufLen(&rsdata->frag) > RPC_MAX_BUF_SIZE)
+    if (frag_len > RPC_MAX_BUF_SIZE)
         RpcBufClean(&rsdata->frag);
 
-    buf.len = RpcBufLen(&rsdata->frag);
+    buf.len = RPC_FRAG_HDR_SIZE + frag_len;
 
     return RPC_STATUS__SUCCESS;
+}
+
+static RpcStatus RpcPrepFrag(RpcSsnData* rsdata, Packet* p)
+{
+    DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
+
+    return RpcPrepFragBuffer(rsdata, buf);
 }
 
 static RpcStatus RpcPrepSeg(RpcSsnData* rsdata, Packet* p)
@@ -508,7 +540,7 @@ static inline void RpcSsnSetInactive(RpcSsnData* rsdata, Packet*)
     RpcSsnClean(rsdata);
 }
 
-static inline int RpcSsnIsActive(RpcSsnData* rsdata)
+static inline int RpcSsnIsActive(const RpcSsnData* rsdata)
 {
     if (rsdata == nullptr)
         return 0;
