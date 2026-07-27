@@ -1533,7 +1533,24 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
         // processed since it won't be carrying SMB.
         case DCE2_SMB_DATA_STATE__NETBIOS_HEADER:
         {
-            uint32_t data_need = sizeof(NbssHdr);
+            // The segmentation buffer only ever holds a partial NetBIOS
+            // header in this state; every transition back here empties it
+            // first. A buffer larger than the NetBIOS header therefore means
+            // an unexpected state transition or crafted traffic -- guard the
+            // subtraction below so it can never underflow and fail closed.
+            uint32_t buffered = DCE2_BufferLength(*seg_buf);
+            if (buffered > sizeof(NbssHdr))
+            {
+                dce_alert(GID_DCE2, DCE2_SMB_SEG_BUFFER_OVERRUN,
+                    reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
+                p->active->block_session(p, true);
+                DCE2_BufferEmpty(*seg_buf);
+                return;
+            }
+
+            // Account for bytes already buffered so the segmentation buffer
+            // can never grow past sizeof(NbssHdr) in this state.
+            uint32_t data_need = sizeof(NbssHdr) - buffered;
 
             // See if there is enough data to process the NetBIOS header
             if (data_len < data_need)
@@ -1613,8 +1630,26 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
         // there won't be any DCE/RPC traffic associated with it.
         case DCE2_SMB_DATA_STATE__SMB_HEADER:
         {
-            uint32_t data_need = (sizeof(NbssHdr) + sizeof(SmbNtHdr)) - DCE2_BufferLength(
-                *seg_buf);
+            uint32_t buffered = DCE2_BufferLength(*seg_buf);
+            uint32_t expected_total = sizeof(NbssHdr) + sizeof(SmbNtHdr);
+
+            // Cap runaway segmentation-buffer growth using the configured
+            // memcap. Legitimate SMB1 PDUs are bounded by the NetBIOS length
+            // (<= 0x1FFFF), far below memcap, so this only trips on crafted
+            // traffic driving unbounded reassembly -- alert and fail closed.
+            if (buffered > DCE2_ScSmbMemcap((const dce2SmbProtoConf*)ssd->sd.config))
+            {
+                dce_alert(GID_DCE2, DCE2_SMB_SEG_BUFFER_OVERRUN,
+                    reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
+                p->active->block_session(p, true);
+                DCE2_BufferEmpty(*seg_buf);
+                return;
+            }
+
+            // Guard the subtraction so data_need can never underflow (the
+            // NETBIOS_HEADER accounting keeps buffered <= expected_total on the
+            // normal path).
+            uint32_t data_need = (buffered < expected_total) ? (expected_total - buffered) : 0;
 
             // See if there is enough data to process the SMB header
             if (data_len < data_need)
@@ -1733,7 +1768,24 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
             else
             {
                 nb_len = NbssLen(reinterpret_cast<NbssHdr*>(DCE2_BufferData(*seg_buf)));
-                data_need = (sizeof(NbssHdr) + nb_len) - DCE2_BufferLength(*seg_buf);
+                uint32_t buffered = DCE2_BufferLength(*seg_buf);
+                uint32_t expected_total = sizeof(NbssHdr) + nb_len;
+
+                // Same memcap cap as the SMB_HEADER case: a retained buffer
+                // that has grown past memcap indicates crafted traffic driving
+                // unbounded reassembly -- alert and fail closed. Normal PDUs
+                // stay well under memcap so this never fires on real traffic.
+                if (buffered > DCE2_ScSmbMemcap((const dce2SmbProtoConf*)ssd->sd.config))
+                {
+                    dce_alert(GID_DCE2, DCE2_SMB_SEG_BUFFER_OVERRUN,
+                        reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
+                    p->active->block_session(p, true);
+                    DCE2_BufferEmpty(*seg_buf);
+                    return;
+                }
+
+                // Guard the subtraction so data_need can never underflow.
+                data_need = (buffered < expected_total) ? (expected_total - buffered) : 0;
             }
 
             /* It's something we want to inspect so make sure we have the full NBSS packet */

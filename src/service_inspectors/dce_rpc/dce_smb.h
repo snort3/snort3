@@ -83,6 +83,8 @@
 #define DCE2_SMB_INVALID_FILE_OFFSET 58
 #define DCE2_SMB_BAD_NEXT_COMMAND_OFFSET 59
 #define DCE2_SMB_EXCESSIVE_FILE_CHUNKS 60
+// 61 and 62 are used by dce_udp (connection-less); continue at 63 for SMB
+#define DCE2_SMB_SEG_BUFFER_OVERRUN 63
 #define DCE2_SMB_EXCESSIVE_WRITEX_RAW 64
 
 #define DCE2_SMB_BAD_NBSS_TYPE_STR "SMB - bad NetBIOS session service session type"
@@ -139,6 +141,8 @@
     "SMB - next command specified in SMB2 header is beyond payload boundary"
 #define DCE2_SMB_EXCESSIVE_FILE_CHUNKS_STR \
     "SMB - excessive out-of-order file chunks causing potential DoS"
+#define DCE2_SMB_SEG_BUFFER_OVERRUN_STR \
+    "SMB - segmentation buffer accounting overrun, possible evasion attempt"
 #define DCE2_SMB_EXCESSIVE_WRITEX_RAW_STR \
     "SMB - excessive raw WriteAndX reassembly memory causing potential DoS"
 
