@@ -314,7 +314,7 @@ static void PrecalcPrefix()
  *      CRC         1
  *
  */
-static int BoGetDirection(Packet* p, const char* pkt_data)
+static int BoGetDirection(const Packet* p, const char* pkt_data)
 {
     /* Check for the default port on either side */
     if ( p->ptrs.dp == BO_DEFAULT_PORT )

@@ -139,7 +139,7 @@ public:
 
     StreamSplitter* get_splitter(bool) override;
 
-    inline bool finished(Wand& w)
+    inline bool finished(const Wand& w)
     { return !w.hex and !w.spell and w.curse_tracker.empty(); }
 
     void reset(Wand&, bool, MagicBook::MagicBook::ArcaneType);

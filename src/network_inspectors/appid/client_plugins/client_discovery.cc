@@ -245,7 +245,7 @@ ClientAppMatch* ClientDiscovery::find_detector_candidates(const Packet* pkt, con
     return sorted;
 }
 
-void ClientDiscovery::create_detector_candidates_list(AppIdSession& asd, Packet* p)
+void ClientDiscovery::create_detector_candidates_list(AppIdSession& asd, const Packet* p)
 {
     ClientAppMatch* match_list;
 
@@ -266,7 +266,8 @@ void ClientDiscovery::create_detector_candidates_list(AppIdSession& asd, Packet*
     free_matched_list(&match_list);
 }
 
-int ClientDiscovery::get_detector_candidates_list(AppIdSession& asd, Packet* p, AppidSessionDirection direction)
+int ClientDiscovery::get_detector_candidates_list(
+    AppIdSession& asd, const Packet* p, AppidSessionDirection direction)
 {
     if (direction == APP_ID_FROM_INITIATOR)
     {

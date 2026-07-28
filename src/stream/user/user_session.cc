@@ -304,7 +304,7 @@ void UserTracker::add_data(Packet* p)
 // may need additional refactoring
 //-------------------------------------------------------------------------
 
-void UserSession::start(Packet* p, Flow* f)
+void UserSession::start(const Packet* p, Flow* f)
 {
     Inspector* ins = f->gadget;
 

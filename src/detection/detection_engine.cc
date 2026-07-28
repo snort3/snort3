@@ -341,6 +341,7 @@ void DetectionEngine::set_data(unsigned id, IpsContextData* p)
 IpsContextData* DetectionEngine::get_data(unsigned id)
 { return Analyzer::get_switcher()->get_context()->get_context_data(id); }
 
+// cppcheck-suppress constParameterPointer ; preserve the installed API and ABI
 IpsContextData* DetectionEngine::get_data(unsigned id, IpsContext* context)
 {
     if ( context )
@@ -496,6 +497,7 @@ void DetectionEngine::idle()
     }
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the installed API and ABI
 void DetectionEngine::onload(Flow* flow)
 {
     if ( flow->is_suspended() )

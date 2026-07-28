@@ -35,15 +35,15 @@
 
 using namespace snort;
 
-static void reset_packet_data(Packet*, TpktFlowData*, CurPacketContext*);
-static void update_flow_data(Packet*, TpktFlowData*, CurPacketContext*);
-static bool populate_cur_pkt_ctx(Packet*, TpktFlowData*, CurPacketContext*);
-static void update_cur_pkt_ctx_exit_offset(Packet*, TpktFlowData*, CurPacketContext*);
+static void reset_packet_data(const Packet*, TpktFlowData*, CurPacketContext*);
+static void update_flow_data(const Packet*, TpktFlowData*, const CurPacketContext*);
+static bool populate_cur_pkt_ctx(const Packet*, TpktFlowData*, CurPacketContext*);
+static void update_cur_pkt_ctx_exit_offset(const Packet*, TpktFlowData*, CurPacketContext*);
 
 static void process_mms_not_found_result(Packet*, TpktFlowData*, CurPacketContext*,
     TpktAppliSearchStateType, Packet*);
 
-static void reset_packet_data(Packet* p, TpktFlowData* tpktfd, CurPacketContext* cur_pkt_ctx)
+static void reset_packet_data(const Packet* p, TpktFlowData* tpktfd, CurPacketContext* cur_pkt_ctx)
 {
     assert(p->is_from_client() or p->is_from_server());
     if (p->is_from_client())
@@ -58,7 +58,7 @@ static void reset_packet_data(Packet* p, TpktFlowData* tpktfd, CurPacketContext*
     }
 }
 
-static void update_flow_data(Packet* p, TpktFlowData* tpktfd, CurPacketContext* cur_pkt_ctx)
+static void update_flow_data(const Packet* p, TpktFlowData* tpktfd, const CurPacketContext* cur_pkt_ctx)
 {
     assert(p->is_from_client() or p->is_from_server());
     if (p->is_from_client())
@@ -79,7 +79,7 @@ static void update_flow_data(Packet* p, TpktFlowData* tpktfd, CurPacketContext* 
     }
 }
 
-static bool populate_cur_pkt_ctx(Packet* p, TpktFlowData* tpktfd, CurPacketContext* cur_pkt_ctx)
+static bool populate_cur_pkt_ctx(const Packet* p, TpktFlowData* tpktfd, CurPacketContext* cur_pkt_ctx)
 {
     assert(p->is_from_client() or p->is_from_server());
     bool res = false;
@@ -105,7 +105,7 @@ static bool populate_cur_pkt_ctx(Packet* p, TpktFlowData* tpktfd, CurPacketConte
     return res;
 }
 
-static void update_cur_pkt_ctx_exit_offset(Packet* p, TpktFlowData* tpktfd,
+static void update_cur_pkt_ctx_exit_offset(const Packet* p, TpktFlowData* tpktfd,
     CurPacketContext* cur_pkt_ctx)
 {
     assert(p->is_from_client() or p->is_from_server());

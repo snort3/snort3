@@ -39,7 +39,7 @@ public:
     static class PlugInterface* get_interface(const snort::TraceLogApi*);
     static snort::TraceLoggerPlug* get_logger(const std::string& name);
     static snort::TraceLoggerPlug* set_logger(const std::string& name);
-    static void instantiate_default_loggers(TraceConfig*);
+    static void instantiate_default_loggers(const TraceConfig*);
 
 private:
     TraceLoggerManager() = delete;

@@ -278,7 +278,7 @@ static void AlertSyslog(int priority, Packet* p, const char* msg, const Event& e
 class SyslogLogger : public Logger
 {
 public:
-    SyslogLogger(SyslogModule*);
+    SyslogLogger(const SyslogModule*);
     ~SyslogLogger() override;
 
     void alert(Packet*, const char* msg, const Event&) override;
@@ -287,7 +287,7 @@ private:
     int priority;
 };
 
-SyslogLogger::SyslogLogger(SyslogModule* m)
+SyslogLogger::SyslogLogger(const SyslogModule* m)
 {
     priority = m->facility | m->level;
     PigPen::open_syslog();

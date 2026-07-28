@@ -47,7 +47,7 @@ using namespace snort;
 static THREAD_LOCAL ProfileStats dnp3_obj_perf_stats;
 
 static IpsOption::EvalStatus dnp3_decode_object(
-    uint8_t* buf, uint16_t buflen, uint8_t rule_group, uint8_t rule_var)
+    const uint8_t* buf, uint16_t buflen, uint8_t rule_group, uint8_t rule_var)
 {
     uint8_t group, var;
 
@@ -144,7 +144,7 @@ IpsOption::EvalStatus Dnp3ObjOption::eval(Cursor&, Packet* p)
     if (rdata->buflen < header_size)
         return NO_MATCH;
 
-    uint8_t* obj_buffer = (uint8_t*)rdata->buffer + header_size;
+    const uint8_t* obj_buffer = rdata->buffer + header_size;
     uint16_t obj_buflen = rdata->buflen - header_size;
 
     return dnp3_decode_object(obj_buffer, obj_buflen, group, var);

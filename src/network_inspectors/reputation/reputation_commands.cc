@@ -73,6 +73,7 @@ bool ReputationReload::execute(Analyzer&)
     return true;
 }
 
+// cppcheck-suppress constParameterCallback
 static int reload(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);

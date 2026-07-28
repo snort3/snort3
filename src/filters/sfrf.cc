@@ -97,7 +97,7 @@ typedef struct
 static XHash* rf_hash = nullptr;
 
 static int checkThreshold(tSFRFConfigNode*, tSFRFTrackingNode*, time_t curTime);
-static int checkSamplingPeriod(tSFRFConfigNode*, tSFRFTrackingNode*, time_t curTime);
+static int checkSamplingPeriod(const tSFRFConfigNode*, tSFRFTrackingNode*, time_t curTime);
 
 static tSFRFTrackingNode* getSFRFTrackingNode(const SfIp*, unsigned tid, time_t curTime);
 
@@ -489,7 +489,7 @@ void SFRF_ShowObjects(RateFilterConfig* config)
  * @returns 0 if continuing with old sampling period.
  *          1 if new sampling period is started.
  */
-static int checkSamplingPeriod(tSFRFConfigNode* cfgNode, tSFRFTrackingNode* dynNode, time_t curTime)
+static int checkSamplingPeriod(const tSFRFConfigNode* cfgNode, tSFRFTrackingNode* dynNode, time_t curTime)
 {
     if ( cfgNode->seconds )
     {

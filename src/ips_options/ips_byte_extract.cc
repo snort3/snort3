@@ -180,7 +180,7 @@ void ByteExtractOption::apply_alignment(uint32_t& value)
 //-------------------------------------------------------------------------
 
 /* Checks a ByteExtractData instance for errors. */
-static bool ByteExtractVerify(ByteExtractData* data)
+static bool ByteExtractVerify(const ByteExtractData* data)
 {
     if (data->bytes_to_extract > MAX_BYTES_TO_GRAB and data->string_convert_flag == 0)
     {

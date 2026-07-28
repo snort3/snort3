@@ -277,7 +277,7 @@ static DetectorHTTPPatterns static_client_agent_patterns =
       APP_ID_APPLE_EMAIL, sizeof(APPLE_EMAIL_PATTERN)-1, (const uint8_t*)APPLE_EMAIL_PATTERN },
 };
 
-static int match_query_elements(tMlpPattern* packetData, tMlpPattern* userPattern,
+static int match_query_elements(const tMlpPattern* packetData, const tMlpPattern* userPattern,
     char* appVersion, size_t appVersionSize)
 {
     if (appVersion == nullptr)
@@ -333,7 +333,7 @@ static void free_app_url_patterns(std::vector<DetectorAppUrlPattern*>& url_patte
     url_patterns.clear();
 }
 
-static void free_http_patterns(DetectorHTTPPatterns& patterns)
+static void free_http_patterns(const DetectorHTTPPatterns& patterns)
 {
     for (const auto& pat: patterns)
         if (pat.pattern)
@@ -830,7 +830,7 @@ static char* normalize_userid(char* user)
     return user;
 }
 
-static void extract_chp(const char* buf, int bs, int start, int psize, char* adata,  char** outbuf)
+static void extract_chp(const char* buf, int bs, int start, int psize, const char* adata,  char** outbuf)
 {
     const char* begin = buf + start + psize;
     const char* end = nullptr;
@@ -899,7 +899,7 @@ AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor& cmd, char** version, cha
 
     for ( const auto& tmp: cmd.chp_matches[pt] )
     {
-        CHPAction* match = (CHPAction*)tmp.mpattern;
+        const CHPAction* match = static_cast<const CHPAction*>(tmp.mpattern);
         if ( match->appIdInstance > hsession->get_chp_candidate() )
             break; // because the list is sorted we know there are no more
         else if ( match->appIdInstance == hsession->get_chp_candidate() )
@@ -979,7 +979,7 @@ static inline int replace_optional_string(char** optionalStr, const char* strToD
 }
 
 static inline const char* continue_buffer_scan(const char* start, const char* end,
-    MatchedPatterns* mp, DetectorHTTPPattern*)
+    const MatchedPatterns* mp, DetectorHTTPPattern*)
 {
     const char* bp = start + mp->after_match_pos;
     if ( (bp >= end) || (*bp != ' ' && *bp != 0x09 && *bp != '/') )

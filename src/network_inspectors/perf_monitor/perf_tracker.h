@@ -70,7 +70,7 @@ public:
     PerfTracker& operator=(const PerfTracker&) = delete;
 
 protected:
-    PerfTracker(PerfConfig*, const char* tracker_name, unsigned flag);
+    PerfTracker(const PerfConfig*, const char* tracker_name, unsigned flag);
     virtual void write();
 
     uint64_t max_file_size = 0;
@@ -84,4 +84,3 @@ private:
     time_t cur_time = 0;
 };
 #endif
-

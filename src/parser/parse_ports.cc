@@ -519,6 +519,7 @@ PortObject* PortObjectParseString(PortVarTable* pvTable, POParser* pop,
     return po;
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 const char* PortObjectParseError(POParser* pop)
 {
     switch ( pop->errflag )
@@ -540,4 +541,3 @@ const char* PortObjectParseError(POParser* pop)
     }
     return "unknown POParse error";
 }
-

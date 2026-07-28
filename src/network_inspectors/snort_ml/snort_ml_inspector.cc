@@ -257,6 +257,7 @@ static Module* mod_ctor()
 static void mod_dtor(Module* m)
 { delete m; }
 
+// cppcheck-suppress constParameterCallback
 static Inspector* snort_ml_ctor(Module* m)
 {
     const SnortMLModule* mod = reinterpret_cast<const SnortMLModule*>(m);

@@ -127,7 +127,7 @@ void FilePolicy::load()
     default_rule.use.capture_enabled = capture_enabled;
 }
 
-FileRule& FilePolicy::match_file_rule(Flow*, FileInfo* file)
+FileRule& FilePolicy::match_file_rule(Flow*, const FileInfo* file)
 {
     for (unsigned i = 0; i < file_rules.size(); i++)
     {
@@ -142,7 +142,7 @@ FileRule& FilePolicy::match_file_rule(Flow*, FileInfo* file)
     return default_rule;
 }
 
-FileVerdict FilePolicy::match_file_signature(Flow*, FileInfo* file)
+FileVerdict FilePolicy::match_file_signature(Flow*, const FileInfo* file)
 {
     // No file type specified in rule or file type is matched
     if (file->get_file_sig_sha256())

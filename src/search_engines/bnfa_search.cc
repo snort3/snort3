@@ -1626,6 +1626,7 @@ unsigned _bnfa_search_csparse_nfa(
     return nfound;
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 int bnfaPatternCount(bnfa_struct_t* p)
 {
     return p->bnfaPatternCnt;
@@ -1634,7 +1635,7 @@ int bnfaPatternCount(bnfa_struct_t* p)
 static bnfa_struct_t summary;
 static int summary_cnt = 0;
 
-static void bnfaPrintInfoEx(bnfa_struct_t* p)
+static void bnfaPrintInfoEx(const bnfa_struct_t* p)
 {
     unsigned max_memory;
 
@@ -1685,6 +1686,7 @@ void bnfaInitSummary()
     memset(&summary,0,sizeof(bnfa_struct_t));
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 void bnfaAccumInfo(bnfa_struct_t* p)
 {
     bnfa_struct_t* px = &summary;

@@ -188,6 +188,7 @@ static int enable_flow_ip_profiling(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback
 static int disable_flow_ip_profiling(lua_State* L)
 {
     PerfMonitor* perf_monitor =
@@ -217,6 +218,7 @@ static int disable_flow_ip_profiling(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback
 static int show_flow_ip_profiling(lua_State* L)
 {
     bool status = false;

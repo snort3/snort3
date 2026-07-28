@@ -43,6 +43,7 @@ enum ModbusBufId
      MODBUS_DATA_BUFID = 1
 };
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 bool get_buf_modbus_data(Packet* p, InspectionBuffer& b)
 {
     if ( !p->is_full_pdu() or p->dsize < MODBUS_MIN_LEN )

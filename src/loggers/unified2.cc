@@ -102,7 +102,7 @@ static THREAD_LOCAL char* io_buffer = nullptr;
 
 /* -------------------- Local Functions -----------------------*/
 
-static void Unified2Write(uint8_t*, uint32_t, Unified2Config*);
+static void Unified2Write(const uint8_t*, uint32_t, Unified2Config*);
 
 static void Unified2InitFile(Unified2Config* config)
 {
@@ -371,7 +371,7 @@ static void _WriteExtraData(Unified2Config* config,
 
 static void AlertExtraData(
     Flow* flow, void* data,
-    LogFunction* log_funcs, //cppcheck-suppress constParameter
+    LogFunction* const log_funcs, // cppcheck-suppress constParameterCallback
     uint32_t max_count, uint32_t xtradata_mask, const AlertInfo& alert_info)
 {
     Unified2Config* config = (Unified2Config*)data;
@@ -509,7 +509,7 @@ static void _Unified2LogPacketAlert(
  * Returns: None
  *
  ******************************************************************************/
-static void Unified2Write(uint8_t* buf, uint32_t buf_len, Unified2Config* config)
+static void Unified2Write(const uint8_t* buf, uint32_t buf_len, Unified2Config* config)
 {
     size_t fwcount = 0;
 
@@ -943,7 +943,7 @@ bool U2Module::begin(const char*, int, SnortConfig* sc)
 class U2Logger : public Logger
 {
 public:
-    U2Logger(U2Module*);
+    U2Logger(const U2Module*);
 
     void open() override;
     void close() override;
@@ -959,7 +959,7 @@ private:
     Unified2Config config;
 };
 
-U2Logger::U2Logger(U2Module* m)
+U2Logger::U2Logger(const U2Module* m)
 {
     config.limit = m->limit;
     config.nostamp = m->nostamp;

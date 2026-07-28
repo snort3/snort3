@@ -458,7 +458,7 @@ static void DCE2_Smb2CreateRequest(DCE2_Smb2SsnData* ssd,
 // size. Request tracker is cleaned after updating file name in file tracker
 //-------------------------------------------------------------------------
 static void DCE2_Smb2CreateResponse(DCE2_Smb2SsnData* ssd,
-    const Smb2CreateResponseHdr* smb_create_hdr, DCE2_Smb2RequestTracker* rtracker,
+    const Smb2CreateResponseHdr* smb_create_hdr, const DCE2_Smb2RequestTracker* rtracker,
     DCE2_Smb2TreeTracker* ttr, DCE2_Smb2SessionTracker* str, uint64_t fileId_persistent)
 {
     uint64_t file_size = 0;
@@ -605,7 +605,7 @@ void DCE2_Smb2Create(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             return;
         }
 
-        DCE2_Smb2RequestTracker* rtr = str->findRtracker(ssd->flow_key, mid);
+        const DCE2_Smb2RequestTracker* rtr = str->findRtracker(ssd->flow_key, mid);
         if (!rtr)
         {
             SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,

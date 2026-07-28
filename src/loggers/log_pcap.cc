@@ -243,7 +243,7 @@ static void SpoLogTcpdumpCleanup(LtdConfig*)
 class PcapLogger : public Logger
 {
 public:
-    PcapLogger(TcpdumpModule*);
+    PcapLogger(const TcpdumpModule*);
     ~PcapLogger() override;
 
     void open() override;
@@ -256,7 +256,7 @@ private:
     LtdConfig* config;
 };
 
-PcapLogger::PcapLogger(TcpdumpModule* m)
+PcapLogger::PcapLogger(const TcpdumpModule* m)
 {
     config = new LtdConfig;
     config->limit = m->limit;

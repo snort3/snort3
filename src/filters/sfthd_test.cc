@@ -831,7 +831,7 @@ static int RuleCheck(int i)
     return 0;
 }
 
-static int EventTest(EventData* p, THD_NODE* rule)
+static int EventTest(const EventData* p, THD_NODE* rule)
 {
     // now is a float to clarify the impact of
     // just using truncated seconds on thresholds
@@ -857,7 +857,7 @@ static int EventTest(EventData* p, THD_NODE* rule)
 
 static int EventCheck(int i)
 {
-    EventData* p = evData + i;
+    const EventData* p = evData + i;
     int status = EventTest(p, nullptr);
 
     if ( p->expect == status )

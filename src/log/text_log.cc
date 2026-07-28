@@ -107,6 +107,7 @@ static size_t TextLog_Size(FILE* file)
 
 namespace snort
 {
+// cppcheck-suppress constParameterPointer ; preserve the exported declaration and ABI
 int TextLog_Avail(TextLog* const txt)
 {
     return txt->maxBuf - txt->pos - 1;
@@ -365,4 +366,3 @@ static int roll_log_file(const char* oldname)
 
     return errno;
 }
-

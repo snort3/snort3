@@ -120,6 +120,7 @@ void ProtocolReference::init(const ProtocolReference* old_proto_ref)
 ProtocolReference::ProtocolReference()
 { init(nullptr); }
 
+// cppcheck-suppress constParameterPointer ; exported constructor ABI retains mutable pointer
 ProtocolReference::ProtocolReference(ProtocolReference* old_proto_ref)
 { init(old_proto_ref); }
 
@@ -129,4 +130,3 @@ ProtocolReference::~ProtocolReference()
     id_map.clear();
     ind_map.clear();
 }
-

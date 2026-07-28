@@ -111,7 +111,7 @@ public:
         unsigned type, AppId);
 
     const HostAppIdsVal* find_on_first_pkt(const snort::SfIp*, uint16_t port, IpProtocol, const OdpContext&);
-    bool add_host(const snort::SnortConfig*, const snort::SfIp*, uint32_t* netmask, uint16_t port, IpProtocol,
+    bool add_host(const snort::SnortConfig*, const snort::SfIp*, const uint32_t* netmask, uint16_t port, IpProtocol,
         AppId, AppId, AppId, unsigned reinspect);
     void dump();
 

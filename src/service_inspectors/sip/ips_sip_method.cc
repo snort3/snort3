@@ -51,7 +51,7 @@ typedef std::unordered_map<std::string, bool> MethodMap; //Method Name => Negate
 
 static THREAD_LOCAL ProfileStats sipMethodRuleOptionPerfStats;
 
-static inline bool IsRequest(SIP_Roptions* ropts)
+static inline bool IsRequest(const SIP_Roptions* ropts)
 {
     if (ropts->status_code)
         return false;
@@ -110,7 +110,7 @@ IpsOption::EvalStatus SipMethodOption::eval(Cursor&, Packet* p)
     if ( !sd )
         return NO_MATCH;
 
-    SIP_Roptions* ropts = &sd->ropts;
+    const SIP_Roptions* ropts = &sd->ropts;
 
     // Not response
     if ( IsRequest(ropts) && !methods.empty() )

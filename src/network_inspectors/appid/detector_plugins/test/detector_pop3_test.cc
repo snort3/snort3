@@ -54,6 +54,7 @@ AppIdFlowData* AppIdDetector::data_get(const AppIdSession&)
     return nullptr;
 }
 
+// cppcheck-suppress constParameterReference
 int ServiceDetector::fail_service(AppIdSession& asd, const Packet* pkt, AppidSessionDirection dir) { return 1; }
 
 

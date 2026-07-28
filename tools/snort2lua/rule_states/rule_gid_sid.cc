@@ -63,7 +63,7 @@ class Sid : public ConversionState
 public:
     Sid(Converter& c) : ConversionState(c) { }
     bool convert(std::istringstream& data_stream) override;
-    static void convert_sid(std::string& sid, std::istringstream& data, RuleApi& rule_api);
+    static void convert_sid(std::string& sid, const std::istringstream& data, RuleApi& rule_api);
 };
 } // namespace
 
@@ -121,7 +121,7 @@ bool Gid::convert(std::istringstream& data_stream)
 // Sid
 //
 
-void Sid::convert_sid(std::string& sid, std::istringstream& data_stream, RuleApi& r_api)
+void Sid::convert_sid(std::string& sid, const std::istringstream& data_stream, RuleApi& r_api)
 {
     int sid_num;
     try
@@ -174,4 +174,3 @@ static const ConvertMap rule_sid =
 
 const ConvertMap* sid_map = &rule_sid;
 } // namespace rules
-

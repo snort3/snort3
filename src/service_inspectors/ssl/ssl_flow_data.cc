@@ -25,6 +25,7 @@
 
 unsigned SslBaseFlowData::inspector_id = 0;
 
+// cppcheck-suppress constParameterPointer
 SSLData* SslBaseFlowData::get_ssl_session_data(snort::Flow* flow)
 {
     SslBaseFlowData* fd = static_cast<SslBaseFlowData*>(

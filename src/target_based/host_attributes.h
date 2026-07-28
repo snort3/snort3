@@ -151,7 +151,7 @@ public:
     static void load_failure_cleanup();
     static void term();
 
-    static bool add_host(HostAttributesEntry, snort::SnortConfig*);
+    static bool add_host(HostAttributesEntry, const snort::SnortConfig*);
     static bool get_host_attributes(const snort::SfIp&, uint16_t protocol, uint16_t port, HostAttriInfo*);
     static bool get_host_attributes(const snort::SfIp&, PktType pkt_type, uint16_t port, HostAttriInfo*);
     static void update_service(const snort::SfIp&, uint16_t port, uint16_t protocol,

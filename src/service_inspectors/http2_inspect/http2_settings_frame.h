@@ -79,13 +79,13 @@ class Http2ConnectionSettingsQueue
 public:
     ~Http2ConnectionSettingsQueue() { delete queue; }
     auto size() const { return queue ? queue->size() : 0; }
-    bool extend(Http2ConnectionSettings& item) { return size() ? extend() : init(item); }
+    bool extend(const Http2ConnectionSettings& item) { return size() ? extend() : init(item); }
     void pop();
     auto& front() { assert(size()); return queue->front(); }
     auto& back() { assert(size()); return queue->back(); }
 
 private:
-    bool init(Http2ConnectionSettings& item);
+    bool init(const Http2ConnectionSettings& item);
     bool extend();
 
     static const uint8_t SETTINGS_QUEUE_MAX = 6;

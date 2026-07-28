@@ -76,6 +76,7 @@ DCE2_Smb2SessionTracker* DCE2_Smb2FindElseCreateSid(DCE2_Smb2SsnData* ssd, const
     return stracker.get();
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 DCE2_Smb2TreeTracker* DCE2_Smb2InsertTid(DCE2_Smb2SsnData* ssd, const uint32_t tid, uint8_t
     share_type,
     DCE2_Smb2SessionTracker* str)
@@ -99,4 +100,3 @@ DCE2_Smb2TreeTracker* DCE2_Smb2InsertTid(DCE2_Smb2SsnData* ssd, const uint32_t t
 
     return ttracker;
 }
-

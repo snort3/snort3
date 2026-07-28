@@ -177,7 +177,7 @@ static void FreeOutputLists(ListHead* list)
 }
 
 /* Finish processing/setup Port Tables */
-static void finish_portlist_table(FastPatternConfig* fp, const char* s, PortTable* pt)
+static void finish_portlist_table(const FastPatternConfig* fp, const char* s, PortTable* pt)
 {
     PortTableSortUniqRules(pt);
 
@@ -197,7 +197,7 @@ static void finish_portlist_table(FastPatternConfig* fp, const char* s, PortTabl
     }
 }
 
-static void PortTablesFinish(RulePortTables* port_tables, FastPatternConfig* fp)
+static void PortTablesFinish(RulePortTables* port_tables, const FastPatternConfig* fp)
 {
     if ( fp->get_debug_print_rule_groups_compiled() )
     {

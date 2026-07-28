@@ -68,7 +68,7 @@ void CallLogFuncs(Packet* p, ListHead* head, Event* event, const char* msg)
     DetectionEngine::set_check_tags(p, false);
     pc.log_pkts++;
 
-    OutputSet* idx = head ? head->LogList : nullptr;
+    const OutputSet* idx = head ? head->LogList : nullptr;
     EventManager::call_loggers(idx, p, msg, event);
 }
 
@@ -99,7 +99,7 @@ void CallLogFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
     IpsRuleEvent data_event(event);
     DataBus::publish(DetectionEngine::get_pub_id(), DetectionEventIds::IPS_LOGGING, data_event, p->flow);
 
-    OutputSet* idx = head ? head->LogList : nullptr;
+    const OutputSet* idx = head ? head->LogList : nullptr;
     EventManager::call_loggers(idx, p, otn->sigInfo.message.c_str(), &event);
 
     if (data)
@@ -123,7 +123,7 @@ void CallAlertFuncs(Packet* p, const OptTreeNode* otn, ListHead* head)
         pc.alert_pkts++;
     }
 
-    OutputSet* idx = head ? head->AlertList : nullptr;
+    const OutputSet* idx = head ? head->AlertList : nullptr;
     EventManager::call_alerters(idx, p, otn->sigInfo.message.c_str(), event);
 }
 
@@ -153,4 +153,3 @@ void check_tags(Packet* p)
         }
     }
 }
-

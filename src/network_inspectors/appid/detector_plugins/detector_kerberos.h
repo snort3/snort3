@@ -68,7 +68,7 @@ public:
     KerberosServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
-    int krb_walk_server_packet(KRBState*, const uint8_t*, const uint8_t*, AppIdSession&, snort::Packet*,
+    int krb_walk_server_packet(KRBState*, const uint8_t*, const uint8_t*, AppIdSession&, const snort::Packet*,
         const AppidSessionDirection, const char*, AppidChangeBits&);
     void set_client_detector(KerberosClientDetector* c)
     {
@@ -80,4 +80,3 @@ private:
 };
 
 #endif
-

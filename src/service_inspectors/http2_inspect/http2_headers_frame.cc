@@ -84,7 +84,7 @@ bool Http2HeadersFrame::decode_headers(Http2StartLine* start_line_generator, boo
     return true;
 }
 
-void Http2HeadersFrame::process_decoded_headers(HttpFlowData* http_flow, SourceId hi_source_id, Packet* p)
+void Http2HeadersFrame::process_decoded_headers(const HttpFlowData* http_flow, SourceId hi_source_id, Packet* p)
 {
     if (session_data->abort_flow[source_id] or http1_header.length() < 0)
         return;

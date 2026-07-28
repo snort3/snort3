@@ -89,6 +89,7 @@ static inline string format_dump_mac(const uint8_t mac[MAC_SIZE])
     return ss.str();
 }
 
+// cppcheck-suppress constParameterCallback
 static int purge_data(lua_State* L)
 {
     const Inspector* rna = PigPen::get_inspector(RNA_NAME, RNA_USE);

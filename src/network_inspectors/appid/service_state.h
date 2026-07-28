@@ -97,7 +97,7 @@ public:
     ~ServiceDiscoveryState();
     ServiceDetector* select_detector_by_brute_force(IpProtocol proto, ServiceDiscovery& sd);
     void set_service_id_valid(ServiceDetector* sd);
-    void set_service_id_failed(AppIdSession& asd, const snort::SfIp* client_ip,
+    void set_service_id_failed(const AppIdSession& asd, const snort::SfIp* client_ip,
         unsigned invalid_delta = 0);
     void update_service_incompatible(const snort::SfIp* ip);
     bool check_and_expire_failed_state();
@@ -175,7 +175,7 @@ public:
         int16_t group, uint32_t asid, bool decrypted, bool do_touch = false);
     static void remove(const snort::SfIp*, IpProtocol, uint16_t port,
         int16_t group, uint32_t asid, bool decrypted);
-    static void check_reset(AppIdSession& asd, const snort::SfIp* ip, uint16_t port,
+    static void check_reset(const AppIdSession& asd, const snort::SfIp* ip, uint16_t port,
         int16_t group, uint32_t asid);
     static bool prune(size_t max_memory = 0, size_t num_items = -1u);
 };

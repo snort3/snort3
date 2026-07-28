@@ -39,6 +39,7 @@ using namespace snort;
 
 THREAD_LOCAL S7commplusStats s7commplus_stats;
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 bool get_buf_s7commplus_content(Packet* p, InspectionBuffer& b)
 {
     if ( !p->is_full_pdu() or p->dsize < S7COMMPLUS_MIN_HDR_LEN )

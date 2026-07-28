@@ -123,6 +123,7 @@ void UnixDomainConnectorListener::stop_accepting_connections()
 {
     close(0);
 }
+// cppcheck-suppress constParameterPointer
 void UnixDomainConnectorListener::start_accepting_connections(UnixDomainConnectorAcceptHandler h, UnixDomainConnectorConfig* cfg)
 {
     socket(0,0,0);

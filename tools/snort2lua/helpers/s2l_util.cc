@@ -282,7 +282,7 @@ bool file_exists(const std::string& name)
     return (stat (name.c_str(), &buffer) == 0);
 }
 
-bool is_regular_file(std::string& path)
+bool is_regular_file(const std::string& path)
 {
     struct stat s;
 

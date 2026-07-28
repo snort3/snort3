@@ -75,7 +75,7 @@ private:
     snort::ExpectFlow* get_flow(ExpectNode*, uint32_t, int16_t);
     bool set_data(ExpectNode*, snort::ExpectFlow*&, snort::FlowData*);
     ExpectNode* find_node_by_packet(snort::Packet*, snort::FlowKey&);
-    bool process_expected(ExpectNode*, snort::FlowKey&, snort::Packet*, snort::Flow*);
+    bool process_expected(ExpectNode*, const snort::FlowKey&, snort::Packet*, snort::Flow*);
 
 private:
     class ZHash* hash_table;
@@ -90,4 +90,3 @@ private:
 };
 
 #endif
-

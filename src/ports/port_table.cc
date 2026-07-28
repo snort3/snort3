@@ -401,7 +401,7 @@ static inline void update_port_lists(PortObject* po, SF_LIST** parray)
 }
 
 // Create optimized port lists per port
-static inline SF_LIST** create_port_lists(PortTable* p)
+static inline SF_LIST** create_port_lists(const PortTable* p)
 {
     SF_LIST** parray = (SF_LIST**)snort_calloc(sizeof(SF_LIST*), SFPO_MAX_PORTS);
     assert(parray);
@@ -541,7 +541,7 @@ static void PortTableCompileMergePortObjects(PortTable* p)
 
 #ifdef DEBUG
 //  Verify all rules in 'po' list are in 'po2' hash
-static void _po2_include_po_rules(PortObject2* po2, PortObject* po)
+static void _po2_include_po_rules(PortObject2* po2, const PortObject* po)
 {
     SF_LNODE* rpos;
 
@@ -681,6 +681,7 @@ void PortTableFinalize(PortTable* p)
     p->pt_mpxo_hash = nullptr;
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 PortObject* PortTableFindInputPortObjectPorts(PortTable* pt, PortObject* pox)
 {
     if ( !pt or !pox )
@@ -747,6 +748,7 @@ int PortTableCompile(PortTable* p)
     return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 void PortTablePrintInputEx(PortTable* p, rim_print_f print_index_map)
 {
     SF_LNODE* pos;
@@ -792,6 +794,7 @@ void PortTablePrintInput(PortTable* p)
    Prints the original (normalized) RuleGroups and
    as specified by the user
 */
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 void PortTablePrintUserRules(PortTable* p)
 {
     /* normalized user PortObjects and rule ids */
@@ -871,6 +874,7 @@ void RuleListSortUniq(SF_LIST* rl)
 /**Sort and make rule index in all port objects unique. Multiple policies may add
  * the same rule which can lead to duplication.
  */
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 void PortTableSortUniqRules(PortTable* p)
 {
     SF_LNODE* pos = nullptr;

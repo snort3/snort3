@@ -160,6 +160,7 @@ static int enable(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback
 static int disable(lua_State* L)
 {
     main_broadcast_command(new PacketCaptureDebug(nullptr, -1, nullptr, true, nullptr, 0), 

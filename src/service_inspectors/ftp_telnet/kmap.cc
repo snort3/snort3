@@ -86,7 +86,7 @@ void KMapDelete(KMAP* km)
     snort_free(km);
 }
 
-static KEYNODE* KMapAddKeyNode(KMAP* km,void* key, int n, void* userdata)
+static KEYNODE* KMapAddKeyNode(KMAP* km,const void* key, int n, void* userdata)
 {
     KEYNODE* knode;
 

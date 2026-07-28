@@ -79,7 +79,7 @@ public:
     void add_comment(const std::string& comment);
     void make_rule_a_comment();
     bool enable_addr_anomaly_detection();
-    void bad_rule(std::istringstream& stream, const std::string& bad_option);
+    void bad_rule(const std::istringstream& stream, const std::string& bad_option);
     void old_http_rule();
     bool is_old_http_rule();
     void resolve_pcre_buffer_options();
@@ -99,4 +99,3 @@ private:
 };
 
 #endif
-

@@ -39,7 +39,7 @@ using namespace std;
 
 //-------------------------------------------------------------------------
 
-static void check_flags(SnortConfig* sc)
+static void check_flags(const SnortConfig* sc)
 {
     if ((sc->run_flags & RUN_FLAG__INLINE) &&
         (sc->run_flags & RUN_FLAG__INLINE_TEST))

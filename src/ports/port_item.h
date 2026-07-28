@@ -51,8 +51,8 @@ struct PortObjectItem
 
 PortObjectItem* PortObjectItemNew();
 void PortObjectItemFree(PortObjectItem*);
-PortObjectItem* PortObjectItemDup(PortObjectItem*);
-int PortObjectItemsEqual(PortObjectItem* a, PortObjectItem* b);
+PortObjectItem* PortObjectItemDup(const PortObjectItem*);
+int PortObjectItemsEqual(const PortObjectItem* a, const PortObjectItem* b);
 void PortObjectItemPrint(PortObjectItem*, char* dstbuf, int bufsize);
 unsigned PortObjectItemHash(PortObjectItem*, unsigned hash, unsigned scale);
 

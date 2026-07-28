@@ -77,6 +77,7 @@ void ipset_free(IPSET* ipc)
     }
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 int ipset_add(IPSET* ipset, SfCidr* ip, void* vport, int notflag)
 {
     if ( !ipset )
@@ -166,13 +167,13 @@ static int portset_add(PORTSET* portset, unsigned port_lo, unsigned port_hi)
     return 0;
 }
 
-static bool search_mask(char* token, bool is_ipv6)
+static bool search_mask(const char* token, bool is_ipv6)
 {
     return (strchr(token, '/') or
         (!is_ipv6 and strchr(token, ':')));
 }
 
-static bool search_mask_delim(char* token, bool is_ipv6)
+static bool search_mask_delim(const char* token, bool is_ipv6)
 {
     return (token[strlen(token)-1] == '/' or
         (!is_ipv6 and token[strlen(token)-1] == ':'));
@@ -236,7 +237,7 @@ static char* check_delimiter(char* ipstr)
     return tmp_ipstr;
 }
 
-static int port_parse(char* portstr, PORTSET* portset)
+static int port_parse(const char* portstr, PORTSET* portset)
 {
     char* port_begin = snort_strdup(portstr);
     char* port1 = port_begin;

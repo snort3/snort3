@@ -95,12 +95,14 @@ void DataBus::publish(unsigned, unsigned, DataEvent& event, Flow*)
     mock().actualCall("publish");
 }
 
+// cppcheck-suppress constParameterReference
 void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packet& p, bool, uint32_t)
 {
     AppidEvent app_event(change_bits, false, 0, this->get_api(), p);
     DataBus::publish(0, AppIdEventIds::ANY_CHANGE, app_event, p.flow);
 }
 
+// cppcheck-suppress constParameterReference
 void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits, bool partial_inspect)
 {
     if (tsession == nullptr)

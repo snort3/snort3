@@ -946,7 +946,7 @@ bool PortScan::ps_tracker_update(PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER
 }
 
 static bool ps_alert_one_to_one(
-    const PS_ALERT_CONF& conf, PS_PROTO* scanner, PS_PROTO* scanned)
+    const PS_ALERT_CONF& conf, const PS_PROTO* scanner, PS_PROTO* scanned)
 {
     //  Let's evaluate the scanned host.
     if (scanned && !scanned->alerts)
@@ -991,7 +991,7 @@ static bool ps_alert_one_to_one(
 }
 
 static bool ps_alert_one_to_one_decoy(
-    const PS_ALERT_CONF& conf, PS_PROTO* scanner, PS_PROTO* scanned)
+    const PS_ALERT_CONF& conf, const PS_PROTO* scanner, PS_PROTO* scanned)
 {
     if (scanned && !scanned->alerts)
     {
@@ -1028,7 +1028,7 @@ static bool ps_alert_one_to_one_decoy(
 }
 
 static bool ps_alert_many_to_one(
-    const PS_ALERT_CONF& conf, PS_PROTO* scanner, PS_PROTO* scanned)
+    const PS_ALERT_CONF& conf, const PS_PROTO* scanner, PS_PROTO* scanned)
 {
     if (scanned && !scanned->alerts)
     {
@@ -1197,7 +1197,7 @@ void PortScan::ps_alert_icmp(PS_PROTO* scanner, PS_PROTO* scanned)
 **    - Filtered Portscan?
 */
 bool PortScan::ps_tracker_alert(
-    PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER* scanned)
+    const PS_PKT* ps_pkt, PS_TRACKER* scanner, PS_TRACKER* scanned)
 {
     PS_PROTO* scanner_proto = nullptr;
     PS_PROTO* scanned_proto = nullptr;

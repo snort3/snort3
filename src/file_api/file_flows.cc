@@ -158,6 +158,7 @@ FileFlows* FileFlows::get_file_flows(Flow* flow, bool to_create)
     return fd;
 }
 
+// cppcheck-suppress constParameterPointer ; exported API retains mutable Flow pointer
 FilePolicyBase* FileFlows::get_file_policy(Flow* flow)
 {
     FileFlows* fd = static_cast<FileFlows*>(flow->get_flow_data(FileFlows::file_flow_data_id));

@@ -1154,7 +1154,7 @@ SfIp DnsResponseIp::get_ip()
     return ip;
 }
 
-DnsResponseFqdn::DnsResponseFqdn(const unsigned char* data, uint16_t bytes_unused, DNSData* dnsSessionData) :
+DnsResponseFqdn::DnsResponseFqdn(const unsigned char* data, uint16_t bytes_unused, const DNSData* dnsSessionData) :
     data(data), bytes_unused(bytes_unused), dnsSessionData(std::make_shared<DNSData>(*dnsSessionData))
 {
     // Clear cur_fqdn_event in the copied DNSData to prevent nested object chains

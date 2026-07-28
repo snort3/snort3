@@ -39,15 +39,16 @@ public:
 
 private:
     bool sticky_buffer_set;
-    bool parse_options(std::istringstream&, const std::string&, std::string);
-    void add_sticky_buffer(std::istringstream&, const std::string& buffer);
+    bool parse_options(const std::istringstream&, const std::string&, std::string);
+    void add_sticky_buffer(const std::istringstream&, const std::string& buffer);
     bool extract_payload(std::istringstream& data_stream,
         std::string& option);
 };
 } // namespace
 
 template<const std::string* option_name>
-void Content<option_name>::add_sticky_buffer(std::istringstream& data_stream, const std::string& buffer)
+void Content<option_name>::add_sticky_buffer(
+    const std::istringstream& data_stream, const std::string& buffer)
 {
     if (sticky_buffer_set)
     {
@@ -61,7 +62,7 @@ void Content<option_name>::add_sticky_buffer(std::istringstream& data_stream, co
 
 template<const std::string* option_name>
 bool Content<option_name>::parse_options(
-    std::istringstream& data_stream,
+    const std::istringstream& data_stream,
     const std::string& keyword,
     std::string val)
 {
@@ -361,4 +362,3 @@ const ConvertMap* content_map = &rule_content_api;
 const ConvertMap* protected_content_map = &rule_protected_content_api;
 const ConvertMap* uricontent_map = &rule_uricontent_api;
 } // namespace rules
-

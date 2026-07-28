@@ -496,7 +496,7 @@ public:
     void handle_flow_service_change(Flow&);
     void handle_assistant_gadget(const char* service, Flow&);
     void handle_flow_after_reload(Flow&);
-    void handle_appid_service_change(DataEvent&,Flow&);
+    void handle_appid_service_change(const DataEvent&,Flow&);
 
 private:
     void check_user_ids(const SnortConfig*) const;
@@ -810,9 +810,9 @@ void Binder::handle_flow_setup(Flow& flow, bool standby)
     bstats.verdicts[stuff.action]++;
 }
 
-void Binder::handle_appid_service_change(DataEvent& event, Flow& flow)
+void Binder::handle_appid_service_change(const DataEvent& event, Flow& flow)
 {
-    AppidEvent& appid_event = static_cast<AppidEvent&>(event);
+    const AppidEvent& appid_event = static_cast<const AppidEvent&>(event);
 
     if(appid_event.get_change_bitset().test(APPID_PROTOCOL_ID_BIT))
     {

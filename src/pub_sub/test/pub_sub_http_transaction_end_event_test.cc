@@ -111,7 +111,7 @@ const snort::StreamBuffer HttpStreamSplitter::reassemble(snort::Flow*, unsigned,
     return buf;
 }
 bool HttpStreamSplitter::finish(snort::Flow*) { return false; }
-void HttpStreamSplitter::prep_partial_flush(snort::Flow*, uint32_t, uint32_t, uint32_t,
+void HttpStreamSplitter::prep_partial_flush(const snort::Flow*, uint32_t, uint32_t, uint32_t,
     HttpEnums::PartialFlushType) { }
 
 HttpMsgHeader::HttpMsgHeader(const uint8_t* buffer, const uint16_t buf_size,

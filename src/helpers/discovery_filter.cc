@@ -332,7 +332,7 @@ bool DiscoveryFilter::is_port_excluded(const Packet* p)
     return false;
 }
 
-void DiscoveryFilter::add_ip(FilterType type, IntfType intf, string& ip)
+void DiscoveryFilter::add_ip(FilterType type, IntfType intf, const string& ip)
 {
     auto varip = get_list(type, intf);
     if ( varip )
@@ -394,7 +394,7 @@ sfip_var_t* DiscoveryFilter::get_port_list(Direction dir, uint32_t key)
 
 #ifdef UNIT_TEST
 
-bool is_port_excluded_test(DiscoveryFilter& df, Packet* p)
+bool is_port_excluded_test(DiscoveryFilter& df, const Packet* p)
 {
     return df.is_port_excluded(p);
 }

@@ -68,7 +68,7 @@ CipSessionData* get_cip_session_data(const Flow* flow)
     return fd ? &fd->session : nullptr;
 }
 
-static CipSessionData* set_new_cip_session_data(CipProtoConf* config, Packet* p)
+static CipSessionData* set_new_cip_session_data(const CipProtoConf* config, Packet* p)
 {
     CipFlowData* fd = new CipFlowData;
     CipSessionData* css = &fd->session;
@@ -109,7 +109,7 @@ static void free_cip_data(void* data)
     }
 }
 
-static CipPacketDirection get_packet_direction(Packet* p)
+static CipPacketDirection get_packet_direction(const Packet* p)
 {
     if (!p->has_tcp_data())
     {
@@ -122,7 +122,7 @@ static CipPacketDirection get_packet_direction(Packet* p)
     return CIP_FROM_SERVER;
 }
 
-static void publish_data_to_appId(Packet* packet, CipCurrentData& current_data)
+static void publish_data_to_appId(Packet* packet, const CipCurrentData& current_data)
 {
     CipEventData cip_event_data = {};
     CipEvent cip_event(packet, &cip_event_data);

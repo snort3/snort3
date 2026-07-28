@@ -44,10 +44,10 @@ public:
     { return table.sfrt_flat_usage(); }
 
 protected:
-    int duplicate_info(IPrepInfo* dest_info, IPrepInfo* current_info, uint8_t* base);
+    int duplicate_info(IPrepInfo* dest_info, const IPrepInfo* current_info, uint8_t* base);
     int64_t update_entry_info_impl(INFO* current, INFO new_entry, SaveDest save_dest, uint8_t* base);
     int add_ip(snort::SfCidr* ip_addr,INFO info_ptr, const ReputationConfig& config);
-    int process_line(char* line, INFO info, const ReputationConfig& config);
+    int process_line(const char* line, INFO info, const ReputationConfig& config);
 
     static int64_t update_entry_info(INFO* current, INFO new_entry, SaveDest save_dest, uint8_t* base, void* data);
 

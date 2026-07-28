@@ -344,6 +344,7 @@ static int enable_debug(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback
 static int disable_debug(lua_State* L)
 {
     AppIdDebugLogEvent event(nullptr, "");
@@ -352,6 +353,7 @@ static int disable_debug(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback
 static int reload_third_party(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);

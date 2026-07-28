@@ -290,6 +290,7 @@ void SnortMLEngine::tterm()
 void SnortMLEngine::install_reload_handler(SnortConfig* sc)
 { sc->register_reload_handler(new SnortMLReloadTuner(conf)); }
 
+// cppcheck-suppress constParameterCallback
 static int filter_match_callback(void* f, void*, int, void* s, void*)
 {
     auto filter = reinterpret_cast<const pair<string, bool>*>(f);

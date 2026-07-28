@@ -369,7 +369,7 @@ static inline DCE2_CoCtxIdNode* DCE2_CoCtxFind(DCE2_CoCtxIdMap* ctx_ids, uint16_
  * Returns whether the context id map is null or empty.
  *
  ********************************************************************/
-static inline bool DCE2_CoCtxMapIsEmpty(DCE2_CoCtxIdMap* ctx_ids)
+static inline bool DCE2_CoCtxMapIsEmpty(const DCE2_CoCtxIdMap* ctx_ids)
 {
     return (ctx_ids == nullptr) || ctx_ids->empty();
 }
@@ -715,7 +715,7 @@ static inline bool DCE2_CoWouldExceedRetainedSegLimit(DCE2_CoTracker* cot, DCE2_
  * sane.
  *
  ********************************************************************/
-static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const DceRpcCoHdr* co_hdr)
+static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, const DCE2_CoTracker* cot, const DceRpcCoHdr* co_hdr)
 {
     uint16_t frag_len = DceRpcCoFragLen(co_hdr);
     DceRpcPduType pdu_type = DceRpcCoPduType(co_hdr);
@@ -1376,7 +1376,7 @@ static DCE2_Buffer* DCE2_CoGetFragBuf(DCE2_CoFragTracker* ft)
  * based on the transport and buffer type.
  *
  ********************************************************************/
-static DCE2_RpktType DCE2_CoGetRpktType(DCE2_SsnData* sd, DCE2_BufType btype)
+static DCE2_RpktType DCE2_CoGetRpktType(const DCE2_SsnData* sd, DCE2_BufType btype)
 {
     DCE2_RpktType rtype = DCE2_RPKT_TYPE__NULL;
 
@@ -1432,7 +1432,7 @@ static DCE2_RpktType DCE2_CoGetRpktType(DCE2_SsnData* sd, DCE2_BufType btype)
  * buffer.
  *
  ********************************************************************/
-static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
+static Packet* DCE2_CoGetRpkt(const DCE2_SsnData* sd, DCE2_CoTracker* cot,
     DCE2_CoRpktType co_rtype, DCE2_RpktType* rtype)
 {
     DCE2_CoSeg* seg_buf = DCE2_CoGetSegPtr(cot);
@@ -1543,7 +1543,7 @@ static Packet* DCE2_CoGetRpkt(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     return rpkt;
 }
 
-static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
+static Packet* dce_co_reassemble(const DCE2_SsnData* sd, DCE2_CoTracker* cot,
     DCE2_CoRpktType co_rtype, const DceRpcCoHdr** co_hdr)
 {
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
@@ -2356,7 +2356,7 @@ static DCE2_Ret DCE2_CoSegEarlyRequest(DCE2_CoTracker* cot,
  ********************************************************************/
 static void DCE2_CoEarlyReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot)
 {
-    DCE2_Buffer* frag_buf = DCE2_CoGetFragBuf(&cot->frag_tracker);
+    const DCE2_Buffer* frag_buf = DCE2_CoGetFragBuf(&cot->frag_tracker);
     const Packet* p = DetectionEngine::get_current_packet();
     if ( (p == nullptr) || p->is_from_server() )
         return;
@@ -2424,7 +2424,7 @@ static void DCE2_CoEarlyReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot)
  * buffer.
  *
  ********************************************************************/
-static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
+static Packet* DCE2_CoGetSegRpkt(const DCE2_SsnData* sd,
     const uint8_t* data_ptr, uint32_t data_len)
 {
     // cppcheck-suppress constVariablePointer

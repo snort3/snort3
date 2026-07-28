@@ -501,6 +501,8 @@ static bool valid_bit_list(Value& v, const char* r)
     return true;
 }
 
+// cppcheck-suppress constParameterCallback
+// cppcheck-suppress constParameterReference
 static bool valid_int_list(Value& v, const char* r)
 {
     if ( v.get_type() != Value::VT_STR )
@@ -529,6 +531,8 @@ static bool valid_int_list(Value& v, const char* r)
 
 
 
+// cppcheck-suppress constParameterCallback
+// cppcheck-suppress constParameterReference
 static bool valid_str_list(Value& v, const char* r)
 {
     if ( v.get_type() != Value::VT_STR )
@@ -1008,4 +1012,3 @@ TEST_CASE("max", "[Parameter]")
 }
 
 #endif
-

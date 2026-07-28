@@ -78,6 +78,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
+// cppcheck-suppress constParameterCallback
 static IpsOption* sid_ctor(Module* p, IpsInfo& info)
 {
     const SidModule* m = static_cast<SidModule*>(p);

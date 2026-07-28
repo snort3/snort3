@@ -275,5 +275,3 @@ int main(int argc, char** argv)
     int return_value = CommandLineTestRunner::RunAllTests(argc, argv);
     return return_value;
 }
-
-

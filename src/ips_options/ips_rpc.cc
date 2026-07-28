@@ -64,8 +64,8 @@ private:
     bool check_version(uint32_t);
     bool check_procedure(uint32_t);
     bool check_program (uint32_t);
-    bool is_match(Packet*);
-    bool is_valid(Packet*);
+    bool is_match(const Packet*);
+    bool is_valid(const Packet*);
 
     static const uint32_t RPC_MSG_VERSION = 2;
     static const uint32_t CALL = 0;
@@ -129,7 +129,7 @@ IpsOption::EvalStatus RpcOption::eval(Cursor&, Packet* p)
 }
 
 // check if there is a detection match
-bool RpcOption::is_match(Packet* p)
+bool RpcOption::is_match(const Packet* p)
 {
     const uint8_t* packet_data = p->data;
 
@@ -161,7 +161,7 @@ uint32_t RpcOption::get_int(const uint8_t*& data)
 }
 
 // check if the packet type and size are valid
-bool RpcOption::is_valid(Packet* p)
+bool RpcOption::is_valid(const Packet* p)
 {
     if ( p->is_tcp() || p->is_data() )
         return p->dsize >= 28;

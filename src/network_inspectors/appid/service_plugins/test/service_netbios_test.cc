@@ -30,6 +30,7 @@
 #include <CppUTest/TestHarness.h>
 #include <CppUTestExt/MockSupport.h>
 
+// cppcheck-suppress constParameterReference
 void AppIdSessionApi::set_netbios_name(AppidChangeBits& change_bits, const char* name) { }
 
 TEST_GROUP(netbios_parsing_tests)

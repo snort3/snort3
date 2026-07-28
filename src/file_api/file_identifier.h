@@ -77,7 +77,7 @@ class FileIdentifier
 public:
     ~FileIdentifier();
     uint32_t memory_usage() const { return memory_used; }
-    void add_file_id(FileMeta& rule);
+    void add_file_id(const FileMeta& rule);
     uint32_t find_file_type_id(const uint8_t* buf, int len, uint64_t offset, void** context);
     const FileMeta* get_rule_from_id(uint32_t) const;
     void get_magic_rule_ids_from_type(const std::string&, const std::string&,
@@ -100,4 +100,3 @@ private:
 };
 
 #endif
-

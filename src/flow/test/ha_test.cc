@@ -616,7 +616,7 @@ TEST(high_availability_test, consume_error_key_mismatch)
     HAMessage msg(reinterpret_cast<uint8_t*>(&hdr), sizeof(hdr));
 
     FlowKey packet_key{};
-    FlowKey* key = &packet_key;
+    const FlowKey* key = &packet_key;
     CHECK(consume_ha_message(msg, key, &s_pkt) == nullptr);
     CHECK(ha_stats.key_mismatch == 1);
 }
@@ -626,7 +626,7 @@ TEST(high_availability_test, consume_error_truncated_msg_hdr)
     HAMessageHeader hdr = { };
     HAMessage msg(reinterpret_cast<uint8_t*>(&hdr), sizeof(hdr) / 2);
 
-    FlowKey* key = nullptr;
+    const FlowKey* key = nullptr;
     CHECK(consume_ha_message(msg, key, &s_pkt) == nullptr);
     CHECK(ha_stats.truncated_msgs == 1);
 }
@@ -636,7 +636,7 @@ TEST(high_availability_test, consume_error_version_mismatch)
     HAMessageHeader hdr = { 0, HA_MESSAGE_VERSION + 1, 0, 0 };
     HAMessage msg(reinterpret_cast<uint8_t*>(&hdr), sizeof(hdr));
 
-    FlowKey* key = nullptr;
+    const FlowKey* key = nullptr;
     CHECK(consume_ha_message(msg, key, &s_pkt) == nullptr);
     CHECK(ha_stats.msg_version_mismatch == 1);
 }
@@ -646,7 +646,7 @@ TEST(high_availability_test, consume_error_length_mismatch)
     HAMessageHeader hdr = { 0, HA_MESSAGE_VERSION, 0x42, 0 };
     HAMessage msg(reinterpret_cast<uint8_t*>(&hdr), sizeof(hdr));
 
-    FlowKey* key = nullptr;
+    const FlowKey* key = nullptr;
     CHECK(consume_ha_message(msg, key, &s_pkt) == nullptr);
     CHECK(ha_stats.msg_length_mismatch == 1);
 }
@@ -1176,7 +1176,7 @@ TEST(high_availability_test, consume_message_bad_key)
     msg_data.mhdr.total_length = sizeof(msg_data);
 
     HAMessage msg(reinterpret_cast<uint8_t*>(&msg_data), sizeof(msg_data));
-    FlowKey* key = nullptr;
+    const FlowKey* key = nullptr;
     CHECK(consume_ha_message(msg, key, nullptr) == nullptr);
     CHECK(ha_stats.truncated_msgs == 1);
 }

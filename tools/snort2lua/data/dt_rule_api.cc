@@ -114,7 +114,7 @@ bool RuleApi::enable_addr_anomaly_detection()
     return false;
 }
 
-void RuleApi::bad_rule(std::istringstream& stream, const std::string& bad_option)
+void RuleApi::bad_rule(const std::istringstream& stream, const std::string& bad_option)
 {
     if (!curr_rule)
         begin_rule();

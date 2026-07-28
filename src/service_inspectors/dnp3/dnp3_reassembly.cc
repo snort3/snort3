@@ -76,7 +76,7 @@ static uint16_t crcLookUpTable[256] =
     true:    Segment queued successfully.
     false:  Data copy failed. Segment did not fit in reassembly buffer.
 */
-static bool dnp3_queue_segment(dnp3_reassembly_data_t* rdata, char* buf, uint16_t buflen)
+static bool dnp3_queue_segment(dnp3_reassembly_data_t* rdata, const char* buf, uint16_t buflen)
 {
     if (rdata == nullptr || buf == nullptr)
         return false;
@@ -203,7 +203,7 @@ static bool dnp3_reassemble_transport(dnp3_reassembly_data_t* rdata, char* buf, 
 }
 
 /* Check for reserved application-level function codes. */
-static void dnp3_check_reserved_function(dnp3_session_data_t* session)
+static void dnp3_check_reserved_function(const dnp3_session_data_t* session)
 {
     if ( !(dnp3_func_is_defined( (uint16_t)session->func)) )
     {

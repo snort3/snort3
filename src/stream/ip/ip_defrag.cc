@@ -121,7 +121,7 @@ struct Fragment
     Fragment(uint16_t flen, const uint8_t* fptr, int ord)
     { init(flen, fptr, ord); }
 
-    Fragment(Fragment* other, int ord)
+    Fragment(const Fragment* other, int ord)
     {
         init(other->flen, other->fptr, ord);
         data = fptr + (other->data - other->fptr);
@@ -252,7 +252,7 @@ static inline void EventAnomMinTtl(FragEngine*)
 }
 
 static inline bool frag_timed_out(
-    const timeval* current_time, const timeval* start_time, FragEngine* engine)
+    const timeval* current_time, const timeval* start_time, const FragEngine* engine)
 {
     struct timeval tv_diff;
     TIMERSUB(current_time, start_time, &tv_diff);   // cppcheck-suppress unreadVariable
@@ -514,7 +514,7 @@ static inline int checkTinyFragments(
  * @retval 1 If the FragTracker is ready to be rebuilt
  * @retval 0 If the FragTracker hasn't fulfilled its completion criteria
  */
-static inline int FragIsComplete(FragTracker* ft)
+static inline int FragIsComplete(const FragTracker* ft)
 {
     debug_log(stream_ip_trace, nullptr, "[$] Checking completion criteria\n");
 
@@ -833,7 +833,7 @@ static void release_tracker(FragTracker* ft)
 
 Defrag::Defrag(FragEngine& e) : engine(e), layers(DEFAULT_LAYERMAX) { }
 
-bool Defrag::configure(SnortConfig* sc)
+bool Defrag::configure(const SnortConfig* sc)
 {
     // FIXIT-L kinda squiffy ... set for each instance (but to same value) ... move to tinit() ?
     layers = sc->get_num_layers();
@@ -2014,7 +2014,7 @@ int Defrag::dup_frag_node( FragTracker* ft, Fragment* left, Fragment** retFrag)
  * @retval FRAG_TRACKER_TIMEOUT The current FragTracker has timed out
  * @retval FRAG_OK The current FragTracker has not timed out
  */
-inline int Defrag::expired(Packet* p, FragTracker* ft, FragEngine* fe)
+inline int Defrag::expired(Packet* p, FragTracker* ft, const FragEngine* fe)
 {
     /*
      * Check the FragTracker that was passed in first

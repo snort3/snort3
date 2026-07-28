@@ -48,7 +48,7 @@ public:
 
     static void init();
 
-    void clear_ht(snort::HostTracker& ht);
+    void clear_ht(const snort::HostTracker& ht);
 
     static unsigned inspector_id;
     RnaTracker serverht = nullptr;

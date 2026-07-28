@@ -99,7 +99,7 @@ struct modbus_header_t
     uint8_t function_code;
 };
 
-static void ModbusCheckRequestLengths(modbus_session_data_t* session, Packet* p)
+static void ModbusCheckRequestLengths(const modbus_session_data_t* session, const Packet* p)
 {
     uint16_t modbus_payload_len = p->dsize - MODBUS_MIN_LEN;
     uint8_t byte_count;
@@ -242,7 +242,7 @@ static void ModbusCheckRequestLengths(modbus_session_data_t* session, Packet* p)
         DetectionEngine::queue_event(GID_MODBUS, MODBUS_BAD_LENGTH);
 }
 
-static void ModbusCheckResponseLengths(modbus_session_data_t* session, Packet* p)
+static void ModbusCheckResponseLengths(const modbus_session_data_t* session, const Packet* p)
 {
     uint16_t modbus_payload_len = p->dsize - MODBUS_MIN_LEN;
     uint8_t byte_count;
@@ -370,7 +370,7 @@ static void ModbusCheckResponseLengths(modbus_session_data_t* session, Packet* p
         DetectionEngine::queue_event(GID_MODBUS, MODBUS_BAD_LENGTH);
 }
 
-static void ModbusCheckReservedFuncs(const modbus_header_t* header, Packet* p)
+static void ModbusCheckReservedFuncs(const modbus_header_t* header, const Packet* p)
 {
     switch (header->function_code)
     {

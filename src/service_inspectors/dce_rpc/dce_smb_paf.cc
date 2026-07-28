@@ -116,7 +116,7 @@ static StreamSplitter::Status dce2_smb_paf(DCE2_PafSmbData* ss, Flow* flow, cons
     const SmbNtHdr* nt_hdr = nullptr;
     uint32_t nb_len = 0;
 
-    DCE2_SsnData* sd = get_dce2_session_data(flow);
+    const DCE2_SsnData* sd = get_dce2_session_data(flow);
 
     if ( dce2_paf_abort(sd) )
     {

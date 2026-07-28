@@ -330,7 +330,7 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
     asd->publish_appid_event(change_bits, *p);
 }
 
-void SipEventHandler::client_handler(SipEvent& sip_event, AppIdSession& asd,
+void SipEventHandler::client_handler(const SipEvent& sip_event, AppIdSession& asd,
     AppidChangeBits& change_bits)
 {
     AppId client_id = APP_ID_SIP;

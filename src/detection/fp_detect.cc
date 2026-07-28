@@ -104,7 +104,7 @@ static THREAD_LOCAL char tr_context[CONTEXT_LEN];
 static THREAD_LOCAL uint32_t tr_len = 0;
 
 static void fp_immediate(Packet*);
-static void fp_immediate(MpseGroup*, Packet*, const uint8_t*, unsigned);
+static void fp_immediate(const MpseGroup*, Packet*, const uint8_t*, unsigned);
 
 void populate_trace_data()
 {
@@ -856,7 +856,7 @@ static inline int batch_search(
     return 0;
 }
 
-static int fp_search(RuleGroup* port_group, Packet* p, bool srvc)
+static int fp_search(const RuleGroup* port_group, Packet* p, bool srvc)
 {
     p->packet_flags |= PKT_FAST_PAT_EVAL;
     const Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
@@ -936,7 +936,7 @@ static int fp_search(RuleGroup* port_group, Packet* p, bool srvc)
 }
 
 static inline void eval_fp(
-    RuleGroup* port_group, Packet* p, char ip_rule, bool srvc, bool force = false)
+    const RuleGroup* port_group, Packet* p, char ip_rule, bool srvc, bool force = false)
 {
     const uint8_t* tmp_payload = nullptr;
     uint16_t tmp_dsize = 0;
@@ -1329,7 +1329,7 @@ static void fp_immediate(Packet* p)
     }
 }
 
-static void fp_immediate(MpseGroup* mpg, Packet* p, const uint8_t* buf, unsigned len)
+static void fp_immediate(const MpseGroup* mpg, Packet* p, const uint8_t* buf, unsigned len)
 {
     MpseStash* stash = p->context->stash;
     {

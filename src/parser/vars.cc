@@ -156,7 +156,7 @@ int VarIsIpAddr(vartable_t* ip_vartable, const char* value)
     return 0;
 }
 
-static int CheckBrackets(char* value)
+static int CheckBrackets(const char* value)
 {
     int num_brackets = 0;
 

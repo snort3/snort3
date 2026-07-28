@@ -133,7 +133,7 @@ void ServiceDiscoveryState::set_service_id_valid(ServiceDetector* sd)
  *  - invalid_client_count: If our service detector search had trouble
  *    simply because of unrecognized client data, then consider retrying
  *    the search again. */
-void ServiceDiscoveryState::set_service_id_failed(AppIdSession& asd, const SfIp* client_ip,
+void ServiceDiscoveryState::set_service_id_failed(const AppIdSession& asd, const SfIp* client_ip,
     unsigned invalid_delta)
 {
     invalid_client_count += invalid_delta;
@@ -301,7 +301,7 @@ void AppIdServiceState::remove(const SfIp* ip, IpProtocol proto, uint16_t port,
     }
 }
 
-void AppIdServiceState::check_reset(AppIdSession& asd, const SfIp* ip, uint16_t port,
+void AppIdServiceState::check_reset(const AppIdSession& asd, const SfIp* ip, uint16_t port,
     int16_t group, uint32_t asid)
 {
     ServiceDiscoveryState* sds = AppIdServiceState::get(ip, IpProtocol::TCP, port,

@@ -78,6 +78,7 @@ void SMTP_ResetAltBuffer(Packet* p)
     DetectionEngine::reset_alt_buffer(p);
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 const uint8_t* SMTP_GetAltBuffer(Packet* p, unsigned& len)
 {
     const DataPointer& buf = DetectionEngine::get_alt_buffer(p);
@@ -110,6 +111,7 @@ int SMTP_CopyToAltBuffer(Packet* p, const uint8_t* start, int length)
     return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 void SMTP_LogFuncs(SmtpProtoConf* config, Packet* p, MimeSession* mime_ssn)
 {
     if (!mime_ssn)

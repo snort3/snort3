@@ -199,7 +199,7 @@ IpsOption::EvalStatus FlowCheckOption::eval(Cursor&, Packet* p)
 // support methods
 //-------------------------------------------------------------------------
 
-static bool flow_verify(FlowCheckData* fcd)
+static bool flow_verify(const FlowCheckData* fcd)
 {
     if (fcd->from_client && fcd->from_server)
     {

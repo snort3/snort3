@@ -45,7 +45,7 @@ uint32_t FileConfig::find_file_type_id(const uint8_t* buf, int len,
 }
 
 /*The main function for parsing rule option*/
-void FileConfig::process_file_rule(FileMeta& rule)
+void FileConfig::process_file_rule(const FileMeta& rule)
 {
     fileIdentifier.add_file_id(rule);
 }
@@ -102,6 +102,7 @@ FileConfig* get_file_config(const SnortConfig* sc)
 namespace snort
 {
 void get_magic_rule_ids_from_type(const std::string& type, const std::string& version,
+    // cppcheck-suppress constParameterPointer ; preserve the exported declaration and ABI
     FileTypeBitSet& ids_set, SnortConfig* sc)
 {
     const FileConfig* conf = get_file_config(sc);
@@ -111,6 +112,7 @@ void get_magic_rule_ids_from_type(const std::string& type, const std::string& ve
         ids_set.reset();
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the exported declaration and ABI
 void set_rule_id_from_type(SnortConfig* sc, uint64_t id, std::string type,
     std::string file_category, std::string file_version, std::vector<std::string> file_groups)
 {

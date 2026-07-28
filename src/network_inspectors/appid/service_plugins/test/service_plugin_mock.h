@@ -124,13 +124,18 @@ void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 AppIdConfig config;
 AppIdContext ctxt(config);
 ServiceDetector::ServiceDetector() {}
+// cppcheck-suppress constParameterReference
 int ServiceDetector::incompatible_data(AppIdSession& asd, const snort::Packet* pkt, AppidSessionDirection dir) { return 0; }
+// cppcheck-suppress constParameterReference
 int ServiceDetector::fail_service(AppIdSession& asd, const snort::Packet* pkt, AppidSessionDirection dir) { return 0; }
+// cppcheck-suppress constParameterReference
 int ServiceDetector::service_inprocess(AppIdSession& asd, const snort::Packet* pkt, AppidSessionDirection dir) { return 0; }
+// cppcheck-suppress constParameterReference
 int ServiceDetector::add_service_consume_subtype(AppIdSession& asd, const snort::Packet* pkt,
     AppidSessionDirection dir, AppId appId, const char* vendor, const char* version,
-    AppIdServiceSubtype* subtype, AppidChangeBits& change_bits)
+    AppIdServiceSubtype* subtype, AppidChangeBits& change_bits) // cppcheck-suppress constParameterReference
     { return 0; }
+// cppcheck-suppress constParameterReference
 int ServiceDetector::add_service(AppidChangeBits& change_bits, AppIdSession& asd,
     const snort::Packet* pkt, AppidSessionDirection dir, AppId appId, const char* vendor,
     const char* version, AppIdServiceSubtype* subtype)

@@ -39,7 +39,7 @@ using namespace snort;
 THREAD_LOCAL GTP_Stats gtp_stats;
 
 // Analyzes GTP packets for anomalies/exploits.
-static inline int GTP_Process(const GTPConfig& config, Packet* p, GTP_Roptions* pRopts)
+static inline int GTP_Process(const GTPConfig& config, const Packet* p, GTP_Roptions* pRopts)
 {
     const uint8_t* gtp_buff =  p->data;
     static THREAD_LOCAL uint64_t msg_id = 0;

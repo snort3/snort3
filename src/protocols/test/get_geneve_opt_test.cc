@@ -43,6 +43,7 @@ const char* PacketManager::get_proto_name(ProtocolId) { return nullptr; }
 const vlan::VlanTagHdr* layer::get_vlan_layer(const Packet*) { return nullptr; }
 const vlan::VlanTagHdr* layer::get_outer_vlan_layer(const Packet*) { return nullptr; }
 int SFDAQInstance::inject(_daq_msg const*, int, unsigned char const*, unsigned int) { return -1; }
+// cppcheck-suppress constParameterPointer
 int snort::SFDAQInstance::ioctl(DAQ_IoctlCmd cmd, void *arg, size_t arglen) { return DAQ_SUCCESS; }
 bool SFDAQInstance::can_invoke_inject_drop() const { return false; }
 void PacketTracer::log(const char*, ...) { }
@@ -68,4 +69,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

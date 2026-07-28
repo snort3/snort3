@@ -86,7 +86,7 @@ static constexpr const char* snort_help =
 
 //-------------------------------------------------------------------------
 
-static void help_args(Module* m, const char* pfx)
+static void help_args(const Module* m, const char* pfx)
 {
     const Parameter* p = m->get_parameters();
     size_t n = pfx ? strlen(pfx) : 0;
@@ -138,7 +138,7 @@ static void help_args(Module* m, const char* pfx)
     exit(0);
 }
 
-[[noreturn]] void help_options(SnortConfig*, const char* val, Module* m)
+[[noreturn]] void help_options(SnortConfig*, const char* val, const Module* m)
 {
     help_args(m, val);
     exit(0);
@@ -166,7 +166,7 @@ static void help_args(Module* m, const char* pfx)
     exit(0);
 }
 
-[[noreturn]] void list_daqs(SnortConfig* sc)
+[[noreturn]] void list_daqs(const SnortConfig* sc)
 {
     SFDAQ::load(sc->daq_config);
     SFDAQ::print_types(cout);
@@ -200,7 +200,7 @@ enum HelpType
 };
 
 [[noreturn]] static void show_help(
-    SnortConfig* sc, const char* val, HelpType ht, const char* opts = nullptr)
+    const SnortConfig* sc, const char* val, HelpType ht, const char* opts = nullptr)
 {
     SnortConfig* conf = new SnortConfig;
     SnortConfig::set_conf(conf);
@@ -267,83 +267,82 @@ enum HelpType
     exit(0);
 }
 
-[[noreturn]] void help_config(SnortConfig* sc, const char* val)
+[[noreturn]] void help_config(const SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_CFG);
 }
 
-[[noreturn]] void help_commands(SnortConfig* sc, const char* val)
+[[noreturn]] void help_commands(const SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_CMD);
 }
 
-[[noreturn]] void help_gids(SnortConfig* sc, const char* val)
+[[noreturn]] void help_gids(const SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_GID);
 }
 
-[[noreturn]] void help_buffers(SnortConfig* sc, const char* val)
+[[noreturn]] void help_buffers(const SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_BUF);
 }
 
-[[noreturn]] void help_builtin(SnortConfig* sc, const char* val)
+[[noreturn]] void help_builtin(const SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_IPS);
 }
 
-[[noreturn]] void help_counts(SnortConfig* sc, const char* val)
+[[noreturn]] void help_counts(const SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_PEG);
 }
 
-[[noreturn]] void help_module(SnortConfig* sc, const char* val)
+[[noreturn]] void help_module(const SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_MOD);
 }
 
-[[noreturn]] void help_modules(SnortConfig* sc, const char* val)
+[[noreturn]] void help_modules(const SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_HMO);
 }
 
-[[noreturn]] void help_modules_json(SnortConfig* sc, const char* val)
+[[noreturn]] void help_modules_json(const SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_HMO_JSON);
 }
 
-[[noreturn]] void help_plugins(SnortConfig* sc, const char* val)
+[[noreturn]] void help_plugins(const SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_HPL);
 }
 
-[[noreturn]] void list_modules(SnortConfig* sc, const char* val)
+[[noreturn]] void list_modules(const SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_LST);
 }
 
-[[noreturn]] void list_plugins(SnortConfig* sc, const char* val)
+[[noreturn]] void list_plugins(const SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_PLG);
 }
 
-[[noreturn]] void dump_defaults(SnortConfig* sc, const char* val)
+[[noreturn]] void dump_defaults(const SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_DFL);
 }
 
-[[noreturn]] void dump_builtin_rules(SnortConfig* sc, const char* val, const char* opts)
+[[noreturn]] void dump_builtin_rules(const SnortConfig* sc, const char* val, const char* opts)
 {
     show_help(sc, val, HT_DBR, opts);
 }
 
-[[noreturn]] void dump_dynamic_rules(SnortConfig* sc, const char* val)
+[[noreturn]] void dump_dynamic_rules(const SnortConfig* sc, const char* val)
 {
     show_help(sc, val, HT_DDR);
 }
 
-[[noreturn]] void dump_modules(SnortConfig* sc)
+[[noreturn]] void dump_modules(const SnortConfig* sc)
 {
     show_help(sc, "", HT_DMO);
 }
-

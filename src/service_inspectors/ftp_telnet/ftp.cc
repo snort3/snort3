@@ -61,7 +61,7 @@ static std::atomic<unsigned> pub_id = 0;
 // implementation stuff
 //-------------------------------------------------------------------------
 
-static inline int InspectClientPacket(Packet* p)
+static inline int InspectClientPacket(const Packet* p)
 {
     return p->has_paf_payload();
 }

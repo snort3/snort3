@@ -171,6 +171,7 @@ int integer_compare(const void* arg1, const void* arg2)
     return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 int* RuleListToSortedArray(SF_LIST* rl)
 {
     SF_LNODE* pos = nullptr;

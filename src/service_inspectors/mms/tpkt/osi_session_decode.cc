@@ -30,6 +30,7 @@ using namespace snort;
 
 static TpktAppliSearchStateType resolve_spdu_parameter(Cursor*, const OsiSessionHdr*);
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 uint32_t get_max_loops(Cursor* tpkt_cur)
 {
     // set a maximum number of loops to the remaining number of

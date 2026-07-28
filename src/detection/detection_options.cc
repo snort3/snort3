@@ -745,6 +745,7 @@ static void detection_option_node_reset_otn_stats(detection_option_tree_node_t* 
     }
 }
 
+// cppcheck-suppress constParameterReference ; preserve the public declaration and ABI
 void detection_option_tree_update_otn_stats(std::vector<HashNode*>& nodes, std::unordered_map<SigInfo*, OtnState>& stats, unsigned thread_id)
 {
     for ( auto hnode : nodes )
@@ -757,6 +758,7 @@ void detection_option_tree_update_otn_stats(std::vector<HashNode*>& nodes, std::
     }
 }
 
+// cppcheck-suppress constParameterReference ; preserve the public declaration and ABI
 void detection_option_tree_reset_otn_stats(std::vector<HashNode*>& nodes, unsigned thread_id)
 {
     for ( auto hnode : nodes )

@@ -154,7 +154,7 @@ bool HostAttributesManager::load_hosts_file(snort::SnortConfig* sc, const char* 
     return false;
 }
 
-bool HostAttributesManager::add_host(HostAttributesEntry host, snort::SnortConfig* sc)
+bool HostAttributesManager::add_host(HostAttributesEntry host, const snort::SnortConfig* sc)
 {
     if ( !next_cache )
         next_cache = new HostAttributesSegmentedCache(sc->max_attribute_hosts, sc->segment_count_host);

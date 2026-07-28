@@ -217,6 +217,7 @@ PortObject2* PortObject2Dup(PortObject& po)
     return ponew;
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 void PortObject2Iterate(PortObject2* po, PortObjectIterator f, void* pv)
 {
     PortObjectItem* poi;
@@ -235,6 +236,7 @@ void PortObject2Iterate(PortObject2* po, PortObjectIterator f, void* pv)
 }
 
 /* Dup and append rule list numbers from pob to poa */
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 PortObject2* PortObject2AppendPortObject(PortObject2* poa, PortObject* pob)
 {
     SF_LNODE* lpos;

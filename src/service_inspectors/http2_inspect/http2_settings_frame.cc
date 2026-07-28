@@ -209,7 +209,7 @@ void Http2ConnectionSettingsQueue::pop()
     }
 }
 
-bool Http2ConnectionSettingsQueue::init(Http2ConnectionSettings& item)
+bool Http2ConnectionSettingsQueue::init(const Http2ConnectionSettings& item)
 {
     queue = new std::vector<Http2ConnectionSettings>();
     queue->reserve(SETTINGS_QUEUE_MAX);

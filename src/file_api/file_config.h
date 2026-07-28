@@ -48,7 +48,7 @@ public:
     const FileMeta* get_rule_from_id(uint32_t) const;
     void get_magic_rule_ids_from_type(const std::string&, const std::string&,
         snort::FileTypeBitSet&) const;
-    void process_file_rule(FileMeta&);
+    void process_file_rule(const FileMeta&);
     uint32_t find_file_type_id(const uint8_t* buf, int len, uint64_t file_offset, void** context);
     std::string file_type_name(uint32_t id) const;
 
@@ -78,4 +78,3 @@ private:
 std::string file_type_name(uint32_t id);
 FileConfig* get_file_config(const snort::SnortConfig* sc = nullptr);
 #endif
-

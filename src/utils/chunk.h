@@ -25,7 +25,7 @@
 #include <string>
 
 // FIXIT-L merge with helpers/lua
-bool init_chunk(struct lua_State*, std::string& chunk, const char* name, std::string& args);
+bool init_chunk(
+    struct lua_State*, const std::string& chunk, const char* name, const std::string& args);
 
 #endif
-

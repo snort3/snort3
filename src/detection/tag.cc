@@ -115,7 +115,7 @@ static THREAD_LOCAL unsigned s_sessions = 0;
 static const unsigned s_max_sessions = 1;
 
 /*  P R O T O T Y P E S  ********************************************/
-static void TagFree(XHash*, TagNode*);
+static void TagFree(const XHash*, TagNode*);
 static int PruneTagCache(uint32_t, int);
 
 class TagSessionCache : public XHash
@@ -198,7 +198,7 @@ static inline unsigned int memory_per_node(const XHash* hash)
  * @returns a pointer to new TagNode or null if memory couldn't * be allocated
  */
 static TagNode* TagAlloc(
-    XHash* hash
+    const XHash* hash
     )
 {
     TagNode* tag_node = nullptr;
@@ -234,7 +234,7 @@ static TagNode* TagAlloc(
     return tag_node;
 }
 
-static void TagFree(XHash* hash, TagNode* node)
+static void TagFree(const XHash* hash, TagNode* node)
 {
     if (node == nullptr)
         return;
@@ -274,7 +274,7 @@ void CleanupTag()
     delete host_tag_cache;
 }
 
-static void AddTagNode(const Packet* p, TagData* tag, int mode, uint32_t now,
+static void AddTagNode(const Packet* p, const TagData* tag, int mode, uint32_t now,
     uint16_t event_id, ListHead* log_list)
 {
     TagNode* idx;  /* index pointer */
@@ -381,12 +381,12 @@ static void AddTagNode(const Packet* p, TagData* tag, int mode, uint32_t now,
     }
 }
 
-static void TagSession(const Packet* p, TagData* tag, uint32_t time, uint16_t event_id, ListHead* log_list)
+static void TagSession(const Packet* p, const TagData* tag, uint32_t time, uint16_t event_id, ListHead* log_list)
 {
     AddTagNode(p, tag, TAG_SESSION, time, event_id, log_list);
 }
 
-static void TagHost(const Packet* p, TagData* tag, uint32_t time, uint16_t event_id, ListHead* log_list)
+static void TagHost(const Packet* p, const TagData* tag, uint32_t time, uint16_t event_id, ListHead* log_list)
 {
     int mode;
 
@@ -635,4 +635,3 @@ void SetTags(const Packet* p, const OptTreeNode* otn, uint16_t event_id)
         }
     }
 }
-

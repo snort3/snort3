@@ -121,7 +121,8 @@ static inline NormMode get_norm_mode(const Packet * const p)
 }
 
 static int Norm_IP4(
-    NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
+    NormalizerConfig* c, // cppcheck-suppress constParameterCallback
+    Packet* p, uint8_t layer, int changes)
 {
     ip::IP4Hdr* h =
         reinterpret_cast<ip::IP4Hdr*>(const_cast<uint8_t*>(p->layers[layer].start));
@@ -245,7 +246,8 @@ static int Norm_ICMP4(
 //-----------------------------------------------------------------------
 
 static int Norm_IP6(
-    NormalizerConfig* c, Packet* p, uint8_t layer, int changes)
+    NormalizerConfig* c, // cppcheck-suppress constParameterCallback
+    Packet* p, uint8_t layer, int changes)
 {
     if ( Norm_IsEnabled(c, NORM_IP6_TTL) )
     {
@@ -346,7 +348,7 @@ static inline void NopDaOpt(uint8_t* opt, uint8_t len)
 #define TS_ECR_OFFSET 6
 #define TS_ECR_LENGTH 4
 
-static inline int Norm_TCPOptions(NormalizerConfig* config, const NormMode mode,
+static inline int Norm_TCPOptions(const NormalizerConfig* config, const NormMode mode,
     uint8_t* opts, size_t len, const tcp::TCPHdr* h, uint8_t validated_len, int changes)
 {
     size_t i = 0;

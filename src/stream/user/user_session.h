@@ -89,7 +89,7 @@ public:
     void restart(snort::Packet*) override;
 
 private:
-    void start(snort::Packet*, snort::Flow*);
+    void start(const snort::Packet*, snort::Flow*);
     void update(snort::Packet*, snort::Flow*);
     void end(snort::Packet*, snort::Flow*);
 
@@ -105,4 +105,3 @@ public:
 };
 
 #endif
-

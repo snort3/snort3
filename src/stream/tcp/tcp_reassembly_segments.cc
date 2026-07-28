@@ -101,7 +101,7 @@ uint32_t TcpReassemblySegments::get_pending_segment_count(const unsigned max) co
     return n;
 }
 
-bool TcpReassemblySegments::segment_within_seglist_window(TcpSegmentDescriptor& tsd)
+bool TcpReassemblySegments::segment_within_seglist_window(const TcpSegmentDescriptor& tsd)
 {
     assert (head);
     uint32_t start;
@@ -121,7 +121,7 @@ bool TcpReassemblySegments::segment_within_seglist_window(TcpSegmentDescriptor& 
     return true;
 }
 
-void TcpReassemblySegments::print_stream_state(TcpStreamTracker* talker)
+void TcpReassemblySegments::print_stream_state(const TcpStreamTracker* talker)
 {
     if ( !snort::PacketTracer::is_active() and !snort::PacketTracer::is_daq_activated()
         and !stream_tcp_trace_enabled )
@@ -178,7 +178,7 @@ void TcpReassemblySegments::insert_segment_in_empty_seglist(TcpSegmentDescriptor
     add_reassembly_segment(tsd, tsd.get_len(), overlap, 0, tsd.get_seq(), nullptr);
 }
 
-bool TcpReassemblySegments::is_segment_fasttrack(TcpSegmentNode* tail, const TcpSegmentDescriptor& tsd)
+bool TcpReassemblySegments::is_segment_fasttrack(const TcpSegmentNode* tail, const TcpSegmentDescriptor& tsd)
 {
     if ( SEQ_EQ(tsd.get_seq(), tail->next_seq()) )
         return true;
@@ -497,7 +497,7 @@ bool TcpReassemblySegments::skip_holes(Packet* p)
     return num_holes > 0;
 }
 
-void TcpReassemblySegments::skip_midstream_pickup_seglist_hole(TcpSegmentDescriptor& tsd)
+void TcpReassemblySegments::skip_midstream_pickup_seglist_hole(const TcpSegmentDescriptor& tsd)
 {
     uint32_t ack = tsd.get_ack();
 

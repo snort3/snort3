@@ -131,7 +131,7 @@ void print_dce2_co_config(const dce2CoProtoConf& co)
     ConfigLogger::log_value("reassemble_threshold", co.co_reassemble_threshold);
 }
 
-bool dce2_paf_abort(DCE2_SsnData* sd)
+bool dce2_paf_abort(const DCE2_SsnData* sd)
 {
     if ((sd != nullptr) && DCE2_SsnNoInspect(sd))
         return true;

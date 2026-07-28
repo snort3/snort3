@@ -65,7 +65,7 @@ TreeConfigNode::TreeConfigNode(BaseConfigNode* parent_node,
 BaseConfigNode* TreeConfigNode::get_node(const std::string& name)
 {
     auto it = std::find_if(children.cbegin(), children.cend(),
-        [name](BaseConfigNode* node){ return node->get_name() == name; });
+        [name](const BaseConfigNode* node){ return node->get_name() == name; });
     return it != children.cend() ? *it : nullptr;
 }
 

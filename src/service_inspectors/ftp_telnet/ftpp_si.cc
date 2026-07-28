@@ -182,6 +182,7 @@ int TelnetsessionInspection(Packet* p, TELNET_PROTO_CONF* GlobalConf,
  * Returns: int => return code indicating the mode
  *
  */
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 int FTPGetPacketDir(Packet* p)
 {
     if (p->dsize >= 3)
@@ -349,6 +350,7 @@ void FTPFreesession(FTP_SESSION* ssn)
  * Return true if packet is from the "sending" host
  * Return false if packet is from the "receiving" host
  */
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 bool FTPDataDirection(Packet* p, FTP_DATA_SESSION* ftpdata)
 {
     Stream::get_packet_direction(p);
@@ -552,4 +554,3 @@ int SetSiInput(FTPP_SI_INPUT* SiInput, Packet* p)
 
     return FTPP_SUCCESS;
 }
-

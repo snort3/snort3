@@ -164,6 +164,6 @@ void free_current_chp_glossary();
 void free_old_chp_glossary();
 
 void check_detector_callback(const snort::Packet& p, AppIdSession& asd, AppidSessionDirection dir,
-    AppId app_id, AppidChangeBits& change_bits, AppInfoTableEntry* entry = nullptr);
+    AppId app_id, AppidChangeBits& change_bits, const AppInfoTableEntry* entry = nullptr);
 
 #endif

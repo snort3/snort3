@@ -54,7 +54,7 @@ static void ntohs_in_place(uint8_t* field)
     memcpy(field, &value, sizeof(value));
 }
 
-static u2iterator* new_iterator(char* filename)
+static u2iterator* new_iterator(const char* filename)
 {
     FILE* f = fopen(filename, "rb");
     u2iterator* ret;
@@ -183,7 +183,7 @@ static bool get_record(u2iterator* it, u2record* record)
     return true;
 }
 
-static void extradata_dump(u2record* record)
+static void extradata_dump(const u2record* record)
 {
     uint8_t* field;
     const uint8_t* data;
@@ -350,7 +350,7 @@ static void print_addr_port(
     printf("\t%s IP: %s\tPort: %hu\n", which, ip_buf, htons(port));
 }
 
-static void event3_dump(u2record* record)
+static void event3_dump(const u2record* record)
 {
     Unified2Event event;
 
@@ -409,7 +409,7 @@ static void event3_dump(u2record* record)
         get_status(event.snort_status), get_action(event.snort_action));
 }
 
-static void event2_dump(u2record* record)
+static void event2_dump(const u2record* record)
 {
     uint8_t* field;
     int i;
@@ -465,7 +465,7 @@ static void event2_dump(u2record* record)
         event.mpls_label, event.vlanId, event.vlanIdOuter, event.pad2, event.app_name);
 }
 
-static void event2_6_dump(u2record* record)
+static void event2_6_dump(const u2record* record)
 {
     uint8_t* field;
     int i;
@@ -557,7 +557,7 @@ static void LogBuffer(const uint8_t* p, unsigned n)
     }
 }
 
-static void packet_dump(u2record* record)
+static void packet_dump(const u2record* record)
 {
     uint32_t counter;
     uint8_t* field;
@@ -616,7 +616,7 @@ static void packet_dump(u2record* record)
     LogBuffer(record->data+offset, reclen);
 }
 
-static int u2dump(char* file)
+static int u2dump(const char* file)
 {
     u2record record;
     u2iterator* it = new_iterator(file);

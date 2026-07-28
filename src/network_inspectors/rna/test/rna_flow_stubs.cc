@@ -29,6 +29,6 @@
 using namespace std;
 using namespace snort;
 
-void RNAFlow::clear_ht(HostTracker& ht) { UNUSED(ht); }
+void RNAFlow::clear_ht(const HostTracker& ht) { UNUSED(ht); }
 RnaTracker RNAFlow::get_server(const SfIp& ) { return nullptr; }
 RnaTracker RNAFlow::get_client(const SfIp&) { return nullptr; }

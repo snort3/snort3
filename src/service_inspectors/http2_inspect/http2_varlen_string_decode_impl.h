@@ -30,6 +30,7 @@ static const uint8_t min_decode_len[HUFFMAN_LOOKUP_MAX + 1] =
     {5, 2, 2, 3, 5, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4};
 
 template <typename IntDec, typename EGen, typename Inf>
+// cppcheck-suppress constParameterReference ; preserve the installed template interface
 bool VarLengthStringDecode<IntDec, EGen, Inf>::translate(const uint8_t* in_buff, const uint32_t in_len,
     IntDec& decode_int, uint32_t& bytes_consumed, uint8_t* out_buff,
     const uint32_t out_len, uint32_t& bytes_written,
@@ -242,4 +243,3 @@ bool VarLengthStringDecode<IntDec, EGen, Inf>::get_huffman_string(const uint8_t*
 }
 
 #endif
-

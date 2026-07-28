@@ -55,7 +55,7 @@ bool FileSession::setup(Packet*)
 
 void FileSession::clear() { }
 
-static FilePosition position(Packet* p)
+static FilePosition position(const Packet* p)
 {
     if ( (p->ptrs.decode_flags & DECODE_PDU) == DECODE_PDU )
         return SNORT_FILE_FULL;

@@ -51,26 +51,26 @@ void PortObjectFinalize(PortObject*);
 
 int PortObjectSetName(PortObject*, const char* name);
 int PortObjectAddItem(PortObject*, PortObjectItem*, int* errflag);
-int PortObjectAddPortObject(PortObject* podst, PortObject* posrc, int* errflag);
+int PortObjectAddPortObject(PortObject* podst, const PortObject* posrc, int* errflag);
 int PortObjectAddPort(PortObject*, int port);
 int PortObjectAddRange(PortObject*, int lport, int hport);
 int PortObjectAddRule(PortObject*, int rule);
 int PortObjectAddPortAny(PortObject*);
 
-PortObject* PortObjectDup(PortObject*);
-PortObject* PortObjectDupPorts(PortObject*);
+PortObject* PortObjectDup(const PortObject*);
+PortObject* PortObjectDupPorts(const PortObject*);
 
 int PortObjectNormalize(PortObject*);
 void PortObjectToggle(PortObject*);
-bool PortObjectEqual(PortObject* poa, PortObject* pob);
+bool PortObjectEqual(const PortObject* poa, const PortObject* pob);
 
-int PortObjectPortCount(PortObject*);
-int PortObjectHasPort(PortObject*, int port);
-int PortObjectIsPureNot(PortObject*);
-int PortObjectHasAny(PortObject*);
+int PortObjectPortCount(const PortObject*);
+int PortObjectHasPort(const PortObject*, int port);
+int PortObjectIsPureNot(const PortObject*);
+int PortObjectHasAny(const PortObject*);
 
 int PortObjectRemovePorts(PortObject* a,  PortObject* b);
-PortObject* PortObjectAppend(PortObject* poa, PortObject* pob);
+PortObject* PortObjectAppend(PortObject* poa, const PortObject* pob);
 
 void PortObjectPrint(PortObject*);
 void PortObjectPrintPortsRaw(PortObject*);
@@ -81,4 +81,3 @@ void PortObjectPrintEx(PortObject*, po_print_f);
 unsigned PortObjectHash(const PortObject*, unsigned hash, unsigned scale, unsigned hardener);
 
 #endif
-

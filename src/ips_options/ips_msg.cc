@@ -79,6 +79,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
+// cppcheck-suppress constParameterCallback
 static IpsOption* msg_ctor(Module* p, IpsInfo& info)
 {
     MsgModule* m = static_cast<MsgModule*>(p);
@@ -120,4 +121,3 @@ const BaseApi* ips_msg[] =
     &msg_api.base,
     nullptr
 };
-

@@ -46,7 +46,7 @@ public:
     void reset();
 
     void update_next(TcpSegmentNode*);
-    bool segment_within_seglist_window(TcpSegmentDescriptor&);
+    bool segment_within_seglist_window(const TcpSegmentDescriptor&);
     void queue_reassembly_segment(TcpSegmentDescriptor&);
     void add_reassembly_segment(TcpSegmentDescriptor&, uint16_t, uint32_t,
         uint32_t, uint32_t, TcpSegmentNode*);
@@ -55,10 +55,10 @@ public:
     void advance_rcv_nxt(TcpSegmentNode *tsn = nullptr);
     void purge_flushed_segments(uint32_t flush_seq);
     bool skip_holes(snort::Packet* p);
-    void skip_midstream_pickup_seglist_hole(TcpSegmentDescriptor&);
+    void skip_midstream_pickup_seglist_hole(const TcpSegmentDescriptor&);
     bool skip_hole_at_beginning(TcpSegmentNode*);
     void purge_segment_list();
-    void print_stream_state(TcpStreamTracker* talker);
+    void print_stream_state(const TcpStreamTracker* talker);
 
     bool is_segment_pending_flush() const;
 
@@ -188,10 +188,9 @@ private:
     void insert_segment_in_empty_seglist(TcpSegmentDescriptor&);
     void insert_segment_in_seglist(TcpSegmentDescriptor&);
 
-    bool is_segment_fasttrack(TcpSegmentNode*, const TcpSegmentDescriptor&);
+    bool is_segment_fasttrack(const TcpSegmentNode*, const TcpSegmentDescriptor&);
     uint32_t get_pending_segment_count(const unsigned max) const;
 
 };
 
 #endif
-

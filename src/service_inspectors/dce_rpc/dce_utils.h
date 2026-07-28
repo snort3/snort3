@@ -323,7 +323,7 @@ inline void DCE2_CopyUuid(Uuid* dst_uuid, const Uuid* pkt_uuid, const DceRpcBoFl
     memcpy(dst_uuid->node, pkt_uuid->node, sizeof(dst_uuid->node));
 }
 
-inline int DCE2_BufferIsEmpty(DCE2_Buffer* buf)
+inline int DCE2_BufferIsEmpty(const DCE2_Buffer* buf)
 {
     if (buf == nullptr)
         return 1;
@@ -332,20 +332,21 @@ inline int DCE2_BufferIsEmpty(DCE2_Buffer* buf)
     return 0;
 }
 
-inline uint32_t DCE2_BufferLength(DCE2_Buffer* buf)
+inline uint32_t DCE2_BufferLength(const DCE2_Buffer* buf)
 {
     if (buf == nullptr)
         return 0;
     return buf->len;
 }
 
-inline uint32_t DCE2_BufferSize(DCE2_Buffer* buf)
+inline uint32_t DCE2_BufferSize(const DCE2_Buffer* buf)
 {
     if (buf == nullptr)
         return 0;
     return buf->size;
 }
 
+// cppcheck-suppress constParameterPointer ; mutable data access requires a mutable buffer handle
 inline uint8_t* DCE2_BufferData(DCE2_Buffer* buf)
 {
     if (buf == nullptr)

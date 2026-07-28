@@ -174,7 +174,7 @@ const HostAppIdsVal* HostPortCache::find_on_first_pkt(const SfIp* ip, uint16_t p
     return nullptr;
 }
 
-bool HostPortCache::add_host(const SnortConfig*, const SfIp* ip, uint32_t* netmask, uint16_t port, IpProtocol proto,
+bool HostPortCache::add_host(const SnortConfig*, const SfIp* ip, const uint32_t* netmask, uint16_t port, IpProtocol proto,
     AppId protocol_appId, AppId client_appId, AppId web_appId, unsigned reinspect)
 {
     if (!netmask)

@@ -241,6 +241,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
+// cppcheck-suppress constParameterCallback
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
     const OpcuaMsgTypeModule* mod = static_cast<const OpcuaMsgTypeModule*>(m);

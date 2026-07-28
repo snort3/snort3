@@ -129,7 +129,7 @@ PopFlowData::~PopFlowData()
 
 unsigned PopFlowData::inspector_id = 0;
 
-static POPData* get_session_data(Flow* flow)
+static POPData* get_session_data(const Flow* flow)
 {
     PopFlowData* fd = static_cast<PopFlowData*>(
         flow->get_flow_data(PopFlowData::inspector_id));
@@ -218,6 +218,7 @@ static void POP_SearchFree()
     pop_resp_search_mpse = nullptr;
 }
 
+// cppcheck-suppress constParameterPointer
 static void POP_ResetState(Flow* ssn)
 {
     POPData* pop_ssn = get_session_data(ssn);
@@ -264,7 +265,7 @@ static void POP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     *eolm = tmp_eolm;
 }
 
-static inline int InspectPacket(Packet* p)
+static inline int InspectPacket(const Packet* p)
 {
     return p->has_paf_payload();
 }
@@ -326,7 +327,7 @@ static int POP_SearchStrFound(void* id, void* , int index, void* , void* )
  * @return          pointer into p->data where we stopped looking at data
  *                  will be end of line or end of packet
  */
-static const uint8_t* POP_HandleCommand(Packet* p, POPData* pop_ssn, const uint8_t* ptr, const
+static const uint8_t* POP_HandleCommand(const Packet* p, POPData* pop_ssn, const uint8_t* ptr, const
     uint8_t* end)
 {
     const uint8_t* eol;   /* end of line */

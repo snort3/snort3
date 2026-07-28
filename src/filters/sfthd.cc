@@ -453,7 +453,7 @@ static inline int sfthd_test_suppress(
  *  Do the appropriate test for the Threshold Object Type
  */
 static inline int sfthd_test_non_suppress(
-    THD_NODE* sfthd_node,
+    const THD_NODE* sfthd_node,
     THD_IP_NODE* sfthd_ip_node,
     time_t curtime)
 {

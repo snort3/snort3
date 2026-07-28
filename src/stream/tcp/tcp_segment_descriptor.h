@@ -150,13 +150,13 @@ public:
     uint64_t get_packet_number() const
     { return packet_number; }
 
-    void rewrite_payload(uint16_t offset, uint8_t* from, uint16_t length)
+    void rewrite_payload(uint16_t offset, const uint8_t* from, uint16_t length)
     {
         memcpy(const_cast<uint8_t*>(pkt->data + offset), from, length);
         set_packet_flags(PKT_MODIFIED);
     }
 
-    void rewrite_payload(uint16_t offset, uint8_t* from)
+    void rewrite_payload(uint16_t offset, const uint8_t* from)
     { rewrite_payload(offset, from, pkt->dsize); }
 
     TcpStreamTracker* get_listener() const
@@ -203,4 +203,3 @@ private:
 };
 
 #endif
-

@@ -129,6 +129,7 @@ void DumpFlowsDeSerializer::deserialize(std::fstream& bin_stream, std::fstream& 
     }
 }
 
+// cppcheck-suppress constParameter ; main must retain its standard signature
 int main(int argc, char* argv[])
 {
     if (argc < 2)

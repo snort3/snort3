@@ -66,7 +66,7 @@ const char* section_to_str[] = {"NONE", "HEADER", "HEADER_BODY", "BODY", "TRAILE
 //--------------------------------------------------------------------------
 
 static bool pmd_can_be_fp(
-    PatternMatchData* pmd, CursorActionType cat, bool only_literals)
+    const PatternMatchData* pmd, CursorActionType cat, bool only_literals)
 {
     switch ( cat )
     {
@@ -96,7 +96,7 @@ PatternMatcher::Type get_pm_type(const std::string& buf)
     return PatternMatcher::PMT_PDU;
 }
 
-static RuleDirection get_dir(OptTreeNode* otn)
+static RuleDirection get_dir(const OptTreeNode* otn)
 {
     if ( otn->to_client() )
         return RULE_FROM_SERVER;
@@ -219,7 +219,7 @@ struct FpSelector
     FpSelector() = default;
     FpSelector(CursorActionType, IpsOption*, PatternMatchData*);
 
-    bool is_better_than(FpSelector&, bool srvc, RuleDirection, bool only_literals = false);
+    bool is_better_than(const FpSelector&, bool srvc, RuleDirection, bool only_literals = false);
 };
 
 FpSelector::FpSelector(CursorActionType c, IpsOption* o, PatternMatchData* p)
@@ -231,7 +231,7 @@ FpSelector::FpSelector(CursorActionType c, IpsOption* o, PatternMatchData* p)
 }
 
 bool FpSelector::is_better_than(
-    FpSelector& rhs, bool /*srvc*/, RuleDirection /*dir*/, bool only_literals)
+    const FpSelector& rhs, bool /*srvc*/, RuleDirection /*dir*/, bool only_literals)
 {
     if ( !pmd_can_be_fp(pmd, cat, only_literals) )
     {
@@ -320,6 +320,7 @@ static std::string make_db_name(
     return ss.str();
 }
 
+// cppcheck-suppress constParameterCallback
 static bool db_dump(const std::string& path, const char* proto, const char* dir, RuleGroup* g)
 {
     for ( int sect = PS_NONE; sect <= PS_MAX; sect++)
@@ -356,6 +357,7 @@ static bool db_dump(const std::string& path, const char* proto, const char* dir,
     return true;
 }
 
+// cppcheck-suppress constParameterCallback
 static bool db_load(const std::string& path, const char* proto, const char* dir, RuleGroup* g)
 {
     for ( int sect = PS_NONE; sect <= PS_MAX; sect++)
@@ -992,4 +994,3 @@ TEST_CASE("fp_pkt_key_srvc_rsp", "[FastPatternSelect]")
     CHECK(true == s1.is_better_than(s0, true, RULE_FROM_SERVER));
 }
 #endif
-

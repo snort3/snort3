@@ -87,6 +87,7 @@ void LogPriorityData(TextLog* log, const Event& e)
  *
  *--------------------------------------------------------------------
  */
+// cppcheck-suppress constParameterPointer ; preserve the exported declaration and ABI
 bool LogAppID(TextLog* log, Packet* p)
 {
     if ( p->flow )
@@ -134,7 +135,7 @@ static void LogMPLSHeader(TextLog* log, Packet* p)
         p->ptrs.mplsHdr.label, p->ptrs.mplsHdr.tc, p->ptrs.mplsHdr.bos, p->ptrs.mplsHdr.ttl);
 }
 
-static void LogGREHeader(TextLog* log, Packet* p)
+static void LogGREHeader(TextLog* log, const Packet* p)
 {
     const gre::GREHdr* greh = layer::get_gre_layer(p);
 

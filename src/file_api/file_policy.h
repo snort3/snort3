@@ -80,8 +80,8 @@ public:
     void set_verdict_delay(int64_t delay) { verdict_delay = delay; }
 
 private:
-    FileRule& match_file_rule(snort::Flow*, snort::FileInfo*);
-    FileVerdict match_file_signature(snort::Flow*, snort::FileInfo*);
+    FileRule& match_file_rule(snort::Flow*, const snort::FileInfo*);
+    FileVerdict match_file_signature(snort::Flow*, const snort::FileInfo*);
     std::vector<FileRule> file_rules;
     std::map<std::string, FileVerdict> file_shas;
     FileRule default_rule;
@@ -92,4 +92,3 @@ private:
 };
 
 #endif
-

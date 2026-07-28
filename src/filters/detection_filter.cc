@@ -72,6 +72,7 @@ int detection_filter_test(THD_NODE* pv, const Packet* const p)
         sip, dip, curtime, get_ips_policy()->policy_id);
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 THD_NODE* detection_filter_create(DetectionFilterConfig* df_config, THDX_STRUCT* thdx)
 {
     if (df_config == nullptr)
@@ -86,6 +87,7 @@ THD_NODE* detection_filter_create(DetectionFilterConfig* df_config, THDX_STRUCT*
         thdx->type, thdx->count, thdx->seconds);
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 void detection_filter_init(DetectionFilterConfig* df_config)
 {
     if ( !df_config->enabled )
@@ -103,4 +105,3 @@ void detection_filter_term()
     delete detection_filter_hash;
     detection_filter_hash = nullptr;
 }
-

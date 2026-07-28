@@ -229,7 +229,7 @@ SmtpFlowData::~SmtpFlowData()
 
 unsigned SmtpFlowData::inspector_id = 0;
 
-static SMTPData* get_session_data(Flow* flow)
+static SMTPData* get_session_data(const Flow* flow)
 {
     SmtpFlowData* fd = static_cast<SmtpFlowData*>(
         flow->get_flow_data(SmtpFlowData::inspector_id));
@@ -562,6 +562,7 @@ void SmtpProtoConf::show() const
     log_mail_show(log_config);
 }
 
+// cppcheck-suppress constParameterPointer
 static void SMTP_ResetState(Flow* ssn)
 {
     SMTPData* smtp_ssn = get_session_data(ssn);
@@ -575,7 +576,7 @@ static void SMTP_ResetState(Flow* ssn)
     }
 }
 
-static inline int InspectPacket(Packet* p)
+static inline int InspectPacket(const Packet* p)
 {
     return p->has_paf_payload();
 }
@@ -1126,7 +1127,7 @@ static void SMTP_ProcessClientPacket(SmtpProtoConf* config, Packet* p, SMTPData*
  * @return  None
  */
 static void SMTP_ProcessServerPacket(
-    SmtpProtoConf* config, Packet* p, SMTPData* smtp_ssn, int* next_state)
+    const SmtpProtoConf* config, Packet* p, SMTPData* smtp_ssn, int* next_state)
 {
     *next_state = 0;
 
@@ -1365,6 +1366,7 @@ static void snort_smtp(SmtpProtoConf* config, Packet* p)
 }
 
 /* Callback to return the MIME attachment filenames accumulated */
+// cppcheck-suppress constParameterCallback
 static int SMTP_GetFilename(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     SMTPData* ssn = get_session_data(flow);
@@ -1378,6 +1380,7 @@ static int SMTP_GetFilename(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* 
 }
 
 /* Callback to return the email addresses accumulated from the MAIL FROM command */
+// cppcheck-suppress constParameterCallback
 static int SMTP_GetMailFrom(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     SMTPData* ssn = get_session_data(flow);
@@ -1391,6 +1394,7 @@ static int SMTP_GetMailFrom(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* 
 }
 
 /* Callback to return the email addresses accumulated from the RCP TO command */
+// cppcheck-suppress constParameterCallback
 static int SMTP_GetRcptTo(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     SMTPData* ssn = get_session_data(flow);
@@ -1404,6 +1408,7 @@ static int SMTP_GetRcptTo(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* ty
 }
 
 /* Callback to return the email headers */
+// cppcheck-suppress constParameterCallback
 static int SMTP_GetEmailHdrs(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     SMTPData* ssn = get_session_data(flow);

@@ -164,9 +164,9 @@ private:
     static void do_port_based_discovery(snort::Packet* p, AppIdSession& asd, IpProtocol protocol,
         AppidSessionDirection direction);
     static bool do_host_port_based_discovery(snort::Packet* p, AppIdSession& asd,
-        IpProtocol protocol, AppidSessionDirection direction, ThirdPartyAppIdContext* tp_appid_ctxt);
+        IpProtocol protocol, AppidSessionDirection direction,
+        const ThirdPartyAppIdContext* tp_appid_ctxt);
     static bool detect_on_first_pkt(snort::Packet* p, AppIdSession& asd, IpProtocol protocol,
         AppidSessionDirection direction, AppId& service_id, AppId& client_id, AppId& payload_id);
 };
 #endif
-

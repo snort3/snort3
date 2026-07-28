@@ -44,7 +44,7 @@ RnaTracker RnaAppDiscovery::get_client_rna_tracker(const Packet* p, RNAFlow* rna
     return rna_flow->get_client(p->flow->client_ip);
 }
 
-void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter, RnaConfig* conf,
+void RnaAppDiscovery::process(const AppidEvent* appid_event, DiscoveryFilter& filter, RnaConfig* conf,
     RnaLogger& logger)
 {
     const Packet* p = DetectionEngine::get_current_packet();
@@ -177,7 +177,7 @@ void RnaAppDiscovery::process(AppidEvent* appid_event, DiscoveryFilter& filter, 
 }
 
 bool RnaAppDiscovery::discover_service(const Packet* p, DiscoveryFilter& filter, RNAFlow* rna_flow,
-    IpProtocol proto, RnaConfig* conf, RnaLogger& logger, uint16_t port, AppId service,
+    IpProtocol proto, const RnaConfig* conf, RnaLogger& logger, uint16_t port, AppId service,
     bool is_client)
 {
     RnaTracker htp;
@@ -228,7 +228,7 @@ bool RnaAppDiscovery::discover_service(const Packet* p, DiscoveryFilter& filter,
 }
 
 void RnaAppDiscovery::discover_payload(const Packet* p, DiscoveryFilter& filter, RNAFlow* rna_flow,
-    IpProtocol proto, RnaConfig* conf, RnaLogger& logger, AppId service, AppId payload,
+    IpProtocol proto, const RnaConfig* conf, RnaLogger& logger, AppId service, AppId payload,
     AppId client)
 {
     uint16_t lookup_port;
@@ -359,7 +359,7 @@ void RnaAppDiscovery::discover_banner(const Packet* p, DiscoveryFilter& filter, 
 }
 
 void RnaAppDiscovery::discover_client(const Packet* p, DiscoveryFilter& filter, RNAFlow* rna_flow,
-    RnaConfig* conf, RnaLogger& logger, const char* version, AppId client, AppId service)
+    const RnaConfig* conf, RnaLogger& logger, const char* version, AppId client, AppId service)
 {
     if ( !filter.is_host_monitored(p, nullptr, nullptr, FlowCheckDirection::DF_CLIENT) )
         return;

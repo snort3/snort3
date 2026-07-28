@@ -135,7 +135,7 @@ static int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree
     return 0;
 }
 
-static bool new_sig(int num_children, detection_option_tree_node_t** nodes, OptTreeNode* otn)
+static bool new_sig(int num_children, detection_option_tree_node_t** nodes, const OptTreeNode* otn)
 {
     for ( int i = 0; i < num_children; ++i )
     {
@@ -487,7 +487,7 @@ static bool srvc_supports_section(const char* srvc)
 }
 
 static int fpAddRuleGroupRule(
-    SnortConfig* sc, RuleGroup* pg, OptTreeNode* otn, FastPatternConfig* fp, const char* srvc = nullptr,
+    const SnortConfig* sc, RuleGroup* pg, OptTreeNode* otn, FastPatternConfig* fp, const char* srvc = nullptr,
     bool to_server = false)
 {
     const MpseApi* search_api = nullptr;
@@ -1238,7 +1238,7 @@ static int fpCreateRuleGroups(SnortConfig* sc, RulePortTables* p)
 * list- list of otns for this service
 */
 static void fpBuildServiceRuleGroupByServiceOtnList(
-    SnortConfig* sc, GHash* p, const char* srvc, SF_LIST* list, FastPatternConfig* fp, bool to_server)
+    SnortConfig* sc, GHash* p, const char* srvc, const SF_LIST* list, FastPatternConfig* fp, bool to_server)
 {
     RuleGroup* pg = new RuleGroup;
     s_group = srvc;
@@ -1323,7 +1323,7 @@ static void fpCreateServiceMapRuleGroups(SnortConfig* sc)
 /*
  *  Print the rule gid:sid based on the otn list
  */
-static void fpPrintRuleList(SF_LIST* list)
+static void fpPrintRuleList(const SF_LIST* list)
 {
     OptTreeNode* otn;
     SF_LNODE* cursor;
@@ -1349,7 +1349,7 @@ static void fpPrintServiceRuleMapTable(GHash* p, const char* dir)
 
     for (n = p->find_first(); n; n = p->find_next())
     {
-        SF_LIST* list;
+        const SF_LIST* list;
 
         list = (SF_LIST*)n->data;
         if ( !list )
@@ -1405,7 +1405,7 @@ static void fp_print_service_rules_by_proto(SnortConfig* sc)
     fp_print_service_rules(sc, sc->srmmTable->to_srv, sc->srmmTable->to_cli);
 }
 
-static void fp_sum_port_groups(RuleGroup* pg, unsigned& c)
+static void fp_sum_port_groups(const RuleGroup* pg, unsigned& c)
 {
     if ( !pg )
         return;
@@ -1426,7 +1426,7 @@ static void fp_sum_service_groups(GHash* h, unsigned& c)
          node;
          node = h->find_next())
     {
-        RuleGroup* pg = (RuleGroup*)node->data;
+        const RuleGroup* pg = (RuleGroup*)node->data;
         fp_sum_port_groups(pg, c);
     }
 }

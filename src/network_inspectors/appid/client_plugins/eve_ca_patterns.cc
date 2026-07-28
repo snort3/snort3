@@ -39,7 +39,7 @@ void EveCaPatternMatchers::add_eve_ca_pattern(AppId app_id, const string& patter
     uint8_t confidence, const string& detector, bool literal)
 {
     auto match = find_if(eve_ca_load_list.begin(), eve_ca_load_list.end(),
-        [pattern_str, literal] (EveCaPattern* eve_ca)
+        [pattern_str, literal] (const EveCaPattern* eve_ca)
         { return (eve_ca->pattern == pattern_str) and (eve_ca->literal == literal); });
 
     if (match != eve_ca_load_list.end())

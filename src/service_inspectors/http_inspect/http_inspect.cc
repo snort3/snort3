@@ -283,7 +283,7 @@ bool HttpInspect::get_buf(unsigned id, Packet* p, InspectionBuffer& b)
     return true;
 }
 
-const Field& HttpInspect::http_get_buf(Packet* p, const HttpBufferInfo& buffer_info) const
+const Field& HttpInspect::http_get_buf(const Packet* p, const HttpBufferInfo& buffer_info) const
 {
     HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
 
@@ -314,7 +314,7 @@ const Field& HttpInspect::http_get_buf(Packet* p, const HttpBufferInfo& buffer_i
     return current_section->get_classic_buffer(buffer_info);
 }
 
-const Field& HttpInspect::http_get_param_buf(Cursor& c, Packet* p,
+const Field& HttpInspect::http_get_param_buf(Cursor& c, const Packet* p,
     const HttpParam& param) const
 {
     HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
@@ -325,7 +325,7 @@ const Field& HttpInspect::http_get_param_buf(Cursor& c, Packet* p,
     return current_section->get_param_buffer(c, param);
 }
 
-int32_t HttpInspect::http_get_num_headers(Packet* p,
+int32_t HttpInspect::http_get_num_headers(const Packet* p,
     const HttpBufferInfo& buffer_info) const
 {
     const HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
@@ -336,7 +336,7 @@ int32_t HttpInspect::http_get_num_headers(Packet* p,
     return current_section->get_num_headers(buffer_info);
 }
 
-int32_t HttpInspect::http_get_max_header_line(Packet* p,
+int32_t HttpInspect::http_get_max_header_line(const Packet* p,
     const HttpBufferInfo& buffer_info) const
 {
     const HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
@@ -347,7 +347,7 @@ int32_t HttpInspect::http_get_max_header_line(Packet* p,
     return current_section->get_max_header_line(buffer_info);
 }
 
-int32_t HttpInspect::http_get_num_cookies(Packet* p,
+int32_t HttpInspect::http_get_num_cookies(const Packet* p,
     const HttpBufferInfo& buffer_info) const
 {
     const HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
@@ -358,7 +358,7 @@ int32_t HttpInspect::http_get_num_cookies(Packet* p,
     return current_section->get_num_cookies(buffer_info);
 }
 
-VersionId HttpInspect::http_get_version_id(Packet* p,
+VersionId HttpInspect::http_get_version_id(const Packet* p,
     const HttpBufferInfo& buffer_info) const
 {
     const HttpMsgSection* const current_section = HttpContextData::get_snapshot(p);
@@ -398,6 +398,7 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
     return get_buf(ibt, p, b);
 }
 
+// cppcheck-suppress constParameterPointer
 int HttpInspect::get_xtra_trueip(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     const HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);
@@ -418,6 +419,7 @@ int HttpInspect::get_xtra_trueip(Flow* flow, uint8_t** buf, uint32_t* len, uint3
     return 1;
 }
 
+// cppcheck-suppress constParameterPointer
 int HttpInspect::get_xtra_uri(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     const HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);
@@ -439,6 +441,7 @@ int HttpInspect::get_xtra_uri(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t
     return 1;
 }
 
+// cppcheck-suppress constParameterPointer
 int HttpInspect::get_xtra_host(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     const HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);
@@ -463,6 +466,7 @@ int HttpInspect::get_xtra_host(Flow* flow, uint8_t** buf, uint32_t* len, uint32_
 // The name of this method reflects its legacy purpose. We actually return the normalized data
 // from a response message body which may include other forms of normalization in addition to
 // JavaScript normalization. But if you don't turn JavaScript normalization on you get nothing.
+// cppcheck-suppress constParameterPointer
 int HttpInspect::get_xtra_jsnorm(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
     HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);

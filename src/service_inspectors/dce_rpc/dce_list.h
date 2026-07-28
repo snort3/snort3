@@ -112,7 +112,7 @@ DCE2_Ret DCE2_ListInsert(DCE2_List*, void*, void*);
 DCE2_Ret DCE2_ListInsertSorted(DCE2_List*, void*, void*, DCE2_ListKeyDistance);
 void* DCE2_ListFirst(DCE2_List*);
 void* DCE2_ListNext(DCE2_List*);
-inline bool DCE2_ListIsEmpty(DCE2_List*);
+inline bool DCE2_ListIsEmpty(const DCE2_List*);
 void DCE2_ListEmpty(DCE2_List*);
 void DCE2_ListDestroy(DCE2_List*);
 void* DCE2_ListFind(DCE2_List*, void*);
@@ -121,7 +121,7 @@ void DCE2_ListRemoveCurrent(DCE2_List*);
 DCE2_Queue* DCE2_QueueNew(DCE2_QueueDataFree);
 DCE2_Ret DCE2_QueueEnqueue(DCE2_Queue*, void*);
 void* DCE2_QueueDequeue(DCE2_Queue*);
-static inline bool DCE2_QueueIsEmpty(DCE2_Queue*);
+static inline bool DCE2_QueueIsEmpty(const DCE2_Queue*);
 void DCE2_QueueEmpty(DCE2_Queue*);
 void* DCE2_QueueFirst(DCE2_Queue*);
 void* DCE2_QueueNext(DCE2_Queue*);
@@ -146,7 +146,7 @@ void* DCE2_QueueLast(DCE2_Queue*);
  *      false if the list has one or more nodes in it.
  *
  ********************************************************************/
-inline bool DCE2_ListIsEmpty(DCE2_List* list)
+inline bool DCE2_ListIsEmpty(const DCE2_List* list)
 {
     if (list == nullptr)
         return true;
@@ -162,7 +162,7 @@ inline bool DCE2_ListIsEmpty(DCE2_List* list)
  * currently.
  *
  ********************************************************************/
-inline bool DCE2_QueueIsEmpty(DCE2_Queue* queue)
+inline bool DCE2_QueueIsEmpty(const DCE2_Queue* queue)
 {
     if (queue == nullptr)
         return true;
@@ -172,4 +172,3 @@ inline bool DCE2_QueueIsEmpty(DCE2_Queue* queue)
 }
 
 #endif
-

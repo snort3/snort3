@@ -84,6 +84,7 @@ void AppIdSession::set_application_ids_service(AppId service_id, AppidChangeBits
     api.set_application_ids_service(service_id, change_bits, *flow);
 }
 
+// cppcheck-suppress constParameterReference
 void AppIdSession::examine_ssl_metadata(AppidChangeBits& bits, bool)
 {
     api.set_tls_host(tsession->get_tls_sni());

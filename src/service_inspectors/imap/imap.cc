@@ -190,7 +190,7 @@ ImapFlowData::~ImapFlowData()
 
 unsigned ImapFlowData::inspector_id = 0;
 
-static IMAPData* get_session_data(Flow* flow)
+static IMAPData* get_session_data(const Flow* flow)
 {
     ImapFlowData* fd = static_cast<ImapFlowData*>(
         flow->get_flow_data(ImapFlowData::inspector_id));
@@ -281,6 +281,7 @@ static void IMAP_SearchFree()
     imap_resp_search_mpse = nullptr;
 }
 
+// cppcheck-suppress constParameterPointer
 static void IMAP_ResetState(Flow* ssn)
 {
     IMAPData* imap_ssn = get_session_data(ssn);
@@ -327,7 +328,7 @@ static void IMAP_GetEOL(const uint8_t* ptr, const uint8_t* end,
     *eolm = tmp_eolm;
 }
 
-static inline int InspectPacket(Packet* p)
+static inline int InspectPacket(const Packet* p)
 {
     return p->has_paf_payload();
 }
@@ -389,7 +390,7 @@ static int IMAP_SearchStrFound(void* id, void* , int index, void* , void* )
  * @return          pointer into p->data where we stopped looking at data
  *                  will be end of line or end of packet
  */
-static const uint8_t* IMAP_HandleCommand(Packet* p, IMAPData* imap_ssn, const uint8_t* ptr, const
+static const uint8_t* IMAP_HandleCommand(const Packet* p, IMAPData* imap_ssn, const uint8_t* ptr, const
     uint8_t* end)
 {
     const uint8_t* eol;   /* end of line */

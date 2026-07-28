@@ -1915,7 +1915,7 @@ static int detector_callback(const uint8_t* data, uint16_t size, AppidSessionDir
 }
 
 void check_detector_callback(const Packet& p, AppIdSession& asd, AppidSessionDirection dir,
-    AppId app_id, AppidChangeBits& change_bits, AppInfoTableEntry* entry)
+    AppId app_id, AppidChangeBits& change_bits, const AppInfoTableEntry* entry)
 {
     if (!entry)
         entry = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(app_id);

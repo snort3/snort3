@@ -114,7 +114,7 @@ DCE2_Roptions* DceContextData::get_current_ropts(const Packet* p)
     return dcd->current_ropts;
 }
 
-void DceContextData::set_current_ropts(DCE2_SsnData* sd)
+void DceContextData::set_current_ropts(const DCE2_SsnData* sd)
 {
     unsigned ips_id = get_ips_id(sd->trans);
 

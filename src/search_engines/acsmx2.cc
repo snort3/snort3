@@ -324,7 +324,7 @@ static void AC_FREE_DFA(void* p, int n, int sizeofstate)
 
 // Get Next State-NFA, using direct index to speed up search
 
-static int List_GetNextStateOpt( ACSM_STRUCT2 * acsm,
+static int List_GetNextStateOpt( const ACSM_STRUCT2 * acsm,
     trans_node_t **acsmTransTableOpt, int state, int input )
 {
     int index = state * acsm->acsmAlphabetSize + input;
@@ -517,7 +517,7 @@ static inline int List_ConvToFull(ACSM_STRUCT2* acsm, acstate_t state, uint8_t* 
 
 // Copy a Match List Entry - don't dup the pattern data
 
-static ACSM_PATTERN2* CopyMatchListEntry(ACSM_PATTERN2* px)
+static ACSM_PATTERN2* CopyMatchListEntry(const ACSM_PATTERN2* px)
 {
     ACSM_PATTERN2* p;
 
@@ -531,7 +531,7 @@ static ACSM_PATTERN2* CopyMatchListEntry(ACSM_PATTERN2* px)
 // Add a pattern to the list of patterns terminated at this state.
 // Insert at front of list.
 
-static void AddMatchListEntry(ACSM_STRUCT2* acsm, int state, ACSM_PATTERN2* px)
+static void AddMatchListEntry(ACSM_STRUCT2* acsm, int state, const ACSM_PATTERN2* px)
 {
     ACSM_PATTERN2* p;
 
@@ -1232,12 +1232,13 @@ void acsmFree2(ACSM_STRUCT2* acsm)
     AC_FREE(acsm, 0, ACSM2_MEMORY_TYPE__NONE);
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 int acsmPatternCount2(ACSM_STRUCT2* acsm)
 {
     return acsm->numPatterns;
 }
 
-static void Print_DFA_MatchList(ACSM_STRUCT2* acsm, int state)
+static void Print_DFA_MatchList(const ACSM_STRUCT2* acsm, int state)
 {
     ACSM_PATTERN2* mlist;
 

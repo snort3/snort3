@@ -46,7 +46,7 @@ public:
     bool finish(snort::Flow* flow) override;
     void prep_partial_flush(snort::Flow* flow, uint32_t num_flush) override
     { prep_partial_flush(flow, num_flush, 0, 0, HttpEnums::PF_DETECT); }
-    void prep_partial_flush(snort::Flow* flow, uint32_t num_flush, uint32_t num_excess,
+    void prep_partial_flush(const snort::Flow* flow, uint32_t num_flush, uint32_t num_excess,
         uint32_t num_head_lines, HttpEnums::PartialFlushType partial_flush_type);
     bool is_paf() override { return true; }
     static StreamSplitter::Status status_value(StreamSplitter::Status ret_val, bool http2 = false);
@@ -66,7 +66,7 @@ private:
     void chunk_spray(HttpFlowData* session_data, uint8_t* buffer, const uint8_t* data,
         unsigned length) const;
     void decompress_copy(const uint8_t* src, uint32_t src_size,
-        uint8_t* dst, uint32_t& dst_size, HttpFlowData* const session_data) const;
+        uint8_t* dst, uint32_t& dst_size, const HttpFlowData* const session_data) const;
     StreamSplitter::Status handle_zero_nine(snort::Flow*, HttpFlowData*, const uint8_t* data,
         uint32_t length, uint32_t* flush_offset, HttpCommon::SectionType&, HttpCutter*&);
     StreamSplitter::Status call_cutter(snort::Flow*, HttpFlowData*, const uint8_t* data,
@@ -79,4 +79,3 @@ private:
 };
 
 #endif
-

@@ -135,7 +135,7 @@ void HttpStreamSplitter::chunk_spray(HttpFlowData* session_data, uint8_t* buffer
 }
 
 void HttpStreamSplitter::decompress_copy(const uint8_t* src, uint32_t src_size,
-    uint8_t* dst, uint32_t& dst_size, HttpFlowData* const session_data) const
+    uint8_t* dst, uint32_t& dst_size, const HttpFlowData* const session_data) const
 {
     if ( session_data->compress[source_id] != nullptr and
         is_body(session_data->section_type[source_id]) )

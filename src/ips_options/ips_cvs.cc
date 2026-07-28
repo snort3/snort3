@@ -84,7 +84,7 @@ typedef struct _CvsCommand
     int cmd_arg_len;
 } CvsCommand;
 
-static int CvsDecode(const uint8_t*, uint16_t, CvsRuleOption*);
+static int CvsDecode(const uint8_t*, uint16_t, const CvsRuleOption*);
 static void CvsGetCommand(const uint8_t*, const uint8_t*, CvsCommand*);
 static int CvsCmdCompare(const char*, const uint8_t*, int);
 static int CvsValidateEntry(const uint8_t*, const uint8_t*);
@@ -157,7 +157,7 @@ IpsOption::EvalStatus CvsOption::eval(Cursor&, Packet* p)
 //-------------------------------------------------------------------------
 
 static int CvsDecode(const uint8_t* data, uint16_t data_len,
-    CvsRuleOption* cvs_rule_option)
+    const CvsRuleOption* cvs_rule_option)
 {
     const uint8_t* line, * end;
     const uint8_t* eol = nullptr, * eolm = nullptr;

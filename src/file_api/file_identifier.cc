@@ -124,7 +124,7 @@ IdentifierNode* FileIdentifier::clone_node(IdentifierNode* start)
     return node;
 }
 
-void FileIdentifier::add_file_id(FileMeta& rule)
+void FileIdentifier::add_file_id(const FileMeta& rule)
 {
     if (!identifier_root)
     {

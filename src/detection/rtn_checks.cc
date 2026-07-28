@@ -237,6 +237,7 @@ int CheckDstPortNotEq(Packet* p, RuleTreeNode* rtn_idx,
     return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 int CheckProto(Packet* p, RuleTreeNode* rtn_idx, RuleFpList*, int check_ports)
 {
     if ( !check_ports )
@@ -260,4 +261,3 @@ int RuleListEnd(Packet*, RuleTreeNode*, RuleFpList*, int)
 {
     return 1;
 }
-

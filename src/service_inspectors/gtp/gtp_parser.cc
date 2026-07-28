@@ -102,7 +102,7 @@ static void convertToHex(char* output, int outputSize, const uint8_t* input, int
 }
 
 /* Display the information elements*/
-static void printInfoElements(GTP_IEData* info_elements, GTPMsg* msg)
+static void printInfoElements(const GTP_IEData* info_elements, const GTPMsg* msg)
 {
     for (int i=0; i < MAX_GTP_IE_CODE + 1; i++)
     {

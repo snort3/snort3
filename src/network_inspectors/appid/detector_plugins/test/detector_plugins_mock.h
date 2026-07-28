@@ -274,15 +274,17 @@ snort::SearchTool::SearchTool(bool, const char*) { }
 
 ServiceDetector::ServiceDetector() {}
 void ServiceDetector::register_appid(AppId appId, unsigned extractsInfo, OdpContext& odp_ctxt) {}
-int ServiceDetector::add_service_consume_subtype(AppIdSession& asd, const snort::Packet* pkt,
+// The mock must retain the production ownership-transfer signature.
+int ServiceDetector::add_service_consume_subtype(AppIdSession&, const snort::Packet* pkt,
     AppidSessionDirection dir, AppId appId, const char* vendor, const char* version,
-    AppIdServiceSubtype* subtype, AppidChangeBits& change_bits)
+    AppIdServiceSubtype*, AppidChangeBits&)
     { return 0; }
-int ServiceDetector::add_service(AppidChangeBits& change_bits, AppIdSession& asd,
+// The mock must retain the production ownership-transfer signature.
+int ServiceDetector::add_service(AppidChangeBits&, AppIdSession&,
     const snort::Packet* pkt, AppidSessionDirection dir, AppId appId, const char* vendor,
-    const char* version, AppIdServiceSubtype* subtype)
+    const char* version, AppIdServiceSubtype*)
     { return 0; }
-int ServiceDetector::service_inprocess(AppIdSession& asd, const snort::Packet* pkt, AppidSessionDirection dir) { return 0; }
+int ServiceDetector::service_inprocess(AppIdSession&, const snort::Packet* pkt, AppidSessionDirection dir) { return 0; }
 
 snort::AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&)
 { }

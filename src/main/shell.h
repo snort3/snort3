@@ -53,7 +53,7 @@ public:
 
     void set_file(const char*);
     void set_overrides(const char*);
-    void set_overrides(Shell*);
+    void set_overrides(const Shell*);
 
     bool configure(snort::SnortConfig*, bool is_root = false, std::list<ConfigData*>* = nullptr);
     void install(const char* name, const snort::Command*);
@@ -155,4 +155,3 @@ private:
 };
 
 #endif
-

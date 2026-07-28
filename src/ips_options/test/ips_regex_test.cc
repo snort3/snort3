@@ -110,6 +110,8 @@ MemoryContext::~MemoryContext() = default;
 
 extern const BaseApi* ips_regex;
 
+// The test stub must match Cursor's mutable Packet constructor.
+// cppcheck-suppress constParameterPointer
 Cursor::Cursor(Packet* p)
 { set("pkt_data", p->data, p->dsize); }
 
@@ -146,7 +148,7 @@ SoEvalFunc SoManager::get_so_eval(const char*, const char*, void**)
 // helpers
 //-------------------------------------------------------------------------
 
-static const Parameter* get_param(Module* m, const char* s)
+static const Parameter* get_param(const Module* m, const char* s)
 {
     const Parameter* p = m->get_parameters();
 

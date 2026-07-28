@@ -58,8 +58,8 @@ public:
     static void close_outputs();
     static void reload_outputs();
 
-    static void call_alerters(OutputSet*, snort::Packet*, const char* message, const Event&);
-    static void call_loggers(OutputSet*, snort::Packet*, const char* message, Event*);
+    static void call_alerters(const OutputSet*, snort::Packet*, const char* message, const Event&);
+    static void call_loggers(const OutputSet*, snort::Packet*, const char* message, Event*);
 
     static void enable_alerts(bool b) { alert_enabled = b; }
     static void enable_logs(bool b) { log_enabled = b; }
@@ -73,4 +73,3 @@ private:
 };
 
 #endif
-

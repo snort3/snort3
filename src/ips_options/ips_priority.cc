@@ -79,6 +79,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
+// cppcheck-suppress constParameterCallback
 static IpsOption* priority_ctor(Module* p, IpsInfo& info)
 {
     const PriorityModule* m = static_cast<PriorityModule*>(p);

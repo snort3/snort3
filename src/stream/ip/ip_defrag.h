@@ -39,7 +39,7 @@ class Defrag
 public:
     Defrag(FragEngine&);
 
-    bool configure(snort::SnortConfig*);
+    bool configure(const snort::SnortConfig*);
     void show() const;
 
     void process(snort::Packet*, FragTracker*);
@@ -59,7 +59,7 @@ private:
         Fragment* left, Fragment** retFrag);
 
     int dup_frag_node(FragTracker*, Fragment* left, Fragment** retFrag);
-    int expired(snort::Packet*, FragTracker*, FragEngine*);
+    int expired(snort::Packet*, FragTracker*, const FragEngine*);
 
 private:
     FragEngine& engine;
@@ -67,4 +67,3 @@ private:
 };
 
 #endif
-

@@ -454,6 +454,7 @@ static int dump_mp_events(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback
 static int show_mp_channel_status(lua_State* L)
 {
     ControlConn* ctrlconn = ControlConn::query_from_lua(L);

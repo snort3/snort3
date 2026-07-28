@@ -598,7 +598,7 @@ void Shell::set_overrides(const char* s)
     overrides += s;
 }
 
-void Shell::set_overrides(Shell* sh)
+void Shell::set_overrides(const Shell* sh)
 {
     overrides += sh->overrides;
 }

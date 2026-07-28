@@ -39,7 +39,7 @@ void AlpnPatternMatchers::add_alpn_pattern(AppId app_id, const string& pattern_s
     const string& detector)
 {
     auto match = find_if(alpn_load_list.begin(), alpn_load_list.end(),
-        [pattern_str] (AlpnPattern* alpn) { return alpn->pattern == pattern_str; });
+        [pattern_str] (const AlpnPattern* alpn) { return alpn->pattern == pattern_str; });
     if (match != alpn_load_list.end())
     {
         if ((*match)->app_id != app_id)

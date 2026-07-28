@@ -123,15 +123,15 @@ public:
     RnaPnd(const bool en, const std::string& cp, RnaConfig* rc = nullptr);
     ~RnaPnd();
 
-    void analyze_appid_changes(snort::DataEvent&);
+    void analyze_appid_changes(const snort::DataEvent&);
     void analyze_flow_icmp(const snort::Packet*);
     void analyze_flow_ip(const snort::Packet*);
     void analyze_flow_non_ip(const snort::Packet*);
     void analyze_flow_tcp(const snort::Packet*, TcpPacketType);
     void analyze_flow_udp(const snort::Packet*);
     void analyze_dhcp_fingerprint(snort::DataEvent&);
-    void add_dhcp_info(snort::DataEvent&);
-    void analyze_smb_fingerprint(snort::DataEvent&);
+    void add_dhcp_info(const snort::DataEvent&);
+    void analyze_smb_fingerprint(const snort::DataEvent&);
     bool analyze_cpe_os_info(snort::DataEvent&);
     bool analyze_netflow(snort::DataEvent&);
     void analyze_netflow_host(snort::NetFlowEvent*);
@@ -177,7 +177,7 @@ private:
     int discover_network_arp(const snort::Packet*, RnaTracker&);
     int discover_network_bpdu(const snort::Packet*, const uint8_t* data, RnaTracker&);
     int discover_network_cdp(const snort::Packet*, const uint8_t* data, uint16_t rlen,
-        RnaTracker&);
+        const RnaTracker&);
 
     int discover_switch(const snort::Packet*, RnaTracker&);
 

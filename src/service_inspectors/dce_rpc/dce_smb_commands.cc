@@ -499,7 +499,7 @@ static inline void DCE2_SmbSetFingerprintedClient(DCE2_SmbSsnData* ssd)
     ssd->ssn_state_flags |= DCE2_SMB_SSN_STATE__FP_CLIENT;
 }
 
-static inline bool DCE2_SmbFingerprintedClient(DCE2_SmbSsnData* ssd)
+static inline bool DCE2_SmbFingerprintedClient(const DCE2_SmbSsnData* ssd)
 {
     return ssd->ssn_state_flags & DCE2_SMB_SSN_STATE__FP_CLIENT;
 }
@@ -509,7 +509,7 @@ static inline void DCE2_SmbSetFingerprintedServer(DCE2_SmbSsnData* ssd)
     ssd->ssn_state_flags |= DCE2_SMB_SSN_STATE__FP_SERVER;
 }
 
-static inline bool DCE2_SmbFingerprintedServer(DCE2_SmbSsnData* ssd)
+static inline bool DCE2_SmbFingerprintedServer(const DCE2_SmbSsnData* ssd)
 {
     return ssd->ssn_state_flags & DCE2_SMB_SSN_STATE__FP_SERVER;
 }

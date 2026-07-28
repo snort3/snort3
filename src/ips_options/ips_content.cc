@@ -449,7 +449,7 @@ typedef enum
     CMF_DISTANCE = 0x1, CMF_WITHIN = 0x2, CMF_OFFSET = 0x4, CMF_DEPTH = 0x8
 } ContentModifierFlags;
 
-static unsigned GetCMF(ContentData* cd)
+static unsigned GetCMF(const ContentData* cd)
 {
     unsigned cmf = 0;
     if ( (cd->pmd.offset != 0) || (cd->offset_var != -1) )

@@ -32,8 +32,12 @@
 class HttpUnitTestSetup
 {
 public:
+    // Returns mutable fixture state to the tests.
+    // cppcheck-suppress constParameterPointer
     static HttpCommon::SectionType* get_section_type(HttpFlowData* flow_data)
         { assert(flow_data!=nullptr); return flow_data->section_type; }
+    // Returns mutable fixture state to the tests.
+    // cppcheck-suppress constParameterPointer
     static HttpCommon::SectionType* get_type_expected(HttpFlowData* flow_data)
         { assert(flow_data!=nullptr); return flow_data->type_expected; }
     static void half_reset(HttpFlowData* flow_data, HttpCommon::SourceId source_id)

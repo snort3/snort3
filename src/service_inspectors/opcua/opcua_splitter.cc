@@ -48,7 +48,7 @@ static const std::unordered_set<uint32_t> opcua_known_msg_types = {
 
 static StreamSplitter::Status abort_search(OpcuaSplitterPduData*);
 
-static bool verify_known_message(OpcuaSplitterPduData* cur_pdu_data)
+static bool verify_known_message(const OpcuaSplitterPduData* cur_pdu_data)
 {
     if ( cur_pdu_data->msg_size > OPCUA_LARGE_MSG_SIZE )
     {

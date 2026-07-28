@@ -69,7 +69,7 @@ static SmbAndXCom smb_chain_map[SMB_MAX_NUM_COMS];
  *          False if not.
  *
  ********************************************************************/
-static inline bool DCE2_SmbIsRawData(DCE2_SmbSsnData* ssd)
+static inline bool DCE2_SmbIsRawData(const DCE2_SmbSsnData* ssd)
 {
     return (ssd->pdu_state == DCE2_SMB_PDU_STATE__RAW_DATA);
 }
@@ -1690,8 +1690,8 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                     // Upgrade connection to SMBv2
                     debug_log(dce_smb_trace, p, "upgrading to smb2 session\n");
                     dce2SmbProtoConf* config = (dce2SmbProtoConf*)ssd->sd.config;
-                    Dce2SmbFlowData* fd = static_cast<Dce2SmbFlowData*>(p->flow->get_flow_data(
-                        Dce2SmbFlowData::inspector_id));
+                    Dce2SmbFlowData* fd = static_cast<Dce2SmbFlowData*>(
+                        p->flow->get_flow_data(Dce2SmbFlowData::inspector_id));
                     p->flow->free_flow_data(fd);
                     DCE2_Smb2SsnData* dce2_smb2_sess = dce2_create_new_smb2_session(p, config, true);
                     DCE2_Smb2Process(dce2_smb2_sess);
@@ -2678,6 +2678,7 @@ DCE2_Smb2SsnData* dce2_create_new_smb2_session(Packet* p, dce2SmbProtoConf* conf
     return dce2_smb2_sess;
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 DCE2_SsnData* get_dce2_session_data(snort::Flow* flow)
 {
     Dce2SmbFlowData* fd = static_cast<Dce2SmbFlowData*>(flow->get_flow_data(Dce2SmbFlowData::inspector_id));

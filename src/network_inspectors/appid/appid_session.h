@@ -414,9 +414,9 @@ public:
     void set_service_appid_data(AppId, AppidChangeBits& change_bits, char* version = nullptr);
     void set_payload_appid_data(AppId, char* version = nullptr);
     void check_app_detection_restart(AppidChangeBits& change_bits,
-        ThirdPartyAppIdContext* tp_appid_ctxt);
+        const ThirdPartyAppIdContext* tp_appid_ctxt);
     void check_ssl_detection_restart(AppidChangeBits& change_bits,
-        ThirdPartyAppIdContext* tp_appid_ctxt);
+        const ThirdPartyAppIdContext* tp_appid_ctxt);
     void check_tunnel_detection_restart();
     void update_encrypted_app_id(AppId);
     void examine_rtmp_metadata(AppidChangeBits& change_bits);
@@ -451,7 +451,7 @@ public:
     void check_domain_fronting_status(const std::string& host);
 
 
-    bool need_to_delete_tp_conn(ThirdPartyAppIdContext*) const;
+    bool need_to_delete_tp_conn(const ThirdPartyAppIdContext*) const;
 
     inline void set_tp_app_id(AppId app_id)
     {
@@ -845,7 +845,7 @@ public:
 private:
     uint16_t prev_httpx_raw_packet = 0;
 
-    void reinit_session_data(AppidChangeBits& change_bits, ThirdPartyAppIdContext* tp_appid_ctxt);
+    void reinit_session_data(AppidChangeBits& change_bits, const ThirdPartyAppIdContext* tp_appid_ctxt);
     void delete_session_data();
 
     bool tp_app_id_deferred = false;

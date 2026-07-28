@@ -130,8 +130,8 @@ public:
 
 private:
     bool valid_checksum_from_daq(const RawData&);
-    bool valid_checksum4(const RawData&, DecodeData&);
-    bool valid_checksum6(const RawData&, const CodecData&, DecodeData&);
+    bool valid_checksum4(const RawData&, const DecodeData&);
+    bool valid_checksum6(const RawData&, const CodecData&, const DecodeData&);
 
     int validate_option(const tcp::TcpOption* const opt,
         const uint8_t* const end, const int expected_len);
@@ -169,7 +169,7 @@ inline bool TcpCodec::valid_checksum_from_daq(const RawData& raw)
     return true;
 }
 
-bool TcpCodec::valid_checksum4(const RawData& raw, DecodeData& snort)
+bool TcpCodec::valid_checksum4(const RawData& raw, const DecodeData& snort)
 {
     const ip::IP4Hdr* ip4h = snort.ip_api.get_ip4h();
 
@@ -183,7 +183,7 @@ bool TcpCodec::valid_checksum4(const RawData& raw, DecodeData& snort)
     return (checksum::tcp_cksum(raw.data, raw.len, ph) == 0);
 }
 
-bool TcpCodec::valid_checksum6(const RawData& raw, const CodecData& codec, DecodeData& snort)
+bool TcpCodec::valid_checksum6(const RawData& raw, const CodecData& codec, const DecodeData& snort)
 {
     const ip::IP6Hdr* const ip6h = snort.ip_api.get_ip6h();
 

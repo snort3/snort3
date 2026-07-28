@@ -77,10 +77,9 @@ public:
     void handle(snort::DataEvent&, snort::Flow*) override;
 
 private:
-    void client_handler(SipEvent&, AppIdSession&, AppidChangeBits&);
+    void client_handler(const SipEvent&, AppIdSession&, AppidChangeBits&);
     void service_handler(SipEvent&, AppIdSession&, AppidChangeBits&);
 
     AppIdInspector& inspector;
 };
 #endif
-

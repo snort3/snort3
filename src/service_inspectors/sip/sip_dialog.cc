@@ -707,4 +707,3 @@ void sip_freeDialogs(SIP_DialogList* list)
         curNode = nextNode;
     }
 }
-

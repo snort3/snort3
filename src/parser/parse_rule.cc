@@ -117,7 +117,7 @@ static SoRule* s_so_rule = nullptr;
 static bool rule_is_stateless()
 { return action_file_id; }
 
-static int ValidateIPList(sfip_var_t* addrset, const char* token)
+static int ValidateIPList(const sfip_var_t* addrset, const char* token)
 {
     if (!addrset || !(addrset->head||addrset->neg_head))
     {
@@ -128,7 +128,7 @@ static int ValidateIPList(sfip_var_t* addrset, const char* token)
     return 0;
 }
 
-static int ProcessIP(SnortConfig* sc, const char* addr, RuleTreeNode* rtn, int mode, int)
+static int ProcessIP(const SnortConfig* sc, const char* addr, RuleTreeNode* rtn, int mode, int)
 {
     vartable_t* ip_vartable = get_ips_policy()->ip_vartable;
 
@@ -890,6 +890,7 @@ void parse_rule_proto(SnortConfig* sc, const char* s, RuleTreeNode& rtn, bool el
 }
 
 void parse_rule_nets(
+    // cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
     SnortConfig* sc, const char* s, bool src, RuleTreeNode& rtn, bool elided)
 {
     if ( s_so_rule )

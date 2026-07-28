@@ -38,6 +38,7 @@
 
 using namespace snort;
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 bool mms_decode(Packet* p, MmsFlowData* mmsfd)
 {
     if (p->dsize < MMS_MIN_LEN)
@@ -69,4 +70,3 @@ bool mms_decode(Packet* p, MmsFlowData* mmsfd)
     }
     return true;
 }
-

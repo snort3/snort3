@@ -178,6 +178,7 @@ void DataBus::publish_to_all_network_policies(unsigned pub_id, unsigned evt_id)
 // private methods
 //--------------------------------------------------------------------------
 
+// cppcheck-suppress constParameterCallback
 static bool compare(DataHandler* a, DataHandler* b)
 {
     if ( a->order and b->order )
@@ -222,4 +223,3 @@ void DataBus::_publish(unsigned pid, unsigned eid, DataEvent& e, Flow* f) const
     for ( auto* h : subs )
         h->handle(e, f);
 }
-

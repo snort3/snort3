@@ -45,10 +45,9 @@ public:
     static DceContextData* get_current_data(const snort::Packet* p);
     static DCE2_Roptions* get_current_ropts(const snort::Packet* p);
     static bool is_noinspect(const snort::Packet* p);
-    static void set_current_ropts(DCE2_SsnData* sd);
+    static void set_current_ropts(const DCE2_SsnData* sd);
     static void clear_current_ropts(const snort::Packet* p, DCE2_TransType trans);
     static void clear_current_ropts(snort::IpsContext* context, DCE2_TransType trans);
 };
 
 #endif
-

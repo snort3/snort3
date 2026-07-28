@@ -51,7 +51,7 @@ void PortObjectItemFree(PortObjectItem* poi)
 /*
     Dup a PortObjectItem
 */
-PortObjectItem* PortObjectItemDup(PortObjectItem* poi)
+PortObjectItem* PortObjectItemDup(const PortObjectItem* poi)
 {
     PortObjectItem* poinew = PortObjectItemNew();
     memcpy(poinew,poi, sizeof(PortObjectItem));
@@ -61,7 +61,7 @@ PortObjectItem* PortObjectItemDup(PortObjectItem* poi)
 /*
    PortObjects should be normalized, prior to testing
 */
-int PortObjectItemsEqual(PortObjectItem* a, PortObjectItem* b)
+int PortObjectItemsEqual(const PortObjectItem* a, const PortObjectItem* b)
 {
     return ( a->lport == b->lport && a->hport == b->hport );
 }

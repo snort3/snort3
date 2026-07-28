@@ -39,7 +39,7 @@ using namespace HttpCommon;
 using namespace Http2Enums;
 
 #ifdef REG_TEST
-static void print_flow_issues(FILE*, Http2Infractions* const, Http2EventGen* const);
+static void print_flow_issues(FILE*, const Http2Infractions* const, const Http2EventGen* const);
 #endif
 
 Http2Inspect::Http2Inspect(const Http2ParaList* params_) : params(params_)
@@ -213,8 +213,8 @@ void Http2Inspect::show(const SnortConfig*) const
 }
 
 #ifdef REG_TEST
-static void print_flow_issues(FILE* output, Http2Infractions* const infractions,
-    Http2EventGen* const events)
+static void print_flow_issues(FILE* output, const Http2Infractions* const infractions,
+    const Http2EventGen* const events)
 {
     fprintf(output, "Infractions: %016" PRIx64 ", Events: %016" PRIx64 "\n\n",
         infractions->get_raw(0), events->get_raw(0));

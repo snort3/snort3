@@ -540,7 +540,7 @@ static bool sip_body_parse(SIPMsg* msg, const char* buff, const char* end, const
  *  false
  *  true
  ********************************************************************/
-static bool sip_check_headers(SIPMsg* msg, SIP_PROTO_CONF* config)
+static bool sip_check_headers(const SIPMsg* msg, const SIP_PROTO_CONF* config)
 {
     int ret = true;
     if (0 == msg->fromLen)
@@ -959,7 +959,7 @@ static int sip_parse_content_type(SIPMsg* msg, const char* start, const char* en
  ********************************************************************/
 
 static int sip_parse_content_len(SIPMsg* msg, const char* start, const char*,
-    SIP_PROTO_CONF* config)
+    SIP_PROTO_CONF* config) // cppcheck-suppress constParameterCallback
 {
     char* next = nullptr;
 

@@ -144,6 +144,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
+// cppcheck-suppress constParameterCallback
 static IpsOption* file_meta_ctor(Module* p, IpsInfo& info)
 {
     const FileMetaModule* m = static_cast<FileMetaModule*>(p);

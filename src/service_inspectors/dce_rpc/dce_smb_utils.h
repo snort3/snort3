@@ -331,7 +331,7 @@ inline bool SmbErrorRangeNotLocked(const SmbNtHdr* hdr)
 
 // Convenience function to determine whether or not the transaction is complete
 // for one side, i.e. all data and parameters sent.
-inline bool DCE2_SmbIsTransactionComplete(DCE2_SmbTransactionTracker* ttracker)
+inline bool DCE2_SmbIsTransactionComplete(const DCE2_SmbTransactionTracker* ttracker)
 {
     if ((ttracker->tdcnt == ttracker->dsent)
         && (ttracker->tpcnt == ttracker->psent))

@@ -52,7 +52,8 @@ static unsigned pub_id = 0;
  * Function prototype(s)
  */
 static void snort_ssh(SSH_PROTO_CONF* GlobalConf, Packet* p);
-static bool process_ssh_version_string(SSH_PROTO_CONF* config, SSHData* sessionp, Packet* p, uint8_t direction);
+static bool process_ssh_version_string(
+    const SSH_PROTO_CONF* config, SSHData* sessionp, Packet* p, uint8_t direction);
 static bool process_ssh1_key_exchange(SSHData *sessionp, Packet *p, uint8_t direction);
 static bool process_ssh2_kexinit(SSHData *sessionp, Packet *p, uint8_t direction);
 static bool process_ssh2_key_exchange(SSHData *sessionp, Packet *p, uint8_t direction);
@@ -276,7 +277,7 @@ bool is_us_ascii(const char *str, uint16_t size)
 }
 
 static bool process_ssh_version_string(
-    SSH_PROTO_CONF* config, SSHData* sessionp, Packet* p, uint8_t direction)
+    const SSH_PROTO_CONF* config, SSHData* sessionp, Packet* p, uint8_t direction)
 {
     if (p->dsize > config->MaxServerVersionLen)
     {

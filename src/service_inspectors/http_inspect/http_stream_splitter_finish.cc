@@ -237,7 +237,7 @@ bool HttpStreamSplitter::finish(Flow* flow)
     return false;
 }
 
-void HttpStreamSplitter::prep_partial_flush(Flow* flow, uint32_t num_flush,
+void HttpStreamSplitter::prep_partial_flush(const Flow* flow, uint32_t num_flush,
     uint32_t num_excess, uint32_t num_head_lines, PartialFlushType partial_flush_type)
 {
     // cppcheck-suppress unreadVariable

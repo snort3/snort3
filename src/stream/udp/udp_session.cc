@@ -54,7 +54,7 @@ THREAD_LOCAL ProfileStats udp_perf_stats;
 
 //-------------------------------------------------------------------------
 
-static void UdpSessionCleanup(Flow* lwssn)
+static void UdpSessionCleanup(const Flow* lwssn)
 {
     if ( lwssn->ssn_state.session_flags & SSNFLAG_SEEN_SENDER )
         udpStats.released++;

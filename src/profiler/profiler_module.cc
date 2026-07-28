@@ -164,6 +164,7 @@ private:
     std::vector<HashNode*> nodes;
 };
 
+// cppcheck-suppress constParameterCallback
 static int rule_profiling_start(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -184,6 +185,7 @@ static int rule_profiling_start(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback
 static int rule_profiling_stop(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -202,6 +204,7 @@ static int rule_profiling_stop(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback
 static int rule_profiling_status(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -292,6 +295,7 @@ private:
     bool enable;
 };
 
+// cppcheck-suppress constParameterCallback
 static int time_profiling_start(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -307,6 +311,7 @@ static int time_profiling_start(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback
 static int time_profiling_stop(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -322,6 +327,7 @@ static int time_profiling_stop(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback
 static int time_profiling_dump(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -341,6 +347,7 @@ static int time_profiling_dump(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback
 static int time_profiling_status(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -497,11 +504,10 @@ static bool s_profiler_module_set_max_depth(RuleProfilerConfig&, Value&)
 { return false; }
 
 template<typename T>
-static bool s_profiler_module_set_dump_file_size(T&, Value&)
+static bool s_profiler_module_set_dump_file_size(T&, const Value&)
 { return false; }
 
-// cppcheck-suppress constParameter
-static bool s_profiler_module_set_dump_file_size(MemoryProfilerConfig& config, Value& v)
+static bool s_profiler_module_set_dump_file_size(MemoryProfilerConfig& config, const Value& v)
 { config.dump_file_size = v.get_int64(); return true; }
 
 template<typename T>

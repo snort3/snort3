@@ -95,7 +95,7 @@ template<HttpEnums::HTTP_RULE_OPT OPT_IDX, snort::PduSection SECTION>
 THREAD_LOCAL snort::ProfileStats HttpNumRuleOptModule<OPT_IDX, SECTION>::ps;
 
 // Template class for range-based rule options
-template<int32_t (HttpInspect::* FNC)(snort::Packet*, const HttpBufferInfo&) const>
+template<int32_t (HttpInspect::* FNC)(const snort::Packet*, const HttpBufferInfo&) const>
 class HttpNumIpsOption : public HttpRangeIpsOption
 {
 public:
@@ -108,4 +108,3 @@ public:
     { return (hi->*FNC)(p, buffer_info); }
 };
 #endif
-

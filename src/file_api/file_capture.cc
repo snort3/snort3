@@ -489,6 +489,7 @@ FileCaptureBlock* FileCapture::get_file_data(uint8_t** buff, int* size)
  * In the case of interrupt errors, the write is retried, but only for a
  * finite number of times.
  */
+// cppcheck-suppress constParameterPointer ; preserve the private installed-header declaration
 void FileCapture::write_file_data(uint8_t* buf, size_t buf_len, FILE* fh)
 {
     int max_retries = 3;

@@ -55,6 +55,7 @@ THREAD_LOCAL ProfileStats dce2_tcp_pstat_main;
 unsigned Dce2TcpFlowData::inspector_id = 0;
 unsigned Dce2Tcp::pub_id = 0;
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 DCE2_TcpSsnData* get_dce2_tcp_session_data(Flow* flow)
 {
     Dce2TcpFlowData* fd = static_cast<Dce2TcpFlowData*>(

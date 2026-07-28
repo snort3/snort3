@@ -76,7 +76,7 @@ public:
 private:
 
     void log_opts(TextLog* const, const uint8_t*, const uint16_t len);
-    bool validate_options(const uint8_t* rptr, uint16_t opts_len, CodecData& codec);
+    bool validate_options(const uint8_t* rptr, uint16_t opts_len, const CodecData& codec);
 };
 
 } // namespace
@@ -86,7 +86,7 @@ void GeneveCodec::get_protocol_ids(std::vector<ProtocolId>& v)
     v.push_back(ProtocolId::GENEVE);
 }
 
-bool GeneveCodec::validate_options(const uint8_t* rptr, uint16_t hdrlen, CodecData& codec)
+bool GeneveCodec::validate_options(const uint8_t* rptr, uint16_t hdrlen, const CodecData& codec)
 {
     const geneve::GeneveHdr* const hdr = reinterpret_cast<const geneve::GeneveHdr*>(rptr);
     uint16_t offset = sizeof(geneve::GeneveHdr);
@@ -280,4 +280,3 @@ const BaseApi* cd_geneve[] =
     &geneve_api.base,
     nullptr
 };
-

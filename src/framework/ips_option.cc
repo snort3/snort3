@@ -152,6 +152,7 @@ void IpsOption::set_message(const IpsInfo& info, const char* msg)
 void IpsOption::set_metadata_match(IpsInfo& info)
 { info.otn->set_metadata_match(); }
 
+// cppcheck-suppress constParameterReference
 void IpsOption::set_tag(IpsInfo& info, TagData* td)
 { info.otn->tag = td; }
 
@@ -164,12 +165,14 @@ void IpsOption::add_reference(IpsInfo& info, const char* scheme, const char* id)
 void IpsOption::add_service(IpsInfo& info, const char* svc)
 { add_service_to_otn(info.sc, info.otn, svc); }
 
+// cppcheck-suppress constParameterReference
 void IpsOption::set_soid(IpsInfo& info, const char* s)
 { info.otn->soid = snort_strdup(s); }
 
 const char* IpsOption::get_soid(const IpsInfo& info)
 { return info.otn->soid; }
 
+// cppcheck-suppress constParameterReference
 IpsOption::SoEvalFunc IpsOption::get_so_eval(IpsInfo& info, const char* name, void*& data)
 { return SoManager::get_so_eval(info.otn->soid, name, &data); }
 

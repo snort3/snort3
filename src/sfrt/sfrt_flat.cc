@@ -200,7 +200,7 @@ GENERIC RtTable::sfrt_flat_lookup(const SfIp* ip)
 }
 
 /* Insert "ip", of length "len", into "table", and have it point to "ptr" */
-return_codes RtTable::sfrt_flat_insert(SfCidr* cidr, unsigned char len, INFO ptr,
+return_codes RtTable::sfrt_flat_insert(const SfCidr* cidr, unsigned char len, INFO ptr,
     int behavior, updateEntryInfoFunc updateEntry, void* update_entry_info_data)
 {
     if (!cidr)

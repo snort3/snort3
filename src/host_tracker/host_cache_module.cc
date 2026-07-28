@@ -52,6 +52,7 @@ static int host_cache_dump(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback
 static int host_cache_get_stats(lua_State* L)
 {
     HostCacheModule* mod =

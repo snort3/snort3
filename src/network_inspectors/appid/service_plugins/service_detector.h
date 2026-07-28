@@ -55,4 +55,3 @@ private:
         const char*, const char*, AppidChangeBits&, AppIdServiceSubtype*);
 };
 #endif
-

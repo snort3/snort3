@@ -80,6 +80,7 @@ bool TraceSwap::execute(Analyzer&)
 }
 
 
+// cppcheck-suppress constParameterReference ; mutates the parser's trace configuration
 bool TraceSwapParams::set_ntuple(lua_State* L, TraceParser& parser, const Parameter* root)
 {
     if ( !lua_isboolean(L, -1) )
@@ -91,6 +92,7 @@ bool TraceSwapParams::set_ntuple(lua_State* L, TraceParser& parser, const Parame
     return true;
 }
 
+// cppcheck-suppress constParameterReference ; mutates the parser's trace configuration
 bool TraceSwapParams::set_timestamp(lua_State* L, TraceParser& parser, const Parameter* root)
 {
     if ( !lua_isboolean(L, -1) )
@@ -342,6 +344,8 @@ int TraceSwapParams::set(lua_State* L)
     return 0;
 }
 
+// Lua callbacks require the mutable lua_State signature.
+// cppcheck-suppress constParameterPointer
 int TraceSwapParams::clear(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -350,4 +354,3 @@ int TraceSwapParams::clear(lua_State* L)
     main_broadcast_command(new TraceSwap(new TraceConfig, ctrlcon), ctrlcon);
     return 0;
 }
-

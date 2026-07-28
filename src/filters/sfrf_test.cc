@@ -582,7 +582,7 @@ static int SetupCheck(int i)
     return 0;
 }
 
-static int EventTest(EventData* p)
+static int EventTest(const EventData* p)
 {
     // now is a float to clarify the impact of
     // just using truncated seconds on thresholds
@@ -607,7 +607,7 @@ static int EventTest(EventData* p)
 
 static int EventCheck(int i)
 {
-    EventData* p = evData + i;
+    const EventData* p = evData + i;
     int status = EventTest(p);
 
     if ( p->expect == status )
@@ -620,7 +620,7 @@ static int EventCheck(int i)
 
 static int CapCheck(int i)
 {
-    EventData* p = evData + i;
+    const EventData* p = evData + i;
     int status = EventTest(p);
 
     if ( RULE_ORIG == status )

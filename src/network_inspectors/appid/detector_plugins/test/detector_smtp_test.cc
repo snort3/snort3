@@ -264,6 +264,7 @@ AppIdFlowData* AppIdDetector::data_get(const AppIdSession&)
     return test_data_get;
 }
 
+// cppcheck-suppress constParameterReference
 int ServiceDetector::fail_service(AppIdSession& asd, const Packet* pkt, AppidSessionDirection dir) { return 1; }
 
 TEST_GROUP(detector_smtp_tests)

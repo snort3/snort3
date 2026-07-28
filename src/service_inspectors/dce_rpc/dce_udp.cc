@@ -66,6 +66,7 @@ Dce2UdpFlowData::~Dce2UdpFlowData()
 
 unsigned Dce2UdpFlowData::inspector_id = 0;
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 DCE2_UdpSsnData* get_dce2_udp_session_data(Flow* flow)
 {
     Dce2UdpFlowData* fd = static_cast<Dce2UdpFlowData*>(

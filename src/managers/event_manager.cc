@@ -206,7 +206,7 @@ void EventManager::reload_outputs()
 }
 
 void EventManager::call_alerters(
-    OutputSet* idx, Packet* pkt, const char* message, const Event& event)
+    const OutputSet* idx, Packet* pkt, const char* message, const Event& event)
 {
     if ( idx )
     {
@@ -219,7 +219,7 @@ void EventManager::call_alerters(
 }
 
 void EventManager::call_loggers(
-    OutputSet* idx, Packet* pkt, const char* message, Event* event)
+    const OutputSet* idx, Packet* pkt, const char* message, Event* event)
 {
     if ( idx )
     {

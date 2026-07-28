@@ -95,9 +95,9 @@ RnaPnd::RnaPnd(const bool en, const std::string& cp, RnaConfig* rc) :
 
 RnaPnd::~RnaPnd() = default;
 
-void RnaPnd::analyze_appid_changes(DataEvent& event)
+void RnaPnd::analyze_appid_changes(const DataEvent& event)
 {
-    RnaAppDiscovery::process(static_cast<AppidEvent*>(&event), filter, conf, logger);
+    RnaAppDiscovery::process(static_cast<const AppidEvent*>(&event), filter, conf, logger);
 }
 
 void RnaPnd::analyze_flow_icmp(const Packet* p)
@@ -455,9 +455,9 @@ void RnaPnd::analyze_dhcp_fingerprint(DataEvent& event)
 
 /* called for processing information extracted from DHCP Ack.
    It is called only for IPv4 since DHCPv6 is not implemented.*/
-void RnaPnd::add_dhcp_info(DataEvent& event)
+void RnaPnd::add_dhcp_info(const DataEvent& event)
 {
-    const DHCPInfoEvent& dhcp_info_event = static_cast<DHCPInfoEvent&>(event);
+    const DHCPInfoEvent& dhcp_info_event = static_cast<const DHCPInfoEvent&>(event);
     uint32_t ip_address = dhcp_info_event.get_ip_address();
     SfIp leased_ip = {(void*)&ip_address, AF_INET};
     const Packet* p = event.get_packet();
@@ -492,7 +492,7 @@ void RnaPnd::add_dhcp_info(DataEvent& event)
         lease, net_mask, reinterpret_cast<const struct in6_addr*>(router_ip.get_ip6_ptr()));
 }
 
-void RnaPnd::analyze_smb_fingerprint(DataEvent& event)
+void RnaPnd::analyze_smb_fingerprint(const DataEvent& event)
 {
     const SmbFpProcessor* processor = get_smb_fp_processor();
     if (!processor)
@@ -507,7 +507,7 @@ void RnaPnd::analyze_smb_fingerprint(DataEvent& event)
     if ( !rt )
         return;
 
-    const FpSMBDataEvent& fp_smb_data_event = static_cast<FpSMBDataEvent&>(event);
+    const FpSMBDataEvent& fp_smb_data_event = static_cast<const FpSMBDataEvent&>(event);
     unsigned smb_major = fp_smb_data_event.get_fp_smb_major();
     unsigned smb_minor = fp_smb_data_event.get_fp_smb_minor();
     uint32_t flags = fp_smb_data_event.get_fp_smb_flags();
@@ -928,7 +928,7 @@ void RnaPnd::discover_host_types_ttl(RnaTracker& ht, const Packet *p, uint8_t pk
 }
 
 int RnaPnd::discover_network_cdp(const Packet* p, const uint8_t* data, uint16_t rlen,
-    RnaTracker& rt)
+    const RnaTracker& rt)
 {
     if ( !is_cdp(layer::get_eth_layer(p)->ether_dst) or rlen < sizeof(RNA_CDP) )
         return 1;

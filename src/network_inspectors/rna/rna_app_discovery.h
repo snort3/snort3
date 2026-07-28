@@ -26,15 +26,15 @@
 class RnaAppDiscovery
 {
 public:
-    static void process(AppidEvent*, DiscoveryFilter&, RnaConfig*, RnaLogger&);
+    static void process(const AppidEvent*, DiscoveryFilter&, RnaConfig*, RnaLogger&);
 
     static bool discover_service(const snort::Packet*, DiscoveryFilter&, RNAFlow*, IpProtocol,
-        RnaConfig*, RnaLogger&, uint16_t, AppId service = APP_ID_NONE, bool is_client = false);
+        const RnaConfig*, RnaLogger&, uint16_t, AppId service = APP_ID_NONE, bool is_client = false);
 
     static void discover_payload(const snort::Packet*, DiscoveryFilter&, RNAFlow*, IpProtocol,
-        RnaConfig*, RnaLogger&, AppId service, AppId payload, AppId client);
+        const RnaConfig*, RnaLogger&, AppId service, AppId payload, AppId client);
 
-    static void discover_client(const snort::Packet*, DiscoveryFilter&, RNAFlow*, RnaConfig*,
+    static void discover_client(const snort::Packet*, DiscoveryFilter&, RNAFlow*, const RnaConfig*,
         RnaLogger&, const char*, AppId client, AppId service);
 
     static void discover_user(const snort::Packet*, DiscoveryFilter&, RNAFlow*, RnaLogger&,

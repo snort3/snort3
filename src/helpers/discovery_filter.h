@@ -55,7 +55,7 @@ private:
         FlowCheckDirection flowdir = FlowCheckDirection::DF_NONE);
     bool is_monitored(const snort::Packet* p, FilterType type, const snort::SfIp* ip = nullptr,
         FlowCheckDirection flowdir = FlowCheckDirection::DF_NONE);
-    void add_ip(FilterType type, IntfType intf, std::string& ip);
+    void add_ip(FilterType type, IntfType intf, const std::string& ip);
     sfip_var_t* get_list(FilterType type, IntfType intf, bool exclude_empty = false);
 
     // add ip for port exclusion
@@ -77,7 +77,7 @@ private:
     std::unordered_map<uint32_t, sfip_var_t*> port_ip_list[NUM_DIRECTIONS];
 
 #ifdef UNIT_TEST
-    friend bool is_port_excluded_test(DiscoveryFilter& df, snort::Packet* p);
+    friend bool is_port_excluded_test(DiscoveryFilter& df, const snort::Packet* p);
 #endif
 };
 

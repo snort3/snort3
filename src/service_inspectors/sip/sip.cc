@@ -44,6 +44,7 @@ static void FreeSipData(void*);
 unsigned SipFlowData::inspector_id = 0;
 unsigned SIPData::pub_id = 0;
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 bool get_buf_sip(unsigned id, snort::Packet* p, snort::InspectionBuffer& b)
 {
     if (id != SIP_HEADER_ID and id != SIP_BODY_ID)

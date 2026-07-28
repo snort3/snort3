@@ -82,7 +82,7 @@ Dnp3FlowData::~Dnp3FlowData()
 
 unsigned Dnp3FlowData::inspector_id = 0;
 
-static dnp3_session_data_t* get_session_data(Flow* flow)
+static dnp3_session_data_t* get_session_data(const Flow* flow)
 {
     Dnp3FlowData* fd = static_cast<Dnp3FlowData*>(
         flow->get_flow_data(Dnp3FlowData::inspector_id));

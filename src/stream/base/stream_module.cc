@@ -198,7 +198,7 @@ std::vector<DumpFlowsLuaParameters> dfs_params =
     { DumpFlowsParams::portB, 5 },
 };
 
-static int validate_cmd_parameters(ControlConn* ctrlcon, lua_State* L, std::vector<DumpFlowsLuaParameters>& cmd_params, DumpFlowsFilter* dff)
+static int validate_cmd_parameters(ControlConn* ctrlcon, lua_State* L, const std::vector<DumpFlowsLuaParameters>& cmd_params, DumpFlowsFilter* dff)
 {
     for (auto const& param : cmd_params)
     {

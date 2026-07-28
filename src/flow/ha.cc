@@ -73,14 +73,14 @@ typedef std::array<FlowHAClient*, MAX_CLIENTS> ClientMap;
 class HighAvailability
 {
 public:
-    HighAvailability(PortBitSet*,bool);
+    HighAvailability(const PortBitSet*,bool);
     ~HighAvailability();
 
     void process_update(Flow*, Packet*);
     void process_deletion(Flow&);
     void process_receive();
 
-    Flow* process_daq_import(Packet&, FlowKey&);
+    Flow* process_daq_import(Packet&, const FlowKey&);
 
     ClientMap client_map = { };
     FlowHAClient* session_client = nullptr;
@@ -511,7 +511,7 @@ static Flow* consume_ha_update_message(HAMessage& msg, const FlowKey& key, Packe
 }
 
 static Flow* consume_ha_message(HAMessage& msg,
-    FlowKey* packet_key = nullptr, Packet* p = nullptr)
+    const FlowKey* packet_key = nullptr, Packet* p = nullptr)
 {
     ha_stats.msgs_recv++;
 
@@ -580,7 +580,7 @@ static void ha_sc_receive_handler(SCMessage* sc_msg)
     sc_msg->sc->discard_message(sc_msg);
 }
 
-HighAvailability::HighAvailability(PortBitSet* ports, bool daq_channel)
+HighAvailability::HighAvailability(const PortBitSet* ports, bool daq_channel)
 {
     using namespace std::placeholders;
 
@@ -722,7 +722,7 @@ void HighAvailability::process_receive()
         sc->process(DISPATCH_ALL_RECEIVE);
 }
 
-Flow* HighAvailability::process_daq_import(Packet& p, FlowKey& key)
+Flow* HighAvailability::process_daq_import(Packet& p, const FlowKey& key)
 {
     Flow* flow = nullptr;
 
@@ -948,6 +948,7 @@ bool HighAvailabilityManager::in_standby(Flow* flow)
     return false;
 }
 
+// cppcheck-suppress constParameterReference
 Flow* HighAvailabilityManager::import(Packet& p, FlowKey& key)
 {
     if (!ha)

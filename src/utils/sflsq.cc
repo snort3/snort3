@@ -185,6 +185,7 @@ NODE_DATA sflist_remove_tail(SF_LIST* s)
     return (NODE_DATA)ndata;
 }
 
+// cppcheck-suppress constParameterPointer ; exported API retains mutable list pointer
 int sflist_count(SF_LIST* s)
 {
     if (!s)
@@ -231,4 +232,3 @@ void sflist_static_free_all(SF_LIST* s, void (* nfree)(void*) )
 }
 
 }
-

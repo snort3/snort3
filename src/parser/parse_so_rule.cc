@@ -40,7 +40,7 @@ public:
     bool parse_so_rule(const char* in, std::string& stub, std::string& opts);
 
 private:
-    bool is_stub_option(std::string& opt);
+    bool is_stub_option(const std::string& opt);
     void trim(std::string&);
 };
 
@@ -50,7 +50,7 @@ static std::set<std::string> stub_opts =
     "reference", "rem", "rev", "service", "sid", "soid"
 };
 
-bool SoRuleParser::is_stub_option(std::string& opt)
+bool SoRuleParser::is_stub_option(const std::string& opt)
 {
     size_t n = opt.find_first_of(" :;");
     std::string name = opt.substr(0, n);
@@ -382,4 +382,3 @@ TEST_CASE("get_so_stub", "[parser]")
 }
 
 #endif
-

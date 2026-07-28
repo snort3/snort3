@@ -40,7 +40,7 @@ using namespace std;
 //-------------------------------------------------------------------------
 
 bool init_chunk(
-    lua_State* L, string& chunk, const char* name, string& args)
+    lua_State* L, const string& chunk, const char* name, const string& args)
 {
     Lua::ManageStack ms(L, 1);
 

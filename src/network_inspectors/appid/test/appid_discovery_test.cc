@@ -226,13 +226,13 @@ uint32_t AppInfoManager::getAttributeBits(AppId)
 
 // Stubs for AppIdSession
 void AppIdSession::sync_with_snort_protocol_id(AppId, Packet*,AppidChangeBits&) {}
-void AppIdSession::check_app_detection_restart(AppidChangeBits&, ThirdPartyAppIdContext*) {}
+void AppIdSession::check_app_detection_restart(AppidChangeBits&, const ThirdPartyAppIdContext*) {}
 void AppIdSession::set_client_appid_data(AppId, AppidChangeBits&, char*) {}
 void AppIdSession::examine_rtmp_metadata(AppidChangeBits&) {}
 void AppIdSession::update_encrypted_app_id(AppId) {}
 bool AppIdSession::is_tp_processing_done() const {return false;}
 AppId AppIdSession::pick_ss_payload_app_id(AppId) const { return get_payload_id(); }
-bool AppIdSession::need_to_delete_tp_conn(ThirdPartyAppIdContext*) const { return true; }
+bool AppIdSession::need_to_delete_tp_conn(const ThirdPartyAppIdContext*) const { return true; }
 void AppIdSession::process_shadow_traffic_appids() {}
 void AppIdSession::examine_ssl_metadata(AppidChangeBits&,bool) {}
 
@@ -242,6 +242,7 @@ AppIdSession* AppIdSession::allocate_session(const Packet*, IpProtocol,
     return nullptr;
 }
 
+// cppcheck-suppress constParameterReference
 void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packet& p, bool, uint32_t)
 {
     AppidEvent app_event(change_bits, false, 0, this->get_api(), p);
@@ -313,7 +314,7 @@ const HostAppIdsVal* HostPortCache::find_on_first_pkt(const SfIp*, uint16_t, IpP
     return nullptr;
 }
 
-void AppIdServiceState::check_reset(AppIdSession&, const SfIp*, uint16_t,
+void AppIdServiceState::check_reset(const AppIdSession&, const SfIp*, uint16_t,
     int16_t, uint32_t) {}
 bool do_tp_discovery(ThirdPartyAppIdContext& , AppIdSession&, IpProtocol,
     Packet*, AppidSessionDirection&, AppidChangeBits&)

@@ -235,7 +235,7 @@ ExpectNode* ExpectCache::find_node_by_packet(Packet* p, FlowKey &key)
     return node;
 }
 
-bool ExpectCache::process_expected(ExpectNode* node, FlowKey& key, Packet* p, Flow* lws)
+bool ExpectCache::process_expected(ExpectNode* node, const FlowKey& key, Packet* p, Flow* lws)
 {
     assert(node->count && node->head);
 

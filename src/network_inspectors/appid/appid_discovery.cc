@@ -444,7 +444,7 @@ void AppIdDiscovery::do_port_based_discovery(Packet* p, AppIdSession& asd, IpPro
 }
 
 bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, IpProtocol protocol,
-    AppidSessionDirection direction, ThirdPartyAppIdContext* tp_appid_ctxt)
+    AppidSessionDirection direction, const ThirdPartyAppIdContext* tp_appid_ctxt)
 {
     if (asd.get_session_flags(APPID_SESSION_HOST_CACHE_MATCHED))
         return false;
@@ -548,7 +548,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
     return false;
 }
 
-static inline bool is_check_host_cache_valid(AppIdSession& asd, AppId service_id, AppId client_id,
+static inline bool is_check_host_cache_valid(const AppIdSession& asd, AppId service_id, AppId client_id,
     AppId payload_id, AppId misc_id)
 {
     bool is_payload_client_misc_none = (payload_id <= APP_ID_NONE and client_id <= APP_ID_NONE and

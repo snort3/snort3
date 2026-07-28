@@ -136,7 +136,7 @@ TraceLoggerPlug* TraceLoggerManager::set_logger(const std::string& name)
     return (intf->thread_loggers.size() > instance) ? intf->thread_loggers[instance] : nullptr;
 }
 
-void TraceLoggerManager::instantiate_default_loggers(TraceConfig* tc)
+void TraceLoggerManager::instantiate_default_loggers(const TraceConfig* tc)
 {
     for ( const auto& s : tc->output_traces )
     {

@@ -191,6 +191,7 @@ static void mod_dtor(Module* m)
     delete m;
 }
 
+// cppcheck-suppress constParameterCallback
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
     const OpcuaNodeNamespaceIndexModule* mod =

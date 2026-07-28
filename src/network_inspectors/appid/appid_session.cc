@@ -311,7 +311,7 @@ void AppIdSession::initialize_future_session(AppIdSession& expected, uint64_t fl
 }
 
 void AppIdSession::reinit_session_data(AppidChangeBits& change_bits,
-    ThirdPartyAppIdContext* curr_tp_appid_ctxt)
+    const ThirdPartyAppIdContext* curr_tp_appid_ctxt)
 {
     misc_app_id = APP_ID_NONE;
 
@@ -412,7 +412,7 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p, AppidC
 }
 
 void AppIdSession::check_ssl_detection_restart(AppidChangeBits& change_bits,
-    ThirdPartyAppIdContext* curr_tp_appid_ctxt)
+    const ThirdPartyAppIdContext* curr_tp_appid_ctxt)
 {
     if (get_session_flags(APPID_SESSION_DECRYPTED) or !flow->is_proxied())
         return;
@@ -497,7 +497,7 @@ void AppIdSession::check_tunnel_detection_restart()
 }
 
 void AppIdSession::check_app_detection_restart(AppidChangeBits& change_bits,
-    ThirdPartyAppIdContext* curr_tp_appid_ctxt)
+    const ThirdPartyAppIdContext* curr_tp_appid_ctxt)
 {
     check_ssl_detection_restart(change_bits, curr_tp_appid_ctxt);
     check_tunnel_detection_restart();
@@ -718,6 +718,7 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
     }
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the established AppId interface
 void AppIdSession::set_client_appid_data(AppId id, char* version, bool published)
 {
     if (id <= APP_ID_NONE or id == APP_ID_HTTP)
@@ -752,6 +753,7 @@ void AppIdSession::set_client_appid_data(AppId id, AppidChangeBits& change_bits,
         change_bits.set(APPID_CLIENT_INFO_BIT);
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the established AppId interface
 void AppIdSession::set_payload_appid_data(AppId id, char* version)
 {
     if (id <= APP_ID_NONE)
@@ -1286,7 +1288,7 @@ bool AppIdSession::is_tp_appid_available() const
     return true;
 }
 
-bool AppIdSession::need_to_delete_tp_conn(ThirdPartyAppIdContext* curr_tp_appid_ctxt) const
+bool AppIdSession::need_to_delete_tp_conn(const ThirdPartyAppIdContext* curr_tp_appid_ctxt) const
 {
     // do not delete a third-party connection when reload third-party is in progress, and
     // third-party context swap isn't complete; since all open connections will be deleted
@@ -1301,7 +1303,7 @@ void AppIdSession::set_tp_app_id(const Packet& p, AppidSessionDirection dir, App
     if (tp_app_id != app_id)
     {
         tp_app_id = app_id;
-        AppInfoTableEntry* entry =
+        const AppInfoTableEntry* entry =
             odp_ctxt.get_app_info_mgr().get_app_info_entry(tp_app_id);
         if (entry)
         {
@@ -1317,7 +1319,7 @@ void AppIdSession::set_tp_payload_app_id(const Packet& p, AppidSessionDirection 
     if (tp_payload_app_id != app_id)
     {
         tp_payload_app_id = app_id;
-        AppInfoTableEntry* entry =
+        const AppInfoTableEntry* entry =
             odp_ctxt.get_app_info_mgr().get_app_info_entry(tp_payload_app_id);
         if (entry)
         {

@@ -54,7 +54,7 @@ RNAFlow::~RNAFlow()
         clientht_loc->remove_flow(this);
 }
 
-void RNAFlow::clear_ht(HostTracker& ht)
+void RNAFlow::clear_ht(const HostTracker& ht)
 {
     lock_guard<mutex> lck(rna_mutex);
     if (&ht == clientht.get())

@@ -33,7 +33,7 @@
 using namespace snort;
 using namespace std;
 
-static bool handle_protocol(SshEvent& event, SshAppIdInfo* fd)
+static bool handle_protocol(const SshEvent& event, SshAppIdInfo* fd)
 {
     // FIXIT-L
     // There isn't any real specification on what separates the vendor name from version number. It
@@ -104,7 +104,7 @@ static void client_success(const SshAppIdInfo& fd, AppIdSession& asd, AppidChang
     asd.set_client_inferred_service_id(APP_ID_SSH);
 }
 
-static void service_success(SshAppIdInfo& fd, const Packet& p, AppIdSession& asd,
+static void service_success(const SshAppIdInfo& fd, const Packet& p, AppIdSession& asd,
     AppidChangeBits& change_bits)
 {
     int16_t group;
@@ -132,7 +132,7 @@ static void service_success(SshAppIdInfo& fd, const Packet& p, AppIdSession& asd
     asd.set_service_detected();
 }
 
-static void handle_success(SshEventFlowData& data, const SshEvent& event,
+static void handle_success(const SshEventFlowData& data, const SshEvent& event,
     AppIdSession& asd, AppidChangeBits& change_bits)
 {
     service_success(data.service_info, *event.get_packet(), asd, change_bits);

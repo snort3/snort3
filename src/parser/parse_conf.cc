@@ -300,6 +300,7 @@ void add_service_to_otn(SnortConfig* sc, OptTreeNode* otn, const char* svc_name)
     }
 }
 
+// cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
 ListHead* get_rule_list(SnortConfig* sc, const char* s)
 {
     const RuleListNode* p = sc->rule_lists;

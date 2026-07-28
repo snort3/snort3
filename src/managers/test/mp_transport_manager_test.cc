@@ -82,15 +82,15 @@ void show_stats(PegCount*, const PegInfo*, unsigned, const char*) { }
 void show_stats(PegCount*, const PegInfo*, const std::vector<unsigned>&, const char*, FILE*) { }
 // LCOV_EXCL_STOP
 
-static void mock_transport_tinit(MPTransport* t)
+static void mock_transport_tinit(MPTransport*)
 {
     test_transport_tinit_calls++;
 }
-static void mock_transport_tterm(MPTransport* t)
+static void mock_transport_tterm(MPTransport*)
 {
     test_transport_tterm_calls++;
 }
-static MPTransport* mock_transport_ctor(Module* m)
+static MPTransport* mock_transport_ctor(Module*)
 {   
     test_transport_ctor_calls++;
     return new MockTransport();
