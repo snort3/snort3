@@ -43,6 +43,9 @@ class FileMemPool;
 namespace snort
 {
 class FileInfo;
+#ifdef UNIT_TEST
+struct FileCaptureTestAccess;
+#endif
 
 struct FileCaptureBlock
 {
@@ -83,6 +86,9 @@ public:
     // Log file capture mempool usage
     static void print_mem_usage();
 
+    // Wait until all asynchronously stored files have been released
+    static void flush();
+
     // Exit file capture, release all file capture memory etc,
     // this must be called when snort exits
     static void exit();
@@ -102,6 +108,10 @@ public:
 
 private:
 
+#ifdef UNIT_TEST
+    friend struct FileCaptureTestAccess;
+#endif
+
     static void init_mempool(int64_t max_file_mem, int64_t block_size);
     static void writer_thread();
     inline FileCaptureBlock* create_file_buffer();
@@ -115,6 +125,7 @@ private:
     static std::condition_variable capture_cv;
     static std::thread* file_storer;
     static std::queue<FileCapture*> files_waiting;
+    static bool file_storing;
     static bool running;
 
     uint64_t capture_size;
@@ -131,4 +142,3 @@ private:
 }
 
 #endif
-

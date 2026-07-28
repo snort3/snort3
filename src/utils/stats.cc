@@ -31,6 +31,7 @@
 
 #include "control/control.h"
 #include "detection/detection_engine.h"
+#include "file_api/file_capture.h"
 #include "file_api/file_stats.h"
 #include "filters/sfthreshold.h"
 #include "framework/module.h"
@@ -398,6 +399,9 @@ void DropStats(ControlConn* ctrlcon, bool already_accumulated,
 // extra timing stats. They always use text format for output.
 void PrintStatistics()
 {
+    // Captured files are stored asynchronously.  Drain the writer before taking the final
+    // memory-pool snapshot so exit statistics do not depend on writer scheduling.
+    FileCapture::flush();
     DropStats();
     timing_stats();
 

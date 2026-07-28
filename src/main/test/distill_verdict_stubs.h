@@ -24,6 +24,7 @@
 #include "detection/detection_engine.h"
 #include "detection/ips_context.h"
 #include "detection/tag.h"
+#include "file_api/file_capture.h"
 #include "file_api/file_service.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
@@ -212,6 +213,7 @@ const uint8_t* PacketManager::encode_response(TcpResponse, EncodeFlags, const Pa
 uint16_t PacketManager::encode_get_max_payload(const Packet*) { return 0; }
 const uint8_t* PacketManager::encode_reject(UnreachResponse, EncodeFlags, const Packet*, uint32_t&)
 { return nullptr; }
+void FileCapture::flush() { }
 void FileService::thread_init() { }
 void FileService::thread_term() { }
 void ErrorMessage(const char*,...) { }

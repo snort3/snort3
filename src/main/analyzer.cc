@@ -37,6 +37,7 @@
 #include "detection/ips_context.h"
 #include "detection/event_trace.h"
 #include "detection/tag.h"
+#include "file_api/file_capture.h"
 #include "file_api/file_service.h"
 #include "filters/detection_filter.h"
 #include "filters/rate_filter.h"
@@ -720,6 +721,7 @@ void Analyzer::term()
     InspectorManager::thread_term();
     PluginManager::thread_term(false);
     memory::MemoryCap::thread_term();
+    FileCapture::flush();
     ModuleManager::accumulate(sc);
 
     EventManager::close_outputs();
@@ -1124,4 +1126,3 @@ void Analyzer::rotate()
 {
     DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::THREAD_ROTATE, nullptr);
 }
-
