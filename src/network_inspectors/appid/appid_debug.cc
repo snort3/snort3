@@ -75,7 +75,7 @@ inline void appid_log(const Packet* p, const uint8_t log_level, const char* form
             break;
 
         case TRACE_DEBUG_LEVEL:
-            if (p) //called from packet threads
+            if (p)
             {
                 if (appidDebug and appidDebug->is_active())
                 {
@@ -85,7 +85,7 @@ inline void appid_log(const Packet* p, const uint8_t log_level, const char* form
 
                 trace_logf(TRACE_DEBUG_LEVEL, appid_trace, DEFAULT_TRACE_OPTION_ID, p, format, dup_args);
             }
-            else //called from control thread
+            else if (appidDebug and appidDebug->is_enabled())
                 LogMessage(format, args);
             break;
 

@@ -203,6 +203,9 @@ void AppIdInspector::third_party_tinit()
 
 void AppIdInspector::tinit()
 {
+    if (appidDebug and config->log_all_sessions)
+        appidDebug->set_enabled(true);
+
     appid_pub_id = cached_global_pub_id;
     appid_mute = PacketTracer::get_mute();
 
@@ -221,8 +224,6 @@ void AppIdInspector::tinit()
     pkt_thread_tp_appid_ctxt = ctxt.get_tp_appid_ctxt();
     if (pkt_thread_tp_appid_ctxt)
         third_party_tinit();
-    if (appidDebug and config->log_all_sessions)
-        appidDebug->set_enabled(true);
     AppIdHAManager::tinit();
     ServiceDiscovery::set_thread_local_ftp_service();
 }

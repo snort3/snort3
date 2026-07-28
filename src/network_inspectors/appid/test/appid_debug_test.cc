@@ -605,6 +605,7 @@ TEST(appid_debug, appidDebug_logging)
     uint32_t address_space_id = 0;
     // The session...
     session.initiator_port = dport;    // session initiator is now dst
+    appidDebug->set_enabled(true);     // enable appidDebug for debug messages
     // activate()
     appidDebug->activate(sip.get_ip6_ptr(), dip.get_ip6_ptr(), sport, dport,
         protocol, 4, address_space_id, &session, true, 0);
@@ -622,13 +623,13 @@ TEST(appid_debug, appidDebug_logging)
     delete &session.get_api();
 }
 
-TEST(appid_debug, trace_on_logging)
+TEST(appid_debug, trace_on_logging_without_packet)
 {
-    appid_trace_enabled = true; // Enable appid_trace for debug messages
+    appid_trace_enabled = true; // Enable appid_trace for trace messages
 
     memset(test_log, 0, sizeof(test_log));
-    APPID_LOG(nullptr , TRACE_DEBUG_LEVEL, "TRACE_DEBUG_LEVEL log message");
-    STRCMP_EQUAL(test_log, "TRACE_DEBUG_LEVEL log message");
+    APPID_LOG(nullptr, TRACE_DEBUG_LEVEL, "TRACE_DEBUG_LEVEL log message");
+    STRCMP_EQUAL(test_log, "");
 
     appid_trace_enabled = false; // Disable appid_trace
 }
