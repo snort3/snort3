@@ -305,7 +305,7 @@ FileContext* FileFlows::get_file_context(
     if (!context and to_create)
     {
         // If we have reached the max file per flow limit, alert and increment the peg count
-        FileConfig* fc = get_file_config(SnortConfig::get_conf());
+        const FileConfig* fc = get_file_config(SnortConfig::get_conf());
         if (partially_processed_contexts.size() == fc->max_files_per_flow)
         {
             FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, GET_CURRENT_PACKET,

@@ -277,6 +277,7 @@ TEST(ips_regex_module, config_fail_regex)
 TEST_GROUP(ips_regex_option)
 {
     Module* mod = nullptr;
+    // cppcheck-suppress constVariablePointer
     IpsOption* opt = nullptr;
     bool do_cleanup = false;
 
@@ -356,6 +357,7 @@ TEST(ips_regex_option, no_match_delta)
 TEST_GROUP(ips_regex_option_relative)
 {
     Module* mod = nullptr;
+    // cppcheck-suppress constVariablePointer
     IpsOption* opt = nullptr;
     bool do_cleanup = false;
 
@@ -399,4 +401,3 @@ int main(int argc, char** argv)
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

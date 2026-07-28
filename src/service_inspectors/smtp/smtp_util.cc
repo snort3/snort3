@@ -115,7 +115,7 @@ void SMTP_LogFuncs(SmtpProtoConf* config, Packet* p, MimeSession* mime_ssn)
     if (!mime_ssn)
         return;
 
-    MailLogState* log = mime_ssn->get_log_state();
+    const MailLogState* log = mime_ssn->get_log_state();
 
     if (!log || !config)
         return;
@@ -140,4 +140,3 @@ void SMTP_LogFuncs(SmtpProtoConf* config, Packet* p, MimeSession* mime_ssn)
         Stream::set_extra_data(p->flow, p, config->xtra_ehdrs_id);
     }
 }
-

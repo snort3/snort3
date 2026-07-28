@@ -282,7 +282,7 @@ static void mod_dtor(Module* m)
 
 static Inspector* fl_ctor(Module* m)
 {
-    FileLogModule* fl_module = static_cast<FileLogModule*>(m);
+    const FileLogModule* fl_module = static_cast<FileLogModule*>(m);
     return new FileLog(fl_module->config);
 }
 

@@ -136,7 +136,7 @@ static inline int _netmask_str_to_bit_count(char* mask, int family)
 {
     uint32_t buf[4] = {};
     int bits, i, nBits, nBytes;
-    uint8_t* bytes = reinterpret_cast<uint8_t*>(buf);
+    const uint8_t* bytes = reinterpret_cast<uint8_t*>(buf);
 
     // Mask not validated.
     // Only sfip_pton should be using this function, and using it safely.

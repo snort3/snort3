@@ -180,7 +180,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* icmp_id_ctor(Module* p, IpsInfo&)
 {
-    IcmpIdModule* m = static_cast<IcmpIdModule*>(p);
+    const IcmpIdModule* m = static_cast<IcmpIdModule*>(p);
     return new IcmpIdOption(m->data);
 }
 
@@ -223,4 +223,3 @@ const BaseApi* ips_icmp_id[] =
     &icmp_id_api.base,
     nullptr
 };
-

@@ -215,7 +215,7 @@ RpcServiceDetector::RpcServiceDetector(ServiceDiscovery* sd)
     proto = IpProtocol::TCP;
     detectorType = DETECTOR_TYPE_DECODER;
 
-    struct rpcent* rpc;
+    const struct rpcent* rpc;
     RPCProgram* prog;
 
     if (!rpc_programs)

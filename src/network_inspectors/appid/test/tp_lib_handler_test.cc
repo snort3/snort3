@@ -91,7 +91,9 @@ TEST(tp_lib_handler, load_unload)
     config.tp_appid_config="./tp.config";
 
     tph = TPLibHandler::get();
-    ThirdPartyAppIdContext* tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(config, ctxt.get_odp_ctxt());
+    // cppcheck-suppress constVariablePointer
+    ThirdPartyAppIdContext* tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(
+        config, ctxt.get_odp_ctxt());
     CHECK_TRUE(tp_appid_ctxt != nullptr);
 
     TPLibHandler::tp_mp_init(*tp_appid_ctxt);
@@ -135,7 +137,8 @@ TEST(tp_lib_handler, load_error)
     // Trigger load error:
     config.tp_appid_path="nonexistent.so";
     TPLibHandler::get();
-    ThirdPartyAppIdContext* tp_appid_ctxt = TPLibHandler::create_tp_appid_ctxt(config, ctxt.get_odp_ctxt());
+    const ThirdPartyAppIdContext* tp_appid_ctxt =
+        TPLibHandler::create_tp_appid_ctxt(config, ctxt.get_odp_ctxt());
     CHECK_TRUE(tp_appid_ctxt == nullptr);
     TPLibHandler::pfini();
 }

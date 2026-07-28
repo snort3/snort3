@@ -73,6 +73,7 @@ TEST_GROUP(relative_length_only)
 {
     // 4 byte length followed by 3 bytes data
     const uint8_t data[7] = { 0, 1, 2, 3, 4, 5, 6 };  // cppcheck-suppress unreadVariable
+    // cppcheck-suppress constVariablePointer
     StreamSplitter* ss = nullptr;
 
     void setup() override
@@ -154,6 +155,7 @@ TEST(relative_length_only, n5)
 TEST_GROUP(relative_offset_length)
 {
     const uint8_t data[10] = { 9, 8, 7, 0, 1, 2, 3, 4, 5, 6 };  // cppcheck-suppress unreadVariable
+    // cppcheck-suppress constVariablePointer
     StreamSplitter* ss = nullptr;
 
     void setup() override
@@ -253,6 +255,7 @@ TEST(relative_offset_length, n8)
 TEST_GROUP(various)
 {
     const uint8_t data[8] = { 9, 8, 0, 1, 2, 3, 4, 5 };  // cppcheck-suppress unreadVariable
+    // cppcheck-suppress constVariablePointer
     StreamSplitter* ss = nullptr;
 
     void teardown() override
@@ -327,6 +330,7 @@ TEST_GROUP(multi_flush)
     // cppcheck-suppress unreadVariable
     const uint8_t data[17] = { 'O', 'O', 3, 'D', 'D', 'D', 'O', 'O', 1, 'D', 'O', 'O', 4, 'D', 'D', 'D', 'D' };
 // __STRDUMP_ENABLE__
+    // cppcheck-suppress constVariablePointer
     StreamSplitter* ss = nullptr;
 
     void setup() override
@@ -371,4 +375,3 @@ int main(int argc, char** argv)
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

@@ -251,7 +251,9 @@ TEST_GROUP(http2_hpack_decoder_decode_header_buffers)
 {
     Http2EventGen* const events[2] = { new Http2EventGen, new Http2EventGen };
     Http2Infractions* const infractions[2] = { new Http2Infractions, new Http2Infractions };
+    // cppcheck-suppress constVariablePointer
     Http2HpackDecoder* hpack_decoder;
+    // cppcheck-suppress constVariablePointer
     Http2StartLine* start_client_line;
     Http2FlowData* session_data = new Http2FlowData(nullptr);
 

@@ -94,7 +94,7 @@ IpsOption::EvalStatus CipStatusOption::eval(Cursor&, Packet* p)
     if (!fd)
         return NO_MATCH;
 
-    CipSessionData* session_data = &fd->session;
+    const CipSessionData* session_data = &fd->session;
 
     if (session_data->current_data.cip_message_type != CipMessageTypeExplicit
         || session_data->current_data.cip_msg.is_cip_request)
@@ -173,7 +173,7 @@ static void cip_status_mod_dtor(Module* m)
 
 static IpsOption* cip_status_ctor(Module* p, IpsInfo&)
 {
-    CipStatusModule* m = static_cast<CipStatusModule*>(p);
+    const CipStatusModule* m = static_cast<CipStatusModule*>(p);
     return new CipStatusOption(m->cip_status);
 }
 

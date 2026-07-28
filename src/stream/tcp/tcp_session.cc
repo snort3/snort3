@@ -376,6 +376,7 @@ void TcpSession::init_session_on_synack(TcpSegmentDescriptor& tsd)
 void TcpSession::update_timestamp_tracking(TcpSegmentDescriptor& tsd)
 {
     TcpStreamTracker* listener = tsd.get_listener();
+    // cppcheck-suppress constVariablePointer
     TcpStreamTracker* talker = tsd.get_talker();
 
     talker->set_tf_flags(listener->normalizer.get_timestamp_flags());
@@ -390,7 +391,7 @@ void TcpSession::update_timestamp_tracking(TcpSegmentDescriptor& tsd)
 bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
 {
     TcpStreamTracker* listener = tsd.get_listener();
-    TcpStreamTracker* talker = tsd.get_talker();
+    const TcpStreamTracker* talker = tsd.get_talker();
     const tcp::TCPHdr* tcph = tsd.get_tcph();
 
     if ( (listener->get_tcp_state() == TcpStreamTracker::TCP_CLOSED)

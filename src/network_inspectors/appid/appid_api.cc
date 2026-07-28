@@ -61,7 +61,7 @@ const char* AppIdApi::get_application_name(AppId app_id, OdpContext& odp_ctxt)
 const char* AppIdApi::get_application_name(AppId app_id, const Flow& flow)
 {
     const char* app_name = nullptr;
-    AppIdSession* asd = get_appid_session(flow);
+    const AppIdSession* asd = get_appid_session(flow);
     if (asd)
     {
         // Skip sessions using old odp context after odp reload
@@ -80,7 +80,7 @@ const char* AppIdApi::get_application_name(AppId app_id, const Flow& flow)
 const char* AppIdApi::get_application_name(const Flow& flow, bool from_client)
 {
     const char* app_name = nullptr;
-    AppIdSession* asd = get_appid_session(flow);
+    const AppIdSession* asd = get_appid_session(flow);
     if (asd)
     {
         // Skip sessions using old odp context after odp reload
@@ -236,7 +236,7 @@ const AppIdSessionApi* AppIdApi::get_appid_session_api(const Flow& flow) const
 
 bool AppIdApi::is_inspection_needed(const Inspector& inspector) const
 {
-    AppIdInspector* appid_inspector = static_cast<AppIdInspector*>(
+    const AppIdInspector* appid_inspector = static_cast<AppIdInspector*>(
         InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
 
     if (!appid_inspector)
@@ -253,7 +253,7 @@ bool AppIdApi::is_inspection_needed(const Inspector& inspector) const
 
 const char* AppIdApi::get_appid_detector_directory() const
 {
-    AppIdInspector* inspector = static_cast<AppIdInspector*>(
+    const AppIdInspector* inspector = static_cast<AppIdInspector*>(
         InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
     if (!inspector)
         return "";

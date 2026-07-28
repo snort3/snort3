@@ -126,7 +126,7 @@ IpsOption::EvalStatus S7commplusFuncOption::eval(Cursor&, Packet* p)
     if ( !p->is_full_pdu() )
         return NO_MATCH;
 
-    S7commplusFlowData* mfd = static_cast<S7commplusFlowData*>(
+    const S7commplusFlowData* mfd = static_cast<S7commplusFlowData*>(
         p->flow->get_flow_data(S7commplusFlowData::inspector_id));
 
     if ( mfd and func == mfd->ssn_data.s7commplus_function )
@@ -198,7 +198,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    S7commplusFuncModule* mod = static_cast<S7commplusFuncModule*>(m);
+    const S7commplusFuncModule* mod = static_cast<S7commplusFuncModule*>(m);
     return new S7commplusFuncOption(mod->func);
 }
 

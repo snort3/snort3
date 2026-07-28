@@ -112,7 +112,7 @@ void dnp3_reassembly_reset(dnp3_reassembly_data_t* rdata)
 */
 static bool dnp3_reassemble_transport(dnp3_reassembly_data_t* rdata, char* buf, uint16_t buflen)
 {
-    dnp3_transport_header_t* trans_header;
+    const dnp3_transport_header_t* trans_header;
 
     if (rdata == nullptr || buf == nullptr || buflen < sizeof(dnp3_transport_header_t) ||
         (buflen > DNP3_MAX_TRANSPORT_LEN))
@@ -224,7 +224,7 @@ static bool dnp3_process_application(dnp3_session_data_t* session)
        Only the outstation sends Internal Indications. */
     if (session->direction == DNP3_CLIENT)
     {
-        dnp3_app_request_header_t* request = nullptr;
+        const dnp3_app_request_header_t* request = nullptr;
         rdata = &(session->client_rdata);
 
         if (rdata->buflen < sizeof(dnp3_app_request_header_t))

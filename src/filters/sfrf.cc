@@ -185,6 +185,7 @@ int SFRF_Alloc(unsigned int memcap)
 int SFRF_ConfigAdd(SnortConfig*, RateFilterConfig* rf_config, tSFRFConfigNode* cfgNode)
 {
     GHash* genHash;
+    // cppcheck-suppress constVariablePointer
     tSFRFSidNode* pSidNode;
     tSFRFConfigNode* pNewConfigNode;
     tSFRFGenHashKey key = { 0,0 };
@@ -345,7 +346,7 @@ int SFRF_TestThreshold(RateFilterConfig* config, unsigned gid, unsigned sid, Pol
     const SfIp* sip, const SfIp* dip, time_t curTime, SFRF_COUNT_OPERATION op)
 {
     GHash* genHash;
-    tSFRFSidNode* pSidNode;
+    const tSFRFSidNode* pSidNode;
     tSFRFConfigNode* cfgNode;
     int newStatus = -1;
     int status = -1;
@@ -436,7 +437,7 @@ int SFRF_TestThreshold(RateFilterConfig* config, unsigned gid, unsigned sid, Pol
 
 void SFRF_ShowObjects(RateFilterConfig* config)
 {
-    tSFRFSidNode* pSidnode;
+    const tSFRFSidNode* pSidnode;
     tSFRFConfigNode* cfgNode;
     unsigned int gid;
     GHashNode* sidHashNode;

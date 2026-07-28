@@ -167,7 +167,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ber_data_ctor(Module* p, IpsInfo&)
 {
-    BerDataModule* m = static_cast<BerDataModule*>(p);
+    const BerDataModule* m = static_cast<BerDataModule*>(p);
     return new BerDataOption(m->type);
 }
 
@@ -210,4 +210,3 @@ const BaseApi* ips_ber_data[] =
     &ber_data_api.base,
     nullptr
 };
-

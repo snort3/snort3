@@ -83,7 +83,7 @@ int ipset_add(IPSET* ipset, SfCidr* ip, void* vport, int notflag)
         return -1;
 
     {
-        PORTSET* portset = (PORTSET*)vport;
+        const PORTSET* portset = (PORTSET*)vport;
         IP_PORT* p = (IP_PORT*)snort_calloc(sizeof(IP_PORT));
 
         p->ip.set(*ip);
@@ -101,7 +101,7 @@ int ipset_add(IPSET* ipset, SfCidr* ip, void* vport, int notflag)
 
 int ipset_contains(IPSET* ipc, const SfIp* ip, void* port)
 {
-    PORTRANGE* pr;
+    const PORTRANGE* pr;
     unsigned short portu;
     IP_PORT* p;
 
@@ -329,7 +329,7 @@ static int ip_parse(char* ipstr, SfCidr* ip, char* not_flag, PORTSET* portset, c
 
     /* Just to get the IP string out of the way */
     char* lasts = nullptr;
-    char* ip_str = strtok_r(ipstr, "#", &lasts);
+    const char* ip_str = strtok_r(ipstr, "#", &lasts);
 
     if (ip->set(ip_str) != SFIP_SUCCESS)
         return -1;
@@ -456,4 +456,3 @@ int ipset_parse(IPSET* ipset, const char* ipstr)
 
     return 0;
 }
-

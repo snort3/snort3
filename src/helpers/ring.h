@@ -95,7 +95,7 @@ bool Ring<T>::pop()
 template <typename T>
 T Ring<T>::get(T v)
 {
-    T* p = read();
+    const T* p = read();
     if ( !p )
         return v;
     v = *p;
@@ -143,4 +143,3 @@ bool Ring<T>::empty()
 }
 
 #endif
-

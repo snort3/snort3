@@ -133,7 +133,7 @@ IpsOption::EvalStatus ModbusFuncOption::eval(Cursor&, Packet* p)
     if ( !p->is_full_pdu() )
         return NO_MATCH;
 
-    ModbusFlowData* mfd = static_cast<ModbusFlowData*>(
+    const ModbusFlowData* mfd = static_cast<ModbusFlowData*>(
         p->flow->get_flow_data(ModbusFlowData::inspector_id));
 
     if ( mfd and func == mfd->ssn_data.func )
@@ -204,7 +204,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    ModbusFuncModule* mod = static_cast<ModbusFuncModule*>(m);
+    const ModbusFuncModule* mod = static_cast<ModbusFuncModule*>(m);
     return new ModbusFuncOption(mod->func);
 }
 

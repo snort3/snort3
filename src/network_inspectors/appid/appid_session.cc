@@ -391,7 +391,7 @@ void AppIdSession::sync_with_snort_protocol_id(AppId newAppId, Packet* p, AppidC
             break;
     }
 
-    AppInfoTableEntry* entry = odp_ctxt.get_app_info_mgr().get_app_info_entry(newAppId);
+    const AppInfoTableEntry* entry = odp_ctxt.get_app_info_mgr().get_app_info_entry(newAppId);
     if (!entry)
         return;
 
@@ -1334,7 +1334,7 @@ void AppIdSession::publish_shadow_traffic_event(const uint32_t& shadow_traffic_b
 
     const char* app_name;
     std::string str_print;
-    Packet* curr_packet = nullptr;
+    const Packet* curr_packet = nullptr;
 
     if (shadow_traffic_bits & ShadowTraffic_Type_Domain_Fronting)
     {
@@ -1404,7 +1404,7 @@ void AppIdSession::publish_appid_event(AppidChangeBits& change_bits, const Packe
 
     if (consumed_ha_data)
     {
-        AppIdHttpSession* hsession = get_http_session();
+        const AppIdHttpSession* hsession = get_http_session();
         if (hsession)
         {
             if (hsession->get_field(MISC_URL_FID))

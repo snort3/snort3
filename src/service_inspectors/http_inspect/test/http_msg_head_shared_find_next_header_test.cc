@@ -205,6 +205,7 @@ TEST_GROUP(find_next_header)
     Flow* flow = nullptr;
     HttpParaList params;
     HttpFlowData* flow_data = nullptr;
+    // cppcheck-suppress constVariablePointer
     HttpMsgHeadTest* msg = nullptr;
     uint8_t dummy = 0;
 

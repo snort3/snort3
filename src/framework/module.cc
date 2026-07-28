@@ -71,7 +71,7 @@ Module::Module(const char* s, const char* h, const Parameter* p, bool is_list)
 
 void Module::clear_global_active_counters()
 {
-    PegCount* p = get_counts();
+    const PegCount* p = get_counts();
 
     if ( !p )
         return;

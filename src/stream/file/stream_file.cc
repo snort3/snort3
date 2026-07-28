@@ -75,7 +75,7 @@ static void mod_dtor(Module* m)
 
 static Inspector* file_ctor(Module* m)
 {
-    StreamFileModule* mod = static_cast<StreamFileModule*>(m);
+    const StreamFileModule* mod = static_cast<StreamFileModule*>(m);
     return new StreamFile(mod->upload);
 }
 

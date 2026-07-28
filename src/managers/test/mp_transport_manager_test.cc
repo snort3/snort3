@@ -182,7 +182,7 @@ TEST(mp_transport_manager_test_group, instantiate_transport_object)
 
 TEST(mp_transport_manager_test_group, get_transport_object)
 {
-    MPTransport* transport = MPTransportManager::get_transport(MODULE_NAME);
+    const MPTransport* transport = MPTransportManager::get_transport(MODULE_NAME);
     CHECK(transport != nullptr);
 
     transport = MPTransportManager::get_transport("non_existent_transport");
@@ -213,4 +213,3 @@ int main(int argc, char** argv)
     int return_value = CommandLineTestRunner::RunAllTests(argc, argv);
     return return_value;
 }
-

@@ -439,7 +439,7 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
             else if ( policy_type == INSPECTION_KEY )
             {
                 Shell* sh = new Shell(policy_filename.c_str());
-                InspectionPolicy* inspection_policy = sc->policy_map->add_inspection_shell(sh);
+                const InspectionPolicy* inspection_policy = sc->policy_map->add_inspection_shell(sh);
                 binding.use.network_index = get_network_parse_policy()->policy_id;
                 binding.use.inspection_index = inspection_policy->policy_id;
                 sh->set_policy_indices(binding.use.network_index, binding.use.inspection_index, binding.use.ips_index);
@@ -447,7 +447,7 @@ bool BinderModule::end(const char* fqn, int idx, SnortConfig* sc)
             else if ( policy_type == IPS_KEY )
             {
                 Shell* sh = new Shell(policy_filename.c_str());
-                IpsPolicy* ips_policy = sc->policy_map->add_ips_shell(sh);
+                const IpsPolicy* ips_policy = sc->policy_map->add_ips_shell(sh);
                 binding.use.ips_index = ips_policy->policy_id;
                 sh->set_policy_indices(binding.use.network_index, binding.use.inspection_index, binding.use.ips_index);
             }

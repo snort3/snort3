@@ -251,7 +251,7 @@ void Extractor::show(const SnortConfig*) const
     ConfigLogger::log_value("pick_by_default", cfg.pick_by_default ? "pick" : "skip");
 
     bool log_header = true;
-    for (const auto& s : services)
+    for (const auto* s : services)
     {
         if (log_header)
         {

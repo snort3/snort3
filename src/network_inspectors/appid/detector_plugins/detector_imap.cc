@@ -630,7 +630,7 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
         {
             /*processing tags */
             char* p = tag;
-            char* p_end = p + sizeof(tag) - 1;
+            const char* p_end = p + sizeof(tag) - 1;
             for (; (s < end) && isImapTagChar(*s); s++)
             {
                 if (p < p_end)
@@ -700,7 +700,7 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
                 strncpy(fd->imapCmdTag, tag, sizeof(fd->imapCmdTag));
                 {
                     char* p = fd->username;
-                    char* p_end = p + sizeof(fd->username) - 1;
+                    const char* p_end = p + sizeof(fd->username) - 1;
 
                     if (*s == '"')
                     {
@@ -885,7 +885,7 @@ int ImapServiceDetector::validate(AppIdDiscoveryArgs& args)
         return APPID_NOMATCH;
 
     ImapDetectorData* dd;
-    ImapServiceData* id;
+    const ImapServiceData* id;
 
     if (args.dir != APP_ID_FROM_RESPONDER)
         goto inprocess;

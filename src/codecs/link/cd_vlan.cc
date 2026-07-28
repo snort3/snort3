@@ -196,7 +196,7 @@ static void mod_dtor(Module* m)
 
 static Codec* ctor(Module* m)
 {
-    VlanModule* mod = static_cast<VlanModule*>(m);
+    const VlanModule* mod = static_cast<VlanModule*>(m);
     return new VlanCodec(mod ? mod->get_tpids() : default_tpids);
 }
 

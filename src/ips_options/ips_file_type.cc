@@ -89,7 +89,7 @@ IpsOption::EvalStatus FileTypeOption::eval(Cursor&, Packet* pkt)
     if (!files)
         return NO_MATCH;
 
-    FileContext* file = files->get_current_file_context();
+    const FileContext* file = files->get_current_file_context();
 
     if (!file)
         return NO_MATCH;

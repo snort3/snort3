@@ -387,7 +387,7 @@ static void detection_option_tree_evaluate(detection_option_tree_root_t* root,
 static void rule_tree_match(
     IpsContext* context, void* user, void* tree, int index, void* neg_list)
 {
-    PMX* pmx = (PMX*)user;
+    const PMX* pmx = (PMX*)user;
     Packet* pkt = context->packet;
 
     print_pattern(pmx->pmd, pkt);
@@ -613,7 +613,7 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
 
     unsigned tcnt = 0;
     int res = 0;
-    EventQueueConfig* eq = p->context->conf->event_queue_config;
+    const EventQueueConfig* eq = p->context->conf->event_queue_config;
 
     for ( unsigned i = 0; i < p->context->conf->num_rule_types; i++ )
     {
@@ -808,7 +808,7 @@ void MpseStash::process(IpsContext* context, MatchStore& store)
 
 void fp_set_context(IpsContext& c)
 {
-    FastPatternConfig* fp = c.conf->fast_pattern_config;
+    const FastPatternConfig* fp = c.conf->fast_pattern_config;
     c.stash = new MpseStash(*fp);
     c.otnx = (OtnxMatchData*)snort_calloc(sizeof(OtnxMatchData));
     c.otnx->matchInfo = (MatchInfo*)snort_calloc(MAX_NUM_RULE_TYPES, sizeof(MatchInfo));
@@ -859,7 +859,7 @@ static inline int batch_search(
 static int fp_search(RuleGroup* port_group, Packet* p, bool srvc)
 {
     p->packet_flags |= PKT_FAST_PAT_EVAL;
-    Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
+    const Inspector* gadget = p->flow ? p->flow->gadget : nullptr;
 
     debug_logf(detection_trace, TRACE_RULE_EVAL, p, "Fast pattern search, packet section %s\n",
         section_to_str[p->sect]);
@@ -980,7 +980,7 @@ static inline void eval_nfp(
     const uint8_t* tmp_payload = nullptr;
     uint16_t tmp_dsize = 0;
 
-    FastPatternConfig* fp = p->context->conf->fast_pattern_config;
+    const FastPatternConfig* fp = p->context->conf->fast_pattern_config;
 
     if (ip_rule)
     {
@@ -1357,7 +1357,7 @@ static inline int fp_do_actions(OtnxMatchData* omd, Packet* p)
             std::sort(omd->matchInfo[i].MatchArray, omd->matchInfo[i].MatchArray + omd->matchInfo[i].iMatchCount,
                 SortOrderByContentLength());
             const OptTreeNode* otn = omd->matchInfo[i].MatchArray[0];
-            RuleTreeNode* rtn = getRtnFromOtn(otn);
+            const RuleTreeNode* rtn = getRtnFromOtn(otn);
             IpsAction* act = get_ips_policy()->get_action(rtn->action, rtn->action_selector);
             if ( !act )
                 continue;

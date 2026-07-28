@@ -104,7 +104,7 @@ IpsOption::EvalStatus IpProtoOption::eval(Cursor&, Packet* p)
 {
     RuleProfile profile(ipProtoPerfStats);
 
-    IpProtoData* ipd = &config;
+    const IpProtoData* ipd = &config;
     const IpProtocol ip_proto = p->get_ip_proto_next();
 
     switch (ipd->comparison_flag)
@@ -185,7 +185,7 @@ static void ip_proto_parse(const char* data, IpProtoData* ds_ptr)
     }
     else
     {
-        struct protoent* pt = getprotobyname(data);  // main thread only
+        const struct protoent* pt = getprotobyname(data);  // main thread only
 
         if ( pt and pt->p_proto < NUM_IP_PROTOS )
         {
@@ -261,7 +261,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ip_proto_ctor(Module* p, IpsInfo&)
 {
-    IpProtoModule* m = static_cast<IpProtoModule*>(p);
+    const IpProtoModule* m = static_cast<IpProtoModule*>(p);
     return new IpProtoOption(m->data);
 }
 
@@ -304,4 +304,3 @@ const BaseApi* ips_ip_proto[] =
     &ip_proto_api.base,
     nullptr
 };
-

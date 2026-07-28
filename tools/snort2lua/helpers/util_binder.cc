@@ -357,7 +357,7 @@ void print_binder_priorities()
 
     stable_sort(binders.begin(), binders.end());
 
-    for ( auto& b : binders )
+    for ( const auto& b : binders )
     {
         if ( b->has_ips_policy_id() )
             cout << "ips_policy_id ";

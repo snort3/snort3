@@ -71,7 +71,7 @@ static std::string to_string(const sfip_var_t* list)
     for (auto node = list->head; node; node = node->next)
     {
         SfIpString ip_str;
-        auto ip = node->ip;
+        const auto* ip = node->ip;
 
         ip->get_addr()->ntop(ip_str);
         ipset += std::string(ip_str);
@@ -764,7 +764,7 @@ void Binder::handle_flow_setup(Flow& flow, bool standby)
     // FIXIT-M logic for applying information from the host attribute table likely doesn't belong
     // in binder, but it *does* need to occur before the binding lookup (for service information)
     HostAttriInfo host;
-    HostAttriInfo* p_host = nullptr;
+    const HostAttriInfo* p_host = nullptr;
 
     if ( HostAttributesManager::get_host_attributes(flow.server_ip, flow.pkt_type, flow.server_port, &host) )
         p_host = &host;

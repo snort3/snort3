@@ -101,7 +101,7 @@ IpsOption::EvalStatus SslStateOption::eval(Cursor&, Packet* pkt)
     if (!pkt->flow)
         return NO_MATCH;
 
-    SSLData* sd = SslBaseFlowData::get_ssl_session_data(pkt->flow);
+    const SSLData* sd = SslBaseFlowData::get_ssl_session_data(pkt->flow);
 
     if (!sd)
         return NO_MATCH;
@@ -237,7 +237,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ssl_state_ctor(Module* p, IpsInfo&)
 {
-    SslStateModule* m = static_cast<SslStateModule*>(p);
+    const SslStateModule* m = static_cast<SslStateModule*>(p);
     return new SslStateOption(m->ssod);
 }
 

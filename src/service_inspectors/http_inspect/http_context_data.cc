@@ -46,7 +46,7 @@ HttpMsgSection* HttpContextData::get_snapshot(const Flow* flow, IpsContext* cont
         return static_cast<HttpMsgSection*>(flow->stream_intf->get_hi_msg_section(flow));
     }
 
-    HttpContextData* hcd = static_cast<HttpContextData*>(
+    const HttpContextData* hcd = static_cast<HttpContextData*>(
         DetectionEngine::get_data(HttpContextData::ips_id, context));
 
     if ( !hcd )

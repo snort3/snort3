@@ -49,7 +49,7 @@ bool get_buf_dnp3_data(snort::Packet* p, snort::InspectionBuffer& b)
     if ((p->has_tcp_data() && !p->is_full_pdu()) || !p->flow || !p->dsize)
         return false;
 
-    Dnp3FlowData* fd = static_cast<Dnp3FlowData*>(
+    const Dnp3FlowData* fd = static_cast<Dnp3FlowData*>(
         p->flow->get_flow_data(Dnp3FlowData::inspector_id));
     if (!fd)
         return false;

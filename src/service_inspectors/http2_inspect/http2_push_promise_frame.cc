@@ -91,7 +91,7 @@ bool Http2PushPromiseFrame::valid_sequence(Http2Enums::StreamState)
     }
 
     // Alert but continue processing if invalid sequence on stream push_promise was sent on
-    Http2Stream* const stream_sent_on = session_data->find_current_stream(source_id);
+    const Http2Stream* const stream_sent_on = session_data->find_current_stream(source_id);
     if (stream_sent_on == nullptr or
         stream_sent_on->get_state(SRC_CLIENT) == STREAM_EXPECT_HEADERS or
         stream_sent_on->get_state(SRC_SERVER) >= STREAM_COMPLETE)

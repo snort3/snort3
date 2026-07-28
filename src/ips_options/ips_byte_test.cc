@@ -271,7 +271,7 @@ IpsOption::EvalStatus ByteTestOption::eval(Cursor& c, Packet* p)
     // cppcheck-suppress unreadVariable
     RuleProfile profile(byteTestPerfStats);
 
-    ByteTestData* btd = (ByteTestData*)&config;
+    const ByteTestData* btd = (ByteTestData*)&config;
     uint32_t cmp_value = 0;
 
     // Get values from byte_extract variables, if present.
@@ -565,7 +565,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* byte_test_ctor(Module* p, IpsInfo&)
 {
-    ByteTestModule* m = static_cast<ByteTestModule*>(p);
+    const ByteTestModule* m = static_cast<ByteTestModule*>(p);
     return new ByteTestOption(m->data);
 }
 
@@ -909,7 +909,7 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
             byte_test.bytes_to_extract = 3;
             byte_test.string_convert_flag = 0;
             byte_test.relative_flag = 1;
-            uint8_t buff[] = "Hello world long input";
+            const uint8_t buff[] = "Hello world long input";
             current_cursor.set("hello_world_long_name", buff, 22);
             current_cursor.set_pos(20);
             ByteTestOption test_6(byte_test);
@@ -929,7 +929,7 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
             byte_test.bitmask_val = 0;
             byte_test.not_flag = 0;
             byte_test.base = 10;
-            uint8_t buff[] = "Hello world long input 123";
+            const uint8_t buff[] = "Hello world long input 123";
             current_cursor.set("hello_world_long_name", buff, 26);
             current_cursor.set_pos(23);
             ByteTestOption test_7(byte_test);
@@ -950,7 +950,7 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
                 byte_test.relative_flag = 1;
                 byte_test.bitmask_val = 0;
                 byte_test.not_flag = 0;
-                uint8_t buff[] = "Hello world long input";
+                const uint8_t buff[] = "Hello world long input";
                 current_cursor.set("hello_world_long_name", buff, 22);
                 current_cursor.set_pos(22);
                 ByteTestOption test_8(byte_test);
@@ -964,7 +964,7 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
                 byte_test.offset_var = -1;
                 byte_test.relative_flag = 1;
                 byte_test.string_convert_flag = 0;
-                uint8_t buff[] = "Hello world long input";
+                const uint8_t buff[] = "Hello world long input";
                 current_cursor.set("hello_world_long_name", buff, 22);
                 current_cursor.set_pos(22);
                 ByteTestOption test_9(byte_test);
@@ -984,7 +984,7 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
                 byte_test.bitmask_val = 0;
                 byte_test.not_flag = 0;
                 byte_test.base = 10;
-                uint8_t buff[] = "Hello world long input 123";
+                const uint8_t buff[] = "Hello world long input 123";
                 current_cursor.set("hello_world_long_name", buff, 26);
                 current_cursor.set_pos(26);
                 ByteTestOption test_10(byte_test);
@@ -1004,7 +1004,7 @@ TEST_CASE("ByteTestOption test", "[ips_byte_test]")
                 byte_test.bitmask_val = 0;
                 byte_test.not_flag = 0;
                 byte_test.base = 10;
-                uint8_t buff[] = "Hello world long input 123";
+                const uint8_t buff[] = "Hello world long input 123";
                 current_cursor.set("hello_world_long_name", buff, 26);
                 current_cursor.set_pos(26);
                 ByteTestOption test_11(byte_test);

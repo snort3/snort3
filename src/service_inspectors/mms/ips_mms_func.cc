@@ -396,7 +396,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    MmsFuncModule* mod = static_cast<MmsFuncModule*>(m);
+    const MmsFuncModule* mod = static_cast<MmsFuncModule*>(m);
 
     return new MmsFuncOption(mod->func);
 }

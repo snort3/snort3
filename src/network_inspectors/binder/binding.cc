@@ -93,7 +93,7 @@ void Binding::configure(const SnortConfig* sc)
     // Update with actual policy indices instead of user-provided identifiers
     if (when.ips_id_user)
     {
-        IpsPolicy* p = sc->policy_map->get_user_ips(when.ips_id_user);
+        const IpsPolicy* p = sc->policy_map->get_user_ips(when.ips_id_user);
         if (p)
             when.ips_id = p->policy_id;
         else
@@ -720,4 +720,3 @@ bool Binding::check_all(const Packet* p) const
 
     return true;
 }
-

@@ -281,7 +281,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* isdataat_ctor(Module* p, IpsInfo&)
 {
-    IsDataAtModule* m = static_cast<IsDataAtModule*>(p);
+    const IsDataAtModule* m = static_cast<IsDataAtModule*>(p);
     return new IsDataAtOption(m->data);
 }
 
@@ -324,4 +324,3 @@ const BaseApi* ips_isdataat[] =
     &isdataat_api.base,
     nullptr
 };
-

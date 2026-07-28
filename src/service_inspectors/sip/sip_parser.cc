@@ -369,7 +369,7 @@ static bool sip_startline_parse(SIPMsg* msg, const char* buff, const char* end, 
     else  /* This might be a request*/
     {
         const char* space, * version;
-        SIPMethodNode* method;
+        const SIPMethodNode* method;
 
         /*Process request*/
         msg->status_code = 0;
@@ -850,7 +850,7 @@ static int sip_parse_server(SIPMsg* msg, const char* start, const char* end, SIP
 static int sip_parse_cseq(SIPMsg* msg, const char* start, const char* end, SIP_PROTO_CONF* config)
 {
     char* next = nullptr;
-    SIPMethodNode* method = nullptr;
+    const SIPMethodNode* method = nullptr;
 
     msg->cseqnum = SnortStrtoul(start, &next, 10);
     if ((nullptr != next )&&(next < end))
@@ -1324,4 +1324,3 @@ void sip_freeMediaList(SIP_MediaList medias)
         curNode = nextNode;
     }
 }
-

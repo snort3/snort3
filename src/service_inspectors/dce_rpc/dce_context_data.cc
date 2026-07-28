@@ -96,7 +96,7 @@ DceContextData* DceContextData::get_current_data(const Packet* p)
 
 bool DceContextData::is_noinspect(const Packet* p)
 {
-    DceContextData* dcd = get_current_data(p);
+    const DceContextData* dcd = get_current_data(p);
 
     if ( !dcd )
         return true;
@@ -106,7 +106,7 @@ bool DceContextData::is_noinspect(const Packet* p)
 
 DCE2_Roptions* DceContextData::get_current_ropts(const Packet* p)
 {
-    DceContextData* dcd = get_current_data(p);
+    const DceContextData* dcd = get_current_data(p);
 
     if ( !dcd )
         return nullptr;

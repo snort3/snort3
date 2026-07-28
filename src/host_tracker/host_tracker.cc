@@ -205,7 +205,7 @@ bool HostTracker::get_hostmac(const uint8_t* mac, HostMac& hm)
 
     lock_guard<mutex> lck(host_tracker_lock);
 
-    for ( auto& ahm : macs )
+    for ( const auto& ahm : macs )
         if ( !memcmp(mac, ahm.mac, MAC_SIZE) )
         {
             if ( !ahm.visibility )
@@ -610,7 +610,7 @@ HostApplication HostTracker::add_service(Port port, IpProtocol proto, uint32_t l
     bool& is_new, AppId appid)
 {
     lock_guard<mutex> lck(host_tracker_lock);
-    HostApplication* ha = find_and_add_service_no_lock(port, proto, lseen, is_new, appid);
+    const HostApplication* ha = find_and_add_service_no_lock(port, proto, lseen, is_new, appid);
     return *ha;
 }
 
@@ -1189,7 +1189,7 @@ HostApplicationInfo::HostApplicationInfo(const char *ver, const char *ven)
 static inline string to_time_string(uint32_t p_time)
 {
     time_t raw_time = (time_t) p_time;
-    struct tm* timeinfo = gmtime(&raw_time);
+    const struct tm* timeinfo = gmtime(&raw_time);
     char buffer[30];
     strftime(buffer, 30, "%F %T", timeinfo);
     return buffer;

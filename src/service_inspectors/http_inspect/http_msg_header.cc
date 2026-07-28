@@ -747,7 +747,7 @@ void HttpMsgHeader::setup_file_processing()
     }
 
     session_data->file_depth_remaining[source_id] = max_file_depth;
-    FileFlows* file_flows = FileFlows::get_file_flows(flow);
+    const FileFlows* file_flows = FileFlows::get_file_flows(flow);
     if (!file_flows)
         session_data->file_depth_remaining[source_id] = 0;
 }

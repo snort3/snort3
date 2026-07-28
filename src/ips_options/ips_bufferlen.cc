@@ -166,7 +166,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* len_ctor(Module* p, IpsInfo&)
 {
-    LenModule* m = static_cast<LenModule*>(p);
+    const LenModule* m = static_cast<LenModule*>(p);
     return new LenOption(m->data, m->relative);
 }
 
@@ -209,4 +209,3 @@ const BaseApi* ips_bufferlen[] =
     &len_api.base,
     nullptr
 };
-

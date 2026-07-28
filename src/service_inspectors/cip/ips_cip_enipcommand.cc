@@ -93,7 +93,7 @@ IpsOption::EvalStatus CipEnipCommandOption::eval(Cursor&, Packet* p)
     if (!fd)
         return NO_MATCH;
 
-    CipSessionData* session_data = &fd->session;
+    const CipSessionData* session_data = &fd->session;
 
     if ( cip_enip_cmd.eval(session_data->current_data.enip_data.enip_header.command) )
     {
@@ -166,7 +166,7 @@ static void cip_enipcommand_mod_dtor(Module* m)
 
 static IpsOption* cip_enipcommand_ctor(Module* p, IpsInfo&)
 {
-    CipEnipCommandModule* m = static_cast<CipEnipCommandModule*>(p);
+    const CipEnipCommandModule* m = static_cast<CipEnipCommandModule*>(p);
     return new CipEnipCommandOption(m->cip_enip_cmd);
 }
 
@@ -201,4 +201,3 @@ static const IpsApi ips_api =
 };
 
 const BaseApi* ips_cip_enipcommand = &ips_api.base;
-

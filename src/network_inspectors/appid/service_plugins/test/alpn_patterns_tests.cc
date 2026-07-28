@@ -68,7 +68,7 @@ TEST(alpn_patterns_tests, alpn_pattern_match)
     AlpnPatternList data;
     AlpnPattern alpn1(APPID_UT_ID + 1, "h3");
     alpn_pattern_match(&alpn1, nullptr, 0, &data, nullptr);
-    AlpnPattern* alpn = data.back();
+    const AlpnPattern* alpn = data.back();
     CHECK(alpn->app_id == alpn1.app_id);
     CHECK(alpn->pattern == alpn1.pattern);
 
@@ -103,4 +103,3 @@ int main(int argc, char** argv)
     int return_value = CommandLineTestRunner::RunAllTests(argc, argv);
     return return_value;
 }
-

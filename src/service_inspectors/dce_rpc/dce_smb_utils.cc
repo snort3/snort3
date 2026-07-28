@@ -200,7 +200,7 @@ void DCE2_SmbRemoveUid(DCE2_SmbSsnData* ssd, const uint16_t uid)
 
                 DCE2_SmbRemoveFileTrackerFromRequestTrackers(ssd, ftracker);
                 DCE2_SmbCleanFileTracker(ftracker);
-                snort_free((void*)ftracker);
+                snort_free(ftracker);
                 it = ssd->ftrackers.erase(it);
             }
             else
@@ -682,7 +682,7 @@ void DCE2_SmbRemoveFileTrackerFromRequestTrackers(DCE2_SmbSsnData* ssd,
     if ((ssd->cur_rtracker != nullptr) && (ssd->cur_rtracker->ftracker == ftracker))
         ssd->cur_rtracker->ftracker = nullptr;
 
-    for (auto& entry : ssd->rtrackers_map)
+    for (const auto& entry : ssd->rtrackers_map)
     {
         if (entry.second->ftracker == ftracker)
             entry.second->ftracker = nullptr;
@@ -776,7 +776,7 @@ void DCE2_SmbRemoveTid(DCE2_SmbSsnData* ssd, const uint16_t tid)
 
             DCE2_SmbRemoveFileTrackerFromRequestTrackers(ssd, ftracker);
             DCE2_SmbCleanFileTracker(ftracker);
-            snort_free((void*)ftracker);
+            snort_free(ftracker);
             it = ssd->ftrackers.erase(it);
         }
         else
@@ -838,7 +838,7 @@ void DCE2_SmbInvalidShareCheck(DCE2_SmbSsnData* ssd,
     if (share_list == nullptr)
         return;
 
-    dce2SmbShare* smb_share;
+    const dce2SmbShare* smb_share;
     for (smb_share = (dce2SmbShare*)DCE2_ListFirst(share_list);
         smb_share != nullptr;
         smb_share = (dce2SmbShare*)DCE2_ListNext(share_list))
@@ -1262,7 +1262,7 @@ void DCE2_SmbSegAlert(DCE2_SmbSsnData* ssd, uint32_t rule_id)
     const uint8_t* data_ptr = DCE2_BufferData(buf);
     uint32_t data_len = DCE2_BufferLength(buf);
 
-    Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_SEG);
+    const Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_SEG);
     if (rpkt == nullptr)
         return;
 
@@ -1296,7 +1296,7 @@ static FileContext* DCE2_get_main_file_context()
 
 FileVerdict DCE2_get_file_verdict()
 {
-    FileContext* file = DCE2_get_main_file_context();
+    const FileContext* file = DCE2_get_main_file_context();
     if ( !file )
         return FILE_VERDICT_UNKNOWN;
     return file->verdict;
@@ -1580,7 +1580,7 @@ static DCE2_Ret DCE2_SmbHandleOutOfOrderFileData(DCE2_SmbSsnData* ssd,
     {
         uint64_t initial_offset = ftracker->ff_file_offset;
         uint64_t next_offset = initial_offset + data_len;
-        DCE2_SmbFileChunk* file_chunk = (DCE2_SmbFileChunk*)DCE2_ListFirst(
+        const DCE2_SmbFileChunk* file_chunk = (DCE2_SmbFileChunk*)DCE2_ListFirst(
             ftracker->ff_file_chunks);
         DCE2_Ret ret = DCE2_SmbFileAPIProcess(ssd, ftracker, data_ptr, data_len, upload);
 

@@ -49,7 +49,7 @@ TEST_GROUP(hash_lru_cache)
         while( node )
         {
             CHECK(*(unsigned*)node->data == node_id);
-            unsigned* data = (unsigned *)lru->get_mru_user_data();
+            const unsigned* data = (unsigned *)lru->get_mru_user_data();
             if ( data )
                 CHECK(*data == 5);
             data = (unsigned *)lru->get_lru_user_data();

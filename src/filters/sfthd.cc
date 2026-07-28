@@ -286,7 +286,7 @@ static int sfthd_create_threshold_local(
      */
     if ( sfthd_item->sfthd_node_list->count > 0 )
     {
-        THD_NODE* p;
+        const THD_NODE* p;
         if ( !sfthd_item->sfthd_node_list->tail )
         {
             // Paranoid check: if there is a count, there should be a tail
@@ -313,7 +313,7 @@ static int sfthd_create_threshold_local(
         for ( auto ndata = sflist_first(sfthd_item->sfthd_node_list, &lnode);
              ndata != nullptr; ndata = sflist_next(&lnode) )
         {
-            THD_NODE* sfthd_n = static_cast<THD_NODE*>(ndata);
+            const THD_NODE* sfthd_n = static_cast<THD_NODE*>(ndata);
             if ( sfthd_node->priority > sfthd_n->priority )
             {
                 sflist_add_before(sfthd_item->sfthd_node_list, lnode, sfthd_node);
@@ -761,7 +761,7 @@ int sfthd_test_threshold(
         if ( sfthd_hash != nullptr )
         {
             tThdItemKey key = { policy_id, sig_id };
-            THD_ITEM* sfthd_item = static_cast<THD_ITEM*>(sfthd_hash->find(&key));
+            const THD_ITEM* sfthd_item = static_cast<THD_ITEM*>(sfthd_hash->find(&key));
 
             if ( sfthd_item != nullptr and sfthd_item->sfthd_node_list != nullptr )
             {
@@ -817,7 +817,7 @@ static char* printIP(unsigned u, char* buf, unsigned len)
  */
 int sfthd_show_objects(ThresholdObjects* thd_objs)
 {
-    THD_ITEM* sfthd_item;
+    const THD_ITEM* sfthd_item;
     THD_NODE* sfthd_node;
     unsigned gen_id;
     GHashNode* item_hash_node;

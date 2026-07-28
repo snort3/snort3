@@ -144,8 +144,8 @@ static void DCE2_OpnumFreeMask(DCE2_Opnum* opnum)
 
 static DCE2_Ret DCE2_ParseOpnumList(char** ptr, const char* end, uint8_t* opnum_mask)
 {
-    char* lo_start = nullptr;
-    char* hi_start = nullptr;
+    const char* lo_start = nullptr;
+    const char* hi_start = nullptr;
     DCE2_OpnumListState state = DCE2_OPNUM_LIST_STATE__START;
     uint16_t lo_opnum = 0, hi_opnum = 0;
 
@@ -294,7 +294,7 @@ static inline void DCE2_OpnumSetRange(uint8_t* opnum_mask, uint16_t lo_opnum, ui
 static DCE2_Ret DCE2_OpnumParse(char* args, DCE2_Opnum* opnum)
 {
     uint8_t opnum_mask[DCE2_OPNUM__MAX_INDEX];  /* 65536 bits */
-    char* args_end;
+    const char* args_end;
     uint16_t num_opnums = 0;
     unsigned int i;
 
@@ -414,7 +414,7 @@ IpsOption::EvalStatus Dce2OpnumOption::eval(Cursor&, Packet* p)
         return NO_MATCH;
     }
 
-    DCE2_Roptions* ropts = DceContextData::get_current_ropts(p);
+    const DCE2_Roptions* ropts = DceContextData::get_current_ropts(p);
 
     if ( !ropts )
         return NO_MATCH;

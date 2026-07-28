@@ -200,7 +200,7 @@ bool HttpStreamSplitter::finish(Flow* flow)
         // If we were publishing a request or response body need to publish that body is complete
         if (session_data->publish_depth_remaining[source_id] > 0)
         {
-            HttpTransaction* transaction = session_data->transaction[source_id];
+            const HttpTransaction* transaction = session_data->transaction[source_id];
             if (transaction && transaction->should_publish_body(source_id))
             {
                 HttpBodyEvent http_body_event(nullptr, 0, (source_id == SRC_CLIENT), true);
@@ -265,4 +265,3 @@ void HttpStreamSplitter::prep_partial_flush(Flow* flow, uint32_t num_flush,
         session_data->cutter[source_id]->get_octets_seen() - num_flush);
     session_data->partial_flush[source_id] = partial_flush_type;
 }
-

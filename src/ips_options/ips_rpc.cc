@@ -312,7 +312,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* rpc_ctor(Module* p, IpsInfo&)
 {
-    RpcModule* m = static_cast<RpcModule*>(p);
+    const RpcModule* m = static_cast<RpcModule*>(p);
     return new RpcOption(m->data);
 }
 
@@ -355,4 +355,3 @@ const BaseApi* ips_rpc[] =
     &rpc_api.base,
     nullptr
 };
-

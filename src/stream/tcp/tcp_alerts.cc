@@ -91,7 +91,7 @@ int TcpAlerts::update_alert(uint32_t gid, uint32_t sid, uint32_t event_id, uint3
 
 void TcpAlerts::purge_alerts(Flow* flow)
 {
-    for (auto &alert : alerts)
+    for (const auto& alert : alerts)
         Stream::log_extra_data(flow, xtradata_mask, alert);
 
     if (!flow->is_suspended())

@@ -405,7 +405,7 @@ void ServiceDiscovery::get_next_service(const Packet* p, const AppidSessionDirec
                  !asd.get_session_flags(APPID_SESSION_ADDITIONAL_PACKET) )
             {
                 asd.tried_reverse_service = true;
-                ServiceDiscoveryState* rsds = AppIdServiceState::get(p->ptrs.ip_api.get_src(),
+                const ServiceDiscoveryState* rsds = AppIdServiceState::get(p->ptrs.ip_api.get_src(),
                     proto, p->ptrs.sp, p->get_ingress_group(), p->pkth->address_space_id,
                     asd.is_decrypted());
                 auto urs_iterator = udp_reversed_services.find(p->ptrs.sp);
@@ -739,7 +739,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
          !asd.get_session_flags(APPID_SESSION_NO_TPI) and
          asd.is_tp_appid_available() )
     {
-        AppInfoTableEntry* entry = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
+        const AppInfoTableEntry* entry = asd.get_odp_ctxt().get_app_info_mgr().get_app_info_entry(tp_app_id);
         if ( entry && entry->service_detector &&
             !(entry->flags & APPINFO_FLAG_SERVICE_ADDITIONAL) )
         {
@@ -831,7 +831,7 @@ bool ServiceDiscovery::do_service_discovery(AppIdSession& asd, Packet* p,
                 return is_discovery_done;
         }
 
-        AppIdDnsSession* dsession = asd.get_dns_session();
+        const AppIdDnsSession* dsession = asd.get_dns_session();
         if (dsession and asd.get_service_id() == APP_ID_DNS
             and asd.get_odp_ctxt().dns_host_reporting and dsession->get_host())
         {

@@ -150,7 +150,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ack_ctor(Module* p, IpsInfo&)
 {
-    AckModule* m = static_cast<AckModule*>(p);
+    const AckModule* m = static_cast<AckModule*>(p);
     return new TcpAckOption(m->data);
 }
 
@@ -193,4 +193,3 @@ const BaseApi* ips_ack[] =
     &ack_api.base,
     nullptr
 };
-

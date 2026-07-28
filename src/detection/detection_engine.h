@@ -133,7 +133,7 @@ private:
 DataPointer DetectionEngine::get_alt_buffer(const Packet* p)
 {
     assert(p);
-    auto& alt_buf = p->context->alt_data;
+    const auto& alt_buf = p->context->alt_data;
 
     return { alt_buf.data, alt_buf.len };
 }
@@ -170,4 +170,3 @@ static inline void clear_file_data()
 
 } // namespace snort
 #endif
-

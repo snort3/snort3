@@ -287,18 +287,18 @@ TEST_CASE( "profiler tree builder", "[profiler][profiler_tree_builder]" )
 
             SECTION( "b branch" )
             {
-                auto& b_entry = root.children[0];
+                const auto& b_entry = root.children[0];
 
                 REQUIRE( b_entry.view.name == "b" );
                 REQUIRE( b_entry.children.size() == 1 );
 
-                auto& d_entry = b_entry.children.back();
+                const auto& d_entry = b_entry.children.back();
                 CHECK( d_entry.view.name == "d" );
             }
 
             SECTION( "c branch" )
             {
-                auto &c_entry = root.children[1];
+                const auto &c_entry = root.children[1];
 
                 REQUIRE( c_entry.view.name == "c" );
                 REQUIRE( (c_entry.children.size() == 2) );
@@ -316,7 +316,7 @@ TEST_CASE( "profiler tree builder", "[profiler][profiler_tree_builder]" )
 
             REQUIRE( root.children.size() == 1 );
 
-            auto& b_entry = root.children.back();
+            const auto& b_entry = root.children.back();
             REQUIRE( b_entry.children.size() == 1 );
             CHECK( b_entry.children[0].view.name == "d" );
         }

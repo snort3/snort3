@@ -188,6 +188,7 @@ THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 
 TEST_GROUP(appid_http_session)
 {
+    // cppcheck-suppress constVariablePointer
     AppIdHttpSession* mock_hsession;
     AppIdSession* session;
 
@@ -368,4 +369,3 @@ int main(int argc, char** argv)
     int rc = CommandLineTestRunner::RunAllTests(argc, argv);
     return rc;
 }
-

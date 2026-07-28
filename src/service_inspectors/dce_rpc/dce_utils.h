@@ -157,6 +157,7 @@ inline bool DCE2_IsConfigEndChar(const char c)
 // String must be 0 terminated.
 inline char* DCE2_PruneWhiteSpace(char* str)
 {
+    // cppcheck-suppress constVariablePointer
     char* end;
 
     if (str == nullptr)
@@ -181,7 +182,7 @@ inline char* DCE2_PruneWhiteSpace(char* str)
 // String must be 0 terminated.
 inline bool DCE2_IsEmptyStr(char* str)
 {
-    char* end;
+    const char* end;
 
     if (str == nullptr)
         return true;
@@ -378,4 +379,3 @@ inline void dce2_move(const uint8_t*& data_ptr, int64_t& data_len, int amount)
 }
 
 #endif
-

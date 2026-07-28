@@ -58,7 +58,7 @@ void OleFile :: walk_directory_list()
     uint8_t* name_buf;
     int bytes_copied;
     FileProperty* node;
-    char* file_name;
+    const char* file_name;
 
     VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
         "Parsing the Directory list.\n");
@@ -845,4 +845,3 @@ void oleprocess(const uint8_t* const ole_file, const uint32_t ole_length, uint8_
     olefile->walk_directory_list();
     olefile->find_and_extract_vba(vba_buf, vba_buf_len);
 }
-

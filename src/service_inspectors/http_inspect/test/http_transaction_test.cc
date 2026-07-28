@@ -130,7 +130,9 @@ TEST_GROUP(http_transaction_test)
     Flow* const flow = new Flow;
     HttpParaList params;
     HttpFlowData* flow_data = new HttpFlowData(flow, &params);
+    // cppcheck-suppress constVariablePointer
     SectionType* const section_type = HttpUnitTestSetup::get_section_type(flow_data);
+    // cppcheck-suppress constVariablePointer
     SectionType* const type_expected = HttpUnitTestSetup::get_type_expected(flow_data);
 
     void setup() override
@@ -152,7 +154,7 @@ TEST(http_transaction_test, simple_transaction)
     // Request
     type_expected[SRC_CLIENT] = SEC_REQUEST;
     section_type[SRC_CLIENT] = SEC_REQUEST;
-    HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
+    const HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
     CHECK(trans != nullptr);
     type_expected[SRC_CLIENT] = SEC_HEADER;
     section_type[SRC_CLIENT] = SEC_HEADER;
@@ -187,7 +189,7 @@ TEST(http_transaction_test, orphan_response)
     // Response message without a request
     type_expected[SRC_CLIENT] = SEC_REQUEST;
     section_type[SRC_SERVER] = SEC_STATUS;
-    HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER, flow);
+    const HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER, flow);
     CHECK(trans != nullptr);
     section_type[SRC_SERVER] = SEC_HEADER;
     CHECK(trans == HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER, flow));
@@ -237,7 +239,7 @@ TEST(http_transaction_test, concurrent_request_response)
     // Response starts before request completes, request completes first
     type_expected[SRC_CLIENT] = SEC_REQUEST;
     section_type[SRC_CLIENT] = SEC_REQUEST;
-    HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
+    const HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
     CHECK(trans != nullptr);
     type_expected[SRC_CLIENT] = SEC_HEADER;
     section_type[SRC_CLIENT] = SEC_HEADER;
@@ -273,7 +275,7 @@ TEST(http_transaction_test, pipeline_underflow)
     // Underflow scenario with request, two responses, request, response
     type_expected[SRC_CLIENT] = SEC_REQUEST;
     section_type[SRC_CLIENT] = SEC_REQUEST;
-    HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
+    const HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
     CHECK(trans != nullptr);
     type_expected[SRC_CLIENT] = SEC_HEADER;
     section_type[SRC_CLIENT] = SEC_HEADER;
@@ -293,7 +295,7 @@ TEST(http_transaction_test, pipeline_underflow)
     CHECK(trans == HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER, flow));
 
     section_type[SRC_CLIENT] = SEC_REQUEST;
-    HttpTransaction* trans2 = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
+    const HttpTransaction* trans2 = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
     CHECK((trans2 != nullptr) && (trans2 != trans));
     type_expected[SRC_CLIENT] = SEC_HEADER;
     section_type[SRC_CLIENT] = SEC_HEADER;
@@ -313,7 +315,7 @@ TEST(http_transaction_test, concurrent_request_response_underflow)
     // Response starts before request completes, response completes first, second response
     type_expected[SRC_CLIENT] = SEC_REQUEST;
     section_type[SRC_CLIENT] = SEC_REQUEST;
-    HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
+    const HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
     CHECK(trans != nullptr);
     type_expected[SRC_CLIENT] = SEC_HEADER;
     section_type[SRC_CLIENT] = SEC_HEADER;
@@ -343,7 +345,7 @@ TEST(http_transaction_test, concurrent_request_response_underflow)
     type_expected[SRC_CLIENT] = SEC_REQUEST;
 
     section_type[SRC_SERVER] = SEC_STATUS;
-    HttpTransaction* trans2 = HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER, flow);
+    const HttpTransaction* trans2 = HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER, flow);
     CHECK((trans2 != nullptr) && (trans2 != trans));
     section_type[SRC_SERVER] = SEC_HEADER;
     CHECK(trans2 == HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER, flow));
@@ -558,4 +560,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

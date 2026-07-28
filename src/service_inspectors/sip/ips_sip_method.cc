@@ -212,7 +212,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* sip_method_ctor(Module* p, IpsInfo&)
 {
-    SipMethodModule* m = static_cast<SipMethodModule*>(p);
+    const SipMethodModule* m = static_cast<SipMethodModule*>(p);
     return new SipMethodOption(m->methods);
 }
 

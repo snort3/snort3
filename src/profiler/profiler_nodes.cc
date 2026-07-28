@@ -77,7 +77,7 @@ struct GetProfileFromModule : public GetProfileFunctor
 
     ProfileStats* operator()() override
     {
-        Module* mod = PluginManager::get_module(mod_name.c_str());
+        const Module* mod = PluginManager::get_module(mod_name.c_str());
 
 #ifdef UNIT_TEST
         if ( !mod )
@@ -334,7 +334,7 @@ static bool rotate_file(const char* old_file, FILE* old_fd,
             ts = time(nullptr);
         else
         {
-            char* p = strtok(line_str, ",");
+            const char* p = strtok(line_str, ",");
             ts = atoll(p);
         }
     }

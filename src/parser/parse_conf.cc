@@ -80,7 +80,7 @@ void get_parse_location(const char*& file, unsigned& line)
         line = 0;
         return;
     }
-    Location& loc = files.top();
+    const Location& loc = files.top();
     file = loc.file.c_str();
     line = loc.line;
 }
@@ -336,4 +336,3 @@ void parse_rules_string(SnortConfig* sc, const char* s, bool ips_policy)
     parse_stream(ss, sc);
     s_ips_policy = true;
 }
-

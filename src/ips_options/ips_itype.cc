@@ -152,7 +152,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* itype_ctor(Module* p, IpsInfo&)
 {
-    ItypeModule* m = static_cast<ItypeModule*>(p);
+    const ItypeModule* m = static_cast<ItypeModule*>(p);
     return new IcmpTypeOption(m->data);
 }
 
@@ -195,4 +195,3 @@ const BaseApi* ips_itype[] =
     &itype_api.base,
     nullptr
 };
-

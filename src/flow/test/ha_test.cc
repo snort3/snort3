@@ -401,7 +401,9 @@ TEST_GROUP(high_availability_test)
 {
     Flow s_flow;
     Active active;
+    // cppcheck-suppress constVariablePointer
     StreamHAClient* s_ha_client;
+    // cppcheck-suppress constVariablePointer
     FlowHAClient* s_other_ha_client;
     uint8_t s_message[MSG_SIZE];
     SCMessage s_sc_message = SCMessage(nullptr, nullptr, ConnectorMsg());
@@ -1133,12 +1135,12 @@ TEST(high_availability_test, other_ha_client_is_update_required)
     write_update_msg_client(s_other_ha_client, s_flow, msg);
 
     // Verify client header was written correctly
-    HAClientHeader* hdr = reinterpret_cast<HAClientHeader*>(buffer);
+    const HAClientHeader* hdr = reinterpret_cast<HAClientHeader*>(buffer);
     CHECK(hdr->client == 0);   // other client index (alphabetical: "other"=0)
     CHECK(hdr->length == 5);   // 5 bytes of content
 
     // Verify content: OtherHAClient::produce writes bytes 0-4
-    uint8_t* content = buffer + sizeof(HAClientHeader);
+    const uint8_t* content = buffer + sizeof(HAClientHeader);
     for (uint8_t i = 0; i < 5; i++)
         CHECK(content[i] == i);
 }

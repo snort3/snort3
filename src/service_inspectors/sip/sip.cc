@@ -55,7 +55,7 @@ bool get_buf_sip(unsigned id, snort::Packet* p, snort::InspectionBuffer& b)
     if (p->has_tcp_data() and !p->is_full_pdu())
         return false;
 
-    SIPData* sd = get_sip_session_data(p->flow);
+    const SIPData* sd = get_sip_session_data(p->flow);
     if (!sd)
         return false;
 

@@ -319,7 +319,7 @@ static int validate_cmd_parameters(ControlConn* ctrlcon, lua_State* L, std::vect
 static int dump_flows_worker(lua_State* L, bool enable_binary)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    Inspector* inspector = InspectorManager::get_inspector("stream", Module::GLOBAL);
+    const Inspector* inspector = InspectorManager::get_inspector("stream", Module::GLOBAL);
 
     if (!inspector)
     {
@@ -368,7 +368,7 @@ static int dump_flows_binary(lua_State* L)
 static int dump_flows_summary(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    Inspector* inspector = InspectorManager::get_inspector("stream", Module::GLOBAL);
+    const Inspector* inspector = InspectorManager::get_inspector("stream", Module::GLOBAL);
 
     if (!inspector)
     {

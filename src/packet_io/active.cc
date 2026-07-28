@@ -784,7 +784,7 @@ bool Active::retry_packet(const Packet* p)
         return false;
 
     // FIXIT-L semi-arbitrary heuristic for preventing retry queue saturation - reevaluate later
-    SFDAQInstance* daq_instance = p->daq_instance ? p->daq_instance : SFDAQ::get_local_instance();
+    const SFDAQInstance* daq_instance = p->daq_instance ? p->daq_instance : SFDAQ::get_local_instance();
     if (!daq_instance || daq_instance->get_pool_available() < daq_instance->get_batch_size())
     {
         // Fall back on dropping the packet and relying on the host to retransmit

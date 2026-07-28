@@ -1148,7 +1148,7 @@ DCE2_Ret DCE2_SmbTransaction(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             {
                 const uint8_t* data_ptr = DCE2_BufferData(ttracker->dbuf);
                 uint32_t data_len = DCE2_BufferLength(ttracker->dbuf);
-                Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr,
+                const Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr,
                     &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
 
                 if (rpkt == nullptr)
@@ -1605,7 +1605,7 @@ DCE2_Ret DCE2_SmbTransactionSecondary(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_
     {
         const uint8_t* data_ptr = DCE2_BufferData(ttracker->dbuf);
         uint32_t data_len = DCE2_BufferLength(ttracker->dbuf);
-        Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
+        const Packet* rpkt = DCE2_SmbGetRpkt(ssd, &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
 
         if (rpkt == nullptr)
             return DCE2_RET__ERROR;

@@ -276,7 +276,8 @@ TEST_CASE("ContextSwitcher single wire", "[ContextSwitcher]")
     for ( unsigned i = 0; i < max; ++i )
         mgr.push(new IpsContext);
 
-    IpsContext *c1, *c2, *c3, *c4, *c5, *c6, *c7, *c8, *c9;
+    IpsContext *c1, *c2, *c3, *c6, *c7, *c8, *c9;
+    const IpsContext *c4, *c5;
 
     /*
           __1__
@@ -451,4 +452,3 @@ TEST_CASE("ContextSwitcher abort", "[ContextSwitcher]")
     CHECK(!mgr.busy_count());
 }
 #endif
-

@@ -90,7 +90,7 @@
                                                     \
         BENCHMARK("1 read")                         \
         {                                           \
-            auto read = reader.read(len);           \
+            const auto* read = reader.read(len);    \
                                                     \
             if (!read)                              \
                 reader.retry();                     \
@@ -111,7 +111,7 @@
             auto r1 = writer.write(data, sizeof(data)); \
             writer.push();                              \
                                                         \
-            auto r2 = reader.read(len);                 \
+            const auto* r2 = reader.read(len);          \
             reader.pop();                               \
                                                         \
             return r1 and r2 and len;                   \

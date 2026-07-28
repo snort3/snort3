@@ -49,7 +49,7 @@ bool TcpStateEstablished::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& 
 
 bool TcpStateEstablished::syn_ack_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    Flow* flow = tsd.get_flow();
+    const Flow* flow = tsd.get_flow();
     if ( !(flow->session_state & STREAM_STATE_ESTABLISHED) )
     {
         /* SYN-ACK from server */
@@ -152,4 +152,3 @@ bool TcpStateEstablished::do_post_sm_packet_actions(
 
     return true;
 }
-

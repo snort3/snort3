@@ -731,7 +731,7 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
             return;
         }
         auto fileId_persistent = rtr->get_file_id();
-        DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(fileId_persistent);
+        const DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(fileId_persistent);
         if (ftracker and ssd->ftracker_tcp == ftracker)
         {
             ssd->ftracker_tcp = nullptr;
@@ -750,7 +750,7 @@ void DCE2_Smb2CloseCmd(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         if (rtr)
         {
             auto fileId_persistent = rtr->get_file_id();
-            DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(fileId_persistent);
+            const DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(fileId_persistent);
             if (ftracker and ssd->ftracker_tcp == ftracker)
             {
                 ssd->ftracker_tcp = nullptr;
@@ -984,7 +984,7 @@ void DCE2_Smb2Read(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         DCE2_Smb2RequestTracker* rtr = str->findRtracker(ssd->flow_key, mid);
         if (rtr and rtr->get_file_id())
         {
-            DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(rtr->get_file_id());
+            const DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(rtr->get_file_id());
             if (ftracker)
             {
                 if (ssd->ftracker_tcp == ftracker)
@@ -1142,7 +1142,7 @@ void DCE2_Smb2Write(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         DCE2_Smb2RequestTracker* wtr = str->findRtracker(ssd->flow_key, mid);
         if (wtr and wtr->get_file_id())
         {
-            DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(wtr->get_file_id());
+            const DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(wtr->get_file_id());
             if (ftracker)
             {
                 if (ssd->ftracker_tcp == ftracker)

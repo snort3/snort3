@@ -119,7 +119,7 @@ TEST(geneve_codec_tests, decode)
 
 TEST(geneve_codec_tests, geneve_lyr)
 {
-    geneve::GeneveLyr* glyr = reinterpret_cast<geneve::GeneveLyr*>(geneve_pkt_data);
+    const geneve::GeneveLyr* glyr = reinterpret_cast<geneve::GeneveLyr*>(geneve_pkt_data);
 
     std::vector<geneve::GeneveOptData> opt_data = glyr->get_opt_data();
 
@@ -130,7 +130,7 @@ TEST(geneve_codec_tests, geneve_lyr)
     CHECK( opt_data[0].opt.optclass() == 0x0106 );
     CHECK( opt_data[0].opt.type() == 0x56 );
 
-    uint8_t opt0_data[] = {0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x40};
+    const uint8_t opt0_data[] = {0x00,0x00,0x00,0x00,0x00,0x00,0x08,0x40};
     CHECK( memcmp(opt_data[0].data, opt0_data, opt_data[0].opt.data_len()) == 0);
 
     CHECK( opt_data[1].opt.olen() == 8 );
@@ -138,7 +138,7 @@ TEST(geneve_codec_tests, geneve_lyr)
     CHECK( opt_data[1].opt.optclass() == 0x0106 );
     CHECK( opt_data[1].opt.type() == 0x02 );
 
-    uint8_t opt1_data[] = {0xac,0x10,0xa0,0x02};
+    const uint8_t opt1_data[] = {0xac,0x10,0xa0,0x02};
     CHECK( memcmp(opt_data[1].data, opt1_data, opt_data[1].opt.data_len()) == 0);
 
     uint64_t value = 0;
@@ -148,7 +148,7 @@ TEST(geneve_codec_tests, geneve_lyr)
 
 TEST(geneve_codec_tests, geneve_lyr_no_options)
 {
-    geneve::GeneveLyr* glyr = reinterpret_cast<geneve::GeneveLyr*>(geneve_pkt_data_no_options);
+    const geneve::GeneveLyr* glyr = reinterpret_cast<geneve::GeneveLyr*>(geneve_pkt_data_no_options);
     std::vector<geneve::GeneveOptData> opt_data = glyr->get_opt_data();
     CHECK( opt_data.empty() );
 }

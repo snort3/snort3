@@ -252,7 +252,7 @@ void FlowIPTracker::process(bool)
     for (auto node = ip_map->find_first_node(); node; node = ip_map->find_next_node())
     {
         FlowStateKey* key = (FlowStateKey*)node->key;
-        FlowStateValue* cur_stats = (FlowStateValue*)node->data;
+        const FlowStateValue* cur_stats = (FlowStateValue*)node->data;
 
         key->ipA.ntop(ip_a, sizeof(ip_a));
         key->ipB.ntop(ip_b, sizeof(ip_b));
@@ -292,4 +292,3 @@ int FlowIPTracker::update_state(const SfIp* src_addr, const SfIp* dst_addr,
     value->state_changes[state]++;
     return 0;
 }
-

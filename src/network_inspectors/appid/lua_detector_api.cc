@@ -132,7 +132,7 @@ static void free_chp_glossary(CHPGlossary*& glossary)
 
     if (glossary)
     {
-        for (auto& entry : *glossary)
+        for (const auto& entry : *glossary)
             delete entry.second;
         delete glossary;
         glossary = nullptr;
@@ -3848,6 +3848,7 @@ int LuaServiceDetector::validate(AppIdDiscoveryArgs& args)
 
     std::string name = this->name + "_";
     lua_getglobal(my_lua_state, name.c_str());
+    // cppcheck-suppress constVariableReference -- validation mutates detector state through UserData
     auto& ud = *UserData<LuaServiceObject>::check(my_lua_state, DETECTOR, -1);
     return ud->lsd.lua_validate(args);
 }
@@ -3921,6 +3922,7 @@ int LuaClientDetector::validate(AppIdDiscoveryArgs& args)
 
     std::string name = this->name + "_";
     lua_getglobal(my_lua_state, name.c_str());
+    // cppcheck-suppress constVariableReference -- validation mutates detector state through UserData
     auto& ud = *UserData<LuaClientObject>::check(my_lua_state, DETECTOR, -1);
     return ud->lsd.lua_validate(args);
 }

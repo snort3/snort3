@@ -52,7 +52,7 @@ StreamSplitter::Status S7commplusSplitter::scan(
     Packet*, const uint8_t* data, uint32_t len, uint32_t /*flags*/, uint32_t* fp)
 {
     uint32_t bytes_processed = 0;
-    uint8_t* processed_data = const_cast<uint8_t*>(data);
+    const uint8_t* processed_data = data;
 
     /* Process this packet 1 byte at a time */
     while (bytes_processed < len)

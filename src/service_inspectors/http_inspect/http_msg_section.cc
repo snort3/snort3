@@ -283,7 +283,7 @@ const Field& HttpMsgSection::get_classic_buffer(const HttpBufferInfo& buf)
     }
     case HTTP_BUFFER_VERSION:
     {
-        HttpMsgStart* start = (buffer_side == SRC_CLIENT) ?
+        const HttpMsgStart* start = (buffer_side == SRC_CLIENT) ?
             (HttpMsgStart*)request : (HttpMsgStart*)status;
         return (start != nullptr) ? start->get_version() : Field::FIELD_NULL;
     }
@@ -394,7 +394,7 @@ const Field& HttpMsgSection::get_param_buffer(Cursor& c, const HttpParam& param)
 
     while (query_index < num_query_params)
     {
-        KeyValue* fields = query_kv[query_index];
+        const KeyValue* fields = query_kv[query_index];
 
         const Field& key = fields->key;
         const Field& value = fields->value;
@@ -410,7 +410,7 @@ const Field& HttpMsgSection::get_param_buffer(Cursor& c, const HttpParam& param)
 
     while (body_index < num_body_params)
     {
-        KeyValue* fields = body_kv[body_index];
+        const KeyValue* fields = body_kv[body_index];
 
         const Field& key = fields->key;
         const Field& value = fields->value;
@@ -471,7 +471,7 @@ VersionId HttpMsgSection::get_version_id(const HttpBufferInfo& buf) const
 {
     // buffer_side replaces source_id for rule options that support the request option
     const SourceId buffer_side = (buf.form & FORM_REQUEST) ? SRC_CLIENT : source_id;
-    HttpMsgStart* start = (buffer_side == SRC_CLIENT) ?
+    const HttpMsgStart* start = (buffer_side == SRC_CLIENT) ?
         (HttpMsgStart*)request : (HttpMsgStart*)status;
 
     return (start != nullptr) ? start->get_version_id() : VERS__NOT_PRESENT;

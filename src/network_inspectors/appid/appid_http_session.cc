@@ -121,7 +121,8 @@ void AppIdHttpSession::set_scan_flags(HttpFieldIds id)
 void AppIdHttpSession::set_tun_dest()
 {
     assert(meta_data[REQ_URI_FID]);
-    char* host = nullptr, *host_start, *host_end = nullptr, *url_end;
+    char* host = nullptr, *host_start, *host_end = nullptr;
+    const char* url_end;
     char* port_str = nullptr;
     uint16_t port = 0;
     int is_IPv6 = 0;
@@ -509,7 +510,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
         return 0;
     }
 
-    Packet* p = CURRENT_PACKET;
+    const Packet* p = CURRENT_PACKET;
 
     if ( direction == APP_ID_FROM_RESPONDER and
         !asd.get_session_flags(APPID_SESSION_RESPONSE_CODE_CHECKED) )
@@ -715,7 +716,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
 
     if (client.get_id() == APP_ID_APPLE_CORE_MEDIA)
     {
-        AppInfoTableEntry* entry;
+        const AppInfoTableEntry* entry;
         AppId tp_payload_app_id = asd.get_tp_payload_app_id();
         if (tp_payload_app_id > APP_ID_NONE)
         {
@@ -934,4 +935,3 @@ void AppIdHttpSession::print_field(HttpFieldIds id, const std::string* field)
     else
         APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "%s %s is %s\n", proto, field_name, field->c_str());
 }
-

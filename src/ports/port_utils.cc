@@ -174,7 +174,7 @@ int integer_compare(const void* arg1, const void* arg2)
 int* RuleListToSortedArray(SF_LIST* rl)
 {
     SF_LNODE* pos = nullptr;
-    int* prid;
+    const int* prid;
     int* ra;
     int k=0;
 
@@ -204,4 +204,3 @@ int* RuleListToSortedArray(SF_LIST* rl)
 //-------------------------------------------------------------------------
 
 char po_print_buf[MAX_PORTS];
-

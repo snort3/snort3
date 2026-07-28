@@ -63,7 +63,7 @@ static void print_ip4(const NormalizerConfig* nc)
 
     if ( Norm_IsEnabled(nc, NORM_IP4_TTL) )
     {
-        NetworkPolicy* policy = get_network_policy();
+        const NetworkPolicy* policy = get_network_policy();
         opts += ", min_ttl = " + std::to_string(policy->min_ttl);
         opts += ", new_ttl = " + std::to_string(policy->new_ttl);
     }
@@ -91,7 +91,7 @@ static void print_ip6(const NormalizerConfig* nc)
 
     if ( Norm_IsEnabled(nc, NORM_IP6_TTL) )
     {
-        NetworkPolicy* policy = get_network_policy();
+        const NetworkPolicy* policy = get_network_policy();
         opts += ", min_ttl = " + std::to_string(policy->min_ttl);
         opts += ", new_ttl = " + std::to_string(policy->new_ttl);
     }
@@ -227,6 +227,7 @@ bool Normalizer::configure(SnortConfig*)
 {
     // FIXIT-M move entire config to network policy? Leaving split loads the currently selected
     // network policy with whichever instantiation of an inspection policy this normalize is in
+    // cppcheck-suppress constVariablePointer
     NetworkPolicy* nap = get_network_policy();
 
     if ( nap->new_ttl && nap->new_ttl < nap->min_ttl )
@@ -257,7 +258,7 @@ bool Normalize_IsEnabled(NormFlags nf)
     if ( get_inspection_policy()->policy_mode != POLICY_MODE__INLINE )
         return false;
 
-    NetworkPolicy* nap = get_network_policy();
+    const NetworkPolicy* nap = get_network_policy();
     return nap->normal_mask & nf;
 }
 

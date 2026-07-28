@@ -102,7 +102,7 @@ void SideChannelManager::thread_init()
     SCMaps* map_list = new SCMaps;
 
     /* Loop through all of the configured SideChannel's */
-    for ( auto& scm : s_maps )
+    for ( const auto* scm : s_maps )
     {
         /* New SideChannel just for this thread */
         SideChannelMapping* map = new SideChannelMapping;

@@ -154,7 +154,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* id_ctor(Module* p, IpsInfo&)
 {
-    IpIdModule* m = static_cast<IpIdModule*>(p);
+    const IpIdModule* m = static_cast<IpIdModule*>(p);
     return new IpIdOption(m->data);
 }
 
@@ -197,4 +197,3 @@ const BaseApi* ips_id[] =
     &id_api.base,
     nullptr
 };
-

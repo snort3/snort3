@@ -80,7 +80,7 @@ bool UdpSession::setup(Packet* p)
     flow->ip_proto = (uint8_t)p->get_ip_proto_next();
     flow->ssn_state.direction = FROM_CLIENT;
 
-    StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
+    const StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
     flow->set_default_session_timeout(pc->session_timeout, false);
 
     SESSION_STATS_ADD(udpStats)

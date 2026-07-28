@@ -112,7 +112,7 @@ int BootpServiceDetector::validate(AppIdDiscoveryArgs& args)
     const uint8_t* op55=nullptr;
     const uint8_t* op60=nullptr;
     const uint8_t* data = args.data;
-    Packet* pkt = args.pkt;
+    const Packet* pkt = args.pkt;
     uint16_t size = args.size;
 
     if (!size)

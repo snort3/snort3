@@ -112,7 +112,7 @@ bool TcpStateCloseWait::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& tr
         return true;
     }
 
-    Flow* flow = tsd.get_flow();
+    const Flow* flow = tsd.get_flow();
     trk.update_tracker_ack_recv(tsd);
 
     if ( !flow->two_way_traffic() )

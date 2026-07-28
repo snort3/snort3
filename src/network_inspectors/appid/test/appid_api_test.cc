@@ -88,7 +88,7 @@ public:
 
 void DataBus::publish(unsigned, unsigned, DataEvent& event, Flow*)
 {
-    AppidEvent* appid_event = static_cast<AppidEvent*>(&event);
+    const AppidEvent* appid_event = static_cast<AppidEvent*>(&event);
     char* test_log = static_cast<char*>(mock().getData("test_log").getObjectPointer());
     snprintf(test_log, 256, "Published change_bits == %s",
         appid_event->get_change_bitset().to_string().c_str());
@@ -405,10 +405,10 @@ TEST(appid_api, ssl_app_group_id_lookup_zero_len_data)
 
 TEST(appid_api, set_tls_null_byte_string_no_leak)
 {
-    char* null_sni = snort_strdup("\0");
-    char* null_cname = snort_strdup("\0");
-    char* null_alt_name = snort_strdup("\0");
-    char* null_org_unit = snort_strdup("\0");
+    const char* null_sni = snort_strdup("\0");
+    const char* null_cname = snort_strdup("\0");
+    const char* null_alt_name = snort_strdup("\0");
+    const char* null_org_unit = snort_strdup("\0");
 
     mock_session->tsession->set_tls_sni(null_sni, 0);
     mock_session->tsession->set_tls_cname(null_cname, 0);

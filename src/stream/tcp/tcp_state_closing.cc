@@ -108,7 +108,7 @@ bool TcpStateClosing::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
         return true;
     }
 
-    Flow* flow = tsd.get_flow();
+    const Flow* flow = tsd.get_flow();
     bool fin_acked = SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt());
     trk.update_tracker_ack_recv(tsd);
 

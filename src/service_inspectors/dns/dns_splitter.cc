@@ -39,7 +39,7 @@ StreamSplitter::Status DnsSplitter::scan(
 {
     assert(len > 0);
 
-    DnsFlowData* fd;
+    const DnsFlowData* fd;
     fd = static_cast<DnsFlowData*>(p->flow->get_flow_data(DnsFlowData::inspector_id));
     if (fd && (fd->session.flags & DNS_FLAG_NOT_DNS))
     {

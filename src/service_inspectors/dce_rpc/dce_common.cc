@@ -164,7 +164,7 @@ void DCE2_Detect(DCE2_SsnData* sd)
 
 DCE2_TransType get_dce2_trans_type(const Packet* p)
 {
-    DCE2_SsnData* sd = get_dce2_session_data(p->flow);
+    const DCE2_SsnData* sd = get_dce2_session_data(p->flow);
     if ((sd != nullptr) && (sd->trans == DCE2_TRANS_TYPE__SMB))
     {
         return DCE2_TRANS_TYPE__SMB;
@@ -229,7 +229,7 @@ bool DceEndianness::get_offset_endianness(int32_t offset, uint8_t& endian)
 
 uint16_t DCE2_GetRpktMaxData(DCE2_RpktType rtype)
 {
-    Packet* p = DetectionEngine::get_current_packet();
+    const Packet* p = DetectionEngine::get_current_packet();
     uint16_t overhead = 0;
 
     switch (rtype)

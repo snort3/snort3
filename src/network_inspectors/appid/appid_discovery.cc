@@ -467,7 +467,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
 
     uint16_t port;
     const SfIp* ip;
-    AppIdHttpSession* hsession = asd.get_http_session();
+    const AppIdHttpSession* hsession = asd.get_http_session();
 
     const TunnelDest* tun_dest = nullptr;
     if (hsession)

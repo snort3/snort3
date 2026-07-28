@@ -376,7 +376,7 @@ static bool pcre_search(
     unsigned start_offset,
     int& found_offset)
 {
-    PCRE2_SIZE* ovector;
+    const PCRE2_SIZE* ovector;
     bool matched;
 
     found_offset = -1;
@@ -550,8 +550,8 @@ bool PcreOption::operator==(const IpsOption& ips) const
         return false;
 
     const PcreOption& rhs = static_cast<const PcreOption&>(ips);
-    PcreData* left = config;
-    PcreData* right = rhs.config;
+    const PcreData* left = config;
+    const PcreData* right = rhs.config;
 
     if (( strcmp(left->expression, right->expression) == 0) &&
         ( left->options == right->options))

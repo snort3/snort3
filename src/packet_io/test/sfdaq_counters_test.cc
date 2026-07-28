@@ -69,7 +69,7 @@ TEST(sfdaq_module_counters, check_outstanding_counter)
     mock().expectOneCall("get_local_instance");
 
     sfdm.prep_counts(false);
-    PegCount* p = sfdm.get_counts();
+    const PegCount* p = sfdm.get_counts();
     mock().checkExpectations();
     for ( unsigned i = 0; infos[i].name; i++ )
     {

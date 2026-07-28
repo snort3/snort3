@@ -132,7 +132,7 @@ namespace snort
 int sf_base64decode(uint8_t* inbuf, uint32_t inbuf_size, uint8_t* outbuf, uint32_t outbuf_size,
     uint32_t* bytes_written)
 {
-    uint8_t* cursor, * endofinbuf;
+    const uint8_t* cursor, * endofinbuf;
     uint8_t* outbuf_ptr;
     uint8_t base64data[4], * base64data_ptr; /* temporary holder for current base64 chunk */
     uint8_t tableval_a, tableval_b, tableval_c, tableval_d;
@@ -217,4 +217,3 @@ int sf_base64decode(uint8_t* inbuf, uint32_t inbuf_size, uint8_t* outbuf, uint32
         return(0);
 }
 } // namespace snort
-

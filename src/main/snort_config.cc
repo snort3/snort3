@@ -710,7 +710,7 @@ void SnortConfig::set_obfuscation_mask(const char* mask)
 
 void SnortConfig::set_gid(const char* args)
 {
-    struct group* gr;
+    const struct group* gr;
     long target_gid;
     char* endptr;
 
@@ -741,7 +741,7 @@ void SnortConfig::set_gid(const char* args)
 
 void SnortConfig::set_uid(const char* args)
 {
-    struct passwd* pw;
+    const struct passwd* pw;
     long target_uid;
     char* endptr;
 
@@ -1113,4 +1113,3 @@ int SnortConfig::get_classification_id(const char* name)
 
     return 0;
 }
-

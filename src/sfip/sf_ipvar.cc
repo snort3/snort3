@@ -759,7 +759,7 @@ SfIpRet sfvar_parse_iplist(vartable_t* table, sfip_var_t* var,
                 return SFIP_LOOKUP_UNAVAILABLE;
             }
 
-            sfip_var_t* tmp_var;
+            const sfip_var_t* tmp_var;
             sfip_var_t* copy_var;
 
             if ((tmp_var = sfvt_lookup_var(table, tok)) == nullptr)
@@ -885,7 +885,8 @@ SfIpRet sfvar_validate(sfip_var_t* var)
 /* Allocates and returns a new variable, described by "variable". */
 sfip_var_t* sfvar_alloc(vartable_t* table, const char* variable, SfIpRet* status)
 {
-    sfip_var_t* ret, * tmpvar;
+    sfip_var_t* ret;
+    const sfip_var_t* tmpvar;
     const char* str, * end;
     char* tmp;
     SfIpRet stat;
@@ -1477,4 +1478,3 @@ TEST_CASE("SfIpVarAny", "[SfIpVar]")
 }
 
 #endif
-

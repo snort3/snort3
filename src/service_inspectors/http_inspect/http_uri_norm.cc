@@ -471,7 +471,7 @@ void UriNormalizer::classic_normalize(const Field& input, Field& result,
     {
         // Normalize path directory traversals
         // Find the leading slash if there is one
-        uint8_t* first_slash = (uint8_t*)memchr(buffer, '/', data_length);
+        const uint8_t* first_slash = (uint8_t*)memchr(buffer, '/', data_length);
         if (first_slash != nullptr)
         {
             const int32_t uri_offset = first_slash - buffer;
@@ -653,4 +653,3 @@ void UriNormalizer::load_unicode_map(uint8_t map[65536], const char* filename, i
 
     fclose(file);
 }
-

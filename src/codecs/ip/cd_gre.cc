@@ -109,7 +109,7 @@ void GreCodec::update(const ip::IpApi& api, const EncodeFlags /*flags*/, uint8_t
     uint16_t lyr_len, uint32_t& updated_len)
 {
     UNUSED(api);
-    gre::GREHdr* const greh = reinterpret_cast<gre::GREHdr*>(raw_pkt);
+    const gre::GREHdr* const greh = reinterpret_cast<const gre::GREHdr*>(raw_pkt);
 
     updated_len += lyr_len;
 
@@ -130,7 +130,7 @@ bool GreCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
     if (!buf.allocate(raw_len))
         return false;
 
-    gre::GREHdr* const greh_out = reinterpret_cast<gre::GREHdr*>(buf.data());
+    const gre::GREHdr* const greh_out = reinterpret_cast<const gre::GREHdr*>(buf.data());
     memcpy(buf.data(), raw_in, raw_len);
     enc.next_proto = IpProtocol::GRE;
     enc.next_ethertype = greh_out->proto();

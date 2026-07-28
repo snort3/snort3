@@ -213,7 +213,7 @@ private:
         netbios_domain = nullptr;
         snort_free(tls_sni);
         tls_sni = nullptr;
-        for (auto& pair : dsessions)
+        for (const auto& pair : dsessions)
             delete pair.second;
         dsessions.clear();
         delete dsession;

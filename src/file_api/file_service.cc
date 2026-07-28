@@ -219,7 +219,7 @@ uint64_t get_file_processed_size(Flow* flow)
     if (!file_flows)
         return 0;
 
-    FileContext* context = file_flows->get_current_file_context();
+    const FileContext* context = file_flows->get_current_file_context();
 
     if ( !context )
         return 0;

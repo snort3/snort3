@@ -141,7 +141,7 @@ std::string DataApi::expand_vars(const std::string& string)
 
             if (varname_completed || iv == l_string)
             {
-                char* p;
+                const char* p;
 
                 i = iv;
 
@@ -423,4 +423,3 @@ void DataApi::swap_conf_data(std::vector<Variable*>& new_vars,
     std::swap(comments, new_comments);
     std::swap(unsupported, new_unsupported);
 }
-

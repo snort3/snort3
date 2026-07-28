@@ -89,7 +89,7 @@ IpsOption::EvalStatus Dce2StubDataOption::eval(Cursor& c, Packet* p)
         return NO_MATCH;
     }
 
-    DCE2_Roptions* ropts = DceContextData::get_current_ropts(p);
+    const DCE2_Roptions* ropts = DceContextData::get_current_ropts(p);
 
     if ( !ropts )
         return NO_MATCH;
@@ -106,7 +106,7 @@ IpsOption::EvalStatus Dce2StubDataOption::eval(Cursor& c, Packet* p)
         {
             // Out of bounds for regular packets - create a reassembly packet.
             auto dce2_tcp_rbuf = std::make_unique<uint8_t[]>(IP_MAXPACKET);
-            DceEndianness* endianness = reinterpret_cast<DceEndianness*>(p->endianness);
+            const DceEndianness* endianness = reinterpret_cast<DceEndianness*>(p->endianness);
             uint16_t stub_len = 0;
 
             if (endianness && endianness->stub_data_offset != DCE2_SENTINEL) 
@@ -122,7 +122,7 @@ IpsOption::EvalStatus Dce2StubDataOption::eval(Cursor& c, Packet* p)
                 stub_len = DCE2_GetRpktMaxData(DCE2_RPKT_TYPE__TCP_CO_FRAG);
             }
 
-            Packet* rpkt = DCE2_GetRpkt(p, DCE2_RPKT_TYPE__TCP_CO_FRAG, dce2_tcp_rbuf.get(), stub_len);
+            const Packet* rpkt = DCE2_GetRpkt(p, DCE2_RPKT_TYPE__TCP_CO_FRAG, dce2_tcp_rbuf.get(), stub_len);
 
             if (rpkt) 
             {

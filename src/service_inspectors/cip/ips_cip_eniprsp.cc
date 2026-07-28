@@ -84,7 +84,7 @@ IpsOption::EvalStatus CipEnipRspOption::eval(Cursor&, Packet* p)
     if (!fd)
         return NO_MATCH;
 
-    CipSessionData* session_data = &fd->session;
+    const CipSessionData* session_data = &fd->session;
 
     if (session_data->current_data.direction == CIP_FROM_SERVER)
     {
@@ -163,4 +163,3 @@ static const IpsApi ips_api =
 };
 
 const BaseApi* ips_cip_eniprsp = &ips_api.base;
-

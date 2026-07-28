@@ -274,7 +274,7 @@ int TcpReassemblerBase::flush_to_seq(uint32_t bytes, Packet* p, uint32_t pkt_fla
 
     tracker.clear_tf_flags(TF_MISSING_PKT | TF_MISSING_PREV_PKT);
 
-    TcpSegmentNode* tsn = seglist.cur_rseg;
+    const TcpSegmentNode* tsn = seglist.cur_rseg;
     assert( seglist.seglist_base_seq == tsn->scan_seq());
 
     Packet* pdu = initialize_pdu(p, pkt_flags, tsn->tv);
@@ -601,4 +601,3 @@ uint32_t TcpReassemblerIgnore::perform_partial_flush(snort::Flow* flow, snort::P
     p = get_packet(flow, packet_dir, server_side);
     return 0;
 }
-

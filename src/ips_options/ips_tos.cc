@@ -154,7 +154,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* tos_ctor(Module* p, IpsInfo&)
 {
-    TosModule* m = static_cast<TosModule*>(p);
+    const TosModule* m = static_cast<TosModule*>(p);
     return new IpTosOption(m->data);
 }
 
@@ -197,4 +197,3 @@ const BaseApi* ips_tos[] =
     &tos_api.base,
     nullptr
 };
-

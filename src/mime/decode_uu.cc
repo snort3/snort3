@@ -129,7 +129,8 @@ int sf_uudecode(uint8_t* src, uint32_t slen, uint8_t* dst, uint32_t dlen, uint32
 {
     int sol = 1, length = 0;
     const uint8_t* ptr;
-    uint8_t* end, * dptr, * dend;
+    uint8_t* dptr;
+    const uint8_t *end, *dend;
 
     if (!src || !slen || !dst || !dlen ||  !bytes_read || !bytes_copied || !begin_found ||
         !end_found )
@@ -248,4 +249,3 @@ int sf_uudecode(uint8_t* src, uint32_t slen, uint8_t* dst, uint32_t dlen, uint32
     *bytes_copied = dptr - dst;
     return 0;
 }
-

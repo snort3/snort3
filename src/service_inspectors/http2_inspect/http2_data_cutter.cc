@@ -72,7 +72,7 @@ StreamSplitter::Status Http2DataCutter::skip_over_frame(Http2Stream* const strea
 
 bool Http2DataCutter::check_http_state(Http2Stream* const stream)
 {
-    HttpFlowData* const http_flow = stream->get_hi_flow_data();
+    const HttpFlowData* const http_flow = stream->get_hi_flow_data();
     if ((http_flow->get_type_expected(source_id) != SEC_BODY_HX))
     {
         stream->set_state(source_id, STREAM_ERROR);

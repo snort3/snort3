@@ -232,7 +232,7 @@ static const uint8_t* get_frame_pdu(Packet* p, uint16_t& length)
     if (!stream)
         return nullptr;
 
-    auto* frame = stream->get_current_frame();
+    const auto* frame = stream->get_current_frame();
     if (!frame)
         return nullptr;
 

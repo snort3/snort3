@@ -76,7 +76,7 @@ static void read_patterns(PortPatternNode* portPatternList, PatternService** ser
     AppIdInspector& inspector)
 {
     PatternService* ps = nullptr;
-    char* lastName = nullptr;
+    const char* lastName = nullptr;
     short lastPort = 0;
     IpProtocol lastProto = IpProtocol::PROTO_NOT_SET;
 
@@ -213,7 +213,7 @@ static int csd_pattern_tree_search(const uint8_t* data, uint16_t size, SearchToo
         return 0;
 
     /* match highest count and then longest pattern. */
-    PatternService* ps = nullptr;
+    const PatternService* ps = nullptr;
     for (PServiceMatch* sm = matches; sm; sm = sm->next)
     {
         Pattern* pattern;

@@ -111,7 +111,7 @@ Http2FlowData::~Http2FlowData()
 HttpFlowData* Http2FlowData::get_hi_flow_data()
 {
     assert(stream_in_hi != Http2Enums::NO_STREAM_ID);
-    Http2Stream* stream = get_hi_stream();
+    const Http2Stream* stream = get_hi_stream();
     return stream->get_hi_flow_data();
 }
 

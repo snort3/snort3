@@ -98,7 +98,7 @@ IpsOption::EvalStatus Dnp3IndOption::eval(Cursor&, Packet* p)
     if (dnp3_session->direction == DNP3_CLIENT)
         return NO_MATCH;
 
-    dnp3_reassembly_data_t* rdata = &(dnp3_session->server_rdata);
+    const dnp3_reassembly_data_t* rdata = &(dnp3_session->server_rdata);
 
     /* Only evaluate rules against complete Application-layer fragments */
     if (rdata->state != DNP3_REASSEMBLY_STATE__DONE)
@@ -188,7 +188,7 @@ static void dnp3_ind_mod_dtor(Module* m)
 
 static IpsOption* dnp3_ind_ctor(Module* p, IpsInfo&)
 {
-    Dnp3IndModule* m = static_cast<Dnp3IndModule*>(p);
+    const Dnp3IndModule* m = static_cast<Dnp3IndModule*>(p);
     return new Dnp3IndOption(m->flags);
 }
 

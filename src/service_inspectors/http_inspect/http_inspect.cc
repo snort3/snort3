@@ -216,7 +216,7 @@ void HttpInspect::show(const SnortConfig*) const
 
 PduSection HttpInspect::get_latest_is(const Packet* p)
 {
-    HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
+    const HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
 
     if (current_section == nullptr)
         return PS_NONE;
@@ -231,7 +231,7 @@ PduSection HttpInspect::get_latest_is(const Packet* p)
 
 SourceId HttpInspect::get_latest_src(const Packet* p)
 {
-    HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
+    const HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
 
     if (current_section == nullptr)
         return SRC__NOT_COMPUTE;
@@ -371,7 +371,7 @@ VersionId HttpInspect::http_get_version_id(Packet* p,
 
 HttpCommon::SectionType HttpInspect::get_type_expected(snort::Flow* flow, HttpCommon::SourceId source_id) const
 {
-    HttpFlowData* session_data = http_get_flow_data(flow);
+    const HttpFlowData* session_data = http_get_flow_data(flow);
     return session_data->get_type_expected(source_id);
 }
 
@@ -400,7 +400,7 @@ bool HttpInspect::get_fp_buf(InspectionBuffer::Type ibt, Packet* p, InspectionBu
 
 int HttpInspect::get_xtra_trueip(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);
+    const HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);
 
     if (current_section == nullptr)
         return 0;
@@ -420,7 +420,7 @@ int HttpInspect::get_xtra_trueip(Flow* flow, uint8_t** buf, uint32_t* len, uint3
 
 int HttpInspect::get_xtra_uri(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);
+    const HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);
 
     if (current_section == nullptr)
         return 0;
@@ -441,7 +441,7 @@ int HttpInspect::get_xtra_uri(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t
 
 int HttpInspect::get_xtra_host(Flow* flow, uint8_t** buf, uint32_t* len, uint32_t* type)
 {
-    HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);
+    const HttpMsgSection* current_section = HttpContextData::get_snapshot(flow);
 
     if (current_section == nullptr)
         return 0;
@@ -489,7 +489,7 @@ int HttpInspect::get_xtra_jsnorm(Flow* flow, uint8_t** buf, uint32_t* len, uint3
 
 void HttpInspect::disable_detection(Packet* p)
 {
-    HttpFlowData* session_data = http_get_flow_data(p->flow);
+    const HttpFlowData* session_data = http_get_flow_data(p->flow);
     if (!session_data->for_httpx)
     {
         assert(p->context);
@@ -744,7 +744,7 @@ void HttpInspect::clear(Packet* p)
 
 const uint8_t* HttpInspect::adjust_log_packet(Packet* p, uint16_t& length)
 {
-    HttpMsgSection*  current_section = HttpContextData::get_snapshot(p);
+    const HttpMsgSection* current_section = HttpContextData::get_snapshot(p);
     if (current_section == nullptr ||
         current_section->get_inspection_section() != PS_HEADER)
         return nullptr;

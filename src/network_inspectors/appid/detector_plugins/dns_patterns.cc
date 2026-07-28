@@ -106,7 +106,7 @@ int DnsPatternMatchers::scan_hostname(const uint8_t* pattern, size_t size, AppId
 {
     MatchedDnsPatterns* mp = nullptr;
     MatchedDnsPatterns* tmp_mp;
-    DnsHostPattern* best_match;
+    const DnsHostPattern* best_match;
 
     dns_host_matcher.find_all((const char*)pattern, size, dns_host_pattern_match, false, &mp);
 

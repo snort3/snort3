@@ -92,7 +92,7 @@ IpsOption::EvalStatus Dnp3FuncOption::eval(Cursor&, Packet* p)
         return NO_MATCH;
 
     dnp3_session_data_t* dnp3_session = &fd->dnp3_session;
-    dnp3_reassembly_data_t* rdata;
+    const dnp3_reassembly_data_t* rdata;
 
     if (dnp3_session->direction == DNP3_CLIENT)
         rdata = &(dnp3_session->client_rdata);
@@ -179,7 +179,7 @@ static void dnp3_func_mod_dtor(Module* m)
 
 static IpsOption* dnp3_func_ctor(Module* p, IpsInfo&)
 {
-    Dnp3FuncModule* m = static_cast<Dnp3FuncModule*>(p);
+    const Dnp3FuncModule* m = static_cast<Dnp3FuncModule*>(p);
     return new Dnp3FuncOption(m->func);
 }
 

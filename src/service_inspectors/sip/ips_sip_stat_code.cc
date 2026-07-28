@@ -100,7 +100,7 @@ IpsOption::EvalStatus SipStatCodeOption::eval(Cursor&, Packet* p)
     if (!sd)
         return NO_MATCH;
 
-    SIP_Roptions* ropts = &sd->ropts;
+    const SIP_Roptions* ropts = &sd->ropts;
 
     if (0 == ropts->status_code)
         return NO_MATCH;
@@ -196,7 +196,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* sip_stat_code_ctor(Module* p, IpsInfo&)
 {
-    SipStatCodeModule* m = static_cast<SipStatCodeModule*>(p);
+    const SipStatCodeModule* m = static_cast<SipStatCodeModule*>(p);
     return new SipStatCodeOption(m->ssod);
 }
 

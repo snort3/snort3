@@ -44,7 +44,7 @@ void DataDecryptEventHandler::handle(snort::DataEvent& event, snort::Flow* flow)
     AppIdSession* asd = snort::appid_api.get_appid_session(*flow);
     if (!asd)
     {
-        Packet* p = DetectionEngine::get_current_packet();
+        const Packet* p = DetectionEngine::get_current_packet();
         auto direction = p->is_from_client() ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
         asd = AppIdSession::allocate_session( p, p->get_ip_proto_next(), direction,
                 inspector, *pkt_thread_odp_ctxt );
@@ -68,4 +68,3 @@ void DataDecryptEventHandler::handle(snort::DataEvent& event, snort::Flow* flow)
     else if (DataDecryptEvent::DATA_DECRYPT_DO_NOT_DECRYPT_EVENT == state)
         asd->set_session_flags(APPID_SESSION_DO_NOT_DECRYPT);
 }
-

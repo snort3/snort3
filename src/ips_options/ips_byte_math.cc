@@ -1247,7 +1247,7 @@ TEST_CASE("Test of byte_math_ctor", "[ips_byte_math]")
         }
         else
         {
-            IpsOption* res_null = byte_math_ctor(&obj, info);
+            const IpsOption* res_null = byte_math_ctor(&obj, info);
             CHECK(res_null == nullptr);
             delete[] obj.data.result_name;
         }

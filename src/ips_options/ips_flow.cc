@@ -116,7 +116,7 @@ IpsOption::EvalStatus FlowCheckOption::eval(Cursor&, Packet* p)
     // cppcheck-suppress unreadVariable
     RuleProfile profile(flowCheckPerfStats);
 
-    FlowCheckData* fcd = &config;
+    const FlowCheckData* fcd = &config;
 
     // Check established/unestablished first
     {
@@ -377,7 +377,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* flow_ctor(Module* p, IpsInfo& info)
 {
-    FlowModule* m = static_cast<FlowModule*>(p);
+    const FlowModule* m = static_cast<FlowModule*>(p);
 
     if ( m->data.stateless )
         IpsOption::set_stateless(info);
@@ -439,4 +439,3 @@ const BaseApi* ips_flow[] =
     &flow_api.base,
     nullptr
 };
-

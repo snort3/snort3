@@ -124,7 +124,7 @@ StreamSplitter::Status SshSplitter::scan(
     Packet* p, const uint8_t* data, uint32_t len,
     uint32_t flags, uint32_t* fp)
 {
-    Flow* flow = p->flow;
+    const Flow* flow = p->flow;
     SSHData* sessp = get_session_data(flow);
 
     if (sessp and sessp->ssh_aborted)

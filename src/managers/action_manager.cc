@@ -203,7 +203,7 @@ void ActionManager::instantiate(const ActionApi* api, Module* mod, SnortConfig* 
 
     if ( act )
     {
-        RuleListNode* rln = CreateRuleType(sc, api->base.name, get_action_type(api->base.name));
+        const RuleListNode* rln = CreateRuleType(sc, api->base.name, get_action_type(api->base.name));
 
         // The plugin actions (e.g. reject, react, etc.) are per policy, per mode.
         // At logging time, they have to be retrieved the way we store them here.

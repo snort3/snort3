@@ -423,7 +423,7 @@ static int validate_date_format(FTP_DATE_FMT* ThisFmt, const char** this_param, 
     curr_ch = *this_param;
     if (!ThisFmt->empty)
     {
-        char* format_char = ThisFmt->format_string;
+        const char* format_char = ThisFmt->format_string;
 
         do
         {
@@ -754,7 +754,7 @@ static int validate_param(Packet* p,
             {
                 int alert = 1;
 
-                FTP_BOUNCE_TO* BounceTo = ftp_bounce_lookup_find(
+                const FTP_BOUNCE_TO* BounceTo = ftp_bounce_lookup_find(
                     session->client_conf->bounce_lookup, &ipAddr, &iRet);
                 if (BounceTo)
                 {
@@ -1999,4 +1999,3 @@ int check_ftp(FTP_SESSION* ftpssn, Packet* p, int iMode)
 
     return iRet;
 }
-

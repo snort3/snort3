@@ -815,7 +815,7 @@ static void Term()
 
 static int SetupCheck(int i)
 {
-    ThreshData* p = thData + i;
+    const ThreshData* p = thData + i;
     if ( p->expect == p->create )
         return 1;
     printf("setup %d: exp %d, got %d\n", i, p->expect, p->create);
@@ -824,7 +824,7 @@ static int SetupCheck(int i)
 
 static int RuleCheck(int i)
 {
-    ThreshData* p = ruleData + i;
+    const ThreshData* p = ruleData + i;
     if ( p->expect == p->create )
         return 1;
     printf("rule %d: exp %d, got %d\n", i, p->expect, p->create);
@@ -966,4 +966,3 @@ TEST_CASE("sfthd detect", "[sfthd]")
     }
     Term();
 }
-

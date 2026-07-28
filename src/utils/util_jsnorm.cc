@@ -618,7 +618,7 @@ static int PNormDecode(char* src, uint16_t srclen, char* dst, uint16_t dstlen, u
 {
     int iRet = RET_OK;
     const char* end;
-    char* ptr;
+    const char* ptr;
     PNormState s;
 
     end = src + srclen;
@@ -670,8 +670,8 @@ static int ConvertToChar(uint16_t flags, uint8_t* buf, uint8_t buflen)
 
 static void WriteDecodedSFCC(SFCCState* s)
 {
-    char* start = s->output.data;
-    char* end = s->output.data + s->output.size;
+    const char* start = s->output.data;
+    const char* end = s->output.data + s->output.size;
     uint16_t len = s->output.len;
     char* ptr = s->output.data + len;
 
@@ -1125,7 +1125,8 @@ static inline void WriteJSNormChar(JSNormState* s, int c, JSState* js)
 static void WriteJSNorm(JSNormState* s, char* copy_buf, uint16_t copy_len, JSState* js)
 {
     const char* end, * dstart, * dend;
-    char* ptr, * dptr;
+    char* dptr;
+    const char* ptr;
 
     ptr = copy_buf;
     end = copy_buf + copy_len;
@@ -1277,4 +1278,3 @@ int JSNormalizeDecode(const char* src, uint16_t srclen, char* dst, uint16_t dest
     return RET_OK;
 }
 }
-

@@ -230,7 +230,7 @@ bool HostPortCache::add_host(const SnortConfig*, const SfIp* ip, uint32_t* netma
 
 void HostPortCache::dump()
 {
-    for ( auto& kv : cache )
+    for ( const auto& kv : cache )
     {
         char inet_buffer[INET6_ADDRSTRLEN];
 

@@ -268,6 +268,7 @@ int ServiceDetector::fail_service(AppIdSession& asd, const Packet* pkt, AppidSes
 
 TEST_GROUP(detector_smtp_tests)
 {
+    // cppcheck-suppress constVariablePointer
     SmtpClientDetector *test_detector = nullptr;
     void setup() override
     {

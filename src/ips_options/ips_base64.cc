@@ -238,7 +238,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* base64_decode_ctor(Module* p, IpsInfo&)
 {
-    B64DecodeModule* m = static_cast<B64DecodeModule*>(p);
+    const B64DecodeModule* m = static_cast<B64DecodeModule*>(p);
     return new Base64DecodeOption(m->data);
 }
 
@@ -364,4 +364,3 @@ const BaseApi* ips_base64[] =
     &base64_data_api.base,
     nullptr
 };
-

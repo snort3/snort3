@@ -309,7 +309,7 @@ void FlowBitsOption::get_dependencies(bool& set, std::vector<std::string>& bits)
 
 bool flowbits_setter(void* option_data)
 {
-    FlowBitsOption* p = (FlowBitsOption*)option_data;
+    const FlowBitsOption* p = (FlowBitsOption*)option_data;
     return p->is_setter();
 }
 
@@ -369,7 +369,7 @@ static FlowBit* get_bit(
 static bool parse_flowbits(const char* flowbits_names, FlowBitCheck* check)
 {
     assert(flowbits_names);
-    FlowBit* flow_bit;
+    const FlowBit* flow_bit;
 
     if ( strchr(flowbits_names, '|') )
     {
@@ -554,4 +554,3 @@ const BaseApi* ips_flowbits[] =
     &flowbits_api.base,
     nullptr
 };
-

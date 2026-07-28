@@ -902,7 +902,7 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
                 char attr_token_buffer[MAX_TABLE_LINE_LEN]; 
                 strncpy(attr_token_buffer, token, sizeof(attr_token_buffer) - 1); 
                 attr_token_buffer[sizeof(attr_token_buffer) - 1] = '\0';
-                char* attr_token; 
+                const char* attr_token;
                 char* attr_context; 
                 attr_token = strtok_r(attr_token_buffer, ",", &attr_context); 
                 while (attr_token) 
@@ -968,10 +968,9 @@ void AppInfoManager::init_appid_info_table(const AppIdConfig& config,
 
 uint32_t AppInfoManager::getAttributeBits(AppId id) 
 {  
-    AppInfoTableEntry* entry = get_app_info_entry(id); 
+    const AppInfoTableEntry* entry = get_app_info_entry(id);
     if (! entry) { 
         return 0;    
     } 
     return entry->attributes;  
 }
-

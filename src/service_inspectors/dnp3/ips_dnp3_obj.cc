@@ -221,7 +221,7 @@ static void dnp3_obj_mod_dtor(Module* m)
 
 static IpsOption* dnp3_obj_ctor(Module* p, IpsInfo&)
 {
-    Dnp3ObjModule* m = static_cast<Dnp3ObjModule*>(p);
+    const Dnp3ObjModule* m = static_cast<Dnp3ObjModule*>(p);
     return new Dnp3ObjOption(m->group, m->var);
 }
 

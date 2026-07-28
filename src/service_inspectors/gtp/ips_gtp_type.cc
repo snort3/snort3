@@ -234,7 +234,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    GtpTypeModule* mod = static_cast<GtpTypeModule*>(m);
+    const GtpTypeModule* mod = static_cast<GtpTypeModule*>(m);
     return new GtpTypeOption(mod->types);
 }
 

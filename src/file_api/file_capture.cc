@@ -494,7 +494,7 @@ void FileCapture::store_file()
     // Check the file buffer
     uint8_t* buff = nullptr;
     int size = 0;
-    void* file_mem;
+    const void* file_mem;
 
     do
     {
@@ -520,7 +520,7 @@ std::string FileCapture::store_file_async()
     if (!file_info)
         return std::string();
 
-    uint8_t* sha = file_info->get_file_sig_sha256();
+    const uint8_t* sha = file_info->get_file_sig_sha256();
     if (!sha)
         return std::string();
 

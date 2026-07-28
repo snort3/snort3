@@ -74,7 +74,7 @@ int FileSession::process(Packet* p)
     Profile profile(file_ssn_stats);    // cppcheck-suppress unreadVariable
 
     p->flow->ssn_state.snort_protocol_id = SNORT_PROTO_FILE;
-    StreamFileConfig* c = get_file_cfg(p->flow->ssn_server);
+    const StreamFileConfig* c = get_file_cfg(p->flow->ssn_server);
 
     FileFlows* file_flows = FileFlows::get_file_flows(p->flow);
 
@@ -89,4 +89,3 @@ int FileSession::process(Packet* p)
 
     return 0;
 }
-

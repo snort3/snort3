@@ -412,6 +412,7 @@ static void clear_controls()
 {
     for (const auto& p : controls)
     {
+        // cppcheck-suppress constVariablePointer
         ControlConn* ctrlcon = p.second;
 
         if (ctrlcon->is_registered())
@@ -442,7 +443,7 @@ static void remove_broken_controls()
     fds.reserve(controls.size());
     for (const auto& p : controls)
     {
-        ControlConn* ctrlcon = p.second;
+        const ControlConn* ctrlcon = p.second;
         if (ctrlcon && !is_fd_valid(ctrlcon->get_fd()))
             fds.push_back(p.first);
     }
@@ -457,7 +458,7 @@ static void reap_removed_controls()
     fds.reserve(controls.size());
     for (const auto& p : controls)
     {
-        ControlConn* ctrlcon = p.second;
+        const ControlConn* ctrlcon = p.second;
         if (ctrlcon && ctrlcon->is_removed())
             fds.push_back(p.first);
     }

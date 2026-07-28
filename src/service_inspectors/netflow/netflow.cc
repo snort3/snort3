@@ -74,7 +74,7 @@ static std::vector<const NetFlowRule*> filter_record(const NetFlowRules* rules, 
             return match_vec;
     }
 
-    for( auto const & address : addr )
+    for( const auto* address : addr )
     {
         for( auto const& rule : rules->include )
         {
@@ -473,7 +473,7 @@ static bool decode_netflow_v9(const unsigned char* data, uint16_t size,
         // It's a data flowset
         if ( f_id > 255 && template_cache->count(ti_key) > 0 )
         {
-            auto& tf = template_cache->find_else_create(ti_key);
+            const auto& tf = template_cache->find_else_create(ti_key);
 
             size_t rec_len = 0;
             for ( const auto& t_field : tf )
@@ -942,7 +942,7 @@ void NetFlowInspector::stringify(std::ofstream& file_stream)
 
     for (auto& elem : *dump_cache)
     {
-        NetFlowSessionRecord& record = elem.second;
+        const NetFlowSessionRecord& record = elem.second;
         std::string str = "NetFlow Record #";
         str += std::to_string(++i);
         str += "\n";

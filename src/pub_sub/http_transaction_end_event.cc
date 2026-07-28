@@ -114,7 +114,7 @@ const Field& HttpTransactionEndEvent::get_stat_msg() const
 
 HttpEnums::VersionId HttpTransactionEndEvent::get_version() const
 {
-    auto status = transaction->get_status();
+    const auto* status = transaction->get_status();
     if (!status and !transaction->get_request())
         return HttpEnums::VERS__NOT_PRESENT;
     return status ? status->get_version_id() : transaction->get_request()->get_version_id();

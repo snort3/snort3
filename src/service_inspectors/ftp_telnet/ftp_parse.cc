@@ -185,7 +185,7 @@ static int ProcessDateFormat(FTP_DATE_FMT* dateFmt,
     int iRet = FTPP_SUCCESS;
     int curr_len = 0;
     char* curr_ch;
-    char* start_ch;
+    const char* start_ch;
     FTP_DATE_FMT* CurrFmt = dateFmt;
 
     if (!dateFmt)
@@ -358,7 +358,7 @@ static int DoNextFormat(FTP_PARAM_FMT* ThisFmt, int allocated,
 {
     FTP_PARAM_FMT* NextFmt;
     int iRet;
-    char* fmt = NextToken(CONF_SEPARATORS);
+    const char* fmt = NextToken(CONF_SEPARATORS);
 
     if (!fmt)
         return FTPP_INVALID_ARG;
@@ -467,7 +467,7 @@ static int DoNextFormat(FTP_PARAM_FMT* ThisFmt, int allocated,
     }
     else if (!strcmp(fmt, F_CHAR))
     {
-        char* chars_allowed = NextToken(CONF_SEPARATORS);
+        const char* chars_allowed = NextToken(CONF_SEPARATORS);
         NextFmt->type = e_char;
         NextFmt->format.chars_allowed = 0;
         while (*chars_allowed != 0)
@@ -495,7 +495,7 @@ static int DoNextFormat(FTP_PARAM_FMT* ThisFmt, int allocated,
     }
     else if ( *fmt == *F_LITERAL )
     {
-        char* end = strchr(++fmt, *F_LITERAL);
+        const char* end = strchr(++fmt, *F_LITERAL);
         int len = end ? end - fmt : 0;
 
         if ( len < 1 )
@@ -656,4 +656,3 @@ int ProcessFTPAllowBounce(
 
     return FTPP_SUCCESS;
 }
-

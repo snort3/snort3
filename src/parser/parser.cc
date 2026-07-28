@@ -86,7 +86,7 @@ public:
     {
         uint32_t a,b,c;
         const RuleTreeNodeKey* rtnk = reinterpret_cast<const RuleTreeNodeKey*>(k);
-        RuleTreeNode* rtn = rtnk->rtn;
+        const RuleTreeNode* rtn = rtnk->rtn;
 
         a = rtn->action;
         b = rtn->flags;
@@ -579,7 +579,7 @@ static void ShowPolicyStats(const SnortConfig* sc)
 
         for (PolicyId id = 0; id < otn->proto_node_num; id++)
         {
-            const auto rtn = getRtnFromOtn(otn, id);
+            const auto* rtn = getRtnFromOtn(otn, id);
 
             if ( rtn and rtn->enabled() )
                 stats[id]++;
@@ -588,7 +588,7 @@ static void ShowPolicyStats(const SnortConfig* sc)
 
     for (unsigned i = 0; i < sc->policy_map->ips_policy_count(); i++)
     {
-        auto policy = sc->policy_map->get_ips_policy(i);
+        const auto* policy = sc->policy_map->get_ips_policy(i);
         if ( !policy )
             continue;
 

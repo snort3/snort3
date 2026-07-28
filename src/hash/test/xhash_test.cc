@@ -69,7 +69,7 @@ TEST(xhash, create_xhash_test)
     XHash* test_table = new XHash(4, sizeof(struct xhash_test_key), 0, 0);
     CHECK(test_table);
 
-    void* data = test_table->get_mru_user_data();
+    const void* data = test_table->get_mru_user_data();
     CHECK(data == nullptr);
 
     for (unsigned i = 1; i <= 4; i++)
@@ -110,7 +110,7 @@ TEST(xhash, free_anr_lru_delete_free_node_test)
     ret = test_table->delete_lru_node();
     CHECK(ret == HASH_OK);
 
-    HashNode* xhnode = test_table->find_node(&xtk);
+    const HashNode* xhnode = test_table->find_node(&xtk);
     CHECK(!xhnode);
 
     delete test_table;
@@ -128,7 +128,7 @@ TEST(xhash, free_anr_lru_delete_tail_node_test)
 
     CHECK(test_table->delete_lru_node());
 
-    HashNode* xhnode = test_table->find_node(&xtk);
+    const HashNode* xhnode = test_table->find_node(&xtk);
     CHECK(xhnode == nullptr);
 
     delete test_table;

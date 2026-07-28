@@ -193,7 +193,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* size_ctor(Module* p, IpsInfo&)
 {
-    SizeModule* m = static_cast<SizeModule*>(p);
+    const SizeModule* m = static_cast<SizeModule*>(p);
     return new SizeOption(m->ssod, m->direction);
 }
 

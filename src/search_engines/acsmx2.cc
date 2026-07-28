@@ -578,6 +578,7 @@ static void AddPatternStates(ACSM_STRUCT2* acsm, ACSM_PATTERN2* p)
 
 static void Build_NFA(ACSM_STRUCT2* acsm)
 {
+    // cppcheck-suppress constVariablePointer
     acstate_t* FailState = acsm->acsmFailState;
     ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
     ACSM_PATTERN2* mlist, * px;
@@ -662,7 +663,7 @@ static void Build_NFA(ACSM_STRUCT2* acsm)
 static void Convert_NFA_To_DFA(ACSM_STRUCT2* acsm)
 {
     int cFailState;
-    acstate_t* FailState = acsm->acsmFailState;
+    const acstate_t* FailState = acsm->acsmFailState;
 
     std::list<int> queue;
     bool* queue_array = (bool*) snort_calloc( acsm->acsmNumStates, sizeof(bool) );
@@ -1038,21 +1039,21 @@ int acsm_search_dfa_full(
     {
     case 1:
     {
-        uint8_t* ps;
+        const uint8_t* ps;
         uint8_t** NextState = reinterpret_cast<uint8_t**>(acsm->acsmNextState);
         AC_SEARCH
     }
     break;
     case 2:
     {
-        uint16_t* ps;
+        const uint16_t* ps;
         uint16_t** NextState = reinterpret_cast<uint16_t**>(acsm->acsmNextState);
         AC_SEARCH
     }
     break;
     default:
     {
-        acstate_t* ps;
+        const acstate_t* ps;
         acstate_t** NextState = acsm->acsmNextState;
         AC_SEARCH
     }
@@ -1138,21 +1139,21 @@ int acsm_search_dfa_full_all(
     {
     case 1:
     {
-        uint8_t* ps;
+        const uint8_t* ps;
         uint8_t** NextState = reinterpret_cast<uint8_t**>(acsm->acsmNextState);
         AC_SEARCH_ALL
     }
     break;
     case 2:
     {
-        uint16_t* ps;
+        const uint16_t* ps;
         uint16_t** NextState = reinterpret_cast<uint16_t**>(acsm->acsmNextState);
         AC_SEARCH_ALL
     }
     break;
     default:
     {
-        acstate_t* ps;
+        const acstate_t* ps;
         acstate_t** NextState = acsm->acsmNextState;
         AC_SEARCH_ALL
     }
@@ -1251,7 +1252,8 @@ static void Print_DFA_MatchList(ACSM_STRUCT2* acsm, int state)
 static void Print_DFA(ACSM_STRUCT2* acsm)
 {
     int k,i;
-    acstate_t* p, state, fmt;
+    const acstate_t* p;
+    acstate_t state, fmt;
     acstate_t** NextState = acsm->acsmNextState;
 
     printf("Print DFA - %d active states\n",acsm->acsmNumStates);
@@ -1301,7 +1303,7 @@ int acsmPrintDetailInfo2(ACSM_STRUCT2* acsm)
 
 int acsmPrintSummaryInfo2()
 {
-    ACSM_STRUCT2* p = &summary.acsm;
+    const ACSM_STRUCT2* p = &summary.acsm;
 
     if ( !summary.num_states )
         return 0;

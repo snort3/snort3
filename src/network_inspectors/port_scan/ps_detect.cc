@@ -69,7 +69,7 @@ public:
 
     bool is_node_recovery_ok(HashNode* hnode) override
     {
-        PS_TRACKER* tracker = (PS_TRACKER*)hnode->data;
+        const PS_TRACKER* tracker = (PS_TRACKER*)hnode->data;
 
         if ( !tracker->priority_node )
             return true;
@@ -329,7 +329,7 @@ bool PortScan::ps_tracker_lookup(
     PS_PKT* ps_pkt, PS_TRACKER** scanner, PS_TRACKER** scanned)
 {
     PS_HASH_KEY key;
-    Packet* p = ps_pkt->pkt;
+    const Packet* p = ps_pkt->pkt;
 
     if (ps_get_proto(ps_pkt, &key.protocol) == -1)
         return false;
@@ -603,7 +603,7 @@ static int ps_update_open_ports(PS_PROTO* proto, unsigned short port)
 void PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
     PS_TRACKER* scanned)
 {
-    Packet* p = ps_pkt->pkt;
+    const Packet* p = ps_pkt->pkt;
     unsigned win = config->tcp_window;
 
     SfIp cleared;
@@ -1271,7 +1271,7 @@ int PortScan::ps_detect(PS_PKT* ps_pkt)
     if (ps_filter_ignore(ps_pkt))
         return 0;
 
-    Packet* p = ps_pkt->pkt;
+    const Packet* p = ps_pkt->pkt;
 
     do
     {

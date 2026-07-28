@@ -467,7 +467,7 @@ bool rotate_file_for_max_size(const char* file_owner, const char* old_file,
 TEST_CASE("uint8_to_printable_str go over all options", "[util]")
 {
     std::string print_str;
-    uint8_t pattern[] = { 0, 'a', '(', 'd', ')', 1, '\r', 2, '\n','n'};
+    const uint8_t pattern[] = { 0, 'a', '(', 'd', ')', 1, '\r', 2, '\n','n'};
     uint8_to_printable_str(pattern, 10, print_str);
     CHECK((strcmp(print_str.c_str(),"|00 |a(d)|01 0d 02 0a |n") == 0));
 }
@@ -475,7 +475,7 @@ TEST_CASE("uint8_to_printable_str go over all options", "[util]")
 TEST_CASE("uint8_to_printable_str empty buffer", "[util]")
 {
     std::string print_str;
-    uint8_t* pattern = nullptr;
+    const uint8_t* pattern = nullptr;
     uint8_to_printable_str(pattern, 0, print_str);
     CHECK((strcmp(print_str.c_str(),"") == 0));
 }
@@ -483,7 +483,7 @@ TEST_CASE("uint8_to_printable_str empty buffer", "[util]")
 TEST_CASE("uint8_to_printable_str end with |", "[util]")
 {
     std::string print_str;
-    uint8_t pattern[] = { 'a', 0 };
+    const uint8_t pattern[] = { 'a', 0 };
     uint8_to_printable_str(pattern, 2, print_str);
     CHECK((strcmp(print_str.c_str(),"a|00 |") == 0));
 }

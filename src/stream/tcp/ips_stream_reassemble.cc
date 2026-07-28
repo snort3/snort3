@@ -225,7 +225,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* reassemble_ctor(Module* p, IpsInfo&)
 {
-    ReassembleModule* m = static_cast<ReassembleModule*>(p);
+    const ReassembleModule* m = static_cast<ReassembleModule*>(p);
     return new ReassembleOption(m->srod);
 }
 

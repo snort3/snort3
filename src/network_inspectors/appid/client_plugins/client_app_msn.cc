@@ -70,7 +70,7 @@ int MsnClientDetector::validate(AppIdDiscoveryArgs& args)
     const uint8_t* end;
     uint8_t version[MAX_VERSION_SIZE];
     uint8_t* v;
-    uint8_t* v_end;
+    const uint8_t* v_end;
     uint32_t product_id;
 
     product_id = APP_ID_MSN_MESSENGER;
@@ -153,4 +153,3 @@ done:
     add_app(args.asd, APP_ID_MSN_MESSENGER, product_id, (char*)version, args.change_bits);
     return APPID_SUCCESS;
 }
-

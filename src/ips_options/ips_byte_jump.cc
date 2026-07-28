@@ -194,7 +194,7 @@ IpsOption::EvalStatus ByteJumpOption::eval(Cursor& c, Packet* p)
     // cppcheck-suppress unreadVariable
     RuleProfile profile(byteJumpPerfStats);
 
-    ByteJumpData* bjd = (ByteJumpData*)&config;
+    const ByteJumpData* bjd = (ByteJumpData*)&config;
 
     int32_t offset = 0;
     int32_t post_offset = 0;
@@ -500,7 +500,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* byte_jump_ctor(Module* p, IpsInfo&)
 {
-    ByteJumpModule* m = static_cast<ByteJumpModule*>(p);
+    const ByteJumpModule* m = static_cast<ByteJumpModule*>(p);
     return new ByteJumpOption(m->data);
 }
 
@@ -814,7 +814,7 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
 
         SECTION("byte_to_extract bigger than bytes left in buffer")
         {
-            uint8_t buff[] = "Hello world long input";
+            const uint8_t buff[] = "Hello world long input";
             current_cursor.set("hello_world_long_name", buff, 22);
             current_cursor.set_pos(22);
             byte_jump.bytes_to_extract = 1;
@@ -832,7 +832,7 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
 
         SECTION("String truncation")
         {
-            uint8_t buff[] = "Hello world long input 000";
+            const uint8_t buff[] = "Hello world long input 000";
             current_cursor.set("hello_world_long_name", buff, 26);
             current_cursor.set_pos(24);
             byte_jump.bytes_to_extract = 3;
@@ -855,7 +855,7 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
         {
             SECTION("Cursor on the last byte of buffer")
             {
-                uint8_t buff[] = "Hello world long input";
+                const uint8_t buff[] = "Hello world long input";
                 current_cursor.set("hello_world_long_name", buff, 22, true);
                 current_cursor.set_pos(22);
                 byte_jump.bytes_to_extract = 1;
@@ -876,7 +876,7 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
 
             SECTION("Cursor on the last byte of buffer, bytes_to_extract is bigger than offset")
             {
-                uint8_t buff[] = "Hello world long input";
+                const uint8_t buff[] = "Hello world long input";
                 current_cursor.set("hello_world_long_name", buff, 22);
                 current_cursor.set_pos(22);
                 byte_jump.bytes_to_extract = 3;
@@ -895,7 +895,7 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
 
             SECTION("Cursor on the last byte of buffer with string flag")
             {
-                uint8_t buff[] = "Hello world long input 000";
+                const uint8_t buff[] = "Hello world long input 000";
                 current_cursor.set("hello_world_long_name", buff, 26);
                 current_cursor.set_pos(26);
                 byte_jump.bytes_to_extract = 1;
@@ -916,7 +916,7 @@ TEST_CASE("ByteJumpOption test", "[ips_byte_jump]")
 
             SECTION("String truncation")
             {
-                uint8_t buff[] = "Hello world long input 000";
+                const uint8_t buff[] = "Hello world long input 000";
                 current_cursor.set("hello_world_long_name", buff, 26);
                 current_cursor.set_pos(26);
                 byte_jump.bytes_to_extract = 3;

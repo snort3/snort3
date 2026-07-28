@@ -305,7 +305,7 @@ static inline fd_status_t Pop_State(fd_PDF_Parse_t* p)
     if ( p->Parse_Stack_Index == 0 )
         return File_Decomp_Error;
 
-    fd_PDF_Parse_Stack_t* StckPtr = &(p->Parse_Stack[--(p->Parse_Stack_Index)]);
+    const fd_PDF_Parse_Stack_t* StckPtr = &(p->Parse_Stack[--(p->Parse_Stack_Index)]);
 
     p->Elem_Index = 0;  // Reset to beginning of token as can't push/pop in mid-token
     p->State = StckPtr->State;

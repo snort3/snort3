@@ -119,7 +119,7 @@ bool TcpStateFinWait2::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk
     if ( !trk.normalizer.validate_rcvd_seq(tsd) )
         return true;
 
-    Flow* flow = tsd.get_flow();
+    const Flow* flow = tsd.get_flow();
 
     trk.set_fin_seq_status_seen(tsd);
     trk.update_tracker_ack_recv(tsd);

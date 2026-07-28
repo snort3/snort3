@@ -174,8 +174,8 @@ StreamSplitter::Status SipSplitter::scan(
     Packet* pkt, const uint8_t* data, uint32_t len,
     uint32_t, uint32_t* fp)
 {
-    SIPData* sip_sess;
-    Flow* flow = pkt->flow;
+    const SIPData* sip_sess;
+    const Flow* flow = pkt->flow;
 
     sip_sess = get_sip_session_data(flow);
     if (sip_sess && sip_sess->sip_aborted) {

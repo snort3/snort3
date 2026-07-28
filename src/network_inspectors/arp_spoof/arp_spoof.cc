@@ -118,7 +118,7 @@ static void arp_config_show(const ArpSpoofConfig* config)
 
     ConfigLogger::log_option("hosts");
 
-    for (auto& ip : config->ipmel)
+    for (const auto& ip : config->ipmel)
     {
         std::string ip_mac;
         SfIpString ip_str;

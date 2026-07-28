@@ -575,7 +575,7 @@ static void Term()
 
 static int SetupCheck(int i)
 {
-    RateData* p = rfData + i;
+    const RateData* p = rfData + i;
     if ( p->expect == p->create )
         return 1;
     printf("setup %d: exp %d, got %d\n", i, p->expect, p->create);

@@ -296,7 +296,7 @@ int Pop3ServiceDetector::pop3_server_validate(POP3DetectorData* dd, const uint8_
 
     assert(data);
     const uint8_t* end = data + size;
-    char* v_end = pd->version + MAX_VERSION_SIZE - 1;
+    const char* v_end = pd->version + MAX_VERSION_SIZE - 1;
     switch (pd->state)
     {
     case POP3_STATE_CONNECT:
@@ -630,7 +630,7 @@ int Pop3ClientDetector::validate(AppIdDiscoveryArgs& args)
             {
                 char username[((255 - (sizeof(USER) - 1)) - 2) + 1];
                 char* p = username;
-                char* p_end = p + sizeof(username) - 1;
+                const char* p_end = p + sizeof(username) - 1;
                 int found_tick = 0;
 
                 for (; s < end && p < p_end; s++)

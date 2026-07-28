@@ -282,6 +282,7 @@ void DetectionEngine::finish_inspect(Packet* p, bool inspected)
 
 void DetectionEngine::finish_packet(Packet* p, bool flow_deletion)
 {
+    // cppcheck-suppress constVariablePointer
     ContextSwitcher* sw = Analyzer::get_switcher();
 
     log_events(p);
@@ -345,7 +346,7 @@ IpsContextData* DetectionEngine::get_data(unsigned id, IpsContext* context)
     if ( context )
         return context->get_context_data(id);
 
-    ContextSwitcher* sw = Analyzer::get_switcher();
+    const ContextSwitcher* sw = Analyzer::get_switcher();
 
     if ( !sw )
         return nullptr;
@@ -575,7 +576,7 @@ void DetectionEngine::resume(Packet* p)
 
 void DetectionEngine::wait_for_context()
 {
-    ContextSwitcher* sw = Analyzer::get_switcher();
+    const ContextSwitcher* sw = Analyzer::get_switcher();
 
     if ( !sw->idle_count() )
     {
@@ -782,4 +783,3 @@ void DetectionEngine::clear_events(Packet* p)
 
 unsigned DetectionEngine::get_pub_id()
 { return de_pub_id; }
-

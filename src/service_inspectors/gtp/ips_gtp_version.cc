@@ -84,7 +84,7 @@ IpsOption::EvalStatus GtpVersionOption::eval(Cursor&, Packet* p)
     if ( !p->flow )
         return NO_MATCH;
 
-    GtpFlowData* gfd = static_cast<GtpFlowData*>(
+    const GtpFlowData* gfd = static_cast<GtpFlowData*>(
         p->flow->get_flow_data(GtpFlowData::inspector_id));
 
     if ( gfd and version == gfd->ropts.gtp_version )
@@ -148,7 +148,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    GtpVersionModule* mod = static_cast<GtpVersionModule*>(m);
+    const GtpVersionModule* mod = static_cast<GtpVersionModule*>(m);
     return new GtpVersionOption(mod->version);
 }
 

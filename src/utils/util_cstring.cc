@@ -135,7 +135,7 @@ int SnortSnprintfAppend(char* buf, size_t buf_size, const char* format, ...)
  */
 int SnortStrncpy(char* dst, const char* src, size_t dst_size)
 {
-    char* ret = nullptr;
+    const char* ret = nullptr;
 
     if (dst == nullptr || src == nullptr || dst_size == 0)
         return SNORT_STRNCPY_ERROR;

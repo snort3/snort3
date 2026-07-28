@@ -387,7 +387,7 @@ static uint32_t DCE2_IgnoreJunkData(const uint8_t* data_ptr, uint16_t data_len,
  ********************************************************************/
 static DCE2_Ret DCE2_SmbHdrChecks(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr)
 {
-    Packet* p = DetectionEngine::get_current_packet();
+    const Packet* p = DetectionEngine::get_current_packet();
     bool is_seg_buf = DCE2_SmbIsSegBuffer(ssd, reinterpret_cast<const uint8_t*>(smb_hdr));
 
     if ((p->is_from_server() && (SmbType(smb_hdr) == SMB_TYPE__REQUEST)) ||
@@ -564,7 +564,7 @@ static DCE2_SmbRequestTracker* DCE2_SmbFindRequestTracker(DCE2_SmbSsnData* ssd,
         return ret_rtracker;
 
     // Phase 2: Iterate map entries
-    for (auto& entry : ssd->rtrackers_map)
+    for (const auto& entry : ssd->rtrackers_map)
     {
         ret_rtracker = DCE2_SmbMatchRequestTracker(ssd, entry.second, smb_com, mid, pid,
             uid, tid, win_rtracker, first_mid_rtracker, first_rtracker);
@@ -1309,7 +1309,7 @@ void DCE2_SmbDataFree(DCE2_SmbSsnData* ssd)
     ssd->ftrackers.clear();
 
     DCE2_SmbCleanRequestTracker(&ssd->rtracker);
-    for (auto& entry : ssd->rtrackers_map)
+    for (const auto& entry : ssd->rtrackers_map)
     {
         DCE2_SmbRequestTrackerDataFree(entry.second);
     }
@@ -1420,7 +1420,7 @@ DCE2_SmbSsnData* dce2_create_new_smb_session(Packet* p, dce2SmbProtoConf* config
  ********************************************************************/
 static DCE2_Ret DCE2_NbssHdrChecks(DCE2_SmbSsnData* ssd, const NbssHdr* nb_hdr)
 {
-    Packet* p = DetectionEngine::get_current_packet();
+    const Packet* p = DetectionEngine::get_current_packet();
     bool is_seg_buf = DCE2_SmbIsSegBuffer(ssd, reinterpret_cast<const uint8_t*>(nb_hdr));
 
     switch (NbssType(nb_hdr))
@@ -1829,7 +1829,7 @@ void DCE2_Smb1Process(DCE2_SmbSsnData* ssd)
                 nb_len = DCE2_BufferLength(*seg_buf);
 
                 // Get reassembled packet
-                Packet* rpkt = DCE2_SmbGetRpkt(ssd, &nb_ptr, &nb_len,
+                const Packet* rpkt = DCE2_SmbGetRpkt(ssd, &nb_ptr, &nb_len,
                     DCE2_RPKT_TYPE__SMB_SEG);
                 if (rpkt == nullptr)
                 {
@@ -2691,7 +2691,7 @@ DCE2_SsnData* get_dce2_session_data(snort::Flow* flow)
 
 void set_smb_reassembled_data(uint8_t* nb_ptr, uint16_t co_len)
 {
-    snort::Flow* flow = DetectionEngine::get_current_packet()->flow;
+    const snort::Flow* flow = DetectionEngine::get_current_packet()->flow;
     if (flow)
     {
         Dce2SmbFlowData* fd = static_cast<Dce2SmbFlowData*>(flow->get_flow_data(

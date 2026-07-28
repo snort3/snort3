@@ -90,6 +90,7 @@ TEST_GROUP(distill_verdict_tests)
     Flow flow{};
     Active act;
     SFDAQInstance* di;
+    // cppcheck-suppress constVariablePointer
     Analyzer* analyzer;
     ActiveAction* active_action;
 

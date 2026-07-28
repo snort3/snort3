@@ -485,7 +485,7 @@ bool FpFingerprintState::set(const Packet* p)
 
 TEST_CASE("get_tcp_fp_processor", "[rna_fingerprint_tcp]")
 {
-    TcpFpProcessor* tfp = get_tcp_fp_processor();
+    const TcpFpProcessor* tfp = get_tcp_fp_processor();
     CHECK(tfp == tcp_fp_processor);
 }
 
@@ -774,8 +774,8 @@ TEST_CASE("is_ws_good", "[rna_fingerprint_tcp]")
 TEST_CASE("is_option_good", "[rna_fingerprint_tcp]")
 {
     int optpos = 1, fp_optpos = 1;
-    uint8_t optorder[] = { (uint8_t) tcp::TcpOptCode::WSCALE };
-    uint8_t fp_optorder[] = { (uint8_t) tcp::TcpOptCode::MAXSEG };
+    const uint8_t optorder[] = { (uint8_t) tcp::TcpOptCode::WSCALE };
+    const uint8_t fp_optorder[] = { (uint8_t) tcp::TcpOptCode::MAXSEG };
 
     // Testing the case when option values are different
     CHECK( is_option_good(optpos, fp_optpos, optorder, fp_optorder) == false );

@@ -181,7 +181,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* icmp_seq_ctor(Module* p, IpsInfo&)
 {
-    IcmpSeqModule* m = static_cast<IcmpSeqModule*>(p);
+    const IcmpSeqModule* m = static_cast<IcmpSeqModule*>(p);
     return new IcmpSeqOption(m->data);
 }
 
@@ -224,4 +224,3 @@ const BaseApi* ips_icmp_seq[] =
     &icmp_seq_api.base,
     nullptr
 };
-

@@ -135,7 +135,7 @@ unsigned DataBus::get_id(const PubKey&)
 
 void DataBus::publish(unsigned, unsigned, DataEvent& event, Flow*)
 {
-    AppidEvent* appid_event = static_cast<AppidEvent*>(&event);
+    const AppidEvent* appid_event = static_cast<AppidEvent*>(&event);
     char* test_log = static_cast<char*>(mock().getData("test_log").getObjectPointer());
     snprintf(test_log, 256, "Published change_bits == %s",
         appid_event->get_change_bitset().to_string().c_str());
@@ -415,7 +415,7 @@ TEST(appid_discovery_tests, event_published_when_ignoring_flow)
     p.ptrs.ip_api.set(ip, ip);
     AppIdModule app_module;
     AppIdInspector ins(app_module);
-    AppIdContext& app_ctxt = ins.get_ctxt();
+    const AppIdContext& app_ctxt = ins.get_ctxt();
     AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0
 #ifndef DISABLE_TENANT_ID
     ,0
@@ -455,7 +455,7 @@ TEST(appid_discovery_tests, event_published_when_processing_flow)
     p.ptrs.tcph = nullptr;
     AppIdModule app_module;
     AppIdInspector ins(app_module);
-    AppIdContext& app_ctxt = ins.get_ctxt();
+    const AppIdContext& app_ctxt = ins.get_ctxt();
     AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0
 #ifndef DISABLE_TENANT_ID
     ,0
@@ -513,7 +513,7 @@ TEST(appid_discovery_tests, change_bits_for_non_http_appid)
     p.ptrs.ip_api.set(ip, ip);
     AppIdModule app_module;
     AppIdInspector ins(app_module);
-    AppIdContext& app_ctxt = ins.get_ctxt();
+    const AppIdContext& app_ctxt = ins.get_ctxt();
     AppIdSession* asd = new AppIdSession(IpProtocol::TCP, &ip, 21, ins, app_ctxt.get_odp_ctxt(), 0
 #ifndef DISABLE_TENANT_ID
     ,0

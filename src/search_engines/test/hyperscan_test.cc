@@ -99,6 +99,7 @@ TEST(mpse_hs_base, mpse)
 
 TEST_GROUP(mpse_hs_match)
 {
+    // cppcheck-suppress constVariablePointer
     Module* mod = nullptr;
     Mpse* hs = nullptr;
     const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_hyperscan[0]);
@@ -244,6 +245,7 @@ TEST(mpse_hs_match, pcre)
 
 TEST_GROUP(mpse_hs_multi)
 {
+    // cppcheck-suppress constVariablePointer
     Module* mod = nullptr;
     Mpse* hs1 = nullptr;
     Mpse* hs2 = nullptr;
@@ -305,6 +307,7 @@ TEST(mpse_hs_multi, single)
 
 TEST_GROUP(mpse_hs_scratch)
 {
+    // cppcheck-suppress constVariablePointer
     Module* mod = nullptr;
     Mpse* hs1 = nullptr;
     Mpse* hs2 = nullptr;

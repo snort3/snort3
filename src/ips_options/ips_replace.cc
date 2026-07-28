@@ -241,7 +241,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* replace_ctor(Module* p, IpsInfo&)
 {
-    ReplModule* m = static_cast<ReplModule*>(p);
+    const ReplModule* m = static_cast<ReplModule*>(p);
     return new ReplaceOption(m->data);
 }
 
@@ -284,4 +284,3 @@ const BaseApi* ips_replace[] =
     &replace_api.base,
     nullptr
 };
-

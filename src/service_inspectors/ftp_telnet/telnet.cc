@@ -48,7 +48,7 @@ THREAD_LOCAL TelnetStats tnstats;
 
 static int TelnetCheckConfigs(SnortConfig*, void* pData)
 {
-    TELNET_PROTO_CONF* telnet_config = (TELNET_PROTO_CONF*)pData;
+    const TELNET_PROTO_CONF* telnet_config = (TELNET_PROTO_CONF*)pData;
 
     if ((telnet_config->ayt_threshold > 0) &&
         !telnet_config->normalize)

@@ -208,7 +208,7 @@ static int GetRecord(FILE* input, u2record* rec)
 
 int main(int argc, char* argv[])
 {
-    char* input_filename = nullptr;
+    const char* input_filename = nullptr;
     char* output_filename = nullptr;
     const char* output_type = nullptr;
 

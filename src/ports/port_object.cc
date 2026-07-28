@@ -102,7 +102,7 @@ int PortObjectSetName(PortObject* po, const char* name)
  */
 int PortObjectAddItem(PortObject* po, PortObjectItem* poi, int* errflag)
 {
-    PortObjectItem* p;
+    const PortObjectItem* p;
     SF_LNODE* pos = nullptr;
 
     if (!po || !poi)
@@ -222,7 +222,7 @@ PortObject* PortObjectDup(PortObject* po)
     /* Dup the input rule list */
     if ( po->rule_list )
     {
-        for (int* prid  = (int*)sflist_first(po->rule_list, &lpos);
+        for (const int* prid = (int*)sflist_first(po->rule_list, &lpos);
             prid != nullptr;
             prid  = (int*)sflist_next(&lpos))
         {
@@ -370,6 +370,7 @@ int PortObjectPortCount(PortObject* po)
 */
 int PortObjectHasPort(PortObject* po, int port)
 {
+    // cppcheck-suppress constVariablePointer
     PortObjectItem* poi;
     SF_LNODE* cursor;
 
@@ -412,7 +413,7 @@ void PortObjectToggle(PortObject* po)
 
 int PortObjectIsPureNot(PortObject* po)
 {
-    PortObjectItem* poi;
+    const PortObjectItem* poi;
     SF_LNODE* cursor;
     int cnt=0;
 
@@ -480,7 +481,7 @@ PortObject* PortObjectAppend(PortObject* poa, PortObject* pob)
 {
     SF_LNODE* cursor;
 
-    for (PortObjectItem* poib = (PortObjectItem*)sflist_first(pob->item_list, &cursor);
+    for (const PortObjectItem* poib = (PortObjectItem*)sflist_first(pob->item_list, &cursor);
          poib != nullptr;
          poib = (PortObjectItem*)sflist_next(&cursor))
     {

@@ -151,7 +151,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* seq_ctor(Module* p, IpsInfo&)
 {
-    SeqModule* m = static_cast<SeqModule*>(p);
+    const SeqModule* m = static_cast<SeqModule*>(p);
     return new TcpSeqOption(m->data);
 }
 
@@ -194,4 +194,3 @@ const BaseApi* ips_seq[] =
     &seq_api.base,
     nullptr
 };
-

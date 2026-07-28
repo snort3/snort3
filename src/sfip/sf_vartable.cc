@@ -91,7 +91,7 @@ static char* sfvt_expand_value(vartable_t* table, const char* value)
             const char* varstart;
             char* vartmp;
             int parens = 0;
-            sfip_var_t* ipvar;
+            const sfip_var_t* ipvar;
 
             ptr++;
             if (ptr >= end)
@@ -424,4 +424,3 @@ TEST_CASE("SfVarTable_Kitchen_Sink", "[SfVarTable]")
 }
 
 #endif
-

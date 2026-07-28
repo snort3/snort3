@@ -411,7 +411,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* cvs_ctor(Module* p, IpsInfo&)
 {
-    CvsModule* m = static_cast<CvsModule*>(p);
+    const CvsModule* m = static_cast<CvsModule*>(p);
     return new CvsOption(m->data);
 }
 

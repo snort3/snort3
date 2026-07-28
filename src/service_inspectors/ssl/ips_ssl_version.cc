@@ -101,7 +101,7 @@ IpsOption::EvalStatus SslVersionOption::eval(Cursor&, Packet* pkt)
     if (!pkt->flow)
         return NO_MATCH;
 
-    SSLData* sd = SslBaseFlowData::get_ssl_session_data(pkt->flow);
+    const SSLData* sd = SslBaseFlowData::get_ssl_session_data(pkt->flow);
 
     if (!sd)
         return NO_MATCH;
@@ -238,7 +238,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ssl_version_ctor(Module* p, IpsInfo&)
 {
-    SslVersionModule* m = static_cast<SslVersionModule*>(p);
+    const SslVersionModule* m = static_cast<SslVersionModule*>(p);
     return new SslVersionOption(m->svod);
 }
 

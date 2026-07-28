@@ -143,7 +143,7 @@ static int ProcessIP(SnortConfig* sc, const char* addr, RuleTreeNode* rtn, int m
 
         if ( !rtn->sip )
         {
-            sfip_var_t* tmp = sfvt_lookup_var(ip_vartable, addr);
+            const sfip_var_t* tmp = sfvt_lookup_var(ip_vartable, addr);
             if ( tmp )
             {
                 rtn->sip = sfvar_create_alias(tmp, tmp->name);
@@ -202,7 +202,7 @@ static int ProcessIP(SnortConfig* sc, const char* addr, RuleTreeNode* rtn, int m
 
         if ( !rtn->dip )
         {
-            sfip_var_t* tmp = sfvt_lookup_var(ip_vartable, addr);
+            const sfip_var_t* tmp = sfvt_lookup_var(ip_vartable, addr);
             if ( tmp )
             {
                 rtn->dip = sfvar_create_alias(tmp, tmp->name);
@@ -1052,7 +1052,7 @@ void parse_rule_opt_end(SnortConfig* sc, const char* key, OptTreeNode* otn)
         s_body += ";";
     }
     RuleOptType type = OPT_TYPE_MAX;
-    IpsOption* ips = IpsManager::option_end(sc, otn, otn->snort_protocol_id, key, type);
+    const IpsOption* ips = IpsManager::option_end(sc, otn, otn->snort_protocol_id, key, type);
     CursorActionType cat = ips ? ips->get_cursor_type() : CAT_NONE;
 
     if ( cat > CAT_ADJUST )

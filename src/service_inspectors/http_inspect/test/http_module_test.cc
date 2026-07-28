@@ -87,7 +87,7 @@ TEST_GROUP(http_peg_count_test)
 
     void setup() override
     {
-        PegCount* counts = mod.get_counts();
+        const PegCount* counts = mod.get_counts();
         for (unsigned k=0; k < PEG_COUNT_MAX; k++)
         {
             CHECK(counts[k] == 0);
@@ -114,7 +114,7 @@ TEST(http_peg_count_test, increment)
     {
        HttpModule::increment_peg_counts(PEG_INSPECT);
     }
-    PegCount* counts = mod.get_counts();
+    const PegCount* counts = mod.get_counts();
     CHECK(counts[PEG_SCAN] == 13);
     CHECK(counts[PEG_INSPECT] == 27816);
 }
@@ -137,4 +137,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

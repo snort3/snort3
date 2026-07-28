@@ -136,7 +136,7 @@ IpsOption::EvalStatus Iec104ApciTypeOption::eval(Cursor&, Packet* p)
     }
 
     // check if the packet apci_type matches the rule option apci_type
-    Iec104FlowData* iec104fd = static_cast<Iec104FlowData*>(
+    const Iec104FlowData* iec104fd = static_cast<Iec104FlowData*>(
         p->flow->get_flow_data(Iec104FlowData::inspector_id));
     if (iec104fd and apci_type == iec104fd->ssn_data.iec104_apci_type)
     {
@@ -215,7 +215,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    Iec104ApciTypeModule* mod = static_cast<Iec104ApciTypeModule*>(m);
+    const Iec104ApciTypeModule* mod = static_cast<Iec104ApciTypeModule*>(m);
     return new Iec104ApciTypeOption(mod->apci_type);
 }
 

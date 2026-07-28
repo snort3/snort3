@@ -1152,7 +1152,7 @@ TEST_CASE("search_for_osi_acse_data: empty buffer", "[mms][acse]")
     MmsTracker mms;
     mms.state = MMS_STATE__OSI_ACSE_DATA_FIND_TAG;
 
-    uint8_t data[1] = { };
+    const uint8_t data[1] = { };
     unsigned len = 0;
     uint32_t idx = 0;
 
@@ -1576,7 +1576,7 @@ TEST_CASE("search_for_pres_ctx: empty buffer", "[mms][pres_ctx]")
     mms.state = MMS_STATE__OSI_PRES_CTX_SEARCH_USER_DATA_TAG;
     mms.state_remain = 0;
 
-    uint8_t data[1] = { };
+    const uint8_t data[1] = { };
     unsigned len = 0;
     uint32_t idx = 0;
 

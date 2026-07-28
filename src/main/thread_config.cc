@@ -613,7 +613,7 @@ void ThreadConfig::update_thread_status(bool status)
 
 TEST_CASE("Parse cpuset string negative test", "[ThreadConfig]")
 {
-    CpuSet* cpuset = ThreadConfig::validate_cpuset_string("totally a bad cpuset string");
+    const CpuSet* cpuset = ThreadConfig::validate_cpuset_string("totally a bad cpuset string");
     CHECK(cpuset == nullptr);
 }
 

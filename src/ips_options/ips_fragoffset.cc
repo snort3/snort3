@@ -151,7 +151,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* fragoffset_ctor(Module* p, IpsInfo&)
 {
-    FragOffsetModule* m = static_cast<FragOffsetModule*>(p);
+    const FragOffsetModule* m = static_cast<FragOffsetModule*>(p);
     return new FragOffsetOption(m->data);
 }
 
@@ -194,4 +194,3 @@ const BaseApi* ips_fragoffset[] =
     &fragoffset_api.base,
     nullptr
 };
-

@@ -203,7 +203,7 @@ IpsOption::EvalStatus Iec104AsduFuncOption::eval(Cursor&, Packet* p)
     }
 
     // check if the packet function matches the rule option function
-    Iec104FlowData* iec104fd = static_cast<Iec104FlowData*>(
+    const Iec104FlowData* iec104fd = static_cast<Iec104FlowData*>(
         p->flow->get_flow_data(Iec104FlowData::inspector_id));
 
     // ASDU only occurs in APCI type I
@@ -288,7 +288,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    Iec104AsduFuncModule* mod = static_cast<Iec104AsduFuncModule*>(m);
+    const Iec104AsduFuncModule* mod = static_cast<Iec104AsduFuncModule*>(m);
     return new Iec104AsduFuncOption(mod->func);
 }
 

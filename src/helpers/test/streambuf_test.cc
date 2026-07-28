@@ -109,7 +109,7 @@ using namespace std;
         (s).clear();                                                    \
         CHECK((exp_len) == (s).tellp());                                \
                                                                         \
-        ostreambuf_infl* b = reinterpret_cast<ostreambuf_infl*>((s).rdbuf()); \
+        const auto* b = static_cast<ostreambuf_infl*>((s).rdbuf());     \
         auto act = b->data();                                           \
         auto act_len = b->data_len();                                   \
                                                                         \
@@ -124,7 +124,7 @@ using namespace std;
         (s).clear();                                                    \
         CHECK((exp_len) == (s).tellp());                                \
                                                                         \
-        ostreambuf_infl* b = reinterpret_cast<ostreambuf_infl*>((s).rdbuf()); \
+        const auto* b = static_cast<ostreambuf_infl*>((s).rdbuf());     \
         auto act = b->data();                                           \
         auto act_len = b->data_len();                                   \
                                                                         \

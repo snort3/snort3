@@ -101,7 +101,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* detection_filter_ctor(Module* p, IpsInfo& info)
 {
-    DetectionFilterModule* m = static_cast<DetectionFilterModule*>(p);
+    const DetectionFilterModule* m = static_cast<DetectionFilterModule*>(p);
     IpsOption::set_detection_filter(info, m->trk_src, m->count, m->seconds);
     return nullptr;
 }
@@ -136,4 +136,3 @@ const BaseApi* ips_detection_filter[] =
     &detection_filter_api.base,
     nullptr
 };
-

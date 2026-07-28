@@ -151,7 +151,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ttl_ctor(Module* p, IpsInfo&)
 {
-    TtlModule* m = static_cast<TtlModule*>(p);
+    const TtlModule* m = static_cast<TtlModule*>(p);
     return new TtlOption(m->data);
 }
 
@@ -194,4 +194,3 @@ const BaseApi* ips_ttl[] =
     &ttl_api.base,
     nullptr
 };
-

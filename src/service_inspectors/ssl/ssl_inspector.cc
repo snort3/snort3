@@ -576,7 +576,7 @@ public:
 
     void handle(DataEvent& e, Flow*) override
     {
-        auto& fp_event = static_cast<FinalizePacketEvent&>(e);
+        const auto& fp_event = static_cast<const FinalizePacketEvent&>(e);
         const Packet* pkt = fp_event.get_packet();
         SslBaseFlowData* base_fd = static_cast<SslBaseFlowData*>(
             pkt->flow->get_flow_data(SslBaseFlowData::get_ssl_inspector_id()));

@@ -197,8 +197,8 @@ static void update_flags(Flow* flow)
     }
     else
     {
-        LwState* old_state = &(flow->previous_ssn_state);
-        LwState* cur_state = &(flow->ssn_state);
+        const LwState* old_state = &(flow->previous_ssn_state);
+        const LwState* cur_state = &(flow->ssn_state);
         uint32_t session_diff =
             ( old_state->session_flags ^ cur_state->session_flags ) &
             ~HA_IGNORED_SESSION_FLAGS;

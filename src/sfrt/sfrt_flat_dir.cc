@@ -248,7 +248,7 @@ static inline void _dir_fill_less_specific(int index, int fill,
         DIR_Entry* entry = reinterpret_cast<DIR_Entry*>(&base[subtable->entries]);
         if ( entry[index].value && !entry[index].length)
         {
-            dir_sub_table_flat_t* next =
+            const dir_sub_table_flat_t* next =
                 reinterpret_cast<dir_sub_table_flat_t*>(&base[entry[index].value]);
             _dir_fill_less_specific(0, 1 << next->width, length, val, entry[index].value);
         }
@@ -289,7 +289,7 @@ int64_t RtTable::_dir_update_info(int index, int fill, word length, uint32_t val
         if ( entry[index].value && !entry[index].length)
         {
             int64_t bytesAllocated;
-            dir_sub_table_flat_t* next =
+            const dir_sub_table_flat_t* next =
                 reinterpret_cast<dir_sub_table_flat_t*>(&base[entry[index].value]);
             bytesAllocated = _dir_update_info(0, 1 << next->width, length, val,
                     entry[index].value, updateEntry, update_entry_info_data, data);
@@ -508,7 +508,7 @@ tuple_flat_t RtTable::_dir_sub_flat_lookup(IPLOOKUP* ip, TABLE_PTR table_ptr)
     word index;
     uint8_t* base = static_cast<uint8_t*>(segment_basePtr());
     DIR_Entry* entry;
-    dir_sub_table_flat_t* tmp_table =
+    const dir_sub_table_flat_t* tmp_table =
         reinterpret_cast<dir_sub_table_flat_t*>(&base[table_ptr]);
 
     {
@@ -550,7 +550,7 @@ tuple_flat_t RtTable::_dir_sub_flat_lookup(IPLOOKUP* ip, TABLE_PTR table_ptr)
 /* Lookup information associated with the value "ip" */
 tuple_flat_t RtTable::sfrt_dir_flat_lookup(const uint32_t* addr, int numAddrDwords, TABLE_PTR table_ptr)
 {
-    dir_table_flat_t* root;
+    const dir_table_flat_t* root;
     uint8_t* base = static_cast<uint8_t*>(segment_basePtr());
     uint32_t h_addr[4];
     int i;
@@ -582,13 +582,13 @@ tuple_flat_t RtTable::sfrt_dir_flat_lookup(const uint32_t* addr, int numAddrDwor
 
 uint32_t RtTable::sfrt_dir_flat_usage(TABLE_PTR table_ptr) const
 {
-    dir_table_flat_t* tmp_table;
+    const dir_table_flat_t* tmp_table;
     uint8_t* base;
     if (!table_ptr)
     {
         return 0;
     }
     base = static_cast<uint8_t*>(segment_basePtr());
-    tmp_table = reinterpret_cast<dir_table_flat_t*>(&base[table_ptr]);
+    tmp_table = reinterpret_cast<const dir_table_flat_t*>(&base[table_ptr]);
     return tmp_table->allocated;
 }

@@ -85,6 +85,7 @@ public:
 
 GTP_IEData* get_infos()
 {
+    // cppcheck-suppress constVariablePointer
     GtpContextData* gcd = IpsContextData::get<GtpContextData>(gtp_ips_id);
 
     return gcd->gtp_ies;

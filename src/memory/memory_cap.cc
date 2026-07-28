@@ -364,7 +364,7 @@ void MemoryCap::print(bool verbose, bool init)
         return;
 
     update_global_stats();
-    MemoryCounts& mc = get_global_stats();
+    const MemoryCounts& mc = get_global_stats();
 
     if ( init and (verbose or mc.start_up_use) )
     {

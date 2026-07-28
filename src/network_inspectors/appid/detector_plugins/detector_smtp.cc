@@ -195,7 +195,7 @@ int SmtpClientDetector::extract_version_and_add_client_app(
     ClientSMTPData* const client_data, AppIdSession& asd, AppId appId,
     AppidChangeBits& change_bits)
 {
-    uint8_t* v_end = client_data->version + MAX_VERSION_SIZE - 1;
+    const uint8_t* v_end = client_data->version + MAX_VERSION_SIZE - 1;
 
     //  The prefix_len includes the NUL character, but product does not, so
     //  subtract 1 from length to skip.
@@ -220,7 +220,7 @@ int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const 
 {
     const uint8_t* p;
     AppId appId = APP_ID_SMTP;
-    uint8_t* v_end = fd->version + MAX_VERSION_SIZE - 1;
+    const uint8_t* v_end = fd->version + MAX_VERSION_SIZE - 1;
     unsigned len = data_end - product;
     if (len >= sizeof(MICROSOFT) && memcmp(product, MICROSOFT, sizeof(MICROSOFT)-1) == 0)
     {

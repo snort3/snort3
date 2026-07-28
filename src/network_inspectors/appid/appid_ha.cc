@@ -82,7 +82,7 @@ bool AppIdHAAppsClient::consume(Flow*& flow, const FlowKey* key, HAMessage& msg,
     if (appidDebug and appidDebug->is_enabled())
         appidDebug->activate(flow, asd, inspector->get_ctxt().config.log_all_sessions);
 
-    Packet* p = CURRENT_PACKET;
+    const Packet* p = CURRENT_PACKET;
     APPID_LOG(p, TRACE_DEBUG_LEVEL, "high-avail - Consuming app data - flags 0x%x, service %d, "
         "client %d, payload %d, misc %d, referred %d, client_inferred_service %d, "
         "port_service %d, tp_app %d, tp_payload %d\n",
@@ -173,7 +173,7 @@ bool AppIdHAAppsClient::produce(Flow& flow, HAMessage& msg)
         return false;
     assert(msg.cursor);
 
-    AppIdSession* asd = static_cast<AppIdSession*>(flow.get_flow_data(AppIdSession::inspector_id));
+    const AppIdSession* asd = static_cast<AppIdSession*>(flow.get_flow_data(AppIdSession::inspector_id));
     if (!asd)
         return false;
 
@@ -268,7 +268,7 @@ bool AppIdHAHttpClient::produce(Flow& flow, HAMessage& msg)
         return false;
     assert(msg.cursor);
 
-    AppIdSession* asd = appid_api.get_appid_session(flow);
+    const AppIdSession* asd = appid_api.get_appid_session(flow);
     if (!asd)
       return false;
 
@@ -349,7 +349,7 @@ bool AppIdHATlsHostClient::produce(Flow& flow, HAMessage& msg)
         return false;
     assert(msg.cursor);
 
-    AppIdSession* asd = appid_api.get_appid_session(flow);
+    const AppIdSession* asd = appid_api.get_appid_session(flow);
     if (!asd or !asd->get_api().get_tls_host())
         return false;
 

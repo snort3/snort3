@@ -111,7 +111,7 @@ static void try_reload_prune(bool is_not_locked)
     if ( is_not_locked )
     {
         CHECK(host_cache.reload_prune(prune_size, 2) == true);
-        for ( auto& seg : host_cache.seg_list )
+        for ( const auto* seg : host_cache.seg_list )
         {
             CHECK(seg->get_max_size() == prune_size/segs);
         }

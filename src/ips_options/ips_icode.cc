@@ -152,7 +152,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* icode_ctor(Module* p, IpsInfo&)
 {
-    IcodeModule* m = static_cast<IcodeModule*>(p);
+    const IcodeModule* m = static_cast<IcodeModule*>(p);
     return new IcodeOption(m->data);
 }
 
@@ -195,4 +195,3 @@ const BaseApi* ips_icode[] =
     &icode_api.base,
     nullptr
 };
-

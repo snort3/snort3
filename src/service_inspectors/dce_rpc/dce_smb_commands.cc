@@ -456,7 +456,7 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
             {
                 const uint8_t* data_ptr = DCE2_BufferData(ftracker->fp_writex_raw->buf);
                 uint32_t data_len = DCE2_BufferLength(ftracker->fp_writex_raw->buf);
-                Packet* rpkt = DCE2_SmbGetRpkt(ssd,
+                const Packet* rpkt = DCE2_SmbGetRpkt(ssd,
                     &data_ptr, &data_len, DCE2_RPKT_TYPE__SMB_TRANS);
 
                 if (rpkt == nullptr)
@@ -774,6 +774,7 @@ DCE2_Ret DCE2_SmbRead(DCE2_SmbSsnData* ssd, const SmbNtHdr*,
 
     if (DCE2_ComInfoIsRequest(com_info))
     {
+        // cppcheck-suppress constVariablePointer
         DCE2_SmbFileTracker* ftracker =
             DCE2_SmbGetFileTracker(ssd, SmbReadReqFid(reinterpret_cast<const SmbReadReq*>(nb_ptr)));
 
@@ -1187,7 +1188,7 @@ DCE2_Ret DCE2_SmbWriteAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
         && (SmbWriteAndXReqStartRaw(reinterpret_cast<const SmbWriteAndXReq*>(nb_ptr))
         || SmbWriteAndXReqRaw(reinterpret_cast<const SmbWriteAndXReq*>(nb_ptr))))
     {
-        DCE2_SmbFileTracker* ftracker =
+        const DCE2_SmbFileTracker* ftracker =
             DCE2_SmbGetFileTracker(ssd,
                 SmbWriteAndXReqFid(reinterpret_cast<const SmbWriteAndXReq*>(nb_ptr)));
 

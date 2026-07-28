@@ -837,7 +837,7 @@ static int _bnfa_conv_list_to_csparse_array(bnfa_struct_t* bnfa)
 {
     int m, k, i, nc;
     bnfa_state_t state;
-    bnfa_state_t* FailState = (bnfa_state_t*)bnfa->bnfaFailState;
+    const bnfa_state_t* FailState = (bnfa_state_t*)bnfa->bnfaFailState;
     bnfa_state_t* ps;     /* transition list */
     bnfa_state_t* pi;     /* state indexes into ps */
     bnfa_state_t ps_index=0;
@@ -1147,7 +1147,7 @@ void bnfaPrint(bnfa_struct_t* bnfa)
             if ( !NextState )
                 continue;
 
-            bnfa_state_t* p = NextState[k];
+            const bnfa_state_t* p = NextState[k];
             printf("fs=%-4d nc=256 ",bnfa->bnfaFailState[k]);
 
             for ( int i=0; i<bnfa->bnfaAlphabetSize; i++ )
@@ -1512,7 +1512,7 @@ static inline unsigned _bnfa_get_next_state_csparse_nfa(
     int k;
     int nc;
     int index;
-    bnfa_state_t* pcs;
+    const bnfa_state_t* pcs;
 
     for (;; )
     {

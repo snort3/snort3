@@ -954,7 +954,7 @@ void ServicePig::vectorize(SnortConfig* sc)
     inspector_cache_by_id.clear();
     inspector_cache_by_service.clear();
 
-    for ( auto* p : ilist )
+    for ( const auto* p : ilist )
         add_inspector_to_cache(p, sc);
 
     if ( !binder and (!get_flow_tracking(sc).vec.empty() or wizard) )
@@ -1241,7 +1241,7 @@ static void instantiate_default_binder(SnortConfig* sc, ServicePig* fp)
 
     bool tcp = false, udp = false, pdu = false;
 
-    for ( const auto& p : fp->service.vec )
+    for ( const auto* p : fp->service.vec )
     {
         const InspectApi& api = *p->get_api();
 
@@ -1351,7 +1351,7 @@ void InspectorManager::dump_inspector_map()
 
     for ( const auto& it : curr_iv->im )
     {
-        auto& insd = curr_iv->iv[it.second];
+        const auto& insd = curr_iv->iv[it.second];
         uint64_t npid = insd.np ? insd.np->user_policy_id : 0;
         uint64_t ipid = insd.ip ? insd.ip->user_policy_id : 0;
         LogMessage("%*s%s: " STDu64 ", " STDu64 "\n", 8, " ", insd.name.c_str(), npid, ipid);
@@ -1392,7 +1392,7 @@ void InspectorManager::print_config(SnortConfig* sc)
     {
         const auto shell = sc->policy_map->get_shell(shell_id);
         const auto policies = sc->policy_map->get_policies(shell);
-        const auto network = policies->network;
+        const auto* network = policies->network;
 
         if ( network and network->traffic_group )
         {
@@ -1424,7 +1424,7 @@ static inline void execute(
 {
     Stopwatch<SnortClock> timer;
 
-    for ( const auto& prep : phv.vec )
+    for ( const auto* prep : phv.vec )
     {
         if ( p->packet_flags & PKT_PASS_RULE )
             break;
@@ -1563,7 +1563,7 @@ inline void InspectorManager::internal_execute(Packet* p)
     const SnortConfig* sc = p->context->conf;
     if ( !p->has_paf_payload() )
     {
-        PHVector& ft = get_flow_tracking(sc);
+        const PHVector& ft = get_flow_tracking(sc);
         if ( !ft.vec.empty() )
             ::execute<T>(p, ft);
         else

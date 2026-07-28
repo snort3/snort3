@@ -80,7 +80,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* target_ctor(Module* p, IpsInfo& info)
 {
-    TargetModule* m = static_cast<TargetModule*>(p);
+    const TargetModule* m = static_cast<TargetModule*>(p);
     IpsOption::set_target(info, m->target);
     return nullptr;
 }
@@ -119,4 +119,3 @@ const BaseApi* ips_target[] =
     &target_api.base,
     nullptr
 };
-

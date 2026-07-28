@@ -107,7 +107,7 @@ public:
 
         for ( int i = 0; i < plx->n; i++ )
         {
-            unsigned char* pc_ptr = (unsigned char*)&plx->p[i];
+            const unsigned char* pc_ptr = (unsigned char*)&plx->p[i];
 
             for ( unsigned j = 0; j < sizeof(void*); j++ )
             {
@@ -596,7 +596,7 @@ static void PortTableConsistencyCheck(PortTable* p)
 static void PortTableConsistencyCheck2(PortTable* p)
 {
     SF_LNODE* pos;
-    PortObject2* lastpo = nullptr;
+    const PortObject2* lastpo = nullptr;
 
     for ( PortObject* ipo = (PortObject*)sflist_first(p->pt_polist, &pos);
         ipo;
@@ -710,7 +710,7 @@ int PortTableAddObject(PortTable* p, PortObject* po)
         return -1;
 
     /* Search for the Port Object in the input list, by address */
-    for ( PortObject* pox = (PortObject*)sflist_first(p->pt_polist, &lpos);
+    for ( const PortObject* pox = (PortObject*)sflist_first(p->pt_polist, &lpos);
         pox!=nullptr;
         pox = (PortObject*)sflist_next(&lpos) )
     {

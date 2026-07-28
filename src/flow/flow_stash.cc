@@ -182,6 +182,6 @@ const list<snort::SfIp>* FlowStash::get_aux_ip_list() const
     StashGenericObject* stash_value;
     if (!get(STASH_AUX_IP, stash_value))
         return nullptr;
-    AuxIPStashItem* item = static_cast<AuxIPStashItem*>(stash_value);
+    const AuxIPStashItem* item = static_cast<AuxIPStashItem*>(stash_value);
     return &item->get_aux_ip_list();
 }

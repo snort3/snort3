@@ -74,7 +74,7 @@ uint32_t AppIdIpsOption::hash() const
 
     mix(a, b, c);
 
-    for ( auto& appid_name : appid_table )
+    for ( const auto& appid_name : appid_table )
         mix_str(a, b, c, appid_name.c_str(), appid_name.length());
 
     finalize(a, b, c);
@@ -239,7 +239,7 @@ static void appid_option_mod_dtor(Module* m)
 
 static IpsOption* appid_option_ips_ctor(Module* p, IpsInfo&)
 {
-    AppIdOptionModule* m = static_cast<AppIdOptionModule*>(p);
+    const AppIdOptionModule* m = static_cast<AppIdOptionModule*>(p);
     return new AppIdIpsOption(m->appid_table);
 }
 

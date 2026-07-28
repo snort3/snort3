@@ -106,7 +106,7 @@ IpsOption::EvalStatus GtpInfoOption::eval(Cursor& c, Packet* p)
     if ( !p or !p->flow )
         return NO_MATCH;
 
-    GtpFlowData* gfd = static_cast<GtpFlowData*>(
+    const GtpFlowData* gfd = static_cast<GtpFlowData*>(
         p->flow->get_flow_data(GtpFlowData::inspector_id));
 
     if ( !gfd or !gfd->ropts.gtp_infoElements )
@@ -220,7 +220,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* opt_ctor(Module* m, IpsInfo&)
 {
-    GtpInfoModule* mod = static_cast<GtpInfoModule*>(m);
+    const GtpInfoModule* mod = static_cast<GtpInfoModule*>(m);
     return new GtpInfoOption(mod->types);
 }
 

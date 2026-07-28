@@ -184,7 +184,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ber_skip_ctor(Module* p, IpsInfo&)
 {
-    BerSkipModule* m = static_cast<BerSkipModule*>(p);
+    const BerSkipModule* m = static_cast<BerSkipModule*>(p);
     return new BerSkipOption(m->type, m->optional);
 }
 
@@ -227,4 +227,3 @@ const BaseApi* ips_ber_skip[] =
     &ber_skip_api.base,
     nullptr
 };
-

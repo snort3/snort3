@@ -385,7 +385,7 @@ static inline void DCE2_CoCtxMapEmpty(DCE2_CoCtxIdMap* ctx_ids)
     if (ctx_ids == nullptr)
         return;
 
-    for (auto& entry : *ctx_ids)
+    for (const auto& entry : *ctx_ids)
         snort_free(entry.second);
 
     ctx_ids->clear();
@@ -494,7 +494,7 @@ static inline void DCE2_CoSetRdata(DCE2_CoTracker* cot, uint8_t* co_ptr, uint16_
         (cot->frag_tracker.opnum != DCE2_SENTINEL) ?
         (uint16_t)cot->frag_tracker.opnum : (uint16_t)cot->opnum;
 
-    Packet* p = DetectionEngine::get_current_packet();
+    const Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return;
 
@@ -546,7 +546,7 @@ void DCE2_CoInitRdata(uint8_t* co_ptr, int dir)
 
 static inline DCE2_CoSeg* DCE2_CoGetSegPtr(DCE2_CoTracker* cot)
 {
-    Packet* p = DetectionEngine::get_current_packet();
+    const Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return nullptr;
 
@@ -763,7 +763,7 @@ static DCE2_Ret DCE2_CoHdrChecks(DCE2_SsnData* sd, DCE2_CoTracker* cot, const Dc
         return DCE2_RET__ERROR;
     }
 
-    Packet* p = DetectionEngine::get_current_packet();
+    const Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return DCE2_RET__ERROR;
 
@@ -968,7 +968,7 @@ static void DCE2_CoCtxReq(DCE2_SsnData* sd, DCE2_CoTracker* cot, const DceRpcCoH
 
     for (i = 0; i < num_ctx_items; i++)
     {
-        DCE2_CoCtxIdNode* ctx_node;
+        const DCE2_CoCtxIdNode* ctx_node;
 
         ctx_node = dce_co_process_ctx_id(sd,cot,co_hdr,policy,frag_ptr,frag_len);
         if (ctx_node == nullptr)
@@ -1359,7 +1359,7 @@ static int DCE2_CoGetAuthLen(DCE2_SsnData* sd, const DceRpcCoHdr* co_hdr,
 
 static DCE2_Buffer* DCE2_CoGetFragBuf(DCE2_CoFragTracker* ft)
 {
-    Packet* p = DetectionEngine::get_current_packet();
+    const Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return nullptr;
 
@@ -1547,7 +1547,7 @@ static Packet* dce_co_reassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     DCE2_CoRpktType co_rtype, const DceRpcCoHdr** co_hdr)
 {
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
-    Packet* p = DetectionEngine::get_current_packet();
+    const Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return nullptr;
 
@@ -1658,7 +1658,7 @@ static DCE2_Ret dce_co_handle_frag(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     uint32_t size = (frag_len < DCE2_CO__MIN_ALLOC_SIZE) ? DCE2_CO__MIN_ALLOC_SIZE : frag_len;
     DCE2_BufferMinAddFlag mflag = DCE2_BUFFER_MIN_ADD_FLAG__USE;
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
-    Packet* p = DetectionEngine::get_current_packet();
+    const Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return DCE2_RET__ERROR;
 
@@ -2066,6 +2066,7 @@ static void DCE2_CoResponse(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     cot->ctx_id = ctx_id;
     cot->call_id = DceRpcCoCallId(co_hdr);
 
+    // cppcheck-suppress constVariablePointer
     Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return;
@@ -2144,7 +2145,7 @@ static void DCE2_CoDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot,
     const DceRpcCoHdr* co_hdr = reinterpret_cast<const DceRpcCoHdr*>(frag_ptr);
     int pdu_type = DceRpcCoPduType(co_hdr);
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
-    Packet* p = DetectionEngine::get_current_packet();
+    const Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return;
 
@@ -2356,7 +2357,7 @@ static DCE2_Ret DCE2_CoSegEarlyRequest(DCE2_CoTracker* cot,
 static void DCE2_CoEarlyReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot)
 {
     DCE2_Buffer* frag_buf = DCE2_CoGetFragBuf(&cot->frag_tracker);
-    Packet* p = DetectionEngine::get_current_packet();
+    const Packet* p = DetectionEngine::get_current_packet();
     if ( (p == nullptr) || p->is_from_server() )
         return;
 
@@ -2371,7 +2372,7 @@ static void DCE2_CoEarlyReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot)
 
             if (DCE2_BufferLength(cot->cli_seg.buf) >= hdr_size)
             {
-                DceRpcCoHdr* co_hdr = reinterpret_cast<DceRpcCoHdr*>(DCE2_BufferData(cot->cli_seg.buf));
+                const DceRpcCoHdr* co_hdr = reinterpret_cast<DceRpcCoHdr*>(DCE2_BufferData(cot->cli_seg.buf));
 
                 if (DceRpcCoPduType(co_hdr) == DCERPC_PDU_TYPE__REQUEST)
                 {
@@ -2426,6 +2427,7 @@ static void DCE2_CoEarlyReassemble(DCE2_SsnData* sd, DCE2_CoTracker* cot)
 static Packet* DCE2_CoGetSegRpkt(DCE2_SsnData* sd,
     const uint8_t* data_ptr, uint32_t data_len)
 {
+    // cppcheck-suppress constVariablePointer
     Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return nullptr;
@@ -2473,7 +2475,7 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
     dce2CommonStats* dce_common_stats = dce_get_proto_stats_ptr(sd);
     int smb_hdr_len;
 
-    Packet* p = DetectionEngine::get_current_packet();
+    const Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
         return;
 

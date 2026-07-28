@@ -585,7 +585,8 @@ TEST_CASE("corner cases", "[PacketTracer]")
 TEST_CASE("dump", "[PacketTracer]")
 {
     char test_string[max_buff_size];
-    char test_str[] = "ABCD", results[] = "ABCD3=400";
+    char test_str[] = "ABCD";
+    const char results[] = "ABCD3=400";
 
     TestPacketTracer::thread_init();
     TestPacketTracer::set_user_enable(true);
@@ -723,7 +724,7 @@ TEST_CASE("open file", "[PacketTracer]")
     TestPacketTracer::thread_init();
     CHECK( log_file == "packet_tracer_tmp" );
 
-    FILE* fh = TestPacketTracer::get_log_fh();
+    const FILE* fh = TestPacketTracer::get_log_fh();
     CHECK( fh != stdout );
 
     TestPacketTracer::thread_term();

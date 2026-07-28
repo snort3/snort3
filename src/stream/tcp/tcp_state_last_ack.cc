@@ -97,7 +97,7 @@ bool TcpStateLastAck::fin_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
     if ( !trk.normalizer.validate_rcvd_seq(tsd) )
         return true;
 
-    Flow* flow = tsd.get_flow();
+    const Flow* flow = tsd.get_flow();
 
     bool fin_acked = SEQ_EQ(tsd.get_ack(), trk.get_snd_nxt());
     trk.update_tracker_ack_recv(tsd);
@@ -148,4 +148,3 @@ bool TcpStateLastAck::do_post_sm_packet_actions(TcpSegmentDescriptor& tsd, TcpSt
 
     return true;
 }
-

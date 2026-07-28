@@ -185,7 +185,8 @@ static bool get_record(u2iterator* it, u2record* record)
 
 static void extradata_dump(u2record* record)
 {
-    uint8_t* field, * data;
+    uint8_t* field;
+    const uint8_t* data;
     int i;
     int len = 0;
     SerialUnified2ExtraData event;

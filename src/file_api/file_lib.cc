@@ -426,7 +426,7 @@ uint8_t* FileInfo::get_file_sig_sha256() const
 
 std::string FileInfo::sha_to_string(const uint8_t* sha256) const
 {
-    uint8_t conv[] = "0123456789ABCDEF";
+    const uint8_t conv[] = "0123456789ABCDEF";
     const uint8_t* index;
     const uint8_t* end;
     std::string sha_out;
@@ -988,7 +988,7 @@ void FileContext::find_file_type_from_ips(Packet* pkt, const uint8_t* file_data,
     bool did_swap = false;
     if (files)
     {
-        FileContext* context = files->get_current_file_context();
+        const FileContext* context = files->get_current_file_context();
         if (!context or context != this)
         {
             saved = files->swap_current_file_context_no_delete(this);
@@ -1222,7 +1222,7 @@ void FileContext::print_file_data(FILE* fp, const uint8_t* data, int len, int ma
  */
 void FileContext::print_file_sha256(std::ostream& log)
 {
-    unsigned char* hash = sha256;
+    const unsigned char* hash = sha256;
 
     if (!sha256)
         return;

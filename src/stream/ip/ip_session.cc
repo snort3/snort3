@@ -156,7 +156,7 @@ bool IpSession::setup(Packet* p)
     SESSION_STATS_ADD(ip_stats)
     memset(&tracker, 0, sizeof(tracker));
 
-    StreamIpConfig* pc = get_ip_cfg(flow->ssn_server);
+    const StreamIpConfig* pc = get_ip_cfg(flow->ssn_server);
     flow->set_default_session_timeout(pc->session_timeout, false);
 
     if ( p->ptrs.decode_flags & DECODE_FRAG )
@@ -205,6 +205,7 @@ int IpSession::process(Packet* p)
 
 bool IpSession::add_alert(Packet*, uint32_t gid, uint32_t sid)
 {
+    // cppcheck-suppress constVariablePointer
     FragTracker* ft = &tracker;
 
     /* Only track a certain number of alerts per session */
@@ -220,7 +221,7 @@ bool IpSession::add_alert(Packet*, uint32_t gid, uint32_t sid)
 
 bool IpSession::check_alerted(Packet* p, uint32_t gid, uint32_t sid)
 {
-    FragTracker* ft = &tracker;
+    const FragTracker* ft = &tracker;
 
     if ( !ft->engine )
         return false;

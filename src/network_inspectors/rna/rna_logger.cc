@@ -271,7 +271,7 @@ TEST_CASE("RNA logger", "[rna_logger]")
     SECTION("Checking enabled flag")
     {
         RnaTracker ht;
-        uint8_t mac[6] = {0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6};
+        const uint8_t mac[6] = {0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6};
         RnaLogger logger1(false);
         CHECK(false == logger1.log(0, 0, nullptr, mac, ht, nullptr, 0, 0,
             nullptr, nullptr, nullptr, nullptr, nullptr));

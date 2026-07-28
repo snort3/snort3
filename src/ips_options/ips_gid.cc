@@ -80,7 +80,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* gid_ctor(Module* p, IpsInfo& info)
 {
-    GidModule* m = static_cast<GidModule*>(p);
+    const GidModule* m = static_cast<GidModule*>(p);
     IpsOption::set_gid(info, m->gid);
     return nullptr;
 }
@@ -119,4 +119,3 @@ const BaseApi* ips_gid[] =
     &gid_api.base,
     nullptr
 };
-

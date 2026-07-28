@@ -890,7 +890,7 @@ TEST_CASE("Test of byte_extract_ctor", "[ips_byte_extract]")
         }
         else
         {
-            IpsOption* res_null = byte_extract_ctor(&obj, info);
+            const IpsOption* res_null = byte_extract_ctor(&obj, info);
             CHECK(res_null == nullptr);
             delete[] obj.data.name;
         }

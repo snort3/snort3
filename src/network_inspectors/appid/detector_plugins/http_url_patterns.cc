@@ -897,7 +897,7 @@ AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor& cmd, char** version, cha
     else
         cmd.sort_chp_matches();
 
-    for ( auto& tmp: cmd.chp_matches[pt] )
+    for ( const auto& tmp: cmd.chp_matches[pt] )
     {
         CHPAction* match = (CHPAction*)tmp.mpattern;
         if ( match->appIdInstance > hsession->get_chp_candidate() )
@@ -1320,7 +1320,7 @@ int HttpPatternMatchers::get_appid_by_pattern(const char* data, unsigned size, c
     via_matcher.find_all((const char*)data, size, &http_pattern_match, false, (void*)&mp);
     if (mp)
     {
-        DetectorHTTPPattern* match = (DetectorHTTPPattern*)mp->mpattern;
+        const DetectorHTTPPattern* match = (DetectorHTTPPattern*)mp->mpattern;
         switch (match->service_id)
         {
         case APP_ID_SQUID:
@@ -1398,7 +1398,7 @@ AppId HttpPatternMatchers::get_appid_by_content_type(const char* data, int size)
     if (!mp)
         return APP_ID_NONE;
 
-    DetectorHTTPPattern* match = mp->mpattern;
+    const DetectorHTTPPattern* match = mp->mpattern;
     AppId payload_id = match->app_id;
 
     free_matched_patterns(mp);
@@ -1439,7 +1439,7 @@ bool HttpPatternMatchers::get_appid_from_url(const char* host, const char* url, 
     if (!host)
     {
         host = url;
-        auto path_offset = strchr(url, '/');
+        const auto* path_offset = strchr(url, '/');
         if (path_offset != nullptr)
             host_len = path_offset - url;
         else
@@ -1556,7 +1556,7 @@ bool HttpPatternMatchers::get_appid_from_url(const char* host, const char* url, 
                 patterns[1].pattern = (const uint8_t*)referer_path;
                 patterns[1].patternSize = referer_path_len;
                 patterns[2].pattern = nullptr;
-                HostUrlDetectorPattern* url_pattern_data = (HostUrlDetectorPattern*)mlmpMatchPatternUrl(matcher,
+                const HostUrlDetectorPattern* url_pattern_data = (HostUrlDetectorPattern*)mlmpMatchPatternUrl(matcher,
                     patterns);
                 if ( url_pattern_data != nullptr )
                 {

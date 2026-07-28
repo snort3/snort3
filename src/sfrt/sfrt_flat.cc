@@ -156,7 +156,7 @@ GENERIC RtTable::sfrt_flat_lookup(const SfIp* ip)
     tuple_flat_t tuple;
     const uint32_t* addr;
     int numAddrDwords;
-    INFO* data;
+    const INFO* data;
     TABLE_PTR rt = 0;
     uint8_t* base;
 
@@ -336,13 +336,13 @@ uint32_t RtTable::sfrt_flat_usage() const
  * Note: this only applied to table setting: DIR_8x16 (DIR_16_8_4x2 for IPV4), DIR_8x4*/
 GENERIC sfrt_flat_dir8x_lookup(const SfIp* ip, table_flat_t* table)
 {
-    dir_sub_table_flat_t* subtable;
+    const dir_sub_table_flat_t* subtable;
     DIR_Entry* entry;
     uint8_t* base = reinterpret_cast<uint8_t*>(table);
     int i;
-    dir_table_flat_t* rt = nullptr;
+    const dir_table_flat_t* rt = nullptr;
     int index;
-    INFO* data = reinterpret_cast<INFO*>(&base[table->data]);
+    const INFO* data = reinterpret_cast<INFO*>(&base[table->data]);
 
     if (ip->is_ip4())
     {

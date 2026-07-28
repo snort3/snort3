@@ -220,8 +220,8 @@ void SipServiceDetector::addFutureRtpFlows(SipEvent& event, AppIdSession& asd)
     session_a->begin_media_data();
     session_b->begin_media_data();
 
-    auto media_a = session_a->next_media_data();
-    auto media_b = session_b->next_media_data();
+    const auto* media_a = session_a->next_media_data();
+    const auto* media_b = session_b->next_media_data();
 
     while ( media_a && media_b )
     {

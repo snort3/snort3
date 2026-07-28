@@ -166,7 +166,7 @@ void DCE2_ClProcess(DCE2_SsnData* sd, DCE2_ClTracker* clt)
         case DCERPC_PDU_TYPE__RESPONSE:
         {
             debug_log(dce_udp_trace, p, "Response from client.  Changing stream direction.\n");
-            ip::IpApi* ip_api = &p->ptrs.ip_api;
+            const ip::IpApi* ip_api = &p->ptrs.ip_api;
 
             p->flow->session->update_direction(SSN_DIR_FROM_SERVER,
                 ip_api->get_src(),
@@ -575,7 +575,7 @@ static void DCE2_ClFragReassemble(
     DCE2_ClFragTracker* ft = &at->frag_tracker;
     const uint8_t* rdata = dce2_cl_rbuf.get();
     uint16_t rlen = IP_MAXPACKET;
-    DCE2_ClFragNode* fnode;
+    const DCE2_ClFragNode* fnode;
     uint32_t stub_len = 0;
 
     for (fnode = (DCE2_ClFragNode*)DCE2_ListFirst(ft->frags);

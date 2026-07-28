@@ -433,7 +433,7 @@ bool UserSession::setup(Packet*)
     client.init();
     server.init();
 
-    StreamUserConfig* pc = get_user_cfg(flow->ssn_server);
+    const StreamUserConfig* pc = get_user_cfg(flow->ssn_server);
     flow->set_default_session_timeout(pc->session_timeout, false);
 
     if ( flow->ssn_state.ignore_direction != SSN_DIR_NONE )
@@ -515,4 +515,3 @@ int UserSession::update_alert(
     Packet*, uint32_t /*gid*/, uint32_t /*sid*/,
     uint32_t /*event_id*/, uint32_t /*event_second*/)
 { return 0; }
-

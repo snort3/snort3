@@ -159,7 +159,7 @@ void DCE2_Smb2SessionTracker::removeSessionFromAllConnection()
         {
             for (auto& t : all_tree_trackers)
             {
-                DCE2_Smb2FileTracker* ftr = t.second->findFtracker(
+                const DCE2_Smb2FileTracker* ftr = t.second->findFtracker(
                     h.second->ftracker_tcp->file_id);
                 if (ftr and ftr == h.second->ftracker_tcp)
                 {

@@ -104,7 +104,7 @@ void ExtractorService::add_events(const std::vector<std::string>& vals)
 
 void ExtractorService::add_fields(const std::vector<std::string>& vals)
 {
-    for (auto& val : vals)
+    for (const auto& val : vals)
     {
         if (find_field(val))
             fields.push_back(val);
@@ -226,7 +226,7 @@ void ExtractorService::validate_events(const ServiceBlueprint& sbp, const std::v
 
 void ExtractorService::validate_fields(const ServiceBlueprint& sbp, const std::vector<std::string>& vals)
 {
-    for (auto& val : vals)
+    for (const auto& val : vals)
     {
         if (!find_field(sbp, val))
             ParseError("unsupported '%s' field in protocols.fields\n", val.c_str());

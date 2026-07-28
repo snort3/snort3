@@ -84,7 +84,7 @@ public:
 
         if ( key->option_type != RULE_OPTION_TYPE_LEAF_NODE )
         {
-            IpsOption* opt = (IpsOption*)key->option_data;
+            const IpsOption* opt = (IpsOption*)key->option_data;
             return opt->hash();
         }
         return 0;
@@ -102,8 +102,8 @@ public:
 
         if ( key1->option_type != RULE_OPTION_TYPE_LEAF_NODE )
         {
-            IpsOption* opt1 = (IpsOption*)key1->option_data;
-            IpsOption* opt2 = (IpsOption*)key2->option_data;
+            const IpsOption* opt1 = (IpsOption*)key1->option_data;
+            const IpsOption* opt2 = (IpsOption*)key2->option_data;
 
             if ( *opt1 == *opt2 )
                 return true;
@@ -465,7 +465,7 @@ static inline bool skip_on_retry(const detection_option_tree_node_t* node,
     // failed before, it's going to fail again so don't
     // go down this path again
     opt = (IpsOption*)child_node->option_data;
-    PatternMatchData* pmd = opt->get_pattern(0, RULE_WO_DIR);
+    const PatternMatchData* pmd = opt->get_pattern(0, RULE_WO_DIR);
 
     if ( pmd and pmd->is_literal() and pmd->is_unbounded() and !pmd->is_negated() )
     {

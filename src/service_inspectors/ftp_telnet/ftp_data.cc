@@ -112,7 +112,7 @@ static void FTPDataProcess(
     // and no IPS rules are configured.
     if (!status)
     {
-        IpsPolicy* empty_policy = snort::get_empty_ips_policy(p->context->conf);
+        const IpsPolicy* empty_policy = snort::get_empty_ips_policy(p->context->conf);
         if (empty_policy->policy_id == p->flow->ips_policy_id)
         {
             if (PacketTracer::is_active())
@@ -235,7 +235,7 @@ void FtpDataFlowData::handle_expected(Packet* p)
     {
         p->flow->set_service(p, fd_svc_name);
 
-        FtpDataFlowData* fd = static_cast<FtpDataFlowData*>(
+        const FtpDataFlowData* fd = static_cast<FtpDataFlowData*>(
             p->flow->get_flow_data(FtpDataFlowData::inspector_id));
         if (fd and fd->in_tls)
         {

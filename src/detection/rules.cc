@@ -76,7 +76,7 @@ void RuleStateMap::apply(SnortConfig* sc)
             {
                 for ( unsigned i = 0; i < sc->policy_map->ips_policy_count(); i++ )
                 {
-                    auto policy = sc->policy_map->get_ips_policy(i);
+                    const auto* policy = sc->policy_map->get_ips_policy(i);
                     if ( policy and (policy->policy_id != empty_ips_id) )
                         apply(sc, otn, i, it.second);
                 }
@@ -122,8 +122,8 @@ RuleTreeNode* RuleStateMap::dup_rtn(RuleTreeNode* rtn, IpsPolicy* policy)
     auto ipvt = policy ? policy->ip_vartable : nullptr;
     auto povt = policy ? policy->portVarTable : nullptr;
 
-    auto sip = sfvt_lookup_var(ipvt, rtn->sip->name);
-    auto dip = sfvt_lookup_var(ipvt, rtn->dip->name);
+    const auto* sip = sfvt_lookup_var(ipvt, rtn->sip->name);
+    const auto* dip = sfvt_lookup_var(ipvt, rtn->dip->name);
     auto spo = rtn->src_portobject
         ? PortVarTableFind(povt, rtn->src_portobject->name, false) : nullptr;
     auto dpo = rtn->dst_portobject

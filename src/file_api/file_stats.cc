@@ -69,7 +69,7 @@ void file_stats_sum()
     unsigned num = sizeof(file_totals) / sizeof(PegCount);
 
     PegCount* t = reinterpret_cast<PegCount*>(&file_totals);
-    PegCount* s = reinterpret_cast<PegCount*>(file_stats);
+    const PegCount* s = reinterpret_cast<PegCount*>(file_stats);
 
     for (unsigned i = 0; i < num; ++i)
         t[i] += s[i];

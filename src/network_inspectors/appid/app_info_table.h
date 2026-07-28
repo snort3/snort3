@@ -122,7 +122,7 @@ public:
 
     unsigned get_app_info_flags(AppId app_id, unsigned flags)
     {
-        AppInfoTableEntry* entry = get_app_info_entry(app_id);
+        const AppInfoTableEntry* entry = get_app_info_entry(app_id);
         return entry ? entry->flags & flags : 0;
     }
 
@@ -164,4 +164,3 @@ private:
 };
 
 #endif
-

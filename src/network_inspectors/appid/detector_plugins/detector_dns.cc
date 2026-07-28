@@ -205,7 +205,7 @@ public:
 
 ServiceDNSDoQData::~ServiceDNSDoQData()
 {
-    for (auto& it: service_dns_data)
+    for (const auto& it: service_dns_data)
         delete it.second;
     service_dns_data.clear();
 }

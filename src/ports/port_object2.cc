@@ -88,7 +88,7 @@ public:
 
     unsigned do_hash(const unsigned char* k, int len) override
     {
-        unsigned char* key;
+        const unsigned char* key;
         int ikey;
         memcpy(&ikey, k, sizeof(ikey));
 
@@ -203,9 +203,9 @@ PortObject2* PortObject2Dup(PortObject& po)
     /* Dup the input rule list */
     SF_LNODE* lpos = nullptr;
 
-    for (int* prid  = (int*)sflist_first(po.rule_list, &lpos);
-            prid != nullptr;
-            prid  = (int*)sflist_next(&lpos) )
+    for (const int* prid = (int*)sflist_first(po.rule_list, &lpos);
+        prid != nullptr;
+        prid  = (int*)sflist_next(&lpos) )
     {
         int* prule = (int*)snort_calloc(sizeof(int));
         *prule = *prid;
@@ -239,9 +239,9 @@ PortObject2* PortObject2AppendPortObject(PortObject2* poa, PortObject* pob)
 {
     SF_LNODE* lpos;
 
-    for (int* prid = (int*)sflist_first(pob->rule_list, &lpos);
-         prid!= nullptr;
-         prid = (int*)sflist_next(&lpos) )
+    for (const int* prid = (int*)sflist_first(pob->rule_list, &lpos);
+        prid!= nullptr;
+        prid = (int*)sflist_next(&lpos) )
     {
         int* prid2 = (int*)snort_calloc(sizeof(int));
         *prid2 = *prid;
@@ -259,7 +259,7 @@ PortObject2* PortObject2AppendPortObject2(PortObject2* poa, PortObject2* pob)
          node!= nullptr;
          node = pob->rule_hash->find_next() )
     {
-        int* prid = (int*)node->data;
+        const int* prid = (int*)node->data;
 
         if ( !prid )
             continue;

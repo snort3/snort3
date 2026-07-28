@@ -188,7 +188,8 @@ static int CheckBrackets(char* value)
 
 int VarIsIpList(vartable_t* ip_vartable, const char* value)
 {
-    char* copy, * item;
+    char* copy;
+    const char* item;
     int item_is_ip = 1;
 
     copy = snort_strdup((const char*)value);
@@ -404,7 +405,7 @@ const std::string VarSearch(const std::string& name)
     VarEntry* var_table = dp->var_table;
     PortVarTable* portVarTable = dp->portVarTable;
     vartable_t* ip_vartable = dp->ip_vartable;
-    sfip_var_t* ipvar;
+    const sfip_var_t* ipvar;
 
     if ((ipvar = sfvt_lookup_var(ip_vartable, name.c_str())) != nullptr)
         return ExpandVars(ipvar->value);

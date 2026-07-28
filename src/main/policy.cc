@@ -300,7 +300,7 @@ NetworkPolicy* PolicyMap::get_user_network(uint64_t user_id) const
 
 bool PolicyMap::set_user_network(NetworkPolicy* p)
 {
-    NetworkPolicy* current_np = get_user_network(p->user_policy_id);
+    const NetworkPolicy* current_np = get_user_network(p->user_policy_id);
     if (current_np)
         return p == current_np;
     user_network[p->user_policy_id] = p;

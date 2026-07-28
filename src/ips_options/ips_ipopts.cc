@@ -238,7 +238,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* ipopts_ctor(Module* p, IpsInfo&)
 {
-    IpOptModule* m = static_cast<IpOptModule*>(p);
+    const IpOptModule* m = static_cast<IpOptModule*>(p);
     return new IpOptOption(m->data);
 }
 
@@ -281,4 +281,3 @@ const BaseApi* ips_ipopts[] =
     &ipopts_api.base,
     nullptr
 };
-

@@ -138,7 +138,7 @@ TraceLoggerPlug* TraceLoggerManager::set_logger(const std::string& name)
 
 void TraceLoggerManager::instantiate_default_loggers(TraceConfig* tc)
 {
-    for ( auto& s : tc->output_traces )
+    for ( const auto& s : tc->output_traces )
     {
         if ( get_logger(s) )
             continue;

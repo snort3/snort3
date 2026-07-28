@@ -209,7 +209,7 @@ void UaFpProcessor::match_mpse(const char* host, const char* uagent, const UaFin
     if ( devicefp )
         device_info = devicefp->device.c_str();
 
-    auto jbfp = search_ua_fp(jb_mpse, uagent, len);
+    const auto* jbfp = search_ua_fp(jb_mpse, uagent, len);
     if ( jbfp and search_ua_fp(jb_host_mpse, host, strlen(host)) )
         jail_broken = true;
 }

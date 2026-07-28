@@ -354,7 +354,7 @@ template<typename Key, typename Value>
 size_t HostCacheSegmented<Key, Value>::get_max_size()
 {
     size_t max_size = 0;
-    for (auto cache : seg_list)
+    for (const auto* cache : seg_list)
         max_size += cache->get_max_size();
     return max_size;
 }

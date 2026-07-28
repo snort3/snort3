@@ -239,7 +239,7 @@ void Shell::clear_config_output()
 
 bool Shell::is_trusted(const std::string& key)
 {
-    Shell* sh = Shell::get_current_shell();
+    const Shell* sh = Shell::get_current_shell();
 
     if ( !sh )
         return false;

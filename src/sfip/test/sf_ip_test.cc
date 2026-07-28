@@ -367,7 +367,7 @@ static int FuncCheck(int i)
 
 static int SetCheck(int i)
 {
-    FuncTest* f = ftests + i;
+    const FuncTest* f = ftests + i;
     SfIpRet status;
     SfIp ip1, ip2;
 
@@ -379,7 +379,7 @@ static int SetCheck(int i)
 
 static int CopyCheck(int i)
 {
-    FuncTest* f = ftests + i;
+    const FuncTest* f = ftests + i;
     SfIp ip1, ip2;
 
     ip1.set(f->arg1);

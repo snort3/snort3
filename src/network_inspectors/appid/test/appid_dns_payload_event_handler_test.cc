@@ -119,7 +119,9 @@ static DnsUdpServiceDetector mock_udp_detector(nullptr);
 
 TEST_GROUP(appid_dns_payload_event_handler_tests)
 {
+    // cppcheck-suppress constVariablePointer
     AppIdDnsPayloadEventHandler* handler = nullptr;
+    // cppcheck-suppress constVariablePointer
     Flow* flow = nullptr;
 
     void setup() override

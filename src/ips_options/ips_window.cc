@@ -151,7 +151,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* window_ctor(Module* p, IpsInfo&)
 {
-    WindowModule* m = static_cast<WindowModule*>(p);
+    const WindowModule* m = static_cast<WindowModule*>(p);
     return new TcpWinOption(m->data);
 }
 
@@ -194,4 +194,3 @@ const BaseApi* ips_window[] =
     &window_api.base,
     nullptr
 };
-

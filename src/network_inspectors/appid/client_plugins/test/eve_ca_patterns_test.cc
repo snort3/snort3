@@ -68,7 +68,7 @@ TEST(eve_ca_patterns_tests, eve_ca_pattern_match)
     EveCaPatternList data;
     EveCaPattern eve1(APPID_UT_ID + 1, "firefox", 80);
     eve_ca_pattern_match(&eve1, nullptr, 0, &data, nullptr);
-    EveCaPattern* eve = data.back();
+    const EveCaPattern* eve = data.back();
     CHECK(eve->app_id == eve1.app_id);
     CHECK(eve->pattern == eve1.pattern);
     CHECK(eve->confidence == eve1.confidence);
@@ -122,4 +122,3 @@ int main(int argc, char** argv)
     int return_value = CommandLineTestRunner::RunAllTests(argc, argv);
     return return_value;
 }
-

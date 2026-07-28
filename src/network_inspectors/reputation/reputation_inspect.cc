@@ -61,7 +61,7 @@ const PegInfo reputation_peg_names[] =
 
 #define MANIFEST_FILENAME "interface.info"
 
-static inline IPrepInfo* reputation_lookup(const ReputationConfig& config,
+static inline const IPrepInfo* reputation_lookup(const ReputationConfig& config,
     ReputationData& data, const SfIp* ip)
 {
     if (!config.scanlocal)
@@ -70,17 +70,18 @@ static inline IPrepInfo* reputation_lookup(const ReputationConfig& config,
             return nullptr;
     }
 
-    return (IPrepInfo*)sfrt_flat_dir8x_lookup(ip, data.ip_list);
+    return static_cast<const IPrepInfo*>(sfrt_flat_dir8x_lookup(ip, data.ip_list));
 }
 
-static inline IPdecision get_reputation(const ReputationConfig& config, ReputationData& data,
-    IPrepInfo* rep_info, uint32_t& listid, uint32_t ingress_intf, uint32_t egress_intf)
+static inline IPdecision get_reputation(const ReputationConfig& config,
+    const ReputationData& data, const IPrepInfo* rep_info, uint32_t& listid,
+    uint32_t ingress_intf, uint32_t egress_intf)
 {
     IPdecision decision = DECISION_NULL;
 
     /*Walk through the IPrepInfo lists*/
-    uint8_t* base = reinterpret_cast<uint8_t*>(data.ip_list);
-    ListFiles& list_info = data.list_files;
+    const uint8_t* base = reinterpret_cast<const uint8_t*>(data.ip_list);
+    const ListFiles& list_info = data.list_files;
 
     while (rep_info)
     {
@@ -112,7 +113,7 @@ static inline IPdecision get_reputation(const ReputationConfig& config, Reputati
 
         if (!rep_info->next)
             break;
-        rep_info = reinterpret_cast<IPrepInfo*>(&base[rep_info->next]);
+        rep_info = reinterpret_cast<const IPrepInfo*>(&base[rep_info->next]);
     }
 
     return decision;
@@ -123,7 +124,7 @@ static bool decision_per_layer(const ReputationConfig& config, ReputationData& d
     IPdecision* decision_final)
 {
     const SfIp* ip = ip_api.get_src();
-    IPrepInfo* result = reputation_lookup(config, data, ip);
+    const IPrepInfo* result = reputation_lookup(config, data, ip);
     if (result)
     {
         IPdecision decision = get_reputation(config, data, result, iplist_id, ingress_intf,
@@ -248,7 +249,7 @@ static IPdecision snort_reputation_aux_ip(const ReputationConfig& config, Reputa
             egress_intf = p->pkth->egress_index;
     }
 
-    IPrepInfo* result = reputation_lookup(config, data, ip);
+    const IPrepInfo* result = reputation_lookup(config, data, ip);
     if (result)
     {
         uint32_t iplist_id;

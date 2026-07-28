@@ -42,6 +42,7 @@ bool TcpStateClosed::syn_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateClosed::syn_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
+    // cppcheck-suppress constVariablePointer
     Flow* flow = tsd.get_flow();
     flow->set_expire(tsd.get_pkt(), trk.session->tcp_config->session_timeout);
     return true;
@@ -65,7 +66,7 @@ bool TcpStateClosed::ack_recv(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 
 bool TcpStateClosed::data_seg_sent(TcpSegmentDescriptor& tsd, TcpStreamTracker& trk)
 {
-    Flow* flow = tsd.get_flow();
+    const Flow* flow = tsd.get_flow();
 
     trk.update_tracker_ack_sent(tsd);
     // data on a segment when we're not accepting data any more alert!

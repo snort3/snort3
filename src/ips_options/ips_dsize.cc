@@ -154,7 +154,7 @@ static void mod_dtor(Module* m)
 
 static IpsOption* dsize_ctor(Module* p, IpsInfo&)
 {
-    DsizeModule* m = static_cast<DsizeModule*>(p);
+    const DsizeModule* m = static_cast<DsizeModule*>(p);
     return new DsizeOption(m->data);
 }
 
@@ -197,4 +197,3 @@ const BaseApi* ips_dsize[] =
     &dsize_api.base,
     nullptr
 };
-

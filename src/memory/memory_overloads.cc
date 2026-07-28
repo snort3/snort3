@@ -345,7 +345,7 @@ TEST_CASE( "memory overloads", "[memory]" )
     {
         SECTION( "allocation failure" )
         {
-            const auto p = Interface::allocate(n);
+            const auto* p = Interface::allocate(n);
 
             CHECK( p == nullptr );
 
@@ -357,7 +357,7 @@ TEST_CASE( "memory overloads", "[memory]" )
         {
             AllocatorSpy::pool = pool;
 
-            const auto p = Interface::allocate(n);
+            const auto* p = Interface::allocate(n);
 
             CHECK( p > (void*)pool );
 
@@ -392,4 +392,3 @@ TEST_CASE( "memory overloads", "[memory]" )
 }
 
 #endif
-

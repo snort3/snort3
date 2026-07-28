@@ -143,7 +143,7 @@ DiscoveryFilter::DiscoveryFilter(const string& conf_path)
                 continue;
             }
 
-            protoent* pt = getprotobyname(proto_str.c_str());
+            const protoent* pt = getprotobyname(proto_str.c_str());
             if ( pt == nullptr )
             {
                 WarningMessage("Discovery Filter: Invalid protocol at line %u from %s;",

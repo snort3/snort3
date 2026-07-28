@@ -57,6 +57,7 @@ const MpseApi* get_test_api()
 
 TEST_GROUP(search_tool_full)
 {
+    // cppcheck-suppress constVariablePointer
     Module* mod = nullptr;
     SearchTool* stool;  // cppcheck-suppress variableScope
     const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_hyperscan[0]);

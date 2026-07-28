@@ -36,7 +36,7 @@ void DnsPayloadEventHandler::handle(DataEvent& event, Flow* flow)
     Packet *p = DetectionEngine::get_current_wire_packet();
     if (!flow or !p )
         return;
-    DnsPayloadEvent* dns_payload_event = static_cast<DnsPayloadEvent*>(&event);
+    const DnsPayloadEvent* dns_payload_event = static_cast<DnsPayloadEvent*>(&event);
     int32_t payload_length = 0;
     const uint8_t* dns_payload = dns_payload_event->get_payload(payload_length);
     bool is_udp = dns_payload_event->is_dns_udp();

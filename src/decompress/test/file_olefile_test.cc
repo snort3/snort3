@@ -75,7 +75,7 @@ TEST(Olefile_oleprocess_test, wrong_ole_sig)
 
 TEST(Olefile_oleprocess_test, wrong_byte_order)
 {
-    uint8_t ole_file[1000] = { 0 };
+    const uint8_t ole_file[1000] = { 0 };
     const uint32_t ole_length = 1000;
     uint8_t* vba_buf = nullptr;
     uint32_t vba_buf_len = 0;
@@ -84,7 +84,7 @@ TEST(Olefile_oleprocess_test, wrong_byte_order)
 
 TEST(Olefile_oleprocess_test, short_header_len)
 {
-    uint8_t ole_file[100] = { 0 };
+    const uint8_t ole_file[100] = { 0 };
     uint32_t ole_length = 100;
     uint8_t* vba_buf = nullptr;
     uint32_t vba_buf_len = 0;
@@ -234,7 +234,7 @@ TEST(Olefile_ole, get_file_node_failure)
 {
     char test[] = {'a','b',0};
     DirectoryList* dir_list = new DirectoryList();
-    FileProperty* res = dir_list->get_file_node(test);
+    const FileProperty* res = dir_list->get_file_node(test);
     delete dir_list;
     CHECK(res == nullptr);
 }
@@ -267,7 +267,7 @@ TEST_GROUP(fat_mini_fat_list)
 TEST(fat_mini_fat_list, fat_list_short_buf_len)
 {
     uint8_t ole_buf[520] = { 0 };
-    uint8_t ole_header_sig[8] =  { 0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1 };
+    const uint8_t ole_header_sig[8] =  { 0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1 };
     memcpy(ole_buf, ole_header_sig, 8);
     ole_buf[28] = 0xFF;
     ole_buf[29] = 0xFE;
@@ -284,7 +284,7 @@ TEST(fat_mini_fat_list, fat_list_short_buf_len)
 TEST(fat_mini_fat_list, fat_list_read_r)
 {
     uint8_t ole_buf[1025] = { 0 };
-    uint8_t ole_header_sig[8] =  { 0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1 };
+    const uint8_t ole_header_sig[8] =  { 0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1 };
     memcpy(ole_buf, ole_header_sig, 8);
     ole_buf[28] = 0xFF;
     ole_buf[29] = 0xFE;
@@ -303,7 +303,7 @@ TEST(fat_mini_fat_list, fat_list_read_r)
 TEST(fat_mini_fat_list, mini_fat_list_short_buf_len)
 {
     uint8_t ole_buf[1550] = { 0 };
-    uint8_t ole_header_sig[8] =  { 0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1 };
+    const uint8_t ole_header_sig[8] =  { 0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1 };
     memcpy(ole_buf, ole_header_sig, 8);
     ole_buf[28] = 0xFF;
     ole_buf[29] = 0xFE;
@@ -327,7 +327,7 @@ TEST(fat_mini_fat_list, mini_fat_list_short_buf_len)
 TEST(fat_mini_fat_list, fat_list_overflow_guard)
 {
     uint8_t ole_buf[512] = {0};
-    uint8_t ole_header_sig[8] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1};
+    const uint8_t ole_header_sig[8] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1};
     memcpy(ole_buf, ole_header_sig, 8);
     // Set sector size to 512 (little-endian at offset 30)
     ole_buf[30] = 0x00;
@@ -353,7 +353,7 @@ TEST(fat_mini_fat_list, fat_list_overflow_guard)
 TEST(fat_mini_fat_list, mini_fat_list_overflow_guard)
 {
     uint8_t ole_buf[512] = {0};
-    uint8_t ole_header_sig[8] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1};
+    const uint8_t ole_header_sig[8] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1};
     memcpy(ole_buf, ole_header_sig, 8);
     ole_buf[30] = 0x00;
     ole_buf[31] = 0x02;
@@ -378,7 +378,7 @@ TEST(fat_mini_fat_list, mini_fat_list_overflow_guard)
 TEST(fat_mini_fat_list, walk_directory_list_overflow_guard)
 {
     uint8_t ole_buf[512] = {0};
-    uint8_t ole_header_sig[8] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1};
+    const uint8_t ole_header_sig[8] = {0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1};
     memcpy(ole_buf, ole_header_sig, 8);
     ole_buf[30] = 0x00;
     ole_buf[31] = 0x02;

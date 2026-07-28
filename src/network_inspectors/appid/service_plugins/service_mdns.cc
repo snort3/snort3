@@ -131,7 +131,7 @@ struct KeyNormResult
 
 static int key_norm_match(void* id, void*, int match_end_pos, void* data, void*)
 {
-    MdnsKeyNormEntry* entry = (MdnsKeyNormEntry*)id;
+    const MdnsKeyNormEntry* entry = (MdnsKeyNormEntry*)id;
     KeyNormResult* result = (KeyNormResult*)data;
     if ((unsigned)(match_end_pos - entry->raw_key_len) == 0 && (unsigned)match_end_pos == result->key_len)
     {

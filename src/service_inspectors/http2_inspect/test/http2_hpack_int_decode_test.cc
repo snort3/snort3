@@ -162,7 +162,7 @@ TEST(http2_hpack_int_decode_success, MAX_UINT32_using_7_bits)
     // prepare decode object
     Http2HpackIntDecode decode_7(7);
     // prepare buf to decode - MAX_UINT32 using 7 bits
-    uint8_t buf[6] = {0x7f, 0x80, 0xff, 0xff, 0xff, 0xf};
+    const uint8_t buf[6] = {0x7f, 0x80, 0xff, 0xff, 0xff, 0xf};
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
@@ -206,7 +206,7 @@ TEST(http2_hpack_int_decode_failure, too_short)
     Http2Infractions local_inf;
     Http2HpackIntDecode local_decode(5);
     // prepare buf to decode - buffer ends before decode finished
-    uint8_t buf[3] = { 31, 0x9a, 10 };
+    const uint8_t buf[3] = { 31, 0x9a, 10 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
@@ -225,7 +225,7 @@ TEST(http2_hpack_int_decode_failure, multiplier_bigger_than_63)
     Http2Infractions local_inf;
     Http2HpackIntDecode local_decode(5);
     // prepare buf to decode - multiplier > 63
-    uint8_t buf[13] = { 31, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x81, 1 };
+    const uint8_t buf[13] = { 31, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x81, 1 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
@@ -244,7 +244,7 @@ TEST(http2_hpack_int_decode_failure, add_val_overflow)
     Http2Infractions local_inf;
     Http2HpackIntDecode local_decode(5);
     // prepare buf to decode - value to add itself is already creating overflow
-    uint8_t buf[12] = { 31, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0xFF, 1 };
+    const uint8_t buf[12] = { 31, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0xFF, 1 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
@@ -263,7 +263,7 @@ TEST(http2_hpack_int_decode_failure, add_val_overflow2)
     Http2Infractions local_inf;
     Http2HpackIntDecode local_decode(5);
     // prepare buf to decode - adding value to result kept so far creates overflow
-    uint8_t buf[11] = { 31, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 1 };
+    const uint8_t buf[11] = { 31, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 1 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
@@ -282,7 +282,7 @@ TEST(http2_hpack_int_decode_failure, 2_64_using_5_bit)
     Http2Infractions local_inf;
     Http2HpackIntDecode local_decode(5);
     // prepare buf to decode - 2^64
-    uint8_t buf[11] = { 31, 0xE1, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 1 };
+    const uint8_t buf[11] = { 31, 0xE1, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 1 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
@@ -309,7 +309,7 @@ TEST(http2_hpack_int_decode_leading_zeros, leading_zeros)
     Http2Infractions local_inf;
     Http2HpackIntDecode local_decode(5);
     // prepare buf to decode - MSB is zero
-    uint8_t buf[3] = { 31, 0x80, 0 };
+    const uint8_t buf[3] = { 31, 0x80, 0 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
@@ -330,7 +330,7 @@ TEST(http2_hpack_int_decode_leading_zeros, leading_0_byte_11)
     Http2HpackIntDecode local_decode(5);
     // prepare buf to decode - multiplier 63 doesn't create overflow, should alert on
     // leading 0
-    uint8_t buf[11] = { 31, 0xE0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0 };
+    const uint8_t buf[11] = { 31, 0xE0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
@@ -347,4 +347,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

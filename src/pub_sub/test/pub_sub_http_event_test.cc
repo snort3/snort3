@@ -55,7 +55,7 @@ const Field Field::FIELD_NULL { STAT_NO_SOURCE };
 const Field& HttpMsgSection::get_classic_buffer(unsigned buffer_type, uint64_t, uint64_t)
 {
     mock().actualCall("get_classic_buffer").withParameter("buffer_type", buffer_type);
-    Field *out = (Field*)mock().getData("output").getObjectPointer();
+    const Field *out = (Field*)mock().getData("output").getObjectPointer();
     return (*out);
 }
 
@@ -67,7 +67,7 @@ bool HttpMsgHeader::has_supported_encoding() const
 
 const Field& HttpMsgHeader::get_true_ip_addr()
 {
-    Field *out = (Field*)mock().getData("output").getObjectPointer();
+    const Field *out = (Field*)mock().getData("output").getObjectPointer();
     return (*out);
 }
 int32_t HttpUri::find_host_len(const Field&) { return 0; }
@@ -282,4 +282,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

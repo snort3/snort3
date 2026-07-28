@@ -79,7 +79,7 @@ std::string FileConfig::file_type_name(uint32_t id) const
 
 std::string file_type_name(uint32_t id)
 {
-    FileConfig* conf = get_file_config();
+    const FileConfig* conf = get_file_config();
     if (conf)
         return conf->file_type_name(id);
     else
@@ -104,7 +104,7 @@ namespace snort
 void get_magic_rule_ids_from_type(const std::string& type, const std::string& version,
     FileTypeBitSet& ids_set, SnortConfig* sc)
 {
-    FileConfig* conf = get_file_config(sc);
+    const FileConfig* conf = get_file_config(sc);
     if (conf)
         conf->get_magic_rule_ids_from_type(type, version, ids_set);
     else
