@@ -71,17 +71,6 @@ static inline int check_ssl_appid_for_reinspect(AppId app_id, OdpContext& odp_ct
         return 0;
 }
 
-// FIXIT-M: All the AppIdHttpSession::set/update functions make an
-// internal copy. That needs to change, as that's already the 2nd copy - the
-// first copy happens when third party calls ThirdPartyAppIDAttributeData::set
-// functions and that's unavoidable.
-// Consider passing all the metadata pointers (e.g. host, url, etc.)
-// to AppIdHttpSession directly from the thirdparty.so callbacks.
-//
-// Or, register observers with ThirdPartyAppIDAttributeData and modify the
-// set functions to copy the tp buffers directly into the appropriate observer.
-//
-// Or, replace ThirdParty with 1st Party http_inspect.
 static inline void process_http_session(const Packet& p, AppIdSession& asd,
     ThirdPartyAppIDAttributeData& attribute_data, AppidChangeBits& change_bits)
 {
@@ -176,16 +165,11 @@ static inline void process_http_session(const Packet& p, AppIdSession& asd,
         }
     }
 
-    // FIXIT-M: except for request/response, these cases are duplicate.
-    if ( (field=attribute_data.http_request_via(own)) != nullptr )
-    {
-        if ( hsession->get_field(MISC_VIA_FID) )
-            if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))
-                hsession->set_chp_finished(false);
+    field = attribute_data.http_request_via(own);
+    if (!field)
+        field = attribute_data.http_response_via(own);
 
-        hsession->set_field(MISC_VIA_FID, field, change_bits);
-    }
-    else if ( (field=attribute_data.http_response_via(own)) != nullptr )
+    if (field)
     {
         if ( hsession->get_field(MISC_VIA_FID) )
             if (!asd.get_session_flags(APPID_SESSION_APP_REINSPECT))

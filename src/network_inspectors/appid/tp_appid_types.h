@@ -161,8 +161,6 @@ class ThirdPartyAppIDAttributeData
     bool ftp_command_user_flush = true;
     bool quic_sni_flush = true;
 
-    // FIXIT-L: make these private too. Figure out how these get set in tp.
-
 public:
     ThirdPartyAppIDAttributeData() = default;
 
