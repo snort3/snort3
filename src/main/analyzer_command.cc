@@ -24,6 +24,7 @@
 #include "analyzer_command.h"
 
 #include <cassert>
+#include <cinttypes>
 #include <sys/time.h>
 
 #include "control/control.h"
@@ -510,17 +511,23 @@ ACShowSnortPacketLatencyData::~ACShowSnortPacketLatencyData()
 
             LogRespond(ctrlcon, "  [%s]\n", protocol_names[i]);
             if (latency_data_proto.snort_up_max_pkt_time != 0)
-                LogRespond(ctrlcon, "    Max Latency (us, since restart): %lu\n", latency_data_proto.snort_up_max_pkt_time/1000);
+                LogRespond(ctrlcon, "    Max Latency (us, since restart): %" PRIu64 "\n",
+                    latency_data_proto.snort_up_max_pkt_time/1000);
             if (latency_data_proto.pkt_count != 0)
-                LogRespond(ctrlcon, "    Total Packet Count in last 5mins: %lu\n", latency_data_proto.pkt_count);
+                LogRespond(ctrlcon, "    Total Packet Count in last 5mins: %" PRIu64 "\n",
+                    latency_data_proto.pkt_count);
             if (latency_data_proto.sum_time != 0)
-                LogRespond(ctrlcon, "    Sum of Packet Latencies in last 5mins (us): %lu\n", latency_data_proto.sum_time/1000);
+                LogRespond(ctrlcon, "    Sum of Packet Latencies in last 5mins (us): %" PRIu64 "\n",
+                    latency_data_proto.sum_time / 1000);
             if (latency_data_proto.conn_meta_null_counters != 0)
-                LogRespond(ctrlcon, "    Null ConnMeta Count in last 5mins: %lu\n", latency_data_proto.conn_meta_null_counters);
+                LogRespond(ctrlcon, "    Null ConnMeta Count in last 5mins: %" PRIu64 "\n",
+                    latency_data_proto.conn_meta_null_counters);
             if (average_pkt_time != 0.0)
-                LogRespond(ctrlcon, "    Average Packet Latency in last 5mins (us): %.3f\n", average_pkt_time);
+                LogRespond(ctrlcon, "    Average Packet Latency in last 5mins (us): %.3f\n",
+                    average_pkt_time);
             if (latency_data_proto.max_pkt_time != 0)
-                LogRespond(ctrlcon, "    Maximum Observed Latency in last 5mins (us): %lu\n", latency_data_proto.max_pkt_time/1000);
+                LogRespond(ctrlcon, "    Maximum Observed Latency in last 5mins (us): %" PRIu64 "\n",
+                    latency_data_proto.max_pkt_time / 1000);
 
             // Only print 5-tuple lines if any port is non-zero and if it has valid IPs
             if ( (latency_data_proto.max_pkt_src_port != 0 || latency_data_proto.max_pkt_dst_port != 0)

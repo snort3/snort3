@@ -24,6 +24,8 @@
 
 #include "file_olefile.h"
 
+#include <cinttypes>
+
 DirectoryList :: ~DirectoryList()
 {
     auto it = oleentry.begin();
@@ -782,7 +784,7 @@ void OleFile :: find_and_extract_vba(uint8_t*& vba_buf, uint32_t& vba_buf_len)
             {
                 VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
                     CURRENT_PACKET,
-                    "Stream %s of size %ld does not have VBA code within first detected"
+                    "Stream %s of size %" PRId64 " does not have VBA code within first detected"
                     " %d bytes\n", node->get_name(), node->get_stream_size(), data_len);
                 delete[] data1;
                 continue;
@@ -791,7 +793,7 @@ void OleFile :: find_and_extract_vba(uint8_t*& vba_buf, uint32_t& vba_buf_len)
             data += offset - 4;
             data_len = data_len - offset + 4;
             VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
-                CURRENT_PACKET, "Stream %s of size %ld has vba code starting at "
+                CURRENT_PACKET, "Stream %s of size %" PRId64 " has vba code starting at "
                 "offset %d bytes. First %d bytes will be processed\n",
                 node->get_name(), node->get_stream_size(), (offset - 4), data_len);
 

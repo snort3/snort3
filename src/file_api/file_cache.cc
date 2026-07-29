@@ -23,6 +23,8 @@
 
 #include "file_cache.h"
 
+#include <cinttypes>
+
 #include "flow/flow_key.h"
 #include "hash/hash_defs.h"
 #include "hash/xhash.h"
@@ -361,7 +363,7 @@ void FileCache::publish_file_cache_event(Flow* flow, FileInfo* file, int64_t tim
         MPDataBus::publish(file_pub_id, FileMPEvents::FILE_SHARE_SYNC, fe);
 
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
-            "File Cache Sharing: Publish event with file_id %lu\n", hashkey.file_id);
+            "File Cache Sharing: Publish event with file_id %" PRIu64 "\n", hashkey.file_id);
     }
 }
 

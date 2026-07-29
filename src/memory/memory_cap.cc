@@ -28,6 +28,7 @@
 
 #include <atomic>
 #include <cassert>
+#include <cinttypes>
 
 #include "log/log_stats.h"
 #include "log/messages.h"
@@ -80,7 +81,9 @@ static void epoch_check(void*)
     over_limit = limit and total > limit;
 
     if ( prior != over_limit )
-        trace_logf(memory_trace, nullptr, "Epoch=%lu, memory=%lu (%s)\n", epoch, total, over_limit?"over":"under");
+        trace_logf(memory_trace, nullptr, "Epoch=%" PRIu64 ", memory=%" PRIu64 " (%s)\n",
+            epoch, total, over_limit ? "over" : "under");
+
     if ( over_limit )
         current_epoch = epoch;
     else
@@ -90,9 +93,8 @@ static void epoch_check(void*)
 
     // Track max here so no peak is missed between stats reads.
     uint64_t cur_max = max_in_use.load(std::memory_order_relaxed);
-    while ( total > cur_max &&
-            !max_in_use.compare_exchange_weak(cur_max, total, std::memory_order_relaxed) )
-        ;
+    while ( total > cur_max
+        && !max_in_use.compare_exchange_weak(cur_max, total, std::memory_order_relaxed) );
 }
 
 // -----------------------------------------------------------------------------

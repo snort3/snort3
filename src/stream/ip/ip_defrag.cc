@@ -633,7 +633,7 @@ static void FragRebuild(FragTracker* ft, Packet* p)
             "   frag->size: %d\n"
             "   frag->prev: %p\n"
             "   frag->next: %p\n",
-            (void*) frag, frag->data, frag->offset,
+            (void*) frag, (void*) frag->data, frag->offset,
             frag->size, (void*) frag->prev, (void*) frag->next);
 
         /*
@@ -1943,7 +1943,7 @@ int Defrag::add_frag_node(
         "[+] Adding new frag, offset %d, size %d\n"
         "   nf->data = nf->fptr(%p) + slide (%d)\n"
         "   nf->size = len(%d) - slide(%d) - trunc(%d)\n",
-        newfrag->offset, newfrag->size, newfrag->fptr,
+        newfrag->offset, newfrag->size, (void*) newfrag->fptr,
         slide, fragLength, slide, trunc);
 
     /*
@@ -1952,7 +1952,7 @@ int Defrag::add_frag_node(
     add_node(ft, left, newfrag);
 
     debug_logf(stream_ip_trace, nullptr, "[*] Inserted new frag %d@%d ptr %p data %p prv %p nxt %p\n",
-        newfrag->size, newfrag->offset, (void*) newfrag, newfrag->data,
+        newfrag->size, newfrag->offset, (void*) newfrag, (void*) newfrag->data,
         (void*) newfrag->prev, (void*) newfrag->next);
 
     /*
@@ -1986,7 +1986,7 @@ int Defrag::dup_frag_node( FragTracker* ft, Fragment* left, Fragment** retFrag)
 
     debug_logf(stream_ip_trace, nullptr,
         "[*] Inserted new frag %d@%d ptr %p data %p prv %p nxt %p\n",
-        newfrag->size, newfrag->offset, (void*) newfrag, newfrag->data,
+        newfrag->size, newfrag->offset, (void*) newfrag, (void*) newfrag->data,
         (void*) newfrag->prev, (void*) newfrag->next);
 
     /*

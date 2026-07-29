@@ -91,7 +91,6 @@ inline void TraceSegments(const TcpReassemblySegments& seglist, const snort::Pac
 
     const TcpSegmentNode* tsn = seglist.head;
     uint32_t sx = seglist.tracker->r_win_base;
-    unsigned segs = 0;
     std::stringstream ss;
 
     while ( tsn )
@@ -109,7 +108,6 @@ inline void TraceSegments(const TcpReassemblySegments& seglist, const snort::Pac
         if ( tsn->cursor and tsn->unscanned() > 0 )
             ss << "(" << tsn->cursor << "|" << tsn->unscanned() << ")";
 
-        segs++;
         sx = seq + tsn->length;
         tsn = tsn->next;
     }

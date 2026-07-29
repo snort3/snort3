@@ -24,7 +24,9 @@
 
 #include "flow_ip_tracker.h"
 
-#include <appid/appid_api.h>
+#include <cinttypes>
+
+#include "appid/appid_api.h"
 #include "flow/stream_flow.h"
 #include "framework/pig_pen.h"
 #include "hash/hash_defs.h"
@@ -266,8 +268,8 @@ void FlowIPTracker::process(bool)
         std::snprintf(port_a, sizeof(port_a), "%d", cur_stats->port_a);
         std::snprintf(port_b, sizeof(port_b), "%d", cur_stats->port_b);
         std::snprintf(protocol, sizeof(protocol), "%d", cur_stats->protocol);
-        std::snprintf(flow_latency, sizeof(flow_latency), "%lu", cur_stats->total_flow_latency);
-        std::snprintf(rule_latency, sizeof(rule_latency), "%lu", cur_stats->total_rule_latency);
+        std::snprintf(flow_latency, sizeof(flow_latency), "%" PRIu64, cur_stats->total_flow_latency);
+        std::snprintf(rule_latency, sizeof(rule_latency), "%" PRIu64, cur_stats->total_rule_latency);
 
         memcpy(&stats, cur_stats, sizeof(stats));
 

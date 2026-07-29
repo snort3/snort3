@@ -25,6 +25,7 @@
 
 #include "detection_module.h"
 
+#include <cinttypes>
 #include <sys/resource.h>
 
 #include "log/messages.h"
@@ -257,8 +258,8 @@ bool DetectionModule::set(const char*, Value& v, SnortConfig* sc)
         if (sc->pcre_match_limit_recursion > max_rec)
         {
             sc->pcre_match_limit_recursion = max_rec;
-            LogMessage("Capping pcre_match_limit_recursion to %ld, thread stack_size %ld.\n",
-                sc->pcre_match_limit_recursion, thread_stack_size);
+            LogMessage("Capping pcre_match_limit_recursion to %" PRIu64 ", thread stack_size %" PRIu64 ".\n",
+                static_cast<uint64_t>(sc->pcre_match_limit_recursion), static_cast<uint64_t>(thread_stack_size));
         }
     }
 

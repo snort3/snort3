@@ -29,6 +29,7 @@
 
 #include "file_flows.h"
 
+#include <cinttypes>
 #include "detection/detection_engine.h"
 #include "log/messages.h"
 #include "main/snort_config.h"
@@ -82,7 +83,7 @@ static void populate_trace_data(FileContext* context)
     std::string file_name = ss.str();
 
     PacketTracer::daq_log("file+%" PRId64"+Matched policy id %u, identification %s, signature %s, capture %s+"
-                "File with ID %lu, name %s, type %s, size %lu, SHA %s detected. Verdict %s.$",
+                "File with ID %" PRIu64 ", name %s, type %s, size %" PRIu64 ", SHA %s detected. Verdict %s.$",
                 PacketTracer::get_time(),
                 context->get_policy_id(),
                 ((context->is_file_type_enabled() || context->get_file_type() || context->get_file_sig_sha256()) ? "<on>" : "<off>"),
@@ -463,7 +464,7 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
     }
 
     FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
-       "calling context process data_size %d, offset %lu, position %d\n",
+       "calling context process data_size %d, offset %" PRIu64 ", position %d\n",
         data_size, offset, position);
     continue_processing = context->process(p, file_data, data_size, offset, file_policy, position);
     if (context->processing_complete)

@@ -26,6 +26,7 @@
 #include "tcp_reassembler_ids.h"
 
 #include <cassert>
+#include <cinttypes>
 
 #include "detection/detection_engine.h"
 #include "log/log.h"
@@ -84,7 +85,7 @@ int32_t TcpReassemblerIds::scan_data_post_ack(uint32_t* flags, Packet* p)
                 tsn = tsn->next;
             else if ( tsn->next )
             {
-                if ( SEQ_GT(tracker.r_win_base, tsn->next->start_seq()) 
+                if ( SEQ_GT(tracker.r_win_base, tsn->next->start_seq())
                      or SEQ_GT(tracker.r_win_base, tsn->next_seq()) )
                 {
                     paf.state = StreamSplitter::SKIP;
@@ -154,7 +155,7 @@ void TcpReassemblerIds::skip_seglist_hole()
     if ( SEQ_LT(seglist.seglist_base_seq, seglist.head->start_seq()) )
     {
         uint32_t old_seglist_base_seq = seglist.seglist_base_seq;
-        
+
         if ( SEQ_LT(tracker.r_win_base, seglist.head->start_seq()) )
         {
             seglist.seglist_base_seq = tracker.r_win_base;
@@ -172,7 +173,7 @@ void TcpReassemblerIds::skip_seglist_hole()
 
         stream_log(DetectionEngine::get_current_packet(),
             "stream_tcp: IDS mode - skipping hole from %u to %u, size: %u"
-            " total holes: %u, total bytes skipped: %lu total bytes missing: %lu\n",
+            " total holes: %u, total bytes skipped: %" PRIu64 " total bytes missing: %" PRIu64 "\n",
             old_seglist_base_seq, seglist.seglist_base_seq,
             hole_size, tracker.holes_detected, tracker.bytes_skipped, tracker.bytes_missing);
 
@@ -183,11 +184,11 @@ void TcpReassemblerIds::skip_seglist_hole()
             splitter->restart();
             paf.paf_reset();
             tcpStats.splitter_restarts++;
-            
+
             stream_log(DetectionEngine::get_current_packet(),
                 "stream_tcp: IDS mode - splitter restarted due to seglist hole\n");
         }
-            
+
         seglist.cur_rseg = seglist.head;
         seglist.cur_sseg = seglist.head;
         tracker.set_order(TcpStreamTracker::OUT_OF_SEQUENCE);
@@ -246,7 +247,7 @@ int TcpReassemblerIds::eval_flush_policy_on_ack(Packet* p)
     uint32_t flushed = 0;
     int32_t flush_amt = FINAL_FLUSH_HOLD;
     uint32_t flags;
-    
+
     do
     {
         skip_seglist_hole();
@@ -268,12 +269,12 @@ int TcpReassemblerIds::eval_flush_policy_on_ack(Packet* p)
 
         if ( !ack_flush_in_window(static_cast<uint32_t>(flush_amt)) )
             break;
- 
+
         flushed += flush_to_seq(flush_amt, p, flags);
         if ( seglist.head )
             purge_to_seq(seglist.seglist_base_seq);
-            
-    } while ( seglist.head and !p->flow->is_inspection_disabled() 
+
+    } while ( seglist.head and !p->flow->is_inspection_disabled()
               and SEQ_LT(seglist.seglist_base_seq, tracker.r_win_base) );
 
     if ( (paf.state == StreamSplitter::ABORT) && is_splitter_paf() )

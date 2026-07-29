@@ -95,6 +95,7 @@ public:
 
     FpElement() = default;
     FpElement(const std::string&);
+    FpElement(const FpElement&) = default;
 
     FpElement& operator=(const FpElement& fpe) = default;
     FpElement& operator=(const std::string& str);

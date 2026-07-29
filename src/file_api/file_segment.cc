@@ -23,6 +23,8 @@
 
 #include "file_segment.h"
 
+#include <cinttypes>
+
 #include "file_lib.h"
 #include "file_module.h"
 
@@ -74,7 +76,7 @@ void FileSegments::add(const uint8_t* file_data, int64_t data_size, uint64_t off
         new_segment->offset = offset;
         new_segment->data = new std::string((const char*)file_data, data_size);
         FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
-            GET_CURRENT_PACKET , "Adding segment, offset : %u data_size : %lu\n",
+            GET_CURRENT_PACKET , "Adding segment, offset : %u data_size : %" PRId64 "\n",
             new_segment->offset, data_size);
         head = new_segment;
         tail = new_segment;
@@ -192,7 +194,7 @@ void FileSegments::insert_segment(const uint8_t* file_data, int64_t data_size, u
     if (data_size <= 0)
     {
         FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL,
-            GET_CURRENT_PACKET, "Complete overlap while adding segments  offset : %lu data_size : %lu\n",
+            GET_CURRENT_PACKET, "Complete overlap while adding segments  offset : %" PRIu64 " data_size : %" PRId64 "\n",
             offset, data_size);
         return;
     }
@@ -202,7 +204,7 @@ void FileSegments::insert_segment(const uint8_t* file_data, int64_t data_size, u
     new_segment->data = new std::string((const char*)file_data, data_size);
 
     FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
-        GET_CURRENT_PACKET, "Adding offset : %lu data_size : %lu\n", offset,
+        GET_CURRENT_PACKET, "Adding offset : %" PRIu64 " data_size : %" PRId64 "\n", offset,
         data_size);
     if (!*left)
     {
@@ -268,7 +270,7 @@ int FileSegments::process_all(Packet* p, FilePolicyBase* policy)
     while (current_segment && (current_offset == current_segment->offset))
     {
         FILE_DEBUG(file_trace,  DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
-          p, "processing the current offset %lu\n", current_offset);
+          p, "processing the current offset %" PRIu64 "\n", current_offset);
 
         ret = process_one(p, (const uint8_t*)current_segment->data->data(),
             current_segment->data->size(), policy);
@@ -315,7 +317,7 @@ int FileSegments::process(Packet* p, const uint8_t* file_data, uint64_t data_siz
         else
         {
             FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
-                p, "not adding to file segment queue offset %lu , current_offset %lu\n",
+                p, "not adding to file segment queue offset %" PRIu64 " , current_offset %" PRIu64 "\n",
                 offset , current_offset);
             return 1;
         }

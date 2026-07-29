@@ -467,7 +467,7 @@ static void reap_removed_controls()
         delete_control(fd);
 }
 
-static void delete_expired_controls()
+[[maybe_unused]] static void delete_expired_controls()
 {
     std::vector<int> fds;
     fds.reserve(controls.size());

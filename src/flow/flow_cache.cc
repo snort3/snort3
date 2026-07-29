@@ -24,6 +24,7 @@
 
 #include "flow_cache.h"
 
+#include <cinttypes>
 #include <numeric>
 #include <sstream>
 
@@ -530,7 +531,7 @@ unsigned FlowCache::timeout(unsigned num_flows, time_t thetime)
             flow = static_cast<Flow*>(hash_table->lru_next(allowlist_lru_index));
         }
         if ( allowlist_timeout_count )
-            flow_log("Flow: %lu allowlist flow(s) timed out but not pruned \n", allowlist_timeout_count);
+            flow_log("Flow: %" PRIu64 " allowlist flow(s) timed out but not pruned \n", allowlist_timeout_count);
     }
 #endif
 

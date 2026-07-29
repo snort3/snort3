@@ -26,6 +26,7 @@
 
 #include "gtp.h"
 
+#include <cinttypes>
 #include "protocols/packet.h"
 #include "trace/trace_api.h"
 
@@ -53,7 +54,7 @@ static inline int GTP_Process(const GTPConfig& config, const Packet* p, GTP_Ropt
      * Using msg_id avoids initializing info_elements for every message
      * Tabled based info_elements improves information element search performance */
     gtpMsg.msg_id = ++msg_id;
-    debug_logf(gtp_inspect_trace, p, "message id: %lu\n", gtpMsg.msg_id);
+    debug_logf(gtp_inspect_trace, p, "message id: %" PRIu64 "\n", gtpMsg.msg_id);
 
     int status = gtp_parse(config, &gtpMsg, gtp_buff, p->dsize);
 
