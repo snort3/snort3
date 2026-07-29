@@ -202,6 +202,35 @@ TEST(http_transaction_test, orphan_response)
     CHECK(trans == HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER, flow));
 }
 
+TEST(http_transaction_test, server_attachment_replaces_null_infractions)
+{
+    HttpUnitTestSetup::clear_infractions(flow_data, SRC_SERVER);
+    section_type[SRC_SERVER] = SEC_STATUS;
+
+    HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER, flow);
+    CHECK_COMPARE(trans->get_infractions(SRC_SERVER), !=, nullptr);
+}
+
+TEST(http_transaction_test, server_attachment_merges_existing_infractions)
+{
+    type_expected[SRC_CLIENT] = SEC_REQUEST;
+    section_type[SRC_CLIENT] = SEC_REQUEST;
+    HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
+    HttpUnitTestSetup::add_transaction_infraction(trans, SRC_SERVER, INF_BAD_STAT_LINE);
+
+    HttpUnitTestSetup::half_reset(flow_data, SRC_CLIENT);
+    section_type[SRC_CLIENT] = SEC_REQUEST;
+    HttpTransaction* next_trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
+    CHECK_COMPARE(trans, !=, next_trans);
+    *HttpUnitTestSetup::get_infractions(flow_data, SRC_SERVER) += INF_BAD_HEADER;
+
+    section_type[SRC_SERVER] = SEC_STATUS;
+    POINTERS_EQUAL(trans, HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER, flow));
+    CHECK(*trans->get_infractions(SRC_SERVER) & INF_BAD_STAT_LINE);
+    CHECK(*trans->get_infractions(SRC_SERVER) & INF_BAD_HEADER);
+    POINTERS_EQUAL(nullptr, HttpUnitTestSetup::get_infractions(flow_data, SRC_SERVER));
+}
+
 TEST(http_transaction_test, simple_pipeline)
 {
     // Pipeline with four requests followed by four responses

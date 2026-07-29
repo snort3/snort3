@@ -22,6 +22,29 @@ HTTP pipeline is present. The current transaction and any pipeline live in the f
 transaction may have only a request because the response is not (yet) received or only a response
 because the corresponding request is unknown or unavailable.
 
+Pipeline overflow and pipeline underflow permanently invalidate request-response association for
+the remainder of the flow. Transactions already queued before an overflow may still be matched with
+their responses while the pipeline is drained. Once that queue is empty, neither side may claim a
+transaction from the other side; subsequent requests and responses must be processed independently.
+This is a fundamental transaction-management invariant, not merely error-reporting behavior.
+
+The resulting transaction model is:
+
+Before overflow::
+  Request and response transactions are paired normally.
+
+After overflow, while the queue is nonempty::
+  Server responses drain and use the valid queued transactions (up to 99).
+  New client requests are processed independently.
+
+After the queue becomes empty::
+  Client requests use client-only transactions.
+  Server responses use server-only transactions.
+  No request-response pairing is attempted again for the flow.
+
+Once the directions are separated, a client request must not establish request-derived server
+parsing state. In particular, a later HTTP/0.9 request must not set zero_nine_expected.
+
 The attach_my_transaction() factory method contains all the logic that makes this work. There are
 many corner cases. Don't mess with it until you fully understand it.
 

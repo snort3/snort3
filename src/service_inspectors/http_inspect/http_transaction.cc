@@ -133,7 +133,14 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
                 {
                     // The pipeline is full and just overflowed.
                     *session_data->infractions[source_id] += INF_PIPELINE_OVERFLOW;
-                    delete_transaction(session_data->transaction[SRC_CLIENT], session_data);
+                    HttpTransaction* rejected = session_data->transaction[SRC_CLIENT];
+                    HttpMsgRequest* request = rejected->get_request();
+                    if (request != nullptr &&
+                        session_data->zero_nine_expected == request->get_transaction_id())
+                    {
+                        session_data->zero_nine_expected = 0;
+                    }
+                    delete_transaction(rejected, session_data);
                     // When overflow occurs the length of the pipeline is unchanged
                     // next code ensures that the alert is still raised
                     *session_data->infractions[source_id] += INF_PIPELINE_MAX;
@@ -169,9 +176,9 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
         session_data->transaction[SRC_SERVER]->header[SRC_SERVER] = nullptr;
     }
     // Status section: delete the current transaction and get a new one from the pipeline. If the
-    // pipeline is empty check for a request transaction and take it. If there is no transaction
-    // available then declare an underflow and create a new transaction specifically for the
-    // response side.
+    // pipeline is empty after an overflow, create a response-only transaction. Otherwise check
+    // for a request transaction and take it. If there is no transaction available then declare an
+    // underflow and create a new transaction specifically for the response side.
     else if (session_data->section_type[source_id] == SEC_STATUS ||
 	     (session_data->section_type[source_id] == SEC_HEADER &&
 	     session_data->version_id[source_id] == VERS_0_9))
@@ -185,7 +192,12 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
         else if ((session_data->transaction[SRC_SERVER] = session_data->take_from_pipeline()) ==
             nullptr)
         {
-            if ((session_data->transaction[SRC_CLIENT] == nullptr) ||
+            if (session_data->pipeline_overflow)
+            {
+                // The valid pipeline has drained. Overflow permanently separated the two sides.
+                session_data->transaction[SRC_SERVER] = new HttpTransaction(session_data, f);
+            }
+            else if ((session_data->transaction[SRC_CLIENT] == nullptr) ||
                 (session_data->transaction[SRC_CLIENT]->has_flag(TransactionFlag::TF_RESPONSE_SEEN)))
             {
                 // Either there is no request at all or there is a request but a previous response
@@ -220,9 +232,19 @@ HttpTransaction* HttpTransaction::attach_my_transaction(HttpFlowData* session_da
         session_data->transaction[SRC_SERVER]->set_flag(TransactionFlag::TF_RESPONSE_SEEN);
 
         // Move in server infractions now that the response is attached here
-        session_data->transaction[SRC_SERVER]->infractions[SRC_SERVER] =
-            session_data->infractions[SRC_SERVER];
-        session_data->infractions[SRC_SERVER] = nullptr;
+        HttpInfractions*& transaction_infractions =
+            session_data->transaction[SRC_SERVER]->infractions[SRC_SERVER];
+        HttpInfractions*& section_infractions = session_data->infractions[SRC_SERVER];
+        if (transaction_infractions == nullptr)
+            transaction_infractions = section_infractions;
+        else if (section_infractions != nullptr)
+        {
+            *transaction_infractions += *section_infractions;
+            delete section_infractions;
+        }
+        section_infractions = nullptr;
+        if (transaction_infractions == nullptr)
+            transaction_infractions = new HttpInfractions;
     }
 
     assert(session_data->transaction[source_id] != nullptr);

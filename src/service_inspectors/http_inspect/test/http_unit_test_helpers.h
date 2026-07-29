@@ -26,6 +26,7 @@
 #include "service_inspectors/http_inspect/http_event.h"
 #include "service_inspectors/http_inspect/http_flow_data.h"
 #include "service_inspectors/http_inspect/http_inspect.h"
+#include "service_inspectors/http_inspect/http_transaction.h"
 
 #include <CppUTest/TestHarness.h>
 
@@ -54,6 +55,20 @@ public:
     }
     static HttpInfractions* get_infractions(HttpFlowData* flow_data, HttpCommon::SourceId source_id)
         { assert(flow_data!=nullptr); return flow_data->infractions[source_id]; }
+    static void clear_infractions(HttpFlowData* flow_data, HttpCommon::SourceId source_id)
+    {
+        assert(flow_data != nullptr);
+        delete flow_data->infractions[source_id];
+        flow_data->infractions[source_id] = nullptr;
+    }
+    static void add_transaction_infraction(HttpTransaction* transaction,
+        HttpCommon::SourceId source_id, HttpEnums::Infraction infraction)
+    {
+        assert(transaction != nullptr);
+        assert(transaction->infractions[source_id] == nullptr);
+        transaction->infractions[source_id] = new HttpInfractions;
+        *transaction->infractions[source_id] += infraction;
+    }
     static void set_partial_flush(HttpFlowData* flow_data, HttpCommon::SourceId source_id,
         bool partial_flush, uint32_t num_excess)
     {

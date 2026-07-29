@@ -417,8 +417,10 @@ void HttpMsgRequest::update_flow()
     {
         session_data->half_reset(source_id);
         // There can only be one 0.9 response per connection because it ends the S2C connection. Do
-        // not allow a pipelined request to overwrite a previous 0.9 setup.
-        if (session_data->zero_nine_expected == 0)
+        // not allow a pipelined request to overwrite a previous 0.9 setup or an unpaired request
+        // to establish server-side parsing state.
+        if (session_data->zero_nine_expected == 0 &&
+            !session_data->pipeline_overflow && !session_data->pipeline_underflow)
         {
             // FIXIT-L Add a configuration option to not do this. This would support an HTTP server
             // that responds to a 0.9 GET request with a full-blown 1.0 or 1.1 response with status

@@ -103,6 +103,10 @@ public:
     HttpTransaction* next = nullptr;
 
 private:
+#ifdef UNIT_TEST
+    friend class HttpUnitTestSetup;
+#endif
+
     HttpTransaction(HttpFlowData*, snort::Flow* const);
     void archive_section(HttpMsgSection*, HttpMsgSection**);
     void archive_status(HttpMsgStatus*);
