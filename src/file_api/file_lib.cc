@@ -1131,17 +1131,24 @@ FileCaptureState FileContext::process_file_capture(const uint8_t* file_data,
         file_capture->process_buffer(file_data, data_size, position);
 
     if (file_state.capture_state != FILE_CAPTURE_SUCCESS)
-        stop_file_capture();
+        stop_file_capture_unlocked();
 
     return file_state.capture_state;
 }
 
 void FileContext::stop_file_capture()
 {
+    std::lock_guard<std::mutex> lock(user_file_data_mutex);
+    stop_file_capture_unlocked();
+}
+
+void FileContext::stop_file_capture_unlocked()
+{
     if (file_capture)
     {
-        delete file_capture;
+        FileCapture* capture = file_capture;
         file_capture = nullptr;
+        delete capture;
     }
 
     config_file_capture(false);

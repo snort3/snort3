@@ -34,6 +34,10 @@
 #include "log/messages.h"
 #include "utils/util.h"
 
+#ifdef UNIT_TEST
+#include "catch/snort_catch.h"
+#endif
+
 using namespace snort;
 
 /*This magic is used for double free detection*/
@@ -147,12 +151,15 @@ int FileMemPool::remove(CircularBuffer* cb, void* obj)
     if (obj == nullptr)
         return FILE_MEM_FAIL;
 
-    if (cbuffer_write(cb, obj))
+    // Reject a detected double free BEFORE enqueuing the block. Testing the
+    // marker after cbuffer_write() leaves the block queued twice, so a later
+    // pair of m_alloc() calls hands the same block to two owners.
+    if (*(MagicType*)obj == FREE_MAGIC)
     {
         return FILE_MEM_FAIL;
     }
 
-    if (*(MagicType*)obj == FREE_MAGIC)
+    if (cbuffer_write(cb, obj))
     {
         return FILE_MEM_FAIL;
     }
@@ -208,4 +215,89 @@ uint64_t FileMemPool::released()
 {
     return (cbuffer_used(released_list));
 }
+
+//--------------------------------------------------------------------------
+// unit tests
+//--------------------------------------------------------------------------
+
+#ifdef UNIT_TEST
+static inline void mark_block_in_use(void* p)
+{
+    // In production, callers initialize block headers immediately after m_alloc().
+    // Mirror that here so the first free/release is treated as a legitimate return.
+    *(MagicType*)p = 0;
+}
+
+TEST_CASE("FileMemPool m_free detects double free", "[file_mempool]")
+{
+    FileMemPool pool(2, sizeof(uint64_t));
+
+    void* ptr = pool.m_alloc();
+    REQUIRE(ptr != nullptr);
+    mark_block_in_use(ptr);
+
+    CHECK(pool.m_free(ptr) == FILE_MEM_SUCCESS);
+    CHECK(pool.m_free(ptr) == FILE_MEM_FAIL);
+}
+
+TEST_CASE("FileMemPool m_free double free does not duplicate queue entries", "[file_mempool]")
+{
+    FileMemPool pool(3, sizeof(uint64_t));
+
+    void* a = pool.m_alloc();
+    void* b = pool.m_alloc();
+    const void* c = pool.m_alloc();
+
+    REQUIRE(a != nullptr);
+    REQUIRE(b != nullptr);
+    REQUIRE(c != nullptr);
+    REQUIRE(a != b);
+    REQUIRE(a != c);
+    REQUIRE(b != c);
+
+    mark_block_in_use(a);
+    mark_block_in_use(b);
+
+    CHECK(pool.m_free(a) == FILE_MEM_SUCCESS);
+    CHECK(pool.m_free(a) == FILE_MEM_FAIL);
+    CHECK(pool.m_free(b) == FILE_MEM_SUCCESS);
+
+    const void* first = pool.m_alloc();
+    const void* second = pool.m_alloc();
+
+    REQUIRE(first != nullptr);
+    REQUIRE(second != nullptr);
+    CHECK(first != second);
+}
+
+TEST_CASE("FileMemPool m_release double free does not duplicate queue entries", "[file_mempool]")
+{
+    FileMemPool pool(3, sizeof(uint64_t));
+
+    void* a = pool.m_alloc();
+    void* b = pool.m_alloc();
+    const void* c = pool.m_alloc();
+
+    REQUIRE(a != nullptr);
+    REQUIRE(b != nullptr);
+    REQUIRE(c != nullptr);
+    REQUIRE(a != b);
+    REQUIRE(a != c);
+    REQUIRE(b != c);
+
+    mark_block_in_use(a);
+    mark_block_in_use(b);
+
+    CHECK(pool.m_release(a) == FILE_MEM_SUCCESS);
+    CHECK(pool.m_release(a) == FILE_MEM_FAIL);
+    CHECK(pool.m_release(b) == FILE_MEM_SUCCESS);
+
+    const void* first = pool.m_alloc();
+    const void* second = pool.m_alloc();
+
+    REQUIRE(first != nullptr);
+    REQUIRE(second != nullptr);
+    CHECK(first != second);
+}
+#endif
 

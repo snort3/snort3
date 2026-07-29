@@ -211,6 +211,8 @@ public:
     void set_timedout() { timedout = true; }
 
 private:
+    void stop_file_capture_unlocked();
+
     uint64_t processed_bytes = 0;
     void* file_type_context;
     void* file_signature_context;
