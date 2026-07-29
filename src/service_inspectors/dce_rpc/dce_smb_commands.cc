@@ -432,6 +432,9 @@ static DCE2_Ret DCE2_SmbWriteAndXRawRequest(DCE2_SmbSsnData* ssd, const SmbNtHdr
                 ftracker->fp_writex_raw->remaining = 0;
                 return DCE2_RET__ERROR;
             }
+            // remaining is the known total raw-write size; clamp geometric
+            // growth to it so capacity never overshoots the claim.
+            ftracker->fp_writex_raw->buf->max_size = remaining;
             ssd->retained_writex_bytes +=
                 DCE2_BufferSize(ftracker->fp_writex_raw->buf);
         }

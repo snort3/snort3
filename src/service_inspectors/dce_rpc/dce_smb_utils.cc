@@ -1182,12 +1182,22 @@ DCE2_Ret DCE2_SmbHandleSegmentation(DCE2_Buffer** buf,
 
     if (*buf == nullptr)
     {
-        /* No initial size or min alloc size */
-        *buf = DCE2_BufferNew(alloc_size, alloc_size);
+        // Size the initial allocation to the data present (add_len). If that is
+        // already >= 3/4 of alloc_size, allocate alloc_size up front; otherwise
+        // start at add_len and let the buffer grow on demand.
+        uint32_t initial_size = (add_len * 4 >= alloc_size * 3)
+            ? alloc_size
+            : add_len;
+        *buf = DCE2_BufferNew(initial_size, 0);
     }
 
+    // alloc_size is the known final size of this PDU and grows as the state
+    // machine advances, so refresh the cap each call. It clamps geometric growth
+    // so capacity never overshoots the PDU size.
+    (*buf)->max_size = alloc_size;
+
     DCE2_Ret status = DCE2_BufferAddData(*buf, data_ptr, add_len,
-        DCE2_BufferLength(*buf), DCE2_BUFFER_MIN_ADD_FLAG__IGNORE);
+        DCE2_BufferLength(*buf), DCE2_BUFFER_MIN_ADD_FLAG__GEOMETRIC);
 
     return status;
 }

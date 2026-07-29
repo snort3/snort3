@@ -177,6 +177,7 @@ DCE2_Buffer* DCE2_BufferNew(uint32_t initial_size, uint32_t min_add_size)
     buf->len = 0;
     buf->min_add_size = min_add_size;
     buf->offset = 0;
+    buf->max_size = 0;
 
     return buf;
 }
@@ -240,10 +241,13 @@ DCE2_Ret DCE2_BufferAddData(DCE2_Buffer* buf, const uint8_t* data,
             // Grow capacity to 1.5x of the CURRENT size (never a fixed constant
             // and never an attacker-claimed total), so reassembling many small
             // fragments stays ~log(n) reallocs while capacity stays <= 1.5x the
-            // bytes actually received.
+            // bytes actually received. When max_size is set the caller knows the
+            // final size, so clamp to it: growth never overshoots the target.
             uint32_t geo_size = buf->size + (buf->size / 2);
             if (new_size < geo_size)
                 new_size = geo_size;
+            if ((buf->max_size != 0) && (new_size > buf->max_size))
+                new_size = buf->max_size;
         }
 
         tmp = (uint8_t*)DCE2_ReAlloc(buf->data, buf->size, new_size);

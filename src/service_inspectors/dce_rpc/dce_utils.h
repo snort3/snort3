@@ -110,6 +110,7 @@ struct DCE2_Buffer
     uint32_t size;
     uint32_t min_add_size;
     uint32_t offset;
+    uint32_t max_size;   // 0 = uncapped; else clamp geometric growth to this
 };
 
 /********************************************************************
