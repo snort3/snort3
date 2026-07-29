@@ -106,6 +106,9 @@ void HpackDynamicTable::prune_to_size(uint32_t new_max_size)
 
 void HpackDynamicTable::update_size(uint32_t new_size)
 {
+    if (new_size > MAX_TABLE_SIZE_LIMIT)
+        new_size = MAX_TABLE_SIZE_LIMIT;
+
     if (new_size < rfc_table_size)
     {
         prune_to_size(new_size);

@@ -46,6 +46,9 @@ private:
 
     const static uint32_t DEFAULT_MAX_SIZE = 4096;
     const static uint32_t ARRAY_CAPACITY = 512;
+    // Sensor-side upper bound the decoder enforces regardless of the peer's
+    // advertised SETTINGS_HEADER_TABLE_SIZE (RFC 7541 section 4.2).
+    const static uint32_t MAX_TABLE_SIZE_LIMIT = 65536;
     uint32_t max_size = DEFAULT_MAX_SIZE;
 
     uint32_t start = 0;

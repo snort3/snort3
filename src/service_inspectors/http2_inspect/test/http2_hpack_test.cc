@@ -498,6 +498,71 @@ TEST(http2_hpack_decoder_decode_header_buffers, header_with_65536_long_cookie_ov
 }
 
 
+// Regression for unclamped HPACK dynamic-table sizing from an oversized
+// peer-advertised SETTINGS_HEADER_TABLE_SIZE.
+TEST_GROUP(http2_hpack_dynamic_table_size)
+{
+};
+
+// Mirrors the private HpackDynamicTable::MAX_TABLE_SIZE_LIMIT.
+static const uint32_t EXPECTED_TABLE_SIZE_CAP = 65536;
+
+TEST(http2_hpack_dynamic_table_size, huge_settings_size_is_clamped)
+{
+    HpackDynamicTable table;
+    table.update_size(0xFFFFFFFF);
+    CHECK_EQUAL(EXPECTED_TABLE_SIZE_CAP, table.get_max_size());
+}
+
+TEST(http2_hpack_dynamic_table_size, size_at_limit_is_unchanged)
+{
+    HpackDynamicTable table;
+    table.update_size(EXPECTED_TABLE_SIZE_CAP);
+    CHECK_EQUAL(EXPECTED_TABLE_SIZE_CAP, table.get_max_size());
+}
+
+TEST(http2_hpack_dynamic_table_size, small_size_is_unchanged)
+{
+    HpackDynamicTable table;
+    table.update_size(4096);
+    CHECK_EQUAL(4096, table.get_max_size());
+}
+
+// Clamping below the current contents must evict entries. Virtual index 62 is
+// the newest dynamic entry (HpackIndexTable::STATIC_MAX_INDEX == 61).
+TEST(http2_hpack_dynamic_table_size, clamp_down_evicts_entries)
+{
+    // Each entry costs name.length() + value.length() + 32 per-entry
+    // overhead = 100 + 100 + 32 = 232 bytes.
+    const uint32_t name_len = 100;
+    const uint32_t value_len = 100;
+    const uint32_t entry_size = name_len + value_len + 32;
+    uint8_t name_buf[name_len];
+    uint8_t value_buf[value_len];
+    memset(name_buf, 'n', name_len);
+    memset(value_buf, 'v', value_len);
+
+    HpackDynamicTable table;
+    CHECK(table.add_entry(Field(name_len, name_buf), Field(value_len, value_buf)));
+    CHECK(table.add_entry(Field(name_len, name_buf), Field(value_len, value_buf)));
+
+    // Both entries present: newest at 62, oldest at 63.
+    CHECK_COMPARE(table.get_entry(62), !=, nullptr);
+    CHECK_COMPARE(table.get_entry(63), !=, nullptr);
+
+    // Clamp to a size that holds exactly one entry (>= entry_size but <
+    // 2 * entry_size). The least-recently-added entry (index 63) is evicted.
+    table.update_size(entry_size + 1);
+    CHECK_EQUAL(entry_size + 1, table.get_max_size());
+    CHECK_COMPARE(table.get_entry(62), !=, nullptr);
+    CHECK_EQUAL(nullptr, table.get_entry(63));
+
+    // Clamp below a single entry: the whole table is evicted.
+    table.update_size(entry_size - 1);
+    CHECK_EQUAL(entry_size - 1, table.get_max_size());
+    CHECK_EQUAL(nullptr, table.get_entry(62));
+}
+
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
