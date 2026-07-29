@@ -139,7 +139,7 @@ public:
         brute_force_inprocess_count = 0;
     }
 
-    Queue_t::iterator qptr; // Our place in service_state_queue
+    Queue_t::iterator qptr {}; // Our place in service_state_queue
 
     void reset();
     

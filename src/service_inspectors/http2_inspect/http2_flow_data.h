@@ -143,7 +143,7 @@ protected:
     bool tcp_close[2] = { false, false };
 
     // Reassemble() data to eval()
-    uint8_t lead_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];
+    uint8_t lead_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH] = {};
     const uint8_t* frame_data[2] = { nullptr, nullptr };
     uint32_t frame_data_size[2] = { 0, 0 };
 
@@ -164,7 +164,7 @@ protected:
     bool preface[2] = { true, false };
     uint32_t preface_octets_seen = 0;
     bool continuation_expected[2] = { false, false };
-    uint8_t scan_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH];
+    uint8_t scan_frame_header[2][Http2Enums::FRAME_HEADER_LENGTH] = {};
     uint32_t scan_remaining_frame_octets[2] = { 0, 0 };
     uint32_t header_octets_seen[2] = { 0, 0 };
     uint8_t padding_length[2] = { 0, 0 };
@@ -199,14 +199,14 @@ protected:
 
 #ifdef REG_TEST
     static uint64_t instance_count;
-    uint64_t seq_num;
+    uint64_t seq_num = 0;
 #endif
 
 private:
     Http2Stream* get_hi_stream();
     Http2Stream* find_stream(const uint32_t key);
     void delete_processing_stream();
-    class snort::Inspector* handler;
+    class snort::Inspector* handler = nullptr;
 };
 
 class Http2FlowStreamIntf : public snort::StreamFlowIntf
@@ -221,4 +221,3 @@ public:
 };
 
 #endif
-

@@ -217,11 +217,10 @@ private:
 
 #ifdef REG_TEST
     static uint64_t instance_count;
-    uint64_t seq_num;
+    uint64_t seq_num = 0;
 
     void show(FILE* out_file) const;
 #endif
 };
 
 #endif
-

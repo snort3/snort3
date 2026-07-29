@@ -53,7 +53,7 @@ public:
     MemoryContext& operator=(const MemoryContext&) = delete;
 
 private:
-    MemoryTracker* saved;
+    MemoryTracker* saved = nullptr;
 };
 
 class SO_PUBLIC MemoryExclude
@@ -66,7 +66,7 @@ public:
     MemoryExclude& operator=(const MemoryExclude&) = delete;
 
 private:
-    MemoryTracker* saved;
+    MemoryTracker* saved = nullptr;
 };
 }
 #endif

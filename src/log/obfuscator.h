@@ -86,6 +86,7 @@ public:
         if (buf == buffer_blocks.end())
             return false;
         cur_buf = buf;
+        it = cur_buf->second.end();
         return true;
     }
 
@@ -95,6 +96,7 @@ public:
             return;
 
         cur_buf = buffer_blocks.emplace(buf_key, ObSet()).first;
+        it = cur_buf->second.end();
     }
 
     const_iterator begin() const
@@ -112,10 +114,9 @@ public:
 private:
     BufBlocks buffer_blocks;
     BufBlocks::iterator cur_buf;
-    iterator it;
+    iterator it {};
     static constexpr char mask_char = 'X';
 };
 }
 
 #endif
-

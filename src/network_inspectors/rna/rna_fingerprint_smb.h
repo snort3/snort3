@@ -44,9 +44,9 @@ public:
     SmbFingerprint(unsigned maj = 0, unsigned min = 0, uint32_t f = 0);
     SmbFingerprint(const RawFingerprint& rfp);
 
-    unsigned smb_major;
-    unsigned smb_minor;
-    uint32_t flags;
+    unsigned smb_major = 0;
+    unsigned smb_minor = 0;
+    uint32_t flags = 0;
 
     bool operator==(const SmbFingerprint& y) const;
 };

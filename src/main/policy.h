@@ -212,7 +212,7 @@ public:
     { return (checksum_eval & CHECKSUM_FLAG__ICMP) != 0; }
 
 protected:
-    FilePolicy* file_policy;
+    FilePolicy* file_policy = nullptr;
 
 public:
     class CodecManager* cd_mgr = nullptr;

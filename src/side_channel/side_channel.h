@@ -87,7 +87,7 @@ private:
     SCSequence sequence = 0;
     SCPort default_port = 0;
     SCProcessMsgFunc receive_handler = nullptr;
-    ScMsgFormat msg_format;
+    ScMsgFormat msg_format = ScMsgFormat::BINARY;
 };
 
 // SideChannelManager is primary interface with Snort.
@@ -117,4 +117,3 @@ private:
     SideChannelManager() = delete;
 };
 #endif
-

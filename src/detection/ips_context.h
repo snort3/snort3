@@ -152,7 +152,7 @@ public:
     MpseBatch searches {};
     MpseStash* stash = nullptr;
     OtnxMatchData* otnx = nullptr;
-    std::list<RegexRequest*>::iterator regex_req_it;
+    std::list<RegexRequest*>::iterator regex_req_it {};
     SF_EVENTQ* equeue = nullptr;
 
     DataPointer file_data = DataPointer(nullptr, 0);
@@ -189,4 +189,3 @@ private:
 };
 }
 #endif
-

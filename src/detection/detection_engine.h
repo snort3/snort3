@@ -127,7 +127,7 @@ private:
 
 private:
     static bool offload_enabled;
-    IpsContext* context;
+    IpsContext* context = nullptr;
 };
 
 DataPointer DetectionEngine::get_alt_buffer(const Packet* p)

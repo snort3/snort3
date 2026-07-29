@@ -88,12 +88,12 @@ private:
     void get_tunnel_capabilities();
 
     std::string input_spec;
-    uint32_t instance_id;
+    uint32_t instance_id = 0;
     DAQ_Instance_h instance = nullptr;
-    DAQ_Msg_h* daq_msgs;
+    DAQ_Msg_h* daq_msgs = nullptr;
     unsigned curr_batch_size = 0;
     unsigned curr_batch_idx = 0;
-    uint32_t batch_size;
+    uint32_t batch_size = 0;
     uint32_t pool_size = 0;
     uint32_t pool_available = 0;
     int dlt = -1;
@@ -102,4 +102,3 @@ private:
 };
 }
 #endif
-

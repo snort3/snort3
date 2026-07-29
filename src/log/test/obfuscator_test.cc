@@ -132,6 +132,9 @@ TEST(ObfuscatorTests, EmptyList2Test)
     Obfuscator ob;
     ObfuscatorBlock b;
     CHECK_FALSE(ob.next(b));
+
+    ob.set_buffer("empty");
+    CHECK_FALSE(ob.next(b));
 }
 
 TEST(ObfuscatorTests, EmptyList3Test)
@@ -214,4 +217,3 @@ int main(int argc, char* argv[])
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

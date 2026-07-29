@@ -119,16 +119,16 @@ private:
     const snort::Packet* p;
 
     const SIPMsg& msg;
-    const SIP_DialogData* dialog;
+    const SIP_DialogData* dialog = nullptr;
 
     const char* from = nullptr;
-    size_t from_len;
+    size_t from_len = 0;
     const char* user_name = nullptr;
-    size_t user_name_len;
+    size_t user_name_len = 0;
     const char* user_agent = nullptr;
-    size_t user_agent_len;
-    const char* server;
-    size_t server_len;
+    size_t user_agent_len = 0;
+    const char* server = nullptr;
+    size_t server_len = 0;
 
     std::list<SipEventMediaSession*> sessions;
     SIP_MediaSession* current_media_session = nullptr;

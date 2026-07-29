@@ -324,8 +324,8 @@ private:
     SipPatternMatchers sip_matchers;
     HostPatternMatchers host_matchers;
     SshPatternMatchers ssh_matchers;
-    PatternClientDetector* client_pattern_detector;
-    PatternServiceDetector* service_pattern_detector;
+    PatternClientDetector* client_pattern_detector = nullptr;
+    PatternServiceDetector* service_pattern_detector = nullptr;
     AlpnPatternMatchers alpn_matchers;
     UserDataMap user_data_map;    
 
@@ -333,7 +333,7 @@ private:
     std::array<AppId, APP_ID_PORT_ARRAY_SIZE> udp_port_only = {}; // port-only UDP services
     std::array<AppId, 256> ip_protocol = {}; // non-TCP / UDP protocol services
 
-    uint32_t version;
+    uint32_t version = 0;
     static uint32_t next_version;
     std::atomic<bool> appid_shadow_traffic_status = false;
 };

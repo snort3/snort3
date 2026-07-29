@@ -488,6 +488,7 @@ TEST_CASE ( "rule latency impl", "[latency]" )
     {
         SECTION( "reenable allowed" )
         {
+            // cppcheck-suppress unreadVariable ; read through the virtual configuration wrapper
             config.config.max_suspend_time = 1_ticks;
 
             SECTION( "push rule" )
@@ -509,6 +510,7 @@ TEST_CASE ( "rule latency impl", "[latency]" )
 
         SECTION( "reenable not allowed" )
         {
+            // cppcheck-suppress unreadVariable ; read through the virtual configuration wrapper
             config.config.max_suspend_time = 0_ticks;
 
             SECTION( "push rule" )
@@ -528,6 +530,7 @@ TEST_CASE ( "rule latency impl", "[latency]" )
 
         SECTION( "suspending of rules disabled" )
         {
+            // cppcheck-suppress unreadVariable ; read through the virtual configuration wrapper
             config.config.suspend = false;
 
             CHECK( false == impl.suspended() );
@@ -536,6 +539,7 @@ TEST_CASE ( "rule latency impl", "[latency]" )
 
         SECTION( "suspend of rules enabled" )
         {
+            // cppcheck-suppress unreadVariable ; read through the virtual configuration wrapper
             config.config.suspend = true;
 
             CHECK( true == impl.suspended() );
@@ -545,6 +549,7 @@ TEST_CASE ( "rule latency impl", "[latency]" )
 
     SECTION( "pop" )
     {
+        // cppcheck-suppress unreadVariable ; read through the virtual configuration wrapper
         config.config.max_time = 1_ticks;
 
         impl.push(root, &pkt);

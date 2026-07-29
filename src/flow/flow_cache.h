@@ -164,20 +164,19 @@ private:
     inline void log_flow_release(const snort::Flow* flow, PruneReason reason) const;
 
 private:
-    uint8_t timeout_idx;
+    uint8_t timeout_idx = 0;
     static const unsigned cleanup_flows = 1;
     FlowCacheConfig config;
-    uint32_t flags;
+    uint32_t flags = 0;
 
-    ZHash* hash_table;
-    FlowUniList* uni_flows;
-    FlowUniList* uni_ip_flows;
+    ZHash* hash_table = nullptr;
+    FlowUniList* uni_flows = nullptr;
+    FlowUniList* uni_ip_flows = nullptr;
 
     PruneStats prune_stats;
     FlowDeleteStats delete_stats;
-    uint64_t empty_lru_mask;
+    uint64_t empty_lru_mask = 0;
     PegCount excess_to_allowlist_count = 0;
 
 };
 #endif
-

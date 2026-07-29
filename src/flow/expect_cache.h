@@ -78,10 +78,10 @@ private:
     bool process_expected(ExpectNode*, const snort::FlowKey&, snort::Packet*, snort::Flow*);
 
 private:
-    class ZHash* hash_table;
-    ExpectNode* nodes;
-    snort::ExpectFlow* pool;
-    snort::ExpectFlow* free_list;
+    class ZHash* hash_table = nullptr;
+    ExpectNode* nodes = nullptr;
+    snort::ExpectFlow* pool = nullptr;
+    snort::ExpectFlow* free_list = nullptr;
 
     unsigned long expects = 0;
     unsigned long realized = 0;

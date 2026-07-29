@@ -62,10 +62,9 @@ public:
         bool confine = false, void* user_data = nullptr, const SnortConfig* = nullptr);
 
 private:
-    class MpseGroup* mpsegrp;
-    unsigned max_len;
-    bool multi_match;
+    class MpseGroup* mpsegrp = nullptr;
+    unsigned max_len = 0;
+    bool multi_match = false;
 };
 } // namespace snort
 #endif
-

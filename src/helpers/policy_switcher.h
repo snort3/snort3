@@ -36,10 +36,9 @@ public:
     ~PolicySwitcher();
 
 private:
-    NetworkPolicy* con;
-    InspectionPolicy* nap;
-    IpsPolicy* ips;
+    NetworkPolicy* con = nullptr;
+    InspectionPolicy* nap = nullptr;
+    IpsPolicy* ips = nullptr;
 };
 
 #endif
-

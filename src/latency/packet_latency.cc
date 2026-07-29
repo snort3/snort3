@@ -346,6 +346,7 @@ TEST_CASE ( "packet latency impl", "[latency]" )
     config.config.max_time = 2_ticks;
     SECTION( "fastpath enabled" )
     {
+        // cppcheck-suppress unreadVariable ; read through the virtual configuration wrapper
         config.config.fastpath = true;
 
         // t = 0
@@ -372,6 +373,7 @@ TEST_CASE ( "packet latency impl", "[latency]" )
 
     SECTION( "fastpath disabled" )
     {
+        // cppcheck-suppress unreadVariable ; read through the virtual configuration wrapper
         config.config.fastpath = false;
 
         // t = 0

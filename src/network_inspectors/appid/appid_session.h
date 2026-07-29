@@ -870,7 +870,7 @@ private:
     AppId shadow_traffic_appid = APP_ID_NONE;
     // AppId matching client side
     AppId client_inferred_service_id = APP_ID_NONE;
-    uint32_t odp_ctxt_version;
+    uint32_t odp_ctxt_version = 0;
 };
 
 #endif
