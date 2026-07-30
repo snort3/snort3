@@ -339,7 +339,6 @@ GENERIC sfrt_flat_dir8x_lookup(const SfIp* ip, table_flat_t* table)
     const dir_sub_table_flat_t* subtable;
     DIR_Entry* entry;
     uint8_t* base = reinterpret_cast<uint8_t*>(table);
-    int i;
     const dir_table_flat_t* rt = nullptr;
     int index;
     const INFO* data = reinterpret_cast<INFO*>(&base[table->data]);
@@ -399,7 +398,7 @@ GENERIC sfrt_flat_dir8x_lookup(const SfIp* ip, table_flat_t* table)
     {
         rt = reinterpret_cast<dir_table_flat_t*>(&base[table->rt6]);
         subtable = reinterpret_cast<dir_sub_table_flat_t*>(&base[rt->sub_table]);
-        for (i = 0; i < 16; i++)
+        for (int i = 0; i < 16; i++)
         {
             index = reinterpret_cast<const uint8_t*>(ip->get_ip6_ptr())[i];
             entry = reinterpret_cast<DIR_Entry*>(&base[subtable->entries]);

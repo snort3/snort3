@@ -56,7 +56,7 @@ bool HttpRuleOptModule::set(const char*, Value& v, SnortConfig*)
         std::string field = v.get_string();
         const int32_t name_size = (field.size() <= MAX_FIELD_NAME_LENGTH) ?
             field.size() : MAX_FIELD_NAME_LENGTH;
-        uint8_t lower_name[MAX_FIELD_NAME_LENGTH];
+        uint8_t lower_name[MAX_FIELD_NAME_LENGTH]{};
         for (int32_t k=0; k < name_size; k++)
         {
             lower_name[k] = ((field[k] < 'A') || (field[k] > 'Z')) ?

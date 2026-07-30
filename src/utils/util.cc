@@ -112,7 +112,8 @@ const char* get_error(int errnum)
 char* snort_strndup(const char* src, size_t n)
 {
     char* dst = (char*)snort_calloc(n + 1);
-    return strncpy(dst, src, n);
+    strncpy(dst, src, n);
+    return dst;
 }
 
 char* snort_strdup(const char* str)

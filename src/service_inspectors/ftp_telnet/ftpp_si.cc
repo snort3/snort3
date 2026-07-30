@@ -419,9 +419,8 @@ static inline int FTPResetsession(FTP_SESSION* Ftpsession)
     return FTPP_SUCCESS;
 }
 
-FtpFlowData::FtpFlowData() : FlowData(inspector_id)
+FtpFlowData::FtpFlowData() : FlowData(inspector_id), session{}
 {
-    session = {};
     ftstats.concurrent_sessions++;
     if(ftstats.max_concurrent_sessions < ftstats.concurrent_sessions)
         ftstats.max_concurrent_sessions = ftstats.concurrent_sessions;

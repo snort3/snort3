@@ -600,7 +600,6 @@ static void ShowPolicyStats(const SnortConfig* sc)
         if ( !file or !file[0] )
             continue;
 
-        auto id = policy->user_policy_id;
         auto rules_loaded = policy->rules_loaded;
         auto rules_shared = policy->rules_shared;
 
@@ -608,8 +607,11 @@ static void ShowPolicyStats(const SnortConfig* sc)
         auto rules_enabled = (res == stats.end()) ? 0 : res->second;
 
         if ( rules_loaded or rules_shared or rules_enabled )
+        {
+            auto id = policy->user_policy_id;
             sorted_stats.emplace(id, PolicyRuleStats{file, rules_loaded,
                 rules_shared, rules_enabled});
+        }
     }
 
     if ( !sorted_stats.size() )

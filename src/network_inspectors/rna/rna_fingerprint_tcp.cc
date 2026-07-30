@@ -732,21 +732,25 @@ TEST_CASE("is_mss_good", "[rna_fingerprint_tcp]")
     tfp_mss.emplace_back(FpElement("SYN-1"));
     key.synmss = 1;
     key.mss = 4;
-    CHECK( is_mss_good(key, tfp_mss) == false );
+    bool matches = is_mss_good(key, tfp_mss);
+    CHECK_FALSE(matches);
 
     key.synmss = 1;
     key.mss = 1;
-    CHECK( is_mss_good(key, tfp_mss) == true );
+    matches = is_mss_good(key, tfp_mss);
+    CHECK(matches);
 
     // Testing out of range case
     tfp_mss.clear();
     tfp_mss.emplace_back(FpElement("5"));
-    CHECK( is_mss_good(key, tfp_mss) == false );
+    matches = is_mss_good(key, tfp_mss);
+    CHECK_FALSE(matches);
 
     // Testing default case
     tfp_mss.clear();
     tfp_mss.emplace_back(FpElement("R"));
-    CHECK( is_mss_good(key, tfp_mss) == false );
+    matches = is_mss_good(key, tfp_mss);
+    CHECK_FALSE(matches);
 }
 
 TEST_CASE("is_ws_good", "[rna_fingerprint_tcp]")
@@ -758,17 +762,20 @@ TEST_CASE("is_ws_good", "[rna_fingerprint_tcp]")
 
     // Testing outside the range case
     tfp_ws.emplace_back(FpElement("-1"));
-    CHECK( is_ws_good(key, tfp_ws) == false );
+    bool matches = is_ws_good(key, tfp_ws);
+    CHECK_FALSE(matches);
 
     // Testing don't care case
     tfp_ws.clear();
     tfp_ws.emplace_back(FpElement("X"));
-    CHECK( is_ws_good(key, tfp_ws) == true );
+    matches = is_ws_good(key, tfp_ws);
+    CHECK(matches);
 
     // Testing default case
     tfp_ws.clear();
     tfp_ws.emplace_back(FpElement("TS"));
-    CHECK( is_ws_good(key, tfp_ws) == false );
+    matches = is_ws_good(key, tfp_ws);
+    CHECK_FALSE(matches);
 }
 
 TEST_CASE("is_option_good", "[rna_fingerprint_tcp]")
@@ -778,42 +785,48 @@ TEST_CASE("is_option_good", "[rna_fingerprint_tcp]")
     const uint8_t fp_optorder[] = { (uint8_t) tcp::TcpOptCode::MAXSEG };
 
     // Testing the case when option values are different
-    CHECK( is_option_good(optpos, fp_optpos, optorder, fp_optorder) == false );
+    const bool matches = is_option_good(optpos, fp_optpos, optorder, fp_optorder);
+    CHECK_FALSE(matches);
 }
 
 TEST_CASE("is_ts_good", "[rna_fingerprint_tcp]")
 {
     vector<FpElement> topts;
-    uint8_t optorder[4], fp_optorder[4];
+    uint8_t optorder[4]{}, fp_optorder[4]{};
     int optpos = 0;
-    FpTcpKey key;
+    FpTcpKey key{};
 
     // Testing SYN timestamp
     key.syn_timestamp = 123456789;
-    CHECK( is_ts_good(key, topts, optpos, optorder, fp_optorder) == false );
+    bool matches = is_ts_good(key, topts, optpos, optorder, fp_optorder);
+    CHECK_FALSE(matches);
 
     // Testing option code without timestamp
     uint8_t syn_tcpopts[] = {0, 0, 0, 0};
     key.syn_tcpopts = syn_tcpopts;
     key.num_syn_tcpopts = 4;
     key.syn_timestamp = 0;
-    CHECK( is_ts_good(key, topts, optpos, optorder, fp_optorder) == false );
+    matches = is_ts_good(key, topts, optpos, optorder, fp_optorder);
+    CHECK_FALSE(matches);
 
     // Testing option code with timestamp, but mismatched position
     key.syn_tcpopts[0] = (uint8_t) tcp::TcpOptCode::TIMESTAMP;
     FpElement fpe("X");
     fpe.d.value = 0;
     topts.emplace_back(fpe);
-    CHECK( is_ts_good(key, topts, optpos, optorder, fp_optorder) == false );
+    matches = is_ts_good(key, topts, optpos, optorder, fp_optorder);
+    CHECK_FALSE(matches);
 
     // Testing option code with timestamp, matched position, but mismatched order
     optpos = 1;
     optorder[0] = (uint8_t) tcp::TcpOptCode::MAXSEG;
-    CHECK( is_ts_good(key, topts, optpos, optorder, fp_optorder) == false );
+    matches = is_ts_good(key, topts, optpos, optorder, fp_optorder);
+    CHECK_FALSE(matches);
 
     // Testing option code with timestamp, matched position, and matched order
     optorder[0] = (uint8_t) tcp::TcpOptCode::EOL;
-    CHECK( is_ts_good(key, topts, optpos, optorder, fp_optorder) == true );
+    matches = is_ts_good(key, topts, optpos, optorder, fp_optorder);
+    CHECK(matches);
 }
 
 TEST_CASE("get_tcp_option", "[rna_fingerprint_tcp]")

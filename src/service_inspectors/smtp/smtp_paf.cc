@@ -249,10 +249,7 @@ static SmtpPafDataLenStatus get_length(char c, uint32_t* len)
     if (isblank(c))
     {
         if (length)
-        {
-            *len = length;
             return SMTP_PAF_LENGTH_DONE;
-        }
     }
     else if (isdigit(c))
     {

@@ -414,15 +414,21 @@ TEST_CASE("uri parsing", "[sfip]")
     SfIp ip;
 
     // Validity of IP strings: empty, large, protocol, port, path
-    CHECK(parse_ip_from_uri(ip_str, ip) == false);
+    bool parsed = parse_ip_from_uri(ip_str, ip);
+    CHECK_FALSE(parsed);
     ip_str = "1111:2222:3333:4444:5555:6666:7777:8888:9999";
-    CHECK(parse_ip_from_uri(ip_str, ip) == false);
+    parsed = parse_ip_from_uri(ip_str, ip);
+    CHECK_FALSE(parsed);
     ip_str = "http://";
-    CHECK(parse_ip_from_uri(ip_str, ip) == false);
+    parsed = parse_ip_from_uri(ip_str, ip);
+    CHECK_FALSE(parsed);
     ip_str = "http://1.2.3.4:80";
-    CHECK(parse_ip_from_uri(ip_str, ip));
+    parsed = parse_ip_from_uri(ip_str, ip);
+    CHECK(parsed);
     ip_str = "https://1.2.3.5/about.html";
-    CHECK(parse_ip_from_uri(ip_str, ip));
+    parsed = parse_ip_from_uri(ip_str, ip);
+    CHECK(parsed);
     ip_str = "[1111::2222]/about.html";
-    CHECK(parse_ip_from_uri(ip_str, ip));
+    parsed = parse_ip_from_uri(ip_str, ip);
+    CHECK(parsed);
 }

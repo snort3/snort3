@@ -170,6 +170,7 @@ TEST_GROUP(pub_sub_http_transaction_end_event_test)
     HttpParaList params;
     HttpFlowData* flow_data = new HttpFlowData(flow, &params);
     // cppcheck-suppress constVariablePointer
+    // cppcheck-suppress unreadVariable ; shared test state is consumed by test bodies
     SectionType* const section_type = HttpUnitTestSetup::get_section_type(flow_data);
     void setup() override
     {

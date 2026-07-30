@@ -1625,6 +1625,7 @@ inline void InspectorManager::internal_execute(Packet* p)
     {
         ::execute<T>(p, fp->network);
 
+        // cppcheck-suppress identicalConditionAfterEarlyExit ; network inspectors may disable inspection
         if ( p->disable_inspect )
             return;
 

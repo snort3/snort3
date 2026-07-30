@@ -293,7 +293,6 @@ int normalize_telnet(
         {
             sb_start = read_ptr;
 
-            if ((read_ptr + 2) >= end) break;
             switch (*(read_ptr+2))
             {
             case 0x26: /* Encryption -- RFC 2946 */
@@ -420,4 +419,3 @@ int normalize_telnet(
 
     return ret;
 }
-

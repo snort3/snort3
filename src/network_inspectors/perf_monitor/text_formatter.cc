@@ -116,6 +116,9 @@ TEST_CASE("text output", "[TextFormatter]")
         "                 vector.2: 70\n";
 
     FILE* fh = tmpfile();
+    REQUIRE(fh != nullptr);
+    if (!fh)
+        return;
     TextFormatter f("text_formatter");
 
     f.register_section("name");
@@ -137,7 +140,7 @@ TEST_CASE("text output", "[TextFormatter]")
     f.write(fh, (time_t)1234567890);
 
     one = 0;
-    five[0] = '\0';
+    five[0] = '\0'; // cppcheck-suppress unreadVariable ; formatter retains the registered buffer
     kvp.clear();
     f.write(fh, (time_t)2345678901);
 

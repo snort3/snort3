@@ -1526,8 +1526,9 @@ static inline unsigned _bnfa_get_next_state_csparse_nfa(
             }
             else
             {
-                if ( pcs[1+input] & BNFA_SPARSE_MAX_STATE )
-                    return pcs[1+input] & BNFA_SPARSE_MAX_STATE;
+                const bnfa_state_t next_state = pcs[1+input] & BNFA_SPARSE_MAX_STATE;
+                if ( next_state )
+                    return next_state;
             }
         }
         else

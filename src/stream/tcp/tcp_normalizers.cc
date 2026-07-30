@@ -608,6 +608,7 @@ void TcpNormalizerFactory::initialize()
 
 void TcpNormalizerFactory::term()
 {
+    // cppcheck-suppress postfixOperator
     for ( auto sp = Normalizer::Policy::FIRST; sp < Normalizer::Policy::MAX_NORM_POLICY; sp++ )
         delete normalizers[sp];
 }

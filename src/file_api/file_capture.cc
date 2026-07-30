@@ -776,7 +776,8 @@ class AsyncCaptureFixture
 public:
     AsyncCaptureFixture()
     {
-        REQUIRE(FileCaptureTestAccess::resettable());
+        const bool resettable = FileCaptureTestAccess::resettable();
+        REQUIRE(resettable);
         FileCaptureTestAccess::reset();
         async_writer_gate = &gate;
         writer_test_hook = wait_in_writer_test_hook;

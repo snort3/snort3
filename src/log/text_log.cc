@@ -133,6 +133,7 @@ TextLog* TextLog_Init(
         maxBuf = MIN_BUF;
 
     txt = (TextLog*)snort_alloc(sizeof(TextLog)+maxBuf);
+    // cppcheck-suppress variableScope ; name points into this storage until it is duplicated
     std::string fname;
 
     if ( strcasecmp(name, "stdout") )

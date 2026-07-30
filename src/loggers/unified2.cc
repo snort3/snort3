@@ -1040,11 +1040,13 @@ void U2Logger::alert_legacy(Packet* p, const char* msg, const Event& event)
     {
         LogFunction* log_funcs;
         uint32_t max_count = Stream::get_xtra_data_map(log_funcs);
-        uint32_t sec = event.get_seconds();
 
         if ( max_count > 0 )
+        {
+            uint32_t sec = event.get_seconds();
             AlertExtraData(p->flow, &config, log_funcs, max_count, p->xtradata_mask,
                 { /* gid */ 0, /* sid */ 0, event.get_event_id(), sec });
+        }
     }
 }
 

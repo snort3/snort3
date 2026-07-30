@@ -361,7 +361,7 @@ bool Http2HpackDecoder::decode_header_line(const uint8_t* encoded_header_buffer,
             }
             bytes_written = 0;
         }
-        else if (pseudo_headers_allowed)
+        else
             pseudo_headers_allowed = false;
 
         if (Http2CookieHeaderBuffer::is_cookie(name.start(), name.length()))

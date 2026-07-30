@@ -197,9 +197,9 @@ public:
     }
     ServiceDNSData* create_stream_dns_data(int64_t stream_id)
     {
-        ServiceDNSData* dns_data = new ServiceDNSData();
-        service_dns_data[stream_id] = dns_data;
-        return dns_data;
+        ServiceDNSData* stream_data = new ServiceDNSData();
+        service_dns_data[stream_id] = stream_data;
+        return stream_data;
     }
 };
 

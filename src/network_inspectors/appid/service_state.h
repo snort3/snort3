@@ -64,20 +64,20 @@ public:
 
     ServiceDetector* next()
     {
-        ServiceDetector* detector = nullptr;
+        ServiceDetector* current_detector = nullptr;
 
         if ( dit != detectors->end() )
-            detector = (ServiceDetector*)(dit++)->second;
-        return detector;
+            current_detector = (ServiceDetector*)(dit++)->second;
+        return current_detector;
     }
 
     ServiceDetector* current()
     {
-        ServiceDetector* detector = nullptr;
+        ServiceDetector* current_detector = nullptr;
 
         if ( dit != detectors->end() )
-            detector = (ServiceDetector*)(dit)->second;
-        return detector;
+            current_detector = (ServiceDetector*)(dit)->second;
+        return current_detector;
     }
 
     void reset()

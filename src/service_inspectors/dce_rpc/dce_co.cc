@@ -655,9 +655,9 @@ static inline bool DCE2_GcReassembleEarly(DCE2_SsnData* sd)
 
 static inline uint16_t DCE2_GcReassembleThreshold(DCE2_SsnData* sd)
 {
-    void* config = sd->config;
     if (DCE2_GcReassembleEarly(sd))
     {
+        void* config = sd->config;
         if (sd->trans == DCE2_TRANS_TYPE__TCP)
         {
             return ((dce2TcpProtoConf*)config)->common.co_reassemble_threshold;

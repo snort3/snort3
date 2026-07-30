@@ -484,7 +484,7 @@ int main_reload_config(lua_State* L)
 
     if ( L )
     {
-        Lua::ManageStack(L, 1);
+        Lua::ManageStack manage_stack(L, 1);
         if (lua_gettop(L) >= 1)
             fname = luaL_checkstring(L, 1);
 
@@ -605,7 +605,7 @@ int main_reload_hosts(lua_State* L)
 
     if ( L )
     {
-        Lua::ManageStack(L, 1);
+        Lua::ManageStack manage_stack(L, 1);
         fname = luaL_optstring(L, 1, sc->attribute_hosts_file.c_str());
     }
     else

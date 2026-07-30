@@ -113,7 +113,9 @@ void get_magic_rule_ids_from_type(const std::string& type, const std::string& ve
 }
 
 // cppcheck-suppress constParameterPointer ; preserve the exported declaration and ABI
+// cppcheck-suppress passedByValue ; preserve the exported API signature
 void set_rule_id_from_type(SnortConfig* sc, uint64_t id, std::string type,
+    // cppcheck-suppress passedByValue ; preserve the exported API signature
     std::string file_category, std::string file_version, std::vector<std::string> file_groups)
 {
     FileConfig* conf = get_file_config(sc);

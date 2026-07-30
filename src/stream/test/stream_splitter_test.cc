@@ -153,6 +153,7 @@ TEST(other_splitter, stop_and_wait)
     CHECK(cs.scan(&pkt, nullptr, 123, 0, &fp) == StreamSplitter::SEARCH);
     CHECK(fp == 0);
     CHECK(flushed == 2);
+    next_splitter = nullptr;
 }
 
 //-------------------------------------------------------------------------
@@ -163,4 +164,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

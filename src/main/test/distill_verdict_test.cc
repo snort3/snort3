@@ -91,16 +91,21 @@ TEST_GROUP(distill_verdict_tests)
     Active act;
     SFDAQInstance* di;
     // cppcheck-suppress constVariablePointer
+    // cppcheck-suppress variableScope ; initialized in setup and consumed by test bodies
     Analyzer* analyzer;
     ActiveAction* active_action;
 
     void setup() override
     {
+        // cppcheck-suppress unreadVariable ; packet state is consumed by test bodies
         pkt.active = &act;
         active_action = nullptr;
+        // cppcheck-suppress unreadVariable ; packet state is consumed by test bodies
         pkt.action = &active_action;
         di = new SFDAQInstance(nullptr, 0, nullptr);
+        // cppcheck-suppress unreadVariable ; packet state is consumed by Analyzer and tests
         pkt.daq_instance = di;
+        // cppcheck-suppress unreadVariable ; fixture ownership is consumed by teardown
         analyzer = new Analyzer(di, 0, nullptr, 0, 40);
     }
 

@@ -903,6 +903,7 @@ TEST_GROUP(dump_flows_summary)
     FlowCacheConfig fcg;
     FlowCache* cache;
     DumpFlowsSummaryTest* dfs;
+    // cppcheck-suppress unreadVariable ; shared test data is consumed by test bodies
     std::vector<PktType> types = {PktType::IP, PktType::ICMP, PktType::TCP, PktType::UDP};
 
     void setup()

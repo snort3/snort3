@@ -643,6 +643,9 @@ bool RnaModule::end(const char* fqn, int index, SnortConfig* sc)
 
     if ( !strcmp(fqn, RNA_NAME) )
     {
+        if ( sc == nullptr )
+            return false;
+
         sc->set_run_flags(RUN_FLAG__TRACK_ON_SYN); // Internal flag to track TCP on SYN
 
         if ( sc->ip_frags_only() )
@@ -838,3 +841,4 @@ TEST_CASE("Fingerprint processors tuner name", "[rna_module]")
 }
 
 #endif
+

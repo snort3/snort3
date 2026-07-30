@@ -60,7 +60,7 @@ public:
     void add_child(ProfilerNode* node)
     { children.emplace_back(node); }
 
-    const std::vector<ProfilerNode*> get_children() const
+    const std::vector<ProfilerNode*>& get_children() const
     { return children; }
 
     const std::string name;

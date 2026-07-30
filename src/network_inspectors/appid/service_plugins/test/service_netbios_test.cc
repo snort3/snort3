@@ -74,8 +74,6 @@ TEST(netbios_parsing_tests, netbios_parse_invalid_len_missing_position_without_d
     const uint8_t* data = (const uint8_t*)"\xC0"; // Invalid length
     const uint8_t* original_data = data;
     const uint8_t* end = data + 1;
-    char name[NBNS_NAME_LEN / 2 + 1] = {0};
-
     int ret = netbios_validate_name(&data, data, end);
     CHECK_EQUAL(-1, ret);
     CHECK_EQUAL(data, original_data); // Ensure data pointer is unchanged
@@ -86,8 +84,6 @@ TEST(netbios_parsing_tests, netbios_parse_invalid_len_wrong_position_without_dec
     const uint8_t* data = (const uint8_t*)"\xC0\xFF"; // Invalid length
     const uint8_t* original_data = data;
     const uint8_t* end = data + 2;
-    char name[NBNS_NAME_LEN / 2 + 1] = {0};
-
     int ret = netbios_validate_name(&data, data, end);
     CHECK_EQUAL(-1, ret);
     CHECK_EQUAL(original_data + sizeof(NBNSLabelPtr), data); // Check that length and flags are parsed

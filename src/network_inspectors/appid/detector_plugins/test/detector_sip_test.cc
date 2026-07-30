@@ -148,6 +148,7 @@ TEST_GROUP(detector_sip_tests)
 
     void setup() override
     {
+        // cppcheck-suppress unreadVariable ; consumed by the test through the fixture
         sip_msg = {};
         appid_inspector.configure(nullptr);
     }

@@ -1144,13 +1144,15 @@ TEST_CASE("RNA pnd", "[non-ip]")
         memcpy(eh.ether_src, zero_mac, MAC_SIZE);
         p.num_layers = 1;
         p.layers[0].start = reinterpret_cast<const uint8_t*>(&eh);
-        CHECK(is_eligible_packet(&p) == false);
+        bool eligible = is_eligible_packet(&p);
+        CHECK_FALSE(eligible);
 
-        ip::IP4Hdr h4;
+        ip::IP4Hdr h4{};
         p.ptrs.ip_api.set(&h4);
         RnaPnd pnd(false, "");
         pnd.analyze_flow_non_ip(&p);
-        CHECK(is_eligible_packet(&p) == true);
+        eligible = is_eligible_packet(&p);
+        CHECK(eligible);
     }
 }
 
@@ -1193,28 +1195,34 @@ TEST_CASE("RNA pnd cpe os", "[cpe-os]")
         // Test to hit sanity check ht is null
         CpeOsInfoEvent* cpeevent = new CpeOsInfoEvent(p2);
         cpeevent->add_os("CPE OS one");
-        CHECK(pnd.analyze_cpe_os_info(*cpeevent) == false);
+        bool logged = pnd.analyze_cpe_os_info(*cpeevent);
+        CHECK_FALSE(logged);
         delete(cpeevent);
         cpeevent = new CpeOsInfoEvent(p);
         cpeevent->add_os("CPE OS one");
-        CHECK(pnd.analyze_cpe_os_info(*cpeevent) == false);
+        logged = pnd.analyze_cpe_os_info(*cpeevent);
+        CHECK_FALSE(logged);
 
         // Check new OS information is invoking logging
         auto ht = host_cache.find_else_create(*src_ip, &new_host);
         rna_flow->set_client(ht);
-        CHECK(pnd.analyze_cpe_os_info(*cpeevent) == true);
+        logged = pnd.analyze_cpe_os_info(*cpeevent);
+        CHECK(logged);
 
         // Check duplicate OS information is not invoking logging
-        CHECK(pnd.analyze_cpe_os_info(*cpeevent) == false);
+        logged = pnd.analyze_cpe_os_info(*cpeevent);
+        CHECK_FALSE(logged);
         delete(cpeevent);
 
         // Check second OS information is invoking logging
         cpeevent = new CpeOsInfoEvent(p);
         cpeevent->add_os("CPE OS two");
-        CHECK(pnd.analyze_cpe_os_info(*cpeevent) == true);
+        logged = pnd.analyze_cpe_os_info(*cpeevent);
+        CHECK(logged);
 
         // Again check duplicate OS information is not invoking logging
-        CHECK(pnd.analyze_cpe_os_info(*cpeevent) == false);
+        logged = pnd.analyze_cpe_os_info(*cpeevent);
+        CHECK_FALSE(logged);
 
         delete(cpeevent);
         p.flow->free_flow_data(rna_flow);

@@ -65,7 +65,7 @@ public:
 
     std::shared_ptr<Value> operator[](const Key& key);
 
-    uint8_t get_segment_idx(Key val);
+    uint8_t get_segment_idx(const Key& val);
     std::shared_ptr<Value> find(const Key& key);
     std::shared_ptr<Value> find_else_create(const Key& key, bool* new_data);
     std::vector<std::pair<Key, std::shared_ptr<Value>>> get_all_data();
@@ -204,7 +204,7 @@ bool HostCacheSegmented<Key, Value>::reload_resize(size_t memcap)
 
 // Computes the index of the segment where a given key-value pair belongs.
 template<typename Key, typename Value>
-uint8_t HostCacheSegmented<Key, Value>::get_segment_idx(Key val)
+uint8_t HostCacheSegmented<Key, Value>::get_segment_idx(const Key& val)
 {
     const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&val);
     uint8_t result = 0;

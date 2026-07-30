@@ -80,7 +80,7 @@ TEST(xhash, create_xhash_test)
         CHECK(ret == HASH_OK);
     }
 
-    xhash_test_key xtk;
+    xhash_test_key xtk{};
     xtk.key = 10;
     HashNode* xnode = test_table->find_node(&xtk);
     CHECK(xnode != nullptr);
@@ -122,7 +122,7 @@ TEST(xhash, free_anr_lru_delete_tail_node_test)
     XHash* test_table = new XHash(3, sizeof(struct xhash_test_key), 1, 1040);
     CHECK(test_table);
 
-    xhash_test_key xtk;
+    xhash_test_key xtk{};
     int ret = test_table->insert(&xtk, nullptr);
     CHECK(ret == HASH_OK);
 

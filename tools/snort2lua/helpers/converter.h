@@ -65,7 +65,7 @@ public:
     inline static void set_ips_pattern(const std::string& val)
     { ips_pattern = val; }
 
-    inline static std::string get_ips_pattern()
+    inline static const std::string& get_ips_pattern()
     { return ips_pattern; }
 
     inline static void set_bind_wizard(bool val)

@@ -260,6 +260,9 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
     if (!asd)
     {
         asd = AppIdSession::allocate_session(p, protocol, direction, inspector, odp_ctxt);
+        // cppcheck-suppress knownConditionTrueFalse ; unit-test stubs may return null
+        if (!asd)
+            return false;
         if (p->flow->get_session_flags() & SSNFLAG_MIDSTREAM)
         {
             asd->flags |= APPID_SESSION_MID;
@@ -842,7 +845,8 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     if (is_check_host_cache_valid(asd, service_id, client_id, payload_id, misc_id) or
         (is_http_tunnel))
     {
-        if (is_http_tunnel and (asd.scan_flags & SCAN_HTTP_URI_FLAG))
+        // cppcheck-suppress knownConditionTrueFalse ; is_http_tunnel requires hsession
+        if (hsession and is_http_tunnel and (asd.scan_flags & SCAN_HTTP_URI_FLAG))
         {
             if (hsession->get_tun_dest())
                 hsession->free_tun_dest();

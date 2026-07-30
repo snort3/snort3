@@ -153,13 +153,17 @@ TEST_GROUP(rpc_publish_alt_packet)
 {
     Packet packet;
     uint8_t original[8] = {};
+    // cppcheck-suppress unreadVariable ; shared fixture state is consumed by test bodies
     uint8_t record[32] = {};
 
     void setup() override
     {
         reset_publish_state();
+        // cppcheck-suppress unreadVariable ; packet state is consumed by test bodies
         packet.data = original;
+        // cppcheck-suppress unreadVariable ; packet state is consumed by test bodies
         packet.dsize = sizeof(original);
+        // cppcheck-suppress unreadVariable ; packet state is consumed by test bodies
         packet.packet_flags = PKT_REBUILT_STREAM;
     }
 };
@@ -198,6 +202,7 @@ TEST_GROUP(rpc_prep_frag)
     {
         if (!alt_buffer.data)
             alt_buffer.allocate_data();
+        // cppcheck-suppress unreadVariable ; buffer state is consumed by test bodies
         alt_buffer.len = 0;
         memset(const_cast<uint8_t*>(alt_buffer.data), 0, alt_buffer.decode_blen);
         memset(&session, 0, sizeof(session));

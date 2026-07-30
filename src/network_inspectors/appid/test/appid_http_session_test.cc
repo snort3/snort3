@@ -201,6 +201,7 @@ TEST_GROUP(appid_http_session)
 #endif
         );
         session->flow = &flow;
+        // cppcheck-suppress unreadVariable ; fixture is consumed by test bodies and teardown
         mock_hsession = new AppIdHttpSession(*session, 0);
         appidDebug = new AppIdDebug();
         AppIdPegCounts::init_pegs();

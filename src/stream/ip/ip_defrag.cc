@@ -277,9 +277,7 @@ static inline int FragCheckFirstLast(
     FragTracker* ft,
     const uint16_t frag_offset)
 {
-    uint16_t fragLength;
     int retVal = FRAG_FIRSTLAST_OK;
-    uint16_t endOfThisFrag;
 
     /* set the frag flag if this is the first fragment */
     if ((p->ptrs.decode_flags & DECODE_MF) && frag_offset == 0)
@@ -296,8 +294,8 @@ static inline int FragCheckFirstLast(
          * captured. Use dsize as the frag length since it is distance
          * between the last succesfully decoded layer (which is ip6_frag
          *  or ipv4) and the end of packet, */
-        fragLength = p->dsize;
-        endOfThisFrag = frag_offset + fragLength;
+        uint16_t fragLength = p->dsize;
+        uint16_t endOfThisFrag = frag_offset + fragLength;
 
         if (ft->frag_flags & FRAG_GOT_LAST)
         {
@@ -2038,4 +2036,3 @@ inline int Defrag::expired(Packet* p, FragTracker* ft, const FragEngine* fe)
 
     return false;
 }
-

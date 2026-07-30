@@ -216,7 +216,9 @@ TEST(ips_regex_base, ips_option)
 TEST_GROUP(ips_regex_module)
 {
     Module* mod = nullptr;
+    // cppcheck-suppress unreadVariable ; configured by test bodies and checked in teardown
     bool end = true;
+    // cppcheck-suppress unreadVariable ; configured by test bodies and checked in teardown
     unsigned expect = 0;
 
     void setup() override
@@ -281,11 +283,13 @@ TEST_GROUP(ips_regex_option)
     Module* mod = nullptr;
     // cppcheck-suppress constVariablePointer
     IpsOption* opt = nullptr;
+    // cppcheck-suppress unreadVariable ; configured by test bodies and checked in teardown
     bool do_cleanup = false;
 
     void setup() override
     {
         mod = ips_regex->mod_ctor();
+        // cppcheck-suppress unreadVariable ; consumed by test bodies and teardown
         opt = get_option(mod, "\"/foo/\"");
     }
     void teardown() override
@@ -361,11 +365,13 @@ TEST_GROUP(ips_regex_option_relative)
     Module* mod = nullptr;
     // cppcheck-suppress constVariablePointer
     IpsOption* opt = nullptr;
+    // cppcheck-suppress unreadVariable ; configured by test bodies and checked in teardown
     bool do_cleanup = false;
 
     void setup() override
     {
         mod = ips_regex->mod_ctor();
+        // cppcheck-suppress unreadVariable ; consumed by test bodies and teardown
         opt = get_option(mod, "\"/\\bfoo/R\"");
     }
     void teardown() override

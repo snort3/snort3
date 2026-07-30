@@ -58,6 +58,7 @@ void TcpStateMachine::term()
 
 TcpStateMachine::TcpStateMachine()
 {
+    // cppcheck-suppress postfixOperator
     for ( auto s = TcpStreamTracker::TCP_LISTEN; s < TcpStreamTracker::TCP_MAX_STATES; s++ )
         tcp_state_handlers[ s ] = nullptr;
 
@@ -80,6 +81,7 @@ TcpStateMachine::TcpStateMachine()
 
 TcpStateMachine::~TcpStateMachine()
 {
+    // cppcheck-suppress postfixOperator
     for ( auto s = TcpStreamTracker::TCP_LISTEN; s < TcpStreamTracker::TCP_MAX_STATES; s++ )
         delete tcp_state_handlers[ s ];
 }
@@ -116,4 +118,3 @@ bool TcpStateMachine::eval(TcpSegmentDescriptor& tsd)
 
     return false;
 }
-

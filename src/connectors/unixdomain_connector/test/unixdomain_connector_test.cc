@@ -842,7 +842,6 @@ void reconnect_update_callback(UnixDomainConnector* connector, bool is_reconnect
 TEST_GROUP(unixdomain_connector_reconnect_helper)
 {
     UnixDomainConnectorConfig reconnect_config;
-    int reconnect_sfd = 0;
     void setup()
     {
         reconnect_config.direction = Connector::CONN_DUPLEX;

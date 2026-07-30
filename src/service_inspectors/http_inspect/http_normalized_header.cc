@@ -261,6 +261,7 @@ void NormalizedHeader::HeaderNormalizer::normalize(const HeaderId head_id, const
     uint8_t* const norm_value = new uint8_t[buffer_length];
     uint8_t* const temp_space = new uint8_t[buffer_length];
     // cppcheck-suppress uninitdata
+    // cppcheck-suppress duplicateExpressionTernary ; allocations yield distinct buffers
     uint8_t* const norm_start = (num_normalizers%2 == 0) ? norm_value : temp_space;
     uint8_t* working = norm_start;
     int32_t data_length = 0;

@@ -853,6 +853,7 @@ void Binder::handle_flow_service_change(Flow& flow)
 {
     bstats.service_changes++;
 
+    // cppcheck-suppress unreadVariable ; RAII lifetime records profiling data
     Profile profile(bindPerfStats);
     Stuff stuff;
 

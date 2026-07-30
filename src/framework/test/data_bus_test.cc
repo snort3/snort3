@@ -123,6 +123,7 @@ TEST_GROUP(data_bus)
 {
     InspectionPolicy my_inspection_policy;
     NetworkPolicy my_network_policy;
+    // cppcheck-suppress variableScope ; initialized in setup and consumed by test bodies
     unsigned pub_id = 0;
 
     void setup() override

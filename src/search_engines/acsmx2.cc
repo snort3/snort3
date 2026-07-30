@@ -828,10 +828,9 @@ static void acsmUpdateMatchStates(ACSM_STRUCT2* acsm)
 
     for (state = 0; state < (acstate_t)acsm->acsmNumStates; state++)
     {
-        acstate_t* p = NextState[state];
-
         if (MatchList[state])
         {
+            acstate_t* p = NextState[state];
             switch (acsm->sizeofstate)
             {
             case 1:

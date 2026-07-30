@@ -72,7 +72,8 @@ uint8_t geneve_pkt_data_no_options[] = {
 
 
 // A sample function to convert the option data to uint64_t.
-bool get_geneve_opt_data(std::vector<snort::geneve::GeneveOptData> options, uint16_t g_class, uint8_t g_type, uint64_t& value)
+bool get_geneve_opt_data(const std::vector<snort::geneve::GeneveOptData>& options,
+    uint16_t g_class, uint8_t g_type, uint64_t& value)
 {
     value = 0;
 

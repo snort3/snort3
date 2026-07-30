@@ -717,6 +717,7 @@ void TcpOverlapResolverFactory::initialize()
 
 void TcpOverlapResolverFactory::term()
 {
+    // cppcheck-suppress postfixOperator
     for ( auto sp = Overlap::Policy::FIRST; sp < Overlap::Policy::MAX_OVERLAP_POLICY; sp++ )
         delete overlap_resolvers[sp];
 }

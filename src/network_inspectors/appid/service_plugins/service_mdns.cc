@@ -418,7 +418,7 @@ void MdnsServiceDetector::process_txt_record(const snort::Packet* pkt, const cha
                 if (dot_pos != std::string::npos and dot_pos > 0)
                 {
                     service_type = device_name.substr(dot_pos + DNS_LABEL_LENGTH_SKIP);
-                    device_name = device_name.substr(0, dot_pos);
+                    device_name.resize(dot_pos);
                 }
 
                 if (!is_printable_string(device_name))

@@ -147,6 +147,9 @@ TEST_CASE("json output", "[JSONFormatter]")
     std::vector<PegCount> kvp;
 
     FILE* fh = tmpfile();
+    REQUIRE(fh != nullptr);
+    if (!fh)
+        return;
     JSONFormatter f("test");
 
     f.register_section("name");
@@ -168,7 +171,7 @@ TEST_CASE("json output", "[JSONFormatter]")
     f.write(fh, (time_t)1234567890);
 
     one = 0;
-    five[0] = '\0';
+    five[0] = '\0'; // cppcheck-suppress unreadVariable ; formatter retains the registered buffer
     kvp.clear();
     f.write(fh, (time_t)2145678903);
     f.finalize_output(fh);

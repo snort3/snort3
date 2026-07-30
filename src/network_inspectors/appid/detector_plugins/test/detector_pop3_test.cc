@@ -64,6 +64,7 @@ TEST_GROUP(detector_pop_tests)
     Pop3ServiceDetector* test_detector = nullptr;
     void setup() override
     {
+        // cppcheck-suppress unreadVariable ; consumed by teardown through the test fixture
         test_detector = new Pop3ServiceDetector(&test_discovery);
     }
 

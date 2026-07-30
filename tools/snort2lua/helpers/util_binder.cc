@@ -242,32 +242,39 @@ bool operator<(const shared_ptr<Binder>& left, const shared_ptr<Binder>& right)
         if ( (left) > (right) ) return true; \
     }
 
+    #define FIRST_BOOL_TRUE(left, right) \
+    { \
+        const bool left_value = (left); \
+        const bool right_value = (right); \
+        if ( left_value != right_value ) return left_value; \
+    }
+
     // By predetermined order
     FIRST_IF_LT(left->get_priority(), right->get_priority())
 
     // By priorities of options
-    FIRST_IF_GT(left->has_ips_policy_id(), right->has_ips_policy_id())
+    FIRST_BOOL_TRUE(left->has_ips_policy_id(), right->has_ips_policy_id())
 
     auto left_zone_specs = left->has_src_zone() + left->has_dst_zone();
     auto right_zone_specs = right->has_src_zone() + right->has_dst_zone();
     FIRST_IF_GT(left_zone_specs, right_zone_specs)
 
-    FIRST_IF_GT(left->has_vlans(), right->has_vlans())
-    FIRST_IF_GT(left->has_service(), right->has_service())
+    FIRST_BOOL_TRUE(left->has_vlans(), right->has_vlans())
+    FIRST_BOOL_TRUE(left->has_service(), right->has_service())
 
     auto left_net_specs = left->has_src_nets() + left->has_dst_nets();
     auto right_net_specs = right->has_src_nets() + right->has_dst_nets();
     FIRST_IF_GT(left_net_specs, right_net_specs)
 
-    FIRST_IF_GT(left->has_nets(), right->has_nets())
+    FIRST_BOOL_TRUE(left->has_nets(), right->has_nets())
 
     auto left_port_specs = left->has_src_ports() + left->has_dst_ports();
     auto right_port_specs = right->has_src_ports() + right->has_dst_ports();
     FIRST_IF_GT(left_port_specs, right_port_specs)
 
-    FIRST_IF_GT(left->has_ports(), right->has_ports())
-    FIRST_IF_GT(left->has_proto(), right->has_proto())
-    FIRST_IF_GT(left->has_role(), right->has_role())
+    FIRST_BOOL_TRUE(left->has_ports(), right->has_ports())
+    FIRST_BOOL_TRUE(left->has_proto(), right->has_proto())
+    FIRST_BOOL_TRUE(left->has_role(), right->has_role())
 
     // By values of options. Fewer specs = more specific.
     if ( left->has_vlans() && right->has_vlans() )
@@ -296,6 +303,11 @@ bool operator<(const shared_ptr<Binder>& left, const shared_ptr<Binder>& right)
 
     return false; //if here, l == r
 }
+
+#undef FIRST_BOOL_TRUE
+#undef FIRST_IF_GT
+#undef FIRST_IF_LT
+#undef TRISTATE
 
 #ifdef REG_TEST
 #include <iostream>

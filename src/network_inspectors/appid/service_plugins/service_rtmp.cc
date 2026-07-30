@@ -636,6 +636,9 @@ success:
     // cppcheck-suppress knownConditionTrueFalse
     if (!hsession)
         hsession = args.asd.create_http_session();
+    // cppcheck-suppress knownConditionTrueFalse ; service test mocks always return null
+    if (!hsession)
+        goto fail;
 
     if ( ss->swfUrl )
     {

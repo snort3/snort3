@@ -113,6 +113,9 @@ TEST_CASE("csv output", "[CSVFormatter]")
         "2145678903,0,0,0,,0\n";
 
     FILE* fh = tmpfile();
+    REQUIRE(fh != nullptr);
+    if (!fh)
+        return;
     CSVFormatter f("csv_formatter");
 
     f.register_section("name");
@@ -133,7 +136,7 @@ TEST_CASE("csv output", "[CSVFormatter]")
 
     two = 0;
     three = 0;
-    five[0] = '\0';
+    five[0] = '\0'; // cppcheck-suppress unreadVariable ; formatter retains the registered buffer
     kvp.clear();
     f.write(fh, (time_t)2145678903);
 

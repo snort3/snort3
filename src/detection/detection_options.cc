@@ -1141,11 +1141,8 @@ private:
 
 TEST_CASE("Detection Engine: skip_on_retry", "[de_core]")
 {
-    Packet p;
     detection_option_tree_node_t m_node(RULE_OPTION_TYPE_OTHER, nullptr);
     detection_option_tree_node_t m_child_node(RULE_OPTION_TYPE_OTHER, nullptr);
-    detection_option_eval_data_t m_e_data;
-    m_e_data.p = &p;
     dot_node_state_t m_child_state;
     int result = 0;
 

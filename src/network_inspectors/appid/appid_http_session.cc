@@ -126,7 +126,7 @@ void AppIdHttpSession::set_tun_dest()
     char* port_str = nullptr;
     uint16_t port = 0;
     int is_IPv6 = 0;
-    char* url = strdup(meta_data[REQ_URI_FID]->c_str());
+    char* url = snort_strdup(meta_data[REQ_URI_FID]->c_str());
     url_end = url + strlen(url) - 1;
     host_start = url;
 
@@ -173,7 +173,7 @@ void AppIdHttpSession::set_tun_dest()
         {
             char tmp = *host_end;
             *host_end = '\0';
-            host = strdup(host_start);
+            host = snort_strdup(host_start);
             *host_end = tmp;
         }
     }
@@ -182,9 +182,9 @@ void AppIdHttpSession::set_tun_dest()
         if (tun_dest)
             delete tun_dest;
         tun_dest= new TunnelDest(host, port);
-        free(host);
+        snort_free(host);
     }
-    free(url);
+    snort_free(url);
 }
 
 bool AppIdHttpSession::initial_chp_sweep(ChpMatchDescriptor& cmd, HttpPatternMatchers& http_matchers)

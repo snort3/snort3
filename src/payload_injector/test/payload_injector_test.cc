@@ -135,6 +135,7 @@ private:
 // Mocks for PayloadInjectorModule::get_http2_payload
 
 static InjectionReturnStatus translation_status = INJECTION_SUCCESS;
+// cppcheck-suppress passedByValue
 InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl,
     uint8_t*& http2_payload, uint32_t& payload_len, bool)
 {
@@ -178,6 +179,7 @@ TEST_GROUP(payload_injector_test)
     InjectionControl control;
     PayloadInjectorCounts* counts = reinterpret_cast<PayloadInjectorCounts*>(mod.get_counts());
     Flow flow;
+    // cppcheck-suppress unusedVariable ; referenced by packets created in test bodies
     Active active;
 
     void setup() override
@@ -198,11 +200,15 @@ TEST_GROUP(payload_injector_test)
         counts->err_s2c_http_proto = 0;
         counts->err_c2s_http_proto = 0;
         counts->err_s2c_http2_proto = 0;
+        // cppcheck-suppress unreadVariable ; consumed by tests through the fixture
         control.http_page = (const uint8_t*)"test";
+        // cppcheck-suppress unreadVariable ; consumed by tests through the fixture
         control.http_page_len = 4;
+        // cppcheck-suppress unreadVariable ; consumed by tests through the fixture
         control.stream_id = 0;
         flow.set_state(Flow::FlowState::INSPECT);
         flow.set_session_flags(SSNFLAG_ESTABLISHED);
+        // cppcheck-suppress unreadVariable ; consumed by tests through the fixture
         flow.pkt_type = PktType::TCP;
         translation_status = INJECTION_SUCCESS;
         http2_flow_data.set_mid_frame(false);
@@ -548,7 +554,9 @@ TEST_GROUP(payload_injector_translate_err_test)
     InjectionControl control;
     PayloadInjectorCounts* counts = reinterpret_cast<PayloadInjectorCounts*>(mod.get_counts());
     Flow flow;
+    // cppcheck-suppress unusedVariable ; referenced by packets created in test bodies
     Active active;
+    // cppcheck-suppress unreadVariable ; consumed by teardown through the fixture
     InjectionReturnStatus status = INJECTION_SUCCESS;
 
     void setup() override
@@ -557,14 +565,19 @@ TEST_GROUP(payload_injector_translate_err_test)
         counts->http2_injects = 0;
         counts->http2_translate_err = 0;
         counts->http2_mid_frame = 0;
+        // cppcheck-suppress unreadVariable ; consumed by tests through the fixture
         control.http_page = (const uint8_t*)"test";
+        // cppcheck-suppress unreadVariable ; consumed by tests through the fixture
         control.http_page_len = 4;
         flow.set_state(Flow::FlowState::INSPECT);
         flow.set_session_flags(SSNFLAG_ESTABLISHED);
+        // cppcheck-suppress unreadVariable ; consumed by tests through the fixture
         flow.pkt_type = PktType::TCP;
         http2_flow_data.set_mid_frame(false);
         mock_api.base.name = "http2_inspect";
+        // cppcheck-suppress unreadVariable ; consumed by teardown through the fixture
         flow.gadget = new MockInspector();
+        // cppcheck-suppress unreadVariable ; consumed by tests through the fixture
         control.stream_id = 1;
     }
 

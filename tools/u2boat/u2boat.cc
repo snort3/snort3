@@ -216,7 +216,7 @@ int main(int argc, char* argv[])
     pcap_t* pcap = nullptr;
     pcap_dumper_t* dumper = nullptr;
 
-    int c, errnum;
+    int c;
     opterr = 0;
 
     /* Use Getopt to parse options */
@@ -299,7 +299,7 @@ int main(int argc, char* argv[])
 
     if (fclose(input_file) != 0)
     {
-        errnum = errno;
+        const int errnum = errno;
         fprintf(stderr, "Error closing input: %s\n", strerror(errnum));
     }
     pcap_dump_close(dumper);

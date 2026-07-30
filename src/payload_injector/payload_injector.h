@@ -81,4 +81,3 @@ InjectionReturnStatus write_7_bit_prefix_int(uint32_t val, uint8_t*& out,
 #endif
 
 #endif
-

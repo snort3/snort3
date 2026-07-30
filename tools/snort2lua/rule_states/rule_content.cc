@@ -39,7 +39,7 @@ public:
 
 private:
     bool sticky_buffer_set;
-    bool parse_options(const std::istringstream&, const std::string&, std::string);
+    bool parse_options(const std::istringstream&, const std::string&, const std::string&);
     void add_sticky_buffer(const std::istringstream&, const std::string& buffer);
     bool extract_payload(std::istringstream& data_stream,
         std::string& option);
@@ -64,7 +64,7 @@ template<const std::string* option_name>
 bool Content<option_name>::parse_options(
     const std::istringstream& data_stream,
     const std::string& keyword,
-    std::string val)
+    const std::string& val)
 {
     if (keyword == "offset")
         rule_api.add_suboption("offset", val);

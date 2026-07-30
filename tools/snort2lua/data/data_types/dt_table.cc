@@ -200,7 +200,7 @@ bool Table::get_option(const std::string& opt_name, std::string& value)
         [&opt_name](const Option* a){ return opt_name == a->get_name(); });
     if (a_it != append_options.cend())
     {
-        value = (*it)->get_value();
+        value = (*a_it)->get_value();
         return true;
     }
 
@@ -341,4 +341,3 @@ std::ostream& operator<<(std::ostream& out, const Table& t)
 
     return out;
 }
-

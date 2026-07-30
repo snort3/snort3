@@ -428,8 +428,6 @@ TEST(appid_api_no_session, ssl_app_group_id_lookup)
     AppId service, client, payload = APP_ID_NONE;
     bool val = false;
 
-    AppidChangeBits change_bits;
-    
     flow_no_session->free_flow_data(1);
     val = appid_api.ssl_app_group_id_lookup(flow_no_session, (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST,
         (const char*)APPID_UT_TLS_HOST, (const char*)APPID_UT_TLS_HOST, false, service, client, payload);

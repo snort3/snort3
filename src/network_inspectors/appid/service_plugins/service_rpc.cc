@@ -363,7 +363,6 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size,
     const ServiceRPCPortmap* pm = nullptr;
     const ServiceRPCAuth* a = nullptr;
     uint32_t tmp = 0;
-    uint32_t val = 0;
     const uint8_t* end = nullptr;
     const RPCProgram* rprog = nullptr;
 
@@ -483,7 +482,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size,
             return APPID_NOMATCH;
         data += sizeof(ServiceRPCReply) + tmp;
         tmp = ntohl(reply->reply_state);
-        val = ntohl(reply->state);
+        const uint32_t val = ntohl(reply->state);
         if (tmp == RPC_REPLY_ACCEPTED)
         {
             if (val > RPC_MAX_ACCEPTED)

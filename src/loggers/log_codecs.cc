@@ -119,10 +119,8 @@ public:
 } // namespace
 
 CodecLogger::CodecLogger(LogCodecModule* m)
-{
-    file = m->print_to_file ? F_NAME : "stdout";
-    flags = m->flags;
-}
+    : file(m->print_to_file ? F_NAME : "stdout"), flags(m->flags)
+{ }
 
 void CodecLogger::open()
 {

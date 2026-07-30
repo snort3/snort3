@@ -310,9 +310,16 @@ static bool rotate_file(const char* old_file, FILE* old_fd,
         return false;
     }
 
-    // Mostly file mode is "a", so can't use rewind() or fseek(). Had to close and reopen.
+    // Mostly file mode is "a", so can't use rewind() or fseek(). Open a read handle before
+    // closing the active handle so the caller retains a usable stream if reopening fails.
+    FILE* read_fd = fopen(old_file, "r");
+    if (!read_fd)
+    {
+        ErrorMessage("Profiler: Unable to reopen Memtracker stats file \"%s\".\n", old_file);
+        return false;
+    }
     fclose(old_fd);
-    old_fd = fopen(old_file, "r");
+    old_fd = read_fd;
 
     // Fetching the first timestamp from the file and renaming it by appending the time
     int line = 0;

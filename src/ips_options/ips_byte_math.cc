@@ -660,8 +660,6 @@ TEST_CASE("ByteMathOption::operator== invalid", "[ips_byte_math]")
 
     SECTION("all fields is different")
     {
-        delete[] rhs_name;
-        rhs_name = new char[5];
         strcpy(rhs_name, "unix");
         ByteMathData data_rhs;
         INITIALIZE(data_rhs, 2, 25, 2, 255, rhs_name, BM_MULTIPLY, 1,
@@ -703,8 +701,6 @@ TEST_CASE("ByteMathOption::operator== invalid", "[ips_byte_math]")
     }
     SECTION("result_name is different")
     {
-        delete[] rhs_name;
-        rhs_name = new char[5];
         strcpy(rhs_name, "unix");
         ByteMathData data_rhs;
         INITIALIZE(data_rhs, 0, 25, 0, 255, rhs_name, BM_PLUS, 0, 0, 0, ENDIAN_BIG,
@@ -1586,8 +1582,6 @@ TEST_CASE("ByteMathVerify invalid", "[ips_byte_math]")
     }
     SECTION("name not numeric check")
     {
-        delete[] name;
-        name = new char[5];
         strcpy(name, "6in4");
         obj.result_name = name;
         CHECK(false == ByteMathVerify(&obj));

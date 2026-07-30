@@ -199,6 +199,7 @@ void log(ExtractorLogger* logger, const T& fields, const QuicExtractorFlowData* 
 
 void QuicExtractor::dump(const QuicExtractorFlowData& fd)
 {
+    // cppcheck-suppress unreadVariable ; RAII lifetime records profiling data
     Profile profile(extractor_perf_stats);
 
     if (!logger)
@@ -216,6 +217,7 @@ void QuicExtractor::dump(const QuicExtractorFlowData& fd)
 
 void QuicExtractor::ClientHello::handle(DataEvent& event, Flow* flow)
 {
+    // cppcheck-suppress unreadVariable ; RAII lifetime records profiling data
     Profile profile(extractor_perf_stats);
 
     if (!owner.filter(flow))
@@ -258,6 +260,7 @@ void QuicExtractor::ClientHello::handle(DataEvent& event, Flow* flow)
 
 void QuicExtractor::HandshakeComplete::handle(DataEvent& event, Flow* flow)
 {
+    // cppcheck-suppress unreadVariable ; RAII lifetime records profiling data
     Profile profile(extractor_perf_stats);
 
     if (!owner.filter(flow))

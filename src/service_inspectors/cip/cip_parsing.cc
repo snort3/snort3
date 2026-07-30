@@ -1272,9 +1272,9 @@ static bool parse_forward_open_request(const uint8_t* data,
     {
         uint16_t actual_multiplier = 1 << (connection_timeout_multiplier + MULTIPLIER_DEFAULT);
         forward_open_request->ot_connection_timeout_us
-            = forward_open_request->ot_parameters.rpi * actual_multiplier;
+            = static_cast<uint64_t>(forward_open_request->ot_parameters.rpi) * actual_multiplier;
         forward_open_request->to_connection_timeout_us
-            = forward_open_request->to_parameters.rpi * actual_multiplier;
+            = static_cast<uint64_t>(forward_open_request->to_parameters.rpi) * actual_multiplier;
     }
     else
     {
@@ -1497,7 +1497,7 @@ static bool parse_multiple_service_packet(const uint8_t* data,
     {
         size_t msp_length;
         CipRequest embedded_request;
-        CipEventData cip_event_data;
+        CipEventData cip_event_data{};
         CipEvent cip_event(global_data->snort_packet, &cip_event_data);
 
         /* This if the offset from the Number of Services field, to the Offset field. */
@@ -1551,8 +1551,6 @@ static bool parse_multiple_service_packet(const uint8_t* data,
         cip_request->cip_req_invalid_nonfatal |= embedded_request.cip_req_invalid_nonfatal;
 
         // Publish embedded CIP data to appid.
-        memset(&cip_event_data, 0, sizeof(cip_event_data));
-
         pack_cip_request_event(&embedded_request, &cip_event_data);
 
         DataBus::publish(CipEventData::pub_id, CipEventIds::DATA, cip_event, global_data->snort_packet->flow);
@@ -2131,4 +2129,3 @@ void pack_cip_request_event(const CipRequest* request, CipEventData* cip_event_d
         cip_event_data->type = CIP_DATA_TYPE_OTHER;
     }
 }
-

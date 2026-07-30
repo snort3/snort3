@@ -916,7 +916,6 @@ static void DCE2_Smb2ReadResponse(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     DCE2_Smb2TreeTracker* ttr, uint64_t message_id)
 {
     const uint8_t* file_data =  reinterpret_cast<const uint8_t*>(smb_read_hdr) + SMB2_READ_RESPONSE_STRUC_SIZE - 1;
-    int data_size = end - file_data;
     uint16_t data_offset;
     DCE2_Smb2RequestTracker* request = str->findRtracker(ssd->flow_key, message_id);
 
@@ -940,6 +939,7 @@ static void DCE2_Smb2ReadResponse(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     DCE2_Smb2FileTracker* ftracker =  ttr->findFtracker(request->get_file_id());
     if ( ftracker and !ftracker->ignore )
     {
+        int data_size = end - file_data;
         ftracker->upload = false;
         ssd->ftracker_local = std::unique_ptr<DCE2_Smb2LocalFileTracker>(new DCE2_Smb2LocalFileTracker());
         ssd->ftracker_local->file_offset = request->get_offset();
@@ -1035,7 +1035,6 @@ static void DCE2_Smb2WriteRequest(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
     DCE2_Smb2TreeTracker* ttr, uint64_t mid)
 {
     const uint8_t* file_data =  reinterpret_cast<const uint8_t*>(smb_write_hdr) + SMB2_WRITE_REQUEST_STRUC_SIZE - 1;
-    int data_size = end - file_data;
     uint64_t fileId_persistent, offset;
     uint16_t data_offset;
 
@@ -1090,6 +1089,7 @@ static void DCE2_Smb2WriteRequest(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
 
     if (!ftracker->ignore) // file tracker can not be nullptr here
     {
+        int data_size = end - file_data;
         if (ftracker->file_size and (offset > ftracker->file_size))
         {
             dce_alert(GID_DCE2, DCE2_SMB_INVALID_FILE_OFFSET, reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats),

@@ -262,6 +262,7 @@ static void write_goaway_frame(uint8_t*& out, uint32_t stream_id)
     out += goaway_frame_len;
 }
 
+// cppcheck-suppress passedByValue
 InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl control,
     uint8_t*& http2_payload, uint32_t& payload_len, bool send_settings)
 {
@@ -310,4 +311,3 @@ InjectionReturnStatus PayloadInjector::get_http2_payload(InjectionControl contro
     assert((http2_payload_cur - http2_payload) == payload_len);
     return INJECTION_SUCCESS;
 }
-

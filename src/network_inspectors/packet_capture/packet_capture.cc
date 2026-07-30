@@ -460,6 +460,7 @@ protected:
     {
         if (bpf_compile_and_validate_test())
         {
+            // cppcheck-suppress intToPointerCast ; non-null sentinel is never dereferenced by the mock
             dumper = (pcap_dumper_t*)1;
             return true;
         }

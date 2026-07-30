@@ -175,9 +175,8 @@ IpsOption::EvalStatus LuaJitOption::eval(Cursor& c, Packet*)
 
     cursor = &c;
 
-    lua_State* L = states[get_instance_id()];
-
     {
+        lua_State* L = states[get_instance_id()];
         Lua::ManageStack ms(L, 1);
 
         lua_getglobal(L, opt_eval);
@@ -254,4 +253,3 @@ const IpsApi ips_lua_api =
 };
 
 const IpsApi* ips_luajit = &ips_lua_api;
-

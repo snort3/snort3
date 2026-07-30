@@ -72,15 +72,15 @@ StreamSplitter::Status TelnetSplitter::scan(
                 const uint8_t* ptr = nullptr;      // last CR or LF found
                 const uint8_t* iac_ptr = nullptr;  // first IAC found
 
-                for ( const uint8_t* scan = read_ptr; scan < end; ++scan )
+                for ( const uint8_t* cursor = read_ptr; cursor < end; ++cursor )
                 {
-                    uint8_t c = *scan;
+                    uint8_t c = *cursor;
                     if ( c == '\r' || c == '\n' )
-                        ptr = scan;
+                        ptr = cursor;
 
                     else if ( c == TNC_IAC )
                     {
-                        iac_ptr = scan;
+                        iac_ptr = cursor;
                         break;
                     }
                 }
