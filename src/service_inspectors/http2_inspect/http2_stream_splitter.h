@@ -64,6 +64,10 @@ private:
         uint8_t frame_type, uint32_t stream_id);
     static void update_injection_status(Http2FlowData* session_data, snort::Packet* pkt,
         uint8_t frame_type);
+
+#ifdef UNIT_TEST
+    friend class Http2UnitTestSetup;
+#endif
 };
 
 

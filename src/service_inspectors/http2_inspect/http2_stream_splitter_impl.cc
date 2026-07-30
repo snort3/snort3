@@ -372,7 +372,13 @@ StreamSplitter::Status Http2StreamSplitter::implement_scan(Http2FlowData* sessio
                         session_data->padding_length[source_id];
                 }
                 session_data->scan_remaining_frame_octets[source_id] -= 1;
-                assert(!session_data->frame_lengths[source_id].empty());
+
+                if (session_data->frame_lengths[source_id].empty())
+                {
+                    session_data->abort_flow[source_id] = true;
+                    return StreamSplitter::ABORT;
+                }
+
                 if (session_data->padding_length[source_id] >
                     session_data->frame_lengths[source_id].back() - 1)
                 {
@@ -434,9 +440,8 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
         (offset+len > total) ||
         ((flags & PKT_PDU_TAIL) && (offset+len != total)))
     {
-         assert(false);
-         session_data->abort_flow[source_id] = true;
-         return frame_buf;
+        session_data->abort_flow[source_id] = true;
+        return frame_buf;
     }
     session_data->running_total[source_id] += len;
 
@@ -484,8 +489,12 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
                 session_data->read_frame_header[source_id] = false;
                 session_data->frame_header_offset[source_id] = 0;
 
-                // Just passed a header: parse and update frame variables
-                assert(!session_data->frame_lengths[source_id].empty());
+                if (session_data->frame_lengths[source_id].empty())
+                {
+                    session_data->abort_flow[source_id] = true;
+                    return frame_buf;
+                }
+
                 session_data->remaining_frame_octets[source_id] =
                     session_data->frame_lengths[source_id].front();
                 session_data->frame_lengths[source_id].pop();
@@ -567,11 +576,11 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
         {
             Http2Stream* const stream =
                 session_data->find_stream(session_data->current_stream[source_id]);
-            if (stream)
-            {
+
+            if (stream != nullptr)
                 stream->set_discard(source_id);
-                session_data->data_cutter[source_id].discarded_frame_cleanup(stream);
-            }
+
+            session_data->data_cutter[source_id].discarded_frame_cleanup(stream);
         }
         else
         {

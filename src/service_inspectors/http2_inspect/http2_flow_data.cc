@@ -102,6 +102,7 @@ Http2FlowData::~Http2FlowData()
         delete events[k];
         hi_ss[k]->go_away();
         delete[] frame_data[k];
+        delete[] frame_reassemble[k];
     }
 
     flow->stream_intf = nullptr;

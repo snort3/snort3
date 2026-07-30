@@ -1,3 +1,12 @@
+add_cpputest ( http2_flow_desync_test
+  SOURCES
+        ../http2_data_cutter.cc
+        ../http2_flow_data.cc
+        ../http2_stream.cc
+        ../http2_stream_splitter_impl.cc
+        ../http2_utils.cc
+)
+
 add_cpputest( http2_hpack_int_decode_test )
 
 add_cpputest( http2_hpack_string_decode_test

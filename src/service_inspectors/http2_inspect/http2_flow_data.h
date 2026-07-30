@@ -84,6 +84,9 @@ public:
     friend class Http2Stream;
     friend class Http2StreamSplitter;
     friend class Http2WindowUpdateFrame;
+#ifdef UNIT_TEST
+    friend class Http2UnitTestSetup;
+#endif
     friend void finish_msg_body(Http2FlowData* session_data, HttpCommon::SourceId source_id);
 
     Http2Stream* find_current_stream(const HttpCommon::SourceId source_id);

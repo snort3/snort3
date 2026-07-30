@@ -67,6 +67,10 @@ private:
     // reassemble
     enum ReassembleState { GET_FRAME_HDR, GET_PADDING_LEN, SEND_EMPTY_DATA, SEND_DATA };
     enum ReassembleState reassemble_state = GET_FRAME_HDR;
+
+#ifdef UNIT_TEST
+    friend class Http2UnitTestSetup;
+#endif
 };
 
 #endif
