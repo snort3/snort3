@@ -140,10 +140,12 @@ bool scan_patterns(SearchTool& matcher, const uint8_t* data, size_t size,
     MatchedHostPatterns* mp = nullptr;
     HostPattern* best_match = nullptr;
 
+    // cppcheck-suppress-begin knownConditionTrueFalse ; template specialization makes selector conditions constant
     matcher.find_all((const char*)data, size, 
         T == HostPatternType::HOST_PATTERN_TYPE_CNAME ? cname_pattern_match :
         T == HostPatternType::HOST_PATTERN_TYPE_URL ? url_pattern_match :
         cert_pattern_match, false, &mp);
+    // cppcheck-suppress-end knownConditionTrueFalse
 
     if ( !mp )
         return false;
@@ -153,8 +155,10 @@ bool scan_patterns(SearchTool& matcher, const uint8_t* data, size_t size,
     while ( tmp )
     {
         auto match = tmp->mpattern;
+        // cppcheck-suppress knownConditionTrueFalse ; specialization selects URL validation at compile time
         if ( !match->is_literal or ( T == HostPatternType::HOST_PATTERN_TYPE_URL ? host_pattern_validate_url_match(tmp, data) : host_pattern_validate_match(tmp, data, size) ))
         {
+            // cppcheck-suppress knownConditionTrueFalse ; specialization excludes URL perfect-match handling
             if ( T != HostPatternType::HOST_PATTERN_TYPE_URL)
             {
                 if ( is_perfect_literal_match(tmp, size, T) )
@@ -182,6 +186,7 @@ bool scan_patterns(SearchTool& matcher, const uint8_t* data, size_t size,
     if ( !best_match )
         return false;
 
+    // cppcheck-suppress knownConditionTrueFalse ; specialization selects URL result fields at compile time
     if ( T == HostPatternType::HOST_PATTERN_TYPE_URL )
     {
         client_id = best_match->client_id;

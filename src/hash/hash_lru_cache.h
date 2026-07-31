@@ -63,6 +63,7 @@ public:
         return hnode;
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     snort::HashNode* get_walk_node()
     {
         if ( tail )
@@ -70,6 +71,7 @@ public:
         return tail;
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     snort::HashNode* get_next_walk_node()
     {
         snort::HashNode* rnode = walk_cursor;

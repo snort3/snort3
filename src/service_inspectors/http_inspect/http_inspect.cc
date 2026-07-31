@@ -325,6 +325,7 @@ const Field& HttpInspect::http_get_param_buf(Cursor& c, const Packet* p,
     return current_section->get_param_buffer(c, param);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 int32_t HttpInspect::http_get_num_headers(const Packet* p,
     const HttpBufferInfo& buffer_info) const
 {
@@ -336,6 +337,7 @@ int32_t HttpInspect::http_get_num_headers(const Packet* p,
     return current_section->get_num_headers(buffer_info);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 int32_t HttpInspect::http_get_max_header_line(const Packet* p,
     const HttpBufferInfo& buffer_info) const
 {
@@ -347,6 +349,7 @@ int32_t HttpInspect::http_get_max_header_line(const Packet* p,
     return current_section->get_max_header_line(buffer_info);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 int32_t HttpInspect::http_get_num_cookies(const Packet* p,
     const HttpBufferInfo& buffer_info) const
 {

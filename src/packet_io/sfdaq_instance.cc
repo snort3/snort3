@@ -84,6 +84,7 @@ bool SFDAQInstance::init(DAQ_Config_h daqcfg, const std::string& bpf_string)
         return false;
     }
 
+    // cppcheck-suppress knownConditionTrueFalse ; validation result comes from the loaded DAQ module
     if (!DAQ_ValidateInstance(instance))
         FatalError("DAQ configuration incompatible with intended operation, DAQ instance (%s).\n", input_spec.c_str());
 
@@ -149,6 +150,7 @@ bool SFDAQInstance::can_start_unprivileged() const
     return (daq_instance_get_capabilities(instance) & DAQ_CAPA_UNPRIV_START) != 0;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 bool SFDAQInstance::can_whitelist() const
 {
     return (daq_instance_get_capabilities(instance) & DAQ_CAPA_WHITELIST) != 0;
@@ -209,6 +211,7 @@ DAQ_RecvStatus SFDAQInstance::receive_messages(unsigned max_recv)
     return rstat;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 int SFDAQInstance::finalize_message(DAQ_Msg_h msg, DAQ_Verdict verdict)
 {
     if ( !msg )

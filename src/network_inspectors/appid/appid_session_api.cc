@@ -276,6 +276,7 @@ bool AppIdSessionApi::is_appid_inspecting_session() const
         return false;
 
     if ( asd->service_disco_state != APPID_DISCO_STATE_FINISHED or
+        // cppcheck-suppress knownConditionTrueFalse ; completion state depends on third-party processing
         !asd->is_tp_appid_done() or
         asd->get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_CONTINUE) or
         (asd->get_session_flags(APPID_SESSION_ENCRYPTED) and

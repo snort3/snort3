@@ -31,11 +31,13 @@ public:
     AppIdDebugLogEvent(const AppIdDebugSessionConstraints* constraints, const char* dbg_str) :
         cs(constraints), debug_str(dbg_str) { }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     const AppIdDebugSessionConstraints* get_appid_debug_constraints() const
     {
         return cs;
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     const std::string& get_debug_string() const
     {
         return debug_str;

@@ -934,6 +934,7 @@ void* DCE2_QueueNext(DCE2_Queue* queue)
  * Returns: None
  *
  ********************************************************************/
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void DCE2_QueueRemoveCurrent(DCE2_Queue* queue)
 {
     if (queue == nullptr)

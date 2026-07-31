@@ -376,12 +376,15 @@ TEST(mp_data_bus, register_event_helpers)
 {
     MPSerializeFunc serialize_func = serialize_mock;
     MPDeserializeFunc deserialize_func = deserialize_mock;
+    // cppcheck-suppress knownConditionTrueFalse ; test intentionally verifies the mock call count
     CHECK(0 == MockMPTransport::get_test_register_helpers_calls());
 
     MPDataBus::register_event_helpers(pub_key1, DbUtIds::EVENT1, serialize_func, deserialize_func);
+    // cppcheck-suppress knownConditionTrueFalse ; test intentionally verifies the mock call count
     CHECK(1 == MockMPTransport::get_test_register_helpers_calls());
 
     MPDataBus::register_event_helpers(pub_key1, DbUtIds::EVENT1, serialize_func, deserialize_func);
+    // cppcheck-suppress knownConditionTrueFalse ; test intentionally verifies the mock call count
     CHECK(2 == MockMPTransport::get_test_register_helpers_calls());
 }
 

@@ -402,6 +402,7 @@ static int fpFinishRuleGroupRule(
 
     if (get_final_pat)
     {
+        // cppcheck-suppress knownConditionTrueFalse ; final pattern selection depends on rule contents
         if (fpGetFinalPattern(fp, pmd, pattern, pattern_length) == -1)
             return -1;
     }

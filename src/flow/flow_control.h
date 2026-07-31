@@ -88,9 +88,11 @@ public:
     FlowCache* get_flow_cache()
     { return cache; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     class ExpectCache* get_exp_cache()
     { return exp_cache; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     PegCount get_flows()
     { return num_flows; }
 

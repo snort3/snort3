@@ -132,6 +132,7 @@ void SFRF_Delete()
     rf_hash = nullptr;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void SFRF_Flush()
 {
     std::lock_guard<std::mutex> lock(sfrf_hash_mutex);
@@ -435,6 +436,7 @@ int SFRF_TestThreshold(RateFilterConfig* config, unsigned gid, unsigned sid, Pol
     return status;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void SFRF_ShowObjects(RateFilterConfig* config)
 {
     const tSFRFSidNode* pSidnode;

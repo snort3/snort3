@@ -463,9 +463,12 @@ return_codes RtTable::sfrt_dir_flat_insert(const uint32_t* addr, int /* numAddrD
     iplu.bits = 0;
 
     base = static_cast<uint8_t*>(segment_basePtr());
+    if (!base)
+        return DIR_INSERT_FAILURE;
+
     root = reinterpret_cast<dir_table_flat_t*>(&base[table_ptr]);
     /* Validate arguments */
-    if (!root || !root->sub_table)
+    if (!root->sub_table)
     {
         return DIR_INSERT_FAILURE;
     }
@@ -475,25 +478,25 @@ return_codes RtTable::sfrt_dir_flat_insert(const uint32_t* addr, int /* numAddrD
     {
         h_addr[1] = ntohl(addr[1]);
         h_addr[2] = ntohl(addr[2]);
-        h_addr[3] = ntohl(addr[3]); // cppcheck-suppress unreadVariable
+        h_addr[3] = ntohl(addr[3]);
     }
     else if (len > 64)
     {
         h_addr[1] = ntohl(addr[1]);
         h_addr[2] = ntohl(addr[2]);
-        h_addr[3] = 0;  // cppcheck-suppress unreadVariable
+        h_addr[3] = 0;
     }
     else if (len > 32)
     {
         h_addr[1] = ntohl(addr[1]);
         h_addr[2] = 0;
-        h_addr[3] = 0;  // cppcheck-suppress unreadVariable
+        h_addr[3] = 0;
     }
     else
     {
         h_addr[1] = 0;
         h_addr[2] = 0;
-        h_addr[3] = 0;  // cppcheck-suppress unreadVariable
+        h_addr[3] = 0;
     }
 
     /* Find the sub table in which to insert */

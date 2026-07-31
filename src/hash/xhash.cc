@@ -604,7 +604,7 @@ bool XHash::delete_a_node()
 
 int XHash::tune_memory_resources(unsigned work_limit, unsigned& num_freed)
 {
-    while ( work_limit-- and mem_allocator->is_over_capacity() )
+    while ( work_limit-- && mem_allocator->is_over_capacity() )
     {
         if ( !delete_a_node() )
             break;

@@ -453,6 +453,7 @@ static void log_stale_packet(snort::Packet *p, snort::Flow *flow, bool drop_pack
 
 static inline bool is_packet_stale(const Flow* flow, const Packet* p)
 {
+    // cppcheck-suppress syntaxError ; timercmp's comparison operator is a macro argument
     return timercmp(&flow->prev_packet_time, &p->pkth->ts, >);
 }
 

@@ -56,6 +56,7 @@ public:
     void tinit(ExtractorLogger* logger);
     void tterm();
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint32_t get_tenant() const { return tenant_id; }
     const std::vector<std::string>& get_events() const { return events; }
     const std::vector<std::string>& get_fields() const { return fields; }

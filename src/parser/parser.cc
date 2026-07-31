@@ -294,6 +294,7 @@ static bool parse_file(SnortConfig* sc, Shell* sh, bool is_root, std::list<Confi
 {
     const char* fname = sh->get_file();
 
+    // cppcheck-suppress knownConditionTrueFalse ; caller may omit the optional shell filename
     if ( !fname || !*fname )
         return false;
 
@@ -597,6 +598,7 @@ static void ShowPolicyStats(const SnortConfig* sc)
             continue;
 
         auto file = shell->get_file();
+        // cppcheck-suppress knownConditionTrueFalse ; caller may omit the optional shell filename
         if ( !file or !file[0] )
             continue;
 

@@ -68,6 +68,7 @@ static inline bool trace_enabled(const snort::Trace* trace,
         return true;
 
     const auto gid = snort::TraceApi::get_constraints_generation();
+    // cppcheck-suppress knownConditionTrueFalse ; checked state depends on the active trace filter
     if ( !p->filtering_state.was_checked(gid) )
         snort::TraceApi::filter(*p);
 
@@ -247,4 +248,3 @@ static inline void trace_print(const snort::Trace* trace, const snort::Packet* p
 #endif
 
 #endif
-

@@ -806,15 +806,11 @@ int sfthd_test_threshold(
 
 #ifdef THD_DEBUG
 
-static char* printIP(unsigned u, char* buf, unsigned len)
-{
-    SnortSnprintf(buf, len, "%d.%d.%d.%d", (u>>24)&0xff, (u>>16)&0xff, (u>>8)&0xff, u&0xff);
-    return s;
-}
 /*!
  *   A function to print the thresholding objects to stdout.
  *
  */
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 int sfthd_show_objects(ThresholdObjects* thd_objs)
 {
     const THD_ITEM* sfthd_item;

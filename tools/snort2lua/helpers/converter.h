@@ -49,6 +49,7 @@ public:
     inline static void create_mult_rule_files(bool var)
     { convert_rules_mult_files = var; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     inline static bool include_create_rule()
     { return convert_rules_mult_files; }
 
@@ -56,6 +57,7 @@ public:
     inline static void create_mult_conf_files(bool var)
     { convert_conf_mult_files = var; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     inline static bool include_create_lua()
     { return convert_conf_mult_files; }
 
@@ -71,6 +73,7 @@ public:
     inline static void set_bind_wizard(bool val)
     { bind_wizard = val; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     inline static bool get_bind_wizard()
     { return bind_wizard; }
 

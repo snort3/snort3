@@ -41,6 +41,7 @@ inline void l_reset_lua_state(lua_State*& L_ptr)
 }
 
 template<typename T, size_t N>
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline constexpr size_t sizeofArray(T (&)[N])
 { return N; }
 

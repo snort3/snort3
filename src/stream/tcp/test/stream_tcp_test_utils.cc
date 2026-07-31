@@ -89,6 +89,7 @@ Packet* get_syn_packet(Flow* flow)
     return pkt;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 Packet* get_syn_ack_packet(Flow* flow)
 {
     Packet* pkt = init_packet(flow, PKT_FROM_SERVER);

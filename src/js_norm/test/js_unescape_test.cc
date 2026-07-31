@@ -640,6 +640,7 @@ TEST_CASE("decodeURIComponent()", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("String.fromCharCode()", "[JSNormalizer]")
 {
     SECTION("binary")
@@ -1268,6 +1269,7 @@ TEST_CASE("Split", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("Mixed input", "[JSNormalizer]")
 {
     SECTION("string")
@@ -1375,6 +1377,7 @@ TEST_CASE("Mixed input", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("Internal limits", "[JSNormalizer]")
 {
     SECTION("output tail size")
@@ -1410,6 +1413,7 @@ TEST_CASE("Internal limits", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("Function type detection", "[JSNormalizer]")
 {
     SECTION("in arrow function")

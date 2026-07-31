@@ -110,6 +110,7 @@ public:
     void reload_daq();
     void reinit(const snort::SnortConfig*);
     void rotate();
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     snort::SFDAQInstance* get_daq_instance() { return daq_instance; }
     void reap_commands();
 

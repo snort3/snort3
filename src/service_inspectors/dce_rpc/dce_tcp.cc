@@ -84,6 +84,7 @@ static DCE2_TcpSsnData* dce2_create_new_tcp_session(Packet* p, dce2TcpProtoConf*
 {
     DCE2_TcpSsnData* dce2_tcp_sess = set_new_dce2_tcp_session(p);
 
+    // cppcheck-suppress knownConditionTrueFalse ; flow data may be absent before session setup
     if ( dce2_tcp_sess )
     {
         DCE2_CoInitTracker(&dce2_tcp_sess->co_tracker);

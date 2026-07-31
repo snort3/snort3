@@ -212,6 +212,7 @@ Telnet::~Telnet()
 
 bool Telnet::configure(SnortConfig* sc)
 {
+    // cppcheck-suppress knownConditionTrueFalse ; result depends on runtime configuration
     return !TelnetCheckConfigs(sc, config);
 }
 

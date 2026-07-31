@@ -852,6 +852,7 @@ static int validate_param(Packet* p,
                     session->datassn = nullptr;
                 }
             }
+            // cppcheck-suppress knownConditionTrueFalse ; data-channel policy is runtime configuration
             else if (session->server_conf->data_chan)
             {
                  /* Call into Streams to mark data channel as something
@@ -1244,6 +1245,7 @@ static int do_stateful_checks(FTP_SESSION* session, Packet* p,
                                     }
                                 }
                             }
+                            // cppcheck-suppress knownConditionTrueFalse ; data-channel policy is runtime configuration
                             else if (session->server_conf->data_chan)
                             {
                                 /* Call into Streams to mark data channel as something

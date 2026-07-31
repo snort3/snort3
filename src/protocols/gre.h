@@ -39,6 +39,7 @@ struct GREHdr
     inline ProtocolId proto() const
     { return (ProtocolId)ntohs(ether_type); }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     inline uint16_t raw_proto() const
     { return ether_type; }
 };

@@ -772,7 +772,6 @@ TEST_CASE("ByteMathOption::operator== invalid", "[ips_byte_math]")
         ByteMathOption rhs(data_rhs);
         CHECK(lhs != rhs);
     }
-    // cppcheck-suppress memleak
 }
 
 TEST_CASE("ByteMathOption::hash", "[ips_byte_math]")

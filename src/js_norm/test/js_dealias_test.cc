@@ -531,6 +531,7 @@ TEST_CASE("De-aliasing - basic", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("De-aliasing - split", "[JSNormalizer]")
 {
     SECTION("var keyword")
@@ -776,6 +777,7 @@ TEST_CASE("De-aliasing - split", "[JSNormalizer]")
         });
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("De-aliasing - scopes", "[JSNormalizer]")
 {
     SECTION("lookup through function")

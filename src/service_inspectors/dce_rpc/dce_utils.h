@@ -181,6 +181,7 @@ inline char* DCE2_PruneWhiteSpace(char* str)
 
 // Checks if string is null, empty or just spaces.
 // String must be 0 terminated.
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline bool DCE2_IsEmptyStr(char* str)
 {
     const char* end;
@@ -309,6 +310,7 @@ inline uint64_t DceRpcNtohl64(const uint64_t* ptr, const DceRpcBoFlag bo_flag)
            ((value & 0x0000000000ff0000) << 24) | ((value & 0x00000000ff000000) << 8);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline uint64_t DceRpcHtonl64(const uint64_t* ptr, const DceRpcBoFlag bo_flag)
 {
     return DceRpcNtohl64(ptr, bo_flag);
@@ -340,6 +342,7 @@ inline uint32_t DCE2_BufferLength(const DCE2_Buffer* buf)
     return buf->len;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline uint32_t DCE2_BufferSize(const DCE2_Buffer* buf)
 {
     if (buf == nullptr)

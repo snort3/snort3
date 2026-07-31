@@ -148,6 +148,7 @@ void TableApi::open_table(bool one_line)
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void TableApi::open_associative_table(const char* name, const char* key)
 {
     if ( should_delegate(name) )
@@ -445,6 +446,7 @@ bool TableApi::get_option_value(const std::string& name, std::string& value)
     return open_tables.top()->get_option(name, value);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void TableApi::run_when_exists(const char* table_name, PendingFunction action)
 {
     if ( should_delegate(table_name) )

@@ -38,6 +38,7 @@ using namespace jsn;
 static const std::unordered_set<std::string> s_ignored_ids { "console", "v" };
 static const std::unordered_set<std::string> s_ignored_props { "watch", "w" };
 
+// cppcheck-suppress syntaxError ; cppcheck 2.18 misparses the Catch test macro
 TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
 {
     SECTION("same name")
@@ -110,6 +111,7 @@ TEST_CASE("JSIdentifierCtx::substitute()", "[JSIdentifierCtx]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("JSIdentifierCtx::is_ignored()", "[JSIdentifierCtx]")
 {
     SECTION("single char identifier")

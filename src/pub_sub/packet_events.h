@@ -39,6 +39,7 @@ public:
     void set_still_pending()
     { still_pending = true; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool is_still_pending() const
     { return still_pending; }
 

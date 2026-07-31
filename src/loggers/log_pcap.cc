@@ -180,7 +180,7 @@ static void TcpdumpInitLogFile(LtdConfig*, bool no_timestamp)
     if ( !pcap )
         FatalError("%s: can't get pcap context\n", S_NAME);
 
-    context.dumpd = pcap ? pcap_dump_open(pcap, file.c_str()) : nullptr;
+    context.dumpd = pcap_dump_open(pcap, file.c_str());
 
     if (context.dumpd == nullptr)
     {

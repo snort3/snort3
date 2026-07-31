@@ -524,11 +524,8 @@ static void PortTableCompileMergePortObjects(PortTable* p)
             parray[ i ] = po->port_list->test(i);
 
         /* Release bit buffer for each port object */
-        if ( po->port_list )
-        {
-            delete po->port_list;
-            po->port_list = nullptr;
-        }
+        delete po->port_list;
+        po->port_list = nullptr;
 
         /* Build a PortObjectItem list from the char array */
         SF_LIST* plist = PortObjectItemListFromBits(parray, SFPO_MAX_PORTS);
@@ -777,6 +774,7 @@ int PortTablePrintCompiledEx(PortTable* p, rim_print_f print_index_map)
     return 0;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void PortTablePrintInput(PortTable* p)
 {
     LogMessage("*** %d PortObjects in Table\n", p->pt_polist->count);
@@ -795,6 +793,7 @@ void PortTablePrintInput(PortTable* p)
    as specified by the user
 */
 // cppcheck-suppress constParameterPointer ; preserve the public declaration and ABI
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void PortTablePrintUserRules(PortTable* p)
 {
     /* normalized user PortObjects and rule ids */
@@ -813,6 +812,7 @@ void PortTablePrintUserRules(PortTable* p)
 /*
     Prints the Unique Port Groups and rules that reference them
 */
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void PortTablePrintRuleGroups(PortTable* p)
 {
     /* normalized user PortObjects and rule ids */

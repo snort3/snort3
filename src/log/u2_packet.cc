@@ -78,6 +78,7 @@ uint8_t* U2PseudoHeader::get_data()
 uint16_t U2PseudoHeader::get_size()
 { return size; }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 uint16_t U2PseudoHeader::get_dsize()
 { return dsize; }
 

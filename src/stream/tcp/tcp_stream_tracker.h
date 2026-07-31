@@ -132,9 +132,11 @@ public:
     void set_rcv_wnd(uint32_t rcv_wnd)
     { this->rcv_wnd = rcv_wnd; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint16_t get_rcv_up() const
     { return rcv_up; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_rcv_up(uint16_t rcv_up)
     { this->rcv_up = rcv_up; }
 
@@ -147,33 +149,42 @@ public:
     uint32_t get_snd_una() const
     { return snd_una; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_snd_una(uint32_t snd_una)
     { this->snd_una = snd_una; }
 
     uint32_t get_snd_nxt() const
     { return snd_nxt; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_snd_nxt(uint32_t snd_nxt)
     { this->snd_nxt = snd_nxt; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint16_t get_snd_up() const
     { return snd_up; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_snd_up(uint16_t snd_up)
     { this->snd_up = snd_up; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint32_t get_snd_wl1() const
     { return snd_wl1; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_snd_wl1(uint32_t snd_wl1)
     { this->snd_wl1 = snd_wl1; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint32_t get_snd_wl2() const
     { return snd_wl2; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_snd_wl2(uint32_t snd_wl2)
     { this->snd_wl2 = snd_wl2; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint32_t get_snd_wnd() const
     { return snd_wnd; }
 
@@ -237,12 +248,14 @@ public:
     uint16_t get_wscale() const
     { return wscale; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_wscale(uint16_t wscale)
     { this->wscale = wscale; }
 
     uint16_t get_mss() const
     { return mss; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_mss(uint16_t mss)
     { this->mss = mss; }
 

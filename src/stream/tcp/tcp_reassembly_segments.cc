@@ -63,6 +63,7 @@ void TcpReassemblySegments::reset()
     seglist_base_seq = 0;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void TcpReassemblySegments::purge_segment_list()
 {
     purge();
@@ -453,6 +454,7 @@ void TcpReassemblySegments::flush_before_purge(Packet* p)
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 bool TcpReassemblySegments::skip_holes(Packet* p)
 {
     assert( head );

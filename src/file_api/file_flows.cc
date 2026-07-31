@@ -561,6 +561,7 @@ bool FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size, uint64_t
     return true;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void FileFlows::add_pending_file(uint64_t file_id)
 {
     current_file_id = pending_file_id = file_id;

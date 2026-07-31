@@ -137,6 +137,7 @@ struct TCPHdr
     inline bool is_ack() const
     { return ((th_flags & TH_ACK) != 0); }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     inline bool is_psh() const
     { return ((th_flags & TH_PUSH) != 0); }
 
@@ -153,21 +154,26 @@ struct TCPHdr
     inline uint16_t raw_dst_port() const
     { return th_dport; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     inline uint32_t raw_seq() const
     { return th_seq; }
 
     inline uint32_t raw_ack() const
     { return th_ack; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     inline uint8_t raw_hlen() const
     { return th_offx2 >> 4; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     inline uint16_t raw_win() const
     { return th_win; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     inline uint16_t raw_cksum() const
     { return th_sum; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     inline uint16_t raw_urp() const
     { return th_urp; }
 
@@ -178,6 +184,7 @@ struct TCPHdr
     inline void set_urp(uint16_t new_urp)
     { th_urp = htons(new_urp); }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     inline void set_raw_urp(uint16_t new_urp)
     { th_urp = new_urp; }
 

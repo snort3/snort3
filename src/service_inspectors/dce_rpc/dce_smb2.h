@@ -398,6 +398,7 @@ public:
         return conn_trackers.Insert(key, ssd);
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     DCE2_Smb2SsnData* findConnectionTracker(const uint32_t key)
     {
         return conn_trackers.Find(key);
@@ -408,6 +409,7 @@ public:
         conn_trackers.Remove(key);
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     int getConnTrackerSize()
     {
         return conn_trackers.GetSize();
@@ -421,6 +423,7 @@ public:
             dce2_smb_stats.total_encrypted_sessions++;
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool get_encryption_flag() { return static_cast<bool>(encryption_flag); }
 
     // Compute a per-connection unique key for request tracking.

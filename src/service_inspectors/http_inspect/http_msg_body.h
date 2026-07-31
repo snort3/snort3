@@ -51,6 +51,7 @@ public:
     const Field& get_detect_data() { return detect_data; }
     const Field& get_msg_text_new() const { return msg_text_new; }
     static void fd_event_callback(void* context, int event);
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool is_first() { return first_body; }
     void publish(unsigned pub_id) override;
     int32_t get_publish_length() const;

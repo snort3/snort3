@@ -538,6 +538,7 @@ void ControlMgmt::reconfigure_controls()
 
 int ControlMgmt::socket_init(const SnortConfig* sc)
 {
+    // cppcheck-suppress knownConditionTrueFalse ; control initialization can fail at runtime
     if (!init_controls())
         FatalError("Failed to initialize controls.\n");
 

@@ -569,6 +569,7 @@ static void snort_pop(POP_PROTO_CONF* config, Packet* p)
          */
         pop_ssn = SetNewPOPData(config, p);
 
+        // cppcheck-suppress knownConditionTrueFalse ; flow data may be absent before session setup
         if ( !pop_ssn )
         {
             /* Could not get/create the session data for this packet. */

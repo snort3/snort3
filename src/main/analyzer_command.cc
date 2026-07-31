@@ -84,6 +84,7 @@ static void tuner_update(ReloadResourceTuner* tuner)
 {
     timeval now;
     packet_gettimeofday(&now);
+    // cppcheck-suppress syntaxError ; timercmp's comparison operator is a macro argument
     if (timercmp(&now, &report_time, >))
     {
         timeradd(&now, &report_period, &report_time);

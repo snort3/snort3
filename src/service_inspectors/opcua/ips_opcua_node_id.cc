@@ -167,6 +167,7 @@ bool OpcuaNodeIdModule::set(const char*, Value& v, SnortConfig*)
 {
     assert(v.is("~"));
     unsigned long n;
+    // cppcheck-suppress knownConditionTrueFalse ; conversion depends on the rule option text
     if (v.strtoul(n))
     {
         node_id = static_cast<OpcuaMsgServiceType>(n);

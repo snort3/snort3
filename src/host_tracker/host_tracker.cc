@@ -378,6 +378,7 @@ bool HostTracker::add_service(Port port, IpProtocol proto, AppId appid, bool inf
     return true;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void HostTracker::clear_service(HostApplication& ha)
 {
     lock_guard<mutex> lck(host_tracker_lock);
@@ -629,12 +630,14 @@ void HostTracker::update_service(const HostApplication& ha)
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void HostTracker::update_service_port(HostApplication& app, Port port)
 {
     lock_guard<mutex> lck(host_tracker_lock);
     app.port = port;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void HostTracker::update_service_proto(HostApplication& app, IpProtocol proto)
 {
     lock_guard<mutex> lck(host_tracker_lock);
@@ -824,6 +827,7 @@ bool HostTracker::add_deviceinfo_fingerprint(uint32_t fpid)
     return result.second;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 std::string HostTracker::get_deviceinfo_hardware()
 {
     lock_guard<mutex> lck(host_tracker_lock);

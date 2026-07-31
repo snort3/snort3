@@ -132,12 +132,14 @@ std::string stringify_tcp_options(const Packet* const pkt)
 
 } // namespace
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void stream_daq_log_start()
 {
     stream_daq_buf_len = 0;
     stream_daq_buf[0] = '\0';
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void stream_daq_log_end(Packet*)
 {
     if ( stream_daq_buf_len == 0 or !PacketTracer::is_daq_activated() )
@@ -365,6 +367,7 @@ void StreamLog::add_eth_header_info(const Packet& p)
         stream_log(&p, "%s\n", eh->to_string().c_str());
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void StreamLog::add_tunnel_info(const Packet& p)
 {
     if ( !PacketTracer::is_active() and !PacketTracer::is_daq_activated() and !stream_is_cbd_enabled() )

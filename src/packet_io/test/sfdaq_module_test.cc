@@ -103,6 +103,7 @@ TEST_CASE("parse sfdaq config", "[SFDAQModule]")
     CHECK(true == sfdm.end("daq.modules", 0, &sc));
     CHECK(true == sfdm.end("daq", 0, &sc));
 
+    // cppcheck-suppress syntaxError ; cppcheck 2.18 misparses the Catch section macro
     SECTION("validate sfdaq config")
     {
         /* Validate the configuration */

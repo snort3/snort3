@@ -86,6 +86,7 @@ void Swapper::apply(Analyzer&) { }
 Swapper::~Swapper() = default;
 void OopsHandler::tinit() { }
 void OopsHandler::tterm() { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void OopsHandler::set_current_message(DAQ_Msg_h, snort::SFDAQInstance*) { }
 uint16_t get_run_num() { return 0; }
 void set_run_num(uint16_t) { }
@@ -96,13 +97,19 @@ void ContextSwitcher::stop() { }
 ContextSwitcher::~ContextSwitcher() = default;
 snort::IpsContext* ContextSwitcher::get_context() const { return nullptr; }
 void ContextSwitcher::start() { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void InitTag() { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void CleanupTag() { }
 void RateFilter_Cleanup() { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 int sfthreshold_alloc(unsigned int, unsigned int) { return -1; }
 void sfthreshold_reset() { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void sfthreshold_free() { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void EventTrace_Init() { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void EventTrace_Term() { }
 void detection_filter_init(DetectionFilterConfig*) { }
 void detection_filter_term() { }
@@ -115,11 +122,14 @@ void SideChannelManager::thread_init() { }
 void SideChannelManager::thread_term() { }
 void CodecManager::thread_init() { }
 void CodecManager::thread_term() { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void EventManager::open_outputs() { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void EventManager::close_outputs() { }
 void EventManager::reload_outputs() { }
 int SFRF_Alloc(unsigned int) { return -1; }
 void packet_time_update(const struct timeval*) { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void main_poke(unsigned) { }
 void set_default_policy(const snort::SnortConfig*) { }
 bool snort_ignore(snort::Packet*) { return false; }
@@ -152,6 +162,7 @@ Packet::~Packet()  = default;
 IpsPolicy* get_ips_policy() { return nullptr; }
 void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
 void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void DataBus::publish_to_all_network_policies(unsigned int, unsigned int) { }
 void InspectorManager::thread_drain_pending_tterm() { }
 SFDAQInstance::SFDAQInstance(const char*, unsigned, const SFDAQConfig*) { }
@@ -162,8 +173,11 @@ bool SFDAQInstance::stop() { return false; }
 const char* SFDAQInstance::get_error() { return nullptr; }
 bool SFDAQInstance::interrupt() { return false; }
 int SFDAQInstance::inject(DAQ_Msg_h, int, const uint8_t*, uint32_t) { return -1; }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 DAQ_RecvStatus SFDAQInstance::receive_messages(unsigned) { return DAQ_RSTAT_ERROR; }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void SFDAQ::set_local_instance(SFDAQInstance*) { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 const char* SFDAQ::verdict_to_string(DAQ_Verdict) { return nullptr; }
 bool SFDAQ::forwarding_packet(const DAQ_PktHdr_t*) { return false; }
 bool SFDAQ::can_inject() { return false; }
@@ -175,6 +189,7 @@ DetectionEngine::~DetectionEngine() = default;
 void DetectionEngine::onload() { }
 void DetectionEngine::thread_init() { }
 void DetectionEngine::thread_term() { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void DetectionEngine::idle() { }
 void DetectionEngine::reset() { }
 void DetectionEngine::wait_for_context() { }
@@ -187,6 +202,7 @@ const SnortConfig* SnortConfig::get_conf() { return nullptr; }
 void PacketTracer::thread_init() { }
 void PacketTracer::thread_term() { }
 void PacketTracer::dump(Packet*) { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void PacketTracer::daq_dump(Packet*) { }
 void PacketTracer::activate(const Packet&) { }
 void TraceApi::thread_init(const TraceConfig*) { }
@@ -207,6 +223,7 @@ void HighAvailabilityManager::thread_init() { }
 void HighAvailabilityManager::thread_reinit() { }
 void HighAvailabilityManager::process_receive() { }
 void HighAvailabilityManager::thread_term() { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void HighAvailabilityManager::thread_term_beginning() { }
 void HighAvailabilityManager::process_update(Flow*, Packet*) { }
 void InspectorManager::thread_init() { }
@@ -214,7 +231,9 @@ void InspectorManager::thread_term() { }
 void InspectorManager::thread_reinit(const SnortConfig*) { }
 void ModuleManager::accumulate(const SnortConfig*, const char*) { }
 void ModuleManager::accumulate_module(const char*) { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void Stream::handle_timeouts(bool) { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void Stream::purge_flows() { }
 bool Stream::set_packet_action_to_hold(Packet*) { return false; }
 void Stream::init_active_response(const Packet*, Flow*) { }
@@ -225,11 +244,15 @@ NetworkPolicy* get_network_policy() { return nullptr; }
 InspectionPolicy* get_inspection_policy() { return nullptr; }
 Flow::~Flow() = default;
 FlowDataStore::~FlowDataStore() = default;
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 bool Flow::handle_allowlist() { return true; }
 void ThreadConfig::implement_thread_affinity(SThreadType, unsigned) { }
 void ThreadConfig::apply_thread_policy(SThreadType , unsigned ) { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void ThreadConfig::set_instance_tid(int) { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void populate_instance_maps() { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void invalidate_instance_maps() { }
 }
 

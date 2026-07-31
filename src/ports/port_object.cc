@@ -141,6 +141,7 @@ int PortObjectAddPortObject(PortObject* podst, const PortObject* posrc, int* err
         po = (PortObjectItem*)sflist_next(&pos))
     {
         PortObjectItem* poi = PortObjectItemDup(po);
+        // cppcheck-suppress knownConditionTrueFalse ; result depends on the supplied port item
         if ((ret = PortObjectAddItem(podst, poi, errflag)) != 0)
         {
             PortObjectItemFree(poi);

@@ -46,6 +46,7 @@ public:
     static void set_compress_stream(HttpFlowData* flow_data, HttpCommon::SourceId source_id,
         HttpCompressStream* stream)
         { assert(flow_data!=nullptr); flow_data->compress[source_id] = stream; }
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     static void set_partial_buffer(HttpFlowData* flow_data, HttpCommon::SourceId source_id,
         uint8_t* buf, uint32_t length)
     {

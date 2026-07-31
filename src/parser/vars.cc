@@ -186,6 +186,7 @@ static int CheckBrackets(const char* value)
     return 1;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 int VarIsIpList(vartable_t* ip_vartable, const char* value)
 {
     char* copy;

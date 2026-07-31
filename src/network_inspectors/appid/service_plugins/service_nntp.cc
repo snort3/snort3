@@ -277,6 +277,7 @@ int NntpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     ServiceNNTPData* nd = static_cast<ServiceNNTPData*>(data_get(args.asd));
+    // cppcheck-suppress knownConditionTrueFalse ; detector data is created on the first session packet
     if (!nd)
     {
         nd = new ServiceNNTPData();

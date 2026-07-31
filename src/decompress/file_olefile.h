@@ -118,6 +118,7 @@ public:
         color = (color_flag)*buf;
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     color_flag get_color()
     {
         return color;
@@ -128,6 +129,7 @@ public:
         lef_sib_id = (!endian) ? LETOHL_UNALIGNED(buf) : BETOHL_UNALIGNED(buf);
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     int32_t get_lef_sib_id()
     {
         return lef_sib_id;
@@ -138,6 +140,7 @@ public:
         rig_sib_id = (!endian) ? LETOHL_UNALIGNED(buf) : BETOHL_UNALIGNED(buf);
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     int32_t get_rig_sib_id()
     {
         return rig_sib_id;
@@ -148,6 +151,7 @@ public:
         root_node_id = (!endian) ? LETOHL_UNALIGNED(buf) : BETOHL_UNALIGNED(buf);
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     int32_t get_root_node_id()
     {
         return root_node_id;
@@ -158,6 +162,7 @@ public:
         memcpy_id(cls_id, sizeof(cls_id), buf, 16);
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     char* get_cls_id()
     {
         return cls_id;

@@ -264,6 +264,7 @@ void CodecManager::thread_term()
     PacketManager::accumulate(); // statistics
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 uint8_t CodecManager::get_grinder()
 {
     return grinder;

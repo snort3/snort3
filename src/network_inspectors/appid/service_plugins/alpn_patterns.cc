@@ -107,6 +107,7 @@ void AlpnPatternMatchers::finalize_patterns()
         #ifdef REG_TEST
         AppIdInspector* inspector =
             static_cast<AppIdInspector*>(InspectorManager::get_inspector(MOD_NAME, MOD_USAGE));
+        // cppcheck-suppress knownConditionTrueFalse ; inspector and logging flag vary in regression builds
         if (inspector and inspector->get_ctxt().config.log_alpn_service_mappings)
             APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Adding ALPN service App pattern %d %s\n",
                 p->app_id, p->pattern.c_str());

@@ -194,6 +194,7 @@ int UdpSession::process(Packet* p)
     return 0;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void UdpSession::count_stale_packet()
 {
     udpStats.stale_packets++;

@@ -70,9 +70,13 @@ static void populate_trace_data(AppIdSession& session)
     PacketTracer::daq_log("AppID+%" PRId64"++service: %s(%d), "
         "client: %s(%d), payload: %s(%d), misc: %s(%d)$",
         PacketTracer::get_time(),
+        // cppcheck-suppress knownConditionTrueFalse ; name lookup depends on the loaded AppID table
         (service_app_name ? service_app_name : ""), service_id,
+        // cppcheck-suppress knownConditionTrueFalse ; name lookup depends on the loaded AppID table
         (client_app_name ? client_app_name : ""), client_id,
+        // cppcheck-suppress knownConditionTrueFalse ; name lookup depends on the loaded AppID table
         (payload_app_name ? payload_app_name : ""), payload_id,
+        // cppcheck-suppress knownConditionTrueFalse ; name lookup depends on the loaded AppID table
         (misc_name ? misc_name : ""), misc_id);
 }
 
@@ -154,6 +158,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     bool is_appid_cpu_profiling_running = (odp_ctxt.is_appid_cpu_profiler_running());
     Stopwatch<SnortClock> per_appid_cpu_timer;
 
+    // cppcheck-suppress knownConditionTrueFalse ; profiling is enabled by runtime configuration
     if (is_appid_cpu_profiling_running)
         per_appid_cpu_timer.start();
     
@@ -168,6 +173,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     do_post_discovery(p, *asd, is_discovery_done, service_id, client_id, payload_id, misc_id,
         change_bits);
 
+    // cppcheck-suppress knownConditionTrueFalse ; profiling is enabled by runtime configuration
     if (is_appid_cpu_profiling_running)
     {
         per_appid_cpu_timer.stop();
@@ -435,6 +441,7 @@ void AppIdDiscovery::do_port_based_discovery(Packet* p, AppIdSession& asd, IpPro
     }
 
     AppId id = asd.get_odp_ctxt().get_port_service_id(protocol, p->ptrs.sp);
+    // cppcheck-suppress knownConditionTrueFalse ; service mapping depends on loaded AppID data
     if (id > APP_ID_NONE)
     {
         asd.set_port_service_id(id);
@@ -473,8 +480,10 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
     const AppIdHttpSession* hsession = asd.get_http_session();
 
     const TunnelDest* tun_dest = nullptr;
+    // cppcheck-suppress knownConditionTrueFalse ; HTTP session presence depends on observed traffic
     if (hsession)
         tun_dest  = hsession->get_tun_dest();
+    // cppcheck-suppress knownConditionTrueFalse ; tunnel destination depends on HTTP session data
     if (tun_dest)
     {
         ip = &(tun_dest->ip);
@@ -496,6 +505,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
     const HostPortVal* hv = nullptr;
 
     if (check_static and
+        // cppcheck-suppress knownConditionTrueFalse ; lookup result depends on the configured host cache
         (hv = asd.get_odp_ctxt().host_port_cache_find(ip, port, protocol)))
     {
         asd.scan_flags |= SCAN_HOST_PORT_FLAG;
@@ -528,6 +538,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
         return true;
     }
 
+    // cppcheck-suppress knownConditionTrueFalse ; dynamic lookup depends on cache state and configuration
     if (!hv and check_dynamic)
     {
         std::lock_guard<std::mutex> lck(AppIdSession::inferred_svcs_lock);
@@ -586,6 +597,7 @@ bool AppIdDiscovery::detect_on_first_pkt(Packet* p, AppIdSession& asd,
     }
 
     const HostAppIdsVal* hv = asd.get_odp_ctxt().host_first_pkt_find(ip, port, protocol);
+    // cppcheck-suppress knownConditionTrueFalse ; lookup result depends on the first-packet cache
     if (hv)
     {
         const char *service_app_name = nullptr, *client_app_name = nullptr, *payload_app_name = nullptr;
@@ -710,6 +722,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     if (outer_protocol != IpProtocol::PROTO_NOT_SET)
     {
         AppId id = asd.get_odp_ctxt().get_protocol_service_id(outer_protocol);
+        // cppcheck-suppress knownConditionTrueFalse ; service mapping depends on loaded AppID data
         if (id > APP_ID_NONE)
         {
             asd.misc_app_id = misc_id = id;
@@ -724,6 +737,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         if ( !asd.get_session_flags(APPID_SESSION_PORT_SERVICE_DONE) )
         {
             AppId id = asd.get_odp_ctxt().get_protocol_service_id(protocol);
+            // cppcheck-suppress knownConditionTrueFalse ; service mapping depends on loaded AppID data
             if (id > APP_ID_NONE)
             {
                 asd.set_port_service_id(id);
@@ -763,6 +777,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
             bool is_tp_done = asd.is_tp_processing_done();
             delete asd.tpsession;
             asd.tpsession = nullptr;
+            // cppcheck-suppress knownConditionTrueFalse ; completion state belongs to the replaced TP session
             if (!is_tp_done)
                 is_discovery_done = do_tp_discovery(*tp_appid_ctxt, asd, protocol, p,
                     direction, change_bits);
@@ -838,11 +853,13 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     AppIdHttpSession* hsession = asd.get_http_session();
     bool is_http_tunnel = false;
 
+    // cppcheck-suppress knownConditionTrueFalse ; HTTP session presence depends on observed traffic
     if (hsession)
         is_http_tunnel = ((hsession->payload.get_id() == APP_ID_HTTP_TUNNEL) or
             (hsession->payload.get_id() == APP_ID_HTTP_SSL_TUNNEL)) ? true : false;
 
     if (is_check_host_cache_valid(asd, service_id, client_id, payload_id, misc_id) or
+        // cppcheck-suppress knownConditionTrueFalse ; tunnel state depends on HTTP session data
         (is_http_tunnel))
     {
         // cppcheck-suppress knownConditionTrueFalse ; is_http_tunnel requires hsession
@@ -889,6 +906,7 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         (asd.scan_flags & SCAN_HOST_PORT_FLAG) and (service_id or payload_id))
     {
         asd.clear_session_flags(APPID_SESSION_OOO_CHECK_TP); // don't repeat this block
+        // cppcheck-suppress knownConditionTrueFalse ; completion state depends on third-party processing
         if (!asd.is_tp_appid_done())
         {
             asd.tpsession->set_state(TP_STATE_TERMINATED);

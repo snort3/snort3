@@ -55,7 +55,7 @@ TEST_GROUP(http2_hpack_string_decode_success)
     Http2EventGen events;
     Http2Infractions inf;
     Http2HpackStringDecode* const decode = new Http2HpackStringDecode();
-    Http2HpackIntDecode decode_int7{7}; // cppcheck-suppress unreadVariable
+    Http2HpackIntDecode decode_int7{7};
 
     void teardown() override
     {

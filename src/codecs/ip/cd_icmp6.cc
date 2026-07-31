@@ -206,6 +206,7 @@ bool Icmp6Codec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
         uint16_t csum = checksum::icmp_cksum(icmp6h, raw.len, ph6);
 
+        // cppcheck-suppress knownConditionTrueFalse ; zero is the valid packet checksum result
         if (csum && !codec.is_cooked())
         {
             stats.bad_ip6_cksum++;
@@ -434,7 +435,6 @@ namespace
 {
 struct IcmpHdr
 {
-    // cppcheck-suppress unusedStructMember
     uint8_t type;
     // cppcheck-suppress unusedStructMember
     uint8_t code;

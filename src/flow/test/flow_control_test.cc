@@ -109,14 +109,18 @@ bool FlowCache::prune_one(PruneReason, bool, uint8_t) { return true; }
 unsigned FlowCache::prune_multiple(PruneReason , bool) { return 0; }
 unsigned FlowCache::delete_flows(unsigned) { return 0; }
 unsigned FlowCache::timeout(unsigned, time_t) { return 1; }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 size_t FlowCache::uni_flows_size() const { return 0; }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 size_t FlowCache::uni_ip_flows_size() const { return 0; }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 size_t FlowCache::flows_size() const { return 0; }
 void Flow::init(PktType) { }
 unsigned SnortConfig::get_reload_id() { return 0; }
 void FlowCache::unlink_uni(Flow*) { }
 void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void Flow::set_mpls_layer_per_dir(Packet*) { }
 void DetectionEngine::disable_all(Packet*) { }
 ExpectCache::ExpectCache(uint32_t) { }
@@ -134,6 +138,7 @@ namespace ip
 {
 uint32_t IpApi::id() const { return 0; }
 }
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 bool Stream::midstream_allowed(Packet const*, bool)
 { return false; }
 }

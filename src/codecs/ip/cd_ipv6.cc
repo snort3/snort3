@@ -340,9 +340,13 @@ void Ipv6Codec::CheckIPV6Multicast(const ip::IP6Hdr* const ip6h, const CodecData
     if (ip6h->is_dst_multicast_scope_reserved())
     {
         // Node-local scope
+        // cppcheck-suppress knownConditionTrueFalse ; destination words come from packet contents
         if ((ip6h->ip6_dst.u6_addr16[1] != 0) ||
+            // cppcheck-suppress knownConditionTrueFalse ; destination words come from packet contents
             (ip6h->ip6_dst.u6_addr16[2] != 0) ||
+            // cppcheck-suppress knownConditionTrueFalse ; destination words come from packet contents
             (ip6h->ip6_dst.u6_addr16[3] != 0) ||
+            // cppcheck-suppress knownConditionTrueFalse ; destination words come from packet contents
             (ip6h->ip6_dst.u6_addr16[4] != 0) ||
             (ip6h->ip6_dst.u6_addr16[5] != 0) ||
             (ip6h->ip6_dst.u6_addr16[6] != 0))
@@ -727,4 +731,3 @@ const BaseApi* cd_ipv6[] =
     &ipv6_api.base,
     nullptr
 };
-

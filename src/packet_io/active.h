@@ -91,6 +91,7 @@ public:
 
     void kill_session(Packet*, EncodeFlags = ENC_FLAG_FWD);
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool can_act() const
     { return active_status == AST_ALLOW or active_status == AST_FORCE; }
 
@@ -143,6 +144,7 @@ public:
     bool keep_pruned_flow() const;
     bool keep_timedout_flow() const;
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool packet_retry_requested() const
     { return active_action == ACT_RETRY; }
 
@@ -158,6 +160,7 @@ public:
     bool packet_force_dropped() const
     { return active_status == AST_FORCE; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool is_packet_held() const
     { return active_action == ACT_HOLD; }
 

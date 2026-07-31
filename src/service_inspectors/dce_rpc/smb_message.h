@@ -228,6 +228,7 @@ inline uint32_t SmbWriteReqOffset(const SmbWriteReq* req)
     return snort::alignedNtohl(&req->smb_offset);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline uint16_t SmbWriteRespCount(const SmbWriteResp* resp)
 {
     return snort::alignedNtohs(&resp->smb_cnt);
@@ -592,6 +593,7 @@ inline uint32_t SmbWriteAndXReqDataCnt(const SmbWriteAndXReq* req)
            | (uint32_t)snort::alignedNtohs(&req->smb_dsize);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline uint16_t SmbWriteAndXReqWriteMode(const SmbWriteAndXReq* req)
 {
     return snort::alignedNtohs(&req->smb_wmode);
@@ -607,6 +609,7 @@ inline bool SmbWriteAndXReqRaw(const SmbWriteAndXReq* req)
     return ((snort::alignedNtohs(&req->smb_wmode) & 0x000c) == 0x0004) ? true : false;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline uint16_t SmbWriteAndXRespCnt(const SmbWriteAndXResp* resp)
 {
     return snort::alignedNtohs(&resp->smb_count);
@@ -884,6 +887,7 @@ inline uint16_t SmbNtCreateAndXReqFileNameLen(const SmbNtCreateAndXReq* req)
     return snort::alignedNtohs(&req->smb_name_len);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline uint32_t SmbNtCreateAndXReqCreateDisposition(const SmbNtCreateAndXReq* req)
 {
     return snort::alignedNtohl(&req->smb_create_disp);
@@ -1239,6 +1243,7 @@ struct SmbTrans2Open2ReqParams
 
 typedef SmbTransaction2Req SmbTrans2Open2Req;
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline uint16_t SmbTrans2Open2ReqAccessMode(const SmbTrans2Open2ReqParams* req)
 {
     return snort::alignedNtohs(&req->AccessMode);
@@ -1249,6 +1254,7 @@ inline uint16_t SmbTrans2Open2ReqFileAttrs(const SmbTrans2Open2ReqParams* req)
     return snort::alignedNtohs(&req->FileAttributes);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline uint16_t SmbTrans2Open2ReqOpenMode(const SmbTrans2Open2ReqParams* req)
 {
     return snort::alignedNtohs(&req->OpenMode);
@@ -2115,6 +2121,7 @@ inline uint64_t SmbWriteRawReqOffset(const SmbWriteRawExtReq* req)
            (uint64_t)snort::alignedNtohl(&req->smb_offset);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline uint16_t SmbWriteRawInterimRespRemaining(const SmbWriteRawInterimResp* resp)
 {
     return snort::alignedNtohs(&resp->smb_remaining);
@@ -2130,6 +2137,7 @@ struct SmbWriteCompleteResp
     uint16_t smb_bcc;    /* value = 0 */
 };
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline uint16_t SmbWriteCompleteRespCount(const SmbWriteCompleteResp* resp)
 {
     return snort::alignedNtohs(&resp->smb_count);
@@ -2183,6 +2191,7 @@ inline uint32_t SmbWriteAndCloseReqOffset(const SmbWriteAndCloseReq* req)
     return snort::alignedNtohl(&req->smb_offset);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline uint16_t SmbWriteAndCloseRespCount(const SmbWriteAndCloseResp* resp)
 {
     return snort::alignedNtohs(&resp->smb_count);

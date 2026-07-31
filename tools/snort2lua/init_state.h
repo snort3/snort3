@@ -32,6 +32,7 @@ public:
     bool convert(std::istringstream& data) override;
 };
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline ConversionState* init_state_ctor(Converter& c)
 {
     return new InitState(c);

@@ -59,6 +59,7 @@ static void check_container(const Elem& cont, Args&& ... args)
     CHECK(it == &cont);
 }
 
+// cppcheck-suppress syntaxError ; cppcheck 2.18 misparses the Catch test macro
 TEST_CASE("Basic", "[Double list]")
 {
     Elem cont;

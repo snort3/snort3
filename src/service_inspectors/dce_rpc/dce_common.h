@@ -234,6 +234,7 @@ inline void DCE2_ResetRopts(DCE2_SsnData* sd, const snort::Packet* p)
     DceContextData::clear_current_ropts(p, sd->trans);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline void DCE2_SsnSetNoInspect(DCE2_SsnData* sd)
 {
     sd->flags |= DCE2_SSN_FLAG__NO_INSPECT;

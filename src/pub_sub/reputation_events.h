@@ -49,9 +49,11 @@ public:
     ReputationVerdict get_verdict() const
     { return verdict; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint32_t get_list_id() const
     { return list_id; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool get_source_matched() const
     { return source_matched; }
 

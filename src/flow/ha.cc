@@ -596,6 +596,7 @@ HighAvailability::HighAvailability(const PortBitSet* ports, bool daq_channel)
             if (sc)
             {
                 // We require a duplex channel
+                // cppcheck-suppress knownConditionTrueFalse ; direction comes from connector configuration
                 if (sc->get_direction() != Connector::CONN_DUPLEX)
                 {
                     sc = nullptr;
@@ -934,6 +935,7 @@ bool HighAvailabilityManager::configured()
     return (ports or use_daq_channel);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void HighAvailabilityManager::set_modified(Flow* flow)
 {
     if (ha && flow && flow->ha_state)
@@ -949,6 +951,7 @@ bool HighAvailabilityManager::in_standby(Flow* flow)
 }
 
 // cppcheck-suppress constParameterReference
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 Flow* HighAvailabilityManager::import(Packet& p, FlowKey& key)
 {
     if (!ha)

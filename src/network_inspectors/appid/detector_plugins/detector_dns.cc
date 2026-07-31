@@ -260,6 +260,7 @@ APPID_STATUS_CODE DnsValidator::add_dns_query_info(AppIdSession& asd, uint16_t i
     uint16_t options_offset, AppidChangeBits& change_bits)
 {
     AppIdDnsSession* dsession = asd.get_dns_session();
+    // cppcheck-suppress knownConditionTrueFalse ; session data may not exist for the first DNS query
     if (!dsession)
         dsession = asd.create_dns_session();
     if ( ( dsession->get_state() != 0 ) && ( dsession->get_id() != id ) )
@@ -294,6 +295,7 @@ APPID_STATUS_CODE DnsValidator::add_dns_response_info(AppIdSession& asd, uint16_
     AppidChangeBits& change_bits)
 {
     AppIdDnsSession* dsession = asd.get_dns_session();
+    // cppcheck-suppress knownConditionTrueFalse ; session data may not exist for the first DNS response
     if (!dsession)
         dsession = asd.create_dns_session();
     if ( ( dsession->get_state() != 0 ) && ( dsession->get_id() != id ) )
@@ -520,6 +522,7 @@ int DnsValidator::dns_validate_header(AppidSessionDirection dir, const DNSHeader
         if (host_reporting)
         {
             AppIdDnsSession* dsession = asd.get_dns_session();
+            // cppcheck-suppress knownConditionTrueFalse ; session data depends on earlier DNS processing
             if (dsession)
                 dsession->reset();
         }

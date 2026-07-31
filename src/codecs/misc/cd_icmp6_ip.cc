@@ -74,6 +74,7 @@ bool Icmp6IpCodec::decode(const RawData& raw, CodecData& codec, DecodeData&)
         return false;
     }
 
+    // cppcheck-suppress knownConditionTrueFalse ; embedded packet length depends on captured traffic
     if ( raw.len < ip::IP6_HEADER_LEN )
     {
         codec_event(codec, DECODE_ICMP_ORIG_DGRAM_LT_ORIG_IP);
@@ -159,4 +160,3 @@ const BaseApi* cd_icmp6_ip[] =
     &icmp6_ip_api.base,
     nullptr
 };
-

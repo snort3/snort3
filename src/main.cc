@@ -651,6 +651,7 @@ int main_reload_hosts(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 int main_process(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -922,6 +923,7 @@ static void service_check()
         return;
 #endif
 
+    // cppcheck-suppress knownConditionTrueFalse ; result depends on pending housekeeping work
     if ( house_keeping() )
         return;
 
@@ -937,6 +939,7 @@ static bool just_validate(const SnortConfig* sc)
     if ( sc->test_mode() )
         return true;
 
+    // cppcheck-suppress knownConditionTrueFalse ; shell use depends on runtime configuration
     if ( use_shell(sc) )
         return false;
 

@@ -61,7 +61,9 @@ static const FlowKey s_test_key =
 };
 
 static struct __attribute__((__packed__)) TestDeleteMessage {
+    // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
     HAMessageHeader mhdr;
+    // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
     FlowKey key;
 } s_delete_message =
 {
@@ -79,9 +81,13 @@ static struct __attribute__((__packed__)) TestDeleteMessage {
 };
 
 static struct __attribute__((__packed__)) TestUpdateMessage {
+    // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
     HAMessageHeader mhdr;
+    // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
     FlowKey key;
+    // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
     HAClientHeader schdr;
+    // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
     uint8_t scmsg[10];
 } s_update_stream_message =
 {
@@ -587,6 +593,7 @@ TEST(high_availability_test, consume_error_truncated_client_msg)
     struct __attribute__((__packed__))
     {
         HAClientHeader chdr = { 0, 0x42 };
+        // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
         uint8_t cmsg[0x42 / 2] = { };
     } input;
     HAMessage msg(reinterpret_cast<uint8_t*>(&input), sizeof(input));
@@ -603,6 +610,7 @@ TEST(high_availability_test, consume_error_client_consume)
     struct __attribute__((__packed__))
     {
         HAClientHeader chdr = { 1, 10 };  // stream client (index 1)
+        // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
         uint8_t cmsg[0x42 / 2] = { };
     } input;
     HAMessage msg(reinterpret_cast<uint8_t*>(&input), sizeof(input));
@@ -1104,11 +1112,17 @@ TEST(high_availability_test, process_update_other_client_produce)
 TEST(high_availability_test, receive_update_both_clients)
 {
     struct __attribute__((__packed__)) {
+        // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
         HAMessageHeader mhdr;
+        // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
         FlowKey key;
+        // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
         HAClientHeader schdr;
+        // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
         uint8_t scmsg[10];
+        // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
         HAClientHeader ochdr;
+        // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
         uint8_t ocmsg[5];
     } msg_data = {
         { HA_UPDATE_EVENT, HA_MESSAGE_VERSION, 0, KEY_TYPE_IP6 },
@@ -1172,7 +1186,9 @@ TEST(high_availability_test, process_update_null_flow)
 TEST(high_availability_test, consume_message_bad_key)
 {
     struct __attribute__((__packed__)) {
+        // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
         HAMessageHeader mhdr;
+        // cppcheck-suppress unusedStructMember ; retained for binary fixture layout
         uint8_t partial_key[2];
     } msg_data = {
         { HA_UPDATE_EVENT, HA_MESSAGE_VERSION, 0, KEY_TYPE_IP6 },

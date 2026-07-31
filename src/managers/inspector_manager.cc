@@ -589,6 +589,7 @@ public:
         return pi;
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     static bool comp(const PHInstance* a, const PHInstance* b)
     { return ( a->get_type() < b->get_type() ); }
 

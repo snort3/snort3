@@ -1280,6 +1280,7 @@ static void snort_smtp(SmtpProtoConf* config, Packet* p)
          *                   */
         smtp_ssn = SetNewSMTPData(config, p);
 
+        // cppcheck-suppress knownConditionTrueFalse ; flow data may be absent before session setup
         if ( !smtp_ssn )
         {
             /* Could not get/create the session data for this packet. */

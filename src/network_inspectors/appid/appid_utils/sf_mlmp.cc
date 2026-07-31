@@ -367,6 +367,7 @@ static int patternMatcherCallback(void* id, void*, int match_end_pos, void* data
         int cmp = compareMlmpPatternList (target, tmpList->patternNode);
         if (cmp > 0 )
             continue;
+        // cppcheck-suppress knownConditionTrueFalse ; comparison depends on runtime pattern matches
         if (cmp == 0)
             return 0;
         break;
@@ -540,7 +541,7 @@ static int addPatternRecursively(tMlmpTree* rootNode, const tMlmpPattern* inputP
     {
         /*move down the new node */
         const tMlmpPattern* nextPattern = inputPatternList + partTotal;
-        if (!nextPattern || !nextPattern->pattern)
+        if (!nextPattern->pattern)
         {
             primaryNode->patternNode.userData = metaData;
         }

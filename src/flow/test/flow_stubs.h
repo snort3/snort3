@@ -91,6 +91,7 @@ namespace layer
 const vlan::VlanTagHdr* get_vlan_layer(const Packet* const) { return nullptr; }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void Stream::drop_traffic(const Packet*, char) { }
 bool Stream::blocked_flow(Packet*) { return true; }
 void Stream::stop_inspection(Flow*, Packet*, char, int32_t, int) { }

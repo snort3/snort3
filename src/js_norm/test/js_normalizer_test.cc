@@ -853,6 +853,7 @@ TEST_CASE("syntax cases", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("bad tokens", "[JSNormalizer]")
 {
     SECTION("explicit LF within literal")
@@ -905,6 +906,7 @@ TEST_CASE("bad tokens", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("braces overflow", "[JSNormalizer]")
 {
     SECTION("exceeding template literal limit")
@@ -1306,6 +1308,7 @@ TEST_CASE("automatic semicolon insertion", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("endings", "[JSNormalizer]")
 {
     SECTION("script closing tag is present", "[JSNormalizer]")
@@ -1615,6 +1618,7 @@ static const char unexpected_tag_expected29[] =
 static const char unexpected_tag_expected29_ext[] =
     "var a=5</script>/";
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("nested script tags", "[JSNormalizer]")
 {
     SECTION("explicit open tag - simple")
@@ -1826,6 +1830,7 @@ TEST_CASE("nested script tags", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("opening tag sequence", "[JSNormalizer]")
 {
     SECTION("incomplete")
@@ -1911,6 +1916,7 @@ TEST_CASE("opening tag sequence", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("nested script tags in an external script", "[JSNormalizer]")
 {
     SECTION("explicit open tag - simple")
@@ -2140,6 +2146,7 @@ TEST_CASE("nested script tags in an external script", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("split between tokens", "[JSNormalizer]")
 {
     auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
@@ -2389,6 +2396,7 @@ TEST_CASE("split between tokens", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("split in comments", "[JSNormalizer]")
 {
     auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
@@ -2595,6 +2603,7 @@ TEST_CASE("split in comments", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("split in opening tag", "[JSNormalizer]")
 {
     auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
@@ -2687,6 +2696,7 @@ TEST_CASE("split in opening tag", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("split in closing tag", "[JSNormalizer]")
 {
     auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
@@ -2828,6 +2838,7 @@ TEST_CASE("split in closing tag", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("split in string literal", "[JSNormalizer]")
 {
     auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
@@ -2962,6 +2973,7 @@ TEST_CASE("split in string literal", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("split in identifier", "[JSNormalizer]")
 {
     auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
@@ -3000,6 +3012,7 @@ TEST_CASE("split in identifier", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("split in keyword", "[JSNormalizer]")
 {
     auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
@@ -3057,6 +3070,7 @@ TEST_CASE("split in keyword", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("split in integer literal", "[JSNormalizer]")
 {
     auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
@@ -3216,6 +3230,7 @@ TEST_CASE("split in integer literal", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("split and continuation combined", "[JSNormalizer]")
 {
     SECTION("PDU 1 [cont] PDU 2 [end end cont end]")
@@ -3296,6 +3311,7 @@ TEST_CASE("split and continuation combined", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("memcap", "[JSNormalizer]")
 {
     auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
@@ -3374,6 +3390,7 @@ TEST_CASE("memcap", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("scope tracking", "[JSNormalizer]")
 {
     auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
@@ -3669,6 +3686,7 @@ TEST_CASE("scope tracking", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("scope misc", "[JSNormalizer]")
 {
     const int stack_limit = 256;
@@ -3704,6 +3722,7 @@ TEST_CASE("scope misc", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("scope tail handling", "[JSNormalizer]")
 {
     auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
@@ -4027,6 +4046,7 @@ TEST_CASE("scope tail handling", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("scope regex groups", "[JSNormalizer]")
 {
     auto norm = default_config.derive({normalize_identifiers(false), use_expected_for_last_pdu(true)});
@@ -4164,6 +4184,7 @@ TEST_CASE("scope regex groups", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("ignored identifiers", "[JSNormalizer]")
 {
     // 'console' 'eval' 'document' are in the ignore list
@@ -4247,6 +4268,7 @@ TEST_CASE("ignored identifiers", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("ignored identifier chain tracking", "[JSNormalizer]")
 {
     // 'console' 'eval' 'document' are in the ignore list
@@ -4454,6 +4476,7 @@ TEST_CASE("ignored identifier chain tracking", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("ignored identifier scope tracking", "[JSNormalizer]")
 {
     // 'console' 'eval' 'document' are in the ignore list
@@ -4634,6 +4657,7 @@ TEST_CASE("ignored identifier scope tracking", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("ignored properties", "[JSNormalizer]")
 {
     SECTION("basic")
@@ -4899,6 +4923,7 @@ TEST_CASE("ignored properties", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("ignored identifier split", "[JSNormalizer]")
 {
 #if JSTOKENIZER_MAX_STATES != 8
@@ -5195,6 +5220,7 @@ TEST_CASE("ignored identifier split", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("ignored properties split", "[JSNormalizer]")
 {
 #if JSTOKENIZER_MAX_STATES != 8
@@ -5477,6 +5503,7 @@ TEST_CASE("ignored properties split", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("Scope tracking - basic", "[JSNormalizer]")
 {
     SECTION("Global only")
@@ -5630,6 +5657,7 @@ TEST_CASE("Scope tracking - basic", "[JSNormalizer]")
         test_scope("var o = {[a+12]:{", {GLOBAL, BLOCK, BLOCK});
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("Scope tracking - closing", "[JSNormalizer]")
 {
 
@@ -5775,6 +5803,7 @@ TEST_CASE("Scope tracking - closing", "[JSNormalizer]")
         test_scope("function() { if (true)\nfor ( ; ; ) a = 2 }", {GLOBAL});
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("Scope tracking - over multiple PDU", "[JSNormalizer]")
 {
     // Every line represents a PDU. Each pdu has input buffer, expected script
@@ -5930,6 +5959,7 @@ TEST_CASE("Scope tracking - over multiple PDU", "[JSNormalizer]")
         });
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("Scope tracking - error handling", "[JSNormalizer]")
 {
     SECTION("not identifier after var keyword")
@@ -5977,6 +6007,7 @@ TEST_CASE("Scope tracking - error handling", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
 {
     auto tester = default_config;
@@ -6256,6 +6287,7 @@ TEST_CASE("Function call tracking - basic", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("Function call tracking - nesting", "[JSNormalizer]")
 {
    auto tester = default_config;
@@ -6345,6 +6377,7 @@ TEST_CASE("Function call tracking - nesting", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("Function call tracking - over multiple PDU", "[JSNormalizer]")
 {
     auto tester = default_config;
@@ -6435,6 +6468,7 @@ TEST_CASE("Function call tracking - over multiple PDU", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("String Concatenation - Basic", "[JSNormalizer]")
 {
     SECTION("Two strings")
@@ -6520,6 +6554,7 @@ TEST_CASE("String Concatenation - Basic", "[JSNormalizer]")
         test_normalization("'foo' + 'bar'\nvar a = 5;", "'foobar';var var_0000=5;");
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("String Concatenation - With unescape", "[JSNormalizer]")
 {
     SECTION("unescape")
@@ -6572,6 +6607,7 @@ TEST_CASE("String Concatenation - With unescape", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("String Concatenation - Multiple PDU", "[JSNormalizer]")
 {
     SECTION("Two single quoted strings")
@@ -6647,6 +6683,7 @@ TEST_CASE("String Concatenation - Multiple PDU", "[JSNormalizer]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("keywords as identifiers", "[JSNormalizer]")
 {
     SECTION("catch as identifier")

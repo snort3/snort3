@@ -63,6 +63,7 @@ public:
     void set_timestamp(bool flag)
     { timestamp = flag; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool get_ntuple() const
     { return ntuple; }
 

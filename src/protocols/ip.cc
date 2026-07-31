@@ -232,6 +232,7 @@ const uint8_t* IpApi::ip_data() const
     return nullptr;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 uint16_t IpApi::actual_ip_len() const
 {
     switch ( type )

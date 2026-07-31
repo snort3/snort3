@@ -69,6 +69,7 @@ static int dump_mac_cache(lua_State* L)
 {
     RnaModule* mod = static_cast<RnaModule*>(PigPen::get_module(RNA_NAME));
     const Inspector* rna = PigPen::get_inspector(RNA_NAME, RNA_USE);
+    // cppcheck-suppress knownConditionTrueFalse ; module availability depends on loaded runtime plugins
     if ( rna && mod )
         mod->log_mac_cache( luaL_optstring(L, 1, nullptr) );
     return 0;
@@ -93,6 +94,7 @@ static inline string format_dump_mac(const uint8_t mac[MAC_SIZE])
 static int purge_data(lua_State* L)
 {
     const Inspector* rna = PigPen::get_inspector(RNA_NAME, RNA_USE);
+    // cppcheck-suppress knownConditionTrueFalse ; inspector availability depends on loaded runtime plugins
     if ( rna )
     {
         HostCacheMac* mac_cache = new HostCacheMac(MAC_CACHE_INITIAL_SIZE);
@@ -169,6 +171,7 @@ static bool get_mac_from_args(lua_State* L, uint8_t* mac_addr)
 static int delete_mac_host(lua_State* L)
 {
     const Inspector* rna = PigPen::get_inspector(RNA_NAME, RNA_USE);
+    // cppcheck-suppress knownConditionTrueFalse ; inspector availability depends on loaded runtime plugins
     if ( rna )
     {
         uint8_t mac[MAC_SIZE] = {0};
@@ -205,6 +208,7 @@ static int delete_mac_host(lua_State* L)
 static int delete_mac_host_proto(lua_State* L)
 {
     const Inspector* rna = PigPen::get_inspector(RNA_NAME, RNA_USE);
+    // cppcheck-suppress knownConditionTrueFalse ; inspector availability depends on loaded runtime plugins
     if ( rna )
     {
         uint8_t mac[MAC_SIZE] = {0};
@@ -450,6 +454,7 @@ void RnaModule::shutdown()
 {
     RnaModule* rna = static_cast<RnaModule*>(PluginManager::get_module("rna"));
 
+    // cppcheck-suppress knownConditionTrueFalse ; module availability depends on loaded runtime plugins
     if ( rna )
         rna->dump();
 }
@@ -592,6 +597,7 @@ bool RnaModule::set(const char* fqn, Value& v, SnortConfig*)
         else if (v.is("substring"))
         {
             const char* ua_part = v.get_string();
+            // cppcheck-suppress knownConditionTrueFalse ; value depends on the supplied RNA configuration
             if ( !ua_part )
                 return false;
             fingerprint.user_agent.emplace_back(ua_part);
@@ -841,4 +847,3 @@ TEST_CASE("Fingerprint processors tuner name", "[rna_module]")
 }
 
 #endif
-

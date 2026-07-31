@@ -184,6 +184,7 @@ void HostAttributesManager::load_failure_cleanup()
     next_cache = nullptr;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void HostAttributesManager::swap_cleanup()
 {
     delete old_cache;

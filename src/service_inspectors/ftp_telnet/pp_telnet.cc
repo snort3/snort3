@@ -299,6 +299,7 @@ int normalize_telnet(
                 /* printf("Telnet: Saw SB for Encryption\n"); */
                 if ((read_ptr + 3) >= end) break;
                 read_ptr += 3;
+                // cppcheck-suppress knownConditionTrueFalse ; cursor position depends on packet contents
                 if (read_ptr >= end) break;
                 switch (*read_ptr)
                 {

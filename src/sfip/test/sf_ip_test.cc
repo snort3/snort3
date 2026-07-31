@@ -390,6 +390,7 @@ static int CopyCheck(int i)
 
 //---------------------------------------------------------------
 
+// cppcheck-suppress syntaxError ; cppcheck 2.18 misparses the Catch test macro
 TEST_CASE("sfip exec", "[sfip]")
 {
     for ( unsigned i = 0; i < NUM_TESTS; ++i )

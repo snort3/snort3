@@ -66,11 +66,13 @@ bool FilePolicy::get_file_type() const
     return type_enabled;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 bool FilePolicy::get_file_signature() const
 {
     return signature_enabled;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 bool FilePolicy::get_file_capture() const
 {
     return capture_enabled;

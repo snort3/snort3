@@ -639,6 +639,7 @@ void CsvLogger::alert(Packet* p, const char* msg, const Event& event)
     Args a = { p, msg, event };
     bool first = true;
 
+    // cppcheck-suppress internalAstError ; cppcheck 2.18 misparses this range expression
     for ( CsvFunc f : fields )
     {
         if ( first )
@@ -698,4 +699,3 @@ const BaseApi* alert_csv[] =
     &csv_api.base,
     nullptr
 };
-

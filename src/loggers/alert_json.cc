@@ -847,6 +847,7 @@ void JsonLogger::alert(Packet* p, const char* msg, const Event& event)
     Args a = { p, msg, event, false };
     TextLog_Putc(json_log, '{');
 
+    // cppcheck-suppress internalAstError ; cppcheck 2.18 misparses this range expression
     for ( JsonFunc f : fields )
     {
         f(a);
@@ -901,4 +902,3 @@ const BaseApi* alert_json[] =
     &json_api.base,
     nullptr
 };
-

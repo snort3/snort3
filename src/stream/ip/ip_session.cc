@@ -252,7 +252,9 @@ public:
 
     void show(const SnortConfig*) const override;
     NORETURN_ASSERT void eval(Packet*) override;
+    // cppcheck-suppress unusedStructMember
     StreamIpConfig* config;
+    // cppcheck-suppress unusedStructMember
     Defrag* defrag;
 };
 

@@ -1587,9 +1587,16 @@ static int detector_add_host_first_pkt_application(lua_State* L)
             tokens.push_back(temp_str);
         }
 
+        if (tokens.size() != 2 or tokens[0].empty() or tokens[1].empty())
+        {
+            APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "First packet API: Invalid CIDR address: %s\n",
+                cidr_str);
+            return 0;
+        }
+
         const char* netip_str = tokens[0].c_str();
 
-        if (!netip_str or !convert_string_to_address(netip_str, &ip_address))
+        if (!convert_string_to_address(netip_str, &ip_address))
         {
             APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "First packet API: Invalid IP address: %s\n", netip_str);
             return 0;
@@ -2043,7 +2050,7 @@ static inline int get_chp_action_type(lua_State* L, int index, ActionType& actio
     return 0;
 }
 
-static inline int get_chp_action_data(lua_State* L, int index, char** action_data)
+static inline void get_chp_action_data(lua_State* L, int index, char** action_data)
 {
     // An empty string is translated into a nullptr pointer because the action data is optional
     size_t action_data_size = 0;
@@ -2052,8 +2059,6 @@ static inline int get_chp_action_data(lua_State* L, int index, char** action_dat
         *action_data = snort_strdup(tmp_string);
     else
         *action_data = nullptr;
-
-    return 0;
 }
 
 static int add_chp_pattern_action(AppId appIdInstance, int isKeyPattern, HttpFieldIds patternType,
@@ -2145,11 +2150,7 @@ static int detector_add_chp_action(lua_State* L)
     }
 
     // Parameter 6
-    if (get_chp_action_data(L, ++index, &action_data))
-    {
-        snort_free(pattern);
-        return 0;
-    }
+    get_chp_action_data(L, ++index, &action_data);
 
     return add_chp_pattern_action(appIdInstance, key_pattern, ptype, psize, pattern,
         action, action_data, ud->get_odp_ctxt());
@@ -2236,11 +2237,7 @@ static int detector_add_chp_multi_action(lua_State* L)
     }
 
     // Parameter 6
-    if (get_chp_action_data(L, ++index, &action_data))
-    {
-        snort_free(pattern);
-        return 0;
-    }
+    get_chp_action_data(L, ++index, &action_data);
 
     return add_chp_pattern_action(appIdInstance, key_pattern, ptype, psize, pattern,
         action, action_data, ud->get_odp_ctxt());
@@ -2952,7 +2949,6 @@ static int add_port_pattern_client(lua_State* L)
     }
 
     PortPatternNode* pPattern  = (decltype(pPattern))snort_calloc(sizeof(PortPatternNode));
-    // cppcheck-suppress internalAstError
     pPattern->pattern  = (decltype(pPattern->pattern))snort_calloc(pattern_size);
     pPattern->appId = appid;
     pPattern->protocol = protocol;
@@ -3722,15 +3718,15 @@ int LuaStateDescriptor::lua_validate(AppIdDiscoveryArgs& args)
     ldp.asd = &args.asd;
     ldp.change_bits = &args.change_bits;
     ldp.pkt = args.pkt;
-    const char* validateFn = package_info.validateFunctionName.c_str();
 
-    if ((!validateFn) or (validateFn[0] == '\0'))
+    if (package_info.validateFunctionName.empty())
     {
         ldp.pkt = nullptr;
         lua_settop(my_lua_state, 0);
         return APPID_NOMATCH;
     }
 
+    const char* validateFn = package_info.validateFunctionName.c_str();
     lua_getfield(my_lua_state, -1, validateFn); // get the function we want to call
 
     if (lua_pcall(my_lua_state, 0, 1, 0))

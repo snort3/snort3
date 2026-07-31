@@ -81,7 +81,7 @@ static TpktAppliSearchStateType resolve_spdu_parameter(Cursor* tpkt_cur, const O
         struct OsiSessionSpduSessionRequirement
         {
             OsiSessionSpduParameterHdr param_hdr;
-            uint16_t flags; // cppcheck-suppress unusedStructMember
+            uint16_t flags;
         };
 
         // overlay the appropriate struct

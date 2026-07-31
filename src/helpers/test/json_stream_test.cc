@@ -29,6 +29,7 @@
 
 using namespace snort;
 
+// cppcheck-suppress syntaxError ; cppcheck 2.18 misparses the Catch test macro
 TEST_CASE("basic", "[json_stream]")
 {
     std::ostringstream ss;

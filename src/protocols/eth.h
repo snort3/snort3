@@ -47,6 +47,7 @@ struct EtherHdr
     { return (ProtocolId)ntohs(ether_type); }
 
     /* return data in network order */
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     inline uint16_t raw_ethertype() const
     { return ether_type; }
 

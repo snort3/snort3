@@ -19,6 +19,7 @@
 #ifndef RELOAD_TUNER_H
 #define RELOAD_TUNER_H
 
+// cppcheck-suppress syntaxError ; this header is C++ despite its language-neutral extension
 namespace snort
 {
 

@@ -661,6 +661,7 @@ success:
     {
         if (dir == APP_ID_FROM_RESPONDER)
         {
+            // cppcheck-suppress knownConditionTrueFalse ; service result depends on session detection state
             if (add_service(args.change_bits, args.asd, args.pkt, dir, serviceAppId) == APPID_SUCCESS)
                 add_miscellaneous_info(args.asd, miscAppId);
         }

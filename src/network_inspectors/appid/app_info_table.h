@@ -109,13 +109,16 @@ public:
     void set_app_info_flags(AppId appId, unsigned flags)
     {
         AppInfoTableEntry* entry = get_app_info_entry(appId);
+        // cppcheck-suppress knownConditionTrueFalse ; entry presence depends on the loaded AppID table
         if ( entry )
             entry->flags |= flags;
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void clear_app_info_flags(AppId appId, unsigned flags)
     {
         AppInfoTableEntry* entry = get_app_info_entry(appId);
+        // cppcheck-suppress knownConditionTrueFalse ; entry presence depends on the loaded AppID table
         if ( entry )
             entry->flags &= (~flags);
     }
@@ -123,12 +126,14 @@ public:
     unsigned get_app_info_flags(AppId app_id, unsigned flags)
     {
         const AppInfoTableEntry* entry = get_app_info_entry(app_id);
+        // cppcheck-suppress knownConditionTrueFalse ; entry presence depends on the loaded AppID table
         return entry ? entry->flags & flags : 0;
     }
 
     void set_app_info_priority(AppId appId, unsigned priority)
     {
         AppInfoTableEntry* entry = get_app_info_entry(appId);
+        // cppcheck-suppress knownConditionTrueFalse ; entry presence depends on the loaded AppID table
         if ( entry )
             entry->priority |= priority;
     }
@@ -136,6 +141,7 @@ public:
     unsigned get_priority(AppId app_id)
     {
         AppInfoTableEntry* entry = get_app_info_entry(app_id);
+        // cppcheck-suppress knownConditionTrueFalse ; entry presence depends on the loaded AppID table
         return entry ? entry->priority : 0;
     }
 

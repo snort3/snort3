@@ -138,6 +138,7 @@ using namespace std;
               (std::streamsize)(b).last_chunk_offset())            \
      - (b).last_chunk_offset())
 
+// cppcheck-suppress syntaxError ; cppcheck 2.18 misparses the Catch test macro
 TEST_CASE("input buffer - basic one source", "[Stream buffers]")
 {
     const char* exp = "Early bird gets a corn.";
@@ -566,6 +567,7 @@ TEST_CASE("input buffer - buffer management", "[Stream buffers]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("input buffer - offset one source", "[Stream buffers]")
 {
     const char* exp = "Early bird gets a corn.";
@@ -1327,6 +1329,7 @@ TEST_CASE("input stream - two sources", "[Stream buffers]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("input stream - last chunk offset", "[Stream buffers]")
 {
     SECTION("no data")
@@ -1445,6 +1448,7 @@ TEST_CASE("input stream - last chunk offset", "[Stream buffers]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("output buffer - basic", "[Stream buffers]")
 {
     const char exp[EXP_SIZE] = "ABC";
@@ -1613,6 +1617,7 @@ TEST_CASE("output buffer - basic", "[Stream buffers]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("output buffer - buffer management", "[Stream buffers]")
 {
     char dat1[] = "0123";
@@ -1662,6 +1667,7 @@ TEST_CASE("output buffer - buffer management", "[Stream buffers]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("output buffer - positioning", "[Stream buffers]")
 {
     const char* exp = "Early bird gets a corn.";
@@ -1756,6 +1762,7 @@ TEST_CASE("output buffer - positioning", "[Stream buffers]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("output buffer - offset", "[Stream buffers]")
 {
     const char* exp = "Early bird gets a corn.";
@@ -1935,6 +1942,7 @@ TEST_CASE("output buffer - offset", "[Stream buffers]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("output stream - basic", "[Stream buffers]")
 {
     SECTION("no input")
@@ -1995,6 +2003,7 @@ TEST_CASE("output stream - basic", "[Stream buffers]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("output stream - reserved size", "[Stream buffers]")
 {
     SECTION("no input")
@@ -2060,6 +2069,7 @@ TEST_CASE("output stream - reserved size", "[Stream buffers]")
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 TEST_CASE("output stream - large data", "[Stream buffers]")
 {
     const int len = 1 << 21;

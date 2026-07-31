@@ -196,6 +196,7 @@ bool Active::thread_init(const SnortConfig* sc)
     if ( !s_attempts )
         s_attempts = 1;
 
+    // cppcheck-suppress knownConditionTrueFalse ; capability comes from the active DAQ module
     if ( !SFDAQ::can_inject() || !sc->respond_device.empty() )
     {
         if ( sc->read_mode() ||
@@ -666,6 +667,7 @@ void Active::update_status_actionable(const Packet* p)
             active_status = AST_WOULD;
             active_would_reason = WHD_INTERFACE_IDS;
         }
+        // cppcheck-suppress knownConditionTrueFalse ; capability comes from the active DAQ module
         else if ( active_action == ACT_REWRITE and !SFDAQ::can_replace() )
         {
             active_status = AST_WOULD;
@@ -822,6 +824,7 @@ bool Active::hold_packet(const Packet* p)
     return true;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void Active::cancel_packet_hold()
 {
     assert(active_action == ACT_HOLD);
@@ -956,6 +959,7 @@ bool Active::open(const char* dev)
     {
         s_link = eth_open(dev);
 
+        // cppcheck-suppress knownConditionTrueFalse ; device open can fail in the packet I/O library
         if ( !s_link )
             FatalError("%s: can't open %s\n", "Active response", dev);
 
@@ -965,6 +969,7 @@ bool Active::open(const char* dev)
     {
         s_ipnet = ip_open();
 
+        // cppcheck-suppress knownConditionTrueFalse ; raw IP open can fail in the packet I/O library
         if ( !s_ipnet )
             FatalError("%s: can't open ip\n", "Active response");
 
@@ -996,6 +1001,7 @@ void Active::reset()
     drop_reason = nullptr;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void Active::clear_queue(Packet* p)
 {
     *p->action = nullptr;
@@ -1043,6 +1049,7 @@ int Active::get_drop_reason_id()
     return default_drop_reason_id;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void Active::send_reason_to_daq(Packet& p)
 {
     if ( !drop_reason )

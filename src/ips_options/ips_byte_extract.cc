@@ -628,7 +628,6 @@ TEST_CASE("ByteExtractOption::operator== invalid", "[ips_byte_extract]")
         ByteExtractOption rhs(data_rhs);
         CHECK(lhs != rhs);
     }
-    // cppcheck-suppress memleak
 }
 
 TEST_CASE("ByteExtractOption::hash", "[ips_byte_extract]")

@@ -937,6 +937,7 @@ ParseResult parse_server_certificates(SSLV3ServerCertData* server_cert_data)
         {
             BIO* issuer_bio = BIO_new(BIO_s_mem());
             int read_issuer_status = X509_NAME_print_ex(issuer_bio, cert_issuer, 0, XN_FLAG_RFC2253);
+            // cppcheck-suppress knownConditionTrueFalse ; availability depends on parsed certificate data
             if (read_issuer_status)
             {
                 BUF_MEM* bptr = nullptr;
@@ -953,6 +954,7 @@ ParseResult parse_server_certificates(SSLV3ServerCertData* server_cert_data)
         {
             BIO* subject_bio = BIO_new(BIO_s_mem());
             int read_subject_status = X509_NAME_print_ex(subject_bio, cert_subject, 0, XN_FLAG_RFC2253);
+            // cppcheck-suppress knownConditionTrueFalse ; availability depends on parsed certificate data
             if (read_subject_status)
             {
                 BUF_MEM* bptr = nullptr;

@@ -422,6 +422,7 @@ int RtmpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     ServiceRTMPData* ss = static_cast<ServiceRTMPData*>(data_get(args.asd));
+    // cppcheck-suppress knownConditionTrueFalse ; detector data is created on the first session packet
     if (!ss)
     {
         ss = new ServiceRTMPData;

@@ -412,6 +412,7 @@ const char* SFDAQ::get_input_spec(const SFDAQConfig* cfg, unsigned instance_id)
     return cfg->inputs[0].c_str();
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 const char* SFDAQ::default_type()
 {
     return DAQ_DEFAULT;

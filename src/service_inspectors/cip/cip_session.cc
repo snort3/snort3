@@ -105,9 +105,8 @@ static void prune_cip_unconnected_list(CipUnconnectedMessageList* unconnected_li
             }
 
             // Check if the current item's timestamp is older than the previous oldest.
-            if (timercmp(&unconnected_list->list[i].timestamp,
-                &unconnected_list->list[oldest_slot].timestamp,
-                <) != 0)
+            // cppcheck-suppress syntaxError ; timercmp's comparison operator is a macro argument
+            if (timercmp(&unconnected_list->list[i].timestamp, &unconnected_list->list[oldest_slot].timestamp, <) != 0)
             {
                 oldest_slot = i;
             }
@@ -521,4 +520,3 @@ bool cip_request_remove(CipUnconnectedMessageList* unconnected_list,
 
     return valid;
 }
-

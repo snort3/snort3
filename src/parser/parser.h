@@ -81,7 +81,7 @@ inline RuleTreeNode* getRtnFromOtn(const OptTreeNode* otn, PolicyId policyId)
 
 inline RuleTreeNode* getRtnFromOtn(const OptTreeNode* otn)
 {
-    // cppcheck-suppress nullPointer
+    // cppcheck-suppress nullPointer ; policy accessors are populated after configuration
     return getRtnFromOtn(otn, snort::get_ips_policy()->policy_id);
 }
 
@@ -101,4 +101,3 @@ struct RuleTreeNodeKey
 };
 
 #endif
-

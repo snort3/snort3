@@ -235,15 +235,14 @@ static void dump_field_lua(const string& key, const Parameter* p, bool table = f
     else if ( !p->deflt )
         return;
 
-    else if ( p->is_quoted() )
-    {
-        const char* s = p->deflt;
-        cout << key << " = '" << s << "'";
-    }
     else
     {
-        const char* s = p->deflt ? p->deflt : "0";
-        cout << key << " = " << s;
+        const char* s = p->deflt;
+
+        if ( p->is_quoted() )
+            cout << key << " = '" << s << "'";
+        else
+            cout << key << " = " << s;
     }
 
     cout << endl;

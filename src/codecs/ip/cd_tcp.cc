@@ -180,6 +180,7 @@ bool TcpCodec::valid_checksum4(const RawData& raw, const DecodeData& snort)
     ph.hdr.protocol = IpProtocol::TCP;
     ph.hdr.len = htons((uint16_t) raw.len);
 
+    // cppcheck-suppress knownConditionTrueFalse ; zero is the valid packet checksum result
     return (checksum::tcp_cksum(raw.data, raw.len, ph) == 0);
 }
 
@@ -194,6 +195,7 @@ bool TcpCodec::valid_checksum6(const RawData& raw, const CodecData& codec, const
     ph6.hdr.protocol = codec.ip6_csum_proto;
     ph6.hdr.len = htons((uint16_t) raw.len);
 
+    // cppcheck-suppress knownConditionTrueFalse ; zero is the valid packet checksum result
     return (checksum::tcp_cksum(raw.data, raw.len, ph6) == 0);
 }
 

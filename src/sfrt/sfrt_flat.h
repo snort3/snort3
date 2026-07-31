@@ -107,6 +107,7 @@ protected:
     MEM_OFFSET segment_snort_alloc(size_t size);
     void segment_free(MEM_OFFSET)
     { }
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     size_t segment_unusedmem() const
     { return unused_mem; }
     void* segment_basePtr() const

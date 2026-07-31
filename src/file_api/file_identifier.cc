@@ -82,6 +82,7 @@ void* FileIdentifier::calloc_mem(size_t size)
     return ret;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void FileIdentifier::set_node_state_shared(IdentifierNode* start)
 {
     unsigned int i;
@@ -102,6 +103,7 @@ void FileIdentifier::set_node_state_shared(IdentifierNode* start)
 }
 
 /*Clone a trie*/
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 IdentifierNode* FileIdentifier::clone_node(IdentifierNode* start)
 {
     unsigned int index;

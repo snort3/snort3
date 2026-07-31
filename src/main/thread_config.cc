@@ -598,6 +598,7 @@ void ThreadConfig::preemptive_kick()
     kick_watchdog();
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void ThreadConfig::update_thread_status(bool status)
 {
     static const bool watchdog_is_enabled = (SnortConfig::get_conf()->watchdog_timer > 0);

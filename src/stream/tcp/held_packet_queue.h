@@ -38,6 +38,7 @@ public:
 
     bool has_expired(const timeval& cur_time)
     {
+        // cppcheck-suppress syntaxError ; timercmp's comparison operator is a macro argument
         expired = (timercmp(&cur_time, &expiration, <) == 0);
         return expired;
     }
@@ -114,4 +115,3 @@ private:
 };
 
 #endif
-

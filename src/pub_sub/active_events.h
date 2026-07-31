@@ -38,9 +38,11 @@ public:
         : current_action(current), previous_action(previous), pkt(p)
     { }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     Active::ActiveActionType get_current_action() const
     { return current_action; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     Active::ActiveActionType get_previous_action() const
     { return previous_action; }
 

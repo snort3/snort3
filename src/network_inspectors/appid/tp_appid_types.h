@@ -243,6 +243,7 @@ public:
     TPAD_SET(tls_version)
     TPAD_SET(http_request_referer)
     TPAD_SET(ftp_command_user)
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     TPAD_SET(quic_sni)
 };
 

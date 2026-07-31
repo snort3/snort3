@@ -185,6 +185,7 @@ static void process_dnp3(const dnp3ProtoConf& config, Packet* p)
          */
         dnp3_sess = set_new_dnp3_session(p);
 
+        // cppcheck-suppress knownConditionTrueFalse ; flow data may be absent before session setup
         if ( !dnp3_sess )
         {
             return;

@@ -688,15 +688,11 @@ static inline int fpFinalSelectEvent(OtnxMatchData* omd, Packet* p)
 class MpseStash
 {
 public:
-    // for some reason cppcheck does not understand that all members are used in MpseStash::process
     struct MatchData
     {
-        // cppcheck-suppress unusedStructMember
         void* user;
         void* tree;
-        // cppcheck-suppress unusedStructMember
         void* list;
-        // cppcheck-suppress unusedStructMember
         int index;
     };
 
@@ -961,6 +957,7 @@ static inline void eval_fp(
 
     if ( DetectionEngine::content_enabled(p) or force)
     {
+        // cppcheck-suppress knownConditionTrueFalse ; search result depends on packet and rule patterns
         if ( fp_search(port_group, p, srvc) )
             return;
     }

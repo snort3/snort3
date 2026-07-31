@@ -45,6 +45,7 @@ public:
     static void setup();
     static void clear();
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool is_ips_policy_inline()
     { return pkt->context->conf->ips_inline_mode(); }
 

@@ -471,6 +471,7 @@ inline uint16_t SmbAndXOff2(const SmbAndXCommon* andx)
 #define SMB_FMT__DIALECT     2
 #define SMB_FMT__ASCII       4
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline bool SmbFmtDataBlock(const uint8_t fmt)
 {
     return fmt == SMB_FMT__DATA_BLOCK ? true : false;

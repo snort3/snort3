@@ -99,6 +99,7 @@ public:
 
     Http2HpackDecoder* get_hpack_decoder(const HttpCommon::SourceId source_id)
     { return &hpack_decoder[source_id]; }
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     Http2ConnectionSettings* get_my_connection_settings(const HttpCommon::SourceId source_id)
     { return &connection_settings[source_id]; }
     Http2ConnectionSettings* get_remote_connection_settings(const HttpCommon::SourceId source_id)

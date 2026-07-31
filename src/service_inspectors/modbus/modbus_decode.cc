@@ -92,7 +92,7 @@ struct modbus_header_t
     /* MBAP Header */
     uint16_t transaction_id;    // cppcheck-suppress unusedStructMember
     uint16_t protocol_id;
-    uint16_t length;    // cppcheck-suppress unusedStructMember
+    uint16_t length;
     uint8_t unit_id;
 
     /* PDU Start */

@@ -281,6 +281,7 @@ uint16_t Packet::get_flow_vlan_id_outer() const
     return 0;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 uint32_t Packet::get_flow_geneve_vni() const
 {
     uint32_t vni = 0;

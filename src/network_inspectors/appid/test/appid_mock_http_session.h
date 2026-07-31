@@ -104,6 +104,7 @@ public:
         }
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     static AppIdHttpSession* init_http_session(AppIdSession& asd)
     {
         AppIdHttpSession* hsession = new MockAppIdHttpSession(asd);

@@ -86,6 +86,7 @@ public:
     using CacheAlloc<T>::lru;
 
     void set_cache(CacheInterface* hci) { Base::set_lru(hci); }
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     CacheInterface* get_cache_ptr() { return Base::get_lru(); }
 
     template <class U>

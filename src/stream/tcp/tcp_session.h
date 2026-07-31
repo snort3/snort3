@@ -82,8 +82,6 @@ public:
     void flush_server(snort::Packet*) override;
     void flush_talker(snort::Packet*, bool final_flush = false) override;
     void flush_listener(snort::Packet*, bool final_flush = false) override;
-    // cppcheck-suppress virtualCallInConstructor
-
     void reset();
     void start_proxy();
     void clear_session(bool free_flow_data, bool flush_segments, bool restart, snort::Packet* p = nullptr);
@@ -183,4 +181,3 @@ private:
 };
 
 #endif
-

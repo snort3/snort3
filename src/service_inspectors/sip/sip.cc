@@ -190,6 +190,7 @@ static void snort_sip(SIP_PROTO_CONF* config, Packet* p)
          */
         sessp = SetNewSIPData(p);
 
+        // cppcheck-suppress knownConditionTrueFalse ; flow data may be absent before session setup
         if ( !sessp )
             // Could not get/create the session data for this packet.
             return;

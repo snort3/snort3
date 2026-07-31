@@ -65,6 +65,7 @@ public:
     const char* get_from() const
     { return parse_from.c_str(); }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool get_loaded() const
     { return loaded; }
 

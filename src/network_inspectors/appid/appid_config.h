@@ -206,12 +206,14 @@ public:
     bool host_port_cache_add(const snort::SnortConfig* sc, const snort::SfIp* ip, uint16_t port,
         IpProtocol proto, unsigned type, AppId appid)
     {
+        // cppcheck-suppress knownConditionTrueFalse ; insertion depends on runtime host-cache data
         return host_port_cache.add(sc, ip, port, proto, type, appid);
     }
 
     bool host_first_pkt_add(const snort::SnortConfig* sc, const snort::SfIp* ip, const uint32_t* netmask, uint16_t port,
         IpProtocol proto, AppId protocol_appid, AppId client_appid, AppId web_appid, unsigned reinspect)
     {
+        // cppcheck-suppress knownConditionTrueFalse ; insertion depends on runtime host-cache data
         return first_pkt_cache.add_host(sc, ip, netmask, port, proto, protocol_appid, client_appid, web_appid, reinspect);
     }
 

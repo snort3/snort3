@@ -167,26 +167,31 @@ private:
     } u16_state;
 };
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 bool PDFTokenizer::h_lit_str()
 {
     return dictionaries.top().array_level == obj_array.nesting_level and !strcmp(obj_entry.key, "/JS");
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 bool PDFTokenizer::h_hex_str()
 {
     return dictionaries.top().array_level == obj_array.nesting_level and !strcmp(obj_entry.key, "/JS");
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 bool PDFTokenizer::h_lit_open()
 {
     return ++obj_string.parenthesis_level == 1;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 bool PDFTokenizer::h_lit_close()
 {
     return --obj_string.parenthesis_level == 0;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void PDFTokenizer::h_ind_obj_close()
 {
     indirect_obj.clear();

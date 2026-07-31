@@ -151,6 +151,7 @@ const char* MPDataBus::get_name_from_id(unsigned id)
     return nullptr;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 bool MPDataBus::is_ready()
 {
     const SnortConfig* sc = SnortConfig::get_conf();

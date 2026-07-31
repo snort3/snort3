@@ -54,6 +54,7 @@ public:
     size_t get_mem_chunk();
     PegCount* get_counts();
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_segments(uint8_t segments) { segment_count = segments; }
     void print_config();
     bool set_max_size(size_t max_size);

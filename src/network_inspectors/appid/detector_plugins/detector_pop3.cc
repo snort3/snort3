@@ -548,6 +548,7 @@ ven_ver_done:;
 POP3DetectorData* Pop3ClientDetector::get_common_data(AppIdSession& asd)
 {
     POP3DetectorData* dd = static_cast<POP3DetectorData*>(data_get(asd));
+    // cppcheck-suppress knownConditionTrueFalse ; detector data is created on the first session packet
     if (!dd)
     {
         dd = new POP3DetectorData;

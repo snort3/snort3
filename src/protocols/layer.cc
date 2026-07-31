@@ -163,6 +163,7 @@ const vlan::VlanTagHdr* get_outer_vlan_layer(const Packet* const p)
     return reinterpret_cast<const vlan::VlanTagHdr*>(lyr->start);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 const cisco_meta_data::CiscoMetaDataHdr* get_cisco_meta_data_layer(const Packet* const p)
 {
     assert( p->proto_bits & PROTO_BIT__CISCO_META_DATA );

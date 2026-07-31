@@ -119,18 +119,22 @@ public:
     void set_use_file(const std::string& file_name, IncludeType = IT_FILE);
     void set_use_action(const std::string& action);
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     const std::string& get_use_type() const
     { return use_type; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     const std::string& get_use_name() const
     { return use_name; }
 
     IncludeTypePair get_use_file() const
     { return IncludeTypePair(use_file, use_file_type); }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     const std::string& get_use_service() const
     { return use_service; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     const std::string& get_use_action() const
     { return use_action; }
 

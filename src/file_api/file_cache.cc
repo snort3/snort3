@@ -67,6 +67,7 @@ public:
 
         struct timeval now;
         packet_gettimeofday(&now);
+        // cppcheck-suppress syntaxError ; timercmp's comparison operator is a macro argument
         if ( timercmp(&node->cache_expire_time, &now, <) )
            return true;
         else
@@ -639,4 +640,3 @@ FileVerdict FileCache::cached_verdict_lookup(Packet* p, FileInfo* file,
 
     return verdict;
 }
-

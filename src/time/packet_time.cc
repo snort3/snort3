@@ -68,6 +68,7 @@ int64_t timersub_ms(const struct timeval* end, const struct timeval* start)
 
 void packet_time_update(const struct timeval* cur_tv)
 {
+    // cppcheck-suppress syntaxError ; timercmp's comparison operator is a macro argument
     if (timercmp(&s_recent_packet, cur_tv, <))
     {
         if ( !s_first_packet )
@@ -81,4 +82,3 @@ uint32_t packet_first_time()
 {
     return s_first_packet;
 }
-

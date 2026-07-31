@@ -81,12 +81,14 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     AppidChangeBits change_bits;
 
     if ((asd->get_tp_appid_ctxt() or ThirdPartyAppIdContext::get_tp_reload_in_progress()) and
+        // cppcheck-suppress knownConditionTrueFalse ; event protocol depends on the publishing inspector
         !http_event->get_is_httpx())
         return;
 
     bool is_appid_cpu_profiling_running = (asd->get_odp_ctxt().is_appid_cpu_profiler_running());
     Stopwatch<SnortClock> per_appid_event_cpu_timer;
 
+    // cppcheck-suppress knownConditionTrueFalse ; profiling is enabled by runtime configuration
     if (is_appid_cpu_profiling_running)
         per_appid_event_cpu_timer.start();
     
@@ -191,6 +193,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     hsession->process_http_packet(direction, change_bits,
         asd->get_odp_ctxt().get_http_matchers());
 
+    // cppcheck-suppress knownConditionTrueFalse ; event protocol depends on the publishing inspector
     if (!http_event->get_is_httpx())
         asd->set_ss_application_ids(asd->pick_service_app_id(), asd->pick_ss_client_app_id(),
             asd->pick_ss_payload_app_id(), asd->pick_ss_misc_app_id(),

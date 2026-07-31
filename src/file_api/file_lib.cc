@@ -327,7 +327,6 @@ void FileInfo::unset_file_name()
     file_name_set = false;
 }
 
-// cppcheck-suppress unusedFunction
 void FileInfo::reset_sha()
 {
     if (sha256)
@@ -511,6 +510,7 @@ void FileInfo::set_file_data(UserFileDataBase* fd)
     user_file_data = fd;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void FileInfo::set_capture_file_data(const uint8_t* file_data, uint32_t size)
 {
     if (file_capture)
@@ -684,6 +684,7 @@ void FileContext::finish_signature_lookup(Packet* p, bool final_lookup, FilePoli
         }
         else
         {
+            // cppcheck-suppress knownConditionTrueFalse ; completion and verdict depend on file processing
             if ( processing_complete and (verdict == FILE_VERDICT_UNKNOWN ))
             {
                 force_adv_log = true;

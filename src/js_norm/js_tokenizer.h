@@ -232,21 +232,27 @@ private:
     void set_do_loop(bool);
     bool do_loop();
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_encoding(uint32_t f)
     { scope_cur().encoding |= f; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint32_t encoding()
     { return scope_cur().encoding; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_char_code_str(bool f)
     { scope_cur().char_code_str = f; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool char_code_str()
     { return scope_cur().char_code_str; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_in_object(bool f)
     { scope_cur().in_object = f; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool in_object()
     { return scope_cur().in_object; }
 

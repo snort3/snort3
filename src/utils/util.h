@@ -107,7 +107,7 @@ inline void snort_free(void* p)
 inline pid_t gettid()
 {
 #if defined(__linux__) && defined(SYS_gettid)
-    return syscall(SYS_gettid); // cppcheck-suppress ConfigurationNotChecked
+    return syscall(SYS_gettid);
 #else
     return getpid();
 #endif
@@ -130,4 +130,3 @@ SO_PUBLIC bool is_directory_path(const std::string&);
 }
 
 #endif
-

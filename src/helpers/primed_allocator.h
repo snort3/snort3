@@ -65,7 +65,6 @@ public:
     PrimedAllocator() noexcept
     { state = new State; }
 
-    // cppcheck-suppress copyCtorPointerCopying
     PrimedAllocator(const PrimedAllocator& other) noexcept : state(other.state)
     {
         state->ref_count++;

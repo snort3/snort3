@@ -232,6 +232,7 @@ public:
         return out_protos;
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     std::vector<uint16_t> get_xport_protos()
     {
         std::vector<uint16_t> out_protos;
@@ -365,6 +366,7 @@ public:
         nat_count_start = natCountStart;
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint32_t get_nat_count() const
     {
         std::lock_guard<std::mutex> lck(host_tracker_lock);
@@ -383,6 +385,7 @@ public:
         return ++nat_count;
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_cache_idx(uint8_t idx)
     {
         std::lock_guard<std::mutex> lck(host_tracker_lock);
@@ -403,6 +406,7 @@ public:
     bool set_device_name(const char*);
 
     bool set_visibility(bool v = true);
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     size_t get_visibility() const {return visibility;}
 
 
@@ -436,6 +440,7 @@ public:
     void remove_flow(RNAFlow*);
 
     void update_cache_interface( uint8_t idx );
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     CacheInterface * get_cache_interface() { return cache_interface; }
 
 private:

@@ -115,6 +115,7 @@ void EventManager::release_outputs(OutputSet* ofn)
     delete ofn;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void EventManager::add_output(OutputSet** ofn, Logger* eh)
 {
     if ( !*ofn )

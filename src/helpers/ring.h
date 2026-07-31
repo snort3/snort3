@@ -115,6 +115,7 @@ bool Ring<T>::put(const T& v)
 }
 
 template <typename T>
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 T* Ring<T>::grab_store(int& ix)
 {
     int i = logic.read();

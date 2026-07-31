@@ -55,6 +55,7 @@ SO_PUBLIC void mix_str(
 
 SO_PUBLIC uint32_t str_to_hash(const uint8_t *str, size_t length);
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 static inline int hash_nearest_power_of_2(int nrows)
 {
     nrows -= 1;

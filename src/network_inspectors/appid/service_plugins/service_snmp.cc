@@ -400,6 +400,7 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
     }
 
     ServiceSNMPData* sd = static_cast<ServiceSNMPData*>(data_get(args.asd));
+    // cppcheck-suppress knownConditionTrueFalse ; detector data is created on the first session packet
     if (!sd)
     {
         sd = new ServiceSNMPData(SNMP_STATE_CONNECTION);
@@ -473,10 +474,12 @@ int SnmpServiceDetector::validate(AppIdDiscoveryArgs& args)
             dip, 0, sip, args.pkt->ptrs.sp, args.asd.protocol,
             args.asd.config.snort_proto_ids[PROTO_INDEX_SNMP], args.asd.get_odp_ctxt());
 
+        // cppcheck-suppress knownConditionTrueFalse ; future-session creation can fail at runtime
         if (pf)
         {
             ServiceSNMPData* tmp_sd = new ServiceSNMPData(SNMP_STATE_RESPONSE);
             data_add(*pf, tmp_sd);
+            // cppcheck-suppress knownConditionTrueFalse ; flow-data registration can fail at runtime
             if (pf->add_flow_data_id(args.pkt->ptrs.dp, this))
             {
                 pf->set_session_flags(APPID_SESSION_SERVICE_DETECTED);

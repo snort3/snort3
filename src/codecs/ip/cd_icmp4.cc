@@ -160,6 +160,7 @@ bool Icmp4Codec::decode(const RawData& raw, CodecData& codec,DecodeData& snort)
     {
         uint16_t csum = checksum::cksum_add(icmph, raw.len);
 
+        // cppcheck-suppress knownConditionTrueFalse ; zero is the valid packet checksum result
         if (csum && !codec.is_cooked())
         {
             stats.bad_ip4_cksum++;

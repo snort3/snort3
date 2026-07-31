@@ -37,6 +37,7 @@ using namespace snort;
 void AppIdDnsPayloadEventHandler::handle(DataEvent& event, Flow* flow)
 {
     const Packet *p = DetectionEngine::get_current_packet();
+    // cppcheck-suppress knownConditionTrueFalse ; callback context may omit a flow or current packet
     if(!flow or !p)
         return;
     const DnsPayloadEvent* dns_payload_event = static_cast<DnsPayloadEvent*>(&event);
@@ -55,6 +56,7 @@ void AppIdDnsPayloadEventHandler::handle(DataEvent& event, Flow* flow)
     bool is_appid_cpu_profiling_running = (asd->get_odp_ctxt().is_appid_cpu_profiler_running());
     Stopwatch<SnortClock> per_appid_event_cpu_timer;
 
+    // cppcheck-suppress knownConditionTrueFalse ; profiling is enabled by runtime configuration
     if (is_appid_cpu_profiling_running)
         per_appid_event_cpu_timer.start();
 
@@ -103,6 +105,7 @@ void AppIdDnsPayloadEventHandler::handle(DataEvent& event, Flow* flow)
         else
         {
             AppIdHttpSession* hsession = asd->get_http_session();
+            // cppcheck-suppress knownConditionTrueFalse ; HTTP session presence depends on observed traffic
             if (hsession)
                 hsession->set_payload(APP_ID_DNS, change_bits, "body");
             if (asd->get_payload_id() != APP_ID_DNS)

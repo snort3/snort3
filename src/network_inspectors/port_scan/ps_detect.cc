@@ -67,6 +67,7 @@ public:
         : XHash(rows, key_len, datasize, memcap)
     { }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool is_node_recovery_ok(HashNode* hnode) override
     {
         const PS_TRACKER* tracker = (PS_TRACKER*)hnode->data;

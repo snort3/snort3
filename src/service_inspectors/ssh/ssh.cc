@@ -84,6 +84,7 @@ SSHData* SetNewSSHData(Packet* p)
 SSHData* get_session_data(const Flow* flow)
 {
     SshFlowData* fd = static_cast<SshFlowData*>(flow->get_flow_data(SshFlowData::inspector_id));
+    // cppcheck-suppress knownConditionTrueFalse ; flow data may be absent before session setup
     return fd ? &fd->session : nullptr;
 }
 
@@ -94,6 +95,7 @@ static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
 
     // Attempt to get a previously allocated SSH block.
     SSHData* sessp = get_session_data(p->flow);
+    // cppcheck-suppress knownConditionTrueFalse ; flow data may be absent before session setup
     if (!sessp)
         return;
 

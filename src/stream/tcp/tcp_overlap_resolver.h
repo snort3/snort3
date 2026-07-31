@@ -77,6 +77,7 @@ public:
     void eval_left(TcpOverlapState&);
     void eval_right(TcpOverlapState&);
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     Overlap::Policy get_overlap_policy()
     { return overlap_policy; }
 

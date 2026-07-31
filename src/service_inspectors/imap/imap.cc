@@ -660,6 +660,7 @@ static void snort_imap(IMAP_PROTO_CONF* config, Packet* p)
          */
         imap_ssn = SetNewIMAPData(config, p);
 
+        // cppcheck-suppress knownConditionTrueFalse ; flow data may be absent before session setup
         if ( !imap_ssn )
         {
             /* Could not get/create the session data for this packet. */

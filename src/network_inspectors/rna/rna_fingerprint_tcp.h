@@ -107,6 +107,7 @@ public:
         return it != tcp_fps.end() ? &it->second : nullptr;
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     const TcpFpContainer& get_tcp_fps() const
     { return tcp_fps; }
 

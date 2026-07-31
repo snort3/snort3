@@ -321,9 +321,11 @@ void PacketTracer::activate(const Packet& p)
 uint64_t PacketTracer::get_time()
 { return TO_NSECS(s_pkt_trace->pt_timer->get()); }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void PacketTracer::start_timer()
 { s_pkt_trace->pt_timer->start(); }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void PacketTracer::reset_timer()
 { s_pkt_trace->pt_timer->reset(); }
 

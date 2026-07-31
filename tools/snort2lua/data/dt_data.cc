@@ -243,6 +243,7 @@ var_it DataApi::find_var(const std::string& name) const
         [&](const Variable* v){ return v->get_name() == name; });
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void DataApi::error(const std::string& error)
 {
     errors->add_text(error);

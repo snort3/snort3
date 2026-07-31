@@ -76,6 +76,7 @@ inline void Norm_TcpPassOption(NormalizerConfig* nc, uint8_t opt)
     nc->normalizer_options[byte] |= bit;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 inline void Norm_TcpDropOption(NormalizerConfig* nc, uint8_t opt)
 {
     uint8_t byte = (opt >> 3), bit = (1 << (opt & 0x07));

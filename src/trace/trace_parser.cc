@@ -31,6 +31,10 @@
 
 #include "trace_config.h"
 
+#include <charconv>
+#include <sstream>
+#include <system_error>
+
 using namespace snort;
 
 std::map<std::string, std::map<std::string, bool>> TraceParser::s_configured_trace_options;
@@ -124,11 +128,32 @@ bool TraceParser::set_constraints(const Value& val)
         parsed_constraints.match = val.get_bool();
     else if (val.is("tenants"))
     {
-        const char* tenants_str = val.get_string();
-        if (!tenants_str)
+        const std::string tenants_str = val.get_string();
+        if (tenants_str.empty() or tenants_str.front() == ',' or tenants_str.back() == ',')
             return false;
 
-        str_to_int_vector(tenants_str, ',', parsed_constraints.tenants);
+        std::istringstream tenants_stream(tenants_str);
+        std::string tenant_token;
+        std::vector<uint32_t> tenants;
+        while (std::getline(tenants_stream, tenant_token, ','))
+        {
+            constexpr const char* whitespace = " \t\n\r\f\v";
+            const auto first = tenant_token.find_first_not_of(whitespace);
+            if (first == std::string::npos)
+                return false;
+
+            const auto last = tenant_token.find_last_not_of(whitespace);
+            uint32_t tenant = 0;
+            const char* begin = tenant_token.data() + first;
+            const char* end = tenant_token.data() + last + 1;
+            const auto [ptr, result] = std::from_chars(begin, end, tenant);
+            if (result != std::errc() or ptr != end)
+                return false;
+
+            tenants.push_back(tenant);
+        }
+
+        parsed_constraints.tenants.swap(tenants);
         parsed_constraints.set_bits |= PacketConstraints::SetBits::TENANT;
     }
     else
@@ -308,7 +333,7 @@ TEST_CASE("packet constraints", "[TraceParser]")
 
     SECTION("tenants")
     {
-        TENANT_OPTION(tenants, "11,12");
+        TENANT_OPTION(tenants, "11, 12");
         const auto expected_tenants = std::vector<uint32_t>{ 11, 12 };
         
         const PacketConstraints expected_constraints = PacketConstraints(IpProtocol::PROTO_NOT_SET, 0, 0,
@@ -319,6 +344,21 @@ TEST_CASE("packet constraints", "[TraceParser]")
 
         REQUIRE(tc.constraints != nullptr);
         CHECK(*tc.constraints == expected_constraints);
+    }
+
+    SECTION("invalid tenants")
+    {
+        const Parameter tenants_param(
+            "tenants", Parameter::PT_STRING, nullptr, nullptr, "tenants test");
+        Value tenants(false);
+        tenants.set(&tenants_param);
+
+        for (const char* invalid_tenants :
+            { "", ",11", "11,", "11,,12", "invalid", "11x,12", "4294967296" })
+        {
+            tenants.set(invalid_tenants);
+            CHECK(false == tp.set_constraints(tenants));
+        }
     }
 }
 

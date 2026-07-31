@@ -168,6 +168,7 @@ bool OpcuaNodeNamespaceIndexModule::set(const char*, Value& v, SnortConfig*)
 {
     assert(v.is("~"));
     unsigned long n;
+    // cppcheck-suppress knownConditionTrueFalse ; conversion depends on the rule option text
     if (v.strtoul(n))
     {
         node_namespace_index = static_cast<uint8_t>(n);

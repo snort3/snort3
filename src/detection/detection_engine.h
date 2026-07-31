@@ -165,6 +165,7 @@ static inline void set_file_data(const uint8_t* p, unsigned n, uint64_t id, bool
     DetectionEngine::set_file_data(dp, id, is_accum, no_flow);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 static inline void clear_file_data()
 { set_file_data(nullptr, 0); }
 

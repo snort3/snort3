@@ -150,12 +150,6 @@ static int gtp_processInfoElements(
         const GTP_InfoElement* ie = &config.infov[msg->version][type];
         uint16_t length;
 
-        if ( nullptr == ie )
-        {
-            gtp_stats.unknownIEs++;
-            return false;
-        }
-
         /*For fixed length, use the table*/
         if (ie->length)
         {
@@ -444,14 +438,6 @@ int gtp_parse(const GTPConfig& config, GTPMsg* msg, const uint8_t* buff, uint16_
     /*Check whether this is GTP or GTP' based on version, flag and msg_type. Exit if GTP'*/
     if (checkPrime(msg->version, hdr->flag, msg->msg_type))
         return false;
-
-    const GTP_MsgType* msgType = &config.msgv[msg->version][msg->msg_type];
-
-    if ( nullptr == msgType )
-    {
-        gtp_stats.unknownTypes++;
-        return false;
-    }
 
     // FIXIT-L need to implement stats retrieval from module
     //gtp_stats.messages[msg->version][msg->msg_type]++;

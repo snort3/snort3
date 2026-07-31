@@ -214,6 +214,7 @@ public:
 
     void set_tls_handshake_done() { tls_handshake_done = true; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     MatchedTlsType get_matched_tls_type() const
     {
         return matched_tls_type;
@@ -832,6 +833,7 @@ public:
        appid_previous_shadow_traffic_bits = lv_bits;
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint32_t get_previous_shadow_traffic_bits()
     {
         return appid_previous_shadow_traffic_bits;

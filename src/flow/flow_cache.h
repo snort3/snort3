@@ -80,21 +80,26 @@ public:
     unsigned purge();
     unsigned get_count();
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     unsigned get_max_flows() const
     { return config.max_flows; }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     PegCount get_total_prunes() const
     { return prune_stats.get_total(); }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     PegCount get_prunes(PruneReason reason) const
     { return prune_stats.get(reason); }
 
     PegCount get_proto_prune_count(PruneReason reason, PktType type) const
     { return prune_stats.get_proto_prune_count(reason,type); }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     PegCount get_total_deletes() const
     { return delete_stats.get_total(); }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     PegCount get_deletes(FlowDeleteState state) const
     { return delete_stats.get(state); }
 

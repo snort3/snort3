@@ -252,6 +252,7 @@ int TcpReassemblerIds::eval_flush_policy_on_ack(Packet* p)
     {
         skip_seglist_hole();
 
+        // cppcheck-suppress knownConditionTrueFalse ; cursor setup depends on buffered TCP data
         if ( !prepare_ack_flush_cursor() )
             break;
 

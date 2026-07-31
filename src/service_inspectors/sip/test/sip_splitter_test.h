@@ -134,6 +134,7 @@ public:
                         ss.next_letter == nullptr && ss.body_state == SIP_PAF_BODY_UNKNOWN;
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     const char * splitter_get_content_length_compact_key()
     {
         return SipSplitter::content_len_key_compact;

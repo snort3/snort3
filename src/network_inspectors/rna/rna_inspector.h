@@ -58,6 +58,7 @@ public:
     void set_fp_processor(snort::TcpFpProcessor*, snort::UaFpProcessor*,
         snort::UdpFpProcessor*, snort::SmbFpProcessor*, snort::DeviceInfoFpProcessor*);
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     RnaPnd* get_pnd() const { return pnd; }
 
 private:

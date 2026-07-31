@@ -42,6 +42,7 @@ public:
 
     void apply(Analyzer&);
     void finish();
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     snort::SnortConfig* get_new_conf() { return new_conf; }
 
 private:

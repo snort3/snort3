@@ -1202,7 +1202,6 @@ void Dns::show(const SnortConfig*) const
 
 void Dns::snort_dns(Packet* p, bool udp, bool is_payload)
 {
-    // cppcheck-suppress unreadVariable
     Profile profile(dnsPerfStats);
 
     ++dnsstats.packets;
@@ -1408,4 +1407,3 @@ const BaseApi* sin_dns[] =
     nullptr
 };
 #endif
-

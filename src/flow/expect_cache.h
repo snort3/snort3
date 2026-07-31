@@ -56,9 +56,12 @@ public:
 
     bool check(snort::Packet*, snort::Flow*);
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     unsigned long get_expects() { return expects; }
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     unsigned long get_realized() { return realized; }
     unsigned long get_prunes() { return prunes; }
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     unsigned long get_overflows() { return overflows; }
     void reset_stats()
     {

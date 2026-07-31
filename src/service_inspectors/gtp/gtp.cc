@@ -91,6 +91,7 @@ void GTPmain(const GTPConfig& config, Packet* packetp)
     {
         pRopts = GTPGetNewSession(packetp);
 
+        // cppcheck-suppress knownConditionTrueFalse ; flow data may be absent before session setup
         if ( !pRopts )
             return;
     }

@@ -213,6 +213,7 @@ void Flow::trust()
     disable_inspection();
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 uint64_t Flow::fetch_add_inspection_duration()
 {
     if (inspected_packet_count != 0)

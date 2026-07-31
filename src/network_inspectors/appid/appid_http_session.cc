@@ -317,6 +317,7 @@ void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits, HttpPat
             cmd.cur_ptype = (HttpFieldIds)i;
             AppId ret = http_matchers.scan_chp(cmd, &version, &user, &num_found, this, asd.get_odp_ctxt());
             total_found += num_found;
+            // cppcheck-suppress knownConditionTrueFalse ; match result depends on runtime HTTP field data
             if (!ret or num_found < ptype_req_counts[i])
             {
                 // No match at all or the required matches for the field was NOT made
@@ -646,6 +647,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             set_client(app_id, change_bits, "X-working-with", version);
         else
         {
+            // cppcheck-suppress knownConditionTrueFalse ; detected application depends on header contents
             if (app_id and asd.get_service_id() != app_id)
             {
                 asd.set_service_appid_data(app_id, change_bits, version);
@@ -682,6 +684,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
         AppId client_id = APP_ID_NONE;
         AppId payload_id = APP_ID_NONE;
 
+        // cppcheck-suppress knownConditionTrueFalse ; match result depends on the observed host and URL
         if ( http_matchers.get_appid_from_url(my_host, urlStr, &version,
             refStr, &client_id, &service_id, &payload_id,
             &referredPayloadAppId, false, asd.get_odp_ctxt()) )

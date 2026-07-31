@@ -46,6 +46,7 @@ static MemoryStats s_fallthrough_stats;
 // -----------------------------------------------------------------------------
 
 // get thread local default stats
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 const MemoryStats& MemoryProfiler::get_fallthrough_stats()
 { return s_fallthrough_stats; }
 

@@ -124,6 +124,7 @@ void TcpSegmentDescriptor::clear()
     ma_pseudo_packet = nullptr;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 uint32_t TcpSegmentDescriptor::init_mss(uint16_t* value)
 {
     if ( pkt->ptrs.decode_flags & DECODE_TCP_MSS )
@@ -143,6 +144,7 @@ uint32_t TcpSegmentDescriptor::init_mss(uint16_t* value)
     return TF_NONE;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 uint32_t TcpSegmentDescriptor::init_wscale(uint16_t* value)
 {
     if ( pkt->ptrs.decode_flags & DECODE_TCP_WS )

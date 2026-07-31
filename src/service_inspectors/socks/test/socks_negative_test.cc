@@ -89,7 +89,6 @@ namespace snort
     bool Inspector::likes(Packet*) { return true; }
     bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return false; }
     
-    // cppcheck-suppress uninitMemberVar ; mock class - only data/dsize used in tests
     Packet::Packet(bool) {}
     Packet::~Packet() = default;
     

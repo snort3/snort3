@@ -176,6 +176,7 @@ void prepare_rule_profiler_stats(std::vector<HashNode*>& nodes, std::unordered_m
     detection_option_tree_update_otn_stats(nodes, stats, thread_id);
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void reset_rule_profiler_stats()
 {
     const SnortConfig* sc = SnortConfig::get_conf();

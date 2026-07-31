@@ -71,12 +71,14 @@
 
 using namespace snort;
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void TcpSession::sinit()
 {
     TcpSegmentDescriptor::setup();
     TcpSegmentNode::setup();
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void TcpSession::sterm()
 {
     TcpSegmentDescriptor::clear();
@@ -487,6 +489,7 @@ void TcpSession::handle_data_on_syn(TcpSegmentDescriptor& tsd)
     }
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void TcpSession::update_session_on_rst(
     TcpSegmentDescriptor& tsd, bool flush, TcpStreamTracker::TcpState next_state)
 {
@@ -1009,6 +1012,7 @@ bool TcpSession::cleanup_session_if_expired(Packet* p)
     return false;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 bool TcpSession::precheck(Packet* p)
 {
     // Check if the session is expired. Should be done before we do something with
@@ -1597,6 +1601,7 @@ bool TcpSession::is_hole_present(TcpStreamTracker* listener, snort::Packet* pkt)
     return false;
 }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void TcpSession::log_tcp_event(TcpStreamTracker::TcpEvent event)
 {
     static constexpr char tcp_event_chars[TcpStreamTracker::TcpEvent::TCP_MAX_EVENTS] = {

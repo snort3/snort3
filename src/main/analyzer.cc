@@ -127,6 +127,7 @@ public:
         if (!empty())
         {
             const Entry& entry = queue.front();
+            // cppcheck-suppress syntaxError ; timercmp's comparison operator is a macro argument
             if (!now || !timercmp(now, &entry.next_try, <))
             {
                 DAQ_Msg_h msg = entry.msg;

@@ -108,6 +108,7 @@ public:
     void set_enabled(bool enable) { enabled = enable; }
 
     bool is_active() { return active; }
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void deactivate() { active = false; }
 
     const char* get_debug_session() const

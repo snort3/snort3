@@ -68,6 +68,7 @@ SO_PUBLIC void TextLog_Reset(TextLog* const);
 
 inline bool TextLog_NewLine(TextLog* const txt)
 {
+    // cppcheck-suppress knownConditionTrueFalse ; write result depends on the configured output
     return snort::TextLog_Putc(txt, '\n');
 }
 
@@ -77,4 +78,3 @@ inline bool TextLog_Puts(TextLog* const txt, const char* str)
 }
 
 #endif
-

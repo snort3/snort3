@@ -64,11 +64,13 @@ public:
     }
 
     // Tunnel establishment status
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     bool is_tunnel_successful() const
     {
         return tunnel_success;
     }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     SocksReplyCode get_reply_code() const
     {
         return flow_data ? flow_data->get_last_error() : SOCKS5_REP_SUCCESS;

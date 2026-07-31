@@ -62,7 +62,6 @@ void FlowDataStore::call_handlers(Packet*, FlowDataHandlerType) const {}
 
 Flow::~Flow() = default;
 
-// cppcheck-suppress uninitMemberVar ; mock class - only data/dsize used in tests
 Packet::Packet(bool) { }
 Packet::~Packet() = default;
 

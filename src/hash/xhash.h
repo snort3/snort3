@@ -73,6 +73,7 @@ public:
     void touch_last_found(uint8_t type = 0);
 
     // set max hash nodes, 0 == no limit
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     void set_max_nodes(int max)
     { max_nodes = max; }
 
@@ -85,6 +86,7 @@ public:
     void set_memcap(unsigned long memcap)
     { mem_allocator->set_mem_capacity(memcap); }
 
+    // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     unsigned long get_memcap()
     { return mem_allocator->get_mem_capacity(); }
 

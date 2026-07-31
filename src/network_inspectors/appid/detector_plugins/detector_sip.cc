@@ -306,6 +306,7 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
 
     AppIdSession* asd = appid_api.get_appid_session(*flow);
     // Skip for sessions using old odp context after odp reload
+    // cppcheck-suppress knownConditionTrueFalse ; session context and ODP version vary across reloads
     if (asd and (!pkt_thread_odp_ctxt or
         (asd->get_odp_ctxt_version() != pkt_thread_odp_ctxt->get_version())))
         return;
@@ -314,6 +315,7 @@ void SipEventHandler::handle(DataEvent& event, Flow* flow)
     const Packet* p = sip_event.get_packet();
     assert(p);
 
+    // cppcheck-suppress knownConditionTrueFalse ; an event may arrive before AppID session creation
     if ( !asd )
     {
         IpProtocol protocol = p->is_tcp() ? IpProtocol::TCP : IpProtocol::UDP;
@@ -337,6 +339,7 @@ void SipEventHandler::client_handler(const SipEvent& sip_event, AppIdSession& as
     char* client_version = nullptr;
 
     SipUdpClientDetector* client = pkt_thread_odp_ctxt->get_sip_client_detector();
+    // cppcheck-suppress knownConditionTrueFalse ; detector availability depends on loaded AppID configuration
     if (!client)
         return;
 
@@ -381,6 +384,7 @@ void SipEventHandler::client_handler(const SipEvent& sip_event, AppIdSession& as
             goto success;
     }
 
+    // cppcheck-suppress knownConditionTrueFalse ; dialog state comes from the published SIP event
     if ( !sip_event.is_dialog_established() )
         return;
 

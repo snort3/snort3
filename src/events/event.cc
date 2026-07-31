@@ -138,6 +138,7 @@ uint32_t Event::get_class_id() const
 uint32_t Event::get_priority() const
 { return sig_info.priority; }
 
+// cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 bool Event::get_target(bool& src) const
 {
     if ( sig_info.target == TARGET_SRC )

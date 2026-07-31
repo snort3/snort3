@@ -393,6 +393,7 @@ static void bnfaBuildMatchStateTrees(SnortConfig* sc, bnfa_struct_t* bnfa)
 /*
 * Print the transition list table to stdout
 */
+// cppcheck-suppress unusedFunction ; debug table printer retained for ALLOW_LIST_PRINT builds
 static int _bnfa_list_print_table(bnfa_struct_t* bnfa)
 {
     int i;
@@ -622,6 +623,7 @@ static int _bnfa_conv_node_to_full(bnfa_trans_node_t* t, bnfa_state_t* full)
 
 #ifdef XXXX
 //  containment test - test if all of tj transitions are in tk
+// cppcheck-suppress unusedFunction ; containment diagnostic retained for XXXX builds
 static int KcontainsJx(bnfa_trans_node_t* tk, bnfa_trans_node_t* tj)
 {
     while ( tj )
@@ -1394,6 +1396,7 @@ static inline int _bnfaCompile(bnfa_struct_t* bnfa)
 #endif
 
     /* Build the nfa w/failure states - time the nfa construction */
+    // cppcheck-suppress knownConditionTrueFalse ; build result depends on configured patterns and allocation
     if ( _bnfa_build_nfa (bnfa) )
     {
         return -1;
