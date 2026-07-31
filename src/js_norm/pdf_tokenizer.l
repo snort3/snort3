@@ -762,6 +762,9 @@ PDFTokenizer::PDFRet PDFTokenizer::process()
     if (YY_CURRENT_BUFFER_LVALUE->yy_buf_size > YY_BUF_SIZE)
         r = PDFTokenizer::TOKEN_TOO_LONG;
 
+    if (state_len > YY_BUF_SIZE)
+        r = PDFTokenizer::TOKEN_TOO_LONG;
+
     if (r != PDFTokenizer::EOS)
         yy_flush_buffer(YY_CURRENT_BUFFER);
 
@@ -771,6 +774,10 @@ PDFTokenizer::PDFRet PDFTokenizer::process()
 void PDFTokenizer::state_add(int len)
 {
     state_len += len;
+
+    if (state_len > YY_BUF_SIZE)
+        state_len = YY_BUF_SIZE + 1;
+
     state_added = true;
 }
 
@@ -778,7 +785,7 @@ void PDFTokenizer::state_store()
 {
     state_act();
 
-    if (state_len == 0)
+    if (state_len == 0 or state_len > YY_BUF_SIZE)
         return;
 
     if (YY_START == hexstr)
