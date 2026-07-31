@@ -107,6 +107,7 @@ public:
     const PegInfo* get_pegs() const override;
     snort::ProfileStats* get_profile() const override;
 
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     Usage get_usage() const override
     { return CONTEXT; }
 

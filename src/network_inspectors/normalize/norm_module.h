@@ -45,6 +45,7 @@ public:
     const NormalizerConfig* get_config()
     { return &config; }
 
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     Usage get_usage() const override
     { return CONTEXT; }
 

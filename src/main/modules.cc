@@ -114,6 +114,7 @@ public:
     bool set(const char*, Value&, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     Usage get_usage() const override
     { return CONTEXT; }
 };
@@ -501,7 +502,9 @@ public:
         Module("mp_data_bus", mp_data_bus_help, mp_data_bus_params) { }
 
     bool set(const char*, Value&, SnortConfig*) override;
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     bool begin(const char*, int, SnortConfig*) override;
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     bool end(const char*, int, SnortConfig*) override;
     const Command* get_commands() const override;
     const PegInfo* get_pegs() const override;
@@ -1724,6 +1727,7 @@ public:
     bool begin(const char*, int, SnortConfig*) override;
     bool end(const char*, int, SnortConfig*) override;
 
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     Usage get_usage() const override
     { return CONTEXT; }
 
@@ -1843,6 +1847,7 @@ public:
         return reinterpret_cast<PegCount*>(&event_filter_stats);
     }
 
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     Usage get_usage() const override
     { return CONTEXT; }
 

@@ -106,6 +106,7 @@ BuiltinExtractor::BuiltinExtractor(Extractor& i, uint32_t t, const vector<string
 void BuiltinExtractor::internal_tinit(const snort::Connector::ID* service_id)
 { log_id = service_id; }
 
+// cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
 void BuiltinExtractor::handle(DataEvent& event, Flow* flow)
 {
     // cppcheck-suppress unreadVariable
@@ -273,6 +274,7 @@ IpsUserExtractor::IpsUserExtractor(Extractor& i, uint32_t t, const vector<string
 void IpsUserExtractor::internal_tinit(const snort::Connector::ID* service_id)
 { log_id = service_id; }
 
+// cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
 void IpsUserExtractor::handle(DataEvent& event, Flow* flow)
 {
     // cppcheck-suppress unreadVariable

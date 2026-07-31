@@ -761,6 +761,7 @@ void FileContext::remove_segments()
     file_segments = nullptr;
 }
 
+// cppcheck-suppress duplInheritedMember ; derived reset intentionally hides base reset for context-specific state
 void FileContext::reset()
 {
     verdict = FILE_VERDICT_UNKNOWN;

@@ -170,6 +170,7 @@ ConnExtractor::ConnExtractor(Extractor& i, uint32_t t, const vector<string>& fie
 void ConnExtractor::internal_tinit(const snort::Connector::ID* service_id)
 { log_id = service_id; }
 
+// cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
 void ConnExtractor::handle(DataEvent& event, Flow* flow)
 {
     // cppcheck-suppress unreadVariable

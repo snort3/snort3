@@ -197,6 +197,7 @@ public:
 
     // Configuration functions
     void remove_segments();
+    // cppcheck-suppress duplInheritedMember ; derived reset intentionally hides base reset for context-specific state
     void reset();
     void set_config(FileConfig* fc) { config = fc; }
     FileConfig* get_config() { return config; }

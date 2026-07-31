@@ -617,6 +617,7 @@ SslExtractor::SslExtractor(Extractor& i, uint32_t t, const vector<string>& field
 void SslExtractor::internal_tinit(const snort::Connector::ID* service_id)
 { log_id = service_id; }
 
+// cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
 void SslExtractor::handle(DataEvent& event, Flow* flow)
 {
     // cppcheck-suppress unreadVariable

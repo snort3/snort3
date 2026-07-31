@@ -68,6 +68,7 @@ public:
     void finalize_service_patterns();
     void reload_service_patterns();
     unsigned get_pattern_count();
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     int add_service_port(AppIdDetector*, const ServiceDetectorPort&) override;
 
     AppIdDetectorsIterator get_detector_iterator(IpProtocol);

@@ -51,6 +51,7 @@ public:
     CipRspOption() : IpsOption(s_name) { }
 
     uint32_t hash() const override;
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     bool operator==(const IpsOption&) const override;
 
     EvalStatus eval(Cursor&, Packet*) override;

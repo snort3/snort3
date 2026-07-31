@@ -249,6 +249,7 @@ public:
     unsigned get_gid() const override
     { return GID_DECODE; }
 
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     Usage get_usage() const override
     { return CONTEXT; }
 };
@@ -266,4 +267,3 @@ public:
 }
 
 #endif
-

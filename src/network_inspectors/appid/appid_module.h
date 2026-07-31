@@ -88,14 +88,18 @@ public:
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
 
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     const snort::Command* get_commands() const override;
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     const PegInfo* get_pegs() const override;
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     PegCount* get_counts() const override;
     snort::ProfileStats* get_profile(
         unsigned i, const char*& name, const char*& parent) const override;
 
     AppIdConfig* get_data();
 
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     void reset_stats() override;
 
     Usage get_usage() const override
@@ -103,9 +107,11 @@ public:
     void sum_stats(bool) override;
     bool has_dynamic_stats() const override
     { return true; }
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     void show_dynamic_stats() override;
 
     void set_trace(const snort::Trace*) const override;
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     const snort::TraceOption* get_trace_options() const override;
 
 private:

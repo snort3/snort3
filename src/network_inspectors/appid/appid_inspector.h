@@ -42,7 +42,9 @@ public:
 
     bool configure(snort::SnortConfig*) override;
     void show(const snort::SnortConfig*) const override;
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     void tinit() override;
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     void tterm() override;
     void tear_down(snort::SnortConfig*, bool) override;
     void eval(snort::Packet*) override;

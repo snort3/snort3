@@ -35,6 +35,7 @@ public:
         snort::CursorActionType cat_, const snort::Parameter params[])
         : HttpRuleOptModule(key_, help, rule_opt_index_, cat_, params){}
     snort::ProfileStats* get_profile() const override { return &http_version_ps; }
+    // cppcheck-suppress duplInheritedMember ; derived member intentionally specializes the inherited interface
     static void mod_dtor(snort::Module* m) { delete m; }
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;

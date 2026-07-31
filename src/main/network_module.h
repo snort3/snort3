@@ -34,6 +34,7 @@ public:
 
     const snort::Command* get_commands() const override;
 
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     Usage get_usage() const override
     { return CONTEXT; }
 };

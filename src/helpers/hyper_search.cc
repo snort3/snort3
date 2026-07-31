@@ -39,6 +39,7 @@
 namespace snort
 {
 
+// cppcheck-suppress duplInheritedMember ; derived member intentionally specializes the inherited interface
 LiteralSearch::Handle* HyperSearch::setup()
 { return new HyperScratchAllocator; }
 

@@ -463,6 +463,7 @@ void PacketTracer::reset(bool daq_log)
 class TestPacketTracer : public PacketTracer
 {
 public:
+    // cppcheck-suppress duplInheritedMember ; derived member intentionally specializes the inherited interface
     static void thread_init()
     { PacketTracer::_thread_init<TestPacketTracer>(); }
 
@@ -490,6 +491,7 @@ public:
     static bool is_daq_enabled()
     { return static_cast<TestPacketTracer*>(s_pkt_trace)->daq_activated; }
 
+    // cppcheck-suppress duplInheritedMember ; derived member intentionally specializes the inherited interface
     static bool is_paused()
     { return static_cast<TestPacketTracer*>(s_pkt_trace)->pause_count; }
 

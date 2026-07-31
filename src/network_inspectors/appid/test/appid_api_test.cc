@@ -83,6 +83,7 @@ void AppIdModule::reset_stats() {}
 class DummyInspector : public snort::Inspector
 {
 public:
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     void eval(Packet*) override {};
 };
 

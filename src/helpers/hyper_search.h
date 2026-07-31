@@ -37,6 +37,7 @@ class SO_PUBLIC HyperSearch : public snort::LiteralSearch
 public:
     using Handle = snort::LiteralSearch::Handle;
 
+    // cppcheck-suppress duplInheritedMember ; derived member intentionally specializes the inherited interface
     static Handle* setup();        // call from module ctor
     static void cleanup(Handle*);  // call from module dtor
 

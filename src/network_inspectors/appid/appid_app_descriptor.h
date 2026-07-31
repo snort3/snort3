@@ -292,6 +292,7 @@ class PayloadAppDescriptor : public ApplicationDescriptor
 public:
     PayloadAppDescriptor() = default;
 
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     void reset() override
     {
         ApplicationDescriptor::reset();

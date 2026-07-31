@@ -41,6 +41,7 @@ public:
 
     snort::ProfileStats* get_profile() const override { return &ps; }
 
+    // cppcheck-suppress duplInheritedMember ; derived member intentionally specializes the inherited interface
     static void mod_dtor(snort::Module* m) { delete m; }
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool set(const char*, snort::Value&, snort::SnortConfig*) override;

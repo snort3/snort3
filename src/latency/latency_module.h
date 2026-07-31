@@ -37,6 +37,7 @@ public:
     const PegInfo* get_pegs() const override;
     PegCount* get_counts() const override;
 
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     Usage get_usage() const override
     { return CONTEXT; }
 

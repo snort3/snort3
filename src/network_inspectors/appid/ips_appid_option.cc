@@ -177,6 +177,7 @@ public:
 
     bool begin(const char*, int, SnortConfig*) override;
     bool set(const char*, Value&, SnortConfig*) override;
+    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
     bool end(const char*, int, SnortConfig*) override;
 
     ProfileStats* get_profile() const override

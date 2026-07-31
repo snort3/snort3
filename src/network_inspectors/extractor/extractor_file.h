@@ -30,6 +30,7 @@ public:
 
     FileExtractor(Extractor&, uint32_t tenant, const std::vector<std::string>& fields);
 
+    // cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
     void handle(DataEvent&, Flow*);
     std::vector<const char*> get_field_names() const override;
 

@@ -133,6 +133,7 @@ public:
 
     void alert(Packet*, const char*, const Event&) override;
 
+    // cppcheck-suppress duplInheritedMember ; derived member intentionally specializes the inherited interface
     static const struct LogApi* get_api();
 
 private:

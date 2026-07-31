@@ -99,6 +99,7 @@ FtpRequestExtractor::FtpRequestExtractor(Extractor& i, uint32_t t, const vector<
 void FtpRequestExtractor::internal_tinit(const snort::Connector::ID* service_id)
 { log_id = service_id; }
 
+// cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
 void FtpRequestExtractor::handle(DataEvent& event, Flow* flow)
 {
     // cppcheck-suppress unreadVariable
@@ -266,6 +267,7 @@ void ExtractorEvent::log<vector<FtpResponseExtractor::SubField>, DataEvent*, Flo
     }
 }
 
+// cppcheck-suppress duplInheritedMember ; derived handler intentionally hides base no-op for typed dispatch
 void FtpResponseExtractor::handle(DataEvent& event, Flow* flow)
 {
     // cppcheck-suppress unreadVariable
