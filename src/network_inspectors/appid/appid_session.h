@@ -22,6 +22,10 @@
 #ifndef APPID_SESSION_H
 #define APPID_SESSION_H
 
+#include "appid_debug.h"
+
+#include <cstring>
+
 #include <map>
 #include <mutex>
 #include <string>
@@ -154,6 +158,7 @@ public:
 
     void set_tls_sni(const char* new_tls_sni, uint32_t len)
     {
+        bool host_changed = is_tls_host_changed(tls_sni, new_tls_sni, len);
         if (tls_sni)
             snort_free(tls_sni);
         if (!new_tls_sni or *new_tls_sni == '\0')
@@ -165,10 +170,13 @@ public:
         }
         tls_sni = len ? snort::snort_strndup(new_tls_sni, len) :
             const_cast<char*>(new_tls_sni);
+        if(host_changed)
+            APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "tls host SNI: %s\n", tls_sni);
     }
 
     void set_tls_first_alt_name(const char* new_tls_first_alt_name, uint32_t len)
     {
+        bool host_changed = is_tls_host_changed(tls_first_alt_name, new_tls_first_alt_name, len);
         if (tls_first_alt_name)
             snort_free(tls_first_alt_name);
         if (!new_tls_first_alt_name or *new_tls_first_alt_name == '\0')
@@ -180,10 +188,13 @@ public:
         }
         tls_first_alt_name = len? snort::snort_strndup(new_tls_first_alt_name, len) :
             const_cast<char*>(new_tls_first_alt_name);
+        if(host_changed)
+            APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "tls host SAN: %s\n", tls_first_alt_name);
     }
 
     void set_tls_cname(const char* new_tls_cname, uint32_t len)
     {
+        bool host_changed = is_tls_host_changed(tls_cname, new_tls_cname, len);
         if (tls_cname)
             snort_free(tls_cname);
         if (!new_tls_cname or *new_tls_cname == '\0')
@@ -195,10 +206,13 @@ public:
         }
         tls_cname = len? snort::snort_strndup(new_tls_cname,len) :
             const_cast<char*>(new_tls_cname);
+        if(host_changed)
+            APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "tls host CN: %s\n", tls_cname);
     }
 
     void set_tls_org_unit(const char* new_tls_org_unit, uint32_t len)
     {
+        bool host_changed = is_tls_host_changed(tls_org_unit, new_tls_org_unit, len);
         if (tls_org_unit)
             snort_free(tls_org_unit);
         if (!new_tls_org_unit or *new_tls_org_unit == '\0')
@@ -210,6 +224,8 @@ public:
         }
         tls_org_unit = len? snort::snort_strndup(new_tls_org_unit,len) :
             const_cast<char*>(new_tls_org_unit);
+        if(host_changed)
+            APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL, "tls host ORG UNIT: %s\n", tls_org_unit);
     }
 
     void set_tls_handshake_done() { tls_handshake_done = true; }
@@ -218,6 +234,19 @@ public:
     MatchedTlsType get_matched_tls_type() const
     {
         return matched_tls_type;
+    }
+
+    const char* get_matched_tls_type_str() const
+    {
+        switch (matched_tls_type)
+        {
+        case MATCHED_TLS_SNI:       return "SNI";
+        case MATCHED_TLS_FIRST_SAN: return "SAN";
+        case MATCHED_TLS_CNAME:     return "CN";
+        case MATCHED_TLS_ORG_UNIT:  break;
+        case MATCHED_TLS_NONE:      break;
+        }
+        return nullptr;
     }
 
     void set_matched_tls_type(MatchedTlsType type, bool is_tls_data_finished = true)
@@ -251,6 +280,14 @@ public:
             snort_free(tls_cert_key);
         }
         tls_cert_key = snort::snort_strdup(key);
+    }
+
+    bool is_tls_host_changed(const char* current, const char* new_host, uint32_t len) const
+    {
+        if(!current or !new_host)
+            return current != new_host;
+        return len ? (strlen(current) != len or strncmp(current, new_host, len) != 0) :
+                strcmp(current, new_host) != 0;
     }
 
 private:

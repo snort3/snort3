@@ -645,11 +645,14 @@ void AppIdSession::examine_ssl_metadata(AppidChangeBits& change_bits, bool parti
 
     if (!tsession->is_tls_host_published())
     {
-        if (tsession->get_tls_host())
+        if (const char* selected_tls_host = tsession->get_tls_host())
         {
-            api.set_tls_host(tsession->get_tls_host());
+            api.set_tls_host(selected_tls_host);
             api.set_tls_sni(tsession->get_tls_sni());
             change_bits.set(APPID_TLSHOST_BIT);
+            if (const char* tls_type = tsession->get_matched_tls_type_str())
+                APPID_LOG(CURRENT_PACKET, TRACE_DEBUG_LEVEL,
+                    "tls host selected %s: %s\n", tls_type, selected_tls_host);
         }
     }
     else if (tsession->is_tls_host_mismatched() and

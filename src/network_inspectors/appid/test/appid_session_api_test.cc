@@ -38,6 +38,13 @@ static AppIdConfig config;
 static OdpContext odpctxt(config, nullptr);
 static Flow flow;
 
+THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
+
+namespace snort
+{
+    Packet* DetectionEngine::get_current_packet() { return nullptr; }
+}
+
 void ApplicationDescriptor::set_id(const Packet&, AppIdSession&, AppidSessionDirection, AppId, AppidChangeBits&) { }
 void AppIdModule::reset_stats() {}
 

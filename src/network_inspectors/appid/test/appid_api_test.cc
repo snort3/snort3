@@ -53,6 +53,7 @@ using namespace snort;
 static SnortProtocolId dummy_http2_protocol_id = 1;
 char const* APPID_UT_ORG_UNIT = "Google";
 THREAD_LOCAL bool TimeProfilerStats::enabled = false;
+THREAD_LOCAL AppIdDebug* appidDebug = nullptr;
 #define ShadowTraffic_Type_Domain_Fronting    0x00000010
 
 bool mock_inspector_exist = true;
