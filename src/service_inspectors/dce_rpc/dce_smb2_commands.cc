@@ -95,6 +95,9 @@ inline void DCE2_Smb2UpdateMaxOffset(DCE2_Smb2FileTracker* ftracker, uint64_t of
 bool DCE2_Smb2ProcessFileData(DCE2_Smb2SsnData* ssd, const uint8_t* file_data,
     uint32_t data_size)
 {
+    if (!ssd->ftracker_tcp)
+        return false;
+
     if (ssd->ftracker_tcp->co_tracker)
     {
         DCE2_CoProcess(&ssd->sd, ssd->ftracker_tcp->co_tracker,

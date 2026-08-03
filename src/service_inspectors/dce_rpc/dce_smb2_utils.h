@@ -133,10 +133,16 @@ inline std::shared_ptr<DCE2_Smb2SessionTracker> DCE2_Smb2FindSidInSsd(DCE2_Smb2S
 inline void DCE2_Smb2InsertSidInSsd(DCE2_Smb2SsnData* ssd, const uint64_t sid,
     std::shared_ptr<DCE2_Smb2SessionTracker> stracker)
 {
-    // add ssd in session tracker's tcp trackers database
-    if (ssd->flow_key)
+    if (!ssd->flow_key)
+        ssd->flow_key = ~0u;
+
+    constexpr int max_probes = 256;
+    for (int i = 0; i < max_probes; ++i)
     {
-        stracker->insertConnectionTracker(ssd->flow_key, ssd);
+        if (stracker->insertConnectionTracker(ssd->flow_key, ssd))
+            break;
+        if (!++ssd->flow_key)
+            ssd->flow_key = 1;
     }
     ssd->insert_session_tracker(sid, std::move(stracker));
 }
