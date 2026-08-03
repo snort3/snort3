@@ -188,12 +188,12 @@ PortObject2* PortObject2Dup(PortObject& po)
     /* Dup the Item List */
     if ( po.item_list )
     {
-        PortObjectItem* poi = nullptr;
+        const PortObjectItem* poi = nullptr;
         SF_LNODE* lpos = nullptr;
 
-        for (poi = (PortObjectItem*)sflist_first(po.item_list, &lpos);
+        for (poi = static_cast<const PortObjectItem*>(sflist_first(po.item_list, &lpos));
              poi != nullptr;
-             poi = static_cast<PortObjectItem*>(sflist_next(&lpos)) )
+             poi = static_cast<const PortObjectItem*>(sflist_next(&lpos)) )
         {
             PortObjectItem* poinew = PortObjectItemDup(poi);
             PortObjectAddItem(reinterpret_cast<PortObject*>(ponew), poinew, nullptr);

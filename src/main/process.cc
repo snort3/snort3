@@ -755,7 +755,7 @@ int gmt2local(time_t t)
         t = time(nullptr);
 
     struct tm gmt;
-    struct tm* lt = gmtime_r(&t, &gmt);
+    const struct tm* lt = gmtime_r(&t, &gmt);
     if (lt == nullptr)
         return 0;
 
@@ -888,7 +888,7 @@ void InitGroups(int user_id, int group_id)
 {
     if ((user_id != -1) && (getuid() == 0))
     {
-        struct passwd* pw = getpwuid(user_id);  // main thread only
+        const struct passwd* pw = getpwuid(user_id);  // main thread only
 
         if (pw != nullptr)
         {
@@ -983,7 +983,7 @@ static char* GetAbsolutePath(const char* dir, PathBuf& buf)
 }
 
 // Chroot and adjust the log_dir reference
-bool EnterChroot(std::string& root_dir, std::string& log_dir)
+bool EnterChroot(const std::string& root_dir, std::string& log_dir)
 {
     if (log_dir.empty())
     {

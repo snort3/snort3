@@ -458,7 +458,7 @@ int PortObjectHasAny(const PortObject* po)
 /*
  *  Removes Ports in B from A ... A = A - B
  */
-int PortObjectRemovePorts(PortObject* a,  PortObject* b)
+int PortObjectRemovePorts(PortObject* a, const PortObject* b)
 {
     PortBitSet pA, pB;
 

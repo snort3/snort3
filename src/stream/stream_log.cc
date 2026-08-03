@@ -280,7 +280,7 @@ void StreamLog::add_packet_type_info(const Packet& p)
 {
     bool is_v6 = p.ptrs.ip_api.is_ip6();
     char timestamp[TIMEBUF_SIZE];
-    ts_print((const struct timeval*)&p.pkth->ts, timestamp);
+    ts_print(&p.pkth->ts, timestamp);
 
     switch ( p.type() )
     {

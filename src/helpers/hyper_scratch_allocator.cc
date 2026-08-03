@@ -33,7 +33,7 @@ HyperScratchAllocator::~HyperScratchAllocator()
         hs_free_scratch(scratch);
 }
 
-bool HyperScratchAllocator::allocate(hs_database_t* db)
+bool HyperScratchAllocator::allocate(const hs_database_t* db)
 {
     return hs_alloc_scratch(db, &scratch) == HS_SUCCESS;
 }

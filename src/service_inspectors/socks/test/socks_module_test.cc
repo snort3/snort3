@@ -137,7 +137,7 @@ TEST(socks5_module_test, peg_counters_available)
 
 TEST(socks5_module_test, all_stats_peg_mapping)
 {
-    PegCount* counts = mod->get_counts();
+    const PegCount* counts = mod->get_counts();
     CHECK(counts != nullptr);
     
     // Set all stats to unique values and verify peg index mapping

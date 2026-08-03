@@ -261,13 +261,13 @@ void PacketManager::decode(
         {
             for (int idx = 0; idx < codec_data.compound_layer_cnt; idx++)
             {
-                CompoundLayer* clyr = &codec_data.compound_layers[idx];
+                const CompoundLayer* clyr = &codec_data.compound_layers[idx];
 
                 // If this was an IP layer, stash the next protocol in the Packet for later
                 if (clyr->proto_bits & (PROTO_BIT__IP | PROTO_BIT__IP6_EXT) &&
                     idx + 1 < codec_data.compound_layer_cnt)
                 {
-                    CompoundLayer* nclyr = &codec_data.compound_layers[idx + 1];
+                    const CompoundLayer* nclyr = &codec_data.compound_layers[idx + 1];
                     p->ip_proto_next = convert_protocolid_to_ipprotocol(nclyr->layer.prot_id);
                 }
                 p->proto_bits |= clyr->proto_bits;

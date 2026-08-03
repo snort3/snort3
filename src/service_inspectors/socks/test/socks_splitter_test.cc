@@ -434,7 +434,7 @@ TEST(SocksSplitterTests, test_invalid_version_byte)
 TEST(SocksSplitterTests, test_minimum_packet_size)
 {
     // Too small to be any valid SOCKS message
-    uint8_t data[] = {0x05};
+    const uint8_t data[] = {0x05};
     uint32_t fp = 0;
 
     flow_data->set_state(SOCKS_STATE_INIT);

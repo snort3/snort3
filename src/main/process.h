@@ -69,7 +69,7 @@ void ClosePidFile();
 bool SetUidGid(int, int);
 void InitGroups(int, int);
 
-bool EnterChroot(std::string& root_dir, std::string& log_dir);
+bool EnterChroot(const std::string& root_dir, std::string& log_dir);
 
 #if defined(NOCOREFILE)
 void SetNoCores();

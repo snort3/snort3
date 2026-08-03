@@ -601,7 +601,7 @@ static int ps_update_open_ports(PS_PROTO* proto, unsigned short port)
 **    - TCP 3-way handshake packets (we decrement the counter)
 **    - TCP reset packets on unestablished streams.
 */
-void PortScan::ps_tracker_update_tcp(PS_PKT* ps_pkt, PS_TRACKER* scanner,
+void PortScan::ps_tracker_update_tcp(const PS_PKT* ps_pkt, PS_TRACKER* scanner,
     PS_TRACKER* scanned)
 {
     const Packet* p = ps_pkt->pkt;

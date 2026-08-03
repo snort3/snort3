@@ -46,7 +46,7 @@ public:
     void cleanup(SnortConfig*) override;
     void update(SnortConfig*) override
     { }
-    bool allocate(hs_database_t*);
+    bool allocate(const hs_database_t*);
 
     hs_scratch_t* get()
     { return get(SnortConfig::get_conf(), snort::get_instance_id()); }

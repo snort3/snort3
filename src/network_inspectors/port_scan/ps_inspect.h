@@ -68,7 +68,7 @@ private:
         unsigned short port, time_t pkt_time);
 
     void ps_tracker_update_ip(PS_PKT*, PS_TRACKER* scanner, PS_TRACKER* scanned);
-    void ps_tracker_update_tcp(PS_PKT*, PS_TRACKER* scanner, PS_TRACKER* scanned);
+    void ps_tracker_update_tcp(const PS_PKT*, PS_TRACKER* scanner, PS_TRACKER* scanned);
     void ps_tracker_update_udp(PS_PKT*, PS_TRACKER* scanner, PS_TRACKER* scanned);
     void ps_tracker_update_icmp(PS_PKT*, PS_TRACKER* scanner, PS_TRACKER* scanned);
 

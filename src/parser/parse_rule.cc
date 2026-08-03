@@ -411,7 +411,7 @@ static int ParsePortList(
 void set_strict_rtn_reduction(bool new_strict_rtn_reduction)
 { strict_rtn_reduction = new_strict_rtn_reduction; }
 
-bool same_headers(RuleTreeNode* rule, RuleTreeNode* rtn)
+bool same_headers(const RuleTreeNode* rule, const RuleTreeNode* rtn)
 {
     if ( !rule or !rtn )
         return false;

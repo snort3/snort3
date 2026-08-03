@@ -363,7 +363,7 @@ static int file_daq_ioctl(void* handle, DAQ_IoctlCmd cmd, void* arg, size_t argl
 
 static int file_daq_get_stats(void* handle, DAQ_Stats_t* stats)
 {
-    FileContext* fc = (FileContext*) handle;
+    const FileContext* fc = (FileContext*) handle;
     memcpy(stats, &fc->stats, sizeof(DAQ_Stats_t));
     return DAQ_SUCCESS;
 }
@@ -376,7 +376,7 @@ static void file_daq_reset_stats(void* handle)
 
 static int file_daq_get_snaplen (void* handle)
 {
-    FileContext* fc = (FileContext*) handle;
+    const FileContext* fc = (FileContext*) handle;
     return fc->snaplen;
 }
 

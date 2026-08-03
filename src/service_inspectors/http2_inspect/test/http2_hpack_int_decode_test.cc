@@ -74,7 +74,7 @@ TEST(http2_hpack_int_decode_success, 10_using_5_bits)
 TEST(http2_hpack_int_decode_success, 10_using_5_bits_wtail)
 {
     // prepare buf to decode - same as above with an extra byte as leftover
-    uint8_t buf[2] = { 10, 0xff };
+    const uint8_t buf[2] = { 10, 0xff };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
@@ -88,7 +88,7 @@ TEST(http2_hpack_int_decode_success, 10_using_5_bits_wtail)
 TEST(http2_hpack_int_decode_success, 1337_using_5_bits)
 {
     // prepare buf to decode - example from RFC 7541 c.1.2
-    uint8_t buf[3] = { 31, 0x9a, 10 };
+    const uint8_t buf[3] = { 31, 0x9a, 10 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
@@ -118,7 +118,7 @@ TEST(http2_hpack_int_decode_success, 42_using_8_bits)
 TEST(http2_hpack_int_decode_success, max_val_using_5_bit)
 {
     // prepare buf to decode - 2^64-1
-    uint8_t buf[11] = { 31, 0xE0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 1 };
+    const uint8_t buf[11] = { 31, 0xE0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 1 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;
@@ -132,7 +132,7 @@ TEST(http2_hpack_int_decode_success, max_val_using_5_bit)
 TEST(http2_hpack_int_decode_success, 31_using_5_bits)
 {
     // prepare buf to decode - 2^N -1
-    uint8_t buf[2] = { 31, 0 };
+    const uint8_t buf[2] = { 31, 0 };
     // decode
     uint32_t bytes_processed = 0;
     uint64_t res = 0;

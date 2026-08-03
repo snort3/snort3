@@ -29,7 +29,7 @@
 struct PortObject;
 struct PortObjectItem;
 
-int PortObjectBits(PortBitSet&, PortObject*);
+int PortObjectBits(PortBitSet&, const PortObject*);
 SF_LIST* PortObjectItemListFromBits(const PortBitSet&, int n);
 
 int* RuleListToSortedArray(SF_LIST*);

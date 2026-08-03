@@ -572,6 +572,7 @@ TEST(appid_discovery_tests, change_bits_to_string)
         " user-info, netbios-name, netbios-domain, finished, tls-version, protocol-id");
 
     // Failure of this test is a reminder that enum is changed, hence translator needs update
+    // cppcheck-suppress knownConditionTrueFalse ; compile-time enum-layout assertion
     CHECK_EQUAL(APPID_MAX_BIT, 23);
 }
 

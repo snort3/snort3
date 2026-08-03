@@ -185,7 +185,7 @@ static void install_dependencies_strings(Shell* sh, lua_State* L)
     char brotli_version_str[16];
     const auto brotli_version = BrotliDecoderVersion();
 
-    std::snprintf(brotli_version_str, sizeof(brotli_version_str), "%d.%d.%d", brotli_version >> 24,
+    std::snprintf(brotli_version_str, sizeof(brotli_version_str), "%u.%u.%u", brotli_version >> 24,
         (brotli_version >> 12) & 0xFFF, brotli_version & 0xFFF);
 
     vs.push_back(brotli_version_str);

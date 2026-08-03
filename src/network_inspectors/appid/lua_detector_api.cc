@@ -775,7 +775,6 @@ static int detector_get_pcre_groups(lua_State* L)
     LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     pcre2_match_data* match_data;
-    PCRE2_UCHAR error[128];
     PCRE2_SIZE erroffset;
     int errorcode;
 
@@ -792,6 +791,7 @@ static int detector_get_pcre_groups(lua_State* L)
 
     if (re == nullptr)
     {
+        PCRE2_UCHAR error[128];
         pcre2_get_error_message(errorcode, error, 128);
         APPID_LOG(lsd->ldp.pkt, TRACE_ERROR_LEVEL, "PCRE compilation failed at offset %zu: %s\n", erroffset, error);
         return 0;

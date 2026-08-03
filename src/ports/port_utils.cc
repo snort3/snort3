@@ -39,7 +39,7 @@ using namespace snort;
  *  returns:  0 if an  ANY port.
  *            n number of unique ports.
  */
-int PortObjectBits(PortBitSet& parray, PortObject* po)
+int PortObjectBits(PortBitSet& parray, const PortObject* po)
 {
     if ( !po || PortObjectHasAny (po) )
         return 0;  /* ANY =64K */

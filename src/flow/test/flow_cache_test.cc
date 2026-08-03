@@ -534,7 +534,7 @@ TEST(allowlist_test, move_to_allowlist)
         Flow* flow = cache->allocate(&flow_key);
         CHECK(cache->move_to_allowlist(flow) == true);  // Move flow to allow list
 
-        Flow* found_flow = cache->find(&flow_key);
+        const Flow* found_flow = cache->find(&flow_key);
         CHECK(found_flow == flow);  // Verify flow is found
         CHECK(found_flow->flags.in_allowlist == 1);  // Verify it's in allowlist
     }
@@ -630,7 +630,7 @@ TEST(allowlist_test, allowlist_timeout_with_other_protos)
         Flow* flow = cache->allocate(&flow_key);
         CHECK(cache->move_to_allowlist(flow) == true);  // Move flow to allow list
 
-        Flow* found_flow = cache->find(&flow_key);
+        const Flow* found_flow = cache->find(&flow_key);
         CHECK(found_flow == flow);
         CHECK(found_flow->flags.in_allowlist == 1);
     }
@@ -688,7 +688,7 @@ TEST(allowlist_test, allowlist_timeout_with_other_protos)
         {
             CHECK(cache->move_to_allowlist(flow) == true);
 
-            Flow* found_flow = cache->find(&flow_key);
+            const Flow* found_flow = cache->find(&flow_key);
             CHECK(found_flow == flow);
             CHECK(found_flow->flags.in_allowlist == 1);
         }
@@ -882,7 +882,7 @@ TEST(dump_flows, dump_flows_with_allowlist)
     {
         flow_key[i].port_l = i + 1;  // allow listed flow ports
         flow_key[i].pkt_type = PktType::TCP;
-        Flow* flow = cache->find(&flow_key[i]);
+        const Flow* flow = cache->find(&flow_key[i]);
         CHECK(flow != nullptr);  // Ensure the flow is found
         CHECK(flow->flags.in_allowlist == 1);  // Ensure the flow is allow listed
     }
@@ -1065,7 +1065,7 @@ TEST(dump_flows_summary, dump_flows_summary_with_allowlist)
     {
         flow_key[i].port_l = i + 1;  // allow listed flow ports
         flow_key[i].pkt_type = PktType::TCP;
-        Flow* flow = cache->find(&flow_key[i]);
+        const Flow* flow = cache->find(&flow_key[i]);
         CHECK(flow != nullptr);  // Ensure the flow is found
         CHECK(flow->flags.in_allowlist == 1);  // Ensure the flow is allow listed
     }
@@ -1500,7 +1500,7 @@ TEST(flow_cache_allowlist_pruning, prune_one_excess_regular_flow_moves_to_allowl
     FlowKey flow_key;
     flow_key.port_l = 1234;
     flow_key.pkt_type = PktType::TCP;
-    Flow* flow = cache->allocate(&flow_key);
+    const Flow* flow = cache->allocate(&flow_key);
     
     FlowKey flow_key2;
     flow_key2.port_l = 5678;

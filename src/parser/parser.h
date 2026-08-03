@@ -66,7 +66,7 @@ int addRtnToOtn(snort::SnortConfig*, OptTreeNode*, RuleTreeNode*);
 int addRtnToOtn(snort::SnortConfig*, OptTreeNode*, RuleTreeNode*, PolicyId);
 
 void set_strict_rtn_reduction(bool);
-bool same_headers(RuleTreeNode*, RuleTreeNode*);
+bool same_headers(const RuleTreeNode*, const RuleTreeNode*);
 RuleTreeNode* deleteRtnFromOtn(OptTreeNode*, snort::SnortConfig* sc = nullptr);
 RuleTreeNode* deleteRtnFromOtn(OptTreeNode*, PolicyId, snort::SnortConfig* sc = nullptr, bool remove = true);
 

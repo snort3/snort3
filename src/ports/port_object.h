@@ -69,7 +69,7 @@ int PortObjectHasPort(const PortObject*, int port);
 int PortObjectIsPureNot(const PortObject*);
 int PortObjectHasAny(const PortObject*);
 
-int PortObjectRemovePorts(PortObject* a,  PortObject* b);
+int PortObjectRemovePorts(PortObject* a, const PortObject* b);
 PortObject* PortObjectAppend(PortObject* poa, const PortObject* pob);
 
 void PortObjectPrint(PortObject*);

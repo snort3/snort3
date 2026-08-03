@@ -358,7 +358,7 @@ struct TestData
     const char* via = nullptr;
 };
 
-static void run_event_handler(TestData test_data, TestData* expect_data = nullptr)
+static void run_event_handler(const TestData& test_data, const TestData* expect_data = nullptr)
 {
     HttpEvent event(nullptr, false, 0);
     FakeHttpMsgHeader http_msg_header;

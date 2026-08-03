@@ -60,7 +60,7 @@ namespace snort
 void LogTimeStamp(TextLog* log, Packet* p)
 {
     char timestamp[TIMEBUF_SIZE];
-    ts_print((const struct timeval*)&p->pkth->ts, timestamp);
+    ts_print(&p->pkth->ts, timestamp);
     TextLog_Puts(log, timestamp);
 }
 

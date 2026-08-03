@@ -367,7 +367,7 @@ static bool parse_command(HextContext* hc, const char* s, HextMsgDesc *desc)
 }
 
 // load quoted string data into buffer up to snaplen
-static void parse_string(HextContext* hc, char* s, HextMsgDesc *desc)
+static void parse_string(const HextContext* hc, const char* s, HextMsgDesc *desc)
 {
     char t;
 
@@ -383,7 +383,7 @@ static void parse_string(HextContext* hc, char* s, HextMsgDesc *desc)
 }
 
 // load hex data into buffer up to snaplen
-static void parse_hex(HextContext* hc, char* s, HextMsgDesc *desc)
+static void parse_hex(const HextContext* hc, char* s, HextMsgDesc *desc)
 {
     char* t = s;
     long x = strtol(t, &s, 16);
@@ -466,7 +466,7 @@ static bool parse(HextContext* hc, char* line, HextMsgDesc* desc)
 static DAQ_RecvStatus hext_read_message(HextContext* hc, HextMsgDesc* desc)
 {
     char line[MAX_LINE_SZ];
-    char* s = NULL;
+    const char* s = NULL;
 
     desc->msg.data = NULL;
     line[0] = '\0';
@@ -696,7 +696,7 @@ static int hext_daq_ioctl(void* handle, DAQ_IoctlCmd cmd, void* arg, size_t argl
 
 static int hext_daq_get_stats(void* handle, DAQ_Stats_t* stats)
 {
-    HextContext* hc = (HextContext*) handle;
+    const HextContext* hc = (HextContext*) handle;
     memcpy(stats, &hc->stats, sizeof(DAQ_Stats_t));
     return DAQ_SUCCESS;
 }
@@ -709,7 +709,7 @@ static void hext_daq_reset_stats(void* handle)
 
 static int hext_daq_get_snaplen (void* handle)
 {
-    HextContext* hc = (HextContext*) handle;
+    const HextContext* hc = (HextContext*) handle;
     return hc->snaplen;
 }
 
@@ -722,7 +722,7 @@ static uint32_t hext_daq_get_capabilities(void* handle)
 
 static int hext_daq_get_datalink_type(void* handle)
 {
-    HextContext* hc = (HextContext*) handle;
+    const HextContext* hc = (HextContext*) handle;
     return hc->dlt;
 }
 

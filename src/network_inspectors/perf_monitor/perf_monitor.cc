@@ -622,35 +622,32 @@ TEST_CASE("Process timing logic", "[perfmon]")
 
     t_constraints = config->constraints;
 
+    const auto ready_at = [&](time_t seconds)
+    {
+        pkth.ts.tv_sec = seconds;
+        return perfmon.ready_to_process(&p);
+    };
+
     t_constraints->pkt_cnt = 0;
     t_constraints->sample_interval = 0;
-    pkth.ts.tv_sec = 0;
-    REQUIRE((perfmon.ready_to_process(&p) == true));
-    pkth.ts.tv_sec = 1;
-    REQUIRE((perfmon.ready_to_process(&p) == true));
+    REQUIRE((ready_at(0) == true));
+    REQUIRE((ready_at(1) == true));
 
     t_constraints->pkt_cnt = 2;
     t_constraints->sample_interval = 0;
-    pkth.ts.tv_sec = 2;
-    REQUIRE((perfmon.ready_to_process(&p) == false));
-    pkth.ts.tv_sec = 3;
-    REQUIRE((perfmon.ready_to_process(&p) == true));
+    REQUIRE((ready_at(2) == false));
+    REQUIRE((ready_at(3) == true));
 
     t_constraints->pkt_cnt = 0;
     t_constraints->sample_interval = 2;
-    pkth.ts.tv_sec = 4;
-    REQUIRE((perfmon.ready_to_process(&p) == false));
-    pkth.ts.tv_sec = 8;
-    REQUIRE((perfmon.ready_to_process(&p) == true));
-    pkth.ts.tv_sec = 10;
-    REQUIRE((perfmon.ready_to_process(&p) == true));
+    REQUIRE((ready_at(4) == false));
+    REQUIRE((ready_at(8) == true));
+    REQUIRE((ready_at(10) == true));
 
     t_constraints->pkt_cnt = 5;
     t_constraints->sample_interval = 4;
-    pkth.ts.tv_sec = 11;
-    REQUIRE((perfmon.ready_to_process(&p) == false));
-    pkth.ts.tv_sec = 14;
-    REQUIRE((perfmon.ready_to_process(&p) == false));
+    REQUIRE((ready_at(11) == false));
+    REQUIRE((ready_at(14) == false));
     REQUIRE((perfmon.ready_to_process(&p) == false));
     REQUIRE((perfmon.ready_to_process(&p) == false));
     REQUIRE((perfmon.ready_to_process(&p) == true));

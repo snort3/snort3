@@ -1567,18 +1567,18 @@ JSTokenizer::JSRet JSTokenizer::do_identifier_substitution(const char* lexeme, b
         return EOS;
     }
 
-    const char* alias = id_part ? nullptr : ident_ctx.alias_lookup(lexeme);
+    const char* identifier_alias = id_part ? nullptr : ident_ctx.alias_lookup(lexeme);
 
-    if (alias)
+    if (identifier_alias)
     {
         set_ident_norm(false);
         ignored_id_pos = yyout.rdbuf()->pubseekoff(0, yyout.cur, std::ios_base::out);
         last_dealiased = std::string(YYText());
         dealias_stored = true;
-        yyout << alias;
+        yyout << identifier_alias;
 
         debug_logf(6, js_trace, TRACE_DUMP, nullptr,
-            "'%s' => '%s'\n", lexeme, alias);
+            "'%s' => '%s'\n", lexeme, identifier_alias);
         return EOS;
     }
 
@@ -1743,7 +1743,7 @@ void JSTokenizer::states_over()
     {
         auto idx = sp + i;
         idx %= JSTOKENIZER_MAX_STATES;
-        auto& state = states[idx];
+        const auto& state = states[idx];
 
         // Continue if NOT_SET
         if (state.sc == 0)
@@ -1819,7 +1819,7 @@ bool JSTokenizer::states_process()
         do { ++sp; sp %= JSTOKENIZER_MAX_STATES; }
         while (states[sp].sc == 0);
 
-        auto& state = states[sp];
+        const auto& state = states[sp];
         token = state.token;
         yy_start = state.sc;
     }
@@ -1858,7 +1858,7 @@ void JSTokenizer::states_adjust()
     if (outbuf_pos > 0)
     {
         // A valid state always here
-        auto& state = states[sp];
+        const auto& state = states[sp];
         assert(state.sc != 0);
 
         int ignore_norm_len = outbuf_pos - state.norm_len;

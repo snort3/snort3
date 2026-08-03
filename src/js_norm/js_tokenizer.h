@@ -326,7 +326,7 @@ private:
 
     static const char* p_scope_codes[];
 
-    void* cur_buffer;
+    void* cur_buffer = nullptr;
     void* tmp_buffer = nullptr;
     std::stringstream tmp;
 
@@ -347,10 +347,10 @@ private:
     ASIGroup previous_group = ASI_OTHER;
     JSIdentifier& ident_ctx;
     size_t bytes_read;
-    size_t tmp_bytes_read;
+    size_t tmp_bytes_read = 0;
     uint32_t tokens_read;
-    uint32_t tmp_tokens_read;
-    bool ext_script;
+    uint32_t tmp_tokens_read = 0;
+    bool ext_script = false;
     VStack<char> regex_stack;
 
     struct

@@ -51,7 +51,7 @@ static unsigned pub_id = 0;
 /*
  * Function prototype(s)
  */
-static void snort_ssh(SSH_PROTO_CONF* GlobalConf, Packet* p);
+static void snort_ssh(const SSH_PROTO_CONF* GlobalConf, Packet* p);
 static bool process_ssh_version_string(
     const SSH_PROTO_CONF* config, SSHData* sessionp, Packet* p, uint8_t direction);
 static bool process_ssh1_key_exchange(SSHData *sessionp, Packet *p, uint8_t direction);
@@ -89,7 +89,7 @@ SSHData* get_session_data(const Flow* flow)
 }
 
 // Main runtime entry point for SSH inspector.
-static void snort_ssh(SSH_PROTO_CONF* config, Packet* p)
+static void snort_ssh(const SSH_PROTO_CONF* config, Packet* p)
 {
     Profile profile(sshPerfStats);
 

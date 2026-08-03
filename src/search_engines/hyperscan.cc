@@ -383,9 +383,9 @@ int HyperscanMpse::prep_patterns(SnortConfig* sc)
 
 #ifdef REG_TEST
     hs_platform_info_t info = { HS_TUNE_FAMILY_SNB, 0, 0, 0 };
-    auto pinfo = &info;
+    const auto* pinfo = &info;
 #else
-    hs_platform_info_t* pinfo = nullptr;
+    const hs_platform_info_t* pinfo = nullptr;
 #endif
 
     if ( hs_compile_multi(&pats[0], &flags[0], &ids[0], pvector.size(), HS_MODE_BLOCK,

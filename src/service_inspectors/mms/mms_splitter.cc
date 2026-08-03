@@ -40,7 +40,7 @@ static void update_flow_data(const Packet*, TpktFlowData*, const CurPacketContex
 static bool populate_cur_pkt_ctx(const Packet*, TpktFlowData*, CurPacketContext*);
 static void update_cur_pkt_ctx_exit_offset(const Packet*, TpktFlowData*, CurPacketContext*);
 
-static void process_mms_not_found_result(Packet*, TpktFlowData*, CurPacketContext*,
+static void process_mms_not_found_result(const Packet*, TpktFlowData*, CurPacketContext*,
     TpktAppliSearchStateType, Packet*);
 
 static void reset_packet_data(const Packet* p, TpktFlowData* tpktfd, CurPacketContext* cur_pkt_ctx)
@@ -119,7 +119,7 @@ static void update_cur_pkt_ctx_exit_offset(const Packet* p, TpktFlowData* tpktfd
     }
 }
 
-static void process_mms_not_found_result(Packet* p, TpktFlowData* tpktfd,
+static void process_mms_not_found_result(const Packet* p, TpktFlowData* tpktfd,
     CurPacketContext* cur_pkt_ctx, TpktAppliSearchStateType res, Packet* tmp_pkt)
 {
     if (res == TPKT_APPLI_SEARCH_STATE__EXIT)
