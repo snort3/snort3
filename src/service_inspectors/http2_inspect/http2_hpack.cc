@@ -342,6 +342,14 @@ bool Http2HpackDecoder::decode_header_line(const uint8_t* encoded_header_buffer,
     // Handle pseudoheaders or concatenated http1 headers (e.g, cookies)
     if (ret and bytes_written > 0)
     {
+        // Charge decoded work before pseudo-header and cookie lines are discarded.
+        if (bytes_written > static_cast<uint32_t>(MAX_OCTETS) - decoded_headers_work)
+        {
+            *infractions += INF_DECODED_HEADER_BUFF_OUT_OF_SPACE;
+            return false;
+        }
+        decoded_headers_work += bytes_written;
+
         if (decoded_header_buffer[0] == ':' and name.length() != 0)
         {
             if (pseudo_headers_allowed)
@@ -397,6 +405,9 @@ bool Http2HpackDecoder::decode_headers(const uint8_t* encoded_headers,
     // block
     table_size_update_allowed = true;
     num_table_size_updates = 0;
+
+    // Reset the per-block decode-work budget (see decode_header_line)
+    decoded_headers_work = 0;
 
     while (success and total_bytes_consumed < encoded_headers_length)
     {

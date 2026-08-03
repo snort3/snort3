@@ -78,6 +78,14 @@ literal. The resulting header line is then added to the dynamic table. The third
 is literal not to be indexed, which is the same as literal to be indexed, except the header line is
 not added to the dynamic table.
 
+decode_headers() limits cumulative decoded work per header block to MAX_OCTETS, including
+pseudo-header and cookie lines that are later discarded or consolidated. These lines are copied into
+the decoded buffer and then discarded (bytes_written reset to 0), so they do not charge the retained
+output-size budget; the decoded_headers_work counter charges their gross decoded size in
+decode_header_line before the discard. The budget resets for each header block, and exceeding it
+fails decoding with INF_DECODED_HEADER_BUFF_OUT_OF_SPACE, invoking the existing fatal
+header-decoding error handling (immediate EVENT_MISFORMATTED_HTTP2, scan() returns ABORT).
+
 *** Error Processing ***
 H2I has two levels of failure for flow processing. Fatal errors include failures in frame splitting
 and errors in header decoding that compromise the HPACK dictionary. A fatal error will trigger an

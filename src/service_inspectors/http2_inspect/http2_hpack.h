@@ -94,6 +94,8 @@ private:
     Http2EventGen* const events;
     Http2Infractions* const infractions;
     uint32_t decoded_headers_size = 0;
+    // Per-block decoded byte count, including discarded pseudo-header and cookie lines.
+    uint32_t decoded_headers_work = 0;
     const HttpCommon::SourceId source_id;
 
     static Http2HpackIntDecode decode_int7;
