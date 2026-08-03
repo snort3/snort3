@@ -198,6 +198,33 @@ static RnaTracker get_client_rna_tracker(const snort::Packet* p, RNAFlow* rna_fl
     return rna_flow->get_client(p->flow->client_ip);
 }
 
+static RnaTracker get_server_rna_tracker(const snort::Packet* p, RNAFlow* rna_flow)
+{
+    return rna_flow->get_server(p->flow->server_ip);
+}
+
+static const struct in6_addr* get_deviceinfo_ip(const snort::Packet* p)
+{
+    return reinterpret_cast<const struct in6_addr*>(p->is_from_server() ?
+        p->flow->server_ip.get_ip6_ptr() : p->flow->client_ip.get_ip6_ptr());
+}
+
+static void log_device_name_change(const std::string& clean_device_name, RnaTracker& rt,
+    const snort::Packet* pkt, RnaLogger& logger, uint8_t* mac_addr, bool priority)
+{
+    if (!is_printable_string(clean_device_name.c_str()))
+        return;
+    if (rt->set_device_name(clean_device_name.c_str(), priority))
+    {
+        debug_logf(rna_trace, pkt, "DeviceInfo: logging CHANGE_DEVICE_NAME event, name='%s'\n",
+            clean_device_name.c_str());
+        logger.log(RNA_EVENT_CHANGE, CHANGE_DEVICE_NAME, pkt, rt,
+            get_deviceinfo_ip(pkt),
+            rt->get_last_seen_mac(mac_addr), nullptr, packet_time(),
+            nullptr, clean_device_name.c_str());
+    }
+}
+
 void RnaDeviceDiscovery::process(const snort::DeviceInfoEvent* event, RnaLogger& logger, DiscoveryFilter& filter)
 {
     DeviceInfoFpProcessor* processor = get_deviceinfo_fp_processor();
@@ -217,10 +244,12 @@ void RnaDeviceDiscovery::process(const snort::DeviceInfoEvent* event, RnaLogger&
     if (!rna_flow)
         return;
 
-    if (!filter.is_host_monitored(pkt, nullptr, nullptr, FlowCheckDirection::DF_CLIENT))
+    bool from_server = pkt->is_from_server();
+    FlowCheckDirection dir = from_server ? FlowCheckDirection::DF_SERVER : FlowCheckDirection::DF_CLIENT;
+    if (!filter.is_host_monitored(pkt, nullptr, nullptr, dir))
         return;
 
-    RnaTracker rt = get_client_rna_tracker(pkt, rna_flow);
+    RnaTracker rt = from_server ? get_server_rna_tracker(pkt, rna_flow) : get_client_rna_tracker(pkt, rna_flow);
     if (!rt)
         return;
 
@@ -228,7 +257,7 @@ void RnaDeviceDiscovery::process(const snort::DeviceInfoEvent* event, RnaLogger&
         return;
     rt->update_last_seen();
 
-    uint8_t mac_addr[MAC_SIZE];
+    uint8_t mac_addr[MAC_SIZE] = {};
 
     for (const std::pair<const std::pair<std::string, std::string>, std::vector<std::pair<std::string, std::string>>>& entry : device_info_map)
     {
@@ -243,18 +272,6 @@ void RnaDeviceDiscovery::process(const snort::DeviceInfoEvent* event, RnaLogger&
             continue;
 
         std::string clean_device_name = clean_field_value(device_name);
-        if (is_printable_string(clean_device_name.c_str()))
-        {
-            if (rt->set_device_name(clean_device_name.c_str()))
-            {
-                debug_logf(rna_trace, pkt, "DeviceInfo: logging CHANGE_DEVICE_NAME event, name='%s'\n",
-                    clean_device_name.c_str());
-                logger.log(RNA_EVENT_CHANGE, CHANGE_DEVICE_NAME, pkt, rt,
-                    reinterpret_cast<const struct in6_addr*>(pkt->flow->client_ip.get_ip6_ptr()),
-                    rt->get_last_seen_mac(mac_addr), nullptr, packet_time(),
-                    nullptr, clean_device_name.c_str());
-            }
-        }
 
         std::vector<const DeviceInfoRowFingerprint*> rows;
         processor->get_rows(service_type.c_str(), rows);
@@ -262,21 +279,22 @@ void RnaDeviceDiscovery::process(const snort::DeviceInfoEvent* event, RnaLogger&
         if (rows.empty())
         {
             debug_logf(rna_trace, pkt, "DeviceInfo: no fingerprint rows found for service %s\n", service_type.c_str());
+            log_device_name_change(clean_device_name, rt, pkt, logger, mac_addr, false);
             continue;
         }
 
         std::vector<MatchedRowInfo> matched_rows;
         const MatchedRowInfo* best_hardware_row = nullptr;
+        bool any_row_matched = false;
 
         for (const DeviceInfoRowFingerprint* row : rows)
         {
             std::string extracted_values[DEVICEINFO_FIELD_MAX];
-            
+
             if (!match_row_fields(row, txt_kv_pairs, extracted_values))
                 continue;
 
-            if (!rt->add_deviceinfo_fingerprint(row->fpid))
-                continue;
+            any_row_matched = true;
 
             MatchedRowInfo info;
             info.row = row;
@@ -284,19 +302,24 @@ void RnaDeviceDiscovery::process(const snort::DeviceInfoEvent* event, RnaLogger&
                 info.field_values[i] = clean_field_value(extracted_values[i]);
             info.field_values[DEVICEINFO_FIELD_DEVICENAME] = clean_field_value(device_name);
 
-            info.hardware_info = info.field_values[DEVICEINFO_FIELD_MANUFACTURER] + 
-                (info.field_values[DEVICEINFO_FIELD_MANUFACTURER].empty() || info.field_values[DEVICEINFO_FIELD_MODEL].empty() ? "" : " ") + 
+            info.hardware_info = info.field_values[DEVICEINFO_FIELD_MANUFACTURER] +
+                (info.field_values[DEVICEINFO_FIELD_MANUFACTURER].empty() || info.field_values[DEVICEINFO_FIELD_MODEL].empty() ? "" : " ") +
                 info.field_values[DEVICEINFO_FIELD_MODEL];
 
             info.has_predefined_model = (row->field_mask & DEVICEINFO_MASK_MODEL) && !row->values[DEVICEINFO_FIELD_MODEL].empty();
-            info.has_hardware = (row->field_mask & (DEVICEINFO_MASK_MODEL | DEVICEINFO_MASK_MANUFACTURER)) && 
+            info.has_hardware = (row->field_mask & (DEVICEINFO_MASK_MODEL | DEVICEINFO_MASK_MANUFACTURER)) &&
                 !info.hardware_info.empty() && is_printable_string(info.hardware_info.c_str());
 
             if (row->field_mask & DEVICEINFO_MASK_OS)
                 info.os_cpe = row->os_prefix + info.field_values[DEVICEINFO_FIELD_OS] + row->os_postfix;
 
+            if (!rt->add_deviceinfo_fingerprint(row->fpid))
+                continue;
+
             matched_rows.push_back(std::move(info));
         }
+
+        log_device_name_change(clean_device_name, rt, pkt, logger, mac_addr, any_row_matched);
 
         if (matched_rows.empty())
             continue;
@@ -319,22 +342,21 @@ void RnaDeviceDiscovery::process(const snort::DeviceInfoEvent* event, RnaLogger&
             if (!os_logged && (info.row->field_mask & DEVICEINFO_MASK_OS) && !info.os_cpe.empty())
             {
                 const std::string& hw_for_os = info.hardware_info.empty() ? preferred_hardware_info : info.hardware_info;
-                if (is_printable_string(hw_for_os.c_str()))
-                {
-                    debug_logf(rna_trace, pkt, "DeviceInfo: logging NEW_OS event for fingerprint %u, os_cpe='%s'\n",
-                        info.row->fpid, info.os_cpe.c_str());
-                    std::vector<const char*> cpes;
-                    cpes.push_back(info.os_cpe.c_str());
-                    FpFingerprint fp;
-                    fp.fpid = info.row->fpid;
-                    fp.fpuuid = info.row->fpuuid;
-                    fp.fp_type = FpFingerprint::FpType::FP_TYPE_DEVICEINFO;
+                const char* hw_for_os_c = is_printable_string(hw_for_os.c_str()) ? hw_for_os.c_str() : nullptr;
 
-                    logger.log(RNA_EVENT_NEW, NEW_OS, pkt, rt, 
-                        reinterpret_cast<const struct in6_addr*>(pkt->flow->client_ip.get_ip6_ptr()),
-                        rt->get_last_seen_mac(mac_addr), &fp, &cpes, packet_time(), hw_for_os.c_str());
-                    os_logged = true;
-                }
+                debug_logf(rna_trace, pkt, "DeviceInfo: logging NEW_OS event for fingerprint %u, os_cpe='%s'\n",
+                    info.row->fpid, info.os_cpe.c_str());
+                std::vector<const char*> cpes;
+                cpes.push_back(info.os_cpe.c_str());
+                FpFingerprint fp;
+                fp.fpid = info.row->fpid;
+                fp.fpuuid = info.row->fpuuid;
+                fp.fp_type = FpFingerprint::FpType::FP_TYPE_DEVICEINFO;
+
+                logger.log(RNA_EVENT_NEW, NEW_OS, pkt, rt,
+                    get_deviceinfo_ip(pkt),
+                    rt->get_last_seen_mac(mac_addr), &fp, &cpes, packet_time(), hw_for_os_c);
+                os_logged = true;
             }
         }
 
@@ -342,8 +364,8 @@ void RnaDeviceDiscovery::process(const snort::DeviceInfoEvent* event, RnaLogger&
         {
             debug_logf(rna_trace, pkt, "DeviceInfo: logging NEW_OS hardware event for fingerprint %u, hardware='%s'\n",
                 best_hardware_row->row->fpid, best_hardware_row->hardware_info.c_str());
-            logger.log(RNA_EVENT_NEW, NEW_OS, pkt, rt, 
-                reinterpret_cast<const struct in6_addr*>(pkt->flow->client_ip.get_ip6_ptr()),
+            logger.log(RNA_EVENT_NEW, NEW_OS, pkt, rt,
+                get_deviceinfo_ip(pkt),
                 rt->get_last_seen_mac(mac_addr), best_hardware_row->row, packet_time(),
                 best_hardware_row->hardware_info.c_str(), nullptr);
         }

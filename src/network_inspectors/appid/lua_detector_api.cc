@@ -3493,7 +3493,7 @@ static int detector_publish_device_info(lua_State* L)
         return 0;
 
     DeviceInfoEvent event(pkt, service_type, device_name, kv_pairs);
-    DataBus::publish(DataBus::get_id(deviceinfo_pub_key), DeviceInfoEventIds::DEVICEINFO, event);
+    DataBus::publish(get_deviceinfo_pub_id(), DeviceInfoEventIds::DEVICEINFO, event);
 
     return 0;
 }

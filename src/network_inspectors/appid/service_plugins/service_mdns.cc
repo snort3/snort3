@@ -49,6 +49,7 @@ using namespace snort;
 #define MDNS_PATTERN1 "\x00\x00\x84\x00\x00\x00"
 #define MDNS_PATTERN2 "\x00\x00\x08\x00\x00\x00"
 #define MDNS_PATTERN3 "\x00\x00\x04\x00\x00\x00"
+#define DNS_FLAGS_OFFSET 2
 #define SRV_RECORD "\x00\x21"
 #define SRV_RECORD_OFFSET  6
 #define LENGTH_OFFSET 8
@@ -119,8 +120,6 @@ static MdnsKeyNormEntry key_norm_entries[] =
     { "MFG", 3, "manufacturer" },
     { "usb_MFG", 7, "manufacturer" },
     { "integrator", 10, "manufacturer" },
-    { "osxvers", 7, "osxvers" },
-    { "osvers", 6, "osxvers" },
 };
 
 struct KeyNormResult
@@ -148,6 +147,17 @@ static MdnsPattern patterns[] =
     { (const uint8_t*)PATTERN_STR_ARPA_1, sizeof(PATTERN_STR_ARPA_1) - 1 },
     { (const uint8_t*)PATTERN_STR_ARPA_2, sizeof(PATTERN_STR_ARPA_2) - 1 },
 };
+
+static bool is_mdns_query(const uint8_t* data, uint16_t size)
+{
+    if (size < RECORD_OFFSET)
+        return false;
+
+    uint16_t flags = (data[DNS_FLAGS_OFFSET] << SHIFT_BITS) | data[DNS_FLAGS_OFFSET + 1];
+    uint16_t query_count = (data[QUERY_OFFSET] << SHIFT_BITS) | data[QUERY_OFFSET + 1];
+
+    return ((flags & 0x8000) == 0) && (query_count > 0);
+}
 
 MdnsServiceDetector::MdnsServiceDetector(ServiceDiscovery* sd)
 {
@@ -207,7 +217,11 @@ int MdnsServiceDetector::validate(AppIdDiscoveryArgs& args)
             goto success;
         }
         else
+        {
+            if (is_mdns_query(args.data, args.size))
+                return APPID_INPROCESS;
             goto fail;
+        }
     }
     else
         goto fail;
@@ -670,7 +684,7 @@ int MdnsServiceDetector::analyze_user(AppIdSession& asd, const Packet* pkt, uint
     if (!device_info_map.empty() and asd.get_odp_ctxt().detector_deviceinfo)
     {
         DeviceInfoEvent event(pkt, device_info_map);
-        DataBus::publish(DataBus::get_id(deviceinfo_pub_key), DeviceInfoEventIds::DEVICEINFO, event);
+        DataBus::publish(get_deviceinfo_pub_id(), DeviceInfoEventIds::DEVICEINFO, event);
     }
     return 1;
 }

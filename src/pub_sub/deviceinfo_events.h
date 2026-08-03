@@ -41,6 +41,12 @@ struct DeviceInfoEventIds { enum : unsigned { DEVICEINFO, num_ids }; };
 
 const PubKey deviceinfo_pub_key { "deviceinfo", DeviceInfoEventIds::num_ids };
 
+inline unsigned get_deviceinfo_pub_id()
+{
+    static unsigned id = DataBus::get_id(deviceinfo_pub_key);
+    return id;
+}
+
 constexpr const char* DEVINFO_SERVICE_NULL = "*";
 constexpr const char* DEVINFO_META_SERVICE_TYPE = "service_type";
 constexpr const char* DEVINFO_KEY_DEVICENAME = "devicename";

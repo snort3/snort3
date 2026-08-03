@@ -403,7 +403,7 @@ public:
         return cache_idx;
     }
 
-    bool set_device_name(const char*);
+    bool set_device_name(const char*, bool priority = false);
 
     bool set_visibility(bool v = true);
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
@@ -465,6 +465,7 @@ private:
     std::vector<DeviceFingerprint, HostDeviceFpAllocator> ua_fps;
     std::string device_name;
     std::string hardware;
+    bool priority_device_name = false;
     bool priority_hardware = false;
 
     // flows that we belong to

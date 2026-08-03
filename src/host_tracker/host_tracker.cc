@@ -801,16 +801,19 @@ bool HostTracker::add_udp_fingerprint(uint32_t fpid)
     return result.second;
 }
 
-bool HostTracker::set_device_name(const char* name)
+bool HostTracker::set_device_name(const char* name, bool priority)
 {
     std::lock_guard<std::mutex> lck(host_tracker_lock);
-    if ( name && device_name != name )
+    if (!name)
+        return false;
+    if (priority)
+        priority_device_name = true;
+    if ((priority || !priority_device_name) && device_name != name)
     {
         device_name = name;
         return true;
     }
-    else
-        return false;
+    return false;
 }
 
 bool HostTracker::add_smb_fingerprint(uint32_t fpid)
@@ -901,6 +904,7 @@ bool HostTracker::set_visibility(bool v)
         udp_fpids.clear();
         smb_fpids.clear();
         device_name.clear();
+        priority_device_name = false;
         cpe_fpids.clear();
         deviceinfo_fpids.clear();
         host_type = HostType::HOST_TYPE_HOST;
