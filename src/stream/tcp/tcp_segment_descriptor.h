@@ -151,14 +151,22 @@ public:
     uint64_t get_packet_number() const
     { return packet_number; }
 
-    void rewrite_payload(uint16_t offset, const uint8_t* from, uint16_t length)
+    void rewrite_payload(unsigned offset, const uint8_t* from, unsigned length)
     {
+        if ( offset > pkt->dsize or length > pkt->dsize - offset )
+            return;
+
         memcpy(const_cast<uint8_t*>(pkt->data + offset), from, length);
         set_packet_flags(PKT_MODIFIED);
     }
 
-    void rewrite_payload(uint16_t offset, const uint8_t* from)
-    { rewrite_payload(offset, from, pkt->dsize); }
+    void rewrite_payload(unsigned offset, const uint8_t* from)
+    {
+        if ( offset > pkt->dsize )
+            return;
+
+        rewrite_payload(offset, from, pkt->dsize - offset);
+    }
 
     TcpStreamTracker* get_listener() const
     { return listener; }

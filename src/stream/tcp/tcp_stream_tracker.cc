@@ -757,12 +757,15 @@ bool TcpStreamTracker::validate_sent_seq(TcpSegmentDescriptor& tsd)
 // In no-ack policy, data is implicitly acked immediately.
 void TcpStreamTracker::update_tracker_no_ack_recv(const TcpSegmentDescriptor& tsd)
 {
-    snd_una = snd_nxt = tsd.get_end_seq();
+    if ( SEQ_GT(tsd.get_end_seq(), snd_una) )
+        snd_una = tsd.get_end_seq();
 }
 
 void TcpStreamTracker::update_tracker_no_ack_sent(const TcpSegmentDescriptor& tsd)
 {
-    r_win_base = tsd.get_end_seq();
+    if ( SEQ_GT(tsd.get_end_seq(), r_win_base) )
+        r_win_base = tsd.get_end_seq();
+
     reassembler->eval_flush_policy_on_ack(tsd.get_pkt());
 }
 

@@ -360,7 +360,9 @@ void TcpOverlapResolver::right_overlap_truncate_new(TcpOverlapState& tos)
     {
         unsigned offset = tos.right->start_seq() - tos.tsd->get_seq();
         unsigned length = tos.tsd->get_seq() + tos.tsd->get_len() - tos.right->start_seq();
-        tos.tsd->rewrite_payload(offset, tos.right->payload(), length);
+
+        if ( offset < tos.tsd->get_len() and length <= tos.tsd->get_len() - offset )
+            tos.tsd->rewrite_payload(offset, tos.right->payload(), length);
     }
 
     norm_stats[PC_TCP_IPS_DATA][tos.tcp_ips_data]++;
@@ -375,7 +377,12 @@ void TcpOverlapResolver::full_right_overlap_truncate_new(TcpOverlapState& tos)
     if ( tos.tcp_ips_data == NORM_MODE_ON )
     {
         unsigned offset = tos.right->start_seq() - tos.tsd->get_seq();
-        tos.tsd->rewrite_payload(offset, tos.right->payload(), tos.right->length);
+
+        if ( offset < tos.tsd->get_len() and
+            tos.right->length <= tos.tsd->get_len() - offset )
+        {
+            tos.tsd->rewrite_payload(offset, tos.right->payload(), tos.right->length);
+        }
     }
 
     norm_stats[PC_TCP_IPS_DATA][tos.tcp_ips_data]++;
