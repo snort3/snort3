@@ -31,8 +31,12 @@
 
 #include <openssl/evp.h>
 
+#include <climits>
 #include <iostream>
 #include <iomanip>
+#ifdef UNIT_TEST
+#include <vector>
+#endif
 
 #include "detection/fp_detect.h"
 #include "framework/data_bus.h"
@@ -65,6 +69,16 @@
 using namespace snort;
 
 THREAD_LOCAL ProfileStats file_perf_stats;
+
+//   - url:       4095 bytes, a practical ceiling for HTTP request URIs.
+//   - file_name: file names are paths, bounded by PATH_MAX.
+//   - host_name: a DNS name is at most 253 bytes (RFC 1035); 256 leaves slack.
+static constexpr uint32_t FILE_URL_CAP  = 4095;
+static constexpr uint32_t FILE_NAME_CAP = PATH_MAX;
+static constexpr uint32_t FILE_HOST_CAP = 256;
+
+static inline uint32_t file_clamp_len(uint32_t len, uint32_t cap)
+{ return len > cap ? cap : len; }
 
 // Convert UTF16-LE file name to UTF-8.
 // Returns allocated name. Caller responsible for freeing the buffer.
@@ -240,20 +254,37 @@ void FileInfo::deserialize(const char* buffer, uint16_t buffer_len)
 {
     uint16_t offset = 0;
     auto read_bool = [&](bool& val) {
+        if (offset + sizeof(val) > buffer_len)
+        {
+            val = false;
+            offset = buffer_len;
+            return;
+        }
         memcpy(&val, buffer + offset, sizeof(val));
         offset += sizeof(val);
     };
 
-    auto read_string = [&](std::string& str, bool& is_set) {
+    // Buffer is peer-supplied (MP sync), so bounds-check the declared length
+    // against buffer_len and clamp to cap; still consume the full on-wire length.
+    auto read_string = [&](std::string& str, bool& is_set, uint32_t cap) {
         read_bool(is_set);
-        if (is_set && offset < buffer_len)
+        if (!is_set)
+            return;
+        if (offset + sizeof(uint32_t) > buffer_len)
         {
-            uint32_t len = 0;
-            memcpy(&len, buffer + offset, sizeof(len));
-            offset += sizeof(len);
-            str.assign(buffer + offset, len);
-            offset += len;
+            offset = buffer_len;
+            return;
         }
+        uint32_t len = 0;
+        memcpy(&len, buffer + offset, sizeof(len));
+        offset += sizeof(len);
+        if (len > (uint32_t)(buffer_len - offset))
+        {
+            offset = buffer_len;
+            return;
+        }
+        str.assign(buffer + offset, file_clamp_len(len, cap));
+        offset += len;
     };
 
     memcpy(&is_sha256_set, buffer + offset, sizeof(is_sha256_set));
@@ -282,9 +313,9 @@ void FileInfo::deserialize(const char* buffer, uint16_t buffer_len)
     offset += sizeof(file_state.sig_state);
     memcpy(&policy_id, buffer + offset, sizeof(policy_id));
     offset += sizeof(policy_id);
-    read_string(file_name, file_name_set);
-    read_string(url, url_set);
-    read_string(host_name, host_set);
+    read_string(file_name, file_name_set, FILE_NAME_CAP);
+    read_string(url, url_set, FILE_URL_CAP);
+    read_string(host_name, host_set, FILE_HOST_CAP);
     read_bool(file_type_enabled);
     read_bool(file_signature_enabled);
     read_bool(file_capture_enabled);
@@ -311,7 +342,7 @@ FileInfo& FileInfo::operator=(const FileInfo& other)
 void FileInfo::set_file_name(const char* name, uint32_t name_size)
 {
     if (name and name_size)
-        file_name.assign(name, name_size);
+        file_name.assign(name, file_clamp_len(name_size, FILE_NAME_CAP));
 
     file_name_set = true;
 }
@@ -319,7 +350,7 @@ void FileInfo::set_file_name(const char* name, uint32_t name_size)
 void FileInfo::set_weak_file_name(const char* name, uint32_t name_size)
 {
     if (name and name_size)
-        file_name.assign(name, name_size);
+        file_name.assign(name, file_clamp_len(name_size, FILE_NAME_CAP));
 }
 
 void FileInfo::unset_file_name()
@@ -340,7 +371,7 @@ void FileInfo::reset_sha()
 void FileInfo::set_url(const char* url_name, uint32_t url_size)
 {
     if (url_name and url_size)
-        url.assign(url_name, url_size);
+        url.assign(url_name, file_clamp_len(url_size, FILE_URL_CAP));
 
     url_set = true;
 }
@@ -348,7 +379,7 @@ void FileInfo::set_url(const char* url_name, uint32_t url_size)
 void FileInfo::set_weak_url(const char* url_name, uint32_t url_size)
 {
     if (url_name and url_size)
-        url.assign(url_name, url_size);
+        url.assign(url_name, file_clamp_len(url_size, FILE_URL_CAP));
 }
 
 void FileInfo::set_host(const char* host_name, uint32_t host_size)
@@ -358,7 +389,7 @@ void FileInfo::set_host(const char* host_name, uint32_t host_size)
 
     if (host_name and host_size)
     {
-        this->host_name.assign(host_name, host_size);
+        this->host_name.assign(host_name, file_clamp_len(host_size, FILE_HOST_CAP));
         this->host_set = true;
     }
 }
@@ -1451,5 +1482,126 @@ TEST_CASE ("serialize_deserialize_roundtrip", "[file_info]")
     CHECK (original.get_url() == deserialized.get_url());
 
     delete[] buffer;
+}
+
+TEST_CASE ("set_url caps oversized url", "[file_info]")
+{
+    FI_TEST info;
+    const std::string big(FILE_URL_CAP + 5000, 'a');
+    info.set_url(big.c_str(), static_cast<uint32_t>(big.size()));
+
+    CHECK (info.get_url().size() == FILE_URL_CAP);
+    CHECK (info.get_url() == big.substr(0, FILE_URL_CAP));
+}
+
+TEST_CASE ("set_url keeps short url intact", "[file_info]")
+{
+    FI_TEST info;
+    info.set_url("https://example.org/a.pdf", 25);
+    CHECK (info.get_url() == std::string("https://example.org/a.pdf"));
+}
+
+TEST_CASE ("set_weak_url caps oversized url", "[file_info]")
+{
+    FI_TEST info;
+    const std::string big(FILE_URL_CAP + 100, 'b');
+    info.set_weak_url(big.c_str(), static_cast<uint32_t>(big.size()));
+    CHECK (info.get_url().size() == FILE_URL_CAP);
+}
+
+TEST_CASE ("set_file_name caps oversized name", "[file_info]")
+{
+    FI_TEST info;
+    const std::string big(FILE_NAME_CAP + 5000, 'c');
+    info.set_file_name(big.c_str(), static_cast<uint32_t>(big.size()));
+
+    CHECK (info.get_file_name().size() == FILE_NAME_CAP);
+    CHECK (info.get_file_name() == big.substr(0, FILE_NAME_CAP));
+    CHECK (true == info.is_file_name_set());
+}
+
+TEST_CASE ("set_file_name keeps short name intact", "[file_info]")
+{
+    FI_TEST info;
+    info.set_file_name("report.pdf", 10);
+    CHECK (info.get_file_name() == std::string("report.pdf"));
+}
+
+TEST_CASE ("set_weak_file_name caps oversized name", "[file_info]")
+{
+    FI_TEST info;
+    const std::string big(FILE_NAME_CAP + 100, 'd');
+    info.set_weak_file_name(big.c_str(), static_cast<uint32_t>(big.size()));
+    CHECK (info.get_file_name().size() == FILE_NAME_CAP);
+}
+
+TEST_CASE ("set_host caps oversized host", "[file_info]")
+{
+    FI_TEST info;
+    const std::string big(FILE_HOST_CAP + 5000, 'e');
+    info.set_host(big.c_str(), static_cast<uint32_t>(big.size()));
+
+    CHECK (info.get_host_name().size() == FILE_HOST_CAP);
+    CHECK (info.get_host_name() == big.substr(0, FILE_HOST_CAP));
+}
+
+TEST_CASE ("set_host keeps short host intact", "[file_info]")
+{
+    FI_TEST info;
+    info.set_host("example.org", 11);
+    CHECK (info.get_host_name() == std::string("example.org"));
+}
+
+TEST_CASE ("deserialize caps peer-supplied oversized url", "[file_info]")
+{
+    const uint32_t big_len = FILE_URL_CAP + 2000;
+    std::vector<char> buf;
+    auto put_bytes = [&](const void* p, size_t n) {
+        const char* c = static_cast<const char*>(p);
+        buf.insert(buf.end(), c, c + n);
+    };
+    auto put_zero = [&](size_t n) { buf.insert(buf.end(), n, '\0'); };
+    auto put_bool = [&](bool b) { char v = b ? 1 : 0; put_bytes(&v, 1); };
+
+    put_bool(false);                       // is_sha256_set
+    put_zero(sizeof(FileVerdict));         // verdict
+    put_zero(sizeof(uint64_t));            // file_size
+    put_zero(sizeof(FileDirection));       // direction
+    put_zero(sizeof(uint64_t));            // file_id
+    put_zero(sizeof(uint32_t));            // file_type_id
+    put_zero(sizeof(FileCaptureState));    // file_state.capture_state
+    put_zero(sizeof(FileSigState));        // file_state.sig_state
+    put_zero(sizeof(uint32_t));            // policy_id
+    put_bool(false);                       // file_name is_set
+    put_bool(true);                        // url is_set
+    put_bytes(&big_len, sizeof(big_len));  // url length (oversized)
+    buf.insert(buf.end(), big_len, 'z');   // url payload present in-buffer
+    put_bool(false);                       // host is_set
+    put_bool(false);                       // file_type_enabled
+    put_bool(false);                       // file_signature_enabled
+    put_bool(false);                       // file_capture_enabled
+    put_bool(false);                       // is_partial
+
+    FI_TEST info;
+    info.deserialize(buf.data(), static_cast<uint16_t>(buf.size()));
+
+    CHECK (info.get_url().size() == FILE_URL_CAP);
+}
+
+TEST_CASE ("deserialize rejects string running past buffer_len", "[file_info]")
+{
+    FI_TEST original;
+    original.set_url("https://example.org/resource.bin", 32);
+
+    size_t full = original.get_serialized_size();
+    std::vector<char> buf(full);
+    original.serialize(buf.data(), static_cast<uint16_t>(full));
+
+    // Declare fewer bytes than were serialized so the url payload no longer
+    // fits; deserialize must bail out cleanly, leaving url empty, not read on.
+    FI_TEST info;
+    info.deserialize(buf.data(), static_cast<uint16_t>(full - 10));
+
+    CHECK (info.get_url().empty());
 }
 #endif
