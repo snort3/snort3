@@ -231,7 +231,7 @@ WHITESPACE         {GRP_WHITESPACE}{1,16}
 <array>{OBJ_DICT_CLOSE}                           { return PDFRet::INCORRECT_BRACKETS_NESTING; }
 <dictnr>{OBJ_DICT_CLOSE}                          { POP(); EXEC(h_dict_close()); }
 <dictnr>{WHITESPACE}                              { state_add(yyleng); }
-<dictnr>{OBJ_REFERENCE}                           { dictionaries.top().consecutive_number = false; EXEC(h_dict_other()); h_ref(); }
+<dictnr>{OBJ_REFERENCE}                           { dictionaries.top().consecutive_number = false; EXEC(h_dict_other()); EXEC(h_ref()); }
 <dictnr>{OBJ_BOOLEAN}                             { EXEC(h_dict_other()); }
 <dictnr>{OBJ_PARTIAL_BOOL}                        { state_add(yyleng); }
 <dictnr>{OBJ_INT_NUM}                             { EXEC(h_dict_number()); h_stream_length(); state_add(yyleng); }
@@ -592,15 +592,21 @@ void PDFTokenizer::h_stream_length()
         obj_stream.rem_length = snort::SnortStrtol(yytext, nullptr, 10);
 }
 
-void PDFTokenizer::h_ref()
+PDFTokenizer::PDFRet PDFTokenizer::h_ref()
 {
     if (!strcmp(obj_entry.key, "/JS"))
+    {
+        if (js_stream_refs.size() >= PDFTOKENIZER_MAX_JS_STREAM_REFS)
+            return PDFRet::DICTIONARY_NESTING_OVERFLOW;
         js_stream_refs.insert(snort::SnortStrtoul(yytext, nullptr, 10));
+    }
     else if (!strcmp(obj_entry.key, "/Length"))
     {
         obj_stream.is_ref_len = true;
         obj_stream.rem_length = -1;
     }
+
+    return PDFRet::EOS;
 }
 
 void PDFTokenizer::h_ind_obj_open()

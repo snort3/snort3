@@ -28,6 +28,7 @@
 #include "main/snort_types.h"
 
 #define PDFTOKENIZER_NAME_MAX_SIZE 16
+#define PDFTOKENIZER_MAX_JS_STREAM_REFS 1024
 
 namespace jsn
 {
@@ -84,7 +85,7 @@ private:
     PDFRet h_stream_dump_remainder_u16();
     bool h_stream_close();
     void h_stream_length();
-    void h_ref();
+    PDFRet h_ref();
     void h_ind_obj_open();
     inline void h_ind_obj_close();
     void h_u16_start();

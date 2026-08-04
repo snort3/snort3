@@ -458,6 +458,22 @@ TEST_CASE("basic", "[PDFTokenizer]")
             "", PDFTokenizer::PDFRet::DICTIONARY_NESTING_OVERFLOW
         );
     }
+    SECTION("js stream references overflow")
+    {
+        std::string body = "1 0 obj\n<<";
+        for (unsigned i = 1; i <= PDFTOKENIZER_MAX_JS_STREAM_REFS + 1; ++i)
+            body += "/JS " + std::to_string(i) + " 0 R ";
+        body += ">>\nendobj\n";
+        test_pdf_proc(body, "", PDFTokenizer::PDFRet::DICTIONARY_NESTING_OVERFLOW);
+    }
+    SECTION("js stream references under cap")
+    {
+        std::string body = "1 0 obj\n<<";
+        for (unsigned i = 1; i <= 8; ++i)
+            body += "/JS " + std::to_string(i) + " 0 R ";
+        body += ">>\nendobj\n";
+        test_pdf_proc(body, "", PDFTokenizer::PDFRet::EOS);
+    }
 }
 
 TEST_CASE("brackets balancing", "[PDFTokenizer]")
