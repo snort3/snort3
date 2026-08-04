@@ -45,11 +45,7 @@ bool HttpStartCutter::find_eol(uint8_t octet, uint32_t idx, HttpInfractions* inf
             *infractions += INF_LF_WITHOUT_CR;
 
             if (is_request_cutter())
-            {
-                if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
-                    get_cache_data().request.reason_code_detail_300 = BAD_REQUEST_TERMINATION;
-                events->create_event(EVENT_REQUEST_LINE_NOT_VALID);
-            }
+                create_event_request_line_not_valid(events, BAD_REQUEST_TERMINATION);
 
             events->create_event(EVENT_LF_WITHOUT_CR);
         }
@@ -62,11 +58,7 @@ bool HttpStartCutter::find_eol(uint8_t octet, uint32_t idx, HttpInfractions* inf
         *infractions += INF_CR_WITHOUT_LF;
 
         if (is_request_cutter())
-        {
-            if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
-                get_cache_data().request.reason_code_detail_300 = BAD_REQUEST_TERMINATION;
-            events->create_event(EVENT_REQUEST_LINE_NOT_VALID);
-        }
+            create_event_request_line_not_valid(events, BAD_REQUEST_TERMINATION);
         events->create_event(EVENT_CR_WITHOUT_LF);
         num_flush = idx;   // current octet not flushed
         return true;
@@ -110,21 +102,20 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
                     return SCAN_ABORT;
                 }
             }
-            else if (is_request_cutter() and octets_seen == 0 and !found_first_char)
+            if (num_crlf > 0)
+            {
+                // Discard leading whitespace before classifying the next character.
+                num_flush = k;     // current octet not flushed with white space
+                return SCAN_DISCARD;
+            }
+            if (is_request_cutter() and octets_seen == 0 and !found_first_char)
             {
                 found_first_char = true;
                 if (buffer[k] == '/')
                 {
-                    if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
-                        get_cache_data().request.reason_code_detail_300 = METHOD_NOT_PRESENT;
                     get_cache_data().request.save_request_line(buffer, length);
-                    events->create_event(EVENT_REQUEST_LINE_NOT_VALID);
+                    create_event_request_line_not_valid(events, METHOD_NOT_PRESENT);
                 }
-            }
-            if (num_crlf > 0)
-            {
-                num_flush = k;     // current octet not flushed with white space
-                return SCAN_DISCARD;
             }
         }
 
@@ -141,6 +132,9 @@ ScanResult HttpStartCutter::cut(const uint8_t* buffer, uint32_t length,
                 validated = true;
                 break;
             case V_BAD:
+                if (is_request_cutter() and
+                    get_cache_data().request.request_line_invalid_reason != HttpEnums::RequestLineInvalidReasonCode::NONE)
+                    get_cache_data().request.save_request_line(buffer, length);
                 *infractions += INF_NOT_HTTP;
                 return SCAN_ABORT;
             case V_TBD:
@@ -197,11 +191,7 @@ HttpStartCutter::ValidationResult HttpRequestCutter::validate(uint8_t octet,
     if (!token_char[octet] || ++octets_checked > max_method_length)
     {
         if (is_request_cutter())
-        {
-            if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
-                get_cache_data().request.reason_code_detail_300 = NON_RFC_CHAR;
-            events->create_event(EVENT_REQUEST_LINE_NOT_VALID);
-        }
+            create_event_request_line_not_valid(events, NON_RFC_CHAR);
         events->create_event(HttpEnums::EVENT_BAD_REQ_LINE);
         return V_BAD;
     }

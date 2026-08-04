@@ -99,6 +99,21 @@ processing of that stream in that direction will end.
 
 H2I supports the NHI test tool. See ../http_inspect/dev_notes.txt for usage instructions.
 
+*** HTTP/2 request-line enforcement metric ***
+NHI's max_request_line_length check (SID 119:299) needs a request-line length for HTTP/2,
+which have no request line on the wire. H2I supplies it as hx_request_line_length via
+Http2RequestLine::get_pseudo_request_line_length() (http2_request_line.cc), callable only after
+generate_start_line() returns true.
+
+The metric is method.length() + uri_len, where uri_len includes generated URI syntax
+(the "://" between scheme and authority, and a leading "/" inserted when :path doesn't start
+with one) but excludes the method/URI/version separator spaces and the synthetic version text
+that generate_start_line() also writes into the full start line.
+
+Message Detail (compute_detail_119_299() in http_field_buffer.cc) reports that full synthesized
+line instead, with its " HTTP/1.1" suffix swapped for " HTTP/2.0" to match the
+stream's actual protocol - so it's longer than the enforced length.
+
 *** Memory requirements ***
 Http2FlowData represents all H2I information in a flow. It does not account 
 for the entries in the hpack dynamic table. The formula below estimates the size of an entry 

@@ -33,6 +33,11 @@
 long HttpTestManager::print_amount {};
 bool HttpTestManager::print_hex {};
 
+namespace snort
+{
+int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
+}
+
 int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);

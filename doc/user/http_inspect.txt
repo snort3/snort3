@@ -226,9 +226,9 @@ body. The compressed content is decompressed and made available through the file
 ===== decompress_vba
 
 decompress_vba = true will enable decompression of RLE (Run Length Encoding)
-compressed vba (Visual Basic for Applications) macro data of MS Office 
+compressed vba (Visual Basic for Applications) macro data of MS Office
 files encountered in a message body. The MS office files are PKZIP compressed which are parsed to
-locate the OLE (Object Linking and Embedding) file embedded with the files 
+locate the OLE (Object Linking and Embedding) file embedded with the files
 containing RLE compressed vba macro data. The decompressed vba macro data is
 then made available through the vba_data ips rule option.
 
@@ -307,6 +307,54 @@ maximum_pipelined_requests = 0, will not trigger an alert in the case
 of an alternating sequence of requests and responses. It will trigger the
 alert once the client issue a request before getting the response to a
 previous request.
+
+===== max_request_size
+
+http_inspect generates 119:298 when the size of a client request (the
+request line plus headers, before any body) exceeds max_request_size = N
+{-1 : 65536} (default 0). A value of 0 disables the check; -1 means no
+limit.
+
+===== max_request_line_length
+
+http_inspect generates 119:299 when the length of the request line alone
+(not counting terminating CR/LF sequence) exceeds max_request_line_length = N
+{-1 : 49152} (default 0). A value of 0 disables the check; -1 means no limit.
+For HTTP/2 traffic, the length is the combined length of the :method,
+:scheme, :authority, and :path pseudo-header values. The alert's Message
+Detail field, however, echoes the full synthesized HTTP/1-style request
+line, including its trailing " HTTP/2.0" version suffix,
+so the string shown there is longer than the reported length.
+
+===== Validate Request Line Format
+
+http_inspect generates 119:300 when the request line does not conform to
+the expected grammar:
+
+* the method contains a character outside the RFC token set
+* the method is missing (the line does not begin with a token followed by
+  whitespace)
+* the method is not all upper case
+* the method is not recognized
+* the URI is missing
+* the URI contains an unescaped space
+* there is improper or extra whitespace in the start line
+* the HTTP-version is missing or malformed
+* the HTTP-version uses an unsupported major version
+* the HTTP-version has an invalid subversion
+* the HTTP-version is not all upper case
+* the request line is terminated incorrectly (bare LF without a
+  preceding CR, or CR without a following LF)
+* the request uses the primitive HTTP/0.9 format (no HTTP-version at
+  all). A request whose HTTP-version field is present but too badly
+  malformed to parse as a supported version is also classified as
+  HTTP/0.9, since http_inspect cannot always distinguish a missing
+  version from a version that is present but unrecognizable.
+
+This is a diagnostic alert with no configuration of its own; it fires
+during normal request-line parsing. The alert's Message Detail field
+names the specific reason and, when available, echoes the request line
+that triggered it.
 
 ===== URI processing
 
@@ -586,19 +634,19 @@ is the scheme, "www.samplehost.com" is the host, "287" is the port,
 "/basic/example/of/path" is the path, "with-query" is the query, and
 "and-fragment" is the fragment.
 
-http_uri represents the normalized uri, normalization of components depends 
-on uri type. If the uri is of type absolute (contains all six components) or 
-absolute path (contains path, query and fragment) then the path and query 
+http_uri represents the normalized uri, normalization of components depends
+on uri type. If the uri is of type absolute (contains all six components) or
+absolute path (contains path, query and fragment) then the path and query
 components are normalized. In these cases, http_uri represents the normalized
-path, query, and fragment (/path?query#fragment). If the uri is of type 
-authority (host and port), the host is normalized and http_uri represents the 
-normalized host with the port number. In all other cases http_uri is the same 
-as http_raw_uri. http_decoded_uri represents the decoded URI with normalization 
+path, query, and fragment (/path?query#fragment). If the uri is of type
+authority (host and port), the host is normalized and http_uri represents the
+normalized host with the port number. In all other cases http_uri is the same
+as http_raw_uri. http_decoded_uri represents the decoded URI with normalization
 but without path simplification. It supports the same six components (path, query,
-fragment, host, port, scheme) as http_uri. For host/port/query/fragment/scheme, 
-http_decoded_uri behaves like http_uri. For path, http_decoded_uri:path uses the 
-decoded path without removing path traversal segments (for example, 
-/safe/../../evil/secret.txt), while http_uri:path uses the normalized (simplified) 
+fragment, host, port, scheme) as http_uri. For host/port/query/fragment/scheme,
+http_decoded_uri behaves like http_uri. For path, http_decoded_uri:path uses the
+decoded path without removing path traversal segments (for example,
+/safe/../../evil/secret.txt), while http_uri:path uses the normalized (simplified)
 path (for example, /evil/secret.txt).
 
 Note: this section uses informal language to explain some things. Nothing
@@ -768,7 +816,7 @@ rule option is available to examine the actual bytes in the version field.
 
 ===== http_header_test and http_trailer_test
 
-Rule options that perform various tests against a specific header and 
+Rule options that perform various tests against a specific header and
 trailer field, respectively. It can perform a range test, check whether the
 value is numeric or whether it is absent. Negative values are considered
 non-numeric. Values with more than 18 digits are considered non-numeric.

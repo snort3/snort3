@@ -23,8 +23,10 @@
 
 #include "http_field_buffer.h"
 
+#include <algorithm>
+#include <memory>
+
 #include "http_common.h"
-#include "http_event_reason.h"
 #include "http_msg_request.h"
 #include "http_msg_section.h"
 #include "http_msg_status.h"
@@ -34,6 +36,64 @@
 using namespace HttpCommon;
 using namespace HttpEnums;
 
+
+static const char* get_http_event_reason_msg(RequestLineInvalidReasonCode event)
+{
+    switch (event)
+    {
+    case BAD_REQUEST_TERMINATION:
+        return "HTTP request bad termination";
+    case BAD_VERSION:
+        return "HTTP version is bad";
+    case IMPROPER_WS:
+        return "Improper whitespace in start line";
+    case INVALID_SUBVERSION:
+        return "Invalid subversion";
+    case METHOD_NOT_PRESENT:
+        return "HTTP method missing";
+    case METHOD_NOT_UPPERCASE:
+        return "HTTP method not all upper case";
+    case NON_RFC_CHAR:
+        return "Non-RFC character present";
+    case SIMPLE_REQUEST:
+        return "Simple request (no version)";
+    case UNESCAPED_SPACE_URI:
+        return "Unescaped space in URI";
+    case UNKNOWN_METHOD:
+        return "Unknown method";
+    case URI_MISSING:
+        return "URI missing";
+    case VERSION_HIGHER_THAN_1:
+        return "Version higher than 1";
+    case VERSION_MALFORMED:
+        return "HTTP version is malformed";
+    case VERSION_NOT_UPPERCASE:
+        return "HTTP version not all upper case";
+    case NONE:
+        return "Unknown reason";
+    }
+
+    assert(false);
+    return "Unknown reason";
+}
+
+static const char* get_detail_301_reason(Detail301ReasonCode code)
+{
+    switch (code)
+    {
+    case DETAIL_301_NONE:
+        return "No detail available";
+    case DETAIL_301_CL_AND_TE_PRESENT:
+        return "Content-Length and Transfer-Encoding are both present";
+    case DETAIL_301_HTTPX_HAS_TE:
+        return "HTTP/2 or HTTP/3 has Transfer-Encoding";
+    case DETAIL_301_NEGATIVE_CL:
+        return "Content-Length has a negative value";
+    }
+
+    assert(false);
+    return "Unknown reason";
+}
 
 static void fill_slot_from_field(HttpTmpBuffer& slot, const Field& f)
 {
@@ -54,6 +114,8 @@ static void append_header_value(std::string& out, const char* label,
     HttpMsgSection* section, HeaderId id)
 {
     out.append(label);
+
+    assert(section);
     const auto& value = section->get_classic_buffer(HTTP_BUFFER_HEADER, id, 0);
 
     if ( value.length() > 0 )
@@ -62,23 +124,48 @@ static void append_header_value(std::string& out, const char* label,
         out.append("<no value>");
 }
 
-// For HTTP/2: strips the trailing " HTTP/1.1" suffix appended by http2_inspect.
-static const uint8_t* get_raw_request_start(const Field& raw_req, int32_t& out_len,
-    bool for_httpx)
+// Replaces the HTTP/1.1 suffix from the synthetic request line with HTTP/2.
+static bool append_raw_request_line(std::string& out, HttpMsgSection* section, int32_t max_append)
 {
+    assert(section);
+    const Field& raw_req = section->get_classic_buffer(HTTP_BUFFER_RAW_REQUEST, 0, 0);
     if (raw_req.length() <= 0)
+        return false;
+
+    int32_t raw_len = raw_req.length();
+
+    std::string version_suffix;
+    if (section->get_session_data()->is_for_httpx())
     {
-        out_len = 0;
-        return nullptr;
+        if (raw_len > HX_REQUEST_LINE_SUFFIX_LEN)
+            raw_len -= HX_REQUEST_LINE_SUFFIX_LEN;
+
+        assert(section->get_request());
+        const auto& iter = VersionEnumToStr.find(section->get_request()->get_version_id());
+        version_suffix = " HTTP/";
+        version_suffix.append(iter != VersionEnumToStr.end() ? iter->second : "?");
     }
 
-    out_len = raw_req.length();
-    if (for_httpx && out_len > HX_REQUEST_LINE_SUFFIX_LEN)
-        out_len -= HX_REQUEST_LINE_SUFFIX_LEN;
+    const int32_t escape_budget = max_append - static_cast<int32_t>(version_suffix.length());
+    HttpCacheData::append_escaped(out, raw_req.start(), raw_len,
+        std::max(escape_budget, 0));
+    out.append(version_suffix);
 
-    return raw_req.start();
+    return true;
 }
 
+static void append_request_line_or_cached(std::string& out, const HttpCacheData& cache,
+    HttpMsgSection* section)
+{
+    if (section and append_raw_request_line(out, section, MAX_REQUEST_LINE_LOG_LEN))
+        return;
+
+    if (cache.request.request_line_raw_len > 0)
+        HttpCacheData::append_escaped(out, cache.request.request_line_raw.data(),
+            cache.request.request_line_raw_len, MAX_REQUEST_LINE_LOG_LEN);
+    else
+        out.append("<no request>");
+}
 
 static void compute_decoded_uri(const HttpCacheData& cache, HttpTmpBuffer& slot,
     const HttpBufferInfo&, HttpMsgSection* section)
@@ -226,6 +313,8 @@ static void compute_detail_119_298(const HttpCacheData& cache, HttpTmpBuffer& sl
 {
     // EVENT_EVENT_REQUEST_SIZE_TOO_LONG
     // Request Size: XXX
+    // Transaction header pointers get replaced on each partial-flush chunk, so only the
+    // cache value accumulates correctly across chunks.
     slot.text = "Request Size: " + std::to_string(cache.request.request_size);
     slot.field.set(static_cast<int32_t>(slot.text.length()),
         reinterpret_cast<const uint8_t*>(slot.text.c_str()));
@@ -236,31 +325,24 @@ static void compute_detail_119_299(const HttpCacheData& cache, HttpTmpBuffer& sl
 {
     // EVENT_REQUEST_LINE_LENGTH_TOO_LONG
     // Request Line Length: XXX
-    slot.text = "Request Line Length: " +
-        std::to_string(cache.request.request_line_length) + ", Request Line: ";
-
-    if (section)
+    uint32_t request_line_length = cache.request.request_line_length;
+    if (section and section->get_session_data()->is_for_httpx())
     {
-        const Field& raw_req = section->get_classic_buffer(HTTP_BUFFER_RAW_REQUEST, 0, 0);
-        int32_t raw_len = 0;
-        const uint8_t* raw = get_raw_request_start(raw_req, raw_len,
-            section->get_session_data()->is_for_httpx());
-        if (raw && raw_len > 0)
-        {
-            HttpCacheData::append_escaped(slot.text, raw, raw_len, MAX_REQUEST_LINE_LOG_LEN);
-            slot.field.set(static_cast<int32_t>(slot.text.length()),
-                reinterpret_cast<const uint8_t*>(slot.text.c_str()));
-            return;
-        }
+        // HTTP/2's msg_text has a synthetic " HTTP/1.1" suffix, so use hx_request_line_length
+        // instead of get_start_line_length().
+        request_line_length = cache.request.hx_request_line_length;
+    }
+    else if (section)
+    {
+        const HttpMsgRequest* const req = section->get_transaction()->get_request();
+        if (req != nullptr)
+            request_line_length = req->get_start_line_length();
     }
 
-    if (cache.request.request_line_raw_len > 0)
-        HttpCacheData::append_escaped(slot.text,
-            cache.request.request_line_raw.data(),
-            cache.request.request_line_raw_len, MAX_REQUEST_LINE_LOG_LEN);
-    else
-        slot.text.append("<no request>");
+    slot.text = "Request Line Length: " +
+        std::to_string(request_line_length) + ", Request Line: ";
 
+    append_request_line_or_cached(slot.text, cache, section);
     slot.field.set(static_cast<int32_t>(slot.text.length()),
         reinterpret_cast<const uint8_t*>(slot.text.c_str()));
 }
@@ -270,31 +352,10 @@ static void compute_detail_119_300(const HttpCacheData& cache, HttpTmpBuffer& sl
 {
     // EVENT_REQUEST_LINE_NOT_VALID
     // XXX, Request Line: YYY
-    slot.text = get_http_event_reason_msg(cache.request.reason_code_detail_300);
+    slot.text = get_http_event_reason_msg(cache.request.request_line_invalid_reason);
     slot.text.append(", Request Line: ");
 
-    if (section)
-    {
-        const Field& raw_req = section->get_classic_buffer(HTTP_BUFFER_RAW_REQUEST, 0, 0);
-        int32_t raw_len = 0;
-        const uint8_t* raw = get_raw_request_start(raw_req, raw_len,
-            section->get_session_data()->is_for_httpx());
-        if (raw and raw_len > 0)
-        {
-            HttpCacheData::append_escaped(slot.text, raw, raw_len, MAX_REQUEST_LINE_LOG_LEN);
-            slot.field.set(static_cast<int32_t>(slot.text.length()),
-                reinterpret_cast<const uint8_t*>(slot.text.c_str()));
-            return;
-        }
-    }
-
-    if (cache.request.request_line_raw_len > 0)
-        HttpCacheData::append_escaped(slot.text,
-            cache.request.request_line_raw.data(),
-            cache.request.request_line_raw_len, MAX_REQUEST_LINE_LOG_LEN);
-    else
-        slot.text.append("<no request>");
-
+    append_request_line_or_cached(slot.text, cache, section);
     slot.field.set(static_cast<int32_t>(slot.text.length()),
         reinterpret_cast<const uint8_t*>(slot.text.c_str()));
 }
@@ -304,7 +365,7 @@ static void compute_detail_119_301(const HttpCacheData& cache, HttpTmpBuffer& sl
 {
     // EVENT_HEADER_INVALID_CL_OR_TE
     // <reason>[, Content-Length: XXX][, Transfer-Encoding: YYY]
-    const auto code = cache.reason_code_detail_301[section->get_source_id()];
+    const auto code = cache.reason_code_detail_301;
 
     slot.text = get_detail_301_reason(code);
 
@@ -369,7 +430,10 @@ const Field& get_http_tmp_buffer(HttpCacheData& cache, const HttpBufferInfo& buf
     if (!section && desc.requires_section)
         return Field::FIELD_NULL;
 
-    HttpTmpBuffer& slot = cache.tmp_bufs[index];
+    if (!cache.tmp_bufs[index])
+        cache.tmp_bufs[index] = std::make_unique<HttpTmpBuffer>();
+
+    HttpTmpBuffer& slot = *cache.tmp_bufs[index];
     if (slot.field.length() == STAT_NOT_COMPUTE)
         desc.compute(cache, slot, buf, section);
 

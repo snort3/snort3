@@ -27,6 +27,8 @@
 #include <cstring>
 #include <memory>
 
+using namespace HttpEnums;
+
 static thread_local std::unique_ptr<HttpCacheData> http_cache_data_ptr;
 
 HttpCacheData& get_cache_data()
@@ -47,18 +49,22 @@ void reset_cache_data()
     http_cache_data_ptr.reset();
 }
 
+void clear_section_cache()
+{
+    if (!cache_data_exists())
+        return;
+
+    get_cache_data().reason_code_detail_301 = DETAIL_301_NONE;
+}
+
 void clear_tmp_fields()
 {
     if (!cache_data_exists())
         return;
 
     HttpCacheData& cache = get_cache_data();
-    for (HttpTmpBuffer& slot : cache.tmp_bufs)
-    {
-        slot.field.reset();
-        slot.text.clear();
-        slot.num = 0;
-    }
+    for (auto& slot : cache.tmp_bufs)
+        slot.reset();
     cache.decoded_path.reset();
 }
 
@@ -109,4 +115,13 @@ void HttpCacheData::append_escaped(std::string& out, const uint8_t* data,
         else
             out.push_back(static_cast<char>(c));
     }
+}
+
+void create_event_request_line_not_valid(HttpEventGen* events, RequestLineInvalidReasonCode reason)
+{
+    HttpRequestScratch& request = get_cache_data().request;
+    if (request.request_line_invalid_reason == RequestLineInvalidReasonCode::NONE)
+        request.request_line_invalid_reason = reason;
+
+    events->create_event(EVENT_REQUEST_LINE_NOT_VALID);
 }

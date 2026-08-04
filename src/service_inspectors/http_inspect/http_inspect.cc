@@ -735,6 +735,8 @@ void HttpInspect::clear(Packet* p)
         return;
     }
 
+    clear_section_cache();
+
     current_section->clear();
     HttpTransaction* current_transaction = current_section->get_transaction();
 

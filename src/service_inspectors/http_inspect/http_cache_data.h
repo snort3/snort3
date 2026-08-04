@@ -22,9 +22,11 @@
 
 #include <array>
 #include <cstdint>
+#include <memory>
 #include <string>
 
 #include "http_enum.h"
+#include "http_event.h"
 #include "http_field.h"
 
 static constexpr int32_t MAX_REQUEST_LINE_LOG_LEN = 256;
@@ -36,8 +38,8 @@ static constexpr unsigned HTTP_TMP_BUFFER_CNT =
 
 struct HttpRequestScratch
 {
-    HttpEnums::GenericEventReasonCode reason_code_detail_300 =
-        HttpEnums::GenericEventReasonCode::NONE;
+    HttpEnums::RequestLineInvalidReasonCode request_line_invalid_reason =
+        HttpEnums::RequestLineInvalidReasonCode::NONE;
     uint32_t request_size = 0;
     uint32_t request_line_length = 0;
     uint32_t hx_request_line_length = 0;
@@ -65,9 +67,9 @@ public:
     HttpCacheData& operator=(const HttpCacheData&) = delete;
 
     HttpRequestScratch request;
-    HttpEnums::Detail301ReasonCode reason_code_detail_301[2] = { HttpEnums::DETAIL_301_NONE,
-        HttpEnums::DETAIL_301_NONE };
-    std::array<HttpTmpBuffer, HTTP_TMP_BUFFER_CNT> tmp_bufs;
+    HttpEnums::Detail301ReasonCode reason_code_detail_301 = HttpEnums::DETAIL_301_NONE;
+
+    std::array<std::unique_ptr<HttpTmpBuffer>, HTTP_TMP_BUFFER_CNT> tmp_bufs;
 
     // Sidecar for decoded URI path (paired with HTTP_BUFFER_DECODED_URI slot).
     Field decoded_path;
@@ -80,6 +82,9 @@ HttpCacheData& get_cache_data();
 bool cache_data_exists();
 void reset_cache_data();
 void clear_tmp_fields();
+void clear_section_cache();
 
+void create_event_request_line_not_valid(HttpEventGen* events,
+    HttpEnums::RequestLineInvalidReasonCode reason);
 
 #endif

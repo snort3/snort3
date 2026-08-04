@@ -106,7 +106,7 @@ bool Http2RequestLine::generate_start_line(Field& start_line, bool pseudo_header
     }
 
     // Compute the length of the URI
-    uint32_t uri_len = 0;
+    uri_len = 0;
     bool use_scheme = false;
     bool use_authority = false;
     bool use_path = false;

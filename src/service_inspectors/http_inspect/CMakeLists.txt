@@ -25,8 +25,6 @@ set (FILE_LIST
     http_cutter.h
     http_enum.h
     http_event.h
-    http_event_reason.cc
-    http_event_reason.h
     http_field.cc
     http_field_buffer.cc
     http_field_buffer.h

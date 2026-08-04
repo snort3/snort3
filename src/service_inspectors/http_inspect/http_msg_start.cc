@@ -44,6 +44,11 @@ void HttpMsgStart::analyze()
     parse_start_line();
 }
 
+void HttpMsgStart::create_event_request_line_not_valid(RequestLineInvalidReasonCode reason)
+{
+    ::create_event_request_line_not_valid(session_data->events[source_id], reason);
+}
+
 void HttpMsgStart::derive_version_id()
 {
     if (version.start()[6] != '.')
@@ -52,11 +57,7 @@ void HttpMsgStart::derive_version_id()
         add_infraction(INF_BAD_VERSION);
 
         if (source_id == HttpCommon::SRC_CLIENT)
-        {
-            if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
-                get_cache_data().request.reason_code_detail_300 = VERSION_MALFORMED;
-            create_event(EVENT_REQUEST_LINE_NOT_VALID);
-        }
+            create_event_request_line_not_valid(VERSION_MALFORMED);
         create_event(EVENT_BAD_VERS);
     }
     else if ((version.start()[5] == '1') && (version.start()[7] == '1'))
@@ -82,11 +83,7 @@ void HttpMsgStart::derive_version_id()
         add_infraction(INF_BAD_VERSION);
 
         if (source_id == HttpCommon::SRC_CLIENT)
-        {
-            if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
-                get_cache_data().request.reason_code_detail_300 = BAD_VERSION;
-            create_event(EVENT_REQUEST_LINE_NOT_VALID);
-        }
+            create_event_request_line_not_valid(BAD_VERSION);
         create_event(EVENT_BAD_VERS);
     }
     else if ((version.start()[5] > '1'))
@@ -95,11 +92,7 @@ void HttpMsgStart::derive_version_id()
         add_infraction(INF_VERSION_HIGHER_THAN_1);
 
         if (source_id == HttpCommon::SRC_CLIENT)
-        {
-            if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
-                get_cache_data().request.reason_code_detail_300 = VERSION_HIGHER_THAN_1;
-            create_event(EVENT_REQUEST_LINE_NOT_VALID);
-        }
+            create_event_request_line_not_valid(VERSION_HIGHER_THAN_1);
         create_event(EVENT_VERSION_HIGHER_THAN_1);
     }
     else if (version.start()[5] == '1')
@@ -108,11 +101,7 @@ void HttpMsgStart::derive_version_id()
         add_infraction(INF_INVALID_SUBVERSION);
 
         if (source_id == HttpCommon::SRC_CLIENT)
-        {
-            if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
-                get_cache_data().request.reason_code_detail_300 = INVALID_SUBVERSION;
-            create_event(EVENT_REQUEST_LINE_NOT_VALID);
-        }
+            create_event_request_line_not_valid(INVALID_SUBVERSION);
         create_event(EVENT_INVALID_SUBVERSION);
     }
     else
@@ -121,11 +110,7 @@ void HttpMsgStart::derive_version_id()
         add_infraction(INF_VERSION_0);
 
         if (source_id == HttpCommon::SRC_CLIENT)
-        {
-            if (get_cache_data().request.reason_code_detail_300 == HttpEnums::GenericEventReasonCode::NONE)
-                get_cache_data().request.reason_code_detail_300 = BAD_VERSION;
-            create_event(EVENT_REQUEST_LINE_NOT_VALID);
-        }
+            create_event_request_line_not_valid(BAD_VERSION);
         create_event(EVENT_VERSION_0);
     }
 }

@@ -1299,6 +1299,27 @@ HTTP reserved GZIP flags are set
 Too many partial flushes. Partial depth is enabled and 20 or more partial flushes are
 made before a regular flush.
 
+119:298
+
+The size of a client request, counting the request line and headers but not the body,
+exceeds the configured max_request_size.
+
+119:299
+
+The length of the request line alone, not counting the terminating CR/LF sequence,
+exceeds the configured max_request_line_length.
+
+119:300
+
+The request line does not conform to the expected grammar: bad method, missing or
+malformed URI, malformed or unsupported HTTP-version, improper whitespace, or incorrect
+line termination.
+
+119:301
+
+A message header contains a negative Content-Length value, or both a Content-Length and
+a Transfer-Encoding header where that combination is not allowed.
+
 121:1
 
 Invalid flag set on HTTP/2 frame header

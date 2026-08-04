@@ -266,7 +266,7 @@ void HttpMsgHeader::gen_events()
 {
     auto raise_cl_or_te = [this] (Detail301ReasonCode code)
     {
-        auto& reason = get_cache_data().reason_code_detail_301[source_id];
+        auto& reason = get_cache_data().reason_code_detail_301;
 
         if ( reason != DETAIL_301_NONE )
             return;

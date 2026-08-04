@@ -38,6 +38,11 @@ using namespace snort;
 long HttpTestManager::print_amount {};
 bool HttpTestManager::print_hex {};
 
+namespace snort
+{
+int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
+}
+
 // Tests for get_next_code()
 TEST_GROUP(get_next_code)
 {

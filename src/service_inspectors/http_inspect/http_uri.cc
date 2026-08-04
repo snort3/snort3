@@ -370,14 +370,8 @@ void HttpUri::fill_decoded_uri(Field& decoded_uri_out, Field& decoded_path_out)
         !(*infractions & INF_URI_NEED_NORM_PATH) ||
         path.length() <= 0)
     {
-        if (path_norm.length() >= 0)
-            decoded_path_out.set(path_norm.length(), path_norm.start());
-        else
-            decoded_path_out.set(static_cast<HttpCommon::StatusCode>(path_norm.length()));
-        if (classic_norm.length() >= 0)
-            decoded_uri_out.set(classic_norm.length(), classic_norm.start());
-        else
-            decoded_uri_out.set(static_cast<HttpCommon::StatusCode>(classic_norm.length()));
+        decoded_path_out.set(path_norm);
+        decoded_uri_out.set(classic_norm);
         return;
     }
 

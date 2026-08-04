@@ -33,11 +33,12 @@ public:
         Http2StartLine(evs, infrs) { }
     void process_pseudo_header(const Field& name, const Field& value) override;
     bool generate_start_line(Field& start_line, bool pseudo_headers_complete) override;
+
+    // Call only after generate_start_line() returns true.
     uint32_t get_pseudo_request_line_length() const
     {
         const int32_t m = method.length();
-        const int32_t p = path.length() > 0 ? path.length() : authority.length();
-        return static_cast<uint32_t>((m > 0 ? m : 0) + (p > 0 ? p : 0));
+        return static_cast<uint32_t>((m > 0 ? m : 0) + uri_len);
     }
 
 private:
@@ -45,6 +46,8 @@ private:
     Field path;
     Field scheme;
     Field authority;
+
+    uint32_t uri_len = 0;
 
     static const char* authority_name;
     static const uint32_t authority_name_length = 10;

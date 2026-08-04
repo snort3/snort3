@@ -66,6 +66,7 @@ const StreamBuffer StreamSplitter::reassemble(Flow*, unsigned, unsigned,
 }
 unsigned StreamSplitter::max(Flow*) { return 0; }
 const char* SnortStrcasestr(const char*, int, const char*) { return nullptr; }
+int DetectionEngine::queue_event(unsigned int, unsigned int) { return 0; }
 }
 
 // HttpFlowData stubs

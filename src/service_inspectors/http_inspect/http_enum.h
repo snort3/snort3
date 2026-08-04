@@ -479,7 +479,8 @@ enum EventSid
     EVENT__MAX_VALUE
 };
 
-enum GenericEventReasonCode: uint8_t
+// reason codes for EVENT_REQUEST_LINE_NOT_VALID (300)
+enum RequestLineInvalidReasonCode : uint8_t
 {
     NONE = 0,
     BAD_REQUEST_TERMINATION,

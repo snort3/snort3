@@ -36,9 +36,12 @@ public:
     bool detection_required() const override { return false; }
     const Field& get_version() const { return version; }
     HttpEnums::VersionId get_version_id() const { return version_id; }
-    uint32_t get_length() const override
     // +2 to account for \r\n at the end of the section that was removed by the splitter
+    uint32_t get_length() const override
     { auto len = HttpMsgSection::get_length(); return (len > 0) ? len + 2 : 0; }
+
+    uint32_t get_start_line_length() const
+    { return HttpMsgSection::get_length(); }
 
 protected:
     HttpMsgStart(const uint8_t* buffer, const uint16_t buf_size, HttpFlowData* session_data_,
@@ -47,6 +50,7 @@ protected:
     ~HttpMsgStart() override;
     virtual void parse_start_line() = 0;
     void derive_version_id();
+    void create_event_request_line_not_valid(HttpEnums::RequestLineInvalidReasonCode reason);
 
     Field start_line;
     Field version;
