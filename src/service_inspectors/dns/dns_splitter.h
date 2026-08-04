@@ -22,6 +22,9 @@
 
 #include "stream/stream_splitter.h"
 
+#define DNS_SPLITTER_MIN_USEFUL_LENGTH 12
+#define DNS_SPLITTER_MAX_TINY_MSGS 32
+
 class DnsSplitter : public snort::StreamSplitter
 {
 public:
@@ -36,6 +39,7 @@ public:
 private:
     bool partial = false;
     uint16_t size = 0;
+    uint8_t tiny_msg_count = 0;
 };
 
 #endif
