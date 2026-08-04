@@ -54,6 +54,9 @@ const PegInfo replace_pegs[] =
 
 static inline void Replace_ApplyChange(Packet* p, const std::string& data, unsigned offset)
 {
+    if ( offset >= p->dsize )
+        return;
+
     uint8_t* start = const_cast<uint8_t*>(p->data) + offset;
     const uint8_t* end = p->data + p->dsize;
     unsigned len;

@@ -166,6 +166,8 @@ IpsOption::EvalStatus ReplaceOption::eval(Cursor& c, Packet* p)
 
     if ( replace_ok(p->context->conf) )
         store(c.get_pos() - repl.size());
+    else
+        store(-1);
 
     return MATCH;
 }
@@ -176,7 +178,10 @@ void ReplaceOption::action(Packet*)
     RuleProfile profile(replacePerfStats);
 
     if ( pending() )
+    {
         DetectionEngine::add_replacement(repl, (unsigned)pos());
+        store(-1);
+    }
 }
 
 //-------------------------------------------------------------------------
