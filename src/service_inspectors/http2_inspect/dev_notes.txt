@@ -78,13 +78,45 @@ literal. The resulting header line is then added to the dynamic table. The third
 is literal not to be indexed, which is the same as literal to be indexed, except the header line is
 not added to the dynamic table.
 
-decode_headers() limits cumulative decoded work per header block to MAX_OCTETS, including
-pseudo-header and cookie lines that are later discarded or consolidated. These lines are copied into
-the decoded buffer and then discarded (bytes_written reset to 0), so they do not charge the retained
-output-size budget; the decoded_headers_work counter charges their gross decoded size in
-decode_header_line before the discard. The budget resets for each header block, and exceeding it
-fails decoding with INF_DECODED_HEADER_BUFF_OUT_OF_SPACE, invoking the existing fatal
-header-decoding error handling (immediate EVENT_MISFORMATTED_HTTP2, scan() returns ABORT).
+The dynamic table is bounded by a sensor-side maximum, MAX_TABLE_SIZE_LIMIT (65536 RFC-accounted
+bytes), enforced independently for each direction of each flow. Endpoints influence the table size
+in two ways: the SETTINGS_HEADER_TABLE_SIZE connection setting, and an HPACK dynamic table size
+update at the start of a header block. Both paths funnel through HpackDynamicTable::update_size(),
+which clamps any value above MAX_TABLE_SIZE_LIMIT down to it before applying. Values at or below
+the limit are honored unchanged; a value smaller than the current table contents prunes
+least-recently-added entries until the table fits, which is the behavior the RFC requires for a
+shrinking size update. In HPACK the decoder is the side that advertises its maximum, via
+SETTINGS_HEADER_TABLE_SIZE, and RFC 7541 section 4.2 bounds the encoder by that advertised value;
+it does not license a decoder to use a smaller table it never advertised. Because Snort is a
+passive observer and cannot advertise this private limit through SETTINGS_HEADER_TABLE_SIZE, the
+clamp is a defensive resource bound rather than an endpoint-negotiated HPACK maximum, and traffic
+using a larger conformant table may cause Snort's decoding state to diverge.
+
+The clamp itself is silent: it raises no infraction and generates no event, because an oversized
+value is legal HTTP/2 that Snort is choosing not to honor in full, not a protocol violation. The
+separate validation in handle_dynamic_size_update() is unrelated to the clamp and still applies to
+the HPACK-update path only - a size update that arrives mid-header-block, a third update in one
+block, or one exceeding the peer's advertised SETTINGS value alerts and is then discarded without
+reaching update_size() at all. The only externally visible effect of the clamp is that the
+max_table_entries peg stops climbing once the table is bounded.
+
+The decoding divergence described above takes a specific form. If the two endpoints negotiate and
+use a table larger than MAX_TABLE_SIZE_LIMIT, Snort will evict entries that are still valid at the
+endpoints. A later header line that references one of those evicted indexes will not resolve: the
+table lookup in get_hpack_table_entry() returns null, INF_HPACK_INDEX_OUT_OF_BOUNDS is raised, and
+decode_headers() fails. That is a fatal error under the existing rules described in the Error
+Processing section below, so abort_flow is set for the direction and EVENT_MISFORMATTED_HTTP2 is
+generated. The clamp introduces no new failure mode; it only makes this existing decode-failure
+path reachable on traffic that uses very large dynamic tables. The limit is deliberately well above
+any realistic negotiated table size (the RFC default is 4096 and the observed average table is
+under 2 KB), so this is not expected in practice.
+
+MAX_TABLE_SIZE_LIMIT is a size bound and does not replace the separate ARRAY_CAPACITY bound on the
+number of entries. Both still apply. Reaching the size limit only evicts, so decoding continues;
+reaching ARRAY_CAPACITY makes add_entry() return false, which fails the header line and is fatal
+for the flow in the same way described above. Because the size limit now evicts entries before the
+table can accumulate 512 large ones, the clamp makes the ARRAY_CAPACITY path harder to reach for
+large entries, but small entries can still fill the table to 512 without approaching 65536 bytes.
 
 *** Error Processing ***
 H2I has two levels of failure for flow processing. Fatal errors include failures in frame splitting
@@ -124,7 +156,19 @@ Using the formula and some sample pcaps, the average size of the dynamic table i
 Dynamically allocated objects related to http_inspect are considered separate and are not 
 included. Temporary objects (frame_data and frame_header) are ignored. The remaining dynamically
 allocated are Http2Infractions (8 bytes * 2) and Http2EventsGen(24 bytes * 2)
-Therefore, the memory required by http2 per flow: sizeof(Http2FlowData) + 1645 + 16 + 48 
+Therefore, the memory required by http2 per flow: sizeof(Http2FlowData) + 1645 + 16 + 48
+
+The 1645-byte figure above is a traffic-derived average, not a bound. The worst case is bounded by
+two independent limits that apply to each of the two directional tables. MAX_TABLE_SIZE_LIMIT caps
+the RFC-accounted size of one table at 65536 bytes, so a single flow holds at most 131072
+RFC-accounted bytes across both directions. Separately, ARRAY_CAPACITY caps each table at 512
+entries; for small entries that entry-count limit binds first, while for large entries the size
+limit binds first. Both numbers are RFC accounting only. RFC_ENTRY_OVERHEAD (32) is a fixed
+per-entry constant defined by the RFC, not a measurement of what an entry costs, so it excludes the
+HpackTableEntry object and the two heap buffers it allocates for the name and value, and it
+excludes the circular_buf vector that is reserved up front at ARRAY_CAPACITY pointers per direction
+regardless of how many entries are in use. Treat 131072 as the ceiling on RFC-accounted table
+content per flow, and expect real memory use to sit above it.
 
 *** HTTP/2 Block Page Injection ***
 During server-to-client scan(), H2I determines whether block page injection is structurally
