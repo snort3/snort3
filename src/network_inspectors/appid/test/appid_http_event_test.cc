@@ -106,6 +106,18 @@ AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index) const
     }
     return nullptr;
 }
+AppIdHttpSession* AppIdSession::get_matching_http_session(int64_t stream_id, uint32_t& stream_index) const
+{
+    for (uint32_t i = 0; i < api.hsessions.size(); ++i)
+    {
+        if (api.hsessions[i]->get_httpx_stream_id() == stream_id)
+        {
+            stream_index = i;
+            return api.hsessions[i].get();
+        }
+    }
+    return nullptr;
+}
 
 void AppIdSession::delete_all_http_sessions()
 {
@@ -119,26 +131,26 @@ void AppIdHttpSession::set_scan_flags(HttpFieldIds id)
     switch (id)
     {
     case REQ_URI_FID:
-        asd.scan_flags |= SCAN_HTTP_URI_FLAG;
+        scan_flags |= SCAN_HTTP_URI_FLAG;
         break;
     case MISC_VIA_FID:
-        asd.scan_flags |= SCAN_HTTP_VIA_FLAG;
+        scan_flags |= SCAN_HTTP_VIA_FLAG;
         break;
     case REQ_AGENT_FID:
-        asd.scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
+        scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
         break;
     case RSP_CONTENT_TYPE_FID:
-        asd.scan_flags |= SCAN_HTTP_CONTENT_TYPE_FLAG;
+        scan_flags |= SCAN_HTTP_CONTENT_TYPE_FLAG;
         break;
     case MISC_SERVER_FID:
-        asd.scan_flags |= SCAN_HTTP_VENDOR_FLAG;
+        scan_flags |= SCAN_HTTP_VENDOR_FLAG;
         break;
     case MISC_XWW_FID:
-        asd.scan_flags |= SCAN_HTTP_XWORKINGWITH_FLAG;
+        scan_flags |= SCAN_HTTP_XWORKINGWITH_FLAG;
         break;
     case REQ_HOST_FID:
     case MISC_URL_FID:
-        asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
+        scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         break;
     default:
         break;
@@ -386,7 +398,7 @@ static void run_event_handler(const TestData& test_data, const TestData* expect_
         static_cast<MockAppIdHttpSession*>(mock_session->get_http_session());
     hsession->reset();
     event_handler.handle(event, flow);
-    LONGS_EQUAL(expect_data->scan_flags, mock_session->scan_flags);
+    LONGS_EQUAL(expect_data->scan_flags, hsession->scan_flags);
     STRCMP_EQUAL(expect_data->host, hsession->get_cfield(REQ_HOST_FID));
     STRCMP_EQUAL(expect_data->uri, hsession->get_cfield(REQ_URI_FID));
     STRCMP_EQUAL(expect_data->content_type, hsession->get_cfield(RSP_CONTENT_TYPE_FID));

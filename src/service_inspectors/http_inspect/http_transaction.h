@@ -99,6 +99,7 @@ public:
     void clear_section();
     bool is_clear() const { return active_sections == 0; }
     void garbage_collect();
+    int64_t get_hx_stream_id() const;
 
     HttpTransaction* next = nullptr;
 

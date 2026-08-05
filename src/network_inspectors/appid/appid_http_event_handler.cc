@@ -77,6 +77,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 
     const uint8_t* header_start;
     int32_t header_length;
+    uint32_t stream_index = 0;
     HttpEvent* http_event = static_cast<HttpEvent*>(&event);
     AppidChangeBits change_bits;
 
@@ -103,22 +104,15 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     AppIdHttpSession* hsession;
     if (http_event->get_is_httpx())
     {
-        if (direction == APP_ID_FROM_INITIATOR)
+        hsession = asd->get_matching_http_session(http_event->get_httpx_stream_id(), stream_index);
+        if (!hsession)
         {
-            AppId http_app_id = flow->stream_intf->get_appid_from_stream(flow);
-            if (http_app_id != APP_ID_HTTP3 and asd->get_prev_httpx_raw_packet() != asd->session_packet_count)
-            {
-                asd->delete_all_http_sessions();
-                asd->set_prev_httpx_raw_packet(asd->session_packet_count);
-            }
             hsession = asd->create_http_session(http_event->get_httpx_stream_id());
+            stream_index = asd->get_api().get_hsessions_size() - 1;
         }
-        else
-        {
-            hsession = asd->get_matching_http_session(http_event->get_httpx_stream_id());
-            if (!hsession)
-                hsession = asd->create_http_session(http_event->get_httpx_stream_id());
-        }
+        auto flow_appid = flow->stream_intf->get_appid_from_stream(flow);
+        if (flow_appid == APP_ID_HTTP2)
+            asd->set_session_flags(APPID_SESSION_HTTP2_SESSION);
     }
     else
     {
@@ -204,8 +198,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     if (change_bits.test(APPID_SERVICE_BIT))
         asd->sync_with_snort_protocol_id(asd->pick_service_app_id(), p, change_bits);
 
-    asd->publish_appid_event(change_bits, *p, http_event->get_is_httpx(),
-        asd->get_api().get_hsessions_size() - 1);
+    asd->publish_appid_event(change_bits, *p, http_event->get_is_httpx(), stream_index);
 
     if (is_appid_cpu_profiling_running)
     {

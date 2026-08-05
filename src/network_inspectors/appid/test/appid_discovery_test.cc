@@ -366,6 +366,7 @@ void AppIdSession::set_ss_application_ids(AppId service_id, AppId client_id, App
 }
 
 AppIdHttpSession* AppIdSession::get_http_session(uint32_t) const { return nullptr; }
+AppIdHttpSession* AppIdSession::get_current_http_session() const { return nullptr; }
 
 TEST_GROUP(appid_discovery_tests)
 {

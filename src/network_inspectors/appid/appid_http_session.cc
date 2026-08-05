@@ -92,26 +92,26 @@ void AppIdHttpSession::set_scan_flags(HttpFieldIds id)
     switch (id)
     {
     case REQ_URI_FID:
-        asd.scan_flags |= SCAN_HTTP_URI_FLAG;
+        scan_flags |= SCAN_HTTP_URI_FLAG;
         break;
     case MISC_VIA_FID:
-        asd.scan_flags |= SCAN_HTTP_VIA_FLAG;
+        scan_flags |= SCAN_HTTP_VIA_FLAG;
         break;
     case REQ_AGENT_FID:
-        asd.scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
+        scan_flags |= SCAN_HTTP_USER_AGENT_FLAG;
         break;
     case RSP_CONTENT_TYPE_FID:
-        asd.scan_flags |= SCAN_HTTP_CONTENT_TYPE_FLAG;
+        scan_flags |= SCAN_HTTP_CONTENT_TYPE_FLAG;
         break;
     case MISC_SERVER_FID:
-        asd.scan_flags |= SCAN_HTTP_VENDOR_FLAG;
+        scan_flags |= SCAN_HTTP_VENDOR_FLAG;
         break;
     case MISC_XWW_FID:
-        asd.scan_flags |= SCAN_HTTP_XWORKINGWITH_FLAG;
+        scan_flags |= SCAN_HTTP_XWORKINGWITH_FLAG;
         break;
     case REQ_HOST_FID:
     case MISC_URL_FID:
-        asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
+        scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         break;
     default:
         break;
@@ -417,9 +417,9 @@ void AppIdHttpSession::process_chp_buffers(AppidChangeBits& change_bits, HttpPat
 
         chp_candidate = 0;
         chp_hold_flow = false;
-        asd.scan_flags &= ~SCAN_HTTP_VIA_FLAG;
-        asd.scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
-        asd.scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
+        scan_flags &= ~SCAN_HTTP_VIA_FLAG;
+        scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
+        scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
         memset(ptype_scan_counts, 0, sizeof(ptype_scan_counts));
     }
     else /* if we have a candidate, but we're not finished */
@@ -568,7 +568,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
     {
         // Scan Server Header for Vendor & Version
         const std::string* server = meta_data[MISC_SERVER_FID];
-        if ( (asd.scan_flags & SCAN_HTTP_VENDOR_FLAG) and server)
+        if ( (scan_flags & SCAN_HTTP_VENDOR_FLAG) and server)
         {
             if (asd.get_service_id() == APP_ID_NONE or asd.get_service_id() == APP_ID_HTTP  or
                 asd.get_service_id() == APP_ID_HTTP2 or asd.get_service_id() == APP_ID_HTTP3)
@@ -583,7 +583,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
                 {
                     asd.set_service_vendor(vendor, change_bits);
                     asd.set_service_version(vendorVersion, change_bits);
-                    asd.scan_flags &= ~SCAN_HTTP_VENDOR_FLAG;
+                    scan_flags &= ~SCAN_HTTP_VENDOR_FLAG;
 
                     snort_free(vendor);
                     snort_free(vendorVersion);
@@ -597,7 +597,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             set_payload(APP_ID_WEBDAV, change_bits, "webdav");
 
         // Scan User-Agent for Browser types or Skype
-        if ( (asd.scan_flags & SCAN_HTTP_USER_AGENT_FLAG)
+        if ( (scan_flags & SCAN_HTTP_USER_AGENT_FLAG)
             and client.get_id() <= APP_ID_NONE and useragent )
         {
             char* version = nullptr;
@@ -616,26 +616,26 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             if (client_id != APP_ID_HTTP)
                 set_client(client_id, change_bits, "User Agent", version);
 
-            asd.scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
+            scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
             snort_free(version);
         }
 
         /* Scan Via Header for squid */
         const std::string* via = meta_data[MISC_VIA_FID];
         if ( !asd.get_tp_payload_app_id() and payload.get_id() <= APP_ID_NONE and
-            (asd.scan_flags & SCAN_HTTP_VIA_FLAG) and via )
+            (scan_flags & SCAN_HTTP_VIA_FLAG) and via )
         {
             AppId payload_id = http_matchers.get_appid_by_pattern(via->c_str(), via->size(),
                 nullptr);
             set_payload(payload_id, change_bits, "VIA");
             is_payload_processed = true;
-            asd.scan_flags &= ~SCAN_HTTP_VIA_FLAG;
+            scan_flags &= ~SCAN_HTTP_VIA_FLAG;
         }
     }
 
     /* Scan X-Working-With HTTP header */
     const std::string* x_working_with = meta_data[MISC_XWW_FID];
-    if ( (asd.scan_flags & SCAN_HTTP_XWORKINGWITH_FLAG) and x_working_with)
+    if ( (scan_flags & SCAN_HTTP_XWORKINGWITH_FLAG) and x_working_with)
     {
         char* version = nullptr;
 
@@ -654,24 +654,24 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
                 APPID_LOG(p, TRACE_DEBUG_LEVEL, "X service %s (%d)\n", app_name ? app_name : "unknown", app_id);
             }
         }
-        asd.scan_flags &= ~SCAN_HTTP_XWORKINGWITH_FLAG;
+        scan_flags &= ~SCAN_HTTP_XWORKINGWITH_FLAG;
 
         snort_free(version);
     }
 
     // Scan Content-Type Header for multimedia types and scan contents
     const std::string* content_type = meta_data[RSP_CONTENT_TYPE_FID];
-    if ( (asd.scan_flags & SCAN_HTTP_CONTENT_TYPE_FLAG)
+    if ( (scan_flags & SCAN_HTTP_CONTENT_TYPE_FLAG)
         and content_type and !asd.get_tp_payload_app_id() and payload.get_id() <= APP_ID_NONE)
     {
         AppId payload_id = http_matchers.get_appid_by_content_type(content_type->c_str(),
             content_type->size());
         set_payload(payload_id, change_bits, "Content-Type");
         is_payload_processed = true;
-        asd.scan_flags &= ~SCAN_HTTP_CONTENT_TYPE_FLAG;
+        scan_flags &= ~SCAN_HTTP_CONTENT_TYPE_FLAG;
     }
 
-    if (asd.scan_flags & SCAN_HTTP_HOST_URL_FLAG)
+    if (scan_flags & SCAN_HTTP_HOST_URL_FLAG)
     {
         AppId referredPayloadAppId = APP_ID_NONE;
         char* version = nullptr;
@@ -709,7 +709,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
         }
 
         is_payload_processed = true;
-        asd.scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
+        scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
         if ( version )
             snort_free(version);
         if ( my_host )
@@ -765,7 +765,7 @@ void AppIdHttpSession::update_url(AppidChangeBits& change_bits)
         else
             meta_data[MISC_URL_FID] = new std::string(std::string("http://") + *host + *uri);
         change_bits.set(APPID_URL_BIT);
-        asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
+        scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
     }
 }
 

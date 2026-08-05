@@ -468,6 +468,8 @@ public:
     AppIdHttpSession* get_http_session(uint32_t stream_index = 0) const;
     AppIdHttpSession* create_http_session(int64_t stream_id = -1);
     AppIdHttpSession* get_matching_http_session(int64_t stream_id) const;
+    AppIdHttpSession* get_matching_http_session(int64_t stream_id, uint32_t& matched_stream_index) const;
+    AppIdHttpSession* get_current_http_session() const;
     void delete_all_http_sessions();
 
     AppIdDnsSession* create_dns_session();
@@ -534,16 +536,6 @@ public:
         inferred_svcs_ver++;
         if (inferred_svcs_ver == 0)
             inferred_svcs_ver++;
-    }
-
-    uint16_t get_prev_httpx_raw_packet() const
-    {
-        return prev_httpx_raw_packet;
-    }
-
-    void set_prev_httpx_raw_packet(uint16_t packet_num)
-    {
-        prev_httpx_raw_packet = packet_num;
     }
 
     const snort::AppIdSessionApi& get_api() const
@@ -886,8 +878,7 @@ public:
         return api.get_session_id();
     }
 
-private:
-    uint16_t prev_httpx_raw_packet = 0;
+    void handle_http2_stream_end_event(const int64_t stream_id);
 
     void reinit_session_data(AppidChangeBits& change_bits, const ThirdPartyAppIdContext* tp_appid_ctxt);
     void delete_session_data();

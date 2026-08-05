@@ -351,7 +351,11 @@ void AppIdSession::reinit_session_data(AppidChangeBits& change_bits,
     init_tpPackets = 0;
     resp_tpPackets = 0;
 
-    scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
+    std::for_each(api.hsessions.begin(), api.hsessions.end(),
+        [](const std::unique_ptr<AppIdHttpSession>& hsession)
+        {
+            hsession->scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
+        });
     clear_session_flags(APPID_SESSION_SERVICE_DETECTED |
         APPID_SESSION_CLIENT_DETECTED | APPID_SESSION_SSL_SESSION |
         APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT);
@@ -457,7 +461,7 @@ void AppIdSession::check_tunnel_detection_restart()
     if (tp_payload_app_id != APP_ID_HTTP_TUNNEL or get_session_flags(APPID_SESSION_HTTP_TUNNEL))
         return;
 
-    AppIdHttpSession* hsession = get_http_session();
+    AppIdHttpSession* hsession = get_current_http_session();
     if (!hsession or !hsession->get_tunnel())
         return;
 
@@ -488,7 +492,11 @@ void AppIdSession::check_tunnel_detection_restart()
 
     init_tpPackets = 0;
     resp_tpPackets = 0;
-    scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
+    std::for_each(api.hsessions.begin(), api.hsessions.end(),
+        [](const std::unique_ptr<AppIdHttpSession>& hsession)
+        {
+            hsession->scan_flags &= ~SCAN_HTTP_HOST_URL_FLAG;
+        });
     clear_session_flags(APPID_SESSION_SERVICE_DETECTED | APPID_SESSION_CLIENT_DETECTED |
         APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT);
 
@@ -672,12 +680,12 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
     AppId referred_payload_id = APP_ID_NONE;
     char* version = nullptr;
 
-    AppIdHttpSession* hsession = get_http_session();
+    AppIdHttpSession* hsession = get_current_http_session();
     if (!hsession)
         return;
 
     const string* field;
-    if ((scan_flags & SCAN_HTTP_USER_AGENT_FLAG) and
+    if ((hsession->scan_flags & SCAN_HTTP_USER_AGENT_FLAG) and
         hsession->client.get_id() <= APP_ID_NONE and
         (field = hsession->get_field(REQ_AGENT_FID)))
     {
@@ -693,7 +701,7 @@ void AppIdSession::examine_rtmp_metadata(AppidChangeBits& change_bits)
         if ( api.service.get_id() <= APP_ID_NONE )
             set_service_appid_data(service_id, change_bits);
 
-        scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
+        hsession->scan_flags &= ~SCAN_HTTP_USER_AGENT_FLAG;
         snort_free(agent_version);
     }
 
@@ -1188,6 +1196,12 @@ AppIdHttpSession* AppIdSession::get_http_session(uint32_t stream_index) const
 
 AppIdHttpSession* AppIdSession::create_http_session(int64_t stream_id)
 {
+    while (api.hsessions.size() >= pkt_thread_odp_ctxt->max_http_streams_per_flow)
+    {
+        APPID_LOG(SAFE_CURRENT_PACKET, TRACE_DEBUG_LEVEL, "Max HTTP sessions reached (%d), deleting oldest session\n", pkt_thread_odp_ctxt->max_http_streams_per_flow);
+        auto oldest = api.hsessions.begin();
+        api.hsessions.erase(oldest);
+    }
     auto hsession = std::make_unique<AppIdHttpSession>(*this, stream_id);
     auto tmp_hsession = hsession.get();
     api.hsessions.push_back(std::move(hsession));
@@ -1196,12 +1210,37 @@ AppIdHttpSession* AppIdSession::create_http_session(int64_t stream_id)
 
 AppIdHttpSession* AppIdSession::get_matching_http_session(int64_t stream_id) const
 {
+    uint32_t matched_stream_index;
+    return get_matching_http_session(stream_id, matched_stream_index);
+}
+
+AppIdHttpSession* AppIdSession::get_matching_http_session(int64_t stream_id, uint32_t& matched_stream_index) const
+{
     for (uint32_t stream_index=0; stream_index < api.hsessions.size(); stream_index++)
     {
         if(stream_id == api.hsessions[stream_index]->get_httpx_stream_id())
+        {
+            matched_stream_index = stream_index;
             return api.hsessions[stream_index].get();
+        }
     }
     return nullptr;
+}
+
+AppIdHttpSession *AppIdSession::get_current_http_session() const
+{
+    if (get_session_flags(APPID_SESSION_HTTP2_SESSION) and flow and flow->stream_intf)
+    {
+        int64_t stream_id;
+        flow->stream_intf->get_stream_id(flow, stream_id);
+        if (stream_id == 0xFFFFFFFF)
+        {
+            uint32_t num_hsessions = api.get_hsessions_size();
+            return num_hsessions ? get_http_session(num_hsessions - 1) : nullptr;
+        }
+        return get_matching_http_session(stream_id);
+    }
+    return get_http_session();
 }
 
 void AppIdSession::delete_all_http_sessions()
@@ -1213,10 +1252,18 @@ AppIdDnsSession* AppIdSession::create_dns_session()
 {
     if (flow->stream_intf)
     {
+        while (api.dsessions.size() >= pkt_thread_odp_ctxt->max_http_streams_per_flow)
+        {
+            auto oldest = api.dsessions.begin();
+            delete oldest->second;
+            api.dsessions.erase(oldest);
+        }
         int64_t stream_id;
         flow->stream_intf->get_stream_id(flow, stream_id);
-        api.dsessions.emplace(stream_id, new AppIdDnsSession());
-        return api.dsessions[stream_id];
+        auto insert_result = api.dsessions.try_emplace(stream_id, nullptr);
+        if (insert_result.second)
+            insert_result.first->second = new AppIdDnsSession();
+        return insert_result.first->second;
     }
     else
     {
@@ -1522,5 +1569,26 @@ void AppIdSession::check_domain_fronting_status(const std::string& host)
         uint32_t shadow_bits = get_shadow_traffic_bits();
         shadow_bits |= ShadowTraffic_Type_Domain_Fronting;
         set_shadow_traffic_bits(shadow_bits);
+    }
+}
+
+void AppIdSession::handle_http2_stream_end_event(const int64_t stream_id)
+{
+    for(auto it = api.hsessions.begin(); it != api.hsessions.end(); ++it)
+    {
+        if ((*it)->get_httpx_stream_id() == stream_id)
+        {
+            APPID_LOG(SAFE_CURRENT_PACKET, TRACE_DEBUG_LEVEL, "HTTP2 stream ended, deleting HTTP session for stream: %ld\n", stream_id);
+            api.hsessions.erase(it);
+            break;
+        }
+    }
+    
+    auto dns_session = api.dsessions.find(stream_id);
+    if (dns_session != api.dsessions.end())
+    {
+        APPID_LOG(SAFE_CURRENT_PACKET, TRACE_DEBUG_LEVEL, "HTTP2 stream ended, deleting DNS session for stream: %ld\n", stream_id);
+        delete dns_session->second;
+        api.dsessions.erase(dns_session);
     }
 }

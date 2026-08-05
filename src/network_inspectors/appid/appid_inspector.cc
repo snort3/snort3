@@ -49,6 +49,7 @@
 #include "appid_ha.h"
 #include "appid_http_event_handler.h"
 #include "appid_httpx_req_body_event_handler.h"
+#include "appid_http_end_of_transaction_event_handler.h"
 #include "appid_opportunistic_tls_event_handler.h"
 #include "appid_peg_counts.h"
 #include "appid_service_event_handler.h"
@@ -164,6 +165,7 @@ bool AppIdInspector::configure(SnortConfig* sc)
         new HttpEventHandler(HttpEventHandler::RESPONSE_EVENT, *this), *sc);
 
     DataBus::subscribe_global(http_pub_key, HttpEventIds::REQUEST_BODY, new AppIdHttpXReqBodyEventHandler(), *sc);
+    DataBus::subscribe_global(http_pub_key, HttpEventIds::END_OF_TRANSACTION, new AppIdHttpEndOfTransactionEventHandler(), *sc);
     DataBus::subscribe_global(intrinsic_pub_key, IntrinsicEventIds::DNS_PAYLOAD, new AppIdDnsPayloadEventHandler(*this), *sc);
     DataBus::subscribe_global(sip_pub_key, SipEventIds::DIALOG, new SipEventHandler(*this), *sc);
     DataBus::subscribe_global(dce_tcp_pub_key, DceTcpEventIds::EXP_SESSION, new DceExpSsnEventHandler(), *sc);

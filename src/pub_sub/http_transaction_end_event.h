@@ -58,6 +58,7 @@ public:
     const std::string& get_filename(HttpCommon::SourceId) const;
     const std::string& get_content_type(HttpCommon::SourceId) const;
     const std::string& get_proxied() const;
+    int64_t get_httpx_stream_id() const;
 
 private:
     const Field& get_client_header(uint64_t sub_id) const;

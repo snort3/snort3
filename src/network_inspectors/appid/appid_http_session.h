@@ -46,6 +46,17 @@ class HttpPatternMatchers;
 #define APP_TYPE_CLIENT     0x2
 #define APP_TYPE_PAYLOAD    0x4
 
+// Per-HTTP-session scan flags. Each AppIdHttpSession tracks its own set - a flow
+// can have multiple concurrent HTTP sessions (HTTP/2, HTTP/3 streams), so these
+// must not be shared across them.
+#define SCAN_HTTP_VIA_FLAG          (1<<0)
+#define SCAN_HTTP_USER_AGENT_FLAG   (1<<1)
+#define SCAN_HTTP_HOST_URL_FLAG     (1<<2)
+#define SCAN_HTTP_VENDOR_FLAG       (1<<6)
+#define SCAN_HTTP_XWORKINGWITH_FLAG (1<<7)
+#define SCAN_HTTP_CONTENT_TYPE_FLAG (1<<8)
+#define SCAN_HTTP_URI_FLAG          (1<<9)
+
 struct TunnelDest
 {
     snort::SfIp ip;
@@ -163,6 +174,9 @@ public:
     {
         return is_tunnel;
     }
+
+    uint16_t scan_flags = 0;
+    
 protected:
 
     void init_chp_match_descriptor(ChpMatchDescriptor& cmd);

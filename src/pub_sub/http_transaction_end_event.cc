@@ -192,3 +192,8 @@ const std::string& HttpTransactionEndEvent::get_proxied() const
 
     return *proxies;
 }
+
+int64_t HttpTransactionEndEvent::get_httpx_stream_id() const
+{
+    return transaction->get_hx_stream_id();
+}

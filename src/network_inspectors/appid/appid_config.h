@@ -77,6 +77,10 @@
 #define DEFAULT_MAX_PKTS_BEFORE_SERVER_ONLY 10
 #define MIN_MAX_PKTS_BEFORE_SERVER_ONLY 2
 
+#define DEFAULT_MAX_HTTP_STREAMS_PER_FLOW 100
+#define MIN_MAX_HTTP_STREAMS_PER_FLOW 1
+#define MAX_MAX_HTTP_STREAMS_PER_FLOW 1000
+
 enum SnortProtoIdIndex
 {
     PROTO_INDEX_UNSYNCHRONIZED = 0,
@@ -163,6 +167,7 @@ public:
     uint16_t max_packet_before_server_only = DEFAULT_MAX_PKTS_BEFORE_SERVER_ONLY;
     uint16_t max_packet_service_fail_ignore_bytes = DEFAULT_MAX_PKT_BEFORE_SERVICE_FAIL_IGNORE_BYTES;
     uint16_t max_midstream_packet_before_service_fail = DEFAULT_MIDSTREAM_PKTS_BEFORE_SERVICE_FAIL;
+    uint16_t max_http_streams_per_flow = DEFAULT_MAX_HTTP_STREAMS_PER_FLOW;
     uint32_t chp_body_collection_max = 0;
     uint32_t rtmp_max_packets = 15;
     uint32_t max_tp_flow_depth = 5;

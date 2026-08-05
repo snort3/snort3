@@ -43,10 +43,11 @@ public:
         // Skip sessions using old odp context after reload detectors
         if (pkt_thread_odp_ctxt->get_version() != asd->get_odp_ctxt_version())
             return;
+        uint32_t stream_index = 0;
         snort::HttpRequestBodyEvent* http_req_body =
             static_cast<snort::HttpRequestBodyEvent*>(&event);
         AppIdHttpSession* hsession = asd->get_matching_http_session(
-            http_req_body->get_httpx_stream_id());
+            http_req_body->get_httpx_stream_id(), stream_index);
 
         if (!hsession)
             return;
@@ -63,7 +64,7 @@ public:
         hsession->set_req_body_field(REQ_BODY_FID, header_start, header_length, change_bits);
         hsession->process_http_packet(APP_ID_FROM_INITIATOR, change_bits,
             asd->get_odp_ctxt().get_http_matchers());
-        asd->publish_appid_event(change_bits, *p, true, asd->get_api().get_hsessions_size() - 1);
+        asd->publish_appid_event(change_bits, *p, true, stream_index);
 
         bool last_req_rcvd = http_req_body->is_last_request_body_piece();
         if (last_req_rcvd)

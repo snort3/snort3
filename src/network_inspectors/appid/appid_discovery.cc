@@ -477,7 +477,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
 
     uint16_t port;
     const SfIp* ip;
-    const AppIdHttpSession* hsession = asd.get_http_session();
+    const AppIdHttpSession* hsession = asd.get_current_http_session();
 
     const TunnelDest* tun_dest = nullptr;
     // cppcheck-suppress knownConditionTrueFalse ; HTTP session presence depends on observed traffic
@@ -850,7 +850,7 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     client_id = asd.pick_ss_client_app_id();
     misc_id =  asd.pick_ss_misc_app_id();
 
-    AppIdHttpSession* hsession = asd.get_http_session();
+    AppIdHttpSession* hsession = asd.get_current_http_session();
     bool is_http_tunnel = false;
 
     // cppcheck-suppress knownConditionTrueFalse ; HTTP session presence depends on observed traffic
@@ -863,13 +863,15 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         (is_http_tunnel))
     {
         // cppcheck-suppress knownConditionTrueFalse ; is_http_tunnel requires hsession
-        if (hsession and is_http_tunnel and (asd.scan_flags & SCAN_HTTP_URI_FLAG))
+        if (is_http_tunnel and (hsession->scan_flags & SCAN_HTTP_URI_FLAG))
         {
+            // cppcheck-suppress-begin nullPointer ; is_http_tunnel requires hsession
             if (hsession->get_tun_dest())
                 hsession->free_tun_dest();
             if (hsession->get_field(REQ_URI_FID))
                 hsession->set_tun_dest();
-            asd.scan_flags &= ~SCAN_HTTP_URI_FLAG;
+            hsession->scan_flags &= ~SCAN_HTTP_URI_FLAG;
+            // cppcheck-suppress-end nullPointer
         }
 
         if (do_host_port_based_discovery(p, asd, protocol, direction, tp_appid_ctxt))

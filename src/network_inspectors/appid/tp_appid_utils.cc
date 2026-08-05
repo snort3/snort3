@@ -460,7 +460,7 @@ static inline void process_third_party_results(const Packet& p, AppIdSession& as
 
 static inline void check_terminate_tp_module(AppIdSession& asd, uint16_t tpPktCount)
 {
-    AppIdHttpSession* hsession = asd.get_http_session();
+    AppIdHttpSession* hsession = asd.get_current_http_session();
 
     if ((tpPktCount >= asd.get_odp_ctxt().max_tp_flow_depth) ||
         (asd.get_session_flags(APPID_SESSION_HTTP_SESSION | APPID_SESSION_APP_REINSPECT) ==

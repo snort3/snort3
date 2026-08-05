@@ -790,6 +790,24 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
                         path, line);
                 }
             }
+            else if (!(strcasecmp(conf_key, "max_http_streams_per_flow")))
+            {
+                int max_http_streams_per_flow = atoi(conf_val);
+                if (max_http_streams_per_flow < MIN_MAX_HTTP_STREAMS_PER_FLOW)
+                {
+                    ParseWarning(WARN_CONF, "appid: invalid max_http_streams_per_flow %d, must be greater than %d\n.",
+                        max_http_streams_per_flow, MIN_MAX_HTTP_STREAMS_PER_FLOW);
+                }
+                else if (max_http_streams_per_flow > MAX_MAX_HTTP_STREAMS_PER_FLOW)
+                {
+                    ParseWarning(WARN_CONF, "appid: invalid max_http_streams_per_flow %d, must be less than %d\n.",
+                        max_http_streams_per_flow, MAX_MAX_HTTP_STREAMS_PER_FLOW);
+                }
+                else
+                {
+                    odp_ctxt.max_http_streams_per_flow = max_http_streams_per_flow;
+                }
+            }
             else
                 ParseWarning(WARN_CONF, "appid: unsupported configuration: %s\n", conf_key);
         }

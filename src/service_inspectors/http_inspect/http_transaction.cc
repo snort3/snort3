@@ -293,6 +293,11 @@ void HttpTransaction::garbage_collect()
     }
 }
 
+int64_t HttpTransaction::get_hx_stream_id() const
+{
+    return session_data->get_hx_stream_id();
+}
+
 void HttpTransaction::delete_transaction(HttpTransaction* transaction, HttpFlowData* session_data)
 {
     if (transaction != nullptr)

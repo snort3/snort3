@@ -646,7 +646,7 @@ success:
         if ( !hsession->get_field(MISC_URL_FID) )
         {
             hsession->set_field(MISC_URL_FID, new std::string(ss->swfUrl), args.change_bits);
-            args.asd.scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
+            hsession->scan_flags |= SCAN_HTTP_HOST_URL_FLAG;
         }
 
         snort_free(ss->swfUrl);

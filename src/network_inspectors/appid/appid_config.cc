@@ -243,6 +243,7 @@ void OdpContext::dump_appid_config()
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: inspect_ooo_flows                        %s\n", inspect_ooo_flows ? "True" : "False");
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: kerberos_check_failed_login              %s\n", kerberos_check_failed_login ? "True" : "False");
     APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: tp_memory_allocation_stats               %s\n", tp_memory_allocation_stats ? "True" : "False");
+    APPID_LOG(nullptr, TRACE_INFO_LEVEL, "Appid Config: max_http_streams_per_flow                %" PRIu16"\n", max_http_streams_per_flow);
 }
 
 bool OdpContext::is_appid_cpu_profiler_running()
