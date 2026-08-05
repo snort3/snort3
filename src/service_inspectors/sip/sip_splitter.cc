@@ -36,8 +36,9 @@ using namespace snort;
 const char SipSplitter::content_len_key[] = "Content-Length";
 const char SipSplitter::content_len_key_compact[] = "l";
 
-SipSplitter::SipSplitter(bool c2s) : StreamSplitter(c2s)
+SipSplitter::SipSplitter(bool c2s, uint32_t max_runt) : StreamSplitter(c2s)
 {
+    max_runt_flushes = max_runt;
     reset_states();
 }
 
@@ -199,7 +200,10 @@ StreamSplitter::Status SipSplitter::scan(
                 paf_state = SIP_PAF_CONTENT_LEN_CMD;
             }
             else
+            {
+                cur_pdu_len += len;
                 return StreamSplitter::SEARCH;
+            }
             break;
         case SIP_PAF_CONTENT_LEN_CMD:
             process_command(ch);
@@ -225,6 +229,15 @@ StreamSplitter::Status SipSplitter::scan(
         case SIP_PAF_FLUSH_STATE:
             if (content_length == 0)
             {
+                const uint32_t pdu_len = cur_pdu_len + (i + 1);
+                cur_pdu_len = 0;
+
+                if (max_runt_flushes and (pdu_len < SIP_MIN_PLAUSIBLE_PDU)
+                    and (++runt_flush_count > max_runt_flushes))
+                {
+                    sip_stats.aborted_sessions++;
+                    return StreamSplitter::ABORT;
+                }
                 *fp = i+1;
                 reset_states();
                 return StreamSplitter::FLUSH;
@@ -233,5 +246,6 @@ StreamSplitter::Status SipSplitter::scan(
         }
     }
 
+    cur_pdu_len += len;
     return StreamSplitter::SEARCH;
 }

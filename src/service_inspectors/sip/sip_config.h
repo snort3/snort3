@@ -107,6 +107,7 @@ struct SIP_PROTO_CONF
     uint16_t maxContactLen;  // Maximum Contact field size
     uint16_t maxContentLen;  // Maximum Content length
     uint32_t maxMediaDataPerSession;  // Maximum m= lines per SDP session
+    uint32_t maxUndersizedMsgs;  // Per-flow cap on undersized SIP PDUs before abort (0 = disabled)
     uint64_t sip_timeout;
     uint64_t sip_media_timeout;
     uint64_t sip_invite_timeout;

@@ -52,11 +52,12 @@ enum SipPafBodyStatus
 };
 
 #define UNKNOWN_CONTENT_LENGTH UINT32_MAX
+#define SIP_MIN_PLAUSIBLE_PDU     64
 
 class SipSplitter : public snort::StreamSplitter
 {
 public:
-    SipSplitter(bool c2s);
+    SipSplitter(bool c2s, uint32_t max_runt_flushes = 0);
 
     Status scan(snort::Packet*, const uint8_t* data, uint32_t len,
         uint32_t flags, uint32_t* fp) override;
@@ -79,6 +80,9 @@ private:
     SipPafBodyStatus body_state;  //State to find sip body
     const char *next_letter;     //The current character in Content-Length
     uint32_t content_length;
+    uint32_t cur_pdu_len = 0;       //bytes scanned since the last flush
+    uint32_t runt_flush_count = 0;  //number of runt PDUs flushed on this flow
+    uint32_t max_runt_flushes = 0;  //per-flow budget; 0 disables the check
 
 #ifdef UNIT_TEST
     friend class SipSplitterUT;

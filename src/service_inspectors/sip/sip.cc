@@ -219,7 +219,7 @@ public:
     void eval(Packet*) override;
 
     class StreamSplitter* get_splitter(bool to_server) override
-    { return new SipSplitter(to_server); }
+    { return new SipSplitter(to_server, config->maxUndersizedMsgs); }
 
     bool is_control_channel() const override
     { return true; }
@@ -269,6 +269,7 @@ void Sip::show(const SnortConfig*) const
     ConfigLogger::log_value("max_media_data", config->maxMediaDataPerSession);
     ConfigLogger::log_value("max_request_name_len", config->maxRequestNameLen);
     ConfigLogger::log_value("max_to_len", config->maxToLen);
+    ConfigLogger::log_value("max_undersized_msgs", config->maxUndersizedMsgs);
     ConfigLogger::log_value("max_uri_len", config->maxUriLen);
     ConfigLogger::log_value("max_via_len", config->maxViaLen);
     ConfigLogger::log_list("methods", methods.c_str());
