@@ -86,6 +86,7 @@
 // 61 and 62 are used by dce_udp (connection-less); continue at 63 for SMB
 #define DCE2_SMB_SEG_BUFFER_OVERRUN 63
 #define DCE2_SMB_EXCESSIVE_WRITEX_RAW 64
+#define DCE2_SMB_EXCESSIVE_CHAINED_WRITEX 65
 
 #define DCE2_SMB_BAD_NBSS_TYPE_STR "SMB - bad NetBIOS session service session type"
 #define DCE2_SMB_BAD_TYPE_STR  "SMB - bad SMB message type"
@@ -145,6 +146,8 @@
     "SMB - segmentation buffer accounting overrun, possible evasion attempt"
 #define DCE2_SMB_EXCESSIVE_WRITEX_RAW_STR \
     "SMB - excessive raw WriteAndX reassembly memory causing potential DoS"
+#define DCE2_SMB_EXCESSIVE_CHAINED_WRITEX_STR \
+    "SMB - excessive chained WriteAndX commands causing potential DoS"
 
 struct dce2SmbStats : public LruCacheLocalStats
 {

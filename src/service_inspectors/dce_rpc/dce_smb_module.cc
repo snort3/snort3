@@ -243,6 +243,9 @@ static const Parameter s_params[] =
     { "smb_max_file_chunks", Parameter::PT_INT, "1:65535", "1024",
       "maximum out-of-order file data chunks buffered per tracker" },
 
+    { "smb_max_writex_detects", Parameter::PT_INT, "0:255", "10",
+      "maximum file data detections per SMB message on the chained WriteAndX path, 0 is unlimited" },
+
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
 
@@ -292,6 +295,7 @@ static const RuleMap dce2_smb_rules[] =
     { DCE2_SMB_EXCESSIVE_FILE_CHUNKS, DCE2_SMB_EXCESSIVE_FILE_CHUNKS_STR },
     { DCE2_SMB_SEG_BUFFER_OVERRUN, DCE2_SMB_SEG_BUFFER_OVERRUN_STR },
     { DCE2_SMB_EXCESSIVE_WRITEX_RAW, DCE2_SMB_EXCESSIVE_WRITEX_RAW_STR },
+    { DCE2_SMB_EXCESSIVE_CHAINED_WRITEX, DCE2_SMB_EXCESSIVE_CHAINED_WRITEX_STR },
     { 0, nullptr }
 };
 
@@ -522,6 +526,9 @@ bool Dce2SmbModule::set(const char*, Value& v, SnortConfig*)
     else if ( v.is("smb_max_file_chunks") )
         config.smb_max_file_chunks = v.get_uint16();
 
+    else if ( v.is("smb_max_writex_detects") )
+        config.smb_max_writex_detects = v.get_uint8();
+
     else if ( v.is("memcap") )
         config.memcap = v.get_size();
 
@@ -550,4 +557,5 @@ void print_dce2_smb_conf(const dce2SmbProtoConf& config)
     ConfigLogger::log_flag("smb_legacy_mode", config.legacy_mode);
     ConfigLogger::log_limit("smb_max_credit", config.smb_max_credit, 0, 1);
     ConfigLogger::log_limit("smb_max_file_chunks", config.smb_max_file_chunks, 0, 1);
+    ConfigLogger::log_limit("smb_max_writex_detects", config.smb_max_writex_detects, 0, 1);
 }

@@ -1228,7 +1228,7 @@ DCE2_Ret DCE2_SmbWriteAndX(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr,
             dcnt = nb_len;
         }
 
-        return DCE2_SmbProcessRequestData(ssd, fid, nb_ptr, dcnt, offset);
+        return DCE2_SmbProcessRequestDataWriteAndX(ssd, fid, nb_ptr, dcnt, offset);
     }
 
     return DCE2_RET__SUCCESS;

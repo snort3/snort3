@@ -41,6 +41,14 @@ using namespace snort;
 
 static uint8_t dce2_smb_delete_pdu[65535];
 
+// File data detection re-scans the whole rebuilt PDU per write, so a chained
+// WriteAndX message costs O(commands x payload).  Bound the detections per message.
+static THREAD_LOCAL bool dce2_smb_in_writeandx = false;
+static THREAD_LOCAL uint8_t dce2_smb_writeandx_detects = 0;
+
+void DCE2_SmbResetWriteAndXDetect()
+{ dce2_smb_writeandx_detects = 0; }
+
 
 /********************************************************************
  * Private function prototypes
@@ -952,6 +960,18 @@ DCE2_Ret DCE2_SmbProcessRequestData(DCE2_SmbSsnData* ssd,
     return DCE2_RET__SUCCESS;
 }
 
+// Chained WriteAndX only; marks the path so DCE2_SmbProcessFileData bounds the
+// detections.  Other DCE2_SmbProcessRequestData callers are unaffected.
+DCE2_Ret DCE2_SmbProcessRequestDataWriteAndX(DCE2_SmbSsnData* ssd,
+    const uint16_t fid, const uint8_t* data_ptr, uint32_t data_len, uint64_t offset)
+{
+    dce2_smb_in_writeandx = true;
+    DCE2_Ret status = DCE2_SmbProcessRequestData(ssd, fid, data_ptr, data_len, offset);
+    dce2_smb_in_writeandx = false;
+
+    return status;
+}
+
 DCE2_Ret DCE2_SmbProcessResponseData(DCE2_SmbSsnData* ssd,
     const uint8_t* data_ptr, uint32_t data_len)
 {
@@ -1742,6 +1762,30 @@ void DCE2_SmbProcessFileData(DCE2_SmbSsnData* ssd,
         ((ftracker->ff_file_offset == ftracker->ff_bytes_processed) &&
         ((file_data_depth == 0) || (ftracker->ff_bytes_processed < (uint64_t)file_data_depth))))
     {
+        const uint8_t max_writex_detects =
+            DCE2_ScSmbMaxWriteXDetects((const dce2SmbProtoConf*)ssd->sd.config);
+
+        if (dce2_smb_in_writeandx && max_writex_detects
+            && (dce2_smb_writeandx_detects >= max_writex_detects))
+        {
+            SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL,
+                DetectionEngine::get_current_packet(),
+                "Chained WriteAndX detections exceeded %hhu on this message - blocking\n",
+                max_writex_detects);
+
+            dce_alert(GID_DCE2, DCE2_SMB_EXCESSIVE_CHAINED_WRITEX,
+                reinterpret_cast<dce2CommonStats*>(&dce2_smb_stats), ssd->sd);
+
+            // Stops the chain walk via the block_pdus check at the top of the loop in
+            // DCE2_SmbProcessCommand; returning also skips the file API below.
+            ssd->block_pdus = true;
+
+            return;
+        }
+
+        if (dce2_smb_in_writeandx)
+            dce2_smb_writeandx_detects++;
+
         set_file_data(data_ptr, (data_len > UINT16_MAX) ? UINT16_MAX : (uint16_t)data_len);
         DCE2_FileDetect();
         set_file_data(nullptr, 0);

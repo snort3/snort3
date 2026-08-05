@@ -811,6 +811,9 @@ static void DCE2_SmbProcessCommand(DCE2_SmbSsnData* ssd, const SmbNtHdr* smb_hdr
     bool open_chain = false;
     int num_chained = 0;
 
+    // Once per SMB message: the scope for the chained WriteAndX detection bound.
+    DCE2_SmbResetWriteAndXDetect();
+
     while (nb_len > 0)
     {
         if (ssd->block_pdus && (DCE2_SmbType() == SMB_TYPE__REQUEST))

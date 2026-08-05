@@ -65,6 +65,7 @@ struct dce2SmbProtoConf
     uint16_t smb_max_credit;
     size_t memcap;
     uint16_t smb_max_file_chunks;
+    uint8_t smb_max_writex_detects;
 };
 
 class Dce2SmbModule : public snort::Module
@@ -109,6 +110,14 @@ inline uint8_t DCE2_ScSmbMaxChain(const dce2SmbProtoConf* sc)
     if (sc == nullptr)
         return 0;
     return sc->smb_max_chain;
+}
+
+// 0 disables the limit
+inline uint8_t DCE2_ScSmbMaxWriteXDetects(const dce2SmbProtoConf* sc)
+{
+    if (sc == nullptr)
+        return 0;
+    return sc->smb_max_writex_detects;
 }
 
 inline DCE2_List* DCE2_ScSmbInvalidShares(const dce2SmbProtoConf* sc)
