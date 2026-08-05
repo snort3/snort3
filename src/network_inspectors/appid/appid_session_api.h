@@ -22,6 +22,7 @@
 #ifndef APPID_SESSION_API_H
 #define APPID_SESSION_API_H
 
+#include <list>
 #include <map>
 
 #include "flow/flow.h"
@@ -109,7 +110,7 @@ class SO_PUBLIC AppIdSessionApi : public StashGenericObject
 public:
     AppId get_service_app_id() const;
     void get_service_info(const char*& vendor, const char*& version,
-        const AppIdServiceSubtype*& subtype) const;
+        const AppIdServiceSubtypeList*& subtypes) const;
     const char* get_user_info(AppId& service, bool& login) const;
     AppId get_misc_app_id(uint32_t stream_index = 0) const;
     AppId get_client_app_id(uint32_t stream_index = 0) const;

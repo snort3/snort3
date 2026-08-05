@@ -130,15 +130,14 @@ int ServiceDetector::incompatible_data(AppIdSession& asd, const snort::Packet* p
 int ServiceDetector::fail_service(AppIdSession& asd, const snort::Packet* pkt, AppidSessionDirection dir) { return 0; }
 // cppcheck-suppress constParameterReference
 int ServiceDetector::service_inprocess(AppIdSession& asd, const snort::Packet* pkt, AppidSessionDirection dir) { return 0; }
-// cppcheck-suppress constParameterReference
-int ServiceDetector::add_service_consume_subtype(AppIdSession& asd, const snort::Packet* pkt,
-    AppidSessionDirection dir, AppId appId, const char* vendor, const char* version,
-    AppIdServiceSubtype* subtype, AppidChangeBits& change_bits) // cppcheck-suppress constParameterReference
+int ServiceDetector::add_service_with_subtypes(AppidChangeBits& change_bits, AppIdSession& asd,
+    const snort::Packet* pkt, AppidSessionDirection dir, AppId appId, const char* vendor,
+    const char* version, AppIdServiceSubtypeList& subtypes)
     { return 0; }
 // cppcheck-suppress constParameterReference
 int ServiceDetector::add_service(AppidChangeBits& change_bits, AppIdSession& asd,
     const snort::Packet* pkt, AppidSessionDirection dir, AppId appId, const char* vendor,
-    const char* version, AppIdServiceSubtype* subtype)
+    const char* version)
     { return 0; }
 void ServiceDetector::register_appid(AppId appId, unsigned extractsInfo, OdpContext& odp_ctxt) {}
 

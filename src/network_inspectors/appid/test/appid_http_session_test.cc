@@ -84,7 +84,7 @@ AppId HttpPatternMatchers::scan_chp(ChpMatchDescriptor&, char**, char**,
 }
 
 void HttpPatternMatchers::get_server_vendor_version(const char*, int, char**,
-    char**, AppIdServiceSubtype**)
+    char**, AppIdServiceSubtypeList&)
 {
 }
 

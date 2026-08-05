@@ -81,7 +81,7 @@ int ServiceDetector::service_inprocess(AppIdSession& asd, const Packet* pkt, App
 
 int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt,
     AppidSessionDirection dir, AppId appId, const char* vendor, const char* version,
-    AppidChangeBits& change_bits, AppIdServiceSubtype* subtype)
+    AppidChangeBits& change_bits)
 {
     uint16_t port = 0;
     const SfIp* ip = nullptr;
@@ -90,8 +90,6 @@ int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt,
     asd.service_detector = this;
     asd.set_service_vendor(vendor, change_bits);
     asd.set_service_version(version, change_bits);
-    if (subtype)
-        asd.add_service_subtype(*subtype, change_bits);
     asd.set_service_detected();
     asd.set_service_id(appId, asd.get_odp_ctxt());
 
@@ -140,27 +138,21 @@ int ServiceDetector::update_service_data(AppIdSession& asd, const Packet* pkt,
     return APPID_SUCCESS;
 }
 
-int ServiceDetector::add_service_consume_subtype(AppIdSession& asd, const Packet* pkt,
-    AppidSessionDirection dir, AppId appId, const char* vendor, const char* version,
-    AppIdServiceSubtype* subtype, AppidChangeBits& change_bits)
-{
-    return update_service_data(asd, pkt, dir, appId, vendor, version, change_bits, subtype);
-}
-
 int ServiceDetector::add_service(AppidChangeBits& change_bits, AppIdSession& asd,
     const Packet* pkt, AppidSessionDirection dir, AppId appId, const char* vendor,
-    const char* version, AppIdServiceSubtype* subtype)
+    const char* version)
 {
-    AppIdServiceSubtype* new_subtype = nullptr;
+    return update_service_data(asd, pkt, dir, appId, vendor, version, change_bits);
+}
 
-    for (; subtype; subtype = subtype->next)
-    {
-        AppIdServiceSubtype* tmp_subtype = new AppIdServiceSubtype(*subtype);
+int ServiceDetector::add_service_with_subtypes(AppidChangeBits& change_bits, AppIdSession& asd,
+    const Packet* pkt, AppidSessionDirection dir, AppId appId, const char* vendor,
+    const char* version, AppIdServiceSubtypeList& subtypes)
+{
+    if (!subtypes.empty())
+        asd.add_service_subtype_list(subtypes, change_bits);
 
-        tmp_subtype->next = new_subtype;
-        new_subtype = tmp_subtype;
-    }
-    return update_service_data(asd, pkt, dir, appId, vendor, version, change_bits, new_subtype);
+    return update_service_data(asd, pkt, dir, appId, vendor, version, change_bits);
 }
 
 int ServiceDetector::incompatible_data(AppIdSession& asd, const Packet* pkt, AppidSessionDirection dir)

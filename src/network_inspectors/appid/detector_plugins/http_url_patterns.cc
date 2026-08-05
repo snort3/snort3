@@ -1597,7 +1597,7 @@ bool HttpPatternMatchers::get_appid_from_url(const char* host, const char* url, 
 }
 
 void HttpPatternMatchers::get_server_vendor_version(const char* data, int len, char** version,
-    char** vendor, AppIdServiceSubtype** subtype)
+    char** vendor, AppIdServiceSubtypeList& subtypes)
 {
     int vendor_len = len;
 
@@ -1636,13 +1636,11 @@ void HttpPatternMatchers::get_server_vendor_version(const char* data, int len, c
                 {
                     if ( subname && subname_len > 0 && subver && *subname )
                     {
-                        AppIdServiceSubtype* sub = new AppIdServiceSubtype();
+                        AppIdServiceSubtype* sub = subtypes.emplace_front();
                         sub->service.assign(subname, subname_len);
                         int subver_len = p - subver;
                         if (subver_len > 0 && *subver)
                             sub->version.assign(subver, subver_len);
-                        sub->next = *subtype;
-                        *subtype = sub;
                     }
                     subname = p + 1;
                     subname_len = 0;
@@ -1656,18 +1654,21 @@ void HttpPatternMatchers::get_server_vendor_version(const char* data, int len, c
                     subver = p + 1;
                 }
             }
+            if (subtypes.size() >= MAX_APPID_SUBTYPES_ENTRIES)
+                break;
         }
 
         if ( subname && subname_len > 0 && subver && *subname )
         {
-            AppIdServiceSubtype* sub = new AppIdServiceSubtype();
-            sub->service.assign(subname, subname_len);
+            AppIdServiceSubtype* sub = subtypes.emplace_front();
+            if (sub)
+            {
+                sub->service.assign(subname, subname_len);
 
-            int subver_len = p - subver;
-            if ( subver_len > 0 && *subver )
-                sub->version.assign(subver, subver_len);
-            sub->next = *subtype;
-            *subtype = sub;
+                int subver_len = p - subver;
+                if ( subver_len > 0 && *subver )
+                    sub->version.assign(subver, subver_len);
+            }
         }
 
         if ( version_len <= 0 )

@@ -564,7 +564,7 @@ success:
         break;
     }
     return add_service(args.change_bits, args.asd, args.pkt, args.dir, APP_ID_SNMP,
-        SNMP_VENDOR_STR, version_str, nullptr);
+        SNMP_VENDOR_STR, version_str);
 
 bail:
     incompatible_data(args.asd, args.pkt, args.dir);

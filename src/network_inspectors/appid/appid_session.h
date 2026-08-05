@@ -584,9 +584,14 @@ public:
         api.service.set_vendor(vendor, change_bits);
     }
 
-    void add_service_subtype(AppIdServiceSubtype& subtype, AppidChangeBits& change_bits)
+    void add_service_subtype(const AppIdServiceSubtype& subtype, AppidChangeBits& change_bits)
     {
         api.service.add_subtype(subtype, change_bits);
+    }
+
+    void add_service_subtype_list(AppIdServiceSubtypeList& subtypes, AppidChangeBits& change_bits)
+    {
+        api.service.add_subtype_list(subtypes, change_bits);
     }
 
     void set_client_inferred_service_id(AppId id)

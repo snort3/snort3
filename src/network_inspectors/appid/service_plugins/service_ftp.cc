@@ -1346,7 +1346,7 @@ inprocess:
             add_service(args.change_bits, args.asd, args.pkt, args.dir,
                 flags == APPID_SESSION_ENCRYPTED ? APP_ID_FTPS : APP_ID_FTP_CONTROL,
                 fd->vendor[0] ? fd->vendor : nullptr,
-                fd->version[0] ? fd->version : nullptr, nullptr);
+                fd->version[0] ? fd->version : nullptr);
         }
         return APPID_SUCCESS;
 

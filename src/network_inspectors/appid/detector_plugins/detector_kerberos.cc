@@ -411,7 +411,7 @@ int KerberosServiceDetector::krb_walk_server_packet(KRBState* krbs, const uint8_
         /*end of server response message */
         if (krbs->flags & KRB_FLAG_SERVICE_DETECTED)
             if (!asd.is_service_detected() && pkt)
-                this->add_service(change_bits, asd, pkt, dir, APP_ID_KERBEROS, nullptr, krbs->ver, nullptr);
+                this->add_service(change_bits, asd, pkt, dir, APP_ID_KERBEROS, nullptr, krbs->ver);
 
         if (krbs->flags & KRB_FLAG_AUTH_FAILED)
         {

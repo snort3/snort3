@@ -62,11 +62,11 @@ AppId AppIdSessionApi::get_service_app_id() const
 }
 
 void AppIdSessionApi::get_service_info(const char*& vendor, const char*& version,
-    const AppIdServiceSubtype*& subtype) const
+    const AppIdServiceSubtypeList*& subtypes) const
 {
     vendor = service.get_vendor();
     version = service.get_version();
-    subtype = service.get_subtype();
+    subtypes = &service.get_subtypes();
 }
 
 const char* AppIdSessionApi::get_user_info(AppId& service, bool& login) const

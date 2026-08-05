@@ -29,6 +29,7 @@
 // is incremented.
 
 #include <string>
+#include <utility>
 
 #include "protocols/packet.h"
 #include "pub_sub/appid_events.h"
@@ -36,6 +37,202 @@
 
 #include "appid_types.h"
 #include "application_ids.h"
+
+#define MAX_APPID_SUBTYPES_ENTRIES 30
+
+struct AppIdServiceSubtype
+{
+    std::string service;
+    std::string vendor;
+    std::string version;
+};
+
+struct AppIdServiceSubtypeListNode
+{
+    AppIdServiceSubtypeListNode() = default;
+    ~AppIdServiceSubtypeListNode() = default;
+
+    AppIdServiceSubtype data;
+    AppIdServiceSubtypeListNode* next = nullptr;
+};
+
+class AppIdServiceSubtypeList
+{
+public:
+    AppIdServiceSubtypeList() = default;
+
+    ~AppIdServiceSubtypeList()
+    {
+        clear();
+    }
+
+    AppIdServiceSubtypeList(const AppIdServiceSubtypeList& other)
+    {
+        for (const AppIdServiceSubtypeListNode* node = other.subtypes_head; node; node = node->next)
+            append() = node->data;
+    }
+
+    AppIdServiceSubtypeList& operator=(const AppIdServiceSubtypeList& other)
+    {
+        if (this != &other)
+        {
+            clear();
+            for (const AppIdServiceSubtypeListNode* node = other.subtypes_head; node; node = node->next)
+                append() = node->data;
+        }
+        return *this;
+    }
+
+    AppIdServiceSubtypeList(AppIdServiceSubtypeList&& other) noexcept
+        : subtypes_head(other.subtypes_head), subtypes_tail(other.subtypes_tail),
+          subtypes_size(other.subtypes_size)
+    {
+        other.subtypes_head = nullptr;
+        other.subtypes_tail = nullptr;
+        other.subtypes_size = 0;
+    }
+
+    AppIdServiceSubtypeList& operator=(AppIdServiceSubtypeList&& other) noexcept
+    {
+        if (this != &other)
+        {
+            clear();
+            subtypes_head = other.subtypes_head;
+            subtypes_tail = other.subtypes_tail;
+            subtypes_size = other.subtypes_size;
+            other.subtypes_head = nullptr;
+            other.subtypes_tail = nullptr;
+            other.subtypes_size = 0;
+        }
+        return *this;
+    }
+
+    void clear()
+    {
+        AppIdServiceSubtypeListNode* node = subtypes_head;
+        while (node)
+        {
+            AppIdServiceSubtypeListNode* next = node->next;
+            delete node;
+            node = next;
+        }
+        subtypes_head = nullptr;
+        subtypes_tail = nullptr;
+        subtypes_size = 0;
+    }
+
+    bool empty() const
+    {
+        return subtypes_head == nullptr;
+    }
+
+    uint16_t size() const
+    {
+        return subtypes_size;
+    }
+
+    const AppIdServiceSubtypeListNode* head() const
+    {
+        return subtypes_head;
+    }
+
+    const AppIdServiceSubtypeListNode* tail() const
+    {
+        return subtypes_tail;
+    }
+
+    AppIdServiceSubtype* emplace_front()
+    {
+        if (!have_space())
+            return nullptr;
+        AppIdServiceSubtypeListNode* node = new AppIdServiceSubtypeListNode();
+        node->next = subtypes_head;
+        subtypes_head = node;
+        if (subtypes_tail == nullptr)
+            subtypes_tail = node;
+        ++subtypes_size;
+        return &node->data;
+    }
+
+    AppIdServiceSubtype* emplace()
+    {
+        if (!have_space())
+            return nullptr;
+        return &append();
+    }
+
+    void splice(AppIdServiceSubtypeList& other, uint16_t limit = UINT16_MAX)
+    {
+        if (other.subtypes_head == nullptr)
+            return;
+
+        if (subtypes_tail)
+            subtypes_tail->next = other.subtypes_head;
+        else
+            subtypes_head = other.subtypes_head;
+        subtypes_tail = other.subtypes_tail;
+
+        uint32_t combined_len = static_cast<uint32_t>(subtypes_size) + other.subtypes_size;
+
+        other.subtypes_head = nullptr;
+        other.subtypes_tail = nullptr;
+        other.subtypes_size = 0;
+
+        while (combined_len > limit)
+        {
+            AppIdServiceSubtypeListNode* node = subtypes_head;
+            subtypes_head = node->next;
+            delete node;
+            --combined_len;
+        }
+        if (subtypes_head == nullptr)
+            subtypes_tail = nullptr;
+
+        subtypes_size = static_cast<uint16_t>(combined_len);
+    }
+
+    void add(const AppIdServiceSubtype& subtype, uint16_t limit = UINT16_MAX)
+    {
+        if (limit != 0 and subtypes_size >= limit)
+            pop_front();
+
+        if (!have_space())
+            return;
+        append() = subtype;
+    }
+
+private:
+    AppIdServiceSubtype& append()
+    {
+        AppIdServiceSubtypeListNode* node = new AppIdServiceSubtypeListNode();
+        if (subtypes_tail)
+            subtypes_tail->next = node;
+        else
+            subtypes_head = node;
+        subtypes_tail = node;
+        ++subtypes_size;
+        return node->data;
+    }
+
+    void pop_front()
+    {
+        AppIdServiceSubtypeListNode* node = subtypes_head;
+        subtypes_head = node->next;
+        if (subtypes_head == nullptr)
+            subtypes_tail = nullptr;
+        delete node;
+        --subtypes_size;
+    }
+
+    bool have_space()
+    {
+        return subtypes_size < UINT16_MAX;
+    }
+
+    AppIdServiceSubtypeListNode* subtypes_head = nullptr;
+    AppIdServiceSubtypeListNode* subtypes_tail = nullptr;
+    uint16_t subtypes_size = 0;
+};
 
 class AppIdDetector;
 class AppIdSession;
@@ -90,31 +287,12 @@ private:
     std::string my_version;
 };
 
-struct AppIdServiceSubtype
-{
-    AppIdServiceSubtype* next = nullptr;
-    std::string service;
-    std::string vendor;
-    std::string version;
-};
-
 class ServiceAppDescriptor : public ApplicationDescriptor
 {
 public:
     ServiceAppDescriptor()
     {
         service_ip.clear();
-    }
-
-    ~ServiceAppDescriptor() override
-    {
-        AppIdServiceSubtype* tmp_subtype = subtype;
-        while (tmp_subtype)
-        {
-            subtype = tmp_subtype->next;
-            delete tmp_subtype;
-            tmp_subtype = subtype;
-        }
     }
 
     void set_id(AppId app_id, OdpContext& odp_ctxt);
@@ -125,13 +303,7 @@ public:
         my_vendor.clear();
         port_service_id = APP_ID_NONE;
 
-        AppIdServiceSubtype* tmp_subtype = subtype;
-        while (tmp_subtype)
-        {
-            subtype = tmp_subtype->next;
-            delete tmp_subtype;
-            tmp_subtype = subtype;
-        }
+        subtypes.clear();
         service_ip.clear();
         service_port = 0;
         service_group = DAQ_PKTHDR_UNKNOWN;
@@ -163,19 +335,23 @@ public:
         }
     }
 
-    void add_subtype(AppIdServiceSubtype& more_subtype, AppidChangeBits& change_bits)
+    void add_subtype(const AppIdServiceSubtype& more_subtype, AppidChangeBits& change_bits)
     {
-        AppIdServiceSubtype** tmp_subtype;
-
-        for (tmp_subtype = &subtype; *tmp_subtype; tmp_subtype = &(*tmp_subtype)->next)
-            ;
-        *tmp_subtype = &more_subtype;
+        subtypes.add(more_subtype, MAX_APPID_SUBTYPES_ENTRIES);
         change_bits.set(APPID_SERVICE_INFO_BIT);
     }
 
-    const AppIdServiceSubtype* get_subtype() const
+    void add_subtype_list(AppIdServiceSubtypeList& more_subtypes, AppidChangeBits& change_bits)
     {
-        return subtype;
+        if (more_subtypes.empty())
+            return;
+        subtypes.splice(more_subtypes, MAX_APPID_SUBTYPES_ENTRIES);
+        change_bits.set(APPID_SERVICE_INFO_BIT);
+    }
+
+    const AppIdServiceSubtypeList& get_subtypes() const
+    {
+        return subtypes;
     }
 
     void set_service_ip(const snort::SfIp& ip)
@@ -229,7 +405,7 @@ private:
     bool deferred = false;
     using ApplicationDescriptor::set_id;
     std::string my_vendor;
-    AppIdServiceSubtype* subtype = nullptr;
+    AppIdServiceSubtypeList subtypes;
     snort::SfIp service_ip;
     uint16_t service_port = 0;
     int16_t service_group = DAQ_PKTHDR_UNKNOWN;
@@ -291,12 +467,6 @@ class PayloadAppDescriptor : public ApplicationDescriptor
 {
 public:
     PayloadAppDescriptor() = default;
-
-    // cppcheck-suppress uselessOverride ; override retained to document the derived interface contract
-    void reset() override
-    {
-        ApplicationDescriptor::reset();
-    }
 };
 
 #endif

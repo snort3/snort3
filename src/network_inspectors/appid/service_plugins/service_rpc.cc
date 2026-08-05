@@ -583,8 +583,6 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size,
 int RpcServiceDetector::rpc_udp_validate(AppIdDiscoveryArgs& args)
 {
     ServiceRPCData* rd;
-    AppIdServiceSubtype sub;
-    AppIdServiceSubtype* subtype;
     uint32_t program = 0;
     const char* pname = nullptr;
     int rval;
@@ -592,6 +590,7 @@ int RpcServiceDetector::rpc_udp_validate(AppIdDiscoveryArgs& args)
     Packet* pkt = args.pkt;
     const AppidSessionDirection dir = args.dir;
     uint16_t size = args.size;
+    AppIdServiceSubtypeList subtypes;
 
     if (!size)
     {
@@ -621,21 +620,20 @@ done:
         {
             if (pname && *pname)
             {
-                sub.service = pname;
-                subtype = &sub;
+                AppIdServiceSubtype* subtype = subtypes.emplace();
+                if (subtype)
+                    subtype->service = pname;
             }
             else if (program)
             {
                 char subname[64];
                 snprintf(subname, sizeof(subname), "(%u)", program);
-                sub.service = subname;
-                subtype = &sub;
+                AppIdServiceSubtype* subtype = subtypes.emplace();
+                if (subtype)
+                    subtype->service = subname;
             }
-            else
-                subtype = nullptr;
-
-            add_service(args.change_bits, args.asd, pkt, dir, APP_ID_SUN_RPC,
-                nullptr, nullptr, subtype);
+            add_service_with_subtypes(args.change_bits, args.asd, pkt, dir, APP_ID_SUN_RPC,
+                    nullptr, nullptr, subtypes);
         }
         args.asd.set_session_flags(APPID_SESSION_CONTINUE);
         return APPID_SUCCESS;
@@ -671,14 +669,13 @@ int RpcServiceDetector::rpc_tcp_validate(AppIdDiscoveryArgs& args)
     const ServiceRPCCall* call;
     const ServiceRPCReply* reply;
 
-    AppIdServiceSubtype sub;
-    AppIdServiceSubtype* subtype;
     uint32_t program = 0;
     const char* pname = nullptr;
     const uint8_t* data = args.data;
     Packet* pkt = args.pkt;
     AppidSessionDirection dir = args.dir;
     uint16_t size = args.size;
+    AppIdServiceSubtypeList subtypes;
 
     if (!size)
         goto inprocess;
@@ -985,20 +982,21 @@ inprocess:
         {
             if (pname && *pname)
             {
-                sub.service = pname;
-                subtype = &sub;
+                AppIdServiceSubtype* subtype = subtypes.emplace();
+                if (subtype)
+                    subtype->service = pname;
             }
             else if (program)
             {
                 char subname[64];
                 snprintf(subname, sizeof(subname), "(%u)", program);
-                sub.service = subname;
-                subtype = &sub;
+                AppIdServiceSubtype* subtype = subtypes.emplace();
+                if (subtype)
+                    subtype->service = subname;
             }
-            else
-                subtype = nullptr;
-            add_service(args.change_bits, args.asd, pkt, dir, APP_ID_SUN_RPC,
-                nullptr, nullptr, subtype);
+
+            add_service_with_subtypes(args.change_bits, args.asd, pkt, dir, APP_ID_SUN_RPC,
+                nullptr, nullptr, subtypes);
         }
         args.asd.set_session_flags(APPID_SESSION_CONTINUE);
         return APPID_SUCCESS;

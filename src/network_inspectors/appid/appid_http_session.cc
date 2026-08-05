@@ -575,10 +575,10 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
             {
                 char* vendorVersion = nullptr;
                 char* vendor = nullptr;
-                AppIdServiceSubtype* subtype = nullptr;
+                AppIdServiceSubtypeList subtypes;
 
                 http_matchers.get_server_vendor_version(server->c_str(), server->size(),
-                    &vendorVersion, &vendor, &subtype);
+                    &vendorVersion, &vendor, subtypes);
                 if (vendor or vendorVersion)
                 {
                     asd.set_service_vendor(vendor, change_bits);
@@ -589,8 +589,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
                     snort_free(vendorVersion);
                 }
 
-                if (subtype)
-                    asd.add_service_subtype(*subtype, change_bits);
+                asd.add_service_subtype_list(subtypes, change_bits);
             }
         }
 

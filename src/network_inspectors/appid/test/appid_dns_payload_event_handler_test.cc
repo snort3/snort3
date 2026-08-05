@@ -95,10 +95,9 @@ ServiceDetector::ServiceDetector() { }
 void ServiceDetector::register_appid(AppId, unsigned, OdpContext&) { }
 int ServiceDetector::service_inprocess(AppIdSession&, const Packet*, AppidSessionDirection) { return 0; }
 int ServiceDetector::add_service(AppidChangeBits&, AppIdSession&, const Packet*,
-    AppidSessionDirection, AppId, const char*, const char*, AppIdServiceSubtype*) { return 0; }
-int ServiceDetector::add_service_consume_subtype(AppIdSession&, const Packet*,
-    AppidSessionDirection, AppId, const char*, const char*, AppIdServiceSubtype*,
-    AppidChangeBits&) { return 0; }
+    AppidSessionDirection, AppId, const char*, const char*) { return 0; }
+int ServiceDetector::add_service_with_subtypes(AppidChangeBits&, AppIdSession&, const Packet*,
+    AppidSessionDirection, AppId, const char*, const char*, AppIdServiceSubtypeList&) { return 0; }
 int ServiceDetector::incompatible_data(AppIdSession&, const Packet*,
     AppidSessionDirection) { return 0; }
 int ServiceDetector::fail_service(AppIdSession&, const Packet*,

@@ -54,7 +54,7 @@ const char* APPID_UT_SERVICE = "at your service";
 const char* APPID_UT_SERVICE_VENDOR = "cisco snorty";
 const char* APPID_UT_SERVICE_VERSION = "Version City";
 
-AppIdServiceSubtype APPID_UT_SERVICE_SUBTYPE = { nullptr, APPID_UT_SERVICE,
+AppIdServiceSubtype APPID_UT_SERVICE_SUBTYPE = { APPID_UT_SERVICE,
                                                  APPID_UT_SERVICE_VENDOR,
                                                  APPID_UT_SERVICE_VERSION };
 
@@ -103,7 +103,7 @@ AppIdSession::AppIdSession(IpProtocol proto, const SfIp* ip, uint16_t, AppIdInsp
 
     set_service_vendor(APPID_UT_SERVICE_VENDOR, change_bits);
     set_service_version(APPID_UT_SERVICE_VERSION, change_bits);
-    add_service_subtype(*(new AppIdServiceSubtype(APPID_UT_SERVICE_SUBTYPE)), change_bits);
+    add_service_subtype(APPID_UT_SERVICE_SUBTYPE, change_bits);
 
     tsession = new TlsSession;
 

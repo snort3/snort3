@@ -538,8 +538,8 @@ TEST(http_url_patterns_tests, empty_server_vendor_version)
 {
     char* server_version = nullptr;
     char* vendor = nullptr;
-    AppIdServiceSubtype* subtype = nullptr;
-    hm->get_server_vendor_version("test/", 5, &server_version, &vendor, &subtype);
+    AppIdServiceSubtypeList subtypes;
+    hm->get_server_vendor_version("test/", 5, &server_version, &vendor, subtypes);
 
     CHECK(server_version);
     CHECK(server_version[0] == '\0');

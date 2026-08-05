@@ -31,6 +31,7 @@
 #include "utils/util.h"
 
 //#include "appid_module.h"
+#include "appid_app_descriptor.h"
 #include "appid_debug.h"
 #include "appid_types.h"
 #include "appid_utils/sf_mlmp.h"
@@ -309,7 +310,7 @@ public:
     bool get_appid_from_url(const char*, const char*, char**, const char*, AppId*, AppId*,
         AppId*, AppId*, bool, OdpContext&);
     AppId get_appid_by_content_type(const char*, int);
-    void get_server_vendor_version(const char*, int, char**, char**, AppIdServiceSubtype**);
+    void get_server_vendor_version(const char*, int, char**, char**, AppIdServiceSubtypeList&);
     void identify_user_agent(const char*, int, AppId&, AppId&, char**);
     uint32_t parse_multiple_http_patterns(const char* pattern, tMlmpPattern*,
         uint32_t numPartLimit, int level, bool is_literal);

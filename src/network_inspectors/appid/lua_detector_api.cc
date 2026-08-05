@@ -658,7 +658,7 @@ static int service_add_service(lua_State* L)
       parameter on the following call is nullptr. Subtype is not displayed on DC at present. */
     unsigned int retValue = ud->sd->add_service(*lsd->ldp.change_bits, *lsd->ldp.asd, lsd->ldp.pkt,
         lsd->ldp.dir, lsd->ldp.asd->get_odp_ctxt().get_app_info_mgr().get_appid_by_service_id(service_id),
-        vendor, version, nullptr);
+        vendor, version);
 
     lua_pushnumber(L, retValue);
     return 1;

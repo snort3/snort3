@@ -115,8 +115,8 @@ void RnaAppDiscovery::process(const AppidEvent* appid_event, DiscoveryFilter& fi
         {
             const char* vendor;
             const char* version;
-            const AppIdServiceSubtype* subtype;
-            appid_session_api.get_service_info(vendor, version, subtype);
+            const AppIdServiceSubtypeList* subtypes;
+            appid_session_api.get_service_info(vendor, version, subtypes);
             update_service_info(p, filter, rna_flow, proto, port, vendor, version, logger, conf,
                 service, is_client);
         }
