@@ -1236,7 +1236,7 @@ TEST_CASE("split", "[PDFTokenizer]")
             {{chunk2, ""}, PDFTokenizer::PDFRet::TOKEN_TOO_LONG},
         });
 
-        CHECK(state_len == 16384 + 1); // YY_BUF_SIZE + 1
+        CHECK((state_len == 16384 + 1)); // YY_BUF_SIZE + 1
     }
 }
 
