@@ -561,6 +561,14 @@ static inline int FragIsComplete(const FragTracker* ft)
     return 0;
 }
 
+// terms are ordered so the unsigned subtractions cannot wrap
+static inline bool frag_exceeds_maxpacket(
+    uint32_t frag_offset, uint32_t frag_len, uint32_t opts_len)
+{
+    return frag_offset + opts_len > IP_MAXPACKET
+        || frag_len > IP_MAXPACKET - frag_offset - opts_len;
+}
+
 /*
  * Reassemble the packet from the data in the FragTracker and reinject into
  * Snort's packet analysis system
@@ -646,9 +654,12 @@ static void FragRebuild(FragTracker* ft, Packet* p)
          */
         if (frag->size)
         {
-            if (frag->size > IP_MAXPACKET - frag->offset - offset)
+            if (frag_exceeds_maxpacket(frag->offset, frag->size, offset))
             {
-                ft->frag_flags = ft->frag_flags | FRAG_REBUILT;
+                // out-of-order arrival can reach here before insert() sees the options
+                debug_log(stream_ip_trace, p, "[..] Oversize frag in FragRebuild!\n");
+                EventAnomBadsizeLg(ft->engine);
+                ft->frag_flags |= FRAG_BAD;
                 return;
             }
 
@@ -1066,10 +1077,10 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     uint16_t orig_offset;   /* offset specified in this fragment header */
     uint16_t frag_offset;   /* calculated offset for this fragment */
     uint16_t frag_end;      /* calculated end point for this fragment */
-    int16_t trunc = 0;      /* we truncate off the tail */
+    uint16_t trunc = 0;     /* we truncate off the tail */
     int32_t overlap;        /* we overlap on either end of the frag */
-    int16_t len = 0;        /* calculated size of the fragment */
-    int16_t slide = 0;      /* slide up the front of the current frag */
+    uint16_t len = 0;       /* calculated size of the fragment */
+    uint16_t slide = 0;     /* slide up the front of the current frag */
     int done = 0;           /* flag for right-side overlap handling loop */
     int addthis = 1;        /* flag for right-side overlap handling loop */
     int i = 0;              /* counter */
@@ -1083,7 +1094,7 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     Fragment* idx = nullptr;        /* indexing fragment pointer for loops */
     Fragment* dump_me = nullptr;    /* frag ptr for complete overlaps to dump */
     const uint8_t* fragStart;
-    int16_t fragLength;
+    uint16_t fragLength;
     const uint16_t net_frag_offset = p->ptrs.ip_api.off();
 
     if (p->is_ip6() && (net_frag_offset == 0))
@@ -1115,7 +1126,9 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
     if (firstLastOk == FRAG_LAST_OFFSET_ADJUST)
         frag_offset = (uint16_t)ft->calculated_size;
 
-    if (IP_MAXPACKET - frag_offset < fragLength)
+    const uint16_t opts_len = ft->ip_options_len ? ft->ip_options_len
+        : p->ptrs.ip_api.get_ip_opt_len();
+    if (frag_exceeds_maxpacket(frag_offset, fragLength, opts_len))
     {
         debug_log(stream_ip_trace, p, "[..] Oversize frag!\n");
         EventAnomBadsizeLg(fe);
@@ -1293,8 +1306,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
             case FRAG_POLICY_WINDOWS:
             case FRAG_POLICY_SOLARIS:
             case FRAG_POLICY_BSD:
-                frag_offset += (int16_t)overlap;
-                slide = (int16_t)overlap;
+                frag_offset += (uint16_t)overlap;
+                slide = (uint16_t)overlap;
 
                 debug_logf(stream_ip_trace, p, "left overlap, new frag moves: %d bytes, slide: %d\n",
                     overlap, slide);
@@ -1327,8 +1340,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
                      * lower/equal offset, EXCEPT when the existing
                      * fragment ends with at a higher/equal offset.
                      */
-                    frag_offset += (int16_t)overlap;
-                    slide = (int16_t)overlap;
+                    frag_offset += (uint16_t)overlap;
+                    slide = (uint16_t)overlap;
                     goto left_overlap_last;
                 }
             /* fall through */
@@ -1351,8 +1364,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
                          * no, its done in add_frag_node */
                         return ret;
                     }
-                    left->size -= (int16_t)overlap;
-                    ft->frag_bytes -= (int16_t)overlap;
+                    left->size -= (uint16_t)overlap;
+                    ft->frag_bytes -= (uint16_t)overlap;
 
                     right->offset = frag_offset + len;
                     right->size -= (frag_offset + len - left->offset);
@@ -1361,8 +1374,8 @@ int Defrag::insert(Packet* p, FragTracker* ft, FragEngine* fe)
                 }
                 else
                 {
-                    left->size -= (int16_t)overlap;
-                    ft->frag_bytes -= (int16_t)overlap;
+                    left->size -= (uint16_t)overlap;
+                    ft->frag_bytes -= (uint16_t)overlap;
                 }
 
 left_overlap_last:
@@ -1402,7 +1415,7 @@ left_overlap_last:
         }
     }
 
-    if ((uint16_t)fragLength > p->context->conf->daq_config->get_mru_size())
+    if (fragLength > p->context->conf->daq_config->get_mru_size())
     {
         debug_logf(stream_ip_trace, p, "Overly large fragment %d 0x%x 0x%x %d\n",
             fragLength, p->ptrs.ip_api.dgram_len(), p->ptrs.ip_api.off(),
@@ -1467,15 +1480,15 @@ left_overlap_last:
                 if ((ft->frag_policy == FRAG_POLICY_BSD) &&
                     (right->offset == frag_offset))
                 {
-                    slide = (int16_t)(right->offset + right->size - frag_offset);
-                    frag_offset += (int16_t)slide;
+                    slide = (uint16_t)(right->offset + right->size - frag_offset);
+                    frag_offset += (uint16_t)slide;
                 }
                 else
                 {
-                    right->offset += (int16_t)overlap;
-                    right->data += (int16_t)overlap;
-                    right->size -= (int16_t)overlap;
-                    ft->frag_bytes -= (int16_t)overlap;
+                    right->offset += (uint16_t)overlap;
+                    right->data += (uint16_t)overlap;
+                    right->size -= (uint16_t)overlap;
+                    ft->frag_bytes -= (uint16_t)overlap;
                 }
                 debug_logf(stream_ip_trace, p, "[!!] right overlap, "
                     "truncating old frag (offset: %d, "
@@ -1501,7 +1514,7 @@ left_overlap_last:
             case FRAG_POLICY_WINDOWS:
             case FRAG_POLICY_SOLARIS:
             case FRAG_POLICY_BSD_RIGHT:
-                trunc = (int16_t)overlap;
+                trunc = (uint16_t)overlap;
                 debug_logf(stream_ip_trace, p, "[!!] right overlap, "
                     "truncating new frag (offset: %d overlap: %d)\n", right->offset, overlap);
                 debug_log(stream_ip_trace, p, "Exiting right overlap loop...\n");
@@ -1589,14 +1602,14 @@ left_overlap_last:
                 /* fix for bug 17823 */
                 if (right->offset == frag_offset)
                 {
-                    slide = (int16_t)(right->offset + right->size - frag_offset);
-                    frag_offset += (int16_t)slide;
+                    slide = (uint16_t)(right->offset + right->size - frag_offset);
+                    frag_offset += (uint16_t)slide;
                     left = right;
                     right = right->next;
                 }
                 else
                 {
-                    trunc = (int16_t)overlap;
+                    trunc = (uint16_t)overlap;
                 }
 
                 debug_logf(stream_ip_trace, p, "right overlap, rejecting new overlap data (overlap: %d, "
@@ -1624,7 +1637,9 @@ left_overlap_last:
                      * overlapped one.
                      * Arrgh.  Need to insert this guy in chunks.
                      */
-                    checkTinyFragments(fe, p, len-slide-trunc);
+                    const uint32_t trim = (uint32_t)slide + trunc;
+                    if (trim < len)
+                        checkTinyFragments(fe, p, len - trim);
 
                     ret = add_frag_node(ft, fe, fragStart, fragLength, 0, len,
                         slide, trunc, frag_offset, left, &newfrag);
@@ -1707,7 +1722,9 @@ right_overlap_last:
     }
 
     // detect tiny fragments but continue processing
-    checkTinyFragments(fe, p, len-slide-trunc);
+    const uint32_t trim = (uint32_t)slide + trunc;
+    if (trim < len)
+        checkTinyFragments(fe, p, len - trim);
 
     if ((fe->max_overlaps) &&
         (ft->overlap_count >= fe->max_overlaps))
@@ -1786,6 +1803,14 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
 
         if (frag_off == 0)
             ft->ip_proto = fragHdr->ip6f_nxt;
+    }
+
+    // options are checked later in insert() once ip_options_len is known
+    if (frag_exceeds_maxpacket(frag_off, fragLength, 0))
+    {
+        debug_log(stream_ip_trace, p, "[..] Oversize frag in new_tracker!\n");
+        EventAnomBadsizeLg(&engine);
+        return 0;
     }
 
     ft->ttl = p->ptrs.ip_api.ttl(); /* store the first ttl we got */
@@ -1883,9 +1908,9 @@ int Defrag::add_frag_node(
     FragTracker* ft,
     FragEngine* fe,
     const uint8_t* fragStart,
-    int16_t fragLength,
+    uint16_t fragLength,
     char lastfrag,
-    int16_t len,
+    uint16_t len,
     uint16_t slide,
     uint16_t trunc,
     uint16_t frag_offset,
@@ -1893,9 +1918,8 @@ int Defrag::add_frag_node(
     Fragment** retFrag)
 {
     Fragment* newfrag = nullptr;  /* new frag container */
-    int16_t newSize = len - slide - trunc;
 
-    if (newSize <= 0)
+    if (slide + trunc >= len)
     {
         /*
          * zero size frag
@@ -1933,7 +1957,7 @@ int Defrag::add_frag_node(
      * twiddle the frag values for overlaps
      */
     newfrag->data = newfrag->fptr + slide;
-    newfrag->size = newSize;
+    newfrag->size = len - slide - trunc;
     newfrag->offset = frag_offset;
     newfrag->last = lastfrag;
 

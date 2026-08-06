@@ -22,3 +22,24 @@ to the invocation of process_deletion().
 
 IpHA::create_session() is called from the stream & flow HA logic and
 handles the creation of new flow upon receiving an HA update message.
+
+Defragmentation oversize checks and alert behavior change
+=========================================================
+
+IP fragment reassembly (frag3, in ip_defrag.cc) must ensure the reassembled
+datagram, including any inner IP options carried on the offset-0 fragment,
+never exceeds IP_MAXPACKET (65535).  Three code paths enforce this bound and
+share the frag_exceeds_maxpacket() helper so the arithmetic cannot drift:
+new_tracker() rejects an oversize first fragment before any tracker state is
+committed, insert() rejects a fragment once its offset, length and the known
+option length are combined, and FragRebuild() is a final safety net for the
+out-of-order case where ft->ip_options_len only becomes known after the
+offset-0 fragment arrives.  All three raise 123:7 (DEFRAG_ANOMALY_BADSIZE_LG).
+
+As a result of adding the FragRebuild() safety net, a fragment that overflows
+IP_MAXPACKET only at rebuild time now raises 123:7 (DEFRAG_ANOMALY_BADSIZE_LG)
+instead of the previous 123:3 (DEFRAG_SHORT_FRAG).  This is an intentional
+alert-behavior change: 123:7 more accurately describes an oversize datagram,
+and it lets the reassembly bail out cleanly instead of silently dropping the
+rebuilt packet.  Deployments that key on the specific defrag SID may observe
+123:3 events for such fragments become 123:7.

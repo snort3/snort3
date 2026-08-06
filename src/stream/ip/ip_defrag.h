@@ -53,8 +53,8 @@ private:
 
     int add_frag_node(  // FIXIT-L too many args
         FragTracker* ft, FragEngine*,
-        const uint8_t* fragStart, int16_t fragLength,
-        char lastfrag, int16_t len,
+        const uint8_t* fragStart, uint16_t fragLength,
+        char lastfrag, uint16_t len,
         uint16_t slide, uint16_t trunc, uint16_t frag_offset,
         Fragment* left, Fragment** retFrag);
 
