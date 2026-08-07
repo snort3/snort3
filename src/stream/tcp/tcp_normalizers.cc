@@ -26,6 +26,7 @@
 #include "tcp_normalizers.h"
 
 #include "detection/detection_engine.h"
+#include "stream/stream.h"
 #include "stream/stream_log.h"
 
 #include "tcp_defs.h"
@@ -238,8 +239,7 @@ public:
     TcpNormalizer::RstStatus validate_rst(TcpNormalizerState&, TcpSegmentDescriptor&) override;
     int handle_paws(TcpNormalizerState&, TcpSegmentDescriptor&) override;
     int handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&) override;
-    uint32_t get_stream_window(TcpNormalizerState&, TcpSegmentDescriptor&) override
-    { return MAX_TCP_WINDOW_SCALED; }
+    uint32_t get_stream_window(TcpNormalizerState&, TcpSegmentDescriptor&) override;
 };
 
 static inline int handle_repeated_syn_mswin(
@@ -472,6 +472,25 @@ int TcpNormalizerProxy::handle_paws(TcpNormalizerState&, TcpSegmentDescriptor&)
 int TcpNormalizerProxy::handle_repeated_syn(TcpNormalizerState&, TcpSegmentDescriptor&)
 { return ACTION_NOTHING; }
 
+uint32_t TcpNormalizerMissed3whs::get_stream_window(
+    TcpNormalizerState& tns, TcpSegmentDescriptor& tsd)
+{
+    Flow* flow = tns.session->flow;
+
+    if ( !flow->two_way_traffic() || !tns.tracker->has_rcv_wnd() )
+        return MAX_TCP_WINDOW_SCALED;
+
+    if ( Stream::is_midstream(flow) )
+    {
+        const uint64_t estimated_window =
+            static_cast<uint64_t>(tns.tracker->get_rcv_wnd()) << TCP_MAX_WSCALE;
+        return estimated_window > MAX_TCP_WINDOW_SCALED
+            ? MAX_TCP_WINDOW_SCALED : static_cast<uint32_t>(estimated_window);
+    }
+
+    return TcpNormalizer::get_stream_window(tns, tsd);
+}
+
 TcpNormalizer::NormStatus TcpNormalizerMissed3whs::apply_normalizations(
     TcpNormalizerState& tns, TcpSegmentDescriptor& tsd, uint32_t, bool)
 {
@@ -497,8 +516,9 @@ TcpNormalizer::NormStatus TcpNormalizerMissed3whs::apply_normalizations(
     }
 
     const uint32_t diff = seq - anchor;
+    const uint32_t window = get_stream_window(tns, tsd);
 
-    if ( diff > MAX_TCP_WINDOW_SCALED && diff < MAX_TCP_SEQ_DISTANCE )
+    if ( diff > window && diff < MAX_TCP_SEQ_DISTANCE )
     {
         if ( diff < TCP_SEQ_MIDPOINT )
             tcpStats.invalid_seq_right++;
@@ -509,9 +529,38 @@ TcpNormalizer::NormStatus TcpNormalizerMissed3whs::apply_normalizations(
         log_drop_reason(tns, tsd, inline_mode, "stream",
             std::string("Normalizer: Missed3whs: Sequence ") + std::to_string(seq) +
             " is too far from " + anchor_name + " " + std::to_string(anchor) +
-            " (diff=" + std::to_string(diff) + ")\n");
+            " (diff=" + std::to_string(diff) +
+            ", window=" + std::to_string(window) + ")\n");
         trim_win_payload(tns, tsd, 0, inline_mode);
         return NORM_BAD_SEQ;
+    }
+
+    // Enforce the right edge for payloads that start inside an observed
+    // receive window.  Missed-3WHS intentionally accepts old sequence space
+    // to permit midstream hole filling, so only forward offsets are trimmed.
+    if ( !asymmetric && tns.tracker->has_rcv_wnd() && diff <= window )
+    {
+        uint32_t max_payload = window - diff;
+
+        // A sender may probe a zero window with one byte at the receive
+        // window base.  Preserve that exception while trimming any excess.
+        if ( window == 0 && diff == 0 && tsd.get_len() )
+        {
+            max_payload = MAX_ZERO_WIN_PROBE_LEN;
+            tcpStats.zero_win_probes++;
+            set_zwp_seq(tns, seq);
+        }
+
+        if ( tsd.get_len() > max_payload )
+        {
+            const bool inline_mode = tsd.is_nap_policy_inline();
+            log_drop_reason(tns, tsd, inline_mode, "stream",
+                "Normalizer: Missed3whs: Trimming payload to observed receive window\n");
+            trim_win_payload(tns, tsd, max_payload, inline_mode);
+
+            if ( max_payload == 0 )
+                return NORM_TRIMMED;
+        }
     }
 
     return NORM_OK;

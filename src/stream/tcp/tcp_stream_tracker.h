@@ -130,7 +130,13 @@ public:
     { return rcv_wnd; }
 
     void set_rcv_wnd(uint32_t rcv_wnd)
-    { this->rcv_wnd = rcv_wnd; }
+    {
+        this->rcv_wnd = rcv_wnd;
+        tf_flags |= TF_RCV_WND_SEEN;
+    }
+
+    bool has_rcv_wnd() const
+    { return tf_flags & TF_RCV_WND_SEEN; }
 
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint16_t get_rcv_up() const
@@ -318,7 +324,8 @@ public:
     void finalize_held_packet(snort::Packet*);
     void finalize_held_packet(snort::Flow*);
     void perform_fin_recv_flush(TcpSegmentDescriptor&);
-    int32_t kickstart_asymmetric_flow(const TcpSegmentDescriptor& tsd, uint32_t max_queued_bytes);
+    void kickstart_asymmetric_flow(
+        const TcpSegmentDescriptor& tsd, uint32_t max_queued_bytes);
     uint32_t perform_partial_flush();
     bool is_holding_packet() const;
 
@@ -350,6 +357,7 @@ public:
 
 private:
     void update_flush_policy(snort::StreamSplitter*);
+    void update_midstream_rcv_wnd(const TcpSegmentDescriptor&);
 
     TcpState tcp_state;
     TcpEvent tcp_event = TCP_MAX_EVENTS;
@@ -401,4 +409,3 @@ inline TcpStreamTracker::TcpState& operator++(TcpStreamTracker::TcpState& state,
 }
 
 #endif
-

@@ -48,12 +48,15 @@ public:
     int eval_asymmetric_flush(snort::Packet*) override;
     int flush_queued_sequenced(snort::Packet*) override;
     int flush_stream(snort::Packet*, uint32_t dir, bool final_flush = false) override;
+    bool try_advance_empty_seglist_to_ack(
+        const TcpSegmentDescriptor&, uint32_t max_queued_bytes) override;
 
     FlushPolicy get_flush_policy() const override
     { return STREAM_FLPOLICY_ON_ACK; }
 
 private:
     int32_t scan_data_post_ack(uint32_t* flags, snort::Packet*);
+    void finish_seglist_hole_skip(uint32_t hole_left_edge);
     void skip_seglist_hole();
     bool prepare_ack_flush_cursor();
     bool ack_flush_in_window(uint32_t) const;

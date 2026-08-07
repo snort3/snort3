@@ -102,24 +102,110 @@ uint32_t TcpReassemblySegments::get_pending_segment_count(const unsigned max) co
     return n;
 }
 
-bool TcpReassemblySegments::segment_within_seglist_window(const TcpSegmentDescriptor& tsd)
+bool TcpReassemblySegments::segment_within_seglist_window(
+    const TcpSegmentDescriptor& tsd, uint32_t max_queued_segs)
 {
-    assert (head);
-    uint32_t start;
+    assert(head);
+    // Allow a small reordered burst while keeping post-limit admission bounded.
+    static constexpr uint32_t max_reordered_segments = 5;
 
-    if ( SEQ_LT(seglist_base_seq, head->start_seq()) )
-        start = seglist_base_seq;
+    assert(seg_count >= max_queued_segs);
+    if ( seg_count - max_queued_segs >= max_reordered_segments )
+        return false;
+
+    const uint32_t hole_left = tracker->get_rcv_nxt();
+    uint32_t hole_right;
+
+    if ( SEQ_LT(hole_left, head->start_seq()) )
+        hole_right = head->start_seq();
+    else if ( !cur_sseg or !cur_sseg->next
+        or !SEQ_EQ(cur_sseg->next_seq(), hole_left)
+        or !SEQ_LT(hole_left, cur_sseg->next->start_seq()) )
+        return false;
     else
-        start = head->seq;
+        hole_right = cur_sseg->next->start_seq();
 
-    if ( SEQ_LEQ(tsd.get_end_seq(), start) )
+    if ( SEQ_LEQ(tsd.get_end_seq(), hole_left)
+        or SEQ_GT(tsd.get_end_seq(), hole_right) )
         return false;
 
-    // Right side
-    if ( SEQ_GEQ(tsd.get_seq(), tail->next_seq()) )
-        return false;
+    // Allow a bounded burst near the visible hole edge.
+    const uint32_t effective_start =
+        SEQ_LT(tsd.get_seq(), hole_left) ? hole_left : tsd.get_seq();
+    const uint32_t reorder_window = tsd.get_len() * max_reordered_segments;
 
-    return true;
+    return effective_start - hole_left < reorder_window;
+}
+
+uint32_t TcpReassemblySegments::get_seglist_footprint_base_seq() const
+{
+    uint32_t base = seglist_base_seq;
+
+    // Reserve the active receive gap for two-way ACK-based reassembly.
+    if ( tracker->get_flush_policy() == STREAM_FLPOLICY_ON_ACK
+        && session->flow->two_way_traffic() )
+        base = tracker->get_rcv_nxt();
+    else if ( SEQ_LT(base, tracker->get_rcv_nxt()) )
+        base = tracker->get_rcv_nxt();
+
+    // Retained data before the active base remains in the footprint.
+    if ( head && SEQ_LT(head->start_seq(), base) )
+        base = head->start_seq();
+
+    return base;
+}
+
+uint32_t TcpReassemblySegments::get_segment_length_in_footprint(
+    const TcpSegmentDescriptor& tsd, uint32_t max_queued_bytes) const
+{
+    const uint32_t len = tsd.get_len();
+    const uint32_t clip_base = head ? tracker->r_win_base : seglist_base_seq;
+    const int32_t clip_offset = static_cast<int32_t>(clip_base - tsd.get_seq());
+    uint32_t prefix = 0;
+
+    // Mirror the prefix that queue insertion will discard.
+    if ( clip_offset > 0 )
+    {
+        prefix = static_cast<uint32_t>(clip_offset);
+        if ( prefix >= len )
+            return len;
+    }
+
+    const uint32_t seq = tsd.get_seq() + prefix;
+    const uint32_t base = get_seglist_footprint_base_seq();
+    const int32_t footprint_offset = static_cast<int32_t>(seq - base);
+    uint32_t right = base;
+
+    if ( head )
+    {
+        assert(tail);
+        right = tail->next_seq();
+        if ( SEQ_GT(tracker->get_rcv_nxt(), right) )
+            right = tracker->get_rcv_nxt();
+
+        // Ignore data that cannot extend the scanned head.
+        if ( SEQ_LEQ(tsd.get_end_seq(), head->start_seq())
+            and tracker->reassembler->segment_already_scanned(seq) )
+            return len;
+    }
+
+    uint32_t offset = 0;
+    if ( footprint_offset < 0 )
+    {
+        const uint64_t span = static_cast<uint32_t>(right - seq);
+        if ( span > max_queued_bytes )
+            return prefix;
+    }
+    else
+        offset = static_cast<uint32_t>(footprint_offset);
+
+    if ( offset >= max_queued_bytes )
+        return prefix;
+
+    const uint32_t space_left = max_queued_bytes - offset;
+    const uint64_t allowed = static_cast<uint64_t>(prefix) + space_left;
+
+    return allowed < len ? static_cast<uint32_t>(allowed) : len;
 }
 
 void TcpReassemblySegments::print_stream_state(const TcpStreamTracker* talker)
@@ -197,9 +283,31 @@ void TcpReassemblySegments::insert_segment_in_seglist(TcpSegmentDescriptor& tsd)
         return;
     }
 
-    // Packet is problematic, may have overlaps/retransmission, fill the hole, create a hole
     tsd.set_packet_flags(PKT_TCP_INJECT_BLOCKED);
+    const uint32_t rcv_nxt = tracker->get_rcv_nxt();
 
+    // Insert a clean segment within the initial receive gap in O(1).
+    if ( SEQ_LT(rcv_nxt, head->start_seq())
+        and SEQ_GEQ(tsd.get_seq(), rcv_nxt)
+        and SEQ_LEQ(tsd.get_end_seq(), head->start_seq())
+        and !tracker->reassembler->segment_already_scanned(tsd.get_seq()) )
+    {
+        add_reassembly_segment(tsd, tsd.get_len(), 0, 0, tsd.get_seq(), nullptr);
+        return;
+    }
+
+    // Insert a clean segment within the active receive gap in O(1).
+    if ( cur_sseg and cur_sseg->next
+        and SEQ_EQ(cur_sseg->next_seq(), rcv_nxt)
+        and SEQ_LT(rcv_nxt, cur_sseg->next->start_seq())
+        and SEQ_GEQ(tsd.get_seq(), rcv_nxt)
+        and SEQ_LEQ(tsd.get_end_seq(), cur_sseg->next->start_seq()) )
+    {
+        add_reassembly_segment(tsd, tsd.get_len(), 0, 0, tsd.get_seq(), cur_sseg);
+        return;
+    }
+
+    // Packet is problematic, may have overlaps/retransmission, fill the hole, create a hole
     tos->init(tsd);
     overlap_resolver->eval_left(*tos);
     overlap_resolver->eval_right(*tos);

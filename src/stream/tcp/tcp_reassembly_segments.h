@@ -46,7 +46,8 @@ public:
     void reset();
 
     void update_next(TcpSegmentNode*);
-    bool segment_within_seglist_window(const TcpSegmentDescriptor&);
+    bool segment_within_seglist_window(const TcpSegmentDescriptor&, uint32_t);
+    uint32_t get_segment_length_in_footprint(const TcpSegmentDescriptor&, uint32_t) const;
     void queue_reassembly_segment(TcpSegmentDescriptor&);
     void add_reassembly_segment(TcpSegmentDescriptor&, uint16_t, uint32_t,
         uint32_t, uint32_t, TcpSegmentNode*);
@@ -90,6 +91,7 @@ public:
     { return seg_bytes_logical; }
 
 private:
+    uint32_t get_seglist_footprint_base_seq() const;
     void insert_segment_data(TcpSegmentNode* prev, TcpSegmentNode*);
     void purge_segments_left_of_hole(const TcpSegmentNode*);
     void flush_before_purge(snort::Packet* p);
@@ -190,7 +192,6 @@ private:
 
     bool is_segment_fasttrack(const TcpSegmentNode*, const TcpSegmentDescriptor&);
     uint32_t get_pending_segment_count(const unsigned max) const;
-
 };
 
 #endif

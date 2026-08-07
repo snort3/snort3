@@ -448,8 +448,7 @@ void TcpSession::update_ignored_session(TcpSegmentDescriptor& tsd)
         return;
 
     Packet* p = tsd.get_pkt();
-    // FIXIT-L why flush here instead of just purge?
-    // s5_ignored_session() may be disabling detection too soon if we really want to flush
+    // Complete deferred flushes before disabling reassembly.
     if ( Stream::ignored_flow(flow, p) )
     {
         TcpStreamTracker* listener = tsd.get_listener();
@@ -466,6 +465,9 @@ void TcpSession::update_ignored_session(TcpSegmentDescriptor& tsd)
             flush_listener(p);
             listener->clear_tf_flags(TF_FORCE_FLUSH);
         }
+
+        if ( listener && listener->get_flush_policy() != STREAM_FLPOLICY_IGNORE )
+            listener->disable_reassembly(flow);
 
         tsd.set_packet_flags(PKT_IGNORE);
         set_pkt_action_flag(ACTION_DISABLE_INSPECTION);
@@ -621,98 +623,96 @@ void TcpSession::mark_packet_for_drop(TcpSegmentDescriptor& tsd)
 
 bool TcpSession::check_reassembly_queue_thresholds(TcpSegmentDescriptor& tsd, TcpStreamTracker* listener)
 {
-    if ( !listener->seglist.head )
-        return false;
+    const bool inline_mode = tsd.is_nap_policy_inline();
+    bool asymmetric_recovery_attempted = false;
 
-    bool inline_mode = tsd.is_nap_policy_inline();
-
+    // Bound the seglist span before insertion.
     if ( tcp_config->max_queued_bytes )
     {
-        int32_t space_left =
-            tcp_config->max_queued_bytes - listener->seglist.get_seg_bytes_total();
+        uint32_t max_payload = listener->seglist.get_segment_length_in_footprint(
+            tsd, tcp_config->max_queued_bytes);
 
-        if ( space_left < (int32_t)tsd.get_len() )
+        // Let IDS reassembly skip an acknowledged empty-queue gap.
+        if ( max_payload < tsd.get_len() && !listener->seglist.head
+            && listener->reassembler->try_advance_empty_seglist_to_ack(
+                tsd, tcp_config->max_queued_bytes) )
         {
-            // if this packet fits within the current queue limit window then it's good
-            if ( listener->seglist.segment_within_seglist_window(tsd) )
-                return false;
+            tsd.set_packet_inorder(tsd.get_seq() == listener->get_rcv_nxt());
+            max_payload = tsd.get_len();
+        }
 
+        if ( max_payload < tsd.get_len() )
+        {
             tcpStats.exceeded_max_bytes++;
 
-            if ( is_hole_present(listener, tsd.get_pkt()) )
+            if ( listener->seglist.head && is_hole_present(listener, tsd.get_pkt()) )
                 tcpStats.max_bytes_exceeded_hole++;
 
-            // if this is an asymmetric flow then skip over any seglist holes
-            // and flush to free up seglist space
-            if ( !tsd.get_pkt()->flow->two_way_traffic() )
+            if ( listener->seglist.head
+                && !tsd.get_pkt()->flow->two_way_traffic() )
             {
-                space_left = listener->kickstart_asymmetric_flow(tsd, tcp_config->max_queued_bytes);
-                if ( space_left >= (int32_t)tsd.get_len() )
-                    return false;
+                listener->kickstart_asymmetric_flow(tsd, tcp_config->max_queued_bytes);
+                asymmetric_recovery_attempted = true;
+                max_payload = listener->seglist.get_segment_length_in_footprint(
+                    tsd, tcp_config->max_queued_bytes);
             }
+        }
 
-            bool ret_val = true;
-
-            if ( space_left > 0 )
-                ret_val = !inline_mode; // For partial trim, reassemble only if we can force an inject
-            else
-                space_left = 0;
-
+        if ( max_payload < tsd.get_len() )
+        {
             if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON )
             {
                 // FIXIT-M - only alert once per threshold exceeded event
                 tel.set_tcp_event(EVENT_MAX_QUEUED_BYTES_EXCEEDED);
                 listener->seglist.print_stream_state(tsd.get_talker());
                 listener->normalizer.log_drop_reason(tsd, inline_mode, "stream",
-                    "stream_tcp: Flow exceeded the configured max byte threshold (" + std::to_string(tcp_config->max_queued_bytes) +
-                    "). You may want to adjust the 'max_bytes' parameter in the NAP policy"
+                    "stream_tcp: Flow exceeded the configured reassembly footprint ("
+                    + std::to_string(tcp_config->max_queued_bytes)
+                    + "). You may want to adjust the 'max_bytes' parameter in the NAP policy"
                     " to a higher value, or '0' for unlimited.\n");
             }
 
-            listener->normalizer.trim_win_payload(tsd, space_left, inline_mode);
-            return ret_val;
+            listener->normalizer.trim_win_payload(tsd, max_payload, inline_mode);
+
+            if ( !max_payload || !inline_mode )
+                return true;
         }
     }
 
-    if ( tcp_config->max_queued_segs )
+    const uint32_t max_segs = tcp_config->max_queued_segs;
+    if ( !listener->seglist.head || !max_segs
+        || listener->seglist.get_seg_count() < max_segs
+        || listener->seglist.segment_within_seglist_window(tsd, max_segs) )
+        return false;
+
+    tcpStats.exceeded_max_segs++;
+
+    if ( is_hole_present(listener, tsd.get_pkt()) )
+        tcpStats.max_segs_exceeded_hole++;
+
+    // Recover queue space once for asymmetric flows.
+    if ( !asymmetric_recovery_attempted
+        && !tsd.get_pkt()->flow->two_way_traffic() )
     {
-        if ( listener->seglist.get_seg_count() + 1 > tcp_config->max_queued_segs )
-        {
-            // if this packet fits within the current queue limit window then it's good
-            if ( listener->seglist.segment_within_seglist_window(tsd) )
-                return false;
+        listener->kickstart_asymmetric_flow(tsd, tcp_config->max_queued_bytes);
 
-            tcpStats.exceeded_max_segs++;
-
-            if ( is_hole_present(listener, tsd.get_pkt()) )
-                tcpStats.max_segs_exceeded_hole++;
-
-            // if this is an asymmetric flow then skip over any seglist holes
-            // and flush to free up seglist space
-            if ( !tsd.get_pkt()->flow->two_way_traffic() )
-            {
-                listener->kickstart_asymmetric_flow(tsd, tcp_config->max_queued_bytes);
-                if ( listener->seglist.get_seg_count() + 1 <= tcp_config->max_queued_segs )
-                    return false;
-            }
-
-            if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON)
-            {
-                // FIXIT-M - only alert once per threshold exceeded event
-                tel.set_tcp_event(EVENT_MAX_QUEUED_SEGS_EXCEEDED);
-                listener->seglist.print_stream_state(tsd.get_talker());
-                listener->normalizer.log_drop_reason(tsd, inline_mode, "stream",
-                    "stream_tcp: Flow exceeded the configured max segment threshold (" + std::to_string(tcp_config->max_queued_segs) +
-                    "). You may want to adjust the 'max_segments' parameter in the NAP policy"
-                    " to a higher value, or '0' for unlimited.\n");
-            }
-
-            listener->normalizer.trim_win_payload(tsd, 0, inline_mode);
-            return true;
-        }
+        if ( listener->seglist.get_seg_count() < max_segs )
+            return false;
     }
 
-    return false;
+    if ( inline_mode || listener->normalizer.get_trim_win() == NORM_MODE_ON )
+    {
+        // FIXIT-M - only alert once per threshold exceeded event
+        tel.set_tcp_event(EVENT_MAX_QUEUED_SEGS_EXCEEDED);
+        listener->seglist.print_stream_state(tsd.get_talker());
+        listener->normalizer.log_drop_reason(tsd, inline_mode, "stream",
+            "stream_tcp: Flow exceeded the configured max segment threshold (" + std::to_string(max_segs) +
+            "). You may want to adjust the 'max_segments' parameter in the NAP policy"
+            " to a higher value, or '0' for unlimited.\n");
+    }
+
+    listener->normalizer.trim_win_payload(tsd, 0, inline_mode);
+    return true;
 }
 
 bool TcpSession::filter_packet_for_reassembly(TcpSegmentDescriptor& tsd, TcpStreamTracker* listener)
@@ -778,7 +778,7 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd, bool flush)
                     tel.set_tcp_event(EVENT_EXCESSIVE_OVERLAP);
                     listener->seglist.set_overlap_count(0);
                 }
-                
+
                 listener->update_stream_order(tsd, tsd.is_packet_inorder());
             }
 

@@ -90,7 +90,7 @@ const PegInfo tcp_pegs[] =
     { CountType::SUM, "exceeded_max_segs",
         "number of times the maximum queued segment limit was reached" },
     { CountType::SUM, "exceeded_max_bytes",
-        "number of times the maximum queued byte limit was reached" },
+        "number of segments exceeding the configured max seglist bytes footprint" },
     { CountType::SUM, "payload_fully_trimmed", "segments with no data after trimming" },
     { CountType::SUM, "internal_events", "135:X events generated" },
     { CountType::SUM, "client_cleanups",

@@ -77,6 +77,9 @@ public:
     virtual void clear_paf() = 0;
     virtual void reinitialize_paf(uint32_t seq) = 0;
     virtual uint32_t get_paf_position() const = 0;
+    virtual bool try_advance_empty_seglist_to_ack(
+        const TcpSegmentDescriptor&, uint32_t)
+    { return false; }
 
 protected:
     uint8_t packet_dir = 0;
@@ -235,4 +238,3 @@ protected:
 };
 
 #endif
-

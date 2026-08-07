@@ -282,7 +282,8 @@ uint32_t TcpNormalizer::get_zwp_seq(
 
 // rcv_wnd stores the scaled window value (set_window_scale applied scaling before
 // update_tracker_ack_sent stored it). Zero means intentional zero-window advertisement.
-// One-way and midstream flows have no reliably negotiated window; return the maximum permissible value.
+// One-way and midstream flows have no reliably negotiated window; specialized
+// normalizers may apply a tighter bound when they have enough information.
 uint32_t TcpNormalizer::get_stream_window(
     TcpNormalizerState& tns, TcpSegmentDescriptor&)
 {
