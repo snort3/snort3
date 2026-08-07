@@ -31,7 +31,7 @@ struct SideChannelConfig
 {
     PortBitSet* ports = nullptr;
     SCConnectors connectors;
-    ScMsgFormat format;
+    ScMsgFormat format = ScMsgFormat::BINARY;
 };
 
 extern THREAD_LOCAL SimpleStats sc_stats;

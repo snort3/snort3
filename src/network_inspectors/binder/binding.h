@@ -38,14 +38,14 @@ struct BindWhen
     enum Role
     { BR_CLIENT, BR_SERVER, BR_EITHER, BR_MAX };
 
-    PolicyId ips_id;
-    unsigned ips_id_user;
-    unsigned protos;
-    Role role;
+    PolicyId ips_id = 0;
+    unsigned ips_id_user = 0;
+    unsigned protos = 0;
+    Role role = BR_EITHER;
     std::string svc;
 
-    sfip_var_t* src_nets;
-    sfip_var_t* dst_nets;
+    sfip_var_t* src_nets = nullptr;
+    sfip_var_t* dst_nets = nullptr;
 
     VlanBitSet vlans;
 
@@ -79,7 +79,7 @@ struct BindWhen
         BWC_ADDR_SPACES =   0x1000,
         BWC_TENANTS =       0x2000
     };
-    uint16_t criteria_flags;
+    uint16_t criteria_flags = 0;
 
     void add_criteria(uint16_t flags)
     { criteria_flags |= flags; }
@@ -99,14 +99,14 @@ struct BindUse
     std::string type;
     std::string name;
 
-    Action action;
-    unsigned network_index;
-    unsigned inspection_index;
-    unsigned ips_index;
-    What what;
-    snort::Inspector* inspector;
-    bool global_type;
-    bool same_file;
+    Action action = BA_INSPECT;
+    unsigned network_index = 0;
+    unsigned inspection_index = 0;
+    unsigned ips_index = 0;
+    What what = BW_NONE;
+    snort::Inspector* inspector = nullptr;
+    bool global_type = false;
+    bool same_file = false;
 };
 
 struct Binding

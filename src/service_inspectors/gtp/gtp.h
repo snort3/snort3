@@ -50,7 +50,7 @@ struct GTP_MsgType
 struct GTP_InfoElement
 {
     std::string name;
-    uint16_t length; // 0 for variable length
+    uint16_t length = 0; // 0 for variable length
 };
 
 struct GTPConfig

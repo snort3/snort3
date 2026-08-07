@@ -32,7 +32,7 @@ class FileInfo;
 
 struct FileVerdictWhen
 {
-    uint32_t type_id;
+    uint32_t type_id = 0;
     std::string sha256;
 };
 

@@ -44,10 +44,10 @@ struct AlertLog
         void print();
         string key;
         string msg;
-        uint32_t gid;
-        uint32_t sid;
-        uint32_t rev;
-        unsigned count;
+        uint32_t gid = 0;
+        uint32_t sid = 0;
+        uint32_t rev = 0;
+        unsigned count = 0;
     };
     map<string, Rule> alerts;
 };

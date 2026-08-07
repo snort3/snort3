@@ -123,22 +123,22 @@ struct SMTPToken
 
 struct SmtpProtoConf
 {
-    SMTPNormType normalize;
-    bool ignore_tls_data;
+    SMTPNormType normalize = NORMALIZE_NONE;
+    bool ignore_tls_data = false;
     int max_auth_command_line_len = 1000;
     int max_command_line_len = 0;
     int max_header_line_len = 0;
     int max_response_line_len = 0;
-    SMTPXlinkState xlink2state;
+    SMTPXlinkState xlink2state = ALERT_XLINK2STATE;
     snort::MailLogConfig log_config;
     snort::DecodeConfig decode_conf;
 
-    uint32_t xtra_filename_id;
-    uint32_t xtra_mfrom_id;
-    uint32_t xtra_rcptto_id;
-    uint32_t xtra_ehdrs_id;
+    uint32_t xtra_filename_id = 0;
+    uint32_t xtra_mfrom_id = 0;
+    uint32_t xtra_rcptto_id = 0;
+    uint32_t xtra_ehdrs_id = 0;
 
-    int num_cmds;
+    int num_cmds = 0;
     SMTPToken* cmds = nullptr;
     SMTPCmdConfig* cmd_config = nullptr;
     SMTPSearch* cmd_search = nullptr;

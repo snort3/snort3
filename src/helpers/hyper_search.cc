@@ -115,7 +115,7 @@ namespace
 {
 struct ScanContext
 {
-    unsigned index;
+    unsigned index = 0;
     bool found = false;
 };
 }

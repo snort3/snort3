@@ -74,7 +74,7 @@ struct Event
         EVENT_SUSPENDED
     };
 
-    Type type;
+    Type type = EVENT_ENABLED;
     typename SnortClock::duration elapsed;
     const detection_option_tree_root_t& root;
     Packet* packet;

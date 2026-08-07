@@ -43,7 +43,7 @@ struct RulePortTables
     PortProto tcp;
     PortProto udp;
 
-    PortObject* svc_any;
+    PortObject* svc_any = nullptr;
 };
 
 RulePortTables* PortTablesNew();

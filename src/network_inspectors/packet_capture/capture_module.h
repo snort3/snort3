@@ -28,11 +28,11 @@
 
 struct CaptureConfig
 {
-    bool enabled;
-    int16_t group;
+    bool enabled = false;
+    int16_t group = -1;
     std::string filter;
     std::vector<uint32_t> tenants;
-    bool check_inner_pkt;
+    bool check_inner_pkt = true;
     std::string capture_path;
     unsigned max_packet_count = 0;
 };

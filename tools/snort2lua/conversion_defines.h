@@ -34,7 +34,7 @@ typedef ConversionState* (* conv_new_f)(Converter&);
 struct ConvertMap
 {
     std::string keyword;
-    conv_new_f ctor;
+    conv_new_f ctor = nullptr;
 };
 
 #endif

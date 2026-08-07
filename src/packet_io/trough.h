@@ -65,7 +65,7 @@ public:
 private:
     struct PcapReadObject
     {
-        SourceType type;
+        SourceType type = SOURCE_FILE_LIST;
         std::string arg;
         std::string filter;
     };

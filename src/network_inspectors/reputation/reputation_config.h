@@ -66,12 +66,12 @@ enum IPdecision
 struct ListFile
 {
     std::string file_name;
-    int file_type;
-    uint32_t list_id;
+    int file_type = 0;
+    uint32_t list_id = 0;
     bool all_intfs_enabled = false;
     std::set<unsigned int> intfs;
-    uint8_t list_index;
-    uint8_t list_type;
+    uint8_t list_index = 0;
+    uint8_t list_type = DECISION_NULL;
 };
 
 typedef std::vector<ListFile*> ListFiles;

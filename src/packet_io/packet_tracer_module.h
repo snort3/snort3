@@ -28,7 +28,7 @@
 
 struct PacketTracerConfig
 {
-    bool enabled;
+    bool enabled = false;
     std::string file;
 };
 

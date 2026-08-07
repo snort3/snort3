@@ -35,8 +35,8 @@ class DeviceInfoFpProcessor;
 struct RnaModuleConfig
 {
     std::string rna_conf_path;
-    bool enable_logger;
-    bool log_when_idle;
+    bool enable_logger = true;
+    bool log_when_idle = false;
     snort::TcpFpProcessor* tcp_processor = nullptr;
     snort::UaFpProcessor* ua_processor = nullptr;
     snort::UdpFpProcessor* udp_processor = nullptr;

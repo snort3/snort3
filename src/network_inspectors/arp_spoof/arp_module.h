@@ -46,7 +46,7 @@ typedef std::vector<IPMacEntry> IPMacEntryList;
 
 struct ArpSpoofConfig
 {
-    bool check_overwrite;
+    bool check_overwrite = false;
 
     IPMacEntryList ipmel;
 };

@@ -27,9 +27,9 @@
 class __attribute__((__packed__)) SessionHAContent
 {
 public:
-    snort::LwState ssn_state;
-    snort::Flow::FlowState flow_state;
-    uint8_t flags;
+    snort::LwState ssn_state = {};
+    snort::Flow::FlowState flow_state = {};
+    uint8_t flags = 0;
     static constexpr uint8_t FLAG_LOW = 0x01; // client address / port is low in key
     static constexpr uint8_t FLAG_IP6 = 0x02; // key addresses are ip6
     static constexpr uint8_t FLAG_UDP_TUNNELED = 0x04; // flow decoded from a UDP tunnel

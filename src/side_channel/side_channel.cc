@@ -48,7 +48,7 @@ struct SideChannelMapping
     SideChannel* sc;
     std::vector<std::string> connectors;
     PortBitSet ports;
-    ScMsgFormat format;
+    ScMsgFormat format = ScMsgFormat::BINARY;
 };
 
 typedef std::vector<SideChannelMapping*> SCMaps;

@@ -44,10 +44,10 @@ class SslTracker
 {
 public:
     SSL_State state = SSL_STATE__BYTE_0_LEN_MSB;
-    unsigned total_len;
-    unsigned ssnid_len;
-    unsigned specs_len;
-    unsigned chlng_len;
+    unsigned total_len = 0;
+    unsigned ssnid_len = 0;
+    unsigned specs_len = 0;
+    unsigned chlng_len = 0;
 };
 
 #endif

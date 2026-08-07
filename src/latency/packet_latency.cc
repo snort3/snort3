@@ -65,7 +65,7 @@ void set_force_enable(bool force)
 struct Event
 {
     const Packet* packet;
-    bool fastpathed;
+    bool fastpathed = false;
     typename SnortClock::duration elapsed;
 };
 

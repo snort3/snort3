@@ -48,9 +48,9 @@ typedef bool (* curse_alg)(const uint8_t* data, unsigned len, CurseTracker*);
 struct CurseDetails
 {
     std::string name;
-    const char* service;
-    curse_alg alg;
-    bool is_tcp;
+    const char* service = nullptr;
+    curse_alg alg = nullptr;
+    bool is_tcp = false;
 };
 
 class CurseBook

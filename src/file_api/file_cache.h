@@ -35,12 +35,12 @@ PADDING_GUARD_BEGIN
     struct FileHashKey
     {
         snort::SfIp sip;
-        int16_t sgroup;
+        int16_t sgroup = 0;
         snort::SfIp dip;
-        int16_t dgroup;
-        uint64_t file_id;
-        uint16_t asid;
-        uint16_t padding[3];
+        int16_t dgroup = 0;
+        uint64_t file_id = 0;
+        uint16_t asid = 0;
+        uint16_t padding[3] = {};
     };
 PADDING_GUARD_END
 

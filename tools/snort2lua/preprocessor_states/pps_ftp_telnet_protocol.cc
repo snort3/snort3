@@ -49,7 +49,7 @@ private:
     {
         std::string name;
         std::string format;
-        int length;
+        int length = -1;
     };
 
     static const int command_default_len = -1;

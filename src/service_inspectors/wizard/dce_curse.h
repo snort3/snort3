@@ -44,7 +44,7 @@ class DceTracker
 {
 public:
     DCE_State state = DCE_State::DCE_STATE__0;
-    uint32_t helper;
+    uint32_t helper = 0;
 };
 
 #endif

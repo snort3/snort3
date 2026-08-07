@@ -1787,7 +1787,7 @@ int Defrag::new_tracker(Packet* p, FragTracker* ft)
         return 0;
     }
 
-    memset(ft, 0, sizeof(*ft));
+    *ft = {};
 
     if ( p->is_ip4() )
     {

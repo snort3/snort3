@@ -232,7 +232,7 @@ public:
         chp_matches[cur_ptype].sort(ChpMatchDescriptor::comp_chp_actions);
     }
 
-    HttpFieldIds cur_ptype;
+    HttpFieldIds cur_ptype = REQ_AGENT_FID;
     const char* buffer[NUM_HTTP_FIELDS] = { };
     uint16_t length[NUM_HTTP_FIELDS] = { };
     std::list<MatchedCHPAction> chp_matches[NUM_HTTP_FIELDS];

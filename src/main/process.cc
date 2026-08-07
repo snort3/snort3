@@ -125,7 +125,7 @@ static THREAD_LOCAL uint8_t* process_alt_signal_stack = nullptr;
 #ifdef HAVE_SIGACTION
 static struct
 {
-    int signal;
+    int signal = 0;
     struct sigaction original_sigaction;
 }
 original_sigactions[] =

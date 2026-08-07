@@ -51,12 +51,12 @@ using namespace snort;
 PADDING_GUARD_BEGIN
 struct PS_HASH_KEY
 {
-    int protocol;
+    int protocol = 0;
     SfIp scanner;
-    int16_t group;
+    int16_t group = 0;
     SfIp scanned;
-    uint16_t pad;
-    uint32_t asid;
+    uint16_t pad = 0;
+    uint32_t asid = 0;
 };
 PADDING_GUARD_END
 

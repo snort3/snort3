@@ -40,7 +40,7 @@ struct ProfilerSorter
     using SortFn = bool(*)(const View& rhs, const View& lhs);
 
     std::string name;
-    SortFn sort;
+    SortFn sort = nullptr;
 
     operator bool() const
     { return sort != nullptr; }

@@ -68,7 +68,7 @@ public:
     bool decompress_swf = false;
     bool decompress_zip = false;
     bool decompress_vba = false;
-    snort::DecodeConfig* mime_decode_conf;
+    snort::DecodeConfig* mime_decode_conf = nullptr;
     uint32_t max_mime_attach = 5;
     bool script_detection = false;
     snort::LiteralSearch::Handle* script_detection_handle = nullptr;

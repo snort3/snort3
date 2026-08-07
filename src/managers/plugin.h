@@ -35,7 +35,7 @@ class Module;
 struct Plugin
 {
     std::string source;
-    const char* type;
+    const char* type = nullptr;
 
     void* handle = nullptr;
     const snort::BaseApi* api = nullptr;

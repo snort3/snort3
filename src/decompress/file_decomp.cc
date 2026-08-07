@@ -52,11 +52,11 @@ static const char ZIP_Sig[4] = { 'P', 'K', 0x03, 0x04 };
 
 static struct sig_map_s
 {
-    const char* Sig;
-    size_t Sig_Length;
-    std::atomic<bool> Enabled;
-    file_type_t File_Type;
-    file_compression_type_t File_Compression_Type;
+    const char* Sig = nullptr;
+    size_t Sig_Length = 0;
+    std::atomic<bool> Enabled = false;
+    file_type_t File_Type = FILE_TYPE_NONE;
+    file_compression_type_t File_Compression_Type = FILE_COMPRESSION_TYPE_NONE;
 } Signature_Map[] =
 {
     // none: compression type is embedded in PDF dictionaries
@@ -615,4 +615,3 @@ TEST_CASE("File_Decomp-no_sig_match", "[file_decomp]")
     File_Decomp_Free(p_s);
 }
 #endif
-

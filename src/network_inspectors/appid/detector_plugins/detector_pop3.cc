@@ -113,12 +113,12 @@ enum POP3State
 static const unsigned MAX_VERSION_SIZE = 64;
 struct ServicePOP3Data
 {
-    POP3State state;
-    unsigned count;
-    const char* vendor;
-    char version[MAX_VERSION_SIZE];
+    POP3State state = POP3_STATE_CONNECT;
+    unsigned count = 0;
+    const char* vendor = nullptr;
+    char version[MAX_VERSION_SIZE] = {};
     AppIdServiceSubtypeList subtypes;
-    int error;
+    int error = 0;
 };
 
 class POP3DetectorData : public AppIdFlowData

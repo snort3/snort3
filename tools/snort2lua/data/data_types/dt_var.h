@@ -50,7 +50,7 @@ private:
     struct VarData
     {
         std::string data;
-        VarType type;
+        VarType type = VarType::STRING;
     };
 
     std::vector<VarData*> vars;

@@ -29,11 +29,11 @@ class StatsTable
 public:
     struct Field
     {
-        const char* name;
-        int width;
-        char fill;
-        int precision;
-        std::ios_base::fmtflags flags;
+        const char* name = nullptr;
+        int width = 0;
+        char fill = 0;
+        int precision = 0;
+        std::ios_base::fmtflags flags = {};
     };
 
     StatsTable(const Field*, std::ostream&);

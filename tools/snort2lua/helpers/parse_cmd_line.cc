@@ -34,10 +34,10 @@ namespace parser
 typedef void (* ParseConfigFunc)(const char*, const char* val);
 struct ConfigFunc
 {
-    const char* name;
-    ParseConfigFunc parse_func;
+    const char* name = nullptr;
+    ParseConfigFunc parse_func = nullptr;
     std::string type;
-    const char* help;
+    const char* help = nullptr;
 };
 
 static const std::string out_default = "snort.lua";

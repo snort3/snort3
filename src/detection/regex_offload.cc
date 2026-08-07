@@ -50,7 +50,7 @@ struct RegexRequest
 {
     Packet* packet = nullptr;
 
-    std::thread* thread;
+    std::thread* thread = nullptr;
     std::mutex mutex;
     std::condition_variable cond;
 

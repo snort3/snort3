@@ -51,20 +51,20 @@ using namespace snort;
 THREAD_LOCAL RateFilterStats rate_filter_stats;
 
 PADDING_GUARD_BEGIN
-typedef struct
+typedef struct tSFRFTrackingNodeKey
 {
     ///policy identifier
-    PolicyId policyId;
+    PolicyId policyId = 0;
 
     // threshold identity
-    int tid;
+    int tid = 0;
 
     /* Stores either source or destination IP address on a matching packet, depending on
      * whether dos threshold is tracking by source or destination IP address. For tracking
      * by rule, it is cleared out (all 0s).
      */
     SfIp ip;
-    uint16_t padding;
+    uint16_t padding = 0;
 } tSFRFTrackingNodeKey;
 PADDING_GUARD_END
 

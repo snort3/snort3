@@ -154,7 +154,7 @@ void IpSession::clear()
 bool IpSession::setup(Packet* p)
 {
     SESSION_STATS_ADD(ip_stats)
-    memset(&tracker, 0, sizeof(tracker));
+    tracker = {};
 
     const StreamIpConfig* pc = get_ip_cfg(flow->ssn_server);
     flow->set_default_session_timeout(pc->session_timeout, false);

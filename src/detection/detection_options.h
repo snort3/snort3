@@ -63,11 +63,11 @@ struct dot_node_state_t
     struct
     {
         struct timeval ts;
-        uint64_t context_num;
-        uint32_t rebuild_flag;
-        uint16_t run_num;
-        char result;
-        char flowbit_failed;
+        uint64_t context_num = 0;
+        uint32_t rebuild_flag = 0;
+        uint16_t run_num = 0;
+        char result = 0;
+        char flowbit_failed = 0;
 
         void set(const snort::Packet& p, int last_result)
         {
@@ -93,11 +93,10 @@ struct dot_node_state_t
     unsigned latency_timeouts;
     unsigned latency_suspends;
 
-    dot_node_state_t()
+    dot_node_state_t() : last_check { }
     {
         result = 0;
         conts = nullptr;
-        memset(&last_check, 0, sizeof(last_check));
         context_num = run_num = 0;
         reset_profiling();
     }
