@@ -63,6 +63,16 @@ int32_t TcpReassemblerIps::scan_data_pre_ack(uint32_t* flags, Packet* p)
         return ret_val;
 
     TcpSegmentNode* tsn = seglist.cur_sseg;
+
+    // resync the scan cursor if it is missing or lags the flush origin
+    if ( !tsn or SEQ_GT(seglist.seglist_base_seq, tsn->scan_seq()) )
+    {
+        tsn = seglist.cur_sseg = seglist.cur_rseg;
+        if ( !tsn )
+            return ret_val;
+    }
+
+    assert( SEQ_LEQ(seglist.seglist_base_seq, tsn->scan_seq()) );
     uint32_t total = tsn->scan_seq() - seglist.seglist_base_seq;
 
     ret_val = FINAL_FLUSH_OK;
