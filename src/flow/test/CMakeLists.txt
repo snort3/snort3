@@ -18,6 +18,7 @@ add_cpputest( flow_control_test
 
 add_cpputest( flow_cache_test
     SOURCES
+        ../deferred_trust.cc
         ../dump_flows.cc
         ../dump_flows_serializer.cc
         ../flow_cache.cc

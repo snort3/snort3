@@ -229,5 +229,6 @@ private:
 
 extern void base_prep();
 extern void base_reset();
+extern void apply_daq_capability_gate(FlowCacheConfig&);
 
 #endif

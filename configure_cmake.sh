@@ -71,6 +71,9 @@ Optional Features:
     --enable-jemalloc-static
                             same as --enable-jemalloc but linked statically
     --disable-tenant-id     disable tenant ID in the FlowKey
+    --enable-allowlist-move-on-excess
+                            enable stream.allowlist_cache.move_on_excess feature
+                            (disabled by default; enable for regression testing)
     --enable-luajit-static  enable luajit linked statically
     --enable-appid-third-party
                             enable third party appid
@@ -376,6 +379,12 @@ while [ $# -ne 0 ]; do
             ;;
         --disable-tenant-id)
             append_cache_entry DISABLE_TENANT_ID        BOOL true
+            ;;
+        --enable-allowlist-move-on-excess)
+            append_cache_entry ALLOWLIST_MOVE_ON_EXCESS BOOL true
+            ;;
+        --disable-allowlist-move-on-excess)
+            append_cache_entry ALLOWLIST_MOVE_ON_EXCESS BOOL false
             ;;
         --enable-appid-third-party)
             ;;

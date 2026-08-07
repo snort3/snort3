@@ -82,6 +82,15 @@
 /* disable tenant_id */
 #cmakedefine DISABLE_TENANT_ID 1
 
+/* enable stream.allowlist_cache.move_on_excess feature (compile-time gate) */
+#cmakedefine ALLOWLIST_MOVE_ON_EXCESS 1
+
+/* REG_TEST builds always compile the excess-to-allowlist feature so
+   regression tests can exercise it, regardless of the cmake option. */
+#if defined(REG_TEST) && !defined(ALLOWLIST_MOVE_ON_EXCESS)
+#define ALLOWLIST_MOVE_ON_EXCESS 1
+#endif
+
 /* enable rule profiler */
 #cmakedefine ENABLE_RULE_PROFILER 1
 

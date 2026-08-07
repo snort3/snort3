@@ -20,6 +20,7 @@ option ( ENABLE_SHELL "enable shell support" OFF )
 option ( ENABLE_UNIT_TESTS "enable unit tests" OFF )
 option ( ENABLE_BENCHMARK_TESTS "enable benchmark tests" OFF )
 option ( DISABLE_TENANT_ID "disable tenant ID in the FlowKey structure" OFF )
+option ( ALLOWLIST_MOVE_ON_EXCESS "enable stream.allowlist_cache.move_on_excess feature (disabled by default for perf)" OFF )
 
 option ( ENABLE_COREFILES "Prevent Snort from generating core files" ON )
 option ( ENABLE_LARGE_PCAP "Enable support for pcaps larger than 2 GB" OFF )

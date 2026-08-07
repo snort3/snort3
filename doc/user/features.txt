@@ -109,6 +109,10 @@ include::sensitive_data.txt[]
 
 include::smtp.txt[]
 
+=== Stream Allowlist Cache
+
+include::stream_allowlist.txt[]
+
 === Telnet
 
 include::telnet.txt[]

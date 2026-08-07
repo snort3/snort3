@@ -1,0 +1,89 @@
+The stream allowlist cache preserves flows that Snort has decided not to
+inspect further, so the DAQ can offload them via a WHITELIST verdict.
+Two entry paths lead into the allowlist LRU: legitimate trust decisions
+(via Stream::stop_inspection) and, optionally, an excess-driven
+admission path that shifts flows to the allowlist under memory pressure
+instead of hard-pruning them.
+
+==== Configuration
+
+The allowlist cache is off by default. Enable and tune it under stream:
+
+    stream =
+    {
+        max_flows = 200000,
+        allowlist_cache =
+        {
+            enable = true,
+            move_on_excess = true,
+            max_excess_flows = 10000,
+        }
+    }
+
+* enable: turns the allowlist LRU on. Requires the underlying DAQ
+  instance to advertise WHITELIST capability; otherwise the feature is
+  silently disabled for that packet thread with a warning at startup.
+
+* move_on_excess: when total flows approach the max_flows ceiling,
+  move the oldest eligible TCP or UDP flow to the allowlist instead of
+  hard-pruning it. The moved flow keeps its 5-tuple in the DAQ's
+  offload path and no longer consumes Snort's inspection budget.
+
+* max_excess_flows: admission threshold offset. Excess-to-allowlist
+  admission begins when total flows reach stream.max_flows -
+  max_excess_flows. Setting max_excess_flows to 0 disables the path.
+  Setting it to a value greater than or equal to max_flows also
+  disables it (a startup warning is emitted in both cases).
+
+==== How excess admission works
+
+At each flow allocation, Snort checks whether current total flows have
+reached the trigger threshold. When it fires, Snort scans a small
+bounded window of the oldest TCP+UDP flows (the window size is
+controlled by the internal constant allowlist_admission_scan_cap) and
+moves the first eligible one (not blocked, not suspended) to the
+allowlist. If every candidate in the scan window is blocked, Snort
+rotates the head to prevent stalling and falls back to normal excess
+pruning on the next allocation. If a reclaimable expired flow is
+encountered during the scan, admission defers entirely (across both
+TCP and UDP) and lets the normal timeout / prune_idle path reclaim it,
+rather than parking a newer flow in the allowlist while a dead one
+sits at tail. Suspended or HA-standby expired flows will not be
+pruned soon, so admission continues past them.
+
+Total live flows stay bounded by max_flows. When the allowlist grows
+past its natural share and total exceeds max_flows, standard EXCESS
+pruning reclaims the oldest allowlist entry (regardless of how it got
+there) so the cache does not grow without bound.
+
+==== Trade-offs
+
+Legitimate trust flows share the allowlist LRU with excess-moved
+flows. Under sustained memory pressure, both kinds are subject to
+EXCESS pruning; a subsequent packet on a previously-trusted flow will
+then trigger fresh inspection. This is intentional: bounded total live
+flows takes priority over retention of trust decisions.
+
+Only TCP and UDP flows are admitted; other protocol types fall through
+to normal excess pruning so they keep honoring their idle timeouts.
+
+==== Monitoring
+
+The following stream pegs cover the feature:
+
+* excess_to_allowlist: cumulative count of flows moved to the allowlist
+  via the excess path.
+* excess_prunes: cumulative EXCESS-reason prunes (including allowlist
+  evictions once total exceeds max_flows).
+* allowlist_flows: current allowlist LRU size (all origins).
+* current_flows: total cache size; always <= max_flows.
+
+==== Build-time gate
+
+The feature is compiled behind ALLOWLIST_MOVE_ON_EXCESS. It is off in
+production builds by default. Configure with
+--enable-allowlist-move-on-excess to force it on, or enable it
+implicitly via --enable-unit-tests. Snort binaries compiled without
+the flag parse allowlist_cache.move_on_excess and max_excess_flows
+without error but emit a parse warning and behave as if the feature
+were disabled.

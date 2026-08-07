@@ -44,6 +44,10 @@ constexpr uint8_t total_lru_count = max_protocols + 1;
 constexpr uint64_t all_lru_mask = (1ULL << max_protocols) - 1;
 constexpr uint8_t first_proto = to_utype(PktType::NONE) + 1;
 
+#ifdef ALLOWLIST_MOVE_ON_EXCESS
+constexpr unsigned allowlist_admission_scan_cap = 8;
+#endif
+
 namespace snort
 {
 class Flow;
@@ -119,6 +123,8 @@ public:
 
     bool move_to_allowlist(snort::Flow* f);
 
+    void allowlist_on_excess_check(time_t now);
+
     template<typename StreamType>
     void output_flow(StreamType&, const snort::Flow&, const struct timeval&) const;
 
@@ -144,9 +150,17 @@ private:
     bool handle_allowlist_pruning(snort::Flow*, PruneReason, uint8_t, bool&);
 
     unsigned delete_active_flows(unsigned mode, unsigned num_to_delete, unsigned &deleted);
- 
+
     inline bool is_allowlist_on_excess() const
-    { return config.allowlist_cache and config.move_to_allowlist_on_excess; }
+    {
+#ifdef ALLOWLIST_MOVE_ON_EXCESS
+        return config.allowlist_cache and config.move_to_allowlist_on_excess
+            and config.allowlist_max_excess_flows > 0
+            and config.allowlist_max_excess_flows < config.max_flows;
+#else
+        return false;
+#endif
+    }
 
     inline bool is_lru_checked(uint64_t checked_lrus_mask, uint64_t lru_mask)
     { return (checked_lrus_mask & lru_mask) != 0; }

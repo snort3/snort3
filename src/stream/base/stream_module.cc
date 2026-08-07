@@ -24,6 +24,8 @@
 
 #include "stream_module.h"
 
+#include <cstdint>
+
 #include "control/control.h"
 #include "detection/rules.h"
 #include "flow/dump_flows_descriptor.h"
@@ -34,8 +36,13 @@
 #include "main/analyzer_command.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
+#include "main/thread.h"
 #include "managers/inspector_manager.h"
 #include "managers/module_manager.h"
+#include "packet_io/active.h"
+#include "packet_io/packet_tracer.h"
+#include "packet_io/sfdaq.h"
+#include "packet_io/sfdaq_instance.h"
 #include "stream/flush_bucket.h"
 #include "stream/tcp/tcp_stream_tracker.h"
 #include "time/packet_time.h"
@@ -43,6 +50,38 @@
 
 using namespace snort;
 using namespace std;
+
+void apply_daq_capability_gate(FlowCacheConfig& cfg)
+{
+    if ( !cfg.allowlist_cache )
+        return;
+
+#ifdef REG_TEST
+    if ( cfg.allowlist_test_force_enable )
+        return;
+#endif
+
+    const SFDAQInstance* di = SFDAQ::get_local_instance();
+    if ( !di )
+    {
+        WarningMessage("WARNING: no DAQ instance for packet thread %u; "
+            "disabling stream.allowlist_cache.\n", get_instance_id());
+        cfg.allowlist_cache = false;
+#ifdef ALLOWLIST_MOVE_ON_EXCESS
+        cfg.move_to_allowlist_on_excess = false;
+#endif
+    }
+    else if ( !di->can_whitelist() )
+    {
+        WarningMessage("WARNING: DAQ instance %u does not support WHITELIST "
+            "verdict; disabling stream.allowlist_cache for this packet thread.\n",
+            get_instance_id());
+        cfg.allowlist_cache = false;
+#ifdef ALLOWLIST_MOVE_ON_EXCESS
+        cfg.move_to_allowlist_on_excess = false;
+#endif
+    }
+}
 
 #ifdef DEBUG_MSGS
 static const TraceOption stream_trace_options[] =
@@ -72,10 +111,23 @@ static const Parameter name[] = \
 static const Parameter allowlist_cache_params[] =
 {
     { "enable", Parameter::PT_BOOL, nullptr, "false",
-      "enable allowlist cache" },
+      "enable allowlist cache (requires DAQ WHITELIST support); under memory "
+      "pressure, allowlist entries may be reclaimed and a subsequent packet on "
+      "a previously-trusted flow will trigger fresh inspection" },
 
     { "move_on_excess", Parameter::PT_BOOL, nullptr, "false",
-      "move flows to allowlist instead of removing when max flows limit reached" },
+      "move oldest eligible TCP or UDP flow to allowlist (via DAQ WHITELIST "
+      "verdict) instead of pruning it when flow allocation approaches max_flows" },
+
+    { "max_excess_flows", Parameter::PT_INT, "0:max32", "0",
+      "admission threshold offset: excess-to-allowlist admission begins when "
+      "total flows reach stream.max_flows - max_excess_flows; 0 disables" },
+
+#ifdef REG_TEST
+    { "test_force_enable", Parameter::PT_BOOL, nullptr, "false",
+      "test-only: bypass the runtime DAQ WHITELIST capability check "
+      "(REG_TEST builds only; never set in production)" },
+#endif
 
     { nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr }
 };
@@ -465,7 +517,33 @@ bool StreamModule::set(const char* fqn, Value& v, SnortConfig* c)
         config.flow_cache_cfg.allowlist_cache = v.get_bool();
 
     else if ( !strcmp(fqn, "stream.allowlist_cache.move_on_excess") )
+    {
+#ifdef ALLOWLIST_MOVE_ON_EXCESS
         config.flow_cache_cfg.move_to_allowlist_on_excess = v.get_bool();
+#else
+        if ( v.get_bool() )
+            ParseWarning(WARN_CONF,
+                "stream.allowlist_cache.move_on_excess is set but this build "
+                "was compiled without ALLOWLIST_MOVE_ON_EXCESS; feature is disabled.");
+#endif
+    }
+
+    else if ( !strcmp(fqn, "stream.allowlist_cache.max_excess_flows") )
+    {
+#ifdef ALLOWLIST_MOVE_ON_EXCESS
+        config.flow_cache_cfg.allowlist_max_excess_flows = v.get_uint32();
+#else
+        if ( v.get_uint32() != 0 )
+            ParseWarning(WARN_CONF,
+                "stream.allowlist_cache.max_excess_flows is set but this build "
+                "was compiled without ALLOWLIST_MOVE_ON_EXCESS; feature is disabled.");
+#endif
+    }
+
+#ifdef REG_TEST
+    else if ( !strcmp(fqn, "stream.allowlist_cache.test_force_enable") )
+        config.flow_cache_cfg.allowlist_test_force_enable = v.get_bool();
+#endif
 
     else if ( !strcmp(fqn, "stream.file_cache.idle_timeout") )
         config.flow_cache_cfg.proto[to_utype(PktType::FILE)].nominal_timeout = v.get_uint32();
@@ -504,6 +582,32 @@ bool StreamModule::end(const char* fqn, int, SnortConfig* sc)
 {
     if ( config.hs_timeout != -1 ) // condition required until stream_tcp.require_3whs is removed
         get_network_parse_policy()->hs_timeout = config.hs_timeout;
+
+#ifdef ALLOWLIST_MOVE_ON_EXCESS
+    if ( strcmp(fqn, MOD_NAME) == 0 and
+         config.flow_cache_cfg.move_to_allowlist_on_excess )
+    {
+        if ( config.flow_cache_cfg.allowlist_max_excess_flows == 0 )
+        {
+            ParseWarning(WARN_CONF,
+                "stream.allowlist_cache.move_on_excess is enabled but "
+                "max_excess_flows is 0; disabling the feature. Set "
+                "max_excess_flows to a value in [1, max_flows-1] to activate.");
+            config.flow_cache_cfg.move_to_allowlist_on_excess = false;
+        }
+        else if ( config.flow_cache_cfg.allowlist_max_excess_flows >=
+                  config.flow_cache_cfg.max_flows )
+        {
+            ParseWarning(WARN_CONF,
+                "stream.allowlist_cache.max_excess_flows (%u) >= max_flows (%u); "
+                "disabling the feature. Set max_excess_flows to a value in "
+                "[1, max_flows-1] to activate.",
+                config.flow_cache_cfg.allowlist_max_excess_flows,
+                config.flow_cache_cfg.max_flows);
+            config.flow_cache_cfg.move_to_allowlist_on_excess = false;
+        }
+    }
+#endif
 
     if ( Snort::is_reloading() && strcmp(fqn, MOD_NAME) == 0 )
     {
@@ -552,20 +656,26 @@ bool StreamReloadResourceManager::initialize(const StreamModuleConfig& config_)
 
 bool StreamReloadResourceManager::tinit()
 {
-    int max_flows_change =
-        config.flow_cache_cfg.max_flows - flow_con->get_flow_cache_config().max_flows;
+    int64_t max_flows_change =
+        static_cast<int64_t>(config.flow_cache_cfg.max_flows) -
+        static_cast<int64_t>(flow_con->get_flow_cache_config().max_flows);
 
     if ( max_flows_change )
     {
         if ( max_flows_change < 0 )
-            stream_base_stats.reload_total_deletes += abs(max_flows_change);
+            stream_base_stats.reload_total_deletes += static_cast<uint64_t>(-max_flows_change);
         else
-            stream_base_stats.reload_total_adds += max_flows_change;
+            stream_base_stats.reload_total_adds += static_cast<uint64_t>(max_flows_change);
 
-        flow_con->set_flow_cache_config(config.flow_cache_cfg);
+        FlowCacheConfig new_cfg = config.flow_cache_cfg;
+        apply_daq_capability_gate(new_cfg);
+        flow_con->set_flow_cache_config(new_cfg);
         return true;
     }
 
+    FlowCacheConfig new_cfg = config.flow_cache_cfg;
+    apply_daq_capability_gate(new_cfg);
+    flow_con->set_flow_cache_config(new_cfg);
     return false;
 }
 
@@ -673,7 +783,10 @@ void StreamModuleConfig::show() const
     {
         std::string tmp;
         tmp += "{ enable = " + (flow_cache_cfg.allowlist_cache ? std::string("true") : std::string("false"));
+#ifdef ALLOWLIST_MOVE_ON_EXCESS
         tmp += ", move_on_excess = " + (flow_cache_cfg.move_to_allowlist_on_excess ? std::string("true") : std::string("false"));
+        tmp += ", max_excess_flows = " + std::to_string(flow_cache_cfg.allowlist_max_excess_flows);
+#endif
         tmp += " }";
         ConfigLogger::log_value("allowlist_cache", tmp.c_str());
     }

@@ -412,7 +412,7 @@ public:
         out << t;
 
         std::string allow_s;
-        if (allowed_on_excess )
+        if ( allowed_on_excess )
             allow_s = " (allowlist on excess)";
         else if ( in_allowlist )
             allow_s = " (allowlist)";

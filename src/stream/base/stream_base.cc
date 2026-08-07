@@ -266,8 +266,10 @@ void StreamBase::tinit()
     assert(!flow_con);
     assert(config.flow_cache_cfg.max_flows);
 
-    // this is temp added to suppress the compiler error only
-    flow_con = new FlowControl(config.flow_cache_cfg);
+    FlowCacheConfig thread_cfg = config.flow_cache_cfg;
+    apply_daq_capability_gate(thread_cfg);
+
+    flow_con = new FlowControl(thread_cfg);
 
     {
         std::lock_guard<std::mutex> flow_control_lock(crash_dump_flow_control_mutex);
