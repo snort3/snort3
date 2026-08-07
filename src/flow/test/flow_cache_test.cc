@@ -1700,7 +1700,7 @@ TEST(flow_cache_move_on_excess, admitted_flow_carries_whitelist_state)
     CHECK_EQUAL(1u, cache->get_lru_flow_count(allowlist_lru_index));
 
     // The oldest flow is the one moved, and it carries the full move state.
-    Flow* moved = cache->find(&oldest_key);
+    const Flow* moved = cache->find(&oldest_key);
     CHECK(moved == oldest);
     CHECK_EQUAL(1u, moved->flags.in_allowlist);
     CHECK_EQUAL(1u, moved->flags.allowed_on_excess);
