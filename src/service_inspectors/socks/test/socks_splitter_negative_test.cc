@@ -46,6 +46,7 @@ struct SocksStats
 {
     uint64_t concurrent_sessions = 0;
     uint64_t max_concurrent_sessions = 0;
+    uint64_t aborted_handshakes = 0;
 };
 
 using namespace snort;

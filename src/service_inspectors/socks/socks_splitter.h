@@ -51,6 +51,9 @@ private:
     uint32_t parse_connect_response(const uint8_t* data, uint32_t len);
 
     uint32_t parse_address_port_length(const uint8_t* data, uint32_t len, uint32_t atyp_offset);
+
+    static constexpr uint32_t max_handshake_flushes = 32;
+    uint32_t handshake_flushes = 0;
 };
 
 #endif

@@ -30,6 +30,7 @@
 #include "flow/flow.h"
 #include "protocols/packet.h"
 #include "socks_flow_data.h"
+#include "socks_module.h"
 
 using namespace snort;
 
@@ -74,6 +75,12 @@ StreamSplitter::Status SocksSplitter::scan(
 
     if ( msg_len > 0 and msg_len <= len )
     {
+        if ( ++handshake_flushes > max_handshake_flushes )
+        {
+            ++socks_stats.aborted_handshakes;
+            return ABORT;
+        }
+
         *fp = msg_len;
         return FLUSH;
     }

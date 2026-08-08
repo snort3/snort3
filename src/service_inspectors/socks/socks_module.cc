@@ -47,6 +47,7 @@ const PegInfo socks_pegs[] =
     { CountType::SUM, "udp_expectations_created", "UDP expectations created for dynamic ports" },
     { CountType::SUM, "udp_packets", "UDP packets processed" },
     { CountType::SUM, "udp_frags", "UDP fragmented packets detected" },
+    { CountType::SUM, "aborted_handshakes", "handshakes aborted after exceeding the pre-established flush budget" },
     { CountType::END, nullptr, nullptr }
 };
 

@@ -63,6 +63,7 @@ enum SocksPeg : uint32_t
     SOCKS_PEG_UDP_EXPECTATIONS_CREATED,
     SOCKS_PEG_UDP_PACKETS,
     SOCKS_PEG_UDP_FRAGS,
+    SOCKS_PEG_ABORTED_HANDSHAKES,
     SOCKS_PEG_MAX
 };
 
@@ -85,6 +86,7 @@ struct SocksStats
     PegCount udp_expectations_created;
     PegCount udp_packets;
     PegCount udp_frags;
+    PegCount aborted_handshakes;
 };
 
 extern THREAD_LOCAL SocksStats socks_stats;
