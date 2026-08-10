@@ -69,9 +69,9 @@ void AppIdSessionApi::get_service_info(const char*& vendor, const char*& version
     subtypes = &service.get_subtypes();
 }
 
-const char* AppIdSessionApi::get_user_info(AppId& service, bool& login) const
+const char* AppIdSessionApi::get_user_info(AppId& user_service, bool& login) const
 {
-    service = client.get_user_id();
+    user_service = client.get_user_id();
     login = flags.user_logged_in;
     return client.get_username();
 }
@@ -82,7 +82,7 @@ AppId AppIdSessionApi::get_misc_app_id(uint32_t stream_index) const
     {
         if ((stream_index != 0) and (stream_index >= get_hsessions_size()))
             return APP_ID_NONE;
-        else if (AppIdHttpSession* hsession = get_hsession(stream_index))
+        else if (const AppIdHttpSession* hsession = get_hsession(stream_index))
             return hsession->misc_app_id;
         else if ((get_service_app_id() == APP_ID_HTTP3) and (stream_index == 0))
             return application_ids[APP_PROTOID_MISC];
@@ -142,7 +142,7 @@ AppId AppIdSessionApi::get_referred_app_id(uint32_t stream_index) const
     {
         if ((stream_index != 0) and (stream_index >= get_hsessions_size()))
             return APP_ID_UNKNOWN;
-        else if (AppIdHttpSession* hsession = get_hsession(stream_index))
+        else if (const AppIdHttpSession* hsession = get_hsession(stream_index))
             return hsession->referred_payload_app_id;
     }
     else if (stream_index == 0)
@@ -151,90 +151,90 @@ AppId AppIdSessionApi::get_referred_app_id(uint32_t stream_index) const
     return APP_ID_NONE;
 }
 
-void AppIdSessionApi::get_app_id(AppId& service, AppId& client,
-    AppId& payload, AppId& misc, AppId& referred, uint32_t stream_index) const
+void AppIdSessionApi::get_app_id(AppId& service_app, AppId& client_app,
+    AppId& payload_app, AppId& misc_app, AppId& referred_app, uint32_t stream_index) const
 {
     AppId service_id = get_service_app_id();
     if (service_id == APP_ID_HTTP2 or service_id == APP_ID_HTTP3)
     {
         if ((stream_index != 0) and (stream_index >= get_hsessions_size()))
         {
-            service = client = payload = misc = referred = APP_ID_UNKNOWN;
+            service_app = client_app = payload_app = misc_app = referred_app = APP_ID_UNKNOWN;
             return;
         }
         else if (AppIdHttpSession* hsession = get_hsession(stream_index))
         {
-            service = service_id;
+            service_app = service_id;
             if (service_id == APP_ID_HTTP2 and prefer_eve_client_over_appid_http_client())
-                client = application_ids[APP_PROTOID_CLIENT];
+                client_app = application_ids[APP_PROTOID_CLIENT];
             else
-                client = hsession->client.get_id();
-            payload = hsession->payload.get_id();
-            misc = hsession->misc_app_id;
-            referred = hsession->referred_payload_app_id;
+                client_app = hsession->client.get_id();
+            payload_app = hsession->payload.get_id();
+            misc_app = hsession->misc_app_id;
+            referred_app = hsession->referred_payload_app_id;
             return;
         }
     }
 
-    get_first_stream_app_ids(service, client, payload, misc);
-    referred = get_referred_app_id();
+    get_first_stream_app_ids(service_app, client_app, payload_app, misc_app);
+    referred_app = get_referred_app_id();
 }
 
-void AppIdSessionApi::get_app_id(AppId* service, AppId* client,
-    AppId* payload, AppId* misc, AppId* referred, uint32_t stream_index) const
+void AppIdSessionApi::get_app_id(AppId* service_app, AppId* client_app,
+    AppId* payload_app, AppId* misc_app, AppId* referred_app, uint32_t stream_index) const
 {
     AppId service_id = get_service_app_id();
     if (service_id == APP_ID_HTTP2 or service_id == APP_ID_HTTP3)
     {
         if ((stream_index != 0) and (stream_index >= get_hsessions_size()))
         {
-            if (service)
-                *service = APP_ID_UNKNOWN;
-            if (client)
-                *client = APP_ID_UNKNOWN;
-            if (payload)
-                *payload = APP_ID_UNKNOWN;
-            if (misc)
-                *misc = APP_ID_UNKNOWN;
-            if (referred)
-                *referred = APP_ID_UNKNOWN;
+            if (service_app)
+                *service_app = APP_ID_UNKNOWN;
+            if (client_app)
+                *client_app = APP_ID_UNKNOWN;
+            if (payload_app)
+                *payload_app = APP_ID_UNKNOWN;
+            if (misc_app)
+                *misc_app = APP_ID_UNKNOWN;
+            if (referred_app)
+                *referred_app = APP_ID_UNKNOWN;
             return;
         }
         else if (AppIdHttpSession* hsession = get_hsession(stream_index))
         {
-            if (service)
-                *service = service_id;
-            if (client)
+            if (service_app)
+                *service_app = service_id;
+            if (client_app)
             {
                 if (service_id == APP_ID_HTTP2 and prefer_eve_client_over_appid_http_client())
-                    *client = application_ids[APP_PROTOID_CLIENT];
+                    *client_app = application_ids[APP_PROTOID_CLIENT];
                 else
-                    *client = hsession->client.get_id();
+                    *client_app = hsession->client.get_id();
             }
-            if (payload)
-                *payload = hsession->payload.get_id();
-            if (misc)
-                *misc = hsession->misc_app_id;
-            if (referred)
-                *referred = hsession->referred_payload_app_id;
+            if (payload_app)
+                *payload_app = hsession->payload.get_id();
+            if (misc_app)
+                *misc_app = hsession->misc_app_id;
+            if (referred_app)
+                *referred_app = hsession->referred_payload_app_id;
             return;
         }
     }
-    if (service)
-        *service = service_id;
-    if (client)
+    if (service_app)
+        *service_app = service_id;
+    if (client_app)
     {
         if (service_id == APP_ID_HTTP2 and prefer_eve_client_over_appid_http_client())
-            *client = application_ids[APP_PROTOID_CLIENT];
+            *client_app = application_ids[APP_PROTOID_CLIENT];
         else
-            *client = get_client_app_id();
+            *client_app = get_client_app_id();
     }
-    if (payload)
-        *payload = get_payload_app_id();
-    if (misc)
-        *misc = get_misc_app_id();
-    if (referred)
-        *referred = get_referred_app_id();
+    if (payload_app)
+        *payload_app = get_payload_app_id();
+    if (misc_app)
+        *misc_app = get_misc_app_id();
+    if (referred_app)
+        *referred_app = get_referred_app_id();
 }
 
 bool AppIdSessionApi::is_service_over_quic() const
@@ -288,6 +288,7 @@ bool AppIdSessionApi::is_appid_inspecting_session() const
 
     if ( asd->client_disco_state != APPID_DISCO_STATE_FINISHED and
         (!asd->is_client_detected() or
+            // cppcheck-suppress knownConditionTrueFalse ; state changes during session discovery
             (asd->service_disco_state != APPID_DISCO_STATE_STATEFUL
                 and asd->get_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS))) )
     {
@@ -347,12 +348,12 @@ const char* AppIdSessionApi::get_client_info(uint32_t stream_index) const
     return nullptr;
 }
 
-uint64_t AppIdSessionApi::get_appid_session_attribute(uint64_t flags) const
+uint64_t AppIdSessionApi::get_appid_session_attribute(uint64_t flag_mask) const
 {
     if (!asd)
         return 0;
 
-    return asd->get_session_flags(flags);
+    return asd->get_session_flags(flag_mask);
 }
 
 const char* AppIdSessionApi::get_tls_host() const
@@ -415,6 +416,7 @@ bool AppIdSessionApi::is_http_inspection_done() const
     if (!asd)
         return true;
 
+    // cppcheck-suppress knownConditionTrueFalse ; completion is set by runtime third-party processing
     return (asd->is_tp_appid_done() and
         !(asd->get_session_flags(APPID_SESSION_SSL_SESSION) and !get_tls_host() and
             (asd->service_disco_state!= APPID_DISCO_STATE_FINISHED)));
@@ -460,18 +462,19 @@ void AppIdSessionApi::set_netbios_domain(AppidChangeBits& change_bits, const cha
 }
 
 void AppIdSessionApi::set_ss_application_ids(AppId service_id, AppId client_id,
-    AppId payload_id, AppId misc_id, AppId referred_id, AppidChangeBits& change_bits, Flow& flow)
+    AppId payload_id, AppId misc_id, AppId referred_id, AppidChangeBits& change_bits,
+    Flow& target_flow)
 {
-    set_application_ids_service(service_id, change_bits, flow);
-    set_ss_application_ids(client_id, payload_id, change_bits, flow);
+    set_application_ids_service(service_id, change_bits, target_flow);
+    set_ss_application_ids(client_id, payload_id, change_bits, target_flow);
 
     if (application_ids[APP_PROTOID_MISC] != misc_id)
     {
         application_ids[APP_PROTOID_MISC] = misc_id;
         AppIdPegCounts::inc_misc_count(misc_id);
         change_bits.set(APPID_MISC_BIT);
-        if (flow.ha_state)
-            flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
+        if (target_flow.ha_state)
+            target_flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
     }
     if (application_ids[APP_PROTOID_REFERRED] != referred_id)
     {
@@ -482,42 +485,42 @@ void AppIdSessionApi::set_ss_application_ids(AppId service_id, AppId client_id,
 }
 
 void AppIdSessionApi::set_ss_application_ids_payload(AppId payload_id,
-    AppidChangeBits& change_bits, Flow& flow)
+    AppidChangeBits& change_bits, Flow& target_flow)
 {
     if (application_ids[APP_PROTOID_PAYLOAD] != payload_id)
     {
         application_ids[APP_PROTOID_PAYLOAD] = payload_id;
         AppIdPegCounts::inc_payload_count(payload_id);
         change_bits.set(APPID_PAYLOAD_BIT);
-        if (flow.ha_state)
-            flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
+        if (target_flow.ha_state)
+            target_flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
     }
 }
 
 void AppIdSessionApi::set_ss_application_ids(AppId client_id, AppId payload_id,
-    AppidChangeBits& change_bits, Flow& flow)
+    AppidChangeBits& change_bits, Flow& target_flow)
 {
     if (application_ids[APP_PROTOID_CLIENT] != client_id)
     {
         application_ids[APP_PROTOID_CLIENT] = client_id;
         AppIdPegCounts::inc_client_count(client_id);
         change_bits.set(APPID_CLIENT_BIT);
-        if (flow.ha_state)
-            flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
+        if (target_flow.ha_state)
+            target_flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
     }
-    set_ss_application_ids_payload(payload_id, change_bits, flow);
+    set_ss_application_ids_payload(payload_id, change_bits, target_flow);
 }
 
 void AppIdSessionApi::set_application_ids_service(AppId service_id, AppidChangeBits& change_bits,
-    Flow& flow)
+    Flow& target_flow)
 {
     if (application_ids[APP_PROTOID_SERVICE] != service_id)
     {
         application_ids[APP_PROTOID_SERVICE] = service_id;
         AppIdPegCounts::inc_service_count(service_id);
         change_bits.set(APPID_SERVICE_BIT);
-        if (flow.ha_state)
-            flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
+        if (target_flow.ha_state)
+            target_flow.ha_state->add(FlowHAState::MODIFIED | FlowHAState::MAJOR);
     }
 }
 

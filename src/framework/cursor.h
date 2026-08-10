@@ -136,7 +136,7 @@ public:
     unsigned get_delta() const
     { return delta; }
 
-    CursorData* get_data(unsigned id) const;
+    CursorData* get_data(unsigned data_id) const;
 
     bool add_pos(unsigned n)
     {
@@ -217,4 +217,3 @@ private:
 };
 
 #endif
-

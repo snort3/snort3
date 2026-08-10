@@ -64,13 +64,13 @@ Cursor::Cursor(const Cursor& rhs)
     }
 }
 
-CursorData* Cursor::get_data(unsigned id) const
+CursorData* Cursor::get_data(unsigned data_id) const
 {
     if (data)
     {
         for (CursorData*& cd : *data)
         {
-            if (cd->get_id() == id)
+            if (cd->get_id() == data_id)
                 return cd;
         }
     }

@@ -114,11 +114,11 @@ void FileFlows::handle_retransmit(Packet* p)
         return;
     }
 
-    FileContext* file_got = nullptr;
     FileCache* file_cache = FileService::get_file_cache();
 
     if (!file->get_file_data())
     {
+        FileContext* file_got = nullptr;
         if (file_cache)
             file_got = file_cache->get_file(flow, pending_file_id, false, false);
         if (file_got and file_got->get_file_data() and file_got->verdict == FILE_VERDICT_PENDING)

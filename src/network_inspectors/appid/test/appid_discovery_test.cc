@@ -161,6 +161,7 @@ void ApplicationDescriptor::set_id(AppId app_id){my_id = app_id;}
 void ServiceAppDescriptor::set_id(AppId app_id, OdpContext& odp_ctxt)
 {
     set_id(app_id);
+    // cppcheck-suppress knownConditionTrueFalse ; this test mock intentionally returns fixed flags
     deferred = odp_ctxt.get_app_info_mgr().get_app_info_flags(app_id, APPINFO_FLAG_DEFER);
 }
 void ServiceAppDescriptor::set_port_service_id(AppId){}

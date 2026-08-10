@@ -62,14 +62,14 @@ public:
     uint8_t get_state() const
     { return state; }
 
-    void set_state(uint8_t state)
-    { this->state = state; }
+    void set_state(uint8_t new_state)
+    { state = new_state; }
 
     uint16_t get_id() const
     { return id; }
 
-    void set_id(uint16_t id)
-    { this->id = id; }
+    void set_id(uint16_t transaction_id)
+    { id = transaction_id; }
 
     uint16_t get_record_type() const
     { return record_type; }
@@ -80,8 +80,8 @@ public:
     uint32_t get_ttl() const
     { return ttl; }
 
-    void set_ttl(uint32_t ttl)
-    { this->ttl = ttl; }
+    void set_ttl(uint32_t new_ttl)
+    { ttl = new_ttl; }
 
     uint8_t get_response_type() const
     { return response_type; }
@@ -92,13 +92,13 @@ public:
     const char* get_host() const
     { return host; }
 
-    void set_host(const char* host, AppidChangeBits& change_bits, bool request)
+    void set_host(const char* host_name, AppidChangeBits& change_bits, bool request)
     {
         if (this->host)
         {
             snort_free(this->host);
         }
-        this->host = snort::snort_strdup(host);
+        host = snort::snort_strdup(host_name);
         if (request)
         {
             change_bits.reset(APPID_DNS_RESPONSE_HOST_BIT);

@@ -158,9 +158,13 @@ void update_buffer_map(const char** bufs, const char* svc)
 void add_default_services(SnortConfig* sc, const std::string& buf, OptTreeNode* otn)
 {
     assert(in_main_thread());
-    SvcList& list = buffer_map[buf];
+    const auto it = buffer_map.find(buf);
+    if ( it == buffer_map.end() )
+        return;
 
-    for ( auto& svc : list )
+    const SvcList& list = it->second;
+
+    for ( const auto& svc : list )
         add_service_to_otn(sc, otn, svc.c_str());
 }
 

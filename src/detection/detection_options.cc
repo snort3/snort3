@@ -582,7 +582,7 @@ int detection_option_node_evaluate(
 
             for ( int i = 0; i < node->num_children; ++i )
             {
-                detection_option_tree_node_t* child_node = node->children[i];
+                const detection_option_tree_node_t* child_node = node->children[i];
                 dot_node_state_t* child_state = child_node->state + get_instance_id();
 
                 for ( unsigned j = 0; node->num_children > 1 and j < NUM_IPS_OPTIONS_VARS; ++j )

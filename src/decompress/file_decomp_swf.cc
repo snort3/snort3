@@ -280,7 +280,7 @@ fd_status_t File_Decomp_SWF(fd_session_t* SessionPtr)
     case ( SWF_STATE_GET_HEADER ):
     {
         uint8_t& Cnt_Ptr = SessionPtr->SWF->Header_Cnt;
-        uint8_t& Len_Ptr = SessionPtr->SWF->Header_Len;
+        const uint8_t& Len_Ptr = SessionPtr->SWF->Header_Len;
 
         while ( Len_Ptr > Cnt_Ptr )
         {

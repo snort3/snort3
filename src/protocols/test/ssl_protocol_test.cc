@@ -248,7 +248,7 @@ TEST(ssl_protocol_tests, ssl_alert_rec_zero_size)
 
 TEST(ssl_protocol_tests, ssl_cert_common_name_parsing)
 {
-    uint8_t cn_data[4] = { 'T', 'E', 'S', 'T' };
+    const uint8_t cn_data[4] = { 'T', 'E', 'S', 'T' };
     
     g_test_asn1_data = cn_data;
     g_test_asn1_len = 4;

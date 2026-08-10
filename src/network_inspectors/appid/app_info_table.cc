@@ -220,37 +220,37 @@ void AppInfoManager::dump_app_info_table()
 
 AppId AppInfoManager::get_appid_by_service_id(uint32_t id)
 {
-    AppInfoTableEntry* entry = get_app_info_entry(id, app_info_service_table);
+    const AppInfoTableEntry* entry = get_app_info_entry(id, app_info_service_table);
     return entry ? entry->appId : APP_ID_NONE;
 }
 
 AppId AppInfoManager::get_appid_by_client_id(uint32_t id)
 {
-    AppInfoTableEntry* entry = get_app_info_entry(id, app_info_client_table);
+    const AppInfoTableEntry* entry = get_app_info_entry(id, app_info_client_table);
     return entry ? entry->appId : APP_ID_NONE;
 }
 
 AppId AppInfoManager::get_appid_by_payload_id(uint32_t id)
 {
-    AppInfoTableEntry* entry = get_app_info_entry(id, app_info_payload_table);
+    const AppInfoTableEntry* entry = get_app_info_entry(id, app_info_payload_table);
     return entry ? entry->appId : APP_ID_NONE;
 }
 
 const char* AppInfoManager::get_app_name(int32_t id)
 {
-    AppInfoTableEntry* entry = get_app_info_entry(id);
+    const AppInfoTableEntry* entry = get_app_info_entry(id);
     return entry ? entry->app_name : nullptr;
 }
 
 const char* AppInfoManager::get_app_name_key(int32_t id)
 {
-    AppInfoTableEntry* entry = get_app_info_entry(id);
+    const AppInfoTableEntry* entry = get_app_info_entry(id);
     return entry ? entry->app_name_key : nullptr;
 }
 
 AppId AppInfoManager::get_appid_by_name(const char* app_name)
 {
-    AppInfoTableEntry* entry = find_app_info_by_name(app_name);
+    const AppInfoTableEntry* entry = find_app_info_by_name(app_name);
     return entry ? entry->appId : APP_ID_NONE;
 }
 

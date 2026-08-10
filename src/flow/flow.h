@@ -221,15 +221,15 @@ public:
     void set_service(Packet*, const char* new_service);
 
     template<typename T>
-    bool get_attr(const std::string& key, T& val) const
-    { return stash.get(key, val); }
+    bool get_attr(const std::string& attr_key, T& val) const
+    { return stash.get(attr_key, val); }
     template<typename T>
-    void set_attr(const std::string& key, T& val)
-    { stash.store(key, val); }
-    void set_attr(const std::string& key, const std::string& val)
-    { stash.store(key, val); }
-    void set_attr(const std::string& key, StashGenericObject* val)
-    { stash.store(key, val); }
+    void set_attr(const std::string& attr_key, T& val)
+    { stash.store(attr_key, val); }
+    void set_attr(const std::string& attr_key, const std::string& val)
+    { stash.store(attr_key, val); }
+    void set_attr(const std::string& attr_key, StashGenericObject* val)
+    { stash.store(attr_key, val); }
     bool set_attr(const snort::SfIp& ip, const SnortConfig* sc = nullptr)
     { return stash.store(ip, sc); }
     const std::list<SfIp>* get_aux_ip_list() const
@@ -247,8 +247,8 @@ public:
     uint32_t clear_session_flags(uint32_t ssn_flags)
     { return ssn_state.session_flags &= ~ssn_flags; }
 
-    uint32_t clear_session_state(uint32_t ssn_state)
-    { return session_state &= ~ssn_state; }
+    uint32_t clear_session_state(uint32_t state_mask)
+    { return session_state &= ~state_mask; }
 
     void set_to_client_detection(bool enable);
     void set_to_server_detection(bool enable);

@@ -279,18 +279,18 @@ void snort::ThreadConfig::set_numa_mempolicy(const std::string& policy)
             policy.c_str());
 }
 
-int ThreadConfig::get_numa_node(hwloc_topology_t topology, hwloc_cpuset_t cpuset)
+int ThreadConfig::get_numa_node(hwloc_topology_t numa_topology, hwloc_cpuset_t cpuset)
 {
     if (hwloc->bitmap_iszero(cpuset))
         return -1;
 
-    int depth = hwloc->get_type_depth(topology, HWLOC_OBJ_NUMANODE);
+    int depth = hwloc->get_type_depth(numa_topology, HWLOC_OBJ_NUMANODE);
     if (depth == HWLOC_TYPE_DEPTH_UNKNOWN)
         return -1;
 
-    for (unsigned i = 0; i < hwloc->get_nbobjs_by_depth(topology, depth); ++i)
+    for (unsigned i = 0; i < hwloc->get_nbobjs_by_depth(numa_topology, depth); ++i)
     {
-        hwloc_obj_t node = hwloc->get_obj_by_depth(topology, depth, i);
+        hwloc_obj_t node = hwloc->get_obj_by_depth(numa_topology, depth, i);
         if (node and hwloc->bitmap_isincluded(cpuset, node->cpuset))
             return node->os_index;
     }

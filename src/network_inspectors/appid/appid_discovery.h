@@ -72,8 +72,8 @@ enum FirstPktAppIdDiscovered : uint8_t
 class AppIdPatternMatchNode
 {
 public:
-    AppIdPatternMatchNode(AppIdDetector* detector, int start, unsigned len)
-        : service(detector), pattern_start_pos(start), size(len) { }
+    AppIdPatternMatchNode(AppIdDetector* app_detector, int start, unsigned len)
+        : service(app_detector), pattern_start_pos(start), size(len) { }
 
     bool valid_match(int end_position)
     {

@@ -135,8 +135,6 @@ int sf_base64decode(uint8_t* inbuf, uint32_t inbuf_size, uint8_t* outbuf, uint32
     const uint8_t* cursor, * endofinbuf;
     uint8_t* outbuf_ptr;
     uint8_t base64data[4], * base64data_ptr; /* temporary holder for current base64 chunk */
-    uint8_t tableval_a, tableval_b, tableval_c, tableval_d;
-
     uint32_t n;
     uint32_t max_base64_chars; /* The max number of decoded base64 chars that fit into outbuf */
 
@@ -163,6 +161,8 @@ int sf_base64decode(uint8_t* inbuf, uint32_t inbuf_size, uint8_t* outbuf, uint32
             n++; /* Number of base64 bytes we've stored */
             if (!(n % 4))
             {
+                uint8_t tableval_a, tableval_b, tableval_c, tableval_d;
+
                 /* We have four databytes upon which to operate */
 
                 if ((base64data[0] == '=') || (base64data[1] == '='))

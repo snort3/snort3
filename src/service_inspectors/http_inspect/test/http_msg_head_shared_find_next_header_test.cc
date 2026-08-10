@@ -206,6 +206,7 @@ TEST_GROUP(find_next_header)
     Flow* flow = nullptr;
     HttpParaList params;
     HttpFlowData* flow_data = nullptr;
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     // cppcheck-suppress constVariablePointer
     HttpMsgHeadTest* msg = nullptr;
     uint8_t dummy = 0;

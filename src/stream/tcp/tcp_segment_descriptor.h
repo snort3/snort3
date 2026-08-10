@@ -81,8 +81,8 @@ public:
     void set_ack(uint32_t ack_num)
     { ack = ack_num; }
 
-    void set_end_seq(uint32_t seq)
-    { end_seq = seq; }
+    void set_end_seq(uint32_t seq_num)
+    { end_seq = seq_num; }
 
     uint32_t get_end_seq() const
     { return end_seq; }

@@ -281,9 +281,9 @@ bool WizardModule::end(const char* fqn, int idx, SnortConfig*)
     return true;
 }
 
-MagicBook* WizardModule::get_book(bool c2s, bool hex)
+MagicBook* WizardModule::get_book(bool to_server, bool hex)
 {
-    int k = c2s ? 1 : 0;
+    int k = to_server ? 1 : 0;
     k |= (hex ? 2 : 0);
 
     MagicBook* b = nullptr;

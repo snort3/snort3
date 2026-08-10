@@ -134,7 +134,7 @@ private:
     bool load_lua_sandbox();
     bool set_sandbox_env();
     bool load_string(const char* s, bool load_in_sandbox, const char* message);
-    bool load_config(const char* file, bool load_in_sandbox);
+    bool load_config(const char* config_file, bool load_in_sandbox);
     static bool dump_enabled();
 
 private:

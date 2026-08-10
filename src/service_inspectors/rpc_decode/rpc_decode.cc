@@ -122,7 +122,7 @@ static const uint32_t flush_size = 28;
 THREAD_LOCAL ProfileStats rpcdecodePerfStats;
 THREAD_LOCAL RpcStats rdstats;
 
-static int ConvertRPC(RpcSsnData*, Packet*);
+static int ConvertRPC(RpcSsnData*, const Packet*);
 
 static RpcSsnData* RpcSsnDataNew(Packet*);
 static inline void RpcSsnClean(RpcSsnData*);
@@ -132,11 +132,11 @@ static inline int RpcSsnIsActive(const RpcSsnData*);
 static RpcStatus RpcStatefulInspection(RpcSsnData*, Packet*);
 static inline void RpcPreprocEvent(RpcSsnData*, int);
 static RpcStatus RpcHandleFrag(RpcSsnData*, const uint8_t*);
-static RpcStatus RpcPrepRaw(const uint8_t*, uint32_t, Packet*);
-static RpcStatus RpcPrepFrag(RpcSsnData*, Packet*);
-static RpcStatus RpcPrepSeg(RpcSsnData*, Packet*);
-static inline uint32_t RpcBufLen(RpcBuffer*);
-static inline uint8_t* RpcBufData(RpcBuffer*);
+static RpcStatus RpcPrepRaw(const uint8_t*, uint32_t, const Packet*);
+static RpcStatus RpcPrepFrag(RpcSsnData*, const Packet*);
+static RpcStatus RpcPrepSeg(RpcSsnData*, const Packet*);
+static inline uint32_t RpcBufLen(const RpcBuffer*);
+static inline const uint8_t* RpcBufData(const RpcBuffer*);
 static RpcStatus RpcBufAdd(RpcBuffer*, const uint8_t*, uint32_t);
 static inline void RpcBufClean(RpcBuffer*);
 
@@ -362,7 +362,7 @@ static RpcStatus RpcStatefulInspection(RpcSsnData* rsdata, Packet* p)
     return RPC_STATUS__SUCCESS;
 }
 
-static RpcStatus RpcPrepRaw(const uint8_t* data, uint32_t fraglen, Packet* p)
+static RpcStatus RpcPrepRaw(const uint8_t* data, uint32_t fraglen, const Packet* p)
 {
     DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
 
@@ -401,14 +401,14 @@ static RpcStatus RpcPrepFragBuffer(RpcSsnData* rsdata, DataBuffer& buf)
     return RPC_STATUS__SUCCESS;
 }
 
-static RpcStatus RpcPrepFrag(RpcSsnData* rsdata, Packet* p)
+static RpcStatus RpcPrepFrag(RpcSsnData* rsdata, const Packet* p)
 {
     DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
 
     return RpcPrepFragBuffer(rsdata, buf);
 }
 
-static RpcStatus RpcPrepSeg(RpcSsnData* rsdata, Packet* p)
+static RpcStatus RpcPrepSeg(RpcSsnData* rsdata, const Packet* p)
 {
     DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
 
@@ -457,12 +457,12 @@ static RpcStatus RpcHandleFrag(RpcSsnData* rsdata, const uint8_t* fragment)
     return RPC_STATUS__SUCCESS;
 }
 
-static inline uint32_t RpcBufLen(RpcBuffer* buf)
+static inline uint32_t RpcBufLen(const RpcBuffer* buf)
 {
     return buf == nullptr ? 0 : buf->len;
 }
 
-static inline uint8_t* RpcBufData(RpcBuffer* buf)
+static inline const uint8_t* RpcBufData(const RpcBuffer* buf)
 {
     return buf == nullptr ? nullptr : buf->data;
 }
@@ -627,7 +627,7 @@ static RpcSsnData* RpcSsnDataNew(Packet* p)
 
 #define MIN_CALL_BODY_SZ 32
 
-static int ConvertRPC(RpcSsnData* rsdata, Packet* p)
+static int ConvertRPC(RpcSsnData* rsdata, const Packet* p)
 {
     const uint8_t* data = p->data;
     uint32_t psize = p->dsize;

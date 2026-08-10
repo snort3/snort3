@@ -40,28 +40,28 @@ TcpOverlapState::TcpOverlapState(TcpReassemblySegments& seglist)
     tcp_ips_data = Normalize_GetMode(NORM_TCP_IPS);
 }
 
-void TcpOverlapState::init(TcpSegmentDescriptor& tsd)
+void TcpOverlapState::init(TcpSegmentDescriptor& descriptor)
 {
     int32_t dist_head = 0, dist_tail = 0;
 
     if ( seglist.head && seglist.tail )
     {
-        if ( SEQ_GT(tsd.get_seq(), seglist.head->start_seq()) )
-            dist_head = tsd.get_seq() - seglist.head->start_seq();
+        if ( SEQ_GT(descriptor.get_seq(), seglist.head->start_seq()) )
+            dist_head = descriptor.get_seq() - seglist.head->start_seq();
         else
-            dist_head = seglist.head->start_seq() - tsd.get_seq();
+            dist_head = seglist.head->start_seq() - descriptor.get_seq();
 
-        if ( SEQ_GT(tsd.get_seq(), seglist.tail->start_seq()) )
-            dist_tail = tsd.get_seq() - seglist.tail->start_seq();
+        if ( SEQ_GT(descriptor.get_seq(), seglist.tail->start_seq()) )
+            dist_tail = descriptor.get_seq() - seglist.tail->start_seq();
         else
-            dist_tail = seglist.tail->start_seq() - tsd.get_seq();
+            dist_tail = seglist.tail->start_seq() - descriptor.get_seq();
     }
 
     left = right = nullptr;
     if ( dist_head < dist_tail )
     {
         right = seglist.head;
-        while ( right and SEQ_LT(right->start_seq(), tsd.get_seq()) )
+        while ( right and SEQ_LT(right->start_seq(), descriptor.get_seq()) )
         {
             left = right;
             right = right->next;
@@ -70,25 +70,25 @@ void TcpOverlapState::init(TcpSegmentDescriptor& tsd)
     else
     {
         left = seglist.tail;
-        while ( left and SEQ_GEQ(left->start_seq(), tsd.get_seq()) )
+        while ( left and SEQ_GEQ(left->start_seq(), descriptor.get_seq()) )
         {
             right = left;
             left = left->prev;
         }
     }
 
-    this->tsd = &tsd;
-    seq = tsd.get_seq();
-    seq_end = tsd.get_end_seq();
-    len = tsd.get_len();
+    tsd = &descriptor;
+    seq = descriptor.get_seq();
+    seq_end = descriptor.get_end_seq();
+    len = descriptor.get_len();
 
     overlap = 0;
     slide = 0;
     trunc_len = 0;
 
-    rdata = tsd.get_pkt()->data;
-    rsize = tsd.get_len();
-    rseq = tsd.get_seq();
+    rdata = descriptor.get_pkt()->data;
+    rsize = descriptor.get_len();
+    rseq = descriptor.get_seq();
 
     keep_segment = true;
 }

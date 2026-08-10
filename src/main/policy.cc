@@ -175,14 +175,14 @@ void IpsPolicy::commit_action_variable(const std::string& name,
 }
 
 bool IpsPolicy::get_action_variable(const std::string& name, const std::string*& action_name,
-    IpsAction::Type& action, ActionSelector& selector) const
+    IpsAction::Type& action_type, ActionSelector& selector) const
 {
     const auto it = action_vars.find(name);
     if ( it == action_vars.end() )
         return false;
 
     action_name = &std::get<0>(it->second);
-    action = std::get<1>(it->second);
+    action_type = std::get<1>(it->second);
     selector = std::get<2>(it->second);
     return true;
 }

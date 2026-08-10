@@ -360,7 +360,7 @@ void MemoryCap::update_global_stats(bool dump_stats)
 }
 
 // called at startup and shutdown
-void MemoryCap::print(bool verbose, bool init)
+void MemoryCap::print(bool verbose, bool initial_report)
 {
     if ( !config.enabled )
         return;
@@ -368,7 +368,7 @@ void MemoryCap::print(bool verbose, bool init)
     update_global_stats();
     const MemoryCounts& mc = get_global_stats();
 
-    if ( init and (verbose or mc.start_up_use) )
+    if ( initial_report and (verbose or mc.start_up_use) )
     {
         LogLabel("memory");
         LogCount("pruning threshold", limit);

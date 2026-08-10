@@ -99,8 +99,8 @@ void BaseTracker::update_global_proxies()
         if ( !proxy.enabled || !proxy.mod )
             continue;
 
-        Module* mod = proxy.mod;
-        PegCount* p = mod->get_counts();
+        const Module* mod = proxy.mod;
+        const PegCount* p = mod->get_counts();
         const PegInfo* pegs = mod->get_pegs();
         if ( !p || !pegs )
             continue;

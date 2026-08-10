@@ -63,10 +63,10 @@ TEST_GROUP(get_next_code)
     class HttpMsgHeadTest : public HttpMsgHeadShared
     {
     public:
-        static int32_t get_next_code_test(const Field& field, int32_t& offset,
+        static int32_t get_next_code_test(const Field& field, int32_t& next_offset,
             const StrCode table[])
         {
-            return HttpMsgHeadShared::get_next_code(field, offset, table);
+            return HttpMsgHeadShared::get_next_code(field, next_offset, table);
         }
     };
 };
@@ -220,4 +220,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

@@ -78,7 +78,7 @@ public:
         return len;
     }
 
-    void deserialize(const char* buffer, uint16_t len)
+    void deserialize(const char* buffer, uint16_t data_len)
     {
         uint16_t offset = 0;
         memcpy(&timeout, buffer, sizeof(timeout));
@@ -97,12 +97,12 @@ public:
         offset += sizeof(hashkey.asid);
         memcpy(&hashkey.padding, buffer + offset, sizeof(hashkey.padding));
         offset += sizeof(hashkey.padding);
-        if (offset < len)
-            file_ctx.deserialize(buffer + offset, len - offset);
-        this->len = len;
+        if (offset < data_len)
+            file_ctx.deserialize(buffer + offset, data_len - offset);
+        len = data_len;
     }
 
-    void serialize(char* buffer, uint16_t len)
+    void serialize(char* buffer, uint16_t data_len)
     {
         uint16_t offset = 0;
         memcpy(buffer, &timeout, sizeof(timeout));
@@ -121,8 +121,8 @@ public:
         offset += sizeof(hashkey.asid);
         memcpy(buffer + offset, &hashkey.padding, sizeof(hashkey.padding));
         offset += sizeof(hashkey.padding);
-        if (offset < len)
-            file_ctx.serialize(buffer + offset, len - offset);
+        if (offset < data_len)
+            file_ctx.serialize(buffer + offset, data_len - offset);
     }
 
 private:

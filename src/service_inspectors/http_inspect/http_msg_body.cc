@@ -1084,7 +1084,7 @@ void HttpMsgBody::print_body_section(FILE* output, const char* body_type_str)
     fprintf(output, "octets seen %" PRIi64 "\n", body_octets);
     detect_data.print(output, "Detect data");
     if ((mime_bufs != nullptr) && !mime_bufs->empty())
-        for (MimeBufs& mb : *mime_bufs)
+        for (const MimeBufs& mb : *mime_bufs)
         {
             mb.file.print(output, "MIME data");
             mb.vba.print(output, "MIME OLE data");

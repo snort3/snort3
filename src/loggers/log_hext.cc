@@ -53,7 +53,7 @@ void DaqMessageEventHandler::handle(DataEvent& event, Flow*)
     if (!hext_log)
         return;
 
-    DaqMessageEvent* dme = static_cast<DaqMessageEvent*>(&event);
+    const DaqMessageEvent* dme = static_cast<DaqMessageEvent*>(&event);
 
     const char* cmd;
     switch (dme->get_type()) {

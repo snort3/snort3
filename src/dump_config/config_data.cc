@@ -62,10 +62,10 @@ TreeConfigNode::TreeConfigNode(BaseConfigNode* parent_node,
         BaseConfigNode(parent_node), name(node_name), type(node_type)
 {}
 
-BaseConfigNode* TreeConfigNode::get_node(const std::string& name)
+BaseConfigNode* TreeConfigNode::get_node(const std::string& node_name)
 {
     auto it = std::find_if(children.cbegin(), children.cend(),
-        [name](const BaseConfigNode* node){ return node->get_name() == name; });
+        [node_name](const BaseConfigNode* node){ return node->get_name() == node_name; });
     return it != children.cend() ? *it : nullptr;
 }
 
@@ -343,4 +343,3 @@ TEST_CASE("value_config_node", "[ValueConfigNode]")
 }
 
 #endif
-

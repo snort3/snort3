@@ -210,7 +210,7 @@ TEST(http_transaction_test, server_attachment_replaces_null_infractions)
     section_type[SRC_SERVER] = SEC_STATUS;
 
     HttpTransaction* trans = HttpTransaction::attach_my_transaction(flow_data, SRC_SERVER, flow);
-    CHECK_COMPARE(trans->get_infractions(SRC_SERVER), !=, nullptr);
+    CHECK(trans->get_infractions(SRC_SERVER) != nullptr);
 }
 
 TEST(http_transaction_test, server_attachment_merges_existing_infractions)
@@ -222,8 +222,9 @@ TEST(http_transaction_test, server_attachment_merges_existing_infractions)
 
     HttpUnitTestSetup::half_reset(flow_data, SRC_CLIENT);
     section_type[SRC_CLIENT] = SEC_REQUEST;
-    HttpTransaction* next_trans = HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
-    CHECK_COMPARE(trans, !=, next_trans);
+    const HttpTransaction* next_trans =
+        HttpTransaction::attach_my_transaction(flow_data, SRC_CLIENT, flow);
+    CHECK(trans != next_trans);
     *HttpUnitTestSetup::get_infractions(flow_data, SRC_SERVER) += INF_BAD_HEADER;
 
     section_type[SRC_SERVER] = SEC_STATUS;

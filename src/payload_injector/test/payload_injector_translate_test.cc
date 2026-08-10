@@ -623,7 +623,7 @@ TEST(payload_injector_translate_test, http_page_is_nullptr)
 
 TEST(payload_injector_translate_test, http_page_is_0_length)
 {
-    uint8_t http_page[] = { 1 };
+    const uint8_t http_page[] = { 1 };
 
     InjectionControl control;
     control.http_page = http_page;

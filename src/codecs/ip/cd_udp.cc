@@ -286,6 +286,7 @@ bool UdpCodec::valid_checksum4(const RawData& raw, const DecodeData& snort)
     ph.hdr.protocol = IpProtocol::UDP;
     ph.hdr.len = htons((uint16_t) raw.len);
 
+    // cppcheck-suppress knownConditionTrueFalse ; zero is the valid packet checksum result
     return (checksum::udp_cksum(raw.data, raw.len, ph) == 0);
 }
 
@@ -300,6 +301,7 @@ bool UdpCodec::valid_checksum6(const RawData& raw, const CodecData& codec, const
     ph6.hdr.protocol = codec.ip6_csum_proto;
     ph6.hdr.len = htons((uint16_t) raw.len);
 
+    // cppcheck-suppress knownConditionTrueFalse ; zero is the valid packet checksum result
     return (checksum::udp_cksum(raw.data, raw.len, ph6) == 0);
 }
 
@@ -375,6 +377,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
              * 2) UDP header chksum value is 0.
              */
             if (!fragmented_udp_flag && udph->uh_chk)
+                // cppcheck-suppress knownConditionTrueFalse ; result depends on packet contents
                 valid = valid_checksum4(raw, snort);
             else
                 valid = true;
@@ -393,6 +396,7 @@ bool UdpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
              * (UDP checksum is not optional in IP6)
              */
             else if (!fragmented_udp_flag)
+                // cppcheck-suppress knownConditionTrueFalse ; result depends on packet contents
                 valid = valid_checksum6(raw, codec, snort);
             else
                 valid = true;

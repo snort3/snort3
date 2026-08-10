@@ -120,7 +120,7 @@ IpsOption::EvalStatus GtpInfoOption::eval(Cursor& c, Packet* p)
     if ( !ieType )
         return NO_MATCH;
 
-    GTP_IEData* ieData = ropts.gtp_infoElements + ieType;
+    const GTP_IEData* ieData = ropts.gtp_infoElements + ieType;
 
     // bail if the data is not up to date
     if ( ieData->msg_id != ropts.msg_id )

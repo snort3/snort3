@@ -57,10 +57,8 @@ void OleFile :: walk_directory_list()
 {
     int32_t current_sector;
     uint16_t sector_size;
-    uint8_t* name_buf;
     int bytes_copied;
     FileProperty* node;
-    const char* file_name;
 
     VBA_DEBUG(vba_data_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, CURRENT_PACKET,
         "Parsing the Directory list.\n");
@@ -93,7 +91,7 @@ void OleFile :: walk_directory_list()
         while (count < (sector_size/DIR_ENTRY_SIZE))
         {
             node = new FileProperty;
-            name_buf = new uint8_t[32];
+            uint8_t* name_buf = new uint8_t[32];
 
             // The filename is UTF16 encoded and will be of the size 64 bytes.
             snort::UtfDecodeSession utf_state;
@@ -125,7 +123,7 @@ void OleFile :: walk_directory_list()
             buf += DIR_NEXT_ENTR_OFFSET;
 
             //Insert the oleentry
-            file_name = (char*)name_buf;
+            const char* file_name = (char*)name_buf;
 
             if (strcmp(file_name, ROOT_ENTRY) == 0)
                 dir_list->set_mini_stream_sector(node->get_starting_sector());

@@ -182,7 +182,7 @@ void LogHandler::handle(DataEvent&, Flow* f)
 
     TextLog_Print(tlog, "[Type: %s] ", type_name.c_str());
 
-    uint8_t* sha = file->get_file_sig_sha256();
+    const uint8_t* sha = file->get_file_sig_sha256();
     if (sha)
         TextLog_Print(tlog, "[SHA: %s] ", (file->sha_to_string(sha)).c_str());
 

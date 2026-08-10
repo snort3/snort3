@@ -261,9 +261,9 @@ void HttpTransaction::archive_section(HttpMsgSection* section, HttpMsgSection** 
     }
 }
 
-void HttpTransaction::archive_status(HttpMsgStatus* status)
+void HttpTransaction::archive_status(HttpMsgStatus* status_section)
 {
-    archive_section(status, &archive_status_list); 
+    archive_section(status_section, &archive_status_list);
 }
 
 void HttpTransaction::archive_header(HttpMsgHeader* hdr)

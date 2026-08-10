@@ -759,6 +759,6 @@ StreamSplitter::Status ImapSplitter::scan(
 
 bool imap_is_data_end(Flow* ssn)
 {
-    ImapPafData* s = get_state(ssn, true);
+    const ImapPafData* s = get_state(ssn, true);
     return s ? s->end_of_data : false;
 }

@@ -201,6 +201,7 @@ class DumpFlowsTest : public DumpFlows
     }
 };
 
+// cppcheck-suppress constParameterPointer ; signature overrides the control test interface
 bool DumpFlowsTest::execute(FlowCache* cache)
 {
     DumpFlowsControl& dfc = dump_flows_control[0];
@@ -261,6 +262,7 @@ class DumpFlowsSummaryTest : public DumpFlowsSummary
     }
 };
 
+// cppcheck-suppress constParameterPointer ; signature overrides the control test interface
 bool DumpFlowsSummaryTest::execute(FlowCache* cache)
 {
     DumpFlowsControl& dfc = dump_flows_control[0];

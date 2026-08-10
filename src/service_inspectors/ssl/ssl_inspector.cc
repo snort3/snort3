@@ -352,7 +352,7 @@ static inline void SSLPP_process_other(const SSL_PROTO_CONF* config, SSLData* sd
 
 // Analyzes SSL packets for anomalies/exploits.
 
-static void snort_ssl(SSL_PROTO_CONF* config, Packet* p, Ssl* inspector)
+static void snort_ssl(const SSL_PROTO_CONF* config, Packet* p, Ssl* inspector)
 {
     Profile profile(sslPerfStats);  // cppcheck-suppress unreadVariable
 

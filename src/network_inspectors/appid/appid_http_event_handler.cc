@@ -42,13 +42,13 @@
 
 using namespace snort;
 
-void HttpEventHandler::handle(DataEvent& event, Flow* flow)
+void HttpEventHandler::handle(DataEvent& event, Flow* event_flow)
 {
     if ( !pkt_thread_odp_ctxt )
         return;
 
-    assert(flow);
-    AppIdSession* asd = appid_api.get_appid_session(*flow);
+    assert(event_flow);
+    AppIdSession* asd = appid_api.get_appid_session(*event_flow);
     Packet* p = DetectionEngine::get_current_packet();
     assert(p);
     auto direction = event_type == REQUEST_EVENT ? APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
@@ -62,7 +62,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
             inspector, *pkt_thread_odp_ctxt );
         if ( appidDebug and appidDebug->is_enabled() )
         {
-            appidDebug->activate(flow, asd, inspector.get_ctxt().config.log_all_sessions);
+            appidDebug->activate(event_flow, asd, inspector.get_ctxt().config.log_all_sessions);
             is_debug_active = true;
         }
         APPID_LOG(p, TRACE_DEBUG_LEVEL, "New AppId session at HTTP event\n");
@@ -86,6 +86,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         !http_event->get_is_httpx())
         return;
 
+    // cppcheck-suppress knownConditionTrueFalse ; profiling is enabled by runtime configuration
     bool is_appid_cpu_profiling_running = (asd->get_odp_ctxt().is_appid_cpu_profiler_running());
     Stopwatch<SnortClock> per_appid_event_cpu_timer;
 
@@ -94,7 +95,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
         per_appid_event_cpu_timer.start();
     
     if (appidDebug and appidDebug->is_enabled() and !is_debug_active)
-        appidDebug->activate(flow, asd, config.log_all_sessions);
+        appidDebug->activate(event_flow, asd, config.log_all_sessions);
 
     APPID_LOG(p, TRACE_DEBUG_LEVEL, "Processing HTTP metadata from HTTP Inspector for stream %" PRId64 "\n",
         http_event->get_httpx_stream_id());
@@ -102,6 +103,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     asd->set_session_flags(APPID_SESSION_HTTP_SESSION);
 
     AppIdHttpSession* hsession;
+    // cppcheck-suppress knownConditionTrueFalse ; event protocol depends on the publishing inspector
     if (http_event->get_is_httpx())
     {
         hsession = asd->get_matching_http_session(http_event->get_httpx_stream_id(), stream_index);
@@ -110,7 +112,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
             hsession = asd->create_http_session(http_event->get_httpx_stream_id());
             stream_index = asd->get_api().get_hsessions_size() - 1;
         }
-        auto flow_appid = flow->stream_intf->get_appid_from_stream(flow);
+        auto flow_appid = event_flow->stream_intf->get_appid_from_stream(event_flow);
         if (flow_appid == APP_ID_HTTP2)
             asd->set_session_flags(APPID_SESSION_HTTP2_SESSION);
     }
@@ -177,9 +179,10 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
     if (header_length > 0)
         hsession->set_field(MISC_VIA_FID, header_start, header_length, change_bits);
 
+    // cppcheck-suppress knownConditionTrueFalse ; event protocol depends on the publishing inspector
     if (http_event->get_is_httpx())
     {
-        AppId http_app_id = flow->stream_intf->get_appid_from_stream(flow);
+        AppId http_app_id = event_flow->stream_intf->get_appid_from_stream(event_flow);
         assert((http_app_id == APP_ID_HTTP2) or (http_app_id == APP_ID_HTTP3));
         asd->set_service_id(http_app_id, asd->get_odp_ctxt());
     }
@@ -200,6 +203,7 @@ void HttpEventHandler::handle(DataEvent& event, Flow* flow)
 
     asd->publish_appid_event(change_bits, *p, http_event->get_is_httpx(), stream_index);
 
+    // cppcheck-suppress knownConditionTrueFalse ; profiling is enabled by runtime configuration
     if (is_appid_cpu_profiling_running)
     {
         per_appid_event_cpu_timer.stop();

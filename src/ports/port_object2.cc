@@ -327,7 +327,6 @@ void PortObject2PrintPorts(PortObject2* po)
 void PortObject2PrintEx(PortObject2* po,
     void (* print_index_map)(int index, char* buf, int bufsize) )
 {
-    PortObjectItem* poi = nullptr;
     SF_LNODE* pos = nullptr;
     int k=0;
     int* rlist = nullptr;
@@ -352,7 +351,7 @@ void PortObject2PrintEx(PortObject2* po,
     }
     else
     {
-        for (poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
+        for (PortObjectItem* poi=(PortObjectItem*)sflist_first(po->item_list,&pos);
             poi != nullptr;
             poi=(PortObjectItem*)sflist_next(&pos) )
         {

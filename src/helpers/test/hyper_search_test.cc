@@ -146,6 +146,7 @@ bool Tester::run(HyperSearch::Handle* handle)
 
 TEST_GROUP(hyper_search_test_group)
 {
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     HyperSearch::Handle* handle = nullptr;
 
     void setup() override
@@ -267,4 +268,3 @@ int main(int argc, char** argv)
     MemoryLeakWarningPlugin::turnOffNewDeleteOverloads();
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

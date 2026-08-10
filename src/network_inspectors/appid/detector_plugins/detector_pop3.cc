@@ -244,6 +244,7 @@ void Pop3ClientDetector::do_custom_reload()
     cmd_matcher->reload();
 }
 
+// cppcheck-suppress constParameterCallback ; signature is fixed by the search callback API
 static int pop3_pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
     unsigned long idx = (unsigned long)id;
@@ -580,7 +581,7 @@ int Pop3ClientDetector::validate(AppIdDiscoveryArgs& args)
     while ((length = (end - s)))
     {
         unsigned long pattern_index;
-        AppIdFlowContentPattern* cmd = nullptr;
+        const AppIdFlowContentPattern* cmd = nullptr;
 
         pattern_index = num_pop3_client_patterns;
         cmd_matcher->find_all((const char*)s, (length > longest_pattern ? longest_pattern : length),

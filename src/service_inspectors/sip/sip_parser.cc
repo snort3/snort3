@@ -1227,8 +1227,10 @@ bool sip_parse(SIPMsg* msg, const char* buff, const char* end, SIP_PROTO_CONF* c
     bool status;
 
     if(msg->content_len <= bodyLen)
+        // cppcheck-suppress knownConditionTrueFalse ; result depends on the parsed SIP body
         status = sip_body_parse(msg, start, start + msg->content_len, &nextIndex);
     else
+        // cppcheck-suppress knownConditionTrueFalse ; result depends on the parsed SIP body
         status = sip_body_parse(msg, start, end, &nextIndex);
 
     // Find out whether multiple SIP messages in this packet

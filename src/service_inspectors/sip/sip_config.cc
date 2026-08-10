@@ -180,8 +180,9 @@ SIPMethodNode* SIP_AddUserDefinedMethod(
     /*Check whether all the chars are defined by RFC2616*/
     while (methodName[i])
     {
-        if (iscntrl(methodName[i])|(nullptr != strchr(SIP_SEPERATORS,methodName[i]))| (methodName[i] <
-            0) )
+        const auto method_char = static_cast<unsigned char>(methodName[i]);
+        if (methodName[i] < 0 or iscntrl(method_char) or
+            (nullptr != strchr(SIP_SEPERATORS, method_char)))
         {
             ParseError("Bad character included in the User defined method \n");
             return nullptr;
@@ -209,4 +210,3 @@ void SIP_DeleteMethods(SIPMethodNode* node)
         node = next;
     }
 }
-

@@ -131,6 +131,7 @@ static int match_script(void*, void*, int index, void* index_ptr, void*)
     return 1;
 }
 
+// cppcheck-suppress constParameterCallback ; signature is fixed by the search callback API
 static int match_html(void* id, void*, int, void* id_ptr, void*)
 {
     *((int*) id_ptr)  = (int)(uintptr_t)id;
@@ -143,6 +144,7 @@ static int match_otag(void*, void*, int index, void* ptr, void*)
     return 1;
 }
 
+// cppcheck-suppress constParameterCallback ; signature is fixed by the search callback API
 static int match_attr(void* pid, void*, int index, void* sctx, void*)
 {
     MatchContext* ctx = (MatchContext*)sctx;

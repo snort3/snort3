@@ -572,7 +572,7 @@ static void ShowPolicyStats(const SnortConfig* sc)
     if ( !sc->otn_map )
         return;
 
-    for (auto node = sc->otn_map->find_first(); node; node = sc->otn_map->find_next())
+    for (const auto* node = sc->otn_map->find_first(); node; node = sc->otn_map->find_next())
     {
         const OptTreeNode* otn = (const OptTreeNode*)node->data;
         if ( !otn )

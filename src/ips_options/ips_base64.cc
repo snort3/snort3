@@ -120,7 +120,7 @@ IpsOption::EvalStatus Base64DecodeOption::eval(Cursor& c, Packet* p)
     DataBuffer& base64_decode_buffer = DetectionEngine::acquire_alt_buffer(p);
     base64_decode_buffer.len = 0;
 
-    Base64DecodeData* idx = (Base64DecodeData*)&config;
+    const Base64DecodeData* idx = (Base64DecodeData*)&config;
     const uint8_t* start_ptr = nullptr;
     unsigned size = 0;
 

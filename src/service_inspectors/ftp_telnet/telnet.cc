@@ -67,7 +67,7 @@ static int TelnetCheckConfigs(SnortConfig*, void* pData)
     return 0;
 }
 
-static int SnortTelnet(TELNET_PROTO_CONF* telnet_config, TELNET_SESSION* Telnetsession,
+static int SnortTelnet(const TELNET_PROTO_CONF* telnet_config, TELNET_SESSION* Telnetsession,
     Packet* p, int iInspectMode)
 {
     // cppcheck-suppress unreadVariable

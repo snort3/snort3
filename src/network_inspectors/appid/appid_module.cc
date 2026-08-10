@@ -387,6 +387,7 @@ static int reload_third_party(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback ; signature is fixed by the Lua C callback API
 static int print_appid_config(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -460,6 +461,7 @@ static int show_cpu_profiler_stats(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback ; signature is fixed by the Lua C callback API
 static int show_cpu_profiler_status(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
@@ -477,6 +479,7 @@ static int show_cpu_profiler_status(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterCallback ; signature is fixed by the Lua C callback API
 static int reload_detectors(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);

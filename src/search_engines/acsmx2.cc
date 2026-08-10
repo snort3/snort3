@@ -328,7 +328,7 @@ static int List_GetNextStateOpt( const ACSM_STRUCT2 * acsm,
     trans_node_t **acsmTransTableOpt, int state, int input )
 {
     int index = state * acsm->acsmAlphabetSize + input;
-    trans_node_t * t = acsmTransTableOpt[index];
+    const trans_node_t* t = acsmTransTableOpt[index];
 
     if ( t )
         return t->next_state;
@@ -343,7 +343,7 @@ static int List_GetNextStateOpt( const ACSM_STRUCT2 * acsm,
 
 static int List_GetNextState(ACSM_STRUCT2* acsm, int state, int input)
 {
-    trans_node_t* t = acsm->acsmTransTable[state];
+    const trans_node_t* t = acsm->acsmTransTable[state];
 
     while ( t )
     {
@@ -364,7 +364,7 @@ static int List_GetNextState(ACSM_STRUCT2* acsm, int state, int input)
 
 static int List_GetNextState2(ACSM_STRUCT2* acsm, int state, int input)
 {
-    trans_node_t* t = acsm->acsmTransTable[state];
+    const trans_node_t* t = acsm->acsmTransTable[state];
 
     while ( t )
     {
@@ -581,7 +581,8 @@ static void Build_NFA(ACSM_STRUCT2* acsm)
     // cppcheck-suppress constVariablePointer
     acstate_t* FailState = acsm->acsmFailState;
     ACSM_PATTERN2** MatchList = acsm->acsmMatchList;
-    ACSM_PATTERN2* mlist, * px;
+    const ACSM_PATTERN2* mlist;
+    ACSM_PATTERN2* px;
 
     std::list<int> queue;
 
@@ -662,7 +663,6 @@ static void Build_NFA(ACSM_STRUCT2* acsm)
 
 static void Convert_NFA_To_DFA(ACSM_STRUCT2* acsm)
 {
-    int cFailState;
     const acstate_t* FailState = acsm->acsmFailState;
 
     std::list<int> queue;
@@ -714,7 +714,8 @@ static void Convert_NFA_To_DFA(ACSM_STRUCT2* acsm)
             }
             else
             {
-                cFailState = List_GetNextStateOpt(acsm, acsmTransTableOpt, FailState[r], i);
+                const int cFailState =
+                    List_GetNextStateOpt(acsm, acsmTransTableOpt, FailState[r], i);
 
                 if ( cFailState != 0 && (acstate_t)cFailState != ACSM_FAIL_STATE2 )
                 {
@@ -1186,7 +1187,7 @@ int acsm_search_dfa_full_all(
 void acsmFree2(ACSM_STRUCT2* acsm)
 {
     int i;
-    ACSM_PATTERN2* mlist, * ilist, * plist;
+    ACSM_PATTERN2* mlist, * plist;
 
     /* For AC_FREE don't really care at this point about stats */
 
@@ -1196,7 +1197,7 @@ void acsmFree2(ACSM_STRUCT2* acsm)
 
         while (mlist)
         {
-            ilist = mlist;
+            ACSM_PATTERN2* ilist = mlist;
             mlist = mlist->next;
 
             if (ilist->rule_option_tree && acsm->agent)

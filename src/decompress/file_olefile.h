@@ -212,9 +212,9 @@ public:
     FileProperty* get_file_node(char* name);
     int32_t get_file_sector(char* name);
     bool is_mini_sector(char* name);
-    void set_mini_stream_sector(int32_t mini_stream_sector)
+    void set_mini_stream_sector(int32_t sector)
     {
-        this->mini_stream_sector = mini_stream_sector;
+        mini_stream_sector = sector;
     }
 
     int32_t get_mini_stream_sector()
@@ -292,4 +292,3 @@ public:
 
 void oleprocess(const uint8_t* const, const uint32_t, uint8_t*&, uint32_t&);
 #endif
-

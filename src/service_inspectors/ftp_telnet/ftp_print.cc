@@ -84,7 +84,7 @@ void print_conf_server(FTP_SERVER_PROTO_CONF* config)
     int ret;
     std::string cmds;
 
-    for (FTP_CMD_CONF* ftp_cmd = ftp_cmd_lookup_first(config->cmd_lookup, &ret);
+    for (const FTP_CMD_CONF* ftp_cmd = ftp_cmd_lookup_first(config->cmd_lookup, &ret);
         ftp_cmd;
         ftp_cmd = ftp_cmd_lookup_next(config->cmd_lookup, &ret))
     {

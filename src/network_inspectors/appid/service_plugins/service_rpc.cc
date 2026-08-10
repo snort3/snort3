@@ -359,8 +359,6 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size,
     AppIdSession& asd, Packet* pkt, ServiceRPCData* rd, const char** pname, uint32_t* program)
 {
     const ServiceRPCCall* call = nullptr;
-    const ServiceRPCReply* reply = nullptr;
-    const ServiceRPCPortmap* pm = nullptr;
     const ServiceRPCAuth* a = nullptr;
     uint32_t tmp = 0;
     const uint8_t* end = nullptr;
@@ -435,7 +433,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size,
             {
                 if (end-data < (int)sizeof(ServiceRPCPortmap))
                     return APPID_NOT_COMPATIBLE;
-                pm = reinterpret_cast<const ServiceRPCPortmap*>(data);
+                const ServiceRPCPortmap* pm = reinterpret_cast<const ServiceRPCPortmap*>(data);
                 rd->proto = static_cast<IpProtocol>(ntohl(pm->proto));
             }
             break;
@@ -455,7 +453,7 @@ int RpcServiceDetector::validate_packet(const uint8_t* data, uint16_t size,
         rd->state = RPC_STATE_DONE;
         if (size < sizeof(ServiceRPCReply))
             return APPID_NOMATCH;
-        reply = reinterpret_cast<const ServiceRPCReply*>(data);
+        const ServiceRPCReply* reply = reinterpret_cast<const ServiceRPCReply*>(data);
         if (ntohl(reply->header.type) != RPC_TYPE_REPLY)
             return APPID_NOMATCH;
 

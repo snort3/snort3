@@ -92,7 +92,7 @@ static void POPUnGetChar(POParser* pop)
 /*
   Peek at next char
 */
-static int POPPeekChar(POParser* pop)
+static int POPPeekChar(const POParser* pop)
 {
     if ( pop->slen > 0)
     {

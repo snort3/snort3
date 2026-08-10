@@ -292,7 +292,7 @@ void ActionManager::initialize_policies(SnortConfig* sc)
 
         auto create = [](PlugInterface* pin, void* pv)
         {
-            ActionClass* ac = static_cast<ActionClass*>(pin);
+            const ActionClass* ac = static_cast<ActionClass*>(pin);
             SnortConfig* conf = static_cast<SnortConfig*>(pv);
             ActionManager::instantiate(ac->api, nullptr, conf, policy);
             PluginManager::set_instantiated(ac->api->base.name);

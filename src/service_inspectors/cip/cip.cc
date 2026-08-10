@@ -196,6 +196,7 @@ static void log_cip_validity_errors(const CipCurrentData& current_data,
 }
 
 static void cip_current_data_process(CipSessionData* css, CipCurrentData& current_data,
+    // cppcheck-suppress constParameterPointer ; session retains the mutable configuration pointer
     CipProtoConf* config, Packet* p)
 {
     /* Current Data should be implemented as the same with c files  */
@@ -395,4 +396,3 @@ const BaseApi* sin_cip[] =
     ips_cip_status,
     nullptr
 };
-

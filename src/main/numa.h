@@ -64,17 +64,17 @@ class HwlocWrapper
 {
 public:
     virtual ~HwlocWrapper() {}
-    virtual unsigned get_nbobjs_by_depth(hwloc_topology_t topology, int depth)
+    virtual unsigned get_nbobjs_by_depth(hwloc_topology_t numa_topology, int depth)
     {
-        return hwloc_get_nbobjs_by_depth(topology, depth);
+        return hwloc_get_nbobjs_by_depth(numa_topology, depth);
     }
-    virtual hwloc_obj_t get_obj_by_depth(hwloc_topology_t topology, int depth, unsigned idx)
+    virtual hwloc_obj_t get_obj_by_depth(hwloc_topology_t numa_topology, int depth, unsigned idx)
     {
-        return hwloc_get_obj_by_depth(topology, depth, idx);
+        return hwloc_get_obj_by_depth(numa_topology, depth, idx);
     }
-    virtual int get_type_depth(hwloc_topology_t topology, hwloc_obj_type_t type)
+    virtual int get_type_depth(hwloc_topology_t numa_topology, hwloc_obj_type_t type)
     {
-        return hwloc_get_type_depth(topology, type);
+        return hwloc_get_type_depth(numa_topology, type);
     }
     virtual int bitmap_isincluded(hwloc_const_cpuset_t sub_set, hwloc_const_cpuset_t super_set)
     {
@@ -86,4 +86,3 @@ public:
     }
 };
 #endif
-

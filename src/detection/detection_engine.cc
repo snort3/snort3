@@ -71,7 +71,7 @@ static unsigned de_pub_id = 0;
 void DetectionEngine::thread_init()
 {
     const SnortConfig* sc = SnortConfig::get_conf();
-    FastPatternConfig* fp = sc->fast_pattern_config;
+    const FastPatternConfig* fp = sc->fast_pattern_config;
     const MpseApi* offload_search_api = fp->get_offload_search_api();
 
     // Note: offload_threads is really the maximum number of offload_requests
@@ -687,7 +687,7 @@ bool DetectionEngine::inspect(Packet* p)
 // See fpFinalSelectEvent()
 int DetectionEngine::queue_event(const OptTreeNode* otn)
 {
-    RuleTreeNode* rtn = getRtnFromOtn(otn);
+    const RuleTreeNode* rtn = getRtnFromOtn(otn);
 
     if ( !rtn )
     {
@@ -713,7 +713,7 @@ int DetectionEngine::queue_event(const OptTreeNode* otn)
 
 int DetectionEngine::queue_event(unsigned gid, unsigned sid)
 {
-    OptTreeNode* otn = OtnLookup(SnortConfig::get_conf()->otn_map, gid, sid);
+    const OptTreeNode* otn = OtnLookup(SnortConfig::get_conf()->otn_map, gid, sid);
 
     if ( !otn )
         return 0;

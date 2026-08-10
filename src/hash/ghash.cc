@@ -177,7 +177,7 @@ void* GHash::find(const void* const key)
     assert(key);
 
     unsigned index = get_index(key);
-    GHashNode* hnode = find_node(key, index);
+    const GHashNode* hnode = find_node(key, index);
     if ( hnode )
         return hnode->data;
 

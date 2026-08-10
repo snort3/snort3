@@ -75,8 +75,8 @@ public:
     void update(snort::Packet*) override;
     void process(bool) override;
     int update_state(const snort::SfIp* src_addr, const snort::SfIp* dst_addr, FlowState,
-        const char* appid_name, uint16_t src_port, uint16_t dst_port, uint8_t ip_protocol,
-        uint64_t flow_latency, uint64_t rule_latency);
+        const char* app_name, uint16_t src_port, uint16_t dst_port, uint8_t ip_protocol,
+        uint64_t total_flow_latency, uint64_t total_rule_latency);
     snort::XHash* get_ip_map()
         { return ip_map; }
 
@@ -89,11 +89,10 @@ private:
     PerfConfig* perf_conf;
     size_t memcap;
     FlowStateValue* find_stats(const snort::SfIp* src_addr, const snort::SfIp* dst_addr,
-        int* swapped, const char* appid_name, uint16_t src_port, uint16_t dst_port,
-        uint8_t ip_protocol, uint64_t flow_latency, uint64_t rule_latency);
+        int* swapped, const char* app_name, uint16_t src_port, uint16_t dst_port,
+        uint8_t ip_protocol, uint64_t total_flow_latency, uint64_t total_rule_latency);
     void write_stats();
     void display_stats();
 
 };
 #endif
-

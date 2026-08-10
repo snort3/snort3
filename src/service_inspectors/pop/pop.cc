@@ -305,6 +305,7 @@ static int POP_Setup(Packet* p, POPData* ssn)
     return pkt_dir;
 }
 
+// cppcheck-suppress constParameterCallback ; signature is fixed by the search callback API
 static int POP_SearchStrFound(void* id, void* , int index, void* , void* )
 {
     int search_id = (int)(uintptr_t)id;
@@ -427,7 +428,7 @@ static const uint8_t* POP_HandleCommand(const Packet* p, POPData* pop_ssn, const
  *
  * @return  none
  */
-static void POP_ProcessClientPacket(Packet* p, POPData* pop_ssn)
+static void POP_ProcessClientPacket(const Packet* p, POPData* pop_ssn)
 {
     const uint8_t* ptr = p->data;
     const uint8_t* end = p->data + p->dsize;

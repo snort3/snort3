@@ -81,6 +81,7 @@ Http2FlowData::~Http2FlowData()
 
 TEST_GROUP(http2_hpack_cookie_header_buffer)
 {
+    // cppcheck-suppress unusedVariable ; fixture state is consumed by test bodies
     Http2CookieHeaderBuffer cookie_buffer;
     // constant arrays used in several tests
     const std::string cookie_key = "cookie";
@@ -670,14 +671,14 @@ TEST(http2_hpack_dynamic_table_size, clamp_down_evicts_entries)
     CHECK(table.add_entry(Field(name_len, name_buf), Field(value_len, value_buf)));
 
     // Both entries present: newest at 62, oldest at 63.
-    CHECK_COMPARE(table.get_entry(62), !=, nullptr);
-    CHECK_COMPARE(table.get_entry(63), !=, nullptr);
+    CHECK(table.get_entry(62) != nullptr);
+    CHECK(table.get_entry(63) != nullptr);
 
     // Clamp to a size that holds exactly one entry (>= entry_size but <
     // 2 * entry_size). The least-recently-added entry (index 63) is evicted.
     table.update_size(entry_size + 1);
     CHECK_EQUAL(entry_size + 1, table.get_max_size());
-    CHECK_COMPARE(table.get_entry(62), !=, nullptr);
+    CHECK(table.get_entry(62) != nullptr);
     CHECK_EQUAL(nullptr, table.get_entry(63));
 
     // Clamp below a single entry: the whole table is evicted.

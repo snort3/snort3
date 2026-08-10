@@ -191,6 +191,7 @@ bool FlowCache::release(Flow*, PruneReason, bool) { return true; }
 
 TEST_GROUP(policy_persistence)
 {
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     FlowControl* flow_control = nullptr;
     NetworkPolicy* network_policy = nullptr;
     InspectionPolicy* inspection_policy = nullptr;

@@ -147,6 +147,7 @@ struct PacketTracerUnsuspend
 
     PacketTracerUnsuspend()
     {
+        // cppcheck-suppress knownConditionTrueFalse ; pause count changes at runtime
         while (PacketTracer::is_paused())
         {
             PacketTracer::unpause();

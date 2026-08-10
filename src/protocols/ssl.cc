@@ -145,7 +145,6 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
     SSLV3ServerCertData* server_cert_data, TLSConnectionParams* tls_connection_params)
 {
     const SSL_handshake_hello_t* hello;
-    const ServiceSSLV3CertsRecord* certs_rec;
     snort::ParseResult result;
     uint32_t retval = 0;
 
@@ -264,7 +263,8 @@ static uint32_t SSL_decode_handshake_v3(const uint8_t* pkt, int size,
                 if (size < SSL_CERTS_LEN_SIZE)
                     return retval | SSL_TRUNCATED_FLAG;
 
-                certs_rec = reinterpret_cast<const ServiceSSLV3CertsRecord*>(handshake);
+                const ServiceSSLV3CertsRecord* certs_rec =
+                    reinterpret_cast<const ServiceSSLV3CertsRecord*>(handshake);
                 server_cert_data->certs_len = ntoh3(certs_rec->certs_len);
 
                 if (server_cert_data->certs_len + SSL_CERTS_LEN_SIZE > (unsigned int)size)
@@ -318,7 +318,6 @@ static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
     SSLV3ClientHelloData* client_hello_data, SSLV3ServerCertData* server_cert_data, uint32_t prev_flags, TLSConnectionParams* tls_connection_params)
 {
     uint32_t retval = 0;
-    uint16_t hblen;
     int ccs = 0;   /* Set if we see a Change Cipher Spec and reset after the next record */
     const SSL_heartbeat* heartbeat;
     uint16_t psize = 0;
@@ -387,7 +386,7 @@ static uint32_t SSL_decode_v3(const uint8_t* pkt, int size, uint32_t pkt_flags,
             heartbeat = reinterpret_cast<const SSL_heartbeat*>(pkt);
             if ((heartbeat->type) == SSL_HEARTBEAT_REQUEST)
             {
-                hblen = ntohs(heartbeat->length);
+                const uint16_t hblen = ntohs(heartbeat->length);
                 if (hblen > max_hb_len)
                     *alert_flags = SSL_ALERT_HEARTBLEED_REQUEST;
             }
@@ -927,6 +926,7 @@ ParseResult parse_server_certificates(SSLV3ServerCertData* server_cert_data)
         cert_subject = X509_get_subject_name(cert);
         cert_issuer = X509_get_issuer_name(cert);
 
+        // cppcheck-suppress knownConditionTrueFalse ; values come from the parsed certificate
         if (!cert_subject and !cert_issuer)
         {
             X509_free(cert);

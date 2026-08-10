@@ -35,13 +35,13 @@
 
 using namespace snort;
 
-static void dump_patterns(const char* name, PatternService* pList)
+static void dump_patterns(const char* name, const PatternService* pList)
 {
     UNUSED(name);
 
     debug_logf(appid_trace, nullptr, "Adding pattern for \"%s\"\n", name);
-    for (PatternService* ps = pList; ps; ps = ps->next)
-        for (Pattern* pattern = ps->pattern; pattern; pattern = pattern->next)
+    for (const PatternService* ps = pList; ps; ps = ps->next)
+        for (const Pattern* pattern = ps->pattern; pattern; pattern = pattern->next)
             if (pattern->data && pattern->length)
             {
                 debug_logf(appid_trace, nullptr, "\t\t%s, %u\n",pattern->data, pattern->length);
@@ -72,7 +72,7 @@ static void free_pattern_service(PatternService* ps)
     }
 }
 
-static void read_patterns(PortPatternNode* portPatternList, PatternService** serviceList,
+static void read_patterns(const PortPatternNode* portPatternList, PatternService** serviceList,
     AppIdInspector& inspector)
 {
     PatternService* ps = nullptr;
@@ -80,7 +80,7 @@ static void read_patterns(PortPatternNode* portPatternList, PatternService** ser
     short lastPort = 0;
     IpProtocol lastProto = IpProtocol::PROTO_NOT_SET;
 
-    for (PortPatternNode* pNode = portPatternList; pNode; pNode = pNode->next)
+    for (const PortPatternNode* pNode = portPatternList; pNode; pNode = pNode->next)
     {
         bool newPs = false;
 
@@ -216,12 +216,12 @@ static int csd_pattern_tree_search(const uint8_t* data, uint16_t size, SearchToo
     const PatternService* ps = nullptr;
     for (PServiceMatch* sm = matches; sm; sm = sm->next)
     {
-        Pattern* pattern;
+        const Pattern* pattern;
 
         /* walk all patterns in PatternService */
         for (pattern = sm->data->ps->pattern; pattern; pattern = pattern->next)
         {
-            PServiceMatch* psm;
+            const PServiceMatch* psm;
 
             for (psm = sm; psm; psm = psm->ps_next)
                 if (pattern == psm->data)
@@ -353,7 +353,7 @@ void PatternServiceDetector::register_service_patterns()
         }
         else
         {
-            for (Pattern* pattern = ps->pattern; pattern; pattern = pattern->next)
+            for (const Pattern* pattern = ps->pattern; pattern; pattern = pattern->next)
             {
                 pattern_count++;
                 ps->count++;
@@ -378,7 +378,7 @@ void PatternServiceDetector::install_ports(PatternService* serviceList)
         if (!ps->port)
             continue;
 
-        for (PortNode* port = ps->port; port; port = port->next)
+        for (const PortNode* port = ps->port; port; port = port->next)
         {
             pp.port = port->port;
             pp.proto = (IpProtocol)ps->proto;

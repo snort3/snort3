@@ -65,14 +65,14 @@ public:
     const char* stringify() override { return "BATCHED_LOGGER_PERIODIC_FLUSH"; }
 };
 
-void LogBuffer::append(FILE* fh, bool use_syslog, const char* msg, size_t len)
+void LogBuffer::append(FILE* file_handle, bool syslog_enabled, const char* msg, size_t len)
 {
     if (size + len >= LOG_BUFFER_THRESHOLD)
         flush();
     std::memcpy(buffer + size, msg, len);
     size += len;
-    this->fh = fh;
-    this->use_syslog = use_syslog;
+    fh = file_handle;
+    use_syslog = syslog_enabled;
 }
 
 void LogBuffer::flush()

@@ -83,7 +83,6 @@ TEST(lru_cache_shared, insert_test)
 // Test set / get max size.
 TEST(lru_cache_shared, max_size)
 {
-    std::string data;
     LruCacheShared<int, std::string, std::hash<int> > lru_cache(5);
 
     size_t sz = lru_cache.get_max_size();
@@ -109,7 +108,6 @@ TEST(lru_cache_shared, max_size)
 //  Test the remove functions.
 TEST(lru_cache_shared, remove_test)
 {
-    std::string data;
     size_t cache_size = 0;
     LruCacheShared<int, std::string, std::hash<int> > lru_cache(5);
 

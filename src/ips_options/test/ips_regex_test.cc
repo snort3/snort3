@@ -215,6 +215,7 @@ TEST(ips_regex_base, ips_option)
 
 TEST_GROUP(ips_regex_module)
 {
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     Module* mod = nullptr;
     // cppcheck-suppress unreadVariable ; configured by test bodies and checked in teardown
     bool end = true;
@@ -281,6 +282,7 @@ TEST(ips_regex_module, config_fail_regex)
 TEST_GROUP(ips_regex_option)
 {
     Module* mod = nullptr;
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     // cppcheck-suppress constVariablePointer
     IpsOption* opt = nullptr;
     // cppcheck-suppress unreadVariable ; configured by test bodies and checked in teardown
@@ -363,6 +365,7 @@ TEST(ips_regex_option, no_match_delta)
 TEST_GROUP(ips_regex_option_relative)
 {
     Module* mod = nullptr;
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     // cppcheck-suppress constVariablePointer
     IpsOption* opt = nullptr;
     // cppcheck-suppress unreadVariable ; configured by test bodies and checked in teardown

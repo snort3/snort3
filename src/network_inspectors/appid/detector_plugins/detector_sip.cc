@@ -83,9 +83,9 @@ public:
     std::string from;
 };
 
-SipUdpClientDetector::SipUdpClientDetector(ClientDiscovery* cdm)
+SipUdpClientDetector::SipUdpClientDetector(ClientDiscovery* discovery_manager)
 {
-    handler = cdm;
+    handler = discovery_manager;
     name = "SIP";
     proto = IpProtocol::UDP;
     minimum_matches = 2;
@@ -354,6 +354,7 @@ void SipEventHandler::client_handler(const SipEvent& sip_event, AppIdSession& as
     AppidSessionDirection direction = (sip_event.get_packet()->is_from_client()) ?
         APP_ID_FROM_INITIATOR : APP_ID_FROM_RESPONDER;
 
+    // cppcheck-suppress knownConditionTrueFalse ; event type is supplied by the SIP publisher
     if ( sip_event.is_invite() && direction == APP_ID_FROM_INITIATOR )
     {
         size_t len;

@@ -368,6 +368,7 @@ static int IMAP_Setup(Packet* p, IMAPData* ssn)
     return pkt_dir;
 }
 
+// cppcheck-suppress constParameterCallback ; signature is fixed by the search callback API
 static int IMAP_SearchStrFound(void* id, void* , int index, void* , void* )
 {
     int search_id = (int)(uintptr_t)id;
@@ -465,7 +466,7 @@ static const uint8_t* IMAP_HandleCommand(const Packet* p, IMAPData* imap_ssn, co
  *
  * @return  none
  */
-static void IMAP_ProcessClientPacket(Packet* p, IMAPData* imap_ssn)
+static void IMAP_ProcessClientPacket(const Packet* p, IMAPData* imap_ssn)
 {
     const uint8_t* ptr = p->data;
     const uint8_t* end = p->data + p->dsize;
@@ -1010,7 +1011,7 @@ TEST_CASE("imap_body_len_not_terminated", "[imap]")
     set_inspection_policy(&ins_policy);
     set_network_policy(&net_policy);
 
-    uint8_t data[] = "* FETCH (BODY[TEXT]{12345}\r\n";
+    const uint8_t data[] = "* FETCH (BODY[TEXT]{12345}\r\n";
     
     Packet p;
     Flow* flow = new Flow;

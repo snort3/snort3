@@ -172,7 +172,7 @@ bool FileService::is_file_service_enabled()
  */
 int64_t FileService::get_max_file_depth(FileConfig *fc)
 {
-    FileConfig* file_config = fc ? fc : get_file_config();
+    const FileConfig* file_config = fc ? fc : get_file_config();
 
     if (!file_config)
         return -1;

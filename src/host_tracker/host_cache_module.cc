@@ -449,7 +449,6 @@ void HostCacheModule::log_host_cache(const char* file_name, bool verbose)
         return;
     }
 
-    string str;
     SfIpString ip_str;
     const auto&& lru_data = host_cache.get_all_data();
     // The current size may not exactly correspond to the number of trackers seen here
@@ -460,7 +459,7 @@ void HostCacheModule::log_host_cache(const char* file_name, bool verbose)
     {
         if ( elem.second->is_visible() == true )
         {
-            str = "IP: ";
+            string str = "IP: ";
             str += elem.first.ntop(ip_str);
             elem.second->stringify(str);
             out_stream << str << endl << endl;

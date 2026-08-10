@@ -882,7 +882,7 @@ static int detector_find_substr(lua_State* L)
 {
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
     // Verify detector user data and that we are in packet context
-    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
+    const LuaStateDescriptor* lsd = ud->validate_lua_state(true);
     unsigned int offset = lua_tonumber(L, 2);
     size_t substr_len = 0;
     const char* substr = lua_tolstring(L, 3, &substr_len);
@@ -928,7 +928,7 @@ static int detector_memcmp(lua_State* L)
 {
     auto& ud = *UserData<LuaObject>::check(L, DETECTOR, 1);
     // Verify detector user data and that we are in packet context
-    LuaStateDescriptor* lsd = ud->validate_lua_state(true);
+    const LuaStateDescriptor* lsd = ud->validate_lua_state(true);
 
     const char* pattern = lua_tostring(L, 2);
     unsigned int patternLen = lua_tonumber(L, 3);
@@ -1759,12 +1759,12 @@ static int detector_add_content_type_pattern(lua_State* L)
         APPID_LOG(nullptr, TRACE_ERROR_LEVEL, "appid: Invalid HTTP Header string.\n");
         return 0;
     }
-    uint8_t* pattern = (uint8_t*)snort_strdup(tmp_string);
+    const uint8_t* pattern = reinterpret_cast<const uint8_t*>(snort_strdup(tmp_string));
     AppId appId = lua_tointeger(L, ++index);
 
     DetectorHTTPPattern detector;
     detector.pattern = pattern;
-    detector.pattern_size = strlen((char*)pattern);
+    detector.pattern_size = strlen(tmp_string);
     detector.app_id = appId;
     ud->get_odp_ctxt().get_http_matchers().insert_content_type_pattern(detector);
     ud->get_odp_ctxt().get_app_info_mgr().set_app_info_active(appId);
@@ -2616,11 +2616,11 @@ static int detector_add_rtmp_url(lua_State* L)
         snort_free(host_pattern);
         return 0;
     }
-    uint8_t* schemePattern = (uint8_t*)snort_strdup(tmp_string);
+    const uint8_t* schemePattern = (uint8_t*)snort_strdup(tmp_string);
 
     /* Verify that query pattern is a valid string */
     size_t query_pattern_size;
-    uint8_t* query_pattern = nullptr;
+    const uint8_t* query_pattern = nullptr;
     tmp_string = lua_tolstring(L, ++index, &query_pattern_size);
     if (tmp_string  and query_pattern_size)
         query_pattern = (uint8_t*)snort_strdup(tmp_string);
@@ -2714,7 +2714,8 @@ static int create_custom_application(lua_State* L)
 
     if (control)
     {
-        AppInfoTableEntry* entry = ud->get_odp_ctxt().get_app_info_mgr().add_dynamic_app_entry(tmp_string);
+        const AppInfoTableEntry* entry =
+            ud->get_odp_ctxt().get_app_info_mgr().add_dynamic_app_entry(tmp_string);
         appId = entry->appId;
         AppIdPegCounts::add_app_peg_info(tmp_string, appId);
     }
@@ -2868,7 +2869,7 @@ static int add_url_pattern(lua_State* L)
 
     /* Verify that scheme pattern is a valid string */
     size_t schemePatternSize;
-    uint8_t* schemePattern = nullptr;
+    const uint8_t* schemePattern = nullptr;
     tmp_string = lua_tolstring(L, ++index, &schemePatternSize);
     if (!tmp_string or !schemePatternSize)
     {
@@ -3109,7 +3110,7 @@ static int create_future_flow(lua_State* L)
     OdpContext& odp_ctxt = lsd->ldp.asd->get_odp_ctxt();
     if (app_id_to_snort > APP_ID_NONE)
     {
-        AppInfoTableEntry* entry = odp_ctxt.get_app_info_mgr().get_app_info_entry(
+        const AppInfoTableEntry* entry = odp_ctxt.get_app_info_mgr().get_app_info_entry(
             app_id_to_snort);
         if (!entry)
             return 0;

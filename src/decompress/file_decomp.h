@@ -144,10 +144,10 @@ struct fd_session_t
     uint32_t ole_data_len;
     bool vba_analysis;
 
-    void get_ole_data(uint8_t*& ole_data_ptr, uint32_t& ole_data_len)
+    void get_ole_data(uint8_t*& data_ptr, uint32_t& data_len)
     {
-        ole_data_ptr = this->ole_data_ptr;
-        ole_data_len = this->ole_data_len;
+        data_ptr = ole_data_ptr;
+        data_len = ole_data_len;
     }
 
     void ole_data_reset()
@@ -327,4 +327,3 @@ SO_PUBLIC void File_Decomp_Free(fd_session_t*);
 SO_PUBLIC void File_Decomp_Alert(fd_session_t*, int Event);
 }
 #endif
-

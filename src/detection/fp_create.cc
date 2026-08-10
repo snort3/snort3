@@ -492,7 +492,6 @@ static int fpAddRuleGroupRule(
     bool to_server = false)
 {
     const MpseApi* search_api = nullptr;
-    const MpseApi* offload_search_api = nullptr;
     bool exclude;
 
     // skip builtin rules, continue for text and so rules
@@ -520,7 +519,7 @@ static int fpAddRuleGroupRule(
         bool cont = true;
         PatternMatchData* ol_pmd = nullptr;
 
-        offload_search_api = fp->get_offload_search_api();
+        const MpseApi* offload_search_api = fp->get_offload_search_api();
 
         // Only add rule to the offload search engine if the offload search engine
         // is different to the normal search engine.
@@ -1530,7 +1529,7 @@ static void fpCreateServiceRuleGroups(SnortConfig* sc)
     sc->srmmTable = nullptr;
 }
 
-static unsigned can_build_mt(FastPatternConfig* fp)
+static unsigned can_build_mt(const FastPatternConfig* fp)
 {
     if ( Snort::is_reloading() )
         return false;

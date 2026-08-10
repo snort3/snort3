@@ -1357,7 +1357,7 @@ static int DCE2_CoGetAuthLen(DCE2_SsnData* sd, const DceRpcCoHdr* co_hdr,
     return (int)auth_len;
 }
 
-static DCE2_Buffer* DCE2_CoGetFragBuf(DCE2_CoFragTracker* ft)
+static DCE2_Buffer* DCE2_CoGetFragBuf(const DCE2_CoFragTracker* ft)
 {
     const Packet* p = DetectionEngine::get_current_packet();
     if (p == nullptr)
@@ -2490,7 +2490,8 @@ static void DCE2_CoSegDecode(DCE2_SsnData* sd, DCE2_CoTracker* cot, DCE2_CoSeg* 
         dce_common_stats->co_srv_seg_reassembled++;
     }
 
-    Packet* rpkt = DCE2_CoGetSegRpkt(sd, DCE2_BufferData(seg->buf), DCE2_BufferLength(seg->buf));
+    const Packet* rpkt =
+        DCE2_CoGetSegRpkt(sd, DCE2_BufferData(seg->buf), DCE2_BufferLength(seg->buf));
 
     if (rpkt == nullptr)
     {

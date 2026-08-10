@@ -328,7 +328,6 @@ bool rotate_file_for_max_size(const char* file_owner, const char* old_file,
     else  // Otherwise, if it does exist, append data from current stats file to it
     {
         char read_buf[4096];
-        size_t num_read, num_wrote;
         FILE* rotate_fh;
         int rotate_index = 0;
         char rotate_file_with_index[PATH_MAX];
@@ -400,7 +399,7 @@ bool rotate_file_for_max_size(const char* file_owner, const char* old_file,
                     }
                 }
 
-                num_read = strlen(read_buf);
+                const size_t num_read = strlen(read_buf);
 
                 if (num_read > 0)
                 {
@@ -435,8 +434,8 @@ bool rotate_file_for_max_size(const char* file_owner, const char* old_file,
                         }
                     }
 
-                    num_wrote = fprintf(rotate_fh, "%s", read_buf);
-                    if ((num_wrote != num_read) && ferror(rotate_fh))
+                    const int num_wrote = fprintf(rotate_fh, "%s", read_buf);
+                    if (num_wrote < 0 or static_cast<size_t>(num_wrote) != num_read)
                     {
                         // A bad write occurred
                         ErrorMessage("%s: Error writing to "

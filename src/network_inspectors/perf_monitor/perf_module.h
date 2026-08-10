@@ -64,8 +64,8 @@ struct ModuleConfig
     std::vector<unsigned> pegs;
     std::vector<PegCount> global_stats_snapshot;
 
-    void set_name(const std::string& name);
-    void set_peg_names(snort::Value& peg_names);
+    void set_name(const std::string& module_name);
+    void set_peg_names(snort::Value& names);
     bool confirm_parse();
     bool resolve();
 

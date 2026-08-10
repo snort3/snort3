@@ -64,13 +64,13 @@ uint64_t FileInfo::get_file_size() const { return file_size; }
 
 uint8_t* FileInfo::get_file_sig_sha256() const { return (sha256); }
 
-std::string FileInfo::sha_to_string(const uint8_t* sha256) const
+std::string FileInfo::sha_to_string(const uint8_t* digest) const
 {
     const uint8_t conv[] = "0123456789ABCDEF";
     const uint8_t* index;
     const uint8_t* end;
     std::string sha_out;
-    index = sha256;
+    index = digest;
     end = index + SHA256_HASH_SIZE;
     while (index < end)
     {
@@ -118,4 +118,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

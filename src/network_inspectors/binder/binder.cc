@@ -68,7 +68,7 @@ static std::string to_string(const sfip_var_t* list)
     if (!list or !list->head)
         return "";
 
-    for (auto node = list->head; node; node = node->next)
+    for (const auto* node = list->head; node; node = node->next)
     {
         SfIpString ip_str;
         const auto* ip = node->ip;

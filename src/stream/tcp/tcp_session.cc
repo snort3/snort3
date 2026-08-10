@@ -166,7 +166,7 @@ void TcpSession::restart(Packet* p)
 // if the flush_segments parameter is true and clear_session is being called while not in
 // the context of a wire packet then the caller must create a packet context by calling
 // DetectionEngine::set_next_packet() before calling clear_session
-void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool restart, Packet* p)
+void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool restart_session, Packet* p)
 {
     assert(!p or p->flow == flow);
     if ( !tcp_init )
@@ -178,12 +178,12 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
     if ( is_data_transferred_asymmetrically() and free_flow_data )
         tcpStats.asymmetric_flows++;
 
-    client.clear_tracker(flow, p, flush_segments, restart);
-    server.clear_tracker(flow, p, flush_segments, restart);
+    client.clear_tracker(flow, p, flush_segments, restart_session);
+    server.clear_tracker(flow, p, flush_segments, restart_session);
     update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
     tel.log_internal_event(SESSION_EVENT_CLEAR);
 
-    if ( restart )
+    if ( restart_session )
         flow->restart(free_flow_data);
     else
         flow->clear(free_flow_data);
@@ -493,9 +493,9 @@ void TcpSession::handle_data_on_syn(TcpSegmentDescriptor& tsd)
 
 // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void TcpSession::update_session_on_rst(
-    TcpSegmentDescriptor& tsd, bool flush, TcpStreamTracker::TcpState next_state)
+    TcpSegmentDescriptor& tsd, bool should_flush, TcpStreamTracker::TcpState next_state)
 {
-    if ( flush )
+    if ( should_flush )
     {
         Packet* p = tsd.get_pkt();
 
@@ -542,21 +542,20 @@ void TcpSession::update_paws_timestamps(const TcpSegmentDescriptor& tsd)
 
 void TcpSession::check_for_session_hijack(const TcpSegmentDescriptor& tsd)
 {
-    TcpStreamTracker* listener = tsd.get_listener();
-    TcpStreamTracker* talker = tsd.get_talker();
-
     const Packet* p = tsd.get_pkt();
     if ( !(p->pkth->flags & DAQ_PKT_FLAG_PRE_ROUTING) )
     {
         if ( p->is_eth() )
         {
+            TcpStreamTracker* listener = tsd.get_listener();
+            TcpStreamTracker* talker = tsd.get_talker();
             const eth::EtherHdr* eh = layer::get_eth_layer(p);
             bool t_hijack = !talker->compare_mac_addresses(eh->ether_src);
             bool l_hijack = !listener->compare_mac_addresses(eh->ether_dst);
 
             // if both seem hijacked then swap src/dst check, it that matches probably a tap
-            if ( (t_hijack & l_hijack) && (talker->compare_mac_addresses(eh->ether_dst) &&
-                 listener->compare_mac_addresses(eh->ether_src)) )
+            if (t_hijack and l_hijack and talker->compare_mac_addresses(eh->ether_dst) and
+                listener->compare_mac_addresses(eh->ether_src))
                 return;
 
             uint32_t event_code = 0;
@@ -744,7 +743,7 @@ void TcpSession::check_small_segment_threshold(const TcpSegmentDescriptor &tsd, 
     }
 }
 
-void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd, bool flush)
+void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd, bool should_flush)
 {
     TcpStreamTracker* listener = tsd.get_listener();
     const TcpStreamTracker* talker = tsd.get_talker();
@@ -814,7 +813,7 @@ void TcpSession::handle_data_segment(TcpSegmentDescriptor& tsd, bool flush)
             proxy_cutover_ooo_drop = false;
     }
 
-    if ( flush )
+    if ( should_flush )
         listener->reassembler->eval_flush_policy_on_data(tsd.get_pkt());
     else
         listener->reassembler->initialize_paf();

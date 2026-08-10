@@ -140,7 +140,7 @@ public:
 
     unsigned get_priority(AppId app_id)
     {
-        AppInfoTableEntry* entry = get_app_info_entry(app_id);
+        const AppInfoTableEntry* entry = get_app_info_entry(app_id);
         // cppcheck-suppress knownConditionTrueFalse ; entry presence depends on the loaded AppID table
         return entry ? entry->priority : 0;
     }

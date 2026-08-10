@@ -96,7 +96,7 @@ typedef struct
 
 static XHash* rf_hash = nullptr;
 
-static int checkThreshold(tSFRFConfigNode*, tSFRFTrackingNode*, time_t curTime);
+static int checkThreshold(const tSFRFConfigNode*, tSFRFTrackingNode*, time_t curTime);
 static int checkSamplingPeriod(const tSFRFConfigNode*, tSFRFTrackingNode*, time_t curTime);
 
 static tSFRFTrackingNode* getSFRFTrackingNode(const SfIp*, unsigned tid, time_t curTime);
@@ -283,7 +283,7 @@ int SFRF_ConfigAdd(SnortConfig*, RateFilterConfig* rf_config, tSFRFConfigNode* c
     return 0;
 }
 
-static int SFRF_TestObject(tSFRFConfigNode* cfgNode, const SfIp* ip, time_t curTime,
+static int SFRF_TestObject(const tSFRFConfigNode* cfgNode, const SfIp* ip, time_t curTime,
     SFRF_COUNT_OPERATION op)
 {
     tSFRFTrackingNode* dynNode;
@@ -538,7 +538,7 @@ static int checkSamplingPeriod(const tSFRFConfigNode* cfgNode, tSFRFTrackingNode
  * @returns 0 if threshold is not reached
  *          1 otherwise
  */
-static int checkThreshold(tSFRFConfigNode* cfgNode, tSFRFTrackingNode* dynNode, time_t curTime)
+static int checkThreshold(const tSFRFConfigNode* cfgNode, tSFRFTrackingNode* dynNode, time_t curTime)
 {
     /* Once newAction is activated, it stays active for the revert timeout, unless ANR
      * causes the node itself to disappear.

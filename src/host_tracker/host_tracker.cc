@@ -395,7 +395,6 @@ void HostTracker::clear_service(HostApplication& ha)
 
 bool HostTracker::add_client_payload(HostClient& hc, AppId payload, size_t max_payloads)
 {
-    Payload_t* invisible_swap_candidate = nullptr;
     std::lock_guard<std::mutex> lck(host_tracker_lock);
 
     auto it = std::find_if(clients.begin(), clients.end(),
@@ -403,6 +402,7 @@ bool HostTracker::add_client_payload(HostClient& hc, AppId payload, size_t max_p
         { return c.id == hc.id and c.service == hc.service; });
     if (it != clients.end())
     {
+        Payload_t* invisible_swap_candidate = nullptr;
         HostClient& client = *it;
         for ( auto& pld : client.payloads )
         {

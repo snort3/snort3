@@ -99,8 +99,10 @@ TEST(mpse_hs_base, mpse)
 
 TEST_GROUP(mpse_hs_match)
 {
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     // cppcheck-suppress constVariablePointer
     Module* mod = nullptr;
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     Mpse* hs = nullptr;
     const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_hyperscan[0]);
 
@@ -245,9 +247,12 @@ TEST(mpse_hs_match, pcre)
 
 TEST_GROUP(mpse_hs_multi)
 {
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     // cppcheck-suppress constVariablePointer
     Module* mod = nullptr;
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     Mpse* hs1 = nullptr;
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     Mpse* hs2 = nullptr;
     const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_hyperscan[0]);
 
@@ -307,9 +312,12 @@ TEST(mpse_hs_multi, single)
 
 TEST_GROUP(mpse_hs_scratch)
 {
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     // cppcheck-suppress constVariablePointer
     Module* mod = nullptr;
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     Mpse* hs1 = nullptr;
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     Mpse* hs2 = nullptr;
     const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_hyperscan[0]);
 

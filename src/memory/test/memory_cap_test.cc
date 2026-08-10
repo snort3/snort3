@@ -228,6 +228,7 @@ TEST(memory_off, nerfed)
 TEST_GROUP(memory)
 {
     TestFlowData fd;
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     MockHeap* heap = nullptr;
 
     void setup() override

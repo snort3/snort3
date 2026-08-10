@@ -138,7 +138,7 @@ bool scan_patterns(SearchTool& matcher, const uint8_t* data, size_t size,
     AppId& client_id, AppId& payload_id, bool* is_referred_appid = nullptr)
 {
     MatchedHostPatterns* mp = nullptr;
-    HostPattern* best_match = nullptr;
+    const HostPattern* best_match = nullptr;
 
     // cppcheck-suppress-begin knownConditionTrueFalse ; template specialization makes selector conditions constant
     matcher.find_all((const char*)data, size, 
@@ -150,11 +150,11 @@ bool scan_patterns(SearchTool& matcher, const uint8_t* data, size_t size,
     if ( !mp )
         return false;
 
-    MatchedHostPatterns* tmp = mp;
+    const MatchedHostPatterns* tmp = mp;
 
     while ( tmp )
     {
-        auto match = tmp->mpattern;
+        const auto* match = tmp->mpattern;
         // cppcheck-suppress knownConditionTrueFalse ; specialization selects URL validation at compile time
         if ( !match->is_literal or ( T == HostPatternType::HOST_PATTERN_TYPE_URL ? host_pattern_validate_url_match(tmp, data) : host_pattern_validate_match(tmp, data, size) ))
         {

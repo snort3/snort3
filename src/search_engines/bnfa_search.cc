@@ -219,7 +219,7 @@ static int _bnfa_list_get_next_state(bnfa_struct_t* bnfa, int state, int input)
 {
     if ( state == 0 )   /* Full set of states  always */
     {
-        bnfa_state_t* p = reinterpret_cast<bnfa_state_t*>(bnfa->bnfaTransTable[0]);
+        const bnfa_state_t* p = reinterpret_cast<bnfa_state_t*>(bnfa->bnfaTransTable[0]);
         if (!p)
         {
             return 0;
@@ -228,7 +228,7 @@ static int _bnfa_list_get_next_state(bnfa_struct_t* bnfa, int state, int input)
     }
     else
     {
-        bnfa_trans_node_t* t = bnfa->bnfaTransTable[state];
+        const bnfa_trans_node_t* t = bnfa->bnfaTransTable[state];
         while ( t )
         {
             if ( t->key == (unsigned)input )
@@ -323,7 +323,7 @@ static int _bnfa_list_put_next_state(bnfa_struct_t* bnfa, int state, int input, 
 static int _bnfa_list_free_table(bnfa_struct_t* bnfa)
 {
     int i;
-    bnfa_trans_node_t* t, * p;
+    bnfa_trans_node_t* t;
 
     if ( !bnfa->bnfaTransTable )
         return 0;
@@ -340,7 +340,7 @@ static int _bnfa_list_free_table(bnfa_struct_t* bnfa)
 
         while ( t )
         {
-            p = t;
+            bnfa_trans_node_t* p = t;
             t = t->next;
             BNFA_FREE(p,sizeof(bnfa_trans_node_t),bnfa->list_memory);
         }
@@ -360,13 +360,12 @@ static void bnfaBuildMatchStateTrees(SnortConfig* sc, bnfa_struct_t* bnfa)
 {
     bnfa_match_node_t* mn;
     bnfa_match_node_t** MatchList = bnfa->bnfaMatchList;
-    bnfa_pattern_t* patrn;
 
     for (int i=0; i<bnfa->bnfaNumStates; i++)
     {
         for (mn = MatchList[i]; mn!= nullptr; mn = mn->next )
         {
-            patrn = (bnfa_pattern_t*)mn->data;
+            bnfa_pattern_t* patrn = (bnfa_pattern_t*)mn->data;
 
             if (patrn->userdata)
             {
@@ -478,7 +477,7 @@ static int _bnfa_list_conv_row_to_full(bnfa_struct_t* bnfa, bnfa_state_t state, 
     {
         int tcnt = 0;
 
-        bnfa_trans_node_t* t = bnfa->bnfaTransTable[ state ];
+        const bnfa_trans_node_t* t = bnfa->bnfaTransTable[ state ];
 
         memset(full,0,sizeof(bnfa_state_t)*bnfa->bnfaAlphabetSize);
 
@@ -576,7 +575,7 @@ int _bnfa_list_get_next_state(bnfa_struct_t* bnfa, int state, int input)
 {
     if ( state == 0 )   /* Full set of states  always */
     {
-        bnfa_state_t* p = reinterpret_cast<bnfa_state_t*>(bnfa->bnfaTransTable[0]);
+        const bnfa_state_t* p = reinterpret_cast<bnfa_state_t*>(bnfa->bnfaTransTable[0]);
         if (!p)
         {
             return 0;
@@ -585,7 +584,7 @@ int _bnfa_list_get_next_state(bnfa_struct_t* bnfa, int state, int input)
     }
     else
     {
-        bnfa_trans_node_t* t = bnfa->bnfaTransTable[state];
+        const bnfa_trans_node_t* t = bnfa->bnfaTransTable[state];
         while ( t )
         {
             if ( t->key == (unsigned)input )
@@ -601,7 +600,7 @@ int _bnfa_list_get_next_state(bnfa_struct_t* bnfa, int state, int input)
 
 #ifdef ENABLE_BNFA_FAIL_STATE_OPT
 /* used only by KcontainsJ() */
-static int _bnfa_conv_node_to_full(bnfa_trans_node_t* t, bnfa_state_t* full)
+static int _bnfa_conv_node_to_full(const bnfa_trans_node_t* t, bnfa_state_t* full)
 {
     int tcnt = 0;
 
@@ -624,12 +623,12 @@ static int _bnfa_conv_node_to_full(bnfa_trans_node_t* t, bnfa_state_t* full)
 #ifdef XXXX
 //  containment test - test if all of tj transitions are in tk
 // cppcheck-suppress unusedFunction ; containment diagnostic retained for XXXX builds
-static int KcontainsJx(bnfa_trans_node_t* tk, bnfa_trans_node_t* tj)
+static int KcontainsJx(const bnfa_trans_node_t* tk, const bnfa_trans_node_t* tj)
 {
     while ( tj )
     {
         int found=0;
-        for ( bnfa_trans_node_t* t=tk; t; t=t->next )
+        for ( const bnfa_trans_node_t* t=tk; t; t=t->next )
         {
             if ( tj->key == t->key )
             {
@@ -646,7 +645,7 @@ static int KcontainsJx(bnfa_trans_node_t* tk, bnfa_trans_node_t* tj)
 }
 #endif
 
-static int KcontainsJ(bnfa_trans_node_t* tk, bnfa_trans_node_t* tj)
+static int KcontainsJ(const bnfa_trans_node_t* tk, const bnfa_trans_node_t* tj)
 {
     bnfa_state_t full[BNFA_MAX_ALPHABET_SIZE];
 
@@ -1513,8 +1512,6 @@ static inline unsigned _bnfa_get_next_state_csparse_nfa(
     bnfa_state_t* pcx, unsigned sindex, unsigned input)
 {
     int k;
-    int nc;
-    int index;
     const bnfa_state_t* pcs;
 
     for (;; )
@@ -1536,11 +1533,12 @@ static inline unsigned _bnfa_get_next_state_csparse_nfa(
         }
         else
         {
-            nc = (pcs[0]>>BNFA_SPARSE_COUNT_SHIFT) & BNFA_SPARSE_MAX_ROW_TRANSITIONS;
+            const int nc =
+                (pcs[0]>>BNFA_SPARSE_COUNT_SHIFT) & BNFA_SPARSE_MAX_ROW_TRANSITIONS;
             if ( nc > BNFA_SPARSE_LINEAR_SEARCH_LIMIT )
             {
                 /* binary search... */
-                index = _bnfa_binearch(pcs+1, nc, input);
+                const int index = _bnfa_binearch(pcs+1, nc, input);
                 if ( index >= 0 )
                 {
                     return pcs[index+1] & BNFA_SPARSE_MAX_STATE;

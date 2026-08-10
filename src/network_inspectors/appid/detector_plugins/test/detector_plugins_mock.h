@@ -151,13 +151,13 @@ AppIdConfig stub_config;
 AppIdContext stub_ctxt(stub_config);
 OdpContext stub_odp_ctxt(stub_config, nullptr);
 AppIdSession::AppIdSession(IpProtocol, const snort::SfIp* ip, uint16_t, AppIdInspector& inspector,
-    OdpContext& odpctxt, uint32_t
+    OdpContext& context, uint32_t
 #ifndef DISABLE_TENANT_ID
     ,uint32_t
 #endif
     ) : snort::FlowData(inspector_id),
         inspector(inspector),
-        config(stub_config), api(*(new snort::AppIdSessionApi(this, *ip))), odp_ctxt(odpctxt)
+        config(stub_config), api(*(new snort::AppIdSessionApi(this, *ip))), odp_ctxt(context)
 {
     
 }
@@ -276,15 +276,16 @@ ServiceDetector::ServiceDetector() {}
 void ServiceDetector::register_appid(AppId appId, unsigned extractsInfo, OdpContext& odp_ctxt) {}
 // cppcheck-suppress-begin constParameterReference
 int ServiceDetector::add_service(AppidChangeBits& change_bits, AppIdSession& asd,
-    const snort::Packet* pkt, AppidSessionDirection dir, AppId appId, const char* vendor,
-    const char* version)
+    const snort::Packet*, AppidSessionDirection dir, AppId appId, const char* vendor,
+    const char*)
     { return 0; }
 int ServiceDetector::add_service_with_subtypes(AppidChangeBits& change_bits, AppIdSession& asd,
-    const snort::Packet* pkt, AppidSessionDirection dir, AppId appId, const char* vendor,
-    const char* version, AppIdServiceSubtypeList& subtypes)
+    const snort::Packet*, AppidSessionDirection dir, AppId appId, const char* vendor,
+    const char*, AppIdServiceSubtypeList& subtypes)
     { return 0; }
 // cppcheck-suppress-end constParameterReference
-int ServiceDetector::service_inprocess(AppIdSession&, const snort::Packet* pkt, AppidSessionDirection dir) { return 0; }
+int ServiceDetector::service_inprocess(
+    AppIdSession&, const snort::Packet*, AppidSessionDirection dir) { return 0; }
 
 snort::AppIdSessionApi::AppIdSessionApi(const AppIdSession*, const SfIp&)
 { }

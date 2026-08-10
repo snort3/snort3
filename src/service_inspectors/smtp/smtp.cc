@@ -636,6 +636,7 @@ static int SMTP_Setup(Packet* p, SMTPData* ssn)
  * @return response
  * @retval 1        commands caller to stop searching
  */
+// cppcheck-suppress constParameterCallback ; signature is fixed by the search callback API
 static int SMTP_SearchStrFound(void* id, void*, int index, void*, void*)
 {
     int search_id = (int)(uintptr_t)id;

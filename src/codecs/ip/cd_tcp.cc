@@ -229,11 +229,13 @@ bool TcpCodec::decode(const RawData& raw, CodecData& codec, DecodeData& snort)
 
         if (snort.ip_api.is_ip4())
         {
+            // cppcheck-suppress knownConditionTrueFalse ; result depends on packet contents
             valid = valid_checksum4(raw, snort);
             bad_cksum_cnt = &stats.bad_ip4_cksum;
         }
         else
         {
+            // cppcheck-suppress knownConditionTrueFalse ; result depends on packet contents
             valid = valid_checksum6(raw, codec, snort);
             bad_cksum_cnt = &stats.bad_ip6_cksum;
         }

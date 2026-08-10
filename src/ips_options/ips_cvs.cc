@@ -162,7 +162,6 @@ static int CvsDecode(const uint8_t* data, uint16_t data_len,
     const uint8_t* line, * end;
     const uint8_t* eol = nullptr, * eolm = nullptr;
     CvsCommand command;
-    int ret;
 
     line = data;
     end = data + data_len;
@@ -185,7 +184,7 @@ static int CvsDecode(const uint8_t* data, uint16_t data_len,
         case CVS_INVALID_ENTRY:
             if (CvsCmdCompare(CVS_ENTRY_STR, command.cmd_str, command.cmd_str_len) == 0)
             {
-                ret = CvsValidateEntry(command.cmd_arg,
+                const int ret = CvsValidateEntry(command.cmd_arg,
                     (command.cmd_arg + command.cmd_arg_len));
 
                 if ((ret == CVS_ENTRY_INVALID)&&(eol < end))

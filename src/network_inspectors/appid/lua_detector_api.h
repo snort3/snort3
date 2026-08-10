@@ -121,8 +121,8 @@ public:
     bool is_running()
     { return running; }
 
-    void set_running(bool is_running)
-    { running = is_running; }
+    void set_running(bool enabled)
+    { running = enabled; }
 
     OdpContext& get_odp_ctxt() const
     { return odp_ctxt; }

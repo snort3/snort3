@@ -210,8 +210,7 @@ TEST(pub_sub_http_transaction_end_event_test, proxied_str_exists)
     std::string proxied = event.get_proxied();
     CHECK(proxied == result);
     test_number = 2;
-    proxied = event.get_proxied();
-    CHECK(proxied == result);
+    CHECK(event.get_proxied() == result);
 }
 
 int main(int argc, char** argv)

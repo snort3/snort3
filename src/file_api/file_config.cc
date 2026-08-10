@@ -91,7 +91,7 @@ FileConfig* get_file_config(const SnortConfig* sc)
     if ( !sc )
         sc = SnortConfig::get_conf();
 
-    FileInspect* fi = static_cast<FileInspect*>(InspectorManager::get_file_inspector(sc));
+    const FileInspect* fi = static_cast<FileInspect*>(InspectorManager::get_file_inspector(sc));
 
     if (fi)
         return (fi->config);

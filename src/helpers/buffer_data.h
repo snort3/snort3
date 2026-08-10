@@ -37,7 +37,7 @@ public:
     int32_t length() const;
     const uint8_t* data_ptr() const;
 
-    void set(int32_t length, const uint8_t* data_, bool own_the_buffer_);
+    void set(int32_t data_length, const uint8_t* data_, bool own_the_buffer_);
 
     void reset();
 

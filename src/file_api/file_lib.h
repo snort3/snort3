@@ -58,7 +58,7 @@ public:
     void set_file_type(uint64_t index);
     void set_file_name(const char* file_name, uint32_t name_size);
     void set_url(const char* url, uint32_t url_size);
-    void set_host(const char* host_name, uint32_t host_size);
+    void set_host(const char* new_host_name, uint32_t host_size);
 
     void set_weak_url(const char* url_name, uint32_t url_size);
     void set_weak_file_name(const char* file_name, uint32_t name_size);
@@ -79,7 +79,7 @@ public:
     void set_file_direction(FileDirection dir);
     FileDirection get_file_direction() const;
     uint8_t* get_file_sig_sha256() const;
-    std::string sha_to_string(const uint8_t* sha256) const;
+    std::string sha_to_string(const uint8_t* digest) const;
     void set_file_id(uint64_t index);
     uint64_t get_file_id() const;
 
@@ -236,4 +236,3 @@ private:
 };
 }
 #endif
-

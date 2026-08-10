@@ -71,7 +71,7 @@ public:
     // main thread - after configure
     static void start(const MemoryConfig&, PruneHandler);
     static void stop();
-    static void print(bool verbose, bool init = false);
+    static void print(bool verbose, bool initial_report = false);
 
     // packet threads
     static void thread_init();

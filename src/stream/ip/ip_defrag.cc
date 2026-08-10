@@ -150,15 +150,15 @@ struct Fragment
     char last = 0;
 
 private:
-    inline void init(uint16_t flen, const uint8_t* fptr, int ord)
+    inline void init(uint16_t new_flen, const uint8_t* new_fptr, int new_ord)
     {
-        assert(flen > 0);
+        assert(new_flen > 0);
 
-        this->flen = flen;
-        this->fptr = new uint8_t[flen];
-        this->ord = ord;
+        flen = new_flen;
+        fptr = new uint8_t[new_flen];
+        ord = new_ord;
 
-        memcpy(this->fptr, fptr, flen);
+        memcpy(fptr, new_fptr, new_flen);
 
         ip_stats.nodes_created++;
     }
@@ -805,7 +805,6 @@ static inline void delete_node(FragTracker* ft, Fragment* node)
 static void delete_tracker(FragTracker* ft)
 {
     Fragment* idx = ft->fraglist;  /* pointer to the fraglist to delete */
-    Fragment* dump_me = nullptr;      /* ptr to the Fragment element to drop */
 
     debug_logf(stream_ip_trace, nullptr, "delete_tracker %d nodes to dump\n", ft->fraglist_count);
 
@@ -814,7 +813,7 @@ static void delete_tracker(FragTracker* ft)
      */
     while (idx)
     {
-        dump_me = idx;
+        Fragment* dump_me = idx;
         idx = idx->next;
         delete dump_me;
     }

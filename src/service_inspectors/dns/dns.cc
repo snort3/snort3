@@ -664,7 +664,7 @@ static uint16_t ParseDNSAnswer(
 }
 
 // Get the DNS transaction ID from a UDP packet's data field
-static inline uint16_t get_udp_trans_id(Packet* p)
+static inline uint16_t get_udp_trans_id(const Packet* p)
 {
     // The length of packet's data field should have already been validated
     return (static_cast<uint16_t>(p->data[0]) << 8) | static_cast<uint16_t>(p->data[1]);
@@ -894,7 +894,8 @@ static uint16_t ParseDNSRData(
     return bytes_unused;
 }
 
-static void ParseDNSResponseMessage(Packet* p, DNSData* dnsSessionData, bool& needNextPacket, bool udp)
+static void ParseDNSResponseMessage(
+    const Packet* p, DNSData* dnsSessionData, bool& needNextPacket, bool udp)
 {
     uint16_t bytes_unused = p->dsize;
     int i;

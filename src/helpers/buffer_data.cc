@@ -43,9 +43,9 @@ const uint8_t* BufferData::data_ptr() const
     return data;
 }
 
-void BufferData::set(int32_t length, const uint8_t* data_, bool own_the_buffer_)
+void BufferData::set(int32_t data_length, const uint8_t* data_, bool own_the_buffer_)
 {
-    len = length;
+    len = data_length;
     data = data_;
     own_the_buffer = own_the_buffer_;
 }

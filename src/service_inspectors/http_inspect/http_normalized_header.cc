@@ -218,12 +218,12 @@ static int32_t derive_header_content(const uint8_t* value, int32_t length, uint8
 }
 
 // This method normalizes the header field value for headId.
-void NormalizedHeader::HeaderNormalizer::normalize(const HeaderId head_id, const int count,
+void NormalizedHeader::HeaderNormalizer::normalize(const HeaderId head_id, const int match_count,
     HttpInfractions* infractions, HttpEventGen* events, const HeaderId header_name_id[],
     const Field header_value[], const int32_t num_headers, Field& result_field,
-    Field& comma_separated_raw) const
+    Field& combined_raw_field) const
 {
-    assert(count > 0);
+    assert(match_count > 0);
 
     // Search Header IDs from all the headers in this message. All repeated field values are
     // concatenated into a comma-separated list.
@@ -244,11 +244,11 @@ void NormalizedHeader::HeaderNormalizer::normalize(const HeaderId head_id, const
             if (++num_matches == 1)
                 curr_match = k;   // remembering location of the first matching header
             buffer_length += header_value[k].length();
-            if (num_matches >= count)
+            if (num_matches >= match_count)
                 break;
         }
     }
-    assert(num_matches == count);
+    assert(num_matches == match_count);
     buffer_length += num_matches - 1;    // allow space for concatenation commas
 
     // We are allocating two buffers to store the normalized field value. The raw field value will
@@ -265,7 +265,7 @@ void NormalizedHeader::HeaderNormalizer::normalize(const HeaderId head_id, const
     uint8_t* const norm_start = (num_normalizers%2 == 0) ? norm_value : temp_space;
     uint8_t* working = norm_start;
     int32_t data_length = 0;
-    const bool create_combined_raw = (count > 1);
+    const bool create_combined_raw = (match_count > 1);
     uint8_t* const combined_raw = (create_combined_raw) ? new uint8_t[buffer_length] : nullptr;
     uint8_t* working_raw = combined_raw;
     for (int j=0; j < num_matches; j++)
@@ -294,7 +294,7 @@ void NormalizedHeader::HeaderNormalizer::normalize(const HeaderId head_id, const
     if (create_combined_raw)
     {
         assert((working_raw - combined_raw) == buffer_length);
-        comma_separated_raw.set(buffer_length, combined_raw, true);
+        combined_raw_field.set(buffer_length, combined_raw, true);
     }
 
     // Many fields names can appear more than once but some should not. If an event or infraction
@@ -303,7 +303,7 @@ void NormalizedHeader::HeaderNormalizer::normalize(const HeaderId head_id, const
     // headers unless someone asks for that header.
     if ((repeat_event != EVENT__NONE) || (repeat_inf != INF__NONE))
     {
-        if (count >= 2)
+        if (match_count >= 2)
         {
             *infractions += repeat_inf;
             events->create_event(repeat_event);

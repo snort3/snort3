@@ -73,7 +73,7 @@ int64_t Parameter::get_int(char const*) { return 0; }
 
 TEST_GROUP(http_inspect_uri_norm)
 {
-    uint8_t buffer[1000];
+    uint8_t buffer[1000]; // cppcheck-suppress unusedVariable ; fixture state is consumed by tests
     HttpParaList::UriParam uri_param;
     HttpInfractions infractions;
     HttpEventGen events;
@@ -90,7 +90,7 @@ TEST(http_inspect_uri_norm, normalize)
 
 TEST_GROUP(http_double_decode_test)
 {
-    uint8_t buffer[1000];
+    uint8_t buffer[1000]; // cppcheck-suppress unusedVariable ; fixture state is consumed by tests
     HttpParaList::UriParam uri_param;
     HttpInfractions infractions;
     HttpEventGen events;
@@ -172,4 +172,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

@@ -84,7 +84,8 @@ public:
     void flush_listener(snort::Packet*, bool final_flush = false) override;
     void reset();
     void start_proxy();
-    void clear_session(bool free_flow_data, bool flush_segments, bool restart, snort::Packet* p = nullptr);
+    void clear_session(
+        bool free_flow_data, bool flush_segments, bool restart_session, snort::Packet* p = nullptr);
     TcpStreamTracker::TcpState get_talker_state(const TcpSegmentDescriptor& tsd);
     TcpStreamTracker::TcpState get_listener_state(const TcpSegmentDescriptor& tsd);
     TcpStreamTracker::TcpState get_peer_state(const TcpStreamTracker& me)
@@ -120,7 +121,7 @@ public:
     void check_for_session_hijack(const TcpSegmentDescriptor&);
     bool check_for_window_slam(TcpSegmentDescriptor& tsd);
     void mark_packet_for_drop(TcpSegmentDescriptor&);
-    void handle_data_segment(TcpSegmentDescriptor&, bool flush = true);
+    void handle_data_segment(TcpSegmentDescriptor&, bool should_flush = true);
     bool validate_packet_established_session(TcpSegmentDescriptor&);
     void handle_late_synack(TcpSegmentDescriptor&);
 

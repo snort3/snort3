@@ -115,7 +115,7 @@ IpsOption::EvalStatus AppIdIpsOption::eval(Cursor&, Packet* p)
     if ( !p->flow )
         return NO_MATCH;
 
-    AppIdSession* session = appid_api.get_appid_session(*(p->flow));
+    const AppIdSession* session = appid_api.get_appid_session(*(p->flow));
 
     // Skip detection for sessions using old odp context after odp reload
     if ( !session or !pkt_thread_odp_ctxt or

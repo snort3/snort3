@@ -78,11 +78,11 @@ AppIdInspector::AppIdInspector(AppIdModule&) : config(&test_app_config), ctxt(te
 
 void AppIdDetector::add_user(AppIdSession&, const char*, AppId, bool, AppidChangeBits&){}
 
-int AppIdDetector::data_add(AppIdSession&, AppIdFlowData* dns_data)
+int AppIdDetector::data_add(AppIdSession&, AppIdFlowData* flow_data)
 {
     if (return_null_data)
     {
-         dns_doq_data = static_cast<ServiceDNSDoQData*>(dns_data);
+         dns_doq_data = static_cast<ServiceDNSDoQData*>(flow_data);
          return 1;
     }
     return 1;

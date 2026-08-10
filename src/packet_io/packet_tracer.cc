@@ -366,21 +366,21 @@ PacketTracer::~PacketTracer()
     delete pt_timer;
 }
 
-void PacketTracer::populate_buf(const char* format, va_list ap, char* buffer, uint32_t& buff_len)
+void PacketTracer::populate_buf(const char* format, va_list ap, char* output, uint32_t& output_len)
 {
-    const int buff_space = max_buff_size - buff_len;
-    const int len = vsnprintf(buffer + buff_len, buff_space, format, ap);
+    const int buff_space = max_buff_size - output_len;
+    const int len = vsnprintf(output + output_len, buff_space, format, ap);
 
     if (len >= 0 and len < buff_space)
-        buff_len += len;
+        output_len += len;
     else
-        buff_len = max_buff_size - 1;
+        output_len = max_buff_size - 1;
 }
 
-void PacketTracer::log_va(const char* format, va_list ap, bool daq_log, bool msg_only)
+void PacketTracer::log_va(const char* format, va_list ap, bool log_to_daq, bool msg_only)
 {
     // FIXIT-L Need to find way to add 'PktTracerDbg' string as part of format string.
-    if (shell_enabled and !daq_log) // only add debug string during shell execution
+    if (shell_enabled and !log_to_daq) // only add debug string during shell execution
     {
         dbg_str = "PktTracerDbg ";
         if (!msg_only && (strcmp(format, "\n") != 0))
@@ -389,7 +389,7 @@ void PacketTracer::log_va(const char* format, va_list ap, bool daq_log, bool msg
         format = dbg_str.c_str();
     }
 
-    if (daq_log)
+    if (log_to_daq)
         s_pkt_trace->populate_buf(format, ap, daq_buffer, daq_buff_len);
     else
         s_pkt_trace->populate_buf(format, ap, buffer, buff_len);
@@ -437,9 +437,9 @@ void PacketTracer::dump_to_daq(Packet* p)
     p->daq_instance->set_packet_trace_data(p->daq_msg, (uint8_t *)daq_buffer, daq_buff_len + 1);
 }
 
-void PacketTracer::reset(bool daq_log)
+void PacketTracer::reset(bool reset_daq_log)
 {
-    if ( daq_log )
+    if ( reset_daq_log )
     {
         daq_buff_len = 0;
         daq_buffer[0] = '\0';

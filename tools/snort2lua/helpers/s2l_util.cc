@@ -220,7 +220,7 @@ bool get_string(std::istringstream& stream,
     }
 }
 
-std::string get_remain_data(std::istringstream& stream, bool trim)
+std::string get_remain_data(std::istringstream& stream, bool trim_data)
 {
     // get string length
     const std::streamoff pos = stream.tellg();
@@ -235,7 +235,7 @@ std::string get_remain_data(std::istringstream& stream, bool trim)
     std::string arg_s(arg_c);
     delete[] arg_c;
 
-    if (trim)
+    if (trim_data)
         util::trim(arg_s);
 
     return arg_s;

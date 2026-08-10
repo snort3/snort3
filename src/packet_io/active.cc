@@ -110,6 +110,7 @@ int Active::send_ip(
 static inline EncodeFlags GetFlags()
 {
     EncodeFlags flags = ENC_FLAG_ID;
+    // cppcheck-suppress knownConditionTrueFalse ; capability comes from the active DAQ module
     if ( SFDAQ::can_inject_raw() || s_ipnet )
         flags |= ENC_FLAG_RAW;
     return flags;
@@ -265,6 +266,8 @@ void Active::add_payload_trace_log(EncodeFlags ef, bool direct_inject, bool succ
 
 void Active::send_reset(Packet* p, EncodeFlags ef)
 {
+    // The combined project database includes constant PacketTracer test stubs;
+    // production reads tracer state established at runtime.
     int i;
     EncodeFlags flags = (GetFlags() | ef) & ~ENC_FLAG_VAL;
     EncodeFlags value = ef & ENC_FLAG_VAL;
@@ -281,13 +284,13 @@ void Active::send_reset(Packet* p, EncodeFlags ef)
             if ( ret != DAQ_SUCCESS )
             {
                 active_counts.failed_direct_injects++;
-                if (PacketTracer::is_active())
+                if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                     add_reset_trace_log(ef, true, false, "send_reset");
                 return;
             }
 
             active_counts.direct_injects++;
-            if (PacketTracer::is_active())
+            if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                 add_reset_trace_log(ef, true, true, "send_reset");
         }
         else
@@ -301,7 +304,7 @@ void Active::send_reset(Packet* p, EncodeFlags ef)
             if ( !rej )
             {
                 active_counts.failed_injects++;
-                if (PacketTracer::is_active())
+                if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                     add_reset_trace_log(ef, false, false, "send_reset failed to encode");
                 return;
             }
@@ -310,13 +313,13 @@ void Active::send_reset(Packet* p, EncodeFlags ef)
             if ( ret )
             {
                 active_counts.failed_injects++;
-                if (PacketTracer::is_active())
+                if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                     add_reset_trace_log(ef, false, false, "send_reset");
             }
             else
             {
                 active_counts.injects++;
-                if (PacketTracer::is_active())
+                if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                     add_reset_trace_log(ef, false, true, "send_reset");
             }
         }
@@ -325,6 +328,8 @@ void Active::send_reset(Packet* p, EncodeFlags ef)
 
 void Active::send_unreach(Packet* p, UnreachResponse type)
 {
+    // The combined project database includes constant PacketTracer test stubs;
+    // production reads tracer state established at runtime.
     uint32_t len;
     const uint8_t* rej;
     EncodeFlags flags = GetFlags();
@@ -336,7 +341,7 @@ void Active::send_unreach(Packet* p, UnreachResponse type)
     if ( !rej )
     {
         active_counts.failed_injects++;
-        if (PacketTracer::is_active())
+        if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
             add_unreach_trace_log(flags, false, false, "send_unreach failed to encode");
         return;
     }
@@ -345,13 +350,13 @@ void Active::send_unreach(Packet* p, UnreachResponse type)
     if ( ret )
     {
         active_counts.failed_injects++;
-        if (PacketTracer::is_active())
+        if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
             add_unreach_trace_log(flags, false, false, "send_unreach");
     }
     else
     {
         active_counts.injects++;
-        if (PacketTracer::is_active())
+        if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
             add_unreach_trace_log(flags, false, true, "send_unreach");
     }
 }
@@ -359,6 +364,8 @@ void Active::send_unreach(Packet* p, UnreachResponse type)
 uint32_t Active::send_data(
     Packet* p, EncodeFlags flags, const uint8_t* buf, uint32_t blen)
 {
+    // The combined project database includes constant PacketTracer test stubs;
+    // production reads tracer state established at runtime.
     int ret;
     const uint8_t* seg;
     uint32_t plen;
@@ -382,13 +389,13 @@ uint32_t Active::send_data(
             if ( ret != DAQ_SUCCESS )
             {
                 active_counts.failed_direct_injects++;
-                if (PacketTracer::is_active())
+                if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                     add_reset_trace_log(tmp_flags, true, false, "send_data to originator");
                 return 0;
             }
 
             active_counts.direct_injects++;
-            if (PacketTracer::is_active())
+            if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                 add_reset_trace_log(tmp_flags, true, true, "send_data to originator");
         }
         else
@@ -402,20 +409,20 @@ uint32_t Active::send_data(
                 if ( ret )
                 {
                     active_counts.failed_injects++;
-                    if (PacketTracer::is_active())
+                    if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                         add_reset_trace_log(tmp_flags, false, false, "send_data to originator");
                 }
                 else
                 {
                     active_counts.injects++;
-                    if (PacketTracer::is_active())
+                    if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                         add_reset_trace_log(tmp_flags, false, true, "send_data to originator");
                 }
             }
             else
             {
                 active_counts.failed_injects++;
-                if (PacketTracer::is_active())
+                if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                     add_reset_trace_log(tmp_flags, false, false, "send_data to originator failed to encode");
             }
         }
@@ -442,14 +449,14 @@ uint32_t Active::send_data(
             if ( ret != DAQ_SUCCESS )
             {
                 active_counts.failed_direct_injects++;
-                if (PacketTracer::is_active())
+                if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                     add_payload_trace_log(flags, true, false, "send_data", blen);
                 return 0;
             }
 
             sent = blen;
             active_counts.direct_injects++;
-            if (PacketTracer::is_active())
+            if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                 add_payload_trace_log(flags, true, true, "send_data", blen);
         }
         else
@@ -471,7 +478,7 @@ uint32_t Active::send_data(
                     if ( !seg )
                     {
                         active_counts.failed_injects++;
-                        if (PacketTracer::is_active())
+                        if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                             add_payload_trace_log(flags, false, false, "send_data failed to encode", blen);
                         return sent;
                     }
@@ -490,7 +497,7 @@ uint32_t Active::send_data(
                 }
                 while (blen -= toSend);
 
-                if (PacketTracer::is_active())
+                if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                     add_payload_trace_log(flags, false, success, "send_data", sent);
             }
         }
@@ -507,7 +514,7 @@ uint32_t Active::send_data(
         if ( !seg )
         {
             active_counts.failed_injects++;
-            if (PacketTracer::is_active())
+            if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                 add_fin_trace_log(flags, false, false, "send_data failed to encode");
             return sent;
         }
@@ -516,13 +523,13 @@ uint32_t Active::send_data(
         if ( ret )
         {
             active_counts.failed_injects++;
-            if (PacketTracer::is_active())
+            if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                 add_fin_trace_log(flags, false, false, "send_data");
         }
         else
         {
             active_counts.injects++;
-            if (PacketTracer::is_active())
+            if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                 add_fin_trace_log(flags, false, true, "send_data");
         }
 
@@ -543,13 +550,13 @@ uint32_t Active::send_data(
             if ( ret != DAQ_SUCCESS )
             {
                 active_counts.failed_direct_injects++;
-                if (PacketTracer::is_active())
+                if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                     add_reset_trace_log(flags, true, false, "send_data");
                 return sent;
             }
 
             active_counts.direct_injects++;
-            if (PacketTracer::is_active())
+            if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                 add_reset_trace_log(flags, true, true, "send_data");
         }
         else
@@ -563,20 +570,20 @@ uint32_t Active::send_data(
                 if ( ret )
                 {
                     active_counts.failed_injects++;
-                    if (PacketTracer::is_active())
+                    if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                         add_reset_trace_log(flags, false, false, "send_data");
                 }
                 else
                 {
                     active_counts.injects++;
-                    if (PacketTracer::is_active())
+                    if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                         add_reset_trace_log(flags, false, true, "send_data");
                 }
             }
             else
             {
                 active_counts.failed_injects++;
-                if (PacketTracer::is_active())
+                if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
                     add_reset_trace_log(flags, false, false, "send_data failed to encode");
             }
         }
@@ -588,6 +595,8 @@ uint32_t Active::send_data(
 void Active::inject_data(
     Packet* p, EncodeFlags flags, const uint8_t* buf, uint32_t blen)
 {
+    // The combined project database includes constant PacketTracer test stubs;
+    // production reads tracer state established at runtime.
     uint32_t plen;
     const uint8_t* seg;
 
@@ -601,7 +610,7 @@ void Active::inject_data(
     if ( !seg )
     {
         active_counts.failed_injects++;
-        if (PacketTracer::is_active())
+        if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
             add_payload_trace_log(flags, false, false, "inject_data failed to encode", blen);
         return;
     }
@@ -610,13 +619,13 @@ void Active::inject_data(
     if ( ret )
     {
         active_counts.failed_injects++;
-        if (PacketTracer::is_active())
+        if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
             add_payload_trace_log(flags, false, false, "inject_data", blen);
     }
     else
     {
         active_counts.injects++;
-        if (PacketTracer::is_active())
+        if (PacketTracer::is_active()) // cppcheck-suppress knownConditionTrueFalse
             add_payload_trace_log(flags, false, true, "inject_data", blen);
     }
 }
@@ -662,6 +671,7 @@ void Active::update_status_actionable(const Packet* p)
 {
     if ( p->context->conf->ips_inline_mode() )
     {
+        // cppcheck-suppress knownConditionTrueFalse ; forwarding comes from runtime DAQ metadata
         if ( !SFDAQ::forwarding_packet(p->pkth) )
         {
             active_status = AST_WOULD;
@@ -782,6 +792,7 @@ bool Active::retry_packet(const Packet* p)
     if (ACT_RETRY == active_action)
         return true;
 
+    // cppcheck-suppress knownConditionTrueFalse ; forwarding comes from runtime DAQ metadata
     if (ACT_RETRY < active_action || !SFDAQ::forwarding_packet(p->pkth))
         return false;
 
@@ -858,6 +869,7 @@ void Active::block_session(Packet* p, bool force)
     active_action = ACT_BLOCK;
     update_status(p, force);
 
+    // cppcheck-suppress knownConditionTrueFalse ; forwarding comes from runtime DAQ metadata
     if ( force or (p->context->conf->ips_inline_mode() and SFDAQ::forwarding_packet(p->pkth)))
         Stream::block_flow(p);
 
@@ -877,6 +889,7 @@ void Active::reset_session(Packet* p, ActiveAction* reject, bool force)
     active_action = ACT_RESET;
     update_status(p, force);
 
+    // cppcheck-suppress knownConditionTrueFalse ; forwarding comes from runtime DAQ metadata
     if ( force or (p->context->conf->ips_inline_mode() and SFDAQ::forwarding_packet(p->pkth)) )
         Stream::drop_flow(p);
 

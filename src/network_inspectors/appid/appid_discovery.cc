@@ -155,6 +155,7 @@ void AppIdDiscovery::do_application_discovery(Packet* p, AppIdInspector& inspect
     if (!do_pre_discovery(p, asd, inspector, protocol, outer_protocol, direction, odp_ctxt))
         return;
 
+    // cppcheck-suppress knownConditionTrueFalse ; profiling is enabled by runtime configuration
     bool is_appid_cpu_profiling_running = (odp_ctxt.is_appid_cpu_profiler_running());
     Stopwatch<SnortClock> per_appid_cpu_timer;
 
@@ -324,6 +325,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
         asd->set_ss_application_ids(asd->pick_service_app_id(), asd->pick_ss_client_app_id(),
             asd->pick_ss_payload_app_id(), asd->pick_ss_misc_app_id(),
             asd->pick_ss_referred_payload_app_id(), change_bits);
+        // cppcheck-suppress knownConditionTrueFalse ; DAQ tracing is enabled at runtime
         if (PacketTracer::is_daq_activated())
             populate_trace_data(*asd);
         change_bits.set(APPID_PROTOCOL_ID_BIT);
@@ -369,6 +371,7 @@ bool AppIdDiscovery::do_pre_discovery(Packet* p, AppIdSession*& asd, AppIdInspec
             {
                 asd->service_disco_state = APPID_DISCO_STATE_FINISHED;
                 if (asd->get_payload_id() == APP_ID_NONE and
+                    // cppcheck-suppress knownConditionTrueFalse ; availability depends on loaded TP AppId
                     (asd->is_tp_appid_available() or asd->get_session_flags(APPID_SESSION_NO_TPI)))
                         asd->set_payload_id(APP_ID_UNKNOWN);
                 asd->client_disco_state = APPID_DISCO_STATE_FINISHED;
@@ -526,6 +529,7 @@ bool AppIdDiscovery::do_host_port_based_discovery(Packet* p, AppIdSession& asd, 
             asd.client_disco_state = APPID_DISCO_STATE_FINISHED;
             asd.set_session_flags(APPID_SESSION_SERVICE_DETECTED);
 
+            // cppcheck-suppress knownConditionTrueFalse ; decision depends on runtime TP session state
             if (asd.tpsession and asd.need_to_delete_tp_conn(tp_appid_ctxt))
                 asd.tpsession->reset();
             else if (asd.tpsession)
@@ -774,17 +778,20 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
         // Skip third-party inspection for sessions using old config
         if (asd.tpsession and asd.tpsession->get_ctxt_version() != tp_appid_ctxt->get_version())
         {
+            // cppcheck-suppress knownConditionTrueFalse ; completion belongs to the current TP session
             bool is_tp_done = asd.is_tp_processing_done();
             delete asd.tpsession;
             asd.tpsession = nullptr;
             // cppcheck-suppress knownConditionTrueFalse ; completion state belongs to the replaced TP session
             if (!is_tp_done)
+                // cppcheck-suppress knownConditionTrueFalse ; result depends on runtime TP inspection
                 is_discovery_done = do_tp_discovery(*tp_appid_ctxt, asd, protocol, p,
                     direction, change_bits);
             else
                 appid_stats.tp_reload_ignored_pkts++;
         }
         else if (!ThirdPartyAppIdContext::get_tp_reload_in_progress())
+            // cppcheck-suppress knownConditionTrueFalse ; result depends on runtime TP inspection
             is_discovery_done = do_tp_discovery(*tp_appid_ctxt, asd, protocol, p,
                 direction, change_bits);
     }
@@ -809,13 +816,13 @@ bool AppIdDiscovery::do_discovery(Packet* p, AppIdSession& asd, IpProtocol proto
     else if (protocol != IpProtocol::TCP or ((p->packet_flags & PKT_STREAM_ORDER_OK) || asd.get_session_flags(APPID_SESSION_OOO)))
     {
         if (asd.service_disco_state != APPID_DISCO_STATE_FINISHED)
-            is_discovery_done =
-                asd.get_odp_ctxt().get_service_disco_mgr().do_service_discovery(asd, p,
-                    direction, change_bits);
+            // cppcheck-suppress knownConditionTrueFalse ; result depends on configured service detectors
+            is_discovery_done = asd.get_odp_ctxt().get_service_disco_mgr().do_service_discovery(
+                asd, p, direction, change_bits);
         if (asd.client_disco_state != APPID_DISCO_STATE_FINISHED)
-            is_discovery_done =
-                asd.get_odp_ctxt().get_client_disco_mgr().do_client_discovery(asd, p,
-                    direction, change_bits);
+            // cppcheck-suppress knownConditionTrueFalse ; result depends on configured client detectors
+            is_discovery_done = asd.get_odp_ctxt().get_client_disco_mgr().do_client_discovery(
+                asd, p, direction, change_bits);
         asd.set_session_flags(APPID_SESSION_ADDITIONAL_PACKET);
     }
 
@@ -925,6 +932,7 @@ void AppIdDiscovery::do_post_discovery(Packet* p, AppIdSession& asd,
         asd.set_client_info_unpublished(false);
     }
 
+    // cppcheck-suppress knownConditionTrueFalse ; DAQ tracing is enabled at runtime
     if (PacketTracer::is_daq_activated())
         populate_trace_data(asd);
 

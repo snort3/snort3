@@ -805,7 +805,7 @@ int RnaPnd::discover_network_arp(const Packet* p, RnaTracker& ht_ref)
     if ( ht->add_mac(src_mac, 0, 0) )
     {
         HostMac hm;
-        HostMac* phm = nullptr;
+        const HostMac* phm = nullptr;
         if ( ht->get_hostmac(src_mac, hm) )
             phm = &hm;
 

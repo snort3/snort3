@@ -95,10 +95,10 @@ AlpnPatternMatchers::~AlpnPatternMatchers() = default;
 CipPatternMatchers::~CipPatternMatchers() = default;
 UserDataMap::~UserDataMap() = default;
 
-void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
+void Field::set(int32_t data_length, const uint8_t* data_start, bool own_the_buffer_)
 {
-    strt = start;
-    len = length;
+    strt = data_start;
+    len = data_length;
     own_the_buffer = own_the_buffer_;
 }
 

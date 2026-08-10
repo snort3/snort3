@@ -60,7 +60,7 @@ private:
 class PacketEvent : public DataEvent
 {
 public:
-    PacketEvent(Packet* p)
+    PacketEvent(const Packet* p)
     { packet = p; }
 
     const Packet* get_packet() const override

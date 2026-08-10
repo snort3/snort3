@@ -52,8 +52,8 @@ public:
 class ThirdPartyAppIdContext
 {
 public:
-    ThirdPartyAppIdContext(uint32_t ver, const char* mname, ThirdPartyConfig& config)
-        : api_version(ver), name(mname), cfg(config)
+    ThirdPartyAppIdContext(uint32_t ver, const char* mname, ThirdPartyConfig& module_config)
+        : api_version(ver), name(mname), cfg(module_config)
     {
         version = next_version++;
     }

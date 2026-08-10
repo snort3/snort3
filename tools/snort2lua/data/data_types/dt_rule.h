@@ -41,7 +41,7 @@ public:
     void add_suboption(const std::string& keyword);
     void add_suboption(const std::string& keyword, const std::string& val);
     void reset_sticky();
-    void set_curr_options_buffer(const std::string& buffer, bool add_option);
+    void set_curr_options_buffer(const std::string& buffer, bool should_add_option);
     void update_rule_action(const std::string&);
     void set_rule_old_action(const std::string&);
     std::string& get_rule_old_action();
@@ -68,4 +68,3 @@ private:
 };
 
 #endif
-

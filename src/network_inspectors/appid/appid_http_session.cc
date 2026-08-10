@@ -50,9 +50,9 @@ AppIdHttpSession::~AppIdHttpSession()
         delete tun_dest;
 }
 
-void AppIdHttpSession::free_chp_matches(ChpMatchDescriptor& cmd, unsigned num_matches)
+void AppIdHttpSession::free_chp_matches(ChpMatchDescriptor& cmd, unsigned match_count)
 {
-    for (unsigned i = 0; i <= num_matches; i++)
+    for (unsigned i = 0; i <= match_count; i++)
         if ( !cmd.chp_matches[i].empty() )
             cmd.chp_matches[i].clear();
 }
@@ -744,6 +744,7 @@ int AppIdHttpSession::process_http_packet(AppidSessionDirection direction,
     if (payload.get_id() <= APP_ID_NONE and is_payload_processed and
         (asd.get_service_id() == APP_ID_HTTP2 or asd.get_service_id() == APP_ID_HTTP3 or
         (asd.get_service_id() == APP_ID_HTTP and
+        // cppcheck-suppress knownConditionTrueFalse ; availability depends on loaded TP AppId
         asd.is_tp_appid_available())))
         set_payload(APP_ID_UNKNOWN, change_bits);
 

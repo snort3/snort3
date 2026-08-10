@@ -359,6 +359,7 @@ static void validate(const SnortConfig* sc)
 
 TEST_GROUP(get_inspector_tests)
 {
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     // cppcheck-suppress constVariablePointer
     SnortConfig* sc = nullptr;
 

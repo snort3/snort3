@@ -311,7 +311,7 @@ void* XHash::get_user_data(const void* key, uint8_t type, bool touch)
     assert(type < num_lru_caches);
 
     int rindex = 0;
-    HashNode* hnode = find_node_row(key, rindex, type, touch);
+    const HashNode* hnode = find_node_row(key, rindex, type, touch);
     return ( hnode ) ? hnode->data : nullptr;
 }
 
@@ -522,13 +522,13 @@ void* XHash::get_lru_user_data(uint8_t type)
 
 void* XHash::get_walk_user_data(uint8_t type)
 {
-    HashNode* walk_node = lru_caches[type]->get_walk_node();
+    const HashNode* walk_node = lru_caches[type]->get_walk_node();
     return walk_node ? walk_node->data : nullptr;
 }
 
 void* XHash::get_next_walk_user_data(uint8_t type)
 {
-    HashNode* walk_node = lru_caches[type]->get_next_walk_node();
+    const HashNode* walk_node = lru_caches[type]->get_next_walk_node();
     return walk_node ? walk_node->data : nullptr;
 }
 

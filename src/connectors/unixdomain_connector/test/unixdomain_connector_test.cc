@@ -834,9 +834,9 @@ TEST(unixdomain_connector_listener, listener_accept_stop)
 UnixDomainConnectorReconnectHelper* reconnect_helper = nullptr;
 UnixDomainConnector* test_reconnect_connector = nullptr;
 
-void reconnect_update_callback(UnixDomainConnector* connector, bool is_reconnecting)
+void reconnect_update_callback(UnixDomainConnector* updated_connector, bool is_reconnecting)
 {
-    test_reconnect_connector = connector;
+    test_reconnect_connector = updated_connector;
 }
 
 TEST_GROUP(unixdomain_connector_reconnect_helper)

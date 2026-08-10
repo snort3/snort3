@@ -60,6 +60,7 @@ int ServiceDetector::fail_service(AppIdSession& asd, const Packet* pkt, AppidSes
 
 TEST_GROUP(detector_pop_tests)
 {
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     // cppcheck-suppress constVariablePointer
     Pop3ServiceDetector* test_detector = nullptr;
     void setup() override

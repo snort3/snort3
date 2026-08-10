@@ -543,7 +543,7 @@ static void _po2_include_po_rules(PortObject2* po2, const PortObject* po)
     SF_LNODE* rpos;
 
     /* get each rule in po */
-    for ( int* pid = (int*)sflist_first(po->rule_list, &rpos);
+    for ( const int* pid = (int*)sflist_first(po->rule_list, &rpos);
         pid;
         pid = (int*)sflist_next(&rpos) )
     {
@@ -595,7 +595,7 @@ static void PortTableConsistencyCheck2(PortTable* p)
     SF_LNODE* pos;
     const PortObject2* lastpo = nullptr;
 
-    for ( PortObject* ipo = (PortObject*)sflist_first(p->pt_polist, &pos);
+    for ( const PortObject* ipo = (PortObject*)sflist_first(p->pt_polist, &pos);
         ipo;
         ipo = (PortObject*)sflist_next(&pos) )
     {

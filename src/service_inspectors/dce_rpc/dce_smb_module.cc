@@ -305,7 +305,7 @@ static std::string get_shares(DCE2_List* shares)
 
     if ( shares )
     {
-        for (dce2SmbShare* share = (dce2SmbShare*)DCE2_ListFirst(shares);
+        for (const dce2SmbShare* share = (dce2SmbShare*)DCE2_ListFirst(shares);
             share;
             share = (dce2SmbShare*)DCE2_ListNext(shares))
         {

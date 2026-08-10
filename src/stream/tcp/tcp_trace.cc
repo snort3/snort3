@@ -162,8 +162,8 @@ void S5TraceTCP(const TcpSegmentDescriptor& tsd, const snort::Packet* p)
     const TcpStreamTracker& srv = ssn->server;
     const TcpStreamTracker& cli = ssn->client;
 
-    const char* cdir = "?";
-    const char* sdir = "?";
+    const char* cdir;
+    const char* sdir;
     uint32_t txd = 0;
     uint32_t rxd = 0;
 
@@ -186,4 +186,3 @@ void S5TraceTCP(const TcpSegmentDescriptor& tsd, const snort::Packet* p)
     TraceState(cli, srv, cdir, p);
     TraceState(srv, cli, sdir, p);
 }
-

@@ -498,8 +498,9 @@ public:
         if (tp_app_id != app_id)
         {
             tp_app_id = app_id;
-            tp_app_id_deferred = odp_ctxt.get_app_info_mgr().get_app_info_flags
-                (tp_app_id, APPINFO_FLAG_DEFER);
+            // cppcheck-suppress knownConditionTrueFalse ; flags come from runtime AppId configuration
+            tp_app_id_deferred = odp_ctxt.get_app_info_mgr().get_app_info_flags(
+                tp_app_id, APPINFO_FLAG_DEFER);
         }
     }
 
@@ -508,8 +509,9 @@ public:
         if (tp_payload_app_id != app_id)
         {
             tp_payload_app_id = app_id;
-            tp_payload_app_id_deferred = odp_ctxt.get_app_info_mgr().get_app_info_flags
-                (tp_payload_app_id, APPINFO_FLAG_DEFER_PAYLOAD);
+            // cppcheck-suppress knownConditionTrueFalse ; flags come from runtime AppId configuration
+            tp_payload_app_id_deferred = odp_ctxt.get_app_info_mgr().get_app_info_flags(
+                tp_payload_app_id, APPINFO_FLAG_DEFER_PAYLOAD);
         }
     }
 
@@ -548,9 +550,9 @@ public:
         return api.service.get_id();
     }
 
-    void set_service_id(AppId id, OdpContext &ctxt)
+    void set_service_id(AppId id, OdpContext &context)
     {
-        api.service.set_id(id, ctxt);
+        api.service.set_id(id, context);
     }
 
     AppId get_port_service_id() const
@@ -563,11 +565,11 @@ public:
         api.service.set_port_service_id(id);
     }
 
-    void set_service_version(const char* version, AppidChangeBits& change_bits)
+    void set_service_version(const char* app_version, AppidChangeBits& change_bits)
     {
-        if (!version)
+        if (!app_version)
             return;
-        api.service.set_version(version);
+        api.service.set_version(app_version);
         change_bits.set(APPID_SERVICE_INFO_BIT);
     }
 
@@ -611,11 +613,11 @@ public:
         api.client.set_id(p, *this, dir, id, change_bits);
     }
 
-    void set_client_version(const char* version, AppidChangeBits& change_bits)
+    void set_client_version(const char* app_version, AppidChangeBits& change_bits)
     {
-        if (!version)
+        if (!app_version)
             return;
-        api.client.set_version(version);
+        api.client.set_version(app_version);
         change_bits.set(APPID_CLIENT_INFO_BIT);
     }
 

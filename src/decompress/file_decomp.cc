@@ -509,7 +509,7 @@ TEST_CASE("File_Decomp-sig_avail_in_shorter_than_sig", "[file_decomp]")
     REQUIRE((File_Decomp_Init(p_s) == File_Decomp_OK));
 
     // Provide only 3 bytes of ZIP signature (PK\x03) - one byte short
-    uint8_t input[3] = { 'P', 'K', 0x03 };
+    const uint8_t input[3] = { 'P', 'K', 0x03 };
     uint8_t output[100];
 
     p_s->Next_In = input;
@@ -540,7 +540,7 @@ TEST_CASE("File_Decomp-sig_avail_in_equals_sig_length", "[file_decomp]")
     REQUIRE((File_Decomp_Init(p_s) == File_Decomp_OK));
 
     // Provide exact ZIP signature (4 bytes)
-    uint8_t input[4] = { 'P', 'K', 0x03, 0x04 };
+    const uint8_t input[4] = { 'P', 'K', 0x03, 0x04 };
     uint8_t output[100];
 
     p_s->Next_In = input;
@@ -570,7 +570,7 @@ TEST_CASE("File_Decomp-sig_partial_match_no_oob", "[file_decomp]")
     REQUIRE((File_Decomp_Init(p_s) == File_Decomp_OK));
 
     // Provide only 2 bytes of PDF signature
-    uint8_t input[2] = { '%', 'P' };
+    const uint8_t input[2] = { '%', 'P' };
     uint8_t output[100];
 
     p_s->Next_In = input;
@@ -598,7 +598,7 @@ TEST_CASE("File_Decomp-no_sig_match", "[file_decomp]")
     REQUIRE((File_Decomp_Init(p_s) == File_Decomp_OK));
 
     // Random data that doesn't match any signature
-    uint8_t input[10] = { 'X', 'Y', 'Z', '1', '2', '3', '4', '5', '6', '7' };
+    const uint8_t input[10] = { 'X', 'Y', 'Z', '1', '2', '3', '4', '5', '6', '7' };
     uint8_t output[100];
 
     p_s->Next_In = input;

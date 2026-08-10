@@ -301,10 +301,10 @@ public:
 
     SocksFlowInitiator get_initiator() const { return initiator; }
     
-    void set_initiator(SocksFlowInitiator init) 
+    void set_initiator(SocksFlowInitiator flow_initiator)
     {
         if (!initiator_detected())
-            initiator = init; 
+            initiator = flow_initiator;
     }
 
     bool initiator_detected() const { return initiator != SOCKS_INITIATOR_UNKNOWN; }

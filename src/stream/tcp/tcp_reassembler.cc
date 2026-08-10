@@ -104,7 +104,7 @@ void TcpReassemblerBase::purge_flushed_ackd()
         return;
 
     uint32_t seq = seglist.head->start_seq();
-    TcpSegmentNode* tsn = seglist.head;
+    const TcpSegmentNode* tsn = seglist.head;
     while ( tsn && !tsn->unscanned() )
     {
         uint32_t end = tsn->next_seq();

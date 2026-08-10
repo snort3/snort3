@@ -168,28 +168,28 @@ int MailLogState::log_email_id(const uint8_t* start, int length, EmailUserType t
     return 0;
 }
 
-void MailLogState::get_file_name(uint8_t** buf, uint32_t* len)
+void MailLogState::get_file_name(uint8_t** out_buf, uint32_t* len)
 {
-    *buf = filenames;
+    *out_buf = filenames;
     *len = file_logged;
 }
 
-void MailLogState::get_email_hdrs(uint8_t** buf, uint32_t* len)
+void MailLogState::get_email_hdrs(uint8_t** out_buf, uint32_t* len)
 {
-    *buf = hdrs;
+    *out_buf = hdrs;
     *len = hdrs_logged;
 }
 
-void MailLogState::get_email_id(uint8_t** buf, uint32_t* len, EmailUserType type)
+void MailLogState::get_email_id(uint8_t** out_buf, uint32_t* len, EmailUserType type)
 {
     if (type == EMAIL_SENDER)
     {
-        *buf = senders;
+        *out_buf = senders;
         *len = snds_logged;
     }
     else
     {
-        *buf = recipients;
+        *out_buf = recipients;
         *len = rcpts_logged;
     }
 }
@@ -241,4 +241,3 @@ MailLogState::~MailLogState()
     if (buf != nullptr)
         snort_free(buf);
 }
-

@@ -222,7 +222,7 @@ static void AlertSyslog(int priority, Packet* p, const char* msg, const Event& e
     }
 
     auto& ptrs = p->ptrs;
-    auto& ip = ptrs.ip_api;
+    const auto& ip = ptrs.ip_api;
     auto& conf = p->context->conf;
 
     if (conf->alert_interface())

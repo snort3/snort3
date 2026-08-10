@@ -92,18 +92,18 @@ bool HttpMsgSection::run_detection(snort::Packet*) { return true; }
 
 HttpTransaction*HttpTransaction::attach_my_transaction(HttpFlowData*, HttpCommon::SourceId, snort::Flow*)
     { return nullptr; }
-Field::Field(int32_t length, const uint8_t* start, bool own_the_buffer_) :
-    strt(start), len(length), own_the_buffer(own_the_buffer_)
+Field::Field(int32_t data_length, const uint8_t* data_start, bool own_the_buffer_) :
+    strt(data_start), len(data_length), own_the_buffer(own_the_buffer_)
 {}
-void Field::set(int32_t length, const uint8_t* start, bool own_the_buffer_)
+void Field::set(int32_t data_length, const uint8_t* data_start, bool own_the_buffer_)
 {
     assert(len == STAT_NOT_COMPUTE);
     assert(strt == nullptr);
-    assert(start != nullptr);
-    assert(length >= 0);
-    assert(length <= MAX_OCTETS);
-    strt = start;
-    len = length;
+    assert(data_start != nullptr);
+    assert(data_length >= 0);
+    assert(data_length <= MAX_OCTETS);
+    strt = data_start;
+    len = data_length;
     own_the_buffer = own_the_buffer_;
 }
 
@@ -234,4 +234,3 @@ int main(int argc, char** argv)
 {
     return CommandLineTestRunner::RunAllTests(argc, argv);
 }
-

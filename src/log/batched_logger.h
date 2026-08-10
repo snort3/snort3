@@ -54,7 +54,7 @@ public:
     size_t size = 0;
     std::chrono::steady_clock::time_point last_flush_time = std::chrono::steady_clock::now();
 
-    void append(FILE* fh, bool use_syslog, const char* msg, size_t len);
+    void append(FILE* file_handle, bool syslog_enabled, const char* msg, size_t len);
     void flush();
     static void send_control_message(const char* msg, size_t len);
 private:

@@ -478,6 +478,6 @@ StreamSplitter::Status PopSplitter::scan(
 
 bool pop_is_data_end(Flow* ssn)
 {
-    PopPafData* s = get_state(ssn, false);
+    const PopPafData* s = get_state(ssn, false);
     return s ? s->end_of_data : false;
 }

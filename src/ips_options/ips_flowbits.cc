@@ -347,7 +347,7 @@ void flowbits_counts(unsigned& total, unsigned& unchecked, unsigned& unset)
 //-------------------------------------------------------------------------
 
 static FlowBit* get_bit(
-    const char* bit, FlowBitCheck* check)
+    const char* bit, const FlowBitCheck* check)
 {
     FlowBit& flow_bit = bit_map[bit];
 

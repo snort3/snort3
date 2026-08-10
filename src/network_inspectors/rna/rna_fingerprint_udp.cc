@@ -140,7 +140,7 @@ TEST_CASE("match_dhcp_fingerprint", "[rna_fingerprint_udp]")
     rawfp.dhcp60 = "dhcp 5.1.3";
     processor->push(rawfp);
 
-    uint8_t op55[] = {1, 2, 45, 121};
+    const uint8_t op55[] = {1, 2, 45, 121};
     key.dhcp55 = op55;
     key.dhcp55_len = 4;
     key.dhcp60 = (const uint8_t*) "dhcp 5.0";

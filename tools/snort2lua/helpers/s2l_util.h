@@ -91,7 +91,7 @@ bool get_string(std::istringstream& data_stream,
  *          data stream
  *
  */
-std::string get_remain_data(std::istringstream& data_stream, bool trim = true);
+std::string get_remain_data(std::istringstream& data_stream, bool trim_data = true);
 
 std::string get_rule_option_args(std::istringstream& data_stream);
 

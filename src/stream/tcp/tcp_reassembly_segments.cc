@@ -265,9 +265,10 @@ void TcpReassemblySegments::insert_segment_in_empty_seglist(TcpSegmentDescriptor
     add_reassembly_segment(tsd, tsd.get_len(), overlap, 0, tsd.get_seq(), nullptr);
 }
 
-bool TcpReassemblySegments::is_segment_fasttrack(const TcpSegmentNode* tail, const TcpSegmentDescriptor& tsd)
+bool TcpReassemblySegments::is_segment_fasttrack(
+    const TcpSegmentNode* tail_segment, const TcpSegmentDescriptor& tsd)
 {
-    if ( SEQ_EQ(tsd.get_seq(), tail->next_seq()) )
+    if ( SEQ_EQ(tsd.get_seq(), tail_segment->next_seq()) )
         return true;
 
     return false;

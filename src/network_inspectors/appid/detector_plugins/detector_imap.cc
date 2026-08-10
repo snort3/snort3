@@ -550,6 +550,7 @@ void ImapClientDetector::do_custom_reload()
     cmd_matcher->reload();
 }
 
+// cppcheck-suppress constParameterCallback ; signature is fixed by the search callback API
 static int pattern_match(void* id, void*, int match_end_pos, void* data, void*)
 {
     unsigned long idx = (unsigned long)id;
@@ -661,7 +662,7 @@ int ImapClientDetector::validate(AppIdDiscoveryArgs& args)
             args.asd.clear_session_flags(APPID_SESSION_CLIENT_GETS_SERVER_PACKETS);
             return APPID_SUCCESS;
         }
-        AppIdFlowContentPattern* cmd = nullptr;
+        const AppIdFlowContentPattern* cmd = nullptr;
         unsigned long pattern_index = num_imap_client_patterns;
         unsigned length = end - s;
         cmd_matcher->find_all((const char*)s, (length > longest_pattern ? longest_pattern : length),

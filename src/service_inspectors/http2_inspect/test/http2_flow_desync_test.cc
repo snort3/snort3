@@ -190,12 +190,15 @@ public:
 
 TEST_GROUP_BASE(http2_data_cutter_desync, Http2FlowDesyncFixture)
 {
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
+    // cppcheck-suppress constVariablePointer ; fixture state is consumed by test bodies
     Http2DataCutter* cutter = nullptr;
 
     void setup() override
     {
         Http2FlowDesyncFixture::setup();
 
+        // cppcheck-suppress unreadVariable ; fixture state is consumed by test bodies
         cutter = Http2UnitTestSetup::get_data_cutter(session_data, source_id);
     }
 };
@@ -265,6 +268,7 @@ TEST(http2_data_cutter_desync, missing_frame_length_with_remaining_data_in_reass
 
 TEST_GROUP_BASE(http2_stream_splitter_desync, Http2FlowDesyncFixture)
 {
+    // cppcheck-suppress unreadVariable ; fixture state is consumed by test bodies
     Http2StreamSplitter splitter { source_id == HttpCommon::SRC_CLIENT };
 };
 

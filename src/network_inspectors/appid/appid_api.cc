@@ -46,9 +46,10 @@ namespace snort
 AppIdApi appid_api;
 }
 
-AppIdSession* AppIdApi::get_appid_session(const Flow& flow)
+AppIdSession* AppIdApi::get_appid_session(const Flow& target_flow)
 {
-    AppIdSession* asd = static_cast<AppIdSession*>(flow.get_flow_data(AppIdSession::inspector_id));
+    AppIdSession* asd =
+        static_cast<AppIdSession*>(target_flow.get_flow_data(AppIdSession::inspector_id));
 
     return asd;
 }
@@ -58,10 +59,10 @@ const char* AppIdApi::get_application_name(AppId app_id, OdpContext& odp_ctxt)
     return odp_ctxt.get_app_info_mgr().get_app_name(app_id);
 }
 
-const char* AppIdApi::get_application_name(AppId app_id, const Flow& flow)
+const char* AppIdApi::get_application_name(AppId app_id, const Flow& target_flow)
 {
     const char* app_name = nullptr;
-    const AppIdSession* asd = get_appid_session(flow);
+    const AppIdSession* asd = get_appid_session(target_flow);
     if (asd)
     {
         // Skip sessions using old odp context after odp reload
@@ -77,10 +78,10 @@ const char* AppIdApi::get_application_name(AppId app_id, const Flow& flow)
     return app_name;
 }
 
-const char* AppIdApi::get_application_name(const Flow& flow, bool from_client)
+const char* AppIdApi::get_application_name(const Flow& target_flow, bool from_client)
 {
     const char* app_name = nullptr;
-    const AppIdSession* asd = get_appid_session(flow);
+    const AppIdSession* asd = get_appid_session(target_flow);
     if (asd)
     {
         // Skip sessions using old odp context after odp reload
@@ -116,7 +117,7 @@ AppId AppIdApi::get_application_id(const char* appName, const AppIdContext& ctxt
     return ctxt.get_odp_ctxt().get_app_info_mgr().get_appid_by_name(appName);
 }
 
-bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
+bool AppIdApi::ssl_app_group_id_lookup(Flow* target_flow, const char* server_name,
     const char* first_alt_name, const char* common_name, const char* org_unit,
     bool sni_mismatch, AppId& service_id, AppId& client_id, AppId& payload_id)
 {
@@ -128,8 +129,8 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
     if (!pkt_thread_odp_ctxt)
         return false;
 
-    if (flow)
-        asd = get_appid_session(*flow);
+    if (target_flow)
+        asd = get_appid_session(*target_flow);
 
     if (asd)
     {
@@ -228,10 +229,10 @@ bool AppIdApi::ssl_app_group_id_lookup(Flow* flow, const char* server_name,
     return false;
 }
 
-const AppIdSessionApi* AppIdApi::get_appid_session_api(const Flow& flow) const
+const AppIdSessionApi* AppIdApi::get_appid_session_api(const Flow& target_flow) const
 {
     StashGenericObject* item;
-    return flow.get_attr(STASH_APPID_DATA, item) ? static_cast<AppIdSessionApi*>(item) : nullptr;
+    return target_flow.get_attr(STASH_APPID_DATA, item) ? static_cast<AppIdSessionApi*>(item) : nullptr;
 }
 
 bool AppIdApi::is_inspection_needed(const Inspector& inspector) const
@@ -291,9 +292,9 @@ void AppIdApi::update_shadow_traffic_status(bool status, const SnortConfig*)
     }
 }
 
-void AppIdApi::set_ssl_certificate_key(const Flow& flow, const std::string& cert_key)
+void AppIdApi::set_ssl_certificate_key(const Flow& target_flow, const std::string& cert_key)
 {
-    AppIdSession* asd = get_appid_session(flow);
+    AppIdSession* asd = get_appid_session(target_flow);
     if (asd != nullptr and asd->get_odp_ctxt().get_appid_shadow_traffic_status() and !cert_key.empty())
         asd->set_cert_key(cert_key.c_str());
 }

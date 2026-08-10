@@ -54,7 +54,8 @@ public:
         flow_data->partial_buffer[source_id] = buf;
         flow_data->partial_buffer_length[source_id] = length;
     }
-    static HttpInfractions* get_infractions(HttpFlowData* flow_data, HttpCommon::SourceId source_id)
+    static HttpInfractions* get_infractions(
+        const HttpFlowData* flow_data, HttpCommon::SourceId source_id)
         { assert(flow_data!=nullptr); return flow_data->infractions[source_id]; }
     static void clear_infractions(HttpFlowData* flow_data, HttpCommon::SourceId source_id)
     {

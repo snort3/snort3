@@ -74,7 +74,7 @@ struct S7commplusDataHeader
 
 using namespace snort;
 
-static bool S7commPlusProtocolDecode(S7commplusSessionData* session, Packet* p)
+static bool S7commPlusProtocolDecode(S7commplusSessionData* session, const Packet* p)
 {
     const S7commplusHeader* s7commplus_header;
     const S7commplusDataHeader* s7commplus_data_header;

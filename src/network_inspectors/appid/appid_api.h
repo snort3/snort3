@@ -44,23 +44,23 @@ class SO_PUBLIC AppIdApi
 public:
     SO_PRIVATE AppIdApi() = default;
 
-    AppIdSession* get_appid_session(const Flow& flow);
+    AppIdSession* get_appid_session(const Flow& target_flow);
     const char* get_application_name(AppId app_id, OdpContext& odp_ctxt);
-    const char* get_application_name(AppId app_id, const Flow& flow);
-    const char* get_application_name(const Flow& flow, bool from_client);
+    const char* get_application_name(AppId app_id, const Flow& target_flow);
+    const char* get_application_name(const Flow& target_flow, bool from_client);
     AppId get_application_id(const char* appName, const AppIdContext& ctxt);
-    bool ssl_app_group_id_lookup(Flow* flow, const char*, const char*, const char*,
+    bool ssl_app_group_id_lookup(Flow* target_flow, const char*, const char*, const char*,
         const char*, bool, AppId& service_id, AppId& client_id, AppId& payload_id);
-    const AppIdSessionApi* get_appid_session_api(const Flow& flow) const;
+    const AppIdSessionApi* get_appid_session_api(const Flow& target_flow) const;
     bool is_inspection_needed(const Inspector& g) const;
     const char* get_appid_detector_directory() const;
     void reset_appid_cpu_profiler_stats();
     void update_shadow_traffic_status(bool status, const snort::SnortConfig* sc = nullptr);
-    void set_ssl_certificate_key(const Flow& flow, const std::string& cert_key);
+    void set_ssl_certificate_key(const Flow& target_flow, const std::string& cert_key);
 
-    bool is_service_http_type(AppId service_id) const
+    bool is_service_http_type(AppId app_id) const
     {
-        switch (service_id)
+        switch (app_id)
         {
             case APP_ID_HTTP:
             case APP_ID_HTTPS:
@@ -86,4 +86,3 @@ public:
 SO_PUBLIC extern AppIdApi appid_api;
 }
 #endif
-

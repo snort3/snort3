@@ -221,7 +221,6 @@ StreamSplitter::Status Http2DataCutter::scan(const uint8_t* data, uint32_t lengt
 
 void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
 {
-    uint32_t cur_data = 0;
     uint32_t cur_data_offset = 0;
 
     unsigned cur_pos = 0;
@@ -283,7 +282,8 @@ void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
           {
             reassemble_state = SEND_DATA;
             const uint32_t missing = reassemble_data_len - reassemble_data_bytes_read;
-            cur_data = ((len - cur_pos) >= missing) ? missing : (len - cur_pos);
+            const uint32_t cur_data =
+                ((len - cur_pos) >= missing) ? missing : (len - cur_pos);
             reassemble_data_bytes_read += cur_data;
             cur_pos += cur_data;
 

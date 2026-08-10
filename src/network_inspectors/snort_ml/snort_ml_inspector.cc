@@ -174,7 +174,7 @@ void HttpFormHandler::handle(DataEvent& de, Flow*)
     // cppcheck-suppress unreadVariable
     Profile profile(snort_ml_prof);
 
-    HttpFormDataEvent* he = reinterpret_cast<HttpFormDataEvent*>(&de);
+    const HttpFormDataEvent* he = reinterpret_cast<HttpFormDataEvent*>(&de);
 
     const std::string& data = he->get_form_data_uri();
 

@@ -57,6 +57,7 @@ const MpseApi* get_test_api()
 
 TEST_GROUP(search_tool_full)
 {
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     // cppcheck-suppress constVariablePointer
     Module* mod = nullptr;
     SearchTool* stool;  // cppcheck-suppress variableScope

@@ -296,7 +296,7 @@ NormalizedHeader* HttpMsgHeadShared::get_header_node(HeaderId header_id) const
 
 int HttpMsgHeadShared::get_header_count(HeaderId header_id) const
 {
-    NormalizedHeader* node = get_header_node(header_id);
+    const NormalizedHeader* node = get_header_node(header_id);
     return (node != nullptr) ? node->count : 0;
 }
 
@@ -635,4 +635,3 @@ void HttpMsgHeadShared::print_headers(FILE* output)
     }
 }
 #endif
-

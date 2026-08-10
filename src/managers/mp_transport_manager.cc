@@ -76,7 +76,7 @@ MPTransport *MPTransportManager::get_transport(const std::string &name)
 {
     if (auto* p = PluginManager::get_interface(name.c_str()))
     {
-        MPTPlugInterface* mp = static_cast<MPTPlugInterface*>(p);
+        const MPTPlugInterface* mp = static_cast<MPTPlugInterface*>(p);
         return mp->transport;
     }
 

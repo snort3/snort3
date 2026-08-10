@@ -61,6 +61,7 @@ static int match(
 TEST_GROUP(mpse_bnfa_match)
 {
     const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_ac_bnfa[0]);
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     Mpse* bnfa = nullptr;
 
     void setup() override
@@ -158,7 +159,9 @@ TEST(mpse_bnfa_match, multi)
 TEST_GROUP(mpse_bnfa_multi)
 {
     const MpseApi* mpse_api = reinterpret_cast<const MpseApi*>(se_ac_bnfa[0]);
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     Mpse* bnfa1 = nullptr;
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     Mpse* bnfa2 = nullptr;
 
     void setup() override

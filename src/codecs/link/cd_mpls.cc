@@ -250,7 +250,7 @@ bool MplsCodec::encode(const uint8_t* const raw_in, const uint16_t raw_len,
     const uint8_t* hdr_start = raw_in;
     if (pflow)
     {
-        Layer* mpls_lyr = pflow->get_mpls_layer_per_dir(enc.forward());
+        const Layer* mpls_lyr = pflow->get_mpls_layer_per_dir(enc.forward());
 
         if (mpls_lyr && mpls_lyr->length)
         {

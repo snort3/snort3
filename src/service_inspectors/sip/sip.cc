@@ -109,7 +109,7 @@ static void FreeSipData(void* data)
     sip_freeDialogs(&ssn->dialogs);
 }
 
-static std::string GetSIPMethods(SIPMethodNode* method)
+static std::string GetSIPMethods(const SIPMethodNode* method)
 {
     std::string cmds;
 

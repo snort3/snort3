@@ -195,7 +195,7 @@ static void update_stats(const AppIdSession& asd, AppId app_id, StatsBucket* buc
             return;
 
         OdpContext& odp_ctxt = asd.get_odp_ctxt();
-        AppInfoTableEntry* entry
+        const AppInfoTableEntry* entry
             = odp_ctxt.get_app_info_mgr().get_app_info_entry(app_id);
 
         const char* app_name;

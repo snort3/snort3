@@ -49,8 +49,8 @@ struct FlowStateKey
 };
 
 FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_addr,
-    int* swapped, const char* appid_name, uint16_t src_port, uint16_t dst_port,
-    uint8_t ip_protocol, uint64_t flow_latency, uint64_t rule_latency)
+    int* swapped, const char* app_name, uint16_t src_port, uint16_t dst_port,
+    uint8_t ip_protocol, uint64_t total_flow_latency, uint64_t total_rule_latency)
 {
     FlowStateKey key;
     FlowStateValue* value = nullptr;
@@ -71,7 +71,7 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
     value = (FlowStateValue*)ip_map->get_user_data(&key);
     if ( value )
     {
-        strncpy(value->appid_name, appid_name, sizeof(value->appid_name) - 1);
+        strncpy(value->appid_name, app_name, sizeof(value->appid_name) - 1);
         value->appid_name[sizeof(value->appid_name) - 1] = '\0';
         if ( *swapped )
         {
@@ -84,8 +84,8 @@ FlowStateValue* FlowIPTracker::find_stats(const SfIp* src_addr, const SfIp* dst_
             value->port_b = dst_port;
         }
         value->protocol = ip_protocol;
-        value->total_flow_latency = flow_latency;
-        value->total_rule_latency = rule_latency;
+        value->total_flow_latency = total_flow_latency;
+        value->total_rule_latency = total_rule_latency;
     }
     else
     {
@@ -281,13 +281,13 @@ void FlowIPTracker::process(bool)
 }
 
 int FlowIPTracker::update_state(const SfIp* src_addr, const SfIp* dst_addr,
-    FlowState state, const char* appid_name, uint16_t src_port, uint16_t dst_port,
-    uint8_t ip_protocol, uint64_t flow_latency, uint64_t rule_latency)
+    FlowState state, const char* app_name, uint16_t src_port, uint16_t dst_port,
+    uint8_t ip_protocol, uint64_t total_flow_latency, uint64_t total_rule_latency)
 {
     int swapped;
 
-    FlowStateValue* value = find_stats(src_addr, dst_addr, &swapped, appid_name, src_port, dst_port,
-        ip_protocol, flow_latency, rule_latency);
+    FlowStateValue* value = find_stats(src_addr, dst_addr, &swapped, app_name, src_port, dst_port,
+        ip_protocol, total_flow_latency, total_rule_latency);
     if ( !value )
         return 1;
 

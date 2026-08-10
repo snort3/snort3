@@ -148,7 +148,7 @@ public:
     virtual PegCount* get_counts() const
     { return nullptr; }
 
-    virtual PegCount get_global_count(const char* name) const;
+    virtual PegCount get_global_count(const char* peg_name) const;
 
     virtual int get_num_counts() const
     { return num_counts; }

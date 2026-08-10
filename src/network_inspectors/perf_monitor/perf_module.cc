@@ -398,16 +398,16 @@ PegCount* PerfMonModule::get_counts() const
 const Command* PerfMonModule::get_commands() const
 { return perf_module_cmds; }
 
-void ModuleConfig::set_name(const std::string& name)
-{ this->name = name; }
+void ModuleConfig::set_name(const std::string& module_name)
+{ name = module_name; }
 
-void ModuleConfig::set_peg_names(Value& peg_names)
+void ModuleConfig::set_peg_names(Value& names)
 {
     std::string tok;
-    peg_names.set_first_token();
+    names.set_first_token();
 
-    while ( peg_names.get_next_token(tok) )
-        this->peg_names[tok] = false;
+    while ( names.get_next_token(tok) )
+        peg_names[tok] = false;
 }
 
 bool ModuleConfig::confirm_parse()

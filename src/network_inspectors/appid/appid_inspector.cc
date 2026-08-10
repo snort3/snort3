@@ -79,7 +79,7 @@ static THREAD_LOCAL PacketTracer::TracerMute appid_mute;
 
 static void add_appid_to_packet_trace(const Flow& flow, const OdpContext& odp_context)
 {
-    AppIdSession* session = appid_api.get_appid_session(flow);
+    const AppIdSession* session = appid_api.get_appid_session(flow);
     // Skip sessions using old odp context after odp reload
     if (!session or (session->get_odp_ctxt_version() != odp_context.get_version()))
         return;

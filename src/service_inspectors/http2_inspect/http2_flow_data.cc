@@ -116,11 +116,11 @@ HttpFlowData* Http2FlowData::get_hi_flow_data()
     return stream->get_hi_flow_data();
 }
 
-void Http2FlowData::set_hi_flow_data(HttpFlowData* flow)
+void Http2FlowData::set_hi_flow_data(HttpFlowData* flow_data)
 {
     assert(stream_in_hi != Http2Enums::NO_STREAM_ID);
     Http2Stream* stream = get_hi_stream();
-    stream->set_hi_flow_data(flow);
+    stream->set_hi_flow_data(flow_data);
 }
 
 Http2Stream* Http2FlowData::find_stream(const uint32_t key)

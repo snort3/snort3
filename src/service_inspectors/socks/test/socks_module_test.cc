@@ -64,6 +64,7 @@ SocksInspector::~SocksInspector() {}
 
 TEST_GROUP(socks5_module_test)
 {
+    // cppcheck-suppress variableScope ; fixture state is consumed by test bodies
     SocksModule* mod = nullptr;
 
     void setup() override

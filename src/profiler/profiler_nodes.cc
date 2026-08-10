@@ -369,7 +369,6 @@ static bool rotate_file(const char* old_file, FILE* old_fd,
     else  // Otherwise, if it does exist, append data from current stats file to it
     {
         char read_buf[4096];
-        size_t num_read, num_wrote;
         int rotate_index = 0;
         char rotate_file_with_index[PATH_MAX];
 
@@ -442,7 +441,7 @@ static bool rotate_file(const char* old_file, FILE* old_fd,
                     }
                 }
 
-                num_read = strlen(read_buf);
+                const size_t num_read = strlen(read_buf);
 
                 if (num_read > 0)
                 {
@@ -477,8 +476,8 @@ static bool rotate_file(const char* old_file, FILE* old_fd,
                         }
                     }
 
-                    num_wrote = fprintf(rotate_fh, "%s", read_buf);
-                    if ((num_wrote != num_read) && ferror(rotate_fh))
+                    const int num_wrote = fprintf(rotate_fh, "%s", read_buf);
+                    if (num_wrote < 0 or static_cast<size_t>(num_wrote) != num_read)
                     {
                         // A bad write occurred
                         ErrorMessage("Profiler: Error writing to Memtracker "

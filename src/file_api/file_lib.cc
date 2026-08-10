@@ -382,15 +382,15 @@ void FileInfo::set_weak_url(const char* url_name, uint32_t url_size)
         url.assign(url_name, file_clamp_len(url_size, FILE_URL_CAP));
 }
 
-void FileInfo::set_host(const char* host_name, uint32_t host_size)
+void FileInfo::set_host(const char* new_host_name, uint32_t host_size)
 {
     if (this->host_set)
         return;
 
-    if (host_name and host_size)
+    if (new_host_name and host_size)
     {
-        this->host_name.assign(host_name, file_clamp_len(host_size, FILE_HOST_CAP));
-        this->host_set = true;
+        host_name.assign(new_host_name, file_clamp_len(host_size, FILE_HOST_CAP));
+        host_set = true;
     }
 }
 
@@ -454,14 +454,14 @@ uint8_t* FileInfo::get_file_sig_sha256() const
     return (sha256);
 }
 
-std::string FileInfo::sha_to_string(const uint8_t* sha256) const
+std::string FileInfo::sha_to_string(const uint8_t* digest) const
 {
     const uint8_t conv[] = "0123456789ABCDEF";
     const uint8_t* index;
     const uint8_t* end;
     std::string sha_out;
 
-    index = sha256;
+    index = digest;
     end = index + SHA256_HASH_SIZE;
 
     while (index < end)

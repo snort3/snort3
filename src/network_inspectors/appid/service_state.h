@@ -107,9 +107,9 @@ public:
         return state;
     }
 
-    void set_state(ServiceState state)
+    void set_state(ServiceState new_state)
     {
-        this->state = state;
+        state = new_state;
     }
 
     ServiceDetector* get_service() const
@@ -117,9 +117,9 @@ public:
         return service;
     }
 
-    void set_service(ServiceDetector* service)
+    void set_service(ServiceDetector* new_detector)
     {
-        this->service = service;
+        service = new_detector;
     }
 
     time_t get_reset_time() const

@@ -96,7 +96,7 @@ TEST(ghash, create_find_delete_test)
         CHECK(p == (void *)(str + (i+1)));
     }
 
-    for (GHashNode* n = t->find_first(); n; n = t->find_next() )
+    for (const GHashNode* n = t->find_first(); n; n = t->find_next() )
     {
         i = t->remove(n->key);
 
@@ -143,7 +143,7 @@ TEST(ghash, collision_test)
     }
 
     // remove one node
-    GHashNode* n = t->find_first();
+    const GHashNode* n = t->find_first();
     if (n)
     {
         n = t->find_next();
@@ -203,7 +203,7 @@ TEST(ghash, userfree_test)
     // try to remove a node that is not in the table
     CHECK(t->remove( str) == HASH_NOT_FOUND);
 
-    for ( GHashNode* n = t->find_first(); n; n = t->find_next() )
+    for ( const GHashNode* n = t->find_first(); n; n = t->find_next() )
     {
         // user free should be called here, no memory leak should be detected
         i = t->remove(n->key);

@@ -1393,7 +1393,7 @@ void parse_rule_process_rtn(RuleTreeNode* rtn)
 int parse_rule_finish_ports(SnortConfig* sc, RuleTreeNode* rtn, OptTreeNode* otn)
 {
     RulePortTables* port_tables = sc->port_tables;
-    FastPatternConfig* fp = sc->fast_pattern_config;
+    const FastPatternConfig* fp = sc->fast_pattern_config;
 
     int large_port_group = 0;
     PortTable* dstTable;

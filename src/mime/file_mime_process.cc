@@ -143,6 +143,7 @@ static bool get_mime_eol(const uint8_t* ptr, const uint8_t* end,
  * @return response
  * @retval 1        commands caller to stop searching
  */
+// cppcheck-suppress constParameterCallback ; signature is fixed by the search callback API
 static int search_str_found(void* id, void*, int index, void*, void*)
 {
     int search_id = (int)(uintptr_t)id;
@@ -769,8 +770,6 @@ const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
     int data_size, bool upload, FilePosition position, AttachmentBuffer* attachment)
 {
     const uint8_t* attach_start = start;
-    const uint8_t* attach_end;
-
     const uint8_t* data_end_marker = start + data_size;
 
     if (attachment)
@@ -790,7 +789,7 @@ const uint8_t* MimeSession::process_mime_data(Packet* p, const uint8_t* start,
         // Found the boundary, start processing data
         if (process_mime_paf_data(&(mime_boundary),  *start))
         {
-            attach_end = start;
+            const uint8_t* attach_end = start;
             finalFilePosition(&position);
             process_mime_data_paf(p, attach_start, attach_end,
                 upload, position, attachment);

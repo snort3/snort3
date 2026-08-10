@@ -114,7 +114,7 @@ void Rule::reset_sticky()
     sticky_buffer.clear();
 }
 
-void Rule::set_curr_options_buffer(const std::string& new_buffer, bool add_option)
+void Rule::set_curr_options_buffer(const std::string& new_buffer, bool should_add_option)
 {
     /* set the buffer if
      * 1) No buffer has been set and this is not the default "pkt_data" buffer
@@ -124,7 +124,7 @@ void Rule::set_curr_options_buffer(const std::string& new_buffer, bool add_optio
         (!sticky_buffer.empty() && sticky_buffer != new_buffer) )
     {
         RuleOption* new_opt = new RuleOption(new_buffer);
-        if ( add_option )
+        if ( should_add_option )
             options.push_back(new_opt);
         else
             options.insert(options.end() - 1, new_opt);
@@ -276,4 +276,3 @@ void Rule::resolve_pcre_buffer_options()
         }
     }
 }
-

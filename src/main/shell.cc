@@ -513,23 +513,23 @@ bool Shell::dump_enabled()
     return s_config_output or snort::SnortConfig::get_conf()->gen_dump_config();
 }
 
-bool Shell::load_config(const char* file, bool load_in_sandbox)
+bool Shell::load_config(const char* config_file, bool load_in_sandbox)
 {
     if ( load_in_sandbox )
     {
-        ifstream in_file(file, ifstream::in);
+        ifstream in_file(config_file, ifstream::in);
         if (in_file.get() == 27 )
         {
-            ParseError("bytecode is not allowed %s\n", file);
+            ParseError("bytecode is not allowed %s\n", config_file);
             return false;
         }
     }
 
     Lua::ManageStack ms(lua);
 
-    if ( luaL_loadfile(lua, file) )
+    if ( luaL_loadfile(lua, config_file) )
     {
-        ParseError("can't load %s: %s\n", file, lua_tostring(lua, -1));
+        ParseError("can't load %s: %s\n", config_file, lua_tostring(lua, -1));
         return false;
     }
 
@@ -538,7 +538,7 @@ bool Shell::load_config(const char* file, bool load_in_sandbox)
 
     if ( lua_pcall(lua, 0, 0, 0) )
     {
-        ParseError("can't init %s: %s\n", file, lua_tostring(lua, -1));
+        ParseError("can't init %s: %s\n", config_file, lua_tostring(lua, -1));
         return false;
     }
 

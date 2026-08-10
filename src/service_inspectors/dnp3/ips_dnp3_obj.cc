@@ -122,7 +122,7 @@ IpsOption::EvalStatus Dnp3ObjOption::eval(Cursor&, Packet* p)
         return NO_MATCH;
 
     dnp3_session_data_t* dnp3_session = &fd->dnp3_session;
-    dnp3_reassembly_data_t* rdata;
+    const dnp3_reassembly_data_t* rdata;
 
     if (dnp3_session->direction == DNP3_CLIENT)
     {

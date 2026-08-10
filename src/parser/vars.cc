@@ -306,7 +306,7 @@ void ParsePathVar(const char* name, const char* value)
     /* Check to see if this variable is just being aliased */
     if (var_table != nullptr)
     {
-        VarEntry* tmp = var_table;
+        const VarEntry* tmp = var_table;
 
         do
         {

@@ -38,7 +38,7 @@ class SO_PUBLIC Field
 public:
     static const Field FIELD_NULL;
 
-    Field(int32_t length, const uint8_t* start, bool own_the_buffer_ = false);
+    Field(int32_t data_length, const uint8_t* data_start, bool own_the_buffer_ = false);
     explicit Field(int32_t length) : len(length) { assert(length<=0); }
     Field() = default;
 
@@ -48,10 +48,10 @@ public:
     ~Field() { if (own_the_buffer) delete[] strt; }
     int32_t length() const { return len; }
     const uint8_t* start() const { return strt; }
-    void set(int32_t length, const uint8_t* start, bool own_the_buffer_ = false);
+    void set(int32_t data_length, const uint8_t* data_start, bool own_the_buffer_ = false);
     void set(const Field& f);
     void set(HttpCommon::StatusCode stat_code);
-    void set(int32_t length) { set(static_cast<HttpCommon::StatusCode>(length)); }
+    void set(int32_t data_length) { set(static_cast<HttpCommon::StatusCode>(data_length)); }
     void reset();
     void set_accumulation(bool is_accum) { was_accumulated = is_accum; }
     bool is_accumulated() const { return was_accumulated; }
@@ -81,4 +81,3 @@ struct MimeBufs
 using MimeFormData = std::vector<std::pair<std::string, std::string>>;
 
 #endif
-

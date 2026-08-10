@@ -109,29 +109,29 @@ public:
     TcpState get_tcp_state() const
     { return tcp_state; }
 
-    void set_tcp_state(TcpState tcp_state)
-    { this->tcp_state = tcp_state; }
+    void set_tcp_state(TcpState state)
+    { tcp_state = state; }
 
     TcpEvent get_tcp_event() const
     { return tcp_event; }
 
     TcpEvent set_tcp_event(const TcpSegmentDescriptor&);
 
-    void set_tcp_event(TcpEvent tcp_event)
-    { this->tcp_event = tcp_event; }
+    void set_tcp_event(TcpEvent event)
+    { tcp_event = event; }
 
     uint32_t get_rcv_nxt() const
     { return rcv_nxt; }
 
-    void set_rcv_nxt(uint32_t rcv_nxt)
-    { this->rcv_nxt = rcv_nxt; }
+    void set_rcv_nxt(uint32_t value)
+    { rcv_nxt = value; }
 
     uint32_t get_rcv_wnd() const
     { return rcv_wnd; }
 
-    void set_rcv_wnd(uint32_t rcv_wnd)
+    void set_rcv_wnd(uint32_t value)
     {
-        this->rcv_wnd = rcv_wnd;
+        rcv_wnd = value;
         tf_flags |= TF_RCV_WND_SEEN;
     }
 
@@ -143,65 +143,65 @@ public:
     { return rcv_up; }
 
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
-    void set_rcv_up(uint16_t rcv_up)
-    { this->rcv_up = rcv_up; }
+    void set_rcv_up(uint16_t value)
+    { rcv_up = value; }
 
     uint32_t get_irs() const
     { return irs; }
 
-    void set_irs(uint32_t irs)
-    { this->irs = irs; snd_wl1 = irs; snd_wl2 = 0; }
+    void set_irs(uint32_t value)
+    { irs = value; snd_wl1 = value; snd_wl2 = 0; }
 
     uint32_t get_snd_una() const
     { return snd_una; }
 
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
-    void set_snd_una(uint32_t snd_una)
-    { this->snd_una = snd_una; }
+    void set_snd_una(uint32_t value)
+    { snd_una = value; }
 
     uint32_t get_snd_nxt() const
     { return snd_nxt; }
 
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
-    void set_snd_nxt(uint32_t snd_nxt)
-    { this->snd_nxt = snd_nxt; }
+    void set_snd_nxt(uint32_t value)
+    { snd_nxt = value; }
 
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint16_t get_snd_up() const
     { return snd_up; }
 
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
-    void set_snd_up(uint16_t snd_up)
-    { this->snd_up = snd_up; }
+    void set_snd_up(uint16_t value)
+    { snd_up = value; }
 
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint32_t get_snd_wl1() const
     { return snd_wl1; }
 
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
-    void set_snd_wl1(uint32_t snd_wl1)
-    { this->snd_wl1 = snd_wl1; }
+    void set_snd_wl1(uint32_t value)
+    { snd_wl1 = value; }
 
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint32_t get_snd_wl2() const
     { return snd_wl2; }
 
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
-    void set_snd_wl2(uint32_t snd_wl2)
-    { this->snd_wl2 = snd_wl2; }
+    void set_snd_wl2(uint32_t value)
+    { snd_wl2 = value; }
 
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
     uint32_t get_snd_wnd() const
     { return snd_wnd; }
 
-    void set_snd_wnd(uint32_t snd_wnd)
-    { this->snd_wnd = snd_wnd; }
+    void set_snd_wnd(uint32_t value)
+    { snd_wnd = value; }
 
     uint32_t get_iss() const
     { return iss; }
 
-    void set_iss(uint32_t iss)
-    { this->iss = iss; }
+    void set_iss(uint32_t value)
+    { iss = value; }
 
     uint32_t get_fin_final_seq() const
     { return fin_final_seq + fin_seq_adjust; }
@@ -221,8 +221,8 @@ public:
     uint32_t get_ts_last_packet() const
     { return ts_last_packet; }
 
-    void set_ts_last_packet(uint32_t ts_last_packet)
-    { this->ts_last_packet = ts_last_packet; }
+    void set_ts_last_packet(uint32_t timestamp)
+    { ts_last_packet = timestamp; }
 
     bool is_ack_valid(uint32_t cur)
     {
@@ -239,8 +239,8 @@ public:
     uint32_t get_ts_last() const
     { return ts_last; }
 
-    void set_ts_last(uint32_t ts_last)
-    { this->ts_last = ts_last; }
+    void set_ts_last(uint32_t timestamp)
+    { ts_last = timestamp; }
 
     uint16_t get_tf_flags() const
     { return tf_flags; }
@@ -255,21 +255,21 @@ public:
     { return wscale; }
 
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
-    void set_wscale(uint16_t wscale)
-    { this->wscale = wscale; }
+    void set_wscale(uint16_t value)
+    { wscale = value; }
 
     uint16_t get_mss() const
     { return mss; }
 
     // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
-    void set_mss(uint16_t mss)
-    { this->mss = mss; }
+    void set_mss(uint16_t value)
+    { mss = value; }
 
     uint8_t get_tcp_options_len() const
     { return tcp_options_len; }
 
-    void set_tcp_options_len(uint8_t tcp_options_len)
-    { this->tcp_options_len = tcp_options_len; }
+    void set_tcp_options_len(uint8_t length)
+    { tcp_options_len = length; }
 
     void cache_mac_address(const TcpSegmentDescriptor&, uint8_t direction);
     bool compare_mac_addresses(const uint8_t eth_addr[]);
@@ -281,8 +281,8 @@ public:
     FlushPolicy get_flush_policy() const
     { return flush_policy; }
 
-    void set_order(uint8_t order)
-    { this->order = order; }
+    void set_order(uint8_t packet_order)
+    { order = packet_order; }
 
     void init_tcp_state(TcpSession*);
     void set_splitter(snort::StreamSplitter* ss);

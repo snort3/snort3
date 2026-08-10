@@ -297,10 +297,10 @@ AppIdSession* AppIdSession::create_future_session(const Packet* ctrlPkt, const S
     return asd;
 }
 
-void AppIdSession::initialize_future_session(AppIdSession& expected, uint64_t flags)
+void AppIdSession::initialize_future_session(AppIdSession& expected, uint64_t session_flags)
 {
 
-    expected.set_session_flags(flags |
+    expected.set_session_flags(session_flags |
         get_session_flags(
         APPID_SESSION_SPECIAL_MONITORED |
         APPID_SESSION_DISCOVER_APP |
@@ -1379,7 +1379,8 @@ void AppIdSession::set_tp_payload_app_id(const Packet& p, AppidSessionDirection 
     }
 }
 
-void AppIdSession::publish_shadow_traffic_event(const uint32_t& shadow_traffic_bits, snort::Flow* flow)
+void AppIdSession::publish_shadow_traffic_event(
+    const uint32_t& shadow_traffic_bits, snort::Flow* event_flow)
 {
     if (shadow_traffic_bits == appid_previous_shadow_traffic_bits)
         return;
@@ -1417,7 +1418,8 @@ void AppIdSession::publish_shadow_traffic_event(const uint32_t& shadow_traffic_b
     }
 
     ShadowTrafficEvent shadow_event(shadow_traffic_bits, "", "", app_name, ShadowTrafficDetectionSource::APPID);
-    DataBus::publish(AppIdInspector::get_shadowtraffic_pub_id(), ShadowTrafficEventIds::SHADOWTRAFFIC_FLOW_DETECTED, shadow_event, flow);
+    DataBus::publish(AppIdInspector::get_shadowtraffic_pub_id(),
+        ShadowTrafficEventIds::SHADOWTRAFFIC_FLOW_DETECTED, shadow_event, event_flow);
 
     if (PacketTracer::is_active())
     {

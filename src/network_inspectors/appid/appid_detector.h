@@ -121,14 +121,15 @@ public:
     int data_add(AppIdSession&, AppIdFlowData*);
     void add_user(AppIdSession&, const char*, AppId, bool, AppidChangeBits&);
     void add_payload(AppIdSession&, AppId);
-    void add_app(AppIdSession& asd, AppId service_id, AppId client_id, const char* version, AppidChangeBits& change_bits)
+    void add_app(AppIdSession& asd, AppId service_app_id, AppId client_app_id,
+        const char* client_version, AppidChangeBits& change_bits)
     {
-        if ( version )
-            asd.set_client_version(version, change_bits);
+        if ( client_version )
+            asd.set_client_version(client_version, change_bits);
 
         asd.set_client_detected();
-        asd.set_client_inferred_service_id(service_id);
-        asd.set_client_id(client_id);
+        asd.set_client_inferred_service_id(service_app_id);
+        asd.set_client_id(client_app_id);
     }
     void add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId, const char*, AppidChangeBits&);
     const char* get_code_string(APPID_STATUS_CODE) const;
@@ -178,4 +179,3 @@ protected:
 };
 
 #endif
-

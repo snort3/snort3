@@ -240,10 +240,10 @@ void RuleApi::reset_sticky()
         DataApi::developer_error("Add a rule before resetting the sticky buffer!!");
 }
 
-void RuleApi::set_curr_options_buffer(const std::string& buffer, bool add_option)
+void RuleApi::set_curr_options_buffer(const std::string& buffer, bool should_add_option)
 {
     if (curr_rule)
-        curr_rule->set_curr_options_buffer(buffer, add_option);
+        curr_rule->set_curr_options_buffer(buffer, should_add_option);
     else
         DataApi::developer_error("Add some header data before adding content!!");
 }
@@ -321,4 +321,3 @@ void RuleApi::print_rejects(std::ostream& out)
 
 void RuleApi::swap_rules(std::vector<Rule*>& new_rules)
 { rules.swap(new_rules); }
-
