@@ -77,6 +77,7 @@ private:
     PDFRet h_hex_hex2chr_u16();
     PDFRet h_lit_u16();
     PDFRet h_lit_u16_unescape();
+    PDFRet h_array_open();
     PDFRet h_array_nesting();
     PDFRet h_stream_open();
     void h_stream();

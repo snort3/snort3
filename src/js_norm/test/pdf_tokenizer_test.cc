@@ -474,6 +474,15 @@ TEST_CASE("basic", "[PDFTokenizer]")
         body += ">>\nendobj\n";
         test_pdf_proc(body, "", PDFTokenizer::PDFRet::EOS);
     }
+    SECTION("array nesting overflow")
+    {
+        test_pdf_proc(
+            "1 0 obj"
+            "[ [ [ [ [ [ [ [ [ [ [ ] ] ] ] ] ] ] ] ] ] ]"
+            "endobj",
+            "", PDFTokenizer::PDFRet::DICTIONARY_NESTING_OVERFLOW
+        );
+    }
 }
 
 TEST_CASE("brackets balancing", "[PDFTokenizer]")

@@ -191,7 +191,7 @@ WHITESPACE         {GRP_WHITESPACE}{1,16}
 <indobj>{WHITESPACE}                              { }
 <indobj>{INDIRECT_OBJ_CLOSE}                      { POP(); h_ind_obj_close(); EXEC(h_array_nesting()); }
 <indobj>{INDIRECT_OBJ_PARTIAL_CLOSE}              { state_add(yyleng); }
-<indobj>{OBJ_ARRAY_OPEN}                          { PUSH(array); ++obj_array.nesting_level; }
+<indobj>{OBJ_ARRAY_OPEN}                          { EXEC(h_array_open()); }
 <indobj>{OBJ_REFERENCE}                           { indirect_obj.ref_met = true; }
 <indobj>{OBJ_BOOLEAN}                             { }
 <indobj>{OBJ_INT_NUM}                             { }
@@ -200,7 +200,7 @@ WHITESPACE         {GRP_WHITESPACE}{1,16}
 <indobj>{OBJ_NAME}                                { }
 
 <array>{WHITESPACE}                               { }
-<array>{OBJ_ARRAY_OPEN}                           { PUSH(array); ++obj_array.nesting_level; }
+<array>{OBJ_ARRAY_OPEN}                           { EXEC(h_array_open()); }
 <array>{OBJ_ARRAY_CLOSE}                          { POP(); --obj_array.nesting_level; if (YY_START == dictnr) EXEC(h_dict_other()); }
 <array>{OBJ_REFERENCE}                            { indirect_obj.ref_met = true; }
 <array>{OBJ_BOOLEAN}                              { }
@@ -239,7 +239,7 @@ WHITESPACE         {GRP_WHITESPACE}{1,16}
 <dictnr>{OBJ_NULL}                                { EXEC(h_dict_other()); }
 <dictnr>{OBJ_PARTIAL_NULL}                        { state_add(yyleng); }
 <dictnr>{OBJ_NAME}                                { EXEC(h_dict_name()); state_add(yyleng); }
-<dictnr>{OBJ_ARRAY_OPEN}                          { PUSH(array); ++obj_array.nesting_level; EXEC(h_dict_other()); }
+<dictnr>{OBJ_ARRAY_OPEN}                          { EXEC(h_array_open()); EXEC(h_dict_other()); }
 <dictnr>{OBJ_ARRAY_CLOSE}                         { return PDFRet::INCORRECT_BRACKETS_NESTING; }
 <dictnr>{OBJ_LIT_STR_OPEN}                        { EXEC(h_dict_other()); if (h_lit_str()) PUSH(jslstr); else PUSH(litstr); yyless(0); }
 <dictnr>{OBJ_HEX_STR_OPEN}                        { EXEC(h_dict_other()); if (h_hex_str()) PUSH(jshstr); else PUSH(hexstr); yyless(0); state_add(yyleng); }
@@ -512,6 +512,17 @@ PDFTokenizer::PDFRet PDFTokenizer::h_lit_u16_unescape()
 
     debug_logf(6, js_trace, TRACE_PDF_DUMP, nullptr,
         "string, in UTF-16BE, escaped: %s\n", yytext);
+
+    return PDFRet::EOS;
+}
+
+PDFTokenizer::PDFRet PDFTokenizer::h_array_open()
+{
+    if ((unsigned)obj_array.nesting_level >= dictionaries_max_size)
+        return PDFRet::DICTIONARY_NESTING_OVERFLOW;
+
+    PUSH(array);
+    ++obj_array.nesting_level;
 
     return PDFRet::EOS;
 }
