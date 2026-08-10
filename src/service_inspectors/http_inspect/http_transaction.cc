@@ -21,6 +21,8 @@
 #include "config.h"
 #endif
 
+#include <string_view>
+
 #include "http_transaction.h"
 
 #include "pub_sub/http_transaction_end_event.h"
@@ -68,6 +70,32 @@ void HttpTransaction::publish_end_of_transaction()
 {
     HttpTransactionEndEvent http_event(this);
     DataBus::publish(pub_id, HttpEventIds::END_OF_TRANSACTION, http_event, flow);
+
+#ifdef REG_TEST
+    if (HttpTestManager::use_test_output(HttpTestManager::IN_HTTP))
+    {
+        const auto& client_fname = http_event.get_filename(SRC_CLIENT);
+        const auto& client_ftype = http_event.get_content_type(SRC_CLIENT);
+
+        const auto& server_fname = http_event.get_filename(SRC_SERVER);
+        const auto& server_ftype = http_event.get_content_type(SRC_SERVER);
+
+        if (client_fname.empty() and client_ftype.empty() and
+            server_fname.empty() and server_ftype.empty())
+            return;
+
+        fprintf(HttpTestManager::get_output_file(),
+            "HttpTransactionEndEvent published (Client/Server).\n");
+        fprintf(HttpTestManager::get_output_file(),
+            "Filename length: %zu/%zu\n",
+            client_fname.size(),
+            server_fname.size());
+        fprintf(HttpTestManager::get_output_file(),
+            "Content-type length: %zu/%zu\n",
+            client_ftype.size(),
+            server_ftype.size());
+    }
+#endif
 }
 
 bool HttpTransaction::is_for_httpx() const
@@ -325,7 +353,7 @@ void HttpTransaction::set_request(HttpMsgRequest* request_)
     request = request_;
 }
 
-void HttpTransaction::set_header(HttpMsgHeader* header_, HttpCommon::SourceId source_id)
+void HttpTransaction::set_header(HttpMsgHeader* header_, SourceId source_id)
 {
     delete (header[source_id]);
     header[source_id] = header_;
@@ -401,36 +429,50 @@ const Field& HttpTransaction::get_info_msg() const
      return Field::FIELD_NULL;
 }
 
-void HttpTransaction::append_separator_if_needed(HttpCommon::SourceId source_id)
-{
-    static const std::string separator = " ";
-
-    if (!filename[source_id].empty())
-    {
-        filename[source_id].append(separator);
-        content_type[source_id].append(separator);
-    }
-}
-
-void HttpTransaction::add_filename(HttpCommon::SourceId source_id, const char* fname, uint32_t len,
+void HttpTransaction::add_filename(SourceId source_id, const char* fname, uint32_t flen,
     const char* ftype, uint32_t tlen)
 {
-    append_separator_if_needed(source_id);
-    if (len)
-        filename[source_id].append(fname, len);
+    if (capped_attachment[source_id])
+        return;
+
+    static constexpr std::string_view separator = " ";
+
+    size_t fname_total_size = filename[source_id].size() + flen;
+
+    const bool fname_needs_separator = !filename[source_id].empty();
+    if (fname_needs_separator)
+        fname_total_size += separator.size();
+
+    size_t ftype_total_size = content_type[source_id].size() + tlen;
+
+    const bool ftype_needs_separator = !content_type[source_id].empty();
+    if (ftype_needs_separator)
+        ftype_total_size += separator.size();
+
+    if (std::max(fname_total_size, ftype_total_size) > MAX_ATTACHMENT_SIZE)
+    {
+        capped_attachment[source_id] = true;
+        return;
+    }
+
+    if (fname_needs_separator)
+        filename[source_id].append(separator);
+
+    if (flen)
+        filename[source_id].append(fname, flen);
+
+    if (ftype_needs_separator)
+        content_type[source_id].append(separator);
+
     if (tlen)
         content_type[source_id].append(ftype, tlen);
 }
 
-void HttpTransaction::add_filename(HttpCommon::SourceId source_id, const std::string& fname,
+void HttpTransaction::add_filename(SourceId source_id, const std::string& fname,
     const std::string& ftype)
-{
-    append_separator_if_needed(source_id);
-    filename[source_id].append(fname);
-    content_type[source_id].append(ftype);
-}
+{ add_filename(source_id, fname.data(), fname.size(), ftype.data(), ftype.size()); }
 
-uint64_t HttpTransaction::get_message_length(const HttpMsgSection* start, HttpCommon::SourceId source_id, bool include_body) const
+uint64_t HttpTransaction::get_message_length(const HttpMsgSection* start, SourceId source_id, bool include_body) const
 {
     uint64_t length = HttpMsgSection::get_section_len(start)
         + HttpMsgSection::get_section_len(header[source_id])

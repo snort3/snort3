@@ -113,7 +113,6 @@ private:
     void archive_status(HttpMsgStatus*);
     void archive_header(HttpMsgHeader*);
     void publish_end_of_transaction();
-    void append_separator_if_needed(HttpCommon::SourceId);
 
     HttpFlowData* const session_data;
 
@@ -171,6 +170,9 @@ private:
     uint64_t body_len[2] = { 0, 0 };
     std::string filename[2];
     std::string content_type[2];
+
+    static constexpr uint16_t MAX_ATTACHMENT_SIZE = 4096;
+    bool capped_attachment[2] = { false, false };
 
     // Estimates of how much memory http_inspect uses to process a transaction
     static const uint16_t small_things = 400; // minor memory costs not otherwise accounted for

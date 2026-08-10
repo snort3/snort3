@@ -106,10 +106,10 @@ Fields supported for HTTP:
 * `info_code` - last informational status code returned by the server
 * `info_msg` - last informational reason phrase returned by the server
 * `proxied` - list with the headers associated with proxied requests
-* `orig_filenames` - list with the names of the files sent by client
-* `resp_filenames` - list with the names of the files sent by server
-* `orig_mime_types` - list with the content types of the files sent by client
-* `resp_mime_types` - list with the content types of the files sent by server
+* `orig_filenames` - list with the names of the files sent by client, up to the limit set for the HTTP transaction
+* `resp_filenames` - list with the names of the files sent by server, up to the limit set for the HTTP transaction
+* `orig_mime_types` - list with the content types of the files sent by client, up to the limit set for the HTTP transaction
+* `resp_mime_types` - list with the content types of the files sent by server, up to the limit set for the HTTP transaction
 
 Fields supported for SSH:
 

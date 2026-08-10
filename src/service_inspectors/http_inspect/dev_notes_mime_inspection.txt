@@ -16,6 +16,33 @@ simultaneous files derived from a message section. NHI resolves this by accumula
 file attachments in a list and directly calling detection multiple times--once for each file
 attachment installed as file_data.
 
+Filenames and MIME content types are collected per transaction, separately for the client and
+server directions, in HttpTransaction. When the transaction ends they are published through
+HttpTransactionEndEvent. Each collected string is capped at HttpTransaction::MAX_ATTACHMENT_SIZE.
+
+Filenames and content types are separated with a space as each attachment is added. A separator is
+inserted whenever the stored value is already non-empty, even if the incoming value for this
+attachment is empty. An attachment that is missing a filename or a content type therefore leaves an
+empty entry behind in that list rather than being dropped from it, which keeps the entries of a
+list positionally associated with the attachments that produced them. A consequence is that a list
+whose last attachment had no value ends in a trailing separator.
+
+The two lists are separated independently--an attachment can extend one of them without touching
+the other. Because the separator depends on the list being non-empty rather than on the number of
+attachments seen, the two lists only line up entry for entry once both have received a value. If
+the first attachment supplies just one of the two, that list is a separator ahead of the other for
+the rest of the transaction.
+
+Once an attachment is dropped for exceeding the cap, the direction is considered capped and every
+later attachment on that side is dropped too. This keeps the client and server strings in the
+order the attachments were received, since letting a later, smaller attachment through would put
+it out of order with the ones dropped before it. The client and server directions are capped
+independently.
+
+An attachment is dropped whole rather than partly added, so a stored value is never cut off
+mid-value. Filename and content type are dropped or kept together even if only one of the two would
+exceed the cap on its own.
+
 Rule options:
 
 HttpIpsOption is the base class for http rule options. It supports the parameters field and request

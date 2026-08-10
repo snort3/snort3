@@ -33,6 +33,8 @@
 class HttpUnitTestSetup
 {
 public:
+    static constexpr size_t MAX_ATTACHMENT_SIZE = HttpTransaction::MAX_ATTACHMENT_SIZE;
+
     // Returns mutable fixture state to the tests.
     // cppcheck-suppress constParameterPointer
     static HttpCommon::SectionType* get_section_type(HttpFlowData* flow_data)
