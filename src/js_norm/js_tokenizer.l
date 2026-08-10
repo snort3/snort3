@@ -1618,15 +1618,22 @@ JSTokenizer::JSRet JSTokenizer::do_semicolon_insertion(ASIGroup current)
     return EOS;
 }
 
-bool JSTokenizer::unescape(const char* lexeme)
+JSTokenizer::JSRet JSTokenizer::unescape(const char* lexeme, bool& process_current)
 {
-    if (strstr(lexeme, "\\u"))
-    {
-        const std::string unescaped_lex = unescape_unicode(lexeme);
-        switch_to_temporal(unescaped_lex);
-        return false;
-    }
-    return true;
+    process_current = true;
+
+    if (!strstr(lexeme, "\\u"))
+        return EOS;
+
+    // switch_to_temporal() has a single buffer slot; do not nest it
+    if (tmp_buffer)
+        return BAD_TOKEN;
+
+    const std::string unescaped_lex = unescape_unicode(lexeme);
+    switch_to_temporal(unescaped_lex);
+    process_current = false;
+
+    return EOS;
 }
 
 bool JSTokenizer::concatenate()
@@ -2983,7 +2990,10 @@ JSTokenizer::JSRet JSTokenizer::general_literal()
 
 JSTokenizer::JSRet JSTokenizer::general_identifier()
 {
-    if (unescape(YYText()))
+    bool process_current = true;
+    EXEC(unescape(YYText(), process_current))
+
+    if (process_current)
     {
         bool id_part = (token == DOT);
         bool assignment_start = token == KEYWORD_VAR_DECL || token == PUNCTUATOR ||

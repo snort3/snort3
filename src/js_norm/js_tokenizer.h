@@ -194,7 +194,7 @@ private:
     JSRet do_semicolon_insertion(ASIGroup current);
     JSRet do_identifier_substitution(const char* lexeme, bool id_part);
     JSRet push_identifier(const char* ident);
-    bool unescape(const char* lexeme);
+    JSRet unescape(const char* lexeme, bool& process_current);
     bool concatenate();
     void process_punctuator(JSToken tok = PUNCTUATOR);
     void skip_punctuator();

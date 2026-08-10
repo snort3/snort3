@@ -904,6 +904,39 @@ TEST_CASE("Identifiers", "[JSNormalizer]")
         );
     }
 
+    SECTION("nested escape sequence")
+    {
+        // a nested escape is rejected, so the cursor advances instead of stalling
+        JSTokenizerTester tester(default_config);
+        tester.do_pdu("\\u005cu0041)aaaaaa");
+        tester.run_checks(default_config.derive({
+            expected_cursor_pos(11)
+        }));
+    }
+
+    SECTION("nested escape sequence encodings")
+    {
+        const std::pair<const char*, int> nested_escape_ids[] =
+        {
+            { "\\u005cu0041",                                     11 },
+            { "\\u{5c}u0041",                                     11 },
+            { "\\u005cu{0041}",                                    7 },
+            { "\\u{5c}u{0041}",                                    7 },
+            { "\\u005c\\u00750041",                               16 },
+            { "\\u005c\\u0075\\u0030\\u0030\\u0034\\u0031",       36 },
+            { "\\u{5c}\\u{75}\\u{30}\\u{30}\\u{34}\\u{31}",       36 }
+        };
+
+        for (const auto& id : nested_escape_ids)
+        {
+            JSTokenizerTester tester(default_config);
+            tester.do_pdu(id.first);
+            tester.run_checks(default_config.derive({
+                expected_cursor_pos(id.second)
+            }));
+        }
+    }
+
     SECTION("valid dot accessor")
     {
         test_normalization(
