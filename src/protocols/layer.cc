@@ -171,6 +171,9 @@ const cisco_meta_data::CiscoMetaDataHdr* get_cisco_meta_data_layer(const Packet*
     const Layer* lyr = find_layer(p->layers, p->num_layers, ProtocolId::ETHERTYPE_CISCO_META,
         ProtocolId::ETHERTYPE_CISCO_META);
 
+    if (lyr == nullptr)
+        return nullptr;
+
     return reinterpret_cast<const cisco_meta_data::CiscoMetaDataHdr*>(lyr->start);
 }
 

@@ -26,3 +26,20 @@ and 'undefined protocol' values.
 * ProtocolIndex is an ordinal value that acts as an index into s_protocols
 and s_stats.
 
+Layer accessor contract:
+
+* A protocol bit is only a cheap "protocol was seen" hint. It is not a
+  complete proof that the corresponding decoded layer is still addressable in
+  Packet::layers.
+
+* Callers of layer accessors must satisfy the accessor's concrete contract
+  before dereferencing the result. Accessors that scan Packet::layers can
+  return nullptr when the requested layer was not retained, such as after the
+  configured layer limit is reached. Accessors that use cached layer indexes
+  rely on their recorded-index preconditions instead; those preconditions are
+  still the caller's responsibility in non-assert builds.
+
+* In practice, treat a proto_bits test as a pre-filter only. If the accessor
+  returns a pointer from a search, null-check it before reading fields. If the
+  accessor indexes a cached layer slot, make sure the index was actually
+  recorded and is in range, not merely that the protocol bit is set.

@@ -502,9 +502,13 @@ static bool ff_sgt(const Args& a)
     if (a.pkt->proto_bits & PROTO_BIT__CISCO_META_DATA)
     {
         const cisco_meta_data::CiscoMetaDataHdr* cmdh = layer::get_cisco_meta_data_layer(a.pkt);
-        print_label(a, "sgt");
-        TextLog_Print(json_log, "%hu", cmdh->sgt_val());
-        return true;
+
+        if (cmdh)
+        {
+            print_label(a, "sgt");
+            TextLog_Print(json_log, "%hu", cmdh->sgt_val());
+            return true;
+        }
     }
     return false;
 }
