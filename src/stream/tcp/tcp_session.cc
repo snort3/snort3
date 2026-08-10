@@ -181,7 +181,9 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
     client.clear_tracker(flow, p, flush_segments, restart_session);
     server.clear_tracker(flow, p, flush_segments, restart_session);
     update_perf_base_state(TcpStreamTracker::TCP_CLOSED);
-    tel.log_internal_event(SESSION_EVENT_CLEAR);
+
+    if ( flow->get_session_flags() & SSNFLAG_COUNTED_ESTABLISH )
+        tel.log_internal_event(SESSION_EVENT_CLEAR);
 
     if ( restart_session )
         flow->restart(free_flow_data);
