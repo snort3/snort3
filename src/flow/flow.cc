@@ -176,6 +176,8 @@ void Flow::restart(bool dump_flow_data)
 
     clean();
 
+    flags.svc_event_generated = false;
+
     ssn_state.ignore_direction = 0;
     ssn_state.session_flags = SSNFLAG_NONE;
 

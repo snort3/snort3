@@ -128,6 +128,20 @@ TEST(nondefault_timeout, hard_expiration)
     delete flow;
 }
 
+TEST_GROUP(flow_restart)
+{
+};
+
+TEST(flow_restart, resets_service_event_generated)
+{
+    Flow flow;
+    flow.flags.svc_event_generated = true;
+
+    flow.restart(false);
+
+    CHECK_FALSE(flow.flags.svc_event_generated);
+}
+
 TEST_GROUP(inspection_time_presence)
 {
 };
