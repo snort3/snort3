@@ -567,6 +567,7 @@ const StreamBuffer Http2StreamSplitter::implement_reassemble(Http2FlowData* sess
     {
         if (session_data->frame_type[source_id] != FT_DATA)
         {
+            delete[] session_data->frame_data[source_id];
             session_data->frame_data[source_id] = session_data->frame_reassemble[source_id];
             session_data->frame_reassemble[source_id] = nullptr;
         }

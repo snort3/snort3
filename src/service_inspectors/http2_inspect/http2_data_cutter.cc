@@ -303,6 +303,7 @@ void Http2DataCutter::reassemble(const uint8_t* data, unsigned len)
                 reassemble_bytes_sent = 0;
                 if (frame_buf.data != nullptr)
                 {
+                    delete[] session_data->frame_data[source_id];
                     session_data->frame_data[source_id] = frame_buf.data;
                     session_data->frame_data_size[source_id] = frame_buf.length;
                 }
