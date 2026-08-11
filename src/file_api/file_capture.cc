@@ -272,6 +272,9 @@ inline FileCaptureState FileCapture::save_to_file_buffer(const uint8_t* file_dat
     FileCaptureBlock* lastBlock = last;
     int64_t available_bytes;
 
+    if ( data_size <= 0 )
+        return FILE_CAPTURE_SUCCESS;
+
     if ( data_size + (int64_t)capture_size > max_size)
     {
         file_counts.file_size_max++;

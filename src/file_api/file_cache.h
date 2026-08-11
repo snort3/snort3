@@ -68,9 +68,21 @@ public:
     bool apply_verdict(snort::Packet*, snort::FileContext*, FileVerdict, bool resume,
         snort::FilePolicyBase*);
 
-private: 
+    snort::FileContext* dup_cache_context(snort::Flow*, uint64_t file_id, bool& is_pending);
+    void take_pending_file_data(snort::Flow*, uint64_t file_id, snort::FileInfo* dst);
+    FileVerdict resume_pending_verdict(snort::Packet*, snort::FileInfo* dup,
+        snort::FilePolicyBase*);
+    bool cached_context_not_cacheable(snort::Flow*, uint64_t file_id);
+    void store_shared_verdict(const FileHashKey&, int64_t timeout, snort::FileInfo& src);
+
+private:
+    void make_key(snort::Flow*, uint64_t file_id, FileHashKey&) const;
+    static bool verdict_publish_blocked(FileVerdict cached, FileVerdict incoming);
+    void publish_flow_verdict_locked(const FileHashKey&, int64_t timeout, snort::FileInfo* src,
+        bool is_cacheable);
     snort::FileContext* find(const FileHashKey&, int64_t, int64_t& cache_expire);
     snort::FileContext* find_add(const FileHashKey&, int64_t);
+    snort::FileContext* find_and_pin(snort::Flow*, uint64_t file_id, int64_t timeout);
     snort::FileContext* get_file(snort::Flow*, uint64_t file_id, bool to_create,
         int64_t timeout, bool using_cache_entry, bool &cache_full, int64_t& cache_expire);
     FileVerdict check_verdict(snort::Packet*, snort::FileInfo*, snort::FilePolicyBase*,const uint8_t* current_data, uint32_t current_data_len);

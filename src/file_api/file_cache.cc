@@ -27,6 +27,7 @@
 
 #include "flow/flow_key.h"
 #include "hash/hash_defs.h"
+#include "hash/hashes.h"
 #include "hash/xhash.h"
 #include "log/messages.h"
 #include "managers/inspector_manager.h"
@@ -65,6 +66,9 @@ public:
         if ( !node )
             return true;
 
+        if ( node->file and node->file->is_in_use() )
+            return false;
+
         struct timeval now;
         packet_gettimeofday(&now);
         // cppcheck-suppress syntaxError ; timercmp's comparison operator is a macro argument
@@ -81,6 +85,21 @@ public:
             delete node->file;
     }
 };
+
+namespace
+{
+struct CacheNodePin
+{
+    CacheNodePin(std::mutex& m, FileContext* f) : cache_mutex(m), file(f) { }
+    ~CacheNodePin()
+    {
+        std::lock_guard<std::mutex> lock(cache_mutex);
+        file->unpin();
+    }
+    std::mutex& cache_mutex;
+    FileContext* file;
+};
+}
 
 // Return the time in ms since we started waiting for pending file lookup.
 static int64_t time_elapsed_ms(struct timeval* now, struct timeval* expire_time, int64_t lookup_timeout)
@@ -156,7 +175,8 @@ FileContext* FileCache::find_add(const FileHashKey& hashKey, int64_t timeout)
 
     if ( timercmp(&node->cache_expire_time, &now, <) )
     {
-        fileHash->release_node(hash_node);
+        if ( !node->file or !node->file->is_in_use() )
+            fileHash->release_node(hash_node);
         return nullptr;
     }
 
@@ -257,7 +277,8 @@ FileContext* FileCache::find(const FileHashKey& hashKey, int64_t timeout, int64_
     packet_gettimeofday(&now);
     if ( timercmp(&node->cache_expire_time, &now, <) )
     {
-        fileHash->release_node(hash_node);
+        if ( !node->file or !node->file->is_in_use() )
+            fileHash->release_node(hash_node);
         return nullptr;
     }
 
@@ -277,14 +298,8 @@ FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create,
     int64_t timeout, bool using_cache_entry, bool &cache_full, int64_t& cache_expire)
 {
     FileHashKey hashKey;
-    hashKey.dip = flow->client_ip;
-    hashKey.sip = flow->server_ip;
-    hashKey.dgroup = flow->client_group;
-    hashKey.sgroup = flow->server_group;
-    hashKey.file_id = file_id;
-    hashKey.asid = flow->key->addressSpaceId;
-    hashKey.padding[0] = hashKey.padding[1] = hashKey.padding[2] = 0;
-    
+    make_key(flow, file_id, hashKey);
+
     FileContext* file = nullptr;
     if (using_cache_entry)
         file = find(hashKey, DEFAULT_FILE_LOOKUP_TIMEOUT_CACHED_ITEM, cache_expire);
@@ -315,14 +330,182 @@ FileContext* FileCache::get_file(Flow* flow, uint64_t file_id, bool to_create, b
         using_cache_entry, cache_full, cache_expire);
 }
 
+FileContext* FileCache::find_and_pin(Flow* flow, uint64_t file_id, int64_t timeout)
+{
+    FileHashKey hashKey;
+    make_key(flow, file_id, hashKey);
+
+    FileContext* file = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(cache_mutex);
+        file = find_add(hashKey, timeout);
+        if (file)
+            file->pin();
+    }
+
+    if (file and !file->get_config() and !file->get_inspector())
+    {
+        FileInspect* inspector = (FileInspect*)InspectorManager::acquire_file_inspector();
+        if (inspector)
+        {
+            file->set_config(inspector->config);
+            file->set_inspector(inspector);
+        }
+    }
+    return file;
+}
+
+void FileCache::make_key(Flow* flow, uint64_t file_id, FileHashKey& hashKey) const
+{
+    hashKey = {};
+    hashKey.dip = flow->client_ip;
+    hashKey.sip = flow->server_ip;
+    hashKey.dgroup = flow->client_group;
+    hashKey.sgroup = flow->server_group;
+    hashKey.file_id = file_id;
+    hashKey.asid = flow->key->addressSpaceId;
+}
+
+FileContext* FileCache::dup_cache_context(Flow* flow, uint64_t file_id, bool& is_pending)
+{
+    FileContext* copy = new FileContext();
+    is_pending = false;
+
+    FileHashKey hashKey;
+    make_key(flow, file_id, hashKey);
+    {
+        std::lock_guard<std::mutex> lock(cache_mutex);
+        FileContext* cached = find_add(hashKey, DEFAULT_FILE_LOOKUP_TIMEOUT_CACHED_ITEM);
+        if (cached)
+        {
+            std::lock_guard<std::recursive_mutex> udlock(cached->user_file_data_mutex);
+            is_pending = (cached->verdict == FILE_VERDICT_PENDING);
+            copy->copy(*cached, false);
+            if (!is_pending and !cached->is_cacheable())
+                copy->set_not_cacheable();
+            return copy;
+        }
+    }
+    delete copy;
+    return nullptr;
+}
+
+bool FileCache::verdict_publish_blocked(FileVerdict cached, FileVerdict incoming)
+{
+    const bool cached_terminal = (cached != FILE_VERDICT_UNKNOWN and cached != FILE_VERDICT_PENDING);
+    const bool incoming_nonterminal = (incoming == FILE_VERDICT_UNKNOWN or incoming == FILE_VERDICT_PENDING);
+    return cached_terminal and incoming_nonterminal;
+}
+
+void FileCache::publish_flow_verdict_locked(const FileHashKey& key, int64_t timeout, FileInfo* src,
+    bool is_cacheable)
+{
+    std::lock_guard<std::mutex> lock(cache_mutex);
+    FileContext* node = find_add(key, timeout);
+    if (!node)
+        return;
+
+    const bool same = (src == static_cast<FileInfo*>(node));
+
+    std::lock_guard<std::recursive_mutex> udlock(node->user_file_data_mutex);
+
+    const uint8_t* node_sha = node->get_file_sig_sha256();
+    const uint8_t* src_sha = src->get_file_sig_sha256();
+    const bool cross_file = node_sha and src_sha and
+        memcmp(node_sha, src_sha, SHA256_HASH_SIZE) != 0;
+
+    if (verdict_publish_blocked(node->verdict, src->verdict) and !cross_file)
+    {
+        if (FILE_VERDICT_PENDING == src->verdict and !same)
+        {
+            if (src->get_file_data() and !node->get_file_data())
+            {
+                node->set_file_data(src->get_file_data());
+                src->set_file_data(nullptr);
+            }
+            if (timerisset(&src->pending_expire_time) and
+                !timerisset(&node->pending_expire_time))
+                node->pending_expire_time = src->pending_expire_time;
+        }
+        return;
+    }
+
+    *((FileInfo*)node) = *src;
+
+    if (!same and not is_cacheable)
+        node->set_not_cacheable();
+
+    if (FILE_VERDICT_PENDING == src->verdict and !same)
+    {
+        if (src->get_file_data() and !node->get_file_data())
+        {
+            node->set_file_data(src->get_file_data());
+            src->set_file_data(nullptr);
+        }
+    }
+    else if (!same and src->get_file_data())
+    {
+        node->set_file_data(nullptr);
+    }
+}
+
+void FileCache::take_pending_file_data(Flow* flow, uint64_t file_id, FileInfo* dst)
+{
+    FileHashKey hashKey;
+    make_key(flow, file_id, hashKey);
+
+    std::lock_guard<std::mutex> lock(cache_mutex);
+    FileContext* node = find_add(hashKey, DEFAULT_FILE_LOOKUP_TIMEOUT_CACHED_ITEM);
+    if (node and node->verdict == FILE_VERDICT_PENDING and node->get_file_data() and !dst->get_file_data())
+    {
+        std::lock_guard<std::recursive_mutex> udlock(node->user_file_data_mutex);
+        dst->set_file_data(node->get_file_data());
+        node->set_file_data(nullptr);
+    }
+}
+
+bool FileCache::cached_context_not_cacheable(Flow* flow, uint64_t file_id)
+{
+    FileHashKey hashKey;
+    make_key(flow, file_id, hashKey);
+
+    std::lock_guard<std::mutex> lock(cache_mutex);
+    FileContext* node = find_add(hashKey, DEFAULT_FILE_LOOKUP_TIMEOUT_CACHED_ITEM);
+    return node and !node->is_cacheable();
+}
+
+void FileCache::store_shared_verdict(const FileHashKey& key, int64_t timeout, FileInfo& src)
+{
+    bool cache_full = false;
+    int64_t cache_expire = 0;
+    add(key, timeout, cache_full, cache_expire, true);
+
+    std::lock_guard<std::mutex> lock(cache_mutex);
+    FileContext* node = find_add(key, timeout);
+    if (!node)
+        return;
+
+    const bool cached_condemned =
+        (node->verdict == FILE_VERDICT_BLOCK or node->verdict == FILE_VERDICT_REJECT);
+    const bool incoming_condemned =
+        (src.verdict == FILE_VERDICT_BLOCK or src.verdict == FILE_VERDICT_REJECT);
+    if (verdict_publish_blocked(node->verdict, src.verdict) or (cached_condemned and !incoming_condemned))
+        return;
+
+    std::lock_guard<std::recursive_mutex> udlock(node->user_file_data_mutex);
+    *((FileInfo*)node) = src;
+}
+
 FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
     FilePolicyBase* policy, const uint8_t* current_data, uint32_t current_data_len)
 {
     assert(file);
 
-    file->user_file_data_mutex.lock();
-    FileVerdict verdict = policy->type_lookup(p, file);
-    file->user_file_data_mutex.unlock();
+    FileVerdict verdict;
+    {
+        std::lock_guard<std::recursive_mutex> udlock(file->user_file_data_mutex);
+        verdict = policy->type_lookup(p, file);
+    }
 
     FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
         "check_verdict:verdict after type lookup %d\n", verdict);
@@ -334,10 +517,9 @@ FileVerdict FileCache::check_verdict(Packet* p, FileInfo* file,
 
     if ( file->get_file_sig_sha256() and verdict <= FILE_VERDICT_LOG )
     {
-        file->user_file_data_mutex.lock();
+        std::lock_guard<std::recursive_mutex> udlock(file->user_file_data_mutex);
         file->set_capture_file_data(current_data, current_data_len);
         verdict = policy->signature_lookup(p, file);
-        file->user_file_data_mutex.unlock();
     }
 
     FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
@@ -350,13 +532,7 @@ void FileCache::publish_file_cache_event(Flow* flow, FileInfo* file, int64_t tim
     if (SnortConfig::get_conf()->mp_dbus)
     {	    
         FileHashKey hashkey;
-        hashkey.dip = flow->client_ip;
-        hashkey.sip = flow->server_ip;
-        hashkey.dgroup = flow->client_group;
-        hashkey.sgroup = flow->server_group;
-        hashkey.file_id = file->get_file_id();
-        hashkey.asid = flow->key->addressSpaceId;
-        hashkey.padding[0] = hashkey.padding[1] = hashkey.padding[2] = 0;
+        make_key(flow, file->get_file_id(), hashkey);
 
 
         std::shared_ptr<FileMPEvent> fe = std::make_shared<FileMPEvent>(hashkey, timeout, *file);
@@ -382,34 +558,14 @@ int FileCache::store_verdict(Flow* flow, FileInfo* file, int64_t timeout, bool &
     }
 
     FileContext* file_got = get_file(flow, file_id, true, timeout, false, cache_full, cache_expire);
-    if (file_got)
-    {
-        publish_file_cache_event(flow, file, cache_expire);
-        *((FileInfo*)(file_got)) = *file;
-
-        if (file != file_got and not is_cacheable)
-            file_got->set_not_cacheable();
-
-        if (FILE_VERDICT_PENDING == file->verdict and file != file_got)
-        {
-            if (file->get_file_data() and !file_got->get_file_data())
-            {
-                file_got->user_file_data_mutex.lock();
-                file_got->set_file_data(file->get_file_data());
-                file->set_file_data(nullptr);
-                file_got->user_file_data_mutex.unlock();
-            }
-        }
-        else
-        {
-            if (file->get_file_data() and file != file_got)
-            {
-                file_got->set_file_data(nullptr);
-            }
-        }
-    }
-    else
+    if (!file_got)
         return -1;
+
+    publish_file_cache_event(flow, file, cache_expire);
+
+    FileHashKey key;
+    make_key(flow, file_id, key);
+    publish_flow_verdict_locked(key, timeout, file, is_cacheable);
     return 0;
 }
 
@@ -625,18 +781,94 @@ FileVerdict FileCache::cached_verdict_lookup(Packet* p, FileInfo* file,
         return verdict;
     }
 
-    FileContext* file_found = get_file(flow, file_id, false, false);
+    int64_t lease = lookup_timeout.load(std::memory_order_relaxed);
+    FileContext* file_found = find_and_pin(flow, file_id, lease < 1 ? 1 : lease);
 
     if (file_found)
     {
-        /*Query the file policy in case verdict has been changed*/
-        verdict = check_verdict(p, file_found, policy, current_data, current_data_len);
+        CacheNodePin node_pin(cache_mutex, file_found);
+        {
+            std::lock_guard<std::recursive_mutex> udlock(file_found->user_file_data_mutex);
+
+            if (not static_cast<FileContext*>(file)->is_cache_dup()
+                and file_found->verdict == FILE_VERDICT_PENDING)
+                return FILE_VERDICT_UNKNOWN;
+
+            file_found->set_partial_flag(file->is_partial_download());
+            verdict = check_verdict(p, file_found, policy, current_data, current_data_len);
+        }
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
             "cached_verdict_lookup:Verdict received from cached_verdict_lookup %d\n", verdict);
-        apply_verdict(p, file_found, verdict, true, policy);
-        // Update the current file context from cached context
-        file->copy(*(FileInfo*)file_found, false);
+        file->verdict = verdict;
+        if (verdict != FILE_VERDICT_UNKNOWN)
+            apply_verdict(p, file_found, verdict, true, policy);
+        if (verdict != FILE_VERDICT_UNKNOWN)
+        {
+            const bool cur_type_enabled = file->is_file_type_enabled();
+            const bool cur_sig_enabled = file->is_file_signature_enabled();
+            std::lock_guard<std::mutex> lock(cache_mutex);
+            std::lock_guard<std::recursive_mutex> udlock(file_found->user_file_data_mutex);
+            file->copy(*(FileInfo*)file_found, false);
+            file->config_file_type(cur_type_enabled);
+            file->config_file_signature(cur_sig_enabled);
+        }
     }
 
     return verdict;
 }
+
+FileVerdict FileCache::resume_pending_verdict(Packet* p, FileInfo* dup,
+    FilePolicyBase* policy)
+{
+    Flow* flow = p->flow;
+    FileVerdict verdict = FILE_VERDICT_UNKNOWN;
+
+    assert(dup);
+    uint64_t file_id = dup->get_file_id();
+    if (!file_id)
+    {
+        FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p,
+            "resume_pending_verdict:File id not found, returning\n");
+        return verdict;
+    }
+
+    int64_t lease = lookup_timeout.load(std::memory_order_relaxed);
+    FileContext* node = find_and_pin(flow, file_id, lease < 1 ? 1 : lease);
+    if (!node)
+    {
+        FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+            "resume_pending_verdict:node not found, returning\n");
+        return verdict;
+    }
+
+    CacheNodePin node_pin(cache_mutex, node);
+    {
+        std::lock_guard<std::recursive_mutex> udlock(node->user_file_data_mutex);
+        if (dup->is_file_name_set())
+            node->set_file_name(dup->get_file_name().c_str(), dup->get_file_name().size());
+        if (dup->is_url_set())
+            node->set_url(dup->get_url().c_str(), dup->get_url().size());
+        if (dup->is_host_set())
+            node->set_host(dup->get_host_name().c_str(), dup->get_host_name().size());
+
+        verdict = policy->signature_lookup(p, node);
+    }
+    dup->verdict = verdict;
+    FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
+        "resume_pending_verdict:applying file cache verdict %d\n", verdict);
+    apply_verdict(p, node, verdict, false, policy);
+    const FileVerdict resolved = node->verdict;
+    dup->verdict = resolved;
+    node->log_file_event(flow, policy);
+    {
+        const bool cur_type_enabled = dup->is_file_type_enabled();
+        const bool cur_sig_enabled = dup->is_file_signature_enabled();
+        std::lock_guard<std::mutex> lock(cache_mutex);
+        std::lock_guard<std::recursive_mutex> udlock(node->user_file_data_mutex);
+        dup->copy(*(FileInfo*)node, false);
+        dup->config_file_type(cur_type_enabled);
+        dup->config_file_signature(cur_sig_enabled);
+    }
+    return resolved;
+}
+

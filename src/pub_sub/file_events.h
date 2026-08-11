@@ -151,10 +151,14 @@ public:
     bool get_extracted_cutoff() const;
     uint64_t get_extracted_size() const;
 
+    void snapshot() const;
+
 private:
     const FileContext& file_ctx;
     mutable std::optional<std::string> sha256;
     mutable std::optional<std::string> filename;
+    mutable std::optional<std::string> source;
+    mutable std::optional<std::string> extracted_name;
 };
 
 }

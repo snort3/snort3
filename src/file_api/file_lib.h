@@ -112,7 +112,7 @@ public:
 
     FileVerdict verdict = FILE_VERDICT_UNKNOWN;
     bool processing_complete = false;
-    std::mutex user_file_data_mutex;
+    std::recursive_mutex user_file_data_mutex;
     struct timeval pending_expire_time = {0, 0};
 
     void set_re_eval();
@@ -193,6 +193,13 @@ public:
     char* get_UTF8_fname(size_t* converted_len);
     void set_not_cacheable() { cacheable = false; }
     bool is_cacheable() { return cacheable; }
+    void pin() { ++in_use; }
+    void unpin() { if ( in_use > 0 ) --in_use; }
+    bool is_in_use() const { return in_use > 0; }
+    void set_cache_dup() { cache_dup = true; }
+    bool is_cache_dup() const { return cache_dup; }
+    void set_limit_excluded() { limit_excluded = true; }
+    bool is_limit_excluded() const { return limit_excluded; }
     bool segments_queued() { return (file_segments != nullptr); }
 
     // Configuration functions
@@ -223,6 +230,9 @@ private:
     FileInspect* inspector;
     FileConfig*  config;
     bool cacheable = true;
+    bool cache_dup = false;
+    bool limit_excluded = false;
+    int in_use = 0;
     hr_time start_time = TIME_POINT_ZERO;
     double duration = 0.0;  // File processing duration in seconds (fractional)
     std::string source;

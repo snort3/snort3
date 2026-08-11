@@ -167,6 +167,7 @@ void FileInfo::copy(const FileInfo& other, bool clear_data)
         // only one copy of file capture
         file_capture = nullptr;
         policy_id = 0;
+        delete user_file_data;
         user_file_data = nullptr;
     }
 }
@@ -516,6 +517,8 @@ uint32_t FileInfo::get_policy_id()
 
 FileCaptureState FileInfo::reserve_file(FileCapture*& dest)
 {
+    std::lock_guard<std::recursive_mutex> lock(user_file_data_mutex);
+
     if (!file_capture)
         return FileCapture::error_capture(FILE_CAPTURE_FAIL);
 
@@ -523,7 +526,6 @@ FileCaptureState FileInfo::reserve_file(FileCapture*& dest)
 
     if (state == FILE_CAPTURE_SUCCESS)
         extracted_size = file_capture->get_file_capture_size();
-    
     config_file_capture(false);
     dest = file_capture;
     file_capture = nullptr;
@@ -544,6 +546,7 @@ void FileInfo::set_file_data(UserFileDataBase* fd)
 // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void FileInfo::set_capture_file_data(const uint8_t* file_data, uint32_t size)
 {
+    std::lock_guard<std::recursive_mutex> lock(user_file_data_mutex);
     if (file_capture)
         file_capture->set_data(file_data, size);
 }
@@ -645,9 +648,13 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
         {
             hr_time now = SnortClock::now();
             duration = (TO_USECS(now - start_time)) / 1000000.0;  // Convert microseconds to seconds
-            set_source(flow);
 
             FileEvent file_event(*this);
+            {
+                std::lock_guard<std::recursive_mutex> udlock(user_file_data_mutex);
+                set_source(flow);
+                file_event.snapshot();
+            }
             DataBus::publish(get_file_adv_pub_id(), FileEventIds::FILE_COMPLETE, file_event, flow);
 
             std::string filename = file_event.get_filename();
@@ -669,7 +676,10 @@ void FileContext::log_file_event(Flow* flow, FilePolicyBase* policy)
         }
 
         if ( config->trace_type and !force_adv_log )
+        {
+            std::lock_guard<std::recursive_mutex> udlock(user_file_data_mutex);
             print(std::cout);
+        }
     }
 }
 
@@ -722,8 +732,11 @@ void FileContext::finish_signature_lookup(Packet* p, bool final_lookup, FilePoli
                 log_file_event(flow, policy);
                 force_adv_log = false;
             }
-            snort_free(sha256);
-            sha256 = nullptr;
+            {
+                std::lock_guard<std::recursive_mutex> lock(user_file_data_mutex);
+                snort_free(sha256);
+                sha256 = nullptr;
+            }
         }
     }
 }
@@ -815,6 +828,9 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
     // cppcheck-suppress unreadVariable
     Profile profile(file_perf_stats);
     Flow* flow = p->flow;
+
+    if ( data_size < 0 )
+        return true;
 
     if ( config->trace_stream )
     {
@@ -930,9 +946,7 @@ bool FileContext::process(Packet* p, const uint8_t* file_data, int data_size,
         /*Fails to capture, when out of memory or size limit, need lookup*/
         if (is_file_capture_enabled())
         {
-            user_file_data_mutex.lock();
             process_file_capture(file_data, data_size, position);
-            user_file_data_mutex.unlock();
         }
 
         finish_signature_lookup(p, ( file_state.sig_state != FILE_SIG_FLUSH ), policy);
@@ -1052,6 +1066,8 @@ void FileContext::process_file_type(Packet* pkt,const uint8_t* file_data, int da
 void FileContext::process_file_signature_sha256(const uint8_t* file_data, int data_size,
     FilePosition position)
 {
+    std::lock_guard<std::recursive_mutex> lock(user_file_data_mutex);
+
     if ((int64_t)processed_bytes + data_size > config->file_signature_depth)
     {
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_INFO_LEVEL, GET_CURRENT_PACKET,
@@ -1154,6 +1170,8 @@ void FileContext::process_file_signature_sha256(const uint8_t* file_data, int da
 FileCaptureState FileContext::process_file_capture(const uint8_t* file_data,
     int data_size, FilePosition position)
 {
+    std::lock_guard<std::recursive_mutex> lock(user_file_data_mutex);
+
     if (!file_capture)
     {
         file_capture = new FileCapture(config->capture_min_size,
@@ -1171,7 +1189,7 @@ FileCaptureState FileContext::process_file_capture(const uint8_t* file_data,
 
 void FileContext::stop_file_capture()
 {
-    std::lock_guard<std::mutex> lock(user_file_data_mutex);
+    std::lock_guard<std::recursive_mutex> lock(user_file_data_mutex);
     stop_file_capture_unlocked();
 }
 

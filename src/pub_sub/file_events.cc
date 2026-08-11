@@ -37,7 +37,12 @@ uint64_t FileEvent::get_fuid() const
 { return file_ctx.get_file_id(); }
 
 const std::string& FileEvent::get_source() const
-{ return file_ctx.get_source(); }
+{
+    if (!source.has_value())
+        source = file_ctx.get_source();
+
+    return *source;
+}
 
 const char* FileEvent::get_mime_type() const
 {
@@ -121,10 +126,23 @@ const std::string& FileEvent::get_sha256() const
 }
 
 const std::string& FileEvent::get_extracted_name() const
-{ return file_ctx.get_extracted_name(); }
+{
+    if (!extracted_name.has_value())
+        extracted_name = file_ctx.get_extracted_name();
+
+    return *extracted_name;
+}
 
 bool FileEvent::get_extracted_cutoff() const
 { return file_ctx.get_extracted_cutoff(); }
 
 uint64_t FileEvent::get_extracted_size() const
 { return file_ctx.get_extracted_size(); }
+
+void FileEvent::snapshot() const
+{
+    get_filename();
+    get_sha256();
+    get_source();
+    get_extracted_name();
+}

@@ -133,7 +133,10 @@ void FileService::verify_reload(const SnortConfig* sc)
 void FileService::close()
 {
     if (file_cache)
+    {
         delete file_cache;
+        file_cache = nullptr;
+    }
 
     MimeSession::exit();
     FileCapture::exit();

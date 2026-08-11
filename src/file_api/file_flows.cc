@@ -106,8 +106,9 @@ void FileFlows::handle_retransmit(Packet* p)
 
     bool is_new_context = false;
     FileContext* file = get_file_context(pending_file_id, false, is_new_context);
-    if ((file == nullptr) or 
-        ((file->verdict != FILE_VERDICT_PENDING) and (file->is_cacheable())))
+    if ((file == nullptr) or
+        ((file->verdict != FILE_VERDICT_PENDING) and (file->is_cacheable())
+            and !pending_resolution))
     {
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, p,
             "handle_retransmit:context is null or verdict not pending, returning\n");
@@ -116,30 +117,23 @@ void FileFlows::handle_retransmit(Packet* p)
 
     FileCache* file_cache = FileService::get_file_cache();
 
-    if (!file->get_file_data())
-    {
-        FileContext* file_got = nullptr;
-        if (file_cache)
-            file_got = file_cache->get_file(flow, pending_file_id, false, false);
-        if (file_got and file_got->get_file_data() and file_got->verdict == FILE_VERDICT_PENDING)
-        {
-            file_got->user_file_data_mutex.lock();
-            file->set_file_data(file_got->get_file_data());
-            file_got->set_file_data(nullptr);
-            file_got->user_file_data_mutex.unlock();
-        }
-    }
-    file->user_file_data_mutex.lock();
-    FileVerdict verdict = file_policy->signature_lookup(p, file);
-    file->user_file_data_mutex.unlock();
-
     if (file_cache)
     {
+        set_current_file_context(file);
+
+        FileVerdict verdict = file_cache->resume_pending_verdict(p, file, file_policy);
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, p,
-            "handle_retransmit:applying file cache verdict %d\n", verdict);
-        file_cache->apply_verdict(p, file, verdict, false, file_policy);
+            "handle_retransmit:file cache verdict %d\n", verdict);
+        if (verdict != FILE_VERDICT_PENDING and verdict != FILE_VERDICT_UNKNOWN)
+            pending_resolution = false;
     }
-    file->log_file_event(flow, file_policy);
+    else
+    {
+        file_policy->signature_lookup(p, file);
+        file->log_file_event(flow, file_policy);
+        if (file->verdict != FILE_VERDICT_PENDING and file->verdict != FILE_VERDICT_UNKNOWN)
+            pending_resolution = false;
+    }
 }
 
 FileFlows* FileFlows::get_file_flows(Flow* flow, bool to_create)
@@ -301,14 +295,34 @@ FileContext* FileFlows::get_file_context(
         context = file_cache->get_file(flow, file_id, false, true);
         FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
             "get_file_context:trying to get context from cache\n");
+
+        if (context)
+        {
+            bool cached_pending = false;
+            FileContext* private_copy = file_cache->dup_cache_context(flow, file_id, cached_pending);
+            if (private_copy)
+            {
+                context = private_copy;
+                is_new_context = false;
+                partially_processed_contexts[multi_file_processing_id] = context;
+                context->set_cache_dup();
+                context->set_limit_excluded();
+                ++cache_dup_count;
+                FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
+                    "get_file_context:created private copy (pending=%d)\n", cached_pending);
+            }
+            else
+                context = nullptr;
+        }
     }
 
     // If we haven't found the context, create it and store it on the file flows object
     if (!context and to_create)
     {
-        // If we have reached the max file per flow limit, alert and increment the peg count
         const FileConfig* fc = get_file_config(SnortConfig::get_conf());
-        if (partially_processed_contexts.size() == fc->max_files_per_flow)
+        const size_t new_context_count =
+            partially_processed_contexts.size() - cache_dup_count;
+        if (new_context_count == fc->max_files_per_flow)
         {
             FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_ERROR_LEVEL, GET_CURRENT_PACKET,
                "max file per flow limit reached %lu\n", partially_processed_contexts.size());
@@ -322,8 +336,10 @@ FileContext* FileFlows::get_file_context(
             partially_processed_contexts[multi_file_processing_id] = context;
             FILE_DEBUG(file_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL, GET_CURRENT_PACKET,
                 "get_file_context:creating new context\n");
-            if (partially_processed_contexts.size() > file_counts.max_concurrent_files_per_flow)
-                file_counts.max_concurrent_files_per_flow = partially_processed_contexts.size();
+            const size_t concurrent_new =
+                partially_processed_contexts.size() - cache_dup_count;
+            if (concurrent_new > file_counts.max_concurrent_files_per_flow)
+                file_counts.max_concurrent_files_per_flow = concurrent_new;
         }
     }
 
@@ -352,6 +368,8 @@ void FileFlows::remove_processed_file_context(uint64_t file_id)
 {
     FileContext* context = get_partially_processed_context(file_id);
     partially_processed_contexts.erase(file_id);
+    if (context and context->is_limit_excluded() and cache_dup_count > 0)
+        --cache_dup_count;
     if (!context)
         return;
 
@@ -394,7 +412,6 @@ bool FileFlows::file_process(Packet* p, uint64_t file_id, const uint8_t* file_da
             "file_process:context missing, returning \n");
         return false;
     }
-
     if (context->has_to_re_eval() and context->processing_complete and not is_partial)
     {
         FILE_DEBUG(file_trace , DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL, p,
@@ -504,12 +521,8 @@ bool FileFlows::file_process(Packet* p, const uint8_t* file_data, int data_size,
 
     context = find_main_file_context(position, direction, file_index);
     FileCache* file_cache = FileService::get_file_cache();
-    if (file_cache)
-    {
-        FileContext *cached_context = file_cache->get_file(flow, file_index, false, false);
-        if (cached_context and not cached_context->is_cacheable())
-            context->set_not_cacheable();
-    }
+    if (file_cache and file_cache->cached_context_not_cacheable(flow, file_index))
+        context->set_not_cacheable();
 
     set_current_file_context(context);
     context->set_weak_file_name((const char*)fname, name_size);
@@ -565,6 +578,7 @@ bool FileFlows::set_file_name(const uint8_t* fname, uint32_t name_size, uint64_t
 void FileFlows::add_pending_file(uint64_t file_id)
 {
     current_file_id = pending_file_id = file_id;
+    pending_resolution = true;
 }
 //--------------------------------------------------------------------------
 // unit tests

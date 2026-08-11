@@ -327,7 +327,11 @@ int FileSegments::process(Packet* p, const uint8_t* file_data, uint64_t data_siz
     if (current_offset == offset)
     {
         if (head and offset+data_size > head->offset)
+        {
+            if (head->offset < offset)
+                return 1;
             data_size = head->offset - offset;
+        }
 
         ret =  process_one(p, file_data, data_size, policy, position);
         current_offset += data_size;

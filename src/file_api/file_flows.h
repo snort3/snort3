@@ -30,6 +30,7 @@
 #include "file_api.h"
 
 #include <map>
+#include <unordered_map>
 
 static const uint32_t FILE_ID_GID = 150;
 
@@ -135,11 +136,13 @@ private:
     FileContext* current_context = nullptr;
     uint64_t current_file_id = 0;
     uint64_t pending_file_id = 0;
+    bool pending_resolution = false;
     bool gen_signature = false;
     Flow* flow = nullptr;
     FilePolicyBase* file_policy = nullptr;
 
     std::unordered_map<uint64_t, FileContext*> partially_processed_contexts;
+    size_t cache_dup_count = 0;
     // Exact FileContext pointer scheduled for delayed deletion. May or may
     // not alias current_context.
     FileContext* deferred_delete_context = nullptr;

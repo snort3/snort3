@@ -37,13 +37,7 @@ void FileCacheShare::handle(DataEvent& de, Flow*)
     FileCache* file_cache = FileService::get_file_cache();
     if (file_cache)
     {
-        bool cache_full = false;
-        int64_t cache_expire = 0;
-        FileContext* file_got = file_cache->add(key, timeout, cache_full, cache_expire, true);
-        if (file_got)
-        {    
-            *static_cast<FileInfo*>(file_got) = file;
-        }
+        file_cache->store_shared_verdict(key, timeout, file);
     }
 }
 
