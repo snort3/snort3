@@ -47,6 +47,7 @@ public:
     static bool send_command_to_socket(const std::string& command);
 
     static bool service_users();
+    static int get_control_port();
 };
 
 #endif

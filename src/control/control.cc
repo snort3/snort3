@@ -77,6 +77,9 @@ void ControlConn::shutdown()
 
 void ControlConn::configure() const
 {
+    if (!Shell::get_lua_sandbox().empty())
+        shell->load_lua_sandbox();
+
     ModuleManager::load_commands(shell);
 }
 

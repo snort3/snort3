@@ -46,6 +46,7 @@ int main_reload_hosts(lua_State* = nullptr);
 int main_resume(lua_State* = nullptr);
 int main_rotate_stats(lua_State* = nullptr);
 int main_show_config_generation(lua_State* = nullptr);
+int main_show_control_port(lua_State* = nullptr);
 int show_snort_cpu(lua_State* = nullptr);
 int show_snort_packet_latency(lua_State* = nullptr);
 

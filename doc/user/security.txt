@@ -1,0 +1,383 @@
+=== Snort Process
+
+Snort requires elevated privileges to capture packets but should not run as root
+longer than necessary.
+
+==== Privilege Dropping
+
+Use -u and -g to drop privileges after initialization:
+
+    snort -u snort -g snort -i eth0 -c snort.lua
+
+Snort starts as root to:
+
+* Open packet capture interface
+* Bind to privileged ports
+* Create PID files in protected directories
+
+Then drops to specified user/group before processing traffic.
+
+==== User and Group Setup
+
+Create a dedicated non-privileged account:
+
+    useradd -r -s /bin/false -M snort
+    groupadd snort
+
+Grant minimal required permissions:
+
+    chown snort:snort /var/log/snort
+    chown snort:snort /var/run/snort
+    chmod 750 /var/log/snort
+
+==== File Permissions
+
+Set restrictive umask before starting Snort:
+
+    snort -m 0027 ...
+
+Or use --umask parameter. Default 0 means use system umask.
+
+==== Chroot
+
+Optionally restrict filesystem access:
+
+    snort -t /var/snort/jail -u snort -g snort ...
+
+Chroot directory must contain required libraries and config files.
+Applied after initialization but before privilege drop.
+
+==== Security Recommendations
+
+* Never run Snort as root in production
+* Use dedicated user account (not nobody, not daemon)
+* Restrict log directory permissions (750 or 700)
+* Use read-only mounts for config files where possible
+* Enable SELinux/AppArmor confinement when available
+* Monitor Snort's resource usage (CPU, memory, file descriptors)
+
+=== Configuration Files
+
+Snort configuration files contain sensitive information and control detection behavior.
+
+==== File Ownership and Permissions
+
+Restrict access to configuration files:
+
+    chown root:snort /etc/snort/snort.lua
+    chmod 640 /etc/snort/snort.lua
+    chown root:snort /etc/snort/rules/*.rules
+    chmod 640 /etc/snort/rules/*.rules
+
+Only root should write to config files. Snort user needs read access only.
+
+==== Lua Sandbox for Config Files
+
+Restrict Lua operations during configuration loading:
+
+    snort -c snort.lua --lua-sandbox lua/sandbox.lua
+
+The sandbox prevents config files from:
+
+* Executing shell commands (os.execute, io.popen)
+* Reading arbitrary files outside config directory
+* Loading untrusted Lua modules
+
+Recommended for production when using external or untrusted Lua configurations.
+
+===== Sandbox File Requirements
+
+The sandbox file MUST define a global table named `sandbox_env`. This is the
+restricted environment in which configuration files and control commands execute.
+Snort will fail to start if `sandbox_env` is missing or not a table.
+
+Minimum valid sandbox file:
+
+    sandbox_env = { }
+
+With this minimal definition, Snort will automatically add:
+
+* Built-in control commands (help, quit, pause, resume, dump_stats, etc.)
+* Snort version constants (SNORT_VERSION, SNORT_MAJOR_VERSION, etc.)
+* Safe include() function for loading sub-configurations
+* Whitelist management functions (snort_whitelist_append, snort_whitelist_add_prefix)
+
+To allow Lua standard library functions in control commands, add them explicitly:
+
+    sandbox_env =
+    {
+        assert = assert,
+        pairs = pairs,
+        ipairs = ipairs,
+        tostring = tostring,
+        tonumber = tonumber,
+        type = type,
+        string = { format = string.format, find = string.find, ... },
+        table = { insert = table.insert, sort = table.sort, ... },
+        math = { floor = math.floor, max = math.max, ... },
+    }
+
+Functions NOT in `sandbox_env` are inaccessible from sandboxed code. Omit dangerous
+functions (os, io, ffi, debug, loadfile, loadstring, require) to prevent abuse.
+
+Optionally, define `create_sandbox_env()` for custom initialization. It is called
+after Snort adds its built-in functions to `sandbox_env`:
+
+    function create_sandbox_env()
+        -- sandbox_env already contains Snort commands and version constants
+        -- Add custom helpers or validation here
+    end
+
+WARNING: Do not set a read-only metatable (__newindex) on `sandbox_env` inside
+`create_sandbox_env()`. Snort registers control commands into `sandbox_env` after
+this function returns, and a read-only metatable would block that registration.
+
+A reference sandbox file is provided at `lua/sandbox.lua` in the installation
+directory.
+
+Note:  third-party configuration bundles may require additional functions beyond
+what the default sandbox provides. They typically ship their own sandbox file.
+
+===== Tweaks Compatibility
+
+The default sandbox does NOT expose `io` or `os` libraries. Some tweaks files
+(notably `talos.lua`) use `io.open` to check for optional files. Using
+`--tweaks talos` with the default sandbox will fail.
+
+To use talos tweaks with sandboxing, add `io.open` and `io.close` to your
+custom sandbox:
+
+    sandbox_env =
+    {
+        -- ... other safe functions ...
+        io = { open = io.open, close = io.close },
+    }
+
+Only expose the minimum `io` functions required. Never expose `io.popen` (shell
+execution) or `os.execute`.
+
+==== Read-Only Configuration
+
+Mount config directories read-only where possible:
+
+    mount -o ro,bind /etc/snort /var/snort/config
+
+Prevents runtime modification of rules and configuration.
+
+=== Control Channel
+
+The control channel allows runtime interaction with Snort via Lua commands.
+Security depends on the interface type used.
+
+==== Lua Sandbox (applies to all control channels)
+
+When --lua-sandbox is specified, ALL control commands execute in the restricted
+sandbox environment, regardless of the control channel type (local shell, UNIX
+socket, or TCP socket). This provides defense-in-depth by preventing:
+
+* Shell command execution (os.execute, io.popen)
+* File I/O (io.open, loadfile, dofile)
+* Arbitrary code loading (loadstring, require)
+* Raw memory access (ffi)
+* Sandbox escape via debug library
+
+The sandbox is applied uniformly to ensure consistent security across all control
+interfaces.
+
+==== Local shell
+
+Local shell mode (--shell) provides an interactive prompt on the console.
+
+Security model:
+
+* Physical or SSH access to the host required
+* User must have permission to execute snort binary
+* Lua sandbox applies if --lua-sandbox is configured (same as other control channels)
+* Intended for development and debugging only
+
+Recommendations:
+
+* Do not use in production with --shell exposed
+* Use --pause with --shell to control when processing starts
+* Shell access implies full trust in the operator
+* Use --lua-sandbox to restrict Lua operations even for local shell
+
+==== UNIX socket
+
+UNIX socket provides local control access with multiple security layers.
+
+Enable UNIX socket:
+
+    snort --control-socket /var/run/snort.sock
+
+===== Security Layers
+
+Layer 1 - File Permissions (automatic):
+
+* Socket created with mode 0600 (owner read/write only)
+* Prevents unauthorized users from connecting
+
+Layer 2 - Peer Credential Validation (optional):
+
+* Validate connecting process UID/GID at accept() time
+* Configure allowed user and group:
+
+    snort --control-socket /var/run/snort.sock \
+          --control-socket-uid snortadmin \
+          --control-socket-gid snortctl
+
+* Root (UID 0) can always connect when UID validation enabled
+* Rejected connections logged with peer credentials
+
+Layer 3 - Lua Sandbox (optional):
+
+* Restrict Lua operations for control commands
+* Apply sandbox to control channel:
+
+    snort --control-socket /var/run/snort.sock \
+          --lua-sandbox lua/sandbox.lua
+
+* Blocks os.execute(), io.open(), ffi, require(), loadstring()
+* Allows legitimate Snort control commands (help, pause, dump_stats, etc.)
+
+Note: Challenge-response authentication (--control-secret-file) is NOT used for
+UNIX sockets. UNIX sockets rely on file permissions and peer credential validation,
+which provide sufficient protection for local-only connections. Challenge-response
+is reserved for TCP sockets where these OS-level protections are unavailable.
+
+===== Deployment Examples
+
+Basic (automatic security):
+
+    snort --control-socket /var/run/snort.sock
+
+Restricted user access:
+
+    snort --control-socket /var/run/snort.sock \
+          --control-socket-uid snortadmin
+
+Maximum security:
+
+    snort --control-socket /var/run/snort.sock \
+          --control-socket-uid 0 \
+          --lua-sandbox lua/sandbox.lua
+
+===== Platform Support
+
+File permissions: All platforms.
+
+Peer credentials: Linux (SO_PEERCRED), BSD/macOS (getpeereid).
+
+Lua sandbox: All platforms.
+
+==== TCP socket
+
+TCP socket provides network control access with optional shared secret authentication.
+
+Enable TCP socket on localhost:
+
+    snort -j 12345
+
+Note: Use port 0 to let the OS assign an available port automatically. The actual port
+is reported via the `show_control_port()` shell command and in the startup log.
+
+===== Security Layers
+
+Layer 1 - Network Binding:
+
+* Binds to 127.0.0.1 (localhost only) by default - not remotely accessible
+* No encryption (plain text Lua commands)
+
+Layer 2 - Shared Secret Authentication (optional):
+
+* Challenge-response authentication using HMAC-SHA256
+* Protects against unauthorized connections on localhost
+* Configure with base64-encoded shared secret file:
+
+    snort -j 12345 --control-secret-file /etc/snort/control.secret
+
+Secret file format: first line contains base64-encoded secret (16-32 bytes recommended).
+Secrets shorter than 16 bytes produce a warning. Empty secrets are rejected. Example:
+
+    openssl rand -base64 32 > /etc/snort/control.secret
+    chmod 600 /etc/snort/control.secret
+
+Secret rotation: The secret file is re-read on every configuration reload
+(reload_config command or SIGHUP). To rotate the secret without restarting Snort:
+
+1. Write new secret to the file
+2. Issue reload_config() or send SIGHUP
+3. New connections will use the updated secret
+
+Authentication protocol:
+
+1. Client connects to control socket
+2. Server sends 32-byte random challenge
+3. Client computes HMAC-SHA256(secret, challenge)
+4. Client sends 32-byte HMAC response
+5. Server verifies HMAC and accepts/rejects connection
+
+Note: Challenge-response authentication is ONLY applied to TCP sockets. UNIX sockets
+use file permissions and peer credential validation instead, which are more appropriate
+for local-only connections and avoid the 1-second timeout overhead per connection.
+
+Layer 3 - Lua Sandbox (optional):
+
+* Restrict Lua operations for control commands
+* Apply sandbox to control channel:
+
+    snort -j 12345 --control-secret-file /etc/snort/control.secret \
+          --lua-sandbox lua/sandbox.lua
+
+===== Deployment Examples
+
+Development (no authentication):
+
+    snort -j 12345
+
+Basic authentication:
+
+    snort -j 12345 --control-secret-file /etc/snort/control.secret
+
+Maximum security:
+
+    snort -j 12345 \
+          --control-secret-file /etc/snort/control.secret \
+          --lua-sandbox lua/sandbox.lua
+
+===== Security Considerations
+
+Shared secret authentication provides protection against:
+
+* Unauthorized localhost connections
+* Accidental connections from other processes
+
+Does NOT protect against:
+
+* Network eavesdropping (no encryption)
+* Man-in-the-middle attacks (no TLS)
+* Root user attacks (root can read secret file and ptrace)
+* Denial of Service: authentication handshake blocks main thread for 1 second per
+  connection. Attacker can spam connections to block the main (control) thread.
+
+Recommendations:
+
+* Always use shared secret authentication for TCP sockets
+* Protect secret file with mode 600 (owner read/write only)
+* Use UNIX socket (--control-socket) for local-only control instead of TCP
+* Use SSH tunneling + shared secret for remote access if TCP required
+* Rotate secrets periodically
+* Never bind -j to 0.0.0.0 or public network interfaces
+* Use firewall rules to restrict access to control port
+
+Known Limitations:
+
+* Current implementation uses blocking I/O for authentication handshake
+* Each connection attempt blocks Snort's main thread for up to 1 second
+* For production environments, strongly prefer UNIX socket over TCP socket
+
+Future security enhancements under consideration:
+
+* TLS/SSL encryption
+* Client certificate authentication
+

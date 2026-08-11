@@ -25,9 +25,13 @@
 
 #include "control_mgmt.h"
 
+#include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <pwd.h>
+#include <grp.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 
 #include <cassert>
@@ -44,6 +48,7 @@
 #include "utils/stats.h"
 #include "utils/util.h"
 #include "utils/util_cstring.h"
+#include "helpers/challenge_response_auth.h"
 
 #include "control.h"
 
@@ -265,7 +270,7 @@ static int setup_socket_family(const SnortConfig* sc)
 {
     int family = AF_UNSPEC;
 
-    if (sc->remote_control_port)
+    if (sc->remote_control_port >= 0)
     {
         memset(&in_addr, 0, sizeof(in_addr));
 
@@ -296,6 +301,179 @@ static int setup_socket_family(const SnortConfig* sc)
     return family;
 }
 
+// cppcheck-suppress constParameterPointer
+static bool get_peer_credentials(int fd, uid_t* peer_uid, gid_t* peer_gid)
+{
+#ifdef __linux__
+    struct ucred peer_cred;
+    socklen_t len = sizeof(peer_cred);
+    if (getsockopt(fd, SOL_SOCKET, SO_PEERCRED, &peer_cred, &len) != 0)
+        return false;
+    *peer_uid = peer_cred.uid;
+    *peer_gid = peer_cred.gid;
+    return true;
+#elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+    return getpeereid(fd, peer_uid, peer_gid) == 0;
+#else
+    return false;
+#endif
+}
+
+static void log_peer_info(int fd, const char* action)
+{
+    if (sock_addr->sa_family == AF_INET)
+    {
+        struct sockaddr_in* peer_addr = reinterpret_cast<struct sockaddr_in*>(sock_addr);
+        char ip_str[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &peer_addr->sin_addr, ip_str, sizeof(ip_str));
+        LogMessage("Control: %s connection from %s:%u\n",
+            action, ip_str, ntohs(peer_addr->sin_port));
+    }
+    else if (sock_addr->sa_family == AF_INET6)
+    {
+        struct sockaddr_in6* peer_addr = reinterpret_cast<struct sockaddr_in6*>(sock_addr);
+        char ip_str[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET6, &peer_addr->sin6_addr, ip_str, sizeof(ip_str));
+        LogMessage("Control: %s connection from [%s]:%u\n",
+            action, ip_str, ntohs(peer_addr->sin6_port));
+    }
+    else if (sock_addr->sa_family == AF_UNIX)
+    {
+        uid_t peer_uid;
+        gid_t peer_gid;
+
+        // cppcheck-suppress knownConditionTrueFalse
+        if (get_peer_credentials(fd, &peer_uid, &peer_gid))
+            LogMessage("Control: %s UNIX socket connection from UID %u, GID %u\n",
+                action, peer_uid, peer_gid);
+        else
+            LogMessage("Control: %s UNIX socket connection\n", action);
+    }
+}
+
+static bool validate_peer_credentials(int fd, const SnortConfig* sc)
+{
+    if (sc->control_socket_uid == static_cast<uid_t>(-1)
+        && sc->control_socket_gid == static_cast<gid_t>(-1))
+        // no socket operations if user has not asked for
+        return true;
+
+    uid_t peer_uid;
+    gid_t peer_gid;
+
+    // cppcheck-suppress knownConditionTrueFalse
+    if (!get_peer_credentials(fd, &peer_uid, &peer_gid))
+    {
+#if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+        ErrorMessage("Failed to get peer credentials: %s\n", get_error(errno));
+        return false;
+#else
+        // On platforms without peer credential support, allow connection
+        // (file permissions still provide protection).
+        return true;
+#endif
+    }
+
+    if (sc->control_socket_uid != static_cast<uid_t>(-1))
+    {
+        if (peer_uid != sc->control_socket_uid && peer_uid != 0)
+        {
+            LogMessage("Control: rejected connection from UID %u (expected %u or root)\n",
+                peer_uid, sc->control_socket_uid);
+            return false;
+        }
+    }
+
+    if (sc->control_socket_gid != static_cast<gid_t>(-1))
+    {
+        if (peer_gid != sc->control_socket_gid)
+        {
+            LogMessage("Control: rejected connection from GID %u (expected %u)\n",
+                peer_gid, sc->control_socket_gid);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static bool authenticate_connection(int fd, const SnortConfig* sc)
+{
+    if (!sc->control_shared_secret || sc->control_shared_secret_len == 0)
+        return true;
+
+    // FIXIT-M: refactor to use non-blocking I/O with async authentication
+    // Using 1 second timeout as temporary mitigation.
+    constexpr int AUTH_TIMEOUT_SEC = 1;
+    struct timeval timeout;
+    timeout.tv_sec = AUTH_TIMEOUT_SEC;
+    timeout.tv_usec = 0;
+
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0)
+    {
+        ErrorMessage("Control: failed to set authentication timeout: %s\n", get_error(errno));
+        return false;
+    }
+
+    ChallengeResponseAuth auth(sc->control_shared_secret, sc->control_shared_secret_len);
+
+    const uint8_t* challenge = auth.generate_challenge();
+    if (!challenge)
+    {
+        ErrorMessage("Control: failed to generate authentication challenge\n");
+        return false;
+    }
+
+    ssize_t bytes_sent = write(fd, challenge, auth.get_challenge_size());
+    if (bytes_sent != static_cast<ssize_t>(auth.get_challenge_size()))
+    {
+        ErrorMessage("Control: failed to send authentication challenge: %s\n", get_error(errno));
+        return false;
+    }
+
+    // Receive HMAC response from client
+    // The SO_RCVTIMEO will cause read() to fail with EAGAIN/EWOULDBLOCK on timeout
+    uint8_t client_hmac[ChallengeResponseAuth::HMAC_SIZE];
+    size_t total_received = 0;
+
+    while (total_received < sizeof(client_hmac))
+    {
+        ssize_t bytes = read(fd, client_hmac + total_received, sizeof(client_hmac) - total_received);
+
+        if (bytes < 0)
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                log_peer_info(fd, "rejected");
+                LogMessage("Control: authentication timeout (%d seconds)\n", AUTH_TIMEOUT_SEC);
+                return false;
+            }
+            log_peer_info(fd, "rejected");
+            ErrorMessage("Control: failed to receive authentication response: %s\n", get_error(errno));
+            return false;
+        }
+        else if (bytes == 0)
+        {
+            log_peer_info(fd, "rejected");
+            LogMessage("Control: connection closed during authentication\n");
+            return false;
+        }
+
+        total_received += bytes;
+    }
+
+    if (!auth.verify(client_hmac))
+    {
+        log_peer_info(fd, "rejected");
+        LogMessage("Control: authentication failed - invalid HMAC\n");
+        return false;
+    }
+
+    log_peer_info(fd, "accepted");
+    LogMessage("Control: connection authenticated successfully\n");
+    return true;
+}
+
 static bool accept_conn()
 {
     int fd = accept(listener, sock_addr, &sock_addr_size);
@@ -304,10 +482,24 @@ static bool accept_conn()
         ErrorMessage("Failed to accept control socket connection: %s\n", get_error(errno));
         return false;
     }
+
+    const SnortConfig* sc = SnortConfig::get_conf();
+    if (sock_addr->sa_family == AF_UNIX && !validate_peer_credentials(fd, sc))
+    {
+        close(fd);
+        return false;
+    }
+
+    if (sock_addr->sa_family != AF_UNIX && !authenticate_connection(fd, sc))
+    {
+        close(fd);
+        return false;
+    }
+
     if (fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK) < 0)
     {
         ErrorMessage("Failed to put control socket connection in non-blocking mode: %s\n",
-                get_error(errno));
+            get_error(errno));
         close(fd);
         return false;
     }
@@ -318,7 +510,6 @@ static bool accept_conn()
         return false;
     }
 
-    // FIXIT-L authenticate, use ssl ?
     return true;
 }
 
@@ -558,6 +749,28 @@ int ControlMgmt::socket_init(const SnortConfig* sc)
     if (bind(listener, sock_addr, sock_addr_size) < 0)
         FatalError("Failed to bind control listener: %s\n", get_error(errno));
 
+    // Set restrictive permissions on UNIX socket
+    if (sock_family == AF_UNIX)
+    {
+        if (chmod(unix_addr.sun_path, S_IRUSR | S_IWUSR) != 0)
+            FatalError("Failed to set permissions on control socket %s: %s\n", unix_addr.sun_path, get_error(errno));
+    }
+
+    if (sock_family == AF_INET)
+    {
+        struct sockaddr_in bound_addr;
+        socklen_t bound_len = sizeof(bound_addr);
+        if (getsockname(listener, reinterpret_cast<struct sockaddr*>(&bound_addr), &bound_len) == 0)
+        {
+            unsigned short actual_port = ntohs(bound_addr.sin_port);
+            LogMessage("Control: listening on TCP port %u\n", actual_port);
+        }
+    }
+    else if (sock_family == AF_UNIX)
+    {
+        LogMessage("Control: listening on UNIX socket %s\n", unix_addr.sun_path);
+    }
+
     if (listen(listener, MAX_CONTROL_FDS) < 0)
         FatalError("Failed to start listening on control listener: %s\n", get_error(errno));
 
@@ -642,6 +855,18 @@ bool ControlMgmt::send_command_to_socket(const std::string& command)
     return false;
 }
 
+int ControlMgmt::get_control_port()
+{
+    if (listener < 0 || sock_addr->sa_family != AF_INET)
+        return -1;
+
+    struct sockaddr_in bound_addr;
+    socklen_t bound_len = sizeof(bound_addr);
+    if (getsockname(listener, reinterpret_cast<struct sockaddr*>(&bound_addr), &bound_len) < 0)
+        return -1;
+
+    return ntohs(bound_addr.sin_port);
+}
 
 void ControlMgmt::socket_term()
 {

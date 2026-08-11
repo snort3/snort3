@@ -248,6 +248,13 @@ To enable local telnet access on port 12345:
 
     snort --shell -j 12345 <args>
 
+To enable UNIX socket control:
+
+    snort --control-socket /var/run/snort.sock <args>
+
+NOTE: For security considerations including privilege restrictions and Lua sandboxing,
+see "Security / Control Channel" section for details.
+
 The command line interface is still under development.  Suggestions are
 welcome.
 

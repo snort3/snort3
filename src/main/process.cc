@@ -862,22 +862,46 @@ bool SetUidGid(int user_id, int group_id)
 
     if (group_id != -1)
     {
+#if !defined(REG_TEST) and (defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__))
+        // Prevent process from regaining elevated privileges
+        if (setresgid(group_id, group_id, group_id) < 0)
+        {
+            ParseError("Cannot set GID (real/effective/saved): %d: %s",
+                group_id, get_error(errno));
+            return false;
+        }
+        LogMessage("Set GID to %d (real/effective/saved)\n", group_id);
+#else
+        // This may leave saved-set-GID unchanged on some systems
         if (setgid(group_id) < 0)
         {
-            ParseError("Cannot set GID: %d", group_id);
+            ParseError("Cannot set GID: %d: %s", group_id, get_error(errno));
             return false;
         }
         LogMessage("Set GID to %d\n", group_id);
+#endif
     }
 
     if (user_id != -1)
     {
+#if !defined(REG_TEST) and (defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__))
+        // Prevent process from regaining elevated privileges
+        if (setresuid(user_id, user_id, user_id) < 0)
+        {
+            ParseError("Cannot set UID (real/effective/saved): %d: %s",
+                user_id, get_error(errno));
+            return false;
+        }
+        LogMessage("Set UID to %d (real/effective/saved)\n", user_id);
+#else
+        // This may leave saved-set-UID unchanged on some systems
         if (setuid(user_id) < 0)
         {
-            ParseError("Cannot set UID: %d", user_id);
+            ParseError("Cannot set UID: %d: %s", user_id, get_error(errno));
             return false;
         }
         LogMessage("Set UID to %d\n", user_id);
+#endif
     }
 
     return true;
@@ -886,25 +910,40 @@ bool SetUidGid(int user_id, int group_id)
 // set the groups of the process based on the UserID with the GroupID added
 void InitGroups(int user_id, int group_id)
 {
-    if ((user_id != -1) && (getuid() == 0))
+    if (user_id == -1 or getuid() == 0)
+        return;
+
+    const struct passwd* pw = getpwuid(user_id);  // main thread only
+
+    if (pw == nullptr)
     {
-        const struct passwd* pw = getpwuid(user_id);  // main thread only
+#ifndef REG_TEST
+        FatalError("Cannot find user information for UID %d. "
+            "The user may have been deleted after configuration was parsed.",
+            user_id);
+#endif
+    }
+    else
+    {
 
-        if (pw != nullptr)
+        /* getpwuid and initgroups may use the same static buffers */
+        char* username = snort_strdup(pw->pw_name);
+
+        if (initgroups(username, group_id) < 0)
         {
-            /* getpwuid and initgroups may use the same static buffers */
-            char* username = snort_strdup(pw->pw_name);
-
-            if (initgroups(username, group_id) < 0)
-                ParseError("Can not initgroups(%s,%d)", username, group_id);
-
-            snort_free(username);
+#ifndef REG_TEST
+            FatalError("Cannot set supplementary groups for user '%s' (GID %d): %s\n"
+                "Ensure the user exists and the process has sufficient privileges.",
+                username, group_id, get_error(errno));
+#endif
         }
 
-        /** Just to be on the safe side... **/
-        endgrent();
-        endpwent();
+        snort_free(username);
     }
+
+    /** Just to be on the safe side... **/
+    endgrent();
+    endpwent();
 }
 
 //-------------------------------------------------------------------------

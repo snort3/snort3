@@ -18,6 +18,7 @@ set (HELPERS_INCLUDES
     boyer_moore.h
     boyer_moore_search.h
     buffer_data.h
+    challenge_response_auth.h
     event_gen.h
     infractions.h
     json_stream.h
@@ -38,6 +39,7 @@ add_library (helpers OBJECT
     boyer_moore.cc
     boyer_moore_search.cc
     buffer_data.cc
+    challenge_response_auth.cc
     directory.cc
     directory.h
     discovery_filter.cc

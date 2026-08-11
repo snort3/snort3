@@ -404,8 +404,13 @@ public:
     ProfilerNodeMap* prof_map = nullptr;
     LatencyConfig* latency = nullptr;
 
-    unsigned remote_control_port = 0;
+    int remote_control_port = -1;
     std::string remote_control_socket;
+    uid_t control_socket_uid = static_cast<uid_t>(-1);
+    gid_t control_socket_gid = static_cast<gid_t>(-1);
+    std::string control_secret_file;
+    uint8_t* control_shared_secret = nullptr;
+    size_t control_shared_secret_len = 0;
 
     MemoryConfig* memory = nullptr;
     //------------------------------------------------------

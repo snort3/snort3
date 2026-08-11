@@ -436,15 +436,16 @@ bool Shell::set_sandbox_env()
     {
         if ( !lua_setfenv(lua, -2) )
         {
-            ParseError("can't set sandbox environment\n");
+            ErrorMessage("can't set sandbox environment\n");
             return false;
         }
     }
     else
     {
-        ParseError("sandbox environment not defined\n");
+        ErrorMessage("sandbox environment not defined\n");
         return false;
     }
+
     return true;
 }
 
@@ -474,11 +475,18 @@ bool Shell::load_lua_sandbox()
         return false;
     }
 
+    // Optionally call for create_sandbox_env()
     lua_getglobal(lua, "create_sandbox_env");
+    if ( !lua_isfunction(lua, -1) )
+    {
+        lua_pop(lua, 1);
+        return true;
+    }
+
     if ( lua_pcall(lua, 0, 0, 0) != 0 )
     {
         ParseError("can't create sandbox environment %s: %s\n", lua_sandbox.c_str(),
-            lua_tostring(lua, -1));
+                   lua_tostring(lua, -1));
         return false;
     }
 
@@ -496,7 +504,10 @@ bool Shell::load_string(const char* s, bool load_in_sandbox, const char* message
     }
 
     if ( load_in_sandbox && !set_sandbox_env() )
+    {
+        ParseError("can't set sandbox for %s: %s\n", message, lua_tostring(lua, -1));
         return false;
+    }
 
 
     if ( lua_pcall(lua, 0, 0, 0) )
@@ -534,7 +545,10 @@ bool Shell::load_config(const char* config_file, bool load_in_sandbox)
     }
 
     if ( load_in_sandbox && !set_sandbox_env() )
+    {
+        ParseError("can't set sandbox for %s: %s\n", file, lua_tostring(lua, -1));
         return false;
+    }
 
     if ( lua_pcall(lua, 0, 0, 0) )
     {
@@ -729,6 +743,51 @@ void Shell::install(const char* name, const Command* c)
 
     luaL_register(lua, name, &cmds[0]);
     lua_pop(lua, 1);
+
+    if ( lua_sandbox.empty() )
+        return;
+
+    lua_getglobal(lua, "sandbox_env");
+
+    if ( !lua_istable(lua, -1) )
+    {
+        lua_pop(lua, 1);
+        return;
+    }
+
+    if ( !strcmp(name, "snort") )
+    {
+        k = 0;
+        while ( k < n )
+        {
+            lua_pushcfunction(lua, cmds[k].func);
+            lua_setfield(lua, -2, cmds[k].name);
+            k++;
+        }
+
+        lua_pop(lua, 1);
+        return;
+    }
+
+    lua_getfield(lua, -1, name);
+
+    if ( !lua_istable(lua, -1) )
+    {
+        lua_pop(lua, 1);    // pop nil
+        lua_newtable(lua);  // a new table for module
+    }
+
+    k = 0;
+    while ( k < n )
+    {
+        lua_pushcfunction(lua, cmds[k].func);
+        lua_setfield(lua, -2, cmds[k].name);
+        k++;
+    }
+
+    lua_setfield(lua, -2, name);
+
+    lua_pop(lua, 1);
 }
 
 void Shell::set_policy_indices(PolicyId net, PolicyId nap, PolicyId ips)
@@ -773,6 +832,15 @@ void Shell::execute(const char* cmd, string& rsp)
     {
         // FIXIT-L shares logic with chunk
         err = luaL_loadbuffer(lua, cmd, strlen(cmd), "shell");
+
+        if ( !err && !lua_sandbox.empty() )
+        {
+            if ( !set_sandbox_env() )
+            {
+                rsp = "Failed to apply sandbox environment to control command\n";
+                return;
+            }
+        }
 
         if ( !err )
         {

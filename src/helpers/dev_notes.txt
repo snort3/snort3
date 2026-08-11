@@ -1,48 +1,212 @@
-This directory contains new utility classes and methods for use by the
-framework. Utility funcitons, defines, etc. should go in src/utils/.
+# Helpers Directory
 
-On stream buffer, there are two classes inherited from std::streambuf:
+This directory contains utility classes and methods for use by the Snort framework.
 
-* istreambuf_glue class for reading operations
-* ostreambuf_infl class for writing operations
+**Distinction**: Utility functions, defines, and basic utilities should go in `src/utils/`.
+This directory is for higher-level helper classes that provide specific functionality.
 
-The input stream buffer presents a continuous sequence of bytes to the client,
-gathered from different sources. For example:
+---
 
-    char* s1 = "world";
-    char* s2 = "!";
-    char* s3 = "Hello ";
+## Key Components
 
-These sources being fed to the stream buffer as s3, s1, s2 will form
-"Hello world!" sequence.
+### Pattern Matching
 
-In order to do that, istreambuf_glue class represents each source as a chunk of
-data, which has its own position in the resulting sequence.
-The chunk structure contains a pointer to the source, source size, and
-the chunk's offset in the resulting sequence.
+**Boyer-Moore** (`boyer_moore.h`, `boyer_moore_search.h`)
+- Boyer-Moore pattern matching algorithm
+- Efficient string searching with bad character and good suffix heuristics
+- Used for fast pattern matching in packet inspection
 
-Reading is done sequentially within the current chunk. When the end of chunk
-reached, the buffer switches to the next one, setting std::streambuf pointers.
+**Literal Search** (`literal_search.h`)
+- Single pattern literal content matching
+- Used during signature evaluation (e.g., with content rules)
+- Optimized for common case of fixed string searches
 
-Positioning the cursor is done in two steps:
+### Encoding/Decoding
 
-1. Calculate the final cursor position (absolute or by offset).
+**Base64 Encoder** (`base64_encoder.h`)
+- Base64 encoding implementation
+- Based on libb64 (https://sourceforge.net/projects/libb64/)
+- Usage: `instantiate → encode+ → finish`
+- Buffer must hold 2× input length
 
-2. Find the right chunk and local offset in it to set cursor there.
+**BER Encoding** (`ber.h`)
+- Basic Encoding Rules (ASN.1 BER) support
+- Used for protocol decoding
 
-Currently, no intermediate buffering done between chunks (like alignment,
-prepending/appending the next chunk). The buffer doesn't take ownership over
-the source's memory.
+**UTF-8** (`utf.h`)
+- UTF-8 character encoding utilities
+- Character validation and conversion
 
-The output stream buffer is mostly like std::stringbuf. The main purpose of it
-is having an extensible dynamic array, where clients could write their data,
-not worrying about resizing and memory management.
+### Cryptography & Authentication
 
-Aside from that, ostreambuf_infl can give away ownership over its memory,
-which could be useful for final consumer.
+**Challenge-Response Authentication** (`challenge_response_auth.h`)
+- HMAC-SHA256 challenge-response protocol
+- Used for TCP control channel authentication
+- Prevents replay attacks with random challenges
 
-From performance perspective, ostreambuf_infl can reserve an amount of memory
-before actual operations. Also, memory extending is done by predefined
-portions of 2^11^, 2^12^, 2^13^, 2^14^, 2^15^, 2^15^, 2^15^...
-This tries to minimize the number of memory reallocation.
+**Architecture**:
+- 256-bit random challenge generation (via OpenSSL RAND_bytes)
+- HMAC-SHA256 computation (via OpenSSL)
+- Constant-time verification (timing attack resistant)
+- Secure memory handling (zeros on destruction)
+
+**API**:
+```cpp
+// Constructor with shared secret
+ChallengeResponseAuth auth(secret, secret_len);
+
+// Generate challenge and compute expected HMAC
+const uint8_t* challenge = auth.generate_challenge();
+
+// Verify client's HMAC response
+if (auth.verify(client_hmac))
+    // Authenticated
+```
+
+**Helper Functions**:
+- `parse_shared_secret_file()` - Load base64-encoded secret from file
+- `parse_shared_secret_string()` - Parse base64 secret from string
+
+### Memory Management
+
+**Scratch Allocator** (`scratch_allocator.h`)
+- Manages per-packet-thread scratch memory
+- Memory stored in `SnortConfig.state[slot][id]`
+- Allocated once per thread, reused across packets
+- **Important**: Scratch memory is per-packet only, cannot be referenced on flows
+- Cleared on config reload
+
+**Memory Cap Allocator** (`memcap_allocator.h`)
+- STL-compatible allocator with memory limits
+- Enforces memory caps for containers
+
+**Primed Allocator** (`primed_allocator.h`)
+- Pre-allocated memory pool pattern
+- Reduces allocation overhead in hot paths
+
+### Data Structures
+
+**Ring Buffers** (`ring.h`, `ring2.h`, `ring_logic.h`)
+- Lock-free ring buffer implementation
+- Producer-consumer pattern support
+- Thread-safe variants available
+
+**Lockless Ring** (`lockless_ring.h`)
+- Lock-free circular buffer
+- High-performance inter-thread communication
+
+**Grouped List** (`grouped_list.h`)
+- List structure with group semantics
+- Efficient bulk operations
+
+### Stream Buffers
+
+Two classes inherited from `std::streambuf`:
+
+**istreambuf_glue** - Input stream buffer for reading operations
+- Presents continuous byte sequence from multiple sources
+- Example:
+  ```cpp
+  char* s1 = "world";
+  char* s2 = "!";
+  char* s3 = "Hello ";
+  // Fed as s3, s1, s2 → forms "Hello world!"
+  ```
+
+**Architecture**:
+- Each source represented as a chunk (pointer, size, offset)
+- Sequential reading within current chunk
+- Automatic chunk switching when end reached
+- No intermediate buffering between chunks
+- Does **not** take ownership of source memory
+
+**Positioning**:
+1. Calculate final cursor position (absolute or by offset)
+2. Find correct chunk and local offset to set cursor
+
+**ostreambuf_infl** - Output stream buffer for writing operations
+- Similar to `std::stringbuf`
+- Extensible dynamic array for client writes
+- Handles resizing and memory management automatically
+
+**Features**:
+- Can transfer ownership to consumer
+- Pre-reserve memory for performance
+- Memory extends in powers of 2: 2^11, 2^12, 2^13, 2^14, 2^15, 2^15, 2^15...
+- Minimizes reallocation count
+
+### Infrastructure
+
+**Infractions** (`infractions.h`)
+- Track protocol violations and anomalies
+- Bitmap-based infraction recording
+
+**Event Generation** (`event_gen.h`)
+- Helper for generating detection events
+
+**Policy Switcher** (`policy_switcher.h`)
+- Manages policy context switching
+- Used when inspection crosses policy boundaries
+
+**Flag Context** (`flag_context.h`)
+- Context flags management
+- State tracking during inspection
+
+### Utilities
+
+**Directory** (`directory.h`)
+- Directory traversal and file operations
+
+**Discovery Filter** (`discovery_filter.h`)
+- Filters for host/service discovery
+- Controls what gets added to host cache
+
+**Signal-Safe Operations** (`sigsafe.h`)
+- Signal-safe utility functions
+- Safe operations in signal handlers
+
+**Bit Operations** (`bitop.h`)
+- Bit manipulation utilities
+- Optimized bit-level operations
+
+**JSON Stream** (`json_stream.h`)
+- JSON serialization helpers
+- Streaming JSON output
+
+**Markup** (`markup.h`)
+- Text markup and formatting utilities
+
+### Hyperscan Integration
+
+**Hyperscan Search** (`hyper_search.h`)
+- Intel Hyperscan regex engine integration
+- High-performance pattern matching
+
+**Hyperscan Scratch Allocator** (`hyper_scratch_allocator.h`)
+- Manages Hyperscan scratch space
+- Per-thread allocation of Hyperscan working memory
+
+---
+
+## Design Principles
+
+**Performance**:
+- Minimize memory allocations in hot paths
+- Use scratch/primed allocators for frequently used memory
+- Lock-free data structures where possible
+
+**Thread Safety**:
+- Scratch memory is per-packet-thread
+- Ring buffers provide thread-safe communication
+- Policy switching handles multi-threaded inspection
+
+**Memory Management**:
+- Clear ownership semantics
+- RAII patterns throughout
+- Efficient reuse via allocators
+
+**Modularity**:
+- Single-purpose classes
+- Minimal dependencies
+- Easy to test and maintain
 

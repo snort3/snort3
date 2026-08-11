@@ -476,6 +476,22 @@ int main_show_config_generation(lua_State* L)
     return 0;
 }
 
+// cppcheck-suppress constParameterPointer ; callback signature must match LuaCFunction
+int main_show_control_port(lua_State* L)
+{
+#ifdef SHELL
+    ControlConn* ctrlcon = ControlConn::query_from_lua(L);
+    int port = ControlMgmt::get_control_port();
+    if (port > 0)
+        LogRespond(ctrlcon, "== control port: %d\n", port);
+    else
+        LogRespond(ctrlcon, "== control port: none\n");
+    return 0;
+#else
+    return 0;
+#endif
+}
+
 int main_reload_config(lua_State* L)
 {
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);

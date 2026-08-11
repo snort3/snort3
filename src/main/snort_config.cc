@@ -48,6 +48,7 @@
 #include "flow/ha_module.h"
 #include "framework/policy_selector.h"
 #include "hash/xhash.h"
+#include "helpers/challenge_response_auth.h"
 #include "host_tracker/host_cache_segmented.h"
 #include "latency/latency_config.h"
 #include "log/messages.h"
@@ -315,6 +316,14 @@ SnortConfig::~SnortConfig()
     delete trace_config;
     delete overlay_trace_config;
 
+    if ( control_shared_secret )
+    {
+        memset(control_shared_secret, 0, control_shared_secret_len);
+        delete[] control_shared_secret;
+        control_shared_secret = nullptr;
+        control_shared_secret_len = 0;
+    }
+
     Profiler::clear(this);
 
     if ( plug_set )
@@ -330,6 +339,9 @@ void SnortConfig::setup()
 
     else
         thiszone = gmt2local(0);
+
+    if ( !control_secret_file.empty() )
+        control_shared_secret = load_shared_secret(control_secret_file.c_str(), control_shared_secret_len);
 
     init_policies(this);
     ParseRules(this);
@@ -350,7 +362,6 @@ void SnortConfig::setup()
 
     /* Need to do this after dynamic detection stuff is initialized, too */
     IpsManager::verify(this);
-    ModuleManager::load_commands(policy_map->get_shell());
 
     fpCreateFastPacketDetection(this);
 }
@@ -473,11 +484,23 @@ void SnortConfig::merge(const SnortConfig* cmd_line_conf)
 
 #ifdef SHELL
     // -j
-    if (cmd_line_conf->remote_control_port)
+    if (cmd_line_conf->remote_control_port >= 0)
         remote_control_port = cmd_line_conf->remote_control_port;
     // --control-socket
     else if (!cmd_line_conf->remote_control_socket.empty())
         remote_control_socket = cmd_line_conf->remote_control_socket;
+
+    // --control-socket-uid
+    if (cmd_line_conf->control_socket_uid != static_cast<uid_t>(-1))
+        control_socket_uid = cmd_line_conf->control_socket_uid;
+
+    // --control-socket-gid
+    if (cmd_line_conf->control_socket_gid != static_cast<gid_t>(-1))
+        control_socket_gid = cmd_line_conf->control_socket_gid;
+
+    // --control-secret-file
+    if (!cmd_line_conf->control_secret_file.empty())
+        control_secret_file = cmd_line_conf->control_secret_file;
 #endif
 
     // Finalize the log directory, save a copy in case we need to chroot

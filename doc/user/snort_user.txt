@@ -39,3 +39,7 @@ include::features.txt[]
 
 include::daq.txt[]
 
+== Security
+
+include::security.txt[]
+

@@ -93,6 +93,11 @@ public:
     static void set_lua_sandbox(const char* s)
     { lua_sandbox = s; }
 
+    static const std::string& get_lua_sandbox()
+    { return lua_sandbox; }
+
+    bool load_lua_sandbox();
+
     static void set_network_policy_user_id(lua_State*, uint64_t user_id);
 
 private:
@@ -130,8 +135,6 @@ private:
 
     void print_allowlist() const;
     void allowlist_update(const char* keyword, bool is_prefix);
-
-    bool load_lua_sandbox();
     bool set_sandbox_env();
     bool load_string(const char* s, bool load_in_sandbox, const char* message);
     bool load_config(const char* config_file, bool load_in_sandbox);

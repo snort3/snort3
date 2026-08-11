@@ -180,7 +180,7 @@ bool NetFlowModule::set(const char*, Value& v, SnortConfig*)
     {
         std::string net;
         v.set_first_token();
-        for ( int i = 0; v.get_next_token(net); i++ )
+        while ( v.get_next_token(net) )
         {
             SfCidr n;
             if ( n.set(net.c_str()) != SFIP_SUCCESS )
@@ -192,7 +192,7 @@ bool NetFlowModule::set(const char*, Value& v, SnortConfig*)
     {
         std::string zone;
         v.set_first_token();
-        for ( int i = 0; v.get_next_token(zone); i++ )
+        while ( v.get_next_token(zone) )
         {
             if ( zone == "any" )
             {
