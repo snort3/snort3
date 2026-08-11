@@ -546,7 +546,7 @@ bool Shell::load_config(const char* config_file, bool load_in_sandbox)
 
     if ( load_in_sandbox && !set_sandbox_env() )
     {
-        ParseError("can't set sandbox for %s: %s\n", file, lua_tostring(lua, -1));
+        ParseError("can't set sandbox for %s: %s\n", config_file, lua_tostring(lua, -1));
         return false;
     }
 
