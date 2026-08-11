@@ -26,6 +26,8 @@
 
 #include "ssh.h"
 
+#define SSH_MAX_KEX_PDUS 64
+
 enum SshPafState
 {
     SSH_PAF_VER_EXCHANGE,
@@ -60,5 +62,6 @@ private:
     uint8_t client_header_buf_len = 0;
     uint8_t server_header_buf[sizeof(SSH2Packet)] = {};
     uint8_t server_header_buf_len = 0;
+    uint8_t kex_pdu_count = 0;
 };
 #endif

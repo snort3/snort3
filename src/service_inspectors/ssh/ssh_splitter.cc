@@ -80,6 +80,11 @@ StreamSplitter::Status SshSplitter::ssh2_key_exchange_scan(
         }
         else
         {
+            if (++kex_pdu_count > SSH_MAX_KEX_PDUS)
+            {
+                sshstats.aborted_sessions++;
+                return StreamSplitter::ABORT;
+            }
             *fp = ssh_len - buffered;
             return StreamSplitter::FLUSH;
         }
