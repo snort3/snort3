@@ -410,8 +410,16 @@ bool dnp3_full_reassembly(const dnp3ProtoConf& config, dnp3_session_data_t* sess
            via the get_buf() inspector api */
         if ((ret == true) && (packet->is_udp()))
         {
+            const uint8_t* saved_data = packet->data;
+            const uint16_t saved_dsize = packet->dsize;
+
+            packet->data = pdu_start;
+            packet->dsize = pdu_length;
+
             DetectionEngine::detect(packet);
 
+            packet->data = saved_data;
+            packet->dsize = saved_dsize;
             /* Since detection was done, reset reassembly state to avoid double alerts
                on the last PDU */
             dnp3_reassembly_reset(rdata);
