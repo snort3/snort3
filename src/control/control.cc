@@ -241,6 +241,34 @@ bool ControlConn::respond(const char* format, va_list& ap)
 
     buf[response_len] = '\0';
 
+    if (local)
+    {
+        // The stdio implementation takes stdout's per-FILE stream lock for each call,
+        // which is also used by product logging.  A raw write(fd, ...) bypasses that
+        // lock, so emit the complete local response with one fwrite() to serialize it
+        // with each log record.
+        if (fwrite(buf, 1, response_len, stdout) != static_cast<size_t>(response_len))
+        {
+            const int err = errno;
+            if (in_main_thread())
+                write_failed_main = true;
+            ErrorMessage("ControlConn: fwrite failed for local response: %s, buf: %s\n",
+                get_error(err), buf);
+            return false;
+        }
+
+        if (fflush(stdout))
+        {
+            const int err = errno;
+            if (in_main_thread())
+                write_failed_main = true;
+            ErrorMessage("ControlConn: fflush failed for local response: %s, buf: %s\n",
+                get_error(err), buf);
+            return false;
+        }
+        return true;
+    }
+
     int bytes_written = 0;
     while (bytes_written < response_len)
     {
