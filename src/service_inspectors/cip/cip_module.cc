@@ -25,6 +25,10 @@
 #include "cip_module.h"
 
 #include <cassert>
+#include <cerrno>
+#include <cstdlib>
+
+#include "log/messages.h"
 
 #include "cip.h"
 
@@ -39,7 +43,7 @@ using namespace std;
 
 static const Parameter c_params[] =
 {
-    { "embedded_cip_path", Parameter::PT_STRING, nullptr, "false",
+    { "embedded_cip_path", Parameter::PT_STRING, nullptr, nullptr,
       "check embedded CIP path" },
     { "unconnected_timeout", Parameter::PT_INT, "0:360", "300",
       "unconnected timeout in seconds" },
@@ -100,10 +104,7 @@ ProfileStats* CipModule::get_profile() const
 bool CipModule::set(const char*, Value& v, SnortConfig*)
 {
     if ( v.is("embedded_cip_path") )
-    {
-        conf->embedded_cip_enabled = true;
         embedded_path = v.get_string();
-    }
     else if ( v.is("unconnected_timeout") )
         conf->unconnected_timeout = v.get_uint32();
 
@@ -126,28 +127,61 @@ CipProtoConf* CipModule::get_data()
 bool CipModule::begin(const char*, int, SnortConfig*)
 {
     assert(!conf);
-    conf = new CipProtoConf;
+    conf = new CipProtoConf();
 
-    conf->embedded_cip_enabled = false;
+    embedded_path.clear();
+
+    return true;
+}
+
+// parse one whitespace-separated token of embedded_cip_path as an integer;
+// the entire token must be consumed and the value must fit in max
+static bool parse_id(Value& v, const char* name, unsigned long max, unsigned long& id)
+{
+    std::string tok;
+
+    if ( !v.get_next_token(tok) )
+    {
+        ParseError("cip: embedded_cip_path requires '<class id> <service id>'");
+        return false;
+    }
+
+    char* end = nullptr;
+    errno = 0;
+    id = ::strtoul(tok.c_str(), &end, 0);
+
+    if ( end == tok.c_str() or *end or errno == ERANGE or id > max )
+    {
+        ParseError("cip: embedded_cip_path %s '%s' is not in 0:%lu", name, tok.c_str(), max);
+        return false;
+    }
 
     return true;
 }
 
 bool CipModule::end(const char*, int, SnortConfig*)
 {
+    conf->embedded_cip_enabled = false;
+    conf->embedded_cip_class_id = 0;
+    conf->embedded_cip_service_id = 0;
+
+    // not configured, or explicitly disabled with the historical "false" spelling
+    if ( embedded_path.empty() or embedded_path == "false" )
+        return true;
+
     Value v(embedded_path.c_str());
-    std::string tok;
     v.set_first_token();
 
-    if ( v.get_next_token(tok) )
-    {
-        conf->embedded_cip_class_id = static_cast<uint32_t>(::strtol(tok.c_str(), nullptr, 0));
-    }
+    unsigned long class_id = 0;
+    unsigned long service_id = 0;
 
-    if (v.get_next_token(tok) )
-    {
-        conf->embedded_cip_service_id = static_cast<uint8_t>(::strtol(tok.c_str(), nullptr, 0));
-    }
+    if ( !parse_id(v, "class id", UINT32_MAX, class_id) or
+         !parse_id(v, "service id", UINT8_MAX, service_id) )
+        return false;
+
+    conf->embedded_cip_class_id = static_cast<uint32_t>(class_id);
+    conf->embedded_cip_service_id = static_cast<uint8_t>(service_id);
+    conf->embedded_cip_enabled = true;
 
     return true;
 }
