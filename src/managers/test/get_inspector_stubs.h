@@ -23,6 +23,7 @@
 #include "detection/detection_engine.h"
 #include "flow/expect_flow.h"
 #include "flow/flow.h"
+#include "flow/session.h"
 #include "main/policy.h"
 #include "main/snort.h"
 #include "main/snort_config.h"
@@ -32,7 +33,10 @@
 #include "network_inspectors/binder/bind_module.h"
 #include "profiler/rule_profiler_defs.h"
 #include "profiler/time_profiler_defs.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "search_engines/search_tool.h"
+#include "stream/stream.h"
+#include "stream/stream_splitter.h"
 #include "trace/trace.h"
 #include "trace/trace_api.h"
 
@@ -59,11 +63,21 @@ void WarningMessage(const char*, ...) { }
 DataBus::DataBus() { }
 DataBus::~DataBus() { }
 
-void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
+using TestDataBusPublishHook = void (*)(unsigned, Packet*);
+static TestDataBusPublishHook test_data_bus_publish_hook = nullptr;
+
+void DataBus::publish(unsigned, unsigned event_id, Packet* packet, Flow*)
+{
+    if ( test_data_bus_publish_hook )
+        test_data_bus_publish_hook(event_id, packet);
+}
 unsigned DataBus::get_id(const PubKey&) { return 0; }
 
-void Flow::set_service(Packet*, const char* new_service)
-{ service = new_service; }
+void Flow::set_service(Packet* packet, const char* new_service)
+{
+    service = new_service;
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_SERVICE_CHANGE, packet);
+}
 
 Flow::~Flow() = default;
 FlowDataStore::~FlowDataStore() = default;
@@ -125,6 +139,33 @@ void set_ips_policy(IpsPolicy*) { }
 unsigned get_instance_id() { return 0; }
 void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) { }
 
+Packet::Packet(bool) { }
+Packet::~Packet() = default;
+
+const StreamBuffer StreamSplitter::reassemble(
+    Flow*, unsigned, unsigned, const uint8_t*, unsigned, uint32_t, unsigned&)
+{ return { nullptr, 0 }; }
+
+unsigned StreamSplitter::max(Flow*)
+{ return 0; }
+
+uint16_t StreamSplitter::get_flush_bucket_size()
+{ return 0; }
+
+AtomSplitter::AtomSplitter(bool to_server, uint16_t size) : StreamSplitter(to_server),
+    base(size), min(size), segs(0)
+{ }
+
+StreamSplitter::Status AtomSplitter::scan(
+    Packet*, const uint8_t*, uint32_t, uint32_t, uint32_t*)
+{ return SEARCH; }
+
+bool AtomSplitter::restart()
+{ return true; }
+
+void Stream::set_splitter(Flow* flow, bool to_server, StreamSplitter* splitter)
+{ flow->session->set_splitter(to_server, splitter); }
+
 NetworkPolicy* get_network_parse_policy() { return nullptr; }
 
 Module::Module(const char* name, const char*) : name(name), help(nullptr), params(nullptr), list(false) { }
@@ -141,4 +182,3 @@ unsigned PluginManager::for_each(PlugType, PluginManager::PlugFunc, void*) { ret
 const snort::BaseApi* PluginManager::get_api(char const*) { return nullptr; }
 
 #endif
-

@@ -101,6 +101,10 @@ public:
     static void clear(Packet*);
     static void empty_trash();
 
+#ifdef UNIT_TEST_BUILD
+    static void clear_stale_service_inspector_for_test(Packet*);
+#endif
+
     static Inspector* get_binder();
 
     static Inspector* acquire_file_inspector();
@@ -132,4 +136,3 @@ private:
 };
 }
 #endif
-

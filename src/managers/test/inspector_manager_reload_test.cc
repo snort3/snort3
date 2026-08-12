@@ -163,6 +163,35 @@ struct ReloadCounts
     unsigned tinit = 0;
     unsigned tterm = 0;
     bool last_shutdown = false;
+    std::shared_ptr<bool> inspector_alive = std::make_shared<bool>(false);
+    unsigned to_server_splitter_detaches = 0;
+    unsigned to_client_splitter_detaches = 0;
+    bool splitters_detached_while_alive = true;
+    bool splitters_detached_after_gadget_clear = true;
+    Flow* observed_flow = nullptr;
+};
+
+class InspectorOwnedSplitter : public StreamSplitter
+{
+public:
+    InspectorOwnedSplitter(bool to_server, ReloadCounts* c, unsigned* detaches) :
+        StreamSplitter(to_server), counts(c), detach_count(detaches)
+    { }
+
+    Status scan(Packet*, const uint8_t*, uint32_t, uint32_t, uint32_t*) override
+    { return SEARCH; }
+
+    void go_away() override
+    {
+        ++*detach_count;
+        counts->splitters_detached_while_alive &= *counts->inspector_alive;
+        counts->splitters_detached_after_gadget_clear &=
+            !counts->observed_flow or !counts->observed_flow->gadget;
+    }
+
+private:
+    ReloadCounts* counts = nullptr;
+    unsigned* detach_count = nullptr;
 };
 
 class ReloadModule : public Module
@@ -183,8 +212,13 @@ public:
 class ReloadInspector : public Inspector
 {
 public:
-    explicit ReloadInspector(ReloadCounts* c) : counts(c)
-    { }
+    explicit ReloadInspector(ReloadCounts* c) : counts(c), alive(c->inspector_alive),
+        to_server_splitter(true, c, &c->to_server_splitter_detaches),
+        to_client_splitter(false, c, &c->to_client_splitter_detaches)
+    { *alive = true; }
+
+    ~ReloadInspector() override
+    { *alive = false; }
 
     bool configure(SnortConfig*) override
     {
@@ -204,9 +238,127 @@ public:
     void tterm() override
     { ++counts->tterm; }
 
+    StreamSplitter* get_splitter(bool to_server) override
+    { return to_server ? &to_server_splitter : &to_client_splitter; }
+
 private:
     ReloadCounts* counts = nullptr;
+    std::shared_ptr<bool> alive;
+    InspectorOwnedSplitter to_server_splitter;
+    InspectorOwnedSplitter to_client_splitter;
 };
+
+class ReloadSession : public Session
+{
+public:
+    explicit ReloadSession(Flow* flow) : Session(flow)
+    { }
+
+    ~ReloadSession() override
+    {
+        release_splitter(to_server_splitter);
+        release_splitter(to_client_splitter);
+    }
+
+    void clear() override
+    { }
+
+    void set_splitter(bool to_server, StreamSplitter* splitter) override
+    {
+        StreamSplitter*& current = to_server ? to_server_splitter : to_client_splitter;
+
+        release_splitter(current);
+        current = splitter;
+    }
+
+    StreamSplitter* get_splitter(bool to_server) override
+    { return to_server ? to_server_splitter : to_client_splitter; }
+
+private:
+    static void release_splitter(StreamSplitter*& splitter)
+    {
+        if ( splitter )
+            splitter->go_away();
+
+        splitter = nullptr;
+    }
+
+    StreamSplitter* to_server_splitter = nullptr;
+    StreamSplitter* to_client_splitter = nullptr;
+};
+
+struct ServiceChangeTestContext
+{
+    Flow* flow = nullptr;
+    ReloadSession* session = nullptr;
+    Inspector* stale_inspector = nullptr;
+    Inspector* replacement_inspector = nullptr;
+    ReloadCounts* stale_counts = nullptr;
+    unsigned callbacks = 0;
+    StreamSplitter* stale_to_server_splitter = nullptr;
+    StreamSplitter* stale_to_client_splitter = nullptr;
+    StreamSplitter* fallback_to_server_splitter = nullptr;
+    StreamSplitter* fallback_to_client_splitter = nullptr;
+};
+
+static ServiceChangeTestContext* service_change_test_context = nullptr;
+static unsigned get_thread_refs(Inspector*);
+
+static void verify_splitters_safe_during_service_change(unsigned event_id, Packet* packet)
+{
+    if ( event_id != IntrinsicEventIds::FLOW_SERVICE_CHANGE )
+        return;
+
+    ServiceChangeTestContext& context = *service_change_test_context;
+    ++context.callbacks;
+
+    POINTERS_EQUAL(context.flow, packet->flow);
+    CHECK_FALSE(context.flow->gadget);
+    CHECK_FALSE(context.flow->service);
+    CHECK(*context.stale_counts->inspector_alive);
+    CHECK_EQUAL(2, get_thread_refs(context.stale_inspector));
+
+    if ( context.session )
+    {
+        CHECK_EQUAL(1, context.stale_counts->to_server_splitter_detaches);
+        CHECK_EQUAL(1, context.stale_counts->to_client_splitter_detaches);
+        CHECK(context.stale_counts->splitters_detached_while_alive);
+        CHECK(context.stale_counts->splitters_detached_after_gadget_clear);
+
+        context.fallback_to_server_splitter = context.session->get_splitter(true);
+        context.fallback_to_client_splitter = context.session->get_splitter(false);
+
+        CHECK(context.fallback_to_server_splitter);
+        CHECK(context.fallback_to_client_splitter);
+        CHECK(context.fallback_to_server_splitter != context.stale_to_server_splitter);
+        CHECK(context.fallback_to_client_splitter != context.stale_to_client_splitter);
+        CHECK(context.fallback_to_server_splitter->to_server());
+        CHECK(context.fallback_to_client_splitter->to_client());
+        CHECK(context.fallback_to_server_splitter->restart());
+        CHECK(context.fallback_to_client_splitter->restart());
+    }
+    else
+    {
+        CHECK_FALSE(context.flow->session);
+        CHECK_EQUAL(0, context.stale_counts->to_server_splitter_detaches);
+        CHECK_EQUAL(0, context.stale_counts->to_client_splitter_detaches);
+    }
+
+    if ( context.replacement_inspector )
+    {
+        CHECK(context.fallback_to_server_splitter !=
+            context.replacement_inspector->get_splitter(true));
+        CHECK(context.fallback_to_client_splitter !=
+            context.replacement_inspector->get_splitter(false));
+        context.session->set_splitter(true, context.replacement_inspector->get_splitter(true));
+        context.session->set_splitter(false, context.replacement_inspector->get_splitter(false));
+    }
+    else
+    {
+        context.flow->set_state(Flow::FlowState::ALLOW);
+        context.flow->disable_inspection();
+    }
+}
 
 static Inspector* reload_ctor(Module* mod)
 {
@@ -319,6 +471,8 @@ TEST_GROUP(inspector_manager_reload_tests)
 
     void teardown() override
     {
+        test_data_bus_publish_hook = nullptr;
+        service_change_test_context = nullptr;
         sc.reset();
         InspectorManager::empty_trash();
         InspectorManager::cleanup();
@@ -427,6 +581,189 @@ TEST(inspector_manager_reload_tests, flow_gadget_release_drains_pending_tterm)
 
     CHECK_EQUAL(1, tterm_after_gadget_release);
     CHECK_EQUAL(0, refs_after_gadget_release);
+}
+
+TEST(inspector_manager_reload_tests,
+    non_inspect_service_change_detaches_both_splitters_before_pending_release)
+{
+    ReloadCounts old_counts;
+    ReloadCounts new_counts;
+
+    reload_plugin->instantiate(sc.get(), old_counts, 10, 11, "old_reload_test");
+    activate_current_map();
+    Inspector* old_inspector = reload_plugin->get(sc.get(), 10, 11, "old_reload_test");
+    CHECK(old_inspector);
+
+    Flow flow;
+    flow.pkt_type = PktType::TCP;
+    old_counts.observed_flow = &flow;
+    ReloadSession session(&flow);
+    flow.session = &session;
+    flow.set_gadget(old_inspector);
+    session.set_splitter(true, old_inspector->get_splitter(true));
+    session.set_splitter(false, old_inspector->get_splitter(false));
+
+    auto reload_sc = start_removal_reload();
+    InspectorManager::thread_term_removed();
+    reload_plugin->instantiate(reload_sc.get(), new_counts, 10, 11, "new_reload_test");
+    InspectorManager::prepare_map();
+    Inspector* replacement = reload_plugin->get(
+        reload_sc.get(), 10, 11, "new_reload_test");
+    CHECK(replacement);
+    InspectorManager::thread_init();
+
+    CHECK_EQUAL(1, old_counts.tterm);
+    CHECK_EQUAL(2, get_thread_refs(old_inspector));
+
+    ServiceChangeTestContext context =
+        { &flow, &session, old_inspector, nullptr, &old_counts, 0 };
+    context.stale_to_server_splitter = session.get_splitter(true);
+    context.stale_to_client_splitter = session.get_splitter(false);
+    service_change_test_context = &context;
+    test_data_bus_publish_hook = verify_splitters_safe_during_service_change;
+
+    Packet packet(false);
+    packet.flow = &flow;
+    InspectorManager::clear_stale_service_inspector_for_test(&packet);
+
+    CHECK_EQUAL(1, context.callbacks);
+    CHECK_FALSE(flow.gadget);
+    POINTERS_EQUAL(context.fallback_to_server_splitter, session.get_splitter(true));
+    POINTERS_EQUAL(context.fallback_to_client_splitter, session.get_splitter(false));
+    CHECK(flow.is_inspection_disabled());
+    CHECK(flow.flow_state == Flow::FlowState::ALLOW);
+    CHECK_EQUAL(0, get_thread_refs(old_inspector));
+    CHECK_EQUAL(1, old_counts.tterm);
+
+    InspectorManager::thread_drain_pending_tterm();
+    CHECK_EQUAL(1, old_counts.tterm);
+
+    session.set_splitter(true, nullptr);
+    session.set_splitter(false, nullptr);
+
+    test_data_bus_publish_hook = nullptr;
+    service_change_test_context = nullptr;
+    InspectorManager::thread_term();
+    restore_old_map_for_teardown(reload_sc);
+}
+
+TEST(inspector_manager_reload_tests,
+    inspect_service_change_replaces_safe_fallbacks_before_pending_release)
+{
+    ReloadCounts old_counts;
+    ReloadCounts new_counts;
+
+    reload_plugin->instantiate(sc.get(), old_counts, 10, 11, "old_reload_test");
+    activate_current_map();
+    Inspector* old_inspector = reload_plugin->get(sc.get(), 10, 11, "old_reload_test");
+    CHECK(old_inspector);
+
+    Flow flow;
+    flow.pkt_type = PktType::TCP;
+    old_counts.observed_flow = &flow;
+    new_counts.observed_flow = &flow;
+    ReloadSession session(&flow);
+    flow.session = &session;
+    flow.set_gadget(old_inspector);
+    session.set_splitter(true, old_inspector->get_splitter(true));
+    session.set_splitter(false, old_inspector->get_splitter(false));
+
+    auto reload_sc = start_removal_reload();
+    InspectorManager::thread_term_removed();
+    reload_plugin->instantiate(reload_sc.get(), new_counts, 10, 11, "new_reload_test");
+    InspectorManager::prepare_map();
+    Inspector* replacement = reload_plugin->get(
+        reload_sc.get(), 10, 11, "new_reload_test");
+    CHECK(replacement);
+    InspectorManager::thread_init();
+
+    CHECK_EQUAL(1, old_counts.tterm);
+    CHECK_EQUAL(2, get_thread_refs(old_inspector));
+
+    ServiceChangeTestContext context =
+        { &flow, &session, old_inspector, replacement, &old_counts, 0 };
+    context.stale_to_server_splitter = session.get_splitter(true);
+    context.stale_to_client_splitter = session.get_splitter(false);
+    service_change_test_context = &context;
+    test_data_bus_publish_hook = verify_splitters_safe_during_service_change;
+
+    Packet packet(false);
+    packet.flow = &flow;
+    InspectorManager::clear_stale_service_inspector_for_test(&packet);
+
+    CHECK_EQUAL(1, context.callbacks);
+    POINTERS_EQUAL(replacement->get_splitter(true), session.get_splitter(true));
+    POINTERS_EQUAL(replacement->get_splitter(false), session.get_splitter(false));
+    CHECK_EQUAL(0, get_thread_refs(old_inspector));
+    CHECK_EQUAL(1, old_counts.tterm);
+
+    InspectorManager::thread_drain_pending_tterm();
+    CHECK_EQUAL(1, old_counts.tterm);
+
+    session.set_splitter(true, nullptr);
+    session.set_splitter(false, nullptr);
+    CHECK_EQUAL(1, new_counts.to_server_splitter_detaches);
+    CHECK_EQUAL(1, new_counts.to_client_splitter_detaches);
+    CHECK(new_counts.splitters_detached_while_alive);
+
+    test_data_bus_publish_hook = nullptr;
+    service_change_test_context = nullptr;
+    InspectorManager::thread_term();
+    restore_old_map_for_teardown(reload_sc);
+}
+
+TEST(inspector_manager_reload_tests,
+    sessionless_stream_service_change_skips_splitters_and_finishes_pending_release)
+{
+    ReloadCounts old_counts;
+    ReloadCounts new_counts;
+
+    reload_plugin->instantiate(sc.get(), old_counts, 10, 11, "old_reload_test");
+    activate_current_map();
+    Inspector* old_inspector = reload_plugin->get(sc.get(), 10, 11, "old_reload_test");
+    CHECK(old_inspector);
+
+    Flow flow;
+    flow.pkt_type = PktType::TCP;
+    flow.service = "stale_reload_test";
+    old_counts.observed_flow = &flow;
+    flow.set_gadget(old_inspector);
+    CHECK_FALSE(flow.session);
+
+    auto reload_sc = start_removal_reload();
+    InspectorManager::thread_term_removed();
+    reload_plugin->instantiate(reload_sc.get(), new_counts, 10, 11, "new_reload_test");
+    InspectorManager::prepare_map();
+    InspectorManager::thread_init();
+
+    CHECK_EQUAL(1, old_counts.tterm);
+    CHECK_EQUAL(2, get_thread_refs(old_inspector));
+
+    ServiceChangeTestContext context =
+        { &flow, nullptr, old_inspector, nullptr, &old_counts, 0 };
+    service_change_test_context = &context;
+    test_data_bus_publish_hook = verify_splitters_safe_during_service_change;
+
+    Packet packet(false);
+    packet.flow = &flow;
+    InspectorManager::clear_stale_service_inspector_for_test(&packet);
+
+    CHECK_EQUAL(1, context.callbacks);
+    CHECK_FALSE(flow.gadget);
+    CHECK_FALSE(flow.service);
+    CHECK_FALSE(flow.session);
+    CHECK(flow.is_inspection_disabled());
+    CHECK(flow.flow_state == Flow::FlowState::ALLOW);
+    CHECK_EQUAL(0, get_thread_refs(old_inspector));
+    CHECK_EQUAL(1, old_counts.tterm);
+
+    InspectorManager::thread_drain_pending_tterm();
+    CHECK_EQUAL(1, old_counts.tterm);
+
+    test_data_bus_publish_hook = nullptr;
+    service_change_test_context = nullptr;
+    InspectorManager::thread_term();
+    restore_old_map_for_teardown(reload_sc);
 }
 
 TEST(inspector_manager_reload_tests, drain_pending_tterm_without_pending_is_noop)

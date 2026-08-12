@@ -46,6 +46,8 @@
 #include "pub_sub/intrinsic_event_ids.h"
 #include "search_engines/search_tool.h"
 #include "stream/base/stream_module.h"
+#include "stream/stream.h"
+#include "stream/stream_splitter.h"
 #include "target_based/snort_protocols.h"
 #include "time/clock_defs.h"
 #include "time/stopwatch.h"
@@ -1498,10 +1500,27 @@ static void clear_stale_service_inspector(Packet* p)
     if ( !flow->gadget or !is_pending_tterm_called(flow->gadget) )
         return;
 
+    Inspector* stale_gadget = flow->gadget;
+    stale_gadget->add_ref();
+
     flow->clear_gadget();
-    InspectorManager::thread_drain_pending_tterm();
+
+    // Service splitters can be embedded in the removed inspector.  Detach both while the
+    // temporary reference still keeps their owner alive, and before FLOW_SERVICE_CHANGE is
+    // published.  Binder may replace these fallbacks for BA_INSPECT; non-inspect actions retain
+    // safe splitters instead of pointers into the stale inspector.
+    if ( flow->is_stream() and flow->session )
+    {
+        Stream::set_splitter(flow, true, new AtomSplitter(true));
+        Stream::set_splitter(flow, false, new AtomSplitter(false));
+    }
 
     flow->set_service(p, nullptr);
+
+    // A service inspector can own the stream splitters still attached to the flow.  Keep the
+    // removed inspector alive until the service-change handlers have replaced those splitters.
+    stale_gadget->rem_ref();
+    InspectorManager::thread_drain_pending_tterm_if_pending(stale_gadget);
 
     if ( !flow->gadget and !flow->flags.svc_event_generated )
     {
@@ -1509,6 +1528,11 @@ static void clear_stale_service_inspector(Packet* p)
         flow->flags.svc_event_generated = true;
     }
 }
+
+#ifdef UNIT_TEST_BUILD
+void InspectorManager::clear_stale_service_inspector_for_test(Packet* p)
+{ clear_stale_service_inspector(p); }
+#endif
 
 template<bool T>
 void inline InspectorManager::full_inspection(Packet* p)
