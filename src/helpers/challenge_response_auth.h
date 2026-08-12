@@ -39,13 +39,10 @@ public:
     ChallengeResponseAuth(const ChallengeResponseAuth&) = delete;
     ChallengeResponseAuth& operator=(const ChallengeResponseAuth&) = delete;
 
-    const uint8_t* generate_challenge();
-
-    const uint8_t* get_challenge() const
-    { return challenge; }
-
     size_t get_challenge_size() const
     { return CHALLENGE_SIZE; }
+
+    const uint8_t* generate_challenge();
 
     bool verify(const uint8_t* client_hmac);
 
@@ -68,9 +65,6 @@ const char* parse_shared_secret_file(const char* filename, uint8_t* secret_out, 
 // Warns if secret is shorter than 16 bytes
 uint8_t* load_shared_secret(const char* filename, size_t& secret_len);
 
-// Helper function: Parse base64-encoded shared secret from string
-// Returns true on success, false on error
-bool parse_shared_secret_string(const char* secret_b64, uint8_t* secret_out, size_t* secret_len_out);
 }
 
 #endif

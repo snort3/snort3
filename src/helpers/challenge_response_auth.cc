@@ -179,12 +179,3 @@ uint8_t* snort::load_shared_secret(const char* filename, size_t& secret_len)
     memset(secret_buffer, 0, sizeof(secret_buffer));
     return secret;
 }
-
-bool snort::parse_shared_secret_string(const char* secret_b64,
-    uint8_t* secret_out, size_t* secret_len_out)
-{
-    if (!secret_b64 || !secret_out || !secret_len_out)
-        return false;
-
-    return decode_base64(secret_b64, secret_out, secret_len_out);
-}

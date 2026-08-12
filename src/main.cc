@@ -488,6 +488,7 @@ int main_show_control_port(lua_State* L)
         LogRespond(ctrlcon, "== control port: none\n");
     return 0;
 #else
+    UNUSED(L);
     return 0;
 #endif
 }
