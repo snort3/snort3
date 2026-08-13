@@ -40,11 +40,12 @@ private:
         std::vector<PegCount> last_seen;
     };
 
-    void update_global_proxies();
+    void update_global_proxies(bool summary);
 
     std::vector<ModuleConfig> modules;
     std::vector<snort::Module*> mods_to_prep;
     std::vector<GlobalProxy> global_proxies;
+    bool has_global_proxies = false;
     bool is_first_packet_thread = false;
 };
 
