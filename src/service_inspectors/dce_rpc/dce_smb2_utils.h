@@ -79,6 +79,19 @@ inline void DCE2_SmbSessionCacheInit(const size_t cache_size)
     smb2_session_cache = new SmbSessionCache(cache_size, dce2_smb_stats);
 }
 
+// Create before the session cache and destroy after it: file tracker destructors erase from here.
+inline void DCE2_Smb2FtrackerLruInit()
+{
+    if (!smb2_ftracker_lru)
+        smb2_ftracker_lru = new DCE2_Smb2FtrackerLruList();
+}
+
+inline void DCE2_Smb2FtrackerLruTerm()
+{
+    delete smb2_ftracker_lru;
+    smb2_ftracker_lru = nullptr;
+}
+
 inline void DCE2_SmbSessionCacheUpdateSize(int size)
 {
     smb2_session_cache->update(size);
@@ -151,6 +164,14 @@ inline void DCE2_Smb2RemoveSidInSsd(DCE2_Smb2SsnData* ssd, const uint64_t sid)
 {
     ssd->remove_session_tracker(sid);
 }
+
+// Nodes scanned in from the tail, capped so eviction cannot be turned into CPU exhaustion.
+static constexpr unsigned SMB2_FTRACKER_EVICT_SCAN = 32;
+// is_ftracker_active walks every channel of a session, so bound how often one scan pays for it.
+static constexpr unsigned SMB2_FTRACKER_ACTIVE_TESTS = 4;
+
+DCE2_Smb2FileTracker* DCE2_Smb2CreateFileTracker(const uint64_t file_id,
+    DCE2_Smb2TreeTracker* ttr, DCE2_Smb2SessionTracker* str);
 
 DCE2_Smb2TreeTracker* DCE2_Smb2InsertTid(DCE2_Smb2SsnData*, const uint32_t tid, uint8_t share_type,
     DCE2_Smb2SessionTracker*);

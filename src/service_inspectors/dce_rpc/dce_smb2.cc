@@ -79,18 +79,34 @@ DCE2_Smb2RequestTracker::~DCE2_Smb2RequestTracker()
 
 DCE2_Smb2FileTracker::DCE2_Smb2FileTracker(uint64_t file_id_v, DCE2_Smb2TreeTracker* ttr_v,
     DCE2_Smb2SessionTracker* str_v, Flow* flow_v) :   file_id(file_id_v), ttr(ttr_v),
-    str(str_v), parent_flow(flow_v), ignore(false), upload(false), multi_channel_file(false)
+    str(str_v), parent_flow(flow_v), ignore(false), upload(false), multi_channel_file(false),
+    in_lru(false)
 {
     dce2_smb_stats.v2_total_file_trackers++;
     SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
         GET_CURRENT_PACKET, "File tracker 0x%" PRIx64 " created\n", file_id);
-    str->update_cache_size(sizeof(DCE2_Smb2FileTracker));
+    // Newly created is most recently used, so enter at the front, furthest from eviction.
+    if (smb2_ftracker_lru)
+    {
+        smb2_ftracker_lru->push_front(this);
+        lru_pos = smb2_ftracker_lru->begin();
+        in_lru = true;
+        if (dce2_smb_stats.v2_max_file_trackers < smb2_ftracker_lru->size())
+            dce2_smb_stats.v2_max_file_trackers = smb2_ftracker_lru->size();
+    }
+    str->update_cache_size(SMB2_FTRACKER_CACHE_COST);
 }
 
 DCE2_Smb2FileTracker::~DCE2_Smb2FileTracker(void)
 {
     SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_DEBUG_LEVEL,
         nullptr, "File tracker with file id: 0x%" PRIx64 " tracker terminating\n", file_id);
+    // Unlink first so a partly destroyed tracker can never be picked as a victim.
+    if (in_lru and smb2_ftracker_lru)
+    {
+        smb2_ftracker_lru->erase(lru_pos);
+        in_lru = false;
+    }
     auto all_conn_trackers = str->conn_trackers.get_all_entry();
     for ( const auto& h : all_conn_trackers )
     {
@@ -110,7 +126,7 @@ DCE2_Smb2FileTracker::~DCE2_Smb2FileTracker(void)
         DCE2_CoCleanTracker(co_tracker);
         snort_free((void*)co_tracker);
     }
-    str->update_cache_size(-(int)sizeof(DCE2_Smb2FileTracker));
+    str->update_cache_size(-(int)SMB2_FTRACKER_CACHE_COST);
 }
 
 DCE2_Smb2TreeTracker::DCE2_Smb2TreeTracker (uint32_t tid_v, uint8_t share_type_v) :
@@ -176,6 +192,18 @@ void DCE2_Smb2SessionTracker::removeSessionFromAllConnection()
 void DCE2_Smb2SessionTracker::update_cache_size(int size)
 {
     DCE2_SmbSessionCacheUpdateSize(size);
+}
+
+// A session can span several TCP flows, so every channel has to be consulted.
+bool DCE2_Smb2SessionTracker::is_ftracker_active(const DCE2_Smb2FileTracker* ftracker)
+{
+    auto all_conn_trackers = conn_trackers.get_all_entry();
+    for ( const auto& h : all_conn_trackers )
+    {
+        if (h.second->ftracker_tcp == ftracker)
+            return true;
+    }
+    return false;
 }
 
 DCE2_Smb2SsnData::DCE2_Smb2SsnData()

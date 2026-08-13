@@ -33,6 +33,7 @@ using namespace snort;
 
 size_t session_cache_size;
 THREAD_LOCAL SmbSessionCache* smb2_session_cache;
+THREAD_LOCAL DCE2_Smb2FtrackerLruList* smb2_ftracker_lru;
 
 Smb2SidHashKey get_key(uint64_t sid)
 {
@@ -99,4 +100,79 @@ DCE2_Smb2TreeTracker* DCE2_Smb2InsertTid(DCE2_Smb2SsnData* ssd, const uint32_t t
     }
 
     return ttracker;
+}
+
+// Remove through the owning tree so the map and the object stay in step.
+static inline void DCE2_Smb2EvictOne(DCE2_Smb2FileTracker* victim)
+{
+    dce2_smb_stats.v2_ftracker_evicted++;
+    victim->ttr->removeFtracker(victim->file_id);
+}
+
+// Drop the least valuable stale file tracker, preferring an idle one with nothing learned yet.
+static void DCE2_Smb2EvictFtracker()
+{
+    if (!smb2_ftracker_lru)
+        return;
+
+    if (smb2_ftracker_lru->size() <= 1)
+        return;
+
+    DCE2_Smb2FileTracker* idle = nullptr;
+    unsigned active_tests = 0;
+    unsigned scanned = 0;
+
+    for (auto it = smb2_ftracker_lru->rbegin();
+        it != smb2_ftracker_lru->rend() and scanned < SMB2_FTRACKER_EVICT_SCAN; ++it, ++scanned)
+    {
+        DCE2_Smb2FileTracker* cand = *it;
+
+        // co_tracker holds retained DCE/RPC reassembly state, the costliest thing to discard.
+        if (cand->co_tracker)
+            continue;
+
+        if (active_tests >= SMB2_FTRACKER_ACTIVE_TESTS)
+            break;
+        ++active_tests;
+        if (cand->str->is_ftracker_active(cand))
+            continue;
+
+        if (!cand->max_offset and !cand->file_name_hash)
+        {
+            DCE2_Smb2EvictOne(cand);
+            return;
+        }
+        if (!idle)
+            idle = cand;
+    }
+
+    if (idle)
+    {
+        DCE2_Smb2EvictOne(idle);
+        return;
+    }
+
+    // Nothing eligible in the window, so fall back to plain LRU.
+    dce2_smb_stats.v2_ftracker_evict_live++;
+    DCE2_Smb2EvictOne(smb2_ftracker_lru->back());
+}
+
+DCE2_Smb2FileTracker* DCE2_Smb2CreateFileTracker(const uint64_t file_id,
+    DCE2_Smb2TreeTracker* ttr, DCE2_Smb2SessionTracker* str)
+{
+    if (smb2_session_cache and smb2_session_cache->current_size + SMB2_FTRACKER_CACHE_COST >
+        smb2_session_cache->max_size)
+    {
+        DCE2_Smb2EvictFtracker();
+    }
+
+    auto ftracker = new DCE2_Smb2FileTracker(file_id, ttr, str,
+        DetectionEngine::get_current_packet()->flow);
+
+    if (!ttr->insertFtracker(file_id, ftracker))
+    {
+        delete ftracker;
+        return nullptr;
+    }
+    return ftracker;
 }

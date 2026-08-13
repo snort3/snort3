@@ -227,6 +227,7 @@ struct dce2SmbStats : public LruCacheLocalStats
     PegCount v2_read_ignored;
     PegCount v2_read_inv_str_sz;
     PegCount v2_read_rtrkr_misng;
+    PegCount v2_read_resp_ftrkr_misng;
     PegCount v2_read_resp_hdr_err;
     PegCount v2_read_req_hdr_err;
     PegCount v2_setinfo;
@@ -263,6 +264,9 @@ struct dce2SmbStats : public LruCacheLocalStats
     PegCount v2_total_session_trackers;
     PegCount v2_total_tree_trackers;
     PegCount v2_total_file_trackers;
+    PegCount v2_max_file_trackers;
+    PegCount v2_ftracker_evicted;
+    PegCount v2_ftracker_evict_live;
     PegCount v2_updated_file_flows;
     PegCount v2_ignored_file_processing;
     PegCount v2_mc_file_transfers;

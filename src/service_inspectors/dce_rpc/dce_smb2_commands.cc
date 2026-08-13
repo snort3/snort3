@@ -402,8 +402,9 @@ static void DCE2_Smb2CreateRequest(DCE2_Smb2SsnData* ssd,
                 !ttr->findFtracker(file_id))
             {
                 //Create a ftracker here to handle compound write case
-                auto ftracker = new DCE2_Smb2FileTracker(file_id, ttr, str,
-                    DetectionEngine::get_current_packet()->flow);
+                auto ftracker = DCE2_Smb2CreateFileTracker(file_id, ttr, str);
+                if (!ftracker)
+                    return;
                 if (file_name and name_len)
                 {
                     ftracker->file_name_hash = str_to_hash(
@@ -414,7 +415,6 @@ static void DCE2_Smb2CreateRequest(DCE2_Smb2SsnData* ssd,
                     ftracker->ignore = true;
                     dce2_smb_stats.v2_ignored_file_processing++;
                 }
-                ttr->insertFtracker(file_id, ftracker);
                 if (SMB2_SHARE_TYPE_DISK == ttr->get_share_type())
                 {
                     FileContext* file = DCE2_Smb2GetFileContext(ssd, ftracker, true);
@@ -474,8 +474,9 @@ static void DCE2_Smb2CreateResponse(DCE2_Smb2SsnData* ssd,
     DCE2_Smb2FileTracker* ftracker = ttr->findFtracker(fileId_persistent);
     if (!ftracker)
     {
-        ftracker = new DCE2_Smb2FileTracker(fileId_persistent, ttr, str, DetectionEngine::get_current_packet()->flow);
-        ttr->insertFtracker(fileId_persistent, ftracker);
+        ftracker = DCE2_Smb2CreateFileTracker(fileId_persistent, ttr, str);
+        if (!ftracker)
+            return;
     }
 
     ftracker->file_size = file_size;
@@ -883,13 +884,12 @@ static void DCE2_Smb2ReadRequest(DCE2_Smb2SsnData* ssd,
         return;
     }
 
-    DCE2_Smb2FileTracker* ftracker =  ttr->findFtracker(fileId_persistent);
+    const DCE2_Smb2FileTracker* ftracker =  ttr->findFtracker(fileId_persistent);
     if (!ftracker and ttr->get_share_type() == SMB2_SHARE_TYPE_DISK)
     {
         //At times read is sent after the close, in case of malware block
         // Create a file tracker here
-        ftracker = new DCE2_Smb2FileTracker(fileId_persistent, ttr, str, DetectionEngine::get_current_packet()->flow);
-        ttr->insertFtracker(fileId_persistent, ftracker);
+        ftracker = DCE2_Smb2CreateFileTracker(fileId_persistent, ttr, str);
     }
     if (!ftracker)
     {
@@ -965,6 +965,14 @@ static void DCE2_Smb2ReadResponse(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
         {
             ssd->ftracker_local->smb2_pdu_state = DCE2_SMB_PDU_STATE__RAW_DATA;
         }
+    }
+    else if (!ftracker)
+    {
+        // Tracker was evicted or closed since the request, so this file data goes uninspected.
+        dce2_smb_stats.v2_read_resp_ftrkr_misng++;
+        SMB_DEBUG(dce_smb_trace, DEFAULT_TRACE_OPTION_ID, TRACE_CRITICAL_LEVEL,
+            DetectionEngine::get_current_packet(), "%s_RESP: ftracker missing 0x%" PRIx64 "\n",
+            smb2_command_string[SMB2_COM_READ], request->get_file_id());
     }
     str->removeRtracker(ssd->flow_key, message_id);
 }
@@ -1077,8 +1085,7 @@ static void DCE2_Smb2WriteRequest(DCE2_Smb2SsnData* ssd, const Smb2Hdr* smb_hdr,
 
     if (!ftracker and ttr->get_share_type() == SMB2_SHARE_TYPE_DISK)
     {
-        ftracker = new DCE2_Smb2FileTracker(fileId_persistent, ttr, str, DetectionEngine::get_current_packet()->flow);
-        ttr->insertFtracker(fileId_persistent, ftracker);
+        ftracker = DCE2_Smb2CreateFileTracker(fileId_persistent, ttr, str);
     }
     if (!ftracker)
     {

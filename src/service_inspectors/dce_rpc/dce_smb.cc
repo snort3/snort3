@@ -459,7 +459,10 @@ static void dce2_smb_init()
 
 static void dce2_smb_tinit()
 {
+    // Must exist before the delete below, whose destructor cascade erases nodes from it.
+    DCE2_Smb2FtrackerLruInit();
     delete smb2_session_cache;
+    smb2_session_cache = nullptr;
     DCE2_SmbSessionCacheInit(smb_memcap);
 }
 
@@ -467,6 +470,7 @@ static void dce2_smb_tterm()
 {
     delete smb2_session_cache;
     smb2_session_cache = nullptr;
+    DCE2_Smb2FtrackerLruTerm();
 }
 
 static Inspector* dce2_smb_ctor(Module* m)

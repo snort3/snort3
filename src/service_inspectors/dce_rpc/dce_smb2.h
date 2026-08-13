@@ -26,6 +26,8 @@
 #include "config.h"
 #endif
 
+#include <list>
+
 #include "dce_db.h"
 #include "dce_smb.h"
 #include "hash/lru_cache_shared.h"
@@ -152,6 +154,13 @@ public:
 
 struct DCE2_Smb2SsnData;
 class DCE2_Smb2SessionTracker;
+class DCE2_Smb2FileTracker;
+
+typedef std::list<DCE2_Smb2FileTracker*> DCE2_Smb2FtrackerLruList;
+
+// Recency list over every live file tracker on this thread, most recent at the front. Null before
+// the first dce2_smb_tinit and after dce2_smb_tterm, so every user must check.
+extern THREAD_LOCAL DCE2_Smb2FtrackerLruList* smb2_ftracker_lru;
 
 class DCE2_Smb2FileTracker
 {
@@ -172,10 +181,18 @@ public:
     DCE2_Smb2SessionTracker* str = nullptr;
     snort::Flow* parent_flow = nullptr;
     DCE2_CoTracker* co_tracker = nullptr;
+    // Position in smb2_ftracker_lru. Valid only while in_lru is set.
+    DCE2_Smb2FtrackerLruList::iterator lru_pos;
     bool ignore : 1;
     bool upload : 1;
     bool multi_channel_file : 1;
+    bool in_lru : 1;
 };
+
+// What one file tracker costs the session cache: the object plus its LRU list node.
+static constexpr size_t SMB2_FTRACKER_LRU_NODE_SIZE = 4 * sizeof(void*);
+static constexpr size_t SMB2_FTRACKER_CACHE_COST =
+    sizeof(DCE2_Smb2FileTracker) + SMB2_FTRACKER_LRU_NODE_SIZE;
 
 class DCE2_Smb2LocalFileTracker
 {
@@ -199,7 +216,12 @@ public:
     // File Tracker
     DCE2_Smb2FileTracker* findFtracker(uint64_t file_id)
     {
-        return file_trackers.Find(file_id);
+        DCE2_Smb2FileTracker* ftracker = file_trackers.Find(file_id);
+        // A lookup counts as a use. splice keeps lru_pos valid across the move.
+        if (ftracker and ftracker->in_lru and smb2_ftracker_lru)
+            smb2_ftracker_lru->splice(smb2_ftracker_lru->begin(), *smb2_ftracker_lru,
+                ftracker->lru_pos);
+        return ftracker;
     }
 
     bool insertFtracker(uint64_t file_id, DCE2_Smb2FileTracker* ftracker)
@@ -373,6 +395,7 @@ public:
 
     void removeSessionFromAllConnection();
     void update_cache_size(int size);
+    bool is_ftracker_active(const DCE2_Smb2FileTracker* ftracker);
 
     // tree tracker
     bool insertTtracker(uint32_t tree_id, DCE2_Smb2TreeTracker* ttr)
