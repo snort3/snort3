@@ -829,7 +829,7 @@ private:
     const NetFlowConfig *config;
 
     bool log_netflow_cache();
-    void stringify(std::ofstream&);
+    static void stringify(std::ofstream&);
 };
 
 class NetFlowReloadSwapper : public snort::ReloadSwapper

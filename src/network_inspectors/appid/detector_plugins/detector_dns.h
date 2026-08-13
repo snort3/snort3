@@ -31,16 +31,20 @@ struct DNSHeader;
 class DnsValidator
 {
 protected:
-    APPID_STATUS_CODE add_dns_query_info(AppIdSession&, uint16_t, const uint8_t*,
+    static APPID_STATUS_CODE add_dns_query_info(AppIdSession&, uint16_t, const uint8_t*,
         uint8_t, uint16_t, uint16_t, uint16_t, AppidChangeBits&);
-    APPID_STATUS_CODE add_dns_response_info(AppIdSession&, uint16_t, const uint8_t*,
+    static APPID_STATUS_CODE add_dns_response_info(AppIdSession&, uint16_t, const uint8_t*,
         uint8_t, uint16_t, uint8_t, uint32_t, AppidChangeBits&);
-    APPID_STATUS_CODE dns_validate_label(const uint8_t*, uint16_t&, uint16_t, uint8_t&, bool&);
-    int dns_validate_query(const uint8_t*, uint16_t*, uint16_t, uint16_t, bool, AppIdSession&, AppidChangeBits&);
-    int dns_validate_answer(const uint8_t*, uint16_t*, uint16_t,
+    static APPID_STATUS_CODE dns_validate_label(const uint8_t*, uint16_t&, uint16_t, uint8_t&,
+        bool&);
+    static int dns_validate_query(const uint8_t*, uint16_t*, uint16_t, uint16_t, bool,
+        AppIdSession&, AppidChangeBits&);
+    static int dns_validate_answer(const uint8_t*, uint16_t*, uint16_t,
         uint16_t, uint8_t, bool, AppIdSession&, AppidChangeBits&);
-    int dns_validate_header(AppidSessionDirection, const DNSHeader*, bool, const AppIdSession&);
-    int validate_packet(const uint8_t*, uint16_t, const int, bool, AppIdSession&, AppidChangeBits&);
+    static int dns_validate_header(AppidSessionDirection, const DNSHeader*, bool,
+        const AppIdSession&);
+    static int validate_packet(const uint8_t*, uint16_t, const int, bool, AppIdSession&,
+        AppidChangeBits&);
 };
 
 class DnsTcpServiceDetector : public ServiceDetector, public DnsValidator
@@ -58,7 +62,7 @@ public:
     DnsUdpServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
-    int validate_doh(AppIdDiscoveryArgs&);
+    static int validate_doh(AppIdDiscoveryArgs&);
 };
 #endif
 

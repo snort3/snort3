@@ -60,7 +60,7 @@ private:
     bool parse_cmd_validity_cmd(std::istringstream& data_stream);
     std::vector<Command>::iterator get_command(const std::string& cmd_name,
         std::vector<FtpServer::Command>::iterator it);
-    bool add_cmd_to_set(std::set<std::string>& cmd_set, std::istringstream& stream);
+    static bool add_cmd_to_set(std::set<std::string>& cmd_set, std::istringstream& stream);
 
     std::vector<Command> ftp_default_command_specs =
     {

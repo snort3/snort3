@@ -109,7 +109,7 @@ private:
 #endif
 
     HttpTransaction(HttpFlowData*, snort::Flow* const);
-    void archive_section(HttpMsgSection*, HttpMsgSection**);
+    static void archive_section(HttpMsgSection*, HttpMsgSection**);
     void archive_status(HttpMsgStatus*);
     void archive_header(HttpMsgHeader*);
     void publish_end_of_transaction();

@@ -249,9 +249,9 @@ public:
 
 private:
 
-    bool valid_checksum_from_daq(const RawData&);
-    bool valid_checksum4(const RawData&, const DecodeData&);
-    bool valid_checksum6(const RawData&, const CodecData&, const DecodeData&);
+    static bool valid_checksum_from_daq(const RawData&);
+    static bool valid_checksum4(const RawData&, const DecodeData&);
+    static bool valid_checksum6(const RawData&, const CodecData&, const DecodeData&);
 
     void UDPMiscTests(const DecodeData&, const CodecData&, uint32_t pay_len);
     UdpCodecConfig* config;

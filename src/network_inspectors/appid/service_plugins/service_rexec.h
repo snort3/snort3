@@ -34,7 +34,7 @@ public:
 
     int validate(AppIdDiscoveryArgs&) override;
 private:
-    void rexec_bail(ServiceREXECData* rd);
+    static void rexec_bail(ServiceREXECData* rd);
 };
 
 #endif

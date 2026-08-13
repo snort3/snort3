@@ -362,7 +362,7 @@ bool ACSwap::execute(Analyzer& analyzer)
                 LogMessage("ReloadResourceTuner[%u] complete\n", id);
                 delete reload_tuners;
                 reload_tuners = nullptr;
-                ps->finish();
+                Swapper::finish();
                 return true;
             }
 

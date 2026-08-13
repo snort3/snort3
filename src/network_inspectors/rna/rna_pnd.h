@@ -156,7 +156,7 @@ private:
         const struct in6_addr* src_ip, const uint8_t* src_mac);
 
     // Change vlan event related utilities
-    inline void update_vlan(const snort::Packet*, HostTrackerMac&);
+    static inline void update_vlan(const snort::Packet*, HostTrackerMac&);
     void generate_change_vlan_update(RnaTracker&, const snort::Packet*,
         const uint8_t* src_mac, HostTrackerMac&, bool isnew);
     void generate_change_vlan_update(RnaTracker&, const snort::Packet*,

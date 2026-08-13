@@ -235,12 +235,12 @@ struct DNSData
 
     bool publish_response() const;
     bool has_events() const;
-    bool valid_dns(const DNSHdr&) const;
+    static bool valid_dns(const DNSHdr&);
 
-    bool decode_rdata(const snort::Packet* p, const uint8_t* rr, const uint8_t* rdata, uint16_t rdlength,
-        uint16_t type, std::string& rdata_str) const;
-    void get_rr_data(const snort::Packet *p, const std::vector<uint16_t>& tabs,
-        std::string& rrs, std::string* ttls = nullptr) const;
+    static bool decode_rdata(const snort::Packet* p, const uint8_t* rr, const uint8_t* rdata,
+        uint16_t rdlength, uint16_t type, std::string& rdata_str);
+    static void get_rr_data(const snort::Packet *p, const std::vector<uint16_t>& tabs,
+        std::string& rrs, std::string* ttls = nullptr);
     void get_answers(const snort::Packet *p, std::string& answers, std::string& ttls) const
     { get_rr_data(p, answer_tabs, answers, &ttls); }
     void get_auth(const snort::Packet *p, std::string& auth) const { get_rr_data(p, auth_tabs, auth); }

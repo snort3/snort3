@@ -148,8 +148,9 @@ public:
     void init_appid_info_table(const AppIdConfig&, snort::SnortConfig*, OdpContext& odp_ctxt);
     void cleanup_appid_info_table();
     void dump_app_info_table();
-    SnortProtocolId add_appid_protocol_reference(const char* protocol, snort::SnortConfig*);
-    void dump_appid_configurations(const std::string&) const;
+    static SnortProtocolId add_appid_protocol_reference(const char* protocol,
+        snort::SnortConfig*);
+    static void dump_appid_configurations(const std::string&);
     uint32_t getAttributeBits(AppId id);
 
 private:
@@ -158,7 +159,7 @@ private:
     bool is_existing_entry(AppInfoTableEntry* entry);
     AppInfoTableEntry* find_app_info_by_name(const char* app_name);
     bool add_entry_to_app_info_name_table(const char* app_name, AppInfoTableEntry* entry);
-    AppId get_static_app_info_entry(AppId appid);
+    static AppId get_static_app_info_entry(AppId appid);
 
     AppInfoTable app_info_table;
     AppInfoTable app_info_service_table;

@@ -35,10 +35,10 @@ public:
     int validate(AppIdDiscoveryArgs&) override;
 
 private:
-    void add_dhcp_info(AppIdSession&, unsigned op55_len, const uint8_t* op55, unsigned
+    static void add_dhcp_info(AppIdSession&, unsigned op55_len, const uint8_t* op55, unsigned
         op60_len, const uint8_t* op60, const uint8_t* mac);
-    void add_new_dhcp_lease(AppIdSession&, const uint8_t* mac, uint32_t ip, uint32_t subnetmask,
-        uint32_t leaseSecs, uint32_t router);
+    static void add_new_dhcp_lease(AppIdSession&, const uint8_t* mac, uint32_t ip,
+        uint32_t subnetmask, uint32_t leaseSecs, uint32_t router);
 };
 #endif
 

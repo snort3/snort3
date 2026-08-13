@@ -84,7 +84,7 @@ protected:
     const HttpBufferInfo buffer_info;
     const snort::CursorActionType cat;
 
-    HttpInspect const* eval_helper(snort::Packet* p);
+    static HttpInspect const* eval_helper(snort::Packet* p);
 
 private:
     const snort::PduSection pdu_section;

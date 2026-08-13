@@ -35,7 +35,7 @@ public:
     SDPattern(Converter& c) : ConversionState(c) { }
     bool convert(std::istringstream& data) override;
 private:
-    std::string convert_pattern(const std::string& pattern);
+    static std::string convert_pattern(const std::string& pattern);
 };
 } // namespace
 

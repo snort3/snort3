@@ -187,7 +187,7 @@ public:
     void report_progress() override;
 
 private:
-    bool tune_resources(unsigned work_limit);
+    static bool tune_resources(unsigned work_limit);
 };
 
 class StreamModule : public snort::Module

@@ -123,7 +123,7 @@ private:
     RawFingerprint fingerprint;
     snort::DeviceInfoRawFingerprint deviceinfo_fingerprint;
 
-    bool is_valid_fqn(const char* fqn) const;
+    static bool is_valid_fqn(const char* fqn);
     void dump();
 };
 

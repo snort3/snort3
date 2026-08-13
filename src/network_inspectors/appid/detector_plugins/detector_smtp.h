@@ -38,10 +38,10 @@ public:
     SMTPDetectorData* get_common_data(AppIdSession&);
 
 private:
-    int extract_version_and_add_client_app(AppId, const int prefix_len,
+    static int extract_version_and_add_client_app(AppId, const int prefix_len,
         const uint8_t* product, const uint8_t* product_end, ClientSMTPData* const,
         AppIdSession&, AppId, AppidChangeBits&);
-    int identify_client_version(ClientSMTPData* const, const uint8_t* product,
+    static int identify_client_version(ClientSMTPData* const, const uint8_t* product,
         const uint8_t* data_end, AppIdSession&, snort::Packet*, AppidChangeBits&);
 };
 

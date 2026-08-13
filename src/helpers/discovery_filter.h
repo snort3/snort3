@@ -62,7 +62,7 @@ private:
     void add_ip(Direction dir, uint16_t proto, uint16_t port, const std::string& ip);
     sfip_var_t* get_port_list(Direction dir, uint32_t key);
 
-    inline uint32_t proto_port_key(uint16_t proto, uint16_t port) const
+    static inline uint32_t proto_port_key(uint16_t proto, uint16_t port)
     {
         return (proto << 16) | port;
     }

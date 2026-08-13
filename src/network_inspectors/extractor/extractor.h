@@ -97,7 +97,6 @@ public:
     { return extractor_config; }
 
 private:
-    void store(snort::Value& val, std::vector<std::string>& dst);
     void commit_config();
 
     ExtractorConfig extractor_config;

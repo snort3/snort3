@@ -86,7 +86,7 @@ public:
 private:
     void init_merge_hash();
     void* calloc_mem(size_t size);
-    void set_node_state_shared(IdentifierNode* start);
+    static void set_node_state_shared(IdentifierNode* start);
     IdentifierNode* clone_node(IdentifierNode* start);
     bool update_next(IdentifierNode* start, IdentifierNode** next_ptr, IdentifierNode* append);
     void update_trie(IdentifierNode* start, IdentifierNode* append);

@@ -345,7 +345,7 @@ private:
         return c;
     }
 
-    size_t do_hash_flow_key(const uint32_t* d) const
+    static size_t do_hash_flow_key(const uint32_t* d)
     {
         uint32_t a, b, c;
         a = b = c = SMB_KEY_HASH_HARDENER;
@@ -394,7 +394,7 @@ public:
     ~DCE2_Smb2SessionTracker();
 
     void removeSessionFromAllConnection();
-    void update_cache_size(int size);
+    static void update_cache_size(int size);
     bool is_ftracker_active(const DCE2_Smb2FileTracker* ftracker);
 
     // tree tracker

@@ -193,4 +193,3 @@ TEST_CASE("invalid option", "[Trace]")
 }
 
 #endif
-

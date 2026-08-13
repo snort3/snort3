@@ -123,7 +123,7 @@ public:
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 
 private:
-    bool valid_checksum_from_daq(const RawData&);
+    static bool valid_checksum_from_daq(const RawData&);
     void IP4AddrTests(const ip::IP4Hdr*, const CodecData&, const DecodeData&);
     void IPMiscTests(const ip::IP4Hdr* const ip4h, const CodecData& codec, uint16_t len);
     void DecodeIPOptions(const uint8_t* start, uint8_t& o_len, CodecData& data);

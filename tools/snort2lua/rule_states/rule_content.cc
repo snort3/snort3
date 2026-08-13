@@ -41,7 +41,7 @@ private:
     bool sticky_buffer_set;
     bool parse_options(const std::istringstream&, const std::string&, const std::string&);
     void add_sticky_buffer(const std::istringstream&, const std::string& buffer);
-    bool extract_payload(std::istringstream& data_stream,
+    static bool extract_payload(std::istringstream& data_stream,
         std::string& option);
 };
 } // namespace

@@ -129,13 +129,13 @@ public:
     void format(bool reverse, uint8_t* raw_pkt, DecodeData& snort) override;
 
 private:
-    bool valid_checksum_from_daq(const RawData&);
-    bool valid_checksum4(const RawData&, const DecodeData&);
-    bool valid_checksum6(const RawData&, const CodecData&, const DecodeData&);
+    static bool valid_checksum_from_daq(const RawData&);
+    static bool valid_checksum4(const RawData&, const DecodeData&);
+    static bool valid_checksum6(const RawData&, const CodecData&, const DecodeData&);
 
-    int validate_option(const tcp::TcpOption* const opt,
+    static int validate_option(const tcp::TcpOption* const opt,
         const uint8_t* const end, const int expected_len);
-    int validate_option(const tcp::TcpOption* const opt,
+    static int validate_option(const tcp::TcpOption* const opt,
         const uint8_t* const end);
 
     void decode_options(const uint8_t*, uint32_t, CodecData&, DecodeData&);

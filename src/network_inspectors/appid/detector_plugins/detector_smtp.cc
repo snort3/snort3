@@ -220,7 +220,6 @@ int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const 
 {
     const uint8_t* p;
     AppId appId = APP_ID_SMTP;
-    const uint8_t* v_end = fd->version + MAX_VERSION_SIZE - 1;
     unsigned len = data_end - product;
     if (len >= sizeof(MICROSOFT) && memcmp(product, MICROSOFT, sizeof(MICROSOFT)-1) == 0)
     {
@@ -274,6 +273,7 @@ int SmtpClientDetector::identify_client_version(ClientSMTPData* const fd, const 
         if (p >= data_end || *(data_end - 1) != ')' || *p == ')' || isspace(*p))
             return 1;
 
+        const uint8_t* v_end = fd->version + MAX_VERSION_SIZE - 1;
         uint8_t* v;
         for (v = fd->version; v < v_end && p < data_end - 1; v++,p++)
         {

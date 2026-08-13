@@ -39,12 +39,12 @@ public:
     { return binding_id; }
 
 private:
-    bool get_bracket_list(std::istringstream& data_stream, std::string& list);
-    bool convert_val_or_list(std::istringstream& data_stream, std::string& str);
+    static bool get_bracket_list(std::istringstream& data_stream, std::string& list);
+    static bool convert_val_or_list(std::istringstream& data_stream, std::string& str);
     bool parse_smb_file_inspection(std::istringstream& data_stream);
     bool parse_detect(std::istringstream& data_stream, std::map<std::string, Binder*> bind, bool
         is_detect);
-    void add_default_binding(const std::string& type, std::map<std::string, Binder*> bind);
+    static void add_default_binding(const std::string& type, std::map<std::string, Binder*> bind);
     bool parse_and_add_ports(const std::string& ports, const std::string& type,  std::map<std::string,
         Binder*> bind, bool bind_port_to_tcp);
     bool init_net_created_table();

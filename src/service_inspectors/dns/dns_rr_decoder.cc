@@ -431,7 +431,7 @@ static void decode_default_rr(std::string& rdata_str, uint16_t type)
 }
 
 bool DNSData::decode_rdata(const Packet* p, const uint8_t* rr_domain_name, const uint8_t* rdata,
-    uint16_t rdlength, uint16_t type, std::string& rdata_str) const
+    uint16_t rdlength, uint16_t type, std::string& rdata_str)
 {
     assert(rdata <= p->data + p->dsize);
 
@@ -525,7 +525,7 @@ bool DNSData::decode_rdata(const Packet* p, const uint8_t* rr_domain_name, const
 }
 
 void DNSData::get_rr_data(const Packet *p, const std::vector<uint16_t>& tabs,
-    std::string& rrs, std::string* ttls) const
+    std::string& rrs, std::string* ttls)
 {
     assert(p != nullptr);
     assert(p->data != nullptr);

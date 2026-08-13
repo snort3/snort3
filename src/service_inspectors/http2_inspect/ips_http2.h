@@ -52,15 +52,13 @@ private:
     struct Http2RuleParaList
     {
     public:
-        void reset();
+        static void reset();
     };
 
     const char* const key;
     const Http2Enums::HTTP2_BUFFER buffer_index;
     const snort::CursorActionType cat;
     const PsIdx psi;
-
-    Http2RuleParaList para_list;
 };
 
 class Http2IpsOption : public snort::IpsOption
@@ -71,8 +69,6 @@ public:
         buffer_index(cm->buffer_index), cat(cm->cat), psi(cm->psi) {}
     snort::CursorActionType get_cursor_type() const override { return cat; }
     EvalStatus eval(Cursor&, snort::Packet*) override;
-    uint32_t hash() const override;
-    bool operator==(const snort::IpsOption& ips) const override;
     static snort::IpsOption* opt_ctor(snort::Module* m, IpsInfo&)
         { return new Http2IpsOption(static_cast<Http2CursorModule*>(m)); }
     static void opt_dtor(IpsOption* p) { delete p; }

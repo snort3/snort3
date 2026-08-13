@@ -79,7 +79,7 @@ struct View
     uint64_t suspends() const
     { return state.latency_suspends; }
 
-    hr_duration time_per(hr_duration d, uint64_t v) const
+    static hr_duration time_per(hr_duration d, uint64_t v)
     {
         if ( v  == 0 )
             return CLOCK_ZERO;

@@ -43,7 +43,7 @@ public:
     void show() const;
 
     void process(snort::Packet*, FragTracker*);
-    void cleanup(FragTracker*);
+    static void cleanup(FragTracker*);
 
     static void init();
 
@@ -58,8 +58,8 @@ private:
         uint16_t slide, uint16_t trunc, uint16_t frag_offset,
         Fragment* left, Fragment** retFrag);
 
-    int dup_frag_node(FragTracker*, Fragment* left, Fragment** retFrag);
-    int expired(snort::Packet*, FragTracker*, const FragEngine*);
+    static int dup_frag_node(FragTracker*, Fragment* left, Fragment** retFrag);
+    static int expired(snort::Packet*, FragTracker*, const FragEngine*);
 
 private:
     FragEngine& engine;

@@ -44,23 +44,15 @@ THREAD_LOCAL const Trace* host_cache_trace = nullptr;
 //-------------------------------------------------------------------------
 static int host_cache_dump(lua_State* L)
 {
-    HostCacheModule* mod =
-        static_cast<HostCacheModule*>(PluginManager::get_module(HOST_CACHE_NAME));
-    assert(mod);
-
-    mod->log_host_cache( luaL_optstring(L, 1, nullptr), true );
+    HostCacheModule::log_host_cache( luaL_optstring(L, 1, nullptr), true );
     return 0;
 }
 
 // cppcheck-suppress constParameterCallback
 static int host_cache_get_stats(lua_State* L)
 {
-    HostCacheModule* mod =
-        static_cast<HostCacheModule*>(PluginManager::get_module(HOST_CACHE_NAME));
-    assert(mod);
-
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    string outstr = mod->get_host_cache_stats();
+    string outstr = HostCacheModule::get_host_cache_stats();
     ctrlcon->respond("%s", outstr.c_str());
 
     return 0;
@@ -68,13 +60,9 @@ static int host_cache_get_stats(lua_State* L)
 
 static int host_cache_get_segment_stats(lua_State* L)
 {
-    HostCacheModule* mod =
-        static_cast<HostCacheModule*>(PluginManager::get_module(HOST_CACHE_NAME));
-    assert(mod);
-
     int seg_idx = luaL_optint(L, 1, -1);
     ControlConn* ctrlcon = ControlConn::query_from_lua(L);
-    string outstr = mod->get_host_cache_segment_stats(seg_idx);
+    string outstr = HostCacheModule::get_host_cache_segment_stats(seg_idx);
     ctrlcon->respond("%s", outstr.c_str());
 
     return 0;
@@ -420,7 +408,7 @@ void HostCacheModule::dump()
     const char* df = hcm ? hcm->get_dump_file() : nullptr;
 
     if ( df and *df )
-        hcm->log_host_cache(df);
+        HostCacheModule::log_host_cache(df);
 }
 
 void HostCacheModule::log_host_cache(const char* file_name, bool verbose)

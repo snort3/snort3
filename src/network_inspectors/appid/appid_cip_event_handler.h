@@ -35,8 +35,8 @@ public:
     void handle(snort::DataEvent&, snort::Flow*) override;
 
 private:
-    void client_handler(AppIdSession&);
-    void service_handler(const snort::Packet&, AppIdSession&);
+    static void client_handler(AppIdSession&);
+    static void service_handler(const snort::Packet&, AppIdSession&);
 
     AppIdInspector& inspector;
 };

@@ -43,7 +43,7 @@ public:
     int validate(AppIdDiscoveryArgs&) override;
 
 private:
-    void add_smb_info(AppIdSession&, unsigned major, unsigned minor, uint32_t flags);
+    static void add_smb_info(AppIdSession&, unsigned major, unsigned minor, uint32_t flags);
 };
 #endif
 

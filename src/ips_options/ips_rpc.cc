@@ -59,13 +59,13 @@ public:
     EvalStatus eval(Cursor&, Packet*) override;
 
 private:
-    uint32_t get_int(const uint8_t*&);
+    static uint32_t get_int(const uint8_t*&);
     bool check_rpc_call(const uint8_t*&);
     bool check_version(uint32_t);
     bool check_procedure(uint32_t);
     bool check_program (uint32_t);
     bool is_match(const Packet*);
-    bool is_valid(const Packet*);
+    static bool is_valid(const Packet*);
 
     static const uint32_t RPC_MSG_VERSION = 2;
     static const uint32_t CALL = 0;

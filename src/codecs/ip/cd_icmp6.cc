@@ -110,7 +110,7 @@ public:
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 
 private:
-    bool valid_checksum_from_daq(const RawData&);
+    static bool valid_checksum_from_daq(const RawData&);
     template<typename OptionType>
     inline void validate_ndp_option(CodecData &codec, const OptionType* const icmp_pkt,
         const uint16_t min_len, const uint16_t dsize);

@@ -242,14 +242,14 @@ public:
     int32_t get_next_mini_fat_sector(int32_t sec_id);
     int32_t get_fat_offset(int32_t sec_id);
     int32_t get_mini_fat_offset(int32_t sec_id);
-    int32_t get_file_offset(const uint8_t*, uint32_t data_len);
+    static int32_t get_file_offset(const uint8_t*, uint32_t data_len);
 
-    void decompression(const uint8_t* data, uint32_t& data_len, uint8_t*& buffer,
+    static void decompression(const uint8_t* data, uint32_t& data_len, uint8_t*& buffer,
         uint32_t& buffer_ofset);
     uint32_t find_bytes_to_copy(uint32_t byte_offset, uint32_t data_len,
                                    uint32_t stream_size, uint16_t sector_size);
 
-    int search_nocase(const uint8_t* buffer, unsigned buffer_len) const
+    static int search_nocase(const uint8_t* buffer, unsigned buffer_len)
     {
         return searcher->search(search_handle, buffer, buffer_len);
     }

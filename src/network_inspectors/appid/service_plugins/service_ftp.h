@@ -34,7 +34,7 @@ public:
     int validate(AppIdDiscoveryArgs&) override;
 
 private:
-    void create_expected_session(AppIdSession&, const snort::Packet*,
+    static void create_expected_session(AppIdSession&, const snort::Packet*,
         const snort::SfIp* cliIp, uint16_t cliPort, const snort::SfIp* srvIp,
         uint16_t srvPort, IpProtocol, AppidSessionDirection);
 };

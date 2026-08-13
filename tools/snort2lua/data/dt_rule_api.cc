@@ -66,10 +66,10 @@ void RuleApi::reset_state()
     curr_data_bad = false;
 }
 
-bool RuleApi::failed_conversions() const
+bool RuleApi::failed_conversions()
 { return error_count > 0; }
 
-std::size_t RuleApi::num_errors() const
+std::size_t RuleApi::num_errors()
 { return error_count; }
 
 bool RuleApi::empty() const

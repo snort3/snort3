@@ -90,8 +90,8 @@ public:
     void print_local_variables(std::ostream&) const;
 
     // have there been any failed conversion?
-    bool failed_conversions() const;
-    std::size_t num_errors() const;
+    static bool failed_conversions();
+    static std::size_t num_errors();
     // is there any actual data to print?
     bool empty() const
     { return vars.empty() && includes.empty(); }

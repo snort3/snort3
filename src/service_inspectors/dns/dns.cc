@@ -110,7 +110,7 @@ static DNSData* SetNewDNSData(Packet* p, bool udp)
     return &fd->session;
 }
 
-bool DNSData::valid_dns(const DNSHdr& dns_header) const
+bool DNSData::valid_dns(const DNSHdr& dns_header)
 {
     // Check QR bit (Query/Response)
     bool is_query = ((dns_header.flags & 0x8000) == 0);

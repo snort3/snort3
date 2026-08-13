@@ -56,10 +56,10 @@ public:
     void go_away() override {}
 
 private:
-    uint32_t compute_request_line_length(const HttpCutter* const& cutter,
-        const HttpFlowData* session_data, uint32_t section_size) const;
-    uint32_t compute_request_size(const HttpFlowData* session_data,
-        HttpCommon::SectionType type, uint32_t current_size) const;
+    static uint32_t compute_request_line_length(const HttpCutter* const& cutter,
+        const HttpFlowData* session_data, uint32_t section_size);
+    static uint32_t compute_request_size(const HttpFlowData* session_data,
+        HttpCommon::SectionType type, uint32_t current_size);
     void prepare_flush(HttpFlowData* session_data, uint32_t* flush_offset, HttpCommon::SectionType
         section_type, uint32_t num_flushed, uint32_t num_excess, int32_t num_head_lines,
         bool is_broken_chunk, uint32_t num_good_chunks, uint32_t octets_seen)

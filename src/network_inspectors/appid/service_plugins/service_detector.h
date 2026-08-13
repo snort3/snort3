@@ -34,7 +34,7 @@ public:
 
     void register_appid(AppId, unsigned extractsInfo, OdpContext& odp_ctxt) override;
 
-    int service_inprocess(AppIdSession&, const snort::Packet*, AppidSessionDirection dir);
+    static int service_inprocess(AppIdSession&, const snort::Packet*, AppidSessionDirection dir);
 
     int add_service(AppidChangeBits&, AppIdSession&, const snort::Packet*,
         AppidSessionDirection, AppId, const char* vendor = nullptr,
@@ -47,7 +47,7 @@ public:
     int incompatible_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir);
     int fail_service(AppIdSession&, const snort::Packet*, AppidSessionDirection dir);
 
-    void add_miscellaneous_info(AppIdSession& asd, AppId miscId)
+    static void add_miscellaneous_info(AppIdSession& asd, AppId miscId)
     {
         asd.misc_app_id = miscId;
     }

@@ -75,7 +75,7 @@ public:
 
 private:
 
-    void log_opts(TextLog* const, const uint8_t*, const uint16_t len);
+    static void log_opts(TextLog* const, const uint8_t*, const uint16_t len);
     bool validate_options(const uint8_t* rptr, uint16_t opts_len, const CodecData& codec);
 };
 

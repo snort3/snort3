@@ -41,14 +41,16 @@ public:
 
 private:
     MatchedPatterns* create_match_list(const char* data, uint16_t dataSize);
-    void scan_matched_patterns(const char* dataPtr, uint16_t index, const char** resp_endptr,
+    static void scan_matched_patterns(const char* dataPtr, uint16_t index,
+        const char** resp_endptr,
         int* pattern_length, MatchedPatterns*& pattern_list);
-    void destroy_match_list(MatchedPatterns*& pattern_list);
-    int validate_reply(const uint8_t* data, uint16_t size);
+    static void destroy_match_list(MatchedPatterns*& pattern_list);
+    static int validate_reply(const uint8_t* data, uint16_t size);
     int analyze_user(AppIdSession&, const snort::Packet*, uint16_t size,
         AppidChangeBits& change_bits, MatchedPatterns*& pattern_list);
-    int reference_pointer(const char* start_ptr, const char* end_pkt, const char** resp_endptr, int* start_index,
-        uint16_t data_size, uint8_t* user_name_len, unsigned size, MatchedPatterns*& pattern_list);
+    static int reference_pointer(const char* start_ptr, const char* end_pkt,
+        const char** resp_endptr, int* start_index, uint16_t data_size, uint8_t* user_name_len,
+        unsigned size, MatchedPatterns*& pattern_list);
     void process_txt_record(const snort::Packet* pkt, const char* srv_original, const char* rdata_start, 
         uint16_t data_len, const char* packet_end, std::string& service_type, std::string& device_name,
         std::vector<std::pair<std::string, std::string>>& kv_pairs);

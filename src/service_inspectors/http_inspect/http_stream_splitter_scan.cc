@@ -355,7 +355,7 @@ StreamSplitter::Status HttpStreamSplitter::call_cutter(Flow* flow, HttpFlowData*
 }
 
 uint32_t HttpStreamSplitter::compute_request_line_length(const HttpCutter* const& cutter,
-    const HttpFlowData* session_data, uint32_t section_size) const
+    const HttpFlowData* session_data, uint32_t section_size)
 {
     if (session_data->for_httpx)
         return get_cache_data().request.hx_request_line_length;
@@ -366,7 +366,7 @@ uint32_t HttpStreamSplitter::compute_request_line_length(const HttpCutter* const
 }
 
 uint32_t HttpStreamSplitter::compute_request_size(const HttpFlowData* session_data,
-    SectionType type, uint32_t current_size) const
+    SectionType type, uint32_t current_size)
 {
     uint64_t base_size = 0;
     const HttpTransaction* const txn = session_data->transaction[SRC_CLIENT];

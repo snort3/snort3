@@ -34,7 +34,7 @@ public:
 
     int validate(AppIdDiscoveryArgs&) override;
 private:
-    void rshell_bail(ServiceRSHELLData* rd);
+    static void rshell_bail(ServiceRSHELLData* rd);
 };
 #endif
 

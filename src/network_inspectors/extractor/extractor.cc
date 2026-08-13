@@ -107,7 +107,7 @@ void ExtractorModule::commit_config()
     service_config.clear();
 }
 
-void ExtractorModule::store(Value& val, std::vector<std::string>& dst)
+static void store(Value& val, std::vector<std::string>& dst)
 {
     dst.clear();
     val.set_first_token();

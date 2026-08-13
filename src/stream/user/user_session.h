@@ -65,7 +65,8 @@ struct UserTracker
     void add_data(snort::Packet*);
     int scan(snort::Packet*, uint32_t&);
     void flush(struct snort::Packet*, unsigned, uint32_t);
-    void detect(const struct snort::Packet*, const struct snort::StreamBuffer&, uint32_t, snort::Packet* up);
+    static void detect(const struct snort::Packet*, const struct snort::StreamBuffer&, uint32_t,
+        snort::Packet* up);
 
     std::list<UserSegment*> seg_list;
     snort::StreamSplitter* splitter;
@@ -90,7 +91,7 @@ public:
 
 private:
     void start(const snort::Packet*, snort::Flow*);
-    void update(snort::Packet*, snort::Flow*);
+    static void update(snort::Packet*, snort::Flow*);
     void end(snort::Packet*, snort::Flow*);
 
     bool add_alert(snort::Packet*, uint32_t gid, uint32_t sid) override;

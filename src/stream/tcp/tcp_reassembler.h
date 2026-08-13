@@ -210,7 +210,7 @@ public:
 protected:
     void show_rebuilt_packet(snort::Packet*);
     int flush_data_segments(uint32_t flush_len, snort::Packet* pdu);
-    void prep_pdu(snort::Flow*, snort::Packet*, uint32_t pkt_flags, snort::Packet*);
+    static void prep_pdu(snort::Flow*, snort::Packet*, uint32_t pkt_flags, snort::Packet*);
     snort::Packet* initialize_pdu(snort::Packet*, uint32_t pkt_flags, struct timeval);
     int flush_to_seq(uint32_t bytes, snort::Packet*, uint32_t pkt_flags);
     int do_zero_byte_flush(snort::Packet*, uint32_t pkt_flags);

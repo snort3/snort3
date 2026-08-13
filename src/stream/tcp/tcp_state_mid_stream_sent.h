@@ -44,7 +44,8 @@ public:
     bool do_post_sm_packet_actions(TcpSegmentDescriptor&, TcpStreamTracker&) override;
 
 private:
-    bool check_for_window_slam(TcpSegmentDescriptor&, TcpStreamTracker&, bool& is_ack_valid);
+    static bool check_for_window_slam(TcpSegmentDescriptor&, TcpStreamTracker&,
+        bool& is_ack_valid);
 };
 
 #endif

@@ -277,7 +277,7 @@ private:
     void log_data(Packet*, const Event&);
 
     static void set_buffer_ids(Inspector*);
-    const BufferIds& get_buffer_ids(Inspector*, Packet*);
+    static const BufferIds& get_buffer_ids(Inspector*, Packet*);
 
 private:
     string file;

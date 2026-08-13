@@ -282,7 +282,7 @@ public:
         tls_cert_key = snort::snort_strdup(key);
     }
 
-    bool is_tls_host_changed(const char* current, const char* new_host, uint32_t len) const
+    static bool is_tls_host_changed(const char* current, const char* new_host, uint32_t len)
     {
         if(!current or !new_host)
             return current != new_host;
@@ -829,7 +829,8 @@ public:
         return shadow_traffic_appid;
     }
 
-    inline void change_shadow_traffic_bits_to_string (const uint32_t& st_bits,std::string& str) const
+    inline static void change_shadow_traffic_bits_to_string(
+        const uint32_t& st_bits, std::string& str)
     {
         std::string tempStr;
 

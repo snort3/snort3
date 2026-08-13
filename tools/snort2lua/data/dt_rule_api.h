@@ -43,8 +43,8 @@ public:
 
     // miscellaneous
     static void set_remark(const char* s);
-    bool failed_conversions() const;
-    std::size_t num_errors() const;
+    static bool failed_conversions();
+    static std::size_t num_errors();
     bool empty() const;
     void reset_state();
     void clear();

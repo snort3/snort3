@@ -119,9 +119,9 @@ public:
 
     AppIdFlowData* data_get(const AppIdSession&);
     int data_add(AppIdSession&, AppIdFlowData*);
-    void add_user(AppIdSession&, const char*, AppId, bool, AppidChangeBits&);
-    void add_payload(AppIdSession&, AppId);
-    void add_app(AppIdSession& asd, AppId service_app_id, AppId client_app_id,
+    static void add_user(AppIdSession&, const char*, AppId, bool, AppidChangeBits&);
+    static void add_payload(AppIdSession&, AppId);
+    static void add_app(AppIdSession& asd, AppId service_app_id, AppId client_app_id,
         const char* client_version, AppidChangeBits& change_bits)
     {
         if ( client_version )
@@ -131,8 +131,9 @@ public:
         asd.set_client_inferred_service_id(service_app_id);
         asd.set_client_id(client_app_id);
     }
-    void add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId, const char*, AppidChangeBits&);
-    const char* get_code_string(APPID_STATUS_CODE) const;
+    static void add_app(const snort::Packet&, AppIdSession&, AppidSessionDirection, AppId, AppId,
+        const char*, AppidChangeBits&);
+    static const char* get_code_string(APPID_STATUS_CODE);
 
     const std::string& get_name() const
     { return name; }

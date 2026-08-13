@@ -99,7 +99,7 @@ public:
     bool is_paf() override { return true; }
 
 private:
-    void count_scan(const Flow* f)
+    static void count_scan(const Flow* f)
     {
         if ( f->pkt_type == PktType::TCP )
             ++tstats.tcp_scans;
@@ -107,7 +107,7 @@ private:
             ++tstats.user_scans;
     }
 
-    void count_hit(const Flow* f)
+    static void count_hit(const Flow* f)
     {
         if ( f->pkt_type == PktType::TCP )
             ++tstats.tcp_hits;
@@ -115,7 +115,7 @@ private:
             ++tstats.user_hits;
     }
 
-    void count_miss(const Flow* f)
+    static void count_miss(const Flow* f)
     {
         if ( f->pkt_type == PktType::TCP )
             ++tstats.tcp_misses;
@@ -139,14 +139,14 @@ public:
 
     StreamSplitter* get_splitter(bool) override;
 
-    inline bool finished(const Wand& w)
+    inline static bool finished(const Wand& w)
     { return !w.hex and !w.spell and w.curse_tracker.empty(); }
 
     void reset(Wand&, bool, MagicBook::MagicBook::ArcaneType);
 
     bool cast_spell(Wand&, Flow*, const uint8_t*, unsigned, uint16_t&);
-    bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned, const MagicPage*&);
-    bool cursebind(const vector<CurseServiceTracker>&, Flow*, const uint8_t*, unsigned);
+    static bool spellbind(const MagicPage*&, Flow*, const uint8_t*, unsigned, const MagicPage*&);
+    static bool cursebind(const vector<CurseServiceTracker>&, Flow*, const uint8_t*, unsigned);
 
 public:
     MagicBook* c2s_hexes;

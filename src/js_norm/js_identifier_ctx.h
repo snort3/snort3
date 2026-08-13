@@ -106,7 +106,7 @@ private:
     };
 
     inline const char* substitute(unsigned char c, bool is_property);
-    inline bool is_substituted(const NormId& id, bool is_property);
+    static inline bool is_substituted(const NormId& id, bool is_property);
     inline const char* acquire_norm_name(NormId& id);
     inline void init_ignored_names();
 

@@ -190,7 +190,7 @@ private:
     void insert_segment_in_empty_seglist(TcpSegmentDescriptor&);
     void insert_segment_in_seglist(TcpSegmentDescriptor&);
 
-    bool is_segment_fasttrack(const TcpSegmentNode*, const TcpSegmentDescriptor&);
+    static bool is_segment_fasttrack(const TcpSegmentNode*, const TcpSegmentDescriptor&);
     uint32_t get_pending_segment_count(const unsigned max) const;
 };
 

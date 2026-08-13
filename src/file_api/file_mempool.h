@@ -70,7 +70,7 @@ public:
 private:
 
     void free_pools();
-    int remove(CircularBuffer* cb, void* obj);
+    static int remove(CircularBuffer* cb, void* obj);
 
     void** datapool = nullptr; /* memory buffer */
     uint64_t total = 0;

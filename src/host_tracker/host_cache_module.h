@@ -80,9 +80,9 @@ public:
     Usage get_usage() const override
     { return GLOBAL; }
 
-    void log_host_cache(const char* file_name, bool verbose = false);
-    std::string get_host_cache_stats();
-    std::string get_host_cache_segment_stats(int seg_idx);
+    static void log_host_cache(const char* file_name, bool verbose = false);
+    static std::string get_host_cache_stats();
+    static std::string get_host_cache_segment_stats(int seg_idx);
 
     const char* get_dump_file() const
     { return dump_file.c_str(); }

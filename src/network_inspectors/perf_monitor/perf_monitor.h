@@ -41,21 +41,21 @@ public:
     void show(const snort::SnortConfig*) const override;
 
     void eval(snort::Packet*) override;
-    bool ready_to_process(snort::Packet* p);
+    static bool ready_to_process(snort::Packet* p);
 
     void tinit() override;
     void tterm() override;
 
     void update_trackers();
-    void rotate();
+    static void rotate();
 
     void swap_constraints(PerfConstraints*);
     PerfConstraints* get_original_constraints();
 
-    void enable_profiling(PerfConstraints*);
-    void disable_profiling(PerfConstraints*);
+    static void enable_profiling(PerfConstraints*);
+    static void disable_profiling(PerfConstraints*);
 
-    FlowIPTracker* get_flow_ip();
+    static FlowIPTracker* get_flow_ip();
 
     inline PerfConstraints* get_constraints()
     { return config->constraints; }
@@ -65,7 +65,7 @@ public:
 
 private:
     PerfConfig* const config;
-    void disable_tracker(size_t);
+    static void disable_tracker(size_t);
     void snapshot_global_stats();
 };
 

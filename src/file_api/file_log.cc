@@ -88,7 +88,7 @@ public:
 
 private:
     FileLogConfig config;
-    void log_file_name(TextLog*, FileContext*);
+    static void log_file_name(TextLog*, FileContext*);
 };
 
 void LogHandler::log_file_name(TextLog* log, FileContext* file)

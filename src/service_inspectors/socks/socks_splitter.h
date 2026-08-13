@@ -35,22 +35,23 @@ public:
     bool is_paf() override { return true; }
 
 private:
-    uint32_t parse_client_packet(const uint8_t* data, uint32_t len, SocksState state);
-    uint32_t parse_server_packet(const uint8_t* data, uint32_t len, SocksState state);
+    static uint32_t parse_client_packet(const uint8_t* data, uint32_t len, SocksState state);
+    static uint32_t parse_server_packet(const uint8_t* data, uint32_t len, SocksState state);
 
     // SOCKS4 parsing
-    uint32_t parse_socks4_request(const uint8_t* data, uint32_t len);
-    uint32_t parse_socks4_response(const uint8_t* data, uint32_t len);
+    static uint32_t parse_socks4_request(const uint8_t* data, uint32_t len);
+    static uint32_t parse_socks4_response(const uint8_t* data, uint32_t len);
 
     // SOCKS5 parsing
-    uint32_t parse_auth_negotiation(const uint8_t* data, uint32_t len);
-    uint32_t parse_auth_response(const uint8_t* data, uint32_t len);
-    uint32_t parse_username_password_auth(const uint8_t* data, uint32_t len);
-    uint32_t parse_username_password_auth_response(const uint8_t* data, uint32_t len);
-    uint32_t parse_connect_request(const uint8_t* data, uint32_t len);
-    uint32_t parse_connect_response(const uint8_t* data, uint32_t len);
+    static uint32_t parse_auth_negotiation(const uint8_t* data, uint32_t len);
+    static uint32_t parse_auth_response(const uint8_t* data, uint32_t len);
+    static uint32_t parse_username_password_auth(const uint8_t* data, uint32_t len);
+    static uint32_t parse_username_password_auth_response(const uint8_t* data, uint32_t len);
+    static uint32_t parse_connect_request(const uint8_t* data, uint32_t len);
+    static uint32_t parse_connect_response(const uint8_t* data, uint32_t len);
 
-    uint32_t parse_address_port_length(const uint8_t* data, uint32_t len, uint32_t atyp_offset);
+    static uint32_t parse_address_port_length(const uint8_t* data, uint32_t len,
+        uint32_t atyp_offset);
 
     static constexpr uint32_t max_handshake_flushes = 32;
     uint32_t handshake_flushes = 0;

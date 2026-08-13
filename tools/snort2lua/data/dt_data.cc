@@ -222,10 +222,10 @@ std::string DataApi::expand_vars(const std::string& string)
     return estring;
 }
 
-bool DataApi::failed_conversions() const
+bool DataApi::failed_conversions()
 { return errors_count > 0; }
 
-std::size_t DataApi::num_errors() const
+std::size_t DataApi::num_errors()
 { return errors_count; }
 
 std::string DataApi::get_file_line()

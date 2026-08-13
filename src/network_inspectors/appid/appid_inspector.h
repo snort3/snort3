@@ -69,8 +69,8 @@ private:
     bool enable_shadow_traffic_requested = false;
     static unsigned cached_global_pub_id;
     static unsigned cached_shadowtraffic_pub_id;
-    void third_party_tinit();
-    void third_party_tfini();
+    static void third_party_tinit();
+    static void third_party_tfini();
 };
 
 extern const snort::InspectApi appid_inspector_api;

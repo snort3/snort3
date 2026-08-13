@@ -35,7 +35,7 @@ public:
     bool convert(std::istringstream& data) override;
 
 private:
-    void fix_separators(std::istringstream& stream);
+    static void fix_separators(std::istringstream& stream);
 };
 } // namespace
 

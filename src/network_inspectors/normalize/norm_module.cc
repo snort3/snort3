@@ -345,7 +345,7 @@ bool NormalizeModule::begin(const char* fqn, int, SnortConfig*)
     return true;
 }
 
-void NormalizeModule::add_test_peg(const PegInfo& norm) const
+void NormalizeModule::add_test_peg(const PegInfo& norm)
 {
     PegInfo test;
 

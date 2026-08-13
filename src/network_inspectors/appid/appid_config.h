@@ -421,10 +421,10 @@ public:
             delete discovery_filter;
     }
 
-    bool odp_ctxt_ready() const
+    static bool odp_ctxt_ready()
     { return odp_ctxt != nullptr; }
 
-    OdpContext& get_odp_ctxt() const
+    static OdpContext& get_odp_ctxt()
     {
         assert(odp_ctxt);
         return *odp_ctxt;
@@ -434,7 +434,7 @@ public:
         return discovery_filter;
     }
 
-    ThirdPartyAppIdContext* get_tp_appid_ctxt() const
+    static ThirdPartyAppIdContext* get_tp_appid_ctxt()
     { return tp_appid_ctxt; }
 
     static void delete_tp_appid_ctxt()

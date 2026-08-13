@@ -745,7 +745,7 @@ struct PolicyInspectorGroup
         }
     }
 
-    void dump_handler(const PHInstance* p)
+    static void dump_handler(const PHInstance* p)
     {
         Inspector* pin = p->get_handler();
 

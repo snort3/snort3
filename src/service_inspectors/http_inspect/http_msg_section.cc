@@ -524,7 +524,7 @@ void HttpMsgSection::print_section_wrapup(FILE* output) const
     fprintf(output, "\n");
 }
 
-void HttpMsgSection::print_peg_counts(FILE* output) const
+void HttpMsgSection::print_peg_counts(FILE* output)
 {
     const PegInfo* const peg_names = HttpModule::get_peg_names();
     const PegCount* const peg_counts = HttpModule::get_peg_counts();

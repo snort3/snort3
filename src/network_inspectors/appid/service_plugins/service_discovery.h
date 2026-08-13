@@ -78,8 +78,10 @@ public:
     bool do_service_discovery(AppIdSession&, snort::Packet*, AppidSessionDirection dir,
         AppidChangeBits& change_bits);
     int identify_service(AppIdSession&, snort::Packet*, AppidSessionDirection, AppidChangeBits&);
-    int fail_service(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, ServiceDetector*, ServiceDiscoveryState* sds = nullptr);
-    int incompatible_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir, ServiceDetector*);
+    static int fail_service(AppIdSession&, const snort::Packet*, AppidSessionDirection dir,
+        ServiceDetector*, ServiceDiscoveryState* sds = nullptr);
+    static int incompatible_data(AppIdSession&, const snort::Packet*, AppidSessionDirection dir,
+        ServiceDetector*);
     static int add_ftp_service_state(AppIdSession&);
     static void clear_ftp_service_state();
     static void set_thread_local_ftp_service();
@@ -88,8 +90,9 @@ public:
 
 private:
     void get_next_service(const snort::Packet*, const AppidSessionDirection dir, AppIdSession&);
-    void get_port_based_services(IpProtocol, uint16_t port, AppIdSession&);
-    void get_port_based_services(IpProtocol, uint16_t port1, uint16_t port2, AppIdSession&);
+    static void get_port_based_services(IpProtocol, uint16_t port, AppIdSession&);
+    static void get_port_based_services(IpProtocol, uint16_t port1, uint16_t port2,
+        AppIdSession&);
     void match_by_pattern(AppIdSession&, const snort::Packet*, IpProtocol);
     static ServiceDiscovery* discovery_manager;
     std::vector<AppIdDetector*> service_detector_list;

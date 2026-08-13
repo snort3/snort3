@@ -97,9 +97,10 @@ public:
 #endif
 
 private:
-    RuleTreeNode* dup_rtn(RuleTreeNode*, IpsPolicy*);
-    bool update_rtn(snort::SnortConfig*, IpsPolicy*, RuleTreeNode*, const RuleState&);
-    void apply(snort::SnortConfig*, struct OptTreeNode*, unsigned ips_num, const RuleState&);
+    static RuleTreeNode* dup_rtn(RuleTreeNode*, IpsPolicy*);
+    static bool update_rtn(snort::SnortConfig*, IpsPolicy*, RuleTreeNode*, const RuleState&);
+    static void apply(snort::SnortConfig*, struct OptTreeNode*, unsigned ips_num,
+        const RuleState&);
 
 private:
     std::map<RuleKey, RuleState> map;

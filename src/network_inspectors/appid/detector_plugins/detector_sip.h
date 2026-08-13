@@ -60,10 +60,10 @@ public:
     SipServiceDetector(ServiceDiscovery*);
 
     int validate(AppIdDiscoveryArgs&) override;
-    void addFutureRtpFlows(SipEvent&, AppIdSession&);
+    static void addFutureRtpFlows(SipEvent&, AppIdSession&);
 
 private:
-    void createRtpFlow(AppIdSession&, const snort::Packet*, const snort::SfIp* cliIp,
+    static void createRtpFlow(AppIdSession&, const snort::Packet*, const snort::SfIp* cliIp,
         uint16_t cliPort, const snort::SfIp* srvIp, uint16_t srvPort, IpProtocol);
 };
 
@@ -77,7 +77,7 @@ public:
     void handle(snort::DataEvent&, snort::Flow*) override;
 
 private:
-    void client_handler(const SipEvent&, AppIdSession&, AppidChangeBits&);
+    static void client_handler(const SipEvent&, AppIdSession&, AppidChangeBits&);
     void service_handler(SipEvent&, AppIdSession&, AppidChangeBits&);
 
     AppIdInspector& inspector;

@@ -59,7 +59,7 @@ public:
     { tcp_events |= eventcode; }
 
     void log_tcp_events();
-    void log_internal_event(uint32_t eventSid);
+    static void log_internal_event(uint32_t eventSid);
 
 private:
     uint32_t tcp_events = 0;

@@ -37,7 +37,7 @@ public:
     bool convert(std::istringstream& data_stream) override;
 
 private:
-    std::string choose_table_name(std::istringstream& data_stream);
+    static std::string choose_table_name(std::istringstream& data_stream);
 };
 } // namespace
 

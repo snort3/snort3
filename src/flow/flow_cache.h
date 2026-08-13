@@ -162,19 +162,20 @@ private:
 #endif
     }
 
-    inline bool is_lru_checked(uint64_t checked_lrus_mask, uint64_t lru_mask)
+    static inline bool is_lru_checked(uint64_t checked_lrus_mask, uint64_t lru_mask)
     { return (checked_lrus_mask & lru_mask) != 0; }
 
-    inline bool all_lrus_checked(uint64_t checked_lrus_mask)
+    static inline bool all_lrus_checked(uint64_t checked_lrus_mask)
     { return checked_lrus_mask == all_lru_mask; }
 
-    inline void mark_lru_checked(uint64_t& checked_lrus_mask, uint64_t lru_mask)
+    static inline void mark_lru_checked(uint64_t& checked_lrus_mask, uint64_t lru_mask)
     { checked_lrus_mask |= lru_mask; }
 
-    inline uint64_t get_lru_mask(uint8_t lru_idx)
+    static inline uint64_t get_lru_mask(uint8_t lru_idx)
     { return 1ULL << lru_idx; }
 
-    inline void mark_lru_checked(uint64_t& checked_lrus_mask, uint64_t& empty_lru_masks, uint64_t lru_mask)
+    static inline void mark_lru_checked(uint64_t& checked_lrus_mask, uint64_t& empty_lru_masks,
+        uint64_t lru_mask)
     {
         checked_lrus_mask |= lru_mask;
         empty_lru_masks |= lru_mask;

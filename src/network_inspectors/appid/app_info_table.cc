@@ -816,7 +816,7 @@ void AppInfoManager::load_odp_config(OdpContext& odp_ctxt, const char* path)
     fclose(config_file);
 }
 
-void AppInfoManager::dump_appid_configurations(const std::string& file_path) const
+void AppInfoManager::dump_appid_configurations(const std::string& file_path)
 {
     std::ifstream conf_file(file_path);
     if (!conf_file.is_open())

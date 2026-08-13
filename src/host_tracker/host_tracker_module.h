@@ -51,7 +51,7 @@ public:
     bool begin(const char*, int, snort::SnortConfig*) override;
     bool end(const char*, int, snort::SnortConfig*) override;
 
-    void init_data();
+    static void init_data();
 
     Usage get_usage() const override
     { return GLOBAL; }

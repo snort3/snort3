@@ -44,13 +44,13 @@ public:
     void clear_traces();
     void clear_constraints();
 
-    void reset_configured_trace_options();
+    static void reset_configured_trace_options();
 
     TraceConfig& get_trace_config() const
     { return trace_config; }
 
 private:
-    void init_configured_trace_options();
+    static void init_configured_trace_options();
 
 private:
     TraceConfig& trace_config;

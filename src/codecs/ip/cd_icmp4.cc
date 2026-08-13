@@ -118,7 +118,7 @@ public:
     void log(TextLog* const, const uint8_t* pkt, const uint16_t len) override;
 
 private:
-    bool valid_checksum_from_daq(const RawData&);
+    static bool valid_checksum_from_daq(const RawData&);
     void ICMP4AddrTests(const DecodeData& snort, const CodecData& codec);
     void ICMP4MiscTests(const ICMPHdr* const, const CodecData&, const uint16_t);
 };

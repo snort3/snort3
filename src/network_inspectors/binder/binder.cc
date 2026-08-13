@@ -504,8 +504,8 @@ private:
     void get_policy_bindings(Packet*);
     void get_bindings(Flow&, Stuff&, const char* service = nullptr);
     void get_bindings(Packet*, Stuff&);
-    void apply(Flow&, Stuff&);
-    void apply_assistant(Flow&, Stuff&, const char*);
+    static void apply(Flow&, Stuff&);
+    static void apply_assistant(Flow&, Stuff&, const char*);
     Inspector* find_gadget(Flow&, Inspector*& data);
 
 private:

@@ -52,7 +52,7 @@ protected:
     RuleApi& rule_api;
     StateApi& state_api;
 
-    inline bool eat_option(std::istringstream& stream)
+    inline static bool eat_option(std::istringstream& stream)
     {
         std::string val;
 

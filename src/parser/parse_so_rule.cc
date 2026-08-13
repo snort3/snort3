@@ -37,11 +37,11 @@ class SoRuleParser
 public:
     SoRuleParser() = default;
 
-    bool parse_so_rule(const char* in, std::string& stub, std::string& opts);
+    static bool parse_so_rule(const char* in, std::string& stub, std::string& opts);
 
 private:
-    bool is_stub_option(const std::string& opt);
-    void trim(std::string&);
+    static bool is_stub_option(const std::string& opt);
+    static void trim(std::string&);
 };
 
 static std::set<std::string> stub_opts =

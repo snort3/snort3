@@ -53,7 +53,7 @@ public:
     ClientDetector* get_client_detector(const std::string&) const;
 
 private:
-    void exec_client_detectors(AppIdSession&, snort::Packet*,
+    static void exec_client_detectors(AppIdSession&, snort::Packet*,
         AppidSessionDirection direction, AppidChangeBits& change_bits);
     ClientAppMatch* find_detector_candidates(const snort::Packet* pkt, const AppIdSession&);
     void create_detector_candidates_list(AppIdSession&, const snort::Packet*);

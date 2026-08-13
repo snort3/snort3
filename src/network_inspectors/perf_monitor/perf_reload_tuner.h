@@ -40,7 +40,7 @@ public:
     bool tune_packet_context() override
         { return tune_resources(max_work); }
 
-    bool tune_resources(unsigned work_limit);
+    static bool tune_resources(unsigned work_limit);
 
 private:
     size_t memcap;

@@ -96,7 +96,7 @@ void AppIdDetector::add_app(const Packet& p, AppIdSession& asd, AppidSessionDire
     asd.set_client_id(p, dir, client_id, change_bits);
 }
 
-const char* AppIdDetector::get_code_string(APPID_STATUS_CODE code) const
+const char* AppIdDetector::get_code_string(APPID_STATUS_CODE code)
 {
     switch (code)
     {

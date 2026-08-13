@@ -773,7 +773,7 @@ bool RnaModule::log_mac_cache(const char* outfile)
     return false;
 }
 
-bool RnaModule::is_valid_fqn(const char* fqn) const
+bool RnaModule::is_valid_fqn(const char* fqn)
 {
     return !strcmp(fqn, RNA_NAME) or !strcmp(fqn, "rna.tcp_fingerprints") or
         !strcmp(fqn, "rna.ua_fingerprints") or !strcmp(fqn, "rna.ua_fingerprints.user_agent") or

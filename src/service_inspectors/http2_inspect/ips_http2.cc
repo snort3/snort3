@@ -36,7 +36,7 @@ THREAD_LOCAL std::array<ProfileStats, PSI_MAX> Http2CursorModule::http2_ps;
 
 bool Http2CursorModule::begin(const char*, int, SnortConfig*)
 {
-    para_list.reset();
+    Http2RuleParaList::reset();
     return true;
 }
 
@@ -52,16 +52,6 @@ bool Http2CursorModule::end(const char*, int, SnortConfig*)
 
 void Http2CursorModule::Http2RuleParaList::reset()
 {
-}
-
-uint32_t Http2IpsOption::hash() const
-{
-    return IpsOption::hash();
-}
-
-bool Http2IpsOption::operator==(const IpsOption& ips) const
-{
-    return IpsOption::operator==(ips);
 }
 
 IpsOption::EvalStatus Http2IpsOption::eval(Cursor& c, Packet* p)
