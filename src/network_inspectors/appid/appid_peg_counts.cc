@@ -110,10 +110,36 @@ static AppIdDynamicPeg zeroed_peg;
 
 static std::mutex dynamic_stats_mutex;
 
+// Set when registration has hit the appid_dynamic_sum[] capacity, so the warning
+// is emitted once rather than once per rejected app. Written only under
+// appid_peg_ids_mutex (unique), by add_app_peg_info() and init_peg_info().
+static bool appid_peg_limit_warned = false;
+
+// appid_peg_ids is shared by all packet threads (readers) and the control
+// thread (writer, during detector/ODP reload). appid_peg_ids_mutex serializes
+// the readers -- init_pegs(), cleanup_pegs(), sum_stats(), print() --
+// against the writers -- init_peg_info(), cleanup_peg_info(), add_app_peg_info().
+// Do NOT remove this lock: without it, a detector reload (add_app_peg_info
+// emplace/rehash) concurrent with packet-thread tinit/tterm corrupts the map
+// and crashes snort.
+//
+// LOCK ORDER (must hold to stay deadlock-free): always acquire
+// appid_peg_ids_mutex BEFORE dynamic_stats_mutex. sum_stats() and
+// print() take both; nothing may take them in the reverse order.
+static std::shared_mutex appid_peg_ids_mutex;
+
 void AppIdPegCounts::init_pegs()
 {
     assert(!appid_thread_pegs);
+    const std::shared_lock<std::shared_mutex> _ids_lock(appid_peg_ids_mutex);
     appid_thread_pegs = new AppIdThreadPegs(appid_peg_ids);
+
+    // The shared lock above excludes add_app_peg_info(), so the map cannot grow
+    // between this size() and the end of the loop: one allocation replaces the
+    // incremental rehashing of a map that reaches thousands of entries. This runs
+    // per packet thread at tinit and again for every thread on a detector reload
+    // (ACOdpContextSwap), not just at startup.
+    appid_thread_pegs->peg_counts.reserve(appid_thread_pegs->peg_ids->size());
 
     for (auto& appid : *appid_thread_pegs->peg_ids)
         appid_thread_pegs->peg_counts.emplace(appid.first, zeroed_peg);
@@ -121,17 +147,21 @@ void AppIdPegCounts::init_pegs()
 
 void AppIdPegCounts::cleanup_pegs()
 {
+    const std::shared_lock<std::shared_mutex> _ids_lock(appid_peg_ids_mutex);
     delete appid_thread_pegs;
     appid_thread_pegs = nullptr;
 }
 
 void AppIdPegCounts::init_peg_info()
 {
+    const std::unique_lock<std::shared_mutex> _ids_lock(appid_peg_ids_mutex);
     appid_peg_ids = std::make_shared<AppIdPegCountIdInfo>();
+    appid_peg_limit_warned = false;
 }
 
 void AppIdPegCounts::cleanup_peg_info()
 {
+    const std::unique_lock<std::shared_mutex> _ids_lock(appid_peg_ids_mutex);
     appid_peg_ids.reset();
 }
 
@@ -157,7 +187,27 @@ void AppIdPegCounts::add_app_peg_info(std::string app_name, AppId app_id)
 {
     std::replace(app_name.begin(), app_name.end(), ' ', '_');
 
+    const std::unique_lock<std::shared_mutex> _ids_lock(appid_peg_ids_mutex);
     assert(appid_peg_ids);
+
+    // The dynamic index assigned below is the map size at insertion, and it is
+    // used to index appid_dynamic_sum[], which has SF_APPID_MAX + 1 slots -- the
+    // last of which is reserved for the unknown-app aggregate. Nothing else limits
+    // how many apps a detector package may register, so without this bound a large
+    // enough ODP would hand out indices past the end of that array and
+    // sum_stats()/print() would read and write out of bounds.
+    if (appid_peg_ids->size() >= SF_APPID_MAX)
+    {
+        if (!appid_peg_limit_warned)
+        {
+            appid_peg_limit_warned = true;
+            APPID_LOG(nullptr, TRACE_WARNING_LEVEL, "AppId peg counts: reached the "
+                "limit of %u tracked apps; detections for further apps are counted "
+                "as unknown\n", static_cast<unsigned>(SF_APPID_MAX));
+        }
+        return;
+    }
+
     appid_peg_ids->emplace(app_id, std::make_pair(app_name, appid_peg_ids->size()));
 }
 
@@ -166,11 +216,13 @@ void AppIdPegCounts::sum_stats()
     if (!appid_thread_pegs)
         return;
 
+    const std::shared_lock<std::shared_mutex> _ids_lock(appid_peg_ids_mutex);
     const std::lock_guard<std::mutex> _lock(dynamic_stats_mutex);
 
     for (auto& peg : appid_thread_pegs->peg_counts)
     {
         auto dyn_indx = appid_thread_pegs->peg_ids->at(peg.first).second;
+        assert(dyn_indx < SF_APPID_MAX);    // guaranteed by add_app_peg_info()
         for (unsigned j = 0; j < DetectorPegs::NUM_APPID_DETECTOR_PEGS; ++j)
             appid_dynamic_sum[dyn_indx].stats[j] += peg.second.stats[j];
 
@@ -242,9 +294,11 @@ void AppIdPegCounts::inc_referred_count(AppId id)
 
 void AppIdPegCounts::print()
 {
+    const std::shared_lock<std::shared_mutex> _ids_lock(appid_peg_ids_mutex);
     if (!appid_peg_ids)
         return;
 
+    const std::lock_guard<std::mutex> _dyn_lock(dynamic_stats_mutex);
     bool print = false;
     unsigned app_num = appid_peg_ids->size();
 
@@ -252,6 +306,7 @@ void AppIdPegCounts::print()
 
     for (auto& det_info : *appid_peg_ids)
     {
+        assert(det_info.second.second < SF_APPID_MAX);   // add_app_peg_info() bound
         AppIdDynamicPeg* pegs = &appid_dynamic_sum[det_info.second.second];
         if (!pegs->all_zeros())
         {
