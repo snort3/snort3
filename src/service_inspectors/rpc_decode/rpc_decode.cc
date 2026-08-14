@@ -57,8 +57,14 @@
 using namespace snort;
 using namespace std;
 
-#define RPC_MAX_BUF_SIZE   256
 #define RPC_FRAG_HDR_SIZE  sizeof(uint32_t)
+#define MAX_INSPECT_DEPTH  16384
+#define NODE_SIZE  80
+// Minimum new body bytes between partial alt-buffer serializations.
+#define RPC_PARTIAL_FLUSH_QUANTUM  256
+
+static_assert(MAX_INSPECT_DEPTH <= DataBuffer::decode_blen,
+    "MAX_INSPECT_DEPTH must fit in the alt decode buffer");
 
 static uint32_t rpc_frag_len(const uint8_t* data)
 {
@@ -67,21 +73,29 @@ static uint32_t rpc_frag_len(const uint8_t* data)
     return ntohl(value) & 0x7FFFFFFF;
 }
 
-struct RpcBuffer
+struct RpcChunkNode
 {
     uint8_t* data;
     uint32_t len;
-    uint32_t size;
+    uint32_t allocated;
+    RpcChunkNode* next;
 };
 
 struct RpcSsnData
 {
     int active;
     int events;
-    uint32_t frag_len;
-    uint32_t ignore;
-    RpcBuffer seg;
-    RpcBuffer frag;
+    uint32_t cur_frag_len;
+    uint32_t cur_frag_received;
+    RpcChunkNode* chunks_head;
+    RpcChunkNode* chunks_tail;
+    uint32_t body_buffered;
+    uint32_t partial_serialized;
+    bool skip_record;
+    bool has_non_last_frag;
+    bool record_complete;
+    uint8_t hdr_buf[RPC_FRAG_HDR_SIZE];
+    uint8_t hdr_bytes_buffered;
 };
 
 class RpcFlowData : public FlowData
@@ -112,9 +126,9 @@ struct RpcStats
     PegCount total_packets;
     PegCount concurrent_sessions;
     PegCount max_concurrent_sessions;
+    PegCount oversized_records;
+    PegCount partial_flushes;
 };
-
-static const uint32_t flush_size = 28;
 
 #define mod_name "rpc_decode"
 #define mod_help "RPC inspector"
@@ -122,7 +136,7 @@ static const uint32_t flush_size = 28;
 THREAD_LOCAL ProfileStats rpcdecodePerfStats;
 THREAD_LOCAL RpcStats rdstats;
 
-static int ConvertRPC(RpcSsnData*, const Packet*);
+static int ConvertRPC(RpcSsnData*, Packet*);
 
 static RpcSsnData* RpcSsnDataNew(Packet*);
 static inline void RpcSsnClean(RpcSsnData*);
@@ -131,14 +145,11 @@ static inline int RpcSsnIsActive(const RpcSsnData*);
 
 static RpcStatus RpcStatefulInspection(RpcSsnData*, Packet*);
 static inline void RpcPreprocEvent(RpcSsnData*, int);
-static RpcStatus RpcHandleFrag(RpcSsnData*, const uint8_t*);
-static RpcStatus RpcPrepRaw(const uint8_t*, uint32_t, const Packet*);
-static RpcStatus RpcPrepFrag(RpcSsnData*, const Packet*);
-static RpcStatus RpcPrepSeg(RpcSsnData*, const Packet*);
-static inline uint32_t RpcBufLen(const RpcBuffer*);
-static inline const uint8_t* RpcBufData(const RpcBuffer*);
-static RpcStatus RpcBufAdd(RpcBuffer*, const uint8_t*, uint32_t);
-static inline void RpcBufClean(RpcBuffer*);
+static RpcStatus RpcChunkAppend(RpcSsnData*, const uint8_t*, uint32_t);
+static void RpcChunksClear(RpcSsnData*);
+static RpcStatus RpcFlushToAlt(RpcSsnData*, Packet*);
+static RpcStatus RpcPrepPartial(RpcSsnData*, Packet*);
+static RpcStatus RpcPrepRaw(const uint8_t*, uint32_t, Packet*);
 
 static inline void RpcPreprocEvent(RpcSsnData* rsdata, int event)
 {
@@ -173,14 +184,16 @@ static inline void RpcPreprocEvent(RpcSsnData* rsdata, int event)
         DetectionEngine::queue_event(GID_RPC_DECODE, RPC_ZERO_LENGTH_FRAGMENT);
         break;
 
+    case RPC_INSPECT_DEPTH_EXCEEDED:
+        DetectionEngine::queue_event(GID_RPC_DECODE, RPC_INSPECT_DEPTH_EXCEEDED);
+        break;
+
     default:
         break;
     }
 }
 
-// Publish one nested ALT_PACKET detection pass for a logical SunRPC record.
-// Empty records have no payload to publish. For non-empty records, use the
-// logical record as the packet view for the duration of the synchronous publish.
+// Publish a synchronous ALT_PACKET pass for a reassembled record.
 static void RpcPublishAltPacket(Packet* p, const uint8_t* record, uint32_t record_len)
 {
     if (!record || record_len <= RPC_FRAG_HDR_SIZE || record_len > Packet::max_dsize)
@@ -198,171 +211,346 @@ static void RpcPublishAltPacket(Packet* p, const uint8_t* record, uint32_t recor
     p->dsize = saved_dsize;
 }
 
-static RpcStatus RpcStatefulInspection(RpcSsnData* rsdata, Packet* p)
+static RpcStatus RpcChunkAppend(RpcSsnData* rsdata, const uint8_t* data, uint32_t dsize)
 {
-    const uint8_t* data = p->data;
-    uint16_t dsize = p->dsize;
-    int need;
-    RpcStatus status;
-
-    if (rsdata->ignore)
-    {
-        if (dsize < rsdata->ignore)
-        {
-            rsdata->ignore -= dsize;
-            return RPC_STATUS__SUCCESS;
-        }
-
-        dsize -= (uint16_t)rsdata->ignore;
-        data += rsdata->ignore;
-        rsdata->ignore = 0;
-    }
-
-    /* Might need to evaluate same packet, different decode buffer
-     * more than once and detection option tree won't let us do that
-     * by default */
-    p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
+    if (rsdata->body_buffered >= (MAX_INSPECT_DEPTH - RPC_FRAG_HDR_SIZE))
+        return RPC_STATUS__SUCCESS;
 
     while (dsize > 0)
     {
-        if (RpcBufLen(&rsdata->seg) == 0)
+        uint32_t remaining_budget = (MAX_INSPECT_DEPTH - RPC_FRAG_HDR_SIZE) - rsdata->body_buffered;
+        if (remaining_budget == 0)
+            break;
+
+        assert(dsize <= remaining_budget);
+        if (dsize > remaining_budget)
+            dsize = remaining_budget;
+
+        if (rsdata->chunks_tail != nullptr && rsdata->chunks_tail->len < rsdata->chunks_tail->allocated)
         {
-            if (dsize < RPC_FRAG_HDR_SIZE)
-            {
-                RpcPreprocEvent(rsdata, RPC_INCOMPLETE_SEGMENT);
+            RpcChunkNode* node = rsdata->chunks_tail;
+            uint32_t avail = node->allocated - node->len;
+            uint32_t to_copy = dsize < avail ? dsize : avail;
 
-                if (RpcBufAdd(&rsdata->seg, data, dsize) != RPC_STATUS__SUCCESS)
-                    return RPC_STATUS__ERROR;
-
-                break;
-            }
-
-            rsdata->frag_len = rpc_frag_len(data);
-            if (dsize < (RPC_FRAG_HDR_SIZE + rsdata->frag_len))
-            {
-                RpcPreprocEvent(rsdata, RPC_INCOMPLETE_SEGMENT);
-
-                if (RpcBufAdd(&rsdata->seg, data, dsize) != RPC_STATUS__SUCCESS)
-                    return RPC_STATUS__ERROR;
-
-                break;
-            }
-
-            dsize -= (RPC_FRAG_HDR_SIZE + rsdata->frag_len);
-
-            status = RpcHandleFrag(rsdata, data);
-
-            if (status == RPC_STATUS__ERROR)
-                return RPC_STATUS__ERROR;
-
-            if (status == RPC_STATUS__DEFRAG)
-            {
-                if ((dsize != 0) || (data != p->data))
-                {
-                    /* Only do this if there is more than one fragment in
-                     * the data we got */
-                    if (RpcPrepRaw(data, rsdata->frag_len, p) != RPC_STATUS__SUCCESS)
-                        return RPC_STATUS__ERROR;
-
-                    RpcPublishAltPacket(p, data, RPC_FRAG_HDR_SIZE + rsdata->frag_len);
-                }
-
-                if ( (dsize > 0) )
-                    RpcPreprocEvent(rsdata, RPC_MULTIPLE_RECORD);
-            }
-
-            data += (RPC_FRAG_HDR_SIZE + rsdata->frag_len);
+            memcpy_s(node->data + node->len, avail, data, to_copy);
+            node->len += to_copy;
+            rsdata->body_buffered += to_copy;
+            data += to_copy;
+            dsize -= to_copy;
         }
         else
         {
-            if (RpcBufLen(&rsdata->seg) < RPC_FRAG_HDR_SIZE)
-            {
-                need = RPC_FRAG_HDR_SIZE - RpcBufLen(&rsdata->seg);
-                if (dsize < need)
-                {
-                    RpcPreprocEvent(rsdata, RPC_INCOMPLETE_SEGMENT);
+            uint32_t alloc_size = dsize > NODE_SIZE ? dsize : NODE_SIZE;
+            if (alloc_size > remaining_budget)
+                alloc_size = remaining_budget;
 
-                    if (RpcBufAdd(&rsdata->seg, data, dsize) != RPC_STATUS__SUCCESS)
-                        return RPC_STATUS__ERROR;
+            RpcChunkNode* node = (RpcChunkNode*)snort_calloc(sizeof(RpcChunkNode));
+            node->data = (uint8_t*)snort_calloc(alloc_size);
+            node->allocated = alloc_size;
+            node->next = nullptr;
 
-                    break;
-                }
+            if (rsdata->chunks_tail != nullptr)
+                rsdata->chunks_tail->next = node;
+            else
+                rsdata->chunks_head = node;
 
-                if (RpcBufAdd(&rsdata->seg, data, need) != RPC_STATUS__SUCCESS)
-                    return RPC_STATUS__ERROR;
+            rsdata->chunks_tail = node;
 
-                data += need;
-                dsize -= need;
-
-                rsdata->frag_len = rpc_frag_len(RpcBufData(&rsdata->seg));
-            }
-
-            need = rsdata->frag_len - (RpcBufLen(&rsdata->seg) - RPC_FRAG_HDR_SIZE);
-            if (dsize < need)
-            {
-                RpcPreprocEvent(rsdata, RPC_INCOMPLETE_SEGMENT);
-
-                if (RpcBufAdd(&rsdata->seg, data, dsize) != RPC_STATUS__SUCCESS)
-                    return RPC_STATUS__ERROR;
-
-                break;
-            }
-
-            if (RpcBufAdd(&rsdata->seg, data, need) != RPC_STATUS__SUCCESS)
-                return RPC_STATUS__ERROR;
-
-            data += need;
-            dsize -= need;
-
-            status = RpcHandleFrag(rsdata, RpcBufData(&rsdata->seg));
-
-            if (status == RPC_STATUS__ERROR)
-                return RPC_STATUS__ERROR;
-
-            if (status == RPC_STATUS__DEFRAG)
-            {
-                const uint32_t buf_len = RpcBufLen(&rsdata->frag);
-                const uint32_t record_len = buf_len != 0 ?
-                    RPC_FRAG_HDR_SIZE + buf_len : RpcBufLen(&rsdata->seg);
-
-                if (buf_len != 0)
-                {
-                    if (RpcPrepFrag(rsdata, p) != RPC_STATUS__SUCCESS)
-                        return RPC_STATUS__ERROR;
-                }
-                else
-                {
-                    if (RpcPrepSeg(rsdata, p) != RPC_STATUS__SUCCESS)
-                        return RPC_STATUS__ERROR;
-                }
-
-                if ( (dsize > 0) )
-                    RpcPreprocEvent(rsdata, RPC_MULTIPLE_RECORD);
-
-                const DataPointer alt_buf = DetectionEngine::get_alt_buffer(p);
-                RpcPublishAltPacket(p, alt_buf.data, record_len);
-                RpcBufClean(&rsdata->frag);
-            }
-
-            RpcBufClean(&rsdata->seg);
+            uint32_t to_copy = dsize < alloc_size ? dsize : alloc_size;
+            memcpy_s(node->data, alloc_size, data, to_copy);
+            node->len = to_copy;
+            rsdata->body_buffered += to_copy;
+            data += to_copy;
+            dsize -= to_copy;
         }
-    }
-
-    if (RpcBufLen(&rsdata->frag) != 0)
-    {
-        if (RpcPrepFrag(rsdata, p) != RPC_STATUS__SUCCESS)
-            return RPC_STATUS__ERROR;
-    }
-    else if (RpcBufLen(&rsdata->seg) != 0)
-    {
-        if (RpcPrepSeg(rsdata, p) != RPC_STATUS__SUCCESS)
-            return RPC_STATUS__ERROR;
     }
 
     return RPC_STATUS__SUCCESS;
 }
 
-static RpcStatus RpcPrepRaw(const uint8_t* data, uint32_t fraglen, const Packet* p)
+static void RpcChunksClear(RpcSsnData* rsdata)
+{
+    RpcChunkNode* node = rsdata->chunks_head;
+
+    while (node != nullptr)
+    {
+        RpcChunkNode* next = node->next;
+        snort_free(node->data);
+        snort_free(node);
+        node = next;
+    }
+
+    rsdata->chunks_head = nullptr;
+    rsdata->chunks_tail = nullptr;
+    rsdata->body_buffered = 0;
+    rsdata->partial_serialized = 0;
+}
+
+static RpcStatus RpcPrepChunkBuffer(RpcSsnData* rsdata, DataBuffer& buf, bool mark_last)
+{
+    if (rsdata->body_buffered + RPC_FRAG_HDR_SIZE > buf.decode_blen)
+    {
+        RpcChunksClear(rsdata);
+        return RPC_STATUS__ERROR;
+    }
+
+    uint32_t fraghdr = htonl(rsdata->body_buffered);
+    memcpy_s(buf.data, buf.decode_blen, &fraghdr, sizeof(fraghdr));
+    if (mark_last)
+        buf.data[0] |= 0x80;
+
+    uint32_t offset = RPC_FRAG_HDR_SIZE;
+    for (RpcChunkNode* node = rsdata->chunks_head; node != nullptr; node = node->next)
+    {
+        memcpy_s(buf.data + offset, buf.decode_blen - offset, node->data, node->len);
+        offset += node->len;
+    }
+
+    buf.len = offset;
+    return RPC_STATUS__SUCCESS;
+}
+
+static RpcStatus RpcFlushToAlt(RpcSsnData* rsdata, Packet* p)
+{
+    DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
+
+    if (RpcPrepChunkBuffer(rsdata, buf, true) != RPC_STATUS__SUCCESS)
+        return RPC_STATUS__ERROR;
+
+    RpcPublishAltPacket(p, buf.data, buf.len);
+    return RPC_STATUS__SUCCESS;
+}
+
+static RpcStatus RpcPrepPartial(RpcSsnData* rsdata, Packet* p)
+{
+    DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
+    return RpcPrepChunkBuffer(rsdata, buf, rsdata->record_complete);
+}
+
+static inline void RpcResetRecordState(RpcSsnData* rsdata)
+{
+    rsdata->cur_frag_len = 0;
+    rsdata->cur_frag_received = 0;
+    rsdata->has_non_last_frag = false;
+    rsdata->record_complete = false;
+    rsdata->hdr_bytes_buffered = 0;
+    rsdata->skip_record = false;
+}
+
+static RpcStatus RpcStatefulInspection(RpcSsnData* rsdata, Packet* p)
+{
+    const uint8_t* data = p->data;
+    uint16_t dsize = p->dsize;
+
+    // Consume remaining fragment bytes without buffering after depth cap.
+    if (rsdata->skip_record)
+    {
+        uint32_t frag_remaining = rsdata->cur_frag_len - rsdata->cur_frag_received;
+        if (dsize < frag_remaining)
+        {
+            rsdata->cur_frag_received += dsize;
+            return RPC_STATUS__SUCCESS;
+        }
+    }
+
+    // Allow multiple detection passes on the same packet.
+    p->packet_flags |= PKT_ALLOW_MULTIPLE_DETECT;
+
+    while (dsize > 0)
+    {
+        if (rsdata->cur_frag_len > 0 && rsdata->cur_frag_received < rsdata->cur_frag_len)
+        {
+            uint32_t remaining_in_frag = rsdata->cur_frag_len - rsdata->cur_frag_received;
+            uint32_t body_to_consume = remaining_in_frag < dsize ? remaining_in_frag : dsize;
+
+            if (!rsdata->skip_record)
+            {
+                uint32_t available = (MAX_INSPECT_DEPTH - RPC_FRAG_HDR_SIZE) - rsdata->body_buffered;
+                uint32_t to_append = body_to_consume < available ? body_to_consume : available;
+
+                if (to_append > 0)
+                {
+                    // cppcheck-suppress knownConditionTrueFalse ; defensive for future RpcChunkAppend errors
+                    if (RpcChunkAppend(rsdata, data, to_append) != RPC_STATUS__SUCCESS)
+                        return RPC_STATUS__ERROR;
+                }
+
+                // cppcheck-suppress knownConditionTrueFalse ; depth cap when body exceeds remaining budget
+                if (to_append < body_to_consume)
+                {
+                    if (rsdata->chunks_head != nullptr)
+                    {
+                        if (RpcFlushToAlt(rsdata, p) != RPC_STATUS__SUCCESS)
+                            return RPC_STATUS__ERROR;
+
+                        RpcChunksClear(rsdata);
+                    }
+                    RpcPreprocEvent(rsdata, RPC_INSPECT_DEPTH_EXCEEDED);
+                    ++rdstats.oversized_records;
+                    rsdata->skip_record = true;
+                }
+            }
+
+            rsdata->cur_frag_received += body_to_consume;
+            data += body_to_consume;
+            dsize -= (uint16_t)body_to_consume;
+
+            if (rsdata->cur_frag_received == rsdata->cur_frag_len)
+            {
+                if (rsdata->record_complete)
+                {
+                    if (!rsdata->skip_record && rsdata->chunks_head != nullptr)
+                    {
+                        if (RpcFlushToAlt(rsdata, p) != RPC_STATUS__SUCCESS)
+                            return RPC_STATUS__ERROR;
+
+                        RpcChunksClear(rsdata);
+                    }
+
+                    if (dsize > 0)
+                        RpcPreprocEvent(rsdata, RPC_MULTIPLE_RECORD);
+
+                    RpcResetRecordState(rsdata);
+                }
+                else
+                {
+                    rsdata->cur_frag_received = 0;
+                    rsdata->cur_frag_len = 0;
+                }
+            }
+        }
+        else
+        {
+            const uint8_t* hdr_ptr = nullptr;
+            bool hdr_in_packet = false;
+
+            if (rsdata->hdr_bytes_buffered > 0)
+            {
+                uint32_t need = RPC_FRAG_HDR_SIZE - rsdata->hdr_bytes_buffered;
+                uint32_t avail = need < dsize ? need : dsize;
+
+                memcpy_s(rsdata->hdr_buf + rsdata->hdr_bytes_buffered,
+                    sizeof(rsdata->hdr_buf) - rsdata->hdr_bytes_buffered, data, avail);
+
+                rsdata->hdr_bytes_buffered += avail;
+                data += avail;
+                dsize -= (uint16_t)avail;
+
+                if (rsdata->hdr_bytes_buffered < RPC_FRAG_HDR_SIZE)
+                {
+                    RpcPreprocEvent(rsdata, RPC_INCOMPLETE_SEGMENT);
+                    break;
+                }
+
+                hdr_ptr = rsdata->hdr_buf;
+                rsdata->hdr_bytes_buffered = 0;
+            }
+            else if (dsize < RPC_FRAG_HDR_SIZE)
+            {
+                memcpy_s(rsdata->hdr_buf, sizeof(rsdata->hdr_buf), data, dsize);
+                rsdata->hdr_bytes_buffered = dsize;
+                RpcPreprocEvent(rsdata, RPC_INCOMPLETE_SEGMENT);
+                break;
+            }
+            else
+            {
+                hdr_ptr = data;
+                hdr_in_packet = true;
+                data += RPC_FRAG_HDR_SIZE;
+                dsize -= RPC_FRAG_HDR_SIZE;
+            }
+
+            rsdata->cur_frag_len = rpc_frag_len(hdr_ptr);
+            rsdata->cur_frag_received = 0;
+
+            if (rsdata->cur_frag_len == 0)
+                RpcPreprocEvent(rsdata, RPC_ZERO_LENGTH_FRAGMENT);
+
+            if (hdr_ptr[0] & 0x80)
+                rsdata->record_complete = true;
+            else
+            {
+                RpcPreprocEvent(rsdata, RPC_FRAG_TRAFFIC);
+                rsdata->has_non_last_frag = true;
+            }
+
+            // Fast path: complete unfragmented record in one segment.
+            if (!rsdata->skip_record
+                && hdr_in_packet
+                && rsdata->record_complete
+                && rsdata->chunks_head == nullptr
+                && !rsdata->has_non_last_frag
+                && rsdata->cur_frag_len <= (MAX_INSPECT_DEPTH - RPC_FRAG_HDR_SIZE)
+                && dsize >= rsdata->cur_frag_len)
+            {
+                const uint8_t* frag_start = data - RPC_FRAG_HDR_SIZE;
+
+                rsdata->cur_frag_received = rsdata->cur_frag_len;
+                data += rsdata->cur_frag_len;
+                dsize -= (uint16_t)rsdata->cur_frag_len;
+
+                if ((dsize != 0) || (frag_start != p->data))
+                {
+                    if (RpcPrepRaw(frag_start, rsdata->cur_frag_len, p) != RPC_STATUS__SUCCESS)
+                        return RPC_STATUS__ERROR;
+
+                    RpcPublishAltPacket(p, frag_start, RPC_FRAG_HDR_SIZE + rsdata->cur_frag_len);
+                }
+
+                if (dsize > 0)
+                    RpcPreprocEvent(rsdata, RPC_MULTIPLE_RECORD);
+
+                RpcResetRecordState(rsdata);
+            }
+            else if (rsdata->cur_frag_len == 0 && rsdata->record_complete)
+            {
+                if (!rsdata->skip_record && rsdata->chunks_head != nullptr)
+                {
+                    if (RpcFlushToAlt(rsdata, p) != RPC_STATUS__SUCCESS)
+                        return RPC_STATUS__ERROR;
+
+                    RpcChunksClear(rsdata);
+                }
+
+                if (dsize > 0)
+                    RpcPreprocEvent(rsdata, RPC_MULTIPLE_RECORD);
+
+                RpcResetRecordState(rsdata);
+            }
+        }
+    }
+
+    if (!rsdata->skip_record
+        && rsdata->cur_frag_len > 0
+        && rsdata->cur_frag_received < rsdata->cur_frag_len)
+    {
+        RpcPreprocEvent(rsdata, RPC_INCOMPLETE_SEGMENT);
+    }
+
+    // Partial alt-buffer flush once per RPC_PARTIAL_FLUSH_QUANTUM new body bytes.
+    if (rsdata->chunks_head != nullptr)
+    {
+        const uint32_t since_partial = rsdata->body_buffered - rsdata->partial_serialized;
+        const bool at_inspect_budget =
+            rsdata->body_buffered >= (MAX_INSPECT_DEPTH - RPC_FRAG_HDR_SIZE);
+
+        if (since_partial >= RPC_PARTIAL_FLUSH_QUANTUM
+            || (at_inspect_budget && since_partial > 0))
+        {
+            if (RpcPrepPartial(rsdata, p) != RPC_STATUS__SUCCESS)
+                return RPC_STATUS__ERROR;
+
+            rsdata->partial_serialized = rsdata->body_buffered;
+            ++rdstats.partial_flushes;
+        }
+    }
+    else if (rsdata->skip_record)
+        DetectionEngine::reset_alt_buffer(p);
+
+    return RPC_STATUS__SUCCESS;
+}
+
+static RpcStatus RpcPrepRaw(const uint8_t* data, uint32_t fraglen, Packet* p)
 {
     DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
 
@@ -373,163 +561,6 @@ static RpcStatus RpcPrepRaw(const uint8_t* data, uint32_t fraglen, const Packet*
     buf.len = (RPC_FRAG_HDR_SIZE + fraglen);
 
     return RPC_STATUS__SUCCESS;
-}
-
-static RpcStatus RpcPrepFragBuffer(RpcSsnData* rsdata, DataBuffer& buf)
-{
-    const uint32_t frag_len = RpcBufLen(&rsdata->frag);
-    uint32_t fraghdr = htonl(frag_len);
-
-    std::memcpy(buf.data, &fraghdr, sizeof(fraghdr));
-
-    buf.data[0] |= 0x80;
-
-    if (frag_len > buf.decode_blen - RPC_FRAG_HDR_SIZE)
-    {
-        RpcBufClean(&rsdata->frag);
-        return RPC_STATUS__ERROR;
-    }
-
-    memcpy_s(buf.data + RPC_FRAG_HDR_SIZE, buf.decode_blen - RPC_FRAG_HDR_SIZE,
-        RpcBufData(&rsdata->frag), frag_len);
-
-    if (frag_len > RPC_MAX_BUF_SIZE)
-        RpcBufClean(&rsdata->frag);
-
-    buf.len = RPC_FRAG_HDR_SIZE + frag_len;
-
-    return RPC_STATUS__SUCCESS;
-}
-
-static RpcStatus RpcPrepFrag(RpcSsnData* rsdata, const Packet* p)
-{
-    DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
-
-    return RpcPrepFragBuffer(rsdata, buf);
-}
-
-static RpcStatus RpcPrepSeg(RpcSsnData* rsdata, const Packet* p)
-{
-    DataBuffer& buf = DetectionEngine::acquire_alt_buffer(p);
-
-    if (RpcBufLen(&rsdata->seg) > buf.decode_blen)
-    {
-        RpcBufClean(&rsdata->seg);
-        return RPC_STATUS__ERROR;
-    }
-    memcpy_s(buf.data, buf.decode_blen,
-        RpcBufData(&rsdata->seg), RpcBufLen(&rsdata->seg));
-
-    if (RpcBufLen(&rsdata->seg) > RPC_MAX_BUF_SIZE)
-    {
-        rsdata->ignore = (sizeof(uint32_t) + rsdata->frag_len) - RpcBufLen(&rsdata->seg);
-        RpcBufClean(&rsdata->seg);
-    }
-
-    buf.len = (uint16_t)RpcBufLen(&rsdata->seg);
-
-    return RPC_STATUS__SUCCESS;
-}
-
-static RpcStatus RpcHandleFrag(RpcSsnData* rsdata, const uint8_t* fragment)
-{
-    int last_frag = fragment[0] & 0x80;
-    uint32_t frag_len = rpc_frag_len(fragment);
-
-    if (frag_len == 0)
-        RpcPreprocEvent(rsdata, RPC_ZERO_LENGTH_FRAGMENT);
-
-    if (!last_frag)
-        RpcPreprocEvent(rsdata, RPC_FRAG_TRAFFIC);
-
-    if ((RpcBufLen(&rsdata->frag) == 0) && last_frag)
-        return RPC_STATUS__DEFRAG;
-
-    if (RpcBufAdd(&rsdata->frag,
-        fragment + sizeof(uint32_t), frag_len) != RPC_STATUS__SUCCESS)
-    {
-        return RPC_STATUS__ERROR;
-    }
-
-    if (last_frag)
-        return RPC_STATUS__DEFRAG;
-
-    return RPC_STATUS__SUCCESS;
-}
-
-static inline uint32_t RpcBufLen(const RpcBuffer* buf)
-{
-    return buf == nullptr ? 0 : buf->len;
-}
-
-static inline const uint8_t* RpcBufData(const RpcBuffer* buf)
-{
-    return buf == nullptr ? nullptr : buf->data;
-}
-
-static RpcStatus RpcBufAdd(RpcBuffer* buf, const uint8_t* data, uint32_t dsize)
-{
-    const uint32_t min_alloc = flush_size;
-    uint32_t alloc_size = dsize;
-
-    if (buf == nullptr)
-        return RPC_STATUS__ERROR;
-
-    if (dsize == 0)
-        return RPC_STATUS__SUCCESS;
-
-    if (alloc_size < min_alloc)
-        alloc_size = min_alloc;
-
-    if (buf->data == nullptr)
-    {
-        buf->data = (uint8_t*)snort_calloc(alloc_size);
-        buf->size = alloc_size;
-    }
-    else if ((buf->len + dsize) > buf->size)
-    {
-        uint32_t new_size = buf->len + alloc_size;
-        uint8_t* tmp = (uint8_t*)snort_calloc(new_size);
-
-        if (buf->len > new_size)
-        {
-            snort_free(buf->data);
-            buf->data = tmp;
-            buf->size = new_size;
-
-            RpcBufClean(buf);
-            return RPC_STATUS__ERROR;
-        }
-        memcpy_s(tmp, new_size, buf->data, buf->len);
-
-        snort_free(buf->data);
-        buf->data = tmp;
-        buf->size = new_size;
-    }
-
-    if (dsize > buf->size - buf->len)
-    {
-        RpcBufClean(buf);
-        return RPC_STATUS__ERROR;
-    }
-
-    memcpy_s(buf->data + buf->len, buf->size - buf->len, data, dsize);
-
-    buf->len += dsize;
-
-    return RPC_STATUS__SUCCESS;
-}
-
-static inline void RpcBufClean(RpcBuffer* buf)
-{
-    if (buf->data != nullptr)
-    {
-        snort_free(buf->data);
-        buf->data = nullptr;
-    }
-
-    buf->len = 0;
-    buf->size = 0;
 }
 
 static inline void RpcSsnSetInactive(RpcSsnData* rsdata, Packet*)
@@ -553,10 +584,8 @@ static inline void RpcSsnClean(RpcSsnData* rsdata)
         return;
 
     rsdata->active = 0;
-    rsdata->frag_len = 0;
-    rsdata->ignore = 0;
-    RpcBufClean(&rsdata->seg);
-    RpcBufClean(&rsdata->frag);
+    RpcChunksClear(rsdata);
+    RpcResetRecordState(rsdata);
 }
 
 RpcFlowData::RpcFlowData() : FlowData(inspector_id)
@@ -627,7 +656,7 @@ static RpcSsnData* RpcSsnDataNew(Packet* p)
 
 #define MIN_CALL_BODY_SZ 32
 
-static int ConvertRPC(RpcSsnData* rsdata, const Packet* p)
+static int ConvertRPC(RpcSsnData* rsdata, Packet* p)
 {
     const uint8_t* data = p->data;
     uint32_t psize = p->dsize;
@@ -810,12 +839,7 @@ void RpcDecode::eval(Packet* p)
     // preconditions - what we registered for
     assert(p->has_tcp_data());
 
-    // If we're stateful that means stream has been configured.
-    // In this case we don't look at server packets.
-    // There is the case were stream configuration requires a 3 way handshake.
-    // If no 3 way, then the packet flags won't be set, so don't look at it
-    // since we won't be able to determine who's the client and who's the
-    // server.
+    // Stateful mode inspects client packets only.
     if ( !p->is_from_client() )
         return;
 
@@ -842,8 +866,6 @@ void RpcDecode::eval(Packet* p)
         if (ret == RPC_STATUS__SUCCESS)
             return;
 
-        // Something went wrong - deactivate session tracking
-        // and decode normally
         if (ret == RPC_STATUS__ERROR)
             RpcSsnSetInactive(rsdata, p);
     }

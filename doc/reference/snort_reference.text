@@ -5829,6 +5829,7 @@ Rules:
   * 106:3 (rpc_decode) large RPC record fragment
   * 106:4 (rpc_decode) incomplete RPC segment
   * 106:5 (rpc_decode) zero-length RPC fragment
+  * 106:6 (rpc_decode) RPC record exceeds inspection depth
 
 Peg counts:
 
@@ -5837,6 +5838,10 @@ Peg counts:
     (now)
   * rpc_decode.max_concurrent_sessions: maximum concurrent rpc
     sessions (max)
+  * rpc_decode.oversized_records: records skipped after inspection
+    depth was exceeded (sum)
+  * rpc_decode.partial_flushes: partial record serializations into the
+    alt buffer (sum)
 
 
 5.42. s7commplus
@@ -13714,6 +13719,10 @@ libraries see the Getting Started section of the manual.
     (now)
   * rpc_decode.max_concurrent_sessions: maximum concurrent rpc
     sessions (max)
+  * rpc_decode.oversized_records: records skipped after inspection
+    depth was exceeded (sum)
+  * rpc_decode.partial_flushes: partial record serializations into the
+    alt buffer (sum)
   * rpc_decode.total_packets: total packets (sum)
   * s7commplus.concurrent_sessions: total concurrent s7commplus
     sessions (now)
@@ -14342,6 +14351,10 @@ fragment length.
 106:5 (rpc_decode) zero-length RPC fragment
 
 Zero-length RPC fragment.
+
+106:6 (rpc_decode) RPC record exceeds inspection depth
+
+RPC record exceeds inspection depth.
 
 112:1 (arp_spoof) unicast ARP request
 

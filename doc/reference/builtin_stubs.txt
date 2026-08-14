@@ -38,6 +38,10 @@ Incomplete RPC segment. Packet data size is less than required RPC fragment leng
 
 Zero-length RPC fragment.
 
+106:6
+
+RPC record exceeds inspection depth.
+
 112:1
 
 ARP request is unicast, not broadcast.

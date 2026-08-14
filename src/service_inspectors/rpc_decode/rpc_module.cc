@@ -36,6 +36,8 @@ using namespace snort;
     "incomplete RPC segment"
 #define RPC_ZERO_LENGTH_FRAGMENT_STR \
     "zero-length RPC fragment"
+#define RPC_INSPECT_DEPTH_EXCEEDED_STR \
+    "RPC record exceeds inspection depth"
 
 static const Parameter s_params[] =
 {
@@ -49,6 +51,7 @@ static const RuleMap rpc_rules[] =
     { RPC_LARGE_FRAGSIZE, RPC_LARGE_FRAGSIZE_STR },
     { RPC_INCOMPLETE_SEGMENT, RPC_INCOMPLETE_SEGMENT_STR },
     { RPC_ZERO_LENGTH_FRAGMENT, RPC_ZERO_LENGTH_FRAGMENT_STR },
+    { RPC_INSPECT_DEPTH_EXCEEDED, RPC_INSPECT_DEPTH_EXCEEDED_STR },
 
     { 0, nullptr }
 };
@@ -65,6 +68,8 @@ static const PegInfo rpc_pegs[] =
     { CountType::SUM, "total_packets", "total packets" },
     { CountType::NOW, "concurrent_sessions", "total concurrent rpc sessions" },
     { CountType::MAX, "max_concurrent_sessions", "maximum concurrent rpc sessions" },
+    { CountType::SUM, "oversized_records", "records skipped after inspection depth was exceeded" },
+    { CountType::SUM, "partial_flushes", "partial record serializations into the alt buffer" },
 
     { CountType::END, nullptr, nullptr }
 };
@@ -83,4 +88,3 @@ PegCount* RpcDecodeModule::get_counts() const
 
 ProfileStats* RpcDecodeModule::get_profile() const
 { return &rpcdecodePerfStats; }
-

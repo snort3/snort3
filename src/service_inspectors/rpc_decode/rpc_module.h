@@ -31,6 +31,7 @@
 #define RPC_LARGE_FRAGSIZE         3
 #define RPC_INCOMPLETE_SEGMENT     4
 #define RPC_ZERO_LENGTH_FRAGMENT   5
+#define RPC_INSPECT_DEPTH_EXCEEDED 6
 
 struct RpcStats;
 
