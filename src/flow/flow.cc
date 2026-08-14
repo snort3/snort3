@@ -186,6 +186,26 @@ void Flow::restart(bool dump_flow_data)
     previous_ssn_state = ssn_state;
 }
 
+void Flow::restart(Packet& p, bool dump_flow_data)
+{
+    if ( p.flow != this || !session )
+    {
+        assert(false);
+        return;
+    }
+
+    restart(dump_flow_data);
+
+    // A packet-triggered restart begins a new logical session on the existing flow.
+    // Replay the complete setup lifecycle so every subscriber can rebuild its state.
+    DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_STATE_SETUP, &p, this);
+
+    if ( flow_state == FlowState::SETUP ||
+        (flow_state == FlowState::INSPECT &&
+         (!ssn_client || !session->setup_after_restart(&p))) )
+        set_state(FlowState::ALLOW);
+}
+
 void Flow::clear(bool dump_flow_data)
 {
     restart(dump_flow_data);

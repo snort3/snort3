@@ -81,6 +81,7 @@ public:
     ~IpSession() override;
 
     bool setup(snort::Packet*) override;
+    bool setup_after_restart(snort::Packet*) override;
     int process(snort::Packet*) override;
     void clear() override;
 
@@ -91,6 +92,9 @@ public:
 
 public:
     FragTracker tracker = {};
+
+private:
+    bool setup(const snort::Packet*, bool is_restart);
 };
 
 #endif

@@ -44,7 +44,37 @@ void LogMessage(const char*,...) { }
 
 void DataBus::publish(unsigned, unsigned, DataEvent&, Flow*) { }
 void DataBus::publish(unsigned, unsigned, const uint8_t*, unsigned, Flow*) { }
+#ifdef FLOW_RESTART_PUBLISH_TEST
+static unsigned test_packet_publish_count = 0;
+static unsigned test_packet_publish_pub_id = 0;
+static unsigned test_packet_publish_event_id = 0;
+static Packet* test_published_packet = nullptr;
+static Flow* test_published_flow = nullptr;
+static void (*test_packet_publish_hook)(Packet*, const Flow*) = nullptr;
+
+static void reset_test_packet_publish()
+{
+    test_packet_publish_count = 0;
+    test_packet_publish_pub_id = 0;
+    test_packet_publish_event_id = 0;
+    test_published_packet = nullptr;
+    test_published_flow = nullptr;
+    test_packet_publish_hook = nullptr;
+}
+
+void DataBus::publish(unsigned pub_id, unsigned event_id, Packet* packet, Flow* flow)
+{
+    ++test_packet_publish_count;
+    test_packet_publish_pub_id = pub_id;
+    test_packet_publish_event_id = event_id;
+    test_published_packet = packet;
+    test_published_flow = flow;
+    if ( test_packet_publish_hook )
+        test_packet_publish_hook(packet, flow);
+}
+#else
 void DataBus::publish(unsigned, unsigned, Packet*, Flow*) { }
+#endif
 
 void InspectorManager::thread_drain_pending_tterm_if_pending(const Inspector*) { }
 
@@ -91,10 +121,53 @@ namespace layer
 const vlan::VlanTagHdr* get_vlan_layer(const Packet* const) { return nullptr; }
 }
 
+#ifdef FLOW_CONTROL_STATE_TEST
+Inspector::Inspector() : ref_count(nullptr) { }
+Inspector::~Inspector() = default;
+bool Inspector::likes(Packet*) { return true; }
+bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return false; }
+StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
+void Inspector::add_ref() { }
+void Inspector::rem_ref() { }
+
+static unsigned test_drop_traffic_calls = 0;
+static unsigned test_blocked_flow_calls = 0;
+static unsigned test_stop_inspection_calls = 0;
+static bool test_blocked_flow_result = true;
+
+static void reset_test_flow_state_calls()
+{
+    test_drop_traffic_calls = 0;
+    test_blocked_flow_calls = 0;
+    test_stop_inspection_calls = 0;
+    test_blocked_flow_result = true;
+}
+#endif
+
 // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
-void Stream::drop_traffic(const Packet*, char) { }
-bool Stream::blocked_flow(Packet*) { return true; }
-void Stream::stop_inspection(Flow*, Packet*, char, int32_t, int) { }
+void Stream::drop_traffic(const Packet*, char)
+{
+#ifdef FLOW_CONTROL_STATE_TEST
+    ++test_drop_traffic_calls;
+#endif
+}
+
+bool Stream::blocked_flow(Packet*)
+{
+#ifdef FLOW_CONTROL_STATE_TEST
+    ++test_blocked_flow_calls;
+    return test_blocked_flow_result;
+#else
+    return true;
+#endif
+}
+
+void Stream::stop_inspection(Flow*, Packet*, char, int32_t, int)
+{
+#ifdef FLOW_CONTROL_STATE_TEST
+    ++test_stop_inspection_calls;
+#endif
+}
 
 static NetworkPolicy* test_network_policy = nullptr;
 static InspectionPolicy* test_inspection_policy = nullptr;

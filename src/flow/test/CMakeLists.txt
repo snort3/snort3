@@ -38,5 +38,7 @@ add_cpputest( flow_test
     SOURCES
         ../flow.cc
         ../flow_data.cc
+        ../flow_stash.cc
         flow_stubs.h
+        ../../sfip/sf_ip.cc
 )

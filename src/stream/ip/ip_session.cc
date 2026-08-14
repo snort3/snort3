@@ -23,6 +23,7 @@
 
 #include "ip_session.h"
 
+#include "flow/flow_control.h"
 #include "framework/data_bus.h"
 #include "profiler/profiler_defs.h"
 #include "protocols/packet.h"
@@ -71,8 +72,14 @@ THREAD_LOCAL ProfileStats ip_perf_stats;
 // private methods
 //-------------------------------------------------------------------------
 
-static void IpSessionCleanup(Flow* lws, FragTracker* tracker)
+static void IpSessionCleanup(Flow* lws, FragTracker* tracker, Packet* p = nullptr)
 {
+    if ( tracker->engine )
+    {
+        assert(ip_stats.current_frags);
+        --ip_stats.current_frags;
+    }
+
     if ( lws->ssn_server )
     {
         Defrag* d = get_defrag(lws->ssn_server);
@@ -82,7 +89,10 @@ static void IpSessionCleanup(Flow* lws, FragTracker* tracker)
     if ( lws->ssn_state.session_flags & SSNFLAG_SEEN_SENDER )
         ip_stats.released++;
 
-    lws->restart();
+    if ( p )
+        lws->restart(*p);
+    else
+        lws->restart();
 }
 
 //-------------------------------------------------------------------------
@@ -140,20 +150,26 @@ IpSession::~IpSession()
 
 void IpSession::clear()
 {
-    if(tracker.engine)
-    {
-        //  Only decrement if the tracker was not already cleaned up.
-        assert(ip_stats.current_frags);
-        ip_stats.current_frags--;
-    }
-
     IpSessionCleanup(flow, &tracker);
     IpHAManager::process_deletion(*flow);
 }
 
 bool IpSession::setup(Packet* p)
 {
-    SESSION_STATS_ADD(ip_stats)
+    return setup(p, false);
+}
+
+bool IpSession::setup_after_restart(Packet* p)
+{
+    return setup(p, true);
+}
+
+bool IpSession::setup(const Packet* p, bool is_restart)
+{
+    if ( is_restart )
+        ip_stats.created++;
+    else
+        SESSION_STATS_ADD(ip_stats)
     tracker = {};
 
     const StreamIpConfig* pc = get_ip_cfg(flow->ssn_server);
@@ -166,7 +182,8 @@ bool IpSession::setup(Packet* p)
     }
     if ( flow->ssn_state.ignore_direction != SSN_DIR_NONE )
     {
-        ip_stats.sessions--; // Incremented in SESSION_STATS_ADD
+        if ( !is_restart )
+            ip_stats.sessions--; // Incremented in SESSION_STATS_ADD
         return false;
     }
     return true;
@@ -179,14 +196,15 @@ int IpSession::process(Packet* p)
     if ( Stream::expired_flow(flow, p) )
     {
         ip_stats.timeouts++;
-        IpSessionCleanup(flow, &tracker);
-        ip_stats.created++;
+        IpSessionCleanup(flow, &tracker, p);
 
 #ifdef ENABLE_EXPECTED_IP
         if ( Stream::expected_flow(flow, p) )
             return 0;
 #endif
         IpHAManager::process_deletion(*flow);
+        if ( !FlowControl::apply_flow_state(flow, p, false) )
+            return 0;
     }
 
     if ( Stream::blocked_flow(p) || Stream::ignored_flow(flow, p) )

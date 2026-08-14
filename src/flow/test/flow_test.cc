@@ -23,6 +23,8 @@
 #include "config.h"
 #endif
 
+#include <cstring>
+
 #include "detection/context_switcher.h"
 #include "detection/detection_engine.h"
 #include "flow/flow.h"
@@ -30,6 +32,7 @@
 #include "flow/flow_control.h"
 #include "flow/flow_stash.h"
 #include "flow/ha.h"
+#include "flow/session.h"
 #include "framework/inspector.h"
 #include "framework/data_bus.h"
 #include "helpers/policy_switcher.h"
@@ -40,12 +43,16 @@
 #include "protocols/ip.h"
 #include "protocols/layer.h"
 #include "protocols/packet.h"
+#include "pub_sub/intrinsic_event_ids.h"
 #include "time/clock_defs.h"
+#include "utils/util.h"
 
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+#define FLOW_RESTART_PUBLISH_TEST
 #include "flow_stubs.h"
+#undef FLOW_RESTART_PUBLISH_TEST
 
 #include "trace/trace.h"
 
@@ -54,6 +61,15 @@ using namespace snort;
 namespace snort
 {
 void trace_vprintf(const char*, TraceLevel, const char*, const Packet*, const char*, va_list) {}
+
+char* snort_strdup(const char* str)
+{
+    assert(str);
+    const size_t length = strlen(str) + 1;
+    auto* copy = static_cast<char*>(snort_alloc(length));
+    memcpy(copy, str, length);
+    return copy;
+}
 }
 
 THREAD_LOCAL class FlowControl* flow_con;
@@ -66,6 +82,12 @@ const FlowCacheConfig& FlowControl::get_flow_cache_config() const
 }
 
 bool FlowControl:: move_to_allowlist(snort::Flow*) { return true; }
+
+Inspector::Inspector() : ref_count(nullptr) { }
+Inspector::~Inspector() = default;
+bool Inspector::likes(Packet*) { return true; }
+bool Inspector::get_buf(const char*, Packet*, InspectionBuffer&) { return false; }
+StreamSplitter* Inspector::get_splitter(bool) { return nullptr; }
 
 void Inspector::rem_ref() {}
 
@@ -207,6 +229,124 @@ public:
 };
 
 unsigned HigherIdFlowData::module_id = 0;
+
+static bool restart_cleanup_observed = false;
+static bool restart_event_observed = false;
+
+static void observe_restart_cleanup(Packet*, const Flow* flow)
+{
+    uint32_t stash_value = 0;
+    restart_cleanup_observed = !flow->get_flow_data(TestFlowData::module_id)
+        && !flow->get_attr("restart-test", stash_value);
+    restart_event_observed = true;
+}
+
+class TestInspector : public Inspector
+{
+public:
+    TestInspector() = default;
+};
+
+class TestSession : public Session
+{
+public:
+    explicit TestSession(Flow* flow) : Session(flow)
+    { }
+
+    bool setup_after_restart(Packet* p) override
+    {
+        restart_setup_calls++;
+        restart_packet = p;
+        setup_observed_event = restart_event_observed;
+        return restart_setup_result;
+    }
+
+    void clear() override
+    { }
+
+    unsigned restart_setup_calls = 0;
+    Packet* restart_packet = nullptr;
+    bool setup_observed_event = false;
+    bool restart_setup_result = true;
+};
+
+TEST_GROUP(flow_restart_event_test)
+{
+    void setup() override
+    {
+        reset_test_packet_publish();
+        restart_cleanup_observed = false;
+        restart_event_observed = false;
+    }
+
+    void teardown() override
+    { reset_test_packet_publish(); }
+};
+
+TEST(flow_restart_event_test, packet_restart_publishes_once_after_cleanup)
+{
+    TestInspector inspector;
+    Flow flow;
+    Packet packet(false);
+    packet.flow = &flow;
+    auto* session = new TestSession(&flow);
+    flow.session = session;
+    flow.set_client(&inspector);
+    flow.set_state(Flow::FlowState::INSPECT);
+
+    TestFlowData::init();
+    flow.set_flow_data(new TestFlowData(1));
+    uint32_t stash_value = 42;
+    flow.set_attr("restart-test", stash_value);
+    test_packet_publish_hook = observe_restart_cleanup;
+
+    flow.restart(packet);
+
+    UNSIGNED_LONGS_EQUAL(1, test_packet_publish_count);
+    UNSIGNED_LONGS_EQUAL(intrinsic_pub_id, test_packet_publish_pub_id);
+    UNSIGNED_LONGS_EQUAL(IntrinsicEventIds::FLOW_STATE_SETUP, test_packet_publish_event_id);
+    POINTERS_EQUAL(&packet, test_published_packet);
+    POINTERS_EQUAL(&flow, test_published_flow);
+    CHECK_TRUE(restart_cleanup_observed);
+    UNSIGNED_LONGS_EQUAL(1, session->restart_setup_calls);
+    POINTERS_EQUAL(&packet, session->restart_packet);
+    CHECK_TRUE(session->setup_observed_event);
+    CHECK_TRUE(flow.flow_state == Flow::FlowState::INSPECT);
+}
+
+TEST(flow_restart_event_test, packet_restart_allows_flow_when_session_setup_fails)
+{
+    TestInspector inspector;
+    Flow flow;
+    Packet packet(false);
+    packet.flow = &flow;
+    auto* session = new TestSession(&flow);
+    session->restart_setup_result = false;
+    flow.session = session;
+    flow.set_client(&inspector);
+    flow.set_state(Flow::FlowState::INSPECT);
+
+    flow.restart(packet);
+
+    UNSIGNED_LONGS_EQUAL(1, test_packet_publish_count);
+    UNSIGNED_LONGS_EQUAL(1, session->restart_setup_calls);
+    CHECK_TRUE(flow.flow_state == Flow::FlowState::ALLOW);
+}
+
+TEST(flow_restart_event_test, packetless_restart_does_not_publish)
+{
+    TestInspector inspector;
+    Flow flow;
+    auto* session = new TestSession(&flow);
+    flow.session = session;
+    flow.set_client(&inspector);
+    flow.set_state(Flow::FlowState::INSPECT);
+
+    flow.restart();
+
+    UNSIGNED_LONGS_EQUAL(0, test_packet_publish_count);
+    UNSIGNED_LONGS_EQUAL(0, session->restart_setup_calls);
+}
 
 TEST_GROUP(flow_data_test)
 {

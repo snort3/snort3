@@ -32,6 +32,7 @@ public:
     ~UdpSession() override;
 
     bool setup(snort::Packet*) override;
+    bool setup_after_restart(snort::Packet*) override;
     void update_direction(char dir, const snort::SfIp*, uint16_t port) override;
     int process(snort::Packet*) override;
     void clear() override;
@@ -43,6 +44,7 @@ public:
     uint64_t payload_bytes_seen_server = 0;
 
 private:
+    bool setup(snort::Packet*, bool is_restart);
     int process_udp(snort::Flow*, snort::Packet*);
 };
 

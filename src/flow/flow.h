@@ -186,6 +186,7 @@ public:
     void flush(bool do_cleanup = true);
     void reset(bool do_cleanup = true);
     void restart(bool dump_flow_data = true);
+    void restart(Packet& packet, bool dump_flow_data = true);
     void clear(bool dump_flow_data = true);
 
     void set_flow_data(FlowData* fd)

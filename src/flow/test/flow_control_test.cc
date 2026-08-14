@@ -59,7 +59,9 @@
 #include <CppUTest/CommandLineTestRunner.h>
 #include <CppUTest/TestHarness.h>
 
+#define FLOW_CONTROL_STATE_TEST
 #include "flow_stubs.h"
+#undef FLOW_CONTROL_STATE_TEST
 
 #include "trace/trace.h"
 
@@ -122,7 +124,8 @@ void Flow::set_client_initiate(Packet*) { }
 void Flow::set_direction(Packet*) { }
 // cppcheck-suppress unusedFunction ; entry point retained for external, conditional, or test use
 void Flow::set_mpls_layer_per_dir(Packet*) { }
-void DetectionEngine::disable_all(Packet*) { }
+static unsigned test_disable_all_calls = 0;
+void DetectionEngine::disable_all(Packet*) { ++test_disable_all_calls; }
 ExpectCache::ExpectCache(uint32_t) { }
 ExpectCache::~ExpectCache() = default;
 bool ExpectCache::check(Packet*, Flow*) { return true; }
@@ -278,6 +281,179 @@ TEST(policy_persistence, reload_refreshes_selected_policy_ids)
     UNSIGNED_LONGS_EQUAL(ips_policy->policy_id, flow.ips_policy_id);
     UNSIGNED_LONGS_EQUAL(1, snort::test_get_inspection_policy_calls);
     UNSIGNED_LONGS_EQUAL(1, snort::test_get_ips_policy_calls);
+}
+
+TEST_GROUP(flow_state_disposition)
+{
+    class TestInspector : public Inspector { };
+
+    TestInspector inspector;
+    Flow flow;
+    Packet packet { false };
+    Active active;
+
+    void setup() override
+    {
+        packet.flow = &flow;
+        packet.active = &active;
+        flow.set_client(&inspector);
+        flow.set_server(&inspector);
+        snort::reset_test_flow_state_calls();
+        test_disable_all_calls = 0;
+    }
+};
+
+TEST(flow_state_disposition, existing_inspect_flow_continues)
+{
+    flow.flow_state = Flow::FlowState::INSPECT;
+
+    CHECK_TRUE(FlowControl::apply_flow_state(&flow, &packet, false));
+    UNSIGNED_LONGS_EQUAL(0, test_disable_all_calls);
+    UNSIGNED_LONGS_EQUAL(0, snort::test_drop_traffic_calls);
+    UNSIGNED_LONGS_EQUAL(0, snort::test_blocked_flow_calls);
+    UNSIGNED_LONGS_EQUAL(0, snort::test_stop_inspection_calls);
+}
+
+TEST(flow_state_disposition, existing_allow_flow_disables_current_packet_inspection)
+{
+    flow.flow_state = Flow::FlowState::ALLOW;
+
+    CHECK_FALSE(FlowControl::apply_flow_state(&flow, &packet, false));
+    UNSIGNED_LONGS_EQUAL(1, test_disable_all_calls);
+    UNSIGNED_LONGS_EQUAL(0, snort::test_stop_inspection_calls);
+}
+
+TEST(flow_state_disposition, existing_block_flow_blocks_current_packet)
+{
+    flow.flow_state = Flow::FlowState::BLOCK;
+
+    CHECK_FALSE(FlowControl::apply_flow_state(&flow, &packet, false));
+    CHECK_EQUAL(Active::ACT_BLOCK, active.get_action());
+    UNSIGNED_LONGS_EQUAL(1, test_disable_all_calls);
+    UNSIGNED_LONGS_EQUAL(0, snort::test_drop_traffic_calls);
+}
+
+TEST(flow_state_disposition, existing_reset_flow_resets_current_packet)
+{
+    flow.flow_state = Flow::FlowState::RESET;
+
+    CHECK_FALSE(FlowControl::apply_flow_state(&flow, &packet, false));
+    CHECK_EQUAL(Active::ACT_RESET, active.get_action());
+    UNSIGNED_LONGS_EQUAL(1, test_disable_all_calls);
+    UNSIGNED_LONGS_EQUAL(1, snort::test_blocked_flow_calls);
+    UNSIGNED_LONGS_EQUAL(0, snort::test_drop_traffic_calls);
+}
+
+TEST(flow_state_disposition, existing_reset_flow_stops_without_block_flags)
+{
+    snort::test_blocked_flow_result = false;
+    flow.flow_state = Flow::FlowState::RESET;
+
+    CHECK_FALSE(FlowControl::apply_flow_state(&flow, &packet, false));
+    CHECK_EQUAL(Active::ACT_RESET, active.get_action());
+    UNSIGNED_LONGS_EQUAL(1, test_disable_all_calls);
+    UNSIGNED_LONGS_EQUAL(1, snort::test_blocked_flow_calls);
+    UNSIGNED_LONGS_EQUAL(0, snort::test_drop_traffic_calls);
+}
+
+TEST(flow_state_disposition, new_allow_flow_stops_session_inspection)
+{
+    flow.flow_state = Flow::FlowState::ALLOW;
+
+    CHECK_FALSE(FlowControl::apply_flow_state(&flow, &packet, true));
+    UNSIGNED_LONGS_EQUAL(0, test_disable_all_calls);
+    UNSIGNED_LONGS_EQUAL(1, snort::test_stop_inspection_calls);
+}
+
+TEST(flow_state_disposition, new_block_flow_drops_current_packet)
+{
+    flow.flow_state = Flow::FlowState::BLOCK;
+
+    CHECK_FALSE(FlowControl::apply_flow_state(&flow, &packet, true));
+    UNSIGNED_LONGS_EQUAL(1, test_disable_all_calls);
+    UNSIGNED_LONGS_EQUAL(1, snort::test_drop_traffic_calls);
+}
+
+TEST(flow_state_disposition, new_reset_flow_drops_current_packet)
+{
+    flow.flow_state = Flow::FlowState::RESET;
+
+    CHECK_FALSE(FlowControl::apply_flow_state(&flow, &packet, true));
+    UNSIGNED_LONGS_EQUAL(1, test_disable_all_calls);
+    UNSIGNED_LONGS_EQUAL(1, snort::test_blocked_flow_calls);
+    UNSIGNED_LONGS_EQUAL(1, snort::test_drop_traffic_calls);
+}
+
+class RestartPrecheckSession : public Session
+{
+public:
+    RestartPrecheckSession(Flow* flow, Flow::FlowState restart_state)
+        : Session(flow), restart_state(restart_state)
+    { }
+
+    bool precheck(Packet*) override
+    {
+        flow->set_state(restart_state);
+        return false;
+    }
+
+    void clear() override
+    { }
+
+private:
+    Flow::FlowState restart_state;
+};
+
+TEST_GROUP(restart_precheck_disposition)
+{
+    FlowCacheConfig config;
+    FlowControl flow_control { config };
+    Flow flow;
+    Packet packet { false };
+    DAQ_PktHdr_t pkth = { };
+    tcp::TCPHdr tcph = { };
+    Active active;
+
+    void setup() override
+    {
+        packet.pkth = &pkth;
+        packet.active = &active;
+        packet.ptrs.set_pkt_type(PktType::TCP);
+        packet.ptrs.tcph = &tcph;
+        tcph.th_flags = TH_RST;
+
+        flow.pkt_type = PktType::TCP;
+        flow.set_state(Flow::FlowState::INSPECT);
+
+        snort::reset_test_flow_state_calls();
+        test_disable_all_calls = 0;
+    }
+};
+
+TEST(restart_precheck_disposition, applies_reset_before_ineligible_packet_return)
+{
+    RestartPrecheckSession session(&flow, Flow::FlowState::RESET);
+    flow.session = &session;
+
+    UNSIGNED_LONGS_EQUAL(0, flow_control.process(&flow, &packet, false));
+
+    CHECK_EQUAL(Active::ACT_RESET, active.get_action());
+    CHECK_TRUE(flow.session_state & STREAM_STATE_CLOSED);
+    UNSIGNED_LONGS_EQUAL(1, test_disable_all_calls);
+    UNSIGNED_LONGS_EQUAL(1, snort::test_blocked_flow_calls);
+}
+
+TEST(restart_precheck_disposition, leaves_setup_restart_for_normal_ineligible_cleanup)
+{
+    RestartPrecheckSession session(&flow, Flow::FlowState::SETUP);
+    flow.session = &session;
+
+    UNSIGNED_LONGS_EQUAL(0, flow_control.process(&flow, &packet, false));
+
+    CHECK_TRUE(flow.flow_state == Flow::FlowState::SETUP);
+    CHECK_TRUE(flow.session_state & STREAM_STATE_CLOSED);
+    UNSIGNED_LONGS_EQUAL(0, test_disable_all_calls);
+    UNSIGNED_LONGS_EQUAL(0, snort::test_blocked_flow_calls);
 }
 
 TEST_GROUP(stale_flow) { };

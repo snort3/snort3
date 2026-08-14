@@ -48,6 +48,7 @@
 
 #include "tcp_session.h"
 
+#include "flow/flow_control.h"
 #include "detection/detection_engine.h"
 #include "detection/rules.h"
 #include "framework/data_bus.h"
@@ -97,7 +98,17 @@ TcpSession::~TcpSession()
     clear_session(true, false, false);
 }
 
-bool TcpSession::setup(Packet*)
+bool TcpSession::setup(Packet* p)
+{
+    return setup(p, false);
+}
+
+bool TcpSession::setup_after_restart(Packet* p)
+{
+    return setup(p, true);
+}
+
+bool TcpSession::setup(Packet*, bool is_restart)
 {
     client.init_tcp_state(this);
     server.init_tcp_state(this);
@@ -118,7 +129,10 @@ bool TcpSession::setup(Packet*)
     flow->set_idle_timeout(tcp_config->embryonic_timeout);
     set_os_policy();
 
-    SESSION_STATS_ADD(tcpStats)
+    if ( is_restart )
+        tcpStats.created++;
+    else
+        SESSION_STATS_ADD(tcpStats)
     tcpStats.setups++;
     return true;
 }
@@ -186,7 +200,14 @@ void TcpSession::clear_session(bool free_flow_data, bool flush_segments, bool re
         tel.log_internal_event(SESSION_EVENT_CLEAR);
 
     if ( restart_session )
-        flow->restart(free_flow_data);
+    {
+        if ( !p )
+        {
+            assert(false);
+            return;
+        }
+        flow->restart(*p, free_flow_data);
+    }
     else
         flow->clear(free_flow_data);
 }
@@ -405,6 +426,8 @@ bool TcpSession::handle_syn_on_reset_session(TcpSegmentDescriptor& tsd)
 
         // FIXIT-M this leads to bogus 129:20
         clear_session( true, true, true, tsd.get_pkt() );
+        if ( !FlowControl::apply_flow_state(flow, tsd.get_pkt(), false) )
+            return false;
 
         if ( tcph->is_rst() )
         {

@@ -52,6 +52,7 @@ public:
     static void sterm();
 
     bool setup(snort::Packet*) override;
+    bool setup_after_restart(snort::Packet*) override;
     void restart(snort::Packet* p) override;
     bool precheck(snort::Packet* p) override;
     int process(snort::Packet*) override;
@@ -150,6 +151,7 @@ public:
     uint8_t ecn = 0;
 
 private:
+    bool setup(snort::Packet*, bool is_restart);
     int process_tcp_packet(TcpSegmentDescriptor&, const snort::Packet*);
     void set_os_policy();
     void swap_trackers();

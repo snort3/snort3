@@ -23,6 +23,7 @@
 
 #include "udp_session.h"
 
+#include "flow/flow_control.h"
 #include "flow/session.h"
 #include "framework/data_bus.h"
 #include "hash/xhash.h"
@@ -72,8 +73,20 @@ UdpSession::~UdpSession()
 
 bool UdpSession::setup(Packet* p)
 {
+    return setup(p, false);
+}
+
+bool UdpSession::setup_after_restart(Packet* p)
+{
+    return setup(p, true);
+}
+
+bool UdpSession::setup(Packet* p, bool is_restart)
+{
     ssn_time.tv_sec = p->pkth->ts.tv_sec;
     ssn_time.tv_usec = p->pkth->ts.tv_usec;
+    payload_bytes_seen_client = 0;
+    payload_bytes_seen_server = 0;
     flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
 
     flow->pkt_type = p->type();
@@ -83,13 +96,17 @@ bool UdpSession::setup(Packet* p)
     const StreamUdpConfig* pc = get_udp_cfg(flow->ssn_server);
     flow->set_default_session_timeout(pc->session_timeout, false);
 
-    SESSION_STATS_ADD(udpStats)
+    if ( is_restart )
+        udpStats.created++;
+    else
+        SESSION_STATS_ADD(udpStats)
 
     DataBus::publish(intrinsic_pub_id, IntrinsicEventIds::FLOW_STATE_CHANGE, p);
 
     if ( flow->ssn_state.ignore_direction != SSN_DIR_NONE )
     {
-        udpStats.sessions--; // incremented in SESSIONS_STATS_ADD
+        if ( !is_restart )
+            udpStats.sessions--; // incremented in SESSION_STATS_ADD
         return false;
     }
 
@@ -180,10 +197,10 @@ int UdpSession::process(Packet* p)
     {
         udpStats.timeouts++;
         UdpSessionCleanup(flow);
-        flow->restart();
-        flow->ssn_state.session_flags |= SSNFLAG_SEEN_SENDER;
-        udpStats.created++;
+        flow->restart(*p);
         UdpHAManager::process_deletion(*flow);
+        if ( !FlowControl::apply_flow_state(flow, p, false) )
+            return 0;
     }
 
     process_udp(flow, p);

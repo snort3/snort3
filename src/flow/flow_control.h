@@ -73,6 +73,7 @@ public:
     void check_expected_flow(snort::Flow*, snort::Packet*);
     unsigned prune_multiple(PruneReason, bool do_cleanup);
     bool move_to_allowlist(snort::Flow*);
+    static bool apply_flow_state(snort::Flow*, snort::Packet*, bool new_flow);
 
     int add_expected_ignore(
         const snort::Packet* ctrlPkt, PktType, IpProtocol,

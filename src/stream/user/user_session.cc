@@ -23,6 +23,7 @@
 
 #include "user_session.h"
 
+#include "flow/flow_control.h"
 #include "detection/detection_engine.h"
 #include "detection/rules.h"
 #include "framework/pig_pen.h"
@@ -472,7 +473,10 @@ int UserSession::process(Packet* p)
 
     if ( Stream::expired_flow(flow, p) )
     {
-        flow->restart();
+        clear();
+        flow->restart(*p);
+        if ( !FlowControl::apply_flow_state(flow, p, false) )
+            return 0;
         // FIXIT-M count user session timeouts here
 
 #ifdef ENABLE_EXPECTED_USER

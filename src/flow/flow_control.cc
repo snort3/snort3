@@ -557,6 +557,54 @@ static inline void restart_inspection(Flow* flow, Packet* p)
     flow->last_verdict = MAX_DAQ_VERDICT;
 }
 
+bool FlowControl::apply_flow_state(Flow* flow, Packet* p, bool new_flow)
+{
+    switch ( flow->flow_state )
+    {
+    case Flow::FlowState::SETUP:
+        flow->set_state(Flow::FlowState::ALLOW);
+        return false;
+
+    case Flow::FlowState::INSPECT:
+        assert(flow->ssn_client);
+        assert(flow->ssn_server);
+        return true;
+
+    case Flow::FlowState::ALLOW:
+        if ( new_flow )
+            Stream::stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
+        else
+            DetectionEngine::disable_all(p);
+        return false;
+
+    case Flow::FlowState::BLOCK:
+        if ( new_flow )
+            Stream::drop_traffic(p, SSN_DIR_BOTH);
+        else
+            p->active->block_again();
+
+        p->active->set_drop_reason("session");
+        DetectionEngine::disable_all(p);
+        flow_log("Session: session has been blocked, drop\n");
+        return false;
+
+    case Flow::FlowState::RESET:
+        if ( new_flow )
+            Stream::drop_traffic(p, SSN_DIR_BOTH);
+        else
+            p->active->reset_again();
+
+        // Apply any existing block response; RESET always stops processing.
+        (void)Stream::blocked_flow(p);
+        p->active->set_drop_reason("session");
+        DetectionEngine::disable_all(p);
+        flow_log("Session: session has been reset\n");
+        return false;
+    }
+
+    return false;
+}
+
 unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
 {
     unsigned news = 0;
@@ -585,6 +633,9 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
             // flow expired, must recheck eligibility
             if ( !want_flow(flow->pkt_type, p, false) )
             {
+                if ( flow->flow_state != Flow::FlowState::SETUP )
+                    (void)apply_flow_state(flow, p, false);
+
                 flow->session_state |= STREAM_STATE_CLOSED;
                 return 0;  // flow will be deleted
             }
@@ -666,47 +717,7 @@ unsigned FlowControl::process(Flow* flow, Packet* p, bool new_ha_flow)
     if ( p->proto_bits & PROTO_BIT__MPLS )
         flow->set_mpls_layer_per_dir(p);
 
-    switch ( flow->flow_state )
-    {
-    case Flow::FlowState::SETUP:
-        flow->set_state(Flow::FlowState::ALLOW);
-        break;
-
-    case Flow::FlowState::INSPECT:
-        assert(flow->ssn_client);
-        assert(flow->ssn_server);
-        break;
-
-    case Flow::FlowState::ALLOW:
-        if ( news )
-            Stream::stop_inspection(flow, p, SSN_DIR_BOTH, -1, 0);
-        else
-            DetectionEngine::disable_all(p);
-        break;
-
-    case Flow::FlowState::BLOCK:
-        if ( news )
-            Stream::drop_traffic(p, SSN_DIR_BOTH);
-        else
-            p->active->block_again();
-
-        p->active->set_drop_reason("session");
-        DetectionEngine::disable_all(p);
-        flow_log("Session: session has been blocked, drop\n");
-        break;
-
-    case Flow::FlowState::RESET:
-        if ( news )
-            Stream::drop_traffic(p, SSN_DIR_BOTH);
-        else
-            p->active->reset_again();
-
-        Stream::blocked_flow(p);
-        p->active->set_drop_reason("session");
-        DetectionEngine::disable_all(p);
-        flow_log("Session: session has been reset\n");
-        break;
-    }
+    apply_flow_state(flow, p, news != 0);
 
     return news;
 }
